@@ -43,8 +43,15 @@ void func_804C0398(CLight* self, int lightObjPtr) {
 void func_804C03A0(u8* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
-void func_804C0454(u8* self, int value){
-    *(int*)((char*)self + 0x2c) = value;
+// Set the light position: copy the vector as raw u32 words (retail lwz/stw),
+// then forward to the LightObj (tail call).
+extern "C" void func_804C0454(CLight* self, const ml::CVec3* v) {
+    u32* dst = (u32*)&self->unk4;
+    const u32* s = (const u32*)v;
+    dst[0] = s[0];
+    dst[1] = s[1];
+    dst[2] = s[2];
+    self->mpLightObj->InitLightPos(self->unk4.x, self->unk4.y, self->unk4.z);
 }
 void func_804C0484(u8* self, int value){
     *(int*)((char*)self + 0x2c) = value;

@@ -77,6 +77,18 @@ _RE_UNK_GEN = re.compile(r"Unk(?:Class_[0-9A-Fa-f]+|VirtualFunc[0-9]+|Struct[0-9
 _RE_BINPATCH = re.compile(
     r"insn_patches|insert_insns|reloc_offset_moves|postprocess_reloc_names"
 )
+# Fakematch-candidate patterns (source reproduces retail codegen, not retail
+# source): single-instruction asm shims and the init-list side-effect trick
+# (assignment inside a cast used as a value, e.g.
+#   mTempSpecialHandle(reinterpret_cast<SeqSoundHandle*>(
+#       mPreparedFlag = mLoadingFlag = false))
+# which forces member-store ordering to match retail bytes).
+_RE_ASM_INSN_MARKER = re.compile(r"\bDECOMP_ASM_INSN_(?:BEGIN|END)\b")
+_RE_INIT_CAST_ONE_LINE = re.compile(
+    r"(?:reinterpret_cast|static_cast)\s*<[^>]+>\s*\([^()]*\w\s*=(?!=)")
+_RE_INIT_CAST_OPEN = re.compile(
+    r"(?:reinterpret_cast|static_cast)\s*<[^>]+>\s*\(\s*$")
+_RE_ASSIGN_OP = re.compile(r"\w\s*=(?!=)")
 _RE_PRAGMA = re.compile(r"^\s*#\s*pragma\b")
 _RE_IF0 = re.compile(r"^\s*#\s*if\s+0\b")
 _RE_SECTION = re.compile(r"__declspec\s*\(\s*section|__attribute__\s*\(\s*\(\s*section")
@@ -124,6 +136,7 @@ def lint_delta(path: str, old_text: str | None,
             rule=rule, line=line_no,
             detail=f"{why}: `{line.strip()[:100]}`"))
 
+    cast_pending = False
     for line_no, raw in _added_lines(old_text, new_text):
         code = _strip_line_comment(raw)
 
@@ -187,6 +200,26 @@ def lint_delta(path: str, old_text: str | None,
         if _RE_ASM.search(code):
             add("no_asm", line_no, raw,
                 "assembly is forbidden, including single-instruction asm")
+        if _RE_ASM_INSN_MARKER.search(code):
+            add("no_asm_insn_shim", line_no, raw,
+                "DECOMP_ASM_INSN single-instruction asm shims are forbidden in "
+                "new code — write high-level C++ and chase a natural match")
+        # Init-list side-effect trick: assignment inside a cast used as a
+        # value. One-line form matches directly; a cast opened at end-of-line
+        # may close on a later added line, so track it across added lines.
+        if _RE_INIT_CAST_ONE_LINE.search(code):
+            add("no_init_side_effect", line_no, raw,
+                "assignment inside a cast (init-list store-ordering trick) is "
+                "forbidden — write the plain value")
+        if not cast_pending and _RE_INIT_CAST_OPEN.search(code):
+            cast_pending = True
+        if cast_pending:
+            if _RE_ASSIGN_OP.search(code):
+                add("no_init_side_effect", line_no, raw,
+                    "assignment inside a multi-line cast / member-initializer "
+                    "is forbidden — write the plain value")
+            if ")" in code:
+                cast_pending = False
         if _RE_REGISTER_KW.search(code):
             add("no_register_keyword", line_no, raw,
                 "register keyword / register bindings are forbidden")

@@ -78,3 +78,48 @@ test("lint_cli delta mode ignores PRE-EXISTING unk usage (only added lines)", as
   assert.equal(ok, true, `rules=${rules}`);
   assert.deepEqual(rules, []);
 });
+
+test("lint_cli flags DECOMP_ASM_INSN single-instruction asm shims", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "lint-asm-shim-"));
+  const f = join(dir, "shim.cpp");
+  writeFileSync(
+    f,
+    "void f() {\nDECOMP_ASM_INSN_BEGIN\nasm { b done }\nDECOMP_ASM_INSN_END\n}\n",
+  );
+  const { ok, rules } = await lintCli(["--file", f]);
+  assert.equal(ok, false);
+  assert.ok(rules.includes("no_asm_insn_shim"), `expected no_asm_insn_shim, got ${rules}`);
+});
+
+test("lint_cli flags the init-list side-effect trick (multi-line cast)", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "lint-init-side-"));
+  const f = join(dir, "seq.cpp");
+  writeFileSync(
+    f,
+    [
+      "struct T { T(); };",
+      "T::T()",
+      "    : mHandle(reinterpret_cast<SeqSoundHandle*>(",
+      "          mPreparedFlag = mLoadingFlag = false)),",
+      "      mOther(0) {}",
+      "",
+    ].join("\n"),
+  );
+  const { ok, rules } = await lintCli(["--file", f]);
+  assert.equal(ok, false);
+  assert.ok(rules.includes("no_init_side_effect"), `expected no_init_side_effect, got ${rules}`);
+});
+
+test("lint_cli delta mode flags an added one-line cast assignment", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "lint-init-delta-"));
+  const oldF = join(dir, "old.cpp");
+  const newF = join(dir, "new.cpp");
+  writeFileSync(oldF, "struct T { T(); }; T::T() : mHandle(0), mOther(0) {}\n");
+  writeFileSync(
+    newF,
+    "struct T { T(); }; T::T() : mHandle(reinterpret_cast<T*>(mFlag = 0)), mOther(0) {}\n",
+  );
+  const { ok, rules } = await lintCli(["--pair", oldF, newF]);
+  assert.equal(ok, false);
+  assert.ok(rules.includes("no_init_side_effect"), `expected no_init_side_effect, got ${rules}`);
+});

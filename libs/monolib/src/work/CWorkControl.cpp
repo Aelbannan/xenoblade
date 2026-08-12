@@ -83,8 +83,9 @@ extern char lbl_eu_80522688[];
 
 #pragma optimize_for_size on
 CWorkControl* CWorkControl::create(CWorkThread* pParent){
+    const char* name = lbl_eu_80522688 + 0x6C;
     CWorkControl* pWorkControl =
-        new (CWorkThreadSystem::getWorkMem()) CWorkControl(lbl_eu_80522688 + 0x6C, pParent);
+        new (CWorkThreadSystem::getWorkMem()) CWorkControl(name, pParent);
     CWorkUtil::entryWork(pWorkControl, pParent, false);
     return pWorkControl;
 }

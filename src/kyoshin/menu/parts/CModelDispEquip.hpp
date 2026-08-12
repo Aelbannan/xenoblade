@@ -158,7 +158,7 @@ struct CModelDispModelVt {
     virtual void m1F(); virtual void m20(); virtual void m21(); virtual void m22();
     virtual void m23();
     virtual void m9C(u32 a, u32 b);     // #38 => +0x9C
-    virtual void m24(); virtual void m25(); virtual void m26(); virtual void m27();
+    virtual void m25(); virtual void m26(); virtual void m27();
     virtual void m28(); virtual void m29(); virtual void m2A(); virtual void m2B();
     virtual void m2C();
     virtual void mC4(CModelDispModelVt* animModel, CModelDispNameParam* name, u32 flag); // #48 => +0xC4
@@ -210,7 +210,7 @@ struct CModelDispVtE0 {
     virtual void m18(); virtual void m19(); virtual void m1A(); virtual void m1B();
     virtual void m1C(); virtual void m1D(); virtual void m1E(); virtual void m1F();
     virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
-    virtual void m24(); virtual void m25(); virtual void m26(); virtual void m27();
+    virtual void m25(); virtual void m26(); virtual void m27();
     virtual void m28(); virtual void m29(); virtual void m2A(); virtual void m2B();
     virtual void m2C(); virtual void m2D(); virtual void m2E(); virtual void m2F();
     virtual void m30(); virtual void m31(); virtual void m32(); virtual void m33();

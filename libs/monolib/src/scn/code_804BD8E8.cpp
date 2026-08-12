@@ -168,7 +168,18 @@ u8 func_804BE5B8() { return lbl_eu_8066597C; }
 extern u8 lbl_eu_8066597D;
 u8 func_804BE5C0() { return lbl_eu_8066597D; }
 
-void func_804BE5C8(){}
+// Scan the resource-entry table (lbl_eu_8065F428, 0x24 stride) for a nonzero
+// entry value; the count comes from the sbss counter (signed, <= 0 -> 0).
+extern "C" int func_804BE5C8() {
+    int count = (int)lbl_eu_80665988;
+    ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
+    while (count > 0) {
+        if (entries->value != 0) return 1;
+        entries++;
+        count--;
+    }
+    return 0;
+}
 
 int func_804BE604(int index) {
     extern unsigned char lbl_eu_8065F428[];

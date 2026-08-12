@@ -12,6 +12,15 @@ Scans .cpp/.hpp files for the smell families the team wants to track:
   fake_this     - u32/first-arg named r3..r31 used as a fake this/register
   globals_in_c  - data symbols declared extern "C" that are NOT lbl_eu_* (real
                   globals that could come from a header)
+
+Fakematch-candidate families (source shapes that reproduce retail *codegen*
+instead of retail *source*; every count is a candidate for the natural-rewrite
+hexdiff test):
+  asm_insn_shim    - DECOMP_ASM_INSN_BEGIN/END single-instruction asm blocks
+  schedule_pragma  - `#pragma schedule once/twice` (MWCC scheduling knobs)
+  init_side_effect - assignment inside a reinterpret_cast/static_cast used as a
+                     value (init-list store-ordering choreography, e.g.
+                     mHandle(reinterpret_cast<T*>(mFlag = false)))
 Output: markdown table grouped by directory, sorted by severity.
 """
 from __future__ import annotations
@@ -52,6 +61,16 @@ RE_RN_PARAM = re.compile(r'\b(?:r3|r4|r5|r6|r7|r8|r9|r10|r11|r12|r13|r14|r15|r16
 RE_GOTO = re.compile(r'\bgoto\b')
 RE_DECOMP_MACRO = re.compile(r'DECOMP_(?:PPC|FORCELITERAL|FORCEACTIVE)')
 RE_PRAGMA = re.compile(r'^\s*#\s*pragma')
+# Fakematch-candidate families (see module docstring):
+RE_ASM_INSN_SHIM = re.compile(r'\bDECOMP_ASM_INSN_BEGIN\b')
+RE_SCHEDULE_PRAGMA = re.compile(r'^\s*#\s*pragma\s+schedule\b')
+# Assignment inside a cast used as a value; `[^()]*` also crosses newlines, so
+# the two-line SeqSound shape
+#   mTempSpecialHandle(reinterpret_cast<SeqSoundHandle*>(
+#       mPreparedFlag = mLoadingFlag = false)),
+# is caught even though the cast open and the `=` sit on different lines.
+RE_INIT_SIDE_EFFECT = re.compile(
+    r'(?:reinterpret_cast|static_cast)\s*<[^>]+>\s*\([^()]*\w\s*=(?!=)')
 RE_IF0 = re.compile(r'^\s*#\s*if\s+0')
 RE_EXTERN_C_BLOCK = re.compile(r'extern\s*"C"\s*\{')
 RE_INCLUDE = re.compile(r'^\s*#\s*include\s*[<"]([^>"]+)')
@@ -76,6 +95,9 @@ class Stats:
         self.goto_count = 0
         self.decomp_macro = 0
         self.pragma = 0
+        self.asm_insn_shim = 0
+        self.schedule_pragma = 0
+        self.init_side_effect = 0
         self.if0 = 0
         self.includes = 0
 
@@ -92,9 +114,10 @@ def scan_file(path: Path, skip_asm_bodies: bool = False) -> Stats:
     """
     s = Stats()
     try:
-        lines = path.read_text(errors="replace").splitlines()
+        text = path.read_text(errors="replace")
     except OSError:
         return s
+    lines = text.splitlines()
     in_extern_c = False
     in_asm = False
     amode = "brace"  # "brace" for asm fns/`asm {` bodies, "paren" for ASM_VOLATILE(
@@ -171,8 +194,16 @@ def scan_file(path: Path, skip_asm_bodies: bool = False) -> Stats:
             s.decomp_macro += 1
         if RE_PRAGMA.search(line):
             s.pragma += 1
+        if RE_ASM_INSN_SHIM.search(line):
+            s.asm_insn_shim += 1
+        if RE_SCHEDULE_PRAGMA.search(line):
+            s.schedule_pragma += 1
         if RE_IF0.search(line):
             s.if0 += 1
+    # Multi-line pass over the raw text (cast open and assignment may be on
+    # different lines; same accepted limitation as the `/* */` note in the
+    # report — comment bodies are not stripped here).
+    s.init_side_effect = len(RE_INIT_SIDE_EFFECT.findall(text))
     return s
 
 
@@ -202,7 +233,8 @@ def main() -> int:
         rel = Path(os.path.relpath(f, ROOT))
         sev = (s.self_params + s.self_access + s.void_ptr + s.void_ptr_cast
                + s.ptr_arith + s.deref_arith + s.asm_code + s.fake_stack
-               + s.rn_params)
+               + s.rn_params + s.asm_insn_shim + s.schedule_pragma
+               + s.init_side_effect)
         extern_bad = s.extern_c_nonlbl_decl + s.extern_c_nonlbl_def
         rows.append((rel, sev, s, extern_bad, s.extern_c_nonlbl_decl, s.extern_c_nonlbl_def))
 

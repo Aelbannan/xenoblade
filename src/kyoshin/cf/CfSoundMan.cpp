@@ -1106,13 +1106,13 @@ void func_801C17CC(CfSoundRecord* rec, u32 a, u32 b) {
         return;
     }
     CfSoundSlot* p = lbl_eu_80575928;
-    while (p != lbl_eu_80575928 + 64) {
+    do {
         if (p->mId == a) {
             p->field_0x2A |= (u16)b;
             return;
         }
         p++;
-    }
+    } while (p != lbl_eu_80575928 + 64);
 }
 #pragma pop
 

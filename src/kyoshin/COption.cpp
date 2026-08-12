@@ -423,10 +423,12 @@ extern "C" void __declspec(noinline) func_8029D1C4(COption* self) {
 }
 
 // CCur19 constructor: run the CBaseCur base constructor, then install the
-// CCur19 vtable at +0x00.
-extern "C" void __declspec(noinline) __ct__CCur19(CBaseCur* _this, void* accessor) {
+// CCur19 vtable at +0x00. Returns this (retail emits the mr r3, r31
+// return-this after the vtable load).
+extern "C" __declspec(noinline) void* __ct__CCur19(CBaseCur* _this, void* accessor) {
     __ct__8CBaseCurFv(_this);
     _this->mVtable = (void*)lbl_eu_805396D0;
+    return _this;
 }
 
 // CCur19 destructor: tear down the CBaseCur base, then free the object only

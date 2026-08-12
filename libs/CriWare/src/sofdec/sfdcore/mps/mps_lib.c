@@ -161,25 +161,29 @@ int MPSLIB_CheckHn(void *handle) {
     return 0;
 }
 
+// Scan the MPS entry table for a free slot (type == 1). Kept as a same-TU
+// helper that MWCC inlines so the match loop emits the retail's
+// branch-over-branch shape (`bne continue; b found`); the direct goto form
+// folds to a single `beq` (MWCC_REFERENCE: btm_bda_to_acl pattern).
+static __inline u32 *mps_find_free(u32 *base, int count) {
+    u32 *entry;
+    int i;
+    for (i = 0, entry = base + 4; i < count; i++, entry += MPS_ENTRY_SIZE / 4) {
+        if (((s32 *)entry)[0] == 1) {
+            return entry;
+        }
+    }
+    return 0;
+}
+
 void *MPS_Create(void) {
     u32 *base = (u32 *)lbl_eu_80606DDC[0];
     int count = base[3];
-    u32 *entry = base + 4;
-    int i;
-
-    for (i = 0; i < count; i++, entry += MPS_ENTRY_SIZE / 4) {
-        if (((s32 *)entry)[0] != 1) {
-        } else {
-            goto found;
-        }
-    }
-    entry = NULL;
-found:
+    u32 *entry = mps_find_free(base, count);
     if (entry == NULL) {
         return NULL;
     }
-    for (;;) {
-    }
+    return mpslib_InitHn(entry);
 }
 
 void *mpslib_InitHn(u32 *entry) {

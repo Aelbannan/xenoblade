@@ -90,12 +90,15 @@ void func_804888B4(){}
 void func_80488938(){}
 
 extern "C" void* func_80488954(void* self, u32 amount) {
-    u32 field = *(u32*)((u8*)self + 0x860);
-    if (amount < 0xC00u - field) {
-        *(u32*)((u8*)self + 0x860) = field + amount;
-        return (u8*)self + field + 0x864;
-    }
+    // The +0x860 counter is read again inside the success path (retail
+    // reloads it: the check and the update are separate volatile reads).
+    volatile u32* f = (volatile u32*)((u8*)self + 0x860);
+    if (amount < 0xC00u - *f) goto success;
     return 0;
+success:
+    u32 field = *f;
+    *f = field + amount;
+    return (u8*)self + field + 0x864;
 }
 
 void func_80488984(){}

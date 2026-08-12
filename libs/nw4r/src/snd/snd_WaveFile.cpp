@@ -248,21 +248,20 @@ WaveArchiveReader::WaveArchiveReader(const void* pData) {
 
     const u8* bytes = reinterpret_cast<const u8*>(pData);
 
-    // NOTE: retail booleanizes the version check arithmetically
-    // (subfic/orc/rlwinm chain materializing version >= 0x100 into r0, then
-    // `if (r0 == 0) return`) and merges both guards through the r0 flag;
-    // MWCC emits branch-based checks from high-level C, leaving the function
-    // 0x44 vs 0x74 -- open item.
-    u32 magic = reinterpret_cast<const u32*>(bytes)[0];
-    if (magic != 0x52574152) { // 'RWAR'
+    // OPEN ITEM: retail booleanizes the version check ARITHMETICALLY
+    // (subfic/orc/rlwinm/subf/rlwinm materializing version>=0x100 into r0
+    // after the bge) and merges both guards through one r0 flag
+    // (magic beq / li r0,0 fail / shared cmpi r0,0; beqlr); every high-level
+    // form probed (&& with bool/u32 ok, nested ifs, bitwise &, signed vs
+    // unsigned compares, u16/u32 locals) makes MWCC emit branch-based checks
+    // with `li rX,1` for the ok flag (best 0x50 vs retail 0x74).
+    u32 ok = (*(reinterpret_cast<const u32*>(bytes)) == 0x52574152) &&
+             (*(reinterpret_cast<const u16*>(bytes + 6)) >= 0x100);
+    if (!ok) {
         return;
     }
-    u16 version = reinterpret_cast<const u16*>(bytes + 6)[0];
-    if (version < 0x100) {
-        return;
-    }
-    mWaveData = bytes + reinterpret_cast<const u32*>(bytes + 0x18)[0];
-    mFileStart = bytes + reinterpret_cast<const u32*>(bytes + 0x10)[0];
+    mWaveData = bytes + *(reinterpret_cast<const u32*>(bytes + 0x18));
+    mFileStart = bytes + *(reinterpret_cast<const u32*>(bytes + 0x10));
 }
 
 const void* WaveArchiveReader::GetWaveFile(int index) const {

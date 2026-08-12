@@ -56,9 +56,9 @@ s32 SFUO_Create(void* self) {
     s32 i = 0;
     u8* end = (u8*)self + 0x2638;
     u8* e = end + 4;
+    *(void**)((u8*)self + 0x2200) = end;
     void* field = *(void**)((u8*)self + 0x2208);
     *(u32*)((u8*)self + 0x2638) = 0;
-    *(void**)((u8*)self + 0x2200) = end;
     do {
         *(u32*)((u8*)end + 4) = 0;
         *(u32*)((u8*)end + 8) = 0;

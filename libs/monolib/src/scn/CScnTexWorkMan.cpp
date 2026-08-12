@@ -299,7 +299,21 @@ extern "C" void func_804903B8(CScnTexWorkMan* self,
 
 // ---- scaffold stubs (unmatched functions, kept as-is) ----
 
-void func_804902D8(){}
+extern "C" void __dt__804943A0(void* self, int flags);
+
+// Release path: while the busy counter is clear, if the arg matches the last
+// allocated work object, publish its +0x28 word into the allocation cursor;
+// then delete the arg when non-null (retail tail-calls __dt__804943A0). The
+// arg is the SECOND parameter (retail compares r4; r3 self is unused).
+extern "C" void func_804902D8(void* self, void* arg) {
+    if (lbl_eu_806658FC != 0) return;
+    if (lbl_eu_80665900 == (u32)arg) {
+        lbl_eu_806658F0 = *(u32*)((u8*)arg + 0x28);
+    }
+    if (arg != 0) {
+        __dt__804943A0(arg, 1);
+    }
+}
 
 void func_80490310__14CScnTexWorkManFv(void) {}
 

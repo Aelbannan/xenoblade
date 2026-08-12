@@ -2124,6 +2124,10 @@ unsigned short ArrayGet12(const unsigned short* p, unsigned char i) {
 // (value loads into freed r4); MWCC always bases in r4 (value in r5) — same
 // ABI-boundary r4<->r5 class as func_800B7680. Decl-order and word-indexed
 // variants invariant; witness rejects (no bijection in [3,11)).
+// Open item: entry-copy base/value register clash. Retail keeps the base in r5
+// (value loads into freed r4); MWCC always bases in r4 (value in r5) — same
+// ABI-boundary r4<->r5 class as func_800B7680. Decl-order and word-indexed
+// variants invariant; witness rejects (no bijection in [3,11)).
 void func_801CB9D8(u32* dst, void* src, u32 idx) {
     if (idx >= 12) return;
     u8* entry = (u8*)src + idx * 12;

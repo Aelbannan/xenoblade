@@ -2,10 +2,45 @@
 
 #include <types.h>
 
+// Declared BEFORE the monolib includes: functions.hpp (pulled in via
+// monolib/scn/CScnNw4r.hpp) declares func_8004302C as a plain C++ function,
+// and a later extern "C" redeclaration is an MWCC error. Declaring the C
+// linkage first makes the plain redeclaration inherit it, so the call sites
+// in func_80040CD8 / func_80040EB4 emit the flat retail reloc.
+extern "C" void func_8004302C(int a, int b);
+
 #include "monolib/core.hpp"
 #include "monolib/scn.hpp"
 #include "monolib/util.hpp"
 #include "monolib/work.hpp"
+
+namespace cf {
+class CfObject; // reslist<cf::CfObject*> instantiation in CTaskGame.cpp
+class CfObjEnumList; // enum list holder target (CfObjectEnumList.hpp)
+class CTaskGameCf; // task created by func_80042274 (create__Q22cf11CTaskGameCfFv)
+}
+
+// CLibCri caller-shape imports: retail CLibCri.hpp declares these as no-arg
+// members, but the retail call sites in this unit pass real arguments (the
+// unkD8 CRI handle + volume), so declare the mangled symbols with the caller's
+// shape (same scheme as cf/CTaskREvent.hpp). extern "C" keeps the retail
+// verbatim symbol (C++ linkage would append an __F-arg mangling suffix).
+extern "C" void func_80459A90__7CLibCriFv(int handle, float volume);
+extern "C" int func_80459A98__7CLibCriFv(int handle);
+extern "C" int func_80459A7C__7CLibCriFv(int handle);
+// CRI streaming-play volume/rate setter (4-arg form; same caller-shape scheme
+// as the members above).
+extern "C" void func_80459A88__7CLibCriFv(s32 handle, float volume, float time, s32 mode);
+// CRI handle-state query / active-set (caller-shape scheme as above; retail
+// func_8004312C branches on the query result and forwards the booleanized OR
+// of two gates as the active flag).
+extern "C" int func_80459A78__7CLibCriFv(int handle);
+extern "C" void func_80459A84__7CLibCriFv(int handle, bool active);
+// Frame-time getter (CDeviceVI; retail verbatim name).
+extern "C" f32 getSecPerFrame__9CDeviceVIFv();
+// Target-frame-rate getter (CDeviceVI static; same flat name as
+// CDeviceFileCri.hpp:108).
+extern "C" u32 getTargetFramerate__9CDeviceVIFv();
 
 class ITitleMenu{
 public:
@@ -31,6 +66,16 @@ struct UnkClass_8004041C{
     u32 unk18;
 };
 
+// Minimal view of the Hbm class for the two static state setters called by
+// retail func_800411A4 (MWCC mangles CLibHbm::func_8045D470(bool) to the
+// retail verbatim func_8045D470__7CLibHbmFb). The full CLibHbm.hpp pulls in
+// the revolution GX/TPL/HBM headers, so only the used members are declared.
+class CLibHbm {
+public:
+    static void func_8045D470(bool enable);
+    static void func_8045D5C8(bool enable);
+};
+
 class CTaskGame : public CTTask<CTaskGame>,
                   public IWorkEvent,
                   public IScnRender,
@@ -44,6 +89,13 @@ public:
     static CTaskGame* getInstance();
     static u32 func_800404F0(); // isUnk68Bit13Set: (spInstance->unk68 >> 13) & 1
     virtual void Init();
+
+    // Retail func_800436A8 compares the inherited CTTask move-hook ptmf against
+    // a static ptmf pool entry (lbl_eu_80525850). Passed by value so MWCC
+    // materializes the pool entry on the stack before __ptmf_cmpr.
+    bool isMoveFunc(CTTask<CTaskGame>::MoveFunc f) const {
+        return mMoveFunc == f;
+    }
 
     void func_80040A3C(u16 r4, u16 r5, const char* r6, s16 r7);
     static bool func_800426F0();
@@ -83,12 +135,12 @@ public:
     u32 unk7C;
     u16 unk80;
     u16 unk82;
-    u16 unk84;
+    s16 unk84;   // mission/save id; retail func_80042274 sign-extends it (lha)
     u16 unk86;
     u16 unk88;
-    u16 unk8A;
+    s16 unk8A;   // retail func_80042274 sign-extends it (lha) into the format vararg
     u8 unk8C[2]; //padding?
-    u16 unk8E;
+    s16 unk8E;
     u8 unk90;
     u8 unk91[0xA0 - 0x91];
     u32 unkA0;
@@ -128,3 +180,340 @@ protected:
     void OnFileEvent();
     void Draw();
 };
+
+// 12-byte static Move-hook ptmf pool entry compared against CTTask mMoveFunc by
+// retail func_800436A8 (this unit's .data region 0x80525850).
+extern CTTask<CTaskGame>::MoveFunc lbl_eu_80525850;
+
+// Retail no-arg reset helper func_80043BC4 (DISCOVERY target us-80044160 in
+// this unit); func_80043C88 calls it with the C-ABI flat name.
+extern "C" void func_80043BC4();
+// Sound-state reset helper (flat retail name; defined in code_80187F14.cpp).
+// Retail func_80043BC4 calls it behind the unk68 bit 0x80 gate.
+extern "C" void func_80189C7C();
+
+// NAND state-check helpers (flat retail names; defined in CfNandManager.cpp).
+// Retail call sites (func_800417AC / func_80041658 / func_80041908) pass the
+// address of the func_80043564 callback and branch on a non-zero result.
+extern "C" int func_8023F690(void (*cb)(u32, u32, u32, u32));
+extern "C" int func_8023FBA0(void (*cb)(u32, u32, u32, u32));
+extern "C" int func_8023FCCC(void (*cb)(u32, u32, u32, u32));
+// func_80041A48 passes just the callback; func_80041390 passes (unkFC, cb).
+extern "C" int func_8023F5CC(void (*cb)(u32, u32, u32, u32));
+extern "C" int func_8023F2F4(u32 value, void (*cb)(u32, u32, u32, u32));
+// Address-taken callback passed to the NAND state checks above (flat retail
+// name; stub body in this TU, DISCOVERY target us-80043adc). Retail
+// dispatches (mode, a, b, c) to the per-mode helpers above by tail call.
+extern "C" void func_80043564(u32 mode, u32 a, u32 b, u32 c);
+// Window-state gate (flat retail name; stub body in this TU). Retail
+// func_80040DE4 / func_80040C2C call it and branch on the result. Declared
+// with the task pointer: retail func_80041BC0 explicitly re-passes self in
+// r3 (mr r3, r30 before the call), which only a with-arg call emits.
+extern "C" u32 func_80042784(CTaskGame* self);
+// Menu-state gates (flat retail names; defined in CMenuSave.cpp /
+// CMenuOption.cpp). func_80041F54 / func_80042048 branch on them.
+extern "C" u32 func_8028E440();
+extern "C" u32 func_8029BBA0();
+// NAND state-check helpers (flat retail names; defined in CfNandManager.cpp).
+// func_8023FC18 is called with the func_80043564 callback and branched on
+// (func_800411A4); func_8023FD4C takes a single int mode.
+extern "C" int func_8023FC18(void (*cb)(u32, u32, u32, u32));
+extern "C" void func_8023FD4C(int mode);
+// CScn empty-per-frame stub (flat retail name; 8-byte retail body). The
+// retail call site in func_80040B38 passes (self, 0, vec4) with the flat
+// verbatim reloc, so declare the caller's shape (CScnNw4r.hpp's member form
+// would mangle an __FiP... suffix).
+extern "C" void func_8049602C(CScnNw4r* self, int arg1, func_800407C8_tmp* arg2);
+// Scene current-process query (flat retail name; defined in CfGameManager.cpp).
+extern "C" void* func_80496034(CScn* scene);
+
+// Hbm state toggle (flat retail names; defined in CLibHbm.cpp). Retail
+// func_800411A4 disables via func_8045D5C8 then re-enables via func_8045D470.
+extern "C" void func_eu_804521BC(int value);
+// CTaskGameEvt event-helper import (retail flat name; stub body in
+// CTaskGameEvt.cpp): func_80040A3C passes the unkD4 object.
+extern "C" void func_802956A8(void*);
+// Per-mode dispatch helpers for the func_80043564 callback (flat retail
+// names; stub bodies in this TU). Retail func_80043564 tail-calls them.
+extern "C" void func_800433B0(CTaskGame* inst, u32 a, u32 b);
+extern "C" void func_80043410(CTaskGame* inst, u32 a, u32 b, u32 c);
+extern "C" void func_8004347C(CTaskGame* inst, u32 a, u32 b, u32 c);
+extern "C" void func_800434AC(CTaskGame* inst, u32 a, u32 b, u32 c);
+extern "C" void func_800434DC(CTaskGame* inst, u32 a, u32 b, u32 c);
+extern "C" void func_80043538(CTaskGame* inst, u32 a);
+// Default caption/title string data (.data); func_80040A3C / func_8004256C
+// index into it for the empty-caption fallback (offsets 0x6D / 0x8A).
+extern char lbl_eu_804FA890[];
+
+// Move-hook ptmf pool entries (.data): retail func_800419BC / func_80041B94
+// copy the 12-byte CTTask mMoveFunc at +0x3C from these 3-word pools.
+extern u32 lbl_eu_8052564C[3];
+extern u32 lbl_eu_80525670[3];
+extern u32 lbl_eu_8052567C[3];
+extern u32 lbl_eu_805256A0[3];
+extern u32 lbl_eu_805256AC[3];
+extern u32 lbl_eu_805256B8[3];
+extern u32 lbl_eu_805256C4[3];
+extern u32 lbl_eu_805256E8[3];
+extern u32 lbl_eu_805256F4[3];
+extern u32 lbl_eu_80525700[3];
+extern u32 lbl_eu_8052570C[3];
+extern u32 lbl_eu_80525718[3];
+extern u32 lbl_eu_80525724[3];
+extern u32 lbl_eu_80525730[3];
+extern u32 lbl_eu_8052573C[3];
+extern u32 lbl_eu_80525778[3];
+extern u32 lbl_eu_805257C0[3];
+extern u32 lbl_eu_805257CC[3];
+extern u32 lbl_eu_805257FC[3];
+extern u32 lbl_eu_80525820[3];
+extern u32 lbl_eu_80525598[3];
+extern u32 lbl_eu_805255A4[3];
+extern u32 lbl_eu_80525658[3];
+extern u32 lbl_eu_80525664[3];
+extern u32 lbl_eu_80525688[3];
+extern u32 lbl_eu_80525694[3];
+extern u32 lbl_eu_80525748[3];
+extern u32 lbl_eu_80525754[3];
+extern u32 lbl_eu_805256D0[3];
+extern u32 lbl_eu_805256DC[3];
+extern u32 lbl_eu_80525808[3];
+extern u32 lbl_eu_80525814[3];
+extern u32 lbl_eu_80525610[3];
+extern u32 lbl_eu_8052561C[3];
+extern u32 lbl_eu_80525838[3];
+extern u32 lbl_eu_80525844[3];
+extern u32 lbl_eu_8052558C[3];
+extern u32 lbl_eu_805255B0[3];
+extern u32 lbl_eu_805255BC[3];
+extern u32 lbl_eu_80525784[3];
+extern u32 lbl_eu_805257D8[3];
+extern u32 lbl_eu_805257E4[3];
+extern u32 lbl_eu_805255F8[3];
+extern u32 lbl_eu_80525604[3];
+extern u32 lbl_eu_80525790[3];
+extern u32 lbl_eu_805257F0[3];
+// Base of the move-hook ptmf pool region holding pools at +0xC0/+0xCC/+0xD8
+// (retail func_8004125C indexes it with addi from one materialized base).
+extern u32 lbl_eu_80525568[];
+
+// 8-byte enum-list holder (list pointer + MEM2 alloc handle) used by
+// func_80043D90 / func_80043F18 / __dt__80043E88; other TUs declare their
+// own local holder equivalents around these flat symbols.
+struct CfEnumListHolder {
+    cf::CfObjEnumList* list;   // +0x00
+    u32 handle;                // +0x04
+};
+
+// Object-registry layout at CTaskGame +0x174: 4 object pointers (stride 4)
+// each paired with a busy byte at +0x184 (stride 1); func_80043310 and
+// func_8004335C scan it.
+struct CTaskGameObjSlots {
+    u8 pad[0x174];
+    u32 objs[4];   // +0x174
+    u8 busy[4];    // +0x184
+};
+
+// Field-offset view of the CfObjEnumList object. The shared
+// CfObjectEnumList.hpp omits the polymorphic reslist base (vtable at +0x00),
+// so its member offsets compile 4 low; this view matches the retail layout
+// (mPtrCount at +0x620, mObjInfoCount at +0x3030).
+struct CfObjEnumListFields {
+    u8 pad[0x620];
+    u32 mPtrCount;          // +0x620
+    u8 pad2[0x3030 - 0x624];
+    u32 mObjInfoCount;      // +0x3030
+};
+
+// CfObjEnumList ctor called with the raw allocated buffer; returns the object
+// in r3 (retail reloc carries the recovered name __ct__cf_CfObjEnumList, not
+// C++ mangling).
+extern "C" cf::CfObjEnumList* __ct__cf_CfObjEnumList(cf::CfObjEnumList* self);
+// Object-registry slot finder / releaser (retail flat names; defined in this TU).
+extern "C" void* func_80043310();
+extern "C" void func_8004335C(void* obj);
+
+// Enum-list message-fill helper (flat retail name; defined in CUICfManager.cpp).
+extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
+
+// Error-window factory ctor (retail stripped name; defined in CUIErrMesWin.cpp
+// with the same C-ABI shape). extern "C": the call-site reloc must carry the
+// verbatim retail name (a C++ declaration would mangle an __FP... suffix).
+extern "C" void* __ct__802B4DF4(CProcess* parent, u32 a, u16 b, u8 c);
+
+// Polymorphic view of the CfObjEnumList / reslist base for the virtual
+// deleting-dtor dispatch in __dt__80043E88. MWCC lays vtables out as
+// [typeinfo @0, toffset @4, virtuals @8..], so the dtor entry sits at +0x08
+// and retail `delete list` dispatches through it with flag 1. A real virtual
+// call forces MWCC's r12 dispatch (lwz r12,0(r3); lwz r12,8(r12); mtctr;
+// bctrl) and the delete expansion supplies the redundant pointer test
+// (retail emits two beq against one cmpwi). The shared CfObjectEnumList.hpp
+// omits the polymorphic base, so the delete is expressed through this view;
+// the dtor is never defined here (dispatched virtually at runtime).
+struct CfObjEnumListVtView {
+    virtual ~CfObjEnumListVtView();
+};
+
+// Error-message-window active flag (.sdata); same symbol as CUIErrMesWin.hpp.
+extern u32 lbl_eu_80664C28;
+
+// Unmangled callee imports for the func_80042630 reset sequence. The retail
+// relocs carry these flat names; the defining TUs (CTaskGameEff.cpp /
+// CfObjectSelectorObj.cpp / code_800B06A4.cpp) emit C-linkage symbols.
+extern "C" u32 func_80044DF4();
+extern "C" void func_800450C8();
+extern "C" void* func_800FE68C();
+extern "C" void __dt__800FDEF8(void* obj);
+extern "C" void func_800B15A4(void* obj);
+// Object-factory singleton accessor (C++ linkage -> retail func_800B07E8__Fv).
+extern void* func_800B07E8();
+
+// Mirror of the CTTask move-hook ptmf region (0x3C-0x48) for word-wise pool
+// copies, so stores use named fields instead of raw offset arithmetic. The
+// pad places the fields at the absolute offsets retail writes (self+0x3C...).
+struct CTaskGamePtmfWords {
+    u8 pad[0x3C];
+    u32 field_0x3C;
+    u32 field_0x40;
+    u32 field_0x44;
+};
+
+// C++ runtime delete / array-delete (flat retail names; used by the reslist
+// base dtor).
+extern "C" void __dl__FPv(void*);
+extern "C" void __dla__FPv(void*);
+
+// _reslist_base<cf::CfObject*> vtable (restored by its dtor
+// __dt___reslist_base_cf_CfObject).
+extern u8 lbl_eu_8052585C[];
+
+// .sdata flag byte (func_80040C2C branches on it to pick the move-hook).
+extern u8 lbl_eu_80663D2C;
+
+// Object pointed to by CTaskGame::unkD0 / unkCC: a busy/active flag byte at
+// +0x8C (func_80040C2C clears/sets it).
+struct CTaskGameFlag8C {
+    u8 pad[0x8C];
+    u8 field_0x8C;   // +0x8C
+};
+
+// Float constant used by retail func_80040B38 as the 4th arg of the first
+// vec4 setter call (lbl_eu_80665D6C, .sdata2; lbl_eu_80665D74 is declared in
+// include/lbls_kyoshin.hpp).
+extern const f32 lbl_eu_80665D6C;
+
+// Object pointed to by CTaskGame::unkD4: flag word at +0x60 (func_80040A3C
+// clears its bit 0x2).
+struct CTaskGameUnkD4Obj {
+    u8 pad[0x60];
+    u32 field_0x60;   // +0x60
+};
+
+// FixStr<32> view of the caption buffer at CTaskGame +0x104 (mLength at
+// +0x124); func_8004256C assigns the default caption through this view.
+// The declared CTaskGame fields at 0x104/0x124 stay byte/u32 so the ctor
+// init list is untouched.
+struct CTaskGameCaptionStr {
+    u8 pad[0x104];
+    ml::FixStr<32> str;   // +0x104 (mLength at +0x124)
+};
+
+// FixStr<64> view of the caption buffer at CTaskGame +0x130 (mString at
+// +0x130, mLength at +0x170); func_80043BC4 re-seeds it with the default
+// caption (retail strlen+strcpy shape).
+struct CTaskGameCaption130 {
+    u8 pad[0x130];
+    ml::FixStr<64> str;   // +0x130 (mLength at +0x170)
+};
+
+// Byte-flag view of the cf::CTaskGameCf object at +0x39 (inside the CProcess
+// base; no named member in CTaskGameCf.hpp); func_8004256C sets it to 1.
+struct CTaskGameCfFlag39 {
+    u8 pad[0x39];
+    u8 field_0x39;   // +0x39
+};
+
+// Byte-flag view of the objects pointed to by CTaskGame::unkCC / unkD0 /
+// unkF0 (func_80041BC0 / func_8004213C set +0x39 to 1 when clearing/null-ing
+// the pointers; the same busy-flag semantics as CTaskGameCfFlag39 but for the
+// task's own object slots).
+struct CTaskGameFlag39 {
+    u8 pad[0x39];
+    u8 field_0x39;   // +0x39
+};
+
+// Flat retail imports used by the func_80040CD8 / func_80041BC0 /
+// func_8004213C / func_8004312C / func_80040EB4 call sites. extern "C" keeps
+// the retail verbatim symbol (a plain C++ declaration would append an
+// __F-arg mangling suffix at the call site, even for func_-prefixed names).
+// Move-state gate (flat retail name; DISCOVERY stub in this TU): retail
+// func_80040CD8 / func_80040EB4 call it with the task pointer and branch on
+// the result.
+extern "C" int func_8004362C(CTaskGame* self);
+// Effect/particle reset helpers (flat retail names; defined in
+// CfResPcImpl.cpp / code_804C8684.cpp). func_8004302C is declared before the
+// monolib includes above (functions.hpp declares it plain C++).
+extern "C" void func_804C8690(int a, int b);
+// Battle/script-time gate (flat retail name; stub body in
+// CTaskREvtSequence.cpp): retail func_8004312C ORs its result with
+// func_800829B8 and forwards the boolean to the CRI active-setter.
+extern "C" int func_8016C720();
+// Vision resource-copy helper (flat retail name; defined in this TU). Retail
+// func_8004312C passes the unk18C struct fields and branches on the result.
+extern "C" int func_8004392C(u32 a, u32 b, u32 c, u32 d, u32 e, f32 f);
+// Vision streaming-open helper (flat retail name; defined in this TU). Retail
+// func_80041CC8 / func_8004392C call it out of line with the path/handle set.
+extern "C" void func_80043738(u32 a1, const char* path, u32 a3, u32 a4, u32 a5, u32 a6, float volume);
+// Play-time gate (flat retail name; defined in this TU).
+extern "C" int func_80043D68();
+// CRI volume/seek helper (flat retail name; defined in this TU).
+extern "C" void func_80043B04(float volume);
+// CTaskGameEvt event helper (flat retail name; stub body in CTaskGameEvt.cpp):
+// func_80041BC0 passes the unkD4 object.
+extern "C" void func_802956A4(void* obj);
+// Window/error-message reset (flat retail name; declared in
+// CMenuKizunagram.hpp): func_80041BC0 runs it before the title-menu ctor.
+extern "C" void func_80042874();
+// CRI stream volume/rate ramp (flat retail name; defined later in this TU
+// with C linkage): retail func_8004213C calls it out of line with
+// (framerate/2, volume constant) before the vec4 scene push.
+extern "C" void func_80043CD8(int frames, float volume);
+// Title-menu factory ctor (retail stripped name; stub body in CMenuTitle.cpp
+// with the same C-ABI shape). extern "C": the call-site reloc must carry the
+// verbatim retail name (a C++ declaration would mangle an __FP... suffix;
+// same scheme as __ct__802B4DF4 above). The ITitleMenu* third parameter
+// receives the +0x60 subobject via a null-checked static_cast at the call
+// site (retail cmpwi/mr/beq/addi adjusted-this shape).
+extern "C" void* __ct__CMenuTitle(CTaskGame* self, CScnNw4r* scene, ITitleMenu* titleMenu);
+
+// Caller-shape imports for the func_80041CC8 / func_80043738 /
+// func_8004392C / func_80042274 call sites (same scheme as the CLibCri
+// caller-shape imports above). Flat retail names; the defining TUs emit
+// C-linkage symbols.
+extern "C" u32 func_80495FF0(CScn* scene);
+extern "C" int func_801684F4();
+extern "C" void func_80134C34();
+extern "C" void func_80134E50(u32 value);
+extern "C" u32 func_80496110(CScnNw4r* scene);
+extern "C" int func_802A0CB8(char* buffer, int index, int value);
+extern "C" int func_8045997C__7CLibCriFPCcUli(const char* filename, u32 allocHandle, int fileHandle);
+extern "C" u32 func_80459AA0__7CLibCriFv(int arg);
+extern "C" int func_804DE010();
+extern "C" int func_804DDD54(const char* ext, const char* path, u32* v0, u32* v1, u32* v2, u32* v3);
+extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int arg1);
+extern "C" void func_80189C70();
+extern "C" void func_eu_804520D0(char* str);
+// cf::CTaskGameCf::create defined with the retail flat name (retail call
+// sites pass the parent + 0; the defining TU emits the Fv symbol).
+extern "C" cf::CTaskGameCf* create__Q22cf11CTaskGameCfFv(CProcess* pParent, int arg2);
+// Scene object (alloc-handle source for func_80495FF0; same symbol as
+// CTaskREvent.hpp).
+extern CScn* lbl_eu_80663E14;
+// Global flag word raised to 0x10000000 by retail func_80042274 after the
+// cf::CTaskGameCf create call.
+extern u32 lbl_eu_80663E28;
+// FixStr<32> append helpers (flat retail names; defined later in this TU
+// with C linkage): retail func_80042274 appends the mission-caption suffix
+// segments through them.
+extern "C" char* func_80044070(ml::FixStr<32>* str, const char* s);
+extern "C" char* func_800440C4(ml::FixStr<32>* str, const char* s);

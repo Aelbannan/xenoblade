@@ -102,8 +102,9 @@ void func_80465704(s32 value) {
 // (retail free function func_80465730__Ff)
 void func_80465730(f32 scale) {
     s32 value = lbl_eu_80665814;
+    f32 fv = (f32)value;
     lbl_eu_806657E8 |= 2;
-    lbl_eu_80665814 = (s32)((f32)value * scale);
+    lbl_eu_80665814 = (s32)(fv * scale);
 }
 
 // 0xFF clears the colourfulness flag; otherwise record the colour and its alpha

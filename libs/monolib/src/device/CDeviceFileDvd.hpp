@@ -42,8 +42,8 @@ public:
     ~CDeviceFileDvd();
     static CDeviceFileDvd* getInstance();
 
-    void isRequestFile(const char* pPath);
-    void cancel(CFileHandle* pHandle);
+    static void isRequestFile(const char* pPath);
+    static void cancel(CFileHandle* pHandle);
     static void cancelCurrent();
     void transState0();
     void transState3();

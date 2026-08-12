@@ -492,6 +492,31 @@ AnimationLink* FindAnimationLink(AnimationLinkList* pAnimList,
     return NULL;
 }
 
+// AnimResource's block pointers are protected; mirror the +4 field for the
+// resource-match search (retail compares transform->mpRes at +0xC with the
+// AnimResource's +4 block).
+namespace {
+struct AnimResourceBlockView {
+    const void* mpFileHeader;                          // 0x00
+    const res::AnimationBlock* mpResBlock;             // 0x04
+    const void* mpTagBlock;                            // 0x08
+    const void* mpShareBlock;                          // 0x0C
+};
+}
+
+AnimationLink* FindAnimationLink(AnimationLinkList* pAnimList,
+                                 const AnimResource& rResource) {
+
+    NW4R_UT_LINKLIST_FOREACH (it, *pAnimList, {
+        if (reinterpret_cast<const AnimResourceBlockView*>(&rResource)->mpResBlock ==
+            it->GetAnimTransform()->GetAnimResource()) {
+            return &*it;
+        }
+    })
+
+    return NULL;
+}
+
 void UnbindAnimationLink(AnimationLinkList* pAnimList,
                                  AnimTransform* pAnimTrans) {
 

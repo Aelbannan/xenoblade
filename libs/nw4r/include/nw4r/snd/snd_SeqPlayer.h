@@ -179,8 +179,9 @@ private:
     ParserPlayerParam mParserParam;                  // at 0xA8
     SeqTrackAllocator* mSeqTrackAllocator;           // at 0xB4
     SeqTrack* mTracks[TRACK_NUM];                    // at 0xB8
-    volatile s16 mLocalVariable[LOCAL_VARIABLE_NUM]; // at 0xF8
-    u32 mTickCounter;                                // at 0x118
+    u8 _pad[0x160 - 0x158];                          // layout gap (retail: mLocalVariable at 0x160)
+    volatile s16 mLocalVariable[LOCAL_VARIABLE_NUM]; // at 0x160 (retail: this-relative addi r3,r3,0x160)
+    u32 mTickCounter;                                // at 0x120
 
     static volatile s16 mGlobalVariable[LOCAL_VARIABLE_NUM];
     static bool mGobalVariableInitialized; // @typo

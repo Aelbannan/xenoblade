@@ -361,7 +361,13 @@ extern "C" void func_801FA338(CPartyStateWin* self) {
 
 u8 func_801FA4EC(CPartyStateWin* self) { return self->field_6BE5; }
 
-void func_801FA4F4(){}
+// Party-state sub-step gate: once the embedded party state at +0x3038 is
+// ready (func_801FD18C), advance its internal step (func_8012FAA8).
+extern "C" void func_801FA4F4(CPartyStateWin* self) {
+    if (func_801FD18C(reinterpret_cast<CPartyState*>(&self->_pad3038))) {
+        func_8012FAA8();
+    }
+}
 
 // Target: us-801fc1e0 | func_801FA524
 // Menu-close gate: returns 1 while the window is armed (state 0xC), the game
@@ -419,27 +425,24 @@ extern "C" __declspec(noinline) void func_801FA614(CPartyStateWin* self) {
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_801FA674(CPartyStateWin* self) {
     cf::CfPadData* cfPad = cf::CfGameManager::getCfPadData();
-    u32 a, b, y, up, down, left, right;
+    bool up, down, left, right;
+    u32 a, b, y;
     if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-        u32 turbo = cfPad->mTurboPressButtonFlags;
-        u32 pressed = cfPad->mPad.mPressedButtonFlags;
-        up = (turbo & (PAD_INPUT_FLAG_LSTICK_UP | PAD_INPUT_FLAG_UP)) != 0;
-        down = (turbo & (PAD_INPUT_FLAG_LSTICK_DOWN | PAD_INPUT_FLAG_DOWN)) != 0;
-        left = (turbo & (PAD_INPUT_FLAG_LSTICK_LEFT | PAD_INPUT_FLAG_LEFT)) != 0;
-        right = (turbo & (PAD_INPUT_FLAG_LSTICK_RIGHT | PAD_INPUT_FLAG_RIGHT)) != 0;
-        a = (pressed >> PAD_INPUT_CLASSIC_A) & 1;
-        b = (pressed >> PAD_INPUT_CLASSIC_B) & 1;
-        y = (pressed >> PAD_INPUT_CLASSIC_Y) & 1;
+        up = (cfPad->mTurboPressButtonFlags & (PAD_INPUT_FLAG_LSTICK_UP | PAD_INPUT_FLAG_UP)) != 0;
+        down = (cfPad->mTurboPressButtonFlags & (PAD_INPUT_FLAG_LSTICK_DOWN | PAD_INPUT_FLAG_DOWN)) != 0;
+        left = (cfPad->mTurboPressButtonFlags & (PAD_INPUT_FLAG_LSTICK_LEFT | PAD_INPUT_FLAG_LEFT)) != 0;
+        right = (cfPad->mTurboPressButtonFlags & (PAD_INPUT_FLAG_LSTICK_RIGHT | PAD_INPUT_FLAG_RIGHT)) != 0;
+        a = (cfPad->mPad.mPressedButtonFlags >> PAD_INPUT_CLASSIC_A) & 1;
+        b = (cfPad->mPad.mPressedButtonFlags >> PAD_INPUT_CLASSIC_B) & 1;
+        y = (cfPad->mPad.mPressedButtonFlags >> PAD_INPUT_CLASSIC_Y) & 1;
     } else {
-        u32 turbo = cfPad->mTurboPressButtonFlags;
-        u32 pressed = cfPad->mPad.mPressedButtonFlags;
-        up = (turbo & (PAD_INPUT_FLAG_LSTICK_UP | PAD_INPUT_FLAG_UP)) != 0;
-        down = (turbo & (PAD_INPUT_FLAG_LSTICK_DOWN | PAD_INPUT_FLAG_DOWN)) != 0;
-        left = (turbo & (PAD_INPUT_FLAG_LSTICK_LEFT | PAD_INPUT_FLAG_LEFT)) != 0;
-        right = (turbo & (PAD_INPUT_FLAG_LSTICK_RIGHT | PAD_INPUT_FLAG_RIGHT)) != 0;
-        a = (pressed >> PAD_INPUT_CORE_A) & 1;
-        b = (pressed >> PAD_INPUT_CORE_B) & 1;
-        y = (pressed >> PAD_INPUT_FS_C) & 1;
+        up = (cfPad->mTurboPressButtonFlags & (PAD_INPUT_FLAG_LSTICK_UP | PAD_INPUT_FLAG_UP)) != 0;
+        down = (cfPad->mTurboPressButtonFlags & (PAD_INPUT_FLAG_LSTICK_DOWN | PAD_INPUT_FLAG_DOWN)) != 0;
+        left = (cfPad->mTurboPressButtonFlags & (PAD_INPUT_FLAG_LSTICK_LEFT | PAD_INPUT_FLAG_LEFT)) != 0;
+        right = (cfPad->mTurboPressButtonFlags & (PAD_INPUT_FLAG_LSTICK_RIGHT | PAD_INPUT_FLAG_RIGHT)) != 0;
+        a = (cfPad->mPad.mPressedButtonFlags >> PAD_INPUT_CORE_A) & 1;
+        b = (cfPad->mPad.mPressedButtonFlags >> PAD_INPUT_CORE_B) & 1;
+        y = (cfPad->mPad.mPressedButtonFlags >> PAD_INPUT_FS_C) & 1;
     }
     if (a) {
         func_801FD48C(reinterpret_cast<CPartyState*>(&self->_pad3038));
@@ -475,8 +478,11 @@ extern "C" __declspec(noinline) void func_801FA674(CPartyStateWin* self) {
         func_801FBC7C(self);
     } else if (y) {
         // Sort dialog opens only in the non-default party config with more
-        // than one member (retail: bne skips the body when cfg == 0).
-        if (func_8009CF8C(0x3358) != 0 && code80135FDC_getByte_64077() > 1) {
+        // than one member. Same cfgIsZero idiom as func_801FBC7C: the
+        // == 0 normalization's srwi. flag feeds the branch directly.
+        u32 cfgIsZero = (func_8009CF8C(0x3358) == 0);
+        if (cfgIsZero || code80135FDC_getByte_64077() <= 1) {
+        } else {
             func_801FD604(reinterpret_cast<CPartyState*>(&self->_pad3038));
             func_801FBC7C(self);
         }
@@ -531,7 +537,370 @@ extern "C" __declspec(noinline) void func_801FA92C(CPartyStateWin* self) {
 
 extern "C" __declspec(noinline) void func_801FAA10(CPartyStateWin* self) {}
 
-extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {}
+// Target: us-801fc71c | func_801FAA60
+// Equip-change input step: increments the window timer field_6BE8 (clamped at
+// lbl_eu_806681E0), then while the equip-change sub-object is active,
+// dispatches on the held/pressed/turbo pad flags. Two mirror chains (classic
+// vs Wii controller layout, selected by func_80086F9C): each chain tests a
+// list of flag combinations and either opens a system window (string ids
+// 0x84/0x85/0x8A via func_8022B9B4/8022BFC8/8022B8B8 + state 0xD), arms a
+// display state (0x8/0xA/0xB/0xC/0x10), or plays a sound (func_80138078).
+// The shared tail refreshes the title help from the sys-win state or the
+// equip-change result.
+extern "C" __declspec(noinline) void func_801FAA60(CPartyStateWin* self) {
+    self->field_6BE8 += lbl_eu_806681DC;
+    if (self->field_6BE8 > lbl_eu_806681E0) {
+        self->field_6BE8 = lbl_eu_806681E0;
+    }
+    if (func_802023C0(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
+        return;
+    }
+    cf::CfPadData* cfPad = cf::CfGameManager::getCfPadData();
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        // -- classic-controller chain --
+        func_8020397C(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
+        if ((cfPad->mTurboPressButtonFlags & 0x02000000) != 0 &&
+            code80135FDC_getByte_64077() > 1 &&
+            func_802023D0(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
+            func_80202424(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
+            if (func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0 &&
+                (u8)func_80203138(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 3) {
+                func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
+                              func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
+                              0);
+                func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
+                func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                self->field_6BE4 = 0xD;
+                goto tail;
+            }
+            func_801FF98C(&self->mModelDispEquip);
+            self->field_6BE4 = 0xB;
+            func_80138078(0xA);
+            goto tail;
+        }
+        if ((cfPad->mTurboPressButtonFlags & 0x04000000) != 0 &&
+            code80135FDC_getByte_64077() > 1 &&
+            func_802023D0(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
+            func_80202424(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
+            if (func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0 &&
+                (u8)func_80203138(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 3) {
+                func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
+                              func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
+                              0);
+                func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
+                func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                self->field_6BE4 = 0xD;
+                goto tail;
+            }
+            func_801FF98C(&self->mModelDispEquip);
+            self->field_6BE4 = 0xA;
+            func_80138078(0xA);
+            goto tail;
+        }
+        if ((cfPad->mPad.mPressedButtonFlags & 0x00200000) != 0) {
+            func_80202CCC(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            if (func_8020392C(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
+                func_801FF98C(&self->mModelDispEquip);
+                self->field_6BE4 = 0xC;
+                goto tail;
+            }
+            if ((u8)func_80203994(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 2) {
+                func_80138078(0x5);
+                func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
+                              func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
+                              0);
+                func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
+                func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                self->field_6BE4 = 0xD;
+                goto tail;
+            }
+            if (func_80203C9C(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
+                u16 v = func_80203A98(reinterpret_cast<CEquipChange*>(&self->_pad4150), 1);
+                if (v == 0x296 || v == 0x2A0) {
+                    func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
+                                  func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
+                                  0);
+                    func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
+                    func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                    self->field_6BE4 = 0xD;
+                    goto tail;
+                }
+            }
+            goto tail;
+        }
+        if ((cfPad->mPad.mPressedButtonFlags & 0x00400000) != 0) {
+            if (func_802023C0(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
+                return;
+            }
+            if (func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
+                func_80202C4C(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+                goto tail;
+            }
+            func_801C4198(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
+            func_80202578(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            func_801FF98C(&self->mModelDispEquip);
+            self->field_6BE4 = 0x8;
+            goto tail;
+        }
+        if ((cfPad->mTurboPressButtonFlags & 0x8004) != 0) {
+            func_80202644(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            goto tail;
+        }
+        if ((cfPad->mTurboPressButtonFlags & 0x00010008) != 0) {
+            func_80202790(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            goto tail;
+        }
+        if ((cfPad->mTurboPressButtonFlags & 0x2001) != 0) {
+            func_802028E4(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            goto tail;
+        }
+        if ((cfPad->mTurboPressButtonFlags & 0x4002) != 0) {
+            func_80202A70(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            goto tail;
+        }
+        if ((cfPad->mPad.mPressedButtonFlags & 0x01000000) != 0) {
+            if (func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
+                func_80202BFC(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+                goto tail;
+            }
+            goto tail;
+        }
+        if ((cfPad->mPad.mPressedButtonFlags & 0x10000000) != 0) {
+            if (func_802023D0(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
+                u8 v = (u8)func_80203210(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+                if (v == 1) {
+                    func_801FF98C(&self->mModelDispEquip);
+                    self->field_6BE4 = 0xC;
+                    goto tail;
+                }
+                if (v == 2) {
+                    func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
+                                  func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
+                                  0);
+                    func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
+                    func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                    self->field_6BE4 = 0xD;
+                    goto tail;
+                }
+                if (v != 3) {
+                    func_80138078(0x5);
+                    u16 w = func_80203A98(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
+                    if (w == 0x296 || w == 0x2A0) {
+                        func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
+                                      func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
+                                      0);
+                        func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
+                        func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                        self->field_6BE4 = 0xD;
+                        goto tail;
+                    }
+                }
+            }
+            goto tail;
+        }
+        if ((cfPad->mPad.mPressedButtonFlags & 0x00000200) != 0) {
+            if (func_8020247C(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
+                func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
+                func_80203984(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+                goto tail;
+            }
+            goto tail;
+        }
+        if ((cfPad->mPad.mPressedButtonFlags & 0x00000400) != 0) {
+            if (func_802023D0(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
+                func_801FF964(&self->mModelDispEquip) != 0 &&
+                func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
+                self->field_6BE4 = 0x10;
+                func_801FF98C(&self->mModelDispEquip);
+                func_80138078(0x2);
+                goto tail;
+            }
+            if (func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
+                func_8020398C(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+                goto tail;
+            }
+        }
+        goto tail;
+    } else {
+        // -- Wii-layout chain --
+        func_8020397C(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
+        if ((cfPad->mPad.mHeldButtonFlags & 0x00001000) != 0 &&
+            code80135FDC_getByte_64077() > 1 &&
+            func_802023D0(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
+            func_80202424(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
+            if (self->field_6BE8 > lbl_eu_806681DC) {
+                func_80138078(0x2);
+            }
+            self->field_6BE8 = lbl_eu_806681D8;
+            func_8020397C(reinterpret_cast<CEquipChange*>(&self->_pad4150), 1);
+            if ((cfPad->mTurboPressButtonFlags & 0x2001) != 0) {
+                if (func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0 &&
+                    (u8)func_80203138(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 3) {
+                    func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
+                                  func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
+                                  0);
+                    func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
+                    func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                    self->field_6BE4 = 0xD;
+                    goto tail;
+                }
+                func_801FF98C(&self->mModelDispEquip);
+                self->field_6BE4 = 0xB;
+                func_80138078(0xA);
+                goto tail;
+            }
+            if ((cfPad->mTurboPressButtonFlags & 0x4002) != 0) {
+                if (func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0 &&
+                    (u8)func_80203138(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 3) {
+                    func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
+                                  func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x85),
+                                  0);
+                    func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
+                    func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                    self->field_6BE4 = 0xD;
+                    goto tail;
+                }
+                func_801FF98C(&self->mModelDispEquip);
+                self->field_6BE4 = 0xA;
+                func_80138078(0xA);
+                goto tail;
+            }
+            goto tail;
+        }
+        if ((cfPad->mPad.mPressedButtonFlags & 0x10) != 0) {
+            func_80202CCC(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            if (func_8020392C(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
+                func_801FF98C(&self->mModelDispEquip);
+                self->field_6BE4 = 0xC;
+                goto tail;
+            }
+            if ((u8)func_80203994(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 2) {
+                func_80138078(0x5);
+                func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
+                              func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
+                              0);
+                func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
+                func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                self->field_6BE4 = 0xD;
+                goto tail;
+            }
+            if (func_80203C9C(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
+                u16 v = func_80203A98(reinterpret_cast<CEquipChange*>(&self->_pad4150), 1);
+                if (v == 0x296 || v == 0x2A0) {
+                    func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
+                                  func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
+                                  0);
+                    func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
+                    func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                    self->field_6BE4 = 0xD;
+                    goto tail;
+                }
+            }
+            goto tail;
+        }
+        if ((cfPad->mPad.mPressedButtonFlags & 0x20) != 0) {
+            if (func_802023C0(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
+                return;
+            }
+            if (func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
+                func_80202C4C(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+                goto tail;
+            }
+            func_801C4198(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
+            func_80202578(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            func_801FF98C(&self->mModelDispEquip);
+            self->field_6BE4 = 0x8;
+            goto tail;
+        }
+        if ((cfPad->mTurboPressButtonFlags & 0x8004) != 0) {
+            func_80202644(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            goto tail;
+        }
+        if ((cfPad->mTurboPressButtonFlags & 0x00010008) != 0) {
+            func_80202790(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            goto tail;
+        }
+        if ((cfPad->mTurboPressButtonFlags & 0x2001) != 0) {
+            func_802028E4(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            goto tail;
+        }
+        if ((cfPad->mTurboPressButtonFlags & 0x4002) != 0) {
+            func_80202A70(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            goto tail;
+        }
+        if ((cfPad->mPad.mPressedButtonFlags & 0x800) != 0) {
+            if (func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
+                func_80202BFC(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+                goto tail;
+            }
+            goto tail;
+        }
+        if ((cfPad->mPad.mPressedButtonFlags & 0x80) != 0) {
+            if (func_802023D0(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
+                u8 v = (u8)func_80203210(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+                if (v == 1) {
+                    func_801FF98C(&self->mModelDispEquip);
+                    self->field_6BE4 = 0xC;
+                    goto tail;
+                }
+                if (v == 2) {
+                    func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
+                                  func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x84),
+                                  0);
+                    func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
+                    func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                    self->field_6BE4 = 0xD;
+                    goto tail;
+                }
+                if (v != 3) {
+                    func_80138078(0x5);
+                    u16 w = func_80203A98(reinterpret_cast<CEquipChange*>(&self->_pad4150), 0);
+                    if (w == 0x296 || w == 0x2A0) {
+                        func_8022B9B4(reinterpret_cast<CSysWin*>(&self->_pad6BA8),
+                                      func_80136190(&lbl_eu_80507C94[0x2d], &lbl_eu_80507C94[0x28], 0x8A),
+                                      0);
+                        func_8022BFC8(reinterpret_cast<CSysWin*>(&self->_pad6BA8), 1);
+                        func_8022B8B8(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
+                        self->field_6BE4 = 0xD;
+                        goto tail;
+                    }
+                }
+            }
+            goto tail;
+        }
+        if ((cfPad->mPad.mPressedButtonFlags & 0x00000200) != 0) {
+            if (func_8020247C(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
+                func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
+                func_80203984(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+                goto tail;
+            }
+            goto tail;
+        }
+        if ((cfPad->mPad.mPressedButtonFlags & 0x40) != 0) {
+            if (func_802023D0(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0 &&
+                func_801FF964(&self->mModelDispEquip) != 0 &&
+                func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) == 0) {
+                self->field_6BE4 = 0x10;
+                func_801FF98C(&self->mModelDispEquip);
+                func_80138078(0x2);
+                goto tail;
+            }
+            if (func_802023C8(reinterpret_cast<CEquipChange*>(&self->_pad4150)) != 0) {
+                func_8020398C(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+            }
+        }
+    }
+tail:
+    if (CSysWin_getUnk34(reinterpret_cast<CSysWin*>(&self->_pad6BA8)) != 0) {
+        func_801C41E8(reinterpret_cast<CTitleAHelp*>(&self->_pad18), 0);
+    } else {
+        // The equip-change result goes through a u32 local so the mask lands after
+        // the receiver setup (retail: mr r0,r3 / addi r3 / clrlwi r4,r0,24 -
+        // same shape as func_801FA92C / func_801FB66C).
+        u32 v = func_802039F4(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+        func_801C41E8(reinterpret_cast<CTitleAHelp*>(&self->_pad18), (u8)v);
+    }
+}
 
 // Target: us-801fd21c | func_801FB560
 // Party-window refresh: once the title help is idle and the equip display /
@@ -862,5 +1231,44 @@ extern "C" void func_801F9754(CPartyStateWinRing* self, u32 flag) {
     self->field_0x3f4 += 1;
     self->field_0x3fc = self->field_0x3f4 - 1;
 }
-extern "C" void func_801F981C() {}
-extern "C" void func_801F9864() {}
+// Target: us-801fb4d8 | func_801F981C (0x48)
+// Pre-fills the two memory-accounting counters of a CPartyStateWinMem with
+// the largest allocatable size of the MEM1 handle and of the scene-alloc
+// handle; returns self (retail keeps `this` in r31 and returns it).
+CPartyStateWinMem* func_801F981C(CPartyStateWinMem* self) {
+    self->field_0x0 = mtl::MemManager::getMaxAllocSize(mtl::MemManager::getHandleMEM1());
+    self->field_0x4 = mtl::MemManager::getMaxAllocSize(func_80495FF0(lbl_eu_80663E14));
+    return self;
+}
+
+// Target: us-801fb520 | func_801F9864 (0x30)
+// Records a 6-argument party-window payload into a small gauge record:
+// u32 @0, f32 @8, u16 @C, u16[10] @E, u16 @22 (the trailing u16 sits right
+// after the array). The array fill is a constant-trip countdown loop (MWCC
+// emits the mtlr/bdnz form for a constant-bound for loop). The scoped
+// optimize_for_size pragma keeps the loop ROLLED: at plain -O4,p MWCC fully
+// unrolls the 10 stores (0x3c bytes); the retail body is the 0x30 rolled
+// form. Object type is not yet recovered (no direct retail callers); the
+// record layout is recovered from the store offsets.
+struct PartyGaugeRecord {
+    u32 field_0;   // 0x00
+    u32 field_4;   // 0x04
+    f32 field_8;   // 0x08
+    u16 field_C;   // 0x0C
+    u16 gauge[10]; // 0x0E..0x22
+    u16 field_22;  // 0x22
+};
+
+#pragma push
+#pragma optimize_for_size on
+extern "C" void func_801F9864(PartyGaugeRecord* rec, u32 a, f32 f, u16 b, u16 c,
+                              u16 d) {
+    rec->field_0 = a;
+    rec->field_8 = f;
+    rec->field_C = b;
+    rec->field_22 = d;
+    for (int i = 0; i < 10; i++) {
+        rec->gauge[i] = c;
+    }
+}
+#pragma pop

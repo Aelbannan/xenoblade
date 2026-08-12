@@ -243,8 +243,8 @@ void cf::CfObject::CfObject_UnkVirtualFunc25() {}
 // the cf-chain vtable slot +0xB4 (CfObject_UnkVirtualFunc25, hidden args).
 void CfObject_UnkVirtualFunc20__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, float a, float b) {
     float arr[3];
-    arr[0] = a;
     arr[1] = lbl_eu_80666A80;
+    arr[0] = a;
     arr[2] = b;
     reinterpret_cast<cf::CfObjectVtB4*>(self)->mB4(arr, lbl_eu_80666A84);
 }

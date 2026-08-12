@@ -15,11 +15,28 @@ void func_801FBEB8(CModelDispSub* sub) {
     (void)sub;
 }
 
+extern "C" void __dt__Q22cf17CActParamAnimGameFv(void* self, int flag);
+extern "C" void __destroy_arr(void*, void*, int, int);
+
+// Sub-object destructor: destroys the two-member CActParamAnimGame array at
+// +0x550 (0x53C stride) and the single one at +0xC, then frees the object
+// when the delete flag is set; returns the object (retail mr r3, r30). The
+// scoped optimize_for_size merges the r30/r31 saves into stmw/lmw like the
+// retail body (plain -O4,p emits two stw's; MWCC_REFERENCE stmw pattern).
+#pragma push
+#pragma optimize_for_size on
 u8* __dt__801FBF0C(CModelDispSub* obj, int flag) {
-    (void)obj;
-    (void)flag;
+    if (obj != 0) {
+        __destroy_arr((char*)obj + 0x550, (void*)__dt__Q22cf17CActParamAnimGameFv,
+                      0x53C, 2);
+        __dt__Q22cf17CActParamAnimGameFv((char*)obj + 0xC, -1);
+        if (flag > 0) {
+            ::operator delete(obj);
+        }
+    }
     return (u8*)obj;
 }
+#pragma pop
 
 // Static helper inlined by -ipa file: its inner loops carry PARAMETER bounds,
 // so MWCC keeps them as mtctr/bdnz countdown loops even after the call-site

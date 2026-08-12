@@ -67,9 +67,9 @@ void CViewRectDataCore::func_804592F0(const ml::CPnt16& size) {
     int heightRemain;
 
     mViewSize = size;
+    maxHeight = (s16)(mViewSize.y - mInsetTop - mInsetBottom);
     maxWidth = (s16)(mViewSize.x - mInsetLeft - mInsetRight);
     widthRemain = mBoundsSize.x - maxWidth;
-    maxHeight = (s16)(mViewSize.y - mInsetTop - mInsetBottom);
     if (mScrollX > widthRemain) {
         mScrollX = widthRemain;
     }

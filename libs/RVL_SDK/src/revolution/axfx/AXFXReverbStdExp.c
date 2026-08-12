@@ -18,12 +18,12 @@ static BOOL __InitParams(AXFX_REVERBSTD_EXP* reverb);
 
 #pragma peephole off
 u32 AXFXReverbStdExpGetMemSize(const AXFX_REVERBSTD_EXP* reverb) {
-    u32 e7 = __EarlySizeTable[7];
-    u32 ival = (u32)(s32)(32000.0f * reverb->preDelayTimeMax);
     u32 f0 = __FilterSizeTable[6][0];
     u32 f1 = __FilterSizeTable[6][1];
     u32 f2 = __FilterSizeTable[6][2];
     u32 f3 = __FilterSizeTable[6][3];
+    u32 e7 = __EarlySizeTable[7];
+    u32 ival = (u32)(s32)(reverb->preDelayTimeMax * 32000.0f);
     u32 tot = e7 + ival;
 
     tot += f0;

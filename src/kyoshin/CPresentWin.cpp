@@ -186,13 +186,13 @@ extern "C" u8 func_8022E4FC(CPresentWin* self) { return func_8022E868(self, self
 // retail: lbz r4,0x33(r3); b func_8022E868
 extern "C" u8 func_8022E504(CPresentWin* self) { return func_8022E868(self, self->mField33); }
 
-void func_8022E50C(){}
+extern "C" __declspec(noinline) void func_8022E50C(CPresentWin* self){(void)self;}
 
-void func_8022E558(){}
+extern "C" __declspec(noinline) void func_8022E558(CPresentWin* self){(void)self;}
 
 // Frame-update handler: when animTrans1 finishes, switch to state 2, enable
 // both animations, show the window and reset the two labelled panes.
-void func_8022E5B0(CPresentWin* self) {
+extern "C" __declspec(noinline) void func_8022E5B0(CPresentWin* self) {
     if (func_80137444(self->mpAnimTrans1, lbl_eu_8066862C) != 0) {
         self->mField37 = 2;
         self->mField38 = 1;
@@ -349,4 +349,20 @@ void func_8022D614(CPresentWin* self, nw4r::lyt::ArcResourceAccessor* accessor) 
     }
 }
 
-void func_8022DA58() {}
+extern "C" void func_8022DA58(CPresentWin* self) {
+    if (self->mField30 == 0) {
+        return;
+    }
+    switch (self->mField37) {
+    case 1:
+        func_8022E50C(self);
+        break;
+    case 3:
+        func_8022E558(self);
+        break;
+    case 4:
+        func_8022E5B0(self);
+        break;
+    }
+    self->mpLayout->Animate(0);
+}

@@ -765,12 +765,12 @@ void func_8016E100(cf::ReloadInfo* p) {
     v2 = p->field_06;
     v3 = p->field_0C;
     v4 = p->field_08;
-    v5 = p->field_0A;
     lbl_eu_80664284 = v0;
     lbl_eu_80664278 = v1;
     lbl_eu_8066427E = v2;
     lbl_eu_80664280 = v3;
     lbl_eu_8066427A = v4;
+    v5 = p->field_0A;
     lbl_eu_8066427C = v5;
     lbl_eu_80664288 = 0;
 }

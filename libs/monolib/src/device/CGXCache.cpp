@@ -4,14 +4,17 @@
 #include <harness_catalog.h>
 #include <string.h>
 #include <revolution/GX.h>
+#include "functions.hpp"
 #include "monolib/math/CCol4.hpp"
 #include "monolib/math/CMat34.hpp"
 
 // IStateCache: 4-byte polymorphic base (vtable only). Retail __dt__11IStateCacheFv
 // is the empty delete-dtor shell; derived dtors inline the (empty) base call away.
+// No C++ virtuals: the vptr is a plain member written explicitly by the ctor
+// (retail __ct__8CGXCacheFv does `bl __ct__IStateCache; stw lbl_eu_8056BFC8`).
 class IStateCache {
 public:
-    virtual ~IStateCache();
+    ~IStateCache();
 };
 
 // CMsgParam message-queue slot (0x24 bytes; command at +0).
@@ -49,6 +52,7 @@ public:
 
 class CGXCache : public IStateCache {
 public:
+    CGXCache();
     ~CGXCache();
     void func_80449D68();
     void func_8044A578();
@@ -77,8 +81,9 @@ public:
     void func_8044C1FC();
 
     //0x0: vtable (IStateCache)
+    void* vtbl;               //0x0 (vtable pointer)
     CMsgParam_32 unk4;        //0x4
-    u8 unk4A0[0x8];           //0x4A0..0x4A7
+    s16 rect4A0[4];           //0x4A0..0x4A7 (scissor rect: x, y, w, h)
     s16 rect4A8[4];           //0x4A8
     s16 rect4B0[4];           //0x4B0
     u8 unk4B8[0x4];           //0x4B8..0x4BB
@@ -86,7 +91,7 @@ public:
     s16 mScissorDeltaY;       //0x4BE
     Mtx44 mProjMtx;           //0x4C0..0x4FF
     s16 unk500;               //0x500
-    u8 unk502[2];             //0x502..0x503
+    s16 unk502;               //0x502..0x503
     GXTexObj* unk504;         //0x504 (last texture bound by func_8044B4B8)
     u32 unk508;               //0x508..0x50B
     u32 unk50C;               //0x50C
@@ -114,11 +119,13 @@ extern CGXCache* cacheInstance__9CDeviceGX;
 // ring cache-update functions above use it before its definition.
 extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
 
-// Retail .sdata2 magic doubles used by MWCC's int->float conversions. Defined
-// here with the exact retail label names/values so the conversion pool emits
-// sda21 references to the retail slots instead of fresh local pool entries.
-const double lbl_eu_8066A388 = 4503601774854144.0;  // s32->f64 magic (2^52+2^31)
-const double lbl_eu_8066A390 = 4503599627370496.0;  // u32->f64 magic (2^52)
+// Retail .sdata2 magic doubles used by MWCC's int->float conversions (imports;
+// the definitions live in the monolib shared data blob). Referenced by name
+// through the s32ToF/u16ToF helpers below so the lfd relocs name the retail
+// slots instead of MWCC's anonymous @N pool entries (docs/MWCC_REFERENCE.md
+// section 7i manual bit construction).
+extern const double lbl_eu_8066A388;  // s32->f64 magic (2^52+2^31)
+extern const double lbl_eu_8066A390;  // u32->f64 magic (2^52)
 extern const f32 lbl_eu_8066A378;
 extern const f32 lbl_eu_8066A380;
 
@@ -128,9 +135,9 @@ extern u32 lbl_eu_8066364C;
 extern u32 lbl_eu_80663650;
 
 
-// __ct__80449548 (constructor at 0x80449548) defined once - all harness stubs
-// that map to this same symbol reference it rather than redefining.
-void __ct__80449548(void) {}
+// __ct__80449548 / func_8044954C are no-op helpers defined below (they take
+// an address in r3 at the call site); the harness stubs that map to these
+// symbols reference them rather than redefining.
 
 // (mapped to __ct__80449548 above)
 
@@ -181,37 +188,15 @@ void* __dt__804494D8(void* self, int deleting) {
 
 // CMsgParam<32>-ish ctor: vtable + ring-buffer init (retail data label).
 // char[] form prevents SDA21 (label is >8B data; retail uses lis/addi).
+// Declarations only - the definitions sit after __ct__8CGXCacheFv so MWCC
+// -inline auto cannot inline them into the ctor (retail emits bl to each).
 extern "C" { extern char lbl_eu_8056BFE4[]; }
-extern "C" void __ct__CMsgParam_32(void* self, u32 param) {
-    u8* s = (u8*)self;
-    *(void**)s = lbl_eu_8056BFE4;
-    *(u32*)(s + 0x490) = 32;
-    *(u32*)(s + 0x484) = (u32)(s + 4);
-    *(u32*)(s + 0x48C) = 0;
-    *(u32*)(s + 0x488) = 0;
-    *(u32*)(s + 0x494) = 0;
-    *(u32*)(s + 0x498) = param;
-}
-
-extern "C" void __ct__80449534(void* self, u16 a, u16 b, u16 c, u16 d) {
-    u8* s = (u8*)self;
-    *(u16*)(s + 0) = a;
-    *(u16*)(s + 2) = b;
-    *(u16*)(s + 4) = c;
-    *(u16*)(s + 6) = d;
-}
-
-// (mapped to __ct__80449548 above)
-
-void func_8044954C(void) {}
-
-// (mapped to __ct__80449548 above)
-
-// IStateCache ctor: vtable store (retail data label). char[] avoids SDA21.
+extern "C" void __ct__CMsgParam_32(void* self, u32 param);
+extern "C" void __ct__80449534(void* self, s16 a, s16 b, s16 c, s16 d);
+extern "C" void func_8044954C(void* self);
+extern "C" void __ct__80449548(void* self);
 extern "C" { extern char lbl_eu_8056BFF0[]; }
-extern "C" void __ct__IStateCache(void* self) {
-    *(void**)self = lbl_eu_8056BFF0;
-}
+extern "C" void __ct__IStateCache(void* self);
 
 // Retail __dt__8CGXCacheFv: destroys the CMsgParam<32> ring member manually.
 // The pointer-var + null-test reproduces retail's rebased `addic. r3,r3,4`
@@ -229,7 +214,187 @@ CGXCache::~CGXCache() {
     }
 }
 
-void CGXCache::func_80449D68() {}
+// Retail GX-state dispatcher: selects the GX command group by the u32 in r4
+// (blend, copy-clear, TEV, viewport or scissor) with the argument block in
+// r5. Retail symbol is Fv-mangled although r4/r5 are live register params
+// (same pattern as func_8044CE68 / func_8044CF74).
+extern "C" u32 VIGetNextField(void);
+extern const f32 lbl_eu_8066A37C;
+extern const f32 lbl_eu_8066A380;
+extern "C" GXRenderModeObj* getRenderModeObj__9CDeviceVIFv(void);
+extern "C" void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd);
+
+static inline s32 minS32(s32 a, s32 b) { return a < b ? a : b; }
+static inline s32 maxS32(s32 a, s32 b) { return a > b ? a : b; }
+static inline GXColor scaleColor255(f32 scale, const ml::CCol4& c);
+
+extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) {
+    GXRenderModeObj* rmo;
+    s16* vp = (s16*)data;
+    f32* vf = (f32*)data;
+    u32* vu = (u32*)data;
+    f32 scale;
+    GXColor gxCol;
+    s16 out[4];
+    s32 x0, y0, w0, h0;
+    s32 r, a;
+    s32 cond;
+
+    switch (sel) {
+    case 0:
+        GXSetBlendMode((GXBlendMode)vu[0], GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+        break;
+    case 1:
+        GXSetBlendMode((GXBlendMode)vu[0], (GXBlendFactor)vu[1], (GXBlendFactor)vu[2],
+                       (GXLogicOp)vu[3]);
+        break;
+    case 2:
+        // Copy-clear: color block in the data (floats scaled to 0-255), z
+        // depth from ring command 3.
+        scale = lbl_eu_8066A37C;
+        gxCol = scaleColor255(scale, *(const ml::CCol4*)data);
+        GXSetCopyClear(gxCol, *(u32*)func_8044CEF8__8CGXCacheFv(&self->unk4, 3));
+        break;
+    case 3:
+        // Copy-clear: color from ring command 2, z depth from the data word.
+        scale = lbl_eu_8066A37C;
+        gxCol = scaleColor255(scale, *(const ml::CCol4*)func_8044CEF8__8CGXCacheFv(&self->unk4, 2));
+        GXSetCopyClear(gxCol, vu[0]);
+        break;
+    case 4:
+        GXSetZCompLoc((GXBool)(vu[0] & 0xff));
+        break;
+    case 5:
+        GXSetCullMode(vu[0] ? GX_CULL_NONE : GX_CULL_BACK);
+        break;
+    case 6:
+        // Z-mode: test enable from the data byte, compare func from ring cmd 6.
+        GXSetZMode(1, (GXCompare)(*(u8*)func_8044CEF8__8CGXCacheFv(&self->unk4, 6) ? GX_LEQUAL : GX_ALWAYS),
+                   (GXBool)*(u8*)data);
+        break;
+    case 7:
+        // Z-mode: compare func from the data byte, test enable from ring cmd 5.
+        GXSetZMode(1, (GXCompare)(*(u8*)data ? GX_LEQUAL : GX_ALWAYS),
+                   (GXBool)*(u8*)func_8044CEF8__8CGXCacheFv(&self->unk4, 5));
+        break;
+    case 8:
+        GXSetColorUpdate((GXBool)*(u8*)data);
+        break;
+    case 9:
+        GXSetAlphaUpdate((GXBool)*(u8*)data);
+        break;
+    case 0xa:
+        // TEV pipeline presets selected by the data word.
+        switch (vu[0]) {
+        case 0:
+            GXSetNumChans(1);
+            GXSetNumTexGens(0);
+            GXSetNumTevStages(1);
+            GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR_NULL);
+            GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_C0);
+            GXSetTevColorOp(GX_TEVSTAGE0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, 0, GX_TEVPREV);
+            GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_A0);
+            GXSetTevAlphaOp(GX_TEVSTAGE0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, 0, GX_TEVPREV);
+            break;
+        case 1:
+            GXSetNumChans(1);
+            GXSetNumTexGens(1);
+            GXSetNumTevStages(1);
+            GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
+            GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_C0, GX_CC_TEXC, GX_CC_ZERO);
+            GXSetTevColorOp(GX_TEVSTAGE0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, 0, GX_TEVPREV);
+            GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_A0, GX_CA_TEXA, GX_CA_ZERO);
+            GXSetTevAlphaOp(GX_TEVSTAGE0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, 0, GX_TEVPREV);
+            break;
+        case 2:
+            GXSetNumChans(1);
+            GXSetNumTexGens(0);
+            GXSetNumTevStages(1);
+            GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
+            GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_RASC);
+            GXSetTevColorOp(GX_TEVSTAGE0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, 0, GX_TEVPREV);
+            GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA);
+            GXSetTevAlphaOp(GX_TEVSTAGE0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, 0, GX_TEVPREV);
+            GXSetChanCtrl(GX_COLOR0, GX_DISABLE, GX_SRC_REG, GX_SRC_REG, (GXLightID)0,
+                          GX_DF_CLAMP, GX_AF_SPOT);
+            GXSetChanCtrl(GX_ALPHA0, GX_DISABLE, GX_SRC_REG, GX_SRC_REG, (GXLightID)0,
+                          GX_DF_NONE, GX_AF_SPOT);
+            break;
+        case 3:
+            GXSetNumChans(1);
+            GXSetNumTexGens(1);
+            GXSetNumTevStages(1);
+            GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+            GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_TEXC, GX_CC_RASC, GX_CC_ZERO);
+            GXSetTevColorOp(GX_TEVSTAGE0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, 0, GX_TEVPREV);
+            GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_TEXA, GX_CA_RASA, GX_CA_ZERO);
+            GXSetTevAlphaOp(GX_TEVSTAGE0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, 0, GX_TEVPREV);
+            GXSetChanCtrl(GX_COLOR0, GX_DISABLE, GX_SRC_REG, GX_SRC_REG, (GXLightID)0,
+                          GX_DF_CLAMP, GX_AF_SPOT);
+            GXSetChanCtrl(GX_ALPHA0, GX_DISABLE, GX_SRC_REG, GX_SRC_REG, (GXLightID)0,
+                          GX_DF_NONE, GX_AF_SPOT);
+            break;
+        }
+        break;
+    case 0xb:
+        GXSetTevColor(GX_TEVREG1, *(GXColor*)data);
+        break;
+    case 0xc: {
+        // Viewport from the 4 s16s; jitter when interlaced.
+        f32 vx = (f32)vp[0];
+        f32 vy = (f32)vp[1];
+        f32 vw = (f32)vp[2];
+        f32 vh = (f32)vp[3];
+        rmo = getRenderModeObj__9CDeviceVIFv();
+        if (rmo->field_rendering) {
+            GXSetViewportJitter(vx, vy, vw, vh, lbl_eu_8066A378, lbl_eu_8066A380,
+                                VIGetNextField());
+        } else {
+            GXSetViewport(vx, vy, vw, vh, lbl_eu_8066A378, lbl_eu_8066A380);
+        }
+        break;
+    }
+    case 0xd:
+        // Scissor rect clamped against the full screen; disabled when the
+        // result has no area. The overflow test reproduces retail's
+        // xor/srawi/and/subf sign idiom for `(fbWidth+w) < width`.
+        rmo = getRenderModeObj__9CDeviceVIFv();
+        self->rect4A0[3] = rmo->efbHeight;
+        rmo = getRenderModeObj__9CDeviceVIFv();
+        self->rect4A0[2] = rmo->fbWidth;
+        self->rect4A0[0] = 0;
+        self->rect4A0[1] = 0;
+        x0 = vp[0];
+        y0 = vp[1];
+        w0 = vp[2];
+        h0 = vp[3];
+        r = minS32(self->rect4A0[2], x0 + w0) - minS32(0, x0);
+        a = self->rect4A0[2] + w0;
+        cond = (a < r) ? 1 : 0;
+        if (cond) {
+            r = minS32(self->rect4A0[1] + self->rect4A0[3], y0 + h0) - minS32(self->rect4A0[1], y0);
+            a = self->rect4A0[3] + h0;
+            cond = (a < r) ? 1 : 0;
+        }
+        if (cond) {
+            out[0] = maxS32(0, x0);
+            out[1] = minS32(self->rect4A0[1], y0);
+            out[2] = minS32(self->rect4A0[2], x0 + w0) - out[0];
+            out[3] = minS32(self->rect4A0[1] + self->rect4A0[3], y0 + h0) - out[1];
+        } else {
+            out[0] = 0;
+            out[1] = 0;
+            out[2] = 0;
+            out[3] = 0;
+        }
+        *(u32*)&self->rect4A0[0] = *(u32*)&out[0];
+        *(u32*)&self->rect4A0[2] = *(u32*)&out[2];
+        if (self->rect4A0[2] > 0 && self->rect4A0[3] > 0) {
+            GXSetScissor(self->rect4A0[0], self->rect4A0[1], self->rect4A0[2], self->rect4A0[3]);
+        }
+        break;
+    }
+}
 
 // Retail .sdata2/.sdata imports used by the cache-update and projection
 // functions below (definitions live in the monolib shared data blob).
@@ -401,13 +566,33 @@ end:
 // lbl_eu_80663644) the entry is re-stamped (unk23 = 3, wid =
 // lbl_eu_80663644) and command 9 is dispatched; the color is then scaled to
 // 0-255 and pushed as TEVREG1.
+// Ring command-9 cache update carrying a 4-byte wid (the shared color
+// multiplier). Unless (flag == 0 && the entry's wid already equals
+// lbl_eu_80663644) the entry is re-stamped (unk23 = 3, wid =
+// lbl_eu_80663644) and command 9 is dispatched; the color is then scaled to
+// 0-255 and pushed as TEVREG0.
+//
+// The color is built through an inlined helper (not a named local) so MWCC
+// allocates the value-assembly slot below the outgoing arg area, matching
+// retail's stb/pack at sp+8 / arg copy at sp+0xc.
+static inline GXColor scaleColor255(f32 scale, const ml::CCol4& c) {
+    GXColor col;
+    col.r = (u8)(s32)(scale * c.r);
+    col.g = (u8)(s32)(scale * c.g);
+    col.b = (u8)(s32)(scale * c.b);
+    col.a = (u8)(s32)(scale * c.a);
+    return col;
+}
+
 void CGXCache::func_8044ACDC(const ml::CCol4& color, int flag) {
+    f32 scale;
     u32 i = ringFindIndex<0x9>(this);
     if (flag != 0) goto update;
     {
         u32 idx = unk4.mFront + i;
         u32 slot = idx % unk4.mCapacity;
-        if (memcmp(&unk4.mArrayPtr[slot].wid, &lbl_eu_80663644, 4) == 0) goto end;
+        bool same = (memcmp(&unk4.mArrayPtr[slot].wid, &lbl_eu_80663644, 4) == 0);
+        if (same) goto end;
     }
 update:
     {
@@ -421,24 +606,22 @@ update:
     }
 end:
     {
-        GXColor col;
-        f32 scale = lbl_eu_8066A37C;
-        col.r = (u8)(s32)(scale * color.r);
-        col.g = (u8)(s32)(scale * color.g);
-        col.b = (u8)(s32)(scale * color.b);
-        col.a = (u8)(s32)(scale * color.a);
-        GXSetTevColor(GX_TEVREG1, col);
+        // Scale the color components to 0-255 and push as TEVREG0.
+        scale = lbl_eu_8066A37C;
+        GXSetTevColor(GX_TEVREG0, scaleColor255(scale, color));
     }
 }
 
 // Same cache update as func_8044ACDC but for the lbl_eu_80663648 slot.
 void CGXCache::func_8044AE8C(const ml::CCol4& color, int flag) {
+    f32 scale;
     u32 i = ringFindIndex<0x9>(this);
     if (flag != 0) goto update;
     {
         u32 idx = unk4.mFront + i;
         u32 slot = idx % unk4.mCapacity;
-        if (memcmp(&unk4.mArrayPtr[slot].wid, &lbl_eu_80663648, 4) == 0) goto end;
+        bool same = (memcmp(&unk4.mArrayPtr[slot].wid, &lbl_eu_80663648, 4) == 0);
+        if (same) goto end;
     }
 update:
     {
@@ -452,13 +635,8 @@ update:
     }
 end:
     {
-        GXColor col;
-        f32 scale = lbl_eu_8066A37C;
-        col.r = (u8)(s32)(scale * color.r);
-        col.g = (u8)(s32)(scale * color.g);
-        col.b = (u8)(s32)(scale * color.b);
-        col.a = (u8)(s32)(scale * color.a);
-        GXSetTevColor(GX_TEVREG1, col);
+        scale = lbl_eu_8066A37C;
+        GXSetTevColor(GX_TEVREG0, scaleColor255(scale, color));
     }
 }
 
@@ -507,7 +685,7 @@ void CGXCache::func_8044B298(void* a, void* b, void* c) {
     u32 slot;
     C1FCMsgEntry* entry;
 
-    // Keep b in r31 across the function like retail (null → this+0x4A8).
+    // Keep b in r31 across the function like retail (null -> this+0x4A8).
     insetPair = (u32*)b;
     {
         u32* a32 = (u32*)a;
@@ -756,7 +934,73 @@ void CGXCache::func_8044B5C0() {
     GXSetProjection(mProjMtx, GX_ORTHOGRAPHIC);
 }
 
-void CGXCache::func_8044B660() {}
+// s32 -> f32 through the shared 2^52+2^31 magic double (lbl_eu_8066A388).
+// Manual bit construction so the lfd reloc names the retail .sdata2 slot
+// instead of MWCC's anonymous @N pool entry (docs/MWCC_REFERENCE.md section 7i).
+static inline f32 s32ToF(s32 v) {
+    union {
+        double d;
+        u32 w[2];
+    } c;
+    c.w[1] = (u32)v ^ 0x80000000;
+    c.w[0] = 0x43300000u;
+    return (f32)(c.d - lbl_eu_8066A388);
+}
+
+// u16 -> f32 through the shared 2^52 magic double (lbl_eu_8066A390). Same
+// reloc-naming rationale as s32ToF.
+static inline f32 u16ToF(u16 v) {
+    union {
+        double d;
+        u32 w[2];
+    } c;
+    c.w[1] = v;
+    c.w[0] = 0x43300000u;
+    return (f32)(c.d - lbl_eu_8066A390);
+}
+
+void CGXCache::func_8044B660() {
+    if (mAdjustProj) {
+        // Letterboxed projection: scale the sub-rect edges (0x510..0x516,
+        // given as fractions of the framebuffer) by the scissor deltas, and
+        // use -unk500 as the far plane (same near=1.0 / ortho shape as the
+        // non-adjusted path). Each delta is loaded before the getRenderModeObj
+        // call that follows so it survives the call in r30 (retail ping-pong).
+        GXRenderModeObj* rmo;
+        f32 far = (f32)(-unk500);
+        s32 dx = cacheInstance__9CDeviceGX->mScissorDeltaX;
+        f32 right, left, bottom, top;
+        rmo = getRenderModeObj__9CDeviceVIFv();
+        f32 fw = (f32)rmo->fbWidth;
+        f32 mr = (f32)mRectRight;
+        right = mr / fw * (f32)dx;
+        dx = cacheInstance__9CDeviceGX->mScissorDeltaX;
+        rmo = getRenderModeObj__9CDeviceVIFv();
+        f32 fw2 = (f32)rmo->fbWidth;
+        f32 ml = (f32)mRectLeft;
+        left = ml / fw2 * (f32)dx;
+        s32 dy = cacheInstance__9CDeviceGX->mScissorDeltaY;
+        rmo = getRenderModeObj__9CDeviceVIFv();
+        f32 eh = (f32)rmo->efbHeight;
+        f32 mb = (f32)mRectBottom;
+        bottom = mb / eh * (f32)dy;
+        dy = cacheInstance__9CDeviceGX->mScissorDeltaY;
+        rmo = getRenderModeObj__9CDeviceVIFv();
+        f32 eh2 = (f32)rmo->efbHeight;
+        f32 mt = (f32)mRectTop;
+        top = mt / eh2 * (f32)dy;
+        C_MTXOrtho(mProjMtx, top, bottom, left, right, lbl_eu_8066A378, far);
+    } else {
+        // Plain ortho: top/left/near = 1.0, bottom = deltaY, right = deltaX,
+        // far = -unk500 (same shape as func_8044B5C0).
+        f32 far = (f32)(-unk500);
+        f32 right = (f32)cacheInstance__9CDeviceGX->mScissorDeltaX;
+        f32 bottom = (f32)cacheInstance__9CDeviceGX->mScissorDeltaY;
+        C_MTXOrtho(mProjMtx, lbl_eu_8066A378, bottom, lbl_eu_8066A378, right,
+                   lbl_eu_8066A378, far);
+    }
+    GXSetProjection(mProjMtx, GX_ORTHOGRAPHIC);
+}
 
 // Builds the perspective projection into mProjMtx. The horizontal fov is
 // widened for 16:9 by scaling the aspect (scissor-rect ratio x fixed
@@ -1346,7 +1590,7 @@ static u32 cmsgFindIndex(CMsgParam<N>* self, u32 msg) {
 }
 
 // Ring push for a message whose payload comes from a volatile, uninitialized
-// stack entry (retail reads 0xc..0x2a(r1) verbatim — MWCC keeps the volatile
+// stack entry (retail reads 0xc..0x2a(r1) verbatim - MWCC keeps the volatile
 // struct at 8(r1) and emits the uninitialized reads). Found entries get
 // field6 = i; otherwise a new entry is appended at (mFront+mSize)%mCapacity
 // (signed divw) with unk23 = 0. Either way the entry at field6 is then
@@ -1577,16 +1821,136 @@ template <> void CMsgParam<32>::func_80449A1C(unsigned long msg, u32* payload) {
 // Pack a color as (r<<24)|(g<<16)|(b<<8)|a with 255-scaled components.
 // Products are computed into temporaries first so MWCC defers the frame setup
 // until after the multiplies (retail: stwu after the 3rd fmul), then the four
-// u8 conversions, then the byte pack.
-u32 func_80449550(ml::CCol4& c) {
+// u8 conversions, then the byte pack. The byte-array assembly makes MWCC emit
+// the retail stb/lwz pack (a shift-based expression would use rlwinm/or).
+u32 __declspec(noinline) func_80449550(ml::CCol4& c) {
     f32 scale = lbl_eu_8066A37C;
-    f32 pr = scale * c.r;
-    f32 pg = scale * c.g;
-    f32 pb = scale * c.b;
-    f32 pa = scale * c.a;
-    u8 r = (u8)(s32)pr;
-    u8 g = (u8)(s32)pg;
-    u8 b = (u8)(s32)pb;
-    u8 a = (u8)(s32)pa;
-    return ((u32)r << 24) | ((u32)g << 16) | ((u32)b << 8) | (u32)a;
+    u8 out[4];
+    out[0] = (u8)(s32)(scale * c.r);
+    out[1] = (u8)(s32)(scale * c.g);
+    out[2] = (u8)(s32)(scale * c.b);
+    out[3] = (u8)(s32)(scale * c.a);
+    return *(u32*)&out[0];
+}
+
+// CGXCache vtable (retail .data label, overwrites the IStateCache vtable).
+extern "C" { extern char lbl_eu_8056BFC8[]; }
+
+// Retail .sdata wid sources for the initial ring command cache (imports).
+extern u32 lbl_eu_80663620;
+extern u32 lbl_eu_80663624;
+extern u32 lbl_eu_80663628;
+extern u32 lbl_eu_8066362C;
+extern u32 lbl_eu_80663630;
+extern u32 lbl_eu_80663634;
+extern u32 lbl_eu_80663638;
+extern u32 lbl_eu_8066363C;
+extern u32 lbl_eu_80663640;
+
+// Full-screen rect helper: reads the render mode twice (efbHeight then
+// fbWidth) like retail and stores the 4 s16s at dst via __ct__80449534.
+static inline void initFullRect(void* dst) {
+    GXRenderModeObj* rmo = getRenderModeObj__9CDeviceVIFv();
+    s16 h = *(s16*)&rmo->efbHeight;   // retail lha
+    rmo = getRenderModeObj__9CDeviceVIFv();
+    s16 w = *(s16*)&rmo->fbWidth;     // retail lha
+    __ct__80449534(dst, 0, 0, w, h);
+}
+
+// Retail __ct__8CGXCacheFv: base ctor (vtable rebind), CMsgParam<32> ring +
+// five full-screen rects, identity projection, then the initial ring command
+// cache entries (cmds 0..0xd).
+CGXCache::CGXCache() {
+    u32 payload[4];
+    func_800407C8_tmp v4;
+    u32 col;
+    s16 rect[4];
+
+    // Base ctor stores the IStateCache vtable; rebind to the CGXCache vtable.
+    __ct__IStateCache(this);
+    vtbl = (void*)lbl_eu_8056BFC8;
+
+    // Ring member: entries inline, owner back-pointer in field7.
+    __ct__CMsgParam_32(&unk4, (u32)this);
+
+    // Five full-screen rects (0x4A0, 0x4A8, 0x4B0, 0x4B8) + identity mtx.
+    initFullRect(&rect4A0);
+    initFullRect(&rect4A8);
+    initFullRect(&rect4B0);
+    initFullRect(&unk4B8);
+    __ct__80449548(&mProjMtx);
+
+    unk500 = 0x7fff;
+    unk502 = 0;
+    unk504 = 0;
+    unk508 = 0;
+    unk50C = 0;
+
+    initFullRect(&mRectLeft);   // 0x510 sub-rect
+    mAdjustProj = 0;
+
+    // Ring command cache entries: cmds 0, 3..9, 0xd carry a wid pointer; 1
+    // carries a 16-byte payload; 2 a CCol4; 0xa a packed color; 0xb/0xc the
+    // full-screen rect words.
+    ((CMsgParam<32>*)&unk4)->func_80449B94(0, &lbl_eu_80663620);
+
+    ((void (*)(void*))func_8044954C)(payload);
+    payload[0] = 1;
+    payload[1] = 4;
+    payload[2] = 5;
+    payload[3] = 0;
+    ((CMsgParam<32>*)&unk4)->func_80449A1C(1, payload);
+
+    func_800407C8(&v4, lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378, lbl_eu_8066A378);
+    ((CMsgParam<32>*)&unk4)->func_804498A4(2, (u32*)&v4);
+
+    ((CMsgParam<32>*)&unk4)->func_80449B94(3, &lbl_eu_80663624);
+    ((CMsgParam<32>*)&unk4)->func_80449B94(4, &lbl_eu_80663628);
+    ((CMsgParam<32>*)&unk4)->func_80449B94(5, &lbl_eu_8066362C);
+    ((CMsgParam<32>*)&unk4)->func_80449B94(6, &lbl_eu_80663630);
+    ((CMsgParam<32>*)&unk4)->func_80449B94(7, &lbl_eu_80663634);
+    ((CMsgParam<32>*)&unk4)->func_80449B94(8, &lbl_eu_80663638);
+    ((CMsgParam<32>*)&unk4)->func_80449B94(9, &lbl_eu_8066363C);
+
+    col = func_80449550(ml::CCol4::white);
+    ((CMsgParam<32>*)&unk4)->func_8044972C(0xa, (u8*)&col);
+
+    initFullRect(rect);
+    ((CMsgParam<32>*)&unk4)->func_804495C4(0xb, (u32*)rect);
+
+    initFullRect(rect);
+    ((CMsgParam<32>*)&unk4)->func_804495C4(0xc, (u32*)rect);
+
+    ((CMsgParam<32>*)&unk4)->func_80449B94(0xd, &lbl_eu_80663640);
+}
+
+// ---- tiny ctor helpers (defined after __ct__8CGXCacheFv so they are not
+// inlined; retail emits a bl to each) ----
+
+extern "C" __declspec(noinline) void __ct__CMsgParam_32(void* self, u32 param) {
+    u8* s = (u8*)self;
+    *(void**)s = lbl_eu_8056BFE4;
+    *(u32*)(s + 0x490) = 32;
+    *(u32*)(s + 0x484) = (u32)(s + 4);
+    *(u32*)(s + 0x48C) = 0;
+    *(u32*)(s + 0x488) = 0;
+    *(u32*)(s + 0x494) = 0;
+    *(u32*)(s + 0x498) = param;
+}
+
+extern "C" __declspec(noinline) void __ct__80449534(void* self, s16 a, s16 b, s16 c, s16 d) {
+    u8* s = (u8*)self;
+    *(u16*)(s + 0) = a;
+    *(u16*)(s + 2) = b;
+    *(u16*)(s + 4) = c;
+    *(u16*)(s + 6) = d;
+}
+
+// No-op helpers called with an address in r3 (retail `addi r3,..; bl`).
+__declspec(noinline) void func_8044954C(void* self) { (void)self; }
+__declspec(noinline) void __ct__80449548(void* self) { (void)self; }
+
+// IStateCache ctor: vtable store (retail data label). char[] avoids SDA21.
+extern "C" __declspec(noinline) void __ct__IStateCache(void* self) {
+    *(void**)self = lbl_eu_8056BFF0;
 }

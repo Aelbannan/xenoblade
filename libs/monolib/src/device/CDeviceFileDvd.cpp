@@ -2,6 +2,64 @@
 
 #include <revolution/DVD.h>
 
+// CDeviceFile helpers (declared here to keep the includes minimal; the
+// retail names are C++ member symbols).
+struct CDeviceFileJob;
+class CDeviceFile {
+public:
+    static void removeFileJob(CDeviceFileJob* pJob);
+};
+
+// Local vtable-positioned view of the job classes: the retail dispatch is
+// vtable[41] (`lwz r12,0xa4(r12)`), which is `cancel(const char*)` after the
+// real IWorkEvent(32) + CWorkThread(7) + job-dtor chain. The dummies only
+// position the slot (never called); declaring cancel as a real virtual makes
+// MWCC emit the r12 dispatch shape.
+class CDeviceFileJobVtbl {
+public:
+    virtual ~CDeviceFileJobVtbl();
+    virtual void s00();
+    virtual void s01();
+    virtual void s02();
+    virtual void s03();
+    virtual void s04();
+    virtual void s05();
+    virtual void s06();
+    virtual void s07();
+    virtual void s08();
+    virtual void s09();
+    virtual void s10();
+    virtual void s11();
+    virtual void s12();
+    virtual void s13();
+    virtual void s14();
+    virtual void s15();
+    virtual void s16();
+    virtual void s17();
+    virtual void s18();
+    virtual void s19();
+    virtual void s20();
+    virtual void s21();
+    virtual void s22();
+    virtual void s23();
+    virtual void s24();
+    virtual void s25();
+    virtual void s26();
+    virtual void s27();
+    virtual void s28();
+    virtual void s29();
+    virtual void s30();
+    virtual void s31();
+    virtual void s32();
+    virtual void s33();
+    virtual void s34();
+    virtual void s35();
+    virtual void s36();
+    virtual void s37();
+    virtual bool cancel(const char* pFilename);
+    virtual bool cancel(void* pStruct);
+};
+
 // Retail vtable (rodata) - referenced manually so the ctor's vptr-store relocs
 // are byte-identical to retail (the class is non-virtual; MWCC emits no vtable).
 extern u32 lbl_eu_8056C420[];
@@ -38,11 +96,63 @@ int CDeviceFileDvd::getFileSize(const char* pPath) {
     return size;
 }
 
-void CDeviceFileDvd::isRequestFile(const char* pPath) {}
+void CDeviceFileDvd::isRequestFile(const char* pPath) {
+    // Walk the file-system job chain (singleton +0x60 list); for each node
+    // whose job is in the still-opening state (field_50 == 0x44), call the
+    // job's cancel(pPath) virtual. The singleton/field_60 sentinel is
+    // re-read every iteration (retail lwz r3,0(r0) in the loop check).
+    u8* node = *(u8**)(*(u32*)((u8*)lbl_eu_80665670 + 0x60));
+    while (node != (u8*)*(u32*)((u8*)lbl_eu_80665670 + 0x60)) {
+        u8* job = *(u8**)(node + 8);
+        if (job == 0) {
+            job = 0;
+        } else if (*(s32*)(job + 0x50) != 0x44) {
+            job = 0;
+        }
+        if (job != 0) {
+            reinterpret_cast<CDeviceFileJobVtbl*>(job)->cancel(pPath);
+        }
+        node = *(u8**)(node);
+    }
+}
 
-void CDeviceFileDvd::cancel(CFileHandle* pHandle) {}
+// Static (retail pHandle in r3) chain walker mirroring isRequestFile: call the
+// job's cancel(handle) virtual (vtable[42]) for each job in the still-opening
+// state. The handle is passed through (r4 = r30).
+void CDeviceFileDvd::cancel(CFileHandle* pHandle) {
+    u8* node = *(u8**)(*(u32*)((u8*)lbl_eu_80665670 + 0x60));
+    while (node != (u8*)*(u32*)((u8*)lbl_eu_80665670 + 0x60)) {
+        u8* job = *(u8**)(node + 8);
+        if (job == 0) {
+            job = 0;
+        } else if (*(s32*)(job + 0x50) != 0x44) {
+            job = 0;
+        }
+        if (job != 0) {
+            reinterpret_cast<CDeviceFileJobVtbl*>(job)->cancel((void*)pHandle);
+        }
+        node = *(u8**)(node);
+    }
+}
 
-void CDeviceFileDvd::cancelCurrent() {}
+void CDeviceFileDvd::cancelCurrent() {
+    // Resolve the active job from the file-system chain, keep it only while
+    // it is in the still-opening state (s32 field_50 == 0x44), close its DVD
+    // file info at +0x214 when the close flag (+0x1D0) is set, then remove
+    // the job and mark the state word +0x1C4 with 4. The singleton is
+    // re-loaded at the end (retail lwz r3,0(r0) after the calls).
+    u8* job = *(u8**)(*(u32*)(*(u32*)((u8*)lbl_eu_80665670 + 0x60)) + 8);
+    if (job == 0) {
+        job = 0;
+    } else if (*(s32*)(job + 0x50) != 0x44) {
+        job = 0;
+    }
+    if (*(u8*)((u8*)lbl_eu_80665670 + 0x1D0) != 0) {
+        DVDClose(reinterpret_cast<DVDFileInfo*>(job + 0x214));
+    }
+    CDeviceFile::removeFileJob(reinterpret_cast<CDeviceFileJob*>(job));
+    *(u32*)((u8*)lbl_eu_80665670 + 0x1C4) = 4;
+}
 
 void CDeviceFileDvd::transState0() {}
 

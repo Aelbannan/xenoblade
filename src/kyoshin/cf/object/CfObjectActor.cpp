@@ -64,19 +64,20 @@ void func_8016FF14(){}
 void func_80170AB0(){}
 void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc3() {
     // Two virtual calls on the CBattleState subobject vtable (this+0x8),
-    // slot +0x20 (CBattleState_UnkVirtualFunc7; the retail signature takes
-    // an int). Raw offset cast: an upcast to the secondary base would make
-    // MWCC emit a null guard for the adjusted this.
-    reinterpret_cast<cf::CfBattleVt20*>((u8*)this + 8)->m20(0xf);
-    reinterpret_cast<cf::CfBattleVt20*>((u8*)this + 8)->m20(0x10);
+    // slot +0x20 (CBattleState_UnkVirtualFunc7; retail fake-Fv ABI passes
+    // the status id in r4). Calling through `this` directly lets MWCC keep
+    // `this` in r31 and recompute the +8 adjusted-this per call (retail
+    // shape); the reinterpret_cast form CSEs this+8 into r31.
+    this->CBattleState_UnkVirtualFunc7(0xf);
+    this->CBattleState_UnkVirtualFunc7(0x10);
 }
 void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc4() {
     // Two calls to the CBattleState subobject vtable slot +0x20 (retail
-    // passes an int through the slot). Function-pointer form keeps the +8
-    // subobject offset folded into the vtable load; a virtual call through a
-    // cast would materialize this+0x8 into a register first.
-    ((cf::CfBattleVt20Table*)((cf::CfActorBattleVtPtr*)(u8*)this)->vt)->fn20((u8*)this + 8, 0xf);
-    ((cf::CfBattleVt20Table*)((cf::CfActorBattleVtPtr*)(u8*)this)->vt)->fn20((u8*)this + 0x8, 0x10);
+    // passes an int through the slot; fake-Fv ABI). Same shape as
+    // CfObjectActor_UnkVirtualFunc3: calling through `this` keeps this in
+    // r31 and recomputes the +8 adjusted-this per call.
+    this->CBattleState_UnkVirtualFunc7(0xf);
+    this->CBattleState_UnkVirtualFunc7(0x10);
 }
 float cf::CfObjectActor::CfObjectActor_UnkVirtualFunc7() {
     // Base height at 0x3EE8; if the move target (0x3F60) is set, add the

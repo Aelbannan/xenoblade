@@ -12,7 +12,9 @@
 #include <nw4r/g3d/g3d_state.h>
 #include <nw4r/g3d/res/g3d_resfile.h>
 #include <string.h>
+#include <math.h>
 #include "monolib/math/CVec3.hpp"
+#include "monolib/scn/CScnRootNw4r.hpp"
 
 // mpfsys render-state globals (SDA-relative linker symbols). Plain
 // global-scope externs - MWCC does not mangle global-scope variable names,
@@ -48,6 +50,15 @@ extern const f32 lbl_eu_8066A748; // sprite velocity random scale (func_804724DC
 extern const f32 lbl_eu_8066A754; // layer fill constant (func_804724DC)
 extern const f32 lbl_eu_8066A760; // layer anim constant (func_804724DC)
 extern const f32 lbl_eu_8066A764; // layer anim constant (func_804724DC)
+// Projection/colour constants for func_80473984 (shared with CScnItemCamera
+// for lbl_eu_8066A210).
+extern const f32 lbl_eu_8066A210;
+extern const f32 lbl_eu_8066A7B4;
+extern const f32 lbl_eu_8066A7B8;
+extern const f32 lbl_eu_8066A7BC;
+extern const f32 lbl_eu_8066A7C0;
+extern u32 lbl_eu_8066A7A8;   // light colour for func_80473984
+extern u32 lbl_eu_80665860;   // cleared render-state flag
 // Retail .sdata2 magic double used by MWCC's (f32)(u32) conversions (xoris
 // form). Defined here with the exact retail label name/value (2^52 + 2^31) so
 // the conversion pool emits an sda21 reference to the retail slot instead of
@@ -689,7 +700,195 @@ void func_804737F0__Q26mpfsys17UnkClass_80471EC8Fv(s16 texIndex, f32 texScale) {
     }
 }
 
-void mpfsys::UnkClass_80471EC8::func_80473984() {}
+// Self-relative offset table used by func_80473984: +0x1C/+0x24/+0x2C hold
+// offsets from `self` into the bound map data; the +0x24 target is a data
+// node whose own words (+0x0 and +0xC) are further self-relative offsets.
+struct MpfsysSelfRelState {
+    u8 field_0x0[0x1C];
+    s32 field_0x1C;
+    u8 field_0x20[0x24 - 0x20];
+    s32 field_0x24;
+    u8 field_0x28[0x2C - 0x28];
+    s32 field_0x2C;
+};
+
+struct MpfsysSelfRelData {
+    s32 field_0x0;
+    u8 field_0x4[0xC - 0x4];
+    s32 field_0xC;
+};
+
+// CScn env-light controller slot at +0x7C (func_80473984 tail). The type is
+// defined in monolib/src/scn/CScnEnvLgtCtrl.hpp (not on the include path),
+// so only a forward declaration is available here.
+class CScnEnvLgtCtrl;
+struct MpfsysCScnEnvLgt {
+    u8 field_0x0[0x7C];
+    CScnEnvLgtCtrl* field_0x7C;
+};
+
+// CScn singleton accessor / env-light refresh (no compiled header declares
+// them; same local C declarations as code_8047BB54.cpp).
+extern "C" void* func_8049698C();
+extern "C" void func_804C19B8(CScnEnvLgtCtrl* ctrl);
+
+// Camera/projection state push for the sprite pass (retail symbol is
+// Fv-mangled but receives self, resFile, mtx, cam0, cam1, swapFlag, f1).
+// Builds the camera rotation/direction from the map matrix, pushes the
+// GX vertex/light/tev state and stores the projection factors.
+void func_80473984__Q26mpfsys17UnkClass_80471EC8Fv(
+    mpfsys::UnkClass_80471EC8* self, nw4r::g3d::ResFileData* resFile, Mtx mtx,
+    void* a5, void* a6, u32 swapFlag, f32 f1) {
+    MpfsysCamMatrixRegion* cam = &lbl_eu_80658410;
+    u32* srcw = (u32*)mtx;
+    lbl_eu_80665848 = resFile;
+    // Word copy of the 12-float matrix (GPR lwz/stw pairs like retail).
+    u32* dst48 = (u32*)cam->field_0x48;
+    dst48[0] = srcw[0];
+    dst48[1] = srcw[1];
+    dst48[2] = srcw[2];
+    dst48[3] = srcw[3];
+    dst48[4] = srcw[4];
+    dst48[5] = srcw[5];
+    dst48[6] = srcw[6];
+    dst48[7] = srcw[7];
+    dst48[8] = srcw[8];
+    dst48[9] = srcw[9];
+    dst48[10] = srcw[10];
+    dst48[11] = srcw[11];
+    PSMTXInverse(cam->field_0x48, cam->field_0x48);
+    u32* dst18 = (u32*)cam->field_0x18;
+    dst18[0] = srcw[0];
+    dst18[1] = srcw[1];
+    dst18[2] = srcw[2];
+    dst18[3] = srcw[3];
+    dst18[4] = srcw[4];
+    dst18[5] = srcw[5];
+    dst18[6] = srcw[6];
+    dst18[7] = srcw[7];
+    dst18[8] = srcw[8];
+    dst18[9] = srcw[9];
+    dst18[10] = srcw[10];
+    dst18[11] = srcw[11];
+    cam->field_0x18[0][3] = lbl_eu_8066A7A4;
+    cam->field_0x18[1][3] = lbl_eu_8066A7A4;
+    cam->field_0x18[2][3] = lbl_eu_8066A7A4;
+    cam->field_0x0[0] = mtx[0][3];
+    cam->field_0x0[1] = mtx[1][3];
+    cam->field_0x0[2] = mtx[2][3];
+    cam->field_0xC[0] = lbl_eu_8066A7A4;
+    cam->field_0xC[1] = lbl_eu_8066A7A4;
+    cam->field_0xC[2] = lbl_eu_8066A7AC;
+    PSMTXMultVec(cam->field_0x18, (Vec*)cam->field_0xC, (Vec*)cam->field_0xC);
+    f32 mag2 = cam->field_0xC[1] * cam->field_0xC[1] +
+               cam->field_0xC[0] * cam->field_0xC[0] +
+               cam->field_0xC[2] * cam->field_0xC[2];
+    if (mag2 == lbl_eu_8066A7A4) {
+        cam->field_0xC[0] = ml::CVec3::zero.x;
+        cam->field_0xC[1] = ml::CVec3::zero.y;
+        cam->field_0xC[2] = ml::CVec3::zero.z;
+    } else {
+        PSVECNormalize((Vec*)cam->field_0xC, (Vec*)cam->field_0xC);
+    }
+    GXSetCurrentMtx(0);
+    GXLoadPosMtxImm(cam->field_0x48, 0);
+    lbl_eu_80665840 = (u8*)self;
+    f32 m2 = cam->field_0xC[1] * cam->field_0xC[1] +
+             cam->field_0xC[0] * cam->field_0xC[0] +
+             cam->field_0xC[2] * cam->field_0xC[2];
+    f32 inv = lbl_eu_8066A7B0 / m2;
+    lbl_eu_80665880 = inv;
+    MpfsysSelfRelState* s = (MpfsysSelfRelState*)self;
+    u8* base = (u8*)self;
+    MpfsysSelfRelData* d1 = (MpfsysSelfRelData*)(base + s->field_0x1C);
+    lbl_eu_80665844 = base + d1->field_0x0;
+    MpfsysSelfRelData* d24 = (MpfsysSelfRelData*)(base + s->field_0x24);
+    lbl_eu_8066584C = base + d24->field_0x0;
+    lbl_eu_80665850 = (u16*)(base + d24->field_0xC);
+    lbl_eu_80665868 = (s32*)(base + ((MpfsysSelfRelData*)(base + s->field_0x2C))->field_0x0);
+    f32 t = f1 * lbl_eu_8066A210 * lbl_eu_8066A7B4 * lbl_eu_8066A7BC *
+            lbl_eu_8066A7B8;
+    lbl_eu_80665884 = lbl_eu_8066A7C0 * (f32)tan(t);
+    GXClearVtxDesc();
+    GXSetVtxDesc((GXAttr)0x9, (GXAttrType)0x1);
+    GXSetVtxDesc((GXAttr)0xB, (GXAttrType)0x1);
+    GXSetVtxDesc((GXAttr)0xD, (GXAttrType)0x2);
+    GXSetVtxAttrFmt((GXVtxFmt)0, (GXAttr)0x9, (GXCompCnt)0x1, (GXCompType)0x4, 0);
+    GXSetVtxAttrFmt((GXVtxFmt)0, (GXAttr)0xB, (GXCompCnt)0x0, (GXCompType)0x0, 0);
+    GXSetVtxAttrFmt((GXVtxFmt)0, (GXAttr)0xD, (GXCompCnt)0x1, (GXCompType)0x4, 0);
+    GXSetVtxAttrFmt((GXVtxFmt)1, (GXAttr)0x9, (GXCompCnt)0x1, (GXCompType)0x4, 0);
+    GXSetVtxAttrFmt((GXVtxFmt)1, (GXAttr)0xB, (GXCompCnt)0x0, (GXCompType)0x4, 0);
+    GXSetVtxAttrFmt((GXVtxFmt)1, (GXAttr)0xD, (GXCompCnt)0x1, (GXCompType)0x4, 0);
+    GXSetVtxAttrFmt((GXVtxFmt)2, (GXAttr)0x9, (GXCompCnt)0x1, (GXCompType)0x4, 0);
+    GXSetVtxAttrFmt((GXVtxFmt)2, (GXAttr)0xB, (GXCompCnt)0x0, (GXCompType)0x0, 0);
+    GXSetVtxAttrFmt((GXVtxFmt)2, (GXAttr)0xD, (GXCompCnt)0x1, (GXCompType)0x4, 0);
+    GXSetVtxAttrFmt((GXVtxFmt)3, (GXAttr)0x9, (GXCompCnt)0x1, (GXCompType)0x4, 0);
+    GXSetVtxAttrFmt((GXVtxFmt)3, (GXAttr)0xD, (GXCompCnt)0x1, (GXCompType)0x4, 0);
+    GXSetVtxAttrFmt((GXVtxFmt)4, (GXAttr)0x9, (GXCompCnt)0x1, (GXCompType)0x4, 0);
+    GXSetVtxAttrFmt((GXVtxFmt)4, (GXAttr)0xB, (GXCompCnt)0x0, (GXCompType)0x1, 0);
+    GXSetVtxAttrFmt((GXVtxFmt)4, (GXAttr)0xD, (GXCompCnt)0x1, (GXCompType)0x4, 0);
+    GXSetAlphaCompare((GXCompare)0x6, 0x80, (GXAlphaOp)0, (GXCompare)0x3, 0xff);
+    GXSetBlendMode((GXBlendMode)0, (GXBlendFactor)0, (GXBlendFactor)0, (GXLogicOp)0);
+    GXSetZMode((GXBool)1, (GXCompare)0x3, (GXBool)1);
+    GXSetZCompLoc((GXBool)0);
+    GXSetCullMode((GXCullMode)0);
+    GXSetNumTexGens(1);
+    GXSetNumIndStages(0);
+    GXSetTevDirect((GXTevStageID)0);
+    GXSetTevDirect((GXTevStageID)1);
+    GXSetNumTevStages(1);
+    GXSetTexCoordGen2((GXTexCoordID)0, (GXTexGenType)0x1, (GXTexGenSrc)0x4, 0x3c, (GXBool)0, 0x7d);
+    GXSetTevOrder((GXTevStageID)0, (GXTexCoordID)0, (GXTexMapID)0, (GXChannelID)0x4);
+    GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xf, (GXTevColorArg)0xa, (GXTevColorArg)0x8, (GXTevColorArg)0xf);
+    GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0x2, (GXBool)1, (GXTevRegID)0);
+    GXSetTevAlphaIn((GXTevStageID)0, (GXTevAlphaArg)0x7, (GXTevAlphaArg)0x6, (GXTevAlphaArg)0x4, (GXTevAlphaArg)0x7);
+    GXSetTevAlphaOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)1, (GXTevRegID)0);
+    GXSetNumChans(1);
+    GXSetChanCtrl((GXChannelID)0, (GXBool)1, (GXColorSrc)0, (GXColorSrc)1, (GXLightID)1, (GXDiffuseFn)0, (GXAttnFn)0x2);
+    GXLightObj light;
+    GXColor lightColor;
+    *(u32*)&lightColor = lbl_eu_8066A7A8;
+    GXInitLightColor(&light, lightColor);
+    GXLoadLightObjImm(&light, (GXLightID)1);
+    func_804723A4__Q26mpfsys17UnkClass_80471EC8Fv(
+        (mpfsys::UnkClass_80471EC8*)lbl_eu_80665838,
+        (GXColor*)&lbl_eu_80665878, (GXColor*)&lbl_eu_8066587C);
+    GXColor amb;
+    *(u32*)&amb = lbl_eu_80665878;
+    GXSetChanAmbColor(GX_COLOR0, amb);
+    GXColor mat;
+    *(u32*)&mat = lbl_eu_8066A7A8;
+    GXSetChanMatColor(GX_COLOR0, mat);
+    GXColor key;
+    *(u32*)&key = lbl_eu_8066A7A0;
+    lbl_eu_80665858 = -1;
+    lbl_eu_80665854 = 1;
+    lbl_eu_8066585A = 0;
+    lbl_eu_8066586C = 0;
+    lbl_eu_80665860 = 0;
+    lbl_eu_80665874 = a5;
+    lbl_eu_80665870 = a6;
+    GXSetTevKColor(GX_KCOLOR0, key);
+    GXSetArray((GXAttr)0xd, lbl_eu_80665844, 0x8);
+    GXSetTevKColorSel((GXTevStageID)0, (GXTevKColorSel)0xc);
+    GXSetTevKColorSel((GXTevStageID)1, (GXTevKColorSel)0xd);
+    GXSetTevKAlphaSel((GXTevStageID)0, (GXTevKAlphaSel)0x1c);
+    GXSetTevKAlphaSel((GXTevStageID)1, (GXTevKAlphaSel)0x1d);
+    if (swapFlag != 0) {
+        GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_RED, GX_CH_RED, GX_CH_ALPHA);
+        GXSetTevSwapModeTable(GX_TEV_SWAP1, GX_CH_RED, GX_CH_RED, GX_CH_RED, GX_CH_ALPHA);
+        GXSetTevSwapModeTable(GX_TEV_SWAP2, GX_CH_RED, GX_CH_RED, GX_CH_RED, GX_CH_ALPHA);
+        GXSetTevSwapModeTable(GX_TEV_SWAP3, GX_CH_RED, GX_CH_RED, GX_CH_RED, GX_CH_ALPHA);
+    } else {
+        GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
+        GXSetTevSwapModeTable(GX_TEV_SWAP1, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
+        GXSetTevSwapModeTable(GX_TEV_SWAP2, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
+        GXSetTevSwapModeTable(GX_TEV_SWAP3, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
+    }
+    func_804C19B8(((MpfsysCScnEnvLgt*)(u8*)func_8049698C())->field_0x7C);
+    lbl_eu_8066585C = 0;
+    nw4r::g3d::G3DState::LoadFog(0x40);
+}
 
 void mpfsys::UnkClass_80471EC8::func_804742BC() {
     if (lbl_eu_8066585A == 0) {
@@ -946,11 +1145,12 @@ void func_80474CF4__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* se
     // table index and is never dereferenced, so the literal mangled name is
     // kept (func_8047233C precedent) - a const member would mangle to
     // ...CFv and never resolve against the retail ...Fv symbol.
+    u32 alpha = lbl_eu_8066A7D0;
     u16 rgb565 = lbl_eu_80665850[(u32)self];
     GXColor color;
-    *(u32*)&color = lbl_eu_8066A7D0;
-    color.r = (u8)((rgb565 >> 8) & 0x1F);
-    color.g = (u8)((rgb565 >> 3) & 0x3F);
+    *(u32*)&color = alpha;
+    color.r = (u8)((rgb565 >> 8) & 0xF8);
+    color.g = (rgb565 >> 3) & 0x1F8;
     color.b = (u8)((rgb565 & 0x1F) << 3);
     GXSetChanMatColor(GX_COLOR0, color);
 }
@@ -958,11 +1158,12 @@ void func_80474CF4__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* se
 void mpfsys::UnkClass_80471EC8::func_80474D50() {
     // Same RGB565->GXColor expansion as func_80474CF4 (alpha byte from
     // lbl_eu_8066A7D4), pushed as TEV register colour 0.
+    u32 alpha = lbl_eu_8066A7D4;
     u16 rgb565 = lbl_eu_80665850[(u32)this];
     GXColor color;
-    *(u32*)&color = lbl_eu_8066A7D4;
-    color.r = (u8)((rgb565 >> 8) & 0x1F);
-    color.g = (u8)((rgb565 >> 3) & 0x3F);
+    *(u32*)&color = alpha;
+    color.r = (u8)((rgb565 >> 8) & 0xF8);
+    color.g = (rgb565 >> 3) & 0x1F8;
     color.b = (u8)((rgb565 & 0x1F) << 3);
     GXSetTevColor(GX_TEVREG0, color);
 }

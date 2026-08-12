@@ -136,16 +136,6 @@ void __HBMSEQReadHeader(HBMSEQSEQUENCE *seq, u8 *data)
 
     seq->field_0x0C = seq->num_tracks;
 }
-#pragma pop
-
-extern "C" void HBMSEQInit()
-{
-    if (__init != 0) {
-        return;
-    }
-    __HBMSEQSequenceList = NULL;
-    __init = 1;
-}
 
 extern "C" void HBMSEQQuit()
 {

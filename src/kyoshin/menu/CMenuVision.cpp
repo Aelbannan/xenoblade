@@ -3,8 +3,11 @@
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFont.hpp"
+#include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/lib/CLibStaticData.hpp"
+#include "monolib/work/CProcess.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
 
 // Globals shared across menu units
 extern "C" {
@@ -28,8 +31,8 @@ public:
 
 extern u32 func_801355A0();
 
-extern void func_801AFAD0(CMenuVision*, CMenuVisionEntry*);
-extern f32 func_800F4424(void*);
+extern "C" void func_801AFAD0(CMenuVision*, CMenuVisionEntry*);
+extern "C" f32 func_800F4424(void*);
 
 extern "C" {
 void* func_800B708C__Fi(int);
@@ -195,26 +198,109 @@ static inline void menuVisionReplacePaneImage(nw4r::lyt::Pane* pane, void* image
     }
 }
 
-// --- Stubs for non-target functions ---
-void __ct__CMenuVision(){}
+// --- CMenuVision ctor/dtor ---
 
-CMenuVision::~CMenuVision() {}
+// Retail ctor symbol is unmangled (`__ct__CMenuVision`, C-ABI); kept as a
+// C-linkage out-of-line helper so the factory (func_801ACCE0) emits a real bl
+// to it, returning `this` in r3 like a real constructor (retail relies on it).
+extern "C" CMenuVision* __ct__CMenuVision(CMenuVision* self, CProcess* parent) {
+    return self;
+}
+
+// Complete-object destructor: destroy the layout-memory region member
+// (deleting flag -1), then the CProcess base guarded by the nested double
+// null-check (an MWCC D2-inlined-into-D1 artifact); the conditional operator
+// delete is auto-emitted from the dtor's deleting flag.
+CMenuVision::~CMenuVision() {
+    if (this != NULL) {
+        mLayoutMem.~UnkClass_8045F564();
+        if (this != 0) {
+            if (this != 0) {
+                __dt__8CProcessFv(reinterpret_cast<CProcess*>(this), 0);
+            }
+        }
+    }
+}
 
 extern "C" unsigned long func_801AC088() {
     return lbl_eu_80664388 != 0;
 }
 
-void func_801AC09C(){}
+// Bitmask -> vision-slot lookup; returns true when the selected slot is
+// currently animating (mState != 0). Bits: 1->0, 2->1, 4->2, 8->3, 0x10->5.
+extern "C" bool func_801AC09C(u32 flags) {
+    int index;
+    if (flags & 1) {
+        index = 0;
+    } else if (flags & 2) {
+        index = 1;
+    } else if (flags & 4) {
+        index = 2;
+    } else if (flags & 8) {
+        index = 3;
+    } else if (flags & 0x10) {
+        index = 5;
+    } else {
+        return false;
+    }
+    if (lbl_eu_80664388 == 0) {
+        return false;
+    }
+    return lbl_eu_80664388->mEntries[index].mState != 0;
+}
 
 void func_801AC124(){}
 
-void func_801AC1F8(){}
+// Mark the vision screen active (set flag byte at 0x54) when the singleton
+// instance exists.
+extern "C" void func_801AC1F8() {
+    if (lbl_eu_80664388 != 0) {
+        lbl_eu_80664388->field_0x54 = 1;
+    }
+}
 
-void CMenuVision::Term() {}
+void CMenuVision::Term() {
+    CDeviceVI::waitForDrawDone();
+
+    // IScnRender subobject lives at +0x5C; the null-checked upcast keeps the
+    // retail `mr r4,this; beq; addi r4,this,0x5c` shape.
+    IScnRender* renderCB = reinterpret_cast<IScnRender*>(this);
+    if (this != NULL) {
+        renderCB = reinterpret_cast<IScnRender*>(&unk55[0x07]);
+    }
+    mScn->removeRenderCB(renderCB);
+
+    // Release each per-slot layout (virtual deleting-dtor dispatch at vtable
+    // slot +8) and re-null the slot; the extra inner null-check is the
+    // D2-inlined-into-D1 artifact.
+    for (u8 i = 0; i < 6; i++) {
+        if (mEntries[i].mLayout != 0) {
+            delete mEntries[i].mLayout;
+            mEntries[i].mLayout = 0;
+        }
+    }
+    mLayoutMem.func_8045F778();
+    lbl_eu_80664388 = 0;
+}
 
 void CMenuVision::cbRenderBefore() {}
 
-void func_801ACCE0(){}
+// Lazy singleton factory: allocate a CMenuVision from the work-thread heap,
+// construct it with the given parent, register it on `self`, and stash the
+// result in the global singleton slot. Only the first call sticks.
+extern "C" CMenuVision* func_801ACCE0(CProcess* self, CProcess* parent) {
+    if (lbl_eu_80664388 != 0) {
+        return 0;
+    }
+    CMenuVision* obj = (CMenuVision*)mtl::MemManager::allocate(
+        0x194, CWorkThreadSystem::getWorkMem());
+    if (obj != 0) {
+        obj = __ct__CMenuVision(obj, parent);
+    }
+    lbl_eu_80664388 = obj;
+    Regist__8CProcessFP8CProcessb(reinterpret_cast<CProcess*>(obj), self, 0);
+    return lbl_eu_80664388;
+}
 
 void func_801ACD5C(){}
 
@@ -691,8 +777,6 @@ extern "C" void func_801AD504(int flags) {
 
 void func_801AF934(){}
 
-void func_801AFAD0(CMenuVision*, CMenuVisionEntry*){}
-
 // Mangled linker names used by adjustor thunks below
 
 void func_801AFE04(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
@@ -705,100 +789,101 @@ void sinit_801AFCE8(){}
 
 // --- CMenuVision::Move ---
 void CMenuVision::Move() {
-    // Gate: return early if game paused, event busy, or UI suppressed
+    // Early-out guards: game paused, UI-suppression bits, or no active entry.
     if (CTaskGame::getInstance()->func_800426F0()) {
-        return;
+        goto L_ret;
     }
-    if (lbl_eu_80663E28 & 0x400) { // bit 10 (IBM bit 21)
-        return;
+    if ((lbl_eu_80663E28 & 0x200000) != 0) {
+        goto L_ret;
     }
+    goto L_continue;
+L_ret:
+    return;
+L_continue:
     if (!func_8013BE50()) {
-        return;
+        goto L_ret;
     }
-    if (lbl_eu_80663E24 & 0x40) { // bit 6 (IBM bit 25)
-        return;
+    if (lbl_eu_80663E24 & 0x2000000) {
+        goto L_ret;
     }
 
-    // Check if any entry has non-zero state - if all are zero, skip update
-    bool anyActive = false;
-    for (int i = 0; i < 6; i++) {
+    // Scan the 6 slots for any entry currently animating (mState != 0).
+    bool noActive = true;
+    for (u8 i = 0; i < 6; i++) {
         if (mEntries[i].mState != 0) {
-            anyActive = true;
+            noActive = false;
             break;
         }
     }
-    if (!anyActive) {
-        return;
+    if (noActive) {
+        goto L_ret;
     }
 
-    f32 scale = lbl_eu_80667DC8;
-    f32 zero = lbl_eu_80667DC0;
-    const char* strBase = lbl_eu_80504268;
+    void* bmObj;
+    for (u8 i = 0; i < 6; i++) {
+        CMenuVisionEntry* e = &mEntries[i];
 
-    for (int i = 0; i < 6; i++) {
-        CMenuVisionEntry& e = mEntries[i];
-        nw4r::lyt::Layout* layout = e.mLayout;
-
-        switch (e.mState) {
+        switch (e->mState) {
         case 1:
-            // Play mAnim1 to 1.0f; when done, advance to state 3
-            if (func_80137444(e.mAnim1, lbl_eu_80667DC4)) {
-                e.mState = 3;
+            // Intro anim (mAnim1) finished -> switch to the sustain phase.
+            if (func_80137444(e->mAnim1, lbl_eu_80667DC4)) {
+                e->mState = 2;
             }
             break;
 
         case 2: {
-            void* bmObj = cf::CBattleManager::getInstance()->func_800EA444();
+            bmObj = func_800EA444(cf::CBattleManager::getInstance());
             if (bmObj != NULL) {
-                // Check if the first indicator pane is visible
-                nw4r::lyt::Pane* pane1 = layout->GetRootPane()->FindPaneByName(strBase + 0x195, true);
+                // While the HP-bar pane is visible, track the target position.
+                nw4r::lyt::Pane* pane1 = e->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x195, true);
                 if (reinterpret_cast<PaneVisAccess*>(pane1)->visByte & 1) {
-                    // Read transX/transY from position pane, scale transX
-                    nw4r::lyt::Pane* posPane = layout->GetRootPane()->FindPaneByName(strBase + 0x215, true);
-                    f32 savedX = reinterpret_cast<PaneTransAccess*>(posPane)->transX;
-                    f32 savedY = reinterpret_cast<PaneTransAccess*>(posPane)->transY;
-                    savedX = scale * func_800F4424(bmObj);
-                    // Re-find and write back
-                    posPane = layout->GetRootPane()->FindPaneByName(strBase + 0x215, true);
-                    reinterpret_cast<PaneTransAccess*>(posPane)->transX = savedX;
-                    reinterpret_cast<PaneTransAccess*>(posPane)->transY = savedY;
+                    nw4r::lyt::Pane* posPane = e->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x215, true);
+                    PaneTransAccess* trans = reinterpret_cast<PaneTransAccess*>(posPane);
+                    nw4r::math::VEC2 position;
+                    position.x = trans->transX;
+                    position.y = trans->transY;
+                    position.x = lbl_eu_80667DC8 * func_800F4424(bmObj);
+                    posPane = e->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x215, true);
+                    trans = reinterpret_cast<PaneTransAccess*>(posPane);
+                    trans->transX = position.x;
+                    trans->transY = position.y;
                 }
             } else {
-                // Disable all anims except mAnim2, set mAnim2 to frame 0, advance to state 3
-                layout->SetAnimationEnable(e.mAnim3, false);
-                layout->SetAnimationEnable(e.mAnim4, false);
-                layout->SetAnimationEnable(e.mAnim5, false);
-                layout->SetAnimationEnable(e.mAnim6, false);
-                layout->SetAnimationEnable(e.mAnim7, false);
-                layout->SetAnimationEnable(e.mAnim8, false);
-                layout->SetAnimationEnable(e.mAnim1, false);
-                layout->SetAnimationEnable(e.mAnim2, true);
-                e.mAnim2->SetFrame(zero);
-                e.mState = 3;
+                // Battle ended: stop every anim except mAnim2 and play it from 0.
+                e->mLayout->SetAnimationEnable(e->mAnim3, false);
+                e->mLayout->SetAnimationEnable(e->mAnim4, false);
+                e->mLayout->SetAnimationEnable(e->mAnim5, false);
+                e->mLayout->SetAnimationEnable(e->mAnim6, false);
+                e->mLayout->SetAnimationEnable(e->mAnim7, false);
+                e->mLayout->SetAnimationEnable(e->mAnim8, false);
+                e->mLayout->SetAnimationEnable(e->mAnim1, false);
+                e->mLayout->SetAnimationEnable(e->mAnim2, true);
+                e->mAnim2->SetFrame(lbl_eu_80667DC0);
+                e->mState = 3;
             }
             break;
         }
 
         case 3:
-            // Play mAnim2 to 1.0f; when done, return to state 0
-            if (func_80137444(e.mAnim2, lbl_eu_80667DC4)) {
-                e.mState = 0;
+            // mAnim2 finished -> idle.
+            if (func_80137444(e->mAnim2, lbl_eu_80667DC4)) {
+                e->mState = 0;
             }
             break;
 
         case 4:
-            // Play mAnim4 to 1.0f; when done, return to state 0
-            if (func_80137444(e.mAnim4, lbl_eu_80667DC4)) {
-                e.mState = 0;
+            // mAnim4 finished -> idle.
+            if (func_80137444(e->mAnim4, lbl_eu_80667DC4)) {
+                e->mState = 0;
             }
             break;
 
         case 5:
-            func_801AFAD0(this, &e);
+            func_801AFAD0(this, e);
             break;
         }
 
-        layout->Animate(0);
+        e->mLayout->Animate(0);
     }
 }
 
@@ -819,76 +904,71 @@ void CMenuVision::Init() {
     paneNames[5] = (const char*)lbl_eu_805041C0[5];
 
     nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
-    const char* strBase = lbl_eu_80504268;
-    f32 zero = lbl_eu_80667DC0;
 
-    for (int i = 0; i < 6; i++) {
+    for (u8 i = 0; i < 6; i++) {
         CMenuVisionEntry& e = mEntries[i];
 
-        func_80136E84(&e.mLayout, accessor, (char*)strBase + 0xb);
-        nw4r::lyt::Layout* layout = e.mLayout;
-
-        func_80136F08(layout, &e.mAnim1, accessor, (char*)strBase + 0x2b);
-        func_80136F08(layout, &e.mAnim2, accessor, (char*)strBase + 0x4e);
-        func_80136F08(layout, &e.mAnim3, accessor, (char*)strBase + 0x72);
-        func_80136F08(layout, &e.mAnim4, accessor, (char*)strBase + 0x9a);
-        func_80136F08(layout, &e.mAnim5, accessor, (char*)strBase + 0xc5);
-        func_80136F08(layout, &e.mAnim6, accessor, (char*)strBase + 0xef);
-        func_80136F08(layout, &e.mAnim7, accessor, (char*)strBase + 0x119);
-        func_80136F08(layout, &e.mAnim8, accessor, (char*)strBase + 0x13f);
+        func_80136E84(&e.mLayout, accessor, lbl_eu_80504268 + 0xb);
+        func_80136F08(e.mLayout, &e.mAnim1, accessor, lbl_eu_80504268 + 0x2b);
+        func_80136F08(e.mLayout, &e.mAnim2, accessor, lbl_eu_80504268 + 0x4e);
+        func_80136F08(e.mLayout, &e.mAnim3, accessor, lbl_eu_80504268 + 0x72);
+        func_80136F08(e.mLayout, &e.mAnim4, accessor, lbl_eu_80504268 + 0x9a);
+        func_80136F08(e.mLayout, &e.mAnim5, accessor, lbl_eu_80504268 + 0xc5);
+        func_80136F08(e.mLayout, &e.mAnim6, accessor, lbl_eu_80504268 + 0xef);
+        func_80136F08(e.mLayout, &e.mAnim7, accessor, lbl_eu_80504268 + 0x119);
+        func_80136F08(e.mLayout, &e.mAnim8, accessor, lbl_eu_80504268 + 0x13f);
 
         // Disable anims 2-8, enable anim1, reset to frame 0
-        layout->SetAnimationEnable(e.mAnim2, false);
-        layout->SetAnimationEnable(e.mAnim3, false);
-        layout->SetAnimationEnable(e.mAnim4, false);
-        layout->SetAnimationEnable(e.mAnim5, false);
-        layout->SetAnimationEnable(e.mAnim6, false);
-        layout->SetAnimationEnable(e.mAnim7, false);
-        layout->SetAnimationEnable(e.mAnim8, false);
-        layout->SetAnimationEnable(e.mAnim1, true);
-        e.mAnim1->SetFrame(zero);
-        layout->Animate(0);
+        e.mLayout->SetAnimationEnable(e.mAnim2, false);
+        e.mLayout->SetAnimationEnable(e.mAnim3, false);
+        e.mLayout->SetAnimationEnable(e.mAnim4, false);
+        e.mLayout->SetAnimationEnable(e.mAnim5, false);
+        e.mLayout->SetAnimationEnable(e.mAnim6, false);
+        e.mLayout->SetAnimationEnable(e.mAnim7, false);
+        e.mLayout->SetAnimationEnable(e.mAnim8, false);
+        e.mLayout->SetAnimationEnable(e.mAnim1, true);
+        e.mAnim1->SetFrame(lbl_eu_80667DC0);
+        e.mLayout->Animate(0);
 
         // Hide 6 standard panes by clearing bit 0 of visByte
-        nw4r::lyt::Pane* rootPane = layout->GetRootPane();
-        nw4r::lyt::Pane* p;
-
-        p = rootPane->FindPaneByName(strBase + 0x169, true);
+        nw4r::lyt::Pane* p = e.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x169, true);
         reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
-        p = rootPane->FindPaneByName(strBase + 0x174, true);
+        p = e.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x174, true);
         reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
-        p = rootPane->FindPaneByName(strBase + 0x17f, true);
+        p = e.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x17f, true);
         reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
-        p = rootPane->FindPaneByName(strBase + 0x18a, true);
+        p = e.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x18a, true);
         reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
-        p = rootPane->FindPaneByName(strBase + 0x195, true);
+        p = e.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x195, true);
         reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
-        p = rootPane->FindPaneByName(strBase + 0x1a2, true);
+        p = e.mLayout->GetRootPane()->FindPaneByName(lbl_eu_80504268 + 0x1a2, true);
         reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
 
-        // Show the entry-specific pane (clear all bits, then set bit 0)
-        p = rootPane->FindPaneByName(paneNames[i], true);
+        // Show the entry-specific pane (retail re-finds it between the two ops)
+        p = e.mLayout->GetRootPane()->FindPaneByName(paneNames[i], true);
+        reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
+        p = e.mLayout->GetRootPane()->FindPaneByName(paneNames[i], true);
         reinterpret_cast<PaneVisAccess*>(p)->visByte &= ~1;
         reinterpret_cast<PaneVisAccess*>(p)->visByte |= 1;
 
         // Per-index special setup
         if (i == 1) {
-            u8* fontObj = (u8*)CDeviceFont::func_80452C10(1, layout);
             typedef u32 (*FontVFn)(void*);
+            void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1);
             u32 fontVal = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
 
-            func_801368C0(layout, (char*)strBase + 0x1ab, fontVal);
-            func_801368C0(layout, (char*)strBase + 0x1b8, fontVal);
-            func_801368C0(layout, (char*)strBase + 0x1c5, fontVal);
-            func_801368C0(layout, (char*)strBase + 0x1d2, fontVal);
-            func_801368C0(layout, (char*)strBase + 0x1df, fontVal);
-            func_801368C0(layout, (char*)strBase + 0x1ed, fontVal);
+            func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1ab, fontVal);
+            func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1b8, fontVal);
+            func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1c5, fontVal);
+            func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1d2, fontVal);
+            func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1df, fontVal);
+            func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1ed, fontVal);
         } else if (i == 3) {
             u32 val = func_801355A0();
-            func_801368C0(layout, (char*)strBase + 0x1fb, val);
+            func_801368C0(e.mLayout, lbl_eu_80504268 + 0x1fb, val);
         } else if (i == 5) {
             u32 val = func_801355A0();
-            func_801368C0(layout, (char*)strBase + 0x208, val);
+            func_801368C0(e.mLayout, lbl_eu_80504268 + 0x208, val);
         }
     }
 

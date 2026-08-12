@@ -82,6 +82,13 @@ METRICS = (
     ("asm_code", "asm"),
     ("rn_params", "rN"),
     ("goto_count", "goto"),
+    # Fakematch-candidate families (source reproduces retail codegen, not
+    # retail source; each hit is a candidate for the natural-rewrite hexdiff
+    # test). schedule_pragma is 0 today: the one known instance lives in
+    # libs/PowerPC_EABI_Support (out of the game-code roots, `.cp` suffix).
+    ("asm_insn_shim", "asm-shim"),
+    ("schedule_pragma", "schedule-pragma"),
+    ("init_side_effect", "init-side-effect"),
 )
 SEVERITY_WEIGHTS = {  # cleanable-smell weight for the top-offenders list
     "extern_c_nonlbl_decl": 1,
@@ -94,6 +101,9 @@ SEVERITY_WEIGHTS = {  # cleanable-smell weight for the top-offenders list
     "deref_arith": 1,
     "asm_code": 3,
     "rn_params": 2,
+    "asm_insn_shim": 3,
+    "schedule_pragma": 3,
+    "init_side_effect": 4,  # strongest fakematch signal: pure codegen choreography
 }
 
 
@@ -123,10 +133,21 @@ def totals(rows: dict[str, Stats]) -> Stats:
     return t
 
 
+# Zero-count seeding for freshly introduced metrics: the strict regression
+# gate treats a metric absent from the base baseline as "new" (skipped this
+# round, see cmd_check) so an initial baseline can be committed without
+# exploding on existing hits; seeding these keys at 0 makes them established
+# from the very first commit after introduction, so future increases are
+# enforced normally.
+NEW_METRIC_SEED = ("asm_insn_shim", "schedule_pragma", "init_side_effect")
+
+
 def baseline_json(rows: dict[str, Stats]) -> str:
     bl = {}
     for path, s in sorted(rows.items()):
         metrics = {k: getattr(s, k) for k, _ in METRICS if getattr(s, k) > 0}
+        for k in NEW_METRIC_SEED:
+            metrics.setdefault(k, 0)
         if metrics:
             bl[path] = metrics
     return json.dumps(bl, sort_keys=True, indent=1)
@@ -146,6 +167,13 @@ def render_report(rows: dict[str, Stats]) -> str:
         "`tools/pi_harness/lint.py`; this report makes the legacy backlog visible and "
         "prevents it from growing. **Goal: every number in this table trends to 0.**"
     )
+    lines.append(
+        "The three `*shim`/`side-effect` rows are **fakematch-candidate** families: "
+        "source shapes that reproduce retail *codegen* instead of retail *source* "
+        "(`DECOMP_ASM_INSN` single-instruction asm blocks, `#pragma schedule` "
+        "scheduling knobs, assignments inside casts in initializers). Each count is "
+        "a candidate for the natural-rewrite hexdiff test, not a proven fakematch."
+    )
     lines.append("")
     lines.append("## Summary")
     lines.append("")
@@ -164,6 +192,9 @@ def render_report(rows: dict[str, Stats]) -> str:
         "asm_code": "inline asm / `register`",
         "rn_params": "rN-named params",
         "goto_count": "goto",
+        "asm_insn_shim": "DECOMP_ASM_INSN asm shims (fakematch candidate)",
+        "schedule_pragma": "#pragma schedule once/twice (fakematch candidate)",
+        "init_side_effect": "assignment inside cast / init-list (fakematch candidate)",
         "pragma": "#pragma",
     }
     for k, label in total_row.items():
@@ -187,6 +218,30 @@ def render_report(rows: dict[str, Stats]) -> str:
         if all(v == "0" for v in vals):
             continue
         lines.append(f"| {path} | " + " | ".join(vals) + " |")
+    lines.append("")
+    lines.append("## Fakematch candidates")
+    lines.append("")
+    lines.append(
+        "TUs with any of the three fakematch-candidate families above. Each row is "
+        "a candidate, not a verdict — verify with the natural-rewrite hexdiff test "
+        "(rewrite the trick in the natural form; if the natural form still matches, "
+        "the current source is a fakematch)."
+    )
+    lines.append("")
+    lines.append("| TU | asm-shim | schedule-pragma | init-side-effect |")
+    lines.append("|---|---|---|---|")
+    fm = [
+        (path, s) for path, s in sorted(rows.items())
+        if s.asm_insn_shim or s.schedule_pragma or s.init_side_effect
+    ]
+    if fm:
+        for path, s in fm:
+            lines.append(
+                f"| {path} | {s.asm_insn_shim} | {s.schedule_pragma} | "
+                f"{s.init_side_effect} |"
+            )
+    else:
+        lines.append("| _(none)_ | 0 | 0 | 0 |")
     lines.append("")
     lines.append("## Notes")
     lines.append("")
@@ -278,11 +333,20 @@ def cmd_check(args, rows: dict[str, Stats]) -> int:
             base = extract_baseline(base_text)
             if base:
                 regressions: list[str] = []
+                # Metrics absent from the base baseline entirely (introduced
+                # after that snapshot) are skipped this round: the regenerated
+                # baseline captures current counts as the new floor. Once it
+                # lands on the base branch they are established and enforced
+                # normally (NEW_METRIC_SEED also seeds them at 0 so even
+                # zero-count metrics become established on the first commit).
+                established = {k for m in base.values() for k in m}
                 for path, metrics in sorted(base.items()):
                     cur = rows.get(path)
                     if cur is None:
                         continue  # TU removed
                     for k, disp in METRICS:
+                        if k not in established:
+                            continue
                         before = int(metrics.get(k, 0))
                         after = getattr(cur, k)
                         if after > before:
@@ -427,7 +491,10 @@ def rvl_module(rel: Path) -> str:
     return parts[i + 1] if i + 1 < len(parts) else "(root)"
 
 
-RVL_SEVERITY_WEIGHTS = {k: w for k, w in SEVERITY_WEIGHTS.items() if k != "asm_code"}
+RVL_SEVERITY_WEIGHTS = {
+    k: w for k, w in SEVERITY_WEIGHTS.items()
+    if k not in ("asm_code", "asm_insn_shim")  # RVL asm kernels/shims are §17.6-sanctioned
+}
 
 
 def rvl_severity(s: Stats) -> int:
@@ -488,6 +555,9 @@ def render_report_rvl(rows: dict[str, Stats], ctx: dict[str, dict[str, int]]) ->
         "asm_code": "inline asm / `register` (incl. asm kernels)",
         "rn_params": "rN-named params",
         "goto_count": "goto",
+        "asm_insn_shim": "DECOMP_ASM_INSN asm shims (ipcclt opword blocks — sanctioned)",
+        "schedule_pragma": "#pragma schedule once/twice",
+        "init_side_effect": "assignment inside cast / init-list",
         "pragma": "#pragma",
     }
     for k, label in total_row.items():

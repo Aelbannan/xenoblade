@@ -4,7 +4,7 @@
 
 Tracks the same legacy TU smell families as `docs/CODE_SMELLS.md` for the hand-written RVL_SDK C TUs in `libs/RVL_SDK/src` (revolution modules). It is **informational, not CI-gated**: SDK code is retail/match-pinned, so most findings are context-dependent rather than cleanable.
 
-**Scope:** 248 hand-written .c/.cpp TUs. Excluded: 197 preprocessed `.ctx.c` context dumps (all headers inlined — not source) and the retail public headers in `libs/RVL_SDK/include`. **Asm-function bodies are stripped** from the C-level metrics (their `lis r3, …` mnemonic lines would otherwise flood rN/self counts); they are folded into the `asm` metric and reported as kernels below.
+**Scope:** 248 hand-written .c/.cpp TUs. Excluded: 198 preprocessed `.ctx.c` context dumps (all headers inlined — not source) and the retail public headers in `libs/RVL_SDK/include`. **Asm-function bodies are stripped** from the C-level metrics (their `lis r3, …` mnemonic lines would otherwise flood rN/self counts); they are folded into the `asm` metric and reported as kernels below.
 
 ## Summary
 
@@ -13,18 +13,21 @@ Tracks the same legacy TU smell families as `docs/CODE_SMELLS.md` for the hand-w
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 419 |
-| extern "C" declarations (non-lbl_*) | 89 |
+| extern "C" (total lines) | 395 |
+| extern "C" declarations (non-lbl_*) | 69 |
 | extern "C" definitions (forced names) | 21 |
 | `self`/register-style params | 7 |
-| `void*` (params + locals) | 821 |
+| `void*` (params + locals) | 814 |
 | `(void*)` casts | 137 |
 | raw pointer offset arithmetic | 93 |
 | deref-through-cast arithmetic | 13 |
 | inline asm / `register` (incl. asm kernels) | 208 |
 | rN-named params | 7 |
 | goto | 224 |
-| #pragma | 211 |
+| DECOMP_ASM_INSN asm shims (ipcclt opword blocks — sanctioned) | 2 |
+| #pragma schedule once/twice | 0 |
+| assignment inside cast / init-list | 0 |
+| #pragma | 208 |
 
 ## void* context
 
@@ -34,7 +37,7 @@ Raw `void*` counts overstate the smell: the SDK surface legitimately uses `void*
 |---|---|---|---|---|---|---|
 | bte | 68 | 409 | 122 | 1 | 0 | 286 |
 | os | 34 | 117 | 4 | 0 | 0 | 113 |
-| hbm | 41 | 108 | 24 | 0 | 0 | 84 |
+| hbm | 41 | 101 | 22 | 0 | 0 | 79 |
 | gx | 15 | 46 | 3 | 0 | 0 | 43 |
 | mem | 5 | 44 | 0 | 0 | 0 | 44 |
 | ax | 10 | 32 | 0 | 0 | 0 | 32 |
@@ -80,173 +83,172 @@ No files carry the `void* self` offset-deref pattern.
 | libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c | 27 |
 | libs/RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c | 26 |
 | libs/RVL_SDK/src/revolution/ipc/ipcclt.c | 25 |
-| libs/RVL_SDK/src/revolution/hbm/HBMAxSound.cpp | 24 |
 | libs/RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c | 23 |
+| libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm.c | 23 |
 
 ## Per-TU metrics
 
-| TU | extC-decl | extC-def | self | void* | ptr-arith | deref-arith | asm | rN | goto |
-|---|---|---|---|---|---|---|---|---|---|
-| libs/RVL_SDK/src/revolution/ai/ai.c | 0 | 0 | 0 | 4 | 0 | 0 | 1 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/arc/arc.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 2 |
-| libs/RVL_SDK/src/revolution/ax/AXAux.c | 0 | 0 | 0 | 20 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/ax/AXCL.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/ax/AXOut.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/axfx/AXFXChorusExp.c | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 |
-| libs/RVL_SDK/src/revolution/axfx/AXFXChorusExpDpl2.c | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 |
-| libs/RVL_SDK/src/revolution/axfx/AXFXDelayExpDpl2.c | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| libs/RVL_SDK/src/revolution/axfx/AXFXHooks.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/axfx/AXFXReverbHi.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/base/PPCArch.c | 0 | 0 | 0 | 0 | 0 | 0 | 27 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c | 0 | 0 | 0 | 56 | 2 | 0 | 1 | 0 | 1 |
-| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c | 0 | 0 | 0 | 7 | 0 | 0 | 1 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c | 0 | 0 | 0 | 6 | 0 | 0 | 1 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c | 0 | 0 | 0 | 4 | 3 | 0 | 1 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/bta/sys/bd.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/bta/sys/bta_sys_main.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/gki/gki_buffer.c | 0 | 0 | 1 | 16 | 0 | 0 | 1 | 1 | 6 |
-| libs/RVL_SDK/src/revolution/bte/gki/gki_ppc.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/hci/hcisu_h2.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/hci/uusb_ppc.c | 0 | 0 | 1 | 9 | 6 | 0 | 0 | 1 | 13 |
-| libs/RVL_SDK/src/revolution/bte/main/bte_hcisu.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c | 0 | 0 | 0 | 5 | 1 | 0 | 0 | 0 | 1 |
-| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c | 0 | 0 | 0 | 23 | 0 | 0 | 1 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c | 0 | 0 | 0 | 22 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_sco.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 3 |
-| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c | 0 | 0 | 0 | 22 | 0 | 0 | 2 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/btu/btu_hcif.c | 0 | 0 | 0 | 9 | 0 | 0 | 3 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/gap/gap_api.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/gap/gap_conn.c | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/gap/gap_utils.c | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c | 0 | 0 | 0 | 17 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/hid/hidd_conn.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/hid/hidd_mgmt.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/hid/hidd_pm.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 11 |
-| libs/RVL_SDK/src/revolution/bte/stack/hid/hidh_api.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/hid/hidh_conn.c | 0 | 0 | 0 | 25 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_api.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_csm.c | 0 | 0 | 0 | 21 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_main.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_utils.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/rfcomm/port_rfc.c | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/rfcomm/port_utils.c | 0 | 0 | 1 | 5 | 0 | 0 | 0 | 1 | 2 |
-| libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm.c | 0 | 0 | 0 | 23 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c | 0 | 0 | 0 | 2 | 25 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c | 0 | 0 | 0 | 14 | 0 | 0 | 0 | 0 | 1 |
-| libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_api.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_main.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_server.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_utils.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/cx/CXSecureUncompression.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/cx/CXStreamingUncompression.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 10 |
-| libs/RVL_SDK/src/revolution/cx/CXUncompression.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/db/db.c | 0 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/dvd/dvd.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/dvd/dvdDeviceError.c | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 10 |
-| libs/RVL_SDK/src/revolution/dvd/dvd_broadway.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/dvd/dvdfs.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 3 |
-| libs/RVL_SDK/src/revolution/esp/esp.c | 0 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 13 |
-| libs/RVL_SDK/src/revolution/exi/EXIBios.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/exi/EXICommon.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/exi/EXIUart.c | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 |
-| libs/RVL_SDK/src/revolution/fs/fs.c | 0 | 0 | 0 | 22 | 0 | 0 | 0 | 0 | 17 |
-| libs/RVL_SDK/src/revolution/gx/GXAttr.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/gx/GXDisplayList.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/gx/GXFifo.c | 0 | 0 | 0 | 17 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/gx/GXFrameBuf.c | 0 | 0 | 0 | 2 | 16 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/gx/GXInit.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/gx/GXLight.c | 0 | 0 | 0 | 1 | 0 | 0 | 5 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/gx/GXPerf.c | 0 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/gx/GXPixel.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/gx/GXTexture.c | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/gx/GXTransform.c | 0 | 0 | 0 | 5 | 0 | 0 | 15 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/HBMAxSound.cpp | 16 | 0 | 0 | 8 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/HBMBase.cpp | 0 | 0 | 0 | 20 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/HBMCommon.cpp | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/HBMController.cpp | 3 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/HBMFrameController.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/HBMRemoteSpk.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/mix.c | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_layout.cpp | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_material.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_picture.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox.cpp | 0 | 1 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window.cpp | 0 | 1 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFont.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFontBase.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase.cpp | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_list.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/seq.c | 10 | 2 | 0 | 3 | 0 | 0 | 0 | 0 | 1 |
-| libs/RVL_SDK/src/revolution/hbm/syn.c | 8 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/synctrl.c | 17 | 2 | 0 | 8 | 2 | 2 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/synenv.c | 3 | 2 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/synmix.c | 6 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/synpitch.c | 3 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/synsample.c | 8 | 1 | 0 | 0 | 3 | 3 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/hbm/synvoice.c | 14 | 1 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/ipc/ipcMain.c | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/ipc/ipcclt.c | 0 | 0 | 1 | 21 | 0 | 0 | 3 | 1 | 7 |
-| libs/RVL_SDK/src/revolution/ipc/memory.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 11 |
-| libs/RVL_SDK/src/revolution/kpad/KPAD.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 17 |
-| libs/RVL_SDK/src/revolution/mem/mem_allocator.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/mem/mem_expHeap.c | 0 | 0 | 0 | 23 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/mem/mem_frameHeap.c | 0 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/mem/mem_heapCommon.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/mem/mem_list.c | 0 | 0 | 0 | 4 | 1 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/mix/mix.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/mix/remote.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/mtx/mtx.c | 0 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/mtx/mtxvec.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/mtx/quat.c | 0 | 0 | 0 | 0 | 0 | 0 | 25 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/mtx/vec.c | 0 | 0 | 0 | 0 | 0 | 0 | 21 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/nand/NANDCheck.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/nand/NANDCore.c | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/nand/NANDLogging.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/nand/NANDOpenClose.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/nand/nand.c | 0 | 0 | 0 | 8 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OS.c | 0 | 0 | 0 | 7 | 0 | 0 | 6 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSAlarm.c | 0 | 0 | 0 | 2 | 0 | 0 | 1 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSAlloc.c | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSArena.c | 0 | 0 | 0 | 17 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSCache.c | 0 | 0 | 0 | 1 | 2 | 0 | 16 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSContext.c | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSExec.c | 0 | 0 | 0 | 9 | 14 | 7 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSFatal.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 2 |
-| libs/RVL_SDK/src/revolution/os/OSFont.c | 0 | 0 | 0 | 4 | 5 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSInterrupt.c | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSIpc.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSLaunch.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSMemory.c | 0 | 0 | 0 | 1 | 0 | 0 | 7 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSNet.c | 0 | 0 | 0 | 9 | 0 | 0 | 1 | 0 | 1 |
-| libs/RVL_SDK/src/revolution/os/OSPlayTime.c | 0 | 0 | 0 | 3 | 1 | 0 | 0 | 0 | 13 |
-| libs/RVL_SDK/src/revolution/os/OSReset.c | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 2 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSRtc.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSStateTM.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 2 |
-| libs/RVL_SDK/src/revolution/os/OSSync.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSThread.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/OSTime.c | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/__ppc_eabi_init.c | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/os/__start.c | 0 | 0 | 0 | 2 | 0 | 0 | 2 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/sc/scsystem.c | 0 | 0 | 0 | 5 | 1 | 0 | 0 | 0 | 39 |
-| libs/RVL_SDK/src/revolution/si/SIBios.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/usb/usb.c | 0 | 0 | 0 | 25 | 0 | 0 | 0 | 0 | 18 |
-| libs/RVL_SDK/src/revolution/vi/vi.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 1 |
-| libs/RVL_SDK/src/revolution/wpad/WPAD.c | 0 | 0 | 0 | 14 | 2 | 0 | 1 | 0 | 7 |
-| libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/wpad/WPADMem.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| libs/RVL_SDK/src/revolution/wud/WUD.c | 0 | 0 | 0 | 5 | 6 | 0 | 0 | 0 | 3 |
+| TU | extC-decl | extC-def | self | void* | ptr-arith | deref-arith | asm | rN | goto | asm-shim | schedule-pragma | init-side-effect |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| libs/RVL_SDK/src/revolution/ai/ai.c | 0 | 0 | 0 | 4 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/arc/arc.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/ax/AXAux.c | 0 | 0 | 0 | 20 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/ax/AXCL.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/ax/AXOut.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/axfx/AXFXChorusExp.c | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/axfx/AXFXChorusExpDpl2.c | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/axfx/AXFXDelayExpDpl2.c | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/axfx/AXFXHooks.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/axfx/AXFXReverbHi.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/base/PPCArch.c | 0 | 0 | 0 | 0 | 0 | 0 | 27 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c | 0 | 0 | 0 | 56 | 2 | 0 | 1 | 0 | 1 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c | 0 | 0 | 0 | 7 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c | 0 | 0 | 0 | 6 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c | 0 | 0 | 0 | 4 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/bta/sys/bd.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/bta/sys/bta_sys_main.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/gki/gki_buffer.c | 0 | 0 | 1 | 16 | 0 | 0 | 1 | 1 | 6 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/gki/gki_ppc.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/hci/hcisu_h2.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/hci/uusb_ppc.c | 0 | 0 | 1 | 9 | 6 | 0 | 0 | 1 | 13 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/main/bte_hcisu.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c | 0 | 0 | 0 | 5 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c | 0 | 0 | 0 | 23 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c | 0 | 0 | 0 | 22 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_sco.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 3 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c | 0 | 0 | 0 | 22 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/btu/btu_hcif.c | 0 | 0 | 0 | 9 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/gap/gap_api.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/gap/gap_conn.c | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/gap/gap_utils.c | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c | 0 | 0 | 0 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/hid/hidd_conn.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/hid/hidd_mgmt.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/hid/hidd_pm.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/hid/hidh_api.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/hid/hidh_conn.c | 0 | 0 | 0 | 25 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_api.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_csm.c | 0 | 0 | 0 | 21 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_main.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_utils.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/rfcomm/port_rfc.c | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/rfcomm/port_utils.c | 0 | 0 | 1 | 5 | 0 | 0 | 0 | 1 | 2 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm.c | 0 | 0 | 0 | 23 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c | 0 | 0 | 0 | 2 | 25 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c | 0 | 0 | 0 | 14 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_api.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_main.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_server.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_utils.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/cx/CXSecureUncompression.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/cx/CXStreamingUncompression.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 10 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/cx/CXUncompression.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/db/db.c | 0 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/dvd/dvd.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/dvd/dvdDeviceError.c | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 10 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/dvd/dvd_broadway.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/dvd/dvdfs.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/esp/esp.c | 0 | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 13 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/exi/EXIBios.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/exi/EXICommon.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/exi/EXIUart.c | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/fs/fs.c | 0 | 0 | 0 | 22 | 0 | 0 | 0 | 0 | 17 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/gx/GXAttr.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/gx/GXDisplayList.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/gx/GXFifo.c | 0 | 0 | 0 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/gx/GXFrameBuf.c | 0 | 0 | 0 | 2 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/gx/GXInit.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/gx/GXLight.c | 0 | 0 | 0 | 1 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/gx/GXPerf.c | 0 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/gx/GXPixel.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/gx/GXTexture.c | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/gx/GXTransform.c | 0 | 0 | 0 | 5 | 0 | 0 | 15 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/HBMAxSound.cpp | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/HBMBase.cpp | 0 | 0 | 0 | 20 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/HBMCommon.cpp | 0 | 4 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/HBMController.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/HBMFrameController.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/HBMRemoteSpk.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/mix.c | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_layout.cpp | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_picture.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox.cpp | 0 | 1 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window.cpp | 0 | 1 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFont.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFontBase.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase.cpp | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_list.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/seq.c | 9 | 2 | 0 | 3 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/syn.c | 8 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/synctrl.c | 17 | 2 | 0 | 8 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/synenv.c | 3 | 2 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/synmix.c | 6 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/synpitch.c | 3 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/synsample.c | 8 | 1 | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/hbm/synvoice.c | 14 | 1 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/ipc/ipcMain.c | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/ipc/ipcclt.c | 0 | 0 | 1 | 21 | 0 | 0 | 3 | 1 | 7 | 2 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/ipc/memory.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/kpad/KPAD.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 17 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/mem/mem_allocator.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/mem/mem_expHeap.c | 0 | 0 | 0 | 23 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/mem/mem_frameHeap.c | 0 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/mem/mem_heapCommon.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/mem/mem_list.c | 0 | 0 | 0 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/mix/mix.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/mix/remote.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/mtx/mtx.c | 0 | 0 | 0 | 0 | 0 | 0 | 39 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/mtx/mtxvec.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/mtx/quat.c | 0 | 0 | 0 | 0 | 0 | 0 | 25 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/mtx/vec.c | 0 | 0 | 0 | 0 | 0 | 0 | 21 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/nand/NANDCheck.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/nand/NANDCore.c | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/nand/NANDLogging.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/nand/NANDOpenClose.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/nand/nand.c | 0 | 0 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OS.c | 0 | 0 | 0 | 7 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSAlarm.c | 0 | 0 | 0 | 2 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSAlloc.c | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSArena.c | 0 | 0 | 0 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSCache.c | 0 | 0 | 0 | 1 | 2 | 0 | 16 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSContext.c | 0 | 0 | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSExec.c | 0 | 0 | 0 | 9 | 14 | 7 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSFatal.c | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSFont.c | 0 | 0 | 0 | 4 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSInterrupt.c | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSIpc.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSLaunch.c | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSMemory.c | 0 | 0 | 0 | 1 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSNet.c | 0 | 0 | 0 | 9 | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSPlayTime.c | 0 | 0 | 0 | 3 | 1 | 0 | 0 | 0 | 13 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSReset.c | 0 | 0 | 2 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSRtc.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSStateTM.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSSync.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSThread.c | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/OSTime.c | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/__ppc_eabi_init.c | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/os/__start.c | 0 | 0 | 0 | 2 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/sc/scsystem.c | 0 | 0 | 0 | 5 | 1 | 0 | 0 | 0 | 39 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/si/SIBios.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/usb/usb.c | 0 | 0 | 0 | 25 | 0 | 0 | 0 | 0 | 18 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/vi/vi.c | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/wpad/WPAD.c | 0 | 0 | 0 | 14 | 2 | 0 | 1 | 0 | 7 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/wpad/WPADMem.c | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/RVL_SDK/src/revolution/wud/WUD.c | 0 | 0 | 0 | 5 | 6 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 
 ## Notes
 
@@ -260,582 +262,1499 @@ No files carry the `void* self` offset-deref pattern.
 {
  "libs/RVL_SDK/src/revolution/ai/ai.c": {
   "asm_code": 1,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
  "libs/RVL_SDK/src/revolution/arc/arc.c": {
+  "asm_insn_shim": 0,
   "goto_count": 2,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
+ "libs/RVL_SDK/src/revolution/ax/AX.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/ax/AXAlloc.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/ax/AXAux.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 20
  },
  "libs/RVL_SDK/src/revolution/ax/AXCL.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 5
  },
+ "libs/RVL_SDK/src/revolution/ax/AXComp.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/ax/AXOut.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 3
  },
+ "libs/RVL_SDK/src/revolution/ax/AXProf.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/ax/AXSPB.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/ax/AXVPB.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/ax/DSPCode.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/axfx/AXFXChorusExp.c": {
-  "goto_count": 3
+  "asm_insn_shim": 0,
+  "goto_count": 3,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/axfx/AXFXChorusExpDpl2.c": {
-  "goto_count": 3
+  "asm_insn_shim": 0,
+  "goto_count": 3,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/axfx/AXFXDelayExp.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/axfx/AXFXDelayExpDpl2.c": {
-  "goto_count": 1
+  "asm_insn_shim": 0,
+  "goto_count": 1,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/axfx/AXFXHooks.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
+ "libs/RVL_SDK/src/revolution/axfx/AXFXLfoTable.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/axfx/AXFXReverbHi.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
+ "libs/RVL_SDK/src/revolution/axfx/AXFXReverbHiExp.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/axfx/AXFXReverbStdExp.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/axfx/AXFXReverbStdExpDpl2.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/axfx/AXFXSrcCoef.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/base/PPCArch.c": {
-  "asm_code": 27
+  "asm_code": 27,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c": {
   "asm_code": 1,
+  "asm_insn_shim": 0,
   "goto_count": 1,
+  "init_side_effect": 0,
   "ptr_arith": 2,
+  "schedule_pragma": 0,
   "void_ptr": 56
  },
  "libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c": {
   "asm_code": 1,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 7
  },
+ "libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_cfg.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c": {
   "asm_code": 1,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 6
  },
  "libs/RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c": {
   "asm_code": 1,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
   "ptr_arith": 3,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
  "libs/RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c": {
-  "asm_code": 1
+  "asm_code": 1,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/bte/bta/hh/bta_hh_cfg.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 3
  },
  "libs/RVL_SDK/src/revolution/bte/bta/sys/bd.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
+ "libs/RVL_SDK/src/revolution/bte/bta/sys/bta_sys_cfg.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/bte/bta/sys/bta_sys_conn.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/bte/bta/sys/bta_sys_main.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 5
+ },
+ "libs/RVL_SDK/src/revolution/bte/bta/sys/ptim.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/bte/bta/sys/utl.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/bte/gki/gki_buffer.c": {
   "asm_code": 1,
+  "asm_insn_shim": 0,
   "goto_count": 6,
+  "init_side_effect": 0,
   "rn_params": 1,
+  "schedule_pragma": 0,
   "self_params": 1,
   "void_ptr": 16
  },
  "libs/RVL_SDK/src/revolution/bte/gki/gki_ppc.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 3
  },
+ "libs/RVL_SDK/src/revolution/bte/gki/gki_time.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/bte/hci/hcisu_h2.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
  "libs/RVL_SDK/src/revolution/bte/hci/uusb_ppc.c": {
+  "asm_insn_shim": 0,
   "goto_count": 13,
+  "init_side_effect": 0,
   "ptr_arith": 6,
   "rn_params": 1,
+  "schedule_pragma": 0,
   "self_params": 1,
   "void_ptr": 9
  },
  "libs/RVL_SDK/src/revolution/bte/main/bte_hcisu.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
+ "libs/RVL_SDK/src/revolution/bte/main/bte_init.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/bte/main/bte_logmsg.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/bte/main/bte_main.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/bte/main/btu_task1.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c": {
+  "asm_insn_shim": 0,
   "goto_count": 1,
+  "init_side_effect": 0,
   "ptr_arith": 1,
+  "schedule_pragma": 0,
   "void_ptr": 5
  },
  "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 3
  },
  "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c": {
   "asm_code": 1,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 23
  },
+ "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_discovery.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 22
+ },
+ "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_main.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_pm.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_sco.c": {
   "asm_code": 1,
-  "goto_count": 3
+  "asm_insn_shim": 0,
+  "goto_count": 3,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c": {
   "asm_code": 2,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 22
  },
  "libs/RVL_SDK/src/revolution/bte/stack/btu/btu_hcif.c": {
   "asm_code": 3,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 9
  },
+ "libs/RVL_SDK/src/revolution/bte/stack/btu/btu_init.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/bte/stack/gap/gap_api.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/bte/stack/gap/gap_conn.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
   "rn_params": 1,
+  "schedule_pragma": 0,
   "self_params": 1
  },
  "libs/RVL_SDK/src/revolution/bte/stack/gap/gap_utils.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 6
  },
  "libs/RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 17
  },
+ "libs/RVL_SDK/src/revolution/bte/stack/hid/hidd_api.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/bte/stack/hid/hidd_conn.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/bte/stack/hid/hidd_mgmt.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/bte/stack/hid/hidd_pm.c": {
+  "asm_insn_shim": 0,
   "goto_count": 11,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/bte/stack/hid/hidh_api.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 5
  },
  "libs/RVL_SDK/src/revolution/bte/stack/hid/hidh_conn.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 25
  },
  "libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_api.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_csm.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 21
  },
  "libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_main.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_utils.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
+ "libs/RVL_SDK/src/revolution/bte/stack/rfcomm/port_api.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/bte/stack/rfcomm/port_rfc.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 9
  },
  "libs/RVL_SDK/src/revolution/bte/stack/rfcomm/port_utils.c": {
+  "asm_insn_shim": 0,
   "goto_count": 2,
+  "init_side_effect": 0,
   "rn_params": 1,
+  "schedule_pragma": 0,
   "self_params": 1,
   "void_ptr": 5
  },
+ "libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_l2cap_if.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_mx_fsm.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 23
  },
  "libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 5
  },
  "libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
   "ptr_arith": 25,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c": {
+  "asm_insn_shim": 0,
   "goto_count": 1,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 14
  },
  "libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_api.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 3
  },
  "libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
  "libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_main.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_server.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
  "libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_utils.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
+ "libs/RVL_SDK/src/revolution/bte/stack/wbt/wbt_ext.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/cx/CXSecureUncompression.c": {
-  "asm_code": 1
+  "asm_code": 1,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/cx/CXStreamingUncompression.c": {
+  "asm_insn_shim": 0,
   "goto_count": 10,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/cx/CXUncompression.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/db/db.c": {
   "asm_code": 1,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
+ "libs/RVL_SDK/src/revolution/dsp/dsp.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/dsp/dsp_debug.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/dsp/dsp_task.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/dvd/dvd.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/dvd/dvdDeviceError.c": {
-  "goto_count": 10
+  "asm_insn_shim": 0,
+  "goto_count": 10,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/dvd/dvdFatal.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/dvd/dvd_broadway.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 5
  },
+ "libs/RVL_SDK/src/revolution/dvd/dvderror.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/dvd/dvdfs.c": {
+  "asm_insn_shim": 0,
   "goto_count": 3,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
+ "libs/RVL_SDK/src/revolution/dvd/dvdidutils.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/dvd/dvdqueue.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/enc/encjapanese.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/enc/encunicode.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/enc/encutility.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/esp/esp.c": {
+  "asm_insn_shim": 0,
   "goto_count": 13,
+  "init_side_effect": 0,
   "ptr_arith": 2,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
+ "libs/RVL_SDK/src/revolution/euart/euart.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/exi/EXIBios.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 3
  },
  "libs/RVL_SDK/src/revolution/exi/EXICommon.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/exi/EXIUart.c": {
-  "goto_count": 2
+  "asm_insn_shim": 0,
+  "goto_count": 2,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/fs/fs.c": {
+  "asm_insn_shim": 0,
   "goto_count": 17,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 22
  },
  "libs/RVL_SDK/src/revolution/gx/GXAttr.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
+ },
+ "libs/RVL_SDK/src/revolution/gx/GXBump.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/gx/GXDisplayList.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
+ "libs/RVL_SDK/src/revolution/gx/GXDraw.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/gx/GXFifo.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 17
  },
  "libs/RVL_SDK/src/revolution/gx/GXFrameBuf.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
   "ptr_arith": 16,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
+ "libs/RVL_SDK/src/revolution/gx/GXGeometry.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/gx/GXInit.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 3
  },
  "libs/RVL_SDK/src/revolution/gx/GXLight.c": {
   "asm_code": 5,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
+ },
+ "libs/RVL_SDK/src/revolution/gx/GXMisc.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/gx/GXPerf.c": {
   "asm_code": 1,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/gx/GXPixel.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
+ "libs/RVL_SDK/src/revolution/gx/GXTev.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/gx/GXTexture.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 6
  },
  "libs/RVL_SDK/src/revolution/gx/GXTransform.c": {
   "asm_code": 15,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 5
  },
+ "libs/RVL_SDK/src/revolution/hbm/HBMAnmController.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/hbm/HBMAxSound.cpp": {
-  "extern_c_nonlbl_decl": 16,
-  "void_ptr": 8
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
+  "void_ptr": 5
  },
  "libs/RVL_SDK/src/revolution/hbm/HBMBase.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 20
  },
  "libs/RVL_SDK/src/revolution/hbm/HBMCommon.cpp": {
+  "asm_insn_shim": 0,
   "extern_c_nonlbl_def": 4,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
  "libs/RVL_SDK/src/revolution/hbm/HBMController.cpp": {
-  "extern_c_nonlbl_decl": 3,
-  "void_ptr": 3
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
+  "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/hbm/HBMFrameController.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/hbm/HBMGUIManager.cpp": {
-  "void_ptr": 6
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
+  "void_ptr": 5
  },
  "libs/RVL_SDK/src/revolution/hbm/HBMRemoteSpk.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/hbm/mix.c": {
+  "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 1,
-  "extern_c_nonlbl_def": 3
+  "extern_c_nonlbl_def": 3,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_animation.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
+ "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_bounding.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
+ "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_drawInfo.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_group.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_layout.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_material.cpp": {
-  "void_ptr": 1
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_pane.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_picture.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
+ "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_resourceAccessor.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox.cpp": {
+  "asm_insn_shim": 0,
   "extern_c_nonlbl_def": 1,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window.cpp": {
+  "asm_insn_shim": 0,
   "extern_c_nonlbl_def": 1,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 3
  },
+ "libs/RVL_SDK/src/revolution/hbm/nw4hbm/math/math_triangular.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_CharStrmReader.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_CharWriter.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_Font.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_LinkList.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFont.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_ResFontBase.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
+ "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TagProcessorBase.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_TextWriterBase.cpp": {
+  "asm_insn_shim": 0,
   "deref_arith": 1,
-  "ptr_arith": 1
+  "init_side_effect": 0,
+  "ptr_arith": 1,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_binaryFileFormat.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/hbm/nw4hbm/ut/ut_list.cpp": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 6
  },
  "libs/RVL_SDK/src/revolution/hbm/seq.c": {
-  "extern_c_nonlbl_decl": 10,
+  "asm_insn_shim": 0,
+  "extern_c_nonlbl_decl": 9,
   "extern_c_nonlbl_def": 2,
   "goto_count": 1,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 3
  },
  "libs/RVL_SDK/src/revolution/hbm/syn.c": {
+  "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 8,
   "extern_c_nonlbl_def": 3,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/hbm/synctrl.c": {
+  "asm_insn_shim": 0,
   "deref_arith": 2,
   "extern_c_nonlbl_decl": 17,
   "extern_c_nonlbl_def": 2,
+  "init_side_effect": 0,
   "ptr_arith": 2,
+  "schedule_pragma": 0,
   "void_ptr": 8
  },
  "libs/RVL_SDK/src/revolution/hbm/synenv.c": {
+  "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 3,
   "extern_c_nonlbl_def": 2,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 5
  },
  "libs/RVL_SDK/src/revolution/hbm/synmix.c": {
+  "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 6,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 6
  },
  "libs/RVL_SDK/src/revolution/hbm/synpitch.c": {
+  "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 3,
   "extern_c_nonlbl_def": 1,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/hbm/synsample.c": {
+  "asm_insn_shim": 0,
   "deref_arith": 3,
   "extern_c_nonlbl_decl": 8,
   "extern_c_nonlbl_def": 1,
-  "ptr_arith": 3
+  "init_side_effect": 0,
+  "ptr_arith": 3,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/hbm/synvoice.c": {
+  "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 14,
   "extern_c_nonlbl_def": 1,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 3
  },
  "libs/RVL_SDK/src/revolution/ipc/ipcMain.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 6
+ },
+ "libs/RVL_SDK/src/revolution/ipc/ipcProfile.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/ipc/ipcclt.c": {
   "asm_code": 3,
+  "asm_insn_shim": 2,
   "goto_count": 7,
+  "init_side_effect": 0,
   "rn_params": 1,
+  "schedule_pragma": 0,
   "self_params": 1,
   "void_ptr": 21
  },
  "libs/RVL_SDK/src/revolution/ipc/memory.c": {
+  "asm_insn_shim": 0,
   "goto_count": 11,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 5
  },
  "libs/RVL_SDK/src/revolution/kpad/KPAD.c": {
+  "asm_insn_shim": 0,
   "goto_count": 17,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/mem/mem_allocator.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
  "libs/RVL_SDK/src/revolution/mem/mem_expHeap.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 23
  },
  "libs/RVL_SDK/src/revolution/mem/mem_frameHeap.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 11
  },
  "libs/RVL_SDK/src/revolution/mem/mem_heapCommon.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/mem/mem_list.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
   "ptr_arith": 1,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
  "libs/RVL_SDK/src/revolution/mix/mix.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/mix/remote.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/mtx/mtx.c": {
-  "asm_code": 39
+  "asm_code": 39,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/mtx/mtx44.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/mtx/mtxvec.c": {
-  "asm_code": 1
+  "asm_code": 1,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/mtx/quat.c": {
-  "asm_code": 25
+  "asm_code": 25,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/mtx/vec.c": {
-  "asm_code": 21
+  "asm_code": 21,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/nand/NANDCheck.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/nand/NANDCore.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 7
  },
  "libs/RVL_SDK/src/revolution/nand/NANDLogging.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/nand/NANDOpenClose.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
  "libs/RVL_SDK/src/revolution/nand/nand.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 8
  },
  "libs/RVL_SDK/src/revolution/os/OS.c": {
   "asm_code": 6,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 7
  },
  "libs/RVL_SDK/src/revolution/os/OSAlarm.c": {
   "asm_code": 1,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/os/OSAlloc.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 6
  },
  "libs/RVL_SDK/src/revolution/os/OSArena.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 17
+ },
+ "libs/RVL_SDK/src/revolution/os/OSAudioSystem.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/os/OSCache.c": {
   "asm_code": 16,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
   "ptr_arith": 2,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
  "libs/RVL_SDK/src/revolution/os/OSContext.c": {
-  "asm_code": 11
+  "asm_code": 11,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/os/OSCrc.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/os/OSError.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/os/OSExec.c": {
+  "asm_insn_shim": 0,
   "deref_arith": 7,
+  "init_side_effect": 0,
   "ptr_arith": 14,
+  "schedule_pragma": 0,
   "void_ptr": 9
  },
  "libs/RVL_SDK/src/revolution/os/OSFatal.c": {
+  "asm_insn_shim": 0,
   "goto_count": 2,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 3
  },
  "libs/RVL_SDK/src/revolution/os/OSFont.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
   "ptr_arith": 5,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
  "libs/RVL_SDK/src/revolution/os/OSInterrupt.c": {
-  "asm_code": 4
+  "asm_code": 4,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/os/OSIpc.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
  "libs/RVL_SDK/src/revolution/os/OSLaunch.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
+ },
+ "libs/RVL_SDK/src/revolution/os/OSLink.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/os/OSMemory.c": {
   "asm_code": 7,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
+ },
+ "libs/RVL_SDK/src/revolution/os/OSMessage.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/os/OSMutex.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/os/OSNandbootInfo.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/os/OSNet.c": {
   "asm_code": 1,
+  "asm_insn_shim": 0,
   "goto_count": 1,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 9
  },
+ "libs/RVL_SDK/src/revolution/os/OSPlayRecord.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/os/OSPlayTime.c": {
+  "asm_insn_shim": 0,
   "goto_count": 13,
+  "init_side_effect": 0,
   "ptr_arith": 1,
+  "schedule_pragma": 0,
   "void_ptr": 3
  },
+ "libs/RVL_SDK/src/revolution/os/OSReboot.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/os/OSReset.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
   "rn_params": 2,
+  "schedule_pragma": 0,
   "self_params": 2,
   "void_ptr": 2
  },
  "libs/RVL_SDK/src/revolution/os/OSRtc.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
+ "libs/RVL_SDK/src/revolution/os/OSStateFlags.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/os/OSStateTM.c": {
+  "asm_insn_shim": 0,
   "goto_count": 2,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
  "libs/RVL_SDK/src/revolution/os/OSSync.c": {
-  "asm_code": 1
+  "asm_code": 1,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/os/OSThread.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 4
  },
  "libs/RVL_SDK/src/revolution/os/OSTime.c": {
-  "asm_code": 2
+  "asm_code": 2,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/os/OSUtf.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/os/__ppc_eabi_init.c": {
-  "asm_code": 2
+  "asm_code": 2,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/os/__start.c": {
   "asm_code": 2,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 2
  },
+ "libs/RVL_SDK/src/revolution/pad/Pad.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/sc/scapi.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/sc/scapi_prdinfo.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/sc/scsystem.c": {
+  "asm_insn_shim": 0,
   "goto_count": 39,
+  "init_side_effect": 0,
   "ptr_arith": 1,
+  "schedule_pragma": 0,
   "void_ptr": 5
  },
  "libs/RVL_SDK/src/revolution/si/SIBios.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 5
+ },
+ "libs/RVL_SDK/src/revolution/si/SISamplingRate.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/tpl/TPL.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/usb/usb.c": {
+  "asm_insn_shim": 0,
   "goto_count": 18,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 25
  },
+ "libs/RVL_SDK/src/revolution/vi/i2c.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/vi/vi.c": {
+  "asm_insn_shim": 0,
   "goto_count": 1,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 5
+ },
+ "libs/RVL_SDK/src/revolution/vi/vi3in1.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/wenc/wenc.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/wpad/WPAD.c": {
   "asm_code": 1,
+  "asm_insn_shim": 0,
   "goto_count": 7,
+  "init_side_effect": 0,
   "ptr_arith": 2,
+  "schedule_pragma": 0,
   "void_ptr": 14
  },
+ "libs/RVL_SDK/src/revolution/wpad/WPADEncrypt.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/wpad/WPADHIDParser.c": {
-  "asm_code": 1
+  "asm_code": 1,
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  },
  "libs/RVL_SDK/src/revolution/wpad/WPADMem.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0,
   "void_ptr": 1
  },
+ "libs/RVL_SDK/src/revolution/wpad/debug_msg.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
  "libs/RVL_SDK/src/revolution/wud/WUD.c": {
+  "asm_insn_shim": 0,
   "goto_count": 3,
+  "init_side_effect": 0,
   "ptr_arith": 6,
+  "schedule_pragma": 0,
   "void_ptr": 5
+ },
+ "libs/RVL_SDK/src/revolution/wud/WUDHidHost.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
+ },
+ "libs/RVL_SDK/src/revolution/wud/debug_msg.c": {
+  "asm_insn_shim": 0,
+  "init_side_effect": 0,
+  "schedule_pragma": 0
  }
 }
 <!-- END BASELINE -->

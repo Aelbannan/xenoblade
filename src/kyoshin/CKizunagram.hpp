@@ -8,10 +8,16 @@ struct CFileHandle;  // monolib/device/CFileHandle.hpp
 
 class CKizunaRadar {
 public:
-    CKizunaRadar();
+    CKizunaRadar(void* arg);
     virtual ~CKizunaRadar();
 
-    // TODO: add fields
+    // +0x00: implicit vptr (set by MWCC from the virtual dtor)
+    void* mArg;      // 0x04
+    u32 mField08;    // 0x08
+    u32 mField0C;    // 0x0C
+    u32 mField10;    // 0x10
+    f32 mField14;    // 0x14
+    f32 mField18;    // 0x18
 };
 
 class CKizunaCur {

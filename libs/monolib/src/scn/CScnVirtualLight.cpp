@@ -833,9 +833,18 @@ __declspec(noinline) void* func_80493C00(void* self) { return &((CScnVirtualLigh
 // Retail: addi r3,r3,0x54; b .+4; addi r3,r3,0xB8; blr. The b .+4 scheduler
 // barrier is the documented unreproducible MWCC artifact (MWCC_REFERENCE sec. 4;
 // GetTextColor is the only getter precedent and was never byte-matched).
-// Natural reconstruction kept; byte-identity needs a policy exception. noinline
-// keeps the bl from func_804936AC's slot loop out-of-line (the constant-folded
-// +0x10C body would otherwise be inlined and hoisted out of the loop).
+// 2026 probe (~80 shapes, Wii/1.1 + GC/2.6/2.7/3.0a5/3.0a5.2, -O4,p/-O4,s,
+// -ipa file/off, -inline auto/on/smart, -proc gekko/750/603/7400, scheduling/
+// peephole/opt_propagation/optimization_level/global_optimizer pragmas, goto/
+// loop/if/good-lucky tautology forms, extern/static/inline helpers in all
+// orders): MWCC ALWAYS constant-folds the two adds to addi r3,r3,0x10C; blr,
+// except while(cond){body;break} forms that keep a runtime cmpwi/bne tail
+// (7-insn, 75% positional but semantically divergent + branches -> witness
+// cannot certify) and -ipa off tail-call thunks (b <helper> reloc, unit-wide
+// -ipa off would regress ~40 matched siblings + reloc presence drift).
+// Natural reconstruction kept; byte-identity needs a policy exception.
+// noinline keeps the bl from func_804936AC's slot loop out-of-line (the
+// constant-folded +0x10C body would otherwise be inlined and hoisted out of the loop).
 __declspec(noinline) void* func_80493C08(void* self) {
     return (void*)((u8*)self + 0x54 + 0xB8);
 }

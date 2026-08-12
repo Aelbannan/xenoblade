@@ -57,19 +57,43 @@ void func_800B084C(UnkClass_805764CC* self, unsigned long count) {
 }
 
 // Target 1: us-800b15d8 - reslist<cf::IFactoryEvent*>::reslist() constructor
+// (flattened: base init with the _reslist_base vtable, then the derived
+// vtable install overwrites +0). Array-typed externs force absolute lis/addi
+// addressing; the base vtable store is volatile so MWCC keeps both stores.
 void __ct__reslist_cf_IFactoryEvent(void* self) {
-    extern void* lbl_eu_805290B8;
-    extern void* lbl_eu_805290A0;
+    extern void* lbl_eu_805290B8[];
+    extern void* lbl_eu_805290A0[];
     u32* base = (u32*)self;
     u32 sentinelAddr = (u32)((u8*)self + 8);
-    base[0] = (u32)&lbl_eu_805290B8;
+    *(volatile u32*)((u8*)self) = (u32)lbl_eu_805290B8;
     base[5] = 0;
     base[6] = 0;
     ((u8*)self)[0x1c] = 0;
     base[1] = sentinelAddr;
-    ((u32*)self)[2] = sentinelAddr;
-    ((u32*)self)[3] = sentinelAddr;
-    base[0] = (u32)&lbl_eu_805290A0;
+    *(u32*)sentinelAddr = sentinelAddr;
+    *(u32*)(sentinelAddr + 4) = sentinelAddr;
+    base[0] = (u32)lbl_eu_805290A0;
+}
+
+// Target 1: us-800b1368 - reslist<cf::CfObject*>::reslist() constructor
+// (flattened: base init with the _reslist_base vtable, then the derived
+// vtable install overwrites +0). Array-typed externs force absolute lis/addi
+// addressing instead of SDA21. The base vtable store is volatile so MWCC's
+// dead-store elimination keeps it (the derived install provably overwrites
+// +0, but retail emits both stores).
+void __ct__reslist_cf_CfObject(void* self) {
+    extern void* lbl_eu_8052585C[];
+    extern void* lbl_eu_805290E8[];
+    u32* base = (u32*)self;
+    u32 sentinelAddr = (u32)((u8*)self + 8);
+    *(volatile u32*)((u8*)self) = (u32)lbl_eu_8052585C;
+    base[5] = 0;
+    base[6] = 0;
+    ((u8*)self)[0x1c] = 0;
+    base[1] = sentinelAddr;
+    *(u32*)sentinelAddr = sentinelAddr;
+    *(u32*)(sentinelAddr + 4) = sentinelAddr;
+    base[0] = (u32)lbl_eu_805290E8;
 }
 // Target 3: us-800b186c - func_800B0FA0
 extern "C" __declspec(noinline) void func_800B0FA0(UnkClass_805764CC* self) {
@@ -135,6 +159,27 @@ check:
     sentinel = *(u32*)((u32*)list + 1);
     if (cur != sentinel) goto loop;
     *(u32*)sentinel = sentinel;
+}
+
+// Target: us-800b23c0 - func_800B1AF4: run the list/state init via
+// func_800B72DC, then clear the 0x100 mask bit via func_800B4278.
+extern "C" void func_800B72DC(void* self);
+extern "C" void func_800B4278(void* object, u32 mask);
+
+extern "C" void func_800B1AF4(void* self) {
+    func_800B72DC(self);
+    func_800B4278(self, 256);
+}
+
+// Target: us-800b1bf8 - cf::CfValueItemManager ctor: base ctor call then
+// derived vtable install (retail lbl_eu_805316D0); returns this (retail
+// emits the mr r3, r31 return-this after the vtable load).
+extern "C" void __ct__cf_CfMapItemManager(void* self);
+void* __ct__cf_CfValueItemManager(void* self) {
+    extern void* lbl_eu_805316D0[];
+    __ct__cf_CfMapItemManager(self);
+    *(u32*)((u8*)self + 0) = (u32)lbl_eu_805316D0;
+    return self;
 }
 
 void init_1A8C(){}
@@ -358,6 +403,30 @@ extern "C" __declspec(noinline) void func_800B4368(UnkClass_805764CC* self, cons
         }
     }
 }
+// List-walk search: start at *headPtr and skip nodes until the cursor equals
+// *valA or its +8 link equals *valB, advancing *headPtr past each skipped
+// node; store the found node to *out (retail func_800B4554).
+extern "C" void func_800B4554(void** out, void** headPtr, void** valA, void** valB) {
+    void* node;
+    while ((node = *headPtr) != *valA && *(void**)((u8*)node + 8) != *valB) {
+        *headPtr = *(void**)node;
+    }
+    *out = node;
+}
+
+// Null-guarded triple dispatch: fetch a handle, reset, then pass the reset
+// result + handle to the forwarder (retail: handle in r4).
+extern "C" void* func_800B720C();
+extern "C" void* func_800B6CA0();
+extern "C" void func_800B7214(void* a, void* b);
+
+extern "C" void func_800B71CC(void* arg) {
+    if (arg != 0) {
+        void* v = func_800B720C();
+        func_800B7214(func_800B6CA0(), v);
+    }
+}
+
 // Target 2: us-800b4cfc - func_800B4400
 // Clears all nodes from reslist at field_0xC28, then reinitializes its sentinel.
 // Then iterates reslist at field_0xBC8, and for each node whose data's field_0x94

@@ -14,20 +14,14 @@ namespace {
 // structural; both mw_versions, decl-order variants invariant). Witness
 // rejects the f1->f3 ABI permutation.
 void MakeTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 su = rSrt.Su;
-    f32 g8 = lbl_eu_80669CC8;
-    f32 sv = rSrt.Sv;
-    f32 g4 = lbl_eu_80669CC4;
-    f32 g0 = lbl_eu_80669CC0;
-
-    pMtx->m[0][0] = su;
-    pMtx->m[0][1] = g0;
-    pMtx->m[0][2] = g0;
-    pMtx->m[0][3] = g4 * (g8 - su);
-    pMtx->m[1][0] = g0;
-    pMtx->m[1][1] = sv;
-    pMtx->m[1][2] = g0;
-    pMtx->m[1][3] = g4 * (g8 - sv);
+    pMtx->m[0][0] = rSrt.Su;
+    pMtx->m[0][1] = lbl_eu_80669CC0;
+    pMtx->m[0][2] = lbl_eu_80669CC0;
+    pMtx->m[0][3] = lbl_eu_80669CC4 * (lbl_eu_80669CC8 - rSrt.Su);
+    pMtx->m[1][0] = lbl_eu_80669CC0;
+    pMtx->m[1][1] = rSrt.Sv;
+    pMtx->m[1][2] = lbl_eu_80669CC0;
+    pMtx->m[1][3] = lbl_eu_80669CC4 * (lbl_eu_80669CC8 - rSrt.Sv);
 }
 
 void MakeTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -43,9 +37,7 @@ void MakeTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
     pMtx->m[1][0] = -sinR;
     pMtx->m[1][1] = cosR;
     pMtx->m[1][2] = lbl_eu_80669CC0;
-    // m[1][3] open item: retail loads sinR(12sp) into f1 before cosR(8sp) for
-    // the fneg+fadds; MWCC loads cosR first in every shape (2 pure reg_swap).
-    pMtx->m[1][3] = lbl_eu_80669CD0 * (-cosR + sinR - lbl_eu_80669CC8);
+    pMtx->m[1][3] = lbl_eu_80669CD0 * (-sinR + cosR - lbl_eu_80669CC8);
 }
 
 void MakeTexSrtMtx_T(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -65,8 +57,8 @@ void MakeTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
-    f32 sv = rSrt.Sv;
     f32 su = rSrt.Su;
+    f32 sv = rSrt.Sv;
 
     // Precompute the four scale-rotate products (retail computes them in
     // this order: Sv*sin, Su*sin, Su*cos, Sv*cos).
@@ -104,19 +96,14 @@ void MakeTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void MakeTexSrtMtx_ST(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 su = rSrt.Su;
-    f32 sv = rSrt.Sv;
-    f32 tu = rSrt.Tu;
-    f32 tv = rSrt.Tv;
-
-    pMtx->m[0][0] = su;
+    pMtx->m[0][0] = rSrt.Su;
     pMtx->m[0][1] = lbl_eu_80669CC0;
     pMtx->m[0][2] = lbl_eu_80669CC0;
-    pMtx->m[0][3] = lbl_eu_80669CC4 + (-su) * (lbl_eu_80669CC4 + tu);
+    pMtx->m[0][3] = lbl_eu_80669CC4 + (-rSrt.Su) * (lbl_eu_80669CC4 + rSrt.Tu);
     pMtx->m[1][0] = lbl_eu_80669CC0;
-    pMtx->m[1][1] = sv;
+    pMtx->m[1][1] = rSrt.Sv;
     pMtx->m[1][2] = lbl_eu_80669CC0;
-    pMtx->m[1][3] = lbl_eu_80669CC4 + sv * (tv - lbl_eu_80669CC4);
+    pMtx->m[1][3] = lbl_eu_80669CC4 + rSrt.Sv * (rSrt.Tv - lbl_eu_80669CC4);
 }
 
 void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {

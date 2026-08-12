@@ -52,15 +52,16 @@ extern "C" u16 func_802AD838(CTutorialList* self) {
                          (u16)((s8)self->mField178 + (s16)self->mField17A));
 }
 
-#pragma push
-#pragma auto_inline off
-extern "C" void func_802ADCE8(void* self){}
-#pragma pop
+// func_802ADCE8 (retail 0x130 bytes, not yet recovered) is declared, not
+// stubbed: an empty definition would be dead-call-eliminated under the unit's
+// -O4,s (matching retail codegen) and drop the bl sites in func_802AD308 /
+// func_802AD854. The undefined reference resolves once the real body lands.
+extern "C" void func_802ADCE8(void* self);
 extern "C" void func_802AD854(void* self) { func_802ADCE8(self); }
 
 void func_802AD858(){}
 
-u8 CTutorialList::func_802AD984() { return func_801D3320(&mSortMenu84[0]); }
+u8 CTutorialList::func_802AD984() { return (u8)func_801D3320(&mSortMenu84[0]); }
 
 // func_802AD98C - advance the list: gate on the sort-menu active/button flags,
 // move the cursor, refresh the sort menu, run the per-frame helpers and (when

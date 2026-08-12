@@ -123,7 +123,10 @@ s16 CfObjectNpc::func_800BF920() {
         u16 row = unk8C_3;
         // Lazily load the rlt_meet value from the BDAT column on first access.
         const char* v = getBdatStringColumnValue(fp, (const char*)&lbl_eu_804FC580[0x2C], row);
-        mRltMeet = (s16)(uintptr_t)v;
+        // Pointer's low halfword holds the rlt_meet id (deref form, not a
+        // cast: MWCC emits the retail stw+lha memory round-trip; a (s16)
+        // cast folds to a direct sth).
+        mRltMeet = *(const s16*)&v;
     }
     return mRltMeet;
 }

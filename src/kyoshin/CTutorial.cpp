@@ -92,13 +92,18 @@ extern "C" void func_8029ACEC() {}
 // retail emits two dead field loads (lbz 0x50/0x51) before the (s8) param
 // casts reuse those registers; MWCC DCEs them from high-level C, leaving the
 // function 2 instructions short (0x68 vs 0x70) — open item.
-extern "C" void func_8029AD88(CTutorial* self, int a, int b) {
-    if (b == a - 1) {
+extern "C" void func_8029AD88(CTutorial* self, int a, int b, int c) {
+    // Retail dispatches through a tutorial-step table with a 4-int convention
+    // (the value arrives in r6; the 3rd param is unused). OPEN ITEM: retail
+    // emits two dead field loads (lbz 0x51/0x50) that the (s8) param casts
+    // then overwrite, plus hoists the extsb pair above the first compare;
+    // MWCC DCEs the loads from every high-level form tried (0x68 vs 0x70).
+    if (c == a - 1) {
         self->field_52 = 1;
         return;
     }
-    self->field_50 = (u8)((s8)b + 1);
-    if ((s8)(u8)((s8)b + 1) >= a) {
+    self->field_50 = (u8)((s8)c + 1);
+    if ((s8)(u8)((s8)c + 1) >= a) {
         self->field_50 = (u8)((s8)a - 1);
     }
     func_8029B124(self);

@@ -174,11 +174,11 @@ extern "C" void func_801FF874(CModelDispEquip* self) {
         }
     }
     func_801390E0__FPP11CFileHandle(&self->modelFileHandle);
-    if (self->modelData != 0) {
+    if (self->modelData != NULL) {
         func_804CC1D8(lbl_eu_8065FC18);
-        if (self->modelData != 0) {
+        if (self->modelData != NULL) {
             mtl::MemManager::deallocate(self->modelData);
-            self->modelData = 0;
+            self->modelData = NULL;
         }
     }
     self->state21 = 1;
@@ -826,20 +826,14 @@ int CModelDispEquip::OnFileEvent(CEventFile* event) {
 extern "C" void func_80200E94(CModelDispEquip* self, void* arg, int index) {
     CActParamHolder* holder = &self->actParamHolder;
     if (holder->animModelPtrs[index] != 0) {
-        void** vtbl = *(void***)holder->field_0x00;
-        // vtable+0xC8: (obj, modelPtr, index)
-        ((void (*)(void*, void*, int))vtbl[50])(holder->field_0x00, holder->animModelPtrs[index], index);
-        // vtable+0xC4: (obj, modelPtr, arg, 0) - reload obj/vtbl (call may clobber)
-        vtbl = *(void***)holder->field_0x00;
-        ((void (*)(void*, void*, void*, int))vtbl[49])(holder->field_0x00, holder->animModelPtrs[index], arg, 0);
+        reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->mC8(
+            reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[index]));
+        reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->mC4(
+            reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[index]),
+            reinterpret_cast<CModelDispNameParam*>(arg), 0);
     }
 }
 
-// ============================================================
-// Target: us-80202c00 | func_80200F08
-// ============================================================
-// Stop the animation-model slot (vtable+0xC8 only, no re-arm): guarded on
-// the move pointer and the arg check - the stop half of func_80200E94.
 extern "C" void func_80200F08(CModelDispEquip* self, void* move, void* arg, int index) {
     if (move == 0) return;
     if (func_800BBC04(arg) <= 0) return;
@@ -847,10 +841,11 @@ extern "C" void func_80200F08(CModelDispEquip* self, void* move, void* arg, int 
     if (holder->animModelPtrs[index] == 0) return;
     // Stop + re-arm the animation-model slot (same shape as func_80200E94),
     // guarded on the move pointer and the name lookup.
-    void** vtbl = *(void***)holder->field_0x00;
-    ((void (*)(void*, void*))vtbl[50])(holder->field_0x00, holder->animModelPtrs[index]);
-    vtbl = *(void***)holder->field_0x00;
-    ((void (*)(void*, void*, void*, int))vtbl[49])(holder->field_0x00, holder->animModelPtrs[index], arg, 0);
+    reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->mC8(
+        reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[index]));
+    reinterpret_cast<CModelDispModelVt*>(holder->field_0x00)->mC4(
+        reinterpret_cast<CModelDispModelVt*>(holder->animModelPtrs[index]),
+        reinterpret_cast<CModelDispNameParam*>(arg), 0);
 }
 
 // ============================================================
@@ -1047,16 +1042,19 @@ extern "C" void func_80201440() {}
 // Target: us-8020313c | func_80201444
 // ============================================================
 extern "C" void func_80201444(CModelDispEquip* self, u32 val) {
-    // Explicit countdown keeps MWCC from unrolling the 2-iteration loop;
-    // retail's mtctr/bdnz needs unit -O4,s (MWCC_REFERENCE §16).
-    u8 i = 0;
-    u8 n = 2;
-    do {
-        if (self->animPtrs[i] == val)
-            self->animPtrs[i] = 0;
-        i++;
-        n--;
-    } while (n != 0);
+    // Holder-base addressing (addi r6,r3,16 + 0xff4(rX) like retail) plus
+    // scoped optimize_for_size to keep the 2-iteration loop rolled as the
+    // mtlr/bdnz countdown (plain -O4,p unrolls it).
+    CActParamHolder* holder = &self->actParamHolder;
+    CActParamHolderTail* tail = (CActParamHolderTail*)holder;
+#pragma push
+#pragma optimize_for_size on
+    for (u8 i = 0; i < 2; i++) {
+        if (tail->animPtrs[i] == (void*)val) {
+            tail->animPtrs[i] = 0;
+        }
+    }
+#pragma pop
 }
 
 // ============================================================

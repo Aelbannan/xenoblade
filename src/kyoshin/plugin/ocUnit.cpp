@@ -1787,18 +1787,34 @@ void CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv(void* self, u8 val) 
 
 u32 CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv(void* self) { return *(u32*)((u8*)self + 0x34); }
 
-// Open item: 3-word copy (src[0..2] -> this+0x48/4C/50). MWCC emits loads in
-// (4),(8),(0) order into r5,r6,r0 vs retail (0),(4),(8) into r6,r5,r0 —
-// invariant across 9 source shapes and flags (-ipa on/off, -O4,p/-O4,s).
-// Witness rejects (lwz offset bits differ); SMT disabled by policy.
+#pragma optimize_for_size on
+#pragma peephole off
+#pragma scheduling off
+#pragma optimize_for_size on
+struct CfObjRot48b { u8 _pad[0x48]; ml::CVec3 mRot48; };
+struct CfObjRot48c { u8 _pad[0x48]; ml::CVec3 mRot48; };
+// Open item (us-8003f6d8): 12-byte copy src -> this+0x48. Best shape found:
+// u64-extract (a,b) + separate c load — MWCC emits loads (0,4,8) and stores
+// (72,76,80) in EXACT retail order; residual is pure register colors
+// (r0,r5,r4 vs retail r6,r5,r0 — a: r0↔r6, c: r4↔r0). The witness rejects the
+// r4→r0 renaming (r4 is an ABI arg reg), so FULL_MATCH is the only route.
+// 56+ shapes probed (3-local, struct copy, CVec3 assign, u64 splits, pairs,
+// pragmas): 3-independent-load shapes rotate loads [s1,s2,s0]; leaf CVec3
+// copy emits pair (a,b)->(b,a) + single; decl/store-order permutations give
+// retail's allocation but reverse/rotate the emission orders.
 void cf::CfObject::CfObject_UnkVirtualFunc27(void* src) {
-    u32 a = *(u32*)((u8*)src + 0);
-    u32 b = *(u32*)((u8*)src + 4);
-    u32 c = *(u32*)((u8*)src + 8);
+    u64 ab = *(const u64*)src;
+    u32 a = (u32)(ab >> 32);
+    u32 b = (u32)ab;
+    u32 c = *(const u32*)((u8*)src + 8);
     *(u32*)((u8*)this + 0x48) = a;
     *(u32*)((u8*)this + 0x4C) = b;
     *(u32*)((u8*)this + 0x50) = c;
 }
+#pragma optimize_for_size off
+#pragma scheduling on
+#pragma peephole on
+#pragma optimize_for_size off
 
 void cf::CfObject::CfObject_UnkVirtualFunc64(int flag) {
     u32* field = (u32*)((char*)this + 0x68);

@@ -6,6 +6,12 @@
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/math/CVec3.hpp"
 
+// Retail data + dtor imports for the D1 (the header declares the virtual
+// dtor; the symbol is provided by the freestanding definition below).
+extern "C" { extern char lbl_eu_80529128[]; }
+extern "C" void __dt__8047BDA8(void* self);
+extern "C" void __dt__Q22cf13CfObjectModelFv(void* self, int flag);
+
 struct CMIf {
     virtual void _v0008();
     virtual void _v000C();
@@ -60,6 +66,14 @@ struct CMIf {
     virtual void vf00D0();
 };
 
+// Calls vtable slot 0x18C (CfObjectModel_UnkVirtualFunc6) when the pointer at
+// +0x70 is set; returns the call's result, or 1 when the pointer is NULL.
+// Real-member form gives retail's r12 virtual dispatch. Open item: the
+// retval-default register (li r0,1 + or r0,r3,r3 / or r3,r0,r0 in retail vs
+// li r4/r5 + or r4 + lwz-r0-first epilogue here) is allocator-fixed across
+// ~16 shapes (decl order, if/else, early-return, ternary, pointer local,
+// named member, -O4,s, volatile); the order diffs at +8/+0xc and +0x30/+0x34
+// are consequences of the r0-vs-r4 choice.
 // Calls vtable slot 0x18C (CfObjectModel_UnkVirtualFunc6) when the pointer at
 // +0x70 is set; returns the call's result, or 1 when the pointer is NULL.
 // Real-member form gives retail's r12 virtual dispatch. Open item: the
@@ -422,7 +436,28 @@ extern "C" int CfObjectModel_UnkVirtualFunc4__Q22cf13CfObjectModelFv(cf::CfObjec
 
 extern "C" void func_800BA764__Q22cf11CfObjectMapFv() {}
 
-cf::CfObjectMap::~CfObjectMap() {}
+// Retail D1 dtor for CfObjectMap: vtable reset (lbl_eu_80529128) then the
+// CfObject_UnkVirtualFunc6 virtual at vtable+0x68 called via the constant
+// (retail lwz r12,104(r12) on the just-written vtable), the embedded
+// UnkClass_8047BB54 sub-object at +0xF0, the CfObjectModel base with
+// NON-deleting flag 0, then delete-on-flag; returns this.
+extern "C" void* __dt__Q22cf11CfObjectMapFv(void* self, int flag) {
+    cf::CfObjectMap* this_ = reinterpret_cast<cf::CfObjectMap*>(self);
+    if (this_ != 0) {
+        u32 vt = (u32)lbl_eu_80529128;
+        *(u32*)this_ = vt;
+        this_->CfObject_UnkVirtualFunc6();
+        void* sub = (char*)this_ + 0xF0;
+        if (sub != 0) {
+            __dt__8047BDA8(sub);
+        }
+        __dt__Q22cf13CfObjectModelFv(this_, 0);
+        if (flag > 0) {
+            ::operator delete(this_);
+        }
+    }
+    return self;
+}
 
 extern "C" void CfObject_UnkVirtualFunc33__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) { reinterpret_cast<CMIf*>(self)->vf00D0(); }
 

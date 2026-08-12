@@ -217,7 +217,14 @@ void func_80173AEC(CfMapItemManager* self) {
     }
 }
 
-void func_80173C6C(){}
+// Toggle the item-record flag on the hikari-item manager singleton, passing
+// the arg through (retail: getter result in r3 feeds the second call).
+extern "C" void* func_802B262C();
+extern "C" void func_802B2AB8(void* self, u32 enable);
+
+extern "C" void func_80173C6C(void* self, void* arg) {
+    func_802B2AB8(func_802B262C(), (u32)arg);
+}
 
 void func_80173CA0(){}
 

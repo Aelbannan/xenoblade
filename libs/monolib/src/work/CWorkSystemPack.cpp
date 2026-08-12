@@ -417,6 +417,21 @@ __attribute__((never_inline)) bool func_804DDD54(const char* pName, const char* 
 
 // Resolve a pack file id for pPath: first via the static lookup, then via the
 // item search (returns the file id << 11). Returns -1 if neither matched.
+// Static lookup: walk the singleton's circular pack-item list (head at
+// +0x1E8, nodes link via +0, item pointer at +8) and forward to the first
+// item's func_804DEC6C when the list is non-empty (retail unmangled reloc).
+extern "C" bool func_804DEC6C(void* item, const char* pPath, void** pOutStartAddr, u32* pOutLength);
+
+bool CWorkSystemPack::func_804DDDF4(const char* pName, void* pOut, u32* pFileId) {
+    CWorkSystemPack* sys = lbl_eu_80665A10;
+    u8* head = *(u8**)((u8*)sys + 0x1E8);
+    u8* first = *(u8**)head;
+    if (first != head) {
+        return func_804DEC6C(*(void**)(first + 8), pName, (void**)pOut, pFileId);
+    }
+    return false;
+}
+
 s32 func_804DDCD4(const char* pName, const char* pPath) {
     // Declared last-to-first: MWCC assigns stack slots in reverse declaration
     // order, so this yields retail's 0x8/0xc/0x10/0x14/0x18 slot layout.

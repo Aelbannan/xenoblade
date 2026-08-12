@@ -4,7 +4,14 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfResPcImpl.hpp"
 #include "kyoshin/cf/CfBdat.hpp"
+#include <nw4r/math/math_types.h>
 #include <string.h>
+
+// Resolve ml::FixStr<128>::format calls to the explicit specialization that
+// CfScript.cpp defines (retail symbol format__Q22ml10FixStr<128>FPCce).  The
+// generic-template call mangles to ...11FixStr... otherwise (reloc-name
+// drift; same convention as pluginSnd.cpp).
+template <> void ml::FixStr<128>::format(const char* fmt, ...);
 
 namespace cf {}
 using namespace cf;
@@ -491,23 +498,22 @@ void func_8018D65C(cf::CfResPcImpl* self, int arg2) {
 // refresh the character-slot ids and finally dispatch the +0x50 slot (or
 // install the +0x34 slot result via func_800685C8 / findResEntry).
 void func_8018D79C(cf::CfResPcImpl* self) {
-    cf::CfResPcParent* parent = self->field_00;
-    ((cf::CfResPcParentVtIf*)parent)->_v1CC();
-    ((cf::CfResPcParentVtIf*)parent)->_v17C();
-    func_800BBB50(parent);
-    ((cf::CfResPcParentVtIf*)parent)->_v178();
-    ((cf::CfResPcParentVtIf*)parent)->_v1D0(0);
-    ((cf::CfResPcParentVtIf*)parent)->_v1D0(1);
-    parent->field_90 = 0;
-    parent->field_94 = 0;
+    ((cf::CfResPcParentVtIf*)self->field_00)->_v1CC();
+    ((cf::CfResPcParentVtIf*)self->field_00)->_v17C();
+    func_800BBB50(self->field_00);
+    ((cf::CfResPcParentVtIf*)self->field_00)->_v178();
+    ((cf::CfResPcParentVtIf*)self->field_00)->_v1D0(0);
+    ((cf::CfResPcParentVtIf*)self->field_00)->_v1D0(1);
+    self->field_00->field_90 = 0;
+    self->field_00->field_94 = 0;
     self->field_38 = -1;
     self->field_3A = -1;
     self->field_3C = -1;
     self->field_34 = 0;
-    if (((cf::CfGameManager*)parent)->func_80082900() == 0) {
+    if (((cf::CfGameManager*)self->field_00)->func_80082900() == 0) {
         return;
     }
-    if (!(parent->field_68 & 0x100000)) {
+    if (!(self->field_00->field_68 & 0x100000)) {
         return;
     }
     if (self->field_0A < 0) {
@@ -519,11 +525,12 @@ void func_8018D79C(cf::CfResPcImpl* self) {
         cond = 0;
     }
     u8* inst = CfRes_getInstanceField();
-    if (parent->field_6C & 0x2) {
-        parent->field_6C &= ~0x3;
+    u32 f6c = self->field_00->field_6C;
+    if (f6c & 0x2) {
+        self->field_00->field_6C &= ~0x3;
         return;
     }
-    if (!(parent->field_6C & 0x1)) {
+    if (!(f6c & 0x1)) {
         return;
     }
     if (self->field_3E > 0) {
@@ -534,7 +541,7 @@ void func_8018D79C(cf::CfResPcImpl* self) {
     int v034_6 = ((cf::CfResPcVtIf*)self)->_v034(6);
     int r29 = 1;
     int r25 = 0;
-    if (parent->field_64 & 0x1) {
+    if (self->field_00->field_64 & 0x80000000) {
         if (inst != 0) {
             int ret;
             if (cond != 0) {
@@ -553,7 +560,7 @@ void func_8018D79C(cf::CfResPcImpl* self) {
                     found->field_0C = 0;
                 }
                 if (v034_6 != 0 &&
-                    ((parent->field_6C & 0x80000) || (parent->field_6C & 0x100000))) {
+                    ((self->field_00->field_6C & 0x80000) || (self->field_00->field_6C & 0x100000))) {
                     r25 = 1;
                     r29 = 1;
                 }
@@ -563,55 +570,55 @@ void func_8018D79C(cf::CfResPcImpl* self) {
     if (r25 == 0) {
         return;
     }
-    if (parent->field_64 & 0x2) {
+    if (self->field_00->field_64 & 0x2) {
         int v6 = ((cf::CfResPcVtIf*)self)->_v034(6);
         if (v6 != 0) {
             int v6b = ((cf::CfResPcVtIf*)self)->_v034(6);
             if (((v6b >> 5) & 0x7F) != 0) {
-                u16 slot = parent->field_8C;
+                u16 slot = self->field_00->field_8C;
                 if (slot == 0xB) {
-                    if (self->field_0A >= 0 && !(parent->field_64 & 0x1)) {
+                    if (self->field_0A >= 0 && !(self->field_00->field_64 & 0x80000000)) {
                         if (func_80062928(self->field_0A, 0x7E30400, 3) != 0) {
-                            parent->field_6C |= 0x40000;
+                            self->field_00->field_6C |= 0x40000;
                         }
                     }
                     if (self->field_0A >= 0) {
                         if (func_80062928(self->field_0A, 0xA630400, 3) != 0) {
-                            parent->field_6C |= 0x200000;
+                            self->field_00->field_6C |= 0x200000;
                             self->field_08 = 1;
                         }
                     }
                 } else {
                     u32 t = ((u32)v6b >> 5 & 0x7F) << 10;
-                    if (self->field_0A >= 0 && !(parent->field_64 & 0x1)) {
+                    if (self->field_0A >= 0 && !(self->field_00->field_64 & 0x80000000)) {
                         if (func_80062928(self->field_0A, t | 0x78000000 | ((u32)slot << 20), 3) != 0) {
-                            parent->field_6C |= 0x40000;
+                            self->field_00->field_6C |= 0x40000;
                         }
                     }
                     u32 token = t | 0xA0000000 | ((u32)slot << 20);
                     if (token != 0 && self->field_0A >= 0) {
                         if (func_80062928(self->field_0A, token, 3) != 0) {
-                            parent->field_6C |= 0x200000;
+                            self->field_00->field_6C |= 0x200000;
                             self->field_08 = 1;
                         }
                     }
                 }
             } else {
-                parent->field_6C &= ~0x20000;
+                self->field_00->field_6C &= ~0x20000;
             }
         }
     }
-    cf::CfResPcCharData* charData = func_8009EC9C(parent->field_8C);
+    cf::CfResPcCharData* charData = func_8009EC9C(self->field_00->field_8C);
     u32 idx = 0;
     for (int i = 1; i <= 5; i++, idx++) {
         int v = ((cf::CfResPcVtIf*)self)->_v034(i);
         u32 r5;
-        if (parent->field_64 & 0x8) {
+        if (self->field_00->field_64 & 0x8) {
             r5 = (u32)func_8009E120(charData, (u16)(i - 1));
         } else if (self->field_40 != 0) {
             r5 = (u32)v;
         } else {
-            r5 = func_80141E90(parent->field_8C, (s16)charData->field_0E[idx], (u16)(idx + 1), 0);
+            r5 = func_80141E90(self->field_00->field_8C, (s16)charData->field_0E[idx], (u16)(idx + 1), 0);
         }
         if ((u32)v != r5) {
             v = (int)r5;
@@ -619,24 +626,24 @@ void func_8018D79C(cf::CfResPcImpl* self) {
         }
         func_8018D154((cf::CfResPcImpl*)self, (u32)v, (u32)i);
     }
-    if (parent->field_64 & 0x2) {
-        func_800BE3E8(parent, 1);
+    if (self->field_00->field_64 & 0x2) {
+        func_800BE3E8(self->field_00, 1);
     }
     ((cf::CfResPcVtIf*)self)->_v04C(v034_0);
     if (r29 != 0) {
-        if (parent->field_6C & 0x100000) {
+        if (self->field_00->field_6C & 0x100000) {
             cf::CfResPcLoadBuffer buf;
-            func_80080F48__Q22cf13CfGameManagerFv(parent->field_8C, &buf, parent->field_64 >> 31, 0);
-            parent->field_70C[0] = buf.field_1C;
-            parent->field_70C[1] = buf.field_1E;
+            func_80080F48__Q22cf13CfGameManagerFv(self->field_00->field_8C, &buf, self->field_00->field_64 >> 31, 0);
+            self->field_00->field_70C[0] = buf.field_1C;
+            self->field_00->field_70C[1] = buf.field_1E;
         }
         for (int j = 0; j < 2; j++) {
-            if ((j == 0 && parent->field_70C[0] != 0) || (j == 1 && parent->field_70C[1] != 0)) {
+            if ((j == 0 && self->field_00->field_70C[0] != 0) || (j == 1 && self->field_00->field_70C[1] != 0)) {
                 int v = ((cf::CfResPcVtIf*)self)->_v034(j + 6);
                 if (v != 0) {
                     ((cf::CfResPcVtIf*)self)->_v03C(j, v);
-                    if (parent->field_70C[j] == 0) {
-                        parent->field_70C[j] = 4;
+                    if (self->field_00->field_70C[j] == 0) {
+                        self->field_00->field_70C[j] = 4;
                     }
                 }
             }
@@ -647,35 +654,234 @@ void func_8018D79C(cf::CfResPcImpl* self) {
     if (v6 != 0) {
         token = (v6 & 0xFE0) | 0x58000400;
     }
-    if (parent->field_64 & 0x2) {
+    if (self->field_00->field_64 & 0x2) {
         if (token != 0) {
             ((cf::CfResPcVtIf*)self)->_v050(token);
         }
-    } else if ((parent->field_64 & 0x1) && r29 != 0 && (lbl_eu_80663E24 & 0x40000) &&
-               inst != 0 && token != 0) {
+    } else if ((self->field_00->field_64 & 0x80000000) && r29 != 0 &&
+               (lbl_eu_80663E24 & 0x40000) && inst != 0 && token != 0) {
         u32 sp10 = 0xFFFFFFFF;
         u8* res = 0;
-        if (func_8007E908__Q22cf13CfGameManagerFv(parent->field_8C) != 0) {
+        if (func_8007E908__Q22cf13CfGameManagerFv(self->field_00->field_8C) != 0) {
             res = (u8*)func_800685C8(inst, (u32)token, &sp10);
         }
         if (res != 0) {
             self->field_34 = (u32)res;
             self->field_3C = -1;
-            parent->field_6C |= 0x20000;
+            self->field_00->field_6C |= 0x20000;
         } else if (func_80062B3C((u8*)token, 4) != 0) {
             u32 spC;
             u32 sp8;
             cf::CfResPcFindEntry* found = findResEntry(inst, (u32)token, &spC, &sp8);
             if (found != 0) {
                 self->field_3C = (u16)sp8;
-                parent->field_6C |= 0x20000;
+                self->field_00->field_6C |= 0x20000;
                 found->field_0C = 0;
             }
         }
     }
 }
 
-void func_8018DE8C(){}
+void func_8018E7E4(cf::CfResPcImpl* self);
+
+// func_8018DE8C - PC resource advance driver: validates the resource entries
+// (in-use checks on the +0x40 slots), builds the model/sound handles into
+// the parent slots (+0x90/+0x94/+0x98/+0x9C/+0x708/+0x6D4), folds the +0x6C
+// flag word, refreshes the player state and finally hands off to
+// func_8018E7E4. When the player is the current character and the event-flag
+// bit is set, a positioning block moves the player model (VEC3Add ps math)
+// and notifies the +0xB8 vtable slot.
+void func_8018DE8C(cf::CfResPcImpl* self) {
+    s16 state = self->field_0A;
+    if (state < 0) {
+        return;
+    }
+    u16 slot = self->field_00->field_8C;
+    cf::CfResPcTableEntry* a = func_80062C28(state, 0);
+    cf::CfResPcLookupEntry* b = func_80062C88(state);
+    cf::CfResPcLookupEntry* c = func_80062D44(state);
+    cf::CfResPcLookupEntry* f = func_80062E64(state);
+    if ((self->field_00->field_64 & 0x80000000) != 0) {
+        b = (cf::CfResPcLookupEntry*)func_80062EC4(self->field_38);
+        c = 0;
+    }
+    int ok = 1;
+    int v = ((cf::CfResPcVtIf*)self)->_v034(0);
+    if ((u32)b->field_04 != (u32)v) {
+        self->field_00->field_6C &= 0xFFD88C0F;
+        self->field_08 = 0;
+        // Log the mismatching resource handle through the format string.
+        u8 msgBuf[0x84];
+        ml::FixStr<128>* msg = (ml::FixStr<128>*)msgBuf;
+        msg->clear();
+        int v1 = ((cf::CfResPcVtIf*)self)->_v034(0);
+        int v2 = ((cf::CfResPcVtIf*)self)->_v034(0);
+        msg->format(lbl_eu_80503BC4, (const char*)func_800AA5C0((void*)v2), v1);
+        return;
+    }
+    if (self->field_00->field_6C & 0x2) {
+        self->field_00->field_6C &= 0xFFD88C0E;
+        self->field_08 = 0;
+        return;
+    }
+    int flag = 0;
+    if ((cf::CfObjectMove*)self->field_00 == cf::CfGameManager::getPlayer(0) &&
+        (lbl_eu_80663E24 & 0x4000)) {
+        // Position the player: add a fixed offset to its current position,
+        // optionally corrected by func_804BE470, then place it (slot +0xB8).
+        nw4r::math::VEC3* p = ((cf::CfResPcParentVtIf*)self->field_00)->_v0AC();
+        nw4r::math::VEC3 pos = *p;
+        nw4r::math::VEC3 off;
+        off.x = lbl_eu_80667A40;
+        off.y = lbl_eu_80667A44;
+        off.z = lbl_eu_80667A40;
+        nw4r::math::VEC3 sum = pos + off;
+        nw4r::math::VEC3 work = sum;
+        nw4r::math::VEC3 scratch;
+        if (func_804BE470(&work, &scratch, 0, 0, 0) != 0) {
+            pos = work;
+        }
+        nw4r::math::VEC3 zero;
+        zero.x = lbl_eu_80667A40;
+        zero.y = lbl_eu_80667A40;
+        zero.z = lbl_eu_80667A40;
+        func_804BD94C(&pos, &zero, 0x44A05, 0, 0, 0, lbl_eu_80667A4C,
+                      lbl_eu_80667A50, lbl_eu_80667A54, lbl_eu_8066AF20,
+                      lbl_eu_80667A58);
+        ((cf::CfResPcParentVtIf*)self->field_00)->_v0B8(&pos, lbl_eu_80667A5C);
+        flag = 1;
+    }
+    for (int i = 1; i <= 5; i++) {
+        if (self->field_00->field_6C & 0x20) {
+            int v2 = ((cf::CfResPcVtIf*)self)->_v034(i);
+            if (v2 != 0) {
+                cf::CfResPcLookupEntry* e = (cf::CfResPcLookupEntry*)&a[i];
+                if (((cf::CfResPcEntryObjIf*)e->field_2C)->_v040(e) == 0) {
+                    ok = 0;
+                    break;
+                }
+            }
+        }
+    }
+    if (self->field_00->field_6C & 0x10) {
+        if (((cf::CfResPcEntryObjIf*)b->field_2C)->_v040(b) == 0) {
+            ok = 0;
+        }
+    }
+    if (self->field_00->field_6C & 0x10000) {
+        if (((cf::CfResPcEntryObjIf*)f->field_2C)->_v040(f) == 0) {
+            ok = 0;
+        }
+    }
+    if (self->field_00->field_6C & 0x40000) {
+        if (((cf::CfResPcEntryObjIf*)c->field_2C)->_v040(c) == 0) {
+            ok = 0;
+        }
+    }
+    u32 f64 = self->field_00->field_64;
+    if ((f64 & 0x80000000) && !(f64 & 0x10000) && (lbl_eu_80663E24 & 0x09800000)) {
+        return;
+    }
+    if (ok == 0) {
+        return;
+    }
+    if (((cf::CfGameManager*)f64)->func_80082900() == 0) {
+        return;
+    }
+    self->field_08++;
+    func_80434A4C__Q23mtl10MemManagerFb(false);
+    if ((self->field_00->field_6C & 0x20) && self->field_00->field_98 == 0) {
+        u8* h = 0;
+        int v1 = ((cf::CfResPcVtIf*)self)->_v034(1);
+        if (v1 != 0) {
+            s16 st = self->field_0A;
+            if (st < 0) {
+                h = 0;
+            } else {
+                cf::CfResPcTableEntry* a2 = func_80062C28(st, 0);
+                h = ((cf::CfResPcEntryObjIf*)a2[1].field_2C)->_v008(
+                    (cf::CfResPcLookupEntry*)&a2[1], slot);
+            }
+        }
+        self->field_00->field_90 = (u32)h;
+        void* hnd = func_80495E8C(CfRes_getD80Flag(), (u32)self->field_00->field_90, -1, 1);
+        u8* d = (u8*)__dynamic_cast(hnd, 0, &lbl_eu_806624C0, &lbl_eu_806624D0, 0);
+        func_800BBADC(self->field_00, d);
+        func_8048472C(self->field_00->field_98, lbl_eu_80503BC4 + 7);
+        ((cf::CfResPcResObj*)self->field_00->field_98)->field_7A4 |= 0x400000;
+        if (self->field_00->field_98 != 0) {
+            self->field_00->field_98->_v064(0);
+        }
+        for (int i = 2; i <= 5; i++) {
+            int v2 = ((cf::CfResPcVtIf*)self)->_v034(i);
+            if (v2 != 0) {
+                u8* res = ((cf::CfResPcEntryObjIf*)a[i].field_2C)->_v008((cf::CfResPcLookupEntry*)&a[i], slot);
+                if (*(u32*)res != 0) {
+                    func_804831C4(self->field_00->field_98, res);
+                }
+            }
+        }
+    }
+    if (self->field_00->field_6C & 0x10) {
+        // FixStr<64> name buffer (mString[64] + mLength); cleared inline
+        // (retail stb/stw - the out-of-line FixStr ctor would emit a bl).
+        u8 buf64[0x44];
+        ml::FixStr<64>& name = *(ml::FixStr<64>*)buf64;
+        name.mString[0] = 0;
+        name.mLength = 0;
+        if (self->field_00->field_9C == 0) {
+            func_800AA33C(name, (u32)b->field_04, 1, 0);
+            self->field_00->field_94 = (u32)((cf::CfResPcEntryObjIf*)b->field_2C)->_v008(b, slot);
+            self->field_00->field_9C = (u32)func_800584B8(CfRes_getD80Flag(),
+                                                         (u32)self->field_00->field_94,
+                                                         (const char*)&name);
+        }
+        if (self->field_00->field_6C & 0x10000) {
+            if (self->field_00->field_6D4 == 0) {
+                func_800AA33C(name, (u32)f->field_04, 1, 0);
+                self->field_00->field_708 = (u32)((cf::CfResPcEntryObjIf*)f->field_2C)->_v008(f, slot);
+                self->field_00->field_6D4 = (u32)func_800584B8(CfRes_getD80Flag(),
+                                                              (u32)self->field_00->field_708,
+                                                              (const char*)&name);
+            }
+        }
+    }
+    if (self->field_00->field_6C & 0x40000) {
+        self->field_00->field_6DC = c;
+        int v6 = ((cf::CfResPcVtIf*)self)->_v034(6);
+        self->field_00->field_6E0 = ((u32)slot << 20) | 0x78000000 | ((u32)v6 >> 10) & 0x3F8000;
+    }
+    func_80434A4C__Q23mtl10MemManagerFb(true);
+    u32 f68 = self->field_00->field_68;
+    int b20 = (f68 >> 11) & 1;
+    if (f68 & 0x100000) {
+        func_800BB618(self->field_00, 0);
+        ((cf::CfResPcParentVtIf*)self->field_00)->_v168(lbl_eu_80667A60);
+        if (!(self->field_00->field_68 & 0x10000000)) {
+            func_800BC3B0((cf::CfObjectMove*)self->field_00, lbl_eu_80667A64);
+        }
+    }
+    if ((cf::CfObjectMove*)self->field_00 != cf::CfGameManager::getPlayer(0)) {
+        self->field_00->field_6CC = 1;
+    }
+    func_800BCFA0(self->field_00);
+    if (b20 != 0) {
+        self->field_00->field_68 |= 0x100000;
+    }
+    ((cf::CfResPcParentVtIf*)self->field_00)->_v134(lbl_eu_80666B08);
+    ((cf::CfResPcParentVtIf*)self->field_00)->_v1D4(lbl_eu_80667A68 * lbl_eu_80666B08);
+    if (self->field_00->field_64 & 0x2) {
+        func_800BE12C(self->field_00, 1, 0, -1, 1);
+        if (flag != 0) {
+            if (self->field_00->field_C4 != 0) {
+                self->field_00->field_C4->field_4EC =
+                    (self->field_00->field_C4->field_4EC & 0xFFF5FFFF) | 0x40000;
+                self->field_00->field_C4->field_4EC |= 0x40;
+            }
+        }
+    }
+    func_8018E7E4(self);
+}
 
 // func_8018E69C - PC resource detach: looks up six resource-table entries
 // by the state at field_0A and detaches each according to the parent +0x6C
@@ -718,7 +924,9 @@ void func_8018E69C(cf::CfResPcImpl* self) {
 // state, validates the parent in-use flags through the entry objects' +0x40
 // slots, then builds the model objects (+0x6F8 and +0x6FC from entry_d's
 // +0x08 slot), installs the bdat ids into the model objects, loads the
-// CMcaFile handle and finally cleans up the slot handles.
+// CMcaFile handle and finally cleans up the slot handles. All parent
+// accesses go through self->field_00 directly (retail reloads it at every
+// site; the model object at +0x98 is held in one register across the block).
 void func_8018E7E4(cf::CfResPcImpl* self) {
     s16 state = self->field_0A;
     u16 slot = self->field_00->field_8C;
@@ -726,15 +934,14 @@ void func_8018E7E4(cf::CfResPcImpl* self) {
     cf::CfResPcLookupEntry* entry_d = func_80062DA4(state);
     cf::CfResPcLookupEntry* entry_e = func_80062E04(state);
     int ok = 1;
-    cf::CfResPcParent* parent = self->field_00;
-    if (parent->field_64 & 0x80000000) {
-        if (parent->field_6C & 0x20000) {
+    if (self->field_00->field_64 & 0x80000000) {
+        if (self->field_00->field_6C & 0x20000) {
             if (self->field_34 != 0) {
                 entry_e = (cf::CfResPcLookupEntry*)self->field_34;
             } else if (self->field_3C >= 0) {
                 entry_e = (cf::CfResPcLookupEntry*)func_80062EC4(self->field_3C);
             } else {
-                parent->field_6C &= ~0x20000;
+                self->field_00->field_6C &= ~0x20000;
             }
         }
     }
@@ -743,94 +950,96 @@ void func_8018E7E4(cf::CfResPcImpl* self) {
     // the FixStr buffer below (retail stack layout).
     cf::CfResPcPosTableEntry table[11];
     *(cf::CfResPcPosTable*)(table + 1) = lbl_eu_80503B30;
-    if ((parent->field_6C & 0x3000) &&
+    if ((self->field_00->field_6C & 0x3000) &&
         ((cf::CfResPcEntryObjIf*)entry_d->field_2C)->_v040(entry_d) == 0) {
         ok = 0;
     }
-    if ((parent->field_6C & 0x20000) &&
+    if ((self->field_00->field_6C & 0x20000) &&
         ((cf::CfResPcEntryObjIf*)entry_e->field_2C)->_v040(entry_e) == 0) {
         ok = 0;
     }
-    if ((parent->field_6C & 0x200000) &&
+    if ((self->field_00->field_6C & 0x200000) &&
         ((cf::CfResPcEntryObjIf*)entry_c->field_2C)->_v040(entry_c) == 0) {
         ok = 0;
     }
     if (ok != 0) {
         self->field_08++;
-        ((cf::CfResPcParentVtIf*)parent)->_v218();
+        ((cf::CfResPcParentVtIf*)self->field_00)->_v218();
         func_80434A4C__Q23mtl10MemManagerFb(false);
-        cf::CfResPc98ObjIf* obj98 = parent->field_98;
-        if ((parent->field_6C & 0x1000) && parent->field_6F8[0] == 0) {
-            parent->field_700 = (cf::CfResPc700Obj*)((cf::CfResPcEntryObjIf*)entry_d->field_2C)->_v008(entry_d, slot);
-            if (parent->field_700->field_00 != 0) {
-                parent->field_6F8[0] = (cf::CfResPcResObj*)func_80489A60(lbl_eu_80663E14, (u8*)parent->field_700, -1, 0, 0, 0x70);
-                if (parent->field_6F8[0] != 0) {
-                    parent->field_6F8[0]->field_7A4 |= 0x40000000;
+        cf::CfResPc98ObjIf* obj98 = self->field_00->field_98;
+        if ((self->field_00->field_6C & 0x1000) && self->field_00->field_6F8[0] == 0) {
+            self->field_00->field_700 = (cf::CfResPc700Obj*)((cf::CfResPcEntryObjIf*)entry_d->field_2C)->_v008(entry_d, slot);
+            if (self->field_00->field_700->field_00 != 0) {
+                self->field_00->field_6F8[0] = (cf::CfResPcResObj*)func_80489A60(lbl_eu_80663E14, (u8*)self->field_00->field_700, -1, 0, 0, 0x70);
+                if (self->field_00->field_6F8[0] != 0) {
+                    self->field_00->field_6F8[0]->field_7A4 |= 0x40000000;
                 }
-                if (obj98 != 0 && parent->field_6F8[0] != 0) {
-                    if ((parent->field_64 & 0x2) && !(lbl_eu_80663E24 & 0x20400)) {
-                        ((cf::CfResPcParentVtIf*)parent)->_v16C();
-                        ((cf::CfResPcResObjVtIf*)parent->field_6F8[0])->_v048();
+                if (obj98 != 0 && self->field_00->field_6F8[0] != 0) {
+                    if ((self->field_00->field_64 & 0x2) && !(lbl_eu_80663E24 & 0x20400)) {
+                        ((cf::CfResPcParentVtIf*)self->field_00)->_v16C();
+                        ((cf::CfResPcResObjVtIf*)self->field_00->field_6F8[0])->_v048();
                     }
-                    u32 bdat = (u32)CfBdat::func_801424A8(parent->field_70C[0]);
-                    if (obj98->_v0C4((u8*)parent->field_6F8[0], bdat, 0) == 0) {
-                        ((cf::CfResPcParentVtIf*)parent)->_v1D0(0);
+                    if (obj98->_v0C4((u8*)self->field_00->field_6F8[0],
+                                     (u32)CfBdat::func_801424A8(self->field_00->field_70C[0]), 0) == 0) {
+                        ((cf::CfResPcParentVtIf*)self->field_00)->_v1D0(0);
                     } else {
+                        u32 bdat = (u32)CfBdat::func_801424A8(self->field_00->field_70C[0]);
                         func_804873EC(obj98, bdat, 1);
                         if (slot <= 10) {
                             func_804875B8(obj98, bdat, table[slot].field_00, table[slot].field_04);
                         }
-                        ((cf::CfResPcResObjVtIf*)parent->field_6F8[0])->_v09C(2, 0);
+                        ((cf::CfResPcResObjVtIf*)self->field_00->field_6F8[0])->_v09C(2, 0);
                     }
                 }
             }
         }
-        if ((parent->field_6C & 0x2000) && parent->field_6F8[1] == 0) {
-            parent->field_700 = (cf::CfResPc700Obj*)((cf::CfResPcEntryObjIf*)entry_d->field_2C)->_v008(entry_d, slot);
-            if (parent->field_700->field_00 != 0) {
-                parent->field_6F8[1] = (cf::CfResPcResObj*)func_80489A60(lbl_eu_80663E14, (u8*)parent->field_700, -1, 0, 0, 0x70);
-                if (parent->field_6F8[1] != 0) {
-                    parent->field_6F8[1]->field_7A4 |= 0x40000000;
+        if ((self->field_00->field_6C & 0x2000) && self->field_00->field_6F8[1] == 0) {
+            self->field_00->field_700 = (cf::CfResPc700Obj*)((cf::CfResPcEntryObjIf*)entry_d->field_2C)->_v008(entry_d, slot);
+            if (self->field_00->field_700->field_00 != 0) {
+                self->field_00->field_6F8[1] = (cf::CfResPcResObj*)func_80489A60(lbl_eu_80663E14, (u8*)self->field_00->field_700, -1, 0, 0, 0x70);
+                if (self->field_00->field_6F8[1] != 0) {
+                    self->field_00->field_6F8[1]->field_7A4 |= 0x40000000;
                 }
-                if (obj98 != 0 && parent->field_6F8[1] != 0) {
-                    if ((parent->field_64 & 0x2) && (lbl_eu_80663E24 & 0x20400)) {
-                        ((cf::CfResPcResObjVtIf2*)parent->field_6F8[1])->_v048(lbl_eu_80667A60);
+                if (obj98 != 0 && self->field_00->field_6F8[1] != 0) {
+                    if ((self->field_00->field_64 & 0x2) && (lbl_eu_80663E24 & 0x20400)) {
+                        ((cf::CfResPcResObjVtIf2*)self->field_00->field_6F8[1])->_v048(lbl_eu_80667A60);
                     } else {
-                        ((cf::CfResPcParentVtIf*)parent)->_v16C();
-                        ((cf::CfResPcResObjVtIf*)parent->field_6F8[1])->_v048();
+                        ((cf::CfResPcParentVtIf*)self->field_00)->_v16C();
+                        ((cf::CfResPcResObjVtIf*)self->field_00->field_6F8[1])->_v048();
                     }
-                    u32 bdat2 = (u32)CfBdat::func_801424A8(parent->field_70C[1]);
-                    if (obj98->_v0C4((u8*)parent->field_6F8[1], bdat2, 0) == 0) {
-                        ((cf::CfResPcParentVtIf*)parent)->_v1D0(1);
+                    if (obj98->_v0C4((u8*)self->field_00->field_6F8[1],
+                                     (u32)CfBdat::func_801424A8(self->field_00->field_70C[1]), 0) == 0) {
+                        ((cf::CfResPcParentVtIf*)self->field_00)->_v1D0(1);
                     } else {
+                        u32 bdat2 = (u32)CfBdat::func_801424A8(self->field_00->field_70C[1]);
                         func_804873EC(obj98, bdat2, 1);
                         if (slot <= 10) {
                             func_804875B8(obj98, bdat2, table[slot].field_00, table[slot].field_04);
                         }
-                        ((cf::CfResPcResObjVtIf2*)parent->field_6F8[1])->_v09C(2, 0);
+                        ((cf::CfResPcResObjVtIf2*)self->field_00->field_6F8[1])->_v09C(2, 0);
                     }
                 }
             }
         }
-        if ((parent->field_6C & 0x20000) && parent->field_6D8 == 0) {
+        if ((self->field_00->field_6C & 0x20000) && self->field_00->field_6D8 == 0) {
             ml::FixStr<64> buf;
             func_800AA33C(buf, (u32)entry_e->field_04, 1, 0);
-            parent->field_704 = (u32)((cf::CfResPcEntryObjIf*)entry_e->field_2C)->_v008(entry_e, slot);
+            self->field_00->field_704 = (u32)((cf::CfResPcEntryObjIf*)entry_e->field_2C)->_v008(entry_e, slot);
             CfResPcMca mca;
-            __ct__CMcaFile((CMcaFile*)&mca, (void*)parent->field_704);
-            parent->field_6D8 = (u32)func_80495EAC((void*)CfRes_getD80Flag(), mca.field_0C, (void*)&buf);
-            func_800BD644(parent);
+            __ct__CMcaFile((CMcaFile*)&mca, (void*)self->field_00->field_704);
+            self->field_00->field_6D8 = (u32)func_80495EAC((void*)CfRes_getD80Flag(), mca.field_0C, (void*)&buf);
+            func_800BD644(self->field_00);
         }
-        if (!(parent->field_68 & 0x100000)) {
+        if (!(self->field_00->field_68 & 0x100000)) {
             for (int i = 0; i < 2; i++) {
-                if (parent->field_6F8[i] != 0) {
-                    func_804838DC(parent->field_6F8[i], 0);
+                if (self->field_00->field_6F8[i] != 0) {
+                    func_804838DC(self->field_00->field_6F8[i], 0);
                 }
             }
         }
         func_80434A4C__Q23mtl10MemManagerFb(true);
-        if (parent->field_38 != 0) {
-            parent->field_38->_v0B0();
+        if (self->field_00->field_38 != 0) {
+            self->field_00->field_38->_v0B0();
         }
     }
 }

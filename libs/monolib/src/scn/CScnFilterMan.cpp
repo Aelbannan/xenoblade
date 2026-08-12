@@ -115,7 +115,12 @@ extern "C" void func_8049C9F8(void* self) { *(u32*)self = 0; }
 extern "C" __declspec(noinline) void func_8049CB70(void* self, void* out) { *(u32*)out = 0; }
 
 
+// Guard the no-op stub so the call sites survive (MWCC_REFERENCE
+// empty-stub pattern: -ipa file inlines the empty body and drops the bl).
+#pragma push
+#pragma auto_inline off
 extern "C" void func_8049CCA4(CScnFilterReslist* list) {}
+#pragma pop
 
 // (re)initialise the filter list member at self+8 and return self. The
 // callee func_8049CCA4 is a no-op in retail; the call is still emitted
@@ -321,7 +326,9 @@ void func_8049D3D8(){}
 
 void func_8049D490(){}
 
-extern "C" void func_8049D520(u32* self) { *self = *(u32*)(*(u32**)self); }
+// noinline keeps the bl from func_8049D914's advance out-of-line (retail
+// emits the call; -ipa file would inline this small body and drop it).
+extern "C" __declspec(noinline) void func_8049D520(u32* self) { *self = *(u32*)(*(u32**)self); }
 
 extern "C" void* func_8049D530(void* self){ return (void*)((char*)*(void**)self + 8); }
 
@@ -444,11 +451,13 @@ void func_8049D960(CScnFilterListIter* dst, CScnFilterListIter* src) {
     func_8049D9A0((u32*)src);
 }
 
-extern "C" void func_8049D994(int* dst, int* src){
+// noinline keeps the bl calls from func_8049D960 out-of-line (retail emits
+// the calls; -ipa file would inline these small bodies and drop them).
+extern "C" __declspec(noinline) void func_8049D994(int* dst, int* src){
     *dst = *src;
 }
 
-extern "C" void func_8049D9A0(u32* self) { *self = *(u32*)(*(u32**)self); }
+extern "C" __declspec(noinline) void func_8049D9A0(u32* self) { *self = *(u32*)(*(u32**)self); }
 
 // != on the u32 values at the two pointers (MWCC dual-subf idiom).
 extern "C" u32 func_8049D9B0(const u32* a, const u32* b) { return *a != *b; }
@@ -515,11 +524,11 @@ extern "C" __declspec(noinline) u32 func_8049DCD8(const u32* a, const u32* b) {
 }
 
 // Round-trip the first node's mNext through a stack slot via func_8049DD28
-// and return it (one more deref than func_8049DD30).
+// and return it (one more deref than func_8049DD30): the retail derefs the
+// callee's preserved r3 (the local's address), not the stack slot.
 extern "C" __declspec(noinline) CScnFilterListNode* func_8049DCF4(CScnFilterList* list) {
     CScnFilterListNode* node;
-    func_8049DD28(&node, (u32)list->mStartNodePtr->mNext);
-    return node;
+    return *(CScnFilterListNode**)func_8049DD28(&node, (u32)list->mStartNodePtr->mNext);
 }
 
 __declspec(noinline) void* func_8049DD28(void* self, u32 val) {

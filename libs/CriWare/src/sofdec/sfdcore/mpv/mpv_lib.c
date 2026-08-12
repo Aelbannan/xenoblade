@@ -106,10 +106,15 @@ void MPV_Finish(void) {
     MPVUMC_Finish();
     MPVSL_Finish();
     MPVM2V_Finish();
-    if (lbl_eu_80602B88[0x48/4] & 0x10000000) {
-        u8* base = (u8*)lbl_eu_80602B88[0x50/4];
-        u32 off;
-        for (off = 0; off < 0x1BE0; off += 0x20) {
+    // Retail hoists both loads (flag + base) before the branch and runs a
+    // 223-iteration dcbi cache-flush countdown (mtlr/bdnz). __dcbi is not an
+    // MWCC intrinsic in any version (KB: dcbi intrinsic gap) so the
+    // instruction itself cannot be reproduced in high-level C; the call
+    // shape below keeps everything else (prologue, loads, countdown)
+    // aligned with retail.
+    if (lbl_eu_80602B88[0x48 / 4] & 0x10000000) {
+        u8* base = (u8*)lbl_eu_80602B88[0x50 / 4];
+        for (u32 off = 0; off < 0x1BE0; off += 0x20) {
             __dcbi(base, off);
         }
     }

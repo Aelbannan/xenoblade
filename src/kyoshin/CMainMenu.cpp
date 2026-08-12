@@ -224,7 +224,13 @@ void func_800FEF4C(CMainMenu* self) {
     func_801D202C(&self->subCur);
 }
 
-void __ct__800FF300(void* self){}
+// Guard the not-yet-recovered constructor stub so MWCC's auto-inliner does not
+// inline the empty body into the OnFileEvent tail-call thunk (reloc must stay
+// an external b __ct__800FF300, per MWCC_REFERENCE empty-stub pattern).
+#pragma push
+#pragma auto_inline off
+extern "C" void __ct__800FF300(){}
+#pragma pop
 
 // rodata block containing resource names:
 // offset 0x00: brlyt name (e.g. "mf00_menu.brlyt")

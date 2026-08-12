@@ -12,8 +12,9 @@
 
 // Retail data imports (defined in nw4r_data.o; the shared header does not
 // declare them, so they live here).
-extern char lbl_eu_805697E8; // ScnMdlExpand vtable
+extern char lbl_eu_805697E8[]; // ScnMdlExpand vtable
 extern u32 lbl_eu_806634A8;  // invalid node-ID marker (0xFFFFFFFF)
+extern "C" void __dt__Q34nw4r3g3d8ScnGroupFv(void* self, int freeFlag);
 
 namespace nw4r {
 namespace g3d {
@@ -37,20 +38,15 @@ public:
 };
 
 // Target 1: destructor
-// Detaches this expand object from its owner model, then destroys the
-// ScnGroup base.
-ScnMdlExpand* __dt__Q34nw4r3g3d12ScnMdlExpandFv(ScnMdlExpand* self, int freeFlag) {
-    if (self != NULL) {
-        ScnMdlExpandLayout* lay = reinterpret_cast<ScnMdlExpandLayout*>(self);
-        ScnMdlSimple* mdl = lay->mpScnMdl;
-        reinterpret_cast<ScnMdlExpandVtblSlot*>(self)->field_0x0 =
-            reinterpret_cast<u32>(&lbl_eu_805697E8);
-        if (mdl != NULL) {
-            mdl->G3dProc(G3dObj::G3DPROC_DETACH_PARENT, 0, self);
-        }
-        static_cast<ScnGroup*>(self)->~ScnGroup();
+// Detaches this expand object from its owner model (vtable reset + G3dProc
+// DETACH_PARENT), then the implicit ScnGroup base destruction runs (retail
+// li r4,0 before bl __dt__ScnGroup; MWCC's implicit base call uses flag 0).
+ScnMdlExpand::~ScnMdlExpand() {
+    *(u32*)this = reinterpret_cast<u32>(lbl_eu_805697E8);
+    ScnMdlSimple* mdl = *(ScnMdlSimple**)((char*)this + 0xE8);
+    if (mdl != NULL) {
+        mdl->G3dProc(0x10003, 0, this);
     }
-    return self;
 }
 
 // Target 5: Insert

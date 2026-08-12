@@ -1,4 +1,13 @@
 #include "kyoshin/cf/chain/CChain.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
+
+// Local C-ABI imports kept out of CChain.hpp: each clashes with a same-named
+// declaration pulled in by CBattleManager.hpp's include chain in other TUs
+// (CSuddenCommu.hpp / CfGimmick.hpp / CVision.hpp), so they are declared
+// extern "C" here where only this TU sees them.
+extern "C" cf::CBattleManager* getInstance__Q22cf14CBattleManagerFv();
+extern "C" CChainGimmickList* func_800B6BC8();
+extern "C" int func_801537E0(void* self);
 
 struct ChIf {
     virtual void _v0008();
@@ -208,6 +217,10 @@ namespace cf {
         return func_8027B770((char*)this + 0x18);
     }
 
+    // Retail plain empty+delete dtor: no base/member dtor calls (the actor's
+    // CChainTemp/CChainEffect regions are raw buffers at the retail level).
+    CChainActor::~CChainActor() {}
+
 
 
 }
@@ -233,8 +246,31 @@ bool CChain_isValidChain(unsigned char* a1, unsigned char* a2, int a3) {
     return true;
 }
 
-void func_80277154(){}
-void func_80277A7C(){}
+// Returns the chain-voice state: 0 when the global voice id is the -1
+// sentinel, otherwise the voice-node lookup result for that id.
+int func_80277154() {
+    if ((u32)lbl_eu_80662A20 + 0x10000 == 0xffff) return 0;
+    return func_802A3748((u32)lbl_eu_80662A20);
+}
+// Chain-gauge accumulation: when the chain is active (type byte set and the
+// battle-object flag bit 2 set), add the frame delta to the gauge at 0x1EF0,
+// clamped to 0x98967F. Only chain types 0xA..0xC and 0x14..0x15 accumulate.
+void func_80277A7C(cf::CChain* self, cf::CChainFlag* flag, float f1) {
+    if (self->unk0[8] != 0 && (flag->field_0x3F00 & 4) != 0) {
+        if ((int)f1 > 0) {
+            bool ok = true;
+            if (!((self->unk0[2] >= 0xA && self->unk0[2] <= 0xC) ||
+                  (self->unk0[2] >= 0x14 && self->unk0[2] <= 0x15))) {
+                ok = false;
+            }
+            if (ok) {
+                int sum = reinterpret_cast<cf::CChainChanceTail*>(&self->mChainChance)->field_0x14 + (int)f1;
+                reinterpret_cast<cf::CChainChanceTail*>(&self->mChainChance)->field_0x14 = sum;
+                if (sum > 0x98967F) reinterpret_cast<cf::CChainChanceTail*>(&self->mChainChance)->field_0x14 = 0x98967F;
+            }
+        }
+    }
+}
 extern "C" void func_8027711C(void* self);
 extern "C" void func_80277B34(void* self) { func_8027711C(self); }
 extern "C" void CChain_noop_78E00() {}
@@ -246,33 +282,239 @@ extern "C" void func_8027A324(u8* self) { reinterpret_cast<ChIf2*>(*(void**)self
 extern "C" void CChain_noop_A9E8() {}
 extern "C" void CChain_noop_AA0C() {}
 
-void func_80276C30(){}
-void func_80276C58(){}
-void func_80276CAC(){}
-void func_80276D30(){}
+// Reset the chain-voice manager and clear the global voice id back to the
+// -1 (not loaded) sentinel.
+void func_80276C30() {
+    func_802A1500();
+    lbl_eu_80662A20 = -1;
+}
+// If a voice id is loaded, retire it (func_802A35B8) and clear the global
+// back to the -1 sentinel. noinline: retail func_8027732C emits a real bl.
+__declspec(noinline) void func_80276C58() {
+    if ((u32)lbl_eu_80662A20 + 0x10000 != 0xffff) {
+        if (func_802A3748((u32)lbl_eu_80662A20) == 0) {
+            if ((u32)lbl_eu_80662A20 + 0x10000 != 0xffff) {
+                func_802A35B8((u32)lbl_eu_80662A20);
+                lbl_eu_80662A20 = -1;
+            }
+        }
+    }
+}
+// Reload the chain voice: retire any currently loaded voice id, allocate a
+// new voice node, and dispatch it against the battle-object sub-object.
+// @p c (unused) mirrors the retail three-arg call shape.
+void func_80276CAC(u8* a, CChainBattleObjTail* b, int c) {
+    int ret = func_80276D30(a);
+    if ((u32)lbl_eu_80662A20 + 0x10000 != 0xffff) {
+        func_802A35B8((u32)lbl_eu_80662A20);
+        lbl_eu_80662A20 = -1;
+    }
+    int id = func_802A3214();
+    lbl_eu_80662A20 = id;
+    if ((u32)id + 0x10000 != 0xffff) {
+        if (b != 0) b = (CChainBattleObjTail*)&b->field_0x3E9C;
+        func_802A3680(id, b, ret);
+    }
+}
+// Chain-voice node update (retail body not yet matched; stub keeps the
+// signature func_80276CAC relies on). noinline: retail emits a real bl here.
+__declspec(noinline) int func_80276D30(u8* self) { return 0; }
 #pragma push
 #pragma auto_inline off
-extern "C" void func_8027711C(void* self){}
+// If a voice id is loaded, retire it and clear the global back to the -1
+// sentinel (auto_inline off keeps func_80277B34's call a real bl).
+extern "C" void func_8027711C(void* self) {
+    if ((u32)lbl_eu_80662A20 + 0x10000 != 0xffff) {
+        func_802A35B8((u32)lbl_eu_80662A20);
+        lbl_eu_80662A20 = -1;
+    }
+}
 #pragma pop
-void func_8027728C(){}
-void func_8027732C(){}
+// Full chain-state reset: seed the chain timer when the chain type is set,
+// clear the type/actor bytes, then reset every sub-object (time, actor list,
+// member list, combo, chain-menu state, error-message record, voice).
+void cf::CChain::func_8027728C() {
+    if (unk0[2] != 0) {
+        mChainTime.mTimer = lbl_eu_80668A18;
+        mChainTime.mEnabled = 0;
+        mChainTime.mPaused = 1;
+        lbl_eu_80663DA0 &= 0xFE;
+    }
+    unk0[2] = 0;
+    unk0[0] = 0;
+    unk0[1] = -1;
+    mChainTime.func_8027CE30();
+    func_8027B164(&mChainActorList);
+    func_8027C45C((cf::CChainList*)&mChainMember);
+    mChainCombo.func1();
+    func_802AB3D0(reinterpret_cast<CBattleChainMenuState*>(&unk1F0C[0]));
+    func_8027711C(func_802B48A0(reinterpret_cast<CErrMesEntry*>(&unk1F0C[8])));
+}
+// Per-frame chain update: after the battle-manager / mode-flag gates, sweep
+// the actor list (dead-actor removal, member rebuild, run-linkage), then when
+// a chain type is active decrement both chain timers and advance the chance /
+// voice / time / menu sub-objects; finally forward the err-mes record.
+void func_8027732C(cf::CChain* self) {
+    if (cf::CfGameManager::func_800829B8() != 0) return;
+    // rlwinm r0,r0,0,12,12: bit 19 (0x80000) of the mode-flag word.
+    if ((lbl_eu_80663E28 & 0x80000) != 0) return;
+    func_8027B200(&self->mChainActorList);
+    func_8027C49C((cf::CChainList*)&self->mChainMember);
+    func_8027B2CC((cf::CChainActorList*)((u8*)self + 0x18));
+    if (self->unk0[2] != 0) {
+        func_8027C560((cf::CChainList*)&self->mChainMember);
+        if (self->mChainTimer1.unk0 > 0) self->mChainTimer1.unk0--;
+        if (self->mChainTimer2.unk0 > 0) self->mChainTimer2.unk0--;
+        func_8027C0B0((cf::CChainChanceS*)&self->mChainChance);
+        func_80277B38(self);
+        func_8027CF3C(&self->mChainTime);
+        func_802AB410((CBattleChainMenuState*)&self->unk1F0C[0]);
+        func_80276C58();
+    }
+    func_802B48B8((CErrMesEntry*)&self->unk1F0C[8]);
+}
 void func_802773EC(){}
 void func_8027750C(){}
-void func_80277B38(){}
+// noinline: retail func_8027732C emits a real bl to this empty stub.
+extern "C" __declspec(noinline) void func_80277B38(cf::CChain* self){}
 void func_80278E0C(){}
 void func_80278F84(){}
 void func_80279214(){}
 void func_8027936C(){}
-void func_802795D4(){}
-void func_80279694(){}
+// Chain-start validation: resolves the target battle object (explicit key, or
+// the first player's embedded spot minus 0x3E9C), then gates on battle state
+// (chain-state word, sudden-commu pause) and the chain-type byte before
+// running the actor-list activation check.
+int func_802795D4(cf::CChain* self, u32 param) {
+    if (param == 0) {
+        void* player = cf::CfGameManager::getPlayer(0);
+        if (player != 0) player = (u8*)player - 0x3e9c;
+        param = (u32)player;
+    }
+    if (param == 0) return 0;
+    cf::CBattleManagerTail* bm = (cf::CBattleManagerTail*)getInstance__Q22cf14CBattleManagerFv();
+    if (bm->field_0x20C8 != 0) return 0;
+    bm = (cf::CBattleManagerTail*)getInstance__Q22cf14CBattleManagerFv();
+    if (func_801BA2C8(&bm->field_0x216C[0]) != 0) return 0;
+    if (self->unk0[2] != 0) return 0;
+    return func_8027BC14((cf::CChainActorList*)((u8*)self + 0x18), param);
+}
+
+// Dispatches a chain-state change to every registered actor: first the actor
+// reslist (walked through the slot-array head at mList), then the member
+// list, then the actor-list removal / member-list append helpers. Retail
+// keeps the second helper's compare as a dead instruction - the original
+// source chained both results with `== 0` (empty body).
+void func_80279694(cf::CChain* self, u32 param) {
+    cf::CChainActor* actor;
+    int i;
+    _reslist_node<cf::CChainActor*>* node =
+        self->mChainActorList.mChainActorList.mStartNodePtr->mNext;
+    while (node != self->mChainActorList.mChainActorList.mStartNodePtr) {
+        actor = node->mItem;
+        ((cf::CChainActorVtIf64*)actor)->v023(param);
+        node = node->mNext;
+    }
+    cf::CChainMemberListMirror* v = (cf::CChainMemberListMirror*)self;
+    while (i < (int)v->mChainMember.mCount) {
+        actor = v->mChainMember.mActors[i];
+        ((cf::CChainActorVtIf64*)actor)->v023(param);
+        i++;
+    }
+    // Retail keeps the second helper's compare as a dead instruction: the
+    // original source nested `if (func_8027C5E4(...) == 0) return;` inside
+    // the outer gate (the trailing branch folds, the compare stays).
+    if (func_8027B814((cf::CChainActorList*)((u8*)self + 0x18), param) == 0) {
+        if (func_8027C5E4((cf::CChainList*)&self->mChainMember, param) == 0) {
+            return;
+        }
+    }
+}
+
+// Scans the gimmick object list for a chain battle object (voice sub-object
+// base minus 0x3E9C) whose battle id is 0x9C5; the first such object is
+// validated through the word-holder / arts-category checks and returns
+// whether its arts category byte equals 4.
+int func_80279A4C() {
+    CChainGimmickList* list = func_800B6BC8();
+    CChainGimmickListNode* head = list->head;
+    CChainGimmickListNode* node = head->next;
+    while (node != head) {
+        cf::CChainBattleObj2A4* obj;
+        if (node->object != 0) {
+            obj = (cf::CChainBattleObj2A4*)((u8*)node->object - 0x3e9c);
+        } else {
+            obj = 0;
+        }
+        if (obj->field_3F28 == 0x9C5) {
+            int local = *(int*)((cf::CChainSub4*)obj->field_04)->f30();
+            if (func_80174C98(obj, &local, 0xA) == 0) return 0;
+            CChainCombo_ArtsCategoryHolder* holder = obj->v167();
+            if (holder->mArtsCategory == 0) return 0;
+            return (((cf::CChainArtsCat77*)holder->mArtsCategory)->field_0x77 == 4)
+                       ? 1
+                       : 0;
+        }
+        node = node->next;
+    }
+    return 0;
+}
 void func_80279778(){}
 void func_8027990C(){}
-void func_802799F0(){}
-void func_80279A4C(){}
+// Chain-membership probe: valid only for chain types 1..0x18, then reports
+// whether the member list holds an entry whose unk0 equals @p target.
+// (Separate ifs + goto: a flat `&&` makes MWCC fold the range to (v-1)<=23,
+// which retail does not have - two explicit cmplwi instead.)
+// Chain-membership probe: valid only for chain types 1..0x18, then reports
+// whether the member list holds an entry whose unk0 equals @p target.
+// u32 v + `1 <= v` (constant first): both defeat MWCC's range fold (which
+// would emit a single (v-1)<=23 instead of retail's two cmplwi).
+bool func_802799F0(cf::CChain* self, CChainBattleObjTail* target) {
+    u32 v = self->unk0[2];
+    int valid = 0;
+    if (1 <= v && v <= 0x18) valid = 1;
+    if (valid == 0) return false;
+    return func_8027CA98((cf::CChainList*)&self->mChainMember, (u32)target) != 0;
+}
 void func_80279B34(){}
-void func_80279DC0(){}
+// Chain-end cleanup: run the actor's begin/end hooks (vtable slots 6/7) on
+// the target's embedded sub-object when a target is set, then clear the
+// target pointer and its flag word.
+void func_80279DC0(cf::CChainActor* self) {
+    u32 p = self->unk0;
+    if (p != 0) {
+        if (p != 0) {
+            p += 0x3e9c;
+        }
+        if (func_800B8920((CChainBattleObjTail*)p) != 0) {
+            ((void(*)(cf::CChainActor*, int))((u32*)self->mVTable)[6])(self, 0);
+            ((void(*)(cf::CChainActor*, int))((u32*)self->mVTable)[7])(self, 0);
+        }
+    }
+    self->unk0 = 0;
+    self->unk6C = 0;
+}
 void func_80279E48(){}
-void func_80279F6C(){}
+// Toggles the chain-cancel/voice flag on the actor's battle object: the
+// enabled side ORs bit 2 into the +0x3388 flag word and disables the voice
+// manager; the disabled side resets the voice-act sub-object and its move
+// flag. Skips when the requested state already matches unk6C bit 1.
+void func_80279F6C(cf::CChainActor* self, u32 param) {
+    if (param != ((self->unk6C >> 1) & 1)) {
+        if (param != 0) {
+            ((cf::CChainBattleObjF*)self->unk0)->field_0x3388 |= 2;
+            func_80174B4C((void*)self->unk0, 0x4000);
+        } else {
+            func_801537E0(&((cf::CChainBattleObjF*)self->unk0)->field_0x3380);
+            ((cf::CChainBattleObjF*)self->unk0)->field_4->f06(0x4000);
+        }
+        if (param != 0) {
+            self->unk6C |= 2;
+        } else {
+            self->unk6C &= ~2;
+        }
+    }
+}
 void func_8027A024(){}
 void func_8027A338(){}
 void func_8027A58C(){}

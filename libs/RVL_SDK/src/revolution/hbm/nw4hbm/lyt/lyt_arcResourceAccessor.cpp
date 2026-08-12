@@ -98,18 +98,6 @@ namespace lyt {
  ******************************************************************************/
 ArcResourceAccessor::ArcResourceAccessor()
     : ResourceAccessor(), mArcBuf(NULL), mFontList() {}
-// Residual (open-item): schedule, store-order, and size are byte-identical to
-// retail (84B/84B); the only diff is a pure 3-temp Chaitin colour cycle -
-// retail allocates [vt=r4, fml=&mNode=r5, zero=r0], decomp allocates
-// [zero=r4, vt=r5, fml=r0] (the retail compiler keeps r0 for the literal zero;
-// ours routes &mNode through r0 and the zero through r4 - a global allocator
-// preference). All three temps are independently hoisted up-front
-// (lis vt@ha / addi r31,0x28 / li 0) so they form an equal-lifetime
-// interference clique; MWCC's tiebreak priority for assigning {r0,r4,r5} is
-// flags/IR-internal. Verified invariant to every .cpp lever: member-init-list
-// permutations, body-vs-list, implicit base/mFontList, placement-new in body
-// (broke structure, OVER budget - ruled out), and the literal upstream
-// nw4r source `: mArcBuf(NULL) {}` all yield the same rotation. Members are
 // header-locked (offsets feed the 5 already-matched fns) and the TU .text
 // budget is exact (0x3A0), so no register-pressure or size lever exists in the
 // writable scope. Needs a unit-flag/-O4,s change or header-level reshuffle.

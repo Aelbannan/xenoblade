@@ -412,12 +412,13 @@ void mwPlyPause(MWSFDPLY* self, s32 pause) {
 }
 
 int MWSFPLY_SetFlowLimit(void *h) {
-    // Retail scale double lives 0x20 before the lbl_eu_8051B190 symbol (the
-    // 8051B190/198 slots hold the 2^52 conversion magic); reference it via the
-    // -0x20 addend to match the retail reloc.
+    // The scale double IS lbl_eu_8051B190 (retail relocs on the lis/lfd pair;
+    // the older comment claiming 8051B170 was wrong — 0x8051B198 holds the
+    // 2^52 conversion magic, referenced via the builtin (double)(s32) cast).
+    // Referencing the named extern emits the retail relocs (the raw-address
+    // form inlined lis 0x8052/lfd -0x4E90 with no reloc).
     MWSFD_SetFlowLimit(h,
-        (u32)(s32)(*(double *)0x8051B170 *  // retail scale (lbl_eu_8051B190-0x20)
-                   (double)(s32)*(s32 *)((u8 *)h + 0x50C)));
+        (u32)(s32)(lbl_eu_8051B190 * (double)(s32)*(s32 *)((u8 *)h + 0x50C)));
 }
 
 int mwPlyChkSupply(void *h) {

@@ -2,6 +2,7 @@
 
 #include <types.h>
 #include <nw4r/lyt.h>
+#include "monolib/lib/UnkClass_8045F564.hpp"
 
 // Panel entry in the 24-slot panel array at offset 0xA4, each 0x4C bytes.
 // Initialised in the ctor do-while loop.  The entry-pointer trick
@@ -147,17 +148,70 @@ public:
     f32 unk838;
 
     CMenuEnemyState(void* scn);
-    virtual ~CMenuEnemyState();
+    // Deliberately non-virtual: the retail dtor stores no vtable (the ctor
+    // writes the vtable constants manually), so declaring `virtual` here would
+    // make MWCC emit an unwanted vptr store in the dtor.
+    ~CMenuEnemyState();
     void Init();
     void Term();
 };
 
+// CPcSelectCursor lives at offset 0x7E4 in CMenuEnemyState and is 0x48 bytes.
+// The retail dtor __dt__15CPcSelectCursorFv stores no vtable, so the class is
+// deliberately non-polymorphic here (the +0x00 word is a plain reserved
+// field). The ctor __ct__CPcSelectCursor is defined in another TU.
 class CPcSelectCursor {
 public:
+    u32 field00;                     // +0x00 (vtable / reserved)
+    u32 field04;                     // +0x04
+    UnkClass_8045F564 mem08;         // +0x08 (16 B: field08..field14)
+    u32 field18;                     // +0x18
+    nw4r::lyt::Layout* layout1C;     // +0x1C
+    nw4r::lyt::AnimTransform* anim20; // +0x20
+    nw4r::lyt::AnimTransform* anim24; // +0x24
+    u32 field28;                     // +0x28
+    u32 field2C;                     // +0x2C
+    u32 field30;                     // +0x30
+    u32 field34;                     // +0x34
+    u32 field38;                     // +0x38
+    u32 field3C;                     // +0x3C
+    u8 byte40;                       // +0x40
+    u8 byte41;                       // +0x41
+    u8 pad42[2];                     // +0x42-0x43
+    u32 field44;                     // +0x44
+
     CPcSelectCursor();
-    virtual ~CPcSelectCursor();
+    ~CPcSelectCursor();
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __ct__CPcSelectCursor(void* self);
 extern "C" void* func_8016FE34(void* r3);
+extern "C" void* __dt__15CMenuEnemyStateFv(CMenuEnemyState* self, int flags);
+extern "C" void* __ct__CMenuEnemyState(void* self, void* scn);
+extern "C" void* func_801355F4();
+extern "C" void __dt__8CProcessFv(void* self, int flags);
+extern "C" void func_80110A78(u32 existing, void* arg3);
+// Layout sound effect helper (retail symbol is unmangled).
+extern "C" void func_80137B44(nw4r::lyt::Layout* layout, const char* name,
+                              u32 value);
+// Apply a loaded texture to a pane (retail symbol is unmangled).
+extern "C" void func_80137F88(void* a, void* palette);
+
+// Retail .sdata singleton (created by func_801109D8, cleared by Term).
+extern u32 lbl_eu_80663F50;
+// CPcSelectCursor vtable (.data; the retail ctor stores its address at +0x00).
+extern char lbl_eu_8052C534[];
+// String pool base (func_80111B08 pane names at +0xd3/+0xdd/+0x11d).
+extern char lbl_eu_804FDBF8[];
+// sdata2 constants used by the panel-highlight helpers.
+extern const f32 lbl_eu_80667008;
+extern const f32 lbl_eu_8066703C;
+extern const f32 lbl_eu_80667040;
+extern const f32 lbl_eu_80667044;
+extern const f32 lbl_eu_80667048;
+extern const f32 lbl_eu_8066704C;
+extern const f32 lbl_eu_80667050;
+extern const f32 lbl_eu_80667054;
+// Texture-index table for the panel-highlight search (func_801132A8).
+extern u32 lbl_eu_804FDBC8[];

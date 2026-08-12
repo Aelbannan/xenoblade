@@ -924,21 +924,29 @@ extern "C" void func_8025F114(CPcKizunagramBig* self, CPcKizunaSlotEntry* entry)
 }
 
 // Walk the prev-pointer (0x1C) chain toward the list head, returning the node
-// whose prev is null. Retail unrolls 5 levels then tail-calls itself; the
-// call is routed through a temp so MWCC keeps it a call (not a loop).
+// whose prev is null. Retail unrolls 5 levels then tail-calls itself. The
+// nested-if shape with the n3-return kept flat reproduces retail's exact
+// register rotation (n1=r4, n2=r5, n3=r3, n4=r4, n5=r3) and the bottom
+// ret-blocks (beq-down for n1/n2/n4, beqlr for p/n3); the fully-flat or
+// fully-nested forms give different layouts (probe-verified).
 extern "C" __declspec(noinline) CPcKizunaSlotEntry* func_8025F290(CPcKizunaSlotEntry* p) {
     CPcKizunaSlotEntry* n1 = p->pField1C;
     if (n1 == 0) return p;
     CPcKizunaSlotEntry* n2 = n1->pField1C;
-    if (n2 == 0) return n1;
-    CPcKizunaSlotEntry* n3 = n2->pField1C;
-    if (n3 == 0) return n2;
-    CPcKizunaSlotEntry* n4 = n3->pField1C;
-    if (n4 == 0) return n3;
-    CPcKizunaSlotEntry* n5 = n4->pField1C;
-    if (n5 == 0) return n4;
-    CPcKizunaSlotEntry* result = func_8025F290(n5);
-    return result;
+    if (n2 != 0) {
+        CPcKizunaSlotEntry* n3 = n2->pField1C;
+        if (n3 != 0) {
+            CPcKizunaSlotEntry* n4 = n3->pField1C;
+            if (n4 == 0) return n3;
+            CPcKizunaSlotEntry* n5 = n4->pField1C;
+            if (n5 != 0) {
+                return func_8025F290(n5);
+            }
+            return n4;
+        }
+        return n2;
+    }
+    return n1;
 }
 
 // (Re)load an affinity-chart entry at (slot a, sub b) from the BDAT table:

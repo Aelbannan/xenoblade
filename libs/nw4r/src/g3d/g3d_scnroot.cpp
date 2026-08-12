@@ -288,7 +288,9 @@ Camera ScnRoot::GetCamera(int idx) {
     return Camera(NULL);
 }
 
-void GetCurrentCamera__Q34nw4r3g3d7ScnRootFv(){}
+Camera ScnRoot::GetCurrentCamera() {
+    return Camera(&mCamera[mCurrentCameraID]);
+}
 
 void SetCurrentCamera__Q34nw4r3g3d7ScnRootFi(ScnRoot* self, int idx) {
     self->mCurrentCameraID = static_cast<u8>(idx);

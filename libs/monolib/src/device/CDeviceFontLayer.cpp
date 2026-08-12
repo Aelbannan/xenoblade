@@ -29,7 +29,9 @@ public:
     virtual u32 GetGlyphWidth();  // 0x10
     virtual u32 GetGlyphHeight(); // 0x14
     virtual u32 GetGlyphFormat(); // 0x18
-    virtual u32 GetTextLength();  // 0x1C
+    virtual u16 GetTextLength();  // 0x1C (u16 return: retail callers see the
+                                  // rlwinm normalization of a u16-returning
+                                  // virtual at this slot)
     virtual const char* GetFontTexture(const char* str, void** texOut,
                                        u32* xOut, u32* yOut,
                                        u32* widthOut); // 0x20
@@ -121,7 +123,7 @@ public:
 
     // Stub declarations retained for the catalog TU (matched separately).
     void func_80453BB4();
-    void func_80453F78();
+    u32 func_80453F78();
     void func_80453FF0();
     void func_804541F8();
     void func_8045438C();
@@ -229,7 +231,19 @@ extern "C" u32 func_80453D78__16CDeviceFontLayerFv(const char* str,
 
 void CDeviceFontLayer::func_80453BB4() {}
 
-void CDeviceFontLayer::func_80453F78() {}
+// Look up the font-info record for this layer's font id; when found, query
+// its text length (u16), scale it by mScaleY and return the integer height.
+// The float conversions follow the retail double-trick (u16->f32 via 2^52
+// lfd) and __cvt_fp2unsigned for the final (u32) cast.
+u32 CDeviceFontLayer::func_80453F78() {
+    IDeviceFontInfo* info = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+        mFontId);
+    if (info == 0) {
+        return 0;
+    }
+    u16 v = info->GetTextLength();
+    return (u32)(mScaleY * (f32)v);
+}
 
 void CDeviceFontLayer::func_80453FF0() {}
 

@@ -306,6 +306,12 @@ extern u8 lbl_eu_805352DC[];
 // Float written to field_6BE8 by the ctor (.sdata, retail unmangled).
 extern const f32 lbl_eu_806681D8;
 
+// Timer constants used by func_801FAA60: lbl_eu_806681DC is added to
+// field_6BE8 each frame; lbl_eu_806681E0 clamps it (.sdata, retail
+// unmangled).
+extern const f32 lbl_eu_806681DC;
+extern const f32 lbl_eu_806681E0;
+
 // Global mode bitfield (bit 0x400 gates the party-window render).
 extern u32 lbl_eu_80663E28;
 
@@ -433,6 +439,39 @@ extern "C" void func_80202110(CEquipChange*);
 extern "C" void func_8022B748(CSysWin*);
 extern "C" void func_802024CC(CEquipChange*);
 extern "C" int CSysWin_isActive(CSysWin*);
+
+// C-linkage imports for the embedded CEquipChange / CSysWin / CModelDispEquip
+// sub-object handlers used by func_801FAA60's pad-dispatch chains (retail
+// unmangled; the embedded sub-object headers cannot be included here).
+// u8/u16 returns where the retail masks the call result (clrlwi) before
+// comparing; int returns where the retail cmpwi's the call result directly.
+extern "C" void func_8020397C(CEquipChange*, u32);
+extern "C" int func_802023D0(CEquipChange*);
+extern "C" int func_80202424(CEquipChange*);
+extern "C" int func_802023C8(CEquipChange*);
+extern "C" u8 func_80203138(CEquipChange*);
+extern "C" u8 func_80203210(CEquipChange*);
+extern "C" void func_80202CCC(CEquipChange*);
+extern "C" int func_8020392C(CEquipChange*);
+extern "C" u8 func_80203994(CEquipChange*);
+extern "C" int func_80203C9C(CEquipChange*);
+extern "C" u16 func_80203A98(CEquipChange*, u32);
+extern "C" void func_80202C4C(CEquipChange*);
+extern "C" void func_80202578(CEquipChange*);
+extern "C" void func_80202644(CEquipChange*);
+extern "C" void func_80202790(CEquipChange*);
+extern "C" void func_802028E4(CEquipChange*);
+extern "C" void func_80202A70(CEquipChange*);
+extern "C" void func_80202BFC(CEquipChange*);
+extern "C" int func_8020247C(CEquipChange*);
+extern "C" void func_80203984(CEquipChange*);
+extern "C" void func_8020398C(CEquipChange*);
+extern "C" u32 func_802039F4(CEquipChange*);
+extern "C" void func_8022B9B4(CSysWin*, char*, u32);
+extern "C" void func_8022BFC8(CSysWin*, u32);
+extern "C" void func_8022B8B8(CSysWin*);
+extern "C" int func_801FF964(CModelDispEquipView*);
+extern "C" void func_801FF98C(CModelDispEquipView*);
 
 // Shared window object pointer value (.sdata, retail unmangled; func_801F9694
 // returns it, func_801FA338 reads its stored s16 pair at +0x1C8).

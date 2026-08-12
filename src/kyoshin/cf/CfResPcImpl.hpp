@@ -5,6 +5,7 @@
 namespace cf {
 
 class CfGameManager;
+class CfObjectMove;
 
 // Resource object behind the lookup entry's +0x2C slot (the "child" passed
 // to func_80065CA4 by func_8018D0C4).
@@ -20,6 +21,24 @@ struct CfResPcLookupEntry {
     /* 0x04 */ u8* field_04;
     u8 field_08[0x2C - 0x08];
     /* 0x2C */ CfResPcEntryObj* field_2C;
+};
+
+// 0x3C-byte resource-table entry returned by func_80062C28: an array base
+// whose entries [1..5] are walked by func_8018DE8C (each has its resource
+// object at +0x2C; entry[1]'s +0x2C is also reachable as base+0x68).
+struct CfResPcTableEntry {
+    /* 0x00 */ u32 field_00;
+    /* 0x04 */ u8* field_04;
+    u8 field_08[0x2C - 0x08];
+    /* 0x2C */ CfResPcEntryObj* field_2C;
+    u8 field_30[0x3C - 0x30];
+};
+
+// Sub-object at parent +0xC4: the flag word at +0x4EC is folded by
+// func_8018DE8C when the player-positioning block ran.
+struct CfResPcC4Obj {
+    u8 field_00[0x4EC];
+    /* 0x4EC */ u32 field_4EC;
 };
 
 // Cast-only vtable view of the object behind lookup-entry field_2C (its own
@@ -44,7 +63,8 @@ struct CfResPc98ObjIf {
     virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
     virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
     virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
-    virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
+    virtual void _v058(); virtual void _v05C(); virtual void _v060();
+    virtual void _v064(int arg);  // vtable offset 0x64 (dispatched by func_8018DE8C with 0)
     virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
     virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
     virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
@@ -189,7 +209,13 @@ struct CfResPcParent {
     /* 0x90 */ u32 field_90;       // cleared by func_8018CB3C
     /* 0x94 */ u32 field_94;       // cleared by func_8018CB3C
     /* 0x98 */ CfResPc98ObjIf* field_98;  // model object (vtable slot +0xC4 dispatched by func_8018E7E4)
-    u8 field_9C[0x6D8 - 0x9C];     // 0x9C..0x6D7
+    /* 0x9C */ u32 field_9C;       // model handle (func_800584B8 result, written by func_8018DE8C)
+    u8 field_A0[0xC4 - 0xA0];      // 0xA0..0xC3
+    /* 0xC4 */ CfResPcC4Obj* field_C4;  // sub-object (flag word at +0x4EC folded by func_8018DE8C)
+    u8 field_C8[0x6CC - 0xC8];     // 0xC8..0x6CB
+    /* 0x6CC */ u16 field_6CC;     // set to 1 by func_8018DE8C when parent != getPlayer(0)
+    u8 field_6CE[0x6D4 - 0x6CE];   // 0x6CE..0x6D3
+    /* 0x6D4 */ u32 field_6D4;     // model handle (func_800584B8 result for the +0x708 object)
     /* 0x6D8 */ u32 field_6D8;     // loaded model handle (func_80495EAC result)
     /* 0x6DC */ CfResPcLookupEntry* field_6DC;  // active lookup entry
     /* 0x6E0 */ u32 field_6E0;
@@ -197,7 +223,7 @@ struct CfResPcParent {
     /* 0x6F8 */ CfResPcResObj* field_6F8[2];  // model objects (+0x6F8 / +0x6FC, built from entry_d's +0x08 slot)
     /* 0x700 */ CfResPc700Obj* field_700; // entry-build result (handle pointer at +0x00)
     /* 0x704 */ u32 field_704;     // cleared by func_8018CB3C
-    u8 field_708[0x70C - 0x708];
+    /* 0x708 */ u32 field_708;     // resource handle (written by func_8018DE8C)
     /* 0x70C */ u16 field_70C[4];  // +0x70C..+0x712 u16 ids (written by func_8018CBE8)
 };
 
@@ -416,6 +442,10 @@ public:
 } // namespace snd
 } // namespace nw4r
 
+// Forward decl so the cast-only parent vtable view can return/accept VEC3
+// (the real definition comes from <nw4r/math/math_types.h> in the .cpp).
+namespace nw4r { namespace math { struct VEC3; } }
+
 namespace cf {
 
 // Slot entry returned by func_801BFAE4 (CfSoundMan slot lookup); +0x00 holds
@@ -514,19 +544,24 @@ struct CfResPcParentVtIf {
     virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
     virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
     virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
-    virtual void _v0A8(); virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
-    virtual void _v0B8(); virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
+    virtual void _v0A8();
+    virtual nw4r::math::VEC3* _v0AC();  // vtable offset 0xAC - returns the player position (3 floats)
+    virtual void _v0B0(); virtual void _v0B4();
+    virtual void _v0B8(nw4r::math::VEC3* pos, float f1);  // vtable offset 0xB8 - position the player
+    virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
     virtual void _v0C8(); virtual void _v0CC(); virtual void _v0D0(); virtual void _v0D4();
     virtual void _v0D8(); virtual void _v0DC(); virtual void _v0E0(); virtual void _v0E4();
     virtual void _v0E8(); virtual void _v0EC(); virtual void _v0F0(); virtual void _v0F4();
     virtual void _v0F8(); virtual void _v0FC(); virtual void _v100(); virtual void _v104();
     virtual void _v108(); virtual void _v10C(); virtual void _v110(); virtual void _v114();
     virtual void _v118(); virtual void _v11C(); virtual void _v120(); virtual void _v124();
-    virtual void _v128(); virtual void _v12C(); virtual void _v130(); virtual void _v134();
+    virtual void _v128(); virtual void _v12C(); virtual void _v130();
+    virtual void _v134(float value);  // vtable offset 0x134 (dispatched by func_8018DE8C)
     virtual void _v138(); virtual void _v13C(); virtual void _v140(); virtual void _v144();
     virtual void _v148(); virtual void _v14C(); virtual void _v150(); virtual void _v154();
     virtual void _v158(); virtual void _v15C(); virtual void _v160(); virtual void _v164();
-    virtual void _v168(); virtual void _v16C(); virtual void _v170(); virtual void _v174();
+    virtual void _v168(float value);  // vtable offset 0x168 (dispatched by func_8018DE8C)
+    virtual void _v16C(); virtual void _v170(); virtual void _v174();
     virtual void _v178();  // vtable offset 0x178 (dispatched by func_8018CB3C)
     virtual void _v17C();  // vtable offset 0x17C (dispatched by func_8018CB3C)
     virtual void _v180(); virtual void _v184(); virtual void _v188(); virtual void _v18C();
@@ -536,7 +571,8 @@ struct CfResPcParentVtIf {
     virtual void _v1C0(); virtual void _v1C4(); virtual void _v1C8();
     virtual void _v1CC();  // vtable offset 0x1CC (dispatched by func_8018CB3C)
     virtual void _v1D0(int a);  // vtable offset 0x1D0 (dispatched by func_8018D3F0 with arg3)
-    virtual void _v1D4(); virtual void _v1D8(); virtual void _v1DC(); virtual void _v1E0();
+    virtual void _v1D4(float value);  // vtable offset 0x1D4 (dispatched by func_8018DE8C with a scaled float)
+    virtual void _v1D8(); virtual void _v1DC(); virtual void _v1E0();
     virtual void _v1E4(); virtual void _v1E8(); virtual void _v1EC(); virtual void _v1F0();
     virtual void _v1F4(); virtual void _v1F8(); virtual void _v1FC(); virtual void _v200();
     virtual void _v204(); virtual void _v208(); virtual void _v20C(); virtual void _v210();
@@ -693,3 +729,43 @@ extern const float lbl_eu_80667A60;
 
 // Model-layer global passed as the first func_80489A60 argument (.sbss).
 extern u8* lbl_eu_80663E14;
+
+// C-ABI imports used by func_8018DE8C (defined in CfRes.cpp / IResInfo.cpp /
+// the model layer / monolib scn). extern "C" keeps the call-site relocs at
+// the plain retail names.
+extern "C" cf::CfResPcTableEntry* func_80062C28(int id, int a);
+extern "C" void func_800BBADC(cf::CfResPcParent* parent, u8* handle);
+extern "C" u8* func_800584B8(u32 global, u32 id, const char* name);
+extern "C" void func_8048472C(void* obj, const char* name);
+extern "C" void func_804831C4(void* obj, u8* handle);
+extern "C" void* func_80495E8C(u32 global, u32 id, int a, int b);
+extern "C" char* func_800AA5C0(void* handle);
+extern "C" void func_800BB618(cf::CfResPcParent* parent, int arg);
+extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
+extern "C" void func_800BCFA0(cf::CfResPcParent* parent);
+extern "C" void func_800BE12C(void* parent, int handle, int a, int b, int c);
+extern "C" int func_804BE470(void* a1, void* a2, void* a3, void* a4, void* a5);
+extern "C" void func_804BD94C(void* a, void* b, u32 c, u32 d, u32 e, u32 f,
+                              float f1, float f2, float f3, float f4, float f5);
+extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
+                                const void* dst_type, void* src2dst);
+
+// RTTI typeinfo pair for the __dynamic_cast in func_8018DE8C (.sdata).
+extern const void* lbl_eu_806624C0;
+extern const void* lbl_eu_806624D0;
+
+// Debug/format string used by func_8018DE8C (.rodata).
+extern char lbl_eu_80503BC4[];
+
+// .sdata2 float constants used by func_8018DE8C.
+extern const float lbl_eu_80667A44;
+extern const float lbl_eu_80667A48;
+extern const float lbl_eu_80667A4C;
+extern const float lbl_eu_80667A50;
+extern const float lbl_eu_80667A54;
+extern const float lbl_eu_80667A58;
+extern const float lbl_eu_80667A5C;
+extern const float lbl_eu_80667A64;
+extern const float lbl_eu_80667A68;
+extern const float lbl_eu_80666B08;
+extern const float lbl_eu_8066AF20;

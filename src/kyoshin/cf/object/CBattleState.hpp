@@ -52,7 +52,7 @@ namespace cf {
         virtual void CBattleState_UnkVirtualFunc4();  //0x14
         virtual void CBattleState_UnkVirtualFunc5(CBattleStateEntry* entry);  //0x18
         virtual void CBattleState_UnkVirtualFunc6(CBattleStateEntry* entry);  //0x1C
-        virtual void CBattleState_UnkVirtualFunc7();  //0x20
+        virtual void CBattleState_UnkVirtualFunc7(u32 id);  //0x20 (retail fake-Fv ABI passes id in r4)
         virtual void CBattleState_UnkVirtualFunc8(CBattleStateEntry* entry);  //0x24
         virtual void CBattleState_UnkVirtualFunc9();  //0x28
         virtual void CBattleState_UnkVirtualFunc10(CBattleStateEntry* arg); //0x2C

@@ -9,6 +9,14 @@
 // String table for cursor layout/anim resource names
 extern char lbl_eu_80505DE8[];
 
+// Fake SI interface for the CBaseCur vtable slot +0x14 (vtable[5]): real
+// virtual dispatch reproduces the retail lwz r12,0(r3); lwz r12,20(r12)
+// sequence (manual ((void**)mVtable)[5] casts emit a scratch r4).
+struct CBaseCurVt5 {
+    virtual void _v00(); virtual void _v04(); virtual void _v08();
+    virtual void m14();  // slot 5 => +0x14, no args (retail leaves r4 untouched)
+};
+
 // Shared helper: set pane visibility
 extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
 
@@ -57,12 +65,20 @@ extern "C" void func_801D202C(CBaseCur* cur) {
     if (cur->mpLayout == NULL) {
         return;
     }
-    if (cur->mActive == 0) {
-        func_80137444(cur->mpAnimTrans0, 1.0f);
-    } else if (cur->mActive == 1) {
-        // vtable[5] = vtable handler for active==1
-        ((void (*)(CBaseCur*))((void**)cur->mVtable)[5])(cur);
+    switch (cur->mActive) {
+    case 0:
+        goto zero;
+    case 1:
+        goto one;
+    default:
+        goto animate;
     }
+zero:
+    func_80137444(cur->mpAnimTrans0, 1.0f);
+    goto animate;
+one:
+    reinterpret_cast<CBaseCurVt5*>(cur)->m14();
+animate:
     cur->mpLayout->Animate(0);
 }
 

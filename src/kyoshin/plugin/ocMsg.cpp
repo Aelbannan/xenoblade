@@ -63,6 +63,11 @@ extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
 // reg_swap depending on shape). Witness rejects the r0<->r5 permutation
 // (register reuse in subf: dest == operand under rho). Shapes tried: x local,
 // a/b locals, CSE inline (sibling func_8003A6D4 shape).
+// Open item: bit-trick type computation (x = count^0xA; 1 + ((x>>1)-(x&0xA))>>31).
+// Retail keeps x in r5 (count in r0); MWCC always reuses r0 for x (4-7 pure
+// reg_swap depending on shape). Witness rejects the r0<->r5 permutation
+// (register reuse in subf: dest == operand under rho). Shapes tried: x local,
+// a/b locals, CSE inline (sibling func_8003A6D4 shape).
 extern "C" int func_8003A68C(VMThread* pThread, void* target) {
     int count = *(int*)((char*)target + 0x10);
     int x = count ^ 0x0a;

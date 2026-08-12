@@ -15,6 +15,13 @@
 void __dt__16CMenuBattleChainFv(void*);
 void cbRenderBefore__16CMenuBattleChainFv(void*);
 
+// Term helpers (retail names; CDeviceVI static + UnkClass member).
+namespace CDeviceVI {
+void waitForDrawDone();
+}
+extern "C" void func_8045F778(void* self);
+extern "C" CMenuBattleChain* lbl_eu_80664A60;
+
 /*
  * Battle-chain menu constructor (retail unmangled name __ct__CMenuBattleChain,
  * 3 args: this, owning scene, chain-type byte). Builds the CProcess base,
@@ -146,7 +153,20 @@ void CMenuBattleChain::Init() {
     mRegion.func_8045F810();
 }
 
-void CMenuBattleChain::Term() {}
+void CMenuBattleChain::Term() {
+    CDeviceVI::waitForDrawDone();
+    void* r4 = this;
+    if (this != 0) {
+        r4 = (char*)this + 0x70;
+    }
+    mScn->removeRenderCB((IScnRender*)r4);
+    if (mLayout != 0) {
+        delete mLayout;
+        mLayout = 0;
+    }
+    func_8045F778(reinterpret_cast<char*>(this) + 0x78);
+    lbl_eu_80664A60 = 0;
+}
 
 void CMenuBattleChain::Move() {
     // Skip while the game task is busy or the render-before flag is set.

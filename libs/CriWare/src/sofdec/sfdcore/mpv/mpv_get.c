@@ -71,11 +71,11 @@ int MPV_GetVbvBufSiz(void *handle, u32 *out_size, u32 *out_avg, u32 *out_max) {
 
 /* Get link flags */
 int MPV_GetLinkFlg(void *handle, u32 *out_prev, u32 *out_next) {
-    if (MPVLIB_CheckHn(handle)) {
+    u8* h = (u8*)handle;
+    if (MPVLIB_CheckHn(h)) {
         return MPVERR_SetCode(NULL, 0xFF03020E);
     }
-
-    *out_prev = *(u32 *)((u8 *)handle + 0xC54);
-    *out_next = *(u32 *)((u8 *)handle + 0xC58);
+    *out_next = *(u32 *)(h + 0xC58);
+    *out_prev = *(u32 *)(h + 0xC54);
     return 0;
 }

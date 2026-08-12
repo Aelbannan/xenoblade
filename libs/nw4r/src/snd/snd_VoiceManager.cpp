@@ -304,24 +304,15 @@ void VoiceManager::UpdateEachVoicePriority(const VoiceList::Iterator& rBegin,
 
 void VoiceManager::UpdateAllVoicesSync(u32 syncFlag) {
     BOOL enabled = OSDisableInterrupts();
-
-    // Traverse mPrioVoiceList manually, matching the retail node loop.
-    ut::LinkListNode* pEnd = reinterpret_cast<ut::LinkListNode*>(
-        reinterpret_cast<u8*>(&mPrioVoiceList) + 0x4);
-    ut::LinkListNode* pNode = pEnd->GetNext();
-
-    while (pNode != pEnd) {
-        ut::LinkListNode* pCurr = pNode;
-        pNode = pNode->GetNext();
-
-        VoiceLayout* pVoice = reinterpret_cast<VoiceLayout*>(
-            reinterpret_cast<u8*>(pCurr) - 0x11C);
-
-        if (pVoice->mIsActive) {
-            pVoice->mSyncFlag |= syncFlag;
+    VoiceLayoutList* list = reinterpret_cast<VoiceLayoutList*>(&mPrioVoiceList);
+    VoiceLayoutList::Iterator iter = list->GetBeginIter();
+    while (iter != list->GetEndIter()) {
+        VoiceLayout* voice = &*iter;
+        ++iter;
+        if (voice->mIsActive) {
+            voice->mSyncFlag |= syncFlag;
         }
     }
-
     OSRestoreInterrupts(enabled);
 }
 

@@ -331,20 +331,24 @@ void func_802A055C(CSkipTimer* self) {
 // (Retail's leaf-block grouping implies a switch; this MWCC revision builds a
 // 10-pivot tree for that switch, so the if/else chain is the byte-closest.)
 // auto_inline off: retail callers (func_802A0234) emit a direct `bl`.
+// func_802A04F0: map skip-timer index (mField2C s16) to an action id (1..7).
+// Winning shape: monotonic-range if/else chain with the RETURNS in ascending
+// value order (7,1,2,3,4,5,6) — MWCC rebuilds the checks into retail's exact
+// 4-pivot tree (17, 19, 5, 10) and emits the leaves in the source return
+// order. (A tree-shaped if/else — 17 first, then arms — emits the leaves in
+// source order and mismatches; a switch builds a 10-pivot tree.)
+// auto_inline off: retail callers (func_802A0234) emit a direct `bl`.
 #pragma push
 #pragma auto_inline off
 extern "C" int func_802A04F0(CSkipTimer* self) {
     s16 key = self->mField2C;
-    if (key == 17) return 4;
-    if (key >= 17) {              // 18,19,20,...
-        if (key >= 19) return 6;  // >=19
-        return 5;                 // 18
-    }
-    // key <= 16
+    if (key < 5) return 7;
     if (key == 5) return 1;
-    if (key < 5) return 7;        // 0..4 (and negatives)
-    if (key >= 10) return 3;      // 10..16
-    return 2;                     // 6..9
+    if (key < 10) return 2;
+    if (key < 17) return 3;
+    if (key == 17) return 4;
+    if (key == 18) return 5;
+    return 6;
 }
 #pragma pop
 

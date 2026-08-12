@@ -4,10 +4,10 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 
 // Retail data labels referenced by this unit.
-extern float lbl_eu_80666A68;   // CfObject_UnkVirtualFunc20 constant / CfObject_UnkVirtualFunc56 fallback
+extern const float lbl_eu_80666A68;   // CfObject_UnkVirtualFunc20 constant / CfObject_UnkVirtualFunc56 fallback
 extern float lbl_eu_80666A6C;   // func_800BBA08 position constant (stack-vector fill)
-extern float lbl_eu_80666A80;   // CfObject_UnkVirtualFunc20 (model) stack-vector middle element
-extern float lbl_eu_80666A84;   // CfObject_UnkVirtualFunc20 (model) slot +0xB4 scale argument
+extern const float lbl_eu_80666A80;   // CfObject_UnkVirtualFunc20 (model) stack-vector middle element
+extern const float lbl_eu_80666A84;   // CfObject_UnkVirtualFunc20 (model) slot +0xB4 scale argument
 extern const float lbl_eu_8066A210;   // CfObject_UnkVirtualFunc32 scale factor
 extern const float lbl_eu_8066A20C;   // CfObject_UnkVirtualFunc34 scale factor
 extern u8 lbl_eu_804FC548[];   // CfObjectModel_UnkVirtualFunc3 null placeholder (rodata, 8 bytes)

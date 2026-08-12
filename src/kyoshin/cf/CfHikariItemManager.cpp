@@ -492,9 +492,9 @@ extern "C" void func_802B371C(CfHikariItemRecord* self) {
     u32* dst = (u32*)(u32)&lbl_eu_80577680[0];
     u32* src = (u32*)self;
     u32 a = src[0];
+    dst[0] = a;
     u32 b = src[1];
     u32 c = src[2];
-    dst[0] = a;
     lbl_eu_80664C18 = 0;
     lbl_eu_80664C1C = 0;
     lbl_eu_80664C20 = 0;

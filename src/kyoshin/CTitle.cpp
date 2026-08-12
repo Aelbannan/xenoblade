@@ -71,16 +71,27 @@ body:
     self->mLayout->Animate(0);
 }
 
+extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void* layout, void* info, int a, int b);
+
 extern "C" void func_802B64AC(void* self, void* drawInfo) {
     void* layout = *(void**)((u8*)self + 8);
     if (layout == 0) return;
-    if (((u8*)self)[0x18] == 0) goto exit;
-    goto body;
-exit:
-    return;
-body:
-    extern void func_80137038(void* layout, void* info, int a, int b);
-    func_80137038(layout, drawInfo, 0, 1);
+    if (((u8*)self)[0x18] != 0) {
+        func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(layout, drawInfo, 0, 1);
+    }
+}
+
+// Target: us-802b8d9c — CTitleLogo ctor: implicit vptr (retail
+// lbl_eu_8053B368), nulled pointers, phase flag 1.
+CTitleLogo::CTitleLogo() {
+    mAccessor = nullptr;
+    mLayout = nullptr;
+    mAnimTrans0 = nullptr;
+    mAnimTrans1 = nullptr;
+    mAnimTrans2 = nullptr;
+    field_0x18 = 0;
+    field_0x19 = 1;
+    field_0x1A = 0;
 }
 
 void func_802B64DC(){}
@@ -105,7 +116,7 @@ void func_802B6580(CTitleLogo* self) {
 // Logo state 1: park the first animation on its final frame (frame count minus
 // the per-frame delta), advance the layout, then step into state 2 and mark
 // the phase flag so the caller can proceed.
-void func_802B65C8(CTitleLogo* self) {
+extern "C" __declspec(noinline) void func_802B65C8(CTitleLogo* self) {
     if (self->field_0x1A == 1) {
         self->mAnimTrans0->SetFrame((float)self->mAnimTrans0->GetFrameSize() - lbl_eu_80668FE0);
         self->mLayout->Animate(0);
@@ -217,13 +228,9 @@ body:
 extern "C" void func_802B6B08(void* self, void* drawInfo) {
     void* layout = *(void**)((u8*)self + 8);
     if (layout == 0) return;
-    if (((u8*)self)[0x24] == 0) goto exit;
-    goto body;
-exit:
-    return;
-body:
-    extern void func_80137038(void* layout, void* info, int a, int b);
-    func_80137038(layout, drawInfo, 0, 1);
+    if (((u8*)self)[0x24] != 0) {
+        func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(layout, drawInfo, 0, 1);
+    }
 }
 
 void func_802B6B38(){}
@@ -260,7 +267,7 @@ extern "C" void __declspec(noinline) func_802B6CBC(nw4r::math::VEC3* dest, CTitl
 // Menu state 4: park animation 3 on its final frame (frame count minus the
 // per-frame delta), advance the layout, step into state 5, and mark the
 // phase flag so the caller can proceed.
-void func_802B6D5C(CTitleMenu* self) {
+extern "C" __declspec(noinline) void func_802B6D5C(CTitleMenu* self) {
     if (self->field_0x26 == 4) {
         self->mAnimTrans3->SetFrame((float)self->mAnimTrans3->GetFrameSize() - lbl_eu_80668FE0);
         self->mLayout->Animate(0);
@@ -451,7 +458,11 @@ int func_802B775C(CTitle* self) {
     return self->field_0x25 == 0;
 }
 
-void func_802B7800(){}
+// Target: us-802ba270 — init the embedded +0x2C and +0x48 sub-objects.
+extern "C" void func_802B7800(void* self) {
+    func_802B65C8((CTitleLogo*)((u8*)self + 0x2C));
+    func_802B6D5C((CTitleMenu*)((u8*)self + 0x48));
+}
 
 void func_802B7838() {}
 

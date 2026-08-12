@@ -655,5 +655,5 @@ int func_802A7FE4(CVoiceHandle* handle) {
 // Returns whether the cf sequence counter is still below the battle-end
 // shutdown threshold (0x94 = 148).
 int func_802A8140() {
-    return cf::CfGameManager::func_800822F4() < 0x94;
+    return (u32)cf::CfGameManager::func_800822F4() < 0x94u;
 }

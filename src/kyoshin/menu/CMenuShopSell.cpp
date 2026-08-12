@@ -120,6 +120,10 @@ void func_8018B0FC(void* dst, void* src) {
 // pointer-save moves (or r6=src / or r7=dst) in the opposite order to retail
 // (2 reg_swap, 0 structural); witness rejects the r3<->r4 ABI permutation
 // (same class as func_800B7680/func_801CB9D8). Local/order variants invariant.
+// Open item: struct-copy loop (mItems 0x800 + mField804). MWCC emits the two
+// pointer-save moves (or r6=src / or r7=dst) in the opposite order to retail
+// (2 reg_swap, 0 structural); witness rejects the r3<->r4 ABI permutation
+// (same class as func_800B7680/func_801CB9D8). Local/order variants invariant.
 void func_8018B130(ShopSellData* dst, const ShopSellData* src) {
     dst->mItems = src->mItems;
     dst->mField804 = src->mField804;

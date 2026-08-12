@@ -174,7 +174,7 @@ private:
 
 class ScnMdlExpand : public ScnGroup {
 public:
-    virtual ~ScnMdlExpand() {} // at 0x10
+    virtual ~ScnMdlExpand(); // at 0x10 (defined out-of-line in the TU)
 
     NW4R_G3D_RTTI_DECL_DERIVED(ScnMdlExpand, ScnGroup);
 };

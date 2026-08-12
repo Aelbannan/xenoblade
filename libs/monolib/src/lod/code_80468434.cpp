@@ -696,9 +696,6 @@ u8* func_8046A0A4__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out)
 // Returns the render-record pointer at record+0x1C.
 // ===========================================================================
 u16* func_8046A11C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out) {
-    // record = this + idx * 0x2C; return &record->field_0x1C.  The address is
-    // formed as a plain integer sum so MWCC keeps the (idx * 0x2C) term as the
-    // add's first operand (retail: add r5, r5, r3).
     u16* result = (u16*)(self->records[0].field_0x2 * 0x2c + (u32)self + 0x1c);
     if ((self->records[0].field_0x1 & 0x2) != 0) {
         if (func_8046451C(self->records[0].field_0x8 * 0x3c,
@@ -742,8 +739,10 @@ u16* func_8046A1A0__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out
 void func_8046A224__Q23LOD17UnkClass_80468434Fv(nw4r::math::VEC3* out, u32,
                                                const ml::CVec4* in, s32 idx) {
     const LodDirEntry* entry = &lbl_eu_806657AC[(idx + lbl_eu_806657A0) & 7];
-    nw4r::math::VEC3Scale(out, &entry->dir, lbl_eu_8066A650 * in->w);
-    nw4r::math::VEC3Add(out, out, (const nw4r::math::VEC3*)in);
+    f32 scale = lbl_eu_8066A650 * in->w;
+    out->x = in->x + entry->dir.x * scale;
+    out->y = in->y + entry->dir.y * scale;
+    out->z = in->z + entry->dir.z * scale;
 }
 
 // ===========================================================================

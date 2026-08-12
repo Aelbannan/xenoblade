@@ -236,8 +236,6 @@ void gcCiEntryErrFunc(u32 a, u32 b) {
 }
 
 
-
-#pragma scheduling off
 void gcCiClose(GciHndl *h) {
     if (h == NULL)
         return;
@@ -246,7 +244,6 @@ void gcCiClose(GciHndl *h) {
     h->use = 0;
     memset(h, 0, 0x64);
 }
-#pragma scheduling on
 
 s32 gcCiSeek(GciHndl *h, s32 offset, s32 mode) {
     if (h == NULL) {

@@ -76,7 +76,18 @@ extern "C" __declspec(noinline) void func_80257F9C(UnkKizunaSelf57D90* self, u32
     }
 }
 
-CKizunaRadar::CKizunaRadar() {}
+// ctor: MWCC emits the implicit vptr init (__vt__12CKizunaRadar, reloc-name
+// drift vs retail lbl_eu_80537608 — data_value category, EQUIVALENT_MATCH
+// route), plus the r4 arg store and zero/float fields.
+CKizunaRadar::CKizunaRadar(void* arg) {
+    f32 idle = lbl_eu_80668828;
+    mArg = arg;
+    mField08 = 0;
+    mField0C = 0;
+    mField10 = 0;
+    mField14 = idle;
+    mField18 = idle;
+}
 
 CKizunaRadar::~CKizunaRadar() {}
 

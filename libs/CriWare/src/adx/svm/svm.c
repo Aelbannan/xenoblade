@@ -110,7 +110,15 @@ void SVM_CallErr(const char* fmt, ...);
     } while (0)
 
 void SVM_Lock(void) {
-    SVM_LOCK();
+    SvmCtrl* _c = &lbl_eu_805F26F0;
+    if (_c->lock_cb.func != NULL) {
+        void (*_fn)(void*) = _c->lock_cb.func;
+        void* _obj = _c->lock_cb.object;
+        _fn(_obj);
+        if (_c->lock_count == 0)
+            _c->lock_flag = 1;
+        _c->lock_count++;
+    }
 }
 
 void SVM_Unlock(void) {

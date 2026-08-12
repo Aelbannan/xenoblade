@@ -228,10 +228,13 @@ int func_80164410() {
 }
 
 // Convert the .sdata u32 counter to float and scale it. MWCC lowers the
-// u32->float conversion through the 0x4330 double trick (xoris sign flip +
-// subtract 2^52+2^31), which is exactly what the retail body shows.
+// signed u32->float conversion through the 0x4330 double trick (xoris sign
+// flip + subtract 2^52+2^31), which is exactly what the retail body shows.
+// The magic constant (0x4330000080000000) pools to a TU-local @N label
+// whose value equals retail's shared .sdata2 blob lbl_eu_80667630 —
+// name-only reloc drift, accepted at EQUIVALENT_MATCH (MWCC_REFERENCE §7i).
 float func_80164478() {
-    return (float)lbl_eu_80662384 * lbl_eu_8066762C;
+    return lbl_eu_8066762C * (float)(s32)lbl_eu_80662384;
 }
 
 extern "C" u32 func_801644AC() { return (u32)lbl_eu_80662380; }
@@ -624,13 +627,14 @@ void func_80164F6C() {
 
 int func_80164FB4() {
     CEventMgr* mgr = lbl_eu_80664240;
-    if (mgr) {
-        CLibCri* cri = mgr->mCri;
-        if ((u32)cri != 0xFFFFFFFF) {
-            return func_80459AC4__7CLibCriFv(cri);
-        }
+    if (mgr == 0) {
+        return 0;
     }
-    return 0;
+    CLibCri* cri = mgr->mCri;
+    if ((u32)cri == 0xFFFFFFFF) {
+        return 0;
+    }
+    return func_80459AC4__7CLibCriFv(cri);
 }
 
 int func_80164FE8(void) {

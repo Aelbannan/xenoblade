@@ -185,8 +185,12 @@ int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFla
     return result;
 }
 
-void func_800AA5C0() {
-    func_800AA33C(*(ml::FixStr<64>*)lbl_eu_80572C80, (u32)0, 0, 1);
+// Forward the arg into the FixStr formatter, then return the buffer address
+// (retail re-materializes r3 = &lbl_eu_80572C80 after the call; dispatch-table
+// slot, so the result is consumed by a caller).
+extern "C" ml::FixStr<64>* func_800AA5C0(void* arg) {
+    func_800AA33C(*(ml::FixStr<64>*)lbl_eu_80572C80, (u32)arg, 0, 1);
+    return (ml::FixStr<64>*)lbl_eu_80572C80;
 }
 
 u32 func_800AA600(const char* str) {

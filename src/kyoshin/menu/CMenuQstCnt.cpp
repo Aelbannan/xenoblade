@@ -56,8 +56,30 @@ QstData* func_80226FAC(QstData* self);
 void* __dt__80227070(QstData* self, int flags);
 void func_802270CC(QstData* self);
 void func_80227260(QstData* self, u32 kind, u32 filter);
-void func_80227660(QstInfo* dst, const QstInfo* src);
-void func_8022769C(QstInfo* dst, const QstInfo* src);
+// Retail emits the -O3 copy shape (load r0; store r0; per-field, no load
+// hoisting) while the unit is -O4,s (sibling func_8022769C matches the -O4
+// separate-register shape, so the retail unit mixed per-function settings
+// that a -O3/-O4,s flip cannot reproduce; per-function optimization_level
+// pragma does not re-enable the -O4 scheduler bundle). Field-by-field is the
+// closest -O4,s-compatible form.
+void func_80227660(QstInfo* dst, const QstInfo* src) {
+    dst->f0 = src->f0;
+    dst->f2 = src->f2;
+    dst->f3 = src->f3;
+    dst->f4 = src->f4;
+    dst->f5 = src->f5;
+    dst->f6 = src->f6;
+    dst->f7 = src->f7;
+}
+void func_8022769C(QstInfo* dst, const QstInfo* src) {
+    dst->f0 = src->f0;
+    dst->f2 = src->f2;
+    dst->f3 = src->f3;
+    dst->f4 = src->f4;
+    dst->f5 = src->f5;
+    dst->f6 = src->f6;
+    dst->f7 = src->f7;
+}
 unsigned short selectQstIndex(unsigned char* p);
 QstInfo* func_802276F4(QstInfo* base, unsigned short idx);
 void func_80227710();
@@ -699,7 +721,17 @@ QstInfo* func_802276F4(QstInfo* base, unsigned short idx) {
     return base + idx;
 }
 
-void func_80227710(){}
+// Search the 8-byte-stride table for the arg; the u16 count lives at
+// +0x2000 but the table reads are base-relative (retail lhzx r0,r3,r0 with
+// r3 unmodified — the table starts at offset 0). Returns the matching index
+// or 0 (retail returns 0, not -1).
+u16 func_80227710(void* self, u32 arg) {
+    u16 count = *(u16*)((u8*)self + 0x2000);
+    for (u16 i = 0; i < count; i++) {
+        if (*(u16*)((u8*)self + i * 8) == arg) return i;
+    }
+    return 0;
+}
 
 // --- IScnRender vtable this-adjusting thunks ---
 // The IScnRender subobject sits at +0x70 within CMenuQstCnt; vtable dispatch

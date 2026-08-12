@@ -43,12 +43,15 @@ CDesktopException* CDesktop::getException(){
     return CDesktopException::spInstance;
 }
 
-void CDesktop::wkUpdate(){
-    // NOTE: retail keeps a full frame (bl, not tail-call b). That is the
-    // documented per-function -O level conflict (MWCC_REFERENCE __init_user):
-    // -O4,p folds void f(){g();} to a 4-byte `b`, only -O1 reproduces the
-    // 0x20 frame, and the rest of this unit needs -O4,p. No source bridge.
-    CLibHbm::isHbmControlInitialized();
+void CDesktop::wkUpdate() {
+    // NOTE: retail keeps a full frame (bl, not tail-call b). A bare
+    // `isHbmControlInitialized();` statement makes MWCC -O4,p tail-call-fold
+    // the whole body to a 4-byte `b`; the conditional form (both paths
+    // return/fall through) keeps the 0x20 frame while emitting the same
+    // single `bl` (MWCC drops the dead compare). Verified via scratch probe.
+    if (CLibHbm::isHbmControlInitialized()) {
+        return;
+    }
 }
 
 void CDesktop::wkRender(){

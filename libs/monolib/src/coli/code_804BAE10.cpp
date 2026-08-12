@@ -165,16 +165,27 @@ void func_804BB4EC(){}
 
 void func_804BB768(ColiObj* self, ColiTri* tri);
 
+// Guard the not-yet-recovered stub so MWCC does not inline the empty body and
+// drop the call sites (func_804BC134 tail-calls it; see MWCC_REFERENCE
+// empty-stub pattern).
+#pragma push
+#pragma auto_inline off
 void func_804BB768(ColiObj* self, ColiTri* tri) {}
+#pragma pop
 
 void func_804BB904(){}
 
 void func_804BBAB0(){}
 
 // Record the query box (src) + squared radius, then dispatch to the
-// sphere-vs-object walker with the triangle selected by idx.
-void func_804BBFA0(ColiObj* self, const Vec3* src, int idx, f32 radius) {
-    lbl_eu_8065F3F0 = *src;
+// sphere-vs-object walker with the triangle selected by idx. The box is
+// copied as raw u32 words (retail lwz/stw, not float loads).
+extern "C" void func_804BBFA0(ColiObj* self, const Vec3* src, int idx, f32 radius) {
+    u32* dst = (u32*)&lbl_eu_8065F3F0;
+    const u32* s = (const u32*)src;
+    dst[0] = s[0];
+    dst[1] = s[1];
+    dst[2] = s[2];
     lbl_eu_80665960 = radius * radius;
     func_804BB2C0(self, &self->tris[idx]);
 }
@@ -182,9 +193,14 @@ void func_804BBFA0(ColiObj* self, const Vec3* src, int idx, f32 radius) {
 void func_804BBFD4(){}
 
 // Record the query box (src) + radius, then dispatch to the box-vs-object
-// walker with the triangle selected by idx.
-void func_804BC134(ColiObj* self, const Vec3* src, int idx, f32 radius) {
-    lbl_eu_8065F3F0 = *src;
+// walker with the triangle selected by idx. The box is copied as raw u32
+// words (retail lwz/stw, not float loads).
+extern "C" void func_804BC134(ColiObj* self, const Vec3* src, int idx, f32 radius) {
+    u32* dst = (u32*)&lbl_eu_8065F3F0;
+    const u32* s = (const u32*)src;
+    dst[0] = s[0];
+    dst[1] = s[1];
+    dst[2] = s[2];
     lbl_eu_80665960 = radius;
     func_804BB768(self, &self->tris[idx]);
 }

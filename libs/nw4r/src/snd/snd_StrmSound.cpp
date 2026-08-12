@@ -32,12 +32,25 @@ bool StrmSound::Prepare(StrmPlayer::StartOffsetType offsetType, s32 offset,
 
 void StrmSound::UpdateMoveValue() {
     BasicSound::UpdateMoveValue();
-    
+
+    // The shared snd_StrmPlayer.h layout is stale (see the retail-layout
+    // mirror note in snd_StrmPlayer.cpp): mMoveBlocks sits at this+0xE54
+    // with 0x10-byte elements { limit; count; } in retail, so access it
+    // through a retail-layout overlay instead of the header member.
+    struct MoveBlocksRetail {
+        u8 _pad[0xE54];
+        struct MoveBlock {
+            s32 limit;
+            s32 count;
+            u8 _pad2[8];
+        } blocks[8];
+    };
+    MoveBlocksRetail* mb = reinterpret_cast<MoveBlocksRetail*>(this);
     for (int i = 0; i < 8; i++) {
         if (!mStrmPlayer.GetPlayerTrack(i)) continue;
-        
-        if (mStrmPlayer.mMoveBlocks[i].count < mStrmPlayer.mMoveBlocks[i].limit)
-            mStrmPlayer.mMoveBlocks[i].count++;
+
+        if (mb->blocks[i].count < mb->blocks[i].limit)
+            mb->blocks[i].count++;
     }
 }
 

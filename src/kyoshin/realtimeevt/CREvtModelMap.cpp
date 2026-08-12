@@ -267,13 +267,9 @@ extern "C" int func_80180C60(void* self) {
 // ---------------------------------------------------------------------------
 // 4. func_80180C88 - isBusy (0x80182084)
 // ---------------------------------------------------------------------------
-bool CREvtModelMap::isBusy()
+extern "C" bool func_80180C88(CREvtModelMap* self)
 {
-    bool result = false;
-    if (mFileHandle1 || mFileHandle2 || mFileHandle3) {
-        result = true;
-    }
-    return result;
+    return self->mFileHandle1 || self->mFileHandle2 || self->mFileHandle3;
 }
 
 // ---------------------------------------------------------------------------
@@ -629,13 +625,10 @@ extern "C" void func_8018140C(CREvtModelMap* self)
 extern "C" void func_8018152C(CREvtModelMap* self)
 {
     if (self->mEmoteModel) {
-        // Frame counter -> float via MWCC's 0x43300000 double trick
-        // ((float)(s32)(time ^ 0x80000000)).
-        f32 fTime = (f32)(s32)(func_8016A35C() ^ 0x80000000);
+        f32 fTime = (f32)(s32)func_8016A35C();
         func_80484F80(self->mEmoteModel, fTime);
     }
 
-    // Virtual dispatch at vtable+0x30 with the camera state, then refresh.
     ((CREvtMapVtIf*)self)->v30(func_80180960());
     func_80168514(self);
 }

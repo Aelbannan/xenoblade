@@ -172,11 +172,13 @@ int ArchiveFontBase::RequestData(ConstructContext* pCtx,
 
     // Note: retail passes the reader pointer where the size argument belongs
     // (the size parameter is unused).
-    if (reinterpret_cast<CachedStreamReader*>(pCtx)->RequestData(
-            pSelf, reinterpret_cast<u32>(pReader)) == 0) {
-        return 2;
+    int result = reinterpret_cast<CachedStreamReader*>(pCtx)->RequestData(
+        pSelf, reinterpret_cast<u32>(pReader));
+    int ret = 2;
+    if (result != 0) {
+        ret = 0;
     }
-    return 0;
+    return ret;
 }
 
 int ArchiveFontBase::ConstructOpAnalyzeFINF(ConstructContext* pCtx,

@@ -3,6 +3,9 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include <cstdio>
+#include <cmath>
+
 #include <monolib/math/CVec3.hpp>
 #include <monolib/math/Random.hpp>
 #include <nw4r/math/math_arithmetic.h>
@@ -105,7 +108,242 @@ void func_80093938(cf::CCtrlNpcChar* self) {
 
 void func_8009398C(){}
 
-void func_80093F28(){}
+// 0x80094900: per-frame NPC talk/page controller update. Runs while the scene
+// clock is running: adjusts the character's action flags, tracks the current
+// event page against the saved heading, then (when the character is not busy)
+// looks up the NPC's talk row in the bdat tables and drives the heading toward
+// the talk target.
+// Message buffer: text at 0x88..0x187 and length word at 0x188 (the struct's
+// address escapes through strcpy / func_8013D07C, which keeps the length
+// stores alive exactly like retail).
+struct NpcMsgBuf {
+    char text[0x100];   // 0x00
+    u32 len;            // 0x100
+};
+
+void func_80093F28(cf::CtrlNpc* self) {
+    NpcMsgBuf msg;
+
+    if (func_80496288(lbl_eu_80663E14) > lbl_eu_80666698) {
+        msg.text[0] = 0;
+        msg.len = 0;
+
+        if (self->field_28->_v0C(8) != 0) {
+            self->field_28->_v18(0x2000);
+        } else {
+            self->field_28->_v20(0x2000);
+        }
+
+        if (self->field_28->_v24(1) != 0) {
+            self->field_28->_v10(1);
+        } else if (self->field_172 != 0) {
+            f32 d = self->field_178 - self->field_28->_vCC();
+            if (ml::math::abs(d) <= lbl_eu_806666A8)
+                self->field_172 = 0;
+        }
+
+        if (self->field_28->_v0C(1) != 0 &&
+            self->field_28->_v24(0x1000) == 0) {
+            cf::CCtrlNpcChar* target =
+                (cf::CCtrlNpcChar*)func_800B708C(self->field_28->_v4C());
+            if (target != 0 && self->field_28->field_C4 != 0) {
+                int page = (int)func_8004C5EC(self->field_28->field_C4);
+                int flag = 1;
+                u32 st = self->field_28->field_8C;
+                if ((st == 1 || st == 8 || st == 0x13) && page >= 0x21 &&
+                    page <= 0x26)
+                    flag = 0;
+                if (flag != 0) {
+                    cf::CCtrlNpcSearch* search = self->field_28->field_98;
+                    if (search != 0) {
+                        // retail compares against 0xFFFFFFFF (unsigned ->
+                        // addis+cmplwi form).
+                        u32 found =
+                            (u32)search->_v44(lbl_eu_804FBB0C);
+                        if (found != 0xFFFFFFFF) {
+                            char* t = (char*)target;
+                            if (t != 0) t -= 0x3E9C;
+                            if (t != 0) t += 0x3E9C;
+                            self->field_28->_v1AC(t, lbl_eu_804FBB0C);
+                        }
+                    }
+                }
+                if (page < 0x21 || page > 0x26) {
+                    if (self->field_174 == 0)
+                        self->field_174 = (u16)page;
+                    if (self->field_172 == 0)
+                        self->field_178 = self->field_28->_vCC();
+                    const ml::CVec3* selfPos = reinterpret_cast<
+                        const ml::CVec3*>(self->field_28->_vAC());
+                    const ml::CVec3* tgtPos = reinterpret_cast<
+                        const ml::CVec3*>(target->_vAC());
+                    ml::CVec3 diff = *tgtPos - *selfPos;
+                    ml::CVec3 v = diff;
+                    f32 h = lbl_eu_806666AC *
+                            nw4r::math::Atan2FIdx(diff.x, diff.z);
+                    self->field_28->_vC4(h);
+                    func_800BE12C(self->field_28, 3, 0, -1, 1);
+                } else {
+                    self->field_174 = 0;
+                }
+            }
+            if (self->field_28->_v24(0x1000) == 0) {
+                self->field_28->_v10(1);
+                self->field_28->_v18(1);
+                if (target != 0)
+                    self->field_172 = 1;
+            }
+        }
+
+        // Not in the talk state: run the page cleanup/advance logic.
+        if (self->field_28->_v0C(1) == 0) {
+            if (self->field_28->_v2C(1, 0) != 0 && self->field_174 != 0) {
+                self->field_28->_vC4(self->field_178);
+                func_800BE12C(self->field_28, 3, 0, -1, 1);
+                if (self->field_28->_v24(0x1000) == 0) {
+                    func_800BE12C(self->field_28, self->field_174, 0, -1, 1);
+                    self->field_174 = 0;
+                }
+            }
+            if (self->field_174 != 0 && self->field_28->_v24(0x1000) == 0 &&
+                self->field_28->_v24(1) == 0) {
+                func_800BE12C(self->field_28, self->field_174, 0, -1, 1);
+                self->field_174 = 0;
+            }
+        }
+
+        func_8003AA34();
+        func_8003AA34();
+        void* fp1 = getFP__FPCc(lbl_eu_804FBB0C + 0x7);
+        char sbuf[0x20] = {0};
+        sprintf(sbuf, lbl_eu_804FBB0C + 0x13, lbl_eu_80663E42,
+                lbl_eu_80663E44);
+        func_8003AA34();
+        void* fp2 = getFP__FPCc(sbuf);
+
+        if (self->field_28->_v2C(0x2000, 1) != 0) {
+            self->field_17C = 0;
+            // Scan the 6 NPC-kind rows; each column gate must pass before the
+            // message column is copied into strbuf and handed to the text
+            // object.
+            for (u32 i = 0; i < 6; i++) {
+                u32 v48, v44, v40, v3C, v38, v34, v30, v2C, v28, v24, v20, v1C,
+                    v18, v14, v10, v0C;
+                v48 = getBdatStringColumnValue(
+                    fp1, lbl_eu_80527A48[i], self->field_28->field_8C);
+                u8 count = (u8)v48;
+                if (count == 0)
+                    continue;
+
+                v44 = getBdatStringColumnValue(
+                    fp2, lbl_eu_804FBB0C + 0x28, count);
+                v40 = getBdatStringColumnValue(
+                    fp2, lbl_eu_804FBB0C + 0x33, count);
+                u32 cur = func_8009CF8C(func_801413DC(0x200001, 0));
+                if (cur < (u16)v44)
+                    continue;
+                if ((u16)v40 < cur)
+                    continue;
+
+                const char* col2 =
+                    lbl_eu_80527A60[(u16)func_80086DA0__Q22cf13CfGameManagerFv() /
+                                    3];
+                v3C = getBdatStringColumnValue(fp2, col2, count);
+                if ((u8)v3C == 0)
+                    continue;
+
+                v38 = getBdatStringColumnValue(
+                    fp2, lbl_eu_804FBB0C + 0x3E, count);
+                if ((u16)v38 != 0) {
+                    u32 f = func_8009CF8C(func_801413DC(0x2203E8, (u16)v38));
+                    if (f != 0xFE && f != 0xFF)
+                        continue;
+                }
+
+                v34 = getBdatStringColumnValue(
+                    fp2, lbl_eu_804FBB0C + 0x47, count);
+                if ((u16)v34 != 0) {
+                    u32 f =
+                        func_8009CF8C(func_801413DC(0x608190, (u16)v34));
+                    v30 = getBdatStringColumnValue(
+                        fp2, lbl_eu_804FBB0C + 0x51, count);
+                    if (f != (u8)v30)
+                        continue;
+                }
+
+                v2C = getBdatStringColumnValue(
+                    fp2, lbl_eu_804FBB0C + 0x58, count);
+                if ((u8)v2C != 0) {
+                    u32 f = func_8009CF8C(func_801413DC(0x798064, (u8)v2C));
+                    v28 = getBdatStringColumnValue(
+                        fp2, lbl_eu_804FBB0C + 0x62, count);
+                    if (f != (u8)v28)
+                        continue;
+                }
+
+                v24 = getBdatStringColumnValue(
+                    fp2, lbl_eu_804FBB0C + 0x69, count);
+                if ((u8)v24 != 0) {
+                    u32 f = func_8009CF8C(func_801413DC(0x210007, (u8)v24));
+                    v20 = getBdatStringColumnValue(
+                        fp2, lbl_eu_804FBB0C + 0x74, count);
+                    if (f < (u16)v20)
+                        continue;
+                }
+
+                v1C = getBdatStringColumnValue(
+                    fp2, lbl_eu_804FBB0C + 0x7C, count);
+                if ((u16)v1C != 0) {
+                    u32 f =
+                        func_8009CF8C(func_801413DC(0xA2012C, (u16)v1C));
+                    if (f == 0)
+                        continue;
+                }
+
+                v18 = getBdatStringColumnValue(
+                    fp2, lbl_eu_804FBB0C + 0x87, count);
+                if ((u8)v18 != 0) {
+                    u32 f = func_8009CF8C(func_801413DC(0x7FC008, (u8)v18));
+                    v14 = getBdatStringColumnValue(
+                        fp2, lbl_eu_804FBB0C + 0x91, count);
+                    if (f < (u16)v14)
+                        continue;
+                }
+
+                v10 = getBdatStringColumnValue(
+                    fp2, lbl_eu_804FBB0C + 0x98, count);
+                if ((u8)v10 != 0) {
+                    u32 f = func_8009CF8C(func_801413DC(0x25781E, (u8)v10));
+                    v0C = getBdatStringColumnValue(
+                        fp2, lbl_eu_804FBB0C + 0xA2, count);
+                    if (f != (u8)v0C)
+                        continue;
+                }
+
+                const char* text = (const char*)getBdatStringColumnValue(
+                    fp2, lbl_eu_804FBB0C + 0xA9, count);
+                msg.len = strlen(text);
+                strcpy(msg.text, text);
+                func_8013D07C(self->field_28->field_74, msg.text, 0);
+                self->field_17C = count;
+                break;
+            }
+        } else if (self->field_28->_v24(0x2000) != 0 &&
+                   self->field_17C != 0) {
+            const char* col3 =
+                lbl_eu_80527A80[(u16)func_80086DA0__Q22cf13CfGameManagerFv() /
+                                3];
+            u32 v08 = getBdatStringColumnValue(fp2, col3, self->field_17C);
+            if ((u8)v08 == 0) {
+                self->field_28->_v20(0x2000);
+                self->field_28->_v10(8);
+            }
+        }
+
+        if (self->field_28->_v2C(0x2000, 0) != 0)
+            func_8013D1E8(self->field_28->field_74);
+    }
+}
 
 // 0x80095274: cf::CObjectState::CObjectState_UnkVirtualFunc5. The retail
 // symbol keeps the Fv suffix, but the virtual is invoked with an int (see
@@ -166,9 +404,58 @@ tail:
     }
 }
 
-// Retail func_80094A9C is a 0x24C-byte body (not yet recovered); the stub is
-// kept noinline so func_80094CE8 can tail-call it instead of inlining it.
-extern "C" void __declspec(noinline) func_80094A9C(cf::CtrlNpc* self) {}
+// 0x80095474: record the movement target words (current position from the
+// character object + the new target vec), then compute the heading toward the
+// target: a distance check picks a turn amount (jittered/continued), the
+// heading is stored to field_0C, and the character is kicked if it is idle.
+void __declspec(noinline) func_80094A9C(cf::CtrlNpc* self,
+                                        const ml::CVec3* vec, f32 scale,
+                                        f32 paramB) {
+    cf::CtrlNpcVec3W* pos = self->field_28->_vAC();
+    const u32* vw = reinterpret_cast<const u32*>(vec);
+    u32 px = pos->x;
+    u32 py = pos->y;
+    self->field_E4 = py;
+    self->field_E0 = px;
+    self->field_E8 = pos->z;
+    self->field_EC[0] = vw[0];
+    self->field_EC[1] = vw[1];
+    self->field_EC[2] = vw[2];
+    self->field_158 = paramB;
+    self->field_160 = func_80086DB4__Q22cf13CfGameManagerFv();
+    self->field_C4 = 1;
+    self->field_15C = 2;
+    const ml::CVec3* posf = reinterpret_cast<const ml::CVec3*>(pos);
+    ml::CVec3 v;
+    ml::CVec3 v2;
+    nw4r::math::VEC3 diff;
+    nw4r::math::VEC3 diff2;
+    nw4r::math::VEC3Sub(&diff, reinterpret_cast<const nw4r::math::VEC3*>(vec),
+                        reinterpret_cast<const nw4r::math::VEC3*>(posf));
+    v.set(*(const ml::CVec3*)&diff);
+    f32 len2 = v.x * v.x + v.z * v.z;
+    if (!(len2 >= lbl_eu_80666698)) {
+        nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+    }
+    f32 len = (len2 <= lbl_eu_80666698) ? lbl_eu_80666698
+                                        : len2 * nw4r::math::FrSqrt(len2);
+    f32 f0 = (lbl_eu_806666B0 * len) / scale;
+    f0 = f0 / *self->field_28->_v138();
+    f32 f1 = f0 < lbl_eu_806666A8 ? lbl_eu_806666A8
+             : (f0 > lbl_eu_806666A4 ? lbl_eu_806666A4 : f0);
+    self->field_14 = lbl_eu_80666698;
+    self->field_D8 = f1;
+    nw4r::math::VEC3Sub(&diff2, reinterpret_cast<const nw4r::math::VEC3*>(vec),
+                        reinterpret_cast<const nw4r::math::VEC3*>(posf));
+    v2.set(*(const ml::CVec3*)&diff2);
+    f32 heading = nw4r::math::Atan2FIdx(v2.x, v2.z) * lbl_eu_806666AC;
+    self->field_0C = heading;
+    if (self->field_28 != 0) {
+        self->field_28->_vC4(heading);
+        if (self->field_28->_v74() != 0)
+            func_800BE12C(self->field_28, 3, 0, -1, 1);
+    }
+}
 
 // 0x800956C0: store the action-setup fields, then dispatch: a zero action id
 // arms the movement sub-object (CCtrlMoveNpc at +0x30), anything else runs
@@ -181,7 +468,7 @@ void func_80094CE8(cf::CtrlNpc* self, const ml::CVec3* vec, int val, f32 scale, 
     self->field_158 = paramB;
     self->field_BE = 1;
     if (val != 0)
-        func_80094A9C(self);
+        func_80094A9C(self, vec, scale, paramB);
     else
         func_8019F6E8((cf::CCtrlMoveNpc*)self->_sub30, vec, scale, paramB);
 }
@@ -380,7 +667,7 @@ void func_80095224(cf::CtrlNpc* self) {
     }
     self->field_0C = f1;
     if (self->field_28 != 0) {
-        self->field_28->_vC4();
+        self->field_28->_vC4(f1);
         if (self->field_28->_v74() != 0)
             func_800BE12C(self->field_28, 3, 0, -1, 1);
     }
@@ -521,7 +808,7 @@ int func_800964EC(cf::CtrlNpc* self) {
     if (self->field_158 < lbl_eu_80666714) {
         self->field_0C = self->field_158 * lbl_eu_8066A210;
         if (self->field_28 != 0) {
-            self->field_28->_vC4();
+            self->field_28->_vC4(self->field_0C);
             if (self->field_28->_v74() != 0)
                 func_800BE12C(self->field_28, 3, 0, -1, 1);
         }

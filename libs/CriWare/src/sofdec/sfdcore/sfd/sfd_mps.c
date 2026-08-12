@@ -434,6 +434,14 @@ int sfmps_DecodeOneUnit(void* self, s32 buf, s32 size, s32* out_size, s32* out_f
     return ret;
 }
 
+// Open item (best shape): inline stm_info stores. Retail hoists both loads
+// (lwz r0,2464 / lwz r5,2468) before both stores; MWCC interleaves s1's load
+// with its store (loads s1 first because its store precedes s0's). Residual:
+// 2 structural (load-pair order s1,s0 vs retail s0,s1), 1 reg_swap, 0x54/0x54.
+// 14+ shapes probed: locals (reverses both loads AND stores), u64/struct-copy
+// (C spills the pair to the stack), named members, decl/store permutations,
+// loads-first (breaks the args store order). The witness rejects the load-pair
+// offset diff; FULL_MATCH needs the s1 load scheduled after s0's.
 void sfmps_pesfn(void* self, u8 stream_kind, s32 arg3, s32 arg4) {
     void (*cb)(s32, void*, s32, s32);
     struct {
@@ -442,20 +450,14 @@ void sfmps_pesfn(void* self, u8 stream_kind, s32 arg3, s32 arg4) {
         s32 args[2];     /* sp+0x10 */
         s32 stm_info[2]; /* sp+0x18 */
     } inf;
-    s32 s0;
-    s32 s1;
-
     cb = (void (*)(s32, void*, s32, s32))(*(u32*)((u8*)self + 0xd5c));
     if (cb == NULL) return;
-
     inf.kind = stream_kind;
     inf.args[1] = arg4;
     inf.args[0] = arg3;
-    s0 = *(s32*)((u8*)self + 0x9a0);
-    s1 = *(s32*)((u8*)self + 0x9a4);
-    inf.stm_info[1] = s1;
-    inf.stm_info[0] = s0;
-    cb(*(s32*)((u8*)self + 0xd60), &inf, s1, arg4);
+    inf.stm_info[1] = *(s32*)((u8*)self + 0x9a4);
+    inf.stm_info[0] = *(s32*)((u8*)self + 0x9a0);
+    cb(*(s32*)((u8*)self + 0xd60), &inf, *(s32*)((u8*)self + 0x9a4), arg4);
 }
 
 void sfmps_SkipNext(void* self, s32 buf, s32 size, s32* out_size) {

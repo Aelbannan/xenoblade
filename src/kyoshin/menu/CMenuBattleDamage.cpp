@@ -27,7 +27,7 @@
 
 #include "monolib/util/FixStr.hpp"
 
-extern "C" void __dt__17CMenuBattleDamageFv(void*, int);
+extern "C" void* __dt__17CMenuBattleDamageFv(void*, int);
 
 // Defined below in this TU (damage-slot enqueue; also called by func_80109734).
 extern "C" void func_801098B0(CMenuBattleDamage* self, int actorId,
@@ -106,7 +106,29 @@ void __ct__CMenuBattleDamage(CMenuBattleDamage* obj, CScn* scene) {
     }
 }
 
-CMenuBattleDamage::~CMenuBattleDamage() {}
+// The retail dtor is the full implicit D1 of the real class (CProcess +
+// IWorkEvent/IScnRender bases + mMemRegion member). The header models the
+// bases as storage, so the symbol is defined as a freestanding extern "C"
+// function with the exact retail structure: member (flag -1) first, then the
+// base with a NON-deleting flag 0 behind the D2-inlined-into-D1 double
+// null-check (retail cmpi r30,0 x2), then delete-on-flag, returning self.
+// The C++ dtor stays declared (header) so the `this->~CMenuBattleDamage()`
+// thunk calls resolve to this symbol at link time.
+extern "C" void* __dt__17CMenuBattleDamageFv(void* self, int flag) {
+    CMenuBattleDamage* this_ = reinterpret_cast<CMenuBattleDamage*>(self);
+    if (this_ != 0) {
+        __dt__17UnkClass_8045F564Fv(&this_->mMemRegion, -1);
+        if (this_ != 0) {
+            if (this_ != 0) {
+                __dt__8CProcessFv(reinterpret_cast<CProcess*>(this_), 0);
+            }
+        }
+        if (flag > 0) {
+            ::operator delete(this_);
+        }
+    }
+    return self;
+}
 
 void CMenuBattleDamage::Init() {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
@@ -447,8 +469,13 @@ CMenuBattleDamage* func_801096B8(CProcess* parent, CScn* scene) {
     return lbl_eu_80663F28;
 }
 
-extern "C" void func_80109734() {}
-extern "C" void func_8010975C() {}
+extern "C" void func_80109734(int actorId, int value) {
+    CMenuBattleDamage* g = lbl_eu_80663F28;
+    if (g) {
+        func_801098B0(g, actorId, value, 0);
+    }
+}
+extern "C" void func_8010975C(u8 val) { CMenuBattleDamage* g = lbl_eu_80663F28; if (g) *(u8*)((u8*)g + 0x774) = val; }
 extern "C" void func_80109784(int actorId, int value, u32 flags) {
     if (lbl_eu_80663F28 == NULL) {
         return;
@@ -518,7 +545,12 @@ void func_8010A848(CPcSelectCursor01* self, u8 value) {
         lbl_eu_80666F94));
 }
 
-extern "C" void func_8010A8E4() {}
+extern "C" void func_8010A8E4(CPcSelectCursor01* self) {
+    self->field_0x2C = 0;
+    self->mAnim1->SetFrame(lbl_eu_80666F94);
+    self->mLayout->Animate();
+    self->field_0x28 = 1;
+}
 // Damage-number enqueue: compact the non-empty digit slots of the queue to
 // the front (via a stack buffer), then append the new digit triple and mark
 // the queue filled.

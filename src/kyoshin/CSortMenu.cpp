@@ -282,24 +282,20 @@ extern "C" void func_801D353C(CSortMenu* _this, s8 page) {
 // func_801D3620: Scroll up
 // ============================================================================
 extern "C" void func_801D3620(CSortMenu* _this) {
-    s8 page = (s8)_this->mPage - 1;
-    _this->mPage = (u8)page;
-
-    if (page < 0) {
-        s8 subPage = (s8)_this->mSubPage - 1;
+    _this->mPage = (u8)(_this->mPage - 1);
+    if ((s8)_this->mPage < 0) {
         _this->mPage = 0;
-        _this->mSubPage = (u8)subPage;
+        _this->mSubPage = (u8)(_this->mSubPage - 1);
 
-        if (subPage < 0) {
+        if ((s8)_this->mSubPage < 0) {
             u8 count = _this->mCount;
             if (count >= 5) {
                 _this->mPage = 4;
                 _this->mSubPage = count - 5;
             } else {
-                s8 newPage = (s8)(count - 1);
-                _this->mPage = (u8)newPage;
+                _this->mPage = (u8)(count - 1);
                 _this->mSubPage = 0;
-                if (newPage < 0) {
+                if ((s8)_this->mPage < 0) {
                     _this->mPage = 0;
                 }
             }
@@ -364,22 +360,22 @@ extern "C" void func_801D3724(CSortMenu* _this) {
 extern "C" void func_801D377C(CSortMenu* _this) {
     u8 count = _this->mCount;
     if (count >= 5) {
-        s8 subPage = (s8)_this->mSubPage + 5;
-        _this->mSubPage = (u8)subPage;
-        s8 maxSubPage = (s8)(count - 5);
-        if (subPage > maxSubPage) {
-            s8 newPage = subPage - maxSubPage;
+        s32 sp5 = (s32)_this->mSubPage + 5;
+        _this->mSubPage = (u8)sp5;
+        s8 sp5s = (s8)sp5;
+        s32 maxSub = (s32)(count - 5);
+        if (sp5 > maxSub) {
+            s32 newPage = (s32)sp5s - maxSub;
             _this->mPage = (u8)newPage;
-            _this->mSubPage = (u8)maxSubPage;
-            if (newPage >= 5) {
+            _this->mSubPage = (u8)maxSub;
+            if ((s8)_this->mPage >= 5) {
                 _this->mPage = 4;
             }
         }
     } else {
-        s8 page = (s8)(count - 1);
-        _this->mPage = (u8)page;
+        _this->mPage = (u8)(count - 1);
         _this->mSubPage = 0;
-        if (page < 0) {
+        if ((s8)_this->mPage < 0) {
             _this->mPage = 0;
         }
     }

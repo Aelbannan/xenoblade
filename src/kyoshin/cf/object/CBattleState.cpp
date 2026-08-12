@@ -15,7 +15,7 @@ extern u8 lbl_eu_80662248[8];      // .sdata object; CBattleState_UnkVirtualFunc
 
 void func_80109784(void* ptr, u32 id, int arg);
 void func_8013DB6C(int a, u32 id, int b, int c);
-extern "C" int func_80148778(cf::CBattleState* self, u32 id);
+int func_80148778(cf::CBattleState* self, u32 id);
 
 namespace cf {
 
@@ -45,6 +45,26 @@ CBattleState::CBattleState() {
 // for each prior id, if it is still present among the 0x68 entries at +0x8
 // (13x8 halfword scan) the this+0x15AC status bit stays; otherwise cleared.
 // Ids >= 0x12f always clear (skip the scan). Ends with memset(+0x152C,0,0x80).
+//
+// findBattleEntry is a static search helper inlined via -ipa file: the
+// return-based form reproduces the retail's exact mtctr/bdnz loop with the
+// dead +(checks-1)=+7 shadow counter (MWCC_REFERENCE §inlined search
+// helpers), indexing entries[j] straight from `this` so the +0x8 array base
+// folds into the load displacements (0x14, 0x48, ...) and the scan base
+// stays `this` (retail mr r4, r26).
+static int findBattleEntry(cf::CBattleState* self, u32 id) {
+    cf::CBattleStateEntryArray* v;
+    int j;
+
+    v = (cf::CBattleStateEntryArray*)self;
+    for (j = 0; j < 0x68; j++) {
+        if (id == v->entries[j].unk0C) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void CBattleState::CBattleState_UnkVirtualFunc29() {
     CBattleStateEntry* entry;
     int i;
@@ -60,21 +80,7 @@ void CBattleState::CBattleState_UnkVirtualFunc29() {
         if (id >= 0x12f) {
             found = 0;
         } else {
-            int j;
-            u8* scan;
-
-            found = 0;
-            // The retail 13x8 listing is MWCC's unroll of this linear scan.
-            scan = (u8*)this;
-            for (j = 0; j < 0x68; scan += sizeof(CBattleStateEntry), j++) {
-                if (id == ((cf::CBattleStateEntry*)scan)->unk0C) {
-                    found = 1;
-                    goto scan_done;
-                }
-            }
-            found = 0;
-        scan_done:
-            ;
+            found = findBattleEntry(this, id);
         }
 
         if (!found) {
@@ -132,9 +138,9 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc6(cf::CBattleStateEntry* arg) 
     id = arg->unk0C;
     one = 1;
     entries = (cf::CBattleStateEntry*)((u8*)this + 0x1388);
-    bit = one << (id & 0x1F);
-    *(u32*)(unk15AC + ((id >> 3) & ~3u)) |= bit;
-    for (p = entries, n = 8; n != 0; n--, p++) {
+    p = entries;
+    *(u32*)(unk15AC + ((id >> 3) & ~3u)) |= one << (id & 0x1F);
+    for (n = 8; n != 0; n--, p++) {
         if (p->unk0C == arg->unk0C) {
             if (p->unk10 < arg->unk10) {
                 p->unk10 = arg->unk10;
@@ -279,9 +285,13 @@ struct BattleStateV11If {
 // this+0x15AC status bit for that id is left alone; otherwise it's
 // cleared (ids >= 0x12f always clear, skipping the scan).
 void cf::CBattleState::CBattleState_UnkVirtualFunc11(u32 mask) {
+    u32 one;
+    int thirteen;
     int i;
     cf::CBattleStateEntry* entry;
 
+    one = 1;
+    thirteen = 0xd;
     entry = (cf::CBattleStateEntry*)((u8*)this + 0x8);
     i = 0;
     do {
@@ -308,7 +318,7 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc11(u32 mask) {
                 int g;
 
                 stillActive = 0;
-                for (g = 0; g < 0x68; g++) {
+                for (g = 0; g < thirteen * 8; g++) {
                     if (id == v->entries[g].unk0C) {
                         stillActive = 1;
                         goto scan_done;
@@ -321,7 +331,7 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc11(u32 mask) {
 
             if (!stillActive) {
                 u8* wordPtr = this->unk15AC + ((id >> 3) & ~3u);
-                *(u32*)wordPtr &= ~(1u << (id & 0x1F));
+                *(u32*)wordPtr &= ~(one << (id & 0x1F));
             }
         }
 
@@ -723,7 +733,7 @@ kind_done:
         int clearLen;
         int trip;
         int g;
-        cf::CBattleStateEntry* p;
+        cf::CBattleStateEntryArray* v;
 
         if (slot->unk0C != entry->unk0C) {
             continue;
@@ -787,43 +797,61 @@ kind_done:
         } else {
             // Retail: savedId in r5, dead trip in r3 (li 0 / addi +7 /
             // unused after bdnz), scan base in r4, ctr=thirteen.
-            p = (cf::CBattleStateEntry*)((u8*)this + 0x8);
+            // Indexing entries[g*8+j] straight from `this` keeps the base
+            // `this` (offsets 0x14+0x34*j folded into the loads, +0x1a0
+            // increment) so no separate this+8 value needs a callee-saved
+            // reg -- the p = this+8 form costs stmw r25 vs retail stmw r26.
             trip = 0;
             stillActive = 0;
             for (g = thirteen; g != 0; g--) {
-                if (savedId == p[0].unk0C) {
+                if (savedId ==
+                    ((cf::CBattleStateEntryArray*)this)
+                        ->entries[g * 8 + 0].unk0C) {
                     stillActive = 1;
                     goto scan_done;
                 }
-                if (savedId == p[1].unk0C) {
+                if (savedId ==
+                    ((cf::CBattleStateEntryArray*)this)
+                        ->entries[g * 8 + 1].unk0C) {
                     stillActive = 1;
                     goto scan_done;
                 }
-                if (savedId == p[2].unk0C) {
+                if (savedId ==
+                    ((cf::CBattleStateEntryArray*)this)
+                        ->entries[g * 8 + 2].unk0C) {
                     stillActive = 1;
                     goto scan_done;
                 }
-                if (savedId == p[3].unk0C) {
+                if (savedId ==
+                    ((cf::CBattleStateEntryArray*)this)
+                        ->entries[g * 8 + 3].unk0C) {
                     stillActive = 1;
                     goto scan_done;
                 }
-                if (savedId == p[4].unk0C) {
+                if (savedId ==
+                    ((cf::CBattleStateEntryArray*)this)
+                        ->entries[g * 8 + 4].unk0C) {
                     stillActive = 1;
                     goto scan_done;
                 }
-                if (savedId == p[5].unk0C) {
+                if (savedId ==
+                    ((cf::CBattleStateEntryArray*)this)
+                        ->entries[g * 8 + 5].unk0C) {
                     stillActive = 1;
                     goto scan_done;
                 }
-                if (savedId == p[6].unk0C) {
+                if (savedId ==
+                    ((cf::CBattleStateEntryArray*)this)
+                        ->entries[g * 8 + 6].unk0C) {
                     stillActive = 1;
                     goto scan_done;
                 }
-                if (savedId == p[7].unk0C) {
+                if (savedId ==
+                    ((cf::CBattleStateEntryArray*)this)
+                        ->entries[g * 8 + 7].unk0C) {
                     stillActive = 1;
                     goto scan_done;
                 }
-                p += 8;
                 trip += 7;
             }
             stillActive = 0;
@@ -2088,7 +2116,172 @@ kind_done:
     return kind == 3;
 }
 extern "C" bool func_80145DBC(int value) { int result; switch (value) { case 2: case 3: case 39: case 51: case 52: case 54: case 68: case 69: case 88: case 89: case 90: case 91: case 92: case 95: case 147: case 206: case 207: case 208: case 209: case 210: case 211: case 236: case 247: case 286: case 301: result = 0; break; case 4: case 5: case 6: case 7: case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 42: case 43: case 60: case 61: case 82: case 83: case 84: case 85: case 86: case 87: case 101: case 102: case 103: case 104: case 105: case 220: case 223: case 224: case 225: case 226: case 279: result = 1; break; case 234: case 237: case 238: case 239: case 240: case 241: case 242: case 243: case 244: case 245: case 246: case 248: case 249: case 250: case 251: case 252: case 253: case 254: case 256: case 257: case 258: case 262: case 265: case 266: case 267: case 268: case 273: case 274: case 275: case 276: case 277: case 278: result = 3; break; default: result = 2; break; } return result == 1; }
-void func_80145F78(){}
+// func_80145F78: r3 = status id. Ids 0xf/0x10 return 0 immediately (retail
+// subi/cmplwi/bgt guard); everything else is classified through the same
+// cmpwi/beq/bge decision tree as func_80145C00 (kind 0/1/2/3) and the result
+// is (kind == 1) via the branchless subi/cntlzw/srwi boolify. Flat if+goto
+// mirrors retail's tree 1:1 (same convention as func_80145C00).
+extern "C" bool func_80145F78(int value) {
+    int kind;
+
+    if (value - 0xf <= 1u) {
+        return 0;
+    }
+
+    if (value >= 0xd4)
+        goto L_E8;
+    if (value >= 0x3e)
+        goto L_80;
+    if (value >= 0x2c)
+        goto L_54;
+    if (value == 0x27)
+        goto kind0;
+    if (value >= 0x27)
+        goto L_48;
+    if (value >= 4)
+        goto L_3C;
+    if (value >= 2)
+        goto kind0;
+    goto kind2;
+
+L_3C:
+    if (value >= 0x14)
+        goto kind2;
+    goto kind1;
+
+L_48:
+    if (value >= 0x2a)
+        goto kind1;
+    goto kind2;
+
+L_54:
+    if (value == 0x36)
+        goto kind0;
+    if (value >= 0x36)
+        goto L_74;
+    if (value >= 0x35)
+        goto kind2;
+    if (value >= 0x33)
+        goto kind0;
+    goto kind2;
+
+L_74:
+    if (value >= 0x3c)
+        goto kind1;
+    goto kind2;
+
+L_80:
+    if (value == 0x5f)
+        goto kind0;
+    if (value >= 0x5f)
+        goto L_BC;
+    if (value >= 0x52)
+        goto L_A8;
+    if (value >= 0x46)
+        goto kind2;
+    if (value >= 0x44)
+        goto kind0;
+    goto kind2;
+
+L_A8:
+    if (value >= 0x5d)
+        goto kind2;
+    if (value >= 0x58)
+        goto kind0;
+    goto kind1;
+
+L_BC:
+    if (value == 0x93)
+        goto kind0;
+    if (value >= 0x93)
+        goto L_DC;
+    if (value >= 0x6a)
+        goto kind2;
+    if (value >= 0x65)
+        goto kind1;
+    goto kind2;
+
+L_DC:
+    if (value >= 0xce)
+        goto kind0;
+    goto kind2;
+
+L_E8:
+    if (value >= 0x103)
+        goto L_48b;
+    if (value == 0xeb)
+        goto kind2;
+    if (value >= 0xeb)
+        goto L_24;
+    if (value >= 0xdf)
+        goto L_10;
+    if (value == 0xdc)
+        goto kind1;
+    goto kind2;
+
+L_10:
+    if (value >= 0xea)
+        goto kind3;
+    if (value >= 0xe3)
+        goto kind2;
+    goto kind1;
+
+L_24:
+    if (value == 0xf7)
+        goto kind0;
+    if (value >= 0xf7)
+        goto L_3Cb;
+    if (value >= 0xed)
+        goto kind3;
+    goto kind0;
+
+L_3Cb:
+    if (value == 0xff)
+        goto kind2;
+    goto kind3;
+
+L_48b:
+    if (value == 0x117)
+        goto kind1;
+    if (value >= 0x117)
+        goto L_7C;
+    if (value >= 0x109)
+        goto L_68;
+    if (value == 0x106)
+        goto kind3;
+    goto kind2;
+
+L_68:
+    if (value >= 0x111)
+        goto kind3;
+    if (value >= 0x10d)
+        goto kind2;
+    goto kind3;
+
+L_7C:
+    if (value == 0x12d)
+        goto kind0;
+    if (value >= 0x12d)
+        goto kind2;
+    if (value == 0x11e)
+        goto kind0;
+    goto kind2;
+
+kind0:
+    kind = 0;
+    goto kind_done;
+kind1:
+    kind = 1;
+    goto kind_done;
+kind3:
+    kind = 3;
+    goto kind_done;
+kind2:
+    kind = 2;
+kind_done:
+
+    return kind == 1;
+}
 extern "C" bool func_80146148(int value) { int result; switch (value) { case 2: case 3: case 0x27: case 0x33: case 0x34: case 0x36: case 0x44: case 0x45: case 0x58: case 0x59: case 0x5a: case 0x5b: case 0x5c: case 0x5f: case 0x93: case 0xce: case 0xcf: case 0xd0: case 0xd1: case 0xd2: case 0xd3: case 0xec: case 0xf7: case 0x11e: case 0x12d: result = 0; break; case 4: case 5: case 6: case 7: case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: case 0x2a: case 0x2b: case 0x3c: case 0x3d: case 0x52: case 0x53: case 0x54: case 0x55: case 0x56: case 0x57: case 0x65: case 0x66: case 0x67: case 0x68: case 0x69: case 0xdc: case 0xdf: case 0xe0: case 0xe1: case 0xe2: case 0x117: result = 1; break; case 0xea: case 0xed: case 0xee: case 0xef: case 0xf0: case 0xf1: case 0xf2: case 0xf3: case 0xf4: case 0xf5: case 0xf6: case 0xf8: case 0xf9: case 0xfa: case 0xfb: case 0xfc: case 0xfd: case 0xfe: case 0x100: case 0x101: case 0x102: case 0x106: case 0x109: case 0x10a: case 0x10b: case 0x10c: case 0x111: case 0x112: case 0x113: case 0x114: case 0x115: case 0x116: result = 3; break; default: result = 2; break; } return result == 0; }
 extern "C" bool func_80146384(unsigned int value) { return value - 0x125u <= 5u; }
 extern "C" void CBattleState_UnkVirtualFunc19__Q22cf12CBattleStateFv() {}
@@ -2364,9 +2557,730 @@ extern "C" void CBattleState_UnkVirtualFunc7__Q22cf12CBattleStateFv(
     self->CBattleState_UnkVirtualFunc8(&entry);
 }
 
-// func_80148778 stays DECLARED but undefined in this TU (retail 0x928B,
-// not yet matched): MWCC would inline any same-TU stub body into vfunc7's
-// call site and drop the retail `bl func_80148778` reloc (MWCC_REFERENCE
-// §bta_hh_start_sdp / cview-render-view leaf recovery: keep callee
-// undefined). The object builds with the undefined reference; the unit is
-// NonMatching so the .o is never linked.
+// func_80148778: r3 = self, r4 = status id. Returns whether status `id` is
+// active per the this+0x15AC bitfield (bit = id & 0x1F, word offset =
+// (id >> 3) & ~3). ids < 0x12f test the bit directly (branchless boolify);
+// ids >= 0x12f scan candidate statuses 1..0x12e for a match:
+//   id == 0x131         -> kind(i) == 0 and bit i set
+//   id == 0x132         -> kind(i) == 1 and bit i set
+//   id in [0x133,0x138] -> bdat column value(i) low-byte - 4 == id - 0x139
+//                          and bit i set
+//   id in [0x139,0x13e] -> kind(i) == 0 and bdat match (id - 0x139)
+//   id in [0x13f,0x144] -> kind(i) == 1 and bdat match (id - 0x13f)
+//   else                -> 0
+// (kind = the same 0/1/2/3 decision tree as func_80145F78, inlined once per
+// loop; bdat column-value low-byte truncation is the stw/lbz union trick
+// from func_80145BC4.)
+int func_80148778(cf::CBattleState* self, u32 id) {
+    int i;
+    u32 one;
+
+    if (id < 0x12f) {
+        goto simple_test;
+    }
+
+    switch (id) {
+    case 0x131:
+        goto case131;
+    case 0x132:
+        goto case132;
+    case 0x133:
+    case 0x134:
+    case 0x135:
+    case 0x136:
+    case 0x137:
+    case 0x138:
+        goto case133_138;
+    case 0x139:
+    case 0x13a:
+    case 0x13b:
+    case 0x13c:
+    case 0x13d:
+    case 0x13e:
+        goto case139_13E;
+    case 0x13f:
+    case 0x140:
+    case 0x141:
+    case 0x142:
+    case 0x143:
+    case 0x144:
+        goto case13F_144;
+    default:
+        goto ret0;
+    }
+
+case131:
+    // kind(i) == 0 and bit i set. No call in this loop: retail keeps a
+    // count-controlled mtctr/bdnz loop (i in r7, one in r6).
+    one = 1;
+    for (i = 1; i < 0x12f; i++) {
+        int kind;
+        u32 wordOff;
+        u32 bitPos;
+
+        if (i >= 0xd4)
+            goto A5;
+        if (i >= 0x3e)
+            goto A4;
+        if (i >= 0x2c)
+            goto A3;
+        if (i == 0x27)
+            goto Akind0;
+        if (i >= 0x27)
+            goto A2;
+        if (i >= 4)
+            goto A1;
+        if (i >= 2)
+            goto Akind0;
+        goto Akind2;
+    A1:
+        if (i >= 0x14)
+            goto Akind2;
+        goto Akind1;
+    A2:
+        if (i >= 0x2a)
+            goto Akind1;
+        goto Akind2;
+    A3:
+        if (i == 0x36)
+            goto Akind0;
+        if (i >= 0x36)
+            goto A3b;
+        if (i >= 0x35)
+            goto Akind2;
+        if (i >= 0x33)
+            goto Akind0;
+        goto Akind2;
+    A3b:
+        if (i >= 0x3c)
+            goto Akind1;
+        goto Akind2;
+    A4:
+        if (i == 0x5f)
+            goto Akind0;
+        if (i >= 0x5f)
+            goto A4b;
+        if (i >= 0x52)
+            goto A4c;
+        if (i >= 0x46)
+            goto Akind2;
+        if (i >= 0x44)
+            goto Akind0;
+        goto Akind2;
+    A4c:
+        if (i >= 0x5d)
+            goto Akind2;
+        if (i >= 0x58)
+            goto Akind0;
+        goto Akind1;
+    A4b:
+        if (i == 0x93)
+            goto Akind0;
+        if (i >= 0x93)
+            goto A4d;
+        if (i >= 0x6a)
+            goto Akind2;
+        if (i >= 0x65)
+            goto Akind1;
+        goto Akind2;
+    A4d:
+        if (i >= 0xce)
+            goto Akind0;
+        goto Akind2;
+    A5:
+        if (i >= 0x103)
+            goto A5b;
+        if (i == 0xeb)
+            goto Akind2;
+        if (i >= 0xeb)
+            goto A5c;
+        if (i >= 0xdf)
+            goto A5d;
+        if (i == 0xdc)
+            goto Akind1;
+        goto Akind2;
+    A5d:
+        if (i >= 0xea)
+            goto Akind3;
+        if (i >= 0xe3)
+            goto Akind2;
+        goto Akind1;
+    A5c:
+        if (i == 0xf7)
+            goto Akind0;
+        if (i >= 0xf7)
+            goto A5e;
+        if (i >= 0xed)
+            goto Akind3;
+        goto Akind0;
+    A5e:
+        if (i == 0xff)
+            goto Akind2;
+        goto Akind3;
+    A5b:
+        if (i == 0x117)
+            goto Akind1;
+        if (i >= 0x117)
+            goto A5f;
+        if (i >= 0x109)
+            goto A5g;
+        if (i == 0x106)
+            goto Akind3;
+        goto Akind2;
+    A5g:
+        if (i >= 0x111)
+            goto Akind3;
+        if (i >= 0x10d)
+            goto Akind2;
+        goto Akind3;
+    A5f:
+        if (i == 0x12d)
+            goto Akind0;
+        if (i >= 0x12d)
+            goto Akind2;
+        if (i == 0x11e)
+            goto Akind0;
+        goto Akind2;
+
+    Akind0:
+        kind = 0;
+        goto Akind_done;
+    Akind1:
+        kind = 1;
+        goto Akind_done;
+    Akind3:
+        kind = 3;
+        goto Akind_done;
+    Akind2:
+        kind = 2;
+    Akind_done:
+
+        if (kind == 0) {
+            wordOff = (i >> 3) & ~3u;
+            bitPos = i & 0x1F;
+            if ((one << bitPos) & *(u32*)((u8*)self + 0x15AC + wordOff)) {
+                return 1;
+            }
+        }
+    }
+    goto ret0;
+
+case132:
+    one = 1;
+    for (i = 1; i < 0x12f; i++) {
+        int kind;
+        u32 wordOff;
+        u32 bitPos;
+
+        if (i >= 0xd4)
+            goto B5;
+        if (i >= 0x3e)
+            goto B4;
+        if (i >= 0x2c)
+            goto B3;
+        if (i == 0x27)
+            goto Bkind0;
+        if (i >= 0x27)
+            goto B2;
+        if (i >= 4)
+            goto B1;
+        if (i >= 2)
+            goto Bkind0;
+        goto Bkind2;
+    B1:
+        if (i >= 0x14)
+            goto Bkind2;
+        goto Bkind1;
+    B2:
+        if (i >= 0x2a)
+            goto Bkind1;
+        goto Bkind2;
+    B3:
+        if (i == 0x36)
+            goto Bkind0;
+        if (i >= 0x36)
+            goto B3b;
+        if (i >= 0x35)
+            goto Bkind2;
+        if (i >= 0x33)
+            goto Bkind0;
+        goto Bkind2;
+    B3b:
+        if (i >= 0x3c)
+            goto Bkind1;
+        goto Bkind2;
+    B4:
+        if (i == 0x5f)
+            goto Bkind0;
+        if (i >= 0x5f)
+            goto B4b;
+        if (i >= 0x52)
+            goto B4c;
+        if (i >= 0x46)
+            goto Bkind2;
+        if (i >= 0x44)
+            goto Bkind0;
+        goto Bkind2;
+    B4c:
+        if (i >= 0x5d)
+            goto Bkind2;
+        if (i >= 0x58)
+            goto Bkind0;
+        goto Bkind1;
+    B4b:
+        if (i == 0x93)
+            goto Bkind0;
+        if (i >= 0x93)
+            goto B4d;
+        if (i >= 0x6a)
+            goto Bkind2;
+        if (i >= 0x65)
+            goto Bkind1;
+        goto Bkind2;
+    B4d:
+        if (i >= 0xce)
+            goto Bkind0;
+        goto Bkind2;
+    B5:
+        if (i >= 0x103)
+            goto B5b;
+        if (i == 0xeb)
+            goto Bkind2;
+        if (i >= 0xeb)
+            goto B5c;
+        if (i >= 0xdf)
+            goto B5d;
+        if (i == 0xdc)
+            goto Bkind1;
+        goto Bkind2;
+    B5d:
+        if (i >= 0xea)
+            goto Bkind3;
+        if (i >= 0xe3)
+            goto Bkind2;
+        goto Bkind1;
+    B5c:
+        if (i == 0xf7)
+            goto Bkind0;
+        if (i >= 0xf7)
+            goto B5e;
+        if (i >= 0xed)
+            goto Bkind3;
+        goto Bkind0;
+    B5e:
+        if (i == 0xff)
+            goto Bkind2;
+        goto Bkind3;
+    B5b:
+        if (i == 0x117)
+            goto Bkind1;
+        if (i >= 0x117)
+            goto B5f;
+        if (i >= 0x109)
+            goto B5g;
+        if (i == 0x106)
+            goto Bkind3;
+        goto Bkind2;
+    B5g:
+        if (i >= 0x111)
+            goto Bkind3;
+        if (i >= 0x10d)
+            goto Bkind2;
+        goto Bkind3;
+    B5f:
+        if (i == 0x12d)
+            goto Bkind0;
+        if (i >= 0x12d)
+            goto Bkind2;
+        if (i == 0x11e)
+            goto Bkind0;
+        goto Bkind2;
+
+    Bkind0:
+        kind = 0;
+        goto Bkind_done;
+    Bkind1:
+        kind = 1;
+        goto Bkind_done;
+    Bkind3:
+        kind = 3;
+        goto Bkind_done;
+    Bkind2:
+        kind = 2;
+    Bkind_done:
+
+        if (kind == 1) {
+            wordOff = (i >> 3) & ~3u;
+            bitPos = i & 0x1F;
+            if ((one << bitPos) & *(u32*)((u8*)self + 0x15AC + wordOff)) {
+                return 1;
+            }
+        }
+    }
+    goto ret0;
+
+case133_138:
+    // No kind check: only the bdat column value match gates the bit test.
+    // The id - 0x139 target is hoisted before the loop (retail r29).
+    {
+        u32 target = id - 0x139;
+        one = 1;
+        for (i = 1; i < 0x12f; i++) {
+            union {
+                u32 w;
+                u8 b;
+            } u;
+            u32 wordOff;
+            u32 bitPos;
+
+            u.w = getBdatStringColumnValue(
+                lbl_eu_806640E0, &lbl_eu_805018A8[0xf], i);
+            if ((u32)target == (u32)(u.b - 4)) {
+                wordOff = (i >> 3) & ~3u;
+                bitPos = i & 0x1F;
+                if ((one << bitPos) &
+                    *(u32*)((u8*)self + 0x15AC + wordOff)) {
+                    return 1;
+                }
+            }
+        }
+    }
+    goto ret0;
+
+case139_13E:
+    one = 1;
+    for (i = 1; i < 0x12f; i++) {
+        int kind;
+        union {
+            u32 w;
+            u8 b;
+        } u;
+        u32 wordOff;
+        u32 bitPos;
+
+        if (i >= 0xd4)
+            goto C5;
+        if (i >= 0x3e)
+            goto C4;
+        if (i >= 0x2c)
+            goto C3;
+        if (i == 0x27)
+            goto Ckind0;
+        if (i >= 0x27)
+            goto C2;
+        if (i >= 4)
+            goto C1;
+        if (i >= 2)
+            goto Ckind0;
+        goto Ckind2;
+    C1:
+        if (i >= 0x14)
+            goto Ckind2;
+        goto Ckind1;
+    C2:
+        if (i >= 0x2a)
+            goto Ckind1;
+        goto Ckind2;
+    C3:
+        if (i == 0x36)
+            goto Ckind0;
+        if (i >= 0x36)
+            goto C3b;
+        if (i >= 0x35)
+            goto Ckind2;
+        if (i >= 0x33)
+            goto Ckind0;
+        goto Ckind2;
+    C3b:
+        if (i >= 0x3c)
+            goto Ckind1;
+        goto Ckind2;
+    C4:
+        if (i == 0x5f)
+            goto Ckind0;
+        if (i >= 0x5f)
+            goto C4b;
+        if (i >= 0x52)
+            goto C4c;
+        if (i >= 0x46)
+            goto Ckind2;
+        if (i >= 0x44)
+            goto Ckind0;
+        goto Ckind2;
+    C4c:
+        if (i >= 0x5d)
+            goto Ckind2;
+        if (i >= 0x58)
+            goto Ckind0;
+        goto Ckind1;
+    C4b:
+        if (i == 0x93)
+            goto Ckind0;
+        if (i >= 0x93)
+            goto C4d;
+        if (i >= 0x6a)
+            goto Ckind2;
+        if (i >= 0x65)
+            goto Ckind1;
+        goto Ckind2;
+    C4d:
+        if (i >= 0xce)
+            goto Ckind0;
+        goto Ckind2;
+    C5:
+        if (i >= 0x103)
+            goto C5b;
+        if (i == 0xeb)
+            goto Ckind2;
+        if (i >= 0xeb)
+            goto C5c;
+        if (i >= 0xdf)
+            goto C5d;
+        if (i == 0xdc)
+            goto Ckind1;
+        goto Ckind2;
+    C5d:
+        if (i >= 0xea)
+            goto Ckind3;
+        if (i >= 0xe3)
+            goto Ckind2;
+        goto Ckind1;
+    C5c:
+        if (i == 0xf7)
+            goto Ckind0;
+        if (i >= 0xf7)
+            goto C5e;
+        if (i >= 0xed)
+            goto Ckind3;
+        goto Ckind0;
+    C5e:
+        if (i == 0xff)
+            goto Ckind2;
+        goto Ckind3;
+    C5b:
+        if (i == 0x117)
+            goto Ckind1;
+        if (i >= 0x117)
+            goto C5f;
+        if (i >= 0x109)
+            goto C5g;
+        if (i == 0x106)
+            goto Ckind3;
+        goto Ckind2;
+    C5g:
+        if (i >= 0x111)
+            goto Ckind3;
+        if (i >= 0x10d)
+            goto Ckind2;
+        goto Ckind3;
+    C5f:
+        if (i == 0x12d)
+            goto Ckind0;
+        if (i >= 0x12d)
+            goto Ckind2;
+        if (i == 0x11e)
+            goto Ckind0;
+        goto Ckind2;
+
+    Ckind0:
+        kind = 0;
+        goto Ckind_done;
+    Ckind1:
+        kind = 1;
+        goto Ckind_done;
+    Ckind3:
+        kind = 3;
+        goto Ckind_done;
+    Ckind2:
+        kind = 2;
+    Ckind_done:
+
+        if (kind == 0) {
+            u.w = getBdatStringColumnValue(
+                lbl_eu_806640E0, &lbl_eu_805018A8[0xf], i);
+            if ((u32)(id - 0x139) == (u32)(u.b - 4)) {
+                wordOff = (i >> 3) & ~3u;
+                bitPos = i & 0x1F;
+                if ((one << bitPos) &
+                    *(u32*)((u8*)self + 0x15AC + wordOff)) {
+                    return 1;
+                }
+            }
+        }
+    }
+    goto ret0;
+
+case13F_144:
+    one = 1;
+    for (i = 1; i < 0x12f; i++) {
+        int kind;
+        union {
+            u32 w;
+            u8 b;
+        } u;
+        u32 wordOff;
+        u32 bitPos;
+
+        if (i >= 0xd4)
+            goto D5;
+        if (i >= 0x3e)
+            goto D4;
+        if (i >= 0x2c)
+            goto D3;
+        if (i == 0x27)
+            goto Dkind0;
+        if (i >= 0x27)
+            goto D2;
+        if (i >= 4)
+            goto D1;
+        if (i >= 2)
+            goto Dkind0;
+        goto Dkind2;
+    D1:
+        if (i >= 0x14)
+            goto Dkind2;
+        goto Dkind1;
+    D2:
+        if (i >= 0x2a)
+            goto Dkind1;
+        goto Dkind2;
+    D3:
+        if (i == 0x36)
+            goto Dkind0;
+        if (i >= 0x36)
+            goto D3b;
+        if (i >= 0x35)
+            goto Dkind2;
+        if (i >= 0x33)
+            goto Dkind0;
+        goto Dkind2;
+    D3b:
+        if (i >= 0x3c)
+            goto Dkind1;
+        goto Dkind2;
+    D4:
+        if (i == 0x5f)
+            goto Dkind0;
+        if (i >= 0x5f)
+            goto D4b;
+        if (i >= 0x52)
+            goto D4c;
+        if (i >= 0x46)
+            goto Dkind2;
+        if (i >= 0x44)
+            goto Dkind0;
+        goto Dkind2;
+    D4c:
+        if (i >= 0x5d)
+            goto Dkind2;
+        if (i >= 0x58)
+            goto Dkind0;
+        goto Dkind1;
+    D4b:
+        if (i == 0x93)
+            goto Dkind0;
+        if (i >= 0x93)
+            goto D4d;
+        if (i >= 0x6a)
+            goto Dkind2;
+        if (i >= 0x65)
+            goto Dkind1;
+        goto Dkind2;
+    D4d:
+        if (i >= 0xce)
+            goto Dkind0;
+        goto Dkind2;
+    D5:
+        if (i >= 0x103)
+            goto D5b;
+        if (i == 0xeb)
+            goto Dkind2;
+        if (i >= 0xeb)
+            goto D5c;
+        if (i >= 0xdf)
+            goto D5d;
+        if (i == 0xdc)
+            goto Dkind1;
+        goto Dkind2;
+    D5d:
+        if (i >= 0xea)
+            goto Dkind3;
+        if (i >= 0xe3)
+            goto Dkind2;
+        goto Dkind1;
+    D5c:
+        if (i == 0xf7)
+            goto Dkind0;
+        if (i >= 0xf7)
+            goto D5e;
+        if (i >= 0xed)
+            goto Dkind3;
+        goto Dkind0;
+    D5e:
+        if (i == 0xff)
+            goto Dkind2;
+        goto Dkind3;
+    D5b:
+        if (i == 0x117)
+            goto Dkind1;
+        if (i >= 0x117)
+            goto D5f;
+        if (i >= 0x109)
+            goto D5g;
+        if (i == 0x106)
+            goto Dkind3;
+        goto Dkind2;
+    D5g:
+        if (i >= 0x111)
+            goto Dkind3;
+        if (i >= 0x10d)
+            goto Dkind2;
+        goto Dkind3;
+    D5f:
+        if (i == 0x12d)
+            goto Dkind0;
+        if (i >= 0x12d)
+            goto Dkind2;
+        if (i == 0x11e)
+            goto Dkind0;
+        goto Dkind2;
+
+    Dkind0:
+        kind = 0;
+        goto Dkind_done;
+    Dkind1:
+        kind = 1;
+        goto Dkind_done;
+    Dkind3:
+        kind = 3;
+        goto Dkind_done;
+    Dkind2:
+        kind = 2;
+    Dkind_done:
+
+        if (kind == 1) {
+            u.w = getBdatStringColumnValue(
+                lbl_eu_806640E0, &lbl_eu_805018A8[0xf], i);
+            if ((u32)(id - 0x13f) == (u32)(u.b - 4)) {
+                wordOff = (i >> 3) & ~3u;
+                bitPos = i & 0x1F;
+                if ((one << bitPos) &
+                    *(u32*)((u8*)self + 0x15AC + wordOff)) {
+                    return 1;
+                }
+            }
+        }
+    }
+    /* falls through to ret0 (retail has no branch here) */
+
+ret0:
+    return 0;
+
+simple_test:
+    {
+        u32 wordOff = (id >> 3) & ~3u;
+        u32 bitPos = id & 0x1F;
+        return ((1u << bitPos) &
+                *(u32*)((u8*)self + 0x15AC + wordOff)) != 0;
+    }
+}

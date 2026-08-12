@@ -12,6 +12,29 @@ struct CtrlNpcVec3W {
     u32 z;   // 0x08
 };
 
+// Name-index search helper reached through CCtrlNpcChar::field_98 (vtable
+// +0x44 query consumed by func_80093F28; returns -1 when the name is not
+// found). Never instantiated here, so no vtable is emitted.
+class CCtrlNpcSearch {
+public:
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void _v24();
+    virtual void _v28();
+    virtual void _v2C();
+    virtual void _v30();
+    virtual void _v34();
+    virtual void _v38();
+    virtual void _v3C();
+    virtual void _v40();
+    virtual int _v44(const char* name);   // +0x44
+};
+
 // Character-model object reached through CtrlNpc::field_28 (CfObjectMove
 // family, cf-chain vtable). Only the vtable slots and the state words this TU
 // touches are declared; never instantiated here, so no vtable is emitted.
@@ -32,7 +55,7 @@ public:
     virtual void _v20(int);
     virtual int _v24(int arg);    // +0x24
     virtual void _v28();
-    virtual void _v2C();
+    virtual int _v2C(int a, int b);   // +0x2C
     virtual void _v30();
     virtual void _v34();
     virtual void _v38();
@@ -40,7 +63,7 @@ public:
     virtual void _v40();
     virtual void _v44();
     virtual void _v48();
-    virtual void _v4C();
+    virtual int _v4C();               // +0x4C (id fed to func_800B708C)
     virtual void _v50();
     virtual void _v54();
     virtual void _v58();          // +0x58
@@ -70,9 +93,9 @@ public:
     virtual void _vB8();
     virtual void _vBC();
     virtual void _vC0();
-    virtual void _vC4();
+    virtual void _vC4(f32 arg);       // +0xC4 (set heading/turn amount)
     virtual void _vC8();
-    virtual void _vCC();
+    virtual f32 _vCC();               // +0xCC (returns a heading)
     virtual void _vD0();
     virtual void _vD4();
     virtual f32 _vD8();          // +0xd8 (returns a heading/turn amount)
@@ -128,7 +151,7 @@ public:
     virtual void _v1A0();
     virtual void _v1A4();
     virtual void _v1A8();
-    virtual void _v1AC();
+    virtual void _v1AC(void* a, const char* name);   // +0x1AC
     virtual void _v1B0();
     virtual void _v1B4();
     virtual void _v1B8();
@@ -143,7 +166,13 @@ public:
     virtual void _v1DC(int arg);  // +0x1DC
 
     u32 field_04;                 // 0x04
-    u8 _pad08[0xC4 - 0x08];       // 0x08..0xC3
+    u8 _pad08[0x74 - 0x08];       // 0x08..0x73
+    u8* field_74;                 // 0x74 opaque text-object handle
+    u8 _pad78[0x8C - 0x78];       // 0x78..0x8B
+    u16 field_8C;                 // 0x8C npc-kind halfword
+    u8 _pad8E[0x98 - 0x8E];       // 0x8E..0x97
+    CCtrlNpcSearch* field_98;     // 0x98 name-index search helper
+    u8 _pad9C[0xC4 - 0x9C];       // 0x9C..0xC3
     u32 field_C4;                 // 0xC4 flag read by the NPC state helpers
     u8 _padC8[0x4EC - 0xC8];      // 0xC8..0x4EB
     u32 field_4EC;                // 0x4EC flags word (bit 0x02000000 tested)
@@ -213,6 +242,7 @@ public:
     u16 field_174;                 // 0x174
     u8 _pad176[0x178 - 0x176];     // 0x176..0x177
     f32 field_178;                 // 0x178
+    u32 field_17C;                 // 0x17C saved bdat row index
 };
 
 } // namespace cf
@@ -224,6 +254,30 @@ namespace cf { class CfObject; }
 // symbol/reloc name unmangled at the call sites).
 namespace ml { struct CVec3; }
 namespace cf { class CCtrlMoveNpc; }
+
+// Talk/page controller update helpers (func_80093F28).
+extern "C" f32 func_80496288(void* scene);
+extern "C" int func_801413DC(unsigned int arg0, int arg1);
+extern "C" u32 func_8009CF8C(u32 resourceId);
+extern "C" void* getFP__FPCc(const char* name);
+extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, int index);
+extern "C" void func_8003AA34();
+extern "C" void func_8013D07C(void* self, char* text, int flag);
+extern "C" void func_8013D1E8(void* self);
+extern "C" u32 func_80086DA0__Q22cf13CfGameManagerFv();
+// C++-linkage decl: MWCC mangles the call to func_800B708C__Fi (actor id ->
+// action source object; the result has a position getter at vtable +0xac).
+void* func_800B708C(int id);
+
+// bdat tables / strings used by func_80093F28.
+extern void* lbl_eu_80663E14;             // scene singleton handle
+// The page-hint halfwords sprintf'd into the bdat file name.
+extern u16 lbl_eu_80663E42;
+extern u16 lbl_eu_80663E44;
+extern const char lbl_eu_804FBB0C[];      // column-name / format string base
+extern const char* lbl_eu_80527A48[];     // 6 per-kind column names
+extern const char* lbl_eu_80527A60[];     // per-row column names (index / 3)
+extern const char* lbl_eu_80527A80[];     // per-row column names (index / 3)
 
 // Character-object factory called by the free-function ctor; defined in
 // CfObjectModel.cpp (retail func_800BBC0C). extern "C" keeps the call reloc

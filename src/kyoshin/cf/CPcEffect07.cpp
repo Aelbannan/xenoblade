@@ -6,13 +6,35 @@
 #include "kyoshin/cf/CPcEffect07.hpp"
 #include "kyoshin/realtimeevt/CREvtEffect.hpp"
 
-extern "C" void __dt__Q22cf11CPcEffect07Fv(void*, int);
+extern "C" void* __dt__Q22cf11CPcEffect07Fv(void*, int);
+
+extern "C" { extern char lbl_eu_80533744[]; }  // vtable data (retail .data)
+extern "C" void func_801B23D0(cf::CPcEffect07*);  // effect cleanup
 
 namespace cf {}
 using namespace cf;
 void __ct__cf_CPcEffect07(){}
 
-cf::CPcEffect07::~CPcEffect07() {}
+// Retail D1 dtor: write the two vtable slots (+0 / +4, retail stw pair from
+// lbl_eu_80533744), run the cleanup, clear the singleton global when it
+// points at this, then delete-on-flag; returns this. Written as a
+// freestanding extern "C" function (the C++ dtor stays declared so the
+// virtual dtor symbol and thunk calls resolve here at link).
+extern "C" void* __dt__Q22cf11CPcEffect07Fv(void* self, int flag) {
+    cf::CPcEffect07* this_ = reinterpret_cast<cf::CPcEffect07*>(self);
+    if (this_ != 0) {
+        *(u32*)((char*)this_ + 0) = (u32)lbl_eu_80533744;
+        *(u32*)((char*)this_ + 4) = (u32)lbl_eu_80533744 + 0x10;
+        func_801B23D0(this_);
+        if ((void*)lbl_eu_80664398 == (void*)this_) {
+            lbl_eu_80664398 = 0;
+        }
+        if (flag > 0) {
+            ::operator delete(this_);
+        }
+    }
+    return self;
+}
 
 void func_801B19F0(){}
 

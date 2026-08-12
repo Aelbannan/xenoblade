@@ -90,15 +90,13 @@ void func_804DFA84(){}
 
 // Release a schedule item by handle (idempotent for invalid handles).
 extern "C" void func_804DFB88(s16 handle) {
-    if (handle < 0) {
+    if (handle < 0 || lbl_eu_80661718.count <= handle) {
         return;
     }
-    if (handle >= 0 && handle < lbl_eu_80661718.count) {
-        lbl_eu_80661718.lastHandle = handle;
-        func_804E3E2C(&lbl_eu_80661718.base[handle]);
-        if (lbl_eu_80661718.freeCount > 0) {
-            lbl_eu_80661718.freeCount--;
-        }
+    lbl_eu_80661718.lastHandle = handle;
+    func_804E3E2C(&lbl_eu_80661718.base[handle]);
+    if (lbl_eu_80661718.freeCount > 0) {
+        lbl_eu_80661718.freeCount--;
     }
 }
 

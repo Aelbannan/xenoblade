@@ -13,6 +13,15 @@ u8 CTutorialList::func_802AD300() { return ((u8*)this)[0x177]; }
 
 void __ct__CTutorialList(){}
 
+// Deleting destructor (retail __dt__802ACBF0): free self when mode > 0,
+// return self.
+extern "C" void* __dt__802ACBF0(void* self, int mode) {
+    if (self != 0 && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
+
 
 // func_802AD308 - initialise the list widget: latch the state byte, clear the
 // initialised flag, seed the scrollbar fade colours and sizes, then run the
@@ -183,10 +192,10 @@ extern "C" void func_802AE004(CTutorialList* self) {
     if (self->mField1C != 0) {
         if (self->mField18 == 0) {
             self->mField176 = 1;
-            func_802ACC30(self->mSubObj180, self->mField17C, 0);
             self->mField174 = 1;
+            func_802ACC30(self->mSubObj180, self->mField17C, 0);
             self->mField178 = (s8)self->mField282;
-            self->mField17A = self->mField284;
+            self->mField17A = (u16)self->mField284;
             func_802ADCE8(self);
         }
     }

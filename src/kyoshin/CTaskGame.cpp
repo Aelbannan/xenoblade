@@ -2,6 +2,8 @@
 #include "kyoshin/cf/CTaskGameCf.hpp"
 #include "kyoshin/cf/CfObjectEnumList.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/CGame.hpp"
+#include "kyoshin/CLoad.hpp"
 
 // --- CTTask<CTaskGame> out-of-line specializations ---
 // The canonical declared-only template emits no bodies; these explicit
@@ -238,7 +240,7 @@ __declspec(noinline) bool CTaskGame::func_800426F0() {
     return lbl_eu_80663D18->unk68 & 1;
 }
 void CTaskGame_stub_80042710() {}
-int lbl_eu_80663D1C;
+CLoad* lbl_eu_80663D1C;
 
 int CTaskGame_checkLbl80663D1C() {
     return lbl_eu_80663D1C != 0;
@@ -464,14 +466,14 @@ void __dt__9CTaskGameFv(CTaskGame*);
 void CTaskGame_thunk_IWorkEvent_dtor(void *self) {
     __dt__9CTaskGameFv(static_cast<CTaskGame*>(static_cast<IWorkEvent*>(self)));
 }
-void cbRenderBefore__9CTaskGameFv(void*);
+void cbRenderBefore__9CTaskGameFv(CTaskGame*, CScn*);
 // IWorkEvent::OnFileEvent(CEventFile*) override: retail emits a this-adjusting
 // thunk (subi r3,-0x54; b func_80043024) named OnFileEvent__9CTaskGameFP10CEventFile.
 class CEventFile;
 extern "C" void OnFileEvent__9CTaskGameFP10CEventFile(CEventFile* ev) {
     func_80043024(reinterpret_cast<CTaskGame*>(reinterpret_cast<char*>(ev) - 0x54));
 }
-void CTaskGame_thunk_IScnRender_cbRenderBefore(void* self) { cbRenderBefore__9CTaskGameFv(static_cast<CTaskGame*>(static_cast<IScnRender*>(self))); }
+void CTaskGame_thunk_IScnRender_cbRenderBefore(void* self, void* scene) { cbRenderBefore__9CTaskGameFv(static_cast<CTaskGame*>(static_cast<IScnRender*>(self)), static_cast<CScn*>(scene)); }
 void CTaskGame_thunk_IScnRender_dtor(void* p) {
     __dt__9CTaskGameFv(static_cast<CTaskGame*>(static_cast<IScnRender*>(p)));
 }
@@ -492,6 +494,250 @@ bool CTaskGame_thunk_IErrMesWinSel_vfunc(void* p) {
 }
 void CTaskGame_thunk_IErrMesWinSel_dtor(void* p) {
     __dt__9CTaskGameFv(static_cast<CTaskGame*>(static_cast<IErrMesWinSel*>(p)));
+}
+
+// Retail cbRenderBefore__9CTaskGameFv: IScnRender render-callback. Dispatched
+// by CScn::Draw as vt+0xC(cb, scn) through the retail thunk func_80044128
+// (subi r3,-0x58; b cbRenderBefore__9CTaskGameFv), so r3 = this, r4 = scene.
+// Sequence:
+//  1. Loading-screen state machine (D24 0..4) while Hbm is disabled.
+//  2. Loading-screen draw gate (camera at idle pose, no active menus).
+//  3. Battery-timer upkeep, then battery show/hide/create/delete logic.
+extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
+    CView::getCurrentView();   // retail bl getCurrentView__5CViewFv, result unused
+    if (cf::CfGameManager::func_8007E1B4() == 0) {
+        return;
+    }
+
+    if (CLibHbm::func_8045DE00() != 0) {
+        goto L_80043078;
+    }
+
+    // ===== Hbm disabled: loading-screen state machine =====
+    if (lbl_eu_80663D1C != 0) {
+        lbl_eu_80663D1C->field_29 = (lbl_eu_806649F4 == 0);
+        if (lbl_eu_80663D24 == 0) {
+            if (func_802AE6B4(lbl_eu_80663D1C) != 0) {
+                lbl_eu_80663D24++;
+                func_802AE6C4(lbl_eu_80663D1C);
+            }
+            goto L_80042FAC;
+        }
+        if (lbl_eu_80663D24 == 1) {
+            if (func_802AE6BC(lbl_eu_80663D1C) != 0) {
+                if (func_8049603C(scene)->field_C < lbl_eu_80665D78) {
+                    lbl_eu_80663D24++;
+                    func_802AE758(lbl_eu_80663D1C);
+                }
+            }
+            goto L_80042FAC;
+        }
+        if (lbl_eu_80663D24 == 2) {
+            if (func_802AE6BC(lbl_eu_80663D1C) != 0) {
+                lbl_eu_80663D24++;
+            }
+            goto L_80042FAC;
+        }
+        if (lbl_eu_80663D24 == 3) {
+            func_802AE62C(lbl_eu_80663D1C);
+            lbl_eu_80663D24++;
+            goto L_80042FAC;
+        }
+        if (lbl_eu_80663D24 == 4) {
+            if (lbl_eu_80663D1C != 0) {
+                // Virtual deleting-dtor dispatch (vt+8, flag 1); the delete
+                // expansion supplies the redundant pointer test (two beq).
+                delete reinterpret_cast<CLoadVtView*>(lbl_eu_80663D1C);
+            }
+            lbl_eu_80663D1C = 0;
+        }
+L_80042FAC:
+        self->unk8C = 0;
+        goto L_80043078;
+    }
+
+    // ===== D1C == 0: frame-counter / idle-pose gate =====
+    if (func_804960A8(scene) != 0) {
+        if (lbl_eu_80663E24 & 0xafa40000) {
+            self->unk8C = 0;
+        }
+        self->unk8C++;
+        if (!(lbl_eu_80663E28 & 0x01000000) && !(lbl_eu_80663E24 & 0xafa40000)) {
+            if ((s16)self->unk8C > 0x1e) {
+                if (func_8049603C(scene)->field_4 == func_8049603C(scene)->field_0 &&
+                    func_8049603C(scene)->field_8 == func_8049603C(scene)->field_4 &&
+                    func_8049603C(scene)->field_0 == lbl_eu_80665D74) {
+                    lbl_eu_80663D28 = 1;
+                }
+            }
+        }
+        goto L_80043078;
+    }
+    self->unk8C = 0;
+
+L_80043078:
+    // ===== loading-screen draw gate =====
+    if (lbl_eu_80663D1C != 0 && lbl_eu_80663D24 <= 2) {
+        if (CLibHbm::func_8045DE00() == 0 && cf::CfGameManager::func_800829B8() == 0) {
+            if (CGame::getInstance() == 0 ||
+                func_80042FBC(reinterpret_cast<CTaskGame*>(CGame::getInstance())) == 0) {
+                func_802AE560(lbl_eu_80663D1C);
+            }
+        }
+        // Camera at idle pose with non-origin x -> skip the draw.
+        if (func_8049603C(scene)->field_4 == func_8049603C(scene)->field_0 &&
+            func_8049603C(scene)->field_8 == func_8049603C(scene)->field_4 &&
+            func_8049603C(scene)->field_0 != lbl_eu_80665D74) {
+            goto L_8004316C;
+        }
+        if (func_801684F4() != 0) {
+            goto L_8004316C;
+        }
+        if (func_802B0D10() != 0) {
+            goto L_8004316C;
+        }
+        {
+            u8 drawInfo[0x54];
+            __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+            func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+            func_802AE5F0(lbl_eu_80663D1C, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+            lbl_eu_80663D28 = 1;
+            __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
+        }
+    }
+
+L_8004316C:
+    // ===== battery timer upkeep =====
+    if (CLibHbm::func_8045DE00() == 0) {
+        if (getWiimoteBattery__Q22cf9CfPadTaskFv() == 1 && (lbl_eu_80663E24 & 0x02040000) == 0) {
+            lbl_eu_80663D30++;
+            if (lbl_eu_80663D30 >= getTargetFramerate__9CDeviceVIFv() * 0x258) {
+                lbl_eu_80663D30 = 0;
+                lbl_eu_80663D34 = getTargetFramerate__9CDeviceVIFv() * 0xa;
+            }
+        }
+        if (lbl_eu_80663D34 > 0) {
+            lbl_eu_80663D34--;
+        }
+        if (getWiimoteBattery__Q22cf9CfPadTaskFv() > 1) {
+            lbl_eu_80663D34 = 0;
+        }
+    }
+
+    // ===== battery show/hide/create/delete =====
+    if (getWiimoteBattery__Q22cf9CfPadTaskFv() != 1) {
+        goto L_800434CC;
+    }
+    if (lbl_eu_80663D28 > 0 || lbl_eu_80663D1C != 0 || lbl_eu_80663D34 != 0) {
+        goto L_8004321C;
+    }
+    goto L_800434CC;
+
+L_8004321C:
+    {
+        bool flag = false;
+        if (lbl_eu_80663D1C == 0 && lbl_eu_80663D34 == 0) {
+            if (func_804960A8(scene) == 0) {
+                if (lbl_eu_80663D20 != 0) {
+                    lbl_eu_80663D20->func_802B9364();
+                }
+                if (lbl_eu_80663D20 != 0) {
+                    delete reinterpret_cast<CBatteryVtView*>(lbl_eu_80663D20);
+                    lbl_eu_80663D20 = 0;
+                }
+                flag = true;
+            } else {
+                if (lbl_eu_80663D24 >= 3 && lbl_eu_80663D1C != 0) {
+                    if (lbl_eu_80663D20 != 0) {
+                        lbl_eu_80663D20->func_802B9364();
+                    }
+                    if (lbl_eu_80663D20 != 0) {
+                        delete reinterpret_cast<CBatteryVtView*>(lbl_eu_80663D20);
+                        lbl_eu_80663D20 = 0;
+                    }
+                    flag = true;
+                }
+            }
+        }
+        if (lbl_eu_80663D34 == 0 && lbl_eu_80663D1C == 0) {
+            u32 fps3 = getTargetFramerate__9CDeviceVIFv() * 3;
+            lbl_eu_80663D28++;
+            if (lbl_eu_80663D28 >= fps3 || func_800FF738() != 0 || CMenuArtsSelect_isCreated() != 0) {
+                lbl_eu_80663D28 = 0;
+                if (lbl_eu_80663D20 != 0) {
+                    lbl_eu_80663D20->func_802B9364();
+                    if (lbl_eu_80663D20 != 0) {
+                        delete reinterpret_cast<CBatteryVtView*>(lbl_eu_80663D20);
+                        lbl_eu_80663D20 = 0;
+                    }
+                    flag = true;
+                }
+            }
+        }
+        if (lbl_eu_80663D20 != 0) {
+            lbl_eu_80663D20->setBatteryLevel((u8)getWiimoteBattery__Q22cf9CfPadTaskFv());
+            if (CLibHbm::func_8045DE00() == 0 && cf::CfGameManager::func_800829B8() == 0) {
+                if (CGame::getInstance() == 0 ||
+                    func_80042FBC(reinterpret_cast<CTaskGame*>(CGame::getInstance())) == 0) {
+                    lbl_eu_80663D20->func_802B92FC();
+                }
+            }
+            lbl_eu_80663D20->mLayoutReady = (lbl_eu_806649F4 == 0);
+            // Camera at idle pose with non-origin x -> D34-gated draw.
+            if (func_8049603C(scene)->field_4 == func_8049603C(scene)->field_0 &&
+                func_8049603C(scene)->field_8 == func_8049603C(scene)->field_4 &&
+                func_8049603C(scene)->field_0 != lbl_eu_80665D74) {
+                goto L_80043454;
+            }
+            if (func_801684F4() != 0) {
+                goto L_80043454;
+            }
+            if (func_802B0D10() != 0) {
+                goto L_80043454;
+            }
+            goto L_80043460;
+L_80043454:
+            if (lbl_eu_80663D34 == 0) {
+                goto L_80043514;
+            }
+L_80043460:
+            {
+                u8 drawInfo[0x54];
+                __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+                func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+                lbl_eu_80663D20->func_802B9334((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+                __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
+            }
+            goto L_80043514;
+        } else {
+            // Create battery widget when idle pose + no delete flag this frame.
+            if ((lbl_eu_80663E28 & 0x01000000) == 0 && flag == 0) {
+                CBattery* battery = (CBattery*)mtl::MemManager::allocate(
+                    0x28, CWorkThreadSystem::getWorkMem());
+                if (battery != 0) {
+                    new (battery) CBattery(0);
+                }
+                lbl_eu_80663D20 = battery;
+                battery->func_802B92A4();
+            }
+            goto L_80043514;
+        }
+    }
+
+L_800434CC:
+    if (lbl_eu_80663D34 != 0) {
+        goto L_80043514;
+    }
+    if (lbl_eu_80663D20 != 0) {
+        lbl_eu_80663D20->func_802B9364();
+        if (lbl_eu_80663D20 != 0) {
+            delete reinterpret_cast<CBatteryVtView*>(lbl_eu_80663D20);
+            lbl_eu_80663D20 = 0;
+        }
+    }
+
+L_80043514:
+    return;
 }
 
 void CTaskGame::Term() {}

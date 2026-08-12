@@ -175,7 +175,8 @@ void func_80062114(){}
 // inline key matches the global name key (lbl_eu_80661A24), else 0.
 int func_800621A0(CfResNameRec* rec) {
     if (rec != 0) {
-        if (strcmp(lbl_eu_80661A24, rec->mKey) == 0) {
+        int same = strcmp(lbl_eu_80661A24, rec->mKey) == 0;
+        if (same) {
             return rec->mCount;
         }
     }

@@ -88,7 +88,7 @@ extern "C" void* func_8049431C(u8* obj, u8* image, u16 w, u16 h, u32 fmt,
 // Texture-work memory-pool state (retail .sdata/.sbss).
 u32 lbl_eu_806639A8 = 0xFFFFFFFF;  // current mem-handle (INVALID_HANDLE before setup)
 u32 lbl_eu_806639AC = 0;           // user-supplied mem-handle
-u32 lbl_eu_806658E8 = 0;           // live-instance count
+s32 lbl_eu_806658E8 = 0;           // live-instance count (retail bgt: signed)
 u32 lbl_eu_806658EC = 0;           // allocatable-region base
 u32 lbl_eu_806658F0 = 0;           // allocation cursor
 u32 lbl_eu_806658F4 = 0;           // max allocatable size

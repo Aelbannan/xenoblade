@@ -191,12 +191,7 @@ void CTaskGameEff::Term() {
 void func_80044FBC(u32 enable) {
     CTaskGameEff* gTask = lbl_eu_80663D40;
     if (gTask == nullptr) return;
-    f32 time;
-    if (enable != 0) {
-        time = lbl_eu_80665D94;
-    } else {
-        time = gTask->field_0x6C;
-    }
+    f32 time = (enable != 0) ? lbl_eu_80665D94 : gTask->field_0x6C;
     func_804CBB14(lbl_eu_8065FC18, time);
     gTask = lbl_eu_80663D40;
     if (enable != 0) {

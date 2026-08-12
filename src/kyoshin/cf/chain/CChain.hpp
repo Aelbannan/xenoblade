@@ -147,6 +147,37 @@ namespace cf {
         virtual void v025(int v) = 0;       // slot 27 / +0x6c
     };
 
+    // Manual-vtable interface for func_80278F84: slots 0x24 (declared #7,
+    // takes the flag arg), 0x2c (declared #9) and 0x58 (declared #20) on the
+    // chain actor's manual vtable at +0x70. Same pad-first / -RTTI layout
+    // trick as CChainActorVtIf2: declared virtual #k lands at vtable byte
+    // offset (k+2)*4. Never instantiated, so no vtable emits.
+    class CChainActorVtIf84 {
+    public:
+        u8 pad70[0x70];
+        virtual void v000() = 0;
+        virtual void v001() = 0;
+        virtual void v002() = 0;
+        virtual void v003() = 0;
+        virtual void v004() = 0;
+        virtual void v005() = 0;
+        virtual void v006() = 0;
+        virtual int v007(int v) = 0; // slot 9 / +0x24 (activate-with-flag)
+        virtual void v008() = 0;
+        virtual int v009() = 0;      // slot 11 / +0x2c (chain-state query)
+        virtual void v010() = 0;
+        virtual void v011() = 0;
+        virtual void v012() = 0;
+        virtual void v013() = 0;
+        virtual void v014() = 0;
+        virtual void v015() = 0;
+        virtual void v016() = 0;
+        virtual void v017() = 0;
+        virtual void v018() = 0;
+        virtual void v019() = 0;
+        virtual int v020() = 0;      // slot 22 / +0x58 (actor value query)
+    };
+
     // Battle-object vtable interface for func_80278E0C: slot +0x5b4
     // (declared virtual #363) returns a float that is stored into the
     // chain's unk0[0x14]. Never instantiated, so no vtable emits.
@@ -434,12 +465,14 @@ namespace cf {
 // addresses through to the reset helpers).
 struct CBattleChainMenuState;
 struct CErrMesEntry;
+struct CErrMesOwner;
 
 // func_80276D30 is defined in this TU (C linkage inherited from the extern
 // "C" block below, so both the definition and the call reloc stay unmangled).
 
 // Chain-voice data symbols (.sdata float / .sbss byte).
 extern float lbl_eu_80668A18;
+extern float lbl_eu_80668A1C;
 extern u8 lbl_eu_80663DA0;
 
 // Voice-timing threshold compared against the voice sub-object's slot-0x110
@@ -515,6 +548,10 @@ extern "C" {
     // carries the Fi suffix) and battle-manager sub-check (CBattleManager).
     bool func_8006EF04__Fi(int mask);
     void* func_800EA444(void* bm);
+    // Arts-select slot probe (CMenuArtsSelect.cpp): unmangled at the retail
+    // call site, so declared here with C linkage rather than through the
+    // class member (which mangles to func_80107C54__15CMenuArtsSelectFl).
+    int func_80107C54(void* menu, int index);
     // Voice-act / chain arts-combo helpers. func_801537F0 lives in
     // CVision.hpp (same signature, no clash); func_8014AE00 and
     // func_80293E24 have no header declaration, so they are declared here.
@@ -526,4 +563,12 @@ extern "C" {
     // Chain-menu / err-mes helpers (CMenuBattleChain.cpp / CUIErrMesWin.cpp).
     void func_802AB410(CBattleChainMenuState* self);
     void func_802B48B8(CErrMesEntry* self);
+    // Error-message record register helpers (CUIErrMesWin.cpp) - same family
+    // as func_802B48A0 / func_802B48B8 above (chain-state codes 1/2/3).
+    void func_802B48E4(CErrMesEntry* self, CErrMesOwner* owner);
+    void func_802B4968(CErrMesEntry* self, CErrMesOwner* owner);
+    void func_802B4A68(CErrMesEntry* self, CErrMesOwner* owner);
+    // Battle-chain menu helpers (CMenuBattleChain.cpp).
+    void func_802AB5E4(CBattleChainMenuState* self);
+    int func_802AB510(CBattleChainMenuState* self, u8* out);
 }

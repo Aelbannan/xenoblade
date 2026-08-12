@@ -61,6 +61,16 @@ extern "C" void func_80450B44(void* self, u32 arg) {
 
 extern "C" void __dt__14CDeviceFileCriFv(void*, int);
 
+// Deleting destructor (retail __dt__FP10IExceptionFv): free self when
+// mode > 0, return self.
+extern "C" void* __dt__FP10IExceptionFv(void* self, int mode) {
+    extern void* __dl__FPv(void*);
+    if (self != 0 && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
+
 extern "C" void func_80450B4C(void* self) {
     ((void(*)(void*))__dt__14CDeviceFileCriFv)((char*)self - 0x1C4);
 }

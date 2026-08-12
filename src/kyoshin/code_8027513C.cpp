@@ -35,6 +35,29 @@ struct CfObjectEff_VTable39 {
 
 int func_802759A8(void* self) { return 0; }
 
+// ---------------------------------------------------------------------------
+// Camera-control registration helpers: fetch the shared camera-control
+// instance (initCamControlInstances) and dispatch (self) through its vtable
+// slots 4..11. Retail: bl initCamControlInstances; lwz r12,0(r3);
+// mr r4,r31; lwz r12,slot(r12); mtctr; bcctrl.
+// ---------------------------------------------------------------------------
+struct CamCtrlRegVt {
+    virtual void m00(); virtual void m01();
+    virtual void m04(void* arg); virtual void m05(void* arg); virtual void m06(void* arg);
+    virtual void m07(void* arg); virtual void m08(void* arg); virtual void m09(void* arg);
+    virtual void m0A(void* arg); virtual void m0B(void* arg);
+};
+extern "C" void* initCamControlInstances(void);
+
+void func_802751F8(void* self) { ((CamCtrlRegVt*)initCamControlInstances())->m04(self); }
+void func_80275238(void* self) { ((CamCtrlRegVt*)initCamControlInstances())->m05(self); }
+void func_80275278(void* self) { ((CamCtrlRegVt*)initCamControlInstances())->m06(self); }
+void func_802752B8(void* self) { ((CamCtrlRegVt*)initCamControlInstances())->m07(self); }
+void func_802752F8(void* self) { ((CamCtrlRegVt*)initCamControlInstances())->m08(self); }
+void func_80275338(void* self) { ((CamCtrlRegVt*)initCamControlInstances())->m09(self); }
+void func_80275378(void* self) { ((CamCtrlRegVt*)initCamControlInstances())->m0A(self); }
+void func_802753B8(void* self) { ((CamCtrlRegVt*)initCamControlInstances())->m0B(self); }
+
 
 
 

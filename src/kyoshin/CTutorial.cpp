@@ -28,22 +28,19 @@ void CTutorial::func_8029ACC4() {
     }
 }
 
-/* Current tutorial phase: when the page counter (0x50) has reached the
- * second-to-last page (bound-1 at 0x51) return the final phase, otherwise
- * report whether the counter has advanced past zero. */
 u8 CTutorial::func_8029AE5C() {
-    s8 last = (s8)field_51;
-    s8 cur = (s8)field_50;
+    s8 last = field_51;
+    s8 cur = field_50;
     if (cur == last - 1) {
-        return (u8)((last - 1 != 0) ? 3 : 2);
+        return (u8)((last == 1) ? 2 : 3);
     }
-    return (u8)(cur != 0);
+    return cur != 0;
 }
 
 void func_8029AE9C(){}
 
 /* Advance-animation (0x40) reached the end frame: state 3, visible. */
-void CTutorial::func_8029AF30() {
+__declspec(noinline) void CTutorial::func_8029AF30() {
     if (func_80137444(mpAnimTrans1, lbl_eu_80668C08) != 0) {
         field_45 = 3;
         field_47 = 1;
@@ -53,7 +50,7 @@ void CTutorial::func_8029AF30() {
 void func_8029AF7C(){}
 
 /* Rewind-animation (0x3C) reached the start frame: state 0, visible. */
-void CTutorial::func_8029B010() {
+__declspec(noinline) void CTutorial::func_8029B010() {
     if (func_80137510(mpAnimTrans0, lbl_eu_80668C08) != 0) {
         field_45 = 0;
         field_47 = 1;
@@ -81,7 +78,21 @@ bool CTutorial::OnFileEvent(CEventFile* pEventFile) { return false; }
 void func_8029B498(){}
 
 extern "C" void func_8029AA34() {}
-extern "C" void func_8029AB28() {}
+extern "C" void func_8029AB28(CTutorial* self) {
+    if (self->field_44 == 0) {
+        return;
+    }
+    if (self->field_45 == 1) {
+        func_8029AE9C();
+    } else if (self->field_45 == 2) {
+        self->func_8029AF30();
+    } else if (self->field_45 == 4) {
+        func_8029AF7C();
+    } else if (self->field_45 == 5) {
+        self->func_8029B010();
+    }
+    self->mpLayout->Animate(0);
+}
 extern "C" void func_8029ABD8() {}
 extern "C" void func_8029ACEC() {}
 // Page-navigation helper: set the page-complete flag when the target is the

@@ -317,7 +317,7 @@ extern "C" {
     bool func_80086F9C__Q22cf13CfGameManagerFv(int arg);
     void func_80080F44__Q22cf13CfGameManagerFv(void* obj);
     // Camera/trigger object accessors (lbl_eu_80663E14 is a global pointer).
-    void* func_8049603C(void* obj);
+    extern "C" void* func_8049603C(void* obj);
     f32 func_80496288(void* obj);
     int func_8017FD4C(void* obj);
     void func_8017FEF0(void* obj, int arg);

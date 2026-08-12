@@ -664,8 +664,8 @@ void func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         if (arg->field_0x2 & 2) {
             u32 p2 = arg->field_0x0 * 0x600;
             u32 b = s->field_0x2c;
-            u32 off = 0x300;
-            arg->field_0x18 = (u8*)(p2 + b + off);
+            u32 sum = p2 + b;
+            arg->field_0x18 = (u8*)(sum + 0x300);
         } else {
             arg->field_0x18 = (u8*)(s->field_0x2c + arg->field_0x0 * 0x600);
         }

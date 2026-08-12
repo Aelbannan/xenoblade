@@ -679,7 +679,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/code_80296898.cpp"),
             Object(NonMatching, "kyoshin/makecrystal/CMCGetItemBox.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuTutorial.cpp", extra_cflags=["-O4,s"]),
-            Object(NonMatching, "kyoshin/CTutorial.cpp"),
+            Object(NonMatching, "kyoshin/CTutorial.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/menu/CMenuOption.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/COption.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuSkipTimer.cpp", extra_cflags=["-O4,s"]),

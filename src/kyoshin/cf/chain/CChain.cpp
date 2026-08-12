@@ -451,7 +451,92 @@ void func_80278E0C(cf::CChain* self) {
     }
     self->unk0[2]++;
 }
-void func_80278F84(){}
+// Chain-extension / cancel driver: resolve the current member actor, then
+// when the chain-extend flag (unk0[6]) is set re-query the battle object's
+// slot-0x5b4 gauge and continue the chain (or reset it when the actor no
+// longer reports an active chain / the gauge did not move / the first timer
+// expired); otherwise run the cancel path (slot 0x24 with flag 1) and the
+// shared chain-state step (slots 0x2c/0x58 of the manual vtable) driving the
+// chain time, battle-chain menu and err-mes record.
+void func_80278F84(cf::CChain* self) {
+    cf::CChainMemberListMirror* v = (cf::CChainMemberListMirror*)self;
+    s8 idx = (s8)self->unk0[0];
+    cf::CChainActor* actor;
+    if ((int)idx < (int)v->mChainMember.mCount) {
+        actor = v->mChainMember.mActors[idx];
+    } else {
+        actor = 0;
+    }
+    if (self->unk0[6] != 0) {
+        f32 gauge = *(f32*)&self->unk0[0x14];
+        *(f32*)&self->unk0[0x14] = ((cf::CChainBattleObj5B4*)actor->unk0)->v363();
+        if (((cf::CChainActorVtIf84*)actor)->v009() == 0 ||
+            *(f32*)&self->unk0[0x14] == gauge ||
+            self->mChainTimer1.unk0 <= 0) {
+            func_802B4968((CErrMesEntry*)&self->unk1F0C[8],
+                          (CErrMesOwner*)actor->unk0);
+            func_802AB5E4((CBattleChainMenuState*)&self->unk1F0C[0]);
+            self->mChainTimer2.unk0 = 0x2d;
+            self->unk0[6] = 0;
+        } else {
+            func_802B48E4((CErrMesEntry*)&self->unk1F0C[8],
+                         (CErrMesOwner*)actor->unk0);
+        }
+    } else if (((cf::CChainActorVtIf84*)actor)->v007(1) == 0 &&
+               self->mChainTimer2.unk0 <= 0) {
+        // Cancel accepted: switch to the cancel state and skip the shared
+        // chain-state step.
+        self->unk0[2] = 0xd;
+        self->unk0[0xa] = 1;
+        return;
+    }
+    // Shared chain-state step: when the actor no longer reports an active
+    // chain (slot 0x2c) or the first timer expired, re-arm the chain time;
+    // then run the chain-menu step which may hand control to the err-mes
+    // record for the actor's chain-state codes (0x12/0x14/0xa).
+    if (((cf::CChainActorVtIf84*)actor)->v009() == 0 &&
+        self->mChainTimer1.unk0 > 0) {
+        self->mChainTime.mTimer = lbl_eu_80668A18;
+        self->mChainTime.mEnabled = 0;
+        self->mChainTime.mPaused = 1;
+    } else {
+        self->mChainTime.mTimer = lbl_eu_80668A1C;
+        self->mChainTime.mEnabled = 1;
+        self->mChainTime.mPaused = 1;
+    }
+    u8 local;
+    if (func_802AB510((CBattleChainMenuState*)&self->unk1F0C[0], &local) != 0) {
+        self->mChainTime.mTimer = lbl_eu_80668A18;
+        self->mChainTime.mEnabled = 0;
+        self->mChainTime.mPaused = 1;
+        if (local != 0) {
+            int cond;
+            if (((cf::CChainActorVtIf84*)actor)->v020() == 1) {
+                u32 flags = ((cf::CChainBattleObj*)actor->unk0)->field_3374;
+                cond = ((flags & 0x4000) != 0) || ((flags & 0x8000) != 0);
+            } else {
+                cond = 0;
+            }
+            if (cond != 0) {
+                func_802B4968((CErrMesEntry*)&self->unk1F0C[8],
+                              (CErrMesOwner*)actor->unk0);
+                self->unk0[2] = 0x12;
+                return;
+            }
+        }
+        if (local != 0) {
+            if (((cf::CChainActorVtIf84*)actor)->v020() == 4) {
+                func_802B4A68((CErrMesEntry*)&self->unk1F0C[8],
+                              (CErrMesOwner*)actor->unk0);
+                self->unk0[2] = 0x14;
+                return;
+            }
+        }
+        func_802B4A68((CErrMesEntry*)&self->unk1F0C[8],
+                      (CErrMesOwner*)actor->unk0);
+        self->unk0[2] = 0xa;
+    }
+}
 // Chain-extension driver: resolve the member actor and its battle object,
 // then gate on the arts-table entry (indexed by field_3590 % field_3598):
 // when the entry is the special id-1 record (or the +0x3594 gate is clear)
@@ -865,39 +950,41 @@ void func_8027A024(){}
 // chain-cancel-voice path = -0x21 (0xFFFFFFDF).
 int func_8027A338(cf::CChainActor* self, int param) {
     if (self->unk6C & 1) {
-        if (param == 0) {
+        if (param != 0) {
+            // Menu-gated path: the slot must pass the chainable probe and the
+            // arts-select menu's own slot check, else the arts param test.
+            CMenuArtsSelect* menu = CMenuArtsSelect_getInstance();
+            if (menu == 0) return 1;
             for (int i = 0; i <= 8; i++) {
+                if (((cf::CChainActorVtIf2*)self)->v021() != 0 &&
+                    func_80107C54(menu, i) != 0)
+                    continue;
                 int res;
-                if (i == 8) {
+                if (i < 8) {
+                    cf::CChainBattleObj* battleObj = (cf::CChainBattleObj*)self->unk0;
+                    res = func_80154280(getArtsParamAtCnt(battleObj->v157(), i),
+                                        battleObj, 0);
+                } else if (i == 8) {
                     res = func_80154280(
                         getArtsParamRC(((cf::CChainBattleObj*)self->unk0)->v157(), 2, 0),
-                        (cf::CChainBattleObj*)self->unk0, 0x20);
+                        (cf::CChainBattleObj*)self->unk0, 0);
                 } else {
-                    res = func_80154280(
-                        getArtsParamAtCnt(((cf::CChainBattleObj*)self->unk0)->v157(), i),
-                        (cf::CChainBattleObj*)self->unk0, 0x20);
+                    res = 0;
                 }
                 if (res == 0) return 1;
             }
             return 0;
         }
-        CMenuArtsSelect* menu = CMenuArtsSelect_getInstance();
-        if (menu == 0) return 1;
         for (int i = 0; i <= 8; i++) {
-            if (((cf::CChainActorVtIf2*)self)->v021() != 0 &&
-                menu->func_80107C54(i) != 0)
-                continue;
             int res;
-            if (i < 8) {
-                res = func_80154280(
-                    getArtsParamAtCnt(((cf::CChainBattleObj*)self->unk0)->v157(), i),
-                    (cf::CChainBattleObj*)self->unk0, 0);
-            } else if (i == 8) {
+            if (i == 8) {
                 res = func_80154280(
                     getArtsParamRC(((cf::CChainBattleObj*)self->unk0)->v157(), 2, 0),
-                    (cf::CChainBattleObj*)self->unk0, 0);
+                    (cf::CChainBattleObj*)self->unk0, 0x20);
             } else {
-                res = 0;
+                cf::CChainBattleObj* battleObj = (cf::CChainBattleObj*)self->unk0;
+                res = func_80154280(getArtsParamAtCnt(battleObj->v157(), i),
+                                    battleObj, 0x20);
             }
             if (res == 0) return 1;
         }
@@ -910,9 +997,9 @@ int func_8027A338(cf::CChainActor* self, int param) {
                 getArtsParamRC(((cf::CChainBattleObj*)self->unk0)->v157(), 2, 0),
                 (cf::CChainBattleObj*)self->unk0, -0x21);
         } else {
-            res = func_80154280(
-                getArtsParamAtCnt(((cf::CChainBattleObj*)self->unk0)->v157(), i),
-                (cf::CChainBattleObj*)self->unk0, -0x21);
+            cf::CChainBattleObj* battleObj = (cf::CChainBattleObj*)self->unk0;
+            res = func_80154280(getArtsParamAtCnt(battleObj->v157(), i),
+                                battleObj, -0x21);
         }
         if (res == 0) return 1;
     }

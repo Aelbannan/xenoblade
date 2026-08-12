@@ -47,7 +47,7 @@ public:
     u8 _pad14[0x10];                       // 0x14..0x24
     u32 field_24;                          // 0x24 - file handle 1
     u32 field_28;                          // 0x28 - file handle 2
-    u8 _pad2C[0x04];                       // 0x2C..0x30
+    nw4r::lyt::ArcResourceAccessor* field_2C; // 0x2C - arc resource accessor
     u32 field_30;                          // 0x30
     u32 field_34;                          // 0x34
     nw4r::lyt::AnimTransform* field_38;    // 0x38
@@ -89,7 +89,7 @@ u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 // function-pointer temp would allocate it to a scratch register. MWCC reserves
 // 2 leading vtable slots, so v9 lands at +0x2C.
 struct CLayoutVtbl11 {
-    virtual void v0();
+    virtual void v0(int arg);      // +0x08 (slot 0 after 2 reserved)
     virtual void v1();
     virtual void v2();
     virtual void v3();
@@ -99,6 +99,9 @@ struct CLayoutVtbl11 {
     virtual void v7();
     virtual void v8();
     virtual void v9(void* arg, int mode);
+    virtual void v10();            // +0x30
+    virtual void v11();            // +0x34
+    virtual void v12(int arg);     // +0x38
 };
 
 // Cast-only view of the sub-cursor at self+0x80 (vtable slot 4 = +0x10,
@@ -110,6 +113,13 @@ struct CSubCurVtblView {
     virtual void v2(void* arg);
 };
 
+// Cast-only view of the cursors at self+0x50/0x68/0x80 (vtable slot 3 =
+// +0x0C, no-arg method). v1 lands at +0x0C (2 reserved leading slots).
+struct CCurVtblView {
+    virtual void v0();
+    virtual void v1();
+};
+
 // Color/sound palette entries initialised by sinit_802059E8 (sdata2).
 extern void* lbl_eu_80664668;
 extern void* lbl_eu_80664670;
@@ -118,11 +128,29 @@ extern void* lbl_eu_80664680;
 extern void* lbl_eu_80664688;
 extern void* lbl_eu_80664690;
 
+// Global equip-page flag (sdata), cleared by func_8020228C.
+extern u32 lbl_eu_80664698;
+
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Retail emits these as C-style (unmangled) symbols, so reference them with C
 // linkage. func_801D2ED8/CEquipItemBox gates take the object and return status.
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+
+// CItemBoxInfo helpers used by the equip-change screen (C-ABI retail names).
+extern "C" u32 func_801D421C(CItemBoxInfo* info);
+extern "C" u32 func_801D4260(CItemBoxInfo* info, u8 arg2);
+extern "C" void func_801D47D4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4);
+extern "C" void func_801D202C(void* cur);
+extern "C" void func_801D40C4(CItemBoxInfo* info);
+extern "C" void func_801D4174(CItemBoxInfo* info);
+
+// Free-function form (retail: advanceItemBoxState__FP12CItemBoxInfo).
+void advanceItemBoxState(CItemBoxInfo* info);
+
+extern "C" void func_80286264(CEquipItemBox* box);
+extern "C" void func_80286454(CEquipItemBox* box);
+extern "C" void func_802867E0(CEquipItemBox* box);
 extern "C" int func_801D2ED8(CBaseCur*);
 extern "C" int func_802865A0(CEquipItemBox* box);
 extern "C" int func_802865A8(CEquipItemBox* box);

@@ -2132,9 +2132,9 @@ int func_80485C28(CScnItemModel* self, u32 param) {
 // bit 0 set) or the stored value7B0, then refresh the sub-object and the
 // embedded CAttrTransform at 0x1F8.
 extern "C" void func_80485CE8(CScnItemModel* self) {
-    if (self->flags7A4 & 1) {
+    if (self->flags7A4 & 0x80000000) {
         func_8049771C(self->field_0xC, lbl_eu_8066A8C0);
-        self->flags7A4 &= ~1;
+        self->flags7A4 &= ~0x80000000u;
     } else {
         func_8049771C(self->field_0xC, self->value7B0);
     }

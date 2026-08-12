@@ -303,7 +303,10 @@ public:
 };
 
 // Layout initialization: create layout, anim transform, and set up font
-// This is a C-linkage function (retail symbol is unmangled)
+// This is a C-linkage function (retail symbol is unmangled). optimize_for_size
+// for the retail stmw r30/lmw r30 save pair.
+#pragma push
+#pragma optimize_for_size on
 extern "C" void func_8028ED70(UnkED70_Struct* s) {
     func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &s->mLayout, s->mAccessor, (const char*)&lbl_eu_8050F7CC[0x50]);
@@ -315,12 +318,13 @@ extern "C" void func_8028ED70(UnkED70_Struct* s) {
     void* rootPane = *(void**)((char*)s->mLayout + 0x10);
     void* fontObj = CDeviceFont::func_80452C10(1, s->mLayout);
     
-    // Virtual call on fontObj at vtable slot 9 (offset 0x24)
-    u32 result = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
+    // Virtual call on fontObj at vtable slot 9 (offset 0x24, retail r12 two-step)
+    u32 result = static_cast<FontHelper*>(fontObj)->v7();
     func_8013676C((nw4r::lyt::Pane*)rootPane, result);
-    
+
     func_8028EF74((UnkTwoPtr*)s);
 }
+#pragma pop
 
 // Dispatch to cursor animation update based on mFieldC state,
 // then call virtual slot 14 on the mField4 object
@@ -388,7 +392,7 @@ struct UnkTwoPtr {
     void* mObjB;        // +0x08 - object with a float field at +0x10
 };
 
-extern "C" void func_8028EF74(UnkTwoPtr* self) {
+extern "C" __declspec(noinline) void func_8028EF74(UnkTwoPtr* self) {
     ((UnkVtblObj*)self->mObjA)->vf11(self->mObjB, 1);
     *(float*)((char*)self->mObjB + 0x10) = lbl_eu_80668B6C;
     ((UnkVtblObj*)self->mObjA)->vf14(0);

@@ -2191,7 +2191,7 @@ extern "C" int func_8013AC3C(u8 max, u8 count, u32 off) {
 extern "C" void func_8013ACFC() {
     if (func_8009CF8C(0x20) <= 4) return;
     if ((lbl_eu_80663E24 & 0x100) == 0) return;
-    void* cam = func_8049603C((void*)lbl_eu_80663E14);
+    void* cam = (void*)func_8049603C((CScn*)lbl_eu_80663E14);
     f32 f = lbl_eu_806672E8 - *(f32*)((u8*)cam + 0xC);
     if (f < lbl_eu_806672E8) return;
 

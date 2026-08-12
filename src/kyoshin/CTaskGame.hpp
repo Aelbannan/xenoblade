@@ -14,6 +14,13 @@ extern "C" void func_8004302C(int a, int b);
 #include "monolib/util.hpp"
 #include "monolib/work.hpp"
 
+// nw4r layout forward decls (DrawInfo raw-storage helpers below).
+namespace nw4r {
+namespace lyt {
+class DrawInfo;
+}
+}
+
 namespace cf {
 class CfObject; // reslist<cf::CfObject*> instantiation in CTaskGame.cpp
 class CfObjEnumList; // enum list holder target (CfObjectEnumList.hpp)
@@ -74,7 +81,23 @@ class CLibHbm {
 public:
     static void func_8045D470(bool enable);
     static void func_8045D5C8(bool enable);
+    static int func_8045DE00();
 };
+
+// Minimal CBattery view (members used by cbRenderBefore). The full
+// CBattery.hpp pulls monolib/lib.hpp (revolution GX/HBM), which redefines the
+// minimal CLibHbm above; only the used members are declared here.
+class CBattery {
+public:
+    CBattery(u8 batteryLevel);
+    void func_802B92A4();
+    void func_802B92FC();
+    void func_802B9334(void*);
+    void func_802B9364();
+    void setBatteryLevel(u8 level);
+    bool mLayoutReady; // 0x20
+};
+
 
 class CTaskGame : public CTTask<CTaskGame>,
                   public IWorkEvent,
@@ -139,7 +162,7 @@ public:
     u16 unk86;
     u16 unk88;
     s16 unk8A;   // retail func_80042274 sign-extends it (lha) into the format vararg
-    u8 unk8C[2]; //padding?
+    s16 unk8C;   // retail lha/sth/extsh (cbRenderBefore frame counter)
     s16 unk8E;
     u8 unk90;
     u8 unk91[0xA0 - 0x91];
@@ -517,3 +540,62 @@ extern u32 lbl_eu_80663E28;
 // segments through them.
 extern "C" char* func_80044070(ml::FixStr<32>* str, const char* s);
 extern "C" char* func_800440C4(ml::FixStr<32>* str, const char* s);
+
+// --- cbRenderBefore (IScnRender render-callback slot) imports ---
+// The retail symbol cbRenderBefore__9CTaskGameFv is entered with r3 = this and
+// r4 = scene (the CScn::Draw vt+0xC dispatch passes (cb, scn) and the retail
+// vtable thunk subi r3,-0x58 / b cbRenderBefore__9CTaskGameFv preserves r4), so
+// declare the caller's shape under extern "C" to keep the verbatim symbol.
+extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene);
+
+// Camera/view object returned by func_8049603C (f32 at +0/+4/+8/+C).
+struct CTaskGameCamView {
+    f32 field_0;
+    f32 field_4;
+    f32 field_8;
+    f32 field_C;
+};
+extern "C" CTaskGameCamView* func_8049603C(CScn* scene);
+// func_804960A8 is declared in CfGameManager.hpp (bool (CScn*)).
+
+// Loading-screen object (CLoad) helpers / gates (flat retail names; defined
+// in CLoad.cpp / CfGameManager.cpp / menu TUs).
+class CLoad;
+class CBattery;
+extern CLoad* lbl_eu_80663D1C;
+extern CBattery* lbl_eu_80663D20;
+extern u32 lbl_eu_80663D24;
+extern u32 lbl_eu_80663D28;
+extern u32 lbl_eu_80663D30;
+extern u32 lbl_eu_80663D34;
+extern u32 lbl_eu_80663E24;
+extern u32 lbl_eu_806649F4;
+extern const f32 lbl_eu_80665D78;
+
+extern "C" int func_802AE6B4(CLoad* self);
+extern "C" int func_802AE6BC(CLoad* self);
+extern "C" void func_802AE6C4(CLoad* self);
+extern "C" void func_802AE758(CLoad* self);
+extern "C" void func_802AE62C(CLoad* self);
+extern "C" void func_802AE5F0(CLoad* self, nw4r::lyt::DrawInfo* di);
+extern "C" void func_802AE560(CLoad* self);
+extern "C" int func_802B0D10();
+extern "C" int func_800FF738();
+extern "C" bool CMenuArtsSelect_isCreated();
+// cf::CfPadTask::getWiimoteBattery() static (retail verbatim mangle).
+extern "C" u32 getWiimoteBattery__Q22cf9CfPadTaskFv();
+
+// nw4r DrawInfo raw-storage helpers (retail pre-mangled names; same scheme
+// as CQuestWindow.hpp).
+void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
+void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
+void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+
+// Virtual-delete views for the loading screen / battery objects (vtable dtor
+// at +8, flag 1); same scheme as CfObjEnumListVtView.
+struct CLoadVtView {
+    virtual ~CLoadVtView();
+};
+struct CBatteryVtView {
+    virtual ~CBatteryVtView();
+};

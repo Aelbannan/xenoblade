@@ -24,7 +24,7 @@ int MPV_GetPicAtr(void *handle, u32 *out) {
     {
         u32 *s = (u32 *)((u8 *)handle + 0xB58);
         u32 *d = out - 1;
-        int n = 16;
+        u32 n = 16;
         do {
             u32 v0 = *(s + 1);
             u32 v1 = *(s += 2);

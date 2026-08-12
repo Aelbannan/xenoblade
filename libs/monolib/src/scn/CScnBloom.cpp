@@ -13,6 +13,15 @@
 
 // Imports not yet declared in their owning headers (retail C-linkage names).
 extern "C" {
+// Deleting destructor (retail __dt__804997D0): free self when mode > 0,
+// return self.
+void* __dt__804997D0(void* self, int mode) {
+    extern void* __dl__FPv(void*);
+    if (self != 0 && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 void func_8043E928__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
 void func_80490314(CTexWorkObj* obj);
 GXTexObj* func_80490208(CTexWorkObj* obj, u16 w, u16 h, u32 fmt);

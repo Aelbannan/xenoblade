@@ -326,7 +326,6 @@ void mfCiSetSctLen(MfCiSectInfo* sct, int sctsize)
     sct->sctcnt = (len + sctsize - 1) / sctsize;
     sct->sctcnt2 = sct->sctcnt2 * old / sctsize;
     sct->unk14 = sct->unk18 * sctsize;
-    sct->unk14 = sct->unk18 * sctsize;
 }
 
 int mfCiGetNumTr(MfCiFile* sct) {

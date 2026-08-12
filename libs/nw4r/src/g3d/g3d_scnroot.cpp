@@ -170,8 +170,27 @@ namespace nw4r {
 namespace g3d {
 namespace {
 
-bool LessZSortOpa(const nw4r::g3d::ScnObj*, const nw4r::g3d::ScnObj*) { return false; }
-bool LessZSortXlu(const nw4r::g3d::ScnObj*, const nw4r::g3d::ScnObj*) { return false; }
+// Z-priority sort comparators for the scene-object arrays. When priorities
+// tie, the object farther from the view (larger view-space Z at +0x98) sorts
+// first; otherwise lower priority sorts first.
+bool LessZSortOpa(const nw4r::g3d::ScnObj* a, const nw4r::g3d::ScnObj* b) {
+    int pa = a->GetPriorityDrawOpa();
+    int pb = b->GetPriorityDrawOpa();
+    if (pa == pb) {
+        return a->GetMtxPtr(nw4r::g3d::ScnObj::MTX_VIEW)->m[2][3] >
+               b->GetMtxPtr(nw4r::g3d::ScnObj::MTX_VIEW)->m[2][3];
+    }
+    return pa < pb;
+}
+bool LessZSortXlu(const nw4r::g3d::ScnObj* a, const nw4r::g3d::ScnObj* b) {
+    int pa = a->GetPriorityDrawXlu();
+    int pb = b->GetPriorityDrawXlu();
+    if (pa == pb) {
+        return a->GetMtxPtr(nw4r::g3d::ScnObj::MTX_VIEW)->m[2][3] <
+               b->GetMtxPtr(nw4r::g3d::ScnObj::MTX_VIEW)->m[2][3];
+    }
+    return pa < pb;
+}
 bool LessByGetValueForSortOpa(const nw4r::g3d::ScnObj* pLhs,
                               const nw4r::g3d::ScnObj* pRhs) {
     if (pLhs->GetPriorityDrawOpa() == pRhs->GetPriorityDrawOpa()) {

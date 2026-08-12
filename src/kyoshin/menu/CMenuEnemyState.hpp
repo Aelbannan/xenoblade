@@ -264,7 +264,9 @@ extern u32 lbl_eu_804FDBC8[];
 // Declared as 4-element s16 arrays so direct element access keeps the retail
 // sda21 addressing (li lbl@sda21 + halfword ops).
 extern s16 lbl_eu_80663F58[4];
+extern u32 lbl_eu_80663F5C;
 extern s16 lbl_eu_80663F60[4];
+extern u32 lbl_eu_80663F64;
 extern s16 lbl_eu_80663F68[4];
 extern s16 lbl_eu_80663F70[4];
 extern s16 lbl_eu_80663F78[4];

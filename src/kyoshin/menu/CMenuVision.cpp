@@ -203,7 +203,7 @@ static inline void menuVisionReplacePaneImage(nw4r::lyt::Pane* pane, void* image
 // Retail ctor symbol is unmangled (`__ct__CMenuVision`, C-ABI); kept as a
 // C-linkage out-of-line helper so the factory (func_801ACCE0) emits a real bl
 // to it, returning `this` in r3 like a real constructor (retail relies on it).
-extern "C" CMenuVision* __ct__CMenuVision(CMenuVision* self, CProcess* parent) {
+extern "C" __declspec(noinline) CMenuVision* __ct__CMenuVision(CMenuVision* self, CProcess* parent) {
     return self;
 }
 

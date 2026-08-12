@@ -136,6 +136,23 @@ void func_80245DF8(){}
 
 void func_80246200(void* self){}
 
+// Deleting dtors (retail names): free self when mode > 0, return self.
+extern "C" void* __dt__80244724(void* self, int mode) {
+    extern void* __dl__FPv(void*);
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
+
+extern "C" void* __dt__8024503C(void* self, int mode) {
+    extern void* __dl__FPv(void*);
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
+
 void* __dt__802462F0(void* self, int mode) {
     extern void* __dl__FPv(void*);
     if (self && mode > 0) {

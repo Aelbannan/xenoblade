@@ -1424,6 +1424,41 @@ rework. Unit also +0x30 from unmatched PrintImpl<c>/<w> (0x5c4/0x5e8 vs retail
 
 **Status of the "GXColor regresses ut_TextWriterBase" correction above:** resolved by the explicit user-defined copy ctors/assignments now in `ut_CharWriter.h` (GXColor members + `ColorMapping(const ColorMapping&) : min(...), max(...) {}` etc.). With those, MWCC's struct-copy schedule matches retail again — PrintImpl<c>/<w> are 100% and the unit is 81/83 (only CalcLineRectImpl<c>/<w> remain at 96.4%/0 structural/9 reg-swaps, pre-existing Chaitin zero-merge split).
 
+## kyoshin code_800B06A4 — flattened reslist ctor schedule + loop-unlink register levers (Wii/1.1 `-O4,p`)
+
+1. **`__ct__reslist_cf_CfObject` / `__ct__reslist_cf_IFactoryEvent` (us-800b1368/800b15d8) went 73.3% → 100.0% FULL_MATCH** by writing the flattened reslist ctor as a struct-typed layout with the sentinel linked through `mStartNodePtr`:
+
+   ```c
+   struct CfReslistNode { void* mNext; void* mPrev; void* mItem; };  // 0xC stride
+   struct CfReslistLayout { void* mVtable; CfReslistNode* mStartNodePtr;
+       CfReslistNode mStartNode; void* mList; int mCapacity; bool field_0x1C; };
+   void __ct__reslist_cf_CfObject(void* self) {
+       CfReslistLayout* o = (CfReslistLayout*)self;
+       *(volatile u32*)((u8*)self) = (u32)lbl_v1;      // dead base-vtable store: volatile keeps it
+       o->mList = 0; o->mCapacity = 0; o->field_0x1C = false;
+       o->mStartNodePtr = &o->mStartNode;              // struct-typed sentinel
+       o->mStartNodePtr->mNext = &o->mStartNode;
+       o->mStartNodePtr->mPrev = &o->mStartNode;
+       o->mVtable = (void*)lbl_v2;                      // derived overwrite
+   }
+   ```
+   The struct-typed `mStartNodePtr`/node access reproduces the retail schedule (li r0 first, the two vtable lis/addi pairs adjacent, sentinel computed after the first vtable store). The raw `(u8*)self + 8`/`u32* base[]` form hoists the sentinel between lis/addi (2 structural). The node stride must be 0xC (mNext/mPrev/mItem), not 8 — off-by-4 field drift otherwise.
+
+2. **`func_800B88E0` (us-800b91fc) loop-unlink went 43.8% (9 reg_swap) → 100.0% FULL_MATCH** by declaring the loop's `next` local BEFORE `node`:
+
+   ```c
+   u32* head = *(u32**)(self + 0xC84);
+   u32* sentinel = head;
+   u32* next;                    // declared before node → node=r7/next=r6 (retail)
+   u32* node = (u32*)*head;
+   while (node != sentinel) { next = (u32*)*node; ...; node = next; }
+   ```
+   The reverse declaration order swaps the Chaitin colors (node=r6/next=r7). The register-renaming witness CANNOT certify loop-heavy functions (path-limit gate: `ExecutionInconclusive: path limit exceeded`), so loop reg-swaps must be pushed to byte-identity via declaration order.
+
+## kyoshin CTutorial — `!= 0` idiom is the `-O4,s` signature (Wii/1.1)
+
+`CTutorial::func_8029AE5C` (us-8029d524) retail uses the `subic/subfe` setnz idiom for `(x != 0)` / `(x == 1) ? 2 : 3`; at `-O4,p` MWCC emits the `neg/or/rlwinm` sign-bit idiom instead (23.5%). Switching the unit to `-O4,s` (sibling CTutorialList.cpp already had it) flipped to the subic/subfe form (52.9%) without regressing the unit's 100% functions. Residual for the ternary tail: retail `addi r3,r3,3` (no u8 clrlwi; range-proved 2/3) vs decomp `addi r0,r3,3; clrlwi r3,r0,24` — see attempts.jsonl.
+
 ## monolib LOD code_804645CC — s32→f32 conversion with interleaved unrelated statement: split the conversion into its own local (Wii/1.1 `-O4,p`)
 
 `func_80465730` (us-80469700, 0x4c) went 57.9% (4 structural + 4 reg_swap) → **100.0% FULL_MATCH** by splitting the cast out of the final expression:
@@ -9729,3 +9764,28 @@ emission order ... unit needs -ipa file (forward pool)"). Rule: when pooled
 string/constant immediates differ by whole-pool layout, check the unit's
 `-ipa` setting and the TU's function emission order in the .o (`list_text_functions`
 order) before touching per-function source.
+
+### `u32` counter `<= 0` folds to `== 0` (bne) — use `s32` for signed post-decrement guards
+CScnTexWorkMan dtor (us-804941ec): the live-instance counter global was
+declared `u32`; `counter--; if (counter <= 0)` folded the unsigned `<= 0` to
+`== 0`, emitting `bne` (branch-if-not-eq skips the body) — semantically wrong
+for counter==0 (0 <= 0 must run the body) AND byte-different from retail's
+`addic.; bgt` (signed post-decrement check). Declaring the global `s32`
+reproduced the retail `bgt` exactly (91.7% → 100%). Symptom to look for:
+retail `bgt`/`ble` after `addic.` where the decomp emits `bne`/`beq`.
+
+### Struct-assignment copy loops returning the dst pointer
+func_80227994 (CQstLogList): a 0x22-byte entry copy compiled by retail as 2
+byte copies + a 4x8-byte `lwzu/stwu` update-form counted loop (`mtctr`/`bdnz`).
+The hand-rolled word loop emits plain `lwz/stw + addi`; the natural source
+`*pDst = *pSrc; return pDst;` (full struct assignment) reproduces the retail
+exactly. The `return pDst` is load-bearing: it keeps r3 (= dst) live through
+the loop, forcing the loop word into r4 (retail's allocation). Needs
+`optimize_for_size` to suppress the -O4,p unroll.
+
+### `#pragma scheduling off` reproduces -O3 interleaved copy shapes
+func_80227660 (CMenuQstCnt): retail emits the -O3 "load r0; store r0"
+interleaved per-field copy under an -O4,s unit. Per-function
+`optimization_level` cannot downgrade codegen (MWCC_REFERENCE 1302), but
+`#pragma scheduling off` around the function reproduces the interleaved
+single-register copy byte-for-byte under -O4,s (verified Wii/1.1).

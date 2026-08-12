@@ -1302,6 +1302,9 @@ void sfmpv_DoReformTc(void* self, void* frm, s64 pts, s32 rep) {
 // ---------------------------------------------------------------------------
 // sfmpv_Pts2Tc
 // ---------------------------------------------------------------------------
+// sfmpv_Pts2Tc takes the pts value as a single s64 (retail call site splits the
+// pair with a lo-first dword move `mr r4,r6; mr r3,r5`); splitting the s64 into
+// two s32 args at the call emits hi-first and breaks DoReformTc's byte match.
 void sfmpv_Pts2Tc(s64 a, s32 v, s32 t, s32 u, u32* out) {
     s32 v0 = lbl_eu_8051CBF8[v];
     s32 t0 = lbl_eu_8051C940[0xf + v];
@@ -1396,6 +1399,11 @@ void sfmpv_NextTc(void* in, void* out) {
 // ---------------------------------------------------------------------------
 // sfmpv_FirstPicAtr
 // ---------------------------------------------------------------------------
+// NOTE: residual 5-instruction rotation vs retail (addi r30 dst before the four
+// mr param copies in the prologue; decomp emits the copies first). Exact size /
+// zero reloc drift; resists declaration/assignment order, C99 mixed decls, temp
+// locals. br/vb temps below are required to reproduce retail's load hoisting
+// (lwz vbv/bitrate + ChkBufSiz arg setup before the 5-word copy loop).
 s32 sfmpv_FirstPicAtr(void* self, void* mpv, void* frm, void* pic) {
     void* shc = *(void**)((u8*)self + 0x2068);
     u32* dst = (u32*)((u8*)self + 0x91c);
@@ -1420,14 +1428,20 @@ s32 sfmpv_FirstPicAtr(void* self, void* mpv, void* frm, void* pic) {
         *(u32*)((u8*)shc + 0x9c) = (u32)((max < ring) ? max : ring);
     }
     sfmpv_SetMpvHd(self, bitrate, pic);
-    dst[0] = ((u32*)frm)[0];
-    dst[1] = ((u32*)frm)[1];
-    dst[2] = ((u32*)frm)[2];
-    dst[3] = ((u32*)frm)[3];
-    dst[5] = ((u32*)frm)[4];
-    dst[4] = (u32)bitrate;
-    dst[8] = (u32)vbv;
-    return sfmpv_ChkBufSiz(self, dst);
+    {
+        s32 br;
+        s32 vb;
+        vb = vbv;
+        br = bitrate;
+        dst[0] = ((u32*)frm)[0];
+        dst[1] = ((u32*)frm)[1];
+        dst[2] = ((u32*)frm)[2];
+        dst[3] = ((u32*)frm)[3];
+        dst[5] = ((u32*)frm)[4];
+        dst[4] = (u32)br;
+        dst[8] = (u32)vb;
+        return sfmpv_ChkBufSiz(self, dst);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -2433,19 +2447,25 @@ int fn_803CA368(void) { return 0x0; }
 // sfmpv_ReprocessShc
 // ---------------------------------------------------------------------------
 s32 sfmpv_ReprocessShc(void* self, void* shc, s32* out) {
-    s32 i;
-    s32 v;
     void* p;
     void* mpv;
+    void* shc2;
+    s32 v;
+    u32 out2;
+    struct {
+        void* a;
+        u32 b;
+    } local;
+
     *out = 0;
     v = *(s32*)((u8*)self + 0x2670);
-    mpv = *(void**)shc;
+    shc2 = *(void**)((u8*)self + 0x2068);
     if (v == 0) {
         p = NULL;
-    } else if (*(s32*)((u8*)*(void**)((u8*)self + 0x2068) + 0x10) <= 0) {
-        p = (u8*)v + 0xad0;
-    } else {
+    } else if (*(s32*)((u8*)shc2 + 0x10) > 0) {
         p = NULL;
+    } else {
+        p = (u8*)v + 0xad0;
     }
     if (p == NULL) {
         return 0;
@@ -2453,23 +2473,17 @@ s32 sfmpv_ReprocessShc(void* self, void* shc, s32* out) {
     if (*(u32*)p == 0) {
         return 0;
     }
+    mpv = *(void**)shc;
     *(u64*)((u8*)self + 0xdd4) = *(u64*)((u8*)p + 0xc);
     *(u64*)((u8*)self + 0xddc) = *(u64*)((u8*)p + 0x14);
     *(u64*)((u8*)self + 0xde4) = *(u64*)((u8*)p + 0x1c);
     *(u64*)((u8*)self + 0xdec) = *(u64*)((u8*)p + 0x24);
     *(u64*)((u8*)self + 0xdf4) = *(u64*)((u8*)p + 0x2c);
     *(u32*)((u8*)self + 0xdfc) = *(u32*)((u8*)p + 0x34);
-    {
-        struct {
-            void* a;
-            u32 b;
-        } local;
-        u32 out2;
-        local.a = (u8*)p + 0x38;
-        local.b = *(u32*)((u8*)p + 0x238);
-        if (MPV_DecodePicAtr(mpv, &local, &out2) != 0) {
-            return SFLIB_SetErr(self, 0xff000f1b);
-        }
+    local.a = (u8*)p + 0x38;
+    local.b = *(u32*)((u8*)p + 0x238);
+    if (MPV_DecodePicAtr(mpv, &local, &out2) != 0) {
+        return SFLIB_SetErr(self, 0xff000f1b);
     }
     *out = 1;
     return 0;

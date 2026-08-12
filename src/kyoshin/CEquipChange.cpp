@@ -13,9 +13,7 @@
 extern const float lbl_eu_806682A8;
 extern char lbl_eu_80508168[];
 
-extern "C" void func_801D47D4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4);
-void func_801D4260(CItemBoxInfo* info, u8 arg2);
-void func_80138078__FUl(u32 op);
+extern "C" void func_80138078__FUl(u32 op);
 void func_80286B94(CEquipItemBox* box);
 void func_80286D7C(CEquipItemBox* box);
 int func_80288948(CEquipItemBox* box);
@@ -114,11 +112,80 @@ int func_80202484(CEquipChange* self) {
     return func_802866A0(&self->mEquipItemBox);
 }
 
-void func_802024CC(){}
+// Target us-802041c4: initialise the equip-change screen. When idle (0x48),
+// set state 1, init the item-info window, repack the selection word and play
+// the 0x6D sound. Retail frame saves 4 regs via stmw (opt-space prologue).
+#pragma optimize_for_size on
+void func_802024CC(CEquipChange* self) {
+    if (self->field_48 == 0) {
+        self->field_48 = 1;
+        self->field_4D = 0;
+        func_801D421C((CItemBoxInfo*)((u8*)self + 0xA4));
+        func_801D4260((CItemBoxInfo*)((u8*)self + 0xA4), (u8)func_80203138(self));
+        u8 f99 = self->field_99;
+        u32 r38 = (u32)func_80203138(self);
+        u32 r3a = (u32)func_802031A0(self);
+        func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4),
+                      (u16)(((u32)f99 << 8) | ((r38 & 0xF) << 4) | (r3a & 0xF)),
+                      func_802052A8(self), 1);
+        func_80138078__FUl(0x6d);
+    }
+}
+#pragma optimize_for_size off
 
-void func_80202578(){}
+// Target us-80204270: close the equip-change screen. From state 3, enter
+// state 4, close the three cursors, advance the item-info window, reset the
+// three layout slot animations and play the 0x6 sound.
+void func_80202578(CEquipChange* self) {
+    if (self->field_48 == 3) {
+        self->field_48 = 4;
+        self->field_4D = 0;
+        func_801D216C((void*)((u8*)self + 0x50), 0);
+        func_801D216C((void*)((u8*)self + 0x68), 0);
+        func_801D216C((void*)self->field_80, 0);
+        advanceItemBoxState((CItemBoxInfo*)((u8*)self + 0xA4));
+        ((CLayoutVtbl11*)(u32)self->field_34)->v9(self->field_3C, 0);
+        ((CLayoutVtbl11*)(u32)self->field_34)->v9(self->field_40, 0);
+        ((CLayoutVtbl11*)(u32)self->field_34)->v9(self->field_38, 1);
+        func_80138078__FUl(6);
+    }
+}
 
-void func_80202644(){}
+// Target us-8020433c: advance the equip selection. When the box gates are
+// closed, roll the cursor-run flag 0x98 backwards past non-equipped slots,
+// then refresh the equip info window; otherwise (both gates open) hand the
+// input to the item box. Retail frame saves 4 regs via stmw.
+#pragma optimize_for_size on
+void func_80202644(CEquipChange* self) {
+    if (func_802865A0(&self->mEquipItemBox) != 0) {
+        if (func_802865A8(&self->mEquipItemBox) != 0)
+            func_802867E0(&self->mEquipItemBox);
+    } else {
+        self->field_98 = (s8)(self->field_98 - 1);
+        if (self->field_98 < 0)
+            self->field_98 = 0xd;
+        while (true) {
+            if (self->field_98 < 0)
+                self->field_98 = 0xd;
+            u8 idx = (u8)func_802031A0(self);
+            if (idx == 0)
+                break;
+            if (((u8*)self)[0x99 + idx] != 0)
+                break;
+            self->field_98 = (s8)(self->field_98 - 1);
+        }
+        func_802040FC(self);
+        u8 f99 = self->field_99;
+        int cur38 = func_80203138(self);
+        int cur3a = func_802031A0(self);
+        func_801D47D4((CItemBoxInfo*)((u8*)self + 0xA4),
+                      (u16)(((u32)f99 << 8) | ((cur38 & 0xF) << 4) | (cur3a & 0xF)),
+                      func_802052A8(self), 1);
+        func_801D4260((CItemBoxInfo*)((u8*)self + 0xA4), (u8)func_80203138(self));
+        func_80138078__FUl(1);
+    }
+}
+#pragma optimize_for_size off
 
 void func_80202790(){}
 
@@ -595,7 +662,34 @@ extern "C" __declspec(noinline) int func_802031A0(CEquipChange* self) {
     }
 }
 
-extern "C" void func_80202110() {}
+// Target us-80203e08: per-frame equip-change update. While visible (0x44),
+// dispatch on state 0x48 (jump table 0..10) to the layout-anim waiters, then
+// drive the layout vtable[0x38] hook and update the cursors / item info
+// window / equip item box.
+void func_80202110(CEquipChange* self) {
+    if (self->field_44 == 0)
+        return;
+    switch (self->field_48) {
+    case 0: func_80203CE0(self); break;
+    case 1: func_80203D78(self); break;
+    case 2: func_80203E00(self); break;
+    case 3: func_80203E98(self); break;
+    case 4: func_80203EE4(self); break;
+    case 5: func_80203F84(self); break;
+    case 6: func_80203FCC(self); break;
+    case 7: func_8020404C(self); break;
+    case 8:
+    case 9:
+    case 10:
+        break;
+    }
+    ((CLayoutVtbl11*)(u32)self->field_34)->v12(0);
+    func_801D202C((void*)((u8*)self + 0x50));
+    func_801D202C((void*)((u8*)self + 0x68));
+    func_801D202C((void*)self->field_80);
+    func_801D40C4((CItemBoxInfo*)((u8*)self + 0xA4));
+    func_80286264(&self->mEquipItemBox);
+}
 // Target us-80203edc: draw the equip-change screen. Draws the main layout
 // (field_34) when visible (0x44), then the two cursors (0x50/0x68) only when
 // the sub-cursor (0x80) is idle, flags the item box (0x62B), and finally the
@@ -617,4 +711,27 @@ extern "C" void func_802021E4(CEquipChange* self, nw4r::lyt::DrawInfo* drawInfo)
     func_80286340(&self->mEquipItemBox, drawInfo);
 }
 #pragma optimize_for_size off
-extern "C" void func_8020228C() {}
+// Target us-80203f84: teardown of the equip-change screen. Release the two
+// file handles, clear the visible flag, delete the layout object at 0x34
+// (guarded double-check), clear the global page flag, release both arc
+// accessors and the 0x04 memory region, reset the three cursors, and close
+// the item info window + box.
+void func_8020228C(CEquipChange* self) {
+    func_801390E0__FPP11CFileHandle(&self->field_24);
+    func_801390E0__FPP11CFileHandle(&self->field_28);
+    self->field_44 = 0;
+    if (self->field_34 != 0) {
+        if (self->field_34 != 0)
+            ((CLayoutVtbl11*)(u32)self->field_34)->v0(1);
+        self->field_34 = 0;
+    }
+    lbl_eu_80664698 = 0;
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(self->field_2C);
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor((void*)self->field_30);
+    func_8045F778__17UnkClass_8045F564Fv(&self->_pad04[0]);
+    ((CCurVtblView*)((u8*)self + 0x50))->v1();
+    ((CCurVtblView*)((u8*)self + 0x68))->v1();
+    ((CCurVtblView*)self->field_80)->v1();
+    func_801D4174((CItemBoxInfo*)((u8*)self + 0xA4));
+    func_80286454(&self->mEquipItemBox);
+}

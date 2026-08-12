@@ -1,7 +1,6 @@
 #include "kyoshin/menu/CMenuEnemyState.hpp"
 
-#include "kyoshin/CTaskGame.hpp"
-#include "kyoshin/cf/CfGameManager.hpp"
+#include "monolib/scn.hpp"
 #include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFont.hpp"
@@ -415,13 +414,36 @@ public:
     u8 pad00[4];                         // vtable / IFactoryEvent subobject
     reslist<CfObjectActor*> mActorList1;  // +0x04 (retail offset)
 };
+
+// Minimal cf::CfGameManager (full header kyoshin/cf/CfGameManager.hpp, which
+// is not includable here: its extern "C" bool func_804960A8 clashes with the
+// int form in CTaskGame.hpp under MWCC 10505). Only the statics this TU uses
+// are declared.
+class CfGameManager {
+public:
+    static CfGameManager* getInstance();
+    static CfObjectMove* getPlayer(int playerIndex);
+};
 }
+
+// Minimal CTaskGame (full header kyoshin/CTaskGame.hpp is not includable here
+// while its extern "C" func_8049603C/func_804960A8 caller-shape imports clash
+// with code_80135FDC.hpp / CfGameManager.hpp under MWCC 10197/10505). Only
+// the statics this TU uses are declared.
+class CTaskGame {
+public:
+    static CTaskGame* getInstance();
+    static bool func_800426F0();
+};
 
 // func_800B708C(BOOL)/func_800BFC68(CfObjectMove*) declared (not extern "C")
 // - MWCC's own C++ mangling matches the retail linker names
 // (func_800B708C__Fi / func_800BFC68__FPQ22cf12CfObjectMove).
 extern void* func_800B708C(int);
 extern cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove);
+// Last-selected actor id source (was declared in kyoshin/CTaskGame.hpp, which
+// is not includable here due to the concurrent func_8049603C/A8 conflict).
+extern "C" void* func_800FE68C();
 
 // Unit functions whose retail linker symbols are UNMANGLED: declare them
 // extern "C" so call sites emit the unmangled reloc names (retail uses C
@@ -434,7 +456,10 @@ void func_80111B08(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c);
 extern "C" void func_80111C50(CMenuEnemyState* self, u8* panelData, int which);
 void func_80111E70(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c);
 extern "C" void func_80112170(CMenuEnemyState* self, u8* panelData);
-void func_801127B0(CMenuEnemyState* self);
+extern "C" void func_801127B0(CMenuEnemyState* self);
+// Menu sound effect for the enemy-menu (plain C++ so MWCC mangles the retail
+// name func_80138078__FUl).
+extern void func_80138078(u32);
 void func_801132A8(CMenuEnemyState* self, u8* panelData, void* actor);
 extern "C" void func_801124C8(CMenuEnemyState* self, Actor2Layout* actor2);
 extern "C" {
@@ -1267,14 +1292,14 @@ extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId) {
 
     func_80111080(self, reinterpret_cast<u8*>(panel), &posA, &posB);
 
-    // Colour/scale quads from sdata; unk1D/unk1E/unk1F pick s16 pairs.
+    // Colour/scale quads from sdata; the four words are individual retail
+    // symbols (58 / 5C / 60 / 64). unk1D/unk1E/unk1F pick s16 pairs.
     u32 a[2];
     u32 b[2];
-    // The sdata quads are halfword pairs packed into 32-bit words.
     a[0] = *reinterpret_cast<u32*>(&lbl_eu_80663F58[0]);
-    a[1] = *reinterpret_cast<u32*>(&lbl_eu_80663F58[2]);
-    b[0] = *reinterpret_cast<u32*>(&lbl_eu_80663F58[4]);
-    b[1] = *reinterpret_cast<u32*>(&lbl_eu_80663F58[6]);
+    a[1] = lbl_eu_80663F5C;
+    b[0] = *reinterpret_cast<u32*>(&lbl_eu_80663F60[0]);
+    b[1] = lbl_eu_80663F64;
     if (panel->unk1D != 0) {
         u16* au = reinterpret_cast<u16*>(a);
         u16* bu = reinterpret_cast<u16*>(b);
@@ -1359,6 +1384,357 @@ extern "C" void func_80110A78(CMenuEnemyState* self, u32 actorId) {
     u8 byteVal = static_cast<u8>(vslot<GetU8Fn>(actor2, 0x260)(actor2));
     ObjBBFlag* f34 = reinterpret_cast<ObjBBFlag*>(panel->obj3);
     f34->flagBB = (f34->flagBB & 0xFE) | byteVal;
+}
+
+// func_801127B0 (us-8011328c): per-frame enemy-menu refresh driven by the
+// last-selected actor id (func_800FE68C). The 24th panel (panels[23], aka
+// panelData at this+0x778) mirrors the current selection; when it is already
+// visible and the selection changed, or when it is hidden, the previous
+// matching panel entry is cleared and the panel is re-registered from the
+// actor's flag bits, position, colour quads and actor2 slot/type textures
+// (same core as func_80110A78, then the highlight-scan panes and the scan
+// timer are reset).
+extern "C" void func_801127B0(CMenuEnemyState* self) {
+    MenuEnemyPanel* panel = &self->panels[23];
+    u8* panelData = reinterpret_cast<u8*>(panel);
+    u32 lastId = static_cast<Fe68CView*>(func_800FE68C())->lastId90E4;
+
+    if (panel->visible != 0) {
+        // Already showing: clear and re-register when the selection changed.
+        if (lastId == 0) {
+            panel->visible = 0;
+            self->field82C = 0;
+            func_80138078(0x58);
+            return;
+        }
+        if (self->field82C == lastId) return;
+
+        panel->visible = 0;
+        self->field82C = 0;
+        Obj64_91* obj = reinterpret_cast<Obj64_91*>(
+            func_800B708C(static_cast<int>(lastId)));
+        if (obj == NULL) return;
+        self->field82C = lastId;
+
+        // Mirror the actor's flag word bits onto the panel state bytes.
+        panelData[0x1C] = static_cast<u8>((obj->word64 >> 30) & 1);
+        panelData[0x1D] = static_cast<u8>((obj->word64 >> 29) & 1);
+        panelData[0x1E] = static_cast<u8>((obj->word64 >> 28) & 1);
+        panelData[0x20] = 0;
+        panelData[0x1F] = static_cast<u8>((obj->word64 >> 17) & 1);
+        panelData[0x21] = 0;
+        panelData[0x22] = 0;
+        if (((obj->word64 >> 17) & 1) == 0) {
+            panelData[0x1F] = static_cast<u8>((obj->word64 >> 16) & 1);
+        }
+        if (panelData[0x1F] == 0) {
+            panelData[0x1F] = static_cast<u8>((obj->word64 >> 23) & 1);
+            panelData[0x20] = panelData[0x1F];
+        }
+        if (panelData[0x1F] != 0 && panelData[0x20] == 0 && obj != NULL) {
+            if (obj->byte91 == 0xC) {
+                panelData[0x21] = 1;
+            } else if (obj->byte91 == 0xE) {
+                panelData[0x22] = 1;
+            }
+        }
+
+        panel->actorId = lastId;
+        panel->visible = 1;
+        panel->animMarker = lbl_eu_80666FEC;
+        panel->drawLayout0Flag = 1;
+        panel->unk24 = 0;
+        panel->panelType = 1;
+
+        // Position fetch (0x12C object vec or the 0xAC position).
+        typedef RLayout* (*GetVecFn)(void*, int);
+        typedef void* (*GetPosFn)(void*);
+        Vec3f posA;
+        const Vec3f* posPtr;
+        RLayout* r = vslot<GetVecFn>(obj, 0x12C)(obj, 0x64);
+        if (r != NULL) {
+            Vec3f tmp;
+            tmp.x = r->val0C;
+            tmp.y = r->val1C;
+            tmp.z = r->val2C;
+            posPtr = &tmp;
+        } else {
+            posPtr = static_cast<const Vec3f*>(vslot<GetPosFn>(obj, 0xAC)(obj));
+        }
+        posA = *posPtr;
+        Vec3f posB = *static_cast<const Vec3f*>(vslot<GetPosFn>(obj, 0xAC)(obj));
+
+        func_80111080(self, panelData, &posA, &posB);
+
+        // Colour/scale quads from sdata; the four words are individual retail
+        // symbols (58 / 5C / 60 / 64). unk1D/unk1E/unk1F pick s16 pairs.
+        u32 a[2];
+        u32 b[2];
+        a[0] = *reinterpret_cast<u32*>(&lbl_eu_80663F58[0]);
+        a[1] = lbl_eu_80663F5C;
+        b[0] = *reinterpret_cast<u32*>(&lbl_eu_80663F60[0]);
+        b[1] = lbl_eu_80663F64;
+        if (panel->unk1D != 0) {
+            u16* au = reinterpret_cast<u16*>(a);
+            u16* bu = reinterpret_cast<u16*>(b);
+            au[0] = static_cast<u16>(lbl_eu_80663F68[0]);
+            au[1] = static_cast<u16>(lbl_eu_80663F68[1]);
+            au[2] = static_cast<u16>(lbl_eu_80663F68[2]);
+            au[3] = static_cast<u16>(lbl_eu_80663F68[3]);
+            bu[0] = static_cast<u16>(lbl_eu_80663F70[0]);
+            bu[1] = static_cast<u16>(lbl_eu_80663F70[1]);
+            bu[2] = static_cast<u16>(lbl_eu_80663F70[2]);
+            bu[3] = static_cast<u16>(lbl_eu_80663F70[3]);
+        } else if (panel->unk1E != 0) {
+            u16* au = reinterpret_cast<u16*>(a);
+            u16* bu = reinterpret_cast<u16*>(b);
+            au[0] = static_cast<u16>(lbl_eu_80663F78[0]);
+            au[1] = static_cast<u16>(lbl_eu_80663F78[1]);
+            au[2] = static_cast<u16>(lbl_eu_80663F78[2]);
+            au[3] = static_cast<u16>(lbl_eu_80663F78[3]);
+            bu[0] = static_cast<u16>(lbl_eu_80663F80[0]);
+            bu[1] = static_cast<u16>(lbl_eu_80663F80[1]);
+            bu[2] = static_cast<u16>(lbl_eu_80663F80[2]);
+            bu[3] = static_cast<u16>(lbl_eu_80663F80[3]);
+        } else if (panel->unk1F != 0) {
+            u16* au = reinterpret_cast<u16*>(a);
+            u16* bu = reinterpret_cast<u16*>(b);
+            au[0] = static_cast<u16>(lbl_eu_80663F88[0]);
+            au[1] = static_cast<u16>(lbl_eu_80663F88[1]);
+            au[2] = static_cast<u16>(lbl_eu_80663F88[2]);
+            au[3] = static_cast<u16>(lbl_eu_80663F88[3]);
+            bu[0] = static_cast<u16>(lbl_eu_80663F90[0]);
+            bu[1] = static_cast<u16>(lbl_eu_80663F90[1]);
+            bu[2] = static_cast<u16>(lbl_eu_80663F90[2]);
+            bu[3] = static_cast<u16>(lbl_eu_80663F90[3]);
+        }
+        func_80139AC8(reinterpret_cast<void*>(panel->unk38), reinterpret_cast<void*>(a),
+                      reinterpret_cast<void*>(b));
+
+        // Clear the highlight bits on the panel + shared panes.
+        reinterpret_cast<ObjBBFlag*>(panel->obj2)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(panel->obj3)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(panel->unk40)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(panel->obj1)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(self->field9C)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(self->fieldA0)->flagBB &= 0xFE;
+
+        if (panel->unk1F == 0) {
+            Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(func_8016FE34(obj));
+            if (actor2 != NULL) {
+                typedef int* (*SubGetFn)(void*);
+                int v = *vslot<SubGetFn>(actor2->subObj4, 0x30)(actor2->subObj4);
+                panel->drawLayout0Flag = static_cast<u8>(func_80174C98(actor2, &v, 0x802));
+
+                typedef void* (*GetObjFn)(void*);
+                panel->unk24 = reinterpret_cast<u32>(vslot<GetObjFn>(actor2, 0x108)(actor2));
+
+                func_80111C50(self, panelData, (panel->unk1C != 0) ? 1 : 2);
+
+                // Slot-type texture by the vt[0x258] value (1/2/3 -> name).
+                typedef u32* (*GetPtrFn)(void*);
+                void* tex = NULL;
+                switch (*vslot<GetPtrFn>(actor2, 0x258)(actor2)) {
+                case 1:
+                    tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
+                              ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x20e], 0);
+                    break;
+                case 2:
+                    tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
+                              ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x226], 0);
+                    break;
+                case 3:
+                    tex = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
+                              ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x23e], 0);
+                    break;
+                }
+                if (tex != NULL) {
+                    func_80137F88(panel->obj2, tex);
+                    reinterpret_cast<ObjBBFlag*>(panel->obj2)->flagBB |= 1;
+                }
+
+                typedef u32 (*GetU8Fn)(void*);
+                u8 byteVal = static_cast<u8>(vslot<GetU8Fn>(actor2, 0x260)(actor2));
+                ObjBBFlag* f34 = reinterpret_cast<ObjBBFlag*>(panel->obj3);
+                f34->flagBB = (f34->flagBB & 0xFE) | byteVal;
+            }
+        }
+
+        // Reset the highlight-scan panes and the scan timer.
+        reinterpret_cast<ObjBBFlag*>(self->field94)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(self->field98)->flagBB &= 0xFE;
+        self->field7D8 = lbl_eu_80667038;
+        self->field7DC = 0;
+        self->field7E0 = 0;
+        func_80138078(0x59);
+    } else {
+        // Hidden: clear the old matching panel entry, then re-register.
+        if (lastId == 0) {
+            panel->visible = 0;
+            self->field82C = 0;
+            return;
+        }
+        if (self->field82C == lastId) return;
+
+        for (u8 i = 0; i < 24; i++) {
+            if (self->panels[i].visible != 0 && self->panels[i].actorId == lastId) {
+                self->panels[i].visible = 0;
+                break;
+            }
+        }
+
+        panel->visible = 0;
+        self->field82C = 0;
+        Obj64_91* obj = reinterpret_cast<Obj64_91*>(
+            func_800B708C(static_cast<int>(lastId)));
+        if (obj == NULL) return;
+        self->field82C = lastId;
+
+        // Mirror the actor's flag word bits onto the panel state bytes.
+        panelData[0x1C] = static_cast<u8>((obj->word64 >> 30) & 1);
+        panelData[0x1D] = static_cast<u8>((obj->word64 >> 29) & 1);
+        panelData[0x1E] = static_cast<u8>((obj->word64 >> 28) & 1);
+        panelData[0x20] = 0;
+        panelData[0x1F] = static_cast<u8>((obj->word64 >> 17) & 1);
+        if (((obj->word64 >> 17) & 1) == 0) {
+            panelData[0x1F] = static_cast<u8>((obj->word64 >> 16) & 1);
+        }
+        if (panelData[0x1F] == 0) {
+            panelData[0x1F] = static_cast<u8>((obj->word64 >> 23) & 1);
+            panelData[0x20] = panelData[0x1F];
+        }
+
+        panel->actorId = lastId;
+        panel->visible = 1;
+        panel->animMarker = lbl_eu_80666FEC;
+        panel->drawLayout0Flag = 1;
+        panel->unk24 = 0;
+        panel->panelType = 1;
+
+        // Position fetch (0x12C object vec or the 0xAC position).
+        typedef RLayout* (*GetVecFn2)(void*, int);
+        typedef void* (*GetPosFn2)(void*);
+        Vec3f posA2;
+        const Vec3f* posPtr2;
+        RLayout* r2 = vslot<GetVecFn2>(obj, 0x12C)(obj, 0x64);
+        if (r2 != NULL) {
+            Vec3f tmp2;
+            tmp2.x = r2->val0C;
+            tmp2.y = r2->val1C;
+            tmp2.z = r2->val2C;
+            posPtr2 = &tmp2;
+        } else {
+            posPtr2 = static_cast<const Vec3f*>(vslot<GetPosFn2>(obj, 0xAC)(obj));
+        }
+        posA2 = *posPtr2;
+        Vec3f posB2 = *static_cast<const Vec3f*>(vslot<GetPosFn2>(obj, 0xAC)(obj));
+
+        func_80111080(self, panelData, &posA2, &posB2);
+
+        // Colour/scale quads from sdata; the four words are individual retail
+        // symbols (58 / 5C / 60 / 64). unk1D/unk1E/unk1F pick s16 pairs.
+        u32 a2[2];
+        u32 b2[2];
+        a2[0] = *reinterpret_cast<u32*>(&lbl_eu_80663F58[0]);
+        a2[1] = lbl_eu_80663F5C;
+        b2[0] = *reinterpret_cast<u32*>(&lbl_eu_80663F60[0]);
+        b2[1] = lbl_eu_80663F64;
+        if (panel->unk1D != 0) {
+            u16* au2 = reinterpret_cast<u16*>(a2);
+            u16* bu2 = reinterpret_cast<u16*>(b2);
+            au2[0] = static_cast<u16>(lbl_eu_80663F68[0]);
+            au2[1] = static_cast<u16>(lbl_eu_80663F68[1]);
+            au2[2] = static_cast<u16>(lbl_eu_80663F68[2]);
+            au2[3] = static_cast<u16>(lbl_eu_80663F68[3]);
+            bu2[0] = static_cast<u16>(lbl_eu_80663F70[0]);
+            bu2[1] = static_cast<u16>(lbl_eu_80663F70[1]);
+            bu2[2] = static_cast<u16>(lbl_eu_80663F70[2]);
+            bu2[3] = static_cast<u16>(lbl_eu_80663F70[3]);
+        } else if (panel->unk1E != 0) {
+            u16* au2 = reinterpret_cast<u16*>(a2);
+            u16* bu2 = reinterpret_cast<u16*>(b2);
+            au2[0] = static_cast<u16>(lbl_eu_80663F78[0]);
+            au2[1] = static_cast<u16>(lbl_eu_80663F78[1]);
+            au2[2] = static_cast<u16>(lbl_eu_80663F78[2]);
+            au2[3] = static_cast<u16>(lbl_eu_80663F78[3]);
+            bu2[0] = static_cast<u16>(lbl_eu_80663F80[0]);
+            bu2[1] = static_cast<u16>(lbl_eu_80663F80[1]);
+            bu2[2] = static_cast<u16>(lbl_eu_80663F80[2]);
+            bu2[3] = static_cast<u16>(lbl_eu_80663F80[3]);
+        } else if (panel->unk1F != 0) {
+            u16* au2 = reinterpret_cast<u16*>(a2);
+            u16* bu2 = reinterpret_cast<u16*>(b2);
+            au2[0] = static_cast<u16>(lbl_eu_80663F88[0]);
+            au2[1] = static_cast<u16>(lbl_eu_80663F88[1]);
+            au2[2] = static_cast<u16>(lbl_eu_80663F88[2]);
+            au2[3] = static_cast<u16>(lbl_eu_80663F88[3]);
+            bu2[0] = static_cast<u16>(lbl_eu_80663F90[0]);
+            bu2[1] = static_cast<u16>(lbl_eu_80663F90[1]);
+            bu2[2] = static_cast<u16>(lbl_eu_80663F90[2]);
+            bu2[3] = static_cast<u16>(lbl_eu_80663F90[3]);
+        }
+        func_80139AC8(reinterpret_cast<void*>(panel->unk38), reinterpret_cast<void*>(a2),
+                      reinterpret_cast<void*>(b2));
+
+        // Clear the highlight bits on the panel + shared panes.
+        reinterpret_cast<ObjBBFlag*>(panel->obj2)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(panel->obj3)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(panel->unk3C)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(panel->unk40)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(panel->obj1)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(self->field9C)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(self->fieldA0)->flagBB &= 0xFE;
+
+        if (panel->unk1F == 0) {
+            Actor2Layout* actor2 = reinterpret_cast<Actor2Layout*>(func_8016FE34(obj));
+            if (actor2 != NULL) {
+                typedef int* (*SubGetFn2)(void*);
+                int v2 = *vslot<SubGetFn2>(actor2->subObj4, 0x30)(actor2->subObj4);
+                panel->drawLayout0Flag = static_cast<u8>(func_80174C98(actor2, &v2, 0x802));
+
+                typedef void* (*GetObjFn2)(void*);
+                panel->unk24 = reinterpret_cast<u32>(vslot<GetObjFn2>(actor2, 0x108)(actor2));
+
+                func_80111C50(self, panelData, (panel->unk1C != 0) ? 1 : 2);
+
+                // Slot-type texture by the vt[0x258] value (1/2/3 -> name).
+                typedef u32* (*GetPtrFn2)(void*);
+                void* tex2 = NULL;
+                switch (*vslot<GetPtrFn2>(actor2, 0x258)(actor2)) {
+                case 1:
+                    tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
+                               ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x20e], 0);
+                    break;
+                case 2:
+                    tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
+                               ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x226], 0);
+                    break;
+                case 3:
+                    tex2 = static_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4())
+                               ->GetResource(0x74696D67, &lbl_eu_804FDBF8[0x23e], 0);
+                    break;
+                }
+                if (tex2 != NULL) {
+                    func_80137F88(panel->obj2, tex2);
+                    reinterpret_cast<ObjBBFlag*>(panel->obj2)->flagBB |= 1;
+                }
+
+                typedef u32 (*GetU8Fn2)(void*);
+                u8 byteVal2 = static_cast<u8>(vslot<GetU8Fn2>(actor2, 0x260)(actor2));
+                ObjBBFlag* f34b = reinterpret_cast<ObjBBFlag*>(panel->obj3);
+                f34b->flagBB = (f34b->flagBB & 0xFE) | byteVal2;
+            }
+        }
+
+        // Reset the highlight-scan panes and the scan timer.
+        reinterpret_cast<ObjBBFlag*>(self->field94)->flagBB &= 0xFE;
+        reinterpret_cast<ObjBBFlag*>(self->field98)->flagBB &= 0xFE;
+        self->field7D8 = lbl_eu_80667038;
+        self->field7DC = 0;
+        self->field7E0 = 0;
+        func_80138078(0x57);
+    }
 }
 
 // func_8010EE40 (us-8010f91c): CPcSelectCursor per-frame update. Clears the
@@ -2049,6 +2425,7 @@ void CMenuEnemyState::Init() {
 
     for (u8 i = 0; i < 24; i++) {
         MenuEnemyPanel* panel = &panels[i];
+        nw4r::lyt::Layout** pLayout1 = &panel->layout1;
         // Volatile template copy: retail writes the same constant values to a
         // dead stack panelData after the entry stores (3 hoisted into the
         // index-computation latency, the rest after). volatile stops MWCC
@@ -2110,7 +2487,6 @@ void CMenuEnemyState::Init() {
         panelData.unk48 = zero;
 
         // ---- layout1 arc + panes ----
-        nw4r::lyt::Layout** pLayout1 = &panel->layout1;
         func_80136E84(pLayout1,
                       reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(func_801355F4()),
                       &lbl_eu_804FDBF8[0xb8]);
@@ -2144,7 +2520,7 @@ void CMenuEnemyState::Init() {
                 PanePosLayout* d = reinterpret_cast<PanePosLayout*>((*pLayout1)
                     ->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x10b], true));
                 d->v2C = tmp.x;
-                d->v30 = animMarker;
+                d->v30 = lbl_eu_80666FEC;
                 d->v34 = tmp.z;
             }
             // Copy pane 0x112 the same way, y = markerY.
@@ -2157,7 +2533,7 @@ void CMenuEnemyState::Init() {
                 PanePosLayout* d = reinterpret_cast<PanePosLayout*>((*pLayout1)
                     ->GetRootPane()->FindPaneByName(&lbl_eu_804FDBF8[0x112], true));
                 d->v2C = tmp.x;
-                d->v30 = markerY;
+                d->v30 = lbl_eu_80667008;
                 d->v34 = tmp.z;
             }
         }

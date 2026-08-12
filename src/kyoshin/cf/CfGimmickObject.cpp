@@ -136,18 +136,12 @@ __declspec(noinline) int func_801F634C(cf::CfGimmickObject* self) { return 0; }
 // func_80208C60 / func_80208C48, plus the func_801BFAE4 volume slot).
 void func_801F6780(cf::CfGimmickObject* self) {
     CfGimmickObjectStep* step = &self->field_A4[self->field_188];
-    if ((self->field_74 & 0x08000000) == 0) {
+    u32 f = self->field_74;
+    if ((f & 0x08000000) == 0) {
         if (step->field_00 != 0) {
-            // u16 -> f32 via the 2^52 double-magic trick (union references
-            // the named constant so the pool reloc matches retail).
-            union {
-                u32 w[2];
-                f64 d;
-            } conv;
-            conv.w[0] = 0x43300000;
+            // u16 -> f32 (MWCC's 2^52 double-slot trick, fused fsubs).
             self->field_74 |= 1;
-            conv.w[1] = step->field_00;
-            self->field_170 = (f32)(conv.d - lbl_eu_806681C0);
+            self->field_170 = (f32)step->field_00;
         }
         if (step->field_02 != 0) {
             func_8007B0C8(step->field_02);
@@ -350,7 +344,7 @@ __declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {}
 // 0x400000 and raises 0x80000000 ("done").
 int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
     u32 flags = self->field_74;
-    if ((flags & 1) != 0)
+    if ((flags & 0x80000000) != 0)
         return 1;
     int found = 0;
     for (int i = self->field_18C; i < 3; i++) {
@@ -363,14 +357,15 @@ int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
         goto done_reset;
     if ((flags & 0x2000) != 0) {
         if (self->field_196 <= 0) {
-            int count = 0;
             CfGimmickObjectList* list = (CfGimmickObjectList*)func_800B6BC8();
+            int count = 0;
             for (CfGimmickObjectListNode* node = list->head->next;
                  node != list->head; node = node->next) {
                 void* obj = node->object;
                 if (obj != 0)
                     obj = (char*)obj - 0x3E9C;
-                if (((CfGimmickPlayerBase*)obj)->field_456C >> 4 == found)
+                if ((u32)(((CfGimmickPlayerBase*)obj)->field_456C >> 4) ==
+                    (u32)found)
                     count++;
             }
             self->field_196 = (s16)count;
@@ -379,11 +374,13 @@ int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
             return 0;
         }
         // Count down the matching (id-matched, hp <= 0, not yet marked)
-        // players; the copy `remaining` tracks every id match.
-        int remaining = self->field_196;
+        // players; the copy `remaining` tracks every id match. `zero` lives
+        // in a saved fpr across the loop's vtable call (retail f31).
         CfGimmickObjectList* list = (CfGimmickObjectList*)func_800B6BC8();
-        for (CfGimmickObjectListNode* node = list->head->next;
-             node != list->head; node = node->next) {
+        int remaining = self->field_196;
+        CfGimmickObjectListNode* node = list->head->next;
+        f32 zero = lbl_eu_806681A0;
+        while (node != list->head) {
             void* obj = node->object;
             if (obj != 0)
                 obj = (char*)obj - 0x3E9C;
@@ -392,7 +389,7 @@ int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
             if ((v >> 4) == found) {
                 remaining--;
                 f32 hp = ((f32 (*)(void*))base->vtable[0x4A])(base);
-                if (hp <= lbl_eu_806681A0) {
+                if (hp <= zero) {
                     u32 bits = self->field_184;
                     u32 bit = 1u << (v & 0xF);
                     if ((bits & bit) == 0) {
@@ -401,6 +398,7 @@ int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
                     }
                 }
             }
+            node = node->next;
         }
         if (remaining > 0)
             self->field_74 |= 0x400000;
@@ -446,7 +444,8 @@ spawn:
             void* obj = node->object;
             if (obj != 0)
                 obj = (char*)obj - 0x3E9C;
-            if (((CfGimmickPlayerBase*)obj)->field_456C >> 4 == found)
+            if ((u32)(((CfGimmickPlayerBase*)obj)->field_456C >> 4) ==
+                (u32)found)
                 count++;
         }
         self->field_196 = (s16)count;
@@ -514,14 +513,18 @@ void func_801F76A8(cf::CfGimmickObject* self) {
     }
     if (self->field_180 != lbl_eu_806681A0) {
         if (self->field_78 != 0) {
-            f32 cur = self->field_180 - func_80496288(lbl_eu_80663E14);
+            // Named locals mirror func_801F75CC's matched countdown.
+            f32 delta = func_80496288(lbl_eu_80663E14);
+            f32 cur = self->field_180 - delta;
+            f32 limit = lbl_eu_806681A0;
             self->field_180 = cur;
-            if (cur <= lbl_eu_806681A0) {
-                self->field_180 = lbl_eu_806681A0;
+            if (cur <= limit) {
+                self->field_180 = limit;
                 func_80208EE4(self);
             } else {
+                f32 scale = lbl_eu_806681B8;
                 f32 v = lbl_eu_806681A4;
-                f32 t = cur / lbl_eu_806681B8;
+                f32 t = cur / scale;
                 f32 vec[4] = { v, v, v, t };
                 func_800ACC64(self->field_78, vec);
             }
@@ -868,15 +871,18 @@ int func_801F879C(cf::CfGimmickObject* self) {
     if (self->field_15C != 0) {
         func_8020A010();
         if ((self->field_74 & 0x80) != 0) {
-            f32 cur = self->field_17C - func_80496288(lbl_eu_80663E14);
+            // Named locals mirror func_801F75CC's matched countdown.
+            f32 delta = func_80496288(lbl_eu_80663E14);
+            f32 cur = self->field_17C - delta;
+            f32 limit = lbl_eu_806681A0;
             self->field_17C = cur;
-            if (cur > lbl_eu_806681A0) {
+            if (cur > limit) {
                 if ((self->field_74 & 0x200) != 0 &&
                     (self->field_74 & 0x08000000) == 0)
                     func_8020A0CC();
                 return 0;
             }
-            self->field_17C = lbl_eu_806681A0;
+            self->field_17C = limit;
         } else {
             // u16 -> f32 via the 2^52 double-magic trick (union references
             // the named constant so the pool reloc matches retail).
@@ -940,21 +946,18 @@ int func_801F879C(cf::CfGimmickObject* self) {
 // set, up otherwise, clamped 0..6). The 0x200/0x400/0x8000/0x10000 work
 // flags are cleared on the way out.
 int func_801F89B8(cf::CfGimmickObject* self) {
-    // Initialized first so MWCC gives the saved register to `result` (retail
-    // keeps it in r31); the `li` is then sunk to the first use.
-    int result = 0;
     if (self->field_14A[3] != 0) {
         func_8020A010();
         if ((self->field_74 & 0x200) != 0)
             func_8020A0CC();
         if ((self->field_74 & 0x40) != 0) {
-            self->field_18E = (s16)(self->field_18E - 1);
+            self->field_18E = self->field_18E - 1;
             if (self->field_18E > 0)
                 return 0;
             self->field_74 &= ~0x40;
         } else {
             self->field_74 |= 0x40;
-            self->field_18E = (s16)self->field_14A[3];
+            self->field_18E = self->field_14A[3];
             return 0;
         }
     }
@@ -965,18 +968,17 @@ int func_801F89B8(cf::CfGimmickObject* self) {
     if (self->field_64 != 0 && (self->field_66 & 0x20) == 0)
         func_8020974C(self->field_64, 1);
     func_801F6780(self);
-    if ((self->field_74 & 0x1000) != 0) {
-        if ((self->field_74 & 0x08000000) != 0) {
-            s16 v = (s16)(self->field_188 - 1);
-            self->field_188 = v;
-            u32 f = self->field_74;
-            self->field_74 = f & ~0x08000000;
-            if (v < 0)
+    u32 flags = self->field_74;
+    int result = 0;
+    if ((flags & 0x1000) != 0) {
+        if ((flags & 0x08000000) != 0) {
+            self->field_188 = self->field_188 - 1;
+            self->field_74 &= ~0x08000000;
+            if (self->field_188 < 0)
                 self->field_188 = 0;
         } else {
-            s16 v = (s16)(self->field_188 + 1);
-            self->field_188 = v;
-            if (v > 6)
+            self->field_188 = self->field_188 + 1;
+            if (self->field_188 > 6)
                 self->field_188 = 6;
         }
         result = 1;

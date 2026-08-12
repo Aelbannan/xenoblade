@@ -10,6 +10,8 @@ extern "C" void func_801FFDB0(CModelDispEquip*);
 extern "C" void func_801FF9AC(CModelDispEquip*);
 extern "C" void func_801FFAC8(CModelDispEquip*);
 extern "C" void func_801FFADC(CModelDispEquip*);
+extern "C" void func_801FFBC4(CModelDispEquip*, CActParamHolder*);
+extern "C" __declspec(noinline) void func_801FFAB4(float* dest, float a, float b, float c, float d);
 
 // ============================================================
 // Target: us-80201254 | __ct__CModelDispEquip (constructor)
@@ -123,7 +125,34 @@ extern "C" void func_801FF82C(CModelDispEquip* self) {
 // ============================================================
 // Target: us-80201564 | func_801FF874
 // ============================================================
-extern "C" void func_801FF874() {}
+// Reset the equip display: drain the 9 slot + model file jobs, free loaded
+// slot buffers and the model arc buffer, then mark the state-21 flag.
+extern "C" void func_801FF874(CModelDispEquip* self) {
+    waitForDrawDone__9CDeviceVIFv();
+    for (u8 i = 0; i < 9; i++) {
+        func_801390E0__FPP11CFileHandle(&self->fileSlots[i].handle);
+    }
+    func_801FFBC4(self, &self->actParamHolder);
+    for (u8 i = 0; i < 9; i++) {
+        FileSlot* slot = &self->fileSlots[i];
+        if (slot->flag != 0) {
+            slot->data = 0;
+            slot->flag = 0;
+        } else if (slot->data != 0) {
+            mtl::MemManager::deallocate(slot->data);
+            slot->data = 0;
+        }
+    }
+    func_801390E0__FPP11CFileHandle(&self->modelFileHandle);
+    if (self->modelData != 0) {
+        func_804CC1D8(lbl_eu_8065FC18);
+        if (self->modelData != 0) {
+            mtl::MemManager::deallocate(self->modelData);
+            self->modelData = 0;
+        }
+    }
+    self->state21 = 1;
+}
 
 // ============================================================
 // Target: us-8020164c | func_801FF95C (getState20)
@@ -171,7 +200,7 @@ extern "C" __declspec(noinline) void func_801FF9AC(CModelDispEquip* self) {}
 // ============================================================
 // Target: us-802017a4 | func_801FFAB4 (storeFloats)
 // ============================================================
-extern "C" void func_801FFAB4(float* dest, float a, float b, float c, float d) {
+extern "C" __declspec(noinline) void func_801FFAB4(float* dest, float a, float b, float c, float d) {
     dest[0] = a;
     dest[1] = b;
     dest[2] = c;
@@ -181,12 +210,40 @@ extern "C" void func_801FFAB4(float* dest, float a, float b, float c, float d) {
 // ============================================================
 // Target: us-802017cc | func_801FFADC
 // ============================================================
-extern "C" __declspec(noinline) void func_801FFADC(CModelDispEquip* self) {}
+// Fade the equip display in (state 3 step): bump alpha toward the clamp,
+// poke the act-param object with the new alpha, then write the quad color
+// (clamp, clamp, clamp, clamp - alpha) into both animation-model slots.
+extern "C" __declspec(noinline) void func_801FFADC(CModelDispEquip* self) {
+    self->alpha += lbl_eu_8066827C;
+    if (self->alpha > lbl_eu_80668270) {
+        self->alpha = lbl_eu_80668270;
+        self->state = 0;
+        self->state20 = 1;
+    }
+    CActParamHolder* holder = &self->actParamHolder;
+    void* obj = self->actParamHolder.field_0x00;
+    if (obj != 0) {
+        void** vtbl = *(void***)obj;
+        ((void (*)(void*, f32))vtbl[18])(obj, self->alpha);
+    }
+    f32 tmp[4];
+    func_801FFAB4(tmp, lbl_eu_80668270, lbl_eu_80668270, lbl_eu_80668270,
+                  lbl_eu_80668270 - self->alpha);
+    for (u8 i = 0; i < 2; i++) {
+        CModelDispAnimColor* p = (CModelDispAnimColor*)self->animPtrs[i];
+        if (p != 0) {
+            p->field_0x40 = tmp[0];
+            p->field_0x44 = tmp[1];
+            p->field_0x48 = tmp[2];
+            p->field_0x4C = tmp[3];
+        }
+    }
+}
 
 // ============================================================
 // Target: us-802018b4 | func_801FFBC4
 // ============================================================
-extern "C" void func_801FFBC4() {}
+extern "C" void func_801FFBC4(CModelDispEquip* self, CActParamHolder* holder) {}
 
 // ============================================================
 // Target: us-80201ab4 | func_801FFDC4
@@ -206,7 +263,26 @@ extern "C" void func_80200394() {}
 // ============================================================
 // Target: us-80202914 | func_80200C20
 // ============================================================
-extern "C" void func_80200C20() {}
+// Load the equip model arc: build the packed path token from `param` and
+// the manager handle, size the file, pick an alloc handle for the buffer
+// (func_801F9894), and kick the async read into modelFileHandle.
+extern "C" int func_80200C20(CModelDispEquip* self, u32 param) {
+    CModelDispFileCtx ctx;
+    func_801F981C(&ctx);
+    if (self->modelData != 0) return 1;
+    if (self->modelFileHandle != 0) return 0;
+    void* h = func_8007DE94__Q22cf13CfGameManagerFv(param, 5);
+    ml::FixStr<64> buf(true);
+    u32 packed = (param << 20) | 0x78000000 | (((u32)h >> 10) & 0x1FC00);
+    func_800AA33C(buf, packed, 1, 1);
+    int size = getFileSize__11CDeviceFileFPCc(buf.mString, 1);
+    if (size < 0) return 0;
+    u32 alloc = func_801F9894(&ctx, (u32)size);
+    CFileHandle* fh = (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(alloc, buf.mString, self, 0, 0);
+    self->modelFileHandle = fh;
+    setHandleFlag1__11CDeviceFileFP11CFileHandle(fh);
+    return 0;
+}
 
 // ============================================================
 // Target: us-802029e0 | func_80200CE8
@@ -216,7 +292,32 @@ extern "C" void func_80200CE8() {}
 // ============================================================
 // Target: us-80202ad8 | OnFileEvent__15CModelDispEquipFP10CEventFile
 // ============================================================
-extern "C" void OnFileEvent__15CModelDispEquipFP10CEventFile() {}
+// CDeviceFile async-load callback: find the slot whose handle matches the
+// event's file handle, hand the loaded buffer to the slot, and clear the
+// handle. The 9-slot scan falls back to the dedicated model slot (0x1090),
+// whose buffer becomes modelData (only for event type 1).
+int CModelDispEquip::OnFileEvent(CEventFile* event) {
+    for (u8 i = 0; i < 9; i++) {
+        FileSlot* slot = &fileSlots[i];
+        if (slot->handle == event->field_04) {
+            u8* d = slot->handle->mData;
+            slot->handle->mData = 0;
+            slot->data = d;
+            slot->handle = 0;
+            return 1;
+        }
+    }
+    if (modelFileHandle == event->field_04) {
+        if (event->field_00 == 1) {
+            u8* d = modelFileHandle->mData;
+            modelFileHandle->mData = 0;
+            modelData = d;
+            func_804CC1BC(lbl_eu_8065FC18);
+        }
+        modelFileHandle = 0;
+    }
+    return 0;
+}
 
 // ============================================================
 // Target: us-80202b8c | func_80200E94
@@ -238,7 +339,20 @@ extern "C" void func_80200E94(CModelDispEquip* self, void* arg, int index) {
 // ============================================================
 // Target: us-80202c00 | func_80200F08
 // ============================================================
-extern "C" void func_80200F08() {}
+// Stop the animation-model slot (vtable+0xC8 only, no re-arm): guarded on
+// the move pointer and the arg check - the stop half of func_80200E94.
+extern "C" void func_80200F08(CModelDispEquip* self, void* move, void* arg, int index) {
+    if (move == 0) return;
+    if (func_800BBC04(arg) <= 0) return;
+    CActParamHolder* holder = &self->actParamHolder;
+    if (holder->animModelPtrs[index] == 0) return;
+    // Stop + re-arm the animation-model slot (same shape as func_80200E94),
+    // guarded on the move pointer and the name lookup.
+    void** vtbl = *(void***)holder->field_0x00;
+    ((void (*)(void*, void*))vtbl[50])(holder->field_0x00, holder->animModelPtrs[index]);
+    vtbl = *(void***)holder->field_0x00;
+    ((void (*)(void*, void*, void*, int))vtbl[49])(holder->field_0x00, holder->animModelPtrs[index], arg, 0);
+}
 
 // ============================================================
 // Target: us-80202ca8 | func_80200FB0
@@ -463,7 +577,6 @@ void CModelDispEquip::resetBase() {
     ((unsigned char*)this)[8] = 0;
 }
 
-void CModelDispEquip::OnFileEvent() {}
 void CModelDispEquip::func_80201298() {}
 void CModelDispEquip::vfunc18() {}
 void CModelDispEquip::func_8020131C() {}

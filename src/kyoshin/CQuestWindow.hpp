@@ -217,6 +217,12 @@ extern u32 lbl_eu_80573D18[];
 // (func_8012278C stores the file pointer at +0xD0).
 extern const char* lbl_eu_8052CFF4[];
 
+// func_801231C4 jump-table item-name pointers (.sdata): passed as the first
+// arg of func_8013639C for the quest-slot name switch (cases 1, 3 and 4).
+extern u32 lbl_eu_806640D8;
+extern u32 lbl_eu_806640EC;
+extern u32 lbl_eu_80664104;
+
 // Shared string table (func_8012435C pane names, func_80122EF8 messages).
 extern char lbl_eu_804FEC84[];
 
@@ -353,6 +359,25 @@ nw4r::lyt::ArcResourceAccessor* func_801355F4();
 // BDAT archive attach helpers (func_8012278C common-archive branch).
 void func_8003AA78__5CBdatFUlPv(u32, void*);
 void* func_8003AA34();
+
+// Quest-content helpers (func_801231C4). The *_E4/58/2C functions return raw
+// u32 values that the caller masks explicitly with & 0xFFFF (retail keeps the
+// unmasked value in a callee-saved register between the call and the mask).
+u32 func_80136254(const void*, const void*, int);
+u32 func_801392E4(u32);
+u32 func_80139358(u32);
+u32 func_8013732C(u32);
+void* func_80138DA4(const char*);
+u32 func_8009ECF0();
+void func_8009ECFC(u16);
+void func_8013DB6C(u32, u32, u32, u32);
+
+// Pane visible-bit toggle (clears bit 0 of the pane +0xBB flag byte and ORs
+// the caller's flag byte; func_801231C4 pane show/hide calls).
+void func_80124270(void*, u32);
+
+// Copy 2 floats from src to self+0x4C (func_801231C4 cursor-pane placement).
+void func_80124288(u8* self, const float* src);
 }
 
 // Same-TU quest-window free functions. The retail names are unmangled, so the

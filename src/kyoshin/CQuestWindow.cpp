@@ -84,7 +84,8 @@ void func_801226C8(QuestWinObj* self) {
 // (field_0x8C) attaches the quest-name file pointer to +0xD0 and refreshes
 // too. Both branches clear the consumed handle; unmatched events return false.
 // ---------------------------------------------------------------------------
-extern "C" bool func_8012278C(CQuestWindow* self, CEventFile* event) {
+// C linkage comes from the header's extern "C" block (retail name unmangled).
+bool func_8012278C(CQuestWindow* self, CEventFile* event) {
     CFileHandle* evt = event->mFileHandle;
     if (self->field_0x88 == evt) {
         // Scratch heap region (RAII Class_8045F858 guard), then detach the
@@ -486,7 +487,319 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
     }
 }
 
-void func_801231C4(CQuestWindow* self){}
+// ---------------------------------------------------------------------------
+// func_801231C4 (us-80123ca0): quest-window content refresh. Reads the quest
+// row (lbl_eu_80573D18) for the pane values, toggles pane visibility from the
+// quest-type byte, binds the shared 'timg' resource to the cursor panes, runs
+// the per-slot name loops (C8==0 / C8!=0 variants with jump-table switches on
+// the slot type) and finally re-registers the render callback.
+// ---------------------------------------------------------------------------
+// base is a preprocessor alias (not a held register): the retail re-materializes
+// the string-base address six times (r22/r24/r29/r31) instead of pinning one
+// register, so the inline &lbl_eu_804FEC84[x] form reproduces that. C linkage
+// comes from the header's extern "C" block (retail name unmangled).
+#define base (lbl_eu_804FEC84)
+void func_801231C4(CQuestWindow* self) {
+    if (self->field_0x94 == 0 || self->field_0xD0 == 0) return;
+    u32 questId = self->field_B8;
+    u32 questRow = lbl_eu_80573D18[func_80138138(questId)];
+
+    self->field_0xDC =
+        (func_80136254((const void*)questRow, &base[0xb5], questId) & 0xFFFF) * 10;
+    self->field_0xE0 =
+        (func_80136254((const void*)questRow, &base[0xc0], questId) & 0xFFFF) * 10;
+    self->field_0xE4 = func_801361E8(questRow, &base[0xcd], questId);
+    u8 v = func_801361E8(questRow, &base[0xa2], questId);
+    if (v == 1) {
+        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xd8], true), 0);
+        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xe1], true), 0);
+        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xea], true), 1);
+        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xf5], true), 1);
+    } else {
+        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xd8], true), 1);
+        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xe1], true), 1);
+        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xea], true), 0);
+        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0xf5], true), 0);
+    }
+    char* res = 0;
+    switch (v) {
+    case 0:
+        res = (char*)self->field_0x94->GetResource(0x74696D67, &base[0x100], 0);
+        break;
+    case 1:
+        res = (char*)self->field_0x94->GetResource(0x74696D67, &base[0x114], 0);
+        break;
+    case 3:
+        res = (char*)self->field_0x94->GetResource(0x74696D67, &base[0x128], 0);
+        break;
+    }
+    if (res != 0) {
+        func_80137E7C(self->mpLayout, &base[0x13c], res);
+    }
+    if ((questId - 0x100) <= 4) {
+        if ((func_8009CF8C(questId + 0x220) & 0xFF) == 0) {
+            func_8009D018(questId + 0x220, 1);
+        }
+    }
+    self->field_0xC4 = func_801361E8(questRow, &base[0x144], questId);
+    char* s;
+    if (self->field_0xC8 != 0) {
+        s = func_80136190(&base[0x14a], &base[0x88], 0x38);
+    } else {
+        s = func_80136190(&base[0x14a], &base[0x88], 0x2e);
+    }
+    func_80136B4C(self->mpLayout, &base[0x154], s, 0);
+    s = func_8013639C((const void*)questRow, &base[0x15d], questId);
+    func_80136B4C(self->mpLayout, &base[0x163], s, 0);
+    u32 v172 = func_80136254((const void*)questRow, &base[0x172], questId);
+    s = (char*)func_80138DA4(
+        func_8013639C((const void*)lbl_eu_80664098, &base[0x88], v172 & 0xFFFF));
+    func_80136B4C(self->mpLayout, &base[0x179], s, 0);
+    s = func_8013639C((const void*)self->field_0xD0, &base[0x182], questId);
+    func_80136B4C(self->mpLayout, &base[0x96], s, (u32)self->field_0x90);
+    char* cur;
+    if (self->field_0xC8 != 0) {
+        if ((func_8009CF8C(questId + 0x220) & 1) != 0) {
+            cur = func_8013639C((const void*)self->field_0xD0, &base[0x18a], questId);
+        } else {
+            cur = func_8013639C((const void*)self->field_0xD0, &base[0x195], questId);
+        }
+    } else {
+        if (func_801361E8(questRow, &base[0x1a0], questId) != 0) {
+            cur = func_8013639C((const void*)self->field_0xD0, &base[0x1ad], questId);
+        } else {
+            cur = func_80136190(&base[0x14a], &base[0x88], 0x34);
+        }
+    }
+    func_80136B4C(self->mpLayout, &base[0x8d], cur, (u32)self->field_0x90);
+    func_80136B4C(self->mpLayout, &base[0x1b7], &base[0x1c4], 0);
+    func_80136B4C(self->mpLayout, &base[0x1c5], &base[0x1c4], 0);
+    func_80136B4C(self->mpLayout, &base[0x1d2], &base[0x1c4], 0);
+    if (self->field_0xC8 != 0) {
+        if (func_8009ECF0() == questId) {
+            func_8009ECFC(0);
+        }
+        u8 vcd = func_801361E8(questRow, &base[0xcd], questId);
+        if (vcd == 1) {
+            s = func_80136190(&base[0x14a], &base[0x88], 0x33);
+            func_80136B4C(self->mpLayout, &base[0x1b7], s, 0);
+            func_80136910(self->mpLayout, &base[0x61], 0);
+            func_80136910(self->mpLayout, &base[0x77], 0);
+        } else {
+            func_80136910(self->mpLayout, &base[0x61], self->field_0xE0);
+            func_80136910(self->mpLayout, &base[0x77], self->field_0xDC);
+            ml::FixStr<32> buf2(false);
+            buf2.mString[0] = 0;
+            buf2.mLength = 0;
+            u8 flg = (u8)(func_8009CF8C(questId + 0x220) & 1);
+            u8 i = 0;
+            char buf[0x20];
+            do {
+                // Retail duplicates the whole sprintf per branch (the ternary
+                // would fold the two format strings into one address select).
+                if (flg != 0) {
+                    sprintf(buf, &base[0x1df], i + 1);
+                } else {
+                    sprintf(buf, &base[0x1ea], i + 1);
+                }
+                u32 v30 = func_80136254((const void*)questRow, buf, questId);
+                if ((v30 & 0xFFFF) != 0) {
+                    u32 v22 = func_801392E4(v30 & 0xFFFF);
+                    u32 v5 = func_80139358(v30 & 0xFFFF);
+                    switch (v22 & 0xFFFF) {
+                    case 0: cur = func_8013639C((const void*)lbl_eu_806640F4, &base[0x88], v5 & 0xFFFF); break;
+                    case 1: cur = func_8013639C((const void*)lbl_eu_806640D8, &base[0x88], v5 & 0xFFFF); break;
+                    case 2: cur = func_8013639C((const void*)lbl_eu_806640F8, &base[0x88], v5 & 0xFFFF); break;
+                    case 3: cur = func_8013639C((const void*)lbl_eu_806640FC, &base[0x88], v5 & 0xFFFF); break;
+                    case 4: cur = func_8013639C((const void*)lbl_eu_80664104, &base[0x88], v5 & 0xFFFF); break;
+                    case 5: cur = func_8013639C((const void*)lbl_eu_80664108, &base[0x88], v5 & 0xFFFF); break;
+                    case 6: cur = func_8013639C((const void*)lbl_eu_8066410C, &base[0x88], v5 & 0xFFFF); break;
+                    case 7: cur = func_8013639C((const void*)lbl_eu_80664110, &base[0x88], v5 & 0xFFFF); break;
+                    }
+                    sprintf(buf, &base[0x1f5], i + 1);
+                    if ((v22 & 0xFFFF) == 3) {
+                        u8 v204 = func_801361E8(lbl_eu_806640EC, &base[0x204], v30 & 0xFFFF);
+                        s = func_80136190(&base[0x7f], &base[0x88], 0x1e - (v204 - 1));
+                        buf2.format(&base[0x20d], cur, s);
+                    } else {
+                        buf2.format(&base[0x212], cur);
+                    }
+                    func_80136B4C(self->mpLayout, buf, buf2.mString, 0);
+                    ((u16*)&self->field_0xD4)[self->field_0xDA] = (u16)v30;
+                    self->field_0xDA = self->field_0xDA + 1;
+                }
+                if (i == 0) {
+                    cur = func_80136190(&base[0x14a], &base[0x88], 0x33);
+                    func_80136B4C(self->mpLayout, &base[0x1b7], cur, 0);
+                }
+                i++;
+            } while (i < 3);
+        }
+    } else {
+        u8 vcd = func_801361E8(questRow, &base[0xcd], questId);
+        if (vcd == 3) {
+            s = func_80136190(&base[0x14a], &base[0x88], 0x32);
+            func_80136B4C(self->mpLayout, &base[0x1b7], s, 0);
+            func_80136910(self->mpLayout, &base[0x61], self->field_0xE0);
+            func_80136910(self->mpLayout, &base[0x77], self->field_0xDC);
+        } else if (vcd == 1) {
+            s = func_80136190(&base[0x14a], &base[0x88], 0x33);
+            func_80136B4C(self->mpLayout, &base[0x1b7], s, 0);
+            func_80136910(self->mpLayout, &base[0x61], 0);
+            func_80136910(self->mpLayout, &base[0x77], 0);
+        } else {
+            func_80136910(self->mpLayout, &base[0x61], self->field_0xE0);
+            func_80136910(self->mpLayout, &base[0x77], self->field_0xDC);
+            ml::FixStr<32> buf2(false);
+            buf2.mString[0] = 0;
+            buf2.mLength = 0;
+            u8 i = 0;
+            char buf3[0x20];
+            do {
+                sprintf(buf3, &base[0x1ea], i + 1);
+                u32 v31 = func_80136254((const void*)questRow, buf3, questId);
+                if ((v31 & 0xFFFF) != 0) {
+                    u32 v30 = func_801392E4(v31 & 0xFFFF);
+                    u32 v5 = func_80139358(v31 & 0xFFFF);
+                    switch (v30 & 0xFFFF) {
+                    case 0: cur = func_8013639C((const void*)lbl_eu_806640F4, &base[0x88], v5 & 0xFFFF); break;
+                    case 1: cur = func_8013639C((const void*)lbl_eu_806640D8, &base[0x88], v5 & 0xFFFF); break;
+                    case 2: cur = func_8013639C((const void*)lbl_eu_806640F8, &base[0x88], v5 & 0xFFFF); break;
+                    case 3: cur = func_8013639C((const void*)lbl_eu_806640FC, &base[0x88], v5 & 0xFFFF); break;
+                    case 4: cur = func_8013639C((const void*)lbl_eu_80664104, &base[0x88], v5 & 0xFFFF); break;
+                    case 5: cur = func_8013639C((const void*)lbl_eu_80664108, &base[0x88], v5 & 0xFFFF); break;
+                    case 6: cur = func_8013639C((const void*)lbl_eu_8066410C, &base[0x88], v5 & 0xFFFF); break;
+                    case 7: cur = func_8013639C((const void*)lbl_eu_80664110, &base[0x88], v5 & 0xFFFF); break;
+                    }
+                    sprintf(buf3, &base[0x1f5], i + 1);
+                    if ((v30 & 0xFFFF) == 3) {
+                        u8 v204 = func_801361E8(lbl_eu_806640EC, &base[0x204], v31 & 0xFFFF);
+                        s = func_80136190(&base[0x7f], &base[0x88], 0x1e - (v204 - 1));
+                        buf2.format(&base[0x20d], cur, s);
+                    } else {
+                        buf2.format(&base[0x212], cur);
+                    }
+                    func_80136B4C(self->mpLayout, buf3, buf2.mString, 0);
+                }
+                if (i == 0) {
+                    cur = func_80136190(&base[0x14a], &base[0x88], 0x33);
+                    func_80136B4C(self->mpLayout, &base[0x1b7], cur, 0);
+                }
+                i++;
+            } while (i < 3);
+        }
+    }
+    // Common tail: button labels, classic-pad hint, timg resource panes.
+    s = func_80136190(&base[0x14a], &base[0x88], 0x30);
+    func_80136B4C(self->mpLayout, &base[0x215], s, 0);
+    s = func_80136190(&base[0x14a], &base[0x88], 0x31);
+    func_80136B4C(self->mpLayout, &base[0x21d], s, 0);
+    s = func_80136190(&base[0x14a], &base[0x88], self->field_0xC8 != 0 ? 0x2f : 0x30);
+    func_80136B4C(self->mpLayout, &base[0x224], s, 0);
+    s = func_80136190(&base[0x22d], &base[0x23b], 0x2b);
+    func_80136B4C(self->mpLayout, &base[0x240], s, 0);
+    func_80136B4C(self->mpLayout, &base[0x24b], s, 0);
+    const char* cp = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0 ? &base[0x256] : &base[0x25f];
+    char* resName = func_80138F78(func_8013606C(&base[0x22d], cp, 0x2b));
+    void* res2 = func_801355F4()->GetResource(0x74696D67, resName, 0);
+    if (res2 != 0) {
+        func_80137E7C(self->mpLayout, &base[0x268], res2);
+        func_80137E7C(self->mpLayout, &base[0x271], res2);
+        struct ResData {
+            u8 pad[8];
+            u16* pData;
+        };
+        u16* data = ((ResData*)res2)->pData;
+        u16 a = data[1];
+        u16 b = data[0];
+        nw4r::lyt::Pane* pane = self->mpLayout->GetRootPane()->FindPaneByName(&base[0x268], true);
+        if (pane != 0) {
+            nw4r::math::VEC2 vec;
+            vec.x = (f32)(u32)a;
+            vec.y = (f32)(u32)b;
+            func_80124288((u8*)pane, (const float*)&vec);
+        }
+        pane = self->mpLayout->GetRootPane()->FindPaneByName(&base[0x271], true);
+        if (pane != 0) {
+            nw4r::math::VEC2 vec2;
+            vec2.x = (f32)(u32)a;
+            vec2.y = (f32)(u32)b;
+            func_80124288((u8*)pane, (const float*)&vec2);
+        }
+    }
+    if (self->field_0xC8 != 0) {
+        u8 flg = (u8)(func_8009CF8C(questId + 0x220) & 1);
+        u8 i = 0;
+        s32 c26 = 0xc6;
+        char buf4[0x20];
+        do {
+            if (flg != 0) {
+                sprintf(buf4, &base[0x27a], i + 1);
+            } else {
+                sprintf(buf4, &base[0x289], i + 1);
+            }
+            u32 v27 = func_80136254((const void*)questRow, buf4, questId);
+            if (flg != 0) {
+                sprintf(buf4, &base[0x298], i + 1);
+            } else {
+                sprintf(buf4, &base[0x2a6], i + 1);
+            }
+            u8 v2 = func_801361E8(questRow, buf4, questId);
+            if ((v27 & 0xFFFF) != 0) {
+                func_8009D018((v27 & 0xFFFF) + 0x608, v2);
+            }
+            if (i == 0) {
+                if (flg != 0) {
+                    sprintf(buf4, &base[0x2b4]);
+                } else {
+                    sprintf(buf4, &base[0x2c0]);
+                }
+                u32 v30 = func_80136254((const void*)questRow, buf4, questId);
+                u8 v27b = (u8)func_8013732C(
+                    func_80136254((const void*)questRow, &base[0x172], questId) & 0xFFFF);
+                if ((v30 & 0xFFFF) != 0) {
+                    s32 v21 = (s32)(v27b & 0xFF) + 0x21;
+                    s32 v4 = (s32)func_8009CF8C((u32)v21) + (v30 & 0xFFFF);
+                    if (v4 < 0) v4 = 0;
+                    if (v4 > 0x2710) v4 = 0x2710;
+                    func_8009D018((u32)v21, (u32)v4);
+                    struct PlayerView {
+                        u8 pad[0x8C];
+                        u16 field_8C;
+                    };
+                    u16 pid = ((PlayerView*)getPlayer__Q22cf13CfGameManagerFi(0))->field_8C;
+                    func_8013DB6C(4, pid, v27b & 0xFF, v30 & 0xFFFF);
+                    if ((v30 & 0xFFFF) != 0) {
+                        self->field_0xCC = (u32)c26;
+                        func_80138078__FUl(0x34);
+                    }
+                }
+            }
+            i++;
+        } while (i < 4);
+    }
+    func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2cc], true), 0);
+    func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 0);
+    func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2e3], true), 0);
+    func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2ec], true), 0);
+    if (self->field_0xC8 == 0) {
+        if (self->field_0xC4 == 0) {
+            func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2cc], true), 1);
+        } else {
+            func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 1);
+        }
+        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2ec], true), 1);
+        func_80138078__FUl(0x19);
+    } else {
+        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2d7], true), 1);
+        func_80124270((void*)self->mpLayout->GetRootPane()->FindPaneByName(&base[0x2e3], true), 1);
+        func_80138078__FUl(0x1c);
+        self->field_0xC0 = 0;
+    }
+    IScnRender* render = reinterpret_cast<IScnRender*>(self);
+    if (self != 0) render = reinterpret_cast<IScnRender*>((u8*)self + 0x70);
+    self->mpScn->addRenderCB(render, 0x10, 0);
+}
 
 // Pane-flag toggle: clear bit 0 of the pane's +0xBB flag byte (nw4r
 // visible bit) and OR in the caller's flag byte (0/1 = hide/show).

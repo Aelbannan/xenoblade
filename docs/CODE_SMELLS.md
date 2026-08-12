@@ -11,15 +11,15 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | metric | count |
 |---|---|
 | extern "C" (total lines) | 8080 |
-| extern "C" declarations (non-lbl_*, imports) | 2647 |
-| extern "C" definitions (forced names) | 3201 |
-| `self`/register-style params | 7083 |
-| `void*` (params + locals) | 5884 |
-| raw pointer offset arithmetic | 5399 |
+| extern "C" declarations (non-lbl_*, imports) | 2649 |
+| extern "C" definitions (forced names) | 3199 |
+| `self`/register-style params | 7092 |
+| `void*` (params + locals) | 5889 |
+| raw pointer offset arithmetic | 5400 |
 | deref-through-cast arithmetic | 2381 |
 | inline asm / `register` | 99 |
 | rN-named params | 417 |
-| goto | 1537 |
+| goto | 1541 |
 | #pragma | 817 |
 
 ## Top offenders (by cleanable severity)
@@ -43,7 +43,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 |---|---|---|---|---|---|---|---|---|---|
 | libs/monolib/src/coli/CColiProc.cpp | 4 | 9 | 8 | 1 | 3 | 0 | 0 | 2 | 0 |
 | libs/monolib/src/coli/code_804A6C60.cpp | 2 | 3 | 5 | 4 | 3 | 2 | 0 | 0 | 0 |
-| libs/monolib/src/coli/code_804B2FF0.cpp | 0 | 1 | 10 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/coli/code_804B2FF0.cpp | 0 | 1 | 9 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/coli/code_804B59C8.cpp | 1 | 4 | 3 | 3 | 3 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/coli/code_804BAE10.cpp | 3 | 4 | 16 | 2 | 1 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/core/CDesktop.cpp | 0 | 1 | 1 | 1 | 0 | 0 | 0 | 1 | 0 |
@@ -152,7 +152,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | libs/monolib/src/scn/CScnRoot.cpp | 1 | 0 | 5 | 4 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnRootNw4r.cpp | 1 | 16 | 22 | 6 | 8 | 3 | 0 | 1 | 0 |
 | libs/monolib/src/scn/CScnTexWorkMan.cpp | 4 | 3 | 6 | 3 | 1 | 0 | 0 | 0 | 54 |
-| libs/monolib/src/scn/CScnVirtualLight.cpp | 12 | 35 | 72 | 38 | 10 | 5 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnVirtualLight.cpp | 12 | 35 | 73 | 39 | 10 | 5 | 0 | 0 | 4 |
 | libs/monolib/src/scn/CScn_80496B0C.cpp | 45 | 10 | 34 | 7 | 21 | 5 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CVirtualLightAmb.cpp | 2 | 1 | 3 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CVirtualLightDir.cpp | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -308,7 +308,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/CPresentWin.cpp | 3 | 7 | 31 | 9 | 0 | 0 | 0 | 2 | 1 |
 | src/kyoshin/CQstLogInfo.cpp | 4 | 11 | 34 | 6 | 0 | 0 | 0 | 2 | 0 |
 | src/kyoshin/CQstLogList.cpp | 3 | 14 | 50 | 3 | 0 | 0 | 0 | 0 | 4 |
-| src/kyoshin/CQuestWindow.cpp | 2 | 5 | 36 | 9 | 5 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CQuestWindow.cpp | 2 | 4 | 37 | 10 | 6 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSaveLoad.cpp | 0 | 42 | 49 | 32 | 96 | 31 | 0 | 4 | 19 |
 | src/kyoshin/CScrollBar.cpp | 3 | 4 | 13 | 4 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSelShopWin.cpp | 2 | 4 | 6 | 7 | 0 | 0 | 0 | 0 | 0 |
@@ -355,7 +355,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/cf/CTaskEnvironment.cpp | 1 | 15 | 14 | 9 | 10 | 9 | 0 | 0 | 0 |
 | src/kyoshin/cf/CTaskGameCf.cpp | 0 | 2 | 0 | 0 | 6 | 4 | 0 | 0 | 1 |
 | src/kyoshin/cf/CTaskGameEffAfter.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CTaskREvent.cpp | 3 | 3 | 11 | 8 | 1 | 1 | 0 | 0 | 0 |
+| src/kyoshin/cf/CTaskREvent.cpp | 3 | 3 | 13 | 8 | 1 | 1 | 0 | 0 | 0 |
 | src/kyoshin/cf/CTaskREvtSequence.cpp | 2 | 4 | 6 | 6 | 1 | 1 | 0 | 0 | 0 |
 | src/kyoshin/cf/CVision.cpp | 13 | 2 | 41 | 51 | 64 | 41 | 0 | 10 | 0 |
 | src/kyoshin/cf/CfBdat.cpp | 0 | 0 | 0 | 80 | 0 | 0 | 0 | 0 | 2 |
@@ -541,7 +541,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
 | src/kyoshin/menu/CMenuZeal.cpp | 1 | 0 | 7 | 8 | 0 | 0 | 0 | 0 | 5 |
 | src/kyoshin/menu/code_80187F14.cpp | 16 | 7 | 0 | 1 | 7 | 0 | 0 | 0 | 5 |
 | src/kyoshin/menu/code_8018C5FC.cpp | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/menu/parts/CModelDispEquip.cpp | 4 | 50 | 48 | 10 | 4 | 1 | 0 | 0 | 1 |
+| src/kyoshin/menu/parts/CModelDispEquip.cpp | 6 | 49 | 54 | 13 | 4 | 1 | 0 | 0 | 1 |
 | src/kyoshin/plugin/ocBdat.cpp | 0 | 21 | 0 | 37 | 0 | 0 | 0 | 0 | 4 |
 | src/kyoshin/plugin/ocBuiltin.cpp | 1 | 1 | 3 | 0 | 0 | 0 | 0 | 3 | 0 |
 | src/kyoshin/plugin/ocCfp.cpp | 5 | 8 | 20 | 2 | 2 | 2 | 0 | 0 | 0 |
@@ -595,7 +595,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "libs/monolib/src/coli/code_804B2FF0.cpp": {
   "extern_c_nonlbl_def": 1,
-  "self_params": 10,
+  "self_params": 9,
   "void_ptr": 1
  },
  "libs/monolib/src/coli/code_804B59C8.cpp": {
@@ -1274,9 +1274,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "deref_arith": 5,
   "extern_c_nonlbl_decl": 12,
   "extern_c_nonlbl_def": 35,
+  "goto_count": 4,
   "ptr_arith": 10,
-  "self_params": 72,
-  "void_ptr": 38
+  "self_params": 73,
+  "void_ptr": 39
  },
  "libs/monolib/src/scn/CScn_80496B0C.cpp": {
   "deref_arith": 5,
@@ -1986,10 +1987,10 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/CQuestWindow.cpp": {
   "extern_c_nonlbl_decl": 2,
-  "extern_c_nonlbl_def": 5,
-  "ptr_arith": 5,
-  "self_params": 36,
-  "void_ptr": 9
+  "extern_c_nonlbl_def": 4,
+  "ptr_arith": 6,
+  "self_params": 37,
+  "void_ptr": 10
  },
  "src/kyoshin/CSaveLoad.cpp": {
   "deref_arith": 31,
@@ -2318,7 +2319,7 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
   "extern_c_nonlbl_decl": 3,
   "extern_c_nonlbl_def": 3,
   "ptr_arith": 1,
-  "self_params": 11,
+  "self_params": 13,
   "void_ptr": 8
  },
  "src/kyoshin/cf/CTaskREvtSequence.cpp": {
@@ -3514,12 +3515,12 @@ Tracks the legacy hand-written TU smell families (extern "C" outside `lbl_*`, `s
  },
  "src/kyoshin/menu/parts/CModelDispEquip.cpp": {
   "deref_arith": 1,
-  "extern_c_nonlbl_decl": 4,
-  "extern_c_nonlbl_def": 50,
+  "extern_c_nonlbl_decl": 6,
+  "extern_c_nonlbl_def": 49,
   "goto_count": 1,
   "ptr_arith": 4,
-  "self_params": 48,
-  "void_ptr": 10
+  "self_params": 54,
+  "void_ptr": 13
  },
  "src/kyoshin/plugin/ocBdat.cpp": {
   "extern_c_nonlbl_def": 21,

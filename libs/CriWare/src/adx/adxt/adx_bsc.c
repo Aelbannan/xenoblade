@@ -453,7 +453,7 @@ s32 ADXB_GetNumChan(void* self) {
 }
 
 s16 ADXB_GetFmtBps(void* self) {
-    return (s8)*(u8*)((u8*)self + 0x0D);
+    return *(s8*)((u8*)self + 0x0D);
 }
 
 s32 ADXB_GetOutBps(void* self) {

@@ -4,10 +4,29 @@
 #include <harness_catalog.h>
 #include <string.h>
 #include "monolib/coli/CTaskColiManager.hpp"
+// The shared header declares lbl_eu_8065D138 / lbl_eu_8056F4F0 as SDA-sized
+// externs (4-byte pointer / 1-byte u8), but retail addresses both as full
+// objects via lis/addi (ADDR16_HA/LO relocs). Rename the header's declarations
+// aside and re-declare them at their full size below so MWCC keeps the 32-bit
+// addressing the retail relocs require instead of SDA21. lbl_eu_8066AEC0 is
+// re-declared const so MWCC can hoist its load past the aliasing stores (like
+// a pooled literal) while still emitting the retail reloc name.
+#define lbl_eu_8065D138 lbl_eu_8065D138_hdr
+#define lbl_eu_8056F4F0 lbl_eu_8056F4F0_hdr
+#define lbl_eu_8066AEC0 lbl_eu_8066AEC0_hdr
 #include "monolib/coli/code_804B2FF0.hpp"
+#undef lbl_eu_8065D138
+#undef lbl_eu_8056F4F0
+#undef lbl_eu_8066AEC0
 #include "monolib/work/CTTask.hpp"
 #include <revolution/MTX.h>
 #include <nw4r/math.h>
+
+// Full-size externs (retail: walk-state object at 0x8065D138, target table at
+// 0x8056F4F0). Declared at global scope so MWCC emits the names unmangled.
+extern CColiWalkState lbl_eu_8065D138;
+extern u32 lbl_eu_8056F4F0[4];
+extern const f32 lbl_eu_8066AEC0;
 
 void func_804B2FF0(){}
 
@@ -20,8 +39,6 @@ void func_804B33C8(){}
 void func_804B34F4(){}
 
 void func_804B3B18(){}
-
-void func_804B4BDC(){}
 
 void func_804B4854(){}
 
@@ -49,24 +66,44 @@ struct CColiSphere {
 
 void func_804B43B4(CColiSphere* p) {
     // Expand the box's max corner by the sphere's max extent and the
-    // min corner by its min extent, per axis.
-    if (lbl_eu_80665944->max[0] < p->x + p->radius) {
-        lbl_eu_80665944->max[0] = p->x + p->radius;
+    // min corner by its min extent, per axis. Each check reloads the radius
+    // temp first (retail does the same - the bound load reuses the FPR, so
+    // the radius is re-fetched at the top of every check).
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->max[0] < p->x + r) {
+            lbl_eu_80665944->max[0] = p->x + r;
+        }
     }
-    if (lbl_eu_80665944->min[0] > p->x - p->radius) {
-        lbl_eu_80665944->min[0] = p->x - p->radius;
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->min[0] > p->x - r) {
+            lbl_eu_80665944->min[0] = p->x - r;
+        }
     }
-    if (lbl_eu_80665944->max[1] < p->y + p->radius) {
-        lbl_eu_80665944->max[1] = p->y + p->radius;
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->max[1] < p->y + r) {
+            lbl_eu_80665944->max[1] = p->y + r;
+        }
     }
-    if (lbl_eu_80665944->min[1] > p->y - p->radius) {
-        lbl_eu_80665944->min[1] = p->y - p->radius;
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->min[1] > p->y - r) {
+            lbl_eu_80665944->min[1] = p->y - r;
+        }
     }
-    if (lbl_eu_80665944->max[2] < p->z + p->radius) {
-        lbl_eu_80665944->max[2] = p->z + p->radius;
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->max[2] < p->z + r) {
+            lbl_eu_80665944->max[2] = p->z + r;
+        }
     }
-    if (lbl_eu_80665944->min[2] > p->z - p->radius) {
-        lbl_eu_80665944->min[2] = p->z - p->radius;
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->min[2] > p->z - r) {
+            lbl_eu_80665944->min[2] = p->z - r;
+        }
     }
 }
 
@@ -117,17 +154,31 @@ struct CColiCapsule {
 
 void func_804B453C(CColiCapsule* p) {
     for (int i = 0; i < 3; i++) {
-        if (lbl_eu_80665944->max[i] < p->endPos[i] + p->radius) {
-            lbl_eu_80665944->max[i] = p->endPos[i] + p->radius;
+        // Per-sub-block radius temp: retail reloads it at the top of every
+        // sub-block (the bound loads reuse the FPR, alternating f1/f2).
+        {
+            f32 r = p->radius;
+            if (lbl_eu_80665944->max[i] < p->radius + p->endPos[i]) {
+                lbl_eu_80665944->max[i] = p->radius + p->endPos[i];
+            }
         }
-        if (lbl_eu_80665944->min[i] > p->endPos[i] - p->radius) {
-            lbl_eu_80665944->min[i] = p->endPos[i] - p->radius;
+        {
+            f32 r = p->radius;
+            if (lbl_eu_80665944->min[i] > p->endPos[i] - r) {
+                lbl_eu_80665944->min[i] = p->endPos[i] - r;
+            }
         }
-        if (lbl_eu_80665944->max[i] < p->endPosB[i] + p->radius) {
-            lbl_eu_80665944->max[i] = p->endPosB[i] + p->radius;
+        {
+            f32 r = p->radius;
+            if (lbl_eu_80665944->max[i] < p->radius + p->endPosB[i]) {
+                lbl_eu_80665944->max[i] = p->radius + p->endPosB[i];
+            }
         }
-        if (lbl_eu_80665944->min[i] > p->endPosB[i] - p->radius) {
-            lbl_eu_80665944->min[i] = p->endPosB[i] - p->radius;
+        {
+            f32 r = p->radius;
+            if (lbl_eu_80665944->min[i] > p->endPosB[i] - r) {
+                lbl_eu_80665944->min[i] = p->endPosB[i] - r;
+            }
         }
     }
 }
@@ -702,12 +753,12 @@ void func_804B4BDC(CColiList* self, CColiListItem* node) {
         tail->next = node;
         node->prev = tail;
         node->next = 0;
-        node->f_a4 = 0.0f;
+        node->f_a4 = lbl_eu_8066AEC0;
     } else {
         self->head = node;
         node->next = 0;
         node->prev = 0;
-        node->f_a4 = 0.0f;
+        node->f_a4 = lbl_eu_8066AEC0;
     }
 }
 
@@ -778,9 +829,12 @@ struct CColiProcLocal {
 };
 
 extern "C" void sinit_804B598C() {
-    CColiProcLocal* self = (CColiProcLocal*)&lbl_eu_8065D138;
-    __ct__CColiProc(self);
-    self->field_0x0 = &lbl_eu_8056F4F0;
+    // Placement-construct CColiProc over the walk-state object's storage,
+    // then point its default target data at the alternate table. The address
+    // is taken twice, so MWCC keeps only the HA half in r31 and folds the LO
+    // half into each use (call arg / store displacement) like retail.
+    __ct__CColiProc((CColiProcLocal*)&lbl_eu_8065D138);
+    ((CColiProcLocal*)&lbl_eu_8065D138)->field_0x0 = &lbl_eu_8056F4F0;
 }
 
 // Walk/traverse helpers (C-linkage retail symbols in the sibling coli unit).
@@ -793,18 +847,18 @@ int func_804B5088(CColiQueryResult* self, const Vec* a, const Vec* b,
 
     int init = 0;
     if (isFirst == 0) {
-        lbl_eu_8065D138->flag = 0;
+        lbl_eu_8065D138.flag = 0;
         init = 1;
-        lbl_eu_8065D138->src[0] = a->x;
-        lbl_eu_8065D138->src[1] = a->y;
-        lbl_eu_8065D138->src[2] = a->z;
-        lbl_eu_8065D138->bbMax[2] = lbl_eu_8066AEC4;
-        lbl_eu_8065D138->f5c = lbl_eu_8066AEC8;
-        lbl_eu_8065D138->bbMin[0] = lbl_eu_8066AEC0;
-        lbl_eu_8065D138->bbMin[1] = lbl_eu_8066AEC0;
-        lbl_eu_8065D138->bbMin[2] = lbl_eu_8066AEC0;
-        lbl_eu_8065D138->bbMax[0] = lbl_eu_8066AEC0;
-        lbl_eu_8065D138->bbMax[1] = lbl_eu_8066AEC0;
+        lbl_eu_8065D138.src[0] = a->x;
+        lbl_eu_8065D138.src[1] = a->y;
+        lbl_eu_8065D138.src[2] = a->z;
+        lbl_eu_8065D138.bbMax[2] = lbl_eu_8066AEC4;
+        lbl_eu_8065D138.f5c = lbl_eu_8066AEC8;
+        lbl_eu_8065D138.bbMin[0] = lbl_eu_8066AEC0;
+        lbl_eu_8065D138.bbMin[1] = lbl_eu_8066AEC0;
+        lbl_eu_8065D138.bbMin[2] = lbl_eu_8066AEC0;
+        lbl_eu_8065D138.bbMax[0] = lbl_eu_8066AEC0;
+        lbl_eu_8065D138.bbMax[1] = lbl_eu_8066AEC0;
         self->bbMin[0] = lbl_eu_8066AEC0;
         self->bbMin[1] = lbl_eu_8066AEC0;
         self->bbMin[2] = lbl_eu_8066AEC0;
@@ -815,7 +869,7 @@ int func_804B5088(CColiQueryResult* self, const Vec* a, const Vec* b,
 
     char seg[0x18];
     char query[0x18];
-    func_804A7ACC(seg, a, b, lbl_eu_8065D138);
+    func_804A7ACC(seg, a, b, &lbl_eu_8065D138);
     func_804B077C(query, a, b);
 
     int found = 0;
@@ -832,13 +886,13 @@ int func_804B5088(CColiQueryResult* self, const Vec* a, const Vec* b,
 
     if (!init) return found;
     if (!found) return 0;
-    if (!lbl_eu_8065D138->flag) return 0;
-    self->bbMin[0] = lbl_eu_8065D138->bbMin[0];
-    self->bbMin[1] = lbl_eu_8065D138->bbMin[1];
-    self->bbMin[2] = lbl_eu_8065D138->bbMin[2];
-    self->bbMax[0] = lbl_eu_8065D138->bbMax[0];
-    self->bbMax[1] = lbl_eu_8065D138->bbMax[1];
-    self->bbMax[2] = lbl_eu_8065D138->bbMax[2];
+    if (!lbl_eu_8065D138.flag) return 0;
+    self->bbMin[0] = lbl_eu_8065D138.bbMin[0];
+    self->bbMin[1] = lbl_eu_8065D138.bbMin[1];
+    self->bbMin[2] = lbl_eu_8065D138.bbMin[2];
+    self->bbMax[0] = lbl_eu_8065D138.bbMax[0];
+    self->bbMax[1] = lbl_eu_8065D138.bbMax[1];
+    self->bbMax[2] = lbl_eu_8065D138.bbMax[2];
     return 1;
 }
 // CRTP task base — canonical monolib template (declared-only members so the
@@ -878,23 +932,21 @@ void CTaskColiManager::Term() {
 // fold any node requesting a pass into mFlags bit 1, re-walk for post-pass
 // cleanup (func_804B0DF4), then re-anchor at the front of the list.
 void CTaskColiManager::Move() {
-    mFlags &= ~0x3u;
     CColiMoveNode* node = mHead;
+    mFlags &= ~0x2u;
     if (node != 0) {
-        do {
+        while (node != 0) {
             func_804B0CE8(node);
             if (node->flags & 0x2000) {
                 mFlags |= 0x2u;
             }
             node = node->next;
-        } while (node != 0);
+        }
     }
     node = mHead;
-    if (node != 0) {
-        do {
-            func_804B0DF4(node);
-            node = node->next;
-        } while (node != 0);
+    while (node != 0) {
+        func_804B0DF4(node);
+        node = node->next;
     }
     CColiMoveNode* front = mHead;
     CColiMoveNode* p = mHead->prev;

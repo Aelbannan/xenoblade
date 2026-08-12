@@ -634,16 +634,20 @@ extern "C" void func_801C171C(CfSoundRecord* rec, u32 soundId, float pan) {
     if ((rec->mFlag & 1) == 0) {
         return;
     }
-    CfSoundSlot* p = lbl_eu_80575928;
+    // end declared before p so MWCC allocates end=r31, p=r30 (retail); the
+    // table base is loaded first and end derived from it (addi r31, r30, 0xC00).
+    // searching flag + nested while reproduce the retail loop rotation
+    // (r0 toggles 1->0->1 per slot).
     CfSoundSlot* end = lbl_eu_80575928 + 64;
-    bool searching = true;
+    CfSoundSlot* p = lbl_eu_80575928;
+    int searching = 1;
     while (searching && p != end) {
-        searching = false;
-        while (!searching) {
-            if (p->mId == soundId && p->mSound != 0) {
+        searching = 0;
+        while (searching == 0) {
+            if (soundId == p->mId && p->mSound != 0) {
                 p->mSound->SetPan(pan);
             }
-            searching = true;
+            searching = 1;
         }
         p++;
     }

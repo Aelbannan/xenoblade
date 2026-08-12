@@ -188,8 +188,9 @@ extern s32 AHXDCD_DecodeBitalloc2(void* self, void* inf, s32* out);
 
 typedef struct AHXDCDState {
     u8 _00[0x349];
+    s8 sampleReady;
+    u8 _34A;
     s8 outputReady;
-    u8 _34A[2];
     u32 eofState;
     u8 _350[0x44];
     u32 totalNumSmpl;
@@ -228,7 +229,7 @@ int AHXDCD_GetOutSmpl(void) { return 0x60; }
 
 u32 AHXDCD_GetTotalNumSmpl(void* self) {
     AHXDCDState* state = (AHXDCDState*)self;
-    if (state->outputReady == 0) return 0;
+    if (state->sampleReady == 0) return 0;
     return state->totalNumSmpl;
 }
 

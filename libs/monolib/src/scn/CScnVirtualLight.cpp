@@ -81,7 +81,30 @@ extern "C" __declspec(noinline) void __dt__804923A0(CScnVirtualLightReslist* obj
 }
 
 
-void func_804929C0(){}
+// Walk the ring from `b` while the value at func_80492A64(b) differs from
+// *d (func_80492A88 tests the pair, func_80492A70 advances), then copy `b`
+// into `a` (retail func_804929C0).
+// Walk the ring from `b` while the value at func_80492A64(b) differs from
+// *d (func_80492A88 tests the pair, func_80492A70 advances), then copy `b`
+// into `a` (retail func_804929C0). The body/check/end labels mirror the
+// retail loop rotation (body below the head with an initial jump over); the
+// `cur` local keeps MWCC's cmplw operand order (rA = the call-derived value).
+void func_804929C0(int* a, u32* b, const u32* c, const u32* d) {
+    goto check;
+body:
+    func_80492A70(b);
+check:
+    if (!func_80492A88(b, c)) {
+        goto end;
+    }
+    u32 cur = *func_80492A64(b);
+    if (cur == *d) {
+        goto end;
+    }
+    goto body;
+end:
+    func_80492AA8(a, (int*)b);
+}
 
 extern "C" __declspec(noinline) void func_80492A5C(void* self, u32 val) { ((CScnVirtualLightData*)self)->value00 = val; }
 
@@ -89,22 +112,24 @@ void func_80492A50(CScnVirtualLightData* self, CScnVirtualLightValueSrc* src) {
     func_80492A5C(self, *src->mValue);
 }
 
-extern "C" void* func_80492A64(void* self){ return (void*)((char*)*(void**)self + 8); }
+extern "C" __declspec(noinline) u32* func_80492A64(void* self){ return (u32*)((char*)*(void**)self + 8); }
 
-extern "C" void func_80492A70(u32* self) { *self = *(u32*)(*(u32**)self); }
+extern "C" __declspec(noinline) void func_80492A70(u32* self) { *self = *(u32*)(*(u32**)self); }
 
 // retail: lwz r4,0x4(r4); b func_80492A5C (r3 passes through). noinline
 // keeps the bl from func_80493148 out-of-line (retail calls it).
 extern "C" __declspec(noinline) void func_80492A80(void* self, void* src) { func_80492A5C(self, *(u32*)((char*)src + 4)); }
 
-u32 func_80492A88(const u32* a, const u32* b) {
+// Word-compare helper (retail func_80492A88): returns *a != *b. noinline
+// keeps the bl from func_804929C0 out-of-line (retail calls it).
+__declspec(noinline) u32 func_80492A88(const u32* a, const u32* b) {
     return *a != *b;
 }
 
 extern "C" void func_804920E0(CScnVirtualLightReslist* self);
 extern "C" void func_80492AA4(void* self) { func_804920E0((CScnVirtualLightReslist*)self); }
 
-extern "C" void func_80492AA8(int* dst, int* src){
+extern "C" __declspec(noinline) void func_80492AA8(int* dst, int* src){
     *dst = *src;
 }
 
@@ -268,8 +293,25 @@ extern "C" __declspec(noinline) CScnVirtualLightNode* func_804932BC(CScnVirtualL
     return &list->mList[i];
 }
 
-void func_80493300(){}
-
+// Creates a CVirtualLightDir for the given light-data field and initializes it
+// from `data` (4 words), `val1` and the two direction floats, returning the
+// new light. Sibling of func_804930BC (amb variant); the if/else phi shape
+// pins the store to the merge point like retail.
+CVirtualLightDir* func_80493300(CScnVirtualLightData* self, u8* field, const func_800407C8_tmp* data,
+                   f32 val1, f32 val2, f32 val3) {
+    CVirtualLightDir* ptr;
+    void* mem = mtl::MemManager::allocate(0x3C, self->value08);
+    if (mem != 0) {
+        ptr = __ct__CVirtualLightDir((CVirtualLightDir*)mem);
+    } else {
+        ptr = (CVirtualLightDir*)mem;
+    }
+    func_80493148((CScnVirtualLightData*)field, (u32)&ptr);
+    copyWord4Offset((u32*)ptr, (const u32*)data);
+    func_80493140(ptr, val1);
+    func_8049474C(ptr, val2, val3);
+    return ptr;
+}
 void func_8049347C(){}
 
 u32 func_80493574(void* self) { return ((CScnVirtualLightData*)self)->value2C; }

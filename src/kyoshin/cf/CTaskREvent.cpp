@@ -64,7 +64,16 @@ void func_80164724(){}
 
 void func_80164838(){}
 
-void func_80164910__Fv(){}
+u32 func_80164910() {
+    CEventMgr* mgr = lbl_eu_80664240;
+    if (mgr == nullptr) return 0;
+    u32 result = 0;
+    if (mgr->field_0x1BC != 0 ||
+        (mgr->field_0x1D4 >= 0 && (lbl_eu_80663E28 & 0x01000000) == 0)) {
+        result = 1;
+    }
+    return result;
+}
 
 void func_80164954(){}
 
@@ -88,7 +97,16 @@ void cf::CTaskREvent::Init() {}
 
 void func_80164ED0(){}
 
-void func_80164F6C(){}
+void func_80164F6C() {
+    CEventMgr* mgr = lbl_eu_80664240;
+    if (mgr == nullptr) return;
+    CLibCri* cri = mgr->mCri;
+    if ((u32)cri == 0xFFFFFFFF) return;
+    cri->func_80459AAC();
+    // Store through the global again: the call above may have changed it,
+    // so retail re-reads lbl_eu_80664240 instead of reusing the local.
+    lbl_eu_80664240->mCri = (CLibCri*)-1;
+}
 
 int func_80164FB4() {
     CEventMgr* mgr = lbl_eu_80664240;
@@ -123,11 +141,16 @@ void cf::CTaskREvent::Term() {}
 
 void cf::CTaskREvent::Move() {}
 
-void cf::CTaskREvent::Draw() {}
+void cf::CTaskREvent::Draw() {
+    func_80165DF4(this, 0);
+    func_80166050(this, 0);
+}
 
-void func_80165DF4(){}
+// Stubs for as-yet-unmatched helpers; noinline so Draw's calls are not
+// folded away (retail Draw emits real bl's).
+__declspec(noinline) void func_80165DF4(CTaskREvent* self, int arg) {}
 
-void func_80166050(){}
+__declspec(noinline) void func_80166050(CTaskREvent* self, int arg) {}
 
 u32 func_80166150(CEventMgr* self, u32 arg) { return 0; }
 

@@ -64,10 +64,19 @@ extern "C" int func_8049B158(CScnCameraMan* cam, s32 id);
 extern "C" void func_804C03A0(u8* self, int value);
 
 struct CVirtualLightAmb;  // defined in CVirtualLightAmb.hpp
+class CVirtualLightDir;   // defined in CVirtualLightDir.cpp
 
 // Amb-light constructor (defined in CVirtualLightAmb.cpp, flat-name symbol):
 // builds the base light, installs the vtable and arms the slot (+0x2C = 1).
 extern "C" CVirtualLightAmb* __ct__CVirtualLightAmb(CVirtualLightAmb* self);
+
+// Dir-light constructor (defined in CVirtualLightDir.cpp; retail flat name
+// __ct__CVirtualLightDir): builds the base light and sets +0x34/+0x38 to 1000.
+extern "C" CVirtualLightDir* __ct__CVirtualLightDir(CVirtualLightDir* self);
+
+// Two-float setter on the dir light (CVirtualLightDir.cpp, flat-name symbol):
+// writes the +0x34/+0x38 fields.
+extern "C" void func_8049474C(CVirtualLightDir* self, float a, float b);
 
 // Word-array copy helper (kyoshin CTaskEnvironment.cpp, flat-name symbol).
 extern "C" void copyWord4Offset(u32* dst, const u32* src);
@@ -77,6 +86,19 @@ extern "C" void copyWord4Offset(u32* dst, const u32* src);
 // definitions below inherit the linkage and keep emitting the flat symbol.
 extern "C" void func_80493148(CScnVirtualLightData* self, u32 arg2);
 extern "C" void func_80493140(void* self, float val);
+
+// Value-compare helper (defined in CScnVirtualLight.cpp): != on two words.
+// Same-TU C-linkage redeclaration keeps func_804929C0's call reloc flat.
+extern "C" u32 func_80492A88(const u32* a, const u32* b);
+
+// Ring-walk helpers (defined in CScnVirtualLight.cpp, flat-name symbols):
+// func_80492A64 returns the next node (+8 of *self), func_80492A70 advances
+// a node to its successor, func_80492AA8 copies one word. Declared here so
+// func_804929C0 (defined before them in the TU) can call them with flat
+// relocs.
+extern "C" u32* func_80492A64(void* self);
+extern "C" void func_80492A70(u32* self);
+extern "C" void func_80492AA8(int* dst, int* src);
 
 class CScnVirtualLight {
 public:

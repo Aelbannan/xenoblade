@@ -602,10 +602,19 @@ u32 CDeviceFont::func_80452D80() {
 
 // ---- wkUpdate (0x80455AE8) ----
 void CDeviceFont::wkUpdate() {
+    // Locals declared in allocation order: retail keeps the walk node in r29
+    // and the loader name in r30 (this in r31).
+    const char* name;
+    CDeviceFontInfoListNode* node;
+
     // First pass: run the per-frame update hook (vtable 0x2C) on every
     // font-info provider still in the list.
-    CDeviceFontInfoListNode* node = mInfoList.mStartNodePtr->mNext;
-    while (node != mInfoList.mStartNodePtr) {
+    node = mInfoList.mStartNodePtr->mNext;
+    // Volatile sentinel reads: retail reloads mStartNodePtr every iteration
+    // (the loop bodies call through vtables, so the list may change); MWCC
+    // otherwise keeps the sentinel in a callee-saved register across the
+    // second loop, dropping the reload (one instruction short of retail).
+    while (node != *(CDeviceFontInfoListNode* volatile*)&mInfoList.mStartNodePtr) {
         node->mItem->func_804535C0();
         node = node->mNext;
     }
@@ -613,20 +622,22 @@ void CDeviceFont::wkUpdate() {
     // Second pass: drop the first provider whose 0x38 slot reports done.
     // The `if (item != 0) delete item;` guard is what produces retail's
     // double null-check around the virtual dtor call.
-    node = mInfoList.mStartNodePtr->mNext;
-    while (node != mInfoList.mStartNodePtr) {
+    for (node = *(CDeviceFontInfoListNode* volatile*)&mInfoList.mStartNodePtr->mNext;
+         node != *(CDeviceFontInfoListNode* volatile*)&mInfoList.mStartNodePtr;
+         node = node->mNext) {
         if (node->mItem->func_80453608() != 0) {
             IDeviceFontInfo* item = node->mItem;
             if (item != 0) {
                 delete item;
             }
             node->mItem = 0;
-            node->mPrev->mNext = node->mNext;
-            node->mNext->mPrev = node->mPrev;
+            CDeviceFontInfoListNode* prev = node->mPrev;
+            CDeviceFontInfoListNode* next = node->mNext;
+            prev->mNext = next;
+            next->mPrev = prev;
             node->mNext = 0;
             break;
         }
-        node = node->mNext;
     }
 
     switch (field_0x1EC) {
@@ -634,29 +645,29 @@ void CDeviceFont::wkUpdate() {
         // Not started: once the file device is up, spin up the font-loader
         // work thread ("FontLoader", the shared name + 0x11) and give it the
         // MenuFont path (JP) or the EU font path, then mark the state 1.
-        if (CDeviceFile::getInstance() != 0 && CDeviceFile::isInitialized()) {
-            // "FontLoader": materialize the shared-name base, then add the
-            // 0x11 offset (retail keeps base in r3 and folds the offset into
-            // r30 before the getWorkMem call).
-            const char* base = lbl_eu_80522DDC;
-            const char* name = base + 0x11;
-            CDeviceFontLoader* loader =
-                (CDeviceFontLoader*)mtl::MemManager::allocate(
-                    0x210, CWorkThreadSystem::getWorkMem());
-            if (loader != 0) {
-                loader = (CDeviceFontLoader*)__ct__CDeviceFontLoader(
-                    loader, &lbl_eu_80522DDC[0x11], this);
+        if (CDeviceFile::getInstance() != 0) {
+            if (CDeviceFile::isInitialized()) {
+                // (retail keeps base in r3 and folds the offset into r30
+                // before the getWorkMem call).
+                name = &lbl_eu_80522DDC[0x11];
+                CDeviceFontLoader* loader =
+                    (CDeviceFontLoader*)mtl::MemManager::allocate(
+                        0x210, CWorkThreadSystem::getWorkMem());
+                if (loader != 0) {
+                    loader = (CDeviceFontLoader*)__ct__CDeviceFontLoader(
+                        loader, name, this);
+                }
+                CWorkUtil::entryWork((CWorkThread*)loader, (CWorkThread*)this,
+                                     false);
+                if (func_eu_8044A600()) {
+                    func_80454F30__17CDeviceFontLoaderFv(loader, (void*)1,
+                                                          lbl_eu_806636FC);
+                } else {
+                    func_80454F30__17CDeviceFontLoaderFv(loader, (void*)1,
+                                                          lbl_eu_806636F8);
+                }
+                field_0x1EC = 1;
             }
-            CWorkUtil::entryWork((CWorkThread*)loader, (CWorkThread*)this,
-                                 false);
-            if (func_eu_8044A600()) {
-                func_80454F30__17CDeviceFontLoaderFv(loader, (void*)1,
-                                                      lbl_eu_806636FC);
-            } else {
-                func_80454F30__17CDeviceFontLoaderFv(loader, (void*)1,
-                                                      lbl_eu_806636F8);
-            }
-            field_0x1EC = 1;
         }
         break;
     case 2:

@@ -4666,32 +4666,6 @@
         ]
       }
     },
-    "lbl_eu_805E04F0": {
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": 0,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 37857,
-        "retail_symbol": "lbl_eu_805E05F0",
-        "units": [
-          "main/CriWare/src/adx/adxf/adx_fs"
-        ]
-      }
-    },
-    "lbl_eu_805E05F0": {
-      "R_PPC_ADDR16_LO": {
-        "addend_delta": 33,
-        "alternatives": [],
-        "count": 1,
-        "kind": "data",
-        "retail_addend": 14567,
-        "retail_symbol": "lbl_eu_805E04F0",
-        "units": [
-          "main/CriWare/src/adx/adxf/adx_fs"
-        ]
-      }
-    },
     "lbl_eu_805E64C0": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
@@ -5007,7 +4981,7 @@
     },
     "main/CriWare/src/adx/adxt/adx_tlk@329": {
       "R_PPC_ADDR16_HA": {
-        "addend_delta": 2,
+        "addend_delta": 0,
         "alternatives": [],
         "count": 2,
         "kind": "data",
@@ -5019,15 +4993,41 @@
         ]
       },
       "R_PPC_ADDR16_LO": {
-        "addend_delta": -32,
+        "addend_delta": 0,
         "alternatives": [],
-        "count": 1,
+        "count": 2,
         "kind": "data",
         "retail_addend": 36993,
         "retail_symbol": "lbl_eu_805162D8",
         "scoped": true,
         "units": [
           "main/CriWare/src/adx/adxt/adx_tlk"
+        ]
+      }
+    },
+    "main/CriWare/src/adx/ahx/ahx_sbf@93": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 31910,
+        "retail_symbol": "lbl_eu_80517560",
+        "scoped": true,
+        "units": [
+          "main/CriWare/src/adx/ahx/ahx_sbf"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14496,
+        "retail_symbol": "lbl_eu_80517560",
+        "scoped": true,
+        "units": [
+          "main/CriWare/src/adx/ahx/ahx_sbf"
         ]
       }
     },
@@ -31970,8 +31970,8 @@
       }
     }
   },
-  "function_pairs": 10232,
-  "generated": "2026-08-12T09:58:25.900633",
+  "function_pairs": 10247,
+  "generated": "2026-08-12T10:29:11.603052",
   "region": "us",
   "units_scanned": 1148,
   "version": 1

@@ -3801,6 +3801,22 @@ header: `wrap@0`, `capacity@4`, `readIdx@8`, `writeIdx@0xC`, `count@0x10`.
   `inconclusive_abstraction` with the `exit.target` LR-restore artifact
   (see the sjrbf soft-cap note).
 
+## CriWare ADX compiler-version sweep — Wii/1.1 across the library (US)
+
+**2026-09 sweep: the ADX library is retail Wii/1.1 — 54/58 remaining GC-configured units flipped, 4 stay GC.** After the Sofdec family sweep (§7d2/2417) proved those units retail-Wii/1.1, every ADX unit still on the `criwareLib` GC/3.0a5.2 default was flipped to `mw_version = "Wii/1.1"` and verified with `hexdiff --all` per unit (probe recipe of §2417: diff the small functions under each compiler; the li-vs-store schedule and dispatch polarity flip between GC and Wii).
+
+**Kept Wii/1.1 (54 units):** zero accepted **FULL_MATCH** regressions anywhere; wins include the documented `adxt_StartAfs` soft-cap (us-803853e8, 96.8% → 100% byte-identical — survived ~50 GC experiments incl. all 9 GC compilers: retail `lwz r3,0xAC; stw r3,0xB0` store-before-args vs GC's always-hoisted `or r3; li r4`), `ADXF_LoadPartitionNw` 89.6→100, `adxf_CreateAdxFs` 93.1→100, `SFA_*`, `lsc_*` (except lsc_svr), `cri_cvfs`, `gcci`, `mfci`, `ahx_*`, `adxt/*`, `wiirna`, `sj_crs/sj_err/sj_utl` etc. Split sizes: PASS except 5 units with **pre-existing** FAILs identical under both compilers (adx_inis +0x10, ahx_bsr +0x4, ahx_mflt_c +0x20, ahx_sjd +0x200, cri_crw_std +0x14) — not Wii regressions, leave for size-trim work.
+
+**Stays GC/3.0a5.2 (4 units) — accepted FULL_MATCH regression is the only blocker:**
+- `adx_mng.c`: ADXMNG_CallMainServerFunctions 100 → 94.6% under Wii (branch-over-branch polarity flip at the state==2 dispatch; source is GC-tuned).
+- `adx_fsvr.c`: adxt_ExecFsSvr 100 → 9.3% under Wii (+ split PASS→FAIL +0x8).
+- `lsc_svr.c`: lsc_ExecHndl 100 → 97.2% under Wii.
+- `adx_fini.c`: no wins under Wii; ADXF_Init (accepted EQUIVALENT_MATCH 95.2) → 86.7%, ADXF_Finish 89.5 → 85.4%, and split PASS→FAIL +0xC.
+
+**Accepted EQUIVALENT_MATCH targets that now need re-certification on the Wii build** (below the ≥50% fuzzy bar or materially changed — re-run `targets recertify --bottom-up`): ADXB_SetDefPrm 96.9→41.9 & ADXB_GetFmtBps 96.7→33.3 (adx_bsc), ADXSTM_IsOpenReq 86.8→40.0 (adx_stmc), ADXPD_EntryMono/Ste/Pl2 67→23.1 & ADXPD_Reset 90→83.3 (adx_xpnd), AHXDCD_GetOutBps 96.7→66.7 (ahx_dcd), gcCiGetInterface 85.3→31.0 & gcCiExecHndl 94.1→86.9 (gcci), SJ_SplitChunk 99.2→86.4 (sj_utl). Many other accepted EQUIVALENT_MATCH targets IMPROVED to 100% under Wii (SJCRS_Init/Finish, ADXCRS_Init/Finish, ADXSTM_Init, adxhdr_get_ply_prm, ADXPD_Destroy/Stop, ADXT_IsHeader, AHXCMN_SetAlcInfTbl, cvFsEntryErrFunc, ADXF_Init's sibling suite…).
+
+**Rule:** flip an ADX unit to Wii/1.1 only after an `hexdiff --all` check shows **zero accepted FULL_MATCH regressions** (ACTIVE/EQUIVALENT_MATCH regressions don't block — the retail is Wii-built, so ACTIVE functions get re-matched under Wii; EQUIVALENT_MATCH targets get re-certified). Watch split PASS→FAIL separately — that is a real gate regression.
+
 ## CriWare tiny setters/getters — r3 clobber vs value-in-r3 (US)
 
 - **`SVM_SetCbLock` / `SVM_SetCbUnlock`** (`libs/CriWare/src/adx/svm/svm.c`,

@@ -1,16 +1,41 @@
 #pragma once
 
 #include <types.h>
+#include "monolib/device/CFileHandle.hpp"
 
-struct CEventFile;
 namespace cf { class CActParamAnimGame; }
+
+// Async file event handed to IWorkEvent callbacks by CDeviceFile. The
+// cf::CEventFile in CfScript.hpp is a different type; this TU uses the global
+// ::CEventFile (retail OnFileEvent__15CModelDispEquipFP10CEventFile).
+struct CEventFile {
+    u32 field_00;          // 0x00 event type
+    CFileHandle* field_04; // 0x04 file handle
+};
 
 // File slot: 12 bytes per entry
 struct FileSlot {
-    u32 handle;
-    u32 data;
-    u8 flag;
+    CFileHandle* handle; // 0x00 file handle (CDeviceFile::readFile result)
+    u8* data;            // 0x04 loaded file buffer (CFileHandle::mData)
+    u8 flag;             // 0x08
     u8 _pad[3];
+};
+
+// 8-byte buffer-budget context built by func_801F981C / func_801F9894
+// (retail: two remaining-size words at +0/+4, decremented by func_801F9894
+// when it picks the MEM1/MEM2 alloc handle for the file size).
+struct CModelDispFileCtx {
+    u32 field_0x00; // +0 remaining MEM1 budget
+    u32 field_0x04; // +4 remaining MEM2 budget
+};
+
+// Object pointed to by animPtrs[i] in func_801FFADC: four color words at +0x40.
+struct CModelDispAnimColor {
+    u8 _00[0x40];
+    f32 field_0x40; // +0x40
+    f32 field_0x44; // +0x44
+    f32 field_0x48; // +0x48
+    f32 field_0x4C; // +0x4C
 };
 
 // View of the 0x53C-byte act-param object. The retail cf::CActParamAnimGame is
@@ -42,7 +67,7 @@ class CModelDispEquip {
 public:
     CModelDispEquip();
     ~CModelDispEquip();
-    void OnFileEvent();
+    int OnFileEvent(CEventFile* event);
 
     void resetBase();
     u8 getState20();
@@ -88,8 +113,8 @@ public:
     u8 state21;    // 0x1021
     u8 _pad1022[2];
     FileSlot fileSlots[9]; // 0x1024-0x108F
-    u32 modelFileHandle; // 0x1090
-    u32 modelData;  // 0x1094
+    CFileHandle* modelFileHandle; // 0x1090
+    u8* modelData;  // 0x1094
     f32 colorR;     // 0x1098
     f32 colorG;     // 0x109C
     f32 colorB;     // 0x10A0
@@ -107,10 +132,14 @@ extern "C" void* __dt__15CModelDispEquipFv(CModelDispEquip*, int);
 // 32-bit words by func_801FF7B0 (lwzu/lwz word copies into scale1/scale2).
 extern u32 lbl_eu_80576550[3];
 extern u32 lbl_eu_8057655C[3];
+// Effect-singleton manager object (array forces @ha/@l at the call sites in
+// OnFileEvent / func_801FF874).
+extern u32 lbl_eu_8065FC18[];
 extern const f32 lbl_eu_80668274;
 extern const f32 lbl_eu_8066829C;
 extern const f32 lbl_eu_80668278;
 extern const f32 lbl_eu_80668270;
+extern const f32 lbl_eu_8066827C; // alpha step for func_801FFADC
 // Step / clamp constants for func_80201570/15D4/1740/17A4 and 1638/16BC.
 extern const f32 lbl_eu_80668280;
 extern const f32 lbl_eu_80668284; // scale1[1] upper clamp
@@ -128,3 +157,17 @@ extern "C" void func_8004B9D4(void* self, void* arg, u32, s32, u32);
 extern "C" void __destroy_arr(void*, void*, int, int);
 // cf::CActParamAnimGame destructor address (defined in kyoshin/cf/CActParamAnimGame.cpp).
 extern "C" void __dt__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame*, int);
+
+// ---- Cross-TU imports (retail C/verbatim-mangled symbol names) ----
+extern "C" int func_800BBC04(void* arg);
+extern "C" void* func_8007DE94__Q22cf13CfGameManagerFv(u32 type, int slot);
+extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
+extern "C" void func_801F981C(CModelDispFileCtx* ctx);
+extern "C" u32 func_801F9894(CModelDispFileCtx* ctx, u32 size);
+extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
+extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32 allocHandle, const char* path, void* workEvent, int, int);
+extern "C" void setHandleFlag1__11CDeviceFileFP11CFileHandle(CFileHandle* fh);
+extern "C" void func_801390E0__FPP11CFileHandle(CFileHandle** handlePtr);
+extern "C" void func_804CC1BC(void* arg);
+extern "C" void func_804CC1D8(void* arg);
+extern "C" void waitForDrawDone__9CDeviceVIFv();

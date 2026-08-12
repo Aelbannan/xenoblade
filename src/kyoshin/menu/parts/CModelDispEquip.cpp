@@ -287,7 +287,32 @@ extern "C" int func_80200C20(CModelDispEquip* self, u32 param) {
 // ============================================================
 // Target: us-802029e0 | func_80200CE8
 // ============================================================
-extern "C" void func_80200CE8() {}
+// Per-frame tick for the equip display: while the holder is live, a countdown
+// timer periodically rolls a random sign that picks one of three anim ids; for
+// the two ids with matching anim state the animation is replayed. Then the
+// act-param object and both occupied animation-model slots are ticked.
+void func_80200CE8(CModelDispEquip* self) {
+    CActParamHolder* holder = &self->actParamHolder;
+    if (self->actParamHolder.field_0x00 == 0)
+        return;
+    if (holder->timer <= 0) {
+        getInstance__Q22ml6MTRandFv();
+        u32 r = rand31__Q22ml6MTRandFv();
+        s32 sign = (s32)(((r & 1) ^ (r >> 31)) - (r >> 31));
+        u32 anim = lbl_eu_80662738[sign];
+        if ((anim == 0x12 && holder->actParam.field_0x374 == 0) ||
+            (anim == 0x7 && holder->actParam.field_0x374 == 0xb)) {
+            func_8004B9D4(&holder->actParam, reinterpret_cast<void*>(anim), 0, -1, 0);
+        }
+        holder->timer = 0x96;
+    }
+    holder->timer--;
+    func_8004CF00(&holder->actParam);
+    for (u8 i = 0; i < 2; i++) {
+        if (holder->animModelPtrs[i] != 0)
+            func_8004CF00(&holder->actParams[i]);
+    }
+}
 
 // ============================================================
 // Target: us-80202ad8 | OnFileEvent__15CModelDispEquipFP10CEventFile

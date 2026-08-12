@@ -19,6 +19,8 @@
 #undef lbl_eu_8056F4F0
 #undef lbl_eu_8066AEC0
 #include "monolib/work/CTTask.hpp"
+#include "monolib/util/MemManager.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
 #include <revolution/MTX.h>
 #include <nw4r/math.h>
 
@@ -27,8 +29,64 @@
 extern CColiWalkState lbl_eu_8065D138;
 extern u32 lbl_eu_8056F4F0[4];
 extern const f32 lbl_eu_8066AEC0;
+extern const f32 lbl_eu_8066AEA8;
+extern f32 lbl_eu_8066AEC4;
+extern f32 lbl_eu_8066AEC8;
 
-void func_804B2FF0(){}
+// C-linkage retail import (declared at global scope so MWCC emits the name
+// unmangled; the definition lives in the sibling coli unit).
+extern "C" void func_804A7ED0(void* self);
+// CProcess is abstract (pure virtuals), so the base ctor is invoked via its
+// pre-mangled retail symbol like the sibling sinit helpers do.
+extern "C" void __ct__8CProcessFv(CProcess* self);
+
+// ---------------------------------------------------------------------------
+// func_804B2FF0: move a collision-source position through a bone matrix twice,
+// fold the delta into the object's accumulated offset, then add the linear
+// offset component. Both stages end by notifying the target object. The
+// delta/accumulate stages use the nw4r SDK inline ASM helpers so MWCC emits
+// the retail psq_l/ps_sub/ps_add paired-single sequences.
+// ---------------------------------------------------------------------------
+struct CColiMtxSrc {
+    Mtx mtx0;       //0x0
+    char pad[0x60]; //0x30
+    Mtx mtx1;       //0x90
+};
+
+struct CColiMover {
+    char pad0[0xC];
+    Vec pos;           //0xC
+    char pad1[0xC];    //0x18
+    Vec off;           //0x24
+    char pad2[0x8];    //0x30
+    Vec acc;           //0x38
+    CColiMtxSrc* src;  //0x44
+    void* target;      //0x48
+};
+
+void func_804B2FF0(CColiMover* self) {
+    if (self->src != 0 && self->off.y > lbl_eu_8066AEA8) {
+        Vec tmp;
+        // First pass uses the +0x90 matrix, second pass the base matrix.
+        PSMTXMultVec((const f32(*)[4])&self->src->mtx1[0], &self->pos, &tmp);
+        PSMTXMultVec((const f32(*)[4])&self->src->mtx0[0], &tmp, &tmp);
+
+        // Paired-single delta + accumulate: the nw4r SDK inline ASM helpers
+        // emit the retail psq_l/ps_sub/ps_add sequences (MWCC reschedules the
+        // loads first, matching the retail load-all-first shape).
+        nw4r::math::VEC3Sub((nw4r::math::VEC3*)&tmp, (nw4r::math::VEC3*)&tmp,
+                            (nw4r::math::VEC3*)&self->pos);
+        nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->acc,
+                            (nw4r::math::VEC3*)&self->acc,
+                            (nw4r::math::VEC3*)&tmp);
+        func_804A7ED0(self->target);
+    }
+
+    nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->acc,
+                        (nw4r::math::VEC3*)&self->acc,
+                        (const nw4r::math::VEC3*)&self->off);
+    func_804A7ED0(self->target);
+}
 
 void func_804B30CC(){}
 
@@ -803,32 +861,46 @@ void func_804B4BDC(CColiList* self, CColiListItem* node) {
 }
 
 // Remove `findNode` from the list owned by `self`, relinking neighbours and
-// fixing the head when the removed node was the head.
+// fixing the head when the removed node was the head. Goto-shaped to match
+// the retail control flow: pre-check on the head value, entry jump to the
+// tail condition, and the found path falling out to the common epilogue.
 void func_804B4C7C(CColiList* self, CColiListItem* findNode) {
     func_804B1DC0(findNode, 0);
-    CColiListItem* cur = self->head;
-    // Explicit pre-check: retail keeps the head test separate from the loop
-    // tail condition (the head value stays live in r0 for the final branch's
-    // head comparison), so a plain while would merge the two checks.
-    if (cur == 0) return;
-    do {
-        if (cur == findNode) {
-            CColiListItem* prev = cur->prev;
-            CColiListItem* next = cur->next;
-            if (prev != 0) {
-                prev->next = next;
-                if (next != 0) next->prev = prev;
-                if (self->head == findNode) self->head = prev;
-            } else if (next != 0) {
-                next->prev = 0;
-                if (self->head == findNode) self->head = next;
-            } else {
-                if (self->head == findNode) self->head = 0;
-            }
-            return;
+    // Declared at function top so the allocator colours prev/next before the
+    // loop variable: retail keeps cur in r4 with prev/next sharing r3.
+    CColiListItem* prev;
+    CColiListItem* next;
+    // `head` stays loop-invariant (r0) for the final branch's comparison;
+    // the middle branches re-read self->head because the relink stores may
+    // alias it. `cur` is assigned after the pre-check like retail.
+    CColiListItem* head = self->head;
+    if (head == 0) goto done;
+    CColiListItem* cur = head;
+    goto cond;
+body:
+    if (findNode == cur) {
+        prev = cur->prev;
+        next = cur->next;
+        if (prev != 0) {
+            prev->next = next;
+            if (next != 0) next->prev = prev;
+            if (self->head == findNode) self->head = prev;
+            goto done;
         }
-        cur = cur->next;
-    } while (cur != 0);
+        if (next != 0) {
+            next->prev = 0;
+            if (self->head == findNode) self->head = next;
+            goto done;
+        }
+        if (head == findNode) self->head = 0;
+        goto done;
+    }
+advance:
+    cur = cur->next;
+cond:
+    if (cur != 0) goto body;
+done:
+    return;
 }
 
 // Shared per-sector query structures used by the walk funcs below.
@@ -953,7 +1025,6 @@ public:
     void Draw() override;
 
     virtual ~CTaskColiManager();
-    static CTaskColiManager* create();
 
 private:
     char pad_0x54[0x8];      //0x54
@@ -1016,7 +1087,71 @@ void func_804B54D4(){}
 
 void func_804B5658(){}
 
-CTaskColiManager* CTaskColiManager::create() { return 0; }
+// ---------------------------------------------------------------------------
+// CTaskColiManager::create — the retail symbol is Fv but the body reads three
+// incoming registers (parent / a / b, per the CTaskGame call site: r3 = root
+// proc, r4 = field_0x74, r5 = field_0x70). MWCC mangles a global function's
+// name with its parameter list, so the exact retail symbol is emitted via
+// extern "C" with the pre-mangled name (MWCC_REFERENCE §1g Fv-with-hidden-
+// params; the `bl` reloc name stays correct and the extra args pass normally).
+// ---------------------------------------------------------------------------
+// Raw first-0x80 mirror of the object the retail create() initialises: the
+// vtable slot at 0x10, two null member-function-pointer slots (0x3C..0x50)
+// filled from __ptmf_null, the caller args at 0x54/0x58, and the remaining
+// state fields. The real class has compiler-managed virtuals, so the init
+// stores go through this POD.
+struct CTaskColiManagerInit {
+    char pad0[0x10];
+    u32 vtable;      //0x10
+    char pad1[0x28]; //0x14
+    u32 ptmf[6];     //0x3C
+    u32 field_0x54;  //0x54
+    u32 field_0x58;  //0x58
+    u32 field_0x5C;  //0x5C
+    f32 f_0x60[6];   //0x60
+    u32 field_0x78;  //0x78
+    u32 field_0x7C;  //0x7C
+}; //0x80
+
+extern u32 __ptmf_null[3];
+extern u8 lbl_eu_8056F4B0[];
+extern u8 lbl_eu_8056F468[];
+
+extern "C" CTaskColiManager* create__16CTaskColiManagerFv(CProcess* parent,
+                                                          void* a, void* b) {
+    void* mem =
+        mtl::MemManager::allocate(0x80, CWorkThreadSystem::getWorkMem());
+    CTaskColiManager* obj = (CTaskColiManager*)mem;
+    if (mem != 0) {
+        __ct__8CProcessFv((CProcess*)mem);
+        CTaskColiManagerInit* init = (CTaskColiManagerInit*)mem;
+        // CTTask ctor body (inlined): CProcess vtable, null member funcs,
+        // then the CTaskColiManager vtable.
+        init->vtable = (u32)lbl_eu_8056F4B0;
+        init->ptmf[0] = __ptmf_null[0];
+        init->ptmf[1] = __ptmf_null[1];
+        init->ptmf[2] = __ptmf_null[2];
+        init->ptmf[3] = __ptmf_null[0];
+        init->ptmf[4] = __ptmf_null[1];
+        init->ptmf[5] = __ptmf_null[2];
+        init->vtable = (u32)lbl_eu_8056F468;
+        init->field_0x54 = (u32)a;
+        init->field_0x58 = (u32)b;
+        init->field_0x5C = 0;
+        init->field_0x78 = 0;
+        init->field_0x7C = (u32)mtl::MemManager::getHandleMEM1();
+        f32 z = lbl_eu_8066AEC0;
+        init->f_0x60[0] = z;
+        init->f_0x60[1] = z;
+        init->f_0x60[2] = z;
+        init->f_0x60[3] = z;
+        init->f_0x60[4] = z;
+        init->f_0x60[5] = z;
+        lbl_eu_80665958 = (int)(uintptr_t)mem;
+    }
+    ((CProcess*)obj)->Regist(parent, false);
+    return obj;
+}
 
 // --- Explicit template specializations for CTTask<CTaskColiManager> ---
 template<> CTTask<CTaskColiManager>::~CTTask() {}

@@ -34,6 +34,59 @@ ResMatChan ScnMdl::CopiedMatAccess::GetResMatChan(bool markDirty) {
     return ResMatChan(NULL);
 }
 
+// The shared header does not declare the CopiedMatAccess "Ex" accessors, so
+// they are emitted as free functions bound to the retail mangled symbols.
+// Overlay of the private CopiedMatAccess field layout (offsets verified
+// against the retail CopiedMatAccess ctor). NB: in retail the two accessors
+// below are shifted by one field - GetResMatIndMtxAndScaleEx reads/writes
+// mPix (dlPix at DL+0x0) and GetResMatTexCoordGenEx reads/writes mTevColor
+// (dlTevColor at DL+0x20); only GetResTevEx uses its own field.
+struct CopiedMatAccessExView {
+    ScnMdl* mpScnMdl;           // at 0x0
+    u32 mMatID;                 // at 0x4
+    u8 field_0x08[0x20 - 0x8];  // ResTexObj .. ResMatMisc
+    ResMatPix mPix;             // at 0x20
+    ResMatTevColor mTevColor;   // at 0x24
+    u8 field_0x28[0x30 - 0x28]; // ResMatIndMtxAndScale, ResMatTexCoordGen
+    ResTev mTev;                // at 0x30
+};
+
+ResMatPix GetResMatIndMtxAndScaleEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(
+    CopiedMatAccessExView* self) {
+    if (self->mpScnMdl != NULL) {
+        if (self->mPix.IsValid()) {
+            return self->mPix;
+        }
+        ResMat mat = ResMdl(self->mpScnMdl->GetResMdl()).GetResMat(self->mMatID);
+        return mat.GetResMatPix();
+    }
+    return ResMatPix(NULL);
+}
+
+ResMatTevColor GetResMatTexCoordGenEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(
+    CopiedMatAccessExView* self) {
+    if (self->mpScnMdl != NULL) {
+        if (self->mTevColor.IsValid()) {
+            return self->mTevColor;
+        }
+        ResMat mat = ResMdl(self->mpScnMdl->GetResMdl()).GetResMat(self->mMatID);
+        return mat.GetResMatTevColor();
+    }
+    return ResMatTevColor(NULL);
+}
+
+ResTev GetResTevEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(
+    CopiedMatAccessExView* self) {
+    if (self->mpScnMdl != NULL) {
+        if (self->mTev.IsValid()) {
+            return self->mTev;
+        }
+        ResMat mat = ResMdl(self->mpScnMdl->GetResMdl()).GetResMat(self->mMatID);
+        return mat.GetResTev();
+    }
+    return ResTev(NULL);
+}
+
 } // namespace g3d
 } // namespace nw4r
 
@@ -56,17 +109,9 @@ void* GetResGenMode__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enab
     return access->resGenMode;
 }
 
-void GetResMatIndMtxAndScaleEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(){}
-
-void GetResMatTexCoordGenEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(){}
-
-void GetResTevEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(){}
-
 void __ct__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFPQ34nw4r3g3d6ScnMdlUl(){}
 
 void SetVisibilityEx__Q44nw4r3g3d6ScnMdl15CopiedVisAccessFb(){}
-
-void __ct__Q44nw4r3g3d6ScnMdl15CopiedVisAccessFPQ34nw4r3g3d6ScnMdlUl(){}
 
 void Construct__Q34nw4r3g3d6ScnMdlFP12MEMAllocatorPUlQ34nw4r3g3d6ResMdlUli(){}
 
@@ -81,10 +126,6 @@ void CleanMatBuffer__Q34nw4r3g3d6ScnMdlFUlUl(){}
 void SetAnmObj__Q34nw4r3g3d6ScnMdlFPQ34nw4r3g3d6AnmObjQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
 
 void RemoveAnmObj__Q34nw4r3g3d6ScnMdlFPQ34nw4r3g3d6AnmObj(){}
-
-
-
-void __dt__Q34nw4r3g3d6ScnMdlFv(){}
 
 void IsDerivedFrom__Q34nw4r3g3d6ScnMdlCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
@@ -122,6 +163,8 @@ struct ScnMdlTailView {
     AnmObjShp* mpAnmObjShp;     // at 0x138 (inherited from ScnMdlSimple)
     u32 mFlagVisBuffer;         // at 0x13C
     u32* mpMatBufferDirtyFlag;  // at 0x140
+    u32 field_0x144;            // at 0x144 (DrawResMdlReplacement flag)
+    u8* mpVisBuffer;            // at 0x148 (DrawResMdlReplacement.visArray)
 };
 
 bool ScnMdl::SetScnObjOption(u32 option, u32 value) {
@@ -180,6 +223,40 @@ const AnmObj* ScnMdl::GetAnmObj(AnmObjType type) const {
         return reinterpret_cast<const ScnMdlTailView*>(this)->mpAnmObjShp;
     }
     return ScnMdlSimple::GetAnmObj(type);
+}
+
+// Releases the shape animation object (read at retail offset 0x138, the
+// member inherited from ScnMdlSimple) before running the base destructor.
+ScnMdl::~ScnMdl() {
+    ScnMdlTailView& tail = *reinterpret_cast<ScnMdlTailView*>(this);
+    if (tail.mpAnmObjShp != NULL) {
+        RemoveAnmObj(tail.mpAnmObjShp);
+    }
+}
+
+ScnMdl::CopiedVisAccess::CopiedVisAccess(ScnMdl* pScnMdl, u32 id) {
+    bool valid = false;
+    if (pScnMdl != NULL) {
+        ResMdl mdl(pScnMdl->GetResMdl());
+        ResNode node = mdl.GetResNode(id);
+        if (node.IsValid()) {
+            valid = true;
+        }
+    }
+    if (valid) {
+        mpScnMdl = pScnMdl;
+        mNodeID = id;
+        ScnMdlTailView& tail = *reinterpret_cast<ScnMdlTailView*>(pScnMdl);
+        if (tail.mpVisBuffer != NULL) {
+            mpVis = tail.mpVisBuffer + id;
+        } else {
+            mpVis = NULL;
+        }
+    } else {
+        mNodeID = id;
+        mpScnMdl = NULL;
+        mpVis = NULL;
+    }
 }
 
 } // namespace g3d

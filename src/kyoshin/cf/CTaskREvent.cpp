@@ -2,7 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <types.h>
+#include <string.h>
 #include "kyoshin/cf/CTaskREvent.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 
 extern "C" void __dt__Q22cf11CTaskREventFv(void*, int);
 extern "C" void cbRenderBefore__Q22cf11CTaskREventFv(void*);
@@ -103,7 +105,46 @@ void func_801644D8(CTaskREvent* self, int type, int upper, int lower) {
     }
 }
 
-void func_8016455C(){}
+// Initializes the 32-slot event data table: each slot's u16 id is set to
+// 0xC00, its u8 flag cleared, its two 0x10-byte word sub-slots zeroed, and
+// its two 0x14-byte byte sub-slots filled with 1.
+void func_8016455C(CEventDataTable* self) {
+    for (int i = 0; i < 0x20; i++) {
+        self->mIds920[i] = 0xC00;
+        self->mFlags900[i] = 0;
+        CEventDataTable::WordSlot* w = &self->mWords[i][0];
+        CEventDataTable::ByteSlot* b = &self->mBytes[i][0];
+        CEventDataTable::WordSlot* wEnd = &self->mWords[i][2];
+        do {
+            w->data[0] = 0;
+            b->data[0] = 1;
+            b->data[1] = 1;
+            b->data[2] = 1;
+            b->data[3] = 1;
+            b->data[4] = 1;
+            w->data[1] = 0;
+            b->data[5] = 1;
+            b->data[6] = 1;
+            b->data[7] = 1;
+            b->data[8] = 1;
+            b->data[9] = 1;
+            w->data[2] = 0;
+            b->data[10] = 1;
+            b->data[11] = 1;
+            b->data[12] = 1;
+            b->data[13] = 1;
+            b->data[14] = 1;
+            w->data[3] = 0;
+            b->data[15] = 1;
+            b->data[16] = 1;
+            b->data[17] = 1;
+            b->data[18] = 1;
+            b->data[19] = 1;
+            w++;
+            b++;
+        } while (w < wEnd);
+    }
+}
 
 void func_80164724(){}
 
@@ -132,9 +173,66 @@ int func_80164C28() {
     return 0;
 }
 
-void func_80164C48(){}
+// Returns 1 while an event sequence is fully idle: manager present, game
+// manager running, no +0x74/+0x6C active flags, no +0xB0 gate, sequence
+// counter clean, and no event word pending. Each guard is materialized as a
+// 0/1 word (cntlzw/srwi) and AND-accumulated (retail shape).
+int func_80164C48() {
+    CEventMgr* mgr = lbl_eu_80664240;
+    if (mgr == 0) return 0;
+    if (cf::CfGameManager::func_8007E1B4() == 0) return 0;
+    int result = lbl_eu_80664240->field_0x74 & 1;
+    if (result) {
+        u32 flag;
+        if (lbl_eu_80664240 != 0) {
+            flag = lbl_eu_80664240->field_0x6C & 1;
+        } else {
+            flag = 0;
+        }
+        result = !flag;
+    }
+    if (result) {
+        result = !lbl_eu_80664240->field_0xB0;
+    }
+    if (result) {
+        result = !func_8016847C();
+    }
+    if (result) {
+        result = !lbl_eu_80664240->field_0x1D0;
+    }
+    return result;
+}
 
-void func_80164CFC(){}
+// Tears down the active event sequence: clears the +0xB0 gate object, the
+// +0x1D0 word, the +0x6C bit0 flag, notifies the game manager, and clears
+// the global event bit when the +0x1BC byte flag is set.
+void func_80164CFC() {
+    CEventMgr* mgr = lbl_eu_80664240;
+    if (mgr == 0) return;
+    u32 v;
+    if (mgr != 0) {
+        v = mgr->field_0x6C & 1;
+    } else {
+        v = 0;
+    }
+    if (v == 0) return;
+    CEventMgrB0* p = mgr->field_0xB0;
+    if (p != 0) {
+        p->field_0x39 = 1;
+        lbl_eu_80664240->field_0xB0 = 0;
+        lbl_eu_80664240->field_0x1D0 = 0;
+    }
+    lbl_eu_80664240->field_0x6C &= ~1;
+    if (cf::CfGameManager::func_80083298() != 0) {
+        if (&cf::CfGameManager::func_80083298()->field_0xF0 != 0) {
+            func_8047BDA0__17UnkClass_8047BB54Fv(
+                &cf::CfGameManager::func_80083298()->field_0xF0);
+        }
+    }
+    if (lbl_eu_80664240->field_0x1BC != 0) {
+        lbl_eu_80663E24 &= ~0x02000000;
+    }
+}
 
 // Event-update kick: when the manager is present and its +0xB0 gate is set,
 // poke the sequence processor, run the bit7-gated cleanup, then clear the
@@ -152,9 +250,37 @@ void func_80164DB8() {
     lbl_eu_80664240->field_0x6C &= ~0x10;
 }
 
-void cf::CTaskREvent::Init() {}
+// Builds the 0x1400-byte string table: 0xAE entries of 0x14 bytes, each
+// "lbl_eu_80503008" + suffix from lbl_eu_80530458. The entry index lives in
+// mIdx (reloaded per use - the calls may clobber memory).
+void cf::CTaskREvent::Init() {
+    this->mBuf = (u8*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0x1400, 4);
+    for (u32 i = 0; i < 0xAE; i++) {
+        strcpy((char*)this->mBuf + this->mIdx * 0x14, lbl_eu_80503008);
+        strcat((char*)this->mBuf + this->mIdx * 0x14, lbl_eu_80530458[i]);
+        this->mIdx++;
+    }
+}
 
-void func_80164ED0(){}
+// Loads an SFD movie through the CRI player when the manager is idle
+// (mCri == (CLibCri*)-1). `handle` selects the buffer source: a fresh MEM2
+// handle vs the scene alloc handle (func_80495FF0(lbl_eu_80663E14)). The
+// finished player is stored back through the global, re-read after the call
+// because it may have been replaced.
+void func_80164ED0(const char* path, int flag, void* handle) {
+    CEventMgr* mgr = lbl_eu_80664240;
+    if (mgr != 0 && (u32)mgr->mCri == 0xFFFFFFFF) {
+        u32 buffer;
+        if (handle != 0) {
+            buffer = mtl::MemManager::getHandleMEM2();
+        } else {
+            buffer = func_80495FF0(lbl_eu_80663E14);
+        }
+        CLibCri* cri = func_80459AA8__7CLibCriFv(
+            path, mtl::MemManager::getHandleMEM2(), buffer, flag, 0);
+        lbl_eu_80664240->mCri = cri;
+    }
+}
 
 void func_80164F6C() {
     CEventMgr* mgr = lbl_eu_80664240;

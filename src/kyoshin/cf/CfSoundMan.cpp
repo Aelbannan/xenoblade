@@ -9,14 +9,14 @@ using namespace cf;
 extern "C" void func_801C0A14(CfSoundRecord* rec);
 extern "C" void func_801C0A98(CfSoundRecord* rec, u32 a, u32 b, u32 c);
 extern "C" void func_801C0B90(CfSoundRecord* rec, u32 a, u32 b, u32 c);
-void func_801C1318(CfSoundRecord* rec, u32 soundId, u32 fadeFrames, float volume);
-void func_801C150C(CfSoundRecord* rec, u32 soundId, s32 stopFlag);
+extern "C" void func_801C1318(CfSoundRecord* rec, u32 soundId, u32 fadeFrames, float volume);
+extern "C" void func_801C150C(CfSoundRecord* rec, u32 soundId, s32 stopFlag);
 extern "C" void func_801C171C(CfSoundRecord* rec, u32 soundId, float pan);
 extern "C" void func_801C17CC(CfSoundRecord* rec, u32 a, u32 b);
 extern "C" void func_801C0948(s32 stopFlag);
-u32 func_801C0FCC(CfSoundRecord* rec, u32 a, CfSoundSlotParam* param, float f1, float f2);
+extern "C" u32 func_801C0FCC(CfSoundRecord* rec, u32 a, CfSoundSlotParam* param, float f1, float f2);
 extern "C" u32 func_801C10C0(CfSoundRecord* rec, u32 a, u32 b);
-void func_801C0C88(CfSoundRecord* rec, nw4r::snd::AuxBus bus, float volume);
+extern "C" void func_801C0C88(CfSoundRecord* rec, nw4r::snd::AuxBus bus, float volume);
 extern "C" void func_801C1218(CfSoundRecord* rec, bool pause, int fade);
 extern "C" void func_801C1618(CfSoundRecord* rec);
 extern "C" void func_801C12A0(CfSoundRecord* rec, s32 mode);
@@ -539,7 +539,7 @@ extern "C" void func_801C0B90(CfSoundRecord* rec, u32 a, u32 b, u32 c){}
 // Applies the FX-send volume `volume` to every player of an active record.
 // The player count is re-queried every iteration (retail keeps the
 // GetPlayerCount call in the loop test).
-void func_801C0C88(CfSoundRecord* rec, nw4r::snd::AuxBus bus, float volume) {
+extern "C" void func_801C0C88(CfSoundRecord* rec, nw4r::snd::AuxBus bus, float volume) {
     if ((rec->mFlag & 1) == 0) {
         return;
     }
@@ -622,8 +622,8 @@ u32 func_801C0F5C(u32 a, s32 userParam, float f1, u32 b, u32 c) {
 // 0xFFFF), copies the caller's parameter block + gain floats into the
 // matching table slot (field_0x2A in-use bit set). No null guard on the
 // lookup result: retail dereferences slot unconditionally.
-u32 func_801C0FCC(CfSoundRecord* rec, u32 a, CfSoundSlotParam* param,
-                  float f1, float f2) {
+extern "C" u32 func_801C0FCC(CfSoundRecord* rec, u32 a, CfSoundSlotParam* param,
+                             float f1, float f2) {
     int result = func_801C0D28(rec, (s32)a);
     u32 res;
     if (result == -1) {
@@ -636,9 +636,9 @@ u32 func_801C0FCC(CfSoundRecord* rec, u32 a, CfSoundSlotParam* param,
     }
     // slot = 0 sunk by MWCC onto the not-found exit path (retail li r6, 0
     // after the loop); end derived from p (addi r0, r6, 0xC00).
-    CfSoundSlot* slot = 0;
-    CfSoundSlot* end = lbl_eu_80575928 + 64;
     CfSoundSlot* p = lbl_eu_80575928;
+    CfSoundSlot* end = lbl_eu_80575928 + 64;
+    CfSoundSlot* slot = 0;
     while (p != end) {
         if ((res & 0xFFFF) == p->mId) {
             slot = p;
@@ -691,8 +691,8 @@ void func_801C12A0(CfSoundRecord* rec, s32 mode) {
 // in f31 across the loop because the SetVolume call clobbers f1. The
 // searching flag + nested while reproduce the retail loop rotation (r0
 // toggles 1->0->1 per slot).
-void func_801C1318(CfSoundRecord* rec, u32 soundId, u32 fadeFrames,
-                   float volume) {
+extern "C" void func_801C1318(CfSoundRecord* rec, u32 soundId, u32 fadeFrames,
+                              float volume) {
     if ((rec->mFlag & 1) == 0) {
         return;
     }
@@ -723,7 +723,7 @@ extern "C" void func_801C13D8(CfSoundRecord* rec, s32 mode, u32 fadeFrames){}
 // 0xFFFF materialization (lis 1 / subi -1) is recomputed per outer iteration
 // while the lis part stays hoisted; the searching flag + nested while
 // reproduce the retail loop rotation (r0 toggles 1->0->1 per slot).
-void func_801C150C(CfSoundRecord* rec, u32 soundId, s32 stopFlag) {
+extern "C" void func_801C150C(CfSoundRecord* rec, u32 soundId, s32 stopFlag) {
     if ((rec->mFlag & 1) == 0) {
         return;
     }

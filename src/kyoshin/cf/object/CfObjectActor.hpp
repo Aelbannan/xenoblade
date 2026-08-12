@@ -10,6 +10,14 @@ extern float lbl_eu_80667738;   // CActorParam_UnkVirtualFunc34 / CfObjectActor_
 
 extern float lbl_eu_8066776C;   // CfObjectActor_UnkVirtualFunc8 fallback value
 
+extern float lbl_eu_8066773C;   // CActorParam_UnkVirtualFunc179 CfObjectMove vf70 arg
+
+extern float lbl_eu_80667740;   // CActorParam_UnkVirtualFunc33 clamp threshold
+
+extern u32 lbl_eu_80663E24;     // event/presentation bitfield (.sbss; bit 0x10000000 gates the 33 path)
+
+extern u32 lbl_eu_80663E28;     // mode bitfield (.sbss; bit 0x800 gates the 33 path)
+
 extern const double lbl_eu_80667748;  // 2^52 + 2^31 magic (CfObjectActor_UnkVirtualFunc7 s16 -> float)
 
 // C-linkage imports (retail symbols are unmangled).
@@ -20,6 +28,16 @@ extern "C" void func_800BE12C(u8* obj, int a, int b, int c, int d);  // status a
 // CfObjectActor::CActorParam_UnkVirtualFunc140 tail-calls this base entry
 // (defined in CActorParam.cpp).
 extern "C" void CActorParam_UnkVirtualFunc140__Q22cf11CActorParamFv(cf::CActorParam* self, void* arg, f32 a, f32 b, f32 c);
+
+// Retail symbols are Fv; the real ABI passes (self, arg). The CfObjectActor
+// overrides of 179/180 forward to these base entries (defined in CActorParam.cpp).
+extern "C" void CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv(cf::CActorParam* self, void* arg);
+extern "C" void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv(cf::CActorParam* self, void* arg);
+
+// C-ABI imports (retail symbols unmangled).
+extern "C" void func_801A891C(void* obj, int arg);   // vision slot release
+
+extern "C" int func_8027990C(void* battleSub, void* actor);  // battle sub-object query
 
 namespace cf {
     //min size: 0x45BC
@@ -214,5 +232,123 @@ namespace cf {
     struct CfActorVt5C4Table {
         u32 _pad[0x5C4 / 4];  // 0x00-0x5C3
         CfActorVt5C4Fn fn5C4; // 0x5C4
+    };
+
+    // Argument passed through the CActorParam_UnkVirtualFunc179/180 slots
+    // (retail ABI r4): u16 dispatch id at +0xC.
+    struct CfActorParamArg {
+        u8 _pad[0xC];
+        u16 field_0xC;  // 0xC
+    };
+
+    // Absolute-offset view of CfObjectActor's CActorParam-region gauge/flag
+    // fields (the C++ class layout in the headers is not trusted for these
+    // functions; raw views pin the retail offsets).
+    struct CfActorParamFields {
+        u8 _pad[0x160C];
+        s16 field_0x160C;  // 0x160C (arts/tension gauge current)
+        s16 field_0x160E;  // 0x160E (gauge max)
+        u8 _pad1610[0x1614 - 0x1610];
+        s16 field_0x1614;  // 0x1614 (second gauge current)
+        s16 field_0x1616;  // 0x1616 (second gauge max)
+        u8 _pad1618[0x1634 - 0x1618];
+        u32 field_0x1634;  // 0x1634
+        u32 field_0x1638;  // 0x1638
+        u32 field_0x163C;  // 0x163C
+        u32 field_0x1640;  // 0x1640
+        u32 field_0x1644;  // 0x1644
+        u8 _pad1648[0x17E8 - 0x1648];
+        f32 field_0x17E8;  // 0x17E8
+        u8 _pad17EC[0x3374 - 0x17EC];
+        u32 field_0x3374;  // 0x3374 (flags, bit 0x40000 gates the battle-state path)
+    };
+
+    // Stack buffer built by CActorParam_UnkVirtualFunc179 and passed to the
+    // CBattleState subobject vtable slot +0x18.
+    struct CfActor179Buf {
+        u32 field_0x00;       // 0x00
+        u32 field_0x04;       // 0x04
+        u8  field_0x08[0xC];  // 0x08
+        u16 field_0x14;       // 0x14
+        u32 field_0x18;       // 0x18
+        u16 field_0x1C;       // 0x1C
+        u16 field_0x1E;       // 0x1E
+        u16 field_0x20;       // 0x20
+        u8  field_0x22[6];    // 0x22
+        f32 field_0x28;       // 0x28
+        u8  field_0x2C[0xC];  // 0x2C
+        u32 field_0x38;       // 0x38
+    };
+
+    // CfObjectActor's pointer at absolute offset 0x3ED4 (CfObjectMove+0x38
+    // sub-object pointer; vtable slots +0x88/+0x8C take (self, arg) - see
+    // CfSub3ED4Vt).
+    struct CfActorField3ED4 {
+        u8 _pad[0x3ED4];
+        u8* field_0x3ED4;  // 0x3ED4
+    };
+
+    // Vtable proxy for the CBattleState subobject vtable (this+0x8), slot
+    // +0x18 (CBattleState_UnkVirtualFunc5; retail passes a pointer through
+    // the slot - the base header declares it with a typed entry arg).
+    class CfBattleVt18 {
+    public:
+        virtual void _d008(); virtual void _d00C(); virtual void _d010(); virtual void _d014();
+        virtual void m18(void* entry);  // vtable +0x18
+    };
+
+    // Vtable proxy for the +0x3ED4 sub-object (CfObjectMove+0x38): slots
+    // +0x88/+0x8C take (self, arg). Dummy slots pin the offsets.
+    class CfSub3ED4Vt {
+    public:
+        virtual void _d008(); virtual void _d00C(); virtual void _d010(); virtual void _d014();
+        virtual void _d018(); virtual void _d01C(); virtual void _d020(); virtual void _d024();
+        virtual void _d028(); virtual void _d02C(); virtual void _d030(); virtual void _d034();
+        virtual void _d038(); virtual void _d03C(); virtual void _d040(); virtual void _d044();
+        virtual void _d048(); virtual void _d04C(); virtual void _d050(); virtual void _d054();
+        virtual void _d058(); virtual void _d05C(); virtual void _d060(); virtual void _d064();
+        virtual void _d068(); virtual void _d06C(); virtual void _d070(); virtual void _d074();
+        virtual void _d078(); virtual void _d07C(); virtual void _d080(); virtual void _d084();
+        virtual void m88(void* arg);  // vtable +0x88
+        virtual void m8C(void* arg);  // vtable +0x8C
+    };
+
+    // Vtable proxy for CfObjectActor's primary vtable (offset 0x00), slots
+    // +0x168/+0x174/+0x178 (CActorParam_UnkVirtualFunc53/56/57) and
+    // +0x180/+0x18C/+0x190 (CActorParam_UnkVirtualFunc59/62/63): the base
+    // header declares them no-arg but retail passes/returns ints through them.
+    class CfActorParamVt168 {
+    public:
+        virtual void _d008(); virtual void _d00C(); virtual void _d010(); virtual void _d014();
+        virtual void _d018(); virtual void _d01C(); virtual void _d020(); virtual void _d024();
+        virtual void _d028(); virtual void _d02C(); virtual void _d030(); virtual void _d034();
+        virtual void _d038(); virtual void _d03C(); virtual void _d040(); virtual void _d044();
+        virtual void _d048(); virtual void _d04C(); virtual void _d050(); virtual void _d054();
+        virtual void _d058(); virtual void _d05C(); virtual void _d060(); virtual void _d064();
+        virtual void _d068(); virtual void _d06C(); virtual void _d070(); virtual void _d074();
+        virtual void _d078(); virtual void _d07C(); virtual void _d080(); virtual void _d084();
+        virtual void _d088(); virtual void _d08C(); virtual void _d090(); virtual void _d094();
+        virtual void _d098(); virtual void _d09C(); virtual void _d0A0(); virtual void _d0A4();
+        virtual void _d0A8(); virtual void _d0AC(); virtual void _d0B0(); virtual void _d0B4();
+        virtual void _d0B8(); virtual void _d0BC(); virtual void _d0C0(); virtual void _d0C4();
+        virtual void _d0C8(); virtual void _d0CC(); virtual void _d0D0(); virtual void _d0D4();
+        virtual void _d0D8(); virtual void _d0DC(); virtual void _d0E0(); virtual void _d0E4();
+        virtual void _d0E8(); virtual void _d0EC(); virtual void _d0F0(); virtual void _d0F4();
+        virtual void _d0F8(); virtual void _d0FC(); virtual void _d100(); virtual void _d104();
+        virtual void _d108(); virtual void _d10C(); virtual void _d110(); virtual void _d114();
+        virtual void _d118(); virtual void _d11C(); virtual void _d120(); virtual void _d124();
+        virtual void _d128(); virtual void _d12C(); virtual void _d130(); virtual void _d134();
+        virtual void _d138(); virtual void _d13C(); virtual void _d140(); virtual void _d144();
+        virtual void _d148(); virtual void _d14C(); virtual void _d150(); virtual void _d154();
+        virtual void _d158(); virtual void _d15C(); virtual void _d160(); virtual void _d164();
+        virtual void m168(int val);  // vtable +0x168 (setter)
+        virtual void _d16C(); virtual void _d170();
+        virtual int m174();          // vtable +0x174 (getter)
+        virtual int m178();          // vtable +0x178 (getter)
+        virtual void _d17C();
+        virtual void m180(int val);  // vtable +0x180 (setter)
+        virtual void _d184(); virtual void _d188();
+        virtual int m18C();          // vtable +0x18C (getter)
+        virtual int m190();          // vtable +0x190 (getter)
     };
 }

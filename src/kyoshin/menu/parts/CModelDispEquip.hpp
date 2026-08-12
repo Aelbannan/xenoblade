@@ -44,9 +44,30 @@ struct CModelDispAnimColor {
 struct CActParamAnimView {
     u8 _00[0x0C];
     u32 field_0x0C;   // +0x0C busy flags (bit 0x20 toggled around func_8004B52C)
-    u8 _10[0x4A4];
+    u8 _10[0x364];
+    u32 field_0x374;  // +0x374 anim state (func_80200CE8 compares vs 0 / 0xb)
+    u8 _378[0x13C];
     void* field_0x4B4; // +0x4B4 model/next-chain-obj pointer (func_8004B9B8 result)
     u8 _4B8[0x84];
+};
+
+// Effect-instance view written by func_8020131C: word at +0x14 (result of the
+// vtable+0xA8 call) and a byte at +0x59 (active flag, set in the cmd==3 case).
+struct CModelDispEffectView {
+    u8 _00[0x14];
+    u32 field_0x14; // +0x14
+    u8 _18[0x41];
+    u8 field_0x59;  // +0x59
+};
+
+// Command buffer passed to func_8020131C: byte +0xA selects the command
+// (2 = load model slot, 3 = mark active); +0x1C holds an optional numeric
+// string that is atoi'd when its first byte is a digit.
+struct CModelDispEquipCmd {
+    u8 _00[0x0A];
+    u8 field_0x0A;  // +0x0A command
+    u8 _0B[0x11];   // +0x0B..0x1B
+    char field_0x1C; // +0x1C string start
 };
 
 // Sub-object at CModelDispEquip+0x10: 3 vtable words + act-param objects.
@@ -157,7 +178,17 @@ extern const f32 lbl_eu_8066828C; // scale1[1] lower clamp
 extern const f32 lbl_eu_80668290; // scale2[1] lower clamp
 extern const f32 lbl_eu_80668294; // scale1[2] lower clamp
 extern const f32 lbl_eu_80668298; // scale1[2] upper clamp
-// Imports used by this unit's functions.
+// 3-word anim-id table read by func_80200CE8: the random sign (-1/0/+1)
+// indexes the array, so the middle entry sits at the label (sdata2 -> @sda21).
+extern const u32 lbl_eu_80662738[3];
+// Imports used by this unit's functions. Retail C symbols: extern "C" keeps
+// MWCC from C++-mangling the call relocs (plain decls emit func_8004CF00__FP..).
+extern "C" void func_8004CF00(CActParamAnimView* self);
+extern "C" bool func_8004B354(CActParamAnimView* self, const f32* value);
+extern "C" CModelDispEffectView* func_804CC1F4(const u32* mgr, u8* bdat, u32 global, int r6, int r7, int r8);
+extern "C" void func_804E3D0C(CModelDispEffectView* effect, CModelDispEffectView* parent);
+extern "C" s32 getInstance__Q22ml6MTRandFv();
+extern "C" u32 rand31__Q22ml6MTRandFv();
 extern "C" bool func_8004B52C(void*, f32);
 extern "C" void* func_80496264(void*, int);
 extern "C" void func_8049EFF8(void*, f32, void*, void*);

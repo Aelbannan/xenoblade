@@ -68,6 +68,36 @@ extern "C" void func_8049239C(CScnVirtualLightReslist* self) {
     __dt__804923A0(self);
 }
 
+// Destroy the scene light manager: reset via func_804923F8, destroyList the
+// four reslists (func_8049239C), free the CLight/LightObj arrays and the
+// extra allocation, erase the resource id, then run each reslist's explicit
+// dtor (retail __dt__reslist_CVirtualLightObj, flat-name import) in reverse
+// member order. The vtable (lbl_eu_8056E868) is stored manually because the
+// class is __declspec(novtable); the virtual dtor supplies the deleting
+// epilogue (flag > 0 -> __dl__FPv).
+CScnVirtualLight::~CScnVirtualLight() {
+    *(void**)this = (void*)lbl_eu_8056E868;
+    func_804923F8(this, 0);
+    func_8049239C(&res_0C);
+    func_8049239C(&res_4C);
+    func_8049239C(&res_2C);
+    func_8049239C(&res_6C);
+    if (mCLights != nullptr) {
+        delete[] mCLights;
+        mCLights = nullptr;
+    }
+    if (mLightObjs != nullptr) {
+        delete[] mLightObjs;
+        mLightObjs = nullptr;
+    }
+    mtl::MemManager::deallocate(mExtraAlloc);
+    mtl::MemManager::erase(value08);
+    __dt__reslist_CVirtualLightObj(&res_6C, -1);
+    __dt__reslist_CVirtualLightObj(&res_4C, -1);
+    __dt__reslist_CVirtualLightObj(&res_2C, -1);
+    __dt__reslist_CVirtualLightObj(&res_0C, -1);
+}
+
 // destroyList for the virtual-light reslist (retail __dt__804923A0): run the
 // base list teardown, free the node array unless it is externally owned
 // (field_0x1C), and reset the capacity. noinline keeps the tail-call
@@ -109,7 +139,7 @@ end:
 
 extern "C" __declspec(noinline) void func_80492A5C(void* self, u32 val) { ((CScnVirtualLightData*)self)->value00 = val; }
 
-void func_80492A50(CScnVirtualLightData* self, CScnVirtualLightValueSrc* src) {
+__declspec(noinline) void func_80492A50(CScnVirtualLightData* self, CScnVirtualLightValueSrc* src) {
     func_80492A5C(self, *src->mValue);
 }
 
@@ -326,23 +356,73 @@ __declspec(noinline) CVirtualLightDir* func_80493300(CScnVirtualLightData* self,
     func_8049474C(ptr, val2, val3);
     return ptr;
 }
-void func_8049347C(){}
 
-u32 func_80493574(void* self) { return ((CScnVirtualLightData*)self)->value2C; }
+// Sibling of func_804935C0 over the +0x4C reslist: applies `value`/`src` to
+// every armed dir light, then stores the scaled vec4 into the +0x8C blend
+// target and copies that into the +0xAC blend-current field.
+void func_8049347C(CScnVirtualLight* self, const ml::CVec4* src, f32 value) {
+    CScnVirtualLightNode* endTmp;   // sp+0x8
+    CScnVirtualLightNode* end;      // sp+0xC
+    CScnVirtualLightNode* itTmp;    // sp+0x10
+    CScnVirtualLightNode* it;       // sp+0x14
+    ml::CVec4 v18;                  // sp+0x18
+    func_80492A50((CScnVirtualLightData*)&itTmp, (CScnVirtualLightValueSrc*)&self->res_4C);
+    func_8049357C((int*)&it, (int*)&itTmp);
+    while ((func_80492A80(&endTmp, (CScnVirtualLightValueSrc*)&self->res_4C),
+            func_8049357C((int*)&end, (int*)&endTmp),
+            func_804935A4((const u32*)&it, (const u32*)&end)) != 0) {
+        CVirtualLightObj* light = *(CVirtualLightObj**)func_80493588(&it);
+        if (func_80493574(light) == 1) {
+            copyWord4Offset((u32*)light, (const u32*)src);
+            func_80493140(light, value);
+        }
+        func_80493594((u32*)&it);
+    }
+    func_80058BD8(&v18, src, value);
+    copyWord4((u32*)&self->field_0x8C, (const u32*)&v18);
+    copyWord4((u32*)&self->field_0xAC, (const u32*)&self->field_0x8C);
+}
 
-extern "C" void func_8049357C(int* dst, int* src){
+__declspec(noinline) u32 func_80493574(void* self) { return ((CScnVirtualLightData*)self)->value2C; }
+
+extern "C" __declspec(noinline) void func_8049357C(int* dst, int* src){
     *dst = *src;
 }
 
-extern "C" void* func_80493588(void* self){ return (void*)((char*)*(void**)self + 8); }
+extern "C" __declspec(noinline) void* func_80493588(void* self){ return (void*)((char*)*(void**)self + 8); }
 
-extern "C" void func_80493594(u32* self) { *self = *(u32*)(*(u32**)self); }
+extern "C" __declspec(noinline) void func_80493594(u32* self) { *self = *(u32*)(*(u32**)self); }
 
-u32 func_804935A4(const u32* a, const u32* b) {
+__declspec(noinline) u32 func_804935A4(const u32* a, const u32* b) {
     return *a != *b;
 }
 
-void func_804935C0(){}
+// Apply `value` and the source vec4 `src` to every armed dir light in the
+// +0x6C reslist (item +0x2C == 1), then copy the scaled vec4 into the +0x9C
+// blend-start field. Iterates the reslist ring with the iterator-helper calls
+// as retail does: begin via func_80492A50 + word copy, end re-fetched every
+// iteration (func_80492A80 + copy), advance func_80493594, deref func_80493588.
+void func_804935C0(CScnVirtualLight* self, const ml::CVec4* src, f32 value) {
+    CScnVirtualLightNode* endTmp;   // sp+0x8
+    CScnVirtualLightNode* end;      // sp+0xC
+    CScnVirtualLightNode* itTmp;    // sp+0x10
+    CScnVirtualLightNode* it;       // sp+0x14
+    ml::CVec4 v18;                  // sp+0x18
+    func_80492A50((CScnVirtualLightData*)&itTmp, (CScnVirtualLightValueSrc*)&self->res_6C);
+    func_8049357C((int*)&it, (int*)&itTmp);
+    while ((func_80492A80(&endTmp, (CScnVirtualLightValueSrc*)&self->res_6C),
+            func_8049357C((int*)&end, (int*)&endTmp),
+            func_804935A4((const u32*)&it, (const u32*)&end)) != 0) {
+        CVirtualLightObj* light = *(CVirtualLightObj**)func_80493588(&it);
+        if (func_80493574(light) == 1) {
+            copyWord4Offset((u32*)light, (const u32*)src);
+            func_80493140(light, value);
+        }
+        func_80493594((u32*)&it);
+    }
+    func_80058BD8(&v18, src, value);
+    copyWord4((u32*)&self->field_0x9C, (const u32*)&v18);
+}
 
 void func_804936AC(){}
 
@@ -533,4 +613,4 @@ extern "C" void func_804920E0(CScnVirtualLightReslist* self) {
 }
 extern "C" void func_8049216C(void* self) {}
 #pragma pop
-extern "C" void func_804923F8() {}
+extern "C" void func_804923F8(CScnVirtualLight* self, int arg) {}

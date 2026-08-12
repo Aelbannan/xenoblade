@@ -136,33 +136,16 @@ extern "C" u32* func_80492A64(void* self);
 extern "C" void func_80492A70(u32* self);
 extern "C" void func_80492AA8(int* dst, int* src);
 
-class CScnVirtualLight {
-public:
-    CScnVirtualLight();
-    virtual ~CScnVirtualLight();
-
-    u32 value00;
-    u32 value08;
-    u8 _0C[0x08];
-    f32 value14;
-    u8 _18[0x1C];
-    f32 value34;
-    f32 value38;
-    f32 value3C;
-    f32 value40;
-    f32 value44;
-    f32 value48;
-    f32 value4C;
-    u8 _50[0x14];
-    u32 value64;
-    u8 _68[0x5C];
-    u32 valueC4;
-    u8 _C8[0x0C];
-    f32 valueD4;
-    u8 enabled;
-    u8 _D9[0xA7];
-    u32 value480;
-};
+// Reslist iterator helpers used by the dir-light apply loops (func_804935C0 /
+// func_8049347C). Declared with C linkage so those call relocs stay flat
+// (retail flat names); the plain definitions below inherit the linkage.
+extern "C" void func_80492A50(CScnVirtualLightData* self, CScnVirtualLightValueSrc* src);
+extern "C" void func_80492A80(void* self, void* src);
+extern "C" u32 func_80493574(void* self);
+extern "C" u32 func_804935A4(const u32* a, const u32* b);
+extern "C" void func_8049357C(int* dst, int* src);
+extern "C" void* func_80493588(void* self);
+extern "C" void func_80493594(u32* self);
 
 class CVirtualLightObj;  // full definition below
 
@@ -199,6 +182,64 @@ class CVirtualLightObj {
 public:
     ~CVirtualLightObj();
 };
+
+// Minimal view of nw4r::g3d::LightObj for the CScnVirtualLight dtor's
+// `delete[] mLightObjs` (the retail emits __destroy_new_array with the
+// out-of-line dtor __dt__Q34nw4r3g3d8LightObjFv). Declared-only here so MWCC
+// treats the dtor as non-trivial without emitting a local copy.
+namespace nw4r {
+namespace g3d {
+class LightObj {
+public:
+    ~LightObj();
+};
+}
+}
+
+// Scene light manager: vtable slot at +0 (stored manually from
+// lbl_eu_8056E868), four CVirtualLightObjPtr reslist members (+0x0C..+0x8B)
+// holding the amb/dir light nodes, three vec4 blend fields (+0x8C..+0xBB)
+// and the light arrays / allocations torn down by the dtor (+0xC0..+0xC8).
+// __declspec(novtable) suppresses MWCC's automatic vtable stores (the dtor
+// stores lbl_eu_8056E868 manually); the virtual dtor still supplies the
+// deleting epilogue (flag > 0 -> __dl__FPv).
+class __declspec(novtable) CScnVirtualLight {
+public:
+    CScnVirtualLight();
+    virtual ~CScnVirtualLight();
+
+    u8 _04[0x04];                       // +0x04
+    u32 value08;                        // +0x08 (ALLOC_HANDLE, erased by the dtor)
+    CScnVirtualLightReslist res_0C;     // +0x0C
+    CScnVirtualLightReslist res_2C;     // +0x2C
+    CScnVirtualLightReslist res_4C;     // +0x4C
+    CScnVirtualLightReslist res_6C;     // +0x6C
+    f32 field_0x8C[4];                  // +0x8C (blend target)
+    f32 field_0x9C[4];                  // +0x9C (blend start)
+    f32 field_0xAC[4];                  // +0xAC (blend current)
+    f32 field_0xBC;                     // +0xBC (blend factor)
+    CLight* mCLights;                   // +0xC0 (delete[]'d by the dtor)
+    u8* mExtraAlloc;                    // +0xC4 (deallocated by the dtor)
+    nw4r::g3d::LightObj* mLightObjs;    // +0xC8 (delete[]'d by the dtor)
+    u8 _CC[0x08];                       // +0xCC
+    f32 valueD4;                        // +0xD4
+    u8 enabled;                         // +0xD8
+    u8 _D9[0xA7];                       // +0xD9
+    u32 value480;                       // +0x180
+};
+
+// CScnVirtualLight vtable (retail .data). Array-typed so MWCC emits absolute
+// lis/addi addressing for the dtor's manual store.
+extern u8 lbl_eu_8056E868[];
+
+// reslist<CVirtualLightObj> teardown (nw4r library, flat-name symbol): called
+// explicitly with flag -1 for each reslist member at the end of the
+// CScnVirtualLight dtor.
+extern "C" void __dt__reslist_CVirtualLightObj(CScnVirtualLightReslist* self, int flag);
+
+// Scene-light reset helper (defined later in CScnVirtualLight.cpp; retail
+// func_804923F8, a large init walk). Called by the dtor with a 0 flag.
+extern "C" void func_804923F8(CScnVirtualLight* self, int arg);
 
 // One slot of the virtual-light pool (0x40-byte stride). Content is opaque
 // here; the pool only allocates/frees whole slots.

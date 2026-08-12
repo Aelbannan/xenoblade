@@ -355,6 +355,12 @@ u32 func_800BB340(cf::CfObjectModel* self) {
 
 // Height difference between the two positions the sub-object helper computes;
 // a fixed fallback constant when there is no sub-object.
+// Height difference between the two positions the sub-object helper computes;
+// a fixed fallback constant when there is no sub-object.
+// OPEN ITEM: retail hoists the mSubObj98 load into the prologue (lwz before
+// the stw lr at 36(sp)); MWCC always emits stw-then-lwz for this family
+// (CfObject_UnkVirtualFunc52/53/56 — same 2 structural mismatch). Tried:
+// local-first, bool local, inverted if, peephole/scheduling pragmas, goto.
 float cf::CfObjectModel::CfObject_UnkVirtualFunc56() {
     if (mSubObj98 == 0) {
         return lbl_eu_80666A68;

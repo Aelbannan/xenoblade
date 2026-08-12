@@ -18,7 +18,7 @@ extern void* jumptable_eu_805369A0[];
 
 // Float constants in small data area
 extern float lbl_eu_80668680; // 0.0f
-extern float lbl_eu_80668684; // 1.0f
+extern const float lbl_eu_80668684; // 1.0f (const: retail hoists the pool load)
 
 // Small data string pairs for func_802369C0
 extern char lbl_eu_80664748[];
@@ -26,9 +26,10 @@ extern char lbl_eu_80664750[];
 
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
-// Forward declarations for state machine functions (defined later in this TU)
+// Forward declarations for state machine functions (defined later in this TU).
+// func_802369C0 is extern "C": retail calls the C name (not __FP9CArtsInfo).
 void func_80236508(CArtsInfo*);
-void func_802369C0(CArtsInfo*);
+extern "C" void func_802369C0(CArtsInfo*);
 void func_80236CF4(CArtsInfo*);
 
 // Forward declarations for animation state handlers
@@ -137,15 +138,18 @@ CArtsInfo::~CArtsInfo() {
 
 // func_80235814 - file loading
 // .text:0x10C, size 0x68
+#pragma optimize_for_size on
 void func_80235814(CArtsInfo* self) {
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
     self->field_0x14 = (int)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)lbl_eu_8050B00C, (const char*)self, (void*)handle, 0, 0);
+        (u32)handle, (const char*)lbl_eu_8050B00C, (void*)self, 0, 0);
 
-    func_800A9D90();
-    self->field_0x18 = (int)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)(lbl_eu_8050B00C + 0x15), (const char*)self, (void*)handle, 0, 0);
+    self->field_0x18 =
+        (int)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
+            (u32)func_800A9D90(), (const char*)(lbl_eu_8050B00C + 0x15),
+            (void*)self, 0, 0);
 }
+#pragma optimize_for_size off
 
 // func_8023587C - state machine dispatch
 // .text:0x174, size 0xDC
@@ -423,13 +427,10 @@ void func_80235F6C(CArtsInfo* self) {
 // .text:0x918, size 0x4C
 void func_80236020(CArtsInfo* self) {
     float f = lbl_eu_80668684;
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans2, f) ==
-        0) {
-        return;
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans2, f)) {
+        self->field_0x44 = 3;
+        self->field_0x49 = 1;
     }
-
-    self->field_0x44 = 3;
-    self->field_0x49 = 1;
 }
 
 // func_8023606C - animation state 2

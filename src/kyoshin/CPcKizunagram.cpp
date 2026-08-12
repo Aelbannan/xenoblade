@@ -263,10 +263,10 @@ extern "C" void __declspec(noinline) func_8025DCB0(CPcKizunagram* self) {
 // func_8025DCFC: refresh all 6 affinity rows for the current character.
 extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
     const void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
-    int count = func_8003B1EC((void*)table) & 0xff;
+    u8 count = (u8)func_8003B1EC((void*)table);
     func_8009CF8C(0x20);
 
-    for (int n = 1; n <= count; n++) {
+    for (u8 n = 1; n <= count; n++) {
         char* paneName = func_8013639C(table, lbl_eu_8050D868 + 0x90, (u8)n);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(paneName, true);
         if (func_8025E960(self, table, (u8)n) != 0) {
@@ -275,7 +275,7 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
             if (func_8025E9E4(self, table, (u8)n) != 0) {
                 func_80137C1C(pane, 0x7777ffff);
             }
-            for (int k = 1; k <= 6; k++) {
+            for (u32 k = 1; k <= 6; k++) {
                 char buf[0x20];
                 sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
                 u32 e8 = func_801361E8((u32)table, buf, (u8)n);
@@ -308,7 +308,7 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
             if ((u8)n == 5) {
                 u16 r25 = (u16)func_8013606C(lbl_eu_8050D868 + 0x7f, lbl_eu_8050D868 + 0xdd, 5);
                 if (func_8009CF8C(0x20) >= r25) {
-                    for (int k = 1; k <= 6; k++) {
+                    for (u32 k = 1; k <= 6; k++) {
                         char buf[0x20];
                         sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
                         u32 e8 = func_801361E8((u32)table, buf, (u8)n);
@@ -333,18 +333,19 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
 void func_8025E0D8(CPcKizunagram* self) {
     const void* table = getFP__FPCc(lbl_eu_8050D868 + 0x7f);
     // First pass: build the character-row lookup table (BDAT indexed by row).
-    int count = func_8003B1EC((void*)table) & 0xff;
-    for (int i = 0; i < count; i++) {
+    // u8 counter/count drive the retail clrlwi + cmplw (unsigned) loop.
+    u8 count = (u8)func_8003B1EC((void*)table);
+    for (u8 i = 0; i < count; i++) {
         func_8013639C(table, lbl_eu_8050D868 + 0x90, (u8)i + 1);
     }
 
-    // Second pass: refresh the 6 affinity rows.
-    for (int k = 1; k <= 6; k++) {
+    // Second pass: refresh the 6 affinity rows (u32 counter -> cmplwi/ble).
+    for (u32 k = 1; k <= 6; k++) {
         char buf[0x20];
         sprintf(buf, lbl_eu_8050D868 + 0x96, (u8)k);
         u32 e8 = func_801361E8((u32)table, buf, (s8)self->mField28 + 1);
-        u16 val = (u16)func_8009CF8C((e8 & 0xff) + 0x29);
         int id = (e8 & 0xff) + 1;
+        u16 val = (u16)func_8009CF8C((e8 & 0xff) + 0x29);
 
         char* str1 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(str1, true);
@@ -382,7 +383,7 @@ void func_8025E0D8(CPcKizunagram* self) {
         }
 
         char* str3 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xd4, id);
-        func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, str3, (u8)val);
+        func_80136910__FPQ34nw4r3lyt6LayoutPcUc(self->mLayout, str3, val);
         nw4r::lyt::Pane* pane3 = self->mLayout->GetRootPane()->FindPaneByName(str3, true);
         if (pane3 != 0) func_80124270(pane3, 1);
     }
@@ -494,8 +495,8 @@ extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
         char buf1[0x20];
         sprintf(buf1, lbl_eu_8050D868 + 0x96, (u8)k);
         u32 e8 = func_801361E8((u32)table, buf1, (s8)self->mField28 + 1);
-        u16 val = (u16)func_8009CF8C((e8 & 0xff) + 0x29);
         int id = (e8 & 0xff) + 1;
+        u16 val = (u16)func_8009CF8C((e8 & 0xff) + 0x29);
 
         char* str1 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xaf, id);
         nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(str1, true);
@@ -752,36 +753,39 @@ extern "C" void func_8025EE94(CPcKizunagramBig* self) {
         entry->byte14 = saved;
 
         int found;
-        if (id < 0x9e) {
-            // Search all 11 slots' 6 entries for a duplicate id.
+        if ((u32)id >= 0x9e) {
             found = 0;
-            CPcKizunaSlot* sp = &self->slots[0];
-            int n = 11;
-            do {
-                if (sp->data00.field04 == id) { found = 1; break; }
-                if (sp->sub[0].field04 == id) { found = 1; break; }
-                if (sp->sub[1].field04 == id) { found = 1; break; }
-                if (sp->sub[2].field04 == id) { found = 1; break; }
-                if (sp->sub[3].field04 == id) { found = 1; break; }
-                if (sp->sub[4].field04 == id) { found = 1; break; }
-                sp++;
-            } while (--n != 0);
         } else {
+            // Search all 11 slots' 6 entries for a duplicate id. Constant trip
+            // count drives the retail mtctr/bdnz loop (count hoisted before the
+            // outer loop); found=0 after the loop emits the fallthrough li.
+            CPcKizunaSlot* sp = &self->slots[0];
+            for (int j = 0; j < 11; j++) {
+                if (sp->data00.field04 == id) { found = 1; goto searchDone; }
+                if (sp->sub[0].field04 == id) { found = 1; goto searchDone; }
+                if (sp->sub[1].field04 == id) { found = 1; goto searchDone; }
+                if (sp->sub[2].field04 == id) { found = 1; goto searchDone; }
+                if (sp->sub[3].field04 == id) { found = 1; goto searchDone; }
+                if (sp->sub[4].field04 == id) { found = 1; goto searchDone; }
+                sp++;
+            }
             found = 0;
         }
+    searchDone:
         if (!found) {
             // Clear bit (id & 0x1f) of the 32-bit word at data870 + ((id>>3)&~7).
+            u32 bit = 1u << (id & 0x1f);
             u32* p = (u32*)(self->data870 + ((id >> 3) & ~7));
-            *p &= ~(1u << (id & 0x1f));
+            *p &= ~bit;
         }
     }
 
     // --- Second half: populate the current slot indicated by field_0x89C.
-    u32 tbl = *(u32*)&lbl_eu_8066415C;
+    int f89C = self->field_0x89C;
     int f86C = self->field_0x86C;
-    u32 f89C = self->field_0x89C;
+    u32 tbl = lbl_eu_8066415C;
+    int total = f89C + (f86C - 1) * 5 + 1;
     CPcKizunaSlot* cur = &self->slots[f89C];
-    int total = (int)f89C + (f86C - 1) * 5 + 1;
 
     // Find the first free sub-slot (word == 0) in the current slot.
     int idx;
@@ -801,14 +805,20 @@ extern "C" void func_8025EE94(CPcKizunagramBig* self) {
 
     // Build the per-column-name format string from two 4-byte constants.
     char fmt[8];
-    *(u32*)&fmt[0] = *(u32*)&lbl_eu_806688A8;
-    *(u32*)&fmt[4] = *(u32*)&lbl_eu_806688AC;
-    fmt[3] = (idx == -1) ? 0x36 : (char)(idx + 0x31);
+    *(u32*)&fmt[0] = lbl_eu_806688A8;
+    *(u32*)&fmt[4] = lbl_eu_806688AC;
+    if (idx == -1) {
+        fmt[3] = 0x36;
+    } else {
+        fmt[3] = (char)(idx + 0x31);
+    }
 
-    // Look up and store the affinity value and the row id.
-    u8 v1 = (u8)getBdatStringColumnValue((void*)tbl, lbl_eu_8050DB18 + 0x6, total);
-    cur->data00.field04 = v1;
+    // Look up both column values first (retail keeps both on the stack across
+    // the second call), then store them into the entry.
+    const char* cols = lbl_eu_8050DB18;
+    u32 v1 = getBdatStringColumnValue((void*)tbl, cols + 0x6, total);
     u32 v2 = getBdatStringColumnValue((void*)tbl, fmt, total);
+    cur->data00.field04 = (u8)v1;
     cur->data00.field08 = (u8)v2;
     cur->data00.byte14 |= 2;
 
@@ -827,7 +837,8 @@ extern "C" void func_8025F114(CPcKizunagramBig* self, CPcKizunaSlotEntry* entry)
     u32 id = entry->field04;
     u32* pWord = (u32*)(self->data870 + ((id >> 3) & ~7));
     u32 bit = 1u << (id & 0x1f);
-    if ((*pWord & bit) != 0) {
+    u32 word = *pWord;
+    if ((word & bit) != 0) {
         if ((entry->byte14 & 2) == 0) return;
 
         // Search the whole chart for another entry with the same id, then
@@ -935,16 +946,12 @@ extern "C" __declspec(noinline) CPcKizunaSlotEntry* func_8025F290(CPcKizunaSlotE
 // bitmap bit when the id no longer appears anywhere in the chart, then
 // repopulate the six runtime columns and re-persist the entry.
 extern "C" void func_8025F2E8(CPcKizunaChart* self, int a, int b, int value) {
-    int aOff = a * 0xC4;
-    int bOff = b * 0x20;
-    CPcKizunaSlotEntry* entry = (CPcKizunaSlotEntry*)((u8*)self + aOff + bOff);
+    CPcKizunaSlotEntry* entry = &self->searchSlots[a].data00 + b;
     CPcKizunaSlotEntry* nxt = entry->pField18;
     u16 id = entry->field04;
     CPcKizunaSlotEntry* prv = entry->pField1C;
     if (nxt != 0) nxt->pField1C = prv;
     if (prv != 0) prv->pField18 = nxt;
-    // Retail re-derives the entry base for each phase of the function.
-    entry = (CPcKizunaSlotEntry*)((u8*)self + aOff + bOff);
     u8 saved = entry->byte14 & 1;
     memset(entry, 0, 0x20);
     entry->byte14 = saved;

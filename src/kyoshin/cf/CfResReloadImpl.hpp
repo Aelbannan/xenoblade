@@ -33,20 +33,11 @@ struct CfResReloadParentSub {
     /* 0x4EC */ u32 field_4EC;  // flags (bit 1 tested)
 };
 
-// Minimal CfGameManager view for the direct member calls used by this unit:
-// the parent object in field_00 is a CfGameManager-derived instance (its
-// vtable dispatches go through CfResParentVtIf). Declared here (instead of
-// including the shared CfGameManager.hpp) to avoid that header's wrong
-// `void func_80069EA0()` import conflicting with the real float return.
-class CfGameManager {
-public:
-    static u32 func_800822F4();
-    static bool func_800829B8();
-    u32 func_80082900();
-    bool func_80085840();
-};
-
-// Object behind CfResReloadParent::field_98: its vtable slots +0x64 and
+// Minimal CfGameManager view note: the shared CfGameManager.hpp is already
+// pulled in transitively (harness_catalog.hpp -> CTaskGameEff.hpp), so the
+// cf::CfGameManager methods used by this unit come from there. func_80069EA0
+// is declared void by that header but really returns float - call it through
+// a cast at the use site.
 // +0x88 take a single int arg (called with 0 by func_8016D688).
 struct CfResParentObjIf {
     virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
@@ -65,19 +56,17 @@ struct CfResParentObjIf {
 // slots each take the owning entry as r4 (retail `mr r4, r31` before each
 // dispatch) and the +0x18/+0x1C results are stored to parent +0x90/+0x94.
 struct CfResEntryIf2 {
-    virtual void _v000();
-    virtual void _v004();
     virtual void _v008();
     virtual void _v00C();
     virtual void _v010();
     virtual void _v014();
-    virtual int _v018(CfResLookupEntry* entry);  // vtable offset 0x18
-    virtual int _v01C(CfResLookupEntry* entry);  // vtable offset 0x1C
+    virtual u8* _v018(CfResLookupEntry* entry);  // vtable offset 0x18
+    virtual u8* _v01C(CfResLookupEntry* entry);  // vtable offset 0x1C
     virtual void _v020();
     virtual void _v024();
     virtual int _v028(CfResLookupEntry* entry);  // vtable offset 0x28
     virtual void _v02C();
-    virtual int _v030(CfResLookupEntry* entry);  // vtable offset 0x30
+    virtual u8* _v030(CfResLookupEntry* entry);  // vtable offset 0x30
     virtual void _v034();
     virtual void _v038();
     virtual void _v03C();
@@ -285,7 +274,7 @@ extern CfResReloadImplPMF lbl_eu_80530FC0[4];
 // retail symbols (plain names), so extern "C" keeps the call relocs at the
 // plain retail names.
 extern "C" int func_8016E654(u32 type, u32 arg2, int arg3, u16* out1, u16* out2);
-extern "C" void func_8016E1AC();
+extern "C" int func_8016E1AC(cf::CfResReloadImpl* self, u32 arg2, int arg3);
 extern "C" int func_8016E430(u32 type);
 extern "C" u16 func_8016E854(cf::CfResReloadImpl* self, u16* out1, u16* counter,
                              u16* out2, u16* out3);
@@ -294,8 +283,9 @@ extern "C" void func_8016EA68(cf::CfResReloadImpl* self);
 
 // func_800AD860 (retail mangled C++ symbol func_800AD860__FPv, single void*
 // parameter): a plain C++ declaration (not extern "C") yields the matching
-// linker name.
-extern cf::CfResEneObj* func_800AD860(void* obj);
+// linker name. Return type is void* to match CfObjectPc.hpp (the same
+// function is declared there first; C++ rejects differing return types).
+extern void* func_800AD860(void* obj);
 
 // Forward decl for the C-ABI player helpers declared above.
 namespace cf { class CfObjectMove; }
@@ -315,25 +305,27 @@ extern "C" void func_800B1BBC(int arg);
 extern "C" void func_800BBB50(cf::CfObjectModel* self);
 // Imports used by func_8016D688 (defined in CfTFile.cpp / CfRes.cpp /
 // CfGameManager.cpp / object/CfObjectModel.cpp).
-extern "C" float func_80069EA0();
 extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool value);
 extern "C" u8* func_80489A60(u8* global, u8* handle, int a, int b, int c, int d);
 extern "C" void func_800BBADC(cf::CfResReloadParent* parent, u8* handle);
-extern "C" int func_800AA33C(u8* buf, u32 packed, int prefixFlag, int suffixFlag);
-extern "C" u8* func_800584B8(u32 handle, u8* buf);
+extern "C" int func_800AA33C(u8* buf, u8* packed, int prefixFlag, int suffixFlag);
+extern "C" u8* func_800584B8(u8* handle, u8* buf);
 extern "C" int CfRes_getD80Flag();
 extern "C" void CfRes_stub_63990();
 extern "C" void func_800BB618(cf::CfResReloadParent* parent, int arg);
 extern "C" void func_800BCFA0(cf::CfResReloadParent* parent);
 extern "C" void func_800BE824(cf::CfResReloadParent* parent, int flag);
 extern "C" void func_804B0A6C(u8* subObj, u8* handle);
-extern "C" void func_800BE12C(u32 handle, int a, int b, int c, int d);
+extern "C" void func_800BE12C(void* parent, int handle, int a, int b, int c);  // signature matches CBattleManager.cpp:451 (same C symbol)
 
 // Scene/manager globals read by func_8016D688.
 extern u8* lbl_eu_80663E14;
 // .sdata2 floats used by func_8016D688 / func_8016E1AC.
 extern float lbl_eu_8066769C;
 extern float lbl_eu_806676A0;
+extern float lbl_eu_8066A208;
+extern float lbl_eu_806676CC;
+extern double lbl_eu_806676D0;
 
 extern "C" cf::CfResLookupEntry* func_80062EC4(int);
 extern "C" int func_80062998(int, int, int);
@@ -345,8 +337,6 @@ extern "C" void func_801BFE8C(u32 a, u32 b, u32 c);
 extern "C" void func_801BFF04(int a, int b, int c, int d);
 extern "C" int func_80063A60(int a);
 extern "C" int func_801AAAA0(int a);
-// More C-ABI imports used by func_8016D688.
-extern "C" void func_800AD4B0(cf::CfResReloadParent* parent);
 // More C-ABI imports used by this unit's functions.
 extern "C" cf::DeviceSearchEntry* func_80068928(u8* self, u32 id, int start, int end);
 extern "C" int func_801BFE20(int a, int b, u8* c, float f1, float f2);

@@ -45,6 +45,7 @@ void __ct__CSkipTimer2(CSkipTimer2* self, void* parent) {
 // ============================================================================
 #pragma push
 #pragma auto_inline off
+#pragma optimize_for_size on
 CSkipTimer2::~CSkipTimer2() {
     // member mMemRegion destroyed implicitly (retail emits external call)
 }
@@ -227,12 +228,28 @@ CSkipTimer::CSkipTimer() {
 }
 
 // CSkipTimer destructor.
-CSkipTimer::~CSkipTimer() {
-    // Destruction order matches retail: mSkipTimer2 (0x70), CSysWin (0x34),
-    // then mMemRegion (0x04, auto-destroyed last as first-declared member).
-    reinterpret_cast<CSkipTimer2*>(&mSkipTimer2Data[0])->~CSkipTimer2();
-    __dt__7CSysWinFv(&mSysWinData[0], -1);
+// Member dtors and operator delete (retail names). UnkClass_8045F564's dtor
+// is declared as a real C++ member in its header; the call below goes
+// through the class to keep the __dt__17UnkClass_8045F564Fv reloc.
+extern "C" void __dt__11CSkipTimer2Fv(void* self, int flags);
+extern "C" void __dt__7CSysWinFv(void* self, int flags);
+extern "C" void __dl__FPv(void* p);
+
+// Retail dtor is a plain free function: destroys mSkipTimer2 (0x70), CSysWin
+// (0x34) and mMemRegion (0x04), then frees the object when the delete flag
+// is positive.
+#pragma optimize_for_size on
+extern "C" void* __dt__10CSkipTimerFv(void* self, int flags) {
+    if (self != 0) {
+        __dt__11CSkipTimer2Fv((u8*)self + 0x70, -1);
+        __dt__7CSysWinFv((u8*)self + 0x34, -1);
+        ((UnkClass_8045F564*)((u8*)self + 0x04))->~UnkClass_8045F564();
+        if (flags > 0)
+            __dl__FPv(self);
+    }
+    return self;
 }
+#pragma optimize_for_size off
 
 // func_802A0234: forward-anim gate for CSkipTimer.
 void func_802A0234(CSkipTimer* self) {

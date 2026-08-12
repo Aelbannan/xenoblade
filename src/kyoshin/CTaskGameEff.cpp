@@ -81,7 +81,31 @@ void* __dt__reslist_CScn(void* _this, int flags) {
 }
 #pragma optimize_for_size off
 
-CTaskGameEff::~CTaskGameEff() {}
+extern "C" void __dt___reslist_base_CScn(void* self, int flags);
+extern "C" void __dt__Q212CTaskGameEff18CEffRenderHighPrioFv(void* self,
+                                                            int flags);
+extern "C" void __dt__8CProcessFv(void* self, int flags);
+
+// Retail dtor is a plain free function: destroy the scene list (guarded),
+// the high-prio render callback, and the CProcess base, then free the object
+// when the delete flag is positive. The redundant `if (self != 0)` re-check
+// reproduces the retail's dead second beq.
+#pragma optimize_for_size on
+extern "C" void* __dt__12CTaskGameEffFv(void* self, int flags) {
+    if (self != 0) {
+        if ((u8*)self + 0x74 != 0) {
+            __dt___reslist_base_CScn((u8*)self + 0x74, 0);
+        }
+        __dt__Q212CTaskGameEff18CEffRenderHighPrioFv((u8*)self + 0x70, -1);
+        if (self != 0) {
+            __dt__8CProcessFv(self, 0);
+        }
+        if (flags > 0)
+            __dl__FPv(self);
+    }
+    return self;
+}
+#pragma optimize_for_size off
 
 // Returns a global word from the sdata2/sdata pool (single lwz+sda21 reloc).
 u32 func_80044DF4() { return (u32)lbl_eu_80663D40; }
@@ -291,7 +315,7 @@ void func_800453EC(CScn* scene) {
 
 // IWorkEvent/IScnRender vtable this-adjusting thunks (retail func_80045540..
 // 80045558): subi the subobject pointer, tail-branch to the real impl.
-void __dt__12CTaskGameEffFv(void*, int);
+extern "C" void* __dt__12CTaskGameEffFv(void*, int);
 extern "C" void func_80045540(void* self) {
     cbRenderBefore__12CTaskGameEffFv((char*)self - 0x54);
 }

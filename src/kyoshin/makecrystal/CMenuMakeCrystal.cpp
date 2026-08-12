@@ -3,13 +3,31 @@
 
 #include "kyoshin/makecrystal/CMenuMakeCrystal.hpp"
 
-extern "C" void __dt__16CMenuMakeCrystalFv(void*, int);
 extern "C" void cbRenderBefore__16CMenuMakeCrystalFv(void*);
+extern "C" void* __dt__15CMakeCrystalWinFv(void*, int);
+extern "C" void __dt__6CBgTexFv(void*, int);
+extern "C" void __dt__800FED0C(void*, int);
 
 
 void __ct__CMenuMakeCrystal(){}
 
-CMenuMakeCrystal::~CMenuMakeCrystal() {}
+// extern "C" free-function form (CCol6CheckBat precedent): retail calls the
+// sub-object dtors at +0x80 (CMakeCrystalWin), +0x60 (CBgTex), then the
+// +0x00 embedded dtor (flags 0), then the flags-based delete; stmw/lmw frame.
+#pragma push
+#pragma optimize_for_size on
+extern "C" void* __dt__16CMenuMakeCrystalFv(void* self, int flags) {
+    if (self != 0) {
+        __dt__15CMakeCrystalWinFv((u8*)self + 0x80, -1);
+        __dt__6CBgTexFv((u8*)self + 0x60, -1);
+        __dt__800FED0C(self, 0);
+        if (flags > 0) {
+            operator delete(self);
+        }
+    }
+    return self;
+}
+#pragma pop
 
 void CMenuMakeCrystal::Init() {}
 
@@ -31,7 +49,32 @@ void func_80211CEC(){}
 
 void func_80212158(){}
 
-void CMenuMakeCrystal::Term() {}
+// CScn view exposing the render-callback removal (retail mangled name).
+class CScn {
+public:
+    void removeRenderCB(void* cb);
+};
+
+extern void* lbl_eu_806646C8;
+extern "C" void waitForDrawDone__9CDeviceVIFv();
+extern "C" void func_801338C8();
+extern "C" void func_804962A0(void*, int);
+extern "C" void func_801C3D9C(void*);
+extern "C" void func_8021299C(void*);
+extern "C" void func_8008294C__Q22cf13CfGameManagerFv(int);
+
+void CMenuMakeCrystal::Term() {
+    waitForDrawDone__9CDeviceVIFv();
+    func_801338C8();
+    func_804962A0(*(void**)((u8*)this + 0x5C), 1);
+    void* render = this;
+    if (this) render = (u8*)this + 0x58;
+    ((CScn*)*(void**)((u8*)this + 0x5C))->removeRenderCB(render);
+    func_801C3D9C((u8*)this + 0x60);
+    func_8021299C((u8*)this + 0x80);
+    lbl_eu_806646C8 = 0;
+    func_8008294C__Q22cf13CfGameManagerFv(0);
+}
 
 void CMenuMakeCrystal::Move() {}
 

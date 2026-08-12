@@ -46,6 +46,7 @@ public:
             PARAM_UPDATE_PRIORITY = (1 << 3),
         };
 
+        virtual ~AmbientParamUpdateCallback() {} // at 0x8 (retail slot)
         virtual void detail_Update(SoundParam* pParam, u32 id,
                                    BasicSound* pSound, const void* pArg,
                                    u32 flags) = 0; // at 0xC

@@ -47,14 +47,14 @@ extern "C" CCol6Invite* lbl_eu_8066423C;
 // tail-call the single-arg (non-deleting) destructor with only r3 adjusted.
 class CCol6Hint;
 class CCol6System;
-extern "C" void __dt__9CCol6HintFv(CCol6Hint*);
-extern "C" void __dt__11CCol6SystemFv(CCol6System*);
+extern "C" void* __dt__9CCol6HintFv(CCol6Hint*, int flags);
+extern "C" void* __dt__11CCol6SystemFv(CCol6System*, int flags);
 
 // func_80164118 backs `this` off to the CCol6Invite embedded subobject and
 // tail-calls the non-deleting destructor. Avoids a virtual dispatch so the
 // thunk compiles to `subi r3,#-0x6c; b __dt__11CCol6InviteFv`.
 class CCol6Invite;
-extern "C" void __dt__11CCol6InviteFv(CCol6Invite*);
+extern "C" void* __dt__11CCol6InviteFv(CCol6Invite*, int flags);
 
 // Standalone string formatting helper.
 void func_eu_801651A0(char* buffer, const char* format, ...);

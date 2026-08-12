@@ -157,11 +157,23 @@ extern "C" CMapSel* __ct__CMapSel(CMapSel* self) {
 /* Complete-object destructor.  Sub-objects are opaque byte arrays, so their
    retail destructors are invoked explicitly (reverse of construction order);
    the flags-conditional delete matches the MWCC deleting-destructor shape. */
-CMapSel::~CMapSel() {
-    __dt__6CCur18Fv(mCursor, -1);
-    __dt__10CScrollBarFv(mScrollBar, -1);
-    __dt__17UnkClass_8045F564Fv(mMemRegion, -1);
+// extern "C" free-function form (CCol6CheckBat precedent): retail calls the
+// sub-object dtors in +0x74, +0x34, +0x4 order with flags -1, then the
+// flags-based delete; uses stmw/lmw (optimize_for_size) for the frame.
+#pragma push
+#pragma optimize_for_size on
+extern "C" void* __dt__7CMapSelFv(CMapSel* self, int flags) {
+    if (self != 0) {
+        __dt__6CCur18Fv(&self->mCursor, -1);
+        __dt__10CScrollBarFv(&self->mScrollBar, -1);
+        __dt__17UnkClass_8045F564Fv(&self->mMemRegion, -1);
+        if (flags > 0) {
+            operator delete(self);
+        }
+    }
+    return self;
 }
+#pragma pop
 
 void func_8024343C(){}
 

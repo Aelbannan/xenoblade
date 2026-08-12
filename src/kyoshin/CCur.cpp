@@ -10,7 +10,7 @@
 extern char lbl_eu_80505DE8[];
 
 // Shared helper: set pane visibility
-extern void func_80124270(nw4r::lyt::Pane*, u32);
+extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
 
 // func_801C4648: pane-visible check (defined in CTitleAHelp.cpp)
 extern bool func_801C4648(nw4r::lyt::Pane*);

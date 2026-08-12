@@ -5,6 +5,9 @@
 #include "kyoshin/CCol6System.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
+extern "C" void __dt__8CProcessFv(void* self, int flags);
+extern "C" void __dt__10CScrollBarFv(void* self, int flags);
+
 // Singleton instance (retail: lbl_eu_80664230).
 CCol6CheckBat* gCol6CheckBat;
 
@@ -21,9 +24,25 @@ void func_8015D0B8() {
 }
 
 // CCol6CheckBat::~CCol6CheckBat()
-#pragma optimize_for_size on
-CCol6CheckBat::~CCol6CheckBat() {}
-#pragma optimize_for_size off
+// extern "C" free-function form (CSysWin/CMenuQstCnt precedent): the retail
+// dtor's outer null-check covers the delete, and the nested double null-check
+// is the documented D2-inlined-into-D1 MWCC artifact (same as
+// ~CSimpleEveTalkWin / ~CSystemWindow) guarding the CProcess base dtor.
+// NOTE: default -O4,p (NOT optimize_for_size) — this retail keeps the
+// separate stw r31/stw r30 saves instead of the stmw pair.
+extern "C" CCol6CheckBat* __dt__13CCol6CheckBatFv(CCol6CheckBat* self, int flags) {
+    if (self != 0) {
+        if (self != 0) {
+            if (self != 0) {
+                __dt__8CProcessFv(reinterpret_cast<CProcess*>(self), 0);
+            }
+        }
+        if (flags > 0) {
+            operator delete(self);
+        }
+    }
+    return self;
+}
 
 // CCol6CheckBat::Init() - no-op; override satisfies CProcess pure-virtual.
 void CCol6CheckBat::Init() {}
@@ -66,7 +85,27 @@ void func_8015D3A0(){}
 
 void __ct__CCol6Hint(){}
 
-CCol6Hint::~CCol6Hint() {}
+// CCol6Hint dtor (extern "C" free-function form, default -O4,p — retail keeps
+// separate stw r31/stw r30 saves): sub-object dtors in +0x13C (CScrollBar),
+// +0x124 (CCur18), +0x74 (UnkClass_8045F564) order with flags -1, then the
+// CProcess base dtor behind the double-null guard (retail re-checks r30 and
+// emits two beq's — the D2-inlined-into-D1 artifact), then flags-based delete.
+extern "C" void* __dt__9CCol6HintFv(CCol6Hint* self, int flags) {
+    if (self != 0) {
+        __dt__10CScrollBarFv(&self->mScrollBar, -1);
+        __dt__6CCur18Fv(self->mCur18, -1);
+        __dt__17UnkClass_8045F564Fv(self->mMemRegion, -1);
+        if (self != 0) {
+            if (self != 0) {
+                __dt__8CProcessFv(reinterpret_cast<CProcess*>(self), 0);
+            }
+        }
+        if (flags > 0) {
+            operator delete(self);
+        }
+    }
+    return self;
+}
 
 void CCol6Hint::Init() {}
 
@@ -86,12 +125,26 @@ void func_8015E0BC(){}
 
 void __ct__CCol6System(){}
 
-CCol6System::~CCol6System() {
-    __dt__7CSysWinFv(mSysWin2, -1);
-    __dt__7CSysWinFv(mSysWin1, -1);
-    __dt__6CCur18Fv(mCur2, -1);
-    __dt__6CCur18Fv(mCur1, -1);
-    __dt__17UnkClass_8045F564Fv(mMemRegion, -1);
+// extern "C" free-function form (CCol6Hint precedent): sub-dtors in retail
+// order (mSysWin2/mSysWin1/mCur2/mCur1/mMemRegion, flags -1), double-null-
+// guarded CProcess base dtor, flags-based delete; default -O4,p.
+extern "C" void* __dt__11CCol6SystemFv(CCol6System* self, int flags) {
+    if (self != 0) {
+        __dt__7CSysWinFv(&self->mSysWin2, -1);
+        __dt__7CSysWinFv(&self->mSysWin1, -1);
+        __dt__6CCur18Fv(self->mCur2, -1);
+        __dt__6CCur18Fv(self->mCur1, -1);
+        __dt__17UnkClass_8045F564Fv(self->mMemRegion, -1);
+        if (self != 0) {
+            if (self != 0) {
+                __dt__8CProcessFv(reinterpret_cast<CProcess*>(self), 0);
+            }
+        }
+        if (flags > 0) {
+            operator delete(self);
+        }
+    }
+    return self;
 }
 
 void CCol6System::Init() {}
@@ -136,7 +189,23 @@ void func_801638C0(){}
 
 void func_80163AF4(){}
 
-CCol6Invite::~CCol6Invite() {}
+// CCol6Invite::~CCol6Invite()
+// extern "C" free-function form (same retail shape as ~CCol6CheckBat):
+// outer null-check covers the delete; nested double null-check (D2-inlined-
+// into-D1 artifact) guards the CProcess base dtor; default -O4,p.
+extern "C" void* __dt__11CCol6InviteFv(CCol6Invite* self, int flags) {
+    if (self != 0) {
+        if (self != 0) {
+            if (self != 0) {
+                __dt__8CProcessFv(reinterpret_cast<CProcess*>(self), 0);
+            }
+        }
+        if (flags > 0) {
+            operator delete(self);
+        }
+    }
+    return self;
+}
 
 void CCol6Invite::Init() {}
 

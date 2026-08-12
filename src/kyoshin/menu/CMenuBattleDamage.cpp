@@ -22,7 +22,10 @@
 #include <nw4r/lyt.h>
 #include <nw4r/math.h>
 #include <revolution/GX.h>
+#include <stdio.h>
 #include <string.h>
+
+#include "monolib/util/FixStr.hpp"
 
 extern "C" void __dt__17CMenuBattleDamageFv(void*, int);
 
@@ -181,7 +184,111 @@ void CMenuBattleDamage::Term() {
     lbl_eu_80663F28 = NULL;
 }
 
-void CMenuBattleDamage::Move() {}
+// Per-frame damage-popup update: for each active entry, project the actor's
+// position to screen space, move the popup and advance/expire its animation.
+void CMenuBattleDamage::Move() {
+    // Retail gate: `bne done` (guard 1) then the branch-over-branch
+    // `beq body; b done` (guard 2) - reproduced by the ||-chain early return
+    // (same shape as the matched CMenuLvUp::Move).
+    if (CTaskGame::getInstance()->func_800426F0() ||
+        (lbl_eu_80663E28 & 0x200000))
+        return;
+    if (!func_8013BE50()) return;
+    if (_pad776[0] == 0) return;
+
+    // Constant pool values cached in callee-saved FPRs (retail f29..f31,
+    // f26..f28 load order).
+    const f32 zero = lbl_eu_80666F68;
+    const f32 one = lbl_eu_80666F6C;
+    const f32 xoff = lbl_eu_80666F70;
+    const f32 yoff = lbl_eu_80666F74;
+    const f32 yscale = lbl_eu_80666F78;
+    const f32 dirmod = lbl_eu_80666F7C;
+
+    for (u8 i = 0; i < 0x20; i++) {
+        CMenuBattleDamageEntry& e = mEntries[i];
+        if (e.mActive == 0) {
+            continue;
+        }
+
+        // MWCC allocates locals in reverse declaration order to ascending
+        // slots: screen +0x20, world +0x14, tmp +0x08.
+        nw4r::math::VEC3 screen; // 0x20
+        nw4r::math::VEC3 world;  // 0x14
+        nw4r::math::VEC3 tmp;    // 0x08 (vfn12C strided components)
+        screen.y = e.field_2C;
+        screen.x = e.field_28;
+        screen.z = zero;
+
+        CMenuBattleDamageActor* actor = func_800B708C((int)e.field_24);
+        if (actor != 0) {
+            const nw4r::math::VEC3* src;
+            CMenuBattleDamageObjPos* obj = actor->vfn12C(0xfa);
+            if (obj != 0) {
+                // Load the strided components in retail's z,y,x order.
+                tmp.x = obj->field_0x0c;
+                tmp.y = obj->field_0x1c;
+                tmp.z = obj->field_0x2c;
+                src = &tmp;
+            } else {
+                src = actor->vfnAC();
+            }
+            world.x = src->x;
+            world.y = src->y;
+            world.z = src->z;
+            if (obj == 0) {
+                world.y += one;
+            }
+
+            CMenuBattleDamagePose* pose = func_80496264(mScn, -1);
+            func_8049B59C(&screen, pose, &world);
+
+            screen.z = zero;
+            screen.y = (screen.y - yoff) * yscale;
+            screen.x = screen.x - xoff;
+
+            if (e.field_30 == 1) {
+                screen.x -= dirmod;
+            } else if (e.field_30 == 2) {
+                screen.x += dirmod;
+            }
+            e.field_28 = screen.x;
+            // Retail quirk: the y used for the pane translate is re-read
+            // from the entry, discarding the projected value.
+            screen.y = e.field_2C;
+        }
+
+        nw4r::lyt::AnimTransform* anim;
+        nw4r::lyt::Layout* layout;
+        if (e.field_32 != 0) {
+            layout = e.mLayout0;
+            anim = e.field_04;
+        } else {
+            layout = e.mLayout1;
+            anim = e.mAnim3;
+        }
+
+        layout->GetRootPane()->SetTranslate(screen);
+
+        if (e.field_34 >= zero) {
+            // Count down the popup lifetime.
+            e.field_34 -= one;
+        } else {
+            // Lifetime expired: show the pane, and free the slot once the
+            // anim finishes. Retail re-derives the root pane here.
+            layout->GetRootPane()->SetVisible(true);
+            if (func_80137444(anim, lbl_eu_80666F6C) != 0) {
+                e.mActive = 0;
+                _pad776[0] -= 1;
+            }
+        }
+        layout->Animate(0);
+    }
+
+    if (mField_55 != 0) {
+        mField_54 = 1;
+    }
+}
 
 void CMenuBattleDamage::cbRenderBefore() {
     CTaskGame::getInstance();
@@ -412,7 +519,36 @@ void func_8010A848(CPcSelectCursor01* self, u8 value) {
 }
 
 extern "C" void func_8010A8E4() {}
-extern "C" void func_8010A940() {}
+// Damage-number enqueue: compact the non-empty digit slots of the queue to
+// the front (via a stack buffer), then append the new digit triple and mark
+// the queue filled.
+void func_8010A940(CMenuBattleDamageQueue* self, u32 v0, u32 v1, u32 v2) {
+    CMenuBattleDamageSlot stack[0x20] = {};
+    u8 dst = 0;
+    for (u8 i = 0; i < 0x20; i++) {
+        CMenuBattleDamageSlot& s = self->mSlots[i];
+        if (s.mVal0 != 0 || s.mVal1 != 0 || s.mVal2 != 0) {
+            stack[dst] = s;
+            s.mVal0 = 0;
+            s.mVal1 = 0;
+            s.mVal2 = 0;
+            dst++;
+        }
+    }
+    if (dst < 0x20) {
+        // Retail compiles this copy loop into the unrolled 8-slot bulk +
+        // 1-slot tail shape (no memcpy call).
+        for (u8 j = 0; j < dst; j++) {
+            self->mSlots[j] = stack[j];
+        }
+        self->mSlots[dst].mVal0 = v0;
+        self->mSlots[dst].mVal1 = v1;
+        self->mSlots[dst].mVal2 = v2;
+        if (self->mFlag == 0) {
+            self->mFlag = 2;
+        }
+    }
+}
 // Draw one queued damage number: find the first non-empty digit slot, write
 // its three digits into the layout panes, play the hit sound and clear it.
 // If every slot is empty, mark the queue idle.
@@ -439,4 +575,358 @@ extern "C" void func_8010ACC4(CMenuBattleDamageQueue* self) {
         return;
     }
     self->mFlag = 0;
+}
+
+// Spawn a battle-damage popup. Finds a free slot (first 8 only), picks the
+// next z-order, projects the actor's position to screen space, then builds
+// either the big damage layout (flags == 0) or the small label layout
+// (flags != 0), chaining the animation start frame to a previous entry of
+// the same actor so popups don't overlap.
+void func_801098B0(CMenuBattleDamage* self, int actorId, int value,
+                    u32 flags) {
+    s8 found = -1;
+    for (u8 i = 0; i < 8; i++) {
+        if (self->mEntries[i].mActive == 0) {
+            found = (s8)i;
+            break;
+        }
+    }
+    if (found < 0) {
+        return;
+    }
+
+    // Count live same-action actors and the highest z-order in use.
+    u32 aliveCount = 0;
+    u8 maxZ = 0;
+    for (u8 i = 0; i < 0x20; i++) {
+        CMenuBattleDamageEntry& o = self->mEntries[i];
+        if (o.mActive != 0) {
+            CMenuBattleDamageActor* a = func_800B708C((int)o.field_24);
+            if (a != 0 && (a->field_0x64 & 2) != 0) {
+                aliveCount++;
+            }
+        }
+        if (o.field_31 > maxZ) {
+            maxZ = o.field_31;
+        }
+    }
+
+    CMenuBattleDamageEntry& e = self->mEntries[found];
+    e.mActive = 1;
+    e.field_20 = value;
+    e.field_24 = actorId;
+    e.field_30 = self->mDamageDir;
+    e.field_31 = maxZ + 1;
+
+    nw4r::math::VEC3 tmp;    // 0x10 (vfn12C strided components)
+    nw4r::math::VEC3 world;  // 0x1c
+    nw4r::math::VEC3 screen; // 0x28
+    screen.x = lbl_eu_80666F68;
+    screen.y = lbl_eu_80666F68;
+    screen.z = lbl_eu_80666F68;
+
+    CMenuBattleDamageActor* actor = func_800B708C((int)e.field_24);
+    u32 dirFlag = 0;
+    if (actor != 0) {
+        const nw4r::math::VEC3* src;
+        CMenuBattleDamageObjPos* obj = actor->vfn12C(0xfa);
+        if (obj != 0) {
+            // Load the strided components in retail's z,y,x order.
+            f32 az = obj->field_0x2c;
+            f32 ay = obj->field_0x1c;
+            f32 ax = obj->field_0x0c;
+            tmp.x = ax;
+            tmp.y = ay;
+            tmp.z = az;
+            src = &tmp;
+        } else {
+            src = actor->vfnAC();
+        }
+        world.x = src->x;
+        world.y = src->y;
+        world.z = src->z;
+        if (obj == 0) {
+            world.y += lbl_eu_80666F6C;
+        }
+
+        CMenuBattleDamagePose* pose = func_80496264(self->mScn, -1);
+        func_8049B59C(&screen, pose, &world);
+
+        screen.y = (screen.y - lbl_eu_80666F74) * lbl_eu_80666F78;
+        screen.z = lbl_eu_80666F68;
+        screen.x = screen.x - lbl_eu_80666F70;
+
+        // Direction: actors with the "action source" bit cycle the popup
+        // direction through the live-actor count modulo 3.
+        dirFlag = (actor->field_0x64 >> 1) & 1;
+        if (dirFlag != 0) {
+            e.field_30 = aliveCount % 3;
+        }
+        if (e.field_30 == 1) {
+            screen.x -= lbl_eu_80666F7C;
+        } else if (e.field_30 == 2) {
+            screen.x += lbl_eu_80666F7C;
+        }
+    }
+
+    e.field_28 = screen.x;
+    e.field_2C = screen.y;
+
+    if (flags == 0) {
+        char buf8[0x8]; // 0x08 sprintf scratch
+
+        nw4r::lyt::Pane* pane = e.mLayout0->GetRootPane();
+        pane->SetTranslate(screen);
+
+        switch (self->mDamageType) {
+        case 0:
+            sprintf(buf8, lbl_eu_804FD524 + 0xc9);
+            break;
+        case 1:
+            sprintf(buf8, lbl_eu_804FD524 + 0xca);
+            break;
+        case 2:
+            sprintf(buf8, lbl_eu_804FD524 + 0xcc);
+            break;
+        }
+
+        ml::FixStr<32> buf; // 0x34
+        switch (self->mDamageType) {
+        case 0:
+            buf.format(lbl_eu_804FD524 + 0xcf, buf8, e.field_20);
+            break;
+        case 1:
+            buf.format(lbl_eu_804FD524 + 0xcf, buf8, e.field_20);
+            break;
+        case 2:
+            buf.format(lbl_eu_804FD524 + 0xcf, buf8, e.field_20);
+            break;
+        case 3:
+            buf.format(lbl_eu_804FD524 + 0xcf, buf8, e.field_20);
+            break;
+        case 4:
+            buf.format(lbl_eu_804FD524 + 0xd4,
+                       func_80136190(lbl_eu_804FD524 + 0xd7,
+                                     lbl_eu_804FD524 + 0xc4, 0xb));
+            break;
+        case 5:
+            buf.format(lbl_eu_804FD524 + 0xe2, buf8, e.field_20,
+                       func_80136190(lbl_eu_804FD524 + 0xd7,
+                                     lbl_eu_804FD524 + 0xc4, 0xc));
+            break;
+        case 6:
+            buf.format(lbl_eu_804FD524 + 0xe2, buf8, e.field_20,
+                       func_80136190(lbl_eu_804FD524 + 0xd7,
+                                     lbl_eu_804FD524 + 0xc4, 0xe));
+            break;
+        case 7:
+            buf.format(lbl_eu_804FD524 + 0xe2, buf8, e.field_20,
+                       func_80136190(lbl_eu_804FD524 + 0xd7,
+                                     lbl_eu_804FD524 + 0xc4, 0xd));
+            break;
+        case 8:
+            buf.format(lbl_eu_804FD524 + 0xd4,
+                       func_80136190(lbl_eu_804FD524 + 0xd7,
+                                     lbl_eu_804FD524 + 0xc4, 0xe));
+            break;
+        case 9:
+            buf.format(lbl_eu_804FD524 + 0xd4,
+                       func_80136190(lbl_eu_804FD524 + 0xd7,
+                                     lbl_eu_804FD524 + 0xc4, 0xd));
+            break;
+        case 0xa:
+            buf.format(lbl_eu_804FD524 + 0xcf, buf8, e.field_20);
+            break;
+        }
+
+        // Hide every damage-type pane, then reveal the one selected below.
+        e.mLayout0->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0xea,
+                                                  true)
+            ->SetVisible(false);
+        e.mLayout0->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0xf5,
+                                                  true)
+            ->SetVisible(false);
+        e.mLayout0->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0xfd,
+                                                  true)
+            ->SetVisible(false);
+        e.mLayout0->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0x10a,
+                                                  true)
+            ->SetVisible(false);
+        e.mLayout0->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0x112,
+                                                  true)
+            ->SetVisible(false);
+        e.mLayout0->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0x11a,
+                                                  true)
+            ->SetVisible(false);
+        e.mLayout0->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0x124,
+                                                  true)
+            ->SetVisible(false);
+
+        const char* animName = lbl_eu_804FD524 + 0xf5;
+        if (self->mDamageType == 3) {
+            animName = lbl_eu_804FD524 + 0xfd;
+        } else if (self->mDamageType == 1) {
+            animName = lbl_eu_804FD524 + 0x112;
+        } else if (self->mDamageType == 2) {
+            animName = lbl_eu_804FD524 + 0x11a;
+        } else if (self->mDamageType == 0xa) {
+            animName = lbl_eu_804FD524 + 0x10a;
+        } else {
+            animName = lbl_eu_804FD524 + 0xf5;
+            if (dirFlag != 0) {
+                animName = lbl_eu_804FD524 + 0xea;
+            }
+        }
+        e.mLayout0->GetRootPane()
+            ->FindPaneByName(animName, true)
+            ->SetVisible(true);
+        func_80136B4C(e.mLayout0, animName, buf.c_str(), 0);
+
+        if (self->_pad776[1] != 0) {
+            e.mLayout0->GetRootPane()
+                ->FindPaneByName(lbl_eu_804FD524 + 0x124, true)
+                ->SetVisible(true);
+        }
+
+        // Select the damage anim: mAnim1 by default, mAnim0 for the plain
+        // numeric types, mAnim2 when the extra style flag is set.
+        e.field_32 = 1;
+        e.field_04 = e.mAnim1;
+        if (self->mDamageType == 2 || self->mDamageType == 1 ||
+            self->mDamageType == 0xa) {
+            e.field_04 = e.mAnim0;
+        }
+        if (self->field_0x779 != 0) {
+            e.field_04 = e.mAnim2;
+        }
+        e.mLayout0->UnbindAllAnimation();
+        e.mLayout0->BindAnimation(e.field_04);
+        e.mLayout0->SetAnimationEnable(e.field_04, true);
+        e.field_04->SetFrame(lbl_eu_80666F68);
+        e.mLayout0->Animate(0);
+
+        e.field_34 = lbl_eu_80666F68;
+        for (s8 j = found - 1; j >= 0; j--) {
+            CMenuBattleDamageEntry& p = self->mEntries[j];
+            if (p.mActive == 0) {
+                continue;
+            }
+            if (p.field_32 == 0) {
+                continue;
+            }
+            if (p.field_24 != e.field_24) {
+                continue;
+            }
+            // Chain the start frame to the previous popup of this actor so
+            // they don't overlap: prev + (frameSize - 1)*scale - frame.
+            f32 mf = p.field_04->GetFrame();
+            u16 fs = p.field_04->GetFrameSize();
+            e.field_34 = p.field_34 +
+                         ((static_cast<f64>(fs) - lbl_eu_80666F6C) *
+                              lbl_eu_80666F80 -
+                          mf);
+            if (e.field_34 < lbl_eu_80666F68) {
+                e.field_34 = lbl_eu_80666F68;
+            }
+            e.mLayout0->GetRootPane()->SetVisible(false);
+            break;
+        }
+    } else {
+        nw4r::lyt::Pane* pane = e.mLayout1->GetRootPane();
+        pane->SetTranslate(screen);
+
+        // Pick the label text for the small layout by flag bits.
+        const char* text = func_80145AA8(value);
+        if (flags & 0x8) {
+            text = func_8013639C(
+                reinterpret_cast<const void*>(lbl_eu_806640E0),
+                lbl_eu_804FD524 + 0xc4, value);
+        } else if (flags & 0x10) {
+            text = func_8013639C(
+                reinterpret_cast<const void*>(lbl_eu_80664160),
+                lbl_eu_804FD524 + 0xc4, value);
+        } else if (flags & 0x20) {
+            switch (value) {
+            case 1:
+                text = func_eu_802B142C();
+                break;
+            case 2:
+                text = func_eu_802B1444();
+                break;
+            case 3:
+                text = func_eu_802B145C();
+                break;
+            }
+        }
+
+        e.mLayout1->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0x12d,
+                                                  true)
+            ->SetVisible(false);
+        e.mLayout1->GetRootPane()->FindPaneByName(lbl_eu_804FD524 + 0x133,
+                                                  true)
+            ->SetVisible(false);
+        if (flags & 0x22) {
+            e.mLayout1->GetRootPane()
+                ->FindPaneByName(lbl_eu_804FD524 + 0x133, true)
+                ->SetVisible(true);
+            func_80136B4C(e.mLayout1, lbl_eu_804FD524 + 0x139, text, 0);
+        } else {
+            e.mLayout1->GetRootPane()
+                ->FindPaneByName(lbl_eu_804FD524 + 0x12d, true)
+                ->SetVisible(true);
+            func_80136B4C(e.mLayout1, lbl_eu_804FD524 + 0x148, text, 0);
+        }
+
+        // Bind a "timg" resource to the small layout (name depends on the
+        // flag bits), then set the fixed label string if one was found.
+        u8* res = static_cast<u8*>(func_801355F4()->GetResource(
+            0x74696D67, lbl_eu_804FD524 + 0x157, 0));
+        if (flags & 0x8) {
+            res = static_cast<u8*>(func_801355F4()->GetResource(
+                0x74696D67, lbl_eu_804FD524 + 0x16e, 0));
+        } else if (flags & 0x10) {
+            res = static_cast<u8*>(func_801355F4()->GetResource(
+                0x74696D67, lbl_eu_804FD524 + 0x185, 0));
+        } else if (flags & 0x20) {
+            res = static_cast<u8*>(func_801355F4()->GetResource(
+                0x74696D67, lbl_eu_804FD524 + 0x19c, 0));
+        } else if (flags & 0x40) {
+            res = static_cast<u8*>(func_801355F4()->GetResource(
+                0x74696D67, lbl_eu_804FD524 + 0x19c, 0));
+        }
+        if (res != 0) {
+            func_80137E7C(e.mLayout1, lbl_eu_804FD524 + 0x1af);
+        }
+
+        e.field_32 = 0;
+        e.mAnim3->SetFrame(lbl_eu_80666F68);
+        e.mLayout1->Animate(0);
+
+        e.field_34 = lbl_eu_80666F68;
+        for (s8 j = found - 1; j >= 0; j--) {
+            CMenuBattleDamageEntry& p = self->mEntries[j];
+            if (p.mActive == 0) {
+                continue;
+            }
+            if (p.field_32 != 0) {
+                continue;
+            }
+            if (p.field_24 != e.field_24) {
+                continue;
+            }
+            f32 mf = p.mAnim3->GetFrame();
+            u16 fs = p.mAnim3->GetFrameSize();
+            e.field_34 = p.field_34 +
+                         ((static_cast<f64>(fs) - lbl_eu_80666F6C) *
+                              lbl_eu_80666F80 -
+                          mf);
+            if (e.field_34 < lbl_eu_80666F68) {
+                e.field_34 = lbl_eu_80666F68;
+            }
+            e.mLayout1->GetRootPane()->SetVisible(false);
+            break;
+        }
+    }
+
+    self->_pad776[0] += 1;
 }

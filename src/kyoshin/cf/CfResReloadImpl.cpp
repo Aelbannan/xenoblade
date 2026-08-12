@@ -353,7 +353,137 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
     }
 }
 
-void func_8016D688(){}
+// Reload advance: dispatches the secondary-interface +0x28 slot when parent
+// flag bit 1 is set or the entry's resource pointer no longer matches, then
+// runs the reload machinery: in-use validation (+0x40 slot), game-manager
+// flag gates, timer decrement, resource-object creation (slots +0x18/+0x1C),
+// entry re-install (+0x28) and the object/sound cleanup tail. The `ok` bit
+// (r29) is also reused for the +0x68 flag extracted near the end.
+extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
+    cf::CfResLookupEntry* entry = func_80062EC4(self->field_0A);
+    int ok = 1;
+    u32 f6c = self->field_00->field_6C;
+    if ((f6c & 0x2) != 0) {
+        ((cf::CfResReloadVtIf*)self)->_v028();
+        return;
+    }
+    if (entry->field_04 != self->field_00->field_70) {
+        ((cf::CfResReloadVtIf*)self)->_v028();
+        CfRes_stub_63990();
+        func_800AD4B0(self->field_00);
+        return;
+    }
+    if ((f6c & 0x2) != 0) {  // redundant re-test, kept for byte-identity (cr1)
+        ((cf::CfResReloadVtIf*)self)->_v028();
+        return;
+    }
+    if (f6c & 0x20) {
+        if (((cf::CfResEntryIf2*)entry->field_2C)->_v040(entry) == 0) {
+            ok = 0;
+        }
+    }
+    u32 f64 = self->field_00->field_64;
+    if (!(f64 & 0x10000)) {
+        if (lbl_eu_80663E24 & 0x09800000) {
+            return;
+        }
+    }
+    if (ok == 0) {
+        return;
+    }
+    if (f64 & 0x4) {
+        ok = 0;
+        if (lbl_eu_80663E28 & 0x10) {
+            if (func_800B4A24(self->field_00) == 0) {
+                ok = 1;
+            }
+        }
+        if (ok == 0 && self->field_04 > lbl_eu_80667698) {
+            if (((cf::CfGameManager*)self->field_00)->func_80085840() == 0) {
+                return;
+            }
+            if (self->field_04 > lbl_eu_80667698) {
+                self->field_04 -= ((float (*)())func_80069EA0)();
+                return;
+            }
+        }
+        self->field_04 = lbl_eu_80667698;
+    }
+    self->field_08++;
+    func_80434A4C__Q23mtl10MemManagerFb(false);
+    if (self->field_00->field_6C & 0x20) {
+        if (self->field_00->field_98 == 0) {
+            u8* slot18 = ((cf::CfResEntryIf2*)entry->field_2C)->_v018(entry);
+            self->field_00->field_90 = slot18;
+            u8* h = func_80489A60(lbl_eu_80663E14, self->field_00->field_90, -1, 1, 0, 0x76);
+            func_800BBADC(self->field_00, h);
+        }
+    }
+    if (self->field_00->field_6C & 0x10) {
+        if (self->field_00->field_9C == 0) {
+            u8 buf[0x40];
+            u32 word48 = 0;
+            buf[0] = 0;
+            func_800AA33C(buf, entry->field_04, 1, 0);
+            u8* slot1C = ((cf::CfResEntryIf2*)entry->field_2C)->_v01C(entry);
+            self->field_00->field_94 = slot1C;
+            CfRes_getD80Flag();
+            self->field_00->field_9C = func_800584B8(self->field_00->field_94, buf);
+        }
+    }
+    if (((cf::CfResEntryIf2*)entry->field_2C)->_v028(entry) != 0) {
+        self->field_00->field_6DC = entry;
+        u32 v = (u32)entry->field_04 & ~0x1F;
+        if (self->field_00->field_64 & 0x8) {
+            self->field_00->field_6E0 = v | 0x88000000;
+        } else {
+            self->field_00->field_6E0 = v | 0x80000000;
+        }
+    }
+    func_80434A4C__Q23mtl10MemManagerFb(true);
+    int ok2 = (self->field_00->field_68 >> 20) & 1;
+    if (ok2 != 0) {
+        func_800BB618(self->field_00, 0);
+        ((cf::CfResParentVtIf*)self->field_00)->_v168(lbl_eu_8066769C);
+    }
+    func_800BCFA0(self->field_00);
+    self->field_1E = 0;
+    self->field_1C = 0;
+    if (!(self->field_00->field_64 & 0x08000000)) {
+        self->field_1E = 1;
+    }
+    if (lbl_eu_80663E24 & 0x40000) {
+        func_800BE824(self->field_00, 0);
+    } else if (self->field_00->field_C4 != 0) {
+        u8* slot30 = ((cf::CfResEntryIf2*)entry->field_2C)->_v030(entry);
+        if (slot30 != 0) {
+            func_804B0A6C(self->field_00->field_60C, slot30);
+        }
+    }
+    if (ok2 != 0) {
+        self->field_00->field_68 |= 0x00100000;
+    }
+    if (self->field_00->field_64 & 0x8) {
+        func_800BE12C(self->field_00, self->field_00->field_6C4, 0, -1, 1);
+    }
+    self->field_00->field_6C &= ~0x3;
+    if (self->field_00->field_98 != 0) {
+        ((cf::CfResParentObjIf*)self->field_00->field_98)->_v064(0);
+    }
+    if (self->field_00->field_64 & 0x4) {
+        cf::CfResEneObj* ene = (cf::CfResEneObj*)self->field_00;
+        if (self->field_00 != 0) {
+            ene = (cf::CfResEneObj*)((u8*)self->field_00 - 0x3E9C);
+        }
+        if (ene->field_45CA & 0x6) {
+            if (self->field_00->field_98 != 0) {
+                ((cf::CfResParentObjIf*)self->field_00->field_98)->_v088(0);
+            }
+            func_800BC3B0((cf::CfObjectMove*)self->field_00, lbl_eu_806676A0);
+        }
+    }
+    ((cf::CfResReloadVtIf*)self)->_v01C();
+}
 
 // Periodic reload tick: dispatches the +0x28 secondary-interface slot when
 // the parent's +0x6C bit 1 is set, then - when the type field is nonzero -
@@ -367,7 +497,7 @@ extern "C" void func_8016DAF8(cf::CfResReloadImpl* self) {
     if (self->field_08 == 0) {
         return;
     }
-    cf::CfResEneObj* obj = func_800AD860(self->field_00);
+    cf::CfResEneObj* obj = (cf::CfResEneObj*)func_800AD860(self->field_00);
     if (obj != 0 && (obj->field_45CA & 0x2)) {
         if (((cf::CfResParentVtIf*)self->field_00)->_v098() != 0) {
             self->field_1C = 0;
@@ -546,6 +676,10 @@ float lbl_eu_806676C8;
 
 float lbl_eu_806676B0;
 float lbl_eu_80666210;
+// 2^52 doubles used by the s16/u16 -> f32 conversion magic (MWCC's pool
+// reuses these named .sdata2 symbols instead of emitting TU-local @N labels).
+double lbl_eu_806676C0 = 0x4330000000000000ll;
+double lbl_eu_806676D0 = 0x4330000000000000ll;
 
 u16 getReloadParam0() { return lbl_eu_80664278; }
 
@@ -668,7 +802,49 @@ void updateReloadTypeState(u16 r3, u16 r4) {
     lbl_eu_8066427C = r4;
 }
 
-extern "C" void func_8016E1AC(){}
+// Reload-distance check: reads three s16-derived floats plus a u16-derived
+// radius from the BDAT table (two column sets selected by arg2), returns 1
+// when the radius is non-positive or the horizontal distance between the
+// self position and the point falls inside the radius. The y-difference is
+// checked separately after the horizontal radius test.
+extern "C" int func_8016E1AC(cf::CfResReloadImpl* self, u32 arg2, int arg3) {
+    void* bdat = lbl_eu_806640A8;
+    u16 row = (u16)lbl_eu_80664184;
+    f32 vals[3];
+    f32 radius;
+    if (arg2 == 2) {
+        vals[0] = (f32)(s16)(u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x5, row);
+        vals[1] = (f32)(s16)(u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0xf, row);
+        vals[2] = (f32)(s16)(u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x19, row);
+        radius = (f32)(u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x23, row);
+    } else {
+        vals[0] = (f32)(s16)(u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x2d, row);
+        vals[1] = (f32)(s16)(u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x37, row);
+        vals[2] = (f32)(s16)(u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x41, row);
+        radius = (f32)(u16)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0x4b, row);
+    }
+    if (radius <= lbl_eu_8066A208) {
+        return 1;
+    }
+    if (arg3 != 0) {
+        radius -= lbl_eu_806676CC;
+    }
+    f32* pos = (f32*)self;
+    f32 d0 = pos[0] - vals[0];
+    f32 d1 = pos[1] - vals[1];
+    f32 d2 = pos[2] - vals[2];
+    if (d0 * d0 + d2 * d2 >= radius * radius) {
+        return 0;
+    }
+    f32 ad = d1;
+    if (ad < 0.0f) {
+        ad = -ad;
+    }
+    if (ad >= radius) {
+        return 0;
+    }
+    return 1;
+}
 
 // Checks the reload progression against the BDAT table: reads the column
 // values for the type, compares them against the game-manager counter, and

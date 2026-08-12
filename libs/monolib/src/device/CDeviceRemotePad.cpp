@@ -4,7 +4,6 @@
 
 // Own TU owns CDeviceBase's dtor: retail places it (0x8044A2AC) at the head
 // of this unit's slice, right before CDeviceRemotePad's dtor.
-CDeviceBase::~CDeviceBase() {}
 
 CDeviceRemotePad::CDeviceRemotePad(const char* pName, CWorkThread* pParent) :
 CDeviceBase(pName, pParent, MAX_CHILD),

@@ -321,7 +321,10 @@ void func_8049034C(){}
 
 void func_8049090C(){}
 
-void func_80490AF4(){}
+extern "C" nw4r::g3d::ResNode func_80490AF4(void* self, const char* name) {
+    nw4r::g3d::ResMdl mdl = *(nw4r::g3d::ResMdl*)((u8*)self + 0x146C);
+    return mdl.GetResNode(name);
+}
 
 // Resolve a ResNode's next sibling (0x64 offset) - retail helper (stub).
 nw4r::g3d::ResNode func_8049090C(const nw4r::g3d::ResNode* pNode) {

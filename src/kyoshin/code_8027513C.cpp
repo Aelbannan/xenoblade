@@ -238,7 +238,12 @@ void func_80275808(UnkCode8027513C* ptr) {
     ptr->field_0x78 = 0;
 }
 
-void func_80275824(){}
+extern "C" void func_80275824(UnkCode8027513C* self) {
+    if (self->field_0x74 == 0) return;
+    *(u32*)((u8*)self->field_0x74 + 0xB0) = 0;
+    *(u32*)((u8*)self->field_0x74 + 0x68) |= 0x40;
+    self->field_0x74 = 0;
+}
 
 // State machine: dispatch based on field_0x6C, then sync flag bit 11 between
 // CfObjectMove->mFlags68 and CfObjectEff->mFlags68,

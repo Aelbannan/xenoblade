@@ -342,13 +342,12 @@ extern "C" void func_801D3698(CSortMenu* _this) {
 extern "C" void func_801D3724(CSortMenu* _this) {
     u8 count = _this->mCount;
     if (count >= 5) {
-        s8 subPage = (s8)_this->mSubPage - 5;
-        _this->mSubPage = (u8)subPage;
-        if (subPage < 0) {
-            s8 newPage = (subPage & 0xFF) + 4;
-            _this->mPage = (u8)newPage;
+        u8 subU8 = (u8)(_this->mSubPage - 5);
+        _this->mSubPage = subU8;
+        if ((s8)subU8 < 0) {
+            _this->mPage = (u8)(subU8 + 4);
             _this->mSubPage = 0;
-            if (newPage < 0) {
+            if ((s8)(u8)(subU8 + 4) < 0) {
                 _this->mPage = 0;
             }
         }
@@ -411,15 +410,16 @@ extern "C" u8 func_801D3810(CSortMenu* _this) {
 // ============================================================================
 // func_801D3818: Convert sort value to page+subpage
 // ============================================================================
+#pragma optimize_for_size on
 extern "C" void func_801D3818(CSortMenu* _this, int value, u8* outPage, u8* outSubPage) {
-    u8 page = func_8015780C(value);
-    *outPage = page;
+    *outPage = func_8015780C(value);
     *outSubPage = 0;
-    if ((s8)page >= 5) {
-        *outSubPage = page - 4;
+    if ((s8)*outPage >= 5) {
+        *outSubPage = *outPage - 4;
         *outPage = 4;
     }
 }
+#pragma optimize_for_size off
 
 // ============================================================================
 // func_801D3878: State 1 handler - opening animation

@@ -64,7 +64,7 @@ extern "C" void func_801FD304(CPartyState* self) {
     } else {
         self->field_0x4C = 2;
     }
-    func_801FD8F8(self);
+    func_801FD8F8((CPartyState*)self);
     func_80138078(1);
 }
 
@@ -90,7 +90,7 @@ extern "C" void func_801FD3D4(CPartyState* self) {
     } else {
         self->field_0x4C = 1;
     }
-    func_801FD8F8(self);
+    func_801FD8F8((CPartyState*)self);
     func_80138078(1);
 }
 
@@ -101,14 +101,14 @@ extern "C" void func_801FD48C(CPartyState* self) {
     if (highlight < 0) {
         self->field_0x4E = 1;
         self->field_0x4D = -1;
-        func_801FD8F8(self);
+        func_801FD8F8((CPartyState*)self);
         func_80138078(3);
         return;
     }
     s8 cur = (s8)self->field_0x4C;
     if (highlight == cur) {
         self->field_0x4D = -1;
-        func_801FD8F8(self);
+        func_801FD8F8((CPartyState*)self);
         func_80138078(6);
         return;
     }
@@ -126,7 +126,7 @@ extern "C" void func_801FD48C(CPartyState* self) {
         }
     }
     func_801FE0C8(self);
-    func_801FD8F8(self);
+    func_801FD8F8((CPartyState*)self);
     func_80138078(0x11);
 }
 
@@ -136,9 +136,18 @@ u32 CPartyState::func_801FD580() {
     return ((u32)(val >> 31) & 1) ^ 1;
 }
 
-void func_801FD594(){}
+extern "C" void func_801FD594(void* self) {
+    *(s8*)((u8*)self + 0x4D) = -1;
+    func_801FD8F8((CPartyState*)self);
+    func_80138078(6);
+}
 
-void func_801FD5C4(){}
+extern "C" int func_801FD5C4(void* self) {
+    s8 a = (s8)((u8*)self)[0x4D];
+    if (a < 0) return 0;
+    s8 b = (s8)((u8*)self)[0x4C];
+    return (a - b) != 0 ? 1 : 2;
+}
 
 u8 CPartyState::func_801FD5F4() { return field_0x4E; }
 
@@ -151,14 +160,14 @@ extern "C" void func_801FD604(CPartyState* self) {
     s8 highlight = self->field_0x4D;
     if (highlight < 0) {
         self->field_0x4D = (s8)self->field_0x4C;
-        func_801FD8F8(self);
+        func_801FD8F8((CPartyState*)self);
         func_80138078(2);
         return;
     }
     s8 cur = (s8)self->field_0x4C;
     if (highlight == cur) {
         self->field_0x4D = -1;
-        func_801FD8F8(self);
+        func_801FD8F8((CPartyState*)self);
         func_80138078(6);
         return;
     }
@@ -176,13 +185,13 @@ extern "C" void func_801FD604(CPartyState* self) {
         }
     }
     func_801FE0C8(self);
-    func_801FD8F8(self);
+    func_801FD8F8((CPartyState*)self);
     func_80138078(0x11);
 }
 
 // Refresh the party-select cursor: format each slot's pane name, look up the
 // pane, accumulate its translate, and move the cursor sub-panes onto it.
-extern "C" void func_801FD8F8(CPartyState* self) {
+extern "C" __declspec(noinline) void func_801FD8F8(CPartyState* self) {
     char buf[0x28];
     sprintf(buf, lbl_eu_80507D40, self->field_0x4F[(s8)self->field_0x4C]);
     nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf, true);
@@ -241,9 +250,12 @@ extern "C" DECOMP_DONT_INLINE void func_801FD8A0(CPartyState* self) {
 
 // Destroys the embedded cursor and scratch-memory sub-objects (reverse
 // declaration order); MWCC emits the delete guard from the incoming flag.
+#pragma push
+#pragma optimize_for_size on
 CPartyState::~CPartyState() {
     __dt__6CCur22Fv(&mCur22, -1);
 }
+#pragma pop
 
 // Intro-animation finish handler: when the +0x24 anim transform reaches the
 // target frame, move to state 3, show the cursor, and run the shared tail.
@@ -252,7 +264,7 @@ extern "C" DECOMP_DONT_INLINE void func_801FD76C(CPartyState* self) {
         self->field_0x2C = 3;
         self->field_0x31 = 1;
         func_801D216C(&self->mCur22, 1);
-        func_801FD8F8(self);
+        func_801FD8F8((CPartyState*)self);
     }
 }
 
@@ -291,7 +303,7 @@ extern "C" void func_801FD220(CPartyState* self) {
     } else if (s == 3) {
         self->field_0x4C = next;
     }
-    func_801FD8F8(self);
+    func_801FD8F8((CPartyState*)self);
     func_80138078(1);
 }
 
@@ -635,7 +647,22 @@ extern "C" void func_801FCFF4(CPartyState* self) {
     }
 }
 
-extern "C" void func_801FD0A0() {}
+// Layout render (retail mangled name; declared per code_80135FDC.hpp) and
+// cursor draw helper.
+void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+extern "C" void func_801D20B0(CBaseCur*, nw4r::lyt::DrawInfo*);
+
+// Render the party list when the visible flag is set: draw the bound layout
+// with the given draw info (projection off, calc mtx on), then draw the
+// embedded cursor.
+#pragma optimize_for_size on
+extern "C" void func_801FD0A0(CPartyState* self, nw4r::lyt::DrawInfo* drawInfo) {
+    if (self->field_0x28 != 0) {
+        func_80137038(self->mLayout, drawInfo, 0, 1);
+        func_801D20B0(&self->mCur22, drawInfo);
+    }
+}
+#pragma optimize_for_size off
 
 // One-time member-list setup: skip if the advance/state word is already
 // active; otherwise mark it active, clear the panel flags, and run the shared
@@ -664,7 +691,7 @@ extern "C" void func_801FD290(CPartyState* self) {
             self->field_0x4C = 3;
         }
     }
-    func_801FD8F8(self);
+    func_801FD8F8((CPartyState*)self);
     func_80138078(1);
 }
 

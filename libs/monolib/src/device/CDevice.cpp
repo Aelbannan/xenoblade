@@ -5,14 +5,19 @@
 
 using namespace ml;
 
-CDeviceBase::~CDeviceBase() {}
+
+// Forward decl for the anonymous-ns singleton (defined extern "C" below).
+namespace {
+    class CDeviceException;
+}
+extern "C" extern CDeviceException* lbl_eu_80665654;
 
 namespace {
     //size: 0x1c8
     class CDeviceException : public CWorkThread {
     public:
         CDeviceException(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD) {
-            spInstance = this;
+            lbl_eu_80665654 = this;
             // Out-of-line getInstance must stay live for the retail symbol.
             (void)getInstance();
         }
@@ -28,18 +33,16 @@ namespace {
 
     private:
         static const int MAX_CHILD = 64;
-
-        static CDeviceException* spInstance;
+        // static CDeviceException* spInstance; -> extern "C" lbl_eu_80665654 below
     };
 }
 
 CDevice* CDevice::spInstance;
-CDeviceException* CDeviceException::spInstance;
+extern "C" CDeviceException* lbl_eu_80665654;
 
 // Retail sbss labels for the two TU singletons (MWCC_REFERENCE §1a).
 extern "C" {
 extern CDevice* lbl_eu_80665650;             // CDevice::spInstance
-extern CDeviceException* lbl_eu_80665654;    // CDeviceException::spInstance
 }
 const char* CDevice::devSys1String = "DeviceSystem1";
 const char* CDevice::devSys2String = "DeviceSystem2";
@@ -200,7 +203,7 @@ void CDevice::deleteRegions(){
 }
 
 CDeviceException::~CDeviceException(){
-    spInstance = nullptr;
+    lbl_eu_80665654 = nullptr;
 }
 
 bool CDeviceException::wkStandbyLogout(){

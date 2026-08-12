@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/lib/CLibCri.hpp"
 #include "monolib/util/FixStr.hpp"
 #include "monolib/util/MemManager.hpp"
 
@@ -33,10 +34,9 @@ extern "C" s32 func_80459A7C__7CLibCriFv(s32);
 extern "C" void func_80459A84__7CLibCriFv(s32, s32);
 extern "C" void func_80459A88__7CLibCriFv(s32, float, float, s32);
 extern "C" void func_80459A8C__7CLibCriFv(s32);
-extern "C" void func_80459A90__7CLibCriFv(s32);
+extern "C" void func_80459A90__7CLibCriFv(s32, float);
 extern "C" void func_80459A94__7CLibCriFv(s32, float);
 extern "C" s32 func_80459A9C__7CLibCriFv(s32, void*, s32, float, float, float);
-extern "C" s32 func_8045997C__7CLibCriFv(const char*, s32, s32);
 extern "C" void getInstance__7CLibCriFv();
 extern "C" s32 func_8008585C__Q22cf13CfGameManagerFv();
 
@@ -59,6 +59,21 @@ struct SoundSlot {
     u16 backupU16_1;         // 0xB0
     u16 backupU16_2;         // 0xB2
     u16 backupU16_3;         // 0xB4
+};
+
+// Reduced copy of SoundSlot used as the stack temp in func_80187F14: only
+// the fields that get swapped around are present, so the stack slot stays
+// small (retail allocates ~0x5A bytes for it).
+struct SoundSlotTmp {
+    s32 handle;              // 0x00
+    char name[0x40];         // 0x04
+    s32 nameLen;             // 0x44
+    float field_0x48;        // 0x48
+    float x;                 // 0x4C
+    float y;                 // 0x50
+    u16 field_0x54;          // 0x54
+    u16 field_0x56;          // 0x56
+    u16 status;              // 0x58
 };
 
 // --- SIMPLE HELPERS ---
@@ -220,13 +235,13 @@ extern "C" void func_80188488(SoundSlot* slot, u32 type, float f1, float f2, flo
     if (!isValid(slot->handle)) return;
     u16 st = slot->status;
     if (st == 4) return;
+    float prod = f1 * f2;
     if (f3 <= 0.0f || st == 5) {
-        func_80459A90__7CLibCriFv(slot->handle);
+        func_80459A90__7CLibCriFv(slot->handle, prod);
         slot->x = f1;
         slot->y = f2;
         return;
     }
-    float prod = f1 * f2;
     func_80459A88__7CLibCriFv(slot->handle, prod, f3, type);
     slot->x = f1;
     slot->y = f2;
@@ -530,8 +545,113 @@ extern "C" s32 func_80189A04(s32 index) {
     return 1;
 }
 
-// STUBS for complex functions
-s32 func_80187F14(SoundSlot* slot, SoundPlayParams* params, s32 flag) { return 0; }
+// Sound-play dispatcher. slot holds a playing voice; params describe the
+// requested sound (name, alloc handle, volumes, flags). If a voice with the
+// same name is already playing, restart or restore it; otherwise start a new
+// one and return the new CRI handle (-1 on failure).
+s32 func_80187F14(SoundSlot* slot, SoundPlayParams* params, s32 flag) {
+    getInstance__7CLibCriFv();
+    f32 product = params->vol2 * params->vol3;
+    const char* name = params->name->mString;
+    u32 allocHandle = params->handle;
+    u16 field14 = params->field_0x14;
+    u16 field16 = params->field_0x16;
+    f32 vol = params->vol1;
+
+    // Is a voice still playing on this slot? Short-circuit: a dead handle
+    // skips the getInstance/query calls entirely.
+    if ((slot->handle == 0xFFFFFFFF)
+            ? 0
+            : (getInstance__7CLibCriFv(), func_80459A78__7CLibCriFv(slot->handle))) {
+        if (strcmp(slot->name, name) == 0) {
+            // Same name: restart the voice.
+            if ((u32)slot->handle != 0xFFFFFFFF) {
+                getInstance__7CLibCriFv();
+                func_80459A84__7CLibCriFv(slot->handle, 0);
+                slot->status = 2;
+            }
+            if ((u32)slot->handle != 0xFFFFFFFF) {
+                getInstance__7CLibCriFv();
+                func_80459A8C__7CLibCriFv(slot->handle);
+            }
+            func_80459A88__7CLibCriFv(slot->handle, product, vol, 0);
+            slot->x = params->vol2;
+            slot->y = params->vol3;
+            return slot->handle;
+        }
+        if ((u32)slot->backupHandle != 0xFFFFFFFF && strcmp(slot->backupName, name) == 0) {
+            // The backed-up name matches: pull the backup state into a temp
+            // slot, silence the current voice, then swap the temp in.
+            SoundSlotTmp tmp;
+            tmp.handle = slot->backupHandle;
+            tmp.nameLen = strlen(slot->backupName);
+            strcpy(tmp.name, slot->backupName);
+            tmp.field_0x48 = slot->backupF1;
+            tmp.x = slot->backupF2;
+            tmp.y = slot->backupF3;
+            tmp.field_0x54 = slot->backupU16_1;
+            tmp.field_0x56 = slot->backupU16_2;
+            tmp.status = slot->backupU16_3;
+            slot->backupHandle = -1;
+            slot->backupU16_1 = 0;
+            slot->backupU16_2 = 0;
+            slot->backupU16_3 = 0;
+            slot->backupF1 = lbl_eu_80667A08;
+            if (vol != lbl_eu_80667A08 && flag != 0) {
+                func_801882AC(slot, vol, 2);
+            } else {
+                func_801882AC(slot, lbl_eu_80667A08, 2);
+            }
+            slot->handle = tmp.handle;
+            slot->nameLen = strlen(tmp.name);
+            strcpy(slot->name, tmp.name);
+            slot->field_0x48 = tmp.field_0x48;
+            slot->x = tmp.x;
+            slot->y = tmp.y;
+            slot->field_0x54 = tmp.field_0x54;
+            slot->field_0x56 = tmp.field_0x56;
+            slot->status = tmp.status;
+            if ((u32)slot->handle != 0xFFFFFFFF) {
+                getInstance__7CLibCriFv();
+                func_80459A8C__7CLibCriFv(slot->handle);
+            }
+            func_80459A88__7CLibCriFv(slot->handle, product, vol, 0);
+            slot->x = params->vol2;
+            slot->y = params->vol3;
+            return slot->handle;
+        }
+        if (vol != lbl_eu_80667A08 && flag != 0) {
+            func_801882AC(slot, vol, 2);
+        } else {
+            func_801882AC(slot, lbl_eu_80667A08, 2);
+        }
+    }
+    // No matching voice: record the new name and start playback.
+    slot->nameLen = strlen(name);
+    strcpy(slot->name, name);
+    slot->x = params->vol2;
+    slot->y = params->vol3;
+    s32 newHandle = CLibCri::func_8045997C(slot->name, allocHandle, 0);
+    if ((u32)newHandle != 0xFFFFFFFF) {
+        slot->handle = newHandle;
+        slot->field_0x54 = field14;
+        slot->field_0x56 = field16;
+        slot->field_0x48 = lbl_eu_80667A08;
+        slot->status = 0;
+        if (vol > lbl_eu_80667A08 && product > lbl_eu_80667A08) {
+            func_80459A90__7CLibCriFv(slot->handle, lbl_eu_80667A08);
+            func_80459A88__7CLibCriFv(slot->handle, product, vol, 0);
+            if ((u32)slot->handle != 0xFFFFFFFF) {
+                getInstance__7CLibCriFv();
+                func_80459A8C__7CLibCriFv(slot->handle);
+            }
+        } else {
+            func_80459A90__7CLibCriFv(slot->handle, product);
+        }
+    }
+    return newHandle;
+}
+
 s32 func_80188B80(s32 index, s32 name, float f1, float f2, s32 flag) {
     if (index == -1) return 0;
     const char* strName = (const char*)name;
@@ -570,8 +690,148 @@ s32 func_80188B80(s32 index, s32 name, float f1, float f2, s32 flag) {
     }
     return result;
 }
-void func_80188D34() {}
-void func_80189034() {}
+// "Set BGM": if the formatted name matches slot 0's live name, move the
+// current BGM to slot 1 (backup) and return 1; otherwise stop slot 0's
+// sound, record the new name and start it via func_80188B80.
+s32 func_80189034(const char* name, s32 flag, float f1, float f2) {
+    SoundSlot* s0 = sptr(0);
+    s32 match;
+    if (name != nullptr && s0 != nullptr && (u32)s0->handle != 0xFFFFFFFF) {
+        // Format the requested name into the full sound path and compare it
+        // against the slot's live name.
+        ml::FixStr<64> str;
+        char* slotName = s0->name;
+        bool hasDot = strstr(name, &lbl_eu_80503AB0[0x00]) != nullptr;
+        bool hasSlash = strstr(name, &lbl_eu_80503AB0[0x02]) != nullptr;
+        const char* mid = hasDot ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x05];
+        const char* prefix = hasSlash ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x11];
+        str.format(&lbl_eu_80503AB0[0x0a], prefix, mid, name);
+        match = (strcmp(str.mString, slotName) == 0);
+    } else {
+        match = 0;
+    }
+    if (match != 0) {
+        // Same name is already playing: shift it to slot 1 and clear slot 0.
+        SoundSlot* s1 = sptr(1);
+        SoundSlot* s0b = sptr(0);
+        s1->handle = s0b->handle;
+        s1->nameLen = strlen(s0b->name);
+        strcpy(s1->name, s0b->name);
+        s1->field_0x48 = s0b->field_0x48;
+        s1->x = s0b->x;
+        s1->y = s0b->y;
+        s1->field_0x54 = s0b->field_0x54;
+        s1->field_0x56 = s0b->field_0x56;
+        s1->status = s0b->status;
+        s1->backupHandle = s0b->backupHandle;
+        s1->backupNameLen = strlen(s0b->backupName);
+        strcpy(s1->backupName, s0b->backupName);
+        s1->backupF1 = s0b->backupF1;
+        s1->backupF2 = s0b->backupF2;
+        s1->backupF3 = s0b->backupF3;
+        s1->backupU16_1 = s0b->backupU16_1;
+        s1->backupU16_2 = s0b->backupU16_2;
+        s1->backupU16_3 = s0b->backupU16_3;
+        s0b->handle = -1;
+        s0b->field_0x54 = 0;
+        s0b->field_0x56 = 0;
+        s0b->status = 0;
+        s0b->field_0x48 = lbl_eu_80667A08;
+        s0b->backupHandle = -1;
+        s0b->backupU16_1 = 0;
+        s0b->backupU16_2 = 0;
+        s0b->backupU16_3 = 0;
+        s0b->backupF1 = lbl_eu_80667A08;
+        SoundSlot* s1b = sptr(1);
+        if (s1b != nullptr) {
+            func_80188488(s1b, 0, f2, lbl_eu_80662490 * lbl_eu_80662494, f1);
+        }
+        return 1;
+    }
+    // Fresh sptr() read: the global may have changed across the calls above.
+    SoundSlot* s0c = sptr(0);
+    if (s0c != nullptr) {
+        func_801882AC(s0c, f1, 1);
+    }
+    lbl_eu_805757BC[8] = strlen(name);
+    strcpy((char*)lbl_eu_805757BC, name);
+    return func_80188B80(1, (s32)name, f1, f2, flag);
+}
+
+// "Stop/restart BGM": if no name is given, use the stored one; slot 1 holds
+// the previous BGM. If the requested name matches slot 1's live name, move
+// it back to slot 0 and return 1; otherwise stop slot 1 and start fresh.
+s32 func_80188D34(const char* name, s32 flag, float f1, float f2) {
+    const char* curName = name;
+    if (name == nullptr) {
+        curName = (const char*)lbl_eu_80575798;
+        if (lbl_eu_80575798[8] == 0) {
+            // No stored name either: just silence slot 1.
+            SoundSlot* s1 = sptr(1);
+            if (s1 != nullptr) {
+                func_801882AC(s1, f1, 2);
+            }
+            return 0;
+        }
+    } else {
+        lbl_eu_80575798[8] = strlen(name);
+        strcpy((char*)lbl_eu_80575798, name);
+    }
+    SoundSlot* s1 = sptr(1);
+    s32 match;
+    if (curName != nullptr && s1 != nullptr && (u32)s1->handle != 0xFFFFFFFF) {
+        ml::FixStr<64> str;
+        char* slotName = s1->name;
+        bool hasDot = strstr(curName, &lbl_eu_80503AB0[0x00]) != nullptr;
+        bool hasSlash = strstr(curName, &lbl_eu_80503AB0[0x02]) != nullptr;
+        const char* mid = hasDot ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x05];
+        const char* prefix = hasSlash ? &lbl_eu_80503AB0[0x04] : &lbl_eu_80503AB0[0x11];
+        str.format(&lbl_eu_80503AB0[0x0a], prefix, mid, curName);
+        match = (strcmp(str.mString, slotName) == 0);
+    } else {
+        match = 0;
+    }
+    if (match != 0) {
+        // Move slot 1's BGM back to slot 0 and clear slot 1.
+        SoundSlot* s1b = sptr(1);
+        SoundSlot* s0 = sptr(0);
+        s0->handle = s1b->handle;
+        s0->nameLen = strlen(s1b->name);
+        strcpy(s0->name, s1b->name);
+        s0->field_0x48 = s1b->field_0x48;
+        s0->x = s1b->x;
+        s0->y = s1b->y;
+        s0->field_0x54 = s1b->field_0x54;
+        s0->field_0x56 = s1b->field_0x56;
+        s0->status = s1b->status;
+        s0->backupHandle = s1b->backupHandle;
+        s0->backupNameLen = strlen(s1b->backupName);
+        strcpy(s0->backupName, s1b->backupName);
+        s0->backupF1 = s1b->backupF1;
+        s0->backupF2 = s1b->backupF2;
+        s0->backupF3 = s1b->backupF3;
+        s0->backupU16_1 = s1b->backupU16_1;
+        s0->backupU16_2 = s1b->backupU16_2;
+        s0->backupU16_3 = s1b->backupU16_3;
+        s1b->handle = -1;
+        s1b->field_0x54 = 0;
+        s1b->field_0x56 = 0;
+        s1b->status = 0;
+        s1b->field_0x48 = lbl_eu_80667A08;
+        s1b->backupHandle = -1;
+        s1b->backupU16_1 = 0;
+        s1b->backupU16_2 = 0;
+        s1b->backupU16_3 = 0;
+        s1b->backupF1 = lbl_eu_80667A08;
+        return 1;
+    }
+    SoundSlot* s1c = sptr(1);
+    if (s1c != nullptr) {
+        func_801882AC(s1c, f1, 2);
+    }
+    return func_80188B80(0, (s32)curName, f1, f2, flag);
+}
+
 void func_8018986C(const char* name, float vol) {
     if (name != nullptr) {
         // Build the full sound path from the input name.
@@ -660,8 +920,6 @@ extern "C" s32 func_801897A0(s32 wantId, s32 type, float f1) {
 void func_80189F20() {}
 void func_80189F84() {}
 void func_8018A134() {}
-void func_8018A2E8() {}
-void func_8018A5E8() {}
 void func_8018A9D8() {}
 void func_8018AA04() {}
 void func_8018AAC4() {}

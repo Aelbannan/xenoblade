@@ -126,6 +126,7 @@ public:
     u16 mField17A;                        // 0x17A: selection id (halfword)
     u16 mField17C;                        // 0x17C: count/limit (halfword)
     s8 mField17E;                         // 0x17E: sign-extended counter base
+    u8 mPad17F;                           // 0x17F: padding (retail sub-object at 0x180)
     u8 mSubObj180[0x100];                 // 0x180: opaque sub-object (func_802ACC30)
     u16 mField280;                        // 0x280: content size (halfword)
     s16 mField282;                        // 0x282: sign-extended row id

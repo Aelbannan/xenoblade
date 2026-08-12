@@ -24,7 +24,24 @@ extern "C" float func_8005871C(void* self) { return *(float*)((char*)self + 0x54
 
 extern "C" float func_80058724(void* self) { return *(float*)((char*)self + 0x58); }
 
-CTaskEnvironment::~CTaskEnvironment() {}
+// CTaskEnvironment::~CTaskEnvironment() — extern "C" free-function form
+// (CCol6CheckBat/CCol6Invite precedent): outer null-check covers the delete;
+// clears the global manager pointer; single inner null-guard (retail has one
+// beq, unlike the double-nest in the CCol6 family) around the CProcess base
+// dtor; default -O4,p (retail keeps separate stw r31/stw r30 saves).
+extern "C" void __dt__8CProcessFv(void* self, int flags);
+extern "C" void* __dt__16CTaskEnvironmentFv(CTaskEnvironment* self, int flags) {
+    if (self != 0) {
+        lbl_eu_80663D58 = 0;
+        if (self != 0) {
+            __dt__8CProcessFv(reinterpret_cast<CProcess*>(self), 0);
+        }
+        if (flags > 0) {
+            operator delete(self);
+        }
+    }
+    return self;
+}
 
 extern "C" void* getGlobalSda() { return lbl_eu_80663D58; }
 
@@ -41,7 +58,16 @@ extern "C" u32 getField5C(u8* self) { return *(u32*)((u8*)self + 0x5C); }
 // instead of inlining the empty stub body (reloc name must match retail).
 extern "C" __declspec(noinline) void func_80058844() {}
 
-void func_80058BD8(){}
+extern "C" void func_80058BD8(ml::CVec4* out, const ml::CVec4* in, float s) {
+    float z = in->z * s;
+    float y = in->y * s;
+    float x = in->x * s;
+    float w = in->w;
+    out->z = z;
+    out->x = x;
+    out->y = y;
+    out->w = w;
+}
 
 void CTaskEnvironment::Init() {
     func_80058844();
@@ -68,9 +94,18 @@ extern "C" u32 checkBitFlag(u8* self) { return (*(u32*)((u8*)self + 0) >> 1) & 0
 
 // Converted to inline member function in header
 
-void func_80059920(){}
+struct _S16 { u32 a, b, c, d; };
 
-void func_80059944(){}
+extern "C" void func_80059920(void* dst, const void* src) {
+    *(_S16*)((u8*)dst + 0x28) = *(const _S16*)((const u8*)src);
+}
+
+struct _S16b { u32 a, b, c, d; };
+
+extern "C" void func_80059944(void* self, const void* src) {
+    if (((u8*)self)[0x19] != 0) return;
+    *(_S16b*)((u8*)self + 0x1C) = *(const _S16b*)src;
+}
 
 // Vector add: out = a + b (component-wise). The four sums are computed in
 // w,z,y,x order but stored z,y,x,w; temps are declared z,w,y,x so MWCC

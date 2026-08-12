@@ -455,7 +455,7 @@ void sfmps_pesfn(void* self, u8 stream_kind, s32 arg3, s32 arg4) {
     s1 = *(s32*)((u8*)self + 0x9a4);
     inf.stm_info[1] = s1;
     inf.stm_info[0] = s0;
-    cb(*(s32*)((u8*)self + 0xd60), &inf, inf.stm_info[1], arg4);
+    cb(*(s32*)((u8*)self + 0xd60), &inf, s1, arg4);
 }
 
 void sfmps_SkipNext(void* self, s32 buf, s32 size, s32* out_size) {

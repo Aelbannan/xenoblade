@@ -38,15 +38,21 @@ cf::CTaskREvent::~CTaskREvent() {}
 
 void func_80164410(){}
 
-void func_80164478(){}
+// Convert the .sdata u32 counter to float and scale it. MWCC lowers the
+// u32->float conversion through the 0x4330 double trick (xoris sign flip +
+// subtract 2^52+2^31), which is exactly what the retail body shows.
+float func_80164478() {
+    return (float)lbl_eu_80662384 * lbl_eu_8066762C;
+}
 
-// retail: lwz r3, lbl_eu_80662380; blr
-extern void* lbl_eu_80662380;
-extern void* lbl_eu_80664240;
 extern "C" u32 func_801644AC() { return (u32)lbl_eu_80662380; }
 
 extern "C" u32 func_801644B4() { return (u32)lbl_eu_80664240; }
-void func_801644BC__FUl(){}
+void func_801644BC(u32 arg) {
+    CEventMgr* mgr = lbl_eu_80664240;
+    if (!mgr) return;
+    func_80166150(mgr, arg);
+}
 
 void func_801644D8(void* self){}
 
@@ -64,7 +70,13 @@ void func_80164954(){}
 
 void func_80164A50(){}
 
-void func_80164C28(){}
+int func_80164C28() {
+    CEventMgr* mgr = lbl_eu_80664240;
+    if (mgr) {
+        return mgr->field_0x6C & 1;
+    }
+    return 0;
+}
 
 void func_80164C48(){}
 
@@ -78,7 +90,16 @@ void func_80164ED0(){}
 
 void func_80164F6C(){}
 
-void func_80164FB4(){}
+int func_80164FB4() {
+    CEventMgr* mgr = lbl_eu_80664240;
+    if (mgr) {
+        CLibCri* cri = mgr->mCri;
+        if ((u32)cri != 0xFFFFFFFF) {
+            return func_80459AC4__7CLibCriFv(cri);
+        }
+    }
+    return 0;
+}
 
 int func_80164FE8(void) {
     int* ptr = (int*)lbl_eu_80664240;
@@ -87,7 +108,13 @@ int func_80164FE8(void) {
     return (unsigned)((-1 - val) | (val + 1)) >> 31;
 }
 
-void func_80165014(){}
+void func_80165014() {
+    CEventMgr* mgr = lbl_eu_80664240;
+    if (!mgr) return;
+    CLibCri* cri = mgr->mCri;
+    if ((u32)cri == 0xFFFFFFFF) return;
+    cri->func_80459AC0();
+}
 
 extern "C" void func_8016C2E4();
 extern "C" void func_80165038() { func_8016C2E4(); }
@@ -102,7 +129,7 @@ void func_80165DF4(){}
 
 void func_80166050(){}
 
-void func_80166150(){}
+u32 func_80166150(CEventMgr* self, u32 arg) { return 0; }
 
 void cf::CTaskREvent::cbRenderBefore() {}
 

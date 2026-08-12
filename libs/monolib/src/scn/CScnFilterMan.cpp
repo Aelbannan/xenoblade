@@ -16,7 +16,7 @@ extern "C" void func_8049CD34(CScnFilterIteratorReslist* self);
 extern "C" void func_8049CDAC(CScnFilterIterator* item);
 extern "C" void func_8049CDB0(void* self, void* out);
 void func_8049D218(CScnFilterReslist* list, u32* val);
-void func_8049DD28(void* self, u32 val);
+void* func_8049DD28(void* self, u32 val);
 extern "C" void func_8049D994(int* dst, int* src);
 extern "C" void func_8049D9A0(u32* self);
 extern "C" void func_8049CAF4(CScnFilterReslist* self);
@@ -222,12 +222,28 @@ extern "C" __declspec(noinline) void __dt__8049D130(CScnFilterReslist* self) {
     self->mCapacity = 0;
 }
 
-extern "C" void __dt__8049D18C();
-extern "C" void func_8049D188(void) { __dt__8049D18C(); }
+extern "C" void __dt__8049D18C(CScnFilterIteratorReslist* self);
+extern "C" void func_8049D188(void) { __dt__8049D18C((CScnFilterIteratorReslist*)0); }
 
+extern "C" void __dla__FPv(void* p);
+
+// reslist-base dtor: clear the node array and ownership flag. The mList
+// backing block (allocated 16 bytes before the array) is freed when the
+// ownership flag is clear and the array is non-null.
 #pragma push
 #pragma auto_inline off
-extern "C" void __dt__8049D18C(){}
+extern "C" void __dt__8049D18C(CScnFilterIteratorReslist* self) {
+    func_8049CD34(self);
+    if (self->field_0x1C != 0)
+        goto done;
+    if (self->mList == 0)
+        goto done;
+    if (self->mList != 0)
+        __dla__FPv((char*)self->mList - 16);
+    self->mList = 0;
+done:
+    self->mCapacity = 0;
+}
 #pragma pop
 
 // Forward (self, val) to func_8049D218 as (reslist member at self+8, &val).
@@ -240,8 +256,20 @@ extern "C" __declspec(noinline) void func_8049D26C(CScnFilterListIter* self, CSc
     func_8049D274(self, (u32)list->mStartNodePtr);
 }
 
+extern "C" __declspec(noinline) CScnFilterListNode* func_8049D2F0(
+    CScnFilterReslist* list, u32 val);
+
+// Allocate a node for `val`, link it into the list before `iter`'s node, and
+// point the output iterator at it.
 extern "C" __declspec(noinline) void func_8049D27C(CScnFilterListIter* self, CScnFilterReslist* list,
-                   CScnFilterListIter* iter, u32* val) {}
+                   CScnFilterListIter* iter, u32* val) {
+    CScnFilterListNode* node = func_8049D2F0(list, (u32)val);
+    node->mNext = iter->mNode;
+    node->mPrev = iter->mNode->mPrev;
+    iter->mNode->mPrev->mNext = node;
+    iter->mNode->mPrev = node;
+    func_8049D274(self, (u32)node);
+}
 
 // Insert `val` at the end of the filter list (retail: end-iterator then
 // insert via the D26C/D27C pair).
@@ -254,7 +282,8 @@ __declspec(noinline) void func_8049D218(CScnFilterReslist* list, u32* val) {
 
 // Get a free node slot from the node array and install `val` into its item
 // slot, returning the node (retail: free-slot search then item setter).
-CScnFilterListNode* func_8049D2F0(CScnFilterReslist* list, u32 val) {
+extern "C" __declspec(noinline) CScnFilterListNode* func_8049D2F0(
+    CScnFilterReslist* list, u32 val) {
     CScnFilterListNode* node = func_8049D394(list);
     func_8049D338(&node->mItem, val);
     return node;
@@ -326,8 +355,21 @@ extern "C" __declspec(noinline) void func_8049D644(CScnFilterListIter* self, CSc
     func_8049D64C(self, (u32)list->mStartNodePtr);
 }
 
+extern "C" __declspec(noinline) CScnFilterListNode* func_8049D6C8(
+    CScnFilterReslist* list, u32 val);
+extern "C" void func_8049D64C(CScnFilterListIter* self, u32 val);
+
+// Allocate a node for `val`, link it into the list before `iter`'s node, and
+// point the output iterator at it (same shape as func_8049D27C).
 extern "C" __declspec(noinline) void func_8049D654(CScnFilterListIter* self, CScnFilterReslist* list,
-                   CScnFilterListIter* iter, u32* val) {}
+                   CScnFilterListIter* iter, u32* val) {
+    CScnFilterListNode* node = func_8049D6C8(list, (u32)val);
+    node->mNext = iter->mNode;
+    node->mPrev = iter->mNode->mPrev;
+    iter->mNode->mPrev->mNext = node;
+    iter->mNode->mPrev = node;
+    func_8049D64C(self, (u32)node);
+}
 
 // Insert `val` at the end of the filter list (retail: end-iterator then
 // insert via the D644/D654 pair; same shape as func_8049D218).
@@ -454,11 +496,23 @@ u32 func_8049DC04(CScnFilterReslist* list) {
     return length;
 }
 
-extern "C" __declspec(noinline) void func_8049DC5C(CScnFilterListNode** cur, CScnFilterListNode** end, u32* out) {}
+extern "C" u32 func_8049DCD8(const u32* a, const u32* b);
+extern "C" void func_8049DCC8(u32* self);
 
-extern "C" void func_8049DCC8(u32* self) { *self = *(u32*)(*(u32**)self); }
+extern "C" __declspec(noinline) void func_8049DC5C(CScnFilterListNode** cur, CScnFilterListNode** end, u32* out) {
+    while (func_8049DCD8((const u32*)cur, (const u32*)end) != 0) {
+        func_8049DCC8((u32*)cur);
+        (*out)++;
+    }
+}
 
-extern "C" u32 func_8049DCD8(const u32* a, const u32* b) { return *a != *b; }
+extern "C" __declspec(noinline) void func_8049DCC8(u32* self) {
+    *self = *(u32*)(*(u32**)self);
+}
+
+extern "C" __declspec(noinline) u32 func_8049DCD8(const u32* a, const u32* b) {
+    return *a != *b;
+}
 
 // Round-trip the first node's mNext through a stack slot via func_8049DD28
 // and return it (one more deref than func_8049DD30).
@@ -468,15 +522,17 @@ extern "C" __declspec(noinline) CScnFilterListNode* func_8049DCF4(CScnFilterList
     return node;
 }
 
-__declspec(noinline) void func_8049DD28(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
+__declspec(noinline) void* func_8049DD28(void* self, u32 val) {
+    *(u32*)((u8*)self + 0x0) = val;
+    return self;
+}
 
 // Getter that round-trips the list's sentinel pointer through the node
 // setter: retail reads the pointer at self+4, stores it via func_8049DD28
-// into a local, and returns that local.
+// into a local, and returns that local (deref of the callee's preserved r3).
 extern "C" __declspec(noinline) CScnFilterListNode* func_8049DD30(CScnFilterList* list) {
     CScnFilterListNode* node;
-    func_8049DD28(&node, (u32)list->mStartNodePtr);
-    return node;
+    return *(CScnFilterListNode**)func_8049DD28(&node, (u32)list->mStartNodePtr);
 }
 
 void CScnFilterMan::cbRenderBefore() {

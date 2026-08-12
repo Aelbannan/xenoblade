@@ -11,6 +11,9 @@
 
 #include <revolution/GX.h>
 
+// isIdle returns raw int so callers use cmpwi (CMenuCollepedia pattern).
+extern "C" int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
+
 extern "C" void cbRenderBefore__13CMenuShopSellFv(void*);
 
 /*
@@ -113,6 +116,10 @@ void func_8018B0FC(void* dst, void* src) {
 // Copies the 0x806-byte sell data blob: the 256 x 8-byte item array at +0x4
 // (the mItems struct assignment lowers to the retail mtctr/lwzu/stwu counted
 // loop) followed by the trailing u16 at +0x804.
+// Open item: struct-copy loop (mItems 0x800 + mField804). MWCC emits the two
+// pointer-save moves (or r6=src / or r7=dst) in the opposite order to retail
+// (2 reg_swap, 0 structural); witness rejects the r3<->r4 ABI permutation
+// (same class as func_800B7680/func_801CB9D8). Local/order variants invariant.
 void func_8018B130(ShopSellData* dst, const ShopSellData* src) {
     dst->mItems = src->mItems;
     dst->mField804 = src->mField804;
@@ -229,7 +236,10 @@ extern "C" __declspec(noinline) void func_8018B3A8(CMenuShopSell* self) {
 // advance the state byte at 0x4AC4 to 2 (the CMenuGCItem::Move case-1 check,
 // kept as a separate helper here).
 extern "C" __declspec(noinline) void func_8018B420(CMenuShopSell* self) {
-    if (self->mTitleAHelp.isIdle() != 0 && GetField61(&self->mItemBoxGrid) != 0) {
+    // isIdle called via the int-returning extern declaration (CMenuCollepedia
+    // pattern) so the caller compares with cmpi (retail), not a byte mask.
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+        GetField61(&self->mItemBoxGrid) != 0) {
         self->mState = 2;
     }
 }
@@ -330,7 +340,10 @@ extern "C" __declspec(noinline) void func_8018B470(CMenuShopSell* self) {
 // set the closing-state flag at 0x54 (the CMenuGCItem::Move case-3 check,
 // kept as a separate helper here).
 extern "C" __declspec(noinline) void func_8018B658(CMenuShopSell* self) {
-    if (self->mTitleAHelp.isIdle() != 0 && GetField61(&self->mItemBoxGrid) != 0) {
+    // isIdle called via the int-returning extern declaration (CMenuCollepedia
+    // pattern) so the caller compares with cmpi (retail), not a byte mask.
+    if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
+        GetField61(&self->mItemBoxGrid) != 0) {
         self->mField54 = 1;
     }
 }

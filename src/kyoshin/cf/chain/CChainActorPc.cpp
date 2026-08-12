@@ -39,7 +39,34 @@ int func_80282174(void* self) {
 bool func_802A0AA0(void*);
 bool func_8028245C(void* self) { return func_802A0AA0((void*)((char*)self + 0x74)); }
 bool func_80282464() { return true; }
-// obj+0x48 holds a fn ptr; call with (self, *(arg)) (retail: lwz r12,0x70; lwz r4,0; lwz r12,0x48; mtctr; bctr)
+// Cast-only interface for the anonymous vtable tail-call thunk (same
+// RTTI-omit pattern as BattleStateV8If in MWCC_REFERENCE): the call target is
+// obj->vtable[0x48] with (self, *arg).
+struct IfVt48 {
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void vf48(void* self, void* arg);
+};
+// retail: lwz r12,0x70; lwz r4,0; lwz r12,0x48; mtctr; bctr
+// Open item: retail loads the fnptr base into r12 (register reuse across
+// lwz-dest/base/bctr roles); MWCC allocates the obj local to r5 in every
+// tested shape (8 variants, both mw_versions, peephole pragma, -ipa off) —
+// witness needs an injective renaming, register reuse gives none. Same class
+// as MWCC_REFERENCE HBM/MIX reg-swap acceptance gap (us-802d9590 family).
 extern "C" void func_8028246C(void* self, void* arg) {
     void* obj = *(void**)((char*)self + 0x70);
     (*(void (**)(void*, void*))((char*)obj + 0x48))(self, *(void**)arg);
@@ -265,7 +292,10 @@ extern "C" int func_80282054(cf::CChainActor* self) {
 extern "C" int func_8028209C() {
     return *(int*)((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194) >= 0x12c;
 }
-void func_802820D4(){}
+extern "C" void func_802820D4() {
+    extern void func_8018C8F4(void* self, int a);
+    func_8018C8F4((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194, 0);
+}
 // Compares the halfword at this->unk0 + 0x3f28 against the result of
 // func_8009ECB0() (a global config struct). Returns 0, 1, or 2 if the
 // value matches fields at offsets 4, 8, or 12 respectively; returns 3

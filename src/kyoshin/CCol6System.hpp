@@ -40,6 +40,7 @@ public:
     /* 0x11C */ u32 mField11C;             // init 0
     /* 0x120 */ u8 mField120;              // init 0
     /* 0x121 */ u8 mField121;              // init 0
+    /* 0x122 */ u8 mPad122[2];             // retail pads to 0x124
     /* 0x124 */ u8 mCur18[0x18];           // CCur18
     /* 0x13C */ CScrollBar mScrollBar;
 };

@@ -8,7 +8,7 @@
   Inherits CProcess for work-thread lifecycle (Init/Term/Move/Draw).
   Size 0x74 bytes.
 */
-class CCol6CheckBat : public CProcess {
+class __declspec(novtable) CCol6CheckBat : public CProcess {
 public:
     CCol6CheckBat();
     virtual ~CCol6CheckBat();

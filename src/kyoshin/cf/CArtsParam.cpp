@@ -8,6 +8,21 @@
 #include <nw4r/math/math_arithmetic.h>
 #include <nw4r/db/db_assert.h>
 
+// float constants (retail .sdata2 pool) used by the effect-dispatch paths
+extern const float lbl_eu_80667460;
+extern const float lbl_eu_8066746C;
+extern const float lbl_eu_80667470;
+extern const float lbl_eu_80667474;
+extern const float lbl_eu_80667478;
+extern const float lbl_eu_8066747C;
+extern const float lbl_eu_80667480;
+extern const float lbl_eu_80667484;
+extern const float lbl_eu_80667488;
+extern const float lbl_eu_8066748C;
+extern const float lbl_eu_8066A1F8;
+extern const float lbl_eu_8066A1FC;
+extern const float lbl_eu_8066A210;
+
 namespace cf {
     CArtsParam lbl_80577580;
 
@@ -41,7 +56,12 @@ u8 CArtsParam::CArtsParam_UnkVirtualFunc2(){
 }
 }
 
-void func_8015403C(){}
+extern "C" int func_8015403C(int x) {
+    if ((unsigned)(x - 4) >= 6) {
+        return 1;
+    }
+    return 2;
+}
 float func_80154058(const u8* this_) { unsigned short raw = *(const unsigned short*)(this_ + 0x5a); int value = raw; if (value < 0) value = 0; else if (value > 4) value = 4; extern const float lbl_eu_80501978[]; return lbl_eu_80501978[value]; }
 void func_8015408C(){}
 extern const float lbl_eu_805019C0[];
@@ -77,6 +97,13 @@ int func_801541B0(void* param, void* actor, int flags) {
     return 1;
 }
 
+// func_801554DC - inverted-flags arts gate: mask to 0xFFF bits, invert, run
+// the full arts check, and return 1 only when the check returned 0.
+extern "C" int func_801554DC(void* param, void* actor, int flags) {
+    int result = func_80154280(param, actor, ~(flags & 0xFFF));
+    return result == 0;
+}
+
 // ---------------------------------------------------------------------------
 // Data imports for func_80154280 (global scope: MWCC does not mangle these).
 // ---------------------------------------------------------------------------
@@ -99,15 +126,16 @@ extern int func_801B1D4C();
 extern int func_801B1FA4();
 extern int func_801B1CB0();
 extern int func_80260264(void* self, int id, void* out);
-extern int func_801491A4(void* self, int id);
+extern void* func_801491A4(void* self, unsigned int id);
 extern void* func_800F6D50(void* list, int index);
 extern int func_8004DAC4(void* obj);
 extern int func_8009CF8C(u32 resource);
 extern void func_800FB270(void* list, void* vec, f32 a, f32 b, f32 c, int d);
 extern void func_800FB5AC(void* list, void* vec, f32 a, f32 b, f32 c, f32 d, f32 e, int f);
 extern void* __ct__800FB044(void* list, f32 a, void* vec, int d);
+extern void* __ct__800FAE3C(void* list, void* vec, int d);
 extern void* __ct__800FBA18(void* list, f32 a, f32 b, f32 c, int d);
-extern void func_804B19CC(void* self, void* src, int a, int b);
+extern int func_804B19CC(void* self, void* src, int a, int b);
 
 // ---------------------------------------------------------------------------
 // func_80154280 - arts usability check. Accumulates a flag word describing
@@ -118,7 +146,7 @@ extern void func_804B19CC(void* self, void* src, int a, int b);
 int func_80154280(void* param, void* actor, int flags) {
     cf::CArtsParam* p = (cf::CArtsParam*)param;            // r24
     cf::CArtsParamActor* a = (cf::CArtsParamActor*)actor;  // r25
-    cf::CArtsParamActor* obj = a->v38();                   // r30
+    cf::CArtsParamActor* obj = (cf::CArtsParamActor*)a->v38();                   // r30
     int result = 0;                                        // r31
     if (p->unk20 == 0) return 1;
     if (a == 0) return 0xfff;
@@ -179,7 +207,7 @@ int func_80154280(void* param, void* actor, int flags) {
             } else {
                 // Battle-manager / arts-select table path.
                 cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-                if (bm->field_20C8 == 0) {
+                if (*(u32*)&bm->unk20C8 == 0) {
                     u64 table[12];
                     for (int i = 0; i < 12; i++) table[i] = lbl_eu_805019D8[i];
                     if (p->unk5C != 2) {
@@ -224,12 +252,12 @@ int func_80154280(void* param, void* actor, int flags) {
                             vec70[1] = *(f32*)((u8*)vpos + 0x1c);
                             vec70[2] = *(f32*)((u8*)vpos + 0x2c);
                         } else {
-                            vec70[0] = obj->mSub.s41()[0];
-                            vec70[1] = obj->mSub.s41()[4];
-                            vec70[2] = obj->mSub.s41()[8];
+                            vec70[0] = ((f32*)obj->mSub.s41())[0];
+                            vec70[1] = ((f32*)obj->mSub.s41())[4];
+                            vec70[2] = ((f32*)obj->mSub.s41())[8];
                         }
-                        vec70[1] = vec70[1] - (vec70[1] - obj->mSub.s41()[4]) * lbl_eu_8066746C;
-                        f27 = vec70[1] - obj->mSub.s41()[4];
+                        vec70[1] = vec70[1] - (vec70[1] - ((f32*)obj->mSub.s41())[4]) * lbl_eu_8066746C;
+                        f27 = vec70[1] - ((f32*)obj->mSub.s41())[4];
                         if (f27 != 0.0f) {
                             f32 len2 = f27 * f27 + f31 * f31;
                             if (len2 <= 0.0f) {
@@ -242,10 +270,11 @@ int func_80154280(void* param, void* actor, int flags) {
                             }
                         }
                         cf::CBattleManager* bm2 = cf::CBattleManager::getInstance();
-                        if (bm2->field_1AA >= 1 && bm2->field_1AA <= 0x18) {
-                            vec70[0] = obj->mSub.s41()[0];
-                            vec70[1] = obj->mSub.s41()[4];
-                            vec70[2] = obj->mSub.s41()[8];
+                        u8 chainByte = ((u8*)bm2)[0x1AA];
+                        if (chainByte >= 1 && chainByte <= 0x18) {
+                            vec70[0] = ((f32*)obj->mSub.s41())[0];
+                            vec70[1] = ((f32*)obj->mSub.s41())[4];
+                            vec70[2] = ((f32*)obj->mSub.s41())[8];
                         }
                         int r27 = 8;
                         if (!(obj->field_3F00 & 2)) r27 = 0;
@@ -297,7 +326,7 @@ int func_80154280(void* param, void* actor, int flags) {
                             void* list = func_80043F18(holder);
                             func_800F4A98(list, r29, 0x1000);
                             list = func_80043F18(holder);
-                            __ct__800FB044(list, f31, r27, vec70);
+                            __ct__800FB044(list, f31, vec70, r27);
                             break;
                         }
                         case 5: {
@@ -321,7 +350,7 @@ int func_80154280(void* param, void* actor, int flags) {
                                 func_800F6D50(list, (int)r28b);
                             }
                             void* list = func_80043F18(holder);
-                            __ct__800FB044(list, f31, r27, vec70);
+                            __ct__800FB044(list, f31, vec70, r27);
                             break;
                         }
                         case 7: {
@@ -339,7 +368,7 @@ int func_80154280(void* param, void* actor, int flags) {
                                 func_800F6D50(list, (int)r28b);
                             }
                             void* list = func_80043F18(holder);
-                            __ct__800FB044(list, f31, r27, vec70);
+                            __ct__800FB044(list, f31, vec70, r27);
                             break;
                         }
                         }
@@ -349,7 +378,7 @@ int func_80154280(void* param, void* actor, int flags) {
                             base[0] = lbl_eu_80667460;
                             base[1] = lbl_eu_80667480;
                             base[2] = lbl_eu_80667460;
-                            f32* off = obj->mSub.s41();
+                            f32* off = (f32*)obj->mSub.s41();
                             f32 sum[3];
                             sum[0] = off[0] + base[0];
                             sum[1] = off[4] + base[4];
@@ -367,12 +396,12 @@ int func_80154280(void* param, void* actor, int flags) {
                             if (target != 0 && func_8016FE34(target) != 0) {
                                 if (!(p->unk78 & 2)) {
                                     f32 f27b = nw4r::math::Atan2FIdx(
-                                        *(f32*)((u8*)target + 0x3e9c + 0x28 + 0x4) - obj->mSub.s41()[4],
-                                        *(f32*)((u8*)target + 0x3e9c + 0x28) - obj->mSub.s41()[0]) * lbl_eu_80667484;
+                                        *(f32*)((u8*)target + 0x3e9c + 0x28 + 0x4) - ((f32*)obj->mSub.s41())[4],
+                                        *(f32*)((u8*)target + 0x3e9c + 0x28) - ((f32*)obj->mSub.s41())[0]) * lbl_eu_80667484;
                                     f27b -= obj->v363();
                                     while (lbl_eu_8066A1F8 <= f27b) f27b -= lbl_eu_8066A1FC;
                                     while (f27b < -lbl_eu_8066A1F8) f27b += lbl_eu_8066A1FC;
-                                    f32* tpos = obj->mSub.s41();
+                                    f32* tpos = (f32*)obj->mSub.s41();
                                     if (func_804B19CC((u8*)target + 0x44a8, tpos, 0, 1) == 0) {
                                         f32 lim = obj->v111()[0];
                                         if (-(lim * lbl_eu_8066746C) <= f27b && f27b <= lim * lbl_eu_8066746C) {
@@ -467,7 +496,7 @@ int func_80154280(void* param, void* actor, int flags) {
             }
         }
         if ((obj->field_3F00 & 2) && obj->field_3F28 == 2) {
-            if (p->unk48 == 0xff && obj->field_1530 == 0) result |= 0x80;
+            if (p->unk48 == 0xff && *(u32*)((u8*)obj + 0x1530) == 0) result |= 0x80;
             if (func_80148778((u8*)obj + 8, 0xeb) != 0 && p->unk48 != 0xeb) result |= 0x80;
         }
         if ((obj->field_3F00 & 2) && obj->field_3F28 == 5) {
@@ -531,7 +560,7 @@ int func_80154280(void* param, void* actor, int flags) {
 }
 
 // cf::CActorParam base virtual (retail: li r3,0; blr)
-extern "C" u32 CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv(void* self) { return 0; }
+extern "C" u32 CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv() { return 0; }
 
 void cf::CArtsParam::vtableFunc3(u8 val) {
     u8* o = *(u8**)((u8*)this + 0x88);

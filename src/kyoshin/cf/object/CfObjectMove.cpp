@@ -162,6 +162,10 @@ void CfObjectMove_nullsub_16(){}
 
 void CfObjectMove_nullsub_17(){}
 
+// Open item: three null-checked stores of `value` at +0x388. MWCC reuses r3
+// (this) for the THIRD target load/store (this is dead after); retail keeps r4
+// for all three (3 reg_swap, 0 structural). Witness rejects the r4<->r3 ABI
+// permutation. Separated locals + (void)this invariant.
 void cf::CfObjectMove::CfObject_UnkVirtualFunc14(float value) {
     void* target = this->mTargetC4;
     if (target != 0) {
@@ -175,25 +179,6 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc14(float value) {
     if (target != 0) {
         *(float*)((char*)target + 0x388) = value;
     }
-}
-
-void cf::CfObjectMove::CfObject_UnkVirtualFunc15() {}
-
-void cf::CfObjectMove::CfObject_UnkVirtualFunc16() {}
-
-void cf::CfObjectMove::CfObject_UnkVirtualFunc17() {}
-
-void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc7() {}
-
-void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc8() {}
-
-void CfObjectMove_nullsub_18(){}
-
-void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc9() {}
-
-extern "C" void CfObjectMove_UnkVirtualFunc10__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float v) {
-    void* o = *(void**)((u8*)self + 0x6c0);
-    if (o) *(float*)((u8*)o + 0xd4) = v;
 }
 
 extern "C" void CfObjectMove_UnkVirtualFunc11__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u16 v) {

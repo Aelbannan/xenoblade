@@ -58,7 +58,19 @@ void CUIErrMesWin::Term() {
     lbl_eu_80664C28 = 0;
 }
 
-void CUIErrMesWin::cbRenderBefore() {}
+// CUIErrMesWin::cbRenderBefore (us-802b7804) - disable Z testing and draw
+// the embedded system window with a layout DrawInfo (raw 0x60-byte buffer
+// like CMenuTitle::cbRenderBefore; the dtor is called directly with -1).
+extern "C" void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
+
+void CUIErrMesWin::cbRenderBefore() {
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+    u8 drawInfo[0x60];
+    __ct__Q34nw4r3lyt8DrawInfoFv(drawInfo);
+    func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    func_8022B7C8(mSysWin, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+    __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);
+}
 
 // CUIErrMesWin factory ctor (us-802b7864, retail stripped name
 // __ct__802B4DF4) - singleton creator. Returns 0 when the window already

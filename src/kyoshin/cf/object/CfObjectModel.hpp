@@ -146,7 +146,8 @@ namespace cf {
 
         //0x0: vtable
         // CfObject ends at 0x70.
-        u8 field_0x70[0x1C];
+        void* mTarget70;              // 0x70 (first word of field_0x70)
+        u8 field_0x74[0x1C - 4];      // 0x74-0x8F
         u16 unk8C_3;
         u16 field_0x8E;
         u8 field_0x90[0x8];          // 0x90-0x97

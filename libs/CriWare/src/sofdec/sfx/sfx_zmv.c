@@ -46,6 +46,7 @@ void SFXZ_Destroy(void* self) {
     *(s32*)lbl_eu_8061A260 -= 1;
 }
 void sfxzmv_SetTagGrp();
+struct SFXZTagInf { u32 unk8; u32 tag; u32 a; u32 b; };
 void SFXZ_SetTagInf(void* self, u32 a, u32 b) {
     *(u32*)((u8*)self + 8) = 1;
     *(u32*)((u8*)self + 12) = a;

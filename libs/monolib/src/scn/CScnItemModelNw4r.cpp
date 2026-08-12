@@ -89,7 +89,14 @@ void func_804888B4(){}
 
 void func_80488938(){}
 
-void func_80488954(){}
+extern "C" void* func_80488954(void* self, u32 amount) {
+    u32 field = *(u32*)((u8*)self + 0x860);
+    if (amount < 0xC00u - field) {
+        *(u32*)((u8*)self + 0x860) = field + amount;
+        return (u8*)self + field + 0x864;
+    }
+    return 0;
+}
 
 void func_80488984(){}
 

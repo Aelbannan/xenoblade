@@ -61,16 +61,18 @@ extern "C" CSysWin* __ct__CSysWin(CSysWin* self, int arg) {
 // Written as the C-linkage free function the retail symbol names: null-check,
 // destroy the embedded UnkClass_8045F564 scratch region, then conditional
 // operator delete when flags > 0.
+#pragma push
+#pragma optimize_for_size on
 extern "C" CSysWin* __dt__7CSysWinFv(CSysWin* _this, int flags) {
     if (_this != 0) {
         __dt__17UnkClass_8045F564Fv(&_this->mMemRegion, -1);
-        int f = flags;
-        if (f > 0) {
+        if (flags > 0) {
             operator delete(_this);
         }
     }
     return _this;
 }
+#pragma pop
 
 // TEMP PROBE: two-register function to test save order codegen.
 extern "C" void probe_2reg(CSysWin* self, int kind) {

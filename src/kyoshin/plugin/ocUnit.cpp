@@ -1787,6 +1787,10 @@ void CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv(void* self, u8 val) 
 
 u32 CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv(void* self) { return *(u32*)((u8*)self + 0x34); }
 
+// Open item: 3-word copy (src[0..2] -> this+0x48/4C/50). MWCC emits loads in
+// (4),(8),(0) order into r5,r6,r0 vs retail (0),(4),(8) into r6,r5,r0 —
+// invariant across 9 source shapes and flags (-ipa on/off, -O4,p/-O4,s).
+// Witness rejects (lwz offset bits differ); SMT disabled by policy.
 void cf::CfObject::CfObject_UnkVirtualFunc27(void* src) {
     u32 a = *(u32*)((u8*)src + 0);
     u32 b = *(u32*)((u8*)src + 4);

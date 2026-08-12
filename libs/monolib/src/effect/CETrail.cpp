@@ -22,7 +22,7 @@ extern u8 lbl_eu_8056FC40[]; // CETrail secondary interface vtable
 extern u8 lbl_eu_8056FC4C[]; // CETrail vtable
 extern u8 lbl_eu_8056FC64[]; // reslist<CETrail::POINT> vtable
 
-extern f32 lbl_eu_8066B15C;
+extern const f32 lbl_eu_8066B15C;
 extern f32 lbl_eu_8066B158;
 extern f32 lbl_eu_8066B178;
 extern f64 lbl_eu_8066B180;
@@ -383,6 +383,11 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
 // ---------------------------------------------------------------------------
 // func_804D70A0: POINT node constructor
 // ---------------------------------------------------------------------------
+// POINT node ctor: copy CVec3::zero into both positions, set the age. The
+// age constant must be declared const to hoist its pool load (0 structural);
+// residual is 17 pure float/gpr register swaps plus a stack-slot-order
+// difference in the Vec3 copies that the witness refuses (non-register
+// bits) -- open item.
 extern "C" void func_804D70A0(CETrailNode* node) {
     f32 age = lbl_eu_8066B15C;
     ml::CVec3 zero = ml::CVec3::zero;

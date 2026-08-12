@@ -17,11 +17,9 @@ unk28(mtl::INVALID_HANDLE),
 unk2C(false),
 unk2D(0),
 unk2E(0){
-    *(void**)this = (void*)lbl_eu_80532ED0;
 }
 
 COccCulling::~COccCulling(){
-    *(void**)this = (void*)lbl_eu_80532ED0;
     func_801A0794();
 
     //This function gets automatically called later in the dtor for both variables :p

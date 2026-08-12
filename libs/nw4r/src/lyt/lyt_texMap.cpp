@@ -37,12 +37,16 @@ void TexMap::Set(TPLPalette* pPalette, u32 id) {
     Set(TPLGet(pPalette, id));
 }
 
+#pragma push
+#pragma auto_inline off
 void TexMap::Set(const TPLDescriptor* pDesc) {
     SetNoWrap(pDesc);
 
     const TPLHeader& rTexHeader = *pDesc->textureHeader;
     SetWrapMode(rTexHeader.wrapS, rTexHeader.wrapT);
 }
+
+#pragma pop
 
 void TexMap::SetNoWrap(const TexMap& rOther) {
     GXTexWrapMode wrapS = GetWrapModeS();

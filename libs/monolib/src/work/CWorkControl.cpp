@@ -74,9 +74,17 @@ bool CWorkControl::wkStandbyLogout(){
     return false;
 }
 
+// Factory: allocate from the work heap, construct in place, register. NOTE:
+// retail keeps pParent/name/result in three callee-saved registers (stmw r29)
+// and materializes the name before the alloc call; MWCC from high-level C
+// uses two (stmw r30) and reuses the name base after the call, leaving the
+// function 0x70 vs 0x74 -- open item.
+extern char lbl_eu_80522688[];
+
 #pragma optimize_for_size on
 CWorkControl* CWorkControl::create(CWorkThread* pParent){
-    CWorkControl* pWorkControl = new (CWorkThreadSystem::getWorkMem()) CWorkControl("CWorkControl", pParent);
+    CWorkControl* pWorkControl =
+        new (CWorkThreadSystem::getWorkMem()) CWorkControl(lbl_eu_80522688 + 0x6C, pParent);
     CWorkUtil::entryWork(pWorkControl, pParent, false);
     return pWorkControl;
 }

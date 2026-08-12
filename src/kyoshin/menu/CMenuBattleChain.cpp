@@ -78,7 +78,26 @@ extern "C" CMenuBattleChain* __ct__CMenuBattleChain(CMenuBattleChain* obj,
     return obj;
 }
 
-CMenuBattleChain::~CMenuBattleChain() {}
+// Member/base dtors and operator delete (retail names). The redundant
+// `if (self != 0)` re-check reproduces the retail's dead double-beq.
+extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int flags);
+extern "C" void __dt__8CProcessFv(void* self, int flags);
+extern "C" void __dl__FPv(void* p);
+
+extern "C" void* __dt__16CMenuBattleChainFv(void* self, int flags) {
+    if (self == 0)
+        goto end;
+    __dt__17UnkClass_8045F564Fv((u8*)self + 0x78, -1);
+    if (self != 0) {
+        if (self != 0) {
+            __dt__8CProcessFv(self, 0);
+        }
+    }
+    if (flags > 0)
+        __dl__FPv(self);
+end:
+    return self;
+}
 
 /*
  * Build the battle-chain menu: allocate a 0x4000 scratch region from MEM2,

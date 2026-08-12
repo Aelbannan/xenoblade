@@ -454,4 +454,4 @@ inline void* cf::CActorParam::CActorParam_UnkVirtualFunc122() { return &mArtsSet
 }
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv();
+extern "C" u32 CActorParam_UnkVirtualFunc3__Q22cf11CActorParamFv();

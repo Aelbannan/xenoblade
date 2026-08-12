@@ -56,7 +56,7 @@ struct CCullFrustum{
     u32 mFlags; //0x130
 };
 
-class __declspec(novtable) COccCulling{
+class COccCulling{
 public:
     COccCulling();
     virtual ~COccCulling();

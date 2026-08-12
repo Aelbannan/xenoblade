@@ -5,8 +5,8 @@
 
 #include "kyoshin/CBgTex.hpp"
 
-extern "C" void __dt__17CMenuItemExchangeFv(void*, int);
 extern "C" void cbRenderBefore__17CMenuItemExchangeFv(void*);
+extern "C" void __dt__9IUIWindowFv(void* self, int flags);
 
 /**
  * Offset from the OC thunk interface (CMenuItemExchangeOC*) to the
@@ -18,7 +18,26 @@ static const u32 CMENU_ITEM_EXCHANGE_OC_OFFSET = 0x6c;
 
 void __ct__CMenuItemExchange(){}
 
-CMenuItemExchange::~CMenuItemExchange() {}
+// extern "C" free-function form (CCol6CheckBat precedent): sub-object dtors in
+// retail order +0x70C (CItemBoxGrid), +0xD0 (CItemBoxLine), +0x98
+// (CTitleAHelp), +0x78 (CBgTex), then the +0x00 IUIWindow dtor (flags 0), then
+// the flags-based delete; stmw/lmw frame via optimize_for_size.
+#pragma push
+#pragma optimize_for_size on
+extern "C" void* __dt__17CMenuItemExchangeFv(void* self, int flags) {
+    if (self != 0) {
+        __dt__12CItemBoxGridFv(reinterpret_cast<CItemBoxGrid*>((u8*)self + 0x70C), -1);
+        __dt__12CItemBoxLineFv(reinterpret_cast<CItemBoxLine*>((u8*)self + 0xD0), -1);
+        __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>((u8*)self + 0x98), -1);
+        __dt__6CBgTexFv(reinterpret_cast<CBgTex*>((u8*)self + 0x78), -1);
+        __dt__9IUIWindowFv(self, 0);
+        if (flags > 0) {
+            operator delete(self);
+        }
+    }
+    return self;
+}
+#pragma pop
 
 // ---------------------------------------------------------------------------
 // Target: CMenuItemExchange::Init (us-801bf844)
@@ -130,7 +149,27 @@ extern "C" __declspec(noinline) void func_801BE590(CItemBoxGrid* dest, CItemBoxG
     __ct__UnkClass_8011C974(reinterpret_cast<u8*>(dest) + 8, reinterpret_cast<u8*>(src) + 8);
 }
 
-void CMenuItemExchange::Term() {}
+extern "C" void waitForDrawDone__9CDeviceVIFv();
+extern "C" void func_801C3D9C(void*);
+extern "C" void func_801C40A0(void*);
+extern "C" void func_801ED618(void*);
+extern "C" void func_801CAE9C(void*);
+extern u32 lbl_eu_80664428;
+
+// Detach the render callback, tear down the embedded widgets, clear the
+// global active flag, and reset the CfGameManager state.
+void CMenuItemExchange::Term() {
+    waitForDrawDone__9CDeviceVIFv();
+    IScnRender* render = reinterpret_cast<IScnRender*>(this);
+    if (this) render = reinterpret_cast<IScnRender*>(&mOCVt);
+    mScene->removeRenderCB(render);
+    func_801C3D9C(&mBgTex);
+    func_801C40A0(&mTitleAHelp);
+    func_801ED618(&mItemBoxLine[0]);
+    func_801CAE9C(&mItemBoxGrid);
+    lbl_eu_80664428 = 0;
+    func_8008294C__Q22cf13CfGameManagerFv(0);
+}
 
 void CMenuItemExchange::Move() {}
 

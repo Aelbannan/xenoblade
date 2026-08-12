@@ -33,7 +33,32 @@ void* func_801862C0(void) {
 
 void* func_801862E0(void* p){ return 0; }
 
-void* func_801863F4(void* p){ return 0; }
+void* func_801863F4(CArtsSelectContainer* self, void* src) {
+    // Find a free slot (val == 0) in the hash bucket and fill it.
+    u32 srcId = *reinterpret_cast<const u32*>((const u8*)src + 0x74);
+
+    // Same bucket index computation as func_80186474.
+    u32 idx = __rlwinm(srcId, 28, 0, 3);
+    u32 sign = __rlwinm(srcId, 1, 31, 31);
+    idx = __rlwinm(idx - sign, 4, 0, 31);
+    idx += sign;
+
+    // Bucket search: find a free slot (val == 0) and fill it. Retail keeps
+    // the bucket base in a callee-saved register and tracks i separately for
+    // the indexed fill-write (stwx base+i*8), then recomputes base + i*8 for
+    // the +4 store. MWCC CSEs the base recompute from high-level C, leaving
+    // the function one instruction short (0x68 vs 0x6c) -- open item.
+    CArtsSelectSlot* slot =
+        reinterpret_cast<CArtsSelectSlot*>((u8*)self + idx * 0x170);
+    for (int i = 0; i < 46; i++) {
+        if (slot[i].unk00 == 0) {
+            slot[i].unk00 = srcId;
+            slot[i].unk04 = reinterpret_cast<u32>(src);
+            return reinterpret_cast<void*>(srcId);
+        }
+    }
+    return reinterpret_cast<void*>(srcId);
+}
 
 extern "C" void* func_80186460(void* dst, void* src) {
     CArtsSelectContainer* container = static_cast<CArtsSelectContainer*>(dst);

@@ -201,7 +201,7 @@ public:
     virtual void v003() = 0; // slot 5  / +20  (dead-actor destroy/remove)
     virtual void v004(int) = 0; // slot 6  / +24  (chain-combo advance; retail passes the target arg in r4)
     virtual void v005(int) = 0; // slot 7  / +28  (activate-with-flag)
-    virtual int  v006(int*) = 0; // slot 8  / +32  (chainable-vs-move check)
+    virtual int  v006(int) = 0; // slot 8  / +32  (chainable-vs-key/move check)
     virtual int  v007(int) = 0; // slot 9  / +36  (activate-with-flag)
     virtual void v008() = 0;
     virtual void v009() = 0;
@@ -210,7 +210,7 @@ public:
     virtual void v012() = 0;
     virtual void v013() = 0;
     virtual void v014() = 0;
-    virtual void v015() = 0;
+    virtual int  v015(cf::CChainActor*) = 0; // slot 17 / +68 (run-chainable check)
     virtual int  v016(int) = 0; // slot 18 / +72  (chainable-against-key check)
     virtual int  v017() = 0; // slot 19 / +76  (activation gate)
     virtual void v018() = 0;
@@ -219,7 +219,7 @@ public:
     virtual int  v021() = 0; // slot 23 / +92  (chainable check)
     virtual void v022() = 0;
     virtual void v023() = 0;
-    virtual void v024() = 0;
+    virtual int  v024() = 0; // slot 26 / +104 (run key query)
     virtual void v025() = 0;
     virtual void v026() = 0;
     virtual int  v027() = 0; // slot 29 / +116 (anti-gate: retail returns 0 when nonzero)
@@ -347,22 +347,25 @@ void func_8027B2CC(cf::CChainActorList* self){
         int chainIdx = 0;
         int otherCount = 0;
         int otherIdx = 0;
-        int key = ((CChainActorIVFn*)node->mItem->mVTable)[26](node->mItem);
+        int key = ((CChainActorVtIf*)node->mItem)->v024();
         _reslist_node<cf::CChainActor*>* cur = node;
         while (true) {
-            ((CChainActorVFn*)cur->mItem->mVTable)[4](cur->mItem);
-            if (((CChainActorChkFn*)cur->mItem->mVTable)[8](
-                    cur->mItem, key) != 0) {
-                chainArr[chainIdx++] = cur->mItem;
+            ((CChainActorVtIf*)cur->mItem)->v002();
+            if (((CChainActorVtIf*)cur->mItem)->v006(key) != 0) {
+                // Retail advances the node before recording the member, so
+                // the item is re-read from the previous node.
+                _reslist_node<cf::CChainActor*>* prev = cur;
+                cur = cur->mNext;
                 chainCount++;
+                chainArr[chainIdx++] = prev->mItem;
             } else {
-                otherArr[otherIdx++] = cur->mItem;
+                _reslist_node<cf::CChainActor*>* prev = cur;
+                cur = cur->mNext;
                 otherCount++;
+                otherArr[otherIdx++] = prev->mItem;
             }
-            cur = cur->mNext;
             if (cur == self->mChainActorList.mStartNodePtr) break;
-            if (((CChainActorChkFn2*)node->mItem->mVTable)[17](
-                    node->mItem, cur->mItem) == 0) break;
+            if (((CChainActorVtIf*)node->mItem)->v015(cur->mItem) == 0) break;
         }
 
         // Pass: link chainable and non-chainable actors into a ring.  Branch A
@@ -373,69 +376,52 @@ void func_8027B2CC(cf::CChainActorList* self){
         int chk = 0;
         if (chainCount >= 2) {
             cf::CChainActor* first = chainArr[0];
-            chk = (first != 0) ? ((CChainActorIVFn*)first->mVTable)[19](first)
-                               : 0;
+            chk = (first != 0) ? ((CChainActorVtIf*)first)->v017() : 0;
         }
         if (chainCount >= 2 && chk != 0) {
             if (chainCount == 1) {
-                ((CChainActorChainFn*)chainArr[0]->mVTable)[12](
-                    chainArr[0], 0, 0, 0);
+                ((CChainActorVtIf*)chainArr[0])->v010(0, 0, 0);
             } else if (chainCount == 2) {
-                ((CChainActorChainFn*)chainArr[0]->mVTable)[12](
-                    chainArr[0], 1, chainArr[1], 1);
-                ((CChainActorChainFn*)chainArr[1]->mVTable)[12](
-                    chainArr[1], 0, 0, 0);
+                ((CChainActorVtIf*)chainArr[0])->v010(1, chainArr[1], 1);
+                ((CChainActorVtIf*)chainArr[1])->v010(0, 0, 0);
             } else {
                 for (int i = 0; i < chainCount; i++) {
-                    ((CChainActorChainFn*)chainArr[i]->mVTable)[12](
-                        chainArr[i], 1,
-                        chainArr[(i + 1) % chainCount], 1);
+                    ((CChainActorVtIf*)chainArr[i])->v010(
+                        1, chainArr[(i + 1) % chainCount], 1);
                 }
             }
             if (otherCount == 1) {
-                ((CChainActorChainFn*)otherArr[0]->mVTable)[12](
-                    otherArr[0], 0, 0, 0);
+                ((CChainActorVtIf*)otherArr[0])->v010(0, 0, 0);
             } else if (otherCount == 2) {
-                ((CChainActorChainFn*)otherArr[0]->mVTable)[12](
-                    otherArr[0], 0, otherArr[1], 1);
-                ((CChainActorChainFn*)otherArr[1]->mVTable)[12](
-                    otherArr[1], 0, 0, 0);
+                ((CChainActorVtIf*)otherArr[0])->v010(0, otherArr[1], 1);
+                ((CChainActorVtIf*)otherArr[1])->v010(0, 0, 0);
             } else if (otherCount >= 3) {
                 for (int i = 0; i < otherCount; i++) {
-                    ((CChainActorChainFn*)otherArr[i]->mVTable)[12](
-                        otherArr[i], 0,
-                        otherArr[(i + 1) % otherCount], 1);
+                    ((CChainActorVtIf*)otherArr[i])->v010(
+                        0, otherArr[(i + 1) % otherCount], 1);
                 }
             }
         } else {
             if (chainCount == 1) {
-                ((CChainActorChainFn*)chainArr[0]->mVTable)[12](
-                    chainArr[0], 0, 0, 0);
+                ((CChainActorVtIf*)chainArr[0])->v010(0, 0, 0);
             } else if (chainCount == 2) {
-                ((CChainActorChainFn*)chainArr[0]->mVTable)[12](
-                    chainArr[0], 0, chainArr[1], 1);
-                ((CChainActorChainFn*)chainArr[1]->mVTable)[12](
-                    chainArr[1], 0, 0, 0);
+                ((CChainActorVtIf*)chainArr[0])->v010(0, chainArr[1], 1);
+                ((CChainActorVtIf*)chainArr[1])->v010(0, 0, 0);
             } else if (chainCount >= 3) {
                 for (int i = 0; i < chainCount; i++) {
-                    ((CChainActorChainFn*)chainArr[i]->mVTable)[12](
-                        chainArr[i], 0,
-                        chainArr[(i + 1) % chainCount], 1);
+                    ((CChainActorVtIf*)chainArr[i])->v010(
+                        0, chainArr[(i + 1) % chainCount], 1);
                 }
             }
             if (otherCount == 1) {
-                ((CChainActorChainFn*)otherArr[0]->mVTable)[12](
-                    otherArr[0], 0, 0, 0);
+                ((CChainActorVtIf*)otherArr[0])->v010(0, 0, 0);
             } else if (otherCount == 2) {
-                ((CChainActorChainFn*)otherArr[0]->mVTable)[12](
-                    otherArr[0], 0, otherArr[1], 1);
-                ((CChainActorChainFn*)otherArr[1]->mVTable)[12](
-                    otherArr[1], 0, 0, 0);
+                ((CChainActorVtIf*)otherArr[0])->v010(0, otherArr[1], 1);
+                ((CChainActorVtIf*)otherArr[1])->v010(0, 0, 0);
             } else if (otherCount >= 3) {
                 for (int i = 0; i < otherCount; i++) {
-                    ((CChainActorChainFn*)otherArr[i]->mVTable)[12](
-                        otherArr[i], 0,
-                        otherArr[(i + 1) % otherCount], 1);
+                    ((CChainActorVtIf*)otherArr[i])->v010(
+                        0, otherArr[(i + 1) % otherCount], 1);
                 }
             }
         }
@@ -835,14 +821,15 @@ static void linkSlot(cf::CChainList* self, int target, int index){
 // guards fall through, and the != -1 single-slot blocks come after), with the
 // innermost re-entering this function per slot.
 void func_8027C6B4(cf::CChainList* self, int target, int index){
+    int i, j, k, m;
     if (index == -1) {
-        for (int i = 0; i < self->mCount; i++) {
+        for (i = 0; i < self->mCount; i++) {
             if (i == -1) {
-                for (int j = 0; j < self->mCount; j++) {
+                for (j = 0; j < self->mCount; j++) {
                     if (j == -1) {
-                        for (int k = 0; k < self->mCount; k++) {
+                        for (k = 0; k < self->mCount; k++) {
                             if (k == -1) {
-                                for (int m = 0; m < self->mCount; m++) {
+                                for (m = 0; m < self->mCount; m++) {
                                     func_8027C6B4(self, target, m);
                                 }
                             } else {

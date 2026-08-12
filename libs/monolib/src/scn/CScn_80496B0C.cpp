@@ -9,12 +9,16 @@
 #include "nw4r/g3d/g3d_anmchr.h"
 #include "nw4r/db/db_assert.h"
 #include "monolib/math/CVec3.hpp"
-#include "libs/monolib/src/scn/CScnItemAnim.hpp"
+#include "monolib/math/Utility.hpp"
+#include <monolib/scn/CScnItemAnim.hpp>
+#include <monolib/core/code_804E36DC.hpp>
 
 // Default value returned by the accessor helpers when the target object
 // chain is missing (sda2 constant).
 extern "C" { extern const float lbl_eu_8066AAC0; }
 extern "C" { extern const float lbl_eu_8066AAC4; }
+extern "C" { extern const float lbl_eu_8066AADC; }
+extern "C" { extern const float lbl_eu_8066AAD8; }
 
 // Panic file/format strings used by the ResMdl node-binding assert.
 extern const char lbl_eu_8056E1C8[];
@@ -37,7 +41,7 @@ extern const char lbl_eu_80530EE0[];   // fmt
 // Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
 struct VTarget {
     virtual void v0() = 0;
-    virtual void v1() = 0;
+    virtual void v1(void* model, u32 id, u32 flag) = 0;  // vtable + 0x0C
     virtual void v2() = 0;
     virtual void v3() = 0;
     virtual void v4() = 0;
@@ -100,11 +104,18 @@ struct CScnModel80496B0C {
 
 // One 0x2C-sized slot of the child's three-element node-binding array.
 struct CScnChildElem80496B0C {
-    u16 field_0x0;                        // +0x00
-    u16 field_0x2;                        // +0x02
-    char field_0x4[0x14 - 0x4];           // +0x04
-    u32 field_0x14;                       // +0x14
-    char field_0x18[0x2C - 0x18];         // +0x18
+    u16 field_0x0;                        // +0x00 (blend slot id)
+    u16 field_0x2;                        // +0x02 (flags)
+    f32 field_0x4;                        // +0x04 (fade duration)
+    f32 field_0x8;                        // +0x08 (fade progress)
+    f32 field_0xC;                        // +0x0C (fade ratio)
+    nw4r::g3d::AnmObjChrRes* field_0x10;  // +0x10 (bound anim object)
+    u32 field_0x14;                       // +0x14 (ResAnmChr handle)
+    CScnItemAnim* field_0x18;             // +0x18 (source item anim)
+    f32 field_0x1C;                       // +0x1C (frame)
+    f32 field_0x20;                       // +0x20 (weight)
+    f32 field_0x24;                       // +0x24 (aux)
+    u16 field_0x28;                       // +0x28 (sequence id)
 };
 
 // Child object: node pointers at +0x84 / +0x88 / +0x8C plus anim/scale state.
@@ -113,7 +124,7 @@ struct CScnChild80496B0C {
     CScnNode80496B0C* field_0x84[3];      // +0x84 (node-binding slots)
     s16 field_0x90;                       // +0x90
     s16 field_0x92;                       // +0x92
-    u16 field_0x94;                       // +0x94
+    s16 field_0x94;                       // +0x94
     s16 field_0x96;                       // +0x96
     nw4r::g3d::AnmObjChrBlend* field_0x98; // +0x98
     ml::CVec3 field_0x9C;                 // +0x9C
@@ -125,12 +136,16 @@ struct CScnChild80496B0C {
 struct CScnNode80496B0C {
     s16 field_0x0;                        // +0x00
     u16 field_0x2;                        // +0x02
-    char field_0x4[0x10 - 0x4];           // +0x04
+    f32 field_0x4;                        // +0x04 (fade timer max)
+    f32 field_0x8;                        // +0x08 (fade timer current)
+    f32 field_0xC;                        // +0x0C (fade progress ratio)
     VTarget* field_0x10;                  // +0x10 polymorphic dispatch object
     u32 field_0x14;                       // +0x14
-    u32 field_0x18;                       // +0x18
+    u32 field_0x18;                       // +0x18 (CScnItemAnim* tag)
     f32 field_0x1C;                       // +0x1C
     f32 field_0x20;                       // +0x20
+    f32 field_0x24;                       // +0x24
+    u16 field_0x28;                       // +0x28
 };
 
 // Root object: two embedded child objects at +0x10/+0xC0 whose addresses are
@@ -404,13 +419,307 @@ extern "C" __declspec(noinline) void func_804980E4(CScnChild80496B0C* child,
     }
 }
 
+// View of the four model-notify pointers stored contiguously at +0x1DC of
+// CScn80496B0C.
+struct CScnNotify80496B0C {
+    VTarget* field_0x1DC[4];   // +0x1DC
+};
+
+// Binds a freshly-created animation object into the child's free element
+// slot: optionally tears down every existing binding first (c == 0), keeps
+// the occupied-slot count within the model's node count by evicting one
+// backup slot when needed, fills the first free 0x2C element with the anim
+// state, attaches it to the chr-blend, and returns the element's sequence
+// id. The element becomes the child's new primary binding.
 extern "C" __declspec(noinline) u32 func_80498288(
     CScnChild80496B0C* child, nw4r::g3d::ResAnmChr anmRes,
     nw4r::g3d::AnmObjChrRes* anmObj, CScnItemAnim* anim, u32 c, u32 e) {
-    return 0;
+    u32 idx;
+    CScnChild80496B0C* walk;
+
+    // With c == 0 the caller wants a full reset: release every bound slot
+    // and clear the stored blend reference.
+    if (c == 0) {
+        CScnNode80496B0C* node;
+        walk = child;
+        idx = 0;
+        do {
+            node = walk->field_0x84[0];
+            if (node != 0) {
+                if (node->field_0x10 != 0) {
+                    child->field_0x98->Detach(node->field_0x0 +
+                                              child->field_0x90 * 3);
+                    child->field_0x92--;
+                    node->field_0x10->v11();
+                    ((nw4r::g3d::G3dObj*)node->field_0x10)->Destroy();
+                    node->field_0x10 = 0;
+                }
+                node->field_0x18 = 0;
+                walk->field_0x84[0] = 0;
+                child->field_0x9C = ml::CVec3::zero;
+            }
+            idx++;
+            walk = (CScnChild80496B0C*)((u8*)walk + 4);
+        } while (idx < 3);
+    }
+
+    // Count the occupied binding slots.
+    int cnt = 0;
+    if (child->field_0x84[0] != 0) {
+        cnt = 1;
+        if (child->field_0x84[1] != 0) {
+            cnt = 2;
+            if (child->field_0x84[2] != 0) {
+                cnt = 3;
+            }
+        }
+    }
+
+    // If the count reached the model's node count, evict one backup slot
+    // (searching from the highest index down).
+    if (cnt >= child->field_0x94) {
+        walk = (CScnChild80496B0C*)((u8*)child + 8);
+        for (u32 j = 2; j >= 1; j--) {
+            if (walk->field_0x84[0] != 0) {
+                CScnNode80496B0C* node = child->field_0x84[j];
+                if (node->field_0x10 != 0) {
+                    child->field_0x98->Detach(node->field_0x0 +
+                                              child->field_0x90 * 3);
+                    child->field_0x92--;
+                    node->field_0x10->v11();
+                    ((nw4r::g3d::G3dObj*)node->field_0x10)->Destroy();
+                    node->field_0x10 = 0;
+                }
+                node->field_0x18 = 0;
+                child->field_0x84[j] = 0;
+                break;
+            }
+            walk = (CScnChild80496B0C*)((u8*)walk - 4);
+        }
+    }
+
+    // Find the first free element in the child's 0x2C-element array.
+    CScnChildElem80496B0C* elem = 0;
+    CScnChildElem80496B0C* it = child->elems;
+    for (idx = 0; idx < 3; idx++) {
+        if (it->field_0x10 == 0) {
+            elem = &child->elems[idx];
+            break;
+        }
+        it++;
+    }
+
+    // Fill the element: anm handle, bound object, source item, fade timer
+    // set from the caller's count value, and a zero weight.
+    elem->field_0x14 = (u32)anmRes.ptr();
+    elem->field_0x10 = anmObj;
+    elem->field_0x18 = anim;
+    elem->field_0x4 = (f32)c;
+    elem->field_0x8 = lbl_eu_8066AAC0;
+    elem->field_0xC = lbl_eu_8066AAC4;
+    elem->field_0x20 = lbl_eu_8066AAC0;
+
+    nw4r::g3d::ResAnmChr res = anmObj->GetResAnm();
+    if (!res.IsValid()) {
+        nw4r::db::Panic(lbl_eu_8056E9D0, 0x27, lbl_eu_8056E9B4,
+                        lbl_eu_8056E9A8, lbl_eu_806639E4);
+    }
+    elem->field_0x1C = (f32)(s16)res.ptr()->info.numFrame;
+    elem->field_0x2 = 0;
+    if (e != 0) {
+        elem->field_0x2 |= 0x1;
+    } else {
+        elem->field_0x2 &= ~0x1;
+    }
+    elem->field_0x24 = lbl_eu_8066AAC0;
+
+    res = anmObj->GetResAnm();
+    if (!res.IsValid()) {
+        nw4r::db::Panic(lbl_eu_8056E9D0, 0x27, lbl_eu_8056E9B4,
+                        lbl_eu_8056E9A8, lbl_eu_806639E4);
+    }
+    if (res.ptr()->info.policy == nw4r::g3d::ANM_POLICY_LOOP) {
+        elem->field_0x2 |= 0x2;
+    } else {
+        elem->field_0x2 &= ~0x2;
+    }
+
+    // Reserve the next sequence id on the owning scene object.
+    CScn80496B0C* owner = child->field_0xAC;
+    owner->field_0x17C++;
+    if (owner->field_0x17C == 0) {
+        owner->field_0x17C = 1;
+    }
+    elem->field_0x28 = owner->field_0x17C;
+
+    // Attach the new anim to the blend at the element's slot, then let the
+    // model notify-objects know a binding changed.
+    u32 slotIdx = elem->field_0x0 + child->field_0x90 * 3;
+    ((nw4r::g3d::AnmObjChr*)child->field_0x98)->SetWeight(slotIdx, lbl_eu_8066AAC0);
+    child->field_0x98->Attach(slotIdx, anmObj);
+
+    child->field_0x96 = (s16)e;
+    child->field_0x92++;
+    CScnNode80496B0C* first = child->field_0x84[0];
+    if (first != 0) {
+        if (!(first->field_0x2 & 0x2)) {
+            ((nw4r::g3d::AnmObjChr*)first->field_0x10)->SetUpdateRate(lbl_eu_8066AAC0);
+        }
+    }
+
+    // Shift the bindings down: the previous primary becomes backup slot 1.
+    first = child->field_0x84[0];
+    child->field_0x84[2] = child->field_0x84[1];
+    child->field_0x84[1] = first;
+    if (first != 0) {
+        u16 seq = first->field_0x28;
+        u32 flag = (child->field_0x90 != 0) ? 1 : 0;
+        CScn80496B0C* base = child->field_0xAC;
+        u32 i2 = 0;
+        do {
+            VTarget* obj =
+                ((CScnNotify80496B0C*)&base->field_0x1DC)->field_0x1DC[i2];
+            if (obj != 0) {
+                obj->v1(base->field_0x4, seq, flag);
+            }
+            i2++;
+        } while (i2 < 4);
+    }
+
+    child->field_0x84[0] = (CScnNode80496B0C*)elem;
+    return elem->field_0x28;
 }
 
-void func_804986F8(){}
+void func_804986F8(CScnChild80496B0C* self, f32 a) {
+    CScnNode80496B0C* n;
+    CScnChild80496B0C* walk;
+    s32 i;
+    CScnNode80496B0C* node = self->field_0x84[0];
+    if (node == 0) {
+        return;
+    }
+
+    // Snapshot the bound node's current animation frame; fall back to the
+    // zero constant when the node is absent (redundant with the guard above,
+    // but the extra check is emitted by MWCC as-is).
+    f32 v;
+    if (node != 0) {
+        v = ((nw4r::g3d::AnmObjChr*)node->field_0x10)->GetFrame();
+    } else {
+        v = lbl_eu_8066AAC0;
+    }
+    self->field_0x84[0]->field_0x24 = v;
+
+    // Bubble-sort pass over the two backup slots by progress ratio, so that
+    // field_0x84[1] carries the smaller ratio. do/while flag shape (no
+    // pre-test, no init) matches the retail flag loop.
+    u32 swapped;
+    do {
+        CScnNode80496B0C* b = self->field_0x84[2];
+        swapped = 0;
+        if (b != 0) {
+            CScnNode80496B0C* a = self->field_0x84[1];
+            if (a->field_0xC < b->field_0xC) {
+                self->field_0x84[2] = a;
+                swapped = 1;
+                self->field_0x84[1] = b;
+            }
+        }
+    } while (swapped != 0);
+
+    node = self->field_0x84[0];
+    if (node->field_0x8 < node->field_0x4) {
+        // Fade timer still running: advance it by the frame delta, clamp it
+        // to the maximum, and refresh the progress ratio.
+        f32 dt = ml::math::abs(func_80496288(((CScnItemAnim*)node->field_0x18)->mParent));
+        f32 t = node->field_0x8 + dt;
+        node->field_0x8 = t;
+        if (t > node->field_0x4) {
+            node->field_0x8 = node->field_0x4;
+        }
+        node->field_0xC = node->field_0x8 / node->field_0x4;
+        if (node->field_0x8 >= node->field_0x4) {
+            // Timer expired: release the two backup slots.
+            i = 2;
+            walk = (CScnChild80496B0C*)((u8*)self + 8);
+            do {
+                n = walk->field_0x84[0];
+                if (n != 0) {
+                    if (n->field_0x10 != 0) {
+                        self->field_0x98->Detach(n->field_0x0 + self->field_0x90 * 3);
+                        self->field_0x92--;
+                        n->field_0x10->v11();
+                        ((nw4r::g3d::G3dObj*)n->field_0x10)->Destroy();
+                        n->field_0x10 = 0;
+                    }
+                    n->field_0x18 = 0;
+                    walk->field_0x84[0] = 0;
+                }
+                i--;
+                walk = (CScnChild80496B0C*)((u8*)walk - 4);
+            } while (i >= 1);
+        }
+    } else if (node->field_0x4 <= lbl_eu_8066AADC) {
+        // Short fade window (or already expired): release the backup slots.
+        i = 2;
+        walk = (CScnChild80496B0C*)((u8*)self + 8);
+        do {
+            n = walk->field_0x84[0];
+            if (n != 0) {
+                if (n->field_0x10 != 0) {
+                    self->field_0x98->Detach(n->field_0x0 + self->field_0x90 * 3);
+                    self->field_0x92--;
+                    n->field_0x10->v11();
+                    ((nw4r::g3d::G3dObj*)n->field_0x10)->Destroy();
+                    n->field_0x10 = 0;
+                }
+                n->field_0x18 = 0;
+                walk->field_0x84[0] = 0;
+            }
+            i--;
+            walk = (CScnChild80496B0C*)((u8*)walk - 4);
+        } while (i >= 1);
+    }
+
+    // Blend-weight pass: the primary slot takes the node's ratio (or 1 when
+    // the backup count is 1); the backup slots take the complement scaled by
+    // their own ratios, then everything is normalized by the sum.
+    f32 w = node->field_0xC;
+    if (self->field_0x92 == 1) {
+        w = lbl_eu_8066AAC4;
+    }
+    node->field_0x20 = w;
+    f32 sum = (f32)(f64)w;
+    f32 inv = lbl_eu_8066AAC4 - w;
+    for (int j = 1; j < 3; j++) {
+        CScnNode80496B0C* s = self->field_0x84[j];
+        if (s != 0) {
+            s->field_0x20 = inv * s->field_0xC;
+            CScnNode80496B0C* s2 = self->field_0x84[j];
+            sum += s2->field_0x20;
+        }
+    }
+    if (sum > lbl_eu_8066AAC0) {
+        if (self->field_0x84[0] != 0) {
+            self->field_0x84[0]->field_0x20 /= sum;
+        }
+        if (self->field_0x84[1] != 0) {
+            self->field_0x84[1]->field_0x20 /= sum;
+        }
+        if (self->field_0x84[2] != 0) {
+            self->field_0x84[2]->field_0x20 /= sum;
+        }
+    }
+
+    // Push the per-node weights into the chr-blend (stops at the first
+    // unbound slot).
+    for (int k = 0; k < 3; k++) {
+        CScnNode80496B0C* n2 = self->field_0x84[k];
+        if (n2 == 0) break;
+        ((nw4r::g3d::AnmObjChr*)self->field_0x98)
+            ->SetWeight(n2->field_0x0 + self->field_0x90 * 3, a * n2->field_0x20);
+    }
+}
 
 // Accumulates each bound node's scaled translate result into outB/outC (and
 // the blend offset delta into outA), then syncs the stored blend reference
@@ -582,11 +891,9 @@ extern "C" __declspec(noinline) u32 func_80497544(
     CScn80496B0C* self, CScnChild80496B0C* child, CScnItemAnim* anim,
     nw4r::g3d::ResAnmChr* anmRes, u32 c, u32 e, s32 f) {
     u32 size;
-    nw4r::g3d::ResMdl mdl = self->field_0x1D0;
-    nw4r::g3d::ResAnmChr chr = *anmRes;
     nw4r::g3d::AnmObjChrRes* anmObj = nw4r::g3d::AnmObjChrRes::Construct(
-        (MEMAllocator*)func_8048ECFC(self->field_0x0), &size, chr, mdl,
-        false);
+        (MEMAllocator*)func_8048ECFC(self->field_0x0), &size, *anmRes,
+        self->field_0x1D0, false);
     if (child->field_0x90 != 0) {
         if (self->field_0x1D8 != 0xFFFFFFFF) {
             anmObj->Bind(self->field_0x1D0, self->field_0x1D8,

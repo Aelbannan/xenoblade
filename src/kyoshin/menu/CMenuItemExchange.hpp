@@ -76,6 +76,7 @@ public:
 class CScn {
 public:
     void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
+    void removeRenderCB(IScnRender* cb);
 };
 
 // cf::CfPadData view: only the flag words the menu input handlers read

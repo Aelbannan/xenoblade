@@ -100,8 +100,8 @@ CCol6Invite* CCol6Invite::Create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
     return lbl_eu_8066423C;
 }
 
-// Destructor stub.
-CCol6Invite::~CCol6Invite() {}
+// Destructor defined in CCol6System.cpp as the extern "C" free function
+// __dt__11CCol6InviteFv (retail form with nested null-guards + delete).
 
 // CProcess overrides (stubs).
 void CCol6Invite::Init() {}
@@ -115,7 +115,8 @@ void CCol6Invite::Draw() {}
 
 // func_801640E0: CCol6Hint dtor at subobject +0x6c.
 void func_801640E0(u8* self) {
-    __dt__9CCol6HintFv(reinterpret_cast<CCol6Hint*>(self - 0x6c));
+    typedef void* (*DtorFn)(CCol6Hint*);
+    ((DtorFn)__dt__9CCol6HintFv)(reinterpret_cast<CCol6Hint*>(self - 0x6c));
 }
 
 // func_801640E8: CCol6Hint::cbRenderBefore at subobject +0x70.
@@ -125,7 +126,8 @@ void func_801640E8(u8* self) {
 
 // func_80164100: CCol6System dtor at subobject +0x6c.
 void func_80164100(u8* self) {
-    __dt__11CCol6SystemFv(reinterpret_cast<CCol6System*>(self - 0x6c));
+    typedef void* (*DtorFn)(CCol6System*);
+    ((DtorFn)__dt__11CCol6SystemFv)(reinterpret_cast<CCol6System*>(self - 0x6c));
 }
 
 // func_80164108: CCol6System::cbRenderBefore at subobject +0x70.
@@ -135,13 +137,17 @@ void func_80164108(u8* self) {
 
 // func_80164110: CCol6System dtor at subobject +0x70.
 void func_80164110(u8* self) {
-    __dt__11CCol6SystemFv(reinterpret_cast<CCol6System*>(self - 0x70));
+    typedef void* (*DtorFn)(CCol6System*);
+    ((DtorFn)__dt__11CCol6SystemFv)(reinterpret_cast<CCol6System*>(self - 0x70));
 }
 
 // func_80164118: CCol6Invite dtor at subobject +0x6c. Backs `this` off to the
 // CCol6Invite embedded subobject and tail-calls the non-deleting destructor.
 void func_80164118(u8* self) {
-    __dt__11CCol6InviteFv(reinterpret_cast<CCol6Invite*>(self - 0x6c));
+    // Retail thunk: subi r3,r3,0x6c; b __dt__11CCol6InviteFv — r4 (flags)
+    // passes through untouched, so call through a 1-arg pointer view.
+    typedef void* (*DtorFn)(CCol6Invite*);
+    ((DtorFn)__dt__11CCol6InviteFv)(reinterpret_cast<CCol6Invite*>(self - 0x6c));
 }
 
 // Standalone string formatting helper.

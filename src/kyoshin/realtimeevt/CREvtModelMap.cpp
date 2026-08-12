@@ -395,7 +395,7 @@ extern "C" void func_80180E60(CREvtModelMap* self)
     if (func_8016BDA8(self, pId)) {
         // The w0/w1/w2 locals with the store order +0x0C, +0x08, +0x10
         // reproduce retail's lwzu load schedule (see CREvtModelPc).
-        u32* src = lbl_eu_80531D38;
+        u32* src = (u32*)lbl_eu_80531D38;
         u32 w1, w2, w0;
         w0 = *src++;
         w1 = *src++;

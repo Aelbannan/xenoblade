@@ -19,8 +19,24 @@ float CfObjectActor::CfObjectActor_UnkVirtualFunc6() {
 void __dt__Q22cf13CfObjectActorFv(void* self);
 void CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(void* self);
 
-void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc5() {}
-void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc8() {}
+// Retail symbol is Fv; the real ABI passes (self, f1, r4). Delegates to the
+// CActorParam_UnkVirtualFunc35 vtable slot (+0x120, takes (float, int, int,
+// int)) with the float arg = value itself, passed through unchanged.
+extern "C" void CfObjectActor_UnkVirtualFunc5__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value, int arg) {
+    if (value <= lbl_eu_80667738) {
+        reinterpret_cast<cf::CfActorVt120*>(self)->m120(value, 0, 0, arg);
+    } else {
+        reinterpret_cast<cf::CfActorVt120*>(self)->m120(value, 3, 0, arg);
+    }
+}
+
+float cf::CfObjectActor::CfObjectActor_UnkVirtualFunc8() {
+    // Word at absolute offset 0x3E74 (CAIAction trailer area) is used as a
+    // pointer to an object holding a float at +0x7C.
+    cf::CfFloat7C* p = reinterpret_cast<cf::CfFloat7C*>(reinterpret_cast<cf::CfActorField3E74*>(this)->field_0x3E74);
+    if (p == 0) return lbl_eu_8066776C;
+    return p->field_0x7C;
+}
 void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc9() {}
 struct CfObjectActorData {
     u8 _pad00[0x3f60];
@@ -45,7 +61,14 @@ void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc11(void* arg) {
 
 void func_8016FF14(){}
 void func_80170AB0(){}
-void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc3() {}
+void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc3() {
+    // Two virtual calls on the CBattleState subobject vtable (this+0x8),
+    // slot +0x20 (CBattleState_UnkVirtualFunc7; the retail signature takes
+    // an int). Raw offset cast: an upcast to the secondary base would make
+    // MWCC emit a null guard for the adjusted this.
+    reinterpret_cast<cf::CfBattleVt20*>((u8*)this + 8)->m20(0xf);
+    reinterpret_cast<cf::CfBattleVt20*>((u8*)this + 8)->m20(0x10);
+}
 void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc4() {}
 void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc7() {}
 void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc10() {}
@@ -96,7 +119,14 @@ extern "C" void CActorParam_UnkVirtualFunc21__Q22cf13CfObjectActorFv(cf::CfObjec
 }
 
 
-extern "C" void CActorParam_UnkVirtualFunc140__Q22cf13CfObjectActorFv() {}
+// Retail symbol is Fv; the real ABI passes (self, arg, f1, f2, f3). Compares
+// the CfObjectModel.field_0x74 word (absolute offset 0x3F10) of both actors
+// and tail-calls the base CActorParam implementation when they differ.
+extern "C" void CActorParam_UnkVirtualFunc140__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, cf::CfObjectActor* arg, float a, float b, float c) {
+    if (arg == 0) return;
+    if (reinterpret_cast<cf::CfActorField3F10*>(self)->field_0x3F10 == reinterpret_cast<cf::CfActorField3F10*>(arg)->field_0x3F10) return;
+    CActorParam_UnkVirtualFunc140__Q22cf11CActorParamFv(self, arg, a, b, c);
+}
 // cf::CfObjectActor vtable thunks (retail: this-adjust + tail-branch)
 extern "C" void CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv(void* self) {
     CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv((char*)self + 0x3e9c);
@@ -109,7 +139,16 @@ extern "C" void CActorParam_UnkVirtualFunc179__Q22cf13CfObjectActorFv() {}
 extern "C" void CActorParam_UnkVirtualFunc180__Q22cf13CfObjectActorFv() {}
 extern "C" void CActorParam_UnkVirtualFunc33__Q22cf13CfObjectActorFv() {}
 extern "C" void CActorParam_UnkVirtualFunc35__Q22cf13CfObjectActorFv() {}
-extern "C" void CActorParam_UnkVirtualFunc34__Q22cf13CfObjectActorFv() {}
+// Retail symbol is Fv; the real ABI passes the float in f1. Slot +0x120
+// (CActorParam_UnkVirtualFunc35) takes (float, int, int, int); the float arg
+// is value itself, passed through unchanged.
+extern "C" void CActorParam_UnkVirtualFunc34__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value) {
+    if (value <= lbl_eu_80667738) {
+        reinterpret_cast<cf::CfActorVt120*>(self)->m120(value, 0, 0, 0);
+    } else {
+        reinterpret_cast<cf::CfActorVt120*>(self)->m120(value, 3, 0, 0);
+    }
+}
 extern "C" void CActorParam_UnkVirtualFunc54__Q22cf13CfObjectActorFv() {}
 extern "C" void CActorParam_UnkVirtualFunc60__Q22cf13CfObjectActorFv() {}
 extern "C" void CActorParam_UnkVirtualFunc4__Q22cf13CfObjectActorFv() {}

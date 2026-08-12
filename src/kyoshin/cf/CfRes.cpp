@@ -410,7 +410,8 @@ void func_80063994(){}
 int func_80063A34(void* self){
     extern int getFileSize__11CDeviceFileFPCc(void*, int);
     int sz = getFileSize__11CDeviceFileFPCc(self, 1);
-    return (sz < 0) ? -1 : sz;
+    if (sz < 0) sz = -1;
+    return sz;
 }
 
 void func_80063A60(){}

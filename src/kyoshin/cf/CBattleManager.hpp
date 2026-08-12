@@ -93,7 +93,7 @@ namespace cf{
         static u32 lbl_804F8228[];
 
     protected:
-        static CBattleManager* spInstance;
+        // static CBattleManager* spInstance; -> extern "C" lbl_eu_80663F00 in .cpp
     };
 }
 

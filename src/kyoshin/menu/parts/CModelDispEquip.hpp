@@ -3,6 +3,7 @@
 #include <types.h>
 
 struct CEventFile;
+namespace cf { class CActParamAnimGame; }
 
 // File slot: 12 bytes per entry
 struct FileSlot {
@@ -12,10 +13,35 @@ struct FileSlot {
     u8 _pad[3];
 };
 
+// View of the 0x53C-byte act-param object. The retail cf::CActParamAnimGame is
+// larger in the shared header; this TU only needs the flag word at +0x0C and
+// the model-pointer slot at +0x4B4 (func_8004B9B8 result).
+struct CActParamAnimView {
+    u8 _00[0x0C];
+    u32 field_0x0C;   // +0x0C busy flags (bit 0x20 toggled around func_8004B52C)
+    u8 _10[0x4A4];
+    void* field_0x4B4; // +0x4B4 model/next-chain-obj pointer (func_8004B9B8 result)
+    u8 _4B8[0x84];
+};
+
+// Sub-object at CModelDispEquip+0x10: 3 vtable words + act-param objects.
+// The animModelPtrs array sits at the holder's tail (+0xFC8) - retail code
+// addresses it through the holder base (e.g. func_80200E94's lwz 0xfc8(r31)).
+struct CActParamHolder {
+    void* field_0x00; // +0x00 object pointer (vtable dispatch at 0xC4/0xC8)
+    u32 field_0x04;   // +0x04 second vtable
+    u32 field_0x08;   // +0x08 third vtable
+    CActParamAnimView actParam;    // +0x0C (0x53C bytes)
+    s32 timer;        // +0x548
+    u32 unk_55C;      // +0x54C
+    CActParamAnimView actParams[2]; // +0x550 (0xA78 bytes)
+    void* animModelPtrs[2]; // +0xFC8 animation model slot pointers (indexed by r5/i)
+};
+
 class CModelDispEquip {
 public:
     CModelDispEquip();
-    virtual ~CModelDispEquip();
+    ~CModelDispEquip();
     void OnFileEvent();
 
     void resetBase();
@@ -25,13 +51,11 @@ public:
     void setState14_3();
     static void storeFloats(float* dest, float a, float b, float c, float d);
 
-    void func_80200F9C();
     void func_80201298();
     void func_8020131C();
-    void func_80201444();
 
-    virtual void vfunc18();
-    virtual void vfunc40();
+    void vfunc18();
+    void vfunc40();
 
     void thunk4_1298();
     void thunk4_1440();
@@ -43,17 +67,14 @@ public:
     void thunk8_dtor();
 
     // ---- Layout ----
-    // The retail has 3 vtable pointers (multiple inheritance).
-    // MWCC generates only 1, so we add 2 dummy words.
+    // The retail has 3 vtable pointers (multiple inheritance), assigned
+    // manually - the class has no C++ virtuals, so the dtor does not
+    // auto-write a vtable. All 3 are plain words.
+    u32 _vtable;  // 0x00 - first vtable pointer
     u32 _vtable2; // 0x04 - second vtable
     u32 _vtable3; // 0x08 - third vtable
     u32 somePtr;  // 0x0C
-    u8 _pad010[0x0C]; // 0x10-0x1B (3 sub-object ptrs)
-    u8 actParamArea[0x53C]; // 0x1C-0x557
-    s32 timer;    // 0x558
-    u32 unk_55C;  // 0x55C
-    u8 actParamArray[0xA78]; // 0x560-0xFD7
-    u32 animModelPtrs[2]; // 0xFD8
+    CActParamHolder actParamHolder; // 0x10
     u32 equipPtrs[8]; // 0xFE0
     u32 currentModelPtr; // 0x1000
     u32 animPtrs[2]; // 0x1004
@@ -76,3 +97,34 @@ public:
     f32 scale1[3];  // 0x10A8
     f32 scale2[3];  // 0x10B4
 };
+
+// C-linkage imports (retail unmangled symbols).
+extern "C" void func_8004B60C(void*, f32, f32, f32);
+// Forward decl so the -4/-8 thunks can reference the dtor symbol.
+extern "C" void* __dt__15CModelDispEquipFv(CModelDispEquip*, int);
+
+// Data written by sinit_802019F8 (set-vector helper args); read back as raw
+// 32-bit words by func_801FF7B0 (lwzu/lwz word copies into scale1/scale2).
+extern u32 lbl_eu_80576550[3];
+extern u32 lbl_eu_8057655C[3];
+extern const f32 lbl_eu_80668274;
+extern const f32 lbl_eu_8066829C;
+extern const f32 lbl_eu_80668278;
+extern const f32 lbl_eu_80668270;
+// Step / clamp constants for func_80201570/15D4/1740/17A4 and 1638/16BC.
+extern const f32 lbl_eu_80668280;
+extern const f32 lbl_eu_80668284; // scale1[1] upper clamp
+extern const f32 lbl_eu_80668288; // scale2[1] upper clamp
+extern const f32 lbl_eu_8066828C; // scale1[1] lower clamp
+extern const f32 lbl_eu_80668290; // scale2[1] lower clamp
+extern const f32 lbl_eu_80668294; // scale1[2] lower clamp
+extern const f32 lbl_eu_80668298; // scale1[2] upper clamp
+// Imports used by this unit's functions.
+extern "C" bool func_8004B52C(void*, f32);
+extern "C" void* func_80496264(void*, int);
+extern "C" void func_8049EFF8(void*, f32, void*, void*);
+extern "C" void* func_8004B9B8(void* self);
+extern "C" void func_8004B9D4(void* self, void* arg, u32, s32, u32);
+extern "C" void __destroy_arr(void*, void*, int, int);
+// cf::CActParamAnimGame destructor address (defined in kyoshin/cf/CActParamAnimGame.cpp).
+extern "C" void __dt__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame*, int);

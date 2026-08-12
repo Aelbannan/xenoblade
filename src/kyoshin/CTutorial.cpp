@@ -62,9 +62,21 @@ void CTutorial::func_8029B010() {
 
 void func_8029B05C(){}
 
-void func_8029B124(){}
+extern "C" __declspec(noinline) void func_8029B124(CTutorial* self) {}
 
-void CTutorial::OnFileEvent() {}
+// Page-counter tick: play the confirm sound while the counter is nonzero,
+// decrement it (u8-domain), clamp negatives to zero, then refresh.
+extern "C" void func_8029ADF8(CTutorial* self) {
+    if (self->field_50 != 0)
+        func_80138078(8);
+    u8 next = (u8)self->field_50 - 1;
+    self->field_50 = (s8)next;
+    if ((s8)next < 0)
+        self->field_50 = 0;
+    func_8029B124(self);
+}
+
+bool CTutorial::OnFileEvent(CEventFile* pEventFile) { return false; }
 
 void func_8029B498(){}
 
@@ -72,5 +84,23 @@ extern "C" void func_8029AA34() {}
 extern "C" void func_8029AB28() {}
 extern "C" void func_8029ABD8() {}
 extern "C" void func_8029ACEC() {}
-extern "C" void func_8029AD88() {}
-extern "C" void func_8029ADF8() {}
+// Page-navigation helper: set the page-complete flag when the target is the
+// last page, otherwise advance the counter (clamped by a), then refresh and
+// play the confirm sound.
+// Page-navigation helper: mark complete when b is the last page, else advance
+// the counter clamped by a, then refresh and play the confirm sound. NOTE:
+// retail emits two dead field loads (lbz 0x50/0x51) before the (s8) param
+// casts reuse those registers; MWCC DCEs them from high-level C, leaving the
+// function 2 instructions short (0x68 vs 0x70) — open item.
+extern "C" void func_8029AD88(CTutorial* self, int a, int b) {
+    if (b == a - 1) {
+        self->field_52 = 1;
+        return;
+    }
+    self->field_50 = (u8)((s8)b + 1);
+    if ((s8)(u8)((s8)b + 1) >= a) {
+        self->field_50 = (u8)((s8)a - 1);
+    }
+    func_8029B124(self);
+    func_80138078(8);
+}

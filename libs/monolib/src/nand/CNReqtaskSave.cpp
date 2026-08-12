@@ -176,10 +176,27 @@ __declspec(noinline) s32 func_804DA628(u32 addr, u32 size) {
     return ret;
 }
 
-// NAND close primitive (stub; symbol kept for the func_804DA4CC tail call).
-// noinline: retail func_804DA4CC emits `b func_804DA69C`; without it MWCC
-// inlines this placeholder and empties the caller.
-s32 __declspec(noinline) func_804DA69C(void) { return 0; }
+// NAND close primitive: stamp the busy flag, clear the result latch, launch
+// NANDCloseAsync (retail passes the callback first, then the block and file
+// info globals), route an immediate nonzero return through func_804DAA58,
+// then clear the busy flag and hand back the raw NAND result.
+#pragma optimize_for_size on
+s32 __declspec(noinline) func_804DA69C(void) {
+    lbl_eu_806659D0 = 1;
+    lbl_eu_806659D4 = 0;
+    s32 ret = NANDCloseAsync(
+        reinterpret_cast<NANDFileInfo*>(reinterpret_cast<void*>(&func_804DA97C)),
+        reinterpret_cast<NANDAsyncCallback>(&lbl_eu_8065FE30),
+        reinterpret_cast<NANDCommandBlock*>(&lbl_eu_8065FEEC));
+    if (ret != 0) {
+        func_804DAA58(ret);
+        lbl_eu_806659D0 = 0;
+    } else {
+        lbl_eu_806659D0 = 0;
+    }
+    return ret;
+}
+#pragma optimize_for_size off
 
 // us-804de94c: func_804DA70C
 // NAND create (async) wrapper: stamps the busy flag, clears the shared result

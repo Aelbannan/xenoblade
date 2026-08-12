@@ -14,7 +14,7 @@ extern "C" void* func_80157C4C(u8, s16);
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 // Float constant in .sdata2, referenced via sda21 reloc.
-extern float lbl_eu_80668B28;
+extern const float lbl_eu_80668B28;
 
 u8 CEquipItemBox::func_802865A0() { return unk_40; }
 

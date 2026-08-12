@@ -9,6 +9,10 @@ namespace dcc {
 namespace {
 
 #pragma dont_inline on
+// Open item: FPR coloring plateau -- retail colors su/sv/g8/g4/g0 as
+// f5/f1/f0/f3/f4, MWCC always f2/f3/f0/f4/f5 (15 pure FPR reg_swaps, 0
+// structural; both mw_versions, decl-order variants invariant). Witness
+// rejects the f1->f3 ABI permutation.
 void MakeTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 su = rSrt.Su;
     f32 g8 = lbl_eu_80669CC8;
@@ -27,17 +31,20 @@ void MakeTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void MakeTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 cosR, sinR;
-    f32 fidx = lbl_eu_80669CCC * rSrt.R;
+    f32 sinR, cosR;
+    f32 r = rSrt.R;
+    f32 fidx = lbl_eu_80669CCC * r;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
-    pMtx->m[0][0] = sinR;
-    pMtx->m[0][1] = cosR;
+    pMtx->m[0][0] = cosR;
+    pMtx->m[0][1] = sinR;
     pMtx->m[0][2] = lbl_eu_80669CC0;
-    pMtx->m[0][3] = lbl_eu_80669CD0 * (sinR + cosR - lbl_eu_80669CC8);
-    pMtx->m[1][0] = -cosR;
-    pMtx->m[1][1] = sinR;
+    pMtx->m[0][3] = lbl_eu_80669CD0 * (cosR + sinR - lbl_eu_80669CC8);
+    pMtx->m[1][0] = -sinR;
+    pMtx->m[1][1] = cosR;
     pMtx->m[1][2] = lbl_eu_80669CC0;
+    // m[1][3] open item: retail loads sinR(12sp) into f1 before cosR(8sp) for
+    // the fneg+fadds; MWCC loads cosR first in every shape (2 pure reg_swap).
     pMtx->m[1][3] = lbl_eu_80669CD0 * (-cosR + sinR - lbl_eu_80669CC8);
 }
 

@@ -412,8 +412,12 @@ void mwPlyPause(MWSFDPLY* self, s32 pause) {
 }
 
 int MWSFPLY_SetFlowLimit(void *h) {
+    // Retail scale double lives 0x20 before the lbl_eu_8051B190 symbol (the
+    // 8051B190/198 slots hold the 2^52 conversion magic); reference it via the
+    // -0x20 addend to match the retail reloc.
     MWSFD_SetFlowLimit(h,
-        (u32)(s32)(lbl_eu_8051B190 * (double)(s32)*(s32 *)((u8 *)h + 0x50C)));
+        (u32)(s32)(*(double *)0x8051B170 *  // retail scale (lbl_eu_8051B190-0x20)
+                   (double)(s32)*(s32 *)((u8 *)h + 0x50C)));
 }
 
 int mwPlyChkSupply(void *h) {

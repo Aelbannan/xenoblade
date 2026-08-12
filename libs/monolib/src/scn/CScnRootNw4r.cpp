@@ -65,7 +65,13 @@ extern "C" void func_8048FED8(CScnRootNw4r* self, u32 r4,
     self->field_0x1C = self->field_0x1C + 1;
 }
 
-void func_8048FF90(){}
+extern "C" void func_8048FF90(CScnRootNw4r* self, u32 a, u32 b) {
+    u32 idx = self->mPairCount;
+    self->mArrA[idx] = a;
+    u32 idx2 = self->mPairCount;
+    self->mArrB[idx2] = b;
+    self->mPairCount = idx2 + 1;
+}
 
 // us-80494030: remove the (a, b) pair entry, shifting later entries down.
 void func_8048FFBC(CScnRootNw4r* self, u32 a, s32 b) {

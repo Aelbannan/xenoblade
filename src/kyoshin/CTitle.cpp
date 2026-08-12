@@ -71,7 +71,17 @@ body:
     self->mLayout->Animate(0);
 }
 
-void func_802B64AC(){}
+extern "C" void func_802B64AC(void* self, void* drawInfo) {
+    void* layout = *(void**)((u8*)self + 8);
+    if (layout == 0) return;
+    if (((u8*)self)[0x18] == 0) goto exit;
+    goto body;
+exit:
+    return;
+body:
+    extern void func_80137038(void* layout, void* info, int a, int b);
+    func_80137038(layout, drawInfo, 0, 1);
+}
 
 void func_802B64DC(){}
 
@@ -204,11 +214,21 @@ body:
     self->mLayout->Animate(0);
 }
 
-void func_802B6B08(){}
+extern "C" void func_802B6B08(void* self, void* drawInfo) {
+    void* layout = *(void**)((u8*)self + 8);
+    if (layout == 0) return;
+    if (((u8*)self)[0x24] == 0) goto exit;
+    goto body;
+exit:
+    return;
+body:
+    extern void func_80137038(void* layout, void* info, int a, int b);
+    func_80137038(layout, drawInfo, 0, 1);
+}
 
 void func_802B6B38(){}
 
-extern "C" void func_802B6B90(CTitleMenu* self) {
+extern "C" __declspec(noinline) void func_802B6B90(CTitleMenu* self) {
     if (self->field_0x26 == 0) {
         self->field_0x26 = 1;
         func_802B6F64(self);
@@ -217,7 +237,7 @@ extern "C" void func_802B6B90(CTitleMenu* self) {
     }
 }
 
-extern "C" void func_802B6BDC(CTitleMenu* self) {
+extern "C" __declspec(noinline) void func_802B6BDC(CTitleMenu* self) {
     if (self->field_0x26 == 2) {
         self->field_0x26 = 3;
         func_802B7094(self);
@@ -311,7 +331,25 @@ extern "C" CTitle* __ct__CTitle(CTitle* self) {
     return self;
 }
 
-CTitle::~CTitle() {}
+// Member dtors and operator delete (retail names).
+extern "C" void __dt__6CCur18Fv(void* self, int flags);
+extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int flags);
+extern "C" void __dl__FPv(void* p);
+
+// Retail dtor is a plain free function: destroys the +0x70 CCur18 member and
+// the +0x04 UnkClass_8045F564 member, then frees the object when the delete
+// flag is positive.
+#pragma optimize_for_size on
+extern "C" void* __dt__6CTitleFv(void* self, int flags) {
+    if (self != 0) {
+        __dt__6CCur18Fv((u8*)self + 0x70, -1);
+        __dt__17UnkClass_8045F564Fv((u8*)self + 0x04, -1);
+        if (flags > 0)
+            __dl__FPv(self);
+    }
+    return self;
+}
+#pragma optimize_for_size off
 
 // Kick off the async load of the title layout arc, register the file-event
 // callback, and expose this instance to the callback via the sbss singleton.
@@ -332,9 +370,21 @@ void func_802B74A8(){}
 
 void func_802B74F4(){}
 
-void func_802B7564(){}
+extern "C" int func_802B7564(CTitle* self) {
+    int r = 0;
+    if (self->field_0x1C != 0 && (s8)self->field_0x25 != -1) {
+        r = 1;
+    }
+    return r;
+}
 
-void func_802B7590(){}
+extern "C" int func_802B7590(CTitle* self) {
+    int r = 0;
+    if (self->mLogo.field_0x19 != 0 && self->mMenu.field_0x25 != 0) {
+        r = 1;
+    }
+    return r;
+}
 
 extern "C" void func_802B75B8(CTitle* self) {
     if (self->field_0x24 != 0) return;
@@ -430,7 +480,11 @@ void func_802B78A4(CTitle* self) {
 
 void func_802B7920() {}
 
-void func_802B7924(){}
+extern "C" void func_802B7924(CTitle* self) {
+    if (self->mLogo.field_0x19 == 0) return;
+    if (self->mMenu.field_0x25 == 0) return;
+    self->field_0x24 = 0;
+}
 
 extern "C" void func_802B7948(void* a, unsigned int b, unsigned char v) {
     extern void* lbl_eu_80664C38;

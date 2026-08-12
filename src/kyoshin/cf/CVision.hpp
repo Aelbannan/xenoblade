@@ -64,9 +64,12 @@ namespace cf{
         u32 mDelta;  // 0x08
     };
 
-    // One of the 0x4818-byte members of CVision::unk20D4.
+    // One of the 0x4818-byte members of CVision::unk20D4. The field comments
+    // are CVision-absolute; the slot itself carries a 0x15E8-byte head before
+    // the fields declared below (f_15E8 is at slot-relative 0x15E8).
     class CVisionSlot {
     public:
+        u8 unk0[0x15E8];    // slot head
         float f_15E8;   // 0x15E8
         u16 h_15EC;     // 0x15EC
         u16 h_15EE;     // 0x15EE

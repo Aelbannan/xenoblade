@@ -367,7 +367,9 @@ void CTaskGame_thunk_IErrMesWinSel_dtor(void* p) {
 }
 
 void CTaskGame::Term() {}
-void CTaskGame::func_80040A3C(u16 r4, u16 r5, const char* r6, s16 r7) {
+// __declspec(noinline): retail func_800426A8 calls this out-of-line; without
+// it MWCC inlines the 0xC4 body into the 0x48 caller.
+__declspec(noinline) void CTaskGame::func_80040A3C(u16 r4, u16 r5, const char* r6, s16 r7) {
     unk86 = r4;
     unk88 = r5;
     if (r6 != nullptr) {

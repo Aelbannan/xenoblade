@@ -62,15 +62,16 @@ struct CMIf {
 
 // Calls vtable slot 0x18C (CfObjectModel_UnkVirtualFunc6) when the pointer at
 // +0x70 is set; returns the call's result, or 1 when the pointer is NULL.
-// Defined as a real member so MWCC emits r12 virtual dispatch (retail
-// lwz r12,0(r3); lwz r12,396(r12); mtctr; bctrl), and keeps the `li r0,1`
-// default + `or r0,r3,r3`/`or r3,r0,r0` return structure.
+// Real-member form gives retail's r12 virtual dispatch. Open item: the
+// retval-default register (li r0,1 + or r0,r3,r3 / or r3,r0,r0 in retail vs
+// li r4/r5 + or r4 + lwz-r0-first epilogue here) is allocator-fixed across
+// ~16 shapes (decl order, if/else, early-return, ternary, pointer local,
+// named member, -O4,s, volatile); the order diffs at +8/+0xc and +0x30/+0x34
+// are consequences of the r0-vs-r4 choice.
 void* cf::CfObjectMap::func_800B9A70() {
-    void* ret;
-    if (*(void**)this->field_0x70) {
+    void* ret = (void*)1;
+    if (this->mTarget70) {
         ret = this->CfObjectModel_UnkVirtualFunc6();
-    } else {
-        ret = (void*)1;
     }
     return ret;
 }
@@ -121,7 +122,7 @@ extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
         self->field_0x2F38 = func_800AA2BC(a, b);
         self->mFlags68 &= 0x40000000;
         self->field_0x8E = 1;
-        *reinterpret_cast<void**>(self->field_0x70) = handle;
+        self->mTarget70 = handle;
     }
     u32 packed = self->field_0x2F38;
     if (packed != 0) {

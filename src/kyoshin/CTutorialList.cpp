@@ -44,7 +44,13 @@ void func_802AD638(){}
 
 void func_802AD728(){}
 
-void func_802AD838(){}
+struct CTutorialWindowIds;
+extern "C" u16 func_802ACE04(CTutorialWindowIds* self, u16 index);
+
+extern "C" u16 func_802AD838(CTutorialList* self) {
+    return func_802ACE04((CTutorialWindowIds*)self->mSubObj180,
+                         (u16)((s8)self->mField178 + (s16)self->mField17A));
+}
 
 #pragma push
 #pragma auto_inline off
@@ -90,7 +96,10 @@ extern "C" void func_802ADA0C(CTutorialList* self) {
     func_80138078(3);
 }
 
-void func_802ADAB8(){}
+extern "C" int func_802ADAB8(void* self) {
+    // existing decl: extern "C" unsigned char func_801D3320(void*)
+    return (func_801D3320((u8*)self + 0x84) != 0) + 0x73;
+}
 
 // Animation-finish handlers: the +0x24/+0x28 anim transform reached its end
 // frame (bound in .sdata2) -> latch the state byte and run the follow-up.
@@ -121,7 +130,12 @@ extern "C" void func_802ADBDC(CTutorialList* self) {
 
 extern "C" __declspec(noinline) void func_802ADC28(CTutorialList* self) {}
 
-extern "C" __declspec(noinline) void func_802ADC88(CTutorialList* self) {}
+// Re-enable the two anim transforms on the layout (SetAnimationEnable,
+// vtable slot 11 = 0x2C): mAnim24 disabled, mAnim28 enabled.
+extern "C" __declspec(noinline) void func_802ADC88(CTutorialList* self) {
+    self->mLayout20->SetAnimationEnable(self->mAnim24, false);
+    self->mLayout20->SetAnimationEnable(self->mAnim28, true);
+}
 
 // func_802ADE18 - move the cursor onto the current tutorial row: format the
 // page number, resolve the root pane, find the page-name pane and the
@@ -237,7 +251,23 @@ extern "C" void func_802AD0E0(CTutorialList* self) {
     func_801D3160(&self->mSortMenu84[0]);
 }
 
-extern "C" void func_802AD188() {}
+extern "C" void func_801F35B0(void*, void*);
+extern "C" void func_801D31F8(void*, void*);
+extern "C" void func_801D20B0(void*, nw4r::lyt::DrawInfo*);
+
+// Render the tutorial list when the visible gate byte is set: draw the
+// layout, scrollbar, sort menu and cursor with the given draw info.
+#pragma optimize_for_size on
+extern "C" void func_802AD188(CTutorialList* self,
+                              nw4r::lyt::DrawInfo* drawInfo) {
+    if (self->mField174 != 0) {
+        func_80137038(self->mLayout20, drawInfo, 0, 1);
+        func_801F35B0(&self->mScrollBar, drawInfo);
+        func_801D31F8(&self->mSortMenu84[0], drawInfo);
+        func_801D20B0(&self->mGap2C[0], drawInfo);
+    }
+}
+#pragma optimize_for_size off
 // func_802AD1F4 - release the list widget: free the CBdat index, close the
 // two file handles, release the bound layout and resource accessor, then run
 // the cursor/scrollbar/sort-menu/region teardown helpers.
@@ -266,7 +296,7 @@ struct CTutorialWindowIds {
     u16 mCount;     // 0x100
 };
 
-extern "C" u16 func_802ACE04(CTutorialWindowIds* self, u16 index) {
+extern "C" __declspec(noinline) u16 func_802ACE04(CTutorialWindowIds* self, u16 index) {
     if (index >= self->mCount)
         return 0;
     return self->mIds[index];

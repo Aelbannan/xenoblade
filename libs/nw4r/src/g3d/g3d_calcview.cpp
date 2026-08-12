@@ -4,6 +4,13 @@
 #include <nw4r/g3d/g3d_workmem.h>
 #include <nw4r/ut/ut_LockedCache.h>
 
+// Retail nw4r data-pool constants referenced by the billboard kernels.  Named
+// after the retail symbols so the generated sda21 float relocations match
+// retail exactly (instead of TU-local pool labels).
+extern const f32 lbl_eu_80669C30;  // 1.0f
+extern const f32 lbl_eu_80669C34;  // billboard Y-axis degeneracy epsilon
+extern const f32 lbl_eu_80669C38;  // adjugate singularity epsilon (f32 view)
+
 namespace nw4r {
 namespace g3d {
 namespace detail {
@@ -16,8 +23,6 @@ namespace detail {
 static const u32 G3D_CALCVIEW_MAX_MTX = 32;
 
 namespace {
-
-#pragma dont_inline on
 
 // Forward declarations
 void GetModelLocalAxisY2(math::VEC3*, const math::MTX34*, const math::MTX34*);
@@ -33,205 +38,192 @@ void Calc_BILLBOARD_PERSP_Y(math::MTX34*, const math::MTX34*, bool, const math::
  *
  * GetModelLocalAxisY2
  *
- * Computes the local Y axis from the parent model matrix.
- * Returns 2D result (z=0). Used by non-perspective billboard variants.
+ * Computes the direction of the parent's local Y axis (column 1) expressed
+ * through the node's matrix.  The parent's axes are recovered from the
+ * adjugate of its upper-left 3x3 (cross products of the other two columns),
+ * which stays well-defined under non-uniform scale; the adjugate row 1 is
+ * then transformed by the node matrix and divided by the determinant.
+ * Returns the 2D result (z = 0); used by the non-perspective billboards.
  *
  ******************************************************************************/
 void GetModelLocalAxisY2(math::VEC3* pOut, const math::MTX34* pMtx,
                           const math::MTX34* pParentMtx) {
-    f32 p00 = pParentMtx->_00;
-    f32 p10 = pParentMtx->_10;
-    f32 p20 = pParentMtx->_20;
-    f32 p01 = pParentMtx->_01;
-    f32 p11 = pParentMtx->_11;
-    f32 p21 = pParentMtx->_21;
-    f32 p02 = pParentMtx->_02;
-    f32 p12 = pParentMtx->_12;
-    f32 p22 = pParentMtx->_22;
+    // Parent matrix columns: right (col 0), up (col 1), fwd (col 2).
+    f32 r0 = pParentMtx->_00, r1 = pParentMtx->_10, r2 = pParentMtx->_20;
+    f32 u0 = pParentMtx->_01, u1 = pParentMtx->_11, u2 = pParentMtx->_21;
+    f32 f0 = pParentMtx->_02, f1 = pParentMtx->_12, f2 = pParentMtx->_22;
 
-    f32 crossX = p10 * p22 - p20 * p12;
-    f32 crossY = p20 * p02 - p00 * p22;
-    f32 crossZ = p00 * p12 - p10 * p02;
+    // Adjugate columns: X = up x fwd, Y = fwd x right, Z = right x up.
+    f32 ix0 = u1 * f2 - u2 * f1;
+    f32 ix1 = u2 * f0 - u0 * f2;
+    f32 ix2 = u0 * f1 - u1 * f0;
+    f32 iy0 = f1 * r2 - f2 * r1;
+    f32 iy1 = f2 * r0 - f0 * r2;
+    f32 iy2 = f0 * r1 - f1 * r0;
+    f32 iz0 = r1 * u2 - r2 * u1;
+    f32 iz1 = r2 * u0 - r0 * u2;
+    f32 iz2 = r0 * u1 - r1 * u0;
 
-    f32 det = p01 * crossX + p11 * crossY + p21 * crossZ;
-
-    // Check if |det| < epsilon
-    f32 absDet1;
-    if (det >= 0.0f) { absDet1 = det; } else { absDet1 = -det; }
-    if (absDet1 < 1.0e-18f) {
+    // Determinant = right . X.  A (near-)singular parent yields no axis.
+    f32 det = r0 * ix0 + r1 * ix1 + r2 * ix2;
+    f32 absDet = det >= 0.0f ? det : -det;
+    pOut->z = 0.0f;
+    if (absDet < lbl_eu_80669C38) {
         pOut->x = 0.0f;
         pOut->y = 0.0f;
-        pOut->z = 0.0f;
         return;
     }
 
-    f32 invDet = 1.0f / det;
-    f32 nx = crossX * invDet;
-    f32 ny = crossY * invDet;
-    f32 nz = crossZ * invDet;
+    // 1/det via fres + Newton-Raphson refinement (retail's lane-0 sequence:
+    // fres, fadds, fmuls, fnmsubs).
+    f32 y0 = __fres(det);
+    f32 t = det * y0;
+    f32 two = y0 + y0;
+    f32 invDet = __fnmsubs(y0, t, two);
 
-    pOut->x = pMtx->_00 * nx + pMtx->_01 * ny + pMtx->_02 * nz;
-    pOut->y = pMtx->_10 * nx + pMtx->_11 * ny + pMtx->_12 * nz;
-    pOut->z = 0.0f;
+    // out = M_node . (X.y, Y.y, Z.y) / det  --  parent Y axis through node.
+    pOut->x = (pMtx->_00 * ix1 + pMtx->_01 * iy1 + pMtx->_02 * iz1) * invDet;
+    pOut->y = (pMtx->_10 * ix1 + pMtx->_11 * iy1 + pMtx->_12 * iz1) * invDet;
 }
 
 /******************************************************************************
  *
  * GetModelLocalAxisY3
  *
- * Same as GetModelLocalAxisY2 but uses all three rows of pMtx for 3D result.
- * Used by perspective billboard variants.
+ * Same as GetModelLocalAxisY2 but keeps all three rows of pMtx in the result
+ * (3D output); used by the perspective billboard variants.
  *
  ******************************************************************************/
 void GetModelLocalAxisY3(math::VEC3* pOut, const math::MTX34* pMtx,
                           const math::MTX34* pParentMtx) {
-    f32 p00 = pParentMtx->_00;
-    f32 p10 = pParentMtx->_10;
-    f32 p20 = pParentMtx->_20;
-    f32 p01 = pParentMtx->_01;
-    f32 p11 = pParentMtx->_11;
-    f32 p21 = pParentMtx->_21;
-    f32 p02 = pParentMtx->_02;
-    f32 p12 = pParentMtx->_12;
-    f32 p22 = pParentMtx->_22;
+    // Parent matrix columns: right (col 0), up (col 1), fwd (col 2).
+    f32 r0 = pParentMtx->_00, r1 = pParentMtx->_10, r2 = pParentMtx->_20;
+    f32 u0 = pParentMtx->_01, u1 = pParentMtx->_11, u2 = pParentMtx->_21;
+    f32 f0 = pParentMtx->_02, f1 = pParentMtx->_12, f2 = pParentMtx->_22;
 
-    f32 crossX = p10 * p22 - p20 * p12;
-    f32 crossY = p20 * p02 - p00 * p22;
-    f32 crossZ = p00 * p12 - p10 * p02;
+    // Adjugate columns: X = up x fwd, Y = fwd x right, Z = right x up.
+    f32 ix0 = u1 * f2 - u2 * f1;
+    f32 ix1 = u2 * f0 - u0 * f2;
+    f32 ix2 = u0 * f1 - u1 * f0;
+    f32 iy0 = f1 * r2 - f2 * r1;
+    f32 iy1 = f2 * r0 - f0 * r2;
+    f32 iy2 = f0 * r1 - f1 * r0;
+    f32 iz0 = r1 * u2 - r2 * u1;
+    f32 iz1 = r2 * u0 - r0 * u2;
+    f32 iz2 = r0 * u1 - r1 * u0;
 
-    f32 det = p01 * crossX + p11 * crossY + p21 * crossZ;
-
-    f32 absDet2;
-    if (det >= 0.0f) { absDet2 = det; } else { absDet2 = -det; }
-    if (absDet2 < 1.0e-18f) {
+    // Determinant = right . X.  A (near-)singular parent yields no axis.
+    f32 det = r0 * ix0 + r1 * ix1 + r2 * ix2;
+    f32 absDet = det >= 0.0f ? det : -det;
+    if (absDet < lbl_eu_80669C38) {
         pOut->x = 0.0f;
         pOut->y = 0.0f;
         pOut->z = 0.0f;
         return;
     }
 
-    f32 invDet = 1.0f / det;
-    f32 nx = crossX * invDet;
-    f32 ny = crossY * invDet;
-    f32 nz = crossZ * invDet;
+    // 1/det via fres + Newton-Raphson refinement (retail's lane-0 sequence).
+    f32 y0 = __fres(det);
+    f32 t = det * y0;
+    f32 two = y0 + y0;
+    f32 invDet = __fnmsubs(y0, t, two);
 
-    pOut->x = pMtx->_00 * nx + pMtx->_01 * ny + pMtx->_02 * nz;
-    pOut->y = pMtx->_10 * nx + pMtx->_11 * ny + pMtx->_12 * nz;
-    pOut->z = pMtx->_20 * nx + pMtx->_21 * ny + pMtx->_22 * nz;
+    // out = M_node . (X.y, Y.y, Z.y) / det  --  parent Y axis through node.
+    pOut->x = (pMtx->_00 * ix1 + pMtx->_01 * iy1 + pMtx->_02 * iz1) * invDet;
+    pOut->y = (pMtx->_10 * ix1 + pMtx->_11 * iy1 + pMtx->_12 * iz1) * invDet;
+    pOut->z = (pMtx->_20 * ix1 + pMtx->_21 * iy1 + pMtx->_22 * iz1) * invDet;
 }
 
 /******************************************************************************
  *
  * Calc_BILLBOARD_STD
  *
- * Standard billboard: always faces the camera.
- * The billboard's local Z axis points toward the camera.
+ * Standard billboard: always faces the camera.  The billboard's local Z axis
+ * points toward the camera.  The X/Y axes are built from the current matrix's
+ * Y column (normalized, with unit Z) and scaled by the model matrix column
+ * lengths.
  *
  ******************************************************************************/
 void Calc_BILLBOARD_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
                          bool useParent, const math::MTX34* pViewMtx,
                          ResMdl mdl, unsigned long mtxId) {
-    // Read the Y axis from the output matrix (which is the model matrix)
-    f32 yx = pOut->_01;
-    f32 yy = pOut->_11;
+    // The billboard's local Y axis comes from the current matrix's Y column
+    // (X, Y components) with a unit Z component.
+    math::VEC3 localY;
+    localY.x = pOut->_01;
+    localY.y = pOut->_11;
+    localY.z = lbl_eu_80669C30;
 
-    // Check if the Y axis is valid
-    f32 ax;
-    if (yx >= 0.0f) { ax = yx; } else { ax = -yx; }
-    f32 ay;
-    if (yy >= 0.0f) { ay = yy; } else { ay = -yy; }
-
-    if (ax >= 1.0e-18f && ay < 1.0e-18f) {
-        // Degenerate Y axis - zero the matrix
+    // Degenerate Y axis (both X and Y components significant) -> zero it.
+    if (__fabs(localY.x) > lbl_eu_80669C34 &&
+        __fabs(localY.y) > lbl_eu_80669C34) {
         math::MTX34Zero(pOut);
         return;
     }
 
-    // Normalize the Y axis
-    math::VEC3 localY;
-    localY.x = yx;
-    localY.y = yy;
-    localY.z = 0.0f;
     math::VEC3Normalize(&localY, &localY);
 
-    // Build the billboard matrix based on useParent
-    u32 offset = mtxId * sizeof(math::MTX34);
-    const math::MTX34* pNodeMtx = reinterpret_cast<const math::MTX34*>(
-        reinterpret_cast<const u8*>(pMtxArray) + offset);
+    const math::MTX34* pMtx = &pMtxArray[mtxId];
 
     if (useParent) {
-        // Use the model matrix's column lengths for scaling
-        f32 scaleX = math::FrSqrt(
-            pNodeMtx->_00 * pNodeMtx->_00 +
-            pNodeMtx->_10 * pNodeMtx->_10 +
-            pNodeMtx->_20 * pNodeMtx->_20
-        );
-        f32 sx = scaleX * (pNodeMtx->_00 * pNodeMtx->_00 +
-                           pNodeMtx->_10 * pNodeMtx->_10 +
-                           pNodeMtx->_20 * pNodeMtx->_20);
+        // Parent-scaled billboard: scale everything by the first column
+        // length of the model matrix.
+        f32 lenSq = pMtx->_00 * pMtx->_00 + pMtx->_10 * pMtx->_10 +
+                    pMtx->_20 * pMtx->_20;
+        f32 len;
+        if (lenSq > lbl_eu_80669C30) {
+            len = lenSq * math::FrSqrt(lenSq);
+        } else {
+            len = lbl_eu_80669C30;
+        }
 
-        // Build the billboard matrix
-        // Column 0: localY direction scaled by column 0 length
-        pOut->_00 = localY.x * sx;
-        pOut->_01 = localY.x * sx;
-        pOut->_02 = 0.0f;
-        pOut->_03 = 0.0f;
-
-        // Column 1: perpendicular to localY
-        pOut->_10 = -localY.y * sx;
-        pOut->_11 = localY.x * sx;
-        pOut->_12 = 0.0f;
-        pOut->_13 = 0.0f;
-
-        // Column 2: zero
-        pOut->_20 = 0.0f;
-        pOut->_21 = 0.0f;
-        pOut->_22 = 0.0f;
-        pOut->_23 = sx;
+        pOut->_00 = localY.x * len;
+        pOut->_01 = localY.y * len;
+        pOut->_02 = lbl_eu_80669C30;
+        pOut->_10 = -localY.y * len;
+        pOut->_11 = localY.x * len;
+        pOut->_12 = lbl_eu_80669C30;
+        pOut->_20 = lbl_eu_80669C30;
+        pOut->_21 = lbl_eu_80669C30;
+        pOut->_22 = len;
     } else {
-        // Use the model matrix's column lengths for scaling
-        f32 scaleCol0 = math::FrSqrt(
-            pNodeMtx->_00 * pNodeMtx->_00 +
-            pNodeMtx->_10 * pNodeMtx->_10 +
-            pNodeMtx->_20 * pNodeMtx->_20
-        );
-        f32 s0 = scaleCol0 * (pNodeMtx->_00 * pNodeMtx->_00 +
-                              pNodeMtx->_10 * pNodeMtx->_10 +
-                              pNodeMtx->_20 * pNodeMtx->_20);
+        // Scale each output column by the model matrix's column length.
+        f32 lenSq0 = pMtx->_00 * pMtx->_00 + pMtx->_10 * pMtx->_10 +
+                     pMtx->_20 * pMtx->_20;
+        f32 len0;
+        if (lenSq0 > lbl_eu_80669C30) {
+            len0 = lenSq0 * math::FrSqrt(lenSq0);
+        } else {
+            len0 = lbl_eu_80669C30;
+        }
 
-        f32 scaleCol1 = math::FrSqrt(
-            pNodeMtx->_01 * pNodeMtx->_01 +
-            pNodeMtx->_11 * pNodeMtx->_11 +
-            pNodeMtx->_21 * pNodeMtx->_21
-        );
-        f32 s1 = scaleCol1 * (pNodeMtx->_01 * pNodeMtx->_01 +
-                              pNodeMtx->_11 * pNodeMtx->_11 +
-                              pNodeMtx->_21 * pNodeMtx->_21);
+        f32 lenSq1 = pMtx->_01 * pMtx->_01 + pMtx->_11 * pMtx->_11 +
+                     pMtx->_21 * pMtx->_21;
+        f32 len1;
+        if (lenSq1 > lbl_eu_80669C30) {
+            len1 = lenSq1 * math::FrSqrt(lenSq1);
+        } else {
+            len1 = lbl_eu_80669C30;
+        }
 
-        f32 scaleCol2 = math::FrSqrt(
-            pNodeMtx->_02 * pNodeMtx->_02 +
-            pNodeMtx->_12 * pNodeMtx->_12 +
-            pNodeMtx->_22 * pNodeMtx->_22
-        );
-        f32 s2 = scaleCol2 * (pNodeMtx->_02 * pNodeMtx->_02 +
-                              pNodeMtx->_12 * pNodeMtx->_12 +
-                              pNodeMtx->_22 * pNodeMtx->_22);
+        f32 lenSq2 = pMtx->_02 * pMtx->_02 + pMtx->_12 * pMtx->_12 +
+                     pMtx->_22 * pMtx->_22;
+        f32 len2;
+        if (lenSq2 > lbl_eu_80669C30) {
+            len2 = lenSq2 * math::FrSqrt(lenSq2);
+        } else {
+            len2 = lbl_eu_80669C30;
+        }
 
-        // Build the billboard matrix
-        pOut->_00 = localY.x * s0;
-        pOut->_01 = localY.y;
-        pOut->_02 = 0.0f;
-        pOut->_03 = 0.0f;
-
-        pOut->_10 = -localY.y * s1;
-        pOut->_11 = localY.x * s1;
-        pOut->_12 = 0.0f;
-        pOut->_13 = 0.0f;
-
-        pOut->_20 = 0.0f;
-        pOut->_21 = 0.0f;
-        pOut->_22 = 0.0f;
-        pOut->_23 = s2;
+        pOut->_00 = localY.x * len0;
+        pOut->_01 = localY.y * len1;
+        pOut->_02 = lbl_eu_80669C30;
+        pOut->_10 = -localY.y * len0;
+        pOut->_11 = localY.x * len1;
+        pOut->_12 = lbl_eu_80669C30;
+        pOut->_20 = lbl_eu_80669C30;
+        pOut->_21 = lbl_eu_80669C30;
+        pOut->_22 = len2;
     }
 }
 
@@ -245,22 +237,27 @@ void Calc_BILLBOARD_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
 void Calc_BILLBOARD_PERSP_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
                                bool useParent, const math::MTX34* pViewMtx,
                                ResMdl mdl, unsigned long mtxId) {
+    // Billboard basis: up = the output matrix's Y column, dir = negated Z
+    // column (toward the camera).  Output columns are right, up, dir.
+    math::VEC3 right;
     math::VEC3 up(pOut->_01, pOut->_11, pOut->_21);
     math::VEC3 dir(-pOut->_03, -pOut->_13, -pOut->_23);
 
-    if (math::FAbs(dir.x) <= 1.0e-18f && math::FAbs(dir.y) <= 1.0e-18f &&
-        math::FAbs(dir.z) <= 1.0e-18f) {
+    // Degenerate facing direction (all components ~0) -> zero matrix.
+    if (math::FAbs(dir.x) < lbl_eu_80669C34 &&
+        math::FAbs(dir.y) < lbl_eu_80669C34 &&
+        math::FAbs(dir.z) < lbl_eu_80669C34) {
         math::MTX34Zero(pOut);
         return;
     }
 
     math::VEC3Normalize(&dir, &dir);
 
-    math::VEC3 right;
     math::VEC3Cross(&right, &up, &dir);
 
-    if (math::FAbs(right.x) <= 1.0e-18f && math::FAbs(right.y) <= 1.0e-18f &&
-        math::FAbs(right.z) <= 1.0e-18f) {
+    if (math::FAbs(right.x) < lbl_eu_80669C34 &&
+        math::FAbs(right.y) < lbl_eu_80669C34 &&
+        math::FAbs(right.z) < lbl_eu_80669C34) {
         math::MTX34Zero(pOut);
         return;
     }
@@ -268,60 +265,60 @@ void Calc_BILLBOARD_PERSP_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
     math::VEC3Normalize(&right, &right);
     math::VEC3Cross(&up, &dir, &right);
 
-    u32 offset = mtxId * sizeof(math::MTX34);
-    const math::MTX34* pNodeMtx = reinterpret_cast<const math::MTX34*>(
-        reinterpret_cast<const u8*>(pMtxArray) + offset);
-
     if (useParent) {
-        f32 len1sq = pNodeMtx->_00 * pNodeMtx->_00 +
-                     pNodeMtx->_10 * pNodeMtx->_10 +
-                     pNodeMtx->_20 * pNodeMtx->_20;
-        f32 len1 = math::FrSqrt(len1sq) * len1sq;
+        // Parent-scaled: one scale from the model matrix's X column length.
+        f32 lenSq = pMtxArray[mtxId]._00 * pMtxArray[mtxId]._00 +
+                    pMtxArray[mtxId]._10 * pMtxArray[mtxId]._10 +
+                    pMtxArray[mtxId]._20 * pMtxArray[mtxId]._20;
+        f32 len = lbl_eu_80669C30;
+        if (lenSq > lbl_eu_80669C30) {
+            len = lenSq * math::FrSqrt(lenSq);
+        }
 
-        f32 len2sq = pNodeMtx->_01 * pNodeMtx->_01 +
-                     pNodeMtx->_11 * pNodeMtx->_11 +
-                     pNodeMtx->_21 * pNodeMtx->_21;
-        f32 len2 = math::FrSqrt(len2sq) * len2sq;
-
-        f32 len3sq = pNodeMtx->_02 * pNodeMtx->_02 +
-                     pNodeMtx->_12 * pNodeMtx->_12 +
-                     pNodeMtx->_22 * pNodeMtx->_22;
-        f32 len3 = math::FrSqrt(len3sq) * len3sq;
-
-        pOut->_00 = right.x * len1;
-        pOut->_01 = right.y * len1;
-        pOut->_02 = right.z * len1;
-        pOut->_10 = up.x * len2;
-        pOut->_11 = up.y * len2;
-        pOut->_12 = up.z * len2;
-        pOut->_20 = dir.x * len3;
-        pOut->_21 = dir.y * len3;
-        pOut->_22 = dir.z * len3;
+        pOut->_00 = right.x * len;
+        pOut->_01 = up.x * len;
+        pOut->_02 = dir.x * len;
+        pOut->_10 = right.y * len;
+        pOut->_11 = up.y * len;
+        pOut->_12 = dir.y * len;
+        pOut->_20 = right.z * len;
+        pOut->_21 = up.z * len;
+        pOut->_22 = dir.z * len;
     } else {
-        f32 len1sq = pNodeMtx->_00 * pNodeMtx->_00 +
-                     pNodeMtx->_10 * pNodeMtx->_10 +
-                     pNodeMtx->_20 * pNodeMtx->_20;
-        f32 len1 = math::FrSqrt(len1sq) * len1sq;
+        // Per-column scaling from the model matrix column lengths.
+        f32 len0Sq = pMtxArray[mtxId]._00 * pMtxArray[mtxId]._00 +
+                     pMtxArray[mtxId]._10 * pMtxArray[mtxId]._10 +
+                     pMtxArray[mtxId]._20 * pMtxArray[mtxId]._20;
+        f32 len0 = lbl_eu_80669C30;
+        if (len0Sq > lbl_eu_80669C30) {
+            len0 = len0Sq * math::FrSqrt(len0Sq);
+        }
 
-        f32 len2sq = pNodeMtx->_01 * pNodeMtx->_01 +
-                     pNodeMtx->_11 * pNodeMtx->_11 +
-                     pNodeMtx->_21 * pNodeMtx->_21;
-        f32 len2 = math::FrSqrt(len2sq) * len2sq;
+        f32 len1Sq = pMtxArray[mtxId]._01 * pMtxArray[mtxId]._01 +
+                     pMtxArray[mtxId]._11 * pMtxArray[mtxId]._11 +
+                     pMtxArray[mtxId]._21 * pMtxArray[mtxId]._21;
+        f32 len1 = lbl_eu_80669C30;
+        if (len1Sq > lbl_eu_80669C30) {
+            len1 = len1Sq * math::FrSqrt(len1Sq);
+        }
 
-        f32 len3sq = pNodeMtx->_02 * pNodeMtx->_02 +
-                     pNodeMtx->_12 * pNodeMtx->_12 +
-                     pNodeMtx->_22 * pNodeMtx->_22;
-        f32 len3 = math::FrSqrt(len3sq) * len3sq;
+        f32 len2Sq = pMtxArray[mtxId]._02 * pMtxArray[mtxId]._02 +
+                     pMtxArray[mtxId]._12 * pMtxArray[mtxId]._12 +
+                     pMtxArray[mtxId]._22 * pMtxArray[mtxId]._22;
+        f32 len2 = lbl_eu_80669C30;
+        if (len2Sq > lbl_eu_80669C30) {
+            len2 = len2Sq * math::FrSqrt(len2Sq);
+        }
 
-        pOut->_00 = right.x * len1;
-        pOut->_01 = right.y * len1;
-        pOut->_02 = right.z * len1;
-        pOut->_10 = up.x * len2;
-        pOut->_11 = up.y * len2;
-        pOut->_12 = up.z * len2;
-        pOut->_20 = dir.x * len3;
-        pOut->_21 = dir.y * len3;
-        pOut->_22 = dir.z * len3;
+        pOut->_00 = right.x * len0;
+        pOut->_01 = up.x * len1;
+        pOut->_02 = dir.x * len2;
+        pOut->_10 = right.y * len0;
+        pOut->_11 = up.y * len1;
+        pOut->_12 = dir.y * len2;
+        pOut->_20 = right.z * len0;
+        pOut->_21 = up.z * len1;
+        pOut->_22 = dir.z * len2;
     }
 }
 
@@ -329,77 +326,106 @@ void Calc_BILLBOARD_PERSP_STD(math::MTX34* pOut, const math::MTX34* pMtxArray,
  *
  * Calc_BILLBOARD_ROT
  *
- * Rotational billboard: rotates around the Y axis to face the camera.
+ * Rotational billboard: rotates around the model's local Y axis to face the
+ * camera.  The local Y axis comes from the parent node's matrix (via
+ * GetModelLocalAxisY2), or from the node's own Y column when no parent
+ * applies.
  *
  ******************************************************************************/
 void Calc_BILLBOARD_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
                          bool useParent, const math::MTX34* pViewMtx,
                          ResMdl mdl, unsigned long mtxId) {
-    // Get the node ID from the model
-    ResMdlInfo info = mdl.GetResMdlInfo();
-    s32 nodeId = info.GetNodeIDFromMtxID(mtxId);
-
     math::VEC3 localY;
-    localY.x = 0.0f;
-    localY.y = 0.0f;
-    localY.z = 0.0f;
-    const math::MTX34* pNodeMtx = NULL;
-    const math::MTX34* pParentMtx = NULL;
 
+    // Look up the node that owns this matrix and its parent node; the local
+    // Y axis is derived from the parent's matrix when available.
+    s32 nodeId = mdl.GetResMdlInfo().GetNodeIDFromMtxID(mtxId);
     if (nodeId >= 0) {
-        ResNode node = mdl.GetResNode(static_cast<u32>(nodeId));
-        ResNode parentNode = node.GetParentNode();
-        u32 parentMtxId = mtxId;
-        if (parentNode.IsValid()) {
-            parentMtxId = parentNode.GetMtxID();
+        ResNode node = mdl.GetResNode(static_cast<int>(nodeId));
+        ResNode parent = node.GetParentNode();
+        if (parent.IsValid()) {
+            GetModelLocalAxisY2(&localY, &pMtxArray[mtxId],
+                                &pMtxArray[parent.GetMtxID()]);
+        } else {
+            localY.x = pMtxArray[mtxId]._01;
+            localY.y = pMtxArray[mtxId]._11;
+            localY.z = lbl_eu_80669C30;
         }
-
-        const u8* base = reinterpret_cast<const u8*>(pMtxArray);
-        pNodeMtx = reinterpret_cast<const math::MTX34*>(
-            base + mtxId * sizeof(math::MTX34));
-        pParentMtx = reinterpret_cast<const math::MTX34*>(
-            base + parentMtxId * sizeof(math::MTX34));
-
-        GetModelLocalAxisY2(&localY, pNodeMtx, pParentMtx);
+    } else {
+        localY.x = pMtxArray[mtxId]._01;
+        localY.y = pMtxArray[mtxId]._11;
+        localY.z = lbl_eu_80669C30;
     }
 
-    // Check if the local Y axis is valid
-    f32 ax;
-    if (localY.x >= 0.0f) { ax = localY.x; } else { ax = -localY.x; }
-    f32 ay;
-    if (localY.y >= 0.0f) { ay = localY.y; } else { ay = -localY.y; }
-
-    if (ax <= 1.0e-18f && ay <= 1.0e-18f) {
-        math::VEC3Normalize(&localY, &localY);
-
-        const math::MTX34* pScaleMtx = useParent ? pParentMtx : pNodeMtx;
-
-        f32 len1sq = pScaleMtx->_00 * pScaleMtx->_00 +
-                     pScaleMtx->_10 * pScaleMtx->_10 +
-                     pScaleMtx->_20 * pScaleMtx->_20;
-        f32 len1 = math::FrSqrt(len1sq) * len1sq;
-
-        f32 len2sq = pScaleMtx->_01 * pScaleMtx->_01 +
-                     pScaleMtx->_11 * pScaleMtx->_11 +
-                     pScaleMtx->_21 * pScaleMtx->_21;
-        f32 len2 = math::FrSqrt(len2sq) * len2sq;
-
-        f32 len3sq = pScaleMtx->_02 * pScaleMtx->_02 +
-                     pScaleMtx->_12 * pScaleMtx->_12 +
-                     pScaleMtx->_22 * pScaleMtx->_22;
-        f32 len3 = math::FrSqrt(len3sq) * len3sq;
-
-        pOut->_00 = localY.y * len1;
-        pOut->_01 = localY.x * len2;
-        pOut->_02 = 1.0f;
-        pOut->_10 = -localY.x * len1;
-        pOut->_11 = localY.y * len2;
-        pOut->_12 = 1.0f;
-        pOut->_20 = 1.0f;
-        pOut->_21 = 1.0f;
-        pOut->_22 = len3;
-    } else {
+    // Degenerate local Y axis (both X and Y components significant) -> zero.
+    if (__fabs(localY.x) > lbl_eu_80669C34 &&
+        __fabs(localY.y) > lbl_eu_80669C34) {
         math::MTX34Zero(pOut);
+        return;
+    }
+
+    math::VEC3Normalize(&localY, &localY);
+
+    const math::MTX34* pMtx = &pMtxArray[mtxId];
+
+    if (useParent) {
+        // Parent-scaled: one length from the first model-matrix column.
+        f32 lenSq = pMtx->_00 * pMtx->_00 + pMtx->_10 * pMtx->_10 +
+                    pMtx->_20 * pMtx->_20;
+        f32 len;
+        if (lenSq > lbl_eu_80669C30) {
+            len = lenSq * math::FrSqrt(lenSq);
+        } else {
+            len = lbl_eu_80669C30;
+        }
+
+        pOut->_00 = localY.x * len;
+        pOut->_01 = localY.y * len;
+        pOut->_02 = lbl_eu_80669C30;
+        pOut->_10 = -localY.y * len;
+        pOut->_11 = localY.x * len;
+        pOut->_12 = lbl_eu_80669C30;
+        pOut->_20 = lbl_eu_80669C30;
+        pOut->_21 = lbl_eu_80669C30;
+        pOut->_22 = len;
+    } else {
+        // Per-column scaling from the model matrix column lengths.
+        f32 lenSq0 = pMtx->_00 * pMtx->_00 + pMtx->_10 * pMtx->_10 +
+                     pMtx->_20 * pMtx->_20;
+        f32 len0;
+        if (lenSq0 > lbl_eu_80669C30) {
+            len0 = lenSq0 * math::FrSqrt(lenSq0);
+        } else {
+            len0 = lbl_eu_80669C30;
+        }
+
+        f32 lenSq1 = pMtx->_01 * pMtx->_01 + pMtx->_11 * pMtx->_11 +
+                     pMtx->_21 * pMtx->_21;
+        f32 len1;
+        if (lenSq1 > lbl_eu_80669C30) {
+            len1 = lenSq1 * math::FrSqrt(lenSq1);
+        } else {
+            len1 = lbl_eu_80669C30;
+        }
+
+        f32 lenSq2 = pMtx->_02 * pMtx->_02 + pMtx->_12 * pMtx->_12 +
+                     pMtx->_22 * pMtx->_22;
+        f32 len2;
+        if (lenSq2 > lbl_eu_80669C30) {
+            len2 = lenSq2 * math::FrSqrt(lenSq2);
+        } else {
+            len2 = lbl_eu_80669C30;
+        }
+
+        pOut->_00 = localY.x * len0;
+        pOut->_01 = localY.y * len1;
+        pOut->_02 = lbl_eu_80669C30;
+        pOut->_10 = -localY.y * len0;
+        pOut->_11 = localY.x * len1;
+        pOut->_12 = lbl_eu_80669C30;
+        pOut->_20 = lbl_eu_80669C30;
+        pOut->_21 = lbl_eu_80669C30;
+        pOut->_22 = len2;
     }
 }
 
@@ -495,66 +521,108 @@ void Calc_BILLBOARD_PERSP_ROT(math::MTX34* pOut, const math::MTX34* pMtxArray,
  *
  * Calc_BILLBOARD_Y
  *
- * Y-axis billboard: faces the camera but Y axis is fixed to world up.
+ * Y-axis billboard: faces the camera while keeping the model's Y axis fixed
+ * (world up).  The up direction is derived from the current matrix's Y
+ * column; the camera-facing axes come from up x Y and the normalized up.
  *
  ******************************************************************************/
 void Calc_BILLBOARD_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
                        bool useParent, const math::MTX34* pViewMtx,
                        ResMdl mdl, unsigned long mtxId) {
-    math::VEC3 up(pOut->_01, pOut->_11, pOut->_21);
-    math::VEC3 dir(up.y, -up.x, 1.0f);
+    // up = the world-up direction implied by the current matrix's Y column;
+    // yAxis = that Y column itself (normalized below).
+    math::VEC3 up;
+    up.x = pOut->_11;
+    up.y = -pOut->_01;
+    up.z = lbl_eu_80669C30;
+    math::VEC3 yAxis;
+    yAxis.x = pOut->_01;
+    yAxis.y = pOut->_11;
+    yAxis.z = pOut->_21;
 
-    if (math::FAbs(up.x) >= 1.0e-18f && math::FAbs(up.z) >= 1.0e-18f) {
+    // Degenerate Y column (all three components significant) -> zero it.
+    if (__fabs(yAxis.x) > lbl_eu_80669C34 &&
+        __fabs(yAxis.y) > lbl_eu_80669C34 &&
+        __fabs(yAxis.z) > lbl_eu_80669C34) {
+        math::MTX34Zero(pOut);
+        return;
+    }
+
+    const math::MTX34* pMtx = &pMtxArray[mtxId];
+
+    // Normalize the Y column by its own length.
+    f32 lenSq1 = pMtx->_01 * pMtx->_01 + pMtx->_11 * pMtx->_11 +
+                 pMtx->_21 * pMtx->_21;
+    f32 len1;
+    if (lenSq1 > lbl_eu_80669C30) {
+        len1 = lenSq1 * math::FrSqrt(lenSq1);
+    } else {
+        len1 = lbl_eu_80669C30;
+    }
+
+    // 1/len1 via fres + Newton-Raphson refinement (retail's lane-0 sequence).
+    f32 y0 = __fres(len1);
+    f32 t = len1 * y0;
+    f32 two = y0 + y0;
+    f32 invLen1 = __fnmsubs(y0, t, two);
+
+    yAxis.x *= invLen1;
+    yAxis.y *= invLen1;
+    yAxis.z *= invLen1;
+
+    // The implied up direction must stay near-vertical; otherwise no
+    // billboard can be formed.
+    if (__fabs(up.x) > lbl_eu_80669C34 && __fabs(up.y) > lbl_eu_80669C34) {
         math::MTX34Zero(pOut);
         return;
     }
 
     math::VEC3Normalize(&up, &up);
 
-    if (math::FAbs(dir.x) >= 1.0e-18f && math::FAbs(dir.y) >= 1.0e-18f) {
-        math::MTX34Zero(pOut);
-        return;
-    }
-
-    math::VEC3Normalize(&dir, &dir);
-
     math::VEC3 right;
-    math::VEC3Cross(&right, &dir, &up);
+    math::VEC3Cross(&right, &up, &yAxis);
 
-    u32 offset = mtxId * sizeof(math::MTX34);
-    const math::MTX34* pNodeMtx = reinterpret_cast<const math::MTX34*>(
-        reinterpret_cast<const u8*>(pMtxArray) + offset);
+    if (useParent) {
+        // Parent-scaled: everything scaled by the Y column length.
+        pOut->_00 = up.x * len1;
+        pOut->_01 = yAxis.x * len1;
+        pOut->_02 = right.x * len1;
+        pOut->_10 = up.y * len1;
+        pOut->_11 = yAxis.y * len1;
+        pOut->_12 = right.y * len1;
+        pOut->_20 = up.z * len1;
+        pOut->_21 = yAxis.z * len1;
+        pOut->_22 = right.z * len1;
+    } else {
+        // Per-column scaling from the model matrix column lengths.
+        f32 lenSq0 = pMtx->_00 * pMtx->_00 + pMtx->_10 * pMtx->_10 +
+                     pMtx->_20 * pMtx->_20;
+        f32 len0;
+        if (lenSq0 > lbl_eu_80669C30) {
+            len0 = lenSq0 * math::FrSqrt(lenSq0);
+        } else {
+            len0 = lbl_eu_80669C30;
+        }
 
-    f32 len1 = math::FrSqrt(pNodeMtx->_00 * pNodeMtx->_00 +
-                            pNodeMtx->_10 * pNodeMtx->_10 +
-                            pNodeMtx->_20 * pNodeMtx->_20);
-    f32 len1f = len1 * (pNodeMtx->_00 * pNodeMtx->_00 +
-                        pNodeMtx->_10 * pNodeMtx->_10 +
-                        pNodeMtx->_20 * pNodeMtx->_20);
+        f32 lenSq2 = pMtx->_02 * pMtx->_02 + pMtx->_12 * pMtx->_12 +
+                     pMtx->_22 * pMtx->_22;
+        f32 len2;
+        if (lenSq2 > lbl_eu_80669C30) {
+            len2 = lenSq2 * math::FrSqrt(lenSq2);
+        } else {
+            len2 = lbl_eu_80669C30;
+        }
 
-    f32 len2 = math::FrSqrt(pNodeMtx->_01 * pNodeMtx->_01 +
-                            pNodeMtx->_11 * pNodeMtx->_11 +
-                            pNodeMtx->_21 * pNodeMtx->_21);
-    f32 len2f = len2 * (pNodeMtx->_01 * pNodeMtx->_01 +
-                        pNodeMtx->_11 * pNodeMtx->_11 +
-                        pNodeMtx->_21 * pNodeMtx->_21);
-
-    f32 len3 = math::FrSqrt(pNodeMtx->_02 * pNodeMtx->_02 +
-                            pNodeMtx->_12 * pNodeMtx->_12 +
-                            pNodeMtx->_22 * pNodeMtx->_22);
-    f32 len3f = len3 * (pNodeMtx->_02 * pNodeMtx->_02 +
-                        pNodeMtx->_12 * pNodeMtx->_12 +
-                        pNodeMtx->_22 * pNodeMtx->_22);
-
-    pOut->_00 = dir.x * len2f;
-    pOut->_01 = up.x * len1f;
-    pOut->_02 = right.x * len3f;
-    pOut->_10 = dir.y * len2f;
-    pOut->_11 = up.y * len1f;
-    pOut->_12 = right.y * len3f;
-    pOut->_20 = dir.z * len2f;
-    pOut->_21 = up.z * len1f;
-    pOut->_22 = right.z * len3f;
+        pOut->_00 = up.x * len0;
+        pOut->_01 = yAxis.x * len1;
+        pOut->_02 = right.x * len2;
+        pOut->_10 = up.y * len0;
+        pOut->_11 = yAxis.y * len1;
+        pOut->_12 = right.y * len2;
+        pOut->_20 = up.z * len0;
+        pOut->_21 = yAxis.z * len1;
+        pOut->_22 = right.z * len2;
+    }
 }
 
 /******************************************************************************
@@ -567,63 +635,87 @@ void Calc_BILLBOARD_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
 void Calc_BILLBOARD_PERSP_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
                              bool useParent, const math::MTX34* pViewMtx,
                              ResMdl mdl, unsigned long mtxId) {
+    // Billboard basis: up = the output matrix's Y column, dir = negated Z
+    // column (toward the camera).  Output columns are right, up, dir.
+    math::VEC3 right;
     math::VEC3 up(pOut->_01, pOut->_11, pOut->_21);
     math::VEC3 dir(-pOut->_03, -pOut->_13, -pOut->_23);
 
-    if (math::FAbs(up.x) >= 1.0e-18f && math::FAbs(up.z) >= 1.0e-18f) {
+    // Degenerate up vector (all components ~0) -> zero matrix.
+    if (math::FAbs(up.x) < lbl_eu_80669C34 &&
+        math::FAbs(up.y) < lbl_eu_80669C34 &&
+        math::FAbs(up.z) < lbl_eu_80669C34) {
         math::MTX34Zero(pOut);
         return;
     }
 
-    math::VEC3Normalize(&up, &up);
+    // Normalize up by its own (clamped) length via fres + Newton reciprocal.
+    f32 upLenSq = pMtxArray[mtxId]._01 * pMtxArray[mtxId]._01 +
+                  pMtxArray[mtxId]._11 * pMtxArray[mtxId]._11 +
+                  pMtxArray[mtxId]._21 * pMtxArray[mtxId]._21;
+    f32 upLen = lbl_eu_80669C30;
+    if (upLenSq > lbl_eu_80669C30) {
+        upLen = upLenSq * math::FrSqrt(upLenSq);
+    }
+    math::VEC3Scale(&up, &up, math::FInv(upLen));
 
-    if (math::FAbs(dir.x) >= 1.0e-18f && math::FAbs(dir.y) >= 1.0e-18f) {
+    math::VEC3Cross(&right, &up, &dir);
+
+    if (math::FAbs(right.x) < lbl_eu_80669C34 &&
+        math::FAbs(right.y) < lbl_eu_80669C34 &&
+        math::FAbs(right.z) < lbl_eu_80669C34) {
         math::MTX34Zero(pOut);
         return;
     }
 
-    math::VEC3Normalize(&dir, &dir);
+    math::VEC3Normalize(&right, &right);
+    math::VEC3Cross(&dir, &right, &up);
 
-    math::VEC3 right;
-    math::VEC3Cross(&right, &dir, &up);
+    if (useParent) {
+        // Parent-scaled: one scale (the up length) for all three columns.
+        pOut->_00 = right.x * upLen;
+        pOut->_01 = up.x * upLen;
+        pOut->_02 = dir.x * upLen;
+        pOut->_10 = right.y * upLen;
+        pOut->_11 = up.y * upLen;
+        pOut->_12 = dir.y * upLen;
+        pOut->_20 = right.z * upLen;
+        pOut->_21 = up.z * upLen;
+        pOut->_22 = dir.z * upLen;
+    } else {
+        // Per-column scaling from the model matrix column lengths; the up
+        // column keeps the length computed for the normalize above.
+        f32 len0Sq = pMtxArray[mtxId]._00 * pMtxArray[mtxId]._00 +
+                     pMtxArray[mtxId]._10 * pMtxArray[mtxId]._10 +
+                     pMtxArray[mtxId]._20 * pMtxArray[mtxId]._20;
+        f32 len0;
+        if (len0Sq > lbl_eu_80669C30) {
+            len0 = len0Sq * math::FrSqrt(len0Sq);
+        } else {
+            len0 = lbl_eu_80669C30;
+        }
 
-    u32 offset = mtxId * sizeof(math::MTX34);
-    const math::MTX34* pNodeMtx = reinterpret_cast<const math::MTX34*>(
-        reinterpret_cast<const u8*>(pMtxArray) + offset);
+        f32 len2Sq = pMtxArray[mtxId]._02 * pMtxArray[mtxId]._02 +
+                     pMtxArray[mtxId]._12 * pMtxArray[mtxId]._12 +
+                     pMtxArray[mtxId]._22 * pMtxArray[mtxId]._22;
+        f32 len2;
+        if (len2Sq > lbl_eu_80669C30) {
+            len2 = len2Sq * math::FrSqrt(len2Sq);
+        } else {
+            len2 = lbl_eu_80669C30;
+        }
 
-    f32 len1 = math::FrSqrt(pNodeMtx->_00 * pNodeMtx->_00 +
-                            pNodeMtx->_10 * pNodeMtx->_10 +
-                            pNodeMtx->_20 * pNodeMtx->_20);
-    f32 len1f = len1 * (pNodeMtx->_00 * pNodeMtx->_00 +
-                        pNodeMtx->_10 * pNodeMtx->_10 +
-                        pNodeMtx->_20 * pNodeMtx->_20);
-
-    f32 len2 = math::FrSqrt(pNodeMtx->_01 * pNodeMtx->_01 +
-                            pNodeMtx->_11 * pNodeMtx->_11 +
-                            pNodeMtx->_21 * pNodeMtx->_21);
-    f32 len2f = len2 * (pNodeMtx->_01 * pNodeMtx->_01 +
-                        pNodeMtx->_11 * pNodeMtx->_11 +
-                        pNodeMtx->_21 * pNodeMtx->_21);
-
-    f32 len3 = math::FrSqrt(pNodeMtx->_02 * pNodeMtx->_02 +
-                            pNodeMtx->_12 * pNodeMtx->_12 +
-                            pNodeMtx->_22 * pNodeMtx->_22);
-    f32 len3f = len3 * (pNodeMtx->_02 * pNodeMtx->_02 +
-                        pNodeMtx->_12 * pNodeMtx->_12 +
-                        pNodeMtx->_22 * pNodeMtx->_22);
-
-    pOut->_00 = dir.x * len2f;
-    pOut->_01 = up.x * len1f;
-    pOut->_02 = right.x * len3f;
-    pOut->_10 = dir.y * len2f;
-    pOut->_11 = up.y * len1f;
-    pOut->_12 = right.y * len3f;
-    pOut->_20 = dir.z * len2f;
-    pOut->_21 = up.z * len1f;
-    pOut->_22 = right.z * len3f;
+        pOut->_00 = right.x * len0;
+        pOut->_01 = up.x * upLen;
+        pOut->_02 = dir.x * len2;
+        pOut->_10 = right.y * len0;
+        pOut->_11 = up.y * upLen;
+        pOut->_12 = dir.y * len2;
+        pOut->_20 = right.z * len0;
+        pOut->_21 = up.z * upLen;
+        pOut->_22 = dir.z * len2;
+    }
 }
-
-#pragma dont_inline off
 
 } // anonymous namespace
 
@@ -912,137 +1004,252 @@ void CalcView_LC_DMA_ModelMtx(math::MTX34* pViewPosArray,
         return;
     }
 
-    // Locked-cache regions used for the model matrix DMA load/store.
-    const u32 lcRegions[6] = {0xE0000800, 0xE0001000, 0xE0001800,
-                              0xE0002800, 0xE0003000, 0xE0003800};
-
+    // Locked-cache region ring: 8 slots, each advancing 2 positions per
+    // 0x28-matrix chunk.  Ring order: [dma, pos, nrm, tex, pre, pos2, nrm2,
+    // tex2]; every outer iteration rotates the ring by swapping the opposite
+    // pairs (i, i+4).  "pre" is the DMA prefetch target for the next chunk.
     u32 posSize = (numMtx * sizeof(math::MTX34) + 0x1F) & ~0x1F;
-    u32 nrmSize = (numMtx * sizeof(math::MTX33) + 0x1F) & ~0x1F;
 
-    DCInvalidateRange(pViewNrmArray, nrmSize);
-    DCInvalidateRange(pViewTexMtxArray, posSize);
+    // Locked-cache region ring: 8 slots, each advancing 2 positions per
+    // 0x28-matrix chunk.  Ring order: [dma, pos, nrm, tex, pre, pos2, nrm2,
+    // tex2]; every outer iteration rotates the ring by swapping the opposite
+    // pairs (i, i+4).  "pre" is the DMA prefetch target for the next chunk.
+    u32 lcDma = 0xE0000000;
+    u32 lcNrm = 0xE0001000;
+    u32 lcPos = 0xE0000800;
+    u32 lcTex = 0xE0001800;
+    u32 lcPre = 0xE0002000;
+    u32 lcPos2 = 0xE0002800;
+    u32 lcNrm2 = 0xE0003000;
+    u32 lcTex2 = 0xE0003800;
+
     DCInvalidateRange(pViewPosArray, posSize);
 
-    math::MTX34* pWorkMtx = nw4r::g3d::detail::workmem::GetBillboardMtxTemporary();
+    // LC queue length to wait for; tracks which output buffer was last
+    // written so the DMA doesn't race the previous store.
+    u32 lcState = 1;
+    if (pViewNrmArray) {
+        lcState = 2;
+        u32 nrmSize = (numMtx * sizeof(math::MTX33) + 0x1F) & ~0x1F;
+        DCInvalidateRange(pViewNrmArray, nrmSize);
 
-    u32 processed = 0;
+        if (pViewTexMtxArray) {
+            lcState = 3;
+            DCInvalidateRange(pViewTexMtxArray, posSize);
+        }
+    }
+
+    math::MTX34* pWorkMtx =
+        nw4r::g3d::detail::workmem::GetBillboardMtxTemporary();
+
+    LCQueueWait(0);
+
+    // Refresh the (stale) main-memory model matrices from the locked cache,
+    // where the previous pipeline stage DMA'd them.
+    nw4r::ut::LC::LoadBlocks(
+        const_cast<void*>(reinterpret_cast<const void*>(pModelMtxArray)),
+        reinterpret_cast<void*>(0xE0000000),
+        (numMtx > 0x28) ? 0x3C : (posSize / 32));
+
+    if (numMtx > 0x14) {
+        while (LCQueueLength() != 0) {
+            OSYieldThread();
+        }
+    } else {
+        LCQueueWait(0);
+    }
+
+    u32 processed = 0;         // current matrix index
+    u32 attribByteOffset = 0;  // == processed * 4
+    u32 dmaByteOffset = 0;     // == processed * 0x30
+    u32 workByteOffset = 0;    // == processed * 0x30
+
+    // Advancing copies of the output pointers; the originals are kept for
+    // the per-chunk null checks.
+    math::MTX33* pViewNrm = pViewNrmArray;
+    math::MTX34* pViewTex = pViewTexMtxArray;
 
     while (processed < numMtx) {
         u32 chunk = numMtx - processed;
+        u32 posBlocks, nrmBlocks;
 
         if (chunk > 0x28) {
             chunk = 0x28;
-        }
-
-        // DMA-load the model matrices from the locked cache.
-        nw4r::ut::LC::LoadBlocks(
-            const_cast<math::MTX34*>(&pModelMtxArray[processed]),
-            reinterpret_cast<void*>(lcRegions[1]), posSize / 32);
-
-        if (numMtx > 0x14) {
-            while (LCQueueLength() != 0) {
-                OSYieldThread();
-            }
+            posBlocks = 0x3C;
+            nrmBlocks = 0x2D;
         } else {
-            LCQueueWait(0);
+            posBlocks = (chunk * sizeof(math::MTX34) + 0x1F) / 32;
+            nrmBlocks = (chunk * sizeof(math::MTX33) + 0x1F) / 32;
         }
 
+        LCQueueWait(lcState);
+
+        // Prefetch the next 0x28 matrices into the pre region while this
+        // chunk is still being processed.
+        if (processed + 0x28 < numMtx) {
+            u32 preChunk = numMtx - processed - 0x28;
+            u32 preBlocks = (preChunk > 0x28)
+                                ? 0x3C
+                                : ((preChunk * sizeof(math::MTX34) + 0x1F) /
+                                   32);
+
+            nw4r::ut::LC::LoadBlocks(
+                const_cast<void*>(reinterpret_cast<const void*>(
+                    reinterpret_cast<const u8*>(pModelMtxArray) +
+                    dmaByteOffset + 0x780)),
+                reinterpret_cast<void*>(lcPre), preBlocks);
+        }
+
+        // viewPos = viewMtx * modelMtx, both operands in the locked cache.
         if (chunk > 1) {
-            math::MTX34MultArray(&pViewPosArray[processed], pViewMtx,
-                                 &pModelMtxArray[processed], chunk);
+            math::MTX34MultArray(reinterpret_cast<math::MTX34*>(lcPos),
+                                 pViewMtx,
+                                 reinterpret_cast<math::MTX34*>(lcDma),
+                                 chunk);
         } else {
-            math::MTX34Mult(&pViewPosArray[processed], pViewMtx,
-                            &pModelMtxArray[processed]);
+            math::MTX34Mult(reinterpret_cast<math::MTX34*>(lcPos), pViewMtx,
+                            reinterpret_cast<math::MTX34*>(lcDma));
         }
 
         for (u32 i = 0; i < chunk; i++) {
-            u32 idx = processed + i;
-            u32 attrib = pModelMtxAttribArray[idx];
+            u32 attrib = pModelMtxAttribArray[processed + i];
             u32 billboardIdx = attrib & 0xFF;
 
             if (billboardIdx != 0) {
                 gCalcBillboardFuncTable[billboardIdx](
-                    &pViewPosArray[idx], pModelMtxArray, (attrib >> 2) & 1,
-                    pViewMtx, mdl, idx);
+                    reinterpret_cast<math::MTX34*>(lcPos) + i, pModelMtxArray,
+                    (attrib >> 2) & 1, pViewMtx, mdl, processed + i);
 
-                s32 nodeId = mdl.GetResMdlInfo().GetNodeIDFromMtxID(idx);
-                ResNode node = mdl.GetResNode(static_cast<int>(nodeId));
+                // Per-node billboard data hangs off the node's child link.
+                s32 nodeId = mdl.GetResMdlInfo().GetNodeIDFromMtxID(
+                    processed + i);
+                ResNode node = mdl.GetResNode(static_cast<u32>(nodeId));
                 u8* pData = NULL;
 
                 if (node.IsValid()) {
-                    s32 toData = node.ref().toResUserData;
-                    pData = (toData != 0)
-                                ? reinterpret_cast<u8*>(&node.ref()) + toData
-                                : NULL;
+                    s32 toData = node.ref().toChildNode;
+                    if (toData != 0) {
+                        pData = reinterpret_cast<u8*>(&node.ref()) + toData;
+                    }
                 }
 
                 if (pData != NULL) {
                     math::MTX34 inv;
 
-                    if (detail::CalcInvWorldMtx(&inv, &pViewPosArray[idx]) ==
-                        1) {
-                        math::MTX34Mult(&pViewTexMtxArray[idx], &inv,
-                                        &pViewTexMtxArray[idx]);
+                    if (detail::CalcInvWorldMtx(
+                            &inv, &pModelMtxArray[processed + i]) == 1) {
+                        // workMtx[mtxId] = viewPos * inv(worldMtx): the
+                        // billboard texture matrix for the renderer.
+                        math::MTX34Mult(&pWorkMtx[processed + i],
+                                        reinterpret_cast<math::MTX34*>(lcPos) +
+                                            i,
+                                        &inv);
                     } else {
-                        math::MTX34Identity(&pViewTexMtxArray[idx]);
-                        pViewTexMtxArray[idx]._02 = pViewMtx->_02;
-                        pViewTexMtxArray[idx]._12 = pViewMtx->_12;
-                        pViewTexMtxArray[idx]._22 = pViewMtx->_22;
+                        math::MTX34Identity(&pWorkMtx[processed + i]);
+                        pWorkMtx[processed + i]._02 = pViewMtx->_02;
+                        pWorkMtx[processed + i]._12 = pViewMtx->_12;
+                        pWorkMtx[processed + i]._22 = pViewMtx->_22;
                     }
                 }
             } else {
-                s32 nodeId = mdl.GetResMdlInfo().GetNodeIDFromMtxID(idx);
+                s32 nodeId = mdl.GetResMdlInfo().GetNodeIDFromMtxID(
+                    processed + i);
 
                 if (nodeId >= 0) {
-                    ResNode node =
-                        mdl.GetResNode(static_cast<int>(nodeId));
+                    ResNode node = mdl.GetResNode(static_cast<u32>(nodeId));
 
                     if (node.IsValid()) {
                         if (node.ref().flags & 0x400) {
-                            s32 parentId = node.ref().bbref_nodeid;
                             ResNode parent =
-                                mdl.GetResNode(static_cast<int>(parentId));
+                                mdl.GetResNode(node.ref().bbref_nodeid);
                             u32 parentMtxId =
                                 parent.IsValid() ? parent.ref().mtxID : 0;
 
-                            math::MTX34Mult(&pWorkMtx[parentMtxId],
-                                            &pViewPosArray[idx],
-                                            &pModelMtxArray[idx]);
+                            // Child of a billboard parent: combine the
+                            // parent's work matrix with this node's model.
+                            math::MTX34Mult(
+                                reinterpret_cast<math::MTX34*>(lcPos) + i,
+                                &pWorkMtx[parentMtxId],
+                                &pModelMtxArray[processed + i]);
                         }
                     }
                 }
             }
         }
 
-        processed += chunk;
-    }
+        nw4r::ut::LC::StoreBlocks(pViewPosArray,
+                                  reinterpret_cast<void*>(lcPos), posBlocks);
 
-    nw4r::ut::LC::StoreBlocks(pViewPosArray,
-                              reinterpret_cast<void*>(lcRegions[1]),
-                              posSize / 32);
+        if (pViewNrmArray) {
+            for (u32 i = 0; i < chunk; i++) {
+                u32 attrib = pModelMtxAttribArray[processed + i];
 
-    if (pViewNrmArray != NULL) {
-        for (u32 i = 0; i < numMtx; i++) {
-            u32 attrib = pModelMtxAttribArray[i];
+                if (attrib & 4) {
+                    // Billboard matrix: tex is a copy with unit translation.
+                    if (pViewTexMtxArray) {
+                        math::MTX34Copy(
+                            reinterpret_cast<math::MTX34*>(lcTex) + i,
+                            reinterpret_cast<math::MTX34*>(lcPos) + i);
+                        reinterpret_cast<math::MTX34*>(lcTex)[i]._23 =
+                            lbl_eu_80669C30;
+                        reinterpret_cast<math::MTX34*>(lcTex)[i]._13 =
+                            lbl_eu_80669C30;
+                        reinterpret_cast<math::MTX34*>(lcTex)[i]._03 =
+                            lbl_eu_80669C30;
+                    }
 
-            if (attrib & 1) {
-                if (pViewTexMtxArray != NULL) {
-                    math::MTX34Copy(&pViewTexMtxArray[i], &pViewPosArray[i]);
-                    pViewTexMtxArray[i]._03 = 0.0f;
-                    pViewTexMtxArray[i]._13 = 0.0f;
-                    pViewTexMtxArray[i]._23 = 0.0f;
+                    math::MTX34ToMTX33(reinterpret_cast<math::MTX33*>(lcNrm) +
+                                           i,
+                                       reinterpret_cast<math::MTX34*>(lcPos) +
+                                           i);
+                } else {
+                    if (pViewTexMtxArray) {
+                        detail::CalcViewTexMtx(
+                            reinterpret_cast<math::MTX34*>(lcTex) + i,
+                            reinterpret_cast<math::MTX34*>(lcPos) + i);
+                        math::MTX34ToMTX33(
+                            reinterpret_cast<math::MTX33*>(lcNrm) + i,
+                            reinterpret_cast<math::MTX34*>(lcTex) + i);
+                    } else {
+                        detail::CalcViewNrmMtx(
+                            reinterpret_cast<math::MTX33*>(lcNrm) + i,
+                            reinterpret_cast<math::MTX34*>(lcPos) + i);
+                    }
                 }
+            }
 
-                math::MTX34ToMTX33(&pViewNrmArray[i], &pViewPosArray[i]);
-            } else {
-                if (pViewTexMtxArray != NULL) {
-                    detail::CalcViewTexMtx(&pViewTexMtxArray[i],
-                                           &pViewPosArray[i]);
-                }
+            nw4r::ut::LC::StoreBlocks(pViewNrm,
+                                      reinterpret_cast<void*>(lcNrm),
+                                      nrmBlocks);
 
-                detail::CalcViewNrmMtx(&pViewNrmArray[i], &pViewPosArray[i]);
+            if (pViewTexMtxArray) {
+                nw4r::ut::LC::StoreBlocks(pViewTex,
+                                          reinterpret_cast<void*>(lcTex),
+                                          posBlocks);
             }
         }
+
+        // Rotate the LC region ring (advance each slot by 2 of 8).
+        u32 t = lcDma;
+        lcDma = lcPre;
+        lcPre = t;
+        t = lcPos;
+        lcPos = lcPos2;
+        lcPos2 = t;
+        t = lcNrm;
+        lcNrm = lcNrm2;
+        lcNrm2 = t;
+        t = lcTex;
+        lcTex = lcTex2;
+        lcTex2 = t;
+
+        processed += 0x28;
+        attribByteOffset += 0xa0;
+        dmaByteOffset += 0x780;
+        workByteOffset += 0x780;
+        pViewPosArray += 0x28;
+        pViewNrm += 0x1E;
+        pViewTex += 0x28;
     }
 }
 

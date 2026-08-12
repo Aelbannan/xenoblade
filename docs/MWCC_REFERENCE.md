@@ -105,6 +105,46 @@ Practical reference for reaching **`FULL_MATCH`** (100% byte match) or **`EQUIVA
   the two-statement form always computes the address before the increment,
   while the postfix form lets MWCC common the increment into r4.
 
+- **`__declspec(novtable)` vs the implicit vptr store (COccCulling ctor):**
+  `__declspec(novtable)` + explicit `*(void**)this = (void*)lbl_eu_80532ED0;`
+  body statements (decomp stored the vptr LAST, after the member init-list
+  stores, with the zero/vtable registers swapped vs retail: lis r4/li r5 vs
+  retail lis r5/li r4). Removing `__declspec(novtable)` from the class and
+  deleting the explicit vptr stores makes MWCC emit its **implicit ctor vptr
+  store** (referencing `__vt__11COccCulling`, which maps to the retail
+  `lbl_eu_80532ED0` .data slot): the store lands at retail's position (2nd,
+  right after the lis+addi) with retail's exact registers — 100% byte-
+  identical. The dtor stays 100% (implicit vptr there too). Rule: when a
+  ctor/dtor's retail vptr store is NOT at the end of the body, prefer the
+  implicit vptr store over an explicit one — `novtable` forces explicit
+  stores that schedule after member initializers.
+
+- **Kyoshin dtors: the extern "C" free-function form + `#pragma
+  optimize_for_size` (stmw/lmw) — 20+ dtors cleared this session.** Retail
+  kyoshin dtors fall into two frame shapes: (a) `stmw r30`/`lmw r30` (CMapSel,
+  CMenuMakeCrystal, CMenuItemExchange, CWorkSystemPack, reslist base/derived
+  dtors, CSysWin, CSkipTimer2, CPartyState, CMCCrystalInfo, CMenuQstCnt,
+  CMakeCrystalWin, CMenuShopSell/Buy) — wrap the dtor in
+  `#pragma optimize_for_size on/off`; (b) separate `stw r31/stw r30` saves
+  (CCol6CheckBat, CCol6Invite, CCol6System, CCol6Hint, CTaskEnvironment) —
+  keep the default -O4,p (optimize_for_size would force stmw and break the
+  size). The reliable source shape is the **extern "C" free function with the
+  retail mangled name** (e.g. `extern "C" void* __dt__13CCol6CheckBatFv(...)`)
+  containing: outer `if (self != 0)` covering everything, sub-object dtors in
+  retail call order with the exact flags (-1 for members, 0 for the base),
+  the CProcess-base dtor behind the documented nested-null guard(s) — retail
+  re-checks `this` and emits one or two `beq`s (the D2-inlined-into-D1 MWCC
+  artifact, same as ~CSimpleEveTalkWin) — and an explicit `if (flags > 0)
+  operator delete(self); return self;`. Notes: (1) declaring `: public
+  CProcess` makes MWCC emit a DUPLICATE implicit base-dtor call, so the
+  extern "C" form must be used (the class's member dtor stays declared but
+  undefined); (2) conflicting 1-arg `extern "C" void __dt__...Fv(Class*)`
+  declarations in headers must be updated to the 2-arg `void* ...(Class*,
+  int)` form — thunk callers that must pass r4 through untouched use a
+  1-arg function-pointer cast; (3) check sub-object OFFSETS against the
+  retail addi's (u8 members don't pad — e.g. CCol6Hint's mCur18 needed an
+  explicit 2-byte pad to land at 0x124).
+
 - **Double-hop thunks (vptr at obj+0x10, this=obj, r4 must pass through):**
   retail `lwz r3,0xb0(r3); lwz r12,0x10(r3); lwz r12,slot(r12); mtctr; bctr`.
   The fn-pointer form `((VFn*)*(void**)(obj+0x10))[N](obj)` clobbers r4 (an
@@ -115,6 +155,30 @@ Practical reference for reaching **`FULL_MATCH`** (100% byte match) or **`EQUIVA
   emits the retail form byte-for-byte (vptr load into r12, this stays obj).
   CfObjectMove CfObject_UnkVirtualFunc9/10/61/62, CfObjectModel_UnkVirtualFunc6,
   func_800BEE1C/800BF29C/B0/CC/E0/F8/eu_800BFC7C — all FULL_MATCH.
+
+- **`extern const float` hoists the sdata2 pool load above the frame stores:**
+  `float f = lbl_eu_80668684; if (fn(anim, f)) {...}` (CArtsInfo anim-state
+  handlers, func_80236020/80236120/802362D4/80236408) — retail schedules
+  `lfs f1, pool` at position 3 (`stwu; mfspr; lfs; stw r0; stw r31; or r31`).
+  With a plain `extern float` declaration MWCC emits the lfs AFTER the
+  frame stores (`stwu; mfspr; stw r0; stw r31; or r31; lfs`), 4-byte shift →
+  73–79% with 3–4 structural. Declaring the global `extern const float`
+  lets MWCC treat the load as a constant and hoist it — 100% static. Not
+  `-O4,p` vs `-O4,s` (both schedules identical) and not `-ipa`/noinline.
+  Applying the const fix to the whole CArtsInfo TU lifted 4 targets to
+  100% with zero regressions.
+
+- **`#pragma optimize_for_size on` merges callee-saved saves (stmw r30) and
+  flips the r30/r31 copy order:** two-param leaf callers like
+  `func_801FD0A0(self, drawInfo)` (CPartyState) — retail prologue is
+  `stwu; mfspr; stw r0; stmw r30; or r30,r3,r3; or r31,r4,r4`. Under plain
+  `-O4,p -use_lmw_stmw on` MWCC emits `or r31,r4,r4` FIRST and two separate
+  `stw`s (`stw r31,12(sp); stw r30,8(sp)`) — the reversed store order blocks
+  the stmw merge (17 structural, 0x54 vs 0x5c). Wrapping the function in
+  `#pragma optimize_for_size on/off` makes MWCC copy r3→r30 first and merge
+  the saves into `stmw r30, 8(sp)` / `lmw r30, 8(sp)` — 100% static. Same
+  pragma wraps the matched sibling func_8027340C (CKizunaTalkList). Not the
+  call count, arg casts, or `if` guard shape (all probed).
 
 ## Section padding is a linker artifact — never fabricate it in source
 
@@ -2349,6 +2413,8 @@ done: …;
 ```
 
 Verified FULL_MATCH: `criware_803C9FC0` (range check `(unsigned)(st-2) <= 2` + equality), `fn_803CC238` (avFlags 1/2/3), `sfply_IsEtrg` (cond 1/2/3/0). Also: `result = 0` must be **initialized after** any early-return guard (retail `li rX,0` sits at the first use point, not the declaration); and the last dispatch test must be written **negated** (`if (x != N) goto default; goto caseN;`) to hit the branch-over-branch peephole — the direct form emits `bne default; b caseN` instead of retail `beq caseN; b default`. **Compiler note:** these dispatch notes (negated form, `SFLIB_SetErr` returns) hold under the *default GC/3.0a5.2* compiler. The retail `sfd_ply.c` was built with a **Wii-family compiler (configure `mw_version = "Wii/1.1"`)**, which changes two things: (1) store scheduling — the retail `li r0,1; stw r0, off(rX)` order (vs GC's `li r0,1; li rX,0; stw` delay) matches only on Wii; this is what unlocks `SFD_RelFrm`, `SFD_RequestStop`, `SFD_Start`, `SFD_TermSupply`, `SFPLY_Init` at 100% (all eight Wii/1.x versions match, all five GC versions fail). (2) dispatch polarity — under Wii/1.1 the **direct** form (`if (x == N) goto caseN; goto default;`) reproduces retail `beq caseN; b default`; the negated form emits `bne default; b caseN`. `SFD_GetFrm`/`SFD_Stop` remain soft-caps: their retail `beq next-block; b target` (conditional targeting the *immediate successor*) is merged to `bne target` by every MWCC version (GC and Wii) regardless of source shape; GetFrm additionally has a 3-way callee-saved rotation (retail self=r29/outFrm=r30/result=r31 vs MWCC outFrm=r31/self=r30/result=r29 — prologue `li result` lands after the parameter moves).
+
+**2026-08 sweep: the whole Sofdec family (sfd/sfh/sfx libs) is Wii/1.1 retail.** Beyond `sfd_ply`, these units were all configured GC/3.0a5.2 and are retail Wii/1.1-built: `sfd_aoap`, `sfd_buf`, `sfd_mps`, `sfd_pl2`, `sfd_mpvf`, `sfd_mpv`, `sfd_pts`, `sfd_see`, `sfd_set`, `sfd_trn`, `sfd_uo`, `sfd_seeki`, `sfd_con`, `sfd_hds`, `sfd_lib`, `sfd_mem`, `sfd_adxt`, `sfd_tmr`, `sfd_tst`, `sfh_ver1`, `sfh_ver2`, `sfh_local`, `sfh_main`, `sfx_lib` → `mw_version = "Wii/1.1"`. Verified wins: SFAOAP_Create 10→100% (unit 0 ✗), SFBUF_VfrmAddRead 92→100%, SFMPS_Init 90.9→100%, SFD_Standby 100%, SFVOM_GetRead 92→100% (unit 0 ✗), SFX_Destroy 91.3→100%, VER1_IsSfdHeader 80→100%, VER2_AnlyPackType/PketSizLen 50→100%, VER1_AnlyHdrSfhVer/ModuleVer 50→100%, VER2_AnlyElemChNum/SmpHz/AnlyFtrFixFlg/ShcFixFlg 100%, and **SFHLOCAL_GetNbyteL** (previously documented as a permanent auto-unroll soft-cap!) 100%. Probe recipe: compile the small function with each `build/compilers/*/mwcceppc.exe` and diff; the li-vs-store schedule and the dispatch polarity (7e) both flip between GC and Wii.
 
 **CriWare `SFLIB_SetErr` returns the error code (s32):** error-handler paths like `SFD_ExecOne`/`SFD_Start`/`SFD_TermSupply` `return SFLIB_SetErr(0, 0xff00xxxx);` (retail reuses r3 = SetErr result for the epilogue, no `li r3,0`). Declaring it `void` produces an extra `li r3,0; b epilogue`. `SFD_ExecOne` (FULL_MATCH) shows the shared-epilogue form: the SetErr path `b` jumps straight to the epilogue restores, skipping the else-path's `li r3, 0`.
 
@@ -9058,3 +9124,25 @@ After transcribing all ~5000 instructions, two systematic codegen problems block
 2. **User-constructed quad types make copy-init a ctor call.** `CItemBoxQuadColor q1 = *(CItemBoxQuadColor*)&lbl_eu_80664518;` emits `bl __ct__17CItemBoxQuadColorFRC17CItemBoxQuadColor` (the hpp's type has user ctors). **Fix: TU-local POD `struct E43Quad { s16 r,g,b,a; };`** — copy-init becomes 2×lwz+2×stw (retail's GXColorS10 memberwise copy). Note: with the stub-inlining bug present, the POD change caused register-spill bloat (0x6314); with pragmas fixed it is net-neutral and matches retail's inline quad loads.
 
 Remaining residuals (all register-allocation/scheduling): decomp frame -2720 vs retail -2176; quad loads interleaved load/store instead of retail's 8-lwz-then-8-stw batching; delta-row if/else-if branch layout differs; the 48-byte `li r0,6; mtctr; lwz/stw pair; bdnz` copy loop (party struct + 7-word entry copies) unreproduced from 25+ tested source forms at -O4,p (only ≥96-byte struct copies emit the counted loop; 48-64-byte copies always unroll; -O4,s emits a different lwzx-indexed loop).
+
+## kyoshin/CPartyState — retail setnz idiom is `-O4,s` + noinline the big same-TU callee (Wii/1.1)
+
+`CPartyState.cpp` (`func_801FD5C4`, us-801ff284, 0x30 → FULL_MATCH) demonstrates the
+addic/subfe setnz attribution from the CNReqtaskSave section with a twist:
+
+1. **Retail `subf; subfic r0,r0,0; subfe r3,r0,r0; addi r3,r3,2` is the -O4,s
+   setnz chain for `return (a - b) != 0 ? 1 : 2;`** — the -1/0 setnz result then
+   `+2` gives 1/2. At `-O4,p` the same source emits cntlzw/neg/or/rlwinm and the
+   subf operand order flips (`subf r0,r4,r0` vs retail `subf r0,r0,r4`) — never
+   byte-identical. Flipping the Object to `-O4,s` was required.
+2. **But -O4,s alone regressed sibling `func_801FD594` from 100% to 1% (frame
+   grew 16 → 96 bytes): `-ipa file` inlined the big same-TU callee
+   `func_801FD8F8` (0x200+ with a stack buffer) into the caller. Fix:
+   `__declspec(noinline)` on the func_801FD8F8 DEFINITION.** After that, both
+   `func_801FD594` and `func_801FD5C4` are byte-identical at -O4,s, and the unit
+   jumped 9 → 14 fully matched functions.
+3. **Signed-byte store of -1 needs `*(s8*)(p+0x4D) = -1;`** — a `u8` store folds
+   the immediate to `li r0,255`; retail has `li r0,-1` before `stb`.
+4. Unit `.text` remains 12.8 KB over its split budget (many unmatched stub
+   bodies still emit) — per-function acceptance is unaffected (user policy
+   2026-08), but a size-trim pass is pending for unit promotion.

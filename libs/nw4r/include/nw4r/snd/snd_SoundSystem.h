@@ -79,7 +79,7 @@ public:
     }
 
 private:
-    static detail::TaskThread sTaskThread;
+    // static detail::TaskThread sTaskThread; -> extern "C" lbl_eu_80638910 in .cpp
 };
 
 } // namespace snd

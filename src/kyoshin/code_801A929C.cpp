@@ -42,10 +42,18 @@ void func_801AAAA0(){}
 
 void func_801AAB64(){}
 
-extern "C" void func_801AAB64(void* a, void* b, int c);
-extern "C" void func_801AAC70(void* self){ void* d; func_801AAB64(self, d, 1); }
+extern "C" void func_801AAB64(void* a, void* b, int c, float d);
+extern "C" void func_801AAC70(void* self){ void* d; float dummy; func_801AAB64(self, d, 1, dummy); }
 
-void func_801AAC78(){}
+extern "C" void func_801AAC78(u8 v) {
+    extern unsigned char lbl_eu_80664330;
+    void* p = *(void**)(&lbl_eu_80664330);
+    if (p == 0) return;
+    *(u8*)((u8*)p + 0x1A) = v;
+    if (v == 0) return;
+    extern float lbl_eu_80667D64;
+    func_801AAB64(0, 0, 0, lbl_eu_80667D64);
+}
 
 extern "C" void func_801AACA8(unsigned char v) {
     extern unsigned char lbl_eu_80664330;
@@ -69,4 +77,8 @@ void func_801AACBC(unsigned int* r3, unsigned int* r4) {
     ((unsigned char *)dst)[0x18] = 1;
 }
 
-void func_801AAD08(){}
+extern "C" void func_801AAD08() {
+    extern unsigned char lbl_eu_80664330;
+    void* p = *(void**)(&lbl_eu_80664330);
+    if (p) *(unsigned char*)((u8*)p + 0x18) = 0;
+}

@@ -178,20 +178,20 @@ namespace cf{
     }
 
 // Static member definition (storage for the singleton pointer)
-CBattleManager* CBattleManager::spInstance = nullptr;
+extern "C" CBattleManager* lbl_eu_80663F00 = nullptr;
 
 CBattleManager* CBattleManager::getInstance() {
-    return spInstance;
+    return lbl_eu_80663F00;
 }
 
     void CBattleManager::func_800D9190(){
-        spInstance = new (mtl::MemManager::getHandleMEM2()) CBattleManager();
+        lbl_eu_80663F00 = new (mtl::MemManager::getHandleMEM1()) CBattleManager();
     }
 
     void CBattleManager::func_800D91D0(){
-        if(spInstance != nullptr){
-            delete spInstance;
-            spInstance = nullptr;
+        if(lbl_eu_80663F00 != nullptr){
+            delete lbl_eu_80663F00;
+            lbl_eu_80663F00 = nullptr;
         }
     }
 
@@ -252,7 +252,7 @@ CBattleManager* CBattleManager::getInstance() {
         
         // Check global battle manager state
         {
-            u32 mgrAddr = lbl_eu_80663F00;
+            u32 mgrAddr = (u32)lbl_eu_80663F00;
             reslist<CfObjectActor*>& globalList1 = *(reslist<CfObjectActor*>*)(mgrAddr + 0x48);
             if(globalList1.size() == 0){
                 extern void func_800F41A0(CBattleManager*);
@@ -261,7 +261,7 @@ CBattleManager* CBattleManager::getInstance() {
         }
         
         {
-            u32 mgrAddr = lbl_eu_80663F00;
+            u32 mgrAddr = (u32)lbl_eu_80663F00;
             reslist<CfObjectActor*>& globalList2 = *(reslist<CfObjectActor*>*)(mgrAddr + 0x8);
             if(globalList2.size() == 0){
                 extern void* getPlayer__Q22cf13CfGameManagerFi(int);
@@ -373,7 +373,7 @@ void* func_800EA3AC(void* self, void* val) {
 }
 extern "C" void func_800EA410(u8* self) { reinterpret_cast<BMIf*>((u8*)self + 0x219c)->vf0010(); }
 void* cf::CBattleManager::func_800EA420() {
-    if (spInstance != nullptr) {
+    if (lbl_eu_80663F00 != nullptr) {
         // Call virtual function at vtable offset 0x14 (BMIf::_v014) on mVision at offset 0x219c
         return reinterpret_cast<BMIf*>((u8*)this + 0x219c)->_v014();
     }
@@ -628,10 +628,10 @@ static inline void vcall_d1(void* o, u32 slot, double d) { void* vt = *(void**)o
 static inline void vcall_v3f(void* o, u32 slot, void* a, f32 x, f32 y, f32 z) { void* vt = *(void**)o; return ((void(*)(void*, void*, f32, f32, f32))(*(void**)((u8*)vt + slot)))(o, a, x, y, z); }
 
 extern "C" int mtRand__Q22ml4mathFii(int a, int b);
-extern "C" s32 getBdatStringColumnValue(void* pData, const char* pColumnName, int index);
+extern "C" u32 getBdatStringColumnValue(void* pData, const char* pColumnName, int index);  // u32 matches CfObjectPoint.hpp
 extern "C" void* getFP__FPCc(const char* str);
 extern "C" u8 lbl_eu_80573EEC[];
-extern "C" void func_8003AA34(void);
+extern "C" void* func_8003AA34();  // void* matches CfGimmick.hpp/CfBdat.hpp
 extern "C" void func_80135380(u8 v);
 extern "C" void* func_80149330(void*, u32, u32, u32, u32);
 extern "C" s32 func_8015B130(s32 a, u16 b);
@@ -3844,7 +3844,7 @@ extern "C" float func_800D81A8(void* obj, void* target, void* source){
     if(obj != nullptr){
         // If source is null or type != 3, try chain value
         if(sourceObj == nullptr || *(u16*)((u8*)sourceObj + 0x3c) != 3){
-            u32 mgrAddr = lbl_eu_80663F00;
+            u32 mgrAddr = (u32)lbl_eu_80663F00;
             if(func_802799F0((void*)(mgrAddr + 0x1a8), obj)){
                 result += *(float*)(mgrAddr + 0x20ac);
             }
@@ -3972,7 +3972,7 @@ void func_800D9CA0(cf::CBattleManager* mgr, BattleRemoveObjAccessor* target){
     
     // Check global lists
     {
-        u32 mgrAddr = lbl_eu_80663F00;
+        u32 mgrAddr = (u32)lbl_eu_80663F00;
         reslist<cf::CfObjectActor*>& globalList1 = *(reslist<cf::CfObjectActor*>*)(mgrAddr + 0x48);
         if(globalList1.size() == 0){
             extern void func_800F41A0(cf::CBattleManager*);
@@ -3981,7 +3981,7 @@ void func_800D9CA0(cf::CBattleManager* mgr, BattleRemoveObjAccessor* target){
     }
     
     if(!(target->field_3f00 & 0x04)){
-        u32 mgrAddr = lbl_eu_80663F00;
+        u32 mgrAddr = (u32)lbl_eu_80663F00;
         reslist<cf::CfObjectActor*>& globalList2 = *(reslist<cf::CfObjectActor*>*)(mgrAddr + 0x8);
         if(globalList2.size() == 0) return;
     }
@@ -8816,8 +8816,7 @@ check:
             // If actor is not null, add 0x3e9c for moveBase
             // If null, pass nullptr directly (retail falls through beq)
             void* moveBase = actor != nullptr ? (u8*)actor + 0x3e9c : (void*)nullptr;
-            extern void* func_800AD860__FPv(void*);
-            void* result = func_800AD860__FPv(moveBase);
+            void* result = func_800AD860(moveBase);
             if (result != nullptr) {
                 *(u32*)((u8*)result + 0x3f08) |= 0x8000000;
                 extern void func_80197BA4(void*, u32, u32);

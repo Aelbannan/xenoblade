@@ -537,6 +537,12 @@ extern "C" u16 func_800B75BC(){extern u16 lbl_eu_80663E44; return lbl_eu_80663E4
 void init_75EC(){}
 
 // Target 5: us-800b7f9c - Count nodes in a circular linked list.
+// Open item: reslist count loop. Retail assigns head=r5/cur=r4; MWCC always
+// assigns head=r4/cur=r5 (4 pure reg_swap). Witness rejects the r4<->r5
+// renaming at the ABI boundary (gpr r4 -> r5, ABI registers must be fixed) —
+// same documented class as MWCC_REFERENCE array-push func_800B5978, but no
+// source shape (8 tried: while/do-while/for, typed nodes, void**, decl
+// orders) flips the allocation; -O4,p/-O4,s and both mw_versions identical.
 extern "C" int func_800B7680(void* self) {
     void* head = *(void**)((u8*)self + 4);
     void* cur = *(void**)head;
@@ -955,19 +961,18 @@ void* func_800B99BC(void* self, void* a1, void* a2, void* a3, void* a4, void* a5
 }
 
 // Target 5: us-800ba35c - sinit_800B9A40
-void sinit_800B9A40() {
+extern "C" void sinit_800B9A40() {
     extern float lbl_eu_80661CC8, lbl_eu_80661CCC, lbl_eu_80661CD0;
     extern float lbl_eu_80663EC8, lbl_eu_80663ECC, lbl_eu_80663ED0, lbl_eu_80663ED4;
     extern u32 lbl_eu_80663EE0;
-    float f3 = lbl_eu_80661CC8;
-    float f0 = lbl_eu_80661CCC;
-    float f1 = lbl_eu_80661CD0;
-    float f2 = f3 * f3;
-    float f0_sq = f0 * f0;
-    lbl_eu_80663EC8 = f3;
-    lbl_eu_80663ECC = f2;
-    lbl_eu_80663ED0 = f1;
-    lbl_eu_80663ED4 = f0_sq;
+    float e = lbl_eu_80661CD0;
+    float c = lbl_eu_80661CC8;
+    float c2 = c * c;
+    float d = lbl_eu_80661CCC;
+    lbl_eu_80663EC8 = c;
+    lbl_eu_80663ECC = c2;
+    lbl_eu_80663ED0 = e;
+    lbl_eu_80663ED4 = d * d;
     lbl_eu_80663EE0 = 0;
 }
 

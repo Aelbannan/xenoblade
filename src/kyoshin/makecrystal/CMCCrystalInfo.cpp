@@ -59,6 +59,8 @@ extern "C" CMCCrystalInfo* __ct__CMCCrystalInfo(CMCCrystalInfo* self)
 // The retail dtor is emitted under the mangled symbol `__dt__14CMCCrystalInfoFv`.
 // Written as a C-linkage function (CItemBoxInfo precedent) for byte-exact
 // control over the null/delete-flag checks.
+#pragma push
+#pragma optimize_for_size on
 extern "C" CMCCrystalInfo* __dt__14CMCCrystalInfoFv(CMCCrystalInfo* self, s32 flags)
 {
     if (self != NULL) {
@@ -68,6 +70,7 @@ extern "C" CMCCrystalInfo* __dt__14CMCCrystalInfoFv(CMCCrystalInfo* self, s32 fl
     }
     return self;
 }
+#pragma pop
 
 void func_8021A718(CMCCrystalInfo* self)
 {

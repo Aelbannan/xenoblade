@@ -226,11 +226,14 @@ int kizunaTalkStart() {
     func_8007D7A4__Q22cf13CfGameManagerFv();
     return 0;
 }
+// Retail C callee (code80135FDC split unit), extern "C" at file scope (MWCC
+// rejects extern "C" inside function bodies).
+extern "C" void code80135FDC_clearByte_64059();
+
 int kizunaTalkEnd(){
     extern u32 lbl_eu_80663E28;
-    extern void func_8013BDD0();
-    lbl_eu_80663E28 &= ~0x1800;
-    func_8013BDD0();
+    lbl_eu_80663E28 &= ~0x1000;
+    code80135FDC_clearByte_64059();
     return 0;
 }
 void isPrioReq(){}

@@ -143,6 +143,9 @@ __attribute__((never_inline)) void func_804DDBD8(ArcItemList* list) {
 void func_804DEC30(CArcItem* self);
 
 // _reslist_base<CPackItem*>::~_reslist_base(int deleting)
+// optimize_for_size matches retail's stmw/lmw frame for the 2 saved regs.
+#pragma push
+#pragma optimize_for_size on
 __attribute__((never_inline)) void* __dt___reslist_base_CPackItem(PackItemList* self, int deleting) {
     if (self != 0) {
         self->m_vtable = (u32)lbl_eu_8056FF48;
@@ -159,8 +162,12 @@ __attribute__((never_inline)) void* __dt___reslist_base_CPackItem(PackItemList* 
     }
     return self;
 }
+#pragma pop
 
 // reslist<CPackItem*>::~reslist(int deleting)
+// optimize_for_size matches retail's stmw/lmw frame.
+#pragma push
+#pragma optimize_for_size on
 void* __dt__reslist_CPackItem(PackItemList* self, int deleting) {
     if (self != 0) {
         __dt___reslist_base_CPackItem(self, 0);
@@ -170,8 +177,12 @@ void* __dt__reslist_CPackItem(PackItemList* self, int deleting) {
     }
     return self;
 }
+#pragma pop
 
 // _reslist_base<CArcItem*>::~_reslist_base(int deleting)
+// optimize_for_size matches retail's stmw/lmw frame (same as CPackItem twin).
+#pragma push
+#pragma optimize_for_size on
 __attribute__((never_inline)) void* __dt___reslist_base_CArcItem(ArcItemList* self, int deleting) {
     if (self != 0) {
         self->m_vtable = (u32)lbl_eu_8056FF24;
@@ -188,8 +199,12 @@ __attribute__((never_inline)) void* __dt___reslist_base_CArcItem(ArcItemList* se
     }
     return self;
 }
+#pragma pop
 
 // reslist<CArcItem*>::~reslist(int deleting)
+// optimize_for_size matches retail's stmw/lmw frame.
+#pragma push
+#pragma optimize_for_size on
 void* __dt__reslist_CArcItem(ArcItemList* self, int deleting) {
     if (self != 0) {
         __dt___reslist_base_CArcItem(self, 0);
@@ -199,6 +214,7 @@ void* __dt__reslist_CArcItem(ArcItemList* self, int deleting) {
     }
     return self;
 }
+#pragma pop
 
 // func_eu_804520D0 is extern "C" in CDeviceFileCri.hpp, but including that
 // header would clash with this TU's C++ definition of func_804DDCD4.
@@ -354,18 +370,30 @@ CWorkSystemPack::CWorkSystemPack(const char* pName, CWorkThread* pParent) {
 }
 #pragma optimize_for_size off
 
-CWorkSystemPack::~CWorkSystemPack() {
-    // Clear the work-system singleton first, then tear down the two resource
-    // lists (arc items at +0x1E4, pack items at +0x1C4) and the base thread.
-    lbl_eu_80665A10 = 0;
-    if (&mArcList != 0) {
-        __dt___reslist_base_CArcItem(&mArcList, 0);
+// extern "C" free-function form: clear the work-system singleton, then tear
+// down the two resource lists (mArcList +0x1E4, mPackList +0x1C4 — retail's
+// addic. null-checks), the base CWorkThread (unchecked), and the flags-based
+// delete; stmw/lmw frame via optimize_for_size.
+#pragma push
+#pragma optimize_for_size on
+extern "C" void __dt__11CWorkThreadFv(void* self, int flags);
+extern "C" void* __dt__15CWorkSystemPackFv(CWorkSystemPack* self, int flags) {
+    if (self != 0) {
+        lbl_eu_80665A10 = 0;
+        if (&self->mArcList != 0) {
+            __dt___reslist_base_CArcItem(&self->mArcList, 0);
+        }
+        if (&self->mPackList != 0) {
+            __dt___reslist_base_CPackItem(&self->mPackList, 0);
+        }
+        __dt__11CWorkThreadFv(self, 0);
+        if (flags > 0) {
+            operator delete(self);
+        }
     }
-    if (&mPackList != 0) {
-        __dt___reslist_base_CPackItem(&mPackList, 0);
-    }
-    ((CWorkThread*)this)->CWorkThread::~CWorkThread();
+    return self;
 }
+#pragma pop
 
 // Walk the pack list, comparing each item's base name against pName. Returns
 // the lookupFile() result (found flag) for the matching item, or 0 if no item

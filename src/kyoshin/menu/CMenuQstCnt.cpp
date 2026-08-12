@@ -159,12 +159,19 @@ QstEntry* copyQstEntry2(QstEntry* dst, const QstEntry* src) {
 }
 #pragma pop
 
-extern "C" void __dt__11CMenuQstCntFv(CMenuQstCnt* self, int flags) {
-    if (self == 0) return;
-    __dt__17UnkClass_8045F564Fv(&self->mMemRegion[0], -1);
-    __dt__9IUIWindowFv(self, 0);
-    if (flags > 0) __dl__FPv(self);
+#pragma push
+#pragma optimize_for_size on
+extern "C" CMenuQstCnt* __dt__11CMenuQstCntFv(CMenuQstCnt* self, int flags) {
+    if (self != 0) {
+        __dt__17UnkClass_8045F564Fv(&self->mMemRegion[0], -1);
+        __dt__9IUIWindowFv(self, 0);
+        if (flags > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
 }
+#pragma pop
 
 // C++-linkage retail symbol (func_801355A0__Fv): returns a u32 message/flag
 // value used to fill the text fields below.

@@ -39,6 +39,8 @@ extern "C" CMakeCrystalWin* __ct__CMakeCrystalWin(CMakeCrystalWin* _this, u32 ar
  * Subobjects are destroyed in reverse construction order with the -1
  * subobject flag, then conditional operator delete when flags > 0.
  */
+#pragma push
+#pragma optimize_for_size on
 extern "C" CMakeCrystalWin* __dt__15CMakeCrystalWinFv(CMakeCrystalWin* _this, int flags) {
     if (_this != 0) {
         __dt__5CLoadFv(&_this->mLoad, -1);
@@ -51,6 +53,7 @@ extern "C" CMakeCrystalWin* __dt__15CMakeCrystalWinFv(CMakeCrystalWin* _this, in
     }
     return _this;
 }
+#pragma pop
 
 void func_8021260C(){}
 

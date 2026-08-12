@@ -20,6 +20,26 @@ namespace WaveFile {
 
 enum Format { FORMAT_PCM8, FORMAT_PCM16, FORMAT_ADPCM };
 
+struct FileHeader {
+    ut::BinaryFileHeader fileHeader; // at 0x0
+    u32 infoBlockOffset;              // at 0x10
+    u32 infoBlockSize;                // at 0x14
+    u32 dataBlockOffset;              // at 0x18
+    u32 dataBlockSize;                // at 0x1C
+};
+
+// Retail nests WaveChannelInfo inside WaveFile (mangled
+// Q54nw4r3snd6detail8WaveFile15WaveChannelInfo).
+struct WaveChannelInfo {
+    u32 channelDataOffset; // at 0x0
+    u32 adpcmOffset;       // at 0x4
+    u32 volumeFrontLeft;   // at 0x8
+    u32 volumeFrontRight;  // at 0xC
+    u32 volumeRearLeft;    // at 0x10
+    u32 volumeRearRight;   // at 0x14
+    u32 reserved;          // at 0x18
+};
+
 }; // namespace WaveFile
 
 struct WaveInfo {
@@ -35,24 +55,6 @@ struct WaveInfo {
     u32 channelInfoTableOffset; // at 0x10
     u32 dataOffset;             // at 0x14
     u32 reserved;               // at 0x18
-};
-
-struct WaveChannelInfo {
-    u32 channelDataOffset; // at 0x0
-    u32 adpcmOffset;       // at 0x4
-    u32 volumeFrontLeft;   // at 0x8
-    u32 volumeFrontRight;  // at 0xC
-    u32 volumeRearLeft;    // at 0x10
-    u32 volumeRearRight;   // at 0x14
-    u32 reserved;          // at 0x18
-};
-
-struct FileHeader {
-    ut::BinaryFileHeader fileHeader; // at 0x0
-    u32 infoBlockOffset;              // at 0x10
-    u32 infoBlockSize;                // at 0x14
-    u32 dataBlockOffset;              // at 0x18
-    u32 dataBlockSize;                // at 0x1C
 };
 
 /******************************************************************************
@@ -82,12 +84,12 @@ struct WaveData {
 class WaveFileReader {
 public:
     explicit WaveFileReader(const WaveInfo* pWaveInfo);
-    explicit WaveFileReader(const FileHeader* pFileHeader);
+    explicit WaveFileReader(const WaveFile::FileHeader* pFileHeader);
 
     bool ReadWaveParam(WaveData* pWaveData, const void* pWaveAddr) const;
     bool ReadWaveInfo(WaveInfo* pWaveInfo,
                       const void* pWaveAddr) const;
-    void* GetWaveDataAddress(const WaveChannelInfo* info,
+    void* GetWaveDataAddress(const WaveFile::WaveChannelInfo* info,
                               const void* addr) const;
 
     static AxVoice::Format GetAxVoiceFormatFromWaveFileFormat(u32 format);

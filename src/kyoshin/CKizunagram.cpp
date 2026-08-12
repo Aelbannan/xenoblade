@@ -418,7 +418,13 @@ unsigned char CKizunagram_checkFields(u8* arg1)
     return 0;
 }
 
-void func_8025C7D0(){}
+extern "C" void func_8025C7D0(UnkKizunaSelfC7FC* self) {
+    if (self->field39 != 0) return;
+    self->field39 = 1;
+    self->field3C = 0;
+    ((u8*)self)[0x38] = 1;
+    func_8025B958(&self->sub4C);
+}
 
 void func_8025C7FC(UnkKizunaSelfC7FC* self, int arg4) {
     if (self->field39 == 3) {

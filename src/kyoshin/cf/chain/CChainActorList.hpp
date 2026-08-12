@@ -205,7 +205,7 @@ public:
     virtual void v014() = 0;
     virtual void v015() = 0;
     virtual void v016() = 0;
-    virtual int* v017() = 0;  // slot 19 / +0x4c
+    virtual int  v017() = 0;  // slot 19 / +0x4c
 };
 
 // Manual vtable objects stored by the Pc/Ene constructors (retail .data).

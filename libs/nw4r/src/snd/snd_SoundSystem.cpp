@@ -19,7 +19,10 @@ inline void InitSeqPlayer() {
 }
 } // namespace detail
 
-detail::TaskThread SoundSystem::sTaskThread;
+// Retail name for the sTaskThread static (bss lbl_eu_80638910, 0x330).
+extern "C" {
+detail::TaskThread lbl_eu_80638910;
+}
 
 void SoundSystem::InitSoundSystem(s32 soundThreadPriority,
                                   s32 dvdThreadPriority) {
@@ -119,7 +122,7 @@ void SoundSystem::InitSoundSystem(const SoundSystemParam& rParam, void* pWork,
     // Initialize the sequence player subsystem before creating threads
     detail::InitSeqPlayer();
 
-    sTaskThread.Create(rParam.dvdThreadPriority, pWork,
+    lbl_eu_80638910.Create(rParam.dvdThreadPriority, pWork,
                        rParam.dvdThreadStackSize);
 
     detail::SoundThread::GetInstance().Create(rParam.soundThreadPriority,
@@ -134,7 +137,7 @@ void SoundSystem::ShutdownSoundSystem() {
 
     detail::SoundThread::GetInstance().Shutdown();
     detail::TaskManager::GetInstance().CancelAllTask();
-    sTaskThread.Destroy();
+    lbl_eu_80638910.Destroy();
 
     detail::RemoteSpeakerManager::GetInstance().Shutdown();
     detail::ChannelManager::GetInstance().Shutdown();

@@ -13,7 +13,23 @@
 
 void __ct__CMCCrystalList(){}
 
-CMCCrystalList::~CMCCrystalList() {}
+// UnkClass_8045F564 member dtor and operator delete (retail names).
+extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int flags);
+extern "C" void __dl__FPv(void* p);
+
+// Retail dtor is a plain free function: destroys the two embedded region
+// members and frees the object when the delete flag is positive.
+#pragma optimize_for_size on
+extern "C" void* __dt__14CMCCrystalListFv(void* self, int flags) {
+    if (self != 0) {
+        __dt__17UnkClass_8045F564Fv((u8*)self + 0x14, -1);
+        __dt__17UnkClass_8045F564Fv((u8*)self + 0x04, -1);
+        if (flags > 0)
+            __dl__FPv(self);
+    }
+    return self;
+}
+#pragma optimize_for_size off
 
 void func_80222848(){}
 

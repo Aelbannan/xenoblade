@@ -3803,15 +3803,15 @@ header: `wrap@0`, `capacity@4`, `readIdx@8`, `writeIdx@0xC`, `count@0x10`.
 
 ## CriWare ADX compiler-version sweep — Wii/1.1 across the library (US)
 
-**2026-09 sweep: the ADX library is retail Wii/1.1 — 54/58 remaining GC-configured units flipped, 4 stay GC.** After the Sofdec family sweep (§7d2/2417) proved those units retail-Wii/1.1, every ADX unit still on the `criwareLib` GC/3.0a5.2 default was flipped to `mw_version = "Wii/1.1"` and verified with `hexdiff --all` per unit (probe recipe of §2417: diff the small functions under each compiler; the li-vs-store schedule and dispatch polarity flip between GC and Wii).
+**2026-09 sweep: the ADX library is retail Wii/1.1 — 56/58 remaining GC-configured units flipped, 2 stay GC.** After the Sofdec family sweep (§7d2/2417) proved those units retail-Wii/1.1, every ADX unit still on the `criwareLib` GC/3.0a5.2 default was flipped to `mw_version = "Wii/1.1"` and verified with `hexdiff --all` per unit (probe recipe of §2417: diff the small functions under each compiler; the li-vs-store schedule and dispatch polarity flip between GC and Wii).
 
-**Kept Wii/1.1 (54 units):** zero accepted **FULL_MATCH** regressions anywhere; wins include the documented `adxt_StartAfs` soft-cap (us-803853e8, 96.8% → 100% byte-identical — survived ~50 GC experiments incl. all 9 GC compilers: retail `lwz r3,0xAC; stw r3,0xB0` store-before-args vs GC's always-hoisted `or r3; li r4`), `ADXF_LoadPartitionNw` 89.6→100, `adxf_CreateAdxFs` 93.1→100, `SFA_*`, `lsc_*` (except lsc_svr), `cri_cvfs`, `gcci`, `mfci`, `ahx_*`, `adxt/*`, `wiirna`, `sj_crs/sj_err/sj_utl` etc. Split sizes: PASS except 5 units with **pre-existing** FAILs identical under both compilers (adx_inis +0x10, ahx_bsr +0x4, ahx_mflt_c +0x20, ahx_sjd +0x200, cri_crw_std +0x14) — not Wii regressions, leave for size-trim work.
+**Kept Wii/1.1 (56 units):** zero accepted **FULL_MATCH** regressions anywhere; wins include the documented `adxt_StartAfs` soft-cap (us-803853e8, 96.8% → 100% byte-identical — survived ~50 GC experiments incl. all 9 GC compilers: retail `lwz r3,0xAC; stw r3,0xB0` store-before-args vs GC's always-hoisted `or r3; li r4`), `ADXF_LoadPartitionNw` 89.6→100, `adxf_CreateAdxFs` 93.1→100, `SFA_*`, `lsc_*`, `cri_cvfs`, `gcci`, `mfci`, `ahx_*`, `adxt/*`, `wiirna`, `sj_crs/sj_err/sj_utl` etc. Split sizes: PASS except 5 units with **pre-existing** FAILs identical under both compilers (adx_inis +0x10, ahx_bsr +0x4, ahx_mflt_c +0x20, ahx_sjd +0x200, cri_crw_std +0x14) — not Wii regressions, leave for size-trim work.
 
-**Stays GC/3.0a5.2 (4 units) — accepted FULL_MATCH regression is the only blocker:**
-- `adx_mng.c`: ADXMNG_CallMainServerFunctions 100 → 94.6% under Wii (branch-over-branch polarity flip at the state==2 dispatch; source is GC-tuned).
-- `adx_fsvr.c`: adxt_ExecFsSvr 100 → 9.3% under Wii (+ split PASS→FAIL +0x8).
-- `lsc_svr.c`: lsc_ExecHndl 100 → 97.2% under Wii.
-- `adx_fini.c`: no wins under Wii; ADXF_Init (accepted EQUIVALENT_MATCH 95.2) → 86.7%, ADXF_Finish 89.5 → 85.4%, and split PASS→FAIL +0xC.
+**Stays GC/3.0a5.2 (2 units) + 2 fixed to Wii/1.1 — the 4 units that regressed in the sweep, re-investigated (2026-09):**
+- **`adx_mng.c` → Wii/1.1 FIXED (2/2 FULL_MATCH).** The residual was the §7d2 dispatch polarity: the last dispatch test was GC-tuned negated (`if (state != 3) goto out; goto case3;` → Wii emits `bne out; b case3`). Under Wii/1.1 the **direct** form `if (state == 3) goto case3; goto out;` reproduces retail `beq case3; b out` byte-for-byte (same fix applied to lsc_ExecHndl's `st_case3` dispatch). Split PASS 0xA0 exact.
+- **`lsc_svr.c` → Wii/1.1 FIXED.** Same §7d2 direct-form fix on the sparse `stat` dispatch (`if (stat == 3) goto st_case3; goto st_done;`); lsc_ExecHndl 100%. lsc_StatWait/lsc_StatEnd remain ACTIVE (56.1%/30.8%). Split PASS 0x394 exact.
+- **`adx_fsvr.c` stays GC — Wii hard cap 69.2% on a lis/addi coalescing ceiling.** Retail materializes the global-struct base ONCE (`lis r31,@ha; addi r31,r31,@l`, 2 relocs) and uses offsets for all accesses; every Wii/1.x compiler (1.0–1.7) splits it (`lis r4,@ha; addi r31,r4,@l` + first access folded `@l(r4)`, 3 relocs) — the base pointer must survive calls, so it needs a second callee-saved register and the allocator never coalesces the addi into the lis target. Tried: const/non-const pointer, direct member access, `static inline` helper split, `-O4,p`/`-O4,s`/`-O3`, `-ipa off`, `-opt noschedule` (best: `-O4,s` 69.2%, 2 structural = stmw/lmw from `-use_lmw_stmw on` + 14 reg_swap). GC/3.0a5.2 reproduces 100% byte-for-byte with the `const` pointer (the `const` is load-bearing: dropping it breaks GC to 69.2%). Note: `SVM_SetCbLock` retail HAS the two-register form — per-function, not per-compiler.
+- **`adx_fini.c` stays GC — residual is compiler-independent.** ADXF_Init/Finish are 86.7%/85.4% under BOTH GC and Wii with the current source (identical bytes): the prologue lis/addi split is a source-shape issue, not a compiler difference. The registry's 95.2% EQUIVALENT_MATCH acceptance predates a source rewrite (current GC build = 86.7%) — stale record, flag for re-certification; no Wii win to chase here.
 
 **Accepted EQUIVALENT_MATCH targets that now need re-certification on the Wii build** (below the ≥50% fuzzy bar or materially changed — re-run `targets recertify --bottom-up`): ADXB_SetDefPrm 96.9→41.9 & ADXB_GetFmtBps 96.7→33.3 (adx_bsc), ADXSTM_IsOpenReq 86.8→40.0 (adx_stmc), ADXPD_EntryMono/Ste/Pl2 67→23.1 & ADXPD_Reset 90→83.3 (adx_xpnd), AHXDCD_GetOutBps 96.7→66.7 (ahx_dcd), gcCiGetInterface 85.3→31.0 & gcCiExecHndl 94.1→86.9 (gcci), SJ_SplitChunk 99.2→86.4 (sj_utl). Many other accepted EQUIVALENT_MATCH targets IMPROVED to 100% under Wii (SJCRS_Init/Finish, ADXCRS_Init/Finish, ADXSTM_Init, adxhdr_get_ply_prm, ADXPD_Destroy/Stop, ADXT_IsHeader, AHXCMN_SetAlcInfTbl, cvFsEntryErrFunc, ADXF_Init's sibling suite…).
 
@@ -4870,6 +4870,40 @@ identical). All six are additionally blocked from EQUIVALENT_MATCH by the
 registry gates: `has_indirect_calls=True` (vtbl `bcctrl` in retail asm) or
 unaccepted callee chains (`ADXERR_CallErrFunc1_`→`SVM_CallErr`,
 `adxt_GetTime`, ADXCRS_*), so only 100% static (FULL_MATCH) can close them.
+
+## CriWare ADX source-shape levers (Wii/1.1, adx/adxf/gcci/sj units) — 10 FULL_MATCH fixes (US)
+
+Probe-verified against `build/compilers/Wii/1.1` (`-O4,p`/`-O4,s`, `-lang=c99`,
+`-sdata 0 -sdata2 0 -use_lmw_stmw on -func_align 4`); each fix was confirmed
+byte-identical via hexdiff and batch-cycled to FULL_MATCH (2026-08).
+
+| Symptom | Fix | Verified on |
+|---------|-----|-------------|
+| Many-constant field-init function is 100% reg_swap (41.9%): all instruction bytes match, registers differ | **Inline the source loads at their store sites** instead of hoisting them into locals at the top. The allocator colors values in source (IR) order: locals-first makes the loads grab low registers first; inline loads make the constants color first exactly like retail | `ADXB_SetDefPrm` (adx_bsc.c) 41.9%→100% |
+| `s8` byte-flag function (40%): retail emits `lbz; extsb; bne→ret1-at-end`; decomp emits `lbz; cmpwi; beq` with ret1 inline | Fields must be **`s8` (not `u8`)** — signed load produces `extsb` where unsigned compares with `cmpwi`; and use the **nested-if-zero shape** `if (a == 0) { if (b == 0) return 0; } return 1;` to put the return-1 block at the end | `ADXSTM_IsOpenReq` (adx_stmc.c) 40%→100% |
+| Guarded entry functions (23%): decomp inverts the branch (`beq body; ret0 inline`) vs retail `bne ret0-at-end` | Write `if (cond == 0) { <body>; return 1; } return 0;` — the final `return 0` becomes the epilogue block (same btm_inq pattern). Do NOT use `int ret = 0; if (c) ret = 1; return ret;` (regresses to 15%) | `ADXPD_EntryMono/Ste/Pl2` (adx_xpnd.c) 23%→100% |
+| `u32` field compared to constant 3 emits `cmpli`; retail uses `cmpwi` | Load as `s32` for signed comparisons | `ADXPD_Reset` (adx_xpnd.c) 83.3%→100% |
+| `return (s8)*(u8*)...` loads into r0 then extsb r3,r0; retail loads directly into r3 | Load the byte as the signed pointer type: `return *(s8*)(...)` | `ADXB_GetFmtBps` (adx_bsc.c) 33.3%→100% |
+| Dispatch function with a multiply/cmp sequence (86.9% reg_swap): `nt`/`fs` registers swapped | (1) Compute `nt = np * h->sctLen` **before** declaring `fs = h->fileSize` (allocator colors in source order → nt gets the lower register); (2) `mullw` operand encoding follows source order — write `h->sctLen * nsct` (not `nsct * h->sctLen`) to get `mullw r5,r5,r6`; (3) use **member-access global stores** (`lbl.flag = 3`) instead of byte-pointer form (`((u8*)&lbl)[4] = 3`) to get the retail's `addi r3,r30,0; stb 4(r3)` base-copy (the byte form folds into `stb 4(r30)`) | `gcCiExecHndl` (gcci.c) 86.9%→100% |
+| Struct member offset wrong by a few bytes (lbz 0x34B vs 0x349) | Two adjacent `s8` fields exist — check each consumer's retail offset; don't assume one field | `AHXDCD_GetOutBps`/`GetTotalNumSmpl` (ahx_dcd.c) →100% (GetTotalNumSmpl bonus) |
+
+### Confirmed plateaus (recorded as open items, 2026-08-12)
+
+- **`gcCiGetInterface` (gcci.c, 0x74 vs 0x70):** the volatile cache-sync
+  round-trip (`volatile u32 t = g->unk0; g->unk0 = t;`) lets MWCC fold
+  `[addi r31,r31,@l; lwz r0,0(r31)]` into `lwzu r0,@l(r31)` under **every**
+  available compiler (GC 3.0a3→3.0a5.2, Wii 1.0/1.0a/1.1/1.3/1.5/1.6/1.7/
+  0x4201_127, ProDG 3.5/3.7/3.8.1; `-O4,p`/`-O4,s`/`-ipa file`; ~15 source
+  shapes incl. non-volatile reads, helper-inline, pointer variants). Retail keeps
+  the addi. Size delta = exactly the 1-instruction fold (0x74→0x70), which shifts
+  every later instruction (hexdiff 31% = alignment, not code).
+- **`SJ_SplitChunk` (sj_utl.c, 86.4%, 3-instr head):** retail loads `src->size`
+  first (`lwz r0,4(r3)`) then `src->ptr` (base-reuse `lwz r3,0(r3)`); Wii/1.1
+  emits ptr-first for all ~30 shapes. The `[size;ptr]` order only appears when the
+  `if` reads `src->size` (CSE hoists the size load) but that eliminates retail's
+  `lwz r0,4(r5)` reload of `dst1->size` before the `cmpw`; the reload requires the
+  if to read `dst1->size`, which flips the head back to `[ptr;size]`. The two CSE
+  conditions are mutually exclusive.
 
 ## CriWare sj_rbf — memset reloc name + ADX error-message fixed point (US)
 

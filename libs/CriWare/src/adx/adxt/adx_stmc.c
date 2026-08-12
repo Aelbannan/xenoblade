@@ -31,11 +31,11 @@ typedef struct {
     /* 0x44 */ void* eosCtx;
     /* 0x48 */ u32 sjBufSize;
     /* 0x4C */ u8 pause;
-    /* 0x4D */ u8 openReq;
+    /* 0x4D */ s8 openReq;
     /* 0x4E */ u8 closing;
     /* 0x4F */ u8 startPending;
     /* 0x50 */ u8 stopReq;
-    /* 0x51 */ u8 opened;
+    /* 0x51 */ s8 opened;
     /* 0x52 */ u8 pad[2];
     /* 0x54 */ u32 retryCount;
     /* 0x54 */ void* fileName;
@@ -369,9 +369,13 @@ int ADXSTM_IsOpened(const ADXSTMHndl* h) {
     return (s8)h->opened ? 1 : 0;
 }
 
-s32 ADXSTM_IsOpenReq(ADXSTMHndl* h) {
-    if (h->openReq || h->opened) return 1;
-    return 0;
+int ADXSTM_IsOpenReq(ADXSTMHndl* h) {
+    if (h->openReq == 0) {
+        if (h->opened == 0) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 s32 ADXSTM_GetStat(ADXSTMHndl* h) {

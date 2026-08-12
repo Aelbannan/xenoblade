@@ -1,4 +1,5 @@
 #include "kyoshin/cf/object/CfObjectActor.hpp"
+#include "kyoshin/code_802B8A3C.hpp"  // func_80174C98 / func_800B708C imports
 
 namespace cf {
     /* TODO: find out what base class the static cast is
@@ -69,9 +70,61 @@ void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc3() {
     reinterpret_cast<cf::CfBattleVt20*>((u8*)this + 8)->m20(0xf);
     reinterpret_cast<cf::CfBattleVt20*>((u8*)this + 8)->m20(0x10);
 }
-void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc4() {}
-void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc7() {}
-void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc10() {}
+void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc4() {
+    // Two calls to the CBattleState subobject vtable slot +0x20 (retail
+    // passes an int through the slot). Function-pointer form keeps the +8
+    // subobject offset folded into the vtable load; a virtual call through a
+    // cast would materialize this+0x8 into a register first.
+    ((cf::CfBattleVt20Table*)((cf::CfActorBattleVtPtr*)(u8*)this)->vt)->fn20((u8*)this + 8, 0xf);
+    ((cf::CfBattleVt20Table*)((cf::CfActorBattleVtPtr*)(u8*)this)->vt)->fn20((u8*)this + 0x8, 0x10);
+}
+float cf::CfObjectActor::CfObjectActor_UnkVirtualFunc7() {
+    // Base height at 0x3EE8; if the move target (0x3F60) is set, add the
+    // signed short value the CActParamData helper returns (s16 -> float via
+    // MWCC's 2^52 double-trick, which emits the retail fsubs sequence).
+    u8* p = reinterpret_cast<cf::CfActorField3F60*>(this)->field_0x3F60;
+    if (p != 0) {
+        float base = reinterpret_cast<cf::CfActorField3EE8*>(this)->field_0x3EE8;
+        return base + (float)(s16)func_80055F94(p + 16, 0);
+    }
+    return reinterpret_cast<cf::CfActorField3EE8*>(this)->field_0x3EE8;
+}
+
+// Retail symbol is Fv; the real ABI passes (self, arg) and returns whether
+// both actors share the CfObjectMove+0x64 flag-bit (2 or 4).
+extern "C" int CfObjectActor_UnkVirtualFunc9__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, cf::CfObjectActor* arg) {
+    if (arg == 0) return 0;
+    if (arg == self) return 0;
+    u32 selfFlags = reinterpret_cast<cf::CfActorField3F00*>(self)->field_0x3F00;
+    if ((selfFlags & 2) != 0 && (reinterpret_cast<cf::CfActorField3F00*>(arg)->field_0x3F00 & 2) != 0) return 1;
+    if ((selfFlags & 4) != 0 && (reinterpret_cast<cf::CfActorField3F00*>(arg)->field_0x3F00 & 4) != 0) return 1;
+    return 0;
+}
+
+// Retail symbol is Fv; the real ABI passes a float in f1. Forwards the move
+// to the CfObjectMove subobject, then re-dispatches this same virtual (slot
+// +0x5C4) on the actor behind the action-source handle when its +0x64 flags
+// select it.
+extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value) {
+    // Forward the move to the CfObjectMove subobject (+0x3E9C), then
+    // re-dispatch this same virtual (slot +0x5C4) on the actor behind the
+    // action-source handle when its +0x64 flags select it.
+    cf::CfObjectMove* move = (cf::CfObjectMove*)((u8*)self + 16028);  // +0x3E9C
+    move->CfObject_UnkVirtualFunc14(value);
+    u8* p = reinterpret_cast<cf::CfActorField45B8*>(self)->field_0x45B8;
+    if (p != 0) {
+        cf::CfObjectMove* src = static_cast<cf::CfObjectMove*>(func_800B708C(reinterpret_cast<int>(p)));
+        if (src != 0) {
+            u32 flags = reinterpret_cast<cf::CfMoveFlags64*>(src)->field_0x64;
+            cf::CfObjectActor* actor = ((flags & 2) != 0 || (flags & 4) != 0)
+                ? (src != 0 ? (cf::CfObjectActor*)((u8*)src - 16028) : 0)
+                : 0;
+            if (actor != 0) {
+                ((cf::CfActorVt5C4Table*)((cf::CfActorVtPtr*)(u8*)actor)->vt)->fn5C4((u8*)actor, value);
+            }
+        }
+    }
+}
 
 
 struct IfE0 {
@@ -151,4 +204,16 @@ extern "C" void CActorParam_UnkVirtualFunc34__Q22cf13CfObjectActorFv(cf::CfObjec
 }
 extern "C" void CActorParam_UnkVirtualFunc54__Q22cf13CfObjectActorFv() {}
 extern "C" void CActorParam_UnkVirtualFunc60__Q22cf13CfObjectActorFv() {}
-extern "C" void CActorParam_UnkVirtualFunc4__Q22cf13CfObjectActorFv() {}
+
+// CfObjectActor's override of the CActorParam virtual (slot 0xA4): queries
+// the +0x04 sub-object's vtable slot +0x30 for the actor-id word, then pokes
+// the move subobject's status chain when the id matches the query.
+void cf::CfObjectActor::CActorParam_UnkVirtualFunc4() {
+    CActorParam::CActorParam_UnkVirtualFunc6();
+    u32* idPtr = reinterpret_cast<cf::CfActorUnk4Vt30*>(reinterpret_cast<cf::CfActorField04*>(this)->field_0x04)->vf30();
+    u32 id = *idPtr;
+    if (func_80174C98(this, &id, 0x1c) != 0) {
+        func_800BE12C((u8*)this + 16028, 0x2f, 1, -1, 1);  // +0x3E9C: CfObjectMove subobject
+    }
+}
+

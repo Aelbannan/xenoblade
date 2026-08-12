@@ -74,10 +74,6 @@ void ScnMdl_G3DPROC_CALC_MAT__Q34nw4r3g3d6ScnMdlFUlPv(){}
 
 void G3dProc__Q34nw4r3g3d6ScnMdlFUlUlPv(){}
 
-void SetScnObjOption__Q34nw4r3g3d6ScnMdlFUlUl(){}
-
-void GetScnObjOption__Q34nw4r3g3d6ScnMdlCFUlPUl(){}
-
 void InitBuffer__Q34nw4r3g3d6ScnMdlFv(){}
 
 void CleanMatBuffer__Q34nw4r3g3d6ScnMdlFUlUl(){}
@@ -86,11 +82,7 @@ void SetAnmObj__Q34nw4r3g3d6ScnMdlFPQ34nw4r3g3d6AnmObjQ44nw4r3g3d12ScnMdlSimple1
 
 void RemoveAnmObj__Q34nw4r3g3d6ScnMdlFPQ34nw4r3g3d6AnmObj(){}
 
-void RemoveAnmObj__Q34nw4r3g3d6ScnMdlFQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
 
-void GetAnmObj__Q34nw4r3g3d6ScnMdlFQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
-
-void GetAnmObj__Q34nw4r3g3d6ScnMdlCFQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
 
 void __dt__Q34nw4r3g3d6ScnMdlFv(){}
 
@@ -121,6 +113,74 @@ const char* ScnMdl::GetTypeName() const {
     return GetTypeObj().GetTypeName();
 }
 
+// Retail ScnMdl tail-field layout. The header's ScnMdl declares a shadowing
+// mpAnmObjShp that shifts its own fields by 4; in retail, mpAnmObjShp is the
+// member inherited from ScnMdlSimple (at 0x138) and mFlagVisBuffer follows at
+// 0x13C. Access the tail fields through this overlay view of the retail layout.
+struct ScnMdlTailView {
+    u8 field_0x00[0x138];       // ScnMdlSimple storage (incl. mpAnmObjChr..TexSrt)
+    AnmObjShp* mpAnmObjShp;     // at 0x138 (inherited from ScnMdlSimple)
+    u32 mFlagVisBuffer;         // at 0x13C
+    u32* mpMatBufferDirtyFlag;  // at 0x140
+};
+
+bool ScnMdl::SetScnObjOption(u32 option, u32 value) {
+    ScnMdlTailView& tail = *reinterpret_cast<ScnMdlTailView*>(this);
+    switch (option) {
+    case OPTID_VISBUFFER_REFRESH_NEEDED:
+        if (value) {
+            tail.mFlagVisBuffer &= ~VISBUFFER_NOT_REFRESH_NEEDED;
+        } else {
+            tail.mFlagVisBuffer |= VISBUFFER_NOT_REFRESH_NEEDED;
+        }
+        break;
+
+    default:
+        return ScnMdlSimple::SetScnObjOption(option, value);
+    }
+    return true;
+}
+
+bool ScnMdl::GetScnObjOption(u32 option, u32* pValue) const {
+    if (!pValue) {
+        return false;
+    }
+
+    const ScnMdlTailView& tail =
+        *reinterpret_cast<const ScnMdlTailView*>(this);
+    switch (option) {
+    case OPTID_VISBUFFER_REFRESH_NEEDED:
+        *pValue = (tail.mFlagVisBuffer & VISBUFFER_NOT_REFRESH_NEEDED) ? 0 : 1;
+        break;
+
+    default:
+        return ScnMdlSimple::GetScnObjOption(option, pValue);
+    }
+    return true;
+}
+
+AnmObj* ScnMdl::RemoveAnmObj(AnmObjType type) {
+    if (type == ANMOBJTYPE_SHP) {
+        AnmObj* pAnmObj = reinterpret_cast<ScnMdlTailView*>(this)->mpAnmObjShp;
+        RemoveAnmObj(pAnmObj);
+        return pAnmObj;
+    }
+    return ScnMdlSimple::RemoveAnmObj(type);
+}
+
+AnmObj* ScnMdl::GetAnmObj(AnmObjType type) {
+    if (type == ANMOBJTYPE_SHP) {
+        return reinterpret_cast<ScnMdlTailView*>(this)->mpAnmObjShp;
+    }
+    return ScnMdlSimple::GetAnmObj(type);
+}
+
+const AnmObj* ScnMdl::GetAnmObj(AnmObjType type) const {
+    if (type == ANMOBJTYPE_SHP) {
+        return reinterpret_cast<const ScnMdlTailView*>(this)->mpAnmObjShp;
+    }
+    return ScnMdlSimple::GetAnmObj(type);
+}
 
 } // namespace g3d
 } // namespace nw4r

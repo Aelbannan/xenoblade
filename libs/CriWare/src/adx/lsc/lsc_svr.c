@@ -179,8 +179,8 @@ void lsc_ExecHndl(struct LSC_Hndl *h) {
             /* sparse dispatch: linear equality chain with out-of-line bodies */
             if (stat == 4) goto st_case4;
             if (stat == 2) goto st_case2;
-            if (stat != 3) goto st_done;  /* last test negated: beq case3; b default */
-            goto st_case3;
+            if (stat == 3) goto st_case3;  /* Wii/1.1: direct form emits beq case3; b default (negated emits bne default; b case3) */
+            goto st_done;
         st_case4:
             h->st = 3;
             goto st_done;

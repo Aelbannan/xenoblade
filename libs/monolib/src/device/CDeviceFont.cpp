@@ -622,9 +622,8 @@ void CDeviceFont::wkUpdate() {
     // Second pass: drop the first provider whose 0x38 slot reports done.
     // The `if (item != 0) delete item;` guard is what produces retail's
     // double null-check around the virtual dtor call.
-    for (node = *(CDeviceFontInfoListNode* volatile*)&mInfoList.mStartNodePtr->mNext;
-         node != *(CDeviceFontInfoListNode* volatile*)&mInfoList.mStartNodePtr;
-         node = node->mNext) {
+    node = *(CDeviceFontInfoListNode* volatile*)&mInfoList.mStartNodePtr->mNext;
+    while (node != *(CDeviceFontInfoListNode* volatile*)&mInfoList.mStartNodePtr) {
         if (node->mItem->func_80453608() != 0) {
             IDeviceFontInfo* item = node->mItem;
             if (item != 0) {
@@ -638,6 +637,7 @@ void CDeviceFont::wkUpdate() {
             node->mNext = 0;
             break;
         }
+        node = node->mNext;
     }
 
     switch (field_0x1EC) {

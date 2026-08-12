@@ -9,7 +9,7 @@ namespace cf { class CActParamAnimGame; }
 // cf::CEventFile in CfScript.hpp is a different type; this TU uses the global
 // ::CEventFile (retail OnFileEvent__15CModelDispEquipFP10CEventFile).
 struct CEventFile {
-    u32 field_00;          // 0x00 event type
+    s32 field_00;          // 0x00 event type (cmpwi in OnFileEvent)
     CFileHandle* field_04; // 0x04 file handle
 };
 
@@ -32,10 +32,10 @@ struct CModelDispFileCtx {
 // Object pointed to by animPtrs[i] in func_801FFADC: four color words at +0x40.
 struct CModelDispAnimColor {
     u8 _00[0x40];
-    f32 field_0x40; // +0x40
-    f32 field_0x44; // +0x44
-    f32 field_0x48; // +0x48
-    f32 field_0x4C; // +0x4C
+    u32 field_0x40; // +0x40
+    u32 field_0x44; // +0x44
+    u32 field_0x48; // +0x48
+    u32 field_0x4C; // +0x4C
 };
 
 // View of the 0x53C-byte act-param object. The retail cf::CActParamAnimGame is
@@ -61,6 +61,15 @@ struct CActParamHolder {
     u32 unk_55C;      // +0x54C
     CActParamAnimView actParams[2]; // +0x550 (0xA78 bytes)
     void* animModelPtrs[2]; // +0xFC8 animation model slot pointers (indexed by r5/i)
+};
+
+// Flat view of the memory past the embedded holder (0xFD0): the animPtrs
+// array at holder+0xFF4 (== CModelDispEquip+0x1004). func_801FFADC reads the
+// animation-model color slots through this so MWCC keeps the holder base and
+// emits 0xff4(rX) like retail.
+struct CActParamHolderTail {
+    u8 _00[0xFF4];      // 0x00..0xFF4
+    void* animPtrs[2];  // 0xFF4 = CModelDispEquip+0x1004
 };
 
 class CModelDispEquip {

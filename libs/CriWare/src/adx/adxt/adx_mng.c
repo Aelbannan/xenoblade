@@ -30,8 +30,8 @@ int ADXMNG_CallMainServerFunctions(void) {
     }
     if (state == 1) goto case1;
     if (state == 2) goto case2;
-    if (state != 3) goto out;
-    goto case3;
+    if (state == 3) goto case3;
+    goto out;
 case1:
     SVM_ExecSvrVint();
     SVM_ExecSvrUsrVsync();

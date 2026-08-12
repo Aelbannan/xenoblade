@@ -197,23 +197,43 @@ struct CColiBoundsPoint {
 };
 
 void func_804B45E4(CColiBoundsPoint* p) {
-    if (lbl_eu_80665944->max[0] < p->x + p->radius) {
-        lbl_eu_80665944->max[0] = p->x + p->radius;
+    // Per-sub-block radius temp: retail reloads it at the top of every check
+    // (the bound loads reuse the FPR, so the radius is re-fetched per block).
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->max[0] < p->x + r) {
+            lbl_eu_80665944->max[0] = p->x + r;
+        }
     }
-    if (lbl_eu_80665944->min[0] > p->x - p->radius) {
-        lbl_eu_80665944->min[0] = p->x - p->radius;
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->min[0] > p->x - r) {
+            lbl_eu_80665944->min[0] = p->x - r;
+        }
     }
-    if (lbl_eu_80665944->max[1] < p->y + p->radius) {
-        lbl_eu_80665944->max[1] = p->y + p->radius;
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->max[1] < p->y + r) {
+            lbl_eu_80665944->max[1] = p->y + r;
+        }
     }
-    if (lbl_eu_80665944->min[1] > p->y - p->radius) {
-        lbl_eu_80665944->min[1] = p->y - p->radius;
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->min[1] > p->y - r) {
+            lbl_eu_80665944->min[1] = p->y - r;
+        }
     }
-    if (lbl_eu_80665944->max[2] < p->z + p->radius) {
-        lbl_eu_80665944->max[2] = p->z + p->radius;
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->max[2] < p->z + r) {
+            lbl_eu_80665944->max[2] = p->z + r;
+        }
     }
-    if (lbl_eu_80665944->min[2] > p->z - p->radius) {
-        lbl_eu_80665944->min[2] = p->z - p->radius;
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->min[2] > p->z - r) {
+            lbl_eu_80665944->min[2] = p->z - r;
+        }
     }
 }
 
@@ -231,23 +251,43 @@ struct CColiBoundsPoint2 {
 };
 
 void func_804B46A8(CColiBoundsPoint2* p) {
-    if (lbl_eu_80665944->max[0] < p->x + p->radius) {
-        lbl_eu_80665944->max[0] = p->x + p->radius;
+    // Per-sub-block radius temp: retail reloads it at the top of every check
+    // (the bound loads reuse the FPR, so the radius is re-fetched per block).
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->max[0] < p->x + r) {
+            lbl_eu_80665944->max[0] = p->x + r;
+        }
     }
-    if (lbl_eu_80665944->min[0] > p->x - p->radius) {
-        lbl_eu_80665944->min[0] = p->x - p->radius;
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->min[0] > p->x - r) {
+            lbl_eu_80665944->min[0] = p->x - r;
+        }
     }
-    if (lbl_eu_80665944->max[1] < p->y + p->radius) {
-        lbl_eu_80665944->max[1] = p->y + p->radius;
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->max[1] < p->y + r) {
+            lbl_eu_80665944->max[1] = p->y + r;
+        }
     }
-    if (lbl_eu_80665944->min[1] > p->y - p->radius) {
-        lbl_eu_80665944->min[1] = p->y - p->radius;
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->min[1] > p->y - r) {
+            lbl_eu_80665944->min[1] = p->y - r;
+        }
     }
-    if (lbl_eu_80665944->max[2] < p->z + p->radius) {
-        lbl_eu_80665944->max[2] = p->z + p->radius;
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->max[2] < p->z + r) {
+            lbl_eu_80665944->max[2] = p->z + r;
+        }
     }
-    if (lbl_eu_80665944->min[2] > p->z - p->radius) {
-        lbl_eu_80665944->min[2] = p->z - p->radius;
+    {
+        f32 r = p->radius;
+        if (lbl_eu_80665944->min[2] > p->z - r) {
+            lbl_eu_80665944->min[2] = p->z - r;
+        }
     }
 }
 
@@ -767,26 +807,28 @@ void func_804B4BDC(CColiList* self, CColiListItem* node) {
 void func_804B4C7C(CColiList* self, CColiListItem* findNode) {
     func_804B1DC0(findNode, 0);
     CColiListItem* cur = self->head;
-    if (cur != 0) {
-        for (;;) {
-            if (cur == findNode) {
-                CColiListItem* prev = cur->prev;
-                CColiListItem* next = cur->next;
-                if (prev != 0) {
-                    prev->next = next;
-                    if (next != 0) next->prev = prev;
-                    if (self->head == findNode) self->head = prev;
-                } else if (next != 0) {
-                    next->prev = 0;
-                    if (self->head == findNode) self->head = next;
-                } else {
-                    if (self->head == findNode) self->head = 0;
-                }
-                break;
+    // Explicit pre-check: retail keeps the head test separate from the loop
+    // tail condition (the head value stays live in r0 for the final branch's
+    // head comparison), so a plain while would merge the two checks.
+    if (cur == 0) return;
+    do {
+        if (cur == findNode) {
+            CColiListItem* prev = cur->prev;
+            CColiListItem* next = cur->next;
+            if (prev != 0) {
+                prev->next = next;
+                if (next != 0) next->prev = prev;
+                if (self->head == findNode) self->head = prev;
+            } else if (next != 0) {
+                next->prev = 0;
+                if (self->head == findNode) self->head = next;
+            } else {
+                if (self->head == findNode) self->head = 0;
             }
-            cur = cur->next;
+            return;
         }
-    }
+        cur = cur->next;
+    } while (cur != 0);
 }
 
 // Shared per-sector query structures used by the walk funcs below.
@@ -942,19 +984,23 @@ void CTaskColiManager::Move() {
             }
             node = node->next;
         }
+        node = mHead;
+        while (node != 0) {
+            func_804B0DF4(node);
+            node = node->next;
+        }
+        CColiMoveNode* front = mHead;
+        CColiMoveNode* p = mHead->prev;
+        while (p != 0) {
+            front = p;
+            p = p->prev;
+        }
+        // Volatile final store: retail restores LR first in the epilogue;
+        // MWCC only emits that order when the function's last store is
+        // volatile (MWCC_REFERENCE, CriWare adx_mwii pattern).
+        CColiMoveNode* volatile* mhp = &mHead;
+        *mhp = front;
     }
-    node = mHead;
-    while (node != 0) {
-        func_804B0DF4(node);
-        node = node->next;
-    }
-    CColiMoveNode* front = mHead;
-    CColiMoveNode* p = mHead->prev;
-    while (p != 0) {
-        front = p;
-        p = p->prev;
-    }
-    mHead = front;
 }
 
 void CTaskColiManager::Draw() {

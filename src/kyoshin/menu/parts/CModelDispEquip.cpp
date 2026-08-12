@@ -221,16 +221,16 @@ extern "C" __declspec(noinline) void func_801FFADC(CModelDispEquip* self) {
         self->state20 = 1;
     }
     CActParamHolder* holder = &self->actParamHolder;
-    void* obj = self->actParamHolder.field_0x00;
+    void* obj = holder->field_0x00;
     if (obj != 0) {
-        void** vtbl = *(void***)obj;
-        ((void (*)(void*, f32))vtbl[18])(obj, self->alpha);
+        ((void (*)(void*, f32))(*(void***)obj)[18])(obj, self->alpha);
     }
-    f32 tmp[4];
-    func_801FFAB4(tmp, lbl_eu_80668270, lbl_eu_80668270, lbl_eu_80668270,
+    u32 tmp[4];
+    func_801FFAB4((float*)tmp, lbl_eu_80668270, lbl_eu_80668270, lbl_eu_80668270,
                   lbl_eu_80668270 - self->alpha);
     for (u8 i = 0; i < 2; i++) {
-        CModelDispAnimColor* p = (CModelDispAnimColor*)self->animPtrs[i];
+        CModelDispAnimColor* p =
+            (CModelDispAnimColor*)((CActParamHolderTail*)holder)->animPtrs[i];
         if (p != 0) {
             p->field_0x40 = tmp[0];
             p->field_0x44 = tmp[1];
@@ -297,19 +297,20 @@ extern "C" void func_80200CE8() {}
 // handle. The 9-slot scan falls back to the dedicated model slot (0x1090),
 // whose buffer becomes modelData (only for event type 1).
 int CModelDispEquip::OnFileEvent(CEventFile* event) {
+    u8* d;
     for (u8 i = 0; i < 9; i++) {
         FileSlot* slot = &fileSlots[i];
-        if (slot->handle == event->field_04) {
-            u8* d = slot->handle->mData;
-            slot->handle->mData = 0;
-            slot->data = d;
-            slot->handle = 0;
-            return 1;
-        }
+        if (slot->handle != event->field_04)
+            continue;
+        d = slot->handle->mData;
+        slot->handle->mData = 0;
+        slot->data = d;
+        slot->handle = 0;
+        return 1;
     }
     if (modelFileHandle == event->field_04) {
         if (event->field_00 == 1) {
-            u8* d = modelFileHandle->mData;
+            d = modelFileHandle->mData;
             modelFileHandle->mData = 0;
             modelData = d;
             func_804CC1BC(lbl_eu_8065FC18);

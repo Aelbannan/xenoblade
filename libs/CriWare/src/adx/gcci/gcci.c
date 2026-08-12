@@ -189,14 +189,14 @@ void gcCiExecHndl(GciHndl *h) {
         goto done;
     case_fatal:
         h->state = 3;
-        ((u8 *)&lbl_eu_805E6B7C)[4] = 3;
+        lbl_eu_805E6B7C.flag = 3;
         goto done;
     case_done: {
         s32 tr = h->length * h->sctLen;
         DCInvalidateRange(h->buf, tr);
         s32 np = h->pos + h->length;
-        s32 fs = h->fileSize;
         s32 nt = np * h->sctLen;
+        s32 fs = h->fileSize;
         h->transferred = tr;
         h->pos = np;
         if (nt > fs) {
@@ -206,16 +206,16 @@ void gcCiExecHndl(GciHndl *h) {
             DCStoreRange(dst, over);
         }
         h->state = 1;
-        ((u8 *)&lbl_eu_805E6B7C)[4] = 1;
+        lbl_eu_805E6B7C.flag = 1;
     } goto done;
     case_err: {
         s32 ts = DVDGetTransferredSize(&h->fi);
         DCInvalidateRange(h->buf, ts);
         s32 nsct = ts / h->sctLen;
+        h->transferred = h->sctLen * nsct;
         h->pos += nsct;
-        h->transferred = nsct * h->sctLen;
         h->state = 0;
-        ((u8 *)&lbl_eu_805E6B7C)[4] = 0;
+        lbl_eu_805E6B7C.flag = 0;
     } goto done;
     done:;
     }

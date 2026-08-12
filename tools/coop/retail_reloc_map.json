@@ -1,5 +1,5 @@
 {
-  "count": 2421,
+  "count": 2422,
   "entries": {
     "Decibel2RatioTable__Q44nw4r3snd6detail4Util": {
       "R_PPC_ADDR16_HA": {
@@ -23599,6 +23599,20 @@
         ]
       }
     },
+    "main/kyoshin/cf/object/CfObjectActor@523": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_80667748",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/cf/object/CfObjectActor"
+        ]
+      }
+    },
     "main/kyoshin/code_800B06A4@2413": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
@@ -31970,8 +31984,8 @@
       }
     }
   },
-  "function_pairs": 10247,
-  "generated": "2026-08-12T10:29:11.603052",
+  "function_pairs": 10265,
+  "generated": "2026-08-12T11:08:34.639846",
   "region": "us",
   "units_scanned": 1148,
   "version": 1

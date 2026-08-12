@@ -32,11 +32,41 @@ CTTask<cf::CTaskREvent>::~CTTask() {}
 
 class CEventFile;
 
-void __ct__cf_CTaskREvent(){}
+// Retail ctor symbol is the pre-mangled name __ct__cf_CTaskREvent (a global
+// function, not a cf::CTaskREvent member); still a stub - body unmatched.
+// Returns the object pointer so func_801665A4 can chain the allocation.
+// noinline keeps the call a real bl (an empty inline body would make MWCC
+// fold the ctor away and shrink func_801665A4 below the retail size).
+__declspec(noinline) CTaskREvent* __ct__cf_CTaskREvent(CTaskREvent* pMem, CScnNw4r* pScene, CView* pView) {
+    return pMem;
+}
 
 cf::CTaskREvent::~CTaskREvent() {}
 
-void func_80164410(){}
+// Returns 1 while an event sequence is active: manager present, sequence
+// index valid, the +0xB0 gate set, or the +0x6C bit0 flag raised. The final
+// `mgr &&` reuses the CR1 null compare from the first guard (retail shape).
+int func_80164410() {
+    CEventMgr* mgr = lbl_eu_80664240;
+    if (mgr == 0) return 0;
+    if (mgr->field_0x1D4 != -1) return 1;
+    if (mgr->field_0xB0 != 0) return 1;
+    // Split the `mgr && flag` value into an explicit pointer-test if/else so
+    // MWCC materializes the 0/1 word via the CR1 compare (reused from the
+    // first guard) and branch-selects the return (MWCC_REFERENCE
+    // __wpadGetExtType / HBMDelete patterns).
+    u32 flag;
+    if (mgr != 0) {
+        flag = mgr->field_0x6C & 1;
+    } else {
+        flag = 0;
+    }
+    if (flag != 0) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
 
 // Convert the .sdata u32 counter to float and scale it. MWCC lowers the
 // u32->float conversion through the 0x4330 double trick (xoris sign flip +
@@ -54,11 +84,26 @@ void func_801644BC(u32 arg) {
     func_80166150(mgr, arg);
 }
 
-void func_801644D8(void* self){}
+// func_8016462C: called with a table index by func_801644D8; stub for an
+// as-yet-unmatched helper (C linkage inherited from the header declaration
+// so the retail plain symbol is emitted). noinline so the call stays a real
+// bl (an empty inline body would make MWCC DCE the whole walk loop).
+__declspec(noinline) void func_8016462C(int index) {}
+
+// Walks the 32-entry event-id table; for each entry strictly above `lower`
+// and at most `upper`, forwards the index to func_8016462C. Only runs when
+// `type` equals 0x20.
+void func_801644D8(CTaskREvent* self, int type, int upper, int lower) {
+    if (type != 0x20) return;
+    for (u32 i = 0; i < 0x20; i++) {
+        s16 v = lbl_eu_80502F90[i];
+        if (v > lower && v <= upper) {
+            func_8016462C(i);
+        }
+    }
+}
 
 void func_8016455C(){}
-
-void func_8016462C(){}
 
 void func_80164724(){}
 
@@ -91,7 +136,21 @@ void func_80164C48(){}
 
 void func_80164CFC(){}
 
-void func_80164DB8(){}
+// Event-update kick: when the manager is present and its +0xB0 gate is set,
+// poke the sequence processor, run the bit7-gated cleanup, then clear the
+// +0x1D0 word and the +0x6C bit4 flag (re-reading the global after the calls
+// because they may have replaced the manager).
+void func_80164DB8() {
+    CEventMgr* mgr = lbl_eu_80664240;
+    if (mgr == 0) return;
+    if (mgr->field_0xB0 == 0) return;
+    func_80168484(1);
+    if ((lbl_eu_80663E28 & 0x01000000) == 0) {
+        func_80043BC4();
+    }
+    lbl_eu_80664240->field_0x1D0 = 0;
+    lbl_eu_80664240->field_0x6C &= ~0x10;
+}
 
 void cf::CTaskREvent::Init() {}
 
@@ -154,13 +213,48 @@ __declspec(noinline) void func_80166050(CTaskREvent* self, int arg) {}
 
 u32 func_80166150(CEventMgr* self, u32 arg) { return 0; }
 
-void cf::CTaskREvent::cbRenderBefore() {}
+// Render-before hook: if the event manager's CRI player is idle, copy the
+// current view's rect into our player. Skips when this task or the manager
+// holds a live CRI controller.
+void cf::CTaskREvent::cbRenderBefore() {
+    if ((u32)this->mCri == 0xFFFFFFFF) return;
+    CView* view = getCurrentView__5CViewFv();
+    CEventMgr* mgr = lbl_eu_80664240;
+    u32 result;
+    // Nested if/else materializes the CRI-player result into r3 with a
+    // per-branch `li r3,0` (retail shape); a flat `&&`/else chain merges the
+    // zero-blocks and shrinks the function.
+    if (mgr != 0) {
+        if ((u32)mgr->mCri != 0xFFFFFFFF) {
+            result = func_80459AC4__7CLibCriFv(mgr->mCri);
+        } else {
+            result = 0;
+        }
+    } else {
+        result = 0;
+    }
+    if (result != 0) return;
+    ml::CRect rect;
+    func_8043EA88__5CViewFRQ22ml5CRectP5CView(rect, view);
+    func_80459ACC__7CLibCriFv(this->mCri, rect);
+}
 
 void func_801662E8(void* self){}
 
 void func_801663A8(void* self){}
 
-void func_801665A4(){}
+// Allocates a CTaskREvent (size 0x1F8) from the work-thread heap and
+// registers it into pParent. Returns the task (or 0 if allocation failed).
+CTaskREvent* func_801665A4(CProcess* pParent, CScnNw4r* pScene, CView* pView) {
+    u8* mem = static_cast<u8*>(
+        mtl::MemManager::allocate(0x1f8, CWorkThreadSystem::getWorkMem()));
+    CTaskREvent* task = reinterpret_cast<CTaskREvent*>(mem);
+    if (mem != 0) {
+        task = __ct__cf_CTaskREvent(task, pScene, pView);
+    }
+    task->Regist(pParent, false);
+    return task;
+}
 
 void viAfterDrawDone__11CDeviceVICbFv() {}
 

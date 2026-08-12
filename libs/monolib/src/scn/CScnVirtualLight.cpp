@@ -8,6 +8,7 @@
 #include "libs/monolib/src/scn/CScnCameraMan.hpp"
 #include "libs/monolib/src/scn/CScnFilterMan.hpp"
 #include "monolib/math/CVec3.hpp"
+#include "monolib/math/CVec4.hpp"
 #include "functions.hpp"
 
 void func_80492030(void) {}
@@ -176,9 +177,21 @@ extern "C" __declspec(noinline) CVirtualLightAmb* func_804930BC(CScnVirtualLight
 
 // Same family as func_804930BC but with the extra 3-float `val` pointer (r6)
 // and the f32 scalar in f1; creates+initializes the light object at `field`.
+// The direction-vector -> angle conversion keeps the sqrt(x^2+z^2) call even
+// though its result is unused (extern call, may warn) - retail computes it
+// into the dead f2 slot.
 extern "C" __declspec(noinline) void func_804933AC(CScnVirtualLightData* self, u8* field,
                               const func_800407C8_tmp* data, const func_800407C8_tmp* val,
-                              f32 value) {}
+                              f32 value) {
+    // Direction-vector -> dir-light angles. The sqrt(z^2+x^2) result is unused
+    // by the call; retail still keeps the call (it may warn) and the dead fmr
+    // of the result.
+    f32 z2 = val->unk00[2] * val->unk00[2];
+    f32 t1 = func_8006D410(-func_8004CC40(-val->unk00[0]));
+    f32 len = func_8004EC78(z2 + val->unk00[0] * val->unk00[0]);
+    f32 t2 = func_8006D410(func_8004CC40(-val->unk00[1]));
+    func_80493300(self, field, data, value, t1, t2);
+}
 
 void func_80492DB8(CScnVirtualLightData* self, const func_800407C8_tmp* arg, f32 val) {
     func_804930BC(self, &self->_0C[0], arg, val);
@@ -296,8 +309,9 @@ extern "C" __declspec(noinline) CScnVirtualLightNode* func_804932BC(CScnVirtualL
 // Creates a CVirtualLightDir for the given light-data field and initializes it
 // from `data` (4 words), `val1` and the two direction floats, returning the
 // new light. Sibling of func_804930BC (amb variant); the if/else phi shape
-// pins the store to the merge point like retail.
-CVirtualLightDir* func_80493300(CScnVirtualLightData* self, u8* field, const func_800407C8_tmp* data,
+// pins the store to the merge point like retail. noinline keeps the bl from
+// func_804933AC out-of-line (retail calls it).
+__declspec(noinline) CVirtualLightDir* func_80493300(CScnVirtualLightData* self, u8* field, const func_800407C8_tmp* data,
                    f32 val1, f32 val2, f32 val3) {
     CVirtualLightDir* ptr;
     void* mem = mtl::MemManager::allocate(0x3C, self->value08);
@@ -456,9 +470,36 @@ void func_80494188(CScnVirtualLightPool* self, CScnVirtualLightPoolSlot* slot) {
     }
 }
 
-void func_80494208(){}
+// Advance the light blend: bump the +0xBC factor toward a clamp (add+upper
+// bound when `flag` is set, subtract+lower bound otherwise), then blend the
+// two position vec4s (+0x9C scaled by t, +0x8C scaled by 1-t) into +0xAC
+// (retail func_80494208).
+void func_80494208(CScnVirtualLightData* self, int flag) {
+    if (flag != 0) {
+        float v = lbl_eu_8066AA78 + self->field_0xBC;
+        self->field_0xBC = v;
+        if (v > lbl_eu_8066AA18) {
+            self->field_0xBC = lbl_eu_8066AA18;
+        }
+    } else {
+        float v = self->field_0xBC - lbl_eu_8066AA78;
+        self->field_0xBC = v;
+        if (v < lbl_eu_8066AA24) {
+            self->field_0xBC = lbl_eu_8066AA24;
+        }
+    }
+    ml::CVec4 v18;
+    ml::CVec4 v8;
+    func_80058BD8(&v18, (const ml::CVec4*)&self->field_0x9C, self->field_0xBC);
+    copyWord4((u32*)&self->field_0xAC, (const u32*)&v18);
+    func_80058BD8(&v8, (const ml::CVec4*)&self->field_0x8C, lbl_eu_8066AA18 - self->field_0xBC);
+    func_804942BC((f32*)&self->field_0xAC, (const f32*)&v8);
+}
 
-void func_804942BC(f32* a, const f32* b) {
+// Retail func_804942BC: vec4 += (a[i] += b[i]). noinline keeps the bl from
+// func_80494208 out-of-line (retail calls it; the trivial body would otherwise
+// be inlined, dropping the call-site reloc).
+__declspec(noinline) void func_804942BC(f32* a, const f32* b) {
     a[0] += b[0];
     a[1] += b[1];
     a[2] += b[2];

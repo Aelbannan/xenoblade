@@ -8,6 +8,30 @@ extern func_800407C8_tmp lbl_eu_80658648;
 extern f32 lbl_eu_8066AA14;
 extern f32 lbl_eu_8066AA18;
 
+// Blend-factor step/clamp constants for func_80494208 (sdata2).
+extern f32 lbl_eu_8066AA78;
+extern f32 lbl_eu_8066AA24;
+
+// Vec4 scale helper (defined in kyoshin/cf/CTaskEnvironment.cpp, flat-name
+// symbol): out = in * s with w unscaled.
+namespace ml {
+struct CVec4;  // full definition in monolib/math/CVec4.hpp
+}
+extern "C" void func_80058BD8(ml::CVec4* out, const ml::CVec4* in, float s);
+
+// Single-float math helpers used by func_804933AC's direction-vector to
+// dir-light-angle conversion (flat-name retail symbols; not yet decompiled).
+extern "C" f32 func_8004CC40(f32 value);
+extern "C" f32 func_8006D410(f32 value);
+extern "C" f32 func_8004EC78(f32 value);
+
+// Word-array copy helper (CTaskEnvironment.cpp, flat-name symbol).
+extern "C" void copyWord4(u32* dst, const u32* src);
+
+// Same-TU vec4-add helper (defined in CScnVirtualLight.cpp): re-declared with
+// C linkage so func_80494208's call reloc stays flat.
+extern "C" void func_804942BC(f32* a, const f32* b);
+
 // Retail vtable data for the reslist<CVirtualLightObjPtr> family. The
 // flattened ctors below store them manually (compiler vtables would emit
 // __vt__ relocs the retail lacks; cf. CScnFilterMan.cpp).
@@ -34,7 +58,12 @@ struct CScnVirtualLightData {
     u8 _50[0x14];
     u32 value64;
     u32 value68;
-    u8 _6C[0x64];
+    u8 _6C[0x20];
+    f32 field_0x8C[4];  // vec4 (blend target)
+    f32 field_0x9C[4];  // vec4 (blend start)
+    f32 field_0xAC[4];  // vec4 (blend current, += result)
+    f32 field_0xBC;     // blend factor, advanced/clamped by func_80494208
+    u8 _C0[0x10];
     u8 enabled;
     u8 _D1[0x3];
     f32 valueD4;
@@ -65,6 +94,13 @@ extern "C" void func_804C03A0(u8* self, int value);
 
 struct CVirtualLightAmb;  // defined in CVirtualLightAmb.hpp
 class CVirtualLightDir;   // defined in CVirtualLightDir.cpp
+
+// Dir-light factory (defined later in CScnVirtualLight.cpp). Declared with C
+// linkage here so func_804933AC's call reloc stays flat (retail func_80493300);
+// the plain definition below inherits the linkage.
+extern "C" CVirtualLightDir* func_80493300(CScnVirtualLightData* self, u8* field,
+                                           const func_800407C8_tmp* data, f32 val1,
+                                           f32 val2, f32 val3);
 
 // Amb-light constructor (defined in CVirtualLightAmb.cpp, flat-name symbol):
 // builds the base light, installs the vtable and arms the slot (+0x2C = 1).

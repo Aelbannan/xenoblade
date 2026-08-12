@@ -20,6 +20,23 @@ extern "C" int func_801C34B0(FxSoundSlot* slots, int index, int frame);
 // the call reloc binds to the retail-unmangled name.
 extern "C" FxSoundSlot* func_801C32E8(FxSoundSlot* self);
 
+// FX-slot pair destructor (retail __dt__801C3340, defined in
+// code_801C2C14.cpp): clears both slots' effects and destroys the member
+// array. extern "C" keeps the call reloc bound to the retail-unmangled name
+// (a plain C++ declaration would have MWCC append the parameter mangling).
+extern "C" void* __dt__801C3340(FxSoundSlot* self, int flag);
+
+// FX effect applicator (retail func_801C358C, defined in code_801C2C14.cpp):
+// tail-calls func_801C30BC and passes its bool result through in r3 (the
+// fork's definition returns void; the bool declaration lets callers test it).
+// extern "C" keeps the call reloc bound to the retail-unmangled name.
+extern "C" bool func_801C358C(FxSoundSlot* slots, int idx, int fxType, u32 memSize, u32 size);
+
+// FX work-buffer size query (defined in code_800A75FC.cpp): returns the
+// per-slot allocation for FX slot index 0 or 1 (or 0). extern "C" keeps the
+// call reloc bound to the retail-unmangled name.
+extern "C" int func_800A9E50(int index);
+
 // Retail nw4r::snd::SoundArchive::GetSoundCount() - the fork's
 // snd_SoundArchive.h does not declare it (only the detail file-reader
 // variant); declared here with extern "C" so the call reloc binds to the
@@ -123,6 +140,10 @@ extern u8 lbl_eu_80575918[0x10];
 extern "C" void __construct_array(void*, void* ctor, void* dtor, int size, int count);
 extern "C" void* __register_global_object(void* object, void* destructor, void* registration);
 
+// Array-destruction helper (MWCC runtime; extern "C" keeps the call reloc
+// bound to the retail-unmangled name, same as __construct_array above).
+extern "C" void __destroy_arr(void*, void* dtor, int size, int count);
+
 // Sound-pause request parameters (retail .bss, 0x10 bytes).
 extern cf::CfSoundPauseParam lbl_eu_80576528;
 
@@ -130,6 +151,10 @@ extern cf::CfSoundPauseParam lbl_eu_80576528;
 // the readonly pool so MWCC can hoist the lfs loads early).
 extern const float lbl_eu_80667E98;
 extern const float lbl_eu_80667E9C;
+
+// Default FX-send volume (retail .sdata2; passed to func_801C0DC4 by
+// func_801C0FCC when starting a sound slot at the default volume).
+extern const float lbl_eu_80667EA0;
 
 // Master-volume backing store (retail .sdata, 8 bytes; written by
 // func_801BFFAC).

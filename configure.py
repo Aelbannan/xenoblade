@@ -1376,13 +1376,13 @@ config.libs = [
     criwareLib(
         "libadxwii",
         [
-            Object(NonMatching, "CriWare/src/adx/adxf/adx_fini.c", mw_version = "Wii/1.1", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "CriWare/src/adx/adxf/adx_fini.c", extra_cflags=["-O4,s"]),
             Object(NonMatching, "CriWare/src/adx/adxf/adx_fs.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/adxf/adx_fcch.c", mw_version = "Wii/1.1"),
-            Object(NonMatching, "CriWare/src/adx/adxt/adx_fsvr.c", mw_version = "Wii/1.1"),
+            Object(NonMatching, "CriWare/src/adx/adxt/adx_fsvr.c"),
             Object(NonMatching, "CriWare/src/adx/adxt/adx_inis.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/adxt/adx_lsc.c", mw_version = "Wii/1.1"),
-            Object(NonMatching, "CriWare/src/adx/adxt/adx_mng.c", mw_version = "Wii/1.1"),
+            Object(NonMatching, "CriWare/src/adx/adxt/adx_mng.c", mw_version = "Wii/1.1"),  # Wii/1.1: dispatch last-test direct form (if (state==3) goto case3; goto out;) -> 2/2 FULL_MATCH (GC-tuned negated form only matches GC),
             Object(NonMatching, "CriWare/src/adx/adxt/adx_sfa.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/adxt/adx_sjd.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/adxt/adx_stmc.c", mw_version = "Wii/1.1"),

@@ -8,6 +8,32 @@ typedef struct {
     int size;
 } SJ_CHUNK;
 
+/* SJ object vtable - the first word of every SJRBF/SJMEM object points to
+ * this function table (retail data at lbl_eu_80565C30 / lbl_eu_80565C00).
+ * Slot names come from the retail vtable relocations: slot 3 = Destroy,
+ * 4 = GetUuid, 5 = Reset, 6 = GetChunk, 7 = UngetChunk, 8 = PutChunk,
+ * 9 = get-avail (SJRBF fn_80397A74 / SJMEM GetNumData), 10 = IsGetChunk,
+ * 11 = EntryErrFunc. Slots 0-2 are NULL in retail (reserved base-object
+ * methods). Slot 9 is also invoked with a 3-arg list at one call site
+ * (retail passes the vtable as the 3rd arg). */
+struct SjObjVtbl {
+    void (*reserved0)(void *self);                               /* 0x00 NULL in retail */
+    void (*reserved1)(void *self);                               /* 0x04 NULL in retail */
+    void (*reserved2)(void *self);                               /* 0x08 NULL in retail */
+    void (*destroy)(void *self);                                 /* 0x0C SJRBF_Destroy */
+    void *(*getUuid)(void *self);                                /* 0x10 SJRBF_GetUuid */
+    void (*reset)(void *self);                                   /* 0x14 SJRBF_Reset */
+    int (*getChunk)(void *self, int mode, int size, void *out);  /* 0x18 SJRBF_GetChunk */
+    int (*ungetChunk)(void *self, int mode, void *chunk);        /* 0x1C SJRBF_UngetChunk */
+    int (*putChunk)(void *self, int mode, void *chunk);          /* 0x20 SJRBF_PutChunk */
+    int (*getAvail)(void *self, int mode);                       /* 0x24 SJRBF fn_80397A74 */
+    int (*isGetChunk)(void *self, int mode, int size, int *out); /* 0x28 SJRBF_IsGetChunk */
+    void (*entryErrFunc)(void *self, void *cb, void *arg);       /* 0x2C SJRBF_EntryErrFunc */
+};
+
+/* Fetch an SJ object's method table (its first word). */
+#define SJ_VT(obj) (*(struct SjObjVtbl **)(obj))
+
 typedef struct {
     u16 loopFlag;
     u16 format;
@@ -281,7 +307,7 @@ void AXRNA_Destroy(void* self) {
     for (i = 0; i < (s8)((u8*)self)[2]; i++) {
         void* sj = *(void**)((u8*)self + i * 4 + 0x30);
         if (sj != NULL) {
-            ((void(*)(void*))(*(void***)sj)[3])(sj);
+            SJ_VT(sj)->destroy(sj);
         }
         GCRNA_LockCs();
         {
@@ -318,12 +344,12 @@ void AXRNA_SetTransSw(void* self, s32 sw) {
         p48 = (u8*)self + 0x48;
         for (i = 0; i < (s8)((u8*)self)[3]; i++) {
             void* sj = *(void**)(ch + 0x30);
-            ((void(*)(void*))(*(void***)sj)[5])(sj);
+            SJ_VT(sj)->reset(sj);
             memset(p38, 0, 8);
             memset(p48, 0, 8);
             if (*(s32*)((u8*)self + 0xb4) == 1) {
                 void* sj2 = *(void**)(ch + 0xc8);
-                ((void(*)(void*))(*(void***)sj2)[5])(sj2);
+                SJ_VT(sj2)->reset(sj2);
             }
             *(s32*)(ch + 0x58) = 0;
             ch += 4;
@@ -434,13 +460,27 @@ s32 AXRNA_GetNumData(void* self) {
     {
         u8* e = (u8*)self + (((s32)((s8)*(u8*)((u8*)self + 3) - 1) << 2) & 0xFFFFFFFC);
         void* p = *(void**)((u8*)e + 0x30);
-        void* q = *(void**)((u8*)p + 0);
-        u32 r = (u32)((s32 (*)(void*, s32, void*))*(void**)((u8*)q + 36))(p, 0, q);
+        struct SjObjVtbl *q = SJ_VT(p);
+        /* Slot 9 in its 3-arg (avail) shape. */
+        u32 r = (u32)((s32 (*)(void*, s32, void*))q->getAvail)(p, 0, q);
         return 0x1000 - (s32)(r >> 1) - *(s32*)((u8*)self + 0x74);
     }
 }
 
-typedef struct AXRNA { char pad0[3]; signed char type; char pad4[0x2c]; void *objs[1]; } AXRNA; int AXRNA_GetNumRoom(AXRNA *rna) { if (rna == NULL) { return -1; } void *obj = rna->objs[rna->type - 1]; int (*func)(void *, int) = ((int (**)(void *, int))(*(void ***)obj))[9]; return (unsigned int)func(obj, 0) >> 1; }
+typedef struct AXRNA {
+    char pad0[3];
+    signed char type;
+    char pad4[0x2c];
+    void *objs[1];
+} AXRNA;
+
+int AXRNA_GetNumRoom(AXRNA *rna) {
+    if (rna == NULL) {
+        return -1;
+    }
+    void *obj = rna->objs[rna->type - 1];
+    return (unsigned int)SJ_VT(obj)->getAvail(obj, 0) >> 1;
+}
 
 #pragma auto_inline off
 void axrna_update_play(void* self) {
@@ -478,6 +518,8 @@ void axrna_update_play(void* self) {
     if (r28 > 0) {
         SJ_CHUNK out;
         for (i = 0; i < (s8)((u8*)self)[3]; i++) {
+            /* NB: keep the un-hoisted object load; hoisting it here shifts
+             * register allocation on this function (baseline diff profile). */
             ((void(*)(void*, s32, s32, void*))((*(void***)*(void**)((u8*)self + i * 4 + 0x30))[6]))(
                 *(void**)((u8*)self + i * 4 + 0x30), 1, r28 * 2, &out);
             ((void(*)(void*, s32, void*))((*(void***)*(void**)((u8*)self + i * 4 + 0x30))[8]))(
@@ -512,23 +554,23 @@ void axrna_start_trans(void* self) {
             goto next;
         {
             void* sj = *(void**)(ch + 0x30);
-            ((void(*)(void*, s32, s32, void*))(*(void***)sj)[6])(sj, 0, 0x2000, &chunkA);
+            SJ_VT(sj)->getChunk(sj, 0, 0x2000, &chunkA);
         }
         {
             void* obj = *(void**)(ch + 0x28);
-            ((void(*)(void*, s32, s32, void*))(*(void***)obj)[6])(obj, 1, chunkA.size, &chunkB);
+            SJ_VT(obj)->getChunk(obj, 1, chunkA.size, &chunkB);
         }
         size = (chunkA.size < chunkB.size) ? chunkA.size : chunkB.size;
         size = (size / 0x20) * 0x20;
         SJ_SplitChunk(&chunkA, size, &chunkA, &chunkC);
         {
             void* sj = *(void**)(ch + 0x30);
-            ((void(*)(void*, s32, void*))(*(void***)sj)[7])(sj, 0, &chunkC);
+            SJ_VT(sj)->ungetChunk(sj, 0, &chunkC);
         }
         SJ_SplitChunk(&chunkB, size, &chunkB, &chunkD);
         {
             void* obj = *(void**)(ch + 0x28);
-            ((void(*)(void*, s32, void*))(*(void***)obj)[7])(obj, 1, &chunkD);
+            SJ_VT(obj)->ungetChunk(obj, 1, &chunkD);
         }
         if (size == 0)
             return;
@@ -543,9 +585,9 @@ void axrna_start_trans(void* self) {
         DCFlushRange(chunkA.ptr, size);
         if (*(s32*)(ch + 0x58) == 1) {
             void* obj = *(void**)(ch + 0x28);
-            ((void(*)(void*, s32, void*))(*(void***)obj)[8])(obj, 0, p38);
+            SJ_VT(obj)->putChunk(obj, 0, p38);
             obj = *(void**)(ch + 0x30);
-            ((void(*)(void*, s32, void*))(*(void***)obj)[8])(obj, 1, p48);
+            SJ_VT(obj)->putChunk(obj, 1, p48);
             *(s32*)(ch + 0x58) = 0;
             if (i == (s8)((u8*)self)[3] - 1) {
                 *(s32*)((u8*)self + 0x64) += *(s32*)((u8*)self + 0x60);
@@ -582,33 +624,33 @@ void criware_80399F4C(void* self) {
     }
     for (i = 0; i < nch; i++) {
         void* sj = *(void**)((u8*)self + i * 4 + 0xc8);
-        if ((s32)((s32(*)(void*, s32))((*(void***)sj)[9]))(sj, 0) < dst_len * 2) {
+        if ((s32)SJ_VT(sj)->getAvail(sj, 0) < dst_len * 2) {
             goto skip;
         }
         {
             void* obj = *(void**)((u8*)self + 0x28);
-            if ((s32)((s32(*)(void*, s32))((*(void***)obj)[9]))(obj, 1) < src_len * 2) {
+            if ((s32)SJ_VT(obj)->getAvail(obj, 1) < src_len * 2) {
                 c4 = *(s32*)((u8*)self + 0xc4);
                 if (c4 <= 2)
                     goto skip;
             }
         }
-        ((void(*)(void*, s32, s32, void*))((*(void***)sj)[6]))(sj, 0, dst_len * 2, &chunk1);
+        SJ_VT(sj)->getChunk(sj, 0, dst_len * 2, &chunk1);
         if (chunk1.size < dst_len * 2) {
             RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x488));
-            ((void(*)(void*, s32, void*))((*(void***)sj)[7]))(sj, 0, &chunk1);
+            SJ_VT(sj)->ungetChunk(sj, 0, &chunk1);
             return;
         }
         {
             void* obj = *(void**)((u8*)self + i * 4 + 0x28);
-            ((void(*)(void*, s32, s32, void*))((*(void***)obj)[6]))(obj, 1, src_len * 2, &chunk2);
+            SJ_VT(obj)->getChunk(obj, 1, src_len * 2, &chunk2);
             memcpy((void*)lbl_eu_805F3A4C, chunk2.ptr, chunk2.size);
-            ((void(*)(void*, s32, void*))((*(void***)obj)[8]))(obj, 0, &chunk2);
+            SJ_VT(obj)->putChunk(obj, 0, &chunk2);
             if ((chunk2.size >> 1) < src_len) {
                 s32 half = chunk2.size >> 1;
-                ((void(*)(void*, s32, s32, void*))((*(void***)obj)[6]))(obj, 1, (src_len - half) * 2, &chunk2);
+                SJ_VT(obj)->getChunk(obj, 1, (src_len - half) * 2, &chunk2);
                 memcpy((void*)((u8*)lbl_eu_805F3A4C + half * 2), chunk2.ptr, chunk2.size);
-                ((void(*)(void*, s32, void*))((*(void***)obj)[8]))(obj, 0, &chunk2);
+                SJ_VT(obj)->putChunk(obj, 0, &chunk2);
                 half += chunk2.size >> 1;
                 if (half < src_len) {
                     memset((void*)((u8*)lbl_eu_805F3A4C + half * 2), 0, (src_len - half) * 2);
@@ -616,7 +658,7 @@ void criware_80399F4C(void* self) {
             }
         }
         criware_8039B4E0((s16*)(void*)lbl_eu_805F3A4C, src_len, (s16*)chunk1.ptr, dst_len);
-        ((void(*)(void*, s32, void*))((*(void***)sj)[8]))(sj, 1, &chunk1);
+        SJ_VT(sj)->putChunk(sj, 1, &chunk1);
         *(s32*)((u8*)self + 0xc4) = 0;
         goto done;
     skip:
@@ -625,33 +667,33 @@ void criware_80399F4C(void* self) {
     done:
         {
             void* ring = *(void**)((u8*)self + i * 4 + 0x30);
-            ((void(*)(void*, s32, s32, void*))((*(void***)ring)[6]))(ring, 0, 0x2000, &out);
+            SJ_VT(ring)->getChunk(ring, 0, 0x2000, &out);
         }
         {
             void* sj2 = *(void**)((u8*)self + i * 4 + 0xc8);
-            ((void(*)(void*, s32, s32, void*))((*(void***)sj2)[6]))(sj2, 1, out.size, &chunk1);
+            SJ_VT(sj2)->getChunk(sj2, 1, out.size, &chunk1);
         }
         m = (out.size < chunk1.size) ? out.size : chunk1.size;
         m = (m / 0x20) * 0x20;
         SJ_SplitChunk(&out, m, &out, &out2);
         {
             void* ring = *(void**)((u8*)self + i * 4 + 0x30);
-            ((void(*)(void*, s32, void*))((*(void***)ring)[7]))(ring, 0, &out2);
+            SJ_VT(ring)->ungetChunk(ring, 0, &out2);
         }
         SJ_SplitChunk(&chunk1, m, &chunk1, &out3);
         {
             void* sj2 = *(void**)((u8*)self + i * 4 + 0xc8);
-            ((void(*)(void*, s32, void*))((*(void***)sj2)[7]))(sj2, 1, &out3);
+            SJ_VT(sj2)->ungetChunk(sj2, 1, &out3);
         }
         memcpy(out.ptr, chunk1.ptr, m);
         DCFlushRange(out.ptr, m);
         {
             void* sj2 = *(void**)((u8*)self + i * 4 + 0xc8);
-            ((void(*)(void*, s32, void*))((*(void***)sj2)[8]))(sj2, 0, &chunk1);
+            SJ_VT(sj2)->putChunk(sj2, 0, &chunk1);
         }
         {
             void* ring = *(void**)((u8*)self + i * 4 + 0x30);
-            ((void(*)(void*, s32, void*))((*(void***)ring)[8]))(ring, 1, &out);
+            SJ_VT(ring)->putChunk(ring, 1, &out);
         }
         *(s32*)((u8*)self + 0x60) = m >> 1;
         if (i == (s8)((u8*)self)[3] - 1) {
@@ -677,14 +719,14 @@ void axrna_start_flash(void* self) {
             goto next;
         {
             void* sj = *(void**)(ch + 0x30);
-            ((void(*)(void*, s32, s32, void*))(*(void***)sj)[6])(sj, 0, 0x2000, &out);
+            SJ_VT(sj)->getChunk(sj, 0, 0x2000, &out);
         }
         size = out.size;
         size = (size / 0x20) * 0x20;
         SJ_SplitChunk(&out, size, &out, &split);
         {
             void* sj = *(void**)(ch + 0x30);
-            ((void(*)(void*, s32, void*))(*(void***)sj)[7])(sj, 0, &split);
+            SJ_VT(sj)->ungetChunk(sj, 0, &split);
         }
         if (size == 0)
             return;
@@ -697,7 +739,7 @@ void axrna_start_flash(void* self) {
         if (*(s32*)(ch + 0x68) == 1) {
             void* obj;
             obj = *(void**)(ch + 0x30);
-            ((void(*)(void*, s32, void*))(*(void***)obj)[8])(obj, 1, p48);
+            SJ_VT(obj)->putChunk(obj, 1, p48);
             *(s32*)(ch + 0x68) = 0;
             if (i == (s8)((u8*)self)[3] - 1) {
                 *(s32*)((u8*)self + 0x74) += *(s32*)((u8*)self + 0x70);

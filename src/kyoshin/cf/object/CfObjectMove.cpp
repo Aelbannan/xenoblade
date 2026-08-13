@@ -138,11 +138,13 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc4() {
     int r28 = 0;
     int r27 = 0;
     if (mSubObj38 != 0) {
-        // Global-mode gate: the two flag reads are kept separate so MWCC
-        // emits the retail double lwz of lbl_eu_80663E24 (r0 for the mode
-        // test, r5 for the +0x40000 advance gate).
-        u32 g0 = lbl_eu_80663E24;
-        u32 g1 = lbl_eu_80663E24;
+        // Global-mode gate: the two flag reads are kept separate (volatile
+        // casts; the extern itself is non-volatile to match CSystemWindow.hpp
+        // and the CUICfManager.cpp definition) so MWCC emits the retail double
+        // lwz of lbl_eu_80663E24 (r0 for the mode test, r5 for the +0x40000
+        // advance gate).
+        u32 g0 = *(volatile u32*)&lbl_eu_80663E24;
+        u32 g1 = *(volatile u32*)&lbl_eu_80663E24;
         cond = (g0 & 0x02040000) != 0;
         if ((g0 & 0x10000000) != 0) {
             cond = 0;
@@ -1485,7 +1487,7 @@ extern "C" void func_800BC8D8(cf::CfObjectMove* self) {
     if (self->mSubObj98 == 0) {
         return;
     }
-    if ((lbl_eu_80663E24 & 0x02040000) == 0) {
+    if ((*(volatile u32*)&lbl_eu_80663E24 & 0x02040000) == 0) {
         u32 flags = self->unk64;
         if ((flags & 0x2) != 0 || (flags & 0x4) != 0 || (flags & 0x8) != 0 ||
             (flags & 0x80000000u) != 0 || (flags & 0x100) != 0) {
@@ -1532,7 +1534,7 @@ extern "C" void func_800BCD04(cf::CfObjectMove* self) {
         // The bit-3 test is normalized through the double-cntlzw idiom (the
         // retail booleanizes it; the top-level tests stay direct).
         if (((u32)__cntlzw((u32)__cntlzw(self->unk64 & 0x8) >> 5) >> 5) != 0) {
-            if ((self->mSubObj98->field_7A4 & 0x10000) != 0 && (lbl_eu_80663E24 & 0x01040000) == 0) {
+            if ((self->mSubObj98->field_7A4 & 0x10000) != 0 && (*(volatile u32*)&lbl_eu_80663E24 & 0x01040000) == 0) {
                 if (self->CObjectState_UnkVirtualFunc8(0x1000) == 0) {
                     func_800BC9EC(self);
                     ((bool (*)(void*, void*))func_8004B40C)(self->mTargetC4, &self->mPos3C);

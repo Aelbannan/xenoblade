@@ -324,7 +324,7 @@ extern "C" {
 }
 
 // Commu camera/trigger globals (.sdata).
-extern volatile u32 lbl_eu_80663E24;
+extern u32 lbl_eu_80663E24;
 extern void* lbl_eu_80663E14;
 
 // Pad button-flag view (retail CPad first word).

@@ -8,7 +8,7 @@
 
 extern "C" bool func_800755B0(void*, int);
 extern "C" bool func_8049EB60(void* obj);
-extern "C" volatile unsigned int lbl_eu_80663E24;
+extern "C" unsigned int lbl_eu_80663E24;
 extern "C" void func_8004B3F0(void*);
 extern "C" float lbl_eu_80527230[];
 extern "C" float lbl_eu_80661BA8;

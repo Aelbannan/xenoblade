@@ -141,7 +141,7 @@ struct CfObjIf {
 
 // C-linkage retail symbols referenced by the plugin functions below.
 extern "C" {
-    extern volatile u32 lbl_eu_80663E24;  // volatile: header CfObjectMove.hpp declares it volatile
+    extern u32 lbl_eu_80663E24;  // non-volatile extern (see CfObjectMove.hpp); reads needing separate loads cast explicitly
     extern u32 lbl_eu_80663E28;
     extern u16 lbl_eu_80663E42;
     extern u16 lbl_eu_80663E44;

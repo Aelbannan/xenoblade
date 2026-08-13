@@ -45,7 +45,7 @@ u8 CExchangeWin::getField25() { return field_25; }
 
 u8 CExchangeWin::getField24() { return field_24; }
 
-u8 CExchangeWin::getField27() { return field_27; }
+int CExchangeWin::getField27() { return field_27; }
 
 // If _26 is already non-zero, do nothing; otherwise initialize state and fire event 0xd
 extern "C" void func_8022D0A4(CExchangeWin* self) {

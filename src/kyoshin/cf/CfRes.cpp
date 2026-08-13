@@ -4,7 +4,8 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CfRes.hpp"
-extern "C" char* getEntryPtr(char* base, int a, int b);
+#include "monolib/device/CDeviceFile.hpp"
+#include "monolib/work/CEventFile.hpp"
 extern "C" char* getEntryPtrGrid(char* self, int a, int b);
 extern "C" void* func_80495FF0(void* scene);
 extern "C" mtl::ALLOC_HANDLE func_80496004(void* src);
@@ -46,7 +47,31 @@ int CfResBuffer::func_80061A80(unsigned char byte1, unsigned short halfword, uns
     return 1;
 }
 
-void func_80061C5C(){}
+// func_80061C5C: pop a header word pair plus `count` data words off the
+// CfResBuffer ring (mod-0x100 index); the popped header's bits 8-11 hold the
+// data-word count. 1 when the ring is non-empty, 0 otherwise.
+int func_80061C5C(CfResBuffer* buffer, u32* headerOut, u32* dataOut) {
+    headerOut[1] = 0;
+    headerOut[0] = headerOut[0] & 0x000F0000;
+    if (buffer->field_404 == 0) {
+        return 0;
+    }
+    u32 i = 0;
+    u32* buf = (u32*)buffer->buffer;
+    headerOut[0] = buf[buffer->field_400];
+    buffer->field_400 = (buffer->field_400 + 1) & 0xFF;
+    buffer->field_404 = buffer->field_404 - 1;
+    headerOut[1] = buf[buffer->field_400];
+    buffer->field_400 = (buffer->field_400 + 1) & 0xFF;
+    buffer->field_404 = buffer->field_404 - 1;
+    while (i < ((headerOut[0] >> 20) & 0xF)) {
+        dataOut[i] = buf[buffer->field_400];
+        buffer->field_400 = (buffer->field_400 + 1) & 0xFF;
+        buffer->field_404 = buffer->field_404 - 1;
+        i++;
+    }
+    return 1;
+}
 
 void func_80061D2C(){}
 
@@ -169,7 +194,22 @@ extern "C" __declspec(noinline) void func_800620F0(){
     }
 }
 
-void func_80062114(){}
+// func_80062114: when the key string at `self` matches the global name key
+// (lbl_eu_80661A20), resolve the indexed table record: store the packed id
+// of its +0x18 string to *out and return the record's relative-offset target
+// (0 otherwise).
+void* func_80062114(char* self, int index, void** out) {
+    void* result = 0;
+    if (self != 0) {
+        int same = strcmp(lbl_eu_80661A20, self) == 0;
+        if (same) {
+            CfResStrTableRec* rec = (CfResStrTableRec*)(self + index * 16);
+            *out = (void*)(uintptr_t)func_800AA600(rec->str);
+            result = self + rec->field_10;
+        }
+    }
+    return result;
+}
 
 // func_800621A0: return the +4 count of a string-keyed record when its
 // inline key matches the global name key (lbl_eu_80661A24), else 0.
@@ -201,17 +241,50 @@ int func_800623DC(u8* res) {
     return ret;
 }
 
-void func_80062430(){}
+// func_80062430: zero the output word, then resolve a resource through the
+// manager's func_80065694 helper when the CfRes manager exists (0 otherwise).
+int func_80062430(int a, int b, int* out) {
+    int ret = 0;
+    *out = 0;
+    if (CfRes_getInstance() != 0) {
+        CfRes_getInstance();
+        ret = func_80065694(a, b, out);
+    }
+    return ret;
+}
 
-void func_800624A8(){}
+// func_800624A8: forward (a, b, c) into the manager's resource resolver
+// (func_80064EB0) when the CfRes manager exists; 0 otherwise.
+int func_800624A8(int a, int b, int c) {
+    int ret = 0;
+    if (CfRes_getInstance() != 0) {
+        ret = func_80064EB0(CfRes_getInstance(), a, b, c);
+    }
+    return ret;
+}
 
-u32 func_8006251C(void* self){ return ((u32)(uintptr_t)self >> 20) & 0x7F; }
+u32 __declspec(noinline) func_8006251C(void* self){ return ((u32)(uintptr_t)self >> 20) & 0x7F; }
 
-u32 func_80062524(void* self){ return ((u32)(uintptr_t)self >> 10) & 0x3FF; }
+u32 __declspec(noinline) func_80062524(void* self){ return ((u32)(uintptr_t)self >> 10) & 0x3FF; }
 
-void func_8006252C(){}
+// func_8006252C: forward (a, b, c) into the manager's resource resolver
+// (func_80064F78) when the CfRes manager exists; 0 otherwise.
+int __declspec(noinline) func_8006252C(u16 a, u16 b, int c) {
+    int ret = 0;
+    if (CfRes_getInstance() != 0) {
+        ret = func_80064F78(CfRes_getInstance(), a, b, c);
+    }
+    return ret;
+}
 
-void func_800625A0(){}
+// func_800625A0: pack the two index fields of `self` as u16 halves and route
+// them (with arg2) into the resource-table walker func_8006252C. The raw
+// results are held in locals so the u16 truncation happens at the call site.
+void func_800625A0(void* self, int arg2) {
+    u32 a = func_8006251C(self);
+    u32 b = func_80062524(self);
+    func_8006252C((u16)a, (u16)b, arg2);
+}
 
 // func_80062600: run the update pipeline only while neither busy flag is set
 extern "C" int CfRes_checkFlags_48000();
@@ -235,13 +308,45 @@ extern "C" __declspec(noinline) int CfRes_checkFlags_2000400() {
     return (lbl_eu_80663E24 & 0x02000400) != 0 ? 1 : 0;
 }
 
-void func_80062680(){}
+// func_80062680: forward (a, b, c) into the manager's resource resolver
+// (func_80065050) when the CfRes manager exists; 0 otherwise.
+int func_80062680(int a, int b, int c) {
+    int ret = 0;
+    if (CfRes_getInstance() != 0) {
+        ret = func_80065050(CfRes_getInstance(), a, b, c);
+    }
+    return ret;
+}
 
-void func_800626F4(){}
+// func_800626F4: forward (a, b, c, d) into the manager's resource resolver
+// (func_80065158) when the CfRes manager exists; 0 otherwise.
+int func_800626F4(int a, int b, int c, int d) {
+    int ret = 0;
+    if (CfRes_getInstance() != 0) {
+        ret = func_80065158(CfRes_getInstance(), a, b, c, d);
+    }
+    return ret;
+}
 
-void func_eu_80062E58(){}
+// func_eu_80062E58: forward (a, b, c) into the manager's resource resolver
+// (func_eu_80065C7C) when the CfRes manager exists; 0 otherwise.
+int func_eu_80062E58(int a, int b, int c) {
+    int ret = 0;
+    if (CfRes_getInstance() != 0) {
+        ret = func_eu_80065C7C(CfRes_getInstance(), a, b, c);
+    }
+    return ret;
+}
 
-void func_80062758(){}
+// func_80062758: forward (a, b) into the manager's resource resolver
+// (func_80065314) when the CfRes manager exists; 0 otherwise.
+int func_80062758(int a, int b) {
+    int ret = 0;
+    if (CfRes_getInstance() != 0) {
+        ret = func_80065314(CfRes_getInstance(), a, b);
+    }
+    return ret;
+}
 
 // func_800627BC: register the resource with the CfRes manager if it exists
 extern "C" void func_80065254(int inst, u8* arg);
@@ -251,17 +356,57 @@ void func_800627BC(u8* arg) {
     }
 }
 
-void func_800627FC(){}
+// func_800627FC: forward (a, b) into the manager's resource resolver
+// (func_800653E4) when the CfRes manager exists; 0 otherwise.
+int func_800627FC(int a, int b) {
+    int ret = 0;
+    if (CfRes_getInstance() != 0) {
+        ret = func_800653E4(CfRes_getInstance(), a, b);
+    }
+    return ret;
+}
 
-void func_80062860(){}
+// func_80062860: forward (a, b) into the manager's resource resolver
+// (func_800654B4) when the CfRes manager exists; 0 otherwise.
+int func_80062860(int a, int b) {
+    int ret = 0;
+    if (CfRes_getInstance() != 0) {
+        ret = func_800654B4(CfRes_getInstance(), a, b);
+    }
+    return ret;
+}
 
-void func_800628C4(){}
+// func_800628C4: forward (a, b) into the manager's resource resolver
+// (func_800655C4) when the CfRes manager exists; 0 otherwise.
+int func_800628C4(int a, int b) {
+    int ret = 0;
+    if (CfRes_getInstance() != 0) {
+        ret = func_800655C4(CfRes_getInstance(), a, b);
+    }
+    return ret;
+}
 
-void func_80062928(){}
+// func_80062928: forward (a, b, c) into the manager's resource resolver
+// (func_80064A74) when the CfRes manager exists; `b` otherwise.
+int func_80062928(int a, int b, int c) {
+    int ret = b;
+    if (CfRes_getInstance() != 0) {
+        ret = func_80064A74(CfRes_getInstance(), a, b, c);
+    }
+    return ret;
+}
 
 extern "C" u32 CfRes_getField18(u8* self) { return *(u32*)((u8*)self + 0x18); }
 
-void func_80062998(){}
+// func_80062998: forward (a, b, c) into the manager's resource resolver
+// (func_80064CD8) when the CfRes manager exists; `b` otherwise.
+int func_80062998(int a, int b, int c) {
+    int ret = b;
+    if (CfRes_getInstance() != 0) {
+        ret = func_80064CD8(CfRes_getInstance(), a, b, c);
+    }
+    return ret;
+}
 
 // func_eu_80063174: forward a (index, ptr) pair into the manager's resolver
 // when the CfRes manager exists.
@@ -271,22 +416,75 @@ void func_eu_80063174(int index, u8* ptr) {
     }
 }
 
-void func_80062A00(){}
+// func_80062A00: scan the 7x6 resource grid (rows x columns) for an in-flight
+// load request (func_80062C28's +0x28 flag); 0 while any request is pending,
+// 1 when the grid is idle or the manager is unavailable.
+int func_80062A00() {
+    if (CfRes_getInstance() != 0) {
+        for (int row = 0; row < 7; row++) {
+            for (int col = 1; col <= 6; col++) {
+                CfResPcEntry28View* entry = func_80062C28(row, col);
+                if (entry != 0 && entry->field_28 != 0) {
+                    return 0;
+                }
+            }
+        }
+    }
+    return 1;
+}
 
 void func_80062A84(){}
 
-void func_80062AD8(){}
+// func_80062AD8: forward (a, b) into the manager's resource resolver
+// (func_800641CC) when the CfRes manager exists; 0 otherwise.
+int func_80062AD8(int a, int b) {
+    int ret = 0;
+    if (CfRes_getInstance() != 0) {
+        ret = func_800641CC(CfRes_getInstance(), a, b);
+    }
+    return ret;
+}
 
-void func_80062B3C(){}
+// func_80062B3C: forward (a, b) into the manager's delegate-op handler
+// (CfRes_delegateOp1) when the CfRes manager exists; 0 otherwise. The
+// delegate is declared to return a value (retail callers capture r3) even
+// though its body is a void call to func_800643F0 followed by blr.
+int func_80062B3C(int a, int b) {
+    int ret = 0;
+    if (CfRes_getInstance() != 0) {
+        ret = CfRes_delegateOp1((void*)(uintptr_t)CfRes_getInstance(),
+                                (void*)(uintptr_t)a,
+                                (void*)(uintptr_t)b);
+    }
+    return ret;
+}
 
-extern "C" void CfRes_delegateOp1(void* a, void* b, void* c) {
+// Retail callers capture r3 after this call, so the delegate is declared with
+// an int return even though the body is a void call to func_800643F0 followed
+// by blr (the value left in r3 is func_800643F0's result). Omitting the
+// return statement keeps the compiled bytes identical to the void form.
+// noinline keeps callers (func_80062B3C) from inlining this body.
+extern "C" int __declspec(noinline) CfRes_delegateOp1(void* a, void* b, void* c) {
     extern void func_800643F0(void*, void*, unsigned long, void*);
     func_800643F0(a, b, 1, c);
 }
 
-void func_80062BAC(){}
+// func_80062BAC: forward (a, b) into the manager's delegate-op handler
+// (CfRes_delegateOp0) when the CfRes manager exists; 0 otherwise.
+int func_80062BAC(int a, int b) {
+    int ret = 0;
+    if (CfRes_getInstance() != 0) {
+        ret = CfRes_delegateOp0((void*)(uintptr_t)CfRes_getInstance(),
+                                (void*)(uintptr_t)a,
+                                (void*)(uintptr_t)b);
+    }
+    return ret;
+}
 
-extern "C" void CfRes_delegateOp0(void* a, void* b, void* c) {
+// Retail callers capture r3 after this call, so the delegate is declared with
+// an int return even though the body is a void call to func_800643F0 followed
+// by blr (the value left in r3 is func_800643F0's result).
+extern "C" int __declspec(noinline) CfRes_delegateOp0(void* a, void* b, void* c) {
     extern void func_800643F0(void*, void*, unsigned long, void*);
     func_800643F0(a, b, 0, c);
 }
@@ -296,7 +494,10 @@ extern "C" void CfRes_readCommonArchive(unsigned long a, const char* b, void* c)
     readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(a, b, c, 0, 0);
 }
 
-void func_80062C28(){}
+// Retail symbol is a resource-table accessor (see CfResPcImpl.hpp); the
+// catalog stub keeps the call relocs resolvable until its own target is
+// worked. noinline keeps callers (func_80062A00) from inlining the body.
+extern "C" __declspec(noinline) CfResPcEntry28View* func_80062C28(int id, int a) { return 0; }
 
 // retail: addi r3,r3,4; b getEntryPtrGrid (3-arg tail call)
 extern "C" char* func_80062C80(char* self, int a, int b) {
@@ -429,7 +630,7 @@ char* func_80062F18() {
     return 0;
 }
 
-extern "C" void* func_80062F58(void* self) { return (char*)self + 0x7c; }
+extern "C" __declspec(noinline) void* func_80062F58(void* self) { return (char*)self + 0x7c; }
 
 #pragma push
 #pragma auto_inline off
@@ -444,7 +645,7 @@ char* func_80062F60() {
     return 0;
 }
 
-extern "C" void* func_80062FA0(void* self) { return (char*)self + 0xb8; }
+extern "C" __declspec(noinline) void* func_80062FA0(void* self) { return (char*)self + 0xb8; }
 
 #pragma push
 #pragma auto_inline off
@@ -489,7 +690,7 @@ char* func_80063038() {
     return 0;
 }
 
-extern "C" void* func_80063078(void* self) { return (char*)self + 0x16c; }
+extern "C" __declspec(noinline) void* func_80063078(void* self) { return (char*)self + 0x16c; }
 
 // func_80063080: return the manager's +0x29c region if the CfRes manager exists
 extern "C" void* func_800630B8(void* self);
@@ -502,7 +703,7 @@ char* func_80063080() {
 
 extern "C" __declspec(noinline) void* func_800630B8(void* self) { return (char*)self + 0x29c; }
 
-extern "C" void* func_800630C0(void* self) { return (char*)self + 0x298; }
+extern "C" __declspec(noinline) void* func_800630C0(void* self) { return (char*)self + 0x298; }
 
 // func_800630C8: return the manager's +0x224 region if the CfRes manager exists
 extern "C" void* func_80063100(void* self);
@@ -515,7 +716,7 @@ char* func_800630C8() {
 
 extern "C" __declspec(noinline) void* func_80063100(void* self) { return (char*)self + 0x224; }
 
-extern "C" void* func_80063108(void* self) { return (char*)self + 0x220; }
+extern "C" __declspec(noinline) void* func_80063108(void* self) { return (char*)self + 0x220; }
 
 extern "C" void* func_80063110(void* self) { return (char*)self + 0x25c; }
 
@@ -523,8 +724,8 @@ extern "C" void* func_80063118(void* self) { return (char*)self + 0x1a8; }
 
 // func_80063120: stash the archive id, init the embedded subobject, and
 // register it into both lookup tables with a -1 id
-extern "C" void func_80063160(int arg);
-extern "C" void func_800631FC(int arg);
+extern "C" void func_80063160(u32 arg);
+extern "C" void func_800631FC(u32 arg);
 void func_80063120(u8* self, int arg) {
     lbl_eu_80663D80 = arg;
     func_800676F8(self + 4);
@@ -538,39 +739,105 @@ extern "C" void __dt__80067670(u8* self);
 extern "C" void func_80063158(u8* self) { __dt__80067670(self + 4); }
 #pragma pop
 
-extern "C" __declspec(noinline) void func_80063160(int arg){}
+// func_80063160: init the single manager entry table slot when the index is
+// in range (<= 6), otherwise init all 7 slots.
+extern "C" __declspec(noinline) void func_80063160(u32 arg) {
+    int inst = CfRes_getInstance();
+    if (inst != 0) {
+        if (arg <= 6) {
+            CfResEntry_init((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), arg));
+        } else {
+            for (u32 i = 0; i < 7; i++) {
+                CfResEntry_init((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), i));
+            }
+        }
+    }
+}
 
-extern "C" void CfResEntry_init(u8* self) {
+extern "C" __declspec(noinline) void CfResEntry_init(u8* self) {
     *(int*)((char*)self + 0) = 0;
     *(int*)((char*)self + 4) = 0;
     *(int*)((char*)self + 8) = 0;
 }
 
-extern "C" void* CfRes_getResEntry(u8* self, u32 idx) { return (u8*)self + idx * 12; }
+extern "C" __declspec(noinline) void* CfRes_getResEntry(u8* self, u32 idx) { return (u8*)self + idx * 12; }
 
-extern "C" __declspec(noinline) void func_800631FC(int arg){}
+// func_800631FC: init the single manager table entry slot when the index is
+// in range (<= 2), otherwise init all 3 slots.
+extern "C" __declspec(noinline) void func_800631FC(u32 arg) {
+    int inst = CfRes_getInstance();
+    if (inst != 0) {
+        if (arg <= 2) {
+            CfResEntry_init((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), arg));
+        } else {
+            for (u32 i = 0; i < 3; i++) {
+                CfResEntry_init((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), i));
+            }
+        }
+    }
+}
 
 extern "C" __declspec(noinline) void* CfRes_getTblEntry(u8* self, u32 idx) { return (u8*)self + idx * 12; }
 
-extern "C" u32 CfResEntry_getHandle(u8* self) { return *(u32*)((u8*)self + 0x0); }
+extern "C" __declspec(noinline) u32 CfResEntry_getHandle(u8* self) { return *(u32*)((u8*)self + 0x0); }
 
-void func_8006328C(){}
+// func_8006328C: return the entry-table index (0-6) whose handle matches,
+// or -1 when the manager is missing, the handle is null, or nothing matched.
+int func_8006328C(int handle) {
+    int inst = CfRes_getInstance();
+    if (inst != 0 && handle != 0) {
+        for (u32 i = 0; i < 7; i++) {
+            if ((u32)handle == CfResEntry_getHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), i))) {
+                return (int)i;
+            }
+        }
+    }
+    return -1;
+}
 
-void func_80063310(){}
+// func_80063310: 1 when a table entry (index 0-2) whose handle matches
+// exists, 0 otherwise.
+int func_80063310(int handle) {
+    int inst = CfRes_getInstance();
+    if (inst != 0) {
+        for (u32 i = 0; i < 3; i++) {
+            if (handle != 0 && (u32)handle == CfResEntry_getHandle((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), i))) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
 
 void func_80063394(){}
 
-extern "C" u32 CfResEntry_getField4(u8* self) { return *(u32*)((u8*)self + 0x4); }
+extern "C" __declspec(noinline) u32 CfResEntry_getField4(u8* self) { return *(u32*)((u8*)self + 0x4); }
 
-extern "C" void CfResEntry_setHandle(u8* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
+extern "C" __declspec(noinline) void CfResEntry_setHandle(u8* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
 
-void func_8006349C(){}
+extern "C" __declspec(noinline) u32 CfResEntry_getField8(u8* self) { return *(u32*)((u8*)self + 0x8); }
 
-extern "C" u32 CfResEntry_getField8(u8* self) { return *(u32*)((u8*)self + 0x8); }
+extern "C" __declspec(noinline) void CfResEntry_setField4(u8* self, u32 val) { *(u32*)((u8*)self + 0x4) = val; }
 
-extern "C" void CfResEntry_setField4(u8* self, u32 val) { *(u32*)((u8*)self + 0x4) = val; }
+extern "C" __declspec(noinline) void CfResEntry_clearField8(u8* self) { *(u32*)((u8*)self + 8) = 0; }
 
-extern "C" void CfResEntry_clearField8(u8* self) { *(u32*)((u8*)self + 8) = 0; }
+// func_8006349C (0x80063C64): for each of the 7 resource-grid entries, move
+// the leftover of (field_04 - field_08) into field_04 and clear field_08.
+void func_8006349C() {
+    int inst = CfRes_getInstance();
+    if (inst != 0) {
+        for (u32 i = 0; i < 7; i++) {
+            u32 f4 = CfResEntry_getField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), i));
+            u32 f8 = CfResEntry_getField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), i));
+            int diff = (int)f4 - (int)f8;
+            if (diff < 0) {
+                diff = 0;
+            }
+            CfResEntry_setField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), i), (u32)diff);
+            CfResEntry_clearField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), i));
+        }
+    }
+}
 
 void func_80063560(){}
 
@@ -585,7 +852,22 @@ void func_800638B4(int idx) {
     }
 }
 
-void func_80063900(){}
+// func_80063900: find the entry-table record whose handle matches and
+// decrement its reference count (no-op when the manager is missing).
+void func_80063900(int handle) {
+    if (handle > 0) {
+        int inst = CfRes_getInstance();
+        if (inst != 0) {
+            for (u32 i = 0; i < 7; i++) {
+                if ((u32)handle == CfResEntry_getHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), i))) {
+                    // Re-resolve the entry (retail re-calls getResEntry here).
+                    CfResEntry_decRefCount((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), i));
+                    break;
+                }
+            }
+        }
+    }
+}
 
 #pragma push
 #pragma auto_inline off
@@ -594,22 +876,38 @@ int func_8006398C() { return CfRes_getInstance(); }
 
 extern "C" void CfRes_stub_63990() {}
 
-void func_80063994(){}
-
-int func_80063A34(void* self){
+int __declspec(noinline) func_80063A34(void* self){
     extern int getFileSize__11CDeviceFileFPCc(void*, int);
     int sz = getFileSize__11CDeviceFileFPCc(self, 1);
     if (sz < 0) sz = -1;
     return sz;
 }
 
-int __declspec(noinline) func_80063A60(u8* res) { return 0; }
+// The FixStr<64> default ctor is defined out-of-line (weak) in the
+// CfGameManager TU; declare the specialization here so MWCC emits a call
+// instead of inlining the trivial clear() body (retail calls it out-of-line).
+namespace ml {
+template <> FixStr<64>::FixStr();
+}
 
-extern "C" void CfRes_stub_63ACC() {}
+// func_80063A60: format the resource id into a path string and return the
+// file size (-1 when the path cannot be built or the file is missing).
+int __declspec(noinline) func_80063A60(u8* res) {
+    int ret = -1;
+    ml::FixStr<64> str;
+    if (func_800AA33C(str, (u32)(uintptr_t)res, 1, 1) != 0) {
+        ret = func_80063A34(CfRes_stub_63ACC(&str));
+    }
+    return ret;
+}
 
-void func_80063AD0(){}
+extern "C" __declspec(noinline) ml::FixStr<64>* CfRes_stub_63ACC(ml::FixStr<64>* str) { return str; }
 
-extern "C" void CfRes_initFields4(u8* self, int a, int b, int c, int d) {
+// func_80063AD0 (0x8006429C): pre-open entry reservation/validation step in
+// the archive-read pipeline (stub; matched separately).
+int __declspec(noinline) func_80063AD0(void* a, void* b, u32 c, void* d, int size, void* e) { return 0; }
+
+extern "C" __declspec(noinline) void CfRes_initFields4(u8* self, int a, int b, int c, int d) {
     *(int*)((char*)self + 4) = a;
     *(int*)((char*)self + 0x28) = b;
     *(int*)((char*)self + 8) = c;
@@ -637,7 +935,7 @@ extern "C" void* CfRes_vcall34(u8* self) {
 
 extern "C" void CfRes_stub_63C2C() {}
 
-extern "C" void CfRes_resetState2(u8* self) {
+extern "C" __declspec(noinline) void CfRes_resetState2(u8* self) {
     u32 v = *(u32*)self;
     u32 z = 0;
     u32 m = 0xFFFFFFAE;
@@ -655,7 +953,7 @@ struct CfResSub_63C50 {
     virtual void* _v038(void* outer);
 };
 struct CfResObj_63C50 { u8 _00[0x2C]; CfResSub_63C50* sub; };
-extern "C" void* CfRes_vcall38(u8* self) {
+extern "C" __declspec(noinline) void* CfRes_vcall38(u8* self) {
     CfResSub_63C50* sub = ((CfResObj_63C50*)self)->sub;
     if (!sub) return self;
     return sub->_v038(self);
@@ -680,34 +978,121 @@ extern "C" int CfRes_getE24Bit18() {
 
 // C++ virtual thunk with struct access (14 dummies + RTTI = offset 64)
 struct CfResObj_63DF0 { u8 _00[0x2C]; struct CfResSub_63DF0* sub; };
-struct CfResSub_63DF0 { virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03(); virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07(); virtual void m08(); virtual void m09(); virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13(); virtual void m14(void* self); };
-extern "C" void CfRes_vcall14(void* self) {
-    ((CfResObj_63DF0*)self)->sub->m14(self);
+struct CfResSub_63DF0 { virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03(); virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07(); virtual void m08(); virtual void m09(); virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13(); virtual int m14(void* self); };
+extern "C" __declspec(noinline) int CfRes_vcall14(void* self) {
+    return ((CfResObj_63DF0*)self)->sub->m14(self);
 }
 
-struct CfResSub_63E08 { virtual void m02(void* self, void* arg); };
+struct CfResSub_63E08 { virtual void* m02(void* self, void* arg); };
 struct CfResObj_63E08 { u8 _00[0x2C]; CfResSub_63E08* sub; };
-extern "C" void CfRes_vcall02(void* self, void* arg) {
-    ((CfResObj_63E08*)self)->sub->m02(self, arg);
+__declspec(noinline) void* CfRes_vcall02(void* self, void* arg) {
+    return ((CfResObj_63E08*)self)->sub->m02(self, arg);
 }
 
-extern "C" u32 CfRes_extractBits27_5(void* self) { return ((u32)(uintptr_t)self >> 27) & 0x1F; }
+extern "C" __declspec(noinline) u32 CfRes_extractBits27_5(void* self) { return ((u32)(uintptr_t)self >> 27) & 0x1F; }
 
-void func_80063E30(){}
+// func_80063E30 (0x800645FC): async archive-read pipeline. Resolves the file
+// size for the path, reserves the entry slot (func_80063AD0), then opens the
+// common archive and initializes the entry's fields. Returns 1 once the read
+// is dispatched, 0 on failure.
+int __declspec(noinline) func_80063E30(void* a, void* b, u32 c, void* d, void* e, int f) {
+    int result = 0;
+    int size = func_80063A34(d);
+    if (size < 0) {
+        return 0;
+    }
+    if (func_80063AD0(a, b, c, d, size, e) != 0) {
+        return 1;
+    }
+    CFileHandle* handle = CDeviceFile::readCommonArchiveFile(
+        (mtl::ALLOC_HANDLE)(uintptr_t)b, (const char*)d, (IWorkEvent*)a, 0, 0);
+    if (handle != 0) {
+        if (f != 4) {
+            CDeviceFile::func_8044F154(handle, f);
+        }
+        CfRes_initFields4((u8*)e, (int)c, (int)(uintptr_t)handle, (int)(uintptr_t)b, size);
+        CfRes_setBits1_2((u8*)e);
+        CfRes_vcall34((u8*)e);
+        result = 1;
+    }
+    return result;
+}
 
-void func_80063F1C(){}
+// func_80063F1C (0x800646E8): format the packed resource id into a path and
+// run the archive-read pipeline (func_80063E30); 0 when the path cannot be
+// built or the pipeline reports failure.
+int __declspec(noinline) func_80063F1C(u8* a, u8* b, u32 c, u8* d, int e) {
+    int ret = 0;
+    ml::FixStr<64> str;
+    if (func_800AA33C(str, c, 1, 1) != 0) {
+        ret = func_80063E30(a, b, c, CfRes_stub_63ACC(&str), d, e);
+    }
+    return ret;
+}
 
-void func_80063FA8(){}
+// func_80063FA8: scan the 0x3C-stride resource table for the first entry
+// whose +4 id field matches `value` (0 = no match). `start`/`end` bound the
+// number of scanned slots, `offset` is the first table index and `stride`
+// advances the index each step.
+ResInfoEntry* func_80063FA8(ResInfoEntry* base, int value, int start, int end, int stride, int offset) {
+    int count;
+    int idx = 0;
+    while (value != 0 && (count = end - start) > 0) {
+        u32 tableIdx = (u32)(offset + idx);
+        ResInfoEntry* entry = (tableIdx <= 0x81) ? (ResInfoEntry*)((u8*)base + tableIdx * 0x3c + 8) : 0;
+        if (entry->field_0x04 == value) {
+            return entry;
+        }
+        idx += stride;
+        count--;
+    }
+    return 0;
+}
 
-void __declspec(noinline) func_80064014(CfRes* self, CEventFile* evt, u32 field) {}
+// func_80064014 (0x800647E0): file-event completion handler. Walks the
+// 0x3C-stride resource-entry table from self+0xBC for the entry whose pending
+// file handle matches the event; clears its in-flight state and, on a
+// successful read, notifies the entry's lookup object. Returns 1 when an entry
+// was updated, 0 otherwise.
+extern "C" int __declspec(noinline) func_80064014(CfRes* self, CEventFile* evt, u32 field) {
+    if (field != 0) {
+        ResInfoEntry* table = (ResInfoEntry*)((u8*)self + 0xbc);
+        int n = 0x7f;
+        for (u32 idx = 3; n > 0; idx++, n--) {
+            ResInfoEntry* entry = (idx < 0x82 && idx <= 0x81) ? table : 0;
+            if ((u32)(uintptr_t)entry->field_0x28 == field) {
+                if (evt->unk0 == 1) {
+                    entry->field_0x00 = (entry->field_0x00 & 0xFFFFFFAEu) | 2;
+                    entry->field_0x28 = 0;
+                    if (entry->field_0x2C != 0) {
+                        ((CfResLookupV38*)entry->field_0x2C)->_v038(entry);
+                    }
+                } else {
+                    entry->field_0x00 = (entry->field_0x00 & 0xFFFFFFACu);
+                    entry->field_0x28 = 0;
+                }
+                return 1;
+            }
+            table++;
+        }
+    }
+    return 0;
+}
 
 void func_800640F4(){}
 
-void func_8006414C(){}
+// func_8006414C: true when the packed resource tag has the marker shape
+// (field-27 bits == 8 and both low index fields zero).
+int func_8006414C(void* self) {
+    u32 bits = CfRes_extractBits27_5(self);
+    int mid = (int)func_80062524(self);
+    int low = (int)CfRes_getAddrLow10(self);
+    return (bits == 8 && mid == 0 && low == 0) ? 1 : 0;
+}
 
-extern "C" u32 CfRes_getAddrLow10(void* self) { return (u32)(uintptr_t)self & 0x3FF; }
+extern "C" __declspec(noinline) u32 CfRes_getAddrLow10(void* self) { return (u32)(uintptr_t)self & 0x3FF; }
 
-void func_800641CC(){}
+extern "C" int __declspec(noinline) func_800641CC(int inst, int a, int b) { return 0; }
 
 extern "C" unsigned long CfRes_packShift27(unsigned long a, unsigned long b) {
     return (a & 0x7FFFFFF) | (b << 27);
@@ -761,9 +1146,8 @@ struct CfResData {
     void* field_2C;
 };
 
-extern "C" void CfRes_delegateCleanup(void* self) {
-    extern void func_80065CA4(void* a, void* b);
-    func_80065CA4(static_cast<CfResData*>(self)->field_2C, self);
+extern "C" __declspec(noinline) void CfRes_delegateCleanup(void* self) {
+    return func_80065CA4((CfResCleanupEntry*)(static_cast<CfResData*>(self)->field_2C), (CfResCleanupEntry*)self);
 }
 
 extern "C" unsigned long CfRes_isField4Zero(u8* self) {
@@ -794,7 +1178,7 @@ extern "C" void CfRes_orBits_649CC(u8* self, u32 bits) {
 extern u32 lbl_eu_80663E30;
 extern "C" int CfRes_getE30() { return lbl_eu_80663E30; }
 
-extern "C" void CfRes_setE28Mask(u32 bits) {
+extern "C" __declspec(noinline) void CfRes_setE28Mask(u32 bits) {
     extern u32 lbl_eu_80663E28;
     lbl_eu_80663E28 |= bits;
 }
@@ -817,7 +1201,7 @@ void ::CfRes::OnFileEvent(CEventFile* ev) {
 
 extern "C" __declspec(noinline) u32 CfRes_getField4_64A6C(u8* self) { return *(u32*)((u8*)self + 0x4); }
 
-void func_80064A74(){}
+extern "C" int __declspec(noinline) func_80064A74(int inst, int a, int b, int c) { return 0; }
 
 extern "C" u32 CfRes_getAddrLow10_64B70(u8* self) { return (u32)(uintptr_t)self & 0x3FF; }
 
@@ -829,18 +1213,40 @@ struct CfResSub_64CB8 {
     virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
     virtual void m08(); virtual void m09(); virtual void m10(); virtual void m11();
     virtual void m12(); virtual void m13(); virtual void m14();
-    virtual void m17(void* self, void* arg);
+    virtual int m17(void* self, void* arg);
 };
 struct CfResObj_64CB8 { u8 _00[0x2C]; CfResSub_64CB8* sub; };
-extern "C" void CfRes_vcall17(u8* self, void* arg) {
-    ((CfResObj_64CB8*)self)->sub->m17(self, arg);
+extern "C" __declspec(noinline) int CfRes_vcall17(u8* self, void* arg) {
+    return ((CfResObj_64CB8*)self)->sub->m17(self, arg);
 }
 
-void func_80064CD8(){}
+extern "C" int __declspec(noinline) func_80064CD8(int inst, int a, int b, int c) { return 0; }
 
-void __declspec(noinline) func_eu_80065590(int inst, int index, u8* ptr) {}
+// func_eu_80065590: re-register the resource-table entry at `index` for the
+// packed token `ptr`: detach the old registration, then repack (entry id,
+// params) from the token and store the packed result into the entry's
+// field_04.
+void __declspec(noinline) func_eu_80065590(int inst, int index, u8* ptr) {
+    if (ptr == 0) {
+        return;
+    }
+    ResInfoEntry* entry = (ResInfoEntry*)getEntryPtr((char*)inst + 4, index, 0);
+    if (entry == 0) {
+        return;
+    }
+    if (CfRes_vcall17((u8*)entry, ptr) == 0) {
+        return;
+    }
+    if (entry->field_0x04 != 0) {
+        func_80066714(entry, true);
+    }
+    CfRes_delegateCleanup(entry);
+    u32 out0, out1, out2, out3;
+    func_800AA318((u32)(uintptr_t)ptr, &out0, &out1, &out2, &out3);
+    entry->field_0x04 = func_eu_80065640(out0, out1, out2, 0x63);
+}
 
-extern "C" u32 func_eu_80065640(u32 a, u32 b, u32 c, u32 d) {
+extern "C" __declspec(noinline) u32 func_eu_80065640(u32 a, u32 b, u32 c, u32 d) {
     u32 t0 = (c << 10) & 0xFFFFFC00;
     u32 t1 = (b << 20) & 0xFFF00000;
     u32 t2 = (a << 27) & 0xF8000000;
@@ -851,43 +1257,191 @@ extern "C" u32 func_eu_80065640(u32 a, u32 b, u32 c, u32 d) {
 
 void func_80064DC4(){}
 
-void func_80064EB0(){}
+extern "C" __declspec(noinline) u32 CfRes_getField18_64F58(u8* self) { return *(u32*)((u8*)self + 0x18); }
 
-extern "C" u32 CfRes_getField18_64F58(u8* self) { return *(u32*)((u8*)self + 0x18); }
-
-extern "C" void CfRes_setBits11_64F60(u8* self) {
+extern "C" __declspec(noinline) void CfRes_setBits11_64F60(u8* self) {
     u32 val = *(u32*)self;
     *(u32*)self = (val & ~0x42) | 0x11;
 }
 
-void func_80064F78(){}
+// func_80064EB0 (0x80065748): resolve the packed id via func_80064F78 and,
+// when the target grid entries are valid, link them into the resolved record.
+int __declspec(noinline) func_80064EB0(int inst, int a, int b, int c) {
+    u8* p2;
+    int v;
+    u8* p1;
+    v = func_80064F78(inst, a, b, c);
+    p1 = (u8*)func_80062F58((u8*)(inst + 4));
+    p2 = (u8*)func_80062FA0((u8*)(inst + 4));
+    if (v != 0 && CfRes_getField18_64F58(p2) != 0) {
+        u32 f18 = CfRes_getField18_64F58(p2);
+        int vc = (int)(uintptr_t)CfRes_vcall02(p1, 0);
+        CfRes_initFields4(p1, v, 0, vc, (int)f18);
+        CfRes_setBits11_64F60(p1);
+    }
+    return v;
+}
 
-void func_80065050(){}
+// func_80064F78 (0x80065810): resolve a packed resource token through the
+// +0xB8 slot. Packs (a, b); when the slot already tracks the token, return it.
+// Otherwise clean the slot, obtain the lookup object (falling back to
+// func_800A8CD4) and dispatch the archive read (func_80063F1C), zeroing the
+// token on failure.
+extern "C" int __declspec(noinline) func_80064F78(int inst, int a, int b, int c) {
+    int result = (int)func_800AA2BC((u32)a, (u32)b);
+    u8* slot = (u8*)func_80062FA0((u8*)(inst + 4));
+    if (result == 0) {
+        return result;
+    }
+    if (CfRes_vcall17(slot, (void*)(uintptr_t)result) != 0) {
+        return result;
+    }
+    CfRes_delegateCleanup(slot);
+    void* vc = CfRes_vcall02(slot, 0);
+    if (vc == 0) {
+        vc = (void*)(uintptr_t)func_800A8CD4();
+        ((ResInfoEntry*)slot)->data = (u32*)vc;
+    }
+    if (func_80063F1C((u8*)(uintptr_t)inst, (u8*)vc, (u32)(uintptr_t)result, slot, c) == 0) {
+        result = 0;
+    }
+    return result;
+}
 
-void func_80065158(){}
+extern "C" int __declspec(noinline) func_80065050(int inst, int a, int b, int c) { return 0; }
 
-extern "C" __declspec(noinline) void func_80065254(int inst, u8* arg){}
+int __declspec(noinline) func_80065158(int inst, int a, int b, int c, int d) { return 0; }
 
-extern "C" unsigned long CfRes_packThreeFields(unsigned long a, unsigned long b, unsigned long c) {
+extern "C" __declspec(noinline) unsigned long CfRes_packThreeFields(unsigned long a, unsigned long b, unsigned long c) {
     return ((a & 0x1F) << 27) | ((b & 0xFFF) << 20) | ((c & 0x3FFFFF) << 10);
 }
 
-void func_80065314(){}
+// func_80065254 (0x80065AEC): run the archive-update step for the manager's
+// +0x16c slot; when the slot's vtable probe returns an object, pack the
+// game-manager fields and store them into the slot.
+void __declspec(noinline) func_80065254(int inst, u8* arg) {
+    u8* p = (u8*)func_80063078((u8*)(inst + 4));
+    func_80066788(p, 0, 0, 0);
+    void* vc = CfRes_vcall02(p, 0);
+    if (vc != 0) {
+        u16 first;
+        u16 second;
+        func_800832BC__Q22cf13CfGameManagerFv(&first, &second);
+        int packed = (int)CfRes_packThreeFields(0x1d, first, second);
+        CfRes_initFields4(p, packed, 0, (int)(uintptr_t)vc, (int)(uintptr_t)arg);
+        CfRes_resetState2(p);
+    }
+}
 
-void func_eu_80065C7C(){}
+// func_80065314: resolve/refresh a resource slot. When the lookup object
+// reports the entry still in use, run its vtable cleanup path and return the
+// request id unchanged; otherwise detach it, rebuild the path and dispatch
+// the archive read (func_80063F1C), zeroing the request id on failure.
+int __declspec(noinline) func_80065314(int inst, int a, int b) {
+    u8* slot = (u8*)func_80063078((u8*)(inst + 4));
+    if (a == 0) {
+        return a;
+    }
+    if (CfRes_vcall17(slot, (void*)(uintptr_t)a) != 0) {
+        if (CfRes_vcall14(slot) != 0) {
+            CfRes_vcall38(slot);
+        }
+        return a;
+    }
+    CfRes_delegateCleanup(slot);
+    void* vc = CfRes_vcall02(slot, 0);
+    if (func_80063F1C((u8*)(uintptr_t)inst, (u8*)vc, (u32)(uintptr_t)a, slot, b) == 0) {
+        a = 0;
+    }
+    return a;
+}
 
-extern "C" void* func_eu_80065D60(void* self) { return (char*)self + 0x1e4; }
+// func_eu_80065C7C (0x80065C7C): EU-style resource load dispatch. Packs the
+// (a, b) indices into a token; if the +0x1E4 slot already tracks it, raise the
+// 0x2000 mask and return the token. Otherwise clean the slot, build the path
+// string (rodata base +0x23 formatted with the two indices) and run the
+// archive-read pipeline (func_80063E30), zeroing the token on failure.
+extern "C" int __declspec(noinline) func_eu_80065C7C(int inst, int a, int b, int c) {
+    int result = (int)func_800AA2BC((u32)a, (u32)b);
+    u8* slot = (u8*)func_eu_80065D60((u8*)(inst + 4));
+    if (CfRes_vcall17(slot, (void*)(uintptr_t)result) != 0) {
+        CfRes_setE28Mask(0x2000);
+        return result;
+    }
+    CfRes_delegateCleanup(slot);
+    ml::FixStr<64> str;
+    str.format(lbl_eu_804FB214 + 0x23, a, b);
+    void* vc = CfRes_vcall02(slot, 0);
+    if (func_80063E30((void*)(uintptr_t)inst, vc, (u32)(uintptr_t)result, CfRes_stub_63ACC(&str), slot, c) == 0) {
+        result = 0;
+    }
+    return result;
+}
 
-void func_800653E4(){}
+extern "C" __declspec(noinline) void* func_eu_80065D60(void* self) { return (char*)self + 0x1e4; }
 
-void func_800654B4(){}
+// func_800653E4: twin of func_80065314 over the +0x220 slot (see there).
+extern "C" int __declspec(noinline) func_800653E4(int inst, int a, int b) {
+    u8* slot = (u8*)func_80063108((u8*)(inst + 4));
+    if (a == 0) {
+        return a;
+    }
+    if (CfRes_vcall17(slot, (void*)(uintptr_t)a) != 0) {
+        if (CfRes_vcall14(slot) != 0) {
+            CfRes_vcall38(slot);
+        }
+        return a;
+    }
+    CfRes_delegateCleanup(slot);
+    void* vc = CfRes_vcall02(slot, 0);
+    if (func_80063F1C((u8*)(uintptr_t)inst, (u8*)vc, (u32)(uintptr_t)a, slot, b) == 0) {
+        a = 0;
+    }
+    return a;
+}
 
-void func_800655C4(){}
+extern "C" int __declspec(noinline) func_800654B4(int inst, int a, int b) { return 0; }
 
-void func_80065694(){}
+// func_800655C4 (0x80065F48): resolve a packed resource token through the
+// +0x298 slot (twin of func_80065314 over the +0x16C slot).
+extern "C" int __declspec(noinline) func_800655C4(int inst, int a, int b) {
+    u8* slot = (u8*)func_800630C0((u8*)(inst + 4));
+    if (a == 0) {
+        return a;
+    }
+    if (CfRes_vcall17(slot, (void*)(uintptr_t)a) != 0) {
+        if (CfRes_vcall14(slot) != 0) {
+            CfRes_vcall38(slot);
+        }
+        return a;
+    }
+    CfRes_delegateCleanup(slot);
+    void* vc = CfRes_vcall02(slot, 0);
+    if (func_80063F1C((u8*)(uintptr_t)inst, (u8*)vc, (u32)(uintptr_t)a, slot, b) == 0) {
+        a = 0;
+    }
+    return a;
+}
 
-extern "C" int CfResEntry_incRefCount(u8* self) {
+int __declspec(noinline) func_80065694(int a, int b, int* out) { return 0; }
+
+extern "C" __declspec(noinline) int CfResEntry_incRefCount(u8* self) {
     return ++*(int*)((char*)self + 4);
+}
+
+// func_80063994 (0x8006415C): register `b` as the handle of the entry-table
+// record at index `a`; when the handle already matches, bump its refcount
+// instead of re-registering.
+void func_80063994(int a, int b) {
+    int inst = CfRes_getInstance();
+    if (inst != 0) {
+        if ((u32)b == CfResEntry_getHandle((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), (u32)a))) {
+            CfResEntry_incRefCount((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), (u32)a));
+        } else {
+            CfResEntry_setHandle((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), (u32)a), (u32)b);
+            CfResEntry_setField4((u8*)CfRes_getTblEntry((u8*)(inst + 0x1ed8), (u32)a), 1);
+        }
+    }
 }
 
 int CfRes_65818::decRefCount() {
@@ -901,9 +1455,25 @@ extern "C" int CfRes_incField8(u8* self) {
     return ++*(int*)((char*)self + 8);
 }
 
-cf::CfRes::~CfRes() {}
+cf::CfRes::~CfRes() {
+    __dt__8006754C((u8*)&mStorage, -1);
+}
 
-cf::CfResTask::~CfResTask() {}
+// CTTask<cf::CfResTask> destructor - base dtor body is empty (the deleting
+// CfResTask dtor drives the CProcess teardown). Defined BEFORE the CfResTask
+// dtor so MWCC inlines the base teardown (CProcess dtor + delete flag) into
+// it, reproducing the retail shape (the retail standalone symbol exists too).
+template<>
+CTTask<cf::CfResTask>::~CTTask() {}
+
+// Destroy the embedded resource storage at +0x58 (guard checks the +0x54
+// header word), then the CProcess base; the delete-flag path is auto-emitted.
+cf::CfResTask::~CfResTask() {
+    u8* storage = (u8*)this + 0x54;
+    if (storage != 0) {
+        __dt__8006754C(storage + 4, -1);
+    }
+}
 
 void cf::CfResTask::Init() {}
 
@@ -952,7 +1522,21 @@ extern "C" int CfRes_cmpField4Eq(void* unused, const void* obj, u32 val) {
     return 0;
 }
 
-void func_80065CA4(){}
+// func_80065CA4: cancel the parent entry's pending device-file handle (if
+// any), clear its state fields, then reset the load-progress field. The
+// `child` resource object is passed through by callers but not used here.
+void __declspec(noinline) func_80065CA4(CfResCleanupEntry* child, CfResCleanupEntry* parent) {
+    if (parent->field_28 != 0) {
+        cancel__11CDeviceFileFP11CFileHandle(parent->field_28);
+        parent->field_04 = 0;
+        parent->field_08 = 0;
+        parent->field_28 = 0;
+        parent->field_00 = 0;
+        parent->field_24 = 0;
+        parent->field_20 = 0;
+    }
+    parent->field_14 = 0;
+}
 
 extern "C" int func_800A7EFC();
 extern "C" int func_800A7FBC();
@@ -989,7 +1573,22 @@ int func_80065D88() { return func_800A99D0(); }
 
 extern "C" void CfRes_stub_65D8C() {}
 
-void func_80065D90(){}
+// func_80065D90: lazily resolve the resource base of a ResInfoEntry through
+// its +0x2C lookup object, cache it in field_0x10, and register it with the
+// effect-singleton list (func_804CC1BC). The retail first arg (r3) is
+// unused (same convention as func_8006660C in IResInfo.cpp).
+void func_80065D90(int unused, ResInfoEntry* self) {
+    if (self->field_0x10 == 0) {
+        void* r = self->field_0x2C->getResourceBase(self, 0);
+        if (r != 0) {
+            u32* fc18 = lbl_eu_8065FC18;
+            if (fc18 != 0) {
+                self->field_0x10 = (u32)r;
+                func_804CC1BC(fc18, r);
+            }
+        }
+    }
+}
 
 extern "C" u32 CfRes_getField24(u32 unused, void* obj) { return *(u32*)((char*)obj + 24); }
 
@@ -1017,7 +1616,25 @@ extern "C" int CfRes_dispatchTypeB(u8* self, void* param) {
     return (int)self;
 }
 
-void func_80065E54(){}
+// func_80065E54: lazily resolve the resource base of an entry through its
+// +0x2C lookup object, cache it in field_0x14, and publish it to the sound
+// manager (subtype 10 -> slot 0, subtype 7 -> slot 1).
+void func_80065E54(int unused, ResInfoEntry* self) {
+    if (*(u32*)self->field_0x14 == 0) {
+        void* result = self->field_0x2C->getResourceBase(self, 0);
+        if (result != 0) {
+            u8 type = self->field_0x32;
+            *(u32*)self->field_0x14 = (u32)(uintptr_t)result;
+            if (type == 10) {
+                func_801BFA08(0, result, self->field_0x18, 0x106000);
+                func_801BFA88(0, 7, 0, 0);
+            } else if (type == 7) {
+                func_801BFA08(1, result, self->field_0x18, 0x1A0000);
+                func_801BFA88(1, 8, 0, 0);
+            }
+        }
+    }
+}
 
 int func_80065F18() { return func_800A9A90(); }
 
@@ -1045,11 +1662,6 @@ void CTTask<cf::CfResTask>::Draw() {
         (static_cast<cf::CfResTask*>(this)->*mDrawFunc)();
     }
 }
-
-// CTTask<cf::CfResTask> destructor - base dtor body is empty (the deleting
-// CfResTask dtor drives the CProcess teardown).
-template<>
-CTTask<cf::CfResTask>::~CTTask() {}
 
 extern "C" void func_80062BA0() {}
 extern "C" void func_80062CD0() {}

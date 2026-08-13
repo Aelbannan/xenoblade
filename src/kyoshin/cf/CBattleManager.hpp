@@ -181,5 +181,5 @@ extern "C" float lbl_eu_80666DDC;
 extern "C" float lbl_eu_80666DD4;
 extern "C" f64 lbl_eu_80666DE0;
 extern "C" BattleTableEntry lbl_eu_804FC828[];
-extern "C" volatile u32 lbl_eu_80663E24;
+extern "C" u32 lbl_eu_80663E24;
 

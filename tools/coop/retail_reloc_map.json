@@ -1,5 +1,5 @@
 {
-  "count": 2419,
+  "count": 2421,
   "entries": {
     "Decibel2RatioTable__Q44nw4r3snd6detail4Util": {
       "R_PPC_ADDR16_HA": {
@@ -22614,7 +22614,7 @@
         ]
       }
     },
-    "main/kyoshin/CEquipChange@7526": {
+    "main/kyoshin/CEquipChange@8271": {
       "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
@@ -22668,7 +22668,7 @@
         ]
       }
     },
-    "main/kyoshin/CItemBoxGrid@15068": {
+    "main/kyoshin/CItemBoxGrid@15069": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -22964,7 +22964,7 @@
         ]
       }
     },
-    "main/kyoshin/CTitle@6885": {
+    "main/kyoshin/CTitle@6888": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -23314,7 +23314,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CTaskREvent@10644": {
+    "main/kyoshin/cf/CTaskREvent@10646": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -23441,7 +23441,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CfGimmickObject@4205": {
+    "main/kyoshin/cf/CfGimmickObject@4564": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -23534,6 +23534,32 @@
         "scoped": true,
         "units": [
           "main/kyoshin/cf/IResInfo"
+        ]
+      }
+    },
+    "main/kyoshin/cf/chain/CChain@14855": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 21664,
+        "retail_symbol": "jumptable_eu_805381D4",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/cf/chain/CChain"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 31843,
+        "retail_symbol": "jumptable_eu_805381D4",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/cf/chain/CChain"
         ]
       }
     },
@@ -23659,7 +23685,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/object/CfObjectActor@861": {
+    "main/kyoshin/cf/object/CfObjectActor@1022": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -24167,7 +24193,7 @@
         ]
       }
     },
-    "main/kyoshin/plugin/ocUnit@6467": {
+    "main/kyoshin/plugin/ocUnit@6469": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -24181,7 +24207,7 @@
         ]
       }
     },
-    "main/kyoshin/plugin/ocUnit@6468": {
+    "main/kyoshin/plugin/ocUnit@6470": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -31928,8 +31954,8 @@
       }
     }
   },
-  "function_pairs": 10705,
-  "generated": "2026-08-13T04:53:34.593283",
+  "function_pairs": 10776,
+  "generated": "2026-08-13T08:20:08.404445",
   "region": "us",
   "units_scanned": 1148,
   "version": 1

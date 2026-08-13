@@ -9789,3 +9789,86 @@ interleaved per-field copy under an -O4,s unit. Per-function
 `optimization_level` cannot downgrade codegen (MWCC_REFERENCE 1302), but
 `#pragma scheduling off` around the function reproduces the interleaved
 single-register copy byte-for-byte under -O4,s (verified Wii/1.1).
+
+### 2026-08 highmatch sweep — reusable fixes (agent-highmatch session)
+
+- **Mask-path volatile re-read (CfObjectMove func_800BC3B0, 0x28, FULL_MATCH):** retail
+  reloads `mFlags68` after an early-return branch; MWCC CSEs a plain member re-read into
+  the check register. `(*(volatile u32*)&self->mFlags68 & ~0x800u) | 0x100400u` forces the
+  fresh `lwz` byte-identically. Also: retail `rlwinm 21,19` clears **0x800** (not 0x100000),
+  and `oris 0x10` sets **0x100000** (the 16-bit immediate is shifted left 16).
+
+- **Goto-gate for the branch-over-branch layout (CTitle func_802B64AC / func_802B6B08,
+  0x30, FULL_MATCH):** retail's `bc 4,2` over a `blr` (if-body placed AFTER the return)
+  requires `if (A && B) goto body; return; body: ...;` — plain nested ifs emit `bclr 12,2`
+  instead. Same family as the documented sjrbf_PutChunk gate.
+
+- **`void*` intermediate flips callee-saved allocation (nw4r snd_RemoteSpeaker
+  IntervalAlarmHandler, 0x70, FULL_MATCH):** `RemoteSpeaker* p = (RemoteSpeaker*)
+  OSGetAlarmUserData(pAlarm);` allocates pAlarm→r31/old→r30; the two-statement
+  `void* ud = OSGetAlarmUserData(pAlarm); p = (RemoteSpeaker*)ud;` flips it to the retail's
+  r30/r31 and byte-identity. (Contrast: the same trick does NOT move func_80145AA8's
+  base/s roles.)
+
+- **`__declspec(noinline)` on a trivial ctor (CMenuVision func_801ACCE0, 0x7C,
+  FULL_MATCH):** an empty `__ct__CMenuVision { return self; }` gets INLINED by -inline auto,
+  dropping the retail's ctor call and its null-check (and mangling the args — the size
+  leaks into r3). `extern "C" __declspec(noinline)` restores the call + `cmpi/bc` pair.
+
+- **Ternary vs if/else for a f32 selection (CTaskGameEff func_80044FBC, 0x7C,
+  FULL_MATCH):** `f32 time; if (enable) time = const; else time = g->field;` lets MWCC
+  hoist the following call's `lis/addi` base ABOVE the if; the single-expression
+  `f32 time = (enable) ? const : g->field;` pins the base after the selection — byte-
+  identical.
+
+- **`(s8)(u8)` double cast reproduces the dead `rlwinm`+`extsb` pair (CSortMenu
+  func_801D377C, 0x78, 86.7%):** `s8 sp5s = (s8)(u8)sp5;` emits retail's dead
+  `rlwinm rX,r0,0,24,31; extsb rX,r0` (the rlwinm result is overwritten); a single `(s8)`
+  cast emits only the extsb and the function is 1 instruction short.
+
+- **Per-use inline casts instead of a base local (CScnItemModel func_80485CE8, 0x7C,
+  FULL_MATCH):** keeping `act = (Act*)self->field_0x1F8` in a local makes MWCC hoist
+  `addi rX, self, 0x1F8` into a saved register (+1 instruction, shifted allocation).
+  Repeating `((Act*)self->field_0x1F8)->...` per use makes MWCC recompute the base inline
+  like retail (0 structural → 100%). Also: the flag bit was **0x80000000** (rlwinm 0,0),
+  not `& 1`.
+
+- **`#pragma optimize_for_size on` for stmw/lmw frames (CTitleAHelp `__ct__CTitleAHelp`,
+  0x80, FULL_MATCH):** retail ctor saves r29-r31 via `stmw`/`lmw`; the function-scoped
+  pragma reproduces the frame byte-identically (same lever as the documented kyoshin
+  dtor stmw cases).
+
+- **Wrong-field zeroing (ahx_sjd AHXSJD_Start, 0x84, FULL_MATCH):** retail zeroes
+  `chanInfo[2..7]` (0x1C-0x30, six words) — NOT decCallback/decCallbackPrm (0x4C/0x50).
+  Always map each `stw` offset against the struct before assuming which field the retail
+  initializes.
+
+- **Loop-exit branch polarity (CGXCache func_8044CEF8/CF74, 0x7c, OPEN):** retail emits
+  `[cmpl; bne → loop-continue; b → found]` (found OUT of line, +1 instr); MWCC emits
+  `[cmpl; beq → found]` for every shape tried (for/do-while/goto/break/continue,
+  -O4,p/s/3/2, GC/3.0a5.2, Wii/1.1). Open item: the found path stays the branch target.
+
+## u8-return vs full-word compare + cast-only virtual interface for r12 dispatch (FULL_MATCH ×2 fixes)
+
+`func_801CE974` (us-801d03c8, CItemBoxGrid.cpp) had two residuals, both fixed
+to 100%:
+
+1. **Return-type mask:** retail `cmpi r3,0` (full word) vs decomp
+   `rlwinm r0,r3,0,24,31` (byte mask) after a `getField27()` call. The header
+   declared `u8 getField27()`; MWCC's `!u8val` inserts the rlwinm mask. Retail
+   compares the full word, so the recovered return type is `int` (the body
+   still returns a byte — zero-extends into r3 with no extra codegen). Rule:
+   when a caller-side `cmpi` vs `rlwinm` mask appears on a method result, the
+   declared return type is too narrow; fix the header to `int`/`u32`.
+2. **Manual-cast dispatch colors the vtable base r5; real virtual dispatch
+   colors r12.** `((void(*)(void*,void*))(*(void***)(p+0xa0))[4])(...)` emits
+   `lwz r5,160(r31); lwz r12,16(r5)`; retail (and a real virtual call) emits
+   `lwz r12,160(r31); lwz r12,16(r12)`. Fix: a minimal cast-only interface
+   with the target as the 3rd declared virtual (lands at +0x10 under -RTTI on,
+   which inserts two hidden slots at 0/4):
+   ```cpp
+   struct CItemBoxObjA0Vt { virtual void _v08(); virtual void _v0C(); virtual void _v10(void*); };
+   reinterpret_cast<CItemBoxObjA0Vt*>(p + 0xa0)->_v10(temp);
+   ```
+   The witness's abi-boundary gate (r5→r12) is avoided because MWCC's virtual
+   dispatch uses r12 for the vtable base.

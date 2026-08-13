@@ -25,6 +25,7 @@ static GXColorS10 lbl_80666D70;
 extern u16 lbl_eu_80533E60[];
 
 // Retail constructor symbol (extern "C" to avoid MWCC mangling to __ct__11CTitleAHelpFPcUc)
+#pragma optimize_for_size on
 extern "C" CTitleAHelp* __ct__CTitleAHelp(CTitleAHelp* self, char* arg1, u8 arg2) {
     extern void* lbl_eu_80534500[];
     extern void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
@@ -45,6 +46,7 @@ extern "C" CTitleAHelp* __ct__CTitleAHelp(CTitleAHelp* self, char* arg1, u8 arg2
     self->unk37 = 0;
     return self;
 }
+#pragma optimize_for_size off
 
 CTitleAHelp::~CTitleAHelp() {}
 

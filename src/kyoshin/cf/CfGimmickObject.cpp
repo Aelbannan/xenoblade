@@ -124,8 +124,150 @@ refresh:
     self->field_74 |= 0x10;
 }
 
-// func_801F634C - step-machine helper (stub; returns "not done").
-__declspec(noinline) int func_801F634C(cf::CfGimmickObject* self) { return 0; }
+// func_801F634C - per-frame LOD/countdown update for the step machine.
+// Gates six independent countdowns on field_74 bits 0..5; each decrements a
+// per-field timer by the frame delta and, on expiry, resets the field's LOD
+// task alpha via func_80462E3C. Returns 1 while any work remains active.
+//
+// The s16->f32 conversion of field_18A uses the direct cast so MWCC emits
+// the 0x43300000 double-slot + fsubs magic idiom (lbl_eu_806681A8).
+int func_801F634C(cf::CfGimmickObject* self) {
+    if ((self->field_74 & 0x3F) != 0) {
+        int result = 0;
+        f32 delta = func_80496288(lbl_eu_80663E14);
+
+        // bit 0: +0x170 expiry (spawns the busy sound via func_80209F2C).
+        if ((self->field_74 & 1) != 0) {
+            self->field_170 -= delta;
+            if (self->field_170 <= lbl_eu_806681A0) {
+                self->field_74 &= ~1;
+            } else {
+                func_80209F2C();
+                result = 1;
+            }
+        }
+
+        // bit 1: +0x16C fade-out; the LOD alpha goes 1.0 -> 0.0 over
+        // field_18A frames (ratio clamped at 1.0). The division is written
+        // twice so MWCC recomputes the s16->f32 conversion for the fade
+        // (retail re-runs the 0x4330 double-slot + fdivs after the branch).
+        if ((self->field_74 & 2) != 0) {
+            f32 v = self->field_16C - delta;
+            self->field_16C = v;
+            if (v <= lbl_eu_806681A0) {
+                self->field_74 &= ~2;
+                for (int i = 0; i < 2; i++) {
+                    if (self->field_70[i] != 0)
+                        func_80462E3C__8CTaskLODFv(self->field_70[i],
+                                                   lbl_eu_806681A4);
+                }
+                result = 1;
+            } else {
+                if (v / (f32)self->field_18A < lbl_eu_806681A4) {
+                    f32 fade =
+                        lbl_eu_806681A4 - v / (f32)self->field_18A;
+                    for (int i = 0; i < 2; i++) {
+                        if (self->field_70[i] != 0)
+                            func_80462E3C__8CTaskLODFv(self->field_70[i], fade);
+                    }
+                } else {
+                    for (int i = 0; i < 2; i++) {
+                        if (self->field_70[i] != 0)
+                            func_80462E3C__8CTaskLODFv(self->field_70[i],
+                                                       lbl_eu_806681A0);
+                    }
+                }
+                result = 1;
+            }
+        }
+
+        // bit 2: +0x16C countdown gated by the linked peer's busy flag; when
+        // the peer (field_168) is busy the whole countdown is skipped.
+        if ((self->field_74 & 4) != 0) {
+            if (self->field_168 == 0 || (self->field_168->field_74 & 2) == 0) {
+                f32 v = self->field_16C - delta;
+                self->field_16C = v;
+                if (v <= lbl_eu_806681A0) {
+                    self->field_74 &= ~4;
+                    func_801F61B0(self, 0);
+                    for (int i = 0; i < 2; i++) {
+                        if (self->field_70[i] != 0)
+                            func_80462E3C__8CTaskLODFv(self->field_70[i],
+                                                       lbl_eu_806681A4);
+                    }
+                } else {
+                    f32 fade = v / (f32)self->field_18A;
+                    for (int i = 0; i < 2; i++) {
+                        if (self->field_70[i] != 0)
+                            func_80462E3C__8CTaskLODFv(self->field_70[i], fade);
+                    }
+                }
+            } else {
+                self->field_74 &= ~4;
+            }
+            result = 1;
+        }
+
+        // bit 3: +0x174 expiry drives a per-LOD range step: the LOD2 target
+        // is nudged toward the current value by (elapsed/120) * delta.
+        if ((self->field_74 & 8) != 0) {
+            f32 v = self->field_174 - delta;
+            self->field_174 = v;
+            if (v <= lbl_eu_806681A0) {
+                self->field_74 &= ~8;
+            } else {
+                f32 step = (v / lbl_eu_806681B4) * delta;
+                for (int i = 0; i < 2; i++) {
+                    if (self->field_70[i] != 0) {
+                        f32 cur = func_80462F2C__8CTaskLODFv(self->field_70[i]);
+                        f32 tgt = func_80462FF4__8CTaskLODFv(self->field_70[i]);
+                        f32 s = cur + step;
+                        if (tgt <= s)
+                            s -= tgt;
+                        func_80462EF4__8CTaskLODFv(self->field_70[i], s);
+                    }
+                }
+                result = 1;
+            }
+        }
+
+        // bit 4: +0x178 expiry; with the 0x40000000 flag the LODs are hidden
+        // (alpha 0 / mode 0) before clearing the flag.
+        if ((self->field_74 & 0x10) != 0) {
+            f32 v = self->field_178 - delta;
+            self->field_178 = v;
+            if (v <= lbl_eu_806681A0) {
+                u32 flags = self->field_74;
+                self->field_74 = flags & ~0x10;
+                if ((flags & 0x40000000) != 0) {
+                    for (int i = 0; i < 2; i++) {
+                        if (self->field_70[i] != 0) {
+                            func_80462EF4__8CTaskLODFv(self->field_70[i],
+                                                       lbl_eu_806681A0);
+                            func_80462F4C__8CTaskLODFv(self->field_70[i], 0);
+                        }
+                    }
+                    self->field_74 &= ~0x40000000;
+                }
+            }
+            result = 1;
+            self->field_74 &= ~0x20000;
+        }
+
+        // bit 5: +0x17C expiry.
+        if ((self->field_74 & 0x20) != 0) {
+            func_8020A010();
+            f32 v = self->field_17C - delta;
+            self->field_17C = v;
+            if (v <= lbl_eu_806681A0)
+                self->field_74 &= ~0x20;
+            result = 1;
+            self->field_74 &= ~0x20000;
+        }
+        return result;
+    }
+    return 0;
+}
 
 // func_801F6780 - per-step gimmick update. The +0xA4 step table (indexed by
 // field_188, 16 bytes per entry) drives: a +0x170 activation countdown,
@@ -331,9 +473,120 @@ int func_801F6D8C(cf::CfGimmickObject* self) {
     return 0;
 }
 
-// Same-TU stub -- __declspec(noinline) keeps -ipa from folding the empty
-// body into the retail caller (must emit a direct `bl`).
-__declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {}
+// func_801F6E60 - state refresh dispatcher. The u8 argument selects a
+// per-state re-init: cases 1..3 arm a +0x16C countdown (flag 0x2) and heal
+// the linked map object, cases 4..6 arm the peer-gated countdown (flag 0x4),
+// and cases 7/8 refresh the LOD registrations. Uses a jump table.
+__declspec(noinline) void func_801F6E60(cf::CfGimmickObject* self, u8 arg) {
+    switch (arg) {
+    case 0:
+        break;
+    case 1:
+    case 9:
+        self->field_18A = 30;
+        self->field_74 |= 2;
+        if (self->field_68 != 0) {
+            ::CfGimmickObject* obj =
+                (::CfGimmickObject*)func_80186BC8(self->field_68);
+            if (obj != 0) {
+                ((void (*)(::CfGimmickObject*, f32))obj->vtable[0x168 >> 2])(
+                    obj, lbl_eu_806681A4);
+                func_800BC3B0((cf::CfObjectMove*)obj, lbl_eu_806681B0);
+            }
+        }
+        func_801F61B0(self, 1);
+        self->field_16C = lbl_eu_806681C8 + (f32)self->field_18A;
+        break;
+    case 2:
+        self->field_18A = 60;
+        self->field_74 |= 2;
+        if (self->field_68 != 0) {
+            ::CfGimmickObject* obj =
+                (::CfGimmickObject*)func_80186BC8(self->field_68);
+            if (obj != 0) {
+                ((void (*)(::CfGimmickObject*, f32))obj->vtable[0x168 >> 2])(
+                    obj, lbl_eu_806681A4);
+                func_800BC3B0((cf::CfObjectMove*)obj, lbl_eu_806681B0);
+            }
+        }
+        func_801F61B0(self, 1);
+        self->field_16C = lbl_eu_806681C8 + (f32)self->field_18A;
+        break;
+    case 3:
+        self->field_18A = 90;
+        self->field_74 |= 2;
+        if (self->field_68 != 0) {
+            ::CfGimmickObject* obj =
+                (::CfGimmickObject*)func_80186BC8(self->field_68);
+            if (obj != 0) {
+                ((void (*)(::CfGimmickObject*, f32))obj->vtable[0x168 >> 2])(
+                    obj, lbl_eu_806681A4);
+                func_800BC3B0((cf::CfObjectMove*)obj, lbl_eu_806681B0);
+            }
+        }
+        func_801F61B0(self, 1);
+        self->field_16C = lbl_eu_806681C8 + (f32)self->field_18A;
+        break;
+    case 4:
+        if (self->field_168 == 0 || (self->field_168->field_74 & 2) == 0) {
+            self->field_18A = 30;
+            self->field_74 |= 4;
+            if (self->field_68 != 0) {
+                ::CfGimmickObject* obj =
+                    (::CfGimmickObject*)func_80186BC8(self->field_68);
+                if (obj != 0) {
+                    ((void (*)(::CfGimmickObject*, f32))obj->vtable[0x168 >> 2])(
+                        obj, lbl_eu_806681A4);
+                    func_800BC3D8((cf::CfObjectMove*)obj, lbl_eu_806681B0);
+                }
+            }
+            func_801F61B0(self, 1);
+            self->field_16C = (f32)self->field_18A;
+        }
+        break;
+    case 5:
+        if (self->field_168 == 0 || (self->field_168->field_74 & 2) == 0) {
+            self->field_18A = 60;
+            self->field_74 |= 4;
+            if (self->field_68 != 0) {
+                ::CfGimmickObject* obj =
+                    (::CfGimmickObject*)func_80186BC8(self->field_68);
+                if (obj != 0) {
+                    ((void (*)(::CfGimmickObject*, f32))obj->vtable[0x168 >> 2])(
+                        obj, lbl_eu_806681A4);
+                    func_800BC3D8((cf::CfObjectMove*)obj, lbl_eu_806681B0);
+                }
+            }
+            func_801F61B0(self, 1);
+            self->field_16C = (f32)self->field_18A;
+        }
+        break;
+    case 6:
+        if (self->field_168 == 0 || (self->field_168->field_74 & 2) == 0) {
+            self->field_18A = 90;
+            self->field_74 |= 4;
+            if (self->field_68 != 0) {
+                ::CfGimmickObject* obj =
+                    (::CfGimmickObject*)func_80186BC8(self->field_68);
+                if (obj != 0) {
+                    ((void (*)(::CfGimmickObject*, f32))obj->vtable[0x168 >> 2])(
+                        obj, lbl_eu_806681A4);
+                    func_800BC3D8((cf::CfObjectMove*)obj, lbl_eu_806681B0);
+                }
+            }
+            func_801F61B0(self, 1);
+            self->field_16C = (f32)self->field_18A;
+        }
+        break;
+    case 7:
+        func_801F61B0(self, 1);
+        break;
+    case 8:
+        if (self->field_168 == 0 || (self->field_168->field_74 & 2) == 0)
+            func_801F61B0(self, 0);
+        break;
+    }
+}
 
 // func_801F72A4 - availability scan for the +0x14A id table. With the 0x2000
 // flag set, counts how many live players with a matching id (high nibble of
@@ -358,9 +611,10 @@ int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
     if ((flags & 0x2000) != 0) {
         if (self->field_196 <= 0) {
             CfGimmickObjectList* list = (CfGimmickObjectList*)func_800B6BC8();
+            CfGimmickObjectListNode* head = list->head;
             int count = 0;
-            for (CfGimmickObjectListNode* node = list->head->next;
-                 node != list->head; node = node->next) {
+            for (CfGimmickObjectListNode* node = head->next;
+                 node != head; node = node->next) {
                 void* obj = node->object;
                 if (obj != 0)
                     obj = (char*)obj - 0x3E9C;
@@ -386,12 +640,13 @@ int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
                 obj = (char*)obj - 0x3E9C;
             CfGimmickPlayerBase* base = (CfGimmickPlayerBase*)obj;
             u16 v = base->field_456C;
+            u32 nibble = v & 0xF;   // kept in a saved reg across the vtable call
             if ((v >> 4) == found) {
                 remaining--;
                 f32 hp = ((f32 (*)(void*))base->vtable[0x4A])(base);
                 if (hp <= zero) {
                     u32 bits = self->field_184;
-                    u32 bit = 1u << (v & 0xF);
+                    u32 bit = 1u << nibble;
                     if ((bits & bit) == 0) {
                         self->field_184 = bits | bit;
                         self->field_196 = (s16)(self->field_196 - 1);
@@ -401,18 +656,11 @@ int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
             node = node->next;
         }
         if (remaining > 0)
-            self->field_74 |= 0x400000;
-        if (self->field_196 >= 1) {
-            if (self->field_198 == self->field_196 ||
-                remaining != self->field_196)
-                return 0;
-            func_80193678((u16)found);
-            self->field_196 = self->field_198;
-            self->field_184 = 0;
-            return 0;
-        }
-        // Table exhausted: advance field_18C to the next non-zero entry and
-        // fall through to the spawn; otherwise reset and finish.
+            self->field_74 |= 0x04000000;
+        if (self->field_196 >= 1)
+            goto state9190;
+        // Table exhausted: advance field_18C to the next non-zero entry
+        // (retail .L_801F910C..915C sits before the .L_801F9190 block).
         {
             int newIndex = self->field_18C + 1;
             int foundFlag = 1;
@@ -431,6 +679,17 @@ int func_801F72A4(cf::CfGimmickObject* self, u16* table) {
                 return 1;
             }
         }
+        goto spawn;   // foundFlag == 0 (retail beq .L_801F91CC)
+state9190:
+        {
+            int cur = self->field_196;
+            if (self->field_198 == cur || remaining != cur)
+                return 0;
+        }
+        func_80193678(found);
+        self->field_196 = self->field_198;
+        self->field_184 = 0;
+        return 0;
     }
 spawn:
     self->field_74 |= 0x2000;
@@ -439,8 +698,9 @@ spawn:
     {
         int count = 0;
         CfGimmickObjectList* list = (CfGimmickObjectList*)func_800B6BC8();
-        for (CfGimmickObjectListNode* node = list->head->next;
-             node != list->head; node = node->next) {
+        CfGimmickObjectListNode* head = list->head;
+        for (CfGimmickObjectListNode* node = head->next;
+             node != head; node = node->next) {
             void* obj = node->object;
             if (obj != 0)
                 obj = (char*)obj - 0x3E9C;

@@ -3,13 +3,17 @@
 
 #include <harness_catalog.h>
 #include "monolib/mpfsys/MPFDrawDisplayList.hpp"
+#include "monolib/mpfsys/UnkClass_80471EC8.hpp"
 
 #include <nw4r/math/math_types.h>
+#include <nw4r/math/math_arithmetic.h>
 #include <revolution/os/OSFastCast.h>
+#include <revolution/os/OSCache.h>
 #include <revolution/GX.h>
 #include <monolib/math/CVec3.hpp>
 #include <monolib/math/Utility.hpp>
 
+#include <stdlib.h>
 #include <string.h>
 
 // ---------------------------------------------------------------------------
@@ -55,12 +59,16 @@ struct MPFDrawCol {            // 3-byte RGB color
 };
 
 struct MPFDrawPos {            // position + interpolated vertex color
-    f32 x;
-    f32 y;
-    f32 z;
-    u8 r;
-    u8 g;
-    u8 b;
+    f32 x;                     // +0x00
+    f32 y;                     // +0x04
+    f32 z;                     // +0x08
+    u8 r;                      // +0x0C
+    u8 g;                      // +0x0D
+    u8 b;                      // +0x0E
+    u8 field_0xf;              // +0x0F
+    f32 field_0x10;            // +0x10 second position slot x
+    f32 field_0x14;            // +0x14 second position slot y
+    f32 field_0x18;            // +0x18 second position slot z
 };
 
 struct MPFColor {              // float color used for the interpolation
@@ -88,6 +96,19 @@ struct MPFDrawDisplayListLayout {
 struct MPFDrawNode {
     u32 field_0x0;            // +0x00 arena offset of the batch data
     u32 field_0x4;            // +0x04 non-zero when the chain has draw data
+    u32 field_0x8;            // +0x08 arena offset
+    u32 field_0xC;            // +0x0C arena offset
+    u32 field_0x10;           // +0x10 arena offset
+    u32 field_0x14;           // +0x14 arena offset
+    u32 field_0x18;           // +0x18 arena offset
+    u32 field_0x1C;           // +0x1C arena offset
+    u32 field_0x20;           // +0x20 arena offset
+    u32 field_0x24;           // +0x24 arena offset
+    u32 field_0x28;           // +0x28 arena offset
+    f32 field_0x2c;           // +0x2C bounds min X
+    f32 field_0x30;           // +0x30 bounds min Z
+    f32 field_0x34;           // +0x34 bounds max X
+    f32 field_0x38;           // +0x38 bounds max Z
 };
 
 // Global slot chain (head at lbl_eu_80665870) browsed by func_80475238.  The
@@ -95,8 +116,8 @@ struct MPFDrawNode {
 // base; +0x0e bit 1 marks a slot as occupied.
 struct MPFDrawSlot {
     u32 field_0x0;            // +0x00 key
-    MPFDrawSlot* next;        // +0x04
-    u8 gap08[4];              // +0x08
+    MPFDrawSlot* next;        // +0x04 global chain
+    MPFDrawSlot* field_0x8;   // +0x08 bucket-chain link
     u8 field_0xc;             // +0x0c
     u8 field_0xd;             // +0x0d
     u8 field_0xe;             // +0x0e flags (bit 1 = in use)
@@ -107,9 +128,103 @@ struct MPFDrawSlot {
     f32 field_0x18;           // +0x18
     f32 field_0x1c;           // +0x1c
     f32 field_0x20;           // +0x20
-    u8 gap24[4];              // +0x24
+    f32 field_0x24;           // +0x24
     u16 field_0x28;           // +0x28
     u16 field_0x2a;           // +0x2a
+};
+
+// 0xC-byte walk cells (self+0x34).  The grid at self+0x20 holds indices into
+// this array; even values recurse into another cell, odd values select a
+// draw-list run from the u16 index array at self+0x24.
+struct MPFDrawCell {
+    u32 offset;               // +0x00 base offset into the cell grid
+    u16 i0;                   // +0x04 vertex index A
+    u16 i1;                   // +0x06 vertex index B
+    u8 w;                     // +0x08 grid width
+    u8 h;                     // +0x09 grid height
+    u16 mask;                 // +0x0A flag mask
+};
+
+// 0x4c-byte per-item data (self+0x18 cursor advances by 0x4c per entry).
+struct MPFDrawItem {
+    u8 gap00[0x16];           // +0x00
+    u8 field_0x16;            // +0x16
+    u8 field_0x17;            // +0x17 scatter mode (1 = jittered, 2 = random)
+    u8 field_0x18;            // +0x18
+    u8 gap19[0xF];            // +0x19..+0x28
+    f32 field_0x28;           // +0x28
+    u8 gap2C[8];              // +0x2C..+0x34
+    u8 field_0x34;            // +0x34
+    u8 gap35[0x17];           // +0x35..+0x4C
+};
+
+// Global draw state at lbl_eu_80665838 (pointer).  The render-state object
+// spans +0x00..+0x2E08 (UnkClass_80471EC8); the current cell index lives at
+// +0x2E12 (advanced by func_80477F80).
+struct MPFDrawGlobal {
+    u8 gap00[0x2DFC];             // +0x00
+    f32 field_0x2DFC;             // +0x2DFC
+    f32 field_0x2E00;             // +0x2E00
+    u8 gap2E04[0x2E12 - 0x2E04];  // +0x2E04
+    s16 field_0x2E12;             // +0x2E12 current cell index
+};
+
+// Per-billboard item data (0x4c stride) consumed by func_804783D0 and
+// func_80478C94.  The position is at +0x00/+0x04, the flag word at +0x10,
+// the layer index at +0x1b and the spread value at +0x20; the sibling draw
+// walkers (func_804795BC etc.) read the remaining fields.
+struct MPFBillItem {
+    f32 x;                    // +0x00
+    f32 y;                    // +0x04
+    u8 gap08[8];              // +0x08
+    u32 flags;                // +0x10
+    u8 gap14[7];              // +0x14
+    u8 layer;                 // +0x1b
+    u8 gap1c[4];              // +0x1c
+    f32 spread;               // +0x20
+    u8 gap24[8];              // +0x24
+    f32 field_0x2c;           // +0x2c near radius
+    f32 field_0x30;           // +0x30 far radius
+    u8 field_0x34;            // +0x34 mask-table index
+    f32 field_0x38;           // +0x38 fallback radius
+    u8 gap3c[0x4c - 0x3c];    // +0x3c
+};
+
+// 0x10-byte probe entry inside each slot (slot + 0x2c); the walk in
+// func_80478C94 advances it by 0x10 per billboard.
+struct MPFDrawProbe {
+    f32 x;                    // +0x00
+    f32 y;                    // +0x04
+    f32 z;                    // +0x08
+    u8 r;                     // +0x0C
+    u8 g;                     // +0x0D
+    u8 b;                     // +0x0E
+    u8 counter;               // +0x0F proximity counter
+};
+
+// Display-list entry written by func_80478C94 (0xcc0-byte stride).
+// field_0x10/field_0x14 are the position/color cursors; field_0x4 counts
+// the written quads and doubles as the copy format for func_804782C4.
+struct MPFDispEntryFull {
+    u16 field_0x0;            // +0x00 layer
+    u16 field_0x2;            // +0x02 flags
+    u32 field_0x4;            // +0x04 quad count / copy format
+    u32 field_0x8;            // +0x08 quad byte size
+    u32 field_0xc;            // +0x0C display-list byte count
+    u32 field_0x10;           // +0x10 position cursor
+    u32 field_0x14;           // +0x14 color cursor
+    u32 field_0x18;           // +0x18 display-list pointer
+    u8 arrayA[0xbc0];         // +0x20 position array (12-byte stride)
+    u8 arrayB[0xe0];          // +0xbe0 color array (3-byte stride)
+};
+
+// 0xb4-byte per-layer draw matrix entry returned by UnkClass_80471EC8::
+// func_804734F4.  The transform matrix sits at +0x54 and each entry advances
+// by 0xb4.
+struct MPFBillMtx {
+    u8 gap00[0x54];           // +0x00
+    Mtx mtx;                  // +0x54
+    u8 gap84[0x30];           // +0x84
 };
 
 // Layout used by the draw-list management functions (func_8047958C,
@@ -178,6 +293,8 @@ struct MPFDrawCfg {
     u8 gap0a[2];              // +0x0a
     s32 field_0xc;            // +0x0c
     MPFDispEntry* field_0x10; // +0x10
+    u8 gap14[0xC];            // +0x14..+0x20
+    u8 field_0x20;            // +0x20
 };
 
 // Draw command used by func_804782C4: index, format, size and buffer.
@@ -198,6 +315,34 @@ struct MPFDrawSrcLayout {
     u8 gap00[0x28];           // +0x00
     u32 field_0x28;           // +0x28 arena address
     u32 field_0x2c;           // +0x2c arena address
+};
+
+// Full recovered layout of MPFDrawDisplayList (offsets from the retail
+// assembly; the class header has no data members yet).
+struct MPFDrawListLayout {
+    u8 gap00[4];              // +0x00
+    MPFDrawNode* field_0x4;   // +0x04 current node chain
+    MPFDrawVert* field_0x8;   // +0x08 vertex array
+    MPFDrawTri* field_0xC;    // +0x0C triangle-height array
+    MPFDrawCol* field_0x10;   // +0x10 vertex-color array
+    MPFDrawPos* field_0x14;   // +0x14 current position + color
+    MPFDrawItem* field_0x18;  // +0x18 per-item cursor
+    MPFDrawVert* field_0x1C;  // +0x1C vertex array (cell walk)
+    u32* field_0x20;          // +0x20 cell grid
+    u16* field_0x24;          // +0x24 cell index array
+    u32 field_0x28;           // +0x28 arena base A
+    u32 field_0x2C;           // +0x2C arena base B
+    MPFDrawEntry* field_0x30; // +0x30 draw entries (0x10 stride)
+    MPFDrawCell* field_0x34;  // +0x34 walk cells (0xC stride)
+    u32 field_0x38;           // +0x38 flag mask
+    u32 field_0x3c;           // +0x3C gate
+    f32 field_0x40;           // +0x40 bounds min X
+    f32 field_0x44;           // +0x44 bounds min Z
+    f32 field_0x48;           // +0x48 bounds max X
+    f32 field_0x4C;           // +0x4C bounds max Z
+    MPFDrawSlot* field_0x50;  // +0x50 current slot
+    MPFDrawSlot* field_0x54;  // +0x54 best-fit insertion slot
+    MPFDrawSlot* field_0x58;  // +0x58 chained slot head
 };
 
 // Singleton block (.bss, 0x60 bytes = 0x18 pointer slots): the first slot is
@@ -224,6 +369,12 @@ extern u32 lbl_eu_8066586C;                         // shared TEV/Z-mode flag st
 // Draw-data arena base (MPFDrawMdlColor / UnkClass_80471EC8 declare the same).
 extern u8* lbl_eu_80665840;
 extern MPFDrawCfg* lbl_eu_80665874;                 // display-list walk config
+extern MPFDrawGlobal* lbl_eu_80665838;              // global draw state (current cell index)
+extern u32* lbl_eu_80665864;                        // global bit-mask table
+extern Mtx lbl_eu_80658428;                        // shared billboard matrix
+extern s32 lbl_eu_8066A728;                        // billboard count
+extern f32 lbl_eu_80665880;                        // billboard probe scale A
+extern f32 lbl_eu_80665884;                        // billboard probe scale B
 
 namespace mpfsys {
 
@@ -234,24 +385,6 @@ MPFDrawDisplayList* MPFDrawDisplayList::getInstance() {
     }
     return (MPFDrawDisplayList*)lbl_eu_80658488;
 }
-
-void MPFDrawDisplayList::func_8047509C() {}
-
-void MPFDrawDisplayList::func_80475C78() {}
-
-void MPFDrawDisplayList::func_80475E64() {}
-
-void MPFDrawDisplayList::func_80476104() {}
-
-void MPFDrawDisplayList::func_80476344() {}
-
-void MPFDrawDisplayList::func_80476E50() {}
-
-void MPFDrawDisplayList::func_80477F80() {}
-
-void MPFDrawDisplayList::func_804783D0() {}
-
-void MPFDrawDisplayList::func_80478C94() {}
 
 void MPFDrawDisplayList::func_8047983C() {}
 
@@ -269,16 +402,33 @@ extern const f32 lbl_eu_8066A7E8;  // 0.0f
 extern const f32 lbl_eu_8066A7EC;  // -0.001f
 extern const f32 lbl_eu_8066A7F0;  // 1.0f
 extern const f32 lbl_eu_8066A7F4;  // 0.001f
+extern const f32 lbl_eu_8066A800;  // 0.0f
+extern const f32 lbl_eu_8066A804;  // 0.5f
+extern const f64 lbl_eu_8066A808;  // 2^52 (double)
 extern const f32 lbl_eu_8066A810;  // probe range scale
+extern const f32 lbl_eu_8066A730;  // billboard spread scale (flags&2 path)
+extern const f32 lbl_eu_8066A83C;  // billboard spread scale (10-entry ramp)
+extern const f32 lbl_eu_8066A814;  // probe fallback scale
+extern const f32 lbl_eu_8066A818;  // grid reset value
+extern const f32 lbl_eu_8066A81C;  // probe scatter scale
+extern const f32 lbl_eu_8066A820;  // probe scatter scale 2
 extern const f32 lbl_eu_8066A824;  // fallback probe radius
+extern const f32 lbl_eu_8066A828;  // probe fallback radius A
+extern const f32 lbl_eu_8066A82C;  // probe fallback radius B
+extern const f32 lbl_eu_8066A830;  // probe fallback radius C
+extern const f32 lbl_eu_8066A834;  // probe fallback radius D
 extern const f32 lbl_eu_8066A838;  // fast-path probe radius
+extern const f32 lbl_eu_8066A83C;  // billboard spread scale (10-entry ramp)
 extern const f32 lbl_eu_8066A840;  // mid-path probe radius
+extern const f32 lbl_eu_8066A844;  // billboard probe color scale
 
 // TEV / texture pipeline helpers implemented by mpfsys::UnkClass_80471EC8.
 // Retail mangles them as Fv/Fif members but they are invoked with the
 // arguments below (see the sibling MPFDrawBillLayTex / MPFDrawMdlColor
 // units).
 void func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(s16 texIdx, f32 texScale);
+void* func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(mpfsys::UnkClass_80471EC8* self, u8 layer);
+void* func_804B5A68(void);
 void func_8047491C__Q26mpfsys17UnkClass_80471EC8Fv(void);
 void func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv(void);
 void func_80474AA0__Q26mpfsys17UnkClass_80471EC8Fv(void);
@@ -291,6 +441,161 @@ void func_80474F54__Q26mpfsys17UnkClass_80471EC8Fv(void);
 // Sibling draw walkers (retail Fv names; called with the node chain in r4).
 void func_804795BC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node);
 void func_804796F0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawNode* node);
+
+// Per-item draw helpers (retail Fv names; still stubs - called from
+// func_80477F80 with the item index / scale values below).
+bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, s32 index, s32 mode, f32 scale);
+bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, s32 index, s32 mode, f32 scale);
+void func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDispEntryFull* dst, s32* counter, s32 limit);
+void func_804783D0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, Vec* dst, s32* countOut, s32* flagsOut);
+
+// Height/color walker + position advance (defined below in this unit).
+bool func_804753B4__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, const MPFDrawEntry* e);
+bool func_80476104__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self);
+MPFDrawSlot* func_80475238__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, u32 index, u8 v1, u8 v2, u16 v3, u16 v4, f32 f1, f32 f2);
+bool func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawCell* cell);
+void func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawListHdr* hdr);
+
+// func_8047509C: collect the in-use, non-empty slots from the global chain
+// into 16 buckets keyed by slot->field_0xc, then splice the buckets into a
+// single list whose head is stored at self+0x58.
+void func_8047509C__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self) {
+    MPFDrawListLayout* d = (MPFDrawListLayout*)self;
+    MPFDrawSlot* buckets[16];
+    MPFDrawSlot* tails[16];
+    MPFDrawSlot* s = lbl_eu_80665870;
+    memset(buckets, 0, 0x40);
+
+    while (s != 0) {
+        if ((s->field_0xe & 2) != 0 && s->field_0x28 != 0) {
+            u32 idx = s->field_0xc;
+            if (buckets[idx] == 0) {
+                buckets[idx] = s;
+            } else {
+                tails[idx]->field_0x8 = s;
+            }
+            tails[idx] = s;
+        }
+        s = s->next;
+    }
+
+    d->field_0x58 = 0;
+    MPFDrawSlot* prev = 0;
+    for (u32 i = 0; i < 16; i++) {
+        if (buckets[i] != 0) {
+            if (d->field_0x58 == 0) {
+                d->field_0x58 = buckets[i];
+            }
+            if (prev != 0) {
+                prev->field_0x8 = buckets[i];
+            }
+            prev = tails[i];
+            prev->field_0x8 = 0;
+        }
+    }
+}
+
+// func_80475C78: walk the cell grid from the node bounds.  Each cell
+// interpolates a grid coordinate from the vertex pair, then either recurses
+// into a sub-cell or runs its draw-list entries through the height/color
+// walker (func_804753B4) and advances the position (func_80476104).
+bool func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self) {
+    MPFDrawListLayout* d = (MPFDrawListLayout*)self;
+    MPFDrawPos* pos = d->field_0x14;
+    MPFDrawNode* node = d->field_0x4;
+    f32 px = pos->x;
+    if (node->field_0x34 > px || node->field_0x2c < px) return false;
+    if (node->field_0x38 > pos->z || node->field_0x30 < pos->z) return false;
+
+    MPFDrawCell* cells = d->field_0x34;
+    u32 mask = d->field_0x38;
+    MPFDrawCell* e = cells;
+    while (true) {
+        if (!(e->mask & mask)) break;
+        const MPFDrawVert* v1 = &d->field_0x1C[e->i1];
+        const MPFDrawVert* v0 = &d->field_0x1C[e->i0];
+        s32 ix = (s32)((pos->x - v1->x) * v0->x);
+        s32 iz = (s32)((pos->z - v1->y) * v0->y);
+        if (ix < 0 || ix >= e->w) return false;
+        if (iz < 0 || iz >= e->h) return false;
+
+        u32 cell = d->field_0x20[iz + e->offset + ix * e->h];
+        if (cell == 0) return false;
+        if (cell & 1) {
+            const u16* p = &d->field_0x24[cell];
+            s32 n = d->field_0x24[cell];
+            p++;
+            for (s32 i = 0; i < n; i++) {
+                if (func_804753B4__Q26mpfsys18MPFDrawDisplayListFv(self, &d->field_0x30[*p])) {
+                    if (func_80476104__Q26mpfsys18MPFDrawDisplayListFv(self)) return true;
+                }
+                p++;
+            }
+            return false;
+        } else {
+            e = &d->field_0x34[cell];
+        }
+    }
+    return false;
+}
+
+// func_80476104: advance the walk position by one step.  The current slot's
+// bounds are grown to include the position; when the slot's step counter
+// exceeds its limit the position is moved to the embedded second slot, and
+// when the slot list is exhausted a fresh slot is allocated from the arena.
+bool func_80476104__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self) {
+    MPFDrawListLayout* d = (MPFDrawListLayout*)self;
+    d->field_0x14->field_0xf = (u8)d->field_0x3c;
+
+    if (d->field_0x18->field_0x18 != 0) {
+        s32 n = d->field_0x18->field_0x18;
+        s32 rnd = n << 1;
+        s32 off = n << 2;
+        s32 r = (s32)d->field_0x14->r + (rand() % rnd) * 4 - off;
+        s32 g = (s32)d->field_0x14->g + (rand() % rnd) * 4 - off;
+        s32 b = (s32)d->field_0x14->b + (rand() % rnd) * 4 - off;
+        if (r > 0xff) r = 0xff;
+        else if (r < 0) r = 0;
+        if (g > 0xff) g = 0xff;
+        else if (g < 0) g = 0;
+        if (b > 0xff) b = 0xff;
+        else if (b < 0) b = 0;
+        d->field_0x14->r = (u8)r;
+        d->field_0x14->g = (u8)g;
+        d->field_0x14->b = (u8)b;
+    }
+
+    if (d->field_0x14->y < d->field_0x50->field_0x18) d->field_0x50->field_0x18 = d->field_0x14->y;
+    if (d->field_0x14->y > d->field_0x50->field_0x20) d->field_0x50->field_0x20 = d->field_0x14->y;
+
+    d->field_0x50->field_0x28++;
+    MPFDrawSlot* hdr = d->field_0x50;
+    if (hdr->field_0x2a > hdr->field_0x28) {
+        d->field_0x14->field_0x10 = d->field_0x14->x;
+        d->field_0x14->field_0x18 = d->field_0x14->z;
+        d->field_0x14 = (MPFDrawPos*)((u8*)d->field_0x14 + 0x10);
+        return false;
+    }
+
+    func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)hdr);
+    u8 v1 = hdr->field_0xc;
+    f32 f31v = hdr->field_0x24;
+    MPFDrawSlot* slot = func_80475238__Q26mpfsys18MPFDrawDisplayListFv(
+        self, 0x20, v1, hdr->field_0xd + 1, hdr->field_0x10, hdr->field_0x12,
+        hdr->field_0x14, hdr->field_0x1c);
+    d->field_0x50 = slot;
+    if (slot != 0) {
+        f32 x = d->field_0x14->x;
+        f32 z = d->field_0x14->z;
+        d->field_0x14 = (MPFDrawPos*)((u8*)slot + 0x2c);
+        slot->field_0xc = v1;
+        d->field_0x50->field_0x24 = f31v;
+        d->field_0x14->x = x;
+        d->field_0x14->z = z;
+        return false;
+    }
+    return true;
+}
 
 // func_8047958C: attach a node chain and hand it to the plain draw walker
 // when the chain carries data.
@@ -769,6 +1074,886 @@ void func_804796F0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         GXSetArray(GX_VA_POS, posArr, 12);
         GXSetArray(GX_VA_CLR0, clrArr, 3);
         GXCallDisplayList(entry->field_0x18, entry->field_0xc);
+    }
+}
+
+// func_80478C94: walk the slot chain (self+0x58), probe-test each slot's
+// position against the moving display range, and emit per-layer display-list
+// quads.  The retail Fv symbol actually receives (self, dst entries, entry
+// counter, counter limit) - see the call site in func_80477F80.
+//
+// Each probe's proximity counter (MPFDrawProbe.counter) decays toward the
+// band edges; the emitted quad corners are probe + arena[0..1] and
+// probe + arena[i .. i+1] with the arena index derived from the probe colour
+// sum, so consecutive quads tile the arena buffer.
+void func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDispEntryFull* dst, s32* counter, s32 limit) {
+    MPFDrawMgrLayout* d = (MPFDrawMgrLayout*)self;
+    MPFDrawNode* node = d->field_0x4;
+    s32 prevLayer = -1;
+    MPFBillItem* itemBase = (MPFBillItem*)(lbl_eu_80665840 + node->field_0x0);
+    Vec* arena = (Vec*)func_804B5A68();
+    s32 countA = 8;
+    s32 countB = 0;
+    Vec diff;
+    Vec tmp;
+    MPFDrawSlot* slot = ((MPFDrawListLayout*)self)->field_0x58;
+    f32 f28 = lbl_eu_80665838->field_0x2DFC;
+    f32 f27 = lbl_eu_80665838->field_0x2E00;
+    MPFDispEntryFull* pendingA = 0;
+    MPFDispEntryFull* pendingB = 0;
+    f32 f31 = lbl_eu_8066A7E8;
+    f32 f30 = lbl_eu_8066A7F0;
+    f32 f20 = lbl_eu_8066A844;
+    const nw4r::math::VEC3* ref = (const nw4r::math::VEC3*)&lbl_eu_80658410;
+    const nw4r::math::VEC3* coeff = (const nw4r::math::VEC3*)&lbl_eu_8065841C;
+
+    while (slot != 0) {
+        if (func_80478BDC__Q26mpfsys18MPFDrawDisplayListFv((mpfsys::MPFDrawDisplayList*)slot)) {
+            s32 layer = slot->field_0xc;
+            MPFBillItem* item = &itemBase[layer];
+            if (!(lbl_eu_80665864[item->field_0x34 >> 5] & (1u << (item->field_0x34 & 31)))) {
+                f32 f1 = item->field_0x30;
+                f32 f26;
+                if (f28 > f1) {
+                    f1 = f28;
+                    f26 = f27;
+                } else {
+                    f26 = item->field_0x38;
+                }
+                f32 f0 = f1 - f26;
+                f32 f24 = f1 * f1;
+                f32 f23 = f26 * f26;
+                f32 f25 = f30 / f0;
+
+                if (prevLayer != layer) {
+                    if (pendingA != 0) {
+                        func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawCmd*)pendingA);
+                        pendingA = 0;
+                    }
+                    if (pendingB != 0) {
+                        func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawCmd*)pendingB);
+                        pendingB = 0;
+                    }
+                    if (limit <= *counter && pendingA == 0 && pendingB == 0) {
+                        return;
+                    }
+                    func_804783D0__Q26mpfsys18MPFDrawDisplayListFv((mpfsys::MPFDrawDisplayList*)item, arena, &countA, &countB);
+                    prevLayer = layer;
+                    u32 fv = item->flags;
+                    u32 r22 = (fv & 1) ? 0 : 1;   // odd flag word selects the alternate entry
+                    (void)r22;
+                }
+
+                // Inner walk over the slot's probe array (0x10-byte stride).
+                f32 f22 = slot->field_0x24 * slot->field_0x24;
+                MPFDrawProbe* probe = (MPFDrawProbe*)((u8*)slot + 0x2c);
+                f32 f21 = item->field_0x2c;
+                s32 k = 0;
+                u16 probeCount = slot->field_0x28;
+                while (k < probeCount) {
+                    s32 r19;
+                    MPFDispEntryFull* entry;
+                    if (slot->field_0xe & 4) {
+                        if (probe->counter != 0) {
+                            nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff, (const nw4r::math::VEC3*)probe, ref);
+                            f32 dot = nw4r::math::VEC3Dot(coeff, (const nw4r::math::VEC3*)&diff);
+                            if (dot <= f31) {
+                                probe->counter = 0;
+                            } else {
+                                f32 f5 = dot * lbl_eu_80665880;
+                                f32 rad = f5 * lbl_eu_80665884 + f21;
+                                nw4r::math::VEC3Scale((nw4r::math::VEC3*)&tmp, coeff, f5);
+                                nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff, (const nw4r::math::VEC3*)&diff, (const nw4r::math::VEC3*)&tmp);
+                                f32 d2 = nw4r::math::VEC3LenSq((const nw4r::math::VEC3*)&diff);
+                                if (d2 <= rad * rad) {
+                                    probe->counter = 0;
+                                } else {
+                                    probe->counter--;
+                                    r19 = ((u8)probe->counter << 4) + (u8)probe->counter;
+                                    slot->field_0xe |= 8;
+                                    goto emit;
+                                }
+                            }
+                        }
+                        goto nextProbe;
+                    } else {
+                        nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff, (const nw4r::math::VEC3*)probe, ref);
+                        f32 f29 = nw4r::math::VEC3LenSq((const nw4r::math::VEC3*)&diff);
+                        if (f22 > f29) {
+                            if (f21 < f29) {
+                                f32 dot = nw4r::math::VEC3Dot(coeff, (const nw4r::math::VEC3*)&diff);
+                                if (dot <= f31) {
+                                    probe->counter = 15;
+                                    goto nextProbe;
+                                }
+                                f32 f5 = dot * lbl_eu_80665880;
+                                f32 rad = f5 * lbl_eu_80665884 + f21;
+                                nw4r::math::VEC3Scale((nw4r::math::VEC3*)&tmp, coeff, f5);
+                                nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff, (const nw4r::math::VEC3*)&diff, (const nw4r::math::VEC3*)&tmp);
+                                f32 d2 = nw4r::math::VEC3LenSq((const nw4r::math::VEC3*)&diff);
+                                if (d2 <= rad * rad) {
+                                    probe->counter = 15;
+                                    goto nextProbe;
+                                }
+                            }
+                            // Inside the band: grow the counter, or compute the
+                            // depth-shaded alpha from the ring distance.
+                            if (probe->counter < 15) {
+                                probe->counter++;
+                                r19 = ((u8)probe->counter << 4) + (u8)probe->counter;
+                            } else {
+                                r19 = 0xff;
+                            }
+                            if (f29 >= f24) {
+                                goto emit;
+                            }
+                            if (f29 <= f23) {
+                                goto nextProbe;
+                            }
+                            f0 = nw4r::math::FSqrt(f29);
+                            r19 = (s32)(f20 * f25 * (f0 - f26));
+                            goto emit;
+                        } else {
+                            // Outside the outer ring: decay the counter.
+                            if (probe->counter != 0) {
+                                f32 dot = nw4r::math::VEC3Dot(coeff, (const nw4r::math::VEC3*)&diff);
+                                if (dot <= f31) {
+                                    probe->counter = 0;
+                                } else {
+                                    f32 f5 = dot * lbl_eu_80665880;
+                                    f32 rad = f5 * lbl_eu_80665884 + f21;
+                                    nw4r::math::VEC3Scale((nw4r::math::VEC3*)&tmp, coeff, f5);
+                                    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff, (const nw4r::math::VEC3*)&diff, (const nw4r::math::VEC3*)&tmp);
+                                    f32 d2 = nw4r::math::VEC3LenSq((const nw4r::math::VEC3*)&diff);
+                                    if (d2 <= rad * rad) {
+                                        probe->counter = 0;
+                                    } else {
+                                        probe->counter--;
+                                        r19 = ((u8)probe->counter << 4) + (u8)probe->counter;
+                                        goto emit;
+                                    }
+                                }
+                            }
+                            goto nextProbe;
+                        }
+                    }
+
+                emit:
+                    // Acquire the pending entry (main or alternate) for this
+                    // alpha class, then write one quad.
+                    if (r19 == 0xff && (item->flags & 1) == 0) {
+                        if (pendingA != 0) {
+                            entry = pendingA;
+                        } else {
+                            if (limit <= *counter) {
+                                if (pendingB != 0) {
+                                    goto nextProbe;
+                                }
+                                return;
+                            }
+                            (*counter)++;
+                            pendingA = dst;
+                            dst->field_0x4 = 0;
+                            dst->field_0x2 = 0;
+                            dst->field_0x10 = (u32)dst->arrayA;
+                            dst->field_0x14 = (u32)((u8*)dst + 0xc00);
+                            dst->field_0x8 = 3;
+                            dst->field_0x0 = (u16)layer;
+                            dst++;
+                            entry = pendingA;
+                        }
+                    } else {
+                        if (pendingB != 0) {
+                            entry = pendingB;
+                        } else {
+                            if (limit <= *counter) {
+                                if (pendingA != 0) {
+                                    goto nextProbe;
+                                }
+                                return;
+                            }
+                            (*counter)++;
+                            pendingB = dst;
+                            dst->field_0x4 = 0;
+                            dst->field_0x10 = (u32)dst->arrayA;
+                            dst->field_0x14 = (u32)((u8*)dst + 0xc00);
+                            dst->field_0x8 = 3;
+                            dst->field_0x0 = (u16)layer;
+                            dst->field_0x2 = 2;
+                            dst++;
+                            entry = pendingB;
+                        }
+                    }
+
+                    // Quad emission: colour-summed arena index + rotated corner
+                    // adds, then the packed RGB colour word.
+                    {
+                        u8 pr = probe->r;
+                        u8 pg = probe->g;
+                        u8 pb = probe->b;
+                        s32 idx = (pg + k) + (pb + pr);
+                        u32 color = ((u32)(pr >> 2) << 26) | ((u32)pg << 18) | ((u32)pb << 12) | (((u32)r19 & 0xFFFFFF) << 6);
+                        s32 aidx = (countB & ((idx % countA) << 1)) + 2;
+                        Vec* pos = (Vec*)entry->field_0x10;
+                        if (idx & 1) {
+                            nw4r::math::VEC3Add((nw4r::math::VEC3*)&pos[0], (const nw4r::math::VEC3*)probe, (const nw4r::math::VEC3*)&arena[1]);
+                            nw4r::math::VEC3Add((nw4r::math::VEC3*)&pos[1], (const nw4r::math::VEC3*)probe, (const nw4r::math::VEC3*)&arena[aidx + 1]);
+                            nw4r::math::VEC3Add((nw4r::math::VEC3*)&pos[2], (const nw4r::math::VEC3*)probe, (const nw4r::math::VEC3*)&arena[aidx]);
+                            nw4r::math::VEC3Add((nw4r::math::VEC3*)&pos[3], (const nw4r::math::VEC3*)probe, (const nw4r::math::VEC3*)&arena[0]);
+                        } else {
+                            nw4r::math::VEC3Add((nw4r::math::VEC3*)&pos[0], (const nw4r::math::VEC3*)probe, (const nw4r::math::VEC3*)&arena[0]);
+                            nw4r::math::VEC3Add((nw4r::math::VEC3*)&pos[1], (const nw4r::math::VEC3*)probe, (const nw4r::math::VEC3*)&arena[aidx]);
+                            nw4r::math::VEC3Add((nw4r::math::VEC3*)&pos[2], (const nw4r::math::VEC3*)probe, (const nw4r::math::VEC3*)&arena[aidx + 1]);
+                            nw4r::math::VEC3Add((nw4r::math::VEC3*)&pos[3], (const nw4r::math::VEC3*)probe, (const nw4r::math::VEC3*)&arena[1]);
+                        }
+                        entry->field_0x10 = (u32)(pos + 4);
+                        u8 colorBytes[4];
+                        *(u32*)colorBytes = color;
+                        u8* cptr = (u8*)entry->field_0x14;
+                        cptr[0] = colorBytes[0];
+                        cptr[1] = colorBytes[1];
+                        cptr[2] = colorBytes[2];
+                        entry->field_0x14 = (u32)(cptr + 3);
+                        entry->field_0x4 += 4;
+                        entry->field_0x8 += 0xc;
+                        if (entry->field_0x4 >= 0xfc) {
+                            func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawCmd*)entry);
+                            if (r19 == 0xff && (item->flags & 1) == 0) {
+                                pendingA = 0;
+                            } else {
+                                pendingB = 0;
+                            }
+                        }
+                    }
+                nextProbe:
+                    k++;
+                    probe++;
+                }
+            }
+        }
+        slot = slot->next;
+    }
+
+    if (pendingA != 0) {
+        func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawCmd*)pendingA);
+    }
+    if (pendingB != 0) {
+        func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawCmd*)pendingB);
+    }
+}
+
+// func_80476344: regenerate the display-list quads for the given map cell.
+// The retail Fv symbol actually receives (self, cell index, density mode,
+// scale) - see the call sites in func_80477F80.  When the cell aligns to the
+// density spacing the cell index is advanced and the caller retries;
+// otherwise a fresh slot is allocated for every in-range grid position and
+// the walk is handed to func_80475E64.
+bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, s32 index, s32 mode, f32 scale) {
+    MPFDrawListLayout* d = (MPFDrawListLayout*)self;
+    MPFDrawGlobal* g = lbl_eu_80665838;
+    f32* cell = (f32*)((u8*)g + 0x2d20 + index * 0xc);
+    f32 refx = lbl_eu_80658410.x;
+    f32 refz = lbl_eu_80658410.z;
+    f32 oldx = cell[0];
+    f32 oldz = cell[2];
+    cell[0] = refx;
+    cell[2] = refz;
+    s32 ix = (s32)refx;
+    s32 iz = (s32)refz;
+    s32 ox = (s32)oldx;
+    s32 oz = (s32)oldz;
+
+    u32 flag = lbl_eu_8066586C & ~0x7Eu;
+    lbl_eu_8066586C = flag;
+    s32 span;
+    s32 step;
+    s32 spacing;
+    if (mode < 3) {
+        lbl_eu_8066586C = flag | 8;
+        span = mode + 1;
+        step = 4;
+        spacing = 0x28;
+    } else if (mode < 6) {
+        lbl_eu_8066586C = flag | 4;
+        span = (mode - 2) * 2;
+        step = 2;
+        spacing = 0x14;
+    } else {
+        span = mode - 2;
+        spacing = 0xa;
+        step = 1;
+    }
+
+    // If the reference position aligns to the density spacing on both axes
+    // the cell index is advanced and this call bails out early.
+    if (ix - (ix / spacing) * spacing == ox - (ox / spacing) * spacing &&
+        iz - (iz / spacing) * spacing == oz - (oz / spacing) * spacing) {
+        s16 next = g->field_0x2E12 + 1;
+        if (next >= (s32)d->field_0x4->field_0x4) {
+            next = 0;
+        }
+        g->field_0x2E12 = next;
+        return true;
+    }
+
+    // Normalize the spacing and derive the scaled probe radius.
+    f32 f26 = (f32)spacing;
+    f32 f27 = nw4r::math::FSqrt(f26 * f26 + f26 * f26) * lbl_eu_8066A810;
+    s32 r4 = (s32)(scale / f26) + 4;
+    s32 r22 = r4 * 2;
+    f32 f25 = (scale + f27) * (scale + f27);
+    s32 r23 = span * span;
+    s32 r7 = spacing * r4;
+    s32 r5 = ix / 10;
+    s32 r3b = iz / 10;
+    s32 r6 = ix - r7;
+    s32 r4b = iz - r7;
+    s32 r5b = (r22 * step) >> 1;
+    s32 r14 = r5 + 0x2710 - r5b;
+    s32 r25 = r3b + 0x2710 - r5b;
+    f32 f24 = (f32)r6;
+    f32 f23 = (f32)r4b;
+
+    // Bit array of already-placed quads.
+    u32* bits = (u32*)func_804B5A68();
+    DCZeroRange((void*)bits, ((r22 * r22) >> 5) + 1);
+
+    // Clear any existing slots that are inside the new probe radius.
+    {
+        MPFDrawSlot* slot = lbl_eu_80665870;
+        while (slot != 0) {
+            if ((slot->field_0xe & 2) && slot->field_0xc == (u8)index) {
+                f32 dx = slot->field_0x1c - lbl_eu_80658410.z;
+                f32 dz = slot->field_0x14 - lbl_eu_80658410.x;
+                f32 d2 = dx * dx + dz * dz;
+                f32 r = slot->field_0x24 + f27;
+                if (d2 <= r * r) {
+                    slot->field_0xe &= ~1u;
+                }
+            }
+            slot = slot->next;
+        }
+    }
+
+    f32 f22 = f26 / (f32)span;
+    f32 f21 = lbl_eu_8066A814 * f22 - f26;
+    f32 f28 = lbl_eu_8066A814;
+    f32 f30 = lbl_eu_8066A820;
+    f32 f29 = lbl_eu_8066A81C;
+    f32 ref2x = lbl_eu_80658410.x;
+    f32 ref2z = lbl_eu_80658410.z;
+    s32 r28 = 0;
+    s32 r29 = 0;
+    s32 r20 = 0;
+    s32 r26 = 0;
+    s32 r19 = 0;
+    s32 cellOff = r14;
+    s32 rowOff = r25;
+    s32 rows = r22;
+    s32 cols = r22;
+
+    for (s32 row = 0; row < rows; row++) {
+        f32 f20 = f24 + (f32)row * f26;
+        f32 f19 = f20 + f28 * f26 - ref2x;
+        s32 rowBase = cellOff + rowOff;
+        for (s32 col = 0; col < cols; col++) {
+            f32 f18 = f23 + (f32)col * f26;
+            f32 dz = f18 + f28 * f26 - ref2z;
+            s32 bitOff = col + r28;
+            if (bits[bitOff >> 5] & (1u << (bitOff & 31))) {
+                goto nextCol;
+            }
+            if (f19 * f19 + dz * dz > f25) {
+                goto nextCol;
+            }
+            {
+                MPFDrawSlot* slot = func_80475238__Q26mpfsys18MPFDrawDisplayListFv(
+                    self, r23, 0, (u8)index, (u16)rowBase, (u16)(r25 + r26), f20, f18);
+                d->field_0x50 = slot;
+                if (slot == 0) {
+                    lbl_eu_80665838->field_0x2DFC = 0;
+                    // fallthrough: reset cell and fail
+                    cell[0] = lbl_eu_8066A818;
+                    cell[2] = lbl_eu_8066A818;
+                    return false;
+                }
+                d->field_0x14 = (MPFDrawPos*)((u8*)slot + 0x2c);
+                slot->field_0x24 = scale;
+                f32 f2 = f20 + f26;
+                f32 f1 = f18 + f26;
+                MPFDrawNode* node = d->field_0x4;
+                if (node->field_0x34 <= f2 && node->field_0x2c <= f20 &&
+                    node->field_0x38 <= f1 && node->field_0x30 <= f18) {
+                    d->field_0x40 = f20;
+                    d->field_0x44 = f18;
+                    d->field_0x48 = f2;
+                    d->field_0x4C = f1;
+                    if (func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(self, d->field_0x34)) {
+                        r20++;
+                        if (r20 > 0x14 && d->field_0x3c == 0) {
+                            cell[0] = lbl_eu_8066A818;
+                            cell[2] = lbl_eu_8066A818;
+                            return false;
+                        }
+                        goto nextCol;
+                    }
+                }
+                // Fill the walk: scatter positions, then advance the slot.
+                if (d->field_0x54 != 0) {
+                    MPFDrawSlot* best = d->field_0x54;
+                    best->field_0x28 = (u16)r29;
+                    best->field_0x2a = (u16)r29;
+                    best->field_0xc = slot->field_0xc;
+                    best->field_0xd = slot->field_0xd;
+                    best->field_0x10 = slot->field_0x10;
+                    best->field_0x12 = slot->field_0x12;
+                    best->field_0x14 = slot->field_0x14;
+                    best->field_0x1c = slot->field_0x1c;
+                    best->field_0x18 = slot->field_0x18;
+                    best->field_0x20 = slot->field_0x20;
+                    best->field_0x24 = slot->field_0x24;
+                    d->field_0x50 = best;
+                }
+                func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
+                if (d->field_0x18->field_0x17 == 1) {
+                    // Scatter walk: random jitter around the grid position.
+                    f32 f31 = lbl_eu_8066A820 * (lbl_eu_8066A814 * f22);
+                    s32 n = r23;
+                    for (s32 i = 0; i < n; i++) {
+                        f32 fx = (f32)(rand() % 100) * 0.01f;
+                        f32 fx2 = f22 * fx + f20 - f21;
+                        d->field_0x14->x = f31 * (f32)(rand() % 100) * 0.01f - (lbl_eu_8066A81C * f22) + fx2;
+                        if (func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(self)) {
+                            break;
+                        }
+                    }
+                }
+                r20++;
+                if (r20 > 0x14 && d->field_0x3c == 0) {
+                    cell[0] = lbl_eu_8066A818;
+                    cell[2] = lbl_eu_8066A818;
+                    return false;
+                }
+            }
+        nextCol:
+            r26 += step;
+            r19++;
+        }
+        r28 += rows;
+        rowOff += step;
+    }
+
+    cell[0] = lbl_eu_8066A818;
+    cell[2] = lbl_eu_8066A818;
+    s16 next = g->field_0x2E12 + 1;
+    if (next >= (s32)d->field_0x4->field_0x4) {
+        next = 0;
+    }
+    g->field_0x2E12 = next;
+    return false;
+}
+
+// func_80476E50: regenerate the display-list quads for the given map cell,
+// with an interpolated half-step refinement between the density rows.  The
+// retail Fv symbol actually receives (self, cell index, density mode, scale)
+// - see the call site in func_80477F80.
+bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, s32 index, s32 mode, f32 scale) {
+    MPFDrawListLayout* d = (MPFDrawListLayout*)self;
+    MPFDrawGlobal* g = lbl_eu_80665838;
+    f32* cell = (f32*)((u8*)g + 0x2d20 + index * 0xc);
+    f32 refx = lbl_eu_80658410.x;
+    f32 refz = lbl_eu_80658410.z;
+    f32 oldx = cell[0];
+    f32 oldz = cell[2];
+    cell[0] = refx;
+    cell[2] = refz;
+    s32 ix = (s32)refx;
+    s32 iz = (s32)refz;
+    s32 ox = (s32)oldx;
+    s32 oz = (s32)oldz;
+    f32 f18 = scale;
+
+    f32 f27 = lbl_eu_8066A824;
+    f32 f1 = lbl_eu_8066A828;
+    f32 f30 = f1 * nw4r::math::FrSqrt(f1);
+    f32 f22 = scale - lbl_eu_8066A82C;
+
+    // Round the reference position to the 10-unit grid.
+    s32 r6 = ix / 10;
+    s32 r5 = iz / 10;
+    s32 r3 = oz / 10;
+    s32 r0 = ox / 10;
+    s32 r14 = ix - r6 * 10;
+    s32 r18 = iz - r5 * 10;
+    s32 r17 = oz - r3 * 10;
+    s32 r19 = ox - r0 * 10;
+
+    if (r14 == r18 && r17 == r19) {
+        s16 next = g->field_0x2E12 + 1;
+        if (next >= (s32)d->field_0x4->field_0x4) {
+            next = 0;
+        }
+        g->field_0x2E12 = next;
+        return true;
+    }
+
+    // Density step selection from the scale/fallback comparison.
+    s32 r22;
+    if (f22 <= 0) {
+        r22 = 2;
+    } else if (f22 <= lbl_eu_8066A830) {
+        r22 = (mode > 8) ? 4 : 3;
+    } else if (f18 <= lbl_eu_8066A834) {
+        r22 = (mode > 8) ? 5 : 4;
+    } else {
+        s32 v = mode ^ 6;
+        r22 = (((v >> 1) - (v & mode)) >> 31) + 4;
+    }
+
+    // Probe spacing factor for the step-count rows.
+    f32 f21 = lbl_eu_8066A7E8;
+    if (r22 >= 3) {
+        f21 = lbl_eu_8066A814 * r22 / ((f32)(r22 - 2));
+    }
+
+    s32 r23 = r22 * ((s32)(f18 / f27) + 1) * 2;
+    s32 r24 = mode * mode;
+    s32 r28 = mode * 100;
+    s32 r29 = r24 + 1;
+    f32 f15 = lbl_eu_8066A808;
+    s32 r14b = ix / 10 * 10;
+    s32 r17b = iz / 10 * 10;
+    s32 r18b = r14;
+    s32 r19b = r17;
+
+    // Bit array of already-placed quads.
+    u32* bits = (u32*)func_804B5A68();
+    DCZeroRange((void*)bits, ((r22 * r23 * r23) >> 5) + 1);
+
+    // Clear existing slots inside the new probe radius.
+    {
+        MPFDrawSlot* slot = lbl_eu_80665870;
+        while (slot != 0) {
+            if ((slot->field_0xe & 2) && slot->field_0xc == (u8)index) {
+                s32 u = slot->field_0x10 - r14b;
+                s32 v = slot->field_0x12 - r17b;
+                if (u >= 0 && v >= 0 && u < r23 && v < r23) {
+                    if (slot->field_0xe & 0x10) {
+                        s32 n = r22;
+                        for (s32 i = 0; i < n; i++) {
+                            s32 bit = (v + i * r23) * r23 + u;
+                            bits[bit >> 5] |= 1u << (bit & 31);
+                        }
+                    } else {
+                        s32 bit = v * r23 + u;
+                        bits[bit >> 5] |= 1u << (bit & 31);
+                    }
+                    // Probe the quad distance and clear the slot if inside.
+                    f32 dx = slot->field_0x1c - lbl_eu_80658410.z;
+                    f32 dz = slot->field_0x14 - lbl_eu_80658410.x;
+                    f32 d2 = dx * dx + dz * dz;
+                    f32 rr = slot->field_0x24 + f30;
+                    if (d2 <= rr * rr) {
+                        slot->field_0xe &= ~1u;
+                    }
+                }
+            }
+            slot = slot->next;
+        }
+    }
+
+    // Grid walk: three nested loops over the interpolated rows.
+    s32 r20 = 1;
+    s32 r26 = 0;
+    s32 r27 = 0;
+    s32 r14c = 0;
+    s32 r25 = 0;
+    s32 r19c = 0;
+    f32 f16 = lbl_eu_8066A820;
+    f32 f14 = lbl_eu_8066A81C;
+    f32 f31 = lbl_eu_8066A814;
+
+    for (s32 zz = 0; zz < r23; zz++) {
+        f32 f20 = f27 * (f32)zz + lbl_eu_8066A840;
+        f32 f29 = f20 - lbl_eu_8066A844;
+        for (s32 xx = 0; xx < r23; xx++) {
+            s32 r20c = 0;
+            for (s32 s = 0; s < r22; s++) {
+                s32 bit = (s * r23 + zz) * r23 + xx;
+                if (bits[bit >> 5] & (1u << (bit & 31))) {
+                    continue;
+                }
+                // Interpolated position for this sub-step.
+                f32 f17;
+                if (r20c == 0) {
+                    f17 = f18;
+                } else if (r20c == r22 - 1) {
+                    f17 = lbl_eu_8066A82C;
+                } else {
+                    f17 = -f31 * f22 + f18 + f21 * ((f32)(r20c - 1));
+                }
+                f32 f1b = f17 + f30;
+                f32 f0 = f29 * f29;
+                if (f0 + (f17 + f30) * (f17 + f30) > (f1b) * (f1b)) {
+                    continue;
+                }
+                {
+                    MPFDrawSlot* slot = func_80475238__Q26mpfsys18MPFDrawDisplayListFv(
+                        self, r19, r20c, (u8)index, (u16)(r14c + r26),
+                        (u16)(r18b + r25), f20, f17);
+                    d->field_0x50 = slot;
+                    if (slot == 0) {
+                        cell[0] = lbl_eu_8066A818;
+                        cell[2] = lbl_eu_8066A818;
+                        return false;
+                    }
+                    if (r20c == 0) {
+                        // Row start: bound the walk and hand it over.
+                        f32 f2 = f20 + f27;
+                        MPFDrawNode* node = d->field_0x4;
+                        if (node->field_0x34 <= f2 && node->field_0x2c <= f20 &&
+                            node->field_0x38 <= f17 && node->field_0x30 <= f17) {
+                            d->field_0x40 = f20;
+                            d->field_0x44 = f17;
+                            d->field_0x48 = f2;
+                            d->field_0x4C = f17;
+                            if (func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(self, d->field_0x34)) {
+                                r20++;
+                                if (r20 > 0x14 && d->field_0x3c == 0) {
+                                    cell[0] = lbl_eu_8066A818;
+                                    cell[2] = lbl_eu_8066A818;
+                                    return false;
+                                }
+                                continue;
+                            }
+                        }
+                        // Merge the best-fit slot and advance the walk.
+                        if (d->field_0x54 != 0) {
+                            MPFDrawSlot* best = d->field_0x54;
+                            best->field_0x28 = 0;
+                            best->field_0x2a = 0;
+                            best->field_0xc = slot->field_0xc;
+                            best->field_0xd = slot->field_0xd;
+                            best->field_0x10 = slot->field_0x10;
+                            best->field_0x12 = slot->field_0x12;
+                            best->field_0x14 = slot->field_0x14;
+                            best->field_0x1c = slot->field_0x1c;
+                            best->field_0x18 = slot->field_0x18;
+                            best->field_0x20 = slot->field_0x20;
+                            best->field_0x24 = slot->field_0x24;
+                            d->field_0x50 = best;
+                        }
+                        func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
+                        if (d->field_0x18->field_0x17 == 1) {
+                            // Jittered scatter walk.
+                            f32 f24 = f27 / (f32)(xx + 1);
+                            f32 f23 = f27 - lbl_eu_8066A814 * f24;
+                            f32 f0b = f31 * f24;
+                            s32 n = r19;
+                            for (s32 i = 0; i < n; i++) {
+                                f32 rnd1 = (f32)(rand() % 100) * 0.01f;
+                                f32 rnd2 = (f32)(rand() % 100) * 0.01f;
+                                f32 fx = f24 * rnd1 + f20 - f23;
+                                f32 fz = f24 * rnd2 + f17 - f23;
+                                d->field_0x14->x = f16 * rnd2 - f14 * f24 + fx;
+                                d->field_0x14->z = f16 * rnd1 - f14 * f24 + fz;
+                                if (func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(self)) {
+                                    break;
+                                }
+                            }
+                        }
+                        r20++;
+                        if (r20 > 0x14 && d->field_0x3c == 0) {
+                            cell[0] = lbl_eu_8066A818;
+                            cell[2] = lbl_eu_8066A818;
+                            return false;
+                        }
+                    } else {
+                        // Sub-step: just position and store the slot.
+                        d->field_0x14 = (MPFDrawPos*)((u8*)slot + 0x2c);
+                        slot->field_0x24 = f17;
+                        func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)slot);
+                    }
+                }
+            }
+            r26 += r23;
+            r25 += 10;
+            r20c++;
+        }
+        r14c += r23;
+    }
+
+    cell[0] = lbl_eu_8066A818;
+    cell[2] = lbl_eu_8066A818;
+    s16 next = g->field_0x2E12 + 1;
+    if (next >= (s32)d->field_0x4->field_0x4) {
+        next = 0;
+    }
+    g->field_0x2E12 = next;
+    return false;
+}
+
+// func_80475E64: recursively walk the cell grid region bounded by the
+// current bounds (self+0x40..+0x4C) and report whether any leaf cell is
+// occupied.  (Stub - retail 0x80479E34, same TU.)
+bool func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawCell* cell) {
+    return false;
+}
+
+// func_804783D0: build the per-billboard display vectors.  The retail Fv
+// symbol actually receives (item data, dst vectors, count out, flags out) -
+// see the call site in func_80478C94.
+//
+// Bit 0 of item->flags (flags & 2) selects the two-vector billboard shape;
+// otherwise a four-vector fan (spread == 0) or a 10-entry ramp is emitted.
+// When item->spread is non-zero the y offset ramps with the iteration
+// counter through the probe-range scale (lbl_eu_8066A810) and a spread
+// scale (lbl_eu_8066A730 / lbl_eu_8066A83C).  Bit 1 (flags & 4) mirrors the
+// emitted vectors' y components at the end.
+void func_804783D0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, Vec* dst, s32* countOut, s32* flagsOut) {
+    MPFBillItem* item = (MPFBillItem*)self;
+    Vec a;
+    Vec b;
+
+    if (item->flags & 2) {
+        // Two base vectors, transformed by the shared matrix, then by each
+        // layer's draw matrix (func_804734F4 result).
+        dst[0].x = -item->x;
+        dst[0].y = lbl_eu_8066A7E8;
+        dst[0].z = lbl_eu_8066A7E8;
+        dst[1].x = item->x;
+        dst[1].y = lbl_eu_8066A7E8;
+        dst[1].z = lbl_eu_8066A7E8;
+        PSMTXMultVec(lbl_eu_80658428, &dst[0], &dst[0]);
+        PSMTXMultVec(lbl_eu_80658428, &dst[1], &dst[1]);
+
+        MPFBillMtx* m = (MPFBillMtx*)func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc((mpfsys::UnkClass_80471EC8*)lbl_eu_80665838, item->layer);
+        Vec* out = &dst[2];
+
+        if (item->spread != lbl_eu_8066A7E8) {
+            // Ramp the y offset with the iteration counter.
+            s32 count = lbl_eu_8066A728;
+            f32 f31 = lbl_eu_8066A730;
+            for (s32 i = 0; i < count; i++) {
+                f32 fi = (f32)i;
+                f32 sp = item->spread;
+                f32 f28 = lbl_eu_8066A810;
+                f32 f27 = lbl_eu_8066A7F0;
+                f32 t = f28 * sp;
+                f32 k = item->y * (fi * t * f31 + f27 - sp);
+                a.x = -item->x;
+                a.y = k;
+                a.z = lbl_eu_8066A7E8;
+                b.x = item->x;
+                b.y = k;
+                b.z = lbl_eu_8066A7E8;
+                PSMTXMultVec(lbl_eu_80658428, &a, &a);
+                PSMTXMultVec(lbl_eu_80658428, &b, &b);
+                PSMTXMultVec(m->mtx, &a, &out[0]);
+                PSMTXMultVec(m->mtx, &b, &out[1]);
+                out += 2;
+                m++;
+            }
+            *countOut = count;
+            if (item->flags & 4) {
+                Vec* n = &dst[2];
+                for (s32 j = 0; j < count; j++) {
+                    n[0].y = -n[0].y;
+                    n[1].y = -n[1].y;
+                    n += 2;
+                }
+            }
+        } else {
+            // Fixed base pair, reused for every layer entry.
+            a.x = -item->x;
+            a.y = item->y;
+            a.z = lbl_eu_8066A7E8;
+            b.x = item->x;
+            b.y = item->y;
+            b.z = lbl_eu_8066A7E8;
+            PSMTXMultVec(lbl_eu_80658428, &a, &a);
+            PSMTXMultVec(lbl_eu_80658428, &b, &b);
+            s32 count = lbl_eu_8066A728;
+            for (s32 i = 0; i < count; i++) {
+                PSMTXMultVec(m->mtx, &a, &out[0]);
+                PSMTXMultVec(m->mtx, &b, &out[1]);
+                out += 2;
+                m++;
+            }
+            *countOut = count;
+            if (item->flags & 4) {
+                Vec* n = &dst[2];
+                for (s32 j = 0; j < count; j++) {
+                    n[0].y = -n[0].y;
+                    n[1].y = -n[1].y;
+                    n += 2;
+                }
+            }
+        }
+        *flagsOut = -1;
+    } else {
+        if (item->spread != lbl_eu_8066A7E8) {
+            // Fixed 10-iteration ramp, transformed directly into the output.
+            dst[0].x = -item->x;
+            dst[0].y = lbl_eu_8066A7E8;
+            dst[0].z = lbl_eu_8066A7E8;
+            dst[1].x = item->x;
+            dst[1].y = lbl_eu_8066A7E8;
+            dst[1].z = lbl_eu_8066A7E8;
+            PSMTXMultVec(lbl_eu_80658428, &dst[0], &dst[0]);
+            PSMTXMultVec(lbl_eu_80658428, &dst[1], &dst[1]);
+            Vec* out = &dst[2];
+            f32 f28 = lbl_eu_8066A810;
+            f32 f29 = lbl_eu_8066A83C;
+            f32 f30 = lbl_eu_8066A7F0;
+            f32 f31 = lbl_eu_8066A7E8;
+            for (s32 i = 0; i < 10; i++) {
+                f32 fi = (f32)(i % 10);
+                f32 sp = item->spread;
+                f32 t = f28 * sp;
+                f32 k = item->y * (f29 * (fi * t) + f30 - sp);
+                a.x = -item->x;
+                a.y = k;
+                a.z = f31;
+                b.x = item->x;
+                b.y = k;
+                b.z = f31;
+                PSMTXMultVec(lbl_eu_80658428, &a, &out[0]);
+                PSMTXMultVec(lbl_eu_80658428, &b, &out[1]);
+                out += 2;
+            }
+            *countOut = 10;
+            *flagsOut = -1;
+            if (item->flags & 4) {
+                for (s32 j = 0; j < 20; j++) {
+                    dst[2 + j].y = -dst[2 + j].y;
+                }
+            }
+        } else {
+            // Four-vector fan: two mirrored pairs, the second pair carrying
+            // the y position.
+            *flagsOut = 0;
+            dst[0].x = -item->x;
+            dst[0].y = lbl_eu_8066A7E8;
+            dst[0].z = lbl_eu_8066A7E8;
+            dst[1].x = item->x;
+            dst[1].y = lbl_eu_8066A7E8;
+            dst[1].z = lbl_eu_8066A7E8;
+            dst[3].x = -item->x;
+            dst[3].y = item->y;
+            dst[3].z = lbl_eu_8066A7E8;
+            dst[4].x = item->x;
+            dst[4].y = item->y;
+            dst[4].z = lbl_eu_8066A7E8;
+            PSMTXMultVec(lbl_eu_80658428, &dst[0], &dst[0]);
+            PSMTXMultVec(lbl_eu_80658428, &dst[1], &dst[1]);
+            PSMTXMultVec(lbl_eu_80658428, &dst[3], &dst[3]);
+            PSMTXMultVec(lbl_eu_80658428, &dst[4], &dst[4]);
+            if (item->flags & 4) {
+                dst[0].y = -dst[0].y;
+                dst[1].y = -dst[1].y;
+            }
+        }
     }
 }
 

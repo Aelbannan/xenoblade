@@ -203,12 +203,16 @@ void AHXSJD_Start(void* self) {
     void* stream;
 
     sjd->termSupply = 0;
-    sjd->outSmplOfst = 0;
-    sjd->outSmplTotal = 0;
+    sjd->chanInfo[2] = 0;
+    sjd->chanInfo[3] = 0;
+    sjd->chanInfo[4] = 0;
+    sjd->chanInfo[5] = 0;
+    sjd->chanInfo[6] = 0;
+    sjd->chanInfo[7] = 0;
     sjd->decSmpl = 0x7FFFFFFF;
     sjd->decSmplLim = -1;
-    sjd->decCallback = 0;
-    sjd->decCallbackPrm = 0;
+    sjd->outSmplOfst = 0;
+    sjd->outSmplTotal = 0;
 
     stream = sjd->streamObj;
     AHXBSR_Restruct(sjd->bsr, stream);

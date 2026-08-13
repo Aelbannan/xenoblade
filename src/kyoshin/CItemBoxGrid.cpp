@@ -3426,6 +3426,16 @@ void func_801CE524(void* self) {
 }
 
 // Handle sub-object activation with copy.
+// Cast-only vtable interface for the +0xA0 sub-object: with -RTTI on the
+// third declared virtual lands at vtable+0x10 (slots 0/4 hidden RTTI),
+// matching retail's lwz r12,16(r12) dispatch that the manual-cast form
+// colors r5 instead of r12.
+struct CItemBoxObjA0Vt {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10(void* arg);  // vtable+0x10
+};
+
 void func_801CE974(void* self) {
     u8* p = (u8*)self;
     if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
@@ -3434,7 +3444,7 @@ void func_801CE974(void* self) {
     u8 temp[16];
     u8 val529 = p[0x529];
     func_8022D0F8(temp, p + 0x440, val529);
-    ((void(*)(void*, void*))(*(void***)(p + 0xa0))[4])(p + 0xa0, temp);
+    reinterpret_cast<CItemBoxObjA0Vt*>(p + 0xa0)->_v10(temp);
 }
 
 // Check if sub-obj is active; set state to 3 and clear flag.

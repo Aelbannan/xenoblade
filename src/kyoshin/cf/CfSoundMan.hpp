@@ -244,7 +244,7 @@ extern cf::CfSoundManGlobal* lbl_eu_80664430;
 
 // Global event/presentation flag words (.sbss). lbl_eu_80663E24 bit 9 / bit 11
 // and lbl_eu_80663E28 bit 7 gate the func_801BFB34 sound-start dispatch.
-extern volatile u32 lbl_eu_80663E24;
+extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
 
 // Sound-start gate helpers (defined in other TUs; C ABI so the call relocs

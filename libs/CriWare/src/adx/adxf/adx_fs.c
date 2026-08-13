@@ -113,11 +113,34 @@ struct AdxFsPt {
 
 extern char *CRICRW_Strncpy(char *dst, void *ignored, const char *src, size_t n);
 
-/* Sector-cache flush callback: the object pointer is stashed in work->sectCnt
- * while a read is pending; the release method is the 4th vtable slot
- * (offset 0xC). */
+/* SJ object vtable - the first word of every SJRBF/SJMEM object points to
+ * this function table (retail data at lbl_eu_80565C30 / lbl_eu_80565C00).
+ * Slot names come from the retail vtable relocations: slot 3 = Destroy,
+ * 4 = GetUuid, 5 = Reset, 6 = GetChunk, 7 = UngetChunk, 8 = PutChunk,
+ * 9 = get-avail (SJRBF fn_80397A74 / SJMEM GetNumData), 10 = IsGetChunk,
+ * 11 = EntryErrFunc. Slots 0-2 are NULL in retail (reserved base-object
+ * methods). */
+struct SjObjVtbl {
+    void (*reserved0)(void *self);                               /* 0x00 NULL in retail */
+    void (*reserved1)(void *self);                               /* 0x04 NULL in retail */
+    void (*reserved2)(void *self);                               /* 0x08 NULL in retail */
+    void (*destroy)(void *self);                                 /* 0x0C SJRBF_Destroy */
+    void *(*getUuid)(void *self);                                /* 0x10 SJRBF_GetUuid */
+    void (*reset)(void *self);                                   /* 0x14 SJRBF_Reset */
+    int (*getChunk)(void *self, int mode, int size, void *out);  /* 0x18 SJRBF_GetChunk */
+    int (*ungetChunk)(void *self, int mode, void *chunk);        /* 0x1C SJRBF_UngetChunk */
+    int (*putChunk)(void *self, int mode, void *chunk);          /* 0x20 SJRBF_PutChunk */
+    int (*getAvail)(void *self, int mode);                       /* 0x24 SJRBF fn_80397A74 */
+    int (*isGetChunk)(void *self, int mode, int size, int *out); /* 0x28 SJRBF_IsGetChunk */
+    void (*entryErrFunc)(void *self, void *cb, void *arg);       /* 0x2C SJRBF_EntryErrFunc */
+};
+
+/* Sector-cache flush callback: while a read is pending, work->sectCnt
+ * stashes the SJRBF used as the read cache (retail adxf_ReadNw32 calls
+ * SJRBF_Create and stores the handle at work+0x08); flushing the cache
+ * calls its destroy slot. */
 struct AdxFsCb {
-    void (**vt)(void *);   /* 0x00 pointer to vtable (4 method slots) */
+    struct SjObjVtbl *vt;   /* 0x00 */
 };  /* size 0x4 */
 extern s32 lbl_eu_805E0610;
 extern s32 lbl_eu_805E0614;
@@ -1031,10 +1054,7 @@ int adxf_Stop(void *adxf) {
         }
         obj = (void *)work->sectCnt;
         work->sectCnt = 0;
-        {
-            void **vt = *(void ***)obj;
-            ((void (*)(void *))vt[3])(obj);
-        }
+        ((struct AdxFsCb *)obj)->vt->destroy(obj);
     }
     work->status = 1;
     ADXCRS_Unlock();
@@ -1069,7 +1089,7 @@ void adxf_ExecOne(struct AdxFsWork *work) {
             }
             cb = (struct AdxFsCb *)work->sectCnt;
             work->sectCnt = 0;
-            cb->vt[3](cb);
+            cb->vt->destroy(cb);
         }
         work->status = 4;
         return;
@@ -1084,7 +1104,7 @@ void adxf_ExecOne(struct AdxFsWork *work) {
                 }
                 cb = (struct AdxFsCb *)work->sectCnt;
                 work->sectCnt = 0;
-                cb->vt[3](cb);
+                cb->vt->destroy(cb);
             }
             return;
         }
@@ -1100,7 +1120,7 @@ void adxf_ExecOne(struct AdxFsWork *work) {
             }
             cb = (struct AdxFsCb *)work->sectCnt;
             work->sectCnt = 0;
-            cb->vt[3](cb);
+            cb->vt->destroy(cb);
         }
     l70skip:;
     }
@@ -1115,7 +1135,7 @@ void adxf_ExecOne(struct AdxFsWork *work) {
                 }
                 cb = (struct AdxFsCb *)work->sectCnt;
                 work->sectCnt = 0;
-                cb->vt[3](cb);
+                cb->vt->destroy(cb);
             }
             work->status = 1;
             work->b3 = 0;

@@ -229,7 +229,6 @@ extern "C" void func_802ACBDC(u8* self) {
 extern "C" void func_802AD060(CTutorialList* self) {
     self->mField14 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (unsigned long)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_80510B78[0xf], self, 0, 0);
-    func_800A9D90();
     self->mField18 = readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (unsigned long)func_800A9D90(), &lbl_eu_80510B78[0x28], self, 0, 0);
     func_801F34F4(&self->mScrollBar);

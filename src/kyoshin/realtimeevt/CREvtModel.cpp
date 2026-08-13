@@ -86,18 +86,48 @@ void* __ct__CREvtModel(void* self, void* pData, void* pArg) {
     return self;
 }
 
+// Cast-only vtable interface for the slot +0x3C dispatch: under -RTTI on the
+// Nth declared virtual lands at slot 8+4(N-1), so 0x3C = the 13th declared
+// virtual. A real virtual dispatch colors the vtable base r12 like retail
+// (manual-cast form uses r4).
+struct CREvtModelVt3C {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void _v24();
+    virtual void _v28();
+    virtual void _v2C();
+    virtual void _v30();
+    virtual void _v34();
+    virtual void _v38();
+    virtual void _v3C();  // vtable+0x3C (14th declared under -RTTI on)
+};
+
 void* __ct__80172668(void* self, int deallocFlag) {
     if (self != 0) {
         FLD(const void**, self, 0) = lbl_eu_8053167C;
-        ((void (*)(void*))lbl_eu_8053167C[0x3C / 4])(self);
+        reinterpret_cast<CREvtModelVt3C*>(self)->_v3C();
         __dt__Q22cf8CREvtObjFv(self, 0);
         if (deallocFlag > 0) { __dt__80185754(self); }
     }
     return self;
 }
 
+// Cast-only vtable interface for slot +0x10 dispatch: with -RTTI on the
+// third declared virtual lands at vtable+0x10 (slots 0/4 hidden RTTI),
+// matching retail's lwz r12,16(r12) (manual-cast form colors r4 instead).
+struct CREvtModelVt10 {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();  // vtable+0x10
+};
+
 void func_80172768(void* self) {
-    (*(void (**)(void*))((char*)*(void**)self + 0x10))(self);
+    reinterpret_cast<CREvtModelVt10*>(self)->_v10();
     void* p24 = FLD(void*, self, 0x24);
     if (p24 != 0) { func_80495E60(p24); FLD(void*, self, 0x24) = 0; }
     void* p20 = FLD(void*, self, 0x20);
@@ -107,7 +137,7 @@ void func_80172768(void* self) {
 int func_801726DC(void* self) {
     u32 flags = FLD(u32, self, 0x18);
     if (flags & 0x80) { return 1; }
-    (*(void (**)(void*))((char*)*(void**)self + 0x10))(self);
+    reinterpret_cast<CREvtModelVt10*>(self)->_v10();
     void* p24 = FLD(void*, self, 0x24);
     if (p24 != 0) { func_80495E60(p24); FLD(void*, self, 0x24) = 0; }
     void* p20 = FLD(void*, self, 0x20);

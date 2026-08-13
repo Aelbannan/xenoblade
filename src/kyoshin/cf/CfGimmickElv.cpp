@@ -235,8 +235,9 @@ extern "C" void func_8020B264(CfGimmickElvData* self, int show) {
             func_80462F10__8CTaskLODFv(self->lod0);
         } else {
             self->flags |= 0x20;
+            int lod = self->lod0;
             f32 zero = lbl_eu_80668380;
-            func_80462EF4__8CTaskLODFv(self->lod0, zero);
+            func_80462EF4__8CTaskLODFv(lod, zero);
         }
         func_80463014__8CTaskLODFv(self->lod0);
     }

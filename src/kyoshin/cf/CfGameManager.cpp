@@ -137,7 +137,7 @@ void func_80189424(float value);
 }
 
 extern "C" u32 func_8009CF8C(u32 resourceId);
-extern "C" float func_80496288(CScn* scene);
+extern "C" float func_80496288(void* scene);
 extern void func_801BFFAC(float value, float fadeTime);
 extern const float lbl_eu_8066A208;
 extern const float lbl_eu_8066650C;

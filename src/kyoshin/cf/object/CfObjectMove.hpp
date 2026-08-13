@@ -66,9 +66,11 @@ extern "C" void* func_80081900__Q22cf13CfGameManagerFv(u32 first, u32 value, u32
 // Retail data labels referenced by this unit.
 extern const char lbl_eu_804FC550[];   // bdat column-name table (func_800BED6C / func_800BEE08)
 extern u32 lbl_eu_80663E28;   // global flag word (bit 26) gating the func_800BC458 flag clear
-// Global flag word (bits 25/9) gating func_800BC8D8's flag block. Volatile so
-// CfObject_UnkVirtualFunc4's two reads stay separate (retail loads it twice).
-extern volatile u32 lbl_eu_80663E24;
+// Global flag word (bits 25/9) gating func_800BC8D8's flag block. Non-volatile
+// extern so the type agrees with CSystemWindow.hpp and the .sbss definition in
+// CUICfManager.cpp; reads that must stay separate use explicit volatile casts
+// in CfObjectMove.cpp (retail loads it twice there - see the double-lwz note).
+extern u32 lbl_eu_80663E24;
 extern u16 lbl_eu_80663E42;   // mode words checked by CfObject_UnkVirtualFunc26 (== 4 / == 1)
 extern u16 lbl_eu_80663E44;
 extern CScn* lbl_eu_80663E14;  // shared scene pointer passed to the func_80496288 time query
@@ -119,7 +121,7 @@ extern const float lbl_eu_80666ACC;
 // Scene-time query (CfGameManager.cpp, retail unmangled name): returns the
 // current time value from the shared scene object. extern "C" keeps the
 // call-site reloc at the unmangled retail name (docs/MWCC_REFERENCE.md §2).
-extern "C" f32 func_80496288(CScn* scene);
+extern "C" f32 func_80496288(void* scene);
 // Second heap handle query (retail unmangled name, same family as
 // func_80061FE8): used by CfObject_UnkVirtualFunc47's CtrlEnemy/CtrlNpc
 // allocations.
@@ -158,7 +160,8 @@ extern "C" void* func_80496264(void* obj, int index);
 extern "C" int func_8007560C();
 extern "C" bool func_800829B8__Q22cf13CfGameManagerFv();
 extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
-extern "C" void* func_800821F8__Q22cf13CfGameManagerFv();
+class UnkClass_800821F8;
+extern "C" UnkClass_800821F8* func_800821F8__Q22cf13CfGameManagerFv();
 // Region-library helper used by func_800BC4CC (region, target, flags, dist).
 extern "C" int func_804B192C(void* region, void* target, int arg2, int arg3, f32 dist);
 // +0x98 sub-object flag query (CfObjectModel.cpp, retail unmangled name) used

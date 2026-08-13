@@ -178,6 +178,77 @@ namespace cf {
         virtual int v020() = 0;      // slot 22 / +0x58 (actor value query)
     };
 
+    // Manual-vtable interface for func_8027A024: slot +0x70 (declared #26)
+    // returns int. Same pad-first / -RTTI layout trick; never instantiated.
+    class CChainActorVtIf70 {
+    public:
+        u8 pad70[0x70];
+        virtual void v000() = 0;
+        virtual void v001() = 0;
+        virtual void v002() = 0;
+        virtual void v003() = 0;
+        virtual void v004() = 0;
+        virtual void v005() = 0;
+        virtual void v006() = 0;
+        virtual void v007() = 0;
+        virtual void v008() = 0;
+        virtual void v009() = 0;
+        virtual void v010() = 0;
+        virtual void v011() = 0;
+        virtual void v012() = 0;
+        virtual void v013() = 0;
+        virtual void v014() = 0;
+        virtual void v015() = 0;
+        virtual void v016() = 0;
+        virtual void v017() = 0;
+        virtual void v018() = 0;
+        virtual void v019() = 0;
+        virtual void v020() = 0;
+        virtual void v021() = 0;
+        virtual void v022() = 0;
+        virtual void v023() = 0;
+        virtual void v024() = 0;
+        virtual void v025() = 0;
+        virtual int v026() = 0;      // slot 28 / +0x70
+    };
+
+    // Manual-vtable interface for func_80277B38: slots +0x1c (declared #5,
+    // activate-with-flag), +0x24 (declared #7, returns int), +0x38 (declared
+    // #12, two-arg), +0x3c (declared #13, returns int), +0x68 (declared #24,
+    // run key query) and +0x6c (declared #25). Same pad-first / -RTTI layout
+    // trick as CChainActorVtIf2: declared virtual #k lands at byte offset
+    // (k+2)*4. Never instantiated, so no vtable emits.
+    class CChainActorVtIfB38 {
+    public:
+        u8 pad70[0x70];
+        virtual void v000() = 0;
+        virtual void v001() = 0;
+        virtual void v002() = 0;
+        virtual void v003() = 0;
+        virtual void v004() = 0;
+        virtual void v005(int v) = 0;       // slot 7 / +0x1c (activate-with-flag)
+        virtual void v006() = 0;
+        virtual int v007(int v) = 0;        // slot 9 / +0x24 (chainable check)
+        virtual void v008() = 0;
+        virtual void v009() = 0;
+        virtual void v010() = 0;
+        virtual void v011() = 0;
+        virtual void v012(int a, int b) = 0; // slot 14 / +0x38
+        virtual int v013() = 0;              // slot 15 / +0x3c (chain-state query)
+        virtual void v014() = 0;
+        virtual void v015() = 0;
+        virtual void v016() = 0;
+        virtual void v017() = 0;
+        virtual void v018() = 0;
+        virtual void v019() = 0;
+        virtual void v020() = 0;
+        virtual void v021() = 0;
+        virtual void v022() = 0;
+        virtual void v023() = 0;
+        virtual int v024() = 0;             // slot 26 / +0x68 (run key query)
+        virtual void v025(int v) = 0;       // slot 27 / +0x6c
+    };
+
     // Battle-object vtable interface for func_80278E0C: slot +0x5b4
     // (declared virtual #363) returns a float that is stored into the
     // chain's unk0[0x14]. Never instantiated, so no vtable emits.
@@ -387,6 +458,46 @@ namespace cf {
         CChainField3F60* field_3F60;  // 0x3F60
     };
 
+    // Voice sub-object interface for func_8027A024: slot 0xc (declared #1)
+    // takes a u32 flag and returns int; a word pointer sits at +0xc4.
+    // Never instantiated, so no vtable emits.
+    class CChainVoiceSubC {
+    public:
+        virtual void v00();
+        virtual int v01(u32 v); // index 1 -> vtable offset 0xc
+        u8 _pad8[0xC4 - 0x8];
+        u8* field_C4;           // 0xC4
+    };
+
+    // Word target of the voice sub-object's +0xC4 pointer (func_8027A024
+    // probes bit 0x10000 at +0x4EC).
+    struct CChainVoiceSubC4EC {
+        u8 _pad[0x4EC];
+        u32 field_4EC;          // 0x4EC
+    };
+
+    // Interface for the embedded voice sub-object's slot 0x4c (declared #17):
+    // returns the current arts index, stored at CChain+0xC by func_80277B38
+    // (cases 0x13/0x14). Same -RTTI layout rule: #N -> (N+2)*4.
+    class CChainVoiceSub17 {
+    public:
+        virtual void v00(); virtual void v01(); virtual void v02();
+        virtual void v03(); virtual void v04(); virtual void v05();
+        virtual void v06(); virtual void v07(); virtual void v08();
+        virtual void v09(); virtual void v10(); virtual void v11();
+        virtual void v12(); virtual void v13(); virtual void v14();
+        virtual void v15(); virtual void v16();
+        virtual u32 v17(); // index 17 -> vtable offset 0x4c
+    };
+
+    // Battle-object view for func_80277B38: embedded sub-object at +0x3E9C
+    // whose slot 0x4c returns the current arts index (lwzu dispatch form).
+    class CChainBattleObjB38 {
+    public:
+        u8 _pad0[0x3E9C];
+        CChainVoiceSub17 mSub; // 0x3E9C
+    };
+
     // Holder for func_8027A8C8: battle object pointer at +0x0.
     class CChainVoiceHolder {
     public:
@@ -458,6 +569,54 @@ namespace cf {
         CChainList mChainMember;         //0x1DC8
         u8 unk1EB4[0x1F0C - 0x1EB4];
     };
+
+    // Head-field view of CChain used by func_80277B38's state machine: the
+    // unk0[0x18] byte region with typed fields (s8 index bytes, u8 state/flag
+    // bytes, the u32 arts-index word at +0xC and the f32 gauge at +0x14).
+    struct CChainHeadView {
+        s8 field_0;      //0x0 current member index
+        s8 field_1;      //0x1 last member index
+        u8 field_2;      //0x2 chain state
+        u8 field_3;      //0x3
+        u8 field_4;      //0x4
+        u8 field_5;      //0x5 chain-direction flag
+        u8 field_6;      //0x6
+        u8 field_7;      //0x7
+        u8 field_8;      //0x8
+        u8 field_9;      //0x9
+        u8 field_A;      //0xA
+        u8 field_B;      //0xB
+        u32 field_C;     //0xC arts index
+        u8 field_10;     //0x10
+        u8 field_11[3];  //0x11
+        f32 field_14;    //0x14 chain gauge
+    };
+
+    // 0x20-byte stack scratch written by func_80277B38 case 5: the 0xe-byte
+    // memset target at +0x4 (retail 0x1c absolute) overlaps the field bytes
+    // written after both memsets (+0x6/+0xD/+0x10 are inside it, +0x12 and
+    // +0x14 just past), so the scratch is one local, not two.
+    struct CChainScratch20 {
+        u8 field_0[0x4]; //0x0
+        union {
+            u8 mScratch[0xE]; //0x4 (memset target)
+            struct {
+                u8 field_4[2]; //0x4
+                u8 field_6;    //0x6
+                u8 field_7[6]; //0x7
+                u8 field_D;    //0xD
+                u8 field_E[2]; //0xE
+                s16 field_10;  //0x10
+            } mFields;
+        };
+        s16 field_12;     //0x12
+        f32 field_14;     //0x14
+        u8 field_18[0x8]; //0x18
+    };
+    // 0xe-byte sub-region of CChainScratch20 at +0x4 (standalone view).
+    struct CChainScratch0E {
+        u8 bytes[0xe];
+    };
 }
 
 // Forward decls for the CChain tail overlays (full defs live in
@@ -470,10 +629,25 @@ struct CErrMesOwner;
 // func_80276D30 is defined in this TU (C linkage inherited from the extern
 // "C" block below, so both the definition and the call reloc stay unmangled).
 
+// Chain-type word view used by func_80276D30's case-1/2/3 mapping: u16 chain
+// type at +0x3F28 of the two battle objects (read with retail lhz).
+struct CChainTypeView {
+    u8 field_0[0x3F28];
+    u16 field_3F28;
+};
+
 // Chain-voice data symbols (.sdata float / .sbss byte).
 extern float lbl_eu_80668A18;
 extern float lbl_eu_80668A1C;
+extern float lbl_eu_80668A40;
+extern float lbl_eu_80668A44;
+extern float lbl_eu_80668A48;
+extern float lbl_eu_80668A50;
+extern float lbl_eu_80668A54;
 extern u8 lbl_eu_80663DA0;
+// Battle-manager mode-flag word (.sbss) probed by func_80277B38's chain-start
+// gate (bit 22). Same declaration as CBattleManager.hpp's extern "C" row.
+extern "C" u32 lbl_eu_80663E24;
 
 // Voice-timing threshold compared against the voice sub-object's slot-0x110
 // result by func_8027A8C8 (.sdata2 float; const lets MWCC schedule the
@@ -485,6 +659,14 @@ extern const f32 lbl_eu_80668A60;
 // the unsigned (value + 0x10000) == 0xffff sentinel test (MWCC addis/cmplwi
 // idiom, cf. func_80190394 in code_8018F8D8.cpp).
 extern s32 lbl_eu_80662A20;
+
+// Chain-voice id tables picked by func_80276D30 (.sdata int arrays -> sda21
+// addressing; lbl_eu_805381C8 is a 3-entry .data table -> lis/addi).
+extern int lbl_eu_80662A24[1];
+extern int lbl_eu_80662A28[2];
+extern int lbl_eu_80662A30[2];
+extern int lbl_eu_80662A38[2];
+extern int lbl_eu_805381C8[3];
 
 // C-linkage callees (retail symbols are unmangled globals - C linkage keeps
 // the call relocs verbatim). Voice-manager helpers are defined in
@@ -513,6 +695,7 @@ namespace cf { class CfObjectActor; }
 
 extern "C" {
     void func_802A1500();
+    u32 func_8009CF8C(u32 resourceId);
     void func_802A35B8(u32 arg);
     int func_802A3748(u32 arg);
     int func_802A3214();
@@ -522,7 +705,7 @@ extern "C" {
     void func_8027C45C(cf::CChainList* self);
     void func_802AB3D0(CBattleChainMenuState* self);
     u8* func_802B48A0(CErrMesEntry* self);
-    int func_80276D30(u8* self);
+    int func_80276D30(int mode, u8* p1, u8* p2);
     // Same-TU voice reset helper (defined in CChain.cpp); C linkage keeps
     // the call reloc from func_8027732C verbatim.
     void func_80276C58();
@@ -571,4 +754,24 @@ extern "C" {
     // Battle-chain menu helpers (CMenuBattleChain.cpp).
     void func_802AB5E4(CBattleChainMenuState* self);
     int func_802AB510(CBattleChainMenuState* self, u8* out);
+    // Chain-state-machine helpers used by func_80277B38 (same-TU or
+    // CChainActorList.cpp / CUIErrMesWin.cpp / CMenuBattleChain.cpp).
+    void func_80276C30();
+    void func_80278E0C(cf::CChain* self);
+    void func_80278F84(cf::CChain* self);
+    void func_80279214(cf::CChain* self);
+    void func_8027B770(cf::CChainActorList* self, u32 key);
+    void func_8027BB4C(cf::CChainActorList* self, cf::CChainList* list);
+    int  func_8027BE84(cf::CChainActorList* self);
+    int  func_8027CAE0(cf::CChainList* self, int target, int check);
+    int  func_8027C154(cf::CChainChance* self, cf::CChainBattleObj* target, cf::CChainBattleObj* source);
+    int  func_8027C33C(cf::CChainAction* self, u8* out);
+    void func_8027CBE8(cf::CChainCounter* self);
+    void func_8027C098(cf::CChainChance* self);
+    void func_802AB4B8(CBattleChainMenuState* self);
+    void func_802AB590(CBattleChainMenuState* self);
+    bool func_802AB59C(CBattleChainMenuState* self);
+    void func_802B4B84(CErrMesEntry* self);
+    void func_8014B120(u8* self, cf::CChainScratch20* scratch);
+    void func_802818F8();
 }

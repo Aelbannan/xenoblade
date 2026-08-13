@@ -120,7 +120,10 @@ public:
     /* 0x162 */ u8 field_162;
     /* 0x163 */ u8 field_163;          // LOD refresh id (func_801F879C)
     /* 0x164 */ u8 field_164;          // mode byte (1 = active) checked by func_801F8BB8
-    /* 0x165 */ u8 gap_165[0x170 - 0x165];
+    /* 0x165 */ u8 field_165;
+    /* 0x166 */ u8 gap_166[0x168 - 0x166];
+    /* 0x168 */ CfGimmickObject* field_168;  // linked peer object (busy check func_801F634C)
+    /* 0x16C */ f32 field_16C;         // LOD fade countdown timer (func_801F634C / func_801F6E60)
     /* 0x170 */ f32 field_170;         // countdown timer (func_801F75CC)
     /* 0x174 */ f32 field_174;
     /* 0x178 */ f32 field_178;         // LOD timer diff (func_801F627C)
@@ -128,7 +131,7 @@ public:
     /* 0x180 */ f32 field_180;         // effect timer (func_801F76A8 / func_801F6780)
     /* 0x184 */ u32 field_184;         // player bitmask (func_801F72A4)
     /* 0x188 */ s16 field_188;         // step counter (clamped to 0..6)
-    /* 0x18A */ u8 gap_18A[0x18C - 0x18A];
+    /* 0x18A */ s16 field_18A;         // LOD fade frames (func_801F634C / func_801F6E60)
     /* 0x18C */ s16 field_18C;         // +0x14A table scan index (func_801F72A4)
     /* 0x18E */ s16 field_18E;         // countdown frames (func_801F89B8)
     /* 0x190 */ u16 field_190;         // sound id (func_801F6780 / func_801F76A8)
@@ -176,6 +179,7 @@ int func_801F72A4(cf::CfGimmickObject* self, u16* table);
 void func_801F6780(cf::CfGimmickObject* self);
 int func_801F634C(cf::CfGimmickObject* self);
 void func_801F76A8(cf::CfGimmickObject* self);
+void func_801F61B0(cf::CfGimmickObject* self, int mode);
 void func_801F6E60(cf::CfGimmickObject* self, u8 arg);
 void func_801F5C2C(cf::CfGimmickObject* self, int a, int b);
 void func_801F6B98(cf::CfGimmickObject* self, u8 lod,
@@ -193,6 +197,7 @@ f32 func_80462F2C__8CTaskLODFv(u8 lod);
 f32 func_80462FF4__8CTaskLODFv(u8 lod);
 void func_80462FD8__8CTaskLODFv(u8 lod, f32 f);
 void func_80462EF4__8CTaskLODFv(u8 lod, f32 f);
+void func_80462E3C__8CTaskLODFv(u8 lod, f32 f);
 void func_80462F10__8CTaskLODFv(u8 lod);
 void func_80462F4C__8CTaskLODFv(u8 lod, int mode);
 void func_80462F70__8CTaskLODFv(u8 lod, int mode);
@@ -201,6 +206,7 @@ void func_80462F94__8CTaskLODFv(u8 lod, u16 id);
 int* func_8009ECB0();
 int func_8009E284(int* data, int id);
 void func_8020A010();
+void func_80209F2C();
 void func_8020A0CC();
 void func_80209F5C();
 void func_8020A068(int arg0, int flag, u32 value);
@@ -219,7 +225,7 @@ u32 func_800822F4__Q22cf13CfGameManagerFv();
 u32 func_80082354__Q22cf13CfGameManagerFv(u32 resourceId);
 f32 func_80496288(void* ptr);
 u16 func_80208C48(u16 id, f32* vec);
-void func_80193678(u16 id);
+void func_80193678(int id);
 // Step-table / sound helpers (func_801F6780 / func_801F76A8).
 void func_80140E00(u32 a, u32 b, u32 c);
 void func_8015B25C(u16 id);
@@ -248,6 +254,9 @@ extern void* lbl_eu_80663E14;   // .sbss scene/handle pointer
 // .sdata2 countdown constants (func_801F75CC).
 extern f32 lbl_eu_806681A0;
 extern f32 lbl_eu_806681B8;
+extern f32 lbl_eu_806681B0;   // 20.0f heal/map-object value (func_801F6E60)
+// .sdata2 s16->f32 magic double (2^52 + 2^31; func_801F634C / func_801F6E60).
+extern f64 lbl_eu_806681A8;
 // .sdata2 LOD constants (func_801F6B98).
 extern f32 lbl_eu_806681A4;
 extern f32 lbl_eu_806681B4;

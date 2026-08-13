@@ -21,7 +21,9 @@ public:
     // field accessors - retail func_8022D094/08C/09C (recovered as members)
     u8 getField24();
     u8 getField25();
-    u8 getField27();
+    // Retail callers compare the FULL word (cmpi r3,0, no rlwinm mask), so the
+    // recovered return type is int even though the body returns a byte.
+    int getField27();
 
     void* mVtbl;                                  // 0x00
     UnkClass_8045F564 mMemRegion;                 // 0x04

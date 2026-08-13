@@ -2138,10 +2138,10 @@ extern "C" void func_80485CE8(CScnItemModel* self) {
     } else {
         func_8049771C(self->field_0xC, self->value7B0);
     }
-    CScnItemModelActData* act = (CScnItemModelActData*)self->field_0x1F8;
-    act->value2E8 = self->value7AC * act->value304;
+    ((CScnItemModelActData*)self->field_0x1F8)->value2E8 =
+        self->value7AC * ((CScnItemModelActData*)self->field_0x1F8)->value304;
     func_80497AA8(self->field_0xC);
-    act->transform.update();
+    ((CScnItemModelActData*)self->field_0x1F8)->transform.update();
 }
 
 // func_80485D64: fade-distance refresh. Three 5-level chain walks run inline

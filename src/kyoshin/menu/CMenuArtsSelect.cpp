@@ -1,14 +1,103 @@
+// CTaskGame.hpp must come first: its line-10 `extern "C"` declaration of
+// func_8004302C must precede the plain C++ declaration pulled in by
+// CMenuArtsSelect.hpp (monolib/scn.hpp -> CScnNw4r.hpp -> functions.hpp);
+// MWCC rejects the reverse order (10505 illegal overloading).
+//
+// CTaskGame.hpp:571 also declares lbl_eu_80663E24 non-volatile, which
+// conflicts with the volatile declaration in CfObjectMove.hpp (reached via
+// the CBattleManager.hpp include below), CTaskGame.hpp:486 declares
+// func_8004392C with a u32 third arg (conflicting with CVision.hpp:170's
+// void* third arg), and CTaskGame.hpp:559 declares func_8049603C with a
+// CScn* arg (conflicting with CSuddenCommu.hpp:320's void* arg). Rename all
+// three CTaskGame.hpp copies out of the way (same scheme as
+// CMenuKizunaTalk.hpp's func_801361E8 rename); this TU uses none of them.
+#define lbl_eu_80663E24 artsSelectCtaskGameE24Unused
+#define func_8004392C artsSelectCtaskGame4392CUnused
+#define func_8049603C artsSelectCtaskGame9603CUnused
+#include "kyoshin/CTaskGame.hpp"
+#undef func_8049603C
+#undef func_8004392C
+#undef lbl_eu_80663E24
+
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
 
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/work/CProcess.hpp"
+#include "monolib/work/CTTask.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
 
-#include "kyoshin/CTaskGame.hpp"
+#include "kyoshin/CUIBattleManager.hpp"
 #include <nw4r/math.h>
+
+// CVision.hpp declares func_80496288 with a void* arg, conflicting with
+// CfObjectMove.hpp's CScn* version (both pulled in via CBattleManager.hpp).
+// This TU does not use func_80496288; pre-include CVision.hpp with the
+// declaration renamed so only the CScn* version survives. Its lbl_eu_80663E24
+// copy is volatile, which now clashes with CfObjectMove.hpp's non-volatile
+// extern (recently aligned with CSystemWindow.hpp); this TU reads E24 via the
+// CfObjectMove copy, so rename CVision's out of the way too.
+#define func_80496288 artsSelectVisionTimeQueryUnused
+#define lbl_eu_80663E24 artsSelectVisionE24Unused
+#include "kyoshin/cf/CVision.hpp"
+#undef lbl_eu_80663E24
+#undef func_80496288
+// CSuddenCommu.hpp's void* func_802A3680 conflicts with CChain.hpp's int
+// version, its void* lbl_eu_80663E14 conflicts with CfObjectMove.hpp's CScn*
+// version, its void* func_80496288 conflicts with CfObjectMove.hpp's CScn*
+// version, its long-arg func_8006EF04__Fi conflicts with CfObjectActor.hpp's
+// int-arg version, its s32-return func_8018C820 conflicts with
+// CfObjectActor.hpp's void-return version, and its (int,void*,int)
+// func_800D81A8 conflicts with CfObjectActor.hpp's (void*,void*,void*)
+// version, and its (void*,u32*,u32) func_80174C98 conflicts with
+// CChainActorList.hpp's (void*,int*,int) version (all via CBattleManager.hpp);
+// this TU uses only the int* func_80174C98 and none of the others.
+#define func_802A3680 artsSelectSuddenCommuVoiceUnused
+#define lbl_eu_80663E14 artsSelectSuddenCommuSceneUnused
+#define lbl_eu_80663E24 artsSelectSuddenCommuE24Unused
+#define func_80496288 artsSelectSuddenCommuTimeQueryUnused
+#define func_8006EF04__Fi artsSelectSuddenCommuFlagProbeUnused
+#define func_8018C820 artsSelectSuddenCommuGaugeAddUnused
+#define func_800D81A8 artsSelectSuddenCommuStatProbeUnused
+#define func_80174C98 artsSelectSuddenCommuCmdProbeUnused
+#define func_8017FD4C artsSelectSuddenCommuGlobalProbeUnused
+#define func_80086F9C__Q22cf13CfGameManagerFv artsSelectSuddenCommuPadModeUnused
+#define func_8049603C artsSelectSuddenCommuCamViewUnused
+#include "kyoshin/cf/CSuddenCommu.hpp"
+#undef func_8049603C
+#undef func_80086F9C__Q22cf13CfGameManagerFv
+#undef func_8017FD4C
+#undef func_80174C98
+#undef func_800D81A8
+#undef func_8018C820
+#undef func_8006EF04__Fi
+#undef func_80496288
+#undef lbl_eu_80663E14
+#undef lbl_eu_80663E24
+#undef func_802A3680
+// CChain.hpp:737 declares func_80107C54 with (void*, int), conflicting with
+// this TU's (CMenuArtsSelect*, s32) extern "C" import used by the matched
+// func_80104454; rename the CChain.hpp copy out of the way. Its volatile
+// lbl_eu_80663E24 also clashes with CfObjectMove.hpp's non-volatile extern.
+#define func_80107C54 artsSelectChainSlotProbeUnused
+#define lbl_eu_80663E24 artsSelectChainE24Unused
+#include "kyoshin/cf/chain/CChain.hpp"
+#undef lbl_eu_80663E24
+#undef func_80107C54
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+// code_80135FDC.hpp:168 declares lbl_eu_8066A208 as u32 (conflicting with
+// CfObjectMove.hpp:97's const float), :172 declares lbl_eu_80663E24 as
+// non-volatile u32 (conflicting with CfObjectMove.hpp:71's volatile u32), and
+// :218 declares void* getBdatStringColumnValue (conflicting with
+// CfGimmick.hpp:159's u32 version). This TU uses none of these copies.
+#define lbl_eu_8066A208 artsSelectCode35FDCepsilonUnused
+#define lbl_eu_80663E24 artsSelectCode35FDCe24Unused
+#define getBdatStringColumnValue artsSelectCode35FDCBdatColumnUnused
 #include "kyoshin/code_80135FDC.hpp"
+#undef getBdatStringColumnValue
+#undef lbl_eu_80663E24
+#undef lbl_eu_8066A208
 
 #include "decomp.h"
 #include <revolution/GX.h>
@@ -45,10 +134,13 @@ struct BattleActor {
     u8 mMoveStart;           // +0x3e9c: CfObjectMove starts here
     u8 _pad3e9d[0x3f28 - 0x3e9d];
     u16 mField3F28;          // +0x3f28: same u16 as CfObjectMove+0x8C
+    u8 _pad3f2a[0x3f60 - 0x3f2a];
+    void* mField3F60;        // +0x3f60: sub-object pointer (move wrapper)
 };
 
-extern u32 lbl_eu_80663E24;
-extern u32 lbl_eu_80663E28;
+// lbl_eu_80663E24 / lbl_eu_80663E28 are declared by CfObjectMove.hpp, which
+// the CBattleManager.hpp include pulls in (C++ linkage, volatile for E24).
+// Declaring them again inside this extern "C" block would conflict.
 // Unmangled retail names; int (not u8) avoids clrlwi before cmpwi.
 int func_8018A608();
 int func_80122448();
@@ -61,6 +153,13 @@ nw4r::lyt::ArcResourceAccessor* func_801355F4();
 int func_80174C98(void* actor, int* outVal, int flags);
 int func_8010EDD4(void*);
 int func_8010A840(void*);
+
+// func_8010433C arts-ref allocator: CfGameManager creates the ref object.
+extern "C" void* func_8008187C__Q22cf13CfGameManagerFv(u32 index);
+// func_801088CC player gate: converts a CfObjectMove to its actor container.
+extern "C" BattleActor* func_800BFC68__FPQ22cf12CfObjectMove(cf::CfObjectMove* objMove);
+extern "C" int func_801B2084();
+extern "C" bool func_80060290(void*);
 
 
 extern char lbl_eu_804FD1E0[];
@@ -277,6 +376,55 @@ extern "C" CMenuArtsSelect* __ct__CMenuArtsSelect(CMenuArtsSelect* self, CScn* s
     }
     return p;
 }
+
+// ---------------------------------------------------------------------------
+// Destructor (us-80102e44). Retail symbol __dt__15CMenuArtsSelectFv has the
+// MSL "D2-inlined-into-D1" shape: the embedded UnkClass_8045F564 member dtor
+// (flag -1), then the CProcess base dtor guarded by the double null-check,
+// then a conditional operator delete when flags > 0. Written as a global
+// function carrying the retail symbol name (CMapSel/CSysWinSelect idiom):
+// MWCC's member-dtor codegen cannot express the double guard artifact.
+// ---------------------------------------------------------------------------
+extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int flags);
+extern "C" void __dt__8CProcessFv(void* self, int flags);
+extern "C" CMenuArtsSelect* __dt__15CMenuArtsSelectFv(CMenuArtsSelect* _this,
+                                                       int flags) {
+    if (_this != 0) {
+        __dt__17UnkClass_8045F564Fv(&_this->unk6C, -1);
+        if (_this != 0) {
+            if (_this != 0) {
+                __dt__8CProcessFv(_this, 0);
+            }
+        }
+        if (flags > 0) {
+            operator delete(_this);
+        }
+    }
+    return _this;
+}
+
+// ---------------------------------------------------------------------------
+// CTTask<IUIBattle> out-of-line specializations (retail standalone symbols).
+// Move/Draw test the ptmf hook at +0x3C / +0x48 through __ptmf_test and
+// dispatch via __ptmf_scall; ~CTTask emits the null check, CProcess base dtor
+// call, and conditional operator delete.
+// ---------------------------------------------------------------------------
+template<>
+void CTTask<IUIBattle>::Move() {
+    if (mMoveFunc) {
+        (reinterpret_cast<IUIBattle*>(this)->*mMoveFunc)();
+    }
+}
+
+template<>
+void CTTask<IUIBattle>::Draw() {
+    if (mDrawFunc) {
+        (reinterpret_cast<IUIBattle*>(this)->*mDrawFunc)();
+    }
+}
+
+template<>
+CTTask<IUIBattle>::~CTTask() {}
 
 void CMenuArtsSelect::Init() {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
@@ -1218,7 +1366,15 @@ extern "C" void CMenuArtsSelect_setDisabled() { if (lbl_eu_80663F20 != 0) lbl_eu
 extern "C" bool CMenuArtsSelect_isFinished() { return false; }
 extern "C" CMenuArtsSelect* CMenuArtsSelect_getInstance() { return lbl_eu_80663F20; }
 extern "C" bool CMenuArtsSelect_isCreated() { return lbl_eu_80663F20 != 0; }
-void func_801042C8(){}
+// func_801042C8 (us-80104db0): arts-select availability gate.
+// Returns 1 once the menu instance exists and its main FSM (unk298) has
+// advanced past the pre-open states (< 5), else 0.
+int func_801042C8() {
+    if (lbl_eu_80663F20 != NULL && lbl_eu_80663F20->unk298 >= 5) {
+        return 1;
+    }
+    return 0;
+}
 extern "C" int CMenuArtsSelect_isInteractable() { CMenuArtsSelect* menu = lbl_eu_80663F20; if (menu != 0) { int value = menu->unk298; if (value != 1 && value != 3) return 1; } return 0; }
 extern "C" CMenuArtsSelect* CMenuArtsSelect_getSelectState() { if (lbl_eu_80663F20 == 0) return 0; return reinterpret_cast<CMenuArtsSelect*>(&lbl_eu_80663F20->unk7C); }
 extern "C" int CMenuArtsSelect_isNotReady() { return lbl_eu_80663F20 == 0 ? 1 : lbl_eu_80663F24 == 0; }
@@ -1240,9 +1396,63 @@ extern "C" void CMenuArtsSelect_scnRenderDtor(CMenuArtsSelect* self) {
     __dt__15CMenuArtsSelectFv((CMenuArtsSelect*)((char*)self - 0x60));
 }
 
-void func_80104210(){}
-void func_8010433C(){}
-void func_801043BC(){}
+// ---------------------------------------------------------------------------
+// func_80104210 (us-80104cf8) -- lazy factory: create + register the menu.
+// Returns NULL if the singleton already exists. Regist(NULL, parent, false)
+// is called even when allocation fails (retail has no guard).
+// ---------------------------------------------------------------------------
+extern "C" CMenuArtsSelect* func_80104210(CProcess* parent, CScn* scn) {
+    if (lbl_eu_80663F20 != NULL) {
+        return NULL;
+    }
+    CMenuArtsSelect* obj = (CMenuArtsSelect*)mtl::MemManager::allocate(
+        0x34c, CWorkThreadSystem::getWorkMem());
+    if (obj != NULL) {
+        obj = __ct__CMenuArtsSelect(obj, scn);
+    }
+    lbl_eu_80663F20 = obj;
+    reinterpret_cast<CProcess*>(obj)->Regist(parent, false);
+    return lbl_eu_80663F20;
+}
+
+// ---------------------------------------------------------------------------
+// func_8010433C (us-80104e24) -- create the arts-select ref object.
+// Only runs while the menu exists but the ref does not; the ref's +0xb0 is
+// bound to the menu's IObjectInfo slot (+0x60), NULL-safe.
+// ---------------------------------------------------------------------------
+extern "C" void func_8010433C() {
+    if (lbl_eu_80663F20 != NULL && lbl_eu_80663F24 == NULL) {
+        UnkArtsSelectRef* ref =
+            (UnkArtsSelectRef*)func_8008187C__Q22cf13CfGameManagerFv(0xb5);
+        lbl_eu_80663F24 = ref;
+        if (ref != NULL) {
+            // Local first: retail re-reads the global after the call and uses
+            // the loaded pointer itself as the NULL case (no separate li 0).
+            void* p = lbl_eu_80663F20;
+            if (p != NULL) {
+                p = reinterpret_cast<void*>(reinterpret_cast<char*>(p) + 0x60);
+            }
+            ref->unkB0 = p;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// func_801043BC (us-80104ea4) -- reset all art-slot anim frames to 0.0f.
+// Each slot whose availability probe (func_80107970 / func_80107C54) passes
+// gets its unk1DC anim rewound; then a 0x9e SE plays.
+// ---------------------------------------------------------------------------
+extern "C" void func_801043BC() {
+    if (lbl_eu_80663F20 == NULL) return;
+    f32 zero = lbl_eu_80666F28;
+    for (u32 i = 0; i < 9; i++) {
+        if (func_80107970(lbl_eu_80663F20, (u8)i) != 0) continue;
+        if (func_80107C54(lbl_eu_80663F20, (u8)i) != 0) continue;
+        lbl_eu_80663F20->unk1DC[(u8)i]->SetFrame(zero);
+    }
+    func_80138078__FUl(0x9e);
+}
+
 // ---------------------------------------------------------------------------
 // func_80104454 (us-80104f3c) -- arts-select main per-frame update.
 // Called from Move() case 2 (unk298 == 2). Retail symbol is the UNMANGLED
@@ -1939,7 +2149,37 @@ int CMenuArtsSelect::func_80107970(s32 index){ return 0; }
 int CMenuArtsSelect::func_80107C54(s32 index){ return 0; }
 void CMenuArtsSelect::func_801080F8(){}
 void func_801086D0(){}
-void func_801088CC(){}
+// ---------------------------------------------------------------------------
+// func_801088CC (us-801093b4) -- use/confirm gate for the talent-art slot.
+// Allowed only when both the main FSM (unk324) and the talent page (unk328)
+// select slot 4, the player's art-id is 7, and its sub-object state passes.
+// ---------------------------------------------------------------------------
+extern "C" int func_801088CC(CMenuArtsSelect* self) {
+    // Retail shares one return-1 block for the two opening guards (bne into
+    // it, beq over it) and one return-0 block (.L_80109460) for the NULL and
+    // sub-state paths; the sub==NULL and !=7 returns stay inline.
+    if (self->unk324 != 4) goto ret1;
+    if (self->unk328 == 4) goto body;
+ret1:
+    return 1;
+body:
+    BattleActor* actor =
+        func_800BFC68__FPQ22cf12CfObjectMove(cf::CfGameManager::getPlayer(0));
+    if (actor == NULL) goto ret0;
+    if ((u8)actor->mField3F28 != 7) return 1;
+    void* sub = actor->mField3F60;
+    if (sub == NULL) return 0;
+    int v = func_801B2084();
+    if (func_80060290(sub) != 0) {
+        if (v <= 1) goto ret0;
+        return 1;
+    } else {
+        if (v <= 0) goto ret0;
+        return 1;
+    }
+ret0:
+    return 0;
+}
 void CMenuArtsSelect::func_80108994(){}
 
 extern "C" void func_801041F4() {}

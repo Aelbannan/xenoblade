@@ -422,13 +422,12 @@ s32 sfmpv_GetActiveSize(void* self, s32* out1, s32* out2, s32* out3) {
     u32 chk;      /* sp+0x08: BsearchDelim out / MPV_CheckDelim result */
     u32 r;
     s32 ch;
-    s32 ch2;
-    s32 zero = 0;
+    s32 tmp = 0;
 
     ch = *(s32*)((u8*)self + 0x2070);
-    *out1 = zero;
-    *out2 = zero;
-    *out3 = zero;
+    *out1 = tmp;
+    *out2 = tmp;
+    *out3 = tmp;
     r = SFBUF_RingGetRead(self, ch, info);
     if (r != 0) {
         return r;
@@ -465,7 +464,7 @@ s32 sfmpv_GetActiveSize(void* self, s32* out1, s32* out2, s32* out3) {
         SFBUF_RingGetDlm(self, ch, &dlm, &dlm_size);
         if (sfmpv_NeedSafeDlmRefresh(info, type, dlm) != 0) {
             u32 end;
-            dlm = 0;
+            dlm = tmp;
             if (info[3] == 0) {
                 end = info[0] + info[1];
             } else {
@@ -478,8 +477,8 @@ s32 sfmpv_GetActiveSize(void* self, s32* out1, s32* out2, s32* out3) {
             }
         }
         if (dlm == 0) {
-            ch2 = *(s32*)((u8*)self + 0x2070);
-            s32 n = SFBUF_GetRingBufSiz(self, ch2) - SFBUF_RingGetDataSiz(self, ch2);
+            tmp = *(s32*)((u8*)self + 0x2070);
+            s32 n = SFBUF_GetRingBufSiz(self, tmp) - SFBUF_RingGetDataSiz(self, tmp);
             if (n < *(s32*)((u8*)self + 0x2c)) {
                 return SFLIB_SetErr(self, 0xff000f1c);
             }
@@ -491,8 +490,8 @@ s32 sfmpv_GetActiveSize(void* self, s32* out1, s32* out2, s32* out3) {
             if ((type & 0x40) != 0) {
                 u32 dr = sfmpv_SearchDelim(info, 8, &type);
                 if (dr == 0 || dr == dlm) {
-                    ch2 = *(s32*)((u8*)self + 0x2070);
-                    s32 n = SFBUF_GetRingBufSiz(self, ch2) - SFBUF_RingGetDataSiz(self, ch2);
+                    tmp = *(s32*)((u8*)self + 0x2070);
+                    s32 n = SFBUF_GetRingBufSiz(self, tmp) - SFBUF_RingGetDataSiz(self, tmp);
                     if (n < *(s32*)((u8*)self + 0x2c)) {
                         return SFLIB_SetErr(self, 0xff000f1c);
                     }
@@ -504,8 +503,8 @@ s32 sfmpv_GetActiveSize(void* self, s32* out1, s32* out2, s32* out3) {
             if ((type & 0x48) != 0) {
                 u32 dr = sfmpv_SearchDelim(info, 4, &type);
                 if (dr == 0 || dr == dlm) {
-                    ch2 = *(s32*)((u8*)self + 0x2070);
-                    s32 n = SFBUF_GetRingBufSiz(self, ch2) - SFBUF_RingGetDataSiz(self, ch2);
+                    tmp = *(s32*)((u8*)self + 0x2070);
+                    s32 n = SFBUF_GetRingBufSiz(self, tmp) - SFBUF_RingGetDataSiz(self, tmp);
                     if (n < *(s32*)((u8*)self + 0x2c)) {
                         return SFLIB_SetErr(self, 0xff000f1c);
                     }
@@ -513,17 +512,19 @@ s32 sfmpv_GetActiveSize(void* self, s32* out1, s32* out2, s32* out3) {
                 }
             }
             break;
+        default:
+            break;
         }
         {
-            u32 v;
+            u32 val;
             if (info[0] <= dlm && dlm < info[0] + info[1]) {
-                v = dlm - info[0];
+                val = dlm - info[0];
             } else if (info[2] <= dlm && dlm < info[2] + info[3]) {
-                v = info[1] + (dlm - info[2]);
+                val = info[1] + (dlm - info[2]);
             } else {
-                v = 0;
+                val = 0;
             }
-            *out1 = v;
+            *out1 = val;
         }
         return 0;
 }

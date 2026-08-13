@@ -23,14 +23,6 @@
 extern "C" void __dt__Q22cf17CTaskREvtSequenceFv(void*, int);
 extern "C" void cbRenderBefore__Q22cf17CTaskREvtSequenceFv(void*);
 
-// Forward decls for the batch targets (func_80168F38 calls func_80169DD0
-// before its definition in this file).
-void func_80169CD0(cf::CTaskREvtSequence* self);
-void func_80168F38(cf::CTaskREvtSequence* self);
-void func_80169DD0(cf::CTaskREvtSequence* self, u32 idx);
-void func_8016BC1C(UnkEvtListEntry* self);
-u32 func_8016C118(u32 resId);
-
 namespace cf {
     u32 CTaskREvtSequence::func_8016A354() { return field_0x20; }
 
@@ -289,15 +281,12 @@ void func_80168F38(cf::CTaskREvtSequence* self) {
         n = 1;
     }
     if (n == 0) {
-        scaled = 0;
-        while (n < self->field_0xA8) {
+        for (scaled = 0, n = 0; n < self->field_0xA8; n++, scaled += 4) {
             UnkEvtListEntry* e =
                 *(UnkEvtListEntry**)((u8*)self->field_0xA4 + scaled);
             if (e->vf_0x18() == 0) {
                 return;
             }
-            n++;
-            scaled += 4;
         }
     }
     func_802A1500();
@@ -343,7 +332,7 @@ void func_80169CD0(cf::CTaskREvtSequence* self) {
     func_8016DF4C(self->field_0x134);
     EvtSeqScnView* scene = reinterpret_cast<EvtSeqScnView*>(lbl_eu_80663E14);
     scene->field_0x5C->field_0xD4 = lbl_eu_80667670;
-    if (func_80164910() != 0 && (lbl_eu_80663E28 & 0x80) == 0) {
+    if (func_80164910() != 0 && (lbl_eu_80663E28 & 0x01000000) == 0) {
         EvtSeqVec4 v = { lbl_eu_80667658, lbl_eu_80667658, lbl_eu_80667658,
                          lbl_eu_80667658 };
         func_8049602C(lbl_eu_80663E14, 0xF, &v);
@@ -360,9 +349,12 @@ void func_80169CD0(cf::CTaskREvtSequence* self) {
         if (mgr2->field_0xC != 0) {
             func_800821F8__Q22cf13CfGameManagerFv()->vf_0x3C(lbl_eu_80667674);
             CfEvtCamManager* mgr4 = func_800821F8__Q22cf13CfGameManagerFv();
-            mgr4->field_0xC->field_0x1EC = lbl_eu_80667678;
-            mgr4->field_0xC->field_0x1F0 = lbl_eu_8066767C;
-            func_8049EB60(mgr4->field_0xC);
+            // Local keeps the player object in one register (retail reuses r3
+            // across the two float stores and the func_8049EB60 call).
+            UnkEvtPlayer* player = mgr4->field_0xC;
+            player->field_0x1EC = lbl_eu_80667678;
+            player->field_0x1F0 = lbl_eu_8066767C;
+            func_8049EB60(player);
         }
     }
 }

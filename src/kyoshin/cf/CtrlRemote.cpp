@@ -41,27 +41,37 @@ float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *
 // word clears, run a battery of player-state probes; if none of them flag a
 // blocking condition, mirror the current menu-state bitmask into self->mField4
 // bit 0 (set when the arts/menu mask is active, clear otherwise).
+// Probe a control-data gate: refresh the player's current control word via the
+// sub-object's vf30 and test it against `gate`. Returns the raw func_80174C98
+// result (nonzero = gate set). Inlined so the player pointer stays in a saved
+// register across the vf30 call, matching retail.
+static int probePlayerCtrl(cf::CtrlPc* self, u32* out, int gate)
+{
+    CtrlPlayerObj* p = self->mField5C;
+    *out = *p->mField4->vf30();
+    return func_80174C98(p, out, gate);
+}
+
+// Target us-8009abb4. Pad-handler gate: when the global "demo/idle" state
+// word clears, run a battery of player-state probes; if none of them flag a
+// blocking condition, mirror the current menu-state bitmask into self->mField4
+// bit 0 (set when the arts/menu mask is active, clear otherwise).
 void func_8009A1DC(cf::CtrlPc* self)
 {
     bool flag = true;
     cf::CfGameManager::getInstance();
-    if (func_8006EF04(0x400) != 0) {
+    if (func_8006EF04(0x4000000) != 0) {
         return;
     }
     if (func_80148778(&self->mField5C->mField8, 0xf) != 0 ||
         func_80148778(&self->mField5C->mField8, 0x6) != 0) {
         flag = false;
     }
-    CtrlPlayerObj* player = self->mField5C;
-    u32 v1 = *player->mField4->vf30();
-    if (func_80174C98(player, &v1, 1) != 0) {
+    u32 v1;
+    u32 v2;
+    if (probePlayerCtrl(self, &v1, 1) != 0 ||
+        probePlayerCtrl(self, &v2, 2) != 0) {
         flag = false;
-    } else {
-        CtrlPlayerObj* player2 = self->mField5C;
-        u32 v2 = *player2->mField4->vf30();
-        if (func_80174C98(player2, &v2, 2) != 0) {
-            flag = false;
-        }
     }
     if (self->mField5C->mSub3ED4->vf14(0x40000) != 0) {
         flag = false;
@@ -72,14 +82,11 @@ void func_8009A1DC(cf::CtrlPc* self)
     if (self->mField5C->mSub3ED4->vf14(0x400) != 0) {
         flag = false;
     }
-    CtrlPlayerObj* player3 = self->mField5C;
-    u32 v3 = *player3->mField4->vf30();
-    if (func_80174C98(player3, &v3, 3) == 0) {
-        CtrlPlayerObj* player4 = self->mField5C;
-        u32 v4 = *player4->mField4->vf30();
-        if (func_80174C98(player4, &v4, 4) == 0) {
-            flag = false;
-        }
+    u32 v3;
+    u32 v4;
+    if (probePlayerCtrl(self, &v3, 3) == 0 &&
+        probePlayerCtrl(self, &v4, 4) == 0) {
+        flag = false;
     }
     if (func_800FE68C()->mField90E4 != 0) {
         flag = false;
@@ -88,7 +95,8 @@ void func_8009A1DC(cf::CtrlPc* self)
         u32 mask = func_80086F9C__Q22cf13CfGameManagerFv(-1)
                        ? lbl_eu_80527F10[2]
                        : lbl_eu_80527E98[2];
-        if (self->vf37()->mField4 & mask) {
+        u32 mf4 = self->vf37()->mField4;
+        if ((mf4 & mask) != 0) {
             if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0 &&
                 (self->vf37()->mField0 & 0x2000000)) {
                 return;
@@ -96,7 +104,8 @@ void func_8009A1DC(cf::CtrlPc* self)
             u32 mask2 = func_80086F9C__Q22cf13CfGameManagerFv(-1)
                             ? lbl_eu_80527F10[2]
                             : lbl_eu_80527E98[2];
-            if (self->vf37()->mField4 & mask2) {
+            u32 mf4b = self->vf37()->mField4;
+            if ((mf4b & mask2) != 0) {
                 self->mField4 |= 1;
             } else {
                 self->mField4 &= ~1;

@@ -4,9 +4,9 @@
 #include "kyoshin/cf/CfNandManager.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CSaveLoad.hpp"
+#include "monolib/work/CEventFile.hpp"
 
 // forward declarations for scaffold thunk references
-void func_8023E4D4__Q22cf13CfNandManagerFv(void*);
 void __dt__Q22cf13CfNandManagerFv(void*);
 void cbRenderBefore__Q22cf13CfNandManagerFv(void*);
 
@@ -100,14 +100,18 @@ void* __dt__8023E448() {
     return result;
 }
 
-u32 cf::CfNandManager::func_8023E4D4() {
+// OnFileEvent body (retail Fv symbol carries a hidden CEventFile* in r4: the
+// IWorkEvent dispatcher calls the OnFileEvent vtable slot with this_sub in r3
+// and the file event in r4; the OnFileEvent adjustor thunk rewrites r3, so the
+// file is the only live argument here). The dummy first parameter keeps the
+// file in r4 without touching the verbatim retail symbol name.
+extern "C" u32 func_8023E4D4__Q22cf13CfNandManagerFv(void* unused, CEventFile* file) {
     lbl_eu_8066476C = 0;
-    // The list-node words (mPrev at +0x00, mParent at +0x14) are repurposed as
-    // event state: 1 -> run the game-manager handler, 4 -> drop the buffer.
-    if (mPrev == (CDoubleListNode*)1 && mParent != 0) {
+    // Event types: 1 = load finished (kick the game manager), 4 = teardown.
+    if (file->unk0 == 1 && file->field_14 != 0) {
         func_80084F50__Q22cf13CfGameManagerFv();
-    } else if (mPrev == (CDoubleListNode*)4) {
-        if (lbl_eu_80664768 != 0 && lbl_eu_80664768->field_0x5C != 0) {
+    } else if (file->unk0 == 4) {
+        if (lbl_eu_80664768->field_0x5C != 0) {
             __dl__FPv(lbl_eu_80664768->field_0x5C);
             lbl_eu_80664768->field_0x5C = 0;
         }
@@ -144,7 +148,9 @@ void func_8023FA64(){}
 // Returns 1 on success, 0 when the singleton is not set up.
 u32 func_8023FB28(u8 byte, u32 word) {
     u32 result;
-    if (lbl_eu_80664768 != 0) {
+    if (lbl_eu_80664768 == 0) {
+        result = 0;
+    } else {
         cf::CfNandManager* mgr = lbl_eu_80664768;
         CfNandEvent* entry =
             &mgr->mEventQueue.mRingBase[(mgr->mEventQueue.mHead + mgr->mEventQueue.mTail) %
@@ -157,8 +163,6 @@ u32 func_8023FB28(u8 byte, u32 word) {
         entry->mFieldF = 0;
         mgr->mEventQueue.mTail++;
         result = 1;
-    } else {
-        result = 0;
     }
     return result;
 }
@@ -194,7 +198,9 @@ u32 func_8023FCCC(u32 word) {
     if (lbl_eu_80664768 == 0) {
         return 0;
     }
-    if (lbl_eu_80664768 != 0) {
+    if (lbl_eu_80664768 == 0) {
+        result = 0;
+    } else {
         cf::CfNandManager* mgr = lbl_eu_80664768;
         CfNandEvent* entry =
             &mgr->mEventQueue.mRingBase[(mgr->mEventQueue.mHead + mgr->mEventQueue.mTail) %
@@ -207,8 +213,6 @@ u32 func_8023FCCC(u32 word) {
         entry->mFieldF = 0;
         mgr->mEventQueue.mTail++;
         result = 1;
-    } else {
-        result = 0;
     }
     return result;
 }

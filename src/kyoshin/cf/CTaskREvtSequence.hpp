@@ -476,7 +476,9 @@ public:
     u32 field_0xC4;   // 0xC4 (newly allocated buffer, read into by func_8016872C)
     u8 gapC8[0x08];            // 0xC8-0xCF
     UnkStateTable_D0* field_0xD0; // 0xD0 (event table walked by func_80169DD0)
-    u8 gapD4[0x24];            // 0xD4-0xF7
+    u8 gapD4[0x1C];            // 0xD4-0xEF
+    UnkBB38Table* field_0xF0;  // 0xF0 (event table walked by func_8016BB38)
+    u8 gapF4[0x04];            // 0xF4-0xF7
     u32 field_0xF8;            // 0xF8 (event index passed to func_80169DD0)
     u32 field_0xFC;            // 0xFC (readCommonArchiveFile handle / busy gate)
     u8 gap100[0x14];           // 0x100-0x113
@@ -529,6 +531,13 @@ extern "C" int func_80462E1C__8CTaskLODFv(s16 taskId);
 
 // Definitions in this TU (retail unmangled names; the extern "C" decls above
 // keep the emitted symbols byte-identical to retail).
+// Definitions in this TU (retail unmangled names; the extern "C" decls above
+// keep the emitted symbols byte-identical to retail).
+extern "C" void func_80169CD0(cf::CTaskREvtSequence* self);
+extern "C" void func_80168F38(cf::CTaskREvtSequence* self);
+extern "C" void func_80169DD0(cf::CTaskREvtSequence* self, u32 idx);
+extern "C" void func_8016BC1C(UnkEvtListEntry* self);
+extern "C" u32 func_8016C118(u32 resId);
 extern "C" int func_8016B788(u8* data);
 extern "C" int func_8016ADF8(UnkEvtListEntry* self);
 extern "C" int func_8016C300(UnkEvtListEntry* self);

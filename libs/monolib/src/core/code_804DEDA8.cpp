@@ -64,7 +64,9 @@ extern CSchedMemGlob lbl_eu_8065FC18;
 // .sdata2 float/double pool shared with the schedule anim helpers:
 // 1.0f, the u32->double conversion constant (2^52), the s32->double
 // conversion constant (2^52 + 2^31), and the frame-rate clamp upper bound.
-extern f32 lbl_eu_8066B290;
+// const routes these into the readonly sdata2 pool so MWCC hoists the lfs
+// above the frame stores (docs/MWCC_REFERENCE.md lfs-hoist scheduling fix).
+extern const f32 lbl_eu_8066B290;
 extern f64 lbl_eu_8066B298;
 extern f64 lbl_eu_8066B2A0;
 extern f32 lbl_eu_8066B2A8;
@@ -698,8 +700,7 @@ extern "C" void func_804E18CC(CSchedAnimItem* item, CEntryElem* entries, u8* arg
 // blob is present) load the run's slot handles and set the 0x04 flag bits
 // according to whether the run extends to the blob terminator.
 extern "C" void func_804E196C(CSchedAnimItem* item, u8* base) {
-    f32 f = lbl_eu_8066B290;
-    item->mField00 = f;
+    item->mField00 = lbl_eu_8066B290;
     item->field_0x04 = 0;
     item->mField05 = 0;
     item->mField07 = 1;
@@ -715,10 +716,12 @@ extern "C" void func_804E196C(CSchedAnimItem* item, u8* base) {
         }
         u8 idx = item->mField05 + item->mField07;
         u16 w = *(u16*)(base + idx * 8);
-        if (w == 0x4000) {
-            item->field_0x04 = (item->field_0x04 | 0x8) & ~0x80;
-        } else {
+        if (w != 0x4000) {
             item->field_0x04 |= 0x80;
+        } else {
+            // 32-bit intermediate (cast the whole AND, not the mask) so MWCC
+            // emits rlwinm instead of andi. (docs/MWCC_REFERENCE.md btm_sec)
+            item->field_0x04 = (u8)((item->field_0x04 | 0x8) & ~0x80);
         }
     }
 }

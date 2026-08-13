@@ -171,6 +171,11 @@ extern "C" bool func_80066788(void* self, bool r4, bool r5, bool r6);
 int func_80065158(int inst, int a, int b, int c, int d);
 int func_80065314(int inst, int a, int b);
 
+// func_80063AD0 (0x8006429C): pre-open entry reservation/validation step in
+// the archive-read pipeline (stub in CfRes.cpp; C linkage so the call reloc
+// from func_80063E30 carries the retail unmangled name).
+extern "C" int func_80063AD0(void* a, void* b, u32 c, void* d, int size, void* e);
+
 // Same-TU helpers (defined in CfRes.cpp). C linkage so call relocs carry the
 // retail unmangled names (same rule as the func_80063A60 stub above).
 extern "C" u32 func_8006251C(void* self);

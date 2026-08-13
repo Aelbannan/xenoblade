@@ -11,6 +11,22 @@ extern const char lbl_eu_80530D54[]; // panic file name
 // --- panic message ---
 extern const char lbl_eu_80530D2C[];
 
+// --- panic strings for the getters below (retail names) ---
+// Fixed-size externs for the .sdata strings: MWCC addresses small (<=8B)
+// extern arrays via sda21 (`li rN, sym@sda21`); incomplete arrays get lis/addi.
+extern const char lbl_eu_8056E194[];  // panic file name (func_804EC418)
+extern const char lbl_eu_8056E178[];  // panic message
+extern const char lbl_eu_80663910[8]; // panic format arg (.sdata, sda21)
+extern const char lbl_eu_80663CBC[4]; // panic format arg (.sdata, sda21)
+extern const char lbl_eu_80530DC4[];  // panic file name (func_804EB4C0)
+extern const char lbl_eu_80530DA8[];  // panic message
+extern const char lbl_eu_80530D68[];  // panic format arg
+extern const char lbl_eu_80663CC8[4]; // panic format arg (.sdata, sda21)
+extern const char lbl_eu_8056E1C8[];  // panic file name (func_804E9FD0)
+extern const char lbl_eu_8056E1A8[];  // panic message
+extern const char lbl_eu_80529678[];  // panic file name (func_804EC344)
+extern const char lbl_eu_80529658[];  // panic message
+
 // CMdlDynamics retail vtable (3 entries, 0xC bytes) lives in retail .data.
 struct CMdlDynamicsVtbl {
     u32 entry0;
@@ -109,7 +125,13 @@ void func_804EB310(){}
 
 void func_804EB3E8(){}
 
-void func_804EB4C0(){}
+u32 func_804EB4C0(CMdlDynHolder* self) {
+    if (self->field_0x0 == 0) {
+        nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8, lbl_eu_80530D68,
+                        lbl_eu_80663CC8);
+    }
+    return self->field_0x0->field_0x8;
+}
 
 extern "C" void func_804EB524(u8* self, const void* src) { *(u32*)self = *(const u32*)src; }
 
@@ -177,7 +199,52 @@ void func_804EB764(void *r3, void *r4) {
     dst[2] = src[2];
 }
 
-void func_804EB798(){}
+// 0xB0-byte element of a dynamic-model array (same stride as func_804EB6F8).
+struct CMdlDynElem {
+    u8 field_0x0[0x8C];  // 0x0..0x8B
+    u32 field_0x8C;      // 0x8C
+    u8 field_0x90[0x20]; // 0x90..0xAF
+};
+
+// Dynamic-model list: base pointer of the 0xB0-stride array + element count.
+struct CMdlDynList {
+    CMdlDynElem* field_0x0; // 0x0
+    u32 field_0x4;          // 0x4
+};
+
+// Object owning the list-pointer array (func_804EB798).
+struct CMdlDynSet {
+    u8 field_0x0[0x8];
+    CMdlDynList** field_0x8; // 0x8
+    u32 field_0xC;           // 0xC
+};
+
+// Sub-object reachable from the holder's field_0x0 (getters below).
+struct CMdlDynSub {
+    u8 field_0x0[0x8];
+    u32 field_0x8;       // 0x8
+    u32 field_0xC;       // 0xC
+    u32 field_0x10;      // 0x10
+    u8 field_0x14[0x24]; // 0x14..0x37
+    u8 field_0x38;       // 0x38
+};
+
+struct CMdlDynHolder {
+    CMdlDynSub* field_0x0; // 0x0
+};
+
+// Sets the dynamic flag (0x40) on every element of every list.
+void func_804EB798(CMdlDynSet* self) {
+    CMdlDynList** it = self->field_0x8;
+    while (it != self->field_0x8 + self->field_0xC) {
+        u32 i = 0;
+        while (i != (*it)->field_0x4) {
+            (*it)->field_0x0[i].field_0x8C |= 0x40;
+            i++;
+        }
+        it++;
+    }
+}
 
 void func_804EB7F8(){}
 
@@ -193,7 +260,12 @@ extern "C" u32 func_804EC32C(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 3
 
 extern "C" u32 func_804EC338(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 19) & 1; }
 
-void func_804EC344(){}
+u32 func_804EC344(CMdlDynHolder* self) {
+    if (self->field_0x0 == 0) {
+        nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
+    }
+    return self->field_0x0 != 0 ? self->field_0x0->field_0x10 : 0;
+}
 
 extern "C" u32 func_804EC3AC(u8* self) { return (*(u32*)((u8*)self + 0x7A4) >> 20) & 1; }
 
@@ -222,7 +294,13 @@ extern "C" void func_804EC3FC(u8* self, const void* src) {
     *(float*)((u8*)self + 8) = *(float*)((u8*)src + 8);
 }
 
-void func_804EC418(){}
+u8* func_804EC418(CMdlDynHolder* self) {
+    if (self->field_0x0 == 0) {
+        nw4r::db::Panic(lbl_eu_8056E194, 0x2c, lbl_eu_8056E178, lbl_eu_80663910,
+                        lbl_eu_80663CBC);
+    }
+    return &self->field_0x0->field_0x38;
+}
 
 extern "C" void func_804EC478(Mtx a, const Quaternion* b) {
     PSMTXQuat(a, b);
@@ -259,5 +337,10 @@ void func_804ED18C(){}
 void func_804ED67C(){}
 
 extern "C" void func_804E95E0() {}
-extern "C" void func_804E9FD0() {}
+u32 func_804E9FD0(CMdlDynHolder* self) {
+    if (self->field_0x0 == 0) {
+        nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
+    }
+    return self->field_0x0 != 0 ? self->field_0x0->field_0xC : 0;
+}
 extern "C" void func_804EA038() {}

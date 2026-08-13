@@ -63,7 +63,6 @@ namespace cf{
         virtual ~CfNandManager();
         void Term();
         void Move();
-        u32 func_8023E4D4();
         void create();
         void cbRenderBefore();
         void Init();

@@ -905,7 +905,7 @@ extern "C" __declspec(noinline) ml::FixStr<64>* CfRes_stub_63ACC(ml::FixStr<64>*
 
 // func_80063AD0 (0x8006429C): pre-open entry reservation/validation step in
 // the archive-read pipeline (stub; matched separately).
-int __declspec(noinline) func_80063AD0(void* a, void* b, u32 c, void* d, int size, void* e) { return 0; }
+extern "C" int __declspec(noinline) func_80063AD0(void* a, void* b, u32 c, void* d, int size, void* e) { return 0; }
 
 extern "C" __declspec(noinline) void CfRes_initFields4(u8* self, int a, int b, int c, int d) {
     *(int*)((char*)self + 4) = a;
@@ -914,7 +914,7 @@ extern "C" __declspec(noinline) void CfRes_initFields4(u8* self, int a, int b, i
     *(int*)((char*)self + 0x18) = d;
 }
 
-extern "C" void CfRes_setBits1_2(u8* self) {
+extern "C" __declspec(noinline) void CfRes_setBits1_2(u8* self) {
     int val = *(int*)self;
     *(int*)self = (val & ~2) | 1;
 }
@@ -927,7 +927,7 @@ struct CfResSub_63C04 {
     virtual void _v02C(); virtual void _v030(); virtual void* _v034(void* outer);
 };
 struct CfResObj_63C04 { u8 _00[0x2C]; CfResSub_63C04* sub; };
-extern "C" void* CfRes_vcall34(u8* self) {
+extern "C" __declspec(noinline) void* CfRes_vcall34(u8* self) {
     CfResSub_63C04* sub = ((CfResObj_63C04*)self)->sub;
     if (!sub) return self;
     return sub->_v034(self);

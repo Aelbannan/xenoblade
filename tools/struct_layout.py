@@ -1272,6 +1272,259 @@ def attach_sublayouts(lay, env, seen=None):
             attach_sublayouts(bl, env, seen | {(m["nested_td"].src_file, m["nested_td"].name)})
 
 
+def collect_splits(root):
+    """Find retail asm data files under build/us/asm (split1.s, criware_data.s,
+    per-TU .s files, ...). Returns list of paths."""
+    out = []
+    for dirpath, _, files in os.walk(root):
+        for fn in files:
+            if fn.endswith(".s"):
+                out.append(os.path.join(dirpath, fn))
+    return sorted(out)
+
+
+def index_vtables(split_paths):
+    """Build addr -> (file, label, [slot tokens]) for every .obj data symbol.
+    Returns (by_addr, by_label)."""
+    by_addr = {}
+    by_label = {}
+    for path in split_paths:
+        with open(path, errors="replace") as f:
+            lines = f.read().splitlines()
+        cur_addr = None
+        cur_label = None
+        cur_slots = None
+        for i, line in enumerate(lines):
+            m = re.match(r"# \.[a-z0-9]+:0x[0-9A-Fa-f]+ \| (0x[0-9A-Fa-f]+) \| size: (0x[0-9A-Fa-f]+)", line)
+            if m:
+                cur_addr = int(m.group(1), 16)
+                continue
+            m = re.match(r"\.obj (\S+), global", line)
+            if m:
+                cur_label = m.group(1)
+                cur_slots = []
+                continue
+            if cur_slots is not None:
+                if line.strip().startswith(".endobj"):
+                    if cur_addr is not None and cur_label is not None:
+                        by_addr[cur_addr] = (path, cur_label, cur_slots)
+                        by_label[cur_label] = (path, cur_addr, cur_slots)
+                    cur_addr = None
+                    cur_label = None
+                    cur_slots = None
+                else:
+                    m = re.match(r"\s*\.4byte\s+(\S+)", line)
+                    if m:
+                        cur_slots.append(m.group(1))
+    return by_addr, by_label
+
+
+def cmd_vtable(args):
+    """Resolve and dump a retail vtable from the split asm data."""
+    root = args.asm_root or os.path.join("build", "us", "asm")
+    by_addr, by_label = index_vtables(collect_splits(root))
+    splits = collect_splits(root)
+
+    target = args.symbol_or_addr
+    found = []
+    if target.lower().startswith("0x"):
+        addr = int(target, 16)
+        if addr in by_addr:
+            found.append((addr, by_addr[addr]))
+    elif target in by_label:
+        path, addr, slots = by_label[target]
+        found.append((addr, (path, target, slots)))
+    else:
+        # class-name lookup. Prefer named __RTTI__<class> symbols; fall back
+        # to the typeinfo-name string -> RTTI struct -> vtable chain.
+        rtti_candidates = [lbl for lbl in by_label
+                           if lbl.startswith("__RTTI__") and target in lbl]
+        if not rtti_candidates:
+            name_label = None
+            for path in splits:
+                with open(path, errors="replace") as f:
+                    lines = f.read().splitlines()
+                for i, line in enumerate(lines):
+                    m = re.match(r"\s*\.string \"([^\"]*" + re.escape(target)
+                                 + r"[^\"]*)\"", line)
+                    if m:
+                        for k in range(i, -1, -1):
+                            m2 = re.match(r"\.obj (\S+), global", lines[k])
+                            if m2:
+                                name_label = m2.group(1)
+                                break
+                        break
+                if name_label:
+                    break
+            if name_label:
+                rtti_candidates = _refs_of(name_label, splits)
+        for rtti in rtti_candidates:
+            if rtti not in by_label:
+                continue
+            # vtable = data symbol referencing this RTTI struct
+            vrefs = _refs_of(rtti, splits)
+            for vt in vrefs:
+                if vt in by_label:
+                    found.append((by_label[vt][1],
+                                  (by_label[vt][0], vt, by_label[vt][2])))
+            if not vrefs:
+                # no vtable refs: show the RTTI struct itself for inspection
+                found.append((by_label[rtti][1],
+                              (by_label[rtti][0], rtti, by_label[rtti][2])))
+
+    if not found:
+        print(f"no vtable found for {target!r} (tried address, symbol, class name)",
+              file=sys.stderr)
+        return 2
+    seen = set()
+    for addr, (path, label, slots) in found:
+        if addr in seen:
+            continue
+        seen.add(addr)
+        if args.json:
+            print(json.dumps({
+                "address": addr, "label": label, "file": path,
+                "slots": [{"offset": i * 4, "symbol": s} for i, s in enumerate(slots)],
+            }, indent=2))
+        else:
+            print(f"vtable 0x{addr:X}  ({label}, {os.path.relpath(path)})")
+            print(f"  {'slot':>4} {'offset':>6}  symbol")
+            for i, s in enumerate(slots):
+                tag = ""
+                if i == 0:
+                    tag = "  (RTTI)"
+                elif i == 1:
+                    tag = "  (offset-to-top)"
+                print(f"  {i:>4} 0x{i * 4:02X}  {s}{tag}")
+    return 0
+
+
+def _refs_of(label, split_paths):
+    """Labels of .obj data symbols whose bodies reference `label` (via .4byte)."""
+    out = []
+    for path in split_paths:
+        with open(path, errors="replace") as f:
+            lines = f.read().splitlines()
+        cur = None
+        for line in lines:
+            m = re.match(r"\.obj (\S+), global", line)
+            if m:
+                cur = m.group(1)
+                continue
+            if line.strip().startswith(".endobj"):
+                cur = None
+            elif cur is not None and re.match(rf"\s*\.4byte\s+{re.escape(label)}\s*$", line):
+                out.append(cur)
+    return out
+
+
+# --------------------------------------------------------------------------
+# Batch check
+# --------------------------------------------------------------------------
+
+CHECK_EXT = (".c", ".h", ".hpp", ".cpp")
+
+
+def _check_file(path, include_ctx=False):
+    """Parse + layout every type in one file. Returns (path, list of findings)."""
+    findings = []
+    try:
+        info = parse_file(path)
+    except Exception as e:  # noqa: BLE001
+        return path, [("ERROR", 0, "parse", str(e))]
+    env = LayoutEnv([info], {}, verbose=False)
+    for name in sorted(info.types, key=lambda n: (info.types[n].line, n)):
+        td = info.types[name]
+        n0 = len(env.warnings)
+        try:
+            lay = layout_type(td, env)
+        except Exception as e:  # noqa: BLE001
+            findings.append(("ERROR", td.line, name, f"layout exception: {e}"))
+            continue
+        warns = env.warnings[n0:]
+        # member-level flags
+        for m in lay.get("members", []):
+            for fl in m.get("flags") or []:
+                if fl in ("MISMATCH", "OVERLAP", "GAP?"):
+                    findings.append((fl, td.line, name,
+                                    f"{m['name']}: {fl} (offset 0x{m['offset']:X}, "
+                                    f"retail 0x{m.get('comment'):X})" if m.get('comment') is not None
+                                    else f"{m['name']}: {fl}"))
+            if m.get("offset") is None:
+                findings.append(("UNPLACED", td.line, name,
+                                f"{m['name']}: unplaced"))
+        if td.size_comment is not None and lay.get("size") not in (None, td.size_comment):
+            findings.append(("SIZE", td.line, name,
+                            f"computed 0x{lay['size']:X} != retail 0x{td.size_comment:X}"))
+        # warnings: separate real problems from expected (unresolved types)
+        for w in warns:
+            if "unresolved" in w or "unknown type" in w or "cannot place" in w or \
+               "layout stops" in w:
+                if "cannot place" in w or "layout stops" in w:
+                    findings.append(("INFO", td.line, name, w))
+                # unresolved base/type without includes is expected -> skip
+            else:
+                findings.append(("WARN", td.line, name, w))
+    return path, findings
+
+
+def cmd_check(args):
+    import concurrent.futures as cfut
+    import functools
+    paths = []
+    for p in args.paths or ["."]:
+        if os.path.isdir(p):
+            for dirpath, dirnames, filenames in os.walk(p):
+                dirnames[:] = [d for d in dirnames
+                               if d not in (".git", "build", "node_modules", ".venv")]
+                for fn in filenames:
+                    if fn.endswith(CHECK_EXT) and (args.include_ctx or ".ctx." not in fn):
+                        paths.append(os.path.join(dirpath, fn))
+        elif os.path.isfile(p):
+            paths.append(p)
+    paths = sorted(set(paths))
+    jobs = args.jobs or os.cpu_count() or 4
+    results = []
+    if jobs > 1 and len(paths) > 1:
+        with cfut.ProcessPoolExecutor(max_workers=jobs) as ex:
+            for res in ex.map(functools.partial(_check_file, include_ctx=args.include_ctx),
+                              paths):
+                results.append(res)
+    else:
+        for p in paths:
+            results.append(_check_file(p, args.include_ctx))
+
+    total_types = 0
+    problem_files = 0
+    sev_counts = {}
+    lines = []
+    for path, findings in results:
+        real = [f for f in findings if f[0] != "INFO"]
+        if not findings:
+            continue
+        total_types += 1
+        if real:
+            problem_files += 1
+        for sev, ln, name, msg in findings:
+            sev_counts[sev] = sev_counts.get(sev, 0) + 1
+            if args.json:
+                lines.append({"file": path, "line": ln, "type": name,
+                              "severity": sev, "message": msg})
+            elif args.quiet:
+                if sev != "INFO":
+                    print(f"{path}:{ln}: {name}: {msg}")
+            else:
+                print(f"{path}:{ln}: [{sev}] {name}: {msg}")
+    if args.json:
+        print(json.dumps({"results": lines, "summary": {
+            "files": len(paths), "files_with_issues": problem_files,
+            "severity_counts": sev_counts}}, indent=2))
+    else:
+        print(f"\nchecked {len(paths)} files: {problem_files} with issues "
+              f"(severities: {sev_counts or 'none'})")
+    return 1 if problem_files else 0
+
+
 # --------------------------------------------------------------------------
 # CLI
 # --------------------------------------------------------------------------
@@ -1377,6 +1630,26 @@ def main(argv=None):
     p_s.add_argument("--root", default=".")
     p_s.set_defaults(func=cmd_search)
 
+    p_c = sub.add_parser("check", help="lint all structs/classes in files or dirs")
+    p_c.add_argument("paths", nargs="*", default=None,
+                     help="files or dirs (default: current dir)")
+    p_c.add_argument("--include-ctx", action="store_true",
+                     help="also check .ctx.c scaffold files")
+    p_c.add_argument("--jobs", type=int, default=None,
+                     help="parallel workers (default: CPU count)")
+    p_c.add_argument("--quiet", action="store_true", help="only print problems")
+    p_c.add_argument("--json", action="store_true")
+    p_c.set_defaults(func=cmd_check)
+
+    p_v = sub.add_parser("vtable", help="dump a retail vtable and its slot names")
+    p_v.add_argument("symbol_or_addr",
+                     help="vtable symbol (lbl_eu_80528870), address (0x80528870), "
+                          "or class name (CfCollCircleImpl)")
+    p_v.add_argument("--asm-root", default=None,
+                     help="path to retail asm splits (default: build/us/asm)")
+    p_v.add_argument("--json", action="store_true")
+    p_v.set_defaults(func=cmd_vtable)
+
     args = ap.parse_args(argv)
     if args.cmd == "show":
         return cmd_show(args)
@@ -1384,6 +1657,10 @@ def main(argv=None):
         return cmd_list(args.files)
     if args.cmd == "search":
         return cmd_search(args.pattern, args.root)
+    if args.cmd == "check":
+        return cmd_check(args)
+    if args.cmd == "vtable":
+        return cmd_vtable(args)
     return 2
 
 

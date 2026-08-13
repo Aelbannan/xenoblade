@@ -21,7 +21,7 @@ void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
 void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
     nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*,
     char*);
-u16 func_80136254(void*, const char*);
+u16 func_80136254(const char*, const char*, const char*);
 char* func_80138F78(u16);
 void func_80137E7C(void*, const char*, void*);
 u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*,
@@ -52,7 +52,7 @@ struct LayoutDestroyIf {
 
 struct AccessorGetResourceIf {
     virtual void _v008();
-    virtual void* getResource(const char*, const char*, void*);
+    virtual void* getResource(u32, const char*, void*);
 };
 }
 
@@ -126,10 +126,12 @@ extern "C" void func_8022EA64(CMCCrystalSupport* self) {
 }
 
 extern "C" void func_8022EA88(CMCCrystalSupport* self, u16 index) {
-    u16 key = func_80136254(lbl_eu_80664090, lbl_eu_8050AA3C + 0x2d);
+    const char* base = lbl_eu_8050AA3C;
+    u16 key = func_80136254((const char*)lbl_eu_80664090, base + 0x2d,
+                            (const char*)index);
     char* name = func_80138F78(key);
     void* resource = ((AccessorGetResourceIf*)self->mAccessor)->getResource(
-        "timg", name, nullptr);
+        'timg', name, nullptr);
     if (resource != nullptr) {
         func_80137E7C(self->mLayout, lbl_eu_8050AA3C + 0x38, resource);
     }

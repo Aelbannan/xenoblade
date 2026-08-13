@@ -105,6 +105,9 @@ public:
         rect.mSize.y = mRectData.mViewSize.y;
     }
 
+    // us-80441420: build a rect from this CView's insets (x/y zeroed, w/h = view size minus insets)
+    void func_8043EA88(ml::CRect& rect, CView* other);
+
     //0x0: vtable 1
     //0x4-1C4: CWorkThread
     //0x1C4: vtable 2

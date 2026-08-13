@@ -32,7 +32,10 @@ u8 CTutorial::func_8029AE5C() {
     s8 last = field_51;
     s8 cur = field_50;
     if (cur == last - 1) {
-        return (u8)((last == 1) ? 2 : 3);
+        if (last == 1) {
+            return 2;
+        }
+        return 3;
     }
     return cur != 0;
 }

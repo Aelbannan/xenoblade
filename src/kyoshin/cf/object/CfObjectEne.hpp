@@ -46,7 +46,7 @@ public:
     void CfObject_UnkVirtualFunc31();
     void* CObjectParam_UnkVirtualFunc2();
     void CfObjectMove_UnkVirtualFunc6();
-    void CfObject_UnkVirtualFunc14(float value);
+    void* CfObject_UnkVirtualFunc14(float value);
 };
 } // namespace cf
 namespace cf {

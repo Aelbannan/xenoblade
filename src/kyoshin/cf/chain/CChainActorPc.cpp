@@ -11,8 +11,9 @@ namespace cf { class CfGameManager { public: static cf::CfObjectMove* getPlayer(
 
 // retail: func_802A0950(self+0x74, r4, 0xAA, r5, (arg3!=0) ? 0x5F : 0, self)
 extern "C" void func_80282020(void* self, void* a, void* b, int c, int d) {
-    func_802A0950((cf::CChainEffect*)((char*)self + 0x74), (int)a, 0xAA, (int)b,
-                  (c != 0) ? 0x5F : 0, (int)self);
+    // retail arg order: r3=effect, r4=a, r5=0xAA, r6=self, r7=b, r8=cond
+    func_802A0950((cf::CChainEffect*)((char*)self + 0x74), (int)a, 0xAA, (int)self,
+                  (int)b, (c != 0) ? 0x5F : 0);
 }
 int func_802A0804(int, int);
 
@@ -87,7 +88,7 @@ extern "C" void func_80282490(void* self, void* a, void* b) {
 // Resets chain state (setFieldAndClear) and clears the chain effect.
 extern "C" void func_80281924(cf::CChainActorPc* self, int val) {
     CChain_setFieldAndClear(self, val);
-    func_802A08F4(&self->mChainEffect);
+    func_802A08F4((cf::CChainEffect*)((char*)self + 0x74));
 }
 // Local struct for accessing known fields within the large object at self->unk0
 struct CChainBigObj {
@@ -180,7 +181,7 @@ tail_check:
 }
 // Resets the chain effect and calls func_80279DC0 on this actor.
 extern "C" void func_80281CB8(cf::CChainActorPc* self) {
-    func_802A0904(&self->mChainEffect);
+    func_802A0904((cf::CChainEffect*)((char*)self + 0x74));
     func_80279DC0(self);
 }
 // External declarations specific to func_80281CF0

@@ -9,7 +9,8 @@ This repository is a **private/downstream** Xenoblade Chronicles Wii decompilati
 3. **`PLAN.md` §§2, 3, 17** — legal boundaries, architecture invariants, and matching policy. Read other sections only when the task touches that subsystem.
 4. **`COOP_IMPLEMENTATION_MAP.md`** — capability graph and feature handoffs; read for co-op architecture work.
 5. **`docs/MWCC_REFERENCE.md`** — consult relevant patterns for matching work.
-6. Read the behaviour, equivalence, symbol-recovery, or opcode documentation only when invoking that subsystem.
+6. **`docs/register_mapping.md`** — the deterministic register-allocator contract (volatile low→high, saved high→low, declaration-order lever); read before chasing any `reg_swap` residual to `FULL_MATCH`.
+7. Read the behaviour, equivalence, symbol-recovery, or opcode documentation only when invoking that subsystem.
 
 ## Quick commands
 

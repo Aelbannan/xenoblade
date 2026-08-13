@@ -4,12 +4,31 @@ Practical reference for reaching **`FULL_MATCH`** (100% byte match) or **`EQUIVA
 
 **Policy sources:** `.claude/skills/xenoblade-decomp/SKILL.md`, `PLAN.md` §17, `coop.json` (`functionRelocDiffs=data_value`).
 
-**Living document:** agents must **append new patterns** here when they discover reusable MWCC matching knowledge. Do not leave discoveries only in `docs/evidence/decomp/attempts.jsonl` or chat.
+**Register-mapping primer:** for a principled account of the allocator's two-tier
+coloring (volatile low→high, saved high→low) and the declaration-order lever, see
+[`docs/register_mapping.md`](register_mapping.md). This file's regalloc notes are
+case studies of that contract.
+
+
+## Vtable-slot arg keeps a register live → flips ret-default allocation (CfObjectMap func_800B9A70, FULL_MATCH)
+
+`func_800B9A70` (us-800ba38c, CfObjectMap, 0x44) was stuck at ~98% with the ret-default
+register `li r0,1 + or r0,r3,r3 / or r3,r0,r0` (retail) vs `li r4,1 + or r4 / lwz-r0-first`
+(decomp); the +8/+0xc and +0x30/+0x34 order diffs were consequences of the r0-vs-r4
+choice, invariant across ~16 shapes. **Fix: the vtable slot +0x18C
+(CfObjectModel_UnkVirtualFunc6) really takes a `void*` arg** (per CfObjectMove.hpp's
+vtable decl `m18C(void*)`; the base CfObjectModel.hpp decl was missing the param).
+Calling `this->CfObjectModel_UnkVirtualFunc6(this->mTarget70)` keeps r4 live as the
+call argument, so MWCC cannot reuse it for the ret default — the default lands in r0
+exactly like retail → 100% FULL_MATCH. Reuse: when a leaf's ret-default register
+choice (r0 vs a caller-saved GPR) is allocator-fixed, check whether the indirect/
+vtable call in the body actually takes the checked pointer as an argument — the
+live-arg liveness forces the default into r0. (Same family as the WPAD
+"passing status keeps r4 live" fix.)
 
 ---
 
 ## kyoshin leaf-codegen walls (MWCC 1.1, Wii/1.1, -O4,p) — unreachable shapes
-
 - **Default-return hoisting:** `int f(...) { if (c1) return 1; ... if (cN) return 1;
   return 0; }` always puts `li r3, 0` in the final epilogue (81 instr). Retail
   (func_8016FA68/801AA960) hoists it to the top and uses `bnelr`/`bgtlr` for the
@@ -1481,6 +1500,50 @@ void func_80465730(f32 scale) {
 
 Mechanism: with the fused form MWCC schedules the conversion's low-word store (`stw <base>, 8(sp)`) right after the value load and defers the flag load, coloring base=r0 / counter=r3 / flag=r4. With `f32 fv` materialized early, MWCC hoists the flag load up (retail: `lwz r4,counter; lwz r0,flag; xoris; stw 12(sp); ori; stw 8(sp)` — high-word store first, low-word store late, flag store after the `lfd`) and colors base=r3 / counter=r4 / flag=r0 exactly like retail. The `(s32)` round-trip (fctiwz/stfd/lwz/stw) is unaffected. Same family as §7i (builtin conversion pools the 2^52+2^31 magic to a TU-local `@N` — value-equal reloc drift vs `lbl_eu_8066A628`, map-canonicalized).
 
+## nw4r snd_WaveFile WaveArchiveReader ctor — comparison-operator choice flips the booleanization idiom + integer-add operand order (GC/3.0a5.2 `-O4`)
+
+`WaveArchiveReader::WaveArchiveReader` (us-8042bbb0, 0x74) went 86.2% (1 structural + 3 reg_swap) → **100.0% FULL_MATCH** via two levers:
+
+1. **`version <= 0x100` instead of `version >= 0x100` for the arithmetic boolean.** The retail guards `version < 0x100` with a branch (fail), then booleanizes the second check ARITHMETICALLY into r0: `subfic(256-v) / li 256; orc(256|~v) / srwi(1) / subf / srwi(31)`. MWCC emits this EXACT constant-first idiom only for the `<=` comparison; `version >= 0x100` booleanizes to the mirrored `addi(v-256) / orc(v|~256) / srwi(1) / subf / srwi(31)` (value-first). Semantics are unchanged given the guard (v<256 already failed, so `<= 256` ⟺ `== 256` matches retail). General rule: when the retail booleanizes a bound check with the constant first (`subfic c-x`, `orc c|~x`), write the comparison as `x <= c` (or `c >= x`); `x >= c` gives the mirrored form.
+2. **Tail pointer adds need integer-operand-first order: `off + (u32)bytes`.** `bytes + off` emits `add rD, rBase, rOff` (base first); `off + (u32)bytes` emits `add rD, rOff, rBase` (offset first) — the retail's `add r5, r5, r4` (offset + base).
+
+The if/else-if/else chain (`magic != 'RWAR'` → ok=0; `version < 0x100` → ok=0; else ok = boolean) keeps the retail's out-of-line block layout under GC/3.0a5.2. `mWaveData`/`mFileStart` pointer adds: `(const u8*)(*(const u32*)(bytes + 0x18) + (u32)bytes)`.
+
+## kyoshin CTutorialList func_802AE004 — OR-combined guard for branch-over-branch + s32-bridge for lha loads (Wii/1.1 `-O4,p`)
+
+`func_802AE004` (us-802b073c, 0x78) went 30% (18 structural) → **100.0% FULL_MATCH** via two levers:
+
+1. **OR-combined guard**: `if (mField1C == 0 || mField18 != 0) return;` makes MWCC emit the retail's branch-over-branch `beq body; b exit` for the second disjunct (body placed out-of-line after the branches). Nested-if, `&&`, positive-if, and goto-gate shapes all emit a single `bne exit` with the body in fall-through. Same pattern as MWCC_REFERENCE line 859 (rfc port guard).
+2. **`(u16)(s32)field` forces the lha sign-extend**: writing a `u16` field from an `s16` field as `dst = (u16)src` (implicit or explicit) lets MWCC fold the truncation into an `lhz` load; `dst = (u16)(s32)src` bridges through s32 first and emits the retail's `lha` + `sth`. The sibling assignment `(s8)s16field` keeps `lha` naturally (s8 result doesn't fold to lbz).
+
+## nw4r snd StrmSound::Setup — u8-return normalization leak + call-arg order (GC/3.0a5.2 `-O4,p`)
+
+`StrmSound::Setup` (us-80427650, 0x7c) went 22.6% → **100.0% FULL_MATCH** via two fixes:
+
+1. **Call-arg order was wrong**: retail passes `Setup(pPool, voices, unk, GetVoiceOutCount())` — the source had `Setup(pPool, GetVoiceOutCount(), unk, 0)` (the voice count was swapped into the `voices` slot).
+2. **`GetVoiceOutCount()` must be declared `int`, not `u8`.** With a u8 return declaration, MWCC re-normalizes the return value at EVERY call site (`rlwinm rX, r3, 0, 24, 31` after the `bl`); retail call sites use a plain `mr`. Changed the header (`snd_BasicSound.h`) AND the impl (`snd_BasicSound.cpp`) to `int`; the impl codegen is unchanged (`lbz r3, 0x95(r3); blr` — the u8→int conversion is free in the lbz), and the other callers (WsdPlayer/WaveSound/SeqTrack) stop emitting the spurious rlwinm.
+
+## nw4r g3d RTTI IsDerivedFrom chains — nested if + return base-call reproduces the per-level param reload (GC/3.0a5.2 `-O4,p`)
+
+`AnmObjChr*::IsDerivedFrom` (us-803e7d38/7da0/7eec → **FULL_MATCH 100%**; us-803e7e70 Blend at 90.3%): the retail checks `other == TypeObj(lbl)` per class in the derivation chain, RELOADING the by-value TypeObj param (`lwz r0, 0(r4)`) at the first two levels. Flat ternaries/||/if-chains let MWCC CSE the load to one `lwz` (0x4c vs retail 0x50). The shape that reproduces the reload is the nested **call boundary**: `if (other == TypeObj(myType)) return true; return Base::IsDerivedFrom(other);` — the inlined base call re-reads the parameter. The base chain ends in a small static helper (AnmObj's body) since the retail inlines it everywhere (`anmObjBaseIsDerivedFrom`): `if (other == TypeObj(lbl_650)) return true; return other == TypeObj(lbl_640);`.
+
+**Known residual (Blend only):** MWCC pools three adjacent type-data references (lbl_8051D5E4/8051D5D0/8051D5C0 — the C0-family, offsets 36/16/0) into a TU-local `...rodata.0` section-symbol base (addend +96 drift vs retail's named `lbl_eu_8051D5C0` base). RES/CHR/NODE reference only 1-2 of these and stay NAMED. Tried: local TypeObj var, pointer-to-data var, reinterpret_cast offsets (regresses to 7 structural), non-const globals (`...data.0`), GC/3.0a3.4 — none stop the pooling. The witness rejects the reloc-name drift. Next angle: single RTTI-block struct `lbl_eu_8051D5C0` with `chr/node/blend/res` members (offsets match the layout exactly) + individual symbol aliases.
+
+## monolib CDeviceFont layer-search — candidate selection: `!=`-form emits retail's beq-skip layout (Wii/1.1 `-O4,p`)
+
+`func_8045271C`/`func_8045283C` (us-80455434/80455554, 0x88): the ring-style child walk's candidate selection compiled with the WRONG branch sense. `else if (child->mType == TYPE_FONT_LAYER) { candidate = child; } else { candidate = 0; }` emits `bne li0; b continue` (branch-over-branch, +1 insn). Restructuring to `candidate = child; if (child->mType != TYPE_FONT_LAYER) { candidate = 0; }` emits the retail's `beq skip; li 0` (the ==-case falls through keeping child). 17 → 0 structural for func_8045271C. Residual: the singleton lands in r4 (dead arg slot) vs retail r7 — the witness rejects the rho (ABI registers must be fixed); both siblings stay near-misses.
+
+Also: the retail RELOADS the singleton global before the children walk (`lwz rX, 0(r0)` twice); a `volatile` view re-read reproduces it in func_8045271C but regressed the sibling (layer=0 hoisted) — keep the goto-found structure (layer declared only in the found path) for the volatile re-read to work.
+
+## monolib UnkClass_8047E110 func_8048163C — walk-box builder: inline sdata2 const + const-first fadds operand (Wii/1.1 `-O4,p`)
+
+`func_8048163C` (us-8048560c, 0x60) went 62.5% (0 structural but reloc-site shift) → **100.0% FULL_MATCH** via two levers:
+
+1. **Inline the sdata2 const in the box expressions instead of a `f32 c` local.** With `f32 c = lbl_eu_8066A890;` MWCC hoists the `lfs fX, const` to slot 0 — BEFORE the `lfs f1, 0(r4)` (v->x) load — which moves the const reloc site from retail's +0x8 to +0x0 and kills the register-renaming witness (`reloc | slot 0`). Inlining `v->x - lbl_eu_8066A890` keeps the v->x load first and the const `lfs` at +0x8 exactly like retail (the value is still CSE'd to one load).
+2. **Write the additions const-first: `lbl_eu_8066A890 + v->x`.** For the commutative `fadds`, MWCC preserves source operand order: retail is `fadds fD, f4, f1` (const + x), so `v->x + const` compiles to the swapped `fadds fD, f1, f4`. Subtractions keep `v->x - const` (operand order is semantic).
+
+Keep the y-assignments first in source (store order y,y,x,z,x,z follows source); the scheduler still delays the v->y load to just before its first store. Same-family near-misses (`CfObjectMove_UnkVirtualFunc9`, `CfObjectModel` vfunc52/53/56, `CScnIdMan::func_8049E51C`) show the retail load-hoists the first member load above the `stw r0, 20(sp)` LR save — not yet reproducible by any MWCC version.
+
 ## kyoshin CfObjectNpc — pointer-low-halfword extraction: deref-not-cast (Wii/1.1 `-O4,p`)
 
 `func_800BF920` (us-800c0368, 0x64) went 48.0% → **100.0% FULL_MATCH**. The function reads a BDAT string pointer and stores its low halfword into an s16 field (`mRltMeet = (s16)(uintptr_t)v`). The CAST folds to a direct `sth r3, field` (0x5c), but the retail keeps the memory round-trip `stw r3, 8(sp); lha r0, 8(sp); sth r0, field` (0x64, 32-byte frame). Writing the extraction as a DEREF of the pointer's storage reproduces it byte-for-byte:
@@ -1497,7 +1560,6 @@ Same family as the sibling `func_800BF8CC` (100%): `mIconType = *(const u8*)&v;`
 ## nw4r ut_ArchiveFontBase — branch vs branchless return selection: default+conditional-assign (Wii/1.1 `-O4,p`)
 
 `ArchiveFontBase::RequestData` (us-8042f9ac, 0x64) went 84.0% → **100.0% FULL_MATCH**. The tail `return (call() == 0) ? 2 : 0;` / `if (x == 0) return 2; return 0;` / if-else forms all compile BRANCHLESS (`cntlzw r3,r0; rlwinm; neg; rlwinm` — 4 insns). The retail keeps the branch form `cmpi r3,0; li r3,2; beq L; li r3,0; L:`. The shape that emits the retail branch byte-for-byte:
-
 ```c
 int ret = 2;
 if (result != 0) {
@@ -9647,18 +9709,32 @@ is the only route; probe every compiler version first (GC 2.7/3.0a5.2, Wii
 1.0/1.1/1.5 all behave identically for these shapes).
 
 Members (all recorded open items, witness-gate rho):
-- `func_801CB9D8` (us-801cd42c, CItemBoxGrid): 12-byte-stride entry copy; retail
-  base in r5 (reused idx reg), MWCC always bases in r4 (reused src reg).
-  Invariant: decl-order, word-indexed, inline-offset, struct-typed, 5 MWCC
-  versions.
+- **`func_801CB9D8` (us-801cd42c, CItemBoxGrid) — SOLVED FULL_MATCH:**
+  12-byte-stride entry copy; retail base in r5 (reused idx reg), MWCC always
+  bases in r4 (reused src reg). Fix: declare the **value locals before the
+  base pointer** — `u32 v24, v28; u8* e = (u8*)src + idx * 12;` then load into
+  v24/v28. MWCC colors in source order, so the value locals claim r4 (freed
+  src arg) first and the base lands in r5 (freed idx arg): retail's exact
+  `add r5,r4,r0; lwz r4,24(r5)`. Old shape (base assigned first, values
+  inline) invariantly bases in r4 across decl-order, word-indexed,
+  inline-offset, struct-typed, 5 MWCC versions. 100% byte-identical,
+  semantic-certified, no witness needed.
 - `func_8018B130` (us-8018c6e4, CMenuShopSell): 0x800-byte struct-copy loop;
   retail saves `or r6=src` before `or r7=dst`, MWCC reverses. Invariant:
   local/order variants, memcpy form (emits a call).
-- `CfObjectMove::CfObject_UnkVirtualFunc14/16` (us-800beb30/800beb80): three
-  null-checked `stfs` to +0x388/+0x38C of the C4/C8/CC targets; the LAST
-  block's value reuses r3 (this) in MWCC vs retail's r4 (this dies at the
-  third load). Invariant: separated locals, inline helper, `(void)this`,
-  `#pragma optimize_for_size on`.
+- `CfObjectMove::CfObject_UnkVirtualFunc14/16` (us-800beb30/800beb80) — SOLVED
+  FULL_MATCH (both, 100% byte-identical): three null-checked `stfs` to
+  +0x388/+0x38C of the C4/C8/CC targets; the LAST block's value reuses r3
+  (this) in MWCC vs retail's r4 (this dies at the third load). Invariant
+  before: separated locals, inline helper, `(void)this`, `#pragma
+  optimize_for_size on`. **Fix: make the function RETURN `this`** (change the
+  virtual's return type to `void*`/`CfObjectMove*` — MWCC does not encode the
+  return type in the mangled symbol, so the name is unchanged). Returning
+  `this` keeps r3 (this) live through the third load, so MWCC must use r4 for
+  the third target — exactly retail's allocation. Both targets 100%
+  FULL_MATCH, semantic-certified. Reuse: for "last block reuses a dead
+  argument register" near-misses, keep the argument register live by making
+  the function return it (return type is not part of the MWCC mangled name).
 
 Approved policy note: do NOT "fix" these with register/stack tricks — record
 the open item with the exact region and invariant shapes, keep the source
@@ -9872,3 +9948,73 @@ to 100%:
    ```
    The witness's abi-boundary gate (r5→r12) is avoided because MWCC's virtual
    dispatch uses r12 for the vtable base.
+
+## monolib CView sinit_8043FB70 — two-store sinit FULL_MATCH: statement order fixes lis reloc sites, member assignment fixes FPR coloring (US, Wii/1.1)
+
+`libs/monolib/src/core/CView.cpp`, `sinit_8043FB70` (0x54, **FULL_MATCH 100%**, semantic certificate). A .ctors static initializer storing two `ml::CCol4` globals (`lbl_8065A0C8` = four float constants, `CView::sFrameColor` = copy of `ml::CCol4::white`). Two reusable levers closed a 9.5% → 100% gap:
+
+1. **Statement order determines lis materialization order (reloc sites).** Retail materializes the `lbl_8065A0C8` base (`lis …@ha`) *before* the `sFrameColor` base even though the struct-copy store issues first. With `sFrameColor = white;` written first, MWCC emitted `lis sFrameColor@ha` first and the +0x0a/+0x0e reloc sites were swapped (fuzzy 9.5%, reloc "addend delta -96" noise). Writing the float-field stores first (`lbl_8065A0C8.r = …;` …) aligned both reloc sites; GPR allocation then fell into place exactly (r6=lwzu src, r9/r8=lbl base/+4, r7=copy dst, r5/r4/r3/r0=copy temps) → 61.9%, 8 reg-swaps.
+
+2. **Direct member assignment vs `set()` call changes FPR coloring.** With `lbl_8065A0C8.set(r,g,b,a)` the four constants got ascending FPRs f0,f1,f2,f3; retail uses *descending* f3,f2,f1,f0 (first-loaded constant c0 → f3, stored at offset 0). Writing the four loads/stores as direct member assignments (`lbl_8065A0C8.r = lbl_eu_8066A2E0; .g = …; .b = …; .a = …;`) reproduces the retail coloring exactly → **100%**. (The `set()` helper is inline in `CCol4.hpp` and is fine elsewhere; this TU's retail used the unfolded form.)
+
+Also note: this sinit stores to **TU-owned** globals (`lbl_8065A0C8`, `CView::sFrameColor` are defined in this TU), unlike the NAND `sinit_804DB4xx`/`sinit_eu_804F9FA4` family (retail-owned sbss slots) — the TU-owned case has no `b .+4` barrier and matches cleanly.
+
+---
+
+
+## kyoshin/CArtsParam func_8015403C (0x80154A80) — constant-output range check always folds branchless (Wii/1.1 -O4,p)
+
+Retail: `subi r0,r3,4; cmpli cr0,0,r0,5; bc 4,1 (ble); li r3,1; blr; li r3,2; blr` (7 insn, two `blr` blocks, `li r3,2` at the branch target). Semantics: `(u32)(x-4) <= 5 ? 2 : 1`.
+
+- MWCC **always** folds any constant-output select/if/switch of this range test into branchless arithmetic at every `-O` level and every repo compiler (GC/1.3 → Wii/1.7, C and C++ mode, `-ipa off/file/program`):
+  - `if (<=5) return 2; return 1;` / ternary / dense switch → `subfic/orc/rlwinm` 0x24 form
+  - `if (>5) return 1; return 2;` → `subfc/subfe` 0x18 form
+- `int ret=2; if ((u32)(x-4)>5) ret=1; return ret;` is the closest (14.3%): `subi r0; li r3,2; cmpli r0,5; blelr; li r3,1; blr` — `li r3,2` hoisted before the compare + `blelr` tail-merge vs retail's `bc` + separate `li r3,2; blr` block.
+- `#pragma scheduling off` keeps a **real** forward branch (no `blelr`) but hoists `li r4,2` first and merges with `mr r3,r4` (8 insn, still not retail). `peephole/opt_propagation/opt_common_subs off` do not change the fold.
+- Switch-on-`x` with dense cases `case 4..9` lowers to the same range test and folds identically; enum-typed returns, u8/u16/u32 params, goto/do-while wrappers, and helper-inline values all fold.
+- Open angles if revisited: an IR-level value that defeats select-arithmetic (inlined helper returning an extern/volatile-derived constant), or a newer MWCC whose scheduler keeps the two-block layout. Recorded open item (attempts.jsonl, 2026-08).
+
+## kyoshin/CKizunagram game-local PSVECAdd/PSVECScale (0x8025B198 / 0x8025B1BC, FULL_MATCH)
+
+Both are game-local copies of the RVL-SDK PSVEC pair, with the game's arg order (r3=dst first), in the kyoshin split. Retail bodies are pure paired-single, no frame: `psq_l f0,0(r4),0,0; psq_l f1,0(r5),0,0; ps_add f2,f0,f1; psq_l f0,8(r4),1,0; psq_l f1,8(r5),1,0; psq_st f2,0(r3),0,0; ps_add f2,f0,f1; psq_st f2,8(r3),1,0; blr` (Add, 0x24) and the ps_muls0 variant (Scale, 0x1C). MWCC has **no** `__ps_add`/`__ps_muls0` intrinsics (verified; error 10140) and scalar C++ emits lfs/fadds/stfs — so both use the §17.6 isolated PS backend: `extern "C" asm void` + `nofralloc` + explicit `blr` (MWCC does **not** auto-append blr to `asm void` bodies — every repo PS kernel writes it explicitly). Scalar fallbacks guarded `__MWERKS__ && !NONMATCHING`. Both accepted FULL_MATCH, size exact, split PASS (0x4730 spare).
+
+**Trust the `tools/ppc_equivalence` decoder, not hexdiff's display, for paired-single code:** hexdiff's hand-rolled decoder prints opcode-4 `ps_muls0 f2,f0,f1` (XO 0x2C) and `ps_add` (XO 0x15) as `ps_cmpo0 f2, f0`, and misreports the psq_l/psq_st W bit (e.g. shows `, 1,` for W=0). The ppc_equivalence `_decode_word` gives `(fd, ra, imm, w, i)` correctly — use it to read the true PS ops before writing the kernel.
+
+## kyoshin CVS_THREAD_HP — GC/3.0a5.2 unit, -O4,s loop-store + for-init register coloring (FULL_MATCH ×2)
+
+`kyoshin/cf/voice/cvsys/CVS_THREAD_HP.cpp` was 0/20 matched on the Wii/1.1 default. Two functions proved the unit is **GC/3.0a5.2 -O4,s** at retail:
+
+1. **func_802A7850 (0x802A9F84)** — `int result=0; if (iter>=1 && iter<=7) result=1; return result;` is byte-exact under GC/3.0a5.2 (`cmpi r3,1; blt; cmpi r3,7; bgt; li r0,1; or r3,r0,r0`). Wii/1.1 folds the range to `(u32)(x-1)<=6` at every -O level.
+2. **func_802A7870 (0x802A9FA4)** — voice-handle collect loop. Retail keeps the array store as `stwx rD,rOut,rOff; addi rCount,1; addi rOff,4` (base + separate offset index). Two source-shape rules were decisive:
+   - **`out[count++] = handle` keeps base+index separate; a manual byte-offset local (`*(T**)((u8*)out+off)`, `off+=4`) folds to a pointer walk** (`stw rD,0(rOut); addi rOut,4`) — the opposite of intuition, verified under GC/3.0a5.2 -O4,p/-O4,s.
+   - **Register colors (count=r27, node=r28) only match when count is initialized in the for-init:** `for (count = 0, node = mgr->field_4->field_0; node != mgr->field_4; node = node->field_0)`. Declaration order alone (`int count=0;` before/after `mgr`) leaves a count↔node Chaitin 2-cycle (82.1%, 7 reg-swaps, witness blocked at abi-boundary); the for-init form reaches 100.0%.
+
+Also: **`-O4,p -O4,s` in the same cflags line — MWCC honors the LAST -O flag** (verified: `-O4,p -O4,s` == `-O4,s` behavior, `stwx` loop store; `-O4,s -O4,p` == `-O4,p`, folded). cflags_base carries `-O4,p` first, so `extra_cflags=["-O4,s"]` correctly overrides per-object.
+
+**Shared-header prerequisite:** GC/3.0a5.2 (__MWERKS__=0x4199) rejects `__attribute__((never_inline))` (error 10358) — `DECOMP_DONT_INLINE` in include/decomp.h is now guarded `__MWERKS__ >= 0x4300` (empty for GC-family). Wii/1.1 (0x4302) keeps the attribute; no current GC unit expands it, so the guard is inert today.
+
+### monolib LOD code_80468434 — func_8046A224 spawn-spread kernel (Wii/1.1): spec-encoded ps_sel via dc.l, and SDA21 without a modifier
+
+`libs/monolib/include/monolib/lod/code_80468434_ps.inl`, `func_8046A224` (0x5C, **FULL_MATCH 100%**, semantic certificate). A nofralloc kernel mixing SDA21 global loads, scalar FP, psq_l/psq_st pairs+singles, and four `ps_sel` selects. Two new reusable findings:
+
+1. **Retail ps_sel can use the spec encoding (XO=12) that NO MWCC assembles.** The LOD retail words (`ps_sel f1,f2,f0,f0` = `0x10220018`) encode XO5=12 (PowerPC spec). Every MWCC line assembles `ps_sel` with XO5=23 (Wii/1.x: correct fields + 0x2E tail; GC 3.0a3-a5.2: shifted field layout + 0x2E). Neither reproduces the retail bytes, so the four ps_sel words are emitted as raw `dc.l 0x10220018` / `0x10600890` / `0x1003002A` / `0x1001002A` inside the asm-void PS kernel with the intended mnemonic in a comment. (`dc.l`, `dc.w`, `dc.b`, `.long`, `.4byte` all assemble raw words; `.word` is rejected with err 33134.) Also note the hexdiff opcode-4 display ("ps_cmpo0 fN, fM") is a rough fallback, not a correct decode — trust raw bytes, not the display, for ps opcodes.
+
+2. **MWCC inline-asm SDA21: no modifier, not `@sda21` and not `@l`.** `@sda21` is rejected (err 33135, "expected @h/@ha/@l/@loword/@hiword"). `@l` assembles (ADDR16_LO) but the reloc-TYPE drift (4 vs 109) blocks the `full-instruction-match` certificate in `_byte_identical_with_relocs` (compares (offset,type) multisets) — the cycle lands at COMPILES/0% even when hexdiff shows 100%. Plain `lwz r0, lbl_eu_806657A0(r0)` (no modifier) makes the assembler default to **EMB_SDA21 (type 109)** for small-data externs — byte-identical AND reloc-type-identical, so the FULL_MATCH certificate issues. Prefer no-modifier over `@l` in any PS/SDA asm body.
+
+Also: psq_l/psq_st W bit — retail offset-0/12 ops are pair loads/stores (W=0), offset-8/20 are single z components (W=1). The hexdiff display shows "1" for both, so copy W from the raw bytes, not the display.
+
+---
+
+
+## u16 flag clear — wrap mask rlwinm 17,15 via bitfield clear (func_804CE140, FULL_MATCH)
+
+`monolib/src/effect/code_804CC2B8.cpp` func_804CE140 (us-804d22b4): retail `lhz r0,6(r3); rlwinm r0,r0,0,17,15; sth r0,6(r3)` — clears u16 bit 0x8000 with the WRAP mask 0xFFFF7FFF. The prior SOFT-CAP comment claimed MWCC "optimizes the wrapping mask to non-wrapping 0x7FFF (rlwinm 17,31)" and called it semantically equivalent — true, but the mask is **not** provably-from-`& ~0x8000`: a 17-compiler sweep (GC/1.3..Wii/1.7) × `u16 &= ~0x8000`, `& 0xFFFF7FFF`, `DECOMP_PPC_RLWINM`/`__rlwinm`, volatile reads, tmp-vs-direct, and cast variants ALL normalize to `rlwinm 17,31` (MWCC knows the lhz value's upper bits are zero and canonicalizes the mask).
+
+**The working shape is a u16 bitfield clear** (same as `CScheduleFlags::b15` in code_804E36DC.cpp): `struct EffectSceneFlags { u16 b15 : 1; u16 : 15; };` then `((EffectSceneFlags*)&self->field_0x06)->b15 = 0;` → byte-exact `rlwinm r0,r0,0,17,15`. Bitfield clears bypass the mask canonicalization. 100.0% FULL_MATCH, no policy exception needed (no DECOMP_PPC_RLWINM).
+
+## kyoshin code_800B06A4 mini-patterns (2026-08 session, Wii/1.1)
+
+- **func_800B1BBC (us-800b2488, FULL_MATCH):** `if (func_800B1C00()) self = 0; func_800B1C24(8, self);` — retail CALLS func_800B1C00 (bl, frame, NON-tail func_800B1C24 call). Same-TU `-inline auto` inlined the tiny getter and tail-called the second call. **Fix: `__declspec(noinline)` on the same-TU getter definition** (its own body is unchanged; the retail evidently doesn't inline it) → the frame + non-tail call fall out naturally, 100%.
+- **func_800B205C (us-800b2928, FULL_MATCH):** `if (func_80082900__Q22cf13CfGameManagerFv() && self->field_0xCAC) func_80206BD4((CfMapMineManager*)self->field_0xCAC);` — a member-scoped Fv (no-param) getter is called as an `extern "C"` free function with the mangled name; the u32 field must be cast to the callee's pointer type (MWCC 10248 otherwise).
+- **func_800B67CC (us-800b70c8, OPEN):** retail `lbz; li r3,0; cmplwi r0,1; bltlr; cmplwi r0,24; bgtlr; li r3,1; blr` is EXACTLY GC/3.0a5.2 output of `int result=0; if (val>=1 && val<=24) result=1; return result;` (verified byte-identical in scratch). The unit can't flip to GC (8 accepted FULL_MATCH targets regress via `#pragma noinline` semantics: `#pragma noinline` does NOT carry from a line-16 declaration to its line-730 definition — inlines func_800B07E8 into callers). Wii/1.1 folds the range at every -O level and ~20 source shapes.
+- **func_800B06A4 (us-800b0f70, OPEN):** retail `frsp f2,f1` for `float sq` requires the float→double→float round-trip (`double d=(double)a; float sq=(float)d;`); plain `float sq=a` lets MWCC drop it. Residual: consistent f0↔f2 swap (sq↔c) across all repo compilers — witness rejected.

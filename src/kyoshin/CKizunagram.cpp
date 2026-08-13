@@ -19,8 +19,8 @@ extern const float lbl_eu_80668864;
 extern const float lbl_eu_80668868;
 extern const float lbl_eu_8066886C;
 extern const float lbl_eu_80668870;
-extern const u32 lbl_eu_80668838;
-extern const u32 lbl_eu_8066883C;
+extern u32 lbl_eu_80668838;
+extern u32 lbl_eu_8066883C;
 extern char lbl_eu_8050CB20[];
 
 u32 func_80137444(nw4r::lyt::AnimTransform* anim, float frame);
@@ -66,13 +66,11 @@ void func_8025C870() {}
 // sub-object, pull its slot-15 layout pane for each id in a 2-word table, and
 // repaint the pane matching the given phase byte.
 extern "C" __declspec(noinline) void func_80257F9C(UnkKizunaSelf57D90* self, u32 a) {
-    u32 paneIds[2];
-    paneIds[0] = lbl_eu_80668838;
-    paneIds[1] = lbl_eu_8066883C;
+    u32 paneIds[2] = { lbl_eu_80668838, lbl_eu_8066883C };
     for (u8 i = 0; i < 2; i++) {
         UnkKizunaRes59344* res =
-            ((UnkKizunaMid59344*)self->field8)->field10->target((int)paneIds[i], 1);
-        func_80124270((nw4r::lyt::Pane*)res, (u32)(a == i));
+            ((UnkKizunaMid59344*)self->field8)->field10->target(paneIds[i], 1);
+        func_80124270((nw4r::lyt::Pane*)res, (u32)(i == a));
     }
 }
 
@@ -152,14 +150,55 @@ extern "C" __declspec(noinline) void func_80257E58(UnkKizunaSelf57E58* self) {
 
 void func_802580CC(){}
 
-void func_80258F5C(){}
-
-// retail uses psq_l/ps_muls0 paired-single: dst = src * scalar (auto-vectorized by MWCC -O4,s)
-extern "C" void func_80258F80(float* dst, const float* src, float f1) {
-    dst[0] = src[0] * f1;
-    dst[1] = src[1] * f1;
-    dst[2] = src[2] * f1;
+// us-8025b198 (0x8025B198): game-local PSVECAdd kernel — dst[i] = a[i] + b[i], i in 0..2.
+// Retail is a pure paired-single body (psq_l/ps_add/psq_st, no frame, arg order r3=dst,
+// r4=a, r5=b) that MWCC cannot emit from scalar C++ (no ps_add intrinsic; scalar C++
+// yields 9 lfs/fadds/stfs). Isolated Gekko paired-single backend (PLAN.md 17.6).
+#if defined(__MWERKS__) && !defined(NONMATCHING)
+extern "C" asm void func_80258F5C(register float* dst, register const float* a,
+                                  register const float* b) {
+    nofralloc
+    psq_l f0, 0(r4), 0, 0
+    psq_l f1, 0(r5), 0, 0
+    ps_add f2, f0, f1
+    psq_l f0, 8(r4), 1, 0
+    psq_l f1, 8(r5), 1, 0
+    psq_st f2, 0(r3), 0, 0
+    ps_add f2, f0, f1
+    psq_st f2, 8(r3), 1, 0
+    blr
 }
+#else
+extern "C" void func_80258F5C(float* dst, const float* a, const float* b) {
+    dst[0] = a[0] + b[0];
+    dst[1] = a[1] + b[1];
+    dst[2] = a[2] + b[2];
+}
+#endif
+
+// us-8025b1bc (0x8025B1BC): game-local PSVECScale kernel — dst = src * scale (3 floats).
+// Retail is a pure paired-single body (psq_l/ps_muls0/psq_st, no frame, arg order r3=dst,
+// r4=src, f1=scale). MWCC has no ps_muls0 intrinsic and scalar C++ yields
+// lfs/fmuls/stfs. Isolated Gekko paired-single backend (PLAN.md 17.6).
+#if defined(__MWERKS__) && !defined(NONMATCHING)
+extern "C" asm void func_80258F80(register float* dst, register const float* src,
+                                  register float scale) {
+    nofralloc
+    psq_l f0, 0(r4), 0, 0
+    ps_muls0 f2, f0, f1
+    psq_l f0, 8(r4), 1, 0
+    psq_st f2, 0(r3), 0, 0
+    ps_muls0 f2, f0, f1
+    psq_st f2, 8(r3), 1, 0
+    blr
+}
+#else
+extern "C" void func_80258F80(float* dst, const float* src, float scale) {
+    dst[0] = src[0] * scale;
+    dst[1] = src[1] * scale;
+    dst[2] = src[2] * scale;
+}
+#endif
 
 void func_80258F9C(){}
 
@@ -198,11 +237,11 @@ extern "C" __declspec(noinline) UnkKizunaPair func_80259344(UnkKizunaSelf59344* 
     return out;
 }
 
-void func_80259394(){}
+extern "C" __declspec(noinline) void func_80259394(UnkKizunaSelf57D90* self, const UnkKizunaVec3* v) {}
 
 extern "C" __declspec(noinline) int func_8025949C(UnkKizunaSelf57D90* self) { return 0; }
 
-void func_80259820(){}
+extern "C" __declspec(noinline) void func_80259820(UnkKizunaSelf57D90* self) {}
 
 extern "C" void func_80259AF4(char* dest, const char* src) { dest[0] = src[0]; dest[1] = src[1]; dest[2] = src[2]; dest[3] = 0; }
 
@@ -317,7 +356,28 @@ CKizunaInfo::~CKizunaInfo() {}
 
 void func_8025B670(){}
 
-void func_8025B870(){}
+// Per-frame display dispatch: while the current-line child (+0x08) is live,
+// run the mode-specific handler for the +0x14 mode byte, then notify the
+// child via vtable slot 14 (retail: cmpwi chain over modes 1/2/4/5).
+extern "C" __declspec(noinline) void func_8025B870(UnkKizunaSelfC21C* self) {
+    if (self->field8) {
+        switch (self->field14) {
+        case 1:
+            func_8025C16C(self);
+            break;
+        case 2:
+            func_8025C21C(self);
+            break;
+        case 4:
+            func_8025C298(self);
+            break;
+        case 5:
+            func_8025C348(self);
+            break;
+        }
+        self->field8->target14(0);
+    }
+}
 
 // Finalize then release/null a +0x08 child: if non-null, finalize it (vtable
 // slot 2) with a 1 flag, then clear the pointer.
@@ -351,11 +411,11 @@ extern "C" __declspec(noinline) void func_8025B9C8(UnkKizunaSelfB958* self) {
     self->field8->slot11(self->field10, 1);
 }
 
-void func_8025BA38(){}
+extern "C" __declspec(noinline) void func_8025BA38(UnkKizunaSelf57D90* self, u16 v) {}
 
-void func_8025C16C(){}
+extern "C" __declspec(noinline) void func_8025C16C(UnkKizunaSelfC21C* self) {}
 
-void func_8025C21C(UnkKizunaSelfC21C* self) {
+extern "C" __declspec(noinline) void func_8025C21C(UnkKizunaSelfC21C* self) {
     if (func_80137444(self->field10, lbl_eu_80668834) != 0) {
         // anim reached its last frame: switch to mode 3, publish via the child.
         self->field14 = 3;
@@ -365,9 +425,9 @@ void func_8025C21C(UnkKizunaSelfC21C* self) {
     }
 }
 
-void func_8025C298(){}
+extern "C" __declspec(noinline) void func_8025C298(UnkKizunaSelfC21C* self) {}
 
-void func_8025C348(){}
+extern "C" __declspec(noinline) void func_8025C348(UnkKizunaSelfC21C* self) {}
 
 CKizunagram::CKizunagram() {}
 
@@ -452,11 +512,49 @@ void func_8025C7FC(UnkKizunaSelfC7FC* self, int arg4) {
 }
 
 
-void func_8025C874(){}
+// Build the line layout from the shared arc string at +0x4C, then copy the
+// animated position at +0x4C of the slot-15 result into the +0x14 Vec2.
+// Each display reset: place a fixed color into the +0x68 sub-object, clear
+// its state byte, reset the two line panes, and step the sub-anim.
+extern "C" __declspec(noinline) void func_8025C874(UnkKizunaSelfC874* self) {
+    UnkKizunaVec3 tmp;
+    UnkKizunaVec3 v = *code80135FDC_setVec3(&tmp.x, lbl_eu_80668828,
+                                            lbl_eu_80668868, lbl_eu_80668828);
+    func_80259394(&self->sub68, &v);
+    func_8025949C(&self->sub68);
+    self->field3A = 0;
+    func_80257F9C(&self->subAC, 0);
+    func_8025BA38(&self->sub4C, self->field8E);
+    func_80259820(&self->sub68);
+}
 
-void func_8025C904(){}
+// Same display reset as func_8025C874 but with the second color constant.
+extern "C" __declspec(noinline) void func_8025C904(UnkKizunaSelfC874* self) {
+    UnkKizunaVec3 tmp;
+    UnkKizunaVec3 v = *code80135FDC_setVec3(&tmp.x, lbl_eu_80668828,
+                                            lbl_eu_8066886C, lbl_eu_80668828);
+    func_80259394(&self->sub68, &v);
+    func_8025949C(&self->sub68);
+    self->field3A = 0;
+    func_80257F9C(&self->subAC, 0);
+    func_8025BA38(&self->sub4C, self->field8E);
+    func_80259820(&self->sub68);
+}
 
-void func_8025C994(){}
+// Same display reset as func_8025C874 but with the color constants swapped
+// (retail loads f2 first then fmr f3, so the source order is x/y/z with the
+// shared constant in y/z).
+extern "C" __declspec(noinline) void func_8025C994(UnkKizunaSelfC874* self) {
+    UnkKizunaVec3 tmp;
+    UnkKizunaVec3 v = *code80135FDC_setVec3(&tmp.x, lbl_eu_8066886C,
+                                            lbl_eu_80668828, lbl_eu_80668828);
+    func_80259394(&self->sub68, &v);
+    func_8025949C(&self->sub68);
+    self->field3A = 0;
+    func_80257F9C(&self->subAC, 0);
+    func_8025BA38(&self->sub4C, self->field8E);
+    func_80259820(&self->sub68);
+}
 
 void func_8025CA24(){}
 

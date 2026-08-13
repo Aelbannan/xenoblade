@@ -127,6 +127,16 @@ void* __dt__8046A584(LOD::UnkClass_8046A530* obj, int dealloc) {
 // compared but never branched on); the only real work is the func_8046A5C4
 // call.  func_8046A5C4 is defined in another TU (it is not a stub here), so
 // the call below cannot be inlined away and keeps its retail `bl` form.
+//
+// UNREPRODUCIBLE DEAD-BLOCK ARTIFACT (2026-08 sweep, 50+ shapes x GC 2.6/2.7/
+// 3.0a3-3.0a5.2/Wii 1.0-1.7 x -O4,p/-O4,s x -ipa file/off): retail keeps
+// `addi r0,r3,0x1200; cmpl r4,r0; bge; li r0,0; bgt; li r0,1; cmpi r0,0`
+// (a bool (p1<=p2) materialized in r0 with the test branch folded). Every
+// high-level shape folds the block away (MWCC DCEs empty nested ifs and
+// simplifies `p1<p2 && p1<=p2` to `p1<p2`). The clamp body `if (p1<p2)
+// {p1=p2;}` DOES keep the p2 addi + cmpl + branch (used by LOD func_801C17CC
+// sibling family) but changes r4 on the p1<p2 path, diverging from retail
+// (retail passes p1 on both paths), so it is not an honest reconstruction.
 // ---------------------------------------------------------------------------
 // Retail func_8046A5C4 is Fv-mangled but this caller passes the range start
 // pointer in r4 (which the callee ignores); declare it with the exact name.

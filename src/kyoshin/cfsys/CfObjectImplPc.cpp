@@ -4,17 +4,122 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cfsys/CfObjectImplPc.hpp"
 
-void func_800C5998(){}
+#include "monolib/util/MemManager.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CfSoundMan.hpp"
 
-void func_800C5AA0(){}
+void func_800C891C(u8* self);  // same-TU target (defined below)
+
+// Player init/refresh: prepares via func_800CA948, dispatches vtable slot
+// 0xE4 and feeds its result + sub-fields into func_8015BB3C, binds the +0x28
+// holder to the battle object's +0x3E9C sub-object, and when the +0x70 token
+// formats with entry id 7, allocates + constructs a CPcEffect07 whose +4
+// pointer becomes field_378. Finally resets the battle object's idle flag
+// word (vtable 0x27C result) and notifies the +0x3E9C sub-object (vtable
+// 0x20C) when the battle id at +0x3F28 is 1.
+void func_800C5998(cf::CfObjectImplPc* self)
+{
+    func_800CA948((u8*)self);
+    func_8015BB3C(self->vfE4(), (u8*)self->field_14, (u8*)self->field_18);
+    u8* owner = (u8*)self->field_18;
+    if (owner != 0) {
+        owner += 0x3e9c;
+    }
+    func_802A0B8C((u8*)&self->field_28, owner);
+    u32 out14;
+    u32 out10;
+    u32 outC;
+    u32 out8;
+    func_800AA318(self->field_14->field_70, &out14, &out10, &outC, &out8);
+    if (out10 == 7) {
+        u8* mem = (u8*)mtl::MemManager::allocate(0x64, func_80061FE8());
+        if (mem != 0) {
+            u8* actor = (u8*)self->field_14;
+            if (actor != 0) {
+                actor -= 0x3e9c;
+            }
+            mem = __ct__cf_CPcEffect07(mem, actor);
+        }
+        if (mem != 0) {
+            mem = (u8*)mem + 4;
+        }
+        self->field_378 = (cf::CfObjectImplPcSub*)mem;
+    }
+    if (self->field_18->field_3F28 == 1) {
+        cf::CfObjectImplPc27C* p = self->field_18->vf27C();
+        p->field_00 = 0;
+        self->field_18->mSub.sf20C(0x27);
+    }
+}
+
+void func_800C5AA0(cf::CfObjectImplPc* self)
+{
+    if (self->field_378 != 0) {
+        if (self->field_378 != 0) {
+            self->field_378->vf08(1);
+        }
+        self->field_378 = 0;
+    }
+    func_800CAA44(self);
+}
 
 void func_800C5B00(){}
 
 void func_800C6A58(){}
 
-void func_800C6EC0(){}
+void func_800C6EC0(cf::CfObjectImplPc* self, u32 param)
+{
+    if (self->field_378 != 0 && self->field_18->field_3F2C != 0) {
+        self->field_378->vf10();
+    }
+    func_800CEE28(self, param);
+}
 
-void func_800C6F30(){}
+// Arts-command feedback: when the battle-id gate passes and the 0x400000
+// battle flag is clear, dispatch the command id (0xEA..0xF2 -> action ids)
+// to the battle object's +0x3E9C sub-object (vtable 0x20C), then forward the
+// original args to func_800CB9AC.
+void func_800C6F30(cf::CfObjectImplPc* self, u32 arg2, u32 arg3, u32 arg4)
+{
+    if (arg2 != 0 && arg2 != (u32)self->field_18->field_3F60) {
+        return;
+    }
+    char* name = 0;
+    int flag = 0;
+    cf::CfObjectImplPc18* battleObj = func_800BFC68(
+        self->field_18 != 0 ? (cf::CfObjectMove*)&self->field_18->mSub : 0);
+    if (arg3 == 0) {
+        if (arg4 == 0) {
+            flag = 0;
+            name = func_800BEDC4((u8*)&battleObj->mSub, 0);
+        } else if (arg4 == 1) {
+            flag = 1;
+            name = func_800BEDC4((u8*)&battleObj->mSub, 1);
+        }
+        if (strcmp(name, lbl_eu_804FC758) == 0) {
+            name = 0;
+        }
+        if (name != 0) {
+            battleObj->mSub.sf104(name, flag);
+            battleObj->field_45B0 = 1;
+        }
+    } else if (arg3 == 1) {
+        if (arg4 == 0) {
+            flag = 0;
+            name = func_800BED80((u8*)&battleObj->mSub, 0);
+        } else if (arg4 == 1) {
+            flag = 1;
+            name = func_800BED80((u8*)&battleObj->mSub, 1);
+        }
+        if (strcmp(name, lbl_eu_804FC758) == 0) {
+            name = 0;
+        }
+        if (name != 0) {
+            battleObj->mSub.sf104(name, flag);
+            battleObj->field_45B0 = 0;
+        }
+    }
+}
 
 void func_800C70BC(){}
 
@@ -22,9 +127,46 @@ void func_800C75D4(){}
 
 void func_800C819C(){}
 
-void func_800C86E8(){}
+// Battle-actor scan: clears the +0x37C count, recounts actors whose +0x3E9C
+// sub-object's action target (vtable 0x4C) matches the battle object's
+// +0x3F10 id, and when the count grew, cancels/refreshes the actor's actions
+// (vtable 0x210 / 0x208 / 0x204) and plays a sound if nothing was active.
+// Returns 1 when the count grew, else 0.
+int func_800C86E8(cf::CfObjectImplPc* self)
+{
+    self->field_18->field_04->vf20(0x400000);
+    self->field_18->field_04->vf20(0x800000);
+    u8 holder[8];
+    func_80043D90(holder);
+    func_800F4A98(func_80043F18(holder), 0x80000002, 0);
+    u32 startId = self->vf40();
+    func_800F6ED0(func_80043F18(holder), startId);
+    for (u32 i = 0; i < ((cf::CfEnumList*)func_80043F18(holder))->field_620; i++) {
+        cf::CfObjectImplPc18* obj = (cf::CfObjectImplPc18*)func_8016FE34(
+            func_800F6EAC(func_80043F18(holder), i));
+        self->field_18->vf2C4((u8*)obj, lbl_eu_80666BCC, lbl_eu_80666BCC, lbl_eu_80666BCC);
+    }
+    u8* listObj = func_800F6E08(func_80043F18(holder));
+    __dt__80043E88(holder, -1);
+    if (self->field_18->mSub.sf4C() == 0) {
+        self->field_18->mSub.sf50((u32)listObj);
+        if (self->field_18->mSub.sf4C() == 0) {
+            cf::CfObjectImplPc18* pobj = (cf::CfObjectImplPc18*)func_8016FE34(
+                (u8*)func_800B708C((int)func_800BFC68(cf::CfGameManager::getPlayer(0))->mSub.sf4C()));
+            if (pobj != 0) {
+                u32 id = *pobj->field_04->vf30();
+                if (func_80174C98((u8*)pobj, &id, 0x100000) != 0) {
+                    self->field_18->mSub.sf50(pobj->field_3F10);
+                    self->field_18->vf2C4((u8*)pobj, lbl_eu_80666BCC, lbl_eu_80666BCC, lbl_eu_80666BCC);
+                }
+            }
+        }
+    }
+    func_800C891C((u8*)self);
+    self->vf78();
+}
 
-void func_800C891C(){}
+void func_800C891C(u8* self){}
 
 void func_800C969C(){}
 
@@ -32,9 +174,59 @@ void func_800C9A20(){}
 
 void func_800C9CEC(){}
 
-void func_800CA084(){}
+// Arts command dispatch: promotes id 0xCF to 0xD0 while the battle object's
+// +0x3374 bit-0x8000 flag is set, then asks func_80148778 whether the arts
+// container holds the id; when missing, bounces to the object's vtable[0x94].
+void func_800CA084(cf::CfObjectImplPc* self, u32 param)
+{
+    if (param == 0xcf && (self->field_18->field_3374 & 0x8000) != 0) {
+        param = 0xd0;
+    }
+    if (func_80148778(&self->field_18->field_08, (int)param) == 0) {
+        self->vf94(param);
+    }
+}
 
-void func_800CA104(){}
+// Arts command dispatch (jump table): when the 0x400000 battle flag is clear,
+// map the command id 0xEA..0xF2 onto action ids sent to the battle object's
+// +0x3E9C sub-object (vtable 0x20C), then forward the args to func_800CB9AC.
+void func_800CA104(cf::CfObjectImplPc* self, u32 param)
+{
+    cf::CfGameManager::getInstance();
+    if (func_8006EF04(0x400000) != 0) {
+        return;
+    }
+    switch (param - 0xea) {
+    case 0:
+        self->field_18->mSub.sf20C(0x15);
+        break;
+    case 1:
+        self->field_18->mSub.sf20C(0x16);
+        break;
+    case 2:
+        self->field_18->mSub.sf20C(0x18);
+        break;
+    case 3:
+        self->field_18->mSub.sf20C(0x17);
+        break;
+    case 4:
+        self->field_18->mSub.sf20C(0x19);
+        break;
+    case 5:
+        self->field_18->mSub.sf20C(0x1a);
+        break;
+    case 6:
+        self->field_18->mSub.sf20C(0x1b);
+        break;
+    case 7:
+        self->field_18->mSub.sf20C(0x16);
+        break;
+    case 8:
+        self->field_18->mSub.sf20C(0x27);
+        break;
+    }
+    func_800CB9AC((u8*)self, param);
+}
 
 void func_800CEA34(void*);
 
@@ -47,11 +239,64 @@ void func_800CA274(void* self, int value)
     func_800CEA34(self);
 }
 
-void func_800CA294(){}
+// Battle-actor recount: clears the +0x37C count, recounts actors whose
+// +0x3E9C sub-object's action target (vtable 0x4C) matches the battle
+// object's +0x3F10 id, and when the count grew, cancels/refreshes the
+// actor's actions (vtable 0x210 / 0x208 / 0x204) and plays a sound if
+// nothing was active. Returns 1 when the count grew, else 0.
+int func_800CA294(cf::CfObjectImplPc* self)
+{
+    u32 prev = self->field_37C;
+    self->field_37C = 0;
+    u8 holder[8];
+    func_80043D90(holder);
+    func_800F4A98(func_80043F18(holder), 0x80000000, 0x800);
+    for (u32 i = 0; i < ((cf::CfEnumList*)func_80043F18(holder))->field_620; i++) {
+        cf::CfObjectImplPc18* obj = (cf::CfObjectImplPc18*)func_8016FE34(
+            func_800F6EAC(func_80043F18(holder), i));
+        if (obj->mSub.sf4C() == self->field_18->field_3F10) {
+            self->field_37C++;
+        }
+    }
+    if (self->field_37C > prev) {
+        u32 v = self->field_18->mSub.sf210(0x11);
+        self->field_18->mSub.sf208(0x11);
+        self->field_18->mSub.sf204(0x11, 0, -1, 0, 0);
+        if (v == 0) {
+            cf::CfSoundMan::func_801BFC38(0, 0x5c, 0, 0, lbl_eu_80666BC8);
+        }
+        __dt__80043E88(holder, -1);
+        return 1;
+    }
+    if (self->field_37C == 0) {
+        self->field_18->mSub.sf208(0x11);
+    }
+    __dt__80043E88(holder, -1);
+    return 0;
+}
 
-void func_800CA42C(){}
+// Tail-calls the +0x378 sub-object's vtable[0x0C] when the sub-object
+// exists, forwarding args 1, 3, 4, 5 (arg 2 is not forwarded).
+void func_800CA42C(cf::CfObjectImplPc* self, u32 a, u32 b, u32 c, u32 d, u32 e)
+{
+    if (self->field_378 != 0) {
+        self->field_378->vf0C(a, c, d, e);
+    }
+}
 
-void func_800CA458(){}
+// Per-frame player update: runs func_800CEBE0, raises the battle object's
+// +0x3F60 flag bit 0x400000, and while the +0x14 object is in state 8 past
+// scenario 0x167, notifies the +0x98 sub-object with the string at +0x3B.
+void func_800CA458(cf::CfObjectImplPc* self)
+{
+    func_800CEBE0(self);
+    self->field_18->field_3F60->field_0C |= 0x400000;
+    if (self->field_14->field_8C == 8) {
+        if (func_800822F4__Q22cf13CfGameManagerFv() >= 0x167) {
+            self->field_14->field_98->vf28((const char*)(lbl_eu_804FC758 + 0x3b), 0);
+        }
+    }
+}
 
 // Adjuster thunk for CfObjectImplPc virtual destructor at vtable slot this-0xc.
 // Adjusts this pointer to the complete object, then tail-calls the real destructor.

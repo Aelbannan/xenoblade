@@ -46,7 +46,13 @@
     }
 
 #define DECOMP_INLINE inline
+// GC-family compilers (__MWERKS__ < 0x4300, e.g. GC/3.0a5.2 = 0x4199) reject
+// __attribute__((never_inline)) with error 10358; only Wii-era MWCC accepts it.
+#if defined(__MWERKS__) && (__MWERKS__ >= 0x4300)
 #define DECOMP_DONT_INLINE __attribute__((never_inline))
+#else
+#define DECOMP_DONT_INLINE
+#endif
 
 /**
  * MWCC PPC rotate-mask intrinsics (PLAN.md section 17.6).

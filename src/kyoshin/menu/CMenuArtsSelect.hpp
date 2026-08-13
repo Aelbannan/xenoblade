@@ -22,6 +22,30 @@ struct UnkArtsSelectEntry {
     u8 unkBB; // 0xBB - bit0 gates per-slot draw in cbRenderBefore
 };
 
+// The arts-param object returned by getArtsParamAtCnt (retail cf::CAttackParam,
+// size 0x88). MWCC lays the vptr at +0x84 because the class derives from a
+// non-polymorphic 0x84-byte base; the vtable's slot +0x14 is the gauge getMax
+// (retail CAttackParam_UnkVirtualFunc4, returns f32). Declared virtual index 3
+// lands at vtable offset (3+2)*4 = 0x14 (2 hidden slots: RTTI + offset-to-top).
+struct ArtsParamLocalBase {
+    u8 unk00[0x74];
+    u16 mCheckFlag;          // +0x74 - non-zero when skill has a gauge
+    u8 unk76[0x80 - 0x76];
+    f32 mRatioNum;           // +0x80 - current gauge value
+};
+
+struct ArtsParamLocal : ArtsParamLocalBase {
+    virtual void m00();      // slot 2 (+0x08) - initializer
+    virtual void m01();      // slot 3 (+0x0C)
+    virtual void m02();      // slot 4 (+0x10)
+    virtual f32 mFn14();     // slot 5 (+0x14) - getMax
+};
+
+// 4 x s16 aggregate returned by func_80139658 in r3:r4 (retail FourShorts).
+struct FourShorts {
+    s16 a, b, c, d;
+};
+
 class CMenuArtsSelect {
 public:
     void Init();

@@ -88,8 +88,9 @@ u8 CMCCrystalList::func_80222A58() { return mIsActive; }
 // Forward decls for functions defined later in this TU. They are C-linkage in
 // retail (unmangled symbols), so extern "C" keeps the call relocs unmangled.
 extern "C" void func_80223698(CMCCrystalList* self);
-extern "C" void func_80223614(CMCCrystalList* self);
+extern "C" void func_80223614(CMCCrystalList* self, u32 idx);
 extern "C" void func_80223754(CMCCrystalList* self);
+extern "C" int func_8013BC0C(void*, void*);
 extern "C" void func_80223810(CMCCrystalList* self);
 extern "C" void func_802238CC(CMCCrystalList* self);
 
@@ -178,14 +179,34 @@ extern "C" void __declspec(noinline) func_802233F8(CMCCrystalList* self)
 
 // Retail 0x80223444: for each crystal slot in state 1, run func_80223614.
 // u8 loop counter (retail masks the slot index to 8 bits before indexing).
+// The retail call passes only r3 (the index rides in the leftover r4 from
+// the loop's rlwinm, which the callee uses), so the call is made through a
+// 1-arg cast of the 2-arg function.
 extern "C" void __declspec(noinline) func_80223444(CMCCrystalList* self)
 {
     for (u8 i = 0; i < 8; i++) {
         if (self->mSlotStates[i] == 1) {
-            func_80223614(self);
+            ((void (*)(CMCCrystalList*))func_80223614)(self);
         }
     }
 }
+
+// func_80223614 (recovered): format the slot icon pane name (fmt @ 0x13E),
+// resolve the pane through the layout root FindPaneByName virtual, and when
+// the func_8013BC0C check passes, clear the slot's state byte.
+// optimize_for_size merges the r30/r31 saves into the retail stmw r30
+// prologue (MWCC_REFERENCE: two-param leaf prologue pattern).
+#pragma optimize_for_size on
+extern "C" void func_80223614(CMCCrystalList* self, u32 idx) {
+    char buf[0x20];
+    sprintf(buf, &lbl_eu_805092C0[0x13e], idx + 1);
+    nw4r::lyt::Pane* pane =
+        self->mLayout->GetRootPane()->FindPaneByName(buf, true);
+    if (func_8013BC0C(pane, self->mAnimRes5) != 0) {
+        self->mSlotStates[idx] = 0;
+    }
+}
+#pragma optimize_for_size off
 
 // Retail 0x80223498: wait for anim trans 2 (via func_80137510) to finish,
 // then enter state 5 and run func_80223698.
@@ -235,8 +256,6 @@ extern "C" void __declspec(noinline) func_802235C8(CMCCrystalList* self)
         self->mIsActive = 1;
     }
 }
-
-extern "C" void __declspec(noinline) func_80223614(CMCCrystalList* self){ OSReport("stub: func_80223614"); }
 
 // Retail 0x802254D8: layout animation setup. Disable anim resource 5 across
 // the whole pane tree (recursive via the root pane), then toggle the

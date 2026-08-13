@@ -247,8 +247,8 @@ void func_80136190(const char* a, const char* b, const char* c) {
 u8 func_801361E8(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
     func_8003AA34(a);
-    void* fp = getFP__FPCc(a);
-    return *(u8*)getBdatStringColumnValue(fp, b, c);
+    void* result = getBdatStringColumnValue((void*)a, b, c);
+    return *(u8*)&result;
 }
 
 extern "C" u16 func_80136254(const char* a, const char* b, const char* c) {
@@ -571,15 +571,13 @@ extern "C" void func_80136FA0(
     nw4r::lyt::ArcResourceAccessor* accessor,
     char* name) {
     void* resource = accessor->GetResource(0, name, 0);
-    getAllocHandle__10CLibLayoutFv();
-    u32 handle = 0;
-    void* mem = allocate__Q23mtl10MemManagerFUlUl(0x10, handle);
+    void* mem = allocate__Q23mtl10MemManagerFUlUl(0x10, getAllocHandle__10CLibLayoutFv());
     if (mem != NULL) {
         Set__Q34nw4r3lyt12AnimResourceFPCv(mem, resource);
     }
     *ppAnimRes = mem;
     layout->BindAnimationAuto(
-        *reinterpret_cast<nw4r::lyt::AnimResource*>(ppAnimRes), accessor);
+        *reinterpret_cast<nw4r::lyt::AnimResource*>(mem), accessor);
 }
 
 extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
@@ -1379,7 +1377,7 @@ extern "C" void* func_80138DA4(const char* str) {
 
 extern "C" u8 func_80138E1C(const char* key) {
     if (lbl_eu_80664098 == 0) return 0;
-    func_8003AA34(key);
+    func_8003AA34((const char*)lbl_eu_80664098);
     void* result = getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x18A], key);
     return *(u8*)&result;
 }
@@ -1428,10 +1426,15 @@ extern "C" char* func_80138F78(const char* key) {
         lbl_eu_80664068 = (u32)getFP__FPCc(&lbl_eu_80500664[0x192]);
     }
     void* fp = (void*)lbl_eu_80664068;
-    void* result = NULL;
-    if (fp != NULL) {
-        func_8003AA34(key);
-        result = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x19F], key);
+    const char* col = &lbl_eu_80500664[0x19F];
+    void* result;
+    if (fp == NULL) {
+        result = NULL;
+    } else {
+        // retail: bl func_8003AA34 with no arg move - r3 already holds
+        // &lbl_eu_80500664[0] from the shared base computation with col
+        func_8003AA34(&lbl_eu_80500664[0]);
+        result = getBdatStringColumnValue(fp, col, key);
     }
     sprintf(&lbl_eu_80573B30[0], &lbl_eu_80500664[0x1A8], result);
     return &lbl_eu_80573B30[0];
@@ -1676,8 +1679,10 @@ extern "C" void func_8013996C(CAnimOwnerIf* owner, void* src, u32 idx) {
 
 extern "C" void func_80139A18(void* obj, void* arg2, void* src1, void* src2) {
     CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
-    if (owner->_v03C((u32)arg2, 1) == 0) return;
-    s16* data = (s16*)owner->_v068();
+    CAnimOwnerIf* res = owner->_v03C((u32)arg2, 1);
+    if (res == NULL) return;
+    if (res == NULL) return;
+    s16* data = (s16*)res->_v068();
     if (data == NULL) return;
     s16* s1 = (s16*)src1;
     s16* s2 = (s16*)src2;
@@ -1709,9 +1714,12 @@ extern "C" void func_80139AC8(CAnimOwnerIf* owner, void* src1, void* src2) {
 
 extern "C" void func_80139B5C(void* obj, void* arg2, void* src) {
     CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
-    if (owner->_v03C((u32)arg2, 1) == 0) return;
-    u8* d = (u8*)owner;
-    u8* s = (u8*)&src;
+    void* result = owner->_v03C((u32)arg2, 1);
+    if (result == NULL) return;
+    // 8-byte color field (0xDC..0xE3): both 32-bit words carry the same value
+    u32 words[2] = { (u32)src, (u32)src };
+    u8* d = (u8*)result;
+    u8* s = (u8*)words;
     d[0xDC] = s[0];
     d[0xDD] = s[1];
     d[0xDE] = s[2];
@@ -1724,9 +1732,12 @@ extern "C" void func_80139B5C(void* obj, void* arg2, void* src) {
 
 extern "C" void func_80139BF4(void* obj, void* arg2, void* a, void* b) {
     CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
-    if (owner->_v03C((u32)arg2, 1) == 0) return;
-    u8* d = (u8*)owner;
-    u8* s = (u8*)&a;
+    void* result = owner->_v03C((u32)arg2, 1);
+    if (result == NULL) return;
+    // 8-byte color field (0xDC..0xE3) from two 32-bit words
+    u32 words[2] = { (u32)a, (u32)b };
+    u8* d = (u8*)result;
+    u8* s = (u8*)words;
     d[0xDC] = s[0];
     d[0xDD] = s[1];
     d[0xDE] = s[2];

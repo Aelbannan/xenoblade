@@ -701,7 +701,7 @@ void CfObjectMove_nullsub_17(){}
 // (this) for the THIRD target load/store (this is dead after); retail keeps r4
 // for all three (3 reg_swap, 0 structural). Witness rejects the r4<->r3 ABI
 // permutation. Separated locals + (void)this invariant.
-void cf::CfObjectMove::CfObject_UnkVirtualFunc14(float value) {
+void* cf::CfObjectMove::CfObject_UnkVirtualFunc14(float value) {
     void* target = this->mTargetC4;
     if (target != 0) {
         *(float*)((char*)target + 0x388) = value;
@@ -714,6 +714,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc14(float value) {
     if (target != 0) {
         *(float*)((char*)target + 0x388) = value;
     }
+    return this;
 }
 
 extern "C" void CfObjectMove_UnkVirtualFunc11__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, u16 v) {
@@ -802,7 +803,7 @@ void CfObjectMove_nullsub_20(){}
 // Retail symbol is Fv but the body consumes f1 (three null-checked stores at
 // +0x38C of the C4/C8/CC targets) - forced-name form with the hidden float
 // arg (same scheme as CfObjectMove_UnkVirtualFunc4).
-extern "C" void CfObject_UnkVirtualFunc16__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float value) {
+extern "C" void* CfObject_UnkVirtualFunc16__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, float value) {
     void* target = self->mTargetC4;
     if (target != 0) {
         *(float*)((char*)target + 0x38C) = value;
@@ -811,10 +812,11 @@ extern "C" void CfObject_UnkVirtualFunc16__Q22cf12CfObjectMoveFv(cf::CfObjectMov
     if (target != 0) {
         *(float*)((char*)target + 0x38C) = value;
     }
-    void* last = self->mTargetCC;
-    if (last != 0) {
-        *(float*)((char*)last + 0x38C) = value;
+    target = self->mTargetCC;
+    if (target != 0) {
+        *(float*)((char*)target + 0x38C) = value;
     }
+    return self;
 }
 
 // Retail symbols are Fv but the bodies consume r4 (an index forwarded to

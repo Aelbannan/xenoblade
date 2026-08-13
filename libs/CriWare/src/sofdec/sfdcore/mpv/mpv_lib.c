@@ -135,12 +135,18 @@ void* MPV_Create(void* pool) {
         base += 0xdc0;
     }
     if (h != 0) {
+        // Retail flushes the found block with an inline dcbi + ps_sel
+        // countdown loop (mtctr 110; dcbi r3,r4; ps_sel f0,f3,f31,f4;
+        // addi r4,32; bdnz) before the tail-call.  Inline dcbi is not an
+        // MWCC intrinsic (KB ref 04331c483d; MPV_Finish same gap) and the
+        // spec-encoded ps_sel needs a dc.l word inside an asm-void kernel,
+        // so the high-level loop below keeps the semantics via per-line
+        // __dcbi calls (documented ceiling; see MWCC_REFERENCE §8507).
         if (lbl_eu_80602B88[0x48 / 4] & 0x10000000) {
             u8* b = (u8*)h;
             u32 off;
             for (off = 0; off < 0x6e * 0x20; off += 0x20) {
                 __dcbi(b, off);
-                __dcbz_l(b, off);
             }
         }
         return mpvlib_InitHn(h);

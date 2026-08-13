@@ -171,10 +171,11 @@ void func_8045271C__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
         CDeviceFontLayer* candidate;
         if (child == 0) {
             candidate = 0;
-        } else if (child->mType == CDeviceFontLayer::TYPE_FONT_LAYER) {
-            candidate = child;
         } else {
-            candidate = 0;
+            candidate = child;
+            if (child->mType != CDeviceFontLayer::TYPE_FONT_LAYER) {
+                candidate = 0;
+            }
         }
         if (candidate != 0 && candidate->field_0x1F8 == fontId) {
             layer = candidate;
@@ -202,10 +203,11 @@ void func_8045283C__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
         CDeviceFontLayer* candidate;
         if (child == 0) {
             candidate = 0;
-        } else if (child->mType == CDeviceFontLayer::TYPE_FONT_LAYER) {
-            candidate = child;
         } else {
-            candidate = 0;
+            candidate = child;
+            if (child->mType != CDeviceFontLayer::TYPE_FONT_LAYER) {
+                candidate = 0;
+            }
         }
         if (candidate != 0 && candidate->field_0x1F8 == fontId) {
             layer = candidate;
@@ -231,10 +233,11 @@ void func_804528C4__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
         CDeviceFontLayer* candidate;
         if (child == 0) {
             candidate = 0;
-        } else if (child->mType == CDeviceFontLayer::TYPE_FONT_LAYER) {
-            candidate = child;
         } else {
-            candidate = 0;
+            candidate = child;
+            if (child->mType != CDeviceFontLayer::TYPE_FONT_LAYER) {
+                candidate = 0;
+            }
         }
         if (candidate != 0 && candidate->field_0x1F8 == fontId) {
             layer = candidate;
@@ -260,10 +263,11 @@ void func_8045294C__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
         CDeviceFontLayer* candidate;
         if (child == 0) {
             candidate = 0;
-        } else if (child->mType == CDeviceFontLayer::TYPE_FONT_LAYER) {
-            candidate = child;
         } else {
-            candidate = 0;
+            candidate = child;
+            if (child->mType != CDeviceFontLayer::TYPE_FONT_LAYER) {
+                candidate = 0;
+            }
         }
         if (candidate != 0 && candidate->field_0x1F8 == fontId) {
             layer = candidate;

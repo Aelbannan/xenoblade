@@ -13,6 +13,12 @@ Commands:
   list   <file>...                  enumerate structs/classes/unions in files
   show   <file> <Type>              dump the layout of one type
   search <pattern> [--root DIR]     find files defining matching types
+  check  [dir/file...]              lint all structs/classes: report offsets
+                                    that contradict retail comments, overlaps,
+                                    size mismatches, unplaceable members
+  vtable <sym|addr|ClassName>       dump a retail vtable's slot names from the
+                                    build/us/asm data splits (RTTI/offset slots
+                                    marked; slot symbols are the real methods)
 
 Options (show):
   -r, --recursive        expand nested types (same-file or --include) inline
@@ -23,6 +29,16 @@ Options (show):
   --json                 machine-readable output (one JSON object on stdout)
   -v, --verbose          diagnostics for unknown types / unresolvable fields
 
+Options (check):
+  --include-ctx          also check .ctx.c scaffold files (skipped by default)
+  --jobs N               parallel workers (default: CPU count)
+  --quiet                print only problem lines
+  --json                 machine-readable findings + summary
+
+Bases and member types in other files are resolved automatically by locating
+and parsing their headers under src/ libs/ include/ (templates are excluded:
+their instantiations carry their own sizes, so comment anchors are used).
+
 Layout rules (MWCC -align powerpc):
   char/bool:1, short:2, int/long/float/ptr:4, long long/double:8; arrays and
   structs align to their member max; bitfields pack into 4-byte units; a
@@ -31,6 +47,7 @@ Layout rules (MWCC -align powerpc):
 """
 
 import argparse
+import ast
 import json
 import os
 import re
@@ -220,7 +237,8 @@ def split_segments(body):
                     # inline method body (or braced initializer) close
                     j = i + 1
                     comment = None
-                    while j < n and body[j]["kind"] == "comment":
+                    while j < n and body[j]["kind"] == "comment" \
+                            and body[j]["line"] == t["line"]:
                         comment = body[j]
                         j += 1
                     segs.append((cur, comment))
@@ -230,7 +248,8 @@ def split_segments(body):
             elif t["value"] == ";" and depth == 0:
                 j = i + 1
                 comment = None
-                while j < n and body[j]["kind"] == "comment":
+                while j < n and body[j]["kind"] == "comment" \
+                        and body[j]["line"] == t["line"]:
                     comment = body[j]
                     j += 1
                 segs.append((cur, comment))
@@ -451,7 +470,9 @@ def _parse_typedef(tokens, i, info, line):
         close = find_matching(stripped, p)
         if close is None:
             return semi + 1
-        body = stripped[p + 1 : close]
+        # slice the ORIGINAL token list (comments included) for the body so
+        # `/* 0xNN */` offset comments survive into the member parse
+        body = stmt[_map_idx(stmt, stripped, p) + 1 : _map_idx(stmt, stripped, close)]
         # aliases after '}'
         tail = stripped[close + 1 :]
         aliases = []
@@ -479,6 +500,19 @@ def _parse_typedef(tokens, i, info, line):
         if alias:
             info.aliases[alias] = [{"kind": "id", "value": name, "line": line}]
     return semi + 1
+
+
+def _map_idx(stmt, stripped, s_idx):
+    """Map an index into `stripped` (comment-free view of `stmt`) back to the
+    corresponding index in `stmt`."""
+    si = 0
+    for oi, t in enumerate(stmt):
+        if t["kind"] == "comment":
+            continue
+        if si == s_idx:
+            return oi
+        si += 1
+    return len(stmt)
 
 
 def _last_id(tokens):
@@ -524,6 +558,7 @@ def parse_body(td, info):
     """Fill td.members with field dicts. Also registers nested anonymous types."""
     members = []
     has_virtual = False
+    virtuals = []
     static_seen = False
     for seg_toks, trail_comment in split_segments(td.body):
         toks = strip_comments(seg_toks)
@@ -569,9 +604,22 @@ def parse_body(td, info):
             if m:
                 members.append(m)
             continue
-        # virtuals: mark vtable, skip the (method) declaration
+        # virtuals: mark vtable, record the slot (name + signature), skip body
         if first["kind"] == "id" and first["value"] == "virtual":
             has_virtual = True
+            rest = toks[1:]
+            # signature text up to the first '('
+            name = None
+            for k, t in enumerate(rest):
+                if t["value"] == "(":
+                    for k2 in range(k - 1, -1, -1):
+                        if rest[k2]["kind"] == "id":
+                            name = rest[k2]["value"]
+                            break
+                    break
+            if name:
+                virtuals.append({"name": name,
+                                 "sig": _join_tokens(rest).strip()})
             continue
         if first["kind"] == "id" and first["value"] == "operator":
             continue  # method
@@ -586,11 +634,12 @@ def parse_body(td, info):
             if any(t["kind"] == "id" and t["value"] == "virtual" for t in toks):
                 has_virtual = True
             continue
-        m = _make_field(toks, info, trail_comment)
+        m = _make_field(toks, info, trail_comment, seg_toks)
         if m:
             members.append(m)
     td.members = members
     td.has_virtual = has_virtual
+    td.virtuals = virtuals
     return members
 
 
@@ -793,7 +842,16 @@ def _join_tokens(toks):
     return s.strip()
 
 
-def _make_field(toks, info, trail_comment):
+def _make_field(toks, info, trail_comment, raw_toks=None):
+    raw_toks = raw_toks if raw_toks is not None else toks
+    lead_off = None
+    for t in raw_toks:
+        if t["kind"] == "comment":
+            o = parse_offset_comment(t["value"])
+            if o is not None:
+                lead_off = o
+        else:
+            break
     ty, name, dims, bits, fn_ret, fn_params = _split_type_name(toks)
     if name is None and not bits:
         # anonymous union `union {...}` handled in _parse_nested; a bare
@@ -804,6 +862,8 @@ def _make_field(toks, info, trail_comment):
     comment_off = None
     if trail_comment:
         comment_off = parse_offset_comment(trail_comment["value"])
+    if comment_off is None and lead_off is not None:
+        comment_off = lead_off  # `/* 0xNN */ u8 x;` leading-comment style
     # static data member (skipped earlier via 'static' prefix, but a static
     # member function returns here too) - guard:
     return {
@@ -843,16 +903,60 @@ def align_up(v, a):
 
 
 class LayoutEnv:
-    def __init__(self, infos, sizes, verbose):
+    def __init__(self, infos, sizes, verbose, auto_include=True, roots=None):
         self.infos = infos           # list of FileInfo (first = primary)
         self.sizes = sizes or {}     # overrides: name -> int
         self.verbose = verbose
         self.warnings = []
+        self.auto_include = auto_include
+        self.roots = roots or [d for d in ("src", "libs", "include")
+                               if os.path.isdir(d)]
+        self._miss_cache = set()
 
     def find_type(self, name):
         for info in self.infos:
             if name in info.types:
                 return info.types[name]
+        if self.auto_include:
+            return self._auto_include(name)
+        return None
+
+    def find_local(self, name):
+        """Look up `name` only in already-parsed files (no auto-include).
+        Used for template base names: a template's generic definition does not
+        describe a given instantiation's size (reslist<A> vs reslist<B>), so
+        resolving through it is wrong - let comments anchor those instead."""
+        for info in self.infos:
+            if name in info.types:
+                return info.types[name]
+        return None
+
+    def _auto_include(self, name):
+        """Best-effort: locate and parse a header defining `name` so cross-file
+        bases / member types resolve without explicit --include. Uses a shared
+        global name->file index; when several files register the type, prefers
+        the most substantial definition (real classes over forward decls)."""
+        if name in self._miss_cache or len(self.infos) > 24:
+            return None
+        best = None
+        best_score = -1
+        for path in _global_type_index().get(name, []):
+            if any(os.path.abspath(path) == os.path.abspath(i.path) for i in self.infos):
+                continue
+            try:
+                info = parse_file(path)
+            except Exception:
+                continue
+            self.infos.append(info)
+            td = info.types.get(name)
+            if td is not None:
+                score = len(td.members or []) + len(td.bases) * 4
+                if score > best_score:
+                    best = td
+                    best_score = score
+        if best is not None:
+            return best
+        self._miss_cache.add(name)
         return None
 
     def resolve_type_tokens(self, ty_toks, in_file, seen=None, alias_chain=None):
@@ -876,13 +980,13 @@ class LayoutEnv:
             return None, None
         if base in self.sizes:
             return self.sizes[base], self.sizes[base]
-        # template: try base name
+        # template: try base name (local definitions only - see find_local)
         m = re.match(r"([\w:]+)<", base)
         if m:
             tn = m.group(1)
             if tn in self.sizes:
                 return self.sizes[tn], self.sizes[tn]
-            td = self.find_type(tn)
+            td = self.find_local(tn)
             if td is not None:
                 lay = layout_type(td, self, seen=seen)
                 return lay["size"], lay["align"]
@@ -925,6 +1029,90 @@ class LayoutEnv:
         return names
 
 
+_GLOBAL_INDEX = None
+_GLOBAL_INDEX_LOCK = None
+
+
+def _global_type_index():
+    """Shared name -> [file paths] index over src/ libs/ include/, built once.
+    Cheap regex pass; the parse in _auto_include verifies each hit."""
+    global _GLOBAL_INDEX
+    if _GLOBAL_INDEX is not None:
+        return _GLOBAL_INDEX
+    idx = {}
+    for root in ("src", "libs", "include"):
+        if not os.path.isdir(root):
+            continue
+        for dirpath, _, files in os.walk(root):
+            for fn in files:
+                if not fn.endswith((".hpp", ".h", ".hxx")) or ".ctx." in fn:
+                    continue
+                p = os.path.join(dirpath, fn)
+                try:
+                    with open(p, errors="replace") as f:
+                        text = f.read()
+                except OSError:
+                    continue
+                for m in re.finditer(
+                        r"\b(?:struct|class)\s+"
+                        r"(?:__declspec\s*\(\s*[\w, ]+\s*\)\s*)?"
+                        r"(?:__attribute__\s*\([^)]*\)\s*)?"
+                        r"([A-Za-z_]\w*)\b", text):
+                    idx.setdefault(m.group(1), []).append(p)
+                for m in re.finditer(r"\benum\s+([A-Za-z_]\w*)\s*\{", text):
+                    idx.setdefault(m.group(1), []).append(p)
+                for m in re.finditer(r"\btypedef\b[^;{]*?([A-Za-z_]\w*)\s*;", text):
+                    idx.setdefault(m.group(1), []).append(p)
+    _GLOBAL_INDEX = idx
+    return idx
+
+def _layout_union(td, env, seen):
+    """Union: all members share offset 0; size = max member end, aligned."""
+    members = []
+    size = 0
+    align = 1
+    pack = None
+    for info in env.infos:
+        p = info.pack_at(td.line)
+        if p:
+            pack = p
+    for m in td.members:
+        if m["kind"] != "field":
+            continue
+        if m.get("nested_td") is not None:
+            bl = layout_type(m["nested_td"], env, seen)
+            sz, al = bl["size"], bl["align"]
+        else:
+            sz, al = env.resolve_type_tokens(m["type_tokens"], td.src_file, seen)
+        dims = m.get("array_dims") or []
+        if sz is not None:
+            for d in dims:
+                n = _arr_len(d)
+                if n is None:
+                    sz = None
+                    break
+                sz *= n
+        if m.get("bitfield"):
+            sz, al = 4, 4
+        if pack is not None and al is not None:
+            al = min(al, pack)
+        members.append({
+            "offset": 0, "size": sz, "align": al,
+            "type": m["type_name"], "name": m["name"],
+            "bitfield": m.get("bitfield"),
+            "comment": m.get("comment_off"),
+            "flags": ["union"],
+            "inferred": False,
+        })
+        if sz is not None:
+            size = max(size, sz)
+        if al is not None:
+            align = max(align, al)
+    size = align_up(size, align)
+    return {"size": size, "align": align, "members": members,
+            "cycle": False, "td": td}
+
+
 def layout_type(td, env, seen=None):
     """Compute the layout of a TypeDef. Returns dict with size/align/members."""
     seen = seen or set()
@@ -936,6 +1124,9 @@ def layout_type(td, env, seen=None):
 
     if td.kind == "enum":
         return {"size": 4, "align": 4, "members": [], "cycle": False}
+
+    if td.kind == "union":
+        return _layout_union(td, env, seen)
 
     members = []
     end_max = 0          # highest known end offset so far (fields, bases, vtable)
@@ -1049,6 +1240,7 @@ def layout_type(td, env, seen=None):
         else:
             # no comment and the walk is anchored (or the type is unknown):
             # defer; a post-pass places it from neighbor/size comments
+            anchored = True
             members.append({
                 "offset": None, "size": size,
                 "align": a if size is not None else None,
@@ -1149,8 +1341,48 @@ def _bits_int(s):
 
 
 def _arr_len(d):
-    m = re.fullmatch(r"\s*(\d+)\s*", d)
-    return int(m.group(1)) if m else None
+    return _eval_expr(d)
+
+
+def _eval_expr(s):
+    """Evaluate simple integer expressions used for array sizes, e.g.
+    '0x40 - 0x29' or '16 * 2'. Only hex/dec literals and + - * / ( ) are
+    allowed; anything else returns None."""
+    s = s.strip()
+    if not s:
+        return None
+    if not re.fullmatch(r"[0-9a-fA-FxX+\-*/().\s]+", s):
+        return None
+    try:
+        tree = ast.parse(s, mode="eval")
+    except SyntaxError:
+        return None
+
+    def ev(node):
+        if isinstance(node, ast.Expression):
+            return ev(node.body)
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+            return int(node.value)
+        if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Sub,
+                                                                ast.Mult, ast.FloorDiv, ast.Div)):
+            l, r = ev(node.left), ev(node.right)
+            if l is None or r is None:
+                return None
+            if isinstance(node.op, ast.Add):
+                return l + r
+            if isinstance(node.op, ast.Sub):
+                return l - r
+            if isinstance(node.op, ast.Mult):
+                return l * r
+            if r == 0:
+                return None
+            return (l // r) if isinstance(node.op, ast.FloorDiv) else int(l / r)
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub):
+            v = ev(node.operand)
+            return -v if v is not None else None
+        return None
+
+    return ev(tree)
 
 
 def infer_sizes(members, size_comment=None):
@@ -1458,11 +1690,14 @@ def _check_file(path, include_ctx=False):
                             f"computed 0x{lay['size']:X} != retail 0x{td.size_comment:X}"))
         # warnings: separate real problems from expected (unresolved types)
         for w in warns:
-            if "unresolved" in w or "unknown type" in w or "cannot place" in w or \
-               "layout stops" in w:
-                if "cannot place" in w or "layout stops" in w:
-                    findings.append(("INFO", td.line, name, w))
-                # unresolved base/type without includes is expected -> skip
+            if "cannot place" in w or "layout stops" in w:
+                findings.append(("INFO", td.line, name, w))
+            elif "computed sizeof" in w:
+                # reported as the SIZE finding below
+                pass
+            elif "unresolved" in w or "unknown type" in w:
+                # expected without a full include closure
+                pass
             else:
                 findings.append(("WARN", td.line, name, w))
     return path, findings
@@ -1523,6 +1758,116 @@ def cmd_check(args):
         print(f"\nchecked {len(paths)} files: {problem_files} with issues "
               f"(severities: {sev_counts or 'none'})")
     return 1 if problem_files else 0
+
+
+# --------------------------------------------------------------------------
+# mapvt: map cast-if slots to retail vtable symbols
+# --------------------------------------------------------------------------
+
+
+def _is_funptr(member):
+    return "(*" in member.get("type", "")
+
+
+def _named_slot(sym):
+    """A retail vtable slot counts as a real method if it is a named symbol:
+    not a raw hex word, not an unnamed lbl_eu_ data label, not a string
+    constant, not RTTI."""
+    if not sym:
+        return False
+    if re.fullmatch(r"0[xX][0-9a-fA-F]+", sym):
+        return False
+    if sym.startswith("lbl_eu_") or sym.startswith("gap_"):
+        return False
+    if sym.startswith("__RTTI__") or sym.startswith("@") or sym.startswith("."):
+        return False
+    return True
+
+
+def _castif_slots(td, env, seen=None):
+    """Return [(offset, name, sig)] for a cast-if type: fn-pointer members of a
+    struct, or the declared virtuals of an all-virtual class (vtable slot i at
+    (2 + i) * 4)."""
+    slots = []
+    if getattr(td, "virtuals", None):
+        for i, v in enumerate(td.virtuals):
+            slots.append((0x08 + i * 4, v["name"], v["sig"]))
+        return slots
+    lay = layout_type(td, env, seen)
+    for m in lay.get("members", []):
+        if _is_funptr(m) and m.get("offset") is not None:
+            slots.append((m["offset"], m["name"], m["type"]))
+    return slots
+
+
+def _map_slots(slots, by_label, by_addr):
+    """For each slot offset, collect candidate retail vtable labels that have a
+    named method there. Returns dict label -> {addr, matches, total, per-slot}."""
+    cands = {}
+    for label, (path, addr, syms) in by_label.items():
+        hits = {}
+        for off, name, sig in slots:
+            idx = off // 4
+            if idx < len(syms) and _named_slot(syms[idx]):
+                hits[off] = syms[idx]
+        if hits:
+            mangled = sum(1 for s in syms if _named_slot(s) and "__" in s)
+            cands[label] = {"label": label, "addr": addr, "path": path,
+                            "hits": hits, "mangled": mangled}
+    return cands
+
+
+def cmd_mapvt(args):
+    env = LayoutEnv([parse_file(args.file)], args.sizes, args.verbose)
+    splits = collect_splits(args.asm_root or os.path.join("build", "us", "asm"))
+    by_addr, by_label = index_vtables(splits)
+
+    if args.type:
+        types = [env.find_type(args.type)] if env.find_type(args.type) else []
+        if not types:
+            print(f"type {args.type!r} not found in {args.file}", file=sys.stderr)
+            return 2
+    else:
+        types = list(env.infos[0].types.values())
+
+    report = []
+    for td in types:
+        slots = _castif_slots(td, env)
+        if not slots:
+            continue
+        cands = _map_slots(slots, by_label, by_addr)
+        # rank by coverage
+        ranked = sorted(cands.values(),
+                        key=lambda c: (-len(c["hits"]), -c["mangled"], -c["addr"]))
+        best = ranked[0] if ranked else None
+        entry = {"file": td.src_file, "line": td.line, "type": td.name,
+                 "slots": [{"offset": off, "declared": name, "sig": sig}
+                            for off, name, sig in slots],
+                 "vtable": ({"label": best["label"], "address": best["addr"],
+                              "coverage": len(best["hits"]), "total": len(slots),
+                              "mangled": best["mangled"]}
+                             if best else None),
+                 "resolved": ({"offset": off, "retail": sym}
+                               for off, sym in (best["hits"].items() if best else {}))}
+        entry["resolved"] = list(entry["resolved"])
+        report.append(entry)
+        if args.json:
+            continue
+        if not best:
+            print(f"{td.src_file}:{td.line}: {td.name}: no matching retail vtable")
+            continue
+        print(f"{td.src_file}:{td.line}: {td.name}")
+        print(f"  -> {best['label']} (0x{best['addr']:X})  "
+              f"{len(best['hits'])}/{len(slots)} slots resolved")
+        for off, name, sig in slots:
+            sym = best["hits"].get(off)
+            if sym:
+                print(f"     0x{off:02X}  {name:<18} -> {sym}")
+            else:
+                print(f"     0x{off:02X}  {name:<18} -> (no named slot)")
+    if args.json:
+        print(json.dumps(report, indent=2))
+    return 0
 
 
 # --------------------------------------------------------------------------
@@ -1650,6 +1995,16 @@ def main(argv=None):
     p_v.add_argument("--json", action="store_true")
     p_v.set_defaults(func=cmd_vtable)
 
+    p_m = sub.add_parser("mapvt", help="map cast-if slots to retail vtable symbols")
+    p_m.add_argument("file")
+    p_m.add_argument("type", nargs="?", default=None,
+                     help="specific type; default: all cast-if types in the file")
+    p_m.add_argument("--asm-root", default=None)
+    p_m.add_argument("--sizes", type=json.loads, default=None)
+    p_m.add_argument("--json", action="store_true")
+    p_m.add_argument("-v", "--verbose", action="store_true")
+    p_m.set_defaults(func=cmd_mapvt)
+
     args = ap.parse_args(argv)
     if args.cmd == "show":
         return cmd_show(args)
@@ -1661,6 +2016,8 @@ def main(argv=None):
         return cmd_check(args)
     if args.cmd == "vtable":
         return cmd_vtable(args)
+    if args.cmd == "mapvt":
+        return cmd_mapvt(args)
     return 2
 
 

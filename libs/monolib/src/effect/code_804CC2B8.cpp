@@ -1273,14 +1273,19 @@ void func_804D4010(EffectStruct* self, u32 a, u32 b) {
 }
 
 // Target 2: us-804d22b4 - if field_0x1c <= 0.0f, clear bit 15 (0x8000) of field_0x06
-// SOFT-CAP: MWCC optimizes wrapping mask 0xFFFF7FFF (rlwinm 17,15) to
-// non-wrapping 0x00007FFF (rlwinm 17,31) because upper bits are zero after lhz.
-// Semantically equivalent - same result for all inputs.
+// Retail clears the u16 flag's bit 0x8000 with the WRAP mask rlwinm 17,15
+// (0xFFFF7FFF); ordinary `u16 &= ~0x8000` (or DECOMP_PPC_RLWINM) emits the
+// semantically equivalent truncated rlwinm 17,31 at every repo compiler. A
+// bitfield clear reproduces the exact wrap mask (same pattern as
+// CScheduleFlags::b15 in code_804E36DC.cpp).
+struct EffectSceneFlags {
+    u16 b15 : 1;
+    u16 : 15;
+};
+
 void func_804CE140(EffectScene* self) {
     if (lbl_eu_8066B0DC < self->field_0x1c) return;
-    u32 tmp = self->field_0x06;
-    tmp &= ~0x8000;
-    self->field_0x06 = (u16)tmp;
+    ((EffectSceneFlags*)&self->field_0x06)->b15 = 0;
 }
 
 // Target 3: us-804d1218 - if bits 0x0800 and 0x8000 of field_0x06 are set, add field_0x18 to field_0x10

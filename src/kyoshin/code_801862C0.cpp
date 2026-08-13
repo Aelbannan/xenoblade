@@ -108,7 +108,34 @@ void* func_801864DC(void* pObj, int slot){ return 0; }
 
 void __dt__801865C4(){}
 
-void* func_80186664(void* p){ return 0; }
+extern "C" int func_800B8920(void*);
+extern "C" void func_800B9404(void*);
+// func_80186664 (recovered): teardown loop over 64 widget slots.  For each
+// slot: if the slot pointer is armed, run the check helper (func_800B8920)
+// and, when it passes, the free helper (func_800B9404); the slot pointer is
+// cleared on both paths (the retail keeps two ptr=0 stores on the success
+// path — an unreduced duplicate of the shared tail store) and the slot's
+// halfword flag at +0x100 is cleared unconditionally.
+extern "C" void func_80186664(u8* self) {
+    u32 zero = 0;
+    void** p = (void**)self;
+    u16* h = (u16*)(self + 0x100);
+    for (u32 i = 0; i < 64; i++) {
+        void* ptr = *p;
+        if (ptr != 0) {
+            if (func_800B8920(ptr) != 0) {
+                // Retail re-reads the slot pointer for the second call (no
+                // local kept across calls; the calls may alias the array).
+                func_800B9404(*p);
+                *p = (void*)0;
+            }
+            *p = (void*)0;
+        }
+        *h = (u16)0;
+        p++;
+        h++;
+    }
+}
 
 void* func_801866F0(void* p){ return 0; }
 

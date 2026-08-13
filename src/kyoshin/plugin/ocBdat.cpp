@@ -75,20 +75,15 @@ void CBdat::func_8003AA8C(u32 idx) {
 #pragma dont_inline on
 void* getFP(const char* pName) {
     void** tableSlot;
-    const char* name;
-    s32 tableIdx;
     BdatNameIndexHdr* hdr;
-    s32 hi;
-    s32 lo;
-    s32 mid;
-    u32 entryOff;
+    s32 tableIdx;
     char* entry;
-    u16 nameOff;
-    const char* entryName;
+    s32 lo;
+    s32 hi;
+    s32 mid;
     s32 cmp;
 
     tableSlot = lbl_eu_805705D0;
-    name = pName;
     tableIdx = 0;
     while (tableIdx < 7) {
         hdr = static_cast<BdatNameIndexHdr*>(*tableSlot);
@@ -98,11 +93,8 @@ void* getFP(const char* pName) {
             hi = hdr->count;
             while (lo < hi) {
                 mid = (lo + hi) / 2;
-                entryOff = hdr->offsets[mid];
-                entry = base + entryOff;
-                nameOff = *reinterpret_cast<u16*>(entry + 6);
-                entryName = entry + nameOff;
-                cmp = strcmp(entryName, name);
+                entry = base + hdr->offsets[mid];
+                cmp = strcmp(entry + *reinterpret_cast<u16*>(entry + 6), pName);
                 if (cmp < 0) {
                     lo = static_cast<s32>(mid + 1);
                 } else if (cmp > 0) {
@@ -431,9 +423,10 @@ extern "C" u32 func_8003B748(void* table, void* col, s32 row, s32 index){
     u16 colDataOff = *reinterpret_cast<u16*>(colHdr + 0x2);
     dataBase += rowStride;
     dataBase += colDataOff;
-    // Retail: (elemType-6) <= 1 -> the 1/4, 2/5, 3 switch; else *4.
-    // Case 3 and the else share the *4 tail (retail beq to the same block).
-    if (static_cast<u32>(elemType - 6) <= 1) {
+    // Retail: (elemType-6) <= 1 (types 6/7) jumps straight into the shared
+    // 1/4, 2/5, 3 switch runs otherwise (retail `bc 4,1` = branch if NOT GT
+    // straight into the shared *4 block).
+    if (static_cast<u32>(elemType - 6) > 1) {
         switch (elemType) {
         case 1:
         case 4:

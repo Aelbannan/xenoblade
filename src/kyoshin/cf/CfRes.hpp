@@ -31,6 +31,70 @@ struct CfRes_65818 {
     int decRefCount();
 };
 
+// 0xC-byte table-entry record (handle at +0, refcount at +4) used by the
+// manager's two entry tables and the CfResEntry_* helpers.
+struct CfResSlot {
+    u32 field_00;   // 0x00 - handle
+    u32 field_04;   // 0x04 - refcount
+    u32 field_08;   // 0x08
+};
+
+// 0x10-byte name-keyed table record walked by func_80065694: the +0x00 word
+// is a relative offset from the table base (the result pointer), +0x04 is
+// the value written to *out, and +0x08 is the 8-byte name string hashed by
+// func_800AA714 (bits 27-31 of the hash select the record).
+struct CfResNameEntry {
+    u32 field_00;   // 0x00 - relative offset
+    u32 field_04;   // 0x04 - value
+    char name[8];   // 0x08 - name string
+};
+
+// Table container read by func_80065694: entry count at +0x08, the entry
+// array at +0x10.
+struct CfResNameTable {
+    u8 _00[0x8];
+    u32 field_08;                  // 0x08 - entry count
+    u8 _0C[4];                     // 0x0C
+    CfResNameEntry entries[1];     // 0x10 - entry array (count varies)
+};
+
+// 0x1FA4-byte CfRes manager object built by the __ct__Q22cf5CfResFv factory
+// ctor. The CProcess/CTTask base (0x00-0x53) is constructed by
+// __ct__8CProcessFv, then the +0x10 vtable and the +0x3C/+0x48 PTMF slots
+// are set by hand; a storage container lives at +0x54, followed by two
+// 0xC-stride entry tables at +0x1F2C/+0x1F50.
+struct CfResManager {
+    u8  _00[0x10];          // 0x00 - CProcess base head
+    u32 vtable;             // 0x10 - CTTask<CfResTask> then CfRes vtable
+    u8  _14[0x28];          // 0x14 - 0x3B
+    u32 mMoveFunc[3];       // 0x3C - ptmf (__ptmf_null)
+    u32 mDrawFunc[3];       // 0x48 - ptmf (__ptmf_null)
+    u32 storageVtable;      // 0x54 - storage subobject vtable (lbl_eu_80526830)
+    u8  storage[0x1E78];    // 0x58 - storage container (ctor __ct__80066F9C)
+    u8  _1ED0[0x5C];        // 0x1ED0 - gap
+    u32 tbl1Header[3];      // 0x1F2C
+    CfResSlot tbl1[2];      // 0x1F38
+    u32 tbl2Header[3];      // 0x1F50
+    CfResSlot tbl2[6];      // 0x1F5C (object ends at 0x1FA4)
+};
+
+// CfRes manager vtables and the null pointer-to-member constant (the retail
+// ctor stores the interim CTTask vtable at +0x10, then overwrites it with
+// the CfRes vtable; the +0x54 storage subobject gets its own vtable).
+extern u32 lbl_eu_805267EC[];   // interim CTTask<CfResTask> vtable
+extern u32 lbl_eu_805267A4[];   // CfRes vtable
+extern u32 lbl_eu_80526830[];   // +0x54 storage subobject vtable
+extern u32 __ptmf_null[3];
+
+// Factory-ctor imports (retail pre-mangled names: these are out-of-line
+// member ctors / allocators from other TUs). extern "C" keeps the call
+// relocs carrying the retail unmangled names (plain global declarations get
+// an `__F...` arg suffix appended by the MWCC mangler).
+extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
+extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
+extern "C" void __ct__8CProcessFv(CProcess* p);
+extern "C" void __ct__80066F9C(u8* self);
+
 namespace cf {
 
 class CfRes {
@@ -94,6 +158,11 @@ extern const char* lbl_eu_80661A24;
 // Name-key string pointer (in .sdata; table key compared by func_80062114).
 extern const char* lbl_eu_80661A20;
 
+// Extension separator character (in .sdata, ".\0"): the key func_80063C7C
+// strips from the end of a path. Declared as a scalar (not an array) so MWCC
+// emits the retail @sda21 addressing; use &lbl_eu_80661A40 as the string.
+extern char lbl_eu_80661A40;
+
 // Reset the ResInfoEntry array (defined in kyoshin/cf/IResInfo.cpp).
 // C linkage so the retail unmangled symbol name is emitted (struct params
 // would otherwise mangle it).
@@ -120,6 +189,9 @@ extern "C" int func_801BFA64(int);
 extern "C" int func_800A9068();
 extern "C" int func_800A9134();
 extern "C" void func_800676F8(u8* self);
+// Same-TU archive-registration helper (defined in CfRes.cpp; C linkage so
+// the call reloc from __ct__Q22cf5CfResFv carries the retail name).
+extern "C" void func_80063120(u8* self, int arg);
 // Packed-token packer (kyoshin/code_800AA008.cpp) - retail C symbol name.
 extern "C" u32 func_800AA2BC(u32 a, u32 b);
 // Device-file allocation helper (retail C symbol name).
@@ -167,8 +239,9 @@ extern "C" void func_800832BC__Q22cf13CfGameManagerFv(u16* first, u16* second);
 extern "C" bool func_80066788(void* self, bool r4, bool r5, bool r6);
 
 // Same-TU helpers (defined in CfRes.cpp; forward-declared so earlier callers
-// in the file can reference them).
-int func_80065158(int inst, int a, int b, int c, int d);
+// in the file can reference them). func_80065158 is C linkage so the call
+// reloc from func_800626F4 carries the retail unmangled name.
+extern "C" int func_80065158(int inst, int a, int b, int c, int d);
 int func_80065314(int inst, int a, int b);
 
 // func_80063AD0 (0x8006429C): pre-open entry reservation/validation step in
@@ -185,9 +258,11 @@ extern "C" int func_80065694(int a, int b, int* out);
 
 // Same-TU entry-table helpers (defined in CfRes.cpp). C linkage so call
 // relocs carry the retail unmangled names.
-extern "C" void CfResEntry_init(u8* self);
-extern "C" void* CfRes_getResEntry(u8* self, u32 idx);
+extern "C" void CfResEntry_init(u8* self);extern "C" void* CfRes_getResEntry(u8* self, u32 idx);
 extern "C" void* CfRes_getTblEntry(u8* self, u32 idx);
+extern "C" u32 CfResEntry_getHandle(u8* self);
+extern "C" u32 CfResEntry_getField4(u8* self);
+extern "C" void CfResEntry_setHandle(u8* self, u32 val);
 
 // +0x28 load-request flag of the CfResPcTableEntry record (func_80062C28's
 // result; only this word is read by func_80062A00 - the full record layout
@@ -215,9 +290,23 @@ struct CfResLookupV38 {
 extern "C" CfResPcEntry28View* func_80062C28(int id, int a);
 
 // Same-TU bit-field helpers (defined in CfRes.cpp). C linkage so call relocs
-// carry the retail unmangled names.
+// carry the retail unmangled names; noinline keeps them out-of-line calls
+// (retail calls them).
 extern "C" u32 CfRes_extractBits27_5(void* self);
 extern "C" u32 CfRes_getAddrLow10(void* self);
+
+// Same-TU packed-token repacker and vtable dispatch thunks used by
+// func_800641CC (defined in CfRes.cpp; C linkage so the call relocs carry
+// the retail unmangled names). int-returning so callers capture r3.
+extern "C" unsigned long CfRes_packShift27(unsigned long a, unsigned long b);
+extern "C" int CfRes_vcall04(void* self);
+extern "C" int CfRes_vcall05(void* self);
+extern "C" int CfRes_vcall07(void* self);
+extern "C" int CfRes_vcall08(void* self);
+
+// Packed-name hash (kyoshin/code_800AA008.cpp - retail C symbol name; the
+// plain C++ declaration in code_800AA008.hpp would mangle the call reloc).
+extern "C" u32 func_800AA714(const char* path);
 
 // Same-TU resource resolvers called by the func_80062xxx wrappers. C linkage
 // so the call relocs carry the retail unmangled names (same rule as the
@@ -253,8 +342,39 @@ extern "C" int CfRes_delegateOp0(void* a, void* b, void* c);
 // call relocs carry the retail symbol names).
 extern "C" int func_80064A74(int inst, int a, int b, int c);
 extern "C" int func_80064CD8(int inst, int a, int b, int c);
+extern "C" int func_80064DC4(int inst, int a, int b, int d, int e);
+extern "C" int func_80063394(int handle);
+extern "C" int func_80063C7C(ml::FixStr<64>& dest, const char* src);
+extern "C" int func_80064B78(int inst, int a, int b, int d, int e);
 extern "C" int func_80063A34(void* self);
 extern "C" ml::FixStr<64>* CfRes_stub_63ACC(ml::FixStr<64>* str);
+
+// Work-cache list helpers (defined in monolib/src/work/CWorkSystemCache.cpp
+// with C linkage; retail unmangled names). func_804D8FB4 counts the cached
+// entries; func_804D8FDC looks up the index-th entry and writes out its item
+// fields (0x3C value, +0x4 buffer pointer, 0x40 value).
+extern "C" u32 func_804D8FB4(void);
+extern "C" bool func_804D8FDC(int index, u32* outField3C, char** outField4Addr, u32* outField40);
+
+// Same-TU string compare helper (defined in CfRes.cpp; C linkage so call
+// relocs carry the retail unmangled name).
+extern "C" int CfRes_streq(const char* s1, const char* s2);
+
+// Same-TU entry helpers (defined in CfRes.cpp; C linkage so call relocs
+// carry the retail unmangled names).
+extern "C" int CfRes_vcall17(u8* self, void* arg);
+extern "C" int CfRes_vcall14(void* self);
+extern "C" void* CfRes_vcall38(u8* self);
+extern "C" void* CfRes_vcall34(u8* self);
+extern "C" void CfRes_delegateCleanup(void* self);
+extern "C" void CfRes_initFields4(u8* self, int a, int b, int c, int d);
+extern "C" void CfRes_setBits1_2(u8* self);
+extern "C" void CfRes_resetState2(u8* self);
+
+// Same-TU string helper (defined in CfRes.cpp; forward-declared so the later
+// func_80065158 caller can reference it). C linkage so the call reloc carries
+// the retail unmangled name.
+extern "C" char* CfRes_strcatAppend(char* buffer, const char* suffix);
 
 // Packed-token formatter (kyoshin/code_800AA008.cpp) - retail C symbol name.
 extern "C" u32 func_800AA600(const char* str);

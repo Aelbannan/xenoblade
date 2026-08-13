@@ -113,17 +113,12 @@ void func_8018B0FC(void* dst, void* src) {
 // Copies the 0x806-byte sell data blob: the 256 x 8-byte item array at +0x4
 // (the mItems struct assignment lowers to the retail mtctr/lwzu/stwu counted
 // loop) followed by the trailing u16 at +0x804.
-// Copies the 0x806-byte sell data blob: the 256 x 8-byte item array at +0x4
-// (the mItems struct assignment lowers to the retail mtctr/lwzu/stwu counted
-// loop) followed by the trailing u16 at +0x804.
-// Open item: struct-copy loop (mItems 0x800 + mField804). MWCC emits the two
-// pointer-save moves (or r6=src / or r7=dst) in the opposite order to retail
-// (2 reg_swap, 0 structural); witness rejects the r3<->r4 ABI permutation
-// (same class as func_800B7680/func_801CB9D8). Local/order variants invariant.
-// Open item: struct-copy loop (mItems 0x800 + mField804). MWCC emits the two
-// pointer-save moves (or r6=src / or r7=dst) in the opposite order to retail
-// (2 reg_swap, 0 structural); witness rejects the r3<->r4 ABI permutation
-// (same class as func_800B7680/func_801CB9D8). Local/order variants invariant.
+// Open item: struct-copy loop (mItems 0x800 + mField804). Retail saves the
+// src pointer first (or r6,r4,r4 before or r7,r3,r3); MWCC invariantly saves
+// dst first across ~30 source shapes, 14 MWCC versions, -O4,s/-O4,p/-O3,
+// -ipa/-func_align variants (same ABI-boundary class as func_800B7680;
+// witness rejects: r6/r7 and r3/r4 both swap, no consistent bijection).
+// The loop body and tail are otherwise byte-identical.
 void func_8018B130(ShopSellData* dst, const ShopSellData* src) {
     dst->mItems = src->mItems;
     dst->mField804 = src->mField804;

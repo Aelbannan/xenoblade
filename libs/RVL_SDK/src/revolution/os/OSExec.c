@@ -11,14 +11,12 @@
 
 BOOL __OSInReboot;
 
-#pragma dont_inline on
 void Run(void (*func)(void)) {
     ICFlashInvalidate();
     __sync();
     __isync();
     func();
 }
-#pragma dont_inline off
 
 void __OSGetExecParams(OSExecParams* out) {
     if ((void*)OS_DOL_EXEC_PARAMS >= (void*)0x80000000) {

@@ -227,26 +227,116 @@ void func_8013D1E8(){}
 void func_8013D448(){}
 void func_8013D55C(){}
 void func_8013D688(){}
-void func_8013D7C0(){}
+// Retail window creator: create a CSysWinBuff window under the manager's
+// parent/scene and queue it on the primary window list.
+extern "C" IUIWindow* func_8013D7C0(u32 id) {
+    CUIWindowManager* inst = lbl_eu_80664088;
+    if (inst == NULL) {
+        return NULL;
+    }
+
+    IUIWindow* window = create__11CSysWinBuffFv((CProcess*)inst->unk9C, inst->unk58, (u16)id);
+    if (window == NULL) {
+        return NULL;
+    }
+
+    // Re-read the singleton: retail keeps `inst` in a volatile register (its
+    // live range ends at the call) and reloads the global for the push_back.
+    lbl_eu_80664088->mWindowList1.push_back(window);
+    return window;
+}
+
 void func_8013D8A0(){}
 void func_8013D978(){}
 void func_8013DA60(){}
 void func_8013DB6C(){}
 void func_8013DCAC(){}
 void func_8013DD94(){}
-void func_8013DE6C(){}
+// Retail window creator: create the Col6 hint window and queue it on the
+// primary window list.
+extern "C" IUIWindow* func_8013DE6C() {
+    CUIWindowManager* inst = lbl_eu_80664088;
+    if (inst == NULL) {
+        return NULL;
+    }
+
+    IUIWindow* window = func_8015DCD0((CProcess*)inst->unk9C, inst->unk58);
+    if (window == NULL) {
+        return NULL;
+    }
+
+    // Re-read the singleton: retail keeps `inst` in a volatile register (its
+    // live range ends at the call) and reloads the global for the push_back.
+    lbl_eu_80664088->mWindowList1.push_back(window);
+    return window;
+}
+
 void func_8013DF44(){}
 void func_8013E030(){}
 void func_8013E104(){}
-void func_8013E204(){}
+// Retail window creator: create the item-exchange window and queue it on the
+// primary window list.
+extern "C" IUIWindow* func_8013E204(u32 id) {
+    CUIWindowManager* inst = lbl_eu_80664088;
+    if (inst == NULL) {
+        return NULL;
+    }
+
+    IUIWindow* window = func_801BEDE0((CProcess*)inst->unk9C, inst->unk58, id);
+    if (window == NULL) {
+        return NULL;
+    }
+
+    // Re-read the singleton: retail keeps `inst` in a volatile register (its
+    // live range ends at the call) and reloads the global for the push_back.
+    lbl_eu_80664088->mWindowList1.push_back(window);
+    return window;
+}
+
 void func_8013E2E0(){}
 void func_8013E424(){}
-void func_8013E52C(){}
+// Retail window creator: create the kizuna-talk window and queue it on the
+// primary window list.
+extern "C" IUIWindow* func_8013E52C(u32 charId) {
+    CUIWindowManager* inst = lbl_eu_80664088;
+    if (inst == NULL) {
+        return NULL;
+    }
+
+    IUIWindow* window = func_801BCEBC((CProcess*)inst->unk9C, inst->unk58, charId);
+    if (window == NULL) {
+        return NULL;
+    }
+
+    // Re-read the singleton: retail keeps `inst` in a volatile register (its
+    // live range ends at the call) and reloads the global for the push_back.
+    lbl_eu_80664088->mWindowList1.push_back(window);
+    return window;
+}
+
 void func_8013E608(){}
 void func_8013E704(){}
 void func_8013E800(){}
 void func_8013E8E0(){}
-void func_8013E9D8(){}
+// Retail window creator: create the save window (CSysWinSave) and queue it on
+// the primary window list.
+extern "C" IUIWindow* func_8013E9D8() {
+    CUIWindowManager* inst = lbl_eu_80664088;
+    if (inst == NULL) {
+        return NULL;
+    }
+
+    IUIWindow* window = __ct__802944D8((CProcess*)inst->unk9C, inst->unk58);
+    if (window == NULL) {
+        return NULL;
+    }
+
+    // Re-read the singleton: retail keeps `inst` in a volatile register (its
+    // live range ends at the call) and reloads the global for the push_back.
+    lbl_eu_80664088->mWindowList1.push_back(window);
+    return window;
+}
+
 void func_8013EAB0(){}
 void func_8013EB90(){}
 void __dt__Q216CUIWindowManager5CTestFv(){}

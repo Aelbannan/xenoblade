@@ -28,7 +28,11 @@ extern const float lbl_eu_80667FF0;  // 16.0f row height (SDA21)
 // CSortMenu constructor
 // ============================================================================
 extern "C" CSortMenu* __ct__CSortMenu(CSortMenu* _this) {
-    // Initialize vtable
+    // Vtable + embedded sub-object first (retail: stw vtable, then the
+    // UnkClass_8045F564 ctor at +4), then the scalar fields, the scrollbar,
+    // and the tail counters.
+    *(void**)_this = (void*)lbl_eu_805349D0;
+    __ct__17UnkClass_8045F564Fv(&_this->_04[0]);
     _this->mFileHandle = NULL;
     _this->mArcResAcc = NULL;
     _this->mpLayout = NULL;
@@ -310,21 +314,24 @@ extern "C" void func_801D3620(CSortMenu* _this) {
 extern "C" void func_801D3698(CSortMenu* _this) {
     u8 count = _this->mCount;
     if (count >= 5) {
-        s8 page = (s8)_this->mPage + 1;
-        _this->mPage = (u8)page;
+        u8 pageU = (u8)(_this->mPage + 1);
+        _this->mPage = pageU;
+        s8 page = (s8)pageU;
         if (page >= 5) {
-            s8 subPage = (s8)_this->mSubPage + 1;
             _this->mPage = 4;
-            _this->mSubPage = (u8)subPage;
-            if (subPage > (s8)(count - 5)) {
+            u8 subU = (u8)(_this->mSubPage + 1);
+            _this->mSubPage = subU;
+            s8 subPage = (s8)subU;
+            if (subPage > (s32)(count - 5)) {
                 _this->mPage = 0;
                 _this->mSubPage = 0;
             }
         }
     } else {
-        s8 page = (s8)_this->mPage + 1;
-        _this->mPage = (u8)page;
-        if (page >= (s8)count) {
+        u8 pageU = (u8)(_this->mPage + 1);
+        _this->mPage = pageU;
+        s8 page = (s8)pageU;
+        if (page >= count) {
             _this->mPage = 0;
             _this->mSubPage = 0;
         }

@@ -59,9 +59,9 @@ public:
     void CfObject_UnkVirtualFunc21();
     void CfObject_UnkVirtualFunc18();
     void CfObject_UnkVirtualFunc17();
-    void CfObject_UnkVirtualFunc16();
+    void* CfObject_UnkVirtualFunc16(float value);
     void CfObject_UnkVirtualFunc15();
-    void CfObject_UnkVirtualFunc14(float value);
+    void* CfObject_UnkVirtualFunc14(float value);
     void CfObject_UnkVirtualFunc13();
     void CfObject_UnkVirtualFunc12();
     void CfObject_UnkVirtualFunc5();

@@ -9,7 +9,31 @@
 
 void __ct__CKizunaTalkList(){}
 
-CKizunaTalkList::~CKizunaTalkList() {}
+// TalkListEntry element destructor (defined below; used by the array teardown).
+struct TalkListEntry;
+TalkListEntry* __dt__80272774(TalkListEntry* entry, int flags);
+
+// Deleting destructor (retail __dt__15CKizunaTalkListFv): teardown the
+// 20x0x100 TalkListEntry array at +0x8C, then the embedded sub-objects
+// (scrollbar +0x44, CCur18 cursor +0x2C, UnkClass_8045F564 +0x04), and free
+// self when the delete flag is set. optimize_for_size merges the r30/r31
+// saves into the retail stmw r30 prologue.
+#pragma optimize_for_size on
+extern "C" CKizunaTalkList* __dt__15CKizunaTalkListFv(CKizunaTalkList* self, int flags) {
+    if (self != 0) {
+        if ((u8*)self + 0x8C != 0) {
+            __destroy_arr((u8*)self + 0x8C, (void*)__dt__80272774, 0x14, 0x100);
+        }
+        __dt__10CScrollBarFv((u8*)self + 0x44, -1);
+        __dt__6CCur18Fv((u8*)self + 0x2C, -1);
+        __dt__17UnkClass_8045F564Fv((u8*)self + 0x04, -1);
+        if (flags > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
+}
+#pragma optimize_for_size off
 
 // Element destructor of TalkListEntry (used by the array teardown). Entries
 // are plain PODs so there is no member teardown; only the backing memory is

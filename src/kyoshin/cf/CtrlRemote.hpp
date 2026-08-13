@@ -108,3 +108,272 @@ extern u8 lbl_eu_80527F88[];
 // sdata2 float constant stored to the 32 floats at +0x1DC by __ct__CtrlRemote
 // (const declaration so MWCC references the retail pool slot directly).
 extern const f32 lbl_eu_80666730;
+
+// ---------------------------------------------------------------------------
+// Imports / view types used by the func_8009BD14 pad-handler sweep.
+// ---------------------------------------------------------------------------
+
+// Forward decls (full layouts live in CtrlPc.hpp, included after this header).
+class CtrlPcSub37;
+class CtrlPlayerObj;
+
+// C++-mangled retail helper func_800B708C__Fi (actor id -> action source).
+void* func_800B708C(int id);
+
+// Voice/battle-list sweep helpers (retail unmangled C-ABI names).
+extern "C" void* func_800F6EAC(void* list, u32 idx);
+extern "C" void* func_8016FE34(void* r3);
+// Retail call site passes no argument (r3 left over from the previous call);
+// other TUs declare the void* form.
+extern "C" int func_8017FD44();
+extern "C" void* func_800451D8(u32 cls, void* param);
+
+// Voice-manager sweep helpers and the sudden-commu active check. Retail
+// relocs are the unmangled C names, so these are extern "C" imports.
+extern "C" void func_802A2BB0();
+extern "C" void func_802A2B44();
+extern "C" void func_802A2C1C();
+extern "C" int func_801B0F8C();
+
+// CtrlPc view exposing vf38 (vtable slot 0xA0) for func_8009BD14's menu-state
+// word reads (CtrlPc.hpp stops at vf37 = 0x9C). The Nth declared virtual sits
+// at (N+2)*4, so vf38 lands at 0xA0; layout is CtrlPc-compatible.
+class CtrlPcVf38 {
+public:
+    virtual ~CtrlPcVf38();  // vtable slot 0x08 (CtrlPc's leading dtor slot)
+    virtual void vf01();  virtual void vf02();  virtual void vf03();
+    virtual void vf04();  virtual void vf05();  virtual void vf06();
+    virtual void vf07();  virtual void vf08();  virtual void vf09();
+    virtual void vf10();  virtual void vf11();  virtual void vf12();
+    virtual void vf13();  virtual void vf14();  virtual void vf15();
+    virtual void vf16();  virtual void vf17();  virtual void vf18();
+    virtual void vf19();
+    virtual void vf20();  virtual void vf21();  virtual void vf22();  // 0x60
+    virtual void vf23();  virtual void vf24();
+    virtual int vf25(float* out);  // 0x6C (writes a 3-float vector)
+    virtual void vf26();  virtual void vf27();  virtual void vf28();
+    virtual void vf29();  virtual void vf30();  virtual void vf31();
+    virtual void vf32();  virtual void vf33();  virtual void vf34();
+    virtual void vf35();  virtual void vf36();
+    virtual CtrlPcSub37* vf37();  // 0x9C
+    virtual CtrlPcSub37* vf38();  // 0xA0
+
+    u32 mField4;                 // 0x04 (pad/battle flags)
+    f32 mField8;                 // 0x08
+    f32 mFieldC;                 // 0x0C (target angle/position state)
+    f32 mField10;                // 0x10 (computed facing angle)
+    f32 mField14;                // 0x14 (aim/fx state flag value)
+    char _pad_18[0x5C - 0x18];   // 0x18-0x5B
+    CtrlPlayerObj* mField5C;     // 0x5C
+};
+
+// func_800B708C result view for func_8009BD14: combo/target id at +0x74.
+struct CtrlVoiceSweepView {
+    u8 _00[0x74];
+    u32 mField74;               // 0x74
+};
+
+// Result view of self->vf38() (vtable slot 0xA0) for func_8009A4AC: flag
+// words at 0x00 / 0x0C / 0x10 (the CtrlPcSub37 view in CtrlPc.hpp does not
+// expose the 0x0C word this sweep reads).
+struct CtrlRemoteSubA0 {
+    u32 mField0;                // 0x00
+    u8 _04[0x0C - 0x04];
+    u32 mFieldC;                // 0x0C
+    u32 mField10;               // 0x10
+};
+
+// Extended vf37() (vtable slot 0x9C) result view for func_80098EF8: signed
+// stick bytes at 0x58-0x5B and a state byte at 0xED (CtrlPcSub37 in
+// CtrlPc.hpp stops at 0x18).
+struct CtrlPcSub37Ext {
+    u8 _00[0x58];
+    s8 mField58;                // 0x58
+    s8 mField59;                // 0x59
+    s8 mField5A;                // 0x5A
+    s8 mField5B;                // 0x5B
+    u8 _5C[0xED - 0x5C];
+    u8 mFieldED;                // 0xED
+};
+
+// Result of player->vf164() (vtable slot 0x298): actor id word at +0x04.
+struct CtrlPlayerSub298Vf4 {
+    u32 mField4;                // 0x04
+};
+
+// Sub-object pointed to by the voice-owner interface data field at +0xC4
+// (func_80098EF8): flag words at 0x270/0x274 and a u16 at 0x530.
+struct CtrlVoiceSubC4 {
+    u8 _00[0x270];
+    u32 mField270;              // 0x270
+    u32 mField274;              // 0x274
+    u8 _278[0x530 - 0x278];
+    u16 mField530;              // 0x530
+};
+
+// Embedded voice-owner interface at player+0x3E9C: data pointer at +0xC4
+// (the vptr at +0x00 is handled by CVoiceOwnerIntfPc in CtrlPc.hpp).
+struct CtrlVoiceOwnerC4View {
+    u8 _00[0xC4];
+    CtrlVoiceSubC4* mFieldC4;   // 0xC4
+};
+
+// getUnk80664658 result view for func_80098EF8: flag word at +0x214.
+struct CtrlUnk64658View {
+    u8 _00[0x214];
+    u32 mField214;              // 0x214
+};
+
+// Result of the game-manager sub-object's vf05() (vtable slot 0x1C): float
+// at +0x04.
+struct CtrlGm8Vf1CRes {
+    u8 _00[0x04];
+    f32 mField4;                // 0x04
+};
+
+// Game-manager sub-object view exposing vf05 at slot 0x1C with a result
+// pointer (the UnkClass_800821F8View decl in CtrlPc.hpp declares it void).
+class CtrlGm8Vf1C {
+public:
+    virtual void vf00();
+    virtual void vf01();
+    virtual void vf02();
+    virtual void vf03();
+    virtual void vf04();
+    virtual CtrlGm8Vf1CRes* vf05();  // vtable slot 0x1C
+    virtual void vf06();
+    virtual void vf07();
+    virtual void vf08();
+    virtual void vf09(void* arg);    // 0x2C
+    u32 mField4;                     // 0x04
+};
+
+// Player-actor view exposing vf141 (vtable slot 0x23C) as a float-returning
+// virtual (the CtrlPlayerObj decl in CtrlPc.hpp names it as void padding).
+class CtrlPlayerVf23C {
+public:
+    virtual void vf00();  virtual void vf01();  virtual void vf02();
+    virtual void vf03();  virtual void vf04();  virtual void vf05();
+    virtual void vf06();  virtual void vf07();  virtual void vf08();
+    virtual void vf09();  virtual void vf10();  virtual void vf11();
+    virtual void vf12();  virtual void vf13();  virtual void vf14();
+    virtual void vf15();  virtual void vf16();  virtual void vf17();
+    virtual void vf18();  virtual void vf19();  virtual void vf20();
+    virtual void vf21();  virtual void vf22();  virtual void vf23();
+    virtual void vf24();  virtual void vf25();  virtual void vf26();
+    virtual void vf27();  virtual void vf28();  virtual void vf29();
+    virtual void vf30();  virtual void vf31();  virtual void vf32();
+    virtual void vf33();  virtual void vf34();  virtual void vf35();
+    virtual void vf36();  virtual void vf37();  virtual void vf38();
+    virtual void vf39();  virtual void vf40();  virtual void vf41();
+    virtual void vf42();  virtual void vf43();  virtual void vf44();
+    virtual void vf45();  virtual void vf46();  virtual void vf47();
+    virtual void vf48();  virtual void vf49();  virtual void vf50();
+    virtual void vf51();  virtual void vf52();  virtual void vf53();
+    virtual void vf54();  virtual void vf55();  virtual void vf56();
+    virtual void vf57();  virtual void vf58();  virtual void vf59();
+    virtual void vf60();  virtual void vf61();  virtual void vf62();
+    virtual void vf63();  virtual void vf64();  virtual void vf65();
+    virtual void vf66();  virtual void vf67();  virtual void vf68();
+    virtual void vf69();  virtual void vf70();  virtual void vf71();
+    virtual void vf72();  virtual void vf73();  virtual void vf74();
+    virtual void vf75();  virtual void vf76();  virtual void vf77();
+    virtual void vf78();  virtual void vf79();  virtual void vf80();
+    virtual void vf81();  virtual void vf82();  virtual void vf83();
+    virtual void vf84();  virtual void vf85();  virtual void vf86();
+    virtual void vf87();  virtual void vf88();  virtual void vf89();
+    virtual void vf90();  virtual void vf91();  virtual void vf92();
+    virtual void vf93();  virtual void vf94();  virtual void vf95();
+    virtual void vf96();  virtual void vf97();  virtual void vf98();
+    virtual void vf99();  virtual void vf100(); virtual void vf101();
+    virtual void vf102(); virtual void vf103(); virtual void vf104();
+    virtual void vf105(); virtual void vf106(); virtual void vf107();
+    virtual void vf108(); virtual void vf109(); virtual void vf110();
+    virtual void vf111(); virtual void vf112(); virtual void vf113();
+    virtual void vf114(); virtual void vf115(); virtual void vf116();
+    virtual void vf117(); virtual void vf118(); virtual void vf119();
+    virtual void vf120(); virtual void vf121(); virtual void vf122();
+    virtual void vf123(); virtual void vf124(); virtual void vf125();
+    virtual void vf126(); virtual void vf127(); virtual void vf128();
+    virtual void vf129(); virtual void vf130(); virtual void vf131();
+    virtual void vf132(); virtual void vf133(); virtual void vf134();
+    virtual void vf135(); virtual void vf136(); virtual void vf137();
+    virtual void vf138(); virtual void vf139(); virtual void vf140();
+    virtual float vf141();  // vtable slot 0x23C
+};
+
+// nw4r math helpers and battle-manager chain probe (retail C-ABI names).
+extern "C" f32 Atan2FIdx__Q24nw4r4mathFff(f32 y, f32 x);
+extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32 value);
+extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+extern "C" CtrlUnk64658View* getUnk80664658();
+extern "C" int func_802799F0(void* a, void* b);
+extern "C" u32 func_8029EE58();
+
+// Debug-assert strings pooled by the Warning call in func_80098EF8 (retail
+// .data at 0x80526324 / 0x80526300).
+extern char lbl_eu_80526324[];
+extern char lbl_eu_80526300[];
+
+// sdata2 float constants used by func_80098EF8. const declarations so MWCC
+// references the retail pool slots directly (see CtrlPc.hpp notes).
+extern const f32 lbl_eu_80666734;
+extern const f32 lbl_eu_80666738;
+extern const f64 lbl_eu_80666740;
+extern const f32 lbl_eu_8066674C;
+extern const f32 lbl_eu_80666750;
+extern const f32 lbl_eu_80666754;
+extern const f32 lbl_eu_80666758;
+extern const f32 lbl_eu_8066675C;
+extern const f32 lbl_eu_80666760;
+extern const f32 lbl_eu_80666764;
+extern const f32 lbl_eu_80666768;
+extern const f32 lbl_eu_8066676C;
+extern const f32 lbl_eu_8066A1F8;   // pi
+extern const f32 lbl_eu_8066A1FC;   // 2*pi
+extern const f32 lbl_eu_8066A20C;
+
+// Second global flag word probed by func_80098EF8 (retail sda21 access).
+extern u32 lbl_eu_80663E28;
+
+// Circular list node used by the +0x28 head (next at +0x00).
+struct CtrlSweepNode {
+    CtrlSweepNode* mNext;       // 0x00
+};
+
+// Battle-manager view for func_8009BD14's list sweep: +0x28 circular list head
+// (next link at +0x00), +0x1AA battle-state byte, +0x20C8 signed timer word.
+struct CtrlBmSweepView {
+    u8 _00[0x28];
+    CtrlSweepNode* mField28;    // 0x28 list head
+    u8 _2C[0x1AA - 0x2C];
+    u8 mField1AA;               // 0x1AA
+    u8 _1AB[0x20C8 - 0x1AB];
+    s16 mField20C8;             // 0x20C8
+};
+
+// func_8016FE34 result view for func_8009BD14's sweep: u16 state word at
+// +0x3388 (bit 0x10) and u32 combo word at +0x3E98, with the opaque voice-
+// owner region at +0x3E9C.
+struct CtrlAccSweepView {
+    u8 _00[0x3388];
+    u16 mField3388;             // 0x3388
+    u8 _338A[0x3E98 - 0x338A];
+    u32 mField3E98;             // 0x3E98
+    u8 mOwner3E9C[0x10];        // 0x3E9C voice-owner region (opaque)
+};
+
+// CtrlPlayerObj view exposing the +0x3E9C voice-owner region as a u8 array
+// (func_8009BD14's func_800451D8 argument, matching the acc-view shape).
+struct CtrlPlayerSweepView {
+    u8 _00[0x3E9C];
+    u8 mOwner3E9C[0x10];       // 0x3E9C voice-owner region (opaque)
+};
+
+// Enum-list view with func_8009BD14's counter word at +0x3030.
+struct CtrlEnumListSweep {
+    u8 _00[0x620];
+    u32 count;                  // 0x620
+    u8 _624[0x3030 - 0x624];
+    u32 mField3030;             // 0x3030
+};

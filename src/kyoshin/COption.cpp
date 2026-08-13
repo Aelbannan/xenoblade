@@ -1147,24 +1147,21 @@ extern "C" void func_8029C35C(COption* self) {
 }
 
 // func_8029C4F4: option-panel state tick. When the panel is live (0x28), jump
-// through the state table (0..7) to the per-state animation/window handlers,
-// then always idle the +0x1C sub-object and update the scroll bar, the three
-// cursors and the system window.
+// through the state table (1,2,4,5,6,7,8,10; 0/3/9 fall through) to the
+// per-state animation/window handlers, then always idle the +0x1C sub-object
+// and update the scroll bar, the three cursors and the system window.
 extern "C" void func_8029C4F4(COption* self) {
     if (self->field_0x28 != 0) {
         switch (self->field_0x29) {
-        case 0: func_8029D0C0(self); break;
-        case 1: func_8029D10C(self); break;
-        case 2: func_8029D178(self); break;
-        case 3: func_8029D1C4(self); break;
-        case 4: func_8029D210(self); break;
-        case 5: func_8029D278(self); break;
-        case 6: func_8029D2F0(self); break;
-        case 7: func_8029D358(self); break;
-        case 8:
-        case 9:
-        case 10:
-            break;
+        case 1: func_8029D0C0(self); break;
+        case 2: func_8029D10C(self); break;
+        case 4: func_8029D178(self); break;
+        case 5: func_8029D1C4(self); break;
+        case 6: func_8029D210(self); break;
+        case 7: func_8029D278(self); break;
+        case 8: func_8029D2F0(self); break;
+        case 10: func_8029D358(self); break;
+        default: break;
         }
         self->mSubObj->v12(0);
         func_801F3540(self->mScrollBar);

@@ -253,9 +253,9 @@ int func_802A77E8(CVoiceHandle* handle) {
 }
 
 // Validates the voice iterator: nonzero only for the state range [1, 7].
-// Two separate signed compares (nested ifs) - retail keeps both cmpwi, so
-// the range must not be merged into the unsigned (iter-1) <= 6 trick.
-int func_802A7850(int iter) {
+// Retail keeps two signed cmpwi (GC/3.0a5.2 codegen; the unit is GC/3.0a5.2 —
+// Wii/1.1 merges the range into the unsigned (iter-1) <= 6 trick).
+extern "C" int func_802A7850(int iter) {
     int result = 0;
     if (iter >= 1) {
         if (iter <= 7) {
@@ -269,13 +269,16 @@ int func_802A7850(int iter) {
 // Collect idle voice handles from the voice-manager circular list into an
 // output array (excluding one handle), returning how many were stored.
 // `capacity` is a caller-side hint and is not used by the retail body.
+// NOTE: index the store as out[count] — a manual byte-offset local folds the
+// address into a pointer walk (stw+addi rOut,4); out[count] keeps base+index
+// separate (retail stwx rD,rOut,rOff; addi rOff,4) under GC/3.0a5.2 -O4,s.
 int func_802A7870(CVoiceHandle** out, int capacity, CVoiceHandle* exclude) {
-    CVoiceManager* mgr = func_800B6BA4();
-    int count = 0;
-    int off = 0;  // byte offset into the output array (retail keeps it separate)
     CVoiceHandle* handle;
-    CVoiceListNode* node = mgr->field_4->field_0;
-    while (node != mgr->field_4) {
+    CVoiceManager* mgr = func_800B6BA4();
+    CVoiceListNode* node;
+    int count;
+    for (count = 0, node = mgr->field_4->field_0; node != mgr->field_4;
+         node = node->field_0) {
         // field_8 points at the embedded CCharVoice; bias it back to the
         // owning handle in place (retail keeps one register for both).
         handle = (CVoiceHandle*)node->field_8;
@@ -284,11 +287,8 @@ int func_802A7870(CVoiceHandle** out, int capacity, CVoiceHandle* exclude) {
         }
         // Idle-check via the handle's vtable slot at 0x2BC (real r12 chain).
         if (((CVoiceVTV*)handle)->idle() == 0 && handle != exclude) {
-            *(CVoiceHandle**)((u8*)out + off) = handle;
-            count++;
-            off += 4;
+            out[count++] = handle;
         }
-        node = node->field_0;
     }
     return count;
 }
@@ -297,11 +297,12 @@ int func_802A7870(CVoiceHandle** out, int capacity, CVoiceHandle* exclude) {
 // Count idle voice handles in the voice-manager circular list, excluding one
 // handle (used by the party-gauge factory to check the free-voice pool).
 int func_802A790C(CVoiceHandle* exclude) {
-    CVoiceManager* mgr = func_800B6BA4();
-    int count = 0;
     CVoiceHandle* handle;
-    CVoiceListNode* node = mgr->field_4->field_0;
-    while (node != mgr->field_4) {
+    CVoiceManager* mgr = func_800B6BA4();
+    CVoiceListNode* node;
+    int count;
+    for (count = 0, node = mgr->field_4->field_0; node != mgr->field_4;
+         node = node->field_0) {
         // field_8 points at the embedded CCharVoice; bias it back to the
         // owning handle in place (retail keeps one register for both).
         handle = (CVoiceHandle*)node->field_8;

@@ -205,12 +205,12 @@ extern "C" int CfObject_UnkVirtualFunc18__Q22cf8CfObjectFv(cf::CfObject* self) {
 extern float lbl_eu_80666910;
 extern "C" float CfObject_UnkVirtualFunc17__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
 
-extern "C" void CfObject_UnkVirtualFunc16__Q22cf8CfObjectFv() {}
+extern "C" void* CfObject_UnkVirtualFunc16__Q22cf8CfObjectFv(cf::CfObject* self) { return self; }
 
 extern float lbl_eu_80666910;
 extern "C" float CfObject_UnkVirtualFunc15__Q22cf8CfObjectFv() { return lbl_eu_80666910; }
 
-void cf::CfObject::CfObject_UnkVirtualFunc14(float value) {}
+void* cf::CfObject::CfObject_UnkVirtualFunc14(float value) { return this; }
 
 extern "C" int CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv(cf::CfObject* self) { return 1; }
 

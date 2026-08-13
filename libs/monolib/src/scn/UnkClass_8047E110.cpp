@@ -1102,11 +1102,10 @@ extern "C" void func_8048163C__17UnkClass_8047E110Fv(UnkClass_8047E110* self, co
     m.field_0x90 = 0;
     m.boxMin.y = v->y;
     m.boxMax.y = v->y;
-    f32 c = lbl_eu_8066A890;
-    m.boxMin.x = v->x - c;
-    m.boxMin.z = v->z - c;
-    m.boxMax.x = v->x + c;
-    m.boxMax.z = v->z + c;
+    m.boxMin.x = v->x - lbl_eu_8066A890;
+    m.boxMin.z = v->z - lbl_eu_8066A890;
+    m.boxMax.x = lbl_eu_8066A890 + v->x;
+    m.boxMax.z = lbl_eu_8066A890 + v->z;
     // Reference block copy: pointer-increment form lets MWCC fold the address
     // addi into the first load (retail lwzu); load/store order follows retail.
     u32 v0;

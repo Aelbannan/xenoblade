@@ -2130,12 +2130,13 @@ unsigned short ArrayGet12(const unsigned short* p, unsigned char i) {
 // variants invariant; witness rejects (no bijection in [3,11)).
 void func_801CB9D8(u32* dst, void* src, u32 idx) {
     if (idx >= 12) return;
-    u8* entry = (u8*)src + idx * 12;
-    u32 v0 = *(u32*)(entry + 0x18);
-    u32 v4 = *(u32*)(entry + 0x1c);
-    *(u32*)((u8*)dst + 4) = v4;
-    *(u32*)((u8*)dst + 0) = v0;
-    *(u32*)((u8*)dst + 8) = *(u32*)(entry + 0x20);
+    u32 v24, v28;
+    u8* e = (u8*)src + idx * 12;
+    v24 = *(u32*)(e + 0x18);
+    v28 = *(u32*)(e + 0x1c);
+    *(u32*)((u8*)dst + 4) = v28;
+    *(u32*)((u8*)dst + 0) = v24;
+    *(u32*)((u8*)dst + 8) = *(u32*)(e + 0x20);
 }
 
 void func_801CBA04(void* self) {

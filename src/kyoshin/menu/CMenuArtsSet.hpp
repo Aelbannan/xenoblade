@@ -1,14 +1,47 @@
 #pragma once
 
 #include <types.h>
-#include "kyoshin/CArtsInfo.hpp"
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/CScrollBar.hpp"
+
+// CArtsInfo layout stand-in (0x74 bytes). kyoshin/CArtsInfo.hpp is NOT
+// included here: it declares the C-linkage import __dt__17UnkClass_8045F564Fv
+// with (void*, int) while CSysWin.hpp re-declares the same C-linkage name
+// with (UnkClass_8045F564*, int) - MWCC rejects the pair as illegal
+// overloading (10197) when both headers are visible in one TU. This TU only
+// embeds the object by value, so an opaque layout-compatible buffer suffices
+// (all CArtsInfo function imports used here are declared below).
+class CArtsInfo {
+public:
+    u8 data[0x74];
+};
 
 // 2D position used as source for func_80231848.
 struct SArtsVec2 {
     float x;
     float y;
+};
+
+// Short variant of SArtsSub8022FA58 for the sub-object at 0x124 in
+// CMenuArtsSet (0x24 bytes: 0x124-0x147). The full-size sibling (mSubObj148)
+// starts at 0x148, so this view stops after field_0x21. field_0x15 lands at
+// absolute 0x139 (written by func_802349F8).
+class SArtsSub8022FA58Short {
+public:
+    u32 field_0x00;
+    u32 field_0x04;
+    u32 field_0x08;
+    u32 field_0x0C;
+    u32 field_0x10;
+    u8  field_0x14;
+    u8  field_0x15;        // absolute 0x139 in CMenuArtsSet
+    u8  field_0x16;
+    u8  field_0x17;
+    u8  field_0x18;
+    u8  field_0x19[7];     // 0x19-0x1F
+    s8  field_0x20;
+    u8  field_0x21;
+    char _pad_0x22[0x24 - 0x22];
 };
 
 // Anonymous menu-sub-object constructed by __ct__8022FA58.
@@ -455,16 +488,13 @@ public:
     char _pad_59[0x74 - 0x59];   // 0x59-0x73
     CArtsInfo mSubObj74;           // 0x74-0xE7
     CSysWinFull mSubObjE8;         // 0xE8 (field_34 read by CSysWin_getUnk34)
-    char _pad_11F[0x124 - 0x11F]; // 0x11F-0x123
-    SArts2FDF4 field_0x124;       // 0x124 func_8022FDF4
-    char _pad_130[0x139 - 0x130]; // 0x130-0x138
-    u8 mField139;               // 0x139
-    char _pad_13A[0x148 - 0x13A]; // 0x13A-0x147
-    u8 mSubObj148[0x32];        // 0x148-0x179 opaque SArtsSub8022FA58 storage
-    char _pad_17A[0x196 - 0x17A]; // 0x17A-0x195
-    u8 field_0x196;             // 0x196
-    char _pad_197[0x2A6 - 0x197]; // 0x197-0x2A5
-    u8 field_0x2A6;             // 0x2A6
+    char _pad_11F[0x124 - 0x11F];           // 0x11F-0x123
+    SArtsSub8022FA58Short mSubObj124;       // 0x124-0x147 (field_0x15 = abs 0x139)
+    SArtsSub8022FA58 mSubObj148;            // 0x148-0x17B
+    char _pad_17C[0x196 - 0x17C];           // 0x17C-0x195
+    u8 field_0x196;                         // 0x196
+    char _pad_197[0x2A6 - 0x197];           // 0x197-0x2A5
+    u8 field_0x2A6;                         // 0x2A6
 };
 
 // Vtable view of the CSysWin sub-object at CArtsList::0xE8 (func_8023352C).

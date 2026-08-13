@@ -82,11 +82,9 @@ u8 CArtsParam::CArtsParam_UnkVirtualFunc2(){
 }
 
 extern "C" int func_8015403C(int x) {
-    int ret;
+    int ret = 2;
     if ((unsigned)(x - 4) > 5) {
         ret = 1;
-    } else {
-        ret = 2;
     }
     return ret;
 }

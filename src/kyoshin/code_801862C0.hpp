@@ -19,7 +19,7 @@ void* func_801863F4(void* p);
 void* func_80186460(void* dst, void* src);
 void* func_80186474(void* p);
 void* func_801864DC(void* pObj, int slot);
-void* func_80186664(void* p);
+void func_80186664(u8* self);
 void* func_801866F0(void* p);
 void* func_80186A70(void* p);
 void* func_80186BC8(int p);

@@ -462,8 +462,52 @@ struct UnkKizunaSelf57E58 {
 };
 
 // ---------------------------------------------------------------------------
+// Targets 11/12/13 (func_8025C874 / func_8025C904 / func_8025C994) types.
+// ---------------------------------------------------------------------------
+
+// 3-float vector used with the code80135FDC_setVec3 C-ABI helper. The helper
+// writes x/y/z at the passed pointer and leaves the pointer in r3, so callers
+// copy the returned struct by value (retail emits lwz/stw word copies).
+struct UnkKizunaVec3 {
+    f32 x;
+    f32 y;
+    f32 z;
+};
+
+// func_8025C874/C904/C994 self: mode byte at +0x3A, sub-objects at +0x4C /
+// +0x68 / +0xAC, and a u16 counter at +0x8E.
+struct UnkKizunaSelfC874 {
+    u8 _00[0x3A];
+    u8 field3A;                   // 0x3A
+    u8 _3B[0x4C - 0x3B];
+    UnkKizunaSelf57D90 sub4C;     // 0x4C
+    u8 _58[0x68 - 0x58];
+    UnkKizunaSelf57D90 sub68;     // 0x68
+    u8 _74[0x8E - 0x74];
+    u16 field8E;                  // 0x8E
+    u8 _90[0xAC - 0x90];
+    UnkKizunaSelf57D90 subAC;     // 0xAC
+};
+
+// ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
+
+// Writes 3 floats at dst, returns dst in r3 (C ABI helper from
+// code_80135FDC.cpp).
+extern "C" UnkKizunaVec3* code80135FDC_setVec3(float* dst, float x, float y, float z);
+
+// Same-TU display-state helpers called by func_8025B870 / func_8025C874
+// family (retail links these unmangled; extern "C" keeps the bl relocs
+// binding to the unmangled names).
+extern "C" void func_8025C16C(UnkKizunaSelfC21C* self);
+extern "C" void func_8025C21C(UnkKizunaSelfC21C* self);
+extern "C" void func_8025C298(UnkKizunaSelfC21C* self);
+extern "C" void func_8025C348(UnkKizunaSelfC21C* self);
+extern "C" void func_80259394(UnkKizunaSelf57D90* self, const UnkKizunaVec3* v);
+extern "C" void func_8025BA38(UnkKizunaSelf57D90* self, u16 v);
+extern "C" void func_80259820(UnkKizunaSelf57D90* self);
+
 
 // Vtable symbols
 // (relocated from top of header: same order, now grouped with the other imports)

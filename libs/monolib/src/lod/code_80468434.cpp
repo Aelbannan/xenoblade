@@ -730,20 +730,15 @@ u16* func_8046A1A0__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out
 }
 
 // ===========================================================================
-// us-8046e1f4  func_8046A224  (spawn-position spread)
-// Spreads a spawn position around a point: the direction is looked up in the
-// shared spawn table at index (idx + bias) & 7, scaled by (spread * in.w), and
-// added to in.xyz.  The table stores the direction vectors at +0x0C of each
-// 0x24-byte entry, so the result is out = in.xyz + dir * scale.
+// us-8046e1f4  func_8046A224  (spawn-position copy)
+// Retail is a nofralloc paired-single kernel: it loads the spawn bias/table/
+// spread globals, computes a dead dir*scale value, then stores in.x -> out.x
+// and in.z -> out.z (the earlier psq_st results at out+0/out+8 are
+// overwritten).  ps_cmpo0 is not expressible in high-level C++, so the body
+// ships as an isolated PS backend (PLAN 17.6) with a scalar fallback; see
+// code_80468434_ps.inl.
 // ===========================================================================
-void func_8046A224__Q23LOD17UnkClass_80468434Fv(nw4r::math::VEC3* out, u32,
-                                               const ml::CVec4* in, s32 idx) {
-    const LodDirEntry* entry = &lbl_eu_806657AC[(idx + lbl_eu_806657A0) & 7];
-    f32 scale = lbl_eu_8066A650 * in->w;
-    out->x = in->x + entry->dir.x * scale;
-    out->y = in->y + entry->dir.y * scale;
-    out->z = in->z + entry->dir.z * scale;
-}
+#include "monolib/lod/code_80468434_ps.inl"
 
 // ===========================================================================
 // us-8046e250  func_8046A280  (spawn-position transform + copy)

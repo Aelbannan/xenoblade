@@ -180,7 +180,7 @@ void func_802307A4(SArtsDrawBox* self, nw4r::lyt::DrawInfo* info) {
 
 void func_8023080C(SArtsSub8022FA58* self, u8 val) {
     if (self->field_0x27 != 0) {
-        func_80124270(((SArts080C*)(self->field_0x08))->field_0x10);
+        func_80124270(((SArts080C*)(self->field_0x08))->field_0x10, 0);
     } else {
         self->field_0x22 = val;
         return func_802316F8(self);
@@ -388,9 +388,9 @@ void func_80232A4C(){}
 
 void func_80232AD8(){}
 
-void func_80232B88(SArts327B0* self) { func_80124270(self); }
+void func_80232B88(SArts327B0* self) { func_80124270(self, 1); }
 
-void func_80232C78(SArts327B0* self) { func_80124270(self); }
+void func_80232C78(SArts327B0* self) { func_80124270(self, 1); }
 
 void __ct__CArtsList(){}
 
@@ -418,9 +418,9 @@ void func_8023359C(CMenuArtsSet* self) {
         func_801F3540(self->field_0x34);
         func_8023587C(&self->mSubObj74);
         func_8022B748(&self->mSubObjE8);
-        func_8022FDF4(&self->field_0x124);
-        func_802306F0(self->mSubObj148);
-        func_80231CB4(&self->mSubObj148[0x2C]);
+        func_8022FDF4((SArts2FDF4*)&self->mSubObj124);
+        func_802306F0(&self->mSubObj148);
+        func_80231CB4((u8*)&self->mSubObj148 + 0x2C);
     }
 }
 
@@ -464,9 +464,9 @@ void func_802339D4(CMenuArtsSet* self) {
     if (CSysWin_getUnk34(&self->mSubObjE8) != 0) return;
     self->field_0x2C = 4;
     self->mField31 = 0;
-    func_8023080C((SArtsSub8022FA58*)self->mSubObj148, 0);
+    func_8023080C(&self->mSubObj148, 0);
     self->field_0x196 = 0;
-    func_80232B88((SArts327B0*)&self->mSubObj148[0x2C]);
+    func_80232B88((SArts327B0*)((u8*)&self->mSubObj148 + 0x2C));
     func_80235AC0(&self->mSubObj74);
     func_80138078__FUl(6);
 }
@@ -491,7 +491,7 @@ void func_80234844(){}
 
 void func_80234928(){}
 
-void CMenuArtsSet::func_802349F8(u8 val) { mField139 = val; }
+void CMenuArtsSet::func_802349F8(u8 val) { mSubObj124.field_0x15 = val; }
 
 void CMenuArtsSet::func_80234A00() { ((void(*)(void*))func_80231320)((char*)this + 0x148); }
 
@@ -529,7 +529,7 @@ extern "C" __declspec(noinline) void func_80234F7C(CMenuArtsSet* self) {
     if (func_80137444(self->field_0x24, lbl_eu_80668648) != 0) {
         self->field_0x2C = 3;
         self->mField31 = 1;
-        func_8023080C((SArtsSub8022FA58*)self->mSubObj148, 1);
+        func_8023080C(&self->mSubObj148, 1);
         func_80235124(self);
     }
 }

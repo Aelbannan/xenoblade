@@ -51,7 +51,7 @@ BasicSound::BasicSound(int priority, int arg)
     mUnk0x50 = arg;
 }
 
-u8 BasicSound::GetVoiceOutCount() const {
+int BasicSound::GetVoiceOutCount() const {
     return mUnk0x95;
 }
 

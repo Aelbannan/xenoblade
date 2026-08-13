@@ -68,25 +68,14 @@ struct CMIf {
 
 // Calls vtable slot 0x18C (CfObjectModel_UnkVirtualFunc6) when the pointer at
 // +0x70 is set; returns the call's result, or 1 when the pointer is NULL.
-// Real-member form gives retail's r12 virtual dispatch. Open item: the
-// retval-default register (li r0,1 + or r0,r3,r3 / or r3,r0,r0 in retail vs
-// li r4/r5 + or r4 + lwz-r0-first epilogue here) is allocator-fixed across
-// ~16 shapes (decl order, if/else, early-return, ternary, pointer local,
-// named member, -O4,s, volatile); the order diffs at +8/+0xc and +0x30/+0x34
-// are consequences of the r0-vs-r4 choice.
-// Calls vtable slot 0x18C (CfObjectModel_UnkVirtualFunc6) when the pointer at
-// +0x70 is set; returns the call's result, or 1 when the pointer is NULL.
-// Real-member form gives retail's r12 virtual dispatch. Open item: the
-// retval-default register (li r0,1 + or r0,r3,r3 / or r3,r0,r0 in retail vs
-// li r4/r5 + or r4 + lwz-r0-first epilogue here) is allocator-fixed across
-// ~16 shapes (decl order, if/else, early-return, ternary, pointer local,
-// named member, -O4,s, volatile); the order diffs at +8/+0xc and +0x30/+0x34
-// are consequences of the r0-vs-r4 choice.
+// The slot takes a void* arg (CfObjectMove.hpp vtable decl): passing
+// this->mTarget70 keeps r4 live as the call argument, so MWCC keeps the ret
+// default in r0 — retail's exact allocation (FULL_MATCH).
 #pragma scheduling off
 void* cf::CfObjectMap::func_800B9A70() {
     void* ret = (void*)1;
     if (this->mTarget70) {
-        ret = this->CfObjectModel_UnkVirtualFunc6();
+        ret = this->CfObjectModel_UnkVirtualFunc6(this->mTarget70);
     }
     return ret;
 }

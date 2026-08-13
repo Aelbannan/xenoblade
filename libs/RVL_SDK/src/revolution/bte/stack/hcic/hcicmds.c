@@ -949,13 +949,15 @@ void btsnd_hcic_write_cur_iac_lap(unsigned char *p, unsigned char num_laps, unsi
 {
     unsigned short len = (num_laps << 2) - num_laps + 4;
     unsigned char *pp = p + 12;
+    u16 len16 = (u16)len;
+    u8 l3 = (u8)(len16 - 3);
     int i, j;
 
     *(unsigned short *)(p + 2) = len;
     *(unsigned short *)(p + 4) = 0;
     p[8] = 0x3a;
     p[9] = 0x0c;
-    p[10] = (unsigned char)(len - 3);
+    p[10] = l3;
     p[11] = num_laps;
 
     for (i = 0; i < num_laps; i++) {

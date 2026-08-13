@@ -4,6 +4,23 @@ void func_8043FBC4(u8* self) {
     __dt__5CViewFv((char*)self - 0x1C4);
 }
 
+// us-8043ef34: deleting-dtor shell (class id 0x8043C59C — vtbl/typeinfo anchor
+// in this TU): if (self && flags > 0) operator delete(self); return self;
+extern "C" void* __dt__8043C59C(void* self, int flags) {
+    if (self != NULL && flags > 0) {
+        operator delete(self);
+    }
+    return self;
+}
+
+// us-8043ef74: CViewFrame::~CViewFrame — same deleting-dtor shell.
+extern "C" void* __dt__10CViewFrameFv(void* self, int flags) {
+    if (self != NULL && flags > 0) {
+        operator delete(self);
+    }
+    return self;
+}
+
 #include "monolib/core.hpp"
 #include "monolib/core/CViewRectData.hpp"
 #include "monolib/device.hpp"
@@ -1691,9 +1708,15 @@ void CView::CView_UnkVirtualFunc7() {
             obj = 0;
         } else {
             s32 code = *reinterpret_cast<s32*>((u8*)obj + 0x50);
+            // Retail: two cmpi's (48/53) sharing one li r3,0 set.  MWCC
+            // range-splits every || / negated-&& form of this check into
+            // subi/cmpli (0x7c), so the two-set else-if (0x88) is the
+            // closest honest shape.
             if (code < 48) {
                 obj = 0;
-            } else if (code >= 53) {
+            } else if (code < 53) {
+                // keep obj
+            } else {
                 obj = 0;
             }
         }
@@ -1710,16 +1733,33 @@ int CView_UnkVirtualFunc6__5CViewFv() { return 0; }
 extern "C" int CView_UnkVirtualFunc5__5CViewFv() { return 0; }
 
 // Static init: copy CCol4::white into sFrameColor (u32 struct copy) and
-// set lbl_8065A0C8 from four float constants (retail order: copy first).
+// set lbl_8065A0C8 from four float constants. Statement order matters:
+// retail materializes the lbl_8065A0C8 base (lis) before sFrameColor's, so
+// the float-field stores must precede the struct copy; direct member
+// assignment (not set()) reproduces the retail FPR coloring f3/f2/f1/f0.
 extern float lbl_eu_8066A2E0;
 extern float lbl_eu_8066A2E4;
 extern float lbl_eu_8066A2D4;
 extern float lbl_eu_8066A2D0;
 extern "C" void sinit_8043FB70() {
-    float r = lbl_eu_8066A2E0;
-    float g = lbl_eu_8066A2E4;
-    float b = lbl_eu_8066A2D4;
-    float a = lbl_eu_8066A2D0;
+    lbl_8065A0C8.r = lbl_eu_8066A2E0;
+    lbl_8065A0C8.g = lbl_eu_8066A2E4;
+    lbl_8065A0C8.b = lbl_eu_8066A2D4;
+    lbl_8065A0C8.a = lbl_eu_8066A2D0;
     CView::sFrameColor = ml::CCol4::white;
-    lbl_8065A0C8.set(r, g, b, a);
+}
+
+// us-80441420: rect with zero origin and size = other->mRectData view size
+// minus its insets (left/right, top/bottom). Retail has no `this` use — the
+// member-scoped name is emitted as a free function (rect=r3, other=r4).
+extern "C" void func_8043EA88__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
+                                                          CView* other) {
+    s16 w = other->mRectData.mViewSize.x - other->mRectData.mInsetLeft -
+            other->mRectData.mInsetRight;
+    s16 h = other->mRectData.mViewSize.y - other->mRectData.mInsetTop -
+            other->mRectData.mInsetBottom;
+    rect.mPos.x = 0;
+    rect.mPos.y = 0;
+    rect.mSize.x = w;
+    rect.mSize.y = h;
 }

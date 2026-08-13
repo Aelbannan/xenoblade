@@ -539,7 +539,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/realtimeevt/CREvtMem.cpp"),
             Object(NonMatching, "kyoshin/cf/CTaskREvtSequence.cpp"),
             Object(NonMatching, "kyoshin/cf/CfResObjImpl.cpp"),
-            Object(NonMatching, "kyoshin/cf/CfResReloadImpl.cpp"),
+            Object(NonMatching, "kyoshin/cf/CfResReloadImpl.cpp", mw_version="GC/3.0a5.2"),  # retail func_8016E100 struct-copy store order (stfs f0 first) only matches under GC/3.0a5.2; Wii/1.1 hoists the last-load store (sth r3) first
             Object(NonMatching, "kyoshin/cf/CfMapEffectManager.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectActor.cpp"),
             Object(NonMatching, "kyoshin/realtimeevt/CREvtModel.cpp"),
@@ -695,7 +695,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE.cpp"),
-            Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_HP.cpp"),
+            Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_HP.cpp", mw_version="GC/3.0a5.2", extra_cflags=["-O4,s"]),  # retail: GC/3.0a5.2 two-compare range checks; -O4,s keeps the loop store as stwx rD,rBase,rOff with separate count/offset induction (O4,p folds to pointer walk)
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp"),

@@ -218,7 +218,7 @@ public:
 
     void SetFxSend(AuxBus bus, f32 send);
 
-    u8 GetVoiceOutCount() const;
+    int GetVoiceOutCount() const;
     int CalcCurrentPlayerPriority() const {
         // US SortPriorityList adds mUnk0x50 (not SoundParam::priority @0x4C).
         return ut::Clamp(static_cast<int>(mPriority) + static_cast<int>(mUnk0x50),

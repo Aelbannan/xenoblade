@@ -14,6 +14,7 @@ void UnkClass_800B0AD8::clearCounters() {
     unkAFC = 0;
 }
 __declspec(noinline) UnkClass_805764CC* func_800B07E8();
+#pragma inline
 u32 func_800AA2BC(u32 a, u32 b);
 extern "C" void func_80193810(unsigned long a, void* b);
 extern "C" void func_801F3CCC(unsigned long a, void* b);
@@ -36,10 +37,14 @@ void func_80081258(void* self);
 void func_80081264(void* self, cf::CfObject* obj);
 
 // Target 4: us-800b0f70 - Store float and its square to several globals.
+// Retail emits frsp f2,f1 for `float sq` — the float->double->float round-trip
+// (double d = a; float sq = (float)d;) keeps the explicit conversion; a plain
+// `float sq = a` lets MWCC drop it.
 extern "C" void func_800B06A4(float a) {
     extern float lbl_eu_80661CCC, lbl_eu_80661CD0;
     extern float lbl_eu_80663EC8, lbl_eu_80663ECC, lbl_eu_80663ED0, lbl_eu_80663ED4;
-    float sq = (float)a;
+    double d = (double)a;
+    float sq = (float)d;
     float c = lbl_eu_80661CD0;
     lbl_eu_80661CCC = a;
     sq = sq * sq;
@@ -118,6 +123,7 @@ extern "C" __declspec(noinline) void func_800B0FA0(UnkClass_805764CC* self) {
         func_800B0FF4(&self->field_0xC80, func_80061FFC(), 4);
     }
 }
+#pragma inline
 
 void init_0FA0(){}
 u32 UnkClass_805764CC::get_u32_18(){return *(u32*)((u8*)this + 0x18);}
@@ -177,6 +183,7 @@ check:
     if (cur != sentinel) goto loop;
     *(u32*)sentinel = sentinel;
 }
+#pragma inline
 
 // Target: us-800b23c0 - func_800B1AF4: run the list/state init via
 // func_800B72DC, then clear the 0x100 mask bit via func_800B4278.
@@ -208,8 +215,16 @@ void init_1AD8(){}
 void init_1AF4(){}
 void init_dispatchTarget_6(){}
 void init_1BBC(){}
+// us-800b2488: if the flag bit-6 test is set, null the self arg, then call
+// func_800B1C24(8, self-or-0) (declared in code_800B06A4.hpp).
+extern "C" void func_800B1BBC(void* self) {
+    if (func_800B1C00()) {
+        self = 0;
+    }
+    func_800B1C24(8, self);
+}
 // func_800B1C00: bit 6 of the global flag word (retail: lwz r0,lbl_eu_80663EE0; extrwi r3,r0,1,25 = (x>>6)&1)
-extern "C" u32 func_800B1C00(){ extern u32 lbl_eu_80663EE0; return (lbl_eu_80663EE0 >> 6) & 1; }
+extern "C" __declspec(noinline) u32 func_800B1C00(){ extern u32 lbl_eu_80663EE0; return (lbl_eu_80663EE0 >> 6) & 1; }
 void init_1C0C(){}
 void init_1C24(){}
 s32 func_800B1C40() {
@@ -243,6 +258,14 @@ extern "C" void func_800B2048(UnkClass_805764CC* self, void* obj){if (self->fiel
 // TEST_FUNC_205C
 extern "C" void func_800B20A0(UnkClass_805764CC* self, void* obj){if (self->field_0xCAC){func_802074F0(self->field_0xCAC, obj);}}
 void init_20B4(){}
+// us-800b2928: if the game-manager getter is nonzero and self->field_0xCAC
+// is set, drive func_80206BD4 with it.
+extern "C" u32 func_80082900__Q22cf13CfGameManagerFv();
+extern "C" void func_800B205C(UnkClass_805764CC* self) {
+    if (func_80082900__Q22cf13CfGameManagerFv() && self->field_0xCAC) {
+        func_80206BD4((CfMapMineManager*)self->field_0xCAC);
+    }
+}
 u32 UnkClass_805764CC::get_u32_04(){return *(u32*)((u8*)this + 0x4);}
 // Target 5: us-800b35fc - __dt__800B2D30
 // Destructor that calls subobject destructor, then frees memory if flags > 0.
@@ -273,20 +296,23 @@ extern "C" void func_800B2E38(void** out, void* list, void* templ, void* data) {
     u32 byteOff = 0;
 
     // Find first empty slot (entry[0] == 0)
-    while (idx < count) {
+    for (; idx < count; idx++) {
         u32* entry = (u32*)(entryBase + byteOff);
         if (entry[0] == 0) {
             break;
         }
-        idx++;
         byteOff += 0xC;
     }
 
     // Calculate entry pointer
     u32* newEntry = (u32*)(entryBase + idx * 0xC);
 
-    // Copy data word into entry[8]
-    *(u32*)((u8*)newEntry + 8) = *(u32*)data;
+    // Copy data word into entry[8] (retail guards the computed address:
+    // addic. r4,r7,8; beq — kept from a source-level pointer null check).
+    u32* p8 = (u32*)((u8*)newEntry + 8);
+    if (p8 != 0) {
+        *p8 = *(u32*)data;
+    }
 
     // Insert before the node pointed to by templ[0]
     u32* targetNode = *(u32**)templ;
@@ -420,6 +446,7 @@ extern "C" __declspec(noinline) void func_800B4368(UnkClass_805764CC* self, cons
         }
     }
 }
+#pragma inline
 // List-walk search: start at *headPtr and skip nodes until the cursor equals
 // *valA or its +8 link equals *valB, advancing *headPtr past each skipped
 // node; store the found node to *out (retail func_800B4554).
@@ -556,6 +583,8 @@ void init_66AC(){}
 void init_66BC(){}
 
 // Target 3: us-800b70c8 - Return 1 if byte at offset 2 is in [1, 24].
+// (retail codegen: lbz; li r3,0; cmplwi r0,1; bltlr; cmplwi r0,24; bgtlr; li r3,1; blr —
+//  matches under GC/3.0a5.2; Wii/1.1 folds the range into (u8)(val-1)<=23)
 extern "C" __declspec(noinline) int func_800B67CC(void* self) {
     u8 val = *(u8*)((u8*)self + 2);
     int result = 0;
@@ -566,6 +595,7 @@ extern "C" __declspec(noinline) int func_800B67CC(void* self) {
     }
     return result;
 }
+#pragma inline
 void* UnkClass_805764CC::getPtr_1A8(){return (void*)((u8*)this + 0x1a8);}
 void UnkClass_805764CC::clear_700(){*(u32*)((u8*)this + 1792) = 0;}
 void init_6800(){}
@@ -728,6 +758,7 @@ __declspec(noinline) UnkClass_805764CC* func_800B07E8() {
     }
     return (UnkClass_805764CC*)lbl_eu_80572CD4;
 }
+#pragma inline
 // Target: us-800b1160 - func_800B0894 (allocate + zero-fill array of count*0xc, store at +0x14/+0x18)
 extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, unsigned long count) {
     u32* arr = (u32*)allocate_array__Q23mtl10MemManagerFUlUl(count * 0xc, handle);

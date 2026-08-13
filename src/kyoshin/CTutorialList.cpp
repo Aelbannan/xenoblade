@@ -61,12 +61,44 @@ extern "C" u16 func_802AD838(CTutorialList* self) {
                          (u16)((s8)self->mField178 + (s16)self->mField17A));
 }
 
-// func_802ADCE8 (retail 0x130 bytes, not yet recovered) is declared, not
-// stubbed: an empty definition would be dead-call-eliminated under the unit's
-// -O4,s (matching retail codegen) and drop the bl sites in func_802AD308 /
-// func_802AD854. The undefined reference resolves once the real body lands.
-extern "C" void func_802ADCE8(void* self);
-extern "C" void func_802AD854(void* self) { func_802ADCE8(self); }
+// func_802ADCE8 (retail 0x130 bytes, recovered): per-frame tutorial list
+// upkeep.  For each of the 10 rows: format the icon pane name ("pic_icon%02d")
+// and the title pane name ("txt_tit%02d"), resolve the icon pane through the
+// layout root-pane vtable call, and either push the title text directly
+// (empty string) or walk the text-lookup path keyed on the window-id table.
+extern "C" void func_80124270(void*, u32);
+extern "C" u32 func_8009CF8C(u32 resourceId);
+extern "C" __declspec(noinline) void func_802ADCE8(CTutorialList* self) {
+    for (u32 i = 0; i < 10; i++) {
+        char buf[0x20];
+        // Retail computes the window-id index early (live across the layout
+        // calls, kept in callee-saved r28); the mField17A read sign-extends
+        // (lha).
+        u8 idx = (u8)(i + (s16)self->mField17A);
+        sprintf(buf, &lbl_eu_80510B78[0x5d], (u8)i + 1);
+        nw4r::lyt::Pane* pane = self->mLayout20->GetRootPane();
+        nw4r::lyt::Pane* text = pane->FindPaneByName(buf, true);
+        func_80124270(text, 0);
+        sprintf(buf, &lbl_eu_80510B78[0x6a], (u8)i + 1);
+        u16 sel = func_802ACE04((CTutorialWindowIds*)self->mSubObj180, idx);
+        if (sel == 0) {
+            func_80136B4C(self->mLayout20, buf, &lbl_eu_80510B78[0x76], 0);
+        } else {
+            // Retail passes only two args here (the third header param is
+            // unused at this site); cast to the 2-arg form so no li r5 is
+            // emitted.
+            char* txt = ((char* (*)(const void*, const void*))func_8013639C)(
+                (const void*)lbl_eu_80664BF0, &lbl_eu_80510B78[0x77]);
+            func_80136B4C(self->mLayout20, buf, txt, 0);
+            if (func_801361E8(lbl_eu_80664BF0, &lbl_eu_80510B78[0x7d], sel) == 0) {
+                if (func_8009CF8C((u16)sel + 0x33bf) == 0) {
+                    func_80124270(text, 1);
+                }
+            }
+        }
+    }
+}
+extern "C" void func_802AD854(void* self) { func_802ADCE8((CTutorialList*)self); }
 
 void func_802AD858(){}
 
@@ -75,7 +107,7 @@ u8 CTutorialList::func_802AD984() { return (u8)func_801D3320(&mSortMenu84[0]); }
 // func_802AD98C - advance the list: gate on the sort-menu active/button flags,
 // move the cursor, refresh the sort menu, run the per-frame helpers and (when
 // requested) play the confirm sound.
-extern "C" void func_802AD98C(CTutorialList* self, int arg) {
+extern "C" __declspec(noinline) void func_802AD98C(CTutorialList* self, int arg) {
     if (func_801D3320(&self->mSortMenu84[0]) == 0) return;
     if (func_801D3328(&self->mSortMenu84[0]) == 0) return;
     func_801D216C(&self->mGap2C[0], 1);
@@ -94,12 +126,12 @@ extern "C" void func_802AD98C(CTutorialList* self, int arg) {
 extern "C" void func_802ADA0C(CTutorialList* self) {
     if (func_801D3320(&self->mSortMenu84[0]) == 0) return;
     if (func_801D3328(&self->mSortMenu84[0]) == 0) return;
-    u8 page = (u8)func_801D3808(&self->mSortMenu84[0]);
+    s32 page = func_801D3808(&self->mSortMenu84[0]);
     self->mField17E = (s8)page;
-    func_802ACC30(self->mSubObj180, 0, page);
+    func_802ACC30(self->mSubObj180, 0, (u8)page);
     self->mField178 = 0;
-    func_801F36BC(&self->mScrollBar, 0xa, self->mField280);
     self->mField17A = 0;
+    func_801F36BC(&self->mScrollBar, 0xa, self->mField280);
     func_801F3850(&self->mScrollBar, self->mField17A);
     func_802AD98C(self, 1);
     func_802ADCE8(self);
@@ -180,7 +212,7 @@ extern "C" void func_802ADEE4(CTutorialList* self) {
     func_801D353C(&self->mSortMenu84[0], self->mField17E);
 }
 
-extern "C" void func_802ADFA8(CTutorialList* self) {
+extern "C" __declspec(noinline) void func_802ADFA8(CTutorialList* self) {
     char* text = func_80136190(&lbl_eu_80510B78[0x8e], &lbl_eu_80510B78[0x97], self->mField17E + 0x25);
     func_80136B4C(self->mLayout20, &lbl_eu_80510B78[0x9c], text, 0);
 }
@@ -189,16 +221,13 @@ extern "C" void func_802ADFA8(CTutorialList* self) {
 // loading: flag the visible selection, seed the sub-object at +0x180, copy the
 // row/selection ids and run the per-frame helper.
 extern "C" void func_802AE004(CTutorialList* self) {
-    if (self->mField1C != 0) {
-        if (self->mField18 == 0) {
-            self->mField176 = 1;
-            self->mField174 = 1;
-            func_802ACC30(self->mSubObj180, self->mField17C, 0);
-            self->mField178 = (s8)self->mField282;
-            self->mField17A = (u16)self->mField284;
-            func_802ADCE8(self);
-        }
-    }
+    if (self->mField1C == 0 || self->mField18 != 0) return;
+    self->mField176 = 1;
+    self->mField174 = 1;
+    func_802ACC30(self->mSubObj180, self->mField17C, 0);
+    self->mField178 = (s8)self->mField282;
+    self->mField17A = (u16)(s32)self->mField284;
+    func_802ADCE8(self);
 }
 
 void CTutorialList::OnFileEvent() {}

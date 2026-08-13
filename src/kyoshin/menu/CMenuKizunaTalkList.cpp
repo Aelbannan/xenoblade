@@ -242,9 +242,10 @@ void CMenuKizunaTalkList::Init() {
         src++;
     } while (dst < mKizunaTalkList.mEntryArray.mEntries + 256);
 
-    // Entry count / parent (at the tail of the entry array).
-    *(u8*)((u8*)this + 0x1544)  = *(u8*)(tempList + 0x14ec);
-    *(u32*)((u8*)this + 0x1548) = *(u32*)(tempList + 0x14f0);
+    // Entry count / parent (at the tail of the entry array: table ends at
+    // tempList+0x148C = 0x8C + 256*0x14).
+    *(u8*)((u8*)this + 0x1544)  = *(u8*)(tempList + 0x148c);
+    *(u32*)((u8*)this + 0x1548) = *(u32*)(tempList + 0x1490);
     __dt__15CKizunaTalkListFv(tempList, -1);
 
     func_802732F4(&this->mKizunaTalkList);
@@ -287,9 +288,9 @@ void CMenuKizunaTalkList::Move() {
     CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 cancel;
     if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-        cancel = pad->mPressedButtonFlags & 0x800000;
+        cancel = (pad->mPressedButtonFlags & 0x800000) != 0;
     } else {
-        cancel = pad->mPressedButtonFlags & 0x400;
+        cancel = (pad->mPressedButtonFlags & 0x400) != 0;
     }
 
     if (cancel != 0) {

@@ -21,10 +21,20 @@ f32 AnmObjChrBlend::GetWeight(int idx) const {
 
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjChr")> lbl_eu_8051D5C0 = {sizeof("AnmObjChr"), "AnmObjChr"};
 
+// AnmObj::IsDerivedFrom body (retail inlines the base chain into every
+// derived class; the 0x650/0x640 checks come from this helper's boundary).
+static bool anmObjBaseIsDerivedFrom(G3dObj::TypeObj other) {
+    if (other == G3dObj::TypeObj(lbl_eu_8051D650)) {
+        return true;
+    }
+    return other == G3dObj::TypeObj(lbl_eu_8051D640);
+}
+
 bool AnmObjChr::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D5C0) ? true
-         : other == TypeObj(lbl_eu_8051D650) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+    if (other == TypeObj(lbl_eu_8051D5C0)) {
+        return true;
+    }
+    return anmObjBaseIsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj AnmObjChr::GetTypeObj() const {
@@ -39,10 +49,10 @@ const char* AnmObjChr::GetTypeName() const {
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjChrNode")> lbl_eu_8051D5D0 = {sizeof("AnmObjChrNode"), "AnmObjChrNode"};
 
 bool AnmObjChrNode::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D5D0) ? true
-         : other == TypeObj(lbl_eu_8051D5C0) ? true
-         : other == TypeObj(lbl_eu_8051D650) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+    if (other == TypeObj(lbl_eu_8051D5D0)) {
+        return true;
+    }
+    return AnmObjChr::IsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj AnmObjChrNode::GetTypeObj() const {
@@ -57,11 +67,10 @@ const char* AnmObjChrNode::GetTypeName() const {
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjChrBlend")> lbl_eu_8051D5E4 = {sizeof("AnmObjChrBlend"), "AnmObjChrBlend"};
 
 bool AnmObjChrBlend::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D5E4) ? true
-         : other == TypeObj(lbl_eu_8051D5D0) ? true
-         : other == TypeObj(lbl_eu_8051D5C0) ? true
-         : other == TypeObj(lbl_eu_8051D650) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+    if (other == TypeObj(lbl_eu_8051D5E4)) {
+        return true;
+    }
+    return AnmObjChrNode::IsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj AnmObjChrBlend::GetTypeObj() const {
@@ -76,10 +85,10 @@ const char* AnmObjChrBlend::GetTypeName() const {
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjChrRes")> lbl_eu_8051D5F8 = {sizeof("AnmObjChrRes"), "AnmObjChrRes"};
 
 bool AnmObjChrRes::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D5F8) ? true
-         : other == TypeObj(lbl_eu_8051D5C0) ? true
-         : other == TypeObj(lbl_eu_8051D650) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+    if (other == TypeObj(lbl_eu_8051D5F8)) {
+        return true;
+    }
+    return AnmObjChr::IsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj AnmObjChrRes::GetTypeObj() const {

@@ -15,8 +15,15 @@ extern "C" void func_8016A480(void* self);
 // UI-state flag toggle used by func_801686B0 (defined in CInfoCf.cpp).
 extern "C" void func_80166788();
 // Sibling ctor in this TU (retail __ct__cf_CTaskREvtSequence, 0x218-byte
-// body): takes (self, sequence-name string), returns self.
-extern "C" void* __ct__cf_CTaskREvtSequence(void* self, const char* name);
+// body): takes (self, sequence-name string), returns self. The retail symbol
+// is the pre-mangled name (a global function, not a cf::CTaskREvtSequence
+// member); declared here so the definition keeps C linkage (CTaskREvent
+// precedent).
+namespace cf {
+class CTaskREvtSequence;
+}
+extern "C" cf::CTaskREvtSequence* __ct__cf_CTaskREvtSequence(
+    cf::CTaskREvtSequence* self, const char* name);
 // func_80168484 (this unit) toggles a flag and fades BGM (menu sound system).
 extern "C" void func_80168484(int a);
 extern "C" void func_80189318(s32 clearName, float fadeTime);
@@ -55,6 +62,9 @@ extern u32 lbl_eu_80663EE0;
 extern f32 lbl_eu_80667658;
 
 #include "monolib/scn/CScn.hpp"
+#include "monolib/scn/IScnRender.hpp"
+// ResAnmChr is returned by value (single pointer word) by func_8049E708.
+#include "nw4r/g3d/res/g3d_resanmchr.h"
 extern CScn* lbl_eu_80663E14; // scene object
 
 // Move-callback ptmf table copied into CTaskREvtSequence::field_0x3C by Init
@@ -115,7 +125,66 @@ extern "C" u32 func_800AA714(const char* path);
 // symbol with a void* shape).
 extern "C" bool func_8049EB60(UnkEvtPlayer* obj);
 
+// Imports for func_80169F28 (event-sequence dispatch): the four realtime-event
+// object setup helpers (kyoshin/realtimeevt/*.cpp). The third argument is the
+// address of the id-list element (the callees store it into +0x43C/+0x1C
+// etc.).
+struct CREvtCamera;
+struct CREvtEffect;
+struct CREvtLight;
+struct CREvtMovie;
+struct CREvtMovieScript;
+struct CREvtParam;
+extern "C" void func_80180664(CREvtCamera* self, void* eventData,
+                              void* elemAddr);
+extern "C" void func_80185378(CREvtEffect* self, void* src, void* elemAddr);
+extern "C" void func_801C36C4(CREvtLight* self, const char* resourceName,
+                              u32 elemAddr);
+extern "C" void func_80294BA4(CREvtMovie* self);
+// Imports for func_80168800 (event-sequence setup): realtime-event arena
+// allocator + object ctors (kyoshin/realtimeevt/*.cpp), the name-matching
+// helper (CREvtModel.cpp), CfGameManager gates and the vision-arm pair
+// (CMenuVision.cpp).
+extern "C" void* func_80185748(void* size);
+extern "C" CREvtCamera* __ct__CREvtCamera(CREvtCamera* self, u32 param);
+extern "C" CREvtEffect* __ct__CREvtEffect(CREvtEffect* self,
+                                          CREvtParam* param);
+extern "C" CREvtLight* __ct__CREvtLight(CREvtLight* self, u32 arg);
+extern "C" CREvtMovie* __ct__CREvtMovie(CREvtMovie* self,
+                                        CREvtMovieScript* scriptData);
+extern "C" void* func_801730D0(void* self);
+extern "C" bool func_80087250__Q22cf13CfGameManagerFv();
+extern "C" void func_8007CE94__Q22cf13CfGameManagerFv();
+extern "C" u32 func_801AC088();
+extern "C" void func_801AC1F8();
+extern "C" void func_80294980(CREvtMovie* self);
+
+// Imports for func_8016ABA8 (async file-event handler): scene dim helper
+// (CfObjectImplWalker.cpp) and the menu tag-processor (re)init pair
+// (code_8025FB10.cpp).
+extern "C" u8* func_8049627C(CScn* scene, int flag);
+extern "C" void func_802618D8(u8* arg);
+extern "C" void func_80261944(int arg);
+// Imports for func_80169050 (fade/arm sequence state): CfGameManager helpers
+// (caller shape - retail symbols are Fv) and the voice/UI-system arm helper
+// (code_801A929C.cpp).
+extern "C" void func_8007C0F8__Q22cf13CfGameManagerFv();
+extern "C" void func_8007FE1C__Q22cf13CfGameManagerFv(int a, int b);
+extern "C" void func_801AAC78(int v);
+// Imports for the ctor: menu/event-system singleton gate + arm
+// (CMenuEnemyState.cpp).
+extern "C" void* func_80110A70();
+extern "C" void func_80111074();
+// Character-anim resource lookup (CScnItemAnim.cpp): returns a single-word
+// ResAnmChr wrapper; func_8016AF4C / func_8016B5A4 walk it.
+extern "C" nw4r::g3d::ResAnmChr func_8049E708(u8* data, int index);
+// ResFile entry-count getter called on the raw file base + 0xC (retail emits
+// addi+bl with no ResFile object spill; CREvtModel precedent).
+extern "C" u32 GetResAnmChrNumEntries__Q34nw4r3g3d7ResFileCFv(u8* resFile);
+
 // .sdata2 floats used by func_80169CD0 (fade vec, camera/player values).
+extern f32 lbl_eu_80667668;
+extern f32 lbl_eu_8066766C;
 extern f32 lbl_eu_80667670;
 extern f32 lbl_eu_80667674;
 extern f32 lbl_eu_80667678;
@@ -123,6 +192,57 @@ extern f32 lbl_eu_8066767C;
 
 // ptmf table copied into field_0x3C by func_80168F38 (retail .data:0x80530A7C).
 extern u32 lbl_eu_80530A7C[3];
+
+// ptmf tables copied into field_0x3C by func_80169050 (retail .data:
+// 0x80530A88 / 0x80530A94).
+extern u32 lbl_eu_80530A88[3];
+extern u32 lbl_eu_80530A94[3];
+
+// ptmf tables copied into field_0x3C by func_80168800 (retail .data:
+// 0x80530A64 / 0x80530A70).
+extern u32 lbl_eu_80530A64[3];
+extern u32 lbl_eu_80530A70[3];
+
+// Vtable block at retail .data:0x80530BF4 (interim, overwritten by the ctor)
+// and 0x80530B0C (final CTTask/IScnRender block written by the ctor: primary
+// at +0x10, secondary sub-vtables at +0x24 and +0xAC).
+extern u32 lbl_eu_80530BF4[];
+extern u32 lbl_eu_80530B0C[];
+
+// Panic file/format strings used by func_8016AF4C / func_8016B5A4
+// (retail .data:0x80530C..).
+extern char lbl_eu_80530D18[];
+extern char lbl_eu_80530CFC[];
+extern char lbl_eu_80530CF0[];
+extern char lbl_eu_80530F08[];
+extern char lbl_eu_80530EE0[];
+extern char lbl_eu_80530D54[];
+extern char lbl_eu_80530D2C[];
+extern char lbl_eu_80530DC4[];
+extern char lbl_eu_80530DA8[];
+extern char lbl_eu_80530D68[];
+extern char lbl_eu_80530ECC[];
+extern char lbl_eu_80530E88[];
+extern char lbl_eu_80530E1C[];
+extern char lbl_eu_80530DD8[];
+extern char lbl_eu_80530E74[];
+extern char lbl_eu_80530E30[];
+// .sdata string extension marker used by func_8016C450's filename strip
+// (retail .sdata:0x806623C0, size 2).
+extern char lbl_eu_806623C0[2];
+extern char lbl_eu_80530D94[];
+extern char lbl_eu_80530D78[];
+// .sbss type-name strings passed as nw4r Panic varargs (fixed size keeps the
+// SDA21 reloc, CfBdat.hpp precedent).
+extern char lbl_eu_806623C4[4];
+extern char lbl_eu_806623C8[4];
+extern char lbl_eu_806623CC[4];
+
+// .sbss event-window halfword toggled by func_80169050 (bit 0).
+extern u16 lbl_eu_806642E0;
+
+// .sdata2 BGM volume used by func_80169050's fade calls.
+extern f32 lbl_eu_8066765C;
 
 // 4-float stack blob passed to func_8049602C by func_80169CD0 (fade vec).
 struct EvtSeqVec4 {
@@ -174,11 +294,18 @@ public:
     UnkEvtPlayer* field_0xC;          // 0x0C: player object pointer
 };
 
-// Pointer at CTaskREvtSequence::field_0x120: byte offset +0x28 added to the
-// pointer itself by func_80169DD0 (walk cursor advance).
+// Pointer at CTaskREvtSequence::field_0x120: walk header of the loaded
+// sequence buffer. The word offsets at +0x14..+0x28 locate the entry table
+// and the four id lists inside the buffer (func_80169F28); func_80169DD0
+// advances the cursor by the +0x28 offset.
 struct UnkSeq120 {
-    u8 gap00[0x28];   // 0x00
-    u32 field_0x28;   // 0x28
+    u8 gap00[0x14];   // 0x00
+    u32 field_0x14;   // 0x14: offset to the 0x14-byte entry table
+    u32 field_0x18;   // 0x18: offset to id-list A (+0xC data start)
+    u32 field_0x1C;   // 0x1C: offset to id-list B (+0xC data start)
+    u32 field_0x20;   // 0x20: offset to id-list C (+0xC data start)
+    u32 field_0x24;   // 0x24: offset to id-list D (+0xC data start)
+    u32 field_0x28;   // 0x28: walk cursor advance (func_80169DD0)
 };
 
 // Object behind the container +0x4594/+0x4598 pointers (func_8016C118): the
@@ -229,10 +356,13 @@ struct UnkStateTable_D0 {
     u8 gap00[0x04];   // 0x00
     u32 field_0x4;    // 0x04: byte stride between entries
     u8 gap08[0x04];   // 0x08
-    u32 field_0xC;    // 0x0C: word read by func_8016A378
+    u32 field_0xC;    // 0x0C: count word read by func_8016A378
     u32 field_0x10;   // 0x10: size word read by func_80169DD0
     u32 field_0x14;   // 0x14: size word read by func_80169DD0
-};  // size 0x18
+    u8 gap18[0x20];   // 0x18-0x37
+    u32 field_0x38;   // 0x38: flag word (bits 0/1/3 read by func_80169F28)
+    f32 field_0x3C;   // 0x3C: fade volume compared by func_80169F28
+};  // size 0x40
 
 // Object whose address is stored in UnkState_80664268::field_0xC4;
 // func_8016C3DC reads its +0x4C word.
@@ -240,6 +370,20 @@ struct UnkStateC4 {
     u8 gap00[0x4C];   // 0x00
     u32 field_0x4C;   // 0x4C
 };  // size 0x50
+
+// Realtime-event object base (func_80169F28 reads the name-data id word at
+// +0x43C after a camera setup call and stores it into the table entry).
+struct EvtSeqObj43C {
+    u8 gap00[0x43C];
+    u32 field_0x43C;
+};
+
+// Scene view exposing the +0x7C pointer whose target word is OR'd/AND'd by
+// func_80169F28 (driven by bits 0/1 of the entry flag word).
+struct EvtSeqScn7C {
+    u8 gap00[0x7C];
+    u32* field_0x7C;
+};
 
 // Object whose address is cached in the .sbss pointer lbl_eu_80664268;
 // func_8016A35C / func_8016A3A8 / func_8016A3C4 read its words.
@@ -282,12 +426,16 @@ struct EvtSeqWithEvt : public EvtSeqHead54, public IWorkEvent {};
 // +0x20 (count base) and +0x28 (start index / run length).
 struct UnkStateC4Obj {
     u8 gap00[0x20];   // 0x00
-    u32 field_0x20;   // 0x20
-    u8 gap24[0x04];   // 0x24
-    u32 field_0x28;   // 0x28
-    u8 gap2C[0x10];   // 0x2C-0x3B
+    u32 field_0x20;   // 0x20 (id-list A count, func_80169F28 loop 2)
+    u32 field_0x24;   // 0x24 (id-list B count, func_80169F28 loop 3)
+    u32 field_0x28;   // 0x28 (start index / id-list C count, func_80169F28 loop 1)
+    u8 gap2C[0x08];   // 0x2C-0x33
+    u32 field_0x34;   // 0x34 (id-list D count, func_80169F28 loop 4)
+    u8 gap38[0x04];   // 0x38-0x3B
     u32 field_0x3C;   // 0x3C (inner-loop bound read by func_8016BB38)
-};  // size 0x40
+    u8 gap40[0x08];   // 0x40-0x47
+    u32 field_0x48;   // 0x48 (final list count, func_80169F28 loop 5)
+};  // size 0x4C
 
 // Name-data block at UnkEvtListEntry::field_0x1C: id word at +0x0C (compared
 // against CBdatEntry mNameData by func_8016A27C), name string at +0x10
@@ -316,6 +464,8 @@ public:
     virtual void* vf_0x24();   // user 7 -> vtable+0x24 (func_80168F38 walk call)
     virtual void* vf_0x28();   // user 8
     virtual void* vf_0x2C();   // user 9 -> vtable+0x2C (func_80169DD0 match call)
+    virtual void* vf_0x30();            // user 10 -> vtable+0x30
+    virtual void* vf_0x34(void* arg);    // user 11 -> vtable+0x34 (func_80169F28 loop 2 call)
     u8 gap04[0x10];            // 0x04-0x13
     s32 field_0x14;            // 0x14: type word (3 = realtime event)
     u8 gap18[0x04];            // 0x18
@@ -449,39 +599,174 @@ struct UnkBlock801682AC {
     u32 field_0xC; // 0x0C (ALLOC_HANDLE; -1 = invalid)
 };
 
+// File-event view consumed by func_8016ABA8 (async OnFileEvent handler): the
+// shared monolib CEventFile only declares the head/tail, so expose the mid
+// words (type, handle, two argument words, size/flag word).
+struct EvtSeqFileEvent {
+    s32 field_00;           // +0x00 event type (1 = data loaded)
+    u32 field_04;           // +0x04 owning file handle (compared to 0xB8/0xBC/0xFC)
+    u8 field_08[0xC - 0x08];
+    u32 field_0C;           // +0x0C (arg0 passed to func_8016C450)
+    u32 field_10;           // +0x10 (arg1 passed to func_8016C450)
+    u32 field_14;           // +0x14 (size/flag compared against the language entry)
+};
+
+// Layout view of CTaskREvtSequence exposing the IScnRender secondary base at
+// +0x58 (func_8016ABA8 registers it as a scene render callback).
+struct EvtSeqHead58 {
+    u8 gap00[0x58];
+};
+struct EvtSeqWithRender : public EvtSeqHead58, public IScnRender {};
+
+// View of the field_0xC4 buffer (loaded sequence data): walk limit at +0x38,
+// flags halfword at +0x44, per-language 8-byte entries at +0x50.
+struct EvtSeqLangEntry {
+    u32 field_0x0;   // 0x00
+    u32 field_0x4;   // 0x04
+};
+// Entry of the type-tagged walk tables inside the sequence buffer
+// (CTaskREvtSequence::field_0xC4): type word at +0, byte stride at +4; a -1
+// type terminates the walk. The type-2/0xb/0xe tables are also viewed as
+// UnkStateTable_D0 / UnkE8Table / UnkBB38Table respectively.
+struct EvtSeqWalkEntry {
+    s32 field_0x0;   // 0x00: entry type (-1 = terminator)
+    u32 field_0x4;   // 0x04: byte stride to the next entry
+};
+
+// Sequence-buffer view for func_80168800: +0x8 locates the first walk
+// entry; +0x20..+0x48 hold the per-kind entry counts; +0x4C the flags word.
+struct EvtSeqWalkBuf {
+    u8 gap00[0x8];    // 0x00
+    u32 field_0x8;    // 0x08: offset to the first walk entry
+    u8 gap0C[0x14];   // 0x0C-0x1F
+    u32 field_0x20;   // 0x20: type-3 (model/effect) count
+    u32 field_0x24;   // 0x24
+    u32 field_0x28;   // 0x28: camera count
+    u8 gap2C[0x08];   // 0x2C-0x33
+    u32 field_0x34;   // 0x34: light count
+    u8 gap38[0x10];   // 0x38-0x47
+    u32 field_0x48;   // 0x48: movie count
+    u32 field_0x4C;   // 0x4C: flags word
+};  // size 0x50
+
+// Object behind CTaskREvtSequence::field_0xCC (type-1 walk entry): the
+// float at +0x10 is compared against the fade volume by func_80168800.
+struct EvtSeqCC {
+    u8 gap00[0x10];   // 0x00
+    f32 field_0x10;   // 0x10
+};
+
+// Type-3 walk entry (CTaskREvtSequence::field_0xD4): name string at +0x10
+// (matched/replaced by func_80168800), packed id at +0x20 and type word at
+// +0x28.
+struct EvtSeqType3Entry {
+    u8 gap00[0x10];   // 0x00
+    char mName[0x10]; // 0x10: name string
+    u32 field_0x20;   // 0x20: packed id written on rename
+    u32 field_0x28;   // 0x28: type word (3)
+};  // size 0x2C
+
+struct EvtSeqC4Buf {
+    u8 gap00[0x38];                 // 0x00
+    u32 field_0x38;                 // 0x38: inner-loop bound / walk limit
+    u8 gap3C[0x08];                 // 0x3C-0x43
+    s16 field_0x44;                 // 0x44: color/type halfword
+    u8 gap46[0x0A];                 // 0x46-0x4F
+    EvtSeqLangEntry field_0x50[8];  // 0x50: per-language entries
+};
+
+// Table at CTaskREvtSequence::field_0xE8 (walked by func_80169050 and
+// func_8016B860): byte stride at +0x4; entries have an id halfword at +0x8, a
+// type byte at +0xA, a signed duration halfword at +0xC, a gate halfword at
+// +0xE and a signed value byte at +0x10 (data area starts at +0x10).
+struct UnkE8Table {
+    u8 gap00[0x04];   // 0x00
+    u32 field_0x4;    // 0x04: byte stride between entries
+    u16 field_0x8;    // 0x08: entry id (matched against field_0x104)
+    u8 field_0xA;     // 0x0A: entry type (1/2/3/5/7 handled by func_8016B860)
+    u8 gap0B;         // 0x0B
+    s16 field_0xC;    // 0x0C: signed duration (frames when negative)
+    u16 field_0xE;    // 0x0E: gate halfword (type-2 entries)
+    s8 field_0x10;    // 0x10: signed value (type-5 entries)
+};
+
+// CFileHandle word at +0x8 read by func_8016ABA8 (CX stream size/state).
+struct EvtSeqHandle8 {
+    u8 gap00[0x08];
+    u32 field_0x8;
+};
+
+// ResDic lookup result view (func_8016AF4C / func_8016B164 / func_8016B5A4):
+// data offset at +0x4, a word at +0x8 (published by func_8016B164 into its
+// second output) and the entry-type word at +0xC.
+struct EvtSeqResEntry {
+    u8 gap00[0x04];
+    u32 field_0x4;   // +0x4: relative offset to the entry data
+    u32 field_0x8;   // +0x8: word stored to *out2 by func_8016B164
+    u32 field_0xC;   // +0xC: entry type word
+};
+
+// Word loaded through the resolved entry data by func_8016AF4C.
+struct EvtSeqIdWord {
+    u32 field_0x0;
+};
+
+// Buffer encrypted in place by func_8016C450 (retail arg1): the cipher writes
+// bytes at [buf, buf->field_0x10 + 0x800).
+struct EvtC450Buf {
+    u8 gap00[0x10];
+    u8* field_0x10;  // +0x10: end-of-buffer marker (end = field_0x10 + 0x800)
+};
+
 namespace cf {
 
 class CTaskREvtSequence {
 public:
-    u8 gap00[0x20];
+    u8 gap00[0x10];
+    u32 field_0x10;  // 0x10 (CTTask/CProcess vtable written by the ctor)
+    u8 gap14[0x0C];  // 0x14-0x1F
     u32 field_0x20;  // at 0x20, accessed by func_8016A354
     u8 gap24[0x18];  // 0x24-0x3C
     u32 field_0x3C;  // 0x3C (CTTask mMoveFunc slot; Init installs a ptmf here)
     u32 field_0x40;  // 0x40
     u32 field_0x44;  // 0x44
-    u8 gap48[0x0C];  // 0x48-0x54
+    u32 field_0x48;  // 0x48 (mDrawFunc ptmf slot 0)
+    u32 field_0x4C;  // 0x4C (mDrawFunc ptmf slot 1)
+    u32 field_0x50;  // 0x50 (mDrawFunc ptmf slot 2)
     u32 mEvt54[2];    // 0x54-0x5B (IWorkEvent sub-object head; readFile target)
     u32 field_0x5C;   // 0x5C (flag word; bits 2/4 handled by func_80169DD0)
     char mPath[0x40]; // 0x60-0xA0 (sequence name buffer, FixStr<64> head)
-    u8 gapA0[0x04];   // 0xA0-0xA3
+    u32 field_0xA0;   // 0xA0 (name length stored by the ctor)
     // Embedded memory block (UnkBlock801682AC layout) cleaned up by the dtor.
     UnkEvtListEntry** field_0xA4; // 0xA4 (realtime-event list; freed by the dtor)
     u32 field_0xA8;   // 0xA8 (walk limit / count)
     u32 field_0xAC;   // 0xAC (spare word)
     u32 field_0xB0;   // 0xB0 (ALLOC_HANDLE; -1 = invalid)
-    u8 gapB4[0x04];   // 0xB4-0xB7
+    u32 field_0xB4;   // 0xB4
     u32 field_0xB8;   // 0xB8 (CFileHandle* stored by func_801686B0)
     u32 field_0xBC;   // 0xBC (CFileHandle* from readCommonArchiveFile)
     u32 field_0xC0;   // 0xC0 (file-header object; freed by func_8016872C)
     u32 field_0xC4;   // 0xC4 (newly allocated buffer, read into by func_8016872C)
-    u8 gapC8[0x08];            // 0xC8-0xCF
+    u32 field_0xC8;   // 0xC8
+    u32 field_0xCC;   // 0xCC
     UnkStateTable_D0* field_0xD0; // 0xD0 (event table walked by func_80169DD0)
-    u8 gapD4[0x1C];            // 0xD4-0xEF
+    u32 field_0xD4;   // 0xD4
+    u32 field_0xD8;   // 0xD8
+    u32 field_0xDC;   // 0xDC
+    u32 field_0xE0;   // 0xE0
+    u32 field_0xE4;   // 0xE4
+    UnkE8Table* field_0xE8;  // 0xE8 (event table walked by func_80169050)
+    u32 field_0xEC;   // 0xEC
     UnkBB38Table* field_0xF0;  // 0xF0 (event table walked by func_8016BB38)
-    u8 gapF4[0x04];            // 0xF4-0xF7
+    u32 field_0xF4;   // 0xF4
     u32 field_0xF8;            // 0xF8 (event index passed to func_80169DD0)
     u32 field_0xFC;            // 0xFC (readCommonArchiveFile handle / busy gate)
-    u8 gap100[0x14];           // 0x100-0x113
+    u32 field_0x100;           // 0x100
+    u32 field_0x104;           // 0x104
+    u8 field_0x108;            // 0x108
+    u8 field_0x109;            // 0x109 (ctor arms this to 1)
+    u32 field_0x10C;           // 0x10C
+    u32 field_0x110;           // 0x110
     u8 field_0x114;            // 0x114 (byte cleared by func_80168F38)
     u8 field_0x115;            // 0x115 (Term tests this byte)
     u16 field_0x116;  // 0x116 (id halfword pair published by func_80168610)
@@ -489,13 +774,20 @@ public:
     u8 gap11A[0x02];  // 0x11A-0x11B
     u32 field_0x11C;  // 0x11C (func_80168028 arena pointer)
     UnkSeq120* field_0x120;    // 0x120 (walk cursor advanced by func_80169DD0)
-    u8 gap124[0x04];  // 0x124-0x127
+    u32 field_0x124;  // 0x124 (CX stream position written by func_8016ABA8)
     u32 field_0x128;  // 0x128 (arena chunk size from func_80167D40)
     f32 field_0x12C;  // 0x12C (Init stores func_8048EA40() here)
     u32 field_0x130;  // 0x130 (zero-check by func_80169DD0)
     u16 field_0x134;  // 0x134 (sequence id halfword from func_8016E08C)
     u8 gap136[0x02];  // 0x136-0x137
     u32 field_0x138;  // 0x138 (frame counter incremented by func_80168F38)
+    u8 mBuf13C[0x100]; // 0x13C-0x23B (zeroed by the ctor)
+    u32 field_0x23C;   // 0x23C (id-list A base; func_80169F28 scratch word)
+    u32 field_0x240;   // 0x240 (id-list B base)
+    u32 field_0x244;   // 0x244 (id-list C base)
+    u32 field_0x248;   // 0x248 (id-list D base)
+    u32 field_0x24C;   // 0x24C (entry-table base)
+    u8 mCxBuffer[0x8A8]; // 0x250-0xAF7 (CX streaming-uncompression context)
 public:
     ~CTaskREvtSequence();
     void Init();
@@ -503,7 +795,7 @@ public:
     void cbRenderBefore();
 
     void Draw();
-    void OnFileEvent();
+    bool OnFileEvent(CEventFile* ev);
     u32 func_8016A354();
 };
 } // namespace cf
@@ -515,8 +807,9 @@ extern "C" cf::CTaskREvtSequence* func_8016AED4(CProcess* parent, const char* na
 extern "C" void func_801686B0(cf::CTaskREvtSequence* self);
 
 // Sibling in this TU (retail func_8016AF4C, unmangled): resolve a name
-// string from a data object into `out`. C linkage (retail unmangled name).
-extern "C" void func_8016AF4C(u8* data, const char* name, s32* out);
+// string from a data object into `out`; returns 1 on a hit. C linkage
+// (retail unmangled name).
+extern "C" int func_8016AF4C(u8* data, const char* name, s32* out);
 // Region-code helper (CTaskEnvironment.cpp): 0/1/2 region code from the
 // global sda. C linkage (retail unmangled name).
 extern "C" int func_80059C14(u8* sda);
@@ -533,6 +826,7 @@ extern "C" int func_80462E1C__8CTaskLODFv(s16 taskId);
 // keep the emitted symbols byte-identical to retail).
 // Definitions in this TU (retail unmangled names; the extern "C" decls above
 // keep the emitted symbols byte-identical to retail).
+extern "C" void func_80168800(cf::CTaskREvtSequence* self);
 extern "C" void func_80169CD0(cf::CTaskREvtSequence* self);
 extern "C" void func_80168F38(cf::CTaskREvtSequence* self);
 extern "C" void func_80169DD0(cf::CTaskREvtSequence* self, u32 idx);
@@ -543,4 +837,38 @@ extern "C" int func_8016ADF8(UnkEvtListEntry* self);
 extern "C" int func_8016C300(UnkEvtListEntry* self);
 extern "C" void func_8016BB38(cf::CTaskREvtSequence* self);
 extern "C" int func_80168514(UnkObj80168514* self);
+extern "C" bool func_8016ABA8(cf::CTaskREvtSequence* self, EvtSeqFileEvent* ev);
+extern "C" int func_8016B5A4(u8* data, const char* name, s32* out);
+extern "C" int func_8016B164(u8* data, const char* name, s32* out, s32* out2);
+extern "C" int func_8016B384(u8* data, const char* name, f32* out);
+extern "C" void func_80169A38(cf::CTaskREvtSequence* self);
+extern "C" void func_80169F28(cf::CTaskREvtSequence* self);
+extern "C" void func_8016B860(cf::CTaskREvtSequence* self);
+extern "C" void func_8016C450(const char* path, EvtC450Buf* buf, s32 limit);
+
+// Imports for func_8016B860 (event-sequence update): minimap/event gates
+// (CMiniMap.cpp / CMenuKizunagram.cpp), tag-processor notify (code_8025FB10.cpp)
+// and the menu BGM/voice helpers (code_80187F14.cpp / code_801A929C.cpp).
+extern "C" bool func_8011C2E8();
+extern "C" void func_8011C400();
+extern "C" void func_80261960(int index);
+extern "C" void func_80189034(const char* name, int flag, float f1, float f2);
+extern "C" void func_80188D34(const char* name, int flag, float f1, float f2);
+extern "C" void func_8018896C(int index, u32 type, float f1, float f2);
+extern "C" void func_801AACA8(u8 v);
+
+// Imports for func_80169A38 (event-sequence update): scene fade helpers
+// (CfObjectImplWalker.cpp).
+extern "C" void func_80496294(CScn* scene, float value);
+extern "C" f32 func_80496288(CScn* scene);
+
+// ptmf tables copied into field_0x3C by func_80169A38 (retail .data:
+// 0x80530ADC / 0x80530AE8).
+extern u32 lbl_eu_80530ADC[3];
+extern u32 lbl_eu_80530AE8[3];
+
+// .sdata2 int->double magic constant (2^52 + 2^31) and the scale float used
+// by func_8016B860's frame-duration conversions.
+extern f64 lbl_eu_80667680;
+extern f32 lbl_eu_80667688;
 

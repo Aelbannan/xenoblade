@@ -133,17 +133,14 @@ void ProductTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 su = rSrt.Su;
     f32 sv = rSrt.Sv;
 
-    f32 m03 = pMtx->m[0][3] - lbl_eu_80669CC4;
-    f32 m13 = pMtx->m[1][3] - lbl_eu_80669CC4;
-
     pMtx->m[0][0] *= su;
     pMtx->m[0][1] *= su;
     pMtx->m[0][2] *= su;
-    pMtx->m[0][3] = lbl_eu_80669CC4 + su * m03;
+    pMtx->m[0][3] = lbl_eu_80669CC4 + su * (pMtx->m[0][3] - lbl_eu_80669CC4);
     pMtx->m[1][0] *= sv;
     pMtx->m[1][1] *= sv;
     pMtx->m[1][2] *= sv;
-    pMtx->m[1][3] = lbl_eu_80669CC4 + sv * m13;
+    pMtx->m[1][3] = lbl_eu_80669CC4 + sv * (pMtx->m[1][3] - lbl_eu_80669CC4);
 }
 
 void ProductTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {

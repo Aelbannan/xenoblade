@@ -55,7 +55,7 @@ public:
 // CSortMenu / CCur helpers (retail unmangled symbols; C linkage).
 extern "C" u32 func_801D32DC(void*);
 extern "C" int func_801D3320(void*);
-extern "C" u8 func_801D3328(void*);
+extern "C" int func_801D3328(void*);
 extern "C" void func_801D3064(void*);
 extern "C" void func_801D3160(void*);
 extern "C" void func_801D3408(void*);
@@ -90,7 +90,7 @@ extern "C" void func_802ADB90(CTutorialList*);
 extern "C" void func_802ADBDC(CTutorialList*);
 extern "C" void func_802ADC28(CTutorialList*);
 extern "C" void func_802ADC88(CTutorialList*);
-extern "C" void func_802ADCE8(void*);
+extern "C" void func_802ADCE8(CTutorialList*);
 extern "C" void func_802ADFA8(CTutorialList*);
 extern "C" void func_802ADE18(CTutorialList*);
 extern "C" void func_802ACC30(u8*, u16, int);

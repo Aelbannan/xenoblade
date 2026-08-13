@@ -579,14 +579,14 @@ extern "C" void func_8047BE8C__17UnkClass_8047BB54Fv(
         func_8047C588__17UnkClass_8047BB54Fv(
             (UnkDrawObj*)obj, self->field_0xC, self->field_0x14,
             self->field_0x18, self->field_0x1C, (u8*)self + 0x20,
-            ((UnkViewFrame*)vf)->field_0x9C, (self->field_0x10 >> 3) & 1, f);
+            ((UnkViewFrame*)vf)->field_0x9C, self->field_0x10 & 0x8, f);
     } else {
         f32 f = ((UnkViewFrame*)vf)->field_0x1E0;
         void* obj = func_8047C034__17UnkClass_8047BB54Fv(vf);
         func_8047C904__17UnkClass_8047BB54Fv(
             (UnkDrawObj*)obj, self->field_0xC, self->field_0x14,
             self->field_0x18, self->field_0x1C, (u8*)self + 0x20,
-            ((UnkViewFrame*)vf)->field_0x9C, (self->field_0x10 >> 3) & 1, f);
+            ((UnkViewFrame*)vf)->field_0x9C, self->field_0x10 & 0x8, f);
     }
 }
 

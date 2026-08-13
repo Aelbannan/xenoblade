@@ -105,7 +105,7 @@ extern u16 func_8016DF2C();
 extern void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern u8 lbl_eu_8052E524[];
 extern u8 lbl_eu_8052E4F0[];
-extern u32 lbl_eu_805001C0;
+extern u32 lbl_eu_805001C0[28];
 extern char lbl_eu_80573B30[];
 extern char lbl_eu_80573BB0[];
 

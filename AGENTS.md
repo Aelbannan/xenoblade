@@ -10,7 +10,9 @@ This repository is a **private/downstream** Xenoblade Chronicles Wii decompilati
 4. **`COOP_IMPLEMENTATION_MAP.md`** — capability graph and feature handoffs; read for co-op architecture work.
 5. **`docs/MWCC_REFERENCE.md`** — consult relevant patterns for matching work.
 6. **`docs/register_mapping.md`** — the deterministic register-allocator contract (volatile low→high, saved high→low, declaration-order lever); read before chasing any `reg_swap` residual to `FULL_MATCH`.
-7. Read the behaviour, equivalence, symbol-recovery, or opcode documentation only when invoking that subsystem.
+7. **`docs/scheduling.md`** — the `-O4,p` vs `-O4,s` loop-optimization split and the level-gated instruction scheduler; read before chasing any `structural` scheduling/loop residual.
+8. **`docs/instruction_selection.md`** — the `mr` vs `addi rD,rS,0` copy lowering, type-driven load selection, and the `lbzu`/peephole rules; read before chasing `mr`/`addi`/`lbzu` residuals.
+9. Read the behaviour, equivalence, symbol-recovery, or opcode documentation only when invoking that subsystem.
 
 ## Quick commands
 

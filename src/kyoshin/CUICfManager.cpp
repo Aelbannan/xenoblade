@@ -23,6 +23,16 @@ CTTask<CUICfManager>::~CTTask() {}
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/MemManager.hpp"
 
+// Retail cf::IFlagEvent / IWorkEvent are trivially destructible (no retail
+// __dt__ symbols); the empty out-of-line dtors here let MWCC elide the base-
+// dtor calls from CUICfManager::~CUICfManager (reference: CTaskCulling dtor
+// note — the body must be visible in the same TU). IWorkEvent's strong copy
+// also lives in CTaskGame.cpp; the per-TU build tolerates the duplicate.
+namespace cf {
+IFlagEvent::~IFlagEvent() {}
+}
+IWorkEvent::~IWorkEvent() {}
+
 // High-level Init (no asm void). Best ~94.8% HIGH_MATCH.
 // Tail: scalars + u8 mid[8] + lone u32@+0x0E + pair-unroll chunks; zeros via u16* overlay.
 
@@ -40,11 +50,15 @@ char lbl_eu_8052E404[];
 char lbl_eu_8052E3BC[];
 u32 __ptmf_null[3];
 void __ct__8CProcessFv(CProcess*);
+void __dt__8CProcessFv(CProcess*, int);
 void func_8015704C(CUICfInitBlock*, const CUICfInitBlock*);
 void func_8009D0B4();
 void func_8009D514(cf::IFlagEvent*);
 void func_801390E0__FPP11CFileHandle(CFileHandle**);
 void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
+// Deleting dtor (C-ABI import): the secondary-subobject thunks tail-call it
+// with the adjusted `this`, so it is referenced through the flat retail name.
+void __dt__12CUICfManagerFv(CUICfManager*);
 }
 
 IWorkEvent* CUICfManager::cfWorkEvent() {
@@ -53,9 +67,8 @@ IWorkEvent* CUICfManager::cfWorkEvent() {
 
 // Virtual function thunks: adjust `this` and tail-call.
 // us-80136a98
-void __dt__12CUICfManagerFv(void*);
 void CUICfManager::func_80135FC4() {
-    __dt__12CUICfManagerFv((void*)((char*)this - 0x54));
+    __dt__12CUICfManagerFv((CUICfManager*)((char*)this - 0x54));
 }
 
 // us-80136aa0
@@ -204,6 +217,83 @@ int lbl_eu_80664050;
 int func_80138138(int);
 u32 func_8013B87C(u8);
 int func_8014A1D4(void*, u32, u8, int);
+// Menu factories used by the func_80133A08-family create helpers below.
+u32 func_8029BB24(CUICfUnk144*, u32, u32);
+u32 func_8014A11C(CUICfUnk144*, u32, u32);
+u32 func_8011CCE0(CUICfUnk144*, u32, u32);
+u32 func_802AC494(CUICfUnk144*, u32, u32);
+u32 __ct__CMenuItem(CUICfUnk144*, u32, u32, u32);
+// Additional menu factories used by the func_80133A08-family create helpers.
+u32 __ct__CMenuPause(CUICfUnk144*, u32);
+// 6-arg factory: (ctx, scene, a, b, y, x) - func_80135464 forwards its two
+// dead int params as args 3/4 (retail materializes them in the prologue).
+u32 func_80113C84(CUICfUnk144*, u32, u32, u32, f32, f32);
+u32 func_802514D4(CUICfUnk144*, u32);
+// cpp-only imports: declared here rather than in the .hpp because other
+// headers declare these same flat symbols with different signatures
+// (func_80124B78: CMenuQstCnt.hpp int vs CMainMenu.hpp u32; func_8029A5DC:
+// CMenuTutorial.hpp C++ member; func_8049603C: CTaskGame.hpp/code_80135FDC.hpp
+// CScn* arg; getUnk80664658: CfGimmick.hpp vs CMainMenu.hpp already differ;
+// lbl_eu_80663E14: CScn* in CTaskGame.hpp/code_80135FDC.hpp), so a header
+// declaration would break TUs that co-include those headers.
+extern "C" {
+u32 func_80124B78();
+void* func_8029A5DC(void* self, void* parent, u32 arg2);
+CUICfCamView* func_8049603C(u8* scene);
+CUICfGlobalSettings* getUnk80664658();
+void* __ct__8011C1B8(void* ctx, u32 scene);
+extern u8* lbl_eu_80663E14;
+}
+
+// Busy/state probe called by func_80134538 with the singleton as its arg
+// (retail passes the just-loaded singleton through r3). noinline keeps
+// the retail bl (MWCC would fold the trivial body otherwise).
+int __declspec(noinline) func_80135D04(CUICfManagerCreateView* singleton) {
+    u8 mode = (u8)lbl_eu_80664184;
+    if (mode == 0x1a || mode == 0x1c) {
+        return 1;
+    }
+    if (singleton->field_0x120 > 0) {
+        return 1;
+    }
+    int st = func_801359AC();
+    if (st != 0) {
+        if (st == 2) {
+            func_80138078(5);
+        }
+        return 1;
+    }
+    if (func_800FF738() != 0) {
+        return 1;
+    }
+    if (func_80124B78() != 0) {
+        return 1;
+    }
+    if (func_801B481C() != 0) {
+        return 1;
+    }
+    if (func_80293C10() != 0) {
+        return 1;
+    }
+    if (func_8029A658() != 0) {
+        return 1;
+    }
+    if (getInstance__11CSysWinBuffFv() != 0) {
+        return 1;
+    }
+    CUICfGlobalSettings* g = getUnk80664658();
+    if ((g->field_214 & 0x40000) != 0) {
+        func_80138078(5);
+        return 1;
+    }
+    f32 v = func_8049603C(lbl_eu_80663E14)->field_C;
+    f32 c = lbl_eu_806672C8;
+    return (c - v) < c;
+}
+// Additional menu factories (CMenuGCItem / CMenuGetItem / CMenuSave TUs).
+u32 __ct__CMenuGCItem(CUICfUnk144*, u32, u8);
+u32 func_8014A064(CUICfUnk144*, u32, u16);
+u32 func_8028E3B4(CUICfUnk144*, u32, u32, u32, u32);
 void func_8013DA60(int, int, int);
 void* func_8009EC9C(u16);
 void func_800A21F8(void*, u16, int, int);
@@ -477,7 +567,7 @@ end:
 
 void func_8012FFB4(void*);
 void func_80133770();
-void func_801338C8(CUICfManager*);
+extern "C" u32 func_801338C8(CUICfManager*);
 extern "C" {
 u32 lbl_eu_80663E24;
 u32 lbl_eu_80663E28;
@@ -1072,12 +1162,16 @@ void func_80135694(){}
 void func_801356BC(){}
 void func_801356E0(){}
 extern "C" int func_80135898() {
-    unsigned char* g = (unsigned char*)lbl_eu_80664054;
-    if (!g) return 0;
-    struct Entry { u8 flag; };
-    Entry* arr = (Entry*)(g + 0x14c);
+    CUICfManager* inst = (CUICfManager*)lbl_eu_80664054;
+    if (inst == 0) {
+        return 0;
+    }
+    // Scan the init slots' unk04 flag for the "in use" value 4 (0x168 stride).
+    CUICfSlotFlagView* slots = (CUICfSlotFlagView*)((u8*)inst + 0x14c);
     for (int i = 0; i < 8; i++) {
-        if (arr[i].flag == 4) return 1;
+        if (slots[i].flag == 4) {
+            return 1;
+        }
     }
     return 0;
 }
@@ -1094,7 +1188,7 @@ void Init__Q212CUICfManager5CTestFv(){}
 
 void func_8012FFB4(void*){}
 void func_80130244(){}
-void func_8013042C(){}
+extern "C" int func_8013042C(u8* base, u8 index) { return 0; }
 void func_80130720(){}
 void func_80130960(){}
 void func_80130B74(){}
@@ -1105,12 +1199,485 @@ void func_80131820(){}
 void __ct__CUICfManager(){}
 void func_801336E4(){}
 void func_80133770(){}
-void func_801338C8(CUICfManager*){}
-void func_80133A08(){}
-void func_80133B80(){}
+// func_801338C8: create the menu via __ct__8011C1B8 and queue it
+// (mFlags bit 0x2; busy-bit/accessor gates + scene-mode guard).
+extern "C" u32 func_801338C8(CUICfManager* self) {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+        return 0;
+    }
+    if (inst->field_0x5C == NULL) {
+        inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x2);
+        return 0;
+    }
+    inst->field_0xC90 = (u16)(inst->field_0xC90 & 0xfffd);
+    if ((u8)lbl_eu_80664184 <= 1 || (u8)lbl_eu_80664184 == 0x1d) {
+        return 0;
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    {
+        u32 tempRet = (u32)__ct__8011C1B8(inst->field_0x144, inst->field_0x11C);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
+// ---------------------------------------------------------------------------
+// Menu-create + event-queue push helpers (func_80133A08 family).
+//
+// Shared skeleton (same slot walk as func_80133324's queue push):
+//   1) null-check the lbl_eu_80664054 singleton,
+//   2) call a menu factory; the result is kept in volatile savedRet@0x8
+//      (spilled right after the call, reloaded for the setItem store and
+//      again for the return value),
+//   3) scan the 0xC-stride event-node array (unk138) for the first empty
+//      slot (item == 0),
+//   4) reslist-style setItem push; the try block forces the stw-r1 frame
+//      home at 0x24 and the frame-link epilogue,
+//   5) link the node into the circular list at unk128 and return savedRet.
+// ---------------------------------------------------------------------------
+
+// func_80134E50: create the option menu and queue it.
+u32 func_80134E50(u32 arg) {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = func_8029BB24(inst->field_0x144, inst->field_0x11C, arg);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
+
+// func_801352A4: create the get-item menu and queue it.
+u32 func_801352A4(u32 arg) {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = func_8014A11C(inst->field_0x144, inst->field_0x11C, arg);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
+
+// func_80133A08: create the quest-log menu and queue it (id narrowed to u16).
+u32 func_80133A08(u32 arg) {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = func_8011CCE0(inst->field_0x144, inst->field_0x11C, (u16)arg);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
+
+// func_80133D78: construct the base menu item and queue it.
+u32 func_80133D78() {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = __ct__CMenuItem(inst->field_0x144, inst->field_0x11C, 0, 1);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
+
+// func_80134F2C: create the tutorial-list menu and queue it (id narrowed to u16).
+u32 func_80134F2C(u32 arg) {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = func_802AC494(inst->field_0x144, inst->field_0x11C, (u16)arg);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
+
+// func_80133B80: create the event menu via func_801109D8 and queue it
+// (mFlags bit 0x10; busy-bit and accessor gates, same as Move's flag path).
+extern "C" u32 func_80133B80() {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+        return 0;
+    }
+    if (inst->field_0x5C == NULL) {
+        inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x10);
+        return 0;
+    }
+    inst->field_0xC90 = (u16)(inst->field_0xC90 & 0xffef);
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    {
+        u32 tempRet = (u32)func_801109D8(inst->field_0x144, inst->field_0x11C, 0);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
 void func_80133CA0(){}
-void func_80133D78(){}
-void func_80133E58(){}
+// us-8013492c: create the pause-style menu via CMenuPause's factory and queue
+// it. The 3rd factory arg is the u8-narrowed first param, the 2nd is the
+// caller's scene id or the manager's own unk11C when 0.
+u32 func_80133E58(CUICfManager* self, u32 arg1, u32 arg2) {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = __ct__CMenuItem(inst->field_0x144, arg1 != 0 ? arg1 : inst->field_0x11C,
+                                      (u8)self, arg2);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
 void func_80133F48(){}
 void func_80134024(){}
 void func_80134100(){}
@@ -1118,28 +1685,567 @@ void func_801341D8(){}
 void func_801342B0(){}
 void func_80134388(){}
 void func_80134460(){}
-void func_80134538(){}
-void func_80134628(){}
+// us-8013500c: probe func_80135D04, then create the world-map menu via
+// func_802514D4 and queue it.
+u32 func_80134538() {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    if (func_80135D04(inst) != 0) {
+        return 0;
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    {
+        u32 tempRet = func_802514D4(inst->field_0x144, inst->field_0x11C);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
+// us-801350fc: create the pause menu via __ct__CMenuPause and queue it
+// (gated on the lbl_eu_80663E28 busy bit).
+u32 func_80134628() {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    if ((lbl_eu_80663E28 & 0x01000000u) != 0) {
+        return 0;
+    }
+    {
+        u32 tempRet = __ct__CMenuPause(inst->field_0x144, inst->field_0x11C);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
 void func_80134714(){}
 void func_801347EC(){}
 void func_801348C8(){}
 void func_801349A0(){}
 void func_80134A78(){}
-void func_80134B50(){}
-void func_80134C34(){}
-void func_80134D18(){}
-void func_80134E50(){}
-void func_80134F2C(){}
+// func_80134B50: create the save menu and queue it, forwarding both own args
+// (retail keeps them in r6/r7 across the singleton check for the call).
+u32 func_80134B50(u32 arg0, u32 arg1) {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = func_8028E3B4(inst->field_0x144, inst->field_0x11C, 0, arg0, arg1);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
+
+// func_80134C34: create the save menu with fixed ctor args (1, 0, 1) and queue it.
+u32 func_80134C34() {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = func_8028E3B4(inst->field_0x144, inst->field_0x11C, 1, 0, 1);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
+
+// func_80134D18: create the tutorial menu via func_8029A5DC and queue it.
+// arg0 = slot index (u8), arg1 = scene id (or the manager's own when 0),
+// arg2 = skip-reset flag (0 resets the slot via func_8013042C first).
+extern "C" u32 func_80134D18(u32 a0, u32 a1, u32 a2) {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    if (a2 == 0) {
+        int reset = 0;
+        if (inst != NULL) {
+            reset = func_8013042C((u8*)inst + 0x14c, (u8)a0);
+        }
+        if (reset != 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    {
+        u32 tempRet =
+            (u32)func_8029A5DC(inst->field_0x144, a1 != 0 ? a1 : inst->field_0x11C, (u8)a0);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
 void func_8013500C(){}
-void func_801350E4(){}
-void func_801351C4(){}
-void func_801352A4(){}
-void func_80135380(){}
-void func_80135464(){}
+// func_801350E4: create the GC-item menu and queue it (id narrowed to u8).
+u32 func_801350E4(u32 arg) {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = __ct__CMenuGCItem(inst->field_0x144, inst->field_0x11C, (u8)arg);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
+
+// func_801351C4: create the get-item menu and queue it (id narrowed to u16).
+u32 func_801351C4(u32 arg) {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = func_8014A064(inst->field_0x144, inst->field_0x11C, (u16)arg);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
+
+// func_80135380: create the multi get-item menu and queue it (id narrowed to u8).
+u32 func_80135380(u32 arg) {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = func_8014A1D4(inst->field_0x144, inst->field_0x11C, (u8)arg, 0);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
+// us-80135f38: create the fade menu via func_80113C84 and queue it. The two
+// dead int params are forwarded as the factory's args 3/4 (retail materializes
+// them with mr r5,r3 / mr r6,r4 at the prologue) and the float params are
+// swapped (retail fmr f0,f1 / f1=f2 / f2=f0).
+u32 func_80135464(u32 a, u32 b, f32 x, f32 y) {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = func_80113C84(inst->field_0x144, inst->field_0x11C, a, b, y, x);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
 void func_80135708(){}
-void func_801359AC(){}
-void func_80135D04(){}
+extern "C" int func_801359AC() { return 0; }
 void __dt__Q212CUICfManager5CTestFv(){}
+
+// ---------------------------------------------------------------------------
+// CUICfManager::~CUICfManager (us-80132dc8)
+//
+// Retail: the reslist-shaped event queue at +0x124 is cleared inline (vtable
+// restore, sentinel walk nulling each node's mNext, then array-delete of the
+// slot pool when the owns-flag is clear); the PackedFont members are
+// destroyed with flag -1 and the CTTask base chain collapses to a direct
+// __dt__8CProcessFv(this, 0). The doubled `if (q != NULL)` mirrors retail's
+// two consecutive beqs against the single addic. on &mEventQueue (same shape
+// as CUIBattleManager's __dt__reslist_IUIBattle).
+// ---------------------------------------------------------------------------
+CUICfManager::~CUICfManager() {
+    if (this != NULL) {
+        CUICfEventQueue* q = reinterpret_cast<CUICfEventQueue*>(&unk124);
+        if (q != NULL) {
+            if (q != NULL) {
+                q->vtable = lbl_eu_8052E3B0;
+                {
+                    CUICfListNode* cur = q->head->next;
+                    while (cur != q->head) {
+                        CUICfListNode* prev = cur;
+                        cur = cur->next;
+                        prev->next = NULL;
+                    }
+                    q->head->next = q->head;
+                    q->head->prev = q->head;
+                }
+                if (q->ownsList == 0 && q->nodes != NULL) {
+                    delete[] q->nodes;
+                    q->nodes = NULL;
+                }
+            }
+        }
+    }
+}
 
 void CUICfManager::func_80135FBC() {
     // retail: subi r3,r3,0x54; b OnFileEvent__12CUICfManagerFv — secondary-subobject thunk

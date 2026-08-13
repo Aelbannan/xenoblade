@@ -696,7 +696,7 @@ u8* func_8046A0A4__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out)
 // Returns the render-record pointer at record+0x1C.
 // ===========================================================================
 u16* func_8046A11C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out) {
-    u16* result = (u16*)(self->records[0].field_0x2 * 0x2c + (u32)self + 0x1c);
+    u16* result = (u16*)((u32)self + (self->records[0].field_0x2 * 0x2c + 0x1c));
     if ((self->records[0].field_0x1 & 0x2) != 0) {
         if (func_8046451C(self->records[0].field_0x8 * 0x3c,
                           self->records[0].field_0xA * 0x3c) != 0) {
@@ -715,9 +715,9 @@ u16* func_8046A11C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out
 // ===========================================================================
 u16* func_8046A1A0__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out) {
     // record = this + idx * 0x2C; return &record->field_0x1C + 0x2C (the next
-    // record's view).  Integer-sum form keeps (idx * 0x2C) as the add's first
-    // operand (retail: add r5, r5, r3).
-    u16* result = (u16*)(self->records[0].field_0x2 * 0x2c + (u32)self + 0x48);
+    // record's view).  Parenthesised (scaled + 0x48) unit keeps the scaled
+    // value as the add's first operand (retail: add r5, r5, r3).
+    u16* result = (u16*)((u32)self + (self->records[0].field_0x2 * 0x2c + 0x48));
     if ((self->records[0].field_0x1 & 0x2) != 0) {
         if (func_8046451C(self->records[0].field_0x8 * 0x3c,
                           self->records[0].field_0xA * 0x3c) != 0) {
@@ -754,7 +754,13 @@ void func_8046A280__Q23LOD17UnkClass_80468434Fv(Vec* self, Vec* vec,
     nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&vec[3],
                                     (nw4r::math::MTX34*)(record + 0x174),
                                     (nw4r::math::VEC3*)&vec[3]);
-    *self = *src;
+    float x, y, z;
+    z = src->z;
+    y = src->y;
+    x = src->x;
+    self->x = x;
+    self->y = y;
+    self->z = z;
 }
 
 // ===========================================================================
@@ -771,7 +777,13 @@ void func_8046A318__Q23LOD17UnkClass_80468434Fv(Vec* self, Vec* vec,
     nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&vec[2],
                                     (nw4r::math::MTX34*)(record + 0x174),
                                     (nw4r::math::VEC3*)&vec[2]);
-    *self = *src;
+    float x, y, z;
+    z = src->z;
+    y = src->y;
+    x = src->x;
+    self->x = x;
+    self->y = y;
+    self->z = z;
 }
 
 // ===========================================================================

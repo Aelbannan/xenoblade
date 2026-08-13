@@ -996,16 +996,19 @@ void func_80271730(CPlayAwardList* self) {
 
 void func_802717F8(CPlayAwardList* self) {
     // Load the two page-title strings ("%s"-style templates from the pool).
+    char* s1;
+    char* s2;
     void* fp = getFP__FPCc(&lbl_eu_8050E7C0[0x14]);
-    char* s1 = func_8013639C(fp, &lbl_eu_8050E7C0[0x1f], 0xa);
-    char* s2 = func_8013639C(fp, &lbl_eu_8050E7C0[0x1f], 0xb);
+    s1 = func_8013639C(fp, &lbl_eu_8050E7C0[0x1f], 0xa);
+    s2 = func_8013639C(fp, &lbl_eu_8050E7C0[0x1f], 0xb);
     func_80136B4C(self->mLayout20, &lbl_eu_8050E7C0[0xba],
                   self->field_0x90 != 0 ? s2 : s1, 0);
 
     // Resolve the award title and the two per-page help strings, then look up
     // the 'timg' texture for the page and size its pane from the row/col.
+    char* s5;
     char* s4 = func_80136190(&lbl_eu_8050E7C0[0xc4], &lbl_eu_8050E7C0[0xd2], 0x8a);
-    char* s5 = func_80136190(&lbl_eu_8050E7C0[0xc4], &lbl_eu_8050E7C0[0xd2], 0x89);
+    s5 = func_80136190(&lbl_eu_8050E7C0[0xc4], &lbl_eu_8050E7C0[0xd2], 0x89);
     const char* sel = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0
                           ? &lbl_eu_8050E7C0[0xd7]
                           : &lbl_eu_8050E7C0[0xe0];
@@ -1032,7 +1035,7 @@ void func_802717F8(CPlayAwardList* self) {
 
     // Bind the page title/help strings (help string differs by page).
     func_80136B4C(self->mLayout20, &lbl_eu_8050E7C0[0xf5],
-                  self->field_0x90 != 0 ? s4 : s5, 0);
+                  self->field_0x90 == 0 ? s5 : s4, 0);
     char* s6 = func_80136190(&lbl_eu_8050E7C0[0xfd], &lbl_eu_8050E7C0[0x108], 0x19);
     func_80136B4C(self->mLayout20, &lbl_eu_8050E7C0[0x10d], s6, 0);
 }

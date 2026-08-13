@@ -43,6 +43,17 @@ ResAnmLight GetResAnmLightImpl(const ResAnmScn& scn, int idx) {
     return ResAnmLight(NULL);
 }
 
+ResAnmFog GetResAnmFogImpl(const ResAnmScn& scn, int idx) {
+    void* pDicData = ResDic(scn.ofs_to_obj<ResDic>(
+        scn.ref().toScnTopLevelDic))[ResName(&ResNameData_Fog)];
+
+    if (pDicData != NULL) {
+        return ResAnmFog(ResDic(pDicData)[idx]);
+    }
+
+    return ResAnmFog(NULL);
+}
+
 } // namespace
 
 bool ResAnmScn::HasResAnmAmbLight() const {
@@ -219,14 +230,7 @@ u32 ResAnmScn::GetResAnmLightNumEntries() const {
 }
 
 ResAnmFog ResAnmScn::GetResAnmFog(u32 idx) const {
-    ResDic dic = ResDic(ofs_to_obj<ResDic>(ref().toScnTopLevelDic));
-    void* pResAnmFogDicData = dic[ResName(&ResNameData_Fog)];
-
-    if (pResAnmFogDicData != NULL) {
-        return ResAnmFog(ResDic(pResAnmFogDicData)[idx]);
-    }
-
-    return ResAnmFog(NULL);
+    return GetResAnmFogImpl(*this, static_cast<int>(idx));
 }
 
 u32 ResAnmScn::GetResAnmFogNumEntries() const {

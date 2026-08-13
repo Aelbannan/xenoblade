@@ -27,7 +27,10 @@ static bool anmObjBaseIsDerivedFrom(G3dObj::TypeObj other) {
     if (other == G3dObj::TypeObj(lbl_eu_8051D650)) {
         return true;
     }
-    return other == G3dObj::TypeObj(lbl_eu_8051D640);
+    if (other == G3dObj::TypeObj(lbl_eu_8051D640)) {
+        return true;
+    }
+    return false;
 }
 
 bool AnmObjChr::IsDerivedFrom(G3dObj::TypeObj other) const {

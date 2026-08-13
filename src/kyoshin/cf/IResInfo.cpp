@@ -839,10 +839,10 @@ extern "C" void func_80068078(u8* self) {
 extern "C" void func_80068110(u8* self, bool param) {
     CDeviceVI::waitForDrawDone();
     u32 flags24 = lbl_eu_80663E24;
-    bool flagResult = ((flags24 >> 18) & 1) | (flags24 & 0x8000);
-    ResGridEntry* base = (ResGridEntry*)(self + 0x14DC);
+    bool flagResult = (flags24 & 0x40000) | (flags24 & 0x8000);
     ResGridEntry* target = (ResGridEntry*)(self + 0x14E0);
-    for (int i = 0x59; i < 0x61; i++, base++, target++) {
+    ResGridEntry* base = (ResGridEntry*)(self + 0x14DC);
+    for (int i = 0x59; i < 0x61; i++, target++, base++) {
         void* r = base->lookup->getResourceBase(target, 0);
         if (r != 0 && func_800A8BD8(r)) {
             if (*(s16*)((u8*)base + 0x3E) == 0) {

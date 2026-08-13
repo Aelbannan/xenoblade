@@ -3,7 +3,10 @@
 
 #include <harness_catalog.h>
 #include <revolution/os/OSFastCast.h>
+#include <revolution/mtx/mtxvec.h>
+#include <revolution/mtx/vec.h>
 #include <nw4r/math/math_types.h>
+#include "monolib/math/CVec3.hpp"
 
 // ---------------------------------------------------------------------------
 // Data globals
@@ -14,7 +17,8 @@ extern s32 lbl_eu_80665988;
 
 // Collision state manager (lbl_eu_8065F1C8): reference vectors at 0x00/0x0C,
 // sampled half-float triple at 0xC8, result at 0xD4, mover hook at 0xE0,
-// acceptance thresholds at 0x120/0x130.
+// matrix source pointer at 0xE8, embedded matrix at 0xF0, registration
+// filter flags at 0x128, acceptance thresholds at 0x120/0x130.
 struct CColiMgr {
     nw4r::math::_VEC3 field_0x00;   // 0x00
     nw4r::math::_VEC3 field_0x0C;   // 0x0C
@@ -24,13 +28,47 @@ struct CColiMgr {
     u8 field_0xA4[0xC8 - 0xA4];     // 0xA4
     nw4r::math::_VEC3 field_0xC8;   // 0xC8
     f32 field_0xD4;                 // 0xD4
+    u8 field_0xD8[0xE0 - 0xD8];     // 0xD8 - pad
     void* field_0xE0;               // 0xE0
+    u8 field_0xE4[0xE8 - 0xE4];     // 0xE4
+    Mtx* field_0xE8;                // 0xE8 - matrix source pointer
     u32 field_0xEC;                 // 0xEC
-    u8 field_0xF0[0x120 - 0xF0];    // 0xF0
+    Mtx field_0xF0;                 // 0xF0 - embedded matrix
     f32 field_0x120;                // 0x120
+    u8 field_0x124[0x128 - 0x124];  // 0x124
+    u32 field_0x128;                // 0x128 - registration filter flags
+    u8 field_0x12C[0x130 - 0x12C];  // 0x12C
     u32 field_0x130;                // 0x130
 };
 extern CColiMgr lbl_eu_8065F1C8;
+
+// Collision registration workspace (lbl_eu_8065D1A0, .bss).  The 0x2000-byte
+// mover bit-table (also symbolised as lbl_eu_8065F1A0) starts at +0x2000 and
+// the collision manager (lbl_eu_8065F1C8) lives at +0x2028; the registered
+// index list (count at +0x215E, entries at +0x2160) is appended by the
+// register helpers below.  The bit-table and the list region overlap in
+// memory, so the two views are expressed as union members.
+struct CColiListMgr {
+    u8 field_0x00[0x136];  // 0x00
+    u16 count;             // 0x136 - number of registered indices
+    u16 list[0x10];        // 0x138
+};
+struct CColiWork {
+    union {
+        struct {
+            u8 field_0x0000[0x2000];  // 0x0000
+            u32 bitTable[0x80];       // 0x2000 (== lbl_eu_8065F1A0)
+        } b;
+        struct {
+            u8 field_0x0000[0x2028];  // 0x0000
+            CColiListMgr listMgr;     // 0x2028 (== lbl_eu_8065F1C8)
+        } l;
+    };
+};
+extern CColiWork lbl_eu_8065D1A0;
+
+// Base of the collision "seen" bit array (pointer value held in sdata).
+extern u32 lbl_eu_80663AC8;
 
 // Acceptance-threshold constant (sdata2).
 extern const f32 lbl_eu_8066AED0;
@@ -61,6 +99,59 @@ struct CColiMover {
     u8 field_0x04[0x10 - 0x04]; // 0x04
     u16 field_0x10;             // 0x10
 };
+
+// 0x80-byte collision entry (indexed from CColiObj::field_0x40): the bit
+// flags at +0x02 address a word/bit pair in the registration bit-table, and
+// the two float triples at +0x64/+0x70 are the segment tested by the
+// func_804BB0C8 family in the sibling unit.
+struct CColiEntry {
+    u8 field_0x00[0x02];
+    u16 field_0x02;     // 0x02 - bit flags (word = >>5 & 0x7F, bit = & 0x1F)
+    u8 field_0x04[0x60];
+    f32 field_0x64[3];  // 0x64
+    f32 field_0x70[3];  // 0x70
+    u32 field_0x7C;     // 0x7C - pad to 0x80
+};
+
+// Collision object owning the 0x80-byte entry table at +0x40.
+struct CColiObj {
+    u8 field_0x00[0x40];
+    CColiEntry* field_0x40;  // 0x40
+};
+
+// Registration query: guard flag at +0x00, entry-table index at +0x02.
+struct CColiQuery {
+    u16 field_0x00;  // 0x00
+    u16 field_0x02;  // 0x02
+};
+
+// 0x14-byte registration entry with a u16 category/type id at +0x12.
+struct CColiEntry2 {
+    u8 field_0x00[0x12];
+    u16 field_0x12;  // 0x12
+};
+
+// Collision registration object: category table +0x28, entry table +0x30,
+// and two callback member-function pointers at +0x7C / +0xA0 invoked by the
+// register helpers below.  The virtual destructor is only declared (never
+// defined or called in this TU) to make the member-function-pointer type
+// 12 bytes wide; nothing is emitted for it.
+struct CColiRegObj {
+    u8 field_0x00[0x28];                               // 0x00
+    u32* field_0x28;                                   // 0x28
+    u8 field_0x2C[0x30 - 0x2C];                        // 0x2C - pad
+    CColiEntry2* field_0x30;                           // 0x30
+    u8 field_0x34[0x7C - 0x34];                        // 0x34
+    void (CColiRegObj::*field_0x7C)();                 // 0x7C
+    u8 field_0x88[0xA0 - 0x88];                        // 0x88 - pad
+    void (CColiRegObj::*field_0xA0)(const ml::CVec3*, const ml::CVec3*);  // 0xA0
+};
+
+// Segment tests shared with the sibling coli unit (code_804BAE10).
+struct Vec3 { f32 x; f32 y; f32 z; };
+bool func_804BB0C8(const f32* a, const f32* b);
+bool func_804BB1A0(const Vec3* a, const Vec3* b);
+bool func_804BB228(const Vec3* a, const Vec3* b);
 
 // Movement-tracked mover: previous position +0x0C, saved copy +0x38,
 // current position +0x50, distance-squared threshold +0x5C, flag +0x60.
@@ -185,11 +276,60 @@ void func_804B62B0(){}
 
 void func_804B6364(){}
 
-void func_804B6418(){}
+// func_804B6418 - register the query's collision index when its entry's
+// segment test passes and the index is not already registered: the entry's
+// flag bits address the shared bit-table (lbl_eu_8065D1A0+0x2000) and the
+// accepted indices are appended to the 16-slot list at +0x2160.
+void func_804B6418(CColiObj* self, CColiQuery* query) {
+    CColiWork* w = &lbl_eu_8065D1A0;
+    if (query->field_0x00 != 0) return;
+    u16 idx = query->field_0x02;
+    CColiEntry* entry = &self->field_0x40[idx];
+    u16 flags = entry->field_0x02;
+    if (w->b.bitTable[(flags >> 5) & 0x7F] & (1u << (flags & 0x1F))) return;
+    if (!func_804BB0C8((const f32*)&entry->field_0x64, (const f32*)&entry->field_0x70)) return;
+    CColiListMgr* lm = &w->l.listMgr;
+    u16 v = query->field_0x02;
+    if (lm->count < 0x10) {
+        int cnt = lm->count;
+        lm->list[cnt] = v;
+        lm->count = cnt + 1;
+    }
+}
 
-void func_804B64CC(){}
+void func_804B64CC(CColiObj* self, CColiQuery* query) {
+    CColiWork* w = &lbl_eu_8065D1A0;
+    if (query->field_0x00 != 0) return;
+    u16 idx = query->field_0x02;
+    CColiEntry* entry = &self->field_0x40[idx];
+    u16 flags = entry->field_0x02;
+    if (w->b.bitTable[(flags >> 5) & 0x7F] & (1u << (flags & 0x1F))) return;
+    if (!func_804BB1A0((const Vec3*)&entry->field_0x64, (const Vec3*)&entry->field_0x70)) return;
+    CColiListMgr* lm = &w->l.listMgr;
+    u16 v = query->field_0x02;
+    if (lm->count < 0x10) {
+        int cnt = lm->count;
+        lm->list[cnt] = v;
+        lm->count = cnt + 1;
+    }
+}
 
-void func_804B6580(){}
+void func_804B6580(CColiObj* self, CColiQuery* query) {
+    CColiWork* w = &lbl_eu_8065D1A0;
+    if (query->field_0x00 != 0) return;
+    u16 idx = query->field_0x02;
+    CColiEntry* entry = &self->field_0x40[idx];
+    u16 flags = entry->field_0x02;
+    if (w->b.bitTable[(flags >> 5) & 0x7F] & (1u << (flags & 0x1F))) return;
+    if (!func_804BB228((const Vec3*)&entry->field_0x64, (const Vec3*)&entry->field_0x70)) return;
+    CColiListMgr* lm = &w->l.listMgr;
+    u16 v = query->field_0x02;
+    if (lm->count < 0x10) {
+        int cnt = lm->count;
+        lm->list[cnt] = v;
+        lm->count = cnt + 1;
+    }
+}
 
 void func_804B6634(void) {}
 
@@ -237,7 +377,23 @@ void func_804B6954(void* a, void* b, void* c) {
     fn(b, c, p);
 }
 
-void func_804B6974(){}
+// func_804B6974 - transform the two input vectors by the manager's matrix
+// source (0xE8) and embedded matrix (0xF0), then normalise the second result
+// (falling back to ml::CVec3::zero for a null vector) and hand both to the
+// mover callback (member-function pointer at +0xA0).
+void func_804B6974(CColiRegObj* self, const Vec* in1, const Vec* in2) {
+    ml::CVec3 out1;
+    ml::CVec3 out2;
+    PSMTXMultVec(*lbl_eu_8065F1C8.field_0xE8, in1, out1);
+    PSMTXMultVec(lbl_eu_8065F1C8.field_0xF0, in2, out2);
+    f32 len2 = out2.y * out2.y + out2.x * out2.x + out2.z * out2.z;
+    if (lbl_eu_8066AED0 == len2) {
+        out2 = ml::CVec3::zero;
+    } else {
+        PSVECNormalize(out2, out2);
+    }
+    (self->*self->field_0xA0)(&out1, &out2);
+}
 
 void func_804B6A3C(){}
 
@@ -267,7 +423,26 @@ void func_804B7804(){}
 
 void func_804B791C(){}
 
-void func_804B7944(){}
+// func_804B7944 - register every index of the u16 list: set the index's bit
+// in the shared bit-table (base held in lbl_eu_80663AC8) and, when the
+// entry's category passes the manager's filter flags, invoke the register
+// callback (member-function pointer at +0x7C).
+void func_804B7944(CColiRegObj* self, const u16* list, int count) {
+    for (int i = 0; i < count; i++) {
+        u16 idx = list[i];
+        u32 base = lbl_eu_80663AC8;
+        u32 wordIdx = idx >> 5;
+        u32 bitIdx = idx & 0x1F;
+        u32 w = ((u32*)base)[wordIdx];
+        u32 mask = 1u << bitIdx;
+        if (w & mask) continue;
+        ((u32*)base)[wordIdx] = w | mask;
+        CColiEntry2* e = &self->field_0x30[idx];
+        u32 v = self->field_0x28[e->field_0x12];
+        if (lbl_eu_8065F1C8.field_0x128 & v) continue;
+        (self->*self->field_0x7C)();
+    }
+}
 
 void func_804B7A00(){}
 

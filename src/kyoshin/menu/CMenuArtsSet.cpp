@@ -63,7 +63,9 @@ void func_8022FAD0(){}
 void func_8022FF74();
 void func_80230070();
 
-void func_8022FD9C(SArts2FDF4* self) {
+// C-linkage + noinline so callers (func_80233760) emit a real bl to the
+// retail symbol instead of inlining the body.
+extern "C" __declspec(noinline) void func_8022FD9C(SArts2FDF4* self) {
     if (self->field_0x8) {
         self->field_0x8->v2(1);
         self->field_0x8 = 0;
@@ -128,7 +130,19 @@ void func_80230070(){}
 
 
 
-void func_80230374(){}
+// Build the arts-selection list: clear the cursor, then append each of the
+// first `count` arts entries that pass the (v>8) / (v==4 && locked) filters.
+void func_80230374(SArtsSub8022FA58* self) {
+    self->field_0x21 = 0;
+    u8 count = code80135FDC_getByte_64077();
+    for (u8 i = 0; i < count; i++) {
+        u8 v = func_801392B4(i);
+        if (v > 8) continue;
+        if (v == 4 && func_800A32BC(func_8009EC9C(v)) != 0) continue;
+        self->field_0x19[self->field_0x21] = v;
+        self->field_0x21 = self->field_0x21 + 1;
+    }
+}
 
 extern "C" __declspec(noinline) u8 func_8023040C(SArtsSub8022FA58* self, u32 idx) {
     if (idx < self->field_0x21) {
@@ -167,7 +181,8 @@ extern "C" void* __dt__80230484(void* self, int flags) {
 
 void func_802304C4(){}
 
-void func_8023066C(){}
+// Release helper for the mSubObj148 pair (called from func_80233760).
+extern "C" __declspec(noinline) void func_8023066C(SArts3066C* self) {}
 
 void func_802306F0(){}
 
@@ -178,7 +193,9 @@ void func_802307A4(SArtsDrawBox* self, nw4r::lyt::DrawInfo* info) {
     }
 }
 
-void func_8023080C(SArtsSub8022FA58* self, u8 val) {
+// C-linkage + noinline: func_80234FDC calls this and retail keeps a real
+// bl (not an inline).
+extern "C" __declspec(noinline) void func_8023080C(SArtsSub8022FA58* self, u8 val) {
     if (self->field_0x27 != 0) {
         func_80124270(((SArts080C*)(self->field_0x08))->field_0x10, 0);
     } else {
@@ -233,7 +250,21 @@ void func_80231220(){}
 
 void func_80231320(void* self){}
 
-void func_802313E0(){}
+// Toggle the 0x27 busy flag: while busy, clear it and park both panes
+// (first visible, second hidden); otherwise set it, stash the old 0x20
+// cursor into 0x21, and run the layout-out animation.
+void func_802313E0(SArts313E0* self) {
+    if (self->field_0x27 != 0) {
+        self->field_0x27 = 0;
+        func_80124270(self->field_0x08->field_0x10, 1);
+        func_80124270(self->field_0x14->field_0x10, 0);
+    } else {
+        self->field_0x27 = 1;
+        self->field_0x21 = self->field_0x20;
+        func_8023185C(self);
+        func_80124270(self->field_0x14->field_0x10, 1);
+    }
+}
 
 void func_80231464(SArtsSub8022FA58* self) {
     if (self->field_0x20 != 4) {
@@ -243,11 +274,47 @@ void func_80231464(SArtsSub8022FA58* self) {
     return func_802316F8(self);
 }
 
-void func_80231480(){}
+// Run the layout-out animation; when the busy flag (0x23) is clear, drive
+// both sub-panels via vtable slot 0x2C (v11) then bump the 0x24 state.
+void func_80231480(SArts31480* self) {
+    float duration = lbl_eu_80668648;
+    func_80137444(self->field_0x0C, duration);
+    if (self->field_0x23 == 0) {
+        self->field_0x08->v11(self->field_0x0C, 0);
+        self->field_0x08->v11(self->field_0x10, 1);
+        self->field_0x10->field_0x10 = lbl_eu_8066864C;
+        self->field_0x24 = 1;
+    }
+}
 
-void func_8023150C(){}
+// Twin driver: run the AnimTransform at 0x10; when the frame check reports
+// the animation finished, drive both sub-panes (v11 at +0x2C), reset the
+// 0x0C float, show the panes, and bump the 0x23/0x24 state.
+void func_8023150C(SArts3150C* self) {
+    float duration = lbl_eu_80668648;
+    if (func_80137444(self->field_0x10, duration) != 0) {
+        self->field_0x08->v11(self->field_0x10, 0);
+        self->field_0x08->v11(self->field_0x0C, 1);
+        self->field_0x0C->field_0x10 = lbl_eu_8066864C;
+        func_80124270(self->field_0x08->field_0x10, 0);
+        func_80124270(self->field_0x14->field_0x10, 1);
+        self->field_0x24 = 2;
+        self->field_0x23 = 1;
+    }
+}
 
-void func_802315BC(){}
+// Same driver as func_80231480 but for the offset-0x14 sub-object; the
+// 0x24 state is bumped to 3 instead of 1.
+void func_802315BC(SArts315BC* self) {
+    float duration = lbl_eu_80668648;
+    func_80137444(self->field_0x18, duration);
+    if (self->field_0x23 == 0) {
+        self->field_0x14->v11(self->field_0x18, 0);
+        self->field_0x14->v11(self->field_0x1C, 1);
+        self->field_0x1C->field_0x10 = lbl_eu_8066864C;
+        self->field_0x24 = 3;
+    }
+}
 
 void func_80231648(){}
 
@@ -256,7 +323,7 @@ void func_80231848(CMenuArtsSet* self, const SArtsVec2* src) {
     self->mField48 = src->y;
 }
 
-void func_8023185C(){}
+extern "C" __declspec(noinline) void func_8023185C(SArts313E0* self){}
 
 void __ct__802319AC(SArts319AC* self, u32 a, u32 b, u32 c) {
     self->field_0x00 = a;
@@ -289,7 +356,19 @@ extern "C" void* __dt__80231A08(void* self, int flags) {
 
 void func_80231A48(){}
 
-void func_80231C30(){}
+// Release both SArts2FObj pointees via their vtable slot 0x08 (v2), then
+// null each field (retail keeps the redundant null-check branch).
+// C-linkage + noinline so func_80233760 emits a real bl.
+extern "C" __declspec(noinline) void func_80231C30(SArts3066C* self) {
+    if (self->field_0x08 != 0) {
+        self->field_0x08->v2(1);
+    }
+    self->field_0x08 = 0;
+    if (self->field_0x14 != 0) {
+        self->field_0x14->v2(1);
+    }
+    self->field_0x14 = 0;
+}
 
 void func_80231CB4(){}
 
@@ -304,7 +383,36 @@ void func_80231DD0(){}
 
 void func_80231E8C(){}
 
-void func_80231F60(){}
+// Cursor-driver refresh helpers (defined below in this TU; C-linkage retail
+// names). Declared here because func_80231F60 calls them.
+extern "C" void func_80232B88(SArts327B0* self);
+extern "C" void func_80232C78(SArts327B0* self);
+
+// Scroll the arts-table cursor up one 5-row page: when the 0x12C count is
+// below 5 the cursor is cleared entirely; otherwise step 0x21 back by 5 and
+// wrap a negative offset into the previous page via 0x20. Then refresh the
+// scrollbar and both cursor drivers.
+void func_80231F60(SArts322BC* self) {
+    if (self->field_0x12C >= 5) {
+        u8 a = self->field_0x21 - 5;
+        self->field_0x21 = a;
+        if ((s8)a < 0) {
+            u8 t = a + 4;
+            self->field_0x20 = t;
+            self->field_0x21 = 0;
+            if ((s8)self->field_0x20 < 0) {
+                self->field_0x20 = 0;
+            }
+        }
+    } else {
+        self->field_0x20 = 0;
+        self->field_0x21 = 0;
+    }
+    u8 c = self->field_0x21;
+    func_801F3850(self->field_0x28, (u16)(s8)c);
+    func_80232B88((SArts327B0*)self);
+    func_80232C78((SArts327B0*)self);
+}
 
 void func_80232000(){}
 
@@ -347,8 +455,8 @@ u8 func_8023270C(SArts3270C* self) {
     return r;
 }
 
-void func_80232B88(SArts327B0* self);
-void func_80232C78(SArts327B0* self);
+extern "C" void func_80232B88(SArts327B0* self);
+extern "C" void func_80232C78(SArts327B0* self);
 
 u8 func_80232734(SArts322BC* self) {
     u8 count = self->field_0x12C;
@@ -376,21 +484,68 @@ void func_802327B0(SArts327B0* self) {
     func_80232C78(self);
 }
 
-void func_80232800(){}
+// Clamp the arts-table cursor: for counts above 5 the cursor sits at row 4
+// with a 0x21 offset; otherwise 0x21 is cleared and 0x20 is the count
+// saturated at 0. Then refresh the scrollbar and both cursor drivers.
+void func_80232800(SArts322BC* self) {
+    u8 count = self->field_0x12C;
+    if (count > 5) {
+        self->field_0x20 = 4;
+        self->field_0x21 = count - 5;
+    } else {
+        self->field_0x21 = 0;
+        self->field_0x20 = (count > 0) ? (count - 1) : 0;
+    }
+    func_801F3850(self->field_0x28, (u16)(s8)self->field_0x21);
+    func_80232B88((SArts327B0*)self);
+    func_80232C78((SArts327B0*)self);
+}
 
-void func_80232888(){}
+// Toggle the 0x12D busy flag and drive both pointees: when clearing, the
+// first pane is shown and the second hidden; when setting, the reverse.
+void func_80232888(SArts32888* self) {
+    if (self->field_0x12D != 0) {
+        self->field_0x12D = 0;
+        func_80124270(self->field_0x08->field_0x10, 1);
+        func_80124270(self->field_0x14->field_0x10, 0);
+    } else {
+        self->field_0x12D = 1;
+        func_80124270(self->field_0x08->field_0x10, 0);
+        func_80124270(self->field_0x14->field_0x10, 1);
+    }
+}
 
-void func_80232910(){}
+// Twin of func_80231480 (same 0x08/0x0C/0x10 driver layout).
+void func_80232910(SArts31480* self) {
+    float duration = lbl_eu_80668648;
+    func_80137444(self->field_0x0C, duration);
+    if (self->field_0x23 == 0) {
+        self->field_0x08->v11(self->field_0x0C, 0);
+        self->field_0x08->v11(self->field_0x10, 1);
+        self->field_0x10->field_0x10 = lbl_eu_8066864C;
+        self->field_0x24 = 1;
+    }
+}
 
 void func_8023299C(){}
 
-void func_80232A4C(){}
+// Twin of func_802315BC (offset-0x14 driver layout, state bump to 3).
+void func_80232A4C(SArts315BC* self) {
+    float duration = lbl_eu_80668648;
+    func_80137444(self->field_0x18, duration);
+    if (self->field_0x23 == 0) {
+        self->field_0x14->v11(self->field_0x18, 0);
+        self->field_0x14->v11(self->field_0x1C, 1);
+        self->field_0x1C->field_0x10 = lbl_eu_8066864C;
+        self->field_0x24 = 3;
+    }
+}
 
 void func_80232AD8(){}
 
-void func_80232B88(SArts327B0* self) { func_80124270(self, 1); }
+extern "C" __declspec(noinline) void func_80232B88(SArts327B0* self) { func_80124270(self, 1); }
 
-void func_80232C78(SArts327B0* self) { func_80124270(self, 1); }
+extern "C" __declspec(noinline) void func_80232C78(SArts327B0* self) { func_80124270(self, 1); }
 
 void __ct__CArtsList(){}
 
@@ -426,7 +581,30 @@ void func_8023359C(CMenuArtsSet* self) {
 
 void func_80233674(){}
 
-void func_80233760(){}
+// Teardown: release the file handle, reset the ready flag, drop the three
+// sub-objects, release the field_0x1C pane pair (nested null guards reproduce
+// retail's double beq on one CR0 test - same D2-inline artifact as COption),
+// release the arc accessor, and clean up the mem region / scroll bar /
+// info / syswin sub-objects.
+void func_80233760(CMenuArtsSet* self) {
+    func_801390E0(&self->field_0x14);
+    self->field_0x28 = 0;
+    func_8022FD9C((SArts2FDF4*)&self->mSubObj124);
+    func_8023066C((SArts3066C*)&self->mSubObj148);
+    func_80231C30((SArts3066C*)((u8*)&self->mSubObj148 + 0x2C));
+    if (self->field_0x1C != 0) {
+        if (self->field_0x1C != 0) {
+            self->field_0x1C->v0(1);
+        }
+        self->field_0x1C = 0;
+    }
+    func_80139124(self->field_0x18);
+    self->field_0x18 = 0;
+    self->mMemRegion.func_8045F778();
+    func_801F35DC(&self->field_0x34);
+    func_802359CC(&self->mSubObj74);
+    func_8022B7F4(&self->mSubObjE8);
+}
 
 u8 func_8023380C(CArtsList* self) {
     if (CScrollBar_isVisible(&self->mScrollBar) == 0) return 0;
@@ -439,7 +617,15 @@ u8 func_8023380C(CArtsList* self) {
 
 u8 CMenuArtsSet::func_80233880() { return mField31; }
 
-void func_80233888(){}
+// True while the arts menu is busy: either the 0x2A1/0x16F flags are set,
+// the CArtsInfo or CSysWin sub-object is active, or the raw 0x2A6 flag.
+u8 func_80233888(SArts33888* self) {
+    if (self->field_0x2A1 != 0) return 1;
+    if (self->field_0x16F != 0) return 1;
+    if (func_80235F50(&self->field_0x74) != 0) return 1;
+    if (CSysWin_getUnk34(&self->field_0xE8) != 0) return 1;
+    return self->field_0x2A6;
+}
 
 u8 func_8023390C(CMenuArtsSet* self) {
     if (func_80235F50(&self->mSubObj74) != 0) return 1;
@@ -495,7 +681,19 @@ void CMenuArtsSet::func_802349F8(u8 val) { mSubObj124.field_0x15 = val; }
 
 void CMenuArtsSet::func_80234A00() { ((void(*)(void*))func_80231320)((char*)this + 0x148); }
 
-void func_80234A08(){}
+// Arm the CSysWin sub-object with a new label pair and mark the 0x2A6 flag.
+// Guarded by the syswin/info busy checks; the string pair is built from the
+// shared arts archive path base (lbl_eu_8050AC70).
+void func_80234A08(CMenuArtsSet* self) {
+    if (CSysWin_getUnk34(&self->mSubObjE8) != 0) return;
+    if (func_80235F50(&self->mSubObj74) != 0) return;
+    char* base = lbl_eu_8050AC70;
+    char* name = func_80136190(base + 0x50, base + 0x5b, 0x3c);
+    func_8022B9B4((CSysWin*)&self->mSubObjE8, name, 0);
+    func_8022BFC8((CSysWin*)&self->mSubObjE8, 1);
+    func_8022B8B8((CSysWin*)&self->mSubObjE8);
+    self->field_0x2A6 = 1;
+}
 
 void func_80234A94(){}
 
@@ -525,7 +723,6 @@ void func_80234D68(){}
 void func_80234EB8(){}
 
 extern "C" __declspec(noinline) void func_80234F7C(CMenuArtsSet* self) {
-    extern float lbl_eu_80668648;
     if (func_80137444(self->field_0x24, lbl_eu_80668648) != 0) {
         self->field_0x2C = 3;
         self->mField31 = 1;
@@ -534,10 +731,22 @@ extern "C" __declspec(noinline) void func_80234F7C(CMenuArtsSet* self) {
     }
 }
 
-void func_80234FDC(){}
+// State-4 handler: when the layout-in animation has finished, drive both
+// sub-panes via the field_0x1C interface, advance the state to 5, reset the
+// 0x148 sub-object, and request the scroll bar scroll-out.
+// noinline: func_8023359C keeps a real bl to the retail symbol.
+__declspec(noinline) void func_80234FDC(CMenuArtsSet* self) {
+    float duration = lbl_eu_80668648;
+    if (func_80137510(self->field_0x24, duration) != 0) {
+        self->field_0x1C->v11(self->field_0x24, 0);
+        self->field_0x1C->v11(self->field_0x20, 1);
+        self->field_0x2C = 5;
+        func_8023080C(&self->mSubObj148, 0);
+        func_801F369C(self->field_0x34);
+    }
+}
 
 extern "C" __declspec(noinline) void func_8023506C(SArts3506C* self) {
-    extern float lbl_eu_80668648;
     if (func_80137510(self->mAnim20, lbl_eu_80668648) != 0) {
         self->field_0x31 = 1;
         self->field_0x2C = 0;

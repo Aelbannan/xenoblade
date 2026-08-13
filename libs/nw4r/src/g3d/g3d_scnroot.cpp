@@ -366,15 +366,18 @@ void CalcAnmScn__Q34nw4r3g3d7ScnRootFv(){}
 
 void CalcWorld__Q34nw4r3g3d7ScnRootFv(){}
 
-void ScnRoot::CalcView() {
-    GXInvalidateVtxCache();
-
-    Camera camera(&mCamera[mCurrentCameraID]);
-
+void CalcViewImpl(ScnRoot& self) {
     nw4r::math::MTX34 mtx;
+    Camera camera(&self.mCamera[self.mCurrentCameraID]);
+
     Camera(camera).GetCameraMtx(&mtx);
 
-    G3dProc(G3DPROC_CALC_VIEW, 0, &mtx);
+    self.G3dProc(nw4r::g3d::G3dObj::G3DPROC_CALC_VIEW, 0, &mtx);
+}
+
+void ScnRoot::CalcView() {
+    GXInvalidateVtxCache();
+    CalcViewImpl(*this);
 }
 
 void ScnRoot::GatherDrawScnObj() {

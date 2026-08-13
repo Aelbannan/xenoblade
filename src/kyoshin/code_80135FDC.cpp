@@ -37,6 +37,10 @@ extern void copyVEC3(nw4r::math::VEC3*, const nw4r::math::VEC3*);
 // bool func_8009CF8C(int) - a move into code_80135FDC.hpp would clash in
 // CGame / CMenu* units that pull functions.hpp via monolib/scn.hpp.
 extern u32 func_8009CF8C(u32);
+// forward decls: func_801375A0 calls these helpers before their definitions
+// (they are defined later in this TU).
+extern void code80135FDC_setVec3(float* self, float a, float b, float c);
+extern void func_80137738(nw4r::math::VEC3* output, const nw4r::math::VEC3* value);
 }
 
 // ---------- globals ----------
@@ -146,7 +150,7 @@ struct CAnimItemIf {
     virtual void _v018();
     virtual void _v01C();
     virtual void _v020();
-    virtual int _v024(void* arg);  // 0x24
+    virtual void* _v024(void* arg);  // 0x24 — returns the found item/result
 };
 
 struct CPlayerIf {
@@ -733,47 +737,47 @@ extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane) {
     output->z = 0.0f;
     if (pane == NULL) return;
 
-    const nw4r::math::VEC3& t = pane->GetTranslate();
-    output->x = t.x;
-    output->y = t.y;
-    output->z = t.z;
+    output->x = pane->GetTranslate().x;
+    output->y = pane->GetTranslate().y;
+    output->z = pane->GetTranslate().z;
 
     nw4r::lyt::Pane* parent = pane->GetParent();
     nw4r::math::VEC3 accum;
-    accum.x = 0.0f; accum.y = 0.0f; accum.z = 0.0f;
-    if (parent == NULL) {
-        nw4r::math::VEC3Add(output, output, &accum);
-        return;
-    }
+    accum.x = 0.0f;
+    accum.y = 0.0f;
+    accum.z = 0.0f;
+    if (parent == NULL) goto add_out;
 
-    accum = parent->GetTranslate();
+    accum.x = parent->GetTranslate().x;
+    accum.y = parent->GetTranslate().y;
+    accum.z = parent->GetTranslate().z;
 
-    nw4r::math::VEC3 temp;
-    temp.x = 0.0f; temp.y = 0.0f; temp.z = 0.0f;
     nw4r::lyt::Pane* grandparent = parent->GetParent();
-    if (grandparent == NULL) {
-        nw4r::math::VEC3Add(&accum, &accum, &temp);
-        nw4r::math::VEC3Add(output, output, &accum);
-        return;
-    }
+    nw4r::math::VEC3 temp;
+    temp.x = 0.0f;
+    temp.y = 0.0f;
+    temp.z = 0.0f;
+    if (grandparent == NULL) goto add_accum;
 
-    temp = grandparent->GetTranslate();
-    nw4r::math::VEC3 temp2;
-    temp2.x = 0.0f; temp2.y = 0.0f; temp2.z = 0.0f;
-    nw4r::lyt::Pane* greatGrandparent = grandparent->GetParent();
-    if (greatGrandparent == NULL) {
-        nw4r::math::VEC3Add(&temp, &temp, &temp2);
-        nw4r::math::VEC3Add(&accum, &accum, &temp);
-        nw4r::math::VEC3Add(output, output, &accum);
-        return;
-    }
+    temp.x = grandparent->GetTranslate().x;
+    temp.y = grandparent->GetTranslate().y;
+    temp.z = grandparent->GetTranslate().z;
 
-    temp2 = greatGrandparent->GetTranslate();
-    nw4r::math::VEC3 recurse;
-    func_801375A0(&recurse, greatGrandparent->GetParent());
-    nw4r::math::VEC3Add(&temp2, &temp2, &recurse);
-    nw4r::math::VEC3Add(&temp, &temp, &temp2);
+    nw4r::lyt::Pane* ggp = grandparent->GetParent();
+    nw4r::math::VEC3 tmp2;
+    code80135FDC_setVec3((float*)&tmp2, 0.0f, 0.0f, 0.0f);
+    if (ggp == NULL) goto add_temp;
+
+    copyVEC3(&tmp2, &ggp->GetTranslate());
+    nw4r::math::VEC3 tmp3;
+    func_801375A0(&tmp3, ggp->GetParent());
+    func_80137738(&tmp2, &tmp3);
+
+add_temp:
+    nw4r::math::VEC3Add(&temp, &temp, &tmp2);
+add_accum:
     nw4r::math::VEC3Add(&accum, &accum, &temp);
+add_out:
     nw4r::math::VEC3Add(output, output, &accum);
 }
 
@@ -974,14 +978,14 @@ extern "C" void func_80137DB8(void* a, u32 b, u32 c) {
 
 extern "C" void func_80137E7C(void* a, u32 b, void* palette) {
     if (a == NULL) return;
-    void* obj = *(void**)((u8*)a + 0x10);
-    void** vt = *(void***)obj;
-    void* res = ((void*(*)(void*, u32, u32))vt[0x3C / 4])(obj, b, 1);
+    CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)a + 0x10);
+    void* res = owner->_v03C(b, 1);
     if (res == NULL) return;
     if (palette == NULL) return;
 
-    void** vt2 = *(void***)res;
-    nw4r::lyt::Material* mat = (nw4r::lyt::Material*)((void*(*)(void*))vt2[0x68 / 4])(res);
+    // res is an anim-owner object; its 0x68 vtable slot returns the material
+    nw4r::lyt::Material* mat =
+        (nw4r::lyt::Material*)((CAnimOwnerIf*)res)->_v068();
 
     nw4r::lyt::TexMap texMap((TPLPalette*)palette, 0);
     if (mat->GetTextureNum() == 0) {
@@ -992,18 +996,19 @@ extern "C" void func_80137E7C(void* a, u32 b, void* palette) {
 }
 
 extern "C" void func_80137F88(void* a, void* palette) {
-    if (a == NULL) return;
-    if (palette == NULL) return;
+    if (a != NULL) {
+        if (palette != NULL) {
+            void** vt = *(void***)a;
+            nw4r::lyt::Material* mat = (nw4r::lyt::Material*)((void*(*)(void*))vt[0x68 / 4])(a);
 
-    void** vt = *(void***)a;
-    nw4r::lyt::Material* mat = (nw4r::lyt::Material*)((void*(*)(void*))vt[0x68 / 4])(a);
-
-    nw4r::lyt::TexMap texMap((TPLPalette*)palette, 0);
-    if (mat->GetTextureNum() == 0) {
-        Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E524, 0x88,
-                                   (const char*)lbl_eu_8052E4F0);
+            nw4r::lyt::TexMap texMap((TPLPalette*)palette, 0);
+            if (mat->GetTextureNum() == 0) {
+                Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E524, 0x88,
+                                           (const char*)lbl_eu_8052E4F0);
+            }
+            mat->GetTexMapAry()[0] = texMap;
+        }
     }
-    mat->GetTexMapAry()[0] = texMap;
 }
 
 void func_80138078__FUl(u32 arg) {
@@ -1030,10 +1035,10 @@ extern "C" u16 func_801380A0(u32 idx) {
 extern "C" u32 func_80138138(u32 val) {
     u32 words[28];
     for (int i = 0; i < 28; i++) {
-        words[i] = ((u32*)&lbl_eu_805001C0)[i];
+        words[i] = lbl_eu_805001C0[i];
     }
     for (int i = 27; i >= 0; i--) {
-        if (val < words[i]) return i;
+        if (val >= words[i]) return i;
     }
     return 0;
 }
@@ -1475,45 +1480,73 @@ extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::Arc
     }
 }
 
+// Cast-only view of the item-data object returned by func_8009EC9C: it has a
+// per-item flag word at 0x176C (1 = already recorded).
+struct CDataObj {
+    u8 field_0x00[0x176C];
+    s32 field_0x176C;
+};
+
+// List blob returned by func_8009ECB0() (+4): 7 words (listA[3] + listB[4],
+// contiguous so listB[i-3] aliases listA[i]) then a gap and 3 trailing
+// words (listC).
+struct ListData {
+    u32 listA[3];      // 0x0
+    u32 listB[4];      // 0xC
+    u32 field_0x1C;    // 0x1C
+    u32 field_0x20;    // 0x20
+    u32 listC[3];      // 0x24
+};
+
+// Collect up to 7 u32 entries from the global list; entries > 0 (filtered by
+// the per-item flag when arg is set) are appended to the u8 list, then the 3
+// trailing words are appended to the u16 list.
 void func_80139198(void* arg) {
     lbl_eu_80664077 = 0;
     lbl_eu_8066407E = 0;
-    u8* base = (u8*)func_8009ECB0() + 4;
-    u8* byteList = (u8*)&lbl_eu_80664070;
-    u8 n = 0;
+    ListData* list = (ListData*)((u8*)func_8009ECB0() + 4);
     for (u8 i = 0; i < 7; i++) {
-        u32 v = *(u32*)(base + (u32)i * 4);
+        u32 v;
+        if (i < 3) {
+            v = list->listA[i];
+        } else {
+            v = list->listB[i - 3];
+        }
         if ((s32)v > 0) {
             if (arg != NULL) {
-                void* obj = (void*)func_8009EC9C(v & 0xFFFF);
-                if (*(u32*)((u32)obj + 0x176C) != 1) {
-                    byteList[n] = (u8)v;
-                    n++;
+                CDataObj* obj = (CDataObj*)func_8009EC9C(v & 0xFFFF);
+                if (obj->field_0x176C != 1) {
+                    u8 n = lbl_eu_80664077;
+                    ((u8*)&lbl_eu_80664070)[n] = (u8)v;
+                    lbl_eu_80664077 = n + 1;
                 }
             } else {
-                byteList[n] = (u8)v;
-                n++;
+                u8 n = lbl_eu_80664077;
+                ((u8*)&lbl_eu_80664070)[n] = (u8)v;
+                lbl_eu_80664077 = n + 1;
             }
         }
     }
     u16* list16 = (u16*)&lbl_eu_80664078;
-    u8 c = lbl_eu_8066407E;
-    u32 w = *(u32*)(base + 0x24);
-    if ((s32)w > 0) {
-        list16[c] = (u16)w;
-        c++;
+    int c = lbl_eu_8066407E;
+    u32 w1 = list->listC[0];
+    if ((s32)w1 > 0) {
+        list16[c] = (u16)w1;
+        c = c + 1;
         lbl_eu_8066407E = c;
     }
-    w = *(u32*)(base + 0x28);
-    if ((s32)w > 0) {
-        list16[c] = (u16)w;
-        c++;
+    u32 w2 = list->listC[1];
+    if ((s32)w2 > 0) {
+        int cm = c & 0xFF;
+        list16[(u8)c] = (u16)w2;
+        c = cm + 1;
         lbl_eu_8066407E = c;
     }
-    w = *(u32*)(base + 0x2C);
-    if ((s32)w > 0) {
-        list16[c] = (u16)w;
-        c++;
+    u32 w3 = list->listC[2];
+    if ((s32)w3 > 0) {
+        int cm2 = c & 0xFF;
+        list16[(u8)c] = (u16)w3;
+        c = cm2 + 1;
         lbl_eu_8066407E = c;
     }
 }
@@ -1580,24 +1613,25 @@ extern "C" char* func_801394D4(const char* name) {
     }
     u16 c = 0;
     if (lbl_eu_806640EC != 0) {
-        func_8003AA34(&lbl_eu_80500664[0x1D2]);
+        func_8003AA34(&lbl_eu_80500664[0]);
         void* r = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1D2], name);
         c = *(u16*)&r;
     }
     void* d0 = 0;
     if (a != 0) {
-        func_8003AA34(&lbl_eu_80500664[0x17C]);
+        func_8003AA34(&lbl_eu_80500664[0]);
         d0 = getBdatStringColumnValue((void*)a, &lbl_eu_80500664[0x17C], (const char*)(u32)b);
     }
     sprintf(&lbl_eu_80573C30[0], &lbl_eu_80500664[0], d0);
     if (c == 3) {
         u8 d = 0;
+        void* rv;
         if (lbl_eu_806640EC != 0) {
-            func_8003AA34(&lbl_eu_80500664[0x1E2]);
-            void* r = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1E2], name);
-            d = *(u8*)&r;
-            func_8003AA34((const char*)r);
+            func_8003AA34(&lbl_eu_80500664[0]);
+            rv = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1E2], name);
+            d = *(u8*)&rv;
         }
+        func_8003AA34((const char*)rv);
         void* fp = getFP__FPCc(&lbl_eu_80500664[0x1EB]);
         void* r2 = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x17C],
                                            (const char*)(0x1E - (d - 1)));
@@ -1607,22 +1641,26 @@ extern "C" char* func_801394D4(const char* name) {
 }
 
 extern "C" FourShorts func_80139658(void* obj, void* arg2, u32 idx) {
-    FourShorts r = {0, 0, 0, 0};
     CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
-    if (owner->_v03C((u32)arg2, 1) != 0) {
-        u8* data = (u8*)owner->_v068();
-        if (data != NULL) {
-            if (idx >= 3) {
-                Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E558, 0x8C,
-                                           (const char*)lbl_eu_8052E530);
-            }
-            u8* p = data + idx * 8 + 0x10;
-            r.a = *(s16*)(p + 0);
-            r.b = *(s16*)(p + 2);
-            r.c = *(s16*)(p + 4);
-            r.d = *(s16*)(p + 6);
-        }
+    if (owner->_v03C((u32)arg2, 1) == 0) {
+        FourShorts r = {0, 0, 0, 0};
+        return r;
     }
+    u8* data = (u8*)owner->_v068();
+    if (data == NULL) {
+        FourShorts r = {0, 0, 0, 0};
+        return r;
+    }
+    if (idx >= 3) {
+        Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E558, 0x8C,
+                                   (const char*)lbl_eu_8052E530);
+    }
+    u8* p = data + ((u8)idx << 3) + 0x10;
+    FourShorts r;
+    r.a = ((s16*)p)[0];
+    r.b = ((s16*)p)[1];
+    r.c = ((s16*)p)[2];
+    r.d = ((s16*)p)[3];
     return r;
 }
 
@@ -2071,8 +2109,6 @@ extern "C" int func_8013A4B4(const nw4r::math::VEC3* a, const nw4r::math::VEC3* 
 }
 
 extern "C" u16 func_8013A7D0(u16 arg1, u16 arg2) {
-    u32 arrA[2] = { *(u32*)&lbl_eu_80667310, *(u32*)&lbl_eu_80667314 };
-    u32 arrB[2] = { *(u32*)&lbl_eu_80667318, *(u32*)&lbl_eu_8066731C };
     int flag = 0;
 
     func_8003AA34((const char*)arg1);
@@ -2082,6 +2118,8 @@ extern "C" u16 func_8013A7D0(u16 arg1, u16 arg2) {
     u16 row0 = *(u16*)&r;
     if (func_8009CF8C(0x20) >= row0) flag = 1;
 
+    u32 arrA[2] = { *(u32*)&lbl_eu_80667310, *(u32*)&lbl_eu_80667314 };
+    u32 arrB[2] = { *(u32*)&lbl_eu_80667318, *(u32*)&lbl_eu_8066731C };
     void* fp2 = getFP__FPCc(&lbl_eu_80500664[0x21C]);
     u32 colA = arrA[flag];
     u32 colB = arrB[flag];
@@ -2111,8 +2149,6 @@ extern "C" u16 func_8013A7D0(u16 arg1, u16 arg2) {
 }
 
 extern "C" void func_8013A95C(u16 arg1, u16 arg2, s8 delta) {
-    u32 arrA[2] = { *(u32*)&lbl_eu_80667320, *(u32*)&lbl_eu_80667324 };
-    u32 arrB[2] = { *(u32*)&lbl_eu_80667328, *(u32*)&lbl_eu_8066732C };
     int flag = 0;
 
     func_8003AA34((const char*)arg1);
@@ -2122,6 +2158,8 @@ extern "C" void func_8013A95C(u16 arg1, u16 arg2, s8 delta) {
     u16 row0 = *(u16*)&r;
     if (func_8009CF8C(0x20) >= row0) flag = 1;
 
+    u32 arrA[2] = { *(u32*)&lbl_eu_80667320, *(u32*)&lbl_eu_80667324 };
+    u32 arrB[2] = { *(u32*)&lbl_eu_80667328, *(u32*)&lbl_eu_8066732C };
     void* fp2 = getFP__FPCc(&lbl_eu_80500664[0x21C]);
     u32 colA = arrA[flag];
     u32 colB = arrB[flag];
@@ -2309,9 +2347,15 @@ extern "C" void func_8013ACFC() {
 extern "C" void func_8013B1C4(u32 v) {
     if (v == 0) return;
     if (v > 0x1D) return;
-    u32 table[35];
-    memcpy(table, &lbl_eu_805005A8, sizeof(table));
-    func_8003AA34((const char*)table[34]);
+    u32 table[34];
+    u8* d = (u8*)table;
+    const u8* s = (const u8*)&lbl_eu_805005A8;
+    for (u32 i = 0; i < 136; i++) {
+        d[i] = s[i];
+    }
+    // retail leaves the last copied word (table[32]) in r3; MWCC's copy-loop
+    // recognition reuses it for this call's argument
+    func_8003AA34((const char*)table[32]);
     u32 sum = 0;
     for (u8 i = 2; i < v; i++) {
         u32 p = table[i - 1];
@@ -2414,29 +2458,31 @@ extern u8 lbl_eu_8066407F;
 extern "C" u8 code80135FDC_getByte_6407F() { return lbl_eu_8066407F; }
 
 extern "C" void func_8013B88C(u8 v) {
-    if (v == 0) return;
-    if (v > 0x1D) return;
-    void* fp = getFP__FPCc(&lbl_eu_80500664[0x15]);
-    int n = func_8003B1EC((void*)fp);
-    u8 count = 0;
-    u8 good = 0;
-    for (int i = 1; i <= n; i++) {
-        u8 c = 0;
-        if (fp != 0) {
-            func_8003AA34((const char*)fp);
-            void* r = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x0F],
-                                               (const char*)(u32)i);
-            c = *(u8*)&r;
-        }
-        if (c == v) {
-            count++;
-            if (func_8009CF8C(i + 0x20C8) != 0) {
-                good++;
+    if (v == 0) {
+        return;
+    } else if (v <= 0x1D) {
+        void* fp = getFP__FPCc(&lbl_eu_80500664[0x15]);
+        int n = func_8003B1EC((void*)fp);
+        u8 count = 0;
+        u8 good = 0;
+        for (int i = 1; i <= n; i++) {
+            u8 c = 0;
+            if (fp != 0) {
+                func_8003AA34((const char*)fp);
+                void* r = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x0F],
+                                                   (const char*)(u32)i);
+                c = *(u8*)&r;
+            }
+            if (c == v) {
+                count++;
+                if (func_8009CF8C(i + 0x20C8) != 0) {
+                    good++;
+                }
             }
         }
-    }
-    if (count == good) {
-        func_8013B1C4(v);
+        if (count == good) {
+            func_8013B1C4(v);
+        }
     }
 }
 
@@ -2458,27 +2504,35 @@ u8 func_8013B980() {
 extern u8 lbl_eu_80664080;
 extern "C" u8 code80135FDC_getByte_64080() { return lbl_eu_80664080; }
 
-extern "C" int func_8013B9AC(void* self, void* arg) {
+// Find the anim item matching arg: returns the first non-NULL result from the
+// direct item list / vt58 slot, recursing into child lists. The retail returns
+// the raw call result (nonzero) rather than a literal 1.
+extern "C" void* func_8013B9AC(void* self, void* arg) {
     CAnimListOwnerIf* owner = (CAnimListOwnerIf*)self;
-    if (owner->_v058() != 0) return 1;
+    void* anchor;
+    void* current;
+    void* found = owner->_v058();
+    if (found != 0) return found;
     u8 n = owner->_v064();
     for (u8 i = 0; i < n; i++) {
         CAnimItemIf* item = (CAnimItemIf*)owner->_v06C(i);
-        if (item->_v024(arg) != 0) return 1;
+        void* r = item->_v024(arg);
+        if (r != 0) return r;
     }
-    void* listAnchor = (char*)self + 0x14;
-    void* current = *(void**)listAnchor;
-    while (current != listAnchor) {
+    anchor = (u8*)self + 0x14;
+    current = *(void**)anchor;
+    while (current != anchor) {
         if (current == NULL) {
             Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 0x23D,
                                        (const char*)lbl_eu_8052CB1C);
         }
-        void* child = (char*)current - 4;
+        void* child = (u8*)current - 4;
         if (child == NULL) {
             Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E4E4, 0x193,
                                        (const char*)lbl_eu_8052E4C0);
         }
-        if (func_8013B9AC(child, arg) != 0) return 1;
+        void* r2 = func_8013B9AC(child, arg);
+        if (r2 != 0) return r2;
         current = *(void**)current;
     }
     return 0;

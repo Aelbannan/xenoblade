@@ -1309,6 +1309,8 @@ Verified 100% byte-identical: `btsnd_hcic_pin_code_req_reply` (0x1E4), `btsnd_hc
 4. **Remaining 23 mismatches are a pure FPR free-list shift** (rate f3→f4, 32000 f2→f3, 256 f4→f0, 0.00390625 f0→f1; GPR `li 0` r4→r7; fctiwz-lwz r7/r6/r5→r6/r5/r4) plus the 2 store-slots. SMT probe (`auto` ppc-eabi+fpscr, 900s, linked + unlinked) times out twice: FP path explosion (10× fcmpo NaN paths + 4× fctiwz + 2× fdivs) — same documented class as AXFXChorusExpDpl2 __CalcLFO (us-802dd310, STALLED) and calc_dpd_variable (us-80348a10). Witness inapplicable (store-order reordering not position-aligned). Left at CODE_MATCH 98.87%/99.87%.
 5. **`AXFXChorusExpInit` residual is 3 pure reg-swaps** (alloc-loop counter r28 vs retail r29 — prior-agent-confirmed Chaitin soft-cap, same insn count). Acceptance additionally requires the registry gates: direct callee `us-802dc590` accepted first, and `has_indirect_calls=True` (`__AXFXAlloc`/`__AXFXFree` via `lwz r12@sda21; bctrl`) blocks the certified-callee context.
 
+**Correction (2026-08-13): the `__InitParams` store-slot trade-off is NOT fundamental — 86.5% / 0 structural / 17 pure reg_swaps with the stores position-aligned.** Three combined changes beat the old "pick div slot (0 structural)" state (80.2% / 25 reg_swap): (a) swap the rate-block statements to `phaseAdd = (256.0f * fx->rate) / 32000.0f; step = (32000.0f / fx->rate) * 0.00390625f;` (phaseAdd FIRST — flips the FPR claim order so 32000→f2 and 65536→f5 match retail); (b) **inline `fx->rate`** instead of the `{ f32 rate = fx->rate; }` block from item 2 (the local costs 4 reg_swaps; the doc's "do not cache in locals" warning applies here too); (c) store `stepSamp` BEFORE `gradFactor` — with (a)+(b) applied this keeps the fdivs at retail's slot AND fixes the stw 0x28/0x44 order (the old "mutually exclusive" note was tested without (a)/(b)). The remaining 17 are a bijective volatile GPR 4-cycle (r4/r5/r6/r7) plus **non-bijective FPR dest-reuse**: phaseAdd div result f2 vs retail f1, ds/step div result f1 vs retail f6, and the `fmuls f7` operand order (f1,f0 vs f0,f1) — rho(f1) must equal both f2 and f0, so no global ρ exists; witness rejects; FULL_MATCH needs the FPR free-list reuse behavior. Do NOT regress: named rate/pdt/gradDiv locals (21/21/23 reg_swap), step-first statement order (25).
+
 ### RVL_SDK hbm/HBMGUIManager.cpp — PaneComponent::draw() FULL_MATCH: shared constant-pool rodata + const-local schedule anchor (Wii/1.1 `-O4,p`)
 
 `PaneComponent::draw()` (us-80322ef0) matched byte-identical (100.0% code AND data, whole unit 56/56). Three reusable keys:
@@ -10018,3 +10020,51 @@ Also: psq_l/psq_st W bit — retail offset-0/12 ops are pair loads/stores (W=0),
 - **func_800B205C (us-800b2928, FULL_MATCH):** `if (func_80082900__Q22cf13CfGameManagerFv() && self->field_0xCAC) func_80206BD4((CfMapMineManager*)self->field_0xCAC);` — a member-scoped Fv (no-param) getter is called as an `extern "C"` free function with the mangled name; the u32 field must be cast to the callee's pointer type (MWCC 10248 otherwise).
 - **func_800B67CC (us-800b70c8, OPEN):** retail `lbz; li r3,0; cmplwi r0,1; bltlr; cmplwi r0,24; bgtlr; li r3,1; blr` is EXACTLY GC/3.0a5.2 output of `int result=0; if (val>=1 && val<=24) result=1; return result;` (verified byte-identical in scratch). The unit can't flip to GC (8 accepted FULL_MATCH targets regress via `#pragma noinline` semantics: `#pragma noinline` does NOT carry from a line-16 declaration to its line-730 definition — inlines func_800B07E8 into callers). Wii/1.1 folds the range at every -O level and ~20 source shapes.
 - **func_800B06A4 (us-800b0f70, OPEN):** retail `frsp f2,f1` for `float sq` requires the float→double→float round-trip (`double d=(double)a; float sq=(float)d;`); plain `float sq=a` lets MWCC drop it. Residual: consistent f0↔f2 swap (sq↔c) across all repo compilers — witness rejected.
+
+## register_mapping.md levers applied to near-miss batches (2026-08, Wii/1.1) — three proven shapes
+
+Batch session matching pure-reg-swap CODE_MATCH targets with
+`docs/register_mapping.md`; every target below reached FULL_MATCH with a
+`full-instruction-match` certificate. Three reusable shape levers:
+
+1. **3-float struct copy: FPR coloring follows the float LOCAL declaration
+   order; load order follows the assignment order.** Retail pattern
+   (`monolib/src/lod/code_80468434.cpp` func_8046A280/A318, us-8046e250/
+   us-8046e2e8):
+   ```
+   lfs f2, 8(rX); lfs f1, 4(rX); lfs f0, 0(rX);   ; loads DESCENDING
+   stfs f0, 0(rY); stfs f1, 4(rY); stfs f2, 8(rY)  ; stores ASCENDING
+   ```
+   `*self = *src` (Vec) or forward member-wise emit FORWARD loads with x→f2
+   (4 reg-swaps); reverse member-wise (`self->z…; self->y…; self->x…`) emits
+   retail's FPRs (z→f2, x→f0) but REVERSED stores (2 reg-swaps). The exact
+   shape: declare `float x, y, z;` **first** (drives FPR allocation x→f0,
+   y→f1, z→f2 per Rule C low→high), then **assign in reverse** `z = src->z;
+   y = src->y; x = src->x;`, then **store forward** `self->x = x; self->y =
+   y; self->z = z;` → 0 diffs. (nw4r `VEC3` class copy = same as plain Vec.)
+
+2. **Address-add operand order: parenthesise `(scaled + const)` as a unit on
+   the RIGHT of the base add.** Retail `add rD, scaled, base` (scaled FIRST)
+   vs decomp `add rD, base, scaled` — one-byte diff, witness-ineligible, and
+   plain `idx*0x2c + (u32)self + 0x1c` emits base-first. `(u32)self +
+   (self->…field_0x2 * 0x2c + 0x1c)` (or `base + (mid * 4 + 8)` for a load
+   address with the +8 folded into the lwz) emits scaled-first. Applies to
+   `getFP__FPCc` (ocBdat, us-8003ae8c) and func_8046A11C/A1A0 (us-8046e0ec/
+   us-8046e170).
+
+3. **Tail pointer arithmetic: build incrementally with `+=`.** `char* dataPtr
+   = base + dataOff + rowBytes + colDataOff;` gave a 7-way scratch rotation
+   in getBdatStringColumnValue (us-8003b148); `char* dataPtr = base +
+   dataOff; dataPtr += rowBytes; dataPtr += colDataOff;` aligned the volatile
+   pool (rowBytes r4, colDataOff r0, ptr r7) exactly → 0 diffs.
+
+Also from this batch: CMenuKizunaTalkList::Init tail reads were off by the
+tempList frame base (tempList+0x148C not +0x14EC — the +0x60 base was double-
+counted); Move's `(x & mask) != 0` vs `& mask` changes rlwinm normalization
+(bit-31 form SH=31-k vs in-place SH=0,k,k); COption func_8029C4F4's switch
+case set was 1,2,4,5,6,7,8,10 (0/3/9 empty) — Wii/1.1 truncates trailing empty
+cases so the full 0..10 table needs the real case set; ocBdat func_8003B748
+guard was `(elemType-6) <= 1 → shared *4 tail` (bc 4,1 = branch if NOT GT),
+expressed as `if ((u32)(elemType-6) > 1) {switch} else {scale4: *4}` with
+`goto` from case 3 (a flat `if (…) goto scale4; switch…; scale4:` lets switch
+`default` fall through into ×4 — wrong).

@@ -39,7 +39,9 @@ extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index) 
     s32 rowBytes = index * stride;
     u16 colDataOff = *reinterpret_cast<u16*>(colHdr + 0x2);
     u8 elemType = static_cast<u8>(colHdr[1]);
-    char* dataPtr = base + dataOff + rowBytes + colDataOff;
+    char* dataPtr = base + dataOff;
+    dataPtr += rowBytes;
+    dataPtr += colDataOff;
     return func_8003B6A0(hdr, dataPtr, elemType);
 }
 
@@ -93,7 +95,10 @@ void* getFP(const char* pName) {
             hi = hdr->count;
             while (lo < hi) {
                 mid = (lo + hi) / 2;
-                entry = base + hdr->offsets[mid];
+                // Parenthesised (mid*4 + 8) makes MWCC form the address as
+                // add rD, scaled, base (retail operand order); hdr->offsets[mid]
+                // would emit add rD, base, scaled (one-byte diff).
+                entry = base + *(u32*)(base + (mid * 4 + 8));
                 cmp = strcmp(entry + *reinterpret_cast<u16*>(entry + 6), pName);
                 if (cmp < 0) {
                     lo = static_cast<s32>(mid + 1);

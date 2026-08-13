@@ -218,16 +218,14 @@ extern "C" int func_8019EEB8(CCtrlMovePC* self) {
 extern "C" void func_8019956C(CCtrlMovePC* self) {
     cf::CMoveEmbedded* emb = (cf::CMoveEmbedded*)((char*)self->mObject + 0x3e9c);
     f32 v = emb->getF35();
-    if (v == lbl_eu_80667B60) {
+    if (lbl_eu_80667B60 == v) {
         return;
     }
 
     u8 battleState = *(u8*)((char*)getInstance__Q22cf14CBattleManagerFv() + 0x1aa);
     u32 inBattle = 0;
-    if (battleState >= 1) {
-        if (battleState <= 0x18) {
-            inBattle = 1;
-        }
+    if (battleState >= 1 && battleState <= 0x18) {
+        inBattle = 1;
     }
     if (inBattle != 0) {
         return;

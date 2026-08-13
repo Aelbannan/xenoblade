@@ -11,9 +11,12 @@ namespace nw4r {
 namespace ut {
 
 // Stub: retail size 0x3C; Destroy returns buffer for MemManager::deallocate.
+// ~PackedFont is declared (defined in nw4r's ut_PackedFont TU) so the
+// CUICfManager dtor emits the retail member-destruction calls.
 class PackedFont {
 public:
     void* Destroy();
+    ~PackedFont();
 
 private:
     u8 unk[0x3C];
@@ -21,6 +24,47 @@ private:
 
 } // namespace ut
 } // namespace nw4r
+
+// reslist<...>-shaped event queue vtable (retail .data, 0xC bytes). Restored
+// by the queue clear in CUICfManager::~CUICfManager.
+extern u8 lbl_eu_8052E3B0[];
+
+// --- imports for the free menu-create / probe helpers (CUICfManager.cpp) ---
+// Signature choices match co-included headers (CTaskGame.hpp, CMenuQstCnt.hpp,
+// CMainMenu.hpp) so TUs that include several of these headers stay legal.
+extern u32 lbl_eu_80664184;      // scene-mode global (u8-narrowed reads)
+extern f32 lbl_eu_806672C8;      // proximity float constant
+extern "C" int func_800FF738();  // matches CTaskGame.hpp
+extern "C" int func_801B481C();  // matches CMenuQstCnt.hpp (int)
+extern "C" int func_80293C10();  // matches CMenuQstCnt.hpp (int)
+extern "C" int func_8029A658();  // matches CMainMenu.hpp / CMenuQstCnt.hpp
+void func_80138078(u32);         // mangles to func_80138078__FUl
+class CSysWinBuff;
+extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv(); // matches CMainMenu.hpp
+
+// This unit's own slot helpers (flat retail names; stubs live in the .cpp).
+extern "C" int func_801359AC();
+extern "C" int func_8013042C(u8* base, u8 index);
+
+// 0x168-stride view over mInitSlots[].unk04 (func_80135898's flag scan).
+struct CUICfSlotFlagView {
+    u8 flag;                     // mInitSlots[i].unk04 (0x14c + i*0x168)
+    u8 pad[0x168 - 0x01];
+};
+
+// View returned by func_8049603C (f32 at +0/+4/+8/+C).
+struct CUICfCamView {
+    f32 field_0;
+    f32 field_4;
+    f32 field_8;
+    f32 field_C;
+};
+
+// Layout view of the object returned by getUnk80664658 (flag word at 0x214).
+struct CUICfGlobalSettings {
+    u8 field_0x00[0x214];
+    u32 field_214;               // 0x214 - flag bits
+};
 
 struct CUICfUnk144 {
     u8 unk00[0x39];
@@ -89,6 +133,38 @@ struct CUICfListNode {
     u32 item;            // 0x8
 };
 
+// reslist<...>-shaped event queue view at CUICfManager +0x124 (same layout as
+// ResListIUIBattle: vtable, sentinel-head ptr, embedded sentinel node, slot
+// array, capacity, owns-flag). The dtor inlines the reslist clear+free.
+struct CUICfEventQueue {
+    u8* vtable;             // +0x00 (0x124)
+    CUICfListNode* head;    // +0x04 (0x128)
+    CUICfListNode startNode;// +0x08 (0x12C)
+    CUICfListNode* nodes;   // +0x14 (0x138)
+    int count;              // +0x18 (0x13C)
+    u8 ownsList;            // +0x1C (0x140)
+};
+
+// Public-layout mirror of the CUICfManager fields the free menu-create
+// helpers (func_80133A08 family) touch; the real fields are private.
+struct CUICfManagerCreateView {
+    u8 field_0x00[0x5C];
+    void* field_0x5C;              // 0x5C - resource accessor (mArcResourceAccessor)
+    u8 field_0x60[0x11C - 0x60];
+    u32 field_0x11C;               // 0x11C - owning scene
+    int field_0x120;               // 0x120 - Move countdown (signed)
+    u8 field_0x124[0x128 - 0x124];
+    CUICfListNode* field_0x128;    // 0x128 - event queue head
+    u8 field_0x12C[0x138 - 0x12C];
+    CUICfListNode* field_0x138;    // 0x138 - event node array
+    int field_0x13C;               // 0x13C - node array count
+    u8 field_0x140[0x144 - 0x140];
+    CUICfUnk144* field_0x144;      // 0x144 - menu context (CProcess-ish)
+    u8 field_0x148[0xC90 - 0x148];
+    u16 field_0xC90;               // 0xC90 - Move bitflags (mFlags)
+    u8 field_0xC92[0xC94 - 0xC92];
+};
+
 // 27-entry, 0-terminated id table copied onto the stack by func_80133324
 // (retail: sp+0x28..0x5D, matches lbl_eu_804FFFDC minus its trailing entry).
 struct CUICfIdTable {
@@ -115,7 +191,10 @@ struct CUICfInitSlot {
     CUICfInitTail unkD8;
 }; // size = 0x168
 
-class CUICfManager : public CTTask<CUICfManager>, public IWorkEvent, public cf::IFlagEvent {
+// novtable: retail's dtor emits NO class-vtable store (the queue's
+// lbl_eu_8052E3B0 store is explicit); without it MWCC emits the
+// lis/addi/stw __vt__12CUICfManager reset (+3 insns) before the body.
+class __declspec(novtable) CUICfManager : public CTTask<CUICfManager>, public IWorkEvent, public cf::IFlagEvent {
 public:
     static CUICfManager* getInstance() {
         return spInstance;

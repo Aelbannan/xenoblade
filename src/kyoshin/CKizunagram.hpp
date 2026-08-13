@@ -3,6 +3,7 @@
 #include <types.h>
 #include <nw4r/lyt.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include <revolution/gx/GXTypes.h>
 
 struct CFileHandle;  // monolib/device/CFileHandle.hpp
 
@@ -48,7 +49,9 @@ public:
     u8 field15;         // 0x15
     u8 field16;         // 0x16
     u8 field17;         // 0x17
-    u8 _18[0x24-0x18];
+    u32 field18;        // 0x18 (pad word; func_8025CF40 copies it as a color word)
+    u32 field1C;        // 0x1C
+    u32 field20;        // 0x20
     u8 field24;         // 0x24
     u8 _25[0x26-0x25];
     u16 field26;        // 0x26
@@ -249,6 +252,20 @@ struct UnkKizunaSelfCAE4 {
     nw4r::lyt::AnimTransform* field78;   // 0x78
     u8 _7C[0xB4-0x7C];
     UnkKizunaFieldB4* fieldB4;           // 0xB4
+};
+
+// ---------------------------------------------------------------------------
+// Target 1 (func_80257B6C) support type.
+// ---------------------------------------------------------------------------
+
+// func_80257B6C self: the line layout at +0x08 (Animate + root pane), two
+// reference panes at +0x0C/+0x10, and the +0x14 Vec2 filled by func_80257AFC.
+struct UnkKizunaSelf57B6C {
+    u8 _00[0x08];
+    nw4r::lyt::Layout* field8;   // 0x08
+    nw4r::lyt::Pane* field0C;    // 0x0C
+    nw4r::lyt::Pane* field10;    // 0x10
+    f32 field14[2];              // 0x14
 };
 
 // ---------------------------------------------------------------------------
@@ -515,8 +532,186 @@ extern "C" void* lbl_eu_805375FC[];
 extern "C" void* lbl_eu_805375E4[];
 extern "C" void* lbl_eu_805375F0[];
 extern "C" void func_80124270(nw4r::lyt::Pane* pane, u32 a);
+extern "C" void func_80127BC4(float* dst, const float* src); // copy 2 floats
+
+// Position constants used by func_80257B6C (sda2 floats).
+extern const float lbl_eu_8066882C;
+extern const float lbl_eu_80668830;
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform* anim, float frame);
 extern "C" void func_80231848(UnkKizunaFunc31848Obj* self, const UnkKizunaPair* src);
 extern "C" void copyVEC2(float* dst, const float* src);
+extern "C" void copyVEC3(float* dst, const float* src);
 extern "C" void func_8025AC1C(UnkKizunaSelfAB* self, u32 a);
 extern "C" void func_8025CE00(UnkKizunaSelfCE00* self);
+
+// ---------------------------------------------------------------------------
+// Targets 15/16 (func_80259B18 / func_80259098) support types.
+// ---------------------------------------------------------------------------
+
+// Self for func_80259B18 / func_80259098: shared arc layout at +0x0C whose
+// +0x10 field is the slot-15-callable root pane.
+struct UnkKizunaSelf59B18 {
+    u8 _00[0x0C];
+    nw4r::lyt::Layout* field0C; // 0x0C
+};
+
+// View of a layout's +0x10 field (root pane) used by func_8025B670.
+struct UnkKizunaLayoutView {
+    u8 _00[0x10];
+    nw4r::lyt::Pane* field10; // 0x10
+};
+
+// func_80259098's slot-15 result: a pane with a tag-context embedded at +0x10
+// driving the pane-name iteration, and a slot-15 virtual at +0x3C returning
+// child panes. MWCC prepends two implicit vtable slots, so slot15 is declared
+// index 13.
+struct UnkKizunaTagCtx59098 {
+    u8 _00[0x04];
+    const wchar_t* field4; // 0x04
+};
+
+struct UnkKizunaCtxPane59098 {
+    virtual void v0();
+    virtual void v1();
+    virtual void v2();
+    virtual void v3();
+    virtual void v4();
+    virtual void v5();
+    virtual void v6();
+    virtual void v7();
+    virtual void v8();
+    virtual void v9();
+    virtual void v10();
+    virtual void v11();
+    virtual void v12();
+    virtual nw4r::lyt::Pane* slot15(const char* s, u32 n); // vtable slot 15 (+0x3C)
+    u8 _04[0x10 - 0x04];
+    UnkKizunaTagCtx59098 ctx; // 0x10
+};
+
+// Object finalized via vtable slot 2 (+0x08) with a 1 flag (release/null
+// helpers and the func_80259098 cleanup tail).
+struct UnkKizunaPaneFinalize {
+    virtual void target2(int a); // vtable slot 2 (+0x08)
+};
+
+// ---------------------------------------------------------------------------
+// Target 2 (func_8025CF40) support types.
+// ---------------------------------------------------------------------------
+
+// Embedded line state at +0x68 of the func_8025CF40 self: layout matches
+// CKizunaLine except +0x18..+0x20 are u32 color words (the source CKizunaLine
+// copies its pad bytes there) and the vtable word is not overwritten.
+struct UnkKizunaLineState {
+    u8 _00[0x04];     // vtable slot, not copied
+    u32 field4;       // 0x04
+    u32 field8;       // 0x08
+    u32 field0C;      // 0x0C
+    u32 field10;      // 0x10
+    u8 field14;       // 0x14
+    u8 field15;       // 0x15
+    u8 field16;       // 0x16
+    u8 field17;       // 0x17
+    u32 field18;      // 0x18
+    u32 field1C;      // 0x1C
+    u32 field20;      // 0x20
+    u8 field24;       // 0x24
+    u8 _25[0x26 - 0x25];
+    u16 field26;      // 0x26
+    f32 field28;      // 0x28
+    f32 field2C;      // 0x2C
+    f32 field30;      // 0x30
+    u8 field34;       // 0x34
+    u8 _35[0x36 - 0x35];
+    u16 field36;      // 0x36
+    f32 field38;      // 0x38
+    u8 field3C;       // 0x3C
+    u8 field3D;       // 0x3D
+    u8 _3E[0x40 - 0x3E];
+    f32 field40;      // 0x40
+};
+
+// func_8025CF40 self: two pointers gating the rebuild, a flag byte, the
+// embedded line state at +0x68, the two slot-15 results, and the +0xDE byte.
+struct UnkKizunaSelfCF40 {
+    u8 _00[0x30];
+    u32 field30;                  // 0x30
+    u32 field34;                  // 0x34
+    u8 _38[0x3B - 0x38];
+    u8 field3B;                   // 0x3B
+    u8 _3C[0x68 - 0x3C];
+    UnkKizunaLineState lineState; // 0x68
+    u8 _AC[0xCC - 0xAC];
+    u32 fieldCC;                  // 0xCC
+    u32 fieldD0;                  // 0xD0
+    u8 _D4[0xDE - 0xD4];
+    u8 fieldDE;                   // 0xDE
+};
+
+// ---------------------------------------------------------------------------
+// Target 5 (func_8025B670) support type.
+// ---------------------------------------------------------------------------
+
+struct UnkKizunaSelfB670 {
+    u8 _00[0x04];
+    nw4r::lyt::ArcResourceAccessor* field4; // 0x04
+    nw4r::lyt::Layout* field8;               // 0x08
+    nw4r::lyt::AnimTransform* field0C;       // 0x0C
+    nw4r::lyt::AnimTransform* field10;       // 0x10
+    u8 _14[0x18 - 0x14];
+    u16 field18;                             // 0x18
+};
+
+// View into the object returned by func_80452C10: vtable slot 9 (+0x24)
+// yields the u32 bound into the layout's font pane by func_8013676C.
+// All-pure so no vtable is emitted.
+struct UnkKizunaFontView {
+    virtual void vf0() = 0; // +0x08
+    virtual void vf1() = 0; // +0x0C
+    virtual void vf2() = 0; // +0x10
+    virtual void vf3() = 0; // +0x14
+    virtual void vf4() = 0; // +0x18
+    virtual void vf5() = 0; // +0x1C
+    virtual void vf6() = 0; // +0x20
+    virtual u32 vf7() = 0;  // +0x24
+};
+
+// ---------------------------------------------------------------------------
+// C-linkage imports for the current targets (retail names unmangled).
+// ---------------------------------------------------------------------------
+
+// Pane visibility check (CTitleAHelp.cpp) and GX color setter.
+extern "C" bool func_801C4648(nw4r::lyt::Pane* pane);
+extern "C" void func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a);
+
+// sinit_8025D304 color table (14 GXColorS10 entries, 8-byte stride).
+extern GXColorS10 lbl_eu_806647E8;
+extern GXColorS10 lbl_eu_806647F0;
+extern GXColorS10 lbl_eu_806647F8;
+extern GXColorS10 lbl_eu_80664800;
+extern GXColorS10 lbl_eu_80664808;
+extern GXColorS10 lbl_eu_80664810;
+extern GXColorS10 lbl_eu_80664818;
+extern GXColorS10 lbl_eu_80664820;
+extern GXColorS10 lbl_eu_80664828;
+extern GXColorS10 lbl_eu_80664830;
+extern GXColorS10 lbl_eu_80664838;
+extern GXColorS10 lbl_eu_80664840;
+extern GXColorS10 lbl_eu_80664848;
+extern GXColorS10 lbl_eu_80664850;
+
+// Tag-context string helpers (CTagProcessor.cpp) and func_8025B670's font
+// result source.
+extern "C" const wchar_t* getContextStr(u8* self);
+extern "C" const wchar_t** getContextStrPtr(u8* self);
+extern "C" void* func_801276E0(const wchar_t** self, u32 arg);
+extern "C" const wchar_t* func_80127670(const wchar_t** self);
+extern "C" int func_801276C8(const wchar_t** a, const wchar_t** b);
+extern "C" u32 func_801355BC(void);
+
+// sprintf for func_80259B18's pane-name formatting.
+extern "C" int sprintf(char* str, const char* fmt, ...);
+
+// CDeviceFont font-object getter (retail symbol is the mangled C++ name).
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+    u32 arg, nw4r::lyt::Layout* layout);

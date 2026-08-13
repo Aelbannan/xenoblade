@@ -98,8 +98,9 @@ struct CPlayAwardMsgObj {
 
 // Mirror of nw4r::lyt::Pane's protected mSize region (cf. CSortMenu.hpp).
 struct CPlayAwardPaneSize {
-    f32 width;   // +0x4C
-    f32 height;  // +0x50
+    u8 pad[0x4C];  // +0x00-0x4B
+    f32 width;     // +0x4C
+    f32 height;    // +0x50
 };
 
 // View into a nw4r::lyt::Pane's trailing user-data region: OnFileEvent writes

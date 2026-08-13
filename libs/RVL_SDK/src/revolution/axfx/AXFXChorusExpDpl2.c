@@ -343,9 +343,8 @@ static BOOL __InitParams(AXFX_CHORUS_EXP_DPL2* fx) {
     }
 
     {
-        f32 rate = fx->rate;
-        step = (32000.0f / rate) * 0.00390625f;
-        phaseAdd = (256.0f * rate) / 32000.0f;
+        phaseAdd = (256.0f * fx->rate) / 32000.0f;
+        step = (32000.0f / fx->rate) * 0.00390625f;
     }
 
     fx->lfo.lastNum = (u32)-1;
@@ -356,8 +355,8 @@ static BOOL __InitParams(AXFX_CHORUS_EXP_DPL2* fx) {
 
     fx->lfo.depthSamp = (s32)(65536.0f * depthSamp);
     fx->lfo.phaseAdd = (s32)(65536.0f * phaseAdd);
-    fx->lfo.gradFactor = (s32)(65536.0f * (depthSamp / step));
     fx->lfo.stepSamp = (s32)(65536.0f * step);
+    fx->lfo.gradFactor = (s32)(65536.0f * (depthSamp / step));
 
     for (i = 0; i < 4; i++) {
         for (j = 0; j < 4; j++) {

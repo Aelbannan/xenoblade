@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CKizunagram.hpp"
+#include "kyoshin/code_80135FDC.hpp"  // layout/anim/font helpers (extern "C" pre-mangled names)
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/MemManager.hpp"
 
@@ -23,18 +24,6 @@ extern u32 lbl_eu_80668838;
 extern u32 lbl_eu_8066883C;
 extern char lbl_eu_8050CB20[];
 
-u32 func_80137444(nw4r::lyt::AnimTransform* anim, float frame);
-void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-    nw4r::lyt::Layout** ppLayout,
-    nw4r::lyt::ArcResourceAccessor* accessor,
-    const char* name);
-void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-    nw4r::lyt::Layout* layout,
-    nw4r::lyt::AnimTransform** ppAnimTrans,
-    nw4r::lyt::ArcResourceAccessor* accessor,
-    char* name);
-void func_801390E0(CFileHandle** ppHandle);
-void func_80139124(nw4r::lyt::ArcResourceAccessor* accessor);
 void func_80138078(u32 number);
 
 // Same-TU display-state helper consumed by func_8025AB04 / func_8025AB84
@@ -148,7 +137,7 @@ extern "C" __declspec(noinline) void func_80257E58(UnkKizunaSelf57E58* self) {
     self->field8->slot14(0);
 }
 
-void func_802580CC(){}
+void func_802580CC(UnkKizunaLineState* arg){}
 
 // us-8025b198 (0x8025B198): game-local PSVECAdd kernel — dst[i] = a[i] + b[i], i in 0..2.
 // Retail is a pure paired-single body (psq_l/ps_add/psq_st, no frame, arg order r3=dst,
@@ -202,7 +191,41 @@ extern "C" void func_80258F80(float* dst, const float* src, float scale) {
 
 void func_80258F9C(){}
 
-extern "C" __declspec(noinline) void func_80259098(UnkKizunaSelf57D90* self) {}
+extern "C" __declspec(noinline) void func_80259098(UnkKizunaSelf59B18* self) {
+    if (self->field0C == 0) return;
+    UnkKizunaCtxPane59098* res =
+        (UnkKizunaCtxPane59098*)((UnkKizunaLayoutSub57AFC*)self->field0C)
+            ->field10->slot15(lbl_eu_8050CB20 + 0x9a, 1);
+    const wchar_t* cur = getContextStr((u8*)&res->ctx);
+    while (func_801276C8(getContextStrPtr((u8*)&res->ctx), &cur) != 0) {
+        const wchar_t* tmp = cur;
+        func_801276E0(&tmp, 0);
+        const wchar_t* s = func_80127670(&cur);
+        nw4r::lyt::Pane* child = res->slot15((const char*)s + 0xbc, 1);
+        ((nw4r::lyt::Pane*)res)->RemoveChild(child);
+        if (child != 0) {
+            if (child != 0) {
+                ((UnkKizunaPaneFinalize*)child)->target2(1);
+            }
+        }
+        cur = tmp;
+    }
+    nw4r::lyt::Pane* root =
+        (nw4r::lyt::Pane*)((UnkKizunaLayoutSub57AFC*)self->field0C)
+            ->field10->slot15(lbl_eu_8050CB20 + 0xa4, 1);
+    root->RemoveChild((nw4r::lyt::Pane*)res);
+    if (res != 0) {
+        if (res != 0) {
+            ((UnkKizunaPaneFinalize*)res)->target2(1);
+        }
+    }
+    if (self->field0C != 0) {
+        if (self->field0C != 0) {
+            ((UnkKizunaPaneFinalize*)self->field0C)->target2(1);
+        }
+        self->field0C = 0;
+    }
+}
 
 // Set an anim child state flag (1), publish it to the object at +0x0C's
 // vtable slot 8, then write the shared "idle" float constant at +0x40.
@@ -245,7 +268,29 @@ extern "C" __declspec(noinline) void func_80259820(UnkKizunaSelf57D90* self) {}
 
 extern "C" void func_80259AF4(char* dest, const char* src) { dest[0] = src[0]; dest[1] = src[1]; dest[2] = src[2]; dest[3] = 0; }
 
-void func_80259B18(){}
+// us-8025bd54 (0x8025BD54): if the shared arc layout's named root pane is
+// visible, hide it and re-apply the 5 kizuna pane-name groups for indices
+// 1..0x11 to the layout.
+void func_80259B18(UnkKizunaSelf59B18* self) {
+    nw4r::lyt::Pane* pane = (nw4r::lyt::Pane*)((UnkKizunaLayoutSub57AFC*)self->field0C)
+                                ->field10->slot15(lbl_eu_8050CB20 + 0x3f5, 1);
+    if (func_801C4648(pane) != 0) {
+        func_80124270(pane, 0);
+        char buf[0x2C];
+        for (u8 i = 1; i <= 0x11; i++) {
+            sprintf(buf, lbl_eu_8050CB20 + 0x445, i);
+            func_80136B4C(self->field0C, buf, lbl_eu_8050CB20 + 0xd3, 0);
+            sprintf(buf, lbl_eu_8050CB20 + 0x454, i);
+            func_80136B4C(self->field0C, buf, lbl_eu_8050CB20 + 0xd3, 0);
+            sprintf(buf, lbl_eu_8050CB20 + 0x464, i);
+            func_80136B4C(self->field0C, buf, lbl_eu_8050CB20 + 0xd3, 0);
+            sprintf(buf, lbl_eu_8050CB20 + 0x474, i);
+            func_80136B4C(self->field0C, buf, lbl_eu_8050CB20 + 0xd3, 0);
+            sprintf(buf, lbl_eu_8050CB20 + 0x484, i);
+            func_80136B4C(self->field0C, buf, lbl_eu_8050CB20 + 0xd3, 0);
+        }
+    }
+}
 
 void func_80259C5C(){}
 
@@ -354,7 +399,41 @@ CKizunaInfo::CKizunaInfo(nw4r::lyt::ArcResourceAccessor* accessor) {
 
 CKizunaInfo::~CKizunaInfo() {}
 
-void func_8025B670(){}
+// us-8025d8ac (0x8025B670): build the kizuna line layout + two anim
+// transforms, bind the font to the root pane, publish the 4 font-format
+// values and 6 localized labels, then reset the +0x18 counter.
+void func_8025B670(UnkKizunaSelfB670* self) {
+    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+        &self->field8, self->field4, lbl_eu_8050CB20 + 0xb19);
+    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        self->field8, &self->field0C, self->field4, lbl_eu_8050CB20 + 0xb2c);
+    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+        self->field8, &self->field10, self->field4, lbl_eu_8050CB20 + 0xb42);
+    nw4r::lyt::Pane* rootPane = ((UnkKizunaLayoutView*)self->field8)->field10;
+    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field8);
+    u32 fontResult = static_cast<UnkKizunaFontView*>(fontObj)->vf7();
+    func_8013676C(rootPane, fontResult);
+    u32 val = func_801355BC();
+    func_801368C0(self->field8, lbl_eu_8050CB20 + 0xb5d, val);
+    func_801368C0(self->field8, lbl_eu_8050CB20 + 0xb6b, val);
+    func_801368C0(self->field8, lbl_eu_8050CB20 + 0xb79, val);
+    func_801368C0(self->field8, lbl_eu_8050CB20 + 0xb87, val);
+    self->field8->UnbindAllAnimation();
+    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xb95,
+                  func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0xb), 0);
+    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xb9f,
+                  func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0xc), 0);
+    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xba9,
+                  func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0xd), 0);
+    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbb3,
+                  func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0xe), 0);
+    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbbd,
+                  func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0xf), 0);
+    func_80136B4C(self->field8, lbl_eu_8050CB20 + 0xbc7,
+                  func_80136190(lbl_eu_8050CB20 + 0x316, lbl_eu_8050CB20 + 0x321, 0x10), 0);
+    self->field18 = 0xFFFF;
+    func_8025BA38((UnkKizunaSelf57D90*)self, 0);
+}
 
 // Per-frame display dispatch: while the current-line child (+0x08) is live,
 // run the mode-specific handler for the +0x14 mode byte, then notify the
@@ -461,7 +540,7 @@ void func_8025C6F0(UnkKizunaSelfC6F0* self) {
     func_801390E0(&self->field2C);
     self->field38 = 0;
     func_8025B900(&self->sub4C);
-    func_80259098(&self->sub68);
+    func_80259098((UnkKizunaSelf59B18*)&self->sub68);
     func_80257F44(&self->subAC);
     func_80257D90(&self->subC0);
     func_80139124(self->field30);
@@ -665,12 +744,113 @@ void func_8025CE78(){}
 
 void func_8025CF1C(){}
 
-void func_8025CF40(){}
+// us-8025f08c (0x8025CF40): when both +0x30/+0x34 pointers are present, build a
+// fresh CKizunaLine, copy it into the +0x68 line state (field-by-field,
+// including the +0x18..+0x20 pad words the ctor leaves uninitialized), then
+// rebuild the line display and re-fetch the two cur/line panes via slot 15.
+void func_8025CF40(UnkKizunaSelfCF40* self) {
+    if (self->field30 != 0 && self->field34 != 0) {
+        self->field3B = 1;
+        CKizunaLine line(self->field30, self->field34, self->fieldDE);
+        self->lineState.field4 = line.field4;
+        self->lineState.field8 = line.field8;
+        self->lineState.field0C = line.field0C;
+        self->lineState.field10 = line.field10;
+        self->lineState.field14 = line.field14;
+        self->lineState.field15 = line.field15;
+        self->lineState.field16 = line.field16;
+        self->lineState.field17 = line.field17;
+        self->lineState.field18 = line.field18;
+        self->lineState.field1C = line.field1C;
+        self->lineState.field20 = line.field20;
+        self->lineState.field24 = line.field24;
+        self->lineState.field26 = line.field26;
+        self->lineState.field28 = line.field28;
+        self->lineState.field2C = line.field2C;
+        self->lineState.field30 = line.field30;
+        self->lineState.field34 = line.field34;
+        self->lineState.field36 = line.field36;
+        self->lineState.field38 = line.field38;
+        self->lineState.field3C = line.field3C;
+        self->lineState.field3D = line.field3D;
+        self->lineState.field40 = line.field40;
+        func_802580CC(&self->lineState);
+        self->fieldCC =
+            (u32)((UnkKizunaMid59344*)self->lineState.field0C)->field10->target(
+                (int)(lbl_eu_8050CB20 + 0xa4), 1);
+        self->fieldD0 =
+            (u32)((UnkKizunaMid59344*)self->lineState.field0C)->field10->target(
+                (int)(lbl_eu_8050CB20 + 0x8b), 1);
+    }
+}
 
 void CKizunagram::OnFileEvent() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-void sinit_8025D304(){}
+// sinit_8025D304: init the 14-color kizuna line palette via func_801C4B60.
+void sinit_8025D304() {
+    func_801C4B60(&lbl_eu_806647E8, 0x21, 0x1c, 0x15, 0x0);
+    func_801C4B60(&lbl_eu_806647F0, 0xb5, 0xb1, 0xab, 0xff);
+    func_801C4B60(&lbl_eu_806647F8, 0x21, 0x1e, 0x15, 0x0);
+    func_801C4B60(&lbl_eu_80664800, 0xb5, 0xb1, 0xab, 0xff);
+    func_801C4B60(&lbl_eu_80664808, 0x17, 0x21, 0x15, 0x0);
+    func_801C4B60(&lbl_eu_80664810, 0xb3, 0xaf, 0x97, 0xff);
+    func_801C4B60(&lbl_eu_80664818, 0x1c, 0x24, 0x2d, 0x0);
+    func_801C4B60(&lbl_eu_80664820, 0xb5, 0xb1, 0xab, 0xff);
+    func_801C4B60(&lbl_eu_80664828, 0x1c, 0x20, 0x31, 0x0);
+    func_801C4B60(&lbl_eu_80664830, 0xb5, 0xb1, 0xab, 0xff);
+    func_801C4B60(&lbl_eu_80664838, 0x1c, 0x2c, 0x1a, 0x0);
+    func_801C4B60(&lbl_eu_80664840, 0xe5, 0xea, 0xde, 0xff);
+    func_801C4B60(&lbl_eu_80664848, 0x21, 0x1e, 0x15, 0x0);
+    func_801C4B60(&lbl_eu_80664850, 0xb5, 0xb1, 0xab, 0xff);
+}
 
-extern "C" void func_80257B6C() {}
+// Position the kizuna line panes: scale the +0x14 Vec2 by (const - the +0x10
+// pane's scale) into the "line" pane's size, then scale the +0x0C pane's
+// translate by the ratio of the two reference-pane size deltas into the line
+// pane's translate. Finally pulse the layout anim.
+void func_80257B6C(UnkKizunaSelf57B6C* self) {
+    if (self->field8 != 0) {
+        if (self->field10 != 0) {
+            nw4r::math::VEC2 sc = self->field10->GetScale();
+            f32 sx = lbl_eu_8066882C - sc.x;
+            f32 sy = lbl_eu_8066882C - sc.y;
+            f32 tmp[2];
+            func_80127BC4(tmp, self->field14);
+            tmp[0] *= sx;
+            tmp[1] *= sy;
+            nw4r::lyt::Pane* pane = self->field8->GetRootPane()->FindPaneByName(
+                lbl_eu_8050CB20 + 0x13, 1);
+            copyVEC2(const_cast<f32*>(&pane->GetSize().width), tmp);
+        }
+        if (self->field0C != 0) {
+            const char* strbase = lbl_eu_8050CB20;
+            nw4r::lyt::Pane* c = self->field0C;
+            nw4r::math::VEC3 tr = c->GetTranslate();
+            tr.x *= lbl_eu_80668830;
+            tr.y *= lbl_eu_80668830;
+            nw4r::lyt::Pane* paneA = self->field8->GetRootPane()->FindPaneByName(
+                strbase + 0x13, 1);
+            f32 sa[2];
+            func_80127BC4(sa, const_cast<f32*>(&paneA->GetSize().width));
+            nw4r::lyt::Pane* paneB = self->field8->GetRootPane()->FindPaneByName(
+                strbase + 0x1d, 1);
+            f32 sb[2];
+            func_80127BC4(sb, const_cast<f32*>(&paneB->GetSize().width));
+            f32 sc2[2];
+            func_80127BC4(sc2, const_cast<f32*>(&c->GetSize().width));
+            sb[0] -= sa[0];
+            sb[1] -= sa[1];
+            f32 rx = sb[0] / sc2[0];
+            f32 ry = sb[1] / sc2[1];
+            tr.x *= rx;
+            tr.y *= ry;
+            nw4r::lyt::Pane* paneC = self->field8->GetRootPane()->FindPaneByName(
+                strbase + 0x13, 1);
+            copyVEC3(const_cast<f32*>(&paneC->GetTranslate().x), &tr.x);
+        }
+        self->field8->Animate(0);
+    }
+}
+
 extern "C" void func_8025A11C() {}

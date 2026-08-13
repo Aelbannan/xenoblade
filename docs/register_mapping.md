@@ -196,6 +196,11 @@ register-renaming witness will not certify them. They are fixed with
 | FPR add hoisted above the `bl` | scheduling | compiler version / `-O4,s` |
 | `li`/`lis` ordering, `lbzu` merge | scheduling / immediate selection | `mw_version`, `-func_align 4/16`, `-ipa off` |
 
+For the scheduler itself, the `-O4,p` vs `-O4,s` loop-optimization split, and
+the full flag vocabulary, see [`docs/scheduling.md`](scheduling.md). For the
+`mr` vs `addi rD,rS,0` copy lowering and `lbzu`/peephole rules, see
+[`docs/instruction_selection.md`](instruction_selection.md).
+
 The prologue/epilogue and PS decisions are **flag-controlled**, not source-steerable.
 Recovered flag/helper vocabulary from the Wii/1.1 binary: `use_lmw_stmw`,
 `no_register_save_helpers` (internal, not a `-flag`), `prologue_helper_functions`,

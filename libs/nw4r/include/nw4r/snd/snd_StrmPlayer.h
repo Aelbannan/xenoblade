@@ -214,16 +214,22 @@ private:
     int mLoopStartBlockIndex;     // at 0x160
     int mLastBlockIndex;          // at 0x164
 
-    StartOffsetType mStartOffsetType; // at 0x168
-    int mStartOffset;                 // at 0x16C
+    // Retail field at +0x168 (4 bytes between mLastBlockIndex and
+    // mStartOffsetType); missing from the header before 2026-08, which put
+    // every later member 4 bytes low (destructor diff: +0x170 vs retail
+    // +0x174).
+    u32 mCurBlockIndex;           // at 0x168
 
-    StrmHeaderLoadTask mStrmHeaderLoadTask;                       // at 0x170
-    StrmDataLoadTaskList mStrmDataLoadTaskList;                   // at 0x190
-    InstancePool<StrmDataLoadTask> mStrmDataLoadTaskPool;         // at 0x19C
-    StrmDataLoadTask mStrmDataLoadTaskArea[DATA_BLOCK_COUNT_MAX]; // at 0x1A0
+    StartOffsetType mStartOffsetType; // at 0x16C
+    int mStartOffset;                 // at 0x170
 
-    StrmBufferPool* mBufferPool; // at 0x820
-    ut::FileStream* mFileStream; // at 0x824
+    StrmHeaderLoadTask mStrmHeaderLoadTask;                       // at 0x174
+    StrmDataLoadTaskList mStrmDataLoadTaskList;                   // at 0x194
+    InstancePool<StrmDataLoadTask> mStrmDataLoadTaskPool;         // at 0x1A0
+    StrmDataLoadTask mStrmDataLoadTaskArea[DATA_BLOCK_COUNT_MAX]; // at 0x1A4
+
+    StrmBufferPool* mBufferPool; // at 0x824
+    ut::FileStream* mFileStream; // at 0x828
     Voice* mVoice;               // at 0x828
     s32 mChannelCount;           // at 0x82C
     s32 mVoiceOutCount;          // at 0x830

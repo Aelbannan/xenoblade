@@ -174,7 +174,7 @@ public:
     u8  field_0x25;
     u8  field_0x26;
     u8  field_0x27;
-    u32 field_0x28;
+    u8* field_0x28;     // 0x28 scrollbar/table object passed to func_801F3850
     u8 mTable[0x100];   // 0x2C-0x12B
     u8 field_0x12C;     // 0x12C
     u8 field_0x12D;     // 0x12D
@@ -256,7 +256,9 @@ public:
     float field_0x10;           // 0x10
 };
 
-// Polymorphic pointee with a driver method at vtable slot 0x2C (index 11).
+// Polymorphic pointee with a driver method at vtable +0x2C. MWCC reserves a
+// 2-entry vtable header, so emitted slot N sits at declaration index N-2: the
+// driver is the 10th declared virtual (index 9) and lands at +0x2C.
 class SArtsV11Obj {
 public:
     virtual void v0();
@@ -268,9 +270,7 @@ public:
     virtual void v6();
     virtual void v7();
     virtual void v8();
-    virtual void v9();
-    virtual void v10();
-    virtual void v11(void* a, int flag); // vtable +0x2C
+    virtual void v11(void* a, int flag); // vtable +0x2C (emitted slot 11)
 };
 
 // Layout driver at 0x08/0x0C/0x10 with 0x23/0x24 state. func_80231480/
@@ -298,6 +298,56 @@ public:
     char _pad_20[0x23 - 0x20];
     u8 field_0x23;                      // 0x23 busy flag
     u8 field_0x24;                      // 0x24
+};
+
+// Pointee of SArts3150C.field_0x08: polymorphic (v11 driver at vtable +0x2C,
+// same shape as SArtsV11Obj) with an extra u8* at +0x10 read by
+// func_8023150C and fed to func_80124270.
+class SArts3150CDriver {
+public:
+    virtual void v0();
+    virtual void v1();
+    virtual void v2();
+    virtual void v3();
+    virtual void v4();
+    virtual void v5();
+    virtual void v6();
+    virtual void v7();
+    virtual void v8();
+    virtual void v11(void* a, int flag); // vtable +0x2C (emitted slot 11)
+    char _pad_04[0x10 - 0x04];
+    u8* field_0x10;                     // 0x10
+};
+
+// Object driven by func_8023150C: a v11 driver at 0x08, a SArtsFloat10 at
+// 0x0C, an AnimTransform at 0x10, a SArts080C at 0x14, and 0x23/0x24 state.
+class SArts3150C {
+public:
+    char _pad_00[0x08];
+    SArts3150CDriver* field_0x08;        // 0x08
+    SArtsFloat10* field_0x0C;            // 0x0C
+    nw4r::lyt::AnimTransform* field_0x10; // 0x10
+    SArts080C* field_0x14;               // 0x14
+    char _pad_18[0x23 - 0x18];
+    u8 field_0x23;                      // 0x23
+    u8 field_0x24;                      // 0x24
+};
+
+// Layout-out driver for the mSubObj148+0x2C twin (func_80231648 /
+// func_80232AD8): a v11 driver at 0x14 (also read via field_0x10), a
+// SArtsFloat10 at 0x18, the AnimTransform at 0x1C, a show/hide pane at
+// 0x08, and 0x23/0x24 state.
+class SArts31648 {
+public:
+    char _pad_00[0x08];
+    SArts080C* field_0x08;               // 0x08 pane (field_0x10 -> func_80124270)
+    char _pad_0C[0x14 - 0x0C];
+    SArts3150CDriver* field_0x14;        // 0x14 v11 driver (field_0x10 too)
+    SArtsFloat10* field_0x18;            // 0x18 float object
+    nw4r::lyt::AnimTransform* field_0x1C; // 0x1C layout-out anim
+    char _pad_20[0x23 - 0x20];
+    u8 field_0x23;                      // 0x23 busy flag
+    u8 field_0x24;                      // 0x24 state
 };
 
 // Overlay used by func_80233888: a CArtsInfo at 0x74, a CSysWinFull at
@@ -372,6 +422,42 @@ public:
     u8 field_0x18;
 };
 
+// Pointee driven via vtable +0x38 by func_802306F0 / func_80231CB4. MWCC
+// reserves a 2-entry vtable header, so the 13th declared virtual (index 12)
+// is the emitted slot at 4*(12+2) = 0x38.
+class SArts38Obj {
+public:
+    virtual void v0();
+    virtual void v1();
+    virtual void v2();
+    virtual void v3();
+    virtual void v4();
+    virtual void v5();
+    virtual void v6();
+    virtual void v7();
+    virtual void v8();
+    virtual void v9();
+    virtual void v10();
+    virtual void v11();
+    virtual void v12(int a); // idx 12 -> vtable +0x38
+};
+
+// State-machine object driven by func_802306F0 / func_80231CB4: two +0x38
+// pointees at 0x08/0x14 plus the 0x22/0x24/0x25 byte states. Overlaps the
+// SArtsSub8022FA58 sub-object at CMenuArtsSet::0x148 and the +0x2C twin.
+class SArts306F0 {
+public:
+    char _pad_00[0x08];
+    SArts38Obj* field_0x08;        // 0x08
+    char _pad_0C[0x14 - 0x0C];
+    SArts38Obj* field_0x14;        // 0x14
+    char _pad_18[0x22 - 0x18];
+    u8 field_0x22;                 // 0x22
+    u8 field_0x23;                 // 0x23
+    u8 field_0x24;                 // 0x24
+    u8 field_0x25;                 // 0x25
+};
+
 // Layout-pair draw box: two layouts at 0x08/0x14 plus visibility flag at
 // 0x22 and 0x28 (and arts-table flag at 0x12E). Used by func_802307A4 and
 // func_80231D68.
@@ -437,11 +523,14 @@ struct SArtsManagerRoot {
     SArtsManager mObj17C;   // 0x17C
 };
 
-// Pointee of CMenuArtsSet.field_0x1C; vtable slot 14 (+0x38) is driven by
-// func_8023359C etc.
+// Pointee of CMenuArtsSet.field_0x1C. MWCC reserves a 2-entry vtable header
+// (emitted slot N = declaration index N+2), so: v0 (index 0) is the release
+// call at +0x08 in func_80233760, v11 (index 9) drives the two panes at
+// +0x2C in func_80234FDC, v14 (index 12) is the state-advance at +0x38
+// driven by func_8023359C.
 class SArts1C {
 public:
-    virtual void v0();
+    virtual void v0(int a);   // index 0 -> vtable +0x08
     virtual void v1();
     virtual void v2();
     virtual void v3();
@@ -450,12 +539,10 @@ public:
     virtual void v6();
     virtual void v7();
     virtual void v8();
-    virtual void v9();
-    virtual void v10();
-    virtual void v11();
+    virtual void v11(void* a, int flag); // index 9 -> vtable +0x2C
     virtual void v12();
     virtual void v13();
-    virtual void v14(int a);   // vtable +0x38
+    virtual void v14(int a);   // index 12 -> vtable +0x38
 };
 
 class CMenuArtsSet {
@@ -470,11 +557,13 @@ public:
 
     // +0x00: vtable (placeholder for the 4-byte vtable pointer)
     void* _vtable;                       // 0x00
-    char _pad_04[0x1C - 0x04];   // 0x04-0x1B
-    SArts1C* field_0x1C;                // 0x1C
-    char _pad_20[0x24 - 0x20];   // 0x20-0x23
+    UnkClass_8045F564 mMemRegion;        // 0x04-0x13
+    CFileHandle* field_0x14;             // 0x14 file handle (func_801390E0)
+    nw4r::lyt::ArcResourceAccessor* field_0x18; // 0x18 (func_80139124)
+    SArts1C* field_0x1C;                 // 0x1C
+    nw4r::lyt::AnimTransform* field_0x20; // 0x20
     nw4r::lyt::AnimTransform* field_0x24; // 0x24
-    u8 field_0x28;                   // 0x28
+    u8 field_0x28;                       // 0x28
     char _pad_29[0x2C - 0x29];   // 0x29-0x2B
     s32 field_0x2C;                // 0x2C
     char _pad_30[0x31 - 0x30];   // 0x30
@@ -579,6 +668,10 @@ extern "C" __declspec(noinline) u8 func_8023040C(SArtsSub8022FA58* self, u32 idx
 extern "C" void func_80230160(SArtsSub8022FA58* self);
 extern "C" void func_802316F8(SArtsSub8022FA58* self);
 extern "C" void func_80124270(void* p, u32 v);
+// Scrollbar cursor refresh (defined in CScrollBar.cpp; C-linkage retail name).
+extern "C" void func_801F3850(void* p, u32 v);
+// Layout-out animation driver (same TU, C-linkage retail name).
+extern "C" void func_8023185C(SArts313E0* self);
 
 // Cross-unit CArtsInfo helpers (C-linkage, defined in CArtsInfo.cpp).
 // Declared u32 so the ==0/!=0 tests compare the raw register (no rlwinm).
@@ -591,6 +684,10 @@ extern "C" u32 CSysWin_getUnk34(void* self);
 extern "C" void func_80235124(CMenuArtsSet* self);
 
 extern "C" void func_801F3540(void* obj34);
+// Scroll-bar scroll-out request (func_80234FDC state-4 tail).
+extern "C" void func_801F369C(void* obj34);
+// Scroll-bar teardown (func_80233760).
+extern "C" void func_801F35DC(void* obj34);
 extern "C" void func_8023587C(CArtsInfo* self);
 extern "C" void func_8022B748(CSysWinFull* self);
 extern "C" void func_802306F0(void* obj148);
@@ -600,6 +697,48 @@ extern "C" void func_80234FDC(CMenuArtsSet* self);
 extern "C" void func_80234F7C(CMenuArtsSet* self);
 extern "C" void func_8023506C(SArts3506C* self);
 extern "C" void func_802350B8(CMenuArtsSet* self);
+// CMenuArtsSet sub-object release (func_80233760).
+extern "C" void func_8023066C(SArts3066C* self);
+// SArtsSub8022FA58 cursor-store helper (func_80234FDC). Same-TU definition;
+// noinline so callers emit a real bl (retail shape).
+extern "C" __declspec(noinline) void func_8023080C(SArtsSub8022FA58* self, u8 val);
+// Same-TU release helpers kept out-of-line for retail bl parity.
+extern "C" __declspec(noinline) void func_8022FD9C(SArts2FDF4* self);
+extern "C" __declspec(noinline) void func_80231C30(SArts3066C* self);
+
+// CMenuArtsSet state-machine / teardown / driver entry points (defined in
+// this TU; C linkage matches the retail unmangled symbols).
+extern "C" void func_80230374(SArtsSub8022FA58* self);
+extern "C" void func_80231F60(SArts322BC* self);
+extern "C" void func_80233760(CMenuArtsSet* self);
+extern "C" void func_8023150C(SArts3150C* self);
+
+// code_80135FDC helpers (retail C symbols; local decls because
+// code_80135FDC.hpp cannot be co-included - func_80136190 signature clash).
+extern "C" u8 code80135FDC_getByte_64077();
+extern "C" u8 func_801392B4(u32);
+// File-handle / arc-accessor teardown; retail symbols are the mangled C++
+// names (func_801390E0__FPP11CFileHandle etc.) so declare C++-linkage.
+void func_801390E0(CFileHandle** self);
+void func_80139124(nw4r::lyt::ArcResourceAccessor* self);
+// CArtsInfo teardown (defined in CArtsInfo.cpp, C symbol).
+extern "C" void func_802359CC(CArtsInfo* self);
+// CSysWinFull teardown (defined in CSysWin.cpp, C symbol).
+extern "C" void func_8022B7F4(CSysWinFull* self);
+
+// .sdata2 floats for the layout-animation drivers (func_80231480 etc.).
+// const is load-bearing: it lets MWCC treat the pool load as a constant and
+// hoist the lfs above the frame stores (retail position 3) - plain extern
+// float places it after the stores (4-byte shift, MWCC_REFERENCE).
+extern const float lbl_eu_80668648;
+extern const float lbl_eu_8066864C;
+
+// Window-arm chain used by func_80234A08: build a label string pair then
+// drive the CSysWin sub-object. func_8022BFC8 is already declared in
+// CSysWin.hpp as (CSysWin*, u8).
+extern "C" char* func_80136190(char* a, char* b, u32 count);
+extern "C" void func_8022B9B4(CSysWin* self, char* str, u32 flag);
+extern "C" void func_8022B8B8(CSysWin* self);
 
 // lib/lyt draw (func_801F3540).
 extern "C" void func_801F35B0(void* obj34, nw4r::lyt::DrawInfo* info);

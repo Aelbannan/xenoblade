@@ -21,6 +21,8 @@ template<>
 CTTask<CUICfManager>::~CTTask() {}
 
 #include "monolib/device/CDeviceFile.hpp"
+#include "monolib/device/CDevice.hpp"
+#include "monolib/lib/CLibLayout.hpp"
 #include "monolib/util/MemManager.hpp"
 
 // Retail cf::IFlagEvent / IWorkEvent are trivially destructible (no retail
@@ -54,6 +56,7 @@ void __dt__8CProcessFv(CProcess*, int);
 void func_8015704C(CUICfInitBlock*, const CUICfInitBlock*);
 void func_8009D0B4();
 void func_8009D514(cf::IFlagEvent*);
+void func_8009D414(cf::IFlagEvent*);
 void func_801390E0__FPP11CFileHandle(CFileHandle**);
 void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor*);
 // Deleting dtor (C-ABI import): the secondary-subobject thunks tail-call it
@@ -72,8 +75,14 @@ void CUICfManager::func_80135FC4() {
 }
 
 // us-80136aa0
-void CUICfManager::func_80135FCC() {
-    func_80133324__12CUICfManagerFv((CUICfManager*)((char*)this - 0x58), 0, 0, 0);
+// Vtable thunk for the secondary-subobject slot of func_80133324: the retail
+// symbol mangles the thunk as a no-arg member (`Fv`) but the vtable entry
+// passes its three hidden args (r4/r5/r6) straight through to the Fiii
+// callee after adjusting `this` by -0x58. Emitted under the extern "C" flat
+// name so the exact retail symbol is produced (OnFileEvent precedent); the
+// in-class no-arg declaration stays declared-only.
+extern "C" void func_80135FCC__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2) {
+    func_80133324__12CUICfManagerFiii((CUICfManager*)((char*)self - 0x58), id, a1, a2);
 }
 
 // us-80136aa8
@@ -238,7 +247,7 @@ u32 func_802514D4(CUICfUnk144*, u32);
 // declaration would break TUs that co-include those headers.
 extern "C" {
 u32 func_80124B78();
-void* func_8029A5DC(void* self, void* parent, u32 arg2);
+void* func_8029A5DC(void* self, u32 parent, u32 arg2);
 CUICfCamView* func_8049603C(u8* scene);
 CUICfGlobalSettings* getUnk80664658();
 void* __ct__8011C1B8(void* ctx, u32 scene);
@@ -565,8 +574,7 @@ end:
 #include "monolib/device/CDeviceVI.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
-void func_8012FFB4(void*);
-void func_80133770();
+u32 func_80133770();
 extern "C" u32 func_801338C8(CUICfManager*);
 extern "C" {
 u32 lbl_eu_80663E24;
@@ -587,6 +595,7 @@ struct CUICfEnumListHolder {
 };
 
 void func_80043D90(CUICfEnumListHolder*);
+void func_80043E08(CUICfEnumListHolder*, int, int); // holder init (r4=0x20, r5=0x800)
 void* func_80043F18(CUICfEnumListHolder*); // returns holder->list
 void __dt__80043E88(CUICfEnumListHolder*, s16);
 void func_800F4A98(void* list, int type, int);
@@ -1125,7 +1134,22 @@ unlink_done:
     }
 }
 
-void func_8013314C(){}
+// func_8013314C: when no file handle is loaded, copy the 12-byte event
+// triplet (lbl_eu_8052E294) onto self+0x3C. The pair copy stores w1 before
+// w0 (retail lwzu/lwz + reversed stw pair + trailing word).
+extern u32 lbl_eu_8052E294[3];
+extern "C" void func_8013314C(CUICfManager* self) {
+    if (*(void**)((u8*)self + 0x114) != 0) {
+        return;
+    }
+    const u32* src = (const u32*)lbl_eu_8052E294;
+    u32 w0 = src[0];
+    u32 w1 = src[1];
+    u32* dst = (u32*)((u8*)self + 0x3C);
+    dst[1] = w1;
+    dst[0] = w0;
+    dst[2] = src[2];
+}
 void CUICfManager_func_33178(){}
 int CUICfManager_prepareMenus(){
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
@@ -1142,7 +1166,10 @@ void CUICfManager_setFlags(int value){
     CUICfManager* manager = static_cast<CUICfManager*>(lbl_eu_80664054);
     manager->setFlagState(value != 0);
 }
-void func_801355A0__Fv(){}
+void* func_801355A0__Fv() {
+    CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
+    return m == 0 ? 0 : (void*)((char*)m + 0x60);
+}
 void* CUICfManager_getPackedFont9C(){
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
     return m == 0 ? 0 : m->getPackedFont9C();
@@ -1155,12 +1182,75 @@ void* CUICfManager_getField5C(){
     CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
     return m == 0 ? 0 : m->getArcResourceAccessor();
 }
-void func_80135610(){}
-void func_80135630(){}
-void func_80135654(){}
-void func_80135694(){}
-void func_801356BC(){}
-void func_801356E0(){}
+// Retail linker name for the slot-reset helper below (flat); declaring it
+// extern "C" here makes the C++ definition emit the flat retail symbol.
+extern "C" int func_80130244(u8* base);
+
+int func_80135610() {
+    CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
+    if (m == 0) {
+        return 0;
+    }
+    return func_80130244(reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots));
+}
+// func_80135630: like func_80135610 but forwards its first argument (the
+// caller's this) as the src arg of the template-copy claim func_80130720.
+// Declaring func_80130720 extern "C" makes its C++ definition emit the
+// flat retail symbol.
+extern "C" int func_80130720(u8* base, CUICfSrcCopyView* src);
+extern "C" int func_80135630(CUICfSrcCopyView* src) {
+    CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
+    if (m == 0) {
+        return 0;
+    }
+    return func_80130720(
+        reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), src);
+}
+// func_80135654: forwards all five args to the 5-id slot claim
+// func_80130960 after the null gate (retail shifts the arg registers up).
+extern "C" int func_80130960(u8* base, u16 a1, u16 a2, u16 a3, u16 a4, u16 a5);
+extern "C" int func_80135654(u16 a1, u16 a2, u16 a3, u16 a4, u16 a5) {
+    CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
+    if (m == 0) {
+        return 0;
+    }
+    return func_80130960(
+        reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots),
+        a1, a2, a3, a4, a5);
+}
+// func_80135694: forwards both args (id, state) to the slot claim
+// func_80130B74 after the null gate (retail: or r5,r4,r4; or r4,r3,r3).
+extern "C" int func_80130B74(u8* base, u16 id, u8 state);
+extern "C" int func_80135694(u16 id, u8 state) {
+    CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
+    if (m == 0) {
+        return 0;
+    }
+    return func_80130B74(
+        reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), id, state);
+}
+// func_801356BC: forwards its first argument as the (u16) second arg of the
+// sprintf-based slot claim func_80130D80 (same null-gate shape as the other
+// slot helpers).
+extern "C" int func_80130D80(u8* base, u16 arg1);
+extern "C" int func_801356BC(u16 arg1) {
+    CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
+    if (m == 0) {
+        return 0;
+    }
+    return func_80130D80(
+        reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), arg1);
+}
+// func_801356E0: same two-arg forward to func_80130F98 (slot claim with id + arg).
+extern "C" int func_80130F98(u8* base, u16 a1, u16 a2);
+extern "C" int func_801356E0(u16 a1, u16 a2) {
+    CUICfManager* m = static_cast<CUICfManager*>(lbl_eu_80664054);
+    if (m == 0) {
+        return 0;
+    }
+    return func_80130F98(
+        reinterpret_cast<u8*>(reinterpret_cast<CUICfManagerSlotView*>(m)->slots), a1, a2);
+}
 extern "C" int func_80135898() {
     CUICfManager* inst = (CUICfManager*)lbl_eu_80664054;
     if (inst == 0) {
@@ -1186,19 +1276,1012 @@ void Move__Q212CUICfManager5CTestFv(){}
 void Term__Q212CUICfManager5CTestFv(){}
 void Init__Q212CUICfManager5CTestFv(){}
 
-void func_8012FFB4(void*){}
-void func_80130244(){}
-extern "C" int func_8013042C(u8* base, u8 index) { return 0; }
-void func_80130720(){}
-void func_80130960(){}
-void func_80130B74(){}
-void func_80130D80(){}
-void func_80130F98(){}
-void func_801311B8(){}
-void func_80131820(){}
-void __ct__CUICfManager(){}
+// ---------------------------------------------------------------------------
+// func_8012FFB4 (us-80130a88)
+//
+// Per-slot state machine for the free-menu system. Runs only when the task /
+// global gate bits are clear, then dispatches on the slot's flag byte:
+//   0 -> close the party window; 1 -> claim a tutorial slot; 2 -> open the
+//   5-id selection window; 3 -> reset a block region; 4 -> open the id window;
+//   5/6 -> open the message windows. The slot flag is then reset to 7 (free)
+// and the slot list is re-sorted (func_80131820).
+// ---------------------------------------------------------------------------
+extern "C" void func_8012FFB4(u8* base) {
+    volatile u32 savedRet;
+    CUICfSlotDispView* slot;
+    CUICfManagerCreateView* inst;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    // OR-combined guard: first disjunct emits the direct `bne end`, second
+    // the retail branch-over `beq cont; b end` (MWCC_REFERENCE func_802AE004).
+    if (func_800426F0__9CTaskGameFv(getInstance__9CTaskGameFv()) != 0 ||
+        (lbl_eu_80663E28 & 0x00200000u) != 0) {
+        return;
+    }
+    {
+        // Dual SDA load (r0 and r3) so the rlwinm/andis pair read separate
+        // loads; a plain single read would CSE (Move's volatile re-read).
+        u32 g24_0 = lbl_eu_80663E24;
+        u32 g24_1 = *(volatile u32*)&lbl_eu_80663E24;
+        if ((g24_0 & 0x01000000u) == 0) {
+            if ((g24_1 & 0xafe40000u) != 0) {
+                return;
+            }
+        }
+        {
+            f32 v = func_8049603C(lbl_eu_80663E14)->field_C;
+            f32 c = lbl_eu_806672C8;
+            if ((c - v) < c) {
+                return;
+            }
+        }
+        if ((lbl_eu_80663E24 & 0x00000200u) != 0) {
+            return;
+        }
+        if (cf::CfGameManager::func_800829B8() != 0) {
+            return;
+        }
+        int busy;
+        if (func_80293C10() != 0) {
+            busy = 1;
+        } else if (func_8029A658() != 0) {
+            busy = 1;
+        } else if (func_801B481C() != 0) {
+            busy = 1;
+        } else if (func_80122450() != 0) {
+            busy = 1;
+        } else {
+            busy = func_80124B78() != 0;
+        }
+        if (busy != 0) {
+            return;
+        }
+
+        slot = reinterpret_cast<CUICfSlotDispView*>(base);
+        if (slot->field_0x00 == 7) {
+            return;
+        }
+    switch (slot->field_0x00) {
+    case 0:
+        func_8013E8E0(1);
+        break;
+    case 1: {
+        inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+        u8 idx = slot->field_0x01;
+        if (inst != NULL) {
+            u32 tempRet = (u32)func_8029A5DC(inst->field_0x144, inst->field_0x11C, idx);
+            savedRet = tempRet;
+            if (tempRet != 0) {
+                inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+                i = 0;
+                byteOff = 0;
+                startNode = inst->field_0x128;
+                capacity = inst->field_0x13C;
+                goto slot_check;
+            slot_body:
+                if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+                    goto slot_found;
+                }
+                byteOff += 0xc;
+                i++;
+            slot_check:
+                if (i < capacity) {
+                    goto slot_body;
+                }
+            slot_found:
+                {
+                    CUICfListNode* temp = (CUICfListNode*)((u8*)inst->field_0x138 + i * 0xc);
+                    u32* ptr = &temp->item;
+                    if (ptr != 0) {
+                        try {
+                            *ptr = (u32)savedRet;
+                        } catch (...) {
+                            throw;
+                        }
+                    }
+                    temp->next = startNode;
+                    temp->prev = startNode->prev;
+                    startNode->prev->next = temp;
+                    startNode->prev = temp;
+                }
+            }
+        }
+        break;
+    }
+    case 3:
+        func_8013E424(reinterpret_cast<u8*>(&slot->block_04), 1);
+        break;
+    case 2: {
+        // Shared 1-constant (retail li r8,1 + mr r9/r10 before the id loads).
+        int one = 1;
+        func_8013E2E0(slot->field_D8, slot->field_DA, slot->field_DC, slot->field_DE,
+                      slot->field_E0, one, one, one, 0);
+        break;
+    }
+    case 4:
+        func_8013DA60(slot->field_E2, slot->field_E4, 1);
+        break;
+    case 5:
+        func_8013D55C(slot->str_E6, 0, 1);
+        break;
+    case 6:
+        func_8013D688(slot->str_E6, slot->str_126, 0, 1);
+        break;
+    default:
+        break;
+    }
+
+    slot->field_0x00 = 7;
+    func_80131820(base);
+    }
+}
+// func_80130244 (us-80130d18): slot reset. When no busy gate is set and all
+// init slots are free (state 7), clears the first in-use slot and rebuilds
+// the slot list (func_801311B8) unless the 0xb40 byte is set.
+int func_80130244(u8* base) {
+    int flag = func_80293C10() != 0 || func_8029A658() != 0 || func_801B481C() != 0 ||
+               func_80122450() != 0 || func_80124B78() != 0;
+    if (flag == 0) {
+        u8 i = 0;
+        do {
+            if (base[i * 0x168] != 7) {
+                flag = 1;
+                break;
+            }
+            i++;
+        } while (i < 8);
+    }
+    if (flag != 0) {
+        u8 j = 0;
+        int changed = 0;
+        do {
+            if (base[j * 0x168] == 7) {
+                base[j * 0x168] = 0;
+                changed = 1;
+                break;
+            }
+            j++;
+        } while (j < 8);
+        if (changed != 0 && base[0xb40] == 0) {
+            func_801311B8(base);
+        }
+        return 1;
+    }
+    return 0;
+}
+// func_8013042C (us-80130f00): slot claim. Same busy-gate + all-free scan
+// skeleton as func_80130960; the claim body sets flag 1 and the index byte
+// at +1, then rebuilds the slot list unless the 0xb40 byte is set. The
+// claim loop keeps `changed` uninitialized on the no-claim path (retail
+// never materializes a 0 init; the flag is only read after a claim).
+extern "C" int func_8013042C(u8* base, u8 index) {
+    int flag;
+    int gateBusy;
+    if (func_80293C10() != 0) {
+        gateBusy = 1;
+    } else if (func_8029A658() != 0) {
+        gateBusy = 1;
+    } else if (func_801B481C() != 0) {
+        gateBusy = 1;
+    } else if (func_80122450() != 0) {
+        gateBusy = 1;
+    } else {
+        gateBusy = func_80124B78() != 0;
+    }
+    if (gateBusy != 0) {
+        flag = 1;
+    } else {
+        u8 i;
+        for (i = 0; i < 8; i++) {
+            if (base[i * 0x168] != 7) {
+                flag = 1;
+                break;
+            }
+        }
+    }
+    if (flag == 0) {
+        return 0;
+    }
+    {
+        // Retail fully unrolls the claim scan (8 explicit iterations; the
+        // sibling claims compile to mtctr loops, but this one's 2-store body
+        // keeps MWCC's per-iteration li/mulli/add/lbzx shape only when written
+        // out). `changed` stays uninitialized on the no-claim path (retail
+        // never materializes a 0 init; it is only read after a claim).
+        int changed;
+        u8 j = 0;
+        if (base[j * 0x168] == 7) {
+            u8* p = &base[j * 0x168];
+            p[0] = 1;
+            p[1] = index;
+            changed = 1;
+            goto claim_done;
+        }
+        j = 1;
+        if (base[j * 0x168] == 7) {
+            u8* p = &base[j * 0x168];
+            p[0] = 1;
+            p[1] = index;
+            changed = 1;
+            goto claim_done;
+        }
+        j = 2;
+        if (base[j * 0x168] == 7) {
+            u8* p = &base[j * 0x168];
+            p[0] = 1;
+            p[1] = index;
+            changed = 1;
+            goto claim_done;
+        }
+        j = 3;
+        if (base[j * 0x168] == 7) {
+            u8* p = &base[j * 0x168];
+            p[0] = 1;
+            p[1] = index;
+            changed = 1;
+            goto claim_done;
+        }
+        j = 4;
+        if (base[j * 0x168] == 7) {
+            u8* p = &base[j * 0x168];
+            p[0] = 1;
+            p[1] = index;
+            changed = 1;
+            goto claim_done;
+        }
+        j = 5;
+        if (base[j * 0x168] == 7) {
+            u8* p = &base[j * 0x168];
+            p[0] = 1;
+            p[1] = index;
+            changed = 1;
+            goto claim_done;
+        }
+        j = 6;
+        if (base[j * 0x168] == 7) {
+            u8* p = &base[j * 0x168];
+            p[0] = 1;
+            p[1] = index;
+            changed = 1;
+            goto claim_done;
+        }
+        j = 7;
+        if (base[j * 0x168] == 7) {
+            u8* p = &base[j * 0x168];
+            p[0] = 1;
+            p[1] = index;
+            changed = 1;
+        }
+    claim_done:
+        if (changed != 0 && base[0xb40] == 0) {
+            func_801311B8(base);
+        }
+    }
+    return 1;
+}
+// func_80130720 (us-801311f4): template-copy slot claim. Same
+// gate/scan skeleton; the claim body sets slot flag 3 and copies four
+// 0x34-byte blocks (src +0/0x34/0x68/0x9C -> slot +4/0x38/0x6C/0xA0) plus a
+// word (src +0xD0 -> slot +0xD4) via the block-copy helper.
+int func_80130720(u8* base, CUICfSrcCopyView* src) {
+    int gateBusy;
+    if (func_80293C10() != 0) {
+        gateBusy = 1;
+    } else if (func_8029A658() != 0) {
+        gateBusy = 1;
+    } else if (func_801B481C() != 0) {
+        gateBusy = 1;
+    } else if (func_80122450() != 0) {
+        gateBusy = 1;
+    } else {
+        gateBusy = func_80124B78() != 0;
+    }
+    int flag;
+    if (gateBusy != 0) {
+        flag = 1;
+    } else {
+        for (u8 i = 0; i < 8; i++) {
+            if (base[i * 0x168] != 7) {
+                flag = 1;
+                break;
+            }
+        }
+    }
+    if (flag == 0) {
+        return 0;
+    }
+    int changed = 0;
+    u8 j;
+    for (j = 0; j < 8; j++) {
+        if (base[j * 0x168] == 7) {
+            CUICfSlotCopyView* slot =
+                reinterpret_cast<CUICfSlotCopyView*>(base + j * 0x168);
+            slot->field_0x00 = 3;
+            changed = 1;
+            func_8015704C(&slot->block1, &src->block1);
+            func_8015704C(&slot->block2, &src->block2);
+            func_8015704C(&slot->block3, &src->block3);
+            func_8015704C(&slot->block4, &src->block4);
+            slot->field_D4 = src->field_D0;
+            break;
+        }
+    }
+    if (changed != 0 && base[0xb40] == 0) {
+        func_801311B8(base);
+    }
+    return 1;
+}
+// func_80130960 (us-80131434): 5-id slot claim. When the busy gates are
+// clear and every init slot is free (state 7), fills the first free slot
+// with flag 2 and the five u16 ids at +0xD8..+0xE0, then rebuilds the slot
+// list unless the 0xb40 byte is set. Returns 1 when it claimed (or was
+// busy), 0 when everything was already idle.
+int func_80130960(u8* base, u16 a1, u16 a2, u16 a3, u16 a4, u16 a5) {
+    // Gate chain: if/else-if form materializes the flag per branch (retail
+    // emits li r0,1; b common per gate); a plain || chain would branch to a
+    // shared flag-set instead (12B-spaced gates vs retail's 20B). The gate
+    // result and the slot-scan busy flag are separate webs (retail colors the
+    // gate value r0; one merged flag web would color both r3).
+    int gateBusy;
+    if (func_80293C10() != 0) {
+        gateBusy = 1;
+    } else if (func_8029A658() != 0) {
+        gateBusy = 1;
+    } else if (func_801B481C() != 0) {
+        gateBusy = 1;
+    } else if (func_80122450() != 0) {
+        gateBusy = 1;
+    } else {
+        gateBusy = func_80124B78() != 0;
+    }
+    int flag;
+    if (gateBusy != 0) {
+        flag = 1;
+    } else {
+        // u8 counter: MWCC fully unrolls the 8-iteration scan keeping the
+        // li/mulli index shape (retail); int would keep a tight loop instead.
+        for (u8 i = 0; i < 8; i++) {
+            if (base[i * 0x168] != 7) {
+                flag = 1;
+                break;
+            }
+        }
+    }
+    if (flag == 0) {
+        return 0;
+    } else {
+        u8 j;
+        int changed = 0;
+        for (j = 0; j < 8; j++) {
+            if (base[j * 0x168] == 7) {
+                CUICfSlotIdWriteView* slot =
+                    reinterpret_cast<CUICfSlotIdWriteView*>(base + j * 0x168);
+                slot->field_0x00 = 2;
+                changed = 1;
+                slot->field_D8 = a1;
+                slot->field_DA = a2;
+                slot->field_DC = a3;
+                slot->field_DE = a4;
+                slot->field_E0 = a5;
+                break;
+            }
+        }
+        if (changed != 0 && base[0xb40] == 0) {
+            func_801311B8(base);
+        }
+        return 1;
+    }
+}
+// func_80130B74 (us-80131648): slot claim. When idle, fills the first free
+// init slot (state 7) with flag 4, the passed id (u16 at +0xE2) and state
+// (u8 at +0xE4), then rebuilds the slot list unless the 0xb40 byte is set.
+int func_80130B74(u8* base, u16 id, u8 state) {
+    int flag = func_80293C10() != 0 || func_8029A658() != 0 || func_801B481C() != 0 ||
+               func_80122450() != 0 || func_80124B78() != 0;
+    if (flag == 0) {
+        u8 i = 0;
+        do {
+            if (base[i * 0x168] != 7) {
+                flag = 1;
+                break;
+            }
+            i++;
+        } while (i < 8);
+    }
+    if (flag != 0) {
+        u8 j = 0;
+        int changed = 0;
+        do {
+            if (base[j * 0x168] == 7) {
+                CUICfSlotWriteView* slot =
+                    reinterpret_cast<CUICfSlotWriteView*>(base + j * 0x168);
+                slot->field_0x00 = 4;
+                slot->field_0xE2 = id;
+                slot->field_0xE4 = state;
+                changed = 1;
+                break;
+            }
+            j++;
+        } while (j < 8);
+        if (changed != 0 && base[0xb40] == 0) {
+            func_801311B8(base);
+        }
+        return 1;
+    }
+    return 0;
+}
+// func_80130D80 (us-80131854): single-arg slot claim that sprintf-formats
+// the passed id into the slot's +0xE6 buffer. Same gate/scan skeleton as
+// func_80130960; the claim body sets slot flag 5, formats the id, then sets
+// changed (live across the sprintf, hence a saved register).
+int func_80130D80(u8* base, u16 arg1) {
+    int gateBusy;
+    if (func_80293C10() != 0) {
+        gateBusy = 1;
+    } else if (func_8029A658() != 0) {
+        gateBusy = 1;
+    } else if (func_801B481C() != 0) {
+        gateBusy = 1;
+    } else if (func_80122450() != 0) {
+        gateBusy = 1;
+    } else {
+        gateBusy = func_80124B78() != 0;
+    }
+    int flag;
+    if (gateBusy != 0) {
+        flag = 1;
+    } else {
+        for (u8 i = 0; i < 8; i++) {
+            if (base[i * 0x168] != 7) {
+                flag = 1;
+                break;
+            }
+        }
+    }
+    if (flag == 0) {
+        return 0;
+    } else {
+        int changed = 0;
+        u8 j;
+        for (j = 0; j < 8; j++) {
+            if (base[j * 0x168] == 7) {
+                CUICfSlotStrView* slot =
+                    reinterpret_cast<CUICfSlotStrView*>(base + j * 0x168);
+                slot->field_0x00 = 5;
+                changed = 1;
+                sprintf(slot->str, (const char*)lbl_eu_805000A8, arg1);
+                break;
+            }
+        }
+        if (changed != 0 && base[0xb40] == 0) {
+            func_801311B8(base);
+        }
+        return 1;
+    }
+}
+// func_80130F98 (us-80131a6c): two-arg slot claim that sprintf-formats both
+// ids into the slot's +0xE6 and +0x126 buffers. Same gate/scan skeleton as
+// func_80130D80; both sprintf calls share the pool-base format address (kept
+// in a saved register across the calls).
+int func_80130F98(u8* base, u16 a1, u16 a2) {
+    int gateBusy;
+    if (func_80293C10() != 0) {
+        gateBusy = 1;
+    } else if (func_8029A658() != 0) {
+        gateBusy = 1;
+    } else if (func_801B481C() != 0) {
+        gateBusy = 1;
+    } else if (func_80122450() != 0) {
+        gateBusy = 1;
+    } else {
+        gateBusy = func_80124B78() != 0;
+    }
+    int flag;
+    if (gateBusy != 0) {
+        flag = 1;
+    } else {
+        for (u8 i = 0; i < 8; i++) {
+            if (base[i * 0x168] != 7) {
+                flag = 1;
+                break;
+            }
+        }
+    }
+    if (flag == 0) {
+        return 0;
+    }
+    int changed = 0;
+    u8 j;
+    for (j = 0; j < 8; j++) {
+        if (base[j * 0x168] == 7) {
+            CUICfSlotStrView* slot =
+                reinterpret_cast<CUICfSlotStrView*>(base + j * 0x168);
+            slot->field_0x00 = 6;
+            changed = 1;
+            sprintf(slot->str, (const char*)lbl_eu_805000A8, a1);
+            sprintf(&slot->str[0x40], (const char*)lbl_eu_805000A8, a2);
+            break;
+        }
+    }
+    if (changed != 0 && base[0xb40] == 0) {
+        func_801311B8(base);
+    }
+    return 1;
+}
+// ---------------------------------------------------------------------------
+// func_801311B8 (us-80131c8c)
+//
+// Bubble-sort pass over the 8 init slots by flag byte (ascending; flag 7 =
+// free sorts last). Each pass compares adjacent slots and, when out of
+// order, swaps them through three stack templates (func_8015704C block
+// copies + sprintf of the two id strings). Passes repeat until a pass makes
+// no swap; the pass length shrinks by one each time (retail subfic limit).
+// ---------------------------------------------------------------------------
+extern "C" void func_801311B8(u8* base) {
+    CUICfSwapSlot bufA;
+    CUICfSwapSlot bufB;
+    CUICfSwapSlot tpl;
+    u8 start = 0;
+    u8 didSwap;
+    u8 i;
+
+    do {
+        didSwap = 0;
+        for (i = 0; i < 7 - start; i++) {
+            CUICfSwapSlot* slotI = reinterpret_cast<CUICfSwapSlot*>(base + i * 0x168);
+            CUICfSwapSlot* slotJ = reinterpret_cast<CUICfSwapSlot*>(base + (i + 1) * 0x168);
+            if (slotI->field_0 > slotJ->field_0) {
+                didSwap = 1;
+
+                // SWAP A: template <- slot i (3 blocks + tail, sprintf the ids).
+                tpl.block1.unk04 = 0;
+                tpl.block1.unk00 = 0;
+                {
+                    CUICfInitBlock* clear = &tpl.block2;
+                    CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&tpl.wordD4);
+                    if (clear < clearEnd) {
+                        u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
+                        do {
+                            clear->unk04 = 0;
+                            clear->unk00 = 0;
+                            ++clear;
+                        } while (--n != 0);
+                    }
+                }
+                tpl.wordD4 = 0;
+                tpl.field_0 = slotI->field_0;
+                tpl.field_1 = slotI->field_1;
+                func_8015704C(&tpl.block1, &slotI->block1);
+                func_8015704C(&tpl.block2, &slotI->block2);
+                func_8015704C(&tpl.block3, &slotI->block3);
+                func_8015704C(&tpl.block4, &slotI->block4);
+                tpl.wordD4 = slotI->wordD4;
+                tpl.ids[0] = slotI->ids[0];
+                tpl.ids[1] = slotI->ids[1];
+                tpl.ids[2] = slotI->ids[2];
+                tpl.ids[3] = slotI->ids[3];
+                tpl.ids[4] = slotI->ids[4];
+                tpl.ids[5] = slotI->ids[5];
+                tpl.byteE4 = slotI->byteE4;
+                sprintf(tpl.strE6.b, lbl_eu_806621EC, slotI->strE6.b);
+                sprintf(tpl.str126.b, lbl_eu_806621E8, slotI->str126.b);
+
+                // SWAP B: buffer B <- slot j (full copy, sprintf the ids).
+                bufB.block1.unk04 = 0;
+                bufB.block1.unk00 = 0;
+                {
+                    CUICfInitBlock* clear = &bufB.block2;
+                    CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&bufB.wordD4);
+                    if (clear < clearEnd) {
+                        u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
+                        do {
+                            clear->unk04 = 0;
+                            clear->unk00 = 0;
+                            ++clear;
+                        } while (--n != 0);
+                    }
+                }
+                bufB.wordD4 = 0;
+                bufB.field_0 = slotJ->field_0;
+                bufB.field_1 = slotJ->field_1;
+                func_8015704C(&bufB.block1, &slotJ->block1);
+                func_8015704C(&bufB.block2, &slotJ->block2);
+                func_8015704C(&bufB.block3, &slotJ->block3);
+                func_8015704C(&bufB.block4, &slotJ->block4);
+                bufB.wordD4 = slotJ->wordD4;
+                bufB.ids[0] = slotJ->ids[0];
+                bufB.ids[1] = slotJ->ids[1];
+                bufB.ids[2] = slotJ->ids[2];
+                bufB.ids[3] = slotJ->ids[3];
+                bufB.ids[4] = slotJ->ids[4];
+                bufB.ids[5] = slotJ->ids[5];
+                bufB.byteE4 = slotJ->byteE4;
+                sprintf(bufB.strE6.b, lbl_eu_806621EC, slotJ->strE6.b);
+                sprintf(bufB.str126.b, lbl_eu_806621E8, slotJ->str126.b);
+
+                // write-back A: slot i <- buffer B (raw copy, no sprintf).
+                slotI->field_0 = bufB.field_0;
+                slotI->field_1 = bufB.field_1;
+                func_8015704C(&slotI->block1, &bufB.block1);
+                func_8015704C(&slotI->block2, &bufB.block2);
+                func_8015704C(&slotI->block3, &bufB.block3);
+                func_8015704C(&slotI->block4, &bufB.block4);
+                slotI->wordD4 = bufB.wordD4;
+                slotI->ids[0] = bufB.ids[0];
+                slotI->ids[1] = bufB.ids[1];
+                slotI->ids[2] = bufB.ids[2];
+                slotI->ids[3] = bufB.ids[3];
+                slotI->ids[4] = bufB.ids[4];
+                slotI->ids[5] = bufB.ids[5];
+                slotI->byteE4 = bufB.byteE4;
+                slotI->strE6 = bufB.strE6;
+                slotI->str126 = bufB.str126;
+
+                // SWAP C: buffer A <- template (block copies, sprintf the ids).
+                bufA.block1.unk04 = 0;
+                bufA.block1.unk00 = 0;
+                {
+                    CUICfInitBlock* clear = &bufA.block2;
+                    CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&bufA.wordD4);
+                    if (clear < clearEnd) {
+                        u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
+                        do {
+                            clear->unk04 = 0;
+                            clear->unk00 = 0;
+                            ++clear;
+                        } while (--n != 0);
+                    }
+                }
+                bufA.wordD4 = 0;
+                bufA.field_0 = tpl.field_0;
+                bufA.field_1 = tpl.field_1;
+                func_8015704C(&bufA.block1, &tpl.block1);
+                func_8015704C(&bufA.block2, &tpl.block2);
+                func_8015704C(&bufA.block3, &tpl.block3);
+                func_8015704C(&bufA.block4, &tpl.block4);
+                bufA.wordD4 = tpl.wordD4;
+                bufA.ids[0] = tpl.ids[0];
+                bufA.ids[1] = tpl.ids[1];
+                bufA.ids[2] = tpl.ids[2];
+                bufA.ids[3] = tpl.ids[3];
+                bufA.ids[4] = tpl.ids[4];
+                bufA.ids[5] = tpl.ids[5];
+                bufA.byteE4 = tpl.byteE4;
+                sprintf(bufA.strE6.b, lbl_eu_806621EC, tpl.strE6.b);
+                sprintf(bufA.str126.b, lbl_eu_806621E8, tpl.str126.b);
+
+                // write-back C: slot j <- buffer A (raw copy, no sprintf).
+                slotJ->field_0 = bufA.field_0;
+                slotJ->field_1 = bufA.field_1;
+                func_8015704C(&slotJ->block1, &bufA.block1);
+                func_8015704C(&slotJ->block2, &bufA.block2);
+                func_8015704C(&slotJ->block3, &bufA.block3);
+                func_8015704C(&slotJ->block4, &bufA.block4);
+                slotJ->wordD4 = bufA.wordD4;
+                slotJ->ids[0] = bufA.ids[0];
+                slotJ->ids[1] = bufA.ids[1];
+                slotJ->ids[2] = bufA.ids[2];
+                slotJ->ids[3] = bufA.ids[3];
+                slotJ->ids[4] = bufA.ids[4];
+                slotJ->ids[5] = bufA.ids[5];
+                slotJ->byteE4 = bufA.byteE4;
+                slotJ->strE6 = bufA.strE6;
+                slotJ->str126 = bufA.str126;
+            }
+        }
+        if (didSwap == 0) {
+            break;
+        }
+        start++;
+    } while (start < 7);
+}
+// func_80131820 (us-801322f4)
+//
+// Same bubble-sort pass as func_801311B8, but sorting by in-use status:
+// a slot is swapped before its neighbour when it is in use (flag != 7) and
+// the neighbour is free (flag == 7), so freed slots sink to the end. The
+// comparison booleanizes each flag's != 7 (retail subfic/subi/or/srwi).
+// ---------------------------------------------------------------------------
+extern "C" void func_80131820(u8* base) {
+    CUICfSwapSlot bufA;
+    CUICfSwapSlot bufB;
+    CUICfSwapSlot tpl;
+    u8 start = 0;
+    u8 didSwap;
+    u8 i;
+
+    do {
+        didSwap = 0;
+        for (i = 0; i < 7 - start; i++) {
+            CUICfSwapSlot* slotI = reinterpret_cast<CUICfSwapSlot*>(base + i * 0x168);
+            CUICfSwapSlot* slotJ = reinterpret_cast<CUICfSwapSlot*>(base + (i + 1) * 0x168);
+            if ((slotI->field_0 != 7) > (slotJ->field_0 != 7)) {
+                didSwap = 1;
+
+                // SWAP A: template <- slot i (3 blocks + tail, sprintf the ids).
+                tpl.block1.unk04 = 0;
+                tpl.block1.unk00 = 0;
+                {
+                    CUICfInitBlock* clear = &tpl.block2;
+                    CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&tpl.wordD4);
+                    if (clear < clearEnd) {
+                        u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
+                        do {
+                            clear->unk04 = 0;
+                            clear->unk00 = 0;
+                            ++clear;
+                        } while (--n != 0);
+                    }
+                }
+                tpl.wordD4 = 0;
+                tpl.field_0 = slotI->field_0;
+                tpl.field_1 = slotI->field_1;
+                func_8015704C(&tpl.block1, &slotI->block1);
+                func_8015704C(&tpl.block2, &slotI->block2);
+                func_8015704C(&tpl.block3, &slotI->block3);
+                func_8015704C(&tpl.block4, &slotI->block4);
+                tpl.wordD4 = slotI->wordD4;
+                tpl.ids[0] = slotI->ids[0];
+                tpl.ids[1] = slotI->ids[1];
+                tpl.ids[2] = slotI->ids[2];
+                tpl.ids[3] = slotI->ids[3];
+                tpl.ids[4] = slotI->ids[4];
+                tpl.ids[5] = slotI->ids[5];
+                tpl.byteE4 = slotI->byteE4;
+                sprintf(tpl.strE6.b, lbl_eu_806621EC, slotI->strE6.b);
+                sprintf(tpl.str126.b, lbl_eu_806621E8, slotI->str126.b);
+
+                // SWAP B: buffer B <- slot j (full copy, sprintf the ids).
+                bufB.block1.unk04 = 0;
+                bufB.block1.unk00 = 0;
+                {
+                    CUICfInitBlock* clear = &bufB.block2;
+                    CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&bufB.wordD4);
+                    if (clear < clearEnd) {
+                        u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
+                        do {
+                            clear->unk04 = 0;
+                            clear->unk00 = 0;
+                            ++clear;
+                        } while (--n != 0);
+                    }
+                }
+                bufB.wordD4 = 0;
+                bufB.field_0 = slotJ->field_0;
+                bufB.field_1 = slotJ->field_1;
+                func_8015704C(&bufB.block1, &slotJ->block1);
+                func_8015704C(&bufB.block2, &slotJ->block2);
+                func_8015704C(&bufB.block3, &slotJ->block3);
+                func_8015704C(&bufB.block4, &slotJ->block4);
+                bufB.wordD4 = slotJ->wordD4;
+                bufB.ids[0] = slotJ->ids[0];
+                bufB.ids[1] = slotJ->ids[1];
+                bufB.ids[2] = slotJ->ids[2];
+                bufB.ids[3] = slotJ->ids[3];
+                bufB.ids[4] = slotJ->ids[4];
+                bufB.ids[5] = slotJ->ids[5];
+                bufB.byteE4 = slotJ->byteE4;
+                sprintf(bufB.strE6.b, lbl_eu_806621EC, slotJ->strE6.b);
+                sprintf(bufB.str126.b, lbl_eu_806621E8, slotJ->str126.b);
+
+                // write-back A: slot i <- buffer B (raw copy, no sprintf).
+                slotI->field_0 = bufB.field_0;
+                slotI->field_1 = bufB.field_1;
+                func_8015704C(&slotI->block1, &bufB.block1);
+                func_8015704C(&slotI->block2, &bufB.block2);
+                func_8015704C(&slotI->block3, &bufB.block3);
+                func_8015704C(&slotI->block4, &bufB.block4);
+                slotI->wordD4 = bufB.wordD4;
+                slotI->ids[0] = bufB.ids[0];
+                slotI->ids[1] = bufB.ids[1];
+                slotI->ids[2] = bufB.ids[2];
+                slotI->ids[3] = bufB.ids[3];
+                slotI->ids[4] = bufB.ids[4];
+                slotI->ids[5] = bufB.ids[5];
+                slotI->byteE4 = bufB.byteE4;
+                slotI->strE6 = bufB.strE6;
+                slotI->str126 = bufB.str126;
+
+                // SWAP C: buffer A <- template (block copies, sprintf the ids).
+                bufA.block1.unk04 = 0;
+                bufA.block1.unk00 = 0;
+                {
+                    CUICfInitBlock* clear = &bufA.block2;
+                    CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&bufA.wordD4);
+                    if (clear < clearEnd) {
+                        u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
+                        do {
+                            clear->unk04 = 0;
+                            clear->unk00 = 0;
+                            ++clear;
+                        } while (--n != 0);
+                    }
+                }
+                bufA.wordD4 = 0;
+                bufA.field_0 = tpl.field_0;
+                bufA.field_1 = tpl.field_1;
+                func_8015704C(&bufA.block1, &tpl.block1);
+                func_8015704C(&bufA.block2, &tpl.block2);
+                func_8015704C(&bufA.block3, &tpl.block3);
+                func_8015704C(&bufA.block4, &tpl.block4);
+                bufA.wordD4 = tpl.wordD4;
+                bufA.ids[0] = tpl.ids[0];
+                bufA.ids[1] = tpl.ids[1];
+                bufA.ids[2] = tpl.ids[2];
+                bufA.ids[3] = tpl.ids[3];
+                bufA.ids[4] = tpl.ids[4];
+                bufA.ids[5] = tpl.ids[5];
+                bufA.byteE4 = tpl.byteE4;
+                sprintf(bufA.strE6.b, lbl_eu_806621EC, tpl.strE6.b);
+                sprintf(bufA.str126.b, lbl_eu_806621E8, tpl.str126.b);
+
+                // write-back C: slot j <- buffer A (raw copy, no sprintf).
+                slotJ->field_0 = bufA.field_0;
+                slotJ->field_1 = bufA.field_1;
+                func_8015704C(&slotJ->block1, &bufA.block1);
+                func_8015704C(&slotJ->block2, &bufA.block2);
+                func_8015704C(&slotJ->block3, &bufA.block3);
+                func_8015704C(&slotJ->block4, &bufA.block4);
+                slotJ->wordD4 = bufA.wordD4;
+                slotJ->ids[0] = bufA.ids[0];
+                slotJ->ids[1] = bufA.ids[1];
+                slotJ->ids[2] = bufA.ids[2];
+                slotJ->ids[3] = bufA.ids[3];
+                slotJ->ids[4] = bufA.ids[4];
+                slotJ->ids[5] = bufA.ids[5];
+                slotJ->byteE4 = bufA.byteE4;
+                slotJ->strE6 = bufA.strE6;
+                slotJ->str126 = bufA.str126;
+            }
+        }
+        if (didSwap == 0) {
+            break;
+        }
+        start++;
+    } while (start < 7);
+}
+// ---------------------------------------------------------------------------
+// CUICfManager::CUICfManager (us-8013297c)
+//
+// The CTTask<CUICfManager> base ctor (inline) emits the CProcess ctor call
+// plus the null move/draw PTMF copies (0x3c-0x50) and the vtable store. The
+// body then finishes the event queue (double vtable store: the reslist base
+// first, then the derived queue vtable), zero-inits the 8 init slots (the
+// 3-block clear is the retail divwu-counted countdown), allocates the 0xC-node
+// pool, and re-installs the move/draw PTMFs from lbl_eu_8052E288.
+// ---------------------------------------------------------------------------
+CUICfManager::CUICfManager(CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle) {
+    mFileHandle = NULL;                       // 0x114
+    unk118 = (int)mHandle;                    // 0x118
+    unk11C = (u32)pScene;                     // 0x11C
+    unk120 = 0;                               // 0x120
+
+    CUICfEventQueue* q = reinterpret_cast<CUICfEventQueue*>(&unk124);
+    q->vtable = lbl_eu_8052E3B0;
+    q->nodes = NULL;                          // 0x138
+    q->count = 0;                             // 0x13C
+    q->ownsList = 0;                          // 0x140
+    q->head = &q->startNode;                  // 0x128
+    q->startNode.next = &q->startNode;
+    q->startNode.prev = &q->startNode;
+    q->vtable = lbl_eu_8052E398;
+
+    unk144 = NULL;                            // 0x144
+    mInitSlots[0].unk00[0] = 0;               // 0x148
+    mInitSlots[0].unk00[1] = 0;               // 0x149
+
+    for (u32 i = 0; i < 8; i++) {
+        CUICfInitSlot& s = mInitSlots[i];
+        // unk08's word pair, then the unk3C..unkA4 block clear (retail divwu
+        // countdown over the 0x34 stride).
+        s.unk08.unk04 = 0;
+        s.unk08.unk00 = 0;
+        CUICfInitBlock* clear = &s.unk3C;
+        CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&s.unkD8);
+        if (clear < clearEnd) {
+            u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
+            do {
+                clear->unk04 = 0;
+                clear->unk00 = 0;
+                clear++;
+            } while (--n != 0);
+        }
+        s.unk00[0] = 7;
+        s.unk00[1] = 0;
+        s.unkD8.unk00 = 0;                    // +0xD4 word, +0xD8..
+        s.unkD8.mid = CUICfInitTailChunk8();
+        s.unkD8.unk0C = 0;
+        s.unkD8.unk0E = 0;
+    }
+
+    unkC88[0] = 0;                            // 0xC8C
+    mFlags = 0;                               // 0xC90
+    unk138 = (CUICfListNode*)mtl::MemManager::allocate_array(
+        0x90, func_80496004((CScn*)pScene));
+    unk13C = 0xc;
+    for (u32 i = 0; i < 0xc; i++) {
+        unk138[i].next = NULL;
+    }
+}
 void func_801336E4(){}
-void func_80133770(){}
+// func_80133770 (us-80134244): teardown/create of the base menu for Move's
+// mFlags bit 0x1. Gates on the singleton + resource accessor, probes the
+// busy chain (with the 0x20-resource / state-2 retry sound), then creates
+// the menu via func_800FF6BC and pushes it onto the event queue (same
+// reslist shape as the func_80133A08 family).
+u32 func_80133770() {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    if (inst->field_0x5C == NULL) {
+        inst->field_0xC90 = (u16)(inst->field_0xC90 | 0x1);
+        return 0;
+    }
+    inst->field_0xC90 = (u16)(inst->field_0xC90 & 0xfffe);
+    {
+        int st = func_801359AC();
+        if (st != 0) {
+            if ((lbl_eu_80663E24 & 0x2) == 0) {
+                if (func_8009CF8C(0x20) > 4 && st == 2) {
+                    func_80138078(5);
+                }
+            }
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    {
+        u32 tempRet = (u32)func_800FF6BC((u8*)inst->field_0x144, inst->field_0x11C);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
 // func_801338C8: create the menu via __ct__8011C1B8 and queue it
 // (mFlags bit 0x2; busy-bit/accessor gates + scene-mode guard).
 extern "C" u32 func_801338C8(CUICfManager* self) {
@@ -2207,8 +3290,165 @@ slot_found:
     }
     return savedRet;
 }
-void func_80135708(){}
-extern "C" int func_801359AC() { return 0; }
+// func_80135708 (us-801361dc): busy/slot-state probe. Returns 1 when any
+// menu-system busy gate is set or any init slot is not in state 7 (free).
+int func_80135708() {
+    CUICfManager* inst = (CUICfManager*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    u8* base = (u8*)inst;
+    base += 0x14c;
+    if (func_80293C10() != 0 || func_8029A658() != 0 || func_801B481C() != 0 ||
+        func_80122450() != 0 || func_80124B78() != 0) {
+        return 1;
+    }
+    u8 i = 0;
+    do {
+        if (base[i * 0x168] != 7) {
+            return 1;
+        }
+        i++;
+    } while (i < 8);
+    return 0;
+}
+// Minimal cf::CBattleManager view (the full CBattleManager.hpp pulls the
+// object/chain headers; only getInstance is needed for func_801359AC).
+namespace cf {
+class CBattleManager {
+public:
+    static CBattleManager* getInstance();
+};
+}
+
+// Float-returning vtable slot (vtable +0x128) of the player wrapper.
+typedef float (*CUICfVFloatFn)(CUICfPlayerView*);
+
+// func_801359AC (us-80136480): busy/slot-state probe. Returns 1 when any
+// menu-system busy gate is set (sound/state gates first), 2 when the battle
+// list, an enum-list fill, the player pose/state, the global settings bit,
+// or any in-use slot (flag == 4) blocks the menus, else 0.
+extern "C" int func_801359AC() {
+    int count;
+    int slotUsed;
+    CUICfEnumListHolder holder;
+    CUICfEnumList620* enumList;
+    CUICfPlayerView* px;
+    CUICfObj3F60View* battleObj;
+    CUICfManager* inst;
+
+    if (func_8008585C__Q22cf13CfGameManagerFv() != 0) {
+        return 1;
+    }
+    if (func_8009CF8C(0x3508) != 0 && func_8009CF8C(0x20) <= 4) {
+        return 1;
+    }
+    {
+        cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+        CBattleListHead* blh = reinterpret_cast<CBattleListHead*>(bm);
+        CUICfListLink* head = blh->head;
+        count = 0;
+        for (CUICfListLink* node = head->next; node != head; node = node->next) {
+            count++;
+        }
+        if (count != 0) {
+            return 2;
+        }
+    }
+    func_80043E08(&holder, 0x20, 0x800);
+    enumList = reinterpret_cast<CUICfEnumList620*>(func_80043F18(&holder));
+    __ct__800FC32C(reinterpret_cast<u8*>(enumList), 3, 4, 0);
+    enumList = reinterpret_cast<CUICfEnumList620*>(func_80043F18(&holder));
+    if (enumList->count == 0) {
+        __dt__80043E88(&holder, -1);
+        return 2;
+    }
+    __dt__80043E88(&holder, -1);
+
+    {
+        u32 g24a = lbl_eu_80663E24;
+        u32 g24b = *(volatile u32*)&lbl_eu_80663E24;
+        if ((g24a & 0xafe40000u) != 0) {
+            return 1;
+        }
+        if ((g24b & 0x4u) != 0) {
+            return 1;
+        }
+    }
+    if (func_80084BF4__Q22cf13CfGameManagerFv() != 0) {
+        return 1;
+    }
+    {
+        cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
+        px = reinterpret_cast<CUICfPlayerView*>(player);
+        if (player != NULL) {
+            px = reinterpret_cast<CUICfPlayerView*>(reinterpret_cast<u8*>(player) - 0x3E9C);
+        }
+        if (px != NULL) {
+            u8** vt = *reinterpret_cast<u8***>(px);
+            f32 v = reinterpret_cast<CUICfVFloatFn>(vt[0x128 / 4])(px);
+            if (v == lbl_eu_806672D0) {
+                return 2;
+            }
+            if (px->field_3F60 != NULL) {
+                battleObj = reinterpret_cast<CUICfObj3F60View*>(px->field_3F60);
+                if ((battleObj->field_530 & 1) != 0) {
+                    return 2;
+                }
+                {
+                    u32 w4ec = battleObj->field_4EC;
+                    if ((w4ec & (1 << 8)) != 0) {
+                        return 2;
+                    }
+                    if ((w4ec & (1 << 15)) == 0 && (w4ec & (1 << 1)) == 0) {
+                        return 2;
+                    }
+                }
+            }
+        }
+    }
+    if ((lbl_eu_80663E24 & 0x00000200u) != 0) {
+        return 1;
+    }
+    if (func_8009CF8C(0x334b) == 0) {
+        return 1;
+    }
+    if (func_8029A658() != 0) {
+        return 1;
+    }
+    if (func_8011CD5C() != 0) {
+        return 1;
+    }
+    if (CMenuArtsSelect_isCreated() != 0) {
+        return 1;
+    }
+    if (func_80122450() != 0) {
+        return 1;
+    }
+    {
+        CUICfGlobalSettings* g = getUnk80664658();
+        if ((g->field_214 & (1 << 19)) != 0) {
+            return 2;
+        }
+    }
+    inst = (CUICfManager*)lbl_eu_80664054;
+    if (inst == NULL) {
+        slotUsed = 0;
+    } else {
+        CUICfManagerSlotView* mv = reinterpret_cast<CUICfManagerSlotView*>(inst);
+        u8 i;
+        for (i = 0; i < 8; i++) {
+            if (mv->slots[i].flag == 4) {
+                slotUsed = 1;
+                break;
+            }
+        }
+    }
+    if (slotUsed != 0) {
+        return 2;
+    }
+    return 0;
+}
 void __dt__Q212CUICfManager5CTestFv(){}
 
 // ---------------------------------------------------------------------------
@@ -2247,9 +3487,63 @@ CUICfManager::~CUICfManager() {
     }
 }
 
+// ---------------------------------------------------------------------------
+// CUICfManager::OnFileEvent (us-80133c50)
+//
+// The retail symbol is the no-arg member `OnFileEvent__12CUICfManagerFv` but
+// the body reads r4 as the CEventFile* from the IWorkEvent dispatcher (same
+// hidden-arg ABI as func_80133324; the func_80135FBC thunk passes r4
+// through). The body is emitted under the extern "C" free function declared
+// in the .hpp so the exact Fv symbol name is produced; the class's member
+// `void OnFileEvent()` stays declared-only and the thunk's bl binds here.
+// ---------------------------------------------------------------------------
+extern "C" bool OnFileEvent__12CUICfManagerFv(CUICfManager* self, CEventFile* evt) {
+    CFileHandle* handle = self->mFileHandle;
+    if (handle != evt->mFileHandle) {
+        return false;
+    }
+    u8* fileData = static_cast<u8*>(handle->getData());
+
+    nw4r::lyt::ArcResourceAccessor* accessor = CLibLayout::createArcResourceAccessor();
+    self->mArcResourceAccessor = accessor;
+    accessor->Attach(fileData, reinterpret_cast<const char*>(&lbl_eu_805000A8[3]));
+
+    u8* fontData = static_cast<u8*>(accessor->GetResource(
+        0x666e7461, reinterpret_cast<const char*>(&lbl_eu_805000A8[7]), NULL));
+    u32 fontBytes = nw4r::ut::PackedFont::GetRequireBufferSize(fontData, lbl_8066DCF8, lbl_eu_806672C8);
+    u8* fontBuf = static_cast<u8*>(
+        mtl::MemManager::allocate_head(CDevice::getDevSys2Handle(), fontBytes, 0x20));
+    self->mPackedFont60.Construct(fontBuf, fontBytes, fontData, lbl_8066DCF8);
+
+    fontData = static_cast<u8*>(accessor->GetResource(
+        0x666e7461, reinterpret_cast<const char*>(&lbl_eu_805000A8[0x1b]), NULL));
+    fontBytes = nw4r::ut::PackedFont::GetRequireBufferSize(fontData, lbl_8066DCF8, lbl_eu_806672C8);
+    fontBuf = static_cast<u8*>(
+        mtl::MemManager::allocate_head(CDevice::getDevSys2Handle(), fontBytes, 0x20));
+    self->mPackedFont9C.Construct(fontBuf, fontBytes, fontData, lbl_8066DCF8);
+
+    fontData = static_cast<u8*>(accessor->GetResource(
+        0x666e7461, reinterpret_cast<const char*>(&lbl_eu_805000A8[0x2f]), NULL));
+    fontBytes = nw4r::ut::PackedFont::GetRequireBufferSize(fontData, lbl_8066DCF8, lbl_eu_806672C8);
+    fontBuf = static_cast<u8*>(
+        mtl::MemManager::allocate_head(CDevice::getDevSys2Handle(), fontBytes, 0x20));
+    self->mPackedFontD8.Construct(fontBuf, fontBytes, fontData, lbl_8066DCF8);
+
+    self->mFileHandle = NULL;
+    cf::IFlagEvent* flagEvent = self;
+    func_8009D0B4();
+    func_8009D414(flagEvent);
+    return true;
+}
+
 void CUICfManager::func_80135FBC() {
     // retail: subi r3,r3,0x54; b OnFileEvent__12CUICfManagerFv — secondary-subobject thunk
     reinterpret_cast<CUICfManager*>(reinterpret_cast<char*>(this) - 0x54)->OnFileEvent();
 }
 
-extern "C" void func_801355BC() {}
+// retail: lwz r3,lbl_eu_80664054; cmpi r3,0; beq -> 0; addi r3,r3,0x9C
+// returns the process sub-object at +0x9C, or null when the process is absent.
+extern "C" void* func_801355BC() {
+    if (lbl_eu_80664054 == 0) return 0;
+    return (u8*)lbl_eu_80664054 + 0x9C;
+}

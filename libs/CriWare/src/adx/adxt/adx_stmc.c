@@ -253,19 +253,16 @@ done:
 }
 
 void ADXSTM_BindFileNw(ADXSTMHndl* h, void* fileName, u32 fileSizeParam,
-                        u32 startOffset, u32 sizeHi, u32 sizeLo) {
+                        u32 startOffset, s64 len) {
     u32 sectors;
-    s64 len;
-
     ADXCRS_Enter();
     ADXCRS_Lock();
 
-    len = ((s64)(u32)sizeHi << 32) | (u64)(u32)sizeLo;
     sectors = (u32)((s32)(((s64)len + 0x7FF) / 2048));
 
     h->startOffset = startOffset;
-    h->fileSizeLo = sizeLo;
-    h->fileSizeHi = sizeHi;
+    h->fileSizeLo = (u32)len;
+    h->fileSizeHi = (u32)((u64)len >> 32);
     h->fileSectors = sectors;
     h->fileName = fileName;
     h->fileSizeParam = fileSizeParam;

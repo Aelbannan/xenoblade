@@ -175,8 +175,9 @@ extern "C" DECOMP_DONT_INLINE void func_804E424C(CScheduleItem* item, f32 delta,
     if (item->mCount == 0) {
         return;
     }
+    CEffectObj* obj;
     for (int i = 0; i < 32; i++) {
-        CEffectObj* obj = func_804DFEAC(item->mSlots[i]);
+        obj = func_804DFEAC(item->mSlots[i]);
         if (obj != NULL && obj->mField2E > 0) {
             void* arg = func_804CB5FC(obj);
             func_804DF808(sched, arg, obj, delta);

@@ -13,12 +13,13 @@ extern u32 lbl_eu_80602A68[];
 extern u32 lbl_eu_80602A6C[];
 
 void MPVCDEC_Init(void* self) {
-    u32 *arr = lbl_eu_80602A6C;
+    u32* arr = lbl_eu_80602A6C;
+    u32 val = (u32)&lbl_eu_8051C080;
     lbl_eu_80602A68[0] = (u32)self;
     fn_803BDF3C((void*)fn_803A7770, 0);
     DCT_IsrInit();
     DCT_IsrInitScaleTbl((u8*)self + 0x1160);
-    arr[2] = (u32)&lbl_eu_8051C080;
+    arr[2] = val;
 }
 
 void fn_803A7770(void) { MPVERR_SetCode(0); }

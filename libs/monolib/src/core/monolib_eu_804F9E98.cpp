@@ -7,12 +7,10 @@
 // returns a module-global string pointer; func_eu_804F9EE0 polls the record's
 // lifecycle state.
 //
-// sinit_eu_804F9FA4 is subject to the documented `b .+4` MWCC sinit ceiling
-// (MWCC_REFERENCE wall #5): retail emits `li r3,dest@sda21; b .+4; lis/addi
-// src; stw r4,0(r3); blr`, which MWCC cannot reproduce from high-level C. The
-// readable folded-store form below is the documented endpoint. Like the
-// sibling NAND sinits it stays NONMATCHING, so this object must remain
-// `NonMatching` in configure.py.
+// sinit_eu_804F9FA4 installs the module-global string pointer via a retail
+// tail-call thunk into the adjacent helper func_804F9FAC (the annotation
+// originally merged the two bodies into one 0x18 symbol; see
+// MWCC_REFERENCE "b .+4 sinit ceiling" RESOLVED note).
 
 #include <types.h>
 #include "monolib/core/monolib_eu_804F9E98.hpp"
@@ -80,10 +78,15 @@ extern "C" int func_eu_804F9EE0(u8* unused, MonoRequestState* req) {  // polls l
     return 0;
 }
 
-// us-804f9fa4: sinit_eu_804F9FA4  size=0x18
+// us-804f9fa4: sinit_eu_804F9FA4  size=0x8 (+ helper func_804F9FAC size=0x10)
 // `.ctors` static initializer: installs the module-global string pointer.
-// (Wall #5 ceiling - see header comment. Body is the documented folded-store
-// candidate and intentionally remains non-matching.)
+// Retail keeps the thunk `li r3,&lbl_eu_80665A98@sda21; b func_804F9FAC` as
+// a tail call into the adjacent helper (the annotation originally merged the
+// two bodies into one 0x18 symbol).  The helper stores the vtable/string
+// address through r3; `char[]` keeps the address constant in a lis/addi pair.
+extern "C" __declspec(noinline) void func_804F9FAC(void* dest) {
+    *(void**)dest = (void*)lbl_eu_80570410;
+}
 extern "C" void sinit_eu_804F9FA4() {  // installs lbl_eu_80665A98
-    lbl_eu_80665A98 = lbl_eu_80570410;
+    func_804F9FAC(&lbl_eu_80665A98);
 }

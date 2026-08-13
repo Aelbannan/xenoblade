@@ -8,6 +8,12 @@
 extern "C" void __dt__8CProcessFv(void* self, int flags);
 extern "C" void __dt__10CScrollBarFv(void* self, int flags);
 
+// Forward decls for the layout-build helpers defined below (extern "C" so the
+// call sites in func_8015DB08 / func_80160118 bind to the unmangled retail
+// symbols).
+extern "C" void func_8015DD4C(CCol6System* self);
+extern "C" void func_80160370(CCol6System* self);
+
 // Singleton instance (retail: lbl_eu_80664230).
 CCol6CheckBat* gCol6CheckBat;
 
@@ -56,8 +62,6 @@ void CCol6CheckBat::Term() {
 void CCol6CheckBat::Move() {}
 
 void __ct__CCol6CheckBat(){}
-
-extern u32 func_8009CF8C(u32 resourceId);
 
 int func_8015D310() {
     union {
@@ -113,13 +117,43 @@ void CCol6Hint::Term() {}
 
 void CCol6Hint::Move() {}
 
-void func_8015DB08(){}
+// func_8015DB08 - first layout file-load completion handler: create the
+// scratch region + host, detach the arc buffer into a fresh accessor, build
+// the layout (func_8015DD4C), flag it ready and register the render callback.
+extern "C" int func_8015DB08(CCol6System* self, CEventFile* event) {
+    if (self->mFileHandle != event->mFileHandle) return 0;
+
+    reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)->createRegion(
+        mtl::MemManager::getHandleMEM2(), 0x20000, &lbl_eu_80502050[0x38], 0);
+    Class_8045F858 host(reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion));
+
+    CFileHandle* handle = self->mFileHandle;
+    u8* data = handle->mData;
+    handle->mData = 0;
+    mtl::MemManager::func_80434A4C(false);
+
+    self->mArcAccessor = CLibLayout::createArcResourceAccessor();
+    self->mArcAccessor->Attach(data, &lbl_eu_80502050[0x42]);
+    func_8015DD4C(self);
+    self->mFlag98 = 1;
+
+    IScnRender* render = reinterpret_cast<IScnRender*>(self);
+    if (self != 0) {
+        render = reinterpret_cast<IScnRender*>(&self->mScnRender);
+    }
+    self->mScn->addRenderCB(render, 0xd, 0);
+
+    self->mFileHandle = 0;
+    reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)->func_8045F810();
+    return 1;
+}
 
 void CCol6Hint::cbRenderBefore() {}
 
 void func_8015DCD0(){}
 
-void func_8015DD4C(){}
+// func_8015DD4C - builds the first CCol6System layout (stub pending decomp).
+extern "C" void func_8015DD4C(CCol6System* self) {}
 
 void func_8015E0BC(){}
 
@@ -149,17 +183,98 @@ extern "C" void* __dt__11CCol6SystemFv(CCol6System* self, int flags) {
 
 void CCol6System::Init() {}
 
-void CCol6System::Term() {}
+// CCol6System::Term() - wait for the VI draw to finish, detach the render
+// callback, release both embedded windows/cursors and the layout/accessor/
+// scratch region, then clear the CCol6System singleton global.
+void CCol6System::Term() {
+    CDeviceVI::waitForDrawDone();
+    func_801390E0(&mFileHandle);
+
+    // The `if (this)` is the MWCC idiom that splits mr r4 / beq / addi +0x70
+    // for the IScnRender subobject passed to removeRenderCB.
+    IScnRender* render = reinterpret_cast<IScnRender*>(this);
+    if (this != 0) {
+        render = reinterpret_cast<IScnRender*>(&mScnRender);
+    }
+    mScn->removeRenderCB(render);
+
+    mFlagA0 = 0;
+    reinterpret_cast<CCol6CursorView*>(&mCur1)->vf3();
+    reinterpret_cast<CCol6CursorView*>(&mCur2)->vf3();
+    func_8022B7F4(&mSysWin1);
+    func_8022B7F4(&mSysWin2);
+
+    // The outer guard plus delete's own null-check reproduce retail's two beq's
+    // on the same CR0 test (MWCC D2-inlined-into-D1 artifact).
+    if (mpLayout != 0) {
+        delete mpLayout;
+        mpLayout = 0;
+    }
+
+    func_80139124(mArcAccessor);
+    mArcAccessor = 0;
+    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->func_8045F778();
+    lbl_eu_80664238 = 0;
+}
 
 void CCol6System::Move() {}
 
-void func_80160118(){}
+// func_80160118 - second layout file-load completion handler: create the
+// scratch region + host, detach the arc buffer into a fresh accessor, build
+// the layout (func_80160370), flag it ready and register the render callback.
+extern "C" int func_80160118(CCol6System* self, CEventFile* event) {
+    if (self->mFileHandle != event->mFileHandle) return 0;
 
-void CCol6System::cbRenderBefore() {}
+    reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)->createRegion(
+        mtl::MemManager::getHandleMEM2(), 0x20000, &lbl_eu_80502050[0xd0], 0);
+    Class_8045F858 host(reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion));
+
+    CFileHandle* handle = self->mFileHandle;
+    u8* data = handle->mData;
+    handle->mData = 0;
+    mtl::MemManager::func_80434A4C(false);
+
+    self->mArcAccessor = CLibLayout::createArcResourceAccessor();
+    self->mArcAccessor->Attach(data, &lbl_eu_80502050[0x42]);
+    func_80160370(self);
+    self->mFlagA0 = 1;
+
+    IScnRender* render = reinterpret_cast<IScnRender*>(self);
+    if (self != 0) {
+        render = reinterpret_cast<IScnRender*>(&self->mScnRender);
+    }
+    self->mScn->addRenderCB(render, 0xd, 0);
+
+    self->mFileHandle = 0;
+    reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)->func_8045F810();
+    return 1;
+}
+
+// cbRenderBefore - draw both embedded windows through a stack DrawInfo. The
+// last gate is written as `if (ready != 0) { ... }` so MWCC emits the retail
+// bne/b pair (skip-body then skip-to-end) instead of an early-return beq.
+void CCol6System::cbRenderBefore() {
+    if (func_8013BE50() == 0) return;
+    if (mFlagA0 == 0) return;
+    if (CSysWin_isReady(&mSysWin1) == 0) return;
+    if (CSysWin_isReady(&mSysWin2) != 0) {
+        GXSetZMode((GXBool)0, GX_NEVER, (GXBool)0);
+        nw4r::lyt::DrawInfo drawInfo;
+        func_80137250(&drawInfo);
+        if (mFlagA1 == 0) {
+            func_80137038(mpLayout, &drawInfo, 0, 1);
+            func_801D20B0(&mCur1, &drawInfo);
+            func_8022B7C8(&mSysWin1, &drawInfo);
+            func_801D20B0(&mCur2, &drawInfo);
+        }
+        func_8022B7C8(&mSysWin2, &drawInfo);
+    }
+}
 
 void func_801602F4(){}
 
-void func_80160370(){}
+// func_80160370 - builds the second CCol6System layout (stub pending decomp).
+extern "C" void func_80160370(CCol6System* self) {}
 
 void func_80160A6C(){}
 
@@ -207,6 +322,23 @@ extern "C" void* __dt__11CCol6InviteFv(CCol6Invite* self, int flags) {
     return self;
 }
 
-void CCol6Invite::Init() {}
+// CCol6Invite::Init() - set up the invite banner: resolve the three banner
+// strings, bump the two invite counters in the global flag memory by the
+// instance's byte args, then format the banner message and post it.
+void CCol6Invite::Init() {
+    char* str0 = func_8013639C((const void*)lbl_eu_80664098,
+                               &lbl_eu_80502050[0x9], mArg2);
+
+    func_8009D018(0x7fc, (u8)((u8)func_8009CF8C(0x7fc) + mArg3));
+    func_8009D018(0x7fd, (u8)((u8)func_8009CF8C(0x7fd) + mArg4));
+
+    char* str1 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x7e);
+    char* str2 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x78);
+    char* str3 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x79);
+
+    ml::FixStr<128> buf;
+    buf.format(&lbl_eu_80502050[0x480], str0, str1, str2, mArg3, str3, mArg4);
+    func_8013D55C(buf.mString, 0, 0);
+}
 
 void CCol6Invite::Move() {}

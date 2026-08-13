@@ -11,6 +11,8 @@ CWorkControl::CWorkControl(const char* pName, CWorkThread* pParent) : CWorkThrea
 }
 #pragma dont_inline off
 
+extern char lbl_eu_80522688[];
+
 #pragma optimize_for_size on
 CWorkControl::~CWorkControl(){
     spInstance = nullptr;
@@ -60,8 +62,9 @@ DECOMP_DONT_INLINE bool CWorkControl::setFlowSetup(){
         return true;
     }
 
+    const char* name = &lbl_eu_80522688[0x10];
     CWorkControl* pControl = CWorkControl::getInstance();
-    CWorkFlowSetup::create("CWorkFlowSetup", pControl);
+    CWorkFlowSetup::create(name, pControl);
     return true;
 }
 #pragma optimize_for_size off

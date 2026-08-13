@@ -1403,10 +1403,25 @@ static u32 getCurrentField(void) {
 
 u32 VIGetNextField(void) {
     u32 field;
+    u32 halfLine;
+    u32 nh;
+    u32 hlw;
     BOOL enabled;
 
     enabled = OSDisableInterrupts();
-    field = getCurrentField();
+    field = VI_HW_REGS[VI_DPV] & 0x7FF;
+    do {
+        halfLine = VI_HW_REGS[VI_DPH] & 0x7FF;
+    } while (field == (VI_HW_REGS[VI_DPV] & 0x7FF));
+    field = VI_HW_REGS[VI_DPV] & 0x7FF;
+    hlw = CurrTiming->hlw;
+    nh = (u32)CurrTiming->nhlines;
+    {
+        u32 hl = (field - 1) << 1;
+        u32 div = (halfLine - 1) / hlw;
+        halfLine = hl + div;
+    }
+    field = ((nh << __cntlzw(nh ^ halfLine)) >> 31);
     OSRestoreInterrupts(enabled);
 
     return ((field ^ 1) ^ (HorVer.AdjustedDispPosY & 1));

@@ -40,10 +40,16 @@ int func_80282174(void* self) {
 bool func_802A0AA0(void*);
 bool func_8028245C(void* self) { return func_802A0AA0((void*)((char*)self + 0x74)); }
 bool func_80282464() { return true; }
-// Cast-only interface for the anonymous vtable tail-call thunk (same
-// RTTI-omit pattern as BattleStateV8If in MWCC_REFERENCE): the call target is
-// obj->vtable[0x48] with (self, *arg).
-struct IfVt48 {
+// Cast-only interface for the vtable tail-call thunk: the vptr sits at
+// +0x70 (data ends 0x6E, MWCC places the vptr after the members, like
+// RemoteSpk's vptr at 0x1F0). 16 pad virtuals + vf48: with 2 hidden RTTI
+// slots, vf48 lands at vtable slot 0x48. vf48 takes ONE explicit arg
+// (this = self is implicit) — retail passes (self, *arg) = (r3, r4).
+struct CChainActorPcVt48 {
+    u32 unk0;          // 0x00
+    u8  pad4[0x68];    // 0x04..0x6C
+    u16 unk6C;         // 0x6C
+    u8  pad6E[2];      // 0x6E
     virtual void _v008();
     virtual void _v00C();
     virtual void _v010();
@@ -60,17 +66,10 @@ struct IfVt48 {
     virtual void _v03C();
     virtual void _v040();
     virtual void _v044();
-    virtual void vf48(void* self, void* arg);
+    virtual void vf48(void* arg);
 };
-// retail: lwz r12,0x70; lwz r4,0; lwz r12,0x48; mtctr; bctr
-// Open item: retail loads the fnptr base into r12 (register reuse across
-// lwz-dest/base/bctr roles); MWCC allocates the obj local to r5 in every
-// tested shape (8 variants, both mw_versions, peephole pragma, -ipa off) —
-// witness needs an injective renaming, register reuse gives none. Same class
-// as MWCC_REFERENCE HBM/MIX reg-swap acceptance gap (us-802d9590 family).
 extern "C" void func_8028246C(void* self, void* arg) {
-    void* obj = *(void**)((char*)self + 0x70);
-    (*(void (**)(void*, void*))((char*)obj + 0x48))(self, *(void**)arg);
+    ((CChainActorPcVt48*)self)->vf48(*(void**)arg);
 }
 int func_80282480(void*, void* p) {
     return ((*(int*)((char*)p + 0x3f00) >> 1) & 1);

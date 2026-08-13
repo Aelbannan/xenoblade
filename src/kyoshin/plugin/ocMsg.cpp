@@ -61,13 +61,17 @@ extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
 // Open item: bit-trick type computation (x = count^0xA; 1 + ((x>>1)-(x&0xA))>>31).
 // Retail keeps x in r5 (count in r0); MWCC always reuses r0 for x (4-7 pure
 // reg_swap depending on shape). Witness rejects the r0<->r5 permutation
-// (register reuse in subf: dest == operand under rho). Shapes tried: x local,
-// a/b locals, CSE inline (sibling func_8003A6D4 shape).
-// Open item: bit-trick type computation (x = count^0xA; 1 + ((x>>1)-(x&0xA))>>31).
-// Retail keeps x in r5 (count in r0); MWCC always reuses r0 for x (4-7 pure
-// reg_swap depending on shape). Witness rejects the r0<->r5 permutation
-// (register reuse in subf: dest == operand under rho). Shapes tried: x local,
-// a/b locals, CSE inline (sibling func_8003A6D4 shape).
+// (register reuse in subf: dest == operand under rho). Refined 2026: the
+// reversed inline source `(x & 0x0a) - (x >> 1)` reproduces retail's EXACT
+// allocation and instruction stream (xori r5 / andi r0 / srawi r5) but the
+// subf comes out `subf r0,r5,r0` (=r0-r5, NEGATED value) instead of retail's
+// `subf r0,r0,r5` (=r5-r0) — a 1-instruction semantic trap. MWCC's subf
+// encoding is source-driven: `a - b` -> `subf r0, b_reg, a_reg`. Retail =
+// fI-shape ALLOCATION + forward source; the allocation is coupled to the
+// subtraction operand order, so no correct-semantic forward shape yields
+// x->r5 (probed: ~50 shapes, Wii/1.1 + GC/3.0a5.2 + GC/3.0a3.4, -O4,s,
+// -ipa off, -func_align 16). Semantics: type = 1 + bit31((x>>1)-(x&0xA));
+// "2 - bit31(reversed)" rescue breaks at v=0 (count 10/11).
 extern "C" int func_8003A68C(VMThread* pThread, void* target) {
     int count = *(int*)((char*)target + 0x10);
     int x = count ^ 0x0a;

@@ -463,7 +463,8 @@ extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(
 extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(
     nw4r::lyt::Layout* layout, char* name, u8 value) {
     char buf[512];
-    sprintf(buf, "%d", (int)value);
+    extern char lbl_eu_80500664[];
+    sprintf(buf, &lbl_eu_80500664[7], (int)value);
     func_80136A1C(layout, name, buf, 0);
 }
 
@@ -504,14 +505,20 @@ extern "C" void func_80136A1C(
 
 extern "C" void func_80136B4C(
     nw4r::lyt::Layout* layout, char* name, char* fmt, u32 value) {
-    char buf[528];
-    sprintf(buf, fmt, value);
-    func_80136A1C(layout, name, buf, 0);
+    // Retail ignores the fmt param (r5 is never read) and formats with the
+    // constant string-table extern lbl_eu_80500664 (lis/@l relocs, offset 0).
+    extern char lbl_eu_80500664[];
+    char buf[520];
+    // Retail passes the fmt param (r5) as the sprintf vararg; the format is
+    // the constant lbl_eu_80500664 (r4 = lis/@l, fmt param never read as a
+    // format). The 4th func_80136A1C arg is the value param (r6 -> r31).
+    sprintf(buf, lbl_eu_80500664, fmt);
+    func_80136A1C(layout, name, buf, value);
 }
 
 extern "C" void func_80136C98(nw4r::lyt::Layout* layout, u32 value) {
     char buf[512];
-    sprintf(buf, "%d", (int)value);
+    sprintf(buf, &lbl_eu_80500664[7], (int)value);
     func_80136D74(layout, buf, 0);
 }
 
@@ -596,33 +603,24 @@ extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
     if (useProjection) {
         void* camera = reinterpret_cast<void*>(lbl_eu_80663E14);
         void* view = getCurrentView__5CViewFv();
-        void* viewFrame = func_8049626C(camera, view);
-        GXSetProjection(
-            *reinterpret_cast<Mtx44(*)>(
-                reinterpret_cast<u8*>(viewFrame) + 0x194),
-            GX_PERSPECTIVE);
+        CViewFrame37038* viewFrame =
+            reinterpret_cast<CViewFrame37038*>(func_8049626C(camera, view));
+        GXSetProjection(viewFrame->projection, GX_PERSPECTIVE);
 
-        u32* src = reinterpret_cast<u32*>(
-            reinterpret_cast<u8*>(viewFrame) + 0xCC);
-        u32* dst = reinterpret_cast<u32*>(drawInfo) + 1;
-        for (int i = 0; i < 12; i++) {
-            dst[i] = src[i];
-        }
-
+        drawInfo->SetViewMtx(viewFrame->mtx);
         drawInfo->SetViewRect(rect);
         GXSetZMode(true, GX_LEQUAL, false);
     } else {
         Mtx44 ortho;
-        C_MTXOrtho(ortho, rect.top, rect.bottom,
-                   rect.left, rect.right, -1000.0f, 1000.0f);
+        f32 right = rect.right;
+        f32 left = rect.left;
+        f32 bottom = rect.bottom;
+        f32 top = rect.top;
+        C_MTXOrtho(ortho, top, bottom, left, right,
+                   lbl_eu_806672DC, lbl_eu_806672E0);
         GXSetProjection(ortho, GX_ORTHOGRAPHIC);
 
-        u32* src = &identity__Q22ml6CMat34;
-        u32* dst = reinterpret_cast<u32*>(drawInfo) + 1;
-        for (int i = 0; i < 12; i++) {
-            dst[i] = src[i];
-        }
-
+        drawInfo->SetViewMtx(reinterpret_cast<const nw4r::math::MTX34&>(ml::CMat34::identity));
         drawInfo->SetViewRect(rect);
         GXSetZMode(false, GX_NEVER, false);
     }
@@ -732,9 +730,9 @@ extern "C" u32 func_80137510(nw4r::lyt::AnimTransform* anim, float delta) {
 }
 
 extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane) {
-    output->x = 0.0f;
-    output->y = 0.0f;
-    output->z = 0.0f;
+    output->x = lbl_eu_806672F0;
+    output->y = lbl_eu_806672F0;
+    output->z = lbl_eu_806672F0;
     if (pane == NULL) return;
 
     output->x = pane->GetTranslate().x;
@@ -743,9 +741,9 @@ extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane) {
 
     nw4r::lyt::Pane* parent = pane->GetParent();
     nw4r::math::VEC3 accum;
-    accum.x = 0.0f;
-    accum.y = 0.0f;
-    accum.z = 0.0f;
+    accum.x = lbl_eu_806672F0;
+    accum.y = lbl_eu_806672F0;
+    accum.z = lbl_eu_806672F0;
     if (parent == NULL) goto add_out;
 
     accum.x = parent->GetTranslate().x;
@@ -754,9 +752,9 @@ extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane) {
 
     nw4r::lyt::Pane* grandparent = parent->GetParent();
     nw4r::math::VEC3 temp;
-    temp.x = 0.0f;
-    temp.y = 0.0f;
-    temp.z = 0.0f;
+    temp.x = lbl_eu_806672F0;
+    temp.y = lbl_eu_806672F0;
+    temp.z = lbl_eu_806672F0;
     if (grandparent == NULL) goto add_accum;
 
     temp.x = grandparent->GetTranslate().x;
@@ -765,7 +763,7 @@ extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane) {
 
     nw4r::lyt::Pane* ggp = grandparent->GetParent();
     nw4r::math::VEC3 tmp2;
-    code80135FDC_setVec3((float*)&tmp2, 0.0f, 0.0f, 0.0f);
+    code80135FDC_setVec3((float*)&tmp2, lbl_eu_806672F0, lbl_eu_806672F0, lbl_eu_806672F0);
     if (ggp == NULL) goto add_temp;
 
     copyVEC3(&tmp2, &ggp->GetTranslate());
@@ -781,135 +779,137 @@ add_out:
     nw4r::math::VEC3Add(output, output, &accum);
 }
 
-extern "C" void code80135FDC_setVec3(float* self, float a, float b, float c) {
+// __declspec(noinline): MWCC -inline auto would inline these small same-TU
+// helpers into func_801375A0/func_8013775C, but retail calls them out-of-line
+// (bl relocs present at every call site). noinline blocks the auto-inline
+// without changing the helper bodies (both are byte-matched).
+extern "C" __declspec(noinline) void code80135FDC_setVec3(float* self, float a, float b, float c) {
     *(float*)((char*)self + 0) = a;
     *(float*)((char*)self + 4) = b;
     *(float*)((char*)self + 8) = c;
 }
 
-extern "C" void func_80137738(nw4r::math::VEC3* output,
+extern "C" __declspec(noinline) void func_80137738(nw4r::math::VEC3* output,
                               const nw4r::math::VEC3* value) {
     nw4r::math::VEC3Add(output, output, value);
 }
 
 extern "C" void func_8013775C(nw4r::math::VEC3* output, nw4r::lyt::Pane* node) {
-    output->x = 0.0f;
-    output->y = 0.0f;
-    output->z = 0.0f;
+    output->x = lbl_eu_806672F0;
+    output->y = lbl_eu_806672F0;
+    output->z = lbl_eu_806672F0;
     if (node != NULL) {
-    if (node->GetParent() != NULL) {
-        output->x = node->GetTranslate().x;
-        output->y = node->GetTranslate().y;
-        output->z = node->GetTranslate().z;
+        if (node->GetParent() != NULL) {
+            output->x = node->GetTranslate().x;
+            output->y = node->GetTranslate().y;
+            output->z = node->GetTranslate().z;
 
-        nw4r::lyt::Pane* parent = node->GetParent();
-        nw4r::math::VEC3 accum;
-        accum.x = 0.0f;
-        accum.y = 0.0f;
-        accum.z = 0.0f;
-        if (parent == NULL) goto add_out;
-        nw4r::lyt::Pane* pp = parent->GetParent();
-        if (pp == NULL) goto add_out;
+            nw4r::lyt::Pane* parent = node->GetParent();
+            nw4r::math::VEC3 accum;
+            accum.x = lbl_eu_806672F0;
+            accum.y = lbl_eu_806672F0;
+            accum.z = lbl_eu_806672F0;
+            if (parent != NULL) {
+                nw4r::lyt::Pane* grandparent = parent->GetParent();
+                if (grandparent != NULL) {
+                    accum.x = parent->GetTranslate().x;
+                    accum.y = parent->GetTranslate().y;
+                    accum.z = parent->GetTranslate().z;
 
-        accum.x = parent->GetTranslate().x;
-        accum.y = parent->GetTranslate().y;
-        accum.z = parent->GetTranslate().z;
+                    nw4r::math::VEC3 temp;
+                    temp.x = lbl_eu_806672F0;
+                    temp.y = lbl_eu_806672F0;
+                    temp.z = lbl_eu_806672F0;
+                    if (grandparent != NULL) {
+                        nw4r::lyt::Pane* ggp = grandparent->GetParent();
+                        if (ggp != NULL) {
+                            temp.x = grandparent->GetTranslate().x;
+                            temp.y = grandparent->GetTranslate().y;
+                            temp.z = grandparent->GetTranslate().z;
 
-        nw4r::math::VEC3 temp;
-        temp.x = 0.0f;
-        temp.y = 0.0f;
-        temp.z = 0.0f;
-        if (pp == NULL) goto add_accum;
-        nw4r::lyt::Pane* gp = pp->GetParent();
-        if (gp == NULL) goto add_accum;
-
-        temp.x = pp->GetTranslate().x;
-        temp.y = pp->GetTranslate().y;
-        temp.z = pp->GetTranslate().z;
-
-        nw4r::math::VEC3 tmp2;
-        code80135FDC_setVec3((float*)&tmp2, 0.0f, 0.0f, 0.0f);
-        if (gp == NULL) goto add_temp;
-        nw4r::lyt::Pane* ggp = gp->GetParent();
-        if (ggp == NULL) goto add_temp;
-
-        copyVEC3(&tmp2, &gp->GetTranslate());
-        nw4r::math::VEC3 recurse;
-        func_8013775C(&recurse, ggp);
-        func_80137738(&tmp2, &recurse);
-
-    add_temp:
-        nw4r::math::VEC3Add(&temp, &temp, &tmp2);
-    add_accum:
-        nw4r::math::VEC3Add(&accum, &accum, &temp);
-    add_out:
-        nw4r::math::VEC3Add(output, output, &accum);
-    }
+                            nw4r::math::VEC3 tmp2;
+                            code80135FDC_setVec3((float*)&tmp2, lbl_eu_806672F0,
+                                                 lbl_eu_806672F0, lbl_eu_806672F0);
+                            if (ggp != NULL) {
+                                nw4r::lyt::Pane* gggp = ggp->GetParent();
+                                if (gggp != NULL) {
+                                    copyVEC3(&tmp2, &ggp->GetTranslate());
+                                    nw4r::math::VEC3 recurse;
+                                    func_8013775C(&recurse, gggp);
+                                    func_80137738(&tmp2, &recurse);
+                                }
+                            }
+                            nw4r::math::VEC3Add(&temp, &temp, &tmp2);
+                        }
+                    }
+                    nw4r::math::VEC3Add(&accum, &accum, &temp);
+                }
+            }
+            nw4r::math::VEC3Add(output, output, &accum);
+        }
     }
 }
 
 extern "C" void func_80137924(nw4r::math::VEC3* output, nw4r::lyt::Pane* node,
-                              void* scale, void* offset) {
-    output->x = 0.0f;
-    output->y = 0.0f;
-    output->z = 0.0f;
-    if (node != NULL && node->GetParent() != NULL) {
-        output->x = node->GetTranslate().x;
-        output->y = node->GetTranslate().y;
-        output->z = node->GetTranslate().z;
+                              nw4r::lyt::Pane* scale, nw4r::lyt::Pane* offset) {
+    output->x = lbl_eu_806672F0;
+    output->y = lbl_eu_806672F0;
+    output->z = lbl_eu_806672F0;
+    if (node != NULL) {
+        if (node->GetParent() != NULL) {
+            output->x = node->GetTranslate().x;
+            output->y = node->GetTranslate().y;
+            output->z = node->GetTranslate().z;
 
-        nw4r::lyt::Pane* parent = node->GetParent();
-        nw4r::math::VEC3 accum;
-        accum.x = 0.0f;
-        accum.y = 0.0f;
-        accum.z = 0.0f;
-        if (parent == NULL) goto add_out;
-        nw4r::lyt::Pane* pp = parent->GetParent();
-        if (pp == NULL) goto add_out;
+            nw4r::lyt::Pane* parent = node->GetParent();
+            nw4r::math::VEC3 recurse;
+            nw4r::math::VEC3 tmp2;
+            nw4r::math::VEC3 temp;
+            nw4r::math::VEC3 accum;
+            accum.x = lbl_eu_806672F0;
+            accum.y = lbl_eu_806672F0;
+            accum.z = lbl_eu_806672F0;
+            if (parent != NULL) {
+                nw4r::lyt::Pane* grandparent = parent->GetParent();
+                if (grandparent != NULL) {
+                    accum.x = parent->GetTranslate().x;
+                    accum.y = parent->GetTranslate().y;
+                    accum.z = parent->GetTranslate().z;
 
-        accum.x = parent->GetTranslate().x;
-        accum.y = parent->GetTranslate().y;
-        accum.z = parent->GetTranslate().z;
+                    temp.x = lbl_eu_806672F0;
+                    temp.y = lbl_eu_806672F0;
+                    temp.z = lbl_eu_806672F0;
+                    if (grandparent != NULL) {
+                        nw4r::lyt::Pane* ggp = grandparent->GetParent();
+                        if (ggp != NULL) {
+                            temp.x = grandparent->GetTranslate().x;
+                            temp.y = grandparent->GetTranslate().y;
+                            temp.z = grandparent->GetTranslate().z;
 
-        nw4r::math::VEC3 temp;
-        temp.x = 0.0f;
-        temp.y = 0.0f;
-        temp.z = 0.0f;
-        if (pp == NULL) goto add_accum;
-        nw4r::lyt::Pane* gp = pp->GetParent();
-        if (gp == NULL) goto add_accum;
-
-        temp.x = pp->GetTranslate().x;
-        temp.y = pp->GetTranslate().y;
-        temp.z = pp->GetTranslate().z;
-
-        nw4r::math::VEC3 tmp2;
-        tmp2.x = 0.0f;
-        tmp2.y = 0.0f;
-        tmp2.z = 0.0f;
-        if (gp == NULL) goto add_temp;
-        nw4r::lyt::Pane* ggp = gp->GetParent();
-        if (ggp == NULL) goto add_temp;
-
-        tmp2.x = gp->GetTranslate().x;
-        tmp2.y = gp->GetTranslate().y;
-        tmp2.z = gp->GetTranslate().z;
-
-        nw4r::math::VEC3 recurse;
-        func_8013775C(&recurse, ggp);
-        nw4r::math::VEC3Add(&recurse, &recurse, &tmp2);
-
-    add_temp:
-        nw4r::math::VEC3Add(&temp, &temp, &tmp2);
-    add_accum:
-        nw4r::math::VEC3Add(&accum, &accum, &temp);
-    add_out:
-        nw4r::math::VEC3Add(output, output, &accum);
+                            tmp2.x = lbl_eu_806672F0;
+                            tmp2.y = lbl_eu_806672F0;
+                            tmp2.z = lbl_eu_806672F0;
+                            if (ggp != NULL) {
+                                nw4r::lyt::Pane* gggp = ggp->GetParent();
+                                if (gggp != NULL) {
+                                    tmp2.x = ggp->GetTranslate().x;
+                                    tmp2.y = ggp->GetTranslate().y;
+                                    tmp2.z = ggp->GetTranslate().z;
+                                    func_8013775C(&recurse, gggp);
+                                    nw4r::math::VEC3Add(&tmp2, &tmp2, &recurse);
+                                }
+                            }
+                            nw4r::math::VEC3Add(&temp, &temp, &tmp2);
+                        }
+                    }
+                    nw4r::math::VEC3Add(&accum, &accum, &temp);
+                }
+            }
+            nw4r::math::VEC3Add(output, output, &accum);
+        }
     }
-    output->x *= *(f32*)((u8*)scale + 0x44);
-    output->x += *(f32*)((u8*)offset + 0x2C);
-    output->y += *(f32*)((u8*)offset + 0x30);
-    output->z += *(f32*)((u8*)offset + 0x34);
+    output->x *= scale->GetScale().x;
+    nw4r::math::VEC3Add(output, output, &offset->GetTranslate());
 }
 
 extern "C" void func_80137B44(void* a, u32 b, u32 c) {
@@ -1046,53 +1046,78 @@ extern "C" u32 func_80138138(u32 val) {
 extern "C" u32 func_80138234(const char* name, u32 id) {
     if (func_8009CF8C(id + 0x220) != 0) return 0;
 
-    u16 v1 = 0;
+    const char* base = lbl_eu_80500664;
+    const char* col1 = base + 0x2A;
+    u16 v1;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x2A], (const char*)id);
+        func_8003AA34(base);
+        void* result = getBdatStringColumnValue((void*)name, col1, (const char*)id);
         v1 = *(u16*)&result;
+    } else {
+        v1 = 0;
     }
-    u16 v2 = 0;
+    const char* col2 = base + 0x30;
+    u16 v2;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x30], (const char*)id);
+        func_8003AA34(base);
+        void* result = getBdatStringColumnValue((void*)name, col2, (const char*)id);
         v2 = *(u16*)&result;
+    } else {
+        v2 = 0;
     }
-    u8 v3 = 0;
+    const char* col3 = base + 0x3C;
+    u8 v3;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x3C], (const char*)id);
+        func_8003AA34(base);
+        void* result = getBdatStringColumnValue((void*)name, col3, (const char*)id);
         v3 = *(u8*)&result;
+    } else {
+        v3 = 0;
     }
-    u16 v4 = 0;
+    const char* col4 = base + 0x47;
+    u16 v4;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x47], (const char*)id);
+        func_8003AA34(base);
+        void* result = getBdatStringColumnValue((void*)name, col4, (const char*)id);
         v4 = *(u16*)&result;
+    } else {
+        v4 = 0;
     }
-    u16 v5 = 0;
+    const char* col5 = base + 0x52;
+    u16 v5;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x52], (const char*)id);
+        func_8003AA34(base);
+        void* result = getBdatStringColumnValue((void*)name, col5, (const char*)id);
         v5 = *(u16*)&result;
+    } else {
+        v5 = 0;
     }
-    u16 v6 = 0;
+    const char* col6 = base + 0x5D;
+    u16 v6;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x5D], (const char*)id);
+        func_8003AA34(base);
+        void* result = getBdatStringColumnValue((void*)name, col6, (const char*)id);
         v6 = *(u16*)&result;
+    } else {
+        v6 = 0;
     }
-    u16 v7 = 0;
+    const char* col7 = base + 0x68;
+    u16 v7;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x68], (const char*)id);
+        func_8003AA34(base);
+        void* result = getBdatStringColumnValue((void*)name, col7, (const char*)id);
         v7 = *(u16*)&result;
+    } else {
+        v7 = 0;
     }
-    u8 v8 = 0;
+    const char* col8 = base + 0x73;
+    u8 v8;
     if (name != NULL) {
-        func_8003AA34(&lbl_eu_80500664[0]);
-        void* result = getBdatStringColumnValue((void*)name, &lbl_eu_80500664[0x73], (const char*)id);
+        func_8003AA34(base);
+        void* result = getBdatStringColumnValue((void*)name, col8, (const char*)id);
         v8 = *(u8*)&result;
+    } else {
+        v8 = 0;
     }
 
     if (((u32)(v5 + v4) + (u32)(v8 + v2)) + ((u32)(v7 + v3) + (u32)(v6 + v1)) == 0) {
@@ -1381,9 +1406,13 @@ extern "C" void* func_80138DA4(const char* str) {
 }
 
 extern "C" u8 func_80138E1C(const char* key) {
-    if (lbl_eu_80664098 == 0) return 0;
-    func_8003AA34((const char*)lbl_eu_80664098);
-    void* result = getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x18A], key);
+    char* col = &lbl_eu_80500664[0x18A];
+    u8* src = (u8*)lbl_eu_80664098;
+    if (src == 0) {
+        return 0;
+    }
+    func_8003AA34(key);
+    void* result = getBdatStringColumnValue((void*)src, col, key);
     return *(u8*)&result;
 }
 
@@ -1430,8 +1459,8 @@ extern "C" char* func_80138F78(const char* key) {
         func_8003AA34(key);
         lbl_eu_80664068 = (u32)getFP__FPCc(&lbl_eu_80500664[0x192]);
     }
-    void* fp = (void*)lbl_eu_80664068;
     const char* col = &lbl_eu_80500664[0x19F];
+    void* fp = (void*)lbl_eu_80664068;
     void* result;
     if (fp == NULL) {
         result = NULL;
@@ -1565,16 +1594,24 @@ extern u8 lbl_eu_8066407E;
 extern "C" u8 code80135FDC_getByte_6407E() { return lbl_eu_8066407E; }
 
 extern "C" u16 func_801392E4(const char* name) {
-    if (lbl_eu_806640EC == 0) return 0;
+    char* col = &lbl_eu_80500664[0x1D2];
+    u8* src = (u8*)lbl_eu_806640EC;
+    if (src == 0) {
+        return 0;
+    }
     func_8003AA34(name);
-    void* result = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1D2], name);
+    void* result = getBdatStringColumnValue((void*)src, col, name);
     return *(u16*)&result;
 }
 
 extern "C" u16 func_80139358(const char* name) {
-    if (lbl_eu_806640EC == 0) return 0;
+    char* col = &lbl_eu_80500664[0x1DB];
+    u8* src = (u8*)lbl_eu_806640EC;
+    if (src == 0) {
+        return 0;
+    }
     func_8003AA34(name);
-    void* result = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1DB], name);
+    void* result = getBdatStringColumnValue((void*)src, col, name);
     return *(u16*)&result;
 }
 
@@ -1598,42 +1635,55 @@ extern "C" u32 func_801393CC(const char* name) {
     case 9: v = lbl_eu_80664104; break;
     case 10: v = lbl_eu_80664108; break;
     case 11: v = lbl_eu_8066410C; break;
-    case 12: v = lbl_eu_80664110; break;
+    case 12:
+    case 13: v = lbl_eu_80664110; break;
+    default: break;
     }
     return v;
 }
 
 extern "C" char* func_801394D4(const char* name) {
+    const char* col1DB = &lbl_eu_80500664[0x1DB];
     u32 a = func_801393CC(name);
-    u16 b = 0;
-    if (lbl_eu_806640EC != 0) {
+    u16 b;
+    if (lbl_eu_806640EC == 0) {
+        b = 0;
+    } else {
         func_8003AA34((const char*)a);
-        void* r = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1DB], name);
+        void* r = getBdatStringColumnValue((void*)lbl_eu_806640EC, col1DB, name);
         b = *(u16*)&r;
     }
-    u16 c = 0;
-    if (lbl_eu_806640EC != 0) {
+    u16 c;
+    const char* col1D2 = &lbl_eu_80500664[0x1D2];
+    if (lbl_eu_806640EC == 0) {
+        c = 0;
+    } else {
         func_8003AA34(&lbl_eu_80500664[0]);
-        void* r = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1D2], name);
+        void* r = getBdatStringColumnValue((void*)lbl_eu_806640EC, col1D2, name);
         c = *(u16*)&r;
     }
     void* d0 = 0;
-    if (a != 0) {
+    const char* col17C = &lbl_eu_80500664[0x17C];
+    if (a == 0) {
+        d0 = 0;
+    } else {
         func_8003AA34(&lbl_eu_80500664[0]);
-        d0 = getBdatStringColumnValue((void*)a, &lbl_eu_80500664[0x17C], (const char*)(u32)b);
+        d0 = getBdatStringColumnValue((void*)a, col17C, (const char*)(u32)b);
     }
     sprintf(&lbl_eu_80573C30[0], &lbl_eu_80500664[0], d0);
     if (c == 3) {
-        u8 d = 0;
+        u8 d;
         void* rv;
-        if (lbl_eu_806640EC != 0) {
+        if (lbl_eu_806640EC == 0) {
+            d = 0;
+        } else {
             func_8003AA34(&lbl_eu_80500664[0]);
             rv = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1E2], name);
             d = *(u8*)&rv;
         }
         func_8003AA34((const char*)rv);
         void* fp = getFP__FPCc(&lbl_eu_80500664[0x1EB]);
-        void* r2 = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x17C],
+        void* r2 = getBdatStringColumnValue(fp, col17C,
                                            (const char*)(0x1E - (d - 1)));
         sprintf(&lbl_eu_80573C30[0], &lbl_eu_80500664[0x1F4], &lbl_eu_80573C30[0], r2);
     }
@@ -1642,13 +1692,16 @@ extern "C" char* func_801394D4(const char* name) {
 
 extern "C" FourShorts func_80139658(void* obj, void* arg2, u32 idx) {
     CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
-    if (owner->_v03C((u32)arg2, 1) == 0) {
-        FourShorts r = {0, 0, 0, 0};
+    CAnimOwnerIf* cur = owner->_v03C((u32)arg2, 1);
+    if (cur == 0) {
+        FourShorts r;
+        r.a = 0; r.b = 0; r.c = 0; r.d = 0;
         return r;
     }
-    u8* data = (u8*)owner->_v068();
+    u8* data = (u8*)cur->_v068();
     if (data == NULL) {
-        FourShorts r = {0, 0, 0, 0};
+        FourShorts r;
+        r.a = 0; r.b = 0; r.c = 0; r.d = 0;
         return r;
     }
     if (idx >= 3) {
@@ -1656,11 +1709,8 @@ extern "C" FourShorts func_80139658(void* obj, void* arg2, u32 idx) {
                                    (const char*)lbl_eu_8052E530);
     }
     u8* p = data + ((u8)idx << 3) + 0x10;
-    FourShorts r;
-    r.a = ((s16*)p)[0];
-    r.b = ((s16*)p)[1];
-    r.c = ((s16*)p)[2];
-    r.d = ((s16*)p)[3];
+    FourShorts src = *(FourShorts*)p;
+    FourShorts r = { src.a, src.b, src.c, src.d };
     return r;
 }
 
@@ -1787,7 +1837,10 @@ extern "C" void func_80139BF4(void* obj, void* arg2, void* a, void* b) {
 }
 
 extern "C" f32 func_80139C98(u32 a, u32 b, u32 c, f32 d) {
-    return (lbl_eu_80667304 * ((f32)a + (f32)b) + (f32)c) / d;
+    f32 fa = (f32)a;
+    f32 fb = (f32)b;
+    f32 fc = (f32)c;
+    return (lbl_eu_80667304 * (fa + fb) + fc) / d;
 }
 
 extern "C" void func_80139CEC(const char* arg) {
@@ -1807,7 +1860,13 @@ extern "C" void func_80139CEC(const char* arg) {
         u32 w[5];
         u8 b;
     };
-    B21 tab = *(B21*)&lbl_eu_80500230;
+    B21 tab;
+    // copy the 21-byte table as 5 words + 1 byte (a whole-struct assignment
+    // would round the copy up to 24 bytes / 6 words)
+    for (int i = 0; i < 5; i++) {
+        tab.w[i] = ((const u32*)&lbl_eu_80500230)[i];
+    }
+    tab.b = ((const u8*)&lbl_eu_80500230)[20];
     u8* chars = (u8*)&tab;
     u8 j = 0;
     for (;;) {
@@ -2109,12 +2168,12 @@ extern "C" int func_8013A4B4(const nw4r::math::VEC3* a, const nw4r::math::VEC3* 
 }
 
 extern "C" u16 func_8013A7D0(u16 arg1, u16 arg2) {
+    const char* col204 = &lbl_eu_80500664[0x204];
     int flag = 0;
-
+    const char* fpName = &lbl_eu_80500664[0x20B];
     func_8003AA34((const char*)arg1);
-    void* fp = getFP__FPCc(&lbl_eu_80500664[0x20B]);
-    void* r = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x204],
-                                       (const char*)5);
+    void* fp = getFP__FPCc(fpName);
+    void* r = getBdatStringColumnValue(fp, col204, (const char*)5);
     u16 row0 = *(u16*)&r;
     if (func_8009CF8C(0x20) >= row0) flag = 1;
 
@@ -2149,12 +2208,12 @@ extern "C" u16 func_8013A7D0(u16 arg1, u16 arg2) {
 }
 
 extern "C" void func_8013A95C(u16 arg1, u16 arg2, s8 delta) {
+    const char* col204 = &lbl_eu_80500664[0x204];
     int flag = 0;
-
+    const char* fpName = &lbl_eu_80500664[0x20B];
     func_8003AA34((const char*)arg1);
-    void* fp = getFP__FPCc(&lbl_eu_80500664[0x20B]);
-    void* r = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x204],
-                                       (const char*)5);
+    void* fp = getFP__FPCc(fpName);
+    void* r = getBdatStringColumnValue(fp, col204, (const char*)5);
     u16 row0 = *(u16*)&r;
     if (func_8009CF8C(0x20) >= row0) flag = 1;
 
@@ -2269,8 +2328,8 @@ extern "C" void func_8013ACFC() {
     }
     f32 scale = (f32)col2 * lbl_eu_80667340;
 
-    u32 table[35];
-    memcpy(table, &lbl_eu_80500108[0x418], sizeof(table));
+    // struct assignment: retail's copy is an inline mtctr/lwzu/stwu loop
+    XBMapTable1 t1 = *(const XBMapTable1*)&lbl_eu_80500108[0x418];
 
     CPlayerIf* pif = (CPlayerIf*)player;
     nw4r::math::VEC3* pos = pif->_v0AC();
@@ -2279,7 +2338,7 @@ extern "C" void func_8013ACFC() {
     f32 sz = pos->z / scale * lbl_eu_80667344;
 
     func_8003AA34((const char*)pos);
-    u32 name = table[flag - 1];
+    u32 name = t1.w[flag];
     if (name == 0) return;
     void* fp = getFP__FPCc((const char*)name);
     u8 n = (u8)func_8003B1EC((void*)fp);
@@ -2312,12 +2371,11 @@ extern "C" void func_8013ACFC() {
         f32 dx = (f32)(s32)(r5 - rem) * lbl_eu_80667348 - sx;
         f32 dz = (f32)(s32)(q2 - q) * lbl_eu_80667348 - sz;
         if (dx * dx + dz * dz <= R2) {
-            u32 table2[31];
-            memcpy(table2, &lbl_eu_80500108[0x378], sizeof(table2));
-            func_8003AA34((const char*)table2[30]);
+            XBMapTable2 t2 = *(const XBMapTable2*)&lbl_eu_80500108[0x378];
+            func_8003AA34((const char*)t2.w[28]);
             u32 sum = 0;
             for (u8 j = 2; j < flag; j++) {
-                u32 p = table2[j - 1];
+                u32 p = t2.w[j];
                 if (p != 0) {
                     void* fp2 = getFP__FPCc((const char*)p);
                     sum += func_8003B1EC((void*)fp2) * 0x240;
@@ -2326,12 +2384,11 @@ extern "C" void func_8013ACFC() {
             sum += baseOff;
             u32 addr = sum + i2 + 1;
             if (func_8009EBE8(addr) == 0) {
-                u32 table3[35];
-                memcpy(table3, &lbl_eu_80500108[0x2F0], sizeof(table3));
-                func_8003AA34((const char*)table3[34]);
+                XBMapTable3 t3 = *(const XBMapTable3*)&lbl_eu_80500108[0x2F0];
+                func_8003AA34((const char*)t3.w[32]);
                 u32 sum2 = 0;
                 for (u8 j = 2; j < flag; j++) {
-                    u32 p = table3[j - 1];
+                    u32 p = t3.w[j];
                     if (p != 0) {
                         void* fp2 = getFP__FPCc((const char*)p);
                         sum2 += func_8003B1EC((void*)fp2) * 0x240;
@@ -2397,11 +2454,19 @@ extern "C" f32 func_8013B380(u32 idx) {
 
 extern "C" void func_8013B428__FUl(u32 value) {
     if (func_8009CF8C(0x20) <= 3) return;
-    u8 m = (u8)(value % 200);
-    if (func_8009CF8C(m + 0x312C) != 0) return;
+    // retail divides the param as SIGNED (mulhw + srawi + sign-adjust), so
+    // cast to int before the modulo even though the ABI type is unsigned.
+    u8 m = (u8)((int)value % 200);
+    // bool temp: forces the retail neg/or/srwi. booleanize idiom for the
+    // nonzero test (a plain != 0 would compile to cmpwi/bne)
+    bool busy = (func_8009CF8C(m + 0x312C) != 0);
+    if (busy) return;
 
-    u16 n = (u16)((u16)func_8009CF8C(m + 0x40) + 1);
-    func_8009D018(m + 0x40, n);
+    // u16 arithmetic: the ++ keeps the value's upper bits "dirty" so every
+    // use re-masks it (clrlwi) exactly like retail (call arg + each case body)
+    u16 n = (u16)func_8009CF8C(m + 0x40);
+    n++;
+    func_8009D018(m + 0x40, (u16)n);
 
     int flag = 0;
     switch (m) {
@@ -2412,38 +2477,42 @@ extern "C" void func_8013B428__FUl(u32 value) {
         if (func_8009CF8C(0x323) < 0xFE) break;
         if (func_8009CF8C(0x324) >= 0xFE) flag = 1;
         break;
-    case 0x79: if (n == 0x1) flag = 1; break;
-    case 0x7A: if (n == 0xFA) flag = 1; break;
-    case 0x7B: if (n == 0x1F4) flag = 1; break;
-    case 0x7C: if (n == 0x1) flag = 1; break;
-    case 0x7D: if (n == 0x3) flag = 1; break;
-    case 0x7E: if (n == 0x1) flag = 1; break;
-    case 0x7F: if (n == 0x5) flag = 1; break;
-    case 0x80: if (n == 0x1) flag = 1; break;
-    case 0x86: if (n == 0x15) flag = 1; break;
-    case 0x87: if (n == 0x14) flag = 1; break;
-    case 0x89: if (n == 0x14) flag = 1; break;
-    case 0x8B: if (n == 0x1E) flag = 1; break;
-    case 0x8C: if (n == 0x14) flag = 1; break;
-    case 0x8D: if (n == 0x1E) flag = 1; break;
-    case 0x9F: if (n == 0xA) flag = 1; break;
-    case 0xA0: if (n == 0x32) flag = 1; break;
-    case 0xA1: if (n == 0x64) flag = 1; break;
-    case 0xA2: if (n == 0xC8) flag = 1; break;
-    case 0xA9:
-        for (m = 1; m <= 5; m++) {
-            if (func_8009CF8C(m + 0x21) < 0x1F40) return;
+    case 0x79: if ((u16)n == 0x1) flag = 1; break;
+    case 0x7A: if ((u16)n == 0xFA) flag = 1; break;
+    case 0x7B: if ((u16)n == 0x1F4) flag = 1; break;
+    case 0x7C: if ((u16)n == 0x1) flag = 1; break;
+    case 0x7D: if ((u16)n == 0x3) flag = 1; break;
+    case 0x7E: if ((u16)n == 0x1) flag = 1; break;
+    case 0x7F: if ((u16)n == 0x5) flag = 1; break;
+    case 0x80: if ((u16)n == 0x1) flag = 1; break;
+    case 0x86: if ((u16)n == 0x15) flag = 1; break;
+    case 0x87: if ((u16)n == 0x14) flag = 1; break;
+    case 0x89: if ((u16)n == 0x14) flag = 1; break;
+    case 0x8B: if ((u16)n == 0x14) flag = 1; break;
+    case 0x8C: if ((u16)n == 0x1E) flag = 1; break;
+    case 0x8D: if ((u16)n == 0x1E) flag = 1; break;
+    case 0x9F: if ((u16)n == 0xA) flag = 1; break;
+    case 0xA0: if ((u16)n == 0x32) flag = 1; break;
+    case 0xA1: if ((u16)n == 0x64) flag = 1; break;
+    case 0xA2: if ((u16)n == 0xC8) flag = 1; break;
+    case 0xA9: {
+        // separate counter: retail reuses the (dead) n register for the loop
+        // and calls func_800826F0 with the ORIGINAL m afterwards
+        u8 i;
+        for (i = 1; i <= 5; i++) {
+            if (func_8009CF8C(i + 0x21) < 0x1F40) return;
         }
         flag = 1;
         break;
-    case 0xB4: if (n == 0x1) flag = 1; break;
-    case 0xB5: if (n == 0xA) flag = 1; break;
-    case 0xB6: if (n == 0x64) flag = 1; break;
-    case 0xB7: if (n == 0x64) flag = 1; break;
-    case 0xB8: if (n == 0x12C) flag = 1; break;
-    case 0xBB: if (n == 0x1) flag = 1; break;
-    case 0xBC: if (n == 0x14) flag = 1; break;
-    case 0xBD: if (n == 0x64) flag = 1; break;
+    }
+    case 0xB4: if ((u16)n == 0x1) flag = 1; break;
+    case 0xB5: if ((u16)n == 0xA) flag = 1; break;
+    case 0xB6: if ((u16)n == 0x64) flag = 1; break;
+    case 0xB7: if ((u16)n == 0xC8) flag = 1; break;
+    case 0xB8: if ((u16)n == 0x12C) flag = 1; break;
+    case 0xBB: if ((u16)n == 0x1) flag = 1; break;
+    case 0xBC: if ((u16)n == 0x14) flag = 1; break;
+    case 0xBD: if ((u16)n == 0x64) flag = 1; break;
     default: flag = 1; break;
     }
     if (flag) {
@@ -2594,7 +2663,9 @@ extern "C" void func_8013BD24(void* self, void* arg) {
     void* t = (void*)func_8013B9AC(self, arg);
     if (t != 0) {
         nw4r::lyt::AnimTransform* anim = *(nw4r::lyt::AnimTransform**)((u8*)t + 8);
-        f32 f = (f32)(u32)(anim->GetFrameSize() - 1);
+        // Signed conversion (retail xoris r0,r3,0x8000): (u32) would emit the
+        // unsigned double-trick without the sign flip.
+        f32 f = (f32)(s32)(anim->GetFrameSize() - 1);
         func_8013BAD8(self, arg, f);
     }
 }

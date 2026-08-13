@@ -75,15 +75,11 @@ typedef struct _HBMMIDICHUNK {
 #pragma auto_inline off
 void __HBMSEQInitTracks(HBMSEQSEQUENCE *seq, u8 *data, int count)
 {
-    HBMSEQTRACK *track;
-    u32 tag;
-    u32 len;
-
-    track = &seq->tracks[0];
+    HBMSEQTRACK* track = &seq->tracks[0];
     while (count != 0) {
     retry:
-        tag = ((HBMMIDICHUNK *)data)->tag;
-        len = ((HBMMIDICHUNK *)data)->length;
+        u32 tag = ((HBMMIDICHUNK *)data)->tag;
+        u32 len = ((HBMMIDICHUNK *)data)->length;
         data += 8;
         if (tag == 0x4D54726B) {
             track->seq = seq;

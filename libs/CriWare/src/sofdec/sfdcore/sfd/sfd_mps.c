@@ -12,12 +12,12 @@ int sfmps_DecodeOneUnit(void* self, s32 buf, s32 size, s32* out_size, s32* out_f
 void sfmps_pesfn(void* self, u8 stream_kind, s32 arg3, s32 arg4);
 void sfmps_SkipNext(void* self, s32 buf, s32 size, s32* out_size);
 int sfmps_CopyPketData(void* self, s32 buf, s32 size, s32* out_size, s32* out_flag);
-int sfmps_CopyAudio(void* self, s32 stream_kind, s32 buf, s32 size, s32 pts_hi, s32 pts_lo);
-int sfmps_CopyVideo(void* self, s32 stream_kind, s32 buf, s32 size, s32 pts_hi, s32 pts_lo);
+int sfmps_CopyAudio(void* self, s32 stream_kind, s32 buf, s32 size, s64 pts);
+int sfmps_CopyVideo(void* self, s32 stream_kind, s32 buf, s32 size, s64 pts);
 int sfmps_CopyPrvate(void* self, s32 kind, s32 buf, s32 size);
 int sfmps_CopyUsrSj(void* self, s32 buf, s32 size, s32 out_kind);
 int sfmps_CopyPadding(void);
-int sfmps_CopyDstBuft(void* self, s32 stream_kind, s32 buf, s32 size, s32 pts_hi, s32 pts_lo);
+int sfmps_CopyDstBuft(void* self, s32 stream_kind, s32 buf, s32 size, s64 pts);
 int sfmps_ChkSupply(void* self, s32 buf, s32 size, s32 a5);
 void sfmps_GetStmNum(void* self, s32* out_a, s32* out_b);
 void sfmps_SetMvInf(void* self);
@@ -434,14 +434,13 @@ int sfmps_DecodeOneUnit(void* self, s32 buf, s32 size, s32* out_size, s32* out_f
     return ret;
 }
 
-// Open item (best shape): inline stm_info stores. Retail hoists both loads
-// (lwz r0,2464 / lwz r5,2468) before both stores; MWCC interleaves s1's load
-// with its store (loads s1 first because its store precedes s0's). Residual:
-// 2 structural (load-pair order s1,s0 vs retail s0,s1), 1 reg_swap, 0x54/0x54.
-// 14+ shapes probed: locals (reverses both loads AND stores), u64/struct-copy
-// (C spills the pair to the stack), named members, decl/store permutations,
-// loads-first (breaks the args store order). The witness rejects the load-pair
-// offset diff; FULL_MATCH needs the s1 load scheduled after s0's.
+// FULL_MATCH 100% (Wii/1.1, c99). Retail hoists both loads (lwz r0,2464 /
+// lwz r5,2468) before both stores, s0 first. 14+ shapes probed without
+// volatile: locals reverse BOTH load order (s1,s0) AND store order ([0],[1]);
+// inline stores interleave load-store-load-store. KEY LEVER: volatile on the
+// pair of reads forces MWCC to keep BOTH loads in source order (s0 first) and
+// hoist them ahead of the stores — byte-identical to retail. (Volatile is
+// safe here: self+0x9a0/0x9a4 are state fields read once; no aliasing in scope.)
 void sfmps_pesfn(void* self, u8 stream_kind, s32 arg3, s32 arg4) {
     void (*cb)(s32, void*, s32, s32);
     struct {
@@ -455,11 +454,11 @@ void sfmps_pesfn(void* self, u8 stream_kind, s32 arg3, s32 arg4) {
     inf.kind = stream_kind;
     inf.args[1] = arg4;
     inf.args[0] = arg3;
-    s32 st0 = *(s32*)((u8*)self + 0x9a0);
-    s32 st1 = *(s32*)((u8*)self + 0x9a4);
-    inf.stm_info[0] = st0;
+    s32 st0 = *(volatile s32*)((u8*)self + 0x9a0);
+    s32 st1 = *(volatile s32*)((u8*)self + 0x9a4);
     inf.stm_info[1] = st1;
-    cb(*(s32*)((u8*)self + 0xd60), &inf, *(s32*)((u8*)self + 0x9a4), arg4);
+    inf.stm_info[0] = st0;
+    cb(*(s32*)((u8*)self + 0xd60), &inf, st1, arg4);
 }
 
 void sfmps_SkipNext(void* self, s32 buf, s32 size, s32* out_size) {
@@ -636,7 +635,7 @@ int sfmps_CopyPketData(void* self, s32 buf, s32 size, s32* out_size, s32* out_fl
     return ret;
 }
 
-int sfmps_CopyAudio(void* self, s32 stream_kind, s32 buf, s32 size, s32 pts_hi, s32 pts_lo) {
+int sfmps_CopyAudio(void* self, s32 stream_kind, s32 buf, s32 size, s64 pts) {
     void* mps_sub;
     s32 split_val;
     int skip;
@@ -670,7 +669,6 @@ int sfmps_CopyAudio(void* self, s32 stream_kind, s32 buf, s32 size, s32 pts_hi, 
         return 1;
 
     {
-        s64 pts = ((s64)pts_hi << 32) | (u32)pts_lo;
         if (pts < 0) {
             /* negative PTS: skip min/max update */
         } else {
@@ -683,10 +681,10 @@ int sfmps_CopyAudio(void* self, s32 stream_kind, s32 buf, s32 size, s32 pts_hi, 
         }
     }
 
-    return sfmps_CopyDstBuft(self, *(s32*)((u8*)self + 0x2034), buf, size, pts_hi, pts_lo);
+    return sfmps_CopyDstBuft(self, *(s32*)((u8*)self + 0x2034), buf, size, pts);
 }
 
-int sfmps_CopyVideo(void* self, s32 stream_kind, s32 buf, s32 size, s32 pts_hi, s32 pts_lo) {
+int sfmps_CopyVideo(void* self, s32 stream_kind, s32 buf, s32 size, s64 pts) {
     void* mps_sub;
     s32 split_val;
 
@@ -750,7 +748,7 @@ int sfmps_CopyVideo(void* self, s32 stream_kind, s32 buf, s32 size, s32 pts_hi, 
     if (*(s32*)((u8*)mps_sub + 0x34) != stream_kind)
         return 1;
 
-    return sfmps_CopyDstBuft(self, *(s32*)((u8*)self + 0x2030), buf, size, pts_hi, pts_lo);
+    return sfmps_CopyDstBuft(self, *(s32*)((u8*)self + 0x2030), buf, size, pts);
 }
 
 int sfmps_CopyPrvate(void* self, s32 kind, s32 buf, s32 size) {
@@ -843,74 +841,75 @@ int sfmps_CopyPadding(void) {
     return 1;
 }
 
-int sfmps_CopyDstBuft(void* self, s32 stream_kind, s32 buf, s32 size, s32 pts_hi, s32 pts_lo) {
-    s32 ring_buf[6];
-    s32 write_pos;
-    s32 total_size;
+int sfmps_CopyDstBuft(void* self, s32 stream_kind, s32 buf, s32 size, s64 pts) {
+    s32 ring_buf[6] __attribute__((aligned(8)));
+    s32 res;
     s32 first_size;
+    s32 total_size;
     void* first_ptr;
+    void* write_ptr;
     void* second_ptr;
 
-    if (SFBUF_RingGetWrite(self, stream_kind, ring_buf))
-        return 0;
+    res = SFBUF_RingGetWrite(self, stream_kind, ring_buf);
+    if (res != 0)
+        return res;
 
-    first_size = ring_buf[1];
-    total_size = ring_buf[3];
-    write_pos = ring_buf[2];
     first_ptr = (void*)ring_buf[0];
+    first_size = ring_buf[1];
+    write_ptr = (void*)ring_buf[2];
     second_ptr = (void*)ring_buf[5];
+    total_size = ring_buf[3];
 
     if (size > first_size + total_size)
         return 0;
 
     if (stream_kind == 1) {
+        s32 pts_data[4];
         if (lbl_eu_80619BAC != NULL) {
-            s32 data[3];
-            data[0] = pts_hi;
-            data[1] = pts_lo;
+            s32 data[3] __attribute__((aligned(8)));
+            data[0] = (s32)(pts >> 32);
+            data[1] = (s32)pts;
             data[2] = size;
             if (lbl_eu_80619BAC((u8*)self + 0x1374, data) == -1)
                 return 0;
         }
 
-        if ((s64)pts_hi >= 0) {
-            if (SFPTS_IsPtsQueFull(self, stream_kind)) {
+        if (pts >= 0) {
+            s32 out;
+            if (SFPTS_IsPtsQueFull(self, stream_kind))
                 return 0;
-            } else {
-                s32 pts_data[4];
-                s32 out;
-                pts_data[0] = pts_hi;
-                pts_data[1] = pts_lo;
-                pts_data[2] = write_pos;
-                pts_data[3] = size;
-                if (SFPTS_WritePtsQue(self, stream_kind, pts_data, &out))
-                    return 0;
-            }
+            pts_data[0] = (s32)(pts >> 32);
+            pts_data[1] = (s32)pts;
+            pts_data[2] = (s32)first_ptr;
+            pts_data[3] = size;
+            res = SFPTS_WritePtsQue(self, stream_kind, pts_data, &out);
+            if (res != 0)
+                return res;
         }
     } else if (stream_kind == 2) {
         if (lbl_eu_80619BAC != NULL) {
-            s32 data[3];
-            data[0] = pts_hi;
-            data[1] = pts_lo;
+            s32 data[3] __attribute__((aligned(8)));
+            data[0] = (s32)(pts >> 32);
+            data[1] = (s32)pts;
             data[2] = size;
             if (lbl_eu_80619BAC((u8*)self + 0x1368, data) == -1)
                 return 0;
         }
     }
 
-    if (size <= write_pos) {
+    if (size <= first_size) {
         MEM_Copy(first_ptr, (void*)buf, size);
     } else {
-        MEM_Copy(first_ptr, (void*)buf, write_pos);
-        MEM_Copy(second_ptr, (void*)(buf + write_pos), size - write_pos);
+        MEM_Copy(write_ptr, (void*)buf, first_size);
+        MEM_Copy(write_ptr, (void*)(buf + first_size), size - first_size);
     }
 
-    if (SFBUF_RingAddWrite(self, stream_kind, size, second_ptr))
-        return 0;
+    res = SFBUF_RingAddWrite(self, stream_kind, size, second_ptr);
+    if (res != 0)
+        return res;
 
     return 1;
 }
-
 int sfmps_ChkSupply(void* self, s32 buf, s32 size, s32 a5) {
     void* mps_sub;
     s32 stream_idx;

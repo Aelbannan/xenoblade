@@ -456,10 +456,13 @@ void func_8048C4F8(u32 unused, u32 arg1, u32 arg2) {
     func_8048C524(arg1, &slot);
 }
 // func_8048C60C: node count of the reslist at self (sentinel walk).
+// Declare cur BEFORE end so end's vreg is born after cur's — the
+// loop-invariant end takes the higher scratch r5 (retail lwz r5,4(r3)).
 extern "C" u32 func_8048C60C(u8* self) {
     CScnItemPoolState* pool = (CScnItemPoolState*)self;
+    CScnItemPoolLink* cur;
     CScnItemPoolLink* end = pool->field_0x04;
-    CScnItemPoolLink* cur = end->field_0x00;
+    cur = end->field_0x00;
     u32 count = 0;
     while (cur != end) {
         cur = cur->field_0x00;

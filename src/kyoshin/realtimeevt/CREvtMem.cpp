@@ -171,10 +171,9 @@ extern "C" void func_80167EF8(void) {
 // ============================================================================
 extern "C" void* func_80167F6C(u32 size, u32 alignment, int useMEM1) {
     cf::CREvtMem* m = lbl_eu_80664260;
-    u32 cur = m->currentPos;
     u32 end = m->arenaEnd;
 
-    if (cur + size > end) {
+    if (m->currentPos + size > end) {
         // Doesn't fit in the arena - allocate fresh from the heap.
         if (useMEM1) {
             void* handle = getHandleMEM1__Q23mtl10MemManagerFv();
@@ -184,10 +183,10 @@ extern "C" void* func_80167F6C(u32 size, u32 alignment, int useMEM1) {
     }
 
     // Fits in the arena - round currentPos up to the alignment.
-    u32 rem = cur % alignment;
+    u32 rem = m->currentPos % alignment;
     u32 pad = 0;
     if (rem != 0) pad = alignment - rem;
-    void* result = (void*)(cur + pad);
+    void* result = (void*)(m->currentPos + pad);
     m->currentPos += size + pad;
     return result;
 }

@@ -54,7 +54,7 @@ extern "C" { // lbl_* and func_* retail names need unmangled emission
     CException* func_804DAA58(s32 code);                            // NAND error dispatcher
     bool func_804DAB80(CNRequest* self);                            // init check sub-task
     bool func_804DABBC(CNRequest* self);                            // init save sub-task
-    CNReqtaskSaveVtbl** sinit_804DAF58();                           // .ctors vtable install
+    void sinit_804DAF58();                                   // .ctors vtable install
 
     // The five targets below (definitions inherit C linkage).
     int func_804DABF8(CNRequest* req, u32 a1, u32 a2, u32 a3, u8 flag);      // init load sub-task
@@ -131,18 +131,16 @@ bool func_804DABBC(CNRequest* self) {
 // .ctors static initializer: installs the CNReqtaskSave vtable
 // (lbl_eu_8056FD68) into the task vtable pointer (lbl_eu_806659E0).
 //
-// KNOWN CEILING (MWCC_REFERENCE "b .+4 sinit barrier"): retail emits a 24-byte
-// `li r3,dest@sda21; b .+4 (scheduler barrier); lis/addi src; stw r4,0(r3); blr`
-// shape that is not reproducible from high-level C: MWCC always folds the store
-// to `stw rX,dest@sda21(r0)` and never emits the `b .+4`. This is the documented
-// readable 20-byte folded-store endpoint shared by all five monolib NAND sinits.
-// Returning p keeps &lbl_eu_806659E0 live in r3 (closest match). No assembly
-// is added per policy.
-CNReqtaskSaveVtbl** sinit_804DAF58() {
-    CNReqtaskSaveVtbl** p = &lbl_eu_806659E0;
-    CNReqtaskSaveVtbl* v = (CNReqtaskSaveVtbl*)lbl_eu_8056FD68;
-    *p = v;
-    return p;
+// Retail keeps the thunk `li r3,&lbl_eu_806659E0@sda21; b func_804DAF60`
+// as a tail call into the adjacent helper (the annotation originally merged
+// the two bodies into one 0x18 symbol).  The helper stores the vtable
+// address through r3.  `char[]` type for the vtable keeps the address
+// constant in a lis/addi pair (no sda21 dereference).
+extern "C" __declspec(noinline) void func_804DAF60(void* dest) {
+    *(void**)dest = (void*)lbl_eu_8056FD68;
+}
+extern "C" __declspec(noinline) void sinit_804DAF58() {
+    func_804DAF60(&lbl_eu_806659E0);
 }
 
 void func_804DA4E0(){}

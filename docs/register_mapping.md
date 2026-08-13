@@ -181,6 +181,203 @@ virtual-register birth order matches retail.
    every saved assignment by one register. Sometimes the fix is to *not* hoist
    a value, or to reuse a dead argument register.
 
+## Copy coalescing — when `fmr`/`mr` disappears
+
+The allocator runs a **copy-coalescing** pass (`SpillCode_CoalesceCopies`) before
+coloring. It walks every instruction, finds copy opcodes, and merges the source
+and destination webs into one when they do not interfere:
+
+| class | copy opcode | PCode opcode |
+|---|---|---|
+| GPR | `mr` (`or rD,rS,rS`) | `0x8b` |
+| FPR | `fmr` | `0x9e` |
+| VR | `vor` | `0x18e` |
+
+Rules (`SpillCode_CanCoalesce`):
+
+1. **no interference** — if the copy's source and destination overlap in any
+   live range, they stay distinct;
+2. **coalescing window** — both virtual registers must be in
+   `[CoalesceFirst, CoalesceLast]` for their class (`Registers_BeginCoalesceWindow`
+   opens it at object preallocation, `CloseCoalesceWindow` closes it after
+   lowering). Copies outside the window are never merged;
+3. the merged root is the **lower virtual-register number**, and the copy
+   instruction is deleted (it becomes a no-op).
+
+Consequence: a `float y = x; return x + y;` where `x` is still live compiles to
+`fadds f1,f1,f1` (the `fmr` is coalesced — `y` and `x` share `f1`). Only when the
+source and destination genuinely interfere does the `fmr` survive with two
+distinct FPR colors.
+
+### FPR free-slot fill (scratch)
+
+FPR scratch results fill **f0-first, ascending**, and a result reuses the lowest
+free FPR once its previous value dies. `t=a*b; u=t+c; v=u*a; return v+b;` emits:
+
+```
+fmuls f0,f1,f2   ; t -> f0
+fadds f0,f0,f3   ; u -> f0 (t dead, f0 reused)
+fmuls f0,f0,f1   ; v -> f0
+fadds f1,f0,f2   ; return -> f1
+```
+
+Every intermediate lands in `f0`; only the return moves to `f1`. A residual where
+retail and decomp differ in an FPR *destination* (`fmuls f0,…` vs `fmuls f1,…`)
+is this free-slot fill, driven by how many FPR values are simultaneously live —
+not by declaration order.
+
+### FPR member/struct copy coloring
+
+A **whole-struct** copy (`*self = *src` on a 12-byte `{x,y,z}`) is lowered to GPR
+word moves (`lwz`/`stw`), not float moves. A **member-wise** float copy
+(`float x=src->x; float y=src->y; float z=src->z; …`) uses `lfs`/`stfs` and colors
+the locals by declaration order: `x->f0, y->f1, z->f2` (scratch, low→high). The
+*store* order follows the assignment/statement order. See `MWCC_REFERENCE`
+§"3-float struct copy" for the exact load-descending/store-ascending retail shape.
+
+## Dead-register reuse vs fresh allocation
+
+`Coloring_SelectColors` does **not** allocate every saved register exactly once.
+When it claims a saved register for a node it adds that register's bit back into
+the color mask, so a later non-interfering node **reuses** the dead register
+instead of claiming a fresh one. Confirmed in the GC/1.2.5 binary at `0x4ce3ce`
+(`orl %eax, (%esp)` = `color_mask |= 1 << color`), matching the decompiled
+`Coloring.c`.
+
+Flow, per node popped off the simplify stack (reverse simplify order):
+
+1. `available = color_mask & ~neighbor_colors`
+2. if any bit set → take the **lowest** set bit (scratch first, `for color=0..31`)
+3. else → `ClaimColor` (highest free saved register), then **`color_mask |= 1<<color`**
+
+The **pop order** is set by `Coloring_SimplifyGraph` (confirmed at `0x4ce410`): it
+walks virtual registers 32..N **ascending**, pushes every node with
+`degree < available_colors` onto the stack, and puts `degree >= available_colors`
+into a "spill" list. When the graph is stuck it picks the lowest
+`spill_cost / degree` from that list, pushes it, and re-runs simplify.
+
+So the stack is **low-degree nodes first (birth order), then high-degree
+(spill) nodes on top**. `SelectColors` pops the top first, so **high-degree webs
+are colored before low-degree webs** — and a low-degree web, colored later,
+reuses a high-degree web's dead register.
+
+The reuse/fresh decision is therefore **degree-driven**, not
+declaration-order-driven:
+
+- **fresh** — the high-degree (long-lived) web claims the register first;
+- **reuse** — the low-degree (short-lived) web, colored later, reuses it.
+
+Declaration order only renumbers virtual registers, so it flips the order **only
+when both webs are in the same phase** (both low-degree). When one is high-degree
+(deferred to spill) and the other low-degree, birth order is ignored and the
+reuse is fixed — this is `AXFXChorusExpInit` (`i` reusing `j`'s r28),
+`bta_dm_inq_cmpl` (`p_buf` reusing the found-flag's r27), `btm_inq_db_reset`,
+`SFUO_Create`, `func_8003E528`, `__wudDeleteHandler`, `func_80164838`. The lever
+is to change a web's **degree** — split a long web, shorten its live range across
+a call, or add/remove a keeping-use — so it crosses the `available_colors`
+boundary, not to reorder declarations.
+
+### The dead-def-range discriminator
+
+The concrete case behind several wall functions is a **dead def**: a value
+assigned at the top and overwritten before any read (`bta_dm_inq_cmpl`'s
+`found = FALSE` → later `found = …`, zero reads between). Whether that def's
+register is reusable is decided before coloring, by `SpillCode_MarkLastUses` /
+`SpillCode_IsDeadInstruction`:
+
+- a def with no use before the next def is **removed** (DCE) when
+  `gDeleteDeadInstructions > 0`, freeing its register → the later web **reuses** it;
+- a def carrying the **dead-code-barrier** flag (`PCodeInstruction_DeadCodeBarrierMask`)
+  is **not** removed, so its register stays live across the dead-def range → the
+  later web gets a **fresh** register.
+
+Source levers that force the dead def to stay live (block the reuse):
+
+1. **`volatile`** — `volatile BOOL found = FALSE;` makes the store a barrier
+   (volatile stores cannot be DCE'd), so `found` holds its register across the
+   range;
+2. **a keeping-read** — any read of the value between the init and the overwrite
+   turns the init into a real def (it now has a use).
+
+So for a reuse-vs-fresh wall where retail keeps the register live and decomp
+reuses it, try `volatile` on the flag (or insert a read) before reaching for
+degree reshapes. Note: verified against the GC/1.2.5 source; test on Wii/1.1
+before trusting the exact volatile DCE boundary.
+
+### Multi-def web continuity (still open)
+
+Several named walls are *not* single dead-defs — they are a value defined on two
+CFG paths (`bta_dm_inq_cmpl`'s `found=1` else / `found=0` break). Retail gives it
+one continuous web (first def → last use) so it interferes with the web in
+between and the later web claims a fresh register; decomp path-splits it, freeing
+the register early for reuse.
+
+The interference is decided by `SpillCode_ConstructInterference` walking each
+block **backward**: a definition clears its register from the live set, then
+adds an edge to every value still live *after* it — so `found` interferes with
+`p_buf` **iff `found` is live at `p_buf`'s def** in that walk. That live set is
+the **post-scheduling PCode**, not the source statement order: the scheduler runs
+before coloring, so a source reorder only *indirectly* reaches the interference.
+
+Recorded negative results (2026-08): (1) a `goto`-label on the def's block does
+**not** set `block->flags_2e & 0x03`, and neither found-def block is a merge point
+in the current shape — block-barrier theory out; (2) the def/use-ordering
+conditions are **already met** by the baseline (`p_buf` def at +0x16c precedes
+`found=0` at +0x198, and `found=0` is already a genuine merge target), yet the
+reuse persists, and neither a keeping-read nor a statement reorder flips it.
+
+Conclusion: the discriminator lives **below the source**. The pipeline runs
+instruction scheduling **before** register coloring (see `scheduling.md`), so the
+interference graph is built from the **post-scheduling PCode**, not the source
+statement order. A source detail can change the PCode (and hence the interference)
+while the scheduler/peephole re-hides it into an identical asm stream — so the
+reuse-vs-fresh split on these functions is a **scheduler-driven register
+allocation** soft-cap, not directly source-steerable. Record it as such; do not
+keep hunting statement-order/block-shape levers.
+
+## Stack-slot placement
+
+When a value cannot live in a register (address taken, spilled, too large, or a
+`&x`-forced local), MWCC places it in the frame via
+`StackFrameEABI_AllocateObjectSlot` (`0x004ac4a0`), an ascending cursor allocator:
+
+```c
+alignment = StackFrameEABI_GetTypeAlignment(object->type);
+cursor   = (cursor + alignment - 1) & ~(alignment - 1);  // round up
+object->stack_offset = cursor;
+cursor  += object->type->size;
+```
+
+Rules:
+
+1. **Alignment = the type's alignment** — `char` 1, `short` 2, `int`/`float` 4,
+   `long long`/`double` 8, vectors/`aligned` 16/32. Force a slot/frame shape with
+   `__attribute__((aligned(N)))` (reference: `titleId`@sp+0x40 / `state`@sp+0x60
+   with `aligned(32)` reproduced the retail frame byte-for-byte).
+2. **Allocation order = insertion order into the addressed-objects list.**
+   `AllocateObjectSlot` runs in a loop over the compiler's addressed-local list
+   (`0x57f6c0` in GC/1.2.5), right before `FinalizeLayout`; a second loop handles
+   register objects whose `RegisterInfo` says they need a home. Objects enter the
+   list in **codegen order** (incoming params → locals → temporaries → spills),
+   so it is **not** first-use and **not** spill-cost order. The practical lever
+   is declaration order of the **locals**, changed one variable at a time
+   (`char buf2[64]; char buf1[64];` with buf2 FIRST flips `branch1→sp+8` /
+   `branch2→sp+0x48`).
+3. **Direction — first-declared lands at the higher frame offset** for same-size
+   locals (`int x,y,z;` → `x@sp+0x10`, `y@sp+0x0c`, `z@sp+0x08`), mirroring the
+   saved-register rule (first → highest). Mixed sizes interleave alignment
+   padding, so the offset sequence is declaration-order only after each object's
+   alignment is applied.
+4. **Slot reuse** — a single reused local (`VEC3 tmp` across several calls) keeps
+   **one** slot; declaring separate locals for each use balloons the frame
+   (+0x20 or more) and shifts every later slot.
+5. **Frame size** is the sum of the bands, aligned: linkage area (back chain + LR
+   save, 8 bytes) → vector-save → GPR-save (`r14–r31`) → FPR-save (`f14–f31`) →
+   local-object area → outgoing-argument area → padding
+   (`StackFrameEABI_FinalizeLayout`, `0x004ac240`). A wrong `stwu r1,-0xN` means
+   the **spill count or callee-save set** differs — reduce live ranges or split
+   helpers, do not pad the frame by hand.
+
 ## Not a register-mapping problem (different levers)
 
 These produce *different instructions*, not just different colors, and the
@@ -247,7 +444,14 @@ Watch the `reg_swap` and `structural` counts:
 - **Direction rules (confirmed, Wii/1.1 probes):** `locals_orderA/B`,
   `locals_six`, `params_four`, `regmap_fpr`, `regmap_mixed` — saved locals
   first→r31/f31 (descending), params first→lowest (ascending), scratch low-first.
-- **Cross-version boundary:** `mwcc-decomp` is GC/1.2.5 only; the register
-  *mapping* is identical to Wii/1.1, but instruction selection / prologue /
-  scheduling differ (see the "not a register-mapping problem" table). Do not
-  transplant GC/1.2.5 byte-level expectations to Wii/1.1.
+- **Cross-version boundary:** `mwcc-decomp` is GC/1.2.5 only. The allocator
+  *mechanism* (`FindFree`/`ColorMask`/`SelectColors`/`SimplifyGraph`, incl. the
+  `color_mask |= 1<<color` reuse and the degree-threshold simplify) is **verified
+  in the GC/1.2.5 binary**, not in Wii/1.1. The Wii/1.1 allocator functions could
+  not be located by byte-pattern (different host compiler), so "the mechanism is
+  the same in Wii/1.1" is **inferred**, not read: it rests on the shared data
+  model (field offsets `+0xe`/`+0x2a`/`+0x2` present), the shared register-class
+  ceilings (`0xc`/`0xd`/`0x13`), the shared `shl cl` bit idioms, and the matching
+  empirical behavior (probes + the dead-register-reuse wall functions). Treat the
+  direction rules as Wii/1.1-verified; treat the mechanism as GC/1.2.5-verified,
+  Wii/1.1-inferred.

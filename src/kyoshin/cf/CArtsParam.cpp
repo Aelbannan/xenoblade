@@ -82,6 +82,11 @@ u8 CArtsParam::CArtsParam_UnkVirtualFunc2(){
 }
 
 extern "C" int func_8015403C(int x) {
+    // Range check: returns 2 when (unsigned)(x-4) <= 5, else 1.
+    // Retail keeps two separate li/blr blocks behind `bc 4,1`; MWCC folds
+    // every constant-output form of this test to branchless arithmetic
+    // (MWCC_REFERENCE CArtsParam func_8015403C ceiling) — this default +
+    // conditional-assign form is the closest (14.3%) and semantically exact.
     int ret = 2;
     if ((unsigned)(x - 4) > 5) {
         ret = 1;

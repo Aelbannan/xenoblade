@@ -370,7 +370,8 @@ void CalcViewImpl(ScnRoot& self) {
     nw4r::math::MTX34 mtx;
     Camera camera(&self.mCamera[self.mCurrentCameraID]);
 
-    Camera(camera).GetCameraMtx(&mtx);
+    Camera tmp = camera;
+    tmp.GetCameraMtx(&mtx);
 
     self.G3dProc(nw4r::g3d::G3dObj::G3DPROC_CALC_VIEW, 0, &mtx);
 }

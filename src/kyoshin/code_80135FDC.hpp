@@ -12,6 +12,8 @@
 #include <nw4r/math/math_types.h>
 #include <nw4r/ut/ut_Font.h>
 
+#include "monolib/math/CMat34.hpp"
+
 class CScn;
 
 // All definitions in code_80135FDC.cpp are C-linkage (extern "C"), so the
@@ -77,6 +79,25 @@ void func_80139A18(void*, void*, void*, void*);
 }
 extern "C" int func_8013BE50();
 extern "C" u8 code80135FDC_getByte_64077();
+
+// Frame object returned by func_8049626C as consumed by func_80137038: the
+// view matrix lives at +0xCC (3x4) and the projection matrix at +0x194.
+// Struct assignment of the matrix member makes MWCC emit the retail lwz/stw
+// pair copy inline (a u32 loop would degrade to sequential loads/stores).
+struct CViewFrame37038 {
+    /* 0x000 */ u8 pad00[0xCC];
+    /* 0x0CC */ nw4r::math::MTX34 mtx;
+    /* 0x0FC */ u8 padFC[0x98];
+    /* 0x194 */ f32 projection[4][4];
+};
+
+// BDAT filename pointer tables copied to the stack by func_8013ACFC. Retail
+// copies them with inline mtctr/lwzu/stwu 8-byte loops; struct assignment is
+// the only source shape that makes MWCC emit those loops (memcpy would emit
+// bl memcpy).
+struct XBMapTable1 { u32 w[35]; };   // 140 B -> 17x8 loop + tail word
+struct XBMapTable2 { u32 w[31]; };   // 124 B -> 15x8 loop + tail word
+struct XBMapTable3 { u32 w[34]; };   // 136 B -> 17x8 loop, no tail
 #ifndef CODE_80135FDC_CPP
 extern "C" u8 func_801392B4(u32);
 #endif
@@ -97,7 +118,6 @@ extern void Set__Q34nw4r3lyt12AnimResourceFPCv(void*, const void*);
 extern void PSVECNormalize(const Vec*, Vec*);
 extern void* getCurrentView__5CViewFv();
 extern void* func_8049626C(void*, void*);
-extern u32 identity__Q22ml6CMat34;
 extern void SetFont__Q34nw4r3lyt7TextBoxFPCQ34nw4r2ut4Font(nw4r::lyt::TextBox*, const nw4r::ut::Font*);
 extern void func_8006A234(u16*, u16*);
 extern int func_8006A6D0();

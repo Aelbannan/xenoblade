@@ -521,9 +521,9 @@ u32 ADXB_GetStat(void* self) { return *(u32*)((u8*)self + 0x4); }
 void ADXB_EntryData(void* self, void* data, int size) {
     if (*(s16*)((u8*)self + 0x98) == 0) {
         *(void**)((u8*)self + 0x48) = data;
+        *(u32*)((u8*)self + 0x74) = 0;
         {
             int ch = (s8)*(u8*)((u8*)self + 0x0F);
-            *(u32*)((u8*)self + 0x74) = 0;
             *(u32*)((u8*)self + 0x4C) = size / ch;
         }
     } else {

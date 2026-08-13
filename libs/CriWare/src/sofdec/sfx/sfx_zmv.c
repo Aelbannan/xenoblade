@@ -19,7 +19,7 @@ void* SFXZ_Create(void) {
     s32 cnt = *(s32*)(base + 8);
     s32 i;
     for (i = 0; i < cnt; i++) {
-        if (*(u32*)p != 0)
+        if (*(u32*)p == 0)
             goto found;
         p += 0x4C;
     }

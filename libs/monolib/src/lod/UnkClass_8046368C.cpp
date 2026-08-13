@@ -448,28 +448,26 @@ void func_80463F8C(f32 a, f32 b, f32 c) {
 // ===========================================================================
 extern "C" s32 func_80463FF8__Q23LOD17UnkClass_8046368CFv(const LodRangeObj* obj) {
     if (obj->mode & 0x2) {
-        s32 a = (s32)obj->start * 60;
-        s32 b = (s32)obj->end * 60;
         s32 lim;
-        if (a <= b) {
+        if ((s32)obj->start * 60 <= (s32)obj->end * 60) {
             goto ordered;
         }
 
         lim = lbl_eu_806657B8;
-        if (a <= lim) {
+        if ((s32)obj->start * 60 <= lim) {
             return 1;
         }
-        if (b < lim) {
+        if ((s32)obj->end * 60 < lim) {
             goto return_zero;
         }
         return 1;
 
 ordered:
         lim = lbl_eu_806657B8;
-        if (a > lim) {
+        if ((s32)obj->start * 60 > lim) {
             goto return_zero;
         }
-        if (b < lim) {
+        if ((s32)obj->end * 60 < lim) {
             goto return_zero;
         }
         return 1;

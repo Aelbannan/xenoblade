@@ -240,7 +240,7 @@ extern "C" void func_80253970(CCollepedia* this_, LayoutContainer* container, in
     sprintf(buf, &lbl_eu_8050C6E8[0x14f], arg3 + 1);
     nw4r::lyt::Pane* pane1 = (*(nw4r::lyt::Pane**)((u8*)container->mpLayout + 0x10))->FindPaneByName(buf, true);
     nw4r::lyt::Pane* pane2 = (*(nw4r::lyt::Pane**)((u8*)container->mpLayout + 0x10))->FindPaneByName(&lbl_eu_8050C6E8[0x15c], true);
-    func_80137924(this_, pane1, pane2, *(nw4r::lyt::Pane**)((u8*)container->mpLayout + 0x10));
+    func_80137924((nw4r::math::VEC3*)this_, pane1, pane2, *(nw4r::lyt::Pane**)((u8*)container->mpLayout + 0x10));
 }
 #pragma pop
 
@@ -489,8 +489,8 @@ extern "C" void* __dt__11CCollepediaFv(CCollepedia* self, int flag) {
         __dt__7CSysWinFv((u8*)self + 0x9C, -1);
         __dt__6CCur18Fv((u8*)self + 0x84, -1);
         __dt__6CCur07Fv((u8*)self + 0x54, -1);
-        __dt__17UnkClass_8045F564Fv((u8*)self + 0x14, -1);
-        __dt__17UnkClass_8045F564Fv((u8*)self + 0x04, -1);
+        __dt__17UnkClass_8045F564Fv((UnkClass_8045F564*)((u8*)self + 0x14), -1);
+        __dt__17UnkClass_8045F564Fv((UnkClass_8045F564*)((u8*)self + 0x04), -1);
         if (flag > 0) {
             __dl__FPv((u8*)self);
         }
@@ -941,7 +941,7 @@ void func_802559DC(CCollepedia* this_) {
 
     char* str = (char*)func_80136190(&strTab[0xA2], &strTab[0xAE], 0x12);
     func_8022B9B4(&this_->field_9C, str, 0);
-    func_8022BFC8(&this_->field_9C, 1);
+    func_8022BFC8((CSysWin*)&this_->field_9C, 1);
     func_8022B8B8(&this_->field_9C);
 
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
@@ -991,7 +991,7 @@ void func_80255B60(CCollepedia* this_) {
 
     char* str = (char*)func_80136190(&strTab[0xA2], &strTab[0xAE], 0x13);
     func_8022B9B4(&this_->field_9C, str, 0);
-    func_8022BFC8(&this_->field_9C, 1);
+    func_8022BFC8((CSysWin*)&this_->field_9C, 1);
     func_8022B8B8(&this_->field_9C);
 
     func_8013B428__FUl(0x85);

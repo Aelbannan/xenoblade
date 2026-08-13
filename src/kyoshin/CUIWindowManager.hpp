@@ -5,7 +5,53 @@
 #include "monolib/work/CTTask.hpp"
 
 class IUIWindow;
+class IUIWindowSubView; // timer view behind IUIWindow::unk5C (defined in CUIWindowManager.cpp)
 class CTalkWindow;
+
+// 0xC8-byte flag buffer (retail BSS at lbl_eu_80573C50): a build/active flag,
+// per-table byte flags, and the quest/mission slot ids consumed by the
+// flag-buffer helpers func_8013F3F0 / func_80140AFC in this unit.
+struct CFlagBuffer {
+    u8  field_0x00;              //0x00 - bit0: active/build flag
+    u8  field_0x01[3];           //0x01-0x03
+    u32 field_0x04;              //0x04 - accepted flag-memory result
+    u8  field_0x08;              //0x08
+    u8  field_0x09;              //0x09 - window-open guard
+    u8  field_0x0A[0x52 - 0x0A]; //0x0A-0x51
+    u16 field_0x52;              //0x52 - quest id
+    u16 field_0x54;              //0x54
+    u16 field_0x56;              //0x56
+    u16 field_0x58;              //0x58 - slot 1 id
+    u16 field_0x5A;              //0x5A - slot 2 id
+    u16 field_0x5C;              //0x5C - slot 3 id
+    u16 field_0x5E;              //0x5E - slot 3 gate value
+    u16 field_0x60;              //0x60 - slot 4 bdat row index
+    u16 field_0x62;              //0x62 - slot 5 bdat row index
+    u16 field_0x64;              //0x64 - slot 6 id
+    u8  field_0x66;              //0x66 - slot 6 expected flag-memory byte
+    u8  field_0x67[0xC8 - 0x67]; //0x67-0xC7
+};
+
+// Item-availability query row (0x2A bytes), indexed by arg1 in func_80140854.
+struct CItemQueryRow {
+    u8  field_0x00;      //+0x00
+    u8  field_0x01;      //+0x01 - nonzero enables the flag-table lookup
+    u16 field_0x02[4];   //+0x02 - per-arg2 entry type
+    u16 field_0x0A[4];   //+0x0A - per-arg2 value
+    u8  field_0x12[24];  //+0x12 - per-arg2 byte
+}; //size 0x2A
+
+// Item-availability query table (retail func_80140854): two per-item rows at
+// 0x6E/0x98 and a signed byte table behind field_0xC4.
+struct CItemQuery {
+    u8  field_0x00;               //0x00 - bit0: active flag
+    u8  field_0x01[3];            //0x01-0x03
+    u32 field_0x04;               //0x04 - item id
+    u8  field_0x08[0x6E - 0x08];  //0x08-0x6D
+    CItemQueryRow field_0x6E[2];  //0x6E,0x98 - per-item rows
+    u8  field_0xC2[2];            //0xC2-0xC3
+    u8* field_0xC4;               //0xC4 - per-item byte table
+};
 
 // Retail-unmangled window-factory imports (owning TUs: CCol6System /
 // CSysWinSave / CMenuItemExchange / CMenuKizunaTalk / CSysWinBuff). Each
@@ -64,8 +110,23 @@ IUIWindow* func_80142B4C(CProcess* self, CScn* pScene, int r5, int r6, int r7,
 u8 func_801361E8(u32 entry, const char* text, u32 row);
 
 // Flag-buffer helpers (owning TU: this unit).
-int func_8013F3F0(u8* flagBuf);
+u8* func_80140AFC(u32 target);
+void func_8013D26C(int mode);
+int func_80140854(CItemQuery* self, u32 arg1, u32 arg2);
+int func_8013F3F0(CFlagBuffer* flagBuf);
 void func_8013FFF8(void* flagBuf, void* entry, u32 value);
+
+// C-ABI imports used by the window-manager ctor and the flag-buffer helpers
+// (owning TUs: CScn / CCol6System / CQuestWindow / CMenuGetItemMulti /
+// CTalkWindow / code_8003B148 family). C linkage so call relocs bind to the
+// literal retail names.
+mtl::ALLOC_HANDLE func_80496004(CScn* scene);
+void func_8015D0B8();
+void func_80122460();
+void func_801B29E0();
+void func_8012BDD0();
+u32 func_8009CF8C(u32 resourceId);
+u32 func_80158068(u16 value);
 }
 
 // Global data used by func_801412D0 (retail BSS/rodata in other splits).
@@ -76,6 +137,11 @@ extern const u8 lbl_804FC1D0[0x70];  // per-table base offsets (rodata)
 // Shared rodata string blobs (other splits).
 extern char lbl_eu_8050097C[];  // quest window text (func_801361E8 source)
 extern char lbl_eu_80500A50[];  // bdat column-name blob (getBdatStringColumnValue)
+
+// bdat pointer used by the flag-buffer column reads (.sdata, other split).
+extern u8* lbl_eu_80664098;
+// rodata flag table (other split), byte-offset indexed by func_80140854.
+extern u8 lbl_804FC260[];
 
 class CUIWindowManager : public CTTask<CUIWindowManager>, public cf::IFlagEvent{
 public:
@@ -108,7 +174,7 @@ public:
 
 private:
     static CUIWindowManager* spInstance;
-    CUIWindowManager();
+    CUIWindowManager(CScn* pScene);
     virtual ~CUIWindowManager();
     void Init();
 

@@ -537,15 +537,20 @@ void* func_804DFA08(u32 size, s32 count) {
 void func_804DFA84(){}
 
 // Release a schedule item by handle (idempotent for invalid handles).
+// Retail duplicates the `handle < 0` guard (two blt to the same exit - the
+// dead-branch CSE family, reproducible under GC/3.0a5.2 with three separate
+// goto guards; Wii/1.1 merges them).
 extern "C" void func_804DFB88(s16 handle) {
-    if (handle < 0 || lbl_eu_80661718.count <= handle) {
-        return;
-    }
+    if (handle < 0) goto end;
+    if (handle < 0) goto end;
+    if (lbl_eu_80661718.count <= handle) goto end;
     lbl_eu_80661718.lastHandle = handle;
     func_804E3E2C(&lbl_eu_80661718.base[handle]);
     if (lbl_eu_80661718.freeCount > 0) {
         lbl_eu_80661718.freeCount--;
     }
+end:
+    return;
 }
 
 // Look up a schedule item by handle; returns NULL for invalid handles.

@@ -389,10 +389,12 @@ extern "C" void func_80180E60(CREvtModelMap* self)
     *pId = -1;
 
     if (func_8016BDA8(self, pId)) {
-        // The w0/w1/w2 locals with the store order +0x0C, +0x08, +0x10
-        // reproduce retail's lwzu load schedule (see CREvtModelPc).
-        u32* src = (u32*)lbl_eu_80531D38;
+        // w1/w2/w0 locals DECLARED BEFORE the src pointer: the w-locals' VRs
+        // are born first, so the allocator colors w0->r3 and src->r4 like
+        // retail (src-first declaration swaps the colors — 5 reg_swap). The
+        // store order +0x0C, +0x08, +0x10 reproduces retail's lwzu schedule.
         u32 w1, w2, w0;
+        u32* src = (u32*)lbl_eu_80531D38;
         w0 = *src++;
         w1 = *src++;
         self->mCallback[1] = w1;
@@ -780,13 +782,13 @@ extern "C" void func_801818BC(CREvtModelMap* self, int visible)
         }
 
         if (getGlobalSda()) {
-            *(u8*)((u8*)getGlobalSda() + 0xA8) = (u8)visible;
+            *(u8*)((u8*)getGlobalSda() + 0xA8) = visible;
         }
 
         // Mirror the flag into the device-file task state byte
         // (lbl_eu_80663E14 + 0x78 -> +0x28).
         u8* taskState = (u8*)(*(void**)((u8*)lbl_eu_80663E14 + 0x78));
-        taskState[0x28] = (u8)visible;
+        taskState[0x28] = visible;
     } else if (self->mEmoteModel) {
         // virtual call on the emote model at vtable+0xB4 - real dispatch
         ((CEmoteModelIf*)self->mEmoteModel)->vB4(func_80180960());

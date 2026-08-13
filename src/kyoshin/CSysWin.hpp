@@ -115,6 +115,7 @@ extern "C" void func_8022BFC8(CSysWin* self, u8 kind);
 class CSysWin {
 public:
     bool OnFileEvent(CEventFile* pEventFile);
+    ~CSysWin();
 
     void* mVtbl;                      // +0x00 - lbl_eu_80536510 (set by __ct__CSysWin)
     UnkClass_8045F564 mMemRegion;     // +0x04 - scratch region for layout build

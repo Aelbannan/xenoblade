@@ -6,7 +6,9 @@ extern int MPVERR_SetCode(void*, int);
 /* Sofdec MPV handle fields accessed by the MPV_Get* accessors. */
 typedef struct MpfGetHd {
     u8 _00[0xB58];
-    u32 picAtr[32];   /* 0xB58 */
+    u8  picAtrBytes[0x80];   /* 0xB58 - kept as bytes so the copy loop is not
+                           seen as a u32 array copy (retail loop is a
+                           counted mtctr/bdnz 1x copy, not unrolled) */
     u8 _B58end[0xC48 - 0xBD8];
     u32 bitRate;      /* 0xC48 */
     u32 vbvBufSiz;    /* 0xC4C */
@@ -16,24 +18,32 @@ typedef struct MpfGetHd {
 } MpfGetHd;
 
 /* Copy picture attributes from handle to output buffer */
+#pragma push
+#pragma optimize_for_size on
 int MPV_GetPicAtr(void *handle, u32 *out) {
     if (MPVLIB_CheckHn(handle)) {
         return MPVERR_SetCode(NULL, 0xFF03020C);
     }
 
+    // Retail loop is a counted mtctr/bdnz 1x loop: the `for (n = 16; n != 0;
+    // n--)` form + whole-function #pragma optimize_for_size on (plain -O4,p
+    // unrolls 8x; the do-while form emits addic./bne; a mid-function pragma
+    // does not suppress the unroll). 0 structural, 8 pure reg_swap - the
+    // witness rejects the ABI rho (out->r31 vs retail handle->r31).
     {
-        u32 *s = (u32 *)((u8 *)handle + 0xB58);
         u32 *d = out - 1;
-        u32 n = 16;
-        do {
+        u32 *s = (u32 *)((u8 *)handle + 0xB58);
+        u32 n;
+        for (n = 16; n != 0; n--) {
             u32 v0 = *(s + 1);
             u32 v1 = *(s += 2);
             *(d + 1) = v0;
             *(d += 2) = v1;
-        } while (--n != 0);
+        }
     }
     return 0;
 }
+#pragma pop
 
 /* Get bitrate from handle */
 int MPV_GetBitRate(void* handle, u32* out) {
@@ -75,7 +85,7 @@ int MPV_GetLinkFlg(void *handle, u32 *out_prev, u32 *out_next) {
     if (MPVLIB_CheckHn(h)) {
         return MPVERR_SetCode(NULL, 0xFF03020E);
     }
-    *out_next = *(u32 *)(h + 0xC58);
     *out_prev = *(u32 *)(h + 0xC54);
+    *out_next = *(u32 *)(h + 0xC58);
     return 0;
 }

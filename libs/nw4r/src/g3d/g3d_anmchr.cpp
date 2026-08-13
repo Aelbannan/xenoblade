@@ -70,7 +70,7 @@ const char* AnmObjChrNode::GetTypeName() const {
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjChrBlend")> lbl_eu_8051D5E4 = {sizeof("AnmObjChrBlend"), "AnmObjChrBlend"};
 
 bool AnmObjChrBlend::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (other == TypeObj(lbl_eu_8051D5E4)) {
+    if (TypeObj(lbl_eu_8051D5E4) == other) {
         return true;
     }
     return AnmObjChrNode::IsDerivedFrom(other);

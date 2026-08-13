@@ -296,12 +296,10 @@ extern "C" CfGimmickJump* __ct__cf_CfGimmickJump(CfGimmickJump* self,
 }
 
 CfGimmickJump::~CfGimmickJump() {
-    if (this != 0) {
-        *(void**)this = lbl_eu_80535A18;
-        func_80208EE4(this);
-        func_8020A434(&effect);
-        __dt__Q22cf9CfGimmickFv(this, 0);
-    }
+    *(void**)this = lbl_eu_80535A18;
+    func_80208EE4(this);
+    func_8020A434(&effect);
+    __dt__Q22cf9CfGimmickFv(this, 0);
 }
 
 extern "C" void func_8020F38C(CfGimmickJump* self) {

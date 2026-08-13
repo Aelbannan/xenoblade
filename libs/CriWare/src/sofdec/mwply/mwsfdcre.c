@@ -338,10 +338,13 @@ void mwsfcre_AttachPicUsrBuf(MWSFDPLY* self) {
     if (tgt == NULL) {
         MWSFSVM_Error(lbl_eu_8051A3CC + 0x25F);
     } else {
+        void* buf;
+        s32 count;
+        s32 size;
         s32 h = self->field_0x18;
-        s32 count = *(s32*)((u8*)tgt + 0x08);
-        s32 size = *(s32*)((u8*)tgt + 0x04);
-        void* buf = *(void**)((u8*)tgt + 0x00);
+        count = *(s32*)((u8*)tgt + 0x08);
+        size = *(s32*)((u8*)tgt + 0x04);
+        buf = *(void**)((u8*)tgt + 0x00);
         if (size < (h + 3) * count) {
             MWSFSVM_Error(lbl_eu_8051A3CC + 0x294);
         } else if (MWSFD_GetUsePicUsr() == 1) {

@@ -785,6 +785,10 @@ void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc14() {
 // Retail symbol is Fv and the body genuinely returns int (1, or the CtrlNpc
 // action-advance query result). The header declares the vtable slot with the
 // int return so the member definition carries the real signature.
+// Retail load-hoists the first member load (lwz r3,0x6c0(r3)) above the LR
+// save (stw r0,0x14(r1)) — documented plateau (MWCC_REFERENCE CDeviceFont
+// section: not reproducible by any MWCC version). Best shape: result-phi +
+// #pragma scheduling off (85.7%, 2 structural).
 #pragma scheduling off
 int cf::CfObjectMove::CfObjectMove_UnkVirtualFunc9() {
     cf::CtrlNpc* target = (cf::CtrlNpc*)mTarget6C0;

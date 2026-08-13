@@ -21,7 +21,10 @@ void func_800CAB00(CfObjectImplMoveObj* self) {
     if (id == 0) {
         return;
     }
-    void* src = self ? &self->field_0x0C : nullptr;
+    void* src = self;
+    if (self != 0) {
+        src = &self->field_0x0C;
+    }
     func_80482AB8(id, src);
 }
 

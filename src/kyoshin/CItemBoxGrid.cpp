@@ -471,8 +471,7 @@ u32 func_801C5E5C(void* self) {
     u8* p = (u8*)self;
     u32 val = func_80157C20(p[0x2802]);
     float f = (float)(s32)val;
-    float f50 = lbl_eu_80667F50;
-    if (f >= f50) return 10;
+    if (f >= lbl_eu_80667F50) return 10;
     float div = f / lbl_eu_80667F30;
     s32 result = (s32)div;
     float frac = div - (float)result;
@@ -1974,7 +1973,7 @@ void func_801CB4E4(void* self) {
     if (p[0x528]) return;
     u8 idx = p[0x6f] + 1;
     p[0x6f] = idx;
-    if ((s8)idx >= (s8)p[0x6e]) {
+    if ((s8)idx >= p[0x6e]) {
         p[0x6f] = 0;
     }
     func_801D05D4(self, 0);

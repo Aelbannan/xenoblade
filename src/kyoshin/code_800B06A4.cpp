@@ -13,7 +13,7 @@ void UnkClass_800B0AD8::clearCounters() {
     unkB00 = 0;
     unkAFC = 0;
 }
-__declspec(noinline) UnkClass_805764CC* func_800B07E8();
+DECOMP_DONT_INLINE UnkClass_805764CC* func_800B07E8();
 #pragma inline
 u32 func_800AA2BC(u32 a, u32 b);
 extern "C" void func_80193810(unsigned long a, void* b);
@@ -118,7 +118,7 @@ void __ct__reslist_cf_CfObject(void* self) {
     obj->mVtable = (void*)lbl_eu_805290E8;
 }
 // Target 3: us-800b186c - func_800B0FA0
-extern "C" __declspec(noinline) void func_800B0FA0(UnkClass_805764CC* self) {
+extern "C" DECOMP_DONT_INLINE void func_800B0FA0(UnkClass_805764CC* self) {
     if (func_800B0FEC(&self->field_0xC80) == 0) {
         func_800B0FF4(&self->field_0xC80, func_80061FFC(), 4);
     }
@@ -167,7 +167,7 @@ void func_800B94D4(cf::CfObject* obj) {
 }
 
 // Target 2: func_800B1A5C
-extern "C" __declspec(noinline) void func_800B1A5C(void* list) {
+extern "C" DECOMP_DONT_INLINE void func_800B1A5C(void* list) {
     u32 sentinel, cur, next, zero;
     u32* p;
     sentinel = *(u32*)((u32*)list + 1);
@@ -224,7 +224,7 @@ extern "C" void func_800B1BBC(void* self) {
     func_800B1C24(8, self);
 }
 // func_800B1C00: bit 6 of the global flag word (retail: lwz r0,lbl_eu_80663EE0; extrwi r3,r0,1,25 = (x>>6)&1)
-extern "C" __declspec(noinline) u32 func_800B1C00(){ extern u32 lbl_eu_80663EE0; return (lbl_eu_80663EE0 >> 6) & 1; }
+extern "C" DECOMP_DONT_INLINE u32 func_800B1C00(){ extern u32 lbl_eu_80663EE0; return (lbl_eu_80663EE0 >> 6) & 1; }
 void init_1C0C(){}
 void init_1C24(){}
 s32 func_800B1C40() {
@@ -296,9 +296,9 @@ extern "C" void func_800B2E38(void** out, void* list, void* templ, void* data) {
     u32 byteOff = 0;
 
     // Find first empty slot (entry[0] == 0)
+    u32* base = (u32*)entryBase;
     for (; idx < count; idx++) {
-        u32* entry = (u32*)(entryBase + byteOff);
-        if (entry[0] == 0) {
+        if (base[byteOff / 4] == 0) {
             break;
         }
         byteOff += 0xC;
@@ -431,7 +431,7 @@ void init_42E8(){}
 // find entries where data->field_0x94 == 2, and if name is NULL or
 // strcmp(name, data->field_0x120) == 0, call func_800B3A88(self, data).
 // The list has sentinel at *(self+0xBCC), nodes are [0]=next, [8]=data_ptr.
-extern "C" __declspec(noinline) void func_800B4368(UnkClass_805764CC* self, const char* name) {
+extern "C" DECOMP_DONT_INLINE void func_800B4368(UnkClass_805764CC* self, const char* name) {
     u8* sentinel = *(u8**)((u8*)self + 0xBCC);
     u8* cur = *(u8**)sentinel;
 
@@ -585,7 +585,7 @@ void init_66BC(){}
 // Target 3: us-800b70c8 - Return 1 if byte at offset 2 is in [1, 24].
 // (retail codegen: lbz; li r3,0; cmplwi r0,1; bltlr; cmplwi r0,24; bgtlr; li r3,1; blr —
 //  matches under GC/3.0a5.2; Wii/1.1 folds the range into (u8)(val-1)<=23)
-extern "C" __declspec(noinline) int func_800B67CC(void* self) {
+extern "C" DECOMP_DONT_INLINE int func_800B67CC(void* self) {
     u8 val = *(u8*)((u8*)self + 2);
     int result = 0;
     if (val >= 1) {
@@ -653,15 +653,13 @@ extern "C" u16 func_800B75BC(){extern u16 lbl_eu_80663E44; return lbl_eu_80663E4
 void init_75EC(){}
 
 // Target 5: us-800b7f9c - Count nodes in a circular linked list.
-// Open item: reslist count loop. Retail assigns head=r5/cur=r4; MWCC always
-// assigns head=r4/cur=r5 (4 pure reg_swap). Witness rejects the r4<->r5
-// renaming at the ABI boundary (gpr r4 -> r5, ABI registers must be fixed) —
-// same documented class as MWCC_REFERENCE array-push func_800B5978, but no
-// source shape (8 tried: while/do-while/for, typed nodes, void**, decl
-// orders) flips the allocation; -O4,p/-O4,s and both mw_versions identical.
+// Retail assigns head=r5/cur=r4. Winning shape: declare cur BEFORE head
+// (uninitialized) so head's vreg is born after cur's, giving head the
+// higher register r5 (retail lwz r5,4(r3); lwz r4,0(r5); cmpl r4,r5).
 extern "C" int func_800B7680(void* self) {
+    void* cur;
     void* head = *(void**)((u8*)self + 4);
-    void* cur = *(void**)head;
+    cur = *(void**)head;
     int count = 0;
     while (cur != head) { cur = *(void**)cur; count++; }
     return count;
@@ -750,7 +748,7 @@ extern "C" {
     extern int func_800B64AC(void* p);
 }
 // Target: us-800b10b4 - func_800B07E8 (singleton sinit: init once, then return &singleton)
-__declspec(noinline) UnkClass_805764CC* func_800B07E8() {
+DECOMP_DONT_INLINE UnkClass_805764CC* func_800B07E8() {
     if (lbl_eu_80663EE8 == 0) {
         __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
         __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);

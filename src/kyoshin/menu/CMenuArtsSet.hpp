@@ -14,6 +14,7 @@
 class CArtsInfo {
 public:
     u8 data[0x74];
+    ~CArtsInfo();
 };
 
 // 2D position used as source for func_80231848.
@@ -192,14 +193,21 @@ public:
     u8 field_0x31;      // 0x31
 };
 
-// Cursor/state object used by func_802327B0.
+// Cursor/state object used by func_802327B0 (and func_80232B88/80232C78,
+// which read the 0x00/0x08/0x14 pointers and the 0x20 cursor).
+class SArts3150CDriver;
 class SArts327B0 {
 public:
-    char _pad_00[0x20];
-    u8 field_0x20;
-    u8 field_0x21;
+    SArts3150CDriver* field_0x00;   // 0x00 driver (field_0x10 -> layout obj)
+    char _pad_04[0x08 - 0x04];
+    SArts080C* field_0x08;          // 0x08
+    char _pad_0C[0x14 - 0x0C];
+    SArts080C* field_0x14;          // 0x14
+    char _pad_18[0x20 - 0x18];
+    s8 field_0x20;                  // 0x20 cursor
+    u8 field_0x21;                  // 0x21
     char _pad_22[0x28 - 0x22];
-    u8* field_0x28;   // 0x28
+    u8* field_0x28;                 // 0x28
 };
 
 // Element of the 0x49-byte array indexed by func_80230FF0.
@@ -215,13 +223,14 @@ public:
 // both pointees (each read via their field_0x10).
 class SArts313E0 {
 public:
-    char _pad_00[0x08];
+    SArts3150CDriver* field_0x00;   // 0x00 driver (field_0x10 -> layout obj)
+    char _pad_04[0x08 - 0x04];
     SArts080C* field_0x08;      // 0x08
     char _pad_0C[0x14 - 0x0C];
     SArts080C* field_0x14;      // 0x14
     char _pad_18[0x20 - 0x18];
     u8 field_0x20;              // 0x20
-    u8 field_0x21;              // 0x21
+    s8 field_0x21;              // 0x21 (signed: used as an index in func_8023185C)
     char _pad_22[0x27 - 0x22];
     u8 field_0x27;              // 0x27 busy flag
 };
@@ -332,6 +341,99 @@ public:
     u8 field_0x23;                      // 0x23
     u8 field_0x24;                      // 0x24
 };
+
+// Pointee of SArts3150CDriver.field_0x10 (only used by func_80230070): a
+// method at vtable +0x3C returns the pane fed to func_80124270. MWCC
+// reserves a 2-entry vtable header, so declared index 13 emits slot 15
+// (4*15 = 0x3C).
+class SArts3CObj {
+public:
+    virtual void v0();
+    virtual void v1();
+    virtual void v2();
+    virtual void v3();
+    virtual void v4();
+    virtual void v5();
+    virtual void v6();
+    virtual void v7();
+    virtual void v8();
+    virtual void v9();
+    virtual void v10();
+    virtual void v11();
+    virtual void v12();
+    virtual void* v13(void* label, int flag); // idx 13 -> vtable +0x3C
+};
+
+// Layout driver shared by the func_802304C4 / func_80231A48 layout-pair
+// init functions: v11 at +0x2C, v14 at +0x38, and a SArts3CObj pane at
+// +0x10 (its v13 at +0x3C fetches the label pane).
+class SArts304C4Driver {
+public:
+    virtual void v0();
+    virtual void v1();
+    virtual void v2();
+    virtual void v3();
+    virtual void v4();
+    virtual void v5();
+    virtual void v6();
+    virtual void v7();
+    virtual void v8();
+    virtual void v11(void* a, int flag); // index 9 -> vtable +0x2C
+    virtual void v12();
+    virtual void v13();
+    virtual void v14(int a);             // index 12 -> vtable +0x38
+    char _pad_04[0x10 - 0x04];
+    SArts3CObj* field_0x10;              // 0x10
+};
+
+// Layout-pair object initialized by func_802304C4 / func_80231A48: an arc
+// accessor at 0x04, two layout drivers at 0x08/0x14 (each parking panes via
+// v11/v14 and exposing a SArts3CObj at +0x10), and AnimTransforms at
+// 0x0C/0x10/0x18/0x1C. Word-compatible with the SArtsSub8022FA58 /
+// SArts327B0 prefixes the tail calls cast back to.
+class SArts304C4 {
+public:
+    u32 field_0x00;
+    nw4r::lyt::ArcResourceAccessor* field_0x04; // 0x04
+    SArts304C4Driver* field_0x08;               // 0x08 layout driver 1
+    nw4r::lyt::AnimTransform* field_0x0C;       // 0x0C
+    nw4r::lyt::AnimTransform* field_0x10;       // 0x10
+    SArts304C4Driver* field_0x14;               // 0x14 layout driver 2
+    nw4r::lyt::AnimTransform* field_0x18;       // 0x18
+    nw4r::lyt::AnimTransform* field_0x1C;       // 0x1C
+    char _pad_20[0x34 - 0x20];                  // tail matches SArtsSub8022FA58
+};
+
+// Object driven by func_80230070 (view of the mSubObj124 sub-object): a
+// v11 driver at 0x08, a SArtsFloat10 at 0x0C, an AnimTransform at 0x10,
+// and 0x16/0x18 state bytes.
+class SArts30070 {
+public:
+    char _pad_00[0x08];
+    SArts3150CDriver* field_0x08;        // 0x08 driver (v11 +0x2C, field_0x10)
+    SArtsFloat10* field_0x0C;            // 0x0C
+    nw4r::lyt::AnimTransform* field_0x10; // 0x10
+    char _pad_14[0x16 - 0x14];
+    u8 field_0x16;                      // 0x16
+    u8 field_0x17;                      // 0x17
+    u8 field_0x18;                      // 0x18
+};
+
+// Twin of SArts30070 with the 0x0C/0x10 roles swapped (func_8022FF74): the
+// AnimTransform sits at 0x0C and the float object at 0x10.
+class SArts2FF74 {
+public:
+    char _pad_00[0x08];
+    SArts3150CDriver* field_0x08;        // 0x08 driver (v11 +0x2C, field_0x10)
+    nw4r::lyt::AnimTransform* field_0x0C; // 0x0C anim
+    SArtsFloat10* field_0x10;            // 0x10 float object
+    char _pad_14[0x16 - 0x14];
+    u8 field_0x16;                      // 0x16
+    u8 field_0x17;                      // 0x17
+    u8 field_0x18;                      // 0x18
+};
+
+
 
 // Layout-out driver for the mSubObj148+0x2C twin (func_80231648 /
 // func_80232AD8): a v11 driver at 0x14 (also read via field_0x10), a
@@ -515,11 +617,22 @@ public:
     virtual s32 v126(int a);   // vtable +0x1F8
     virtual void v127();
     virtual s32 v128();        // vtable +0x200
+    virtual void v129(); virtual void v130(); virtual void v131(); virtual void v132();
+    virtual void v133(); virtual void v134(); virtual void v135(); virtual void v136();
+    virtual void v137(); virtual void v138(); virtual void v139(); virtual void v140();
+    virtual void v141(); virtual void v142(); virtual void v143(); virtual void v144();
+    virtual void v145(); virtual void v146(); virtual void v147(); virtual void v148();
+    virtual void v149(); virtual void v150(); virtual void v151(); virtual void v152();
+    virtual void v153(); virtual void v154(); virtual void v155(); virtual void v156();
+    virtual void v157();   // declared index 157 -> vtable +0x27C (func_80231320)
 };
 
-// Root returned by func_8009EC9C; the manager object sits at offset 0x17C.
+// Root returned by func_8009EC9C; the manager object sits at offset 0x17C and
+// an array of 0x49-byte arts elements starts at offset 0xE8 (func_80231320).
 struct SArtsManagerRoot {
-    char _pad[0x17C];
+    char _pad[0xE8];
+    SArtsSubDElem mElemsE8[1];   // 0xE8 - arts element array (0x49-byte rows)
+    char _pad2[0x17C - (0xE8 + sizeof(SArtsSubDElem))];
     SArtsManager mObj17C;   // 0x17C
 };
 
@@ -543,6 +656,23 @@ public:
     virtual void v12();
     virtual void v13();
     virtual void v14(int a);   // index 12 -> vtable +0x38
+    char _pad_04[0x10 - 0x04];
+    SArts3CObj* field_0x10;    // 0x10 pane (read by CArtsList::OnFileEvent)
+};
+
+// View of the object returned by func_80452C10 (CDeviceFont); its vtable
+// slot +0x24 (declared index 7; MWCC reserves a 2-entry header) yields the
+// font handle pushed onto the layout root pane by func_8013676C.
+class SDevFontV {
+public:
+    virtual void v0();
+    virtual void v1();
+    virtual void v2();
+    virtual void v3();
+    virtual void v4();
+    virtual void v5();
+    virtual void v6();
+    virtual u32 v7();   // vtable +0x24
 };
 
 class CMenuArtsSet {
@@ -579,10 +709,27 @@ public:
     CSysWinFull mSubObjE8;         // 0xE8 (field_34 read by CSysWin_getUnk34)
     char _pad_11F[0x124 - 0x11F];           // 0x11F-0x123
     SArtsSub8022FA58Short mSubObj124;       // 0x124-0x147 (field_0x15 = abs 0x139)
-    SArtsSub8022FA58 mSubObj148;            // 0x148-0x17B
-    char _pad_17C[0x196 - 0x17C];           // 0x17C-0x195
-    u8 field_0x196;                         // 0x196
-    char _pad_197[0x2A6 - 0x197];           // 0x197-0x2A5
+    // 0x148: busy/armed sub-object; 0x174: arts-table cursor object. The two
+    // views overlap (mList174 aliases mSubObj148's tail bytes 0x2C-0x33 and
+    // extends to 0x2A2, where its 0x12C/0x12D/0x12E bytes alias the shared
+    // 0x2A0/0x2A1/0x2A2 flags), so they are declared as a union. Both arms
+    // span 0x148-0x2A2 (0x15B bytes). mList174 is a real member so callers
+    // re-derive addi r3, r31, 0x174 per call instead of CSE-caching it.
+    union {
+        struct {
+            SArtsSub8022FA58 mSubObj148;        // 0x148-0x17B
+            char _pad_17C[0x196 - 0x17C];       // 0x17C-0x195
+            u8 field_0x196;                     // 0x196
+            char _pad_197[0x2A1 - 0x197];       // 0x197-0x2A0
+            u8 field_0x2A1;                     // 0x2A1 (arts menu busy flag)
+            u8 field_0x2A2;                     // 0x2A2 (draw-active flag)
+        };
+        struct {
+            char _pad_148[0x2C];                // 0x148-0x173
+            SArts322BC mList174;                // 0x174-0x2A2
+        };
+    };
+    char _pad_2A3[0x2A6 - 0x2A3];           // 0x2A3-0x2A5
     u8 field_0x2A6;                         // 0x2A6
 };
 
@@ -627,21 +774,82 @@ public:
     virtual void v34();       // vtable +0x88
 };
 
+// Embedded cursor (CCur18) body inside CArtsInfo: only the tail (abs
+// 0x60-0x71) is copied by CArtsList::CArtsList's temp copy-init.
+struct SArtsCursorBody {
+    u32 field_0x00;   // abs 0x5C - not copied by the ctor
+    u32 field_0x04;   // abs 0x60
+    u32 field_0x08;   // abs 0x64
+    u32 field_0x0C;   // abs 0x68
+    u32 field_0x10;   // abs 0x6C
+    u8  field_0x14;   // abs 0x70
+    u8  field_0x15;   // abs 0x71
+    u8  _pad_16[2];
+};
+
+// Body view of CArtsInfo (everything after the vtable at +0x00), used by
+// CArtsList::CArtsList's copy-init from a stack temp: the copy starts at
+// +0x04 (skipping the vtable) and covers the 0x10-byte mem region (via
+// __ct__UnkClass_8011C974) plus the scalar fields through abs 0x71.
+struct SArtsInfoBody {
+    UnkClass_8045F564 mMemRegion;   // body+0x00 (abs 0x04)
+    int field_0x14;                 // body+0x10 (abs 0x14)
+    int field_0x18;                 // body+0x14
+    int field_0x1C;                 // body+0x18
+    void* field_0x20;               // body+0x1C
+    void* field_0x24;               // body+0x20
+    void* field_0x28;               // body+0x24
+    void* field_0x2C;               // body+0x28
+    void* field_0x30;               // body+0x2C
+    void* field_0x34;               // body+0x30
+    void* field_0x38;               // body+0x34
+    void* field_0x3C;               // body+0x38
+    u8 field_0x40;                  // body+0x3C
+    char _pad_41[3];
+    int field_0x44;                 // body+0x40
+    u8 field_0x48;                  // body+0x44
+    u8 field_0x49;                  // body+0x45
+    char _pad_4A[2];
+    int field_0x4C;                 // body+0x48
+    int field_0x50;                 // body+0x4C
+    u8 field_0x54;                  // body+0x50
+    u8 field_0x55;                  // body+0x51
+    u8 field_0x56;                  // body+0x52
+    char _pad_57;
+    u16 field_0x58;                 // body+0x54
+    s8 field_0x5A;                  // body+0x56
+    char _pad_5B;
+    SArtsCursorBody mCursor;        // body+0x58 (abs 0x5C)
+};
+
 class CArtsList {
 public:
     CArtsList();
-    virtual ~CArtsList();
-    void OnFileEvent();
+    ~CArtsList();
+    int OnFileEvent(CEventFile* pEventFile);
 
-    // vptr at 0x00 (implicit)
+    void* mVtbl;                    // 0x00 - retail vtable lbl_eu_80536908
     UnkClass_8045F564 mMemRegion;   // 0x04 (0x10 bytes)
-    u32 field_0x14;                 // 0x14  file handle
-    char _pad18[0x30 - 0x18];       // 0x18-0x2F
+    CFileHandle* field_0x14;        // 0x14  file handle
+    nw4r::lyt::ArcResourceAccessor* field_0x18;  // 0x18 arc accessor
+    SArts1C* field_0x1C;            // 0x1C layout driver
+    nw4r::lyt::AnimTransform* field_0x20;        // 0x20
+    nw4r::lyt::AnimTransform* field_0x24;        // 0x24
+    u8 field_0x28;                  // 0x28
+    char _pad_29[0x2C - 0x29];
+    s32 field_0x2C;                 // 0x2C
     u8 field_0x30;                  // 0x30
-    char _pad31[0x34 - 0x31];       // 0x31-0x33
+    u8 field_0x31;                  // 0x31
+    char _pad_32[0x34 - 0x32];
     CScrollBar mScrollBar;          // 0x34 (0x40 bytes)
     CArtsInfo mSubObj74;            // 0x74 (0x74 bytes)
-    CSysWin mSysWinE8;              // 0xE8
+    CSysWin mSysWinE8;              // 0xE8 (0x3C bytes)
+    SArtsSub8022FA58Short mSubObj124;   // 0x124 (0x24 bytes)
+    SArts3042C mSubObj148;          // 0x148 (0x2C bytes)
+    SArts319AC mSubObj174;          // 0x174 (0x130 bytes)
+    u8 field_0x2A4;                 // 0x2A4
+    u8 field_0x2A5;                 // 0x2A5
+    u8 field_0x2A6;                 // 0x2A6
 };
 
 // ---------------------------------------------------------------------------
@@ -650,6 +858,27 @@ public:
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 extern "C" void func_801F34F4(void*);
+// CArtsList vtable (.data). Declared as an array so MWCC emits lis/addi
+// (incomplete array types are not sdata-eligible).
+extern "C" void* lbl_eu_80536908[];
+// Sub-object ctor/dtor/body-copy imports for CArtsList::CArtsList's temp
+// copy-init (retail emits the unmangled names at the call sites).
+extern "C" void __ct__CScrollBar(CScrollBar* self, int arg);
+extern "C" void __dt__10CScrollBarFv(void* self, int flags);
+extern "C" void __ct__CArtsInfo(void* self);
+extern "C" void __dt__9CArtsInfoFv(void* self, int flags);
+extern "C" void __ct__CSysWin(void* self, int arg);
+extern "C" void __dt__7CSysWinFv(void* self, int flags);
+extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
+// OnFileEvent imports: mem-region resize / font / layout-text helpers
+// (retail emits the unmangled names at the call sites).
+extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
+extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool);
+extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" void func_8013676C(void*, u32);
+extern "C" void* func_801355BC();
+extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" u32 CScrollBar_isVisible(void*);
 extern "C" void func_80138078__FUl(u32);
@@ -673,11 +902,39 @@ extern "C" void func_801F3850(void* p, u32 v);
 // Layout-out animation driver (same TU, C-linkage retail name).
 extern "C" void func_8023185C(SArts313E0* self);
 
+// Same-TU cursor/state helpers (retail unmangled names; definitions below).
+extern "C" u8 func_80231014(SArtsSub8022FA58* self);
+extern "C" u8 func_80231220(SArtsSub8022FA58* self);
+extern "C" u8 func_802322BC(SArts322BC* self);
+extern "C" u8 func_802322F4(SArts322BC* self, int key);
+extern "C" u16 func_80232370(SArts322BC* self, int key);
+extern "C" void func_802324C4(SArts322BC* self, int key);
+extern "C" void func_80232B88(SArts327B0* self);
+extern "C" void func_80232C78(SArts327B0* self);
+extern "C" __declspec(noinline) int func_80234C84(SArts34C84* self);
+extern "C" __declspec(noinline) int func_80234CA0(SArts34D14* self);
+extern "C" __declspec(noinline) int func_80234D14(SArts34D14* self);
+extern "C" u8 func_80234D68(CMenuArtsSet* self);
+
 // Cross-unit CArtsInfo helpers (C-linkage, defined in CArtsInfo.cpp).
 // Declared u32 so the ==0/!=0 tests compare the raw register (no rlwinm).
 extern "C" u32 func_80235A98(CArtsInfo* self);
 extern "C" void func_80235AA0(CArtsInfo* self);
 extern "C" u32 func_80235F50(CArtsInfo* self);
+// CArtsInfo cursor-step helpers (func_80233A50 / func_80233C08 busy paths).
+extern "C" void func_80235EF0(CArtsInfo* self);
+extern "C" void func_80235F14(CArtsInfo* self);
+// CArtsInfo state-machine advance (defined in CArtsInfo.cpp; C symbol).
+extern "C" void func_80235D24(CArtsInfo* self);
+// CSysWin active/advance helpers (defined in CSysWin.cpp; C symbols).
+extern "C" int CSysWin_isActive(void* self);
+extern "C" void func_8022B8E4(void* self);
+// CArtsInfo draw (defined in CArtsInfo.cpp; C-linkage retail name).
+extern "C" void func_80235958(CArtsInfo* self, void* drawInfo);
+// CSysWin draw (defined in CSysWin.cpp; C-linkage retail name).
+extern "C" void func_8022B7C8(CSysWinFull* self, nw4r::lyt::DrawInfo* drawInfo);
+// Pane-visible check (defined in CTitleAHelp.cpp; C-linkage retail name).
+extern "C" bool func_801C4648(nw4r::lyt::Pane* pane);
 // C-linkage CSysWin state query (defined in CSysWin.cpp).
 extern "C" u32 CSysWin_getUnk34(void* self);
 // Drive/refresh helper (same TU, defined below; C-name for reloc parity).
@@ -721,6 +978,10 @@ extern "C" u8 func_801392B4(u32);
 // names (func_801390E0__FPP11CFileHandle etc.) so declare C++-linkage.
 void func_801390E0(CFileHandle** self);
 void func_80139124(nw4r::lyt::ArcResourceAccessor* self);
+// Layout/anim binding helpers (code_80135FDC.cpp). C++ linkage: MWCC mangles
+// func_80136E84/func_80136F08 to the retail names (func_80136E84__FPPQ...).
+void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 // CArtsInfo teardown (defined in CArtsInfo.cpp, C symbol).
 extern "C" void func_802359CC(CArtsInfo* self);
 // CSysWinFull teardown (defined in CSysWin.cpp, C symbol).
@@ -732,6 +993,34 @@ extern "C" void func_8022B7F4(CSysWinFull* self);
 // float places it after the stores (4-byte shift, MWCC_REFERENCE).
 extern const float lbl_eu_80668648;
 extern const float lbl_eu_8066864C;
+// .sdata2 floats for func_802316F8's 9-entry cursor position table.
+extern const float lbl_eu_80668650;
+extern const float lbl_eu_80668654;
+// .sdata2 zero float for func_80231A48's pane-translate reset (SArtsVec2).
+extern const float lbl_eu_80668658;
+
+// Word blocks copied by the arts-table cursor drivers (func_80232B88 copies
+// the 5-word lbl_eu_8050AC4C, func_802316F8 the 9-word lbl_eu_8050ABB4) via
+// MWCC's counted block-copy path (lwzu/stwu loop).
+struct SArtsB88Block {
+    u32 w[5];   // 0x14 bytes
+};
+extern const SArtsB88Block lbl_eu_8050AC4C;
+struct SArts316F8Block {
+    u32 w[9];   // 0x24 bytes
+};
+extern const SArts316F8Block lbl_eu_8050ABB4;
+// 9-word label block for the func_8023185C cursor refresh (field_0x21 twin
+// of func_802316F8's lbl_eu_8050ABB4).
+extern const SArts316F8Block lbl_eu_8050ABD8;
+
+// String-table lookup (func_80231220) and learn-arts flag-grid query
+// (func_80231220); C-linkage retail symbols.
+extern "C" u32 func_8013600C(void*, const char*, u32);
+extern "C" bool func_801F9268(unsigned char*, int, int);
+// Accumulated pane translate (func_801375A0, defined in code_80135FDC.cpp)
+// and pane translate setter (func_801D2150, defined in CSysWin.cpp).
+extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane);
 
 // Window-arm chain used by func_80234A08: build a label string pair then
 // drive the CSysWin sub-object. func_8022BFC8 is already declared in
@@ -745,3 +1034,19 @@ extern "C" void func_801F35B0(void* obj34, nw4r::lyt::DrawInfo* info);
 
 // func_80137510 is a flat C symbol (anim-frame check helper).
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+
+// CArtsInfo field setters / refresh (defined in CArtsInfo.cpp; C symbols).
+extern "C" void func_80235E84(CArtsInfo* self, u8 val);
+extern "C" void func_80235E8C(CArtsInfo* self, u8 val);
+extern "C" void func_80235E94(CArtsInfo* self, u8 val);
+extern "C" void func_80235E9C(CArtsInfo* self, u16 val);
+extern "C" void func_80235EA4(CArtsInfo* self);
+// Arts-element scan / character-data refresh (C symbols).
+extern "C" void func_80280DBC(u8* self);
+extern "C" void func_800A1370(void*);
+// BDAT string -> u16 (code_80135FDC.cpp). u32 3rd arg: retail passes the
+// raw int (no clrlwi at the call site).
+extern "C" u16 func_8013606C(const void*, const void*, u32);
+// sprintf (varargs): C declaration mirrors CArtsInfo.hpp (crclr cr1eq at
+// the call site comes from the varargs ABI).
+extern "C" int sprintf(char*, const char*, ...);

@@ -3,6 +3,8 @@
 #include <types.h>
 #include "monolib/lod/UnkClass_8046A530.hpp"
 
+struct CEventFile;  // global (retail mangles P10CEventFile)
+
 namespace LOD {
 
 /**
@@ -17,7 +19,7 @@ public:
     void func_8046F088();
     void func_80471834();
 
-    void OnFileEvent();
+    bool OnFileEvent(CEventFile* evt);
     void func_8046D264();
     void func_8046D898();
     void func_8046DA04();

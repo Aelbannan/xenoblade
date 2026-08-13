@@ -111,18 +111,26 @@ CKizunaLine::~CKizunaLine() {}
 // extern "C" + noinline keeps same-TU callers emitting an unmangled `bl
 // func_80257D90` (retail links this symbol unmangled) instead of inlining.
 extern "C" __declspec(noinline) void func_80257D90(UnkKizunaSelf57D90* self) {
+    // Retail re-tests field8 inside the guard: the duplicated condition CSEs to
+    // one cmpwi with two beq's (dead second branch — the btm_sec pattern).
     if (self->field8 != 0) {
-        self->field8->target2(1);
+        if (self->field8 != 0) {
+            self->field8->target2(1);
+        }
+        self->field8 = 0;
     }
-    self->field8 = 0;
 }
 
 // Same shape as func_80257D90 (sibling release/null helper).
 extern "C" __declspec(noinline) void func_80257F44(UnkKizunaSelf57D90* self) {
+    // Same retail shape as func_80257D90: duplicated guard test CSEs to one
+    // cmpwi with two beq's; zeroing inside the outer if.
     if (self->field8 != 0) {
-        self->field8->target2(1);
+        if (self->field8 != 0) {
+            self->field8->target2(1);
+        }
+        self->field8 = 0;
     }
-    self->field8 = 0;
 }
 
 // Build the current-line layout (+0x08) from the shared arc string at +0x27,
@@ -255,8 +263,8 @@ bool func_802592D8(UnkKizunaSelf592D8* self) {
 // unmangled bl branches (retail links func_80259344 unmangled) without
 // inlining - the CKizunaTalkList pattern for same-TU callees.
 extern "C" __declspec(noinline) UnkKizunaPair func_80259344(UnkKizunaSelf59344* self) {
-    UnkKizunaRes59344* res = self->field0C->field10->target(0x8b, 1);
-    UnkKizunaPair out = {res->field44, res->field48};
+    UnkKizunaRes59344* res = self->field0C->field10->target((int)(lbl_eu_8050CB20 + 0x8b), 1);
+    UnkKizunaPair out = *(UnkKizunaPair*)((u8*)res + 0x44);
     return out;
 }
 

@@ -59,8 +59,9 @@ public:
     IUIWindowSubView* unk5C; //0x5C - non-null: timer lives at unk5C->unk828
     s32 unk60;               //0x60 - fallback timer when unk5C is null
     bool unk64;              //0x64 - pending removal flag
-    bool unk65;              //0x65 - pending update-mark flag
-    u8 pad66[0x68 - 0x66];   //0x66
+    bool field_0x65;         //0x65 - pending update-mark flag
+    bool field_0x66;         //0x66 - removal-mark (func_8013D26C)
+    u8 pad67[0x68 - 0x67];   //0x67
     u32 field_0x68;          //0x68 - window id (matched by func_8013D07C)
 };
 
@@ -126,10 +127,10 @@ void CUIWindowManager::Move() {
         WindowNode* mark = sentinel->mNext;
         WindowNode* search = mark;
         for (; search != sentinel; search = search->mNext) {
-            if (search->mItem->unk65 != 0 || unkA1 != 0) {
+            if (search->mItem->field_0x65 != 0 || unkA1 != 0) {
                 bool flag = true;
                 for (; mark != mWindowList1.mStartNodePtr; mark = mark->mNext) {
-                    mark->mItem->unk65 = flag;
+                    mark->mItem->field_0x65 = flag;
                 }
                 break;
             }
@@ -140,10 +141,10 @@ void CUIWindowManager::Move() {
         WindowNode* mark = sentinel->mNext;
         WindowNode* search = mark;
         for (; search != sentinel; search = search->mNext) {
-            if (search->mItem->unk65 != 0 || unkA1 != 0) {
+            if (search->mItem->field_0x65 != 0 || unkA1 != 0) {
                 bool flag = true;
                 for (; mark != mWindowList2.mStartNodePtr; mark = mark->mNext) {
-                    mark->mItem->unk65 = flag;
+                    mark->mItem->field_0x65 = flag;
                 }
                 break;
             }
@@ -198,7 +199,40 @@ void CUIWindowManager::Move() {
 extern "C" u32 func_8013C54C() {
     return (u32)lbl_eu_80664088;
 }
-void func_8013D26C(){}
+// Window-queue sweep (retail func_8013D26C): walk the secondary queue. With
+// mode == 0 mark each window for removal (mIsRemove + field_0x66) and collect
+// the nodes; with mode != 0 just set the update-mark (field_0x65). Collected
+// nodes are unlinked from the list (MWCC auto-unrolls the unlink loop by 8).
+void func_8013D26C(int mode) {
+    CUIWindowManager* inst = lbl_eu_80664088;
+    if (inst == NULL) {
+        return;
+    }
+
+    WindowNode* pending[18];
+    int count = 0;
+    WindowNode* sentinel = inst->mWindowList2.mStartNodePtr;
+    for (WindowNode* n = sentinel->mNext; n != sentinel; n = n->mNext) {
+        if (mode == 0) {
+            pending[count++] = n;
+            n->mItem->field_0x66 = 1;
+            n->mItem->SetRemove();
+        } else {
+            n->mItem->field_0x65 = 1;
+        }
+    }
+
+    if (count > 0) {
+        for (int i = 0; i < count; i++) {
+            WindowNode* node = pending[i];
+            WindowNode* prev = node->mPrev;
+            WindowNode* next = node->mNext;
+            prev->mNext = next;
+            next->mPrev = prev;
+            node->mNext = NULL;
+        }
+    }
+}
 extern "C" unsigned short func_8013EC58()
 {
     return lbl_eu_8066408C;
@@ -231,7 +265,24 @@ extern "C" void func_8013F2A0(CUIWindowManager* self);
 extern "C" void func_8013F3EC(CUIWindowManager* self) { func_8013F2A0(self); }
 extern "C" int func_801413DC(unsigned int arg0, int arg1) { unsigned int low = arg0 & 0xffff; unsigned int high = arg0 >> 16; if (arg1 >= (int)low) return -1; return (int)(high + arg1); }
 
-void __ct__CUIWindowManager(){}
+// Singleton ctor: CProcess base first, then the complete-object vtable, the
+// IFlagEvent sub-vtable, the scene, and the two window queues (each reslist
+// default-constructs its sentinel, then reserves 8 node slots from the
+// scene's alloc handle). Closes with the global timer-id reset.
+CUIWindowManager::CUIWindowManager(CScn* pScene) : unk58(pScene) {
+    unk9C = NULL;
+    unkA0 = false;
+    unkA1 = false;
+
+    mWindowList1.reserve(func_80496004(pScene), 8);
+    mWindowList2.reserve(func_80496004(pScene), 8);
+
+    func_8015D0B8();
+    func_80122460();
+    func_801B29E0();
+    func_8012BDD0();
+    lbl_eu_8066408C = 0;
+}
 void __dt__CTTask_CUIWindowManager(){}
 void func_8013CBB4(){}
 void func_8013CFDC(){}
@@ -534,11 +585,253 @@ void __dt__Q216CUIWindowManager5CTestFv(){}
 void func_8013F244(){}
 void func_8013F2A0(){}
 void func_8013F354(){}
-extern "C" int func_8013F3F0(u8* flagBuf) { return 0; }
+// Flag-buffer availability check (retail func_8013F3F0): returns 1 when the
+// buffer's window can still be shown, 0 otherwise. Bit0 of field_0x00 is
+// cleared by the caller before querying. The quest id (0x52) must not map to
+// a blocked flag-memory state, and each nonzero mission slot (0x58-0x64)
+// must pass its own flag-memory gate.
+int func_8013F3F0(CFlagBuffer* flagBuf) {
+    if ((flagBuf->field_0x00 & 1) != 0) {
+        return 0;
+    }
+
+    int v52 = flagBuf->field_0x52;
+    int id = -1;
+    if (v52 < 0x3E8) {
+        id = v52 + 0x220;
+    }
+    if (id == -1) {
+        return 0;
+    }
+    int res = (int)func_8009CF8C((u32)id);
+    if (res == 1) {
+        return 0;
+    }
+    if (res == 0x6F || res == 0x70 || res == 0x79 || res == 0x7A ||
+        res == 0x83 || res == 0x84 || (u32)(res - 0x8D) <= 1) {
+        return 0;
+    }
+    if (res == 0xC8) {
+        return 0;
+    }
+    if ((u32)(res - 0xFE) <= 1) {
+        return 0;
+    }
+
+    int v58 = flagBuf->field_0x58;
+    if (v58 == 0 && flagBuf->field_0x5A == 0 && flagBuf->field_0x5C == 0 &&
+        flagBuf->field_0x60 == 0 && flagBuf->field_0x62 == 0 &&
+        flagBuf->field_0x64 == 0) {
+        return 0;
+    }
+    if (v58 != 0 && (int)func_8009CF8C(0x20) < flagBuf->field_0x58) {
+        return 0;
+    }
+
+    int v5a = flagBuf->field_0x5A;
+    if (v5a != 0) {
+        id = -1;
+        if (v5a < 0x3E8) {
+            id = v5a + 0x220;
+        }
+        if (id == -1) {
+            return 0;
+        }
+        int res = (int)func_8009CF8C((u32)id);
+        if (res != 0xFE && res != 0xFF) {
+            return 0;
+        }
+    }
+
+    int v5c = flagBuf->field_0x5C;
+    if (v5c != 0) {
+        id = -1;
+        if (v5c < 7) {
+            id = v5c + 0x21;
+        }
+        if (id == -1) {
+            return 0;
+        }
+        int res = (int)func_8009CF8C((u32)id);
+        if (res < (int)flagBuf->field_0x5E) {
+            return 0;
+        }
+    }
+
+    int v60 = flagBuf->field_0x60;
+    if (v60 != 0) {
+        u16 v = (u16)getBdatStringColumnValue(lbl_eu_80664098,
+                                              lbl_eu_80500A50, v60);
+        id = -1;
+        if (v < 0x12C) {
+            id = v + 0xA20;
+        }
+        if (id == -1) {
+            return 0;
+        }
+        if ((int)func_8009CF8C((u32)id) == 0) {
+            return 0;
+        }
+    }
+
+    int v62 = flagBuf->field_0x62;
+    if (v62 != 0) {
+        u16 v = (u16)getBdatStringColumnValue(lbl_eu_80664098,
+                                              lbl_eu_80500A50, v62);
+        id = -1;
+        if (v < 0x12C) {
+            id = v + 0xA20;
+        }
+        if (id == -1) {
+            return 0;
+        }
+        if ((int)func_8009CF8C((u32)id) == 0) {
+            return 0;
+        }
+    }
+
+    int v64 = flagBuf->field_0x64;
+    if (v64 != 0) {
+        id = -1;
+        if (v64 < 0x190) {
+            id = v64 + 0x608;
+        }
+        if (id == -1) {
+            return 0;
+        }
+        int res = (int)func_8009CF8C((u32)id);
+        if (res != (int)flagBuf->field_0x66) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
 void func_8013F6C4(){}
 extern "C" void func_8013FFF8(void* flagBuf, void* entry, u32 value){}
-void func_80140854(){}
-void func_80140AFC(){}
+// Item-availability query (retail func_80140854): returns 1 when the item
+// can be used/shown, 0 otherwise. Reads the per-row entry type at
+// rows[arg1].field_0x02[arg2]; types 2 / 3 / 0x104 / 0x105 gate on the sign
+// of the field_0xC4 byte table and a 4-entry rodata flag table; type 4
+// accepts when the flag-memory read is 0xFE or 0xFF; the default case does a
+// signed range test of the byte-table value against the row byte.
+int func_80140854(CItemQuery* self, u32 arg1, u32 arg2) {
+    if ((self->field_0x00 & 1) == 0) {
+        if ((u32)(self->field_0x04 - 0xFC) > 3) {
+            CItemQueryRow* row = &self->field_0x6E[arg1];
+            u16 rowType = row->field_0x02[arg2];
+            if (rowType == 2) {
+                if ((s8)self->field_0xC4[arg1 * 4 + arg2] >= 1) {
+                    return 1;
+                }
+                if ((int)func_80158068(row->field_0x0A[arg2]) >=
+                    (int)row->field_0x12[arg2]) {
+                    return 1;
+                }
+                if (row->field_0x01 == 0) {
+                    return 0;
+                }
+                if (*(u32*)&lbl_804FC260[arg1 * 4 + arg2 * 8] >
+                    self->field_0x04) {
+                    return 0;
+                }
+                u32 idx = (__cntlzw(arg1) >> 3) & 0x07FFFFFF;
+                u32* t = (u32*)&lbl_804FC260[idx];
+                if (self->field_0x04 == t[0] || self->field_0x04 == t[2] ||
+                    self->field_0x04 == t[4] || self->field_0x04 == t[6]) {
+                    return 0;
+                }
+                return 1;
+            }
+            if (rowType == 3 || rowType == 0x104 || rowType == 0x105) {
+                if ((s8)self->field_0xC4[arg1 * 4 + arg2] >= 1) {
+                    return 1;
+                }
+                if (row->field_0x01 == 0) {
+                    return 0;
+                }
+                if (*(u32*)&lbl_804FC260[arg1 * 4 + arg2 * 8] >
+                    self->field_0x04) {
+                    return 0;
+                }
+                u32 idx = (__cntlzw(arg1) >> 3) & 0x07FFFFFF;
+                u32* t = (u32*)&lbl_804FC260[idx];
+                if (self->field_0x04 == t[0] || self->field_0x04 == t[2] ||
+                    self->field_0x04 == t[4] || self->field_0x04 == t[6]) {
+                    return 0;
+                }
+                return 1;
+            }
+            if (rowType == 4) {
+                int id = -1;
+                if (row->field_0x0A[arg2] < 0x3E8) {
+                    id = row->field_0x0A[arg2] + 0x220;
+                }
+                if (id == -1) {
+                    return 0;
+                }
+                int res = (int)func_8009CF8C((u32)id);
+                return (res == 0xFE || res == 0xFF) ? 1 : 0;
+            }
+            s8 v = (s8)self->field_0xC4[arg1 * 4 + arg2];
+            return v >= (int)row->field_0x12[arg2];
+        } else {
+            return 1;
+        }
+    }
+    return 0;
+}
+// Flag-buffer build (bdat-column variant): zero the 0xC8-byte flag buffer,
+// mark it active, refresh the per-table entry pointers, then scan every
+// table's rows for a row whose bdat column value matches `target`. On a hit
+// set the flag for that table (func_8013FFF8) and, when the window-open
+// guard is clear (field_0x09 == 0), accept the buffer when the flag-memory
+// read of the 0x52 slot id is 1, 2, 0xFC or 0xFD; otherwise 0.
+u8* func_80140AFC(u32 target) {
+    CFlagBuffer* flagBuf = (CFlagBuffer*)lbl_eu_80573C50;
+    memset(flagBuf, 0, 0xC8);
+    flagBuf->field_0x00 |= 1;
+    func_8003AA34();
+
+    // Working copy of the 28 per-table base offsets (14 x 8-byte chunks).
+    u32 work[28];
+    for (int i = 0; i < 14; i++) {
+        ((u64*)work)[i] = ((u64*)lbl_804FC1D0)[i];
+    }
+
+    for (int i = 0; i < 28; i++) {
+        u8* entry = (u8*)lbl_eu_80573D18[i];
+        int count = (int)func_8003B1EC(entry);
+        for (int j = 0; j < count; j++) {
+            u32 tmp[28];
+            for (int k = 0; k < 14; k++) {
+                ((u64*)tmp)[k] = ((u64*)work)[k];
+            }
+            u32 v = j + tmp[i];
+            if ((u16)getBdatStringColumnValue(entry, &lbl_eu_80500A50[0x32],
+                                              (int)v) == target) {
+                func_8013FFF8(flagBuf, entry, v);
+                if (flagBuf->field_0x09 == 0) {
+                    int id = -1;
+                    if (flagBuf->field_0x52 < 0x3E8) {
+                        id = flagBuf->field_0x52 + 0x220;
+                    }
+                    if (id != -1) {
+                        int res = (int)func_8009CF8C((u32)id);
+                        flagBuf->field_0x04 = (u32)res;
+                        if (res == 1 || res == 2 || res == 0xFC ||
+                            res == 0xFD) {
+                            return (u8*)flagBuf;
+                        }
+                    } else {
+                        return NULL;
+                    }
+                }
+            }
+        }
+    }
+    return NULL;
+}
 // Flag-buffer build (bdat-column variant): zero the 0xC8-byte flag buffer,
 // mark it active, refresh the per-table entry pointers, then scan every
 // table's rows for a row whose bdat column value matches `target`. On a hit
@@ -569,7 +862,7 @@ extern "C" u8* func_80140CA4(u32 target) {
             if ((u16)getBdatStringColumnValue(entry, &lbl_eu_80500A50[0x32],
                                               (int)v) == target) {
                 func_8013FFF8(flagBuf, entry, v);
-                if (flagBuf[9] == 0 && func_8013F3F0(flagBuf) != 0) {
+                if (flagBuf[9] == 0 && func_8013F3F0((CFlagBuffer*)flagBuf) != 0) {
                     // Clear the per-table entry slot (retail writes a word).
                     *reinterpret_cast<u32*>(&flagBuf[4]) = 0;
                     return flagBuf;

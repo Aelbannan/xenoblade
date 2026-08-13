@@ -391,11 +391,19 @@ def _register_fields_impl(opcode: Opcode) -> tuple[tuple[int, str], ...]:
         Opcode.STFIWX,
     ):
         return (_FD, _RA, _RB)
+    if opcode in (Opcode.FMULS, Opcode.FMUL):
+        # A-form with a RESERVED FB field: fmuls/fmul frD,frA,frC encode
+        # frC at bits 21-25 MSB (LSB 10-6) and bits 16-20 MSB (LSB 15-11)
+        # are reserved-zero (the decoder rejects FMULS with fb!=0; FMUL's
+        # fb is reserved the same way).  Treating the always-zero FB as a
+        # renameable register poisoned the rho with an f0=0 mapping and
+        # broke otherwise-consistent swaps (func_800B06A4 / us-800b0f70).
+        return (_FD, _FA, _FC)
     if opcode in (
         Opcode.FDIVS, Opcode.FSUBS, Opcode.FADDS, Opcode.FRES,
-        Opcode.FMULS, Opcode.FMSUBS, Opcode.FMADDS, Opcode.FNMSUBS,
+        Opcode.FMSUBS, Opcode.FMADDS, Opcode.FNMSUBS,
         Opcode.FNMADDS, Opcode.FDIV, Opcode.FSUB, Opcode.FADD,
-        Opcode.FSEL, Opcode.FMUL, Opcode.FRSQRTE, Opcode.FMSUB,
+        Opcode.FSEL, Opcode.FRSQRTE, Opcode.FMSUB,
         Opcode.FMADD, Opcode.FNMSUB, Opcode.FNMADD,
     ):
         return (_FD, _FA, _FB, _FC)
@@ -663,11 +671,16 @@ def _use_def(opcode: Opcode) -> tuple[tuple[tuple[int, str], ...], tuple[tuple[i
         Opcode.SUBFZE,
     ):
         return ((1, g),), ((0, g),)
+    if opcode in (Opcode.FMULS, Opcode.FMUL):
+        # fmuls/fmul read fa (LSB 20-16) and fc (LSB 10-6) only; the
+        # reserved FB field (LSB 15-11) is never an input — semantics
+        # compute fa*fc and the decoder rejects FMULS with fb!=0.
+        return ((1, FPR), (3, FPR)), ((0, FPR),)
     if opcode in (
         Opcode.FDIVS, Opcode.FSUBS, Opcode.FADDS, Opcode.FRES,
-        Opcode.FMULS, Opcode.FMSUBS, Opcode.FMADDS, Opcode.FNMSUBS,
+        Opcode.FMSUBS, Opcode.FMADDS, Opcode.FNMSUBS,
         Opcode.FNMADDS, Opcode.FDIV, Opcode.FSUB, Opcode.FADD,
-        Opcode.FSEL, Opcode.FMUL, Opcode.FRSQRTE, Opcode.FMSUB,
+        Opcode.FSEL, Opcode.FRSQRTE, Opcode.FMSUB,
         Opcode.FMADD, Opcode.FNMSUB, Opcode.FNMADD,
     ):
         return ((1, FPR), (2, FPR), (3, FPR)), ((0, FPR),)

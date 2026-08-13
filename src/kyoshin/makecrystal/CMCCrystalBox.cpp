@@ -7,7 +7,7 @@
 
 #include <nw4r/lyt.h>
 
-extern float lbl_eu_80668470;  // anim sentinel constant used by completion checks
+extern const float lbl_eu_80668470;  // anim sentinel constant used by completion checks
 extern float lbl_eu_8066845C;
 extern float lbl_eu_80668474;
 extern float lbl_eu_80668478;
@@ -19,6 +19,13 @@ u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 void func_80138078(u32);
 
 void func_80136910(nw4r::lyt::Layout*, char*, u8);
+
+// Layout-anim helpers: retail emits out-of-line `bl` calls to these from the
+// anim-completion callbacks; MWCC -O4,p would otherwise inline them into the
+// small callers. C linkage carries over from the header declarations.
+__declspec(noinline) void func_80219094(CMCCrystalBox* self);
+__declspec(noinline) void func_8021900C(CMCCrystalBox* self);
+__declspec(noinline) void func_8021922C(CMCCrystalBox* self);
 
 // Retail 0x80219E70: refresh the crystal box display / name.
 void func_80218018(CMCCrystalBox* self) {
@@ -68,11 +75,16 @@ char* func_802138B8(CMCCrystalData* d, int v) {
     return d->name;
 }
 
+// Swap the 4-byte payload (s16 + u8) of two crystal-data entries.
 void func_80213964(int unused, void* a, void* b) {
-    short b_lo = *(short*)b;
-    unsigned char b_hi = ((unsigned char*)b)[2];
-    short a_lo = *(short*)a;
-    unsigned char a_hi = ((unsigned char*)a)[2];
+    short b_lo;
+    unsigned char b_hi;
+    unsigned char a_hi;
+    short a_lo;
+    a_lo = *(short*)a;
+    a_hi = ((unsigned char*)a)[2];
+    b_hi = ((unsigned char*)b)[2];
+    b_lo = *(short*)b;
     *(short*)a = b_lo;
     ((unsigned char*)a)[2] = b_hi;
     *(short*)b = a_lo;
@@ -135,20 +147,36 @@ u8* func_80213D74(u8* base) {
     return base;
 }
 
-void __dt__80213E4C(){}
+void* __dt__80213E4C(void* self, int flags) {
+    if (self != 0 && flags > 0) {
+        operator delete(self);
+    }
+    return self;
+}
 
 void func_80213E8C(CMCCrystalBox* self) {
-    u32 i;
+    u8 i;
     self->unk20 = 0;
     ((u8*)self)[0x29] = 0;
     ((u8*)self)[0x6A] = 0;
-    for (i = 0; i < 8; i++) {
+    // Retail keeps this as a rolled mtctr/bdnz count-down loop with a u8
+    // up-counter (clrlslwi/clrlwi masks). That shape is -O4,s codegen
+    // (indexed stwx, no unroll); this unit compiles -O4,p which unrolls the
+    // constant-trip loop instead (walls doc #6: needs a unit flag split).
+    i = 0;
+    do {
         self->subObjPtrs[i] = 0;
         ((u8*)self)[0x21 + i] = 0xFF;
-    }
+        i++;
+    } while (i < 8);
 }
 
-void __dt__80213ECC(){}
+void* __dt__80213ECC(void* self, int flags) {
+    if (self != 0 && flags > 0) {
+        operator delete(self);
+    }
+    return self;
+}
 
 // Retail 0x80215D64: destroy all placed member subobjects in reverse order.
 CMCCrystalBox::~CMCCrystalBox() {
@@ -486,7 +514,14 @@ void func_80216AEC(CMCCrystalBox* self) {
     func_80138078(0x2);
 }
 
-void func_80216B7C(){}
+// Retail 0x802189D4: when sub-object 6's animation finishes, enter state 2
+// and play back animation 7.
+void func_80216B7C(CMCCrystalBox* self) {
+    if (func_80137444(self->subObjPtrs[6], lbl_eu_80668470) != 0) {
+        self->unk64 = 2;
+        func_80219094(self);
+    }
+}
 
 void func_80216BC8(CMCCrystalBox* self) {
     if (func_80137444(self->subObjPtrs[7], 1.0f) == 0) return;
@@ -498,8 +533,10 @@ void func_80216BC8(CMCCrystalBox* self) {
     func_8021852C(self);
 }
 
+// Retail 0x80218A94: when sub-object 7's animation finishes, play back
+// animation 6 and enter state 5.
 void func_80216C3C(CMCCrystalBox* self) {
-    if (func_80137510(self->subObjPtrs[7], 1.0f) != 0) {
+    if (func_80137510(self->subObjPtrs[7], lbl_eu_80668470) != 0) {
         func_8021900C(self);
         self->unk64 = 5;
     }
@@ -519,10 +556,13 @@ void func_80216CE0(CMCCrystalBox* self) {
     func_801D216C((u8*)self + 0x6c, 0);
 }
 
+// Retail 0x80218B90: when sub-object 9's animation finishes, enter state 9
+// and play back animation 10.
 void func_80216D38(CMCCrystalBox* self) {
-    if (func_80137444(self->subObjPtrs[9], 1.0f) == 0) return;
-    self->unk64 = 9;
-    func_8021922C(self);
+    if (func_80137444(self->subObjPtrs[9], lbl_eu_80668470) != 0) {
+        self->unk64 = 9;
+        func_8021922C(self);
+    }
 }
 
 void func_80216D84(CMCCrystalBox* self) {
@@ -532,7 +572,12 @@ void func_80216D84(CMCCrystalBox* self) {
     self->unk64 = 3;
 }
 
-void func_80216DD8(){}
+// Retail 0x80218C30: when sub-object 11's animation finishes, enter state 3.
+void func_80216DD8(CMCCrystalBox* self) {
+    if (func_80137444(self->subObjPtrs[11], lbl_eu_80668470) != 0) {
+        self->unk64 = 3;
+    }
+}
 
 void func_80216E1C(CMCCrystalBox* self) {
     if (func_80137444(self->subObjPtrs[12], 1.0f) == 0) return;
@@ -540,7 +585,12 @@ void func_80216E1C(CMCCrystalBox* self) {
     self->subObjPtrs[12]->SetFrame(lbl_eu_8066845C);
 }
 
-void func_80216E6C(){}
+// Retail 0x80218CC4: when sub-object 13's animation finishes, enter state 3.
+void func_80216E6C(CMCCrystalBox* self) {
+    if (func_80137444(self->subObjPtrs[13], lbl_eu_80668470) != 0) {
+        self->unk64 = 3;
+    }
+}
 
 void func_80216EB0(CMCCrystalBox* self) {
     if (func_80137510(self->subObjPtrs[10], 1.0f) == 0) return;
@@ -568,13 +618,10 @@ void func_80217434(CMCCrystalBox*, unsigned short, unsigned int*, unsigned char)
 
 void func_802177D0(){}
 
+// Item-kind check: vtable word bits 16-19 == 9 and byte at +7 has flag 1.
 u8 func_80217BDC(void* self) {
-    u32 vtable = *(u32*)self;
-    u32 kind = (vtable >> 16) & 0xF;
-    u32 flag = ((u8*)self)[7] & 3;
-    if (kind != 9) return 0;
-    if (flag != 1) return 0;
-    return 1;
+    u32 word = *(u32*)self;
+    return ((word >> 16) & 0xF) == 9 && (u32)(((u8*)self)[7] & 3) == 1;
 }
 
 void func_80217C0C(CMCCrystalBox*, unsigned short, unsigned int*, unsigned char){}

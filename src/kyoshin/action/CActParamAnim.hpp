@@ -21,32 +21,40 @@ struct CActParamAnimStateView {
     u8 _pad_00[0x08];           // +0x00..+0x07
     CActParamAnimOwnerIf* owner08;  // +0x08: owner object
     u32 field0C;                // +0x0C: flags
-    u8 mChildData10[0x30 - 0x10];   // +0x10..+0x2F (embedded CActParamData base, start)
+    u8 mChildData10[0x24 - 0x10];   // +0x10..+0x23 (embedded CActParamData base, start)
+    f32 field24;                // +0x24 (anim scale, func_8004CC8C)
+    u8 _pad_28[0x30 - 0x28];    // +0x28..+0x2F
     s32 field30;                // +0x30 (copied to field374 in func_8004D194)
     u8 _pad_34[0x270 - 0x34];   // +0x34..+0x26F (rest of embedded CActParamData base)
     u32 field270;               // +0x270
     u8 _pad_274[0x278 - 0x274]; // +0x274..+0x277
     u32 field278;               // +0x278
     u32 field27C;               // +0x27C
-    u8 _pad_280[0x2A4 - 0x280]; // +0x280..+0x2A3
+    u8 _pad_280[0x28C - 0x280]; // +0x280..+0x28B
+    u32 field28C;               // +0x28C (anim id used by func_8004E9EC dispatch)
+    u8 _pad_290[0x2A4 - 0x290]; // +0x290..+0x2A3
     u32 field2A4;               // +0x2A4
     u8 _pad_2A8[0x2BC - 0x2A8]; // +0x2A8..+0x2BB
     u32 field2BC;               // +0x2BC
     u8 _pad_2C0[0x2FC - 0x2C0]; // +0x2C0..+0x2FB
     u32 field2FC;               // +0x2FC
-    u8 _pad_300[0x33C - 0x300]; // +0x300..+0x33B
+    u8 _pad_300[0x304 - 0x300]; // +0x300..+0x303
+    f32 field304;               // +0x304 (sub-object anim value, func_8004CC8C)
+    u8 _pad_308[0x33C - 0x308]; // +0x308..+0x33B
     u32 field33C;               // +0x33C
-    u8 _pad_340[0x374 - 0x340]; // +0x340..+0x373
+    u8 _pad_340[0x370 - 0x340]; // +0x340..+0x36F
+    s32 field370;               // +0x370
     s32 field374;               // +0x374: anim counter (setAnimCounter)
     s32 field378;               // +0x378
     s32 field37C;               // +0x37C (guard counter, func_8004F484)
-    u8 _pad_380[0x384 - 0x380]; // +0x380..+0x383
+    f32 field380;               // +0x380
     f32 field384;               // +0x384 (anim blend, func_8004FE58)
     f32 field388;               // +0x388 (anim speed scale, func_8004CF00)
-    u8 _pad_38C[0x390 - 0x38C]; // +0x38C..+0x38F
+    f32 field38C;               // +0x38C (func_8004CC8C)
     f32 field390;               // +0x390: anim speed (func_8004CF00 stores here)
     f32 field394;               // +0x394: anim speed
-    u8 _pad_398[0x3A0 - 0x398]; // +0x398..+0x39F
+    f32 field398;               // +0x398
+    f32 field39C;               // +0x39C
     u8* object3A0;              // +0x3A0: attached sub-object
     u32 state3A4;               // +0x3A4: sub-object state
     u32 field3A8;               // +0x3A8
@@ -57,24 +65,54 @@ struct CActParamAnimStateView {
     u32 field3BC;               // +0x3BC
     u8 _pad_3C0[4];             // +0x3C0
     f32 field3C4;               // +0x3C4
-    u8 _pad_3C8[0x430 - 0x3C8]; // +0x3C8..+0x42F
+    u8 _pad_3C8[0x3CC - 0x3C8]; // +0x3C8..+0x3CB
+    f32 field3CC;               // +0x3CC (anim direction x, func_8004E9EC)
+    u8 _pad_3D0[0x3D4 - 0x3D0]; // +0x3D0..+0x3D3
+    f32 field3D4;               // +0x3D4 (anim direction z, func_8004E9EC)
+    u8 _pad_3D8[0x430 - 0x3D8]; // +0x3D8..+0x42F
     f32 field430;               // +0x430
     f32 field434;               // +0x434
     u8 _pad_438[0x440 - 0x438]; // +0x438..+0x43F
     f32 field440;               // +0x440
     f32 field444;               // +0x444
-    u8 _pad_448[0x488 - 0x448]; // +0x448..+0x487
+    f32 field448;               // +0x448 (func_8004CC8C: anim blend accumulator)
+    f32 field44C;               // +0x44C
+    f32 field450;               // +0x450
+    f32 field454;               // +0x454
+    f32 field458;               // +0x458
+    u8 _pad_45C[0x460 - 0x45C]; // +0x45C..+0x45F
+    f32 field460;               // +0x460
+    f32 field464;               // +0x464
+    f32 field468;               // +0x468
+    f32 field46C;               // +0x46C
+    f32 field470;               // +0x470
+    f32 field474;               // +0x474
+    f32 field478;               // +0x478
+    f32 field47C;               // +0x47C
+    f32 field480;               // +0x480
+    f32 field484;               // +0x484
     f32 field488;               // +0x488: last anim value (stored as f32)
-    u8 _pad_48C[0x4B0 - 0x48C]; // +0x48C..+0x4AF
+    u8 _pad_48C[0x49C - 0x48C]; // +0x48C..+0x49B
+    f32 field49C;               // +0x49C (snap position, func_8004E9EC)
+    f32 field4A0;               // +0x4A0
+    u8 _pad_4A4[0x4B0 - 0x4A4]; // +0x4A4..+0x4AF
     u32 field4B0;               // +0x4B0 (func_8004CF00: cleared each frame)
     u8 _pad_4B4[0x4BD - 0x4B4]; // +0x4B4..+0x4BC
     u8 field4BD;                // +0x4BD
-    u8 _pad_4BE[0x4C8 - 0x4BE]; // +0x4BE..+0x4C7
+    u8 field4BE;                // +0x4BE
+    u8 _pad_4BF[0x4C4 - 0x4BF]; // +0x4BF..+0x4C3
+    u32 field4C4;               // +0x4C4
     s32 field4C8;               // +0x4C8 (anim request/owner id, -1 = none)
-    u8 _pad_4CC[0x4D4 - 0x4CC]; // +0x4CC..+0x4D3
+    f32 field4CC;               // +0x4CC
+    f32 field4D0;               // +0x4D0
     s16 field4D4;               // +0x4D4 (signed anim guard, lha in retail)
     s16 field4D6;               // +0x4D6 (frame counter)
     s16 field4D8;               // +0x4D8 (anim-stay counter, func_8004CF00)
+    u8 field4DA;                // +0x4DA
+    u8 _pad_4DB;                // +0x4DB
+    u16 field4DC;               // +0x4DC
+    u8 _pad_4DE[0x4E4 - 0x4DE]; // +0x4DE..+0x4E3
+    u32 field4E4;               // +0x4E4
 };
 
 // Word-copy view of the sub-object returned by func_8048315C: the anim
@@ -95,6 +133,135 @@ struct CActParamAnimData3 {
     u32 z;
 };
 
+// Word view of the position triple at +0x3C0..+0x3C8. func_8004FAB4/F884
+// store the rotated anim-axis result here as plain words (lwz/stw in retail).
+struct CActParamAnimPosView {
+    u8 _pad_000[0x3C0];
+    u32 x;   // +0x3C0
+    u32 y;   // +0x3C4
+    u32 z;   // +0x3C8
+};
+
+// Float-typed view of the anim-state region used by the func_8004B114
+// initializer: offsets that CActParamAnimStateView declares as u32 (word
+// copies in func_8004B354/B40C) are written/read as floats here (lfs/stfs
+// in retail), and the tail region +0x3C8..+0x4E4 is exposed as named fields.
+struct CActParamAnimInitView {
+    u8 _pad_00[0x04];
+    u32 field04;            // +0x04
+    u32 field08;            // +0x08
+    u32 field0C;            // +0x0C
+    u8 _pad_10[0x370 - 0x10];
+    s32 field370;           // +0x370
+    s32 field374;           // +0x374
+    s32 field378;           // +0x378
+    s32 field37C;           // +0x37C
+    f32 field380;           // +0x380
+    f32 field384;           // +0x384
+    f32 field388;           // +0x388
+    f32 field38C;           // +0x38C
+    f32 field390;           // +0x390
+    f32 field394;           // +0x394
+    f32 field398;           // +0x398
+    f32 field39C;           // +0x39C
+    u8* object3A0;          // +0x3A0
+    u32 state3A4;           // +0x3A4
+    f32 field3A8;           // +0x3A8 (float view)
+    f32 field3AC;           // +0x3AC (float view)
+    f32 field3B0;           // +0x3B0 (float view)
+    f32 field3B4;           // +0x3B4 (float view)
+    f32 field3B8;           // +0x3B8 (float view)
+    f32 field3BC;           // +0x3BC (float view)
+    f32 field3C0;           // +0x3C0
+    f32 field3C4;           // +0x3C4
+    f32 field3C8;           // +0x3C8
+    f32 field3CC;           // +0x3CC
+    f32 field3D0;           // +0x3D0
+    f32 field3D4;           // +0x3D4
+    f32 field3D8;           // +0x3D8
+    f32 field3DC;           // +0x3DC
+    f32 field3E0;           // +0x3E0
+    f32 field3E4;           // +0x3E4
+    f32 field3E8;           // +0x3E8
+    f32 field3EC;           // +0x3EC
+    f32 field3F0;           // +0x3F0
+    f32 field3F4;           // +0x3F4
+    f32 field3F8;           // +0x3F8
+    f32 field3FC;           // +0x3FC
+    f32 field400;           // +0x400
+    f32 field404;           // +0x404
+    f32 field408;           // +0x408
+    f32 field40C;           // +0x40C
+    f32 field410;           // +0x410
+    f32 field414;           // +0x414
+    f32 field418;           // +0x418
+    f32 field41C;           // +0x41C
+    f32 field420;           // +0x420
+    f32 field424;           // +0x424
+    f32 field428;           // +0x428
+    f32 field42C;           // +0x42C
+    f32 field430;           // +0x430
+    f32 field434;           // +0x434
+    f32 field438;           // +0x438
+    f32 field43C;           // +0x43C
+    f32 field440;           // +0x440
+    f32 field444;           // +0x444
+    f32 field448;           // +0x448
+    f32 field44C;           // +0x44C
+    f32 field450;           // +0x450
+    f32 field454;           // +0x454
+    f32 field458;           // +0x458
+    f32 field45C;           // +0x45C
+    f32 field460;           // +0x460
+    f32 field464;           // +0x464
+    f32 field468;           // +0x468
+    f32 field46C;           // +0x46C
+    f32 field470;           // +0x470
+    f32 field474;           // +0x474
+    f32 field478;           // +0x478
+    f32 field47C;           // +0x47C
+    f32 field480;           // +0x480
+    f32 field484;           // +0x484
+    f32 field488;           // +0x488
+    f32 field48C;           // +0x48C
+    f32 field490;           // +0x490
+    f32 field494;           // +0x494
+    u8 field498;            // +0x498
+    u8 _pad_499[0x49C - 0x499];
+    f32 field49C;           // +0x49C
+    f32 field4A0;           // +0x4A0
+    f32 field4A4;           // +0x4A4
+    u32 field4A8;           // +0x4A8
+    u32 field4AC;           // +0x4AC
+    u32 field4B0;           // +0x4B0
+    u32 field4B4;           // +0x4B4
+    u32 field4B8;           // +0x4B8
+    u8 field4BC;            // +0x4BC
+    u8 field4BD;            // +0x4BD
+    u8 field4BE;            // +0x4BE
+    u8 field4BF;            // +0x4BF
+    u32 field4C0;           // +0x4C0
+    u32 field4C4;           // +0x4C4
+    s32 field4C8;           // +0x4C8
+    f32 field4CC;           // +0x4CC
+    f32 field4D0;           // +0x4D0
+    s16 field4D4;           // +0x4D4
+    s16 field4D6;           // +0x4D6
+    s16 field4D8;           // +0x4D8
+    u8 field4DA;            // +0x4DA
+    u8 _pad_4DB;            // +0x4DB
+    u16 field4DC;           // +0x4DC
+    u8 _pad_4DE[0x4E4 - 0x4DE];
+    u32 field4E4;           // +0x4E4
+};
+
+// Cast-only view of the attached sub-object region read by func_8004CC8C:
+// the anim divisor value at +0x304.
+struct CActParamAnimSubObjView {
+    u8 _pad_000[0x304];
+    f32 field304;   // +0x304
+};
+
 // C-linkage callees in sibling units (retail names, keep verbatim).
 extern "C" float func_80484F18(u8* object);
 extern "C" int func_8049798C(u8* object);
@@ -112,6 +279,10 @@ extern "C" void func_80055F08(void* data);
 extern "C" void func_8004C608(void* self);
 extern "C" void func_8004CC8C(void* self);
 extern "C" f32 func_80496288(void* obj);
+extern "C" void func_80484E5C(void* self, f32 value);
+extern "C" int func_804BE398(void* vec, u32 a, u32 b, u32 c, f32 d, f32 e);
+extern "C" void func_804BE4B4(void* out, int a);
+extern "C" void func_804BE4E0(void* out, int a);
 
 // Cast-only interface for the owner object at +0x08: MWCC places the first
 // user virtual at vt+0x08 (two RTTI entries at vt+0x00/0x04), so the 4th
@@ -126,6 +297,15 @@ struct CActParamAnimOwnerIf {
     f32 field14;    // +0x14
     u8 _pad_18[0x24 - 0x18]; // +0x18..+0x23
     u32 field24;    // +0x24 (func_8004D950 stores it to field4C8)
+};
+
+// Vtable-view for the +0x14 dispatch in func_8004FFBC: with two hidden RTTI
+// slots the 3rd user virtual (index 3) sits at vt+0x14 and returns a float.
+struct CActParamAnimVt14 {
+    virtual int f00();
+    virtual int f01();
+    virtual int f02();
+    virtual f32 f03();  // +0x14
 };
 
 // Vtable-view for the +0x0C dispatch in func_8004FCE0: the second user
@@ -384,6 +564,10 @@ private:
     CActParamData mChildData; // +0x10: embedded CActParamData sub-object
 };
 
+// Same-TU helper (target us-80053ac8), forward-declared for func_8004FFBC.
+// extern "C" so the call-site reloc keeps the retail name verbatim.
+extern "C" int func_80053490(CActParamAnim* self, const ml::CVec3* dirParam);
+
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __dl__FPv(void* object);
 extern "C" void* func_8048315C(void* object);
@@ -407,10 +591,43 @@ extern const float lbl_eu_80665EA0; // const: lets MWCC hoist the sdata2 load li
 extern const float lbl_eu_80665ED8; // fidx scale (func_800526C0 / func_8004CC68)
 extern const float lbl_eu_80665F00; // half-angle (func_800526C0)
 extern float lbl_eu_80665F18;
+extern const float lbl_eu_80665E98; // (func_8004B114 init)
+extern const float lbl_eu_80665EA4; // (func_8004B114 init)
+extern const float lbl_eu_80665EA8; // (func_8004B114 init)
+extern const float lbl_eu_80665EAC; // (func_8004B114 init)
+extern const float lbl_eu_80665EB0; // (func_8004B114 init / func_800504DC clamp)
+extern const float lbl_eu_80665EB4; // (func_8004B114 init / func_800504DC)
+extern const float lbl_eu_80665EBC; // (func_8004B114 init: pre-multiplied with 8066A210)
+extern const float lbl_eu_8066A210; // (func_8004B114 init: pre-multiplied with 80665EBC)
+extern const float lbl_eu_80665EC0; // (func_8004B9D4 angle normalization divisor)
+extern const float lbl_eu_80665F04; // (func_800504DC rand scale)
+extern const float lbl_eu_80665F1C; // (func_800504DC angle threshold)
+extern const float lbl_eu_80665F20; // (func_800504DC angle threshold)
+extern const float lbl_eu_80665F24; // (func_800504DC angle threshold)
+extern const float lbl_eu_80665F28; // (func_800504DC clamp bound)
+extern const float lbl_eu_80665F2C; // (func_800504DC clamp scale)
+extern const float lbl_eu_80665F30; // (func_800504DC clamp bound)
+extern const float lbl_eu_80665F34; // (func_800504DC clamp bound)
+extern const float lbl_eu_80665F38; // (func_800504DC clamp bound)
+extern const float lbl_eu_80665F40; // (func_800504DC clamp bound)
+extern const float lbl_eu_80665F44; // (func_800504DC clamp scale)
+extern const float lbl_eu_80665F48; // (func_800504DC clamp bound)
+extern const float lbl_eu_80665EF8; // (func_800504DC clamp bound / func_8004ECF4 gate)
+extern const float lbl_eu_80665EFC; // (func_800504DC angle threshold / func_8004ECF4 gate)
 extern const float lbl_eu_80665EF0; // 10.0f (anim blend threshold, func_8004FE58/FCE0)
+extern const float lbl_eu_80665F08; // (func_8004ECF4 anim clamp bound)
+extern const float lbl_eu_80665F10; // (func_8004FFBC anim angle bound)
+extern const float lbl_eu_80665F0C; // (func_8004ECF4/FFBC speed limit scale)
+extern float lbl_eu_80663D48; // (sdata anim gate, sinit_800539E0 + func_8004ECF4)
+extern const float lbl_eu_80665EC4; // (func_8004CC8C)
+extern const float lbl_eu_80665EC8; // (func_8004CC8C)
+extern const float lbl_eu_80665EDC; // (func_8004ECF4/FFBC speed limit scale)
+extern const float lbl_eu_80665EE0; // (func_8004CC8C: anim blend threshold)
 extern float lbl_eu_80665F3C;
 extern float lbl_eu_80665F50;
 extern float lbl_eu_80665F54;
+extern const float lbl_eu_80665F14; // (func_80053490 acos-angle epsilon)
+extern const float lbl_eu_80665F5C; // (func_80053490 dot threshold)
 extern float lbl_eu_80665F6C;
 extern float lbl_eu_80665F70;
 extern float lbl_eu_8066A1F8; // pi (angle wrap, func_8004BC28)
@@ -420,4 +637,7 @@ extern float lbl_eu_8066A20C; // angle gate scale (func_80050F5C / func_800512A8
 // nw4r debug strings used by the FSqrt-style assert (file/msg pair).
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
+// nw4r acos-domain assert strings (func_80053490, line 0xef).
+extern const char lbl_eu_805262F0[];
+extern const char lbl_eu_805262C8[];
 

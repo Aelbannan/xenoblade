@@ -4,8 +4,10 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
 #include "monolib/util.hpp"
+#include "monolib/device/CDeviceFile.hpp"
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
+#include <new>
 
 // Retail is 2-arg (category index + s16 item id, see CEquipChange.hpp).
 extern "C" void* func_80157C4C(u32 index, s16 value);
@@ -14,17 +16,11 @@ static inline void* func_80157C4C_1(u32 id) { return func_80157C4C(0, (s16)id); 
 
 // --- Forward declarations ---
 namespace nw4r { namespace lyt { class Layout; class DrawInfo; class AnimTransform; } }
-void func_80136B4C(nw4r::lyt::Layout*, const char*, const char*, u32);
 void func_80136910(nw4r::lyt::Layout*, const char*, u8);
 u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 int sprintf(char*, const char*, ...);
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-u32 func_8026178C(void*, u32);
-u32 func_8025FB10(void*, u32);
 void func_80127BD8(void*, float*);
-void func_801390E0__FPP11CFileHandle(void*);
-void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
-void func_8045F778__17UnkClass_8045F564Fv(void*);
 char* func_80136190(char*, char*, u32);
 char* func_8013639C(void*, char*);
 u32 func_801392B4(u32);
@@ -38,7 +34,6 @@ void func_80139C98(u32);
 extern void* lbl_eu_806645A8;
 extern void* lbl_eu_806645B0;
 void func_80139A18(nw4r::lyt::Layout*, char*, void*, void*);
-void func_801D8930(CItemBoxInfo*);
 void func_801D885C(CItemBoxInfo*);
 void func_801D5564(void*, void*, void*, void*);
 void func_801D8318(CItemBoxInfo*);
@@ -51,21 +46,17 @@ void func_801D4A2C(void*);
 extern "C" void func_801D8E34(CItemBoxInfo*, u32, void*, u32);
 u32 func_801C6E90(void*);
 void func_801D5AA0(CItemBoxInfo*, u16, void*);
-void func_801E40E8(CItemBoxInfo2*);
 void func_801E3B9C(CItemBoxInfo2*);
 void func_801E3EB8(CItemBoxInfo2*);
 void func_801E2638(CItemBoxInfo2*, u16, void*);
 void func_801E2928(CItemBoxInfo2*, u16, void*, u16);
 void func_801E2C5C(CItemBoxInfo2*, u16, void*, u16);
-void func_801E37C4(CItemBoxInfo2*);
 extern "C" void func_801E43BC(CItemBoxInfo2*, u16, void*, u16, u32);
 void func_801E3228(CItemBoxInfo2*, u16, void*, u16);
 void func_801E3730(CItemBoxInfo2*, u32);
-void func_801E27D0(void*, void*);
 void func_801E3918(CItemBoxInfo2*);
 void func_801E197C(void*, void*, void*);
 void func_801E1E0C(void*, void*, void*);
-void func_80137B44(nw4r::lyt::Layout*, const char*, u32);
 void func_80137E7C(nw4r::lyt::Layout*, const char*);
 extern "C" void* func_8009ECB0();
 extern "C" void* func_800B8B94(u32);
@@ -144,15 +135,11 @@ extern const u32 lbl_eu_80668074;
 extern const u16 lbl_eu_80668078;
 extern const u32 lbl_eu_8066807C;
 extern const u16 lbl_eu_80668080;
-u32 getLanguage__9CDeviceSCFv();
-extern "C" void* CItem_initItemImplInstances(void*);
+u8 getLanguage__9CDeviceSCFv();
 u32 func_801393CC(void*);
 extern void* lbl_eu_80664110;
-u32 getHandleMEM2__Q23mtl10MemManagerFv();
-void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
-void setHandleFlag1__11CDeviceFileFP11CFileHandle(void*);
 
-void resetCItemBox() {}
+void __declspec(noinline) resetCItemBox() {}
 
 // --- CItemBoxInfo methods ---
 
@@ -208,8 +195,8 @@ void func_801D4BDC(CItemBoxInfo* info, u8 arg2, u8 arg3) {
 
 // --- Remaining CItemBoxInfo stubs ---
 
-void func_801D8C0C(CItemBoxInfo*);
-void func_801E4194(CItemBoxInfo2*);
+extern "C" void func_801D8C0C(CItemBoxInfo*);
+extern "C" void func_801E4194(CItemBoxInfo2*);
 
 void func_801D421C(CItemBoxInfo* info) {
     if (info->state.state != 0) return;
@@ -227,57 +214,85 @@ void func_801D4154(CItemBoxInfo* info, nw4r::lyt::DrawInfo* drawInfo) {
 
 void func_80127BD8(void*, float*);
 
+#pragma push
+#pragma optimize_for_size on
 void func_801D4A2C(void* sub) {
     float f = lbl_eu_8066800C;
-    for (int i = 0; i < 12; i++) {
+    for (u8 i = 0; i < 12; i++) {
         ((s16*)sub)[i] = 0;
         float temp[3] = {f, f, f};
-        func_80127BD8((u8*)sub + 0x18 + i * 0xC, temp);
+        copyVEC3((u8*)sub + i * 0xC + 0x18, temp);
     }
 }
+#pragma pop
 
 
+// Retail func_801D4054 uses the stmw/lmw frame (MWCC optimize_for_size
+// prologue merge). The setHandleFlag1 call reuses the readFile result in r3.
+#pragma push
+#pragma optimize_for_size on
 void func_801D4054(CItemBoxInfo* info) {
-    u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
-    info->state.fileHandle1 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_805063BC[0x8e], info, 0, 0);
-    setHandleFlag1__11CDeviceFileFP11CFileHandle(info->state.fileHandle1);
-    handle = getHandleMEM2__Q23mtl10MemManagerFv();
-    info->state.fileHandle2 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_805063BC[0xa6], info, 0, 0);
-    setHandleFlag1__11CDeviceFileFP11CFileHandle(info->state.fileHandle2);
+    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+    CFileHandle* fh1 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0x8e], reinterpret_cast<IWorkEvent*>(info), 0, 0);
+    info->state.fileHandle1 = fh1;
+    CDeviceFile::setHandleFlag1(fh1);
+    handle = mtl::MemManager::getHandleMEM2();
+    CFileHandle* fh2 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0xa6], reinterpret_cast<IWorkEvent*>(info), 0, 0);
+    info->state.fileHandle2 = fh2;
+    CDeviceFile::setHandleFlag1(fh2);
 }
+#pragma pop
+// Retail func_801D4174 uses the stmw/lmw frame (MWCC optimize_for_size
+// prologue merge): r30 holds `this` and r31 the zero constant for the four
+// post-call pointer clears, so both survive the func_801390E0/80139124 calls.
+#pragma push
+#pragma optimize_for_size on
 void func_801D4174(CItemBoxInfo* info) {
-    func_801390E0__FPP11CFileHandle(&info->state.fileHandle1);
-    func_801390E0__FPP11CFileHandle(&info->state.fileHandle2);
+    func_801390E0(&info->state.fileHandle1);
+    func_801390E0(&info->state.fileHandle2);
     void* layout = info->state.layout;
     info->state.active = 0;
     if (layout != 0) {
         if (layout != 0) {
-            (*(void(**)(void*, u32))(*(void***)layout + 2))(layout, 1);
+            // Retail calls the deleting destructor through vtable slot 2;
+            // real virtual dispatch reproduces the r12/CTR load pattern.
+            reinterpret_cast<CItemBoxLayoutDtorVt*>(layout)->destroy(1);
         }
         info->state.layout = 0;
     }
     info->state.animTransform1 = 0;
     info->state.animTransform2 = 0;
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(info->state.arcResourceAccessor);
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(info->state.resource);
+    func_80139124(info->state.arcResourceAccessor);
+    func_80139124(info->state.resource);
     info->state.arcResourceAccessor = 0;
     info->state.resource = 0;
-    func_8045F778__17UnkClass_8045F564Fv(&info->state.memRegion1);
-    func_8045F778__17UnkClass_8045F564Fv(&info->state.memRegion2);
+    info->state.memRegion1.func_8045F778();
+    info->state.memRegion2.func_8045F778();
 }
+#pragma pop
 
 
 
-void func_80137924(void*, void*, void*, void*);
-
-void func_801D4B3C(void* arg0, CItemBoxInfo* info, u32 arg2) {
+// Retail func_801D4B3C uses the stmw/lmw frame (MWCC optimize_for_size
+// prologue merge) for arg0/child/first-result in r29/r30/r31.
+#pragma push
+#pragma optimize_for_size on
+void func_801D4B3C(u8* arg0, CItemBoxInfo* info, u32 arg2) {
     char buf[0x20];
-    sprintf(buf, (char*)&lbl_eu_805063BC[0x161], arg2 + 1);
-    nw4r::lyt::Pane* child = (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10);
-    void* r1 = child->FindPaneByName((char*)&lbl_eu_805063BC[0x16e], true);
-    void* r2 = child->FindPaneByName(buf, true);
-    func_80137924(arg0, r2, r1, child);
+    // Declare `first` before `child`: low-degree webs color in reverse birth
+    // order, so child (declared later) colors first into info's dead r30 and
+    // first reuses the pool base's r31 (matches retail r29/r30/r31 layout).
+    nw4r::lyt::Pane* first;
+    nw4r::lyt::Pane* second;
+    nw4r::lyt::Pane* child;
+    char* base = lbl_eu_805063BC;
+    sprintf(buf, base + 0x161, arg2 + 1);
+    child = (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10);
+    first = child->FindPaneByName(base + 0x16e, true);
+    second = child->FindPaneByName(buf, true);
+    func_80137924((nw4r::math::VEC3*)arg0, second, first, child);
 }
+#pragma pop
 
 void func_801D4C3C(CItemBoxInfo* info, void* arg2) {
     if (info->state.layout == 0) return;
@@ -298,7 +313,7 @@ extern "C" void func_801D4C9C(CItemBoxInfo* info) {
 }
 
 extern "C" void func_801D4D18(CItemBoxInfo* info) {
-    if (func_80137444((nw4r::lyt::AnimTransform*)info->state.animTransform2, -0.0f) != 0) {
+    if (func_80137444((nw4r::lyt::AnimTransform*)info->state.animTransform2, lbl_eu_80668010) != 0) {
         info->state.state = 3;
         info->state.visible = 1;
     }
@@ -507,15 +522,13 @@ void func_801D5DA4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x165, base + 0x2aa, 0);
 }
 
-void func_801D62F8(void* arr, u32 index, const void* color) {
+void __declspec(noinline) func_801D62F8(void* arr, u32 index, const void* color) {
     if (index >= 3) {
         Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8052E590, 0x8f, lbl_eu_8052E568);
     }
     __as__11_GXColorS10FRC11_GXColorS10((u8*)arr + index * 8 + 0x10, color);
 }
-void func_80137924(void*, void*, void*, void*);
 void func_801D3FF0(void*);
-void __dl__FPv(void*);
 
 void func_801D40C4(CItemBoxInfo* info) {
     if (info->state.active != 0) {
@@ -714,10 +727,15 @@ extern "C" void func_801D85D8(CItemBoxInfo* info) {
         }
     }
 }
+// Retail func_801D885C uses the stmw/lmw frame (MWCC optimize_for_size
+// prologue merge): info in r28, loop counter in r29, index in r30,
+// string-pool base in r31.
+#pragma push
+#pragma optimize_for_size on
 void func_801D885C(CItemBoxInfo* info) {
     char buf[0x20];
-    for (int i = 0; i < 3; i++) {
-        int index = (u8)i + 1;
+    for (u32 i = 0; i < 3; i++) {
+        u32 index = (u8)i + 1;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x35f], index);
         void* r = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         func_80124270(r, 0);
@@ -727,25 +745,44 @@ void func_801D885C(CItemBoxInfo* info) {
         func_80136B4C((nw4r::lyt::Layout*)info->state.layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
     }
 }
+#pragma pop
+// Retail func_801D8930: label every slot pane, then build two 8-byte
+// selection colours (from the s16s at +0xA2/+0xAA) read as four u32 varargs
+// for the pane-name sprintf, look the pane up, and push both colours into its
+// vertex buffer via func_801D62F8. layout is reloaded per use (lwz 0x34).
 void func_801D8930(CItemBoxInfo* info) {
     char* base = (char*)&lbl_eu_805063BC;
-    void* layout = info->state.layout;
-    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x44f, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x44f, base + 0x2aa, 0);
     char buf[0x20];
-    u32 max = func_801392C0();
-    for (u32 i = 0; i < max; i++) {
-        u32 idx = i + 1;
+    // Retail re-evaluates the slot count on every iteration (bl in the
+    // loop condition), so do not hoist the func_801392C0 call.
+    for (u32 i = 0; i < (u8)func_801392C0(); i++) {
+        u32 idx = (u8)i + 1;
         sprintf(buf, base + 0x303, idx);
-        func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
-        sprintf(buf, base + 0x161, idx);
-        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10))->FindPaneByName(buf, true);
+        func_80137B44((nw4r::lyt::Layout*)info->state.layout, buf, 0x777777ff);
+        u32 args[4];
+        s16 c0hi[2] = {0, *(s16*)((u8*)info + 0xA2)};
+        s16 c0lo[2] = {0, 0};
+        s16 c1hi[2] = {0, *(s16*)((u8*)info + 0xAA)};
+        s16 c1lo[2] = {0, 0};
+        args[1] = *(u32*)c0hi;
+        args[0] = *(u32*)c0lo;
+        args[3] = *(u32*)c1hi;
+        args[2] = *(u32*)c1lo;
+        sprintf(buf, base + 0x161, idx, args[0], args[1], args[2], args[3]);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
+            void* obj = ((void*(*)(void*))(*(void***)pane)[26])(pane);
             for (u32 j = 0; j < 2; j++) {
-                func_801D62F8((u8*)pane + 0x10, j, buf);
+                func_801D62F8(obj, (u8)j, (u8*)args + (u8)j * 8);
             }
         }
     }
 }
+// Retail func_801D8A88 uses the stmw/lmw frame (MWCC optimize_for_size
+// prologue merge); the first call's arg4 zero is hoisted into the prologue.
+#pragma push
+#pragma optimize_for_size on
 void func_801D8A88(CItemBoxInfo* info) {
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
                   &lbl_eu_805063BC[0x45a],
@@ -760,13 +797,18 @@ void func_801D8A88(CItemBoxInfo* info) {
                   &lbl_eu_805063BC[0x472],
                   &lbl_eu_805063BC[0x2aa], 0);
 }
+#pragma pop
 
+// Retail func_801D8B60 uses the stmw/lmw frame (MWCC optimize_for_size
+// prologue merge): info in r29, loop counter in r30, string-pool base in r31.
+#pragma push
+#pragma optimize_for_size on
 void func_801D8B60(CItemBoxInfo* info) {
     char buf[0x20];
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
                   &lbl_eu_805063BC[0x4a7],
                   &lbl_eu_805063BC[0x2aa], 0);
-    for (int i = 0; i < 4; i++) {
+    for (u32 i = 0; i < 4; i++) {
         sprintf(buf, &lbl_eu_805063BC[0x4b3], (u8)i * 2 + 0x1f);
         func_80136B4C((nw4r::lyt::Layout*)info->state.layout, buf,
                       &lbl_eu_805063BC[0x2aa], 0);
@@ -775,6 +817,7 @@ void func_801D8B60(CItemBoxInfo* info) {
                       &lbl_eu_805063BC[0x2aa], 0);
     }
 }
+#pragma pop
 
 #pragma push
 #pragma auto_inline off
@@ -788,7 +831,7 @@ extern "C" void func_801D8B08(CItemBoxInfo* info) {
 }
 #pragma pop
 
-void func_801D8C0C(CItemBoxInfo* info) {
+extern "C" void func_801D8C0C(CItemBoxInfo* info) {
     void* layout = info->state.layout;
     char* base = (char*)&lbl_eu_805063BC;
     func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x44f, base + 0x2aa, 0);
@@ -2425,7 +2468,7 @@ extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4
             sprintf(buf1, &lbl_eu_805063BC[0x507], i * 2 + 0x13);
             sprintf(buf2, &lbl_eu_805063BC[0x515], i + 0x10);
             nw4r::lyt::Pane* pane1 = ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10))->FindPaneByName(buf1, true);
-            func_80137924(&quad, pane1, root, ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10)));
+            func_80137924((nw4r::math::VEC3*)&quad, pane1, root, ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10)));
             // Transpose alternating UI rows into the two four-slot columns.
             s32 idx = (s32)(0.5f * (f32)i);
             if (((s8)i % 2) != 0) idx += 4;
@@ -2528,25 +2571,23 @@ void setItemBoxEntry(CItemBoxInfoEntry* self, u16 a, u32 b, u8 c) {
 }
 
 s32 func_801DF4E0(void* a, void* b, s32 arg2, void* d) {
-    void* r27 = a;
-    void* r28 = b;
-    s32 r29 = arg2;
-    void* r30 = d;
-    u32 r31 = func_801DFD60(r27, r28, 0x2d);
-    u32 r3 = func_801DF610(r27, r28, 0x52, r30);
-    s32 sum = (s32)(r3 + r31 + 0x64);
-    return (s32)(lbl_eu_80668040 * (float)(r29 * sum));
+    u32 t1 = func_801DFD60(a, b, 0x2d);
+    u32 t2 = func_801DF610(a, b, 0x52, d);
+    s32 sum = (s32)(t2 + t1 + 0x64);
+    union { double d; u32 w[2]; } u;
+    u.w[1] = (u32)(arg2 * sum) ^ 0x80000000;
+    u.w[0] = 0x43300000;
+    return (s32)(lbl_eu_80668040 * (float)(u.d - lbl_eu_80668028));
 }
 
 s32 func_801DF578(void* a, void* b, s32 arg2, void* d) {
-    void* r27 = a;
-    void* r28 = b;
-    s32 r29 = arg2;
-    void* r30 = d;
-    u32 r31 = func_801DFD60(r27, r28, 0x2d);
-    u32 r3 = func_801DF610(r27, r28, 0x53, r30);
-    s32 sum = (s32)(r3 + r31 + 0x64);
-    return (s32)(lbl_eu_80668040 * (float)(r29 * sum));
+    u32 t1 = func_801DFD60(a, b, 0x2d);
+    u32 t2 = func_801DF610(a, b, 0x53, d);
+    s32 sum = (s32)(t2 + t1 + 0x64);
+    union { double d; u32 w[2]; } u;
+    u.w[1] = (u32)(arg2 * sum) ^ 0x80000000;
+    u.w[0] = 0x43300000;
+    return (s32)(lbl_eu_80668040 * (float)(u.d - lbl_eu_80668028));
 }
 u32 func_801DF610(void* unused, u16 lookup_key, u32 category, void* arg3) {
     void* lookup = func_8009EC9C(lookup_key);
@@ -2662,10 +2703,13 @@ u32 func_801DFD60(void* a, void* b, u32 arg2) {
 }
 
 #pragma push
-#pragma auto_inline off
+#pragma optimize_for_size on
 u32 func_801E9690(void* dummy, u32 arg1, u32 arg2) {
+    // Retail keeps obj in r31 and result in r30 (obj declared first gets the
+    // highest saved register); the result=0 init lands before the call.
+    void* obj;
     u32 result = 0;
-    void* obj = (u8*)func_8009EC9C(arg1) + 0x3534;
+    obj = (u8*)func_8009EC9C(arg1) + 0x3534;
     if (func_8026178C(obj, arg2) != 0) {
         result = func_8025FB10(obj, arg2);
     }
@@ -2790,6 +2834,12 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
     return false;
 }
 
+// Retail __ct__CItemBoxInfo uses the stmw/lmw frame (MWCC optimize_for_size
+// prologue merge) with arg2/arg3 saved in r30/r31; plain -O4,p splits the
+// saves into separate stw's. The trailing resetCItemBox__Fv call is a real
+// bl (the callee is __declspec(noinline)).
+#pragma push
+#pragma optimize_for_size on
 CItemBoxInfo* __ct__CItemBoxInfo(CItemBoxInfo* info, u8 arg2, u16 arg3) {
     *(void**)info = (void*)lbl_eu_80534B28;
     __ct__17UnkClass_8045F564Fv((u8*)info + 0x4);
@@ -2828,21 +2878,31 @@ CItemBoxInfo* __ct__CItemBoxInfo(CItemBoxInfo* info, u8 arg2, u16 arg3) {
     *(u8*)((u8*)info + 0x9A) = arg2;
     *(u16*)((u8*)info + 0xAC) = arg3;
     *(u8*)((u8*)info + 0xAE) = 0;
-    func_801D3FF0((u8*)info + 0xB0);
+    // Retail keeps a dead addi r3,r29,0xb0 (scheduled before the zero-stores)
+    // plus the trailing bl resetCItemBox__Fv; the cast call makes MWCC emit
+    // the extra-arg setup and then fold to the direct bl of the Fv symbol.
+    ((void(*)(void*))resetCItemBox)((u8*)info + 0xB0);
     return info;
 }
+#pragma pop
 
 extern "C" CItemBoxInfo* __dt__12CItemBoxInfoFv(CItemBoxInfo* info, s32 flags) {
     if (info != NULL) {
-        __dt__17UnkClass_8045F564Fv((u8*)info + 0x14, -1);
-        __dt__17UnkClass_8045F564Fv((u8*)info + 0x4, -1);
-        if (flags > 0) __dl__FPv(info);
+        __dt__17UnkClass_8045F564Fv(&info->state.memRegion2, -1);
+        __dt__17UnkClass_8045F564Fv(&info->state.memRegion1, -1);
+        if (flags > 0) ::operator delete(info);
     }
     return info;
 }
 
 void func_801D3FF0(void*) {}
 
+// Retail __ct__CItemBoxInfo2 uses the stmw/lmw frame (MWCC optimize_for_size
+// prologue merge) with arg2/arg3 saved in r30/r31; plain -O4,p splits the
+// saves into separate stw's. The trailing resetCItemBox__Fv call is a real
+// bl (the callee is __declspec(noinline)).
+#pragma push
+#pragma optimize_for_size on
 CItemBoxInfo2* __ct__CItemBoxInfo2(CItemBoxInfo2* info, u8 arg2, u16 arg3) {
     *(void**)info = (void*)lbl_eu_80534A90;
     __ct__17UnkClass_8045F564Fv((u8*)info + 0x4);
@@ -2880,25 +2940,40 @@ CItemBoxInfo2* __ct__CItemBoxInfo2(CItemBoxInfo2* info, u8 arg2, u16 arg3) {
     *(u8*)((u8*)info + 0x99) = 1;
     *(u8*)((u8*)info + 0x9A) = arg2;
     *(u16*)((u8*)info + 0xAC) = arg3;
-    func_801D3FF0((u8*)info + 0xB0);
+    // Retail keeps a dead addi r3,r29,0xb0 (scheduled before the zero-stores)
+    // plus the trailing bl resetCItemBox__Fv; the cast call makes MWCC emit
+    // the extra-arg setup and then fold to the direct bl of the Fv symbol.
+    ((void(*)(void*))resetCItemBox)((u8*)info + 0xB0);
     return info;
 }
+#pragma pop
 
+// Retail __dt__13CItemBoxInfo2Fv uses the stmw/lmw frame (MWCC
+// optimize_for_size prologue merge); plain -O4,p splits the r30/r31 saves
+// into separate stw's. Same pattern as the matched kyoshin dtors.
+#pragma push
+#pragma optimize_for_size on
 CItemBoxInfo2* __dt__13CItemBoxInfo2Fv(CItemBoxInfo2* info, s32 flags) {
     if (info != NULL) {
-        __dt__17UnkClass_8045F564Fv((u8*)info + 0x14, -1);
-        __dt__17UnkClass_8045F564Fv((u8*)info + 0x4, -1);
-        if (flags > 0) __dl__FPv(info);
+        __dt__17UnkClass_8045F564Fv(&info->state.memRegion2, -1);
+        __dt__17UnkClass_8045F564Fv(&info->state.memRegion1, -1);
+        if (flags > 0) ::operator delete(info);
     }
     return info;
 }
+#pragma pop
 
+// Retail func_801E12E0 uses the stmw/lmw frame (MWCC optimize_for_size
+// prologue merge) like the sibling ItemBox1/2 dtors.
+#pragma push
+#pragma optimize_for_size on
 void func_801E12E0(CItemBoxInfo2* info) {
-    u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
-    info->state.fileHandle1 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_805063BC[0x8e], info, 0, 0);
-    handle = getHandleMEM2__Q23mtl10MemManagerFv();
-    info->state.fileHandle2 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_805063BC[0xa6], info, 0, 0);
+    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+    info->state.fileHandle1 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0x8e], reinterpret_cast<IWorkEvent*>(info), 0, 0);
+    handle = mtl::MemManager::getHandleMEM2();
+    info->state.fileHandle2 = CDeviceFile::readFile(handle, &lbl_eu_805063BC[0xa6], reinterpret_cast<IWorkEvent*>(info), 0, 0);
 }
+#pragma pop
 
 
 void CItemBoxInfo2::drawItemBox2Layout(nw4r::lyt::DrawInfo* drawInfo) {
@@ -2907,26 +2982,30 @@ void CItemBoxInfo2::drawItemBox2Layout(nw4r::lyt::DrawInfo* drawInfo) {
     }
 }
 
+// Retail func_801E13F8 (CItemBoxInfo2 teardown) keeps a plain single-save
+// frame (only r31 = `this` survives the calls; zeros are re-loaded per store),
+// so unlike func_801D4174 it must NOT use optimize_for_size, and it does not
+// clear the 0x2C/0x30 accessor/resource pointers after releasing them.
 void func_801E13F8(CItemBoxInfo2* info) {
-    func_801390E0__FPP11CFileHandle(&info->state.fileHandle1);
-    func_801390E0__FPP11CFileHandle(&info->state.fileHandle2);
+    func_801390E0(&info->state.fileHandle1);
+    func_801390E0(&info->state.fileHandle2);
     void* layout = info->state.layout;
     info->state.active = 0;
     if (layout != 0) {
         if (layout != 0) {
-            (*(void(**)(void*, u32))(*(void***)layout + 2))(layout, 1);
+            // Deleting destructor via vtable slot 2 (see func_801D4174).
+            reinterpret_cast<CItemBoxLayoutDtorVt*>(layout)->destroy(1);
         }
         info->state.layout = 0;
     }
     info->state.animTransform1 = 0;
     info->state.animTransform2 = 0;
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(info->state.arcResourceAccessor);
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(info->state.resource);
-    info->state.arcResourceAccessor = 0;
-    info->state.resource = 0;
-    func_8045F778__17UnkClass_8045F564Fv(&info->state.memRegion1);
-    func_8045F778__17UnkClass_8045F564Fv(&info->state.memRegion2);
+    func_80139124(info->state.arcResourceAccessor);
+    func_80139124(info->state.resource);
+    info->state.memRegion1.func_8045F778();
+    info->state.memRegion2.func_8045F778();
 }
+
 
 void func_801E1498(CItemBoxInfo2* info) {
     if (info->state.state != 0) return;
@@ -2967,7 +3046,7 @@ void func_801E14DC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4, u32 arg5
         if (val <= 2) arg4 = -1;
         func_801E2C5C(info, id_final, arg3, arg4);
     } else if (r == 9 || r == 10) {
-        func_801E37C4(info);
+        func_801E37C4(info, arg3, arg3);
     } else if (r == 13) {
         func_801E3730(info, arg2);
     }
@@ -2978,16 +3057,24 @@ void func_801E16F0(CItemBoxInfo2* info, char* arg1, char* arg2) {
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, buf, arg2, 0);
 }
 
-void func_801E174C(void* arg0, CItemBoxInfo2* info, u32 arg2) {
+// Retail func_801E174C (CItemBoxInfo2 variant) uses the same stmw/lmw frame.
+#pragma push
+#pragma optimize_for_size on
+void func_801E174C(u8* arg0, CItemBoxInfo2* info, u32 arg2) {
     char buf[0x20];
-    sprintf(buf, (char*)&lbl_eu_805063BC[0x161], arg2 + 1);
-    void* layout = info->state.layout;
-    nw4r::lyt::Pane* child = (nw4r::lyt::Pane*)*(void**)((u8*)layout + 0x10);
-    void* r1 = child->FindPaneByName((char*)&lbl_eu_805063BC[0x16e], true);
-    void* r2 = child->FindPaneByName(buf, true);
-    func_80137924(arg0, r2, r1, child);
+    // Same declaration-order trick as func_801D4B3C: `first` before `child`
+    // so child colors into dead info's r30 and first reuses base's r31.
+    nw4r::lyt::Pane* first;
+    nw4r::lyt::Pane* second;
+    nw4r::lyt::Pane* child;
+    char* base = lbl_eu_805063BC;
+    sprintf(buf, base + 0x161, arg2 + 1);
+    child = (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10);
+    first = child->FindPaneByName(base + 0x16e, true);
+    second = child->FindPaneByName(buf, true);
+    func_80137924((nw4r::math::VEC3*)arg0, second, first, child);
 }
-
+#pragma pop
 #pragma push
 #pragma auto_inline off
 extern "C" void func_801E17EC(CItemBoxInfo2* info) {
@@ -3113,7 +3200,7 @@ void func_801E20FC(void* out, void* unused, void* data, void* arg3) {
     }
 }
 
-void func_801E2558(u32* out, void* arg2) {
+void func_801E2558(u32* out, void* info, void* arg2) {
     u32 v0 = func_801392E4(arg2);
     u16 v2 = func_80139358((u32)arg2);
     u8 r1 = func_801361E8((u32)lbl_eu_80664104, (char*)&lbl_eu_805063BC[0x214], v2);
@@ -3158,24 +3245,43 @@ void func_801E2638(CItemBoxInfo2* info, u16 arg2, void* arg3) {
     ((u32*)info)[1] = 0;
     ((u8*)info)[8] = flag2;
 }
-void func_801E27D0(void* out, void* arg2) {
-    u16 v1 = func_801392E4(arg2);
-    u16 v2 = func_80139358((u32)arg2);
-    void* inst = CItem_initItemImplInstances(arg2);
-    u8 r = ((u8(*)(void*, void*))(*(void***)inst)[2])(inst, arg2);
-    char* s = (char*)func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
-    ((u32*)out)[0] = 0;
-    ((u8*)out)[4] = 0;
-    for (u32 i = 0; i < 3; i++) {
-        void* inst2 = CItem_initItemImplInstances(arg2);
-        u16 count = ((u16(*)(void*, void*, u32))(*(void***)inst2)[19])(inst2, arg2, i);
-        if (count == 0) continue;
-        char* t = func_8013639C(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x139]);
-        ((u32*)((u8*)out + 8))[i * 4] = (u32)t;
-        void* inst3 = CItem_initItemImplInstances(arg2);
-        u8 val = ((u8(*)(void*, void*, u32))(*(void***)inst3)[25])(inst3, arg2, i);
-        ((u8*)out)[i + 0x1C] = val;
+// Retail func_801E27D0 fills a 0x24-byte slot record (count byte, string ptr,
+// per-item text ptrs at +8, per-item values at +0x1C, counter at +0x21) then
+// copies it out. The func_801392E4/80139358 results are discarded (dead calls
+// kept because MWCC never elides calls). Param 2 (info) is unused in retail.
+void func_801E27D0(u8* out, void* unused, void* item, void* arg4) {
+    u8* dst = out;
+    CItemBoxSlotRecord rec;
+    void* p = arg4 != 0 ? arg4 : 0;
+    func_801392E4(item);
+    func_80139358((u32)item);
+    void* inst = CItem_initItemImplInstances(p);
+    u8 r = ((u8(*)(void*, void*))(*(void***)inst)[2])(inst, p);
+    rec.count = r;
+    char* base = (char*)&lbl_eu_805063BC;
+    rec.str = (u32)func_80136190(&base[0x130], &base[0x139], 0x1e - (r - 1));
+    rec.tail[1] = 0;
+    for (u32 i = 0; i < 4; i++) {
+        void* inst2 = CItem_initItemImplInstances(p);
+        u16 n = ((u16(*)(void*, void*, u32))(*(void***)inst2)[19])(inst2, p, (u8)i);
+        if (n > 0) {
+            rec.text[rec.tail[1]] = (u32)func_8013639C(lbl_eu_806640D8, &base[0x139]);
+            void* inst3 = CItem_initItemImplInstances(p);
+            u8 val = ((u8(*)(void*, void*, u32))(*(void***)inst3)[25])(inst3, p, (u8)i);
+            rec.vals[rec.tail[1]] = val;
+            rec.tail[1]++;
+        }
     }
+    // 4x 8-byte pair loop + 4-byte tail == retail mtctr copy shape; the inner
+    // constant-trip loop is what keeps -O4,p from unrolling the outer loop.
+    u32* d = (u32*)dst;
+    u32* s = (u32*)&rec;
+    for (u32 k = 0; k < 4; k++) {
+        for (u32 j = 0; j < 2; j++) {
+            *d++ = *s++;
+        }
+    }
+    *(u32*)((u8*)dst + 0x20) = *(u32*)((u8*)&rec + 0x20);
 }
 // Render the item-box slot info: for each slot (count from the slot-table
 // byte getter) set up a labelled layout pane, per-slot vertex colours, and
@@ -3308,23 +3414,37 @@ void func_801E3228(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
     }
 }
 void func_801E3730(CItemBoxInfo2* info, u32 arg2) {
-    func_801D8B08((CItemBoxInfo*)info);
-    func_801E3918(info);
-    void* layout = *(void**)((u8*)info + 0x34);
+    func_801E4090(info);
+    func_801E3B9C(info);
     u32 buf[4];
-    func_801D59C0(buf, info, (void*)arg2);
-    func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_805063BC[0x48f], (char*)buf[1], 0);
-    func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_805063BC[0x49b], (char*)buf[3], 0);
+    func_801E2558(buf, info, (void*)arg2);
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC[0x48f], (char*)buf[1], 0);
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC[0x49b], (char*)buf[3], 0);
 }
-void func_801E37C4(CItemBoxInfo2* info) {
+// Retail func_801E37C4: run the two layout preps, build a 0x24-byte slot
+// record via func_801E27D0, copy it to a local, then label every slot: a
+// count-driven loop of 4-byte pane names + per-item text/val colour labels
+// (FixStr<32> buffer sits between the record and the copy in the frame).
+void func_801E37C4(CItemBoxInfo2* info, void* arg1, void* arg2) {
+    char paneName[0x20];
+    u8 out[0x24];
     func_801E40E8(info);
     func_801E3B9C(info);
-    func_801E27D0(info, 0);
-    void* layout = *(void**)((u8*)info + 0x34);
+    func_801E27D0(out, info, arg1, arg2);
+    u8 dst[0x24];
+    memcpy(dst, out, 0x24);
+    nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34);
     char* base = (char*)&lbl_eu_805063BC;
-    char buf[0x20];
-    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x1e2, base + 0x2aa, 0);
-    func_80136190(buf, base + 0x130, 0);
+    func_80136B4C(layout, &base[0x4a7], *(const char**)(dst + 4), 0);
+    u8 count = dst[0x21];
+    for (u8 i = 0; i < count; i++) {
+        sprintf(paneName, &base[0x4b3], (u8)i * 2 + 0x1f);
+        func_80136B4C(layout, paneName, *(const char**)(dst + 8 + (u8)i * 4), 0);
+        ml::FixStr<32> text;
+        sprintf(paneName, &base[0x4c0], (u8)i + 0x1f);
+        text.format(&base[0x13e], dst[0x1c + i], func_80136190(&base[0x130], &base[0x139], 0x21));
+        func_80136B4C(layout, paneName, text.c_str(), 0);
+    }
 }
 void func_801E3918(CItemBoxInfo2* info) {
     void* layout = *(void**)((u8*)info + 0x34);
@@ -3411,6 +3531,10 @@ void func_801E3EB8(CItemBoxInfo2* info) {
         }
     }
 }
+// Retail uses the stmw/lmw frame (MWCC optimize_for_size prologue merge);
+// the first call's arg4 zero and the string base are hoisted into the prologue.
+#pragma push
+#pragma optimize_for_size on
 void func_801E4010(CItemBoxInfo2* info) {
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
                   &lbl_eu_805063BC[0x45a],
@@ -3425,6 +3549,7 @@ void func_801E4010(CItemBoxInfo2* info) {
                   &lbl_eu_805063BC[0x472],
                   &lbl_eu_805063BC[0x2aa], 0);
 }
+#pragma pop
 
 void func_801E4090(CItemBoxInfo2* info) {
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
@@ -3434,12 +3559,16 @@ void func_801E4090(CItemBoxInfo2* info) {
                   &lbl_eu_805063BC[0x49b],
                   &lbl_eu_805063BC[0x2aa], 0);
 }
+// Retail func_801E40E8 uses the stmw/lmw frame (MWCC optimize_for_size
+// prologue merge): info in r29, loop counter in r30, string-pool base in r31.
+#pragma push
+#pragma optimize_for_size on
 void func_801E40E8(CItemBoxInfo2* info) {
     char buf[0x20];
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
                   &lbl_eu_805063BC[0x4a7],
                   &lbl_eu_805063BC[0x2aa], 0);
-    for (int i = 0; i < 4; i++) {
+    for (u32 i = 0; i < 4; i++) {
         sprintf(buf, &lbl_eu_805063BC[0x4b3], (u8)i * 2 + 0x1f);
         func_80136B4C((nw4r::lyt::Layout*)info->state.layout, buf,
                       &lbl_eu_805063BC[0x2aa], 0);
@@ -3448,8 +3577,9 @@ void func_801E40E8(CItemBoxInfo2* info) {
                       &lbl_eu_805063BC[0x2aa], 0);
     }
 }
+#pragma pop
 
-void func_801E4194(CItemBoxInfo2* info) {
+extern "C" void func_801E4194(CItemBoxInfo2* info) {
     void* layout = *(void**)((u8*)info + 0x34);
     char* base = (char*)&lbl_eu_805063BC;
     func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x44f, base + 0x2aa, 0);
@@ -3472,8 +3602,6 @@ void func_801E4390(CItemBoxInfo2* info) {
     if (info->state.resource != 0) {
         info->state.current = 1;
         info->state.active = 1;
-    } else {
-        return;
     }
 }
 // ============================================================================
@@ -4663,7 +4791,7 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
             nw4r::lyt::Pane* pane1 = ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10))->FindPaneByName(buf1, true);
             nw4r::lyt::Pane* pane2 = ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10))->FindPaneByName(buf2, true);
             CItemBoxQuad quad;
-            func_80137924(&quad, pane1, root, ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10)));
+            func_80137924((nw4r::math::VEC3*)&quad, pane1, root, ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10)));
             // slot index transposition: idx = (s32)(0.5f * i) + ((i & 1) ? 4 : 0)
             s32 idx = (s32)(0.5f * (f32)i) + ((i & 1) ? 4 : 0);
             if (idx < 12) {
@@ -4742,28 +4870,26 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
 #pragma push
 #pragma auto_inline off
 s32 func_801E9190(void* a, void* b, s32 arg2, void* d) {
-    u32 r31 = func_801E92B8(a, b);
-    void* r27 = a;
-    void* r28 = b;
-    s32 r29 = arg2;
-    void* r30 = d;
-    u32 r3 = func_801E9310(r27, r28, 0x52, r30);
-    s32 sum = (s32)(r3 + r31 + 0x64);
-    return (s32)(lbl_eu_80668040 * (float)(r29 * sum));
+    u32 t1 = func_801E92B8(a, b);
+    u32 t2 = func_801E9310(a, b, 0x52, d);
+    s32 sum = (s32)(t2 + t1 + 0x64);
+    union { double d; u32 w[2]; } u;
+    u.w[1] = (u32)(arg2 * sum) ^ 0x80000000;
+    u.w[0] = 0x43300000;
+    return (s32)(lbl_eu_80668040 * (float)(u.d - lbl_eu_80668028));
 }
 #pragma pop
 
 #pragma push
 #pragma auto_inline off
 s32 func_801E9224(void* a, void* b, s32 arg2, void* d) {
-    u32 r31 = func_801E92B8(a, b);
-    void* r27 = a;
-    void* r28 = b;
-    s32 r29 = arg2;
-    void* r30 = d;
-    u32 r3 = func_801E9310(r27, r28, 0x53, r30);
-    s32 sum = (s32)(r3 + r31 + 0x64);
-    return (s32)(lbl_eu_80668040 * (float)(r29 * sum));
+    u32 t1 = func_801E92B8(a, b);
+    u32 t2 = func_801E9310(a, b, 0x53, d);
+    s32 sum = (s32)(t2 + t1 + 0x64);
+    union { double d; u32 w[2]; } u;
+    u.w[1] = (u32)(arg2 * sum) ^ 0x80000000;
+    u.w[0] = 0x43300000;
+    return (s32)(lbl_eu_80668040 * (float)(u.d - lbl_eu_80668028));
 }
 #pragma pop
 #pragma push
@@ -4783,13 +4909,15 @@ u32 func_801E9310(void* a, void* b, u32 c, void* d) {
 #pragma pop
 #pragma push
 #pragma auto_inline off
+#pragma optimize_for_size on
 u32 func_801E96F0(void* dummy, u32 arg1, u32 arg2) {
     if (arg1 == 0 || arg2 == 0) return 0;
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x1f4], arg1);
-    u16 r5 = func_80139358(arg2);
-    u32 result = func_801361E8((u32)lbl_eu_806640F8, buf, r5);
-    return !!(u8)result;
+    u32 g = (u32)lbl_eu_806640F8;
+    u16 cat = func_80139358(arg2);
+    u8 result = func_801361E8(g, buf, cat);
+    return result != 0;
 }
 #pragma pop
 #pragma push

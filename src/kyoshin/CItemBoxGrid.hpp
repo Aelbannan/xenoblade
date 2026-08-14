@@ -29,19 +29,154 @@ public:
     // TODO: add fields
 };
 
+// Cast-only vtable interface for the +0xA0/+0xD0 sub-objects: with -RTTI on,
+// the third declared virtual lands at vtable+0x10 (slots 0/4 hidden RTTI),
+// matching retail's lwz r12,16(r12) dispatch that the manual-cast form
+// colors r5 instead of r12.
+struct CItemBoxObjA0Vt {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10(void* arg);  // vtable+0x10
+};
+
+// Cast-only vtable interface for the layout-pane sub-object reached via
+// *(*(self+0x44)+0x10): method at raw vtable slot 15 (offset 0x3C). MWCC
+// prepends 2 RTTI header entries, so 13 dummy virtuals precede the method.
+struct CItemPaneObjVt {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void _v24();
+    virtual void _v28();
+    virtual void _v2C();
+    virtual void _v30();
+    virtual void _v34();
+    virtual void _v38();
+    virtual void* _v3C(char* buf, int n);  // vtable+0x3C
+};
+
+// Cast-only vtable interface for the layout-pane sub-object reached via
+// *(self+0x44): method at raw vtable slot 11 (offset 0x2C). MWCC prepends
+// 2 RTTI header entries, so 9 dummy virtuals precede the method.
+struct CItemPaneAnimVt {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void _v24();
+    virtual void _v28();
+    virtual void* _v2C(void* arg, int n);  // vtable+0x2C
+};
+
+// Cast-only vtable interface for the CItemImplInstances object: method at
+// vtable+0x08 (raw slot 2, the first declared virtual after the 2 RTTI
+// header entries).
+struct CItemInstVt08 {
+    virtual u32 _v08(void* arg);  // vtable+0x08
+};
+
+// Cast-only vtable interface for the CItemImplInstances object: method at
+// vtable+0x30 (raw slot 12). MWCC prepends 2 RTTI header entries, so 10
+// dummy virtuals precede the method.
+struct CItemInstVt30 {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void _v24();
+    virtual void _v28();
+    virtual void _v2C();
+    virtual u32 _v30(void* arg);  // vtable+0x30
+};
+
+// Cast-only vtable interface for the CItemImplInstances object: method at
+// vtable+0x90 (raw slot 36). MWCC prepends 2 RTTI header entries, so 34
+// dummy virtuals precede the method.
+struct CItemInstVt90 {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void _v24();
+    virtual void _v28();
+    virtual void _v2C();
+    virtual void _v30();
+    virtual void _v34();
+    virtual void _v38();
+    virtual void _v3C();
+    virtual void _v40();
+    virtual void _v44();
+    virtual void _v48();
+    virtual void _v4C();
+    virtual void _v50();
+    virtual void _v54();
+    virtual void _v58();
+    virtual void _v5C();
+    virtual void _v60();
+    virtual void _v64();
+    virtual void _v68();
+    virtual void _v6C();
+    virtual void _v70();
+    virtual void _v74();
+    virtual void _v78();
+    virtual void _v7C();
+    virtual void _v80();
+    virtual void _v84();
+    virtual void _v88();
+    virtual void _v8C();
+    virtual u32 _v90(void* arg);  // vtable+0x90
+};
+
+// Cast-only vtable interface for the CItemImplInstances object: method at
+// vtable+0x20 (raw slot 8). MWCC prepends 2 RTTI header entries, so 6 dummy
+// virtuals precede the method.
+struct CItemInstVt20 {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void* _v20(void* arg);  // vtable+0x20
+};
+
+// 10-byte grid cell: stored item id + 8 per-cell flag bytes
+struct CItemBoxGridEntry {
+    s16 id;        // +0x00 item id (or -1 for an empty cell)
+    u8 flags[8];   // +0x02 per-cell flag bytes
+};
+
 // Full object layout for CItemBoxGrid (used by C-linkage accessors)
 struct CItemBoxGridFull {
-    u8 _00[0x61];
-    u8 field_61;
-    u8 _62[0x52D - 0x62];
-    u8 field_52D;
-    u8 _52E[0x549 - 0x52E];
-    u8 field_549;
-    u8 _54A[0x2800 - 0x54A];
-    u16 field_2800;
-    u8 field_2802;
-    u8 field_2803;
-    u8 field_2804;
+    union {
+        CItemBoxGridEntry entries[0x280];  // cells 0x0000..0x2800
+        struct {
+            u8 _00[0x61];
+            u8 field_61;
+            u8 _62[0x52D - 0x62];
+            u8 field_52D;
+            u8 _52E[0x549 - 0x52E];
+            u8 field_549;
+            u8 _54A[0x2800 - 0x54A];
+        } bytes;
+    };
+    u16 field_2800;  // entry count
+    u8 field_2802;   // current category
+    u8 field_2803;   // row count
+    u8 field_2804;   // page index
 };
 
 class CItemBoxGrid {
@@ -68,13 +203,13 @@ extern "C" void func_801CFF28(void*);
 extern "C" int CSysWin_isActive(void*);
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" void func_801D216C(void*, u8);
-extern "C" void func_801D0950(void*);
+extern "C" __declspec(noinline) void func_801D0950(void*);
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" void* func_80157C4C(u32, s16);
 extern "C" u32 func_801392E4(u32);
-extern "C" u8 func_801361E8(u32, const char*, u32);
-extern "C" u16 func_80139358(u32);
-extern "C" CItemImplInstances* CItem_initItemImplInstances();
+extern "C" u32 func_801361E8(u32, const char*, u32);
+extern "C" u32 func_80139358(u32);
+extern "C" CItemImplInstances* CItem_initItemImplInstances(void*);
 extern "C" u32 func_801D3320(void*);
 extern "C" void func_80158118(void*, u32);
 extern "C" u32 func_80208360(void*);
@@ -199,8 +334,10 @@ extern "C" void func_801CFD2C(void*);
 extern "C" u32 func_80157C20(u8);
 extern "C" void func_801CE390(void*);
 extern "C" float func_801C9F88(void*, void*);
+extern "C" u32 func_801CA070(void*, void*);
+extern "C" u32 func_801C7958(void*, void*);
 extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(void*, float);
-extern "C" void CopyEntry9Bytes(char*, const char*);
+extern "C" char* CopyEntry9Bytes(char*, const char*);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
 extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
 extern "C" u32 getMaxAllocSize__Q23mtl10MemManagerFUl(u32);
@@ -240,7 +377,7 @@ extern "C" void* getFP__FPCc(const char*);
 extern "C" u16 func_80136254(const void*, const void*, int);
 extern "C" void __ct__CVisionItem(void*);
 extern "C" void __ct__CArtsBookItem(void*);
-extern "C" void SetEntry9Bytes(unsigned char*, unsigned short, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char);
+extern "C" void SetEntry9Bytes(unsigned char*, short, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char);
 extern "C" void func_801C562C(void*, char*);
 extern "C" u32 func_801576C8(u8);
 extern "C" void func_8022E204(void*, u32);
@@ -296,6 +433,14 @@ extern "C" void __dt__6CCur09Fv(void*, int);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__6CCur16Fv(void*, int);
 extern "C" void __dt__6CCur11Fv(void*, int);
+extern "C" void __dt__7CSysWinFv(void*, int);
+extern "C" void __dt__11CPresentWinFv(void*, int);
+extern "C" void __dt__12CExchangeWinFv(void*, int);
+extern "C" void __dt__19CItemBoxGridSubMenuFv(void*, int);
+extern "C" void __dt__10CNumSelectFv(void*, int);
+extern "C" void __dt__12CItemBoxInfoFv(void*, int);
+extern "C" void __dt__9CSortMenuFv(void*, int);
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void func_8018B0FC(void*, void*);
 extern "C" void code80135FDC_setVec3(float*, float, float, float);
 extern "C" void func_801D24E8(void*, void*, void*);

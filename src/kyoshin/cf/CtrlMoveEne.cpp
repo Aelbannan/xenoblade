@@ -60,7 +60,635 @@ void func_8008A23C(cf::CfObjectMove* self) {
     }
 }
 
-void func_8008A2C8(){}
+// The +0x3E9C embedded sub-object of the enemy battle object, as
+// func_8008A2C8 calls it (vtable slots 0x0C/0x4C/0x50/0x8C/0xAC/0x110/0x150).
+static cf::CFunc8008A2C8Sub* A2C8Sub(cf::CFunc8008B580Obj* obj) {
+    return (cf::CFunc8008A2C8Sub*)&obj->mSub2;
+}
+// func_8008A2C8's word copy of the base position (+0x0C) into mVec144
+// (plus the move-sub height into +0x148, matching the retail store order).
+static void A2C8CopyPos(cf::CFunc8008A2C8View* view,
+                        cf::CFunc8008B580Obj* obj) {
+    view->mVec144W.x = *(u32*)&view->mPos0.x;
+    view->mVec144W.y = *(u32*)&view->mPos0.y;
+    view->mVec144W.z = *(u32*)&view->mPos0.z;
+    *(u32*)&view->mVec144W.y =
+        *(u32*)&A2C8Sub(obj)->vtable->fn_0xAC(A2C8Sub(obj))->y;
+}
+
+// Word view of the base position (retail copies the three words with
+// lwz/stw pairs).
+static cf::CFunc8008E760Vec3W& A2C8PosW(cf::CFunc8008A2C8View* view) {
+    return *(cf::CFunc8008E760Vec3W*)&view->mPos0;
+}
+
+// Enemy move-controller per-frame update (retail func_8008A2C8): the big
+// battle-AI driver. It refreshes the controller state, orients the velocity
+// toward the move-sub heading, runs the battle-object busy/HP gate, dispatches
+// func_8008BEEC for the actor-word checks, runs the approach/ground-probe
+// chain (actor lookup via func_800B708C__Fi / func_8016FE34, the collision
+// height-band scan, the +0x192 timer), then the heading / +0x178 / +0x168
+// pursuit gates, the player proximity scan and the mVec144 commit, the
+// +0x8000 / +0x4 / +0x5 flag paths and finally the +0x31 battle event.
+void func_8008A2C8(cf::CfObjectMove* self) {
+    cf::CFunc8008A2C8View* view = (cf::CFunc8008A2C8View*)self;
+    func_800895A8(self);
+    view->field_0x17C &= 0x7F613E7F;
+    if ((view->field_0x17C & 0x1000u) == 0) {
+        if ((view->field_0x17C & 0x08000000u) == 0) {
+            // Face the move-sub heading.
+            cf::CFunc8008FE8CSub* sub =
+                (cf::CFunc8008FE8CSub*)self->field_0x34->field_0x28;
+            f32 h = sub->vtable->fn_0xCC(sub);
+            view->mVelocity.z =
+                CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * h);
+            view->mVelocity.x =
+                SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * h);
+            view->mVelocity.y = lbl_eu_806665C0;
+        }
+        s16 t = (s16)(view->field_0x198 + 1);
+        view->field_0x198 = t;
+        view->field_0x17C |= 0x08000000;
+        if (t > 0x12C) {
+            view->field_0x198 = 0x12C;
+        }
+        cf::CFunc8008B580Obj* obj = (cf::CFunc8008B580Obj*)(
+            self->field_0x34->field_0x28
+                ? (u8*)self->field_0x34->field_0x28 - 0x3E9C
+                : 0);
+        cf::CFunc8008A2C8F60* f60 =
+            (cf::CFunc8008A2C8F60*)obj->field_3F60;
+        if (obj->_v2BC() != 0 && obj->_v128() <= lbl_eu_806665C0) {
+            if (f60 != 0 && (self->field_0x180 & 0x8u) != 0) {
+                view->field_0x17C &= ~0x8000u;
+                func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
+                A2C8Sub(obj)->vtable->fn_0x150(A2C8Sub(obj), 0);
+            }
+            return;
+        }
+        int r28 = 0;
+        if (f60 != 0) {
+            int r31 = 1;
+            u32 w = obj->field_04->_v30()->field_0;
+            if (func_80174C98(obj, &w, 0xA) == 0) {
+                u32 w2 = obj->field_04->_v30()->field_0;
+                if (func_80174C98(obj, &w2, 0x9) == 0) {
+                    r31 = 0;
+                }
+            }
+            func_8008BEEC(self, obj, 1, r31);
+            u32 f180 = self->field_0x180;
+            if ((f180 & 0x1C000000u) != 0) {
+                if ((f180 & 0x8u) != 0) {
+                    view->field_0x17C &= ~0x8000u;
+                    u32 w3 = obj->field_04->_v30()->field_0;
+                    if (func_80174C98(obj, &w3, 0x1C) != 0) {
+                        func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
+                        A2C8Sub(obj)->vtable->fn_0x150(A2C8Sub(obj), 0);
+                    } else if ((view->field_0x17C & 0x800000u) != 0) {
+                        func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
+                        A2C8Sub(obj)->vtable->fn_0x150(A2C8Sub(obj), 0);
+                    } else {
+                        // Approach: resolve the action source and probe.
+                        A2C8Sub(obj)->vtable->fn_0x150(A2C8Sub(obj), 1);
+                        void* src = (void*)func_800B708C__Fi(
+                            A2C8Sub(obj)->vtable->fn_0x4C(A2C8Sub(obj),
+                                                          1));
+                        cf::CFunc8008B580Obj* r26 =
+                            (cf::CFunc8008B580Obj*)func_8016FE34(src);
+                        if (r26 != 0) {
+                            ml::CVec3* p =
+                                A2C8Sub(r26)->vtable->fn_0xAC(A2C8Sub(r26));
+                            f32 f31 = lbl_eu_806665D0 + p->y;
+                            u16 d74 =
+                                ((cf::CFunc8008E760Data*)self->field_0x34)
+                                    ->field_74;
+                            int r27 = 0;
+                            if ((d74 & 1u) != 0) {
+                                cf::CFunc8008A2C8F60* f3 =
+                                    (cf::CFunc8008A2C8F60*)
+                                        r26->field_3F60;
+                                if (f3 != 0) {
+                                    if ((f3->field_4EC & 0x2u) != 0) {
+                                        f31 = lbl_eu_806665D4 +
+                                              A2C8Sub(r26)
+                                                  ->vtable
+                                                  ->fn_0xAC(A2C8Sub(r26))
+                                                  ->y;
+                                    } else if ((f3->field_C & 0x2u) == 0) {
+                                        r27 = 1;
+                                    }
+                                }
+                                view->field_0x164 = f31;
+                                view->field_0x192 = 0x3C;
+                            } else {
+                                // Collision height-band scan.
+                                ml::CVec3* pa =
+                                    A2C8Sub(r26)->vtable->fn_0xAC(
+                                        A2C8Sub(r26));
+                                ml::CVec3* pb =
+                                    A2C8Sub(obj)->vtable->fn_0xAC(
+                                        A2C8Sub(obj));
+                                f32 f30 = pb->y - lbl_eu_806665E0;
+                                f32 f28 = lbl_eu_806665D4 + pb->y;
+                                s16 t192 = (s16)(view->field_0x192 - 1);
+                                view->field_0x192 = t192;
+                                if (t192 > 0) {
+                                    f31 = view->field_0x164;
+                                } else {
+                                    ml::CVec3 vec(lbl_eu_806665C0,
+                                                 lbl_eu_806665D4,
+                                                 lbl_eu_806665C0);
+                                    ml::CVec3 probe =
+                                        *obj->mSub2.vtable
+                                              ->fn_0xAC(&obj->mSub2) +
+                                        vec;
+                                    if (func_804BE398(
+                                            &probe, 0x4A11, 0, 1,
+                                            lbl_eu_806665DC,
+                                            lbl_eu_806665DC) != 0) {
+                                        int r24 = 0;
+                                        for (int i = 0;
+                                             i < func_804BE4AC(); i++) {
+                                            if (((ml::CVec3*)func_804BE520(
+                                                     i))
+                                                    ->y <
+                                                lbl_eu_806665C0) {
+                                                continue;
+                                            }
+                                            ml::CVec3* c =
+                                                (ml::CVec3*)func_804BE50C(i);
+                                            f32 py = obj->mSub2.vtable
+                                                         ->fn_0xAC(
+                                                             &obj->mSub2)
+                                                         ->y;
+                                            if (c->y > py &&
+                                                c->y < f28) {
+                                                f28 = c->y;
+                                            }
+                                        }
+                                        for (int i = 0;
+                                             i < func_804BE4AC(); i++) {
+                                            if (((ml::CVec3*)func_804BE520(
+                                                     i))
+                                                    ->y <=
+                                                lbl_eu_806665C0) {
+                                                continue;
+                                            }
+                                            f32 cy =
+                                                ((ml::CVec3*)func_804BE50C(i))
+                                                    ->y;
+                                            if (cy > f30 && cy < f28) {
+                                                r24 = 1;
+                                                f30 = cy;
+                                            }
+                                        }
+                                        if (r24 != 0) {
+                                            view->field_0x164 =
+                                                lbl_eu_806665E4 + f30;
+                                        } else {
+                                            view->field_0x164 = f31;
+                                        }
+                                    } else {
+                                        view->field_0x164 = f31;
+                                    }
+                                    view->field_0x192 = 0x3C;
+                                }
+                            }
+                            if (r31 != 0) r27 = 1;
+                            if (r27 != 0) {
+                                f31 = obj->mSub2.vtable
+                                          ->fn_0xAC(&obj->mSub2)
+                                          ->y;
+                            }
+                            func_8004B8B0(f60, 1, 0, f31);
+                        }
+                        func_800899AC(self, lbl_eu_806665E0);
+                    }
+                }
+            }
+        a2c8_b2c4:
+            u32 f180b = self->field_0x180;
+            if ((f180b & 0x08000000u) != 0) {
+                f60->field_C |= 0x2000;
+            } else if ((f180b & 0x04000000u) != 0) {
+                f60->field_C |= 0x4000;
+            }
+            if ((self->field_0x180 & 0x40u) != 0) {
+                f60->field_4EC |= 4;
+            }
+            // Heading / pursuit gates.
+            f32 f29 = obj->mSub2.vtable->fn_0x8C(&obj->mSub2);
+            f32 f31 = func_80496288(lbl_eu_80663E14) * f29;
+            int r27 = 0;
+            if (r31 != 0) {
+                obj->field_4550 |= 0x200;
+                void* sub2 = (void*)obj->_v2A4();
+                if (sub2 != 0) {
+                    u32* w50 = *(u32**)((u8*)sub2 + 0x50);
+                    if (w50 != 0) {
+                        u16 w = *(u16*)((u8*)w50 + 0x3C);
+                        r27 = (w == 1 || w == 2) ? 1 : 0;
+                    }
+                }
+            } else {
+                obj->field_4550 &= ~0x200u;
+            }
+            if ((view->field_0x17C & 0x02000000u) != 0) {
+                f32 f1;
+                if ((f60->field_4EC & 1u) != 0) {
+                    view->field_0x19C = lbl_eu_806665C0;
+                    f1 = lbl_eu_806665C8;
+                } else {
+                    f1 = view->field_0x19C + f31;
+                    view->field_0x19C = f1;
+                    if (f1 >= lbl_eu_806665E8) {
+                        if (f1 >= lbl_eu_806665EC) {
+                            view->field_0x17C &= 0xFC7FFFFF;
+                            view->field_0x19C = lbl_eu_806665C0;
+                        }
+                        f1 = view->field_0x170;
+                    } else {
+                        f1 = lbl_eu_806665C8;
+                    }
+                }
+                view->field_0x174 =
+                    lbl_eu_806665F0 * (f1 - view->field_0x174) +
+                    view->field_0x174;
+            } else {
+                view->field_0x174 =
+                    lbl_eu_806665F0 *
+                        (view->field_0x170 - view->field_0x174) +
+                    view->field_0x174;
+                if (r31 != 0) {
+                    view->field_0x19C = lbl_eu_806665C0;
+                    ml::CVec3* pp =
+                        obj->mSub2.vtable->fn_0xAC(&obj->mSub2);
+                    view->mVec138W.x = *(u32*)&pp->x;
+                    view->mVec138W.y = *(u32*)&pp->y;
+                    view->mVec138W.z = *(u32*)&pp->z;
+                } else if ((f60->field_4EC & 1u) != 0) {
+                    ml::CVec3* pp =
+                        obj->mSub2.vtable->fn_0xAC(&obj->mSub2);
+                    ml::CVec3* me =
+                        self->field_0x34->field_0x28
+                            ? (ml::CVec3*)0
+                            : (ml::CVec3*)0;
+                    (void)me;
+                    f32 dx = *(f32*)&view->mVec138W.x - pp->x;
+                    f32 dz = *(f32*)&view->mVec138W.z - pp->z;
+                    f32 d2 = dx * dx + dz * dz;
+                    if (d2 <= lbl_eu_806665F4) {
+                        f32 f1 = view->field_0x19C + f31;
+                        view->field_0x19C = f1;
+                        if (f1 > lbl_eu_806665F8) {
+                            view->field_0x19C = lbl_eu_806665F8;
+                            view->field_0x17C |= 0x02000000;
+                        }
+                    } else {
+                        view->mVec138W.x = *(u32*)&pp->x;
+                        view->mVec138W.y = *(u32*)&pp->y;
+                        view->mVec138W.z = *(u32*)&pp->z;
+                        view->field_0x19C = lbl_eu_806665C0;
+                    }
+                } else {
+                    f32 f1 = view->field_0x19C - f31;
+                    view->field_0x19C = f1;
+                    if (f1 < lbl_eu_806665C0) {
+                        view->field_0x19C = lbl_eu_806665C0;
+                    }
+                }
+            }
+            view->field_0x3C = lbl_eu_806665F0;
+            if ((self->field_0x180 & 0x2u) != 0) {
+                view->field_0x17C &= 0xF9FFFFFF;
+                return;
+            }
+            getInstance__Q22cf13CfGameManagerFv();
+            if (func_8006EF04(0x400) != 0) return;
+            cf::CFunc8008A2C8BMan* bm = (cf::CFunc8008A2C8BMan*)
+                getInstance__Q22cf14CBattleManagerFv();
+            u8 b1aa = bm->field_1AA;
+            if (b1aa >= 1 && b1aa <= 0x18) return;
+            // Battle-state / damage gate.
+            f32 f29b = obj->mSub2.vtable->fn_0x8C(&obj->mSub2);
+            f32 f28 = func_80496288(lbl_eu_80663E14) * f29b;
+            if (f28 == lbl_eu_806665C0) {
+                f28 = lbl_eu_806665E4;
+            }
+            int r0 = 0;
+            u32 f4ec = f60->field_4EC;
+            if ((f4ec & 0x100u) != 0 && (f4ec & 0x40000u) != 0) {
+                f32 hp = obj->_v128();
+                obj->_v11C(-hp);
+                r0 = 1;
+            } else if ((f4ec & 0x100000u) != 0) {
+                view->field_0x17C |= 0x40000000;
+                view->field_0x178 = lbl_eu_806665C0;
+                if (((cf::CFunc8008B580F60*)f60)->field_532 >= 100) {
+                    f32 hp = obj->_v128();
+                    obj->_v11C(-hp);
+                }
+                r0 = 1;
+            } else {
+                r0 = (f4ec & 0x40000u) != 0 ? 1 : 0;
+            }
+            if (r0 != 0) return;
+            int r26 = 1;
+            if ((view->field_0x17C & 0x04000000u) != 0) {
+                view->field_0x17C &= 0xFC7FFFFF;
+                r26 = 0;
+                r28 = 1;
+            } else if ((f60->field_4EC & 0x100u) == 0 ||
+                       (obj->field_3374 & 0x100000u) != 0) {
+                if ((view->field_0x17C & 0x4u) != 0) {
+                    void* r23 = func_800B89CC(obj->field_45C0);
+                    if (r23 != 0 && func_80198310() != 0) {
+                        cf::CFunc8008B580Obj* ro =
+                            (cf::CFunc8008B580Obj*)func_80198310();
+                        if (ro->field_3F60 != 0) {
+                            void* tgt = (void*)ro->mSub2.vtable
+                                            ->fn_0x110(&ro->mSub2, 0);
+                            if (tgt != 0 &&
+                                (*(u32*)((u8*)tgt + 0x200) &
+                                 0x08000000u) != 0) {
+                                view->field_0x196 = 0;
+                                int r0b = 0;
+                                if ((self->field_0x180 & 0x40u) != 0) {
+                                    if (f60->field_4F8 > lbl_eu_806665C0) {
+                                        r0b = 1;
+                                    } else {
+                                        view->mVec144W =
+                                            A2C8PosW(view);
+                                        *(u32*)&view->mVec144W.y =
+                                            *(u32*)&obj->mSub2.vtable
+                                                    ->fn_0xAC(&obj->mSub2)
+                                                    ->y;
+                                        r0b = 0;
+                                    }
+                                } else if ((self->field_0x180 & 0x8u) !=
+                                           0) {
+                                    r0b = 1;
+                                } else if ((f60->field_4EC & 0x2u) == 0) {
+                                    r0b = 1;
+                                } else {
+                                    view->mVec144W =
+                                        A2C8PosW(view);
+                                    r0b = 0;
+                                }
+                                if (r0b != 0) return;
+                                r26 = 0;
+                            } else {
+                                s16 t = (s16)(view->field_0x196 + 1);
+                                view->field_0x196 = t;
+                                if (t >= 0x1E) r26 = 0;
+                            }
+                        }
+                    }
+                }
+                if ((view->field_0x17C & 0x40000000u) != 0) {
+                    f32 f1 = view->field_0x178 + f28;
+                    view->field_0x178 = f1;
+                    if (f1 >= lbl_eu_806665E8) {
+                        if (f1 <= lbl_eu_806665FC) {
+                            view->field_0x178 = lbl_eu_806665C0;
+                            view->field_0x17C &= 0xBFFFFFFF;
+                            return;
+                        }
+                    } else {
+                        return;
+                    }
+                }
+                // Player proximity scan.
+                void* pl = getPlayer__Q22cf13CfGameManagerFi(0);
+                if (pl != 0) {
+                    u32* c4 = *(u32**)((u8*)pl + 0xC4);
+                    if (c4 != 0 &&
+                        (*(u16*)((u8*)c4 + 0x530) & 1u) != 0) {
+                        r26 = 0;
+                    }
+                }
+                if ((self->field_0x180 & 0x40u) != 0) {
+                    if (r27 != 0) {
+                        view->field_0x168 = lbl_eu_806665C0;
+                    } else {
+                        cf::CFunc8008B580Obj* obj2 =
+                            (cf::CFunc8008B580Obj*)(
+                                self->field_0x34->field_0x28
+                                    ? (u8*)self->field_0x34->field_0x28 -
+                                          0x3E9C
+                                    : 0);
+                        if (func_80148778((u8*)obj2 + 8, 6) != 0 ||
+                            func_80148778((u8*)obj2 + 8, 7) != 0 ||
+                            func_80148778((u8*)obj2 + 8, 0xC) != 0) {
+                            r27 = 1;
+                        }
+                        if (r27 == 0) {
+                            f32 f1 = view->field_0x168 + f28;
+                            view->field_0x168 = f1;
+                            if (f1 >= lbl_eu_80666600) {
+                                view->mVec144W = A2C8PosW(view);
+                                *(u32*)&view->mVec144W.y =
+                                    *(u32*)&obj->mSub2.vtable
+                                            ->fn_0xAC(&obj->mSub2)
+                                            ->y;
+                                r26 = 0;
+                            }
+                        }
+                    }
+                } else {
+                    if (r27 == 0 &&
+                        (((cf::CFunc8008E760Data*)self->field_0x34)
+                             ->field_74 &
+                         0x20u) != 0) {
+                        f32 f1 = view->field_0x168 + f28;
+                        view->field_0x168 = f1;
+                        if (f1 >= lbl_eu_806665FC) r26 = 0;
+                    } else {
+                        view->field_0x168 = lbl_eu_806665C0;
+                    }
+                }
+            }
+            if (((cf::CFunc8008A2C8Global*)getUnk80664658())
+                    ->field_214 &
+                0x10000u) {
+                r26 = 0;
+            }
+            if (r26 != 0) {
+                // Commit the +0x144 target / proximity decision.
+                ml::CVec3* pos =
+                    obj->mSub2.vtable->fn_0xAC(&obj->mSub2);
+                f32 dx = *(f32*)&view->mVec144W.x - pos->x;
+                f32 dz = *(f32*)&view->mVec144W.z - pos->z;
+                f32 d2 = dx * dx + dz * dz;
+                f32 th;
+                int sel;
+                if ((view->field_0x17C & 0x800u) != 0) {
+                    if ((view->field_0x17C & 0x10u) != 0) {
+                        th = _lbl_eu_80666604;
+                        sel = 1;
+                    } else {
+                        th = _lbl_eu_80666608;
+                        sel = 0;
+                    }
+                } else {
+                    if ((view->field_0x17C & 0x10u) != 0) {
+                        th = lbl_eu_8066660C;
+                        sel = 1;
+                    } else {
+                        sel = 0;
+                        th = view->field_0x16C;
+                    }
+                }
+                if ((self->field_0x180 & 0x4u) != 0 || d2 >= th) {
+                    r26 = 0;
+                    if (sel != 1) {
+                        if ((self->field_0x180 & 0x100u) != 0) {
+                            sel = 2;
+                        }
+                        if ((self->field_0x180 & 0x400u) != 0) {
+                            f28 = view->field_0x16C;
+                        } else {
+                            f28 = cf::lbl_eu_804FB9C8[sel];
+                        }
+                        f32 f29z = lbl_eu_806665C0;
+                        for (int i = 0; i < 3; i++) {
+                            void* p =
+                                getPlayer__Q22cf13CfGameManagerFi(i);
+                            if (p == 0) continue;
+                            cf::CFunc8008B580Obj* pobj =
+                                (cf::CFunc8008B580Obj*)((u8*)p - 0x3E9C);
+                            if (pobj->_v128() <= f29z) continue;
+                            ml::CVec3* pa =
+                                pobj->mSub2.vtable->fn_0xAC(
+                                    &pobj->mSub2);
+                            ml::CVec3* pb =
+                                obj->mSub2.vtable->fn_0xAC(
+                                    &obj->mSub2);
+                            f32 pdx = pa->x - pb->x;
+                            f32 pdz = pa->z - pb->z;
+                            if (pdx * pdx + pdz * pdz < f28) {
+                                r26 = 1;
+                                break;
+                            }
+                        }
+                        if (r26 == 0) {
+                            f32 f30 = cf::lbl_eu_804FB9C8[0];
+                            f32 f31b = cf::lbl_eu_804FB9C8[1];
+                            int r23 = 0;
+                            for (int i = 1; i < 3; i++) {
+                                void* p =
+                                    getPlayer__Q22cf13CfGameManagerFi(i);
+                                if (p == 0) continue;
+                                cf::CFunc8008B580Obj* pobj =
+                                    (cf::CFunc8008B580Obj*)((u8*)p -
+                                                            0x3E9C);
+                                if (pobj->_v128() <= lbl_eu_806665C0) {
+                                    continue;
+                                }
+                                ml::CVec3* pa =
+                                    pobj->mSub2.vtable->fn_0xAC(
+                                        &pobj->mSub2);
+                                ml::CVec3* pb =
+                                    obj->mSub2.vtable->fn_0xAC(
+                                        &obj->mSub2);
+                                f32 pdx = pa->x - pb->x;
+                                f32 pdz = pa->z - pb->z;
+                                f32 pd2 = pdx * pdx + pdz * pdz;
+                                if (pd2 < f30) {
+                                    r26 = 1;
+                                    r23 = 0;
+                                    break;
+                                }
+                                if (pd2 < f31b) r26 = 1;
+                            }
+                            if (r23 != 0) {
+                                view->field_0x190 =
+                                    view->field_0x190 + 1;
+                                if (view->field_0x190 >= 0x1C2) {
+                                    r26 = 0;
+                                }
+                            } else {
+                                view->field_0x190 = 0;
+                            }
+                        }
+                    }
+                }
+            }
+            if (r26 != 0) {
+                int r0b = 0;
+                if ((self->field_0x180 & 0x40u) != 0) {
+                    if (f60->field_4F8 > lbl_eu_806665C0) {
+                        r0b = 1;
+                    } else {
+                        view->mVec144W = A2C8PosW(view);
+                        *(u32*)&view->mVec144W.y =
+                            *(u32*)&obj->mSub2.vtable
+                                    ->fn_0xAC(&obj->mSub2)
+                                    ->y;
+                        r0b = 0;
+                    }
+                } else if ((self->field_0x180 & 0x8u) != 0) {
+                    r0b = 1;
+                } else if ((f60->field_4EC & 0x2u) == 0) {
+                    r0b = 1;
+                } else {
+                    view->mVec144W = A2C8PosW(view);
+                    r0b = 0;
+                }
+                if (r0b != 0) return;
+            }
+            if (r28 == 0 && (view->field_0x17C & 0x4u) != 0) {
+                // Mark the party targets with the +0x08000000 flag.
+                void* r23 = func_800B89CC(obj->field_45C0);
+                if (r23 != 0) {
+                    s16 cnt = *(s16*)((u8*)r23 + 0xA2);
+                    for (int i = 0; i < cnt; i++) {
+                        void* r3 = (void*)func_801984F0(r23, i);
+                        if (r3 != 0) {
+                            cf::CFunc8008B580Obj* ro =
+                                (cf::CFunc8008B580Obj*)r3;
+                            void* tgt = (void*)ro->mSub2.vtable
+                                            ->fn_0x110(&ro->mSub2, 0);
+                            if (tgt != 0) {
+                                u32 w = *(u32*)((u8*)tgt + 0x200);
+                                if ((w & 0x08000000u) != 0) {
+                                    *(u32*)((u8*)tgt + 0x200) =
+                                        w | 0x40000000;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            func_8008D444(self, (cf::CFunc8008D444Obj*)obj, 1);
+            if (f60 != 0) {
+                u32 w = obj->field_04->_v30()->field_0;
+                if (func_80174C98(obj, &w, 0x10) != 0 ||
+                    func_80174C98(obj, &w, 0xA) != 0 ||
+                    func_80174C98(obj, &w, 0x9) != 0) {
+                    func_800BE12C(&obj->mSub2, 0x31, 0, -1, 1);
+                }
+            }
+            void* bm2 = getInstance__Q22cf14CBattleManagerFv();
+            func_800D9CA0(bm2, obj);
+            return;
+        }
+        return;
+    }
+    if ((view->field_0x17C & 0x4000u) != 0) {
+        view->field_0x17C &= ~0x6000u;
+        cf::CFunc8008B580Obj* obj2 = (cf::CFunc8008B580Obj*)(
+            self->field_0x34->field_0x28
+                ? (u8*)self->field_0x34->field_0x28 - 0x3E9C
+                : 0);
+        if (obj2->mSub2.vtable->fn_0x0C(&obj2->mSub2, 0x200) == 0) {
+            obj2->field_3374 &= 0xFBFFFFFF;
+            view->field_0x17C &= 0xEFFFFFFF;
+        }
+    }
+}
+
 
 void* CActorParam_UnkVirtualFunc132__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x3298); }
 
@@ -92,7 +720,7 @@ void func_8008B580(cf::CfObjectMove* self) {
         if (f60 != 0 && (self->field_0x180 & 0x8u) != 0) {
             self->field_0x17C &= ~0x8000u;
             func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
-            ((cf::CFunc8008B580Sub150*)&obj->mSub)->_v150(0);
+            ((cf::CFunc8008B580Sub150*)&obj->mSub2)->_v150(0);
             return;
         }
     }
@@ -104,7 +732,7 @@ void func_8008B580(cf::CfObjectMove* self) {
                 u32 w1 = obj->field_04->_v30()->field_0;
                 if (func_80174C98(obj, &w1, 0x1C) != 0) {
                     func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
-                    ((cf::CFunc8008B580Sub150*)&obj->mSub)->_v150(0);
+                    ((cf::CFunc8008B580Sub150*)&obj->mSub2)->_v150(0);
                 } else {
                     u32 w2 = obj->field_04->_v30()->field_0;
                     u32 w3;
@@ -115,7 +743,7 @@ void func_8008B580(cf::CfObjectMove* self) {
                     }
                     if (ok) {
                         func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
-                        ((cf::CFunc8008B580Sub150*)&obj->mSub)->_v150(0);
+                        ((cf::CFunc8008B580Sub150*)&obj->mSub2)->_v150(0);
                     }
                 }
             }
@@ -550,7 +1178,7 @@ __declspec(noinline) int func_8008D51C(cf::CfObjectMove* self) {
                 obj->mSub.vtable->fn_0x150(&obj->mSub, 1);
                 obj->mSub.vtable->fn_0x9C(&obj->mSub, &view->mVec144);
             } else {
-                func_8004B8B0(f60, 1, 0, view->field_0x148);
+                func_8004B8B0(f60, 1, 0, view->mVec144.y);
             }
         }
         f32 f31 = obj->mSub.vtable->fn_0x8C(&obj->mSub);
@@ -629,7 +1257,7 @@ __declspec(noinline) int func_8008D51C(cf::CfObjectMove* self) {
                         PSVECNormalize(dir, dir);
                     }
                 }
-                func_8004B8B0(f60, 1, 1, view->field_0x148);
+                func_8004B8B0(f60, 1, 1, view->mVec144.y);
                 if (dir.x * dir.x + dir.y * dir.y + dir.z * dir.z >
                     lbl_eu_80666640) {
                     f32 rate = lbl_eu_80666644 /
@@ -1357,7 +1985,361 @@ void func_8008F9EC(cf::CfObjectMove* self) {
     self->field_0x184 = 0;
 }
 
-void func_8008FE8C(){}
+// Enemy move-controller per-frame update (retail func_8008FE8C): the +0x8000
+// flag path reinstalls the +0x184 hook and resets the move-list state; the
+// main path steps the +0x60 timer, latches the current move-list entry into
+// the base position, and runs the direction / turn logic (the +0x70 & 0x40
+// sub-heading branch, the +0x70 & 0x100 idle branch with the +0x74 timer, the
+// +0x100000 pursuit branch), then the talk-state takeover, the +0x74 heading
+// gate, the mVec138 pursuit-distance gate and finally the +0x5A row advance
+// with the +0x190 / +0x19C / dispatch hooks.
+void func_8008FE8C(cf::CfObjectMove* self) {
+    cf::CFunc8008FE8CView* view = (cf::CFunc8008FE8CView*)self;
+    int flag;
+    if ((view->field_0x17C & 0x8000u) != 0) {
+        self->mMoveHook = lbl_eu_80527830.hook184;
+        view->field_0x72 = 0;
+        view->field_0x60 = 0;
+        view->field_0x70 &= 0xFFFB;
+        *(u32*)&view->mPosition.x = *(u32*)&view->field_0x4C;
+        *(u32*)&view->mPosition.y = *(u32*)&view->field_0x50;
+        *(u32*)&view->mPosition.z = *(u32*)&view->field_0x54;
+        if ((self->field_0x180 & 0x8u) != 0) {
+            view->field_0x160 = view->mPosition.y;
+        }
+        view->field_0x17C &= 0xFBFFFFFF;
+        ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+            lbl_eu_806665C0;
+        flag = 1;
+    } else {
+        flag = 0;
+    }
+    if (flag != 0) return;
+
+    if ((view->field_0x17C & 0x20u) == 0) {
+        u32 t = view->field_0x60;
+        view->field_0x60 = t - 1;
+        if (t > 0) return;
+        view->field_0x60 = 0;
+        cf::CfMoveSubEntry* entry =
+            &view->field_0x78[(s16)view->field_0x5A];
+        if ((entry->field_0xC & 0x400u) != 0) {
+            view->field_0x70 |= 0x40;
+        } else {
+            view->field_0x70 &= ~0x40u;
+        }
+        cf::CfMoveSubEntry* entry2 =
+            &view->field_0x78[(s16)view->field_0x5A];
+        *(u32*)&view->mPosition.x = *(u32*)&entry2->field_0x0;
+        *(u32*)&view->mPosition.y = *(u32*)&entry2->field_0x4;
+        *(u32*)&view->mPosition.z = *(u32*)&entry2->field_0x8;
+        view->field_0x17C |= 0x20;
+        if ((self->field_0x180 & 0x8u) != 0) {
+            view->field_0x160 = view->mPosition.y;
+            view->field_0x74 = 0x3C;
+            view->field_0x70 |= 0x80;
+        } else {
+            ml::CVec3 dir(lbl_eu_806665C0, lbl_eu_806665C0,
+                          lbl_eu_806665C0);
+            cf::CFunc8008FE8CSub* sub =
+                (cf::CFunc8008FE8CSub*)self->field_0x34->field_0x28;
+            if ((view->field_0x70 & 0x40u) != 0) {
+                // Face the sub: commit the normalized direction.
+                ml::CVec3 d = view->mPosition - *sub->vtable->fn_0xAC(sub);
+                if (d.x != lbl_eu_806665C0 || d.y != lbl_eu_806665C0 ||
+                    d.z != lbl_eu_806665C0) {
+                    if (d.x * d.x + d.y * d.y + d.z * d.z ==
+                        lbl_eu_806665C0) {
+                        d = ml::CVec3::zero;
+                    } else {
+                        PSVECNormalize(d, d);
+                    }
+                }
+                *(u32*)&view->mVelocity.x = *(u32*)&d.x;
+                *(u32*)&view->mVelocity.y = *(u32*)&d.y;
+                *(u32*)&view->mVelocity.z = *(u32*)&d.z;
+                f32 ang = Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+                sub->vtable->fn_0xC4(sub, lbl_eu_80666638 * ang);
+                if (sub->field_C4 != 0 && sub->field_98 != 0 &&
+                    (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
+                     0x10000u) == 0) {
+                    func_800BE12C(sub, 3, 0, -1, 1);
+                    sub->vtable->fn_0x10(sub, 4);
+                    view->field_0x17C |= 1;
+                }
+            } else if ((view->field_0x70 & 0x100u) != 0) {
+                view->field_0x70 |= 0x80;
+                view->field_0x74 = 0xA;
+            } else if (sub->field_63C <= lbl_eu_806665C4) {
+                func_80088974(self, &dir, &view->mPosition, 0, 0);
+                view->field_0x60 = 12;
+                view->field_0x17C |= 0x100000;
+            } else {
+                func_80088974(self, &dir, &view->mPosition, 0, 0);
+                ml::CVec3 d = view->mPosition - *sub->vtable->fn_0xAC(sub);
+                if (d.x != lbl_eu_806665C0 || d.y != lbl_eu_806665C0 ||
+                    d.z != lbl_eu_806665C0) {
+                    if (d.x * d.x + d.y * d.y + d.z * d.z ==
+                        lbl_eu_806665C0) {
+                        d = ml::CVec3::zero;
+                    } else {
+                        PSVECNormalize(d, d);
+                    }
+                }
+                *(u32*)&view->mVelocity.x = *(u32*)&d.x;
+                *(u32*)&view->mVelocity.y = *(u32*)&d.y;
+                *(u32*)&view->mVelocity.z = *(u32*)&d.z;
+                f32 ang = Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+                sub->vtable->fn_0xC4(sub, lbl_eu_80666638 * ang);
+                if (sub->field_C4 != 0 && sub->field_98 != 0 &&
+                    (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
+                     0x10000u) == 0) {
+                    func_800BE12C(sub, 3, 0, -1, 1);
+                    sub->vtable->fn_0x10(sub, 4);
+                    view->field_0x17C |= 1;
+                }
+            }
+            if ((view->field_0x70 & 0x80u) != 0) {
+                ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+                    lbl_eu_806665C0;
+                return;
+            }
+        }
+    } else if ((view->field_0x17C & 0x100000u) != 0) {
+        // Pursuit: turn toward the controller position, then hand off.
+        ml::CVec3 dir;
+        func_80088974(self, &dir, &view->mPosition, 0, 0);
+        u32 t = view->field_0x60;
+        view->field_0x60 = t - 1;
+        if (t > 0) {
+            ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+                lbl_eu_806665C0;
+            return;
+        }
+        cf::CFunc8008FE8CSub* sub =
+            (cf::CFunc8008FE8CSub*)self->field_0x34->field_0x28;
+        f32 ang = Atan2FIdx__Q24nw4r4mathFff(dir.x, dir.z);
+        sub->vtable->fn_0xC4(sub, lbl_eu_80666638 * ang);
+        if (sub->field_C4 != 0 && sub->field_98 != 0 &&
+            (((cf::CFunc8008EF04Sub98*)sub->field_98)->field_7A4 &
+             0x10000u) == 0) {
+            func_800BE12C(sub, 3, 0, -1, 1);
+            sub->vtable->fn_0x10(sub, 4);
+            view->field_0x17C |= 1;
+        }
+        *(u32*)&view->mVelocity.x = *(u32*)&dir.x;
+        *(u32*)&view->mVelocity.y = *(u32*)&dir.y;
+        *(u32*)&view->mVelocity.z = *(u32*)&dir.z;
+        view->field_0x17C &= ~0x100000u;
+        ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+            lbl_eu_806665C0;
+        return;
+    }
+
+    // Talk-state takeover / +0x74 heading gate / pursuit distance.
+    int r0 = 0;
+    if ((view->field_0x17C & 1u) != 0) {
+        cf::CFunc8008FE8CSub* sub =
+            (cf::CFunc8008FE8CSub*)self->field_0x34->field_0x28;
+        void* p98 = sub->field_98;
+        if (p98 != 0 &&
+            (((cf::CFunc8008EF04Sub98*)p98)->field_7A4 & 0x10000u) != 0) {
+            if (sub->field_C4 != 0) {
+                func_8004B9D4(sub->field_C4, 1, 0, -1, 0);
+            }
+        } else {
+            if (sub->field_C4 != 0 &&
+                sub->vtable->fn_0x0C(sub, 4) != 0) {
+                ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+                    lbl_eu_806665C0;
+                r0 = 1;
+            }
+        }
+        if (r0 == 0) {
+            view->field_0x17C &= ~1u;
+        }
+    }
+    if (r0 != 0) return;
+    view->field_0x17C |= 0x10000000;
+    if ((view->field_0x70 & 0x80u) != 0) {
+        s16 t74 = (s16)(view->field_0x74 - 1);
+        view->field_0x74 = (s16)t74;
+        view->field_0x3C = lbl_eu_8066666C;
+        if (t74 <= 0) {
+            view->field_0x70 &= ~0x80u;
+        }
+    }
+    cf::CFunc8008FE8CSub* sub =
+        (cf::CFunc8008FE8CSub*)self->field_0x34->field_0x28;
+    ml::CVec3* p = sub->vtable->fn_0xAC(sub);
+    f32 dx = p->x - view->mPosition.x;
+    f32 dz = p->z - view->mPosition.z;
+    f32 dist2 = dx * dx + dz * dz;
+    f32 th = (sub->field_63C <= lbl_eu_806665C4) ? lbl_eu_80666670
+                                                 : lbl_eu_806665E4;
+    int r29 = (dist2 > th);
+    ml::CVec3 dir74(lbl_eu_806665C0, lbl_eu_806665C0, lbl_eu_806665C0);
+    if ((self->field_0x180 & 0x8u) != 0 ||
+        (view->field_0x70 & 0x40u) != 0) {
+        ml::CVec3 d = view->mPosition - *sub->vtable->fn_0xAC(sub);
+        if (d.x != lbl_eu_806665C0 || d.y != lbl_eu_806665C0 ||
+            d.z != lbl_eu_806665C0) {
+            if (d.x * d.x + d.y * d.y + d.z * d.z == lbl_eu_806665C0) {
+                d = ml::CVec3::zero;
+            } else {
+                PSVECNormalize(d, d);
+            }
+        }
+        dir74 = d;
+        func_800898D4(self, &dir74);
+    } else if (sub->field_63C <= lbl_eu_806665C4) {
+        ml::CVec3 vel = view->mVelocity;
+        func_80088974(self, &dir74, &view->mPosition, 0, 0);
+        view->mVelocity = vel;
+        f32 h = sub->vtable->fn_0xCC(sub);
+        f32 cos = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * h);
+        f32 sin = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * h);
+        f32 dot = dir74.x * sin + dir74.z * cos;
+        if (dot <= lbl_eu_806665C0) {
+            view->field_0x60 = 6;
+            view->field_0x17C |= 0x100000;
+            ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+                lbl_eu_806665C0;
+            return;
+        }
+        if (dot <= lbl_eu_806665DC) {
+            view->field_0x3C = lbl_eu_80666658;
+        }
+        func_800898D4(self, &dir74);
+    } else {
+        func_80088974(self, &dir74, &view->mPosition, 1, 0);
+    }
+    cf::CfMoveSubEntry* entry3 =
+        &view->field_0x78[(s16)view->field_0x5A];
+    if ((entry3->field_0xC & 0x8000u) != 0 && dist2 > lbl_eu_80666674) {
+        if (view->field_0x72 == 0) {
+            if ((view->field_0x70 & 0x2u) != 0) {
+                view->field_0x70 &= ~0x2u;
+                view->field_0x72 = 0xA;
+                view->field_0x64 = lbl_eu_806665C0;
+            } else {
+                view->field_0x70 |= 0x2;
+                view->field_0x72 = 0x28;
+                view->field_0x64 =
+                    (f32)((rand() % 160) - 80) * lbl_eu_8066A210;
+            }
+        }
+        view->field_0x68 = lbl_eu_8066666C *
+                               (view->field_0x64 - view->field_0x68) +
+                           view->field_0x68;
+        view->field_0x72 = view->field_0x72 - 1;
+        f32 f30 = view->field_0x68 +
+                  lbl_eu_80666638 *
+                      Atan2FIdx__Q24nw4r4mathFff(dir74.x, dir74.z);
+        dir74.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * f30);
+        dir74.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * f30);
+    }
+    // mVec138 pursuit-distance gate.
+    ml::CVec3* p2 = sub->vtable->fn_0xAC(sub);
+    f32 mdx = *(f32*)&view->mVec138W.x - p2->x;
+    f32 mdz = *(f32*)&view->mVec138W.z - p2->z;
+    if (mdx * mdx + mdz * mdz <= lbl_eu_806665E4) {
+        view->field_0x184 = view->field_0x184 + 1;
+        if (view->field_0x184 > 0x3C) {
+            view->field_0x184 = 0x3C;
+            r0 = 1;
+        } else {
+            r0 = 0;
+        }
+    } else {
+        view->mVec138W.x = *(u32*)&p2->x;
+        view->mVec138W.y = *(u32*)&p2->y;
+        view->mVec138W.z = *(u32*)&p2->z;
+        view->field_0x184 = 0;
+        r0 = 0;
+    }
+    if (r0 != 0) {
+        func_80089694(self, &dir74, lbl_eu_806665E4);
+    } else {
+        func_80089694(self, &dir74, view->field_0x6C);
+    }
+    if (r29 != 0) {
+        if ((self->field_0x180 & 0x8u) != 0) {
+            // Keep the sub within reach of the controller.
+            if (sub->field_C4 == 0 || sub->field_98 == 0) {
+                ml::CVec3 stk = *sub->vtable->fn_0xAC(sub);
+                f32 diff = view->field_0x160 - stk.y;
+                if (fabsf(diff) > lbl_eu_806665E4) {
+                    if (diff > lbl_eu_806665C0) {
+                        stk.y += lbl_eu_80666640;
+                    } else {
+                        stk.y -= lbl_eu_80666640;
+                    }
+                }
+                sub->vtable->fn_0x9C(sub, &stk);
+            }
+            return;
+        }
+        view->field_0x17C &= 0xFFEFFFDF;
+        cf::CfMoveSubEntry* entry4 =
+            &view->field_0x78[(s16)view->field_0x5A];
+        if ((entry4->field_0xC & 0x8u) != 0) {
+            if (sub->field_C4 != 0) {
+                func_800BE12C(sub, 0x66, 0, -1, 1);
+                view->field_0x17C |= 0x8;
+            }
+        } else if ((entry4->field_0xC & 0x10u) != 0) {
+            view->field_0x17C |= 0x80;
+        }
+        cf::CfMoveSubEntry* entry5 =
+            &view->field_0x78[(s16)view->field_0x5A];
+        if ((entry5->field_0xC & 0x80u) != 0) {
+            func_80089684(self);
+            self->mMoveHook = lbl_eu_80527830.hook190;
+            view->field_0x4C = self->field_0x34->field_0x28->_vCC();
+            self->field_0x180 |= 0x800;
+            ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+                lbl_eu_806665C0;
+            return;
+        }
+        if ((entry5->field_0xC & 0x20u) != 0) {
+            self->mMoveHook = lbl_eu_80527830.hook19C;
+            view->field_0x70 |= 0x4;
+            view->field_0x72 = entry5->field_0xF * 30;
+            ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+                lbl_eu_806665C0;
+            return;
+        }
+        if ((entry5->field_0xC & 0x4u) != 0) {
+            view->field_0x70 |= 1;
+        }
+        (self->*((const CfMoveDispatchPtmf*)&lbl_eu_80527830)
+             [view->field_0x5C])(&view->field_0x60, &view->field_0x6C);
+        view->field_0x60 = entry5->field_0xE * 30;
+        if ((view->field_0x70 & 1u) != 0) {
+            s16 t5 = (s16)(view->field_0x5A - 1);
+            view->field_0x5A = (s16)t5;
+            if (t5 < 0) {
+                view->field_0x5A = 1;
+                view->field_0x70 &= ~1u;
+            }
+        } else {
+            s16 t5 = (s16)(view->field_0x5A + 1);
+            view->field_0x5A = (s16)t5;
+            if (t5 >= view->field_0x58) {
+                view->field_0x5A = 0;
+            }
+        }
+        if ((f32)view->field_0x60 == lbl_eu_806665C0) {
+            view->field_0x70 |= 0x100;
+        } else {
+            ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
+                lbl_eu_806665C0;
+            view->field_0x70 &= ~0x100u;
+        }
+    }
+}
+
 
 // Enemy move-controller per-frame update (retail func_80090DB4): the +0x8000
 // flag path reinstalls the +0x1A8 hook, resets the move-list counters and

@@ -3,6 +3,10 @@
 #include <types.h>
 #include <monolib/math/CVec3.hpp>
 
+namespace cf {
+struct CfCamFollow; // fwd decl for extern-C imports below (full layout later)
+} // namespace cf
+
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
@@ -38,9 +42,30 @@ extern "C" int lbl_eu_80661BA4;       // .sdata word (retail 0x80661BA4)
 extern "C" u32 func_80061FE8();                          // mtl heap handle for cf allocations
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
 extern "C" int func_80174C98(void* actor, u32* val, int flags); // actor-state gate
+// func_8006F5C8 callees (flat retail names, same naming class)
+extern "C" int func_80075640();
+extern "C" int func_8006D72C(void* self);
+extern "C" int func_80275378(void* self);
+extern "C" int func_80275338(void* self);
+extern "C" int func_802752B8(void* self);
+extern "C" int func_802752F8(void* self);
+extern "C" int CfRes_getE24Bit22();
+extern "C" int func_8006EEE4();
+extern "C" int func_801B0F8C();
+extern "C" int func_8017FD44();
+extern "C" int func_802751F8(void* self);
+extern "C" int func_8008585C__Q22cf13CfGameManagerFv();
+extern "C" float lbl_eu_80666358; // .sdata2 constant
 extern "C" int func_8006C6B4(int self, int mask);        // CfCam sibling flag probe (0x1D4 word)
 extern "C" void func_8006D734(void* self, void* src);     // CfCam sibling (retail 0x8006E18C)
-extern "C" u8* func_8006BF14(u8*, int);                   // CfCam sibling (retail 0x8006BF14), body at bottom of CfCam.cpp
+extern "C" __declspec(noinline) u8* func_8006BF14(u8*, int); // CfCam sibling (retail 0x8006BF14), body at bottom of CfCam.cpp; noinline keeps the retail bl at call sites
+// In-TU ctor helpers whose bodies MWCC would otherwise inline; noinline keeps
+// the retail `bl func_8006BE*` calls in __ct__cf_CfCamFollow.
+extern "C" __declspec(noinline) void func_8006BEF8(void* self);
+extern "C" __declspec(noinline) void func_8006BEC0(void* self);
+extern "C" __declspec(noinline) void func_8006BEE4(cf::CfCamFollow* self);
+extern "C" __declspec(noinline) void func_8006BEFC(void* self);
+extern "C" __declspec(noinline) void func_8006BF08(u16* self);
 // .data lookup tables (retail 0x80527208 / 0x8052721C, 20 bytes each). Sized
 // >8B so MWCC uses full lis/@l addressing (SDA threshold).
 extern "C" float lbl_eu_80527208[5];
@@ -65,7 +90,7 @@ extern "C" void func_80059610(void*, float);        // retail 0x80059C78
 extern "C" void func_8006BBF4(void* obj, u32 mask, int flag); // CfCam sibling flag set (retail 0x8006BBF4)
 extern "C" void func_8006B948();                              // CfCam sibling (retail 0x8006B948)
 extern "C" void func_8006BEC0(void* self);                    // CfCam sibling no-op (retail 0x8006BEC0)
-extern "C" void func_8006C740(void* out, void* self);         // CfCam sibling (retail 0x8006C740)
+extern "C" void func_8006C740(ml::CVec3* out, cf::CfCamFollow* self); // CfCam sibling (retail 0x8006CA1C); same signature as the in-TU def so call sites keep the unmangled bl
 extern "C" void func_80073C7C(void* a, void* b, void* c, void* d, float f); // CfCam sibling (retail 0x80073C7C)
 extern "C" void func_800742FC(float* mtx, float scale);       // CfCam sibling (retail 0x800742FC)
 extern "C" void func_800743A4(float* mtx, const float* v);    // CfCam sibling (retail 0x800743A4)
@@ -90,6 +115,8 @@ extern "C" float lbl_eu_8066636C;          // .sdata2 decay step (retail 0x80666
 extern "C" float lbl_eu_8066A1F8;          // .sdata2 pi (retail 0x8066A1F8)
 extern char lbl_eu_80526324[];              // nw4r FSqrt assert source-file string (retail .data)
 extern char lbl_eu_80526300[];              // nw4r FSqrt assert message string (retail .data)
+extern char lbl_eu_805262F0[];              // nw4r assert source-file string (retail .data)
+extern char lbl_eu_805262C8[];              // nw4r assert message string (retail .data)
 
 namespace cf {
 
@@ -123,7 +150,11 @@ struct CfCamFollow {
     f32 unk1FC;
     f32 unk200;
     f32 unk204;
-    u8 unk208[0x21C - 0x208];
+    f32 unk208;
+    f32 unk20C;
+    f32 unk210;
+    u32 unk214;
+    f32 unk218;
     f32 unk21C;
     f32 unk220;
     f32 unk224;
@@ -133,7 +164,9 @@ struct CfCamFollow {
     f32 unk234;
     f32 unk238;
     f32 unk23C;              // 0x23C follow/decay heading float
-    u8 unk240[0x24C - 0x240]; // 0x240..0x24C padding
+    f32 unk240;
+    f32 unk244;
+    f32 unk248;
     u32 unk24C;
     u16 unk250;
     u16 unk252;
@@ -168,7 +201,7 @@ public:
     virtual void v10() = 0;
     virtual void v11() = 0;
     virtual void v12() = 0;
-    virtual void v13() = 0;
+    virtual void v13(float f) = 0; // 0x3C (index 13) - camera-state update
     virtual void v14() = 0;
     virtual void v15() = 0;
     virtual void v16() = 0;
@@ -181,7 +214,7 @@ public:
     virtual void v23() = 0;
     virtual void v24() = 0;
     virtual void v25() = 0;
-    virtual void v26() = 0;
+    virtual void* v26() = 0; // 0x70 (index 26) - sub-object getter
     virtual int fn0x74() = 0;    // 0x74 (index 27) - target-visible flag
     virtual void v28() = 0;
     virtual void v29() = 0;
@@ -214,6 +247,31 @@ public:
 class CfCamEvent : public CfCamFollow {
 public:
     ~CfCamEvent();
+};
+
+// Vtable-slot view over CfCamFollow's head for __ct__cf_CfCamFollow's two
+// virtual calls. With the -RTTI 8-byte vtable header, virtual index N sits at
+// 0x08 + 4N: index 14 -> slot 0x40, index 8 -> slot 0x28 (retail ctor loads
+// those slots into r12 right before each bctrl). Never instantiated - MWCC
+// emits no vtable for it (same pattern as CfCamPosSource).
+class CfCamCtorVt {
+public:
+    virtual void v00() = 0; // 0x08
+    virtual void v01() = 0;
+    virtual void v02() = 0;
+    virtual void v03() = 0;
+    virtual void v04() = 0;
+    virtual void v05() = 0;
+    virtual void v06() = 0;
+    virtual void v07() = 0;
+    virtual void v08() = 0;        // 0x28 (index 8) - follow-cam init (no args)
+    virtual void v09() = 0;
+    virtual void v10() = 0;
+    virtual void v11() = 0;
+    virtual void v12() = 0;
+    virtual void v13() = 0;
+    virtual void v14(int arg) = 0; // 0x40 (index 14) - init with int arg
+    virtual void v15() = 0;
 };
 
 // Minimal views for func_8006DBD4: the +0x4 sub-object's vtable slot-0x30
@@ -250,6 +308,16 @@ void func_8004B738(float* destination, const float* source);              // ret
 f32 func_8004CC68(f32 angle);                        // retail 0x8004D300 (SinFIdx wrapper)
 f32 func_8004CC74(f32 angle);                        // retail 0x8004D30C (CosFIdx wrapper)
 float func_80073F88(const f32* v);                   // in-TU def: (const ml::CVec3*); differing signature keeps the bl
+void func_80073E74(const ml::CVec3* a, const ml::CVec3* b, f32* out, int flag2, int flag3); // in-TU def (defined below its first use)
+void func_800733B8(void* a, void* b, void* c, void* d, float f); // in-TU stub (defined below its first use)
+__declspec(noinline) void func_8006FFA8(cf::CfCamFollow* self, float* outA, float* outB); // in-TU def, same signature (mixed linkage keeps the unmangled bl); noinline keeps the retail bl instead of inlining the body
+void func_80071730(void* dst, void* src);            // retail 0x8007215C (16-byte copy)
+void func_80071AB0(void* self, void* a, void* b, int c, float f1, float f2); // in-TU stub (defined below its first use)
+__declspec(noinline) void func_800707C0(void* self, void* a, void* b); // in-TU stub, same signature (mixed linkage keeps the unmangled bl)
+int CfRes_getD80Flag();                              // scene flag gate (CUIErrMesWin.hpp)
+void* func_8049603C();                               // scene/camera view getter (CTaskGame.hpp shape)
+bool func_80074A74();                                // in-TU def (defined below its first use), same signature (mixed linkage)
+void func_80070EBC(cf::CfCamFollow* self);           // in-TU def (defined below its first use), same signature (mixed linkage)
 ml::CVec3* func_8004B79C(ml::CVec3* out, const ml::CVec3* v); // retail 0x8004BE74 (vec helper)
 int func_8006C640(cf::CfCamFollow* self, u32 mask, int flag); // CfCam sibling (retail 0x8006D098)
 int func_8007FE24__Q22cf13CfGameManagerFv(u32);          // CfGameManager state gate (retail 0x8007FE24)
@@ -279,6 +347,7 @@ float lbl_eu_80666374;                               // .sdata2 constant
 float lbl_eu_80663DC8;                               // .sbss float
 float lbl_eu_80663DCC;                               // .sbss float
 float lbl_eu_8066635C;                               // .sdata2 constant
+float lbl_eu_8066638C;                               // .sdata2 constant
 float lbl_eu_80666324;                               // .sdata2 constant
 float lbl_eu_8066A1FC;                               // .sdata2 constant (2*pi)
 extern const float lbl_eu_80666308;                               // .sdata2 constant
@@ -302,6 +371,54 @@ float lbl_eu_80663DD0;                               // .sbss float (retail 0x80
 float lbl_eu_80570A74[3];                            // .bss vec3 (retail 0x80570A74)
 float lbl_eu_80570A80[3];                            // .bss vec3 (retail 0x80570A80)
 extern char lbl_eu_804FB4F0[];                       // .data message string (retail 0x804FB4F0)
+}
+
+class CfCamEventManager;
+
+// CfCam sibling imports used by func_8006C740 / func_8006D8D0 / func_80071754
+// / func_8006E5D8 (same naming class as the blocks above: unmangled retail
+// func_* names + lbl_eu_* data, so call relocs keep the retail symbol).
+extern "C" {
+CfCamEventManager* func_8006E59C();       // camera-event manager getter
+void func_8006E5AC(void*, void*);         // CfCam sibling block copy (dst, src)
+int func_8006E5B8(void* self);            // CfCam sibling count (ignores its arg)
+void func_8006E5C0(void*, void*);         // CfCam sibling word copy (dst, src)
+void func_8006E5CC(void*, void*);         // CfCam sibling halfword copy (dst, src)
+void func_8006C730();                     // CfCam sibling
+int func_800B8920(void* obj);             // follow-target liveness probe
+void* func_800BBC0C(void* obj);           // talk-source getter (takes an arg here)
+void* func_8006C670(void* obj);           // CfCam sibling
+unsigned int func_8006CA20(const void* self); // CfCam sibling (in-TU def has const CfCamFollow*)
+void func_8006BC1C(void* self, int mask); // CfCam sibling flag clear
+int func_80071A90(void* self);            // CfCam sibling
+int func_80071A9C(void* self);            // CfCam sibling
+int func_8006EEF8(void* self);            // CfCam sibling gate
+int func_8006DC34(void* x);               // CfCam sibling probes
+int func_8006DC40(void* x);
+int func_8006DC4C(void* x, u32 mask);
+int func_8006DC64(void* x);
+int func_8006DC70(void* x);
+float func_8006DC7C(void* x);
+float func_8006DC84(void* x);
+float func_8006DC8C(void* x);
+int func_8006DC94(void* x);
+int func_8004B848(void* x);               // vec helper probe
+void func_8004B0B4(void* v);              // vec helper
+void* func_8016FE34(void* source);        // object state getter
+float lbl_eu_8066629C;                    // .sdata2 constant
+float lbl_eu_80666300;                    // .sdata2 constant
+float lbl_eu_8066631C;                    // .sdata2 constant
+float lbl_eu_80666320;                    // .sdata2 constant
+float lbl_eu_80666334;                    // .sdata2 constant
+float lbl_eu_80666338;                    // .sdata2 constant
+float lbl_eu_80570A2C[3];                 // .bss vec3 (retail 0x80570A2C)
+u8 lbl_eu_80570A8C[];                     // .bss fallback camera-state buffer
+// In-TU definitions (CfCam.cpp) whose differing signatures keep the bl at
+// call sites (see the extern-C-only-views pattern above).
+extern "C" void func_80071398(void* out, void* a, void* b, float t); // in-TU def: (Quaternion*, const Quaternion*, const Quaternion*, float)
+extern "C" void* func_80071364(void* q);                            // in-TU def: (Quaternion*)
+extern "C" int func_8006DBD4(cf::CfCamFollow* self, int flags);     // in-TU def (defined below its first use)
+extern "C" __declspec(noinline) void func_80071694(void* a, void* b); // in-TU stub, same signature (mixed linkage keeps the unmangled bl)
 }
 
 // 48-byte / 12-word camera data block copied whole by func_8006EF1C.

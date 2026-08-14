@@ -6,17 +6,23 @@
 extern "C" void* lbl_eu_80538658[];
 
 namespace nw4r {
+namespace math {
+    struct VEC3;
+}
 namespace lyt {
     class Layout;
     class DrawInfo;
     class AnimTransform;
     class ArcResourceAccessor;
+    class Pane;
 }
 }
 
-/* Layout cursor used by CEquipItemBox (CBaseCur-style), own vtable. */
+/* Layout cursor used by CEquipItemBox (CBaseCur-style), own vtable.
+   Ctor is C-ABI: retail symbol __ct__CEIBCur carries no class-length
+   mangling, so it is declared/defined with C linkage and called explicitly
+   from derived ctors. */
 struct CEIBCur {
-    CEIBCur(void* arcResAcc);
     void func_80285A18();
     void func_80285B24();
     void* mVtable;          // 0x00
@@ -29,6 +35,9 @@ struct CEIBCur {
     u8 _pad16[2];           // 0x16
 };
 
+/* CEIBCur ctor (C-ABI, returns this). */
+extern "C" CEIBCur* __ct__CEIBCur(CEIBCur* self, void* arcResAcc);
+
 /* CEIBCur vtable / CEIBPageCur vtable (in this unit's .data). */
 extern "C" void* lbl_eu_80538704[];
 extern "C" void* lbl_eu_805386EC[];
@@ -36,6 +45,14 @@ extern "C" void* lbl_eu_805386EC[];
 /* Layout draw w/ visible flag. Retail symbol IS the mangled name; declare
    with C++ linkage so MWCC mangles func_80137038 to the retail symbol. */
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+
+/* Bind a named pane to a resource (code_80135FDC unit, 3-arg form). */
+extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
+
+/* Layout/anim builders (code_80135FDC unit). C++ linkage so MWCC mangles
+   the unmangled identifiers to the retail names. */
+void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 
 /* CEIBPageCur - page-cursor subclass of CEIBCur, overrides vtable. */
 struct CEIBPageCur : CEIBCur {
@@ -53,6 +70,14 @@ struct CEquipItemData {
     u8 unk7;    // 0x7
 };
 
+/* Item instance (retail CItemBase-ish). Only the id word at +0x0 and the
+   flag halfword at +0x4 are read by this TU's helpers. */
+struct CItemInstance {
+    u32 word;   // 0x0 id/kind word
+    u16 flags;  // 0x4
+    u8 _pad6[2];
+};
+
 /* Grid of 8-byte items used by the equip-box list helpers. Header fields
    (count / category / cursor row) sit right after the element array. */
 struct CEquipItemGrid {
@@ -62,6 +87,7 @@ struct CEquipItemGrid {
     u8 _pad2003;                 // 0x2003 (count/range)
     s8 idx;                      // 0x2004 (current cursor row)
     u8 _pad2005;                 // 0x2005
+    char field_2006[0x20];       // 0x2006 name buffer (sprintf dst)
 };
 
 /* CEquipItemBox - equip item box UI widget.
@@ -79,16 +105,20 @@ struct CEquipItemBox {
     u8 func_80286698();
     u8 func_80287EE8();
     void func_80287EFC(u32 val);
-    void func_8028A07C();
-    void func_8028A0C0(u8 val);
     void func_80288A1C();
     void func_80288A6C();
     void func_80288AC0();
     void func_80282DF8();
     void func_80282E24();
     void func_80287D58();
-    u8 func_80283280(u32 param);
     u8 func_802832B4();
+    int func_802865B0();
+    void func_80286740();
+    int func_8028847C();
+    char* func_8028D0EC();
+    void func_80286F6C();
+    void func_80289754();
+    void func_80289AA4();
 
     void* mVtbl;            // 0x00
 
@@ -113,9 +143,8 @@ struct CEquipItemBox {
     // +0x74: CCur18     (0x18 bytes)
     u8 _pad44[0x14];    // 0x44..0x57
     u8 unk_58;          // 0x58 (cursor0 mActive)
-    u8 _pad59[0x17];    // 0x59..0x6F
-    u8 unk_70;          // 0x70 (page-cur mActive)
-    u8 _pad71[0x3];     // 0x71..0x73
+    u8 _pad59[3];       // 0x59..0x5B (mVisible + pad)
+    u8 pagecur[0x18];   // 0x5C..0x73 (CEIBPageCur region)
     u8 ccur18[0x18];    // 0x74..0x8B
 
     // +0x8C: CSortMenu (0xF0 bytes)
@@ -158,11 +187,125 @@ struct CEquipItemBox {
     u8 field_2003;          // 0x2003 (count/range)
     s8 field_2004;          // 0x2004 (current index)
     u8 _pad2005[0x2026 - 0x2005]; // 0x2005..0x2025
-    u8 field_2026[0x400];   // 0x2026
+    u8 field_2026[0x400];   // 0x2026..0x2425
+    u8 _pad2426[0x27A4 - 0x2426]; // 0x2426..0x27A3
+    u32 field_27A4;         // 0x27A4
+};
+
+/* CSysWin vtable view exposing the layout-build virtual at +0x88 (slot 34 =
+   declared index 32 after the MWCC offset-to-top + RTTI prefix), dispatched by
+   func_802861A8 after the file loads. Same shape as the CSysWinView classes in
+   CSysWinSave.hpp / COption.hpp / CCollepedia.hpp. */
+class CEquipItemBoxSysWinView {
+public:
+    virtual void v00() = 0;
+    virtual void v01() = 0;
+    virtual void v02() = 0;
+    virtual void v03() = 0;
+    virtual void v04() = 0;
+    virtual void v05() = 0;
+    virtual void v06() = 0;
+    virtual void v07() = 0;
+    virtual void v08() = 0;
+    virtual void v09() = 0;
+    virtual void v10() = 0;
+    virtual void v11() = 0;
+    virtual void v12() = 0;
+    virtual void v13() = 0;
+    virtual void v14() = 0;
+    virtual void v15() = 0;
+    virtual void v16() = 0;
+    virtual void v17() = 0;
+    virtual void v18() = 0;
+    virtual void v19() = 0;
+    virtual void v20() = 0;
+    virtual void v21() = 0;
+    virtual void v22() = 0;
+    virtual void v23() = 0;
+    virtual void v24() = 0;
+    virtual void v25() = 0;
+    virtual void v26() = 0;
+    virtual void v27() = 0;
+    virtual void v28() = 0;
+    virtual void v29() = 0;
+    virtual void v30() = 0;
+    virtual void v31() = 0;
+    virtual void v32() = 0; // vtable +0x88 (layout build)
 };
 
 /* Copy 8-byte CEquipItemData struct from src to dst */
 void copyEquipItemData(CEquipItemData* dst, const CEquipItemData* src);
+
+/* Item-impl vtable view exposing the slots the grid sorts dispatch: vf08
+   (0x08), vf30 (0x30) and vf90 (0x90) carry the sort keys, plus the two
+   slots func_80283350 reads (vf08 / vf20). MWCC auto-inserts RTTI + null
+   at vtable slots 0-1, so the declared virtuals land at slots 2..n.
+   Declarations are padded out to 0x90 so the sort-key slot offsets match
+   retail's vtable. */
+class CEquipItemBoxItemImplView {
+public:
+    virtual u32 vf08(CItemInstance* p);  // 0x08
+    virtual void vf0C(CItemInstance* p); // 0x0C
+    virtual void vf10(CItemInstance* p); // 0x10
+    virtual void vf14();                 // 0x14
+    virtual void vf18();                 // 0x18
+    virtual void vf1C(CItemInstance* p); // 0x1C
+    virtual u32 vf20(CItemInstance* p);  // 0x20
+    virtual void vf24(CItemInstance* p); // 0x24
+    virtual void vf28(CItemInstance* p); // 0x28
+    virtual CItemInstance* vf2C(CItemInstance* p, u8 idx); // 0x2C (slot entry getter)
+    virtual u32 vf30(CItemInstance* p);  // 0x30 (item-count sort key)
+    virtual void vf34(CItemInstance* p); // 0x34
+    virtual void vf38(CItemInstance* p); // 0x38
+    virtual void vf3C(CItemInstance* p); // 0x3C
+    virtual s16 vf40(CItemInstance* p, u8 idx);  // 0x40 (slot id, -1 = empty)
+    virtual void vf44(CItemInstance* p); // 0x44
+    virtual void vf48(CItemInstance* p); // 0x48
+    virtual void vf4C(CItemInstance* p); // 0x4C
+    virtual void vf50(CItemInstance* p); // 0x50
+    virtual u32 vf54(CItemInstance* p);  // 0x54 (name-key sort)
+    virtual void vf58(CItemInstance* p); // 0x58
+    virtual void vf5C(CItemInstance* p); // 0x5C
+    virtual void vf60(CItemInstance* p); // 0x60
+    virtual void vf64(CItemInstance* p); // 0x64
+    virtual void vf68(CItemInstance* p); // 0x68
+    virtual void vf6C(CItemInstance* p); // 0x6C
+    virtual void vf70(CItemInstance* p); // 0x70
+    virtual void vf74(CItemInstance* p); // 0x74
+    virtual void vf78(CItemInstance* p); // 0x78
+    virtual void vf7C(CItemInstance* p); // 0x7C
+    virtual void vf80(CItemInstance* p); // 0x80
+    virtual void vf84(CItemInstance* p); // 0x84
+    virtual void vf88(CItemInstance* p); // 0x88
+    virtual void vf8C(CItemInstance* p); // 0x8C
+    virtual u32 vf90(CItemInstance* p);  // 0x90 (name-key sort)
+};
+
+/* CCur18 vtable view (declared index 2 -> vtable +0x10 = Move/position-set
+   virtual, dispatched by func_802870DC with a 16-byte state buffer). */
+class CEquipItemBoxCur18View {
+public:
+    virtual void vf02() = 0;        // +0x08
+    virtual void vf03(void*) = 0;   // +0x0C
+    virtual void vf04(void*) = 0;   // +0x10 Move
+};
+
+/* Pane-layout view exposing the translate at +0x2C (Pane::mTranslate is
+   protected in the nw4r header, so the equip-box helpers reach it through
+   this fixed-offset mirror). */
+struct CEquipItemBoxPaneView {
+    u8 pad00[0x2C];
+    float mTranslate[3];  // 0x2C
+};
+
+/* u32->float conversion scratch (CPartsChange.cpp convention): builds the
+   0x43300000-prefixed bit pattern by hand so the magic subtraction below
+   references the retail .sdata2 constants (lbl_eu_80668B18/80668B10)
+   instead of MWCC's un-nameable pool entry. */
+union CEquipItemBoxF64Conv {
+    u32 w[2];
+    double d;
+};
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void* __dl__FPv(void*);
@@ -174,20 +317,43 @@ extern "C" void func_80139198(void*);
 extern "C" void func_80138078__FUl(u32);
 extern "C" u8 func_801392B4(int);
 extern "C" void func_8028A5D8(CEquipItemBox* self, int a);
+extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b);
+extern "C" void func_8028B7CC(CEquipItemBox* self, int a, int b);
+extern "C" void func_8028BE74(CEquipItemBox* self, int a, int b);
 extern "C" u8 func_802832D8(CEquipItemGrid* grid, u16 idx);
+extern "C" u8 func_80283280(CEquipItemGrid* grid, u32 param);
+extern "C" int func_80288948(CEquipItemBox* box);
 extern "C" void func_8028AA64(CEquipItemBox* self);
 extern "C" void func_80289500(CEquipItemBox* self, int a);
+extern "C" void func_8028A1DC(CEquipItemBox* self);
+extern "C" void func_8028A07C(CEquipItemBox* self);
+extern "C" void func_8028A0C0(CEquipItemBox* self, u8 val);
 extern "C" void func_80289CC0(CEquipItemBox* self);
 extern "C" void func_80285B70(CEIBCur* self);
 extern "C" void func_8022B8E4(void*);
 extern "C" void func_80289E70(CEquipItemBox*);
+// Same-TU helpers (defined as extern "C" free functions in CEquipItemBox.cpp;
+// the retail symbols are unmangled, so calls must reference the plain names).
+extern "C" void func_80282DF8(CEquipItemBox* self);
+extern "C" void func_80282E24(CEquipItemBox* self);
+extern "C" u8 func_802832B4(CEquipItemBox* self);
+extern "C" void func_80289754(CEquipItemBox* self);
+extern "C" void func_80289AA4(CEquipItemBox* self);
+extern "C" void func_80288A1C(CEquipItemBox* self);
+extern "C" void func_80288A6C(CEquipItemBox* self);
+extern "C" void func_802889C0(CEquipItemBox* self);
+extern "C" void func_80285A18(CEIBCur* self);
+extern "C" void func_80285B24(CEIBCur* self);
+extern "C" u32 func_802857F0(CEquipItemBox* self, CItemInstance* item);
+extern "C" double func_80285708(CEquipItemBox* self, CItemInstance* item);
 // Forward decls for the grid/array helpers (defined in CEquipItemBox.cpp).
 extern "C" CEquipItemData* func_80282574(CEquipItemData* dst, s16 a0, u8 a2, u8 a3, u8 a4, u8 a5, u8 a6, u8 a7);
 extern "C" void func_80282594(CEquipItemData* dst, const CEquipItemData* src);
+extern "C" void func_80282610(CEquipItemGrid* grid, int v, int b, int hi);
 // String pool used by func_8028D0EC (offsets 0x2d / 0x36) and others.
 extern "C" char lbl_eu_8050EFDC[];
 extern "C" char* func_80136190(char*, char*, u32);
-extern "C" u8 func_801361E8(u32, const char*, u32);
+extern "C" u32 func_801361E8(u32, const char*, u32);
 extern "C" void func_8003AA8C__5CBdatFUl(u32);
 extern "C" void func_801390E0__FPP11CFileHandle(void*);
 extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
@@ -195,8 +361,58 @@ extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
 extern "C" void func_801D3258(void*);
 extern "C" void func_8022B7F4(void*);
 extern "C" u16 func_80139358(u32);
+extern "C" u16 func_80136254(u32, const char*, u32);
+extern "C" void* func_8009EC9C(u32);
+extern "C" u16 func_800A082C();
+extern "C" nw4r::math::VEC3* code80135FDC_setVec3(float*, float, float, float);
+extern "C" void copyVEC3(float*, const float*);
 extern "C" void* CItem_initItemImplInstances(void*);
-extern "C" char lbl_eu_806640D8[];
-extern "C" char lbl_eu_806640F8[];
+extern u32 lbl_eu_806640D8;
+extern u32 lbl_eu_806640F8;
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" int func_801D3320(void*);
+extern "C" int func_801D3328(void*);
+extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+// Pane-visibility query (C-ABI retail symbol; extern "C" so call sites emit
+// the plain name, matching func_80287250's reloc site).
+extern "C" bool func_801C4648(nw4r::lyt::Pane*);
+extern "C" void func_801D3330(void*);
+extern "C" void func_801D3408(void*);
+extern "C" void func_801D3430(void*, const nw4r::math::VEC3*);
+extern "C" void func_801D3454(void*, void*);
+extern "C" void func_801D353C(void*, u8);
+extern "C" void func_80137924(void*, void*, void*, void*);
+// Per-frame update helpers (retail plain names, defined in sibling TUs).
+extern "C" void func_801D3064(void*);
+extern "C" int func_800A9D90(void);
+extern "C" void func_801D202C(void*);
+extern "C" void func_801D3160(void*);
+extern "C" void func_8022B748(void*);
+// Sub-window / cursor / sort-menu draw helpers (retail plain names).
+extern "C" void func_801D31F8(void*, nw4r::lyt::DrawInfo*);
+extern "C" void func_8022B7C8(void*, nw4r::lyt::DrawInfo*);
+extern "C" void func_801D20B0(void*, nw4r::lyt::DrawInfo*);
+
+// Small-data global read by func_80285890 (item-impl table id, .sbss).
+extern u32 lbl_eu_806640F4;
+
+// .sdata2 float/double constants used by the equip-box helpers (sda21
+// relocs). 80668B10/80668B18 are the int->float conversion magics (0x4330
+// trick); 80668B2C is the drop-rate scale; 80668B30/34/38 are pane offsets.
+extern const float lbl_eu_80668B2C;
+extern const float lbl_eu_80668B30;
+extern const float lbl_eu_80668B34;
+extern const float lbl_eu_80668B38;
+extern const double lbl_eu_80668B10;
+extern const double lbl_eu_80668B18;
+
+// Item-impl accessor (retail CItemImpl vtable-indexed helper).
+extern "C" u32 func_801392E4(u32);
+
+// Sub-object destructors invoked by ~CEquipItemBox (retail C-ABI names; the
+// member-class dtors live in their own TUs as extern "C" free functions).
+extern "C" void __dt__7CSysWinFv(void*, int);
+extern "C" void __dt__9CSortMenuFv(void*, int);
+extern "C" void __dt__6CCur18Fv(void*, int);
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+extern "C" void* __dt__80285C44(void*, int);

@@ -426,11 +426,252 @@ void func_804C2654(CScnEnvLgtCtrl* self) {
 
 extern "C" __declspec(noinline) void func_804C26F0(CScnEnvLgtCtrl* self) {}
 
-// Stub body only - the constructor is a separate target (us-804c6afc). The
-// signature matches its retail caller func_804C6A70. noinline keeps the call
-// out-of-line (the retail factory emits `bl __ct__CScnEnvLgtCtrl`).
+// Compact light-header builder (defined later in this TU; forward decl so
+// the ctor can call it).
+extern "C" void func_804C6BA8(CScnEnvLgtCtrlLgtHeader* dst,
+                              const CScnEnvLgtCtrlLgtSrc* src, u32 base);
+
 extern "C" __declspec(noinline) CScnEnvLgtCtrl* __ct__CScnEnvLgtCtrl(
     CScnEnvLgtCtrl* self, const u32* data, void* arg) {
+    CScnEnvLgtCtrlCtorView* s = (CScnEnvLgtCtrlCtorView*)self;
+    s->mVtable = (void*)lbl_eu_8056F9B8;
+    s->field_0x04 = 0;
+    s->field_0x08 = 0;
+    s->field_0x0C = 0;
+    s->field_0x10 = 0;
+    s->field_0x20 = 0;
+    s->field_0x24 = 0;
+    s->field_0x28 = 0;
+    s->field_0x30 = 0;
+    s->field_0x38 = 0;
+    s->field_0x40 = 0;
+    s->field_0x48 = 0;
+    s->field_0x4C = 0;
+    s->field_0x50 = 0;
+    s->field_0xA8 = 0;
+    s->field_0x2C = (u8*)data;
+    s->field_0xBE = 0;
+    s->field_0xC0 = lbl_eu_8066B010;
+    s->field_0xC4 = lbl_eu_8066B014;
+    s->field_0xC8 = lbl_eu_8066B010;
+    s->field_0xCC = lbl_eu_8066B014;
+    s->field_0xBC = -1;
+    s->ctor90.field_0x90 = lbl_eu_80656C58[0];
+    s->ctor90.field_0x94 = lbl_eu_80656C58[1];
+    s->ctor90.field_0x98 = lbl_eu_80656C58[2];
+    s->ctor90.field_0x9C = lbl_eu_80656C58[0];
+    s->ctor90.field_0xA0 = lbl_eu_80656C58[1];
+    s->ctor90.field_0xA4 = lbl_eu_80656C58[2];
+    s->field_0xAC = arg;
+    s->field_0x04 = 0;
+    if (data[3] & 1) {
+        s->field_0x04 = 0x10000100;
+    }
+    if (data[3] & 2) {
+        s->field_0x04 |= 0x2000;
+    }
+    // Walk the resource elements at data+0x1C (8-byte stride) and size the
+    // work-buffer layout. Each element type contributes item counts (saved
+    // in the nXX locals) and the running byte total.
+    int total = 0;
+    int n0C = 0;
+    int n18 = 0;
+    int n20 = 0;
+    int n24 = 0;
+    int n10 = 0;
+    int n1C = 0;
+    int n14 = 0;
+    int n28 = 0;
+    if (data[2] != 0) {
+        const CScnEnvLgtCtrlCtorElem* elem =
+            (const CScnEnvLgtCtrlCtorElem*)(data + 7);
+        int i = 0;
+        do {
+            u8* base = (u8*)data;
+            switch (elem->mType) {
+            case 1: {
+                CScnEnvLgtCtrlCtorCtl* ctl =
+                    (CScnEnvLgtCtrlCtorCtl*)(base + elem->mOffset);
+                s->field_0x30 = ctl;
+                s->field_0x34 = base + ctl->mOff34;
+                if (ctl->mFlag38) {
+                    s->field_0x38 = base + ctl->mOff38;
+                    s->field_0x3C = base + ctl->mOff3C;
+                }
+                if (ctl->mCount0C) {
+                    n0C = ctl->mCount0C * 0x14;
+                    total += n0C;
+                }
+                if (ctl->mFlags & 1) {
+                    n18 = ctl->mCount18 * 0x14;
+                    total += n18;
+                }
+                if (ctl->mFlags & 2) {
+                    n20 = ctl->mCount20 * 0x40;
+                    total += n20;
+                }
+                if (!(data[3] & 1)) {
+                    n24 = 0xc0;
+                    total += 0xc0;
+                }
+                n28 = 0x28;
+                total += 0x28;
+                break;
+            }
+            case 2: {
+                CScnEnvLgtCtrlCtorElem2* obj2 =
+                    (CScnEnvLgtCtrlCtorElem2*)(base + elem->mOffset);
+                s->field_0x40 = obj2;
+                s->field_0x44 = base + obj2->mOff44;
+                if (obj2->mCount10) {
+                    n10 = obj2->mCount10 * 0x1c;
+                    total += n10;
+                }
+                if (obj2->mFlags & 2) {
+                    n1C = obj2->mCount1C * 0x1c;
+                    total += n1C;
+                }
+                break;
+            }
+            case 3:
+                s->field_0x4C = base + elem->mOffset;
+                s->field_0x04 |= 0x80;
+                break;
+            case 5: {
+                CScnEnvLgtCtrlCtorElem5* obj5 =
+                    (CScnEnvLgtCtrlCtorElem5*)(base + elem->mOffset);
+                s->field_0x48 = obj5;
+                n14 += obj5->mCount14 * 0xd8;
+                total += n14;
+                if (obj5->mFlags & 1) {
+                    s->field_0x04 |= 1;
+                }
+                if (obj5->mFlags & 2) {
+                    s->field_0x04 |= 2;
+                }
+                if (obj5->mFlags & 4) {
+                    s->field_0x04 |= 4;
+                }
+                break;
+            }
+            case 6:
+                s->field_0x50 = base + elem->mOffset;
+                break;
+            }
+            elem++;
+            i++;
+        } while (i < data[2]);
+    }
+    if (total != 0) {
+        s->field_0x08 = mtl::MemManager::allocate_head(
+            mtl::MemManager::getHandleMEM1(), total, 0x20);
+    }
+    // Lay out the sub-buffers inside the allocation (s->field_0x08). The
+    // running byte offset reuses `total` (retail keeps it in r31) and the
+    // buffer base is reloaded per use (retail `lwz r0, 0x8(r22)` each time).
+    total = 0;
+    if (n0C != 0) {
+        total = n0C;
+        s->field_0x0C = s->field_0x08;
+        CScnEnvLgtCtrlLgtItem20* item = (CScnEnvLgtCtrlLgtItem20*)s->field_0x08;
+        for (u32 k = 0; k < s->field_0x30->mCount0C; k++) {
+            item[k].field_0x10 = 0;
+        }
+    }
+    if (n18 != 0) {
+        s->field_0x18 = (u8*)s->field_0x08 + total;
+        total += n18;
+    }
+    if (n20 != 0) {
+        s->field_0x20 = (u8*)s->field_0x08 + total;
+        total += n20;
+    }
+    if (n24 != 0) {
+        s->field_0x24 = (u8*)s->field_0x08 + total;
+        total += n24;
+        u8* p24 = (u8*)s->field_0x24;
+        *(u16*)(p24 + 0x28) = 0;
+        *(u16*)(p24 + 0x58) = 0;
+        *(u16*)(p24 + 0x88) = 0;
+        *(u16*)(p24 + 0xb8) = 0;
+    }
+    if (n10 != 0 || n1C != 0) {
+        s->field_0x10 = (u8*)s->field_0x08 + total;
+        CScnEnvLgtCtrlCtorItem1C* it1 =
+            (CScnEnvLgtCtrlCtorItem1C*)((u8*)s->field_0x08 + total);
+        for (u32 k = 0; k < s->field_0x40->mCount10; k++) {
+            it1[k].field_0x18 = 0;
+        }
+        total += n10;
+        s->field_0x1C = (u8*)s->field_0x08 + total;
+        CScnEnvLgtCtrlCtorItem1C* it2 =
+            (CScnEnvLgtCtrlCtorItem1C*)((u8*)s->field_0x08 + total);
+        for (u32 k = 0; k < s->field_0x40->mCount1C; k++) {
+            it2[k].field_0x18 = 0;
+        }
+        total += n1C;
+    }
+    if (n14 != 0) {
+        s->field_0x14 = (u8*)s->field_0x08 + total;
+        total += n14;
+        u8* src2 = (u8*)s->field_0x48 + 0x10;
+        for (u32 k = 0; k < s->field_0x48->mCount14; k++) {
+            func_804C6BA8((CScnEnvLgtCtrlLgtHeader*)((u8*)s->field_0x14 + k * 0xd8),
+                          (const CScnEnvLgtCtrlLgtSrc*)(src2 + k * 0x5c),
+                          (u32)s->field_0x2C);
+        }
+    }
+    if (n28 != 0) {
+        s->field_0x28 = (u8*)s->field_0x08 + total;
+        memset(s->field_0x28, 0, n28);
+    }
+    // Set the light-enable bits for every active entry in the four
+    // control sub-arrays (strides 0x30/0x3C/0x50/0x64).
+    if (s->field_0x30 != 0 && s->field_0x28 != 0) {
+        u32* bits = (u32*)s->field_0x28;
+        CScnEnvLgtCtrlCtorCtl* ctl = s->field_0x30;
+        u8* e = (u8*)s->field_0x2C + ctl->mBaseA;
+        for (u32 k = 0; k < ctl->mCountA; k++) {
+            if (*(u32*)(e + 4) & 0x4000) {
+                u32 idx = *(u16*)e;
+                bits[idx >> 5] |= 1u << (idx & 31);
+            }
+            e += 0x30;
+        }
+        e = (u8*)s->field_0x2C + ctl->mBaseB;
+        for (u32 k = 0; k < ctl->mCountB; k++) {
+            if (*(u32*)(e + 4) & 0x4000) {
+                u32 idx = *(u16*)e;
+                bits[idx >> 5] |= 1u << (idx & 31);
+            }
+            e += 0x3c;
+        }
+        e = (u8*)s->field_0x2C + ctl->mBaseC;
+        for (u32 k = 0; k < ctl->mCountC; k++) {
+            if (*(u32*)(e + 4) & 0x4000) {
+                u32 idx = *(u16*)e;
+                bits[idx >> 5] |= 1u << (idx & 31);
+            }
+            e += 0x50;
+        }
+        e = (u8*)s->field_0x2C + ctl->mBaseD;
+        for (u32 k = 0; k < ctl->mCountD; k++) {
+            if (*(u32*)(e + 4) & 0x4000) {
+                u32 idx = *(u16*)e;
+                bits[idx >> 5] |= 1u << (idx & 31);
+            }
+            e += 0x64;
+        }
+    }
+    s->field_0x04 |= 0x80000000;
+    f32 f0 = lbl_eu_8066B014;
+    s->field_0x74[0] = f0;
+    s->field_0x74[1] = f0;
+    s->field_0x74[2] = f0;
+    s->field_0x74[3] = f0;
+    s->field_0x74[4] = f0;
+    s->field_0x74[5] = f0;
+    s->field_0x74[6] = f0;
     return self;
 }
 
@@ -450,6 +691,11 @@ CScnEnvLgtCtrl::~CScnEnvLgtCtrl() {
 }
 
 void func_804C30E8();
+
+// Compact light-header builder (defined later in this TU; forward decl so
+// the ctor can call it).
+void func_804C6BA8(CScnEnvLgtCtrlLgtHeader* dst,
+                   const CScnEnvLgtCtrlLgtSrc* src, u32 base);
 
 // Forward decls for the two per-frame light-update helpers called at the end
 // of func_804C30E8 (stubs below; separate targets). extern "C" keeps the flat
@@ -510,42 +756,42 @@ void func_804C31C8(CScnEnvLgtCtrl* self, const CScnEnvLgtCtrlLgtVec3* src) {
         u16 flags = slot->field_0x28;
         if (flags & 1) {
             if (flags & 4) {
-                u32 v0 = (u32)slot->field_0x2A * 60;
-                u32 v1 = (u32)slot->field_0x2C * 60;
-                u32 v2 = (u32)slot->field_0x2E * 60;
+                int bound = self->alt7.field_0xA8;
+                int v0 = (int)slot->field_0x2A * 60;
+                int v1 = (int)slot->field_0x2C * 60;
+                int v2 = (int)slot->field_0x2E * 60;
                 f32 f = lbl_eu_8066B014;
                 int changed = 0;
                 if (v0 > v1) {
-                    u32 bound = self->field_0xA8;
-                    if (v0 > bound) {
-                        if (v1 >= bound) {
-                            changed = 1;
-                            if (v2 != 0 && v1 - v2 < bound) {
-                                f = (f32)(v1 - bound) / (f32)v2;
-                            }
-                        }
-                    } else {
-                        changed = 1;
+                    if (v0 <= bound) {
                         if (v2 != 0 && v0 + v2 > bound) {
-                            f = lbl_eu_8066B014 - (f32)(v0 + v2 - bound) / (f32)v2;
+                            f = lbl_eu_8066B014 - (f32)(u32)(v0 + v2 - bound) / (f32)(u32)v2;
+                        }
+                        changed = 1;
+                    } else {
+                        if (v1 >= bound) {
+                            if (v2 != 0 && v1 - v2 < bound) {
+                                f = (f32)(u32)(v1 - bound) / (f32)(u32)v2;
+                            }
+                            changed = 1;
                         }
                     }
                 } else {
-                    u32 bound = self->field_0xA8;
                     if (v0 <= bound && v1 >= bound) {
-                        changed = 1;
                         if (v2 != 0 && v0 + v2 > bound) {
-                            f = lbl_eu_8066B014 - (f32)(v0 + v2 - bound) / (f32)v2;
+                            f = lbl_eu_8066B014 - (f32)(u32)(v0 + v2 - bound) / (f32)(u32)v2;
                         } else if (v2 != 0 && v1 - v2 < bound) {
-                            f = (f32)(v1 - bound) / (f32)v2;
+                            f = (f32)(u32)(v1 - bound) / (f32)(u32)v2;
                         }
+                        changed = 1;
                     }
                 }
                 if (changed) {
                     slot->field_0x28 |= 8;
-                    slot->field_0x00.x = f32tou32b(u32tof32b(slot->field_0x0C.x) * f);
-                    slot->field_0x00.y = f32tou32b(u32tof32b(slot->field_0x0C.y) * f);
-                    slot->field_0x00.z = f32tou32b(u32tof32b(slot->field_0x0C.z) * f);
+                    f32* v3 = (f32*)&slot->field_0x0C;
+                    slot->field_0x00.x = f32tou32b(v3[0] * f);
+                    slot->field_0x00.y = f32tou32b(v3[1] * f);
+                    slot->field_0x00.z = f32tou32b(v3[2] * f);
                 } else {
                     slot->field_0x28 &= 0xFFF7;
                 }
@@ -1655,8 +1901,8 @@ void func_804C6BA0(void* self, float val) { *(float*)((u8*)self + 0xcc) = val; }
 // set, record the running base+0x58 offset into dst +0x28/+0x2C (advancing
 // it by count * (dst->field_0x18[i] + 1) * 4). Source bit 2 sets dst flag
 // 0x8.
-void func_804C6BA8(CScnEnvLgtCtrlLgtHeader* dst,
-                   const CScnEnvLgtCtrlLgtSrc* src, u32 base) {
+extern "C" void func_804C6BA8(CScnEnvLgtCtrlLgtHeader* dst,
+                              const CScnEnvLgtCtrlLgtSrc* src, u32 base) {
     dst->field_0x00 = (u16)src->field_0x00;
     dst->field_0x02 = src->field_0x14;
     dst->field_0x04 = src->field_0x16;
@@ -2081,8 +2327,184 @@ extern "C" __declspec(noinline) void func_804C8054(CScnEnvLgtCtrlWorkBlob* blob,
     }
 }
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-void sinit_804C8174(){}
+// sinit_804C8174 (us-804cc2d0): static-initializer blob copy. The retail
+// body copies the .data template lbl_eu_8056FA68 into the .bss object
+// lbl_eu_8065FA40 (dest has a 4-byte gap at +0xB4 that is not copied).
+// The retail emits seven unrolled lwz/stw copy waves; explicit block-local
+// u32 temps reproduce MWCC's load-all/store-all codegen (GXFrameBuf idiom).
+void sinit_804C8174() {
+    const u8* src = (const u8*)&lbl_eu_8056FA68;
+    u8* dst = (u8*)&lbl_eu_8065FA40;
+    // loads: wave a [0x00..0x58) first (22 words, takes the registers)
+    u32 a00 = *(u32*)(src + 0x00), a04 = *(u32*)(src + 0x04),
+        a08 = *(u32*)(src + 0x08), a0C = *(u32*)(src + 0x0C),
+        a10 = *(u32*)(src + 0x10), a14 = *(u32*)(src + 0x14),
+        a18 = *(u32*)(src + 0x18), a1C = *(u32*)(src + 0x1C),
+        a20 = *(u32*)(src + 0x20), a24 = *(u32*)(src + 0x24),
+        a28 = *(u32*)(src + 0x28), a2C = *(u32*)(src + 0x2C),
+        a30 = *(u32*)(src + 0x30), a34 = *(u32*)(src + 0x34),
+        a38 = *(u32*)(src + 0x38), a3C = *(u32*)(src + 0x3C),
+        a40 = *(u32*)(src + 0x40), a44 = *(u32*)(src + 0x44),
+        a48 = *(u32*)(src + 0x48), a4C = *(u32*)(src + 0x4C),
+        a50 = *(u32*)(src + 0x50), a54 = *(u32*)(src + 0x54),
+        // then wave b [0x58..0x84) (11 words, spilled while a is live)
+        b58 = *(u32*)(src + 0x58), b5C = *(u32*)(src + 0x5C),
+        b60 = *(u32*)(src + 0x60), b64 = *(u32*)(src + 0x64),
+        b68 = *(u32*)(src + 0x68), b6C = *(u32*)(src + 0x6C),
+        b70 = *(u32*)(src + 0x70), b74 = *(u32*)(src + 0x74),
+        b78 = *(u32*)(src + 0x78), b7C = *(u32*)(src + 0x7C),
+        b80 = *(u32*)(src + 0x80);
+    // stores: wave b first, then wave a
+    *(u32*)(dst + 0x58) = b58;
+    *(u32*)(dst + 0x5C) = b5C;
+    *(u32*)(dst + 0x60) = b60;
+    *(u32*)(dst + 0x64) = b64;
+    *(u32*)(dst + 0x68) = b68;
+    *(u32*)(dst + 0x6C) = b6C;
+    *(u32*)(dst + 0x70) = b70;
+    *(u32*)(dst + 0x74) = b74;
+    *(u32*)(dst + 0x78) = b78;
+    *(u32*)(dst + 0x7C) = b7C;
+    *(u32*)(dst + 0x80) = b80;
+    *(u32*)(dst + 0x00) = a00;
+    *(u32*)(dst + 0x04) = a04;
+    *(u32*)(dst + 0x08) = a08;
+    *(u32*)(dst + 0x0C) = a0C;
+    *(u32*)(dst + 0x10) = a10;
+    *(u32*)(dst + 0x14) = a14;
+    *(u32*)(dst + 0x18) = a18;
+    *(u32*)(dst + 0x1C) = a1C;
+    *(u32*)(dst + 0x20) = a20;
+    *(u32*)(dst + 0x24) = a24;
+    *(u32*)(dst + 0x28) = a28;
+    *(u32*)(dst + 0x2C) = a2C;
+    *(u32*)(dst + 0x30) = a30;
+    *(u32*)(dst + 0x34) = a34;
+    *(u32*)(dst + 0x38) = a38;
+    *(u32*)(dst + 0x3C) = a3C;
+    *(u32*)(dst + 0x40) = a40;
+    *(u32*)(dst + 0x44) = a44;
+    *(u32*)(dst + 0x48) = a48;
+    *(u32*)(dst + 0x4C) = a4C;
+    *(u32*)(dst + 0x50) = a50;
+    *(u32*)(dst + 0x54) = a54;
+    // loads: wave c [0x84..0xB4) + wave d [0xB8..0xDC)
+    u32 c84 = *(u32*)(src + 0x84), c88 = *(u32*)(src + 0x88),
+        c8C = *(u32*)(src + 0x8C), c90 = *(u32*)(src + 0x90),
+        c94 = *(u32*)(src + 0x94), c98 = *(u32*)(src + 0x98),
+        c9C = *(u32*)(src + 0x9C), cA0 = *(u32*)(src + 0xA0),
+        cA4 = *(u32*)(src + 0xA4), cA8 = *(u32*)(src + 0xA8),
+        cAC = *(u32*)(src + 0xAC), cB0 = *(u32*)(src + 0xB0),
+        dB8 = *(u32*)(src + 0xB4), dBC = *(u32*)(src + 0xB8),
+        dC0 = *(u32*)(src + 0xBC), dC4 = *(u32*)(src + 0xC0),
+        dC8 = *(u32*)(src + 0xC4), dCC = *(u32*)(src + 0xC8),
+        dD0 = *(u32*)(src + 0xCC), dD4 = *(u32*)(src + 0xD0),
+        dD8 = *(u32*)(src + 0xD4),
+        // then wave e [0xDC..0x118) (15 words, spilled while c+d live)
+        eDC = *(u32*)(src + 0xD8), eE0 = *(u32*)(src + 0xDC),
+        eE4 = *(u32*)(src + 0xE0), eE8 = *(u32*)(src + 0xE4),
+        eEC = *(u32*)(src + 0xE8), eF0 = *(u32*)(src + 0xEC),
+        eF4 = *(u32*)(src + 0xF0), eF8 = *(u32*)(src + 0xF4),
+        eFC = *(u32*)(src + 0xF8), e100 = *(u32*)(src + 0xFC),
+        e104 = *(u32*)(src + 0x100), e108 = *(u32*)(src + 0x104),
+        e10C = *(u32*)(src + 0x108), e110 = *(u32*)(src + 0x10C),
+        e114 = *(u32*)(src + 0x110);
+    // stores: wave e first, then c, then d
+    *(u32*)(dst + 0xDC) = eDC;
+    *(u32*)(dst + 0xE0) = eE0;
+    *(u32*)(dst + 0xE4) = eE4;
+    *(u32*)(dst + 0xE8) = eE8;
+    *(u32*)(dst + 0xEC) = eEC;
+    *(u32*)(dst + 0xF0) = eF0;
+    *(u32*)(dst + 0xF4) = eF4;
+    *(u32*)(dst + 0xF8) = eF8;
+    *(u32*)(dst + 0xFC) = eFC;
+    *(u32*)(dst + 0x100) = e100;
+    *(u32*)(dst + 0x104) = e104;
+    *(u32*)(dst + 0x108) = e108;
+    *(u32*)(dst + 0x10C) = e10C;
+    *(u32*)(dst + 0x110) = e110;
+    *(u32*)(dst + 0x114) = e114;
+    *(u32*)(dst + 0x84) = c84;
+    *(u32*)(dst + 0x88) = c88;
+    *(u32*)(dst + 0x8C) = c8C;
+    *(u32*)(dst + 0x90) = c90;
+    *(u32*)(dst + 0x94) = c94;
+    *(u32*)(dst + 0x98) = c98;
+    *(u32*)(dst + 0x9C) = c9C;
+    *(u32*)(dst + 0xA0) = cA0;
+    *(u32*)(dst + 0xA4) = cA4;
+    *(u32*)(dst + 0xA8) = cA8;
+    *(u32*)(dst + 0xAC) = cAC;
+    *(u32*)(dst + 0xB0) = cB0;
+    *(u32*)(dst + 0xB8) = dB8;
+    *(u32*)(dst + 0xBC) = dBC;
+    *(u32*)(dst + 0xC0) = dC0;
+    *(u32*)(dst + 0xC4) = dC4;
+    *(u32*)(dst + 0xC8) = dC8;
+    *(u32*)(dst + 0xCC) = dCC;
+    *(u32*)(dst + 0xD0) = dD0;
+    *(u32*)(dst + 0xD4) = dD4;
+    *(u32*)(dst + 0xD8) = dD8;
+    // loads: wave f [0x118..0x16C) then wave g [0x16C..0x1A8)
+    u32 f118 = *(u32*)(src + 0x114), f11C = *(u32*)(src + 0x118),
+        f120 = *(u32*)(src + 0x11C), f124 = *(u32*)(src + 0x120),
+        f128 = *(u32*)(src + 0x124), f12C = *(u32*)(src + 0x128),
+        f130 = *(u32*)(src + 0x12C), f134 = *(u32*)(src + 0x130),
+        f138 = *(u32*)(src + 0x134), f13C = *(u32*)(src + 0x138),
+        f140 = *(u32*)(src + 0x13C), f144 = *(u32*)(src + 0x140),
+        f148 = *(u32*)(src + 0x144), f14C = *(u32*)(src + 0x148),
+        f150 = *(u32*)(src + 0x14C), f154 = *(u32*)(src + 0x150),
+        f158 = *(u32*)(src + 0x154), f15C = *(u32*)(src + 0x158),
+        f160 = *(u32*)(src + 0x15C), f164 = *(u32*)(src + 0x160),
+        f168 = *(u32*)(src + 0x164),
+        // then wave g [0x16C..0x1A8) (15 words, spilled while f is live)
+        g16C = *(u32*)(src + 0x168), g170 = *(u32*)(src + 0x16C),
+        g174 = *(u32*)(src + 0x170), g178 = *(u32*)(src + 0x174),
+        g17C = *(u32*)(src + 0x178), g180 = *(u32*)(src + 0x17C),
+        g184 = *(u32*)(src + 0x180), g188 = *(u32*)(src + 0x184),
+        g18C = *(u32*)(src + 0x188), g190 = *(u32*)(src + 0x18C),
+        g194 = *(u32*)(src + 0x190), g198 = *(u32*)(src + 0x194),
+        g19C = *(u32*)(src + 0x198), g1A0 = *(u32*)(src + 0x19C),
+        g1A4 = *(u32*)(src + 0x1A0);
+    // stores: wave g first, then wave f
+    *(u32*)(dst + 0x16C) = g16C;
+    *(u32*)(dst + 0x170) = g170;
+    *(u32*)(dst + 0x174) = g174;
+    *(u32*)(dst + 0x178) = g178;
+    *(u32*)(dst + 0x17C) = g17C;
+    *(u32*)(dst + 0x180) = g180;
+    *(u32*)(dst + 0x184) = g184;
+    *(u32*)(dst + 0x188) = g188;
+    *(u32*)(dst + 0x18C) = g18C;
+    *(u32*)(dst + 0x190) = g190;
+    *(u32*)(dst + 0x194) = g194;
+    *(u32*)(dst + 0x198) = g198;
+    *(u32*)(dst + 0x19C) = g19C;
+    *(u32*)(dst + 0x1A0) = g1A0;
+    *(u32*)(dst + 0x1A4) = g1A4;
+    *(u32*)(dst + 0x118) = f118;
+    *(u32*)(dst + 0x11C) = f11C;
+    *(u32*)(dst + 0x120) = f120;
+    *(u32*)(dst + 0x124) = f124;
+    *(u32*)(dst + 0x128) = f128;
+    *(u32*)(dst + 0x12C) = f12C;
+    *(u32*)(dst + 0x130) = f130;
+    *(u32*)(dst + 0x134) = f134;
+    *(u32*)(dst + 0x138) = f138;
+    *(u32*)(dst + 0x13C) = f13C;
+    *(u32*)(dst + 0x140) = f140;
+    *(u32*)(dst + 0x144) = f144;
+    *(u32*)(dst + 0x148) = f148;
+    *(u32*)(dst + 0x14C) = f14C;
+    *(u32*)(dst + 0x150) = f150;
+    *(u32*)(dst + 0x154) = f154;
+    *(u32*)(dst + 0x158) = f158;
+    *(u32*)(dst + 0x15C) = f15C;
+    *(u32*)(dst + 0x160) = f160;
+    *(u32*)(dst + 0x164) = f164;
+    *(u32*)(dst + 0x168) = f168;
+}
 
 // func_804C1094 (us-804c51f0): init/destroy the blend+bloom filter pair.
 // With r4 != 0 and +0x00 bit 3 clear: allocate CScnBlend (0x6C) and
@@ -2159,10 +2581,6 @@ void func_804C1270(void* self, int flag) {
     else
         obj[0x64] &= ~1;
 }
-// func_804C12A4 (us-804c5400): advance every light item's frame delta
-// (func_80496288 on the shared view) and dispatch vtable slot 3 (0x0C).
-// Sets +0x00 bit 0x100 when any item was visited, clears it otherwise, and
-// returns whether the ring was non-empty.
 // func_804C12A4 (us-804c5400): advance every light item's frame delta
 // (func_80496288 on the shared view) and dispatch vtable slot 3 (0x0C).
 // Sets +0x00 bit 0x100 when any item was visited, clears it otherwise, and

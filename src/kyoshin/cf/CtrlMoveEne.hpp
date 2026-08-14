@@ -293,6 +293,42 @@ public:
     virtual CFunc8008B580Word* _v30();  // vtable +0x30
 };
 
+// func_8008A2C8's sub-object vtable: slots +0x0C (int query), +0x4C (int
+// query), +0x50 (int arg), +0x8C (float), +0xAC (position), +0x110 (int),
+// +0x150 (int arg). Declared before CFunc8008B580Obj, which embeds the same
+// sub-object as a raw vtable view.
+struct CFunc8008A2C8SubVtbl {
+    void* r00[0x0C / 4];                                // 0x00-0x0B
+    int (*fn_0x0C)(void* self, int arg);                // 0x0C
+    void* r10[(0x4C - 0x10) / 4];                       // 0x10-0x4B
+    int (*fn_0x4C)(void* self, int arg);                // 0x4C
+    void (*fn_0x50)(void* self, int arg);               // 0x50
+    void* r54[(0x8C - 0x54) / 4];                       // 0x54-0x8B
+    f32 (*fn_0x8C)(void* self);                         // 0x8C
+    void* r90[(0xAC - 0x90) / 4];                       // 0x90-0xAB
+    ml::CVec3* (*fn_0xAC)(void* self);                  // 0xAC
+    void* rB0[(0x110 - 0xB0) / 4];                      // 0xB0-0x10F
+    int (*fn_0x110)(void* self, int arg);               // 0x110
+    void* r114[(0x150 - 0x114) / 4];                    // 0x114-0x14F
+    void (*fn_0x150)(void* self, int arg);              // 0x150
+};
+struct CFunc8008A2C8Sub {
+    CFunc8008A2C8SubVtbl* vtable;                       // 0x00
+};
+
+// func_8008A2C8's extension of the +0x3F60 flag object: +0x4F8 float and the
+// +0x532 halfword.
+struct CFunc8008A2C8F60 {
+    u8 _pad[0xC];                                       // 0x00-0x0B
+    u32 field_C;                                        // 0x0C
+    u8 _pad10[0x4EC - 0x10];                            // 0x10-0x4EB
+    u32 field_4EC;                                      // 0x4EC
+    u8 _pad4F0[0x4F8 - 0x4F0];                          // 0x4F0-0x4F7
+    f32 field_4F8;                                      // 0x4F8
+    u8 _pad4FC[0x532 - 0x4FC];                          // 0x4FC-0x531
+    s16 field_532;                                      // 0x532
+};
+
 // View of the enemy battle object passed to func_8008D444 (CfImplEneBattleObj
 // layout): +0x3374 flags, +0x3E9C embedded sub-object, +0x3F60 the sub
 // func_8008C4F0 toggles, +0x4550 flags. func_8008B580's separate polymorphic
@@ -303,11 +339,18 @@ struct CFunc8008B580Obj {
     u8 _pad08[0x3374 - 0x08];           // 0x08-0x3373
     u32 field_3374;                     // 0x3374 flags
     u8 _pad3378[0x3E9C - 0x3378];       // 0x3378-0x3E9B
-    CFunc8008D444Sub mSub;              // 0x3E9C embedded sub-object
+    // 0x3E9C embedded sub-object, raw vtable-slot view (func_8008A2C8 calls
+    // slots +0x0C/+0x8C/+0xAC/+0x110; func_8008B580 casts it to the +0x150
+    // virtual-slot view).
+    CFunc8008A2C8Sub mSub2;             // 0x3E9C embedded sub-object
     u8 _pad3EA0[0x3F60 - 0x3EA0];       // 0x3EA0-0x3F5F
     CfObj3F60View* field_3F60;          // 0x3F60 (func_8008C4F0 flag object)
     u8 _pad3F64[0x4550 - 0x3F64];       // 0x3F64-0x454F
     u32 field_4550;                     // 0x4550 flags
+    u8 _pad4554[0x45C0 - 0x4554];       // 0x4554-0x45BF
+    u16 field_45C0;                     // 0x45C0 (func_800B89CC id)
+    u16 field_45C4;                     // 0x45C4
+    u16 field_45C6;                     // 0x45C6
 
     // Declared virtuals only (never instantiated here -> no vtable emitted):
     // -RTTI places the Nth declared virtual at vtable offset (N+2)*4.
@@ -478,7 +521,7 @@ struct CFunc8008B580Obj {
     virtual void _v298();
     virtual void _v29C();
     virtual void _v2A0();
-    virtual void _v2A4();
+    virtual void* _v2A4();              // vtable +0x2A4 (func_8008A2C8: sub-object ptr)
     virtual void _v2A8();
     virtual void _v2AC();
     virtual void _v2B0();
@@ -1337,6 +1380,118 @@ struct CFunc8008D51CView {
     f32 field_0x19C;                            // 0x19C
 };
 
+// func_8008FE8C's view of CfObjectMove: base position/velocity words, the
+// move-list entries at +0x78, the mVec138 words, the heading/turn state and
+// the timers.
+struct CFunc8008FE8CView {
+    u8 _pad[0x0C];                              // 0x00-0x0B
+    ml::CVec3 mPosition;                        // 0x0C
+    ml::CVec3 mVelocity;                        // 0x18
+    u8 _pad24[0x34 - 0x24];                     // 0x24-0x33
+    CNpcBaseDataView* field_0x34;               // 0x34
+    u8 _pad38[0x3C - 0x38];                     // 0x38-0x3B
+    f32 field_0x3C;                             // 0x3C
+    u8 _pad40[0x4C - 0x40];                     // 0x40-0x4B
+    f32 field_0x4C;                             // 0x4C
+    f32 field_0x50;                             // 0x50
+    f32 field_0x54;                             // 0x54
+    s16 field_0x58;                             // 0x58
+    s16 field_0x5A;                             // 0x5A
+    u32 field_0x5C;                             // 0x5C (ptmf dispatch index)
+    u32 field_0x60;                             // 0x60 timer
+    f32 field_0x64;                             // 0x64 turn target
+    f32 field_0x68;                             // 0x68 turn current
+    f32 field_0x6C;                             // 0x6C
+    u16 field_0x70;                             // 0x70 flags
+    u16 field_0x72;                             // 0x72 gate
+    s16 field_0x74;                             // 0x74 timer
+    u8 _pad76[0x78 - 0x76];                     // 0x76-0x77
+    CfMoveSubEntry field_0x78[8];               // 0x78 move-list entries
+    u8 _pad118[0x138 - 0x118];                  // 0x118-0x137
+    CFunc8008E760Vec3W mVec138W;                // 0x138
+    u8 _pad144[0x160 - 0x144];                  // 0x144-0x15F
+    f32 field_0x160;                            // 0x160
+    u8 _pad164[0x17C - 0x164];                  // 0x164-0x17B
+    u32 field_0x17C;                            // 0x17C
+    u32 field_0x180;                            // 0x180
+    u16 field_0x184;                            // 0x184
+    u16 field_0x186;                            // 0x186
+};
+
+// Move sub-object as func_8008FE8C calls it: vtable +0x0C (int query), +0x10
+// (int arg), +0x9C (pointer arg), +0xAC (position getter), +0xC4 (float
+// angle) and +0xCC (heading query); data words at +0x98 / +0xC4 / +0x63C.
+struct CFunc8008FE8CSubVtbl {
+    void* r00[0x0C / 4];                                // 0x00-0x0B
+    int (*fn_0x0C)(void* self, int arg);                // 0x0C
+    void (*fn_0x10)(void* self, int arg);               // 0x10
+    void* r14[(0x9C - 0x14) / 4];                       // 0x14-0x9B
+    void (*fn_0x9C)(void* self, void* a);               // 0x9C
+    void* rA0[(0xAC - 0xA0) / 4];                       // 0xA0-0xAB
+    ml::CVec3* (*fn_0xAC)(void* self);                  // 0xAC
+    void* rB0[(0xC4 - 0xB0) / 4];                       // 0xB0-0xC3
+    void (*fn_0xC4)(void* self, f32 angle);             // 0xC4
+    void* rC8[(0xCC - 0xC8) / 4];                       // 0xC8-0xCB
+    float (*fn_0xCC)(void* self);                       // 0xCC
+};
+struct CFunc8008FE8CSub {
+    CFunc8008FE8CSubVtbl* vtable;                       // 0x00
+    u8 _pad04[0x98 - 0x04];                             // 0x04-0x97
+    void* field_98;                                     // 0x98
+    u8 _pad9C[0xC4 - 0x9C];                             // 0x9C-0xC3
+    void* field_C4;                                     // 0xC4
+    u8 _padC8[0x63C - 0xC8];                            // 0xC8-0x63B
+    f32 field_63C;                                      // 0x63C
+};
+
+// func_8008A2C8's view of CfObjectMove: the velocity words, the mVec138 /
+// mVec144 copies, the heading/timer halfwords and the +0x164..+0x19C floats.
+struct CFunc8008A2C8View {
+    u8 _pad[0x0C];                              // 0x00-0x0B
+    ml::CVec3 mPos0;                            // 0x0C
+    ml::CVec3 mVelocity;                        // 0x18
+    u8 _pad24[0x34 - 0x24];                     // 0x24-0x33
+    CNpcBaseDataView* field_0x34;               // 0x34
+    u8 _pad38[0x3C - 0x38];                     // 0x38-0x3B
+    f32 field_0x3C;                             // 0x3C
+    u8 _pad40[0x138 - 0x40];                    // 0x40-0x137
+    CFunc8008E760Vec3W mVec138W;                // 0x138
+    CFunc8008E760Vec3W mVec144W;                // 0x144
+    u8 _pad150[0x164 - 0x150];                  // 0x150-0x163
+    f32 field_0x164;                            // 0x164
+    f32 field_0x168;                            // 0x168
+    f32 field_0x16C;                            // 0x16C
+    f32 field_0x170;                            // 0x170
+    f32 field_0x174;                            // 0x174
+    f32 field_0x178;                            // 0x178
+    u32 field_0x17C;                            // 0x17C
+    u32 field_0x180;                            // 0x180
+    u16 field_0x184;                            // 0x184
+    u16 field_0x186;                            // 0x186
+    u8 _pad188[0x190 - 0x188];                  // 0x188-0x18F
+    u16 field_0x190;                            // 0x190
+    s16 field_0x192;                            // 0x192
+    u8 _pad194[0x196 - 0x194];                  // 0x194-0x195
+    s16 field_0x196;                            // 0x196
+    s16 field_0x198;                            // 0x198
+    u8 _pad19A[0x19C - 0x19A];                  // 0x19A-0x19B
+    f32 field_0x19C;                            // 0x19C
+};
+
+// func_8008A2C8 helpers: the CBattleManager +0x1AA byte and the global
+// settings +0x214 flag word.
+struct CFunc8008A2C8BMan {
+    u8 _pad[0x1AA];                                     // 0x00-0x1A9
+    u8 field_1AA;                                       // 0x1AA
+};
+struct CFunc8008A2C8Global {
+    u8 _pad[0x214];                                     // 0x00-0x213
+    u32 field_214;                                      // 0x214
+};
+// Proximity threshold table (retail .data floats indexed by the +0x17C
+// mode bits in func_8008A2C8).
+extern const f32 lbl_eu_804FB9C8[];
+
 } // namespace cf
 
 // C-linkage imports/exports (retail symbol names - keep linkage/signatures
@@ -1417,6 +1572,24 @@ extern "C" void func_8004B7C0(void* self, const ml::CVec3* vec);
 extern "C" f32 func_80496288(void* self);
 extern "C" void func_80174B4C(void* self, int arg);
 extern "C" void func_80193710(void* self);
+// func_8008FE8C call site: direction-commit helper (CtrlMoveBase.cpp) and the
+// C runtime rand() used for the turn jitter.
+extern "C" void func_800898D4(void* self, ml::CVec3* vec);
+extern "C" int rand(void);
+// func_8008A2C8 call sites: battle-object helpers, the CfGameManager /
+// CBattleManager singletons and the parts/actor lookups (retail names).
+extern "C" int func_800B708C__Fi(int id);
+extern "C" void* func_8016FE34(void* src);
+extern "C" int func_80148778(void* self, int id);
+extern "C" int func_801984F0(void* self, int index);
+extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
+extern "C" void* getPlayer__Q22cf13CfGameManagerFi(int index);
+extern "C" void* getUnk80664658(void);
+extern "C" void* getInstance__Q22cf14CBattleManagerFv(void);
+extern "C" void func_800D9CA0(void* self, void* obj);
+// func_8008A2C8 call site: game-flag query (C++ linkage mangles to the retail
+// func_8006EF04__Fi).
+int func_8006EF04(int r3);
 
 // .sdata2 float constants compared/stored by the func_80092CC4 family.
 // Declared const so MWCC treats the pool loads as constants and hoists them
@@ -1460,6 +1633,19 @@ extern const f32 lbl_eu_80666628;   // func_80090DB4 pursuit-move scale
 extern const f32 lbl_eu_806665EC;   // func_8008D51C +0x168 reset threshold
 extern const f32 lbl_eu_80666640;   // func_8008D51C close-range threshold
 extern const f32 lbl_eu_80666644;   // func_8008D51C move-speed divisor
+extern const f32 lbl_eu_8066666C;   // func_8008FE8C lerp factor
+// func_8008FE8C turn-range / close thresholds.
+extern const f32 lbl_eu_80666670;
+extern const f32 lbl_eu_80666674;
+// func_8008A2C8 ground-probe / pursuit constants.
+extern const f32 lbl_eu_806665D4;
+extern const f32 lbl_eu_806665D8;
+extern const f32 lbl_eu_806665E8;
+extern const f32 lbl_eu_806665F4;
+extern const f32 lbl_eu_806665F8;
+extern const f32 lbl_eu_806665FC;
+extern const f32 lbl_eu_80666600;
+extern const f32 lbl_eu_8066660C;
 // func_8008E760 field_0x160/0x4 scale (mode 2), field_0x16C fallbacks for the
 // bdat bytes 0xFC / 0xFB, and the field_0x16C squaring threshold.
 extern const f32 lbl_eu_80666658;

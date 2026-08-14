@@ -375,6 +375,17 @@ struct CScnEnvLgtCtrlLgtCtl;
 struct CScnEnvLgtCtrlLgtParamCtl;
 struct CScnEnvLgtCtrlLgtLimit;
 
+// +0x90..0xA8 region of CScnEnvLgtCtrl written by the ctor (two 3-word
+// copies of lbl_eu_80656C58 plus the light-count cap at +0xA8).
+struct CScnEnvLgtCtrlCtorCopy {
+    u32 field_0x90;  // +0x90
+    u32 field_0x94;  // +0x94
+    u32 field_0x98;  // +0x98
+    u32 field_0x9C;  // +0x9C
+    u32 field_0xA0;  // +0xA0
+    u32 field_0xA4;  // +0xA4
+};
+
 class CScnEnvLgtCtrl {
 public:
     CScnEnvLgtCtrl();
@@ -422,6 +433,7 @@ public:
     union {
         u8 field_0x34[4];                   // +0x34 byte view
         f32 field_0x34_f;                   // +0x34 float view (func_804C2124)
+        void* field_0x34_ptr;               // +0x34 pointer view (ctor: sub-blob base)
     };
     // +0x38 .. +0xB8: 4 rows of 8 floats at 0x38/0x58/0x78/0x98
     // (func_804C7530 copies rows 2,3 <- rows 0,1). +0x3C aliases row 0's
@@ -455,6 +467,14 @@ public:
             f32 field_0x94;                 // +0x94
             f32 field_0x98;                 // +0x98
         } alt4;
+        struct {
+            u8 pad_0x90b[0x58];             // +0x38..+0x90
+            CScnEnvLgtCtrlCtorCopy ctor;    // +0x90..+0xA8 (ctor 3-word blob copies)
+        } ctor90;
+        struct {
+            void* field_0x38;               // +0x38 (ctor: optional sub-blob base)
+            void* field_0x3C;               // +0x3C (ctor: optional sub-blob base)
+        } ctor38;
         struct {
             u8 pad_0xAC[0x74];              // +0x38..+0xAC
             s32 field_0xAC;                 // +0xAC light-count cap (func_804C526C)
@@ -939,4 +959,170 @@ struct CScnEnvLgtCtrlLgtView {
     f32 field_0x64;                    // +0x64
     f32 field_0x68;                    // +0x68
     f32 field_0x6C;                    // +0x6c
+};
+
+// --- sinit_804C8174 static-initializer blob copy ---
+// The TU's static initializer copies a 0x1A8-byte template blob from .data
+// (lbl_eu_8056FA68) into a .bss object (lbl_eu_8065FA40). The destination
+// layout differs from the source by a 4-byte gap at +0xB4 (not copied).
+// The retail copy waves are: [0x58..0x84) [0x00..0x58) [0xDC..0x118)
+// [0x84..0xB4) [0xB8..0xDC) [0x16C..0x1A8) [0x118..0x16C) - all under the
+// 0x80-byte unroll threshold, so the members below mirror those chunks.
+
+// 0x58-byte member (22 words).
+struct CScnEnvLgtCtrlSinitA {
+    u32 words[0x16];  // +0x00 .. +0x58
+};
+// 0x2C-byte member (11 words).
+struct CScnEnvLgtCtrlSinitB {
+    u32 words[0x0B];  // +0x00 .. +0x2C
+};
+// 0x30-byte member (12 words).
+struct CScnEnvLgtCtrlSinitC {
+    u32 words[0x0C];  // +0x00 .. +0x30
+};
+// 0x24-byte member (9 words).
+struct CScnEnvLgtCtrlSinitD {
+    u32 words[0x09];  // +0x00 .. +0x24
+};
+// 0x3C-byte member (15 words).
+struct CScnEnvLgtCtrlSinitE {
+    u32 words[0x0F];  // +0x00 .. +0x3C
+};
+// 0x54-byte member (21 words).
+struct CScnEnvLgtCtrlSinitF {
+    u32 words[0x15];  // +0x00 .. +0x54
+};
+// 0x3C-byte member (15 words).
+struct CScnEnvLgtCtrlSinitG {
+    u32 words[0x0F];  // +0x00 .. +0x3C
+};
+
+// Source template (.data at 0x8056FA68): members packed back-to-back.
+struct CScnEnvLgtCtrlSinitSrc {
+    CScnEnvLgtCtrlSinitA a;  // +0x00
+    CScnEnvLgtCtrlSinitB b;  // +0x58
+    CScnEnvLgtCtrlSinitC c;  // +0x84
+    CScnEnvLgtCtrlSinitD d;  // +0xB4
+    CScnEnvLgtCtrlSinitE e;  // +0xD8
+    CScnEnvLgtCtrlSinitF f;  // +0x114
+    CScnEnvLgtCtrlSinitG g;  // +0x168
+};
+
+// Destination (.bss at 0x8065FA40): 4-byte gap at +0xB4 (set elsewhere),
+// so d..g sit 4 bytes later than in the source.
+struct CScnEnvLgtCtrlSinitDst {
+    CScnEnvLgtCtrlSinitA a;  // +0x00
+    CScnEnvLgtCtrlSinitB b;  // +0x58
+    CScnEnvLgtCtrlSinitC c;  // +0x84
+    u32 field_0xB4;          // +0xB4 (not copied by the sinit)
+    CScnEnvLgtCtrlSinitD d;  // +0xB8
+    CScnEnvLgtCtrlSinitE e;  // +0xDC
+    CScnEnvLgtCtrlSinitF f;  // +0x118
+    CScnEnvLgtCtrlSinitG g;  // +0x16C
+};
+
+extern CScnEnvLgtCtrlSinitSrc lbl_eu_8056FA68;
+extern CScnEnvLgtCtrlSinitDst lbl_eu_8065FA40;
+
+// --- __ct__CScnEnvLgtCtrl ctor helper types ---
+// 3-word .bss blob copied by the ctor into +0x90..0x98 and +0x9C..0xA4.
+extern u32 lbl_eu_80656C58[3];
+
+// 8-byte resource elements walked by the ctor at data+0x1C: a type word
+// plus a byte offset into the resource blob.
+struct CScnEnvLgtCtrlCtorElem {
+    u32 mType;    // +0x00 (1/2/3/5/6)
+    u32 mOffset;  // +0x04
+};
+
+// Resource sub-blob referenced by the type-1 element (also the +0x30
+// light-param control): flag-loop counts/bases at +0x04..0x20, the +0x34
+// sub-blob offset at +0x28, three optional sub-blob offsets at +0x3C..0x48
+// and three item counts at +0x4C..0x54.
+struct CScnEnvLgtCtrlCtorCtl {
+    u32 mFlags;     // +0x00 (bits 0/1 select the +0x50/+0x54 counts)
+    u32 mCountA;    // +0x04 flag-loop 1 count
+    u32 mBaseA;     // +0x08 flag-loop 1 base
+    u32 mCountB;    // +0x0C flag-loop 2 count
+    u32 mBaseB;     // +0x10 flag-loop 2 base
+    u32 mCountC;    // +0x14 flag-loop 3 count
+    u32 mBaseC;     // +0x18 flag-loop 3 base
+    u32 mCountD;    // +0x1C flag-loop 4 count
+    u32 mBaseD;     // +0x20 flag-loop 4 base
+    u8 _24[0x04];   // +0x24
+    u32 mOff34;     // +0x28 -> self+0x34
+    u8 _2C[0x10];   // +0x2C
+    u32 mFlag38;    // +0x3C (nonzero enables the +0x38/+0x3C pair)
+    u32 mOff38;     // +0x40 -> self+0x38
+    u8 _44[0x04];   // +0x44
+    u32 mOff3C;     // +0x48 -> self+0x3C
+    u32 mCount0C;   // +0x4C (0x14-stride items at self+0x0C)
+    u32 mCount18;   // +0x50 (0x14-stride items at self+0x18)
+    u32 mCount20;   // +0x54 (0x40-stride items at self+0x20)
+};
+
+// Resource sub-blob referenced by the type-2 element (self+0x40).
+struct CScnEnvLgtCtrlCtorElem2 {
+    u16 mFlags;    // +0x00 (bit 1 selects the +0x18 count)
+    u8 _02[0x0E];  // +0x02
+    u32 mOff44;    // +0x10 -> self+0x44
+    u32 mCount10;  // +0x14 (0x1C-stride items at self+0x10)
+    u32 mCount1C;  // +0x18 (0x1C-stride items at self+0x1C)
+};
+
+// Resource sub-blob referenced by the type-5 element (self+0x48): flags at
+// +0x00, the 0xD8-stride item count at +0x04, and the 0x5C-stride source
+// entries at +0x10 handed to func_804C6BA8.
+struct CScnEnvLgtCtrlCtorElem5 {
+    u32 mFlags;    // +0x00 (bits 0/1/2 -> self flags 1/2/4)
+    u32 mCount14;  // +0x04 (0xD8-stride items at self+0x14)
+    u8 _08[0x08];  // +0x08
+    u8 mSrc[0];    // +0x10 (0x5C-stride source entries)
+};
+
+// 0x1C-stride item rows installed at self+0x10 / self+0x1C by the ctor; the
+// u16 at +0x18 is zeroed per item.
+struct CScnEnvLgtCtrlCtorItem1C {
+    u8 _00[0x18];    // +0x00
+    u16 field_0x18;  // +0x18
+};
+
+// Constructor-only view of the CScnEnvLgtCtrl fields written by
+// __ct__CScnEnvLgtCtrl (the shared header models the post-init layout where
+// +0x10/+0x18 are scalars, but the ctor installs item-array pointers there).
+struct CScnEnvLgtCtrlCtorView {
+    void* mVtable;                        // +0x00
+    u32 field_0x04;                       // +0x04
+    void* field_0x08;                     // +0x08 (allocated work buffer)
+    void* field_0x0C;                     // +0x0C (0x14-stride item array)
+    void* field_0x10;                     // +0x10 (0x1C-stride item array)
+    void* field_0x14;                     // +0x14 (0xD8-stride item array)
+    void* field_0x18;                     // +0x18 (0x14-stride item array)
+    void* field_0x1C;                     // +0x1C (0x1C-stride item array)
+    void* field_0x20;                     // +0x20 (0x40-stride item array)
+    void* field_0x24;                     // +0x24 (0x30-stride array)
+    void* field_0x28;                     // +0x28 (bit array / memset target)
+    u8* field_0x2C;                       // +0x2C (resource blob base)
+    CScnEnvLgtCtrlCtorCtl* field_0x30;    // +0x30 (light-param control)
+    void* field_0x34;                     // +0x34
+    void* field_0x38;                     // +0x38
+    void* field_0x3C;                     // +0x3C
+    CScnEnvLgtCtrlCtorElem2* field_0x40;  // +0x40 (type-2 element)
+    void* field_0x44;                     // +0x44
+    CScnEnvLgtCtrlCtorElem5* field_0x48;  // +0x48 (type-5 element)
+    void* field_0x4C;                     // +0x4C (type-3 element)
+    void* field_0x50;                     // +0x50 (type-6 element)
+    u8 _54[0x20];                         // +0x54 .. +0x74
+    f32 field_0x74[7];                    // +0x74 (zeroed to B014)
+    u8 _8C[0x04];                         // +0x8C
+    CScnEnvLgtCtrlCtorCopy ctor90;        // +0x90 .. +0xA8
+    u32 field_0xA8;                       // +0xA8
+    void* field_0xAC;                     // +0xAC (arg)
+    s16 field_0xBC;                       // +0xBC (slot index, -1)
+    s16 field_0xBE;                       // +0xBE
+    f32 field_0xC0;                       // +0xC0
+    f32 field_0xC4;                       // +0xC4
+    f32 field_0xC8;                       // +0xC8
+    f32 field_0xCC;                       // +0xCC
 };

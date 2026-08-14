@@ -1,5 +1,5 @@
 {
-  "count": 2455,
+  "count": 2457,
   "entries": {
     "Decibel2RatioTable__Q44nw4r3snd6detail4Util": {
       "R_PPC_ADDR16_HA": {
@@ -22882,7 +22882,7 @@
         ]
       }
     },
-    "main/kyoshin/CItemBoxGrid@15066": {
+    "main/kyoshin/CItemBoxGrid@14211": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -22896,28 +22896,40 @@
         ]
       }
     },
-    "main/kyoshin/CItemBoxInfo@12533": {
-      "R_PPC_EMB_SDA21": {
+    "main/kyoshin/CItemBoxGrid@16026": {
+      "R_PPC_ADDR16_HA": {
         "addend_delta": 0,
         "alternatives": [],
-        "count": 4,
+        "count": 1,
         "kind": "data",
-        "retail_addend": 0,
-        "retail_symbol": "lbl_eu_80668010",
+        "retail_addend": 21504,
+        "retail_symbol": "jumptable_eu_80534704",
         "scoped": true,
         "units": [
-          "main/kyoshin/CItemBoxInfo"
+          "main/kyoshin/CItemBoxGrid"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 31843,
+        "retail_symbol": "jumptable_eu_80534704",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/CItemBoxGrid"
         ]
       }
     },
-    "main/kyoshin/CItemBoxInfo@13583": {
+    "main/kyoshin/CItemBoxInfo@12960": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
-        "count": 2,
+        "count": 3,
         "kind": "data",
         "retail_addend": 0,
-        "retail_symbol": "lbl_eu_80668028",
+        "retail_symbol": "lbl_eu_80668010",
         "scoped": true,
         "units": [
           "main/kyoshin/CItemBoxInfo"
@@ -23161,6 +23173,20 @@
         "scoped": true,
         "units": [
           "main/kyoshin/CPartyStateWin"
+        ]
+      }
+    },
+    "main/kyoshin/CPassiveSkill@9596": {
+      "R_PPC_EMB_SDA21": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 0,
+        "retail_symbol": "lbl_eu_80668910",
+        "scoped": true,
+        "units": [
+          "main/kyoshin/CPassiveSkill"
         ]
       }
     },
@@ -23908,7 +23934,7 @@
         ]
       }
     },
-    "main/kyoshin/cf/CtrlMoveEne@4871": {
+    "main/kyoshin/cf/CtrlMoveEne@6591": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -32417,8 +32443,8 @@
       }
     }
   },
-  "function_pairs": 11244,
-  "generated": "2026-08-14T14:36:01.324724",
+  "function_pairs": 11365,
+  "generated": "2026-08-14T21:00:21.549746",
   "region": "us",
   "units_scanned": 1148,
   "version": 1

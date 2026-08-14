@@ -11,6 +11,12 @@
 // reloc is the plain retail name.
 extern "C" void func_802641D0(UI_PassiveSkillInit* self, u32 arg);
 
+// Skill-info sub-struct copier / second-layout init (defined later in this
+// TU). C linkage so the call relocs from func_802646E8 are the plain retail
+// names.
+extern "C" void func_80264AC8(UI_PassiveSkillInit* dst, const UI_PassiveSkillInit* src);
+extern "C" void func_80264204(UI_PassiveSkillLayoutInit* self);
+
 // Line sub-object constructors (defined later in this TU). C linkage so the
 // call relocs from __ct__UI_CPassiveSkillLine are the plain retail names
 // (MWCC would otherwise mangle the C++ references to them).
@@ -220,10 +226,113 @@ __declspec(noinline) void* __ct__UI_CPassiveSkillInfo(UI_CPassiveSkillInfo* self
 // retail `bl __dt__Q22UI17CPassiveSkillInfoFv` call, not inline this body.
 __declspec(noinline) UI::CPassiveSkillInfo::~CPassiveSkillInfo() {}
 
-void func_802646E8(){}
+// Skill-info init (retail func_802646E8): create the main layout, bind the
+// three animation transforms, attach the font, push the name text into the
+// six skill panes, configure the animation states, build the +0x20 second
+// layout sub-struct, then set the skill-name pane flag and text, attach the
+// character name texture and size its pane from the texture dimensions, and
+// hide the party-count panes when the party has at most one member. The
+// r29-r31 _savegpr_29 frame retail uses needs optimize_for_size.
+#pragma optimize_for_size on
+void func_802646E8(UI_CPassiveSkillInfo* self) {
+    func_80136E84(&self->field_8,
+                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->arg),
+                  &lbl_eu_8050DC20[0xc7]);
+    func_80136F08(self->field_8,
+                  reinterpret_cast<nw4r::lyt::AnimTransform**>(&self->field_C),
+                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->arg),
+                  &lbl_eu_8050DC20[0xdc]);
+    func_80136F08(self->field_8,
+                  reinterpret_cast<nw4r::lyt::AnimTransform**>(&self->field_10),
+                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->arg),
+                  &lbl_eu_8050DC20[0xf4]);
+    func_80136F08(self->field_8, &self->field_14,
+                  reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->arg),
+                  &lbl_eu_8050DC20[0x111]);
+    // Bind the font handle into the layout's root pane.
+    nw4r::lyt::Pane* rootPane = self->field_8->GetRootPane();
+    CDeviceFontView* font = reinterpret_cast<CDeviceFontView*>(func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field_8));
+    func_8013676C(rootPane, font->vf7());
+    u32 textVal = func_801355BC();
+    if (textVal != 0) {
+        func_801368C0(self->field_8, &lbl_eu_8050DC20[0x12d], textVal);
+        func_801368C0(self->field_8, &lbl_eu_8050DC20[0x139], textVal);
+        func_801368C0(self->field_8, &lbl_eu_8050DC20[0x145], textVal);
+        func_801368C0(self->field_8, &lbl_eu_8050DC20[0x154], textVal);
+        func_801368C0(self->field_8, &lbl_eu_8050DC20[0x160], textVal);
+        func_801368C0(self->field_8, &lbl_eu_8050DC20[0x16c], textVal);
+    }
+    self->field_8->SetAnimationEnable(
+        reinterpret_cast<nw4r::lyt::AnimTransform*>(self->field_10), 0);
+    self->field_8->SetAnimationEnable(self->field_14, 0);
+    self->field_8->SetAnimationEnable(
+        reinterpret_cast<nw4r::lyt::AnimTransform*>(self->field_C), 1);
+    self->field_8->Animate(0);
+    self->field_8->UnbindAllAnimation();
+    func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x178],
+                  &lbl_eu_8050DC20[0x182], 0);
+    func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x183],
+                  &lbl_eu_8050DC20[0x182], 0);
+    UI_PassiveSkillInit init;
+    float out[2];
+    CPSkillF64Conv convA;
+    CPSkillF64Conv convB;
+    func_802641D0(&init, self->arg);
+    func_80264AC8(&self->sub, &init);
+    func_80264204(reinterpret_cast<UI_PassiveSkillLayoutInit*>(&self->sub));
+    u8 flag = 0;
+    if (func_8009CF8C(0x3372) == 0) {
+        // no-op: flag stays 0
+    } else {
+        u8 tmp = 0;
+        if (func_8009CF8C(0x3508) != 0 && func_8009CF8C(0x20) < 0x38) {
+            tmp = 1;
+        }
+        if (tmp == 0) {
+            flag = 1;
+        }
+    }
+    nw4r::lyt::Pane* pane = self->field_8->GetRootPane()->FindPaneByName(
+        &lbl_eu_8050DC20[0x18d], true);
+    func_80124270(pane, flag);
+    char* text = func_80136190(&lbl_eu_8050DC20[0x196], &lbl_eu_8050DC20[0x1a4], 0x87);
+    func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x1a9], text, 0);
+    const char* sel = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0
+                          ? &lbl_eu_8050DC20[0x1b4]
+                          : &lbl_eu_8050DC20[0x1bd];
+    u16 msgId = func_8013606C(&lbl_eu_8050DC20[0x196], sel, 0x87);
+    char* texName = func_80138F78(msgId);
+    void* res = func_801355F4()->GetResource(0x74696d67, texName, 0);
+    if (res != 0) {
+        func_80137E7C(self->field_8, &lbl_eu_8050DC20[0x1c6], res);
+        CPSkillTexCoords* coords =
+            reinterpret_cast<CPSkillTexRes*>(res)->coords;
+        nw4r::lyt::Pane* pane2 = self->field_8->GetRootPane()->FindPaneByName(
+            &lbl_eu_8050DC20[0x1c6], true);
+        if (pane2 != 0) {
+            convA.w[1] = coords->c2;
+            convA.w[0] = 0x43300000;
+            out[0] = (f32)(convA.d - lbl_eu_80668910);
+            convB.w[1] = coords->c0;
+            convB.w[0] = 0x43300000;
+            out[1] = (f32)(convB.d - lbl_eu_80668910);
+            func_80124288(pane2, out);
+        }
+    }
+    if ((u8)code80135FDC_getByte_64077() <= 1) {
+        nw4r::lyt::Pane* paneA = self->field_8->GetRootPane()->FindPaneByName(
+            &lbl_eu_8050DC20[0x1d2], true);
+        func_80124270(paneA, 0);
+        nw4r::lyt::Pane* paneB = self->field_8->GetRootPane()->FindPaneByName(
+            &lbl_eu_8050DC20[0x1dd], true);
+        func_80124270(paneB, 0);
+    }
+}
+#pragma optimize_for_size off
 
-// Copy the 0x1C-byte init struct (6 words + 4 byte flags).
-void func_80264AC8(UI_PassiveSkillInit* dst, const UI_PassiveSkillInit* src) {
+// Copy the 0x1C-byte init struct (6 words + 4 byte flags). noinline: retail
+// keeps the `bl func_80264AC8` call from func_802646E8 / func_80267268.
+__declspec(noinline) void func_80264AC8(UI_PassiveSkillInit* dst, const UI_PassiveSkillInit* src) {
     *dst = *src;
 }
 
@@ -2263,9 +2372,10 @@ __declspec(noinline) void func_802641D0(UI_PassiveSkillInit* self, u32 arg) {
 // accessor, bind the two animation transforms (second disabled, first
 // enabled), animate once, then find the three panes (hiding the first) and
 // store the other two finders at +0x10/+0x14. The r30/r31 stmw/lmw frame
-// retail uses needs optimize_for_size.
+// retail uses needs optimize_for_size. noinline: retail keeps the `bl
+// func_80264204` call from func_802646E8.
 #pragma optimize_for_size on
-void func_80264204(UI_PassiveSkillLayoutInit* self) {
+__declspec(noinline) void func_80264204(UI_PassiveSkillLayoutInit* self) {
     func_80136E84(&self->mpLayout, self->mArcResAcc, &lbl_eu_8050DC20[0x50]);
     func_80136F08(self->mpLayout, &self->mpAnimTrans0, self->mArcResAcc, &lbl_eu_8050DC20[0x68]);
     func_80136F08(self->mpLayout, &self->mpAnimTrans1, self->mArcResAcc, &lbl_eu_8050DC20[0x85]);

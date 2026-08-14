@@ -32,8 +32,11 @@ from __future__ import annotations
 import argparse
 import collections
 import json
+import math
 import os
 import re
+import struct
+import subprocess
 import sys
 from pathlib import Path
 
@@ -158,17 +161,20 @@ def parse_file(path: Path):
                 typ = re.sub(r'^"C"?\s*', "", typ)
                 is_def = bool(rest)
                 kind = "DEF_INIT" if is_def else "DECL"
-                out.append((name, norm_type(typ), typ, kind, start_i + 1, end_i + 1))
+                out.append((name, norm_type(typ), typ, arr, kind,
+                            start_i + 1, end_i + 1))
             i += 1
             continue
         bm = BARE_LINE.match(line)
         if bm:
             typ = bm.group(1).strip()
+            arr = bm.group(3) or ""
             first = typ.split()[0] if typ.split() else ""
             if (typ and not BAD_BARE.search(typ)
                     and not re.match(r"^extern$", typ)
                     and first not in BAD_BARE_WORDS):
-                out.append((bm.group(2), norm_type(typ), typ, "DEF_BARE", i + 1, i + 1))
+                out.append((bm.group(2), norm_type(typ), typ, arr, "DEF_BARE",
+                            i + 1, i + 1))
         i += 1
     return out
 
@@ -185,64 +191,208 @@ def scan_corpus():
                     continue  # decomp.me context snapshots, not compiled
                 p = Path(d) / f
                 rel = str(p.relative_to(ROOT))
-                for addr, ntype, rtype, kind, start, end in parse_file(p):
+                for addr, ntype, rtype, arr, kind, start, end in parse_file(p):
                     rows.append({
                         "address": addr, "ntype": ntype, "rtype": rtype,
-                        "kind": kind, "file": rel, "area": area_for(rel),
-                        "line": start, "end": end,
+                        "arr": arr, "kind": kind, "file": rel,
+                        "area": area_for(rel), "line": start, "end": end,
                     })
     return rows
 
 
+def type_key(ntype: str, arr: str) -> str:
+    """Conflict key: normalized type + array-ness (any bound -> `[]`)."""
+    return ntype + ("[]" if arr else "")
+
+
 def classify(rows):
-    """Return (header_addrs, exclusions) where header_addrs maps addr -> (ntype, area)."""
+    """Return (header_addrs, exclusions) where header_addrs maps addr ->
+    (ntype, arr, area)."""
     by = collections.defaultdict(list)
     for r in rows:
         by[r["address"]].append(r)
     header_addrs = {}
     exclusions = []
     for addr, rs in sorted(by.items()):
-        ntypes = {r["ntype"] for r in rs}
+        keys = {type_key(r["ntype"], r["arr"]) for r in rs}
         areas = {r["area"] for r in rs}
         kinds = {r["kind"] for r in rs}
         # Addresses with a definition in source (RTTP objects, singletons,
         # initialised tables) stay per-TU: the definition TU owns the storage.
         if "DEF_BARE" in kinds or "DEF_INIT" in kinds:
             exclusions.append((addr, "defined_in_source",
-                               sorted({f"{r['file']}:{r['line']} {r['rtype']}" for r in rs})))
+                               sorted({f"{r['file']}:{r['line']} {r['rtype']}{r['arr']}" for r in rs})))
             continue
-        if len(ntypes) > 1:
+        if len(keys) > 1:
             exclusions.append((addr, "type_conflict",
-                               sorted({f"{r['file']}:{r['line']} {r['rtype']}" for r in rs})))
+                               sorted({f"{r['file']}:{r['line']} {r['rtype']}{r['arr']}" for r in rs})))
             continue
-        ntype = next(iter(ntypes))
+        key = next(iter(keys))
+        ntype = key[:-2] if key.endswith("[]") else key
+        arr = "[]" if key.endswith("[]") else ""
         if not c99_safe(ntype):
             exclusions.append((addr, "non_c99_type",
-                               sorted({f"{r['file']}:{r['line']} {r['rtype']}" for r in rs})))
+                               sorted({f"{r['file']}:{r['line']} {r['rtype']}{r['arr']}" for r in rs})))
             continue
         # owner area = the area that declares it most
         owner = collections.Counter(rs_area for rs_area in areas).most_common(1)[0][0]
-        header_addrs[addr] = (ntype, owner)
+        header_addrs[addr] = (ntype, arr, owner)
     return header_addrs, exclusions
 
 
-def build_header(entries):
-    """entries: iterable of (address, normalized_type) for ONE area header."""
+_KIND_UNIT = {"byte": 1, "2byte": 2, "4byte": 4, "float": 4,
+              "double": 8, "string": 1}
+_BSS_SECTIONS = frozenset({".bss", ".sbss", ".sbss2"})
+
+
+def _load_data_sources(region: str):
+    """symbols.txt rows (name -> DataSymbol) + retail DOL (or None)."""
+    sys.path.insert(0, str(ROOT / "tools" / "port"))
+    from gen_data_defs import parse_symbols, DolImage  # noqa: PLC0415
+    syms_path = ROOT / "config" / region / "symbols.txt"
+    syms = {}
+    if syms_path.exists():
+        for r in parse_symbols(syms_path):
+            syms[r.name] = r
+    dol_path = ROOT / "orig" / region / "sys" / "main.dol"
+    dol = DolImage.load(dol_path) if dol_path.exists() else None
+    return syms, dol
+
+
+def _type_unit(ntype: str) -> int:
+    """Element width of a scalar base type (PPC word sizes; void* handled
+    separately as pointer)."""
+    base = ntype.replace("*", "").strip()
+    return {"u8": 1, "s8": 1, "char": 1, "u16": 2, "s16": 2,
+            "wchar_t": 2, "u32": 4, "s32": 4, "int": 4, "f32": 4,
+            "f64": 8}.get(base, 0)
+
+
+def _zero_init(ntype: str, is_arr: bool) -> str:
+    if is_arr:
+        return "{0}"
+    if ntype.endswith("*"):
+        return "0"
+    if ntype == "f32":
+        return "0.0f"
+    if ntype == "f64":
+        return "0.0"
+    return "0"
+
+
+def _scalar_value(ntype: str, raw: bytes, addr: int) -> str | None:
+    """One scalar literal from big-endian retail bytes (host-decoded)."""
+    base = ntype.replace("*", "").strip()
+    if ntype.endswith("*"):
+        return f"(void*)0x{int.from_bytes(raw[:4], 'big'):08X}"
+    if base == "u8":
+        return f"0x{raw[0]:02X}"
+    if base == "char":
+        return f"0x{raw[0]:02X}"
+    if base == "u16" and len(raw) >= 2:
+        return f"0x{int.from_bytes(raw[:2], 'big'):04X}"
+    if base in ("u32", "s32", "int") and len(raw) >= 4:
+        return f"0x{int.from_bytes(raw[:4], 'big'):08X}"
+    if base == "f32" and len(raw) >= 4:
+        v = struct.unpack(">f", raw[:4])[0]
+        if math.isfinite(v):
+            return f"{v!r}f"
+        return None
+    if base == "f64" and len(raw) >= 8:
+        v = struct.unpack(">d", raw[:8])[0]
+        if math.isfinite(v):
+            return f"{v!r}"
+        return None
+    return None
+
+
+def _entry_def(addr: str, ntype: str, arr: str, sym, dol):
+    """Return (ext_decl, def_decl, init) for one header entry.
+
+    ext_decl mirrors the source declaration exactly (MWCC extern mode).
+    def_decl carries the array bound from symbols.txt (definitions cannot be
+    incomplete). init is the definition initializer: retail bytes decoded per
+    type when available (initialized data), typed zeros otherwise.
+    """
+    if ntype == "void":
+        ntype = "u8"  # a bare `void` object is invalid; the address is what matters
+    ext = f"{ntype} {addr}{arr}"
+    is_ptr = ntype.endswith("*")
+    is_arr = bool(arr)
+    unit = _type_unit(ntype)
+    size = sym.size if sym else 0
+    raw = None
+    if sym and dol is not None and sym.section not in _BSS_SECTIONS:
+        raw = dol.read(int(sym.address, 16), sym.size)
+    elif sym and sym.section in _BSS_SECTIONS:
+        raw = None  # zeros
+    # definition declarator: bound arrays from symbols.txt size
+    if is_arr:
+        if size and unit:
+            bound = size // unit if size % unit == 0 else size
+            defn = f"{ntype} {addr}[{bound}]"
+        else:
+            defn = f"{ntype} {addr}[1]"  # unknown size: minimal storage
+    else:
+        defn = f"{ntype} {addr}"
+    # initializer
+    if raw is None:
+        return ext, defn, _zero_init(ntype, is_arr)
+    if is_arr and unit:
+        elems = []
+        n = size // unit
+        for i in range(n):
+            v = _scalar_value(ntype, raw[i * unit:(i + 1) * unit], 0)
+            if v is None:
+                return ext, defn, _zero_init(ntype, is_arr)
+            elems.append(v)
+        return ext, defn, "{" + ", ".join(elems) + "}"
+    v = _scalar_value(ntype, raw, int(sym.address, 16))
+    if v is None:
+        return ext, defn, _zero_init(ntype, is_arr)
+    return ext, defn, v
+
+
+def build_header(entries, area: str, region: str = "us"):
+    """entries: iterable of (address, normalized_type, arr) for ONE area."""
+    syms, dol = _load_data_sources(region)
+    macro = f"LBLS_{area.upper()}"
     lines = [
         "// Generated by tools/coop/lbls_gen.py -- do not edit by hand.",
         "// Centralized retail data-label declarations for one area.",
         "//",
         "// Plain `extern` at global scope: MWCC never mangles global-scope data",
         "// names, so the emitted reloc is exactly the retail name (lbl_eu_XXXX),",
-        "// identical to `extern \"C\"` (verified Wii/1.1). `extern \"C\"` is only",
-        "// required inside namespace blocks; declarations here are global-scope.",
+        "// identical to `extern \"C\"` (verified Wii/1.1).",
+        "//",
+        "// Dual-mode: the MWCC matching build sees declarations only (the retail",
+        "// image supplies all data). Non-MWCC builds (PC port) get definitions",
+        "// from the same lines -- the generated data TU (port/data_defs.cpp)",
+        "// sets LBLS_DEFINE_DATA so storage exists exactly once; every other TU",
+        "// sees `extern`. Initializers carry retail bytes when a DOL is present",
+        "// (decoded per type), typed zeros otherwise.",
         "#pragma once",
         "",
         "#include <types.h>",
         "",
+        "#if defined(__MWERKS__) && !defined(NONMATCHING)",
+        f"#  define {macro}(ext, dfn, init) extern ext;",
+        f"#elif defined(LBLS_DEFINE_DATA)",
+        f"#  define {macro}(ext, dfn, init) dfn = LBLS_UNWRAP init;",
+        f"#else",
+        f"#  define {macro}(ext, dfn, init) extern ext;",
+        "#endif",
+        "#ifndef LBLS_UNWRAP",
+        "#  define LBLS_UNWRAP(...) __VA_ARGS__",
+        "#endif",
+        "",
     ]
-    for addr, t in sorted(entries):
-        lines.append(f"extern {t} {addr};")
+    for addr, t, arr in sorted(entries):
+        sym = syms.get(addr)
+        ext, dfn, init = _entry_def(addr, t, arr, sym, dol)
+        # dfn has no commas -> no paren protection needed; init needs parens
+        # (byte lists contain commas).
+        lines.append(f"{macro}({ext}, {dfn}, ({init}))")
     lines.append("")
     return "\n".join(lines) + "\n"
 
@@ -276,23 +426,24 @@ def main():
     if args.command == "generate":
         # Headers are generated ONCE from the pristine corpus; `apply` must
         # never rewrite them (it would shrink them as decls get stripped).
-        by_header = collections.defaultdict(dict)
-        for addr, (ntype, area) in header_addrs.items():
-            by_header[header_for_area(area)][addr] = ntype
+        by_header = collections.defaultdict(list)
+        for addr, (ntype, arr, area) in header_addrs.items():
+            by_header[header_for_area(area)].append((addr, ntype, arr))
         if not args.dry_run:
             for hdr, entries in by_header.items():
+                area = hdr[len("lbls_"):-len(".hpp")]
                 path = INCLUDE_DIR / hdr
-                path.write_text(build_header(entries.items()))
+                path.write_text(build_header(entries, area))
                 print(f"wrote {path.relative_to(ROOT)} ({len(entries)} decls)")
             EXCLUSIONS_PATH.write_text(json.dumps(
                 [{"address": a, "reason": r,
-                  "sites": sorted({f"{x['file']}:{x['line']} {x['rtype']}"
+                  "sites": sorted({f"{x['file']}:{x['line']} {x['rtype']}{x['arr']}"
                                    for x in rows if x['address'] == a})}
                  for a, r, _s in exclusions],
                 indent=1))
             print(f"wrote {EXCLUSIONS_PATH.relative_to(ROOT)} ({len(exclusions)} entries)")
             MANIFEST_PATH.write_text(json.dumps(
-                {hdr: sorted(entries.items()) for hdr, entries in by_header.items()},
+                {hdr: sorted(entries) for hdr, entries in by_header.items()},
                 indent=1))
             print(f"wrote {MANIFEST_PATH.relative_to(ROOT)}")
 
@@ -413,12 +564,13 @@ def check_invariants(rows, header_addrs):
         manifest = json.loads(MANIFEST_PATH.read_text())
         for hdr, entries in manifest.items():
             path = INCLUDE_DIR / hdr
-            want = build_header(entries)
+            want = build_header(entries, hdr[len("lbls_"):-len(".hpp")])
             if not path.exists() or path.read_text() != want:
                 problems += 1
                 print(f"STALE {hdr}: re-run `lbls_gen.py generate` on a clean tree")
         # 2) no TU may declare an address that the manifest centralizes
-        centralized = {a for entries in manifest.values() for a, _t in entries}
+        centralized = {a for entries in manifest.values()
+                       for a, _t, _arr in entries}
         for r in rows:
             if r["kind"] == "DECL" and r["address"] in centralized:
                 problems += 1

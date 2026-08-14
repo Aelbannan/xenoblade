@@ -116,7 +116,8 @@ extern "C" u32 func_80282EC4(CEquipItemGrid* grid, u16 idx) {
 #pragma push
 #pragma optimize_for_size on
 // Return the stored item short for a valid grid cell, or -1.
-extern "C" s16 func_80282E4C(CEquipItemGrid* grid, u16 idx) {
+// noinline: retail callers emit a `bl` (cross-TU in the original build).
+extern "C" __declspec(noinline) s16 func_80282E4C(CEquipItemGrid* grid, u16 idx) {
     u16 offset = (u16)((s8)grid->idx * 0x1e + idx);
     if ((u32)offset < (u32)grid->count) {
         CEquipItemData* item = &grid->data[offset];
@@ -1450,7 +1451,43 @@ extern "C" unsigned char func_80288530(u8* self) {
     return *(unsigned char*)(self + 0x36c + idx);
 }
 
-extern "C" void func_80288544(){}
+// Scan the 6 equipment slots for the item that owns the slot id selected by
+// the current grid row. For each category definition, look up the item
+// object, then walk its instance list for a slot whose id matches the grid
+// row's item; the result is the global slot number (per-category base byte +
+// instance index), or 0 when no slot matches.
+#pragma push
+#pragma optimize_for_size on
+extern "C" u32 func_80288544(CEquipItemBox* self) {
+    s16 target;  // declared before items so MWCC colors it r31 (retail order)
+    CEquipItemBoxItemView* items;
+    items = (CEquipItemBoxItemView*)func_8009EC9C(func_801392B4((self->unk_1fc >> 8) & 0xFF));
+    u8 idx = (u8)((u8)self->unk_1f5 * 5 + self->unk_1f4);
+    target = func_80282E4C((CEquipItemGrid*)&self->_pad37D[1], idx);
+    CEquipItemBoxSlotTable table = lbl_eu_8050EF90;
+    table.slots[0].item = items->field_26;
+    table.slots[1].item = items->field_1c;
+    table.slots[2].item = items->field_1e;
+    table.slots[3].item = items->field_20;
+    table.slots[4].item = items->field_22;
+    table.slots[5].item = items->field_24;
+    for (u8 e = 0; e < 6; e++) {
+        s16 item = table.slots[e].item;
+        if (item == -1) continue;
+        CItemInstance* obj = (CItemInstance*)func_80157C4C(table.slots[e].cat, item);
+        if (obj == 0) continue;
+        if (obj->word == 0) continue;
+        u8 count = (u8)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf30(obj);
+        for (u8 i = 0; i < count; i++) {
+            CEquipItemBoxItemImplView* impl = (CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj);
+            s16 slot = impl->vf40(obj, i);
+            if (slot == -1) continue;
+            if (slot == target) return (u8)(i + table.slots[e].extra);
+        }
+    }
+    return 0;
+}
+#pragma pop
 
 extern "C" void func_802886D8(){}
 
@@ -1596,9 +1633,47 @@ extern "C" void func_8028A160(CEquipItemBox* self) {
     func_80138078__FUl(0x70);
 }
 
-extern "C" void func_8028A1DC(CEquipItemBox* self){}
+// Rebuild the sort-menu page list after a page change: for each of the 6 page
+// slots, format its two pane names, set the pane colours (a highlighted pair
+// when the slot is the current page, an idle pair otherwise), look the panes
+// up by name and toggle their visibility, then hand the slot value to the
+// page handler. Finally refresh the current-page cursor and the page list.
+extern "C" void func_8028A1DC(CEquipItemBox* self) {
+    for (u8 i = 0; i < 6; i++) {
+        char buf1[0x20];
+        char buf2[0x20];
+        sprintf(buf1, &lbl_eu_8050EFDC[0x2df], i + 1);
+        sprintf(buf2, &lbl_eu_8050EFDC[0x2ee], i + 1);
+        u32 flagA = 0;
+        u32 flagB = 0;
+        u8 v = self->unk_36c[i];
+        if (v != 0) {
+            if (i == (s8)self->unk_373) {
+                flagA = 1;
+                flagB = 0;
+            } else {
+                flagA = 0;
+                flagB = 1;
+            }
+            if ((u32)(v - 4) <= 4 || v == 2 || v == 0xb) {
+                func_80139A18(self->field_38, buf1, lbl_eu_80664940, lbl_eu_80664948);
+                func_80139A18(self->field_38, buf2, lbl_eu_80664940, lbl_eu_80664948);
+            } else {
+                func_80139A18(self->field_38, buf1, lbl_eu_80664930, lbl_eu_80664938);
+                func_80139A18(self->field_38, buf2, lbl_eu_80664930, lbl_eu_80664938);
+            }
+        }
+        nw4r::lyt::Pane* pane1 = self->field_38->GetRootPane()->FindPaneByName(buf1, true);
+        func_80124270(pane1, flagA);
+        nw4r::lyt::Pane* pane2 = self->field_38->GetRootPane()->FindPaneByName(buf2, true);
+        func_80124270(pane2, flagB);
+        func_8028A374(self, v, i);
+    }
+    func_8028A5D8(self, self->unk_373);
+    func_80289500(self, 0);
+}
 
-extern "C" void func_8028A374(){}
+extern "C" void func_8028A374(CEquipItemBox* self, u8 v, u8 i){}
 
 #pragma push
 #pragma auto_inline off

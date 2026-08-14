@@ -307,6 +307,37 @@ union CEquipItemBoxF64Conv {
     double d;
 };
 
+/* 6-byte equipment-slot definition used by func_80288544's slot scan:
+   category byte, item-id short and a per-category base offset byte. */
+struct CEquipItemBoxSlotDef {
+    u8 cat;     // 0x0
+    u8 _pad1;   // 0x1
+    s16 item;   // 0x2
+    u8 extra;   // 0x4 (base offset added to the matched instance index)
+    u8 _pad5;   // 0x5
+};
+
+/* 36-byte table of 6 slot definitions (data at lbl_eu_8050EF90). Copied to a
+   stack local by func_80288544 before the item ids are patched in. */
+struct CEquipItemBoxSlotTable {
+    CEquipItemBoxSlotDef slots[6];
+};
+
+/* Item object returned by func_8009EC9C: 6 slot-id shorts at 0x1c..0x26
+   supply the item ids patched into the slot table by func_80288544. */
+struct CEquipItemBoxItemView {
+    u8 _pad00[0x1c];
+    s16 field_1c;   // 0x1c
+    s16 field_1e;   // 0x1e
+    s16 field_20;   // 0x20
+    s16 field_22;   // 0x22
+    s16 field_24;   // 0x24
+    s16 field_26;   // 0x26
+};
+
+// 36-byte equipment-slot table (data import, same .data block as the string pool).
+extern CEquipItemBoxSlotTable lbl_eu_8050EF90;
+
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void* __dl__FPv(void*);
 extern "C" int CSysWin_isActive(void*);
@@ -392,6 +423,15 @@ extern "C" void func_8022B748(void*);
 extern "C" void func_801D31F8(void*, nw4r::lyt::DrawInfo*);
 extern "C" void func_8022B7C8(void*, nw4r::lyt::DrawInfo*);
 extern "C" void func_801D20B0(void*, nw4r::lyt::DrawInfo*);
+// Layout text/colour setter used by the sort-menu page rebuild (func_8028A1DC);
+// the 3rd/4th args are .sbss colour-table pairs referenced via sda21.
+extern "C" void func_80139A18(nw4r::lyt::Layout*, char*, void*, void*);
+extern u16 lbl_eu_80664930[4];
+extern u16 lbl_eu_80664938[4];
+extern u16 lbl_eu_80664940[4];
+extern u16 lbl_eu_80664948[4];
+// Sort-menu page handler called once per page by func_8028A1DC (this TU).
+extern "C" void func_8028A374(CEquipItemBox* self, u8 v, u8 i);
 
 // Small-data global read by func_80285890 (item-impl table id, .sbss).
 extern u32 lbl_eu_806640F4;

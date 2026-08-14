@@ -27,6 +27,7 @@ extern const float lbl_eu_8066AE88;
 extern const float lbl_eu_8066AE40;
 extern const float lbl_eu_8066AE8C;
 extern const float lbl_eu_8066AE90;
+extern const float lbl_eu_8066AE94;  // rotation angle scale (nw4r RAD_TO_FIDX)
 
 // Registered-collision globals (sbss 0x65910..0x65938) written by
 // func_804A7E18 / func_804A7EC8: the current collision object plus its
@@ -98,7 +99,8 @@ struct CColiObject {
             f32 field_0x5c;            // 0x5c radius / scalar
             f32 field_0x60;            // 0x60 (func_804A7C64: sdata2 const * f2)
             f32 field_0x64;            // 0x64 (func_804A7C64: f3)
-            u8 _68[0x8c - 0x68];       // 0x68..0x8b
+            VEC3 field_0x68;           // 0x68..0x73 segment diff (y forced to 0)
+            u8 _74[0x8c - 0x74];       // 0x74..0x8b
             u32 field_0x8c;            // 0x8c
             u8 _90[0xa8 - 0x90];       // 0x90..0xa7
         };
@@ -108,7 +110,9 @@ struct CColiObject {
     u32 field_0x210;          // 0x210
     u8 _214[0x2d4 - 0x214];   // 0x214..0x2d3
     u32 field_0x2d4;          // 0x2d4
-    u8 _2d8[0x310 - 0x2d8];   // 0x2d8..0x30f
+    u8 _2d8[0x308 - 0x2d8];   // 0x2d8..0x307
+    f32 field_0x308;          // 0x308 horizontal squared distance
+    u8 _30c[0x310 - 0x30c];   // 0x30c..0x30f
     f32 field_0x310;          // 0x310
     u32 field_0x314;          // 0x314
 };
@@ -220,7 +224,19 @@ extern "C" void __ct__CColiProc(CColiProcLocal* self);
 extern "C" void func_804B25A4(CColiProcLocal* self, CColiObject* target,
                               u32 a, u32 b);
 extern "C" int func_804B2CBC(CColiProcLocal* proc, CColiObject* obj);
-extern "C" void func_804A7D1C(CColiObject* self);
+// Sibling CColiProc TU helpers used by func_804B102C: seed/classify the
+// local proc (func_804B2590, func_804B25BC) and query its result bits
+// (func_804B2F80, func_804B2FA8).
+extern "C" void func_804B2590(CColiProcLocal* self, CColiObject* target,
+                              u32 a);
+extern "C" int func_804B25BC(CColiProcLocal* work, u16* outIndex,
+                             void** outBuf, void* arg4);
+extern "C" bool func_804B2F80(CColiProcLocal* self);
+extern "C" bool func_804B2FA8(CColiProcLocal* self);
+// Local-object ctor: the trailing params default so func_804B1BDC's retail
+// no-setup call (`&local` only) still compiles.
+extern "C" CColiObject* func_804A7D1C(CColiObject* self, const VEC3* a = 0,
+                                      const VEC3* b = 0, f32 f = 0.0f);
 extern "C" int func_804AD410(CColiObject* self, const f32* a, const VEC3* b,
                              const Mtx m);
 extern "C" void func_804B0EA0(CColiObject* self);
@@ -312,6 +328,8 @@ CColiObject* func_804A7878(CColiObject* self, const CColiSubSpec804A7878* spec,
 // CColiObject initialiser: run the embedded CColiProc base ctor at +0x04,
 // copy the 3-word vector into the +0x44 point, then seed the +0x5c scalar,
 // the +0x40 sub-object offset (= 0x14) and the cleared state fields.
+// C-linkage so callers emit the unmangled retail symbol (bl func_804A7BDC).
+extern "C" void func_804A7BDC(CColiObject* self, const VEC3* v, f32 f);
 void func_804A7BDC(CColiObject* self, const VEC3* v, f32 f) {
     __ct__CColiProc((CColiProcLocal*)&self->field_0x10);
     self->field_0x44 = *v;
@@ -343,12 +361,41 @@ CColiObject* func_804A7C64(CColiObject* self, const CColiSubSpec804A7878* spec,
     return self;
 }
 
-// Local-object constructor (retail body still to be decompiled); called via
-// `bl` from func_804B1BDC.
-// auto_inline off: retail calls this via `bl`.
+// Local-object constructor: run the embedded CColiProc base ctor at +0x04,
+// copy the two 3-word points into the +0x44/+0x50 slots, then write the
+// horizontal segment diff (b - a with y forced to zero) at +0x68 and its
+// squared horizontal length at +0x308 (inverted to 1/length^2 when non-zero).
+// auto_inline off: retail calls this via `bl` from func_804B1BDC.
 #pragma push
 #pragma auto_inline off
-extern "C" void func_804A7D1C(CColiObject* self) {}
+extern "C" CColiObject* func_804A7D1C(CColiObject* self, const VEC3* a,
+                                       const VEC3* b, f32 f) {
+    __ct__CColiProc((CColiProcLocal*)&self->field_0x04);
+    // Raw word copies so MWCC emits lwz/stw for the point slots (retail).
+    const u32* sa = (const u32*)a;
+    const u32* sb = (const u32*)b;
+    u32* da = (u32*)&self->field_0x44;
+    u32* db = (u32*)&self->field_0x50;
+    self->field_0x40 = 0x1e;
+    da[0] = sa[0];
+    da[1] = sa[1];
+    db[0] = sb[0];
+    db[1] = sb[1];
+    da[2] = sa[2];
+    db[2] = sb[2];
+    VEC3* d = &self->field_0x68;
+    VEC3Sub(d, &self->field_0x50, &self->field_0x44);
+    d->y = lbl_eu_8066AE44;
+    self->field_0x40 = 0x1e;
+    self->field_0x5c = f;
+    f32 sq = VEC3Dot(d, d);
+    self->field_0x308 = sq;
+    if (sq != lbl_eu_8066AE44) {
+        self->field_0x308 = lbl_eu_8066AE3C / sq;
+    }
+    self->field_0x8c = 0;
+    return self;
+}
 #pragma pop
 
 // Register the collision object and its sub-objects with the global
@@ -518,7 +565,34 @@ bool func_804ABA68(CColiObject* self) {
     }
     return false;
 }
-void func_804ABAF0(){}
+// Segment/capsule partner geometry for func_804ABAF0: base point at +0x04,
+// direction vector at +0x1c, radius at +0x28 and the direction length^2 at
+// +0x2c (used to normalise the projection parameter).
+struct CColiSegment804ABAF0 {
+    u8 _00[0x04];
+    VEC3 field_0x04;       // +0x04 base point
+    u8 _10[0x1c - 0x10];   // +0x10..+0x1b
+    VEC3 field_0x1c;       // +0x1c direction
+    f32 field_0x28;        // +0x28 radius
+    f32 field_0x2c;        // +0x2c direction length^2
+};
+
+// Capsule test: project self's point (+0x44) onto the partner's segment
+// (base +0x04, direction +0x1c, param clamped to [0,1] via length^2 +0x2c),
+// then compare the squared distance to the closest point against the squared
+// radius (+0x28). VEC3Sub/VEC3Dot/VEC3Scale/VEC3Add/VEC3LenSq lower to the
+// retail paired-single sequences.
+bool func_804ABAF0(CColiObject* self) {
+    CColiSegment804ABAF0* o = (CColiSegment804ABAF0*)self->field_0x00_obj;
+    VEC3 v;
+    VEC3 d;
+    VEC3Sub(&d, &self->field_0x44, &o->field_0x04);
+    f32 t = clamp01(VEC3Dot(&o->field_0x1c, &d) / o->field_0x2c);
+    VEC3Scale(&v, &o->field_0x1c, t);
+    VEC3Add(&v, &v, &o->field_0x04);
+    VEC3Sub(&d, &self->field_0x44, &v);
+    return o->field_0x28 * o->field_0x28 >= VEC3LenSq(&d);
+}
 
 // Partner transform AABB test: the partner's +0x34 matrix maps self's point
 // (+0x44) into the local frame, then each axis of the result is checked
@@ -967,7 +1041,7 @@ void* __dt__804B095C(CColi804B095C* self, int deleting) {
 // is re-read after the identity calls because bl clobbers FPRs.
 struct CColiNode804B09C8 {
     u32 field_0x00;                  // +0x00
-    u8 _04[4];                       // +0x04
+    u8* field_0x04;                  // +0x04 owned collision-data buffer
     u32 field_0x08;                  // +0x08
     f32 field_0x0c[6];               // +0x0c..+0x23
     f32 field_0x24[6];               // +0x24..+0x3b
@@ -1084,7 +1158,53 @@ void func_804B0B54(CColiObject* self, const _VEC3* v) {
     func_804B0EA0(self);
 }
 
-void func_804B0C0C(){}
+// Position/rotation update: raw-copy the 3-word vector into the +0x24 slot and
+// set flag bit 2. When bit 5 is set, build the +0x3c matrix from the rotation
+// vector scaled by the RAD_TO_FIDX constant, copy the +0x24 vector into its
+// translation column and invert it into +0x6c; when the object is a fresh one
+// (kind 0) with bits 4..7 set, fill the +0x0c..+0x20 axis block with the two
+// sdata2 constants. Hand the object to func_804B0EA0 last.
+void func_804B0C0C(CColiObject* self, const _VEC3* v, const _VEC3* rot) {
+    const u32* src = (const u32*)v;
+    u32* dst = (u32*)&self->field_0x00[3];
+    u32 flags = self->field_0xa8;
+    dst[0] = src[0];
+    u32 nf = flags | 0x4;
+    self->field_0xa8 = nf;
+    dst[1] = src[1];
+    dst[2] = src[2];
+    if (nf & 0x20) {
+        CColiNode804B09C8* node = (CColiNode804B09C8*)self;
+        // k born first (f0) but loaded after z: declare it before z yet
+        // assign it after z's load so the sdata2 load lands second.
+        f32 k;
+        f32 z = rot->z;
+        k = lbl_eu_8066AE94;
+        f32 y = rot->y;
+        f32 x = rot->x;
+        MTX34RotXYZFIdx((nw4r::math::MTX34*)node->field_0x3c, k * x, k * y,
+                        k * z);
+        node->field_0x3c[0][3] = self->field_0x00[3].x;
+        node->field_0x3c[1][3] = self->field_0x00[3].y;
+        node->field_0x3c[2][3] = self->field_0x00[3].z;
+        PSMTXInverse(node->field_0x3c, node->field_0x6c);
+    }
+    if (self->field_0x04 == 0 && (self->field_0xa8 & 0xf0) != 0) {
+        // Declared c2 first (c2->f0) but assigned c1 first (its load is
+        // emitted first), matching retail's lfs f1,const1; lfs f0,const2.
+        f32 c2;
+        f32 c1;
+        c1 = lbl_eu_8066AE8C;
+        c2 = lbl_eu_8066AE90;
+        self->field_0x00[1].x = c1;
+        self->field_0x00[1].y = c1;
+        self->field_0x00[1].z = c1;
+        self->field_0x00[2].x = c2;
+        self->field_0x00[2].y = c2;
+        self->field_0x00[2].z = c2;
+    }
+    func_804B0EA0(self);
+}
 
 void func_804B0CE8(){}
 
@@ -1132,9 +1252,44 @@ void func_804B0DF4(CColiNode804B09C8* self) {
 extern "C" void func_804B0EA0(CColiObject* self) {}
 #pragma pop
 
+// Collision-node refresh: when the +0x00/+0x08 words are set, free the owned
+// +0x04 buffer, clear the +0xa8 status bits, then rebuild the local proc and
+// classify the node (func_804B25BC writes the selection index into +0xb0 and
+// the new buffer into +0x04). The status bits are set from the classification
+// result. auto_inline off: retail callers (func_804B0A6C/804B0A74) call via
+// `b`.
 #pragma push
 #pragma auto_inline off
-extern "C" void func_804B102C(void* self) {}
+extern "C" void func_804B102C(void* self) {
+    CColiNode804B09C8* node = (CColiNode804B09C8*)self;
+    if (node->field_0x08 != 0 && node->field_0x00 != 0) {
+        if (node->field_0x04 != 0) {
+            if (node->field_0x04 != 0) {
+                mtl::MemManager::deallocate(node->field_0x04);
+                node->field_0x04 = 0;
+            }
+        }
+        node->field_0xa8 &= 0xFFFFBB01;
+        CColiProcLocal proc;
+        func_804B2590(&proc, (CColiObject*)node->field_0x00, node->field_0x08);
+        switch (func_804B25BC(&proc, &node->field_0xb0,
+                              (void**)&node->field_0x04, &node->field_0x24[3])) {
+        case 1:
+            node->field_0xa8 |= 0x80;
+            break;
+        case 2:
+            node->field_0xa8 |= 0x40;
+            break;
+        }
+        node->field_0xa8 |= 0x1;
+        if (func_804B2F80(&proc)) {
+            node->field_0xa8 |= 0x2000;
+        }
+        if (func_804B2FA8(&proc)) {
+            node->field_0xa8 |= 0x4000;
+        }
+    }
+}
 #pragma pop
 
 void func_804B1130(){}
@@ -1165,7 +1320,43 @@ int func_804B192C(CColiObject* self, const VEC3* in, f32 d, u32 a4, u32 a5) {
 
 void func_804B19CC(){}
 
-void func_804B1AD8(){}
+// Move-check gate: the object must have a non-zero kind and the +0xa8 flag
+// combination (bit 8 set) or (bit 1 clear) or (bit 2 clear), with bit 4 set
+// and bit 3 set. On success, build the segment AABB around (v, f), verify it
+// is contained in self's box, construct a local object via func_804A7BDC,
+// link it to self and forward both to func_804B2CBC, returning its status.
+bool func_804B1AD8(CColiObject* self, const VEC3* v, f32 f) {
+    CColiProcLocal proc;
+    CColiSeg804B192C seg;
+    CColiObject local;
+    if (self->field_0x04 == 0) goto fail;
+    int t = 1;
+    int w = 1;
+    u32 flags = self->field_0xa8;
+    if (!(flags & 0x100)) {
+        if (flags & 0x2) {
+            w = 0;
+        }
+    }
+    if (w == 0) {
+        if (flags & 0x4) {
+            t = 0;
+        }
+    }
+    if (t != 0) return 0;
+    if (!(flags & 0x8)) goto fail;
+
+    func_804B06FC((CColiObject*)&seg, v, f);
+    if (!func_804B0818((CColiObject*)&seg, self)) goto fail;
+    func_804A7BDC(&local, v, f);
+    local.field_0x314 = (u32)self;
+    func_804B25A4(&proc, self->field_0x00_obj, self->field_0x08,
+                  self->field_0x04);
+    if (func_804B2CBC(&proc, &local) == 0) goto fail;
+    return true;
+fail:
+    return false;
+}
 
 // State-machine check before segment processing: the object must have a
 // non-zero kind, and the +0xa8 flag combination must be (bit 8 set) or

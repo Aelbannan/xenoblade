@@ -33,6 +33,7 @@ Options:
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import re
 import struct
@@ -300,7 +301,10 @@ def emit(sym: DataSymbol, raw: bytes | None) -> str:
 
 
 def generate(rows: list[DataSymbol], region: str, symbols_path: Path,
-             only_referenced: bool, exclude: Path, dol: DolImage | None) -> str:
+             only_referenced: bool, exclude: Path, dol: DolImage | None,
+             manifest: dict | None = None):
+    """manifest: lbls_manifest.json content; its addresses are defined by the
+    dual-mode area headers (LBLS_DEFINE_DATA + includes), not this TU."""
     kept, skipped = select(rows)
     if only_referenced:
         wanted = references(kept, [_REPO / "src", _REPO / "libs"], exclude)
@@ -308,6 +312,13 @@ def generate(rows: list[DataSymbol], region: str, symbols_path: Path,
         kept = [r for r in kept if r.name in wanted]
         skipped["not referenced by src/libs"] = \
             skipped.get("not referenced by src/libs", 0) + before - len(kept)
+    if manifest:
+        covered = {a for entries in manifest.values()
+                   for a, _t, _arr in entries}
+        before = len(kept)
+        kept = [r for r in kept if r.name not in covered]
+        skipped["covered by lbl area headers (lbls_manifest.json)"] = \
+            skipped.get("covered by lbl area headers (lbls_manifest.json)", 0) + before - len(kept)
 
     by_section: dict[str, list[DataSymbol]] = defaultdict(list)
     for r in kept:
@@ -340,6 +351,15 @@ def generate(rows: list[DataSymbol], region: str, symbols_path: Path,
     lines.append("// Matching build: the retail image supplies all data — nothing defined.")
     lines.append("#else")
     lines.append("#include \"types.h\"")
+    if manifest:
+        lines.append("")
+        lines.append("// Data owned by the dual-mode area lbl headers: define it once here")
+        lines.append("// (LBLS_DEFINE_DATA makes the headers emit definitions instead of")
+        lines.append("// extern; every other TU sees extern).")
+        lines.append("#define LBLS_DEFINE_DATA")
+        for hdr in sorted(manifest):
+            lines.append(f"#include <{hdr}>")
+        lines.append("#undef LBLS_DEFINE_DATA")
     lines.append("")
     lines.append("extern \"C\" {")
     lines.append(f"// {len(kept)} data symbol(s) defined here.")
@@ -393,8 +413,13 @@ def main() -> int:
 
     rows = parse_symbols(symbols_path)
     kept, skipped = select(rows)
+    manifest = None
+    manifest_path = _REPO / "tools" / "coop" / "lbls_manifest.json"
+    if manifest_path.is_file():
+        manifest = json.loads(manifest_path.read_text())
     text, skip2, emitted, with_bytes, total_bytes = generate(
         rows, args.region, symbols_path, args.only_referenced, out_path, dol,
+        manifest,
     )
 
     total_refs = references(kept, [_REPO / "src", _REPO / "libs"], out_path)

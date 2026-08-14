@@ -433,6 +433,45 @@ extern u8 lbl_eu_8050DB60[];
 // CUICfManager.hpp / CArtsInfo.hpp).
 extern "C" int sprintf(char* str, const char* fmt, ...);
 
+// View into the object returned by CDeviceFont::func_80452C10: vtable+0x24
+// (index 7, no args) yields the u32 pushed onto the root pane by
+// func_8013676C. All-pure so no vtable is emitted (CMapSel.hpp / COption.hpp
+// carry the same view under different class names).
+class CDeviceFontView {
+public:
+    virtual void vf0() = 0; // index 0 -> +0x08
+    virtual void vf1() = 0; // index 1 -> +0x0C
+    virtual void vf2() = 0; // index 2 -> +0x10
+    virtual void vf3() = 0; // index 3 -> +0x14
+    virtual void vf4() = 0; // index 4 -> +0x18
+    virtual void vf5() = 0; // index 5 -> +0x1C
+    virtual void vf6() = 0; // index 6 -> +0x20
+    virtual u32 vf7() = 0;  // index 7 -> +0x24
+};
+
+// CDeviceFont font-create helper (retail symbol is the literal mangled
+// identifier; extern "C" so calls bind to it, same convention as
+// CItemBoxGrid.hpp / COption.hpp).
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
+
+// Character/party name-text value pushed into layout panes by func_801368C0
+// (retail symbol unmangled; same convention as CPartyState.hpp).
+extern "C" u32 func_801355BC();
+
+// Texture-dimension record read by func_802646E8: the 'timg' texture
+// resource's +0x8 pointer points to a pair of u16 dimensions.
+struct CPSkillTexCoords {
+    u16 c0;   // +0x00
+    u16 c2;   // +0x02
+};
+
+// Head of the 'timg' texture resource: the +0x8 pointer gives the dimension
+// record above.
+struct CPSkillTexRes {
+    u8 _pad0[0x8];            // +0x00..0x07
+    CPSkillTexCoords* coords; // +0x08
+};
+
 // Cursor draw helper (CCur.cpp; retail symbol unmangled).
 extern "C" void func_801D20B0(void* cursor, nw4r::lyt::DrawInfo* drawInfo);
 
@@ -458,7 +497,7 @@ extern "C" void func_8013AB0C(u8*, u8*, int);
 extern void* lbl_eu_80664090;
 
 // Shared arc resource accessor (retail symbol unmangled; also in CPresentWin.hpp).
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 
 // Skill grid data table (.sdata pointer; value resolved at link time),
 // passed as the message table to func_80136254 by func_80266950.

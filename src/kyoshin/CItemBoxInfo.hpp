@@ -25,6 +25,39 @@ struct CItemBoxLayoutDtorVt {
     virtual void destroy(u32 flags);  // slot 2 => +0x8, arg in r4
 };
 
+// Cast-only vtable interface for the object returned by
+// CItem_initItemImplInstances: with -RTTI on, MWCC prepends 2 hidden RTTI
+// header entries, so the first declared virtual lands at raw vtable slot 2
+// (+0x08). Real virtual dispatch reproduces the retail `lwz r12,0(r3);
+// lwz r12,<off>(r12); mtctr; bcctrl` sequence; the manual `(*(void***)x)[N]`
+// casts color a scratch r5 instead of r12 (see CItemBoxGrid.hpp CItemInstVt08).
+struct CItemImplVt {
+    virtual u32 _v08(void* item);  // vtable+0x08 (raw slot 2)
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void _v24();
+    virtual void _v28();
+    virtual void _v2C();
+    virtual void _v30();
+    virtual void _v34();
+    virtual void _v38();
+    virtual void _v3C();
+    virtual void _v40();
+    virtual void _v44();
+    virtual void _v48();
+    virtual u16 _v4C(void* item, u32 i);  // vtable+0x4C (raw slot 19)
+    virtual void _v50();
+    virtual void _v54();
+    virtual void _v58();
+    virtual void _v5C();
+    virtual void _v60();
+    virtual u8 _v64(void* item, u32 i);   // vtable+0x64 (raw slot 25)
+};
+
 struct CItemBoxInfoState {
     u8 _00[0x04];
     UnkClass_8045F564 memRegion1;   // 0x04
@@ -154,6 +187,8 @@ extern "C" void* CItem_initItemImplInstances(void*);
 extern "C" void func_801D62F8(void*, u32, const void*);
 extern "C" void func_801D8930(CItemBoxInfo*);
 extern "C" void func_801E37C4(CItemBoxInfo2*, void*, void*);
+extern "C" u32 func_8013600C(void*, const char*, u32);
+extern "C" u32 func_800A32BC();
 
 // 0x24-byte item-box slot record (built by func_801E27D0 and copied by the
 // renderers): count byte, string pointer, per-slot text pointers, a 4-byte
@@ -168,5 +203,22 @@ struct CItemBoxSlotRecord {
     u8 _18[4];     // 0x18
     u8 vals[4];    // 0x1C
     u8 tail[4];    // 0x20 (tail[1] = counter at 0x21)
+};
+
+// 0x2C-byte item-box slot record with per-slot pair counts (built by
+// func_801D5C38, copied out as one unit): count byte, string pointer,
+// per-slot text pointers, per-slot byte values, a counter byte at 0x21, and
+// two u16 pair counts at 0x22.
+struct CItemBoxSlotRecord1 {
+    u8 count;      // 0x00
+    u8 _01[3];     // 0x01
+    u32 str;       // 0x04
+    u32 text[4];   // 0x08
+    u8 _18[4];     // 0x18
+    u8 vals[4];    // 0x1C
+    u8 _20;        // 0x20
+    u8 counter;    // 0x21 (build counter)
+    u16 counts[2]; // 0x22
+    u8 _26[6];     // 0x26 - pad to 0x2C
 };
 

@@ -25,7 +25,7 @@ char* func_80136190(char*, char*, u32);
 char* func_8013639C(void*, char*);
 u32 func_801392B4(u32);
 u32 func_801392C0();
-u8 func_8013600C(void*, void*, u32);
+u32 func_8013600C(void*, const char*, u32);
 u32 func_800A32BC();
 u32 func_80136254(void*, const char*, u16);
 void func_800A082C(void*);
@@ -439,64 +439,61 @@ extern "C" void func_801D59C0(u32* out, void* unused, void* arg2) {
 }
 #pragma pop
 
-void func_801D5AA0(CItemBoxInfo* info, u16 arg2, void* arg3) {
+void func_801D5AA0(CItemBoxInfo* info, u16 arg2, void* data) {
     void* global = lbl_eu_80664110;
-    u16 v1 = func_801392E4(arg3);
-    u16 v2 = func_80139358((u32)arg3);
-    u8 flag1 = func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x22b], v2);
-    u8 count = func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x237], v2);
-    u8 arr[4] = {flag1, 0, 0, 0};
-    u32 max = func_801392C0();
-    for (u32 i = 0; i < max; i++) {
-        u8 a = func_801392B4(i);
-        arr[i + 1] = (a != count ? 1 : 0);
+    u16 v1 = func_801392E4(data);
+    u16 v2 = func_80139358((u32)data);
+    u8 arr[8];
+    arr[0] = (u8)func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x22b], v2);
+    // count stays u32: retail keeps the raw call result (r28) and masks at
+    // each (u8)count use (loop mask hoisted to r29).
+    u32 count = func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x237], v2);
+    for (u32 i = 0; i < (u8)code80135FDC_getByte_64077(); i++) {
+        u8 a = (u8)func_801392B4((u8)i);
+        arr[(u8)i + 1] = (a == (u8)count) ? 1 : 0;
     }
-    u8 r5 = func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x23f], v2);
-    u8 val = func_8013600C((char*)&lbl_eu_805063BC[0x248], (char*)&lbl_eu_805063BC[0x250], r5);
-    void* lookup = func_8009EC9C(count);
-    u8 cat = func_800A32BC();
-    u8* entry = (u8*)lookup + cat * 0x49 + val * 2;
+    u32 key = func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x23f], v2);
+    u32 val = func_8013600C((char*)&lbl_eu_805063BC[0x248], (char*)&lbl_eu_805063BC[0x250], (u8)key);
+    void* lookup = func_8009EC9C((u8)count);
+    u8 cat = (u8)func_800A32BC();
+    u8* entry = (u8*)lookup + cat * 0x49 + (u8)val * 2;
     u8 flag2 = 0;
     switch (arr[0]) {
         case 1: if (entry[0xE8] != 0) flag2 = 1; break;
         case 2: if ((entry[0xE9] >> 0) & 1) flag2 = 1; break;
         case 3: if ((entry[0xE9] >> 1) & 1) flag2 = 1; break;
     }
-    ((u32*)info)[0] = (arr[0]) | (arr[1] << 8) | (arr[2] << 16) | (arr[3] << 24);
-    ((u32*)info)[1] = 0;
+    *(u32*)((u8*)info + 0) = *(u32*)arr;
+    *(u32*)((u8*)info + 4) = *(u32*)(arr + 4);
     ((u8*)info)[8] = flag2;
 }
 void func_801D5C38(void* out, void* unused, void* data, void* arg3) {
-    void* item = arg3 ? arg3 : NULL;
-    u16 v1 = func_801392E4(data);
-    u16 v2 = func_80139358((u32)data);
-    void* inst = CItem_initItemImplInstances(item);
-    u8 r = ((u8(*)(void*, void*))(*(void***)inst)[2])(inst, item);
-    u8 buf[0x30];
-    buf[0] = r;
-    char* s = (char*)func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
-    ((u32*)(buf + 4))[0] = (u32)s;
-    u8 count = 0;
-    buf[0x21] = 0;
+    void* p = arg3 != 0 ? arg3 : 0;
+    func_801392E4(data);
+    func_80139358((u32)data);
+    CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(p);
+    u32 r = inst->_v08(p);
+    CItemBoxSlotRecord1 rec;
+    rec.count = (u8)r;
+    char* base = (char*)&lbl_eu_805063BC;
+    rec.str = (u32)func_80136190(&base[0x130], &base[0x139], 0x1e - ((u8)r - 1));
+    rec.counter = 0;
     for (u32 i = 0; i < 4; i++) {
-        void* inst2 = CItem_initItemImplInstances(item);
-        u16 n = ((u16(*)(void*, void*, u32))(*(void***)inst2)[19])(inst2, item, i);
+        CItemImplVt* inst2 = (CItemImplVt*)CItem_initItemImplInstances(p);
+        u16 n = inst2->_v4C(p, (u8)i);
         if (n > 0) {
-            char* t = func_8013639C(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x139]);
-            ((u32*)(buf + 8))[count] = (u32)t;
-            void* inst3 = CItem_initItemImplInstances(item);
-            u8 val = ((u8(*)(void*, void*, u32))(*(void***)inst3)[25])(inst3, item, i);
-            buf[0x1C + count] = val;
-            ((u16*)(buf + 0x22))[count] = n;
-            count++;
+            // Retail passes the pair count n as a third arg to func_8013639C.
+            rec.text[rec.counter] =
+                (u32)((char*(*)(void*, const char*, u16))&func_8013639C)(lbl_eu_806640D8, &base[0x139], n);
+            CItemImplVt* inst3 = (CItemImplVt*)CItem_initItemImplInstances(p);
+            rec.vals[rec.counter] = inst3->_v64(p, (u8)i);
+            rec.counts[rec.counter] = n;
+            rec.counter++;
         }
     }
-    u32* dst = (u32*)((u8*)out - 4);
-    u32* src = (u32*)(buf + 4);
-    for (int i = 0; i < 5; i++) {
-        *++dst = *++src;
-    }
-    *++dst = *++src;
+    // 0x2C-byte copy: MWCC inlines constant-size memcpy as the retail mtctr
+    // 8-byte-pair loop (5 pairs + 4-byte tail).
+    memcpy(out, &rec, 0x2C);
 }
 void func_801D5DA4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     func_801D8318(info);
@@ -2753,12 +2750,12 @@ u32 func_801DFE48(void* global, u16 arg2, void* arg3) {
             case 8: val = *(s16*)((u8*)lookup + 0x24); break;
         }
         if (val == -1) continue;
-        void* r = func_80157C4C_1(ii);
+        // Retail passes the slot id (u8)i and the slot value val (2-arg form).
+        void* r = func_80157C4C((u8)i, val);
         if (r == NULL) continue;
         u32 v = *(u32*)r;
         if (v == 0) continue;
-        u16 cat = func_80139358(v >> 20);
-        result += (u8)func_801361E8((u32)g, (char*)&lbl_eu_805063BC[0x1e2], cat);
+        result += (u8)func_801361E8((u32)g, (char*)&lbl_eu_805063BC[0x1e2], func_80139358(v >> 20));
     }
     if (arg3 != NULL) {
         result += (u8)func_801361E8((u32)g, (char*)&lbl_eu_805063BC[0x1e2], v2);
@@ -3511,22 +3508,31 @@ void func_801E3DE4(CItemBoxInfo2* info) {
 }
 void func_801E3EB8(CItemBoxInfo2* info) {
     char* base = (char*)&lbl_eu_805063BC;
-    void* layout = *(void**)((u8*)info + 0x34);
-    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x44f, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x44f, base + 0x2aa, 0);
     char buf[0x20];
-    u32 max = func_801392C0();
-    for (u32 i = 0; i < max; i++) {
-        u32 idx = i + 1;
+    for (u32 i = 0; i < (u8)code80135FDC_getByte_64077(); i++) {
+        u32 idx = (u8)i + 1;
         sprintf(buf, base + 0x303, idx);
-        func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
-        sprintf(buf, base + 0x161, idx);
-        void* child = *(void**)((u8*)layout + 0x10);
-        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(buf, true);
+        func_80137B44((nw4r::lyt::Layout*)info->state.layout, buf, 0x777777ff);
+        u32 args[4];
+        // zero via a variable: MWCC materializes it in a register (r30-like)
+        // and cannot fold the {zero, zero} s16-pair arrays to a constant,
+        // keeping the retail stack build of the four u32 colour args.
+        s16 zero = 0;
+        s16 c0hi[2] = {zero, *(s16*)((u8*)info + 0xA2)};
+        s16 c0lo[2] = {zero, zero};
+        s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
+        s16 c1lo[2] = {zero, zero};
+        args[1] = *(u32*)c0hi;
+        args[0] = *(u32*)c0lo;
+        args[3] = *(u32*)c1hi;
+        args[2] = *(u32*)c1lo;
+        sprintf(buf, base + 0x161, idx, args[0], args[1], args[2], args[3]);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
-            void** pvt = *(void***)pane;
-            u16 count = ((u16(*)(void*))pvt[26])(pane);
+            void* obj = ((void*(*)(void*))(*(void***)pane)[26])(pane);
             for (u32 j = 0; j < 2; j++) {
-                func_801D62F8((u8*)pane + 0x10, j, buf);
+                func_801D62F8(obj, (u8)j, (u8*)args + (u8)j * 8);
             }
         }
     }
@@ -4941,12 +4947,12 @@ u32 func_801E9774(void* global, u16 arg2, void* arg3) {
             case 8: val = *(s16*)((u8*)lookup + 0x24); break;
         }
         if (val == -1) continue;
-        void* r = func_80157C4C_1(ii);
+        // Retail passes the slot id (u8)i and the slot value val (2-arg form).
+        void* r = func_80157C4C((u8)i, val);
         if (r == NULL) continue;
         u32 v = *(u32*)r;
         if (v == 0) continue;
-        u16 cat = func_80139358(v >> 20);
-        result += (u8)func_801361E8((u32)g, (char*)&lbl_eu_805063BC[0x1e2], cat);
+        result += (u8)func_801361E8((u32)g, (char*)&lbl_eu_805063BC[0x1e2], func_80139358(v >> 20));
     }
     if (arg3 != NULL) {
         result += (u8)func_801361E8((u32)g, (char*)&lbl_eu_805063BC[0x1e2], v2);

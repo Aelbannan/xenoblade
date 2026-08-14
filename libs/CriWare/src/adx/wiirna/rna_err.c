@@ -1,26 +1,46 @@
-// Auto-scaffolded catalog TU for CriWare/src/adx/wiirna/rna_err
-// Replace stubs with high-level C/C++ during decomp.
+// CriWare ADX Wii RNA error handler.
+//
+// The handler state lives in .bss as two adjacent objects (defined by the
+// data TU, linked at 0x805F2AF8):
+//   lbl_eu_805F2AF8 - the registered error callback (4 bytes)
+//   lbl_eu_805F2AFC - the callback argument word + 256-byte message buffer
+//                     (0x104 bytes)
+//
+// Together they form the RNAErrHandler layout below; RNAERR_CallErrFunc
+// views them as one contiguous state block based at lbl_eu_805F2AF8.
 
 #include <harness_catalog.h>
+#include <string.h>
 
-typedef struct {
-    u32 errfunc;
-    u32 errarg;
-    u8 buf[255];
-} RNAERR_Globals;
-extern RNAERR_Globals lbl_eu_805F2AF8;
-void RNAERR_EntryErrFunc(void* a, void* b) {
-    lbl_eu_805F2AF8.errfunc = (u32)a;
-    lbl_eu_805F2AF8.errarg = (u32)b;
+// Error callback state as one contiguous block (base = 0x805F2AF8):
+//   +0x00 cb   - callback invoked with (arg, msg)
+//   +0x04 arg  - first word of the state buffer, passed as the callback argument
+//   +0x08 msg  - 256-byte message buffer (last entry of lbl_eu_805F2AFC)
+typedef struct RNAErrHandler {
+    void (*cb)(u32, char*);
+    u32 arg;
+    char msg[0x100];
+} RNAErrHandler;
+
+// Registered error callback (0x805F2AF8).
+extern void (*lbl_eu_805F2AF8)(u32, char*);
+
+// Callback argument word + message buffer (0x805F2AFC, 0x104 bytes).
+extern u32 lbl_eu_805F2AFC[65];
+
+// Register the error callback and its argument word.
+void RNAERR_EntryErrFunc(u32 fn, u32 arg) {
+    lbl_eu_805F2AF8 = (void (*)(u32, char*))fn;
+    lbl_eu_805F2AFC[0] = arg;
 }
 
-char* strncpy(char* dst, const char* src, size_t n);
+// Copy msg into the handler's buffer (capped at 0xFF bytes) and dispatch
+// the registered callback with (arg, msg). No-op when no callback is set.
 void RNAERR_CallErrFunc(const char* msg) {
-    register u32* g = (u32*)&lbl_eu_805F2AF8;
-    void (*cb)(u32, char*);
-    strncpy((char*)&lbl_eu_805F2AF8 + 8, msg, 0xFF);
-    cb = (void (*)(u32, char*))g[0];
-    if (cb) {
-        cb(g[1], (char*)(g + 2));
+    RNAErrHandler* handler = (RNAErrHandler*)&lbl_eu_805F2AF8;
+
+    strncpy(handler->msg, msg, 0xFF);
+    if (handler->cb) {
+        handler->cb(handler->arg, handler->msg);
     }
 }

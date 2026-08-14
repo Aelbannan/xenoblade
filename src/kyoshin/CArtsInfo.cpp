@@ -37,9 +37,18 @@ void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 // Forward declarations for state machine functions (defined later in this TU).
 // func_802369C0/func_80236CF4 are extern "C": retail calls the C names (not
 // __FP9CArtsInfo).
-void func_80236508(CArtsInfo*);
+extern "C" __declspec(noinline) void func_80236508(CArtsInfo*);
 extern "C" void func_802369C0(CArtsInfo*);
 extern "C" void func_80236CF4(CArtsInfo*);
+extern "C" void func_802375A8(CArtsInfo*, u8, u8);
+// Damage/level helpers: extern "C" so the sprintf-family call sites
+// (func_80238298 / func_80238038) emit bl to the unmangled retail names.
+extern "C" int func_80237238(CArtsInfo*);
+extern "C" int func_80237394(CArtsInfo*);
+// Stat-id helper: noinline + C linkage so func_80238038 emits a bl to the
+// retail (unmangled) symbol instead of an inlined vtable dispatch. The
+// definition (later in this TU) inherits the linkage; its body is unchanged.
+extern "C" __declspec(noinline) int func_80236DB8(CArtsInfo*);
 
 // Forward declarations for animation state handlers
 void func_80235F6C(CArtsInfo*);
@@ -557,8 +566,12 @@ void func_80236454(CArtsInfo* self) {
 }
 
 // func_80236508 - large layout setup (bind all pane animations)
-// .text:0xE00, size 0x4B8
-void func_80236508(CArtsInfo* self) {
+// noinline + extern "C": func_80235EA4 (and OnFileEvent) tail-call the bare
+// retail symbol; inlining would balloon their bodies. optimize_for_size
+// merges the r30/r31 saves into the retail stmw r30 prologue (plain -O4,p
+// emits two separate stw's, +8 bytes).
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) void func_80236508(CArtsInfo* self) {
     // Bind animations for all named panes on layout 1
     func_80136B4C(self->mpLayout1, lbl_eu_8050B00C + 0x50, lbl_eu_8050B00C + 0x58, 0);
     func_80136B4C(self->mpLayout1, lbl_eu_8050B00C + 0x59, lbl_eu_8050B00C + 0x58, 0);
@@ -623,8 +636,85 @@ void func_80236508(CArtsInfo* self) {
     func_80139A18(self->mpLayout2, lbl_eu_8050B00C + 0x166, &lbl_eu_80664748, &lbl_eu_80664750);
     func_80139A18(self->mpLayout2, lbl_eu_8050B00C + 0x175, &lbl_eu_80664748, &lbl_eu_80664750);
 }
+#pragma optimize_for_size off
 
-void func_802369C0(){}
+// func_802369C0 - arts info full layout refresh. Formats the arts name/lv
+// strings and the colour/flag rows, then binds the row strings to the named
+// panes on both layouts. The trailing loop walks arts rows 1..10 (slot 0x1b2
+// names) and grows the arts list (func_802375A8) for each row that has a
+// non-empty entry.
+// noinline: func_80235EA4 (FULL_MATCH) tail-calls the retail symbol; inlining
+// would balloon its body. optimize_for_size gives the retail stmw r25
+// prologue for the 7 saved GPRs.
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) void func_802369C0(CArtsInfo* self) {
+    char buf[32]; // sprintf at +0x8
+    char* str1 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x18);
+    sprintf(buf, lbl_eu_8050B00C + 0x42, self->field_0x58, str1);
+    func_80136A1C(self->mpLayout1, lbl_eu_8050B00C + 0x184, buf, 0);
+
+    char* str2 = func_80136190(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x3d, self->field_0x55);
+    char* str3 = 0;
+    if (self->field_0x56 != 0) {
+        str3 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, self->field_0x56 + 0x1e);
+    }
+    sprintf(buf, lbl_eu_8050B00C + 0x193, str2, str3);
+    func_80136A1C(self->mpLayout1, lbl_eu_8050B00C + 0x50, buf, 0);
+
+    char* str4 = 0;
+    if (self->field_0x56 < 0xA) {
+        if (self->field_0x56 != 0) {
+            str4 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, self->field_0x56 + 0x1f);
+        }
+        sprintf(buf, lbl_eu_8050B00C + 0x193, str2, str4);
+        func_80136A1C(self->mpLayout2, lbl_eu_8050B00C + 0x50, buf, 0);
+    }
+
+    char* s = func_8013639C(self->field_0x4C, lbl_eu_8050B00C + 0x198, self->field_0x55);
+    func_80136B4C(self->mpLayout1, lbl_eu_8050B00C + 0x59, s, 0);
+    if (self->field_0x56 < 0xA) {
+        func_80136B4C(self->mpLayout2, lbl_eu_8050B00C + 0x59, s, 0);
+    }
+
+    u8 f1 = func_801361E8(self->field_0x4C, lbl_eu_8050B00C + 0x19c, self->field_0x55);
+    u8 f2 = func_801361E8(self->field_0x4C, lbl_eu_8050B00C + 0x1a1, self->field_0x55);
+    u8 f3 = func_801361E8(self->field_0x4C, lbl_eu_8050B00C + 0x1a6, self->field_0x55);
+    char* p1 = 0;
+    char* p2 = 0;
+    char* p3 = 0;
+    if (f1 != 0) p1 = func_8013639C(self->field_0x50, lbl_eu_8050B00C + 0x1ab, f1);
+    if (f2 != 0) p2 = func_8013639C(self->field_0x50, lbl_eu_8050B00C + 0x1ab, f2);
+    if (f3 != 0) p3 = func_8013639C(self->field_0x50, lbl_eu_8050B00C + 0x1ab, f3);
+    func_80136B4C(self->mpLayout1, lbl_eu_8050B00C + 0x64, p1, 0);
+    if (self->field_0x56 < 0xA) {
+        func_80136B4C(self->mpLayout2, lbl_eu_8050B00C + 0x64, p1, 0);
+    }
+    func_80136B4C(self->mpLayout1, lbl_eu_8050B00C + 0x80, p2, 0);
+    if (self->field_0x56 < 0xA) {
+        func_80136B4C(self->mpLayout2, lbl_eu_8050B00C + 0x80, p2, 0);
+    }
+    func_80136B4C(self->mpLayout1, lbl_eu_8050B00C + 0x8b, p3, 0);
+    if (self->field_0x56 < 0xA) {
+        func_80136B4C(self->mpLayout2, lbl_eu_8050B00C + 0x8b, p3, 0);
+    }
+
+    // Loop counters: full-width ints narrowed to u8 at the call sites
+    // (retail clrlwi's the sprintf vararg and the func_802375A8 arg, but
+    // tests the loop bound with a bare cmplwi - a u8 counter would force an
+    // extra rlwinm mask before the bound test). n declared first: saved-reg
+    // allocation gives it the lower register (retail n->r25, i->r26).
+    unsigned int n = 2;
+    unsigned int i = 1;
+    do {
+        sprintf(buf, lbl_eu_8050B00C + 0x1b2, (u8)i);
+        u8 f = func_801361E8(self->field_0x4C, buf, self->field_0x55);
+        if (f != 0) {
+            func_802375A8(self, f, (u8)n++);
+        }
+        i++;
+    } while (i <= 0xA);
+}
+#pragma optimize_for_size off
 
 // func_80236CF4 - cursor name display. Formats the current cursor slot name
 // (field_0x5A + 1) and binds it to the pane found by name on layout 1, then
@@ -649,9 +739,11 @@ extern "C" __declspec(noinline) void func_80236CF4(CArtsInfo* self) {
 }
 #pragma optimize_for_size off
 
-// func_80236DB8 - fetch stat block via vtable[0x224] dispatch, return s16 id
-// .text:0x16B0, size 0x38
-s16 func_80236DB8(CArtsInfo* self) {
+// func_80236DB8 - fetch stat block via vtable[0x224] dispatch, return s16 id.
+// Declared int (not s16): the callee already sign-extends the s16 slot value
+// in r3, so callers (func_80238038/802384F4) add it directly without an
+// explicit extsh (retail codegen).
+int func_80236DB8(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
     CArtsStatsV* s = (CArtsStatsV*)&obj->stats;
     CArtsStatBlock* st = s->getStatBlock();
@@ -673,7 +765,9 @@ extern "C" __declspec(noinline) int func_80236DF0(CArtsInfo* self) {
 
 // func_80236E28 - same dispatch, return (int)float at +0x10
 // .text:0x1720, size 0x44
-int func_80236E28(CArtsInfo* self) {
+// noinline + extern "C": the arts-level callers (func_8023939C) must emit a
+// bl to the retail (unmangled) symbol, not an inlined vtable dispatch.
+extern "C" __declspec(noinline) int func_80236E28(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
     CArtsStatsV* s = (CArtsStatsV*)&obj->stats;
     CArtsStatBlock* st = s->getStatBlock();
@@ -885,7 +979,116 @@ extern "C" __declspec(noinline) char* func_8023754C(CArtsInfo* self, u32 arg2) {
 }
 #pragma optimize_for_size off
 
-void func_802375A8(){}
+// func_802375A8 - arts list entry update. Formats the current arts-row name
+// (func_8013639C row lookup for field_0x50 at table 0x1ab) and the level
+// string (arg3 + 2) into a buffer bound to the row pane on both layouts
+// (layout 2 only when field_0x56 < 0xA), then dispatches on the row id
+// (func_801361E8 lookup at 0x225, masked to u8) through a 44-case jump table
+// to the per-arts text-update handlers.
+//
+// Dispatch-target forward declarations: C linkage so the jump-table calls
+// emit the bare retail reloc names, and noinline so -inline auto keeps the
+// bl's (the definitions below inherit the extern "C" linkage).
+extern "C" __declspec(noinline) void func_80237A0C(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_80237B88(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_80237D58(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_80237E24(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_80238038(CArtsInfo*, u32, int, u8);
+extern "C" __declspec(noinline) void func_80238298(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_802384F4(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_80238904(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_80239030(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023916C(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023939C(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023959C(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_802397F4(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_80239964(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_80239AA0(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_80239BDC(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_80239D20(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_80239EFC(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_80239FC4(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023A148(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023A210(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023A2D8(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023A398(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023A460(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023A55C(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023A60C(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023A6BC(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023A76C(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023A81C(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023A8CC(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023A97C(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023AA2C(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023AADC(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023AB8C(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023AD5C(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023AE24(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023AF60(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023B074(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023B12C(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023B280(CArtsInfo*, u32, int);
+extern "C" __declspec(noinline) void func_8023B368(CArtsInfo*, u32, int);
+
+extern "C" __declspec(noinline) void func_802375A8(CArtsInfo* self, u8 arg2, u8 arg3) {
+    char buf[32]; // sprintf at +0x8
+    char* s = func_8013639C(self->field_0x50, lbl_eu_8050B00C + 0x1ab, arg2);
+    sprintf(buf, lbl_eu_8050B00C + 0x218, arg3 + 2);
+    func_80136B4C(self->mpLayout1, buf, s, 0);
+    if (self->field_0x56 < 0xA) {
+        func_80136B4C(self->mpLayout2, buf, s, 0);
+    }
+    u8 k = (u8)func_801361E8(self->field_0x50, lbl_eu_8050B00C + 0x225, arg2);
+    switch (k) {
+    case 0x00: func_80237A0C(self, arg2, arg3); break;
+    case 0x01: func_80237B88(self, arg2, arg3); break;
+    case 0x02: func_80237D58(self, arg2, arg3); break;
+    case 0x03: func_80237E24(self, arg2, arg3); break;
+    case 0x04: func_80238038(self, arg2, arg3, 0); break;
+    case 0x05: func_80238298(self, arg2, arg3); break;
+    case 0x06: func_802384F4(self, arg2, arg3); break;
+    case 0x07: func_80238904(self, arg2, arg3); break;
+    case 0x08: func_80239030(self, arg2, arg3); break;
+    case 0x09: func_8023916C(self, arg2, arg3); break;
+    case 0x0A: func_8023939C(self, arg2, arg3); break;
+    case 0x0B: func_8023959C(self, arg2, arg3); break;
+    case 0x0C: func_802397F4(self, arg2, arg3); break;
+    case 0x0D: func_80239964(self, arg2, arg3); break;
+    case 0x0E: func_80239AA0(self, arg2, arg3); break;
+    case 0x0F: func_80239BDC(self, arg2, arg3); break;
+    case 0x10: func_80239D20(self, arg2, arg3); break;
+    case 0x11: func_80239EFC(self, arg2, arg3); break;
+    case 0x12: func_80239FC4(self, arg2, arg3); break;
+    case 0x13: func_8023A148(self, arg2, arg3); break;
+    case 0x14: func_8023A210(self, arg2, arg3); break;
+    case 0x15: func_8023A2D8(self, arg2, arg3); break;
+    case 0x16: func_8023A398(self, arg2, arg3); break;
+    case 0x17: func_8023A460(self, arg2, arg3); break;
+    case 0x18: func_8023A55C(self, arg2, arg3); break;
+    case 0x19: func_8023A60C(self, arg2, arg3); break;
+    case 0x1A: func_8023A6BC(self, arg2, arg3); break;
+    case 0x1B: func_8023A76C(self, arg2, arg3); break;
+    case 0x1C: func_8023A81C(self, arg2, arg3); break;
+    case 0x1D: func_8023A8CC(self, arg2, arg3); break;
+    case 0x1E: func_8023A97C(self, arg2, arg3); break;
+    case 0x1F: func_8023AA2C(self, arg2, arg3); break;
+    case 0x20: func_8023AADC(self, arg2, arg3); break;
+    case 0x21: func_8023AB8C(self, arg2, arg3); break;
+    case 0x22: func_8023AD5C(self, arg2, arg3); break;
+    case 0x23: func_8023AE24(self, arg2, arg3); break;
+    case 0x24: func_8023AF60(self, arg2, arg3); break;
+    case 0x25: func_8023B074(self, arg2, arg3); break;
+    case 0x26: func_8023B12C(self, arg2, arg3); break;
+    case 0x27: func_8023B280(self, arg2, arg3); break;
+    case 0x28: func_80238038(self, arg2, arg3, (u8)(self->field_0x55 + 1)); break;
+    case 0x29: func_80238038(self, arg2, arg3, (u8)(self->field_0x55 + 2)); break;
+    case 0x2A: func_80238038(self, arg2, arg3, (u8)(self->field_0x55 + 3)); break;
+    case 0x2B: break;
+    case 0x2C: func_8023B368(self, arg2, arg3); break;
+    default: break;
+    }
+}
 
 // func_80237A0C - arts info text update. Formats a computed percentage
 // (base value scaled by the arts-skill lookups func_80236E6C(0x2d) and
@@ -919,7 +1122,47 @@ void func_80237A0C(CArtsInfo* self, u32 arg2, int arg3) {
     }
 }
 
-void func_80237B88(){}
+// func_80237B88 - arts info text update. Reads the character-data category
+// (func_800A32BC), discards a 0x24c-keyed lookup, then formats
+// v - 0.5 * (level-1) * v * w (float arithmetic via MWCC's u32/s32
+// conversion magics: clrlwi + 2^52 for the u8 lookups, xoris + 2^52+2^31
+// for the signed (level-1)) into buf1, post-processes it, pushes it onto
+// layout 1, then on level-up (< 0xA) formats the next-level value
+// (level instead of level-1) into buf3 for layout 2 and runs the
+// colour-pair helper when the raw lookup v differs from the next value.
+void func_80237B88(CArtsInfo* self, u32 arg2, int arg3) {
+    char buf1[32]; // sprintf at +0x48
+    char buf2[32]; // sprintf at +0x28
+    char buf3[32]; // sprintf at +0x8
+    char* s1 = func_802374F0(self, arg2);
+    char* s2 = func_8023754C(self, arg2);
+    func_800A32BC(func_8009EC9C(self->field_0x54));
+    func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x24c, self->field_0x55);
+    u8 v = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x250, self->field_0x55);
+    u8 w = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x257, self->field_0x55);
+    // fv/fw stay in saved FPRs across the calls (reused in the level-up
+    // branch below); retail keeps them in f31/f30.
+    float fv = (float)v;
+    float fw = (float)w;
+    float cur = fv - lbl_eu_80668694 * ((float)(self->field_0x56 - 1) * (fv * fw));
+    sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, cur, s2);
+    func_eu_80136F90(buf1);
+    func_eu_8023D490(self, arg2, buf1);
+    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    func_80136A1C(self->mpLayout1, buf2, buf1, 0);
+    if (self->field_0x56 < 0xA) {
+        // (int) cast: retail converts level with the s32 magic (xoris);
+        // plain (float)u8 would use the shorter u32 magic.
+        float nxt = fv - lbl_eu_80668694 * ((float)(int)self->field_0x56 * (fv * fw));
+        sprintf(buf3, lbl_eu_8050B00C + 0x232, s1, nxt, s2);
+        func_eu_80136F90(buf3);
+        func_eu_8023D490(self, arg2, buf3);
+        func_80136A1C(self->mpLayout2, buf2, buf3, 0);
+        if (fv != nxt) {
+            func_80139A18(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+        }
+    }
+}
 
 // func_80237D58 - arts info text update. Same shape as func_8023A148 but the
 // lookup is func_801360CC (s8 result): the value is abs()'d and narrowed back
@@ -939,15 +1182,297 @@ void func_80237D58(CArtsInfo* self, u32 arg2, int arg3) {
     }
 }
 
-void func_80237E24(){}
+// func_80237E24 - arts info text update. The first grid value (u16-keyed
+// lookup func_8013606C at 0x26d) is converted to float and scaled by
+// lbl_eu_806686A4 when non-zero, then overridden by the field_0x55
+// arts-type switch (0x68/0x69/0x70 -> fixed constants); the second grid
+// value (u8-keyed lookup func_8013600C at 0x275) is scaled the same way.
+// The displayed value is base + second*(level-1), post-processed and pushed
+// onto both layouts; on level-up the level grid is recomputed for layout 2
+// and the colour-pair helper runs when the two values differ.
+void func_80237E24(CArtsInfo* self, u32 arg2, int arg3) {
+    char buf1[32]; // sprintf at +0x28
+    char buf2[32]; // sprintf at +0x8
+    char* s1 = func_802374F0(self, arg2);
+    char* s2 = func_8023754C(self, arg2);
+    u16 v1 = func_8013606C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x26d, self->field_0x55);
+    float f1 = (float)v1;
+    u8 v2 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x275, self->field_0x55);
+    float f2 = (float)v2;
+    if (f1 != lbl_eu_80668680) {
+        f1 = f1 * lbl_eu_806686A4;
+    }
+    switch (self->field_0x55) {
+    case 0x68:
+        f1 = lbl_eu_806686B0;
+        break;
+    case 0x69:
+        f1 = lbl_eu_806686B4;
+        break;
+    case 0x70:
+        f1 = lbl_eu_806686B8;
+        break;
+    default:
+        break;
+    }
+    if (f2 != lbl_eu_80668680) {
+        f2 = f2 * lbl_eu_806686A4;
+    }
+    float cur = f1 + f2 * (float)(self->field_0x56 - 1);
+    sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, cur, s2);
+    func_eu_80136F90(buf1);
+    func_eu_8023D490(self, arg2, buf1);
+    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    func_80136A1C(self->mpLayout1, buf2, buf1, 0);
+    if (self->field_0x56 < 0xA) {
+        float nxt = f1 + f2 * (float)(int)self->field_0x56;
+        sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, nxt, s2);
+        func_eu_80136F90(buf1);
+        func_eu_8023D490(self, arg2, buf1);
+        func_80136A1C(self->mpLayout2, buf2, buf1, 0);
+        if (cur != nxt) {
+            func_80139A18(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+        }
+    }
+}
 
-void func_80238038(){}
+// func_80238038 - arts info text update. Same shape as func_80238298
+// (stat + min(damage1, damage2) grids scaled by 0.5) but the grid lookups
+// func_80237100/8023719C are keyed on the 4th parameter instead of 0 and
+// the stat comes from func_80236DB8.
+void func_80238038(CArtsInfo* self, u32 arg2, int arg3, u8 arg4) {
+    char buf1[32]; // sprintf at +0x28
+    char buf2[32]; // sprintf at +0x8
+    int level;
+    func_802374F0(self, arg2);
+    func_8023754C(self, arg2);
+    s16 stat = func_80236DB8(self);
+    int g1 = func_80237100(self, self->field_0x56, arg4);
+    int g2 = func_8023719C(self, self->field_0x56, arg4);
+    int m1 = func_80237238(self);
+    int m2 = func_80237394(self);
+    if (m1 > m2) m1 = m2;
+    int s = m1 + stat;
+    int v1 = func_801C6158(lbl_eu_80668694 * (float)(g1 * s));
+    int t = m2 + stat;
+    int v2 = func_801C6158(lbl_eu_80668694 * (float)(g2 * t));
+    char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
+    sprintf(buf1, lbl_eu_8050B00C + 0x282, v1, str, v2);
+    level = arg3 + 2;
+    sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+    func_80136A1C(self->mpLayout1, buf2, buf1, 0);
+    if (self->field_0x56 < 0xA) {
+        int g1n = func_80237100(self, self->field_0x56 + 1, arg4);
+        int g2n = func_8023719C(self, self->field_0x56 + 1, arg4);
+        int v1n = func_801C6158(lbl_eu_80668694 * (float)(g1n * s));
+        int v2n = func_801C6158(lbl_eu_80668694 * (float)(g2n * t));
+        char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
+        sprintf(buf1, lbl_eu_8050B00C + 0x282, v1n, str2, v2n);
+        sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+        func_80136A1C(self->mpLayout2, buf2, buf1, 0);
+        func_80139A18(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+    }
+}
 
-void func_80238298(){}
+// func_80238298 - arts info text update. Combines the stat id
+// (func_80236DF0) with the min of the two damage/level helpers
+// (func_80237238/80237394): the two grids are 0.5*stat*(m+stat) products,
+// formatted into buf1 (sprintf 0x282). On level-up the level+1 grids are
+// recomputed for layout 2 and the colour-pair helper always runs.
+void func_80238298(CArtsInfo* self, u32 arg2, int arg3) {
+    char buf1[32]; // sprintf at +0x28
+    char buf2[32]; // sprintf at +0x8
+    int level;
+    func_802374F0(self, arg2);
+    func_8023754C(self, arg2);
+    int stat = func_80236DF0(self);
+    int g1 = func_80237100(self, self->field_0x56, 0);
+    int g2 = func_8023719C(self, self->field_0x56, 0);
+    int m1 = func_80237238(self);
+    int m2 = func_80237394(self);
+    if (m1 > m2) m1 = m2;
+    int s = m1 + stat;
+    int v1 = func_801C6158(lbl_eu_80668694 * (float)(g1 * s));
+    int t = m2 + stat;
+    int v2 = func_801C6158(lbl_eu_80668694 * (float)(g2 * t));
+    char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
+    sprintf(buf1, lbl_eu_8050B00C + 0x282, v1, str, v2);
+    level = arg3 + 2;
+    sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+    func_80136A1C(self->mpLayout1, buf2, buf1, 0);
+    if (self->field_0x56 < 0xA) {
+        int g1n = func_80237100(self, self->field_0x56 + 1, 0);
+        int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
+        int v1n = func_801C6158(lbl_eu_80668694 * (float)(g1n * s));
+        int v2n = func_801C6158(lbl_eu_80668694 * (float)(g2n * t));
+        char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
+        sprintf(buf1, lbl_eu_8050B00C + 0x282, v1n, str2, v2n);
+        sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+        func_80136A1C(self->mpLayout2, buf2, buf1, 0);
+        func_80139A18(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+    }
+}
 
-void func_802384F4(){}
+// func_802384F4 - arts info text update. Combines the stat id
+// (func_80236DB8) with the min of the two damage/level helpers
+// (func_80237238/80237394): the two grids are 0.5*stat*(m+stat) products
+// (func_801C6158), then both grids are scaled by a byte-keyed factor
+// (func_8013600C at 0x289) and get the 0x49-keyed arts lookup
+// (func_80236E6C) contribution added: value = v + 0.5*v*func_80236E6C(0x49).
+// Two func_8013606C lookups (0x26d/0x290) are called with results discarded.
+void func_802384F4(CArtsInfo* self, u32 arg2, int arg3) {
+    char buf1[32]; // sprintf at +0x28
+    char buf2[32]; // sprintf at +0x8
+    int level;
+    func_802374F0(self, arg2);
+    func_8023754C(self, arg2);
+    int stat = func_80236DB8(self);
+    int g1 = func_80237100(self, self->field_0x56, 0);
+    int g2 = func_8023719C(self, self->field_0x56, 0);
+    int m1 = func_80237238(self);
+    int m2 = func_80237394(self);
+    if (m1 > m2) m1 = m2;
+    int s = m1 + stat;
+    int v1 = func_801C6158(lbl_eu_80668694 * (float)(g1 * s));
+    int t = m2 + stat;
+    int v2 = func_801C6158(lbl_eu_80668694 * (float)(g2 * t));
+    u8 v3 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
+    func_8013606C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x26d, self->field_0x55);
+    func_8013606C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x290, self->field_0x55);
+    v1 = func_801C6158(lbl_eu_80668694 * (float)(v1 * v3));
+    int a = func_80236E6C(self, 0x49);
+    int value1 = v1 + func_801C6158(lbl_eu_80668694 * (float)(v1 * a));
+    v2 = func_801C6158(lbl_eu_80668694 * (float)(v2 * v3));
+    a = func_80236E6C(self, 0x49);
+    int value2 = v2 + func_801C6158(lbl_eu_80668694 * (float)(v2 * a));
+    char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
+    sprintf(buf1, lbl_eu_8050B00C + 0x282, value1, str, value2);
+    level = arg3 + 2;
+    sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+    func_80136A1C(self->mpLayout1, buf2, buf1, 0);
+    if (self->field_0x56 < 0xA) {
+        int g1n = func_80237100(self, self->field_0x56 + 1, 0);
+        int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
+        int v1n = func_801C6158(lbl_eu_80668694 * (float)(g1n * s));
+        int v2n = func_801C6158(lbl_eu_80668694 * (float)(g2n * t));
+        v1n = func_801C6158(lbl_eu_80668694 * (float)(v1n * v3));
+        a = func_80236E6C(self, 0x49);
+        int value1n = v1n + func_801C6158(lbl_eu_80668694 * (float)(v1n * a));
+        v2n = func_801C6158(lbl_eu_80668694 * (float)(v2n * v3));
+        a = func_80236E6C(self, 0x49);
+        int value2n = v2n + func_801C6158(lbl_eu_80668694 * (float)(v2n * a));
+        char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
+        sprintf(buf1, lbl_eu_8050B00C + 0x282, value1n, str2, value2n);
+        sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+        func_80136A1C(self->mpLayout2, buf2, buf1, 0);
+        func_80139A18(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+    }
+}
 
-void func_80238904(){}
+// func_80238904 - arts info text update. Same stat+min(damage1,damage2)
+// grid shape as func_80238298 (func_80236DF0 stat, func_80237100/8023719C
+// offsets), then the grids are scaled by a field_0x55 arts-type base
+// (func_8013600C at 0x289, overridden by the 0x68/0x69/0x70 switch to fixed
+// 0x28/0x3c/0x64). A func_8013606C lookup at 0x297 picks the arts lookup
+// key (func_80236E6C) used to add 0.5*v*lookup to each grid: 0x66 -> 0x49,
+// 0x67 -> 0x9, 0x68 -> 0x3a, 0x69 -> 0x5c. On level-up the level+1 grids
+// are recomputed for layout 2 (re-dispatching the 0x297 key switch) and the
+// colour-pair helper always runs.
+void func_80238904(CArtsInfo* self, u32 arg2, int arg3) {
+    char buf1[32]; // sprintf at +0x28
+    char buf2[32]; // sprintf at +0x8
+    int level;
+    func_802374F0(self, arg2);
+    func_8023754C(self, arg2);
+    int stat = func_80236DF0(self);
+    int g1 = func_80237100(self, self->field_0x56, 0);
+    int g2 = func_8023719C(self, self->field_0x56, 0);
+    int m1 = func_80237238(self);
+    int m2 = func_80237394(self);
+    if (m1 > m2) m1 = m2;
+    int s = m1 + stat;
+    int v1 = func_801C6158(lbl_eu_80668694 * (float)(g1 * s));
+    int t = m2 + stat;
+    int v2 = func_801C6158(lbl_eu_80668694 * (float)(g2 * t));
+    int base = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
+    switch (self->field_0x55) {
+    case 0x68:
+        base = 0x28;
+        break;
+    case 0x69:
+        base = 0x3c;
+        break;
+    case 0x70:
+        base = 0x64;
+        break;
+    default:
+        break;
+    }
+    v1 = func_801C6158(lbl_eu_80668694 * (float)(v1 * base));
+    v2 = func_801C6158(lbl_eu_80668694 * (float)(v2 * base));
+    u16 k = func_8013606C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x297, self->field_0x55);
+    if (k == 0x66) {
+        int a = func_80236E6C(self, 0x49);
+        v1 += func_801C6158(lbl_eu_80668694 * (float)(v1 * a));
+        a = func_80236E6C(self, 0x49);
+        v2 += func_801C6158(lbl_eu_80668694 * (float)(v2 * a));
+    } else if (k == 0x67) {
+        int a = func_80236E6C(self, 0x9);
+        v1 += func_801C6158(lbl_eu_80668694 * (float)(v1 * a));
+        a = func_80236E6C(self, 0x9);
+        v2 += func_801C6158(lbl_eu_80668694 * (float)(v2 * a));
+    } else if (k == 0x68) {
+        int a = func_80236E6C(self, 0x3a);
+        v1 += func_801C6158(lbl_eu_80668694 * (float)(v1 * a));
+        a = func_80236E6C(self, 0x3a);
+        v2 += func_801C6158(lbl_eu_80668694 * (float)(v2 * a));
+    } else if (k == 0x69) {
+        int a = func_80236E6C(self, 0x5c);
+        v1 += func_801C6158(lbl_eu_80668694 * (float)(v1 * a));
+        a = func_80236E6C(self, 0x5c);
+        v2 += func_801C6158(lbl_eu_80668694 * (float)(v2 * a));
+    }
+    char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
+    sprintf(buf1, lbl_eu_8050B00C + 0x282, v1, str, v2);
+    level = arg3 + 2;
+    sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+    func_80136A1C(self->mpLayout1, buf2, buf1, 0);
+    if (self->field_0x56 < 0xA) {
+        int g1n = func_80237100(self, self->field_0x56 + 1, 0);
+        int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
+        int v1n = func_801C6158(lbl_eu_80668694 * (float)(g1n * s));
+        int v2n = func_801C6158(lbl_eu_80668694 * (float)(g2n * t));
+        v1n = func_801C6158(lbl_eu_80668694 * (float)(v1n * base));
+        v2n = func_801C6158(lbl_eu_80668694 * (float)(v2n * base));
+        u16 k2 = func_8013606C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x297, self->field_0x55);
+        if (k2 == 0x66) {
+            int a = func_80236E6C(self, 0x49);
+            v1n += func_801C6158(lbl_eu_80668694 * (float)(v1n * a));
+            a = func_80236E6C(self, 0x49);
+            v2n += func_801C6158(lbl_eu_80668694 * (float)(v2n * a));
+        } else if (k2 == 0x67) {
+            int a = func_80236E6C(self, 0x9);
+            v1n += func_801C6158(lbl_eu_80668694 * (float)(v1n * a));
+            a = func_80236E6C(self, 0x9);
+            v2n += func_801C6158(lbl_eu_80668694 * (float)(v2n * a));
+        } else if (k2 == 0x68) {
+            int a = func_80236E6C(self, 0x3a);
+            v1n += func_801C6158(lbl_eu_80668694 * (float)(v1n * a));
+            a = func_80236E6C(self, 0x3a);
+            v2n += func_801C6158(lbl_eu_80668694 * (float)(v2n * a));
+        } else if (k2 == 0x69) {
+            int a = func_80236E6C(self, 0x5c);
+            v1n += func_801C6158(lbl_eu_80668694 * (float)(v1n * a));
+            a = func_80236E6C(self, 0x5c);
+            v2n += func_801C6158(lbl_eu_80668694 * (float)(v2n * a));
+        }
+        char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
+        sprintf(buf1, lbl_eu_8050B00C + 0x282, v1n, str2, v2n);
+        sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+        func_80136A1C(self->mpLayout2, buf2, buf1, 0);
+        func_80139A18(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+    }
+}
 
 // func_80239030 - arts info text update. Same shape as func_8023AF60 but the
 // two lookups' results are combined into a grid offset (func_80237100
@@ -975,11 +1500,114 @@ void func_80239030(CArtsInfo* self, u32 arg2, int arg3) {
     }
 }
 
-void func_8023916C(){}
+// func_8023916C - arts grid percentage. Both string lookups are called but
+// their results discarded; the stat id (func_80236DF0) is multiplied by two
+// grid offsets (func_80237100/8023719C keyed on the arts level), each scaled
+// by 0.5 and converted via func_801C6158, then formatted with the
+// func_80136190(0x32, 0x3d, 0x52) string into buf1. On level-up (< 0xA) the
+// level+1 offsets are recomputed and formatted on layout 2 and the
+// colour-pair helper always runs.
+void func_8023916C(CArtsInfo* self, u32 arg2, int arg3) {
+    char buf1[32]; // sprintf at +0x28
+    char buf2[32]; // sprintf at +0x8
+    // level assigned late (after sprintf1) so the addi lands after the first
+    // sprintf like retail's in-place addi r27, r26, 2.
+    int level;
+    func_802374F0(self, arg2);
+    func_8023754C(self, arg2);
+    int stat = func_80236DF0(self);
+    int g1 = func_80237100(self, self->field_0x56, 0);
+    int g2 = func_8023719C(self, self->field_0x56, 0);
+    int v1 = func_801C6158(lbl_eu_80668694 * (float)(g1 * stat));
+    int v2 = func_801C6158(lbl_eu_80668694 * (float)(g2 * stat));
+    char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
+    sprintf(buf1, lbl_eu_8050B00C + 0x282, v1, str, v2);
+    level = arg3 + 2;
+    sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+    func_80136A1C(self->mpLayout1, buf2, buf1, 0);
+    if (self->field_0x56 < 0xA) {
+        int g1n = func_80237100(self, self->field_0x56 + 1, 0);
+        int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
+        int v1n = func_801C6158(lbl_eu_80668694 * (float)(g1n * stat));
+        int v2n = func_801C6158(lbl_eu_80668694 * (float)(g2n * stat));
+        char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
+        sprintf(buf1, lbl_eu_8050B00C + 0x282, v1n, str2, v2n);
+        sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+        func_80136A1C(self->mpLayout2, buf2, buf1, 0);
+        func_80139A18(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+    }
+}
 
-void func_8023939C(){}
+// func_8023939C - arts info text update. The stat value (func_80236E28) is
+// halved into cur, combined with a grid offset (v1 + v2*(level-1)) and halved
+// again, then formatted into buf1. On level-up (< 0xA) the lookups are
+// re-fetched and the level grid recomputed for layout 2; the colour-pair
+// helper runs when the two formatted values differ.
+void func_8023939C(CArtsInfo* self, u32 arg2, int arg3) {
+    char buf1[32]; // sprintf at +0x28
+    char buf2[32]; // sprintf at +0x8
+    char* s1 = func_802374F0(self, arg2);
+    char* s2 = func_8023754C(self, arg2);
+    int base = func_80236E28(self);
+    u8 v1 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
+    u8 v2 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
+    float fbase = (float)(base * 100);
+    int cur = (int)(lbl_eu_80668694 * fbase);
+    u32 grid = v1 + v2 * (self->field_0x56 - 1);
+    float fcur = (float)(cur * grid);
+    int cur2 = (int)(lbl_eu_80668694 * fcur);
+    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, cur2, s2);
+    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    func_80136A1C(self->mpLayout1, buf2, buf1, 0);
+    if (self->field_0x56 < 0xA) {
+        u8 n1 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
+        u8 n2 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
+        u8 lvl = self->field_0x56;
+        u32 grid2 = n1 + n2 * lvl;
+        float fnxt = (float)(cur * grid2);
+        int nxt = (int)(lbl_eu_80668694 * fnxt);
+        sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
+        func_80136A1C(self->mpLayout2, buf2, buf1, 0);
+        if (cur2 != nxt) {
+            func_80139A18(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+        }
+    }
+}
 
-void func_8023959C(){}
+// func_8023959C - arts info text update. The stat value (func_80236E28,
+// (int)float at +0x10) is scaled by 100 then halved into x1; the two grids
+// are x1*g1 and x1*g2, each halved, formatted into buf1 (sprintf 0x282). On
+// level-up the level+1 grids are recomputed for layout 2 and the colour-pair
+// helper always runs.
+void func_8023959C(CArtsInfo* self, u32 arg2, int arg3) {
+    char buf1[32]; // sprintf at +0x28
+    char buf2[32]; // sprintf at +0x8
+    int level;
+    func_802374F0(self, arg2);
+    func_8023754C(self, arg2);
+    int stat = func_80236E28(self);
+    int g1 = func_80237100(self, self->field_0x56, 0);
+    int g2 = func_8023719C(self, self->field_0x56, 0);
+    int x1 = func_801C6158(lbl_eu_80668694 * (float)(stat * 100));
+    int x2 = func_801C6158(lbl_eu_80668694 * (float)(x1 * g1));
+    int x3 = func_801C6158(lbl_eu_80668694 * (float)(x1 * g2));
+    char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
+    sprintf(buf1, lbl_eu_8050B00C + 0x282, x2, str, x3);
+    level = arg3 + 2;
+    sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+    func_80136A1C(self->mpLayout1, buf2, buf1, 0);
+    if (self->field_0x56 < 0xA) {
+        int g1n = func_80237100(self, self->field_0x56 + 1, 0);
+        int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
+        int x2n = func_801C6158(lbl_eu_80668694 * (float)(x1 * g1n));
+        int x3n = func_801C6158(lbl_eu_80668694 * (float)(x1 * g2n));
+        char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
+        sprintf(buf1, lbl_eu_8050B00C + 0x282, x2n, str2, x3n);
+        sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
+        func_80136A1C(self->mpLayout2, buf2, buf1, 0);
+        func_80139A18(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+    }
+}
 
 // func_802397F4 - arts info text update. Same shape as func_8023B12C: the
 // two string lookups are discarded and the formatted string comes from
@@ -995,8 +1623,8 @@ void func_802397F4(CArtsInfo* self, u32 arg2, int arg3) {
     // level is assigned late (after sprintf1) so the addi lands after the
     // first sprintf like retail's in-place addi r30, r30, 2.
     int level;
-    u32 grid2;
     u32 grid1;
+    u32 grid2;
     func_802374F0(self, arg2);
     func_8023754C(self, arg2);
     grid1 = func_80237100(self, self->field_0x56, 0);
@@ -1089,8 +1717,72 @@ void func_80239BDC(CArtsInfo* self, u32 arg2, int arg3) {
     }
 }
 
-void func_80239D20(){}
+// func_80239D20 - arts info text update. The two byte lookups are converted
+// to float; when the first is non-zero it is scaled by lbl_eu_806686A4, then
+// the value scale*v2*(level-1) is added and formatted into buf1. On level-up
+// (< 0xA) the level grid is recomputed for layout 2; the colour-pair helper
+// runs when the two values differ.
+void func_80239D20(CArtsInfo* self, u32 arg2, int arg3) {
+    char buf1[32]; // sprintf at +0x28
+    char buf2[32]; // sprintf at +0x8
+    char* s1 = func_802374F0(self, arg2);
+    char* s2 = func_8023754C(self, arg2);
+    u8 v1 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
+    float fa = (float)v1;
+    u8 v2 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
+    float fb = (float)v2;
+    if (fa != lbl_eu_80668680) {
+        fa = fa * lbl_eu_806686A4;
+    }
+    float cur = fa + lbl_eu_806686A4 * (fb * (float)(self->field_0x56 - 1));
+    sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, cur, s2);
+    func_eu_80136F90(buf1);
+    func_eu_8023D490(self, arg2, buf1);
+    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    func_80136A1C(self->mpLayout1, buf2, buf1, 0);
+    if (self->field_0x56 < 0xA) {
+        float nxt = fa + lbl_eu_806686A4 * (fb * (float)(int)self->field_0x56);
+        sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, nxt, s2);
+        func_eu_80136F90(buf1);
+        func_eu_8023D490(self, arg2, buf1);
+        func_80136A1C(self->mpLayout2, buf2, buf1, 0);
+        if (cur != nxt) {
+            func_80139A18(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+        }
+    }
+}
 
+// func_8023AB8C - arts info text update. Formats
+// 1.0 + scale*(float)v1 + (float)v2*(level-1) into buf1, post-processes it
+// and pushes it onto layout 1. On level-up (< 0xA) the level grid is
+// recomputed (level instead of level-1, s32 magic) for layout 2; the
+// colour-pair helper runs when the two values differ.
+void func_8023AB8C(CArtsInfo* self, u32 arg2, int arg3) {
+    char buf1[32]; // sprintf at +0x28
+    char buf2[32]; // sprintf at +0x8
+    char* s1 = func_802374F0(self, arg2);
+    char* s2 = func_8023754C(self, arg2);
+    u8 v1 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
+    float fa = (float)v1;
+    u8 v2 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
+    float fb = (float)v2;
+    float cur = lbl_eu_80668684 + (lbl_eu_806686A4 * fa + fb * (float)(self->field_0x56 - 1));
+    sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, cur, s2);
+    func_eu_80136F90(buf1);
+    func_eu_8023D490(self, arg2, buf1);
+    sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
+    func_80136A1C(self->mpLayout1, buf2, buf1, 0);
+    if (self->field_0x56 < 0xA) {
+        float nxt = lbl_eu_80668684 + (lbl_eu_806686A4 * fa + fb * (float)(int)self->field_0x56);
+        sprintf(buf1, lbl_eu_8050B00C + 0x232, s1, nxt, s2);
+        func_eu_80136F90(buf1);
+        func_eu_8023D490(self, arg2, buf1);
+        func_80136A1C(self->mpLayout2, buf2, buf1, 0);
+        if (cur != nxt) {
+            func_80139A18(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
+        }
+    }
+}
 // func_80239EFC - arts info text update. Formats the arts skill name and a
 // byte-keyed table value (func_8013600C) into buf1, the level string into
 // buf2, then pushes both onto the layouts (layout 2 only when field_0x56
@@ -1382,8 +2074,6 @@ void func_8023AADC(CArtsInfo* self, u32 arg2, int arg3) {
     }
 }
 #pragma optimize_for_size off
-
-void func_8023AB8C(){}
 
 // func_8023AD5C - arts info text update. Same shape as func_80239EFC with
 // the u8-keyed lookup func_8013600C at 0x2ab.

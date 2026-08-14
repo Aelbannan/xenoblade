@@ -423,7 +423,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc64(int flag);
     void CfObject_UnkVirtualFunc65();
     void CfObject_UnkVirtualFunc19();
-    void CfObject_UnkVirtualFunc22();
+    CfObjectMove* CfObject_UnkVirtualFunc22();  // covariant (retail callers read r3 after dispatch)
     void CfObject_UnkVirtualFunc25();
     void CfObject_UnkVirtualFunc26(u32 value, float amount);
     u32 CfObject_UnkVirtualFunc23();

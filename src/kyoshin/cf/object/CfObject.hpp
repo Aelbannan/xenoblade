@@ -34,7 +34,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc19();     //0x9C
         virtual void CfObject_UnkVirtualFunc20(float a, float b);     //0xA0
         virtual void CfObject_UnkVirtualFunc21();     //0xA4
-        virtual void CfObject_UnkVirtualFunc22();     //0xA8
+        virtual CfObject* CfObject_UnkVirtualFunc22();     //0xA8 (returns this: impl leaves r3=self)
         virtual u32 CfObject_UnkVirtualFunc23();      //0xAC
         virtual void CfObject_UnkVirtualFunc24();     //0xB0
         virtual void CfObject_UnkVirtualFunc25();     //0xB4

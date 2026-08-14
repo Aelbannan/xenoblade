@@ -344,6 +344,7 @@ extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" char* func_80136190(const void*, const void*, int); // caller-tuned (see code_80135FDC.hpp)
+extern "C" char* func_8013639C(u32, const char*, u8); // BDAT row string lookup (u8 row index)
 extern "C" void func_80138078__FUl(u32);
 extern "C" u8 func_801361E8(u32, const char*, u32);
 // func_8013606C/8013600C take byte-keyed lookups: retail masks the 3rd arg
@@ -356,6 +357,7 @@ extern "C" void func_801C4B60(void*, s16, s16, s16, s16); // colour init
 extern "C" void func_80139A18(void*, void*, void*, void*);
 extern "C" u32 func_80137924(void*, void*, void*, void*);
 extern "C" void* func_8009EC9C(u32);
+extern "C" u32 func_800A32BC(void*); // character-data category
 extern "C" u32 func_800A082C(CArtsCharData*);
 extern "C" u16 func_80139358(u32);
 extern "C" u32 func_80136254(const void*, const void*, int); // wider-than-u16 in retail (CSysWinScenarioLog.hpp)
@@ -376,6 +378,11 @@ extern "C" CItemImplV* CItem_initItemImplInstances(CArtsInfoListEntry* entry);
 extern "C" int func_8026178C(void*, u32);
 extern "C" u32 func_8025FB10(void*, u32);
 
+// Float -> s32 conversion helper used by the arts-grid percentage functions
+// (func_8023916C): takes the scaled float in f1 and returns the truncated
+// integer in r3.
+extern "C" s32 func_801C6158(float);
+
 // Float constant in the small data area (sda21-accessed via lfs, promoted to
 // double for the arts-info sprintf vararg).
 extern float lbl_eu_806686A0;
@@ -388,9 +395,14 @@ extern double lbl_eu_806686C8;
 // Double constant in the small data area (sda21-accessed via lfd): the
 // 2^52 + 2^31 bias (4503601774854144.0) used by MWCC's s32->double
 // conversion trick (func_8023B280 / func_8023A460). The conversion relocs
-// reference a TU-local pool entry (cannot be named in source — see
+// reference a TU-local pool entry (cannot be named in source - see
 // makecrystal/code_80213488.cpp) so they register as un-fixable reloc drift.
 extern double lbl_eu_80668698;
+
+// Double constant 2^52 (4503599627370496.0) in the small data area
+// (sda21-accessed via lfd): the bias subtracted after the 0x4330 magic for
+// MWCC's u32->float conversion (func_80237B88 / func_8023AB8C / func_80239D20).
+extern double lbl_eu_806686A8;
 
 // Float constant in the small data area (sda21-accessed via lfs) scaling the
 // converted double in func_8023A460.
@@ -404,6 +416,13 @@ extern float lbl_eu_80668694;
 // Float scale for the arts-level percentage computation in func_80239FC4
 // (percentage = 806686BC * level + base, sda21-accessed via lfs).
 extern float lbl_eu_806686BC;
+
+// Float constants in the small data area (sda21-accessed via lfs): fixed
+// values for the arts-type switch in func_80237E24 (field_0x55 0x68/0x69/0x70
+// overrides the first grid value).
+extern float lbl_eu_806686B0;
+extern float lbl_eu_806686B4;
+extern float lbl_eu_806686B8;
 
 // Item slot-type flags for the func_80236E6C list loop (6 bytes: a u32
 // followed by a u16 at 0x8066868C). Loaded as lwz + lhz, byte-indexed via

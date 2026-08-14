@@ -131,41 +131,27 @@ void SFD_CalcYccPlane(s32 base, s32 w, s32 h, void* out) {
     *(s32*)((u8*)out + 4) = base + h16 * (w32 * 32) + u * (t * 32);
 }
 
-s32 sfmpvf_SetPicUsrBuf(void* self, u32 w, u32 h, u32 stride);
-s32 SFLIB_CheckHn(void* h);
-
-s32 SFD_SetPicUsrBuf(void* sfd, void* buf, s32 height, s32 count) {
-    if (SFLIB_CheckHn(sfd) != 0) {
-        return SFLIB_SetErr(0, 0xff000185);
-    }
-    return sfmpvf_SetPicUsrBuf(sfd, (u32)buf, height, count);
-}
-
-void SFMPVF_ResetPicUsrBuf(void* self) {
-    sfmpvf_SetPicUsrBuf(self, lbl_eu_80619B20[0x1c], lbl_eu_80619B20[0x1d], lbl_eu_80619B20[0x1e]);
-}
-
 s32 sfmpvf_SetPicUsrBuf(void* self, u32 w, u32 h, u32 stride) {
     u32* p = (u32*)((u8*)self + 0x38f8);
     s32 i;
+    s32 hm1;
 
     if (w == 0 || h == 0 || stride == 0) {
-        for (i = 0; i < 0x94 / 4; i++) {
+        for (i = 0; i < 37; i++)
             p[i] = 0;
-        }
         return 0;
     }
-    if ((s32)h < *(s32*)((u8*)self + 0x30) + 3) {
+    if ((s32)h < *(s32*)((u8*)self + 0x30) + 3)
         return SFLIB_SetErr(self, 0xff000f1d);
-    }
-    p[0] = w;
-    p[1] = h;
-    p[2] = stride;
-    p[3] = w;
-    p[4] = 0;
     {
         u32 cur = w + stride;
-        for (i = 0; i < (((s32)h - 1 >= 16) ? 16 : (s32)h - 1); i++) {
+        hm1 = (s32)h - 1;
+        p[0] = w;
+        p[1] = h;
+        p[2] = stride;
+        p[3] = w;
+        p[4] = 0;
+        for (i = 0; i < (hm1 >= 16 ? 16 : hm1); i++) {
             p[5 + 2 * i] = cur;
             p[6 + 2 * i] = 0;
             cur += stride;
@@ -173,139 +159,6 @@ s32 sfmpvf_SetPicUsrBuf(void* self, u32 w, u32 h, u32 stride) {
     }
     return 0;
 }
-
-void SFMPVF_InitPicUsr(void* self) {
-    u32* w = (u32*)self;
-    u32 i;
-    for (i = 0; i < 0x94 / 4; i++) {
-        w[i] = 0;
-    }
-}
-
-extern u32 SFSET_GetCond(void* self, u32 idx);
-extern s32 SFTIM_IsGetFrmTime(void* self, void* frm);
-extern s32 SFTIM_ExecCyclicFrameOutput(void* self);
-
-s32 SFMPVF_GetRead(void* self, void** ppRead, u32* pFrmCnt, void (*callback)(void*, void*, void*)) {
-    void* frm;
-    void* entry;
-    s32 i;
-    u32 cnt = *(u32*)((u8*)self + 0x27ec);
-    u8* base = (u8*)self + 0x27f8;
-
-    if (SFSET_GetCond(self, 0xf) == 0 && *(s32*)((u8*)self + 0x5c) == 1) {
-        *ppRead = NULL;
-        return 0;
-    }
-
-    frm = SFMPVF_HoldFrm(self);
-    if (frm == NULL) {
-        *ppRead = NULL;
-        return 0;
-    }
-
-    /* Search for the held frame's entry index */
-    entry = NULL;
-    for (i = 0; i < (s32)cnt; i++) {
-        void* e = base + i * 0x110;
-        if (e == frm) {
-            entry = (u8*)self + 0x1758 + i * 0x88;
-            break;
-        }
-    }
-
-    *(u32*)entry = 1;
-    *(void**)((u8*)self + 0x27f4) = frm;
-    *ppRead = (u8*)entry + 8;
-
-    /* Call the read callback */
-    callback(self, frm, *ppRead);
-
-    /* Copy frame info */
-    *(u32*)((u8*)self + 0x1018) = *(u32*)((u8*)*ppRead + 0x14);
-    *(u32*)((u8*)self + 0x101c) = *(u32*)((u8*)*ppRead + 0x18);
-
-    if (SFTIM_IsGetFrmTime(self, *ppRead) == 0) {
-        *ppRead = NULL;
-        return 0;
-    }
-
-    if (SFTIM_ExecCyclicFrameOutput(self) == 0) {
-        *ppRead = NULL;
-        return 0;
-    }
-
-    if (*(s32*)((u8*)self + 0x68) == 2) {
-        s32 frameCnt = *(s32*)((u8*)self + 0x6c);
-        u32 newCnt = frameCnt + 1;
-        *(u32*)((u8*)self + 0x6c) = newCnt;
-        if ((s32)newCnt < 0) {
-            *(u32*)((u8*)self + 0x6c) = 0;
-        }
-        *(u32*)((u8*)frm + 0x64) = frameCnt;
-        *pFrmCnt = frameCnt;
-    }
-    return 0;
-}
-
-s32 SFMPVF_AddRead(void* self, void* p2, u32* pFrmNo) {
-    void* cs;
-    void* frm;
-    void* req;
-    s32 err = 0;
-    s32 i;
-
-    SFLIB_LockCs(&cs);
-    if (*(s32*)((u8*)self + 0x68) == 2) {
-        u32 target = *pFrmNo;
-        for (i = 0; i < 16; i++) {
-            u8* e = (u8*)self + 0x27F8 + i * 0x110;
-            if (*(s32*)(e + 0x64) == (s32)target) {
-                frm = e;
-                break;
-            }
-            frm = NULL;
-        }
-        if (frm == NULL) {
-            err = SFLIB_SetErr(self, 0xff000f1f);
-        } else {
-            for (i = 0; i < *(s32*)((u8*)self + 0x27EC); i++) {
-                u8* e = (u8*)self + 0x27F8 + i * 0x110;
-                if (e == frm) {
-                    req = (u8*)self + 0x1758 + i * 0x88;
-                    break;
-                }
-            }
-        }
-    } else {
-        if (*(s32*)((u8*)p2 - 8) != 1) {
-            err = SFLIB_SetErr(self, 0xff000f0e);
-        } else {
-            req = (u8*)p2 - 8;
-            for (i = 0; i < 16; i++) {
-                u8* e = (u8*)self + 0x1758 + i * 0x88;
-                if (e + 8 == p2) {
-                    frm = (u8*)self + 0x27F8 + i * 0x110;
-                    break;
-                }
-                frm = NULL;
-            }
-            if (*(s32*)((u8*)self + 0x27F4) != (s32)frm) {
-                err = SFLIB_SetErr(self, 0xff000f0f);
-            }
-        }
-    }
-    if (err == 0) {
-        *(s32*)req = 0;
-        if (frm != NULL) {
-            *(s32*)frm = (*(s32*)frm == 4) ? 3 : 0;
-            *(s32*)((u8*)frm + 0x64) = -1;
-        }
-    }
-    SFLIB_UnlockCs(&cs);
-    return err;
-}
-
 void SFMPVF_TermDec(void* self) { *(u32*)((u8*)self + 0x27F0) = 1; }
 
 u32 SFMPVF_IsTermDec(void* self) { return *(u32*)((u8*)self + 0x27f0); }

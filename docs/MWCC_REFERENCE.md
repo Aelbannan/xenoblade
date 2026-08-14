@@ -10380,3 +10380,150 @@ The LODMemMan TU has a family of element-walk functions (func_8046E780/E7D0/E8C8
 ## Doubled-beq family: `if (old) { if (old) { call } store0; }` near-miss class
 
 func_80471794 (99.8%), func_804719FC (99.8%), func_804717FC (92.9%): all reconstruct with the `int old = lbl; if (old) { if (old) { deallocate(old) } lbl = 0; }` + an `old` local (the local is REQUIRED — direct global reads fold the double-beq). Residual is always exactly 1 reg_swap: the retail's dead second `beq` skips BOTH the call and the trailing `lbl = 0` store (targets past it); MWCC keeps the store inside the second beq's skip region. The witness cannot certify the branch-displacement field (slot 10 non-register bits). Store order `if (old) { if (old) { call } lbl = 0; }` is the best; nesting the store inside the inner if (to force the skip) blows up to 14 structural.
+
+## u64 copy form fixes two-s32 store-pair register swap
+
+`SFMPS_Seek` (us-803c55d4, sfd_mps.c): the 8-byte pairs
+`self[0xee8..0xeec] = raw_hdr[0x18..0x1c]` and `mps_sub[0x10..0x14] =
+raw_hdr[0x20..0x24]` plateaued at 89.3% (8 pure reg_swap, 0 structural) with
+every two-s32 temporary shape (v0/v1 reuse, fresh vars, top/bottom
+declarations, assignment order, store order, direct store expressions):
+MWCC always emits `lwz r4,0x18; lwz r0,0x1c; stw r0,0xeec; stw r4,0xee8`
+(first-loaded → r4, first-stored → r0) while retail emits
+`lwz r0,0x18; lwz r4,0x1c; stw r4,0xeec; stw r0,0xee8` (first-loaded → r0).
+The winning shape is a **single u64 load-store**
+`*(u64*)((u8*)self + 0xee8) = *(u64*)((u8*)raw_hdr + 0x18);` — MWCC colors the
+pair exactly like retail (loads 0x18→r0, 0x1c→r4; stores r4→high, r0→low) and
+100% byte-identical. Mechanism: the u64 access makes MWCC allocate the two
+words as one 64-bit value (low word born first → r0), whereas separate s32
+loads allocate the second-defined temp to r0. Boundary: the mps_sub+0x2c/0x30
+pair (same 8-byte span) must stay TWO s32 stores with a reused v0 temp — the
+u64 form there breaks the earlier `li r3,0` scheduling (96.0%). Rule: for
+8-byte store pairs whose low word is loaded first and stored second, try the
+u64 copy form; if the surrounding code has an interleaved constant store,
+keep the two-s32 form for that pair.
+
+## CriWare sfd_mpv — loop-bound-before-counter + temp-add levers (SearchDelim/BsearchDelim 100%)
+
+`sfmpv_SearchDelim` (us-803c6454) / `sfmpv_BsearchDelim` (us-803c659c) were stuck at
+90.2%/84.1% (8/13 pure reg_swap, 0 structural) with a scrambled saved-register map
+(r/bound/i/p across r28-r31). Collapsed to 100% with three levers:
+1. **Declaration order `p, bound, r2, i, n1, n2, r, tmp`** — the loop LIMIT
+   (`bound`) BEFORE the counter (`i`) (SetOutVol-family rule: loop value before
+   counter), and the SECOND search result (`r2`) declared right after `bound` so
+   it reuses bound's dead register (r29) after the loop. The FIRST result `r`
+   then lands in r28 exactly like retail.
+2. **Named `bound` local** instead of inlining `n1 + n2 - 3` in the for header —
+   the inline form scatters the bound computation across p/i/p registers.
+3. **Temp `s32 off` for the return add**: `return off + i;` where
+   `off = *(u32*)buf + *(s32*)(buf+4) - n1;` forces `add r3,r0,r28` (accumulator
+   first) — direct expression forms let MWCC reassociate to `add r3,r28,r0`
+   (i first). The `- n1` still emits `subf r0,r30,r0` (subf source-driven).
+Both functions used the identical shape → 100%. Reuse: when a search/scan
+function's saved registers are scrambled across the loop limit/counter/pointer,
+apply (1)+(2)+(3) before declaring a regalloc fixed point.
+
+## CriWare sfd_mpv — dst-pointer guard via indexed access hoists prologue computation (FirstPicAtr 100%)
+
+`sfmpv_FirstPicAtr` (us-803c830c) had a 5-instruction prologue rotation: retail
+computed `addi r30,r3,2332` (dst = self+0x91c) FIRST (right after stmw, before
+the `mr r26-r29` arg saves); decomp saved args then computed dst. The first
+guard `if (*(s32*)((u8*)self + 0x92c) != 0)` was rewritten as
+`if (dst[4] != 0)` — dst[4] is exactly self+0x92c (0x91c+16). Referencing dst[4]
+makes MWCC schedule the dst pointer computation at the top of the prologue,
+interleaved before the arg saves exactly like retail → 100% byte-identical.
+Rule: when a function's prologue computes a `self+const` pointer but the decomp
+schedules it after the arg saves, rewrite the earliest `*(s32*)(self+const')`
+access as an indexed access through that pointer (dst[k]) — the indexed form
+forces the pointer materialization to the entry.
+
+## CriWare sfd_mpvf — 3-cycle volatile rotation fixed point (SetPicUsrBuf open)
+
+`sfmpvf_SetPicUsrBuf` (us-803ca980, 0x134) plateaus at 89.6% (0 structural, 8
+pure reg_swap) with a persistent 3-cycle rotation of volatile temps:
+retail {zero→r7, hm1→r0, limit→r3} vs decomp {zero→r3, hm1→r7, limit→r0}.
+Retail reuses BOTH dead error-check registers (r7=[self+0x30] load, r0=+3 add)
+for zero/hm1; decomp reuses r3 (dead self) for the zero and r7 for hm1.
+Invariant across ~25 source shapes: hm1 named/inline/u32/s32, zero named/
+literal/shared-with-early-loop, declaration order (hm1 first/last/scoped),
+statement order (hm1 before/after stores, cur first/second), loop bound
+(ternary, min var, if/else, flipped compare, default-first), p-index forms,
+p-advance pointer loop, -O4,s (smaller code, not retail), casted error-check
+load, index order (5+2i vs 2i+5). The role table classifies all 8 as
+role-clean (r0/r3/r7 same "gpr" role), but the renaming witness rejects
+ABI-fixed r3↔r7 (return register). Open item; revisit with a new MWCC
+behavior discovery (e.g., a statement that keeps self/r3 live past the error
+check to block the r3 reuse, forcing zero into r7).
+
+## CriWare mwsfdply — SetFlowLimit (double)(s32) reg-allocation fixed point (open)
+
+`MWSFPLY_SetFlowLimit` (us-803a523c, 0x5c): 82.6% (0 structural, 4 pure
+reg_swap). Retail: magic addr→r7, xoris→r6. Decomp: magic addr→r6,
+xoris→r5. The retail allocates a FRESH register for the (double)(s32)
+conversion's `xoris` result (r6) and the 2^52-magic address gets r7; the
+decomp reuses the raw's register (r5) for the xoris and the magic gets r6.
+Invariant across ~12 forms: builtin (double)(s32) cast, named raw/v temps,
+explicit union {f64 d; u32 u[2]} + bias (worse, 56-65%), scale on right
+(worse), cast removal, redundant casts. The raw (r5) is dead after the
+xoris in both, yet the allocators differ — a pure Chaitin reuse choice.
+Also fixed: a stray static `sfd(void*)` helper in mwsfdply.c emitted an
+8-byte standalone function, blowing the unit split budget by 0x8 — inlined
+the two call sites (`*(void**)((u8*)h + 0x58)`), split now PASS (0x0 spare).
+Open item; revisit with a value that keeps r5 live across the xoris (e.g., a
+second use of h[0x50C]) without changing codegen.
+
+## ocUnit session — real-virtual-dispatch sweep (US)
+
+- **func_8003C84C 100% via real dispatch:** the manual vtable casts
+  `((s32(*)(void*))(*(void***)obj)[43])(obj)` and
+  `((void(*)(void*,void*,float))(*(void***)obj)[46])(obj,&vec,lbl)` for
+  DECLARED slots 43/46 (CfObject_UnkVirtualFunc23 at 0xAC, UnkVirtualFunc26 at
+  0xB8) collapsed to `obj->CfObject_UnkVirtualFunc23()` and
+  `obj->CfObject_UnkVirtualFunc26((u32)&vec, lbl)` → MWCC emits r12 dispatch,
+  all 4 vtable-load swaps gone → 100%. Applies whenever the slot is already
+  declared in the header (check the //0xXX comment); do NOT add undeclared
+  virtuals to CfObject (33-slot gap at 0x178..0x1F8 for func_8003D570 — too
+  risky, documented).
+- **turn (us-8003e94c) 92.9% → 97.6%:** slot 49 (0xC4, UnkVirtualFunc29)
+  real dispatch fixed 2 vtable swaps; residual 1 reg_swap is a pure
+  `fmuls fD,fA,fC` operand-order fixed point: retail `fmuls f1,f1,f0`
+  (computed value first) vs decomp `fmuls f1,f0,f1` (constant first).
+  Invariant across source order (angle-first/const-first/named k/two-step).
+  Same fixed point hits setRot (3 fmuls swaps at 0xd4/0xe4/0xe8).
+- **setRot (us-8003f5b0) 95.9%, 3 fmuls swaps:** `(x/4096.0f)*0.01745...`
+  retail `fmuls f3,f3,f2` vs decomp `fmuls f3,f2,f3`. Named temps/const
+  reorder regress (78-82%). Documented open.
+- **func_8003E528 92.4%, 6 swaps:** obj/ocHandle r30↔r31 swap — retail keeps
+  obj in r31 (fresh) and reuses handle's dead r30 for ocHandle; decomp puts
+  obj in r30 (reuse) and ocHandle in r31 (fresh). Declaration order, split
+  decls, void* cast: no change. Documented open.
+- **func_8003D570 92.6%:** vtable slot 0x1F8 = slot 126 — 33 virtuals beyond
+  the last declared (0x174); needs 33 new CfObject virtuals (vtable surgery
+  across all derived classes). Documented open; revisit only with a
+  purpose-built class-change plan.
+- **func_8003F870 100% via covariant-return lever:** retail's `mr r28, r3`
+  right after the slot-0xA8 virtual dispatch proves UnkVirtualFunc22 returns
+  `this` (its impl copies 3 u32s and never touches r3, so r3 survives as
+  self). Fix: base `CfObject.hpp` declares `virtual CfObject*
+  CfObject_UnkVirtualFunc22()`, CfObjectModel/CfObjectMove overrides declare
+  COVARIANT returns (`CfObjectModel*`/`CfObjectMove*`), and the call site
+  becomes `child = obj->CfObject_UnkVirtualFunc22();` — the object's liveness
+  ends at the call so MWCC keeps it in a VOLATILE register (r4) like retail
+  instead of spilling to a callee-saved (r31). 89.6% → 100%. Key tell: retail
+  uses the virtual-call return register (r3) where the decomp uses the
+  pre-call object variable — the virtual returns this.
+- **func_8003DDF4 100% via reverse-declaration lever:** pervasive r30↔r31
+  swap (retail: first-created str → r31/higher, second obj → r30/lower; decomp
+  assigned by DECLARATION order). Fix: declare the locals in REVERSE creation
+  order with deferred assignment (`cf::CfObject* obj; VMArg* arg1; const
+  char* str;` then assign arg1/str/obj in creation order). 74.6% → 100%.
+  General rule: when retail assigns saved regs by creation order (first-created
+  → higher reg) but decomp assigns by declaration order, declare in reverse
+  creation order. (Did NOT help func_8003E528's obj/ocHandle swap — that one
+  involves handle-slot reuse, separate dynamic.)
+- **setAct 100% via slot-reuser-first lever:** pThread/actionId r30↔r31 swap
+  where fixedParam reuses pThread's slot. Declaring `int fixedParam;` (the
+  local that REUSES an arg's register) FIRST makes MWCC give the arg the
+  HIGHER register (pThread→r31, actionId→r30, fixedParam→r31 via reuse).
+  83.6% → 100%. Refinement of the reverse-declaration rule: the local that
+  reuses an arg's dead register must be declared before any other local.

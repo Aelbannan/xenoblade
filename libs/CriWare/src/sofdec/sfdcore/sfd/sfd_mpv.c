@@ -611,12 +611,12 @@ s32 sfmpv_NeedSafeDlmRefresh(void* buf, u32 dlm, u32 dlm_new) {
 // ---------------------------------------------------------------------------
 u32 sfmpv_SearchDelim(void* buf, u32 mask, u32* out) {
     u8* p;
+    s32 bound;
+    u32 r2;
     s32 i;
     s32 n1;
     s32 n2;
     u32 r;
-    u32 r2;
-    s32 bound;
     u8 tmp[8];
     *out = 0;
     r = MPV_SearchDelim(*(void**)buf, *(u32*)((u8*)buf + 4), mask);
@@ -639,7 +639,10 @@ u32 sfmpv_SearchDelim(void* buf, u32 mask, u32* out) {
         u32 v = MPV_CheckDelim(p);
         if ((v & mask) != 0) {
             *out = v;
-            return *(u32*)((u8*)buf) + *(s32*)((u8*)buf + 4) - n1 + i;
+            {
+                s32 off = *(u32*)((u8*)buf) + *(s32*)((u8*)buf + 4) - n1;
+                return off + i;
+            }
         }
         p++;
     }
@@ -655,10 +658,13 @@ u32 sfmpv_SearchDelim(void* buf, u32 mask, u32* out) {
 // sfmpv_BsearchDelim
 // ---------------------------------------------------------------------------
 u32 sfmpv_BsearchDelim(void* buf, u32 mask, u32* out) {
-    u32 r;
+    u8* p;
+    s32 bound;
+    u32 r2;
+    s32 i;
     s32 n1;
     s32 n2;
-    s32 i;
+    u32 r;
     u8 tmp[8];
     *out = 0;
     if (*(s32*)((u8*)buf + 0xc) != 0) {
@@ -673,22 +679,24 @@ u32 sfmpv_BsearchDelim(void* buf, u32 mask, u32* out) {
         n2 = (n2 < 3) ? n2 : 3;
         memcpy(tmp, *(u8**)buf + *(s32*)((u8*)buf + 4) - n1, n1);
         memcpy(tmp + n1, *(void**)((u8*)buf + 8), n2);
-        {
-            u8* p = tmp;
-            for (i = 0; i < (n1 + n2 - 3); i++) {
-                u32 v = MPV_CheckDelim(p);
-                if ((v & mask) != 0) {
-                    *out = v;
-                    return *(u32*)((u8*)buf) + *(s32*)((u8*)buf + 4) - n1 + i;
+        bound = n1 + n2 - 3;
+        p = tmp;
+        for (i = 0; i < bound; i++) {
+            u32 v = MPV_CheckDelim(p);
+            if ((v & mask) != 0) {
+                *out = v;
+                {
+                    s32 off = *(u32*)((u8*)buf) + *(s32*)((u8*)buf + 4) - n1;
+                    return off + i;
                 }
-                p++;
             }
+            p++;
         }
     }
-    r = MPV_BsearchDelim((u8*)*(void**)((u8*)buf) + *(u32*)((u8*)buf + 4), *(u32*)((u8*)buf + 4), mask);
-    if (r != 0) {
-        *out = MPV_CheckDelim((u8*)r);
-        return r;
+    r2 = MPV_BsearchDelim((u8*)*(void**)((u8*)buf) + *(u32*)((u8*)buf + 4), *(u32*)((u8*)buf + 4), mask);
+    if (r2 != 0) {
+        *out = MPV_CheckDelim((u8*)r2);
+        return r2;
     }
     return 0;
 }
@@ -1475,7 +1483,7 @@ s32 sfmpv_FirstPicAtr(void* self, void* mpv, void* frm, void* pic) {
     s32 vbv;
     s32 avg;
     s32 max;
-    if (*(s32*)((u8*)self + 0x92c) != 0) {
+    if (dst[4] != 0) {
         return 0;
     }
     if (MPV_GetBitRate(mpv, (u32*)&bitrate) != 0) {
@@ -1817,7 +1825,7 @@ s32 sfmpv_IsLate(void* self, s32 type) {
     s32 a;
     s32 b;
     tc = (u8*)self + 0xd98;
-    if (*(s32*)((u8*)self + 0xeb0) == 0) {
+    if (*(s32*)((u8*)tc + 0x118) == 0) {
         t = 0;
     } else {
         t = (*(s32*)((u8*)tc + 0xe4) - *(s32*)((u8*)tc + 0x13c)) + *(s32*)((u8*)tc + 0x164);

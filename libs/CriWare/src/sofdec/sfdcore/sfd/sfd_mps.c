@@ -844,9 +844,9 @@ int sfmps_CopyPadding(void) {
 int sfmps_CopyDstBuft(void* self, s32 stream_kind, s32 buf, s32 size, s64 pts) {
     s32 ring_buf[6] __attribute__((aligned(8)));
     s32 res;
+    void* first_ptr;
     s32 first_size;
     s32 total_size;
-    void* first_ptr;
     void* write_ptr;
     void* second_ptr;
 
@@ -867,8 +867,8 @@ int sfmps_CopyDstBuft(void* self, s32 stream_kind, s32 buf, s32 size, s64 pts) {
         s32 pts_data[4];
         if (lbl_eu_80619BAC != NULL) {
             s32 data[3] __attribute__((aligned(8)));
-            data[0] = (s32)(pts >> 32);
             data[1] = (s32)pts;
+            data[0] = (s32)(pts >> 32);
             data[2] = size;
             if (lbl_eu_80619BAC((u8*)self + 0x1374, data) == -1)
                 return 0;
@@ -878,8 +878,8 @@ int sfmps_CopyDstBuft(void* self, s32 stream_kind, s32 buf, s32 size, s64 pts) {
             s32 out;
             if (SFPTS_IsPtsQueFull(self, stream_kind))
                 return 0;
-            pts_data[0] = (s32)(pts >> 32);
             pts_data[1] = (s32)pts;
+            pts_data[0] = (s32)(pts >> 32);
             pts_data[2] = (s32)first_ptr;
             pts_data[3] = size;
             res = SFPTS_WritePtsQue(self, stream_kind, pts_data, &out);
@@ -889,8 +889,8 @@ int sfmps_CopyDstBuft(void* self, s32 stream_kind, s32 buf, s32 size, s64 pts) {
     } else if (stream_kind == 2) {
         if (lbl_eu_80619BAC != NULL) {
             s32 data[3] __attribute__((aligned(8)));
-            data[0] = (s32)(pts >> 32);
             data[1] = (s32)pts;
+            data[0] = (s32)(pts >> 32);
             data[2] = size;
             if (lbl_eu_80619BAC((u8*)self + 0x1368, data) == -1)
                 return 0;
@@ -900,7 +900,7 @@ int sfmps_CopyDstBuft(void* self, s32 stream_kind, s32 buf, s32 size, s64 pts) {
     if (size <= first_size) {
         MEM_Copy(first_ptr, (void*)buf, size);
     } else {
-        MEM_Copy(write_ptr, (void*)buf, first_size);
+        MEM_Copy(first_ptr, (void*)buf, first_size);
         MEM_Copy(write_ptr, (void*)(buf + first_size), size - first_size);
     }
 
@@ -1224,6 +1224,7 @@ s32 SFMPS_AddRead(void* h) {
 }
 
 int SFMPS_Seek(void* self) {
+    s32 v0;
     s32* hdr = *(s32**)((u8*)self + 0x2670);
     s32* raw_hdr;
     u8* base;
@@ -1232,7 +1233,6 @@ int SFMPS_Seek(void* self) {
     int out1, out2;
     s32 ret1, ret2;
     s32 err;
-    s32 v0, v1;
 
     if (hdr == NULL) {
         raw_hdr = NULL;
@@ -1266,14 +1266,8 @@ int SFMPS_Seek(void* self) {
     *(s32*)((u8*)mps_sub + 0x2c) = v0;
     v0 = *(s32*)((u8*)raw_hdr + 0x2c);
     *(s32*)((u8*)mps_sub + 0x30) = v0;
-    v0 = *(s32*)((u8*)raw_hdr + 0x18);
-    v1 = *(s32*)((u8*)raw_hdr + 0x1c);
-    *(s32*)((u8*)self + 0xeec) = v1;
-    *(s32*)((u8*)self + 0xee8) = v0;
-    v0 = *(s32*)((u8*)raw_hdr + 0x20);
-    v1 = *(s32*)((u8*)raw_hdr + 0x24);
-    *(s32*)((u8*)mps_sub + 0x14) = v1;
-    *(s32*)((u8*)mps_sub + 0x10) = v0;
+    *(u64*)((u8*)self + 0xee8) = *(u64*)((u8*)raw_hdr + 0x18);
+    *(u64*)((u8*)mps_sub + 0x10) = *(u64*)((u8*)raw_hdr + 0x20);
 
     return 0;
 }

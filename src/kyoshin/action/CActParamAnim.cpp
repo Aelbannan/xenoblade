@@ -4,10 +4,14 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/action/CActParamAnim.hpp"
+#include "kyoshin/action/CActParamData.hpp"
 #include "monolib/device/CDeviceVI.hpp"
+#include <monolib/math/CVec3.hpp>
 #include <nw4r/math.h>
+#include <revolution/mtx/quat.h>
+#include <revolution/mtx/vec.h>
 
-CActParamAnim::CActParamAnim() {}
+CActParamAnim::CActParamAnim() : mField0C(0) {}
 
 extern "C" CActParamAnim* __dt__8004B070(CActParamAnim* self, s32 deleteFlag) {
     if (self != nullptr && deleteFlag > 0) {
@@ -44,24 +48,20 @@ struct CActParamAnimFlagView {
     u32 flags;
 };
 
-struct CActParamAnimData3 {
-    u32 x;
-    u32 y;
-    u32 z;
-};
-
-extern "C" bool func_8004B354(CActParamAnim* self, const CActParamAnimData3* value) {
-    CActParamAnimObjectView* view =
-        reinterpret_cast<CActParamAnimObjectView*>(self);
-    if (view->object == nullptr ||
-        (reinterpret_cast<CActParamAnimFlagView*>(self)->flags & 0x100) != 0) {
+bool func_8004B354(CActParamAnim* self, const CActParamAnimData3* value) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    if (view->object3A0 == nullptr) {
         return false;
     }
-    view->field_3A8 = *reinterpret_cast<const f32*>(&value->x);
-    view->field_3AC = *reinterpret_cast<const f32*>(&value->y);
-    view->field_3B0 = *reinterpret_cast<const f32*>(&value->z);
+    if ((view->field0C & 0x100) != 0) {
+        return false;
+    }
+    // Commit the new position to the cached state and the attached sub-object.
+    view->field3A8 = value->x;
+    view->field3AC = value->y;
+    view->field3B0 = value->z;
     CActParamAnimData3* destination =
-        reinterpret_cast<CActParamAnimData3*>(func_8048315C(view->object));
+        reinterpret_cast<CActParamAnimData3*>(func_8048315C(view->object3A0));
     destination->x = value->x;
     destination->y = value->y;
     destination->z = value->z;
@@ -78,20 +78,23 @@ void CActParamAnim_copyTranslation(void* dst, const void* src) {
     *(int*)((char*)dst + 8) = *(int*)((char*)src + 8);
 }
 
-extern "C" bool func_8004B40C(CActParamAnim* self, const CActParamAnimData3* value) {
-    CActParamAnimObjectView* view =
-        reinterpret_cast<CActParamAnimObjectView*>(self);
-    u32 flags = reinterpret_cast<CActParamAnimFlagView*>(self)->flags | 0x10;
-    view->field_3A8 = *reinterpret_cast<const f32*>(&value->y);
-    reinterpret_cast<CActParamAnimFlagView*>(self)->flags = flags;
-    if (view->object == nullptr || (flags & 0x100) != 0) {
+bool func_8004B40C(CActParamAnim* self, const CActParamAnimData3* value) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    view->field488 = *reinterpret_cast<const f32*>(&value->y);
+    u32 flags = view->field0C | 0x10;
+    view->field0C = flags;
+    if (view->object3A0 == nullptr) {
         return false;
     }
-    view->field_3A8 = *reinterpret_cast<const f32*>(&value->x);
-    view->field_3AC = *reinterpret_cast<const f32*>(&value->y);
-    view->field_3B0 = *reinterpret_cast<const f32*>(&value->z);
+    if ((flags & 0x100) != 0) {
+        return false;
+    }
+    // Commit the new position to the cached state and the attached sub-object.
+    view->field3A8 = value->x;
+    view->field3AC = value->y;
+    view->field3B0 = value->z;
     CActParamAnimData3* destination =
-        reinterpret_cast<CActParamAnimData3*>(func_8048315C(view->object));
+        reinterpret_cast<CActParamAnimData3*>(func_8048315C(view->object3A0));
     destination->x = value->x;
     destination->y = value->y;
     destination->z = value->z;
@@ -99,16 +102,14 @@ extern "C" bool func_8004B40C(CActParamAnim* self, const CActParamAnimData3* val
 }
 
 extern "C" bool func_8004B4A4(CActParamAnim* self, f32 value) {
-    CActParamAnimObjectView* view =
-        reinterpret_cast<CActParamAnimObjectView*>(self);
-    void* owner = *reinterpret_cast<void**>(reinterpret_cast<u8*>(self) + 8);
-    if (owner != nullptr &&
-        reinterpret_cast<bool (*)(void*)>(*reinterpret_cast<void**>(
-            *reinterpret_cast<void**>(owner))) (owner) == false) {
+    CActParamAnimOwnerIf* owner =
+        *reinterpret_cast<CActParamAnimOwnerIf**>(reinterpret_cast<u8*>(self) + 8);
+    if (owner != NULL && owner->v3() == 0) {
         return true;
     }
-    if ((reinterpret_cast<CActParamAnimFlagView*>(self)->flags & 0x40) == 0) {
-        *reinterpret_cast<f32*>(reinterpret_cast<u8*>(self) + 0x440) = value;
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    if ((view->field0C & 0x20) == 0) {
+        view->field440 = value;
     }
     return true;
 }
@@ -158,12 +159,13 @@ float CActParamAnim::getScale() {
 }
 
 extern "C" void func_8004B624(CActParamAnim* self, void* object, void* state,
-                                u32 first, u32 second, u32 third) {
-    CActParamAnimFlagView* flags = reinterpret_cast<CActParamAnimFlagView*>(self);
-    CActParamAnimObjectView* view = reinterpret_cast<CActParamAnimObjectView*>(self);
-    view->object = object;
-    view->objectState = reinterpret_cast<u32>(state);
-    flags->flags |= 8;
+                              u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    view->object3A0 = reinterpret_cast<u8*>(object);
+    view->state3A4 = reinterpret_cast<u32>(state);
+    view->field0C |= 8;
+    func_80053B24(reinterpret_cast<u8*>(self) + 0x10, self, self, state,
+                  reinterpret_cast<void*>(param));
     func_8004B9D4(self, 1, 0, -1, 0);
 }
 
@@ -172,7 +174,6 @@ void bits_clear(uint32_t* ptr, uint32_t mask) {
 }
 
 void CActParamAnim::updateSubAnim() {
-    extern void func_80055AC4(void*);
     if (*(int*)((char*)this + 0x3A4) != 0) func_80055AC4((char*)this + 16);
 }
 
@@ -320,21 +321,9 @@ void* CActParamAnim::getNextChainObj() {
 void func_8004B9D4(){}
 
 extern "C" f32 func_8004BC28(f32 value) {
-    extern f32 lbl_eu_8066A1FC;
-    extern f32 lbl_eu_8066A1F8;
-    f32 twoPi = lbl_eu_8066A1FC;
-    f32 pi = lbl_eu_8066A1F8;
-    goto check1;
-loop1:
-    value -= twoPi;
-check1:
-    if (pi <= value) goto loop1;
-    f32 negPi = -pi;
-    goto check2;
-loop2:
-    value += twoPi;
-check2:
-    if (value < negPi) goto loop2;
+    // Wrap an angle into [-pi, pi) by adding/subtracting 2*pi.
+    while (lbl_eu_8066A1F8 <= value) value -= lbl_eu_8066A1FC;
+    while (value < -lbl_eu_8066A1F8) value += lbl_eu_8066A1FC;
     return value;
 }
 
@@ -371,21 +360,15 @@ extern "C" void func_8004CB80(f32* out, const f32* a, const f32* b){
     out[2] = result.z;
 }
 
-extern "C" void func_8004CBC8(f32* vec) {
-    extern f32 lbl_eu_80665EA0;
-    extern void PSVECNormalize(const f32*, f32*);
-    extern u32 zero__Q22ml5CVec3[];
-    f32 y = vec[1];
-    f32 x = vec[0];
-    f32 z = vec[2];
-    f32 magSq = y*y + x*x + z*z;
-    if (magSq == 0.0f) {
-        vec[0] = 0.0f;
-        vec[1] = 0.0f;
-        vec[2] = 0.0f;
+ml::CVec3* func_8004CBC8(ml::CVec3* vec) {
+    // Normalize; degenerate (zero-length) vectors are replaced by the zero
+    // vector instead (matches the retail lenSq == 0 branch).
+    if (vec->x * vec->x + vec->y * vec->y + vec->z * vec->z == lbl_eu_80665EA0) {
+        *vec = ml::CVec3::zero;
     } else {
-        PSVECNormalize(vec, vec);
+        PSVECNormalize(*vec, *vec);
     }
+    return vec;
 }
 
 float Atan2FIdx__Q24nw4r4mathFff(float, float);
@@ -459,19 +442,14 @@ void CActParamAnim::func_8004E828() {}
 
 void CActParamAnim::func_8004E9EC() {}
 
-extern "C" f32 func_8004EC78(f32 value) {
-    extern f32 lbl_eu_80665EA0;
-    extern f32 FrSqrt__Q24nw4r4mathFf(f32);
-    extern void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
-    extern char lbl_eu_80526324[];
-    extern char lbl_eu_80526300[];
-    if (value < 0.0f) {
-        Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+f32 func_8004EC78(f32 value) {
+    // sqrt via fast reciprocal sqrt (nw4r FSqrt semantics); warn on negatives.
+    if (value < lbl_eu_80665EA0) {
+        nw4r::db::Warning((const char*)lbl_eu_80526324, 0x273,
+                          (const char*)lbl_eu_80526300);
     }
-    if (value <= 0.0f) {
-        return 0.0f;
-    }
-    return value * FrSqrt__Q24nw4r4mathFf(value);
+    return (value <= lbl_eu_80665EA0) ? lbl_eu_80665EA0
+                                      : value * nw4r::math::FrSqrt(value);
 }
 
 void CActParamAnim::func_8004ECF4() const {}
@@ -538,15 +516,18 @@ void CActParamAnim::setActiveFlag(s32 param) {
 }
 
 extern "C" int func_80051AD0(CActParamAnim* self) {
-    extern f32 lbl_eu_80665EA0;
-    extern f32 lbl_eu_80665ECC;
-    void* owner = *(void**)((u8*)self + 8);
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    CActParamAnimOwnerIf* owner =
+        *reinterpret_cast<CActParamAnimOwnerIf**>(reinterpret_cast<u8*>(self) + 8);
     if (owner == NULL) return 0;
-    f32 animSpeed = *(f32*)((u8*)self + 0x394);
-    if (animSpeed == lbl_eu_80665EA0) return 0;
-    f32 val = *(f32*)((u8*)owner + 0x14) * *(f32*)((u8*)self + 0x430);
-    if (val >= *(f32*)((u8*)self + 0x434) && val <= lbl_eu_80665ECC) return 1;
-    return 0;
+    f32 animSpeed = view->field394;
+    if (lbl_eu_80665EA0 == animSpeed) return 0;
+    f32 val = owner->field14 * view->field430;
+    int result = 0;
+    if (val <= view->field434 && val >= lbl_eu_80665ECC) {
+        result = 1;
+    }
+    return result;
 }
 
 extern "C" int func_80051B38(CActParamAnim* self) {
@@ -554,9 +535,10 @@ extern "C" int func_80051B38(CActParamAnim* self) {
     void* owner = *(void**)((u8*)self + 8);
     if (owner == NULL) return 0;
     f32 animSpeed = *(f32*)((u8*)self + 0x394);
-    if (animSpeed == lbl_eu_80665EA0) return 0;
+    if (lbl_eu_80665EA0 == animSpeed) return 0;
     f32 val = *(f32*)((u8*)owner + 0x14) * *(f32*)((u8*)self + 0x430);
-    return val < *(f32*)((u8*)self + 0x434) ? 1 : 0;
+    // 1 while val exceeds the upper bound (mirror of func_80051AD0's first condition).
+    return val > *(f32*)((u8*)self + 0x434) ? 1 : 0;
 }
 
 void CActParamAnim::startAnimA() {
@@ -589,24 +571,36 @@ void CActParamAnim::startAnimC() {
 
 extern "C" int func_80051BF4(CActParamAnim* self) {
     void* owner = *(void**)((u8*)self + 8);
-    if (owner == NULL) return 0;
+    if (owner == NULL) return 1;
     f32 animSpeed = *(f32*)((u8*)self + 0x394);
     extern f32 lbl_eu_80665EA0;
-    if (animSpeed == lbl_eu_80665EA0) return 0;
+    if (lbl_eu_80665EA0 == animSpeed) return 1;
     f32 val = *(f32*)((u8*)owner + 0x14) * *(f32*)((u8*)self + 0x430);
-    return val > *(f32*)((u8*)self + 0x434) ? 1 : 0;
+    // 1 while val is below the lower bound (mirror of func_80051AD0's second condition).
+    return val < lbl_eu_80665ECC ? 1 : 0;
 }
 
-extern "C" int func_80051C40(CActParamAnim* self) {
-    void* owner = *(void**)((u8*)self + 8);
-    if (owner == NULL) return 0;
-    extern f32 lbl_eu_80665EA0;
-    f32 animSpeed = *(f32*)((u8*)self + 0x394);
-    if (animSpeed == lbl_eu_80665EA0) return 0;
-    f32 f1 = *(f32*)((u8*)owner + 0x14) * *(f32*)((u8*)self + 0x430);
-    f32 f2 = *(f32*)((u8*)self + 0x434);
-    if (f1 >= f2) return 1;
-    return 0;
+extern "C" void func_80051C40(CActParamAnim* self) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    // Copy 0x3A8..0x3B0 to 0x3B4..0x3BC, then flag juggling. The flag word is
+    // shared state (retail re-loads it after each store), so access it through
+    // a volatile pointer to keep MWCC from caching it in a register.
+    volatile u32* flagp = reinterpret_cast<volatile u32*>(reinterpret_cast<u8*>(self) + 0xC);
+    u32 flags = *flagp;
+    view->field3B4 = view->field3A8;
+    view->field3B8 = view->field3AC;
+    view->field3BC = view->field3B0;
+    if ((flags & 2) != 0) {
+        *flagp |= 4;
+    } else {
+        *flagp &= ~4;
+    }
+    if ((*flagp & 0x40) != 0) {
+        return;
+    }
+    if (view->field3C4 > lbl_eu_80665EA0) {
+        *flagp &= ~2;
+    }
 }
 
 void CActParamAnim::stopAnim() {
@@ -649,11 +643,19 @@ u32 CActParamAnim::testAndClearFlag18() {
 
 void func_80052584(){}
 
-void func_800526C0(){}
+void func_800526C0(Quaternion* out, const Vec* axis, f32 angle) {
+    // Rotation quaternion from an axis + angle: (axis * sin(half), cos(half)).
+    f32 t = lbl_eu_80665F00 * angle;
+    f32 s = nw4r::math::SinFIdx(lbl_eu_80665ED8 * t);
+    out->x = axis->x * s;
+    out->y = axis->y * s;
+    out->z = axis->z * s;
+    out->w = nw4r::math::CosFIdx(lbl_eu_80665ED8 * t);
+}
 
-extern "C" void func_8005274C(void* self, const void* param) {
-    extern void PSQUATMultiply(const void*, const void*, void*);
+extern "C" Quaternion* func_8005274C(Quaternion* self, const Quaternion* param) {
     PSQUATMultiply(self, param, self);
+    return self;
 }
 
 extern "C" void func_80052780(void* self, void* src){
@@ -699,7 +701,14 @@ void CActParamAnim::mulVec3Y(float param_2) {
 
 void CActParamAnim::func_80052934() {}
 
-void CActParamAnim::func_80053164() {}
+// Retail symbol is Fv but the body reads r4/r5: two extra args forwarded to
+// func_804BD94C's (a, b) slots (forced-name global, same scheme as
+// CfObject_UnkVirtualFunc19__Q22cf13CfObjectModelFv).
+void func_80053164__13CActParamAnimFv(CActParamAnim* self, void* a, void* b) {
+    func_804BD94C(a, b, *(u32*)((u8*)self + 0x4A8), 0, 0, 0,
+                  lbl_eu_80665EB8, lbl_eu_80665F6C, lbl_eu_80665F3C,
+                  lbl_eu_80665F70, lbl_eu_80665EA0);
+}
 
 void func_80053198(){}
 
@@ -750,6 +759,20 @@ extern "C" void sinit_800539E0() {
     lbl_eu_80663D48 = lbl_eu_8066AF20;
 }
 
-extern "C" void func_8004B6A4() {}
-extern "C" bool func_8004DAC4() { return false; }
-extern "C" void func_80051BA0() {}
+extern "C" void* func_8004DAC4(CActParamAnim* self) {
+    return *(void**)((char*)self + 0x4c0);
+}
+
+extern "C" void func_8004B6A4(CActParamAnim* self) {
+    if (*(int*)((char*)self + 0x3A4) != 0) {
+        func_80055AC4((char*)self + 0x10);
+    }
+}
+
+extern "C" void func_80051BA0(CActParamAnim* self) {
+    u32 v = *(u32*)((u8*)self + 0xC);
+    float f = lbl_eu_80665F18;
+    *(volatile u32*)((u8*)self + 0x4A8) = 0x44A05;
+    *(volatile float*)((u8*)self + 0x484) = f;
+    *(u32*)((u8*)self + 0xC) = v | 0x00800000;
+}

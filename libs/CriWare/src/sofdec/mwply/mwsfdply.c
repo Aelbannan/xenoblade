@@ -156,11 +156,8 @@ extern void MWSFSEE_StartFnameSub1(void* self, s32 a, s32 b);
 extern void MWSFSEE_StartFnameSub2(void* self, s32 a, s32 b);
 extern SfdTraceRec lbl_eu_80566354;
 
-/* Get SFD handle from player handle (+0x58) */
-static void *sfd(void *h) { return *(void **)((u8 *)h + 0x58); }
-
 int mwPlySfdStart(void *h) {
-    if (SFD_Start(sfd(h))) {
+    if (SFD_Start(*(void **)((u8 *)h + 0x58))) {
         MWSFLIB_SetErrCode(-0x133);
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x1B);
         return -0x133;
@@ -169,7 +166,7 @@ int mwPlySfdStart(void *h) {
 }
 
 int mwPlyTermSupply(void *h) {
-    if (SFD_TermSupply(sfd(h)))
+    if (SFD_TermSupply(*(void **)((u8 *)h + 0x58)))
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x62);
 }
 
@@ -418,7 +415,7 @@ int MWSFPLY_SetFlowLimit(void *h) {
     // Referencing the named extern emits the retail relocs (the raw-address
     // form inlined lis 0x8052/lfd -0x4E90 with no reloc).
     MWSFD_SetFlowLimit(h,
-        (u32)(s32)(lbl_eu_8051B190 * (double)(s32)*(s32 *)((u8 *)h + 0x50C)));
+        (u32)(s32)(lbl_eu_8051B190 * (double)*(s32 *)((u8 *)h + 0x50C)));
 }
 
 int mwPlyChkSupply(void *h) {

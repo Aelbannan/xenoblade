@@ -109,6 +109,7 @@ u32 func_801E9774(void*, u16, void*);
 bool func_801E98E4(void*, u16, void*);
 void func_801D62F8(void*, u32, const void*);
 u32 func_801DFD60(void*, void*, u32);
+u32 func_801DFDC0(void*, u32, void*);
 u32 func_801DF610(void*, void*, u32, void*);
 u32 func_801DFE48(void*, u16, void*);
 u32 func_801DFFB8(void*, u16, void*, void*);
@@ -144,7 +145,7 @@ extern const u16 lbl_eu_80668078;
 extern const u32 lbl_eu_8066807C;
 extern const u16 lbl_eu_80668080;
 u32 getLanguage__9CDeviceSCFv();
-void* CItem_initItemImplInstances(void*);
+extern "C" void* CItem_initItemImplInstances(void*);
 u32 func_801393CC(void*);
 extern void* lbl_eu_80664110;
 u32 getHandleMEM2__Q23mtl10MemManagerFv();
@@ -621,6 +622,7 @@ void func_801D77BC(CItemBoxInfo* info, u16 arg2) {
                 func_801D62F8((u8*)pane + 0x10, j, tmp);
             }
         }
+
     }
 }
 void func_801D79F8(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
@@ -804,11 +806,1715 @@ void func_801D8C0C(CItemBoxInfo* info) {
         }
     }
 }
-extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4) {
-    // Placeholder body while func_801E43BC matching is in flight.
-    func_8009ECB0();
+// Local data shapes used by the ItemBox1 comparison renderer.
+struct D8EQuad {
+    s16 r, g, b, a;
+};
+struct D8ERenderQuad {
+    f32 values[8];
+};
+struct D8EEntry {
+    union {
+        u32 words[13];
+        s16 halfWords[26];
+    };
+};
+struct D8EArmorEntry {
+    union {
+        u32 words[7];
+        s16 halfWords[14];
+        struct {
+            u16 _00;
+            u16 _02;
+            s16 etherDefense;
+            s16 physicalDefense;
+            u8 _08[0x14];
+        };
+    };
+};
+union D8EComparisonStorage {
+    D8EEntry weapon[4];
+    D8EArmorEntry armor[4];
+};
+
+static inline void scaleArmorDefense(D8EArmorEntry& entry, s32 effect) {
+    f32 scale = 0.01f * (100.0f + (f32)effect);
+    entry.physicalDefense = (s16)(s32)((f32)entry.physicalDefense * scale);
+    entry.etherDefense = (s16)(s32)((f32)entry.etherDefense * scale);
 }
 
+static inline void applyArmorEffects(void* info, u16 member,
+                                     D8EArmorEntry& entry, u8 armorType) {
+    switch (armorType) {
+        case 3: {
+            s32 effect = func_801DFD60(info, (void*)(u32)member, 0x0D);
+            if (effect != 0) scaleArmorDefense(entry, effect);
+            effect = func_801DFD60(info, (void*)(u32)member, 0x24);
+            if (effect != 0) {
+                entry.etherDefense = (s16)(entry.etherDefense + (s16)effect);
+            }
+            break;
+        }
+        case 2: {
+            s32 effect = func_801DFD60(info, (void*)(u32)member, 0x0C);
+            if (effect != 0) scaleArmorDefense(entry, effect);
+            break;
+        }
+        case 1: {
+            s32 effect = func_801DFD60(info, (void*)(u32)member, 0x0B);
+            if (effect != 0) scaleArmorDefense(entry, effect);
+            break;
+        }
+    }
+}
+struct D8EStatC {
+    u8 _00[6];
+    s16 s06;
+    u8 _08[4];
+    s16 s0C, s0E, s10;
+    u8 _12[6];
+    s16 s18;
+    u8 _1A[2];
+    s16 s1C;
+    u8 _1E[4];
+    s16 s22;
+};
+struct D8EStatA {
+    u8 _00[0x10];
+    f32 f10;
+    u8 _14[8];
+    s16 s1C, s1E, s20;
+    u8 _22[0xC];
+    s16 s2E;
+    u8 _30[2];
+    s16 s32;
+    u8 _34[4];
+    s16 s38;
+    u8 _3A[0x1B];
+    u8 b55;
+};
+struct D8EStatB {
+    u8 _00[0x10];
+    f32 f10;
+};
+typedef void (*D8EVF)(void*, u32);
+
+static inline s16 calculateItemBoxStat(s16 modifier, s16 base, s32 effect) {
+    return (s16)(s32)(0.01f * ((100.0f + (f32)modifier) * (f32)(base + effect)));
+}
+
+static inline void applyItemBoxDeltaColor(void* valuePane, void* labelPane, s16 delta) {
+    D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
+    D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
+    D8EQuad valueTop = *(D8EQuad*)&lbl_eu_80664558;
+    D8EQuad valueBottom = *(D8EQuad*)&lbl_eu_80664560;
+    if (delta < 0) {
+        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664538);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664540);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664578);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664580);
+    } else if (delta > 0) {
+        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664528);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664530);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
+    }
+    func_80139AC8(valuePane, &valueTop, &valueBottom);
+    func_80139AC8(labelPane, &labelTop, &labelBottom);
+}
+
+static inline void applyItemBoxDeltaColorAt(CItemBoxInfo* info, u32 valueIndex,
+                                             u32 labelIndex, s16 delta) {
+    D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
+    D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
+    D8EQuad valueTop = *(D8EQuad*)&lbl_eu_80664558;
+    D8EQuad valueBottom = *(D8EQuad*)&lbl_eu_80664560;
+    if (delta < 0) {
+        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664538);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664540);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664578);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664580);
+    } else if (delta > 0) {
+        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664528);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664530);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
+    }
+    nw4r::lyt::Pane** panes = (nw4r::lyt::Pane**)((u8*)info + 0x40);
+    func_80139AC8(panes[valueIndex], &valueTop, &valueBottom);
+    func_80139AC8(panes[labelIndex], &labelTop, &labelBottom);
+}
+
+static inline void applyItemBoxDeltaColorPair(void* firstValuePane, void* firstLabelPane,
+                                               void* secondValuePane, void* secondLabelPane,
+                                               s16 delta) {
+    D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
+    D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
+    D8EQuad valueTop = *(D8EQuad*)&lbl_eu_80664558;
+    D8EQuad valueBottom = *(D8EQuad*)&lbl_eu_80664560;
+    if (delta < 0) {
+        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664538);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664540);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664578);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664580);
+    } else if (delta > 0) {
+        __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664528);
+        __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664530);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
+        __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
+    }
+    func_80139AC8(firstValuePane, &valueTop, &valueBottom);
+    func_80139AC8(firstLabelPane, &labelTop, &labelBottom);
+    func_80139AC8(secondValuePane, &valueTop, &valueBottom);
+    func_80139AC8(secondLabelPane, &labelTop, &labelBottom);
+}
+
+void copyItemBoxEntry(CItemBoxInfoEntry*, const CItemBoxInfoEntry*);
+void setItemBoxEntry(CItemBoxInfoEntry*, u16, u32, u8);
+extern "C" void copyVEC3(void*, void*);
+extern const u32 lbl_eu_8066806C;
+extern const u8 lbl_eu_80668070;
+extern const u32 lbl_eu_80506368[6];
+u32 func_801DF988(void*, void*, u32, void*, u32);
+
+// Named views keep the item-stat calculations readable while leaving the
+// backing entry as a plain 13-word record, which is how MWCC copies it.
+#define w04 words[1]
+#define _0C words[3]
+#define _10 words[4]
+#define w14 halfWords[10]
+
+#pragma push
+#pragma optimize_for_size on
+extern "C" void func_801D8E34(CItemBoxInfo* info, u32 arg2, void* arg3, u32 arg4) {
+    ml::FixStr<32> textBuffer;
+    // Packed selection: low nibble is slot, bits 16..23 select the party member,
+    // and bits 24..27 identify the equipment category. Slot zero takes its
+    // category from the candidate item itself.
+    u8 slot = (u8)(arg2 & 0xF);
+    u8 type = (u8)((arg2 >> 24) & 0xF);
+    if (slot == 0) {
+        void* selectedItem = arg3 != NULL ? arg3 : NULL;
+        if (selectedItem != NULL) {
+            type = (u8)((*(u32*)selectedItem >> 12) & 0xF);
+        }
+    }
+
+    // ---- party-slot ping: 12-word copy of party struct + 2x3 vtable[0xA4] ----
+    struct PartyData { u32 w[12]; };
+    void* party = func_8009ECB0();
+    PartyData partyData = *(PartyData*)((u8*)party + 4);
+    for (u32 row = 0; row < 2; row++) {
+        for (u32 col = 0; col < 3; col++) {
+            u8 id = (u8)partyData.w[col];
+            if (id != 0) {
+                void* actor = func_800B8B94(id);
+                if (actor != NULL) {
+                    ((D8EVF*)(*(void***)actor))[0x29](actor, 0);
+                }
+            }
+        }
+    }
+
+    // ---- character setup ----
+    u8 member = (u8)func_801392B4((arg2 >> 16) & 0xFF);
+    void* charObj = func_8009EC9C(member);
+    if (func_800B8B94(member) == NULL) {
+        func_800A13C4(charObj, 1);
+    }
+    void* stats = (u8*)charObj + 0x17C;
+    void** vt = *(void***)stats;
+
+    // ---- HP values (clamped to 9999) ----
+    s32 hp1 = (s32)((float(*)(void*))vt[0x4A])(stats);
+    if (hp1 > 9999) hp1 = 9999;
+    s32 hp2 = (s32)((float(*)(void*))vt[0x4B])(stats);
+    if (hp2 > 9999) hp2 = 9999;
+
+    // ---- name / pane text ----
+    func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4D7], func_8013639C(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
+    func_80136910((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4E3], ((u8(*)(void*))vt[0x42])(stats));
+    func_80136910((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), &lbl_eu_805063BC[0x4F0], ((u8(*)(void*))vt[0x79])(stats));
+    func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], hp1);
+    func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hp2);
+    func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x82), 0);
+
+    // ---- stat sub-objects ----
+    D8EStatA* stA = (D8EStatA*)((void*(*)(void*))vt[0x8A])(stats);
+    D8EStatB* stB = (D8EStatB*)((void*(*)(void*))vt[0x83])(stats);
+    D8EStatC* stC = (D8EStatC*)((void*(*)(void*))vt[0x8B])(stats);
+    func_8009D7E4((u8*)charObj + 0x1C, 5);
+
+    // ---- arts sum ----
+    s32 artsSum = (s32)func_801DFE48(info, member, NULL);
+    u32 w = func_801DFD60(info, (void*)(u32)member, 0x97);
+    if (w != 0) {
+        artsSum = artsSum - (s32)w;
+        if (artsSum < 0) artsSum = 0;
+    }
+
+    // ---- stat bars (display formula) ----
+    s32 effect = func_801DF610(info, (void*)(u32)member, 0x21, NULL);
+    volatile s16 bar1 = calculateItemBoxStat(stC->s10, stA->s20, effect);
+    effect = func_801DF610(info, (void*)(u32)member, 0x1, NULL);
+    volatile s16 bar2 = calculateItemBoxStat(stC->s0C, stA->s1C, effect);
+    effect = func_801DF610(info, (void*)(u32)member, 0x31, NULL);
+    s16 bar3 = calculateItemBoxStat(stC->s1C, stA->s32, effect);
+    effect = func_801DF610(info, (void*)(u32)member, 0x41, NULL);
+    volatile s16 bar4 = calculateItemBoxStat(stC->s0E, stA->s1E - (s16)artsSum, effect);
+    effect = func_801DF610(info, (void*)(u32)member, 0x51, NULL);
+    s16 bar5 = calculateItemBoxStat(stC->s18, stA->s2E, effect);
+    effect = func_801DF610(info, (void*)(u32)member, 0x54, NULL);
+    s16 bar6 = calculateItemBoxStat(stC->s22, stA->s38, effect);
+    effect = func_801DF610(info, (void*)(u32)member, 0x11, NULL);
+    volatile s16 hpStat = (s16)(s32)(stA->f10 + (f32)func_801C6158(
+        0.01f * stB->f10 * (f32)(stC->s06 + effect)));
+    if (hpStat > 9999) hpStat = 9999;
+
+    // ---- equip-mode gate: recompute bars with the equipped stat (0x30) ----
+    if (func_801DFFB8(info, member, NULL, NULL)) {
+        s32 eq = func_801DFD60(info, (void*)(u32)member, 0x30);
+        if (eq != 0) {
+            s16 barA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq) * (f32)(stA->s20 + func_801DF610(info, (void*)(u32)member, 0x21, NULL))));
+            s16 barB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)barA) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, NULL))));
+            s16 barC = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)eq) * (f32)(stA->s1E + func_801DF610(info, (void*)(u32)member, 0x41, NULL) - artsSum)));
+            hpStat = (s16)(s32)(stA->f10 + (f32)func_801C6158(
+                0.01f * stB->f10 *
+                (f32)(stC->s06 + eq + func_801DF610(info, (void*)(u32)member, 0x11, NULL))));
+
+            // ---- current weapon block ----
+            void* item2 = func_80157C4C(2, *(s16*)((u8*)charObj + 0x26));
+            if (item2 != NULL && *(u32*)item2 != 0) {
+                D8EEntry e1;
+                func_801D4E2C(&e1, member, (void*)(u32)((u16)((*(u32*)item2 >> 20) & 0xFFFF)));
+                D8EEntry e2 = e1;
+                s32 s1 = func_801DF4E0(info, (void*)(u32)member,
+                                       (u16)e2.w04, NULL);
+                s32 s2 = func_801DF578(info, (void*)(u32)member,
+                                       (u16)(e2.w04 >> 16), NULL);
+                s32 atk1 = (s32)barB + s1;
+                s32 atk2 = (s32)barB + s2;
+                if (atk1 > atk2) atk1 = atk2;
+                char* rangeSeparator = func_80136190(
+                    &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
+                textBuffer.format(&lbl_eu_805063BC[0x254], atk1, rangeSeparator, atk2);
+                func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], textBuffer.c_str(), 0);
+            }
+
+            // ---- numbers ----
+            if (barC <= 0) barC = 1;
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], (s16)barB);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], (s16)barC);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], (s16)barA);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], (s16)bar5);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], (s16)bar3);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], hpStat);
+            char* percentSuffix = func_80136190(
+                &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
+            textBuffer.format(&lbl_eu_805063BC[0x13E], (s16)bar6, percentSuffix);
+            func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], textBuffer.c_str(), 0);
+            textBuffer.format(&lbl_eu_805063BC[0x13E], (s16)(stA->b55), percentSuffix);
+            func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], textBuffer.c_str(), 0);
+
+            // ---- 20x color application ----
+            D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
+            D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
+            D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
+            D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[1], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[5], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[9], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[17], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[19], &q1, &q2);
+        }
+    }
+
+    // ---- stat panel (arg4 != 0, type in {2,4,5,6,7,8}) ----
+    if (arg4 != 0 && (type == 2 || (type >= 4 && type <= 8))) {
+        s32 e1 = 0;
+        if (func_801DFFB8(info, member, NULL, NULL)) e1 = func_801DFD60(info, (void*)(u32)member, 0x30);
+        s32 e2 = 0;
+        if (func_801DFFB8(info, member, arg3, NULL)) e2 = func_801DFD60(info, (void*)(u32)member, 0x30);
+
+        // row A: 0x21 -> panes 0x60/0x64
+        s16 dB = 0;
+        {
+            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e1) * (f32)(stA->s20 + func_801DF610(info, (void*)(u32)member, 0x21, NULL))));
+            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)e2) * (f32)(stA->s20 + func_801DF610(info, (void*)(u32)member, 0x21, arg3))));
+            s16 d = (s16)(nb - pb);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], nb);
+            D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
+            D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
+            D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
+            D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+            if (d < 0) {
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+            } else if (d > 0) {
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+            }
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[9], &q1, &q2);
+        }
+
+        // row B: 0x1 -> panes 0x50/0x54
+        {
+            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e1) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, NULL))));
+            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)e2) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, arg3))));
+            dB = (s16)(nb - pb);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], nb);
+            D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
+            D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
+            D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
+            D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+            if (dB < 0) {
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+            } else if (dB > 0) {
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+            }
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[5], &q1, &q2);
+        }
+
+        s32 comparisonArtsSum = (s32)func_801DFE48(info, member, NULL);
+        u32 comparisonWeight = func_801DFD60(info, (void*)(u32)member, 0x97);
+        if (comparisonWeight != 0) {
+            comparisonArtsSum -= (s32)comparisonWeight;
+            if (comparisonArtsSum < 0) comparisonArtsSum = 0;
+        }
+
+        // row C: 0x41 -> panes 0x58/0x5C
+        {
+            s16 oldAgilityBase = (s16)(stA->s1E - (s16)comparisonArtsSum);
+            if (oldAgilityBase <= 0) oldAgilityBase = 1;
+            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e1) *
+                (f32)(oldAgilityBase + func_801DF610(
+                    info, (void*)(u32)member, 0x41, NULL))));
+            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0E + (f32)e2) *
+                (f32)(oldAgilityBase + func_801DF610(
+                    info, (void*)(u32)member, 0x41, arg3))));
+            s16 dC = (s16)(nb - pb);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], nb);
+            D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
+            D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
+            D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
+            D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+            if (dC < 0) {
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+            } else if (dC > 0) {
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+            }
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
+        }
+
+        // row D: 0x11 + func_801C6158 -> panes 0x40/0x48
+        {
+            s16 pb = (s16)(s32)(stA->f10 + (f32)func_801C6158(0.01f * stB->f10 * (f32)(stC->s06 + e1 + func_801DF610(info, (void*)(u32)member, 0x11, NULL))));
+            s16 nb = (s16)(s32)(stA->f10 + (f32)func_801C6158(0.01f * stB->f10 * (f32)(stC->s06 + e2 + func_801DF610(info, (void*)(u32)member, 0x11, arg3))));
+            if (pb > 9999) pb = 9999;
+            if (nb > 9999) nb = 9999;
+            s16 dD = (s16)(nb - pb);
+            if (((float(*)(void*))vt[0x4A])(stats) > (f32)nb) {
+                func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], nb);
+            }
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], nb);
+            D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
+            D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
+            D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
+            D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+            if (dD < 0) {
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+            } else if (dD > 0) {
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+            }
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[1], &q1, &q2);
+        }
+        // ---- type switch: slot id + item ----
+        s16 slotId = 0;
+        switch (type) {
+            case 2: slotId = *(s16*)((u8*)charObj + 0x26); break;
+            case 4: slotId = *(s16*)((u8*)charObj + 0x1C); break;
+            case 5: slotId = *(s16*)((u8*)charObj + 0x1E); break;
+            case 6: slotId = *(s16*)((u8*)charObj + 0x20); break;
+            case 7: slotId = *(s16*)((u8*)charObj + 0x22); break;
+            case 8: slotId = *(s16*)((u8*)charObj + 0x24); break;
+        }
+        D8EComparisonStorage comparisonStorage;
+        void* item = func_80157C4C(type, slotId);
+        if (type == 2) {
+            // ---- weapon block (0x801E7300) ----
+            u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
+            D8EEntry& e_cur = comparisonStorage.weapon[0];
+            func_801D4E2C(&e_cur, member, (void*)(u32)w0);
+            D8EEntry& c_cur = comparisonStorage.weapon[1];
+            c_cur = e_cur;
+            D8EEntry& e_new = comparisonStorage.weapon[2];
+            func_801D4E2C(&e_new, member, arg3);
+            D8EEntry& c_new = comparisonStorage.weapon[3];
+            c_new = e_new;
+            s32 eq1 = 0;
+            if (func_801DFFB8(info, member, NULL, NULL)) eq1 = func_801DFD60(info, (void*)(u32)member, 0x30);
+            s32 eq2 = 0;
+            if (func_801DFFB8(info, member, arg3, NULL)) eq2 = func_801DFD60(info, (void*)(u32)member, 0x30);
+            s16 pb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, NULL))));
+            s16 nb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, arg3))));
+            s32 atkA = (s32)pb + func_801DF4E0(info, (void*)(u32)member, (u16)c_cur.w04, NULL);
+            s32 atkC = (s32)pb + func_801DF578(info, (void*)(u32)member, (u16)(c_cur.w04 >> 16), NULL);
+            s32 atkB = (s32)nb + func_801DF4E0(info, (void*)(u32)member, (u16)c_new.w04, arg3);
+            s32 atkD = (s32)nb + func_801DF578(info, (void*)(u32)member,
+                (u16)(c_new.w04 >> 16), arg3);
+            if (atkB < atkD) atkB = atkD;
+            s16 dW = (s16)(atkC - atkA);
+            s32 c1 = func_801DF610(info, (void*)(u32)member, 0x31, arg3);
+            s16 v612 = (s16)c_new._0C;
+            s16 v646 = (s16)c_cur._0C;
+            v612 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)((stA->s32 - v646) + (c1 + v612))));
+            c1 = func_801DF610(info, (void*)(u32)member, 0x31, NULL);
+            v646 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) * (f32)(stA->s32 + c1)));
+            c1 = func_801DF610(info, (void*)(u32)member, 0x51, arg3);
+            s16 v610 = (s16)c_new._10;
+            s16 v644 = (s16)c_cur._10;
+            v610 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)((stA->s2E - v644) + (c1 + v610))));
+            c1 = func_801DF610(info, (void*)(u32)member, 0x51, NULL);
+            v644 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
+            c1 = func_801DF610(info, (void*)(u32)member, 0x54, arg3);
+            s16 v614 = c_new.w14;
+            s16 v648 = c_cur.w14;
+            v614 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) * (f32)((stA->s38 - v648) + (c1 + v614))));
+            c1 = func_801DF610(info, (void*)(u32)member, 0x54, NULL);
+            v648 = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) * (f32)(stA->s38 + c1)));
+            s16 snap644 = v644;
+            s16 snap646 = v646;
+            s16 d1 = (s16)(v610 - snap644);
+            s16 d2 = (s16)(v612 - snap646);
+            s16 d3 = (s16)(c_new.w14 - c_cur.w14);
+            s16 d4 = (s16)(v614 - v648);
+            s16 disp1 = v610;
+            s16 disp2 = v612;
+            s16 disp3 = v614;
+            char* rangeSeparator = func_80136190(
+                &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
+            textBuffer.format(&lbl_eu_805063BC[0x254], atkD, rangeSeparator, atkC);
+            func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], textBuffer.c_str(), 0);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], (s16)disp1);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], (s16)disp2);
+            char* percentSuffix2 = func_80136190(
+                &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
+            textBuffer.format(&lbl_eu_805063BC[0x13E], (s16)disp3, percentSuffix2);
+            func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], textBuffer.c_str(), 0);
+            char* percentSuffix3 = func_80136190(
+                &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
+            textBuffer.format(&lbl_eu_805063BC[0x13E],
+                           (s32)stA->b55 + (s32)d3, percentSuffix3);
+            func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], textBuffer.c_str(), 0);
+            // delta colors (5 rows)
+            {
+                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
+                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
+                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
+                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                if (dW < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (dW > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
+            }
+            {
+                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
+                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
+                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
+                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                if (d1 < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (d1 > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
+            }
+            {
+                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
+                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
+                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
+                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                if (d2 < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (d2 > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
+            }
+            {
+                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
+                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
+                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
+                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                if (d4 < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (d4 > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[17], &q1, &q2);
+            }
+            {
+                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
+                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
+                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
+                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                if (d3 < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (d3 > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[19], &q1, &q2);
+            }
+        } else {
+            // ---- armor block (0x801E7DA0) ----
+            u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
+            D8EArmorEntry& e_cur = comparisonStorage.armor[0];
+            func_801D5274(&e_cur, member, (void*)(u32)w0);
+            D8EArmorEntry& c_cur = comparisonStorage.armor[1];
+            c_cur = e_cur;
+            D8EArmorEntry& e_new = comparisonStorage.armor[2];
+            func_801D5274(&e_new, member, arg3);
+            D8EArmorEntry& c_new = comparisonStorage.armor[3];
+            c_new = e_new;
+            volatile s16 v484 = (s16)func_801DFE48(
+                info, member,
+                (item != NULL && *(u32*)item != 0)
+                    ? (void*)(u32)(u16)(*(u32*)item >> 20)
+                    : NULL);
+            volatile s16 v468 = (s16)func_801DFE48(info, member, arg3);
+            s32 eq1 = 0;
+            if (func_801DFFB8(info, member, NULL, NULL)) eq1 = func_801DFD60(info, (void*)(u32)member, 0x30);
+            s32 eq2 = 0;
+            if (func_801DFFB8(info, member, arg3, NULL)) eq2 = func_801DFD60(info, (void*)(u32)member, 0x30);
+            // arm-type scaling of the entry value pairs
+            u8 arm1 = (u8)func_801361E8(
+                (u32)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB],
+                func_80139358((u32)((item != NULL && *(u32*)item != 0)
+                    ? (u16)(*(u32*)item >> 20)
+                    : 0)));
+            applyArmorEffects(info, member, c_cur, arm1);
+            u8 arm2 = (u8)func_801361E8((u32)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], func_80139358((u32)(*(u32*)arg3 >> 20)));
+            applyArmorEffects(info, member, c_new, arm2);
+            // weight
+            s32 wv = func_801DFD60(info, (void*)(u32)member, 0x97);
+            if (wv != 0) {
+                v484 = (s16)(v484 - (s16)wv);
+                v468 = (s16)(v468 - (s16)wv);
+                if (v484 < 0) v484 = 0;
+                if (v468 < 0) v468 = 0;
+            }
+            // slot sum
+            s32 ssum = (s32)*(s16*)((u8*)charObj + 0x22) + *(s16*)((u8*)charObj + 0x20) + *(s16*)((u8*)charObj + 0x24) + *(s16*)((u8*)charObj + 0x1C) + *(s16*)((u8*)charObj + 0x1E);
+            if (ssum <= -5) {
+                func_801DFD60(info, (void*)(u32)member, 0x1A);
+            }
+            // Recalculate the two armor values in candidate/current pairs.  Keeping
+            // each result adjacent to its query mirrors the original UI pipeline
+            // and makes the current-value subtraction explicit.
+            s32 c1 = func_801DF610(info, (void*)(u32)member, 0x31, arg3);
+            c_new.etherDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) *
+                (f32)((stA->s32 - c_cur.etherDefense) + (c1 + c_new.etherDefense))));
+            c1 = func_801DF610(info, (void*)(u32)member, 0x31, NULL);
+            c_cur.etherDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) *
+                (f32)(stA->s32 + c1)));
+            c1 = func_801DF610(info, (void*)(u32)member, 0x51, arg3);
+            c_new.physicalDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) *
+                (f32)((stA->s2E - c_cur.physicalDefense) +
+                      (c1 + c_new.physicalDefense))));
+            c1 = func_801DF610(info, (void*)(u32)member, 0x51, NULL);
+            c_cur.physicalDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) *
+                (f32)(stA->s2E + c1)));
+            s16 d1;
+            s16 d2;
+            s16 attackDelta = 0;
+            s16 percentDelta;
+            s16 agilityDelta;
+            s16 b14;
+            // embedded weapon block
+            void* item2 = func_80157C4C(2, *(s16*)((u8*)charObj + 0x26));
+            if (item2 != NULL && *(u32*)item2 != 0) {
+                D8EEntry previewWeapon;
+                func_801D4E2C(&previewWeapon, member,
+                    (void*)(u32)(u16)(*(u32*)item2 >> 20));
+                s16 newPercent = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) *
+                    (f32)(stA->s38 + func_801DF610(
+                        info, (void*)(u32)member, 0x54, arg3))));
+                s16 oldPercent = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s22) *
+                    (f32)(stA->s38 + func_801DF610(
+                        info, (void*)(u32)member, 0x54, NULL))));
+                percentDelta = (s16)(newPercent - oldPercent);
+                char* percentSuffix = func_80136190(
+                    &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
+                textBuffer.format(&lbl_eu_805063BC[0x13E], newPercent,
+                                   percentSuffix);
+                func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16],
+                              textBuffer.c_str(), 0);
+
+                d1 = (s16)(c_new.etherDefense - c_cur.etherDefense);
+                d2 = (s16)(c_new.physicalDefense - c_cur.physicalDefense);
+
+                s16 oldAgility = (s16)(s32)(0.01f *
+                    ((100.0f + (f32)stC->s0E + (f32)eq1) *
+                     (f32)((stA->s1E - (s16)v484) + func_801DF610(
+                         info, (void*)(u32)member, 0x41, NULL))));
+                s16 newAgility = (s16)(s32)(0.01f *
+                    ((100.0f + (f32)stC->s0E + (f32)eq2) *
+                     (f32)((stA->s1E - (s16)v468) + func_801DF610(
+                         info, (void*)(u32)member, 0x41, arg3))));
+                if (oldAgility <= 0) oldAgility = 1;
+                if (newAgility <= 0) newAgility = 1;
+                agilityDelta = (s16)(newAgility - oldAgility);
+                b14 = newAgility;
+
+                D8EEntry ew;
+                func_801D4E2C(&ew, member, (void*)(u32)(u16)(*(u32*)item2 >> 20));
+                D8EEntry cw = ew;
+                s32 c3 = func_801DF610(info, (void*)(u32)member, 0x1, NULL);
+                s16 wpb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq1) * (f32)(stA->s1C + c3)));
+                c3 = func_801DF610(info, (void*)(u32)member, 0x1, arg3);
+                s16 wnb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + c3)));
+                s32 wa = (s32)wpb + func_801DF4E0(info, (void*)(u32)member, (u16)cw.w04, NULL);
+                s32 wb = (s32)wnb + func_801DF578(info, (void*)(u32)member, (u16)(cw.w04 >> 16), NULL);
+                s32 wc = (s32)wnb + func_801DF4E0(info, (void*)(u32)member, (u16)cw.w04, arg3);
+                s32 wd = (s32)wnb + func_801DF578(info, (void*)(u32)member, (u16)(cw.w04 >> 16), arg3);
+                s32 wmin = wc < wd ? wc : wd;
+                attackDelta = (s16)(wd - wa);
+                char* rangeSeparator = func_80136190(
+                    &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
+                textBuffer.format(&lbl_eu_805063BC[0x254], wmin, rangeSeparator, wd);
+                func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], textBuffer.c_str(), 0);
+
+            }
+            // numbers
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], c_new.physicalDefense);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], c_new.etherDefense);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], (s16)b14);
+            // delta colors (4 rows)
+            {
+                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
+                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
+                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
+                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                if (attackDelta < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (attackDelta > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
+            }
+            {
+                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
+                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
+                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
+                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                if (d2 < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (d2 > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
+            }
+            {
+                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
+                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
+                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
+                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                if (d1 < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (d1 > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
+            }
+            {
+                D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
+                D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
+                D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
+                D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+                if (percentDelta < 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+                } else if (percentDelta > 0) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                    __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+                }
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
+                func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
+            }
+            applyItemBoxDeltaColorAt(info, 8, 9, agilityDelta);
+        }
+
+        // ItemBox1 also previews effects for the selected inventory slot. The
+        // slot-aware helper mirrors func_801DF610 but includes the candidate
+        // item and selected slot in its lookup.
+        {
+        s32 currentEquipBonus = 0;
+        if (func_801DFFB8(info, member, NULL, NULL)) {
+            currentEquipBonus = func_801DFD60(info, (void*)(u32)member, 0x30);
+        }
+        s16 oldStrength = calculateItemBoxStat(stC->s10 + currentEquipBonus, stA->s20,
+            func_801DF610(info, (void*)(u32)member, 0x21, NULL));
+        s16 newStrength = calculateItemBoxStat(stC->s10 + currentEquipBonus, stA->s20,
+            func_801DF988(info, (void*)(u32)member, 0x21, arg3, slot));
+        s16 strengthDelta = (s16)(newStrength - oldStrength);
+        func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], newStrength);
+        applyItemBoxDeltaColorAt(info, 8, 9, strengthDelta);
+
+        s16 oldPhysical = calculateItemBoxStat(stC->s0C + currentEquipBonus, stA->s1C,
+            func_801DF610(info, (void*)(u32)member, 0x01, NULL));
+        s16 newPhysical = calculateItemBoxStat(stC->s0C + currentEquipBonus, stA->s1C,
+            func_801DF988(info, (void*)(u32)member, 0x01, arg3, slot));
+        s16 physicalDelta = (s16)(newPhysical - oldPhysical);
+        func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], newPhysical);
+        applyItemBoxDeltaColorAt(info, 4, 5, physicalDelta);
+
+        s16 oldHp = (s16)(s32)(stA->f10 + (f32)func_801C6158(
+            0.01f * stB->f10 * (f32)(stC->s06 + currentEquipBonus +
+                func_801DF610(info, (void*)(u32)member, 0x11, NULL))));
+        s16 newHp = (s16)(s32)(stA->f10 + (f32)func_801C6158(
+            0.01f * stB->f10 * (f32)(stC->s06 + currentEquipBonus +
+                func_801DF988(info, (void*)(u32)member, 0x11, arg3, slot))));
+        if (oldHp > 9999) oldHp = 9999;
+        if (newHp > 9999) newHp = 9999;
+        s16 hpDelta = (s16)(newHp - oldHp);
+        if (((float(*)(void*))vt[0x4A])(stats) > (f32)newHp) {
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], newHp);
+        }
+        func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], newHp);
+        {
+            D8EQuad labelTop = *(D8EQuad*)&lbl_eu_80664518;
+            D8EQuad labelBottom = *(D8EQuad*)&lbl_eu_80664520;
+            D8EQuad valueTop = *(D8EQuad*)&lbl_eu_80664558;
+            D8EQuad valueBottom = *(D8EQuad*)&lbl_eu_80664560;
+            if (hpDelta < 0) {
+                __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664538);
+                __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664540);
+                __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664578);
+                __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664580);
+            } else if (hpDelta > 0) {
+                __as__11_GXColorS10FRC11_GXColorS10(&labelTop, &lbl_eu_80664528);
+                __as__11_GXColorS10FRC11_GXColorS10(&labelBottom, &lbl_eu_80664530);
+                __as__11_GXColorS10FRC11_GXColorS10(&valueTop, &lbl_eu_80664568);
+                __as__11_GXColorS10FRC11_GXColorS10(&valueBottom, &lbl_eu_80664570);
+            }
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0],
+                          &valueTop, &valueBottom);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[1],
+                          &labelTop, &labelBottom);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2],
+                          &valueTop, &valueBottom);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3],
+                          &labelTop, &labelBottom);
+        }
+
+        s16 oldEther = calculateItemBoxStat(stC->s1C, stA->s32,
+            func_801DF610(info, (void*)(u32)member, 0x31, NULL));
+        s16 newEther = calculateItemBoxStat(stC->s1C, stA->s32,
+            func_801DF988(info, (void*)(u32)member, 0x31, arg3, slot));
+        s16 etherDelta = (s16)(newEther - oldEther);
+        func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], newEther);
+        applyItemBoxDeltaColorAt(info, 12, 13, etherDelta);
+
+        s32 oldArtsTotal = (s32)func_801DFE48(info, member, NULL);
+        s32 weightPenalty = (s32)func_801DFD60(info, (void*)(u32)member, 0x97);
+        if (weightPenalty != 0) {
+            oldArtsTotal -= weightPenalty;
+            if (oldArtsTotal < 0) oldArtsTotal = 0;
+        }
+        s16 oldAgilityBase = (s16)(stA->s1E - (s16)oldArtsTotal);
+        if (oldAgilityBase <= 0) oldAgilityBase = 1;
+        s16 oldAgilityEffect = (s16)func_801DF610(
+            info, (void*)(u32)member, 0x41, NULL);
+        s16 oldAgility = (s16)(s32)(0.01f *
+            ((100.0f + (f32)stC->s0E + (f32)currentEquipBonus) *
+             (f32)(oldAgilityBase + oldAgilityEffect)));
+
+        s16 newAgility = calculateItemBoxStat(stC->s0E, oldAgilityBase,
+            func_801DF988(info, (void*)(u32)member, 0x41, arg3, slot));
+        s16 agilityDelta = (s16)(newAgility - oldAgility);
+        func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], newAgility);
+        applyItemBoxDeltaColorAt(info, 6, 7, agilityDelta);
+
+        s16 oldDefense = calculateItemBoxStat(stC->s18, stA->s2E,
+            func_801DF610(info, (void*)(u32)member, 0x51, NULL));
+        s16 newDefense = calculateItemBoxStat(stC->s18, stA->s2E,
+            func_801DF988(info, (void*)(u32)member, 0x51, arg3, slot));
+        s16 defenseDelta = (s16)(newDefense - oldDefense);
+        func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], newDefense);
+        applyItemBoxDeltaColorAt(info, 14, 15, defenseDelta);
+
+        s16 oldResistance = calculateItemBoxStat(stC->s22, stA->s38,
+            func_801DF610(info, (void*)(u32)member, 0x54, NULL));
+        s16 newResistance = calculateItemBoxStat(stC->s22, stA->s38,
+            func_801DF988(info, (void*)(u32)member, 0x54, arg3, slot));
+        char* percentSuffix = func_80136190(
+            &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x80);
+        textBuffer.format(&lbl_eu_805063BC[0x13E], newResistance,
+                              percentSuffix);
+        func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], textBuffer.c_str(), 0);
+        s16 resistanceDelta = (s16)(newResistance - oldResistance);
+        applyItemBoxDeltaColorAt(info, 16, 17, resistanceDelta);
+
+        void* currentWeaponItem = func_80157C4C(2, *(s16*)((u8*)charObj + 0x26));
+        s16 attackDelta = 0;
+        if (currentWeaponItem != NULL && *(u32*)currentWeaponItem != 0) {
+            D8EEntry currentWeapon;
+            func_801D4E2C(&currentWeapon, member,
+                (void*)(u32)(u16)(*(u32*)currentWeaponItem >> 20));
+            D8EEntry weaponStats = currentWeapon;
+            s32 oldBaseEffect = func_801DF610(
+                info, (void*)(u32)member, 0x01, NULL);
+            s16 oldAttackBase = calculateItemBoxStat(
+                stC->s0C + currentEquipBonus, stA->s1C, oldBaseEffect);
+            s32 newBaseEffect = func_801DF988(
+                info, (void*)(u32)member, 0x01, arg3, slot);
+            s16 newAttackBase = calculateItemBoxStat(
+                stC->s0C, stA->s1C, newBaseEffect);
+
+            // The low-bound lookup is retained for its item-effect traversal;
+            // the comparison display uses the high bound as its old endpoint.
+            func_801DF4E0(info, (void*)(u32)member,
+                          (u16)weaponStats.w04, NULL);
+            s32 oldAttackHigh = oldAttackBase + func_801DF578(
+                info, (void*)(u32)member,
+                (u16)(weaponStats.w04 >> 16), NULL);
+
+            s32 lowScale = (s32)func_801DFD60(
+                info, (void*)(u32)member, 0x2D);
+            lowScale += (s32)func_801DF988(
+                info, (void*)(u32)member, 0x52, arg3, slot);
+            s32 newAttackLow = newAttackBase + (s32)(0.01f *
+                (f32)((u16)weaponStats.w04 * (100 + lowScale)));
+
+            s32 highScale = (s32)func_801DFD60(
+                info, (void*)(u32)member, 0x2D);
+            highScale += (s32)func_801DF988(
+                info, (void*)(u32)member, 0x53, arg3, slot);
+            s32 newAttackHigh = newAttackBase + (s32)(0.01f *
+                (f32)((u16)(weaponStats.w04 >> 16) * (100 + highScale)));
+            s32 displayLow = newAttackLow < newAttackHigh
+                ? newAttackLow : newAttackHigh;
+            attackDelta = (s16)(newAttackHigh - oldAttackHigh);
+
+            char* rangeSeparator = func_80136190(
+                &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
+            textBuffer.format(&lbl_eu_805063BC[0x254], displayLow,
+                              rangeSeparator, newAttackHigh);
+            func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10],
+                          textBuffer.c_str(), 0);
+        }
+        applyItemBoxDeltaColorAt(info, 10, 11, attackDelta);
+        }
+
+    }
+
+    // ---- equip-detail / simple path (arg4 == 0, type in {2,4,5,6,7,8}) ----
+    if (arg4 == 0 && (type == 2 || (type >= 4 && type <= 8))) {
+        if (type != 2 && func_801DFDC0(info, member, arg3)) {
+            // ---- equip detail (0x801E8C88) ----
+            s16 slotId = 0;
+            switch (type) {
+                case 2: slotId = *(s16*)((u8*)charObj + 0x26); break;
+                case 4: slotId = *(s16*)((u8*)charObj + 0x1C); break;
+                case 5: slotId = *(s16*)((u8*)charObj + 0x1E); break;
+                case 6: slotId = *(s16*)((u8*)charObj + 0x20); break;
+                case 7: slotId = *(s16*)((u8*)charObj + 0x22); break;
+                case 8: slotId = *(s16*)((u8*)charObj + 0x24); break;
+            }
+            void* item = func_80157C4C(type, slotId);
+            u16 w0 = (item != NULL && *(u32*)item != 0) ? (u16)(*(u32*)item >> 20) : 0;
+            D8EArmorEntry e_cur;
+            func_801D5274(&e_cur, member, (void*)(u32)w0);
+            D8EArmorEntry c_cur = e_cur;
+            D8EArmorEntry e_new;
+            func_801D5274(&e_new, member, arg3);
+            D8EArmorEntry c_new = e_new;
+            volatile s16 v44C = (s16)func_801DFE48(
+                info, member,
+                (item != NULL && *(u32*)item != 0)
+                    ? (void*)(u32)(u16)(*(u32*)item >> 20)
+                    : NULL);
+            volatile s16 v430 = (s16)func_801DFE48(info, member, arg3);
+            s32 eq1 = 0;
+            if (func_801DFFB8(info, member, NULL, NULL)) eq1 = func_801DFD60(info, (void*)(u32)member, 0x30);
+            s32 eq2 = 0;
+            if (func_801DFFB8(info, member, arg3, NULL)) eq2 = func_801DFD60(info, (void*)(u32)member, 0x30);
+            func_801DF610(info, (void*)(u32)member, 0x21, NULL);
+            s16 bA = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s10 + (f32)eq2) * (f32)(stA->s20 + func_801DF610(info, (void*)(u32)member, 0x21, arg3))));
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], (s16)bA);
+            func_801DF610(info, (void*)(u32)member, 0x1, NULL);
+            s16 bB = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C + (f32)eq2) * (f32)(stA->s1C + func_801DF610(info, (void*)(u32)member, 0x1, arg3))));
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], (s16)bB);
+            func_801C6158(0.01f * stB->f10 * (f32)(stC->s06 + eq1 + func_801DF610(info, (void*)(u32)member, 0x11, NULL)));
+            s32 r6158 = func_801C6158(0.01f * stB->f10 * (f32)(stC->s06 + eq2 + func_801DF610(info, (void*)(u32)member, 0x11, arg3)));
+            s16 nb = (s16)(s32)(stA->f10 + (f32)r6158);
+            if (nb > 9999) nb = 9999;
+            if (((float(*)(void*))vt[0x4A])(stats) > (f32)nb) {
+                func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], nb);
+            }
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], nb);
+            // arm-type scaling of entry value pairs
+            u8 arm1 = (u8)func_801361E8(
+                (u32)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB],
+                func_80139358((u32)((item != NULL && *(u32*)item != 0)
+                    ? (u16)(*(u32*)item >> 20)
+                    : 0)));
+            applyArmorEffects(info, member, c_cur, arm1);
+            u8 arm2 = (u8)func_801361E8((u32)lbl_eu_806640F8, &lbl_eu_805063BC[0x1EB], func_80139358((u32)(*(u32*)arg3 >> 20)));
+            applyArmorEffects(info, member, c_new, arm2);
+            // weight
+            s32 wv = func_801DFD60(info, (void*)(u32)member, 0x97);
+            if (wv != 0) {
+                v44C = (s16)(v44C - (s16)wv);
+                v430 = (s16)(v430 - (s16)wv);
+                if (v44C < 0) v44C = 0;
+                if (v430 < 0) v430 = 0;
+            }
+            // slot sum
+            s32 ssum = (s32)*(s16*)((u8*)charObj + 0x22) + *(s16*)((u8*)charObj + 0x20) + *(s16*)((u8*)charObj + 0x24) + *(s16*)((u8*)charObj + 0x1C) + *(s16*)((u8*)charObj + 0x1E);
+            if (ssum <= -5) {
+                func_801DFD60(info, (void*)(u32)member, 0x1A);
+            }
+            // Recalculate candidate and current armor values in matched pairs.
+            s32 c1 = func_801DF610(info, (void*)(u32)member, 0x31, arg3);
+            c_new.etherDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) *
+                (f32)((stA->s32 - c_cur.etherDefense) + (c1 + c_new.etherDefense))));
+            c1 = func_801DF610(info, (void*)(u32)member, 0x31, NULL);
+            c_cur.etherDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s1C) *
+                (f32)(stA->s32 + c1)));
+            c1 = func_801DF610(info, (void*)(u32)member, 0x51, arg3);
+            c_new.physicalDefense = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s18) *
+                (f32)((stA->s2E - c_cur.physicalDefense) +
+                      (c1 + c_new.physicalDefense))));
+            c1 = func_801DF610(info, (void*)(u32)member, 0x51, NULL);
+            volatile s16 currentPhysicalDefense = (s16)(s32)(0.01f *
+                ((100.0f + (f32)stC->s18) * (f32)(stA->s2E + c1)));
+            func_801DF610(info, (void*)(u32)member, 0x41, NULL);
+            s32 c2 = func_801DF610(info, (void*)(u32)member, 0x41, arg3);
+            s16 b14 = (s16)(s32)(0.01f * ((100.0f + (f32)eq2) *
+                (f32)((stA->s1E - (s16)v430) + c2)));
+            if (b14 <= 0) b14 = 1;
+            // embedded weapon block
+            void* item2 = func_80157C4C(2, *(s16*)((u8*)charObj + 0x26));
+            if (item2 != NULL && *(u32*)item2 != 0) {
+                D8EEntry ew;
+                func_801D4E2C(&ew, member, (void*)(u32)(u16)(*(u32*)item2 >> 20));
+                D8EEntry cw = ew;
+                func_801DF610(info, (void*)(u32)member, 0x1, NULL);
+                s16 wpb = (s16)(s32)(0.01f * ((100.0f + (f32)stC->s0C) *
+                    (f32)(stA->s1C + func_801DF610(
+                        info, (void*)(u32)member, 0x1, arg3))));
+                s32 wa = (s32)wpb + func_801DF4E0(info, (void*)(u32)member, (u16)cw.w04, NULL);
+                s32 wb = (s32)wpb + func_801DF578(info, (void*)(u32)member, (u16)(cw.w04 >> 16), NULL);
+                s32 wc = (s32)wpb + func_801DF4E0(info, (void*)(u32)member, (u16)cw.w04, arg3);
+                s32 wd = (s32)wpb + func_801DF578(info, (void*)(u32)member, (u16)(cw.w04 >> 16), arg3);
+                s32 wmin = wc < wd ? wc : wd;
+                char* rangeSeparator = func_80136190(
+                    &lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0xB);
+                textBuffer.format(&lbl_eu_805063BC[0x254], wmin, rangeSeparator, wd);
+                func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], textBuffer.c_str(), 0);
+            }
+            // numbers
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], c_new.physicalDefense);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], c_new.etherDefense);
+            func_80136C98(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], (s16)b14);
+            // 20x color application (selected palette A8/B0/C8/D0)
+            D8EQuad q1 = *(D8EQuad*)&lbl_eu_806645A8;
+            D8EQuad q2 = *(D8EQuad*)&lbl_eu_806645B0;
+            D8EQuad q3 = *(D8EQuad*)&lbl_eu_806645C8;
+            D8EQuad q4 = *(D8EQuad*)&lbl_eu_806645D0;
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[1], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[5], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[9], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[17], &q1, &q2);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &q3, &q4);
+            func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[19], &q1, &q2);
+
+        }
+        // ---- simple path ----
+        D8EQuad q1 = *(D8EQuad*)&lbl_eu_806645A8;
+        D8EQuad q2 = *(D8EQuad*)&lbl_eu_806645B0;
+        D8EQuad q3 = *(D8EQuad*)&lbl_eu_806645C8;
+        D8EQuad q4 = *(D8EQuad*)&lbl_eu_806645D0;
+        func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[0], &lbl_eu_805063BC[0x2AA], 0);
+        func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[2], &lbl_eu_805063BC[0x2AA], 0);
+        func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[3], &lbl_eu_805063BC[0x2AA], 0);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[1], &q1, &q2);
+        func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], &lbl_eu_805063BC[0x2AA], 0);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[4], &q3, &q4);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[5], &q1, &q2);
+        func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &lbl_eu_805063BC[0x2AA], 0);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[6], &q3, &q4);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[7], &q1, &q2);
+        func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], &lbl_eu_805063BC[0x2AA], 0);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[8], &q3, &q4);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[9], &q1, &q2);
+        func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &lbl_eu_805063BC[0x2AA], 0);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[10], &q3, &q4);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[11], &q1, &q2);
+        func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &lbl_eu_805063BC[0x2AA], 0);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[12], &q3, &q4);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[13], &q1, &q2);
+        func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &lbl_eu_805063BC[0x2AA], 0);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[14], &q3, &q4);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[15], &q1, &q2);
+        func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &lbl_eu_805063BC[0x2AA], 0);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[16], &q3, &q4);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[17], &q1, &q2);
+        func_80136D74(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &lbl_eu_805063BC[0x2AA], 0);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[18], &q3, &q4);
+        func_80139AC8(((nw4r::lyt::Pane**)((u8*)info + 0x40))[19], &q1, &q2);
+    }
+
+    // ---- common tail: two 8-entry item lists ----
+    CItemBoxInfoEntry listA[8];
+    CItemBoxInfoEntry listB[8];
+    listA[0].itemId = 0;
+    listA[0].value = 0;
+    listA[0].state = 0;
+    setItemBoxEntry(&listA[1], 0, 0, 0);
+    setItemBoxEntry(&listA[2], 0, 0, 0);
+    setItemBoxEntry(&listA[3], 0, 0, 0);
+    setItemBoxEntry(&listA[4], 0, 0, 0);
+    setItemBoxEntry(&listA[5], 0, 0, 0);
+    setItemBoxEntry(&listA[6], 0, 0, 0);
+    setItemBoxEntry(&listA[7], 0, 0, 0);
+    listB[0].itemId = 0;
+    listB[0].value = 0;
+    listB[0].state = 0;
+    setItemBoxEntry(&listB[1], 0, 0, 0);
+    setItemBoxEntry(&listB[2], 0, 0, 0);
+    setItemBoxEntry(&listB[3], 0, 0, 0);
+    setItemBoxEntry(&listB[4], 0, 0, 0);
+    setItemBoxEntry(&listB[5], 0, 0, 0);
+    setItemBoxEntry(&listB[6], 0, 0, 0);
+    setItemBoxEntry(&listB[7], 0, 0, 0);
+
+    u8 listIdxA = 0;
+    u8 listIdxB = 0;
+
+    // weapon slot
+    {
+        s16 weaponId = *(s16*)((u8*)charObj + 0x26);
+        s16 headId = *(s16*)((u8*)charObj + 0x1C);
+        s16 torsoId = *(s16*)((u8*)charObj + 0x1E);
+        s16 armId = *(s16*)((u8*)charObj + 0x20);
+        s16 legId = *(s16*)((u8*)charObj + 0x22);
+        s16 footId = *(s16*)((u8*)charObj + 0x24);
+        void* itemW = func_80157C4C(2, weaponId);
+        void* items[5];
+        items[0] = func_80157C4C(4, headId);
+        items[1] = func_80157C4C(5, torsoId);
+        items[2] = func_80157C4C(6, armId);
+        items[3] = func_80157C4C(7, legId);
+        items[4] = func_80157C4C(8, footId);
+        if (itemW != NULL) {
+            void* itemImpl = CItem_initItemImplInstances(itemW);
+            u8 cnt = ((u8(*)(void*, void*))(*(void***)itemImpl)[12])(itemImpl, itemW);
+            for (u8 i = 0; i < 3; i++) {
+                CItemBoxInfoEntry tmp;
+                tmp.itemId = 0;
+                tmp.value = 0;
+                tmp.state = 0;
+                if (i < cnt) {
+                    void* recordImpl = CItem_initItemImplInstances(itemW);
+                    void* e = ((void*(*)(void*, void*, u32))(*(void***)recordImpl)[11])(
+                        recordImpl, itemW, i);
+                    if (e != NULL) {
+                        u32 w0 = *(u32*)e;
+                        u16 w1 = *(u16*)((u8*)e + 4);
+                        CItemBoxInfoEntry tmp2;
+                        setItemBoxEntry(&tmp2, (s16)((w0 >> 11) & 0x7FF),
+                                        (w0 >> 22) & 7, (w1 >> 4) & 0xFFF);
+                        copyItemBoxEntry(&tmp, &tmp2);
+                    }
+                }
+                copyItemBoxEntry(&listA[listIdxA++], &tmp);
+                if (type != 2) {
+                    copyItemBoxEntry(&listB[listIdxB++], &tmp);
+                }
+            }
+        }
+        // Candidate weapon gems use two retail representations. Kind 3 stores
+        // one synthesized record at the selected slot; other weapon kinds
+        // expose up to three ordinary sub-records through vf30/vf2C.
+        if (type == 2) {
+            void* candidateWeapon = arg3 != NULL ? arg3 : NULL;
+            if (candidateWeapon != NULL && *(u32*)candidateWeapon != 0) {
+            bool synthesized = ((*(u32*)arg3 >> 16) & 0xF) == 3;
+            if (synthesized) {
+                if (arg4 != 0) {
+                    for (u8 i = 0; i < 3; i++) {
+                        CItemBoxInfoEntry tmp = {0, 0, 0};
+                        if (i == slot - 1) {
+                            CItemBoxInfoEntry built;
+                            void* idImpl = CItem_initItemImplInstances(arg3);
+                            u16 itemId = (u16)((u32(*)(void*, void*))(*(void***)idImpl)[2])(
+                                idImpl, arg3);
+                            void* valueImpl = CItem_initItemImplInstances(arg3);
+                            u32 value = ((u32(*)(void*, void*))(*(void***)valueImpl)[36])(
+                                valueImpl, arg3);
+                            void* stateImpl = CItem_initItemImplInstances(arg3);
+                            u8 state = (u8)((u32(*)(void*, void*))(*(void***)stateImpl)[21])(
+                                stateImpl, arg3);
+                            setItemBoxEntry(&built, itemId, value, state);
+                            copyItemBoxEntry(&tmp, &built);
+                        }
+                        copyItemBoxEntry(&listB[listIdxB++], &tmp);
+                    }
+                } else {
+                    { CItemBoxInfoEntry blank = {0, 0, 0};
+                      copyItemBoxEntry(&listB[listIdxB++], &blank); }
+                    { CItemBoxInfoEntry blank = {0, 0, 0};
+                      copyItemBoxEntry(&listB[listIdxB++], &blank); }
+                    { CItemBoxInfoEntry blank = {0, 0, 0};
+                      copyItemBoxEntry(&listB[listIdxB++], &blank); }
+                }
+            } else if (arg4 != 0) {
+                void* countImpl = CItem_initItemImplInstances(arg3);
+                u8 count = ((u8(*)(void*, void*))(*(void***)countImpl)[12])(countImpl, arg3);
+                for (u8 i = 0; i < 3; i++) {
+                    CItemBoxInfoEntry tmp = {0, 0, 0};
+                    if (i < count) {
+                        void* recordImpl = CItem_initItemImplInstances(arg3);
+                        void* record = ((void*(*)(void*, void*, u32))(*(void***)recordImpl)[11])(
+                            recordImpl, arg3, i);
+                        if (record != NULL) {
+                            u32 packed = *(u32*)record;
+                            u16 tail = *(u16*)((u8*)record + 4);
+                            CItemBoxInfoEntry built;
+                            setItemBoxEntry(&built, (packed >> 11) & 0x7FF,
+                                (packed >> 22) & 7, (tail >> 4) & 0xFFF);
+                            copyItemBoxEntry(&tmp, &built);
+                        }
+                    }
+                    copyItemBoxEntry(&listB[listIdxB++], &tmp);
+                }
+            } else {
+                { CItemBoxInfoEntry blank = {0, 0, 0};
+                  copyItemBoxEntry(&listB[listIdxB++], &blank); }
+                { CItemBoxInfoEntry blank = {0, 0, 0};
+                  copyItemBoxEntry(&listB[listIdxB++], &blank); }
+                { CItemBoxInfoEntry blank = {0, 0, 0};
+                  copyItemBoxEntry(&listB[listIdxB++], &blank); }
+            }
+            } else {
+                { CItemBoxInfoEntry blank = {0, 0, 0};
+                  copyItemBoxEntry(&listB[listIdxB++], &blank); }
+                { CItemBoxInfoEntry blank = {0, 0, 0};
+                  copyItemBoxEntry(&listB[listIdxB++], &blank); }
+                { CItemBoxInfoEntry blank = {0, 0, 0};
+                  copyItemBoxEntry(&listB[listIdxB++], &blank); }
+            }
+        }
+        // armor slots
+        {
+            u8 slotTypes[5];
+            *(u32*)&slotTypes[0] = lbl_eu_8066806C;
+            slotTypes[4] = lbl_eu_80668070;
+            for (u8 i = 0; i < 5; i++) {
+                CItemBoxInfoEntry tmp;
+                tmp.itemId = 0;
+                tmp.value = 0;
+                tmp.state = 0;
+                void* item = items[i];
+                if (item != NULL) {
+                    void* itemImpl = CItem_initItemImplInstances(item);
+                    if (((u8(*)(void*, void*))(*(void***)itemImpl)[12])(itemImpl, item) != 0) {
+                        void* recordImpl = CItem_initItemImplInstances(item);
+                        void* e = ((void*(*)(void*, void*, u32))(*(void***)recordImpl)[11])(
+                            recordImpl, item, 0);
+                        if (e != NULL) {
+                            u32 w0 = *(u32*)e;
+                            u16 w1 = *(u16*)((u8*)e + 4);
+                            CItemBoxInfoEntry tmp2;
+                            setItemBoxEntry(&tmp2, (s16)((w0 >> 11) & 0x7FF),
+                                            (w0 >> 22) & 7, (w1 >> 4) & 0xFFF);
+                            copyItemBoxEntry(&tmp, &tmp2);
+                        }
+                    }
+                }
+                copyItemBoxEntry(&listA[listIdxA++], &tmp);
+                if (type != slotTypes[i]) {
+                    copyItemBoxEntry(&listB[listIdxB++], &tmp);
+                }
+                if (type == slotTypes[i]) {
+                    CItemBoxInfoEntry tmp3;
+                    tmp3.itemId = 0;
+                    tmp3.value = 0;
+                    tmp3.state = 0;
+                    if (arg3 != NULL && *(u32*)arg3 != 0 &&
+                        ((*(u32*)arg3 >> 16) & 0xF) == 3) {
+                            CItemBoxInfoEntry built = {0, 0, 0};
+                            void* idImpl = CItem_initItemImplInstances(arg3);
+                            u16 itemId = (u16)((u32(*)(void*, void*))(*(void***)idImpl)[2])(
+                                idImpl, arg3);
+                            void* valueImpl = CItem_initItemImplInstances(arg3);
+                            u32 value = ((u32(*)(void*, void*))(*(void***)valueImpl)[36])(
+                                valueImpl, arg3);
+                            void* stateImpl = CItem_initItemImplInstances(arg3);
+                            u8 state = (u8)((u32(*)(void*, void*))(*(void***)stateImpl)[21])(
+                                stateImpl, arg3);
+                            setItemBoxEntry(&built, itemId, value, state);
+                            copyItemBoxEntry(&tmp3, &built);
+                    } else if (arg4 != 0 || arg3 != NULL) {
+                            void* countImpl = CItem_initItemImplInstances(arg3);
+                            u8 count = ((u8(*)(void*, void*))(*(void***)countImpl)[12])(
+                                countImpl, arg3);
+                            if (count != 0) {
+                                void* recordImpl = CItem_initItemImplInstances(arg3);
+                                void* record = ((void*(*)(void*, void*, u32))(*(void***)recordImpl)[11])(
+                                    recordImpl, arg3, 0);
+                                if (record != NULL) {
+                                    u32 packed = *(u32*)record;
+                                    u16 tail = *(u16*)((u8*)record + 4);
+                                    CItemBoxInfoEntry built;
+                                    setItemBoxEntry(&built, (packed >> 11) & 0x7FF,
+                                        (packed >> 22) & 7, (tail >> 4) & 0xFFF);
+                                    copyItemBoxEntry(&tmp3, &built);
+                                }
+                            }
+                    }
+                    copyItemBoxEntry(&listB[listIdxB++], &tmp3);
+                }
+            }
+        }
+
+        // Type 3 replaces a crystal rather than a whole equipment slot. Find
+        // the matching equipped sub-record and synthesize the replacement at
+        // the resolved list position.
+        if (type == 3) {
+            CItemBoxInfoEntry candidate = {0, 0, 0};
+            void* replacement = arg3 != NULL ? arg3 : NULL;
+            if (replacement != NULL) {
+            struct EquippedTypes {
+                u32 values[6];
+            };
+            EquippedTypes equippedTypes =
+                *(const EquippedTypes*)lbl_eu_80506368;
+            s16 equippedIds[6] = {
+                *(s16*)((u8*)charObj + 0x26), *(s16*)((u8*)charObj + 0x1C),
+                *(s16*)((u8*)charObj + 0x1E), *(s16*)((u8*)charObj + 0x20),
+                *(s16*)((u8*)charObj + 0x22), *(s16*)((u8*)charObj + 0x24)
+            };
+            u8 destination = 0;
+            for (u8 equipmentIndex = 0; equipmentIndex < 6 && destination == 0;
+                 equipmentIndex++) {
+                void* equipped = func_80157C4C(
+                                                (u8)equippedTypes.values[equipmentIndex],
+                                                equippedIds[equipmentIndex]);
+                if (equipped == NULL || *(u32*)equipped == 0) continue;
+
+                void* countImpl = CItem_initItemImplInstances(equipped);
+                u16 count = (u16)((u32(*)(void*, void*))(*(void***)countImpl)[12])(
+                    countImpl, equipped);
+                for (u8 itemIndex = 0; itemIndex < count; itemIndex++) {
+                    void* indexImpl = CItem_initItemImplInstances(equipped);
+                    s16 crystalId = (s16)((s32(*)(void*, void*, u32))(*(void***)indexImpl)[16])(
+                        indexImpl, equipped, itemIndex);
+                    if (crystalId != -1) {
+                        void* crystal = func_80157C4C(3, crystalId);
+                        if (crystal != NULL && *(u32*)crystal != 0 &&
+                            crystal == replacement) {
+                            destination = equipmentIndex == 0 ? itemIndex + 1
+                                                              : equipmentIndex + 3;
+                            break;
+                        }
+                    } else if (arg4 == 0) {
+                        void* recordImpl = CItem_initItemImplInstances(equipped);
+                        void* record = ((void*(*)(void*, void*, u32))(*(void***)recordImpl)[11])(
+                            recordImpl, equipped, itemIndex);
+                        if (record == NULL || (*(u16*)((u8*)record + 4) & 1) == 0) continue;
+
+                        void* candidateStateImpl = CItem_initItemImplInstances(arg3);
+                        u16 candidateState = (u16)((u32(*)(void*, void*))
+                            (*(void***)candidateStateImpl)[21])(candidateStateImpl, arg3);
+                        s16 recordValue = (s16)((*(u32*)record >> 11) & 0x7FF);
+                        void* candidateValueImpl = CItem_initItemImplInstances(arg3);
+                        u32 candidateValue = ((u32(*)(void*, void*))
+                            (*(void***)candidateValueImpl)[36])(candidateValueImpl, arg3);
+                        if (((*(u16*)((u8*)record + 4) >> 4) & 0xFFF) == candidateState &&
+                            recordValue == candidateValue) {
+                            destination = equipmentIndex == 0 ? itemIndex + 1
+                                                              : equipmentIndex + 3;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (destination == 0) destination = slot;
+            void* idImpl = CItem_initItemImplInstances(arg3);
+            u16 itemId = (u16)((u32(*)(void*, void*))(*(void***)idImpl)[2])(idImpl, arg3);
+            void* valueImpl = CItem_initItemImplInstances(arg3);
+            u32 value = ((u32(*)(void*, void*))(*(void***)valueImpl)[36])(valueImpl, arg3);
+            void* stateImpl = CItem_initItemImplInstances(arg3);
+            u8 state = (u8)((u32(*)(void*, void*))(*(void***)stateImpl)[21])(stateImpl, arg3);
+            CItemBoxInfoEntry built;
+            setItemBoxEntry(&built, itemId, value, state);
+            copyItemBoxEntry(&candidate, &built);
+            copyItemBoxEntry(&listB[destination - 1], &candidate);
+            }
+        }
+    }
+
+    // ---- compact listA (dedupe by stackable flag, sum values, cap) ----
+    {
+        u16 ids[8] = {0};
+        u32 vals[8] = {0};
+        u8 flags[8] = {0};
+        u16 ids2[8] = {0};
+        u32 vals2[8] = {0};
+        u8 flags2[8] = {0};
+        u8 n = 0;
+        for (u8 i = 0; i < 8; i++) {
+            u16 id = listA[i].itemId;
+            u32 val = listA[i].value;
+            u8 flag = listA[i].state;
+            if (id == 0) {
+                ids[n] = id;
+                vals[n] = val;
+                flags[n] = flag;
+                n++;
+            } else if (func_801361E8((u32)lbl_eu_806640D8, &lbl_eu_805063BC[0x4FD], id) != 0) {
+                u8 found = 0;
+                for (u8 j = 0; j < n; j++) {
+                    if (id == ids[j]) {
+                        vals[j] += val;
+                        for (u8 k = j + 1; k < n; k++) {
+                            if (id == ids[k]) vals[k] = vals[j];
+                        }
+                        found = 1;
+                        ids[n] = id;
+                        vals[n] = vals[j];
+                        flags[n] = flag;
+                        n++;
+                        break;
+                    }
+                }
+                if (!found) {
+                    ids[n] = id;
+                    vals[n] = val;
+                    flags[n] = flag;
+                    n++;
+                }
+            }
+        }
+        // same for listB
+        u8 n2 = 0;
+        for (u8 i = 0; i < 8; i++) {
+            u16 id = listB[i].itemId;
+            u32 val = listB[i].value;
+            u8 flag = listB[i].state;
+            if (id == 0) {
+                ids2[n2] = id;
+                vals2[n2] = val;
+                flags2[n2] = flag;
+                n2++;
+            } else if (func_801361E8((u32)lbl_eu_806640D8, &lbl_eu_805063BC[0x4FD], id) != 0) {
+                u8 found = 0;
+                for (u8 j = 0; j < n2; j++) {
+                    if (id == ids2[j]) {
+                        vals2[j] += val;
+                        for (u8 k = j + 1; k < n2; k++) {
+                            if (id == ids2[k]) vals2[k] = vals2[j];
+                        }
+                        found = 1;
+                        ids2[n2] = id;
+                        vals2[n2] = vals2[j];
+                        flags2[n2] = flag;
+                        n2++;
+                        break;
+                    }
+                }
+                if (!found) {
+                    ids2[n2] = id;
+                    vals2[n2] = val;
+                    flags2[n2] = flag;
+                    n2++;
+                }
+            }
+        }
+        for (u8 i = 0; i < 8; i++) {
+            if (ids[i] != 0) {
+                u32 cap = func_80136254(lbl_eu_806640D8,
+                                       &lbl_eu_805063BC[0x503], ids[i]);
+                if (vals[i] > cap) vals[i] = cap;
+            }
+            if (ids2[i] != 0) {
+                u32 cap = func_80136254(lbl_eu_806640D8, &lbl_eu_805063BC[0x503], ids2[i]);
+                if (vals2[i] > cap) vals2[i] = cap;
+            }
+        }
+
+        // better/worse flags comparing listB vs listA
+        u8 cmp[8] = {0};
+        for (u8 i = 0; i < 8; i++) {
+            u16 compareId = ids2[i];
+            s32 compareValue = (s32)vals2[i];
+            if (compareId != 0 && func_801361E8((u32)lbl_eu_806640D8, &lbl_eu_805063BC[0x4FD], compareId) != 0) {
+                u8 done = 0;
+                for (u8 j = 0; j < 8; j++) {
+                    if (compareId == ids[j]) {
+                        if (compareValue > (s32)vals[j]) cmp[i] = 1;
+                        else if (compareValue < (s32)vals[j]) cmp[i] = 2;
+                        done = 1;
+                        break;
+                    }
+                }
+                if (!done) cmp[i] = 1;
+            } else {
+                u8 done = 0;
+                if (compareId == ids[i]) {
+                    if (compareValue > (s32)vals[i]) cmp[i] = 1;
+                    else if (compareValue < (s32)vals[i]) cmp[i] = 2;
+                    done = 1;
+                }
+                if (!done) cmp[i] = 1;
+            }
+        }
+        // clear duplicate ids in listB
+        for (u8 i = 0; i < 8; i++) {
+            if (ids2[i] != 0 && func_801361E8((u32)lbl_eu_806640D8, &lbl_eu_805063BC[0x4FD], ids2[i]) != 0) {
+                for (u8 j = i + 1; j < 8; j++) {
+                    if (ids2[i] == ids2[j]) ids2[j] = 0;
+                }
+            }
+        }
+
+        // pane name setup
+        nw4r::lyt::Pane* root = ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10))->FindPaneByName(&lbl_eu_805063BC[0x16E], true);
+        for (u8 i = 0; i < 8; i++) {
+            char buf1[0x20];
+            char buf2[0x20];
+            sprintf(buf1, &lbl_eu_805063BC[0x507], i * 2 + 0x13);
+            sprintf(buf2, &lbl_eu_805063BC[0x515], i + 0x10);
+            func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf1, &lbl_eu_805063BC[0x2AA], 0);
+            func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf2, &lbl_eu_805063BC[0x2AA], 0);
+        }
+
+        // per-slot render
+        D8ERenderQuad quad;
+        for (u8 i = 0; i < 8; i++) {
+            u16 id = ids2[i];
+            u32 val = vals2[i];
+            u8 flag = flags2[i];
+            u8 cf = cmp[i];
+            if (id == 0) continue;
+            char buf1[0x20];
+            char buf2[0x20];
+            sprintf(buf1, &lbl_eu_805063BC[0x507], i * 2 + 0x13);
+            sprintf(buf2, &lbl_eu_805063BC[0x515], i + 0x10);
+            nw4r::lyt::Pane* pane1 = ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10))->FindPaneByName(buf1, true);
+            func_80137924(&quad, pane1, root, ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10)));
+            // Transpose alternating UI rows into the two four-slot columns.
+            s32 idx = (s32)(0.5f * (f32)i);
+            if (((s8)i % 2) != 0) idx += 4;
+            if ((u8)idx < 12) {
+                *(s16*)((u8*)info + 0xB0 + (u8)idx * 2) = id;
+            }
+            if ((u8)idx < 12) {
+                *(u8*)((u8*)info + 0x158 + (u8)idx) = 3;
+            }
+            if ((u8)idx < 12) {
+                *(u8*)((u8*)info + 0x164 + (u8)idx) = flag;
+            }
+            if ((u8)idx < 12) {
+                *(s16*)((u8*)info + 0x170 + (u8)idx * 2) = (s16)val;
+            }
+            u32 dstWords[3] = {
+                ((u32*)&quad)[0], ((u32*)&quad)[1], ((u32*)&quad)[2]
+            };
+            if ((u8)idx < 12) {
+                copyVEC3((void*)((u8*)info + 0xC8 + (u8)idx * 12),
+                         (void*)dstWords);
+            }
+            func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf1, func_8013639C(lbl_eu_806640D8, &lbl_eu_805063BC[0x139]), 0);
+            if (val == 0) {
+                func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34),
+                              buf2, &lbl_eu_805063BC[0x2AA], 0);
+            }
+            u8 rvs = (u8)func_801361E8((u32)lbl_eu_806640D8,
+                                       &lbl_eu_805063BC[0x3], id);
+            if (rvs != 0) {
+                if (rvs == 0xFF || rvs == 0xFE) {
+                    textBuffer.format(&lbl_eu_805063BC[0x13E], (s32)val,
+                        func_80136190(&lbl_eu_805063BC[0x130],
+                                      &lbl_eu_805063BC[0x139], 0x21));
+                } else {
+                    textBuffer.format(&lbl_eu_805063BC[0x422], (s32)val);
+                }
+            } else {
+                textBuffer.format(&lbl_eu_805063BC[0x422], (s32)val);
+            }
+            func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34),
+                          buf2, textBuffer.c_str(), 0);
+            if (arg3 != NULL && arg4 == 0 &&
+                (cf != 0 || type == 2 || !func_801DFDC0(info, member, arg3))) {
+                cf = 0;
+                func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34),
+                              buf2, &lbl_eu_805063BC[0x2AA], 0);
+            }
+            D8EQuad q1 = *(D8EQuad*)&lbl_eu_80664518;
+            D8EQuad q2 = *(D8EQuad*)&lbl_eu_80664520;
+            D8EQuad q3 = *(D8EQuad*)&lbl_eu_80664558;
+            D8EQuad q4 = *(D8EQuad*)&lbl_eu_80664560;
+            u32 cap = func_80136254(lbl_eu_806640D8, &lbl_eu_805063BC[0x503], id);
+            if ((u32)val >= cap) {
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664548);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664550);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664588);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664590);
+            } else if (cf == 1) {
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664528);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664530);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664568);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664570);
+            } else if (cf == 2) {
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_80664538);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_80664540);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_80664578);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_80664580);
+            }
+            if (arg4 == 0) {
+                __as__11_GXColorS10FRC11_GXColorS10(&q1, &lbl_eu_806645A8);
+                __as__11_GXColorS10FRC11_GXColorS10(&q2, &lbl_eu_806645B0);
+                __as__11_GXColorS10FRC11_GXColorS10(&q3, &lbl_eu_806645C8);
+                __as__11_GXColorS10FRC11_GXColorS10(&q4, &lbl_eu_806645D0);
+            }
+            func_80139A18((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf1, &q1, &q2);
+            func_80139A18((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf2, &q3, &q4);
+        }
+    }
+}
+#pragma pop
+
+#undef w04
+#undef _0C
+#undef _10
+#undef w14
+
+#pragma push
+#pragma auto_inline off
 void copyItemBoxEntry(CItemBoxInfoEntry* dst, const CItemBoxInfoEntry* src) {
     dst->itemId = src->itemId;
     dst->value = src->value;
@@ -931,7 +2637,12 @@ u32 func_801DF610(void* unused, u16 lookup_key, u32 category, void* arg3) {
     return result;
 }
 
-void func_801DF988(void* a, void* b, void* c, void* d) {
+u32 func_801DF988(void* info, void* member, u32 category, void* candidate, u32 slot) {
+    (void)info;
+    (void)member;
+    (void)category;
+    (void)candidate;
+    (void)slot;
     void* lookup = func_8009EC9C(0);
     for (int i = 0; i < 12; i++) {
         void* r = func_80157C4C_1(i);
@@ -939,6 +2650,7 @@ void func_801DF988(void* a, void* b, void* c, void* d) {
             void* inst = CItem_initItemImplInstances(r);
         }
     }
+    return 0;
 }
 u32 func_801DFD60(void* a, void* b, u32 arg2) {
     u32 result = 0;
@@ -1072,6 +2784,7 @@ u32 func_801DFFB8(void* unused, u16 lookup_key, void* arg3, void* unused2) {
     }
     return 1;
 }
+#pragma pop
 
 bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
     return false;

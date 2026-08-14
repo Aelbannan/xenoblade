@@ -202,8 +202,9 @@ extern "C" int func_8003BC10(void* obj) {
     if (!(*(u32*)((u8*)a + 0x64) & 8)) {
         goto done;
     }
-    s32 v1 = ((s32(*)(void*))(*(void***)a)[70])(a);
-    s32 v2 = ((s32(*)(void*))(*(void***)a)[71])(a);
+    cf::CfObject* ca = (cf::CfObject*)a;
+    s32 v1 = ca->CfObject_UnkVirtualFunc50();
+    s32 v2 = ca->CfObject_UnkVirtualFunc51();
     s32 ok = 0;
     if (lbl_eu_80663E42 == 4 && lbl_eu_80663E44 == 1) {
         ok = 1;
@@ -384,7 +385,7 @@ bool isValid() { return false; }
 extern "C" int func_8003C84C(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    float* p = (float*)((s32(*)(void*))(*(void***)obj)[43])(obj);
+    float* p = (float*)obj->CfObject_UnkVirtualFunc23();
     struct {
         float x;
         float y;
@@ -393,7 +394,7 @@ extern "C" int func_8003C84C(VMThread* pThread, int handle) {
     vec.x = p[0];
     vec.y = p[1];
     vec.z = p[2];
-    ((void(*)(void*, void*, float))(*(void***)obj)[46])(obj, &vec, lbl_eu_80665C40);
+    obj->CfObject_UnkVirtualFunc26((u32)&vec, lbl_eu_80665C40);
     if (!(lbl_eu_80663E24 & 0xAFA40000) && (*(u32*)((u8*)obj + 0x64) & 8)) {
         func_800BDB4C(obj);
     }
@@ -605,7 +606,8 @@ extern "C" int func_8003D570(VMThread* pThread, int handle) {
     int arg = vmArgIntGet(2, ptr);
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    ((void(*)(void*, int))(*(void***)obj)[0x1F8/4])(obj, arg);
+    void** vt = *(void***)obj;
+    ((void(*)(void*, int))vt[0x1F8/4])(obj, arg);
     return 0;
 }
 
@@ -830,10 +832,13 @@ extern "C" int func_8003DDAC(VMThread* pThread, int handle) {
 // us-8003e370: func_8003DDF4
 // Gets a string and calls a func, then handles notification flags
 extern "C" int func_8003DDF4(VMThread* pThread, int handle) {
-    VMArg* arg1 = vmArgPtrGet(pThread, 1);
-    const char* str = vmArgStringGet(2, arg1);
+    cf::CfObject* obj;
+    VMArg* arg1;
+    const char* str;
+    arg1 = vmArgPtrGet(pThread, 1);
+    str = vmArgStringGet(2, arg1);
     void* ctx = func_801862C0();
-    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    obj = (cf::CfObject*)func_801864DC(ctx, handle);
     func_8013D448(*(void**)((u8*)obj + 0x74), str);
     if (obj->unk64 & 0x8) {
         if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)1, 1)) {
@@ -850,9 +855,10 @@ extern "C" int func_8003DDF4(VMThread* pThread, int handle) {
 // us-8003e46c: setAct
 // Sets an action on an object: action ID and optional fixed-point parameter
 extern "C" int setAct(VMThread* pThread, int handle) {
-    VMArg* arg1 = vmArgPtrGet(pThread, 1);
-    int actionId = vmArgIntGet(2, arg1);
     int fixedParam;
+    int actionId;
+    VMArg* arg1 = vmArgPtrGet(pThread, 1);
+    actionId = vmArgIntGet(2, arg1);
     if (vmArgOmitChk(pThread, 2)) {
         fixedParam = 1;
     } else {
@@ -962,7 +968,7 @@ extern "C" int turn(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     float f = (float)(s32)angle * 4.68133871e-08f;
-    ((void(*)(void*, float))(*(void***)obj)[0xC4/4])(obj, f);
+    obj->CfObject_UnkVirtualFunc29(f);
     // func_800BE12C is header-declared as the 4-arg form; retail call sites
     // pass a 5th arg (r7=1) the callee ignores — cast to keep the r3-r7 setup.
     ((void (*)(void*, int, int, int, int))&func_800BE12C)(obj, 3, 0, -1, 1);
@@ -1593,8 +1599,7 @@ extern "C" int func_8003F870(VMThread* pThread, int handle) {
                 }
             }
             if (followTarget) {
-                ((cf::CfObject*)followTarget)->CfObject_UnkVirtualFunc22();
-                child = followTarget;
+                child = ((cf::CfObject*)followTarget)->CfObject_UnkVirtualFunc22();
             }
         }
     }

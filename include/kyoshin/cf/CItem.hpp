@@ -30,6 +30,15 @@ extern void* lbl_eu_806640CC;
 // BDAT handle used by func_8015B25C's item-box creation lookups.
 extern void* lbl_eu_806640E8;
 
+// BDAT handle used by func_8015ACAC's random-roll lookups.
+extern void* lbl_eu_80664154;
+
+// BDAT handles used by func_80159D74's per-family item-name lookups (a==2
+// path picks one of the three by the c argument).
+extern void* lbl_eu_80664170;
+extern void* lbl_eu_80664094;
+extern void* lbl_eu_8066416C;
+
 // BDAT handle used by func_8015A930's item-roll loop.
 extern void* lbl_eu_8066414C;
 
@@ -37,6 +46,12 @@ extern void* lbl_eu_8066414C;
 // lbl_eu_806640F4, cat in [4,8] picks lbl_eu_806640F8).
 extern void* lbl_eu_806640F4;
 extern void* lbl_eu_806640F8;
+
+// BDAT handle used by func_80156934's slot refresh lookups.
+extern void* lbl_eu_80664100;
+
+// BDAT handle used by func_8015AAB4's weighted random-roll lookups.
+extern void* lbl_eu_80664150;
 
 // Item-name string pool (also the +0x42 column-name argument in func_801558B4).
 extern char lbl_eu_80501C58[];
@@ -53,6 +68,23 @@ extern const char* lbl_eu_8052F660[8];
 // lwz sym@sda21(r0) - d-form r0 is the literal-zero base, not an index).
 extern const char* lbl_eu_80662288;
 extern const char* lbl_eu_8066228C;
+
+// u8 min/max pair table indexed by func_80156934's slot-size roll. Fixed
+// size keeps it sdata-eligible (an incomplete array type is not, so MWCC
+// would emit lis/addi instead of the retail li sym@sda21).
+extern u8 lbl_eu_80662290[8];
+
+// Introsort depth counters (func_80158AF4 / func_80158E74 pivot-sample
+// jitter - each recursive helper keeps its own counter).
+extern s32 lbl_eu_8066229C;
+extern s32 lbl_eu_806622A0;
+
+// Item-name prefix string used by func_80159D74's per-language name
+// concatenation (copied to the prefix buffer, then appended in language-
+// specific order). Fixed size keeps it sdata-eligible (an incomplete array
+// type is not, so MWCC would emit lis/addi instead of the retail li
+// sym@sda21).
+extern char lbl_eu_806622A4[8];
 
 // Column-name string pointers mutated by func_8015A7FC: the last character
 // of each pointed-to string is replaced with '1'..'8' per loop iteration.
@@ -72,12 +104,47 @@ extern char* lbl_eu_806622D4;
 extern char* lbl_eu_806622E0;
 extern char* lbl_eu_806622E4;
 
+// Column-name string pointers mutated by func_8015A238: the last character
+// of each pointed-to string is replaced with '1'..'4' per loop iteration
+// (three columns per iteration).
+extern char* lbl_eu_806622B0;
+extern char* lbl_eu_806622B4;
+extern char* lbl_eu_806622B8;
+
+// Column-name string pointers mutated by func_8015A51C: the last character
+// of each pointed-to string is replaced with '1'..'4' per loop iteration
+// (three columns per iteration).
+extern char* lbl_eu_806622C4;
+extern char* lbl_eu_806622C8;
+extern char* lbl_eu_806622CC;
+
+// Column-name string pointer mutated by func_80156350: the last character
+// of the pointed-to string is replaced with '1'.. per loop iteration.
+extern char* lbl_eu_80662298;
+
+// Column-name string pointers mutated by func_8015A054: the last character
+// of each pointed-to string is replaced with '1'/'2' per loop iteration.
+extern char* lbl_eu_806622A8;
+extern char* lbl_eu_806622AC;
+
 // Lazy strlen-1 cache + init flag for the func_8015A3CC / func_8015A6AC
 // column-string mutation (computed once from the BC/D0 strings).
 extern s32 lbl_eu_80664210;
 extern s8 lbl_eu_80664214;
 extern s32 lbl_eu_80664220;
 extern s8 lbl_eu_80664224;
+
+// Lazy strlen-1 cache + init flag for the func_8015A238 / func_8015A51C
+// column-string mutation (computed once from the B0/C4 strings).
+extern s32 lbl_eu_80664208;
+extern s8 lbl_eu_8066420C;
+extern s32 lbl_eu_80664218;
+extern s8 lbl_eu_8066421C;
+
+// Lazy strlen-1 cache + init flag for the func_8015A054 column-string
+// mutation (computed once from the A8/AC strings).
+extern s32 lbl_eu_80664200;
+extern s8 lbl_eu_80664204;
 
 // ---------------------------------------------------------------------------
 // Item data types (unit kyoshin/cf/CItem)
@@ -179,7 +246,8 @@ struct CItemFamilyBuf {
 };
 
 // Sort helper for __dt__801589BC: sorts the pointer range [base, end) with
-// the func_801589A0 comparator (retail symbol unmangled - C linkage).
+// Sort the pointer range [base, end) using the func_801589A0 comparator
+// (retail symbol unmangled - C linkage).
 extern "C" void func_80158AF4(CItemFamilyRec** base, CItemFamilyRec** end,
                               u32 (*cmp)(CItemFamilyRec*, CItemFamilyRec*));
 
@@ -244,6 +312,45 @@ extern s8 lbl_eu_806641FE;
 extern CItemSortBuf lbl_eu_80574004;
 extern CItemSortBuf lbl_eu_80574048;
 
+// ---------------------------------------------------------------------------
+// Per-category item-impl instances (lazy-initialized by
+// CItem_initItemImplInstances)
+// ---------------------------------------------------------------------------
+
+// 4-byte impl instance shell: the only member is the vtable pointer that the
+// lazy-init guard blocks write (retail stw of a .data vtable address).
+struct CItemImplInst {
+    void* vtable;
+};
+extern CItemImplInst lbl_eu_806641C0;
+extern CItemImplInst lbl_eu_806641C8;
+extern CItemImplInst lbl_eu_806641D0;
+extern CItemImplInst lbl_eu_806641D8;
+extern CItemImplInst lbl_eu_806641E0;
+extern CItemImplInst lbl_eu_806641E8;
+extern CItemImplInst lbl_eu_806641F0;
+extern CItemImplInst lbl_eu_806641F8;
+
+// Lazy-init guard flags (one per impl instance above).
+extern s8 lbl_eu_806641BC;
+extern s8 lbl_eu_806641C4;
+extern s8 lbl_eu_806641CC;
+extern s8 lbl_eu_806641D4;
+extern s8 lbl_eu_806641DC;
+extern s8 lbl_eu_806641E4;
+extern s8 lbl_eu_806641EC;
+extern s8 lbl_eu_806641F4;
+
+// Vtable objects written into the impl instances' vtable slots.
+extern u8 lbl_eu_8052FC58[];
+extern u8 lbl_eu_8052FBA8[];
+extern u8 lbl_eu_8052FAF8[];
+extern u8 lbl_eu_8052FA48[];
+extern u8 lbl_eu_8052F990[];
+extern u8 lbl_eu_8052F8D8[];
+extern u8 lbl_eu_8052F828[];
+extern u8 lbl_eu_8052F770[];
+
 // Item-implementation vtable interface returned by
 // CItem_initItemImplInstances. Only the vtable offsets exercised by the
 // retail call sites (0x08, 0x1C, 0x4C, 0x50, 0x68, 0x78, 0x80) are named;
@@ -263,12 +370,12 @@ public:
     virtual void vf28();                         // 0x28
     virtual CItemRec* vf2C(CItemData* p, u32 x); // 0x2C (returns the 8-byte sub-record)
     virtual u32 vf30(CItemData* p);              // 0x30
-    virtual void vf34();                         // 0x34
+    virtual void vf34(CItemData* p, u32 x);      // 0x34
     virtual void vf38();                         // 0x38
-    virtual void vf3C();                         // 0x3C
-    virtual void vf40();                         // 0x40
-    virtual void vf44();                         // 0x44
-    virtual void vf48();                         // 0x48
+    virtual void vf3C(CItemData* p, u32 x);      // 0x3C
+    virtual u32 vf40(CItemData* p, u32 x);       // 0x40
+    virtual void vf44(CItemData* p, u32 x, u32 y); // 0x44
+    virtual void vf48(CItemData* p);             // 0x48
     virtual u32 vf4C(CItemData* p, u32 x);       // 0x4C
     virtual u32 vf50(CItemData* p, u32 x, u16 y); // 0x50
     virtual void vf54();                         // 0x54
@@ -281,21 +388,72 @@ public:
     virtual void vf70();                         // 0x70
     virtual void vf74();                         // 0x74
     virtual u32 vf78(CItemData* p);              // 0x78
-    virtual void vf7C();                         // 0x7C
+    virtual void vf7C(CItemData* p, u16 x);      // 0x7C
     virtual u32 vf80(CItemData* p);              // 0x80
     virtual u32 vf84(CItemData* p, u32 x);       // 0x84
+    virtual void vf88();                         // 0x88
+    virtual void vf8C(CItemData* p, u32 x);      // 0x8C
+    virtual void vf90();                         // 0x90
+    virtual u32 vf94(CItemData* p, u32 x);       // 0x94
 };
 
 // Lazy item-impl accessor: returns the per-category impl instance for self.
 extern "C" CItemImpl* CItem_initItemImplInstances(CItemData* self);
 
+// Per-kind impl table (indexed by kind & 0xF) used by the default dispatch
+// of CItem_initItemImplInstances.
+extern CItemImpl* lbl_eu_8052F67C[16];
+
 // Sort scratch filler shared with func_80155F34 (writes the u8 at 0x00 and
 // the u32 at 0x40 of buf).
-extern "C" void func_80159D74(void* buf, u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
+extern "C" void func_80159D74(CItemSortBuf* buf, u32 a, u32 b, u32 c, u32 d,
+                              u32 e, u32 f);
+
+// 68-byte string slot used by func_80159D74's name building: a 0x40-byte
+// string buffer plus a running length (the retail zeroes mStr[0]/mLen at the
+// top of the function, then fills each slot via strlen/strcpy/strcat).
+struct CItemNameBuf {
+    /* 0x00 */ char mStr[0x40];
+    /* 0x40 */ s32 mLen;
+};
+
+// CfGameManager data-id refresh (retail C-linkage name; the unity TU
+// provides the definition).
+extern "C" void func_8007F11C__Q22cf13CfGameManagerFv();
+
+// Console language id (0..6).
+extern "C" int getLanguage__9CDeviceSCFv();
+
+// ---------------------------------------------------------------------------
+// Party item-slot bookkeeping table (func_80159348)
+// ---------------------------------------------------------------------------
+
+// Per-party inventory/equip-slot tables refreshed by func_80159348: the 13
+// characters (ids 1..13) each own six equip slots (u16 at +0x0C, row stride
+// 0xC) and up to eight parallel (item id, slot, sub-index) tuples stored in
+// the three u16 arrays at +0xAC / +0x17C / +0x24C (row stride 0x10). The
+// entries are signed so the retail's `li r31, -1` clear value materialises
+// as a signed -1 (u16 fields would force a lis/subi 0xFFFF pair).
+struct CItemPartySlots {
+    u8 pad_00[0xC];
+    /* 0x0C */ s16 mSlots[13][6];
+    u8 pad_A8[4];
+    /* 0xAC */ s16 mArr1[13][8];
+    /* 0x17C */ s16 mArr2[13][8];
+    /* 0x24C */ s16 mArr3[12][8];
+    /* 0x30C */ u8 pad_30C[8];
+};
 
 // Count the zero records in the func_801579C4 list for arg, minus the
 // randomizer result when the category is in [2,8].
 extern "C" s32 func_80157CD0(u32 arg);
+
+// Party item-slot table refresh (retail symbol unmangled - C linkage).
+extern "C" void func_80159348(CItemPartySlots* self);
+
+// Compact one kind's record list into the out table (retail symbol
+// unmangled - C linkage; the capacity argument is ignored by the callee).
+extern "C" int func_80158894(u16 arg, u16* out, s32 capacity);
 
 // Item-slot randomizer (size 0x144): counts non-empty slots for kind 3
 // (per-slot u16 high-byte table) or the func_801575B0 family flags.
@@ -303,12 +461,46 @@ extern "C" s32 func_80157CD0(u32 arg);
 // reference the plain name.
 extern "C" s32 func_801576C8(u32 arg);
 
+// Item-roll helpers called by func_8015AAB4's weighted dispatch (retail
+// symbols unmangled - C linkage so call-site relocs use the plain names).
+extern "C" s32 func_8015A51C(CItemFour* self, u32 a, u32 unused, void* c, u32 d);
+extern "C" s32 func_8015A054(CItemFour* self, u32 a, u32 unused, void* c, u32 d, u32 e);
+
+// Find a free record in the item-block list for arg (writes the record
+// index to *pOut; retail symbol unmangled - C linkage).
+extern "C" CItemExt* func_80157D6C(u32 arg, s16* pOut, u32 family);
+
+// Three-element sort helper used by func_80158AF4's median-of-3 pivot
+// selection (retail symbol unmangled - C linkage).
+extern "C" void func_801591F4(u32* a, u32* b, u32* c, int (**pCmp)(u32*, u32*));
+
+// Recursive half-sort used by func_80158AF4's introsort loop (retail
+// symbol unmangled - C linkage).
+extern "C" void func_80158E74(CItemFamilyRec** base, CItemFamilyRec** end,
+                              u32 (**cmp)(CItemFamilyRec*, CItemFamilyRec*));
+
 // Item-family BDAT resolver (unit-local): returns the BDAT file handle for
 // family id v and writes the kind/row sub-ids into outA/outB. The retail
 // return value is recovered from the func_80155DBC/func_80155E30 call sites,
 // which pass it straight to getBdatStringColumnValue. C linkage so the
-// call-site reloc uses the plain retail name (PLAN.md §17.6).
-extern "C" void* func_80157F04(u16 v, void* outA, void* outB);
+// call-site reloc uses the plain retail name (PLAN.md §17.6). The first
+// param is u32 so call sites pass the id unmasked (retail mr, not clrlwi).
+extern "C" void* func_80157F04(u32 v, void* outA, void* outB);
+
+// Character-data / equip-table helpers (defined in CtrlObjectParam.cpp):
+// resolve the item instance for an equip slot, set an equip-slot entry, and
+// the u16 row-table readers/writers used by the party item-slot refresh.
+extern "C" u8* func_8009D790(s16* arr, u32 idx);
+extern "C" void func_8009DBF4(void* a, unsigned long b, void* c);
+extern "C" u16 func_8009E0B4(void* data, u32 index, void* ptr);
+extern "C" void func_8009E0C4(void* table, u16 index, u16 value);
+
+// CfGameManager party-inventory queries (defined in the CfGameManager unity
+// TU, src/kyoshin/cf/CfGameManagerUnityHelpers.hpp): count/sum the items of
+// a kind across the party members. The retail mangled names are kept as the
+// plain C-linkage identifiers.
+extern "C" u32 func_80082E50__Q22cf13CfGameManagerFv(s32 playerIndex, u32 value);
+extern "C" u32 func_80082EC4__Q22cf13CfGameManagerFv(s32 playerIndex, u32 value);
 
 // Item-box engine helpers (defined in kyoshin/cf/CtrlObjectParam.cpp).
 // func_8009EC9C returns the character-data block for a u16 character id;

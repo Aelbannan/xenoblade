@@ -165,7 +165,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc8();
     void CfObject_UnkVirtualFunc63();
     void CfObject_UnkVirtualFunc19();
-    void CfObject_UnkVirtualFunc22();
+    CfObjectModel* CfObject_UnkVirtualFunc22();  // covariant (retail callers read r3 after dispatch)
     void CfObject_UnkVirtualFunc20();
     u32 CfObject_UnkVirtualFunc23();
     void CfObject_UnkVirtualFunc27(void* src);

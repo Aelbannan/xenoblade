@@ -6,22 +6,18 @@
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceFile.hpp"
+#include "monolib/device/CDeviceVI.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/scn/IScnRender.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/util/FixStr.hpp"
+#include "monolib/work/CProcess.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 
 #include <nw4r/lyt.h>
 #include <stdio.h>
-
-struct CMenuGetItemFourShorts {
-    s16 a;
-    s16 b;
-    s16 c;
-    s16 d;
-};
+#include "revolution/gx/GXPixel.h"
 
 struct CMenuGetItemPaneWord {
     CMenuGetItemPaneWord() {}
@@ -93,20 +89,6 @@ extern f64 lbl_eu_80667E08;
 extern u32 lbl_eu_806640EC;
 extern u32 lbl_eu_80664108;
 extern u32 lbl_eu_80664410;
-extern CMenuGetItemFourShorts lbl_eu_806643A0;
-extern CMenuGetItemFourShorts lbl_eu_806643A8;
-extern CMenuGetItemFourShorts lbl_eu_806643B0;
-extern CMenuGetItemFourShorts lbl_eu_806643B8;
-extern CMenuGetItemFourShorts lbl_eu_806643C0;
-extern CMenuGetItemFourShorts lbl_eu_806643C8;
-extern CMenuGetItemFourShorts lbl_eu_806643D0;
-extern CMenuGetItemFourShorts lbl_eu_806643D8;
-extern CMenuGetItemFourShorts lbl_eu_806643E0;
-extern CMenuGetItemFourShorts lbl_eu_806643E8;
-extern CMenuGetItemFourShorts lbl_eu_806643F0;
-extern CMenuGetItemFourShorts lbl_eu_806643F8;
-extern CMenuGetItemFourShorts lbl_eu_80664400;
-extern CMenuGetItemFourShorts lbl_eu_80664408;
 
 void code80135FDC_postIncByte_64080();
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
@@ -114,12 +96,17 @@ u32 func_801355BC();
 char* func_80138F78(u32);
 CMenuGetItemFourShorts func_801397AC(void*, u32);
 CMenuGetItemImpl* CItem_initItemImplInstances(CMenuGetItemMultiEntry* entry);
-u16 func_801392E4(u16);
 u16 func_80139358(u16);
 char* func_801393CC(u16);
 char* func_801394D4(u16);
 u8 func_80157CD0(u16);
-int func_80158068(u16);
+// Retail call sites consume the +6 slot-sum as a raw byte (mr r5, r3, no
+// clrlwi), so the call-site type is u8 despite the CItem.cpp def using u32;
+// the arg is passed raw (mr r3, rN) so the visible param is u32.
+u8 func_80158068(u32);
+// Retail passes the raw id to func_801392E4 without a halfword mask (mr r3,
+// r4 directly), so the visible param is u32 here.
+u32 func_801392E4(u32);
 char* func_eu_802B1474();
 char* func_eu_802B148C();
 u16 func_80136254(const char*, const char*, u16);
@@ -129,12 +116,28 @@ CBaseCur* __ct__CCur18(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
 void* __dt__6CCur18Fv(CBaseCur*, int);
 CSysWin* __ct__CSysWin(CSysWin*, int);
 CSysWin* __dt__7CSysWinFv(CSysWin*, int);
-void func_801B5630(CMenuGetItemMulti*);
-void func_801B5860(CMenuGetItemMulti*, int, int);
+void func_801B59F4(CMenuGetItemMulti*);
+void func_801B5860(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
+void func_801B6184(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
+void func_801B69F4(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
+void func_801B70BC(CMenuGetItemMulti*, int, CMenuGetItemMultiEntry*);
+void func_801B7440(CMenuGetItemMulti*, CMenuGetItemMultiEntry*);
+void func_801B76CC(CMenuGetItemMulti*, int);
+void func_801B78B4(CMenuGetItemMulti*, int);
+void __dt__8CProcessFv(CProcess*, int);
+u8* __ct__801B2794(u8*, u32, u32);
 }
 
 extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);
 extern "C" void func_8008294C__Q22cf13CfGameManagerFv(int);
+
+// Named .sdata2 conversion magic: defining it lets MWCC's constant pool reuse
+// the retail symbol for the (f32)(s32) casts in func_801B5630 instead of
+// emitting a TU-local @N label (CMiniMap idiom).
+extern const f64 lbl_eu_80667E18 = 0x4330000080000000ll;
+
+// Pane layout adjustment for the visible-item count (defined below; called by Init).
+void func_801B5630(CMenuGetItemMulti* self);
 
 
 extern "C" void __dt__17CMenuGetItemMultiFv(void*, int);
@@ -142,11 +145,31 @@ extern "C" void cbRenderBefore__17CMenuGetItemMultiFv(void*);
 
 void __ct__CMenuGetItemMulti(){}
 
-void __dt__801B2754(){}
+// Retail __dt__801B2754: deleting destructor of the 0x36c get-item-multi
+// task object (empty body - the ctor __ct__801B2794 owns all state init).
+u8* __dt__801B2754(u8* _this, int flags) {
+    if (_this != 0 && flags > 0) {
+        operator delete(_this);
+    }
+    return _this;
+}
 
 void __ct__801B2794(){}
 
-CMenuGetItemMulti::~CMenuGetItemMulti() {}
+CMenuGetItemMulti::~CMenuGetItemMulti() {
+    // Sub-objects destroyed in reverse declaration order via their retail
+    // dtor symbols (r4=-1); the CProcess base region at +0x00 is destroyed
+    // last with flags=0 behind the nested double null-check (MWCC
+    // D2-inlined-into-D1 artifact - CMenuGetItem idiom).
+    __dt__7CSysWinFv(reinterpret_cast<CSysWin*>(&mSystemWindow[0]), -1);
+    __dt__6CCur18Fv(&mCursor, -1);
+    reinterpret_cast<UnkClass_8045F564*>(&mRegion[0])->~UnkClass_8045F564();
+    if (this != 0) {
+        if (this != 0) {
+            __dt__8CProcessFv(reinterpret_cast<CProcess*>(this), 0);
+        }
+    }
+}
 
 extern u32 lbl_eu_80664418;
 extern "C" void func_801B29E0() { lbl_eu_80664418 = 0; }
@@ -619,26 +642,27 @@ void CMenuGetItemMulti::Init() {
     u8 systemWindowStorage[sizeof(CSysWin)];
     CSysWin* systemWindowTemp = reinterpret_cast<CSysWin*>(&systemWindowStorage[0]);
     __ct__CSysWin(systemWindowTemp, 2);
-    mSystemWindow.mMemRegion.unk0 = systemWindowTemp->mMemRegion.unk0;
-    mSystemWindow.mMemRegion.unk4 = systemWindowTemp->mMemRegion.unk4;
-    mSystemWindow.mMemRegion.unk8 = systemWindowTemp->mMemRegion.unk8;
-    mSystemWindow.mMemRegion.unkC = systemWindowTemp->mMemRegion.unkC;
-    mSystemWindow.mFileHandle = systemWindowTemp->mFileHandle;
-    mSystemWindow.mTagProcessor = systemWindowTemp->mTagProcessor;
-    mSystemWindow.mArcAccessor = systemWindowTemp->mArcAccessor;
-    mSystemWindow.mLayout = systemWindowTemp->mLayout;
-    mSystemWindow.mAnimTrans = systemWindowTemp->mAnimTrans;
-    mSystemWindow.field_28 = systemWindowTemp->field_28;
-    mSystemWindow.field_2C = systemWindowTemp->field_2C;
-    mSystemWindow.field_30 = systemWindowTemp->field_30;
-    mSystemWindow.field_34 = systemWindowTemp->field_34;
-    mSystemWindow.field_35 = systemWindowTemp->field_35;
-    mSystemWindow.field_36 = systemWindowTemp->field_36;
-    mSystemWindow.field_37 = systemWindowTemp->field_37;
-    mSystemWindow.field_38 = systemWindowTemp->field_38;
-    mSystemWindow.field_39 = systemWindowTemp->field_39;
+    CSysWin* systemWindow = reinterpret_cast<CSysWin*>(&mSystemWindow[0]);
+    systemWindow->mMemRegion.unk0 = systemWindowTemp->mMemRegion.unk0;
+    systemWindow->mMemRegion.unk4 = systemWindowTemp->mMemRegion.unk4;
+    systemWindow->mMemRegion.unk8 = systemWindowTemp->mMemRegion.unk8;
+    systemWindow->mMemRegion.unkC = systemWindowTemp->mMemRegion.unkC;
+    systemWindow->mFileHandle = systemWindowTemp->mFileHandle;
+    systemWindow->mTagProcessor = systemWindowTemp->mTagProcessor;
+    systemWindow->mArcAccessor = systemWindowTemp->mArcAccessor;
+    systemWindow->mLayout = systemWindowTemp->mLayout;
+    systemWindow->mAnimTrans = systemWindowTemp->mAnimTrans;
+    systemWindow->field_28 = systemWindowTemp->field_28;
+    systemWindow->field_2C = systemWindowTemp->field_2C;
+    systemWindow->field_30 = systemWindowTemp->field_30;
+    systemWindow->field_34 = systemWindowTemp->field_34;
+    systemWindow->field_35 = systemWindowTemp->field_35;
+    systemWindow->field_36 = systemWindowTemp->field_36;
+    systemWindow->field_37 = systemWindowTemp->field_37;
+    systemWindow->field_38 = systemWindowTemp->field_38;
+    systemWindow->field_39 = systemWindowTemp->field_39;
     __dt__7CSysWinFv(systemWindowTemp, -1);
-    ((void (*)(CSysWin*))reinterpret_cast<void**>(mSystemWindow.mVtbl)[34])(&mSystemWindow);
+    ((void (*)(CSysWin*))reinterpret_cast<void**>(systemWindow->mVtbl)[34])(systemWindow);
 
     if ((*reinterpret_cast<u32*>(cf::CfGameManager::getCurrentPad()) & 0x0001e000) != 0) {
         field_200 = 1;
@@ -652,36 +676,246 @@ void CMenuGetItemMulti::Init() {
     reinterpret_cast<UnkClass_8045F564*>(&mRegion[0])->func_8045F810();
 }
 
-void CMenuGetItemMulti::Term() {}
+void CMenuGetItemMulti::Term() {
+    CDeviceVI::waitForDrawDone();
+    IScnRender* render = reinterpret_cast<IScnRender*>(this);
+    if (this != 0) {
+        render = reinterpret_cast<IScnRender*>(&mIScnRenderVtable);
+    }
+    mScn->removeRenderCB(render);
+    func_8003AA8C__5CBdatFUl(5);
+    func_801390E0(&mFileHandle);
+    if (field_208 != 0) {
+        mtl::MemManager::deallocate(reinterpret_cast<void*>(field_208));
+        field_208 = 0;
+    }
+    reinterpret_cast<CMenuGetItemMultiCur*>(&mCursor)->func_801D2180();
+    func_8022B7F4(&mSystemWindow[0]);
+    if (mLayout != 0) {
+        delete mLayout;
+        mLayout = 0;
+    }
+    reinterpret_cast<UnkClass_8045F564*>(&mRegion[0])->func_8045F778();
+    lbl_eu_80664414 = 0;
+    lbl_eu_80664418 = 0;
+    if (mEntryCount != 0 || field_1F6 != 0) {
+        func_8013B980();
+        if (code80135FDC_getByte_64080() == 0) {
+            func_8008294C__Q22cf13CfGameManagerFv(0);
+        }
+    }
+    if (mEntryCount != 0) {
+        lbl_eu_80663E24 &= ~0x200000u;
+        CfGameManagerTermFields* mgrView = reinterpret_cast<CfGameManagerTermFields*>(
+            cf::CfGameManager::getInstance());
+        CfGameManagerTermFields* src = reinterpret_cast<CfGameManagerTermFields*>(
+            func_800B708C(mgrView->field_80));
+        if (src != 0 && (src->field_64 & 0x100) != 0) {
+            reinterpret_cast<CfGameManagerTermFields*>(
+                cf::CfGameManager::getInstance())->field_80 = 0;
+            func_800B7320(reinterpret_cast<u32>(src));
+            src->field_68 |= 0x60;
+        }
+    }
+}
 
 void CMenuGetItemMulti::Move() {}
 
-void func_801B45A0(void* self){}
+// Adjust the item-multi pane layout for the visible-item count: each hidden
+// item (4 - mVisibleItemCount, clamped at 0) shrinks the item-text pane
+// height and shifts the close/other panes down by lbl_eu_80667E14 per step.
+void func_801B5630(CMenuGetItemMulti* self) {
+    s32 count = 4 - (s32)self->mVisibleItemCount;
+    if (count < 0) {
+        count = 0;
+    }
 
-void CMenuGetItemMulti::cbRenderBefore() {}
+    nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
+        &lbl_eu_80504A3C[0x3ef], true);
+    if (pane != 0) {
+        nw4r::lyt::Size size = pane->GetSize();
+        size.height -= lbl_eu_80667E14 * (f32)count;
+        reinterpret_cast<CMenuGetItemPaneView*>(pane)->height = size.height;
+    }
+    pane = self->mLayout->GetRootPane()->FindPaneByName(
+        &lbl_eu_80504A3C[0x187], true);
+    if (pane != 0) {
+        nw4r::math::VEC3 pos = pane->GetTranslate();
+        pos.y += (f32)count * lbl_eu_80667E14;
+        pane->SetTranslate(pos);
+    }
+    pane = self->mLayout->GetRootPane()->FindPaneByName(
+        &lbl_eu_80504A3C[0x16b], true);
+    if (pane != 0) {
+        nw4r::math::VEC3 pos = pane->GetTranslate();
+        pos.y += (f32)count * lbl_eu_80667E14;
+        pane->SetTranslate(pos);
+    }
+    pane = self->mLayout->GetRootPane()->FindPaneByName(
+        &lbl_eu_80504A3C[0x3f8], true);
+    if (pane != 0) {
+        nw4r::math::VEC3 pos = pane->GetTranslate();
+        pos.y += (f32)count * lbl_eu_80667E14;
+        pane->SetTranslate(pos);
+    }
+}
 
-void func_801B46E4(){}
+// File-event completion handler: OnFileEvent routes the CEventFile through
+// here once the owning CFileHandle matches (event->mFileHandle == this->mFileHandle).
+// Steals the loaded buffer, publishes it to field_208, then re-reads the
+// BDAT file pointer and clears the handle. Returns 1 on success.
+int func_801B45A0(CMenuGetItemMulti* self, CEventFile* event) {
+    if (self->mFileHandle == event->mFileHandle) {
+        u8* data = self->mFileHandle->mData;
+        self->mFileHandle->mData = 0;
+        self->field_208 = reinterpret_cast<u32>(data);
+        func_8003AA34();
+        if (getFP__FPCc(&lbl_eu_80504A3C[0x3e5]) == 0) {
+            func_8003AA78__5CBdatFUlPv(5, reinterpret_cast<u8*>(self->field_208));
+        }
+        lbl_eu_80664418 = reinterpret_cast<u32>(getFP__FPCc(&lbl_eu_80504A3C[0x3e5]));
+        self->mFileHandle = 0;
+        return 1;
+    }
+    return 0;
+}
 
-void func_801B4790(){}
+// Render-callback: gate prefix (task busy / global bit 21 / scene active),
+// then draw the layout, system window and cursor through a stack DrawInfo.
+// The DrawInfo's scope-exit dtor is auto-emitted as the retail direct
+// `bl __dt__Q34nw4r3lyt8DrawInfoFv(drawInfo, -1)`; an explicit
+// `drawInfo.~DrawInfo()` would make MWCC ALSO emit a virtual-dispatched
+// scope-exit dtor, so none is written here.
+void CMenuGetItemMulti::cbRenderBefore() {
+    CTaskGame::getInstance();
+    if (CTaskGame::func_800426F0() != 0) goto exit;
+    if (lbl_eu_80663E28 & (1u << 21)) goto exit;
+    // Branch-over-branch guard: `goto body` with the `exit` label + return
+    // placed BEFORE `body` keeps MWCC from folding the bit test to a single
+    // `bne` -- it emits retail's `beq body; b exit`.
+    goto body;
+exit:
+    return;
+body:
+    if (!func_8013BE50()) goto exit;
+    {
+        GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+        nw4r::lyt::DrawInfo drawInfo;
+        func_80137250(&drawInfo);
+        func_80137038(mLayout, &drawInfo, 0, 1);
+        func_8022B7C8(&mSystemWindow[0], &drawInfo);
+        func_801D20B0(&mCursor, &drawInfo);
+    }
+}
 
-extern unsigned long lbl_eu_80664414;
+// Item-multi window factory: creates the single get-item-multi task object
+// (retail SDA slot lbl_eu_80664414) under the given parent process and
+// returns it, or 0 when one already exists. The 8 ctor arguments are
+// forwarded verbatim (last is a byte flag on the stack).
+IUIWindow* func_801B46E4(CProcess* pParent, CScn* pScene, u32 a, u32 b, u32 c,
+                         u32 d, u32 e, u32 f, u8 g) {
+    if (lbl_eu_80664414 != 0) {
+        return 0;
+    }
+    u8* obj = reinterpret_cast<u8*>(
+        mtl::MemManager::allocate(0x36c, CWorkThreadSystem::getWorkMem()));
+    if (obj != 0) {
+        // Ctor returns `this`, re-establishing obj in r3 across the call
+        // (keeps the object in a volatile register, matching retail).
+        obj = __ct__CMenuGetItemMulti(obj, pScene, a, b, c, d, e, f, g);
+    }
+    lbl_eu_80664414 = reinterpret_cast<u32>(obj);
+    reinterpret_cast<CProcess*>(obj)->Regist(pParent, false);
+    return reinterpret_cast<IUIWindow*>(lbl_eu_80664414);
+}
+
+// Create the single get-item-multi task object (retail SDA slot
+// lbl_eu_80664414) under the given parent process. Returns the instance
+// pointer, or 0 when one already exists.
+u8* func_801B4790(CProcess* parent, u32 arg2, u32 arg3) {
+    if (lbl_eu_80664414 != 0) {
+        return 0;
+    }
+    u8* obj = (u8*)mtl::MemManager::allocate(0x36c, CWorkThreadSystem::getWorkMem());
+    if (obj != 0) {
+        // ctor returns `this`, re-establishing obj in r3 across the call
+        // (keeps the object in a volatile register, matching retail).
+        obj = __ct__801B2794(obj, arg2, arg3);
+    }
+    lbl_eu_80664414 = (u32)obj;
+    reinterpret_cast<CProcess*>(obj)->Regist(parent, false);
+    return (u8*)lbl_eu_80664414;
+}
+
 extern "C" unsigned long func_801B481C() { return lbl_eu_80664414 != 0; }
 
 void func_801B4830(){}
 
-void func_801B59F4(){}
+// noinline: the retail keeps real bl relocs to these dispatch helpers; empty
+// stub bodies must not be inlined away at call sites.
+__declspec(noinline) void func_801B59F4(CMenuGetItemMulti* self) {}
 
-void func_801B6184(){}
+// Refresh the item-multi display for one item. arg2 = item id (or 0 to
+// clear), arg3 = optional packed entry (when non-null its packed word
+// supplies the id and category instead of arg2). Category dispatch:
+//   2 -> equipped items, 3 -> rank item, 4-8 -> slotted items,
+//   9 -> key item, 10 -> art/talent, 13 -> quest item.
+void func_801B5860(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* arg3) {
+    func_801B59F4(self);
+    nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
+        &lbl_eu_80504A3C[0x404], true);
+    if (pane != 0) {
+        CMenuGetItemPaneView* view = reinterpret_cast<CMenuGetItemPaneView*>(pane);
+        view->flags = (view->flags & 0xfe) | (arg2 != 0);
+    }
+    if (arg2 != 0) {
+        // Inline ternary: branches compute into the arg register (r3), the
+        // u16 assignment masks once at the join (retail clrlwi r3, r3, 16).
+        u16 id = (arg3 != 0) ? (arg3->packed >> 20) : (u32)arg2;
+        func_80136910(self->mLayout, &lbl_eu_80504A3C[0xeb], func_80158068(id));
+        u8 cat = (arg3 != 0) ? ((arg3->packed >> 16) & 0xf)
+                             : func_801392E4(arg2);
+        // Goto-chain dispatch: MWCC emits the comparison chain first, then the
+        // bodies in this order (2, 4-8, 3, 9, 10, 13) - the retail layout.
+        if (cat >= 4 && cat <= 8) goto case4_8;
+        if (cat == 2) goto case2;
+        if (cat == 3) goto case3;
+        if (cat == 9) goto case9;
+        if (cat == 10) goto case10;
+        if (cat == 13) goto case13;
+        goto done;
+    case2:
+        func_801B6184(self, arg2, arg3);
+        goto done;
+    case4_8:
+        func_801B69F4(self, arg2, arg3);
+        goto done;
+    case3:
+        func_801B70BC(self, arg2, arg3);
+        goto done;
+    case9:
+        func_801B7440(self, arg3);
+        goto done;
+    case10:
+        func_801B76CC(self, arg2);
+        goto done;
+    case13:
+        func_801B78B4(self, arg2);
+    done:;
+    }
+}
 
-void func_801B69F4(){}
+__declspec(noinline) void func_801B6184(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* arg3) {}
 
-void func_801B70BC(){}
+__declspec(noinline) void func_801B69F4(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* arg3) {}
 
-void func_801B7440(){}
+__declspec(noinline) void func_801B70BC(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* arg3) {}
 
-void func_801B76CC(){}
+__declspec(noinline) void func_801B7440(CMenuGetItemMulti* self, CMenuGetItemMultiEntry* arg3) {}
 
-void func_801B78B4(){}
+__declspec(noinline) void func_801B76CC(CMenuGetItemMulti* self, int arg2) {}
+
+__declspec(noinline) void func_801B78B4(CMenuGetItemMulti* self, int arg2) {}
 
 void func_801B7A58(){}
 
@@ -693,7 +927,7 @@ void func_801B9864(){}
 
 void func_801B9C1C(){}
 
-extern "C" void OnFileEvent__17CMenuGetItemMultiFP10CEventFile(void* self) { func_801B45A0((char*)self - 0x6c); }
+void OnFileEvent__17CMenuGetItemMultiFP10CEventFile(u8* self) { ((void (*)(char*))func_801B45A0)((char*)self - 0x6c); }
 
 void func_801BA134(void* self) { ((void(*)(void*))__dt__17CMenuGetItemMultiFv)((char*)self - 0x6c); }
 
@@ -702,4 +936,63 @@ void func_801BA13C(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuGetItem
 void func_801BA144(void* self) { ((void(*)(void*))__dt__17CMenuGetItemMultiFv)((char*)self - 0x70); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-void sinit_801B9FC8(){}
+// Static constructor: initialise the get-item-multi pane colour/position
+// defaults (.sbss). Each entry is an RGBA 16-bit quadruple; alpha stays 0.
+void sinit_801B9FC8() {
+    lbl_eu_806643A0.a = 0;
+    lbl_eu_806643A0.b = 0;
+    lbl_eu_806643A0.c = 0;
+    lbl_eu_806643A0.d = 0;
+    lbl_eu_806643A8.a = 0;
+    lbl_eu_806643A8.b = 0;
+    lbl_eu_806643A8.c = 0;
+    lbl_eu_806643A8.d = 0;
+    lbl_eu_806643B0.a = 0x80;
+    lbl_eu_806643B0.b = 0x80;
+    lbl_eu_806643B0.c = 0;
+    lbl_eu_806643B0.d = 0;
+    lbl_eu_806643B8.a = 0x80;
+    lbl_eu_806643B8.b = 0x80;
+    lbl_eu_806643B8.c = 0;
+    lbl_eu_806643B8.d = 0;
+    lbl_eu_806643C0.a = 0;
+    lbl_eu_806643C0.b = 0;
+    lbl_eu_806643C0.c = 0;
+    lbl_eu_806643C0.d = 0;
+    lbl_eu_806643C8.a = 0;
+    lbl_eu_806643C8.b = 0;
+    lbl_eu_806643C8.c = 0;
+    lbl_eu_806643C8.d = 0;
+    lbl_eu_806643D0.a = 0xff;
+    lbl_eu_806643D0.b = 0xff;
+    lbl_eu_806643D0.c = 0xfa;
+    lbl_eu_806643D0.d = 0;
+    lbl_eu_806643D8.a = 0x80;
+    lbl_eu_806643D8.b = 0x80;
+    lbl_eu_806643D8.c = 0x80;
+    lbl_eu_806643D8.d = 0;
+    lbl_eu_806643E0.a = 0;
+    lbl_eu_806643E0.b = 0;
+    lbl_eu_806643E0.c = 0;
+    lbl_eu_806643E0.d = 0;
+    lbl_eu_806643E8.a = 0;
+    lbl_eu_806643E8.b = 0;
+    lbl_eu_806643E8.c = 0;
+    lbl_eu_806643E8.d = 0;
+    lbl_eu_806643F0.a = 0x12;
+    lbl_eu_806643F0.b = 0xa3;
+    lbl_eu_806643F0.c = 0xe7;
+    lbl_eu_806643F0.d = 0;
+    lbl_eu_806643F8.a = 0xff;
+    lbl_eu_806643F8.b = 0xff;
+    lbl_eu_806643F8.c = 0xff;
+    lbl_eu_806643F8.d = 0;
+    lbl_eu_80664400.a = 0xb3;
+    lbl_eu_80664400.b = 0x9;
+    lbl_eu_80664400.c = 0xc0;
+    lbl_eu_80664400.d = 0;
+    lbl_eu_80664408.a = 0xff;
+    lbl_eu_80664408.b = 0xff;
+    lbl_eu_80664408.c = 0xff;
+    lbl_eu_80664408.d = 0;
+}

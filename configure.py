@@ -1770,7 +1770,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/core/CViewFrame.cpp"),
             Object(NonMatching, "monolib/src/core/CViewRoot.cpp"),
             Object(NonMatching, "monolib/src/work/CWorkControl.cpp", extra_cflags=["-func_align 4"]),
-            Object(NonMatching, "monolib/src/work/CWorkFlowSetup.cpp", extra_cflags=["-func_align 16"]),
+            Object(Matching, "monolib/src/work/CWorkFlowSetup.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # retail dtor frame: stmw/lmw r30+r31 save/restore (MWCC -O4,s prologue merge); -O4,p would emit separate stw/lwz. -O4,s resets -func_align, so -func_align 4 must come AFTER it or the unit gains inter-fn padding and blows the split (MWCC_REFERENCE)
             Object(NonMatching, "monolib/src/work/CWorkFlowShutdownAll.cpp"),
             Object(NonMatching, "monolib/src/work/CWorkFlowWiiMenu.cpp"),
             Object(NonMatching, "monolib/src/work/CWorkFlowWiiReset.cpp"),

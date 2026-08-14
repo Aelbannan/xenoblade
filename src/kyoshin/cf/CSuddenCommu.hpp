@@ -240,6 +240,12 @@ struct CSuddenCommuBmGauge {
     u32 field_194;                  // 0x194
 };
 
+// Forward decls for the C-linkage imports below, matching the types the chain
+// / scene headers use for the same retail symbols (CChain.hpp takes
+// CChainBattleObjTail*, CfObjectMove.hpp / CTaskGame.hpp take CScn*).
+class CChainBattleObjTail;
+class CScn;
+
 // C-linkage callees defined in CSuddenCommu.cpp (retail symbols are unmangled
 // global func_* names - the declarations below give the definitions C linkage
 // so the object emits the exact retail symbol names).
@@ -262,7 +268,9 @@ extern "C" {
     int func_802A3290();
     // Battle-voice dispatch (defined in voice/CCharVoiceMan.cpp): run the
     // voice node for `voiceId` with the target spot and the commu's result id.
-    void* func_802A3680(u32 voiceId, void* spot, int result);
+    // Signature matches CChain.hpp (int/CChainBattleObjTail*/int) so both
+    // headers can be included in one TU without a rename guard.
+    int func_802A3680(int a, CChainBattleObjTail* b, int c);
     // Battle-manager singleton (retail pre-mangled name; C linkage keeps the
     // symbol verbatim - CSysWinScenarioLog idiom). CBattleManager.hpp is not
     // included by CSuddenCommu.cpp (conflicting func_80149154 decl in
@@ -271,7 +279,7 @@ extern "C" {
     // Voice/help imports used by the sudden-commu triggers (unmangled retail
     // names - C linkage keeps the call relocs verbatim).
     u32 func_8009CF8C(u32 resourceId);
-    int func_80174C98(void* actor, u32* outVal, u32 flags);
+    int func_80174C98(void* actor, int* outVal, int flags);
     int func_8017FD44(void* global);
     CSuddenCommuGlobal* getUnk80664658();
 }
@@ -299,11 +307,11 @@ extern u32 lbl_eu_806625E0;
 extern "C" {
     // Battle-object stat / event-flag probes (code_8025FB10.cpp).
     int func_80260518(void* self, int id, u32* outVal, f32* outF);
-    int func_80260264(void* self, int id, u32* outVal);
+    int func_80260264(void* self, int id, void* outVal);
     // Battle-command dispatch and battle-move accessor (CBattleManager.cpp).
     void func_800EA9A8(void* bm, void* actor, CSuddenCommuCmd* cmd, int size, int flag);
-    f32 func_800D81A8(int arg1, void* actor, int arg3);
-    s32 func_8018C820(void* obj, s32 value);
+    float func_800D81A8(void* obj, void* target, void* source);
+    void func_8018C820(void* obj, int value);
     // Voice/battle-manager helpers.
     void func_80280BF0();
     void func_80082568__Q22cf13CfGameManagerFv(int a, int b, int c);
@@ -311,21 +319,23 @@ extern "C" {
     // the class member is declared in CfGameManager.hpp, this is the bare
     // Fv-form import so the call reloc keeps the retail symbol verbatim).
     bool func_8007F91C__Q22cf13CfGameManagerFv();
-    bool func_8006EF04__Fi(s32 mask);
+    bool func_8006EF04__Fi(int mask);
     // Commu camera/trigger helpers (retail pre-mangled names; the Fv suffix
     // does not reflect the actual argument counts - see func_80082568).
-    bool func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+    int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
     void func_80080F44__Q22cf13CfGameManagerFv(void* obj);
     // Camera/trigger object accessors (lbl_eu_80663E14 is a global pointer).
     extern "C" void* func_8049603C(void* obj);
     f32 func_80496288(void* obj);
-    int func_8017FD4C(void* obj);
+    int func_8017FD4C(int);
     void func_8017FEF0(void* obj, int arg);
 }
 
-// Commu camera/trigger globals (.sdata).
+// Commu camera/trigger globals (.sdata). E14's CScn* matches CfObjectMove.hpp
+// / CTaskGame.hpp / code_8027513C.hpp; a void* decl here would clash with
+// those in any TU that includes both this header and the scene headers.
 extern u32 lbl_eu_80663E24;
-extern void* lbl_eu_80663E14;
+extern CScn* lbl_eu_80663E14;
 
 // Pad button-flag view (retail CPad first word).
 struct CSuddenCommuPadView {

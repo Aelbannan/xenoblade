@@ -46,6 +46,40 @@ void* func_80081A40__Q22cf13CfGameManagerFv(const char* col, u32 a, u32 b, u32 c
 // Global event/presentation flag word (.sbss); bit 0x200000 gates re-arming.
 extern u32 lbl_eu_80663E24;
 
+// Party-change refresh helpers (func_80197538): battle-manager instance
+// getter and battle-membership check (retail unmangled C-ABI imports).
+extern "C" void* getInstance__Q22cf14CBattleManagerFv();
+extern "C" int func_800DA06C(void* bm, void* obj);
+
+// CfGameManager statics used by func_80195E5C (retail pre-mangled names).
+extern "C" u32 func_80086B34__Q22cf13CfGameManagerFv();
+extern "C" int func_80084BAC__Q22cf13CfGameManagerFv();
+extern "C" int func_800829B8__Q22cf13CfGameManagerFv();
+// Global settings object returned by getUnk80664658 (func_80195E5C reads the
+// flag word at +0x214).
+struct CfGlobalGimmickView {
+    u8 pad_00[0x214];
+    /* 0x214 */ u32 field_214;
+};
+extern "C" CfGlobalGimmickView* getUnk80664658();
+// Vector helpers used by func_801953E8 (retail unmangled C-ABI imports).
+extern "C" void* func_8004B79C(void* out, void* v);
+extern "C" void* func_8004B0B0(void* out);
+extern "C" int func_8006DFBC(void* obj);
+// Globals read by func_80195E5C / func_80196E04 / func_801953E8: the
+// presentation/flag words, the settings timer, the party-slot speed scale
+// constants, and the four shared column-name buffers (their 4th character
+// is rewritten per iteration to build column names).
+extern u32 lbl_eu_80663EE0;
+extern u32 lbl_eu_80663D90;
+extern float lbl_eu_80663ED8;
+extern const f32 lbl_eu_80667B1C;
+extern const f32 lbl_eu_80667B20;
+extern char lbl_eu_80662500[4];
+extern char lbl_eu_80662508[4];
+extern char lbl_eu_80662510[4];
+extern char lbl_eu_80662520[4];
+
 // Global parts-manager singletons written by the manager ctor (__ct__80193270)
 // and read by the element helpers (lbl_eu_80664308 / lbl_eu_8066430C) plus
 // the u8/u16 state words cleared by the same ctor.
@@ -653,7 +687,7 @@ struct CfPartsDistEntry {
 // tail state words written by the ctor __ct__80193270 / func_80193810.
 struct CfPartsManager {
     /* 0x0000 */ CfPartsElemArray mElems;
-    /* 0x9804 */ CfPartsDistEntry mDist[0x100];
+    /* 0x9804 */ CfPartsDistEntry mDist[0x200];
     /* 0xA804 */ u32 field_A804;
     /* 0xA808 */ CfPartyListBase mPartyList;
     /* 0xA828 */ CfElemA4 mTable[16];
@@ -662,7 +696,7 @@ struct CfPartsManager {
     /* 0xB270 */ u16 field_B270;
     /* 0xB272 */ u16 field_B272;
     /* 0xB274 */ u16 field_B274;
-    /* 0xB276 */ u16 field_B276;
+    /* 0xB276 */ s16 field_B276;
     /* 0xB278 */ u16 field_B278;
 };
 
@@ -790,7 +824,7 @@ struct CfPartsChgObjFull {
     /* 0x3E9C */ void* mSubVt;   // sub-object vtable pointer (CfResPcParent)
     u8 pad_3EA0[0x3F00 - 0x3EA0];
     /* 0x3F00 */ u32 field_3F00;
-    u8 pad_3F04[0x3F08 - 0x3F04];
+    /* 0x3F04 */ u32 field_3F04;
     /* 0x3F08 */ u32 field_3F08;
     u8 pad_3F0C[0x3F10 - 0x3F0C];
     /* 0x3F10 */ u32 field_3F10;
@@ -866,3 +900,15 @@ extern "C" void func_80196864(CfPartsSwapEntry* a, CfPartsSwapEntry* b,
 extern "C" CfPartsChgObj3F04* func_80194610(CfPartsManager* mgr, u32 arg2, u32 arg3,
                                              u32 arg4, CfPartsElem4C* src);
 extern "C" void func_80194D5C(CfPartsManager* mgr, const ml::CVec3* pos, f32 f);
+
+// Same-TU party-info helpers with unmangled retail names (func_80195E5C
+// calls; the declarations give the definitions below C linkage).
+extern "C" int func_80194AFC();
+extern "C" void func_8019514C(CfPartsManager* self);
+extern "C" void func_80196E04(CfPartsManager* mgr, f32 f);
+extern "C" void func_80196434(CfPartsSwapEntry* a, CfPartsSwapEntry* b,
+                               CfPartsSwapCmp cmp);
+// Party-info sort comparator (func_80195E5C takes its address; the retail
+// reloc names the unmangled form, so give the definition C linkage).
+extern "C" bool func_8019641C(const cf::CfPartyInfoSortKey* a,
+                               const cf::CfPartyInfoSortKey* b);

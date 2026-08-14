@@ -50,39 +50,13 @@
 #include "kyoshin/cf/CVision.hpp"
 #undef lbl_eu_80663E24
 #undef func_80496288
-// CSuddenCommu.hpp's void* func_802A3680 conflicts with CChain.hpp's int
-// version, its void* lbl_eu_80663E14 conflicts with CfObjectMove.hpp's CScn*
-// version, its void* func_80496288 conflicts with CfObjectMove.hpp's CScn*
-// version, its long-arg func_8006EF04__Fi conflicts with CfObjectActor.hpp's
-// int-arg version, its s32-return func_8018C820 conflicts with
-// CfObjectActor.hpp's void-return version, and its (int,void*,int)
-// func_800D81A8 conflicts with CfObjectActor.hpp's (void*,void*,void*)
-// version, and its (void*,u32*,u32) func_80174C98 conflicts with
-// CChainActorList.hpp's (void*,int*,int) version (all via CBattleManager.hpp);
-// this TU uses only the int* func_80174C98 and none of the others.
-#define func_802A3680 artsSelectSuddenCommuVoiceUnused
-#define lbl_eu_80663E14 artsSelectSuddenCommuSceneUnused
-#define lbl_eu_80663E24 artsSelectSuddenCommuE24Unused
-#define func_80496288 artsSelectSuddenCommuTimeQueryUnused
-#define func_8006EF04__Fi artsSelectSuddenCommuFlagProbeUnused
-#define func_8018C820 artsSelectSuddenCommuGaugeAddUnused
-#define func_800D81A8 artsSelectSuddenCommuStatProbeUnused
-#define func_80174C98 artsSelectSuddenCommuCmdProbeUnused
-#define func_8017FD4C artsSelectSuddenCommuGlobalProbeUnused
-#define func_80086F9C__Q22cf13CfGameManagerFv artsSelectSuddenCommuPadModeUnused
+// CSuddenCommu.hpp's import signatures now match the chain / CfObjectActor
+// headers (see CSuddenCommu.hpp); only its func_8049603C (void* arg vs
+// CTaskGame.hpp's CScn* version pulled in via CBattleManager.hpp) stays
+// renamed.
 #define func_8049603C artsSelectSuddenCommuCamViewUnused
 #include "kyoshin/cf/CSuddenCommu.hpp"
 #undef func_8049603C
-#undef func_80086F9C__Q22cf13CfGameManagerFv
-#undef func_8017FD4C
-#undef func_80174C98
-#undef func_800D81A8
-#undef func_8018C820
-#undef func_8006EF04__Fi
-#undef func_80496288
-#undef lbl_eu_80663E14
-#undef lbl_eu_80663E24
-#undef func_802A3680
 // CChain.hpp:737 declares func_80107C54 with (void*, int), conflicting with
 // this TU's (CMenuArtsSelect*, s32) extern "C" import used by the matched
 // func_80104454; rename the CChain.hpp copy out of the way. Its volatile

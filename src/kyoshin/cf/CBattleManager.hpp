@@ -9,34 +9,10 @@
 #define func_800F3970 battleManagerVisionDispatchUnused
 #include "kyoshin/cf/CVision.hpp"
 #undef func_800F3970
-// CChain.hpp and CSuddenCommu.hpp expose incompatible provisional signatures
-// for imports also declared by CBattleManager.cpp. CBattleManager only needs
-// the CSuddenCommu type here, so hide those unused declarations in this header.
-#define func_802A3680 battleManagerSuddenCommuVoiceUnused
-#define func_80174C98 battleManagerSuddenCommuActorQueryUnused
-#define func_800D81A8 battleManagerSuddenCommuScaleUnused
-#define func_8018C820 battleManagerSuddenCommuGaugeUnused
-#define func_80260264 battleManagerSuddenCommuStatQueryUnused
-#define func_8006EF04__Fi battleManagerSuddenCommuGameFlagUnused
-#define func_80086F9C__Q22cf13CfGameManagerFv battleManagerSuddenCommuGateUnused
-#define func_80080F44__Q22cf13CfGameManagerFv battleManagerSuddenCommuObjectUnused
-#define func_8017FD4C battleManagerSuddenCommuTriggerQueryUnused
-#define func_8017FEF0 battleManagerSuddenCommuTriggerUpdateUnused
-#define lbl_eu_80663E14 battleManagerSuddenCommuSceneUnused
-#define lbl_eu_80663E24 battleManagerSuddenCommuFlagsUnused
+// CSuddenCommu.hpp's C-linkage import signatures are aligned with the chain /
+// CfObjectActor / CfGameManager headers (see CSuddenCommu.hpp), so it can be
+// included directly without rename guards.
 #include "kyoshin/cf/CSuddenCommu.hpp"
-#undef lbl_eu_80663E24
-#undef lbl_eu_80663E14
-#undef func_8017FEF0
-#undef func_8017FD4C
-#undef func_80080F44__Q22cf13CfGameManagerFv
-#undef func_80086F9C__Q22cf13CfGameManagerFv
-#undef func_8006EF04__Fi
-#undef func_80260264
-#undef func_8018C820
-#undef func_800D81A8
-#undef func_80174C98
-#undef func_802A3680
 #include "monolib/util.hpp"
 #include <cstring>
 

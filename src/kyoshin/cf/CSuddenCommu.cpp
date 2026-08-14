@@ -54,8 +54,8 @@ __declspec(noinline) int func_801BA2DC(CSuddenCommu* self) {
         // Both the A (0xA) and B (0xB) voice probes must be idle before the
         // commu can start; then the current voice action must be in the 7..9
         // window (anything else means the commu is blocked).
-        if (func_80174C98(player, &vA, 0xA) != 0 ||
-            func_80174C98(player, &(vB = *player->field_4->vf30()), 0xB) != 0) {
+        if (func_80174C98(player, (int*)&vA, 0xA) != 0 ||
+            func_80174C98(player, (int*)&(vB = *player->field_4->vf30()), 0xB) != 0) {
             // Commu armed: the current voice action must be in the 7..9 window
             // (anything else means the commu is blocked).
             if (((CSuddenCommuActorVt*)player)->vf298()->field_48 >= 7 &&
@@ -157,7 +157,7 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
         self->field_24 = 0;
         if (player0 != 0) {
             u32 v = *(u32*)player0->field_4->vf30();
-            if (func_80174C98(player0, &v, 0x803) != 0) {
+            if (func_80174C98(player0, (int*)&v, 0x803) != 0) {
                 ((CSuddenCommuActorVt*)player0)->vf304(4);
             }
         }
@@ -165,7 +165,7 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
         self->field_14 = 5;
         if (player0 != 0) {
             u32 v = *(u32*)player0->field_4->vf30();
-            if (func_80174C98(player0, &v, 0x803) != 0) {
+            if (func_80174C98(player0, (int*)&v, 0x803) != 0) {
                 if (self->field_C == 0) {
                     if (((CSuddenCommuActorVt*)player0)->vf308() == 0) {
                         ((CSuddenCommuActorVt*)player0)->vf314();
@@ -292,12 +292,12 @@ void func_801BADE4(CSuddenCommu* self) {
             if (spotP != 0) player = (CSuddenCommuActor*)((char*)spotP - 0x3E9C);
             u32 v6, v5, v4, v3, v2, v1;
             int found = 0;
-            if (func_80174C98(player, &(v1 = *player->field_4->vf30()), 0x1c) != 0) found = 1;
-            else if (func_80174C98(player, &(v2 = *player->field_4->vf30()), 0x16) != 0) found = 1;
-            else if (func_80174C98(player, &(v3 = *player->field_4->vf30()), 0x17) != 0) found = 1;
-            else if (func_80174C98(player, &(v4 = *player->field_4->vf30()), 0x18) != 0) found = 1;
-            else if (func_80174C98(player, &(v5 = *player->field_4->vf30()), 0x1a) != 0) found = 1;
-            else if (func_80174C98(player, &(v6 = *player->field_4->vf30()), 0x19) != 0) found = 1;
+            if (func_80174C98(player, (int*)&(v1 = *player->field_4->vf30()), 0x1c) != 0) found = 1;
+            else if (func_80174C98(player, (int*)&(v2 = *player->field_4->vf30()), 0x16) != 0) found = 1;
+            else if (func_80174C98(player, (int*)&(v3 = *player->field_4->vf30()), 0x17) != 0) found = 1;
+            else if (func_80174C98(player, (int*)&(v4 = *player->field_4->vf30()), 0x18) != 0) found = 1;
+            else if (func_80174C98(player, (int*)&(v5 = *player->field_4->vf30()), 0x1a) != 0) found = 1;
+            else if (func_80174C98(player, (int*)&(v6 = *player->field_4->vf30()), 0x19) != 0) found = 1;
             else found = !!player->field_3ED4->field_36C;
             if (found != 0) {
                 if (self->field_18 < lbl_eu_80667E4C) self->field_18 = lbl_eu_80667E4C;
@@ -320,12 +320,12 @@ void func_801BADE4(CSuddenCommu* self) {
                 if (player == 0) continue;
                 u32 w6, w5, w4, w3, w2, w1;
                 int found2 = 0;
-                if (func_80174C98(player, &(w1 = *player->field_4->vf30()), 0x1c) != 0) found2 = 1;
-                else if (func_80174C98(player, &(w2 = *player->field_4->vf30()), 0x16) != 0) found2 = 1;
-                else if (func_80174C98(player, &(w3 = *player->field_4->vf30()), 0x17) != 0) found2 = 1;
-                else if (func_80174C98(player, &(w4 = *player->field_4->vf30()), 0x18) != 0) found2 = 1;
-                else if (func_80174C98(player, &(w5 = *player->field_4->vf30()), 0x1a) != 0) found2 = 1;
-                else if (func_80174C98(player, &(w6 = *player->field_4->vf30()), 0x19) != 0) found2 = 1;
+                if (func_80174C98(player, (int*)&(w1 = *player->field_4->vf30()), 0x1c) != 0) found2 = 1;
+                else if (func_80174C98(player, (int*)&(w2 = *player->field_4->vf30()), 0x16) != 0) found2 = 1;
+                else if (func_80174C98(player, (int*)&(w3 = *player->field_4->vf30()), 0x17) != 0) found2 = 1;
+                else if (func_80174C98(player, (int*)&(w4 = *player->field_4->vf30()), 0x18) != 0) found2 = 1;
+                else if (func_80174C98(player, (int*)&(w5 = *player->field_4->vf30()), 0x1a) != 0) found2 = 1;
+                else if (func_80174C98(player, (int*)&(w6 = *player->field_4->vf30()), 0x19) != 0) found2 = 1;
                 else found2 = !!player->field_3ED4->field_36C;
                 if (found2 != 0) flag29 = 0;
                 if (player->field_3F28 == 0xa) goto commu_end;
@@ -348,8 +348,8 @@ void func_801BADE4(CSuddenCommu* self) {
                 if (lbl_eu_806625E4 == pG->field_3F28) {
                     u32 gvA;
                     u32 gvB;
-                    if (func_80174C98(pG, &(gvA = *pG->field_4->vf30()), 0xa) != 0 ||
-                        func_80174C98(pG, &(gvB = *pG->field_4->vf30()), 0xb) != 0) {
+                    if (func_80174C98(pG, (int*)&(gvA = *pG->field_4->vf30()), 0xa) != 0 ||
+                        func_80174C98(pG, (int*)&(gvB = *pG->field_4->vf30()), 0xb) != 0) {
                         if (((CSuddenCommuActorVt*)pG)->vf298()->field_48 >= 7 &&
                             ((CSuddenCommuActorVt*)pG)->vf298()->field_48 <= 9) goto commu_end;
                     }
@@ -362,7 +362,7 @@ void func_801BADE4(CSuddenCommu* self) {
                     if (spot2 != 0) player = (CSuddenCommuActor*)((char*)spot2 - 0x3E9C);
                     if (player == 0) continue;
                     u32 av;
-                    if (func_80174C98(player, &(av = *player->field_4->vf30()), 0x1c) == 0) {
+                    if (func_80174C98(player, (int*)&(av = *player->field_4->vf30()), 0x1c) == 0) {
                         allFound = 0;
                         break;
                     }
@@ -372,7 +372,7 @@ void func_801BADE4(CSuddenCommu* self) {
                     player = (CSuddenCommuActor*)spotA;
                     if (spotA != 0) player = (CSuddenCommuActor*)((char*)spotA - 0x3E9C);
                     u32 pv;
-                    if (func_80174C98(player, &(pv = *player->field_4->vf30()), 0x803) != 0) {
+                    if (func_80174C98(player, (int*)&(pv = *player->field_4->vf30()), 0x803) != 0) {
                         self->field_4 = 0;
                         self->field_A = 0;
                         self->field_C = 4;
@@ -534,12 +534,12 @@ int func_801BBCBC(CSuddenCommu* self) {
             if (self->field_C == 4) {
                 u32 v6, v5, v4, v3, v2, v1;
                 int found = 0;
-                if (func_80174C98(player, &(v1 = *player->field_4->vf30()), 0x1c) != 0) found = 1;
-                else if (func_80174C98(player, &(v2 = *player->field_4->vf30()), 0x16) != 0) found = 1;
-                else if (func_80174C98(player, &(v3 = *player->field_4->vf30()), 0x17) != 0) found = 1;
-                else if (func_80174C98(player, &(v4 = *player->field_4->vf30()), 0x18) != 0) found = 1;
-                else if (func_80174C98(player, &(v5 = *player->field_4->vf30()), 0x1a) != 0) found = 1;
-                else if (func_80174C98(player, &(v6 = *player->field_4->vf30()), 0x19) != 0) found = 1;
+                if (func_80174C98(player, (int*)&(v1 = *player->field_4->vf30()), 0x1c) != 0) found = 1;
+                else if (func_80174C98(player, (int*)&(v2 = *player->field_4->vf30()), 0x16) != 0) found = 1;
+                else if (func_80174C98(player, (int*)&(v3 = *player->field_4->vf30()), 0x17) != 0) found = 1;
+                else if (func_80174C98(player, (int*)&(v4 = *player->field_4->vf30()), 0x18) != 0) found = 1;
+                else if (func_80174C98(player, (int*)&(v5 = *player->field_4->vf30()), 0x1a) != 0) found = 1;
+                else if (func_80174C98(player, (int*)&(v6 = *player->field_4->vf30()), 0x19) != 0) found = 1;
                 else found = !!player->field_3ED4->field_36C;
                 if (found != 0) {
                     // Voice retired and state reset; the camera path is skipped.
@@ -568,12 +568,12 @@ int func_801BBCBC(CSuddenCommu* self) {
                     if (player == 0) continue;
                     u32 w6, w5, w4, w3, w2, w1;
                     found = 0;
-                    if (func_80174C98(player, &(w1 = *player->field_4->vf30()), 0x1c) != 0) found = 1;
-                    else if (func_80174C98(player, &(w2 = *player->field_4->vf30()), 0x16) != 0) found = 1;
-                    else if (func_80174C98(player, &(w3 = *player->field_4->vf30()), 0x17) != 0) found = 1;
-                    else if (func_80174C98(player, &(w4 = *player->field_4->vf30()), 0x18) != 0) found = 1;
-                    else if (func_80174C98(player, &(w5 = *player->field_4->vf30()), 0x1a) != 0) found = 1;
-                    else if (func_80174C98(player, &(w6 = *player->field_4->vf30()), 0x19) != 0) found = 1;
+                    if (func_80174C98(player, (int*)&(w1 = *player->field_4->vf30()), 0x1c) != 0) found = 1;
+                    else if (func_80174C98(player, (int*)&(w2 = *player->field_4->vf30()), 0x16) != 0) found = 1;
+                    else if (func_80174C98(player, (int*)&(w3 = *player->field_4->vf30()), 0x17) != 0) found = 1;
+                    else if (func_80174C98(player, (int*)&(w4 = *player->field_4->vf30()), 0x18) != 0) found = 1;
+                    else if (func_80174C98(player, (int*)&(w5 = *player->field_4->vf30()), 0x1a) != 0) found = 1;
+                    else if (func_80174C98(player, (int*)&(w6 = *player->field_4->vf30()), 0x19) != 0) found = 1;
                     else found = !!player->field_3ED4->field_36C;
                     if (found != 0) break;
                 }
@@ -642,7 +642,7 @@ int func_801BBCBC(CSuddenCommu* self) {
                     padBit = (pad->field_00 >> 5) & 1;
                 }
                 if (padBit != 0) {
-                    moveSel = func_8017FD4C(winState);
+                    moveSel = func_8017FD4C((int)winState);
                 } else {
                     return 0;
                 }
@@ -799,7 +799,7 @@ __declspec(noinline) void func_801BC6A4(CSuddenCommu* self, int playerIdx, int n
         break;
     }
     }
-    func_802A3680(self->field_10, player1 != 0 ? (char*)player1 + 0x3E9C : 0, result);
+    func_802A3680(self->field_10, player1 != 0 ? (CChainBattleObjTail*)((char*)player1 + 0x3E9C) : 0, result);
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

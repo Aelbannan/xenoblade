@@ -512,12 +512,726 @@ void* __ct__CTagProcessor(void* self) {
 // when the deleting flag is set (the retail shape).
 CTagProcessor::~CTagProcessor() {}
 
-// Stub (retail body is 0x14D4 bytes, not matched yet). noinline keeps -ipa file
-// from folding the empty body into the tag-writer family's bl sites.
+// Message-pump step: dispatch the next tag code at buf[field_810+2]. The
+// tag stream is the u16-encoded message written by the tag-writer family;
+// most handlers push tag data to the text pane via its +0x7C SetText and
+// advance the read counters. The name-display tag (codes 6/7) is multi-step:
+// the first call builds the per-name rows and the combined string, later
+// calls handle the directional input / accept (field_82c gate).
+// Frame layout note: locals are assigned in declaration order from the top
+// of the frame down (first declared = highest address), and the per-walk
+// ctx/pair/color temps follow the walk order - the declaration order below
+// mirrors the retail frame (0x8..0x480 locals, 0x480..0xC80 namebuf).
 __declspec(noinline) int func_8012615C(nw4r::lyt::AnimTransform* tag,
                                         nw4r::lyt::Pane* a,
                                         nw4r::lyt::Pane* b,
-                                        nw4r::lyt::Pane* c){}
+                                        nw4r::lyt::Pane* c) {
+    CTagProcMsg* msg = (CTagProcMsg*)tag;
+    TalkMsgPane* pane = (TalkMsgPane*)a;
+    // Big buffers first (highest frame addresses): the name display uses the
+    // 0x480 combined-string buffer and the 0x1C0 per-name rows; the push
+    // cases share the 0x280 output buffer.
+    wchar_t namebuf[0x400];
+    u16 outbuf[0x100];
+    wchar_t rows[0x60];
+    // Icon-tag locals (flag/color handler).
+    TagFlagTable flagTbl;
+    u32 vals[3];
+    s16 hdr[3];
+    // Context-walk locals: six ctx slots for the find/highlight walk pairs,
+    // then the per-walk pair arrays and the highlight color temps - declared
+    // at the top in the retail's frame order (first declared = highest
+    // address: 0xB8 ctxs, 0xB0..0x8 pairs/colors).
+    u32* ctxA;
+    u32* ctxB;
+    u32* ctxC;
+    u32* ctxD;
+    u32* ctxE;
+    u32* ctxF;
+    u32 pair1[2];
+    nw4r::ut::Color cW2a;
+    nw4r::ut::Color cW2b;
+    u32 pair2[2];
+    u32 pair3[2];
+    nw4r::ut::Color cW4a1;
+    nw4r::ut::Color cW4a2;
+    nw4r::ut::Color cW4b1;
+    nw4r::ut::Color cW4b2;
+    u32 pair4[2];
+    u32 pair5[2];
+    nw4r::ut::Color cW6a;
+    nw4r::ut::Color cW6b;
+    u32 pair6[2];
+    u32 pair5p[2];
+    nw4r::ut::Color cW6pa1;
+    nw4r::ut::Color cW6pa2;
+    nw4r::ut::Color cW6pb1;
+    nw4r::ut::Color cW6pb2;
+    u32 pair6p[2];
+    u32 pair7[2];
+    nw4r::ut::Color cW8a1;
+    nw4r::ut::Color cW8a2;
+    nw4r::ut::Color cW8b1;
+    nw4r::ut::Color cW8b2;
+    u32 pair8[2];
+    u32 pair9[2];
+    nw4r::ut::Color cW10a1;
+    nw4r::ut::Color cW10a2;
+    nw4r::ut::Color cW10b1;
+    nw4r::ut::Color cW10b2;
+    u32 pair10[2];
+
+    u16 tagcode = (msg->buf + msg->field_810)[2];
+    if (tagcode == 0)
+        return 3;
+
+    outbuf[0] = 0;
+    // Talk-source / party-member / player lookups (r29/r28/r30).
+    TagMemberObj* member = 0;
+    func_800B708C(msg->field_804);
+    TagTalkSrc* tsrc = (TagTalkSrc*)func_800BBC0C();
+    if (tsrc != 0)
+        member = tsrc->field_98;
+    cf::CfGameManager::getPlayer(0);
+    TagTalkSrc* player = (TagTalkSrc*)func_800BBC0C();
+
+    // Walk the tag dispatch table (25 x 12-byte entries).
+    for (u32 o = 0; ; o += 12) {
+        const TagEntry* e = (const TagEntry*)((const u8*)lbl_eu_8052D478 + o);
+        if (e->field_04 == 0) {
+            // No handler for this code: push <tag, 0> verbatim and advance
+            // both counters, then run the icon-pending tail.
+            outbuf[0] = tagcode;
+            outbuf[1] = 0;
+            u16 p = msg->field_810;
+            msg->field_810 = p + 1;
+            pane->v7C(outbuf, msg->field_820, p);
+            msg->field_820 += 1;
+            goto finish;
+        }
+        if (tagcode == e->tag) {
+            switch (e->tag) {
+            case 0:
+            case 0xA:
+            case 0xC:
+            case 0xD:
+                return 4;  // selection-accepted marker
+
+            case 5: {
+                // <5 v> text-speed / skip tag: v == -1 selects the button-
+                // driven auto-advance, otherwise v is the skip counter.
+                s16 v = (s16)msg->buf[msg->field_810 + 3];
+                if (v == -1) {
+                    f32 speed = msg->field_824;
+                    if (speed < lbl_eu_80667208) {
+                        msg->field_824 += lbl_eu_806671F4;
+                    } else {
+                        TagPadView* pad =
+                            (TagPadView*)cf::CfGameManager::getCurrentPad();
+                        int pressed;
+                        if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0)
+                            pressed = (pad->field_04 & 0x00600000) != 0;
+                        else
+                            pressed = (pad->field_04 & 0x00000030) != 0;
+                        if (pressed != 0) {
+                            msg->field_824 = lbl_eu_806671F0;
+                            msg->field_810 += 2;
+                            msg->field_820 += 2;
+                        }
+                    }
+                    return 2;
+                }
+                f32 speed = msg->field_824;
+                if (speed < (f32)v) {
+                    if (speed < lbl_eu_806671F4 && member != 0)
+                        member->v58(0, 0);
+                    msg->field_824 += lbl_eu_806671F4;
+                } else {
+                    if (member != 0)
+                        member->v58(1, 0);
+                    msg->field_824 = lbl_eu_806671F0;
+                    msg->field_810 += 2;
+                    msg->field_820 += 2;
+                }
+                return 2;
+            }
+
+            case 4: {
+                // <4 v> wait-for-click tag: v == 0xFFFF holds the page.
+                s16 v = (s16)msg->buf[msg->field_810 + 3];
+                msg->field_810 += 2;
+                msg->field_820 = 0;
+                return v == -1;
+            }
+
+            case 1: {
+                // <1 len0|len1 data...> raw text-range tag: copy the range
+                // (hi+lo count u16s) to the pane with the header preserved.
+                u16 h = msg->buf[msg->field_810 + 3];
+                u32 hi = h >> 8;
+                u32 lo = h & 0xff;
+                u32 count = hi + lo;
+                outbuf[0] = tagcode;
+                outbuf[1] = h;
+                u32 j;
+                for (j = 0; j < count; j++)
+                    outbuf[2 + j] = msg->buf[msg->field_810 + 4 + j];
+                outbuf[2 + count] = 0;
+                u16 adv = (u16)(count + 2);
+                msg->field_810 += adv;
+                pane->v7C(outbuf, msg->field_820, adv);
+                msg->field_820 += adv;
+                return -1;
+            }
+
+            case 2: {
+                // <2 hi lo> color tag: push the two data u16s plus a 0 tail.
+                u16 d0 = msg->buf[msg->field_810 + 3];
+                u16 d1 = msg->buf[msg->field_810 + 4];
+                outbuf[0] = tagcode;
+                outbuf[1] = d0;
+                outbuf[2] = d1;
+                outbuf[3] = 0;
+                msg->field_810 += 3;
+                pane->v7C(outbuf, msg->field_820, d1);
+                msg->field_820 += 3;
+                return -1;
+            }
+
+            case 0xB: {
+                // <0xB ...> party-icon/event tag: 5 s16 operands, type = the
+                // high byte of the first. Manipulates event bytes/words and
+                // plays UI sounds; advances 6.
+                s16 v3 = (s16)msg->buf[msg->field_810 + 3];
+                s32 v4 = (s16)msg->buf[msg->field_810 + 4];
+                s16 v5 = (s16)msg->buf[msg->field_810 + 5];
+                s32 type = v3 >> 8;
+                s32 v6 = (s16)msg->buf[msg->field_810 + 6];
+                s32 v7 = (s16)msg->buf[msg->field_810 + 7];
+                s16 v26 = 0;
+                s16 v28 = v5;
+                if (code80135FDC_getByte_6405A() != 0) {
+                    if (code80135FDC_getByte_6405B() != 0) {
+                        if (v28 < 0) {
+                            v28 = (s16)-code80135FDC_getWord_6405C();
+                            v26 = (s16)-code80135FDC_getWord_64060();
+                            func_8013BE38();
+                        }
+                    } else {
+                        int val = (int)func_8009CF8C(v4 + 0x29) + v28;
+                        if (val < 0)
+                            val = 0;
+                        s32 r21;
+                        if (val > 0x1388) {
+                            r21 = v28 - (val - 0x1388);
+                            if (r21 < 0)
+                                r21 = 0;
+                        } else {
+                            r21 = v28;
+                        }
+                        r21 += code80135FDC_getWord_6405C();
+                        code80135FDC_setPair_6405C_64060(
+                            r21, code80135FDC_getWord_64060() + v28);
+                    }
+                }
+                u32 v24 = 0;
+                if (type == 1) {
+                    if (v7 != func_8009CF8C(v6 + 0x608)) {
+                        s32 r21 = v4 + 0x21;
+                        int val = (int)func_8009CF8C(r21) + v28;
+                        if (val < 0)
+                            val = 0;
+                        if (val > 0x2710)
+                            val = 0x2710;
+                        func_8009D018(r21, val);
+                    } else {
+                        v24 = 1;
+                    }
+                } else if (type == 2) {
+                    s32 r21 = v4 + 0x29;
+                    int val = (int)func_8009CF8C(r21) + v28;
+                    if (val < 0)
+                        val = 0;
+                    if (val > 0x1388) {
+                        v26 = v28;
+                        v28 = v28 - (s16)(val - 0x1388);
+                        if (v28 < 0)
+                            v28 = 0;
+                        val = 0x1388;
+                    }
+                    func_8009D018(r21, val);
+                }
+                if (v26 != 0)
+                    v28 = v26;
+                if (v28 == 0)
+                    v24 = 1;
+                if (v24 == 0) {
+                    s32 sound = 0;
+                    if (v28 > 0) {
+                        sound = (type == 1) ? 0xc6 : 0xac;
+                        func_80138078(0x34);
+                    } else if (v28 < 0) {
+                        sound = (type == 1) ? 0xc8 : 0xae;
+                        func_80138078(0x36);
+                    }
+                    if (tsrc != 0)
+                        func_800451D8(sound, tsrc);
+                    if (player != 0)
+                        func_800451D8(sound, player);
+                }
+                if (type == 1) {
+                    if (player != 0)
+                        func_8013DB6C(4, player->field_8C, v4, v28);
+                } else if (type == 2) {
+                    func_8013DB6C(5, 0, v4 + 1, v28);
+                }
+                msg->field_810 += 6;
+                msg->field_820 += 6;
+                return -1;
+            }
+
+            case 9: {
+                // <9 v> party-member emphasis tag: v == 0 enables, v == -1
+                // disables the member's follow highlight.
+                s16 v = (s16)msg->buf[msg->field_810 + 3];
+                if (member != 0) {
+                    if (v == 0)
+                        member->v58(1, 0);
+                    else if (v == -1)
+                        member->v58(0, 0);
+                }
+                msg->field_810 += 2;
+                msg->field_820 += 2;
+                return -1;
+            }
+
+            case 3: {
+                // <3> plain text tag: push <tag, 0> and advance 1.
+                outbuf[0] = tagcode;
+                outbuf[1] = 0;
+                u16 p = msg->field_810;
+                msg->field_810 = p + 1;
+                pane->v7C(outbuf, msg->field_820, p);
+                msg->field_820 += 1;
+                return -1;
+            }
+
+            case 6:
+            case 7: {
+                // Name-display tag: <7, count, len-pairs, name strings...>.
+                // First call builds and displays the name list; later calls
+                // handle the directional input / acceptance.
+                if (msg->field_82c == 0) {
+                    u16 h = msg->buf[msg->field_810 + 3];
+                    u32 count = h & 0xff;
+                    msg->field_830 = count;
+                    u32 lcount = count;
+                    if (h & 1)
+                        lcount = (lcount + 1) & 0xff;
+                    u32 pairs = (lcount >> 1) & 0x7f;
+                    memset(msg->m838, 0, 0xc);
+                    for (u32 i = 0; i < pairs; i++) {
+                        u16 v = msg->buf[msg->field_810 + 4 + i];
+                        msg->m838[2 * i] = v >> 8;
+                        msg->m838[2 * i + 1] = v & 0xff;
+                    }
+                    memset(rows, 0, 0xc0);
+                    u32 charIdx = 0;
+                    for (u32 i = 0; i < msg->field_830; i++) {
+                        wcscpy(
+                            &rows[i * 0x20],
+                            (const wchar_t*)&msg->buf[msg->field_810 + pairs +
+                                                       charIdx + 4]);
+                        charIdx += msg->m838[i];
+                        rows[i * 0x20 + msg->m838[i]] = 0;
+                    }
+                    namebuf[0] = 0;
+                    charIdx = 0;
+                    for (u32 i = 0; i < msg->field_830; i++) {
+                        wcscpy(&namebuf[charIdx], &rows[i * 0x20]);
+                        charIdx += msg->m838[i];
+                        if (i < msg->field_830 - 1)
+                            namebuf[charIdx++] = 0xa;
+                    }
+                    namebuf[charIdx] = 0;
+                    pane->v78();
+                    pane->v74(0x40);
+                    func_80127764(msg, (nw4r::lyt::Pane*)pane, b, c,
+                                   (int)namebuf);
+                    u8* ctxBase = (u8*)pane->field_0C + 0x10;
+                    // walk 1: find the context node matching the current text
+                    ctxA = (u32*)getContextStr(ctxBase);
+                    for (;;) {
+                        u8* node = (u8*)func_80127670(&ctxA);
+                        if (strcmp((char*)(node + 0xbc),
+                                   (char*)pane->field_BC) == 0)
+                            break;
+                        ctxA = (u32*)*ctxA;
+                        pair1[0] = (u32)getContextStrPtr(ctxBase);
+                        pair1[1] = (u32)ctxA;
+                        if (func_801276C8(&pair1[1], &pair1[0]) == 0)
+                            break;
+                    }
+                    func_801276E0(&ctxA, 0);
+                    // walk 2: create the per-name panes, set text + colors
+                    u32 paneIdx = 0;
+                    for (;;) {
+                        pair2[0] = (u32)getContextStrPtr(ctxBase);
+                        pair2[1] = (u32)ctxA;
+                        if (func_801276C8(&pair2[1], &pair2[0]) == 0)
+                            break;
+                        if (paneIdx >= msg->field_830)
+                            break;
+                        TalkNamePane* np = pane->field_0C->v3C(
+                            (const wchar_t*)((u8*)func_80127670(&ctxA) + 0xbc),
+                            1);
+                        copyVEC2(&np->field_4C[0], &pane->field_4C[0]);
+                        np->v78();
+                        np->v74(0x20);
+                        np->v7C((const u16*)&rows[paneIdx * 0x20], 0);
+                        cW2a.v = 0x5a5a5aff;
+                        cW2b.v = 0x5a5a5aff;
+                        np->field_DC = cW2a;
+                        np->field_E0 = cW2b;
+                        paneIdx++;
+                        ctxA = (u32*)*ctxA;
+                    }
+                    msg->field_828 = 0;
+                    msg->field_82c = 1;
+                    msg->field_844 = 10;
+                    if (e->tag == 7) {
+                        msg->field_844 = 0;
+                        msg->field_834 = msg->field_830 - 1;
+                        // walk 3: find (second ctx)
+                        ctxB = (u32*)getContextStr(ctxBase);
+                        for (;;) {
+                            u8* node = (u8*)func_80127670(&ctxB);
+                            if (strcmp((char*)(node + 0xbc),
+                                       (char*)pane->field_BC) == 0)
+                                break;
+                            ctxB = (u32*)*ctxB;
+                            pair3[0] = (u32)getContextStrPtr(ctxBase);
+                            pair3[1] = (u32)ctxB;
+                            if (func_801276C8(&pair3[1], &pair3[0]) == 0)
+                                break;
+                        }
+                        func_801276E0(&ctxB, 0);
+                        // walk 4: highlight (last name selected)
+                        paneIdx = 0;
+                        for (;;) {
+                            pair4[0] = (u32)getContextStrPtr(ctxBase);
+                            pair4[1] = (u32)ctxB;
+                            if (func_801276C8(&pair4[1], &pair4[0]) == 0)
+                                break;
+                            if (paneIdx >= msg->field_830)
+                                break;
+                            TalkNamePane* np = pane->field_0C->v3C(
+                                (const wchar_t*)((u8*)func_80127670(&ctxB) +
+                                                 0xbc),
+                                1);
+                            if (paneIdx == msg->field_834) {
+                                cW4a1.v = 0x006400ff;
+                                cW4a2.v = 0x006400ff;
+                                np->field_DC = cW4a1;
+                                np->field_E0 = cW4a2;
+                            } else {
+                                cW4b1.v = 0x5a5a5aff;
+                                cW4b2.v = 0x5a5a5aff;
+                                np->field_DC = cW4b1;
+                                np->field_E0 = cW4b2;
+                            }
+                            paneIdx++;
+                            ctxB = (u32*)*ctxB;
+                        }
+                    }
+                    return 2;
+                }
+                // ---- subsequent calls: directional input handling ----
+                TagPadDataView* pad =
+                    (TagPadDataView*)cf::CfGameManager::getCfPadData();
+                int btn;
+                bool upDown;
+                bool leftRight;
+                if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+                    btn = (pad->field_04 >> 22) & 1;
+                    upDown = (pad->field_104 & 0x8004) != 0;
+                    leftRight = (pad->field_104 & 0x8000) != 0 ||
+                                (pad->field_104 & 0x8) != 0;
+                } else {
+                    btn = (pad->field_04 >> 4) & 1;
+                    upDown = (pad->field_104 & 0x8004) != 0;
+                    leftRight = (pad->field_104 & 0x8000) != 0 ||
+                                (pad->field_104 & 0x8) != 0;
+                }
+                u32 hold = msg->field_844 + 1;
+                msg->field_844 = hold;
+                if (btn != 0) {
+                    if (hold > 10) {
+                        if (msg->field_834 < 0) {
+                            // button pressed with no selection yet: reset +
+                            // highlight the first row
+                            msg->field_844 = 0;
+                            msg->field_834 = 0;
+                            u8* ctxBase2 = (u8*)pane->field_0C + 0x10;
+                            // walk 5': find
+                            ctxD = (u32*)getContextStr(ctxBase2);
+                            for (;;) {
+                                u8* node = (u8*)func_80127670(&ctxD);
+                                if (strcmp((char*)(node + 0xbc),
+                                           (char*)pane->field_BC) == 0)
+                                    break;
+                                ctxD = (u32*)*ctxD;
+                                pair5p[0] = (u32)getContextStrPtr(ctxBase2);
+                                pair5p[1] = (u32)ctxD;
+                                if (func_801276C8(&pair5p[1], &pair5p[0]) == 0)
+                                    break;
+                            }
+                            func_801276E0(&ctxD, 0);
+                            // walk 6': highlight
+                            u32 paneIdx2 = 0;
+                            for (;;) {
+                                pair6p[0] = (u32)getContextStrPtr(ctxBase2);
+                                pair6p[1] = (u32)ctxD;
+                                if (func_801276C8(&pair6p[1], &pair6p[0]) == 0)
+                                    break;
+                                if (paneIdx2 >= msg->field_830)
+                                    break;
+                                TalkNamePane* np = pane->field_0C->v3C(
+                                    (const wchar_t*)((u8*)func_80127670(&ctxD) +
+                                                     0xbc),
+                                    1);
+                                if (paneIdx2 == msg->field_834) {
+                                    cW6pa1.v = 0x006400ff;
+                                    cW6pa2.v = 0x006400ff;
+                                    np->field_DC = cW6pa1;
+                                    np->field_E0 = cW6pa2;
+                                } else {
+                                    cW6pb1.v = 0x5a5a5aff;
+                                    cW6pb2.v = 0x5a5a5aff;
+                                    np->field_DC = cW6pb1;
+                                    np->field_E0 = cW6pb2;
+                                }
+                                paneIdx2++;
+                                ctxD = (u32*)*ctxD;
+                            }
+                            return 2;
+                        }
+                        // accept the current selection: re-highlight every
+                        // row with the accept color, then consume the tag
+                        u8* ctxBase3 = (u8*)pane->field_0C + 0x10;
+                        // walk 5: find
+                        ctxC = (u32*)getContextStr(ctxBase3);
+                        for (;;) {
+                            u8* node = (u8*)func_80127670(&ctxC);
+                            if (strcmp((char*)(node + 0xbc),
+                                       (char*)pane->field_BC) == 0)
+                                break;
+                            ctxC = (u32*)*ctxC;
+                            pair5[0] = (u32)getContextStrPtr(ctxBase3);
+                            pair5[1] = (u32)ctxC;
+                            if (func_801276C8(&pair5[1], &pair5[0]) == 0)
+                                break;
+                        }
+                        func_801276E0(&ctxC, 0);
+                        // walk 6: accept highlight
+                        u32 paneIdx3 = 0;
+                        for (;;) {
+                            pair6[0] = (u32)getContextStrPtr(ctxBase3);
+                            pair6[1] = (u32)ctxC;
+                            if (func_801276C8(&pair6[1], &pair6[0]) == 0)
+                                break;
+                            if (paneIdx3 >= msg->field_830)
+                                break;
+                            TalkNamePane* np = pane->field_0C->v3C(
+                                (const wchar_t*)((u8*)func_80127670(&ctxC) +
+                                                 0xbc),
+                                1);
+                            np->v78();
+                            np->v74(0x20);
+                            cW6a.v = 0x483a21ff;
+                            cW6b.v = 0x483a21ff;
+                            np->field_DC = cW6a;
+                            np->field_E0 = cW6b;
+                            paneIdx3++;
+                            ctxC = (u32*)*ctxC;
+                        }
+                        // consume the name tag and reset the display state
+                        u32 c2 = msg->field_830;
+                        if (c2 & 1)
+                            c2++;
+                        u32 half = c2 / 2;
+                        msg->field_810 += half + 2;
+                        for (u32 i = 0; i < msg->field_830; i++)
+                            msg->field_810 += (u16)msg->m838[i];
+                        s32 f834 = msg->field_834;
+                        msg->field_820 = 0;
+                        msg->field_824 = lbl_eu_806671F0;
+                        msg->field_830 = 0;
+                        msg->field_828 = f834 + 1;
+                        msg->field_834 = -1;
+                        msg->field_82c = 0;
+                    }
+                    return 2;
+                }
+                if (upDown) {
+                    // up/down: move the selection and re-highlight
+                    msg->field_834--;
+                    if (msg->field_834 < 0)
+                        msg->field_834 = msg->field_830 - 1;
+                    u8* ctxBase4 = (u8*)pane->field_0C + 0x10;
+                    // walk 7: find
+                    ctxE = (u32*)getContextStr(ctxBase4);
+                    for (;;) {
+                        u8* node = (u8*)func_80127670(&ctxE);
+                        if (strcmp((char*)(node + 0xbc),
+                                   (char*)pane->field_BC) == 0)
+                            break;
+                        ctxE = (u32*)*ctxE;
+                        pair7[0] = (u32)getContextStrPtr(ctxBase4);
+                        pair7[1] = (u32)ctxE;
+                        if (func_801276C8(&pair7[1], &pair7[0]) == 0)
+                            break;
+                    }
+                    func_801276E0(&ctxE, 0);
+                    // walk 8: highlight
+                    u32 paneIdx4 = 0;
+                    for (;;) {
+                        pair8[0] = (u32)getContextStrPtr(ctxBase4);
+                        pair8[1] = (u32)ctxE;
+                        if (func_801276C8(&pair8[1], &pair8[0]) == 0)
+                            break;
+                        if (paneIdx4 >= msg->field_830)
+                            break;
+                        TalkNamePane* np = pane->field_0C->v3C(
+                            (const wchar_t*)((u8*)func_80127670(&ctxE) + 0xbc),
+                            1);
+                        if (paneIdx4 == msg->field_834) {
+                            cW8a1.v = 0x006400ff;
+                            cW8a2.v = 0x006400ff;
+                            np->field_DC = cW8a1;
+                            np->field_E0 = cW8a2;
+                        } else {
+                            cW8b1.v = 0x5a5a5aff;
+                            cW8b2.v = 0x5a5a5aff;
+                            np->field_DC = cW8b1;
+                            np->field_E0 = cW8b2;
+                        }
+                        paneIdx4++;
+                        ctxE = (u32*)*ctxE;
+                    }
+                    return 2;
+                }
+                if (leftRight) {
+                    // left/right: move the selection and re-highlight
+                    msg->field_834++;
+                    if (msg->field_834 > msg->field_830 - 1)
+                        msg->field_834 = 0;
+                    u8* ctxBase5 = (u8*)pane->field_0C + 0x10;
+                    // walk 9: find
+                    ctxF = (u32*)getContextStr(ctxBase5);
+                    for (;;) {
+                        u8* node = (u8*)func_80127670(&ctxF);
+                        if (strcmp((char*)(node + 0xbc),
+                                   (char*)pane->field_BC) == 0)
+                            break;
+                        ctxF = (u32*)*ctxF;
+                        pair9[0] = (u32)getContextStrPtr(ctxBase5);
+                        pair9[1] = (u32)ctxF;
+                        if (func_801276C8(&pair9[1], &pair9[0]) == 0)
+                            break;
+                    }
+                    func_801276E0(&ctxF, 0);
+                    // walk 10: highlight
+                    u32 paneIdx5 = 0;
+                    for (;;) {
+                        pair10[0] = (u32)getContextStrPtr(ctxBase5);
+                        pair10[1] = (u32)ctxF;
+                        if (func_801276C8(&pair10[1], &pair10[0]) == 0)
+                            break;
+                        if (paneIdx5 >= msg->field_830)
+                            break;
+                        TalkNamePane* np = pane->field_0C->v3C(
+                            (const wchar_t*)((u8*)func_80127670(&ctxF) + 0xbc),
+                            1);
+                        if (paneIdx5 == msg->field_834) {
+                            cW10a1.v = 0x006400ff;
+                            cW10a2.v = 0x006400ff;
+                            np->field_DC = cW10a1;
+                            np->field_E0 = cW10a2;
+                        } else {
+                            cW10b1.v = 0x5a5a5aff;
+                            cW10b2.v = 0x5a5a5aff;
+                            np->field_DC = cW10b1;
+                            np->field_E0 = cW10b2;
+                        }
+                        paneIdx5++;
+                        ctxF = (u32*)*ctxF;
+                    }
+                }
+                return 2;
+            }
+
+            case 8: {
+                // <8 ...> icon tag: map the three header bytes through the
+                // 0x1B-entry flag table into icon ids (func_8004B9D4 call or
+                // pending field_848/field_850 stores), then advance 3.
+                flagTbl = lbl_eu_804FF608;
+                hdr[0] = (s16)((msg->buf[msg->field_810 + 3] >> 8) & 0xff);
+                hdr[1] = (s16)(msg->buf[msg->field_810 + 3] & 0xff);
+                hdr[2] = (s16)((msg->buf[msg->field_810 + 4] >> 8) & 0xff);
+                vals[0] = 0;
+                vals[1] = 0;
+                vals[2] = 0;
+                for (u32 k = 0; k < 3; k++) {
+                    s16 id = hdr[k];
+                    if (id == 0xff)
+                        break;
+                    u32 v = flagTbl.v[id];
+                    vals[k] = v;
+                    if (k == 0) {
+                        if (tsrc != 0)
+                            func_8004B9D4(tsrc->field_C4, v, 0, -1, 0);
+                    } else if (k == 1) {
+                        msg->field_848 = v;
+                        msg->field_84c = 1;
+                    } else {
+                        msg->field_850 = v;
+                        msg->field_854 = 1;
+                    }
+                }
+                msg->field_810 += 3;
+                msg->field_820 += 3;
+                goto finish;
+            }
+
+            default:
+                goto finish;
+            }
+        }
+    }
+
+finish:
+    // Icon-pending tail: display the pending icon once its window is ready.
+    if (msg->field_84c != 0) {
+        if (tsrc != 0) {
+            TagC4Obj* w = tsrc->field_C4;
+            if (w->v80(0)) {
+                func_8004B9D4(w, msg->field_848, 0, -1, 0);
+                msg->field_84c = 0;
+            }
+        }
+    }
+    if (msg->field_854 != 0) {
+        if (tsrc != 0) {
+            TagC4Obj* w = tsrc->field_C4;
+            if (w->v80(0)) {
+                func_8004B9D4(w, msg->field_850, 0, -1, 0);
+                msg->field_854 = 0;
+            }
+        }
+    }
+    return -1;
+}
 
 // noinline: func_80127BF4 keeps the bl copyVEC2 call in retail - a tiny
 // same-TU body like this would otherwise be folded into the call site.
@@ -525,13 +1239,23 @@ extern "C" __declspec(noinline) void copyVEC2(float *dst, const float *src) {
     dst[0] = src[0];
     dst[1] = src[1];
 }
-nw4r::ut::Color& nw4r::ut::Color::operator=(const nw4r::ut::Color& rhs) {
-    r = rhs.r;
-    g = rhs.g;
-    b = rhs.b;
-    a = rhs.a;
+// noinline: the retail name-display walks call the operator out-of-line
+// (each store emits a bl to __as__Q34nw4r2ut5ColorFRCQ34nw4r2ut5Color and
+// the RHS color is materialized on the stack) - -ipa would otherwise fold
+// the 4-byte copy into the call sites and drop the color temps.
+__declspec(noinline) nw4r::ut::Color& nw4r::ut::Color::operator=(
+    const nw4r::ut::Color& rhs) {
+    comp.r = rhs.comp.r;
+    comp.g = rhs.comp.g;
+    comp.b = rhs.comp.b;
+    comp.a = rhs.comp.a;
     return *this;
 }
+
+// noinline: the retail name-display walks call the operator out-of-line
+// (each store emits a bl to __as__Q34nw4r2ut5ColorFRCQ34nw4r2ut5Color and
+// the RHS color is materialized on the stack) - -ipa would otherwise fold
+// the 4-byte copy into the call sites and drop the color temps.
 
 // TagContext struct for the u8*-self functions
 struct TagContext {
@@ -552,7 +1276,7 @@ extern "C" const wchar_t** getContextStrPtr(u8* self) { return (const wchar_t**)
 // so the tiny body must not be folded into call sites.
 extern "C" __declspec(noinline) void addToCharSpace(u8* self, float val) { *(float*)(self + 0xC) = *(float*)(self + 0x4) + val; };
 
-void func_80127670(){}
+void* func_80127670(void* self) { return *(void**)self; }
 
 // Compare the first u32 of two blocks (used as a tag-identity test).
 // NOTE: retail uses the -O4,s addic/subfe setnz idiom; under this unit's
@@ -562,7 +1286,7 @@ u32 func_801276C8(const u32* a, const u32* b) {
     return *b != *a;
 }
 
-extern "C" void* func_801276E0(void* self) {
+extern "C" void* func_801276E0(void* self, int a) {
     void* p = *(void**)self;
     *(u32*)self = *(u32*)p;
     return p;
@@ -1772,7 +2496,7 @@ u32 func_8012AD40(void* a, void* b, TagColorArg* arg) {
     if (!validRegs2)
         nw4r::db::Panic(lbl_eu_8052DD40, 0x98, lbl_eu_8052DD0C, w);
     nw4r::ut::Color cur = w->mVertexColor;
-    c.a = cur.a;
+    c.comp.a = cur.comp.a;
     nw4r::ut::Color merged = c;
     validRegs2 = true;
     validRegs = true;

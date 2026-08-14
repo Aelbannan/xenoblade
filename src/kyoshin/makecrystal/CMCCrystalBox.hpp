@@ -2,8 +2,9 @@
 
 #include <types.h>
 class CBaseCur;
+class CEventFile;
 
-namespace nw4r { namespace lyt { class AnimTransform; class Layout; class Pane; } }
+namespace nw4r { namespace lyt { class AnimTransform; class ArcResourceAccessor; class Layout; class Pane; } }
 
 // Pane +0x2C is the protected mTranslate VEC3 (lyt_pane.h); mirror it so the
 // crystal-box refresh (func_802180B4) can hand the field to copyVEC3.
@@ -145,6 +146,29 @@ struct CSysWinData {
     u8 field_39;             // +0x39
 };
 
+// View into the object returned by CDeviceFont::func_80452C10: vtable+0x24
+// (index 7, no args) yields the u32 bound into the layout's font pane
+// (handed to func_8013676C). All-pure so no vtable is emitted.
+class CDeviceFontVtblView {
+public:
+    virtual void vf0() = 0; // index 0 -> +0x08
+    virtual void vf1() = 0; // index 1 -> +0x0C
+    virtual void vf2() = 0; // index 2 -> +0x10
+    virtual void vf3() = 0; // index 3 -> +0x14
+    virtual void vf4() = 0; // index 4 -> +0x18
+    virtual void vf5() = 0; // index 5 -> +0x1C
+    virtual void vf6() = 0; // index 6 -> +0x20
+    virtual u32 vf7() = 0;  // index 7 -> +0x24
+};
+
+// Pane +0x4C/+0x50 float pair written by OnFileEvent from the timg-resource
+// u16 position header (same +0x4C offset func_80127BC4 reads as a drag pair).
+struct PanePosMirror {
+    u8 _pad[0x4C];   // +0x00..+0x4B
+    f32 m4C;         // +0x4C
+    f32 m50;         // +0x50
+};
+
 // Crystal-state table rooted at CMCCrystalBox+0x3D8: 1024 entries (4 bytes
 // each), then a small state header, then the name buffer for sprintf.
 struct CMCCrystalData {
@@ -163,7 +187,7 @@ class __declspec(novtable) CMCCrystalBox {
 public:
     CMCCrystalBox(u8 parentType);
     virtual ~CMCCrystalBox();
-    void OnFileEvent();
+    bool OnFileEvent(CEventFile* event);
 
     // Fields - vtable at +0x00 (implicit), user fields start at +0x04
     u8 pad_00[0x1C];                    // +0x04 to +0x1F
@@ -352,6 +376,19 @@ public:
     virtual void vf_30() = 0;                    // user slot 12 = 0x38
     virtual nw4r::lyt::Pane* vf_3C(char* s, int flag) = 0;  // slot 0x3C
 };
+// 3-arg variant used by OnFileEvent: retail passes the double-deref of the
+// timg-resource +8 field in r6 (extra arg), which also feeds the u16 reads.
+class CLytVf3C3 {
+public:
+    virtual void vf_00() = 0; virtual void vf_04() = 0;
+    virtual void vf_08() = 0; virtual void vf_0C() = 0;
+    virtual void vf_10() = 0; virtual void vf_14() = 0;
+    virtual void vf_18() = 0; virtual void vf_1C() = 0;
+    virtual void vf_20() = 0; virtual void vf_24() = 0;
+    virtual void vf_28() = 0; virtual void vf_2C() = 0;
+    virtual void vf_30() = 0;                    // user slot 12 = 0x38
+    virtual nw4r::lyt::Pane* vf_3C(char* s, int flag, u32* extra) = 0;  // slot 0x3C
+};
 
 // C-linkage imports
 // -----------------
@@ -410,6 +447,28 @@ extern "C" u16 func_8015780C(int);
 extern "C" char* func_80136190(const void*, const void*, int);
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void func_80124270(void*, u32);   // pane visibility setter
+// OnFileEvent (code_80135FDC-unit) imports: unmangled retail symbols keep C
+// linkage; func_801355A0 / func_80086F9C__Q22cf13CfGameManagerFv use the
+// plain C++ forms that re-derive the retail mangled names.
+extern "C" u32 func_801355BC();
+extern "C" void* func_801355F4();   // shared timg resource accessor
+// C++ linkage so MWCC mangles to the retail func_801355A0__Fv.
+u32 func_801355A0();
+extern "C" u16 func_8013606C(const void*, const void*, u32);
+extern "C" void func_8013676C(void*, u32);   // bind font pane onto root
+extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char*, u32);
+extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" void func_8003AA34();
+extern "C" void* getFP__FPCc(const char*);
+extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
+extern "C" void func_8018B0FC(void*, void*);   // cursor copy (func_801D24E8 sibling)
+extern "C" void func_801D24E8(void*, void*, void*);
+extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);   // cf::CfGameManager (verbatim mangled identifier)
+extern "C" float lbl_eu_80668488;
+extern "C" float lbl_eu_8066848C;
+extern "C" float lbl_eu_80668490;
 extern "C" void* func_80157C4C(u32, s16);
 extern "C" int func_80213710(void*, unsigned char);
 extern "C" void* func_8021384C(void*, unsigned char);
@@ -494,6 +553,7 @@ extern "C" __declspec(noinline) void func_80216EB0(CMCCrystalBox* self);
 extern "C" __declspec(noinline) void func_80216EFC(CMCCrystalBox* self);
 extern "C" void func_80219994(CMCCrystalBox* self, int);
 extern "C" void func_80213788(void* self);
+extern "C" void func_80216F8C(CMCCrystalBox* self);
 extern "C" void func_802137B4(void* self);
 extern "C" void func_802136E0(void*, int, unsigned char);
 extern "C" int func_80215AE8(void*);

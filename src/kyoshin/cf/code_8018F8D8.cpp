@@ -5,7 +5,14 @@
 
 #include "kyoshin/cf/code_8018F8D8.hpp"
 
+// CTaskGame.hpp declares func_8004392C with a u32 third arg and func_8049603C
+// with a CScn* arg, conflicting with the CVision.hpp / CSuddenCommu.hpp copies
+// reached via CBattleManager.hpp below; this TU uses neither copy.
+#define func_8004392C f8d8CtaskGame4392CUnused
+#define func_8049603C f8d8CtaskGame9603CUnused
 #include "kyoshin/CTaskGame.hpp"
+#undef func_8049603C
+#undef func_8004392C
 #include "kyoshin/cf/CBattleManager.hpp"
 
 // C-linkage (unmangled) helpers referenced by the catalog functions below.
@@ -24,14 +31,14 @@ extern "C" {
     void func_8008064C__Q22cf13CfGameManagerFv(void* element0, int idx, float* stk);
     void func_8007FE18__Q22cf13CfGameManagerFv(int flag);
     int  func_80174C98(void* actor, int* outVal, int flags);
-    bool func_8006EF04__Fi(s32 mask);
+    bool func_8006EF04__Fi(int mask);
     u32  func_8009CF8C(u32 resource);
     int  func_80148778(void* obj, int id);
     int  func_8027E018(void* obj, void* arg);
     void __dt__80043E88(void* holder, int flag);
     int func_80061A80(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
     int func_80061870(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f);
-    void func_800BE12C(void* obj, int a, int b, int c, int d);
+    void func_800BE12C(u8* obj, int a, int b, int c, int d);
     void func_8012F860();
     void func_801338C8();
     void func_80133AE8();
@@ -44,7 +51,7 @@ extern "C" {
     int  func_8012FA5C();
     void func_8012FAA8();
     int  func_80062A84(s32 arg);
-    int  func_802A3748(s32 value);
+    int  func_802A3748(u32 value);
     void func_80135550();
     int  func_804962A0(CScn* scn, int flag);
     UnkR31_8019E88* func_8009D5FC();
@@ -254,7 +261,7 @@ int func_80190394(u32 p0, u32 p1, u32 p2, u32 p3, u32 p4) {
 int func_80190414(void* p0, void* p1) {
     cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
     if (player != 0) {
-        func_800BE12C(player, (int)p1, 0, 0, 1);
+        func_800BE12C((u8*)player, (int)p1, 0, 0, 1);
     }
     return 0;
 }

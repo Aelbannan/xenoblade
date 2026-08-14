@@ -822,16 +822,17 @@ CfPartsChgObj3F04* func_80194610(CfPartsManager* mgr, u32 arg2, u32 arg3,
     local14.x = src->mPos.x;
     local14.y = src->mPos.y;
     local14.z = src->mPos.z;
-    u8 bval = *(const u8*)&val;
     u32 flag = 1;
+    u8 b = src->field_24;
+    u8 bval = *(const u8*)&val;
+    if (b != 0) {
+        int t = 0;
+        if ((b & 1) != 0 && (b & 0x10) == 0) t = 1;
+        if (t == 0) flag = 0;
+    }
     float local18;
     CfCollideOut local8;
     u32 r28;
-    if (src->field_24 != 0) {
-        int t = 0;
-        if ((src->field_24 & 1) != 0 && (src->field_24 & 0x10) == 0) t = 1;
-        if (t == 0) flag = 0;
-    }
     if (flag != 0) {
         f32 fA = src->field_0C;
         if (src->field_0C <= lbl_eu_8066A208 && arg4 > 1) fA = lbl_eu_80667B04;
@@ -1287,7 +1288,172 @@ int func_80195BD4(u16 id, int arg2) {
     return count != 0;
 }
 
-void func_80195E5C(){}
+// Frame update over the party slots (retail func_80195E5C, called from
+// outside this TU): gate on the BDAT table / party count / presentation
+// flags, decay the +0xB276 retry timer, then run the element scan
+// (func_8019514C) and the per-frame pass: recompute the player speed f
+// from the settings flags (80663ED8 vs epsilon, the 80663E28 bits, the
+// settings-object 0x8000 bit), and when the speed changed or the actor
+// list is under 0x20 nodes, sort the distance array (func_80196434 with
+// func_8019641C), rebuild the slots (func_80196E04), then walk the sorted
+// entries applying the party-count range checks (func_801953E8 spawns
+// each passing element). The +0xB274 index wraps past the count.
+extern "C" void func_80195E5C(CfPartsManager* mgr, f32 f) {
+    func_8003AA34();
+    void* bdat = (void*)func_80086B24__Q22cf13CfGameManagerFv();
+    u32 partyCount = func_80086B34__Q22cf13CfGameManagerFv();
+    void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+    mgr->field_B268 = f;
+    if (bdat == 0) return;
+    if (partyCount == 0) return;
+    if (lbl_eu_80663E28 & 0x20) {
+        if (mgr->field_B276 > 0) mgr->field_B276 = 0;
+    }
+    if (mgr->field_B276 > 0) {
+        mgr->field_B276 -= 1;
+        mgr->field_B278 = 1;
+        return;
+    }
+    if (func_80084BAC__Q22cf13CfGameManagerFv() != 0) return;
+    if ((lbl_eu_80663E24 & 0x02000000) != 0 || (lbl_eu_80663E24 & 0x400) != 0) return;
+    if ((lbl_eu_80663E24 & 0x00400000) != 0 && (lbl_eu_80663E28 & 0x30) == 0) return;
+    if (func_800829B8__Q22cf13CfGameManagerFv() != 0) return;
+    if (player == 0) return;
+    func_8019514C(mgr);
+    u32 t = (lbl_eu_80663E28 >> 6) & 3;
+    int notT = (t == 0) ? 1 : 0;
+    u32 bit23 = (lbl_eu_80663EE0 >> 8) & 1;
+    u32 r28 = func_8006A6D0();
+    u32 r16 = lbl_eu_80663D90;
+    u32 bit27 = (lbl_eu_80663E28 >> 4) & 1;
+    u32 bit25 = (lbl_eu_80663E28 >> 6) & 1;
+    CfGlobalGimmickView* g = getUnk80664658();
+    u32 unkBit = 0;
+    if (g != 0) {
+        unkBit = (getUnk80664658()->field_214 >> 15) & 1;
+    }
+    int gt = lbl_eu_80663ED8 > lbl_eu_8066A208;
+    u32 bit26 = (lbl_eu_80663E28 >> 5) & 1;
+    if (bit27 != 0 && bit25 != 0) {
+        f = lbl_eu_80667B08;
+    } else if (gt) {
+        f = lbl_eu_80667ABC;
+    } else if (unkBit != 0) {
+        f *= lbl_eu_80667B20;
+    } else if (bit27 != 0) {
+        f *= lbl_eu_80667B20;
+    } else if (bit26 != 0 && bit25 != 0) {
+        f = lbl_eu_80667ABC;
+    } else if (bit26 != 0) {
+        f *= lbl_eu_80667B20;
+    }
+    int changed = mgr->field_B26C != f;
+    mgr->field_B26C = f;
+    if (mgr->field_B278 == 0 && (r16 & 3) != 0 && r28 == mgr->field_B272 &&
+        notT == 0 && bit23 == 0 && changed == 0) {
+        goto afterLoop;
+    }
+    for (u32 i = 0; i < 16; i++) {
+        CfElemA4Full* t = &((CfElemA4Full*)mgr->mTable)[i];
+        if (!(t->field_A0 & 1)) continue;
+        if (t->field_A2 != 0) continue;
+        u16 id = t->field_9E;
+        CfPartsElem4C* elem;
+        if (id != 0) {
+            CfPartsManager* gm = (CfPartsManager*)lbl_eu_8066430C;
+            const CfPartsElem4C* p = gm->mElems.mElems;
+            for (u32 k = 0; k < gm->mElems.mCount; p++, k++) {
+                if (id == p->field_1C) {
+                    elem = &gm->mElems.mElems[k];
+                    goto foundInList;
+                }
+            }
+        }
+        elem = 0;
+    foundInList:
+        if (elem != 0 && elem->field_22 != 0) elem->field_22 = 0;
+        t->field_94 = 0;
+        t->field_A0 &= ~1u;
+    }
+    {
+        CfPlayerPosView* pv = (CfPlayerPosView*)player;
+        ml::CVec3* pos = pv->vt->vfAC(player);
+        func_80194D5C(mgr, pos, f);
+    }
+    if (notT == 0 && bit23 == 0 && mgr->field_B278 == 0) return;
+    mgr->field_B278 = 0;
+afterLoop:
+    ((int (*)(void*))func_80194AFC)(mgr);
+    if (r28 != mgr->field_B272 && bit23 == 0) return;
+    {
+        CfActorList* list = (CfActorList*)func_800B6BC8();
+        int n = 0;
+        CfActorListNode* node = list->mHead->mNext;
+        while (node != list->mHead) {
+            node = node->mNext;
+            n++;
+        }
+        if ((u32)n >= 0x20) return;
+    }
+    u32 cnt = mgr->field_A804;
+    func_80196434((CfPartsSwapEntry*)mgr->mDist, (CfPartsSwapEntry*)&mgr->mDist[cnt],
+                  (CfPartsSwapCmp)func_8019641C);
+    func_80196E04(mgr, f);
+    u32 count = mgr->field_A804;
+    int hit = 0;
+    int limit = 0x10;
+    if (bit23 != 0) {
+        mgr->field_B274 = 0;
+        limit = (int)count;
+        lbl_eu_80663EE0 &= ~0x80u;
+    } else if (notT != 0 && (count >> 1) > 0x10) {
+        limit = (int)(count >> 1);
+    }
+    const char* cols = lbl_eu_80503C48;
+    for (int i = 0; i < (int)count && i < limit; i++) {
+        u16 idx = mgr->field_B274;
+        idx++;
+        mgr->field_B274 = idx;
+        if (idx >= count) mgr->field_B274 = 0;
+        idx = mgr->field_B274;
+        CfPartsElem4C* elem = (CfPartsElem4C*)mgr->mDist[idx].elem;
+        u16 eid = elem->field_1C;
+        u32 val = getBdatStringColumnValue(bdat, cols + 0x6c, eid);
+        int lo = 1;
+        int hi = 0xfc;
+        int cnt3 = func_80082354__Q22cf13CfGameManagerFv(*(const u16*)&val);
+        if (cnt3 != 0) {
+            u32 w = getBdatStringColumnValue(bdat, cols + 0x74, eid);
+            u8 wb = *(const u8*)&w;
+            if (wb != 0) {
+                lo = wb;
+                hi = wb;
+            }
+        }
+        int ok1;
+        if (*(const u16*)&val == 0) ok1 = 1;
+        else if ((u32)(u16)lo > (u32)cnt3) ok1 = 0;
+        else if ((u32)cnt3 <= (u32)(u16)hi) ok1 = 1;
+        else ok1 = 0;
+        int ok2 = 0;
+        if (ok1) {
+            u16 cnt2 = (u16)func_800822F4__Q22cf13CfGameManagerFv();
+            u32 c2 = getBdatStringColumnValue(bdat, cols + 0x80, eid);
+            u32 d2 = getBdatStringColumnValue(bdat, cols + 0x8a, eid);
+            if ((u16)c2 <= cnt2 && cnt2 <= (u16)d2) ok2 = 1;
+        }
+        if (ok2) {
+            if (!(elem->field_20 & 8) && (bit23 == 0 || (elem->field_1E & 0x200))) {
+                u8 flag;
+                func_801953E8((CfPartsElemArray*)mgr, elem, &flag, 1);
+                if (flag != 0) {
+                    hit++;
+                    if (notT == 0 || hit > 8) return;
+                }
+            }
+        }
+    }
+}
 
 // 8-byte entry swap used by the three-way sort of func_80196C94 and the
 // quicksorts. The old entry is homed in a u32 pair on the stack: field_00
@@ -1479,7 +1645,7 @@ void func_80196C94(CfPartsSwapEntry* a, CfPartsSwapEntry* b,
     else swapPartsEntry(a, c);
 }
 
-void func_80196E04(){}
+extern "C" void func_80196E04(CfPartsManager* mgr, f32 f) {}
 
 // Linear scan of the 0x4C-stride element array: return the element whose u16
 // id at +0x1C matches, or null (count at +0x9800).
@@ -1515,12 +1681,178 @@ CfPartsElem4C* func_801974CC(CfPartsElemArray* self, CfPartsFlagView* other) {
     return 0;
 }
 
-// Stub bodies are inlined into func_80197B4C by MWCC (they are defined in
-// this TU), which would delete the retail `bl` calls - keep them opaque with
-// the same auto_inline-off pattern used for func_80193810 below.
+// Slot removal helper (same-TU sibling, retail unmangled symbol); forward
+// declared here for func_80197538 (the definition below inherits C linkage).
+extern "C" int func_80198284(CfPartsSlots* self, CfPartsSlots* other);
+
+// Party-change refresh (retail func_80197538, called by func_80197B4C /
+// func_80197BA4 with the global manager): when the actor is active (busy
+// flag or +0x3F08 activity bit) or idle with bit 0x20 of +0x3F00 set, walk
+// the 16 table slots whose +0x45C0 id matches, resolve each slot's actor
+// (func_800B708C, de-biased by 0x3E9C), skip battle members owned by the
+// battle manager (func_800DA06C) unless it is the actor itself, then apply
+// the equipment-slot update: find the +0x4C element matching the shifted
+// +0x456C id, decrement its field_27[lo] counter, bump field_30/field_39
+// by the busy state, set the +0x40 bit on +0x3F04 and release the slot
+// (func_80198284). The actor itself then gets the same element update, and
+// when active the field_30[] vs field_42[] comparison gate re-initializes
+// the element speed from the BDAT columns; the field_27[1..8] data check
+// clears the +0x400 re-arm bit. auto_inline off keeps the retail `bl` from
+// callers (same pattern as func_80193810).
 #pragma push
 #pragma auto_inline off
-extern "C" void func_80197538(unsigned long manager, int arg) {}
+extern "C" void func_80197538(unsigned long manager, int arg) {
+    CfPartsChgObjFull* obj;         // r31
+    int active;                     // r30
+    int busy;                       // r29
+    const CfPartsListEntry* p;      // r28 (mEntries walk)
+    void* bm;                       // r27
+    CfElemA4Full* tbl;              // r26
+    int j;                          // r25
+    CfPartsChgObjFull* actor;       // r24
+    CfPartsManager* mgr;            // r23
+    CfPartsElem4C* elem;            // second part (reuses obj's r31 once dead)
+    actor = (CfPartsChgObjFull*)arg;
+    mgr = (CfPartsManager*)manager;
+    if (!(actor->field_3F00 & 4)) return;
+    active = 1;
+    if (((cf::CfResPcPlayerVtIf*)actor)->_v2BC() == 0 && (actor->field_3F08 & 0x08000000) == 0) {
+        active = 0;
+    }
+    if (actor->field_3F00 & 0x04000000) {
+        bm = getInstance__Q22cf14CBattleManagerFv();
+        if (active == 0) {
+            tbl = 0;
+            u16 id = actor->field_45C0;
+            if (id != 0) {
+                for (u32 i = 0; i < 16; i++) {
+                    if (mgr->mTable[i].field_94 == id) {
+                        tbl = (CfElemA4Full*)&mgr->mTable[i];
+                        break;
+                    }
+                }
+            }
+            if (tbl != 0) {
+                p = tbl->mEntries;
+                for (j = 0; j < 16; j++, p++) {
+                    obj = (CfPartsChgObjFull*)func_800B708C(p->field_00);
+                    if (obj != 0) obj = (CfPartsChgObjFull*)((u8*)obj - 0x3E9C);
+                    if (obj == 0) continue;
+                    if (bm != 0 && func_800DA06C(bm, obj) != 0 && actor != obj) continue;
+                    busy = 1;
+                    if (((cf::CfResPcPlayerVtIf*)obj)->_v2BC() == 0 && (obj->field_3F08 & 0x08000000) == 0) {
+                        busy = 0;
+                    }
+                    CfPartsElem4C* elem1;   // per-iteration, short-lived (retail r4)
+                    if (obj->field_3F00 & 4) {
+                        u16 shifted = (u16)(obj->field_456C >> 4);
+                        if (shifted != 0) {
+                            u32 k = 0;
+                            const CfPartsElem4C* p = mgr->mElems.mElems;
+                            u32 count = mgr->mElems.mCount;
+                            for (; k < count; p++, k++) {
+                                if (shifted == p->field_1C) {
+                                    elem1 = &mgr->mElems.mElems[k];
+                                    goto elemFound1;
+                                }
+                            }
+                        }
+                        elem1 = 0;
+                    } else {
+                        elem1 = 0;
+                    }
+                elemFound1:
+                    if (elem1 != 0) {
+                        u16 lo = obj->field_456C & 0xF;
+                        u16 o = lo > 8 ? 8 : lo;
+                        u8 n = elem1->field_27[o];
+                        if (n != 0) {
+                            elem1->field_27[o] = n - 1;
+                            if (busy != 0) {
+                                elem1->field_30[o] += 1;
+                            } else {
+                                elem1->field_39[o] += 1;
+                            }
+                        }
+                    }
+                    obj->field_3F04 |= 0x40;
+                    if (obj != actor) {
+                        func_80198284((CfPartsSlots*)tbl, (CfPartsSlots*)obj);
+                    }
+                }
+            }
+        }
+    }
+    busy = 1;
+    if (((cf::CfResPcPlayerVtIf*)actor)->_v2BC() == 0 && (actor->field_3F08 & 0x08000000) == 0) {
+        busy = 0;
+    }
+    if (actor->field_3F00 & 4) {
+        u16 shifted = (u16)(actor->field_456C >> 4);
+        if (shifted != 0) {
+            u32 k = 0;
+            const CfPartsElem4C* p = mgr->mElems.mElems;
+            u32 count = mgr->mElems.mCount;
+            for (; k < count; p++, k++) {
+                if (shifted == p->field_1C) {
+                    elem = &mgr->mElems.mElems[k];
+                    goto elemFound2;
+                }
+            }
+        }
+        elem = 0;
+    } else {
+        elem = 0;
+    }
+elemFound2:
+    if (elem != 0) {
+        u16 lo = actor->field_456C & 0xF;
+        u16 o = lo > 8 ? 8 : lo;
+        u8 n = elem->field_27[o];
+        if (n != 0) {
+            elem->field_27[o] = n - 1;
+            if (busy != 0) {
+                elem->field_30[o] += 1;
+            } else {
+                elem->field_39[o] += 1;
+            }
+        }
+    }
+    if (elem != 0 && active != 0) {
+        int ok = 1;
+        if (elem->field_30[1] < elem->field_42[1]) ok = 0;
+        else if (elem->field_30[2] < elem->field_42[2]) ok = 0;
+        else if (elem->field_30[3] < elem->field_42[3]) ok = 0;
+        else if (elem->field_30[4] < elem->field_42[4]) ok = 0;
+        else if (elem->field_30[5] < elem->field_42[5]) ok = 0;
+        else if (elem->field_30[6] < elem->field_42[6]) ok = 0;
+        else if (elem->field_30[7] < elem->field_42[7]) ok = 0;
+        else if (elem->field_30[8] < elem->field_42[8]) ok = 0;
+        if (ok != 0) {
+            elem->field_1E &= ~4u;
+            u32 val = getBdatStringColumnValue(lbl_eu_806640A8, lbl_eu_80503C48, lbl_eu_80664184);
+            u8 b = *(const u8*)&val;
+            if (b == 0) b = 1;
+            elem->field_10 = lbl_eu_80667AB8 * (lbl_eu_80667ABC * (f32)(u32)b);
+            elem->field_14 = lbl_eu_80667AC0;
+            memset(&elem->field_42[0], 0, 9);
+        } else {
+            elem->field_14 = lbl_eu_80667AC0;
+        }
+    }
+    if (elem != 0) {
+        int has = 0;
+        if (elem->field_27[1] != 0) has = 1;
+        else if (elem->field_27[2] != 0) has = 1;
+        else if (elem->field_27[3] != 0) has = 1;
+        else if (elem->field_27[4] != 0) has = 1;
+        else if (elem->field_27[5] != 0) has = 1;
+        else if (elem->field_27[6] != 0) has = 1;
+        else if (elem->field_27[7] != 0) has = 1;
+        else if (elem->field_27[8] != 0) has = 1;
+        if (has == 0) elem->field_1E &= ~0x400u;
+    }
+}
 #pragma pop
 
 // Scan the 16-entry 0xA4 table for the id, then use the found element's

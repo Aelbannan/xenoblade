@@ -95,6 +95,60 @@ public:
     u8 field_20D;
     u8 field_20E;
     u8 field_20F;
+    // Rank-item slot display arrays (shared by the category-3/9 item
+    // handlers func_801B7440 / func_801B70BC / func_801B7A58): per-slot item
+    // ids, positions and the "slot filled" flag byte. Slots 8-11 are the
+    // rank-item display. The +0x2C4/+0x2D0 arrays are only written by
+    // func_801B7A58 (extra per-slot rank data).
+    u16 mRankSlotIds[12];             // +0x210
+    nw4r::math::VEC3 mRankSlotPos[12]; // +0x228
+    u8 mRankSlotFlag[12];             // +0x2B8
+    u8 mRankSlotFlag2[12];            // +0x2C4
+    u16 mRankSlotIds2[12];            // +0x2D0
+    u8 field_2E8;                     // +0x2E8 slot-window selection (A-press scan)
+};
+
+// Vtable-dispatch view of the per-category item impl (the +0x4C/+0x54/+0x64/
+// +0x90 slots this TU calls are typed here; CItem.hpp's CItemImpl keeps those
+// as placeholders). Offsets match the real CItemImpl vtable; never
+// constructed directly (instances come from CItem_initItemImplInstances).
+class CMenuGetItemImpl {
+public:
+    virtual u16 getRankCount(CMenuGetItemMultiEntry*) = 0;    // +0x08
+    virtual void v0C() = 0;
+    virtual void v10() = 0;
+    virtual void v14() = 0;
+    virtual void v18() = 0;
+    virtual void v1C() = 0;
+    virtual char* getName(CMenuGetItemMultiEntry*) = 0;       // +0x20
+    virtual void v24() = 0;
+    virtual void v28() = 0;
+    virtual void* getSlot(CMenuGetItemMultiEntry*, u8) = 0;   // +0x2C
+    virtual u8 hasSlot(CMenuGetItemMultiEntry*) = 0;          // +0x30
+    virtual void v34() = 0;
+    virtual void v38() = 0;
+    virtual void v3C() = 0;
+    virtual s16 getSlotId(CMenuGetItemMultiEntry*, u8) = 0;   // +0x40
+    virtual void v44() = 0;                                   // +0x44
+    virtual void v48() = 0;                                   // +0x48
+    virtual u32 vf4C(CMenuGetItemMultiEntry*, u8) = 0;        // +0x4C slot item id
+    virtual void v50() = 0;                                   // +0x50
+    virtual u32 vf54(CMenuGetItemMultiEntry*) = 0;            // +0x54 item id
+    virtual void v58() = 0;
+    virtual void v5C() = 0;
+    virtual void v60() = 0;
+    virtual u32 vf64(CMenuGetItemMultiEntry*, u8) = 0;        // +0x64 slot id
+    virtual void v68() = 0;
+    virtual void v6C() = 0;
+    virtual void v70() = 0;
+    virtual void v74() = 0;
+    virtual void v78() = 0;
+    virtual void v7C() = 0;
+    virtual void v80() = 0;
+    virtual void v84() = 0;
+    virtual void v88() = 0;
+    virtual void v8C() = 0;
+    virtual u8 vf90(CMenuGetItemMultiEntry*) = 0;            // +0x90 rank text value
 };
 
 // --- unit imports ---
@@ -104,6 +158,9 @@ extern u32 lbl_eu_80664414;
 
 // Currently-loaded item file buffer pointer (released by Term/func_801B45A0).
 extern u32 lbl_eu_80664418;
+
+// Item-name font pointer (.sbss, read by func_801B7440's item-name lookup).
+extern void* lbl_eu_806640D8;
 
 // Pane colour/position defaults (.sbss, written by sinit_801B9FC8).
 extern CMenuGetItemFourShorts lbl_eu_806643A0;
@@ -131,6 +188,25 @@ extern u32 lbl_eu_80663E28;
 extern f32 lbl_eu_80667E14;
 extern const f64 lbl_eu_80667E18;
 
+// Anim frame target used by Move's open/close states (func_80137444 /
+// func_80137510 argument), plus the rank-window size/position constants
+// func_801B6184 scales the item window by.
+extern f32 lbl_eu_80667E10;
+extern f32 lbl_eu_80667E20;
+extern f32 lbl_eu_80667E24;
+extern f32 lbl_eu_80667E28;
+
+// Slot-window page step: func_801B82E8's A-press multiplies the selected
+// slot index by this to derive the page (field_20D), using the sibling
+// int->double magic constant 80667E08 for the (f64) index conversion.
+extern f32 lbl_eu_80667E2C;
+extern const f64 lbl_eu_80667E08;
+
+// Item-window font/table pointers (.sbss) used by the category-4/8 item
+// handlers (func_801B6184 / func_801B69F4) and func_801B7A58.
+extern u32 lbl_eu_806640F4;
+extern u32 lbl_eu_806640F8;
+
 // Minimal CTaskGame decl (same shape as CSystemWindow.hpp) - only the
 // statics cbRenderBefore consumes.
 class CTaskGame {
@@ -145,8 +221,9 @@ public:
 // to land at vtable offset 0xC. All-pure, never constructed directly.
 class CMenuGetItemMultiCur {
 public:
-    virtual void vfn0() = 0;          // MWCC vtable slot 2
-    virtual void func_801D2180() = 0; // MWCC vtable slot 3 (retail slot 3)
+    virtual void vfn0() = 0;                             // MWCC vtable slot 2
+    virtual void func_801D2180() = 0;                    // MWCC vtable slot 3 (retail slot 3)
+    virtual void vfn4(const nw4r::math::VEC3*) = 0;      // MWCC vtable slot 4 (+0x10) cursor move
 };
 
 // Minimal view of the CfGameManager fields Term's action-source teardown
@@ -169,7 +246,44 @@ extern "C" u8 code80135FDC_getByte_64080();
 extern "C" void func_8022B7F4(u8* syswin);          // CSysWin teardown (Term, after the lbl_eu_80664414/18 clears)
 extern "C" void func_8022B7C8(u8* syswin, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void func_801D20B0(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void func_8022B8E4(u8* syswin);          // CSysWin re-layout
+// CSysWin content setters (grade-up window setup in func_801B8E2C /
+// func_801B82E8); func_8022B90C/BFC8 take CSysWin* (declared in CSysWin.hpp).
+extern "C" void func_8022B9B4(u8* syswin, char* text, u32 flag);
+extern "C" void func_8022B8B8(u8* syswin);
+extern "C" void func_8022BF6C(u8* syswin, char* a, char* b);
+// Item removal helpers (item sweeps in func_801B8E2C): release an entry
+// and notify the item system.
+extern "C" void func_801599D4(CMenuGetItemMultiEntry* entry, u32 flags);
+extern "C" void func_801586D4(u32 id, u32 flags);
+extern "C" void func_80140E00(u32 a, u32 id, u32 b);
+// Slot-window name source used by func_801B82E8's A-press open (no args).
+extern "C" char* func_801D3C74();
+// Cursor position + window selection helpers (pad-input handlers).
+extern "C" void func_8022C1B4(nw4r::math::VEC3* out, u8* syswin, u8 sel);
+extern "C" void func_801D216C(CBaseCur* cur, u8 val); // cursor visibility setter
+// Per-frame system-window/cursor updates (Move's tail after the state switch).
+extern "C" void func_8022B748(u8* syswin);
+extern "C" void func_801D202C(CBaseCur* cur);
+// System-window lifecycle queries used by Move's state machine.
+extern "C" int CSysWin_isActive(u8* syswin);
+extern "C" u32 CSysWin_isReady(u8* syswin);
+extern "C" u32 CSysWin_getUnk34(u8* syswin); // window state query (pad handlers)
+// Item-menu active check (CMenuItem.cpp) and item-created callback (CUICfManager.cpp).
+extern "C" u32 func_80167A18();
+extern "C" u32 func_80133E58(u8 self, u8 arg1, u8 arg2);
+// Rank-window geometry helpers (CItemBoxInfo.cpp family).
+extern "C" f32 func_8013B380(u32 idx);
+extern "C" void func_80139C98(u16 a, u16 b, int c, f32 d);
+extern "C" u16 func_800A082C(u32 a);
+extern "C" void func_80137F88(void* pane, void* tex); // pane texture setter
 extern "C" void func_800B7320(u32 obj);             // action-source teardown (Term, after the lbl_eu_80663E24 clear)
+extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane* a,
+                               nw4r::lyt::Pane* b, nw4r::lyt::Pane* root); // cursor position from two panes
+// UI sound effect (retail pre-mangled name).
+extern "C" void func_80138078__FUl(u32 sound);
+// Rank-item pane text setter (retail symbol is the C++-mangled name).
+void func_80136910(nw4r::lyt::Layout* layout, char* paneName, u8 value);
 // Retail ctor symbol is the unmangled `__ct__CMenuGetItemMulti` (constructs
 // the singleton stored in lbl_eu_80664414); 8 reg args + a byte on the stack.
 extern "C" u8* __ct__CMenuGetItemMulti(u8* obj, CScn* pScene, u32 a, u32 b, u32 c,

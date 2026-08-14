@@ -154,7 +154,9 @@ void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self,
     }
 }
 
-void func_8014A8F8__Fv() {}
+void func_8014A8F8__Fv() {
+    lbl_eu_806641B0 = 0;
+}
 void func_8014AA10(void* obj, unsigned int value) {
     *(unsigned int*)((unsigned char*)obj + 0xB14) = value;
 }
@@ -2018,4 +2020,89 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
 
 
 void func_801537F0(){}
-void func_8015396C(){}
+// Walks the AI config table (*lbl_eu_806641B0): finds the entry whose id
+// matches (0x70/0x65 derived from the party flags when sel == 0, else sel
+// itself) and whose arts id matches (the party's current arts id when
+// sel == 0, else 0). The table's u16 fields are stored byte-swapped
+// (BDAT/LE export), so they are rotated on load (__rlwimi reproduces the
+// retail rlwinm+rlwimi swap pair). On a hit the action ring is cleared,
+// the art name is recorded (strlen -> unkB10, strcpy -> unkB00), and the
+// entry's 0xC-byte action sub-entries are installed via func_8014B804.
+void func_8015396C(cf::CAIAction* self, u32 sel) {
+    cf::CAIActionTable* table = lbl_eu_806641B0;
+    u32 target = sel;
+    u32 want;
+    u32 raw = table->count;
+    u16 count = (u16)__rlwimi((raw << 8) & 0xFF00, raw, 24, 24, 31);
+    const u8* ep = (const u8*)table + 2;
+
+    if (sel == 0) {
+        u32 flags = ((cf::CAIPartyInfo*)self->unkB14)->flags;
+        if (flags & 0x2)
+            target = 0x70;
+        else if (flags & 0x4)
+            target = 0x65;
+        if (target != 0) {
+            u8* p = self->entries;
+            for (s32 i = 0; i < 0xA0; i++) {
+                std::memset(p, 0, 0xE);
+                p += 0xE;
+            }
+            u32 i = 0;
+            while (i < count) {
+                const cf::CAIActionTableEntry* e = (const cf::CAIActionTableEntry*)ep;
+                if (e->id == target &&
+                    (u32)(u16)__rlwimi((e->artsId << 8) & 0xFF00, e->artsId, 24, 24, 31) ==
+                        (u32)((cf::CAIPartyInfo*)self->unkB14)->artsId) {
+                    char name[0x11];
+                    std::memcpy(name, e->name, 0x10);
+                    name[0x10] = 0;
+                    self->unkB10 = (u32)std::strlen(name);
+                    std::strcpy((char*)&self->unkB00, name);
+                    {
+                        const cf::CAIActionSubEntry* s = e->actions;
+                        for (s32 j = 0; j < e->actionCount; j++) {
+                            func_8014B804((unsigned char*)self, j, s->b0, s->b2, s->b3,
+                                          s->b5, s->b4, s->b6, s->b7, s->b8, s->b9,
+                                          s->b10, s->b11, 0);
+                            s++;
+                        }
+                    }
+                    return;
+                }
+                ep += 0x16 + e->actionCount * 0xC;
+                i++;
+            }
+        }
+        target = 0x63;
+        want = 0;
+    }
+
+    {
+        const cf::CAIActionTableEntry* p = table->entries;
+        u32 i = 0;
+        while (i < count) {
+            if (p->id == target &&
+                (u32)(u16)__rlwimi((p->artsId << 8) & 0xFF00, p->artsId, 24, 24, 31) ==
+                    (u32)want) {
+                char name[0x11];
+                std::memcpy(name, p->name, 0x10);
+                name[0x10] = 0;
+                self->unkB10 = (u32)std::strlen(name);
+                std::strcpy((char*)&self->unkB00, name);
+                {
+                    const cf::CAIActionSubEntry* s = p->actions;
+                    for (s32 j = 0; j < p->actionCount; j++) {
+                        func_8014B804((unsigned char*)self, j, s->b0, s->b2, s->b3,
+                                      s->b5, s->b4, s->b6, s->b7, s->b8, s->b9,
+                                      s->b10, s->b11, 0);
+                        s++;
+                    }
+                }
+                return;
+            }
+            p = (const cf::CAIActionTableEntry*)((const u8*)p + 0x16 + p->actionCount * 0xC);
+            i++;
+        }
+    }
+}

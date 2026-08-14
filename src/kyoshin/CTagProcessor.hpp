@@ -94,6 +94,10 @@ extern const f32 lbl_eu_80667244;
 extern const f32 lbl_eu_80667248;
 extern const f32 lbl_eu_8066724C;
 
+// sdata2 float constant used by func_8012615C's auto-speed gate
+// (retail .sdata2:0x80667208).
+extern const f32 lbl_eu_80667208;
+
 // sdata2 float constants used by the tag-writer family (func_801287BC's
 // message-speed select / line math; retail .sdata2:0x806671F8..0x80667258).
 extern const f32 lbl_eu_806671F8;
@@ -206,13 +210,22 @@ namespace ut {
  * operator= is defined out-of-line in CTagProcessor.cpp so it is emitted
  * as the standalone retail symbol. */
 struct Color {
-    u8 r;  // +0x00
-    u8 g;  // +0x01
-    u8 b;  // +0x02
-    u8 a;  // +0x03
+    union {
+        u32 v;  // packed ARGB value (0xAARRGGBB)
+        struct {
+            u8 r;  // +0x00
+            u8 g;  // +0x01
+            u8 b;  // +0x02
+            u8 a;  // +0x03
+        } comp;
+    };
 
     Color& operator=(const Color& rhs);
 };
+
+/* 4-byte color-value pack for the name-list highlight walks: the retail
+ * constructs the packed ARGB u32 with lis/addi and stores it to the stack
+ * slot that the out-of-line Color::operator= then reads. */
 
 }  // namespace ut
 }  // namespace nw4r
@@ -296,10 +309,27 @@ public:
  * family (func_801276F4 / func_80128740) reads/writes the position counters. */
 struct CTagProcMsg {
     u16 buf[0x400];    // +0x000 message buffer (0x800 bytes)
-    u8  pad_800[0x10]; // +0x800
+    u8  pad_800[0x4];  // +0x800
+    u32 field_804;     // +0x804 talk-source index (func_800B708C arg)
+    u8  pad_808[0x8];  // +0x808
     u16 field_810;     // +0x810 next-tag write position / index
     u8  pad_812[0xE];  // +0x812
     u16 field_820;     // +0x820 text-done flag
+    u8  pad_822[0x2];  // +0x822
+    f32 field_824;     // +0x824 auto-advance speed (negative steps)
+    u32 field_828;     // +0x828
+    u8  field_82c;     // +0x82c name-display active flag
+    u8  pad_82d[0x3];  // +0x82d
+    u32 field_830;     // +0x830 name count
+    s32 field_834;     // +0x834 current name index (-1 = none)
+    u32 m838[3];       // +0x838 per-name char counts (0xC bytes)
+    u32 field_844;     // +0x844 input hold counter
+    u32 field_848;     // +0x848 icon 1 id
+    u8  field_84c;     // +0x84c icon 1 pending flag
+    u8  pad_84d[0x3];  // +0x84d
+    u32 field_850;     // +0x850 icon 2 id
+    u8  field_854;     // +0x854 icon 2 pending flag
+    u8  pad_855[0x3];  // +0x855
 };
 
 /* Local view of the message text pane vtable (nw4r::lyt::TextBox layout):
@@ -389,6 +419,187 @@ public:
     // slot 5 @ +0x14: tag-body processor called by func_80125B58's name
     // dispatch (consumes the '<name=value>' tag, returns the new position).
     virtual u16* v14(u16* p, const wchar_t* value, TagParam* param);
+};
+
+/* 216-byte flag/icon table copied to the stack by func_8012615C's icon-tag
+ * handler (retail .rodata:0x804FF608, 0x1B x 8 bytes; MWCC emits the
+ * mtctr/bdnz copy loop for this size, same as func_80128DA0's tables). */
+struct TagFlagTable {
+    u32 v[54];  // +0x00
+};
+extern const TagFlagTable lbl_eu_804FF608;
+
+/* Text-pane view for func_8012615C's message pane (`a`) and its context
+ * node list (a->field_0C): the vtable slots called are the context-pane
+ * factory (+0x3C, returns a per-name pane), string-buffer alloc/free
+ * (+0x74/+0x78) and the 3-arg SetText at +0x7C. MWCC emits 2 hidden
+ * leading slots, so 30 declared virtuals fill slots 0x08..0x7C. */
+struct TalkNamePane;
+struct TalkMsgPane {
+    virtual void v08();
+    virtual void v0C();
+    virtual void v10();
+    virtual void v14();
+    virtual void v18();
+    virtual void v1C();
+    virtual void v20();
+    virtual void v24();
+    virtual void v28();
+    virtual void v2C();
+    virtual void v30();
+    virtual void v34();
+    virtual void v38();
+    virtual TalkNamePane* v3C(const wchar_t* text, int flag);  // +0x3C
+    virtual void v40();
+    virtual void v44();
+    virtual void v48();
+    virtual void v4C();
+    virtual void v50();
+    virtual void v54();
+    virtual void v58();
+    virtual void v5C();
+    virtual void v60();
+    virtual void v64();
+    virtual void v68();
+    virtual void v6C();
+    virtual void v70();
+    virtual void v74(u16 len);               // +0x74 AllocStringBuffer
+    virtual void v78();                      // +0x78 FreeStringBuffer
+    virtual void v7C(const u16* text, u16 a, u16 b);  // +0x7C SetText
+    u8   pad_04[0x8];   // +0x04
+    TalkMsgPane* field_0C;  // +0x0C context node list
+    u8   pad_10[0x3C];  // +0x10
+    f32  field_4C[2];   // +0x4C
+    u8   pad_54[0x68];  // +0x54
+    u8*  field_BC;      // +0xBC current text
+};
+
+/* Per-name pane created by the context list's +0x3C factory: vtable slots
+ * +0x74/+0x78/+0x7C are string-buffer alloc/free and the 2-arg SetText.
+ * field_DC/field_E0 are the two text colors written by the name-list
+ * highlight walks. */
+struct TalkNamePane {
+    virtual void v08();
+    virtual void v0C();
+    virtual void v10();
+    virtual void v14();
+    virtual void v18();
+    virtual void v1C();
+    virtual void v20();
+    virtual void v24();
+    virtual void v28();
+    virtual void v2C();
+    virtual void v30();
+    virtual void v34();
+    virtual void v38();
+    virtual void v3C();
+    virtual void v40();
+    virtual void v44();
+    virtual void v48();
+    virtual void v4C();
+    virtual void v50();
+    virtual void v54();
+    virtual void v58();
+    virtual void v5C();
+    virtual void v60();
+    virtual void v64();
+    virtual void v68();
+    virtual void v6C();
+    virtual void v70();
+    virtual void v74(u16 len);               // +0x74 AllocStringBuffer
+    virtual void v78();                      // +0x78 FreeStringBuffer
+    virtual void v7C(const u16* text, int flag);  // +0x7C SetText (2-arg)
+    u8   pad_04[0x48];  // +0x04
+    f32  field_4C[2];   // +0x4C
+    u8   pad_54[0x88];  // +0x54
+    nw4r::ut::Color field_DC;  // +0xDC
+    nw4r::ut::Color field_E0;  // +0xE0
+};
+
+/* Party-member object (func_8012615C's r29->field_98): the +0x58 virtual
+ * toggles the member's auto-follow/emphasis state (called with (this, on, 0)). */
+struct TagMemberObj {
+    virtual void v08();
+    virtual void v0C();
+    virtual void v10();
+    virtual void v14();
+    virtual void v18();
+    virtual void v1C();
+    virtual void v20();
+    virtual void v24();
+    virtual void v28();
+    virtual void v2C();
+    virtual void v30();
+    virtual void v34();
+    virtual void v38();
+    virtual void v3C();
+    virtual void v40();
+    virtual void v44();
+    virtual void v48();
+    virtual void v4C();
+    virtual void v50();
+    virtual void v54();
+    virtual void v58(int a, int b);  // +0x58
+};
+
+/* Talk-window/icon object (func_8012615C's r29->field_C4): the +0x80
+ * virtual is a busy/accept query; the object is passed to func_8004B9D4
+ * for icon display. */
+struct TagC4Obj {
+    virtual void v08();
+    virtual void v0C();
+    virtual void v10();
+    virtual void v14();
+    virtual void v18();
+    virtual void v1C();
+    virtual void v20();
+    virtual void v24();
+    virtual void v28();
+    virtual void v2C();
+    virtual void v30();
+    virtual void v34();
+    virtual void v38();
+    virtual void v3C();
+    virtual void v40();
+    virtual void v44();
+    virtual void v48();
+    virtual void v4C();
+    virtual void v50();
+    virtual void v54();
+    virtual void v58();
+    virtual void v5C();
+    virtual void v60();
+    virtual void v64();
+    virtual void v68();
+    virtual void v6C();
+    virtual void v70();
+    virtual void v74();
+    virtual void v78();
+    virtual void v7C();
+    virtual int v80(int a);  // +0x80
+};
+
+/* Talk-source object (func_800BBC0C result): the member object at +0x98
+ * and the icon window at +0xC4; the player variant carries a u16 at +0x8C. */
+struct TagTalkSrc {
+    u8 pad_00[0x8C];
+    u16 field_8C;          // +0x8C
+    u8 pad_8E[0xA];
+    TagMemberObj* field_98;  // +0x98
+    u8 pad_9C[0x28];
+    TagC4Obj* field_C4;    // +0xC4
+};
+
+/* Pad-data views for the CfGameManager pad getters used by func_8012615C. */
+struct TagPadView {
+    u8  pad[0x4];
+    u32 field_04;   // +0x04 button bits
+};
+struct TagPadDataView {
+    u8  pad[0x4];
+    u32 field_04;    // +0x04 button bits
+    u8  pad_08[0xFC];
+    u32 field_104;   // +0x104
 };
 
 /* Tag-processor objects (0x858 heap block). Retail layout: vtable pointer at
@@ -655,7 +866,35 @@ u32 func_8012AD40(void* unused, void* ret, TagColorArg* arg);
 int func_8012968C(void* unused, void* unused2, TagWriterHolder* holder);
 // Accumulated pane translate (code_80135FDC.cpp).
 void func_801375A0(f32* out, nw4r::lyt::Pane* pane);
+
+// func_8012615C's C-ABI imports: flat (or pre-mangled) retail names.
+void* func_800BBC0C();  // talk-source getter (r3 = prior call's result)
+void func_8004B9D4(void* w, int a, int b, int c, int d);  // icon display
+u32 func_8009CF8C(u32 id);
+void func_8009D018(u32 owner, u32 value);
+void* func_800451D8(u32 cls, void* param);
+void func_8013DB6C(u32 a, u32 b, u32 c, u32 d);
+void func_8013BE38();
+int code80135FDC_getByte_6405A();
+int code80135FDC_getByte_6405B();
+int code80135FDC_getWord_6405C();
+int code80135FDC_getWord_64060();
+void code80135FDC_setPair_6405C_64060(int a, int b);
+// cf::CfGameManager controller-mode query. Retail name keeps the Fv suffix
+// but the call passes -1 in r3 (same convention as CTalkWindow.hpp).
+int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+// Local context-walk helpers (defined in CTagProcessor.cpp).
+void* func_80127670(void* self);
+u32 func_801276C8(const u32* a, const u32* b);
+void* func_801276E0(void* self, int a);
+const wchar_t* getContextStr(u8* self);
+const wchar_t** getContextStrPtr(u8* self);
+void copyVEC2(float* dst, const float* src);
 }
+
+// C++-linkage imports (retail emits the mangled forms).
+void* func_800B708C(int id);  // func_800B708C__Fi (talk-source index lookup)
+void func_80138078(u32 op);   // func_80138078__FUl (UI sound effect)
 
 // Tag-code singleton instances (retail .sbss:0x80663FE0..0x80664038, 4 bytes
 // each - just the vtable pointer). Declared with plain u32 so MWCC treats

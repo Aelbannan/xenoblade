@@ -422,18 +422,19 @@ static inline void camEventAnglePair(const ml::CVec3* o1, const ml::CVec3* o2,
         d.x = o1->x - o2->x;
         d.y = o1->y - o2->y;
         d.z = o1->z - o2->z;
-        f32 dx = d.x, dy = d.y, dz = d.z;
         dst1->x0 = o2->x;
         dst1->x4 = o2->y;
         dst1->x8 = o2->z;
-        f32 len = (f32)sqrt((f64)(dz * dz + dx * dx));
-        dst2->x0 = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(dy, len);
-        dst2->x4 = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(dz, dx);
+        f32 len = (f32)sqrt((f64)(d.z * d.z + d.x * d.x));
+        dst2->x0 = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
+        dst2->x4 = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.z, d.x);
         dst2->x8 = lbl_eu_8066641C;
         func_800A3F8C(dst2);
-        if ((f32)__fabs((f64)dx) <= lbl_eu_8066A208 &&
-            (f32)__fabs((f64)dy) <= lbl_eu_8066A208 &&
-            (f32)__fabs((f64)dz) <= lbl_eu_8066A208)
+        // The difference is address-taken (PSVECMag), so MWCC reloads its
+        // components from the stack after the call - no FPR saves needed.
+        if ((f32)__fabs((f64)d.x) <= lbl_eu_8066A208 &&
+            (f32)__fabs((f64)d.y) <= lbl_eu_8066A208 &&
+            (f32)__fabs((f64)d.z) <= lbl_eu_8066A208)
             dst2->x8 = lbl_eu_8066641C;
         else
             dst2->x8 = PSVECMag(d);
@@ -734,33 +735,34 @@ extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
     }
 
     // Seed the aim vectors from the source voice (or clear them).
+    CfCamEventAimRegion* aim = (CfCamEventAimRegion*)self;
     if (r31 != 0) {
-        self->field_0x0C = r31;
-        self->field_0x10 = ((CamEventAimObj*)r31)->field_0x74;
+        aim->field_0x0C = r31;
+        aim->field_0x10 = ((CamEventAimObj*)r31)->field_0x74;
         ml::CVec3 tmp;
         func_800756D0(&tmp, (CinemCamSrc*)r31);
         f32 tx = tmp.x;
         f32 ty = tmp.y;
-        self->field_0x18 = ty;
-        self->field_0x14 = tx;
-        self->field_0x1C = tmp.z;
+        aim->field_0x18 = ty;
+        aim->field_0x14 = tx;
+        aim->field_0x1C = tmp.z;
     } else {
-        self->field_0x0C = 0;
-        self->field_0x10 = 0;
+        aim->field_0x0C = 0;
+        aim->field_0x10 = 0;
     }
     if (r29 != 0) {
-        self->field_0x20 = r29;
-        self->field_0x24 = ((CamEventAimObj*)r29)->field_0x74;
+        aim->field_0x20 = r29;
+        aim->field_0x24 = ((CamEventAimObj*)r29)->field_0x74;
         ml::CVec3 tmp;
         func_800756D0(&tmp, (CinemCamSrc*)r29);
         f32 tx = tmp.x;
         f32 ty = tmp.y;
-        self->field_0x2C = ty;
-        self->field_0x28 = tx;
-        self->field_0x30 = tmp.z;
+        aim->field_0x2C = ty;
+        aim->field_0x28 = tx;
+        aim->field_0x30 = tmp.z;
     } else {
-        self->field_0x20 = 0;
-        self->field_0x24 = 0;
+        aim->field_0x20 = 0;
+        aim->field_0x24 = 0;
     }
 
     // Push the follow state into the manager's follow-cam object.
@@ -789,24 +791,9 @@ extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
         CamEventVecSrc tmp;
         if (self->slots[0] != 0) {
             CfCamEventSlotObj* s = (CfCamEventSlotObj*)self->slots[0];
-            ml::CVec3* va2 = s->vtable->fn_0x10(s);
-            f32 a0 = va2->x;
-            f32 a1 = va2->y;
-            tmp.f_04 = a1;
-            tmp.f_00 = a0;
-            tmp.f_08 = va2->z;
-            ml::CVec3* vb2 = s->vtable->fn_0x34(s);
-            f32 b0 = vb2->x;
-            f32 b1 = vb2->y;
-            tmp.f_10 = b1;
-            tmp.f_0C = b0;
-            tmp.f_14 = vb2->z;
-            ml::CVec3* vc2 = s->vtable->fn_0x1C(s);
-            f32 c0 = vc2->x;
-            f32 c1 = vc2->y;
-            tmp.f_1C = c1;
-            tmp.f_18 = c0;
-            tmp.f_20 = vc2->z;
+            tmp.v0 = *s->vtable->fn_0x10(s);
+            tmp.v1 = *s->vtable->fn_0x34(s);
+            tmp.v2 = *s->vtable->fn_0x1C(s);
             tmp.f_24 = s->vtable->fn_0x58(s);
         }
         func_8007990C(self, 0, 1, &tmp, 0);
@@ -834,24 +821,9 @@ extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
         CamEventVecSrc tmp2;
         if (self->slots[0] != 0) {
             CfCamEventSlotObj* s = (CfCamEventSlotObj*)self->slots[0];
-            ml::CVec3* va2 = s->vtable->fn_0x10(s);
-            f32 a0 = va2->x;
-            f32 a1 = va2->y;
-            tmp2.f_04 = a1;
-            tmp2.f_00 = a0;
-            tmp2.f_08 = va2->z;
-            ml::CVec3* vb2 = s->vtable->fn_0x34(s);
-            f32 b0 = vb2->x;
-            f32 b1 = vb2->y;
-            tmp2.f_10 = b1;
-            tmp2.f_0C = b0;
-            tmp2.f_14 = vb2->z;
-            ml::CVec3* vc2 = s->vtable->fn_0x1C(s);
-            f32 c0 = vc2->x;
-            f32 c1 = vc2->y;
-            tmp2.f_1C = c1;
-            tmp2.f_18 = c0;
-            tmp2.f_20 = vc2->z;
+            tmp2.v0 = *s->vtable->fn_0x10(s);
+            tmp2.v1 = *s->vtable->fn_0x34(s);
+            tmp2.v2 = *s->vtable->fn_0x1C(s);
             tmp2.f_24 = s->vtable->fn_0x58(s);
         }
         func_8007990C(self, (u16)(r29i + 0x1E), 0, &tmp2, 0);
@@ -968,46 +940,16 @@ extern "C" __declspec(noinline) void* func_800784A0(u32 first, void* second,
 
     if (first == 0) {
         if (old != 0 && cur != 0) {
-            ml::CVec3* va = ((CfCamEventSlotObj*)cur)->vtable->fn_0x10(cur);
-            f32 a0 = va->x;
-            f32 a1 = va->y;
-            m->field_0x54.y = a1;
-            m->field_0x54.x = a0;
-            m->field_0x54.z = va->z;
-            ml::CVec3* vb = ((CfCamEventSlotObj*)cur)->vtable->fn_0x34(cur);
-            f32 b0 = vb->x;
-            f32 b1 = vb->y;
-            m->field_0x60.y = b1;
-            m->field_0x60.x = b0;
-            m->field_0x60.z = vb->z;
-            ml::CVec3* vc = ((CfCamEventSlotObj*)cur)->vtable->fn_0x1C(cur);
-            f32 c0 = vc->x;
-            f32 c1 = vc->y;
-            m->field_0x6C.y = c1;
-            m->field_0x6C.x = c0;
-            m->field_0x6C.z = vc->z;
+            m->field_0x54 = *((CfCamEventSlotObj*)cur)->vtable->fn_0x10(cur);
+            m->field_0x60 = *((CfCamEventSlotObj*)cur)->vtable->fn_0x34(cur);
+            m->field_0x6C = *((CfCamEventSlotObj*)cur)->vtable->fn_0x1C(cur);
             m->field_0x78 = ((CfCamEventSlotObj*)cur)->vtable->fn_0x58(cur);
         }
     } else {
         if (cur != 0) {
-            ml::CVec3* va = ((CfCamEventSlotObj*)cur)->vtable->fn_0x10(cur);
-            f32 a0 = va->x;
-            f32 a1 = va->y;
-            m->field_0x54.y = a1;
-            m->field_0x54.x = a0;
-            m->field_0x54.z = va->z;
-            ml::CVec3* vb = ((CfCamEventSlotObj*)cur)->vtable->fn_0x34(cur);
-            f32 b0 = vb->x;
-            f32 b1 = vb->y;
-            m->field_0x60.y = b1;
-            m->field_0x60.x = b0;
-            m->field_0x60.z = vb->z;
-            ml::CVec3* vc = ((CfCamEventSlotObj*)cur)->vtable->fn_0x1C(cur);
-            f32 c0 = vc->x;
-            f32 c1 = vc->y;
-            m->field_0x6C.y = c1;
-            m->field_0x6C.x = c0;
-            m->field_0x6C.z = vc->z;
+            m->field_0x54 = *((CfCamEventSlotObj*)cur)->vtable->fn_0x10(cur);
+            m->field_0x60 = *((CfCamEventSlotObj*)cur)->vtable->fn_0x34(cur);
+            m->field_0x6C = *((CfCamEventSlotObj*)cur)->vtable->fn_0x1C(cur);
             m->field_0x78 = ((CfCamEventSlotObj*)cur)->vtable->fn_0x58(cur);
         }
     }
@@ -1234,14 +1176,14 @@ void func_8007990C(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32
     s16 st = self->field_0x3E;
     if (st == 9) {
         ml::CVec3 tmp;
-        tmp.x = c->f_18 * lbl_eu_8066A20C;
-        tmp.y = c->f_1C * lbl_eu_8066A20C;
-        tmp.z = c->f_20 * lbl_eu_8066A20C;
-        func_80078D08(self, a, (void*)c, &tmp, b, 0, c->f_24);
+        tmp.x = c->v2.x * lbl_eu_8066A20C;
+        tmp.y = c->v2.y * lbl_eu_8066A20C;
+        tmp.z = c->v2.z * lbl_eu_8066A20C;
+        func_80078D08(self, a, (ml::CVec3*)c, &tmp, b, 0, c->f_24);
     } else if (st == 8) {
         ml::CVec3 v1, v2;
-        v1.x = c->f_00; v1.y = c->f_04; v1.z = c->f_08;
-        v2.x = c->f_0C; v2.y = c->f_10; v2.z = c->f_14;
+        v1.x = c->v0.x; v1.y = c->v0.y; v1.z = c->v0.z;
+        v2.x = c->v1.x; v2.y = c->v1.y; v2.z = c->v1.z;
         if (self->field_0x34 != 0) {
             CinemCamSrc* src34 = (CinemCamSrc*)(void*)self->field_0x34;
             CinemVecOut* sv = src34->vtable->fn_0xAC(src34);
@@ -1251,8 +1193,8 @@ void func_8007990C(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32
         func_80078D08(self, a, &v1, &v2, b, 0, c->f_24);
     } else if (st == 0xA) {
         ml::CVec3 v1, v2;
-        v1.x = c->f_00; v1.y = c->f_04; v1.z = c->f_08;
-        v2.x = c->f_0C; v2.y = c->f_10; v2.z = c->f_14;
+        v1.x = c->v0.x; v1.y = c->v0.y; v1.z = c->v0.z;
+        v2.x = c->v1.x; v2.y = c->v1.y; v2.z = c->v1.z;
         if (self->field_0x34 != 0) {
             func_80074230(&v1, &v2);
         }
@@ -1264,76 +1206,405 @@ void func_8007990C(CfCamEventManager* self, u32 a, u32 b, CamEventVecSrc* c, u32
             if (g >= 0x10 && g <= 0x2b) busy = 1;
         }
         if (busy) {
-            func_80078D08(self, a, (void*)c, (ml::CVec3*)&c->f_0C, b, d, c->f_24);
+            func_80078D08(self, a, (ml::CVec3*)c, (ml::CVec3*)&c->v1, b, d, c->f_24);
         }
     }
 }
 
 // Insert a scaled aim vector into the manager's three shake tables (0x7C,
-// 0x1F4, 0x36C), each capped at 16 entries. table0/table1 store the scaled
-// aim; table2 stores (f1, 0, 0).
-void func_80078D08(CfCamEventManager* self, int add, void* p5, ml::CVec3* r6, int p7, int p8,
-                   f32 p1) {
+// 0x1F4, 0x36C), each capped at 16 entries. The cam-state word (0x3E)
+// selects the fill pattern:
+//   state 9      - r6 scaled by lbl_eu_8066A210 and normalized, stored into
+//                  all three tables (table2 receives the (p1,1,1) constant
+//                  triplet instead);
+//   state 8 + 47 - raw pair: table0 <- r6, table1 <- p5, d word cleared;
+//   state 8/-0xA - angle pair: table0 <- r6, table1 <- the yaw/pitch angles
+//                  of the (p5 - r6) difference, d word cleared;
+//   anything else- only while the global cam state is in the busy range
+//                  [0x10, 0x2b]: demo mode (global table h00) swaps the
+//                  angle vector into table1, otherwise table0 <- p5 and
+//                  table1 <- r6.
+// Every appended element shares the id halfword (add + field_0x40) and the
+// p7/p8 word fields. The angle-pair body is duplicated below exactly as
+// retail duplicates it (a helper would add a call).
+void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r6,
+                   int p7, int p8, f32 p1) {
     u16 id = (u16)(add + self->field_0x40);
     if (p1 <= lbl_eu_8066A208)
         self->field_0x50 |= 0x10000;
 
-    if (self->field_0x3E != 9) return;
+    s16 state = self->field_0x3E;
+    if (state == 9) {
+        // Scale the r6 aim vector and normalize it; all three tables get it.
+        ml::CVec3 sv;
+        f32 k = lbl_eu_8066A210;
+        sv.x = r6->x * k;
+        sv.y = r6->y * k;
+        sv.z = r6->z * k;
+        func_800A3F8C(&sv);
 
-    ml::CVec3 sv;
-    f32 k = lbl_eu_8066A210;
-    sv.x = r6->x * k;
-    sv.y = r6->y * k;
-    sv.z = r6->z * k;
-    func_800A3F8C(&sv);
-
-    // table0 (0x7C) - elements start at the table base; count at 0x1E2
-    s16 cnt0 = self->field_0x1E2;
-    if (cnt0 < 0x10) {
-        CfCamEventElem* e = &self->tab0.elems[cnt0];
-        e->x0 = sv.x;
-        e->x4 = sv.y;
-        e->x8 = sv.z;
-        e->id = id;
-        e->c = (u16)p7;
-        e->d = (u16)p8;
-        if (cnt0 == 0) {
-            self->tab0.baseX = sv.x;
-            self->tab0.baseY = sv.y;
-            self->tab0.baseZ = sv.z;
+        // table0 (0x7C) - elements start at the table base; count at 0x1E2.
+        // Retail stores the raw p5 words here; the scaled vector goes to
+        // table1 (that is why p5 lives in a saved register across the
+        // normalize call).
+        s16 cnt0 = self->field_0x1E2;
+        if (cnt0 < 0x10) {
+            CfCamEventElem* e = &self->tab0.elems[cnt0];
+            e->x0 = p5->x;
+            e->x4 = p5->y;
+            e->x8 = p5->z;
+            e->id = id;
+            e->c = (u16)p7;
+            e->d = (u16)p8;
+            if (cnt0 == 0) {
+                self->tab0.baseX = p5->x;
+                self->tab0.baseY = p5->y;
+                self->tab0.baseZ = p5->z;
+            }
+            self->field_0x1E2 = cnt0 + 1;
+            self->field_0x1F0 = (f32)id;
         }
-        self->field_0x1E2 = cnt0 + 1;
-    }
 
-    // table1 (0x1F4) - shake unit 0 element array
-    s16 cnt1 = self->shake[0].field_0x166;
-    if (cnt1 < 0x10) {
-        CfCamEventElem* e = &self->shake[0].u.elems[cnt1];
-        e->x0 = sv.x;
-        e->x4 = sv.y;
-        e->x8 = sv.z;
-        e->id = id;
-        e->c = (u16)p7;
-        e->d = (u16)p8;
-        self->shake[0].field_0x166 = cnt1 + 1;
-    }
-
-    // table2 (0x36C): stores (p1, 0, 0); count at shake[1].field_0x166
-    s16 cnt2 = self->shake[1].field_0x166;
-    if (cnt2 < 0x10) {
-        CfCamEventElem* e = &self->shake[1].u.tab.elems[cnt2];
-        e->x0 = p1;
-        e->x4 = 0.0f;
-        e->x8 = 0.0f;
-        e->id = id;
-        e->c = (u16)p7;
-        e->d = 0;
-        if (cnt2 == 0) {
-            self->shake[1].u.tab.baseX = p1;
-            self->shake[1].u.tab.baseY = 0.0f;
-            self->shake[1].u.tab.baseZ = 0.0f;
+        // table1 (0x1F4) - shake unit 0 element array
+        s16 cnt1 = self->shake[0].field_0x166;
+        if (cnt1 < 0x10) {
+            CfCamEventElem* e = &self->shake[0].u.elems[cnt1];
+            e->x0 = sv.x;
+            e->x4 = sv.y;
+            e->x8 = sv.z;
+            e->id = id;
+            e->c = (u16)p7;
+            e->d = (u16)p8;
+            if (cnt1 == 0) {
+                // Retail stores baseY first, then baseX, then baseZ here.
+                f32 bx = sv.x;
+                f32 by = sv.y;
+                self->shake[0].u.tab.baseY = by;
+                self->shake[0].u.tab.baseX = bx;
+                self->shake[0].u.tab.baseZ = sv.z;
+            }
+            self->shake[0].field_0x166 = cnt1 + 1;
+            self->shake[0].field_0x174 = (f32)id;
         }
-        self->shake[1].field_0x166 = cnt2 + 1;
+
+        // table2 (0x36C): stores the (p1, 1, 1) constant triplet. Retail
+        // materializes the triple in a stack temp, then GPR-copies it.
+        s16 cnt2 = self->shake[1].field_0x166;
+        f32 c2[3] = { p1, lbl_eu_8066641C, lbl_eu_8066641C };
+        if (cnt2 < 0x10) {
+            CfCamEventElem* e = &self->shake[1].u.tab.elems[cnt2];
+            e->x0 = c2[0];
+            e->x4 = c2[1];
+            e->x8 = c2[2];
+            e->id = id;
+            e->c = (u16)p7;
+            e->d = 0;
+            if (cnt2 == 0) {
+                self->shake[1].u.tab.baseX = c2[0];
+                self->shake[1].u.tab.baseY = c2[1];
+                self->shake[1].u.tab.baseZ = c2[2];
+            }
+            self->shake[1].field_0x166 = cnt2 + 1;
+            self->shake[1].field_0x174 = (f32)id;
+        }
+    } else if (state == 8) {
+        if (self->field_0x47 != 0) {
+            // One-shot path: raw pair, d word cleared.
+            s16 cnt0 = self->field_0x1E2;
+            if (cnt0 < 0x10) {
+                CfCamEventElem* e = &self->tab0.elems[cnt0];
+                e->x0 = r6->x;
+                e->x4 = r6->y;
+                e->x8 = r6->z;
+                e->id = id;
+                e->c = (u16)p7;
+                e->d = 0;
+                if (cnt0 == 0) {
+                    self->tab0.baseX = r6->x;
+                    self->tab0.baseY = r6->y;
+                    self->tab0.baseZ = r6->z;
+                }
+                self->field_0x1E2 = cnt0 + 1;
+                self->field_0x1F0 = (f32)id;
+            }
+            s16 cnt1 = self->shake[0].field_0x166;
+            if (cnt1 < 0x10) {
+                CfCamEventElem* e = &self->shake[0].u.elems[cnt1];
+                e->x0 = p5->x;
+                e->x4 = p5->y;
+                e->x8 = p5->z;
+                e->id = id;
+                e->c = (u16)p7;
+                e->d = 0;
+                if (cnt1 == 0) {
+                    self->shake[0].u.tab.baseX = p5->x;
+                    self->shake[0].u.tab.baseY = p5->y;
+                    self->shake[0].u.tab.baseZ = p5->z;
+                }
+                self->shake[0].field_0x166 = cnt1 + 1;
+                self->shake[0].field_0x174 = (f32)id;
+            }
+            s16 cnt2 = self->shake[1].field_0x166;
+            f32 c2[3] = { p1, lbl_eu_8066641C, lbl_eu_8066641C };
+            if (cnt2 < 0x10) {
+                CfCamEventElem* e = &self->shake[1].u.tab.elems[cnt2];
+                e->x0 = c2[0];
+                e->x4 = c2[1];
+                e->x8 = c2[2];
+                e->id = id;
+                e->c = (u16)p7;
+                e->d = 0;
+                if (cnt2 == 0) {
+                    self->shake[1].u.tab.baseX = c2[0];
+                    self->shake[1].u.tab.baseY = c2[1];
+                    self->shake[1].u.tab.baseZ = c2[2];
+                }
+                self->shake[1].field_0x166 = cnt2 + 1;
+                self->shake[1].field_0x174 = (f32)id;
+            }
+        } else {
+            // One-shot clear path: table0 gets the raw r6 vector, table1 the
+            // yaw/pitch angles of the (p5 - r6) difference.
+            ml::CVec3 d;
+            d.x = p5->x - r6->x;
+            d.y = p5->y - r6->y;
+            d.z = p5->z - r6->z;
+            f32 len = (f32)sqrt((f64)(d.z * d.z + d.x * d.x));
+            ml::CVec3 out;
+            out.x = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
+            out.y = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+            out.z = lbl_eu_8066641C;
+            func_800A3F8C(&out);
+            if ((f32)__fabs((f64)d.x) <= lbl_eu_8066A208 &&
+                (f32)__fabs((f64)d.y) <= lbl_eu_8066A208 &&
+                (f32)__fabs((f64)d.z) <= lbl_eu_8066A208)
+                out.z = lbl_eu_8066641C;
+            else
+                out.z = PSVECMag(d);
+
+            s16 cnt0 = self->field_0x1E2;
+            if (cnt0 < 0x10) {
+                CfCamEventElem* e = &self->tab0.elems[cnt0];
+                e->x0 = r6->x;
+                e->x4 = r6->y;
+                e->x8 = r6->z;
+                e->id = id;
+                e->c = (u16)p7;
+                e->d = 0;
+                if (cnt0 == 0) {
+                    self->tab0.baseX = r6->x;
+                    self->tab0.baseY = r6->y;
+                    self->tab0.baseZ = r6->z;
+                }
+                self->field_0x1E2 = cnt0 + 1;
+                self->field_0x1F0 = (f32)id;
+            }
+            s16 cnt1 = self->shake[0].field_0x166;
+            if (cnt1 < 0x10) {
+                CfCamEventElem* e = &self->shake[0].u.elems[cnt1];
+                e->x0 = out.x;
+                e->x4 = out.y;
+                e->x8 = out.z;
+                e->id = id;
+                e->c = (u16)p7;
+                e->d = 0;
+                if (cnt1 == 0) {
+                    // Retail stores baseY first, then baseX, then baseZ here.
+                    f32 bx = out.x;
+                    f32 by = out.y;
+                    self->shake[0].u.tab.baseY = by;
+                    self->shake[0].u.tab.baseX = bx;
+                    self->shake[0].u.tab.baseZ = out.z;
+                }
+                self->shake[0].field_0x166 = cnt1 + 1;
+                self->shake[0].field_0x174 = (f32)id;
+            }
+            s16 cnt2 = self->shake[1].field_0x166;
+            f32 c2[3] = { p1, lbl_eu_8066641C, lbl_eu_8066641C };
+            if (cnt2 < 0x10) {
+                CfCamEventElem* e = &self->shake[1].u.tab.elems[cnt2];
+                e->x0 = c2[0];
+                e->x4 = c2[1];
+                e->x8 = c2[2];
+                e->id = id;
+                e->c = (u16)p7;
+                e->d = 0;
+                if (cnt2 == 0) {
+                    self->shake[1].u.tab.baseX = c2[0];
+                    self->shake[1].u.tab.baseY = c2[1];
+                    self->shake[1].u.tab.baseZ = c2[2];
+                }
+                self->shake[1].field_0x166 = cnt2 + 1;
+                self->shake[1].field_0x174 = (f32)id;
+            }
+        }
+    } else if (state == 0xA) {
+        // Same angle pair as state 8's clear path.
+        ml::CVec3 d;
+        d.x = p5->x - r6->x;
+        d.y = p5->y - r6->y;
+        d.z = p5->z - r6->z;
+        f32 len = (f32)sqrt((f64)(d.z * d.z + d.x * d.x));
+        ml::CVec3 out;
+        out.x = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
+        out.y = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+        out.z = lbl_eu_8066641C;
+        func_800A3F8C(&out);
+        if ((f32)__fabs((f64)d.x) <= lbl_eu_8066A208 &&
+            (f32)__fabs((f64)d.y) <= lbl_eu_8066A208 &&
+            (f32)__fabs((f64)d.z) <= lbl_eu_8066A208)
+            out.z = lbl_eu_8066641C;
+        else
+            out.z = PSVECMag(d);
+
+        s16 cnt0 = self->field_0x1E2;
+        if (cnt0 < 0x10) {
+            CfCamEventElem* e = &self->tab0.elems[cnt0];
+            e->x0 = r6->x;
+            e->x4 = r6->y;
+            e->x8 = r6->z;
+            e->id = id;
+            e->c = (u16)p7;
+            e->d = 0;
+            if (cnt0 == 0) {
+                self->tab0.baseX = r6->x;
+                self->tab0.baseY = r6->y;
+                self->tab0.baseZ = r6->z;
+            }
+            self->field_0x1E2 = cnt0 + 1;
+            self->field_0x1F0 = (f32)id;
+        }
+        s16 cnt1 = self->shake[0].field_0x166;
+        if (cnt1 < 0x10) {
+            CfCamEventElem* e = &self->shake[0].u.elems[cnt1];
+            e->x0 = out.x;
+            e->x4 = out.y;
+            e->x8 = out.z;
+            e->id = id;
+            e->c = (u16)p7;
+            e->d = 0;
+            if (cnt1 == 0) {
+                // Retail stores baseY first, then baseX, then baseZ here.
+                f32 bx = out.x;
+                f32 by = out.y;
+                self->shake[0].u.tab.baseY = by;
+                self->shake[0].u.tab.baseX = bx;
+                self->shake[0].u.tab.baseZ = out.z;
+            }
+            self->shake[0].field_0x166 = cnt1 + 1;
+            self->shake[0].field_0x174 = (f32)id;
+        }
+        s16 cnt2 = self->shake[1].field_0x166;
+        f32 c2[3] = { p1, lbl_eu_8066641C, lbl_eu_8066641C };
+        if (cnt2 < 0x10) {
+            CfCamEventElem* e = &self->shake[1].u.tab.elems[cnt2];
+            e->x0 = c2[0];
+            e->x4 = c2[1];
+            e->x8 = c2[2];
+            e->id = id;
+            e->c = (u16)p7;
+            e->d = 0;
+            if (cnt2 == 0) {
+                self->shake[1].u.tab.baseX = c2[0];
+                self->shake[1].u.tab.baseY = c2[1];
+                self->shake[1].u.tab.baseZ = c2[2];
+            }
+            self->shake[1].field_0x166 = cnt2 + 1;
+            self->shake[1].field_0x174 = (f32)id;
+        }
+    } else {
+        // Default states: only append while the global cam state is inside
+        // its busy frame range; demo mode swaps the angle vector into table1.
+        int busy = 0;
+        if (lbl_eu_80663DF0 != 0) {
+            s16 g = lbl_eu_80663DF0->field_0x3E;
+            if (g >= 0x10 && g <= 0x2b) busy = 1;
+        }
+        if (busy) {
+            ml::CVec3 t0, t1;
+            if (lbl_eu_80570C90.h00 != 0) {
+                ml::CVec3 d;
+                d.x = p5->x - r6->x;
+                d.y = p5->y - r6->y;
+                d.z = p5->z - r6->z;
+                t0.x = r6->x;
+                t0.y = r6->y;
+                t0.z = r6->z;
+                f32 len = (f32)sqrt((f64)(d.z * d.z + d.x * d.x));
+                t1.x = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.y, len);
+                t1.y = lbl_eu_80666454 * Atan2FIdx__Q24nw4r4mathFff(d.x, d.z);
+                t1.z = lbl_eu_8066641C;
+                func_800A3F8C(&t1);
+                if ((f32)__fabs((f64)d.x) <= lbl_eu_8066A208 &&
+                    (f32)__fabs((f64)d.y) <= lbl_eu_8066A208 &&
+                    (f32)__fabs((f64)d.z) <= lbl_eu_8066A208)
+                    t1.z = lbl_eu_8066641C;
+                else
+                    t1.z = PSVECMag(d);
+            } else {
+                t0.x = p5->x;
+                t0.y = p5->y;
+                t0.z = p5->z;
+                t1.x = r6->x;
+                t1.y = r6->y;
+                t1.z = r6->z;
+            }
+            s16 cnt0 = self->field_0x1E2;
+            if (cnt0 < 0x10) {
+                CfCamEventElem* e = &self->tab0.elems[cnt0];
+                e->x0 = t0.x;
+                e->x4 = t0.y;
+                e->x8 = t0.z;
+                e->id = id;
+                e->c = (u16)p7;
+                e->d = (u16)p8;
+                if (cnt0 == 0) {
+                    self->tab0.baseX = t0.x;
+                    self->tab0.baseY = t0.y;
+                    self->tab0.baseZ = t0.z;
+                }
+                self->field_0x1E2 = cnt0 + 1;
+                self->field_0x1F0 = (f32)id;
+            }
+            s16 cnt1 = self->shake[0].field_0x166;
+            if (cnt1 < 0x10) {
+                CfCamEventElem* e = &self->shake[0].u.elems[cnt1];
+                e->x0 = t1.x;
+                e->x4 = t1.y;
+                e->x8 = t1.z;
+                e->id = id;
+                e->c = (u16)p7;
+                e->d = (u16)p8;
+                if (cnt1 == 0) {
+                    // Retail stores baseY first, then baseX, then baseZ here.
+                    f32 bx = t1.x;
+                    f32 by = t1.y;
+                    self->shake[0].u.tab.baseY = by;
+                    self->shake[0].u.tab.baseX = bx;
+                    self->shake[0].u.tab.baseZ = t1.z;
+                }
+                self->shake[0].field_0x166 = cnt1 + 1;
+                self->shake[0].field_0x174 = (f32)id;
+            }
+            s16 cnt2 = self->shake[1].field_0x166;
+            ml::CVec3 c2(p1, lbl_eu_8066641C, lbl_eu_8066641C);
+            if (cnt2 < 0x10) {
+                CfCamEventElem* e = &self->shake[1].u.tab.elems[cnt2];
+                e->x0 = c2.x;
+                e->x4 = c2.y;
+                e->x8 = c2.z;
+                e->id = id;
+                e->c = (u16)p7;
+                e->d = (u16)p8;
+                if (cnt2 == 0) {
+                    self->shake[1].u.tab.baseX = c2.x;
+                    self->shake[1].u.tab.baseY = c2.y;
+                    self->shake[1].u.tab.baseZ = c2.z;
+                }
+                self->shake[1].field_0x166 = cnt2 + 1;
+                self->shake[1].field_0x174 = (f32)id;
+            }
+        }
     }
 }
 
@@ -1436,11 +1707,17 @@ bool func_80079DBC(CfCamEventManager* manager) {
     return false;
 }
 
-// Per-frame cam-event update. Resolves the game manager, checks its busy
-// flag, then either runs the main camera advance (flag0 set) or the shorts
-// path that clears the one-shot flag. Returns the advance result (bool).
+// Per-frame cam-event update (state machine). Resolves the game manager via
+// dynamic_cast and checks its busy flag and the frame-speed value before
+// dispatching on the cam-state word (0x3E). The main path (flag 0x1DE set)
+// advances the three shake tables, then feeds the manager's aim/base vectors
+// through the dynamic-cast object's vector setters; states 8/0xA compose a
+// pair of rotations (sin/cos of the table-base axis) around the source
+// vector. Returns the busy/flag word (r29).
 int func_80079E04(CfCamEventManager* self) {
-    CfDynMgr* dyn = (CfDynMgr*)func_800821F8__Q22cf13CfGameManagerFv();
+    void* gm = func_800821F8__Q22cf13CfGameManagerFv();
+    CfDynMgr* dyn = (CfDynMgr*)__dynamic_cast(gm, 0, (const void*)&lbl_eu_80661B00,
+                                              (const void*)&lbl_eu_80661B30, 0);
     if (dyn == 0) return 0;
     if (dyn->m_field04 & 0x04000000) return 0;
 
@@ -1450,31 +1727,204 @@ int func_80079E04(CfCamEventManager* self) {
 
     int result = 0;
     if (self->field_0x1DE != 0) {
+        // r31 = the unit-1 active flag (0x4CE); survives to the tail call.
+        int flag = (self->shake[1].field_0x162 != 0);
+
+        // Busy early-out: hand the whole advance to func_8007AA4C.
         int busy = 0;
         if (lbl_eu_80663DF0 != 0) {
             s16 g = lbl_eu_80663DF0->field_0x3E;
             if (g >= 0x10 && g <= 0x2b) busy = 1;
         }
-        if (busy) {
-            self->field_0x50 = self->field_0x50 | 1;
-            result = func_8007AA4C(self);
-        } else {
-            if (self->field_0x46 != 0) {
-                func_80081E90__Q22cf13CfGameManagerFv(self->field_0x44, 0, 0);
-                self->field_0x46 = 0;
+        if (busy) return func_8007AA4C(self);
+
+        // Advance the three shake tables.
+        func_80074F4C((CfCamShakeState*)&self->tab0, 0);
+        func_80074F4C((CfCamShakeState*)&self->shake[0], 0);
+        func_80074F4C((CfCamShakeState*)&self->shake[1], 0);
+
+        // Busy word: either the manager's own flag or unit 0's finish flag.
+        result = (self->shake[0].field_0x164 != 0) || (self->field_0x1E0 != 0);
+
+        CfCamAdvObj* adv = (CfCamAdvObj*)dyn;
+        s16 state = self->field_0x3E;
+        if (state == 9) {
+            // Normalize the unit-0 base anchor, then push it (and the table-0
+            // base anchor) into the dynamic object's vector setters.
+            ml::CVec3 v;
+            v.x = self->shake[0].u.tab.baseX;
+            v.y = self->shake[0].u.tab.baseY;
+            v.z = self->shake[0].u.tab.baseZ;
+            func_800A3F8C(&v);
+            adv->vtable->fn_0x14(adv, &self->tab0.baseX);
+            adv->vtable->fn_0x4C(adv, &v);
+        } else if (state == 8) {
+            if (self->field_0x47 != 0) {
+                // One-shot: table-0 base into slot 2, unit-0 base into slot 1.
+                ml::CVec3 a, b;
+                a.x = self->tab0.baseX;
+                a.y = self->tab0.baseY;
+                a.z = self->tab0.baseZ;
+                b.x = self->shake[0].u.tab.baseX;
+                b.y = self->shake[0].u.tab.baseY;
+                b.z = self->shake[0].u.tab.baseZ;
+                adv->vtable->fn_0x14(adv, &b);
+                adv->vtable->fn_0x64(adv, &a);
+            } else {
+                // Rotate the table-0 base anchor by the two-axis rotation
+                // composed from the unit-0 base (the retail fuses the 3x3
+                // products into FPR chains; this is the equivalent C form).
+                ml::CVec3 V;
+                V.x = self->tab0.baseX;
+                V.y = self->tab0.baseY;
+                V.z = self->tab0.baseZ;
+                f32 mz = (f32)__fabs((f64)self->shake[0].u.tab.baseZ);
+                f32 ax = self->shake[0].u.tab.baseX;
+                f32 ay = self->shake[0].u.tab.baseY;
+                f32 one = lbl_eu_8066641C;
+                f32 s1 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * one);
+                f32 c1 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * one);
+                f32 s2 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
+                f32 c2 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
+                // Base matrix (unit/0.5 fills as in the retail).
+                f32 m00 = c1, m01 = -s1, m02 = one, m11 = c1, m12 = one,
+                    m21 = one, m22 = lbl_eu_80666428;
+                // M = R(s2,c2) * base, expanded component-wise.
+                f32 M00 = c2 * s2 * m12 + m00 + s2 * s1;
+                f32 M01 = c2 * m21 + m01 + s2 * m11;
+                f32 M02 = c2 * m22 + m02 + s2 * m12;
+                f32 M10 = s2 * m12 + lbl_eu_80666428 * m00 + s1;
+                f32 M11 = m21 + lbl_eu_80666428 * m01 + m11;
+                f32 M12 = m22 + lbl_eu_80666428 * m02 + m12;
+                f32 M20 = -s2 * s2 * m12 + m00 + c2 * s1;
+                f32 M21 = -s2 * m21 + m01 + c2 * m11;
+                f32 M22 = -s2 * m22 + m02 + c2 * m12;
+
+                // Second composition around the Y axis, then scale the
+                // result by the base magnitude to get the offset vector m.
+                f32 s3 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ay);
+                f32 c3 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ay);
+                f32 t00 = c3 * s3 * M12 + M00 + s3 * M10;
+                f32 t01 = c3 * M21 + M01 + s3 * M11;
+                f32 t02 = c3 * M22 + M02 + s3 * M12;
+                f32 t10 = s3 * M12 + lbl_eu_80666428 * M00 + M10;
+                f32 t11 = M21 + lbl_eu_80666428 * M01 + M11;
+                f32 t12 = M22 + lbl_eu_80666428 * M02 + M12;
+                f32 t20 = -s3 * s3 * M12 + M00 + c3 * M10;
+                f32 t21 = -s3 * M21 + M01 + c3 * M11;
+                f32 t22 = -s3 * M22 + M02 + c3 * M12;
+
+                ml::CVec3 m;
+                m.x = mz * t00 + t20;
+                m.y = mz * t01 + t21;
+                m.z = mz * t02 + t22;
+
+                ml::CVec3 out1, out2;
+                out1.x = V.x - m.x;
+                out1.y = V.y + m.y;
+                out1.z = V.z - m.z;
+                out2 = V;
+                if (self->field_0x34 != 0) {
+                    CinemCamSrc* src = (CinemCamSrc*)(void*)self->field_0x34;
+                    ml::CVec3* rv = &src->vtable->fn_0xAC(src)->v;
+                    out1.x += rv->x;
+                    out1.y += rv->y;
+                    out1.z += rv->z;
+                    out2.x += rv->x;
+                    out2.y += rv->y;
+                    out2.z += rv->z;
+                    adv->vtable->fn_0x68(adv, (void*)self->field_0x34, &out1, 0);
+                    adv->vtable->fn_0x6C(adv, (void*)self->field_0x34, &out2, 0);
+                } else {
+                    adv->vtable->fn_0x14(adv, &out1);
+                    adv->vtable->fn_0x64(adv, &out2);
+                }
+            }
+        } else if (state == 0xA) {
+            // Same rotation composition as state 8's clear path.
+            ml::CVec3 V;
+            V.x = self->tab0.baseX;
+            V.y = self->tab0.baseY;
+            V.z = self->tab0.baseZ;
+            f32 mz = (f32)__fabs((f64)self->shake[0].u.tab.baseZ);
+            f32 ax = self->shake[0].u.tab.baseX;
+            f32 ay = self->shake[0].u.tab.baseY;
+            f32 one = lbl_eu_8066641C;
+            f32 s1 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * one);
+            f32 c1 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * one);
+            f32 s2 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
+            f32 c2 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
+            f32 m00 = c1, m01 = -s1, m02 = one, m11 = c1, m12 = one,
+                m21 = one, m22 = lbl_eu_80666428;
+            f32 M00 = c2 * s2 * m12 + m00 + s2 * s1;
+            f32 M01 = c2 * m21 + m01 + s2 * m11;
+            f32 M02 = c2 * m22 + m02 + s2 * m12;
+            f32 M10 = s2 * m12 + lbl_eu_80666428 * m00 + s1;
+            f32 M11 = m21 + lbl_eu_80666428 * m01 + m11;
+            f32 M12 = m22 + lbl_eu_80666428 * m02 + m12;
+            f32 M20 = -s2 * s2 * m12 + m00 + c2 * s1;
+            f32 M21 = -s2 * m21 + m01 + c2 * m11;
+            f32 M22 = -s2 * m22 + m02 + c2 * m12;
+
+            f32 s3 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ay);
+            f32 c3 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ay);
+            f32 t00 = c3 * s3 * M12 + M00 + s3 * M10;
+            f32 t01 = c3 * M21 + M01 + s3 * M11;
+            f32 t02 = c3 * M22 + M02 + s3 * M12;
+            f32 t10 = s3 * M12 + lbl_eu_80666428 * M00 + M10;
+            f32 t11 = M21 + lbl_eu_80666428 * M01 + M11;
+            f32 t12 = M22 + lbl_eu_80666428 * M02 + M12;
+            f32 t20 = -s3 * s3 * M12 + M00 + c3 * M10;
+            f32 t21 = -s3 * M21 + M01 + c3 * M11;
+            f32 t22 = -s3 * M22 + M02 + c3 * M12;
+
+            ml::CVec3 m;
+            m.x = mz * t00 + t20;
+            m.y = mz * t01 + t21;
+            m.z = mz * t02 + t22;
+
+            ml::CVec3 out1, out2;
+            out1.x = V.x - m.x;
+            out1.y = V.y + m.y;
+            out1.z = V.z - m.z;
+            out2 = V;
+            if (self->field_0x34 != 0) {
+                CinemCamSrc* src = (CinemCamSrc*)(void*)self->field_0x34;
+                ml::CVec3* rv = &src->vtable->fn_0xAC(src)->v;
+                out1.x += rv->x;
+                out1.y += rv->y;
+                out1.z += rv->z;
+                out2.x += rv->x;
+                out2.y += rv->y;
+                out2.z += rv->z;
+                adv->vtable->fn_0x68(adv, (void*)self->field_0x34, &out1, 0);
+                adv->vtable->fn_0x6C(adv, (void*)self->field_0x34, &out2, 0);
+            } else {
+                adv->vtable->fn_0x14(adv, &out1);
+                adv->vtable->fn_0x64(adv, &out2);
             }
         }
+
+        // One-shot active flag: push the unit-1 base magnitude into the
+        // dynamic object's scalar setter.
+        if (flag) {
+            adv->vtable->fn_0x3C(adv, self->shake[1].u.tab.baseX);
+        }
     } else {
+        // Flag 0x1DE clear: busy range still hands off to func_8007AA4C;
+        // otherwise the one-shot flag 0x46 is cleared via the game manager.
         int busy = 0;
         if (lbl_eu_80663DF0 != 0) {
             s16 g = lbl_eu_80663DF0->field_0x3E;
             if (g >= 0x10 && g <= 0x2b) busy = 1;
         }
         if (busy) {
-            if (self->field_0x48 & 1) result = func_8007AA4C(self);
+            if (self->field_0x48 & 1) {
+                func_8007AA4C(self);
+            }
         } else {
             if (self->field_0x46 != 0) {
-                func_80081E90__Q22cf13CfGameManagerFv(self->field_0x44, 0, 0);
+                func_80081E90__Q22cf13CfGameManagerFv(0, 0, self->field_0x44);
                 self->field_0x46 = 0;
             }
         }

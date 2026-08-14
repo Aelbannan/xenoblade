@@ -7,6 +7,7 @@
 #include "kyoshin/action/CActParamData.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include <monolib/math/CVec3.hpp>
+#include <monolib/math/Random.hpp>
 #include <nw4r/math.h>
 #include <revolution/mtx/quat.h>
 #include <revolution/mtx/vec.h>
@@ -50,22 +51,20 @@ struct CActParamAnimFlagView {
 
 bool func_8004B354(CActParamAnim* self, const CActParamAnimData3* value) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
-    if (view->object3A0 == nullptr) {
-        return false;
-    }
-    if ((view->field0C & 0x100) != 0) {
-        return false;
-    }
+    CActParamAnimData3* destination;
+    if (view->object3A0 == nullptr) goto ret_false;
+    if ((view->field0C & 0x100) != 0) goto ret_false;
     // Commit the new position to the cached state and the attached sub-object.
     view->field3A8 = value->x;
     view->field3AC = value->y;
     view->field3B0 = value->z;
-    CActParamAnimData3* destination =
-        reinterpret_cast<CActParamAnimData3*>(func_8048315C(view->object3A0));
+    destination = reinterpret_cast<CActParamAnimData3*>(func_8048315C(view->object3A0));
     destination->x = value->x;
     destination->y = value->y;
     destination->z = value->z;
     return true;
+ret_false:
+    return false;
 }
 
 int CActParamAnim::checkFlag(int mask) {
@@ -83,22 +82,24 @@ bool func_8004B40C(CActParamAnim* self, const CActParamAnimData3* value) {
     view->field488 = *reinterpret_cast<const f32*>(&value->y);
     u32 flags = view->field0C | 0x10;
     view->field0C = flags;
-    if (view->object3A0 == nullptr) {
-        return false;
-    }
-    if ((flags & 0x100) != 0) {
-        return false;
-    }
+    bool result;
+    CActParamAnimData3* destination;
+    if (view->object3A0 == nullptr) goto ret_zero;
+    if ((flags & 0x100) != 0) goto ret_zero;
     // Commit the new position to the cached state and the attached sub-object.
     view->field3A8 = value->x;
     view->field3AC = value->y;
     view->field3B0 = value->z;
-    CActParamAnimData3* destination =
-        reinterpret_cast<CActParamAnimData3*>(func_8048315C(view->object3A0));
+    destination = reinterpret_cast<CActParamAnimData3*>(func_8048315C(view->object3A0));
     destination->x = value->x;
     destination->y = value->y;
     destination->z = value->z;
-    return true;
+    result = true;
+    goto ret_end;
+ret_zero:
+    result = false;
+ret_end:
+    return result;
 }
 
 extern "C" bool func_8004B4A4(CActParamAnim* self, f32 value) {
@@ -120,27 +121,27 @@ void* CActParamAnim::getOwner() {
 
 bool CActParamAnim_isEnabled() { return true; }
 
-extern "C" bool func_8004B52C(CActParamAnim* self, f32 value) {
-    CActParamAnimObjectView* view =
-        reinterpret_cast<CActParamAnimObjectView*>(self);
-    void* owner = *reinterpret_cast<void**>(reinterpret_cast<u8*>(self) + 8);
-    if (owner == nullptr || reinterpret_cast<bool (*)(void*)>(*reinterpret_cast<void**>(
-            *reinterpret_cast<void**>(owner))) (owner)) {
-        if ((reinterpret_cast<CActParamAnimFlagView*>(self)->flags & 0x40) == 0) {
-            *reinterpret_cast<f32*>(reinterpret_cast<u8*>(self) + 0x440) = value;
+bool func_8004B52C(CActParamAnim* self, f32 value) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    CActParamAnimOwnerIf* owner = view->owner08;
+    if (owner == 0 || owner->v3() != 0) {
+        if ((view->field0C & 0x20) == 0) {
+            view->field440 = value;
         }
     }
-    u32 flags = reinterpret_cast<CActParamAnimFlagView*>(self)->flags;
-    if ((flags & 0x40) == 0) {
-        *reinterpret_cast<f32*>(reinterpret_cast<u8*>(self) + 0x444) = value;
-        if (view->object != nullptr) {
-            CActParamAnimData3 temp = {0, 0, 0};
-            temp.y = *reinterpret_cast<const u32*>(&value);
-            CActParamAnimData3* destination =
-                reinterpret_cast<CActParamAnimData3*>(func_8048315C(view->object));
-            destination->x = temp.x;
-            destination->y = temp.y;
-            destination->z = temp.z;
+    if ((view->field0C & 0x20) == 0) {
+        u8* obj = view->object3A0;
+        view->field444 = value;
+        if (obj != 0) {
+            f32 tmp[3];
+            tmp[1] = (f32)(f64)value;
+            tmp[0] = lbl_eu_80665EA0;
+            tmp[2] = lbl_eu_80665EA0;
+            CActParamAnimObjVec* dst =
+                reinterpret_cast<CActParamAnimObjVec*>(func_8048315C(obj));
+            dst->x = *reinterpret_cast<u32*>(&tmp[0]);
+            dst->y = *reinterpret_cast<u32*>(&tmp[1]);
+            dst->z = *reinterpret_cast<u32*>(&tmp[2]);
         }
     }
     return true;
@@ -249,7 +250,6 @@ extern "C" u32 func_8004B848(const CActParamAnim* self) {
 
 float CActParamAnim::func_8004B854() {
     extern float func_80484F18(void*);
-    extern float lbl_eu_80665EA0;
     void* obj = *(void**)((char*)this + 0x3A0);
     if (obj) return func_80484F18(obj);
     return lbl_eu_80665EA0;
@@ -257,7 +257,6 @@ float CActParamAnim::func_8004B854() {
 
 float CActParamAnim::func_8004B86C() {
     extern float func_804850A4(void*);
-    extern float lbl_eu_80665EA0;
     void* obj = *(void**)((char*)this + 0x3A0);
     if (obj != 0) return func_804850A4(obj);
     return lbl_eu_80665EA0;
@@ -271,7 +270,6 @@ void CActParamAnim::callObjUpdate() {
 
 float CActParamAnim::func_8004B898() {
     extern float func_80484EB0(void*);
-    extern float lbl_eu_80665EA0;
     void* obj = *(void**)((char*)this + 0x3A0);
     if (obj != 0) return func_80484EB0(obj);
     return lbl_eu_80665EA0;
@@ -297,7 +295,18 @@ extern "C" void func_8004B8B0(CActParamAnim* self, u32 param1, u32 param2, f32 v
     }
 }
 
-void func_8004B8F8(){}
+int func_8004B8F8(CActParamAnim* self, int param) {
+    const CActParamAnimStateView* view = reinterpret_cast<const CActParamAnimStateView*>(self);
+    u8* obj = view->object3A0;
+    if (obj == 0) return 0;
+    if (param == 0) {
+        return func_80484F18(obj) <= lbl_eu_80665E9C;
+    }
+    if (func_8049798C(obj + 0xC) != 0) {
+        return func_80485174(view->object3A0) <= lbl_eu_80665E9C;
+    }
+    return 0;
+}
 
 extern int func_80485464(void*, void*);
 extern int func_80485244(void*);
@@ -337,7 +346,38 @@ void CActParamAnim::setBlendFlag(int param) {
     }
 }
 
-void func_8004BC94(){}
+void func_8004BC94(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    if (param == 0) return;
+    if (param < 0x68) {
+        if ((view->field0C & 0x40000) != 0 && param == 0x12) return;
+        if (view->field4BD == 0) {
+            view->field4BD = 0;
+        }
+        u32 local;
+        u32 model = view->field2FC;
+        u32 flag = 0;
+        view->field0C &= ~0x200;
+        u8 b = view->field4BD;
+        if (model == 0) model = view->field27C;
+        if (model == 1) {
+            u32 m = view->field270;
+            if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+        }
+        u32 ret = func_80054170(view->mChildData10, &local, param, b, flag);
+        func_8004BDCC(self, local, ret, view->field2A4, 0);
+        view->field0C &= ~0x200;
+    } else {
+        u32 flag = 0;
+        u32 local;
+        if (view->field278 == 1) {
+            u32 m = view->field270;
+            if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+        }
+        u32 ret = func_80054614(view->mChildData10, &local, param, flag, 0);
+        func_8004BDCC(self, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+    }
+}
 
 void func_8004BDCC(){}
 
@@ -378,13 +418,11 @@ float CActParamAnim_atan2Scaled(float y, float x) {
 }
 
 extern "C" f32 func_8004CC68(f32 angle) {
-    extern f32 lbl_eu_80665ED8;
     extern f32 SinFIdx__Q24nw4r4mathFf(f32);
     return SinFIdx__Q24nw4r4mathFf(lbl_eu_80665ED8 * angle);
 }
 
 extern "C" f32 func_8004CC74(f32 angle) {
-    extern f32 lbl_eu_80665ED8;
     extern f32 CosFIdx__Q24nw4r4mathFf(f32);
     return CosFIdx__Q24nw4r4mathFf(lbl_eu_80665ED8 * angle);
 }
@@ -397,21 +435,257 @@ void CActParamAnim::setAnimCounter(int value) {
     *(int*)((char*)this + 0x374) = value;
 }
 
-void func_8004CF00(){}
+void func_8004CF00(CActParamAnim* self) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    if ((view->field0C & 0x800) != 0) return;
+    if (view->object3A0 != 0) {
+        // The sub-object's current position is read as ints and re-floated
+        // (retail: fctiwz + lbl_eu_80665EE8 magic) before the state sync call.
+        f32 v1 = (f32)(s32)func_80485174(view->object3A0);
+        f32 v2 = (f32)(s32)func_80484F18(view->object3A0);
+        func_80053F7C(view->mChildData10, v2, v1);
+        f32 rate = view->field388;
+        f32 t = func_80496288(*(void**)(view->object3A0 + 4));
+        view->field390 = t * rate;
+        view->field4B0 = 0;
+        if (func_80496288(*(void**)(view->object3A0 + 4)) > lbl_eu_80665EA0 && view->field4D8 < 10) {
+            view->field4D8++;
+        }
+    }
+    func_8004C608(self);
+    func_80055EE4(view->mChildData10);
+    func_80054A3C(view->mChildData10);
+    func_80055F08(view->mChildData10);
+    func_8004CC8C(self);
+    reinterpret_cast<CActParamAnimVtE4*>(self)->dispatchE4();
+    if ((view->field0C & 0x80000) != 0 && (view->field270 & 0x20) == 0) {
+        // Retail reloads the flag word for the clear (lwz/stw pair) — a volatile
+        // access keeps MWCC from reusing the value loaded by the test.
+        *(volatile u32*)&view->field0C &= ~0x80000;
+    }
+    view->field4D6++;
+}
 
-void CActParamAnim::func_8004D074() {}
+// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_8004D074__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    if (param != 0) {
+        int result = 1;
+        if (func_80485464(view->object3A0, param) == 0) {
+            s32 v = (param != 0) ? (s32)view->field33C : (s32)view->field2BC;
+            if (func_80485174(view->object3A0) < (f32)v) result = 0;
+        }
+        return result;
+    }
+    int result = 1;
+    if (func_80485244(view->object3A0) == 0) {
+        s32 v = (param != 0) ? (s32)view->field33C : (s32)view->field2BC;
+        if (func_80484F18(view->object3A0) < (f32)v) result = 0;
+    }
+    return result;
+}
 
-void CActParamAnim::func_8004D194() {}
+// Retail symbol is Fv but the body reads r4/r5 (two extra args: anim id +
+// dispatch arg) — forced-name free function, same scheme as
+// func_80053164__13CActParamAnimFv.
+int func_8004D194__13CActParamAnimFv(CActParamAnim* self, u32 param, u32 arg2) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    u32 localSmall;
+    u32 localBig;
+    // Dispatch through the vtable slot at +0x80 (retail: lwz r12, 0x80(r12));
+    // proceed unless BOTH the virtual call and the child reset return 0.
+    if (reinterpret_cast<CActParamAnimVt80*>(self)->dispatch80(arg2) != 0 ||
+        func_80054A24(view->mChildData10, 0) != 0) {
+        if (view->field30 >= 0) {
+            view->field374 = view->field30;
+        }
+        if (param < 0x68) {
+            // The 0x40000 guard flag skips the anim start while the requested
+            // anim is 0x12 (retail: beq body; cmplwi 0x12; beq ret1).
+            if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                if (view->field4BD == 0) {
+                    view->field4BD = 1;
+                }
+                u8* data = view->mChildData10;
+                u8 b = view->field4BD;
+                u32 flag = 0;
+                view->field0C &= ~0x200;
+                u32 model = view->field2FC;
+                if (model == 0) model = view->field27C;
+                if (model == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                view->field0C &= ~0x200;
+            }
+        } else {
+            u32 ret = func_80054614(view->mChildData10, &localBig, param, 1, 0);
+            func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+        }
+        return 1;
+    }
+    return 0;
+}
 
 void CActParamAnim::func_8004D2F8() {}
 
 void CActParamAnim::func_8004D4AC() {}
 
-void CActParamAnim::func_8004D650() {}
+// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_8004D650__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    CActParamAnimOwnerIf* owner = view->owner08;
+    u32 localSmall;
+    u32 localBig;
+    int ok;
+    if (owner != 0) {
+        ok = owner->field04 & 1;
+    } else {
+        ok = 0;
+    }
+    if (ok) {
+        // Proceed unless the anim is busy: either the 0x80000 anim flag is
+        // clear (bit 5 of field270) with the 0x2 active flag set, or the anim
+        // counter is in the "2" state (retail: bne to the field374 test on bit
+        // 5, bne to the body on the 0x2 flag, beq to the body on counter == 2).
+        if (((view->field270 & 0x20) == 0 && (view->field0C & 0x2) != 0) ||
+            view->field374 == 2) {
+            if (param != 0) {
+                if (param < 0x68) {
+                    // The 0x40000 guard flag skips the anim start while the
+                    // requested anim is 0x12 (retail: beq body; cmplwi 0x12;
+                    // beq ret1).
+                    if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                        if (view->field4BD == 0) {
+                            view->field4BD = 0;
+                        }
+                        u32 model = view->field2FC;
+                        u8 b = view->field4BD;
+                        view->field0C &= ~0x200;
+                        u32 flag = 0;
+                        model = (model != 0) ? model : view->field27C;
+                        if (model == 1) {
+                            u32 m = view->field270;
+                            if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                        }
+                        u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+                        func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                        view->field0C &= ~0x200;
+                    }
+                } else {
+                    u32 flag = 0;
+                    if (view->field278 == 1) {
+                        u32 m = view->field270;
+                        if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                    }
+                    u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+                    func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                }
+            }
+            view->field0C &= ~0x80000;
+            return 1;
+        }
+        return 0;
+    }
+    return 0;
+}
 
-void CActParamAnim::func_8004D7EC() {}
+// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_8004D7EC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    CActParamAnimOwnerIf* owner = view->owner08;
+    u32 localSmall;
+    u32 localBig;
+    if (owner == 0) return 0;
+    if ((owner->field04 & 8) != 0) {
+        if (param != 0) {
+            if (param < 0x68) {
+                // The 0x40000 guard flag skips the anim start while the
+                // requested anim is 0x12 (retail: beq body; cmplwi 0x12; beq
+                // ret1).
+                if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                    if (view->field4BD == 0) {
+                        view->field4BD = 0;
+                    }
+                    u8* data = view->mChildData10;
+                    u8 b = view->field4BD;
+                    u32 flag = 0;
+                    view->field0C &= ~0x200;
+                    u32 model = view->field2FC;
+                    if (model == 0) model = view->field27C;
+                    if (model == 1) {
+                        u32 m = view->field270;
+                        if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                    }
+                    u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                    func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                    view->field0C &= ~0x200;
+                }
+            } else {
+                u32 flag = 0;
+                if (view->field278 == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+                func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
 
-void CActParamAnim::func_8004D950() {}
+// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_8004D950__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    u32 localSmall;
+    u32 localBig;
+    CActParamAnimOwnerIf* owner = view->owner08;
+    if (owner == 0) return 0;
+    if ((owner->field04 & 2) != 0) {
+        view->field4C8 = owner->field24;
+        if (param != 0) {
+        if (param < 0x68) {
+            // The 0x40000 guard flag skips the anim start while the requested
+            // anim is 0x12 (retail: beq body; cmplwi 0x12; beq ret1).
+            if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                if (view->field4BD == 0) {
+                    view->field4BD = 0;
+                }
+                u32 model = view->field2FC;
+                u32 flag = 0;
+                view->field0C &= ~0x200;
+                model = (model != 0) ? model : view->field27C;
+                if (model == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054170(view->mChildData10, &localSmall, param, view->field4BD, flag);
+                func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                view->field0C &= ~0x200;
+            }
+        } else {
+            u32 flag = 0;
+            if (view->field278 == 1) {
+                u32 m = view->field270;
+                if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+            }
+            u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+            func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+        }
+        view->field4C8 = -1;
+        return 1;
+    }
+    return 0;
+}
+}
 
 void* CActParamAnim::getEffObj() {
     return *(void**)((char*)this + 0x4c0);
@@ -434,17 +708,126 @@ void CActParamAnim::func_8004E168() {}
 
 void CActParamAnim::func_8004E334() {}
 
-void CActParamAnim::func_8004E500() {}
+// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_8004E500__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    CActParamAnimOwnerIf* owner = view->owner08;
+    u32 localSmall;
+    u32 localBig;
+    int ok;
+    if (owner == 0) {
+        ok = 0;
+    } else {
+        f32 animSpeed = view->field394;
+        if (lbl_eu_80665EA0 == animSpeed) {
+            ok = 0;
+        } else {
+            // Gate: fail when the scaled owner value exceeds the anim upper bound.
+            ok = owner->field14 * view->field430 > view->field434;
+        }
+    }
+    if (!ok) {
+        if (param != 0) {
+            if (param < 0x68) {
+                // The 0x40000 guard flag skips the anim start while the
+                // requested anim is 0x12 (retail: beq body; cmplwi 0x12; beq
+                // ret1).
+                if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                    if (view->field4BD == 0) {
+                        view->field4BD = 0;
+                    }
+                    u32 model = view->field2FC;
+                    u8 b = view->field4BD;
+                    view->field0C &= ~0x200;
+                    u32 flag = 0;
+                    model = (model != 0) ? model : view->field27C;
+                    if (model == 1) {
+                        u32 m = view->field270;
+                        if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                    }
+                    u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+                    func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                    view->field0C &= ~0x200;
+                }
+            } else {
+                u32 flag = 0;
+                if (view->field278 == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+                func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
 
-void CActParamAnim::func_8004E694() {}
+// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_8004E694__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    CActParamAnimOwnerIf* owner = view->owner08;
+    u32 localSmall;
+    u32 localBig;
+    int ok;
+    if (owner == 0) {
+        ok = 0;
+    } else {
+        f32 animSpeed = view->field394;
+        if (lbl_eu_80665EA0 == animSpeed) {
+            ok = 0;
+        } else {
+            ok = owner->field14 * view->field430 > view->field434;
+        }
+    }
+    if (ok) {
+        if (param != 0) {
+            if (param < 0x68) {
+                // The 0x40000 guard flag skips the anim start while the
+                // requested anim is 0x12 (retail: beq body; cmplwi 0x12; beq
+                // ret1).
+                if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                    if (view->field4BD == 0) {
+                        view->field4BD = 0;
+                    }
+                    u32 model = view->field2FC;
+                    u8 b = view->field4BD;
+                    view->field0C &= ~0x200;
+                    u32 flag = 0;
+                    model = (model != 0) ? model : view->field27C;
+                    if (model == 1) {
+                        u32 m = view->field270;
+                        if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                    }
+                    u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+                    func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                    view->field0C &= ~0x200;
+                }
+            } else {
+                u32 flag = 0;
+                if (view->field278 == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+                func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
 
 void CActParamAnim::func_8004E828() {}
 
 void CActParamAnim::func_8004E9EC() {}
 
 f32 func_8004EC78(f32 value) {
-    // sqrt via fast reciprocal sqrt (nw4r FSqrt semantics); warn on negatives.
-    if (value < lbl_eu_80665EA0) {
+    // nw4r FSqrt semantics: warn on negative input, then x<=0 ? 0 : x*FrSqrt(x).
+    if (!(value >= lbl_eu_80665EA0)) {
         nw4r::db::Warning((const char*)lbl_eu_80526324, 0x273,
                           (const char*)lbl_eu_80526300);
     }
@@ -454,11 +837,137 @@ f32 func_8004EC78(f32 value) {
 
 void CActParamAnim::func_8004ECF4() const {}
 
-void CActParamAnim::func_8004F1E4() {}
+// Retail symbol is Fv but the body reads r4/r5 (two extra args) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_8004F1E4__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    u32 localBig;
+    u32 localSmall;
+    if (view->field374 == val) {
+        if (param != 0) {
+            if (param < 0x68) {
+                // Skip the anim start while the 0x40000 guard flag is set and the
+                // requested anim is 0x12 (same guard as the sibling helpers).
+                if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                    if (view->field4BD == 0) {
+                        view->field4BD = 0;
+                    }
+                    u8* data = view->mChildData10;
+                    u8 b = view->field4BD;
+                    u32 flag = 0;
+                    view->field0C &= ~0x200;
+                    u32 model = view->field2FC;
+                    if (model == 0) model = view->field27C;
+                    if (model == 1) {
+                        u32 m = view->field270;
+                        if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                    }
+                    u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                    func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                    view->field0C &= ~0x200;
+                }
+            } else {
+                u32 flag = 0;
+                if (view->field278 == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+                func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
 
-void CActParamAnim::func_8004F334() {}
+// Retail symbol is Fv but the body reads r4/r5 (two extra args) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_8004F334__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    u32 localBig;
+    u32 localSmall;
+    if (view->field378 == val) {
+        if (param != 0) {
+            if (param < 0x68) {
+                // Skip the anim start while the 0x40000 guard flag is set and the
+                // requested anim is 0x12 (same guard as the sibling helpers).
+                if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                    if (view->field4BD == 0) {
+                        view->field4BD = 0;
+                    }
+                    u8* data = view->mChildData10;
+                    u8 b = view->field4BD;
+                    u32 flag = 0;
+                    view->field0C &= ~0x200;
+                    u32 model = view->field2FC;
+                    if (model == 0) model = view->field27C;
+                    if (model == 1) {
+                        u32 m = view->field270;
+                        if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                    }
+                    u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                    func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                    view->field0C &= ~0x200;
+                }
+            } else {
+                u32 flag = 0;
+                if (view->field278 == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+                func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
 
-void CActParamAnim::func_8004F484() {}
+// Retail symbol is Fv but the body reads r4/r5 (two extra args) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_8004F484__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    u32 localSmall;
+    u32 localBig;
+    s32 f37C = view->field37C;
+    if (f37C < 0 && view->field4C8 < 0) return 0;
+    if (f37C == val || view->field4C8 == val) {
+        if (param != 0) {
+            if (param < 0x68) {
+                // The 0x40000 guard flag skips the anim start while the requested
+                // anim is 0x12 (retail: beq body; cmplwi 0x12; beq ret1).
+                if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                    if (view->field4BD == 0) {
+                        view->field4BD = 0;
+                    }
+                    u32 model = view->field2FC;
+                    u32 flag = 0;
+                    view->field0C &= ~0x200;
+                    model = (model != 0) ? model : view->field27C;
+                    if (model == 1) {
+                        u32 m = view->field270;
+                        if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                    }
+                    u32 ret = func_80054170(view->mChildData10, &localSmall, param, view->field4BD, flag);
+                    func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                    view->field0C &= ~0x200;
+                }
+            } else {
+                u32 flag = 0;
+                if (view->field278 == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+                func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
 
 void CActParamAnim::func_8004F5FC() {}
 
@@ -466,9 +975,94 @@ void CActParamAnim::func_8004F884() {}
 
 void CActParamAnim::func_8004FAB4() {}
 
-void CActParamAnim::func_8004FCE0() {}
+// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_8004FCE0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    u32 localSmall;
+    u32 localBig;
+    // Both gates share the out-of-line return-0 block (retail: beq/ble to
+    // .L_80050474).
+    if ((view->field0C & 2) != 0) {
+        if (reinterpret_cast<CActParamAnimVt0C*>(view)->f01() > lbl_eu_80665EF0) {
+            if (param != 0) {
+                if (param < 0x68) {
+                    // The 0x40000 guard flag skips the anim start while the requested
+                    // anim is 0x12 (retail: beq body; cmplwi 0x12; beq ret1).
+                    if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                        if (view->field4BD == 0) {
+                            view->field4BD = 0;
+                        }
+                        u32 model = view->field2FC;
+                        u32 flag = 0;
+                        view->field0C &= ~0x200;
+                        model = (model != 0) ? model : view->field27C;
+                        if (model == 1) {
+                            u32 m = view->field270;
+                            if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                        }
+                        u32 ret = func_80054170(view->mChildData10, &localSmall, param, view->field4BD, flag);
+                        func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                        view->field0C &= ~0x200;
+                    }
+                } else {
+                    u32 flag = 0;
+                    if (view->field278 == 1) {
+                        u32 m = view->field270;
+                        if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                    }
+                    u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+                    func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+                }
+            }
+            return 1;
+        }
+    }
+    return 0;
+}
 
-void CActParamAnim::func_8004FE58() {}
+// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_8004FE58__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    u32 localSmall;
+    u32 localBig;
+    view->field384 = lbl_eu_80665EF0;
+    if (param != 0) {
+        if (param < 0x68) {
+            // The 0x40000 guard flag skips the anim start while the requested
+            // anim is 0x12 (retail: beq body; cmplwi 0x12; beq ret1).
+            if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                if (view->field4BD == 0) {
+                    view->field4BD = 0;
+                }
+                u32 model = view->field2FC;
+                u32 flag = 0;
+                view->field0C &= ~0x200;
+                model = (model != 0) ? model : view->field27C;
+                if (model == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054170(view->mChildData10, &localSmall, param, view->field4BD, flag);
+                func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                view->field0C &= ~0x200;
+            }
+        } else {
+            u32 flag = 0;
+            if (view->field278 == 1) {
+                u32 m = view->field270;
+                if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+            }
+            u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+            func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+        }
+    }
+    if ((view->field0C & 0x4000000) == 0) {
+        reinterpret_cast<CActParamAnimVtEC*>(self)->dispatchEC();
+    }
+    return 1;
+}
 
 void CActParamAnim::func_8004FFBC() {}
 
@@ -480,31 +1074,409 @@ extern "C" f32 func_800504BC(const f32* a, const f32* b){
 
 void func_800504DC(){}
 
-void CActParamAnim::func_80050744() {}
+// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_80050744__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    u32 localBig;
+    u32 localSmall;
+    if ((view->field0C & 2) != 0) {
+        if (param != 0) {
+            if (param < 0x68) {
+                // Skip the anim start while the 0x40000 guard flag is set and the
+                // requested anim is 0x12 (same guard as the sibling helpers).
+                if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                    if (view->field4BD == 0) {
+                        view->field4BD = 0;
+                    }
+                    u8* data = view->mChildData10;
+                    u8 b = view->field4BD;
+                    u32 flag = 0;
+                    view->field0C &= ~0x200;
+                    u32 model = view->field2FC;
+                    if (model == 0) model = view->field27C;
+                    if (model == 1) {
+                        u32 m = view->field270;
+                        if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                    }
+                    u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                    func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                    view->field0C &= ~0x200;
+                }
+            } else {
+                u32 flag = 0;
+                if (view->field278 == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+                func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
 
 void CActParamAnim::func_80050890() {}
 
-void CActParamAnim::func_80050C50() {}
+// Retail symbol is Fv but the body reads r4/r5 (anim id + rng arg) —
+// forced-name free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_80050C50__13CActParamAnimFv(CActParamAnim* self, u32 param, int rngArg) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    u32 localSmall;
+    u32 localBig;
+    if (ml::math::mtRand(rngArg) == 0) {
+        if (param != 0) {
+            if (param < 0x68) {
+                // The 0x40000 guard flag skips the anim start while the
+                // requested anim is 0x12 (retail: beq body; cmplwi 0x12; beq
+                // ret1).
+                if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                    if (view->field4BD == 0) {
+                        view->field4BD = 0;
+                    }
+                    u8* data = view->mChildData10;
+                    u8 b = view->field4BD;
+                    u32 flag = 0;
+                    view->field0C &= ~0x200;
+                    u32 model = view->field2FC;
+                    if (model == 0) model = view->field27C;
+                    if (model == 1) {
+                        u32 m = view->field270;
+                        if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                    }
+                    u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                    func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                    view->field0C &= ~0x200;
+                }
+            } else {
+                u32 flag = 0;
+                if (view->field278 == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+                func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
 
 void CActParamAnim::func_80050DB0() {}
 
-void CActParamAnim::func_80050F5C() {}
+// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_80050F5C__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    u32 localSmall;
+    u32 localBig;
+    // Wrap the anim angle delta into [-pi, pi) (same wrap as func_8004BC28),
+    // then gate: fail when the scaled wrapped angle exceeds the upper bound.
+    f32 v444 = view->field444;
+    f32 value = view->field440 - v444;
+    while (lbl_eu_8066A1F8 <= value) value -= lbl_eu_8066A1FC;
+    while (value < -lbl_eu_8066A1F8) value += lbl_eu_8066A1FC;
+    if (value * lbl_eu_8066A20C <= lbl_eu_80665F50) {
+        if (param != 0) {
+            if (param < 0x68) {
+                // The 0x40000 guard flag skips the anim start while the
+                // requested anim is 0x12 (retail: beq body; cmplwi 0x12; beq
+                // ret1).
+                if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                    if (view->field4BD == 0) {
+                        view->field4BD = 0;
+                    }
+                    u32 model = view->field2FC;
+                    u32 flag = 0;
+                    view->field0C &= ~0x200;
+                    u8 b = view->field4BD;
+                    if (model == 0) model = view->field27C;
+                    if (model == 1) {
+                        u32 m = view->field270;
+                        if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                    }
+                    u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+                    func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                    view->field0C &= ~0x200;
+                }
+            } else {
+                u32 flag = 0;
+                if (view->field278 == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+                func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
 
 void CActParamAnim::func_800510FC() {}
 
-void CActParamAnim::func_800512A8() {}
+// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_800512A8__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    u32 localSmall;
+    u32 localBig;
+    // Wrap the anim angle delta into [-pi, pi) (same wrap as func_8004BC28),
+    // then gate: fail when the scaled wrapped angle falls below the lower bound.
+    f32 v444 = view->field444;
+    f32 value = view->field440 - v444;
+    while (lbl_eu_8066A1F8 <= value) value -= lbl_eu_8066A1FC;
+    while (value < -lbl_eu_8066A1F8) value += lbl_eu_8066A1FC;
+    if (value * lbl_eu_8066A20C >= lbl_eu_80665F54) {
+        if (param != 0) {
+            if (param < 0x68) {
+                // The 0x40000 guard flag skips the anim start while the
+                // requested anim is 0x12 (retail: beq body; cmplwi 0x12; beq
+                // ret1).
+                if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                    if (view->field4BD == 0) {
+                        view->field4BD = 0;
+                    }
+                    u32 model = view->field2FC;
+                    u32 flag = 0;
+                    view->field0C &= ~0x200;
+                    u8 b = view->field4BD;
+                    if (model == 0) model = view->field27C;
+                    if (model == 1) {
+                        u32 m = view->field270;
+                        if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                    }
+                    u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+                    func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                    view->field0C &= ~0x200;
+                }
+            } else {
+                u32 flag = 0;
+                if (view->field278 == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+                func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
 
-void CActParamAnim::func_80051448() {}
+// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_80051448__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    if (param == 0) return 1;
+    if (param < 0x68) {
+        if ((view->field0C & 0x40000) != 0 && param == 0x12) return 1;
+        if (view->field4BD == 0) {
+            view->field4BD = 0;
+        }
+        u32 model = view->field2FC;
+        if (model == 0) model = view->field27C;
+        u32 flag = 0;
+        if (model == 1) {
+            u32 m = view->field270;
+            if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+        }
+        u32 local;
+        view->field0C &= ~0x200;
+        u32 ret = func_80054170(view->mChildData10, &local, param, view->field4BD, flag);
+        func_8004BDCC(self, local, ret, view->field2A4, 0);
+        view->field0C &= ~0x200;
+    } else {
+        u32 flag = 0;
+        if (view->field278 == 1) {
+            u32 m = view->field270;
+            if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+        }
+        u32 local;
+        u32 ret = func_80054614(view->mChildData10, &local, param, flag, 0);
+        func_8004BDCC(self, local, ret, view->field2A4, (view->field0C >> 9) & 1);
+    }
+    return 1;
+}
 
-void CActParamAnim::func_80051584() {}
+// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_80051584__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    u32 localBig;
+    u32 localSmall;
+    if (param != 0) {
+        if (param < 0x68) {
+            // Skip the anim start while the 0x40000 guard flag is set and the
+            // requested anim is 0x12 (same guard as the sibling helpers).
+            if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                if (view->field4BD == 0) {
+                    view->field4BD = 0;
+                }
+                view->field0C &= ~0x200;
+                u8* data = view->mChildData10;
+                u8 b = view->field4BD;
+                u32 flag = 0;
+                u32 model = view->field2FC;
+                if (model == 0) model = view->field27C;
+                if (model == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                view->field0C &= ~0x200;
+            }
+        } else {
+            u32 flag = 0;
+            if (view->field278 == 1) {
+                u32 m = view->field270;
+                if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+            }
+            u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+            func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+        }
+    }
+    return 1;
+}
 
-void CActParamAnim::func_800516C0() {}
+// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_800516C0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    u32 localBig;
+    u32 localSmall;
+    if (param != 0) {
+        if (param < 0x68) {
+            // Skip the anim start while the 0x40000 guard flag is set and the
+            // requested anim is 0x12 (same guard as the sibling helpers).
+            if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                if (view->field4BD == 0) {
+                    view->field4BD = 0;
+                }
+                u8* data = view->mChildData10;
+                u8 b = view->field4BD;
+                u32 flag = 0;
+                view->field0C &= ~0x200;
+                u32 model = view->field2FC;
+                if (model == 0) model = view->field27C;
+                if (model == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                view->field0C &= ~0x200;
+            }
+        } else {
+            u32 flag = 0;
+            if (view->field278 == 1) {
+                u32 m = view->field270;
+                if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+            }
+            u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+            func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+        }
+    }
+    return 1;
+}
 
-void CActParamAnim::func_800517FC() {}
+// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv.
+int func_800517FC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    u32 localSmall;
+    u32 localBig;
+    if (view->field4D4 != 0) {
+        if (param != 0) {
+            if (param < 0x68) {
+                // The 0x40000 guard flag skips the anim start while the
+                // requested anim is 0x12 (retail: beq body; cmplwi 0x12; beq
+                // ret1).
+                if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                    if (view->field4BD == 0) {
+                        view->field4BD = 0;
+                    }
+                    u8* data = view->mChildData10;
+                    u8 b = view->field4BD;
+                    u32 flag = 0;
+                    view->field0C &= ~0x200;
+                    u32 model = view->field2FC;
+                    if (model == 0) model = view->field27C;
+                    if (model == 1) {
+                        u32 m = view->field270;
+                        if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                    }
+                    u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                    func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                    view->field0C &= ~0x200;
+                }
+            } else {
+                u32 flag = 0;
+                if (view->field278 == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+                func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
 
-void CActParamAnim::func_8005194C() {}
+// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// free function, same scheme as func_80053164__13CActParamAnimFv. Mirror of
+// func_800517FC with the 0x4D4 guard inverted.
+int func_8005194C__13CActParamAnimFv(CActParamAnim* self, u32 param) {
+    CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    u32 localSmall;
+    u32 localBig;
+    if (view->field4D4 == 0) {
+        if (param != 0) {
+            if (param < 0x68) {
+                // The 0x40000 guard flag skips the anim start while the
+                // requested anim is 0x12 (retail: beq body; cmplwi 0x12; beq
+                // ret1).
+                if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                    if (view->field4BD == 0) {
+                        view->field4BD = 0;
+                    }
+                    u8* data = view->mChildData10;
+                    u8 b = view->field4BD;
+                    u32 flag = 0;
+                    view->field0C &= ~0x200;
+                    u32 model = view->field2FC;
+                    if (model == 0) model = view->field27C;
+                    if (model == 1) {
+                        u32 m = view->field270;
+                        if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                    }
+                    u32 ret = func_80054170(data, &localSmall, param, b, flag);
+                    func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+                    view->field0C &= ~0x200;
+                }
+            } else {
+                u32 flag = 0;
+                if (view->field278 == 1) {
+                    u32 m = view->field270;
+                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                }
+                u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+                func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
 
-extern float lbl_eu_80665EA0;
 void CActParamAnim::resetVec3Y() { *(float*)((u8*)this + 964) = lbl_eu_80665EA0; }
 
 void CActParamAnim::setActiveFlag(s32 param) {
@@ -531,7 +1503,6 @@ extern "C" int func_80051AD0(CActParamAnim* self) {
 }
 
 extern "C" int func_80051B38(CActParamAnim* self) {
-    extern f32 lbl_eu_80665EA0;
     void* owner = *(void**)((u8*)self + 8);
     if (owner == NULL) return 0;
     f32 animSpeed = *(f32*)((u8*)self + 0x394);
@@ -573,7 +1544,6 @@ extern "C" int func_80051BF4(CActParamAnim* self) {
     void* owner = *(void**)((u8*)self + 8);
     if (owner == NULL) return 1;
     f32 animSpeed = *(f32*)((u8*)self + 0x394);
-    extern f32 lbl_eu_80665EA0;
     if (lbl_eu_80665EA0 == animSpeed) return 1;
     f32 val = *(f32*)((u8*)owner + 0x14) * *(f32*)((u8*)self + 0x430);
     // 1 while val is below the lower bound (mirror of func_80051AD0's second condition).
@@ -616,7 +1586,6 @@ void CActParamAnim::stopAnim() {
 extern "C" int func_80051CD4(CActParamAnim* self) {
     void* owner = *(void**)((u8*)self + 8);
     if (owner == NULL) return 0;
-    extern f32 lbl_eu_80665EA0;
     f32 animSpeed = *(f32*)((u8*)self + 0x394);
     if (animSpeed == lbl_eu_80665EA0) return 0;
     f32 val = *(f32*)((u8*)owner + 0x14) * *(f32*)((u8*)self + 0x430);

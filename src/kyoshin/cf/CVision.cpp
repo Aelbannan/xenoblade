@@ -21,14 +21,9 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 // header's symbols so its C-linkage decls don't overload-conflict with the
 // chain headers pulled in by CBattleManager.hpp).
 //
-// CChain.hpp and CSuddenCommu.hpp both declare func_802A3680 with different
-// C-linkage signatures (int vs void*); CSuddenCommu.hpp also clashes with the
-// chain headers on lbl_eu_80663E14 (void* vs CScn*), func_8006EF04__Fi
-// (s32/long vs int), func_800D81A8, func_8018C820, func_80086F9C, and
-// func_80174C98 / func_8017FD4C (CChainActorList.hpp). Pre-include
-// CSuddenCommu.hpp under renames so only the chain headers' declarations are
-// visible when CBattleManager.hpp pulls the headers in. CVision.cpp never
-// calls these itself; the symbols it does use (lbl_eu_80663E24,
+// CSuddenCommu.hpp's imports now match the chain headers (see CSuddenCommu.hpp)
+// except func_8049603C (void* arg here vs CScn* in CTaskGame.hpp), so only
+// that one is renamed; the symbols this TU uses (lbl_eu_80663E24,
 // func_80496288, func_8006EF04__Fi, func_80260264) resolve to the
 // chain-header / local declarations instead.
 //
@@ -36,27 +31,9 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 // CChainTimer.hpp but takes an int id at the retail call sites here, so those
 // two headers are pre-included under a rename and CVision.cpp keeps its
 // (int id) declaration.
-#define func_802A3680 visionCppSuddenCommuVoiceUnused
-#define lbl_eu_80663E14 visionCppScenePtr
-#define func_8006EF04__Fi visionCppGateCheck
-#define func_800D81A8 visionCppBmoveAccessor
-#define func_8018C820 visionCppGaugeAdd
-#define func_80260264 visionCppStatProbe
-#define func_80174C98 visionCppActorIdProbe
-#define func_8017FD4C visionCppCtlProbe
 #define func_8049603C visionCppCamView
-#define func_80086F9C__Q22cf13CfGameManagerFv visionCppCamTrigger
 #include "kyoshin/cf/CSuddenCommu.hpp"
-#undef func_80086F9C__Q22cf13CfGameManagerFv
 #undef func_8049603C
-#undef func_8017FD4C
-#undef func_80174C98
-#undef func_80260264
-#undef func_8018C820
-#undef func_800D81A8
-#undef func_8006EF04__Fi
-#undef lbl_eu_80663E14
-#undef func_802A3680
 #define func_8016FE34 visionCppChainActorLookup
 #include "kyoshin/cf/object/CAIAction.hpp"
 #undef func_8016FE34
@@ -90,7 +67,7 @@ extern "C" int func_80148778(void* obj, int id);   // CBattleManager.cpp declare
 extern "C" void func_801AD504(int id);             // CMenuVision.cpp defines an empty stub
 extern "C" void* func_8016FE34(int id);            // 4 TUs declare a void* -param version
 extern "C" void func_802A1DF0(u32 a);              // CCharVoiceMan.cpp defines an empty stub
-extern "C" int func_80260264(void* self, u32 id, void* result); // CBattleManager.cpp declares (void*,int,void*)
+extern "C" int func_80260264(void* self, int id, void* result); // matches CSuddenCommu.hpp / CBattleManager.cpp
 
 // Kept inline (not moved to CVision.hpp): sibling TUs declare/stub these.
 extern "C" void func_800BE12C(u8* a, int b, int c, int d, int e); // CfObjectActor.hpp/CfObjectMove.hpp declare (u8*,int,int,int,int)

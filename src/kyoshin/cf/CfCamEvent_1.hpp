@@ -171,16 +171,11 @@ public:
     ~CfCamEventManager();
 
     CfCamEventSlot* slots[3];  // 0x00 - 3 effect slot pointers
-    void* field_0x0C;    // 0x0C - voice/aim source pointer
+    u8  _00C[0x10 - 0x0C];
     u32 field_0x10;      // 0x10
-    f32 field_0x14;      // 0x14
-    f32 field_0x18;      // 0x18
-    f32 field_0x1C;      // 0x1C
-    void* field_0x20;    // 0x20
+    u8  _14[0x24 - 0x14];
     u32 field_0x24;      // 0x24
-    f32 field_0x28;      // 0x28
-    f32 field_0x2C;      // 0x2C
-    f32 field_0x30;      // 0x30
+    u8  _28[0x34 - 0x28];
     u32 field_0x34;      // 0x34 - pointer/result slot
     u32 field_0x38;     // 0x38
     s16 field_0x3C;     // 0x3C (retail lha)
@@ -298,6 +293,24 @@ struct CamEventAimObj {
     u32 field_0x74;       // 0x74
 };
 
+// View of the manager's aim-vector region (offsets 0x0C..0x34) used by
+// func_80076F88. Kept as a separate view so the manager class itself keeps
+// its original opaque gaps (MWCC's copy-lowering for the 0x54..0x78 range
+// is sensitive to the struct layout).
+struct CfCamEventAimRegion {
+    void* field_0x0C;    // 0x0C
+    u32   field_0x10;    // 0x10
+    f32   field_0x14;    // 0x14
+    f32   field_0x18;    // 0x18
+    f32   field_0x1C;    // 0x1C
+    void* field_0x20;    // 0x20
+    u32   field_0x24;    // 0x24
+    f32   field_0x28;    // 0x28
+    f32   field_0x2C;    // 0x2C
+    f32   field_0x30;    // 0x30
+    u32   field_0x34;    // 0x34
+};
+
 struct CamEventTargetInfo {
     u8  _000[0x15E4];
     u32 field_0x15E4;   // +0x15E4
@@ -406,6 +419,28 @@ struct CfDynMgr {
     u8  _00[0x04];
     u32 m_field04;   // +0x04
 };
+
+// Vtable of the dynamic-cast object used by func_80079E04 (r30): vector
+// setters at 0x14/0x4C/0x64, a f32 setter at 0x3C, pointer-taking variants
+// at 0x68/0x6C and a vector accessor at 0xAC.
+struct CfCamAdvVtbl {
+    void* p00[0x14 / 4];
+    void* (*fn_0x14)(void* self, void* vec);          // 0x14
+    void* r18[0x3C - 0x18];
+    void* (*fn_0x3C)(void* self, f32 v);              // 0x3C
+    void* r40[0x4C - 0x40];
+    void* (*fn_0x4C)(void* self, void* vec);          // 0x4C
+    void* r50[0x64 - 0x50];
+    void* (*fn_0x64)(void* self, void* vec);          // 0x64
+    void* (*fn_0x68)(void* self, void* obj, void* vec, int flag);  // 0x68
+    void* (*fn_0x6C)(void* self, void* obj, void* vec, int flag);  // 0x6C
+    void* r70[0xAC - 0x70];
+    ml::CVec3* (*fn_0xAC)(void* self);                // 0xAC
+};
+
+struct CfCamAdvObj {
+    CfCamAdvVtbl* vtable;  // 0x00
+};
 // 0x34-byte cam-table entry: two aim vectors at +0x04/+0x10 plus four floats
 // (+0x1C..+0x28). The 12-entry table lives at 0x805273C8 and is filled by
 // sinit_8007BE74 (which also fills a discarded local prototype array).
@@ -432,18 +467,13 @@ extern f32 lbl_eu_80666488;
 extern f32 lbl_eu_8066648C;
 extern f32 lbl_eu_80666490;
 // 0x28-byte camera-source view read by func_8007990C: two aim vectors at
-// +0x00/+0x0C, a third triplet at +0x18, and a scalar at +0x24.
+// +0x00/+0x0C, a third triplet at +0x18, and a scalar at +0x24. The triplets
+// are CVec3 so whole-vector copies keep the retail lwz/stw schedule.
 struct CamEventVecSrc {
-    f32 f_00;   // +0x00
-    f32 f_04;
-    f32 f_08;
-    f32 f_0C;
-    f32 f_10;
-    f32 f_14;
-    f32 f_18;
-    f32 f_1C;
-    f32 f_20;
-    f32 f_24;   // +0x24
+    ml::CVec3 v0;   // +0x00
+    ml::CVec3 v1;   // +0x0C
+    ml::CVec3 v2;   // +0x18
+    f32 f_24;       // +0x24
 };
 
 extern f32 lbl_eu_8066A20C;   // sdata2 scale constant (state-9 branch)
@@ -452,10 +482,16 @@ extern "C" void func_80074230(ml::CVec3* v1, ml::CVec3* v2);
 // Defined in this TU (retail unmangled free functions; the extern "C"
 // declarations keep call relocs unmangled while the .cpp defines them as
 // plain C++ bodies). Forward-declared for the cross-referencing bodies.
-extern "C" void func_80078D08(CfCamEventManager* self, int add, void* p5,
+extern "C" void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5,
                               ml::CVec3* r6, int p7, int p8, f32 p1);
 extern "C" void func_8007990C(CfCamEventManager* self, u32 a, u32 b,
                               CamEventVecSrc* c, u32 d);
+extern "C" int func_80074F4C(CfCamShakeState* self, int mode);
+extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
+                                const void* dst_type, void* src2dst);
+extern char lbl_eu_80661B00[];  // RTTI typeinfo pair used by the cam advance cast
+extern char lbl_eu_80661B30[];
+extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" CfCamDataTable lbl_eu_80570C90;
@@ -468,7 +504,7 @@ extern "C" f32   lbl_eu_8066A1F8;
 extern "C" f32   lbl_eu_8066A1FC;
 extern "C" f32   lbl_eu_8066641C;
 extern "C" f32   lbl_eu_80666418;
-extern "C" f32   lbl_eu_80666420;
+extern "C" f64   lbl_eu_80666420;
 extern "C" f32   lbl_eu_80666428;
 extern "C" f32   lbl_eu_80666448;
 extern "C" f32   lbl_eu_80666454;

@@ -26,6 +26,48 @@ struct CAIActionExport {
     u32 unk20C;            // 0x20C - column stride
 };
 
+// 0xC-byte AI action sub-entry (installed via func_8014B804).
+struct CAIActionSubEntry {
+    u8 b0;   // 0x00 -> func_8014B804 a2
+    u8 b1;   // 0x01 (unused)
+    u8 b2;   // 0x02 -> a3
+    u8 b3;   // 0x03 -> a4
+    u8 b4;   // 0x04 -> a6
+    u8 b5;   // 0x05 -> a5
+    u8 b6;   // 0x06 -> a7
+    u8 b7;   // 0x07 -> a8
+    u8 b8;   // 0x08 -> a9
+    u8 b9;   // 0x09 -> a10
+    u8 b10;  // 0x0A -> a11
+    u8 b11;  // 0x0B -> a12
+};
+
+// Variable-length AI config table entry (stride 0x16 + actionCount * 0xC).
+struct CAIActionTableEntry {
+    u8 id;                   // 0x00 - selection id
+    u8 field_01;             // 0x01
+    u16 artsId;              // 0x02 - stored byte-swapped; matched vs party
+                             //        unkB14->unk3F28 (or 0)
+    char name[0x10];         // 0x04 - art name
+    u8 actionCount;          // 0x14
+    u8 field_15;             // 0x15
+    CAIActionSubEntry actions[1]; // 0x16 - variable
+};
+
+// AI config table header (*lbl_eu_806641B0).
+struct CAIActionTable {
+    u16 count;                     // 0x00
+    CAIActionTableEntry entries[1]; // 0x02 - variable
+};
+
+// Party object referenced by CAIAction::unkB14 (fields used by func_8015396C).
+struct CAIPartyInfo {
+    u8 pad[0x3F00];
+    u32 flags;  // 0x3F00 - bits 1/2 select the lookup id (0x70 / 0x65)
+    u8 pad2[0x24];
+    u16 artsId; // 0x3F28 - current arts id
+};
+
 // size: 0xB1C
 class CAIAction {
 public:
@@ -70,6 +112,11 @@ extern "C" void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self
 
 extern void func_8014A86C(void*);
 extern void func_8014A8F8();
+
+// .sbss object at 0x806641B0 - pointer to the AI action config table
+// (u16 entry count at +0, variable-length entries at +2). Walked by
+// func_8015396C; cleared by func_8014A8F8.
+extern cf::CAIActionTable* lbl_eu_806641B0;
 extern void* func_800B708C(int);        // C++ linkage -> func_800B708C__Fi
 
 struct CAIActionQuery;

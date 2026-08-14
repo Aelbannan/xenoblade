@@ -14,14 +14,11 @@ extern int CSysWin_getUnk34(void*);
 extern void func_80246200(void*);
 extern u32 func_80248558(void*);
 extern void func_8024577C(void*, u16);
-extern void func_801F3850(void*, u16);
-extern void func_801375A0(float*, void*);
 extern void func_80137C1C(void*, void*);
 extern void* func_80136190(const char*, const char*, const char*);
 extern void* func_801355F4();
 extern void* createPicture__10CLibLayoutFv();
 extern void SetName__Q34nw4r3lyt4PaneFPCc(void*, const char*);
-extern void* func_80137E7C(void*, const char*, const char*);
 extern u32 func_8009CF8C(u32);
 extern void func_80138078(u32);
 
@@ -78,26 +75,51 @@ void func_80245450(void* self) {
 }
 
 void func_802455F0(void* self) {
-    extern void func_80246200(void*);
-    u8* p = (u8*)self;
-    s8 idx0 = (s8)p[0x09];
-    u32 base = idx0 * 0x30C;
-    u8 count = *(u8*)(p + base + 0x318);
+    CFloorMapCursor* cur = (CFloorMapCursor*)self;
+    CFloorMapFloorEntry* entries = reinterpret_cast<CFloorMapFloorEntry*>(cur->_0C);
+    u8 count = entries[cur->field_09].count;
     if (count >= 5) {
-        p[0x0B] += 5;
-        if ((s8)p[0x0B] > (s8)count) {
-            p[0x0A] = p[0x0B] - count;
-            p[0x0B] = count;
-            if ((s8)p[0x0A] >= 5) {
-                p[0x0A] = 0;
-            }
+        // Page down by one row; wrap to the next page once the row index
+        // passes the last visible row on this page.
+        u8 nb = (u8)(cur->field_0B + 5);
+        cur->field_0B = nb;
+        if ((s8)nb > (s32)(count - 5)) {
+            u8 na = (u8)(nb - (count - 5));
+            cur->field_0A = na;
+            cur->field_0B = (u8)(count - 5);
+            if ((s8)na >= 5)
+                cur->field_0A = 4;
         }
     } else {
-        p[0x0A] = count - 1;
-        p[0x0B] = 0;
-        if ((s8)p[0x0A] < 0) p[0x0A] = 0;
+        u8 c1 = (u8)(count - 1);
+        cur->field_0A = c1;
+        cur->field_0B = 0;
+        if ((s8)c1 < 0)
+            cur->field_0A = 0;
     }
-    func_80246200(self);
+    func_80246200(cur);
+
+    // Refresh the cursor position: format the pane name for the current page
+    // index, scale its translate by the zoom pane, and move the target pane.
+    nw4r::math::VEC3 pos;
+    nw4r::math::VEC3 dest;
+    char buf[0x20];
+    sprintf(buf, &lbl_eu_8050BEA8[0x14D], (s8)cur->field_0A);
+
+    nw4r::lyt::Pane* pane = cur->mData->GetRootPane()->FindPaneByName(buf, 1);
+    func_801375A0(&pos, pane);
+
+    nw4r::lyt::Pane* scalePane =
+        cur->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
+    pos.x *= scalePane->GetScale().x;
+
+    dest = pos;
+    if (cur->field_3108) {
+        CFloorMapCursorTarget* target = (CFloorMapCursorTarget*)cur->field_3108;
+        target->pane->SetTranslate(dest);
+    }
+
+    func_801F3850(cur->field_3134, (u16)(s8)cur->field_0B);
 }
 
 void func_8024577C(void* self, u16 val) {
@@ -369,40 +391,39 @@ void* __dt__8024B6B8(void* self, int mode) {
     return self;
 }
 
-void func_8024B6F8(void* self, void* arg2, u32 arg3, u32 arg4) {
-    extern void* getPlayer__Q22cf13CfGameManagerFi(int);
-    extern u32 func_8009CF8C(u32);
-    extern s16 func_80136330(u32, const char*, u32);
-    extern s16 func_80137E7C(void*, void*, const char*, ...);
-    u8* p = (u8*)self;
-    if (!arg2 || !*(void**)p) return;
-    void* player = getPlayer__Q22cf13CfGameManagerFi(0);
-    if (!player) return;
-    void* data = *(void**)p;
-    void* obj = *(void**)((u8*)data + 0x10);
-    void** vtable = *(void***)obj;
-    void* result = ((void*(*)(void*, void*, const char*, ...))vtable[1])(data, arg2, &lbl_eu_8050BEA8[0x47F]);
-    if (!result) return;
-    for (u32 i = 1; i <= arg3; i++) {
-        s16 val = func_80136330(*(u32*)lbl_eu_8066479C, &lbl_eu_8050BEA8[0x487], i);
-        if (val) {
-            u8* pBB = (u8*)result + 0xBB;
-            u8 bit = (i == arg4) ? 1 : 0;
-            *pBB = (*pBB & 0x7F) | bit;
-        }
+void func_8024B6F8(CFloorMapRowList* self, void* arg2, u32 arg3, u32 arg4, u32 arg5) {
+    if (arg2 == 0)
+        return;
+    if (self->mData == 0)
+        return;
+
+    func_80137E7C(self->mData, &lbl_eu_8050BEA8[0x47F], arg2);
+
+    // Tag each row pane: panes within the 8 rows above the current row are
+    // shown, the rest are hidden.
+    for (u32 i = 1; (u8)i <= arg4; i++) {
+        char buf[0x20];
+        sprintf(buf, &lbl_eu_8050BEA8[0x487], (u8)i);
+        nw4r::lyt::Pane* pane =
+            self->mData->GetRootPane()->FindPaneByName(buf, 1);
+        if (pane)
+            pane->SetVisible((__cntlzw((u32)arg3 - (u8)i) >> 4) & 1);
     }
-    if (arg4 == 0xC) {
-        if (result) {
-            u32 val = func_8009CF8C(0x20);
-            u8* pBB = (u8*)result + 0xBB;
-            *pBB = (*pBB & 0x7F) | ((__cntlzw(val ^ 0x166) >> 5) & 1);
+
+    // Random visibility for the two special row kinds.
+    if (arg5 == 0xC) {
+        nw4r::lyt::Pane* pane =
+            self->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x491], 1);
+        if (pane) {
+            u32 v = func_8009CF8C(0x20) ^ 0x166;
+            pane->SetVisible(((0x166 << __cntlzw(v)) >> 30) & 1);
         }
-    } else if (arg4 == 5) {
-        if (result) {
-            u32 val = func_8009CF8C(0x20);
-            u8* pBB = (u8*)result + 0xBB;
-            u8 bit = ((val - 0x171) | (val ^ 0x171)) >> 31;
-            *pBB = (*pBB & 0x7F) | (bit & 1);
+    } else if (arg5 == 5) {
+        nw4r::lyt::Pane* pane =
+            self->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x491], 1);
+        if (pane) {
+            u32 x = func_8009CF8C(0x20);
+            pane->SetVisible((((x | ~0x171) - ((x - 0x171) >> 1)) >> 30) & 1);
         }
     }
 }
@@ -417,7 +438,19 @@ void* __dt__8024B894(void* self, int mode) {
 
 void __ct__CFloorMap(){}
 
-CFloorMap::~CFloorMap() {}
+// Complete-object destructor.  Sub-objects are opaque byte arrays, so their
+// retail destructors are invoked explicitly in reverse construction order
+// (+0xF4, +0xB8, +0xA0, +0x60, +0x14, +0x04); MWCC emits the null-check on
+// this and the flags-conditional operator delete automatically for the member
+// destructor form.
+CFloorMap::~CFloorMap() {
+    __dt__7CSysWinFv(mSysWinF4, -1);
+    __dt__7CSysWinFv(mSysWinB8, -1);
+    __dt__6CCur18Fv(mCursorA0, -1);
+    __dt__10CScrollBarFv(mScrollBar, -1);
+    __dt__17UnkClass_8045F564Fv(mMemRegion14, -1);
+    __dt__17UnkClass_8045F564Fv(mMemRegion04, -1);
+}
 
 void func_8024BE1C(){}
 
@@ -1025,6 +1058,96 @@ void sinit_80250CB4() {
 extern "C" void func_80244764() {}
 extern "C" void func_80244944() {}
 extern "C" void func_80244AE8() {}
-extern "C" void func_80244C60() {}
-extern "C" void func_80244DD8() {}
-extern "C" void func_802452C4() {}
+// Load the map layout + animation transforms, bind the font, hide the three
+// decorative panes, and start the two animation transforms.
+void func_80244C60(void* self) {
+    CFloorMapLayoutData* obj = (CFloorMapLayoutData*)self;
+    func_80136E84(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
+    func_80136F08(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
+    func_80136F08(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
+
+    nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
+    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
+    typedef u32 (*FontVFn)(void*);
+    u32 fontResult = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
+    func_8013676C(rootPane, fontResult);
+
+    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x100], 1)->SetVisible(false);
+    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xD9], 1)->SetVisible(false);
+    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xE4], 1)->SetVisible(false);
+
+    obj->layout->SetAnimationEnable(obj->anim10, false);
+    obj->layout->SetAnimationEnable(obj->anim0C, true);
+    obj->layout->Animate(0);
+}
+
+void func_80244DD8(void* self) {
+    CFloorMapLayoutData* obj = (CFloorMapLayoutData*)self;
+    func_80136E84(&obj->layout, obj->accessor, &lbl_eu_8050BEA8[0x7E]);
+    func_80136F08(obj->layout, &obj->anim0C, obj->accessor, &lbl_eu_8050BEA8[0x96]);
+    func_80136F08(obj->layout, &obj->anim10, obj->accessor, &lbl_eu_8050BEA8[0xB3]);
+
+    nw4r::lyt::Pane* rootPane = obj->layout->GetRootPane();
+    void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->layout);
+    typedef u32 (*FontVFn)(void*);
+    u32 fontResult = (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
+    func_8013676C(rootPane, fontResult);
+
+    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x100], 1)->SetVisible(false);
+    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xCE], 1)->SetVisible(false);
+    obj->layout->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0xE4], 1)->SetVisible(false);
+
+    obj->layout->SetAnimationEnable(obj->anim10, false);
+    obj->layout->SetAnimationEnable(obj->anim0C, true);
+    obj->layout->Animate(0);
+}
+
+void func_802452C4(void* self) {
+    CFloorMapCursor* cur = (CFloorMapCursor*)self;
+    CFloorMapFloorEntry* entries = reinterpret_cast<CFloorMapFloorEntry*>(cur->_0C);
+    u8 count = entries[cur->field_09].count;
+    // Page up by one row; wrap to the previous page once the row index
+    // underflows, then to the last page/row of the floor.
+    u8 a1 = (u8)(cur->field_0A - 1);
+    cur->field_0A = a1;
+    if ((s8)a1 < 0) {
+        u8 b1 = (u8)(cur->field_0B - 1);
+        cur->field_0A = 0;
+        cur->field_0B = b1;
+        if ((s8)b1 < 0) {
+            if (count >= 5) {
+                cur->field_0A = 4;
+                cur->field_0B = (u8)(count - 5);
+            } else {
+                u8 c1 = (u8)(count - 1);
+                cur->field_0A = c1;
+                cur->field_0B = 0;
+                if ((s8)c1 < 0)
+                    cur->field_0A = 0;
+            }
+        }
+    }
+    func_80246200(cur);
+
+    // Refresh the cursor position: format the pane name for the current page
+    // index, scale its translate by the zoom pane, and move the target pane.
+    nw4r::math::VEC3 pos;
+    nw4r::math::VEC3 dest;
+    char buf[0x20];
+    sprintf(buf, &lbl_eu_8050BEA8[0x14D], (s8)cur->field_0A);
+
+    nw4r::lyt::Pane* pane = cur->mData->GetRootPane()->FindPaneByName(buf, 1);
+    func_801375A0(&pos, pane);
+
+    nw4r::lyt::Pane* scalePane =
+        cur->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x136], 1);
+    pos.x *= scalePane->GetScale().x;
+
+    dest = pos;
+    if (cur->field_3108) {
+        CFloorMapCursorTarget* target = (CFloorMapCursorTarget*)cur->field_3108;
+        target->pane->SetTranslate(dest);
+    }
+
+    func_801F3850(cur->field_3134, (u16)(s8)cur->field_0B);
+}

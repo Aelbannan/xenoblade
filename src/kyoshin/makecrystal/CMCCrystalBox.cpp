@@ -5,6 +5,12 @@
 
 #include "kyoshin/makecrystal/CMCCrystalBox.hpp"
 
+#include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/lib/CLibLayout.hpp"
+#include "monolib/util/MemManager.hpp"
+#include "monolib/work/CEventFile.hpp"
+#include "monolib/device/CFileHandle.hpp"
+
 #include <nw4r/lyt.h>
 
 // Retail symbols: func_80137444 keeps the mangled C++ name, but func_80137510
@@ -1502,7 +1508,7 @@ __declspec(noinline) void func_80216EFC(CMCCrystalBox* self) {
     self->unk64 = 3;
 }
 
-void func_80216F8C(){}
+void func_80216F8C(CMCCrystalBox* self){}
 
 // Retail 0x80218EF0: resolve the message texture for one crystal slot and
 // publish it into the box. When the slot holds an item, its kind picks the
@@ -2301,7 +2307,291 @@ void copyShortPair_80219D10(void* dst, void* src){
     *(unsigned short*)((char*)dst + 2) = *(unsigned short*)((char*)src + 2);
 }
 
-void CMCCrystalBox::OnFileEvent() {}
+// Retail 0x8021BB7C: file-load completion callback. The box issues three async
+// reads (main crystal-box layout +0x24, crystal-info arc +0x28, BDAT table
+// +0x2C); when the event's handle matches one of them, the matching branch
+// builds that resource and returns 1, otherwise 0.
+// _savegpr_28 frame (retail) is the -O4,s shape (pragma).
+#pragma optimize_for_size on
+bool CMCCrystalBox::OnFileEvent(CEventFile* event) {
+    CFileHandle* evt = event->mFileHandle;
+    if ((CFileHandle*)subObjPtrs[0] == evt) {
+        // --- main crystal-box layout arc ---
+        reinterpret_cast<UnkClass_8045F564*>(&pad_00[0])->createRegion(
+            mtl::MemManager::getHandleMEM2(), 0x40000,
+            lbl_eu_8050888C + 0x371, 0);
+        Class_8045F858 host(reinterpret_cast<UnkClass_8045F564*>(&pad_00[0]));
+        char buf[0x20];
+        CFileHandle* fh = (CFileHandle*)subObjPtrs[0];
+        void* data = fh->getData();
+        mtl::MemManager::func_80434A4C(0);
+        subObjPtrs[3] = (nw4r::lyt::AnimTransform*)CLibLayout::createArcResourceAccessor();
+        ((nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3])
+            ->Attach(data, lbl_eu_8050888C + 0x37f);
+        func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
+            (nw4r::lyt::Layout**)&subObjPtrs[5],
+            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
+            lbl_eu_8050888C + 0x383);
+        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[6],
+            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
+            lbl_eu_8050888C + 0x39a);
+        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[7],
+            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
+            lbl_eu_8050888C + 0x3b4);
+        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[8],
+            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
+            lbl_eu_8050888C + 0x3d3);
+        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[9],
+            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
+            lbl_eu_8050888C + 0x3f3);
+        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[10],
+            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
+            lbl_eu_8050888C + 0x40e);
+        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[11],
+            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
+            lbl_eu_8050888C + 0x42d);
+        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[12],
+            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
+            lbl_eu_8050888C + 0x44c);
+        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[13],
+            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
+            lbl_eu_8050888C + 0x46c);
+        func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
+            (nw4r::lyt::Layout*)subObjPtrs[5], &subObjPtrs[14],
+            (nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3],
+            lbl_eu_8050888C + 0x48b);
+
+        // Bind the shared font into the layout's root pane.
+        nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((u8*)subObjPtrs[5] + 0x10);
+        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+            1, (nw4r::lyt::Layout*)subObjPtrs[5]);
+        u32 fontHandle = ((CDeviceFontVtblView*)fontObj)->vf7();
+        func_8013676C(rootPane, fontHandle);
+        // Row/column count labels from the two shared counters.
+        u32 cnt = func_801355A0();
+        if (cnt != 0) {
+            func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(
+                (nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x14d, cnt);
+            func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(
+                (nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x12e, cnt);
+            func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(
+                (nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x365, cnt);
+        }
+        u32 cnt2 = func_801355BC();
+        if (cnt2 != 0) {
+            for (u8 i = 1; i <= 30; i++) {
+                sprintf(buf, lbl_eu_8050888C + 0x102, i);
+                func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(
+                    (nw4r::lyt::Layout*)subObjPtrs[5], buf, cnt2);
+            }
+            for (u8 i = 1; i <= 8; i++) {
+                sprintf(buf, lbl_eu_8050888C + 0x11e, i);
+                func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(
+                    (nw4r::lyt::Layout*)subObjPtrs[5], buf, cnt2);
+            }
+            func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(
+                (nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x257, cnt2);
+        }
+
+        func_8021900C(this);
+        ((CLytVf38*)subObjPtrs[5])->vf_30(0);
+
+        // Static labels for the window-kind counter rows.
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x4a6,
+                      func_80136190(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, 2), 0);
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x1bd,
+                      func_80136190(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, 4), 0);
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x4b3,
+                      func_80136190(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, 3), 0);
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x4bf,
+                      func_80136190(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, 0x2e), 0);
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x4c8,
+                      func_80136190(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, 0x2f), 0);
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x4d1,
+                      func_80136190(lbl_eu_8050888C + 0xf4, lbl_eu_8050888C + 0xfd, 4), 0);
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x1ca,
+                      lbl_eu_8050888C + 0x22b, 0);
+
+        // Window title: pick the message by game-manager flag, resolve the
+        // timg texture and publish it onto the pane.
+        const char* msgName = func_80086F9C__Q22cf13CfGameManagerFv(-1)
+                                  ? lbl_eu_8050888C + 0x4dd
+                                  : lbl_eu_8050888C + 0x4e6;
+        u16 id = (u16)func_8013606C(lbl_eu_8050888C + 0x4ef, msgName, 0x49);
+        void* msg = func_80138F78(id);
+        void* res = ((nw4r::lyt::ArcResourceAccessor*)func_801355F4())
+                        ->GetResource(0x74696D67, (const char*)msg, 0);
+        if (res != 0) {
+            func_80137E7C((nw4r::lyt::Layout*)subObjPtrs[5],
+                          lbl_eu_8050888C + 0x4fd, res);
+            // Mirror the timg-resource u16 position header onto the pane. The
+            // double deref of res+8 rides as the vf_3C extra arg (r6) and is
+            // reused as the base of the two u16 reads (retail schedule).
+            u32* d = *(u32**)*(u32**)((u8*)res + 8);
+            u16 w2 = *(u16*)((u8*)d + 2);
+            u16 w0 = *(u16*)d;
+            nw4r::lyt::Pane* pane =
+                ((CLytVf3C3*)(*(void**)((u8*)subObjPtrs[5] + 0x10)))
+                    ->vf_3C(lbl_eu_8050888C + 0x4fd, 1, d);
+            if (pane != 0) {
+                f32 fx;
+                f32 fy;
+                // Dead local pair (8-aligned so MWCC places it at +0x10, the
+                // first 8-aligned slot above the two 4-byte RAII hosts); retail
+                // interleaves the two stores between the pane writes.
+                u64 pos;
+                ((PanePosMirror*)pane)->m4C = fx = (f32)w2;
+                ((f32*)&pos)[0] = fx;
+                ((f32*)&pos)[1] = fy = (f32)w0;
+                ((PanePosMirror*)pane)->m50 = fy;
+            }
+        }
+
+        func_80139198(1);
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x257,
+                      lbl_eu_8050888C + 0x22b, 0);
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x1e6,
+                      lbl_eu_8050888C + 0x22b, 0);
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x1f5,
+                      lbl_eu_8050888C + 0x22b, 0);
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x21c,
+                      lbl_eu_8050888C + 0x22b, 0);
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x22c,
+                      lbl_eu_8050888C + 0x22b, 0);
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x23b,
+                      lbl_eu_8050888C + 0x22b, 0);
+
+        int v = func_801392B4(0);
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x509,
+                      func_80136190(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, 9), 0);
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x516,
+                      func_80136190(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, 0xa), 0);
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x1e6,
+                      func_80136190(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1,
+                                    (u8)v + 10),
+                      0);
+        func_80136B4C((nw4r::lyt::Layout*)subObjPtrs[5], lbl_eu_8050888C + 0x1f5,
+                      func_80136190(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1,
+                                    (u8)v + 0x12),
+                      0);
+
+        void* msg2 = func_80138F78(
+            (u16)func_80136254(lbl_eu_80664090, lbl_eu_8050888C + 0x204, (u8)v));
+        void* res2 = ((nw4r::lyt::ArcResourceAccessor*)subObjPtrs[3])
+                         ->GetResource(0x74696D67, (const char*)msg2, 0);
+        if (res2 != 0) {
+            func_80137E7C((nw4r::lyt::Layout*)subObjPtrs[5],
+                          lbl_eu_8050888C + 0x20f, res2);
+        }
+
+        // Mirror the window-size pane's translate onto field_14F4.
+        nw4r::lyt::Pane* sizePane =
+            ((CLytVf3C*)(*(void**)((u8*)subObjPtrs[5] + 0x10)))
+                ->vf_3C(lbl_eu_8050888C + 0x523, 1);
+        copyVEC3(&field_14F4, (u8*)sizePane + 0x2c);
+
+        // Re-init all six cursor sub-objects from temps (accessor or the
+        // shared resource manager), then poke each member's slot-0x08 virtual.
+        u8 tmpC0[0x18];
+        __ct__CCur07(tmpC0, (void*)subObjPtrs[3]);
+        func_8018B0FC((u8*)this + 0x6c, tmpC0);
+        __dt__6CCur07Fv(tmpC0, -1);
+        ((CCurVf0C*)((u8*)this + 0x6c))->vf_00();
+
+        u8 tmpA8[0x18];
+        __ct__CCur09(tmpA8, (void*)subObjPtrs[3]);
+        func_8018B0FC((u8*)this + 0x84, tmpA8);
+        __dt__6CCur09Fv(tmpA8, -1);
+        ((CCurVf0C*)((u8*)this + 0x84))->vf_00();
+
+        // Two direction vectors for the +0x84 cursor's quad.
+        float v1[3];
+        code80135FDC_setVec3(v1, lbl_eu_80668488, lbl_eu_8066848C,
+                             lbl_eu_8066845C);
+        u32 t1[3];
+        t1[0] = *(u32*)&v1[0];
+        t1[1] = *(u32*)&v1[1];
+        t1[2] = *(u32*)&v1[2];
+        float v2[3];
+        code80135FDC_setVec3(v2, lbl_eu_80668490, lbl_eu_8066848C,
+                             lbl_eu_8066845C);
+        u32 t2[3];
+        t2[0] = *(u32*)&v2[0];
+        t2[1] = *(u32*)&v2[1];
+        t2[2] = *(u32*)&v2[2];
+        func_801D24E8((u8*)this + 0x84, t2, t1);
+
+        u8 tmp90[0x18];
+        __ct__CCur18(tmp90, func_801355F4());
+        func_8018B0FC((u8*)this + 0x9c, tmp90);
+        __dt__6CCur18Fv(tmp90, -1);
+        ((CCurVf0C*)((u8*)this + 0x9c))->vf_00();
+
+        u8 tmp78[0x18];
+        __ct__CCur11(tmp78, (void*)subObjPtrs[3]);
+        func_8018B0FC((u8*)this + 0xb4, tmp78);
+        __dt__6CCur11Fv(tmp78, -1);
+        ((CCurVf0C*)((u8*)this + 0xb4))->vf_00();
+
+        u8 tmp60[0x18];
+        __ct__CCur16(tmp60, (void*)subObjPtrs[3]);
+        func_8018B0FC((u8*)this + 0xcc, tmp60);
+        __dt__6CCur16Fv(tmp60, -1);
+        ((CCurVf0C*)((u8*)this + 0xcc))->vf_00();
+
+        u8 tmp48[0x18];
+        __ct__CCur18(tmp48, func_801355F4());
+        func_8018B0FC((u8*)this + 0xe4, tmp48);
+        __dt__6CCur18Fv(tmp48, -1);
+        ((CCurVf0C*)((u8*)this + 0xe4))->vf_00();
+
+        func_80216F8C(this);
+        subObjPtrs[0] = 0;
+        reinterpret_cast<UnkClass_8045F564*>(&pad_00[0])->func_8045F810();
+        return true;
+    }
+    if ((CFileHandle*)subObjPtrs[1] == evt) {
+        // --- crystal-info arc ---
+        reinterpret_cast<UnkClass_8045F564*>(&pad_00[0x10])->createRegion(
+            mtl::MemManager::getHandleMEM2(), 0x100,
+            lbl_eu_8050888C + 0x530, 0);
+        Class_8045F858 host2(reinterpret_cast<UnkClass_8045F564*>(&pad_00[0x10]));
+        CFileHandle* fh2 = (CFileHandle*)subObjPtrs[1];
+        void* data2 = fh2->getData();
+        mtl::MemManager::func_80434A4C(0);
+        subObjPtrs[4] = (nw4r::lyt::AnimTransform*)CLibLayout::createArcResourceAccessor();
+        ((nw4r::lyt::ArcResourceAccessor*)subObjPtrs[4])
+            ->Attach(data2, lbl_eu_8050888C + 0x37f);
+        func_80216F8C(this);
+        subObjPtrs[1] = 0;
+        reinterpret_cast<UnkClass_8045F564*>(&pad_00[0x10])->func_8045F810();
+        return true;
+    }
+    if ((CFileHandle*)subObjPtrs[2] == evt) {
+        // --- BDAT table file ---
+        CFileHandle* fh3 = (CFileHandle*)subObjPtrs[2];
+        void* data3 = fh3->getData();
+        func_8003AA34();
+        if (getFP__FPCc(lbl_eu_8050888C + 0x541) == 0) {
+            func_8003AA78__5CBdatFUlPv(2, data3);
+        }
+        func_8003AA34();
+        lbl_eu_806646D0 = (unsigned long)getFP__FPCc(lbl_eu_8050888C + 0x550);
+        func_80216F8C(this);
+        subObjPtrs[2] = 0;
+        return true;
+    }
+    return false;
+}
+#pragma optimize_for_size off
 
 void func_80219D10(CMCCrystalBoxParam* dst, const CMCCrystalBoxParam* src) {
     dst->m0 = (unsigned short)src->m0;

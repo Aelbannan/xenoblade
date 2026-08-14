@@ -36,6 +36,23 @@ typedef uint32_t u32;
 typedef int32_t s32;
 #endif
 
+// Dual-mode data-label entry used by the include/lbls_<area>.hpp headers:
+// the MWCC matching build declares the label (`extern`; the retail image
+// supplies the data), non-MWCC builds define it. The generated data TU
+// (port/data_defs.cpp) defines LBLS_DEFINE_DATA BEFORE including types.h so
+// the macro is baked in define mode; every other TU sees extern. Note the
+// mode is chosen at macro-DEFINITION time, hence the ordering requirement.
+#if defined(__MWERKS__) && !defined(NONMATCHING)
+#  define LBLS_ENTRY(ext, dfn, init) extern ext;
+#elif defined(LBLS_DEFINE_DATA)
+#  define LBLS_ENTRY(ext, dfn, init) dfn = LBLS_UNWRAP init;
+#else
+#  define LBLS_ENTRY(ext, dfn, init) extern ext;
+#endif
+#ifndef LBLS_UNWRAP
+#  define LBLS_UNWRAP(...) __VA_ARGS__
+#endif
+
 typedef unsigned short u16;
 typedef signed short s16;
 

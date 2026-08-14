@@ -29,6 +29,80 @@ public:
     // TODO: add fields
 };
 
+// Cast-only class with a virtual destructor at vtable+0x08 (the first
+// declared virtual after the 2 RTTI header entries). Used for delete-style
+// release calls with mode 1 on the +0x44/+0x5C sub-objects: retail's
+// `if (ptr) delete ptr` shows two identical null tests (the if plus the
+// delete expansion's own guard), which the plain manual-cast form cannot
+// reproduce.
+struct CItemBoxObjVt08 {
+    virtual ~CItemBoxObjVt08();  // vtable+0x08
+};
+
+// Cast-only vtable interface for the +0x70..+0xD0 sub-objects: method at
+// vtable+0x0C (raw slot 3, no args). MWCC prepends 2 RTTI header entries,
+// so the second declared virtual lands here.
+struct CItemBoxObjVt0C {
+    virtual void _v08();
+    virtual void _v0C();  // vtable+0x0C
+};
+
+// Cast-only vtable interface for the CItemImplInstances object: method at
+// vtable+0x2C (raw slot 11). MWCC prepends 2 RTTI header entries, so 9
+// dummy virtuals precede the method.
+struct CItemInstVt2C {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void _v24();
+    virtual void _v28();
+    virtual void* _v2C(void* arg, u8 slot);  // vtable+0x2C
+};
+
+// Cast-only vtable interface for the CItemImplInstances object: method at
+// vtable+0x40 (raw slot 16). MWCC prepends 2 RTTI header entries, so 14
+// dummy virtuals precede the method.
+struct CItemInstVt40 {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void _v24();
+    virtual void _v28();
+    virtual void _v2C();
+    virtual void _v30();
+    virtual void _v34();
+    virtual void _v38();
+    virtual void _v3C();
+    virtual u32 _v40(void* arg, u8 slot);  // vtable+0x40
+};
+
+// Cast-only vtable interface for the +0x44 layout object: method at
+// vtable+0x38 (raw slot 14). MWCC prepends 2 RTTI header entries, so 12
+// dummy virtuals precede the method.
+struct CItemBoxLayoutVt38 {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void _v24();
+    virtual void _v28();
+    virtual void _v2C();
+    virtual void _v30();
+    virtual void _v34();
+    virtual void _v38(void* arg, int n);  // vtable+0x38
+};
+
 // Cast-only vtable interface for the +0xA0/+0xD0 sub-objects: with -RTTI on,
 // the third declared virtual lands at vtable+0x10 (slots 0/4 hidden RTTI),
 // matching retail's lwz r12,16(r12) dispatch that the manual-cast form
@@ -151,6 +225,32 @@ struct CItemInstVt20 {
     virtual void _v18();
     virtual void _v1C();
     virtual void* _v20(void* arg);  // vtable+0x20
+};
+
+// Cast-only vtable interface for the CItemImplInstances object: method at
+// vtable+0x54 (raw slot 21). MWCC prepends 2 RTTI header entries, so 19
+// dummy virtuals precede the method.
+struct CItemInstVt54 {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void _v24();
+    virtual void _v28();
+    virtual void _v2C();
+    virtual void _v30();
+    virtual void _v34();
+    virtual void _v38();
+    virtual void _v3C();
+    virtual void _v40();
+    virtual void _v44();
+    virtual void _v48();
+    virtual void _v4C();
+    virtual void _v50();
+    virtual u32 _v54(void* arg);  // vtable+0x54
 };
 
 // 10-byte grid cell: stored item id + 8 per-cell flag bytes

@@ -480,7 +480,7 @@
   "address": "lbl_eu_8050EF90",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/CEquipItemBox.hpp:339 CEquipItemBoxSlotTable"
+   "src/kyoshin/CEquipItemBox.hpp:359 CEquipItemBoxSlotTable"
   ]
  },
  {
@@ -1371,7 +1371,7 @@
   "address": "lbl_eu_8052E568",
   "reason": "type_conflict",
   "sites": [
-   "src/kyoshin/CItemBoxInfo.hpp:155 char[]",
+   "src/kyoshin/CItemBoxInfo.hpp:167 char[]",
    "src/kyoshin/code_80135FDC.cpp:63 u8[]"
   ]
  },
@@ -1379,7 +1379,7 @@
   "address": "lbl_eu_8052E590",
   "reason": "type_conflict",
   "sites": [
-   "src/kyoshin/CItemBoxInfo.hpp:154 char[]",
+   "src/kyoshin/CItemBoxInfo.hpp:166 char[]",
    "src/kyoshin/code_80135FDC.cpp:64 u8[]"
   ]
  },
@@ -2586,7 +2586,7 @@
   "address": "lbl_eu_8056F1D8",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/src/coli/code_804A6C60.cpp:440 CColiDispatchFn[]"
+   "libs/monolib/src/coli/code_804A6C60.cpp:548 CColiDispatchFn[]"
   ]
  },
  {
@@ -4538,8 +4538,9 @@
   "address": "lbl_eu_80664090",
   "reason": "defined_in_source",
   "sites": [
+   "src/kyoshin/CItemBoxInfo.cpp:125 void*",
    "src/kyoshin/CPartyState.hpp:166 char*",
-   "src/kyoshin/CPassiveSkill.hpp:497 void*",
+   "src/kyoshin/CPassiveSkill.hpp:539 void*",
    "src/kyoshin/CSaveLoad.cpp:38 u8[]",
    "src/kyoshin/makecrystal/CMCCrystalSupport.cpp:15 void*",
    "src/kyoshin/menu/CMenuBattleCommu.hpp:188 void*",
@@ -4580,7 +4581,7 @@
    "src/kyoshin/CCollepedia.hpp:147 void*",
    "src/kyoshin/CFloorMap.cpp:507 u32",
    "src/kyoshin/CFloorMap.hpp:624 u32",
-   "src/kyoshin/CItemBoxInfo.cpp:119 void*",
+   "src/kyoshin/CItemBoxInfo.cpp:103 void*",
    "src/kyoshin/CItemBoxLine.hpp:392 void*",
    "src/kyoshin/CKizunaTalkList.hpp:127 u8*",
    "src/kyoshin/CMapSel.hpp:152 void*",
@@ -4627,9 +4628,9 @@
   "reason": "defined_in_source",
   "sites": [
    "src/kyoshin/CArtsInfo.hpp:435 u32",
-   "src/kyoshin/CEquipItemBox.hpp:401 u32",
+   "src/kyoshin/CEquipItemBox.hpp:425 u32",
    "src/kyoshin/CItemBoxGrid.cpp:98 u32",
-   "src/kyoshin/CItemBoxInfo.cpp:124 void*",
+   "src/kyoshin/CItemBoxInfo.cpp:108 void*",
    "src/kyoshin/CItemBoxLine.hpp:394 void*",
    "src/kyoshin/CQstLogInfo.hpp:60 u32",
    "src/kyoshin/CQuestWindow.hpp:222 u32",
@@ -4657,8 +4658,9 @@
   "sites": [
    "src/kyoshin/CCollepedia.hpp:167 u32",
    "src/kyoshin/CEquipChange.hpp:302 u32",
+   "src/kyoshin/CEquipItemBox.hpp:513 u32",
    "src/kyoshin/CItemBoxGrid.cpp:99 u32",
-   "src/kyoshin/CItemBoxInfo.cpp:121 void*",
+   "src/kyoshin/CItemBoxInfo.cpp:105 void*",
    "src/kyoshin/CItemBoxLine.hpp:393 void*",
    "src/kyoshin/CQstLogInfo.hpp:61 u32",
    "src/kyoshin/CQuestWindow.hpp:223 u32",
@@ -4672,9 +4674,9 @@
   "reason": "defined_in_source",
   "sites": [
    "src/kyoshin/CArtsInfo.cpp:33 u32",
-   "src/kyoshin/CEquipItemBox.hpp:437 u32",
+   "src/kyoshin/CEquipItemBox.hpp:538 u32",
    "src/kyoshin/CItemBoxGrid.cpp:134 u32",
-   "src/kyoshin/CItemBoxInfo.cpp:120 void*",
+   "src/kyoshin/CItemBoxInfo.cpp:104 void*",
    "src/kyoshin/CItemBoxLine.hpp:524 u32",
    "src/kyoshin/cf/CfBdat.hpp:28 void*",
    "src/kyoshin/cf/CfGameManager.cpp:708 u32",
@@ -4687,9 +4689,9 @@
   "address": "lbl_eu_806640F8",
   "reason": "defined_in_source",
   "sites": [
-   "src/kyoshin/CEquipItemBox.hpp:402 u32",
+   "src/kyoshin/CEquipItemBox.hpp:426 u32",
    "src/kyoshin/CItemBoxGrid.cpp:101 u32",
-   "src/kyoshin/CItemBoxInfo.cpp:123 void*",
+   "src/kyoshin/CItemBoxInfo.cpp:107 void*",
    "src/kyoshin/CItemBoxLine.hpp:525 u32",
    "src/kyoshin/cf/CfBdat.hpp:29 void*",
    "src/kyoshin/code_80135FDC.hpp:152 u32",
@@ -4709,7 +4711,7 @@
   "sites": [
    "src/kyoshin/CCollepedia.hpp:148 void*",
    "src/kyoshin/CItemBoxGrid.cpp:102 u32",
-   "src/kyoshin/CItemBoxInfo.cpp:118 void*",
+   "src/kyoshin/CItemBoxInfo.cpp:102 void*",
    "src/kyoshin/CItemBoxLine.hpp:391 void*",
    "src/kyoshin/CPresentWin.hpp:72 u32",
    "src/kyoshin/CQstLogInfo.hpp:62 u32",
@@ -4722,7 +4724,7 @@
   "reason": "type_conflict",
   "sites": [
    "src/kyoshin/CItemBoxGrid.cpp:103 u32",
-   "src/kyoshin/CItemBoxInfo.cpp:140 void*",
+   "src/kyoshin/CItemBoxInfo.cpp:124 void*",
    "src/kyoshin/CItemBoxLine.hpp:528 u32",
    "src/kyoshin/code_80135FDC.hpp:156 u32"
   ]
@@ -6683,56 +6685,56 @@
   "address": "lbl_eu_80665910",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/src/coli/code_804A6C60.cpp:36 ml::coli::CColiObject*"
+   "libs/monolib/src/coli/code_804A6C60.cpp:47 ml::coli::CColiObject*"
   ]
  },
  {
   "address": "lbl_eu_80665914",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/src/coli/code_804A6C60.cpp:37 ml::coli::CColiObject*"
+   "libs/monolib/src/coli/code_804A6C60.cpp:48 ml::coli::CColiObject*"
   ]
  },
  {
   "address": "lbl_eu_80665918",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/src/coli/code_804A6C60.cpp:38 ml::coli::CColiObject*"
+   "libs/monolib/src/coli/code_804A6C60.cpp:49 ml::coli::CColiObject*"
   ]
  },
  {
   "address": "lbl_eu_8066591C",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/src/coli/code_804A6C60.cpp:39 ml::coli::CColiObject*"
+   "libs/monolib/src/coli/code_804A6C60.cpp:50 ml::coli::CColiObject*"
   ]
  },
  {
   "address": "lbl_eu_80665920",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/src/coli/code_804A6C60.cpp:40 ml::coli::CColiObject*"
+   "libs/monolib/src/coli/code_804A6C60.cpp:51 ml::coli::CColiObject*"
   ]
  },
  {
   "address": "lbl_eu_80665928",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/src/coli/code_804A6C60.cpp:41 ml::coli::CColiObject*"
+   "libs/monolib/src/coli/code_804A6C60.cpp:52 ml::coli::CColiObject*"
   ]
  },
  {
   "address": "lbl_eu_8066592C",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/src/coli/code_804A6C60.cpp:42 ml::coli::CColiObject*"
+   "libs/monolib/src/coli/code_804A6C60.cpp:53 ml::coli::CColiObject*"
   ]
  },
  {
   "address": "lbl_eu_80665930",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/src/coli/code_804A6C60.cpp:43 ml::coli::CColiObject*"
+   "libs/monolib/src/coli/code_804A6C60.cpp:54 ml::coli::CColiObject*"
   ]
  },
  {

@@ -513,33 +513,36 @@ s16 func_801C5F48(CItemBoxGridFull* self, u16 idx) {
     return -1;
 }
 
+// Item sell price for the cell at page*0x1e+idx: 0 when the cell is out of
+// range or the referenced item object is invalid. Otherwise the item's base
+// price (func_801C7958) scaled by kind type (0xB unchanged, 0xD half, else
+// tenth), then multiplied by 100 + the party's skill-0x93 bonus and rounded.
 u32 func_801C5FC0(CItemBoxGridFull* self, u16 idx) {
-    u8* p = (u8*)self;
-    s8 base = (s8)p[0x2804];
-    u16 offset = (u16)(base * 0x1e + idx);
-    if (offset >= *(u16*)(p + 0x2800)) return 0;
+    s8 base = (s8)self->field_2804;
+    u32 offset = (u16)(base * 0x1e + idx);
+    if (offset >= (u32)self->field_2800) return 0;
 
-    u8 cat = p[0x2802];
-    s16 val = *(s16*)(p + offset * 0xa);
-    void* obj = func_80157C4C(cat, val);
+    void* obj = func_80157C4C(self->field_2802, self->entries[offset].id);
     if (!obj || !*(u32*)obj) return 0;
 
     u32 kind = *(u32*)obj >> 20;
     func_801393CC(kind);
-    u16 type = (u16)func_801392E4(kind);
+    u32 type = func_801392E4(kind);
     func_80139358(kind);
     u32 price = func_801C7958(self, obj);
 
-    if (type == 0xB) {
-        price = (u32)((double)price * 0.5);
-    } else if (type != 0xD) {
-        price = (u32)((double)price * 0.1);
+    if ((u32)(u16)type == 0xB) {
+        // kind 0xB sells at the base price unchanged
+    } else if ((u32)(u16)type == 0xD) {
+        price = (u32)((double)price * 0.5f);
+    } else {
+        price = (u32)((double)price * 0.1f);
     }
 
     u32 basePrice = 0x64;
     u8 partyCount = code80135FDC_getByte_64077();
     u32 i;
-    for (i = 0; i < (u32)partyCount; i++) {
+    for (i = 0; (u32)(u8)i < (u32)partyCount; i++) {
         u32 member = func_801392B4((u8)i);
         void* charData = (void*)func_8009EC9C((u32)(u8)member);
         void* ptr = (void*)((u8*)charData + 0x3534);
@@ -548,7 +551,7 @@ u32 func_801C5FC0(CItemBoxGridFull* self, u16 idx) {
         }
     }
 
-    return (u32)func_801C6158((double)(price * basePrice) * 0.01);
+    return (u32)func_801C6158(0.01f * (double)(price * basePrice));
 }
 
 // Round a double to nearest integer with .5 tie-breaking biased away from zero.
@@ -1086,25 +1089,44 @@ void func_801C8534(CItemBoxGridFull* self) {
     }
 }
 
-// Bubble sort entries by byte comparison.
+// Two-pass bubble sort: pass 1 orders entries ascending by flag byte 5
+// (flags[3]), pass 2 by flag byte 4 (flags[2]). Each pass swaps adjacent
+// pairs while the earlier entry's byte is strictly smaller, stopping early
+// when a pass makes no swap. The 3-slot temp shuffle (12-byte stride) keeps
+// the retail CopyEntry9Bytes / func_801C562C call sequence.
 void func_801C8634(CItemBoxGridFull* self) {
-    u32 n = self->field_2800;
     u32 i;
-    for (i = 0; i < n - 1; i++) {
-        u32 limit = n - 1 - i;
-        u32 j;
+    for (i = 0; (u16)i < self->field_2800 - 1; i++) {
+        u32 i16 = (u16)i;
         int swapped = 0;
-        char tmp[27];
-        for (j = 0; j < limit; j++) {
-            u8* e1 = (u8*)self + j * 10;
-            u8* e2 = (u8*)self + (j + 1) * 10;
-            if (e1[6] <= e2[6]) continue;
-            CopyEntry9Bytes(tmp, (const char*)e1);
-            CopyEntry9Bytes(tmp + 9, (const char*)e2);
-            func_801C562C(e1, tmp + 9);
-            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
-            func_801C562C(e2, tmp);
-            swapped = 1;
+        u32 j;
+        char tmp[36];
+        for (j = 0; (u16)j < self->field_2800 - 1 - (s32)i16; j++) {
+            CItemBoxGridEntry* e1 = &self->entries[(u16)j];
+            CItemBoxGridEntry* e2 = &self->entries[(u16)j + 1];
+            if ((u32)e1->flags[3] < (u32)e2->flags[3]) {
+                CopyEntry9Bytes(tmp, (const char*)e1);
+                func_801C562C(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
+                func_801C562C(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
+                swapped = 1;
+            }
+        }
+        if (!swapped) break;
+    }
+    for (u32 i = 0; (u16)i < self->field_2800 - 1; i++) {
+        u32 i16 = (u16)i;
+        int swapped = 0;
+        u32 j;
+        char tmp2[36];
+        for (j = 0; (u16)j < self->field_2800 - 1 - (s32)i16; j++) {
+            CItemBoxGridEntry* e1 = &self->entries[(u16)j];
+            CItemBoxGridEntry* e2 = &self->entries[(u16)j + 1];
+            if ((u32)e1->flags[2] < (u32)e2->flags[2]) {
+                CopyEntry9Bytes(tmp2, (const char*)e1);
+                func_801C562C(e1, CopyEntry9Bytes(tmp2 + 12, (const char*)e2));
+                func_801C562C(e2, CopyEntry9Bytes(tmp2 + 24, (const char*)tmp2));
+                swapped = 1;
+            }
         }
         if (!swapped) break;
     }
@@ -1191,57 +1213,65 @@ void func_801C8994(CItemBoxGridFull* self) {
     }
 }
 
-// Bubble sort entries by float comparison.
-void func_801C8ACC(CItemBoxGridFull* self) {
-    u32 n = self->field_2800;
+// Bubble-sort grid entries so items whose slot-status name lookup matches
+// `target` group at the front: an adjacent pair (j, j+1) is swapped when
+// entry j+1's key byte equals target but entry j's does not. Key = each
+// item's vtable+0x54 slot status, looked up in the message table
+// (lbl_eu_806640D8) with the "name" key at +0x217.
+void func_801C8ACC(CItemBoxGridFull* self, u32 target) {
     u32 i;
-    for (i = 0; i < n - 1; i++) {
-        u32 limit = n - 1 - i;
-        u32 j;
+    for (i = 0; (u16)i < self->field_2800 - 1; i++) {
         int swapped = 0;
-        char tmp[27];
-        for (j = 0; j < limit; j++) {
-            u8* e1 = (u8*)self + j * 10;
-            u8* e2 = (u8*)self + (j + 1) * 10;
-            void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
-            void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
-            float v1 = func_801C9F88(self, obj1);
-            float v2 = func_801C9F88(self, obj2);
-            if (v1 >= v2) continue;
-            CopyEntry9Bytes(tmp, (const char*)e1);
-            CopyEntry9Bytes(tmp + 9, (const char*)e2);
-            func_801C562C(e1, tmp + 9);
-            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
-            func_801C562C(e2, tmp);
-            swapped = 1;
+        u32 j;
+        char tmp[36];
+        for (j = 0; (u16)j < self->field_2800 - 1 - (u16)i; j++) {
+            CItemBoxGridEntry* e1 = &self->entries[(u16)j];
+            CItemBoxGridEntry* e2 = &self->entries[(u16)j + 1];
+            void* obj1 = func_80157C4C(self->field_2802, e1->id);
+            void* obj2 = func_80157C4C(self->field_2802, e2->id);
+            u32 v1 = ((CItemInstVt54*)CItem_initItemImplInstances(obj1))->_v54(obj1);
+            u32 v2 = ((CItemInstVt54*)CItem_initItemImplInstances(obj2))->_v54(obj2);
+            u32 c1 = func_801361E8(lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x217], (u16)v1);
+            u32 c2 = func_801361E8(lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x217], (u16)v2);
+            u32 m1 = (u8)c1 == target;
+            u32 m2 = (u8)c2 == target;
+            if (m1 < m2) {
+                CopyEntry9Bytes(tmp, (const char*)e1);
+                func_801C562C(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
+                func_801C562C(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
+                swapped = 1;
+            }
         }
         if (!swapped) break;
     }
 }
 
-// Bubble sort entries by float comparison.
-void func_801C8C58(CItemBoxGridFull* self) {
-    u32 n = self->field_2800;
+// Bubble-sort grid entries so items whose slot-status name lookup matches
+// `target` group at the front (same shape as func_801C8ACC, key string at
+// +0x220).
+void func_801C8C58(CItemBoxGridFull* self, u32 target) {
     u32 i;
-    for (i = 0; i < n - 1; i++) {
-        u32 limit = n - 1 - i;
-        u32 j;
+    for (i = 0; (u16)i < self->field_2800 - 1; i++) {
         int swapped = 0;
-        char tmp[27];
-        for (j = 0; j < limit; j++) {
-            u8* e1 = (u8*)self + j * 10;
-            u8* e2 = (u8*)self + (j + 1) * 10;
-            void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
-            void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
-            float v1 = func_801C9F88(self, obj1);
-            float v2 = func_801C9F88(self, obj2);
-            if (v1 >= v2) continue;
-            CopyEntry9Bytes(tmp, (const char*)e1);
-            CopyEntry9Bytes(tmp + 9, (const char*)e2);
-            func_801C562C(e1, tmp + 9);
-            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
-            func_801C562C(e2, tmp);
-            swapped = 1;
+        u32 j;
+        char tmp[36];
+        for (j = 0; (u16)j < self->field_2800 - 1 - (u16)i; j++) {
+            CItemBoxGridEntry* e1 = &self->entries[(u16)j];
+            CItemBoxGridEntry* e2 = &self->entries[(u16)j + 1];
+            void* obj1 = func_80157C4C(self->field_2802, e1->id);
+            void* obj2 = func_80157C4C(self->field_2802, e2->id);
+            u32 v1 = ((CItemInstVt54*)CItem_initItemImplInstances(obj1))->_v54(obj1);
+            u32 v2 = ((CItemInstVt54*)CItem_initItemImplInstances(obj2))->_v54(obj2);
+            u32 c1 = func_801361E8(lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x220], (u16)v1);
+            u32 c2 = func_801361E8(lbl_eu_806640D8, (const char*)&lbl_eu_8050566C[0x220], (u16)v2);
+            u32 m1 = (u8)c1 == target;
+            u32 m2 = (u8)c2 == target;
+            if (m1 < m2) {
+                CopyEntry9Bytes(tmp, (const char*)e1);
+                func_801C562C(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
+                func_801C562C(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
+                swapped = 1;
+            }
         }
         if (!swapped) break;
     }
@@ -1620,29 +1650,35 @@ void func_801C9CCC(CItemBoxGridFull* self) {
     }
 }
 
-// Bubble sort entries by float comparison.
-void func_801C9E1C(CItemBoxGridFull* self) {
-    u32 n = self->field_2800;
+// Bubble-sort grid entries so items whose kind-name lookup matches `target`
+// group at the front: an adjacent pair (j, j+1) is swapped when entry j+1's
+// key byte equals target but entry j's does not. Key = message-table
+// (lbl_eu_80664110) lookup of the kind's short id ("name" key at +0x109).
+void func_801C9E1C(CItemBoxGridFull* self, u32 target) {
     u32 i;
-    for (i = 0; i < n - 1; i++) {
-        u32 limit = n - 1 - i;
-        u32 j;
+    for (i = 0; (u16)i < self->field_2800 - 1; i++) {
         int swapped = 0;
-        char tmp[27];
-        for (j = 0; j < limit; j++) {
-            u8* e1 = (u8*)self + j * 10;
-            u8* e2 = (u8*)self + (j + 1) * 10;
-            void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
-            void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
-            float v1 = func_801C9F88(self, obj1);
-            float v2 = func_801C9F88(self, obj2);
-            if (v1 >= v2) continue;
-            CopyEntry9Bytes(tmp, (const char*)e1);
-            CopyEntry9Bytes(tmp + 9, (const char*)e2);
-            func_801C562C(e1, tmp + 9);
-            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
-            func_801C562C(e2, tmp);
-            swapped = 1;
+        u32 j;
+        char tmp[36];
+        for (j = 0; (u16)j < self->field_2800 - 1 - (u16)i; j++) {
+            CItemBoxGridEntry* e1 = &self->entries[(u16)j];
+            CItemBoxGridEntry* e2 = &self->entries[(u16)j + 1];
+            void* obj1 = func_80157C4C(self->field_2802, e1->id);
+            void* obj2 = func_80157C4C(self->field_2802, e2->id);
+            u32 w1 = *(u32*)obj1;
+            u32 tbl = lbl_eu_80664110;
+            u32 c1 = func_801361E8(tbl, (const char*)&lbl_eu_8050566C[0x109], (u16)func_80139358(w1 >> 20));
+            u32 w2 = *(u32*)obj2;
+            u32 tbl2 = lbl_eu_80664110;
+            u32 c2 = func_801361E8(tbl2, (const char*)&lbl_eu_8050566C[0x109], (u16)func_80139358(w2 >> 20));
+            u32 m1 = (u8)c1 == target;
+            u32 m2 = (u8)c2 == target;
+            if (m1 < m2) {
+                CopyEntry9Bytes(tmp, (const char*)e1);
+                func_801C562C(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
+                func_801C562C(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
+                swapped = 1;
+            }
         }
         if (!swapped) break;
     }
@@ -1888,6 +1924,11 @@ void func_801CAD8C(void* self, int r4) {
 }
 #pragma optimize_for_size off
 
+// Teardown: release the CBdat banners, file handles, heap block, layout
+// sub-objects and all UI panes, in retail's exact order. optimize_for_size
+// merges the r30/r31 saves into retail's stmw prologue, and the delete-style
+// releases reproduce the double null test (if + delete's own guard).
+#pragma optimize_for_size on
 void func_801CAE9C(void* self, int r4) {
     u8* p = (u8*)self;
 
@@ -1908,44 +1949,29 @@ void func_801CAE9C(void* self, int r4) {
         *(u32*)(p + 0x38) = 0;
     }
 
-    if (*(void**)(p + 0x44)) {
-        void** vtbl = *(void***)(*(u32*)(p + 0x44));
-        ((void(*)(void*, int))vtbl[2])(*(void**)(p + 0x44), 1);
+    void* obj44 = *(void**)(p + 0x44);
+    if (obj44) {
+        delete (CItemBoxObjVt08*)obj44;
         *(u32*)(p + 0x44) = 0;
     }
 
     func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(*(void**)(p + 0x3c));
     func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(*(void**)(p + 0x40));
 
-    if (*(void**)(p + 0x5c)) {
-        void** vtbl = *(void***)(*(u32*)(p + 0x5c));
-        ((void(*)(void*, int))vtbl[2])(*(void**)(p + 0x5c), 1);
+    void* obj5c = *(void**)(p + 0x5c);
+    if (obj5c) {
+        delete (CItemBoxObjVt08*)obj5c;
         *(u32*)(p + 0x5c) = 0;
     }
 
     func_8045F778__17UnkClass_8045F564Fv(p + 0x8);
     func_8045F778__17UnkClass_8045F564Fv(p + 0x18);
 
-    {
-        void** vtbl = *(void***)(p + 0x70);
-        ((void(*)(void*))vtbl[3])(p + 0x70);
-    }
-    {
-        void** vtbl = *(void***)(p + 0x88);
-        ((void(*)(void*))vtbl[3])(p + 0x88);
-    }
-    {
-        void** vtbl = *(void***)(p + 0xa0);
-        ((void(*)(void*))vtbl[3])(p + 0xa0);
-    }
-    {
-        void** vtbl = *(void***)(p + 0xb8);
-        ((void(*)(void*))vtbl[3])(p + 0xb8);
-    }
-    {
-        void** vtbl = *(void***)(p + 0xd0);
-        ((void(*)(void*))vtbl[3])(p + 0xd0);
-    }
+    ((CItemBoxObjVt0C*)(p + 0x70))->_v0C();
+    ((CItemBoxObjVt0C*)(p + 0x88))->_v0C();
+    ((CItemBoxObjVt0C*)(p + 0xa0))->_v0C();
+    ((CItemBoxObjVt0C*)(p + 0xb8))->_v0C();
+    ((CItemBoxObjVt0C*)(p + 0xd0))->_v0C();
 
     func_801D3258(p + 0xe8);
     func_801D4174(p + 0x1d8);
@@ -1956,6 +1982,7 @@ void func_801CAE9C(void* self, int r4) {
     func_8022B7F4(p + 0x4ac);
     func_8022B7F4(p + 0x4e8);
 }
+#pragma optimize_for_size off
 
 // Check if item grid is fully ready.
 u32 func_801CB038(void* self) {

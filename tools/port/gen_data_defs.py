@@ -319,6 +319,19 @@ def generate(rows: list[DataSymbol], region: str, symbols_path: Path,
         kept = [r for r in kept if r.name not in covered]
         skipped["covered by lbl area headers (lbls_manifest.json)"] = \
             skipped.get("covered by lbl area headers (lbls_manifest.json)", 0) + before - len(kept)
+    # Addresses the decomp source itself DEFINES (bare definitions in src/libs
+    # TUs -- the matching build's .bss storage) must not be defined here either:
+    # the port compiles those same TUs, so defining them twice is a link error.
+    exclusions_path = _REPO / "tools" / "coop" / "lbls_exclusions.json"
+    if exclusions_path.is_file():
+        src_defined = {e["address"]
+                       for e in json.loads(exclusions_path.read_text())
+                       if e.get("reason") == "defined_in_source"}
+        if src_defined:
+            before = len(kept)
+            kept = [r for r in kept if r.name not in src_defined]
+            skipped["defined by src/libs TUs (lbls_exclusions.json)"] = \
+                skipped.get("defined by src/libs TUs (lbls_exclusions.json)", 0) + before - len(kept)
 
     by_section: dict[str, list[DataSymbol]] = defaultdict(list)
     for r in kept:
@@ -350,13 +363,16 @@ def generate(rows: list[DataSymbol], region: str, symbols_path: Path,
     lines.append("#if defined(__MWERKS__) && !defined(NONMATCHING)")
     lines.append("// Matching build: the retail image supplies all data — nothing defined.")
     lines.append("#else")
-    lines.append("#include \"types.h\"")
     if manifest:
         lines.append("")
-        lines.append("// Data owned by the dual-mode area lbl headers: define it once here")
-        lines.append("// (LBLS_DEFINE_DATA makes the headers emit definitions instead of")
-        lines.append("// extern; every other TU sees extern).")
+        lines.append("// Data owned by the dual-mode area lbl headers: define it once here.")
+        lines.append("// LBLS_DEFINE_DATA must be set BEFORE including types.h: the LBLS_ENTRY")
+        lines.append("// macro in types.h picks its mode at macro-definition time, so the")
+        lines.append("// headers (which include types.h) expand to definitions for this TU")
+        lines.append("// and extern everywhere else.")
         lines.append("#define LBLS_DEFINE_DATA")
+    lines.append("#include \"types.h\"")
+    if manifest:
         for hdr in sorted(manifest):
             lines.append(f"#include <{hdr}>")
         lines.append("#undef LBLS_DEFINE_DATA")

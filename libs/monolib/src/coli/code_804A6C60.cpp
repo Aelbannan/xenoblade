@@ -5,6 +5,7 @@
 #include <harness_catalog.h>
 #include <monolib/coli/code_804A6C60.hpp>
 #include <monolib/coli/coli_types.hpp>
+#include <monolib/lod/CLODCacheManagerS.hpp>
 #include <monolib/util/MemManager.hpp>
 #include <nw4r/math.h>
 #include <revolution/mtx/mtx.h>
@@ -14,6 +15,13 @@
 using ml::coli::CColiObject;
 using nw4r::math::VEC3;
 using nw4r::math::_VEC3;
+
+// 3-word sub-spec copied raw into the +0x44 point; full definition appears
+// below the ctor family that uses it.
+struct CColiSubSpec804A7878;
+// Embedded CColiProc base sub-object at +0x04; definition appears below.
+struct CColiProcLocal;
+extern "C" void __ct__CColiProc(CColiProcLocal* self);
 
 // SDA2 zero constant used to fill the axis-helper vectors (retail @sda21 reloc).
 extern const float lbl_eu_8066AE24;
@@ -28,6 +36,10 @@ extern const float lbl_eu_8066AE40;
 extern const float lbl_eu_8066AE8C;
 extern const float lbl_eu_8066AE90;
 extern const float lbl_eu_8066AE94;  // rotation angle scale (nw4r RAD_TO_FIDX)
+extern const float lbl_eu_8066AE38;  // radius/angle gate scale (func_804A79B4)
+extern const float lbl_eu_8066AE60;  // FIdx->angle scale (func_804ABF08)
+extern const float lbl_eu_8066A1F8;  // pi in FIdx units (func_804ABF08 wrap bound)
+extern const float lbl_eu_8066A1FC;  // 2*pi in FIdx units (func_804ABF08 wrap step)
 
 // Registered-collision globals (sbss 0x65910..0x65938) written by
 // func_804A7E18 / func_804A7EC8: the current collision object plus its
@@ -123,7 +135,71 @@ static inline f32 clamp01(f32 value) {
     return value;
 }
 
-void func_804A6C60(void){}
+// LOD draw-record view used by func_804A6C60 (retail stride 0x68; only the
+// fields the matrix builder reads are declared).
+struct CColiLodRecA6C60 {
+    u16 field_0x0;       // 0x00 flags (bit 1 = concat self after dispatch)
+    u8  field_0x2;       // 0x02 dispatch-table index
+    u8  field_0x3;       // 0x03
+    u16 field_0x4;       // 0x04
+    u16 field_0x6;       // 0x06 LOD pair-table index
+    u8  _08[0x14 - 0x08];  // 0x08..0x13
+    f32 field_0x14[3];   // 0x14
+    f32 field_0x20[3];   // 0x20
+    Mtx field_0x2c;      // 0x2c..0x5b
+};
+
+// Per-record LOD matrix dispatch table (target func_804A6C60): the entry
+// index is the record's field_0x2 byte; called with (out-matrix, buffer,
+// record).
+typedef void (*LodA6C60Fn)(f32*, f32*, CColiLodRecA6C60*);
+extern LodA6C60Fn lbl_eu_8056F1B8[];
+
+// LOD cache record (retail stride 0xC), defined in CLODCacheManagerS.cpp;
+// the member lookup is called via `bl` from func_804A6C60.
+namespace LOD {
+struct CLODCacheManagerS {
+    u16 field_0x0;   // 0x00 near distance
+    u16 field_0x2;   // 0x02 far distance
+    u16 field_0x4;   // 0x04 record id (dispatch-table index)
+    u16 field_0x6;   // 0x06 entry count
+    u32 field_0x8;   // 0x08 table index
+    f32 func_8046323C();
+};
+}  // namespace LOD
+
+// LOD record-matrix builder: zero the 9-float work buffer, then overwrite
+// slots 3..8 with the record's +0x14/+0x20 vectors, sweep the record's LOD
+// pair list to write each cache record's distance value into
+// buf[rec->field_0x4], dispatch through the per-record table at
+// lbl_eu_8056F1B8 with (matrix, buf, record), and - when record bit 1 is
+// set - premultiply self by the record's +0x2c matrix.
+extern "C" void func_804A6C60(f32* self, CColiLodRecA6C60* obj) {
+    u16 idx = obj->field_0x6;
+    u32 entry = lbl_eu_8066574C[idx];
+    u16* pair = &lbl_eu_80665750[entry];
+    u16 count = *pair;
+    f32 buf[9] = {0};
+    s32 i = 0;
+    buf[3] = obj->field_0x14[0];
+    buf[4] = obj->field_0x14[1];
+    buf[5] = obj->field_0x14[2];
+    buf[6] = obj->field_0x20[0];
+    buf[7] = obj->field_0x20[1];
+    buf[8] = obj->field_0x20[2];
+    while (i < count) {
+        LOD::CLODCacheManagerS* rec = (LOD::CLODCacheManagerS*)(
+            (u8*)lbl_eu_80665738 + (u32)pair[1] * 0xC);
+        buf[rec->field_0x4] = rec->func_8046323C();
+        pair++;
+        i++;
+    }
+    lbl_eu_8056F1B8[obj->field_0x2](self, buf, obj);
+    if (obj->field_0x0 & 0x2) {
+        PSMTXConcat(obj->field_0x2c, (const f32 (*)[4])self,
+                    (f32 (*)[4])self);
+    }
+}
 
 void func_804A6D90(void){}
 
@@ -204,9 +280,81 @@ void func_804A7834(CColiObject* self, const CColiObject* other) {
     self->field_0x00[3].z = k;
 }
 
-void func_804A79B4(){}
+// Constructor with angular parameters: run the embedded CColiProc base ctor
+// at +0x04, copy the 3-word sub-spec into the +0x44/+0x50 point slots (raw
+// word copies; +0x48 is later re-written as the float sum), seed the +0x40
+// sub-object offset (= 5) and the +0x5c/+0x60 angle-pair scalars. When the
+// +0x60 bound exceeds const * +0x5c, set flag bit 3 and compute the +0x310
+// gap from the +0x54 scalar. The +0x3c partner slot points at the caller's
+// index or the embedded proc itself. Returns self.
+CColiObject* func_804A79B4(CColiObject* self, const CColiSubSpec804A7878* spec,
+                           f32 f1, f32 f2, u32 idx) {
+    __ct__CColiProc((CColiProcLocal*)&self->field_0x04);
+    const u32* s = (const u32*)spec;
+    u32* d = (u32*)&self->field_0x44;
+    d[1] = s[1];   // +0x48
+    d[0] = s[0];   // +0x44
+    d[2] = s[2];   // +0x4c
+    d[3] = s[0];   // +0x50
+    d[4] = s[1];   // +0x54
+    d[5] = s[2];   // +0x58
+    self->field_0x40 = 5;
+    self->field_0x44.y += f1;
+    self->field_0x5c = f1;
+    self->field_0x60 = f2;
+    if (f2 > lbl_eu_8066AE38 * f1) {
+        self->field_0x8c |= 0x8;
+        self->field_0x310 = self->field_0x50.y + f2 - f1;
+    }
+    self->field_0x8c = 0;
+    self->field_0x210 = 0;
+    self->field_0x2d4 = 0;
+    if (idx != 0) {
+        self->field_0x3c_u = idx;
+    } else {
+        self->field_0x3c_u = (u32)&self->field_0x04;
+    }
+    self->field_0x314 = 0;
+    return self;
+}
 
-void func_804A7ACC(){}
+// Segment constructor: run the embedded CColiProc base ctor at +0x04, copy
+// the 3-word sub-spec into the +0x44 point and the 3-word vector into the
+// +0x50 point (raw word copies), then write the segment diff (b - a) at
+// +0x68 and normalise it to unit length, storing the original length at
+// +0x308. The +0x40 sub-object offset is 10; the +0x3c partner slot points
+// at the caller's index or the embedded proc itself. Returns self.
+CColiObject* func_804A7ACC(CColiObject* self, const CColiSubSpec804A7878* spec,
+                           const VEC3* v, u32 idx) {
+    __ct__CColiProc((CColiProcLocal*)&self->field_0x04);
+    const u32* sa = (const u32*)spec;
+    const u32* sv = (const u32*)v;
+    u32* d = (u32*)&self->field_0x44;
+    self->field_0x40 = 0xa;
+    d[0] = sa[0];   // +0x44
+    d[1] = sa[1];   // +0x48
+    d[3] = sv[0];   // +0x50
+    d[4] = sv[1];   // +0x54
+    d[2] = sa[2];   // +0x4c
+    d[5] = sv[2];   // +0x58
+    VEC3Sub(&self->field_0x68, &self->field_0x50, &self->field_0x44);
+    // mag holds the call result (double-modeled); the division re-singles it
+    // via frsp while the raw f1 goes to the +0x308 store (retail's frsp f0,f1).
+    double mag = PSVECMag((const Vec*)&self->field_0x68);
+    f32 inv = lbl_eu_8066AE3C / (f32)mag;
+    self->field_0x308 = (f32)mag;
+    VEC3Scale(&self->field_0x68, &self->field_0x68, inv);
+    self->field_0x8c = 0;
+    self->field_0x210 = 0;
+    self->field_0x2d4 = 0;
+    if (idx != 0) {
+        self->field_0x3c_u = idx;
+    } else {
+        self->field_0x3c_u = (u32)&self->field_0x04;
+    }
+    self->field_0x314 = 0;
+    return self;
+}
 
 // Embedded CColiProc base sub-object at +0x04; only its constructor runs
 // from this TU (retail symbol __ct__CColiProc, defined in the sibling
@@ -240,6 +388,13 @@ extern "C" CColiObject* func_804A7D1C(CColiObject* self, const VEC3* a = 0,
 extern "C" int func_804AD410(CColiObject* self, const f32* a, const VEC3* b,
                              const Mtx m);
 extern "C" void func_804B0EA0(CColiObject* self);
+// Sibling CColiProc TU helpers used by func_804B0CE8 / func_804B19CC: the
+// segment classifier (func_804B27EC), the local-object classifier
+// (func_804B2E3C) and the node query helper (func_804B236C).
+extern "C" void func_804B27EC(CColiProcLocal* proc, f32* a, f32* b, f32* c,
+                              u16 d);
+extern "C" int func_804B2E3C(CColiProcLocal* proc, CColiObject* obj);
+extern "C" int func_804B236C(const void* a, const void* b, const void* c);
 
 // u32 view of a CColiObject used by the func_804A7878 constructor: the
 // sub-spec words are copied raw (lwz/stw) into the +0x44 point and the
@@ -307,6 +462,13 @@ struct CColiSubSpec804A7878 {
 // copy the 3-word sub-spec into the +0x44 point, seed the +0x40 behaviour
 // flags (= 0xf) and clear +0x8c/+0x314; the +0x3c partner slot points at
 // the caller-supplied parent object or at the embedded proc itself.
+// C-linkage forward decl so the definition emits the unmangled retail name;
+// auto_inline off keeps retail callers (func_804B19CC) emitting a real `bl`.
+extern "C" CColiObject* func_804A7878(CColiObject* self,
+                                       const CColiSubSpec804A7878* spec,
+                                       CColiObject* parent);
+#pragma push
+#pragma auto_inline off
 CColiObject* func_804A7878(CColiObject* self, const CColiSubSpec804A7878* spec,
                            CColiObject* parent) {
     CColiCtor804A7878* s = (CColiCtor804A7878*)self;
@@ -324,6 +486,7 @@ CColiObject* func_804A7878(CColiObject* self, const CColiSubSpec804A7878* spec,
     s->field_0x314 = 0;
     return self;
 }
+#pragma pop
 
 // CColiObject initialiser: run the embedded CColiProc base ctor at +0x04,
 // copy the 3-word vector into the +0x44 point, then seed the +0x5c scalar,
@@ -346,8 +509,12 @@ void func_804A7BDC(CColiObject* self, const VEC3* v, f32 f) {
 // CColiProc base ctor at +0x04, copy the 3-word sub-spec into the +0x44
 // point, then seed the +0x5c/+0x60/+0x64 scalars (0x60 = sdata2 const *
 // f2) and the +0x40 sub-object offset (= 0x19). Returns self.
-CColiObject* func_804A7C64(CColiObject* self, const CColiSubSpec804A7878* spec,
-                           f32 f1, f32 f2, f32 f3) {
+// C linkage (retail symbol is unmangled) + auto_inline off: retail calls
+// this via `bl` (separate TU in the original source).
+#pragma push
+#pragma auto_inline off
+extern "C" CColiObject* func_804A7C64(CColiObject* self, const CColiSubSpec804A7878* spec,
+                            f32 f1, f32 f2, f32 f3) {
     CColiCtor804A7878* s = (CColiCtor804A7878*)self;
     __ct__CColiProc((CColiProcLocal*)&s->field_0x04);
     s->field_0x44 = spec->field_0x00;
@@ -360,6 +527,7 @@ CColiObject* func_804A7C64(CColiObject* self, const CColiSubSpec804A7878* spec,
     s->field_0x8c = 0;
     return self;
 }
+#pragma pop
 
 // Local-object constructor: run the embedded CColiProc base ctor at +0x04,
 // copy the two 3-word points into the +0x44/+0x50 slots, then write the
@@ -675,13 +843,79 @@ bool func_804ABDD4(CColiObject* self) {
     return r2 >= VEC3LenSq(&diff2);
 }
 
-void func_804ABF08(){}
+// Sphere/cone test against the cylinder partner: returns true when the
+// squared distance from self's point (+0x44) to the partner centre (+0x04)
+// is within the partner's squared radius (+0x10), or within the squared sum
+// of the partner radius and self's scalar (+0x5c) AND the azimuth of the
+// offset vector (Atan2FIdx of x/z) scaled by the FIdx constant, offset by
+// +0x64 and wrapped into [-pi, pi], lies within the +0x60 bound.
+bool func_804ABF08(CColiObject* self) {
+    CColiCylinder804ABA68* other = (CColiCylinder804ABA68*)self->field_0x00_obj;
+    VEC3 diff;
+    VEC3Sub(&diff, &self->field_0x44, &other->field_0x04);
+    f32 r = other->field_0x10;
+    f32 r2 = r * r;
+    f32 dist2 = VEC3LenSq(&diff);
+    if (r2 >= dist2) return true;
+    f32 rs = r + self->field_0x5c;
+    if (rs * rs >= dist2) {
+        f32 ang = lbl_eu_8066AE60 *
+                      nw4r::math::Atan2FIdx(diff.x, diff.z) -
+                  self->field_0x64;
+        while (ang >= lbl_eu_8066A1F8) ang -= lbl_eu_8066A1FC;
+        while (ang < -lbl_eu_8066A1F8) ang += lbl_eu_8066A1FC;
+        if (-self->field_0x60 <= ang && ang <= self->field_0x60) return true;
+    }
+    return false;
+}
 
 void func_804AC020(){}
 
 void func_804AC198(){}
 
-void func_804AC3B0(){}
+// Contact-partner geometry view used by func_804AC3B0: point rows at
+// +0x10/+0x20/+0x30 and the scalar at +0x70 (same fields CColiContactObj
+// declares for the clip helper).
+struct CColiContact804AC3B0 {
+    u8 _00[0x10];            // +0x00 .. +0x10
+    f32 field_0x10;          // +0x10
+    u8 _14[0x20 - 0x14];     // +0x14 .. +0x20
+    f32 field_0x20;          // +0x20
+    u8 _24[0x30 - 0x24];     // +0x24 .. +0x30
+    f32 field_0x30;          // +0x30
+    u8 _34[0x70 - 0x34];     // +0x34 .. +0x70
+    f32 field_0x70;          // +0x70
+};
+
+// Sphere/cone test against the contact partner: returns true when the
+// squared distance from self's point (+0x44) to the partner's point rows
+// (+0x10/+0x20/+0x30) is within the partner's squared scalar (+0x70), or
+// within the squared sum of the partner scalar and self's radius (+0x5c)
+// AND the azimuth of the offset vector (Atan2FIdx of x/z) scaled by the
+// FIdx constant, offset by +0x64 and wrapped into [-pi, pi], lies within
+// the +0x60 bound.
+bool func_804AC3B0(CColiObject* self) {
+    CColiContact804AC3B0* obj = (CColiContact804AC3B0*)self->field_0x00_obj;
+    VEC3 v(obj->field_0x10, obj->field_0x20, obj->field_0x30);
+    VEC3 diff;
+    VEC3Sub(&diff, &v, &self->field_0x44);
+    f32 r = obj->field_0x70;
+    // r2 declared before the length call so MWCC schedules the fmuls early
+    // (retail interleaves it with the VEC3Sub), mirroring func_804ABF08.
+    f32 r2 = r * r;
+    f32 dist2 = VEC3LenSq(&diff);
+    if (r2 >= dist2) return true;
+    f32 rs = r + self->field_0x5c;
+    if (rs * rs >= dist2) {
+        f32 ang = lbl_eu_8066AE60 *
+                      nw4r::math::Atan2FIdx(diff.x, diff.z) -
+                  self->field_0x64;
+        while (ang >= lbl_eu_8066A1F8) ang -= lbl_eu_8066A1FC;
+        while (ang < -lbl_eu_8066A1F8) ang += lbl_eu_8066A1FC;
+        if (-self->field_0x60 <= ang && ang <= self->field_0x60) return true;
+    }
+    return false;
+}
 
 void func_804AC4E4(){}
 
@@ -824,7 +1058,24 @@ bool func_804AF98C(CColiObject* self, const VEC3* other, f32 a, f32 b) {
     return false;
 }
 
-void func_804AFA08(){}
+// Point-in-box + half-extent gate used by func_804B236C: when the object's
+// point (+0x44) lies inside the box spanned by (boxA, boxB) - checked in
+// x, z, y order to mirror the retail compare sequence - transform it by m
+// and verify each axis of the result is within the half-extent vector.
+int func_804AFA08(CColiObject* self, const VEC3* half, const Mtx m,
+                  const VEC3* boxA, const VEC3* boxB) {
+    Vec out;
+    if (boxA->x >= self->field_0x44.x && boxB->x <= self->field_0x44.x &&
+        boxA->z >= self->field_0x44.z && boxB->z <= self->field_0x44.z &&
+        boxA->y >= self->field_0x44.y && boxB->y <= self->field_0x44.y) {
+        PSMTXMultVec(m, (const Vec*)&self->field_0x44, &out);
+        if (half->x < out.x || -half->x > out.x) return 0;
+        if (half->y < out.y || -half->y > out.y) return 0;
+        if (half->z < out.z || -half->z > out.z) return 0;
+        return 1;
+    }
+    return 0;
+}
 
 // Clip the segment (pA, pB) against the frame spanned by (pC, pD): writes the
 // entry/exit points of the portion of the segment that lies within the strip
@@ -1206,7 +1457,59 @@ void func_804B0C0C(CColiObject* self, const _VEC3* v, const _VEC3* rot) {
     func_804B0EA0(self);
 }
 
-void func_804B0CE8(){}
+// Kind/behaviour record pointed at by CColiNode804B09C8::field_0x08: the
+// word at +0x7a4 carries the collision flags (bits 1/16/26) that gate the
+// axis-block refill in func_804B0CE8.
+struct CColiKind804B0CE8 {
+    u8 _00[0x7a4];
+    u32 field_0x7a4;
+};
+
+// Behaviour-flag / axis-refill update: clears the bit-1 flag and returns
+// early, otherwise clears bit 3 and - when the node is valid and either its
+// kind record's +0x7a4 flags are in the active combination (bit 1 set, bits
+// 16/26 clear) or behaviour bit 11 is set - refills the +0x0c axis block
+// with the two sdata2 constants, re-seeds the local proc and classifies the
+// segment via func_804B27EC, then runs func_804B0EA0 when behaviour bits
+// 7-8 are set. Always ends by setting bit 1.
+void func_804B0CE8(CColiNode804B09C8* self) {
+    u32 flags = self->field_0xa8;
+    if (flags & 0x1) {
+        self->field_0xa8 = flags & ~0x1;
+        return;
+    }
+    self->field_0xa8 = flags & ~0x8;
+    if (self->field_0x00 != 0 && self->field_0x08 != 0 &&
+        self->field_0x04 != 0) {
+        u32 w = ((CColiKind804B0CE8*)self->field_0x08)->field_0x7a4;
+        if (((w & 0x2) && !(w & 0x10000) && !(w & 0x4000000)) ||
+            (self->field_0xa8 & 0x800)) {
+            // Axis-block refill (8066AE8C x3, 8066AE90 x3); c2 declared
+            // first but c1 assigned first so its load lands first (retail
+            // lfs f1,const1; lfs f0,const2).
+            f32 c2;
+            f32 c1;
+            c1 = lbl_eu_8066AE8C;
+            c2 = lbl_eu_8066AE90;
+            self->field_0x0c[0] = c1;
+            self->field_0x0c[1] = c1;
+            self->field_0x0c[2] = c1;
+            self->field_0x0c[3] = c2;
+            self->field_0x0c[4] = c2;
+            self->field_0x0c[5] = c2;
+            CColiProcLocal proc;
+            func_804B25A4(&proc, (CColiObject*)self->field_0x00,
+                          self->field_0x08, (u32)self->field_0x04);
+            func_804B27EC(&proc, self->field_0x0c, self->field_0x24,
+                          &self->field_0x24[3], self->field_0xb0);
+            if (self->field_0xa8 & 0xC0) {
+                func_804B0EA0((CColiObject*)self);
+            }
+            self->field_0xa8 |= 0xc;
+        }
+    }
+    self->field_0xa8 |= 0x2;
+}
 
 // Re-sort self into the keyed list after its +0x18 key changed: walk from
 // the head and relink self after the last node whose key is still greater.
@@ -1318,7 +1621,50 @@ int func_804B192C(CColiObject* self, const VEC3* in, f32 d, u32 a4, u32 a5) {
     return 0;
 }
 
-void func_804B19CC(){}
+// Move-check gate (sibling of func_804B1AD8 with a proc-seeded variant):
+// when the last argument is non-zero, require behaviour bit 14, apply the
+// shared kind/flag gate, then - when the node is valid and behaviour bit 3
+// is set - seed the local proc and classify the local object via
+// func_804B2E3C, returning 1 on success. Otherwise seed a local object from
+// the sub-spec and forward self/local/arg to func_804B236C, returning its
+// status (retail tail block).
+int func_804B19CC(CColiObject* self, const CColiSubSpec804A7878* spec,
+                  const void* a5, u32 a6) {
+    CColiProcLocal proc;   // +0x8
+    CColiObject local;     // +0x330
+    CColiObject local2;    // +0x18
+    if (a6 == 0) goto tail;
+    if (!(self->field_0xa8 & 0x4000)) goto ret_gate;
+    func_804A7878(&local, spec, 0);
+    {
+        int t = 1;
+        int w = 1;
+        u32 flags = self->field_0xa8;
+        if (!(flags & 0x100)) {
+            if (flags & 0x2) {
+                w = 0;
+            }
+        }
+        if (w == 0) {
+            if (flags & 0x4) {
+                t = 0;
+            }
+        }
+        if (t != 0) return 0;
+        local.field_0x314 = (u32)self;
+        if (self->field_0x04 != 0 && (self->field_0xa8 & 0x8)) {
+            func_804B25A4(&proc, self->field_0x00_obj, self->field_0x08,
+                          self->field_0x04);
+            if (func_804B2E3C(&proc, &local) != 0) return 1;
+        }
+        return 0;
+    }
+ret_gate:
+    return 0;
+tail:
+    func_804A7878(&local2, spec, 0);
+    return func_804B236C(self, &local2, a5);
+}
 
 // Move-check gate: the object must have a non-zero kind and the +0xa8 flag
 // combination (bit 8 set) or (bit 1 clear) or (bit 2 clear), with bit 4 set
@@ -1398,7 +1744,42 @@ fail:
     return false;
 }
 
-void func_804B1C9C(){}
+// Segment move-check gate (sibling of func_804B1AD8): require a non-zero
+// kind and the shared +0xa8 flag combination, then build the segment AABB
+// around (v, f1), verify it is contained in self's box, construct a local
+// object from the same sub-spec via func_804A7C64, link it to self and
+// classify it through the local proc, returning the classifier's status.
+int func_804B1C9C(CColiObject* self, const VEC3* v, f32 f1, f32 f2, f32 f3) {
+    CColiProcLocal proc;   // +0x8
+    CColiSeg804B192C seg;  // +0x18
+    CColiObject local;     // +0x30
+    if (self->field_0x04 == 0) goto fail;
+    int t = 1;
+    int w = 1;
+    u32 flags = self->field_0xa8;
+    if (!(flags & 0x100)) {
+        if (flags & 0x2) {
+            w = 0;
+        }
+    }
+    if (w == 0) {
+        if (flags & 0x4) {
+            t = 0;
+        }
+    }
+    if (t != 0) return 0;
+    if (!(flags & 0x8)) goto fail;
+    func_804B06FC((CColiObject*)&seg, v, f1);
+    if (!func_804B0818((CColiObject*)&seg, self)) goto fail;
+    func_804A7C64(&local, (const CColiSubSpec804A7878*)v, f1, f2, f3);
+    local.field_0x314 = (u32)self;
+    func_804B25A4(&proc, self->field_0x00_obj, self->field_0x08,
+                  self->field_0x04);
+    if (func_804B2CBC(&proc, &local) == 0) goto fail;
+    return 1;
+fail:
+    return 0;
+}
 
 void func_804B1DC0(u8* self, int arg) {
     int* flags = (int*)((char*)self + 0xa8);

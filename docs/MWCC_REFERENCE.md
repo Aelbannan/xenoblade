@@ -10527,3 +10527,45 @@ second use of h[0x50C]) without changing codegen.
   HIGHER register (pThread→r31, actionId→r30, fixedParam→r31 via reuse).
   83.6% → 100%. Refinement of the reverse-declaration rule: the local that
   reuses an arg's dead register must be declared before any other local.
+
+## Dual-mode area headers: `extern` on MWCC, data definitions on the PC port
+
+`tools/coop/lbls_gen.py generate` emits each `include/lbls_<area>.hpp` as a
+flat list of `LBLS_ENTRY(ext, dfn, init)` lines. The macro is defined ONCE in
+`include/types.h`, next to the u32/s32 world-guard:
+
+```c
+#if defined(__MWERKS__) && !defined(NONMATCHING)
+#  define LBLS_ENTRY(ext, dfn, init) extern ext;          // matching build
+#elif defined(LBLS_DEFINE_DATA)
+#  define LBLS_ENTRY(ext, dfn, init) dfn = LBLS_UNWRAP init;  // port data TU
+#else
+#  define LBLS_ENTRY(ext, dfn, init) extern ext;          // port, other TUs
+#endif
+#define LBLS_UNWRAP(...) __VA_ARGS__   // strips the paren-wrapping of init
+```
+
+- The MWCC matching build sees exactly the original extern declarations
+  (textually identical modulo const/float-spelling/array-bound, all
+  codegen-neutral — no `sizeof(extern)` exists in the corpus). `apply` +
+  rebuild still yields byte-identical objects; the macro is inert unless a
+  TU includes a lbls header, which the matching build does not.
+- Non-MWCC builds get real definitions: `port/data_defs.cpp` sets
+  `LBLS_DEFINE_DATA` BEFORE `#include "types.h"` (the macro picks its mode at
+  definition time, so the flag must precede the types.h include), includes
+  all five headers, then emits only the non-manifest remainder. Every other
+  port TU sees `extern` — storage exists exactly once.
+- Initializers carry RETAIL BYTES from `orig/<region>/sys/main.dol` decoded
+  per type (u8/u16/u32 hex, s8/s16/s32/int and char as signed decimals to
+  avoid narrowing, f32/f64 as finite literals, pointers as `(T*)0xADDR`),
+  typed zeros for bss-family. Array bounds come from `symbols.txt` sizes.
+- Macro-arg rules learned the hard way: declarators need NO parens (a
+  parenthesized declarator `(u8 x[88]) = {...}` is invalid), initializers
+  DO need paren-wrapping (`({0x0A, 0x41, ...})`) because brace contents
+  contain commas; `void*` arrays need the PPC pointer width (4) for
+  element count/bound — the scalar type-unit map has no entry for pointers.
+- Source decls that are invalid for variables (`extern void lbl_x;`) are
+  emitted as `u8`; `extern "C" void* x[]` with space collapses to `void*`.
+- Verified end-to-end on the host: clang links data_defs.cpp (define) +
+  an extern-mode TU + main; the retail value of `lbl_eu_804FA4C0[2]` (3)
+  reads back correctly.

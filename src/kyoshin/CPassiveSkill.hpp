@@ -136,10 +136,11 @@ struct CPSkillBlobTotal {
 
 // 8-byte skill-grid cell embedded at CPassiveSkillLine+0x20 (the ctor's
 // memset 0xC8 zeroes the whole 5x5 grid; func_802675D8 deletes each
-// layout through its virtual dtor).
+// layout through its virtual dtor). The +0x04 slot holds the cell layout's
+// animation transform, whose frame func_80269D20 drives via SetFrame.
 struct CPSkillGridCell {
-    nw4r::lyt::Layout* mpLayout; // +0x00
-    u32 _pad4;                   // +0x04
+    nw4r::lyt::Layout* mpLayout;        // +0x00
+    nw4r::lyt::AnimTransform* mpAnimTrans; // +0x04
 };
 
 // Skill-learn record view for func_8026DD84's learn-all loop: rows are
@@ -208,7 +209,7 @@ public:
     u8 field_FE;                         // +0x0FE - cleared by func_80267C44
     u8 _padFF[0x1];                      // +0x0FF
     f32 field_100;                       // +0x100 - frame float (lbl_eu_80668904, set by the ctor)
-    u8 _pad104[0x19];                    // +0x104..0x11C
+    u8 field_104[0x19];                  // +0x104..0x11C - per-cell affordable/learned flag (row*5+i-1)
     u8 field_11D;                        // +0x11D - set to 1 by func_80269768
     u8 field_11E;                        // +0x11E - close-mode selector (1 -> state 0xC, else 0xF)
     u8 field_11F;                        // +0x11F - zeroed by the ctor
@@ -459,21 +460,62 @@ extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4
 extern "C" u32 func_801355BC();
 
 // Texture-dimension record read by func_802646E8: the 'timg' texture
-// resource's +0x8 pointer points to a pair of u16 dimensions.
+// resource's +0x8 chain pointer leads (via +0x0) to a pair of u16 dims.
 struct CPSkillTexCoords {
     u16 c0;   // +0x00
     u16 c2;   // +0x02
 };
 
-// Head of the 'timg' texture resource: the +0x8 pointer gives the dimension
-// record above.
+// Chain record at CPSkillTexRes+0x8: its +0x0 gives the coord record above.
+struct CPSkillTexChain {
+    CPSkillTexCoords* pCoords;   // +0x00
+};
+
+// Head of the 'timg' texture resource: the +0x8 pointer is the chain record.
 struct CPSkillTexRes {
     u8 _pad0[0x8];            // +0x00..0x07
-    CPSkillTexCoords* coords; // +0x08
+    CPSkillTexChain* chain;   // +0x08
 };
 
 // Cursor draw helper (CCur.cpp; retail symbol unmangled).
 extern "C" void func_801D20B0(void* cursor, nw4r::lyt::DrawInfo* drawInfo);
+
+// 8-byte animation-colour vector (4 s16 channels) returned by func_80139658
+// in r3:r4 (same layout as CItemBoxLine.hpp's FourShorts; the .d channel is
+// the alpha used by the skill-grid color ladder).
+struct CPSkillFourShorts {
+    s16 a, b, c, d;
+};
+
+// 8-byte colour record filled by func_801C4B60 (retail GXColorS10 layout);
+// the helper returns the record pointer.
+struct CPSkillColorS10 {
+    s16 r, g, b, a;
+};
+
+// Pane-animation colour fetch (retail symbol unmangled): reads the 4 s16
+// animation vector of a named pane (index 0 = base, 1 = alternate).
+extern "C" CPSkillFourShorts func_80139658(void*, const char*, u32);
+
+// RGB-colour builder (retail symbol unmangled): fills the record with the
+// four s16 channels and returns the record pointer (CTitle.hpp /
+// CKizunagram.hpp convention).
+extern "C" CPSkillColorS10* func_801C4B60(CPSkillColorS10* color, s16 r,
+                                            s16 g, s16 b, s16 a);
+
+// Bind a texture resource to a pane (retail symbol unmangled).
+extern "C" void func_80137F88(nw4r::lyt::Pane* pane, u32 res);
+
+// Pane colour setter (retail symbol unmangled): applies the two colours to
+// the pane (CItemBoxLine.hpp convention; func_80139A18 is the layout form).
+extern "C" void func_80139AC8(nw4r::lyt::Pane* pane, CPSkillColorS10* c1,
+                               CPSkillColorS10* c2);
+
+// Pane byte at +0xB8 written by func_8026AAF4's cell update (opaque state).
+struct CPSkillPaneB8 {
+    u8 _pad0[0xB8];   // +0x00..0xB7
+    u8 field_B8;      // +0xB8
+};
 
 // Cursor/skill-pane visibility helpers (retail symbols unmangled).
 // func_80124270 (declared in CSysWin.hpp) sets a pane's visible flag;
@@ -499,14 +541,33 @@ extern void* lbl_eu_80664090;
 // Shared arc resource accessor (retail symbol unmangled; also in CPresentWin.hpp).
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 
-// Skill grid data table (.sdata pointer; value resolved at link time),
-// passed as the message table to func_80136254 by func_80266950.
+// Skill grid data tables (.sdata pointers; values resolved at link time).
+// lbl_eu_8066488C is passed as the message table to func_80136254 by
+// func_80266950; func_8026BB60 reads all three (80664880 name lookup,
+// 80664888 slot-category lookup, 8066488C learned-slot lookup).
 extern void* lbl_eu_8066488C;
+extern void* lbl_eu_80664880;
+extern void* lbl_eu_80664888;
+extern void* lbl_eu_80664890;
+extern void* lbl_eu_80664884;
+extern void* lbl_eu_80664894;
+
+// Character-data view for func_80269D20: the current-grid-row counter word
+// at +0x3DD0 of the func_8009EC9C result (compared against the loop row).
+struct CPSkillCharData3DD0 {
+    u8 _pad0[0x3DD0];   // +0x00..0x3DCF
+    u32 field_3DD0;     // +0x3DD0
+};
 
 // Frame-bound floats used by func_802694F4's window check (retail .sdata2
 // floats; values resolved at link time).
 extern const float lbl_eu_8066891C;
 extern const float lbl_eu_80668920;
+
+// Per-character slot-spacing table read by func_8026BB60 (retail .sdata2
+// floats, indexed by (id-1)*2 to reach an 8-byte per-character stride;
+// only the first float of each pair is read).
+extern const f32 lbl_eu_80668930[];
 
 // +0x28 sub-object update (retail func_80269B68, 0x410 bytes). C linkage so the
 // call reloc from func_8026DA4C matches retail's plain `func_802676F8` name

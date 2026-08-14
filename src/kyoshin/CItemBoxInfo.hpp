@@ -58,6 +58,18 @@ struct CItemImplVt {
     virtual u8 _v64(void* item, u32 i);   // vtable+0x64 (raw slot 25)
 };
 
+// Cast-only vtable for the object returned by func_801355F4 (item-name
+// system): the tag lookup method is at vtable+0x0C (raw slot 3). Real virtual
+// dispatch reproduces the retail `lwz r12,0(r3); lwz r12,0xc(r12); mtctr;
+// bcctrl` sequence; a manual (*(void***)obj)[3] cast colors a scratch
+// register instead of the ABI r12.
+struct CItemNameLookupVt {
+    virtual void _v00();
+    virtual void _v04();
+    virtual void _v08();
+    virtual u32 findName(u32 tag, u32 itemId, u32 unk);  // vtable+0x0C
+};
+
 struct CItemBoxInfoState {
     u8 _00[0x04];
     UnkClass_8045F564 memRegion1;   // 0x04
@@ -182,6 +194,7 @@ extern "C" char* func_8013639C(void*, char*);
 extern "C" u32 func_801392C0();
 extern "C" u32 func_801392B4(u32);
 extern "C" void func_801E40E8(CItemBoxInfo2*);
+extern "C" void func_801E43BC(CItemBoxInfo2*, u16, void*, u16, u32);
 extern "C" void func_801E27D0(u8*, void*, void*, void*);
 extern "C" void* CItem_initItemImplInstances(void*);
 extern "C" void func_801D62F8(void*, u32, const void*);
@@ -189,6 +202,31 @@ extern "C" void func_801D8930(CItemBoxInfo*);
 extern "C" void func_801E37C4(CItemBoxInfo2*, void*, void*);
 extern "C" u32 func_8013600C(void*, const char*, u32);
 extern "C" u32 func_800A32BC();
+extern "C" void func_801D4A2C(void*);
+extern "C" u32 func_801C6E90(void*);
+extern "C" u32 func_801D4AB0(void*);
+extern "C" void func_801E2928(CItemBoxInfo2*, u16, void*, u16);
+extern "C" void func_801E3228(CItemBoxInfo2*, u16, void*, u16);
+extern "C" void func_801E2C5C(CItemBoxInfo2*, u16, void*, u16);
+extern "C" void func_801E3730(CItemBoxInfo2*, u32);
+extern "C" void func_801E2FEC(CItemBoxInfo2*, u16);
+extern "C" void func_801E3918(CItemBoxInfo2*);
+extern "C" void func_801E3DE4(CItemBoxInfo2*);
+extern "C" void func_801E3EB8(CItemBoxInfo2*);
+extern "C" void func_801E4010(CItemBoxInfo2*);
+extern "C" void func_801D5C38(void*, void*, void*, void*);
+extern "C" void func_801D8B60(CItemBoxInfo*);
+extern "C" void func_801D8C0C(CItemBoxInfo*);
+extern "C" void func_801E4194(CItemBoxInfo2*);
+extern "C" void func_801E14DC(CItemBoxInfo2*, u16, void*, u16, u32);
+extern "C" void func_801D80EC(CItemBoxInfo*, u16, void*);
+extern "C" void func_801E2638(CItemBoxInfo2*, u16, void*);
+extern "C" void* func_801571FC();
+extern "C" void func_80137F88(void*, u16);
+extern "C" void func_80137C1C(void*, u32);
+extern "C" u32 func_80136254(void*, const char*, u16);
+extern "C" u32 func_80138F78(u16);
+extern "C" void* func_801355F4();
 
 // 0x24-byte item-box slot record (built by func_801E27D0 and copied by the
 // renderers): count byte, string pointer, per-slot text pointers, a 4-byte

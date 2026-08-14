@@ -6,11 +6,22 @@
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 
+// Named .sdata2 conversion magic: defining it lets MWCC's constant pool reuse
+// the retail symbol for the (f32)u16 casts in func_802646E8 instead of
+// emitting a TU-local @N label (CfResReloadImpl / CSuddenCommu idiom, same as
+// CMiniMap.cpp's 806670A8). Value is 2^52 = 0x4330000000000000.
+extern const double lbl_eu_80668910 = 0x4330000000000000ll;
+
+// Per-character slot-spacing table read by func_8026BB60 (retail .sdata2,
+// read at (id-1)*2 with an 8-byte per-character stride; 2 elements keep it
+// in .sdata2 so the retail sda21 reloc is emitted). Values unresolved
+// (placeholder).
+extern const f32 lbl_eu_80668930[] = { 0.0f, 0.0f };
+
 // Skill-info sub-struct initializer (defined later in this TU; noinline keeps
 // the __ct__UI_CPassiveSkillInfo `bl` a real call). C linkage so the call
 // reloc is the plain retail name.
 extern "C" void func_802641D0(UI_PassiveSkillInit* self, u32 arg);
-
 // Skill-info sub-struct copier / second-layout init (defined later in this
 // TU). C linkage so the call relocs from func_802646E8 are the plain retail
 // names.
@@ -226,6 +237,12 @@ __declspec(noinline) void* __ct__UI_CPassiveSkillInfo(UI_CPassiveSkillInfo* self
 // retail `bl __dt__Q22UI17CPassiveSkillInfoFv` call, not inline this body.
 __declspec(noinline) UI::CPassiveSkillInfo::~CPassiveSkillInfo() {}
 
+// u16 -> f32 via the 2^52 magic double: the union stores the value + 0x4330
+// prefix and subtracts the named .sdata2 magic so the pool reloc stays
+// lbl_eu_80668910 (a plain `(f32)u16` cast would synthesize an @N entry).
+// Inlined into func_802646E8 so the conversion doubles land in the temp
+// area (sp+0x30/0x38), matching the retail frame.
+
 // Skill-info init (retail func_802646E8): create the main layout, bind the
 // three animation transforms, attach the font, push the name text into the
 // six skill panes, configure the animation states, build the +0x20 second
@@ -273,16 +290,15 @@ void func_802646E8(UI_CPassiveSkillInfo* self) {
                   &lbl_eu_8050DC20[0x182], 0);
     func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x183],
                   &lbl_eu_8050DC20[0x182], 0);
-    UI_PassiveSkillInit init;
     float out[2];
-    CPSkillF64Conv convA;
-    CPSkillF64Conv convB;
+    UI_PassiveSkillInit init;
     func_802641D0(&init, self->arg);
     func_80264AC8(&self->sub, &init);
     func_80264204(reinterpret_cast<UI_PassiveSkillLayoutInit*>(&self->sub));
     u8 flag = 0;
-    if (func_8009CF8C(0x3372) == 0) {
-        // no-op: flag stays 0
+    u32 isZero = (func_8009CF8C(0x3372) == 0);
+    if (isZero) {
+        // flag stays 0
     } else {
         u8 tmp = 0;
         if (func_8009CF8C(0x3508) != 0 && func_8009CF8C(0x20) < 0x38) {
@@ -305,17 +321,18 @@ void func_802646E8(UI_CPassiveSkillInfo* self) {
     void* res = func_801355F4()->GetResource(0x74696d67, texName, 0);
     if (res != 0) {
         func_80137E7C(self->field_8, &lbl_eu_8050DC20[0x1c6], res);
+        // Hoist the texture dimension reads ahead of the pane lookup so they
+        // stay in the saved registers across the virtual call (retail keeps
+        // c2 in r29 / c0 in r30 during the FindPaneByName dispatch).
         CPSkillTexCoords* coords =
-            reinterpret_cast<CPSkillTexRes*>(res)->coords;
+            reinterpret_cast<CPSkillTexRes*>(res)->chain->pCoords;
+        u16 c2 = coords->c2;
+        u16 c0 = coords->c0;
         nw4r::lyt::Pane* pane2 = self->field_8->GetRootPane()->FindPaneByName(
             &lbl_eu_8050DC20[0x1c6], true);
         if (pane2 != 0) {
-            convA.w[1] = coords->c2;
-            convA.w[0] = 0x43300000;
-            out[0] = (f32)(convA.d - lbl_eu_80668910);
-            convB.w[1] = coords->c0;
-            convB.w[0] = 0x43300000;
-            out[1] = (f32)(convB.d - lbl_eu_80668910);
+            out[0] = (f32)c2;
+            out[1] = (f32)c0;
             func_80124288(pane2, out);
         }
     }
@@ -461,7 +478,238 @@ void func_80264E70(UI::CPassiveSkillInfo* self, u8 id1, u8 id2) {
 }
 #pragma optimize_for_size off
 
-void func_80264F7C(){}
+// Forward declarations for the skill-pane setters called by func_80264F7C
+// (defined later in this TU).
+void func_802665FC(UI::CPassiveSkillLine* self, int id);
+void func_80266724(UI::CPassiveSkillLine* self, int charId, int row, int slot);
+void func_80266930(UI_CPassiveSkill* self, u8 row, u8 col, u8 slot);
+extern "C" void func_80266950(UI::CPassiveSkillLine* self, u8 index);
+
+// Skill-menu selection state handler (retail func_80264F7C): dispatch on the
+// menu state byte to refresh the name/desc/cost/icon panes for a selected
+// skill-grid cell. Each state uses a different BDAT table set and ends with
+// the shared summary refresh (func_802665FC + a grid-slot setter).
+void func_80264F7C(UI::CPassiveSkillLine* self, int state, int id, int row,
+                   int col, int r8) {
+    char buf3[0x20];  // slot-name buffer (sp+0x68)
+    char buf2[0x20];  // slot-name buffer (sp+0x48)
+    char buf1[0x20];  // slot-name buffer (sp+0x28)
+    char buf0[0x20];  // slot-name buffer (sp+0x08)
+    switch (state) {
+    case 0: {
+        u8 idx = (u8)(row + (id - 1) * 5 + 1);
+        char* text = func_8013639C(lbl_eu_80664884, &lbl_eu_8050DC20[0x207], idx);
+        func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x20c], text, 0);
+        text = func_8013639C(lbl_eu_80664884, &lbl_eu_8050DC20[0x1a4], idx);
+        func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x215], text, 0);
+        text = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x15);
+        func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x22b], text, 0);
+        func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x154], &lbl_eu_8050DC20[0x182], 0);
+        u8 v1 = func_801361E8((u32)lbl_eu_80664890, &lbl_eu_8050DC20[0x235], idx);
+        text = func_8013639C(lbl_eu_80664894, &lbl_eu_8050DC20[0x207], (u8)v1);
+        func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x23b], text, 0);
+        u8 v2 = func_801361E8((u32)lbl_eu_80664894, &lbl_eu_8050DC20[0x245], (u8)v1);
+        UI::CPSkillRecord* rec = reinterpret_cast<UI::CPSkillRecord*>(
+            (u8*)func_8009EC9C(id) + row * 0xc4 + 0x3534);
+        u8 found = 1;
+        for (u8 i = 1; i <= 5; i++) {
+            if (rec->slots[i].word == 0) {
+                sprintf(buf3, &lbl_eu_8050DC20[0x24e], i);
+                u8 v3 = func_801361E8((u32)lbl_eu_80664890, buf3, idx);
+                if (v3 != 0 && rec->slots[i].word != 0xe && rec->slots[i].word != 0x4b &&
+                    rec->slots[i].word != 0xa5 && rec->slots[i].word != 0xc8) {
+                    char* t12 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x12);
+                    func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x254], t12, 0);
+                    char* t6 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x6);
+                    if (v2 == 1) {
+                        sprintf(buf3, &lbl_eu_8050DC20[0x25e], (u8)v3);
+                    } else {
+                        sprintf(buf3, &lbl_eu_8050DC20[0x261], (u8)v3, t6);
+                    }
+                    func_80136A1C(self->field_8, &lbl_eu_8050DC20[0x160], buf3, 0);
+                } else {
+                    func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x254], &lbl_eu_8050DC20[0x182], 0);
+                    func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x160], &lbl_eu_8050DC20[0x182], 0);
+                }
+                found = 0;
+                break;
+            }
+        }
+        if (found != 0) {
+            u8 v3 = func_801361E8((u32)lbl_eu_80664890, &lbl_eu_8050DC20[0x266], idx);
+            if (v3 != 0) {
+                char* t12 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x12);
+                func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x254], t12, 0);
+                char* t6 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x6);
+                if (v2 == 1) {
+                    sprintf(buf3, &lbl_eu_8050DC20[0x25e], (u8)v3);
+                } else {
+                    sprintf(buf3, &lbl_eu_8050DC20[0x261], (u8)v3, t6);
+                }
+                func_80136A1C(self->field_8, &lbl_eu_8050DC20[0x160], buf3, 0);
+            } else {
+                func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x254], &lbl_eu_8050DC20[0x182], 0);
+                func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x160], &lbl_eu_8050DC20[0x182], 0);
+            }
+        }
+        func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x26b], &lbl_eu_8050DC20[0x182], 0);
+        func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x16c], &lbl_eu_8050DC20[0x182], 0);
+        func_802665FC(self, id);
+        func_80266724(self, 0, row, col);
+        break;
+    }
+    case 1:
+    case 2: {
+        u8 idx = (u8)(col + row * 5 + (id - 1) * 0x19 + 1);
+        char* text = func_8013639C(lbl_eu_8066488C, &lbl_eu_8050DC20[0x207], idx);
+        func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x20c], text, 0);
+        text = func_8013639C(lbl_eu_80664880, &lbl_eu_8050DC20[0x1a4], idx);
+        func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x215], text, 0);
+        u8 v0 = func_801361E8((u32)lbl_eu_80664880, &lbl_eu_8050DC20[0x275], idx);
+        char* tSel = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], v0 == 1 ? 0x15 : 0x14);
+        func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x22b], tSel, 0);
+        u8 v1 = func_801361E8((u32)lbl_eu_8066488C, &lbl_eu_8050DC20[0x27a], idx);
+        char* t6 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x6);
+        if (v1 == 0) {
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x154], &lbl_eu_8050DC20[0x182], 0);
+        } else {
+            sprintf(buf2, &lbl_eu_8050DC20[0x261], (u8)v1, t6);
+            func_80136A1C(self->field_8, &lbl_eu_8050DC20[0x154], buf2, 0);
+        }
+        u8 v2 = func_801361E8((u32)lbl_eu_8066488C, &lbl_eu_8050DC20[0x235], idx);
+        text = func_8013639C(lbl_eu_80664894, &lbl_eu_8050DC20[0x207], (u8)v2);
+        func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x23b], text, 0);
+        u8 v3 = func_801361E8((u32)lbl_eu_80664894, &lbl_eu_8050DC20[0x245], (u8)v2);
+        u8 v4 = func_801361E8((u32)lbl_eu_8066488C, &lbl_eu_8050DC20[0x27f], idx);
+        if (v4 != 0 && idx != 0xe && idx != 0x4b && idx != 0xa5 && idx != 0xc8) {
+            char* t12 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x12);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x254], t12, 0);
+            if (v3 == 1) {
+                sprintf(buf2, &lbl_eu_8050DC20[0x25e], (u8)v4);
+            } else {
+                sprintf(buf2, &lbl_eu_8050DC20[0x261], (u8)v4, t6);
+            }
+            func_80136A1C(self->field_8, &lbl_eu_8050DC20[0x160], buf2, 0);
+        } else {
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x254], &lbl_eu_8050DC20[0x182], 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x160], &lbl_eu_8050DC20[0x182], 0);
+        }
+        u8 v5 = func_801361E8((u32)lbl_eu_8066488C, &lbl_eu_8050DC20[0x284], idx);
+        if (v5 != 0) {
+            char* t13 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x13);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x26b], t13, 0);
+            char* t5 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x5);
+            sprintf(buf2, &lbl_eu_8050DC20[0x261], (u8)v5, t5);
+            func_80136A1C(self->field_8, &lbl_eu_8050DC20[0x16c], buf2, 0);
+        } else {
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x26b], &lbl_eu_8050DC20[0x182], 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x16c], &lbl_eu_8050DC20[0x182], 0);
+        }
+        if (state == 1) {
+            func_802665FC(self, id);
+            func_80266724(self, id, row, col);
+        } else {
+            func_802665FC(self, r8);
+            func_80266930(reinterpret_cast<UI_CPassiveSkill*>(self), (u8)id, (u8)row, (u8)col);
+        }
+        break;
+    }
+    default: {
+        if (col != 0) {
+            char* t19 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x19);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x20c], t19, 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x215], t19, 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x22b], t19, 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x154], &lbl_eu_8050DC20[0x182], 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x23b], t19, 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x254], &lbl_eu_8050DC20[0x182], 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x160], &lbl_eu_8050DC20[0x182], 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x26b], &lbl_eu_8050DC20[0x182], 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x16c], &lbl_eu_8050DC20[0x182], 0);
+            char* t18 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x18);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x183], t18, 0);
+            void* res = 0;
+            switch (r8) {
+            case 0: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x289], 0); break;
+            case 1: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x2a1], 0); break;
+            case 2: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x2b9], 0); break;
+            case 3: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x2d1], 0); break;
+            case 4: res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x2e9], 0); break;
+            }
+            if (res != 0) {
+                func_80137E7C(self->field_8, &lbl_eu_8050DC20[0x301], res);
+                func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x301], true), 1);
+            }
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x178], &lbl_eu_8050DC20[0x182], 0);
+        } else if (row != 0) {
+            char* text = func_8013639C(lbl_eu_8066488C, &lbl_eu_8050DC20[0x207], row);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x20c], text, 0);
+            text = func_8013639C(lbl_eu_80664880, &lbl_eu_8050DC20[0x1a4], row);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x215], text, 0);
+            u8 v0 = func_801361E8((u32)lbl_eu_80664880, &lbl_eu_8050DC20[0x275], row);
+            char* tSel = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], v0 == 1 ? 0x15 : 0x14);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x22b], tSel, 0);
+            u8 v1 = func_801361E8((u32)lbl_eu_8066488C, &lbl_eu_8050DC20[0x27a], row);
+            char* t6 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x6);
+            if (v1 == 0) {
+                func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x154], &lbl_eu_8050DC20[0x182], 0);
+            } else {
+                sprintf(buf0, &lbl_eu_8050DC20[0x261], (u8)v1, t6);
+                func_80136A1C(self->field_8, &lbl_eu_8050DC20[0x154], buf0, 0);
+            }
+            u8 v2 = func_801361E8((u32)lbl_eu_8066488C, &lbl_eu_8050DC20[0x235], row);
+            text = func_8013639C(lbl_eu_80664894, &lbl_eu_8050DC20[0x207], (u8)v2);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x23b], text, 0);
+            u8 v3 = func_801361E8((u32)lbl_eu_80664894, &lbl_eu_8050DC20[0x245], (u8)v2);
+            u8 v4 = func_801361E8((u32)lbl_eu_8066488C, &lbl_eu_8050DC20[0x27f], row);
+            if (v4 != 0 && row != 0xe && row != 0x4b && row != 0xa5 && row != 0xc8) {
+                char* t12 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x12);
+                func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x254], t12, 0);
+                if (v3 == 1) {
+                    sprintf(buf0, &lbl_eu_8050DC20[0x25e], (u8)v4);
+                } else {
+                    sprintf(buf0, &lbl_eu_8050DC20[0x261], (u8)v4, t6);
+                }
+                func_80136A1C(self->field_8, &lbl_eu_8050DC20[0x160], buf0, 0);
+            } else {
+                func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x254], &lbl_eu_8050DC20[0x182], 0);
+                func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x160], &lbl_eu_8050DC20[0x182], 0);
+            }
+            u8 v5 = func_801361E8((u32)lbl_eu_8066488C, &lbl_eu_8050DC20[0x284], row);
+            if (v5 != 0) {
+                char* t13 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x13);
+                func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x26b], t13, 0);
+                char* t5 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x5);
+                sprintf(buf0, &lbl_eu_8050DC20[0x261], (u8)v5, t5);
+                func_80136A1C(self->field_8, &lbl_eu_8050DC20[0x16c], buf0, 0);
+            } else {
+                func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x26b], &lbl_eu_8050DC20[0x182], 0);
+                func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x16c], &lbl_eu_8050DC20[0x182], 0);
+            }
+            char* t16 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x16);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x178], t16, 0);
+        } else {
+            char* t19 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x19);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x20c], t19, 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x215], t19, 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x22b], t19, 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x154], &lbl_eu_8050DC20[0x182], 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x23b], t19, 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x254], &lbl_eu_8050DC20[0x182], 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x160], &lbl_eu_8050DC20[0x182], 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x26b], &lbl_eu_8050DC20[0x182], 0);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x16c], &lbl_eu_8050DC20[0x182], 0);
+            char* t17 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x17);
+            func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x178], t17, 0);
+        }
+        func_80136B4C(self->field_8, &lbl_eu_8050DC20[0x183], &lbl_eu_8050DC20[0x182], 0);
+        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x301], true), 0);
+        func_802665FC(self, id);
+        func_80266950(self, row);
+        break;
+    }
+    }
+}
 
 // Skill-info update for the embedded CPassiveSkillInfo (retail func_802660EC).
 // C linkage so callers (func_80269A98 / func_80269B94) emit the plain retail
@@ -1751,13 +1999,589 @@ __declspec(noinline) void func_80269C08(UI::CPassiveSkillLine* self) {
 // State-0xB line helper (called by func_80269A98). C linkage so the call reloc
 // is the plain retail `func_80269D20`; noinline keeps the retail `bl` (the
 // real body lives at 0x80269D20, not yet matched).
-extern "C" __declspec(noinline) void func_80269D20(UI::CPassiveSkillLine* self) {}
+// Skill-grid tab update (retail func_80269D20): show/hide the two skill-row
+// tabs and their pane slots, set the row-availability flags from the two
+// BDAT lookups, then for each grid cell pick the icon/name textures by the
+// slot category ladder, drive the cell layout animation frame from the SP
+// cost ratio, and show the pane matching the category.
+extern "C" __declspec(noinline) void func_80269D20(UI::CPassiveSkillLine* self) {
+    func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x48b], true), 0);
+    func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x497], true), 1);
+    u8 id = func_801392B4(self->field_F3);
+    char bufTab[0x20];
+    char buf[0x40];
+    for (u8 i = 1; i <= 5; i++) {
+        sprintf(bufTab, &lbl_eu_8050DC20[0x4e3], id, i);
+        void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, bufTab, 0);
+        if (res != 0) {
+            sprintf(bufTab, &lbl_eu_8050DC20[0x500], i);
+            func_80137E7C(self->field_8, bufTab, res);
+        }
+    }
+    self->field_F9 = 0;
+    self->field_FA = 0;
+    u32 t16 = (u32)((u8)id - 1);
+    u8 r0 = (u8)(t16 * 5 + 4);
+    u8 r17 = (u8)(id * 5);
+    u8 v = func_801361E8((u32)lbl_eu_80664890, &lbl_eu_8050DC20[0x50c], r0);
+    if (func_8009CF8C((u8)v + 0x3509) != 0) {
+        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 1);
+        void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x51b], 0);
+        if (res != 0) {
+            func_80137E7C(self->field_8, &lbl_eu_8050DC20[0x531], res);
+        }
+        for (u8 i = 0; i < 5; i++) {
+            func_80124270(self->cells[3][i].mpLayout->GetRootPane(), 1);
+        }
+        self->field_F9 = 1;
+    } else {
+        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 0);
+        void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x53b], 0);
+        if (res != 0) {
+            func_80137E7C(self->field_8, &lbl_eu_8050DC20[0x531], res);
+        }
+        for (u8 i = 0; i < 5; i++) {
+            func_80124270(self->cells[3][i].mpLayout->GetRootPane(), 0);
+        }
+    }
+    u8 v2 = func_801361E8((u32)lbl_eu_80664890, &lbl_eu_8050DC20[0x50c], r17);
+    if (func_8009CF8C((u8)v2 + 0x3509) != 0) {
+        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 1);
+        void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x55b], 0);
+        if (res != 0) {
+            func_80137E7C(self->field_8, &lbl_eu_8050DC20[0x571], res);
+        }
+        for (u8 i = 0; i < 5; i++) {
+            func_80124270(self->cells[4][i].mpLayout->GetRootPane(), 1);
+        }
+        self->field_FA = 1;
+    } else {
+        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 0);
+        void* res = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x57b], 0);
+        if (res != 0) {
+            func_80137E7C(self->field_8, &lbl_eu_8050DC20[0x571], res);
+        }
+        for (u8 i = 0; i < 5; i++) {
+            func_80124270(self->cells[4][i].mpLayout->GetRootPane(), 0);
+        }
+    }
+    CPSkillCharData3DD0* data = reinterpret_cast<CPSkillCharData3DD0*>(func_8009EC9C(id));
+    u32 cur = data->field_3DD0;
+    UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>((u8*)data + 0x3534);
+    for (u8 row = 0; row < 5; row++) {
+        sprintf(buf, &lbl_eu_8050DC20[0x591], row + 1);
+        nw4r::lyt::Pane* paneA = self->field_8->GetRootPane()->FindPaneByName(buf, true);
+        sprintf(buf, &lbl_eu_8050DC20[0x59f], row + 1);
+        nw4r::lyt::Pane* paneB = self->field_8->GetRootPane()->FindPaneByName(buf, true);
+        u32 isCur = (u32)(cur - (u32)row) == 0;
+        func_80124270(paneA, isCur);
+        func_80124270(paneB, isCur);
+    }
+    u32 gridBase = t16 * 25;
+    for (u8 row = 0; row < 5; row++) {
+        u8 rowP1 = row + 1;
+        u32 rowIdxBase = row * 5 + gridBase;
+        UI::CPSkillRecord* rec = &blob->records[row];
+        UI::CPSkillBlobCost* costBlob = reinterpret_cast<UI::CPSkillBlobCost*>(blob);
+        for (u8 i = 1; i <= 5; i++) {
+            u32 gridIdx = (u8)(i + rowIdxBase);
+            u8 v1 = func_801361E8((u32)lbl_eu_8066488C, &lbl_eu_8050DC20[0x5ad], gridIdx);
+            u8 v2 = func_801361E8((u32)lbl_eu_8066488C, &lbl_eu_8050DC20[0x5b3], gridIdx);
+            u8 v3 = func_801361E8((u32)lbl_eu_8066488C, &lbl_eu_8050DC20[0x344], gridIdx);
+            u32 word = rec->slots[i].word;
+            u16 value = (u16)(v3 * 0x64);
+            void* res2 = 0;
+            if (word == 0) {
+                switch (v1) {
+                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x5ba], 0); break;
+                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x5d3], 0); break;
+                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x5ec], 0); break;
+                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x605], 0); break;
+                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x61e], 0); break;
+                }
+            } else if (v2 == 1) {
+                switch (v1) {
+                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x637], 0); break;
+                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x650], 0); break;
+                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x669], 0); break;
+                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x682], 0); break;
+                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x69b], 0); break;
+                }
+            } else {
+                switch (v1) {
+                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6b4], 0); break;
+                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6cd], 0); break;
+                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6e6], 0); break;
+                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6ff], 0); break;
+                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x718], 0); break;
+                }
+            }
+            if (res2 != 0) {
+                sprintf(buf, &lbl_eu_8050DC20[0x431], rowP1, i);
+                func_80137E7C(self->field_8, buf, res2);
+            }
+            u16 msgId = func_80136254(lbl_eu_80664880, &lbl_eu_8050DC20[0x731], gridIdx);
+            char* text = func_80138F78(msgId);
+            void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, text, 0);
+            if (res3 != 0) {
+                sprintf(buf, &lbl_eu_8050DC20[0x736], rowP1, i);
+                func_80137E7C(self->field_8, buf, res3);
+                CPSkillFourShorts fs0 = func_80139658(self->field_8, buf, 0);
+                CPSkillFourShorts fs1 = fs0;
+                CPSkillFourShorts fs2 = func_80139658(self->field_8, buf, 1);
+                CPSkillFourShorts fs3 = fs2;
+                CPSkillColorS10 c1, c2;
+                if (word == 0) {
+                    CPSkillColorS10* col1 = func_801C4B60(&c1, 0xf0, 0xf0, 0xeb, fs3.d);
+                    CPSkillColorS10* col2 = func_801C4B60(&c2, 0xf0, 0xf0, 0xeb, fs1.d);
+                    func_80139A18(self->field_8, buf, col2, col1);
+                } else {
+                    CPSkillColorS10* col1 = func_801C4B60(&c1, 0x2a, 0x22, 0x18, fs3.d);
+                    CPSkillColorS10* col2 = func_801C4B60(&c2, 0x2a, 0x22, 0x18, fs1.d);
+                    func_80139A18(self->field_8, buf, col2, col1);
+                }
+            }
+            sprintf(buf, &lbl_eu_8050DC20[0x749], rowP1, i);
+            func_80124270(self->field_8->GetRootPane()->FindPaneByName(buf, true), 0);
+            nw4r::lyt::Layout* cellLayout = self->cells[row][i - 1].mpLayout;
+            nw4r::lyt::AnimTransform* anim = self->cells[row][i - 1].mpAnimTrans;
+            anim->SetFrame(lbl_eu_80668904);
+            cellLayout->Animate(0);
+            if (word == 0) {
+                if (i == 1) {
+                    s32 cost = (s32)costBlob->costs[(u8)row];
+                    f32 ratio;
+                    if (cost == 0) {
+                        ratio = lbl_eu_80668904;
+                    } else {
+                        ratio = (f32)cost / (f32)value;
+                    }
+                    f32 f = ((f32)(u16)anim->GetFrameSize() - lbl_eu_80668900) * ratio;
+                    anim->SetFrame(f);
+                    cellLayout->Animate(0);
+                } else if (rec->slots[i - 1].word != 0) {
+                    s32 cost = (s32)costBlob->costs[(u8)row];
+                    f32 ratio;
+                    if (cost == 0) {
+                        ratio = lbl_eu_80668904;
+                    } else {
+                        ratio = (f32)cost / (f32)value;
+                    }
+                    f32 f = ((f32)(u16)anim->GetFrameSize() - lbl_eu_80668900) * ratio;
+                    anim->SetFrame(f);
+                    cellLayout->Animate(0);
+                }
+            } else {
+                f32 f = (f32)(u16)anim->GetFrameSize() - lbl_eu_80668900;
+                anim->SetFrame(f);
+                cellLayout->Animate(0);
+            }
+            func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x446], true), 0);
+            func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x451], true), 0);
+            func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x45c], true), 0);
+            func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x467], true), 0);
+            func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x472], true), 0);
+            switch (v1) {
+            case 1: func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x446], true), 1); break;
+            case 2: func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x451], true), 1); break;
+            case 3: func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x45c], true), 1); break;
+            case 4: func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x467], true), 1); break;
+            case 5: func_80124270(cellLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x472], true), 1); break;
+            }
+        }
+    }
+}
 
-// Line update tail (retail func_8026AAF4). noinline: func_80269B94 keeps the
-// retail `bl` (the body lives at 0x8026AAF4).
-__declspec(noinline) void func_8026AAF4(UI::CPassiveSkillLine* self) {}
+// Skill-learn grid update (retail func_8026AAF4): scan the column entries
+// for the row marker to select the active skill id, refresh the name texture
+// and the five tab slots, set the row-availability flags, then for each grid
+// cell attach the category icon/name textures and drive the pane visibility
+// from the learned state and the remaining-SP affordability check.
+__declspec(noinline) void func_8026AAF4(UI::CPassiveSkillLine* self) {
+    func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x48b], true), 1);
+    func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x497], true), 0);
+    u8 id = func_801392B4(self->field_F3);
+    u32 catBase = ((u32)((u8)id - 1) & 0x1F) * 8;
+    char bufB[0x40];
+    char bufA[0x40];
+    u8 entry2 = id;
+    u8 v = 0;
+    u8 cnt = 0;
+    for (u8 idx = 0; idx < self->field_F2; idx++) {
+        u8 entry = self->field_EA[idx];
+        if (entry == id) {
+            continue;
+        }
+        if ((u8)cnt == (s8)self->field_FD) {
+            entry2 = entry;
+            for (u8 i = 1; i <= 5; i++) {
+                if ((u8)i == (s8)self->field_FE + 1) {
+                    sprintf(bufB, &lbl_eu_8050DC20[0x772], i);
+                    v = func_801361E8((u32)lbl_eu_80664888, bufB, catBase + entry);
+                    break;
+                }
+            }
+            break;
+        }
+        cnt++;
+        if (cnt >= 6) {
+            break;
+        }
+    }
+    self->field_F4 = entry2;
+    u16 msgId = func_80136254(lbl_eu_80664090, &lbl_eu_8050DC20[0x1e8], entry2);
+    char* text = func_80138F78(msgId);
+    void* res = func_801355F4()->GetResource(0x74696d67, text, 0);
+    if (res != 0) {
+        func_80137E7C(self->field_8, &lbl_eu_8050DC20[0x781], res);
+    }
+    for (u8 i = 1; i <= 5; i++) {
+        sprintf(bufA, &lbl_eu_8050DC20[0x4e3], entry2, i);
+        void* res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, bufA, 0);
+        if (res2 != 0) {
+            sprintf(bufA, &lbl_eu_8050DC20[0x500], i);
+            func_80137E7C(self->field_8, bufA, res2);
+        }
+    }
+    self->field_FB = 0;
+    self->field_FC = 0;
+    u32 t16 = (u32)((u8)entry2 - 1);
+    u8 r0 = (u8)(t16 * 5 + 4);
+    u8 r19 = (u8)(entry2 * 5);
+    u8 vv = func_801361E8((u32)lbl_eu_80664890, &lbl_eu_8050DC20[0x50c], r0);
+    if (func_8009CF8C((u8)vv + 0x3509) != 0) {
+        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 1);
+        void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x51b], 0);
+        if (res3 != 0) {
+            func_80137E7C(self->field_8, &lbl_eu_8050DC20[0x531], res3);
+        }
+        self->field_FB = 1;
+    } else {
+        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x511], true), 0);
+        void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x53b], 0);
+        if (res3 != 0) {
+            func_80137E7C(self->field_8, &lbl_eu_8050DC20[0x531], res3);
+        }
+    }
+    u8 vv2 = func_801361E8((u32)lbl_eu_80664890, &lbl_eu_8050DC20[0x50c], r19);
+    if (func_8009CF8C((u8)vv2 + 0x3509) != 0) {
+        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 1);
+        void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x55b], 0);
+        if (res3 != 0) {
+            func_80137E7C(self->field_8, &lbl_eu_8050DC20[0x571], res3);
+        }
+        self->field_FC = 1;
+    } else {
+        func_80124270(self->field_8->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x551], true), 0);
+        void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x57b], 0);
+        if (res3 != 0) {
+            func_80137E7C(self->field_8, &lbl_eu_8050DC20[0x571], res3);
+        }
+    }
+    UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>(
+        (u8*)func_8009EC9C((u8)entry2) + 0x3534);
+    for (u8 row = 0; row < 5; row++) {
+        sprintf(bufB, &lbl_eu_8050DC20[0x591], row + 1);
+        nw4r::lyt::Pane* paneA = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
+        sprintf(bufB, &lbl_eu_8050DC20[0x59f], row + 1);
+        nw4r::lyt::Pane* paneB = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
+        func_80124270(paneA, 0);
+        func_80124270(paneB, 0);
+    }
+    u32 gridBase = (u32)((u8)entry2 - 1) * 0x19;
+    u8 v0 = (u8)v;
+    for (u8 row = 0; row < 5; row++) {
+        u8 rowP1 = row + 1;
+        u32 rowIdxBase = row * 5;
+        UI::CPSkillRecord* rec = &blob->records[row];
+        for (u8 i = 1; i <= 5; i++) {
+            u32 gridIdx = (u8)(i + rowIdxBase + gridBase);
+            u8 v1 = func_801361E8((u32)lbl_eu_8066488C, &lbl_eu_8050DC20[0x5ad], gridIdx);
+            u8 v2 = func_801361E8((u32)lbl_eu_8066488C, &lbl_eu_8050DC20[0x5b3], gridIdx);
+            func_801361E8((u32)lbl_eu_8066488C, &lbl_eu_8050DC20[0x344], gridIdx);
+            u32 word = rec->slots[i].word;
+            void* res2 = 0;
+            if (word == 0) {
+                switch (v1) {
+                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x5ba], 0); break;
+                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x5d3], 0); break;
+                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x5ec], 0); break;
+                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x605], 0); break;
+                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x61e], 0); break;
+                }
+            } else if (v2 == 1) {
+                switch (v1) {
+                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x637], 0); break;
+                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x650], 0); break;
+                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x669], 0); break;
+                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x682], 0); break;
+                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x69b], 0); break;
+                }
+            } else {
+                switch (v1) {
+                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6b4], 0); break;
+                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6cd], 0); break;
+                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6e6], 0); break;
+                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6ff], 0); break;
+                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x718], 0); break;
+                }
+            }
+            if (res2 != 0) {
+                sprintf(bufB, &lbl_eu_8050DC20[0x431], rowP1, i);
+                func_80137E7C(self->field_8, bufB, res2);
+            }
+            u16 msgId2 = func_80136254(lbl_eu_80664880, &lbl_eu_8050DC20[0x731], gridIdx);
+            char* text2 = func_80138F78(msgId2);
+            void* res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, text2, 0);
+            if (res3 != 0) {
+                sprintf(bufB, &lbl_eu_8050DC20[0x736], rowP1, i);
+                func_80137E7C(self->field_8, bufB, res3);
+                CPSkillFourShorts fs0 = func_80139658(self->field_8, bufB, 0);
+                CPSkillFourShorts fs1 = fs0;
+                CPSkillFourShorts fs2 = func_80139658(self->field_8, bufB, 1);
+                CPSkillFourShorts fs3 = fs2;
+                CPSkillColorS10 c1, c2;
+                if (word == 0) {
+                    CPSkillColorS10* col1 = func_801C4B60(&c1, 0xf0, 0xf0, 0xeb, fs3.d);
+                    CPSkillColorS10* col2 = func_801C4B60(&c2, 0xf0, 0xf0, 0xeb, fs1.d);
+                    func_80139A18(self->field_8, bufB, col2, col1);
+                } else {
+                    CPSkillColorS10* col1 = func_801C4B60(&c1, 0x2a, 0x22, 0x18, fs3.d);
+                    CPSkillColorS10* col2 = func_801C4B60(&c2, 0x2a, 0x22, 0x18, fs1.d);
+                    func_80139A18(self->field_8, bufB, col2, col1);
+                }
+            }
+            sprintf(bufB, &lbl_eu_8050DC20[0x749], rowP1, i);
+            nw4r::lyt::Pane* pane6 = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
+            func_80124270(pane6, (u32)(word == 0));
+            void* res4 = 0;
+            switch (v1) {
+            case 1: res4 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x78d], 0); break;
+            case 2: res4 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x7a2], 0); break;
+            case 3: res4 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x7b7], 0); break;
+            case 4: res4 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x7cc], 0); break;
+            case 5: res4 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x7e1], 0); break;
+            }
+            if (res4 != 0) {
+                nw4r::lyt::Pane* pane2 = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
+                if (pane2 != 0) {
+                    func_80137E7C(self->field_8, bufB, res4);
+                    CPSkillFourShorts fs0 = func_80139658(self->field_8, bufB, 0);
+                    CPSkillFourShorts fs1 = fs0;
+                    CPSkillFourShorts fs2 = func_80139658(self->field_8, bufB, 1);
+                    CPSkillFourShorts fs3 = fs2;
+                    CPSkillColorS10 c1, c2;
+                    CPSkillColorS10* col1 = func_801C4B60(&c1, 0, 0, 0, fs3.d);
+                    CPSkillColorS10* col2 = func_801C4B60(&c2, 0, 0, 0, fs1.d);
+                    func_80139AC8(pane2, col2, col1);
+                    reinterpret_cast<CPSkillPaneB8*>(pane2)->field_B8 = 0xa0;
+                }
+            }
+            sprintf(bufB, &lbl_eu_8050DC20[0x75d], rowP1, i);
+            nw4r::lyt::Pane* pane3 = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
+            func_80124270(pane3, (u32)(v0 == v1));
+            u8 id3 = func_801392B4(self->field_F3);
+            u8 id2b = self->field_F4;
+            u8* data3 = (u8*)func_8009EC9C(id3);
+            u8 rowR = lbl_eu_8050DB60[(u8)id3 * 8 + (u8)id2b - 9];
+            u32* cellWords = reinterpret_cast<u32*>(data3 + rowR * 0xc4 + 0x3908);
+            u8 found = 0;
+            for (u8 i2 = 1; i2 <= 5; i2++) {
+                if (cellWords[i2 * 8] == gridIdx) {
+                    func_80124270(self->field_8->GetRootPane()->FindPaneByName(bufB, true), 1);
+                    found = 1;
+                    break;
+                }
+            }
+            self->field_104[row * 5 + i - 1] = 0;
+            if (func_801C4648(pane3) != 0) {
+                sprintf(bufB, &lbl_eu_8050DC20[0x75d], rowP1, i);
+                nw4r::lyt::Pane* pane5 = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
+                if (found != 0) {
+                    void* res5 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x7f6], 0);
+                    if (res5 != 0) {
+                        func_80137F88(pane5, reinterpret_cast<u32>(res5));
+                        CPSkillColorS10 c1, c2;
+                        CPSkillColorS10* col1 = func_801C4B60(&c1, 0xff, 0xff, 0xfa, 0xff);
+                        CPSkillColorS10* col2 = func_801C4B60(&c2, 0x48, 0x3a, 0x21, 0);
+                        func_80139AC8(pane5, col2, col1);
+                    }
+                } else {
+                    u32 sum = 0;
+                    for (u8 row2 = 0; row2 < 6; row2++) {
+                        UI::CPSkillRecord* rec2 = &blob->records2[row2];
+                        for (u8 i2 = 1; i2 <= 5; i2++) {
+                            if (rec2->slots[i2].word != 0) {
+                                sum += func_80136254(lbl_eu_8066488C, &lbl_eu_8050DC20[0x318], rec2->slots[i2].word);
+                            }
+                        }
+                    }
+                    u8 id3b = func_801392B4(self->field_F3);
+                    u8 rowR2 = lbl_eu_8050DB60[(u8)id3b * 8 + (u8)self->field_F4 - 9];
+                    UI::CPSkillRecord* rec3 = &blob->records2[rowR2];
+                    if (rec3->slots[(s8)self->field_FE + 1].word != 0) {
+                        sum -= func_80136254(lbl_eu_8066488C, &lbl_eu_8050DC20[0x318], rec3->slots[(s8)self->field_FE + 1].word);
+                    }
+                    s32 remaining = (s32)((UI::CPSkillBlobTotal*)blob)->totalSP - (s32)sum;
+                    u8 costIdx = (u8)(((u32)(u8)self->field_F4 - 1) * 0x19 + rowIdxBase + i);
+                    u16 costId = func_80136254(lbl_eu_8066488C, &lbl_eu_8050DC20[0x318], costIdx);
+                    sprintf(bufB, &lbl_eu_8050DC20[0x749], rowP1, i);
+                    if (remaining >= (s32)(u16)costId) {
+                        nw4r::lyt::Pane* pane6b = self->field_8->GetRootPane()->FindPaneByName(bufB, true);
+                        if (func_801C4648(pane6b) == 0) {
+                            void* res6 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x80c], 0);
+                            if (res6 != 0) {
+                                func_80137F88(pane6b, reinterpret_cast<u32>(res6));
+                                CPSkillColorS10 c1, c2;
+                                CPSkillColorS10* col1 = func_801C4B60(&c1, 0xff, 0xff, 0xfa, 0xff);
+                                CPSkillColorS10* col2 = func_801C4B60(&c2, 0xff, 0xff, 0xfa, 0);
+                                func_80139AC8(pane6b, col2, col1);
+                            }
+                            self->field_104[row * 5 + i - 1] = 1;
+                        }
+                    } else {
+                        void* res7 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x822], 0);
+                        if (res7 != 0) {
+                            func_80137F88(pane5, reinterpret_cast<u32>(res7));
+                            CPSkillColorS10 c1, c2;
+                            CPSkillColorS10* col1 = func_801C4B60(&c1, 0xff, 0xff, 0xfa, 0xff);
+                            CPSkillColorS10* col2 = func_801C4B60(&c2, 0xaa, 0x19, 0x19, 0);
+                            func_80139AC8(pane5, col2, col1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
-extern "C" __declspec(noinline) void func_8026BB60(UI::CPassiveSkillLine* self){}
+// Skill-learn grid refresh (retail func_8026BB60): hide the six slot panes
+// of the secondary layout, then for each character-column entry that is not
+// the current character, show the slot pane and attach the character
+// texture; for each of the 5 skill slots pick the icon/name textures by the
+// slot category ladder (unlearned / learned-empty / learned-type1 /
+// learned-type2), set the slot colours from the pane animation vectors, and
+// finally position the slot pane by the learned-slot count.
+extern "C" __declspec(noinline) void func_8026BB60(UI::CPassiveSkillLine* self) {
+    u8 id = func_801392B4(self->field_F3);
+    UI::CPSkillBlob* blob = reinterpret_cast<UI::CPSkillBlob*>(
+        (u8*)func_8009EC9C((u8)id) + 0x3534);
+    func_80124270(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x838], true), 0);
+    func_80124270(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x841], true), 0);
+    func_80124270(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x84a], true), 0);
+    func_80124270(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x853], true), 0);
+    func_80124270(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x85c], true), 0);
+    func_80124270(self->field_18->GetRootPane()->FindPaneByName(&lbl_eu_8050DC20[0x865], true), 0);
+    u32 t = id - 1;
+    u32 catBase = (t & 0x1F) * 8;
+    f32 scale = lbl_eu_80668930[t * 2];
+    u8* table = &lbl_eu_8050DB60[t * 8];
+    char buf[0x28];
+    u8 slotCount = 0;
+    for (u8 idx = 0; idx < self->field_F2; idx++) {
+        u8 entry = self->field_EA[idx];
+        if (entry == id) {
+            continue;
+        }
+        u8 slot = slotCount + 1;
+        sprintf(buf, &lbl_eu_8050DC20[0x86e], slot);
+        func_80124270(self->field_18->GetRootPane()->FindPaneByName(buf, true), 1);
+        u16 msgId = func_80136254(lbl_eu_80664090, &lbl_eu_8050DC20[0x1e8], entry);
+        char* text = func_80138F78(msgId);
+        void* res = func_801355F4()->GetResource(0x74696d67, text, 0);
+        if (res != 0) {
+            sprintf(buf, &lbl_eu_8050DC20[0x879], slot);
+            func_80137E7C(self->field_18, buf, res);
+        }
+        u8 row = table[entry - 1];
+        UI::CPSkillRecord* rec = &blob->records2[row];
+        u32 cat = catBase + entry;
+        u8 learnedCount = 0;
+        for (u8 s = 1; s <= 5; s++) {
+            sprintf(buf, &lbl_eu_8050DC20[0x772], s);
+            u8 v = func_801361E8((u32)lbl_eu_80664888, buf, cat);
+            UI::CPSkillSlot* slotPtr = &rec->slots[s];
+            void* res2 = 0;
+            void* res3;
+            if ((slotPtr->byte14 & 1) == 0) {
+                switch (v) {
+                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x887], 0); break;
+                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x8a0], 0); break;
+                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x8b9], 0); break;
+                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x8d2], 0); break;
+                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x8eb], 0); break;
+                }
+                res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x904], 0);
+            } else if (slotPtr->word != 0) {
+                u8 v2 = func_801361E8((u32)lbl_eu_8066488C, &lbl_eu_8050DC20[0x5b3], slotPtr->word);
+                if (v2 == 1) {
+                    switch (v) {
+                    case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x637], 0); break;
+                    case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x650], 0); break;
+                    case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x669], 0); break;
+                    case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x682], 0); break;
+                    case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x69b], 0); break;
+                    }
+                } else if (v2 == 2) {
+                    switch (v) {
+                    case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6b4], 0); break;
+                    case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6cd], 0); break;
+                    case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6e6], 0); break;
+                    case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x6ff], 0); break;
+                    case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x718], 0); break;
+                    }
+                }
+                msgId = func_80136254(lbl_eu_80664880, &lbl_eu_8050DC20[0x731], slotPtr->word);
+                text = func_80138F78(msgId);
+                res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, text, 0);
+            } else {
+                switch (v) {
+                case 1: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x917], 0); break;
+                case 2: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x930], 0); break;
+                case 3: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x949], 0); break;
+                case 4: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x962], 0); break;
+                case 5: res2 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x97b], 0); break;
+                }
+                res3 = reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mArg)->GetResource(0x74696d67, &lbl_eu_8050DC20[0x904], 0);
+            }
+            if (res2 != 0) {
+                sprintf(buf, &lbl_eu_8050DC20[0x994], slot, s);
+                func_80137E7C(self->field_18, buf, res2);
+            }
+            if (res3 != 0) {
+                sprintf(buf, &lbl_eu_8050DC20[0x9a9], slot, s);
+                func_80137E7C(self->field_18, buf, res3);
+                CPSkillFourShorts fs0 = func_80139658(self->field_18, buf, 0);
+                CPSkillFourShorts fs1 = fs0;
+                CPSkillFourShorts fs2 = func_80139658(self->field_18, buf, 1);
+                CPSkillFourShorts fs3 = fs2;
+                CPSkillColorS10 c1, c2;
+                if ((slotPtr->byte14 & 1) == 0) {
+                    CPSkillColorS10* col1 = func_801C4B60(&c1, 0xf0, 0xf0, 0xeb, fs3.d);
+                    CPSkillColorS10* col2 = func_801C4B60(&c2, 0xf0, 0xf0, 0xeb, fs1.d);
+                    func_80139A18(self->field_18, buf, col2, col1);
+                } else {
+                    CPSkillColorS10* col1 = func_801C4B60(&c1, 0x2a, 0x22, 0x18, fs3.d);
+                    CPSkillColorS10* col2 = func_801C4B60(&c2, 0x2a, 0x22, 0x18, fs1.d);
+                    func_80139A18(self->field_18, buf, col2, col1);
+                }
+            }
+            if (s > 1 && (slotPtr->byte14 & 1) != 0) {
+                learnedCount++;
+            }
+        }
+        sprintf(buf, &lbl_eu_8050DC20[0x9bc], slot);
+        nw4r::lyt::Pane* pane = self->field_18->GetRootPane()->FindPaneByName(buf, true);
+        float pos[2];
+        func_80127BC4(pos, reinterpret_cast<float*>(reinterpret_cast<u8*>(pane) + 0x4C));
+        pos[1] = self->field_100 + scale * (f32)learnedCount;
+        func_80124288(pane, pos);
+        slotCount++;
+        if (slotCount >= 6) {
+            break;
+        }
+    }
+}
 
 // Line update tail (retail func_8026C4A4); body lives at 0x8026C4A4, not yet
 // matched. C linkage inherited from the file-top declaration keeps the call

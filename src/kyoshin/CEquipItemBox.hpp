@@ -70,6 +70,26 @@ struct CEquipItemData {
     u8 unk7;    // 0x7
 };
 
+/* Item-list region of the CItemBoxInfo object at unk_20c + 0xB0, written by
+   func_80289AA4's list refresh: u16 ids, 12 VEC3 records (i*0xC), two per-item
+   byte tables (+0xA8 / +0xB4) and a per-item s16 table (+0xC0). */
+struct CEquipItemBoxItemListView {
+    u16 field_00[0xC];            // 0x00..0x17 u16 item ids
+    u8 field_18[0x90];            // 0x18..0xA7 12 x 0xC records (VEC3 copies)
+    u8 field_A8[0x20];            // 0xA8..0xC7 per-item bytes (+0xA8 / +0xB4)
+    s16 field_C0[0x20];           // 0xC0..0xFF per-item shorts
+};
+
+/* Overlay for the per-page u16 item array at +0x210 with the per-index u8
+   table at +0x2C4 and s16 table at +0x2D0 (read by func_80289AA4). */
+struct CEquipItemBoxPageDataView {
+    u8 pad00[0x210];
+    u16 field_210[0x20];    // 0x210..0x24F per-page u16 ids
+    u8 pad250[0x2C4 - 0x250];
+    u8 field_2C4[0xC];      // 0x2C4..0x2CF per-index bytes
+    s16 field_2D0[0xC];     // 0x2D0..0x2DF per-index shorts
+};
+
 /* Item instance (retail CItemBase-ish). Only the id word at +0x0 and the
    flag halfword at +0x4 are read by this TU's helpers. */
 struct CItemInstance {
@@ -370,6 +390,10 @@ extern "C" void func_80282E24(CEquipItemBox* self);
 extern "C" u8 func_802832B4(CEquipItemBox* self);
 extern "C" void func_80289754(CEquipItemBox* self);
 extern "C" void func_80289AA4(CEquipItemBox* self);
+extern "C" void func_80286D7C(CEquipItemBox* self);
+extern "C" void func_80286F6C(CEquipItemBox* self);
+extern "C" void func_8028A0E0(CEquipItemBox* self);
+extern "C" char* func_8028D0EC(CEquipItemBox* self);
 extern "C" void func_80288A1C(CEquipItemBox* self);
 extern "C" void func_80288A6C(CEquipItemBox* self);
 extern "C" void func_802889C0(CEquipItemBox* self);
@@ -403,15 +427,38 @@ extern u32 lbl_eu_806640F8;
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" int func_801D3320(void*);
 extern "C" int func_801D3328(void*);
+extern "C" void func_801D377C(void*);
 extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
 // Pane-visibility query (C-ABI retail symbol; extern "C" so call sites emit
 // the plain name, matching func_80287250's reloc site).
 extern "C" bool func_801C4648(nw4r::lyt::Pane*);
+
+// Item-box object type for the unk_20c pointer (forward decl; full layout in
+// CItemBoxInfo.hpp, which is included by TUs that also include this header).
+struct CItemBoxInfo;
+// Item-box state query (retail mangled getItemBoxState__FP12CItemBoxInfo;
+// u32 return avoids the u8 call-site mask; same decl as CItemBoxGrid.hpp).
+extern "C" u32 getItemBoxState__FP12CItemBoxInfo(void*);
+// Item-box list refresh helpers (CItemBoxInfo TU, retail plain names).
+extern "C" void func_801D4AE0(CItemBoxInfo* info, int arg2, void* arg3);
+extern "C" u8 func_801EF034(const u8*, unsigned int);
+// Same-TU grid helpers used by the equip-list refresh (retail plain names).
+extern "C" void* func_80282F34(CEquipItemGrid* grid, u16 idx);
+extern "C" char* func_80283350(CEquipItemGrid* grid, u32 param);
+extern "C" void func_8028A9CC(CEquipItemBox* self, int a, int b);
 extern "C" void func_801D3330(void*);
 extern "C" void func_801D3408(void*);
 extern "C" void func_801D3430(void*, const nw4r::math::VEC3*);
 extern "C" void func_801D3454(void*, void*);
 extern "C" void func_801D353C(void*, u8);
+// Sort-menu page-list helpers (CSortMenu TU, retail plain names).
+// func_801D3818(menu, page, &outCount, &outRemain): writes func_8015780C(page)
+// (clamped to >= 4) into outCount and (0 or count-4) into outRemain.
+extern "C" void func_801D3818(void*, u8, u8*, u8*);
+extern "C" void func_801D350C(void*);
+extern "C" void func_801D3518(void*, void*);
+extern "C" u16 func_8015780C(int);
+extern "C" void func_80136B4C(nw4r::lyt::Layout*, const char*, const char*, u32);
 extern "C" void func_80137924(void*, void*, void*, void*);
 // Per-frame update helpers (retail plain names, defined in sibling TUs).
 extern "C" void func_801D3064(void*);
@@ -426,12 +473,66 @@ extern "C" void func_801D20B0(void*, nw4r::lyt::DrawInfo*);
 // Layout text/colour setter used by the sort-menu page rebuild (func_8028A1DC);
 // the 3rd/4th args are .sbss colour-table pairs referenced via sda21.
 extern "C" void func_80139A18(nw4r::lyt::Layout*, char*, void*, void*);
+// .sbss colour-table initialisers used by sinit_8028DAB0 (retail plain names).
+extern "C" void func_801D1F9C(void*, u32);
+extern "C" void func_801C4B60(void*, u32, u32, u32, u32);
+extern u16 lbl_eu_80664920[4];
+extern u16 lbl_eu_80664928[4];
 extern u16 lbl_eu_80664930[4];
 extern u16 lbl_eu_80664938[4];
 extern u16 lbl_eu_80664940[4];
 extern u16 lbl_eu_80664948[4];
+extern u16 lbl_eu_80664950[4];
+extern u16 lbl_eu_80664958[4];
+extern u16 lbl_eu_80664960[4];
+extern u16 lbl_eu_80664968[4];
+extern u16 lbl_eu_80664970[4];
+extern u16 lbl_eu_80664978[4];
+extern u16 lbl_eu_80664980[4];
+extern u16 lbl_eu_80664988[4];
+extern u16 lbl_eu_80664990[4];
+extern u16 lbl_eu_80664998[4];
+extern u16 lbl_eu_806649A0[4];
+extern u16 lbl_eu_806649A8[4];
+extern u16 lbl_eu_806649B0[4];
+extern u16 lbl_eu_806649B8[4];
+extern u16 lbl_eu_806649C0[4];
+extern u16 lbl_eu_806649C8[4];
+extern u16 lbl_eu_806649D0[4];
+extern u16 lbl_eu_806649D8[4];
 // Sort-menu page handler called once per page by func_8028A1DC (this TU).
 extern "C" void func_8028A374(CEquipItemBox* self, u8 v, u8 i);
+
+// Same-TU grid helpers used by the equip-slot checks (defined in this .cpp;
+// retail plain names). Return u32 (lbz zero-extends; avoids call-site masks).
+extern "C" u32 func_80283208(CEquipItemGrid* grid, u16 idx);
+extern "C" u32 func_80282EC4(CEquipItemGrid* grid, u16 idx);
+
+// Shared item/bdat table id passed as func_801361E8's group arg by the
+// equip-slot checks (same .sbss block as lbl_eu_806640F4).
+extern u32 lbl_eu_806640EC;
+// Resource/flag helper: 0 when the named resource id is absent (CQuestLog).
+extern "C" u32 func_8009CF8C(u32);
+// Sort-menu scroll-down / page-up helpers (CSortMenu TU, retail plain names).
+extern "C" void func_801D3698(void*);
+extern "C" void func_801D3724(void*);
+// Item-name string providers (CErrMes TU, current hint/error strings).
+extern "C" char* func_eu_802B148C(void);
+extern "C" char* func_eu_802B1474(void);
+// Layout text bind (code_80135FDC unit): (layout, pane name, text, 0).
+extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
+// Page-slot word-table accessors used by the grid-cursor scans.
+extern "C" u16 ArrayGet12(const u16*, u8);
+extern "C" void func_801CB9D8(nw4r::math::VEC3*, const u16*, u32);
+// Number-of-equip-pages byte (shared .sbss flag; > 1 means multi-page).
+extern "C" u8 code80135FDC_getByte_64077();
+// Sort-page colour table pairs (func_80139A18 3rd/4th args, .sbss).
+extern u16 lbl_eu_806649B0[4];
+extern u16 lbl_eu_806649B8[4];
+extern u16 lbl_eu_806649C0[4];
+extern u16 lbl_eu_806649C8[4];
+extern u16 lbl_eu_806649D0[4];
+extern u16 lbl_eu_806649D8[4];
 
 // Small-data global read by func_80285890 (item-impl table id, .sbss).
 extern u32 lbl_eu_806640F4;

@@ -93,10 +93,72 @@ def norm_type(t: str) -> str:
 
 
 def c99_safe(t: str) -> bool:
+    t = re.sub(r"\b(volatile|static|register|restrict|const)\b", " ", t)
     toks = re.sub(r"[\*\[\]&]", " ", t).split()
     if not toks:
         return False
     return all(tok in BUILTINS or tok in ("struct", "union", "enum") for tok in toks)
+
+
+def base_type(ntype: str) -> str:
+    """Last qualified component of a (possibly pointer/array/const/volatile)
+    type, with struct/class/union tags stripped."""
+    t = ntype.replace("*", "").strip()
+    t = re.sub(r"\[[^\]]*\]", "", t).strip()
+    t = re.sub(r"\b(const|volatile|static|register|restrict)\b", "", t).strip()
+    t = t.replace("struct ", "").replace("class ", "").replace("enum ", "")
+    t = t.replace("struct", "").replace("class", "").replace("enum", "")
+    return t.split("::")[-1].strip() if "::" in t else t.strip()
+
+
+_INCLUDE_ROOTS = ("src/", "libs/monolib/include/", "libs/nw4r/include/",
+                  "libs/RVL_SDK/include/", "libs/CriWare/include/")
+
+
+def resolvable_path(p: str) -> bool:
+    return any(p.startswith(r) for r in _INCLUDE_ROOTS)
+
+
+def include_form(p: str) -> str:
+    for r in _INCLUDE_ROOTS:
+        if p.startswith(r):
+            return "<" + p[len(r):] + ">"
+    return "<" + p + ">"  # unresolvable; caller should not reach here
+
+
+def find_type_home(name: str):
+    """Include-form path of the header that DEFINES `name`, or None.
+
+    Prefers full definitions over forward declarations, include-tree headers
+    over src-tree copies, and returns None on ambiguity so labels stay per-TU
+    rather than risk pulling the wrong declaration."""
+    defs, typd, fwd = set(), set(), set()
+    for root in (SRC, LIBS):
+        for p in root.rglob("*"):
+            if p.suffix not in (".h", ".hpp") or p.name.endswith(".ctx.c"):
+                continue
+            try:
+                txt = p.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            s = str(p.relative_to(ROOT))
+            if re.search(rf"\b(class|struct|union)\s+{re.escape(name)}\s*(:\s*[^{{;]+)?{{", txt):
+                defs.add(s)
+            elif re.search(rf"\b(class|struct|union)\s+{re.escape(name)}\b", txt):
+                fwd.add(s)
+            if (re.search(rf"}}\s*{re.escape(name)}\s*;", txt)          # } Name;
+                    or re.search(rf"\btypedef\b[^;]*\b{re.escape(name)}\s*;", txt)
+                    or re.search(rf"\(\s*\*\s*{re.escape(name)}\s*\)", txt)):  # (*Name)(
+                typd.add(s)
+    for bucket in (defs, typd):
+        cands = [p for p in bucket if resolvable_path(p)] or list(bucket)
+        if len(cands) == 1:
+            return include_form(cands[0])
+        if len(cands) > 1:
+            return None  # ambiguous definition sites
+    if len(fwd) == 1 and resolvable_path(next(iter(fwd))):
+        return include_form(next(iter(fwd)))
+    return None
 
 
 def area_for(rel: str) -> str:
@@ -206,17 +268,20 @@ def type_key(ntype: str, arr: str) -> str:
 
 
 def classify(rows):
-    """Return (header_addrs, exclusions) where header_addrs maps addr ->
-    (ntype, arr, area)."""
+    """Return (central, exclusions): central maps addr -> (ntype, arr, area, mode)
+    with mode 'dual' (LBLS_ENTRY: extern + port definition) or 'extern_only'
+    (plain extern in both builds; storage stays byte-accurate in data_defs.cpp).
+    """
     by = collections.defaultdict(list)
     for r in rows:
         by[r["address"]].append(r)
-    header_addrs = {}
+    central = {}
     exclusions = []
     for addr, rs in sorted(by.items()):
         keys = {type_key(r["ntype"], r["arr"]) for r in rs}
         areas = {r["area"] for r in rs}
         kinds = {r["kind"] for r in rs}
+        owner = collections.Counter(rs_area for rs_area in areas).most_common(1)[0][0]
         # Addresses with a definition in source (RTTP objects, singletons,
         # initialised tables) stay per-TU: the definition TU owns the storage.
         if "DEF_BARE" in kinds or "DEF_INIT" in kinds:
@@ -231,13 +296,22 @@ def classify(rows):
         ntype = key[:-2] if key.endswith("[]") else key
         arr = "[]" if key.endswith("[]") else ""
         if not c99_safe(ntype):
+            # class/typedef types: migrate to include/lbls_typed.hpp (real
+            # type, extern in both builds) when the declaring header is
+            # resolvable and self-contained. Their PC definitions stay raw
+            # bytes in data_defs.cpp (fidelity); data_defs.cpp deliberately
+            # does NOT include lbls_typed.hpp, so its type providers cannot
+            # clash with the SDK globals it defines.
+            if owner not in ("criware", "rvl_sdk"):
+                home = find_type_home(base_type(ntype))
+                if home:
+                    central[addr] = (ntype, arr, owner, "typed")
+                    continue
             exclusions.append((addr, "non_c99_type",
                                sorted({f"{r['file']}:{r['line']} {r['rtype']}{r['arr']}" for r in rs})))
             continue
-        # owner area = the area that declares it most
-        owner = collections.Counter(rs_area for rs_area in areas).most_common(1)[0][0]
-        header_addrs[addr] = (ntype, arr, owner)
-    return header_addrs, exclusions
+        central[addr] = (ntype, arr, owner, "dual")
+    return central, exclusions
 
 
 _KIND_UNIT = {"byte": 1, "2byte": 2, "4byte": 4, "float": 4,
@@ -409,8 +483,20 @@ def _entry_def(addr: str, ntype: str, arr: str, sym, dol):
 
 
 def build_header(entries, area: str, region: str = "us"):
-    """entries: iterable of (address, normalized_type, arr) for ONE area."""
+    """entries: iterable of (address, normalized_type, arr, mode) for ONE area."""
     syms, dol = _load_data_sources(region)
+    # type-provider includes for class/typedef-typed labels (resolved by
+    # find_type_home; headers are included from their include roots)
+    type_includes = []
+    seen = set()
+    for addr, t, arr, mode in entries:
+        if c99_safe(t):
+            continue
+        home = find_type_home(base_type(t))
+        if home and home not in seen:
+            seen.add(home)
+            type_includes.append(home)
+    type_includes.sort()
     lines = [
         "// Generated by tools/coop/lbls_gen.py -- do not edit by hand.",
         "// Centralized retail data-label declarations for one area.",
@@ -426,19 +512,195 @@ def build_header(entries, area: str, region: str = "us"):
         "// before including types.h so storage exists exactly once; every other",
         "// TU sees `extern`. Initializers carry retail bytes when a DOL is",
         "// present (decoded per type), typed zeros otherwise.",
+        "//",
+        "// Class/typedef-typed labels include their declaring headers. The",
+        "// extern-only section (object-typed labels) is suppressed in the data",
+        "// TU: those definitions must stay raw bytes in data_defs.cpp for",
+        "// fidelity, and a real-typed extern + raw definition cannot coexist",
+        "// in one TU (type mismatch).",
         "#pragma once",
         "",
         "#include <types.h>",
-        "",
     ]
-    for addr, t, arr in sorted(entries):
+    for h in type_includes:
+        lines.append(f"#include {h}")
+    lines.append("")
+    for addr, t, arr, mode in sorted(entries):
+        if mode in ("extern_only", "typed"):
+            continue  # emitted in the guarded section below (extern_only) or
+                      # in include/lbls_typed.hpp (typed)
         sym = syms.get(addr)
         ext, dfn, init = _entry_def(addr, t, arr, sym, dol)
         # dfn has no commas -> no paren protection needed; init needs parens
         # (byte lists contain commas).
         lines.append(f"LBLS_ENTRY({ext}, {dfn}, ({init}))")
+    extern_only = [e for e in sorted(entries) if e[3] == "extern_only"]
+    if extern_only:
+        lines.append("")
+        lines.append("// Extern-only: real type in every build; the PC definition stays raw")
+        lines.append("// bytes in port/data_defs.cpp (byte fidelity).")
+        lines.append("#if !defined(LBLS_DEFINE_DATA)")
+        for addr, t, arr, mode in extern_only:
+            lines.append(f"extern {t} {addr}{arr};")
+        lines.append("#endif")
     lines.append("")
     return "\n".join(lines) + "\n"
+
+
+def build_typed_header(entries, region: str = "us"):
+    """Class/typedef-typed labels: real-type extern declarations for every
+    build. The PC definitions stay raw bytes in data_defs.cpp; this header is
+    deliberately NOT included by data_defs.cpp so its type providers cannot
+    clash with the SDK globals data_defs defines."""
+    syms, dol = _load_data_sources(region)  # noqa: F841 (dol unused here)
+    type_includes = []
+    seen = set()
+    for addr, t, arr, mode in entries:
+        home = find_type_home(base_type(t))
+        if home and home not in seen:
+            seen.add(home)
+            type_includes.append(home)
+    type_includes.sort()
+    lines = [
+        "// Generated by tools/coop/lbls_gen.py -- do not edit by hand.",
+        "// Class/typedef-typed retail data labels: real-type externs for every",
+        "// build (matching + PC port). Definitions stay raw bytes in",
+        "// port/data_defs.cpp; this header is NOT included by data_defs.cpp",
+        "// so its type providers cannot clash with the SDK globals it defines.",
+        "#pragma once",
+        "",
+        "#include <types.h>",
+    ]
+    for h in type_includes:
+        lines.append(f"#include {h}")
+    lines.append("")
+    for addr, t, arr, mode in sorted(entries):
+        lines.append(f"extern {t} {addr}{arr};")
+    lines.append("")
+    return "\n".join(lines) + "\n"
+
+
+def home_to_path(home: str):
+    """Map an include-form `<kyoshin/X.hpp>` back to the file path."""
+    name = home.strip("<>")
+    for r in _INCLUDE_ROOTS:
+        cand = ROOT / r / name
+        if cand.exists():
+            return cand
+    return None
+
+
+def _self_contained(home: str) -> bool:
+    """True if the type-provider header compiles standalone with the repo
+    include paths. Non-self-contained homes would break every TU that includes
+    the lbls header (matching build and port alike)."""
+    inc = ["-I", str(ROOT / "include"),
+           "-I", str(ROOT / "libs/PowerPC_EABI_Support/include"),
+           "-I", str(ROOT / "libs/PowerPC_EABI_Support/include/stl"),
+           "-I", str(ROOT / "src"),
+           "-I", str(ROOT / "libs/monolib/include"),
+           "-I", str(ROOT / "libs/nw4r/include"),
+           "-I", str(ROOT / "libs/RVL_SDK/include"),
+           "-I", str(ROOT / "libs/CriWare/include")]
+    path = home_to_path(home)
+    if path is None:
+        return False
+    r = subprocess.run(["clang++", "-fsyntax-only", "-x", "c++", *inc,
+                        "-include", str(path), "/dev/null"],
+                       capture_output=True)
+    return r.returncode == 0
+
+
+def _gate_type_homes(central, exclusions):
+    """Drop class-typed labels whose type-provider header is not self-contained
+    back to per-TU exclusions (a broken include would break every TU that
+    includes the header). Also drops the whole area's class-typed migration when
+    its homes conflict with each other (same function declared with different
+    signatures across kyoshin headers) -- those only parse in TU include order."""
+    homes = {}
+    for addr, (ntype, arr, area, mode) in central.items():
+        if not c99_safe(ntype):
+            home = find_type_home(base_type(ntype))
+            if home:
+                homes.setdefault(home, []).append((addr, ntype, arr))
+    bad = {h for h in homes if not _self_contained(h)}
+    for h in sorted(bad):
+        print(f"  type home NOT self-contained -> stays per-TU: {h}")
+    # combined check per area: all its homes must parse together (a TU sees
+    # every home the header includes)
+    by_area = collections.defaultdict(set)
+    for addr, (ntype, arr, area, mode) in central.items():
+        if not c99_safe(ntype):
+            home = find_type_home(base_type(ntype))
+            if home and home not in bad:
+                by_area[area].add(home)
+    inc = ["-I", str(ROOT / "include"),
+           "-I", str(ROOT / "libs/PowerPC_EABI_Support/include"),
+           "-I", str(ROOT / "libs/PowerPC_EABI_Support/include/stl"),
+           "-I", str(ROOT / "src"),
+           "-I", str(ROOT / "libs/monolib/include"),
+           "-I", str(ROOT / "libs/nw4r/include"),
+           "-I", str(ROOT / "libs/RVL_SDK/include"),
+           "-I", str(ROOT / "libs/CriWare/include")]
+    for area, hs in sorted(by_area.items()):
+        if not hs:
+            continue
+        tu = "#include <types.h>\n" + "".join(f"#include {h}\n" for h in sorted(hs))
+        r = subprocess.run(["clang++", "-fsyntax-only", "-x", "c++", *inc, "-"],
+                           input=tu.encode(), capture_output=True)
+        if r.returncode != 0:
+            print(f"  combined type homes for {area} conflict -> class-typed labels "
+                  f"stay per-TU ({len(hs)} homes)")
+            for h in hs:
+                for addr, ntype, arr in homes[h]:
+                    central.pop(addr, None)
+                    exclusions.append((addr, "non_c99_type",
+                                       [f"conflicting type homes in {area}"]))
+    # per-entry artifact gate: each class-typed entry's extern form must parse
+    # with its type home included -- catches namespace-relative types
+    # (`detail::X`), homes that declare the label themselves with a different
+    # type, and other single-entry breakage.
+    typed_entries = []
+    for addr, (ntype, arr, area, mode) in list(central.items()):
+        if c99_safe(ntype):
+            continue
+        home = find_type_home(base_type(ntype))
+        if not home or home in bad:
+            continue
+        decl = f"extern {ntype} {addr}{arr};"
+        tu = f"#include <types.h>\n#include {home}\n{decl}\n"
+        r = subprocess.run(["clang++", "-fsyntax-only", "-x", "c++", *inc, "-"],
+                           input=tu.encode(), capture_output=True)
+        if r.returncode != 0:
+            central.pop(addr, None)
+            exclusions.append((addr, "non_c99_type",
+                               [f"extern form does not parse with type home"]))
+        else:
+            typed_entries.append((addr, ntype, arr, area))
+    # full-header artifact gate: include/lbls_typed.hpp must parse (extern mode)
+    if typed_entries:
+        text = build_typed_header(sorted(typed_entries))
+        tmp = ROOT / ".scratch" / ".lbls_gate_lbls_typed.hpp"
+        tmp.write_text(text)
+        r = subprocess.run(["clang++", "-fsyntax-only", "-x", "c++", *inc,
+                            "-include", str(tmp), "/dev/null"],
+                           capture_output=True)
+        tmp.unlink(missing_ok=True)
+        if r.returncode != 0:
+            errs = [l for l in r.stderr.decode(errors="replace").splitlines()
+                    if "error:" in l][:3]
+            print(f"  lbls_typed.hpp gate FAILED -> class-typed labels stay "
+                  f"per-TU | " + "; ".join(e.strip()[:90] for e in errs))
+            for addr, ntype, arr, area in typed_entries:
+                central.pop(addr, None)
+                exclusions.append((addr, "non_c99_type",
+                                   [f"typed header artifact gate failed"]))
+    for h in bad:
+        for addr, ntype, arr in homes[h]:
+            central.pop(addr, None)
+            exclusions.append((addr, "non_c99_type",
+                               [f"unresolvable type home {h}"]))
+    return central, exclusions
 
 
 def main():
@@ -452,6 +714,9 @@ def main():
 
     rows = scan_corpus()
     header_addrs, exclusions = classify(rows)
+
+    if args.command == "generate":
+        header_addrs, exclusions = _gate_type_homes(header_addrs, exclusions)
 
     if args.command in ("scan", "generate", "apply", "check"):
         total = len({r["address"] for r in rows})
@@ -471,14 +736,23 @@ def main():
         # Headers are generated ONCE from the pristine corpus; `apply` must
         # never rewrite them (it would shrink them as decls get stripped).
         by_header = collections.defaultdict(list)
-        for addr, (ntype, arr, area) in header_addrs.items():
-            by_header[header_for_area(area)].append((addr, ntype, arr))
+        typed = []
+        for addr, (ntype, arr, area, mode) in header_addrs.items():
+            if mode == "typed":
+                typed.append((addr, ntype, arr, area))
+            else:
+                by_header[header_for_area(area)].append((addr, ntype, arr, mode))
         if not args.dry_run:
             for hdr, entries in by_header.items():
                 area = hdr[len("lbls_"):-len(".hpp")]
                 path = INCLUDE_DIR / hdr
                 path.write_text(build_header(entries, area))
                 print(f"wrote {path.relative_to(ROOT)} ({len(entries)} decls)")
+            if typed:
+                INCLUDE_DIR.joinpath("lbls_typed.hpp").write_text(
+                    build_typed_header(sorted(typed)))
+                print(f"wrote include/lbls_typed.hpp ({len(typed)} decls)")
+                by_header["lbls_typed.hpp"] = sorted(typed)
             EXCLUSIONS_PATH.write_text(json.dumps(
                 [{"address": a, "reason": r,
                   "sites": sorted({f"{x['file']}:{x['line']} {x['rtype']}{x['arr']}"
@@ -562,7 +836,9 @@ def strip_rows(rows, header_addrs, dry_run):
             txt = "\n".join(lines) + "\n"
             if not re.search(r"#\s*include\s*[<\"]lbls_", txt):
                 inc = "\n".join(sorted(
-                    {f"#include <{header_for_area(header_addrs[r['address']][1])}>"
+                    {f"#include <lbls_typed.hpp>"
+                     if header_addrs[r['address']][3] == "typed"
+                     else f"#include <{header_for_area(header_addrs[r['address']][2])}>"
                      for r in rs}))
                 idxs = [i for i, l in enumerate(lines) if re.match(r"\s*#\s*include", l)]
                 if idxs:
@@ -608,13 +884,16 @@ def check_invariants(rows, header_addrs):
         manifest = json.loads(MANIFEST_PATH.read_text())
         for hdr, entries in manifest.items():
             path = INCLUDE_DIR / hdr
-            want = build_header(entries, hdr[len("lbls_"):-len(".hpp")])
+            if hdr == "lbls_typed.hpp":
+                want = build_typed_header(entries)
+            else:
+                want = build_header(entries, hdr[len("lbls_"):-len(".hpp")])
             if not path.exists() or path.read_text() != want:
                 problems += 1
                 print(f"STALE {hdr}: re-run `lbls_gen.py generate` on a clean tree")
         # 2) no TU may declare an address that the manifest centralizes
         centralized = {a for entries in manifest.values()
-                       for a, _t, _arr in entries}
+                       for a, _t, _arr, _mode in entries}
         for r in rows:
             if r["kind"] == "DECL" and r["address"] in centralized:
                 problems += 1

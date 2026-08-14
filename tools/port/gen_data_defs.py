@@ -314,11 +314,14 @@ def generate(rows: list[DataSymbol], region: str, symbols_path: Path,
             skipped.get("not referenced by src/libs", 0) + before - len(kept)
     if manifest:
         covered = {a for entries in manifest.values()
-                   for a, _t, _arr in entries}
+                   for a, _t, _arr, _mode in entries if _mode == "dual"}
         before = len(kept)
         kept = [r for r in kept if r.name not in covered]
         skipped["covered by lbl area headers (lbls_manifest.json)"] = \
             skipped.get("covered by lbl area headers (lbls_manifest.json)", 0) + before - len(kept)
+    # extern-only manifest entries are NOT skipped here: the headers declare
+    # them extern (guarded out of this TU by #if !defined(LBLS_DEFINE_DATA))
+    # and this TU keeps the byte-accurate raw definitions.
     # Addresses the decomp source itself DEFINES (bare definitions in src/libs
     # TUs -- the matching build's .bss storage) must not be defined here either:
     # the port compiles those same TUs, so defining them twice is a link error.
@@ -374,6 +377,10 @@ def generate(rows: list[DataSymbol], region: str, symbols_path: Path,
     lines.append("#include \"types.h\"")
     if manifest:
         for hdr in sorted(manifest):
+            if hdr == "lbls_typed.hpp":
+                continue  # class-typed externs live in their own header, which
+                          # this TU deliberately does NOT include (its type
+                          # providers declare SDK globals this TU defines).
             lines.append(f"#include <{hdr}>")
         lines.append("#undef LBLS_DEFINE_DATA")
     lines.append("")

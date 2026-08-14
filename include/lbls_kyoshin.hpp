@@ -12,6 +12,12 @@
 // before including types.h so storage exists exactly once; every other
 // TU sees `extern`. Initializers carry retail bytes when a DOL is
 // present (decoded per type), typed zeros otherwise.
+//
+// Class/typedef-typed labels include their declaring headers. The
+// extern-only section (object-typed labels) is suppressed in the data
+// TU: those definitions must stay raw bytes in data_defs.cpp for
+// fidelity, and a real-typed extern + raw definition cannot coexist
+// in one TU (type mismatch).
 #pragma once
 
 #include <types.h>
@@ -243,7 +249,6 @@ LBLS_ENTRY(u8 lbl_eu_80525CAC[], u8 lbl_eu_80525CAC[36], ({0x80, 0x66, 0x19, 0x9
 LBLS_ENTRY(char lbl_eu_80525D68[], char lbl_eu_80525D68[304], ({-128, 102, 93, -56, -128, 4, 94, 36, -128, 102, 93, -48, -128, 4, 94, -104, -128, 79, -87, -4, -128, 4, 95, 12, -128, 79, -86, 8, -128, 4, 95, -76, -128, 102, 93, -40, -128, 4, 95, -12, -128, 102, 93, -32, -128, 4, 96, -92, -128, 79, -86, 24, -128, 4, 97, 84, -128, 79, -86, 36, -128, 4, 97, -96, -128, 79, -86, 52, -128, 4, 97, -60, -128, 79, -86, 68, -128, 4, 97, -24, -128, 79, -86, 88, -128, 4, 98, -124, -128, 79, -86, 104, -128, 4, 98, -88, -128, 79, -86, 120, -128, 4, 98, -52, -128, 79, -86, -116, -128, 4, 98, -16, -128, 79, -86, -100, -128, 4, 99, 20, -128, 79, -86, -88, -128, 4, 101, -100, -128, 79, -86, -72, -128, 4, 103, 52, -128, 102, 93, -24, -128, 4, 103, 108, -128, 79, -86, -56, -128, 4, 103, -84, -128, 79, -86, -40, -128, 4, 104, 68, -128, 79, -86, -24, -128, 4, 104, -116, -128, 79, -86, -12, -128, 4, 105, -128, -128, 79, -85, 0, -128, 4, 105, -8, -128, 79, -85, 12, -128, 4, 106, 112, -128, 79, -85, 24, -128, 4, 106, -80, -128, 79, -85, 40, -128, 4, 106, -16, -128, 79, -85, 52, -128, 4, 107, 48, -128, 79, -85, 68, -128, 4, 107, 112, -128, 102, 93, -16, -128, 4, 107, -92, -128, 79, -85, 88, -128, 4, 107, -44, -128, 79, -85, 104, -128, 4, 108, 8, -128, 79, -85, 120, -128, 4, 108, 56, -128, 79, -85, -124, -128, 4, 108, -124, -128, 79, -85, -112, -128, 4, 108, -88, -128, 79, -85, -96, -128, 4, 109, 84, -128, 79, -85, -76, -128, 4, 109, -96, -128, 79, -85, -56, -128, 4, 109, -60, 0, 0, 0, 0, 0, 0, 0, 0}))
 LBLS_ENTRY(char lbl_eu_80525EF8[], char lbl_eu_80525EF8[160], ({-128, 102, 94, 0, -128, 4, 110, -56, -128, 102, 94, 8, -128, 4, 111, -128, -128, 79, -84, 32, -128, 4, 112, -16, -128, 79, -84, 48, -128, 4, 113, 76, -128, 79, -84, 64, -128, 4, 113, -12, -128, 79, -84, 80, -128, 4, 114, 44, -128, 79, -84, 100, -128, 4, 114, -64, -128, 79, -84, 120, -128, 4, 115, 28, -128, 79, -84, -116, -128, 4, 115, 64, -128, 79, -84, -96, -128, 4, 119, 60, -128, 79, -84, -84, -128, 4, 119, -128, -128, 102, 94, 16, -128, 4, 119, -108, -128, 79, -84, -68, -128, 4, 119, -48, -128, 79, -84, -56, -128, 4, 120, 12, -128, 102, 94, 24, -128, 4, 115, -128, -128, 79, -84, -40, -128, 4, 116, 60, -128, 102, 94, 32, -128, 4, 116, -8, -128, 102, 94, 40, -128, 4, 117, -4, -128, 79, -84, -28, -128, 4, 118, -4, 0, 0, 0, 0, 0, 0, 0, 0}))
 LBLS_ENTRY(char lbl_eu_80526338[], char lbl_eu_80526338[16], ({-128, 102, 25, -72, 0, 0, 0, 0, -128, 5, 64, -88, 0, 0, 0, 0}))
-LBLS_ENTRY(char lbl_eu_80526354[], char lbl_eu_80526354[39], ("NW4R:Failed assertion !((u32)p & 0x1f)"))
 LBLS_ENTRY(u8 lbl_eu_80526608[], u8 lbl_eu_80526608[36], ({0x80, 0x66, 0x1A, 0x10, 0x00, 0x00, 0x00, 0x00, 0x80, 0x06, 0x1C, 0xFC, 0x80, 0x44, 0x90, 0xCC, 0x80, 0x06, 0x1C, 0xF8, 0x80, 0x06, 0x1C, 0xF4, 0x80, 0x06, 0x1D, 0x50, 0x80, 0x06, 0x1C, 0xF0, 0x80, 0x04, 0x44, 0xBC}))
 LBLS_ENTRY(u8 lbl_eu_80526650[], u8 lbl_eu_80526650[36], ({0x80, 0x66, 0x1A, 0x18, 0x00, 0x00, 0x00, 0x00, 0x80, 0x06, 0x1C, 0xA0, 0x80, 0x44, 0x90, 0xCC, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x06, 0x1D, 0x50, 0x80, 0x06, 0x1D, 0x98, 0x80, 0x04, 0x44, 0xBC}))
 LBLS_ENTRY(u32 lbl_eu_80526920[], u32 lbl_eu_80526920[3], ({0x80661A48, 0x00000000, 0x80067E84}))
@@ -388,12 +393,6 @@ LBLS_ENTRY(u32 lbl_eu_80530AE8[], u32 lbl_eu_80530AE8[3], ({0x00000000, 0xFFFFFF
 LBLS_ENTRY(u32 lbl_eu_80530AF4[], u32 lbl_eu_80530AF4[6], ({0x00000000, 0xFFFFFFFF, 0x8016980C, 0x00000000, 0xFFFFFFFF, 0x8016AF68}))
 LBLS_ENTRY(u32 lbl_eu_80530B0C[], u32 lbl_eu_80530B0C[49], ({0x806623B0, 0x00000000, 0x80169540, 0x804490CC, 0x8016B684, 0x8016B6D0, 0x8016DA9C, 0x8016BE58, 0x800444BC, 0x806623B0, 0xFFFFFFAC, 0x8016DB34, 0x8003A1D4, 0x8016DB2C, 0x8003A1C4, 0x8003A1BC, 0x8003A1B8, 0x8003A1B0, 0x8003A1A8, 0x8003A1A0, 0x8003A198, 0x8003A190, 0x8003A188, 0x8003A180, 0x8003A178, 0x8003A170, 0x8003A168, 0x8003A160, 0x8003A158, 0x8003A150, 0x8003A148, 0x8003A140, 0x8003A138, 0x8003A130, 0x8003A128, 0x8003A120, 0x8003A118, 0x8003A110, 0x8003A108, 0x8003A100, 0x8003A0F8, 0x8003A0F0, 0x8003A0EC, 0x806623B0, 0xFFFFFFA8, 0x8016DB44, 0x8016DB3C, 0x8016BE5C, 0x8016D5BC}))
 LBLS_ENTRY(u32 lbl_eu_80530BF4[], u32 lbl_eu_80530BF4[9], ({0x806623B8, 0x00000000, 0x80169450, 0x804490CC, 0x00000000, 0x00000000, 0x8016DA9C, 0x8016DAE4, 0x800444BC}))
-LBLS_ENTRY(char lbl_eu_80530CF0[], char lbl_eu_80530CF0[12], ("ResUserData"))
-LBLS_ENTRY(char lbl_eu_80530CFC[], char lbl_eu_80530CFC[26], ("%s::%s: Object not valid."))
-LBLS_ENTRY(char lbl_eu_80530D2C[], char lbl_eu_80530D2C[38], ("NW4R:Failed assertion !((u32)p & 0x3)"))
-LBLS_ENTRY(char lbl_eu_80530D78[], char lbl_eu_80530D78[26], ("%s::%s: Object not valid."))
-LBLS_ENTRY(char lbl_eu_80530DD8[], char lbl_eu_80530DD8[65], ("NW4R:Failed assertion GetValueType() == ResUserDataItemData::S32"))
-LBLS_ENTRY(char lbl_eu_80530E1C[], char lbl_eu_80530E1C[17], ("g3d_resuser_ac.h"))
 LBLS_ENTRY(char lbl_eu_80530E30[], char lbl_eu_80530E30[65], ("NW4R:Failed assertion GetValueType() == ResUserDataItemData::F32"))
 LBLS_ENTRY(char lbl_eu_80530E74[], char lbl_eu_80530E74[17], ("g3d_resuser_ac.h"))
 LBLS_ENTRY(char lbl_eu_80530E88[], char lbl_eu_80530E88[68], ("NW4R:Failed assertion GetValueType() == ResUserDataItemData::STRING"))
@@ -482,20 +481,10 @@ LBLS_ENTRY(void* lbl_eu_805375F0[], void* lbl_eu_805375F0[3], ({(void*)0x8066295
 LBLS_ENTRY(void* lbl_eu_805375FC[], void* lbl_eu_805375FC[3], ({(void*)0x80662960, (void*)0x00000000, (void*)0x8025A054}))
 LBLS_ENTRY(void* lbl_eu_80537618[], void* lbl_eu_80537618[34], ({(void*)0x80662970, (void*)0x00000000, (void*)0x8025F96C, (void*)0x8003A1D4, (void*)0x80260BB4, (void*)0x8003A1C4, (void*)0x8003A1BC, (void*)0x8003A1B8, (void*)0x8003A1B0, (void*)0x8003A1A8, (void*)0x8003A1A0, (void*)0x8003A198, (void*)0x8003A190, (void*)0x8003A188, (void*)0x8003A180, (void*)0x8003A178, (void*)0x8003A170, (void*)0x8003A168, (void*)0x8003A160, (void*)0x8003A158, (void*)0x8003A150, (void*)0x8003A148, (void*)0x8003A140, (void*)0x8003A138, (void*)0x8003A130, (void*)0x8003A128, (void*)0x8003A120, (void*)0x8003A118, (void*)0x8003A110, (void*)0x8003A108, (void*)0x8003A100, (void*)0x8003A0F8, (void*)0x8003A0F0, (void*)0x8003A0EC}))
 LBLS_ENTRY(void* lbl_eu_805376AC[], void* lbl_eu_805376AC[3], ({(void*)0x80662978, (void*)0x00000000, (void*)0x8025F5F0}))
-LBLS_ENTRY(char lbl_eu_805376B8[], char lbl_eu_805376B8[50], ("NW4R:Pointer Error\nstr(=%p) is not valid pointer."))
-LBLS_ENTRY(char lbl_eu_805376EC[], char lbl_eu_805376EC[17], ("TextWriterBase.h"))
-LBLS_ENTRY(char lbl_eu_80537700[], char lbl_eu_80537700[51], ("NW4R:Pointer Error\nthis(=%p) is not valid pointer."))
-LBLS_ENTRY(char lbl_eu_80537734[], char lbl_eu_80537734[17], ("TextWriterBase.h"))
 LBLS_ENTRY(char lbl_eu_80537748[], char lbl_eu_80537748[59], ("NW4R:Pointer Error\ntagProcessor(=%p) is not valid pointer."))
 LBLS_ENTRY(char lbl_eu_80537784[], char lbl_eu_80537784[17], ("TextWriterBase.h"))
 LBLS_ENTRY(char lbl_eu_80537798[], char lbl_eu_80537798[51], ("NW4R:Pointer Error\nthis(=%p) is not valid pointer."))
 LBLS_ENTRY(char lbl_eu_805377CC[], char lbl_eu_805377CC[17], ("TextWriterBase.h"))
-LBLS_ENTRY(char lbl_eu_805377E0[], char lbl_eu_805377E0[53], ("NW4R:Pointer Error\n& font(=%p) is not valid pointer."))
-LBLS_ENTRY(char lbl_eu_80537818[], char lbl_eu_80537818[13], ("CharWriter.h"))
-LBLS_ENTRY(char lbl_eu_80537828[], char lbl_eu_80537828[51], ("NW4R:Pointer Error\nthis(=%p) is not valid pointer."))
-LBLS_ENTRY(char lbl_eu_8053785C[], char lbl_eu_8053785C[13], ("CharWriter.h"))
-LBLS_ENTRY(char lbl_eu_8053786C[], char lbl_eu_8053786C[51], ("NW4R:Pointer Error\nthis(=%p) is not valid pointer."))
-LBLS_ENTRY(char lbl_eu_805378A0[], char lbl_eu_805378A0[13], ("CharWriter.h"))
 LBLS_ENTRY(void* lbl_eu_80537968[], void* lbl_eu_80537968[34], ({(void*)0x80662990, (void*)0x00000000, (void*)0x8026F9C0, (void*)0x8003A1D4, (void*)0x80270310, (void*)0x8003A1C4, (void*)0x8003A1BC, (void*)0x8003A1B8, (void*)0x8003A1B0, (void*)0x8003A1A8, (void*)0x8003A1A0, (void*)0x8003A198, (void*)0x8003A190, (void*)0x8003A188, (void*)0x8003A180, (void*)0x8003A178, (void*)0x8003A170, (void*)0x8003A168, (void*)0x8003A160, (void*)0x8003A158, (void*)0x8003A150, (void*)0x8003A148, (void*)0x8003A140, (void*)0x8003A138, (void*)0x8003A130, (void*)0x8003A128, (void*)0x8003A120, (void*)0x8003A118, (void*)0x8003A110, (void*)0x8003A108, (void*)0x8003A100, (void*)0x8003A0F8, (void*)0x8003A0F0, (void*)0x8003A0EC}))
 LBLS_ENTRY(void* lbl_eu_805379FC[], void* lbl_eu_805379FC[3], ({(void*)0x80662998, (void*)0x00000000, (void*)0x80268F88}))
 LBLS_ENTRY(void* lbl_eu_80537A08[], void* lbl_eu_80537A08[3], ({(void*)0x806629A0, (void*)0x00000000, (void*)0x80266B18}))
@@ -1031,9 +1020,11 @@ LBLS_ENTRY(void* lbl_eu_80664860, void* lbl_eu_80664860, (0))
 LBLS_ENTRY(u8* lbl_eu_80664870, u8* lbl_eu_80664870, (0))
 LBLS_ENTRY(u32 lbl_eu_80664878, u32 lbl_eu_80664878, (0))
 LBLS_ENTRY(void* lbl_eu_80664880, void* lbl_eu_80664880, (0))
+LBLS_ENTRY(void* lbl_eu_80664884, void* lbl_eu_80664884, (0))
 LBLS_ENTRY(void* lbl_eu_80664888, void* lbl_eu_80664888, (0))
 LBLS_ENTRY(void* lbl_eu_8066488C, void* lbl_eu_8066488C, (0))
 LBLS_ENTRY(void* lbl_eu_80664890, void* lbl_eu_80664890, (0))
+LBLS_ENTRY(void* lbl_eu_80664894, void* lbl_eu_80664894, (0))
 LBLS_ENTRY(u32 lbl_eu_806648A0, u32 lbl_eu_806648A0, (0))
 LBLS_ENTRY(void* lbl_eu_806648A8, void* lbl_eu_806648A8, (0))
 LBLS_ENTRY(u32 lbl_eu_806648B0, u32 lbl_eu_806648B0, (0))
@@ -1999,6 +1990,7 @@ LBLS_ENTRY(f32 lbl_eu_80668B2C, f32 lbl_eu_80668B2C, (1.5f))
 LBLS_ENTRY(f32 lbl_eu_80668B30, f32 lbl_eu_80668B30, (368.0f))
 LBLS_ENTRY(f32 lbl_eu_80668B34, f32 lbl_eu_80668B34, (-17.0f))
 LBLS_ENTRY(f32 lbl_eu_80668B38, f32 lbl_eu_80668B38, (129.0f))
+LBLS_ENTRY(f32 lbl_eu_80668B44, f32 lbl_eu_80668B44, (11.0f))
 LBLS_ENTRY(f32 lbl_eu_80668B68, f32 lbl_eu_80668B68, (1.0f))
 LBLS_ENTRY(f32 lbl_eu_80668B6C, f32 lbl_eu_80668B6C, (0.0f))
 LBLS_ENTRY(f32 lbl_eu_80668B70, f32 lbl_eu_80668B70, (210.0f))

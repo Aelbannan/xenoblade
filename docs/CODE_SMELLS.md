@@ -11,42 +11,42 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 9474 |
-| extern "C" declarations (non-lbl_*, imports) | 3466 |
-| extern "C" definitions (forced names) | 3624 |
-| `self`/register-style params | 11052 |
-| `void*` (params + locals) | 6861 |
-| raw pointer offset arithmetic | 6198 |
-| deref-through-cast arithmetic | 2407 |
+| extern "C" (total lines) | 9517 |
+| extern "C" declarations (non-lbl_*, imports) | 3492 |
+| extern "C" definitions (forced names) | 3641 |
+| `self`/register-style params | 11306 |
+| `void*` (params + locals) | 6858 |
+| raw pointer offset arithmetic | 6343 |
+| deref-through-cast arithmetic | 2479 |
 | inline asm / `register` | 103 |
-| rN-named params | 511 |
-| goto | 2785 |
+| rN-named params | 480 |
+| goto | 2819 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 0 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
-| #pragma | 1530 |
+| #pragma | 1588 |
 
 ## Top offenders (by cleanable severity)
 
 | TU | severity |
 |---|---|
 | src/kyoshin/cf/CBattleManager.cpp | 2621 |
-| src/kyoshin/CItemBoxGrid.cpp | 1975 |
+| src/kyoshin/CItemBoxGrid.cpp | 2353 |
 | src/kyoshin/CPassiveSkill.cpp | 1495 |
-| src/kyoshin/CItemBoxInfo.cpp | 1403 |
+| src/kyoshin/CItemBoxInfo.cpp | 1489 |
 | src/kyoshin/cf/object/CActorParam.cpp | 1279 |
 | src/kyoshin/CArtsInfo.cpp | 1222 |
 | src/kyoshin/menu/CMenuArtsSet.cpp | 1135 |
 | src/kyoshin/makecrystal/CMCCrystalBox.cpp | 1112 |
+| libs/monolib/src/coli/code_804A6C60.cpp | 1092 |
 | libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 1037 |
-| libs/monolib/src/scn/CScnItemModelNw4r.cpp | 1026 |
 
 ## Per-TU metrics
 
 | TU | extC-decl | extC-def | self | void* | ptr-arith | deref-arith | asm | rN | goto | asm-shim | schedule-pragma | init-side-effect |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | libs/monolib/src/coli/CColiProc.cpp | 4 | 9 | 8 | 1 | 3 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/coli/code_804A6C60.cpp | 25 | 9 | 82 | 8 | 4 | 2 | 0 | 0 | 13 | 0 | 0 | 0 |
+| libs/monolib/src/coli/code_804A6C60.cpp | 48 | 22 | 152 | 8 | 11 | 2 | 0 | 0 | 29 | 0 | 0 | 0 |
 | libs/monolib/src/coli/code_804B2FF0.cpp | 9 | 1 | 19 | 7 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 |
 | libs/monolib/src/coli/code_804B59C8.cpp | 6 | 3 | 66 | 7 | 11 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/coli/code_804BAE10.cpp | 3 | 6 | 16 | 2 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -286,14 +286,14 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CCollepedia.cpp | 14 | 46 | 23 | 14 | 26 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CCur.cpp | 1 | 45 | 0 | 11 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | src/kyoshin/CEquipChange.cpp | 4 | 15 | 131 | 25 | 47 | 2 | 0 | 5 | 3 | 0 | 0 | 0 |
-| src/kyoshin/CEquipItemBox.cpp | 2 | 91 | 85 | 11 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CEquipItemBox.cpp | 2 | 92 | 102 | 30 | 11 | 0 | 0 | 0 | 11 | 0 | 0 | 0 |
 | src/kyoshin/CErrMes.cpp | 1 | 1 | 0 | 4 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CExchangeWin.cpp | 0 | 11 | 13 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CFade.cpp | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CFloorMap.cpp | 2 | 9 | 68 | 105 | 69 | 39 | 0 | 1 | 12 | 0 | 0 | 0 |
-| src/kyoshin/CItemBoxGrid.cpp | 23 | 10 | 374 | 269 | 305 | 84 | 0 | 71 | 21 | 0 | 0 | 0 |
+| src/kyoshin/CItemBoxGrid.cpp | 23 | 12 | 549 | 275 | 374 | 87 | 0 | 48 | 26 | 0 | 0 | 0 |
 | src/kyoshin/CItemBoxGridSubMenu.cpp | 0 | 2 | 5 | 4 | 6 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CItemBoxInfo.cpp | 20 | 17 | 13 | 285 | 583 | 203 | 0 | 9 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CItemBoxInfo.cpp | 23 | 18 | 5 | 257 | 646 | 272 | 0 | 1 | 2 | 0 | 0 | 0 |
 | src/kyoshin/CItemBoxLine.cpp | 2 | 7 | 127 | 15 | 12 | 0 | 0 | 2 | 16 | 0 | 0 | 0 |
 | src/kyoshin/CKizunaTalkList.cpp | 0 | 6 | 43 | 12 | 21 | 7 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CKizunagram.cpp | 3 | 35 | 74 | 8 | 18 | 12 | 4 | 10 | 0 | 0 | 0 | 0 |
@@ -611,13 +611,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/coli/code_804A6C60.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 2,
-  "extern_c_nonlbl_decl": 25,
-  "extern_c_nonlbl_def": 9,
-  "goto_count": 13,
+  "extern_c_nonlbl_decl": 48,
+  "extern_c_nonlbl_def": 22,
+  "goto_count": 29,
   "init_side_effect": 0,
-  "ptr_arith": 4,
+  "ptr_arith": 11,
   "schedule_pragma": 0,
-  "self_params": 82,
+  "self_params": 152,
   "void_ptr": 8
  },
  "libs/monolib/src/coli/code_804B2FF0.cpp": {
@@ -3199,12 +3199,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CEquipItemBox.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 2,
-  "extern_c_nonlbl_def": 91,
+  "extern_c_nonlbl_def": 92,
+  "goto_count": 11,
   "init_side_effect": 0,
-  "ptr_arith": 5,
+  "ptr_arith": 11,
   "schedule_pragma": 0,
-  "self_params": 85,
-  "void_ptr": 11
+  "self_params": 102,
+  "void_ptr": 30
  },
  "src/kyoshin/CErrMes.cpp": {
   "asm_insn_shim": 0,
@@ -3252,16 +3253,16 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/CItemBoxGrid.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 84,
+  "deref_arith": 87,
   "extern_c_nonlbl_decl": 23,
-  "extern_c_nonlbl_def": 10,
-  "goto_count": 21,
+  "extern_c_nonlbl_def": 12,
+  "goto_count": 26,
   "init_side_effect": 0,
-  "ptr_arith": 305,
-  "rn_params": 71,
+  "ptr_arith": 374,
+  "rn_params": 48,
   "schedule_pragma": 0,
-  "self_params": 374,
-  "void_ptr": 269
+  "self_params": 549,
+  "void_ptr": 275
  },
  "src/kyoshin/CItemBoxGridSubMenu.cpp": {
   "asm_insn_shim": 0,
@@ -3275,15 +3276,16 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/CItemBoxInfo.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 203,
-  "extern_c_nonlbl_decl": 20,
-  "extern_c_nonlbl_def": 17,
+  "deref_arith": 272,
+  "extern_c_nonlbl_decl": 23,
+  "extern_c_nonlbl_def": 18,
+  "goto_count": 2,
   "init_side_effect": 0,
-  "ptr_arith": 583,
-  "rn_params": 9,
+  "ptr_arith": 646,
+  "rn_params": 1,
   "schedule_pragma": 0,
-  "self_params": 13,
-  "void_ptr": 285
+  "self_params": 5,
+  "void_ptr": 257
  },
  "src/kyoshin/CItemBoxLine.cpp": {
   "asm_insn_shim": 0,

@@ -10528,6 +10528,33 @@ second use of h[0x50C]) without changing codegen.
   83.6% → 100%. Refinement of the reverse-declaration rule: the local that
   reuses an arg's dead register must be declared before any other local.
 
+## Class/typedef-typed labels: include/lbls_typed.hpp + type-home gates
+
+Real-typed class/typedef labels (kyoshin/monolib/nw4r classes, `OSThread*`,
+`nw4r::ut::detail::RuntimeTypeInfo`, typedefs) live in `include/lbls_typed.hpp`
+as plain externs in BOTH builds; their PC definitions stay raw bytes in
+data_defs.cpp (byte fidelity -- a C++ initializer cannot reproduce arbitrary
+retail bytes for a class object). The header is deliberately NOT included by
+data_defs.cpp: its type providers (SDK headers like gx.h) declare globals
+data_defs.cpp also defines (`__GXData`, `__files`) -- same-TU redefinition.
+
+Three gates decide what may migrate (all enforced in `lbls_gen.py generate`):
+1. find_type_home resolves the declaring header (definitions over forward
+   decls, include-tree preference, `} Name;`/`typedef`/`(*Name)(` forms,
+   ambiguity -> stay per-TU).
+2. The home must be self-contained (`clang++ -include <home>` parses alone).
+   kyoshin/monolib headers are NOT self-contained by convention (they rely on
+   TU include order, e.g. reslist.hpp's mStartNodePtr template only parses
+   with prior includes) -- so most kyoshin/monolib class-typed labels stay
+   per-TU. This is correct: including them from a header would break every TU.
+3. Per-entry extern-form test (catches namespace-relative `detail::X` and
+   homes that declare the label itself with a different type) + a full-header
+   parse. data_defs.cpp's own __MWERKS__-guarded body keeps the rest.
+
+Migration result is deliberately small (32 labels) -- the gates trade coverage
+for safety; the machinery is ready to pick up more labels as headers become
+self-contained.
+
 ## Dual-mode area headers: `extern` on MWCC, data definitions on the PC port
 
 `tools/coop/lbls_gen.py generate` emits each `include/lbls_<area>.hpp` as a

@@ -12,6 +12,12 @@
 // before including types.h so storage exists exactly once; every other
 // TU sees `extern`. Initializers carry retail bytes when a DOL is
 // present (decoded per type), typed zeros otherwise.
+//
+// Class/typedef-typed labels include their declaring headers. The
+// extern-only section (object-typed labels) is suppressed in the data
+// TU: those definitions must stay raw bytes in data_defs.cpp for
+// fidelity, and a real-typed extern + raw definition cannot coexist
+// in one TU (type mismatch).
 #pragma once
 
 #include <types.h>

@@ -12,6 +12,12 @@
 // before including types.h so storage exists exactly once; every other
 // TU sees `extern`. Initializers carry retail bytes when a DOL is
 // present (decoded per type), typed zeros otherwise.
+//
+// Class/typedef-typed labels include their declaring headers. The
+// extern-only section (object-typed labels) is suppressed in the data
+// TU: those definitions must stay raw bytes in data_defs.cpp for
+// fidelity, and a real-typed extern + raw definition cannot coexist
+// in one TU (type mismatch).
 #pragma once
 
 #include <types.h>
@@ -36,6 +42,7 @@ LBLS_ENTRY(char lbl_eu_80517498[], char lbl_eu_80517498[8], ("Error\x00"" "))
 LBLS_ENTRY(char lbl_eu_805174A0[], char lbl_eu_805174A0[168], ("E2005092203 : NULL pointer is passed.\x00""E2005092204 : Work area size is too short.\x00""E2005092202 : AHXSJD_Create function failed.\x00""E2005092205 : NULL pointer is passed.\x00""\x00""\x00""\x00"""))
 LBLS_ENTRY(f32 lbl_eu_80517548[], f32 lbl_eu_80517548[2], ({0.0f, 0.0f}))
 LBLS_ENTRY(f32 lbl_eu_80517550[], f32 lbl_eu_80517550[4], ({0.0f, 2147483648.0f, -2147483648.0f, 0.0f}))
+LBLS_ENTRY(volatile u32 lbl_eu_80517598, volatile u32 lbl_eu_80517598, (0))
 LBLS_ENTRY(u32 lbl_eu_805175A0[], u32 lbl_eu_805175A0[34], ({0x00000000, 0x00000001, 0x00000003, 0x00000007, 0x0000000F, 0x0000001F, 0x0000003F, 0x0000007F, 0x000000FF, 0x000001FF, 0x000003FF, 0x000007FF, 0x00000FFF, 0x00001FFF, 0x00003FFF, 0x00007FFF, 0x0000FFFF, 0x0001FFFF, 0x0003FFFF, 0x0007FFFF, 0x000FFFFF, 0x001FFFFF, 0x003FFFFF, 0x007FFFFF, 0x00FFFFFF, 0x01FFFFFF, 0x03FFFFFF, 0x07FFFFFF, 0x0FFFFFFF, 0x1FFFFFFF, 0x3FFFFFFF, 0x7FFFFFFF, 0xFFFFFFFF, 0x00000000}))
 LBLS_ENTRY(char lbl_eu_80517638[], char lbl_eu_80517638[7], ("CRI-MW"))
 LBLS_ENTRY(char lbl_eu_80517640[], char lbl_eu_80517640[2992], ("cvFsAddDev #1:illegal device name\x00""cvFsAddDev #2:illegal I/F func name\x00""cvFsAddDev #3:can not add device\x00""cvFsDelDev #1:illegal device name\x00""cvFsSetDefDev #1:illegal device name\x00""cvFsSetDefDev #2:unknown device name\x00""cvFsOpen #1:illegal file name\x00""cvFsOpen #3:can not allocate handle\x00""%s:%s\x00""cvFsOpen #2:illegal device name\x00""cvFsOpen #4:device not found\x00""cvFsOpen #5:vtbl error\x00""cvFsOpen #6:can not open file\x00""cvFsClose #1:handle error\x00""cvFsClose #2:vtbl error\x00""cvFsTell #1:handle error\x00""cvFsTell #2:vtbl error\x00""cvFsSeek #1:handle error\x00""cvFsSeek #2:vtbl error\x00""cvFsReqRd #1:handle error\x00""cvFsReqRd #2:vtbl error\x00""cvFsReqWr #1:handle error\x00""cvFsReqWr #2:vtbl error\x00""cvFsStopTr #1:handle error\x00""cvFsStopTr #2:vtbl error\x00""cvFsGetStat #1:handle error\x00""cvFsGetStat #2:vtbl error\x00""cvFsGetFileSize #1:illegal file name\x00""cvFsGetFileSize #2:illegal device name\x00""cvFsGetFileSize #3:device not found\x00""cvFsGetFileSize #4:vtbl error\x00""cvFsGetFileSizeEx #1:illegal file name\x00""cvFsGetFileSizeEx #2:illegal device name\x00""cvFsGetFileSizeEx #3:device not found\x00""cvFsGetFileSizeEx #4:vtbl error\x00""cvFsGetFileSizeByHndl #1:illegal file handle\x00""cvFsGetFileSizeByHndl #2:command not found\x00""cvFsIsFileOpened #1:illegal file handle\x00""cvFsGetFreeSize #5:device not found\x00""cvFsGetFreeSize #6:vtbl error\x00""cvFsGetSctLen #1:handle error\x00""cvFsGetSctLen #2:vtbl error\x00""cvFsSetSctLen #3:handle error\x00""cvFsSetSctLen #4:vtbl error\x00""cvFsGetNumTr #1:handle error\x00""cvFsGetNumTr #2:vtbl error\x00""cvFsChangeDir #1:illegal directory name\x00""cvFsChangeDir #2:illegal device name\x00""cvFsChangeDir #3:device not found\x00""cvFsChangeDir #4:vtbl error\x00""cvFsIsExistFile #1:illegal file name\x00""cvFsIsExistFile #2:illegal device name\x00""cvFsIsExistFile #3:device not found\x00""cvFsIsExistFile #4:vtbl error\x00""cvFsGetMaxByteRate #1:handle error\x00""cvFsGetMaxByteRate #2:vtbl error\x00""cvFsMakeDir #1:illegal directory name\x00""cvFsMakeDir #2:illegal device name\x00""cvFsMakeDir #3:device not found\x00""cvFsMakeDir #4:vtbl error\x00""cvFsRemoveDir #1:illegal directory name\x00""cvFsRemoveDir #2:illegal device name\x00""cvFsRemoveDir #3:device not found\x00""cvFsRemoveDir #4:vtbl error\x00""cvFsDeleteFile #1:illegal file name\x00""cvFsDeleteFile #2:illegal device name\x00""cvFsDeleteFile #3:device not found\x00""cvFsDeleteFile #4:vtbl error\x00""cvFsGetDevName #1:vtbl error\x00""cvFsOptFn1 #1:handle error\x00""cvFsOptFn1 #2:vtbl error\x00""cvFsOptFn2 #1:handle error\x00""cvFsOptFn2 #2:vtbl error\x00""cvFsSetCurVolume #1:illegal device name\x00""cvFsSetCurVolume #2:illegal image handle\x00""cvFsSetCurVolume #3:device not found\x00""cvFsAddVolumeEx #1:illegal device name\x00""cvFsAddVolumeEx #2:illegal volume name\x00""cvFsAddVolumeEx #3:illegal image handle\x00""cvFsAddVolumeEx #3:device not found\x00""cvFsDelVolume #1:illegal device name\x00""cvFsDelVolume #2:illegal volume name\x00""cvFsDelVolume #3:device not found\x00""cvFsGetVolumeInfo #1:illegal device name\x00""cvFsGetVolumeInfo #2:illegal volume name\x00""cvFsGetVolumeInfo #3:device not found\x00""cvFsSetDefVol #1:illegal device name\x00""cvFsSetDefVol #2:illegal volume name\x00""cvFsSetDefVol #3:device not found\x00""cvFsReqClose #1:illegal file handle\x00""cvFsIsAvailableRetry #1:illegal file handle\x00""\x00""\x00""\x00""\x00""\x00""\x00"""))
@@ -52,6 +59,7 @@ LBLS_ENTRY(char lbl_eu_80518E00[], char lbl_eu_80518E00[336], ("SJUNI Error\x00"
 LBLS_ENTRY(char lbl_eu_80518F50[], char lbl_eu_80518F50[440], ("2103102:SVM:svm_unlock:lock type miss match.(type org=%d, type now=%d)\x00""1071205:SVM_SetCbSvrId:illegal svtype\x00""Unknown\x00""1051001:SVM_SetCbSvr:too many server function\x00""1051002:SVM_DelCbSvr:illegal id\x00""1071206:SVM_SetCbSvrId:illegal svtype\x00""1071201:SVM_SetCbSvrId:illegal id\x00""1071202:SVM_SetCbSvrId:illegal svtype\x00""2100801:SVM_SetCbSvrId:over write callback function.\x00""1071301:SVM_ExecSvrFuncId:illegal id\x00""1071302:SVM_ExecSvrFuncId:illegal svtype\x00""\x00""\x00""\x00"""))
 LBLS_ENTRY(u8 lbl_eu_80519108[], u8 lbl_eu_80519108[5], ("SPSD"))
 LBLS_ENTRY(u8 lbl_eu_80519110[], u8 lbl_eu_80519110[16], (".snd\x00"".sd\x00""\x00""\x00""\x00""\x00""\x00""\x00"""))
+LBLS_ENTRY(volatile u32 lbl_eu_8051914C, volatile u32 lbl_eu_8051914C, (0))
 LBLS_ENTRY(u8 lbl_eu_80519150[], u8 lbl_eu_80519150[1360], ("E1070301:Invalid parameter(maxnch<=0).\n\x00""E1070302:Invalid parameter(sj=null).\n\x00""E1070303:Invalid parameter(sj[]=null).\n\x00""E1070304:Not enough RNA handle.\n\x00""E1070306:Can't create SJ.\n\x00""E1070307:Can't acquire voice(AX).\n\x00""E2071701:DMA transfer(data) to A-RAM did not finish.\n\x00""E2071701:DMA transfer(flash) to A-RAM did not finish.\n\x00""E1070308:Invalid parameter(sw).\n\x00""E1070309:Invalid parameter(sw).\n\x00""E8020801:Invalid parameter(work=NULL).\n\x00""E8020802:Invalid parameter(size or max_unit_len).\n\x00""E8020803:ADXWII_InitTS() was not called.\n\x00""E8022501:Invalid parameter(60<=unit_len<=100).\n\x00""E8020804:Invalid parameter(work=NULL).\n\x00""E8020805:Invalid parameter(size or max_unit_len).\n\x00""E8020806:Invalid parameter(adxt=NULL).\n\x00""E8020807:Invalid parameter(adxt=NULL).\n\x00""E8020808:ADXWII_InitTS() was not called.\n\x00""E8020809:Invalid parameter(adxt=NULL).\n\x00""E8020811:Invalid parameter(unit_len<60 or unit_len>100).\n\x00""E8022001:ADXWII_AttachTS() was not called.\n\x00""E8022502:Invalid parameter(unit_len > max_unit_len).\n\x00""E8021902:ADXWII_InitTS() was not called.\n\x00""E8021903:Invalid parameter(adxt=NULL).\n\x00""E8022002:ADXWII_AttachTS() was not called.\n\x00""E8021901:Too many channels(Time Stretch is only mono).\n\x00""E8021902:TS output buffer is discontinuous.\n\x00""E6112701:Invalid sampling frequency(32028Hz).\n\x00""E8043001:Invalid parameter(wpadno<0 or wpadno>3).\n\x00""E8043002:Invalid parameter(wpadno<0 or wpadno>3).\n\x00""\x00""\x00""\x00""\x00""\x00"""))
 LBLS_ENTRY(char lbl_eu_805196D4[], char lbl_eu_805196D4[49], ("1060102: Internal Error: adxm_goto_mwidle_border"))
 LBLS_ENTRY(u32 lbl_eu_80519744, u32 lbl_eu_80519744, (0x80519708))
@@ -169,9 +177,15 @@ LBLS_ENTRY(u32 lbl_eu_805E26DC, u32 lbl_eu_805E26DC, (0))
 LBLS_ENTRY(u8 lbl_eu_805E26E8[], u8 lbl_eu_805E26E8[3136], ({0}))
 LBLS_ENTRY(void* lbl_eu_805E3328, void* lbl_eu_805E3328, (0))
 LBLS_ENTRY(u32 lbl_eu_805E3338, u32 lbl_eu_805E3338, (0))
+LBLS_ENTRY(volatile u32 lbl_eu_805E3340, volatile u32 lbl_eu_805E3340, (0))
 LBLS_ENTRY(u32 lbl_eu_805E3354, u32 lbl_eu_805E3354, (0))
 LBLS_ENTRY(u8 lbl_eu_805E3358[], u8 lbl_eu_805E3358[2880], ({0}))
+LBLS_ENTRY(volatile s32 lbl_eu_805E3E98, volatile s32 lbl_eu_805E3E98, (0))
+LBLS_ENTRY(volatile s32 lbl_eu_805E3E9C, volatile s32 lbl_eu_805E3E9C, (0))
+LBLS_ENTRY(volatile s32 lbl_eu_805E3EA0, volatile s32 lbl_eu_805E3EA0, (0))
+LBLS_ENTRY(volatile s32 lbl_eu_805E3EA4, volatile s32 lbl_eu_805E3EA4, (0))
 LBLS_ENTRY(u8 lbl_eu_805E3EA8[], u8 lbl_eu_805E3EA8[4160], ({0}))
+LBLS_ENTRY(volatile s32 lbl_eu_805E4EE8, volatile s32 lbl_eu_805E4EE8, (0))
 LBLS_ENTRY(u32 lbl_eu_805E4EF0, u32 lbl_eu_805E4EF0, (0))
 LBLS_ENTRY(u32 lbl_eu_805E4F10, u32 lbl_eu_805E4F10, (0))
 LBLS_ENTRY(u32 lbl_eu_805E4F18, u32 lbl_eu_805E4F18, (0))
@@ -194,6 +208,7 @@ LBLS_ENTRY(u32 lbl_eu_805E64AC, u32 lbl_eu_805E64AC, (0))
 LBLS_ENTRY(u32 lbl_eu_805E64B0, u32 lbl_eu_805E64B0, (0))
 LBLS_ENTRY(u32 lbl_eu_805E64B8, u32 lbl_eu_805E64B8, (0))
 LBLS_ENTRY(u32 lbl_eu_805E64BC, u32 lbl_eu_805E64BC, (0))
+LBLS_ENTRY(volatile s32 lbl_eu_805E64C0, volatile s32 lbl_eu_805E64C0, (0))
 LBLS_ENTRY(u32 lbl_eu_805E64C8, u32 lbl_eu_805E64C8, (0))
 LBLS_ENTRY(u32 lbl_eu_805E64D0, u32 lbl_eu_805E64D0, (0))
 LBLS_ENTRY(u32 lbl_eu_805E64D4, u32 lbl_eu_805E64D4, (0))
@@ -216,6 +231,8 @@ LBLS_ENTRY(u32 lbl_eu_805ED2D0, u32 lbl_eu_805ED2D0, (0))
 LBLS_ENTRY(u8 lbl_eu_805ED2D8[], u8 lbl_eu_805ED2D8[18432], ({0}))
 LBLS_ENTRY(u32 lbl_eu_805F1AD8, u32 lbl_eu_805F1AD8, (0))
 LBLS_ENTRY(u8 lbl_eu_805F1AE0[], u8 lbl_eu_805F1AE0[3072], ({0}))
+LBLS_ENTRY(volatile int lbl_eu_805F26E0, volatile int lbl_eu_805F26E0, (0))
+LBLS_ENTRY(volatile int lbl_eu_805F26E8, volatile int lbl_eu_805F26E8, (0))
 LBLS_ENTRY(char lbl_eu_805F2710[], char lbl_eu_805F2710[256], ({0}))
 LBLS_ENTRY(u32 lbl_eu_805F2A58[], u32 lbl_eu_805F2A58[38], ({0}))
 LBLS_ENTRY(s32 lbl_eu_805F2AF0, s32 lbl_eu_805F2AF0, (0))

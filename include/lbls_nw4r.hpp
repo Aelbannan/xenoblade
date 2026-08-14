@@ -12,6 +12,12 @@
 // before including types.h so storage exists exactly once; every other
 // TU sees `extern`. Initializers carry retail bytes when a DOL is
 // present (decoded per type), typed zeros otherwise.
+//
+// Class/typedef-typed labels include their declaring headers. The
+// extern-only section (object-typed labels) is suppressed in the data
+// TU: those definitions must stay raw bytes in data_defs.cpp for
+// fidelity, and a real-typed extern + raw definition cannot coexist
+// in one TU (type mismatch).
 #pragma once
 
 #include <types.h>
@@ -39,6 +45,7 @@ LBLS_ENTRY(u8 lbl_eu_8056B084[], u8 lbl_eu_8056B084[92], ({0x00, 0x00, 0x00, 0x0
 LBLS_ENTRY(char lbl_eu_8061A750[], char lbl_eu_8061A750[16], ({0}))
 LBLS_ENTRY(char lbl_eu_8061B574[], char lbl_eu_8061B574[10796], ({0}))
 LBLS_ENTRY(char lbl_eu_8061FAB8[], char lbl_eu_8061FAB8[72], ({0}))
+LBLS_ENTRY(volatile s16 lbl_eu_806382C0[], volatile s16 lbl_eu_806382C0[1], ({0}))
 LBLS_ENTRY(u32 lbl_eu_8066346C, u32 lbl_eu_8066346C, (0x8061FA20))
 LBLS_ENTRY(bool lbl_eu_80665448, bool lbl_eu_80665448, (0))
 LBLS_ENTRY(u8 lbl_eu_8066544C, u8 lbl_eu_8066544C, (0))

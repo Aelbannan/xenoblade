@@ -29,7 +29,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CGame.s",
       "abi_helper_calls": [],
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -368,7 +368,8 @@
       "claim": null,
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80039648",
@@ -863,7 +864,8 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/CGame.s",
       "abi_helper_calls": [],
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8003a0b4",
@@ -145851,7 +145853,7 @@
       "size": "0x54",
       "unit": "kyoshin/cf/object/CActorParam",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/object/CActorParam.cpp",
@@ -145862,16 +145864,8 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/object/CActorParam.s",
       "abi_helper_calls": [],
       "source_present": true,
-      "instruction_match": 51.905,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "agent-structural",
-        "claimed_at": "2026-08-15T06:32:38.816201+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/object/CActorParam.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 46.667,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8017fb94",
@@ -172909,7 +172903,7 @@
       "unit": "kyoshin/CItemBoxGrid",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "STRUCTURAL",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80139ca8",
@@ -172922,8 +172916,16 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/CItemBoxGrid.cpp",
       "source_present": true,
-      "instruction_match": 13.76,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 97.8,
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "agent-structural",
+        "claimed_at": "2026-08-15T06:57:54.624554+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CItemBoxGrid.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801c6b80",
@@ -386152,7 +386154,7 @@
       "size": "0x90",
       "unit": "CriWare/src/adx/svm/svm",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -386167,15 +386169,7 @@
       "instruction_match": 97.056,
       "equivalence_status": "inconclusive_smt_disabled",
       "declared_return": "i32",
-      "source_present": true,
-      "claim": {
-        "owner": "agent-codematch",
-        "claimed_at": "2026-08-15T06:39:34.063612+00:00",
-        "allowed_paths": [
-          "libs/CriWare/src/adx/svm/svm.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-80399c04",
@@ -398281,8 +398275,8 @@
       "size": "0x170",
       "unit": "CriWare/src/sofdec/sfdcore/mps/mps_lib",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803bdf54",
@@ -398303,7 +398297,9 @@
           "libs/CriWare/src/sofdec/sfdcore/mps/mps_lib.c"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 92.413,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-803bf650",
@@ -452198,8 +452194,8 @@
       "size": "0x9C",
       "unit": "nw4r/src/snd/snd_SeqSound",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SeqSound.cpp",
       "called_functions": [
@@ -452219,7 +452215,9 @@
           "libs/nw4r/src/snd/snd_SeqSound.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-8041cfbc",
@@ -452547,8 +452545,8 @@
       "size": "0xE4",
       "unit": "nw4r/src/snd/snd_SeqSound",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SeqSound.cpp",
       "called_functions": [
@@ -452570,7 +452568,9 @@
           "libs/nw4r/src/snd/snd_SeqSound.cpp"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8041d4d8",
@@ -461696,8 +461696,8 @@
       "size": "0xA0",
       "unit": "nw4r/src/snd/snd_WaveSound",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_WaveSound.cpp",
       "called_functions": [
@@ -461712,7 +461712,9 @@
         "_restgpr_25",
         "_savegpr_25"
       ],
-      "source_present": false
+      "source_present": false,
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-8042c084",
@@ -461840,8 +461842,8 @@
       "size": "0xE4",
       "unit": "nw4r/src/snd/snd_WaveSound",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_WaveSound.cpp",
       "called_functions": [
@@ -461855,7 +461857,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_WaveSound.s",
       "abi_helper_calls": [],
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8042c254",
@@ -488682,8 +488686,8 @@
       "size": "0x188",
       "unit": "monolib/src/lib/CLib",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/lib/CLib.cpp",
       "called_functions": [
@@ -488703,9 +488707,10 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/lib/CLib.s",
       "abi_helper_calls": [],
-      "instruction_match": 100.0,
+      "instruction_match": 99.949,
       "notes": "decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8045d590",
@@ -493327,8 +493332,8 @@
       "size": "0xA8",
       "unit": "monolib/src/lib/CLibVM",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -493338,14 +493343,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibVM.cpp",
       "source_present": true,
-      "claim": {
-        "owner": "pi-harness-32893",
-        "claimed_at": "2026-08-15T06:12:42.591998+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/lib/CLibVM.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8046420c",
@@ -493383,8 +493382,8 @@
       "size": "0x58",
       "unit": "monolib/src/lib/CLibVM",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8043b390",
@@ -493397,14 +493396,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibVM.cpp",
       "source_present": true,
-      "claim": {
-        "owner": "pi-harness-32893",
-        "claimed_at": "2026-08-15T06:12:42.591791+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/lib/CLibVM.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80464270",
@@ -493417,8 +493410,8 @@
       "size": "0x68",
       "unit": "monolib/src/lib/CLibVM",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8043b3bc",
@@ -493431,14 +493424,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibVM.cpp",
       "source_present": true,
-      "claim": {
-        "owner": "pi-harness-32893",
-        "claimed_at": "2026-08-15T06:12:42.591994+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/lib/CLibVM.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804642d8",

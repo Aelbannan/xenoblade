@@ -1,22 +1,27 @@
 #include "kyoshin/cf/CArtsSet.hpp"
 
-void* memset(void* dest, int val, size_t count);
-
 // Records viewed as polymorphic objects: the 0x84-byte non-polymorphic data
 // base places the vptr at 0x84 (retail loads the table pointer from there),
 // and the per-record init routine is vtable slot 2 (offset 8) - the same
 // dispatch shape the retail CAttackSet/CArtsSet init loops emit.
+//
+// The init virtual is declared PURE: the real init implementations live in
+// CArtsParam.cpp (CAttackParam::CAttackParam_UnkVirtualFunc1 and CArtsParam's
+// override). This TU only needs the dispatch shape (load the record's table
+// pointer at +0x84, jump to slot 2) - the record objects are never
+// constructed here, so these class vtables are never dispatched through at
+// runtime; the game data carries the real per-record table pointers.
 struct CAttackParamData {
     u8 field_0[0x84];
 };
 
 struct CAttackParamVtblRec : CAttackParamData {
-    virtual void vtInit() {}  // first virtual -> vtable slot 2 (offset 8, MWCC 2-slot vtable overhead)
+    virtual void vtInit() = 0;  // first virtual -> vtable slot 2 (offset 8, MWCC 2-slot vtable overhead)
 };
 
 // 0x8c-strided arts-param record: vptr at 0x84, 4 bytes of derived data at 0x88.
 struct CArtsParamVtblRec : CAttackParamData {
-    virtual void vtInit() {}  // first virtual -> vtable slot 2 (offset 8)
+    virtual void vtInit() = 0;  // first virtual -> vtable slot 2 (offset 8)
     u8 field_88[0x8c - 0x88];
 };
 
@@ -35,7 +40,7 @@ namespace cf {
         CArtsParamVtblRec* p;
         int row;
 
-        rowBase = reinterpret_cast<CArtsParamVtblRec*>(reinterpret_cast<unsigned char*>(this) + 0x38);
+        rowBase = reinterpret_cast<CArtsParamVtblRec*>(&mArtsParams[0]);
         for (row = 0; row < 3; row++) {
             p = rowBase;
             for (int col = 0; col < 8; col++) {
@@ -63,6 +68,17 @@ namespace cf {
         p += index * 0x10;
         p += subindex * 0x2;
         return *(u16*)(p + 0x4);
+    }
+
+    // Slot lookup keyed by the current slot count stored in the first word
+    // (mArtsSlotData[0]): the requested slot sits at byte +4 (2 u16 entries
+    // past the count word) on the row*0x10 + index*2 grid - the same strides
+    // as getArtsSlotRC. Out-of-range index reads past the declared grid,
+    // which is intentional (retail performs the same raw memory access).
+    unsigned short CArtsSet::getArtsSlotAtCnt(unsigned int index) {
+        unsigned short count = mArtsSlotData[0];
+        return *reinterpret_cast<unsigned short*>(
+            reinterpret_cast<unsigned char*>(this) + 4 + count * 0x10 + index * 0x2);
     }
 
     // Decompose the flat index into row/col and store into the slot entry.
@@ -120,6 +136,9 @@ unsigned short func_80153CAC(const void* self, int index) {
     return *reinterpret_cast<const unsigned short*>(p + 4);
 }
 
+// C-ABI accessor (retail symbol is unmangled): returns the arts-param record
+// at the row stamped in the first word (count*0x460) plus the given index
+// stride (index*0x8c), 0x38 bytes past the CArtsSet base.
 extern "C" void* getArtsParamAtCnt(void* self, unsigned int index) { unsigned short count = *static_cast<unsigned short*>(self); return static_cast<unsigned char*>(self) + 0x38 + count * 0x460 + index * 0x8c; }
 
 cf::CArtsParam* func_80153DCC(cf::CArtsSet* self, int id) {
@@ -144,10 +163,12 @@ cf::CArtsParam* func_80153DCC(cf::CArtsSet* self, int id) {
     return &lbl_eu_80573D88;
 }
 
+// C-ABI accessor (retail symbol is unmangled): returns the attack-param
+// record at base + index*0x88 + 0x10.
 extern "C" void* getAtkParam(void* base, int index) { return (char*)base + index * 0x88 + 0x10; }
 
 void func_80153E88(void* self) {
-    memset(self, 0, 0xc);
+    std::memset(self, 0, 0xc);
     CAttackParamVtblRec* arr = reinterpret_cast<CAttackParamVtblRec*>(reinterpret_cast<unsigned char*>(self) + 0x10);
     for (int i = 0; i < 6; i++) {
         arr[i].vtInit();

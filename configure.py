@@ -526,7 +526,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/object/CBattleState.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuGetItem.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CAIAction.cpp"),
-            Object(NonMatching, "kyoshin/cf/CArtsSet.cpp"),
+            Object(Matching, "kyoshin/cf/CArtsSet.cpp"),
             Object(NonMatching, "kyoshin/cf/CArtsParam.cpp"),
             Object(NonMatching, "kyoshin/cf/CItem.cpp"),
             Object(NonMatching, "kyoshin/cf/CCharEffect.cpp"),
@@ -720,7 +720,29 @@ config.libs = [
             Object(NonMatching, "kyoshin/CUIErrMesWin.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuTitle.cpp"),
             Object(NonMatching, "kyoshin/CTitle.cpp"),
-            Object(NonMatching, "kyoshin/help/CHelp.cpp"),
+            # TU-final 2026: 7/7 FULL_MATCH (witness-certified), split 0x12C exact.
+            # Link-only renames: symbols.txt annotates the ctor/B7C68/B7CBC/B7CE4
+            # with uneducated Fv/unmangled suffixes (pre-existing); the compiled
+            # object emits the true mangled names. The retail split objects
+            # (split1.s vtbl tables, retail CHelpManager/CHelp_LandMark call
+            # sites) reference the annotation names, so the link copy provides
+            # them via objcopy --redefine-sym (objdiff/hexdiff keep the compiled
+            # object). Forward fix: rename those 4 annotations in symbols.txt
+            # to the mangled names and re-run the DOL split.
+            Object(
+                Matching,
+                "kyoshin/help/CHelp.cpp",
+                link_transform={
+                    "renames": [
+                        ("__ct__Q22cf5CHelpFPvUl", "__ct__Q22cf5CHelpFv"),
+                        ("func_802B7C68__Q22cf5CHelpFv", "func_802B7C68"),
+                        ("func_802B7CBC__Q22cf11CHelpSwitchFUl",
+                         "func_802B7CBC__Q22cf11CHelpSwitchFv"),
+                        ("func_802B7CE4__Q22cf11CHelpSwitchFUc",
+                         "func_802B7CE4__Q22cf11CHelpSwitchFv"),
+                    ],
+                },
+            ),
             Object(NonMatching, "kyoshin/help/CHelp_ArtsAttack.cpp"),
             Object(Matching, "kyoshin/help/CHelp_ArtsSet.cpp"),
             Object(NonMatching, "kyoshin/help/CHelp_CkKizuna.cpp"),
@@ -1938,7 +1960,7 @@ config.libs = [
             Object(Matching, "monolibdata1b.s"),
             Object(Matching, "monolibdata1f.s"),
             Object(Matching, "monolibdata1d.s"),
-            Object(Matching, "monolibdata1e.s"),
+            Object(Matching, "monolibdata1e.cpp"),  # converted from asm dump: one 0x280-byte .bss global (lbl_eu_80657238), verified byte+align identical via run.py data diff
             Object(Matching, "monolibdata2.s"),
         ],
     },

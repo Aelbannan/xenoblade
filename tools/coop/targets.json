@@ -82514,7 +82514,7 @@
       "size": "0x44",
       "unit": "kyoshin/code_800B06A4",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -82526,14 +82526,7 @@
       "source": "src/kyoshin/code_800B06A4.cpp",
       "instruction_match": 0.0,
       "source_present": false,
-      "claim": {
-        "owner": "agent-compiles",
-        "claimed_at": "2026-08-15T09:32:48.006662+00:00",
-        "allowed_paths": [
-          "src/kyoshin/code_800B06A4.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-800ba34c",
@@ -376986,7 +376979,7 @@
       "source": "libs/CriWare/src/adx/adxt/adx_amp.c",
       "claim": null,
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -386013,8 +386006,8 @@
       "size": "0x210",
       "unit": "CriWare/src/adx/sj/sj_utl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802c52ac"
@@ -386034,7 +386027,9 @@
           "libs/CriWare/src/adx/sj/sj_utl.c"
         ],
         "note": ""
-      }
+      },
+      "instruction_match": 99.924,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80399a3c",
@@ -414350,14 +414345,6 @@
       "source": "libs/CriWare/src/sofdec/sfx/sfx_lib.c",
       "declared_return": "void",
       "source_present": true,
-      "claim": {
-        "owner": "pi-harness-32893",
-        "claimed_at": "2026-08-15T08:45:10.501939+00:00",
-        "allowed_paths": [
-          "libs/CriWare/src/sofdec/sfx/sfx_lib.c"
-        ],
-        "note": ""
-      },
       "instruction_match": 77.717,
       "equivalence_status": "inconclusive_smt_disabled"
     },
@@ -475501,7 +475488,7 @@
       "size": "0x58",
       "unit": "monolib/src/work/CWorkSystem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/work/CWorkSystem.cpp",
@@ -475516,7 +475503,15 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-32893",
+        "claimed_at": "2026-08-15T09:41:05.737743+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/work/CWorkSystem.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80446e6c",
@@ -475663,7 +475658,7 @@
       "size": "0x144",
       "unit": "monolib/src/work/CWorkSystem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/work/CWorkSystem.cpp",
@@ -475695,7 +475690,15 @@
       "abi_helper_calls": [],
       "instruction_match": 100.0,
       "notes": "decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-32893",
+        "claimed_at": "2026-08-15T09:41:05.737970+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/work/CWorkSystem.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80447104",
@@ -475742,7 +475745,7 @@
       "size": "0x78",
       "unit": "monolib/src/work/CWorkSystem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/work/CWorkSystem.cpp",
@@ -475760,7 +475763,15 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-32893",
+        "claimed_at": "2026-08-15T09:41:05.737962+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/work/CWorkSystem.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8044720c",
@@ -481254,7 +481265,7 @@
       "size": "0xB4",
       "unit": "monolib/src/device/CDeviceClock",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/device/CDeviceClock.cpp",
@@ -481267,7 +481278,15 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/device/CDeviceClock.s",
       "abi_helper_calls": [],
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-32893",
+        "claimed_at": "2026-08-15T09:38:33.914329+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/device/CDeviceClock.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804507cc",
@@ -481280,7 +481299,7 @@
       "size": "0xB8",
       "unit": "monolib/src/device/CDeviceClock",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/device/CDeviceClock.cpp",
@@ -481293,7 +481312,15 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/device/CDeviceClock.s",
       "abi_helper_calls": [],
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-32893",
+        "claimed_at": "2026-08-15T09:38:33.914333+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/device/CDeviceClock.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80450884",
@@ -481359,8 +481386,8 @@
       "size": "0xA8",
       "unit": "monolib/src/device/CDeviceClock",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "BACKLOG",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/device/CDeviceClock.cpp",
       "called_functions": [],
@@ -481370,8 +481397,17 @@
       "callgraph_source": "build/us/asm/monolib/src/device/CDeviceClock.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 4.405,
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-32893",
+        "claimed_at": "2026-08-15T09:38:33.914137+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/device/CDeviceClock.cpp"
+        ],
+        "note": ""
+      },
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80450a14",

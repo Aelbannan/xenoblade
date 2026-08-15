@@ -275,10 +275,10 @@ extern "C" void func_80137F88(nw4r::lyt::Pane*, void*);
 extern "C" void func_80137C1C(void*, u32);
 extern "C" void func_8013AB0C(u8*, u8*, int);
 extern "C" int sprintf(char*, const char*, ...);
-extern "C" u32 lbl_eu_80668898;
-extern "C" u32 lbl_eu_8066889C;
-extern "C" u32 lbl_eu_806688A0;
-extern "C" u32 lbl_eu_806688A4;
+extern "C" const u32 lbl_eu_80668898;  // const: MWCC hoists the loads above the LR save (load-hoist family)
+extern "C" const u32 lbl_eu_8066889C;
+extern "C" const u32 lbl_eu_806688A0;
+extern "C" const u32 lbl_eu_806688A4;
 extern "C" void func_80136910__FPQ34nw4r3lyt6LayoutPcUc(nw4r::lyt::Layout*, char*, u8);
 extern "C" void func_80137924(void*, void*, void*, void*);
 extern "C" void func_80124270(void*, u32);

@@ -10,7 +10,7 @@ namespace nw4r { namespace math { struct VEC3; } }
 /* 0x22-byte quest-log entry record, copied wholesale by func_80227994.
    Layout matches the retail copy: 2 head bytes + 4x8-byte word loop. */
 struct CQstLogListEntry {
-    u8 mField0;          // 0x0
+    s8 mField0;          // 0x0 (retail li r5,-1 store - signed)
     u8 mField1;          // 0x1
     u8 mData[0x20];      // 0x2..0x21
 };

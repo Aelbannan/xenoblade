@@ -290,22 +290,20 @@ void fwd_2DB0_body(){}
 // and links it into the list before the node pointed to by r5[0].
 // Returns the new entry pointer via *r3.
 extern "C" void func_800B2E38(void** out, void* list, void* templ, void* data) {
-    u32 count = *(u32*)((u8*)list + 0x18);
-    u32 entryBase = *(u32*)((u8*)list + 0x14);
-    u32 idx = 0;
-    u32 byteOff = 0;
+    s32 idx = 0;
+    s32 byteOff = 0;
 
-    // Find first empty slot (entry[0] == 0)
-    u32* base = (u32*)entryBase;
-    for (; idx < count; idx++) {
-        if (base[byteOff / 4] == 0) {
+    // Find first empty slot (entry[0] == 0). Count and entry base re-read
+    // per iteration (retail cmp r8,r10; blt loop, not counted mtctr).
+    for (; idx < *(s32*)((u8*)list + 0x18); idx++) {
+        if (*(u32*)(*(u32*)((u8*)list + 0x14) + byteOff) == 0) {
             break;
         }
         byteOff += 0xC;
     }
 
     // Calculate entry pointer
-    u32* newEntry = (u32*)(entryBase + idx * 0xC);
+    u32* newEntry = (u32*)(*(u32*)((u8*)list + 0x14) + idx * 0xC);
 
     // Copy data word into entry[8] (retail guards the computed address:
     // addic. r4,r7,8; beq — kept from a source-level pointer null check).

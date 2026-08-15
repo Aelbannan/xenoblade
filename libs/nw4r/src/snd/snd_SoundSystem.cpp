@@ -4,12 +4,6 @@
 #include <revolution/OS.h>
 #include <revolution/SC.h>
 
-namespace {
-
-NW4R_LIB_VERSION(SND, "Jun  8 2007", "11:17:15", "0x4199_60831");
-
-} // namespace
-
 namespace nw4r {
 namespace snd {
 
@@ -19,7 +13,15 @@ inline void InitSeqPlayer() {
 }
 } // namespace detail
 
-// Retail name for the sTaskThread static (bss lbl_eu_80638910, 0x330).
+// Retail NW4R_SND version slot (sdata lbl_eu_806634E8, an 8-byte blob whose
+// first word points at the "<< NW4R - SND ... >>" string in the data blob);
+// declared extern so this TU defines no .sdata/.data version data. The
+// NW4R_LIB_VERSION macro would pool a local copy of the string.
+extern "C" const char* lbl_eu_806634E8;
+
+// Retail name for the sTaskThread static (bss lbl_eu_80638910, 0x330). The
+// definition must stay in this TU so MWCC emits the retail auto-__sinit_
+// (it constructs + dtor-registers the object through the retail labels).
 extern "C" {
 detail::TaskThread lbl_eu_80638910;
 }
@@ -34,13 +36,6 @@ void SoundSystem::InitSoundSystem(s32 soundThreadPriority,
     InitSoundSystem(param, lbl_eu_80638C40, 0x16E00);
 }
 
-u32 SoundSystem::GetRequiredMemSize(const SoundSystemParam& rParam) {
-    return rParam.soundThreadStackSize + rParam.dvdThreadStackSize +
-           detail::AxVoiceManager::GetInstance().GetRequiredMemSize() +
-           detail::VoiceManager::GetInstance().GetRequiredMemSize() +
-           detail::ChannelManager::GetInstance().GetRequiredMemSize();
-}
-
 void SoundSystem::InitSoundSystem(const SoundSystemParam& rParam, void* pWork,
                                   u32 workSize) {
 #pragma unused(workSize)
@@ -51,7 +46,7 @@ void SoundSystem::InitSoundSystem(const SoundSystemParam& rParam, void* pWork,
 
     lbl_eu_80665508 = true;
 
-    OSRegisterVersion(NW4R_SND_Version_);
+    OSRegisterVersion(lbl_eu_806634E8);
 
     detail::AxManager::GetInstance().Init();
 
@@ -146,20 +141,6 @@ void SoundSystem::ShutdownSoundSystem() {
     detail::AxManager::GetInstance().Shutdown();
 
     lbl_eu_80665508 = false;
-}
-
-void SoundSystem::WaitForResetReady() {
-    if (!lbl_eu_80665508) {
-        return;
-    }
-
-    u32 start = OSGetTick();
-
-    while (!detail::AxManager::GetInstance().IsResetReady()) {
-        if (OS_TICKS_TO_SEC(OSGetTick() - start) > 0) {
-            break;
-        }
-    }
 }
 
 } // namespace snd

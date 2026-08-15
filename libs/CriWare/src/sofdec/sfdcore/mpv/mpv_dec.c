@@ -97,10 +97,9 @@ s32 MPVDEC_CheckVersion(const char* version, unsigned int size, s32 v) {
     if (strcmp(lbl_eu_8051C088, version) != 0)
         return -1;
     // Best state (96.7%): the SWITCH form matches the retail layout but
-    // lowers to signed cmpwi under GC/3.0a5.2 (retail cmpli). if/goto forms
-    // fix the signedness but lose the retail `beq body; li -1; b done`
-    // dispatch (0x78 -> 0x74, 11 structural). No compiler version emits both
-    // shapes together. Kept as the switch.
+    // lowers to signed cmpwi under GC/3.0a5.2 (retail cmpli). if/else forms
+    // emit the unsigned cmpli but lose the retail `beq body; li -1; b done`
+    // dispatch (0x78 -> 0x74, 11 structural). No shape emits both together.
     switch (size) {
     default:
         return -1;

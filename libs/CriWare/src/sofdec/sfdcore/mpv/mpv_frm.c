@@ -39,6 +39,7 @@ typedef struct MpvFrmInfo {
 s32 MPV_DecodeFrmSj(MpvHn* h, void* a2, MpvFrmInfo* a3) {
     u32 v1;
     u32 v2;
+    s32 r;
     if (MPVLIB_CheckHn(h))
         return MPVERR_SetCode(NULL, 0xFF030209);
     if (h->mode == 2)
@@ -46,9 +47,9 @@ s32 MPV_DecodeFrmSj(MpvHn* h, void* a2, MpvFrmInfo* a3) {
     {
         /* Copy the 68B SJ frame info into the handle output area: 8 pairs of
          * words plus one tail word. */
+        s32 n = 8;
         u32* d = h->copyOut - 1;
         u32* s = (u32*)a3 - 1;
-        s32 n = 8;
         v1 = h->field_0xbe8;
         v2 = h->field_0xbec;
         do {
@@ -64,26 +65,24 @@ s32 MPV_DecodeFrmSj(MpvHn* h, void* a2, MpvFrmInfo* a3) {
     MPVCMC_SetCcnt(h);
     MPVCDEC_StartFrame(h);
     MPVBDEC_StartFrame(h);
+    r = MPVSL_DecPicture(h, a2);
+    MPVUMC_EndOfFrame(h);
     {
-        s32 r = MPVSL_DecPicture(h, a2);
-        MPVUMC_EndOfFrame(h);
-        {
-            /* Copy 128B of decoded stream from the handle to a3->outBuf. */
-            u32* s = h->decode;
-            u32* d = a3->outBuf - 1;
-            s32 n = 16;
-            do {
-                u32 v0 = *(s + 1);
-                u32 v1 = *(s += 2);
-                *(d + 1) = v0;
-                *(d += 2) = v1;
-            } while (--n != 0);
-        }
-        a3->field_0x38 = h->field_0xbe8 - v1;
-        a3->field_0x3c = h->field_0xbec - v2;
-        a3->field_0x40 = *(s16*)&h->copyOut[16];
-        return r;
+        /* Copy 128B of decoded stream from the handle to a3->outBuf. */
+        u32* d = a3->outBuf - 1;
+        u32* s = h->decode;
+        s32 n = 16;
+        do {
+            u32 v0 = *(s + 1);
+            u32 v1 = *(s += 2);
+            *(d + 1) = v0;
+            *(d += 2) = v1;
+        } while (--n != 0);
     }
+    a3->field_0x38 = h->field_0xbe8 - v1;
+    a3->field_0x3c = h->field_0xbec - v2;
+    a3->field_0x40 = *(s16*)&h->copyOut[16];
+    return r;
 }
 
 extern s32 MPV_GoNextDelimSj(void* a);

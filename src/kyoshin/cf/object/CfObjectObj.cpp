@@ -1,16 +1,58 @@
 // cf::CfObjectObj - reconstructed functions for kyoshin/cf/object/CfObjectObj
+// Functions are kept in retail .text order so hexdiff's offset-based symbol
+// fallback maps the unmangled retail names (__ct__cf_CfObjectObj,
+// __dt__800BFA14, func_800BFAB0, func_800BFBF4) onto the mangled decomp ones.
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectObj.hpp"
-#include "kyoshin/cf/object/CfObjectPc.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/cf/CfResObjImpl.hpp"
 
-// Imported from CfObjectImplObj TU; C-linkage (retail symbol is unmangled
-// func_800CA580). Takes the resource-object handle and a sub-id.
-extern "C" void func_800CA580(void* self, u16 id);
+// CfObjectPc.hpp (read-only) currently fails to compile due to an internal
+// virtual-override mismatch (CActorParam_UnkVirtualFunc86 return type); only
+// the incomplete type is needed here (func_800BFC68 pointer arithmetic).
+namespace cf {
+class CfObjectPc;
+}
 
-// Target 1: us-800c04f8  - init helper: two vtable init calls, clears two flags,
+// us-800c03d4  - constructor: base CfObjectMove ctor, retail vtable restore
+// (novtable scheme), zero the helper field, then guard the CfResObjImpl
+// resource allocation behind a __dynamic_cast check (the cast succeeds only
+// when the object already carries the resource impl, in which case the
+// 0x1C-byte allocation is skipped).
+cf::CfObjectObj::CfObjectObj() {
+    *(void**)this = (void*)lbl_eu_80529B4C;
+    field_71C = 0;
+    if (__dynamic_cast(this, 0, &lbl_eu_80661D18, &lbl_eu_80661D20, 0) == 0) {
+        // The ctor returns the object in r3, so assigning it back keeps `res`
+        // in volatile r3 for the mSubObjB0 store (no callee-saved slot).
+        void* res = mtl::MemManager::allocate(0x1c, func_80061FFC());
+        if (res != 0) {
+            res = (void*)__ct__cf_CfResObjImpl(res, this);
+        }
+        this->mSubObjB0 = res;
+    }
+}
+
+// us-800c045c  - deleting destructor: restore the retail vtable, run the slot
+// +0x68 virtual cleanup; MWCC auto-generates the base CfObjectMove dtor call
+// (flag 0) and the null-check + delete-flag wrapper (CfObjectNpc pattern).
+cf::CfObjectObj::~CfObjectObj() {
+    *(void**)this = (void*)lbl_eu_80529B4C;
+    this->CfObject_UnkVirtualFunc6();
+}
+
+// us-800c04d0  - simple bool/int return after a virtual init call.
+int cf::CfObjectObj::func_800BFA88() {
+    // Qualified call forces direct (non-virtual) dispatch to the CfObjectModel impl.
+    this->CfObjectModel::CfObject_UnkVirtualFunc2();
+    return 1;
+}
+
+// us-800c04f4  - retail is a 4-byte blr stub.
+void cf::CfObjectObj::func_800BFAAC() {}
+
+// us-800c04f8  - init helper: two vtable init calls, clears two flags,
 // dispatches two helper-ids through the 0x144 virtual, then sets bit-derived
 // flags on arg4/arg5. Returns 1.
 int cf::CfObjectObj::func_800BFAB0(u32 arg4, u32 arg5) {
@@ -36,14 +78,32 @@ int cf::CfObjectObj::func_800BFAB0(u32 arg4, u32 arg5) {
     return 1;
 }
 
-// Target 1: us-800c04d0  - simple bool/int return after a virtual init call.
-int cf::CfObjectObj::func_800BFA88() {
-    // Qualified call forces direct (non-virtual) dispatch to the CfObjectModel impl.
-    this->CfObjectModel::CfObject_UnkVirtualFunc2();
-    return 1;
+// us-800c05d8  - run the model update, then consume a pending helper id.
+void cf::CfObjectObj::func_800BFB90() {
+    // Qualified call forces direct (non-virtual) dispatch to CfObjectMove's
+    // member impl (retail uses a plain bl, not a vtable dispatch).
+    this->CfObjectMove::CfObject_UnkVirtualFunc4();
+    if (this->CfObject_UnkVirtualFunc9() != 0 && this->field_71C != 0) {
+        func_800CA580(this->mSubObj38, this->field_71C);
+        this->field_71C = 0;
+    }
 }
 
-// Target 2: us-800c06b0  - find the containing CfObjectPc for a CfObjectMove subobject.
+// us-800c063c  - dispatch a helper id, or store it if not dispatchable.
+// Retail branches straight to the epilogue when mSubObj38 is null (no store
+// then); the id is stored only when mSubObj38 != 0 but the virtual check fails.
+void func_800BFBF4(cf::CfObjectObj* self, u16 id) {
+    if (self->mSubObj38 != 0) {
+        if (self->CfObject_UnkVirtualFunc9() != 0) {
+            func_800CA580(self->mSubObj38, id);
+            self->field_71C = 0;
+        } else {
+            self->field_71C = id;
+        }
+    }
+}
+
+// us-800c06b0  - find the containing CfObjectPc for a CfObjectMove subobject.
 // The CfObjectMove subobject lives at +0x3E9C inside CfObjectPc, so the reverse
 // offset recovers the outer object. Only valid when the flag is set.
 cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove) {
@@ -55,35 +115,4 @@ cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove) {
         return (cf::CfObjectPc*)((u8*)objMove);
     }
     return 0;
-}
-
-// Target 3: us-800c05d8  - run the model update, then consume a pending helper id.
-void cf::CfObjectObj::func_800BFB90() {
-    // Qualified call forces direct (non-virtual) dispatch to CfObjectMove's
-    // member impl (retail uses a plain bl, not a vtable dispatch).
-    this->CfObjectMove::CfObject_UnkVirtualFunc4();
-    if (this->CfObject_UnkVirtualFunc9() != 0 && this->field_71C != 0) {
-        func_800CA580(this->mSubObj38, this->field_71C);
-        this->field_71C = 0;
-    }
-}
-
-// Target 4: us-800c045c  - deleting destructor: run cleanup, MWCC then emits the
-// base dtor + operator delete.
-cf::CfObjectObj::~CfObjectObj() {
-    this->CfObject_UnkVirtualFunc6();
-}
-
-// Target 5: us-800c063c  - dispatch a helper id, or store it if not dispatchable.
-// Retail branches straight to the epilogue when mSubObj38 is null (no store then);
-// the id is stored only when mSubObj38 != 0 but the virtual check fails.
-extern "C" void func_800BFBF4(cf::CfObjectObj* self, u16 id) {
-    if (self->mSubObj38 != 0) {
-        if (self->CfObject_UnkVirtualFunc9() != 0) {
-            func_800CA580(self->mSubObj38, id);
-            self->field_71C = 0;
-        } else {
-            self->field_71C = id;
-        }
-    }
 }

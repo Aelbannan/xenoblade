@@ -43,8 +43,14 @@ public:
     virtual AnmObjVisRes* Detach(int idx);                     // at 0x40
     void DetachAll();
 
-    bool TestExistence(u32 idx) const;
-    bool TestDefined(u32 idx) const;
+    // Inline (header) so the retail ApplyVisAnmResult TUs can inline the
+    // binding check; the retail DOL never emits these as standalone symbols.
+    bool TestExistence(u32 idx) const {
+        return !(mpBinding[idx] & (BINDING_UNDEFINED | BINDING_INVALID));
+    }
+    bool TestDefined(u32 idx) const {
+        return !(mpBinding[idx] & BINDING_UNDEFINED);
+    }
 
 protected:
     enum BindingFlag {

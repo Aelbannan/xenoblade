@@ -1901,7 +1901,7 @@ void func_800BE12C(u8* obj, int a, int b, int c, int d) {
     self->mField6C8 = c;
     self->mFlags6C9 = (u8)__rlwimi(self->mFlags6C9, b, 5, 24, 26);
     if (target != 0) {
-        func_8004B9D4(target, a, b, c);
+        ((void (*)(void*, int, int, int, int))func_8004B9D4)(target, a, b, c, d);
         if ((self->unk64 & 0x8) == 0) {
             self->mField6C4 = 1;
             self->mField6C8 = -1;

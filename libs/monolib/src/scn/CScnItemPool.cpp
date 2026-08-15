@@ -224,16 +224,18 @@ extern "C" __declspec(noinline) u32 func_8048C9F4(u8* self) { return ((CScnItemP
 // ScheduleList.cpp func_804E4830.
 extern "C" __declspec(noinline) void func_8048C524(u32 a, u32* b) {
     _reslist_base<CScnItem*>* self = (_reslist_base<CScnItem*>*)a;
-    _reslist_node<CScnItem*>* sentinel;
+    int i;
+    int byteOff;
     _reslist_node<CScnItem*>* temp;
     int capacity;
-    int i;
+    _reslist_node<CScnItem*>* sentinel;
     sentinel = self->mStartNodePtr;
     capacity = self->mCapacity;
-    for (i = 0; i < capacity; i++) {
-        if (self->mList[i].mNext == 0) {
+    for (i = 0, byteOff = 0; i < capacity; i++) {
+        if (*(void**)((u8*)self->mList + byteOff) == 0) {
             break;
         }
+        byteOff += 12;
     }
     temp = &self->mList[i];
     {

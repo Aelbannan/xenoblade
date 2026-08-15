@@ -14,40 +14,48 @@ extern double lbl_eu_806046C0[];  /* BSS: IDCT coefficient table */
  * int->double conversions use the itof bit-reform (bias read from c[3]). */
 void DCT_AcInit(void) {
     const double *c = (const double *)lbl_eu_8051C388;
-    u32 *t = lbl_eu_806046B8;
+    double *t = (double *)lbl_eu_806046B8;
+    double *rowBase;
+    double *row;
+    double *col;
+    double bias;
+    double pi8;
+    double half;
+    double scale;
     int i, j;
+    union { double d; unsigned int w[2]; } ui, uj;
 
-    t[0] = (u32)DCT_GetVerStr();
+    *((u32 *)t) = (u32)DCT_GetVerStr();
 
-    double *rowBase = (double *)(t + 2);              /* +0x08 */
-    double bias = c[3];   /* itof bias const (0x4330000080000000) */
-    double *trans = (double *)((char *)t + 0x208);    /* +0x208 */
-    double pi8 = c[2];    /* pi/8 */
-    double half = c[1];   /* 0.5 */
-    int transCol = 0;     /* byte offset into the transposed table */
+    rowBase = t + 1;                                  /* +0x08 */
+    bias = c[3];   /* itof bias const (0x4330000080000000) */
+    t = (double *)((char *)t + 0x208);                /* reuse t as the transposed table */
+    pi8 = c[2];    /* pi/8 */
+    half = c[1];   /* 0.5 */
 
     for (i = 0; i < 8; i++) {
-        double scale = (i == 0) ? c[0] : c[1];
-        double *row = rowBase;
-        double *col = (double *)((char *)trans + transCol);
+        scale = (i == 0) ? c[0] : c[1];
+        row = rowBase;
+        col = (double *)((char *)t + i * 8);
         unsigned int iv = (unsigned int)i ^ 0x80000000;
 
         for (j = 0; j < 8; j++) {
             /* itof: int -> double via 0x4330 magic sweep, bias pulled from c[3].
              * Low word written first (MWCC 7i manual-bit pattern). */
-            union { double d; unsigned int w[2]; } ui, uj;
             ui.w[1] = iv;
-            ui.w[0] = 0x43300000;
             uj.w[1] = (unsigned int)j ^ 0x80000000;
+            ui.w[0] = 0x43300000;
+            double id = ui.d - bias;
+            id *= pi8;                                  /* pi8*id in place */
             uj.w[0] = 0x43300000;
-            double v = scale * cos(pi8 * (ui.d - bias) * (half + (uj.d - bias)));
+            double jd = uj.d - bias;
+            double v = scale * cos(id * (half + jd));
             *row = v;
             row += 8;
             *col = v;
             col += 8;
         }
         rowBase += 8;
-        transCol += 8;
     }
 }
 

@@ -951,11 +951,16 @@ void* func_8009C8F4(cf::CtrlRemote* self, u32 a, u32 b)
     return p;
 }
 
-// Free a heap buffer when non-null.
+// Free a heap buffer when non-null. The trailing `self` guard is a no-op
+// (the function returns anyway) but keeps `this` live across the deallocate
+// call, reproducing retail's r31 frame (mr r31, r3 / lwz r31).
 void func_8009C980(cf::CtrlRemote* self, u8* ptr)
 {
     if (ptr != NULL) {
         mtl::MemManager::deallocate(ptr);
+    }
+    if (self != NULL) {
+        return;
     }
 }
 

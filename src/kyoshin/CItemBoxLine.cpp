@@ -279,6 +279,9 @@ extern "C" void* __dt__801EBBC0(CBaseCur* _this, int flags) {
 }
 
 // func_801EE87C / __dt__801ECBC0
+// optimize_for_size merges the r30/r31 saves into stmw/lmw + fixes the copy
+// order (CTagProcessor dtor family pattern).
+#pragma optimize_for_size on
 extern "C" void* __dt__801ECBC0(CBaseCur* _this, int flags) {
     if (_this != NULL) {
         __dt__8CBaseCurFv(_this, 0);
@@ -288,6 +291,7 @@ extern "C" void* __dt__801ECBC0(CBaseCur* _this, int flags) {
     }
     return _this;
 }
+#pragma optimize_for_size off
 
 // ============================================================================
 // func_801EF034: byte at this+0xA8, index bounded to a 12-entry table

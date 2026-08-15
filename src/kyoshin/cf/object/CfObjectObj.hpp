@@ -4,11 +4,15 @@
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 
 namespace cf {
-    //size 0x718
-    class CfObjectObj : public CfObjectMove {
+    // 0x71C CfObjectMove base (mField718 at 0x718-0x71B) + u16 field_71C
+    // The retail vtable lives in a data TU (lbl_eu_80529B4C); the
+    // compiler-generated __vt__Q22cf11CfObjectObj reloc name would drift, so
+    // novtable suppresses the implicit vptr store and the ctor/dtor assign
+    // the retail label explicitly (same scheme as CfObjectMove.hpp).
+    class __declspec(novtable) CfObjectObj : public CfObjectMove {
     public:
         //0x0: vtable 1
-        //0x0-718: CfObjectMove
+        //0x0-71C: CfObjectMove (mField718 is the base's last field)
 
         CfObjectObj();
         virtual ~CfObjectObj();
@@ -18,9 +22,8 @@ namespace cf {
         void func_800BFB90();
         int func_800BFAB0(u32 arg4, u32 arg5);
 
-        //0x718-0x71B
-        u8 _718[4];
-        u16 field_71C;      //0x71C helper field
+        //0x71C helper field (first field past the 0x71C base)
+        u16 field_71C;
     };
 
     // Virtual-dispatch view used only to reproduce MWCC's r12 vtable call for
@@ -74,3 +77,27 @@ namespace cf {
         virtual void fn144(u32 value, u32 src) = 0;  // vtable slot 0x144
     };
 }
+
+// CfObjectObj retail vtable (data TU; the ctor/dtor store it explicitly, same
+// scheme as CfObjectMove.hpp's lbl_eu_80529690).
+extern u8 lbl_eu_80529B4C[];
+
+// RTTI typeinfo pair for the ctor's __dynamic_cast guard: the 0x1C-byte
+// CfResObjImpl resource object is allocated only when the cast fails. Passed
+// by address (&lbl) so MWCC emits li rN, lbl@sda21 (CBattleManager pattern);
+// fixed-size decls (8-byte typeinfo objects) keep them sdata-eligible
+// (MWCC_REFERENCE: incomplete-array externs fall back to lis/addi).
+extern char lbl_eu_80661D18[8];
+extern char lbl_eu_80661D20[8];
+
+// Runtime RTTI helper (retail unmangled symbol; MWCC emits the plain name).
+void* __dynamic_cast(void* obj, long offset, const void* src_type,
+                     const void* dst_type, void* src2dst);
+
+// C-ABI imports (retail unmangled names): func_800CA580 dispatches a helper
+// id on the +0x38 sub-object; __ct__cf_CfResObjImpl constructs the 0x1C-byte
+// resource object in place and returns it (CfResObjImpl.hpp's member ctor
+// would mangle to __ct__Q22cf10CfResObjImplFv - same scheme as CfObjectPc.hpp's
+// __ct__cf_CfResPcImpl).
+extern "C" void func_800CA580(void* self, u16 id);
+extern "C" void* __ct__cf_CfResObjImpl(void* self, void* parent);

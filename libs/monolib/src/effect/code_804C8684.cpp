@@ -31,11 +31,11 @@ extern CEffectParam lbl_eu_8065FC08;
 void func_804C8690(u8 flag, const CEffectParam* src) {
     lbl_eu_806659A0 = flag;
     if (src) {
-        // Byte-view pointer first (retail lis/addi precede the pair loads),
-        // then the 8-byte pair chunk (lwz 0; lwz 4; stw 4; stw 0) plus the
-        // word at 0x08 (lwz 8; stw 8).
-        u8* dst = (u8*)&lbl_eu_8065FC08;
+        // 8-byte pair chunk (lwz 0; lwz 4; stw 4; stw 0) plus the word at
+        // 0x08 (lwz 8; stw 8). The pair is loaded before the dst base is
+        // materialised so the pair's hi word claims r0 (retail order).
         u64 pair = *(const u64*)src;
+        u8* dst = (u8*)&lbl_eu_8065FC08;
         *(u64*)dst = pair;
         *(u32*)(dst + 8) = src->field_0x08;
     }

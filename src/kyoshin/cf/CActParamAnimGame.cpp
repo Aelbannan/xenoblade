@@ -1726,12 +1726,13 @@ void cf::CActParamAnimGame::func_80060110() {
 }
 
 // Forwards the +0x444 scalar to the +0xC4 virtual slot of the object at
-// +0x4E8 (tail call; retail keeps no stack frame).
+// +0x4E8 (tail call; retail keeps no stack frame). Real virtual dispatch
+// so MWCC emits the r12 vtable load (the manual cast would use r4).
 void cf::CActParamAnimGame::func_80060268() {
     CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
-    void* region = self->region4E8;
+    CActParamAnimGameVt4C* region = (CActParamAnimGameVt4C*)self->region4E8;
     if (region == 0) return;
-    (*(void (**)(void*, f32))(*(void**)((u8*)*(void**)region + 0xC4)))(region, self->f444);
+    region->vC4(self->f444);
 }
 
 extern "C" bool func_80060290(void* r3) {

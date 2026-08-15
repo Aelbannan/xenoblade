@@ -5,7 +5,8 @@
 
 // C-linkage runtime imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" long __ptmf_test(void* ptmf);
-// Raw CProcess constructor (CProcess is abstract, so it cannot be placement-\n\'d).
+// Raw CProcess base ctor: CProcess is abstract, so the raw-init factory calls
+// the ctor entry point directly instead of placement-new.
 extern "C" void __ct__8CProcessFv(CProcess* self);
 
 // Global null pointer-to-member-function constant (3 words).

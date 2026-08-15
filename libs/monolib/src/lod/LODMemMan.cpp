@@ -561,8 +561,8 @@ void LOD::LODMemMan::func_8046D898() {}
 #pragma scheduling off
 void LOD::LODMemMan::func_8046DA04() {
     LODMemManLayout* l = (LODMemManLayout*)this;
+    f32 v1 = lbl_eu_8066A6C0;   // 1.0f constant (0xC0/0xC4/0xC8 stores) - declared first so it loads first (retail lfs f1 first)
     f32 v0 = lbl_eu_8066A6D8;   // scale divisor (0x7C/0x1CDC/0x84 stores)
-    f32 v1 = lbl_eu_8066A6C0;   // 1.0f constant (0xC0/0xC4/0xC8 stores)
     l->field_0x4 = 0;
     l->field_0xC = 0;
     l->mCount_18 = 0;
@@ -1927,6 +1927,7 @@ void func_80471184__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
         l->field_0x0 = 0;
     }
 }
+#pragma scheduling on
 #pragma pop
 
 // ---------------------------------------------------------------------------
@@ -1956,6 +1957,7 @@ void func_80471224__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CScn* scene) {
         }
     }
 }
+#pragma scheduling on
 #pragma pop
 
 // ---------------------------------------------------------------------------
@@ -2151,6 +2153,7 @@ extern "C" u8* func_8047163C__Q23LOD9LODMemManFv(LODPoolBlock* self, u32 size, i
     }
     return 0;
 }
+#pragma scheduling on
 #pragma pop
 
 // ---------------------------------------------------------------------------
@@ -2175,14 +2178,22 @@ extern "C" void func_804716B8__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 targ
             if ((prev[0] & 1) != 0) {
                 return;
             }
-            prev[1] = cur[1] + prev[1];
-            prev[2] = cur[2];
-            return;
+            // Read the merge pair in retail load order (cur[1] before prev[1]):
+            // the volatile pins the source order (MWCC_REFERENCE sfmps_pesfn
+            // load-pair rule — one-time state reads, no aliasing writes in
+            // scope), and declaring vp first makes the allocator land prev's
+            // word in r0 so the sum reuses it (add r0,r4,r0 like retail).
+            u32 vp;
+            u32 vc = *(volatile u32*)&cur[1];
+            vp = *(volatile u32*)&prev[1];
+            prev[1] = vc + vp;
+            prev[2] = cur[2];            return;
         }
         prev = cur;
         cur = (u32*)cur[2];
     }
 }
+#pragma scheduling on
 #pragma pop
 
 // ---------------------------------------------------------------------------
@@ -2201,6 +2212,7 @@ extern "C" LODPoolBlock* func_80471718__Q23LOD9LODMemManFv(LODPoolBlock* self, i
     }
     return 0;
 }
+#pragma scheduling on
 #pragma pop
 
 #pragma push
@@ -2219,6 +2231,7 @@ extern "C" void func_80471748__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 targ
         cur = cur->mNext;
     }
 }
+#pragma scheduling on
 #pragma pop
 
 // ---------------------------------------------------------------------------
@@ -2233,6 +2246,7 @@ extern "C" void func_80471780__Q23LOD9LODMemManFv(LOD::LODMemMan* self, void* ar
     l->field_0x8 = 0;
     l->field_0x4 = (LODElem20*)arg;
 }
+#pragma scheduling on
 #pragma pop
 
 // ---------------------------------------------------------------------------
@@ -2245,8 +2259,8 @@ extern "C" void func_80471794__Q23LOD9LODMemManFv(u32 handle, u32 size) {
     if (old != 0) {
         if (old != 0) {
             mtl::MemManager::deallocate((void*)old);
+            lbl_eu_80665830 = 0;
         }
-        lbl_eu_80665830 = 0;
     }
     lbl_eu_80665830 = (int)mtl::MemManager::allocate_head(handle, size, 0x20);
 }
@@ -2261,8 +2275,8 @@ void func_804717FC__Q23LOD9LODMemManFv() {
         if (old != 0) {
             mtl::MemManager::deallocate((void*)old);
         }
-        lbl_eu_80665830 = 0;
     }
+    lbl_eu_80665830 = 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -2363,10 +2377,11 @@ void LOD::LODMemMan::func_804719FC() {
     if (l->field_0x8) {
         if (l->field_0x8) {
             mtl::MemManager::deallocate(l->field_0x8);
+            l->field_0x8 = 0;
         }
-        l->field_0x8 = 0;
     }
 }
+#pragma scheduling on
 #pragma pop
 
 // ---------------------------------------------------------------------------
@@ -2383,6 +2398,7 @@ void LOD::LODMemMan::func_80471A70() {
     l->field_0x74 = strlen(name);
     strcpy(l->mStr_34, name);
 }
+#pragma scheduling on
 #pragma pop
 
 // ---------------------------------------------------------------------------
@@ -2432,13 +2448,12 @@ void func_80471ACC__Q23LOD9LODMemManFv(
 // ---------------------------------------------------------------------------
 void func_80471BC8__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int unk, int unused, int delta) {
     LODMemManLayout* l = (LODMemManLayout*)self;
-    if (l->field_0x4) {
-        u8* base = (u8*)l->field_0x4;
-        base += delta;
+    if (l->field_0x4 != 0) {
         int rem = (int)l->mView_1C - delta;
-        l->field_0xC = base;
+        l->field_0xC = (u8*)l->field_0x4 + delta;
         l->mCount_18 = rem;
-        func_80471780__Q23LOD9LODMemManFv((LOD::LODMemMan*)base, (void*)rem);
+        func_80471780__Q23LOD9LODMemManFv(
+            (LOD::LODMemMan*)((u8*)l->field_0x4 + delta), (void*)rem);
     }
 }
 
@@ -2555,17 +2570,14 @@ void func_80471CDC__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
 }
 
 bool LOD::LODMemMan::OnFileEvent(CEventFile* evt) {
-    // File-event hook: adopt the event's file handle when it differs from the
-    // current one (storing the event pointer + in-use flag), otherwise clear
-    // the handle and set the flag on the existing word.
+    // File-event hook: when the event carries the currently adopted file
+    // handle, clear the handle and set the in-use flag on the existing word.
     LODMemManLayout* l = (LODMemManLayout*)this;
     CFileHandle* current = l->field_0x30;
     if (current == evt->mFileHandle) {
+        u32 flags = l->field_0x20;
         l->field_0x30 = 0;
-        l->field_0x20 |= 0x20000;
-        return true;
+        l->field_0x20 = flags | 0x20000;
     }
-    l->field_0x30 = evt->mFileHandle;
-    l->field_0x20 = (u32)evt | 0x20000;
     return true;
 }

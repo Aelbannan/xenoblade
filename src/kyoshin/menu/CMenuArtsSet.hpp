@@ -498,9 +498,7 @@ public:
 // is called by func_8022FD9C; slot 14 (vtable offset 0x38) by func_8022FDF4.
 class SArts2FObj {
 public:
-    virtual void v0();
-    virtual void v1();
-    virtual void v2(int a); // vtable +0x08
+    virtual void v2(int a); // vtable +0x08 (declared index 0; MWCC 2-entry header)
     virtual void v3();
     virtual void v4();
     virtual void v5();
@@ -512,7 +510,7 @@ public:
     virtual void v11();
     virtual void v12();
     virtual void v13();
-    virtual void v14(int a); // vtable +0x38
+    virtual void v14(int a); // vtable +0x38 (declared index 12)
 };
 
 // Object used by func_8022FD9C / func_8022FDF4.

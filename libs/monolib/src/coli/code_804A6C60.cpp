@@ -232,6 +232,7 @@ struct CLODCacheManagerS {
     u16 field_0x6;   // 0x06 entry count
     u32 field_0x8;   // 0x08 table index
     f32 func_8046323C();
+    s32 func_80463590();
 };
 }  // namespace LOD
 
@@ -268,7 +269,17 @@ extern "C" void func_804A6C60(f32* self, CColiLodRecA6C60* obj) {
     }
 }
 
-void func_804A6D90(void){}
+// LOD cache-record lookup for the +4 index: entry table → pair table →
+// record table, then tail-call the member distance-bin lookup (retail
+// `b func_80463590`).
+extern "C" s32 func_804A6D90(void* self) {
+    u32 idx = *(u32*)((u8*)self + 4);
+    u32 n = lbl_eu_8066574C[idx];
+    u16 h = *(u16*)((u8*)lbl_eu_80665750 + n * 2 + 2);
+    LOD::CLODCacheManagerS* rec =
+        (LOD::CLODCacheManagerS*)((u8*)lbl_eu_80665738 + h * 0xC);
+    return rec->func_80463590();
+}
 
 void func_804A6DC0(void){}
 
@@ -3025,7 +3036,17 @@ extern "C" int func_804AE388(CColiObject* self, const _VEC3* vec, f32 x, f32 y) 
 }
 extern "C" int func_804AE9A4(CColiObject* self, const _VEC3* vec, f32 x, f32 y);
 extern "C" int func_804AEC8C(CColiObject* self, const _VEC3* vec, f32 x, f32 y);
-extern "C" int func_804AF2F0(CColiObject* self, const _VEC3* a, const _VEC3* b, const _VEC3* c) { return 0; }
+// Seed the proc's +0x08 with the sweep global, clear the +0x8c axis bit,
+// then pass the axis-frame description through to the point/box classifier
+// (func_804AD410) with self's +0x5c radius (retail tail-calls).
+extern "C" int func_804AF2F0(CColiObject* self, const _VEC3* a, const _VEC3* b,
+                             const _VEC3* c) {
+    CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
+    proc->field_0x08 = lbl_eu_80663A90;
+    self->field_0x8c &= ~0x2u;
+    return func_804AD410(self, (const f32*)a, (const VEC3*)b,
+                         (const f32(*)[4])c, self->field_0x5c);
+}
 // Seed the proc's +0x08 with the sweep global, clear the +0x8c axis bits,
 // then pass the segment description through to the segment-vs-segment clip
 // (func_804ADD3C). The args travel unchanged, so retail tail-calls.
@@ -3587,7 +3608,18 @@ void func_804B077C(CColiObject* out, const CColiObject* a, const CColiObject* b)
     }
 }
 
-void func_804B07F0(){}
+// Duplicate the source 12 bytes into both AABB corners (+0x00 and +0x0C):
+// retail copies with lwz/stw (integer words), stores the +0x0C row first.
+extern "C" void func_804B07F0(CColiObject* dst, const void* src) {
+    const u32* s = (const u32*)src;
+    u32* d = (u32*)dst;
+    d[3] = s[0];
+    d[4] = s[1];
+    d[5] = s[2];
+    d[0] = s[0];
+    d[1] = s[1];
+    d[2] = s[2];
+}
 
 // AABB-containment test: true when b's box (min corner at field_0x00[1],
 // max corner at field_0x00[2]) lies inside a's box (min at field_0x00[1],
@@ -3632,8 +3664,6 @@ void func_804B08A0(f32* self, const f32* v) {
         self[3] += v[2];
     }
 }
-
-void func_804B0924(){}
 
 // Object whose destructor releases an owned buffer (retail __dt__804B095C).
 // Only +0x04 (the MemManager-owned allocation) is touched by the teardown;
@@ -3680,6 +3710,14 @@ struct CColiNode804B09C8 {
     u16 field_0xb0;                  // +0xb0
     u16 field_0xb2;                  // +0xb2
 };
+
+// Clear the owned collision-data pointer, run the node's init, return self.
+void func_804B09C8(CColiNode804B09C8* self);
+extern "C" CColiNode804B09C8* func_804B0924(CColiNode804B09C8* self) {
+    self->field_0x04 = 0;
+    func_804B09C8(self);
+    return self;
+}
 
 void func_804B09C8(CColiNode804B09C8* self) {
     f32 k = lbl_eu_8066AE88;
@@ -4378,11 +4416,17 @@ contact:
     }
 }
 
-// Plain sweep variant without the bit-4 bound-widening (retail body 0x20
-// bytes; placeholder - the sibling sweep shares the same proc-seed prologue).
+// Seed the proc's +0x08 with the sweep global, clear the +0x8c axis bit,
+// then pass the box description through to the point/box classifier
+// (func_804AD410) with self's +0x5c radius. The args travel unchanged, so
+// retail tail-calls.
 extern "C" int func_804AF07C(CColiObject* self, const VEC3* extents,
                              const Mtx m1, const Mtx m2) {
-    return func_804AF09C(self, extents, m1, m2);
+    CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
+    proc->field_0x08 = lbl_eu_80663A90;
+    self->field_0x8c &= ~0x2u;
+    return func_804AD410(self, (const f32*)extents, (const VEC3*)m1, m2,
+                         self->field_0x5c);
 }
 
 // Segment-processing helper (retail body still to be decompiled); returns

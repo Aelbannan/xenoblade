@@ -29,8 +29,10 @@ CScnIdMan::~CScnIdMan() {
     removeRenderCB__4CScnFP10IScnRender(mParam, (u32)this);
 }
 
-extern "C" int func_8049E51C(CScnIdMan* self) {
+extern "C" int func_8049E51C(const CScnIdMan* self) {
     // Fetch the scene-id pool slot and count its live nodes; return 1 if empty.
+    // const self: MWCC hoists the first load (lwz r3,4(r3)) above the LR save
+    // (load-hoist family lever; non-const emits stw-first - 3 structural).
     CScnIdNode* node;
     u32 count;
     CScnIdNode* anchor;

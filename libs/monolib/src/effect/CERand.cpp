@@ -24,7 +24,7 @@ void CERandomizerSimple::create(int seed) {
 void CERandomizerSimple::execute(float time) {
     float prevAge = age;
     age += time;
-    
+
     //Check if the randomizer age is not a new whole number
     if ((int)prevAge == (int)age) {
         seed1 = seed2;

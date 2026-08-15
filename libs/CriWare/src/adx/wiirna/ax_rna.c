@@ -462,8 +462,8 @@ s32 AXRNA_GetNumData(void* self) {
         void* p = *(void**)((u8*)e + 0x30);
         struct SjObjVtbl *q = SJ_VT(p);
         /* Slot 9 in its 3-arg (avail) shape. */
-        u32 r = (u32)((s32 (*)(void*, s32, void*))q->getAvail)(p, 0, q);
-        return 0x1000 - (s32)(r >> 1) - *(s32*)((u8*)self + 0x74);
+        return 0x1000 - (s32)(((u32)((s32 (*)(void*, s32, void*))q->getAvail)(p, 0, q)) >> 1)
+               - *(s32*)((u8*)self + 0x74);
     }
 }
 

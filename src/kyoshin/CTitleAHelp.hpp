@@ -29,12 +29,6 @@ public:
     void func_801C46B4(char*);
     void func_801C46DC(u32);
     void func_801C473C(u8);
-    void func_801C4744();
-    void func_801C4760();
-    void func_801C477C();
-    void func_801C47F8();
-    void func_801C484C();
-    void func_801C48E0();
     virtual bool OnFileEvent(CEventFile* pEventFile) override;
 
     UnkClass_8045F564 unk4;
@@ -54,4 +48,3 @@ public:
 };
 
 bool func_801C4648(nw4r::lyt::Pane*);
-void func_801C4B60(GXColorS10*, s16, s16, s16, s16);

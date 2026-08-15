@@ -632,7 +632,7 @@ extern float lbl_eu_80665F6C;
 extern float lbl_eu_80665F70;
 extern float lbl_eu_8066A1F8; // pi (angle wrap, func_8004BC28)
 extern float lbl_eu_8066A1FC; // two*pi (angle wrap, func_8004BC28)
-extern float lbl_eu_8066A20C; // angle gate scale (func_80050F5C / func_800512A8)
+extern const float lbl_eu_8066A20C; // angle gate scale (func_80050F5C / func_800512A8) - const to match CfObjectModel.hpp's declaration (MWCC rejects const/non-const redeclaration)
 
 // nw4r debug strings used by the FSqrt-style assert (file/msg pair).
 extern const char lbl_eu_80526324[];

@@ -402,7 +402,7 @@ extern "C" void OnFileEvent__12CQstLogListFv() {}
 // unmangled (C linkage) - extern "C" keeps the sinit reloc bound to the
 // retail name, and the entry ctor returns self (retail `mr r3, r31`).
 extern "C" CQstLogListEntry* func_80229398(CQstLogListEntry* self) {
-    self->mField0 = 0xFF;
+    self->mField0 = -1;  // retail li r5,-1 (signed constant); 0xFF would emit li r5,255
     self->mField1 = 0x00;
     // "%s" (lbl_eu_80509AB4 + 0x10) with a null pointer - clears the text.
     sprintf((char*)&self->mData[0], &lbl_eu_80509AB4[0x10], 0);
@@ -763,7 +763,7 @@ CQstLogList::CQstLogList(u16 arg2) {
     // vtable at +0x0 (UnkClass region via the copy helper, then the pointer
     // fields, flags, scrollbar, array and tail bytes).
     __ct__CSortMenu(&tmp2);
-    __ct__UnkClass_8011C974(&mSortMenuData.mUnk04[0], &tmp2.mUnk04[0]);
+    __ct__UnkClass_8011C974(&mSortMenuData.mUnk04[0], (const u32*)&tmp2.mUnk04[0]);
     mSortMenuData.mFileHandle = tmp2.mFileHandle;
     mSortMenuData.mArcResAcc = tmp2.mArcResAcc;
     mSortMenuData.mpLayout = tmp2.mpLayout;

@@ -221,15 +221,17 @@ extern "C" void removeRenderCB__4CScnFP10IScnRender(void* self, void* cb);
 extern u8* lbl_eu_80663E14;
 void CArrow3D::Term() {
     CDeviceVI::waitForDrawDone();
-    if (mLayout) {
-        if (mLayout) {
-            void** vt = *(void***)mLayout;
-            ((void(*)(void*, int))vt[2])(mLayout, 1);
-        }
+    // delete through the Layout type: the retail dispatches vtable slot 2
+    // with the deleting flag 1 (polymorphic delete), and the delete's own
+    // null-check is the dead second beq (func_80285ABC pattern).
+    nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)mLayout;
+    if (layout) {
+        delete layout;
         mLayout = 0;
     }
     if (this) {
-        removeRenderCB__4CScnFP10IScnRender(lbl_eu_80663E14, (u8*)this + 0x54);
+        void* cb = (u8*)this + 0x54;
+        removeRenderCB__4CScnFP10IScnRender(lbl_eu_80663E14, cb);
     }
 }
 

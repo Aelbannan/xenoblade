@@ -32,7 +32,9 @@ void func_80138078(u32 number);
 // Forward declarations for callees used in func_8025CAB4
 // func_8025CE00 is target 5 (takes the display self); the tail calls pass the
 // same self pointer. func_8025CE78 / func_8025CF1C are still-unknown stubs.
-static void func_8025CE78();
+// noinline: -ipa would fold the empty stub into func_8025CAB4's case-1 tail
+// call, turning the retail `b func_8025CE78` into a bare return.
+static __declspec(noinline) void func_8025CE78();
 extern "C" void func_80257F9C(UnkKizunaSelf57D90* self, u32 a);
 extern "C" void func_8025CF1C(void* self) {
     if (*(u8*)((char*)self + 0x8C) != 0) {
@@ -514,6 +516,13 @@ extern "C" __declspec(noinline) void func_8025C21C(UnkKizunaSelfC21C* self) {
 
 extern "C" __declspec(noinline) void func_8025C298(UnkKizunaSelfC21C* self) {}
 
+// func_8025C348 (us-8025e494): kizuna-line update gate. Retail: reads a
+// global float (sdata), calls 0x80104F00 ([self+12], f1) — a REAL function
+// merged inside the func_801043BC symbol (+0x5C) reading [arg+0x10] float;
+// on non-zero return: field14=0, field15=1, then [self+8] virtual slot 56
+// twice with arg 0, then slot 32 with arg [self+12]. BLOCKED: the two call
+// targets (0x80104F00 / 0x80104FE4, the latter inside func_80104454 +0xA8)
+// have no split symbols, so no reloc-identical externs are possible.
 extern "C" __declspec(noinline) void func_8025C348(UnkKizunaSelfC21C* self) {}
 
 CKizunagram::CKizunagram() {}
@@ -645,15 +654,14 @@ extern "C" __declspec(noinline) void func_8025C994(UnkKizunaSelfC874* self) {
 
 void func_8025CA24(){}
 
-// Dispatch on display-state byte at +0x3A; each branch is a tail call.
+// Dispatch on display-state byte at +0x3A; each case is a tail call.
 void func_8025CAB4(UnkKizunaDisp* self) {
-    if (self->field_0x3A == 0) {
+    switch (self->field_0x3A) {
+    case 0:
         return func_8025CE00((UnkKizunaSelfCE00*)self);
-    }
-    if (self->field_0x3A == 1) {
+    case 1:
         return func_8025CE78();
-    }
-    if (self->field_0x3A == 2) {
+    case 2:
         return func_8025CF1C(self);
     }
 }
@@ -734,21 +742,21 @@ void func_8025CD40(){}
 extern "C" __declspec(noinline) void func_8025CE00(UnkKizunaSelfCE00* self) {
     if (func_8025949C(&self->sub68) != 0) {
         u32 raw[3];
-        raw[0] = self->field80;
         raw[1] = self->field84;
-        raw[2] = self->field88;
+        raw[0] = self->field80;
+        raw[2] = self->field88;   // dead store (never read) — retail keeps it
         f32 denom = lbl_eu_80668870;
-        // field48 carries the constant; +0x88 never feeds a published field.
-        *(u32*)&raw[2] = (u32)denom - (u32)denom; // keep raw write alive
+        f32 f0 = *(f32*)&raw[1] / denom;
+        f32 f1 = *(f32*)&raw[0] / denom;
         self->field48 = denom;
         self->field3A = 1;
-        self->field44 = *(f32*)&raw[1] / denom;
-        self->field40 = *(f32*)&raw[0] / denom;
+        self->field44 = f0;
+        self->field40 = f1;
     }
 }
 
 
-void func_8025CE78(){}
+__declspec(noinline) void func_8025CE78(){}
 
 void func_8025CF1C(){}
 

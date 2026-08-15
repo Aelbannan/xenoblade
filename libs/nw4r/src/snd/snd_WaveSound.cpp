@@ -41,8 +41,11 @@ void WaveSound::SetReleasePriorityFix(bool flag) {
     mWsdPlayer.SetReleasePriorityFix(flag);
 }
 
+// Re-insert this sound into its instance manager's priority list, keeping the
+// list sorted by current player priority (mPriority + mUnk0x50, clamped to
+// [0, PRIORITY_MAX]).
 void WaveSound::OnUpdatePlayerPriority() {
-    BasicSound::OnUpdatePlayerPriority();
+    mManager->UpdatePriority(this, CalcCurrentPlayerPriority());
 }
 
 bool WaveSound::IsAttachedTempSpecialHandle() {

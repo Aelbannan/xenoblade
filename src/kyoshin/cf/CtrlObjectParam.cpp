@@ -147,10 +147,12 @@ extern "C" void* func_8009D764(cf::CtrlObjectParamInit* p) {
 
 extern "C" u8* func_8009D790(s16* arr, u32 idx) {
     // Equip-table helper: when the s16 entry is valid (> -1), resolve the
-    // item instance for the category and entry value; 0 otherwise.
+    // item instance for the category and entry value; 0 otherwise. The q
+    // pointer anchors the idx*2 offset in r5 (retail rlwinm r5,r4,1 once,
+    // used by both lhax reads); indexed arr[idx] reads recompute it.
+    s16* q = &arr[idx];
     u8* result = 0;
-    if (arr[idx] > -1) {
-        s16* q = &arr[idx];
+    if (*q > -1) {
         u32 a = idx > 4 ? 2 : idx + 4;
         result = reinterpret_cast<u8*>(func_80157C4C(a, *q));
     }
@@ -667,9 +669,16 @@ extern "C" void func_8009EABC() {
 extern "C" char* func_8009EB2C(u16 arg1, u16 arg2, const char* srcStr) {
     // Copy the 36-byte header block forward, write the two s16 ids, then
     // strncpy the caller's string into the (already copied) source area.
+    // The copy goes through a u32-first view so the whole block copies as
+    // words (retail lwz 0->36 then word pairs); a plain struct assign emits
+    // lha/sth for the s16 pair at +0/+2 (0x70 vs retail 0x68).
     cf::CtrlObjectParamCopyView* work =
         reinterpret_cast<cf::CtrlObjectParamCopyView*>(lbl_eu_80663E88);
-    work->dst = work->src;
+    struct CopyWords {
+        u32 field_00;
+        char str[0x20];
+    };
+    *(CopyWords*)&work->dst = *(CopyWords*)&work->src;
     work->src.field_02 = (s16)arg1;
     work->src.field_00 = (s16)arg2;
     return strncpy(work->src.str, srcStr, 0x1f);
@@ -2109,9 +2118,12 @@ u8 cf::CtrlObjectParamByteE4::getByteE4() {
 extern "C" u8 func_800A32C4(cf::CtrlObjectParamBdatRow* self) {
     // bdat column lookup: item/weapon table (lbl_eu_806640F4), column name
     // at lbl_eu_804FBCB0+0x58, row key at +0xC of the object; the returned
-    // column value is truncated to a byte.
-    return (u8)getBdatStringColumnValue(reinterpret_cast<void*>(lbl_eu_806640F4),
-                                        &lbl_eu_804FBCB0[0x58], self->field_0C);
+    // column value is truncated to a byte via a memory round-trip (retail
+    // stw r3,8(sp); lbz r3,8(sp)) — deref-of-storage, not a cast (the cast
+    // folds to rlwinm).
+    u32 v = getBdatStringColumnValue(reinterpret_cast<void*>(lbl_eu_806640F4),
+                                     &lbl_eu_804FBCB0[0x58], self->field_0C);
+    return *(const u8*)&v;
 }
 
 extern "C" void func_800A3304() {
@@ -2402,10 +2414,13 @@ extern "C" int func_800A3998(cf::CtrlObjectParamArtsList* list) {
     int total = 0;
     cf::CtrlObjectParamArtsListEntry* e = list->head;
     while (e != 0) {
-        int type = e->field_00;
-        if (type == 0x1111) {
+        switch (e->field_00) {
+        case 0x1111:
             total += (int)(e->field_04 << 5);
-        } else if (type != 0xAAAA) {
+            break;
+        case 0xAAAA:
+            break;
+        default:
             return 0;
         }
         e = e->next;
@@ -2421,24 +2436,33 @@ extern "C" int func_800A39E8(cf::CtrlObjectParamArtsList* list, u8* target,
     cf::CtrlObjectParamArtsListEntry* e = list->head;
     while (e != 0) {
         u16 type = e->field_00;
-        if (type == 0x1111) {
-            e = e->next;
-        } else if (type == 0xAAAA) {
-            if ((u8*)&e->data[4] == target) {
+        u8* dataArea = (u8*)&e->data[4];
+        switch (type) {
+        case 0x1111:
+            goto advance;
+        case 0xAAAA:
+            if (dataArea == target) {
                 found = 1;
-                break;
+                goto done;
             }
-            e = e->next;
-        } else {
-            break;
+            goto advance;
+        default:
+            found = 0;
+            goto done;
         }
+    advance:
+        e = e->next;
     }
+    found = 0;
+done:
     if (found == 0) return 0;
     cf::CtrlObjectParamArtsListEntry* entry =
         reinterpret_cast<cf::CtrlObjectParamArtsListEntry*>(target - 0x20);
-    if (entry->field_00 != 0xAAAA) return 0;
+    if (entry->field_00 != 0xAAAA) goto ret0;
     entry->data[index] = value;
     return 1;
+ret0:
+    return 0;
 }
 
 // Walk the arts list: 0x1111 rows get their data[0] slot cleared, 0xAAAA rows

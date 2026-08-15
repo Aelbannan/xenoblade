@@ -186,7 +186,30 @@ u32 CDeviceVI::getVisPerFrame(){
 }
 
 bool CDeviceVI::entryCb(CDeviceVICb* entry){
-    spInstance->mCallbackList.push_back(entry);
+    // reslist push_back walk inlined with the func_8048C524 levers: the
+    // loop invariants (capacity then sentinel) declared/assigned last so
+    // they win the high scratch registers (retail: sp r5, i r6, byteOff r7,
+    // capacity r8, sentinel r9), plus the explicit byteOff + comma-init for
+    // the li order.
+    reslist<CDeviceVICb*>* list = &spInstance->mCallbackList;
+    int i;
+    int byteOff;
+    int capacity;
+    _reslist_node<CDeviceVICb*>* sentinel;
+    sentinel = list->mStartNodePtr;
+    capacity = list->mCapacity;
+    for (i = 0, byteOff = 0; i < capacity; i++) {
+        if (*(void**)((u8*)list->mList + byteOff) == 0) {
+            break;
+        }
+        byteOff += 12;
+    }
+    _reslist_node<CDeviceVICb*>* temp = &list->mList[i];
+    temp->setItem(entry);
+    temp->mNext = sentinel;
+    temp->mPrev = sentinel->mPrev;
+    sentinel->mPrev->mNext = temp;
+    sentinel->mPrev = temp;
     return true;
 }
 

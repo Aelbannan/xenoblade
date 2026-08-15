@@ -11,6 +11,17 @@
 
 
 namespace nw4hbm {
+namespace ut {
+
+/* Defined inline here so MWCC inlines away all ~Color calls in this TU
+ * (retail DrawQuad emits no dtor calls; the strong ~Color symbol lives in
+ * lyt_bounding.o per retail). */
+inline Color::~Color() {}
+
+} // namespace ut
+} // namespace nw4hbm
+
+namespace nw4hbm {
 namespace lyt {
 namespace detail {
 
@@ -19,12 +30,9 @@ namespace detail {
  * Utility functions
  *
  ******************************************************************************/
-bool EqualsResName(const char* pLhs, const char* pRhs) {
-    return std::strncmp(pLhs, pRhs, NW4R_LYT_RES_NAME_LEN) == 0;
-}
-
 bool EqualsMaterialName(const char* pLhs, const char* pRhs) {
-    return std::strncmp(pLhs, pRhs, NW4R_LYT_RES_NAME_LEN) == 0;
+    // Material names are 20 bytes; res/pane names are 16 (NW4R_LYT_RES_NAME_LEN).
+    return std::strncmp(pLhs, pRhs, NW4R_LYT_MATERIAL_NAME_LEN) == 0;
 }
 
 bool EqualsPaneName(const char* pLhs, const char* pRhs) {
@@ -86,13 +94,6 @@ void TexCoordAry::SetSize(u8 num) {
             }
         }
         mNum = num;
-    }
-}
-
-void TexCoordAry::SetCoord(u32 idx, const math::VEC2* coord) {
-    for(int i = 0; i < VERTEXCOLOR_MAX; i++)
-    {
-        mpData[idx][i] = coord[i];
     }
 }
 
@@ -176,12 +177,6 @@ ut::Color MultipleAlpha(ut::Color color, u8 alpha) {
     return result;
 }
 
-void MultipleAlpha(ut::Color* pDst, const ut::Color* pSrc, u8 alpha) {
-    for (int i = 0; i < VERTEXCOLOR_MAX; i++) {
-        pDst[i] = MultipleAlpha(pSrc[i], alpha);
-    }
-}
-
 void SetVertexFormat(bool modulate, u8 numCoord) {
     GXClearVtxDesc();
 
@@ -254,10 +249,16 @@ void DrawQuad(const math::VEC2& rBase, const Size& rSize, u8 num,
 void DrawQuad(const math::VEC2& rBase, const Size& rSize, u8 num,
               const TexCoord* pCoords, const ut::Color* pColors, u8 alpha) {
 
-    ut::Color colorWork[VERTEXCOLOR_MAX];
+    // Work buffer, defaulting to opaque white. The inline Color(u32) ctor lets
+    // MWCC materialize this as plain word stores (retail emits no ctor calls).
+    ut::Color colorWork[VERTEXCOLOR_MAX] = {
+        0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF
+    };
 
     if (pColors != NULL) {
-        MultipleAlpha(colorWork, pColors, alpha);
+        for (int i = 0; i < VERTEXCOLOR_MAX; i++) {
+            colorWork[i] = MultipleAlpha(pColors[i], alpha);
+        }
     }
 
     DrawQuad(rBase, rSize, num, pCoords, pColors ? colorWork : NULL);

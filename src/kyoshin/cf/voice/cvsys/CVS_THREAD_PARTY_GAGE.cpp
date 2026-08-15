@@ -170,9 +170,9 @@ int CVS_THREAD_PARTY_GAGE::blank2() {
 // Factory/constructor.  Picks a gauge threshold level from the two owner
 // counts, allocates the two voice-handle buffers and the object itself, runs
 // the base constructor, sets vtable/owner fields, and copies init data.
-CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) try {
+CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
     if (owner1 <= owner2) return NULL;
-    if (func_802A790C() < 2) return NULL;
+    if (func_802A790C(NULL) < 2) return NULL;
 
     int level;
     if (owner1 >= 0x12c) {
@@ -194,21 +194,34 @@ CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) try {
     if (self == NULL) return NULL;
 
     // Retail emits a redundant re-check (beq past the construct block) here.
+    // The try only wraps the base-constructor call + field stores; the catch
+    // rethrows via the runtime __throw(0,0,0) (retail `li r3,0; li r4,0;
+    // li r5,0; bl __throw`).
     if (self != NULL) {
-        __ct__cf_CVS_THREAD();
-        // Set the subclass vtable at offset 0x1C (right after base fields).
-        ((void**)self)[7] = (void*)lbl_eu_80539C6C;
-        self->partyMember = member;
-        self->gaugeData = gauge;
-        self->thresholdLevel = (u32)level;
+        try {
+            __ct__cf_CVS_THREAD();
+            // Set the subclass vtable at offset 0x1C (right after base fields).
+            ((void**)self)[7] = (void*)lbl_eu_80539C6C;
+            self->partyMember = member;
+            self->gaugeData = gauge;
+            self->thresholdLevel = (u32)level;
+        } catch (...) {
+            __throw(0, 0, 0);
+        }
     }
 
-    // Copy init data from the global table.
-    const u32* base = lbl_eu_80539C48;
-    self->unk0 = (u32*)base[0];
-    self->unk4 = base[1];
+    // Copy init data from the global table (retail loads 4, 0, 8 but stores
+    // 0, 4, 8).  Temps are loaded before the stores; the base pointer is
+    // declared last so MWCC colors it r5.  The address is forced through an
+    // integer cast so the full base (lis+addi) is materialized before any
+    // load.
+    u32 v0;
+    u32 v1;
+    const u32* base = (const u32*)(u32)lbl_eu_80539C48;
+    v1 = base[1];
+    v0 = base[0];
+    self->unk0 = (u32*)v0;
+    self->unk4 = v1;
     self->unk8 = base[2];
     return self;
-} catch (...) {
-    throw;
 }

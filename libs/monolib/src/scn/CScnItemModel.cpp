@@ -250,37 +250,27 @@ void func_80483134(){}
 // pointer-chasing loops; retail is this shape). extern "C" keeps the self
 // tail-call reloc name verbatim (reloc-site gate, same as func_80484E5C).
 extern "C" u8* func_8048315C(CScnItemModel* self) {
-    CScnItemModel* cur = self;
-    CScnItemModel* next = cur->field_0x7C4;
-    if (next != 0) {
-        cur = next;
-        next = cur->field_0x7C4;
-        if (next != 0) {
-            cur = next;
-            next = cur->field_0x7C4;
-            if (next != 0) {
-                cur = next;
-                next = cur->field_0x7C4;
-                if (next != 0) {
-                    cur = next;
-                    next = cur->field_0x7C4;
-                    if (next != 0) {
-                        return func_8048315C(next);
-                    } else {
-                        return cur->field_0x1F8;
+    CScnItemModel* n1 = self->field_0x7C4;
+    if (n1 != 0) {
+        CScnItemModel* n2 = n1->field_0x7C4;
+        if (n2 != 0) {
+            CScnItemModel* n3 = n2->field_0x7C4;
+            if (n3 != 0) {
+                CScnItemModel* n4 = n3->field_0x7C4;
+                if (n4 != 0) {
+                    CScnItemModel* n5 = n4->field_0x7C4;
+                    if (n5 != 0) {
+                        return func_8048315C(n5);
                     }
-                } else {
-                    return cur->field_0x1F8;
+                    return (u8*)n4->field_0x1F8;
                 }
-            } else {
-                return cur->field_0x1F8;
+                return (u8*)n3->field_0x1F8;
             }
-        } else {
-            return cur->field_0x1F8;
+            return (u8*)n2->field_0x1F8;
         }
-    } else {
-        return cur->field_0x1F8;
+        return (u8*)n1->field_0x1F8;
     }
+    return (u8*)self->field_0x1F8;
 }
 
 void func_804831C4(){}
@@ -1468,37 +1458,27 @@ extern "C" void func_80484E5C(CScnItemModel* self, float value) {
 // func_80484E5C (MWCC does not auto-unroll pointer-chasing loops; retail is
 // this shape). extern "C" keeps the self tail-call reloc name verbatim.
 extern "C" float func_80484EB0(CScnItemModel* self) {
-    CScnItemModel* cur = self;
-    CScnItemModel* next = cur->field_0x7C4;
-    if (next != 0) {
-        cur = next;
-        next = cur->field_0x7C4;
-        if (next != 0) {
-            cur = next;
-            next = cur->field_0x7C4;
-            if (next != 0) {
-                cur = next;
-                next = cur->field_0x7C4;
-                if (next != 0) {
-                    cur = next;
-                    next = cur->field_0x7C4;
-                    if (next != 0) {
-                        return func_80484EB0(next);
-                    } else {
-                        return cur->value7B0;
+    CScnItemModel* n1 = self->field_0x7C4;
+    if (n1 != 0) {
+        CScnItemModel* n2 = n1->field_0x7C4;
+        if (n2 != 0) {
+            CScnItemModel* n3 = n2->field_0x7C4;
+            if (n3 != 0) {
+                CScnItemModel* n4 = n3->field_0x7C4;
+                if (n4 != 0) {
+                    CScnItemModel* n5 = n4->field_0x7C4;
+                    if (n5 != 0) {
+                        return func_80484EB0(n5);
                     }
-                } else {
-                    return cur->value7B0;
+                    return n4->value7B0;
                 }
-            } else {
-                return cur->value7B0;
+                return n3->value7B0;
             }
-        } else {
-            return cur->value7B0;
+            return n2->value7B0;
         }
-    } else {
-        return cur->value7B0;
+        return n1->value7B0;
     }
+    return self->value7B0;
 }
 
 // func_80484F18: walk the field_0x7C4 chain to its last node and tail-call
@@ -1506,37 +1486,27 @@ extern "C" float func_80484EB0(CScnItemModel* self) {
 // self tail-call shape as func_80484E5C. extern "C" keeps both the self and
 // the func_80497724 tail-call reloc names verbatim (reloc-site gate).
 extern "C" float func_80484F18(CScnItemModel* self) {
-    CScnItemModel* cur = self;
-    CScnItemModel* next = cur->field_0x7C4;
-    if (next != 0) {
-        cur = next;
-        next = cur->field_0x7C4;
-        if (next != 0) {
-            cur = next;
-            next = cur->field_0x7C4;
-            if (next != 0) {
-                cur = next;
-                next = cur->field_0x7C4;
-                if (next != 0) {
-                    cur = next;
-                    next = cur->field_0x7C4;
-                    if (next != 0) {
-                        return func_80484F18(next);
-                    } else {
-                        return func_80497724(cur->field_0xC);
+    CScnItemModel* n1 = self->field_0x7C4;
+    if (n1 != 0) {
+        CScnItemModel* n2 = n1->field_0x7C4;
+        if (n2 != 0) {
+            CScnItemModel* n3 = n2->field_0x7C4;
+            if (n3 != 0) {
+                CScnItemModel* n4 = n3->field_0x7C4;
+                if (n4 != 0) {
+                    CScnItemModel* n5 = n4->field_0x7C4;
+                    if (n5 != 0) {
+                        return func_80484F18(n5);
                     }
-                } else {
-                    return func_80497724(cur->field_0xC);
+                    return func_80497724(n4->field_0xC);
                 }
-            } else {
-                return func_80497724(cur->field_0xC);
+                return func_80497724(n3->field_0xC);
             }
-        } else {
-            return func_80497724(cur->field_0xC);
+            return func_80497724(n2->field_0xC);
         }
-    } else {
-        return func_80497724(cur->field_0xC);
+        return func_80497724(n1->field_0xC);
     }
+    return func_80497724(self->field_0xC);
 }
 
 // func_80484F80: refresh the 0x8 flag at 0x7A8 on self and every model in
@@ -1583,37 +1553,27 @@ extern "C" void func_80484F80(CScnItemModel* self, float value) {
 // func_804850A4: walk the field_0x7C4 chain to its last node and tail-call
 // func_80497790 with the node's 0xC sub-object. Same shape as func_80484F18.
 extern "C" float func_804850A4(CScnItemModel* self) {
-    CScnItemModel* cur = self;
-    CScnItemModel* next = cur->field_0x7C4;
-    if (next != 0) {
-        cur = next;
-        next = cur->field_0x7C4;
-        if (next != 0) {
-            cur = next;
-            next = cur->field_0x7C4;
-            if (next != 0) {
-                cur = next;
-                next = cur->field_0x7C4;
-                if (next != 0) {
-                    cur = next;
-                    next = cur->field_0x7C4;
-                    if (next != 0) {
-                        return func_804850A4(next);
-                    } else {
-                        return func_80497790(cur->field_0xC);
+    CScnItemModel* n1 = self->field_0x7C4;
+    if (n1 != 0) {
+        CScnItemModel* n2 = n1->field_0x7C4;
+        if (n2 != 0) {
+            CScnItemModel* n3 = n2->field_0x7C4;
+            if (n3 != 0) {
+                CScnItemModel* n4 = n3->field_0x7C4;
+                if (n4 != 0) {
+                    CScnItemModel* n5 = n4->field_0x7C4;
+                    if (n5 != 0) {
+                        return func_804850A4(n5);
                     }
-                } else {
-                    return func_80497790(cur->field_0xC);
+                    return func_80497790(n4->field_0xC);
                 }
-            } else {
-                return func_80497790(cur->field_0xC);
+                return func_80497790(n3->field_0xC);
             }
-        } else {
-            return func_80497790(cur->field_0xC);
+            return func_80497790(n2->field_0xC);
         }
-    } else {
-        return func_80497790(cur->field_0xC);
+        return func_80497790(n1->field_0xC);
     }
+    return func_80497790(self->field_0xC);
 }
 
 // func_8048510C: walk the field_0x7C4 chain to its last node and tail-call

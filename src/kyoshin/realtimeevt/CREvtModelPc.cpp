@@ -89,7 +89,6 @@ extern "C" {
     // __ptmf intrinsics
     extern void func_8044F400__11CDeviceFileFP11CFileHandleUl(CFileHandle* pFileHandle, u32 val);
 
-    extern u32 __ptmf_null[3];
     extern int __ptmf_cmpr(void* ptmf, void* other);
 }
 

@@ -824,8 +824,8 @@ void sftim_Tc2TimeN(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     s32 frame2 = *(s32*)(td + 0x18);
     s32 field = *(s16*)(td + 0x1E);
     s32 totalFrame = frame + frame2;
-    s32 totalSec = sec + min * 60 + hour * 3600;
     s32 half = unit / 2;
+    s32 totalSec = sec + min * 60 + hour * 3600;
     s32 time = tcSec * totalSec;
     time += totalFrame * unit;
     time += field * half;

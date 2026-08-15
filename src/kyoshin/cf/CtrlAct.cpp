@@ -4,8 +4,9 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CtrlAct.hpp"
+#include "kyoshin/cf/CArtsSet.hpp"
 
-namespace cf { class CAttackParam { public: void CAttackParam_UnkVirtualFunc4(); }; }
+// CAttackParam is defined in CArtsSet.hpp (included above).
 
 void __ct__800D10DC(){}
 
@@ -436,7 +437,24 @@ void func_800D1CFC(CtrlActView* self) {
 
 void func_800D1F0C(){}
 
-void cf::CAttackParam::CAttackParam_UnkVirtualFunc4() {}
+// Attack-param virtual #4: scale a per-frame effect by the count-scaled
+// rate. The (f32)(s32) product conversion emits MWCC's 2^52 trick
+// (lis 0x4330 / xoris / lfd / fsubs), and the whole tail is single
+// precision (fsubs/fdivs) matching retail. Constants referenced as extern
+// const float so MWCC emits @sda21 loads (retail lbl_eu_80666CFC/80666D4C).
+extern "C" { extern const float lbl_eu_80666CFC; }  // 1.0f (subtrahend)
+extern "C" { extern const float lbl_eu_80666D4C; }  // 100.0f (divisor)
+// lbl_eu_80666D50 (0x4330000080000000) is MWCC's signed int->double magic;
+// the (f32)prod conversion references it automatically from the pool.
+typedef int (*CAtk84Fn)(void);
+float cf::CAttackParam::CAttackParam_UnkVirtualFunc4() {
+    // unk84 is a raw vtable pointer: [this+0x84] -> slot 3 -> int return.
+    CAtk84Fn* vt = ((CAtk84Fn**)this)[33];
+    int v = vt[3]();
+    int prod = (int)unk6C[4] * (v - 1);
+    float d = (float)prod;
+    return unk30 * (lbl_eu_80666CFC - (d / lbl_eu_80666D4C));
+}
 
 // Target us-800d3544. Attack-action setup: gate on the player and source
 // state words, then fill the player's +0x2A4 action block from the argument
@@ -1446,14 +1464,14 @@ void func_800D59FC(void* obj) {
     };
     Data70* data = (Data70*)((char*)obj + 0x70);
     unsigned short temp = data->u74;
-    temp &= 0x2000;
+    f32 v = *(f32*)(uintptr_t)temp;  // u74 doubles as a float pointer
     data->u78 = 0;
     data->u7b = 0;
-    data->f70 = lbl_eu_80666CFC;
+    data->f70 = v;
     data->u7a = 0;
     data->u79 = 0;
     data->u76 = 0;
-    data->u74 = temp;
+    data->u74 = temp & 0x2000;
 }
 
 // Target us-800d6514. Facing picker: when the player's 0x3F00 bit 1 is set,

@@ -1,5 +1,15 @@
-#include "monolib/device.hpp"
-#include "monolib/core.hpp"
+// NOTE: deliberately NOT including monolib/device.hpp: it pulls in
+// CDeviceFileJobReadDvd.hpp, whose member declarations would collide with the
+// extern "C" definitions below (they carry the exact retail mangled names).
+#include <types.h>
+#include "monolib/work/CWorkThread.hpp"
+#include "monolib/device/CDeviceFileJob.hpp"
+#include "monolib/device/CFileHandle.hpp"
+#include "monolib/device/CDeviceFile.hpp"
+#include "monolib/device/CDeviceFileDvd.hpp"
+#include "monolib/core/CRsrc.hpp"
+#include "monolib/util.hpp"
+#include <revolution/DVD.h>
 
 // Local vtable-positioned view of the read-DVD job used by wkStandbyLogout:
 // retail dispatches cancel(CFileHandle*) at vtable[0xA8], but MWCC lays the
@@ -92,12 +102,15 @@ extern "C" u8 lbl_eu_8056C598[];
 extern "C" void __ct__14CDeviceFileJobFPCcP11CWorkThread(void* self, const char* pName, CWorkThread* pParent);
 extern "C" void __dt__11CWorkThreadFv(void* self, int flag);
 extern "C" void __dl__FPv(void*);
+// CDeviceFileCri.hpp pulls in CDeviceFileJobReadDvd.hpp (member collision), so
+// this sibling helper is declared directly under its retail mangled name.
+extern "C" void func_8044FC38__14CDeviceFileCriFv(void);
 
 extern "C" CDeviceFileJobReadDvdLayout* __ct__21CDeviceFileJobReadDvdFPCcP11CWorkThread(
     CDeviceFileJobReadDvdLayout* self, const char* pName, CWorkThread* pParent) {
     __ct__14CDeviceFileJobFPCcP11CWorkThread(self, pName, pParent);
     self->vtbl = (void*)lbl_eu_8056C598;
-    self->mType = THREAD_CDEVICEFILEJOBREADDVD;
+    self->mType = CWorkThread::THREAD_CDEVICEFILEJOBREADDVD;
     // Why not initialize mDvdFileInfo??
     return self;
 }
@@ -105,7 +118,9 @@ extern "C" CDeviceFileJobReadDvdLayout* __ct__21CDeviceFileJobReadDvdFPCcP11CWor
 extern "C" CDeviceFileJobReadDvdLayout* __dt__21CDeviceFileJobReadDvdFv(
     CDeviceFileJobReadDvdLayout* self, int flag) {
     if (self != 0) {
-        __dt__11CWorkThreadFv(self, 0);
+        if (self != 0) {
+            __dt__11CWorkThreadFv(self, 0);
+        }
         if (flag > 0) {
             __dl__FPv(self);
         }
@@ -123,7 +138,7 @@ extern "C" bool cancel__21CDeviceFileJobReadDvdFPCc(CDeviceFileJobReadDvdLayout*
     if (!wt->wkIsCurrent()) {
         CDeviceFile::removeFileJob(reinterpret_cast<CDeviceFileJob*>(self));
     } else if (CDeviceFile::func_8044E768()) {
-        CDeviceFileCri::func_8044FC38();
+        func_8044FC38__14CDeviceFileCriFv();
     } else {
         CDeviceFileDvd::cancelCurrent();
     }
@@ -138,7 +153,7 @@ extern "C" bool cancel__21CDeviceFileJobReadDvdFP11CFileHandle(CDeviceFileJobRea
     if (!wt->wkIsCurrent()) {
         CDeviceFile::removeFileJob(reinterpret_cast<CDeviceFileJob*>(self));
     } else if (CDeviceFile::func_8044E768()) {
-        CDeviceFileCri::func_8044FC38();
+        func_8044FC38__14CDeviceFileCriFv();
     } else {
         CDeviceFileDvd::cancelCurrent();
     }
@@ -160,13 +175,13 @@ extern "C" void wkUpdate__21CDeviceFileJobReadDvdFv(CDeviceFileJobReadDvdLayout*
 extern "C" bool wkStandbyLogin__21CDeviceFileJobReadDvdFv(CDeviceFileJobReadDvdLayout* self) {
     CWorkThread* wt = reinterpret_cast<CWorkThread*>(self);
     if (wt->isNoEvent()) {
-        return wt->wkStandbyLogin();
+        return wt->CWorkThread::wkStandbyLogin();
     } else if (wt->wkIsCurrent()) {
         if (self->mHandle->checkExistRsrc(CBM_1)) {
             CDeviceFile::removeFileJob(reinterpret_cast<CDeviceFileJob*>(self));
         }
 
-        return wt->wkStandbyLogin();
+        return wt->CWorkThread::wkStandbyLogin();
     }
 
     return false;
@@ -179,10 +194,11 @@ extern "C" bool wkStandbyLogout__21CDeviceFileJobReadDvdFv(CDeviceFileJobReadDvd
         return false;
     }
 
-    return reinterpret_cast<CWorkThread*>(self)->wkStandbyLogout(); //Call base
+    return reinterpret_cast<CWorkThread*>(self)->CWorkThread::wkStandbyLogout(); //Call base
 }
 
-extern "C" void callCBM3__21CDeviceFileJobReadDvdFv(CDeviceFileJobReadDvdLayout* self) {
+extern "C" void callCBM3__21CDeviceFileJobReadDvdFv(void* selfPtr) {
+    CDeviceFileJobReadDvdLayout* self = reinterpret_cast<CDeviceFileJobReadDvdLayout*>(selfPtr);
     if (self->mHandle != nullptr) {
         self->mHandle->call(CBM_3);
     }

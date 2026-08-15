@@ -119,7 +119,16 @@ void func_8022FE90(SArtsSub8022FA58* self) {
     return func_80230160(self);
 }
 
-void func_8022FEC4(){}
+// vtable +0x200 slot on the +0x17C manager sub-object, result discarded.
+// NOTE: the header's SArtsManager vtable is mid-edit — v128 currently maps
+// to +0x208 (MWCC +2 leading slots); the retail +0x200 slot needs 2 fewer
+// fillers before v126. Manual casts add an extra indirection.
+void func_8022FEC4(SArtsSub8022FA58* self) {
+    SArtsManagerRoot* root =
+        (SArtsManagerRoot*)func_8009EC9C(func_8023040C(self, self->field_0x14));
+    SArtsManager* obj = &root->mObj17C;
+    obj->v128();
+}
 
 void func_8022FF00(SArtsSub8022FA58* self, int arg2) {
     SArtsManagerRoot* root =
@@ -136,7 +145,7 @@ void func_8022FF00(SArtsSub8022FA58* self, int arg2) {
 // then load the 0x17-dependent window label through the driver's field_0x10
 // pane interface and show it. (0x0C/0x10 roles are swapped vs the matched
 // func_80230070 twin.)
-void func_8022FF74(SArts2FF74* self) {
+__declspec(noinline) void func_8022FF74(SArts2FF74* self) {
     float duration = lbl_eu_80668648;
     func_80137444(self->field_0x0C, duration);
     if (self->field_0x16 == 0) {

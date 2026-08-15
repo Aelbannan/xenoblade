@@ -447,7 +447,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/CTimeLightGrp.cpp"),
             Object(NonMatching, "kyoshin/cf/CActParamAnimGame.cpp"),
             Object(NonMatching, "kyoshin/plugin/pluginCam.cpp"),
-            Object(NonMatching, "kyoshin/cf/CTaskGameEffAfter.cpp"),
+            Object(Matching, "kyoshin/cf/CTaskGameEffAfter.cpp", extra_cflags=["-O4,s"]),  # retail: size-priority codegen (stmw r30 ctor/dtor prologues); -O4,s is the flag-level equivalent of the removed #pragma optimize_for_size
             Object(Matching, "kyoshin/plugin/pluginPad.cpp"),
             Object(NonMatching, "kyoshin/cf/CfRes.cpp"),
             Object(NonMatching, "kyoshin/cf/IResInfo.cpp"),

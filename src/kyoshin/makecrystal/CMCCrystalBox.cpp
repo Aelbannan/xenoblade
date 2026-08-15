@@ -221,22 +221,24 @@ void* __dt__80213E4C(void* self, int flags) {
     return self;
 }
 
+// Retail keeps this as a rolled mtctr/bdnz count-down loop with a u8
+// up-counter (clrlslwi/clrlwi masks) — the -O4,s shape; -O4,p unrolls the
+// constant-trip loop. optimize_for_size forces the rolled form.
+// Retail zeroes a 32-byte word array at +0, the +0x20 byte, an 8-byte
+// array at +0x21 (filled with 0xFF), +0x29 and +0x6A — with a rolled
+// mtctr/bdnz loop (the -O4,s shape; -O4,p unrolls). The header's +4-shifted
+// pad_00/subObjPtrs view doesn't match this region, so raw offsets are used.
+#pragma optimize_for_size on
 void func_80213E8C(CMCCrystalBox* self) {
-    u8 i;
-    self->unk20 = 0;
+    ((u8*)self)[0x20] = 0;
     ((u8*)self)[0x29] = 0;
     ((u8*)self)[0x6A] = 0;
-    // Retail keeps this as a rolled mtctr/bdnz count-down loop with a u8
-    // up-counter (clrlslwi/clrlwi masks). That shape is -O4,s codegen
-    // (indexed stwx, no unroll); this unit compiles -O4,p which unrolls the
-    // constant-trip loop instead (walls doc #6: needs a unit flag split).
-    i = 0;
-    do {
-        self->subObjPtrs[i] = 0;
-        ((u8*)self)[0x21 + i] = 0xFF;
-        i++;
-    } while (i < 8);
+    for (u8 i = 0; i < 8; i++) {
+        *(u32*)((u8*)self + i * 4) = 0;
+        ((s8*)self)[0x21 + i] = -1;
+    }
 }
+#pragma optimize_for_size off
 
 void* __dt__80213ECC(void* self, int flags) {
     if (self != 0 && flags > 0) {

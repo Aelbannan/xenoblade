@@ -89,11 +89,16 @@ typedef struct
 
 extern tBTM_CB_LOCAL btm_cb;
 
+/* Retail .rodata (0x10 bytes): the eSCO default parameter table. Defined here
+   (const => .rodata) so the split object's .rodata section matches; the retail
+   split owns these bytes even though the functions reference the table only
+   through the extern name. */
+const unsigned long btm_esco_defaults[4] = {0x1F40, 0x1F40, 0x0A0060, 0x3F0100};
+
 void btm_sco_init(void)
 {
-    extern unsigned long btm_esco_defaults[];
     unsigned long v0, v1, v2, v3;
-    unsigned long *src = btm_esco_defaults;
+    const unsigned long *src = btm_esco_defaults;
     unsigned char* cb = (unsigned char*)&btm_cb;
 
     v0 = *src++;
@@ -186,6 +191,13 @@ void btm_esco_conn_rsp(UINT16 sco_inx, UINT8 hci_status, BD_ADDR bda,
     }
 }
 
+/* Retail .data string pool entries (external so -ipa file keeps them; the
+   LogMsg trace strings below reference the shared "txbw" entry so the pool
+   reproduces the retail layout byte-for-byte). */
+char btm_sco_pool_tcs[] = "TCS accept SCO: Packet Types 0x%04x";
+char btm_sco_pool_cs[] = "BTM_CreateSco -> (e)SCO Link for ACL handle 0x%04x, Desired Type %d";
+char btm_sco_pool_tx[] = "      txbw 0x%x, rxbw 0x%x, lat 0x%x, voice 0x%x, retrans 0x%02x, pkt 0x%04x";
+
 static tBTM_STATUS btm_send_connect_request(UINT16 acl_handle,
                                                tBTM_ESCO_PARAMS *p_setup)
 {
@@ -211,7 +223,7 @@ static tBTM_STATUS btm_send_connect_request(UINT16 acl_handle,
         if (SCO_CB->trace_level >= BT_TRACE_LEVEL_API) {
             LogMsg_6(TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK |
                      TRACE_TYPE_API,
-                     "      txbw 0x%x, rxbw 0x%x, lat 0x%x, voice 0x%x, retrans 0x%02x, pkt 0x%04x",
+                     btm_sco_pool_tx,
                      p_setup->tx_bw, p_setup->rx_bw, p_setup->max_latency,
                      p_setup->voice_contfmt, p_setup->retrans_effort,
                      temp_pkt_types);
@@ -312,6 +324,13 @@ void btm_sco_conn_req(BD_ADDR bda, DEV_CLASS dev_class, UINT8 link_type)
 
     btm_esco_conn_rsp(3, HCI_ERR_HOST_REJECT_RESOURCES, bda, NULL);
 }
+
+/* Retail .data string pool: BTM_SetEScoMode / BTM_ReadEScoLinkParms / the
+   %08x txbw trace sit between btm_sco_conn_req and BTM_ChangeEScoLinkParms. */
+char btm_sco_pool_sem[] = "BTM_SetEScoMode -> mode %d";
+char btm_sco_pool_ses[] = "BTM_SetEScoMode -> mode SCO (eSCO not supported)";
+char btm_sco_pool_tx08[] = "    txbw 0x%08x, rxbw 0x%08x, max_lat 0x%04x, voice 0x%04x, pkt 0x%04x, rtx effort 0x%02x";
+char btm_sco_pool_rel[] = "BTM_ReadEScoLinkParms -> sco_inx 0x%04x";
 
 void btm_sco_connected(UINT8 hci_status, BD_ADDR bda, UINT16 hci_handle,
                        tBTM_ESCO_DATA *p_esco_data)
@@ -453,6 +472,11 @@ void btm_route_sco_data(BT_HDR* p_msg)
    call site; -ipa file must not inline the body or the call disappears
    (same pattern as btm_sec_execute_procedure in btm_sec.c). */
 #pragma auto_inline off
+/* Retail .data string pool: BTM_ChangeEScoLinkParms trace strings (the
+   function reaches them as trace_pool + 0x248 / +0x28C). */
+char btm_sco_pool_ces[] = "BTM_ChangeEScoLinkParms -> SCO Link for handle 0x%04x, pkt 0x%04x";
+char btm_sco_pool_cee[] = "BTM_ChangeEScoLinkParms -> eSCO Link for handle 0x%04x";
+
 tBTM_STATUS BTM_ChangeEScoLinkParms(UINT16 sco_inx, tBTM_CHG_ESCO_PARAMS* p_parms)
 {
     /* Retail pools the trace strings under one base label (@1903) and reaches

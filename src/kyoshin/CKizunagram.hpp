@@ -71,7 +71,7 @@ public:
 class CKizunaInfo {
 public:
     CKizunaInfo(nw4r::lyt::ArcResourceAccessor* accessor);
-    virtual ~CKizunaInfo();
+    ~CKizunaInfo();
 
     void* mVtable;                               // 0x00
     nw4r::lyt::ArcResourceAccessor* mArcResAcc;  // 0x04

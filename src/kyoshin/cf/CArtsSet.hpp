@@ -4,7 +4,7 @@
 #include <cstring>
 
 namespace cf {
-    
+
     //size: 0x88
     class CAttackParam {
     public:
@@ -52,10 +52,11 @@ namespace cf {
         u32 unk78;
         float unk7C;
         float unk80;
+        void* unk84;   // 0x84 - raw vtable (slot 3 = +0x0C hook, read by UnkVirtualFunc4)
 
         CAttackParam();
 
-        virtual void __declspec(noinline) CAttackParam_UnkVirtualFunc1(){
+        virtual void CAttackParam_UnkVirtualFunc1(){
             unk0 = 0;
             unk20 = 0;
             unk24 = 0;
@@ -99,7 +100,7 @@ namespace cf {
         }
         virtual u8 CAttackParam_UnkVirtualFunc2();
         virtual void CAttackParam_UnkVirtualFunc3(u8 r4);
-        virtual void CAttackParam_UnkVirtualFunc4();
+        virtual float CAttackParam_UnkVirtualFunc4();
     };
 
     struct _sAttackSet {

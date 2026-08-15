@@ -28,14 +28,20 @@ extern u32 lbl_eu_80606DE0[];
 
 #define MPS_ENTRY_SIZE 0x130
 
+/* One stream entry inside the work buffer (0x130 bytes) */
+typedef struct {
+    u32 field_0x00; /* 0x00: state (1 = free) */
+    u8  pad[0x12C];
+} MPS_STREAM;
+
 int MPS_Init(int max_streams, void *work_buf) {
-    u32 magic = 0x01020304;
-    u32 def_err = (u32)&lbl_eu_8051C488;
     int i;
+    MPS_STREAM *streams;
+    u32 magic;
 
-    lbl_eu_80606DD8 = def_err;
-
-    /* endianness check: high byte of 0x01020304 must be 1 */
+    /* endianness check: first byte of 0x01020304 must be 0x01 (big-endian) */
+    lbl_eu_80606DD8 = (u32)&lbl_eu_8051C488;
+    magic = 0x01020304;
     if (((u8 *)&magic)[0] != 1) {
         for (;;) ((void (*)(void))-1)();
     }
@@ -46,23 +52,24 @@ int MPS_Init(int max_streams, void *work_buf) {
     UTY_MemsetDword((u32 *)work_buf, 0,
                     (u32)((max_streams - 1) * MPS_ENTRY_SIZE + 0x140) / 4);
 
-    /* Initialize global state */
-    ((u32 *)lbl_eu_80606DDC[0])[0] = 0;
-    ((u32 *)lbl_eu_80606DDC[0])[1] = 0;
-    ((u32 *)lbl_eu_80606DDC[0])[2] = 0;
-    ((u32 *)lbl_eu_80606DDC[0])[3] = max_streams;
+    /* Initialize work buffer header. The base reads are volatile-qualified so
+     * MWCC emits a fresh load for each group (retail's three loads of
+     * lbl_eu_80606DDC[0]); CSE otherwise fuses them into one. */
+    ((u32 *)lbl_eu_80606DDC[0])[0] = 0;          /* error callback */
+    ((u32 *)lbl_eu_80606DDC[0])[1] = 0;          /* error callback arg */
+    ((u32 *)lbl_eu_80606DDC[0])[2] = 0;          /* global error code */
+    *(volatile u32 *)((u32 *)*(volatile u32 *)&lbl_eu_80606DDC[0] + 3) = max_streams;
 
-    /* Mark all entries as free (state = 1) */
-    {
-        u32 *p = (u32 *)lbl_eu_80606DDC[0] + 4;
-        for (i = 0; i < max_streams; i++) {
-            *p = 1;
-            p += MPS_ENTRY_SIZE / 4;
-        }
+    /* Mark all entries as free (state = 1); MWCC unrolls this 8x */
+    streams = (MPS_STREAM *)((u32)*(volatile u32 *)&lbl_eu_80606DDC[0] + 0x10);
+    for (i = 0; i < max_streams; i++) {
+        streams[i].field_0x00 = 1;
     }
 
-    MPSDEC_Init();
-    MPSGET_Init();
+    if (max_streams > 0) {
+        MPSDEC_Init();
+        MPSGET_Init();
+    }
     return 0;
 }
 

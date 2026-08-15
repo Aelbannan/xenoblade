@@ -22,6 +22,12 @@ extern "C" void InvalidateWaveData__Q44nw4r3snd6detail9SeqPlayerFPCvPCv(void) {
 }
 extern "C" void OnUpdateVoiceSoundThread__Q54nw4r3snd6detail11SoundThread14PlayerCallbackFv(void) {
 }
-extern "C" u8 IsPause__Q44nw4r3snd6detail9SeqPlayerCFv(SeqPlayer* self) { return self->IsPause(); }
-extern "C" u8 IsStarted__Q44nw4r3snd6detail9SeqPlayerCFv(SeqPlayer* self) { return self->IsStarted(); }
-extern "C" u8 IsActive__Q44nw4r3snd6detail9SeqPlayerCFv(SeqPlayer* self) { return self->IsActive(); }
+extern "C" u8 IsPause__Q44nw4r3snd6detail9SeqPlayerCFv(SeqPlayer* self) {
+    return self->SeqPlayer::IsPause();
+}
+extern "C" u8 IsStarted__Q44nw4r3snd6detail9SeqPlayerCFv(SeqPlayer* self) {
+    return self->SeqPlayer::IsStarted();
+}
+extern "C" u8 IsActive__Q44nw4r3snd6detail9SeqPlayerCFv(SeqPlayer* self) {
+    return self->SeqPlayer::IsActive();
+}

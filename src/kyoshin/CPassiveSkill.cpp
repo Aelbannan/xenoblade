@@ -1143,9 +1143,11 @@ void func_80267360(u8* selfRaw) {
 // then the embedded info sub-object, an extra region layout when the window
 // is closed, and finally the syswin + cursor. The five callee-saved
 // registers (r27-r31) need the stmw/lmw frame retail uses, which -O4,p only
-// emits under optimize_for_size.
+// emits under optimize_for_size. extern "C" keeps the plain retail symbol;
+// noinline stops -ipa folding the body into func_8026D8FC's call site.
 #pragma optimize_for_size on
-void func_80267484(UI::CPassiveSkillLine* self, nw4r::lyt::DrawInfo* drawInfo) {
+extern "C" __declspec(noinline) void func_80267484(UI::CPassiveSkillLine* self,
+                                                   nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_8 == 0) {
         return;
     }
@@ -2596,11 +2598,16 @@ extern "C" __declspec(noinline) void func_8026BB60(UI::CPassiveSkillLine* self) 
 // the retail `bl`.
 __declspec(noinline) void func_8026C4A4(UI::CPassiveSkillLine* self) {}
 
+// Skill-grid cell flag lookup: the cell byte at +0x104 for the signed
+// row/col cursor (row*5 + col). Pointer-arithmetic form keeps MWCC's
+// accumulation on self (retail add r3,r3,r4/add r3,r3,r0), and
+// optimize_for_size on fixes the -O4,p extsb scheduling bug (extsb would
+// read the uninitialised r4) and keeps mulli for the *5.
+#pragma optimize_for_size on
 u8 func_8026CC34(UI_CPassiveSkill* self) {
-    s8 row = self->field_F7;
-    s8 col = self->field_F8;
-    return self->field_104[row * 5 + col];
+    return *(u8*)((u8*)self + 0x104 + self->field_F7 * 5 + self->field_F8);
 }
+#pragma optimize_for_size off
 
 // Skill-learn check (retail func_8026CC58): scan the line's grid column
 // entries; for each entry that is not the current skill id, when the slot
@@ -2929,7 +2936,7 @@ void func_8026D894(UI_CPassiveSkill* self) {
     func_80267360(self->_pad28);
 }
 
-void func_8026D8FC(UI_CPassiveSkill* self, u8* arg2) {
+extern "C" void func_8026D8FC(UI_CPassiveSkill* self, u8* arg2) {
     if (self->field_24 == 0) {
         return;
     }

@@ -71,17 +71,21 @@ CVS_THREAD_SUDDEN* __ct__802A8C04() {
     }
 
     // Base constructor (self in r3), then vtable and the null voice slot,
-    // inside a construction try/catch so MVWCC emits the frame-pointer EH
+    // inside a construction try/catch so MWCC emits the frame-pointer EH
     // prologue/epilogue retail shows (the allocation failures above bypass
-    // this region and jump straight to the epilogue, matching retail).
-    try {
-        __ct__cf_CVS_THREAD();
+    // this region and jump straight to the epilogue, matching retail). The
+    // redundant `self != NULL` re-check reproduces retail's `beq` guard on
+    // the EH region (CR0 from the earlier cmpwi is reused).
+    if (self != NULL) {
+        try {
+            __ct__cf_CVS_THREAD();
 
-        // Set the vtable at offset 0x1C (right after the 7 base words).
-        ((void**)self)[7] = (void**)lbl_eu_80539CF4;
-        self->field_0x20 = NULL;
-    } catch (...) {
-        throw;
+            // Set the vtable at offset 0x1C (right after the 7 base words).
+            ((void**)self)[7] = (void**)lbl_eu_80539CF4;
+            self->field_0x20 = NULL;
+        } catch (...) {
+            throw;
+        }
     }
 
     // Copy the slot-state init data triple into the first 3 u32s (outside try).

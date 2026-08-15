@@ -8,18 +8,33 @@
 extern void* SFXZ_Create(void);
 extern void* SFXA_Create(void);
 extern void* SFXSUD_Create(void);
+extern void SFXZ_Destroy(void* self);
+extern void SFXA_Destroy(void* self);
+extern u8 lbl_eu_8051D1AC[];   /* Sofdec SDK error message pool */
 void sfx_InitHn(SFXHandleState* hn, u32 width, u32 height);
 
 /* ---- SFX library global state ----
- * lbl_eu_80619C10 is a0x528-byte structure:
+ * lbl_eu_80619C10 is a 0x528-byte structure:
  *   +0x00: init_count (number of times SFX_Init called)
  *   +0x04: max_handles
  *   +0x08: error_fn (function pointer)
  *   +0x0C: error_arg
  *   +0x10: error_count
  *   +0x14: ccirFx
- *   +0x18: main SFX state / handle pool (SFXHandleState[max_handles], each0xA0 bytes)
+ *   +0x18: handle pool (max_handles entries, each 0xA0 bytes)
  */
+/* Retail SFXHandleState entries are 0xA0 bytes; the shared header's
+ * SFXHandleState is an unfinished 0x68-byte view, so walk the pool with this
+ * local 0xA0-strided entry struct and cast at the API boundaries. */
+typedef struct SFXHandlePoolEntry {
+    u32 active;        /* 0x00 */
+    u8 _04[0x20];      /* 0x04 */
+    void* zmv;         /* 0x24 */
+    u8 _28[0x08];      /* 0x28 */
+    u32 field_0x30;    /* 0x30 */
+    u8 _34[0x6C];      /* 0x34 - pad to 0xA0 stride */
+} SFXHandlePoolEntry;
+
 typedef struct SFXLibState {
     u32 init_count;       /* 0x00 */
     u32 max_handles;      /* 0x04 */
@@ -27,7 +42,8 @@ typedef struct SFXLibState {
     u32 error_arg;        /* 0x0C */
     u32 error_count;      /* 0x10 */
     u32 ccirFx;           /* 0x14 */
-    SFXHandleState handle[8];  /* 0x18, each0xA0 bytes */
+    SFXHandlePoolEntry handle[8];  /* 0x18, each 0xA0 bytes */
+    u8 _518[0x10];        /* 0x518 - pad to 0x528 */
 } SFXLibState;
 
 extern SFXLibState lbl_eu_80619C10;
@@ -56,47 +72,53 @@ void SFX_SetErrFn(void (*fn)(u32, const char*), u32 arg) {
 }
 
 SFXHandleState* SFX_Create(u32 width, u32 height) {
-    SFXHandleState* hn;
+    SFXHandlePoolEntry* hn;
+    SFXHandlePoolEntry* p;
+    u32 count;
     void* zmv;
     void* alp;
-    int i;
 
-    /* Find free handle slot */
+    /* Find a free handle slot in the pool. */
     hn = NULL;
-    for (i = 0; i < (int)lbl_eu_80619C10.max_handles; i++) {
-        if (lbl_eu_80619C10.handle[i].active == 0) {
-            hn = &lbl_eu_80619C10.handle[i];
+    p = lbl_eu_80619C10.handle;
+    count = lbl_eu_80619C10.max_handles;
+    while (count > 0) {
+        if (p->active == 0) {
+            hn = p;
             break;
         }
+        count--;
+        p++;
     }
     if (hn == NULL) {
         return NULL;
     }
 
-    /* Validate size */
-    if ((int)width > 12319) {
+    /* The work buffer size must be at least 0x301F bytes. */
+    if ((s64)(s32)height < 12319) {
         lbl_eu_80619C10.error_count++;
         if (lbl_eu_80619C10.error_fn) {
-            lbl_eu_80619C10.error_fn(lbl_eu_80619C10.error_arg, "...");
+            lbl_eu_80619C10.error_fn(lbl_eu_80619C10.error_arg,
+                                     (const char*)lbl_eu_8051D1AC);
         }
         return NULL;
     }
 
-    sfx_InitHn(hn, width, height);
+    sfx_InitHn((SFXHandleState*)hn, width, height);
 
     zmv = SFXZ_Create();
     if (zmv == NULL) {
         lbl_eu_80619C10.error_count++;
         if (lbl_eu_80619C10.error_fn) {
-            lbl_eu_80619C10.error_fn(lbl_eu_80619C10.error_arg, "...");
+            lbl_eu_80619C10.error_fn(lbl_eu_80619C10.error_arg,
+                                     (const char*)&lbl_eu_8051D1AC[0x29]);
         }
-        /* Cleanup */
         if (hn != NULL) {
-            void* hn_zmv = hn->zmv;
-            u32 hn_alp = hn->field_0x30;
+            void* z = hn->zmv;
+            u32 a = hn->field_0x30;
             hn->active = 0;
-            SFXZ_Destroy(hn_zmv);
-            SFXA_Destroy(hn_alp);
+            SFXZ_Destroy(z);
+            SFXA_Destroy((void*)a);
             lbl_eu_80619C10.init_count--;
         }
         return NULL;
@@ -107,15 +129,15 @@ SFXHandleState* SFX_Create(u32 width, u32 height) {
     if (alp == NULL) {
         lbl_eu_80619C10.error_count++;
         if (lbl_eu_80619C10.error_fn) {
-            lbl_eu_80619C10.error_fn(lbl_eu_80619C10.error_arg, "...");
+            lbl_eu_80619C10.error_fn(lbl_eu_80619C10.error_arg,
+                                     (const char*)&lbl_eu_8051D1AC[0x48]);
         }
-        /* Cleanup */
         if (hn != NULL) {
-            void* hn_zmv = hn->zmv;
-            u32 hn_alp = hn->field_0x30;
+            void* z = hn->zmv;
+            u32 a = hn->field_0x30;
             hn->active = 0;
-            SFXZ_Destroy(hn_zmv);
-            SFXA_Destroy(hn_alp);
+            SFXZ_Destroy(z);
+            SFXA_Destroy((void*)a);
             lbl_eu_80619C10.init_count--;
         }
         return NULL;
@@ -123,7 +145,7 @@ SFXHandleState* SFX_Create(u32 width, u32 height) {
     hn->field_0x30 = (u32)alp;
 
     lbl_eu_80619C10.init_count++;
-    return hn;
+    return (SFXHandleState*)hn;
 }
 
 void sfx_InitHn(SFXHandleState* hn, u32 width, u32 height) {

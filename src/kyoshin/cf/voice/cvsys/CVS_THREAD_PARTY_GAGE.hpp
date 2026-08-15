@@ -33,7 +33,7 @@ extern "C" {
     int           func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
     CVoiceHandle* func_802A330C(int size, int align);
     u8*           func_802A34E4(int size);
-    int           func_802A790C();
+    int           func_802A790C(CVoiceHandle* exclude);
     CVoiceHandle* func_802A7998(CVoiceHandle* exclude);
     int           func_802A7DF8(CVoiceHandle* handle);
     int           func_802A77E8(CVoiceHandle* handle);
@@ -41,6 +41,11 @@ extern "C" {
     int           func_802A7B90(CVoiceHandle* handle1, CVoiceHandle* handle2);
     int           func_802A7CC4(CVoiceHandle* handle1, CVoiceHandle* handle2);
     void          __ct__cf_CVS_THREAD();
+    // Runtime rethrow (NMWException.h): declared noreturn so MWCC elides the
+    // __end__catch epilogue of a catch-all handler that ends with `bl __throw`
+    // (retail catch-all handlers end at the rethrow).
+    __declspec(noreturn) void __throw(char* throwtype, void* location,
+                                      void* dtor);
 }
 
 // Init state triples and this subclass's vtable.

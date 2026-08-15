@@ -186,7 +186,11 @@ void func_8045271C__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
     layer = 0;
 found:
     if (layer == 0) return;
-    layer->func_80453BB4();
+    // Retail passes the incoming a1-a3 through to the layer dispatcher as
+    // trailing args (they ride along in r4-r6 at the tail jump); passing them
+    // keeps the walk off the arg registers (walk colors r7-r9 like retail).
+    extern void func_80453BB4(CDeviceFontLayer* layer, u32 a1, u32 a2, u32 a3);
+    func_80453BB4(layer, a1, a2, a3);
 }
 
 // Same lookup as func_8045271C, dispatching to the layer's func_80453FF0.

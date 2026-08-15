@@ -319,10 +319,11 @@ extern "C" void func_801D3698(CSortMenu* _this) {
         s8 page = (s8)pageU;
         if (page >= 5) {
             _this->mPage = 4;
-            u8 subU = (u8)(_this->mSubPage + 1);
-            _this->mSubPage = subU;
-            s8 subPage = (s8)subU;
-            if (subPage > (s32)(count - 5)) {
+            s32 sp = (s32)_this->mSubPage + 1;
+            _this->mSubPage = (u8)sp;
+            u8 spu = (u8)sp;
+            s8 sps = (s8)spu;
+            if (sps > (s32)(count - 5)) {
                 _this->mPage = 0;
                 _this->mSubPage = 0;
             }

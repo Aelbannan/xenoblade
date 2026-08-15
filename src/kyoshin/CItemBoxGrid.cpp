@@ -231,15 +231,20 @@ __declspec(noinline) void func_801C562C(void* dst, void* src) {
 }
 
 // Destructor for the main grid container.
+// optimize_for_size: retail uses stmw r30/lmw r30 block save (not individual stw).
+#pragma push
+#pragma optimize_for_size on
 __declspec(noinline) void* __dt__801C5670(void* self, int mode) {
     u8* p = (u8*)self;
-    if (!self) return self;
+    if (!self) goto exit;
     lbl_eu_80664514 = 0;
     __dt__13CArtsBookItemFv(p + 0x3cb8, 0xFFFFFFFF);
     __dt__11CVisionItemFv(p + 0x34b0, 0xFFFFFFFF);
     if (mode > 0) __dl__FPv(self);
+exit:
     return self;
 }
+#pragma pop
 
 
 void func_801C56D8(CItemBoxGridFull* self, u8 cat, int r5, u16 r6, u16 r7) {
@@ -458,7 +463,9 @@ check_next:;
 }
 
 // Search for a matching short id in an array, return 1 if found.
-int func_801C51BC(void* obj, u16 id) {
+// noinline: retail func_801C5158 keeps a `bl func_801C51BC` call; u32 id
+// (retail compares the full register, no call-site mask).
+__declspec(noinline) int func_801C51BC(void* obj, u32 id) {
     u16 count = *(u16*)((u8*)obj + 0x804);
     u16 i = 0;
     while (i < count) {
@@ -799,9 +806,14 @@ extern "C" __declspec(noinline) u8 func_801C67F8(CItemBoxGridFull* self) {
 // Return a duration/stride value based on the category byte at offset 0x2802.
 extern "C" __declspec(noinline) u8 func_801C6840(CItemBoxGridFull* self) {
     int cat = self->field_2802;
-    if ((u32)(cat - 4) <= 4 || cat == 2) return 0x1e;
-    if (cat == 11) return 0x3c;
-    return 0;
+    if ((u32)(cat - 4) > 4) return 0x1e;
+    u8 r = 0;
+    if (cat == 2) {
+        r = 0x1e;
+    } else if (cat == 11) {
+        r = 0x3c;
+    }
+    return r;
 }
 
 __declspec(noinline) int LookupIndexedByte(char* obj) {
@@ -4409,10 +4421,22 @@ void func_801CEBF0(void* self) {
 
 // Check conditions; set flags.
 void func_801CEC80(void* self) {
-    if (!*(u32*)((u8*)self + 0x44)) return;
-    if (!*(u32*)((u8*)self + 0x40)) return;
+    // Guard chain: the message object at +0x44 and the list at +0x40 must be
+    // live, and the three global table pointers must all be non-null, before
+    // the busy/dirty flags are set.  The exit label keeps retail's
+    // `bne store; blr` gate layout (see MWCC_REFERENCE goto-gate pattern).
+    if (*(u32*)((u8*)self + 0x44) == 0) goto exit;
+    if (*(u32*)((u8*)self + 0x40) == 0) goto exit;
+    if (lbl_eu_80664508 == 0) goto exit;
+    if (lbl_eu_8066450C == 0) goto exit;
+    if (lbl_eu_80664510 != 0) goto store;
+    goto exit;
+exit:
+    return;
+store:
     ((u8*)self)[0x60] = 1;
     ((u8*)self)[0x54] = 1;
+    return;
 }
 
 // Resolve the cell's detail-message id and show it: per-item-type message
@@ -5206,19 +5230,34 @@ func_801D0E88_break:
     ;
 }
 
+// Cast-only vtable interface for the object returned by
+// CItem_initItemImplInstances: with -RTTI on, MWCC prepends 2 hidden RTTI
+// header entries, so the Nth declared virtual sits at 4*(N+2). Real virtual
+// dispatch reproduces the retail `lwz r12,0(r3); lwz r12,<off>(r12)`
+// sequence; manual `(*(void***)x)[N]` casts color a scratch r5 instead.
+struct CItemInstVtLocal {
+    virtual void v0();                   // +0x08
+    virtual void v1();                   // +0x0C
+    virtual void v2(void* item);         // +0x10
+};
+
 // Handle item event dispatch.
 void func_801D11B8(void* self, void* item, int eventType) {
     if (!item) return;
-    if (eventType >= 1) {
+    if (eventType < 1) {
+        CItemInstVtLocal* inst = (CItemInstVtLocal*)CItem_initItemImplInstances(item);
+        inst->v2(item);
+    } else {
         u32 w = *(u32*)item;
         func_80158118(item, w >> 20);
-    } else {
-        void* inst = CItem_initItemImplInstances(item);
-        void** vtbl = *(void***)inst;
-        ((void(*)(void*, void*))vtbl[4])(inst, item);
     }
 }
 
+// Cast-only vtable interface for the object returned by
+// CItem_initItemImplInstances: with -RTTI on, MWCC prepends 2 hidden RTTI
+// header entries, so the Nth declared virtual sits at 4*(N+2). Real virtual
+// dispatch reproduces the retail `lwz r12,0(r3); lwz r12,<off>(r12)`
+// sequence; manual `(*(void***)x)[N]` casts color a scratch r5 instead.
 // Dispatch based on entry category.
 u32 func_801D1220(void* self) {
     u8* p = (u8*)self;
@@ -5450,13 +5489,17 @@ void func_801C4BB4(void* self) {
 // noinline: func_801C53D8 (and the other callers in this TU) must emit `bl`
 // to the retail symbol — the unit builds with -inline and would otherwise
 // fold this body into every call site (tripling func_801C53D8).
+#pragma push
+#pragma optimize_for_size on
 __declspec(noinline) void func_801C5158(void* self, u32 id) {
     if (func_801C51BC(self, id)) return;
     if ((func_801392E4(id) & 0xFFFF) == 12) return;
     u16 count = *(u16*)((u8*)self + 0x804);
-    *(u16*)((u8*)self + 4 + count * 2) = (u16)id;
+    u16* slot = (u16*)((u8*)self + 4 + count * 2);
+    *slot = (u16)id;
     *(u16*)((u8*)self + 0x804) = count + 1;
 }
+#pragma pop
 void func_801C5254(void* self) {
     void* bdat = getFP__FPCc(&lbl_eu_8050566C[0xd5]);
     if (!bdat) return;

@@ -1077,6 +1077,17 @@ void* __dt__80285954(void* self, int mode) {
     return self;
 }
 
+// func_80285994 (us-80287e18): MetroTRK hardware-ID setup. Retail calls
+// 5 cross-TU targets with MetroTRK message-table fragments:
+//   1. bl 0x8040708C (self+8, [self+4], base+0x97 "Invalid hardware ID passed from OS\n")
+//   2. bl 0x80404534 ([self+8], self+12, [self+4], base+0xAF "ed from OS\n")
+//   3. bl 0x80404534 ([self+8], self+16, [self+4], base+0xCC "to GDEV Hardware\n")
+//   4. virtual slot 36 on [self+8]
+//   5. bl 0x804144F0 (self)
+// string base = 0x8053C662 (MetroTRK message table). Blocked: call targets
+// 0x80404534 / 0x8040708C / 0x804144F0 have no symbols (undecompiled TUs),
+// so no reloc-identical externs are possible; stmw frame needs
+// optimize_for_size once the body is reconstructible.
 extern "C" void func_80285994(){}
 
 // Per-frame cursor update: play the entry animation (mpAnimTrans0) when idle,
@@ -1106,13 +1117,16 @@ extern "C" void func_80285A90(CEIBCur* self, nw4r::lyt::DrawInfo* drawInfo) {
 
 // Reset a cursor object: stop it, clear its animation transforms, and release
 // the bound layout if one is present.
+// delete layout (not ~Layout()): the retail passes the deleting flag 1 to the
+// virtual dtor; the delete's own null-check is the retail's dead second beq
+// (beq skip-all from the guard, beq mpLayout-zero block from the delete).
 extern "C" void func_80285ABC(CEIBCur* self) {
     nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mpLayout;
     self->mActive = 0;
     self->mpAnimTrans0 = 0;
     self->mpAnimTrans1 = 0;
     if (layout != 0) {
-        layout->~Layout();
+        delete layout;
         self->mpLayout = 0;
     }
 }
@@ -1305,8 +1319,10 @@ extern "C" void func_80286454(CEquipItemBox* self) {
 extern "C" u8 func_8028652C(CEquipItemBox* self) {
     if (func_801D32DC(self->_padSortMenu) == 0) return 0;
     if (CSysWin_isReady(self->_padSysWin1) == 0) return 0;
-    if (CSysWin_isReady(self->_padSysWin2) == 0) return 0;
-    return self->unk_42;
+    // Inverted form: retail's last check falls through to the unk_42 return
+    // and branches to the li 0 block (beq -> li0; fall -> lbz).
+    if (CSysWin_isReady(self->_padSysWin2) != 0) return self->unk_42;
+    return 0;
 }
 
 
@@ -1713,7 +1729,20 @@ extern "C" u32 func_80288544(CEquipItemBox* self) {
 }
 #pragma pop
 
-extern "C" void func_802886D8(){}
+// us-8028ab5c: guarded teardown — skips while the sort/syswin sub-objects are
+// busy; on success flags unk_1f5 = -1 and runs the close sequence
+// (func_80289CC0, func_80289AA4, func_80138078(2)).
+extern "C" void func_802886D8(CEquipItemBox* self) {
+    if ((s8)self->unk_1f5 == -1) return;
+    if (self->unk_375 != 0) return;
+    if (func_801D3320(&self->_padSortMenu[0]) != 0) return;
+    if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) return;
+    if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) return;
+    self->unk_1f5 = -1;
+    func_80289CC0(self);
+    func_80289AA4(self);
+    func_80138078__FUl(2);
+}
 
 extern "C" void func_8028876C(){}
 

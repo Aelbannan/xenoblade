@@ -1345,6 +1345,7 @@ void func_801D8B60(CItemBoxInfo* info) {
 
 #pragma push
 #pragma auto_inline off
+#pragma optimize_for_size on
 extern "C" void func_801D8B08(CItemBoxInfo* info) {
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
                   &lbl_eu_805063BC[0x48f],
@@ -4716,12 +4717,18 @@ extern "C" void func_801E4194(CItemBoxInfo2* info) {
     }
 }
 #pragma pop
+// Activates the panel: once both the layout (+0x34) and its resource
+// accessor (+0x30) are present, set the current/active bytes. Goto-gate
+// layout matches retail's branch-over-branch shape (bne over a blr with
+// the body placed after the return — see CTitle func_802B64AC family).
 void func_801E4390(CItemBoxInfo2* info) {
-    if (info->state.layout == 0) return;
-    if (info->state.resource != 0) {
-        info->state.current = 1;
-        info->state.active = 1;
+    if (info->state.layout != 0 && info->state.resource != 0) {
+        goto body;
     }
+    return;
+body:
+    info->state.current = 1;
+    info->state.active = 1;
 }
 // ============================================================================
 // func_801E43BC — ItemBox2 info-panel render (retail 0x801E5FB8, 0x4DA8 bytes)
@@ -6555,4 +6562,14 @@ u8 func_801E1490(CItemBoxInfo2* info) {
 
 u32 func_801E14BC(CItemBoxInfo2* info) {
     return *(u32*)((u8*)info + 0x94) == 3;
+}
+
+// GXColorS10::operator= (retail __as__11_GXColorS10FRC11_GXColorS10): the
+// implicit 4x s16 struct copy emits the batched lha/sth sequence (all loads
+// first, then all stores) that matches the retail body exactly.
+struct GXColorS10Copy {
+    s16 r, g, b, a;
+};
+extern "C" void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src) {
+    *(GXColorS10Copy*)dst = *(const GXColorS10Copy*)src;
 }

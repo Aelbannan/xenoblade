@@ -1270,7 +1270,14 @@ void func_804B7D9C(int, int bit_index) {
     bits[word_idx] &= ~mask;
 }
 
-void func_804B7DD4(){}
+void func_804B7DD4(int, int bit_index) {
+    if (bit_index > 0x140) bit_index = 0x140;
+    int word_idx = bit_index >> 5;
+    int bit_off = bit_index & 0x1F;
+    int mask = 1 << bit_off;
+    int* bits = (int*)&lbl_eu_8065F1A0;
+    bits[word_idx] |= mask;
+}
 
 // func_804B7E0C - update one mover-state entry: save the current matrix and
 // inverse into the previous slots, install the new 48-byte matrix block,
@@ -1391,7 +1398,22 @@ void* func_804B80A4(CColiMoverState* self, int idx) {
     return 0;
 }
 
-void func_804B80CC(){}
+// Scan the input entry array (+0x44, 0x3C stride) for the entry whose high
+// halfword matches id, returning its index (retail counted loop with bdnz;
+// -O4,p strength-reduces the count to addic./bne). Signed count keeps the
+// loop pre-check on the gate-1 cmpi so the extra cmpli is CSE'd away.
+#pragma optimize_for_size on
+int func_804B80CC(CColiMoverState* self, u16 id) {
+    int count = (int)self->field_0x78;
+    if (count != 0) {
+        const CColiInEntry* e = self->field_0x44;
+        for (int i = 0; i < count; i++, e++) {
+            if ((int)((u16*)&e->field_0x00)[1] == (int)id) return i;
+        }
+    }
+    return 0;
+}
+#pragma optimize_for_size off
 
 // func_804B8108 - build the six OBB plane definitions from a rotation
 // matrix and the manager's reference point: the three unit axes are

@@ -90,6 +90,10 @@ cf::CVS_THREAD_CHAIN* __ct__802A5830() {
     }
 
     // Construct the base (can throw -> EH guard), then set vtable + link slot.
+    // The redundant `self != NULL` re-check reproduces retail's `beq` guard on
+    // the EH region (CR0 from the earlier cmpwi is reused). The catch rethrows
+    // via the runtime __throw(0,0,0) (retail `li r3,0; li r4,0; li r5,0; bl
+    // __throw`).
     if (self != NULL) {
         try {
             __ct__cf_CVS_THREAD();
@@ -98,14 +102,24 @@ cf::CVS_THREAD_CHAIN* __ct__802A5830() {
             ((void**)self)[7] = (void**)lbl_eu_80539A3C;
             self->field_0x20 = NULL;
         } catch (...) {
-            throw;
+            __throw(0, 0, 0);
         }
     }
 
-    // Copy the init-state triple into the first 3 u32s (outside try).
-    const u32* base = lbl_eu_80539A30;
-    self->unk0 = (u32*)base[0];
-    self->unk4 = base[1];
+    // Copy the init-state triple into the first 3 u32s (outside try). Temps
+    // are loaded before the stores; the base pointer is declared last so MWCC
+    // colors it r5. The address is forced through an integer cast so the full
+    // base (lis+addi) is materialized once before any load. (Residual: retail
+    // colors the unk4 value r0 and the unk0 value r4; MWCC emits the reverse
+    // for every source shape tried - allocator fixed point, cf. sibling
+    // factory drafts.)
+    u32 v0;
+    u32 v1;
+    const u32* base = (const u32*)(u32)lbl_eu_80539A30;
+    v1 = base[1];
+    v0 = base[0];
+    self->unk0 = (u32*)v0;
+    self->unk4 = v1;
     self->unk8 = base[2];
 
     return self;
@@ -120,7 +134,8 @@ int func_802A5A14(CVoiceHandle* self, int flag) {
     if ((self->field_0x3F00 & 2) == 0) {
         return 0;
     }
-    if (((int (*)(CVoiceHandle*))self->vtable[0x2BC / 4])(self) != 0) {
+    // Idle-check via the handle's vtable slot at 0x2BC (real r12 chain).
+    if (((CVoiceChainVTV*)self)->isActive() != 0) {
         return 0;
     }
     if (func_800BE8F4(&self->voice) == 0x12C) {

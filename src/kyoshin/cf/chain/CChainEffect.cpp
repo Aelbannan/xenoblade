@@ -115,11 +115,11 @@ void func_802A08F4(void* self) {
 // (id, p2). The scan repeats until a pass finds nothing; the return flags
 // whether any object was matched (target 7).
 int func_802A0818(s32 id, u32 p2) {
+    CChainManager* mgr;
+    CChainItem* item;
+    CChainNode* node;
     int found = 0;
     int matched;
-    CChainManager* mgr;
-    CChainNode* node;
-    CChainItem* item;
     goto scan;
 loopback:
     found = 1;
@@ -130,16 +130,22 @@ scan:
         while (node != mgr->field_04) {
             item = (CChainItem*)func_800AC610(node->field_08);
             if (item != 0 && id == item->field_8C) {
-                u32 member = item->field_9C;
-                if (member != 0) {
-                    member -= 0x3E9C;
+                if (p2 != 0) {
+                    // Member pointer is stored rebased by 0x3E9C; the rebase
+                    // must stay after the p2==0 test (short-circuit order).
+                    u32 member = item->field_9C;
+                    if (member != 0) {
+                        member -= 0x3E9C;
+                    }
+                    if (p2 != member) {
+                        goto next_node;
+                    }
                 }
-                if (p2 == 0 || p2 == member) {
-                    func_800B3A88(func_800B07E8(), item);
-                    matched = 1;
-                    goto check;
-                }
+                func_800B3A88(func_800B07E8(), item);
+                matched = 1;
+                goto check;
             }
+        next_node:
             node = node->field_00;
         }
         matched = 0;

@@ -29,6 +29,8 @@ void CErrorWii::addCallback(IErrorWii* pError){
 }
 
 //This feels like it should be an inline from fixed_vector (probably erase), but it uses spInstance multiple times...
+// NOTE: retail is compiled -func_align 4; this unit's -func_align 16 forces MWCC to pad the two
+// loop heads to 8-byte boundaries (ori r0,r0,0), which is the only residual vs retail.
 void CErrorWii::removeCallback(IErrorWii* pError){
     int index = 0;
 

@@ -1099,20 +1099,30 @@ extern "C" void func_801C171C(CfSoundRecord* rec, u32 soundId, float pan) {
     }
 }
 
+#pragma push
+#pragma optimize_for_size on
 // ORs `b` into the flag word of the first sound slot whose 16-bit id matches
 // `a`; only runs while the record is active (mFlag bit 0).
+// searching flag + nested while reproduce the retail loop rotation
+// (r0 toggles 1->0->1 per slot) — same shape as the SetPan sibling above.
 void func_801C17CC(CfSoundRecord* rec, u32 a, u32 b) {
     if ((rec->mFlag & 1) == 0) {
         return;
     }
+    CfSoundSlot* end = lbl_eu_80575928 + 64;
     CfSoundSlot* p = lbl_eu_80575928;
-    do {
-        if (p->mId == a) {
-            p->field_0x2A |= (u16)b;
-            return;
+    int searching = 1;
+    while (searching && p != end) {
+        searching = 0;
+        while (searching == 0) {
+            if (p->mId == a) {
+                p->field_0x2A |= (u16)b;
+                return;
+            }
+            searching = 1;
+            p++;
         }
-        p++;
-    } while (p != lbl_eu_80575928 + 64);
+    }
 }
 #pragma pop
 

@@ -3,6 +3,11 @@
 
 #include <cstring>
 
+// Retail name of lyt::Layout::mspAllocator (shared SDA storage). The static
+// member's mangled name (mspAllocator__Q34nw4r3lyt6Layout) cannot be renamed
+// from source, so the retail lbl label is referenced directly (PLAN.md §17.6).
+extern "C" MEMAllocator* lbl_eu_80665478;
+
 namespace nw4r {
 namespace lyt {
 
@@ -58,9 +63,17 @@ void Group::AppendPane(Pane* pPane) {
 GroupContainer::~GroupContainer() {
     NW4R_UT_LINKLIST_FOREACH_SAFE (it, mGroupList, {
         mGroupList.Erase(it);
-        
+
         if (!it->IsUserAllocated()) {
-            Layout::DeleteObj(&*it);
+            Group* pGroup = &*it;
+
+            // Layout::DeleteObj spelled out so the allocator is referenced by
+            // its retail label (lbl_eu_80665478) instead of the mangled
+            // static-member name.
+            if (pGroup != NULL) {
+                pGroup->~Group();
+                MEMFreeToAllocator(lbl_eu_80665478, pGroup);
+            }
         }
     })
 }

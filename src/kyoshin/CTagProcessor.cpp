@@ -279,8 +279,11 @@ extern "C" __declspec(noinline) void copyTagParam(u8* dst, const u8* src) {
 // Deleting destructor for CTagProcessorBase (retail __dt__17CTagProcessorBaseFv):
 // genuine C++ member dtor of the derived class — the compiler emits the nw4r
 // base-dtor call with flag 0 and the operator delete when the deleting flag
-// is set (the retail shape).
-CTagProcessorBase::~CTagProcessorBase() {}
+// is set (the retail shape). optimize_for_size merges the r30/r31 saves into
+// stmw/lmw and fixes the copy order (func_801289B4 family pattern).
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) CTagProcessorBase::~CTagProcessorBase() {}
+#pragma optimize_for_size off
 
 // Tag-code dispatch for Process: walk the handler table; a null handler
 // falls back to the base TagProcessor, a matching tag dispatches to the
@@ -509,8 +512,11 @@ void* __ct__CTagProcessor(void* self) {
 // Deleting destructor for CTagProcessor (retail __dt__13CTagProcessorFv):
 // genuine C++ member dtor of the derived class — the compiler emits the base
 // dtor call (__dt__17CTagProcessorBaseFv) with flag 0 and the operator delete
-// when the deleting flag is set (the retail shape).
+// when the deleting flag is set (the retail shape). optimize_for_size merges
+// the r30/r31 saves into stmw/lmw + fixes the copy order (family pattern).
+#pragma optimize_for_size on
 CTagProcessor::~CTagProcessor() {}
+#pragma optimize_for_size off
 
 // Message-pump step: dispatch the next tag code at buf[field_810+2]. The
 // tag stream is the u16-encoded message written by the tag-writer family;
@@ -1464,8 +1470,12 @@ void* __ct__CTagProcessorSE(void* self) {
 
 // Deleting destructor for CTagProcessorSE (retail __dt__15CTagProcessorSEFv):
 // member dtor of the derived class — base dtor call with flag 0, then
-// operator delete when the deleting flag is set.
+// operator delete when the deleting flag is set. optimize_for_size merges
+// the r30/r31 saves into stmw/lmw; the base dtor is noinline so its guard
+// isn't inlined into the derived dtor (single null-check, family pattern).
+#pragma optimize_for_size on
 CTagProcessorSE::~CTagProcessorSE() {}
+#pragma optimize_for_size off
 
 void func_80127FB4(){}
 
@@ -1547,19 +1557,18 @@ void func_801287BC(CTagProcessorBase* msg, nw4r::lyt::Pane* pane,
 #pragma optimize_for_size off
 
 // Tag-writer family (small variants): init a TagParam block with a tag code
-// and copy it into the output buffer, returning the r4 arg. The r3/r5 args
-// are unused by these small variants (the larger siblings use the r5 code
-// arg); the helpers are called via bl (extern "C" flat names, kept out of
-// line with noinline - retail had them in a separate TU).
-// NOTE: the r30/r31 saves come out as stw pairs + reversed moves under this
-// unit's -O4,p; retail used -O4,s (stmw r30) - per-function opt-level wall
-// (walls doc #13; same as func_801276C8's addic/subfe idiom).
+// NOTE: retail prologue is stwu; mflr; stw r0; stmw r30; or r30,r4,r4;
+// or r31,r6,r6 — the optimize_for_size pragma merges the callee-saved saves
+// into stmw/lmw and fixes the copy order (MWCC_REFERENCE CPartyState
+// func_801FD0A0 pattern); plain -O4,p emits reversed stw pairs + moves.
+#pragma optimize_for_size on
 extern "C" void* func_801289B4(void* a, void* b, u8 code, u8* dst) {
     TagParam p;
     func_80125944(&p, 7);
     copyTagParam(dst, (const u8*)&p);
     return b;
 }
+#pragma optimize_for_size off
 
 // Tag-writer variant with a numeric value: uppercase the value string, parse it
 // with wcstol, store tag-param code 6 plus the value, copy the block into the
@@ -1576,12 +1585,15 @@ extern "C" void* func_801289FC(void* a, void* b, u16* str, u8* dst) {
 }
 #pragma optimize_for_size off
 
+// Same stmw/lmw save-merge + copy-order fix as func_801289B4.
+#pragma optimize_for_size on
 extern "C" void* func_80128A70(void* a, void* b, u8 code, u8* dst) {
     TagParam p;
     func_80125944(&p, 5);
     copyTagParam(dst, (const u8*)&p);
     return b;
 }
+#pragma optimize_for_size off
 
 void func_80128AB8(){}
 
@@ -1604,12 +1616,15 @@ void* callInitTagProc(void* arg1, void* arg2) {
     return arg2;
 }
 
+// Same stmw/lmw save-merge + copy-order fix as func_801289B4.
+#pragma optimize_for_size on
 extern "C" void* func_80128BB0(void* a, void* b, u8 code, u8* dst) {
     TagParam p;
     func_80125944(&p, 3);
     copyTagParam(dst, (const u8*)&p);
     return b;
 }
+#pragma optimize_for_size off
 
 // Same as func_801289FC but with tag-param code 2.
 #pragma optimize_for_size on

@@ -381,10 +381,13 @@ s16 CActorParam_UnkVirtualFunc155__Q22cf11CActorParamFv(void* self) { return *(s
 s16 CActorParam_UnkVirtualFunc157__Q22cf11CActorParamFv(void* self) { return *(s16*)((u8*)self + 0x335a); }
 void cf::CActorParam::CActorParam_UnkVirtualFunc160() {
     cf::CActorParamStatusView* v = reinterpret_cast<cf::CActorParamStatusView*>(this);
-    // rate byte (0x335E) scaled by gauge max (0x3368), halved, stored at 0x3358.
-    int t = (int)(v->field_0x3368 * (float)v->field_0x335E) / 2;
+    // 0x335A = 2 is stored first; the rate byte (0x335E) is widened to
+    // double via the 0x43300000 magic and scaled by the gauge max (0x3368);
+    // the truncating half is stored at 0x3358.
     v->field_0x335A = 2;
-    v->field_0x3358 = (u16)t;
+    double b = (double)(u32)v->field_0x335E;
+    int t = (int)(b * v->field_0x3368);
+    v->field_0x3358 = (u16)(t / 2);
 }
 float CActorParam_UnkVirtualFunc23__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x15e8); }
 void CActorParam_UnkVirtualFunc21__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x15e8) = val; }

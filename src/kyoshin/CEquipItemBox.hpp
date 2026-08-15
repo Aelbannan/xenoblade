@@ -181,7 +181,7 @@ struct CEquipItemBox {
     u8 _padSysWin2[0x3C];
 
     u8 unk_1f4;             // 0x1F4
-    u8 unk_1f5;             // 0x1F5
+    s8 unk_1f5;             // 0x1F5
     u8 unk_1f6;             // 0x1F6
     u8 _pad1F7[3];          // 0x1F7
     u16 unk_1fa;            // 0x1FA

@@ -97,22 +97,29 @@ s32 SFPTS_WritePtsQue(void* self, s32 idx, void* data, void* out) {
 }
 
 s32 SFPTS_ReadPtsQue(void* self, s32 idx, u32 arg, void* out) {
-    u8* base = (u8*)self + idx * 0x74;
-    SfdPtsQue* q = (SfdPtsQue*)(base + 0x13f0);
-    u32 win_start = *(u32*)(base + 0x13d0);
-    u32 win_len = *(u32*)(base + 0x13d4);
     u32* o = (u32*)out;
+    SfdPtsQue* q;
+    u32 win_start;
+    u32 win_len;
     o[1] = -1;
     o[0] = -1;
+    q = (SfdPtsQue*)((u8*)self + idx * 0x74 + 0x13f0);
+    win_start = *(u32*)((u8*)self + idx * 0x74 + 0x13d0);
+    win_len = *(u32*)((u8*)self + idx * 0x74 + 0x13d4);
     if (q->entries == 0)
         return 0;
     if (arg == 0) {
         if (q->count != 0) {
-            SfdPtsEntry* e = &q->entries[q->start];
-            o[0] = e->lo;
-            o[1] = e->hi;
-            o[2] = e->pos;
-            o[3] = e->size;
+            SfdPtsEntry* e = q->entries;
+            e += q->start;
+            u32 lo = e->lo;
+            u32 hi = e->hi;
+            u32 pos = e->pos;
+            u32 size = e->size;
+            o[1] = hi;
+            o[0] = lo;
+            o[3] = size;
+            o[2] = pos;
             q->start = (q->start + 1 >= q->maxIdx) ? q->start + 1 - q->maxIdx : q->start + 1;
             q->count = q->count - 1;
         }
@@ -122,17 +129,19 @@ s32 SFPTS_ReadPtsQue(void* self, s32 idx, u32 arg, void* out) {
         if (q->count != 0) {
             s32 idx2 = sfpts_SearchPtsQue(q, arg, win_start, win_len);
             if (idx2 != -1) {
-                u32 np = (q->start + (u32)idx2 >= q->maxIdx)
-                             ? q->start + (u32)idx2 - q->maxIdx
-                             : q->start + (u32)idx2;
-                q->count = q->count - (u32)idx2;
-                q->start = np;
+                s32 ns = (q->start + idx2 >= q->maxIdx) ? q->start + idx2 - q->maxIdx : q->start + idx2;
+                q->count = q->count - idx2;
+                q->start = ns;
                 {
-                    SfdPtsEntry* e = &q->entries[np];
-                    o[0] = e->lo;
-                    o[1] = e->hi;
-                    o[2] = e->pos;
-                    o[3] = e->size;
+                    SfdPtsEntry* e = &q->entries[ns];
+                    u32 lo = e->lo;
+                    u32 hi = e->hi;
+                    u32 pos = e->pos;
+                    u32 size = e->size;
+                    o[1] = hi;
+                    o[0] = lo;
+                    o[3] = size;
+                    o[2] = pos;
                 }
             }
         }

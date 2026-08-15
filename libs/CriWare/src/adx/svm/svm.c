@@ -102,8 +102,8 @@ void SVM_CallErr(const char* fmt, ...);
                 _c->lock_flag = 0;                                            \
             }                                                                 \
             {                                                                 \
-                void (*_fn)(void*) = _c->unlock_cb.func;                      \
-                void* _obj = _c->unlock_cb.object;                            \
+                void (*_fn)(void*) = _c->unlock_cb.func; \
+                void* _obj = _c->unlock_cb.object; \
                 _fn(_obj);                                                    \
             }                                                                 \
         }                                                                     \

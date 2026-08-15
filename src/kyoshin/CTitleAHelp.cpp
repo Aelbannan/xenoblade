@@ -1,3 +1,6 @@
+// Inline-empty ~IWorkEvent (see IWorkEvent.hpp): retail elides the empty
+// base-dtor call in ~CTitleAHelp (CArcItem.cpp pattern).
+#define IWORK_EVENT_INLINE_DTOR
 #include "kyoshin/CTitleAHelp.hpp"
 
 #include "kyoshin/CUICfManager.hpp"
@@ -16,16 +19,19 @@
 extern void func_80124270(nw4r::lyt::Pane*, u32);
 extern void copyVEC3(nw4r::math::VEC3*, nw4r::math::VEC3*);
 
-static GXColorS10 lbl_80666D58; //light orange
-static GXColorS10 lbl_80666D60;
-
-static GXColorS10 lbl_80666D68; //light blue
-static GXColorS10 lbl_80666D70;
+// Retail keeps these state-machine helpers unmangled (C linkage); declare
+// them extern "C" so the switch in func_801C3FF0 emits the retail relocs.
+extern "C" void func_801C477C(CTitleAHelp*);
+extern "C" void func_801C47F8(CTitleAHelp*);
+extern "C" void func_801C484C(CTitleAHelp*);
+extern "C" void func_801C48E0(CTitleAHelp*);
 
 extern u16 lbl_eu_80533E60[];
 
 // Retail constructor symbol (extern "C" to avoid MWCC mangling to __ct__11CTitleAHelpFPcUc)
 #pragma optimize_for_size on
+// Retail dtor shares the ctor's optimize_for_size region (stmw frame).
+CTitleAHelp::~CTitleAHelp() {}
 extern "C" CTitleAHelp* __ct__CTitleAHelp(CTitleAHelp* self, char* arg1, u8 arg2) {
     extern void* lbl_eu_80534500[];
     extern void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
@@ -48,8 +54,6 @@ extern "C" CTitleAHelp* __ct__CTitleAHelp(CTitleAHelp* self, char* arg1, u8 arg2
 }
 #pragma optimize_for_size off
 
-CTitleAHelp::~CTitleAHelp() {}
-
 void CTitleAHelp::CTitleAHelp_load() {
     u32 allocHandle = mtl::MemManager::getHandleMEM2();
     mFileHandle = CDeviceFile::readFile(allocHandle, "/menu/TitleAHelp.arc", this, 0, 0);
@@ -60,19 +64,16 @@ void CTitleAHelp::func_801C3FF0() {
     if(unk28 == 0) return;
     switch(unk2c) {
         case 1:
-            func_801C477C();
+            func_801C477C(this);
             break;
         case 2:
-            func_801C47F8();
+            func_801C47F8(this);
             break;
         case 4:
-            func_801C484C();
+            func_801C484C(this);
             break;
         case 5:
-            func_801C48E0();
-            break;
-        default:
-            break;
+            func_801C48E0(this); // retail falls through to Animate (no break)
     }
     mLayout->Animate(0);
 }
@@ -274,38 +275,38 @@ extern "C" void func_801C4760(CTitleAHelp* self) {
     func_80139A18(self->mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664478, &lbl_eu_80664480);
 }
 
-void CTitleAHelp::func_801C477C() {
-    if(func_80137444(mAnimTrans20, 1.0f)) {
-        mLayout->SetAnimationEnable(mAnimTrans20, 0);
-        mLayout->SetAnimationEnable(mAnimTrans24, 1);
-        unk2c = 2;
+extern "C" void __declspec(noinline) func_801C477C(CTitleAHelp* self) {
+    if(func_80137444(self->mAnimTrans20, 1.0f)) {
+        self->mLayout->SetAnimationEnable(self->mAnimTrans20, 0);
+        self->mLayout->SetAnimationEnable(self->mAnimTrans24, 1);
+        self->unk2c = 2;
     }
 }
 
-void CTitleAHelp::func_801C47F8() {
-    if(func_80137444(mAnimTrans24, 1.0f)) {
-        unk2c = 3;
-        unk36 = 1;
-        unk37 = 0;
+extern "C" void __declspec(noinline) func_801C47F8(CTitleAHelp* self) {
+    if(func_80137444(self->mAnimTrans24, 1.0f)) {
+        self->unk2c = 3;
+        self->unk36 = 1;
+        self->unk37 = 0;
     }
 }
 
-void CTitleAHelp::func_801C484C() {
-    if(func_80137510(mAnimTrans24, 1.0f)) {
-        if(unk37 == 0) {
-            mLayout->SetAnimationEnable(mAnimTrans24, 0);
-            mLayout->SetAnimationEnable(mAnimTrans20, 1);
-            unk2c = 5;
+extern "C" void __declspec(noinline) func_801C484C(CTitleAHelp* self) {
+    if(func_80137510(self->mAnimTrans24, 1.0f)) {
+        if(self->unk37 == 0) {
+            self->mLayout->SetAnimationEnable(self->mAnimTrans24, 0);
+            self->mLayout->SetAnimationEnable(self->mAnimTrans20, 1);
+            self->unk2c = 5;
         } else {
-            unk36 = 1;
+            self->unk36 = 1;
         }
     }
 }
 
-void CTitleAHelp::func_801C48E0() {
-    if(func_80137510(mAnimTrans20, 1.0f)) {
-        unk2c = 0;
-        unk36 = 1;
+extern "C" void __declspec(noinline) func_801C48E0(CTitleAHelp* self) {
+    if(func_80137510(self->mAnimTrans20, 1.0f)) {
+        self->unk2c = 0;
+        self->unk36 = 1;
     }
 }
 
@@ -363,15 +364,19 @@ bool func_801C4648(nw4r::lyt::Pane* self) {
     return (bytes[0xBB] & 1) != 0;
 }
 
-void sinit_801C4AE4() {
-    func_801C4B60(&lbl_80666D58, 0xa8, 0x52, 0x08, 0x00);
-    func_801C4B60(&lbl_80666D60, 0xa8, 0x52, 0x08, 0xff);
+// Retail symbol func_801C4B60 is unmangled (C linkage): declare it extern "C"
+// so the definition and sinit's calls all emit the retail reloc name.
+extern "C" void func_801C4B60(GXColorS10*, s16, s16, s16, s16);
 
-    func_801C4B60(&lbl_80666D68, 0x05, 0x80, 0xa6, 0x00);
-    func_801C4B60(&lbl_80666D70, 0x05, 0x80, 0xa6, 0xff);
+void sinit_801C4AE4() {
+    func_801C4B60(reinterpret_cast<GXColorS10*>(&lbl_eu_80664468), 0xa8, 0x52, 0x08, 0x00);
+    func_801C4B60(reinterpret_cast<GXColorS10*>(&lbl_eu_80664470), 0xa8, 0x52, 0x08, 0xff);
+
+    func_801C4B60(reinterpret_cast<GXColorS10*>(&lbl_eu_80664478), 0x05, 0x80, 0xa6, 0x00);
+    func_801C4B60(reinterpret_cast<GXColorS10*>(&lbl_eu_80664480), 0x05, 0x80, 0xa6, 0xff);
 }
 
-void func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
+void __declspec(noinline) func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
     color->a = a;
     color->b = b;
     color->g = g;

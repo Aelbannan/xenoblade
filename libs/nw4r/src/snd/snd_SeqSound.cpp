@@ -193,7 +193,32 @@ void SeqSound::SeqLoadTask::OnCancel() {
 void SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(void* self, void (*callback)(unsigned short, void*, void*), void* arg);
 
 void SetSeqUserprocCallback__Q44nw4r3snd6detail8SeqSoundFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(nw4r::snd::detail::SeqSound* thisPtr, void (*callback)(unsigned short, void*, void*), void* arg) { SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv((void*)((u8*)thisPtr + 0x10c), callback, arg); }
-void OnUpdatePlayerPriority__Q44nw4r3snd6detail8SeqSoundFv(){}
+// Flattened entry point: the SeqSound member layout lives in snd_SeqSound.h,
+// but the fields this function needs are private, so they are reached through
+// retail-offset overlay structs (same pattern as StrmSound's MoveBlocksRetail
+// overlay in snd_StrmSound.cpp). The priority list itself stays on the real
+// Flattened entry point: the SeqSound member layout lives in snd_SeqSound.h
+// (not writable from this TU), so the one private field this function needs
+// (mManager at 0x294) is reached through a retail-offset overlay struct.
+// The manager's public UpdatePriority() inlines to exactly the retail body:
+// AutoLock(OSLockMutex/OSUnlockMutex around one Erase + one sorted Insert by
+// CalcCurrentPlayerPriority).
+void OnUpdatePlayerPriority__Q44nw4r3snd6detail8SeqSoundFv(
+    nw4r::snd::detail::SeqSound* self) {
+
+    struct SeqSoundOfs {
+        u8 _pad[0x294];
+        nw4r::snd::detail::SoundInstanceManager<nw4r::snd::detail::SeqSound>*
+            mManager; // at 0x294
+    };
+
+    nw4r::snd::detail::SeqSound* pSound = self; // retail's `mr r28, r3` copy
+
+    reinterpret_cast<
+        nw4r::snd::detail::SoundInstanceManager<nw4r::snd::detail::SeqSound>*>(
+        reinterpret_cast<SeqSoundOfs*>(self)->mManager)
+        ->UpdatePriority(pSound, self->CalcCurrentPlayerPriority());
+}
 extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundFv(void* self) { return (void*)((u8*)self + 0x10c); }
 extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return (void*)((u8*)self + 0x10c); }
 extern "C" u8 IsPrepared__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return *(static_cast<u8*>(self) + 677); }

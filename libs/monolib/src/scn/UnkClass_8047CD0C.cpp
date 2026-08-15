@@ -84,8 +84,6 @@ struct UnkClass_8047CD0C {
 
 extern u8 lbl_eu_80658560[]; // scene manager (bss)
 
-extern "C" void func_8047E110__17UnkClass_8047E110Fv(u8* self);
-
 extern "C" void func_8047E0B8__17UnkClass_8047E064Fv(UnkClass_8047E064* self);
 extern "C" void func_8047E100__17UnkClass_8047E064Fv(UnkClass_8047E064* self);
 extern "C" void func_8047E064__17UnkClass_8047E064Fv(UnkClass_8047E064* self, u32 val);
@@ -192,8 +190,9 @@ extern "C" void func_8047CD0C__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
                                                       u8* config) {
     self->mData = 0;
     if (*(u32*)config == 0x57504F49) {
-        self->mData = config += 0xc;
-        func_8047E110__17UnkClass_8047E110Fv(lbl_eu_80658560);
+        config += 0xc;
+        self->mData = config;
+        ((UnkClass_8047E110*)lbl_eu_80658560)->func_8047E110();
         func_8047D0F0__17UnkClass_8047CD0CFv(&lbl_eu_80658540,
                                              (UnkClass_8047CD0C*)self->mData);
         if (self->mField08 != 0) {
@@ -332,22 +331,28 @@ extern "C" __declspec(noinline) void func_8047D0F0__17UnkClass_8047CD0CFv(UnkCla
     if (!(self->mFlags & 1)) return;
 
     u32 cap = (u32)src->mData;
-    u32 sel = cap >> 1;
-    u32 base = src->mNodeCount * 2;
-    base += base;
-    base += 0x28;
-    if (cap < 0x1f4) {
-        sel = cap;
-    }
-    u32 grow = (cap + sel * 2) * 2;
+    // count*4 + 0x28 must stay unfolded as slwi+add+addi (retail shape): any
+    // single-expression multiply form (count*4, (count*2)*2, count*2+count*2,
+    // (count+count)*2) is folded by MWCC into one rlwinm count,2.  Only a
+    // compound self-add survives; keeping the doubled value in short-lived t
+    // (dead after the +0x28) lets the add reuse t's register in place.
+    u32 t = src->mNodeCount * 2;
+    t += t;
+    u32 base = t + 0x28;
+    // Retail defaults sel to cap>>1 and only overrides with cap when cap < 0x1f4
+    // (bge skips the copy); the select is evaluated inline so shr is born late.
+    u32 grow = (cap + ((cap < 0x1f4) ? cap : (cap >> 1)) * 2) * 2;
     if (grow > base) {
         base = grow;
     }
     base += 0x1f - (base & 0x1f);
 
-    self->mFlags |= 2;
     self->mNodes = (u16*)(self->mField08 + base);
     self->mStride = ((self->mField04 - base) / self->mNodeCount) >> 1;
+    // Written LAST (with the plain `= |` form) so the mFlags web is born last and
+    // colored first (r0) like retail; the scheduler keeps the mFlags store first
+    // because the field offsets don't alias.
+    self->mFlags = self->mFlags | 2;
 }
 
 // ------------------------------------------------------------------

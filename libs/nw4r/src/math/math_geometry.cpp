@@ -283,6 +283,11 @@ struct CAPSULE {
     f32 radius;
 };
 
+struct SPHERE {
+    VEC3 center; // at 0x0
+    f32 radius;  // at 0xC
+};
+
 f32 DistSqSegment3ToSegment3(const SEGMENT3* pSegment0,
                              const SEGMENT3* pSegment1, f32* pOut0,
                              f32* pOut1) {
@@ -373,4 +378,61 @@ bool IntersectionCapsule(const CAPSULE* pCapsule0,
 } // namespace math
 } // namespace nw4r
 
-void IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE(){}
+// Layout mirror of nw4r::math::FRUSTUM's private members. math_geometry.h is
+// outside this session's writable scope, so FRUSTUM cannot gain the
+// IntersectSphere member declaration here; the mangled-name free function
+// below walks the mirror instead. Only the fields this function touches are
+// listed (offsets must match the real class up to mFarZ at 0x74).
+struct FRUSTUMLayout {
+    nw4r::math::MTX34 mCamMtx; // at 0x0
+    nw4r::math::PLANE mPlaneL; // at 0x30
+    nw4r::math::PLANE mPlaneR; // at 0x40
+    nw4r::math::PLANE mPlaneT; // at 0x50
+    nw4r::math::PLANE mPlaneB; // at 0x60
+    f32 mNearZ;                // at 0x70
+    f32 mFarZ;                 // at 0x74
+};
+
+bool IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE(
+    const FRUSTUMLayout* self, const nw4r::math::SPHERE* pSphere) {
+    const FRUSTUMLayout* pThis = self;
+
+    nw4r::math::VEC3 p;
+
+    // Transform the sphere center into view space. The near/far tests need z
+    // first, so compute the rows lazily in the order they are used.
+    p.z = pThis->mCamMtx._20 * pSphere->center.x +
+          pThis->mCamMtx._21 * pSphere->center.y +
+          pThis->mCamMtx._22 * pSphere->center.z + pThis->mCamMtx._23;
+
+    if (p.z - pSphere->radius > pThis->mNearZ) {
+        return false;
+    }
+    if (p.z + pSphere->radius < pThis->mFarZ) {
+        return false;
+    }
+
+    // The side/top/bottom planes all pass through the view origin, so their
+    // d terms vanish and only the n.x/n.z (sides) or n.y/n.z (top/bottom)
+    // components of the plane normals are needed.
+    p.x = pThis->mCamMtx._00 * pSphere->center.x +
+          pThis->mCamMtx._01 * pSphere->center.y +
+          pThis->mCamMtx._02 * pSphere->center.z + pThis->mCamMtx._03;
+
+    if (p.x * pThis->mPlaneL.n.x + p.z * pThis->mPlaneL.n.z > pSphere->radius) {
+        return false;
+    }
+    if (p.x * pThis->mPlaneR.n.x + p.z * pThis->mPlaneR.n.z > pSphere->radius) {
+        return false;
+    }
+
+    p.y = pThis->mCamMtx._10 * pSphere->center.x +
+          pThis->mCamMtx._11 * pSphere->center.y +
+          pThis->mCamMtx._12 * pSphere->center.z + pThis->mCamMtx._13;
+
+    if (p.y * pThis->mPlaneT.n.y + p.z * pThis->mPlaneT.n.z > pSphere->radius) {
+        return false;
+    }
+    return !(p.y * pThis->mPlaneB.n.y + p.z * pThis->mPlaneB.n.z >
+             pSphere->radius);
+}

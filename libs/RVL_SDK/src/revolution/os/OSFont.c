@@ -251,14 +251,13 @@ typedef struct {
 //   i         write position (index) into dst
 //   maskBits  number of valid bits remaining in the current mask
 static void Decode(u8* src, u8* dst) {
-    Yay0Header* hdr = (Yay0Header*)src;
-    const u8* chunk = src + hdr->chunksOfs;
+    const u8* chunk = src + ((const Yay0Header*)src)->chunksOfs;
     const u32* maskPtr = (const u32*)(src + 0x10);
-    s32 linkTblOfs = hdr->linkTblOfs;
-    s32 expandSize = hdr->expandSize;
+    s32 expandSize = ((const Yay0Header*)src)->expandSize;
     s32 i = 0;
+    s32 linkTblOfs = ((const Yay0Header*)src)->linkTblOfs;
     u32 maskBits = 0;
-    u32 mask = 0;
+    u32 mask;
 
     do {
         // Get next mask
@@ -267,15 +266,15 @@ static void Decode(u8* src, u8* dst) {
             maskBits = sizeof(u32) * 8;
         }
 
-        // Non-linked chunk
+        // Non-linked chunk (mask bit 31 set)
         if (mask & 0x80000000) {
             dst[i++] = *chunk++;
         }
         // Linked chunk
         else {
             s32 linkOfs;
-            s32 chunkPos;
             s32 count;
+            s32 chunkPos;
             s32 j;
 
             // Read offset from link table
@@ -283,8 +282,8 @@ static void Decode(u8* src, u8* dst) {
             linkTblOfs += sizeof(u16);
 
             // Apply offset
-            chunkPos = i - (linkOfs & 0x0FFF);
             count = linkOfs >> 12;
+            chunkPos = i - (linkOfs & 0x0FFF);
             if (count == 0) {
                 count = *chunk++ + 0x12;
             } else {

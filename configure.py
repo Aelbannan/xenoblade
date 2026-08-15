@@ -1835,7 +1835,13 @@ config.libs = [
             Object(NonMatching, "monolib/src/lib/CLibCri.cpp"),
             Object(NonMatching, "monolib/src/lib/CLibCriMoviePlay.cpp"),
             Object(NonMatching, "monolib/src/lib/CLibCriStreamingPlay.cpp"),
-            Object(NonMatching, "monolib/src/lib/CLibG3d.cpp"),
+            # TU-final 2026: 6/6 FULL_MATCH (hexdiff byte-identical, data
+            # 100%, split 0x204 exact). Vtable symbol renamed in symbols.txt
+            # (lbl_eu_8056D0F0 -> __vt__7CLibG3d) so the retail reloc name
+            # matches the compiled object; objdiff still under-reports the
+            # ctor until the retail .o is re-split (baked name), as with
+            # CDeviceGX's own vtable.
+            Object(Matching, "monolib/src/lib/CLibG3d.cpp", extra_cflags=["-i libs/monolib/src/lib"]),
             Object(NonMatching, "monolib/src/lib/CLibHbm.cpp"),
             Object(NonMatching, "monolib/src/lib/CLibHbmControl.cpp"),
             Object(NonMatching, "monolib/src/lib/CLibLayout.cpp"),

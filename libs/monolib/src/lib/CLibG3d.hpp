@@ -1,16 +1,9 @@
 #pragma once
 
-#include <types.h>
+#include "monolib/lib/CLibG3d.hpp"
 
-class CLibG3d {
-public:
-    CLibG3d();
-    virtual ~CLibG3d();
-    void isInitialized();
-    void wkStandbyLogin();
-    void wkStandbyLogout();
-
-    // TODO: add fields
-    void getInstance();
-};
-
+// Retail singleton backpointer (.sbss:0x806656F0): written by the
+// constructor/destructor, read by getInstance()/isInitialized(). Plain
+// global-scope extern - MWCC does not mangle global data names, so this
+// emits the exact retail reloc symbol directly.
+extern CLibG3d* lbl_eu_806656F0;

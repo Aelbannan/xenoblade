@@ -11,20 +11,20 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 9649 |
+| extern "C" (total lines) | 9647 |
 | extern "C" declarations (non-lbl_*, imports) | 3530 |
-| extern "C" definitions (forced names) | 3673 |
-| `self`/register-style params | 11385 |
-| `void*` (params + locals) | 6861 |
+| extern "C" definitions (forced names) | 3672 |
+| `self`/register-style params | 11381 |
+| `void*` (params + locals) | 6860 |
 | raw pointer offset arithmetic | 6355 |
 | deref-through-cast arithmetic | 2480 |
 | inline asm / `register` | 103 |
 | rN-named params | 480 |
-| goto | 2831 |
+| goto | 2832 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 0 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
-| #pragma | 1625 |
+| #pragma | 1634 |
 
 ## Top offenders (by cleanable severity)
 
@@ -61,7 +61,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/core/CRsrc.cpp | 10 | 4 | 0 | 9 | 8 | 2 | 0 | 0 | 10 | 0 | 0 | 0 |
 | libs/monolib/src/core/CRsrcData.cpp | 9 | 0 | 2 | 6 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 |
 | libs/monolib/src/core/CSchedule.cpp | 0 | 3 | 5 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/core/CScriptCode.cpp | 1 | 9 | 13 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/core/CScriptCode.cpp | 1 | 8 | 11 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CSplitFrame.cpp | 0 | 6 | 6 | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CToken.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/core/CView.cpp | 1 | 4 | 28 | 15 | 65 | 16 | 1 | 23 | 120 | 0 | 0 | 0 |
@@ -248,7 +248,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/nw4r/src/snd/snd_RemoteSpeaker.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SeqFile.cpp | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_SeqPlayer.cpp | 0 | 1 | 0 | 4 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_SeqSound.cpp | 0 | 3 | 8 | 11 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
+| libs/nw4r/src/snd/snd_SeqSound.cpp | 0 | 3 | 6 | 11 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
 | libs/nw4r/src/snd/snd_SeqTrack.cpp | 0 | 1 | 1 | 1 | 21 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_Sound3DActor.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_Sound3DManager.cpp | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -295,7 +295,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CExchangeWin.cpp | 0 | 11 | 13 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CFade.cpp | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CFloorMap.cpp | 2 | 9 | 68 | 105 | 69 | 39 | 0 | 1 | 12 | 0 | 0 | 0 |
-| src/kyoshin/CItemBoxGrid.cpp | 23 | 12 | 549 | 275 | 374 | 86 | 0 | 48 | 32 | 0 | 0 | 0 |
+| src/kyoshin/CItemBoxGrid.cpp | 23 | 12 | 549 | 275 | 374 | 86 | 0 | 48 | 33 | 0 | 0 | 0 |
 | src/kyoshin/CItemBoxGridSubMenu.cpp | 0 | 2 | 5 | 4 | 6 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CItemBoxInfo.cpp | 23 | 19 | 5 | 258 | 646 | 272 | 0 | 1 | 3 | 0 | 0 | 0 |
 | src/kyoshin/CItemBoxLine.cpp | 2 | 7 | 127 | 15 | 12 | 0 | 0 | 2 | 16 | 0 | 0 | 0 |
@@ -757,11 +757,11 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/core/CScriptCode.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 1,
-  "extern_c_nonlbl_def": 9,
+  "extern_c_nonlbl_def": 8,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 13,
-  "void_ptr": 14
+  "self_params": 11,
+  "void_ptr": 13
  },
  "libs/monolib/src/core/CSplitFrame.cpp": {
   "asm_insn_shim": 0,
@@ -2812,7 +2812,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "init_side_effect": 1,
   "ptr_arith": 3,
   "schedule_pragma": 0,
-  "self_params": 8,
+  "self_params": 6,
   "void_ptr": 11
  },
  "libs/nw4r/src/snd/snd_SeqSoundHandle.cpp": {
@@ -3275,7 +3275,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "deref_arith": 86,
   "extern_c_nonlbl_decl": 23,
   "extern_c_nonlbl_def": 12,
-  "goto_count": 32,
+  "goto_count": 33,
   "init_side_effect": 0,
   "ptr_arith": 374,
   "rn_params": 48,

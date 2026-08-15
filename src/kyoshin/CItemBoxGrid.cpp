@@ -806,14 +806,19 @@ extern "C" __declspec(noinline) u8 func_801C67F8(CItemBoxGridFull* self) {
 // Return a duration/stride value based on the category byte at offset 0x2802.
 extern "C" __declspec(noinline) u8 func_801C6840(CItemBoxGridFull* self) {
     int cat = self->field_2802;
-    if ((u32)(cat - 4) > 4) return 0x1e;
-    u8 r = 0;
-    if (cat == 2) {
-        r = 0x1e;
-    } else if (cat == 11) {
-        r = 0x3c;
+    switch (cat) {
+    case 2:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+        return 0x1e;
+    case 11:
+        return 0x3c;
+    default:
+        return 0;
     }
-    return r;
 }
 
 __declspec(noinline) int LookupIndexedByte(char* obj) {

@@ -60,7 +60,10 @@ extern "C" void func_80295880(void* self) { ((void(*)(void*))__dt__12CTaskGameEv
 // a free function (not a C++ member ctor) so no `__ct__12CTaskGameEvtFi`
 // symbol is emitted and the interim CTTask vtable write can be reproduced.
 #pragma optimize_for_size on
-__declspec(noinline) CTaskGameEvt* __ct__CTaskGameEvt(CTaskGameEvt* pThis, int arg) {
+// C-linkage so the emitted symbol is exactly the retail `__ct__CTaskGameEvt`
+// (stripped symbol; a C++ declaration would mangle to __ct__12CTaskGameEvtFi),
+// and so create()'s call reloc references the retail name.
+extern "C" __declspec(noinline) CTaskGameEvt* __ct__CTaskGameEvt(CTaskGameEvt* pThis, int arg) {
     __ct__8CProcessFv(pThis);
 
     // Final CTaskGameEvt vtable base + its two sub-vtable pointers (kept as the
@@ -137,7 +140,9 @@ void CTaskGameEvt::Move() {
 }
 
 #pragma optimize_for_size on
-CTaskGameEvt* CTaskGameEvt::create(CProcess* pParent, int arg) {
+// Retail symbol keeps the C-linkage Fv name although the source takes a parent
+// and a scene arg (cf. CTaskGameCf / CTaskGamePic).
+extern "C" CTaskGameEvt* create__12CTaskGameEvtFv(CProcess* pParent, int arg) {
     u32 handle = CWorkThreadSystem::getWorkMem();
     CTaskGameEvt* obj = (CTaskGameEvt*)mtl::MemManager::allocate(0x64, handle);
     if (obj) {

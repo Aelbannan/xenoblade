@@ -165,10 +165,10 @@ CfCamEventManager::CfCamEventManager() {
     field_0x48 = 0;
     field_0x4C = 0;
     field_0x50 = 0;
-    field_0x1DE = 0;
-    field_0x1E0 = 0;
-    field_0x1E2 = 0;
-    field_0x1E4 = 0;
+    tab0.flag_active = 0;
+    tab0.flag_finish = 0;
+    tab0.count = 0;
+    tab0.field_0x168 = 0;
     for (CfCamEventShakeUnit* u = shake; u < &shake[2]; u++) {
         u->field_0x162 = 0;
         u->field_0x164 = 0;
@@ -467,7 +467,7 @@ int func_800762A0(CfCamEventManager* self) {
 
     // Scan for the first tab0 element with a nonzero marker word.
     int idx = 0;
-    for (int i = 0; i < self->field_0x1E2; i++) {
+    for (int i = 0; i < self->tab0.count; i++) {
         if (self->tab0.elems[i].d != 0) break;
         idx++;
     }
@@ -479,7 +479,7 @@ int func_800762A0(CfCamEventManager* self) {
     if (hA == 0 || hB == 0) return 0;
 
     ml::CVec3 o1, o2;
-    if (idx == self->field_0x1E2) {
+    if (idx == self->tab0.count) {
         // No marked element: rework the last one.
         idx--;
         if (idx < 0) return 1;
@@ -707,14 +707,14 @@ extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
         u32 flags = self->field_0x50 & 0xFFFEFFFFu;
         self->field_0x40 = 0;
         self->field_0x50 = flags;
-        self->field_0x1DC = 1;
-        self->field_0x1E2 = 0;
-        self->field_0x1E4 = 0;
-        self->field_0x1E8 = lbl_eu_80666418;
-        self->field_0x1EC = lbl_eu_8066641C;
-        self->field_0x1F0 = lbl_eu_8066641C;
-        self->field_0x1DE = 0;
-        self->field_0x1E0 = 0;
+        self->tab0.field_0x160 = 1;
+        self->tab0.count = 0;
+        self->tab0.field_0x168 = 0;
+        self->tab0.field_0x16C = lbl_eu_80666418;
+        self->tab0.field_0x170 = lbl_eu_8066641C;
+        self->tab0.field_0x174 = lbl_eu_8066641C;
+        self->tab0.flag_active = 0;
+        self->tab0.flag_finish = 0;
         self->shake[0].field_0x160 = 1;
         self->shake[0].field_0x166 = 0;
         self->shake[0].field_0x168 = 0;
@@ -830,8 +830,8 @@ extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
     }
 
     // Shake tail (same busy/flag logic as func_80079B34).
-    self->field_0x1DE = 1;
-    self->field_0x1DF = 0;
+    self->tab0.flag_active = 1;
+    self->tab0.field_0x163 = 0;
 
     int busy = 0;
     if (lbl_eu_80663DF0 != 0) {
@@ -959,7 +959,7 @@ extern "C" __declspec(noinline) void* func_800784A0(u32 first, void* second,
     // reuses the loaded pointer for the flag stores below).
     CfCamEventManager* gm = (CfCamEventManager*)lbl_eu_80663DF0;
     if (gm->field_0x3C != idx || gm->slots[idx] == 0) {
-        gm->field_0x1DE = 0;
+        gm->tab0.flag_active = 0;
         gm->shake[0].field_0x162 = 0;
         gm->shake[1].field_0x162 = 0;
         CfCamEventManager* g = (CfCamEventManager*)lbl_eu_80663DF0;
@@ -1134,14 +1134,14 @@ void func_80078C08(CfCamEventManager* self, u32 first, u32 second,
     u32 flags = self->field_0x50 & 0xFFFF0000u;
     self->field_0x40 = 0;
     self->field_0x50 = flags;
-    self->field_0x1DC = (u16)second;
-    self->field_0x1E2 = 0;
-    self->field_0x1E4 = 0;
-    self->field_0x1E8 = f18;
-    self->field_0x1EC = f1C;
-    self->field_0x1F0 = f1C;
-    self->field_0x1DE = 0;
-    self->field_0x1E0 = 0;
+    self->tab0.field_0x160 = (u16)second;
+    self->tab0.count = 0;
+    self->tab0.field_0x168 = 0;
+    self->tab0.field_0x16C = f18;
+    self->tab0.field_0x170 = f1C;
+    self->tab0.field_0x174 = f1C;
+    self->tab0.flag_active = 0;
+    self->tab0.flag_finish = 0;
     self->shake[0].field_0x160 = (u16)second;
     self->shake[0].field_0x166 = 0;
     self->shake[0].field_0x168 = 0;
@@ -1247,7 +1247,7 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
         // Retail stores the raw p5 words here; the scaled vector goes to
         // table1 (that is why p5 lives in a saved register across the
         // normalize call).
-        s16 cnt0 = self->field_0x1E2;
+        s16 cnt0 = self->tab0.count;
         if (cnt0 < 0x10) {
             CfCamEventElem* e = &self->tab0.elems[cnt0];
             e->x0 = p5->x;
@@ -1261,8 +1261,8 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                 self->tab0.baseY = p5->y;
                 self->tab0.baseZ = p5->z;
             }
-            self->field_0x1E2 = cnt0 + 1;
-            self->field_0x1F0 = (f32)id;
+            self->tab0.count = cnt0 + 1;
+            self->tab0.field_0x174 = (f32)id;
         }
 
         // table1 (0x1F4) - shake unit 0 element array
@@ -1310,7 +1310,7 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
     } else if (state == 8) {
         if (self->field_0x47 != 0) {
             // One-shot path: raw pair, d word cleared.
-            s16 cnt0 = self->field_0x1E2;
+            s16 cnt0 = self->tab0.count;
             if (cnt0 < 0x10) {
                 CfCamEventElem* e = &self->tab0.elems[cnt0];
                 e->x0 = r6->x;
@@ -1324,8 +1324,8 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                     self->tab0.baseY = r6->y;
                     self->tab0.baseZ = r6->z;
                 }
-                self->field_0x1E2 = cnt0 + 1;
-                self->field_0x1F0 = (f32)id;
+                self->tab0.count = cnt0 + 1;
+                self->tab0.field_0x174 = (f32)id;
             }
             s16 cnt1 = self->shake[0].field_0x166;
             if (cnt1 < 0x10) {
@@ -1382,7 +1382,7 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
             else
                 out.z = PSVECMag(d);
 
-            s16 cnt0 = self->field_0x1E2;
+            s16 cnt0 = self->tab0.count;
             if (cnt0 < 0x10) {
                 CfCamEventElem* e = &self->tab0.elems[cnt0];
                 e->x0 = r6->x;
@@ -1396,8 +1396,8 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                     self->tab0.baseY = r6->y;
                     self->tab0.baseZ = r6->z;
                 }
-                self->field_0x1E2 = cnt0 + 1;
-                self->field_0x1F0 = (f32)id;
+                self->tab0.count = cnt0 + 1;
+                self->tab0.field_0x174 = (f32)id;
             }
             s16 cnt1 = self->shake[0].field_0x166;
             if (cnt1 < 0x10) {
@@ -1457,7 +1457,7 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
         else
             out.z = PSVECMag(d);
 
-        s16 cnt0 = self->field_0x1E2;
+        s16 cnt0 = self->tab0.count;
         if (cnt0 < 0x10) {
             CfCamEventElem* e = &self->tab0.elems[cnt0];
             e->x0 = r6->x;
@@ -1471,8 +1471,8 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                 self->tab0.baseY = r6->y;
                 self->tab0.baseZ = r6->z;
             }
-            self->field_0x1E2 = cnt0 + 1;
-            self->field_0x1F0 = (f32)id;
+            self->tab0.count = cnt0 + 1;
+            self->tab0.field_0x174 = (f32)id;
         }
         s16 cnt1 = self->shake[0].field_0x166;
         if (cnt1 < 0x10) {
@@ -1549,7 +1549,7 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                 t1.y = r6->y;
                 t1.z = r6->z;
             }
-            s16 cnt0 = self->field_0x1E2;
+            s16 cnt0 = self->tab0.count;
             if (cnt0 < 0x10) {
                 CfCamEventElem* e = &self->tab0.elems[cnt0];
                 e->x0 = t0.x;
@@ -1563,8 +1563,8 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
                     self->tab0.baseY = t0.y;
                     self->tab0.baseZ = t0.z;
                 }
-                self->field_0x1E2 = cnt0 + 1;
-                self->field_0x1F0 = (f32)id;
+                self->tab0.count = cnt0 + 1;
+                self->tab0.field_0x174 = (f32)id;
             }
             s16 cnt1 = self->shake[0].field_0x166;
             if (cnt1 < 0x10) {
@@ -1613,8 +1613,8 @@ void func_80078D08(CfCamEventManager* self, int add, ml::CVec3* p5, ml::CVec3* r
 // the gap reaches PI. Written inline in both branches below (retail keeps two
 // copies of the loop).
 void func_80079B34(CfCamEventManager* self) {
-    self->field_0x1DE = 1;
-    self->field_0x1DF = 0;
+    self->tab0.flag_active = 1;
+    self->tab0.field_0x163 = 0;
 
     // Whether the global cam manager is inside its busy frame range.
     int busy = 0;
@@ -1696,14 +1696,16 @@ void func_80079D6C(f32 step, CfCamEventShakeElem* e) {
 
 // True while any of three "active" flags are set on the manager.
 // NOTE: retail materializes the sub pointer (addi r3,r3,0x1f4) and keeps the
-// three checks branchy; Wii/1.1 -O4,p folds the addi into the displacements
-// and normalizes the tail return to the neg/or/rlwinm bool idiom (same
-// version wall as func_8007560C's two-cmpi range check).
+// three checks branchy with separate return blocks. The constant-bounds
+// indexed loop reproduces the branchy unrolled shape byte-for-byte except
+// the base addi (Wii/1.1 -O4,p folds &shake[0] into the load displacements:
+// lbz 0x356/0x4CE from this instead of addi + lbz 0x162/0x2da). Direct
+// if-return forms merge the final check into the neg/or/rlwinm bool idiom.
 bool func_80079DBC(CfCamEventManager* manager) {
-    if (manager->field_0x1DE != 0) return true;
-    CfCamEventShakeUnit* sub = &manager->shake[0];
-    if (sub->field_0x162 != 0) return true;
-    if (sub[1].field_0x162 != 0) return true;
+    if (manager->tab0.flag_active != 0) return true;
+    for (int i = 0; i < 2; i++) {
+        if (manager->shake[i].field_0x162 != 0) return true;
+    }
     return false;
 }
 
@@ -1726,7 +1728,7 @@ int func_80079E04(CfCamEventManager* self) {
     if (val <= 0.0f) return 0;
 
     int result = 0;
-    if (self->field_0x1DE != 0) {
+    if (self->tab0.flag_active != 0) {
         // r31 = the unit-1 active flag (0x4CE); survives to the tail call.
         int flag = (self->shake[1].field_0x162 != 0);
 
@@ -1744,7 +1746,7 @@ int func_80079E04(CfCamEventManager* self) {
         func_80074F4C((CfCamShakeState*)&self->shake[1], 0);
 
         // Busy word: either the manager's own flag or unit 0's finish flag.
-        result = (self->shake[0].field_0x164 != 0) || (self->field_0x1E0 != 0);
+        result = (self->shake[0].field_0x164 != 0) || (self->tab0.flag_finish != 0);
 
         CfCamAdvObj* adv = (CfCamAdvObj*)dyn;
         s16 state = self->field_0x3E;

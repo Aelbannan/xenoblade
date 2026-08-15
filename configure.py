@@ -494,7 +494,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplNpc.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplMove.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplEne.cpp"),
-            Object(NonMatching, "kyoshin/cf/CtrlAct.cpp"),
+            Object(NonMatching, "kyoshin/cf/CtrlAct.cpp", mw_version="GC/3.0a5.2"),  # retail store-order scheduling (stfs stays between the stb pairs) only matches under GC/3.0a5.2; Wii/1.1 hoists the stfs to the front
             Object(NonMatching, "kyoshin/cf/CBattleManager.cpp"),
             Object(NonMatching, "kyoshin/cf/code_800F42AC.cpp"),
             Object(NonMatching, "kyoshin/cf/CfObjectEnumList.cpp"),
@@ -514,7 +514,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/CQuestWindow.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/CSystemWindow.cpp"),
             Object(NonMatching, "kyoshin/CSysWinSelect.cpp"),
-            Object(NonMatching, "kyoshin/CTagProcessor.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/CTagProcessor.cpp"),
             Object(NonMatching, "kyoshin/CTalkWindow.cpp"),
             Object(NonMatching, "kyoshin/CUIBattleManager.cpp"),
             Object(NonMatching, "kyoshin/CUICfManager.cpp"),

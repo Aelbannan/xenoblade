@@ -24,15 +24,19 @@ CScnItemId::~CScnItemId() {
 // the id list is already occupied.
 // ===========================================================================
 CScnItemId* __ct__804820F8(CScnItemIdHost* self, u32 value, const char* name) {
+    CScnItemId* item;
     if (func_8048C5B8(self->mPool, 5) == 0) {
         return 0;
     }
 
     // The id list (kind 5) must be empty before a new id item can be created.
     CScnItemIdListSlot* slot = (CScnItemIdListSlot*)func_8048C698(self->mPool, 5);
-    CScnItemIdNode* anchor = slot->mAnchor;
-    u32 count = 0;
-    CScnItemIdNode* node = anchor->next;
+    CScnItemIdNode* node;
+    u32 count;
+    CScnItemIdNode* anchor;
+    anchor = slot->mAnchor;
+    count = 0;
+    node = anchor->next;
     while (node != anchor) {
         node = node->next;
         count++;
@@ -41,16 +45,16 @@ CScnItemId* __ct__804820F8(CScnItemIdHost* self, u32 value, const char* name) {
         return 0;
     }
 
-    CScnItemId* item;
     if (name != NULL) {
         item = (CScnItemId*)mtl::MemManager::allocate(0x54, func_80496018(self));
         if (item != NULL) {
             // Retail does not default-construct the FixStr before
             // getNoPathExtName fills it (no ctor call in the retail body); the
-            // pointer local keeps the buffer address in one saved register.
+            // pointer is declared AFTER the call so the buffer address reuses
+            // `name`'s saved register instead of extending liveness backward.
             u8 nameBuf[0x44];
+            ml::CPathUtil::getNoPathExtName(*(ml::FixStr<64>*)nameBuf, name);
             ml::FixStr<64>* localName = (ml::FixStr<64>*)nameBuf;
-            ml::CPathUtil::getNoPathExtName(*localName, name);
 
             item->mParent = self;
             item->mType = 5;

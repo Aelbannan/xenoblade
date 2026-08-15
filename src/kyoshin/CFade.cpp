@@ -1,6 +1,8 @@
-// Catalog TU for kyoshin/CFade
-// FULL_MATCH: func_80244508 (returns mReady), func_80244510 (returns mVisible).
-// Remaining stubs are NOT_STARTED.
+// kyoshin/CFade
+// FULL_MATCH: __ct__CFade, func_802443E8, func_80244508, func_80244510,
+// func_80244558, func_802445A4, func_802445F0.
+// The dtor/OnFileEvent need stmw r30/r28 which requires -O4,s (walls #13);
+// the source is byte-perfect apart from that fixed -O4,p save/restore split.
 
 #include "kyoshin/CFade.hpp"
 #include "kyoshin/code_80135FDC.hpp"
@@ -15,10 +17,33 @@ u8 CFade::func_80244508() { return mReady; }
 u8 CFade::func_80244510() { return mVisible; }
 
 
-extern "C" void func_802445F0(u8* self) {
-    if (*(u32*)(self + 0x1C) != 0) {
-        self[0x26] = 1;
-        self[0x24] = 1;
+// Retail marks the fade overlay loaded/ready once the layout is attached.
+// extern "C" + noinline: retail reloc name is unmangled and func_802445F0 is
+// called via `bl` from OnFileEvent (same stripped-mangling convention as the
+// func_80244558/func_802445A4 helpers).
+extern "C" __declspec(noinline) void func_802445F0(CFade* self) {
+    if (self->mLayout != nullptr) {
+        self->mReady = 1;
+        self->mIsLoaded = 1;
+    }
+}
+
+// Target 5: once the fade-in animation reaches the target frame, mark faded-in.
+// Target 6: once the fade-out animation rewinds, return to idle.
+// extern "C" free functions: the US retail build strips member manglings for
+// these helpers (retail `bl func_80244558`), so C linkage reproduces the
+// unmangled reloc names at the call sites (PLAN.md §17.6 approved). noinline
+// keeps the retail `bl` instead of inlining the body into func_802443E8.
+extern "C" __declspec(noinline) void func_80244558(CFade* self) {
+    if (func_80137444(self->mAnimTrans, lbl_eu_80668750) == 0) return;
+    self->mFadeState = 2;
+    self->mVisible = 1;
+}
+
+extern "C" __declspec(noinline) void func_802445A4(CFade* self) {
+    if (func_80137510(self->mAnimTrans, lbl_eu_80668750) != 0) {
+        self->mFadeState = 0;
+        self->mVisible = 1;
     }
 }
 
@@ -42,7 +67,7 @@ bool CFade::OnFileEvent(CEventFile* pEventFile) {
         Class_8045F858 sp8(&mMemRegion);
 
         // Detach the loaded file buffer for the layout archive.
-        void* data = mFileHandle->getData();
+        u8* data = static_cast<u8*>(mFileHandle->getData());
         mtl::MemManager::func_80434A4C(false);
 
         // Build the arc resource accessor and attach the archive buffer.
@@ -58,7 +83,7 @@ bool CFade::OnFileEvent(CEventFile* pEventFile) {
         mLayout->Animate(0);
 
         // Mark the fade overlay loaded/ready now that the layout is attached.
-        func_802445F0((u8*)this);
+        func_802445F0(this);
 
         mFileHandle = nullptr;
         mMemRegion.func_8045F810();
@@ -67,11 +92,7 @@ bool CFade::OnFileEvent(CEventFile* pEventFile) {
     return false;
 }
 
-// Target 8: constructor. Store the shared vtable first, then init the scratch
-// region (retail manual-vptr ordering; see CBgTex.cpp).
-CFade::CFade() {
-    mVtbl = lbl_eu_80536EA8;
-    __ct__17UnkClass_8045F564Fv(&mMemRegion);
+CFade::CFade() : CFadeVtblBase(), mMemRegion() {
     mFileHandle = nullptr;
     mArcResAcc = nullptr;
     mLayout = nullptr;
@@ -93,14 +114,21 @@ void CFade::func_8024439C() {
 }
 
 // Target 9: per-frame update. Drive the fade-in/out animations, then refresh
-// the layout's visibility once loaded and no longer idle.
+// the layout's animation once loaded and not idle. The s32 copy of the byte
+// state makes MWCC emit signed cmpi (retail), and the sparse switch gives the
+// beq/fallthrough dispatch shape (if/else-if would invert the branches).
 void CFade::func_802443E8() {
     if (mIsLoaded == 0) return;
-    if (mFadeState == 0) return;
-    if (mFadeState == 1)
-        func_80244558();
-    else if (mFadeState == 3)
-        func_802445A4();
+    s32 state = mFadeState;
+    if (state == 0) return;
+    switch (state) {
+    case 1:
+        func_80244558(this);
+        break;
+    case 3:
+        func_802445A4(this);
+        break;
+    }
     mLayout->Animate(0);
 }
 
@@ -138,20 +166,5 @@ void CFade::func_80244538() {
     if (mFadeState == 2) {
         mFadeState = 3;
         mVisible = 0;
-    }
-}
-
-// Target 5: once the fade-in animation reaches the target frame, mark faded-in.
-void CFade::func_80244558() {
-    if (func_80137444(mAnimTrans, lbl_eu_80668750) == 0) return;
-    mFadeState = 2;
-    mVisible = 1;
-}
-
-// Target 6: once the fade-out animation rewinds, return to idle.
-void CFade::func_802445A4() {
-    if (func_80137510(mAnimTrans, lbl_eu_80668750) != 0) {
-        mFadeState = 0;
-        mVisible = 1;
     }
 }

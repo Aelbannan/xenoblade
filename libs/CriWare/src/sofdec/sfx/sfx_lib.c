@@ -71,31 +71,37 @@ void SFX_SetErrFn(void (*fn)(u32, const char*), u32 arg) {
     lbl_eu_80619C10.error_arg = arg;
 }
 
-SFXHandleState* SFX_Create(u32 width, u32 height) {
-    SFXHandlePoolEntry* hn;
+/* Walk the handle pool for a free slot; returns the slot pointer or NULL.
+ * Inlined by MWCC into SFX_Create (retail shows the loop inlined with a
+ * `bne next; b found` exit shape, which the `return p` form reproduces). */
+static inline SFXHandlePoolEntry* SFX_FindFreeHandle(void) {
     SFXHandlePoolEntry* p;
-    u32 count;
-    void* zmv;
-    void* alp;
+    s32 count;
 
-    /* Find a free handle slot in the pool. */
-    hn = NULL;
     p = lbl_eu_80619C10.handle;
     count = lbl_eu_80619C10.max_handles;
     while (count > 0) {
         if (p->active == 0) {
-            hn = p;
-            break;
+            return p;
         }
         count--;
         p++;
     }
+    return NULL;
+}
+
+SFXHandleState* SFX_Create(u32 width, s32 height) {
+    SFXHandlePoolEntry* hn;
+    void* zmv;
+    void* alp;
+
+    hn = SFX_FindFreeHandle();
     if (hn == NULL) {
-        return NULL;
+        return (SFXHandleState*)hn;
     }
 
     /* The work buffer size must be at least 0x301F bytes. */
-    if ((s64)(s32)height < 12319) {
+    if ((s64)height < 12319) {
         lbl_eu_80619C10.error_count++;
         if (lbl_eu_80619C10.error_fn) {
             lbl_eu_80619C10.error_fn(lbl_eu_80619C10.error_arg,

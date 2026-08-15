@@ -3,6 +3,7 @@
 #include <types.h>
 
 #include "kyoshin/action/CActParamData.hpp"
+#include "monolib/math/CVec3.hpp"  // ml::CVec3 for func_80053490 (same-TU helper)
 
 // Full object layout for C-linkage accessors
 struct CActParamAnimFull {

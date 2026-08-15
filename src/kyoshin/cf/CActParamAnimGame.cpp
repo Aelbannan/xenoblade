@@ -86,7 +86,6 @@ f32 func_80053958();
 bool func_8004B354(void*, const ml::CVec3*);
 bool func_8004B52C(void*, f32);
 u32 func_804BE348(void*, void*, u32, u32, u32);
-u32 func_804BE398(void*, u32, u32, u32);
 u32 func_804BE5A4(u32, u32);
 u32 func_804BE4AC(void);
 int func_804BE470(void*, void*, void*, void*, void*, f32, f32);
@@ -94,8 +93,6 @@ int func_804BE53C(void*, u32);
 int func_804BE5A8(void*, u32, u32, u32);
 int func_804BE604(u32);
 void* func_804BE520(int);
-void func_804BE4B4(void*, u32);
-void func_804BE4E0(void*, u32);
 void* func_804BE50C(u32);
 u32 getTargetFramerate__9CDeviceVIFv(void);
 void func_804876E4(void*, void*);
@@ -109,7 +106,6 @@ u32 func_800822F4__Q22cf13CfGameManagerFv(void);
 int func_80082694__Q22cf13CfGameManagerFv(int);
 void func_8008269C__Q22cf13CfGameManagerFv(int, int);
 void func_800826F0__Q22cf13CfGameManagerFv(int);
-u32 func_804BD94C(void*, void*, u32, u32, u32, u32);
 void func_804B0B54(void*, const ml::CVec3*);
 void func_804B1130(void*, void*, void*, void*, void*);
 s8 lbl_eu_80663D64;
@@ -125,9 +121,13 @@ ml::CVec3 zero__Q22ml5CVec3;
 }
 
 // func_804BE398's retail ABI passes two FP args (f1, f2) after the four GPR
-// args; the local extern "C" decl (4 GPR args) is shared with the
-// already-matched func_8005BC14 4-arg call site, so 6-arg calls here cast.
-typedef u32 (*BE398Fn)(void*, u32, u32, u32, f32, f32);
+// args; the header now owns the extern "C" decl (6 GPR+FP args), and the
+// already-matched func_8005BC14 4-arg call site casts to a 4-arg fn type.
+typedef int (*BE398Fn)(void*, u32, u32, u32, f32, f32);
+typedef int (*BE398Fn4)(void*, u32, u32, u32);
+// func_804BD94C (11-arg; header-owned extern "C") cast helpers.
+typedef u32 (*BD94CFn)(void*, void*, u32, u32, u32, u32, f32, f32, f32, f32, f32);
+typedef u32 (*BD94CFn6)(void*, void*, u32, u32, u32, u32);
 
 // Collision-query result object returned by func_804BE520 / func_804BE50C:
 // position triple with the height at +4.
@@ -871,10 +871,10 @@ ground:
                             accel.z = v2c0.z - target2.z;
                         }
                     }
-                    func_804BD94C(&target2, &accel, self->filter4A8, 0, (self->flags0C & 0x100) != 0, 0);
+                    ((BD94CFn6)func_804BD94C)(&target2, &accel, self->filter4A8, 0, (self->flags0C & 0x100) != 0, 0);
                 }
                 target2.y += 0.9f;
-                if (func_804BE398(&target2, self->filter4A8, 0, 0) != 0) {
+                if (((BE398Fn4)func_804BE398)(&target2, self->filter4A8, 0, 0) != 0) {
                     void* e = func_804BE50C(0);
                     target2.y -= 1.4f - (*(f32*)((u8*)e + 0x4) - target2.y);
                 }
@@ -1270,12 +1270,6 @@ bool func_8005E7C4(cf::CActParamAnimGame* self) {
 }
 
 void func_8005E990(){}
-
-// Full 11-arg ABI of func_804BD94C (6 GPR + 5 FP args, see
-// CfResPcImpl.hpp); the 6-arg decl in the extern "C" block is shared with
-// func_8005BC14's 4-arg call sites, so this cast is used for the 11-arg
-// calls in func_8005EEB4.
-typedef int (*BD94CFn)(void*, void*, u32, u32, u32, u32, f32, f32, f32, f32, f32);
 
 // Obstacle/facing update: adjusts the move vector against the linked
 // region's probe results and refines it via the two scan loops, then runs
@@ -1732,7 +1726,8 @@ void cf::CActParamAnimGame::func_80060268() {
     CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
     CActParamAnimGameVt4C* region = (CActParamAnimGameVt4C*)self->region4E8;
     if (region == 0) return;
-    region->vC4(self->f444);
+    f32 value = self->f444;
+    region->vC4(value);
 }
 
 extern "C" bool func_80060290(void* r3) {

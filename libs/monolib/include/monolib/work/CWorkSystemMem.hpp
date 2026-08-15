@@ -27,8 +27,8 @@ private:
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Retail SDA singleton (getHandle / ctor / dtor reloc name).
-extern "C" CWorkSystemMem* lbl_eu_80665620;
+extern "C" CWorkSystemMem* lbl_eu_80665620[2];  // 8-byte sbss; word 0 = singleton
 
-// Retail CWorkSystemMem vtable (0x8057BAA8, outside this .text-only split -
-// retail ctor stores it explicitly; no vtable/RTTI data lives in this TU).
-extern "C" char lbl_eu_8056BAA8[];
+// Retail CWorkSystemMem vtable (0x8056BAA8) + RTTI base list
+// (0x8056BB48): defined explicitly in CWorkSystemMem.cpp (blob
+// monolibdata1d dissolve); retail ctor stores it explicitly.

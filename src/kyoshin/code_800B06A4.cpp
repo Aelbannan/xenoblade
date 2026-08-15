@@ -150,7 +150,10 @@ void FactoryEvent4__Q22cf13IFactoryEventFv(){}
 void UnkClass_805764CC::set_u32_00(u32 val){*(u32*)((u8*)this + 0x0) = val;}
 void copy_int_ptr(int* dst, int* src){*dst = *src;}
 void init_182C(){}
-void __dt__800B183C(){}
+#pragma push
+#pragma auto_inline off
+void __dt__800B183C(void* self){(void)self;}
+#pragma pop
 void __dt__800B18CC(){}
 void init_dispatchTarget_5(){}
 // Target 1: func_800B93AC
@@ -187,7 +190,16 @@ check:
 
 // Target: us-800b23c0 - func_800B1AF4: run the list/state init via
 // func_800B72DC, then clear the 0x100 mask bit via func_800B4278.
-extern "C" void func_800B72DC(void* self);
+extern "C" void* func_800B6CA0();
+extern "C" void func_800B137C(void* self, void* arg, int count);
+// Target: us-800b7bfc - fetch the node list, run the teardown dtor, then
+// pass (list, handle, 0x14) to the binder helper. func_80061FFC is declared
+// via the TU-wide extern (see line 59 family).
+extern "C" void func_800B72DC(void* self) {
+    void* obj = func_800B6CA0();
+    __dt__800B183C(obj);
+    func_800B137C(obj, (void*)func_80061FFC(), 0x14);
+}
 extern "C" void func_800B4278(void* object, u32 mask);
 
 extern "C" void func_800B1AF4(void* self) {
@@ -613,7 +625,11 @@ extern "C" reslist<cf::CfObject>* func_800B6CC4() {
     func_800B4400(obj);
     return &obj->field_0xC28;
 }
-void init_6CF8(){}
+extern "C" void* func_800B6CF8(void* arg) {
+    UnkClass_805764CC* obj = func_800B07E8();
+    func_800B44A0(obj, arg);
+    return &obj->field_0xC28;
+}
 void* func_800B6D3C(void*);
 void fwd_6DD0_body(){}
 void init_6EC0(){}
@@ -746,7 +762,11 @@ extern "C" {
     extern int func_800B64AC(void* p);
 }
 // Target: us-800b10b4 - func_800B07E8 (singleton sinit: init once, then return &singleton)
-DECOMP_DONT_INLINE UnkClass_805764CC* func_800B07E8() {
+// auto_inline off: DECOMP_DONT_INLINE is empty under GC/3.0a5.2 (__MWERKS__ 0x4199)
+// so the -ipa pass folds this body into func_800B6CC4/6CF8's spans.
+#pragma push
+#pragma auto_inline off
+UnkClass_805764CC* func_800B07E8() {
     if (lbl_eu_80663EE8 == 0) {
         __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
         __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
@@ -754,6 +774,7 @@ DECOMP_DONT_INLINE UnkClass_805764CC* func_800B07E8() {
     }
     return (UnkClass_805764CC*)lbl_eu_80572CD4;
 }
+#pragma pop
 #pragma inline
 // Target: us-800b1160 - func_800B0894 (allocate + zero-fill array of count*0xc, store at +0x14/+0x18)
 extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, unsigned long count) {
@@ -974,7 +995,12 @@ void init_8D5C(){}
 void init_8FC4(){}
 void sub_dispatchInit_1(){func_800B07E8(); ((void(*)())init_dispatchTarget_1)();}
 void sub_dispatchInit_2(){func_800B07E8(); ((void(*)())init_dispatchTarget_2)();}
-void init_92FC(){}
+extern "C" void func_800B8524(void* singleton, void* self, void* other);
+// Target: us-800b9c18 - pass the singleton, self and arg to the pair helper.
+extern "C" void func_800B92FC(void* self, void* arg) {
+    UnkClass_805764CC* obj = func_800B07E8();
+    func_800B8524(obj, self, arg);
+}
 void sub_dispatchInit_3(){func_800B07E8(); ((void(*)())init_dispatchTarget_3)();}
 void sub_dispatchInit_4(){func_800B07E8(); ((void(*)())init_dispatchTarget_4)();}
 void sub_dispatchInit_5(){func_800B07E8(); ((void(*)())init_dispatchTarget_5)();}

@@ -3,7 +3,115 @@
 
 #include <harness_catalog.h>
 
-void MPV_Init() {}
+s32 mpvlib_ChkFatal(void);
+void mpvlib_InitClip0255(void);
+
+/* Global Sofdec work area at 0x80602B80.  The B88 config block that the rest
+ * of this TU addresses via lbl_eu_80602B88 is the field_0x08 member. */
+struct MPVConfig {
+    u8  field_0x00[0x48];   /* 0x00..0x47 (B80+0x08..0x4f) */
+    u32 field_0x48;         /* 0x48: cache-flush flag (bit 0x10000000) */
+    u32 field_0x4c;         /* 0x4c: handle block base */
+    u32 field_0x50;         /* 0x50: vlc block base */
+    u32 field_0x54;         /* 0x54: handle count */
+    u32 field_0x58;         /* 0x58: aligned byte size */
+    u8  field_0x5c[4];      /* 0x5c..0x5f */
+    u8  field_0x60[0x100];  /* 0x60..0x15f: default init table */
+};
+
+struct MPVWork {
+    u32 field_0x00;         /* 0x00 */
+    u32 field_0x04;         /* 0x04: version string pointer */
+    struct MPVConfig config; /* 0x08: B88 config block */
+    u8  field_0x168[0x300]; /* 0x168..0x467 */
+    u32 field_0x468;        /* 0x468: clip table pointer */
+};
+
+extern struct MPVWork lbl_eu_80602B80;
+extern u8 lbl_eu_8051C200[];
+extern u8 lbl_eu_8051C258[];
+
+extern void MPVERR_Init(void);
+extern void MPVHDEC_Init(void);
+extern void MPVFRM_Init(void);
+extern void MPVSL_Init(void);
+extern void MPVVLC_Init(void* a, void* b);
+extern void MPVBDEC_Init(void* handle);
+extern void MPVUMC_Init(void);
+extern void MPVCDEC_Init(void* self);
+extern void MPVM2V_Init(void);
+extern void UTY_MemsetDword(u32* dst, u32 val, u32 n);
+extern void UTY_MemcpyDword(u32* dst, const u32* src, u32 n);
+void MEM_Copy(void* d, const void* s, u32 n);
+
+extern void MPVM2V_Destroy(void* self);
+extern void MPVSL_Destroy(void* self);
+extern s32 MPVERR_SetCode(s32 val, u32 err_code);
+
+s32 MPV_Init(s32 a, s32 b) {
+    s32 err;
+    u32 aligned;
+    u8* vlc;
+    u8* blk;
+    s32 i;
+
+    lbl_eu_80602B80.field_0x04 = (u32)lbl_eu_8051C200;
+    err = mpvlib_ChkFatal();
+    if (err != 0) {
+        /* fatal: the version-mismatch code (0xff03ff05) returns the fatal
+         * code unchanged either way */
+        if ((u32)(err + 0xfd0000) == 0xff05) {
+            return err;
+        }
+        return err;
+    }
+
+    aligned = (u32)(b + 0x1f) & ~0x1f;
+    UTY_MemsetDword((u32*)aligned, 0, (u32)((a << 13) + 0x2000) >> 2);
+    blk = (u8*)aligned + a * 0xdc0;
+    vlc = blk + 0x420;
+    if (lbl_eu_80602B80.config.field_0x48 & 0x10000000) {
+        /* Retail cache-invalidates + dcbz_l's 0xdf blocks (dcbi/dcbz_l pair);
+         * neither instruction is emittable in GC/3.0a5.2 high-level C (KB
+         * dcbi gap), so two __dcbz keep the countdown-loop shape; both cache
+         * opcodes differ (documented ceiling, MWCC_REFERENCE MPV_Finish). */
+        for (i = 0; i < 0xdf; i++) {
+            __dcbz(vlc, i * 0x20);
+            __dcbz(vlc, i * 0x20);
+        }
+    }
+    MEM_Copy(&lbl_eu_80602B80.config, lbl_eu_8051C258, 0x40);
+    lbl_eu_80602B80.config.field_0x4c = (u32)blk;
+    lbl_eu_80602B80.config.field_0x50 = (u32)vlc;
+    lbl_eu_80602B80.config.field_0x54 = (u32)a;
+    lbl_eu_80602B80.config.field_0x58 = aligned;
+    MPVERR_Init();
+    MPVHDEC_Init();
+    MPVFRM_Init();
+    MPVSL_Init();
+    MPVVLC_Init(vlc + 0x1230, vlc);
+    MPVBDEC_Init(vlc);
+    MPVUMC_Init();
+    MPVCDEC_Init(vlc);
+    mpvlib_InitClip0255();
+    {
+        u8* clip = vlc + 0x17e0;
+        if (clip != NULL) {
+            UTY_MemcpyDword((u32*)clip, (u32*)lbl_eu_80602B80.config.field_0x60, 0x100);
+            lbl_eu_80602B80.field_0x468 = (u32)(vlc + 0x1960);
+        }
+    }
+    {
+        s32 n = lbl_eu_80602B80.config.field_0x54;
+        u8* base = (u8*)lbl_eu_80602B80.config.field_0x58;
+        for (i = 0; i < n; i++) {
+            *(s32*)(base + 0xb08) = 1;
+            base += 0xdc0;
+        }
+    }
+    MPVM2V_Init();
+    return 0;
+}
 
 extern s32 MPVVLC_IsVlcSizErr(void);
 extern s32 criware_803A59B0(void);
@@ -252,10 +360,15 @@ s32 MPV_Destroy(void* self) {
     }
     MPVM2V_Destroy(self);
     MPVSL_Destroy(self);
+    // Retail cache-invalidates 0x6e blocks (dcbi r31,r3 countdown). MWCC
+    // 3.0a5.2 has no inline __dcbi intrinsic (it compiles __dcbi() to an
+    // external call, KB ref 04331c483d), so __dcbz - the closest real
+    // intrinsic - keeps the countdown-loop shape; only the dcbi/dcbz
+    // opcode differs (documented ceiling, MWCC_REFERENCE MPV_Finish).
     if (lbl_eu_80602B88[0x48/4] & 0x10000000) {
         s32 i;
         for (i = 0; i < 0x6e; i++) {
-            __dcbi(self, i * 0x20);
+            __dcbz(self, i * 0x20);
         }
     }
     *(s32*)((u8*)self + 0xb08) = 1;

@@ -1,6 +1,7 @@
 #include "monolib/work.hpp"
 
-bool CProcessMan::sIsInitialized = false;
+// Retail sbss flag lbl_eu_80665628 (8-byte object; byte 0 = sIsInitialized) - blob monolibdata1d dissolve
+u8 lbl_eu_80665628[8];
 
 TChildListHeader<CProcess> CProcessMan::sFreeProcessList;
 TChildListHeader<CProcess> CProcessMan::sRootProcessList;
@@ -97,15 +98,15 @@ void CProcess::Remove() {
 }
 
 void CProcessMan::Init() {
-    if (!sIsInitialized) {
-        sIsInitialized = true;
+    if (!lbl_eu_80665628[0]) {
+        lbl_eu_80665628[0] = true;
     }
 }
 
 void CProcessMan::Term() {
-    if (sIsInitialized == true) {
+    if (lbl_eu_80665628[0] == true) {
         Reset();
-        sIsInitialized = false;
+        lbl_eu_80665628[0] = false;
     }
 }
 

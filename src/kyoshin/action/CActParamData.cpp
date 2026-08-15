@@ -493,14 +493,15 @@ extern "C" void func_800560B4(void* self) { ((CActVt98*)self)->m36(); }
 extern "C" void func_800560C4(void* self) { ((CActVt88*)self)->m32(); }
 extern "C" void func_800560D4(void* self) { ((CActVt8C*)self)->m33(); }
 extern "C" void func_800550E8() {}
-// us-80057a94: if (flags & 8) tail-call func_800550E8(a, b, c, 0); else 0.
+// us-80057a94: if (flags & 8) call func_800550E8(a, b, c, 0); always return 0.
+// Goto-gate keeps the call block out-of-line with li r3, 0 on both paths.
 extern "C" int func_8005742C(u32 flags, void* a, void* b, void* c) {
     extern int func_800550E8(void*, void*, void*, int);
-    int r = 0;
-    if (flags & 8) {
-        r = func_800550E8(a, b, c, 0);
-    }
-    return r;
+    if (flags & 8) goto call;
+    return 0;
+call:
+    func_800550E8(a, b, c, 0);
+    return 0;
 }
 extern "C" void func_80055700() {}
 extern "C" void func_80055AC4() {}

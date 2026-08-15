@@ -107,7 +107,7 @@ live-arg liveness forces the default into r0. (Same family as the WPAD
   right-minus-left; the retail subtraction direction (left-minus-right) is a
   fixed register-operand assignment (`subf r3,r4,r0` vs retail `subf r3,r0,r4`
   — probed 12+ shapes, 2 compiler versions, `-ipa` on/off, `scheduling`
-  pragma: identical). The register-renaming witness CANNOT certify this
+  pragma: identical). 2026-08 sweep (worker agent): ~70 source shapes × Wii/1.1 + GC/3.0a5.2/a3.4/a3.3 + Wii/1.3/1.6/1.7, `-O4,s`/`-O4,p`/`-O3`/`-O2`/`-ipa off`, member-function (this-call) forms, preloaded minuend/subtrahend temps, compound `d -= *a`, ternaries (`? 0 : 1` / `? -1 : 0`), `-(x==y)`, `!(x==y)`, bool/u8/s32 casts — NO shape emits retail's exact `subf r3,r0,r4; addic r0,r3,-1; subfe r3,r0,r3`. The -O4,p `==` idiom (`-(*b==*a)` / `*b==*a?0:-1`) DOES emit the exact retail prefix `lwz r4,0(r4); lwz r0,0(r3); subf r3,r0,r4` but always finishes `subf r0,r4,r0; (or|nor); srawi r3,r0,31` — never addic/subfe (all versions). -O4,s `== ? -1 : 0`/`-(==)` emits the == direction into dest r0 (`subf r0,r0,r4; addic r0,r0,-1; subfe r3,r0,r0`). The register-renaming witness CANNOT certify this
   residual: the subf RA/RB swap needs rho r0↔r4 but `addic r0,r3,-1` pins r0
   (gate-4 rho conflict), so FULL_MATCH is the only route and it is blocked
   by the fixed operand assignment (open item, us-801281a4).
@@ -397,6 +397,18 @@ pad bytes (4 for 8-aligned slices, up to 31 for 32-aligned `.bss`). Those bytes
 are **linker-inserted inter-unit alignment**, not content, and they reproduce
 automatically when the neighbouring unit's section is aligned at link time. The
 original source never contained them.
+
+## Trailing no-op `self` guard reproduces an unused-r31 frame across a call (Wii/1.1)
+
+`void f(self, ptr) { if (ptr) deallocate(ptr); }` compiles to a leaf tail-call
+(no frame, `b deallocate`) — MWCC sees `self` dead across the call. Adding a
+semantic no-op after the call that references `self` (`if (self != NULL)
+return;` — the function returns anyway) keeps `this` live across the call, so
+MWCC emits the retail's frame (`stwu; mflr; stw r31; mr r31, r3; bl ...; lwz
+r31`) byte-for-byte. Verified on kyoshin/cf/CtrlRemote func_8009C980 (0.0% →
+100%): the retail saves r31 = self and never reads it — a fixed allocator
+artifact that only the live-range trick reproduces. Probed 12+ other shapes
+((void)self, empty if/else, do-while-break, explicit return) — all tail-call.
 
 **Antipatterns — do not add these to `libs/**` or `src/**`:**
 
@@ -3440,6 +3452,16 @@ The buffer-param builders hoist **all** `li`s before the first store.
 
   Without the pragma, Async/callback wrappers grow by ~convert size and the
   split goes over budget.
+- **`DECOMP_DONT_INLINE` is an empty macro under GC/3.0a5.2** (`__MWERKS__` 0x4199
+  < 0x4300 — see include/decomp.h), so a singleton-sinit marked with it is
+  still folded by `-ipa file` into every caller's span (kyoshin/code_800B06A4
+  func_800B07E8 inlined into func_800B6CC4/6CF8, turning each into a 0x70/0x80
+  span with the sinit's flag-check/ctor body). `__declspec(noinline)` is
+  rejected by GC/3.0a5.2 under `-pragma "cats off"` (illegal type qualifier).
+  The working lever is `#pragma push / #pragma auto_inline off / #pragma pop`
+  around the callee — restores the retail `bl` and both callers hit 100%.
+  Reusable: under GC/3.0a5.2, check DECOMP_DONT_INLINE'd callees for span
+  pollution before chasing the callers' codegen.
 - `NANDOpenClose`: keep `nandOpen` outlined with `#pragma dont_inline on` around
   it — `-ipa file` otherwise inlines it into every wrapper and blows the
   `0x510` split. Retail OpenClose has only the open/close family (no safe-open).
@@ -9766,6 +9788,14 @@ Members (all recorded open items, witness-gate rho):
 - `func_8018B130` (us-8018c6e4, CMenuShopSell): 0x800-byte struct-copy loop;
   retail saves `or r6=src` before `or r7=dst`, MWCC reverses. Invariant:
   local/order variants, memcpy form (emits a call).
+  **2026-08 sweep (~55 shapes total):** src-first moves ARE reachable, but
+  only when the SOURCE is the `this` pointer of a member `copyTo(dst)` form
+  (`d->x = this->x` with this=src=r3 emits `mr r6,r3; mr r7,r4`) — MWCC
+  always moves the `this`/arg1 pointer first, so a free `func(dst=r3,
+  src=r4)` can never emit the retail `or r6,r4,r4` first (r3's move
+  invariantly precedes). ABI registers (r3/r4) rule out witness
+  certification. Remaining angle: an original TU where the copy helper
+  receives (src, dst) in that order.
 - `CfObjectMove::CfObject_UnkVirtualFunc14/16` (us-800beb30/800beb80) — SOLVED
   FULL_MATCH (both, 100% byte-identical): three null-checked `stfs` to
   +0x388/+0x38C of the C4/C8/CC targets; the LAST block's value reuses r3
@@ -11123,3 +11153,33 @@ Session on snd_SoundThread, CChildListNode, g3d_scnproc, db_DbgPrintBase, snd_So
 - **Dropping weak dtors leaves benign dangling `.extabindex` ADDR32 relocs to the now-ABS symbols** (CChildListNode: 2 extra extab/etb entries; extab 0x20 vs retail 0x10). Harmless: data_match compares only DATA_SECTIONS (no extab), the values resolve to ABS literals, and elf2dol drops extab entirely. Not worth a tool change; note it when extab cleanliness ever matters.
 - **Template-class .data vtable orphan (CChildListNode):** `__declspec(novtable)` is ignored for template classes, so the 0xC `__vt__34TChildListHeader<...>` stays emitted — but it is fully orphaned (the ctor's vptr stores already reference the retail labels lbl_eu_8056BBA0/B0 by name; its only reloc is the dtor address which is itself dropped). `extern_data_sections=(".data",)` zeroes the section AND its .rela.data in one shot. The dropped weak dtors are defined STRONGLY in CProcess.o (21 Matching targets untouched).
 - **Magic-double pool renames for CScnFrame/g3d_resanmclr/g3d_scnproc:** each unit's remaining .sdata2 was exactly one compiler-generated pool (u32/u16->f32 2^52 double or the ScnLeaf mScale 1.0f). Single `pool_patterns` entry by content + `extern_data_sections=(".sdata2",)`; reloc names then match retail exactly (lbl_eu_8066ABE8 / lbl_eu_80669AD0 / lbl_eu_80669CF0).
+
+## kyoshin/CItemBoxGrid func_801C6840 (0x801C6840) — constant multi-return: switch form defeats branchless fold, reproduces two-block layout (FULL_MATCH)
+
+Category-byte duration getter: `(u32)(cat-4)<=4 || cat==2 → 30; cat==11 → 60; else 0` (0x3C, leaf). Retail layout: `lbz r3,0x2802(r3); subi r0,r3,4; cmpli r0,4; ble L30; cmpi r3,2; beq L30; cmpi r3,11; beq L60; b L0; L30: li r3,30; blr; L60: li r3,60; blr; L0: li r3,0; blr` — ALL constant returns as separate trailing li/blr blocks with an unconditional `b L0` before them.
+
+- **if-chain with `return 0` tail folds the last select:** `if ((u32)(cat-4)<=4) return 30; if (cat==2) return 30; if (cat==11) return 60; return 0;` (and the if/else-if `r=...; return r` variant) lowers the final `(cat==11) ? 60 : 0` to branchless arithmetic (`addi/subfic/nor/srawi/rlwinm`, 0x54 body) — 57.1%.
+- **switch reproduces retail byte-for-byte:** `switch (cat) { case 2: case 4: case 5: case 6: case 7: case 8: return 0x1e; case 11: return 0x3c; default: return 0; }` → identical layout, register coloring (cat stays in r3, no r4), the trailing `b L0`, and the shared L30 block. **100.0% FULL_MATCH**, 0 structural, 0 reg_swap. (Same lever class as func_8015403C in CArtsParam, but there the whole select folds even as a switch; the difference here is the multi-case + default structure.)
+- Prior wrong-shape trap: an earlier reconstruction with inverted range logic (`if ((u32)(cat-4) > 4) return 30;` + `r=0; if==2 r=30; elif==11 r=60; return r`) was semantically WRONG (cat==11 returned 30) yet still showed ~63% structural — always verify the retail branch targets, not just the shape.
+
+## Leading-constant expression shape flips scratch regalloc (CPassiveSkill func_80266930, FULL_MATCH 100%)
+
+`(u8)(slot + col*5 + (row-1)*25 + 1)` tail-calling a void setter left a fixed 5-instruction scratch rotation (37.5%: retail colors the row-1 chain r0, col*5 reuses r5, accumulator starts r4; MWCC colored row-1→r4 and col*5→r0 regardless of parenthesization/statement order). Preceding the whole sum with the constant term — `(u8)(1 + slot + col*5 + (row-1)*25)` — reorders MWCC's virtual-register birth so the coloring matches retail byte-for-byte: `addi r0,r4,-1; mulli r5,r5,5; mulli r0,r0,25; add r4,r6,r5; add r4,r4,r0; addi r0,r4,1; clrlwi r4,r0,24; b`. Same opcode graph, different birth order → 100% FULL_MATCH, no pragmas/macros. Lesson: when a pure scratch `reg_swap` rotation resists parenthesization and statement reordering, try moving a literal constant to the head of the left-associative sum.
+
+## kyoshin CfCamEventManager — uniform N-byte field shift ⇒ missing gap in a mid-struct table type (func_80079DBC layout fix)
+
+A whole TU (kyoshin/cf/CfCamEvent_1) compiled every `CfCamEventManager` field 4 bytes short of retail (`field_0x1DE` → 0x1DA, `shake[0]` → 0x1F0 vs retail 0x1F4). Root cause: `tab0` was declared as a 0x14C-byte `CfCamEventTable` (elems[16]@+0x00, base triplet directly at +0x140) but retail's table is a **full 0x178-byte shake state**: elems + **0x140..0x154 gap** + baseX/Y/Z@+0x154 + tail flags/counts/values@+0x160..+0x178 (`field_0x160` spline, `flag_active`@+0x162, `flag_finish`@+0x164, `count`@+0x166, …). The manager's "tail fields" (0x1DC..0x1F0) are just the state tail. Fix: keep `CfCamEventTable` at 0x160 (elems + gap + base, used by the shake-unit union) and give `tab0` its own 0x178 type with the tail members; the `shake[i].field_0x162` etc. accesses then line up with retail byte-for-byte (verified against retail ctor `stb 0x1DE/0x1E0/0x1E2` + func_80074F4C's `stw 0x154/0x158/0x15C`, `lha 0x166/0x168`, `lfs 0x170/0x174`). **Lesson: when every field in a TU is uniformly N bytes off, don't add N bytes of padding after the table — find the missing gap/tail INSIDE the table type; check sibling functions that view the same memory through another type (`CfCamShakeState` cast) for the true layout.**
+
+## Branchy multi-return flag chain: constant-bounds indexed loop defeats the bool-idiom tail merge (func_80079DBC, 0x48)
+
+`if (a) return true; if (b) return true; if (c) return true; return false;` (bool return) merges the FINAL if-return into the `neg/or/rlwinm` bool idiom in every MWCC (`-O2..-O4,p`, `-O4,s` → `subic/subfe`, Wii/1.1 + GC/3.0a5.2, `-ipa off`) — only the checks with code after them stay branchy. The shape that reproduces the retail's branchy structure (3× `lbz; cmpi; beq; li r3,1; blr` + trailing `li r3,0; blr`) is the **constant-bounds indexed loop**:
+
+```c
+if (manager->tab0.flag_active != 0) return true;
+for (int i = 0; i < 2; i++) {
+    if (manager->shake[i].field_0x162 != 0) return true;
+}
+return false;
+```
+
+`-O4,p` unrolls it into the exact two-check chain with the fall-through `li r3,0; blr`. Residual: retail materializes `addi r3,r3,0x1f4` for `&shake[0]` and loads `lbz 0x162(r3)/0x2da(r3)` from it; Wii/1.1 folds the base into the displacements (`lbz 0x356(r3)/0x4ce(r3)`) in every shape tried (sub local, `sub++`, `p += 0x178`, volatile reads, address-taken inline helper, `sub[i]` loop, `#pragma unroll`, `-ipa off`) — one instruction short of FULL_MATCH. A pointer-walk loop (`for (sub = &shake[0]; sub != &shake[2]; sub++)`) does NOT unroll (runtime `divwu` trip count). The local-default pattern (`bool r = false; if (c) r = true; return r;`) also keeps a branch but emits `beqlr` (branch-to-LR peephole) instead of retail's `beq` + separate `li r3,0; blr` block.

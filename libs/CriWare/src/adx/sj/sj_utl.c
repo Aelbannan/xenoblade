@@ -50,7 +50,7 @@ void* SJ_SearchTag(const u8** list, const char* tag, const char* tag2, u32* out)
         }
         if (tag2 != NULL && strncmp((const char*)p, tag2, 7) == 0)
             return NULL;
-        p = (u8*)((u32)sj_tag_hash((const char*)(p + 8)) + (u32)p + 16);
+        p = (u8*)(16 + ((u32)sj_tag_hash((const char*)(p + 8)) + (u32)p));
     }
     return (p < end) ? (void*)p : NULL;
 }

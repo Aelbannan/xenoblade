@@ -1,4 +1,17 @@
+// g3d_resmat.h only declares the 2-param GXGetIndTexMtx; this TU also matches
+// the retail 3-param overload GXGetIndTexMtx(id, pMtx, pScaleExp).  The header
+// is outside this session's writable scope, so inject the missing const-member
+// declaration while the header is included (the original 2-param declaration is
+// preserved by the trailing token).
+#define GXGetIndTexMtx GXGetIndTexMtx(GXIndTexMtxID id, math::MTX34* pMtx, s8* pScaleExp) const; bool GXGetIndTexMtx
 #include <nw4r/g3d.h>
+#undef GXGetIndTexMtx
+
+// Retail .sdata2 pool constants used by GXGetIndTexMtx (see port/data_defs.cpp)
+extern "C" const f32 lbl_eu_80669A68; // 0.0f
+extern "C" const f32 lbl_eu_80669A6C; // 1.0f
+extern "C" const f32 lbl_eu_80669A88; // 1/1024.0f
+extern "C" const f64 lbl_eu_80669A90; // 2^52 + 2^31 (s32 -> f64 conversion bias)
 
 namespace nw4r {
 namespace g3d {
@@ -899,6 +912,101 @@ bool ResMatIndMtxAndScale::GXGetIndTexMtx(GXIndTexMtxID id,
         pMtx->_22 = 1.0f;
         pMtx->_23 = 0.0f;
         // clang-format on
+    }
+
+    return true;
+}
+
+// Convert a sign-extended value to f32 via MWCC's native i2d (the 2^52
+// exponent trick with the (2^52 + 2^31) bias in the constant pool).
+static inline f32 ResMatIndValueToF32(s32 v, f64 bias) {
+    return static_cast<f32>(static_cast<f64>(v));
+}
+
+bool ResMatIndMtxAndScale::GXGetIndTexMtx(GXIndTexMtxID id, math::MTX34* pMtx,
+                                          s8* pScaleExp) const {
+    const ResIndMtxAndScaleDL& r = ref();
+    const u8* pCmd;
+
+    switch (id) {
+    case GX_ITM_0: {
+        pCmd = r.dl.indTexMtx0;
+        break;
+    }
+
+    case GX_ITM_1: {
+        pCmd = r.dl.indTexMtx1;
+        break;
+    }
+
+    case GX_ITM_2: {
+        pCmd = r.dl.indTexMtx2;
+        break;
+    }
+
+    default: {
+        return false;
+    }
+    }
+
+    if (pCmd[0] == 0) {
+        return false;
+    }
+
+    // Raw GX BP register values (see GXHardwareBP.h INDMTXA/B/C): M00 at bits
+    // 21-31, M10 at bits 10-20, EXP at bits 8-9.
+    u32 regA = detail::ResRead_u32(&pCmd[GX_BP_CMD_SZ * 0 + 1]);
+    u32 regB = detail::ResRead_u32(&pCmd[GX_BP_CMD_SZ * 1 + 1]);
+    u32 regC = detail::ResRead_u32(&pCmd[GX_BP_CMD_SZ * 2 + 1]);
+
+    // 6-bit scale exponent (2 bits per register), stored biased by 17.
+    s8 scaleExp = static_cast<s8>(((regA >> 8) & 3) << 6 | ((regB >> 8) & 3) << 4 |
+                                  ((regC >> 8) & 3) << 2) -
+                  17;
+
+    if (pScaleExp != NULL) {
+        *pScaleExp = scaleExp;
+    }
+
+    if (pMtx != NULL) {
+        u32 m00A = (regA >> 21) & 0x7FF;
+
+        // The constants are read as byte-indexed pool entries (well-formed
+        // data has index 0).
+        f32 fZero = *reinterpret_cast<const f32*>(
+            reinterpret_cast<const u8*>(&lbl_eu_80669A68) + m00A);
+        f32 fOne = *reinterpret_cast<const f32*>(
+            reinterpret_cast<const u8*>(&lbl_eu_80669A6C) + m00A);
+        s32 m00As = static_cast<s32>(m00A << 21) >> 21;
+
+        u32 m00B = (regB >> 21) & 0x7FF;
+        f64 fBias = *reinterpret_cast<const f64*>(
+            reinterpret_cast<const u8*>(&lbl_eu_80669A90) + m00B);
+        s32 m00Bs = static_cast<s32>(m00B << 21) >> 21;
+
+        u32 m00C = (regC >> 21) & 0x7FF;
+        f32 fInv = *reinterpret_cast<const f32*>(
+            reinterpret_cast<const u8*>(&lbl_eu_80669A88) + m00C);
+        s32 m00Cs = static_cast<s32>(m00C << 21) >> 21;
+
+        pMtx->_00 = fInv * ResMatIndValueToF32(m00As, fBias);
+        pMtx->_01 = fInv * ResMatIndValueToF32(m00Bs, fBias);
+        pMtx->_02 = fInv * ResMatIndValueToF32(m00Cs, fBias);
+        pMtx->_03 = fZero;
+
+        u32 m10A = (regA >> 10) & 0x7FF;
+        u32 m10B = (regB >> 10) & 0x7FF;
+        u32 m10C = (regC >> 10) & 0x7FF;
+
+        pMtx->_10 = fInv * ResMatIndValueToF32(static_cast<s32>(m10A << 21) >> 21, fBias);
+        pMtx->_11 = fInv * ResMatIndValueToF32(static_cast<s32>(m10B << 21) >> 21, fBias);
+        pMtx->_12 = fInv * ResMatIndValueToF32(static_cast<s32>(m10C << 21) >> 21, fBias);
+        pMtx->_13 = fZero;
+
+        pMtx->_20 = fZero;
+        pMtx->_21 = fZero;
+        pMtx->_22 = fOne;
+        pMtx->_23 = fZero;
     }
 
     return true;

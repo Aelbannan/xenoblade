@@ -3,6 +3,9 @@
 
 #include <types.h>
 
+#include "monolib/util/MemManager.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
+
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/menu/CMenuTitle.hpp"
 
@@ -18,7 +21,67 @@ struct CfPadDataLocal {
     u8 mTimers[0x20];           // 0x108
 };
 
-void __ct__CMenuTitle(){}
+// ---------------------------------------------------------------------------
+// __ct__CMenuTitle: allocating factory constructor (retail unmangled symbol).
+// Allocates a fresh 0xF0-byte CMenuTitle, builds it (CProcess base, the two
+// null task-callback ptmf records, the two secondary-base vtable pointers,
+// the embedded CTitle), registers it under `_this` and returns the stored
+// singleton. Returns 0 when a singleton already exists.
+// ---------------------------------------------------------------------------
+CMenuTitle* __ct__CMenuTitle(CMenuTitle* _this, CProcess* parent, u32 arg2) {
+    if (lbl_eu_80664C30 != 0) {
+        return 0;
+    }
+
+    CMenuTitleCtorShim* shim = (CMenuTitleCtorShim*)mtl::MemManager::allocate(
+        0xf0, CWorkThreadSystem::getWorkMem());
+
+    if (shim != 0) {
+        // CProcess base first; the vtable slot is then overwritten with the
+        // final CMenuTitle vtable (retail stores the intermediate vtable
+        // before the callbacks, the final one last).
+        __ct__8CProcessFv((CProcess*)shim);
+        shim->vtable = lbl_eu_8053B1AC;
+
+        // Two null member-function-pointer records (task callbacks), built
+        // from the compiler's __ptmf_null table. Statement order mirrors the
+        // retail load/store interleave (ptmf2 is loaded only after cb1).
+        u32* ptmf = __ptmf_null;
+        char* vtFinal = lbl_eu_8053B0B8;
+        u32 ptmf1 = ptmf[1];
+        u32 ptmf0 = ptmf[0];
+        char* vt54 = vtFinal + 0x24; // secondary-base vtable slot +0x54
+        shim->callbacks[0] = ptmf0;
+        char* vt58 = vtFinal + 0xac; // secondary-base vtable slot +0x58
+        shim->callbacks[1] = ptmf1;
+        u32 ptmf2 = ptmf[2];
+        shim->callbacks[2] = ptmf2;
+        ptmf1 = ptmf[1];
+        ptmf0 = ptmf[0];
+        shim->callbacks[3] = ptmf0;
+        shim->callbacks[4] = ptmf1;
+        ptmf2 = ptmf[2];
+        shim->callbacks[5] = ptmf2;
+
+        shim->vtable = vtFinal;
+        shim->field54 = vt54;
+        shim->field58 = vt58;
+        shim->parent = parent;
+
+        __ct__CTitle(&shim->mTitle);
+        shim->field_e8 = 0;
+        shim->field_e9 = 1;
+        shim->field_ea = 1;
+        shim->field_ec = lbl_eu_80668FD0;
+        shim->mTitle.field_0x20 = (CTitleAction*)arg2;
+    }
+
+    // Store the singleton (possibly null) and register as a child of `_this`;
+    // the return value is the stored singleton, reloaded after the call.
+    lbl_eu_80664C30 = (CMenuTitle*)shim;
+    ((CProcess*)shim)->Regist(_this, false);
+    return lbl_eu_80664C30;
+}
 
 // CfGameManager one-arg controller-type query, kept as the retail mangled
 // C symbol (extern "C" stops C++ `__Fi` param mangling). The inline header
@@ -86,61 +149,57 @@ void func_802B6020(CMenuTitleInput* self) {
 
 void func_802B60CC(CMenuTitleInput* self) {
     // Only accept input while enabled (field_e9) and not in the transient
-    // field_ea state (e.g. during an animation/transition).
-    if (self->field_e9 != 0) {
-        if (self->field_ea == 0) {
-            CfPadDataLocal* pad =
-                (CfPadDataLocal*)cf::CfGameManager::getCfPadData();
+    // field_ea state (e.g. during an animation/transition). The if/else-if
+    // form is what makes MWCC emit the retail two-branch guard (beq/beq/b).
+    if (self->field_e9 == 0) {
+        return;
+    } else if (self->field_ea != 0) {
+        return;
+    }
 
-            // Direction/stick trigger bits differ between controller types;
-            // the whole extraction block is re-run per branch (retail reloads
-            // both flag words inside each branch).
-            u32 trigger1, trigger2, dirButton, cancelButton;
-            if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-                // Classic controller: trigger bits 21, 22 from right.
-                u32 f = pad->mTurboPressButtonFlags;   // lwz r0
-                u32 p = pad->mPadPressedFlags;          // lwz r4
-                // 0x10008 = bit16|bit3; exceeds the 16-bit andi immediate, so
-                // MWCC masks it via rlwinm+rlwimi keeping the bit positions.
-                u32 dirVal = f & 0x8004;
-                u32 cancelVal = f & 0x10008;
-                trigger1 = (p >> 21) & 1;
-                trigger2 = (p >> 22) & 1;
-                // (x | -x) >> 31 converts any non-zero value to 1, zero to 0.
-                dirButton = (u32)(-(s32)dirVal | dirVal) >> 31;
-                cancelButton = (u32)(-(s32)cancelVal | cancelVal) >> 31;
-            } else {
-                // Wiimote/Nunchuk: trigger bits 4, 5 from right.
-                u32 f = pad->mTurboPressButtonFlags;
-                u32 p = pad->mPadPressedFlags;
-                u32 dirVal = f & 0x8004;
-                u32 cancelVal = f & 0x10008;
-                trigger1 = (p >> 4) & 1;
-                trigger2 = (p >> 5) & 1;
-                dirButton = (u32)(-(s32)dirVal | dirVal) >> 31;
-                cancelButton = (u32)(-(s32)cancelVal | cancelVal) >> 31;
-            }
+    CfPadDataLocal* pad =
+        (CfPadDataLocal*)cf::CfGameManager::getCfPadData();
 
-            // Each branch handles one input and returns.
-            if (trigger1 != 0) {
-                if (func_802B775C(&self->mSub) != 0) {
-                    self->field_e8 = 8;
-                }
-                return;
-            }
-            if (trigger2 != 0) {
-                self->field_e8 = 7;
-                func_802B75D8(&self->mSub);
-                return;
-            }
-            if (dirButton != 0) {
-                func_802B7650(&self->mSub);
-                return;
-            }
-            if (cancelButton != 0) {
-                func_802B76D4(&self->mSub);
-            }
+    // Direction/stick trigger bits differ between controller types; retail
+    // re-runs the whole extraction block per branch (both flag words reloaded).
+    u32 trigger1, trigger2, dirButton, cancelButton;
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        // Classic controller: trigger bits 21, 22 from right.
+        u32 f = pad->mTurboPressButtonFlags;   // lwz r0
+        u32 p = pad->mPadPressedFlags;          // lwz r4
+        // 0x10008 = bit16|bit3; exceeds the andi immediate, so MWCC masks it
+        // via rlwinm+rlwimi keeping the bit positions.
+        u32 dirVal = f & 0x8004;
+        u32 cancelVal = f & 0x10008;
+        trigger1 = (p >> 21) & 1;
+        trigger2 = (p >> 22) & 1;
+        // (x | -x) >> 31 converts any non-zero value to 1, zero to 0.
+        cancelButton = (u32)(-(s32)cancelVal | cancelVal) >> 31;
+        dirButton = (u32)(-(s32)dirVal | dirVal) >> 31;
+    } else {
+        // Wiimote/Nunchuk: trigger bits 4, 5 from right.
+        u32 f = pad->mTurboPressButtonFlags;
+        u32 p = pad->mPadPressedFlags;
+        u32 dirVal = f & 0x8004;
+        u32 cancelVal = f & 0x10008;
+        trigger1 = (p >> 4) & 1;
+        trigger2 = (p >> 5) & 1;
+        cancelButton = (u32)(-(s32)cancelVal | cancelVal) >> 31;
+        dirButton = (u32)(-(s32)dirVal | dirVal) >> 31;
+    }
+
+    // Each branch handles one input; every path falls through to the exit.
+    if (trigger1 != 0) {
+        if (func_802B775C(&self->mSub) != 0) {
+            self->field_e8 = 8;
         }
+    } else if (trigger2 != 0) {
+        self->field_e8 = 7;
+        func_802B75D8(&self->mSub);
+    } else if (dirButton != 0) {
+        func_802B7650(&self->mSub);
+    } else if (cancelButton != 0) {
+        func_802B76D4(&self->mSub);
     }
 }
 

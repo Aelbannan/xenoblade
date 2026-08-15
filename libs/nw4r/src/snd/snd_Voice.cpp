@@ -56,6 +56,8 @@ struct VoiceLayout {
     float mVeTargetVolume;                         // 0x110
     int field_0x114;                               // 0x114 (PanMode)
     int field_0x118;                               // 0x118 (PanCurve)
+    u32 node_prev;                                 // 0x11C (LinkListNode prev)
+    u32 node_next;                                 // 0x120 (LinkListNode next)
 };
 
 static inline VoiceLayout& VoiceRef(Voice* self) {
@@ -85,7 +87,9 @@ Voice::Voice() {
     VoiceLayout& v = VoiceRef(this);
 
     // Default every voice-out param to { volume=1, pitch=1, pan=0, surround=0,
-    // fxSend=0, lpf=0 }. Retail peels element 0 inline, then loops the rest.
+    // fxSend=0, lpf=0 }. Retail peels element 0 inline, then loops the rest
+    // with a runtime-counted loop (MWCC emits the div-by-24 count machinery
+    // only for the pointer-loop form, not for a constant index loop).
     v.mVoiceOutParam[0][0] = lbl_eu_8066A098;
     v.mVoiceOutParam[0][1] = lbl_eu_8066A098;
     v.mVoiceOutParam[0][2] = lbl_eu_8066A09C;
@@ -93,19 +97,16 @@ Voice::Voice() {
     v.mVoiceOutParam[0][4] = lbl_eu_8066A09C;
     v.mVoiceOutParam[0][5] = lbl_eu_8066A09C;
 
-    for (int i = 1; i < VOICES_MAX; i++) {
-        v.mVoiceOutParam[i][0] = lbl_eu_8066A098;
-        v.mVoiceOutParam[i][1] = lbl_eu_8066A098;
-        v.mVoiceOutParam[i][2] = lbl_eu_8066A09C;
-        v.mVoiceOutParam[i][3] = lbl_eu_8066A09C;
-        v.mVoiceOutParam[i][4] = lbl_eu_8066A09C;
-        v.mVoiceOutParam[i][5] = lbl_eu_8066A09C;
-    }
-
-    for (int i = 0; i < CHANNEL_MAX; i++) {
-        for (int j = 0; j < VOICES_MAX; j++) {
-            v.mAxVoice[i][j] = NULL;
-        }
+    float(*pParam)[6] = &v.mVoiceOutParam[1];
+    float(*pEnd)[6] = &v.mVoiceOutParam[VOICES_MAX];
+    while (pParam < pEnd) {
+        (*pParam)[0] = lbl_eu_8066A098;
+        (*pParam)[1] = lbl_eu_8066A098;
+        (*pParam)[2] = lbl_eu_8066A09C;
+        (*pParam)[3] = lbl_eu_8066A09C;
+        (*pParam)[4] = lbl_eu_8066A09C;
+        (*pParam)[5] = lbl_eu_8066A09C;
+        pParam++;
     }
 
     v.mCallback = NULL;
@@ -114,8 +115,12 @@ Voice::Voice() {
     v.mIsStarted = false;
     v.mIsPause = false;
     v.mSyncFlag = 0;
-    v.field_0x114 = 0;
-    v.field_0x118 = 0;
+
+    for (int i = 0; i < CHANNEL_MAX; i++) {
+        for (int j = 0; j < VOICES_MAX; j++) {
+            v.mAxVoice[i][j] = NULL;
+        }
+    }
 }
 
 Voice::~Voice() {

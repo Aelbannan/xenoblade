@@ -934,7 +934,7 @@ extern "C" __declspec(noinline) void func_80266950(UI::CPassiveSkillLine* self,
 #pragma optimize_for_size on
 void func_80266930(UI_CPassiveSkill* self, u8 row, u8 col, u8 slot) {
     return func_80266950(reinterpret_cast<UI::CPassiveSkillLine*>(self),
-                         (u8)(col * 5 + slot + (row - 1) * 25 + 1));
+                         (u8)(1 + slot + col * 5 + (row - 1) * 25));
 }
 #pragma optimize_for_size off
 

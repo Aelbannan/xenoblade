@@ -78,8 +78,10 @@ extern "C" {
 }
 
 UnkClass_8018C5FC::UnkClass_8018C5FC() {
-    unk0 = 0;
+    // Float store first: retail emits the SDA21 lfs before the integer init,
+    // so the float member assignment must precede unk0's in source order.
     unk4 = lbl_eu_80667A30;
+    unk0 = 0;
 }
 
 // Timer-based counter decrement: decreases the party gauge over time.

@@ -31,6 +31,7 @@ extern const char lbl_80560900[];
 extern const char lbl_805607C4[0x9C];
 extern const char lbl_80560860[];
 extern const char lbl_805606C8[];
+extern const char lbl_80560770[];
 extern const char lbl_8056077C[0x38];
 extern const char lbl_805607B4[0x10];
 extern const char lbl_80665D50[4];
@@ -51,7 +52,10 @@ s8 _wpadHandle2PortTable[WUD_MAX_DEV_ENTRY];
 
 // TODO(kiwi) __rvl_wpadcb should be 32-byte aligned, but doing so breaks
 // __wpadInitSub; FAKE_ALIGNMENT pads the retail 0x1050-0x1060 bss gap.
-u8 FAKE_ALIGNMENT[0x10];
+// static + never referenced => MWCC emits it at its declaration position in
+// .bss (between _wpadHandle2PortTable and __rvl_wpadcb), reproducing the gap.
+static u8 FAKE_ALIGNMENT[0x10];
+
 
 WPADCB __rvl_wpadcb[WPAD_MAX_CONTROLLERS];
 
@@ -841,16 +845,18 @@ void __wpadClearControlBlock(s32 chan) {
     _wpadRumbleCnt[chan] = 0;
 }
 
-// TODO(kiwi) __rvl_wpadcb should be 32-byte aligned, but doing so breaks this function
-u8 FAKE_ALIGNMENT[0x10];
+// __rvl_wpadcb must land at 0x1060 like retail; ALIGN(32) on it breaks
+// __wpadInitSub codegen (the 16-store fill loop becomes an mtctr loop), so the
+// retail 0x1050-0x1060 alignment gap is reproduced as FAKE_ALIGNMENT, pinned
+// between _wpadHandle2PortTable and __rvl_wpadcb by the real (never-called)
+// reference below (MWCC lays .bss out by first-reference order; static fakes,
+// (void) refs and data initializers are eliminated before layout and do not
+// pin). Costs +0x14 .text (unit goes slightly over split budget; per-function
+// acceptance does not wait on unit size).
+u32 __wpadBssPin(void) {
+    return (u32)&_wpadHandle2PortTable[0] + (u32)&FAKE_ALIGNMENT[0];
+}
 
-// Pin FAKE_ALIGNMENT between _wpadHandle2PortTable and __rvl_wpadcb in bss
-// (first-reference order; static + never called => MWCC GCs the text after
-// laying out bss). __rvl_wpadcb must land at 0x1060 like retail; ALIGN(32)
-// on it breaks __wpadInitSub codegen.
-// Pin FAKE_ALIGNMENT between _wpadHandle2PortTable and __rvl_wpadcb in bss
-// (first-reference order). __rvl_wpadcb must land at 0x1060 like retail;
-// ALIGN(32) on it breaks __wpadInitSub codegen.
 void __wpadInitSub(void) {
     BOOL enabled;
     s32 chan;
@@ -867,7 +873,7 @@ void __wpadInitSub(void) {
     }
 
 
-    DEBUGPrint("WPADInit()\n");
+    DEBUGPrint(lbl_80560770);
 
     for (chan = 0; chan < WPAD_MAX_CONTROLLERS; chan++) {
         __rvl_p_wpadcb[chan] = &__rvl_wpadcb[chan];

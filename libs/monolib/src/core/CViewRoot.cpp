@@ -13,6 +13,13 @@
 #include "monolib/util/MemManager.hpp"
 #include "decomp.h"
 
+// sbss data owned by this TU (blob monolibdata1d dissolve):
+//   lbl_eu_806655D0 (4 bytes) = current root view pointer
+//   lbl_eu_806655D4 (1 byte)
+CViewRoot* lbl_eu_806655D0;
+u8 lbl_eu_806655D4;
+
+
 DECOMP_FORCEACTIVE(CViewRoot_cpp, "CViewRoot");
 
 CViewRoot::CViewRoot(const char* pName, CWorkThread* pParent) :

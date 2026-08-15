@@ -2,11 +2,12 @@
 #include "monolib/work.hpp"
 #include "decomp.h"
 
-CWorkControl* CWorkControl::spInstance = nullptr;
+// sbss singleton lbl_eu_806655D8 (8 bytes; word 0 in use) - blob monolibdata1d dissolve
+CWorkControl* lbl_eu_806655D8[2];
 
 #pragma dont_inline on
 CWorkControl::CWorkControl(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD){
-    spInstance = this;
+    lbl_eu_806655D8[0] = this;
     mType = THREAD_CWORKCONTROL;
 }
 #pragma dont_inline off
@@ -15,12 +16,12 @@ extern char lbl_eu_80522688[];
 
 #pragma optimize_for_size on
 CWorkControl::~CWorkControl(){
-    spInstance = nullptr;
+    lbl_eu_806655D8[0] = nullptr;
 }
 #pragma optimize_for_size off
 
 CWorkControl* CWorkControl::getInstance(){
-    return spInstance;
+    return lbl_eu_806655D8[0];
 }
 
 void CWorkControl::pause(bool paused){

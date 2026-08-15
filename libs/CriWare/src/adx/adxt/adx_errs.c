@@ -92,7 +92,7 @@ void ADXERR_ItoA(s32 value, char* buf, s32 buf_size) {
         for (j = 0; j < n; j++) {
             buf[j] = lbl_eu_805E6488[n - 1 - j];
         }
-        buf[n] = '\0';
+        buf[j] = '\0';  // j == n here; retail uses the loop counter
     }
 }
 

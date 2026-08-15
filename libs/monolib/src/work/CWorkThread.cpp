@@ -2,6 +2,12 @@
 #include "monolib/work.hpp"
 #include <cstring>
 
+// sbss data owned by this TU (blob monolibdata1d dissolve):
+//   lbl_eu_80665594 (0x80665594, 4 bytes) = sAllocFlags (u32*)
+//   lbl_eu_80665598 (0x80665598, 8 bytes) = sWorkThreads (CWorkThread**; word 0 in use)
+// (lbl_eu_80665590 = sMemAvailable is defined in CWorkThreadSystem.cpp, its user.)
+u32* lbl_eu_80665594;
+CWorkThread** lbl_eu_80665598[2];
 CWorkThread::CWorkThread(const char* pName, CWorkThread* pParent, int capacity)
     : mState(THREAD_STATE_NONE),
       mWorkID(INVALID_WORK_ID),

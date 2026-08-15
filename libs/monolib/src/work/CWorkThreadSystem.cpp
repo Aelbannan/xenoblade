@@ -12,9 +12,9 @@
 extern "C" {
     extern const char* lbl_eu_80663518;
     extern u32 lbl_eu_8066351C;
-    extern BOOL lbl_eu_80665590;
-    extern u32* lbl_eu_80665594;
-    extern CWorkThread** lbl_eu_80665598;
+    BOOL lbl_eu_80665590;              // sMemAvailable - defined here (blob monolibdata1d dissolve)
+    extern u32* lbl_eu_80665594;       // sAllocFlags - defined in CWorkThread.cpp (owner)
+    extern CWorkThread** lbl_eu_80665598[2];  // sWorkThreads - 8-byte sbss (word 0 in use), defined in CWorkThread.cpp (owner)
 }
 
 void CWorkThreadSystem::initialize(){
@@ -22,7 +22,7 @@ void CWorkThreadSystem::initialize(){
     lbl_eu_80665590 = true;
 
     lbl_eu_80665594 = new (lbl_eu_8066351C) u32[ALLOC_FLAGS_COUNT];
-    lbl_eu_80665598 =
+    lbl_eu_80665598[0] =
         static_cast<CWorkThread**>(mtl::MemManager::allocate_head(lbl_eu_8066351C, sizeof(CWorkThread*) * MAX_WORK_ID, 4));
 
     for(WORK_ID i = 0; i < ALLOC_FLAGS_COUNT; i++){
@@ -52,7 +52,7 @@ WORK_ID CWorkThreadSystem::allocWID(CWorkThread* thread){
 
                 //Save thread information
                 lbl_eu_80665594[flag] |= mask;
-                lbl_eu_80665598[wid] = thread;
+                lbl_eu_80665598[0][wid] = thread;
 
                 return wid;
             }
@@ -66,7 +66,7 @@ WORK_ID CWorkThreadSystem::allocWID(CWorkThread* thread){
 
 void CWorkThreadSystem::destroy(){
     DELETE_ARRAY(lbl_eu_80665594);
-    DELETE_OBJ(lbl_eu_80665598);
+    DELETE_OBJ(lbl_eu_80665598[0]);
 
     mtl::MemManager::erase(lbl_eu_8066351C);
     lbl_eu_8066351C = mtl::INVALID_HANDLE;

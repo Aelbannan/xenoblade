@@ -95,14 +95,38 @@ struct CfCamEventElem {
     u16 d;        // +0x10
 };
 
-// Shake table (16-entry cap, 0x160 bytes): elements start AT the base (no
-// count word - the count lives in the enclosing manager at tab0+0x166, i.e.
-// manager field_0x1E2), followed by the base anchor triplet at +0x154.
+// Shake table payload (0x160 bytes): elements start AT the base (no count
+// word - the count lives in the enclosing state at +0x166), followed by the
+// base anchor triplet at +0x154. The union payload of CfCamEventShakeUnit and
+// the manager's tab0 state both start with this shape.
 struct CfCamEventTable {
     CfCamEventElem elems[16];    // +0x00
+    u8  _140[0x154 - 0x140];     // +0x140 gap (padding before the base anchor)
     f32 baseX;                   // +0x154
     f32 baseY;                   // +0x158
     f32 baseZ;                   // +0x15C
+};
+
+// Full 0x178-byte shake state as embedded at the manager's tab0 (0x7C):
+// table payload + the tail flags/counts/values at +0x160..+0x178. Same
+// layout as CfCamEventShakeUnit and CfCamShakeState; the manager's legacy
+// field_0x1DC/0x1DE/0x1E2/... names map onto this tail.
+struct CfCamEventShakeTable {
+    CfCamEventElem elems[16];    // +0x00
+    u8  _140[0x154 - 0x140];     // +0x140 gap
+    f32 baseX;                   // +0x154
+    f32 baseY;                   // +0x158
+    f32 baseZ;                   // +0x15C
+    u16 field_0x160;             // +0x160 (abs 0x1DC) - spline method word
+    u8  flag_active;             // +0x162 (abs 0x1DE)
+    u8  field_0x163;             // +0x163 (abs 0x1DF)
+    u8  flag_finish;             // +0x164 (abs 0x1E0)
+    u8  field_0x165;             // +0x165 (abs 0x1E1)
+    s16 count;                   // +0x166 (abs 0x1E2) - shake element count
+    s16 field_0x168;             // +0x168 (abs 0x1E4)
+    f32 field_0x16C;             // +0x16C (abs 0x1E8)
+    f32 field_0x170;             // +0x170 (abs 0x1EC)
+    f32 field_0x174;             // +0x174 (abs 0x1F0)
 };
 
 // 0x178-byte shake unit; two instances at manager 0x1F4 / 0x36C. Unit 0
@@ -195,20 +219,10 @@ public:
     ml::CVec3 field_0x60;       // 0x60
     ml::CVec3 field_0x6C;       // 0x6C
     f32 field_0x78;     // 0x78
-    CfCamEventTable tab0;       // 0x7C - shake table 0 (16-entry cap)
-    u8  flag0;                  // 0x1CC
-    u8  flag1;                  // 0x1CD
-    u8  _1CE[0x1DC - 0x1CE];    // 0x1CE..0x1DC
-    u16 field_0x1DC;            // 0x1DC
-    u8  field_0x1DE;            // 0x1DE
-    u8  field_0x1DF;            // 0x1DF
-    u8  field_0x1E0;            // 0x1E0
-    u8  field_0x1E1;            // 0x1E1
-    s16 field_0x1E2;            // 0x1E2 - shake count
-    s16 field_0x1E4;            // 0x1E4
-    f32 field_0x1E8;            // 0x1E8
-    f32 field_0x1EC;            // 0x1EC
-    f32 field_0x1F0;            // 0x1F0
+    CfCamEventShakeTable tab0;  // 0x7C - full 0x178 shake state (table payload
+                                // + tail flags/counts). The state tail doubles
+                                // as the legacy field_0x1DC/0x1DE/0x1E2/...
+                                // region of the manager.
     CfCamEventShakeUnit shake[2];  // 0x1F4 - units at 0x1F4 / 0x36C
 };
 

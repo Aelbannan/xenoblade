@@ -385,9 +385,7 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc160() {
     // double via the 0x43300000 magic and scaled by the gauge max (0x3368);
     // the truncating half is stored at 0x3358.
     v->field_0x335A = 2;
-    double b = (double)(u32)v->field_0x335E;
-    int t = (int)(b * v->field_0x3368);
-    v->field_0x3358 = (u16)(t / 2);
+    v->field_0x3358 = (u16)((int)(v->field_0x3368 * (float)(u32)v->field_0x335E) / 2);
 }
 float CActorParam_UnkVirtualFunc23__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x15e8); }
 void CActorParam_UnkVirtualFunc21__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x15e8) = val; }

@@ -49,7 +49,17 @@ extern "C" u32 getField68(u8* self) { return *(u32*)((u8*)self + 0x68); }
 
 extern "C" u32 getSubField7C(u8* self) { return *(u32*)((u8*)self + 0x7C); }
 
-void func_800587F8(){}
+// Step/time scaling: (float)(s32)field_0x6C / c + field_0x70 / c / c,
+// where c is the sdata2 rate constant (retail double-trick int→f32).
+extern "C" float lbl_eu_80665FB0;
+extern "C" double lbl_eu_80665FB8;
+extern "C" float func_800587F8(u8* self) {
+    // (float)(s32)field_0x6C / c + field_0x70 / c / c (c = sdata2 rate const).
+    float c = 60.0f;
+    float f = *(float*)((u8*)self + 0x70);
+    float ivf = (float)*(s32*)((u8*)self + 0x6C);
+    return ivf / c + f / c / c;
+}
 
 extern "C" u32 getField5C(u8* self) { return *(u32*)((u8*)self + 0x5C); }
 

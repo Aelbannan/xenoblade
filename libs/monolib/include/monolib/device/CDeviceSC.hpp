@@ -41,4 +41,4 @@ private:
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // Retail SDA reloc for the TU singleton (MWCC_REFERENCE §1a).
-extern "C" CDeviceSC* lbl_eu_80665640;
+extern "C" CDeviceSC* lbl_eu_80665640[2];

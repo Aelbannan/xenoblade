@@ -11,12 +11,12 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 9664 |
+| extern "C" (total lines) | 9665 |
 | extern "C" declarations (non-lbl_*, imports) | 3533 |
-| extern "C" definitions (forced names) | 3673 |
-| `self`/register-style params | 11400 |
-| `void*` (params + locals) | 6863 |
-| raw pointer offset arithmetic | 6358 |
+| extern "C" definitions (forced names) | 3677 |
+| `self`/register-style params | 11402 |
+| `void*` (params + locals) | 6862 |
+| raw pointer offset arithmetic | 6357 |
 | deref-through-cast arithmetic | 2483 |
 | inline asm / `register` | 103 |
 | rN-named params | 480 |
@@ -292,7 +292,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CEquipItemBox.cpp | 2 | 92 | 105 | 30 | 11 | 0 | 0 | 0 | 11 | 0 | 0 | 0 |
 | src/kyoshin/CErrMes.cpp | 1 | 1 | 0 | 4 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CExchangeWin.cpp | 0 | 11 | 13 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CFade.cpp | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CFade.cpp | 0 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CFloorMap.cpp | 2 | 9 | 68 | 105 | 69 | 39 | 0 | 1 | 12 | 0 | 0 | 0 |
 | src/kyoshin/CItemBoxGrid.cpp | 23 | 12 | 549 | 275 | 374 | 86 | 0 | 48 | 33 | 0 | 0 | 0 |
 | src/kyoshin/CItemBoxGridSubMenu.cpp | 0 | 2 | 5 | 4 | 6 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -333,7 +333,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CTalkWindow.cpp | 3 | 4 | 10 | 9 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/CTaskGame.cpp | 5 | 25 | 133 | 16 | 10 | 9 | 0 | 5 | 21 | 0 | 0 | 0 |
 | src/kyoshin/CTaskGameEff.cpp | 5 | 7 | 13 | 20 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CTaskGameEvt.cpp | 2 | 6 | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CTaskGameEvt.cpp | 2 | 8 | 7 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTaskGamePic.cpp | 1 | 5 | 12 | 5 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTimeLightGrp.cpp | 0 | 7 | 7 | 9 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTitle.cpp | 5 | 18 | 57 | 16 | 8 | 0 | 0 | 0 | 6 | 0 | 0 | 0 |
@@ -3242,12 +3242,10 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/CFade.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_def": 1,
+  "extern_c_nonlbl_def": 3,
   "init_side_effect": 0,
-  "ptr_arith": 1,
   "schedule_pragma": 0,
-  "self_params": 1,
-  "void_ptr": 1
+  "self_params": 3
  },
  "src/kyoshin/CFloorMap.cpp": {
   "asm_insn_shim": 0,
@@ -3677,7 +3675,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CTaskGameEvt.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 2,
-  "extern_c_nonlbl_def": 6,
+  "extern_c_nonlbl_def": 8,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 7,

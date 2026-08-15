@@ -24,7 +24,7 @@ public:
 class CKizunaCur {
 public:
     CKizunaCur(nw4r::lyt::ArcResourceAccessor* accessor);
-    virtual ~CKizunaCur();
+    ~CKizunaCur();  // non-virtual: retail stores the manual lbl_eu_805375FC vtable label at +0 (no compiler vptr)
 
     void* mVtable;                               // 0x00
     nw4r::lyt::ArcResourceAccessor* mArcResAcc;  // 0x04

@@ -9,23 +9,29 @@
 #include <nw4r/lyt.h>
 
 // IWorkEvent-compatible vtable (split1 .data).
-extern "C" void* lbl_eu_80536EA8[];
+extern void* lbl_eu_80536EA8[];
 // Shared string pool (split1 .rodata): fade layout arc filename.
 extern char lbl_eu_8050B5A0[];
 // SDA float - fade animation frame target.
 extern const f32 lbl_eu_80668750;
 
-// UnkClass_8045F564 ctor, called by hand by CFade's ctor to reproduce the
-// retail member-init order (vtable store first). See CBgTex.cpp.
-extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
+/* Stores mVtbl before UnkClass_8045F564 is constructed (retail ctor order).
+Same pattern as CBatteryVtblBase in CBattery.hpp: an inline base ctor makes
+MWCC emit the vptr store first, then the member ctors. */
+struct CFadeVtblBase {
+    void* mVtbl; // 0x0 - lbl_eu_80536EA8
+
+    CFadeVtblBase() {
+        mVtbl = lbl_eu_80536EA8;
+    }
+};
 
 /* Fade overlay layout widget. Loads and animates a nw4r layout for fade-in/out
 effects. Layout-compatible with IWorkEvent (vptr @ +0) for CDeviceFile::readFile,
 but not a C++ IWorkEvent subclass - that would make MWCC emit a __vt__5CFade and
 blow the US split budget (retail uses the shared lbl_eu_80536EA8 vtable). */
-class CFade {
+class CFade : public CFadeVtblBase {
 public:
-    void* mVtbl;                             // 0x00 - lbl_eu_80536EA8
     UnkClass_8045F564 mMemRegion;            // 0x04
     CFileHandle* mFileHandle;                // 0x14
     nw4r::lyt::ArcResourceAccessor* mArcResAcc; // 0x18
@@ -49,6 +55,4 @@ public:
     u8 func_80244510();
     void func_80244518();
     void func_80244538();
-    void func_80244558();
-    void func_802445A4();
 };

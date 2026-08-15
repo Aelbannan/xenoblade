@@ -1464,7 +1464,7 @@ void func_800D59FC(void* obj) {
     };
     Data70* data = (Data70*)((char*)obj + 0x70);
     unsigned short temp = data->u74;
-    f32 v = *(f32*)(uintptr_t)temp;  // u74 doubles as a float pointer
+    f32 v = lbl_eu_80666CFC;  // 1.0f (SDA2 float pool)
     data->u78 = 0;
     data->u7b = 0;
     data->f70 = v;

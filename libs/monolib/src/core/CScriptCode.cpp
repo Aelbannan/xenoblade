@@ -22,7 +22,8 @@
 
 // CScriptCode vtable (0x8056B418), name string (0x8052254C) and global
 // singleton pointer (0x806655B0) data labels.
-extern void* lbl_eu_806655B0;
+// Retail sbss singleton slot lbl_eu_806655B0 (8 bytes; word 0 in use) - blob monolibdata1d dissolve
+void* lbl_eu_806655B0[2];
 extern const u8 lbl_eu_8056B418[];
 extern const char lbl_eu_8052254C[];
 
@@ -93,7 +94,7 @@ extern "C" void __dt__11CScriptCodeFv(void* self, int freeFlag) {
 
     ths->m_cnt0 = 0;
     ths->m_cnt1 = 0;
-    lbl_eu_806655B0 = NULL;
+    lbl_eu_806655B0[0] = NULL;
 
     // Destroy token member and base class
     ths->m_token.~CToken();
@@ -181,7 +182,7 @@ extern "C" s16 func_8043A2F8__11CScriptCodeFv(void* self, u8* pOut, u8* pIn) {
 // Registers a (key, value) pair in the global ScriptCode singleton's primary
 // slot array. Does nothing if the key is already registered.
 extern "C" void func_8043A70C__11CScriptCodeFv(void* self, void* pValue) {
-    CScriptCode* inst = (CScriptCode*)lbl_eu_806655B0;
+    CScriptCode* inst = (CScriptCode*)lbl_eu_806655B0[0];
     s16 cnt = inst->m_cnt0;
 
     // Search for an existing entry whose key matches `self`
@@ -198,7 +199,7 @@ extern "C" void func_8043A70C__11CScriptCodeFv(void* self, void* pValue) {
     entry[1] = (u32)pValue;
 
     // Append to the global instance's primary array
-    inst = (CScriptCode*)lbl_eu_806655B0;
+    inst = (CScriptCode*)lbl_eu_806655B0[0];
     s16 idx = inst->m_cnt0;
     inst->m_slot0[idx] = entry;
     inst->m_cnt0 = idx + 1;
@@ -219,7 +220,7 @@ extern "C" void* create__11CScriptCodeFP11CWorkThread(CWorkThread* pParent) {
 
         new (&ths->m_token) CToken();
         ths->m_1738 = 0;
-        lbl_eu_806655B0 = ths;
+        lbl_eu_806655B0[0] = ths;
         ths->m_token.func_8043AA1C();
 
         ths->mType = CWorkThread::THREAD_CSCRIPTCODE;
@@ -238,22 +239,22 @@ extern "C" void* create__11CScriptCodeFP11CWorkThread(CWorkThread* pParent) {
 // no command matched.
 extern "C" int func_8043A390__11CScriptCodeFv(void* self, void* pData, int doSecondary) {
     u8 buf[0x800];
-    s16 segCount = func_8043A2F8__11CScriptCodeFv((CScriptCode*)lbl_eu_806655B0, buf, (u8*)pData);
+    s16 segCount = func_8043A2F8__11CScriptCodeFv((CScriptCode*)lbl_eu_806655B0[0], buf, (u8*)pData);
 
     for (s16 s = 0; s < segCount; s++) {
         const u8* seg = &buf[s * 0x100];
 
         // Search the secondary slot array (m_slot1)
-        for (s16 i = 0; i < ((CScriptCode*)lbl_eu_806655B0)->m_cnt1; i++) {
-            CScriptCodeEntry* entry = (CScriptCodeEntry*)((CScriptCode*)lbl_eu_806655B0)->m_slot1[i];
-            if (((CScriptCode*)lbl_eu_806655B0)->m_token.func_8043ABD4((const char*)entry->field_0, (const char*)seg)) {
+        for (s16 i = 0; i < ((CScriptCode*)lbl_eu_806655B0[0])->m_cnt1; i++) {
+            CScriptCodeEntry* entry = (CScriptCodeEntry*)((CScriptCode*)lbl_eu_806655B0[0])->m_slot1[i];
+            if (((CScriptCode*)lbl_eu_806655B0[0])->m_token.func_8043ABD4((const char*)entry->field_0, (const char*)seg)) {
                 int r = 0;
                 if (self != NULL) {
-                    r = ((CCmdDispatcher*)self)->cmdHandler(((CScriptCode*)lbl_eu_806655B0)->m_token, (void*)entry->field_0);
+                    r = ((CCmdDispatcher*)self)->cmdHandler(((CScriptCode*)lbl_eu_806655B0[0])->m_token, (void*)entry->field_0);
                 }
                 if (entry->field_4 != NULL) {
                     return ((CCmdDispatcher*)(void*)entry->field_4)
-                        ->cmdHandler(((CScriptCode*)lbl_eu_806655B0)->m_token, (void*)entry->field_0);
+                        ->cmdHandler(((CScriptCode*)lbl_eu_806655B0[0])->m_token, (void*)entry->field_0);
                 }
                 return r;
             }
@@ -261,18 +262,18 @@ extern "C" int func_8043A390__11CScriptCodeFv(void* self, void* pData, int doSec
 
         if (doSecondary) {
             // Search the primary slot array (m_slot0)
-            for (s16 i = 0; i < ((CScriptCode*)lbl_eu_806655B0)->m_cnt0; i++) {
-                CScriptCodeEntry* entry = (CScriptCodeEntry*)((CScriptCode*)lbl_eu_806655B0)->m_slot0[i];
-                if (((CScriptCode*)lbl_eu_806655B0)->m_token.func_8043ABD4((const char*)entry->field_0, (const char*)seg)) {
+            for (s16 i = 0; i < ((CScriptCode*)lbl_eu_806655B0[0])->m_cnt0; i++) {
+                CScriptCodeEntry* entry = (CScriptCodeEntry*)((CScriptCode*)lbl_eu_806655B0[0])->m_slot0[i];
+                if (((CScriptCode*)lbl_eu_806655B0[0])->m_token.func_8043ABD4((const char*)entry->field_0, (const char*)seg)) {
                     int r = 0;
                     if (self != NULL) {
-                        r = ((CCmdDispatcher*)self)->cmdHandler(((CScriptCode*)lbl_eu_806655B0)->m_token, (void*)entry->field_0);
+                        r = ((CCmdDispatcher*)self)->cmdHandler(((CScriptCode*)lbl_eu_806655B0[0])->m_token, (void*)entry->field_0);
                     }
                     if (entry->field_4 != NULL) {
                         r = ((CCmdDispatcher*)(void*)entry->field_4)
-                            ->cmdHandler(((CScriptCode*)lbl_eu_806655B0)->m_token, (void*)entry->field_0);
+                            ->cmdHandler(((CScriptCode*)lbl_eu_806655B0[0])->m_token, (void*)entry->field_0);
                     }
-                    ((CScriptCode*)lbl_eu_806655B0)->m_1738 = (u32)entry;
+                    ((CScriptCode*)lbl_eu_806655B0[0])->m_1738 = (u32)entry;
                     return r;
                 }
             }
@@ -293,41 +294,41 @@ extern "C" void func_8043A57C__11CScriptCodeFv(void* self, void* pTarget) {
     // Primary slot array: find first entry whose key matches, free + compact.
     // The singleton is re-read after the delete/compaction (retail keeps inst
     // and cnt in volatile regs across the search, not callee-saved).
-    s16 cnt = ((CScriptCode*)lbl_eu_806655B0)->m_cnt0;
+    s16 cnt = ((CScriptCode*)lbl_eu_806655B0[0])->m_cnt0;
     for (s16 i = 0; i < cnt; i++) {
-        CScriptCodeEntry* entry = (CScriptCodeEntry*)((CScriptCode*)lbl_eu_806655B0)->m_slot0[i];
+        CScriptCodeEntry* entry = (CScriptCodeEntry*)((CScriptCode*)lbl_eu_806655B0[0])->m_slot0[i];
         if (entry->field_0 == key) {
             if (entry != NULL) {
                 ::operator delete(entry);
-                ((CScriptCode*)lbl_eu_806655B0)->m_slot0[i] = NULL;
+                ((CScriptCode*)lbl_eu_806655B0[0])->m_slot0[i] = NULL;
             }
-            while (i < ((CScriptCode*)lbl_eu_806655B0)->m_cnt0 - 1) {
-                ((CScriptCode*)lbl_eu_806655B0)->m_slot0[i]
-                    = ((CScriptCode*)lbl_eu_806655B0)->m_slot0[i + 1];
+            while (i < ((CScriptCode*)lbl_eu_806655B0[0])->m_cnt0 - 1) {
+                ((CScriptCode*)lbl_eu_806655B0[0])->m_slot0[i]
+                    = ((CScriptCode*)lbl_eu_806655B0[0])->m_slot0[i + 1];
                 i++;
             }
-            ((CScriptCode*)lbl_eu_806655B0)->m_cnt0 =
-                ((CScriptCode*)lbl_eu_806655B0)->m_cnt0 - 1;
+            ((CScriptCode*)lbl_eu_806655B0[0])->m_cnt0 =
+                ((CScriptCode*)lbl_eu_806655B0[0])->m_cnt0 - 1;
             return;
         }
     }
 
     // Secondary slot array
-    cnt = ((CScriptCode*)lbl_eu_806655B0)->m_cnt1;
+    cnt = ((CScriptCode*)lbl_eu_806655B0[0])->m_cnt1;
     for (s16 i = 0; i < cnt; i++) {
-        CScriptCodeEntry* entry = (CScriptCodeEntry*)((CScriptCode*)lbl_eu_806655B0)->m_slot1[i];
+        CScriptCodeEntry* entry = (CScriptCodeEntry*)((CScriptCode*)lbl_eu_806655B0[0])->m_slot1[i];
         if (entry->field_0 == key) {
             if (entry != NULL) {
                 ::operator delete(entry);
-                ((CScriptCode*)lbl_eu_806655B0)->m_slot1[i] = NULL;
+                ((CScriptCode*)lbl_eu_806655B0[0])->m_slot1[i] = NULL;
             }
-            while (i < ((CScriptCode*)lbl_eu_806655B0)->m_cnt1 - 1) {
-                ((CScriptCode*)lbl_eu_806655B0)->m_slot1[i]
-                    = ((CScriptCode*)lbl_eu_806655B0)->m_slot1[i + 1];
+            while (i < ((CScriptCode*)lbl_eu_806655B0[0])->m_cnt1 - 1) {
+                ((CScriptCode*)lbl_eu_806655B0[0])->m_slot1[i]
+                    = ((CScriptCode*)lbl_eu_806655B0[0])->m_slot1[i + 1];
                 i++;
             }
-            ((CScriptCode*)lbl_eu_806655B0)->m_cnt1 =
-                ((CScriptCode*)lbl_eu_806655B0)->m_cnt1 - 1;
+            ((CScriptCode*)lbl_eu_806655B0[0])->m_cnt1 =
+                ((CScriptCode*)lbl_eu_806655B0[0])->m_cnt1 - 1;
             return;
         }
     }

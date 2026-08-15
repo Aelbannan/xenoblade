@@ -147,14 +147,11 @@ extern "C" void* func_8009D764(cf::CtrlObjectParamInit* p) {
 
 extern "C" u8* func_8009D790(s16* arr, u32 idx) {
     // Equip-table helper: when the s16 entry is valid (> -1), resolve the
-    // item instance for the category and entry value; 0 otherwise. The q
-    // pointer anchors the idx*2 offset in r5 (retail rlwinm r5,r4,1 once,
-    // used by both lhax reads); indexed arr[idx] reads recompute it.
-    s16* q = &arr[idx];
+    // item instance for the category and entry value; 0 otherwise.
     u8* result = 0;
-    if (*q > -1) {
-        u32 a = idx > 4 ? 2 : idx + 4;
-        result = reinterpret_cast<u8*>(func_80157C4C(a, *q));
+    if (arr[idx] > -1) {
+        result = reinterpret_cast<u8*>(
+            func_80157C4C(idx > 4 ? 2 : idx + 4, arr[idx]));
     }
     return result;
 }

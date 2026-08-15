@@ -482,16 +482,17 @@ BOOL vmPluginRegist(const char* name, PluginFuncData* plugin_funcs){
     return FALSE;
 }
 
-/* TODO: These two functions are accessing the value at offset 4 in the entry at index sp - 1,
-but doing it normally doesn't match. There has to be a better way, right?? */
+//Retail accesses the arg count through the entry at index sp with a -4 displacement
+//(stack[sp - 1].value == &stack[sp] - 4); expressing it as (stack + sp)[-1] stops MWCC
+//from folding the -1 into the index, which otherwise emits an extra subi + +4 load.
 
 inline u8 vmArgCntGet(VMThread* pThread){
-    return pThread->stack[pThread->reg.sp - 1].value.uintVal;
+    return (pThread->stack + pThread->reg.sp)[-1].value.uintVal;
 }
 
 //Not official
 inline void vmArgCntSet(VMThread* pThread, u32 value){
-    pThread->stack[pThread->reg.sp - 1].value.uintVal = value;
+    (pThread->stack + pThread->reg.sp)[-1].value.uintVal = value;
 }
 
 VMArg* vmArgPtrGet(VMThread* pThread, int r4){
@@ -744,8 +745,21 @@ BOOL vmThreadGetOC(VMThread* pThread, int r4, u32* outId){
     return FALSE;
 }
 
+//Finds a thread by ID. Kept as a separate inline so the inlined copy in vmThreadStart
+//keeps the retail's "NULL after loop fallthrough" codegen (a direct thread=NULL
+//initializer gets hoisted before the loop instead).
+static inline VMThread* vmThreadSearchImpl(u32 id){
+    for(int i = 0; i < MAX_THREADS; i++){
+        if (vmState.threads[i].scriptData != NULL && id == vmState.threads[i].id) {
+            return &vmState.threads[i];
+        }
+    }
+    return NULL;
+}
+
 void vmThreadStart(VMThread* pThread, u32 r4){
-    VMThread* thread = vmThreadSearch(r4);
+    //Search for the thread slot with the matching ID
+    VMThread* thread = vmThreadSearchImpl(r4);
     u8 argCount = vmArgCntGet(pThread);
     u32 total = argCount + 1;
 

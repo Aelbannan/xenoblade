@@ -1,14 +1,13 @@
 #include "monolib/work.hpp"
 
-// Retail sbss singleton slot (config symbols.txt lbl_eu_80665600; the retail
-// TU references it as a flat address label, so declare the typed extern with
-// that name instead of defining spInstance locally — the definition lives in
-// the retail data object).
-extern "C" CWorkFlowWiiPowerOff* lbl_eu_80665600;
+// Retail sbss singleton slot (config symbols.txt lbl_eu_80665600; 8 bytes:
+// word 0 = singleton pointer, word 1 = pad). Defined here so this TU owns
+// its data (blob monolibdata1d dissolve).
+CWorkFlowWiiPowerOff* lbl_eu_80665600[2];
 
 /**
  * Returns the singleton instance of the Wii Power Off workflow thread.
  */
 CWorkFlowWiiPowerOff* CWorkFlowWiiPowerOff::getInstance(){
-    return lbl_eu_80665600;
+    return lbl_eu_80665600[0];
 }

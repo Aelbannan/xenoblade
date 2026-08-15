@@ -586,7 +586,32 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/CfPadTask.cpp"),
             Object(NonMatching, "kyoshin/cf/code_801C2C14.cpp"),
             Object(NonMatching, "kyoshin/realtimeevt/CREvtLight.cpp"),
-            Object(NonMatching, "kyoshin/CBgTex.cpp", extra_cflags=["-func_align 16"]),
+            # TU-final: 10/10 FULL_MATCH, split 0x55C exact. Retail CBgTex
+            # frames use stmw/lmw block saves (2-3 callee-saved regs): needs
+            # -O4,s (MWCC_REFERENCE §16); -func_align 4 keeps .text packed
+            # like retail (no inter-function padding). US retail strips the
+            # member manglings (kept only for __dt__/OnFileEvent), so the link
+            # copy renames the compiled mangled names to the retail-unmangled
+            # names via objcopy --redefine-sym (CHelp pattern); objdiff/hexdiff
+            # keep the compiled object.
+            Object(
+                Matching,
+                "kyoshin/CBgTex.cpp",
+                extra_cflags=["-O4,s", "-func_align 4"],
+                link_transform={
+                    "renames": [
+                        ("__ct__6CBgTexFUc", "__ct__CBgTex"),
+                        ("func_801C3A24__6CBgTexFv", "func_801C3A24"),
+                        ("func_801C3C14__6CBgTexFv", "func_801C3C14"),
+                        ("func_801C3D54__6CBgTexFv", "func_801C3D54"),
+                        ("func_801C3D7C__6CBgTexFPQ34nw4r3lyt8DrawInfo",
+                         "func_801C3D7C"),
+                        ("func_801C3D9C__6CBgTexFv", "func_801C3D9C"),
+                        ("func_801C3E34__6CBgTexFv", "func_801C3E34"),
+                        ("func_801C3E3C__6CBgTexFv", "func_801C3E3C"),
+                    ],
+                },
+            ),
             Object(NonMatching, "kyoshin/CTitleAHelp.cpp", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "kyoshin/CItemBoxGrid.cpp"),
             Object(NonMatching, "kyoshin/CCur.cpp"),
@@ -1916,7 +1941,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/scn/CLight.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnEnvLgtCtrl.cpp"),
             Object(NonMatching, "monolib/src/effect/Unknown1.cpp"),
-            Object(NonMatching, "monolib/src/effect/code_804C8684.cpp"),
+            Object(NonMatching, "monolib/src/effect/code_804C8684.cpp", mw_version="GC/3.0a5.2"),  # retail func_804C8690 pair-copy schedule (addi after both pair loads, word load after pair stores) only matches under GC/3.0a5.2
             Object(NonMatching, "monolib/src/effect/code_804C8718.cpp"),
             Object(NonMatching, "monolib/src/effect/code_804CC2B8.cpp"),
             Object(NonMatching, "monolib/src/effect/CETrail.cpp"),

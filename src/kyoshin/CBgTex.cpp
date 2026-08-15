@@ -1,5 +1,6 @@
 #include "kyoshin/CBgTex.hpp"
 
+#include "kyoshin/CPresentWin.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device.hpp"
 #include "monolib/lib/CLibLayout.hpp"
@@ -8,17 +9,14 @@
 
 #include <nw4r/lyt.h>
 
-extern void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-extern void func_801390E0(CFileHandle**);
+// US retail keeps most callee names unmangled in CBgTex.o relocs; the C++
+// member manglings are only kept for __dt__ and OnFileEvent (see CBgTex.hpp).
 
-// US retail keeps these callee names unmangled in CBgTex.o relocs.
-void func_80124270(nw4r::lyt::Pane*, u32);
-u8 func_801372B4(u8);
-
-// Emit ctor before dtor so .text order matches retail (avoids 0xC align pad).
-CBgTex::CBgTex(u8 arg) {
-    mVtbl = lbl_eu_80533DC8;
-    __ct__17UnkClass_8045F564Fv(&mMemRegion);
+// Retail frames for this unit use the stmw/lmw block save (2-3 callee-saved
+// registers), which needs the -O4,s size-optimized lowering (MWCC_REFERENCE
+// §16 stmw/lmw: -O4,p would emit separate stw/lwz pairs). The unit is
+// configured with -O4,s -func_align 4 in configure.py.
+CBgTex::CBgTex(u8 arg) : CBgTexVtblBase(), mMemRegion() {
     mFileHandle = nullptr;
     mLayout = nullptr;
     mLayoutReady = false;
@@ -28,11 +26,10 @@ CBgTex::CBgTex(u8 arg) {
 
 CBgTex::~CBgTex() {}
 
-
 void CBgTex::func_801C3A24() {
     u32 handle = mtl::MemManager::getHandleMEM2();
     mMemRegion.createRegion(handle, 0x2000, lbl_eu_80505370, 1);
-    Class_8045F858 unusedVar = Class_8045F858(&mMemRegion);
+    Class_8045F858 unusedVar(&mMemRegion);
     mtl::MemManager::func_80434A4C(false);
 
     u8 regionId = static_cast<u8>(lbl_eu_80664184);
@@ -70,7 +67,7 @@ void CBgTex::func_801C3A24() {
     func_80124270(pane, !mPtmMode);
     pane = mLayout->GetRootPane()->FindPaneByName(lbl_eu_80505370 + 0xA0, true);
     func_80124270(pane, !mPtmMode);
-    func_801C3E3C();
+    this->func_801C3E3C();
     mMemRegion.func_8045F810();
 }
 
@@ -112,9 +109,10 @@ bool CBgTex::func_801C3C14() {
     }
 
     u32 allocHandle = mtl::MemManager::getHandleMEM2();
-    mFileHandle = CDeviceFile::readFile(
+    CFileHandle* handle = CDeviceFile::readFile(
         allocHandle, file, reinterpret_cast<IWorkEvent*>(this), 0, 0);
-    CDeviceFile::setHandleFlag1(mFileHandle);
+    mFileHandle = handle;
+    CDeviceFile::setHandleFlag1(handle);
     return false;
 }
 
@@ -160,10 +158,12 @@ void CBgTex::func_801C3E3C() {
 bool CBgTex::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
         void* pArchive = mFileHandle->getData();
-        lbl_eu_80664464 = CLibLayout::createArcResourceAccessor();
-        lbl_eu_80664464->Attach(pArchive, lbl_eu_80505370 + 0x136);
+        nw4r::lyt::ArcResourceAccessor* accessor =
+            CLibLayout::createArcResourceAccessor();
+        lbl_eu_80664464 = accessor;
+        accessor->Attach(pArchive, lbl_eu_80505370 + 0x136);
         mFileHandle = nullptr;
-        func_801C3A24();
+        this->func_801C3A24();
         return true;
     }
     return false;

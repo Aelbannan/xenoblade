@@ -106,10 +106,14 @@ public:
                    u32 blockSize) {
         return LoadGroup(static_cast<u32>(id), pAllocatable, blockSize);
     }
+#if defined(__MWERKS__)
+    // MWCC: u32 == unsigned long, distinct overloads. clang: u32 ==
+    // unsigned int, would redeclare the u32 version above.
     bool LoadGroup(unsigned int id, SoundMemoryAllocatable* pAllocatable,
                    u32 blockSize) {
         return LoadGroup(static_cast<u32>(id), pAllocatable, blockSize);
     }
+#endif
 
     u32 GetSoundPlayerCount() const {
         return mSoundPlayerCount;

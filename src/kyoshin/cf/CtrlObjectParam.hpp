@@ -31,7 +31,7 @@ extern u32 lbl_eu_806667C8;    // arts-learn table words (.sdata2, func_800A145C
 extern u32 lbl_eu_806667CC;    // arts-learn table words (.sdata2, func_800A145C)
 extern u32 lbl_eu_806640F4;    // item/weapon bdat file pointer (.sbss, sda21)
 extern u32 lbl_eu_806640D8;    // arts bdat file pointer (.sbss, sda21, func_800A2DE8)
-extern u32 lbl_eu_806640DC;    // arts bdat file pointer (.sbss, sda21, func_800A1E3C)
+extern void* lbl_eu_806640DC;   // arts bdat file pointer (.sbss, sda21, func_800A1E3C)
 extern u32 lbl_eu_806640F8;    // armor bdat file pointer (.sbss, sda21, func_8009D7F4)
 extern u32 lbl_eu_80664090;    // arts stat bdat file pointer (.sbss, sda21, func_800A0E64)
 extern char lbl_eu_804FBCB0[]; // bdat column-name string table (.rodata)

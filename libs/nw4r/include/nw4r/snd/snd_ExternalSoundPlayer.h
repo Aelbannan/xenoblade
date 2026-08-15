@@ -3,6 +3,7 @@
 #include <nw4r/types_nw4r.h>
 
 #include <nw4r/snd/snd_BasicSound.h>
+#include <nw4r/snd/snd_SoundHandle.h>  // SoundHandle (inline bodies use it by value)
 
 namespace nw4r {
 namespace snd {

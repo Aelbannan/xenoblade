@@ -73,10 +73,10 @@ extern "C" {
     u32 getWorkMem__17CWorkThreadSystemFv();
     void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
     void Regist__8CProcessFP8CProcessb(void*, void*, bool);
-    u32 __ptmf_null[];
-    u32 lbl_eu_8052BF70[];
-    char lbl_eu_805371A0[];
-    char lbl_eu_8050C5C8[];
+    extern u32 __ptmf_null[];
+    extern u32 lbl_eu_8052BF70[];
+    extern char lbl_eu_805371A0[];
+    extern char lbl_eu_8050C5C8[];
     extern const f32 lbl_eu_806687D8;
     extern const f64 lbl_eu_806687D0;
 

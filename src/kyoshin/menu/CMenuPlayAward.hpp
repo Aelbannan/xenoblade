@@ -455,7 +455,7 @@ extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
 extern "C" void* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool);
 extern "C" void* __ct__CTagProcessor(void*);
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(unsigned long, nw4r::lyt::Layout*);
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" u32 func_801355BC();
 extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
 extern "C" u32 func_8003B1EC(void*);

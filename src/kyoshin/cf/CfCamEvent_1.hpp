@@ -3,6 +3,8 @@
 #include <types.h>
 #include <monolib/math/CVec3.hpp>
 
+class UnkClass_800821F8;  // fwd decl: only pointer-position use (func_800821F8__Q22cf13CfGameManagerFv result)
+
 // Global singleton object referenced by the CfCamEvent cam logic
 // (address lbl_eu_80663DF0, accessed via sda21 as a pointer).
 struct CfCamEventGlobal {

@@ -647,7 +647,7 @@ extern float lbl_eu_80668A54;
 extern u8 lbl_eu_80663DA0;
 // Battle-manager mode-flag word (.sbss) probed by func_80277B38's chain-start
 // gate (bit 22). Same declaration as CBattleManager.hpp's extern "C" row.
-extern "C" u32 lbl_eu_80663E24;
+extern u32 lbl_eu_80663E24;
 
 // Voice-timing threshold compared against the voice sub-object's slot-0x110
 // result by func_8027A8C8 (.sdata2 float; const lets MWCC schedule the

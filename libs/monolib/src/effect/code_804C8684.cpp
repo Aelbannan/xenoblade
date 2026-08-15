@@ -31,11 +31,11 @@ extern CEffectParam lbl_eu_8065FC08;
 void func_804C8690(u8 flag, const CEffectParam* src) {
     lbl_eu_806659A0 = flag;
     if (src) {
-        // Explicit pair local + pointer: MWCC emits the pair loads, then the
-        // base addi, then the reversed pair stores, then the word load+store
-        // (retail: lwz 0; lwz 4; addi; stw 4; stw 0; lwz 8; stw 8).
-        u64 pair = *(const u64*)src;
+        // Byte-view pointer first (retail lis/addi precede the pair loads),
+        // then the 8-byte pair chunk (lwz 0; lwz 4; stw 4; stw 0) plus the
+        // word at 0x08 (lwz 8; stw 8).
         u8* dst = (u8*)&lbl_eu_8065FC08;
+        u64 pair = *(const u64*)src;
         *(u64*)dst = pair;
         *(u32*)(dst + 8) = src->field_0x08;
     }
@@ -47,13 +47,6 @@ void func_804C8690(u8 flag, const CEffectParam* src) {
 // through their retail sdata2 symbols so the lfs relocs stay pinned.
 // ---------------------------------------------------------------------------
 
-struct CEffectBlk {
-    f32 field_0x00;
-    f32 field_0x04;
-    f32 field_0x08;
-    f32 field_0x0c;
-};
-
 extern f32 lbl_eu_8065FBE8[12];
 extern f32 lbl_eu_8066B088;  // 1.0f
 extern f32 lbl_eu_8066B08C;  // 0.0f
@@ -64,9 +57,10 @@ extern f32 lbl_eu_8066B098;  // 393.0f
 void sinit_804C86C0() {
     // Default-parameter table at lbl_eu_8065FBE8: three 16-byte blocks.
     // Retail keeps one address register per block (addi rX, r6, K) with each
-    // block's first field folded back into the base. The array-decay pointer
-    // form reproduces that (address-of forms fold into one register); same
-    // shape as the matched sinit_8049FC60.
+    // block's first field folded back into the base (same shape as the
+    // unmatched sinit_8049FC60; MWCC's -ipa file pass folds every constant
+    // address form into one register, so the per-block addi's are currently
+    // unreproducible).
     f32* v0 = lbl_eu_8065FBE8;
     f32* v1 = v0 + 4;
     f32* v2 = v0 + 8;

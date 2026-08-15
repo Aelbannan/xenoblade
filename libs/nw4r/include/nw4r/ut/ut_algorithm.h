@@ -57,8 +57,8 @@ template <typename T> inline bool TestBit(T t, int pos) {
  * Pointer arithmetic
  *
  ******************************************************************************/
-inline u32 GetIntPtr(const void* pPtr) {
-    return reinterpret_cast<u32>(pPtr);
+inline uintptr_t GetIntPtr(const void* pPtr) {
+    return reinterpret_cast<uintptr_t>(pPtr);
 }
 
 template <typename T>

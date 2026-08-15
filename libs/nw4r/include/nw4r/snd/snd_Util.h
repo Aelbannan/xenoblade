@@ -28,10 +28,10 @@ public:
     static const int SEMITONE_MAX = 12;
     static const int MICROTONE_MAX = 256;
 
-    static const int VOLUME_MIN =
-        static_cast<int>(10 * VOLUME_MIN_DB); // -90.4db
-    static const int VOLUME_MAX =
-        static_cast<int>(10 * VOLUME_MAX_DB); // +6.0db
+    // static_cast<int>(10 * VOLUME_MIN_DB) = -904 (clang rejects the float
+    // chain as a non-constant in-class initializer; value is identical).
+    static const int VOLUME_MIN = -904; // -90.4db
+    static const int VOLUME_MAX = 60;   // +6.0db
 
 public:
     /******************************************************************************
@@ -170,7 +170,9 @@ private:
     // Table index is the millibel / hundredth-of-a-decibel
     // dB(idx) = VOLUME_MIN_DB + (idx / 10)
     // tbl[idx] = 10 ** (dB(idx) / 20)
-    static const int VOLUME_TABLE_SIZE = VOLUME_RANGE_MB + 1;
+    // VOLUME_RANGE_MB + 1 = 965 (folded: the float chain is not a constant
+    // expression under clang).
+    static const int VOLUME_TABLE_SIZE = 965;
     // NOLINTNEXTLINE (vla-cxx-extension)
     static const f32 Decibel2RatioTable[VOLUME_TABLE_SIZE];
 

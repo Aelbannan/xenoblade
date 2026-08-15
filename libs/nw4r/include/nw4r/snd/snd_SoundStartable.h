@@ -66,32 +66,40 @@ public:
     bool StartSound(SoundHandle* pHandle, u32 id) {
         return detail_StartSound(pHandle, id, NULL) == START_SUCCESS;
     }
+#if defined(__MWERKS__)
+    // MWCC: u32 == unsigned long, so these overloads are distinct. clang
+    // (LP64 exact-width) has u32 == unsigned int and would redeclare.
     bool StartSound(SoundHandle* pHandle, unsigned int id) {
         return detail_StartSound(pHandle, id, NULL) == START_SUCCESS;
     }
     bool StartSound(SoundHandle* pHandle, int id) {
         return detail_StartSound(pHandle, id, NULL) == START_SUCCESS;
     }
+#endif
 
     bool HoldSound(SoundHandle* pHandle, u32 id) {
         return detail_HoldSound(pHandle, id, NULL) == START_SUCCESS;
     }
+#if defined(__MWERKS__)
     bool HoldSound(SoundHandle* pHandle, unsigned int id) {
         return detail_HoldSound(pHandle, id, NULL) == START_SUCCESS;
     }
     bool HoldSound(SoundHandle* pHandle, int id) {
         return detail_HoldSound(pHandle, id, NULL) == START_SUCCESS;
     }
+#endif
 
     bool PrepareSound(SoundHandle* pHandle, u32 id) {
         return detail_PrepareSound(pHandle, id, NULL) == START_SUCCESS;
     }
+#if defined(__MWERKS__)
     bool PrepareSound(SoundHandle* pHandle, unsigned int id) {
         return detail_PrepareSound(pHandle, id, NULL) == START_SUCCESS;
     }
     bool PrepareSound(SoundHandle* pHandle, int id) {
         return detail_PrepareSound(pHandle, id, NULL) == START_SUCCESS;
     }
+#endif
 
 private:
     StartResult detail_StartSound(SoundHandle* pHandle, u32 id,

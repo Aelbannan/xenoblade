@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include <monolib/work/CEventFile.hpp>  // CEventFile (OnFileEvent param)
 
 // CEquipItemBox vtable (lbl_eu_80538658)
 extern "C" void* lbl_eu_80538658[];

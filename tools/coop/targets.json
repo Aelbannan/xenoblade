@@ -393667,7 +393667,7 @@
       "unit": "CriWare/src/sofdec/mwply/mwsfx_Y84C44",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803a137c",
@@ -393682,7 +393682,9 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/mwply/mwsfx_Y84C44.c",
       "declared_return": "i32",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 89.744,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-803a71c4",
@@ -394557,7 +394559,7 @@
       "size": "0xA8",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_err",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "called_functions": [
@@ -394570,7 +394572,15 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_err.c",
       "declared_return": "i32",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-32893",
+        "claimed_at": "2026-08-15T00:45:55.598425+00:00",
+        "allowed_paths": [
+          "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_err.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-803a99a8",
@@ -434606,7 +434616,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803ff3a8",
@@ -486132,7 +486143,7 @@
       "size": "0xA8",
       "unit": "monolib/src/device/CDeviceGX",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "NOT_STARTED",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/device/CDeviceGX.cpp",
@@ -486144,7 +486155,15 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-32893",
+        "claimed_at": "2026-08-15T01:08:13.187977+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/device/CDeviceGX.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8045944c",
@@ -536494,8 +536513,8 @@
       "size": "0xA4",
       "unit": "monolib/src/scn/CScnEnvLgtCtrl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80492d4c"
@@ -536506,7 +536525,9 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnEnvLgtCtrl.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804c5cfc",
@@ -539487,8 +539508,8 @@
       "size": "0x30",
       "unit": "monolib/src/effect/code_804C8684",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -539498,14 +539519,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/effect/code_804C8684.cpp",
       "source_present": true,
-      "claim": {
-        "owner": "pi-harness-32893",
-        "claimed_at": "2026-08-14T23:56:27.971317+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/effect/code_804C8684.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-804cc81c",
@@ -539518,8 +539533,8 @@
       "size": "0x58",
       "unit": "monolib/src/effect/code_804C8684",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -539529,14 +539544,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/effect/code_804C8684.cpp",
       "source_present": true,
-      "claim": {
-        "owner": "pi-harness-32893",
-        "claimed_at": "2026-08-14T23:56:27.971516+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/effect/code_804C8684.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-804cc874",

@@ -1,4 +1,8 @@
 // Typed helpers recovered from the original CfGameManager unity translation unit.
+// Self-contained includes: the file has no other includes and is parsed
+// standalone by the label-centralization gate.
+#include <types.h>
+#include <monolib/util/FixStr.hpp>  // ml::FixStr<64>
 
 namespace ml {
 #pragma dont_inline on
@@ -1299,9 +1303,7 @@ union ResourceDestination {
 };
 extern "C" u32 func_8009CF8C(u32 resourceId);
 extern "C" void func_8009D018(u32 destination, u32 value);
-struct ResourceIndexTable {
-    s8 values[8][8];
-};
+#include "kyoshin/cf/ResourceIndexTable.hpp"
 extern "C" const ResourceIndexTable lbl_eu_804FB7B0;
 #pragma dont_inline on
 extern "C" s32 func_80082418__Q22cf13CfGameManagerFv(s32 first, s32 second) {

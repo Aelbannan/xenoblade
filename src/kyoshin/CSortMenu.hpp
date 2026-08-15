@@ -102,7 +102,7 @@ extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(unsigned long, const char*, void*, int, int);
 extern "C" void setHandleFlag1__11CDeviceFileFP11CFileHandle(void*);
-extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(unsigned long, nw4r::lyt::Layout*);
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" u32 func_8015780C(int);
 
 // CScrollBar functions

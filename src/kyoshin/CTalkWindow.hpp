@@ -376,7 +376,7 @@ void func_80127764(void* tagProc, nw4r::lyt::Pane* a, nw4r::lyt::Pane* b,
 void func_8013676C(nw4r::lyt::Pane* rootPane, u32 fontHandle);
 void* __ct__CTagProcessor(void* self);
 u32 getAllocHandle__10CLibLayoutFv();
-void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
 void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
     nw4r::lyt::Layout** ppLayout, nw4r::lyt::ArcResourceAccessor* accessor,

@@ -1,8 +1,8 @@
 #include "monolib/mpfsys/MPFDrawBillboard.hpp"
 
 extern "C" {
-    s8 lbl_eu_806658A0;
-    mpfsys::MPFDrawBillboard* lbl_eu_806658A4;
+    extern s8 lbl_eu_806658A0;
+    extern mpfsys::MPFDrawBillboard* lbl_eu_806658A4;
 }
 
 struct MPFDrawBillboard_Prototype {
@@ -10,7 +10,9 @@ struct MPFDrawBillboard_Prototype {
     u32 padding[4];
 };
 
-static MPFDrawBillboard_Prototype lbl_eu_8056DC48;
+// Retail-owned prototype storage (bss lbl_eu_8056DC48, in the retail data
+// blob); declared extern so this TU defines no data.
+extern MPFDrawBillboard_Prototype lbl_eu_8056DC48;
 
 namespace mpfsys {
 

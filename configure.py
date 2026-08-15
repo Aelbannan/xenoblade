@@ -1819,7 +1819,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/device/CDeviceFile.cpp"),
             Object(NonMatching, "monolib/src/device/CDeviceFileCri.cpp"),
             Object(NonMatching, "monolib/src/device/CDeviceFileDvd.cpp"),
-            Object(NonMatching, "monolib/src/device/CDeviceFileJob.cpp"),
+            Object(NonMatching, "monolib/src/device/CDeviceFileJob.cpp", extra_cflags=["-RTTI off"]),  # retail has NO RTTI data in this TU (weak __RTTI__/typeinfo names the retail linker GC'd; .data/.rodata/.sdata all 0)
             Object(NonMatching, "monolib/src/device/CDeviceFileJobReadDvd.cpp"),
             Object(NonMatching, "monolib/src/device/CDeviceFont.cpp"),
             Object(NonMatching, "monolib/src/device/CDeviceFontInfoExt.cpp"),

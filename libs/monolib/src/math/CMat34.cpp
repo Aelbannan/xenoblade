@@ -1,7 +1,5 @@
 #include "monolib/math.hpp"
 
-DECOMP_FORCELITERAL(CMat34_cpp, 0.0f);
-
 namespace ml{
     CMat34 CMat34::zero = CMat34(
     0,0,0,0,

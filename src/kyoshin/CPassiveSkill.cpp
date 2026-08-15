@@ -2952,10 +2952,13 @@ u8 func_8026D9F0(UI_CPassiveSkill* self) {
     return 0;
 }
 
+// returns 1 when the byte at +0x110 is >= 8 (retail subfc/subfze carry
+// idiom — optimize_for_size on forces the -O4,s lowering in this -O4,p unit).
+#pragma optimize_for_size on
 u32 func_8026DA34(u8* self) {
-    // returns 1 when the byte at +0x110 is >= 8 (retail subfc/subfze carry idiom)
     return (u32)self[0x110] >= 8;
 }
+#pragma optimize_for_size off
 
 // Open the skill menu: lazily attach the +0x1B8 CSysWin sub-object pointer at
 // +0x19C, mark visible, then tail-call the +0x28 sub-object's update.

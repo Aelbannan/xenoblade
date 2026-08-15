@@ -4,8 +4,6 @@
 namespace nw4r {
 namespace g3d {
 
-NW4R_G3D_RTTI_DEF(ScnProc);
-
 // Allocates a ScnProc (plus an optional caller-owned user-data area) out of
 // the given MEM allocator. The user-data area follows the object header:
 // both the object size and the user-data size are rounded up to 4 bytes, and
@@ -81,13 +79,13 @@ void ScnProc::G3dProc(u32 task, u32 param, void* pInfo) {
 // ScnObj::~ScnObj (retail's double `this`-null-check + `li r4,0; bl` shape).
 ScnProc::~ScnProc() {}
 
-// Retail RTTI name record for ScnProc ("ScnProc", 8 bytes including NUL).
-// The retail binary keeps it in the shared nw4r_data.s unit, so the data
-// itself is referenced (not defined) there; this TU defines the symbol so
-// the GetTypeObj / IsDerivedFrom relocations resolve to `lbl_eu_8051D7E8`.
-// `extern "C"` is required: the definition sits inside namespace nw4r::g3d,
-// where C++ linkage would mangle the global variable name.
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnProc")> lbl_eu_8051D7E8 = {sizeof("ScnProc"), "ScnProc"};
+// Retail RTTI name record for ScnProc ("ScnProc", 8 bytes including NUL)
+// lives in the shared nw4r_data.s unit, outside this split slice; the
+// GetTypeObj / IsDerivedFrom relocations reference it by name only, so keep
+// it as an extern declaration (no local .rodata). `extern "C"` is required:
+// the declaration sits inside namespace nw4r::g3d, where C++ linkage would
+// mangle the global variable name.
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnProc")> lbl_eu_8051D7E8;
 
 // Base-chain check mirroring ScnLeaf/ScnObj/G3dObj::IsDerivedFrom. Kept as a
 // static helper (not a virtual-call chain) so MWCC inlines it into

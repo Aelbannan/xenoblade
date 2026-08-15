@@ -17,7 +17,11 @@ extern volatile u32 lbl_eu_80519744;
 extern u32 lbl_eu_80519748[];
 
 void ADXWII_SetupDvdFs(int media) {
-    (void)*(volatile char**)&lbl_eu_80519744;
+    /* Retail dead-reads rodata lbl_eu_80519744 (a pointer to the module SDK
+       version banner at 0x80519708) into r0 before the first cvFsEntryErrFunc
+       call; the value is unused. The volatile qualifier keeps the load alive
+       (MWCC DCEs the plain read) - same lever as AXRNA_Init. */
+    (void)lbl_eu_80519744;
     cvFsEntryErrFunc((CvFsErrFn)adxwii_err_dvd, 0);
     cvFsAddDev(&lbl_eu_80519748[0], mfCiGetInterface, 0);
     cvFsEntryErrFunc((CvFsErrFn)adxwii_err_dvd, 0);

@@ -1,7 +1,9 @@
 #include "monolib/work.hpp"
 
-CWorkFlowWiiReset* CWorkFlowWiiReset::spInstance = nullptr;
+// Retail singleton slot (sbss lbl_eu_806655F8); owned by the retail data
+// blob (monolibdata*.s), so this TU declares it extern and stays data-free.
+extern "C" CWorkFlowWiiReset* lbl_eu_806655F8;
 
 CWorkFlowWiiReset* CWorkFlowWiiReset::getInstance(){
-    return spInstance;
+    return lbl_eu_806655F8;
 }

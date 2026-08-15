@@ -56,6 +56,15 @@ int MPV_GetBitRate(void* handle, u32* out) {
 }
 
 /* Get VBV buffer size */
+
+/* Max bitrate = (frameRate * bitRate * 0x91A2B3C5) >> 42, rounded toward zero.
+   Kept as an inline helper so the magic-mulhw chain is born as its own block. */
+static s32 mpv_calc_max_bitrate(MpfGetHd *h, u32 bitRate) {
+    s32 m = (s32)h->frameRate * (s32)bitRate;
+    return (u32)(((__mulhw((s32)0x91A2B3C5, m) + m) >> 10))
+         + ((u32)(((__mulhw((s32)0x91A2B3C5, m) + m) >> 10)) >> 31);
+}
+
 int MPV_GetVbvBufSiz(void *handle, u32 *out_size, u32 *out_avg, u32 *out_max) {
     MpfGetHd *h = (MpfGetHd *)handle;
     u32 bitRate;
@@ -70,10 +79,7 @@ int MPV_GetVbvBufSiz(void *handle, u32 *out_size, u32 *out_avg, u32 *out_max) {
     if ((u32)(bitRate - 0x30000) == 0xFFFF) {
         *out_max = (u32)-1;
     } else {
-        /* 410 avg bitrate = (frameRate * bitRate * 0x91A2B3C5) >> 42, rounded */
-        s32 m = (s32)h->frameRate * (s32)bitRate;
-        *out_max = (u32)(((__mulhw(0x91A2B3C5, m) + m) >> 10))
-                 + ((u32)(((__mulhw(0x91A2B3C5, m) + m) >> 10)) >> 31);
+        *out_max = (u32)mpv_calc_max_bitrate(h, bitRate);
     }
     return 0;
 }

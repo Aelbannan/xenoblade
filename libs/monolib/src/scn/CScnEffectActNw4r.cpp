@@ -34,22 +34,24 @@ extern "C" void func_8049BEEC(u8* self, const void* other) {
 }
 
 // Manager's effect-act getter, act slot at +0x48.
-extern "C" u8* func_8049BF0C(CScnEffectActNw4r* self) {
+// const self: MWCC hoists the mpMgr load above the LR-save store (retail
+// prologue order lwz r3,4(r3) BEFORE stw r0,20(sp)); non-const emits stw-first.
+extern "C" u8* func_8049BF0C(const CScnEffectActNw4r* self) {
     return func_8048315C(self->mpMgr) + 0x48;
 }
 
 // Manager's effect-act getter, act slot at +0x78.
-extern "C" u8* func_8049BF34(CScnEffectActNw4r* self) {
+extern "C" u8* func_8049BF34(const CScnEffectActNw4r* self) {
     return func_8048315C(self->mpMgr) + 0x78;
 }
 
 // Manager's effect-act getter, act slot at +0xb8.
-extern "C" u8* func_8049BF5C(CScnEffectActNw4r* self) {
+extern "C" u8* func_8049BF5C(const CScnEffectActNw4r* self) {
     return func_8048315C(self->mpMgr) + 0xb8;
 }
 
 // Manager's effect-act getter, act slot at +0xc4.
-extern "C" u8* func_8049BF84(CScnEffectActNw4r* self) {
+extern "C" u8* func_8049BF84(const CScnEffectActNw4r* self) {
     return func_8048315C(self->mpMgr) + 0xc4;
 }
 

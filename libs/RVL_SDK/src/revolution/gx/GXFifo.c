@@ -421,12 +421,14 @@ void __GXSaveFifo(void) {
     }
 
     if (GPFifoReady[0]) {
-        temp = (u32)GX_CP_REG_READ_U16(CP_FIFO_RPTRH) << 16;
-        temp |= (u32)GX_CP_REG_READ_U16(CP_FIFO_RPTRL);
+        const volatile u16* cp = (const volatile u16*)__cpReg;
+
+        temp = (u32)cp[CP_FIFO_RPTRH] << 16;
+        temp |= (u32)cp[CP_FIFO_RPTRL];
         GPFifo.readPtr = (void*)OSPhysicalToCached(temp);
 
-        temp = (u32)GX_CP_REG_READ_U16(CP_FIFO_COUNTH) << 16;
-        temp |= (u32)GX_CP_REG_READ_U16(CP_FIFO_COUNTL);
+        temp = (u32)cp[CP_FIFO_COUNTH] << 16;
+        temp |= (u32)cp[CP_FIFO_COUNTL];
         GPFifo.count = temp;
     }
 

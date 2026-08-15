@@ -3,6 +3,16 @@
 #include <types.h>
 #include "monolib/scn/CVirtualLightDir.hpp"
 
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// Retail CVirtualLightDir vtable data (monolibdata2.s @0x8056E898) and the
+// shared sdata2 {0.0f, 0.0f} constant (monolibdata2.s @0x8066AA80). The
+// classes are __declspec(novtable), so ctor/dtor never emit a local vtable
+// and assign the retail label explicitly instead of the compiler-generated
+// __vt__16CVirtualLightDir / __vt__20CVirtualLightObjBase (which would add
+// .data/.rodata/RTTI to a retail-empty TU).
+extern "C" void* lbl_eu_8056E898[];
+extern "C" const float lbl_eu_8066AA80; // 0.0f (first float of the 8-byte pair)
+
 // CVirtualLightObj-compatible prefix laid out exactly to 0x34 so that the
 // derived CVirtualLightDir extension fields land at 0x34/0x38. Keeping the
 // base polymorphic (its vptr occupies +0x00, matching CVirtualLightObj's own
@@ -34,7 +44,7 @@ public:
 };
 
 // Directional light node: CVirtualLightObj prefix + f32 extension fields.
-class CVirtualLightDir : public CVirtualLightObjBase {
+class __declspec(novtable) CVirtualLightDir : public CVirtualLightObjBase {
 public:
     CVirtualLightDir();
     virtual ~CVirtualLightDir();
@@ -46,8 +56,9 @@ public:
 };
 
 CVirtualLightDir::CVirtualLightDir() {
-    mField34 = 1000.0f;
-    mField38 = 1000.0f;
+    *(void**)this = (void*)lbl_eu_8056E898;
+    mField34 = lbl_eu_8066AA80;
+    mField38 = lbl_eu_8066AA80;
     mField2C = 2;
 }
 

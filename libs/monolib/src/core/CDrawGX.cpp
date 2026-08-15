@@ -318,7 +318,9 @@ void CDrawGX::add(s16 x, s16 y, const ml::CCol4& r6){
     mVertCount++;
 }
 
-void CDrawGX::add(s16 x, s16 y){
+// Defined inline so no standalone body is emitted (retail inlines it into
+// renderRect and never ships a copy in this TU).
+inline void CDrawGX::add(s16 x, s16 y){
     GXPosition3s16(x, y, 0);
 
     mVertCount++;

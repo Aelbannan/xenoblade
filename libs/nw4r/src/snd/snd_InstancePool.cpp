@@ -5,8 +5,12 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
+// Retail compiles the interrupt-lock RAII inline and never emits an out-of-line
+// AutoInterruptLock destructor; spelled out as explicit calls so the TU stays
+// byte-identical without the spurious weak/local destructor symbols.
+
 u32 PoolImpl::CreateImpl(void* pBuffer, u32 size, u32 stride) {
-    ut::AutoInterruptLock lock;
+    BOOL old = OSDisableInterrupts();
 
     u8* pPtr = static_cast<u8*>(ut::RoundUp(pBuffer, 4));
     stride = ut::RoundUp(stride, 4);
@@ -20,11 +24,13 @@ u32 PoolImpl::CreateImpl(void* pBuffer, u32 size, u32 stride) {
         mNext = pHead;
     }
 
+    OSRestoreInterrupts(old);
+
     return length;
 }
 
 void PoolImpl::DestroyImpl(void* pBuffer, u32 size) {
-    ut::AutoInterruptLock lock;
+    BOOL old = OSDisableInterrupts();
 
     void* pBegin = pBuffer;
     void* pEnd = static_cast<u8*>(pBegin) + size;
@@ -39,10 +45,12 @@ void PoolImpl::DestroyImpl(void* pBuffer, u32 size) {
             pPrev = pIt;
         }
     }
+
+    OSRestoreInterrupts(old);
 }
 
 int PoolImpl::CountImpl() const {
-    ut::AutoInterruptLock lock;
+    BOOL old = OSDisableInterrupts();
 
     int num = 0;
 
@@ -50,28 +58,35 @@ int PoolImpl::CountImpl() const {
         num++;
     }
 
+    OSRestoreInterrupts(old);
+
     return num;
 }
 
 void* PoolImpl::AllocImpl() {
-    ut::AutoInterruptLock lock;
+    BOOL old = OSDisableInterrupts();
 
     if (mNext == NULL) {
+        OSRestoreInterrupts(old);
         return NULL;
     }
 
     PoolImpl* pHead = mNext;
     mNext = pHead->mNext;
 
+    OSRestoreInterrupts(old);
+
     return pHead;
 }
 
 void PoolImpl::FreeImpl(void* pElem) {
-    ut::AutoInterruptLock lock;
+    BOOL old = OSDisableInterrupts();
 
     PoolImpl* pHead = static_cast<PoolImpl*>(pElem);
     pHead->mNext = mNext;
     mNext = pHead;
+
+    OSRestoreInterrupts(old);
 }
 
 } // namespace detail

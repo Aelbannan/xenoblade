@@ -492,7 +492,7 @@ extern "C" void func_802B3568(cf::CfHikariItemManager* self, const f32* src,
 // Target 3 (us-802b618c): publish the record's first three words into the
 // .bss global state block and reset the four sbss counters (retail emits
 // four SDA-relocated word stores to lbl_eu_80664C18..24).
-extern "C" void func_802B371C(CfHikariItemRecord* self) {
+extern "C" void func_802B371C(const CfHikariItemRecord* self) {
     u32* dst = (u32*)&lbl_eu_80577680[0];
     dst[0] = self->field_00;
     u32 b = self->field_04;

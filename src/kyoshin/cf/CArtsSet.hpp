@@ -139,10 +139,11 @@ namespace cf {
         };
 
         _sArtsSet();
-        virtual void _sArtsSet_UnkVirtualFunc1(){
-            unk0 = 0;
-            std::memset(unk4, 0, sizeof(unk4));
-        }
+        // Declared (no inline body): the retail vtable lives in the shared
+        // data split (lbl_eu_8052F5D8), so this TU must NOT emit __vt__/RTTI.
+        // The body is defined in CArtsSet.cpp as the retail-named free
+        // function _sArtsSet_UnkVirtualFunc1__Q22cf9_sArtsSetFv.
+        virtual void _sArtsSet_UnkVirtualFunc1();
     };
 
     //size: 0xD58

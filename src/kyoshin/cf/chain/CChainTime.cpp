@@ -45,8 +45,10 @@ extern "C" void func_8027CF3C(cf::CChainTime* self) {
 
     if (lbl_eu_80668A88 != timer) {
         if (self->mEnabled != 0) {
-            f32 limit = -1.0f;
-            if (timer != limit || self->mChainEffect.unk4 != 0) {
+            // Retail compares against lbl_eu_80668A8C (0.0f) here, not a -1.0f
+            // literal — using the extern keeps the lfs reloc on the retail name
+            // and avoids pooling a TU-local float constant.
+            if (timer != lbl_eu_80668A8C || self->mChainEffect.unk4 != 0) {
                 timer = self->mTimer;
                 if (timer <= lbl_eu_80668A8C) {
                     func_802A0818(0xB8, 0);

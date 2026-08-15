@@ -5,17 +5,17 @@
 #include <revolution/OS.h>
 #include <revolution/VI.h>
 
-namespace {
-
-NW4R_LIB_VERSION(G3D, "Nov 20 2008", "03:23:14", "0x4199_60831");
-
-} // namespace
+// Retail keeps the G3D version string and its .sdata pointer in the shared
+// pool (pointer at lbl_eu_806634B0 -> string at 0x80569828, outside this
+// split slice); reference the pointer by name instead of defining the
+// version record locally (no .data/.sdata here).
+extern "C" const char* lbl_eu_806634B0;
 
 namespace nw4r {
 namespace g3d {
 
 void G3dInit(bool enableLockedCache) {
-    OSRegisterVersion(NW4R_G3D_Version_);
+    OSRegisterVersion(lbl_eu_806634B0);
 
     if (enableLockedCache) {
         ut::LC::Enable();

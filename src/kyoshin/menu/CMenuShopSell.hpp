@@ -94,7 +94,7 @@ extern "C" void Term__13CMenuShopSellFv();
 extern "C" void Move__13CMenuShopSellFv();
 extern "C" void cbRenderBefore__13CMenuShopSellFv(void* self);
 extern "C" void func_8018B0FC(void*, void*);
-extern "C" void func_8018B130(ShopSellData* dst, const ShopSellData* src);
+extern "C" void func_8018B130(void*, void*);
 extern "C" CMenuShopSell* func_8018B324(CProcess* parent, CScn* scene);
 extern "C" bool func_8018B398();
 extern "C" __declspec(noinline) void func_8018B3A8(CMenuShopSell* self);

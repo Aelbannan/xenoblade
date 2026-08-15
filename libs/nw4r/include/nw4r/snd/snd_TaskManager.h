@@ -35,11 +35,31 @@ public:
     void CancelWaitTask();
 
 private:
-    TaskManager();
+    // Inline (retail emits no standalone __ct__: GetInstance inlines the body).
+    TaskManager() : mCurrentTask(NULL), mCancelWaitTaskFlag(false) {
+        OSInitThreadQueue(&mAppendThreadQueue);
+        OSInitThreadQueue(&mDoneThreadQueue);
+    }
 
     Task* PopTask();
     Task* GetNextTask();
-    Task* GetNextTask(TaskPriority priority, bool remove);
+    // Inline (retail emits no standalone 2-arg GetNextTask: PopTask/GetNextTask
+    // inline the body).
+    Task* GetNextTask(TaskPriority priority, bool remove) {
+        ut::AutoInterruptLock lock;
+
+        if (mTaskList[priority].IsEmpty()) {
+            return NULL;
+        }
+
+        Task& rTask = mTaskList[priority].GetFront();
+
+        if (remove) {
+            mTaskList[priority].PopFront();
+        }
+
+        return &rTask;
+    }
 
 private:
     TaskList mTaskList[PRIORITY_MAX]; // at 0x0

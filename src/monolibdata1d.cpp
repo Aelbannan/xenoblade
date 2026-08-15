@@ -3,36 +3,47 @@
  * Sections: .data 0x89C (2204 B), .bss 0x370 (880 B), .sbss 0xB8 (184 B);
  * 468 relocs in .data (vtable / RTTI / typeinfo / jumptable references).
  *
- * This is a pure data TU compiled by MWCC with `-lang=c++` only (no include
- * paths), so it is self-contained: no <types.h>, no monolib headers.  The
- * owning types are the monolib library classes (CView / CWorkThread /
- * IWorkEvent / CProcess / CDeviceBase / ...), whose vtable shapes are
- * reproduced here with typed structs; function slots reference the retail
- * mangled names via `extern "C"` declarations (MWCC never mangles those, so
- * the emitted reloc name is exactly the identifier).
+ * The owning types are the monolib library classes (CView / CWorkThread /
+ * IWorkEvent / CProcess / CDeviceBase / ...); this TU reproduces their
+ * vtable / RTTI blobs as typed structs.  Function-pointer slots reference the
+ * real methods through real declarations: each class is declared with its
+ * retail method names and signatures, and the slot takes `&Class::method`.
  *
- * Encoding notes (verified against the retail split object):
- *  - .data symbols in forward declaration order; every word is either a
- *    reloc site (placeholder 0 bytes, exactly like retail) or a literal.
- *  - vtable header is [typeinfo label, offset-to-top] where the typeinfo
- *    label (lbl_eu_8066xxxx / lbl_eu_806619xx) lives in another unit.
- *  - .bss forward, .sbss REVERSE declaration order (MWCC emits .sbss in
- *    reverse of the source list); both NOBITS so only size+align matter.
+ * Declaration mechanism notes (verified against MWCC Wii/1.1):
+ *  - MWCC rejects converting an instance-member pointer (pmf) to a plain
+ *    function pointer, and rejects taking a destructor's address outright
+ *    ("illegal pointer to constructor/destructor").  Instance methods are
+ *    therefore declared as STATIC members here: a static member's address IS
+ *    a plain function pointer, and MWCC mangles static members identically
+ *    to instance members (verified: `static void CView::wkUpdate()` emits
+ *    `wkUpdate__5CViewFv`).  The vtable slot content (a plain 4-byte
+ *    address) is identical either way; only the port-side caller type
+ *    changes, and the static declaration keeps the real parameter signature.
+ *  - Parameter types MUST match the retail encoding (Ul vs Ui, P10CEventFile
+ *    vs Pv): these change the mangled name.
+ *  - Destructor slots (`__dt__5CViewFv`, ...) have no legal source-level
+ *    address form in MWCC (see above); template-instantiation dtors
+ *    (`__dt__13CMsgParam<10>Fv`, ...) additionally contain `<`/`>` in the
+ *    symbol, which no identifier can express.  Those slots are literal 0
+ *    with the retail name in a comment (bytes stay placeholder zeros, like
+ *    retail); they are listed in the report as residuals.
  *
- * Residuals (reported to the coordinator):
- *  - 10 function-slot relocs cannot be expressed in C++ (the names contain
- *    `@`/`<`/`>` or start with the reserved `__dt`): 5 anonymous-namespace
- *    symbols and 5 template-instantiation dtors.  Slots are literal zeros;
- *    bytes match retail (retail also stores placeholder zeros there), but the
- *    .data reloc list drifts at those 10 offsets.
- *  - retail split .data has sh_addralign=4 (dtk derives it from the DOL base
- *    0x8056B55C); MWCC always emits sh_addralign=8 for .data.  Byte content
- *    is identical; only the section alignment metadata differs.
+ * Residuals (reported to the coordinator; reloc drift in .data only):
+ *  - 13 destructor slots (no MWCC address form exists).
+ *  - 8 template-instantiation dtor slots (5 nameable templates + 3
+ *    CTTask<@unnamed@ CRootProc>; names contain `<`/`>`/`@`).
+ *  - 5 @unnamed@ anonymous-namespace slots (3 CTTask are double-counted
+ *    above: `Move/Draw/dt__48CTTask<Q226@unnamed@...>`; plus 2
+ *    CWorkRootThread) -- the mangle embeds the owning file basename.
+ *  - .data sh_addralign: retail split object has 4 (dtk derives it from the
+ *    DOL base 0x8056B55C); MWCC always emits 8 for .data.  Byte content is
+ *    identical; only the section alignment metadata differs.
  */
 
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
+typedef unsigned long ulong;   /* MWCC mangles `Ul` (retail uses Ul) */
 typedef unsigned long long u64;
 typedef signed char s8;
 typedef signed short s16;
@@ -66,96 +77,139 @@ extern char lbl_eu_806635F8; /* typeinfo chain: CDeviceSC                     */
 extern char __RTTI__10IWorkEvent;   /* IWorkEvent typeinfo object             */
 extern char __RTTI__11CWorkThread;  /* CWorkThread typeinfo object            */
 
-/* =============== external function declarations (retail names) ==============
- * `extern "C"` keeps the emitted symbol exactly equal to the identifier, so
- * the vtable slots reference the retail mangled names 1:1.  Declared as
- * void() -- only the NAME matters for reloc identity.
+/* ================== real method declarations (owning classes) ==============
+ * Minimal class declarations carrying the retail method names and signatures.
+ * Methods are declared static so `&Class::method` is a plain 4-byte function
+ * pointer (MWCC emits instance-method addresses as pointer-to-member pairs,
+ * which cannot fill a vtable slot).  The mangled name is identical to the
+ * retail instance-method symbol (verified per method below).
  */
-extern "C" {
-void __dt__5CViewFv();
-void WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
-void OnFileEvent__10IWorkEventFP10CEventFile(void*);
-void WorkEvent3__10IWorkEventFPv(void*);
-void WorkEvent4__10IWorkEventFv();
-void OnPauseTrigger__10IWorkEventFb(bool);
-void WorkEvent6__10IWorkEventFv();
-void WorkEvent7__10IWorkEventFv();
-void WorkEvent8__10IWorkEventFv();
-void WorkEvent9__10IWorkEventFv();
-void WorkEvent10__10IWorkEventFv();
-void WorkEvent11__10IWorkEventFv();
-void WorkEvent12__10IWorkEventFv();
-void WorkEvent13__10IWorkEventFv();
-void WorkEvent14__10IWorkEventFv();
-void WorkEvent15__10IWorkEventFv();
-void WorkEvent16__10IWorkEventFv();
-void WorkEvent17__10IWorkEventFv();
-void WorkEvent18__10IWorkEventFv();
-void WorkEvent19__10IWorkEventFv();
-void WorkEvent20__10IWorkEventFv();
-void WorkEvent21__10IWorkEventFv();
-void WorkEvent22__10IWorkEventFv();
-void WorkEvent23__10IWorkEventFv();
-void WorkEvent24__10IWorkEventFv();
-void WorkEvent25__10IWorkEventFv();
-void WorkEvent26__10IWorkEventFv();
-void WorkEvent27__10IWorkEventFv();
-void WorkEvent28__10IWorkEventFv();
-void WorkEvent29__10IWorkEventFv();
-void WorkEvent30__10IWorkEventFv();
-void WorkEvent31__10IWorkEventFv();
-void wkUpdate__5CViewFv();
-void wkRender__11CWorkThreadFv();
-void wkRenderAfter__11CWorkThreadFv();
-void wkStandbyLogin__5CViewFv();
-void wkStandbyLogout__5CViewFv();
-void wkStandbyExceptionRetry__11CWorkThreadFUl(u32);
-void updateMsg__5CViewFv();
-void func_8043FBC4();
-void CView_UnkVirtualFunc1__5CViewFv();
-void detachRenderWork__5CViewFP11CWorkThread();
-void CView_UnkVirtualFunc3__5CViewFv();
-void CView_UnkVirtualFunc4__5CViewFv();
-void CView_UnkVirtualFunc5__5CViewFv();
-void CView_UnkVirtualFunc6__5CViewFv();
-void CView_UnkVirtualFunc7__5CViewFv();
-void CView_UnkVirtualFunc8__5CViewFv();
-void CView_UnkVirtualFunc9__5CViewFv();
-void __dt__10CViewFrameFv();
-void __dt__9CViewRootFv();
-void wkStandbyLogin__9CViewRootFv();
-void wkStandbyLogout__9CViewRootFv();
-void __dt__12CWorkControlFv();
-void wkStandbyLogin__12CWorkControlFv();
-void wkStandbyLogout__12CWorkControlFv();
-void __dt__14CWorkFlowSetupFv();
-void wkStandbyLogin__14CWorkFlowSetupFv();
-void wkStandbyLogout__14CWorkFlowSetupFv();
-void wkUpdate__11CWorkThreadFv();
-void wkStandbyLogin__11CWorkThreadFv();
-void wkStandbyLogout__11CWorkThreadFv();
-void __dt__11CWorkSystemFv();
-void wkUpdate__11CWorkSystemFv();
-void wkStandbyLogin__11CWorkSystemFv();
-void wkStandbyLogout__11CWorkSystemFv();
-void __dt__14CWorkSystemMemFv();
-void wkStandbyLogin__14CWorkSystemMemFv();
-void wkStandbyLogout__14CWorkSystemMemFv();
-void __dt__8CProcessFv();
-void __dt__14CChildListNodeFv();
-void Reset__14CChildListNodeFv();
-void Tail__8CProcessFv();
-void __dt__15CDoubleListNodeFv();
-void Reset__15CDoubleListNodeFv();
-void __dt__16CDeviceRemotePadFv();
-void wkUpdate__16CDeviceRemotePadFv();
-void wkStandbyLogin__16CDeviceRemotePadFv();
-void wkStandbyLogout__16CDeviceRemotePadFv();
-void __dt__11CDeviceBaseFv();
-void __dt__9CDeviceSCFv();
-void wkStandbyLogin__9CDeviceSCFv();
-void wkStandbyLogout__9CDeviceSCFv();
-}
+class CWorkThread; /* used as a signature type (P11CWorkThread) */
+class CEventFile;  /* used as a signature type (P10CEventFile)  */
+
+class IWorkEvent {
+public:
+    static bool WorkEvent1(void* r4, const char* r5); /* WorkEvent1__10IWorkEventFPvPCc */
+    static bool OnFileEvent(CEventFile* pEventFile);  /* OnFileEvent__10IWorkEventFP10CEventFile */
+    static bool WorkEvent3(void* r4);                 /* WorkEvent3__10IWorkEventFPv */
+    static bool WorkEvent4();                         /* WorkEvent4__10IWorkEventFv */
+    static void OnPauseTrigger(bool paused);          /* OnPauseTrigger__10IWorkEventFb */
+    static bool WorkEvent6();
+    static bool WorkEvent7();
+    static bool WorkEvent8();
+    static bool WorkEvent9();
+    static bool WorkEvent10();
+    static bool WorkEvent11();
+    static bool WorkEvent12();
+    static bool WorkEvent13();
+    static bool WorkEvent14();
+    static bool WorkEvent15();
+    static bool WorkEvent16();
+    static bool WorkEvent17();
+    static bool WorkEvent18();
+    static bool WorkEvent19();
+    static bool WorkEvent20();
+    static bool WorkEvent21();
+    static bool WorkEvent22();
+    static bool WorkEvent23();
+    static bool WorkEvent24();
+    static bool WorkEvent25();
+    static bool WorkEvent26();
+    static bool WorkEvent27();
+    static bool WorkEvent28();
+    static bool WorkEvent29();
+    static bool WorkEvent30();
+    static void WorkEvent31();
+};
+
+class CWorkThread {
+public:
+    static void wkUpdate();                          /* wkUpdate__11CWorkThreadFv */
+    static void wkRender();                          /* wkRender__11CWorkThreadFv */
+    static void wkRenderAfter();                     /* wkRenderAfter__11CWorkThreadFv */
+    static bool wkStandbyLogin();                    /* wkStandbyLogin__11CWorkThreadFv */
+    static bool wkStandbyLogout();                   /* wkStandbyLogout__11CWorkThreadFv */
+    static bool wkStandbyExceptionRetry(ulong wid);  /* wkStandbyExceptionRetry__11CWorkThreadFUl */
+};
+
+class CView {
+public:
+    static void wkUpdate();                          /* wkUpdate__5CViewFv */
+    static bool wkStandbyLogin();                    /* wkStandbyLogin__5CViewFv */
+    static bool wkStandbyLogout();                   /* wkStandbyLogout__5CViewFv */
+    static void CView_UnkVirtualFunc1();             /* CView_UnkVirtualFunc1__5CViewFv */
+    static void detachRenderWork(CWorkThread* pThread); /* detachRenderWork__5CViewFP11CWorkThread */
+    static void CView_UnkVirtualFunc3();
+    static void CView_UnkVirtualFunc4();
+    static void CView_UnkVirtualFunc5();
+    static void CView_UnkVirtualFunc6();
+    static void CView_UnkVirtualFunc7();
+    static void CView_UnkVirtualFunc8();
+    static void CView_UnkVirtualFunc9();
+    static void updateMsg();                         /* updateMsg__5CViewFv */
+};
+
+class CViewRoot {
+public:
+    static bool wkStandbyLogin();                    /* wkStandbyLogin__9CViewRootFv */
+    static bool wkStandbyLogout();                   /* wkStandbyLogout__9CViewRootFv */
+};
+
+class CWorkControl {
+public:
+    static bool wkStandbyLogin();                    /* wkStandbyLogin__12CWorkControlFv */
+    static bool wkStandbyLogout();                   /* wkStandbyLogout__12CWorkControlFv */
+};
+
+class CWorkFlowSetup {
+public:
+    static bool wkStandbyLogin();                    /* wkStandbyLogin__14CWorkFlowSetupFv */
+    static bool wkStandbyLogout();                   /* wkStandbyLogout__14CWorkFlowSetupFv */
+};
+
+class CWorkSystem {
+public:
+    static void wkUpdate();                          /* wkUpdate__11CWorkSystemFv */
+    static bool wkStandbyLogin();                    /* wkStandbyLogin__11CWorkSystemFv */
+    static bool wkStandbyLogout();                   /* wkStandbyLogout__11CWorkSystemFv */
+};
+
+class CWorkSystemMem {
+public:
+    static bool wkStandbyLogin();                    /* wkStandbyLogin__14CWorkSystemMemFv */
+    static bool wkStandbyLogout();                   /* wkStandbyLogout__14CWorkSystemMemFv */
+};
+
+class CDeviceRemotePad {
+public:
+    static void wkUpdate();                          /* wkUpdate__16CDeviceRemotePadFv */
+    static bool wkStandbyLogin();                    /* wkStandbyLogin__16CDeviceRemotePadFv */
+    static bool wkStandbyLogout();                   /* wkStandbyLogout__16CDeviceRemotePadFv */
+};
+
+class CDeviceSC {
+public:
+    static bool wkStandbyLogin();                    /* wkStandbyLogin__9CDeviceSCFv */
+    static bool wkStandbyLogout();                   /* wkStandbyLogout__9CDeviceSCFv */
+};
+
+class CProcess {
+public:
+    static void Tail();                              /* Tail__8CProcessFv */
+};
+
+class CChildListNode {
+public:
+    static void Reset();                             /* Reset__14CChildListNodeFv */
+};
+
+class CDoubleListNode {
+public:
+    static void Reset();                             /* Reset__15CDoubleListNodeFv */
+};
+
+/* Real C-linkage function (unmangled C symbol in the retail image). */
+extern "C" void func_8043FBC4();
 
 /* ============================ vtable shapes ================================= */
 
@@ -164,79 +218,79 @@ void wkStandbyLogout__9CDeviceSCFv();
 struct IWorkEventVtbl {
     void* typeinfo;                  /* SI chain label (lbl_eu_8066xxxx)  */
     u32   offsetToTop;               /* 0 for primary vtables             */
-    void  (*dt)();                   /* dtor                              */
-    void  (*workEvent1)(void*, const char*);
-    void  (*onFileEvent)(void*);
-    void  (*workEvent3)(void*);
-    void  (*workEvent4)();
+    void  (*dt)();                   /* dtor (untypeable in MWCC -> 0)    */
+    bool  (*workEvent1)(void*, const char*);
+    bool  (*onFileEvent)(CEventFile*);
+    bool  (*workEvent3)(void*);
+    bool  (*workEvent4)();
     void  (*onPauseTrigger)(bool);
-    void  (*workEvent6)();
-    void  (*workEvent7)();
-    void  (*workEvent8)();
-    void  (*workEvent9)();
-    void  (*workEvent10)();
-    void  (*workEvent11)();
-    void  (*workEvent12)();
-    void  (*workEvent13)();
-    void  (*workEvent14)();
-    void  (*workEvent15)();
-    void  (*workEvent16)();
-    void  (*workEvent17)();
-    void  (*workEvent18)();
-    void  (*workEvent19)();
-    void  (*workEvent20)();
-    void  (*workEvent21)();
-    void  (*workEvent22)();
-    void  (*workEvent23)();
-    void  (*workEvent24)();
-    void  (*workEvent25)();
-    void  (*workEvent26)();
-    void  (*workEvent27)();
-    void  (*workEvent28)();
-    void  (*workEvent29)();
-    void  (*workEvent30)();
+    bool  (*workEvent6)();
+    bool  (*workEvent7)();
+    bool  (*workEvent8)();
+    bool  (*workEvent9)();
+    bool  (*workEvent10)();
+    bool  (*workEvent11)();
+    bool  (*workEvent12)();
+    bool  (*workEvent13)();
+    bool  (*workEvent14)();
+    bool  (*workEvent15)();
+    bool  (*workEvent16)();
+    bool  (*workEvent17)();
+    bool  (*workEvent18)();
+    bool  (*workEvent19)();
+    bool  (*workEvent20)();
+    bool  (*workEvent21)();
+    bool  (*workEvent22)();
+    bool  (*workEvent23)();
+    bool  (*workEvent24)();
+    bool  (*workEvent25)();
+    bool  (*workEvent26)();
+    bool  (*workEvent27)();
+    bool  (*workEvent28)();
+    bool  (*workEvent29)();
+    bool  (*workEvent30)();
     void  (*workEvent31)();
     void  (*wkUpdate)();
     void  (*wkRender)();
     void  (*wkRenderAfter)();
-    void  (*wkStandbyLogin)();
-    void  (*wkStandbyLogout)();
-    void  (*wkStandbyExceptionRetry)(u32);
+    bool  (*wkStandbyLogin)();
+    bool  (*wkStandbyLogout)();
+    bool  (*wkStandbyExceptionRetry)(ulong);
 };
 
 /* IWorkEvent event slots 1..31, shared verbatim by every 40-word vtable. */
 #define IWEVTBL_EVENTS                                                          \
-    &WorkEvent1__10IWorkEventFPvPCc,                                            \
-    &OnFileEvent__10IWorkEventFP10CEventFile,                                   \
-    &WorkEvent3__10IWorkEventFPv,                                               \
-    &WorkEvent4__10IWorkEventFv,                                                \
-    &OnPauseTrigger__10IWorkEventFb,                                            \
-    &WorkEvent6__10IWorkEventFv,                                                \
-    &WorkEvent7__10IWorkEventFv,                                                \
-    &WorkEvent8__10IWorkEventFv,                                                \
-    &WorkEvent9__10IWorkEventFv,                                                \
-    &WorkEvent10__10IWorkEventFv,                                               \
-    &WorkEvent11__10IWorkEventFv,                                               \
-    &WorkEvent12__10IWorkEventFv,                                               \
-    &WorkEvent13__10IWorkEventFv,                                               \
-    &WorkEvent14__10IWorkEventFv,                                               \
-    &WorkEvent15__10IWorkEventFv,                                               \
-    &WorkEvent16__10IWorkEventFv,                                               \
-    &WorkEvent17__10IWorkEventFv,                                               \
-    &WorkEvent18__10IWorkEventFv,                                               \
-    &WorkEvent19__10IWorkEventFv,                                               \
-    &WorkEvent20__10IWorkEventFv,                                               \
-    &WorkEvent21__10IWorkEventFv,                                               \
-    &WorkEvent22__10IWorkEventFv,                                               \
-    &WorkEvent23__10IWorkEventFv,                                               \
-    &WorkEvent24__10IWorkEventFv,                                               \
-    &WorkEvent25__10IWorkEventFv,                                               \
-    &WorkEvent26__10IWorkEventFv,                                               \
-    &WorkEvent27__10IWorkEventFv,                                               \
-    &WorkEvent28__10IWorkEventFv,                                               \
-    &WorkEvent29__10IWorkEventFv,                                               \
-    &WorkEvent30__10IWorkEventFv,                                               \
-    &WorkEvent31__10IWorkEventFv
+    &IWorkEvent::WorkEvent1,                                                    \
+    &IWorkEvent::OnFileEvent,                                                   \
+    &IWorkEvent::WorkEvent3,                                                    \
+    &IWorkEvent::WorkEvent4,                                                    \
+    &IWorkEvent::OnPauseTrigger,                                                \
+    &IWorkEvent::WorkEvent6,                                                    \
+    &IWorkEvent::WorkEvent7,                                                    \
+    &IWorkEvent::WorkEvent8,                                                    \
+    &IWorkEvent::WorkEvent9,                                                    \
+    &IWorkEvent::WorkEvent10,                                                   \
+    &IWorkEvent::WorkEvent11,                                                   \
+    &IWorkEvent::WorkEvent12,                                                   \
+    &IWorkEvent::WorkEvent13,                                                   \
+    &IWorkEvent::WorkEvent14,                                                   \
+    &IWorkEvent::WorkEvent15,                                                   \
+    &IWorkEvent::WorkEvent16,                                                   \
+    &IWorkEvent::WorkEvent17,                                                   \
+    &IWorkEvent::WorkEvent18,                                                   \
+    &IWorkEvent::WorkEvent19,                                                   \
+    &IWorkEvent::WorkEvent20,                                                   \
+    &IWorkEvent::WorkEvent21,                                                   \
+    &IWorkEvent::WorkEvent22,                                                   \
+    &IWorkEvent::WorkEvent23,                                                   \
+    &IWorkEvent::WorkEvent24,                                                   \
+    &IWorkEvent::WorkEvent25,                                                   \
+    &IWorkEvent::WorkEvent26,                                                   \
+    &IWorkEvent::WorkEvent27,                                                   \
+    &IWorkEvent::WorkEvent28,                                                   \
+    &IWorkEvent::WorkEvent29,                                                   \
+    &IWorkEvent::WorkEvent30,                                                   \
+    &IWorkEvent::WorkEvent31
 
 /* CProcess-shaped vtable (9 words): [typeinfo, 0, dt, Reset, Init, Term, Move,
  * Draw, Tail] -- Init/Term/Move/Draw are pure virtuals (0) in retail. */
@@ -305,7 +359,7 @@ struct CViewSecondaryVtbl {
     u32   offsetToTop;              /* 0xFFFFFE3C = -452 (base at +0x1C4)   */
     void  (*f0)();                  /* func_8043FBC4                        */
     void  (*f1)();                  /* CView_UnkVirtualFunc1                */
-    void  (*f2)();                  /* detachRenderWork                     */
+    void  (*f2)(CWorkThread*);      /* detachRenderWork                     */
     void  (*f3)();                  /* CView_UnkVirtualFunc3                */
     void  (*f4)();                  /* CView_UnkVirtualFunc4                */
     void  (*f5)();                  /* CView_UnkVirtualFunc5                */
@@ -341,67 +395,73 @@ TypeinfoQuad lbl_eu_8056B55C = {
 };
 
 /* 0x8056B580 | 0x24 | CTTask<CRootProc> vtable (CProcess shape).  dtor/Move/
- * Draw are anonymous-namespace symbols (CTaskManager_cpp) -- not nameable. */
+ * Draw are @unnamed@ symbols from CTaskManager_cpp.cpp -- not reproducible
+ * in this TU. */
 CProcessVtbl lbl_eu_8056B580 = {
     &lbl_eu_80663570, 0,
-    0,                     /* __dt__48CTTask<Q226@unnamed@CTaskManager_cpp@9CRootProc>Fv */
-    &Reset__14CChildListNodeFv,
-    0,                     /* pure virtual Init  */
-    0,                     /* pure virtual Term  */
-    0,                     /* Move__48CTTask<Q226@unnamed@CTaskManager_cpp@9CRootProc>Fv */
-    0,                     /* Draw__48CTTask<Q226@unnamed@CTaskManager_cpp@9CRootProc>Fv */
-    &Tail__8CProcessFv,
+    0,   /* UNRESOLVED: __dt__48CTTask<Q226@unnamed@CTaskManager_cpp@9CRootProc>Fv (owning file: CTaskManager_cpp.cpp) */
+    &CChildListNode::Reset,
+    0,   /* pure virtual Init */
+    0,   /* pure virtual Term */
+    0,   /* UNRESOLVED: Move__48CTTask<Q226@unnamed@CTaskManager_cpp@9CRootProc>Fv (owning file: CTaskManager_cpp.cpp) */
+    0,   /* UNRESOLVED: Draw__48CTTask<Q226@unnamed@CTaskManager_cpp@9CRootProc>Fv (owning file: CTaskManager_cpp.cpp) */
+    &CProcess::Tail,
 };
 
-/* 0x8056B5A4 | 0x1C | three (typeinfo, 0) pairs + trailing 0. */
-struct TypeinfoTriple {
+/* 0x8056B5A4 | 0x3C | three (typeinfo, 0) pairs + trailing 0, immediately
+ * followed by CView::updateMsg's switch jump table (retail symbols
+ * lbl_eu_8056B5A4 + jumptable_eu_8056B5C0).  Declared as one object because
+ * MWCC 8-aligns any top-level array whose first member is >= 16 bytes; the
+ * merged object's first member is a pointer, so the whole block stays
+ * 4-aligned exactly like retail (verified: {ptr,...} first-member structs
+ * keep 4-alignment even with a trailing u32[8]). */
+struct TypeinfoTripleAndJumptable {
     void* t0; u32 z0;
     void* t1; u32 z1;
     void* t2; u32 z2;
     u32   tail;
+    u32   jt[8];
 };
-TypeinfoTriple lbl_eu_8056B5A4 = {
+TypeinfoTripleAndJumptable lbl_eu_8056B5A4 = {
     &lbl_eu_80661958, 0,
     &lbl_eu_80661950, 0,
     &lbl_eu_80661948, 0,
     0,
-};
-
-/* 0x8056B5C0 | 0x20 | CView::updateMsg switch jump table (relocs w/ addends). */
-u32 jumptable_eu_8056B5C0[8] = {
-    (u32)((char*)&updateMsg__5CViewFv + 0x138),
-    (u32)((char*)&updateMsg__5CViewFv + 0x460),
-    (u32)((char*)&updateMsg__5CViewFv + 0x6A0),
-    (u32)((char*)&updateMsg__5CViewFv + 0x6E4),
-    (u32)((char*)&updateMsg__5CViewFv + 0x6F4),
-    (u32)((char*)&updateMsg__5CViewFv + 0x704),
-    (u32)((char*)&updateMsg__5CViewFv + 0x714),
-    (u32)((char*)&updateMsg__5CViewFv + 0x720),
+    {   /* jumptable_eu_8056B5C0: updateMsg relocs w/ addends */
+        (u32)((char*)&CView::updateMsg + 0x138),
+        (u32)((char*)&CView::updateMsg + 0x460),
+        (u32)((char*)&CView::updateMsg + 0x6A0),
+        (u32)((char*)&CView::updateMsg + 0x6E4),
+        (u32)((char*)&CView::updateMsg + 0x6F4),
+        (u32)((char*)&CView::updateMsg + 0x704),
+        (u32)((char*)&CView::updateMsg + 0x714),
+        (u32)((char*)&CView::updateMsg + 0x720),
+    },
 };
 
 /* 0x8056B5E0 | 0xD0 | CView complete vtable region (primary 0xA0 + secondary
  * 0x30 for the CFontLayer subobject at +0x1C4). */
 CViewVtbls lbl_eu_8056B5E0 = {
     { &lbl_eu_80663578, 0,
-      &__dt__5CViewFv,
+      0,   /* UNRESOLVED dtor: __dt__5CViewFv (MWCC rejects dtor addresses) */
       IWEVTBL_EVENTS,
-      &wkUpdate__5CViewFv,
-      &wkRender__11CWorkThreadFv,
-      &wkRenderAfter__11CWorkThreadFv,
-      &wkStandbyLogin__5CViewFv,
-      &wkStandbyLogout__5CViewFv,
-      &wkStandbyExceptionRetry__11CWorkThreadFUl },
+      &CView::wkUpdate,
+      &CWorkThread::wkRender,
+      &CWorkThread::wkRenderAfter,
+      &CView::wkStandbyLogin,
+      &CView::wkStandbyLogout,
+      &CWorkThread::wkStandbyExceptionRetry },
     { &lbl_eu_80663578, 0xFFFFFE3C,
       &func_8043FBC4,
-      &CView_UnkVirtualFunc1__5CViewFv,
-      &detachRenderWork__5CViewFP11CWorkThread,
-      &CView_UnkVirtualFunc3__5CViewFv,
-      &CView_UnkVirtualFunc4__5CViewFv,
-      &CView_UnkVirtualFunc5__5CViewFv,
-      &CView_UnkVirtualFunc6__5CViewFv,
-      &CView_UnkVirtualFunc7__5CViewFv,
-      &CView_UnkVirtualFunc8__5CViewFv,
-      &CView_UnkVirtualFunc9__5CViewFv },
+      &CView::CView_UnkVirtualFunc1,
+      &CView::detachRenderWork,
+      &CView::CView_UnkVirtualFunc3,
+      &CView::CView_UnkVirtualFunc4,
+      &CView::CView_UnkVirtualFunc5,
+      &CView::CView_UnkVirtualFunc6,
+      &CView::CView_UnkVirtualFunc7,
+      &CView::CView_UnkVirtualFunc8,
+      &CView::CView_UnkVirtualFunc9 },
 };
 
 /* 0x8056B6B0 | 0x1C | CView SI descriptor (7 words). */
@@ -412,22 +472,24 @@ struct RttiRef7 {
     u32   z3;
 };
 RttiRef7 lbl_eu_8056B6B0 = {
-    &lbl_eu_80663598, 0,
+    &lbl_eu_80663598, 0x000001C4,   /* 0x1C4: CFontLayer subobject offset in CView */
     &__RTTI__10IWorkEvent, 0,
     &__RTTI__11CWorkThread, 0,
     0,
 };
 
-/* 0x8056B6CC | 0xC | CMsgParam<10> vtable; dtor is a template name. */
+/* 0x8056B6CC | 0xC | CMsgParam<10> vtable; dtor is a template instantiation
+ * (symbol contains `<`/`>` -- not expressible). */
 SmallVtbl3 lbl_eu_8056B6CC = {
     &lbl_eu_80663580, 0,
-    0,                     /* __dt__13CMsgParam<10>Fv -- template name, unnameable */
+    0,   /* UNRESOLVED: __dt__13CMsgParam<10>Fv (template name) */
 };
 
-/* 0x8056B6D8 | 0xC | reslist<IWorkEvent*> vtable; dtor is a template name. */
+/* 0x8056B6D8 | 0xC | reslist<IWorkEvent*> vtable; dtor is a template
+ * instantiation. */
 SmallVtbl3 lbl_eu_8056B6D8 = {
     &lbl_eu_80663588, 0,
-    0,                     /* __dt__22reslist<P10IWorkEvent>Fv -- template name */
+    0,   /* UNRESOLVED: __dt__22reslist<P10IWorkEvent>Fv (template name) */
 };
 
 /* 0x8056B6E4 | 0xC | 3-word blob, dtor slot unused. */
@@ -437,31 +499,31 @@ SmallVtbl3 lbl_eu_8056B6E4 = {
 };
 
 /* 0x8056B6F0 | 0x10 | _reslist_base<IWorkEvent*> vtable; dtor is a template
- * name, second slot unused. */
+ * instantiation, second slot unused. */
 SmallVtbl4 lbl_eu_8056B6F0 = {
     &lbl_eu_80663590, 0,
-    0,                     /* __dt__28_reslist_base<P10IWorkEvent>Fv -- template name */
+    0,   /* UNRESOLVED: __dt__28_reslist_base<P10IWorkEvent>Fv (template name) */
     0,
 };
 
 /* 0x8056B700 | 0x10 | CViewFrame vtable. */
 SmallVtbl4 lbl_eu_8056B700 = {
     &lbl_eu_806635A0, 0,
-    &__dt__10CViewFrameFv,
+    0,   /* UNRESOLVED dtor: __dt__10CViewFrameFv (MWCC rejects dtor addresses) */
     0,
 };
 
 /* 0x8056B710 | 0xA0 | CViewRoot vtable (wkUpdate NOT overridden). */
 IWorkEventVtbl lbl_eu_8056B710 = {
     &lbl_eu_806635A8, 0,
-    &__dt__9CViewRootFv,
+    0,   /* UNRESOLVED dtor: __dt__9CViewRootFv (MWCC rejects dtor addresses) */
     IWEVTBL_EVENTS,
-    &wkUpdate__11CWorkThreadFv,
-    &wkRender__11CWorkThreadFv,
-    &wkRenderAfter__11CWorkThreadFv,
-    &wkStandbyLogin__9CViewRootFv,
-    &wkStandbyLogout__9CViewRootFv,
-    &wkStandbyExceptionRetry__11CWorkThreadFUl,
+    &CWorkThread::wkUpdate,
+    &CWorkThread::wkRender,
+    &CWorkThread::wkRenderAfter,
+    &CViewRoot::wkStandbyLogin,
+    &CViewRoot::wkStandbyLogout,
+    &CWorkThread::wkStandbyExceptionRetry,
 };
 
 /* 0x8056B7B0 | 0x18 | RTTI descriptor. */
@@ -470,14 +532,14 @@ RttiRef6 lbl_eu_8056B7B0 = { &__RTTI__10IWorkEvent, 0, &__RTTI__11CWorkThread, 0
 /* 0x8056B7C8 | 0xA0 | CWorkControl vtable. */
 IWorkEventVtbl lbl_eu_8056B7C8 = {
     &lbl_eu_806635B0, 0,
-    &__dt__12CWorkControlFv,
+    0,   /* UNRESOLVED dtor: __dt__12CWorkControlFv (MWCC rejects dtor addresses) */
     IWEVTBL_EVENTS,
-    &wkUpdate__11CWorkThreadFv,
-    &wkRender__11CWorkThreadFv,
-    &wkRenderAfter__11CWorkThreadFv,
-    &wkStandbyLogin__12CWorkControlFv,
-    &wkStandbyLogout__12CWorkControlFv,
-    &wkStandbyExceptionRetry__11CWorkThreadFUl,
+    &CWorkThread::wkUpdate,
+    &CWorkThread::wkRender,
+    &CWorkThread::wkRenderAfter,
+    &CWorkControl::wkStandbyLogin,
+    &CWorkControl::wkStandbyLogout,
+    &CWorkThread::wkStandbyExceptionRetry,
 };
 
 /* 0x8056B868 | 0x18 | RTTI descriptor. */
@@ -486,14 +548,14 @@ RttiRef6 lbl_eu_8056B868 = { &__RTTI__10IWorkEvent, 0, &__RTTI__11CWorkThread, 0
 /* 0x8056B880 | 0xA0 | CWorkFlowSetup vtable. */
 IWorkEventVtbl lbl_eu_8056B880 = {
     &lbl_eu_806635B8, 0,
-    &__dt__14CWorkFlowSetupFv,
+    0,   /* UNRESOLVED dtor: __dt__14CWorkFlowSetupFv (MWCC rejects dtor addresses) */
     IWEVTBL_EVENTS,
-    &wkUpdate__11CWorkThreadFv,
-    &wkRender__11CWorkThreadFv,
-    &wkRenderAfter__11CWorkThreadFv,
-    &wkStandbyLogin__14CWorkFlowSetupFv,
-    &wkStandbyLogout__14CWorkFlowSetupFv,
-    &wkStandbyExceptionRetry__11CWorkThreadFUl,
+    &CWorkThread::wkUpdate,
+    &CWorkThread::wkRender,
+    &CWorkThread::wkRenderAfter,
+    &CWorkFlowSetup::wkStandbyLogin,
+    &CWorkFlowSetup::wkStandbyLogout,
+    &CWorkThread::wkStandbyExceptionRetry,
 };
 
 /* 0x8056B920 | 0x18 | RTTI descriptor. */
@@ -503,14 +565,14 @@ RttiRef6 lbl_eu_8056B920 = { &__RTTI__10IWorkEvent, 0, &__RTTI__11CWorkThread, 0
  * CWorkRoot_cpp.cpp); dtor + wkStandbyLogout are @unnamed@ symbols. */
 IWorkEventVtbl lbl_eu_8056B938 = {
     &lbl_eu_806635C0, 0,
-    0,                     /* __dt__Q223@unnamed@CWorkRoot_cpp@15CWorkRootThreadFv */
+    0,   /* UNRESOLVED @unnamed@: __dt__Q223@unnamed@CWorkRoot_cpp@15CWorkRootThreadFv (owning file: CWorkRoot_cpp.cpp) */
     IWEVTBL_EVENTS,
-    &wkUpdate__11CWorkThreadFv,
-    &wkRender__11CWorkThreadFv,
-    &wkRenderAfter__11CWorkThreadFv,
-    &wkStandbyLogin__11CWorkThreadFv,
-    0,                     /* wkStandbyLogout__Q223@unnamed@CWorkRoot_cpp@15CWorkRootThreadFv */
-    &wkStandbyExceptionRetry__11CWorkThreadFUl,
+    &CWorkThread::wkUpdate,
+    &CWorkThread::wkRender,
+    &CWorkThread::wkRenderAfter,
+    &CWorkThread::wkStandbyLogin,
+    0,   /* UNRESOLVED @unnamed@: wkStandbyLogout__Q223@unnamed@CWorkRoot_cpp@15CWorkRootThreadFv (owning file: CWorkRoot_cpp.cpp) */
+    &CWorkThread::wkStandbyExceptionRetry,
 };
 
 /* 0x8056B9D8 | 0x18 | RTTI descriptor. */
@@ -519,14 +581,14 @@ RttiRef6 lbl_eu_8056B9D8 = { &__RTTI__10IWorkEvent, 0, &__RTTI__11CWorkThread, 0
 /* 0x8056B9F0 | 0xA0 | CWorkSystem vtable (wkUpdate overridden). */
 IWorkEventVtbl lbl_eu_8056B9F0 = {
     &lbl_eu_806635C8, 0,
-    &__dt__11CWorkSystemFv,
+    0,   /* UNRESOLVED dtor: __dt__11CWorkSystemFv (MWCC rejects dtor addresses) */
     IWEVTBL_EVENTS,
-    &wkUpdate__11CWorkSystemFv,
-    &wkRender__11CWorkThreadFv,
-    &wkRenderAfter__11CWorkThreadFv,
-    &wkStandbyLogin__11CWorkSystemFv,
-    &wkStandbyLogout__11CWorkSystemFv,
-    &wkStandbyExceptionRetry__11CWorkThreadFUl,
+    &CWorkSystem::wkUpdate,
+    &CWorkThread::wkRender,
+    &CWorkThread::wkRenderAfter,
+    &CWorkSystem::wkStandbyLogin,
+    &CWorkSystem::wkStandbyLogout,
+    &CWorkThread::wkStandbyExceptionRetry,
 };
 
 /* 0x8056BA90 | 0x18 | RTTI descriptor. */
@@ -535,14 +597,14 @@ RttiRef6 lbl_eu_8056BA90 = { &__RTTI__10IWorkEvent, 0, &__RTTI__11CWorkThread, 0
 /* 0x8056BAA8 | 0xA0 | CWorkSystemMem vtable (wkUpdate NOT overridden). */
 IWorkEventVtbl lbl_eu_8056BAA8 = {
     &lbl_eu_806635D0, 0,
-    &__dt__14CWorkSystemMemFv,
+    0,   /* UNRESOLVED dtor: __dt__14CWorkSystemMemFv (MWCC rejects dtor addresses) */
     IWEVTBL_EVENTS,
-    &wkUpdate__11CWorkThreadFv,
-    &wkRender__11CWorkThreadFv,
-    &wkRenderAfter__11CWorkThreadFv,
-    &wkStandbyLogin__14CWorkSystemMemFv,
-    &wkStandbyLogout__14CWorkSystemMemFv,
-    &wkStandbyExceptionRetry__11CWorkThreadFUl,
+    &CWorkThread::wkUpdate,
+    &CWorkThread::wkRender,
+    &CWorkThread::wkRenderAfter,
+    &CWorkSystemMem::wkStandbyLogin,
+    &CWorkSystemMem::wkStandbyLogout,
+    &CWorkThread::wkStandbyExceptionRetry,
 };
 
 /* 0x8056BB48 | 0x18 | RTTI descriptor. */
@@ -551,55 +613,55 @@ RttiRef6 lbl_eu_8056BB48 = { &__RTTI__10IWorkEvent, 0, &__RTTI__11CWorkThread, 0
 /* 0x8056BB60 | 0x24 | CProcess vtable (Init/Term/Move/Draw pure virtuals). */
 CProcessVtbl lbl_eu_8056BB60 = {
     &lbl_eu_80661948, 0,
-    &__dt__8CProcessFv,
-    &Reset__14CChildListNodeFv,
-    0,                     /* pure virtual Init */
-    0,                     /* pure virtual Term */
-    0,                     /* pure virtual Move */
-    0,                     /* pure virtual Draw */
-    &Tail__8CProcessFv,
+    0,   /* UNRESOLVED dtor: __dt__8CProcessFv (MWCC rejects dtor addresses) */
+    &CChildListNode::Reset,
+    0,   /* pure virtual Init */
+    0,   /* pure virtual Term */
+    0,   /* pure virtual Move */
+    0,   /* pure virtual Draw */
+    &CProcess::Tail,
 };
 
 /* 0x8056BB84 | 0xC | TChildListHeader<CProcess> vtable; dtor is a template
- * name. */
+ * instantiation. */
 SmallVtbl3 lbl_eu_8056BB84 = {
     &lbl_eu_806635D8, 0,
-    0,                     /* __dt__27TChildListHeader<8CProcess>Fv -- template name */
+    0,   /* UNRESOLVED: __dt__27TChildListHeader<8CProcess>Fv (template name) */
 };
 
 /* 0x8056BB90 | 0x10 | CDoubleListNode vtable. */
 CNodeVtbl lbl_eu_8056BB90 = {
     &lbl_eu_80661958, 0,
-    &__dt__15CDoubleListNodeFv,
-    &Reset__15CDoubleListNodeFv,
+    0,   /* UNRESOLVED dtor: __dt__15CDoubleListNodeFv (MWCC rejects dtor addresses) */
+    &CDoubleListNode::Reset,
 };
 
 /* 0x8056BBA0 | 0x10 | CChildListNode vtable. */
 CNodeVtbl lbl_eu_8056BBA0 = {
     &lbl_eu_80661950, 0,
-    &__dt__14CChildListNodeFv,
-    &Reset__14CChildListNodeFv,
+    0,   /* UNRESOLVED dtor: __dt__14CChildListNodeFv (MWCC rejects dtor addresses) */
+    &CChildListNode::Reset,
 };
 
 /* 0x8056BBB0 | 0x10 | TChildListHeader<CChildListNode> vtable; dtor is a
- * template name, second slot unused. */
+ * template instantiation, second slot unused. */
 SmallVtbl4 lbl_eu_8056BBB0 = {
     &lbl_eu_806635E0, 0,
-    0,                     /* __dt__34TChildListHeader<14CChildListNode>Fv -- template name */
+    0,   /* UNRESOLVED: __dt__34TChildListHeader<14CChildListNode>Fv (template name) */
     0,
 };
 
 /* 0x8056BBC0 | 0xA0 | CDeviceRemotePad vtable. */
 IWorkEventVtbl lbl_eu_8056BBC0 = {
     &lbl_eu_806635E8, 0,
-    &__dt__16CDeviceRemotePadFv,
+    0,   /* UNRESOLVED dtor: __dt__16CDeviceRemotePadFv (MWCC rejects dtor addresses) */
     IWEVTBL_EVENTS,
-    &wkUpdate__16CDeviceRemotePadFv,
-    &wkRender__11CWorkThreadFv,
-    &wkRenderAfter__11CWorkThreadFv,
-    &wkStandbyLogin__16CDeviceRemotePadFv,
-    &wkStandbyLogout__16CDeviceRemotePadFv,
-    &wkStandbyExceptionRetry__11CWorkThreadFUl,
+    &CDeviceRemotePad::wkUpdate,
+    &CWorkThread::wkRender,
+    &CWorkThread::wkRenderAfter,
+    &CDeviceRemotePad::wkStandbyLogin,
+    &CDeviceRemotePad::wkStandbyLogout,
+    &CWorkThread::wkStandbyExceptionRetry,
 };
 
 /* 0x8056BC60 | 0x20 | RTTI descriptor (8 words, CDeviceBase family). */
@@ -609,14 +671,14 @@ RttiRef8 lbl_eu_8056BC60 = { &__RTTI__10IWorkEvent, 0, &__RTTI__11CWorkThread, 0
 /* 0x8056BC80 | 0xA0 | CDeviceBase vtable (retail symbol __vt__11CDeviceBase). */
 IWorkEventVtbl __vt__11CDeviceBase = {
     &lbl_eu_806635F0, 0,
-    &__dt__11CDeviceBaseFv,
+    0,   /* UNRESOLVED dtor: __dt__11CDeviceBaseFv (MWCC rejects dtor addresses) */
     IWEVTBL_EVENTS,
-    &wkUpdate__11CWorkThreadFv,
-    &wkRender__11CWorkThreadFv,
-    &wkRenderAfter__11CWorkThreadFv,
-    &wkStandbyLogin__11CWorkThreadFv,
-    &wkStandbyLogout__11CWorkThreadFv,
-    &wkStandbyExceptionRetry__11CWorkThreadFUl,
+    &CWorkThread::wkUpdate,
+    &CWorkThread::wkRender,
+    &CWorkThread::wkRenderAfter,
+    &CWorkThread::wkStandbyLogin,
+    &CWorkThread::wkStandbyLogout,
+    &CWorkThread::wkStandbyExceptionRetry,
 };
 
 /* 0x8056BD20 | 0x18 | RTTI descriptor. */
@@ -625,14 +687,14 @@ RttiRef6 lbl_eu_8056BD20 = { &__RTTI__10IWorkEvent, 0, &__RTTI__11CWorkThread, 0
 /* 0x8056BD38 | 0xA0 | CDeviceSC vtable. */
 IWorkEventVtbl lbl_eu_8056BD38 = {
     &lbl_eu_806635F8, 0,
-    &__dt__9CDeviceSCFv,
+    0,   /* UNRESOLVED dtor: __dt__9CDeviceSCFv (MWCC rejects dtor addresses) */
     IWEVTBL_EVENTS,
-    &wkUpdate__11CWorkThreadFv,
-    &wkRender__11CWorkThreadFv,
-    &wkRenderAfter__11CWorkThreadFv,
-    &wkStandbyLogin__9CDeviceSCFv,
-    &wkStandbyLogout__9CDeviceSCFv,
-    &wkStandbyExceptionRetry__11CWorkThreadFUl,
+    &CWorkThread::wkUpdate,
+    &CWorkThread::wkRender,
+    &CWorkThread::wkRenderAfter,
+    &CDeviceSC::wkStandbyLogin,
+    &CDeviceSC::wkStandbyLogout,
+    &CWorkThread::wkStandbyExceptionRetry,
 };
 
 /* 0x8056BDD8 | 0x20 | RTTI descriptor (8 words, CDeviceBase family). */

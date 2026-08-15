@@ -123,6 +123,7 @@ struct CColiObject {
             CColiObject* field_0x00_obj; // 0x00 partner-object pointer
             u32 field_0x04;              // 0x04 kind/valid word
             u32 field_0x08;              // 0x08
+            u8 _0c[4];                   // 0x0c
             union {
                 u32 field_0x10;          // 0x10 sub-object byte offset
                 f32 field_0x10_f;        // 0x10 radius view (func_804ABCA4)
@@ -1587,7 +1588,16 @@ extern "C" int func_804AAA98(CColiObject* self);
 
 void func_804AAD90(){}
 
-void func_804AB524(){}
+// Segment-vs-segment clip (defined at the end of the file): passes the
+// partner's +0x64 scalar list, +4 AABB matrix and +0x34 transform matrix.
+extern "C" int func_804ADD3C(CColiObject* self, const f32* a, const Mtx b,
+                             const Mtx c);
+extern "C" int func_804AB524(CColiObject* self) {
+    CColiObject* partner = self->field_0x00_obj;
+    return func_804ADD3C(self, (const f32*)((u8*)partner + 0x64),
+                         (const f32(*)[4])((u8*)partner + 0x04),
+                         (const f32(*)[4])((u8*)partner + 0x34));
+}
 
 // 16-byte collision registration record: two sub-object ids, a point and a
 // radius, plus the kind (+0x0c; 3 = group of sub-objects) and the group
@@ -2027,15 +2037,6 @@ bool func_804AC3B0(CColiObject* self) {
     return false;
 }
 
-// Delegates to the contact clip helper, describing the partner object's
-// segment from its centre (+4) and radius (+0x10) fields.
-extern "C" int func_804AF808(CColiContactObj* self, const VEC3* v, f32 f);
-extern "C" int func_804AC4E4(CColiObject* self) {
-    CColiObject* partner = self->field_0x00_obj;
-    return func_804AF808((CColiContactObj*)self, (const VEC3*)((u8*)partner + 4),
-                         partner->field_0x10_f);
-}
-
 void func_804AC57C(){}
 
 // Contact object sampled by func_804AC5D8 / func_804AF808: field_0x00 links
@@ -2054,6 +2055,15 @@ struct CColiContactObj {
 };
 
 extern "C" int func_804AF808(CColiContactObj* self, const VEC3* v, f32 f);
+
+// Delegates to the contact clip helper, describing the partner object's
+// segment from its centre (+4) and radius (+0x10) fields.
+extern "C" int func_804AC4E4(CColiObject* self) {
+    CColiObject* partner = self->field_0x00_obj;
+    f32 radius = partner->field_0x10_f;
+    const VEC3* seg = (const VEC3*)((u8*)partner + 4);
+    return func_804AF808((CColiContactObj*)self, seg, radius);
+}
 
 // Sample the partner's point (+0x04) into v, clamp v.y so the caller's
 // +0x48 scalar lies inside [v.y + field_0x18, v.y + field_0x14], then hand

@@ -52,9 +52,6 @@ private:
     static const int TABLE_SIZE = 32;
 
 private:
-    static s8 GetSinIdx(int idx);
-
-private:
     LfoParam mParam;   // at 0x0
     u32 mDelayCounter; // at 0x10
     f32 mCounter;      // at 0x14

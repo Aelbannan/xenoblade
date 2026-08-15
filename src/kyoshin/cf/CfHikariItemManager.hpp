@@ -234,7 +234,7 @@ extern "C" void* __dt__802B37B4(void* self, int flag);
 
 // Per-frame update entry points (defined in this TU; extern "C" so
 // cbRenderBefore's call relocs carry the exact retail names).
-extern "C" void func_802B371C(CfHikariItemRecord* self);
+extern "C" void func_802B371C(const CfHikariItemRecord* self);
 extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta);
 extern "C" void func_802B403C(CfHikariItemRecord* self, const CfHikariQuadCorners* corners);
 extern "C" void func_802B4460(CfHikariItemRecord* self);

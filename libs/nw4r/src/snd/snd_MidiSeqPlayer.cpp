@@ -1,14 +1,6 @@
 #include <nw4r/snd.h>
 #include <nw4r/ut.h>
 
-namespace nw4r {
-namespace snd {
-namespace detail {
-
-} // namespace detail
-} // namespace snd
-} // namespace nw4r
-
 using nw4r::snd::detail::SeqPlayer;
 
 void Update__Q44nw4r3snd6detail9SeqPlayerFv(void);

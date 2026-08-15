@@ -5,7 +5,10 @@
 namespace nw4r {
 namespace g3d {
 
-ResFile ResAnmTexPat::GetParent() const {
+// Called only from GetAnmResult as a dead call that drives the retail
+// register allocation; inline so MWCC emits no standalone copy (the retail
+// split has no GetParent symbol).
+inline ResFile ResAnmTexPat::GetParent() const {
     return ofs_to_obj<ResFile>(ref().toResFileData);
 }
 
@@ -57,7 +60,8 @@ inline ResName GetResNameFromOffsetArray(s32* pStringArray, int idx) {
 
 void ResAnmTexPat::GetAnmResult(TexPatAnmResult* pResult, u32 idx,
                                 f32 frame) const {
-    (void)GetParent(); // unused
+    (void)GetParent(); // unused; call is eliminated but its presence drives
+                       // the retail register allocation
 
     const ResAnmTexPatMatData* pMatData = GetMatAnm(idx);
     const ResAnmTexPatMatData::AnmData* pAnmDataImpl = pMatData->anms;
@@ -161,23 +165,6 @@ bool ResAnmTexPat::Bind(const ResFile file) {
     }
 
     return numBound == numTexture + numPalette;
-}
-
-void ResAnmTexPat::Release() {
-    const ResAnmTexPatInfoData& rInfoData = ref().info;
-    int numTexture = rInfoData.numTexture;
-    int numPalette = rInfoData.numPalette;
-
-    ResTex* pResTexArray = ofs_to_ptr<ResTex>(ref().toResTexArray);
-    ResPltt* pResPlttArray = ofs_to_ptr<ResPltt>(ref().toResPlttArray);
-
-    for (int i = 0; i < numTexture; i++) {
-        pResTexArray[i] = ResTex(NULL);
-    }
-
-    for (int i = 0; i < numPalette; i++) {
-        pResPlttArray[i] = ResPltt(NULL);
-    }
 }
 
 } // namespace g3d

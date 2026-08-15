@@ -4,6 +4,12 @@ namespace nw4r {
 namespace g3d {
 namespace {
 
+// The ResName pascal-string data for the file resource groups. Retail keeps
+// the bytes in the shared nw4r_data.s slice (this TU's retail split carries no
+// .data); the definitions stay HERE so MWCC can fold adjacent references into
+// base+offset immediates (CheckRevision's ten iterations are `addi rX,base,ofs`
+// on a single base), and the postprocess extern_data_sections rule strips the
+// emitted .data/UNDEFs the symbols for the link (CfPadTask.o pattern).
 NW4R_G3D_RESFILE_NAME_DEF(Models, "3DModels(NW4R)");
 NW4R_G3D_RESFILE_NAME_DEF(Pltts, "Palettes(NW4R)");
 NW4R_G3D_RESFILE_NAME_DEF(Textures, "Textures(NW4R)");
@@ -23,17 +29,6 @@ NW4R_G3D_RESFILE_NAME_DEF(Ext, "External");
  * ResMdl
  *
  ******************************************************************************/
-ResMdl ResFile::GetResMdl(const char* pName) const {
-    void* pResMdlDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&ResNameData_Models)];
-
-    if (pResMdlDicData != NULL) {
-        return ResMdl(ResDic(pResMdlDicData)[pName]);
-    }
-
-    return ResMdl(NULL);
-}
-
 ResMdl ResFile::GetResMdl(int idx) const {
     void* pResMdlDicData = ResDic(const_cast<ResDicData*>(
         &ref().dict.topLevel))[ResName(&ResNameData_Models)];
@@ -43,10 +38,6 @@ ResMdl ResFile::GetResMdl(int idx) const {
     }
 
     return ResMdl(NULL);
-}
-
-ResMdl ResFile::GetResMdl(u32 idx) const {
-    return GetResMdl(static_cast<int>(idx));
 }
 
 u32 ResFile::GetResMdlNumEntries() const {
@@ -98,22 +89,6 @@ ResPltt ResFile::GetResPltt(int idx) const {
     return ResPltt(NULL);
 }
 
-ResPltt ResFile::GetResPltt(u32 idx) const {
-    return GetResPltt(static_cast<int>(idx));
-}
-
-
-u32 ResFile::GetResPlttNumEntries() const {
-    void* pResPlttDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&ResNameData_Pltts)];
-
-    if (pResPlttDicData != NULL) {
-        return ResDic(pResPlttDicData).GetNumData();
-    }
-
-    return 0;
-}
-
 /******************************************************************************
  *
  * ResTex
@@ -152,38 +127,11 @@ ResTex ResFile::GetResTex(int idx) const {
     return ResTex(NULL);
 }
 
-ResTex ResFile::GetResTex(u32 idx) const {
-    return GetResTex(static_cast<int>(idx));
-}
-
-
-u32 ResFile::GetResTexNumEntries() const {
-    void* pResTexDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&ResNameData_Textures)];
-
-    if (pResTexDicData != NULL) {
-        return ResDic(pResTexDicData).GetNumData();
-    }
-
-    return 0;
-}
-
 /******************************************************************************
  *
  * ResAnmChr
  *
  ******************************************************************************/
-ResAnmChr ResFile::GetResAnmChr(const char* pName) const {
-    void* pResAnmChrDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&ResNameData_AnmChr)];
-
-    if (pResAnmChrDicData != NULL) {
-        return ResAnmChr(ResDic(pResAnmChrDicData)[pName]);
-    }
-
-    return ResAnmChr(NULL);
-}
-
 ResAnmChr ResFile::GetResAnmChr(int idx) const {
     void* pResAnmChrDicData = ResDic(const_cast<ResDicData*>(
         &ref().dict.topLevel))[ResName(&ResNameData_AnmChr)];
@@ -194,11 +142,6 @@ ResAnmChr ResFile::GetResAnmChr(int idx) const {
 
     return ResAnmChr(NULL);
 }
-
-ResAnmChr ResFile::GetResAnmChr(u32 idx) const {
-    return GetResAnmChr(static_cast<int>(idx));
-}
-
 
 u32 ResFile::GetResAnmChrNumEntries() const {
     void* pResAnmChrDicData = ResDic(const_cast<ResDicData*>(
@@ -216,17 +159,9 @@ u32 ResFile::GetResAnmChrNumEntries() const {
  * ResAnmVis
  *
  ******************************************************************************/
-ResAnmVis ResFile::GetResAnmVis(const char* pName) const {
-    void* pResAnmVisDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&ResNameData_AnmVis)];
-
-    if (pResAnmVisDicData != NULL) {
-        return ResAnmVis(ResDic(pResAnmVisDicData)[pName]);
-    }
-
-    return ResAnmVis(NULL);
-}
-
+// Retail emits NO GetResAnmVis* symbols: the only callers are the AnmVis
+// iteration inside CheckRevision, where -ipa file inlines these bodies. The
+// standalone copies are dropped by the postprocess drop_text_symbols rule.
 ResAnmVis ResFile::GetResAnmVis(int idx) const {
     void* pResAnmVisDicData = ResDic(const_cast<ResDicData*>(
         &ref().dict.topLevel))[ResName(&ResNameData_AnmVis)];
@@ -237,11 +172,6 @@ ResAnmVis ResFile::GetResAnmVis(int idx) const {
 
     return ResAnmVis(NULL);
 }
-
-ResAnmVis ResFile::GetResAnmVis(u32 idx) const {
-    return GetResAnmVis(static_cast<int>(idx));
-}
-
 
 u32 ResFile::GetResAnmVisNumEntries() const {
     void* pResAnmVisDicData = ResDic(const_cast<ResDicData*>(
@@ -259,17 +189,6 @@ u32 ResFile::GetResAnmVisNumEntries() const {
  * ResAnmClr
  *
  ******************************************************************************/
-ResAnmClr ResFile::GetResAnmClr(const char* pName) const {
-    void* pResAnmClrDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&ResNameData_AnmClr)];
-
-    if (pResAnmClrDicData != NULL) {
-        return ResAnmClr(ResDic(pResAnmClrDicData)[pName]);
-    }
-
-    return ResAnmClr(NULL);
-}
-
 ResAnmClr ResFile::GetResAnmClr(int idx) const {
     void* pResAnmClrDicData = ResDic(const_cast<ResDicData*>(
         &ref().dict.topLevel))[ResName(&ResNameData_AnmClr)];
@@ -280,11 +199,6 @@ ResAnmClr ResFile::GetResAnmClr(int idx) const {
 
     return ResAnmClr(NULL);
 }
-
-ResAnmClr ResFile::GetResAnmClr(u32 idx) const {
-    return GetResAnmClr(static_cast<int>(idx));
-}
-
 
 u32 ResFile::GetResAnmClrNumEntries() const {
     void* pResAnmClrDicData = ResDic(const_cast<ResDicData*>(
@@ -302,17 +216,6 @@ u32 ResFile::GetResAnmClrNumEntries() const {
  * ResAnmTexPat
  *
  ******************************************************************************/
-ResAnmTexPat ResFile::GetResAnmTexPat(const char* pName) const {
-    void* pResAnmTexPatDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&ResNameData_AnmTexPat)];
-
-    if (pResAnmTexPatDicData != NULL) {
-        return ResAnmTexPat(ResDic(pResAnmTexPatDicData)[pName]);
-    }
-
-    return ResAnmTexPat(NULL);
-}
-
 ResAnmTexPat ResFile::GetResAnmTexPat(int idx) const {
     void* pResAnmTexPatDicData = ResDic(const_cast<ResDicData*>(
         &ref().dict.topLevel))[ResName(&ResNameData_AnmTexPat)];
@@ -323,11 +226,6 @@ ResAnmTexPat ResFile::GetResAnmTexPat(int idx) const {
 
     return ResAnmTexPat(NULL);
 }
-
-ResAnmTexPat ResFile::GetResAnmTexPat(u32 idx) const {
-    return GetResAnmTexPat(static_cast<int>(idx));
-}
-
 
 u32 ResFile::GetResAnmTexPatNumEntries() const {
     void* pResAnmTexPatDicData = ResDic(const_cast<ResDicData*>(
@@ -345,17 +243,6 @@ u32 ResFile::GetResAnmTexPatNumEntries() const {
  * ResAnmTexSrt
  *
  ******************************************************************************/
-ResAnmTexSrt ResFile::GetResAnmTexSrt(const char* pName) const {
-    void* pResAnmTexSrtDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&ResNameData_AnmTexSrt)];
-
-    if (pResAnmTexSrtDicData != NULL) {
-        return ResAnmTexSrt(ResDic(pResAnmTexSrtDicData)[pName]);
-    }
-
-    return ResAnmTexSrt(NULL);
-}
-
 ResAnmTexSrt ResFile::GetResAnmTexSrt(int idx) const {
     void* pResAnmTexSrtDicData = ResDic(const_cast<ResDicData*>(
         &ref().dict.topLevel))[ResName(&ResNameData_AnmTexSrt)];
@@ -366,11 +253,6 @@ ResAnmTexSrt ResFile::GetResAnmTexSrt(int idx) const {
 
     return ResAnmTexSrt(NULL);
 }
-
-ResAnmTexSrt ResFile::GetResAnmTexSrt(u32 idx) const {
-    return GetResAnmTexSrt(static_cast<int>(idx));
-}
-
 
 u32 ResFile::GetResAnmTexSrtNumEntries() const {
     void* pResAnmTexSrtDicData = ResDic(const_cast<ResDicData*>(
@@ -388,17 +270,9 @@ u32 ResFile::GetResAnmTexSrtNumEntries() const {
  * ResAnmShp
  *
  ******************************************************************************/
-ResAnmShp ResFile::GetResAnmShp(const char* pName) const {
-    void* pResAnmShpDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&ResNameData_AnmShp)];
-
-    if (pResAnmShpDicData != NULL) {
-        return ResAnmShp(ResDic(pResAnmShpDicData)[pName]);
-    }
-
-    return ResAnmShp(NULL);
-}
-
+// Retail emits NO GetResAnmShp* symbols: the only callers are the AnmShp
+// iteration inside CheckRevision, where -ipa file inlines these bodies. The
+// standalone copies are dropped by the postprocess drop_text_symbols rule.
 ResAnmShp ResFile::GetResAnmShp(int idx) const {
     void* pResAnmShpDicData = ResDic(const_cast<ResDicData*>(
         &ref().dict.topLevel))[ResName(&ResNameData_AnmShp)];
@@ -409,12 +283,6 @@ ResAnmShp ResFile::GetResAnmShp(int idx) const {
 
     return ResAnmShp(NULL);
 }
-
-ResAnmShp ResFile::GetResAnmShp(u32 idx) const {
-    return GetResAnmShp(static_cast<int>(idx));
-}
-
-
 
 u32 ResFile::GetResAnmShpNumEntries() const {
     void* pResAnmShpDicData = ResDic(const_cast<ResDicData*>(
@@ -432,17 +300,6 @@ u32 ResFile::GetResAnmShpNumEntries() const {
  * ResAnmScn
  *
  ******************************************************************************/
-ResAnmScn ResFile::GetResAnmScn(const char* pName) const {
-    void* pResAnmScnDicData = ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&ResNameData_AnmScn)];
-
-    if (pResAnmScnDicData != NULL) {
-        return ResAnmScn(ResDic(pResAnmScnDicData)[pName]);
-    }
-
-    return ResAnmScn(NULL);
-}
-
 ResAnmScn ResFile::GetResAnmScn(int idx) const {
     void* pResAnmScnDicData = ResDic(const_cast<ResDicData*>(
         &ref().dict.topLevel))[ResName(&ResNameData_AnmScn)];
@@ -452,10 +309,6 @@ ResAnmScn ResFile::GetResAnmScn(int idx) const {
     }
 
     return ResAnmScn(NULL);
-}
-
-ResAnmScn ResFile::GetResAnmScn(u32 idx) const {
-    return GetResAnmScn(static_cast<int>(idx));
 }
 
 u32 ResFile::GetResAnmScnNumEntries() const {
@@ -474,16 +327,6 @@ u32 ResFile::GetResAnmScnNumEntries() const {
  * Miscellaneous
  *
  ******************************************************************************/
-
-bool ResFile::HasResMdl() const {
-    return ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&ResNameData_Models)] != NULL;
-}
-
-bool ResFile::HasResPltt() const {
-    return ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&ResNameData_Pltts)] != NULL;
-}
 
 bool ResFile::HasResTex() const {
     return ResDic(const_cast<ResDicData*>(
@@ -520,11 +363,6 @@ bool ResFile::HasResAnmScn() const {
         &ref().dict.topLevel))[ResName(&ResNameData_AnmScn)] != NULL;
 }
 
-bool ResFile::HasExternalData() const {
-    return ResDic(const_cast<ResDicData*>(
-        &ref().dict.topLevel))[ResName(&ResNameData_Ext)] != NULL;
-}
-
 bool ResFile::Bind(const ResFile file) {
     u32 i;
     bool success = true;
@@ -541,20 +379,6 @@ bool ResFile::Bind(const ResFile file) {
     }
 
     return success;
-}
-
-void ResFile::Release() {
-    u32 i;
-
-    u32 mdlNum = GetResMdlNumEntries();
-    for (i = 0; i < mdlNum; i++) {
-        GetResMdl(i).Release();
-    }
-
-    u32 anmTexPatNum = GetResAnmTexPatNumEntries();
-    for (i = 0; i < anmTexPatNum; i++) {
-        GetResAnmTexPat(i).Release();
-    }
 }
 
 void ResFile::Init() {
@@ -660,9 +484,6 @@ bool ResFile::CheckRevision() const {
 
     return true;
 }
-
-DECOMP_FORCEACTIVE(g3d_resfile_cpp,
-                   ResNameData_Ext);
 
 } // namespace g3d
 } // namespace nw4r

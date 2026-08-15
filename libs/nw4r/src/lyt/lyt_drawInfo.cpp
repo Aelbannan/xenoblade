@@ -6,7 +6,9 @@
 namespace nw4r {
 namespace lyt {
 
-DrawInfo::DrawInfo() : mLocationAdjustScale(1.0f, 1.0f), mGlobalAlpha(1.0f) {
+DrawInfo::DrawInfo() : mViewRect(lbl_eu_80669DD0, lbl_eu_80669DD0, lbl_eu_80669DD0, lbl_eu_80669DD0),
+                       mLocationAdjustScale(lbl_eu_80669DD4, lbl_eu_80669DD4),
+                       mGlobalAlpha(lbl_eu_80669DD4) {
     std::memset(&mFlag, 0, sizeof(mFlag));
     math::MTX34Identity(&mViewMtx);
 }

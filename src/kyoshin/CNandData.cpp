@@ -1,45 +1,25 @@
 #include "kyoshin/CNandData.hpp"
 
 // ---------------------------------------------------------------------------
-// NAND save-slot display data (banner, title, description, icons) injected at
-// the nearest explicit link boundary. These string/array statics populate the
-// read-only .data slice of this TU.
+// NAND save-slot display data. The retail CNandData split object carries NO
+// data sections: every static lives in the retail data objects (split1.s)
+// under flat address labels, referenced from this TU as typed externs with
+// the exact retail names (config symbols.txt). The Japanese title/description
+// strings are unused by any retail code path and are not emitted at all.
 // ---------------------------------------------------------------------------
 
-// System-menu NAND banner title / description (Japanese region only).
-const char* CNandData::scNandTitleText = "ゼノブレイド";
-const char* CNandData::scNandDescriptionText = "巨神と機神　モナドが未来を斬り開く";
+// Banner image file pointer (retail .sdata lbl_eu_80662E00, SDA21).
+extern "C" const char* lbl_eu_80662E00;
 
-// Banner image file embedded in the save data.
-const char* CNandData::scNandBannerFilename = "bannerTexture.tpl";
+// Ordered list of up to 8 icon textures + parallel per-icon frame counts
+// (retail .data lbl_eu_8053A3D8 / lbl_eu_8053A3FC, 9 entries each).
+extern "C" const char* lbl_eu_8053A3D8[9];
+extern "C" int lbl_eu_8053A3FC[9];
 
-// Ordered list of up to 8 icon textures; nullptr marks the end of the list.
-const char* CNandData::sNandIconTextureFilenames[] = {
-    "iconTexture[0].tpl",
-    "iconTexture[1].tpl",
-    "iconTexture[2].tpl",
-    "iconTexture[3].tpl",
-    "iconTexture[4].tpl",
-    "iconTexture[5].tpl",
-    "iconTexture[6].tpl",
-    "iconTexture[7].tpl",
-    nullptr,
-};
-
-// Per-icon frame count, parallel to sNandIconTextureFilenames (2 frames each,
-// terminating 0). 0x8053A3FC.
-int CNandData::sNandIconTextureSomething[] = {
-    2, 2, 2, 2, 2, 2, 2, 2, 0,
-};
-
-// ---------------------------------------------------------------------------
-// Cross-TU BDAT string getters (defined in the CErrMes TU).
-//
-// These functions (and the init routine below) are emitted by retail as plain
-// UNMANGLED global C symbols (func_eu_802B14A4 / func_eu_802B14BC), so C
-// linkage is mandatory here - C++ linkage would mangle the call target to
-// `...__Fv` and break the FULL_MATCH. They return BDAT-driven display strings.
-// ---------------------------------------------------------------------------
+// The singleton instance itself stays DEFINED here: MWCC emits the 0x10-byte
+// boundary structure (retail lbl_eu_80577348) before it for the __sinit_
+// __register_global_object call, and the postprocess strip turns both into
+// UNDEF references to the retail .bss symbols.
 CNandData CNandData::sInstance;
 
 // Initializes the NAND save banner shown in the system menu:
@@ -55,8 +35,7 @@ extern "C" void func_eu_802B11C0()
     const char* desc = func_eu_802B14BC();
     CNandData::sInstance.mNandBanner.func_804F5304(desc);
 
-    CNandData::sInstance.mNandBanner.func_804F5310(CNandData::scNandBannerFilename);
-    CNandData::sInstance.mNandBanner.func_804F531C(
-        CNandData::sNandIconTextureFilenames, CNandData::sNandIconTextureSomething);
+    CNandData::sInstance.mNandBanner.func_804F5310(lbl_eu_80662E00);
+    CNandData::sInstance.mNandBanner.func_804F531C(lbl_eu_8053A3D8, lbl_eu_8053A3FC);
     CNandData::sInstance.mNandBanner.unkC &= ~0x10;
 }

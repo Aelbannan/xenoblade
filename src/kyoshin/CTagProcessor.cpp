@@ -1279,12 +1279,13 @@ extern "C" __declspec(noinline) void addToCharSpace(u8* self, float val) { *(flo
 void* func_80127670(void* self) { return *(void**)self; }
 
 // Compare the first u32 of two blocks (used as a tag-identity test).
-// NOTE: retail uses the -O4,s addic/subfe setnz idiom; under this unit's
-// -O4,p the same expression lowers to the neg/or/rlwinm form (5 mismatches).
-// Needs a unit-level extra_cflags=["-O4,s"] flip (wall: per-function opt level).
+// Retail uses the -O4,s addic/subfe setnz idiom; optimize_for_size on
+// forces the -O4,s lowering even though the unit compiles at -O4,p.
+#pragma optimize_for_size on
 u32 func_801276C8(const u32* a, const u32* b) {
     return *b != *a;
 }
+#pragma optimize_for_size off
 
 extern "C" void* func_801276E0(void* self, int a) {
     void* p = *(void**)self;

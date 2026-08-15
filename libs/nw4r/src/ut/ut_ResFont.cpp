@@ -12,7 +12,11 @@ template <typename T> inline void ResolveOffset(T*& rpPtr, void* pBase) {
 
 } // namespace
 
-ResFont::ResFont() {}
+ResFont::ResFont() {
+    // Retail ctor stores the vtable pointer after the base-ctor call; with
+    // novtable the store is explicit (lbl_eu_8056AF90 = ResFont vtable).
+    *(void**)this = (void*)lbl_eu_8056AF90;
+}
 
 ResFont::~ResFont() {}
 

@@ -2,7 +2,7 @@
 
 // NOTE: CfBdat.hpp is intentionally NOT included. It declares
 // `extern void* lbl_eu_806640F4;` while code_80135FDC.hpp declares the same
-// symbol as `extern u32 lbl_eu_806640F4;` — including both is a redeclaration
+// symbol as `extern u32 lbl_eu_806640F4;` -- including both is a redeclaration
 // error (10563). This TU uses none of CfBdat's declarations (all symbols
 // below come from CMCEffStart.hpp / code_80135FDC.hpp / local externs), so
 // the include is dropped to keep the two extern forms apart.
@@ -183,7 +183,7 @@ void CMCEffUpPrm::update() {
         return;
     }
     for(u8 i = 0; i < 8; ++i) {
-        if((s8)unkStruct[i].unk8 == 1 && func_80137444__FPQ34nw4r3lyt13AnimTransformf(unkStruct[i].animTrans, 1.0f) != 0) {
+        if((s8)unkStruct[i].unk8 == 1 && func_80137444__FPQ34nw4r3lyt13AnimTransformf(unkStruct[i].animTrans, lbl_eu_80668554) != 0) {
             unkStruct[i].unk8 = 0;
         }
         unkStruct[i].layout->Animate(0);
@@ -213,6 +213,9 @@ void CMCEffUpPrm::destroy() {
 void CMCEffUpPrm::activateSlots(u32 arg) {
     for(u8 i = 0; i < 8; ++i) {
         unkStruct[i].unk8 = 0;
+        // Pooled 0.0f (not named): MWCC hoists the pool load out of the loop
+        // into f31 (retail shape); a named extern load stays in the loop and
+        // the function grows to 0xA0 (see postprocess pool_patterns rename).
         unkStruct[i].animTrans->SetFrame(0.0f);
         unkStruct[i].layout->Animate(0);
         if(i < arg) {
@@ -583,7 +586,7 @@ void __declspec(noinline) CMCEffCrystal::updateChange() {
         unk4 = 3;
         unk5 = 1;
     }
-    if(mAnimTrans20->GetFrame() >= 5.0f) {
+    if(mAnimTrans20->GetFrame() >= lbl_eu_80668560) {
         char* name = func_8013639C(lbl_eu_806640D8, &lbl_eu_805095EC[0x274], unk36);
         char* itemName = (char*)func_80136190(&lbl_eu_805095EC[0x279], &lbl_eu_805095EC[0x274], 0x1e - unk38);
         char buffer[0x20];

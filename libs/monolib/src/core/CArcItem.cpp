@@ -1,3 +1,8 @@
+// Opt into the inline-empty ~IWorkEvent (see IWorkEvent.hpp): retail compiles
+// this dtor with the empty base-dtor body visible, so the base-dtor call is
+// elided and the unit fits its 0x294 split budget (the call would add 0xC).
+#define IWORK_EVENT_INLINE_DTOR
+
 #include "monolib/core.hpp"
 #include "monolib/device.hpp"
 #include "monolib/util.hpp"

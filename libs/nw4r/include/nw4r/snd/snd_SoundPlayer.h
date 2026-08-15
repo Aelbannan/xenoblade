@@ -21,6 +21,7 @@ namespace nw4r {
 namespace snd {
 
 // Forward declarations
+class SoundActor;
 namespace detail {
 class ExternalSoundPlayer;
 class SeqSound;

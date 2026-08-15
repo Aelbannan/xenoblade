@@ -95,24 +95,16 @@ ret0:
 
 // us-804df738: sinit_804DB420
 // .ctors static initializer: installs the CNReqtaskCheck vtable
-// (lbl_eu_8056FDE8) into the vtable pointer (lbl_eu_80665A00).
+// (lbl_eu_8056FDE8) into the task vtable pointer (lbl_eu_80665A00).
 //
-// KNOWN CEILING (MWCC_REFERENCE "b .+4 sinit barrier"): retail emits a 24-byte
-// `li r3,dest@sda21; b .+4 (scheduler barrier); lis/addi src; stw r4,0(r3); blr`
-// shape that is unreachable from high-level C: MWCC always folds the store to
-// `stw rX,dest@sda21(r0)` and never emits the `b .+4`. This is the documented
-// readable 20-byte folded-store endpoint for all five monolib NAND sinits.
-// Returning p keeps &lbl_eu_80665A00 live in r3 (closest match). No assembly
-// is added per policy.
-//
-// This same ceiling accounts for the TU's one unmatched data slot (data 83.3%):
-// the retail .o registers `sinit_804DB420` in `.ctors`, but as a plain free
-// function MWCC emits no `.ctors` entry. Producing that entry requires the real
-// `__sinit_` static-initializer machinery (unreachable without the `b .+4`
-// artifact), so the `.ctors` data residual is deferred together with the code.
-extern "C" CNReqtaskCheckVtbl** sinit_804DB420() {
-    CNReqtaskCheckVtbl** p = &lbl_eu_80665A00;
-    CNReqtaskCheckVtbl* v = (CNReqtaskCheckVtbl*)lbl_eu_8056FDE8;
-    *p = v;
-    return p;
+// Retail keeps the thunk `li r3,&lbl_eu_80665A00@sda21; b func_804DB440`
+// as a tail call into the adjacent helper (the annotation originally merged
+// the two bodies into one 0x18 symbol). The helper stores the vtable
+// address through r3. `char[]` type for the vtable keeps the address
+// constant in a lis/addi pair (no sda21 dereference).
+extern "C" __declspec(noinline) void func_804DB440(void* dest) {
+    *(void**)dest = (void*)lbl_eu_8056FDE8;
+}
+extern "C" __declspec(noinline) void sinit_804DB420() {
+    func_804DB440(&lbl_eu_80665A00);
 }

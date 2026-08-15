@@ -97,6 +97,20 @@ live-arg liveness forces the default into r0. (Same family as the WPAD
   configure them `extra_cflags=["-O4,s"]` — `subic/subfe` is otherwise
   unreachable from any `!= 0` source shape under `-O4,p` (probed ~20 shapes).
   `func_80252CD4` etc. are 0x10 (4 instr) only under `-O4,s`.
+  **Per-function alternative to a unit flip:** `#pragma optimize_for_size on`
+  *forces the `-O4,s` lowering inside a `-O4,p` unit* — verified on
+  `func_801276C8` (kyoshin/CTagProcessor, retail `subf; addic; subfe`
+  two-value `!=` idiom): wrapped in the pragma it drops from 28.6% (4
+  structural) to 83.3% (0 structural, 1 reg_swap) without touching the
+  unit's `extra_cflags` (which would risk regressing the 96 already-100%
+  functions in the TU). The `!=` two-value lowering under `-O4,s` computes
+  right-minus-left; the retail subtraction direction (left-minus-right) is a
+  fixed register-operand assignment (`subf r3,r4,r0` vs retail `subf r3,r0,r4`
+  — probed 12+ shapes, 2 compiler versions, `-ipa` on/off, `scheduling`
+  pragma: identical). The register-renaming witness CANNOT certify this
+  residual: the subf RA/RB swap needs rho r0↔r4 but `addic r0,r3,-1` pins r0
+  (gate-4 rho conflict), so FULL_MATCH is the only route and it is blocked
+  by the fixed operand assignment (open item, us-801281a4).
   **Pitfall:** `#pragma optimize_for_size off` *reverts subsequent functions to
   `-O4,p` codegen* even when the unit is compiled with `-O4,s` — a `!= 0`
   function placed after a `off` in the same TU emits the 5-instr
@@ -2322,17 +2336,22 @@ if (lbl_eu_806659D4 == -12) {
 
 Combined with (1) this took `func_804F4D90` (0x2F8 state machine with 12-case jump table) from 173 mismatches/744 bytes to **0 mismatches/760 bytes exact**.
 
-### 4. `b .+4` sinit ceiling (not yet reproduced)
+### 4. `b .+4` sinit — RESOLVED: merged-symbol tail-call thunk split (FULL_MATCH ×5)
 
-All five `sinit_804DB4xx/804DB2xx/804DB0xx/804F51xx` functions store one vtable pointer. Retail shape: `li r3, dest@sda21; b .+4; lis r4, src@ha; addi r4, r4, src@l; stw r4, 0(r3); blr` (24 bytes). The `b .+4` is a scheduler barrier and the store is deliberately unfolded through r3.
+All five `sinit_804DB4xx/804DB2xx/804DB0xx/804F51xx` functions store one vtable pointer. Retail shape: `li r3, dest@sda21; b .+4; lis r4, src@ha; addi r4, r4, src@l; stw r4, 0(r3); blr` (24 bytes). The `b .+4` looks like a scheduler barrier; the store is deliberately unfolded through r3.
 
-**Why the global-object-with-ctor route (CRect16/CVec3) does NOT apply here:** the matched `__sinit_` functions in this repo (CRect16 `__sinit_\\CRect16_cpp`, CVec3 `__sinit_\\CVec3_cpp`, CCol3, etc.) are generated from a **global object definition with a constructor call in the TU** (`ml::CRect16 lbl_eu_80665588(0,0,0,0);` / `CVec3 CVec3::zero = CVec3(...)`). That works because the TU **owns** the object's bss/sbss slice and MWCC emits the auto-`__sinit_` that inlines the constructor (`li r3, obj@sda21; li r0,0; sth r0, obj@sda21(r0); sth r0, 2(r3); …`). The NAND sinits (and `sinit_eu_804F9FA4`) instead reference a **retail-owned sbss slot** (`lbl_eu_806659E8`/`lbl_eu_80665A98` live in the `monolibdata2.s` data slice — the retail object has them as `U` undefined, and the split assigns them to the retail data object). A TU cannot define those slots, so the global-object-with-ctor route (which requires the TU to own the object and emit the auto-`__sinit_` + `.ctors` pointer) is closed; the decompiled source must hand-write `sinit_804DB0D8` as an `extern "C"` free function.
+**RESOLVED 2026-08 (agent-structural):** the `b .+4` is **NOT a scheduler barrier — it is a cross-function tail call into an adjacent helper** that the annotation merged into one 0x18 symbol. The DOL bytes are TWO functions: the sinit thunk `li r3,&dest@sda21; b func_804DB0E0` (0x8) + the helper `lis/addi r4,src@ha/l; stw r4,0(r3); blr` (0x10) at +0x8. dtk bakes intra-symbol branch displacements, so with the merged annotation the branch looks baked with no reloc; splitting the symbol in symbols.txt (`sinit_804DB420` size 0x8 + new `func_804DB440` size 0x10, then re-run the SPLIT ninja rule / hexdiff) turns it into a proper REL24 reloc and the two-function C reproduces it exactly:
 
-MWCC always folds the store to `stw rX, dest@sda21(r0)` (16–20 bytes, 0% fuzzy) and no tested source form emits the branch. 2026-08 probe (Wii/1.1 default + GC/1.3, 2.0, 2.5, 2.6, 2.7, 3.0a3, 3.0a3.2-3.4, 3.0a5, 3.0a5.2, Wii/1.0, 1.0a, 1.1, 1.3, 1.5, 1.6, 1.7 × `-O4,p/-O4,s` × `-ipa file/off/program`): ruled out return-p trick (`void** p = &dest; *p = v; return p;` — 20 bytes, still folded), `volatile` pointer/`void* volatile` global, `#pragma scheduling off`, `#pragma opt_propagation off`, `#pragma peephole off`, C-mode compile, `goto`/`if(1)`/`while(0)` wrappers, static object with external vtable, inline helper taking the dest as a parameter, explicit `__ct__` tail call with named sbss symbol (produces `lis r4,src@ha; li r3,dest@sda21; addi r4,src@l; stw r4,dest@sda21(r0)` — 5-insn folded, same 20 bytes), placement-new/manual-ctor, function-local static guard, static class member object, derived-class static object, `-O4,p`/`-O4,s`, and all MWCC versions above. Under `-O4,p` the auto-`__sinit_` inlines a trivial ctor into a **folded** store; under `-O4,s` it keeps the tail call `li r3,obj@sda21; b __ct__` (which is the CNand `sinit_804DA4C0` FULL_MATCH shape when the ctor is a real out-of-line `__ct__` symbol). No combination produces `b .+4` + unfolded store through r3. Same pattern exists in `monolib_eu_804F9E98.cpp` (`sinit_eu_804F9FA4`, also unmatched, STRUCTURAL); its dest is also retail-owned.
+```cpp
+extern "C" __declspec(noinline) void func_804DB0E0(void* dest) {
+    *(void**)dest = (void*)lbl_eu_8056FD88;   // vtable as char[] keeps lis/addi address constant
+}
+extern "C" __declspec(noinline) void sinit_804DB0D8() {
+    func_804DB0E0(&lbl_eu_806659E8);          // void body -> tail call `b`, no frame
+}
+```
 
-These 5 sinits are deferred at COMPILES; fuzzy 0/6 < 50% excludes EQUIVALENT_MATCH. The `.ctors`-registered vtable-pointer sinits likely came from a different codegen path (hand-written `.s` or toolchain emission). If a policy exception is ever granted, a single `asm { }` for the `b .+4` plus the unfolded-store source would close them.
-
-**2026-08 re-analysis (agent-compiles):** the `b .+4` targets the **immediately-following instruction** (branch at +0x4 → the `lis` at +0x8; `0x48000004` LI=1, disp=4) — it is a pure no-op barrier, NOT a skip over dead code. The store is live straight-line code (`la r3,dest@sda21; b .+4; lis/addi src; stw r4,0(r3); blr`). The raw DOL has **no relocation at +0x4** (internal branch; the CScnVirtualLight func_80493C08/C10 `b .+4` tail-call case differs — that one HAS a REL24 reloc, so a no-reloc `b .+4` cannot be a cross-function tail call). ~40 fresh high-level shapes probed on Wii/1.1 `-O4,s` (constant-false `if(0)`/`while(0)`/`for(;i<0;)`, `goto END;` dead-store retention, `if(1) goto END`, inlined ctors with constant params, address-vs-zero and address-vs-address comparisons, `&dest != &src`, `volatile` stores and volatile pointer vars, `-O0`..`-O3`, do/switch/ternary/comma forms, function-local static guard, return-via-pointer) all still fold to the 20-byte form or emit a runtime test — none emits the no-op `b .+4`. The same no-op `b .+4` artifact also appears in unrelated MWCC functions that are NOT sinits: `GetTextColor__Q34nw4r3lyt7TextBoxCFUl` (us-80403ce4, accepted EQUIVALENT_MATCH via witness — between `rlwinm idx>>1` and `rlwinm idx*4`), `func_80069C78` (CfTFile, COMPILES — between `addi r3,r3,0x834` and `cmpi r3,0`), `DCT_AcIdctDouble` (CriWare, after the pool-pointer `lis/addi r5`), so it is a general MWCC scheduling artifact, not sinit-specific. The barrier + unfolded-store combination remains unreproducible from high-level C; the readable 20-byte candidate is the endpoint.
+Key: the sinit must be **void** (a trailing `return` kills the tail call and forces a frame), the helper is `__declspec(noinline)`, `extern "C"` for the unmangled reloc names, and the vtable is `extern char[]` (array type prevents sda21 folding on the src side). Result: **all five** NAND sinits `sinit_804DB0D8`/`sinit_804DB228`/`sinit_804DB330`/`sinit_804DB420`/`sinit_804F5140` reached **FULL_MATCH 100%** (thunk 0x8 + helper 0x10), and the `.ctors` data residual noted below also cleared. Same pattern applies to `sinit_eu_804F9FA4` (monolib EU) and `sinit_804DAF58` (CNReqtaskSave, already resolved earlier). Reusable rule: a `b` whose target is the immediately-following instruction in a function that ends in a store = tail call into an adjacent merged-symbol helper — check symbols.txt for the merged annotation before treating it as a compiler artifact.
 
 ### 5. MPF billboard list-loop shape (US)
 
@@ -10694,3 +10713,23 @@ Key gotchas:
   the unit's `-func_align 16` padded 0xC between bdcpy and bdcmp (.text 0xD8 vs
   budget 0xD4). `-func_align 4` restores the packed layout (0xCC, 0x8 spare),
   same documented fix as bta_sys_conn.c.
+
+## monolib CScnEffectActNw4r getters — const self hoists the member load above the LR save (Wii/1.1 `-O4,p`)
+
+`func_8049BF0C/34/5C/84` (us-8049fff0/804a0018/804a0040/804a0068, 0x28 each) went 80.0% (2 structural: prologue order) → **100.0% FULL_MATCH ×4** via ONE lever:
+
+- **`const` on the self parameter.** Retail prologue is `stwu; mflr; lwz r3,4(r3); stw r0,20(sp); bl getter; … addi r3,r3,N` — the first member load is scheduled BEFORE the LR-save store. With a NON-const self, MWCC always emits `stw r0,20(sp)` first (2 structural, 80%). Declaring the parameter `const CScnEffectActNw4r* self` (extern "C" free function, name unchanged) makes MWCC hoist `lwz r3,4(r3)` above the LR store — byte-identical, 0 structural.
+- Mechanism: the const-qualified pointed-to object can't be written by the compiler-generated stack store, so the load is hoistable above it. Confirmed via minimal probes (GC/3.0a5.2 AND Wii/1.1, offsets 0 and 4): `const S* self` → `lwz` before `stw r0,20(sp)`; `S* self` → `stw` first. Non-const member functions, `-O4,s`, `-O3`, `-schedule off`, all GC/Wii compilers, and volatile/cast/local shapes did NOT reproduce the hoist.
+- **This closes the documented "load-hoisted above `stw r0,20(sp)` LR save — not yet reproducible by any MWCC version" family** (MWCC_REFERENCE line ~1547 named `CfObjectMove_UnkVirtualFunc9`, `CfObjectModel` vfunc52/53/56, `CScnIdMan::func_8049E51C` us-804a2678). Apply the same lever there: read-only member loads + const-qualified `this`/self.
+- Verified: whole unit 17/27 functions 100%, split PASS 0xAA4/0xAA4; 4× semantic certificates (full-instruction-match).
+
+## brief_9 (agent 9) — nw4r DATA/SIZE session: pooled-constant naming, static-local guards, shared-pool vtables
+
+Session notes from the nw4r data/size mission (units: g3d_camera, lyt_common, lyt_bounding, g3d_scnproc, g3d_init, ut_LinkList, snd_DisposeCallbackManager, snd_StrmChannel, snd_MidiSeqPlayer, db_assert, db_DbgPrintBase). All probes GC/3.0a5.2 `-O4,p -ipa file` unless noted.
+
+- **`extern f32` reads are NOT CSE'd across statements — one `lfs` per use.** Replacing a repeated literal (`r.x = 0.0f; r.y = 0.0f; ...`) with `lbl_eu_XXXX` at each site makes MWCC emit a fresh `lfs` before EVERY store (Init(FUsUsUsUsUsUs) went 0x11C→0x168). Locals (`const f32 c = lbl_eu_XXXX;`) fix the count but hoist the load to the declaration point (slot-0 style, §1544). A single expression with 3 identical extern reads IS CSE'd (`mScale(g,g,g)` → one `lfs`). Rule: only use named-extern floats where retail also loads once per site; literals stay the only byte-exact shape for repeated-use constants (g3d_camera .sdata2 0x30 unresolvable source-level).
+- **MWCC's static-local init guard (`lbz; cntlzw; bc`) cannot be reproduced from high-level C.** The compiler-generated guard for `static T x = {...}` checks `lbz [guard]; cntlzw r0,r0; bc 4,2`; a manual `if (!externGuard)` compiles to `lbz; cmpi r0,0; bc` — one structural mismatch. All zero-test shapes (`== 0`, `(x&0xFF)==0`, int-typed, ternary) emit cmpi. So a local static whose table/guard/consts must move to externs (lyt_common pCoords) is unfixable byte-exactly.
+- **The C-linkage ctor-definition `__sinit_` stub**: `extern "C" RuntimeTypeInfo obj(&parent);` at global scope emits the retail 0xC dead-stub `__sinit_\<file>` (`li r0,0; stw r0,0(0); blr`) plus a 4-byte `.sbss` object. The object CANNOT be externalized without losing the `__sinit_` symbol — which is a registered FULL_MATCH target in lyt_bounding (us-8032ee90). lyt_bounding keeps the definition (`.sbss` +4 vs retail 0, blocked) and the vtable fix below.
+- **Shared-pool vtable via `__declspec(novtable)` + explicit vptr store**: when retail references the vtable as `lbl_eu_XXXX` (shared pool, no local `__vt__`), mark the class `__declspec(novtable)` and write `*(void**)this = (void*)lbl_eu_XXXX;` in the ctor. Position matters: retail g3d_scnproc stores the vptr AFTER the base mScale init and BEFORE the member stores — put the member init in the BODY after the explicit store (init-list order would schedule the store last, §128's trap in reverse). Verified: g3d_scnproc Construct 100% (was 89% with init-list), .data 0x34→0; lyt_bounding .data 0x74→0, ctor/dtor still 100%. Dtors with no retail vptr store are unaffected.
+- **Retail-inline ctor vs standalone `__ct__`**: snd_DisposeCallbackManager's retail slice has no `__ct__` (the ctor is only used by GetInstance's static-init). Moving `DisposeCallbackManager() {}` into the header removed the 0x20 standalone (0x53C→0x51C) with 6/6 still 100%. Same lever as ut_LinkList's range-Erase (retail keeps it inline; moving the body into the header dropped the 0x48 standalone, size PASS) and g3d_camera's SetPosition(f32,f32,f32)/SetScissorBoxOffset(s32,s32)/SetViewportZRange/UpdateProjectionMtx (0x100, size PASS).
+- **Unit data/self-blockers confirmed** (postprocess fix policy-forbidden per SKILL §9): snd_StrmChannel 0x98 = `__dt__AutoInterruptLock` 0x58 + `__dt__NonCopyable` 0x40 weaks (manual OSDisableInterrupts/OSRestoreInterrupts rewrite matches Setup/Shutdown/Free byte-for-byte but flips Alloc's loop-counter allocation — 50 structural, regression); db_DbgPrintBase 0x6C = dummy caller (0x2C) + orphan `__dt__Color` (0x40) — SetTextColor (the only retail symbol) needs a live caller and any `ut::Color` construction emits the weak dtor; g3d_scnproc 0x3C = orphan `~ScnLeaf` weak (§7752) and .sdata2 1.0f from the shared ScnLeaf `mScale(1.0f,1.0f,1.0f)` (g3d_scnobj.h, out of scope); snd_MidiSeqPlayer: thunk adjust amounts 0xD4/0xE0 vs retail 0xD0/0xDC = SeqPlayer class layout 4 bytes off + vtable/thunk emission mechanics vs retail slicing; db_assert: 14 functions belong to retail units absent from this repo's slice.

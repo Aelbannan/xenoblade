@@ -1738,7 +1738,25 @@ extern "C" void func_80470A90__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int para
 
 void LOD::LODMemMan::func_80470B10() {}
 
-void LOD::LODMemMan::func_80470DB0() {}
+extern "C" int func_80470EF8__Q23LOD9LODMemManFv(
+    LOD::LODMemMan* self, CScn* archive, nw4r::g3d::ResFile* resFile,
+    u32 id, int mdlIdx, const f32* mtxSrc);
+
+// ---------------------------------------------------------------------------
+// func_80470DB0: thunk into func_80470EF8.  The retail body is a pure tail
+// call that repacks the (mdlIdx, packed) pair into the callee's id: the
+// callee's resFile is this+4, its id is `(packed >> 16) | mdlIdx` (the high
+// 16 bits of packed moved into the low half, OR'd with the index), its
+// mdlIdx is passed through unchanged, and its mtxSrc is the 5th arg.
+// ---------------------------------------------------------------------------
+__declspec(noinline) int func_80470DB0__Q23LOD9LODMemManFv(
+    LOD::LODMemMan* self, CScn* archive, u32 mdlIdx, u32 packed,
+    const f32* mtxSrc)
+{
+    return func_80470EF8__Q23LOD9LODMemManFv(
+        self, archive, (nw4r::g3d::ResFile*)((u8*)self + 4),
+        ((u16)packed << 16) | mdlIdx, mdlIdx, mtxSrc);
+}
 
 // ---------------------------------------------------------------------------
 // func_80470DCC: resolve a ResFile slot for `id`.  A slot whose id already

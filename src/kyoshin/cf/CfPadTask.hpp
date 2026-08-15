@@ -9,18 +9,18 @@
 
 namespace cf {
 
-    // novtable: the retail CfPadTask.o carries NO data sections — the class
-    // vtables/RTTI live in the retail data object (split1.s .data, referenced
-    // as lbl_eu_80533C90 / lbl_eu_80533D08). novtable suppresses MWCC's
-    // implicit vptr stores + vtable/RTTI emission; the ctor below restores
-    // the vptr stores explicitly (same reloc names, same bytes).
-    class __declspec(novtable) CfPadTask : public CTTask<CfPadTask>, public IGameException, public IHBMCallback {
+    // Retail .sdata2 constant (0.0f; config symbols.txt). Referencing it in
+    // the inline ctor keeps the timer-reset lfs on the retail symbol instead
+    // of pooling a TU-local literal into .sdata2.
+    extern "C" const float lbl_eu_80667EA8;
+
+    class CfPadTask : public CTTask<CfPadTask>, public IGameException, public IHBMCallback {
     public:
         // Inline so create's placement-new inlines ctor; retail has no __ct__Q22cf9CfPadTaskFv.
         CfPadTask() : CTTask<CfPadTask>(), mFrameCounter(0) {
             CLibHbm::addCallback(this);
-            sInputDisableTimer = 0;
-            sButtonDisableTimer = 0;
+            sInputDisableTimer = lbl_eu_80667EA8;
+            sButtonDisableTimer = lbl_eu_80667EA8;
         }
         virtual ~CfPadTask();
 

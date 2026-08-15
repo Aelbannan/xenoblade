@@ -34,6 +34,13 @@ extern "C" {
     s32 func_8004368C__9CTaskGameFv();
 }
 
+// The retail CfPadTask.o split object carries NO data sections — the class
+// statics live in the retail data object (split1.s .sbss / .bss) and are
+// referenced from this TU as plain (undefined) symbols with the exact retail
+// mangled names (config symbols.txt). Not defining them here keeps this TU
+// free of .sbss/.bss content; the linker resolves the references to the
+// retail data object.
+
 // --- CTTask<cf::CfPadTask> out-of-line specializations ---
 // The canonical declared-only template emits no bodies; these explicit
 // specializations produce the retail standalone Move/Draw/dtor symbols.
@@ -55,11 +62,6 @@ template<>
 CTTask<cf::CfPadTask>::~CTTask() {}
 
 namespace cf{
-    u8 CfPadTask::sMainPadExtension;
-    u8 CfPadTask::sDpadDisableTimer;
-    bool CfPadTask::sMainPadIsGCController;
-    u8 CfPadTask::sWpadDisconnectTimer;
-
     u32 CfPadTask::lbl_80666D3C;
     u32 CfPadTask::sMainPadType;
     float CfPadTask::sInputDisableTimer;
@@ -279,7 +281,7 @@ void CfPadTask::func_801C1BD8(float f1) {
                         CPadManager::setRightStickDeadzoneDefault();
                     }else if(mainPad->mPadType == PAD_TYPE_CLASSIC){
                         sMainPadType = PAD_TYPE_CLASSIC;
-                        CPadManager::setRightStickDeadzone(0.3f);
+                        CPadManager::setRightStickDeadzone(lbl_eu_80667EAC);
                     }else if(mainPad->mPadType == PAD_TYPE_CORE){
                         sMainPadType = PAD_TYPE_CORE;
                         CPadManager::setRightStickDeadzoneDefault();
@@ -293,7 +295,7 @@ void CfPadTask::func_801C1BD8(float f1) {
                 if(mainPad->mConnected && (mainPad->mPadType >= PAD_TYPE_CORE && mainPad->mPadType <= PAD_TYPE_CLASSIC)){
                     sMainPadType = mainPad->mPadType;
                     if(sMainPadType == PAD_TYPE_CLASSIC){
-                        CPadManager::setRightStickDeadzone(0.3f);
+                        CPadManager::setRightStickDeadzone(lbl_eu_80667EAC);
                     }else{
                         CPadManager::setRightStickDeadzoneDefault();
                     }

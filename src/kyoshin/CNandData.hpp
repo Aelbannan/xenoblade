@@ -27,10 +27,5 @@ public:
     friend void func_eu_802B11C0();
 
 private:
-    static const char* scNandTitleText;
-    static const char* scNandDescriptionText;
-    static const char* scNandBannerFilename;
-    static const char* sNandIconTextureFilenames[];
-    static int sNandIconTextureSomething[];
     static CNandData sInstance;
 };

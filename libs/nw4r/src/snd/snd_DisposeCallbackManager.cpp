@@ -10,8 +10,6 @@ DisposeCallbackManager& DisposeCallbackManager::GetInstance() {
     return instance;
 }
 
-DisposeCallbackManager::DisposeCallbackManager() {}
-
 void DisposeCallbackManager::RegisterDisposeCallback(
     DisposeCallback* pCallback) {
     mCallbackList.PushBack(pCallback);

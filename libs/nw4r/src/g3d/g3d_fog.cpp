@@ -2,6 +2,12 @@
 
 #include <revolution/GX.h>
 
+// Retail .sdata2 zero constant ships from the nw4r data unit (nw4r_data.s);
+// referenced by name so no local pool is emitted.
+extern "C" {
+    extern const f32 lbl_eu_80669CF8; // 0.0f
+}
+
 namespace nw4r {
 namespace g3d {
 
@@ -16,10 +22,10 @@ void Fog::Init() {
 
     r.type = GX_FOG_NONE;
 
-    r.startz = 0.0f;
-    r.endz = 0.0f;
-    r.nearz = 0.0f;
-    r.farz = 0.0f;
+    r.startz = lbl_eu_80669CF8;
+    r.endz = lbl_eu_80669CF8;
+    r.nearz = lbl_eu_80669CF8;
+    r.farz = lbl_eu_80669CF8;
 
     r.color.r = r.color.g = r.color.b = r.color.a = 0;
 

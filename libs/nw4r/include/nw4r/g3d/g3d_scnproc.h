@@ -11,10 +11,17 @@ extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnLeaf")> lbl_eu_8051D
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnObj")> lbl_eu_8051D768;
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640;
 
+// Retail vtable (shared pool, lbl_eu_80569870).
+extern "C" void* lbl_eu_80569870[];
+
 namespace nw4r {
 namespace g3d {
 
-class ScnProc : public ScnLeaf {
+// __declspec(novtable): the retail vtable lives in the shared data pool
+// (lbl_eu_80569870), so MWCC must not emit a local __vt__ScnProc; the ctor
+// stores the extern vtable address explicitly (retail's vptr store lands
+// after the base mScale init, exactly where the body's first statement sits).
+class __declspec(novtable) ScnProc : public ScnLeaf {
 public:
     typedef void (*DrawProc)(ScnProc* pProc, bool opa);
 
@@ -25,10 +32,15 @@ public:
 
     ScnProc(MEMAllocator* pAllocator, DrawProc pProc, void* pUserData, bool opa,
             bool xlu)
-        : ScnLeaf(pAllocator),
-          mFlag(0),
-          mpDrawProc(pProc),
-          mpUserData(pUserData) {
+        : ScnLeaf(pAllocator) {
+
+        // Retail's vptr store lands before the member stores (mFlag etc.),
+        // so write it first and initialize the members in the body instead
+        // of the init list.
+        *(void**)this = (void*)lbl_eu_80569870;
+        mFlag = 0;
+        mpDrawProc = pProc;
+        mpUserData = pUserData;
 
         if (opa) {
             mFlag |= SCNPROCFLAG_DRAW_OPA;

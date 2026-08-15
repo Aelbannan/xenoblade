@@ -70,19 +70,6 @@ void Camera::Init(u16 efbWidth, u16 efbHeight, u16 xfbWidth, u16 xfbHeight,
     r.scissorOffsetY = 0;
 }
 
-void Camera::SetPosition(f32 x, f32 y, f32 z) {
-    if (!IsValid()) {
-        return;
-    }
-
-    CameraData& r = ref();
-
-    r.cameraPos.x = x;
-    r.cameraPos.y = y;
-    r.cameraPos.z = z;
-    r.flags &= ~CameraData::FLAG_CAM_MTX_READY;
-}
-
 void Camera::SetPosition(const math::VEC3& rPos) {
     if (!IsValid()) {
         return;
@@ -242,17 +229,6 @@ void Camera::SetScissor(u32 x, u32 y, u32 width, u32 height) {
     r.scissorHeight = height;
 }
 
-void Camera::SetScissorBoxOffset(s32 ox, s32 oy) {
-    if (!IsValid()) {
-        return;
-    }
-
-    CameraData& r = ref();
-
-    r.scissorOffsetX = ox;
-    r.scissorOffsetY = oy;
-}
-
 void Camera::SetViewport(f32 x, f32 y, f32 width, f32 height) {
     if (!IsValid()) {
         return;
@@ -267,17 +243,6 @@ void Camera::SetViewport(f32 x, f32 y, f32 width, f32 height) {
 
     SetScissor(static_cast<u32>(x), static_cast<u32>(y),
                static_cast<u32>(width), static_cast<u32>(height));
-}
-
-void Camera::SetViewportZRange(f32 near, f32 far) {
-    if (!IsValid()) {
-        return;
-    }
-
-    CameraData& r = ref();
-
-    r.viewportNear = near;
-    r.viewportFar = far;
 }
 
 void Camera::GetViewport(f32* pX, f32* pY, f32* pWidth, f32* pHeight,
@@ -531,23 +496,6 @@ void Camera::UpdateCameraMtx() const {
     }
 
     r.flags |= CameraData::FLAG_CAM_MTX_READY;
-}
-
-void Camera::UpdateProjectionMtx() const {
-    CameraData& r = const_cast<CameraData&>(ref());
-
-    if (r.flags & CameraData::FLAG_PROJ_ORTHO) {
-        C_MTXOrtho(r.projMtx, r.projTop, r.projBottom, r.projLeft, r.projRight,
-                   r.projNear, r.projFar);
-    } else if (r.flags & CameraData::FLAG_PROJ_FRUSTUM) {
-        C_MTXFrustum(r.projMtx, r.projTop, r.projBottom, r.projLeft,
-                     r.projRight, r.projNear, r.projFar);
-    } else /* FLAG_PROJ_PERSP */ {
-        C_MTXPerspective(r.projMtx, r.projFovy, r.projAspect, r.projNear,
-                         r.projFar);
-    }
-
-    r.flags |= CameraData::FLAG_PROJ_MTX_READY;
 }
 
 } // namespace g3d

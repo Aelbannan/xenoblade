@@ -5,7 +5,6 @@
 #include "kyoshin/cf/CMcaFile.hpp"
 
 extern "C" void __ct__CMcaFile(u8* self, void* data) {
-    extern u8 lbl_eu_80526348[];
     u8* s = (u8*)self;
     u8* d = (u8*)data;
 

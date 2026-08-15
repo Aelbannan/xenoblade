@@ -3,19 +3,22 @@
 #include <revolution/OS.h>
 #include <cstring>
 
-CStopwatchUtil::StopwatchEntry CStopwatchUtil::sEntries[MAX_ENTRIES];
+// Retail owns the stopwatch entry table in monolibdata1.s (.data) as the
+// unnamed symbol lbl_eu_80657238 (0x280 = 16 entries); declare it extern so
+// this TU emits no data.
+extern "C" CStopwatchUtil::StopwatchEntry lbl_eu_80657238[16];
 
 void CStopwatchUtil::initialize(){
     //Mark each entry as empty
     for(int i = 0; i < MAX_ENTRIES; i++){
-        sEntries[i].mFlags = 0;
+        lbl_eu_80657238[i].mFlags = 0;
     }
 }
 
 CStopwatchUtil::StopwatchEntry* CStopwatchUtil::findEntry(const char* pStr){
     for(int i = 0; i < MAX_ENTRIES; i++){
-        if(((sEntries[i].mFlags & StopwatchEntry::FLAGS_OCCUPIED) != 0) && std::strcmp(pStr, sEntries[i].mString) == 0){
-            return &sEntries[i];
+        if(((lbl_eu_80657238[i].mFlags & StopwatchEntry::FLAGS_OCCUPIED) != 0) && std::strcmp(pStr, lbl_eu_80657238[i].mString) == 0){
+            return &lbl_eu_80657238[i];
         }
     }
 
@@ -24,8 +27,8 @@ CStopwatchUtil::StopwatchEntry* CStopwatchUtil::findEntry(const char* pStr){
 
 CStopwatchUtil::StopwatchEntry* CStopwatchUtil::findEmptyEntry(){
     for(int i = 0; i < MAX_ENTRIES; i++){
-        if((sEntries[i].mFlags & StopwatchEntry::FLAGS_OCCUPIED) == 0){
-            return &sEntries[i];
+        if((lbl_eu_80657238[i].mFlags & StopwatchEntry::FLAGS_OCCUPIED) == 0){
+            return &lbl_eu_80657238[i];
         }
     }
 

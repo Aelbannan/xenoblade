@@ -4,14 +4,18 @@
 #include <algorithm>
 #include <cstddef>
 
+// Retail owns the scene-culling frustum pointer in nw4r_data.s (.sbss,
+// 0x80665468). Declared here at global scope (unmangled) so the GATHER
+// function's sda21 relocs carry the retail symbol name.
+extern const nw4r::math::FRUSTUM* lbl_eu_80665468;
+
 namespace nw4r {
 namespace g3d {
 
-NW4R_G3D_RTTI_DEF(ScnObj);
-NW4R_G3D_RTTI_DEF(ScnLeaf);
-NW4R_G3D_RTTI_DEF(ScnGroup);
-
-const math::FRUSTUM* gpCullingFrustum = NULL;
+// TYPE_NAME (RTTI name data) and vtables for ScnObj/ScnLeaf/ScnGroup are
+// retail-owned by nw4r_data.s (lbl_eu_8051D768/788, lbl_eu_80569648/88); the
+// retail split of this TU contains no data sections, so nothing is defined
+// here.
 
 /******************************************************************************
  *
@@ -196,29 +200,7 @@ bool ScnObj::GetScnObjOption(u32 option, u32* pValue) const {
     return true;
 }
 
-//unused
-bool ScnObj::SetMtx(ScnObjMtxType type, const math::MTX34* pMtx) {
-    if (static_cast<u32>(type) < MTX_TYPE_MAX) {
-        if (pMtx != NULL) {
-            if (type == MTX_LOCAL) {
-                SetScnObjFlag(SCNOBJFLAG_MTX_LOCAL_IDENTITY, FALSE);
-            }
-
-            math::MTX34Copy(&mMtxArray[type], pMtx);
-        } else {
-            if (type == MTX_LOCAL) {
-                SetScnObjFlag(SCNOBJFLAG_MTX_LOCAL_IDENTITY, TRUE);
-            }
-
-            math::MTX34Identity(&mMtxArray[type]);
-        }
-
-        return true;
-    }
-
-    return false;
-}
-
+//unused (not present in the retail split)
 bool ScnObj::SetMtx(ScnObjMtxType type, const math::MTX34& pMtx) {
     if (static_cast<u32>(type) < MTX_TYPE_MAX) {
         if (type == MTX_LOCAL) {
@@ -233,41 +215,14 @@ bool ScnObj::SetMtx(ScnObjMtxType type, const math::MTX34& pMtx) {
     return false;
 }
 
-bool ScnObj::GetMtx(ScnObjMtxType type, math::MTX34* pMtx) const {
-    if (pMtx != NULL && static_cast<u32>(type) < MTX_TYPE_MAX) {
-        math::MTX34Copy(pMtx, &mMtxArray[type]);
-        return true;
-    }
-
-    return false;
-}
-
+// GetMtx is not present in the retail split; retail code uses GetMtxPtr.
+// (definition removed; declaration kept in the header)
 f32 ScnObj::GetValueForSortOpa() const {
     return -mMtxArray[MTX_VIEW]._23;
 }
 
 f32 ScnObj::GetValueForSortXlu() const {
     return mMtxArray[MTX_VIEW]._23;
-}
-
-void ScnObj::SetPriorityDrawOpa(int prio) {
-    if (prio < 0) {
-        prio = 0;
-    } else if (prio > 255) {
-        prio = 255;
-    }
-
-    mPriorityDrawOpa = prio;
-}
-
-void ScnObj::SetPriorityDrawXlu(int prio) {
-    if (prio < 0) {
-        prio = 0;
-    } else if (prio > 255) {
-        prio = 255;
-    }
-
-    mPriorityDrawXlu = prio;
 }
 
 void ScnObj::EnableScnObjCallbackTiming(Timing timing) {
@@ -516,20 +471,23 @@ void ScnGroup::ScnGroup_G3DPROC_GATHER_SCNOBJ(u32 param,
                                       pCollection);
         }
     } else if (status == IScnObjGather::CULLINGSTATUS_INSIDE) {
-        const math::FRUSTUM* pTemp = gpCullingFrustum;
-        gpCullingFrustum = NULL;
+        const math::FRUSTUM* pTemp = lbl_eu_80665468;
+        lbl_eu_80665468 = NULL;
         {
             for (u32 i = 0; i < mNumScnObj; i++) {
                 mpScnObjArray[i]->G3dProc(G3DPROC_GATHER_SCNOBJ, param,
                                           pCollection);
             }
         }
-        gpCullingFrustum = pTemp;
+        lbl_eu_80665468 = pTemp;
     }
 }
 
-void ScnGroup::ScnGroup_G3DPROC_CALC_WORLD(u32 param,
-                                           const math::MTX34* pParent) {
+// These three G3DPROC helpers are only called from DefG3dProcScnGroup, where
+// MWCC inlines them; the retail split has no standalone copies, so they are
+// declared inline here to suppress out-of-line emission.
+inline void ScnGroup::ScnGroup_G3DPROC_CALC_WORLD(
+    u32 param, const math::MTX34* pParent) {
     CheckCallback_CALC_WORLD(CALLBACK_TIMING_A, param,
                              const_cast<math::MTX34*>(pParent));
 
@@ -548,7 +506,7 @@ void ScnGroup::ScnGroup_G3DPROC_CALC_WORLD(u32 param,
                              const_cast<math::MTX34*>(pParent));
 }
 
-void ScnGroup::ScnGroup_G3DPROC_CALC_MAT(u32 param, void* pInfo) {
+inline void ScnGroup::ScnGroup_G3DPROC_CALC_MAT(u32 param, void* pInfo) {
     CheckCallback_CALC_MAT(CALLBACK_TIMING_A, param, pInfo);
 
     for (u32 i = 0; i < mNumScnObj; i++) {
@@ -558,8 +516,8 @@ void ScnGroup::ScnGroup_G3DPROC_CALC_MAT(u32 param, void* pInfo) {
     CheckCallback_CALC_MAT(CALLBACK_TIMING_C, param, pInfo);
 }
 
-void ScnGroup::ScnGroup_G3DPROC_CALC_VIEW(u32 param,
-                                          const math::MTX34* pCamera) {
+inline void ScnGroup::ScnGroup_G3DPROC_CALC_VIEW(
+    u32 param, const math::MTX34* pCamera) {
     CheckCallback_CALC_VIEW(CALLBACK_TIMING_A, param,
                             const_cast<math::MTX34*>(pCamera));
 
@@ -696,7 +654,7 @@ ScnGroup::~ScnGroup() {
     Clear();
 }
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnObj")> lbl_eu_8051D768 = {sizeof("ScnObj"), "ScnObj"};
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnObj")> lbl_eu_8051D768;
 
 // ScnObj's base-chain check (G3dObj). Kept as a static helper (not a virtual-call
 // chain) so MWCC inlines it and emits the retail parameter-reload pattern
@@ -722,7 +680,7 @@ const char* ScnObj::GetTypeName() const {
 }
 
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnGroup")> lbl_eu_8051D788 = {sizeof("ScnGroup"), "ScnGroup"};
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnGroup")> lbl_eu_8051D788;
 
 // ScnGroup's base-chain check (ScnObj then G3dObj). Kept as a static helper
 // (not a virtual-call chain) so MWCC inlines it and emits the retail
@@ -755,10 +713,3 @@ const char* ScnGroup::GetTypeName() const {
 
 } // namespace g3d
 } // namespace nw4r
-
-void ExecCallback_CALC_WORLD__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv() {}
-void ExecCallback_CALC_MAT__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv() {}
-void ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv() {}
-void IsDerivedFrom__Q34nw4r3g3d8ScnGroupCFQ44nw4r3g3d6G3dObj7TypeObj(){}
-void IsDerivedFrom__Q34nw4r3g3d6ScnObjCFQ44nw4r3g3d6G3dObj7TypeObj(){}
-void GetTypeName__Q34nw4r3g3d8ScnGroupCFv(){}

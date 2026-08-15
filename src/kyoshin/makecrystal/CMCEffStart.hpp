@@ -339,8 +339,10 @@ extern "C" u32 func_801355A0__Fv();
 
 // Retail string pool (SDA-data base for pooled string literals).
 extern "C" char lbl_eu_805095EC[];
-extern "C" float lbl_eu_80668550;
-extern "C" const float lbl_eu_80668554;
+extern "C" float lbl_eu_80668550;         // 0.0f (SetFrame reset)
+extern "C" const float lbl_eu_80668554;   // 1.0f (anim done threshold)
+extern "C" const double lbl_eu_80668558;  // int->float magic (0x4330000080000000)
+extern "C" const float lbl_eu_80668560;   // 5.0f (crystal change frame)
 // SDA global: retail refers to cf::CfBdat::spBtlSkillListFileData by its raw
 // symbol name lbl_eu_806640D8; referencing the C++ static member would emit
 // the mangled reloc (spBtlSkillListFileData__Q22cf6CfBdat) which retail does

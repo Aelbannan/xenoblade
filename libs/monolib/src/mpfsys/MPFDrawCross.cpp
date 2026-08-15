@@ -1,8 +1,12 @@
 #include "monolib/mpfsys/MPFDrawCross.hpp"
 
+// Retail singleton state lives in the shared retail data (monolibdata2.s):
+// lbl_eu_806658A8 = init flag (.sbss), lbl_eu_806658AC = instance pointer
+// (.sbss), lbl_eu_8056DC28 = prototype object (.data). Declaration only so
+// this TU emits no .bss/.sbss.
 extern "C" {
-    s8 lbl_eu_806658A8;
-    mpfsys::MPFDrawCross* lbl_eu_806658AC;
+    extern s8 lbl_eu_806658A8;
+    extern mpfsys::MPFDrawCross* lbl_eu_806658AC;
 }
 
 struct MPFDrawCross_Prototype {
@@ -10,7 +14,7 @@ struct MPFDrawCross_Prototype {
     u32 padding[4];
 };
 
-static MPFDrawCross_Prototype lbl_eu_8056DC28;
+extern "C" MPFDrawCross_Prototype lbl_eu_8056DC28;
 
 namespace mpfsys {
 

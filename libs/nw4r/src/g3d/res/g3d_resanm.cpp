@@ -2,6 +2,10 @@
 #include <nw4r/math.h>
 #include <nw4r/ut.h>
 
+// Retail float-pool constants (SDA21 relocs must reference these names).
+extern const float lbl_eu_80669ABC; // 0.0f
+extern const float lbl_eu_80669AC0; // 32768.0f
+
 namespace nw4r {
 namespace g3d {
 namespace detail {
@@ -87,18 +91,22 @@ f32 GetResKeyFrameAnmResult(const ResKeyFrameAnmData* pData, f32 frame) {
 u32 GetResColorAnmResult(const ResColorAnmFramesData* pData, f32 frame) {
     const u32* pColorArray = pData->frameColors;
 
+    // modf splits frame into integer/fractional parts (both as double).
+    // The fractional part is narrowed to single precision for the zero test
+    // and the ratio multiply, and the integral part is narrowed too before
+    // the fctiwz conversion (retail emits frsp before fctiwz).
     f64 intPart;
-    f64 fracPart = modf(frame, &intPart);
-    int intFrame = static_cast<int>(intPart);
+    f32 fracPart = static_cast<f32>(modf(frame, &intPart));
+    int intFrame = static_cast<int>(static_cast<f32>(intPart));
 
-    if (fracPart == 0.0f) {
+    if (fracPart == lbl_eu_80669ABC) {
         return pColorArray[intFrame];
     }
 
     ut::Color left(pColorArray[intFrame]);
     ut::Color right(pColorArray[intFrame + 1]);
 
-    f32 biasedRatio = 32768 * static_cast<f32>(fracPart);
+    f32 biasedRatio = lbl_eu_80669AC0 * fracPart;
     s16 fpRatio = math::F32ToS16(biasedRatio);
 
     return ut::Color(LinearInterpColorElem(left.r, right.r, fpRatio),

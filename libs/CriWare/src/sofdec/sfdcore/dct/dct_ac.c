@@ -11,37 +11,36 @@ extern double lbl_eu_806046C0[];  /* BSS: IDCT coefficient table */
  * For each (i,j): val = scale * cos(pi/8 * i * (j + 0.5)).
  * Written to the row-major table (row, stride 8) and the transposed
  * table (col, stride 8, byte offset transCol).
- * int->double conversions use the itof reform (bias read from c[3]). */
+ * int->double conversions use the itof bit-reform (bias read from c[3]). */
 void DCT_AcInit(void) {
-    u32 *b8 = lbl_eu_806046B8;
     const double *c = (const double *)lbl_eu_8051C388;
+    u32 *t = lbl_eu_806046B8;
     int i, j;
 
-    b8[0] = (u32)DCT_GetVerStr();
+    t[0] = (u32)DCT_GetVerStr();
 
-    double *rowBase = (double *)(b8 + 2);             /* +0x08 */
+    double *rowBase = (double *)(t + 2);              /* +0x08 */
     double bias = c[3];   /* itof bias const (0x4330000080000000) */
-    double *trans = (double *)((char *)b8 + 0x208);   /* +0x208 */
+    double *trans = (double *)((char *)t + 0x208);    /* +0x208 */
     double pi8 = c[2];    /* pi/8 */
     double half = c[1];   /* 0.5 */
-    u32 transCol = 0;
+    int transCol = 0;     /* byte offset into the transposed table */
 
     for (i = 0; i < 8; i++) {
         double scale = (i == 0) ? c[0] : c[1];
         double *row = rowBase;
         double *col = (double *)((char *)trans + transCol);
-        u32 iv = (u32)i;
+        unsigned int iv = (unsigned int)i ^ 0x80000000;
 
         for (j = 0; j < 8; j++) {
-            /* itof: int -> double via 0x4330 magic sweep, bias pulled from c[3]. */
-            union { f64 d; u32 u[2]; } cvt;
-            cvt.u[0] = 0x43300000;
-            cvt.u[1] = iv ^ 0x80000000;
-            double id = cvt.d - bias;
-            cvt.u[0] = 0x43300000;
-            cvt.u[1] = (u32)j ^ 0x80000000;
-            double jd = cvt.d - bias;
-            double v = scale * cos(pi8 * id * (half + jd));
+            /* itof: int -> double via 0x4330 magic sweep, bias pulled from c[3].
+             * Low word written first (MWCC 7i manual-bit pattern). */
+            union { double d; unsigned int w[2]; } ui, uj;
+            ui.w[1] = iv;
+            ui.w[0] = 0x43300000;
+            uj.w[1] = (unsigned int)j ^ 0x80000000;
+            uj.w[0] = 0x43300000;
+            double v = scale * cos(pi8 * (ui.d - bias) * (half + (uj.d - bias)));
             *row++ = v;
             *col = v;
             col += 8;

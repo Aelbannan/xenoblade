@@ -60,18 +60,28 @@ public:
         OSUnlockMutex(&mMutex);
     }
 
-private:
+public:
     bool mIsEnabled;        // at 0x0
     mutable OSMutex mMutex; // at 0x4
 };
 
 } // namespace
 
-// BSS object (retail symbol lbl_eu_80653E88). C-linkage definition so the
-// static-init reloc carries the retail global name instead of an
-// anonymous-namespace mangling.
+// Retail owns the LCImpl singleton in nw4r_data.s (.bss, 0x80653E88); declared
+// extern (C linkage, unmangled) so the static-init / method relocs carry the
+// retail global name and this .text-only split emits no data.
 extern "C" {
-LCImpl lbl_eu_80653E88;
+extern LCImpl lbl_eu_80653E88;
+}
+
+// The retail split keeps the auto-static-init for the (retail-owned) LCImpl
+// object as a standalone 0x18 function in this TU (mIsEnabled = false, then
+// the OSMutex ctor tail call); reproduce it by hand without defining the
+// object (the blob's copy is already initialized). Renamed to the retail
+// backslash form via the postprocess exact_renames rule for this object.
+extern "C" void __sinit_ut_LockedCache_cpp() {
+    lbl_eu_80653E88.mIsEnabled = false;
+    OSInitMutex(&lbl_eu_80653E88.mMutex);
 }
 
 namespace LC {

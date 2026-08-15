@@ -78,7 +78,20 @@ public:
     void Init(u16 efbWidth, u16 efbHeight, u16 xfbWidth, u16 xfbHeight,
               u16 viWidth, u16 viHeight);
 
-    void SetPosition(f32 x, f32 y, f32 z);
+    // Retail keeps the 3-float SetPosition inline (no standalone symbol in
+    // the g3d_camera split slice); callers inline it, so define it here.
+    void SetPosition(f32 x, f32 y, f32 z) {
+        if (!IsValid()) {
+            return;
+        }
+
+        CameraData& r = ref();
+
+        r.cameraPos.x = x;
+        r.cameraPos.y = y;
+        r.cameraPos.z = z;
+        r.flags &= ~CameraData::FLAG_CAM_MTX_READY;
+    }
     void SetPosition(const math::VEC3& rPos);
 
     void SetPosture(const PostureInfo& rInfo);
@@ -88,10 +101,32 @@ public:
     void SetProjectionMtxDirectly(const math::MTX44* pMtx);
 
     void SetScissor(u32 x, u32 y, u32 width, u32 height);
-    void SetScissorBoxOffset(s32 ox, s32 oy);
+    // Retail keeps the s32 overload inline (no standalone symbol in the
+    // g3d_camera split slice).
+    void SetScissorBoxOffset(s32 ox, s32 oy) {
+        if (!IsValid()) {
+            return;
+        }
+
+        CameraData& r = ref();
+
+        r.scissorOffsetX = ox;
+        r.scissorOffsetY = oy;
+    }
 
     void SetViewport(f32 x, f32 y, f32 width, f32 height);
-    void SetViewportZRange(f32 near, f32 far);
+    // Retail keeps SetViewportZRange inline (no standalone symbol in the
+    // g3d_camera split slice).
+    void SetViewportZRange(f32 near, f32 far) {
+        if (!IsValid()) {
+            return;
+        }
+
+        CameraData& r = ref();
+
+        r.viewportNear = near;
+        r.viewportFar = far;
+    }
     void GetViewport(f32* pX, f32* pY, f32* pWidth, f32* pHeight, f32* pNear,
                      f32* pFar) const;
 
@@ -111,7 +146,24 @@ public:
 
 private:
     void UpdateCameraMtx() const;
-    void UpdateProjectionMtx() const;
+    // Retail keeps UpdateProjectionMtx inline (inlined into both callers;
+    // no standalone symbol in the g3d_camera split slice).
+    void UpdateProjectionMtx() const {
+        CameraData& r = const_cast<CameraData&>(ref());
+
+        if (r.flags & CameraData::FLAG_PROJ_ORTHO) {
+            C_MTXOrtho(r.projMtx, r.projTop, r.projBottom, r.projLeft,
+                       r.projRight, r.projNear, r.projFar);
+        } else if (r.flags & CameraData::FLAG_PROJ_FRUSTUM) {
+            C_MTXFrustum(r.projMtx, r.projTop, r.projBottom, r.projLeft,
+                         r.projRight, r.projNear, r.projFar);
+        } else /* FLAG_PROJ_PERSP */ {
+            C_MTXPerspective(r.projMtx, r.projFovy, r.projAspect, r.projNear,
+                             r.projFar);
+        }
+
+        r.flags |= CameraData::FLAG_PROJ_MTX_READY;
+    }
 };
 
 } // namespace g3d

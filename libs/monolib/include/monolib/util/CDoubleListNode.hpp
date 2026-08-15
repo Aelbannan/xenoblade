@@ -5,7 +5,7 @@
 /*
 Doubly-linked list node
 */
-class CDoubleListNode {
+class __declspec(novtable) CDoubleListNode {
 public:
     CDoubleListNode* mPrev; //0x0
     CDoubleListNode* mNext; //0x4
@@ -23,6 +23,13 @@ public:
     void SetPrev(CDoubleListNode* prev) { mPrev = prev; }
     void SetNext(CDoubleListNode* next) { mNext = next; }
 }; // size = 0x10
+
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// Retail CDoubleListNode vtable data (monolibdata1d.s @0x8056BB90). The class
+// is __declspec(novtable), so the ctor assigns the retail label explicitly
+// instead of the compiler-generated __vt__15CDoubleListNode (which would add
+// .data/.rodata/RTTI to a retail-empty TU).
+extern "C" void* lbl_eu_8056BB90[];
 
 /*
 Doubly-linked, circular list

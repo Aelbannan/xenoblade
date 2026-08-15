@@ -9,11 +9,6 @@ TaskManager& TaskManager::GetInstance() {
     return instance;
 }
 
-TaskManager::TaskManager() : mCurrentTask(NULL), mCancelWaitTaskFlag(false) {
-    OSInitThreadQueue(&mAppendThreadQueue);
-    OSInitThreadQueue(&mDoneThreadQueue);
-}
-
 void TaskManager::AppendTask(Task* pTask, TaskPriority priority) {
     ut::AutoInterruptLock lock;
 
@@ -21,22 +16,6 @@ void TaskManager::AppendTask(Task* pTask, TaskPriority priority) {
     mTaskList[priority].PushBack(pTask);
 
     OSWakeupThread(&mAppendThreadQueue);
-}
-
-Task* TaskManager::GetNextTask(TaskPriority priority, bool remove) {
-    ut::AutoInterruptLock lock;
-
-    if (mTaskList[priority].IsEmpty()) {
-        return NULL;
-    }
-
-    Task& rTask = mTaskList[priority].GetFront();
-
-    if (remove) {
-        mTaskList[priority].PopFront();
-    }
-
-    return &rTask;
 }
 
 Task* TaskManager::PopTask() {

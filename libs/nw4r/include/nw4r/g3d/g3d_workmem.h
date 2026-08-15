@@ -61,7 +61,6 @@ u32* GetMtxIDTemporary();
 MdlZ* GetMdlZTemporary();
 math::MTX34* GetSkinningMtxTemporary();
 math::MTX34* GetBillboardMtxTemporary();
-ShpAnmResultBuf* GetShpAnmResultBufTemporary();
 
 } // namespace workmem
 } // namespace detail

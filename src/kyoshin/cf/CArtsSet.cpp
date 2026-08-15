@@ -25,30 +25,34 @@ struct CArtsParamVtblRec : CAttackParamData {
     u8 field_88[0x8c - 0x88];
 };
 
+// Record viewed as a 0x8c-strided element within CArtsSet where the
+// CArtsParam begins 0x38 bytes in (relative to the CArtsSet base).
+// Field offsets below are relative to the record origin, matching the
+// retail loads of 0xaf (unk77 + 0x38) and 0x58 (unk20 + 0x38).
+struct CArtsRecord {
+    u8 field_0[0x58];
+    u32 field58;  // 0x58  (unk20 of the nested CArtsParam)
+    u8 field_5c[0xaf - 0x5c];
+    u8 fieldAF;   // 0xaf  (unk77 of the nested CArtsParam)
+};
+
+// Note on function order: the object emits functions in source order, and the
+// retail .o lists them in this exact order (ctor, the sArtsSet init virtual,
+// slot accessors, free helpers, the CArtsSet init virtual, param accessors,
+// then the tail helpers).
+
 namespace cf {
+
     _sArtsSet::_sArtsSet() {
         _sArtsSet_UnkVirtualFunc1();
     }
 
-    void CArtsSet::CArtsSet_UnkVirtualFunc1() {
-        unk0 = 0;
-        std::memset(unk4, 0, 0x30);
-
-        // Function-scope rowBase/p/row declaration order drives the Chaitin
-        // homes to r31/r30/r29, matching the retail init loop.
-        CArtsParamVtblRec* rowBase;
-        CArtsParamVtblRec* p;
-        int row;
-
-        rowBase = reinterpret_cast<CArtsParamVtblRec*>(&mArtsParams[0]);
-        for (row = 0; row < 3; row++) {
-            p = rowBase;
-            for (int col = 0; col < 8; col++) {
-                p->vtInit();
-                p++;
-            }
-            rowBase += 8;  // 8 * 0x8c = 0x460 bytes per row
-        }
+    // The virtual's body, defined under the retail mangled name so no local
+    // __vt__/RTTI is emitted (retail CArtsSet.o is text-only; the vtables
+    // live in the shared data split, lbl_eu_8052F5D8).
+    extern "C" void _sArtsSet_UnkVirtualFunc1__Q22cf9_sArtsSetFv(_sArtsSet* self) {
+        self->unk0 = 0;
+        std::memset(self->unk4, 0, 0x30);
     }
 
     // Retrieve a 16-bit arts-slot entry at row*0x10 + col*0x2 bytes in.
@@ -70,6 +74,25 @@ namespace cf {
         return *(u16*)(p + 0x4);
     }
 
+    // Decompose the flat index into row/col and store into the slot entry.
+    void CArtsSet::setArtsSlotByIdx(unsigned short value, int index) {
+        u8* p = (u8*)this;
+        p += (index / 8) * 0x10;
+        p += (index % 8) * 0x2;
+        *(u16*)(p + 0x4) = value;
+    }
+}
+
+unsigned short func_80153CAC(const void* self, int index) {
+    int row = index / 8;
+    int col = index % 8;
+    const char* p = static_cast<const char*>(self);
+    p += row * 0x10;
+    p += col * 2;
+    return *reinterpret_cast<const unsigned short*>(p + 4);
+}
+
+namespace cf {
     // Slot lookup keyed by the current slot count stored in the first word
     // (mArtsSlotData[0]): the requested slot sits at byte +4 (2 u16 entries
     // past the count word) on the row*0x10 + index*2 grid - the same strides
@@ -81,65 +104,49 @@ namespace cf {
             reinterpret_cast<unsigned char*>(this) + 4 + count * 0x10 + index * 0x2);
     }
 
-    // Decompose the flat index into row/col and store into the slot entry.
-    void CArtsSet::setArtsSlotByIdx(unsigned short value, int index) {
-        u8* p = (u8*)this;
-        p += (index / 8) * 0x10;
-        p += (index % 8) * 0x2;
-        *(u16*)(p + 0x4) = value;
+    // The CArtsSet init virtual's body, defined under the retail mangled name
+    // (see the _sArtsSet_UnkVirtualFunc1 note above).
+    extern "C" void CArtsSet_UnkVirtualFunc1__Q22cf8CArtsSetFv(CArtsSet* self) {
+        // Raw byte access: _sArtsSet is a private base, and the retail
+        // operates on the shared layout (u16 count at +0, 0x30 bytes at +4).
+        u8* base = reinterpret_cast<u8*>(self);
+        *reinterpret_cast<u16*>(base) = 0;
+        std::memset(base + 4, 0, 0x30);
+
+        // Function-scope rowBase/p/row declaration order drives the Chaitin
+        // homes to r31/r30/r29, matching the retail init loop.
+        CArtsParamVtblRec* rowBase;
+        CArtsParamVtblRec* p;
+        int row;
+
+        rowBase = reinterpret_cast<CArtsParamVtblRec*>(&self->mArtsParams[0]);
+        for (row = 0; row < 3; row++) {
+            p = rowBase;
+            for (int col = 0; col < 8; col++) {
+                p->vtInit();
+                p++;
+            }
+            rowBase += 8;  // 8 * 0x8c = 0x460 bytes per row
+        }
     }
 
     void* CArtsSet::getArtsParamRC(int index460, int index8c) {
-        return &mArtsParams[index460 * 8 + index8c];
-    }
-
-    // Return the CArtsParam at row*0x460 + col*0x8c bytes into mArtsParams
-    // (0x38 from the CArtsSet base); array indexing keeps the two mulli
-    // strides separate and reuses the source registers like the retail build.
-    // Accumulate the index1*0x460 and index2*0x8c strides into this(r3), so the
-    // two mullis land in the source registers (r4/r0) like the retail build.
-    void* CArtsSet::getArtsParamRC2(int index1, int index2) {
+        // Explicit strides: `&mArtsParams[index460 * 8 + index8c]` folds the
+        // x8 into the 0x8c mulli (rlwinm + mulli); the explicit 0x460/0x8c
+        // strides emit the retail pair of mullis.
         u8* p = (u8*)this;
-        p += index1 * 0x460;
-        p += index2 * 0x8c;
+        p += index460 * 0x460;
+        p += index8c * 0x8c;
         return p + 0x38;
     }
-
-    // Decompose the flat index into row/col and return the CArtsParam entry.
-    void* CArtsSet::getArtsParamByIdx(int index) {
-        u8* p = (u8*)this;
-        p += (index / 8) * 0x460;
-        p += (index % 8) * 0x8c;
-        return p + 0x38;
-    }
-}
-
-// Record viewed as a 0x8c-strided element within CArtsSet where the
-// CArtsParam begins 0x38 bytes in (relative to the CArtsSet base).
-// Field offsets below are relative to the record origin, matching the
-// retail loads of 0xaf (unk77 + 0x38) and 0x58 (unk20 + 0x38).
-struct CArtsRecord {
-    u8 field_0[0x58];
-    u32 field58;  // 0x58  (unk20 of the nested CArtsParam)
-    u8 field_5c[0xaf - 0x5c];
-    u8 fieldAF;   // 0xaf  (unk77 of the nested CArtsParam)
-};
-
-extern cf::CArtsParam lbl_eu_80573D88;
-
-unsigned short func_80153CAC(const void* self, int index) {
-    int row = index / 8;
-    int col = index % 8;
-    const char* p = static_cast<const char*>(self);
-    p += row * 0x10;
-    p += col * 2;
-    return *reinterpret_cast<const unsigned short*>(p + 4);
 }
 
 // C-ABI accessor (retail symbol is unmangled): returns the arts-param record
 // at the row stamped in the first word (count*0x460) plus the given index
 // stride (index*0x8c), 0x38 bytes past the CArtsSet base.
 extern "C" void* getArtsParamAtCnt(void* self, unsigned int index) { unsigned short count = *static_cast<unsigned short*>(self); return static_cast<unsigned char*>(self) + 0x38 + count * 0x460 + index * 0x8c; }
+
+extern cf::CArtsParam lbl_eu_80573D88;
 
 cf::CArtsParam* func_80153DCC(cf::CArtsSet* self, int id) {
     unsigned char* outer = reinterpret_cast<unsigned char*>(self);
@@ -163,9 +170,27 @@ cf::CArtsParam* func_80153DCC(cf::CArtsSet* self, int id) {
     return &lbl_eu_80573D88;
 }
 
-// C-ABI accessor (retail symbol is unmangled): returns the attack-param
-// record at base + index*0x88 + 0x10.
-extern "C" void* getAtkParam(void* base, int index) { return (char*)base + index * 0x88 + 0x10; }
+namespace cf {
+    // Return the CArtsParam at row*0x460 + col*0x8c bytes into mArtsParams
+    // (0x38 from the CArtsSet base); array indexing keeps the two mulli
+    // strides separate and reuses the source registers like the retail build.
+    // Accumulate the index1*0x460 and index2*0x8c strides into this(r3), so the
+    // two mullis land in the source registers (r4/r0) like the retail build.
+    void* CArtsSet::getArtsParamRC2(int index1, int index2) {
+        u8* p = (u8*)this;
+        p += index1 * 0x460;
+        p += index2 * 0x8c;
+        return p + 0x38;
+    }
+
+    // Decompose the flat index into row/col and return the CArtsParam entry.
+    void* CArtsSet::getArtsParamByIdx(int index) {
+        u8* p = (u8*)this;
+        p += (index / 8) * 0x460;
+        p += (index % 8) * 0x8c;
+        return p + 0x38;
+    }
+}
 
 void func_80153E88(void* self) {
     std::memset(self, 0, 0xc);
@@ -174,3 +199,7 @@ void func_80153E88(void* self) {
         arr[i].vtInit();
     }
 }
+
+// C-ABI accessor (retail symbol is unmangled): returns the attack-param
+// record at base + index*0x88 + 0x10.
+extern "C" void* getAtkParam(void* base, int index) { return (char*)base + index * 0x88 + 0x10; }

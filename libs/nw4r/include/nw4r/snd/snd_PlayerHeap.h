@@ -18,7 +18,7 @@ namespace detail {
 
 // US Xenoblade PlayerHeap is a compact heap (not stock SoundHeap subclass).
 // Layout: vt@0, mSound@4, mPlayer@8, buffer ptrs@0xC/0x10/0x14, node@0x18.
-class PlayerHeap {
+class __declspec(novtable) PlayerHeap {
 public:
     PlayerHeap();
     virtual ~PlayerHeap();

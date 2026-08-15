@@ -1,6 +1,8 @@
 #include "monolib/util.hpp"
 
 CDoubleListNode::CDoubleListNode() {
+    // vptr sits at +0x10 (virtuals declared after the data members)
+    *(void**)((char*)this + 0x10) = (void*)lbl_eu_8056BB90;
     CDoubleListNode::Reset();
 }
 

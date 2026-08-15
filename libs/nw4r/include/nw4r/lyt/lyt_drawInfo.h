@@ -8,7 +8,29 @@
 namespace nw4r {
 namespace lyt {
 
-class DrawInfo {
+// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// Retail DrawInfo vtable data (nw4r_data.s @0x80569C68) and the shared sdata2
+// 0.0f/1.0f constants it references (nw4r_data.s @0x80669DD0/@0x80669DD4).
+// The class is __declspec(novtable), so ctor/dtor never emit a local vtable;
+// the base inline ctor assigns the retail label explicitly instead of the
+// compiler-generated __vt__Q34nw4r3lyt8DrawInfo.
+extern "C" void* lbl_eu_80569C68[];
+extern "C" const float lbl_eu_80669DD0; // 0.0f
+extern "C" const float lbl_eu_80669DD4; // 1.0f
+
+// Empty base whose inline ctor writes the retail vtable label. Because the
+// base ctor runs before the derived member inits, the store lands at retail's
+// position (right after the prologue) instead of at the end of the ctor body
+// (MWCC_REFERENCE "Retail-owned vtable data" COccCulling note: with a
+// non-empty init list a body-level explicit store is scheduled last).
+class __declspec(novtable) DrawInfoVtblBase {
+public:
+    DrawInfoVtblBase() {
+        *(void**)this = (void*)lbl_eu_80569C68;
+    }
+};
+
+class __declspec(novtable) DrawInfo : public DrawInfoVtblBase {
 public:
     DrawInfo();
     virtual ~DrawInfo(); // at 0x8

@@ -26,14 +26,35 @@ void func_804528C4__11CDeviceFontFv(CDeviceFont* self);
 void func_8045294C__11CDeviceFontFv(CDeviceFont* self);
 void func_804529D4__11CDeviceFontFv(CDeviceFont* self);
 void func_80452B78__11CDeviceFontFv(CDeviceFont* self);
+void func_80452CF8__11CDeviceFontFv(CDeviceFont* self);
+void __dl__FPv(void*);
 }
 
-CFontLayer::CFontLayer() {
-    func_804525F0__11CDeviceFontFv((CDeviceFont*)this);
+// Retail vtable (monolibdata2.s-owned .data 0x8056BF80): the class's ctor/dt
+// reference it by name so no local __vt__/RTTI is emitted (retail CFontLayer.o
+// is text-only; the vtable lives in the shared data split).
+extern unsigned char lbl_eu_8056BF80[];
+
+// The retail ctor symbol is the un-mangled `__ct__CFontLayer` (not the C++
+// member mangling); hand-writing it as an extern "C" free function also
+// suppresses the local vtable emission (no key function defined in this TU).
+extern "C" void* __ct__CFontLayer(CFontLayer* self) {
+    *(void**)self = (void*)lbl_eu_8056BF80;
+    func_804525F0__11CDeviceFontFv((CDeviceFont*)self);
+    return self;
 }
 
-CFontLayer::~CFontLayer() {
-    func_80452690__11CDeviceFontFv((CDeviceFont*)this);
+// Retail dtor keeps MWCC's delete-flag idiom: `cmpi r31, 0; bc 4, 1` (delete
+// when flag > 0). The `if (flag > 0)` form reproduces the exact branch.
+extern "C" void* __dt__10CFontLayerFv(CFontLayer* self, int flag) {
+    if (self != 0) {
+        *(void**)self = (void*)lbl_eu_8056BF80;
+        func_80452690__11CDeviceFontFv((CDeviceFont*)self);
+        if (flag > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
 }
 
 // Thin variadic forwarding: build a formatted string on the stack and push it

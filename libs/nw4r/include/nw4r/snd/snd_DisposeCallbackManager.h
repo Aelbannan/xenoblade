@@ -19,7 +19,9 @@ public:
     void DisposeWave(void* pData, u32 size, void* pArg);
 
 private:
-    DisposeCallbackManager();
+    // Retail keeps the ctor inline (no standalone __ct__ symbol in the split
+    // slice; it is only used by the GetInstance static-init path).
+    DisposeCallbackManager() {}
 
 private:
     DisposeCallbackList mCallbackList; // at 0x0

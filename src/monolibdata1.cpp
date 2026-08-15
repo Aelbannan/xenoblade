@@ -5,134 +5,153 @@
  * Sections (retail): .rodata 0x57A | .data 0x458 | .bss 0x2CD0 | .sdata 0x100
  *                    .sbss 0x2D | .sdata2 0x1E8 | .sbss2 0x4  (all align 8)
  *
- * Typing notes
- * ------------
- * - .rodata: class-name/format strings + a few u32 lookup tables. String
- *   objects are declared with their exact retail sizes (MWCC 4-aligns .rodata
- *   char arrays by default; three objects need `#pragma align 8` to
- *   reproduce retail gaps). MWCC counts a string literal's characters plus an
- *   implicit terminator, so literals omit the retail's final NUL byte.
- *   Two 2-byte strings ("." and " ") are folded into neighbouring objects
- *   because a standalone const char[2] would land in .sdata2, not .rodata.
- * - .data: vtables (40-slot IWorkEvent-derived layout), 3-slot type-info
- *   records (RTTI ptr, 0, dtor), RTTI base-chain records and two switch jump
- *   tables. Function slots reference the retail-mangled extern "C" names
- *   below so reloc names match retail exactly; jump-table entries use
- *   (char*)&fn + off to emit addend relocs.
- * - .sdata: MemManager handle/flag globals + a run of 8-byte MWCC RTTI
- *   type-info objects {name-string ptr, 0-or-vtable ptr}.
- * - .sdata2: const float/double constants and small const strings (MWCC
- *   small-data placement).
- * - .bss/.sbss/.sbss2: NOBITS; sizes/alignments match retail (bss layout
- *   verified per-symbol against the retail object).
+ * Why function slots use extern "C" + retail mangled names
+ * ---------------------------------------------------------
+ * These records are compiler-emitted data (MWCC vtables / RTTI descriptors /
+ * switch jump tables).  Writing them by hand in C++ requires materializing
+ * member-function addresses as 4-byte data words, which MWCC cannot do:
+ *   - `(u32)&Class::method` and `(void*)&Class::method` -> error (10247)
+ *     illegal explicit conversion from member-function-pointer (MWCC stores
+ *     member pointers as 12-byte, non-constant objects; probe_* in .scratch).
+ *   - `&Class::~Class` -> error (10573) illegal pointer to constructor/
+ *     destructor, for any spelling (plain, cast, pointer-to-member init).
+ *   - `typeid(Class)` compiles and references __RTTI__<mangle>, but forces
+ *     MWCC to EMIT the typeinfo object + name string into this TU, adding
+ *     bytes to .rodata/.sdata (breaks byte-exactness; probe_typeid).
+ * The compiler emits these reloc names itself when it emits a vtable; a
+ * data-only TU cannot reach them through any source-level construct.
  *
- * Known residuals (cannot be expressed in legal C++/MWCC, see report):
- * - 5 template-destructor relocs in .data (names contain '<' '>'):
- *   __dt__12CMsgParam<8>Fv, __dt__23reslist<P11CWorkThread>Fv,
- *   __dt__29_reslist_base<P11CWorkThread>Fv, __dt__11reslist<Ul>Fv,
- *   __dt__17_reslist_base<Ul>Fv -> placeholder 0 words (bytes already 0).
- * - .bss @LOCAL@getInstance__Q22ml6MTRandFv@instance_806561E0 (contains '@',
- *   illegal identifier; MWCC has no asm-label support) -> placeholder-named
- *   0x9D0 blob at the same size/alignment; coordinator may redefine-sym.
+ * Therefore every function slot references an `extern "C"` declaration whose
+ * identifier is the retail mangled name (MWCC never re-mangles those, so the
+ * emitted reloc name is the identifier, matching retail 1:1) -- same
+ * mechanism as the already-merged monolibdata1d.cpp.  Unlike monolibdata1d
+ * (which used void() everywhere), the declarations here carry the REAL
+ * signatures, and the vtable structs use real function-pointer types, so a
+ * consumer calling through these pointers uses correct types.
+ *
+ * Residuals (impossible in C++, see report for probe evidence):
+ *   - 11 destructor slots in .data -> literal 0 (retail bytes are also 0):
+ *       .data+0xD8  __dt__12CMsgParam<8>Fv
+ *       .data+0xE4  __dt__23reslist<P11CWorkThread>Fv
+ *       .data+0xFC  __dt__29_reslist_base<P11CWorkThread>Fv
+ *       .data+0x108 __dt__5CProcFv
+ *       .data+0x1A8 __dt__11reslist<Ul>Fv
+ *       .data+0x1C0 __dt__17_reslist_base<Ul>Fv
+ *       .data+0x1D0 __dt__9CProcRootFv
+ *       .data+0x288 __dt__9CRsrcDataFv
+ *       .data+0x340 __dt__11CScriptCodeFv
+ *       .data+0x454 __dt__6CTokenFv
+ *       .data+0x38  __dt__11CWorkThreadFv
+ *   - .bss @LOCAL@getInstance__Q22ml6MTRandFv@instance_806561E0 ('@' is an
+ *     illegal identifier char; MWCC has no asm-label support) -> placeholder
+ *     name, same size/alignment; coordinator may redefine-sym at link time.
  */
 
 #pragma force_active on
 
-/* ------------------------------------------------------------------ */
-/* Retail-mangled extern references (reloc names must match exactly). */
-/* ------------------------------------------------------------------ */
+typedef unsigned char u8;
+typedef unsigned int u32;
+typedef unsigned long long u64;
+
+/* ================================================================== */
+/* External data labels (owned by other units / this unit's .data).    */
+/* Global data names are never mangled; the identifier is the reloc.   */
+/* ================================================================== */
 extern "C" {
-    /* CWorkThread (monolib/work/CWorkThread.hpp) */
-    void  wkStandby__11CWorkThreadFv(void);
-    void  wkUpdate__11CWorkThreadFv(void);
-    void  wkRender__11CWorkThreadFv(void);
-    void  wkRenderAfter__11CWorkThreadFv(void);
-    bool  wkStandbyLogin__11CWorkThreadFv(void);
-    bool  wkStandbyLogout__11CWorkThreadFv(void);
-    bool  wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned long);
-    void  __dt__11CWorkThreadFv(void);
-    unsigned int __RTTI__11CWorkThread;
+    extern unsigned char lbl_eu_8056B55C[];  /* CWorkControl vtable (monolibdata1d) */
+    extern unsigned char lbl_eu_8056B5A4[];  /* CTTask<CRootProc> vtable            */
+    extern unsigned char lbl_eu_8056B6B0[];  /* CView SI descriptor                 */
+    extern unsigned char lbl_eu_8056B6E4[];  /* _reslist_base<IWorkEvent*> vtable   */
+    extern unsigned char lbl_eu_8056B7B0[];  /* CViewRoot RTTI chain                */
+    extern unsigned char lbl_eu_8056B868[];  /* CWorkControl RTTI chain             */
+    extern unsigned char lbl_eu_8056B920[];  /* CWorkFlowSetup RTTI chain           */
+    extern unsigned char lbl_eu_8056B9D8[];  /* CWorkRootThread RTTI chain          */
+    extern unsigned char lbl_eu_8056BA90[];  /* CWorkSystem RTTI chain              */
+    extern unsigned char lbl_eu_8056BB48[];  /* CWorkSystemMem RTTI chain           */
+    extern unsigned char lbl_eu_8056BC60[];  /* CDeviceRemotePad RTTI chain         */
+    extern unsigned char lbl_eu_8056BD20[];  /* CDeviceBase RTTI chain              */
+    extern unsigned char lbl_eu_8056BDD8[];  /* CDeviceSC RTTI chain                */
 
-    /* IWorkEvent (monolib/work/IWorkEvent.hpp) */
-    bool  WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
-    bool  OnFileEvent__10IWorkEventFP10CEventFile(void*);
-    bool  WorkEvent3__10IWorkEventFPv(void*);
-    bool  WorkEvent4__10IWorkEventFv(void);
-    void  OnPauseTrigger__10IWorkEventFb(bool);
-    bool  WorkEvent6__10IWorkEventFv(void);
-    bool  WorkEvent7__10IWorkEventFv(void);
-    bool  WorkEvent8__10IWorkEventFv(void);
-    bool  WorkEvent9__10IWorkEventFv(void);
-    bool  WorkEvent10__10IWorkEventFv(void);
-    bool  WorkEvent11__10IWorkEventFv(void);
-    bool  WorkEvent12__10IWorkEventFv(void);
-    bool  WorkEvent13__10IWorkEventFv(void);
-    bool  WorkEvent14__10IWorkEventFv(void);
-    bool  WorkEvent15__10IWorkEventFv(void);
-    bool  WorkEvent16__10IWorkEventFv(void);
-    bool  WorkEvent17__10IWorkEventFv(void);
-    bool  WorkEvent18__10IWorkEventFv(void);
-    bool  WorkEvent19__10IWorkEventFv(void);
-    bool  WorkEvent20__10IWorkEventFv(void);
-    bool  WorkEvent21__10IWorkEventFv(void);
-    bool  WorkEvent22__10IWorkEventFv(void);
-    bool  WorkEvent23__10IWorkEventFv(void);
-    bool  WorkEvent24__10IWorkEventFv(void);
-    bool  WorkEvent25__10IWorkEventFv(void);
-    bool  WorkEvent26__10IWorkEventFv(void);
-    bool  WorkEvent27__10IWorkEventFv(void);
-    bool  WorkEvent28__10IWorkEventFv(void);
-    bool  WorkEvent29__10IWorkEventFv(void);
-    bool  WorkEvent30__10IWorkEventFv(void);
-    void  WorkEvent31__10IWorkEventFv(void);
-    unsigned int __RTTI__10IWorkEvent;
-
-    /* CProc (monolib/core/CProc.hpp) */
-    void  __dt__5CProcFv(void);
-    bool  wkStandbyLogin__5CProcFv(void);
-    bool  wkStandbyLogout__5CProcFv(void);
-    unsigned int __RTTI__5CProc;
-
-    /* CProcRoot (monolib/core/CProcRoot.hpp) */
-    void  __dt__9CProcRootFv(void);
-    bool  wkStandbyLogin__9CProcRootFv(void);
-    bool  wkStandbyLogout__9CProcRootFv(void);
-
-    /* CRsrcData (monolib/core/CRsrcData.hpp) */
-    void  __dt__9CRsrcDataFv(void);
-    void  wkUpdate__9CRsrcDataFv(void);
-    bool  wkStandbyLogin__9CRsrcDataFv(void);
-    bool  wkStandbyLogout__9CRsrcDataFv(void);
-
-    /* CScriptCode (monolib/core/CScriptCode.hpp) */
-    void  __dt__11CScriptCodeFv(void);
-    bool  wkStandbyLogout__11CScriptCodeFv(void);
-
-    /* CToken (monolib/core/CToken.hpp) + recovered symbol */
-    void  __dt__6CTokenFv(void);
-    void  func_8043ABD4__6CTokenFPCcPCc(const char*, const char*);
-
-    /* Data owned by other units (vtable/type-info objects of other classes) */
-    extern unsigned char lbl_eu_8056B55C[];
-    extern unsigned char lbl_eu_8056B5A4[];
-    extern unsigned char lbl_eu_8056B6B0[];
-    extern unsigned char lbl_eu_8056B6E4[];
-    extern unsigned char lbl_eu_8056B7B0[];
-    extern unsigned char lbl_eu_8056B868[];
-    extern unsigned char lbl_eu_8056B920[];
-    extern unsigned char lbl_eu_8056B9D8[];
-    extern unsigned char lbl_eu_8056BA90[];
-    extern unsigned char lbl_eu_8056BB48[];
-    extern unsigned char lbl_eu_8056BC60[];
-    extern unsigned char lbl_eu_8056BD20[];
-    extern unsigned char lbl_eu_8056BDD8[];
+    /* MWCC RTTI typeinfo objects (referenced by vtable[-1] / RTTI chains).
+     * These are the `typeid()` targets; typeid() would force MWCC to emit
+     * them here, so they are referenced as extern data instead. */
+    extern unsigned int __RTTI__10IWorkEvent;
+    extern unsigned int __RTTI__11CWorkThread;
+    extern unsigned int __RTTI__5CProc;
 }
 
-typedef unsigned int u32;
+/* ================================================================== */
+/* Function references (retail mangled names, real signatures).        */
+/* Owning declarations: CWorkThread.hpp / IWorkEvent.hpp / CProc.hpp / */
+/* CProcRoot.hpp / CRsrcData.hpp / CScriptCode.hpp / CToken.hpp.       */
+/* ================================================================== */
+extern "C" {
+    /* CWorkThread (virtual unless noted) */
+    void wkStandby__11CWorkThreadFv(void);                 /* non-virtual */
+    void wkUpdate__11CWorkThreadFv(void);
+    void wkRender__11CWorkThreadFv(void);
+    void wkRenderAfter__11CWorkThreadFv(void);
+    bool wkStandbyLogin__11CWorkThreadFv(void);
+    bool wkStandbyLogout__11CWorkThreadFv(void);
+    bool wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned long);
 
-/* ------------------------------------------------------------------ */
+    /* IWorkEvent virtuals */
+    bool WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
+    bool OnFileEvent__10IWorkEventFP10CEventFile(void*);
+    bool WorkEvent3__10IWorkEventFPv(void*);
+    bool WorkEvent4__10IWorkEventFv(void);
+    void OnPauseTrigger__10IWorkEventFb(bool);
+    bool WorkEvent6__10IWorkEventFv(void);
+    bool WorkEvent7__10IWorkEventFv(void);
+    bool WorkEvent8__10IWorkEventFv(void);
+    bool WorkEvent9__10IWorkEventFv(void);
+    bool WorkEvent10__10IWorkEventFv(void);
+    bool WorkEvent11__10IWorkEventFv(void);
+    bool WorkEvent12__10IWorkEventFv(void);
+    bool WorkEvent13__10IWorkEventFv(void);
+    bool WorkEvent14__10IWorkEventFv(void);
+    bool WorkEvent15__10IWorkEventFv(void);
+    bool WorkEvent16__10IWorkEventFv(void);
+    bool WorkEvent17__10IWorkEventFv(void);
+    bool WorkEvent18__10IWorkEventFv(void);
+    bool WorkEvent19__10IWorkEventFv(void);
+    bool WorkEvent20__10IWorkEventFv(void);
+    bool WorkEvent21__10IWorkEventFv(void);
+    bool WorkEvent22__10IWorkEventFv(void);
+    bool WorkEvent23__10IWorkEventFv(void);
+    bool WorkEvent24__10IWorkEventFv(void);
+    bool WorkEvent25__10IWorkEventFv(void);
+    bool WorkEvent26__10IWorkEventFv(void);
+    bool WorkEvent27__10IWorkEventFv(void);
+    bool WorkEvent28__10IWorkEventFv(void);
+    bool WorkEvent29__10IWorkEventFv(void);
+    bool WorkEvent30__10IWorkEventFv(void);
+    void WorkEvent31__10IWorkEventFv(void);
+
+    /* CProc */
+    bool wkStandbyLogin__5CProcFv(void);
+    bool wkStandbyLogout__5CProcFv(void);
+
+    /* CProcRoot */
+    bool wkStandbyLogin__9CProcRootFv(void);
+    bool wkStandbyLogout__9CProcRootFv(void);
+
+    /* CRsrcData */
+    void wkUpdate__9CRsrcDataFv(void);
+    bool wkStandbyLogin__9CRsrcDataFv(void);
+    bool wkStandbyLogout__9CRsrcDataFv(void);
+
+    /* CScriptCode (header lacks the wkStandbyLogout override, declared per
+     * its retail mangle: CScriptCode::wkStandbyLogout()) */
+    bool wkStandbyLogout__11CScriptCodeFv(void);
+
+    /* CToken */
+    bool func_8043ABD4__6CTokenFPCcPCc(const char*, const char*);
+}
+
+/* ================================================================== */
 /* .rodata                                                             */
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
 /* ProgArea debug banner strings; "." folded in (retail: separate 2-byte
  * .rodata object at +0x48 that would land in .sdata2 if standalone). */
 const char lbl_eu_80522410[0x4A] =
@@ -230,15 +249,14 @@ const char lbl_eu_80522960[0x11] = "CDeviceRemotePad";
 const char lbl_eu_80522974[0xC] = "CDeviceBase";
 const char lbl_eu_80522980[0xA] = "CDeviceSC";
 
-/* ------------------------------------------------------------------ */
-/* Forward declarations for .data references                            */
-/* ------------------------------------------------------------------ */
-/* 8-byte MWCC RTTI type-info object: { class-name string, 0/vtable }. */
+/* ================================================================== */
+/* .data                                                               */
+/* ================================================================== */
+/* Forward declarations for the .sdata RTTI type-info objects. */
 struct MonolibRttiInfo {
     const char* name;
     const void* extra;
 };
-
 extern MonolibRttiInfo lbl_eu_80663520;
 extern MonolibRttiInfo lbl_eu_80663528;
 extern MonolibRttiInfo lbl_eu_80663530;
@@ -261,43 +279,91 @@ extern const char lbl_eu_8066A2AC[];
 extern const char lbl_eu_8066A2B0[];
 extern const char lbl_eu_8066A2B8[];
 
-/* ------------------------------------------------------------------ */
-/* .data                                                               */
-/* ------------------------------------------------------------------ */
-#define IWE_SLOTS \
-    (u32)&WorkEvent1__10IWorkEventFPvPCc, \
-    (u32)&OnFileEvent__10IWorkEventFP10CEventFile, \
-    (u32)&WorkEvent3__10IWorkEventFPv, \
-    (u32)&WorkEvent4__10IWorkEventFv, \
-    (u32)&OnPauseTrigger__10IWorkEventFb, \
-    (u32)&WorkEvent6__10IWorkEventFv, \
-    (u32)&WorkEvent7__10IWorkEventFv, \
-    (u32)&WorkEvent8__10IWorkEventFv, \
-    (u32)&WorkEvent9__10IWorkEventFv, \
-    (u32)&WorkEvent10__10IWorkEventFv, \
-    (u32)&WorkEvent11__10IWorkEventFv, \
-    (u32)&WorkEvent12__10IWorkEventFv, \
-    (u32)&WorkEvent13__10IWorkEventFv, \
-    (u32)&WorkEvent14__10IWorkEventFv, \
-    (u32)&WorkEvent15__10IWorkEventFv, \
-    (u32)&WorkEvent16__10IWorkEventFv, \
-    (u32)&WorkEvent17__10IWorkEventFv, \
-    (u32)&WorkEvent18__10IWorkEventFv, \
-    (u32)&WorkEvent19__10IWorkEventFv, \
-    (u32)&WorkEvent20__10IWorkEventFv, \
-    (u32)&WorkEvent21__10IWorkEventFv, \
-    (u32)&WorkEvent22__10IWorkEventFv, \
-    (u32)&WorkEvent23__10IWorkEventFv, \
-    (u32)&WorkEvent24__10IWorkEventFv, \
-    (u32)&WorkEvent25__10IWorkEventFv, \
-    (u32)&WorkEvent26__10IWorkEventFv, \
-    (u32)&WorkEvent27__10IWorkEventFv, \
-    (u32)&WorkEvent28__10IWorkEventFv, \
-    (u32)&WorkEvent29__10IWorkEventFv, \
-    (u32)&WorkEvent30__10IWorkEventFv, \
-    (u32)&WorkEvent31__10IWorkEventFv
+/* .sdata references into .sdata2 (declared below) */
+extern const char lbl_eu_8066A1A8[];
+extern const char lbl_eu_8066A1B0[];
+extern const char lbl_eu_8066A2C8[];
+extern const char lbl_eu_8066A2D8[];
 
-/* CWorkThread::wkStandby switch jump table. */
+/* 40-word primary vtable shared by every CWorkThread-derived class here:
+ * [typeinfo, 0, ~dt, IWorkEvent::WorkEvent1..31, wk* overrides]. */
+struct IWorkEventVtbl {
+    const void* typeinfo;                 /* vtable[-1] RTTI descriptor     */
+    u32         offsetToTop;              /* 0 for primary vtables          */
+    void        (*dtor)();                /* deleting destructor            */
+    bool        (*workEvent1)(void*, const char*);
+    bool        (*onFileEvent)(void*);
+    bool        (*workEvent3)(void*);
+    bool        (*workEvent4)();
+    void        (*onPauseTrigger)(bool);
+    bool        (*workEvent6)();
+    bool        (*workEvent7)();
+    bool        (*workEvent8)();
+    bool        (*workEvent9)();
+    bool        (*workEvent10)();
+    bool        (*workEvent11)();
+    bool        (*workEvent12)();
+    bool        (*workEvent13)();
+    bool        (*workEvent14)();
+    bool        (*workEvent15)();
+    bool        (*workEvent16)();
+    bool        (*workEvent17)();
+    bool        (*workEvent18)();
+    bool        (*workEvent19)();
+    bool        (*workEvent20)();
+    bool        (*workEvent21)();
+    bool        (*workEvent22)();
+    bool        (*workEvent23)();
+    bool        (*workEvent24)();
+    bool        (*workEvent25)();
+    bool        (*workEvent26)();
+    bool        (*workEvent27)();
+    bool        (*workEvent28)();
+    bool        (*workEvent29)();
+    bool        (*workEvent30)();
+    void        (*workEvent31)();
+    void        (*wkUpdate)();
+    void        (*wkRender)();
+    void        (*wkRenderAfter)();
+    bool        (*wkStandbyLogin)();
+    bool        (*wkStandbyLogout)();
+    bool        (*wkStandbyExceptionRetry)(unsigned long);
+};
+
+#define IWE_SLOTS \
+    &WorkEvent1__10IWorkEventFPvPCc, \
+    &OnFileEvent__10IWorkEventFP10CEventFile, \
+    &WorkEvent3__10IWorkEventFPv, \
+    &WorkEvent4__10IWorkEventFv, \
+    &OnPauseTrigger__10IWorkEventFb, \
+    &WorkEvent6__10IWorkEventFv, \
+    &WorkEvent7__10IWorkEventFv, \
+    &WorkEvent8__10IWorkEventFv, \
+    &WorkEvent9__10IWorkEventFv, \
+    &WorkEvent10__10IWorkEventFv, \
+    &WorkEvent11__10IWorkEventFv, \
+    &WorkEvent12__10IWorkEventFv, \
+    &WorkEvent13__10IWorkEventFv, \
+    &WorkEvent14__10IWorkEventFv, \
+    &WorkEvent15__10IWorkEventFv, \
+    &WorkEvent16__10IWorkEventFv, \
+    &WorkEvent17__10IWorkEventFv, \
+    &WorkEvent18__10IWorkEventFv, \
+    &WorkEvent19__10IWorkEventFv, \
+    &WorkEvent20__10IWorkEventFv, \
+    &WorkEvent21__10IWorkEventFv, \
+    &WorkEvent22__10IWorkEventFv, \
+    &WorkEvent23__10IWorkEventFv, \
+    &WorkEvent24__10IWorkEventFv, \
+    &WorkEvent25__10IWorkEventFv, \
+    &WorkEvent26__10IWorkEventFv, \
+    &WorkEvent27__10IWorkEventFv, \
+    &WorkEvent28__10IWorkEventFv, \
+    &WorkEvent29__10IWorkEventFv, \
+    &WorkEvent30__10IWorkEventFv, \
+    &WorkEvent31__10IWorkEventFv
+
+/* CWorkThread::wkStandby switch jump table (case offsets within wkStandby). */
 u32 jumptable_eu_8056B0E0[0xC] = {
     (u32)((char *)&wkStandby__11CWorkThreadFv + 0x194),
     (u32)((char *)&wkStandby__11CWorkThreadFv + 0x64),
@@ -314,127 +380,146 @@ u32 jumptable_eu_8056B0E0[0xC] = {
 };
 
 /* CWorkThread vtable. */
-u32 lbl_eu_8056B110[0x28] = {
-    (u32)&__RTTI__11CWorkThread, 0,
-    (u32)&__dt__11CWorkThreadFv,
+IWorkEventVtbl lbl_eu_8056B110 = {
+    &__RTTI__11CWorkThread, 0,
+    0, /* RESIDUAL: __dt__11CWorkThreadFv (MWCC 10573: no dtor addresses) */
     IWE_SLOTS,
-    (u32)&wkUpdate__11CWorkThreadFv,
-    (u32)&wkRender__11CWorkThreadFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv,
-    (u32)&wkStandbyLogin__11CWorkThreadFv,
-    (u32)&wkStandbyLogout__11CWorkThreadFv,
-    (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+    &wkUpdate__11CWorkThreadFv,
+    &wkRender__11CWorkThreadFv,
+    &wkRenderAfter__11CWorkThreadFv,
+    &wkStandbyLogin__11CWorkThreadFv,
+    &wkStandbyLogout__11CWorkThreadFv,
+    &wkStandbyExceptionRetry__11CWorkThreadFUl,
 };
 
 /* CMsgParam<8> vtable: { RTTI, 0, dtor }. */
-u32 lbl_eu_8056B1B0[0x3] = {
-    (u32)&lbl_eu_80663520, 0,
-    0, /* RESIDUAL: __dt__12CMsgParam<8>Fv (template name not expressible) */
+struct SmallVtbl3 {
+    const void* typeinfo;
+    u32         offsetToTop;
+    void        (*dtor)();
+};
+SmallVtbl3 lbl_eu_8056B1B0 = {
+    &lbl_eu_80663520, 0,
+    0, /* RESIDUAL: __dt__12CMsgParam<8>Fv (template dtor) */
 };
 
 /* reslist<CWorkThread*> vtable. */
-u32 lbl_eu_8056B1BC[0x3] = {
-    (u32)&lbl_eu_80663528, 0,
-    0, /* RESIDUAL: __dt__23reslist<P11CWorkThread>Fv */
+SmallVtbl3 lbl_eu_8056B1BC = {
+    &lbl_eu_80663528, 0,
+    0, /* RESIDUAL: __dt__23reslist<P11CWorkThread>Fv (template dtor) */
 };
 
 /* reslist<CWorkThread*> (base?) vtable; no dtor slot. */
-u32 lbl_eu_8056B1C8[0x3] = {
-    (u32)&lbl_eu_80663530, 0, 0,
+SmallVtbl3 lbl_eu_8056B1C8 = {
+    &lbl_eu_80663530, 0, 0,
 };
 
 /* _reslist_base<CWorkThread*> vtable. */
-u32 lbl_eu_8056B1D4[0x3] = {
-    (u32)&lbl_eu_80663530, 0,
-    0, /* RESIDUAL: __dt__29_reslist_base<P11CWorkThread>Fv */
+SmallVtbl3 lbl_eu_8056B1D4 = {
+    &lbl_eu_80663530, 0,
+    0, /* RESIDUAL: __dt__29_reslist_base<P11CWorkThread>Fv (template dtor) */
 };
 
 /* CProc vtable. */
-u32 lbl_eu_8056B1E0[0x28] = {
-    (u32)&__RTTI__5CProc, 0,
-    (u32)&__dt__5CProcFv,
+IWorkEventVtbl lbl_eu_8056B1E0 = {
+    &__RTTI__5CProc, 0,
+    0, /* RESIDUAL: __dt__5CProcFv */
     IWE_SLOTS,
-    (u32)&wkUpdate__11CWorkThreadFv,
-    (u32)&wkRender__11CWorkThreadFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv,
-    (u32)&wkStandbyLogin__5CProcFv,
-    (u32)&wkStandbyLogout__5CProcFv,
-    (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+    &wkUpdate__11CWorkThreadFv,
+    &wkRender__11CWorkThreadFv,
+    &wkRenderAfter__11CWorkThreadFv,
+    &wkStandbyLogin__5CProcFv,
+    &wkStandbyLogout__5CProcFv,
+    &wkStandbyExceptionRetry__11CWorkThreadFUl,
 };
 
 /* reslist<unsigned long> vtable. */
-u32 lbl_eu_8056B280[0x3] = {
-    (u32)&lbl_eu_80663538, 0,
-    0, /* RESIDUAL: __dt__11reslist<Ul>Fv */
+SmallVtbl3 lbl_eu_8056B280 = {
+    &lbl_eu_80663538, 0,
+    0, /* RESIDUAL: __dt__11reslist<Ul>Fv (template dtor) */
 };
 
 /* reslist<unsigned long> (base?) vtable; no dtor slot. */
-u32 lbl_eu_8056B28C[0x3] = {
-    (u32)&lbl_eu_80663540, 0, 0,
+SmallVtbl3 lbl_eu_8056B28C = {
+    &lbl_eu_80663540, 0, 0,
 };
 
 /* _reslist_base<unsigned long> vtable. */
-u32 lbl_eu_8056B298[0x4] = {
-    (u32)&lbl_eu_80663540, 0,
-    0, /* RESIDUAL: __dt__17_reslist_base<Ul>Fv */
+struct SmallVtbl4 {
+    const void* typeinfo;
+    u32         offsetToTop;
+    void        (*dtor)();
+    void        (*extra)();
+};
+SmallVtbl4 lbl_eu_8056B298 = {
+    &lbl_eu_80663540, 0,
+    0, /* RESIDUAL: __dt__17_reslist_base<Ul>Fv (template dtor) */
     0,
 };
 
 /* CProcRoot vtable. */
-u32 lbl_eu_8056B2A8[0x28] = {
-    (u32)&lbl_eu_80663548, 0,
-    (u32)&__dt__9CProcRootFv,
+IWorkEventVtbl lbl_eu_8056B2A8 = {
+    &lbl_eu_80663548, 0,
+    0, /* RESIDUAL: __dt__9CProcRootFv */
     IWE_SLOTS,
-    (u32)&wkUpdate__11CWorkThreadFv,
-    (u32)&wkRender__11CWorkThreadFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv,
-    (u32)&wkStandbyLogin__9CProcRootFv,
-    (u32)&wkStandbyLogout__9CProcRootFv,
-    (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+    &wkUpdate__11CWorkThreadFv,
+    &wkRender__11CWorkThreadFv,
+    &wkRenderAfter__11CWorkThreadFv,
+    &wkStandbyLogin__9CProcRootFv,
+    &wkStandbyLogout__9CProcRootFv,
+    &wkStandbyExceptionRetry__11CWorkThreadFUl,
 };
 
 /* CProcRoot RTTI base chain: {IWorkEvent RTTI, 0, CWorkThread RTTI, 0, 0, 0}. */
-u32 lbl_eu_8056B348[0x6] = {
-    (u32)&__RTTI__10IWorkEvent, 0,
-    (u32)&__RTTI__11CWorkThread, 0, 0, 0,
+struct RttiRef6 {
+    const void* rttiA;
+    u32 z0;
+    const void* rttiB;
+    u32 z1;
+    u32 z2;
+    u32 z3;
+};
+RttiRef6 lbl_eu_8056B348 = {
+    &__RTTI__10IWorkEvent, 0,
+    &__RTTI__11CWorkThread, 0, 0, 0,
 };
 
 /* CRsrcData vtable. */
-u32 lbl_eu_8056B360[0x28] = {
-    (u32)&lbl_eu_80663550, 0,
-    (u32)&__dt__9CRsrcDataFv,
+IWorkEventVtbl lbl_eu_8056B360 = {
+    &lbl_eu_80663550, 0,
+    0, /* RESIDUAL: __dt__9CRsrcDataFv */
     IWE_SLOTS,
-    (u32)&wkUpdate__9CRsrcDataFv,
-    (u32)&wkRender__11CWorkThreadFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv,
-    (u32)&wkStandbyLogin__9CRsrcDataFv,
-    (u32)&wkStandbyLogout__9CRsrcDataFv,
-    (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+    &wkUpdate__9CRsrcDataFv,
+    &wkRender__11CWorkThreadFv,
+    &wkRenderAfter__11CWorkThreadFv,
+    &wkStandbyLogin__9CRsrcDataFv,
+    &wkStandbyLogout__9CRsrcDataFv,
+    &wkStandbyExceptionRetry__11CWorkThreadFUl,
 };
 
 /* CRsrcData RTTI base chain. */
-u32 lbl_eu_8056B400[0x6] = {
-    (u32)&__RTTI__10IWorkEvent, 0,
-    (u32)&__RTTI__11CWorkThread, 0, 0, 0,
+RttiRef6 lbl_eu_8056B400 = {
+    &__RTTI__10IWorkEvent, 0,
+    &__RTTI__11CWorkThread, 0, 0, 0,
 };
 
 /* CScriptCode vtable. */
-u32 lbl_eu_8056B418[0x28] = {
-    (u32)&lbl_eu_80663558, 0,
-    (u32)&__dt__11CScriptCodeFv,
+IWorkEventVtbl lbl_eu_8056B418 = {
+    &lbl_eu_80663558, 0,
+    0, /* RESIDUAL: __dt__11CScriptCodeFv */
     IWE_SLOTS,
-    (u32)&wkUpdate__11CWorkThreadFv,
-    (u32)&wkRender__11CWorkThreadFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv,
-    (u32)&wkStandbyLogin__11CWorkThreadFv,
-    (u32)&wkStandbyLogout__11CScriptCodeFv,
-    (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+    &wkUpdate__11CWorkThreadFv,
+    &wkRender__11CWorkThreadFv,
+    &wkRenderAfter__11CWorkThreadFv,
+    &wkStandbyLogin__11CWorkThreadFv,
+    &wkStandbyLogout__11CScriptCodeFv,
+    &wkStandbyExceptionRetry__11CWorkThreadFUl,
 };
 
 /* CScriptCode RTTI base chain. */
-u32 lbl_eu_8056B4B8[0x6] = {
-    (u32)&__RTTI__10IWorkEvent, 0,
-    (u32)&__RTTI__11CWorkThread, 0, 0, 0,
+RttiRef6 lbl_eu_8056B4B8 = {
+    &__RTTI__10IWorkEvent, 0,
+    &__RTTI__11CWorkThread, 0, 0, 0,
 };
 
 /* CToken print-format-string table. */
@@ -461,14 +546,14 @@ u32 jumptable_eu_8056B500[0xB] = {
 };
 
 /* CToken vtable. */
-u32 lbl_eu_8056B52C[0x3] = {
-    (u32)&lbl_eu_80663560, 0,
-    (u32)&__dt__6CTokenFv,
+SmallVtbl3 lbl_eu_8056B52C = {
+    &lbl_eu_80663560, 0,
+    0, /* RESIDUAL: __dt__6CTokenFv */
 };
 
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
 /* .sdata                                                              */
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
 u32 lbl_eu_80663500 = (u32)&lbl_eu_8066A1A8;              /* &"Mem1"   (MEM1 region name) */
 u32 lbl_eu_80663504 = (u32)&lbl_eu_8066A1B0;              /* &"Mem2"   (MEM2 region name) */
 u32 lbl_eu_80663508 = 0xFFFFFFFFu;                        /* MemManager::sHandleMEM1 */
@@ -479,14 +564,15 @@ u32 lbl_eu_80663514 = 0x00600000u;                        /* MEM2 region size (6
 u32 lbl_eu_80663518 = (u32)&lbl_eu_80522460;              /* &"WorkThreadSystem" */
 u32 lbl_eu_8066351C = 0xFFFFFFFFu;                        /* -1 */
 
+/* 8-byte MWCC RTTI type-info object: { class-name string, 0/vtable }. */
 MonolibRttiInfo lbl_eu_80663520 = { lbl_eu_80522474, 0 };                       /* CMsgParam<8> */
-MonolibRttiInfo lbl_eu_80663528 = { lbl_eu_80522484, lbl_eu_8056B1C8 };         /* reslist<CWorkThread*> */
+MonolibRttiInfo lbl_eu_80663528 = { lbl_eu_80522484, &lbl_eu_8056B1C8 };         /* reslist<CWorkThread*> */
 MonolibRttiInfo lbl_eu_80663530 = { lbl_eu_8052249C, 0 };                       /* _reslist_base<CWorkThread*> */
-MonolibRttiInfo lbl_eu_80663538 = { lbl_eu_805224C8, lbl_eu_8056B28C };         /* reslist<unsigned long> */
+MonolibRttiInfo lbl_eu_80663538 = { lbl_eu_805224C8, &lbl_eu_8056B28C };         /* reslist<unsigned long> */
 MonolibRttiInfo lbl_eu_80663540 = { lbl_eu_805224E0, 0 };                       /* _reslist_base<unsigned long> */
-MonolibRttiInfo lbl_eu_80663548 = { lbl_eu_80522508, lbl_eu_8056B348 };         /* CProcRoot */
-MonolibRttiInfo lbl_eu_80663550 = { lbl_eu_80522528, lbl_eu_8056B400 };         /* CRsrcData */
-MonolibRttiInfo lbl_eu_80663558 = { lbl_eu_80522540, lbl_eu_8056B4B8 };         /* CScriptCode */
+MonolibRttiInfo lbl_eu_80663548 = { lbl_eu_80522508, &lbl_eu_8056B348 };         /* CProcRoot */
+MonolibRttiInfo lbl_eu_80663550 = { lbl_eu_80522528, &lbl_eu_8056B400 };         /* CRsrcData */
+MonolibRttiInfo lbl_eu_80663558 = { lbl_eu_80522540, &lbl_eu_8056B4B8 };         /* CScriptCode */
 MonolibRttiInfo lbl_eu_80663560 = { lbl_eu_8066A2C8, 0 };                       /* CToken */
 MonolibRttiInfo lbl_eu_80663568 = { lbl_eu_80522588, lbl_eu_8056B55C };         /* @unnamed@CTaskManager_cpp@::CRootProc */
 MonolibRttiInfo lbl_eu_80663570 = { lbl_eu_805225B0, lbl_eu_8056B5A4 };         /* CTTask<CRootProc> */
@@ -508,29 +594,29 @@ MonolibRttiInfo lbl_eu_806635E8 = { lbl_eu_80522960, lbl_eu_8056BC60 };         
 MonolibRttiInfo lbl_eu_806635F0 = { lbl_eu_80522974, lbl_eu_8056BD20 };         /* CDeviceBase */
 MonolibRttiInfo lbl_eu_806635F8 = { lbl_eu_80522980, lbl_eu_8056BDD8 };         /* CDeviceSC */
 
-/* ------------------------------------------------------------------ */
-/* .sbss (forward declaration order; retail symbol offsets verified)    */
-/* ------------------------------------------------------------------ */
-unsigned long long lbl_eu_80665550;    /* 8 bytes @0x00 */
-unsigned char lbl_eu_80665558;         /* 1 byte  @0x08 */
-unsigned char gap_10_80665559_sbss[3]; /* retail 3-byte gap @0x09 */
-unsigned char lbl_eu_8066555C;         /* 1 byte  @0x0C */
-unsigned char lbl_eu_8066555D;         /* 1 byte  @0x0D */
-unsigned char lbl_eu_8066555E;         /* 1 byte  @0x0E */
-unsigned char lbl_eu_8066555F;         /* 1 byte  @0x0F */
-u32 lbl_eu_80665560;                   /* 4 bytes @0x10 */
-u32 lbl_eu_80665564;                   /* 4 bytes @0x14 */
-unsigned char lbl_eu_80665568;         /* 1 byte  @0x18 */
-unsigned char lbl_eu_80665569[7];      /* 7 bytes @0x19 */
-u32 lbl_eu_80665570;                   /* 4 bytes @0x20 */
-unsigned char lbl_eu_80665574;         /* 1 byte  @0x24 */
-unsigned char gap_10_80665575_sbss[3]; /* retail 3-byte gap @0x25 */
-u32 lbl_eu_80665578;                   /* 4 bytes @0x28 */
-unsigned char lbl_eu_8066557C;         /* 1 byte  @0x2C (MemManager flag) */
+/* ================================================================== */
+/* .sbss (forward declaration order; retail symbol offsets verified)   */
+/* ================================================================== */
+u64 lbl_eu_80665550;                     /* 8 bytes @0x00 */
+unsigned char lbl_eu_80665558;           /* 1 byte  @0x08 */
+unsigned char gap_10_80665559_sbss[3];   /* retail 3-byte gap @0x09 */
+unsigned char lbl_eu_8066555C;           /* 1 byte  @0x0C */
+unsigned char lbl_eu_8066555D;           /* 1 byte  @0x0D */
+unsigned char lbl_eu_8066555E;           /* 1 byte  @0x0E */
+unsigned char lbl_eu_8066555F;           /* 1 byte  @0x0F */
+u32 lbl_eu_80665560;                     /* 4 bytes @0x10 */
+u32 lbl_eu_80665564;                     /* 4 bytes @0x14 */
+unsigned char lbl_eu_80665568;           /* 1 byte  @0x18 */
+unsigned char lbl_eu_80665569[7];        /* 7 bytes @0x19 */
+u32 lbl_eu_80665570;                     /* 4 bytes @0x20 */
+unsigned char lbl_eu_80665574;           /* 1 byte  @0x24 */
+unsigned char gap_10_80665575_sbss[3];   /* retail 3-byte gap @0x25 */
+u32 lbl_eu_80665578;                     /* 4 bytes @0x28 */
+unsigned char lbl_eu_8066557C;           /* 1 byte  @0x2C (MemManager flag) */
 
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
 /* .sdata2 (const small data)                                          */
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
 const float lbl_eu_8066A178 = 0.5f;
 const float lbl_eu_8066A17C = 40.7436637878418f;
 const float lbl_eu_8066A180 = 1.0f;
@@ -625,16 +711,16 @@ const float lbl_eu_8066A348 = 16666.666015625f;
 const double lbl_eu_8066A350 = 4503599627370496.0;
 const float lbl_eu_8066A358[2] = { 0.0f, 0.0f };
 
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
 /* .sbss2                                                              */
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
 #pragma align 8
 const u32 lbl_8066DCF8 = 0;
 #pragma align 4
 
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
 /* .bss                                                               */
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
 /* mtl::MemManager::sRegionBuffer (retail: mtl::RawArray<MemRegion, 0x230>
  * region array, 0x2300 bytes). */
 unsigned long long sRegionBuffer__Q23mtl10MemManager[0x2300 / 8];

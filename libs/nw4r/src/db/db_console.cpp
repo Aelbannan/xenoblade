@@ -1,108 +1,16 @@
 #include <nw4r/db/db_console.h>
 #include <revolution/OS.h>
 
+// The retail db_console split holds ONLY Console_Printf and
+// Console_GetTotalLines (0xD4 of .text, no data). The remaining console API
+// (Console_Create/Draw/VFPrintf/...) lives in other retail TUs, so the stub
+// bodies + their statics (sStrBuf[1024], sMutex) must not be emitted here.
+
 namespace nw4r
 {
     namespace db
     {
         using namespace detail;
-
-        //unused
-        static OSMutex sMutex;
-
-        //unused
-        static void TerminateLine_(ConsoleHead* console)
-        {
-        }
-
-        //unused
-        static u8* GetTextPtr_(ConsoleHead* console, u16 line, u16 xPos)
-        {
-            return 0;
-        }
-
-        //unused
-        static u8* NextLine_(ConsoleHead* console)
-        {
-            return 0;
-        }
-
-        //unused
-        static u8* PutTab_(ConsoleHead* console, u8* dstPtr)
-        {
-            return 0;
-        }
-
-        //unused
-        static u32 GetTabSize_(ConsoleHead* console)
-        {
-            return 0;
-        }
-
-        //unused
-        static u32 PutChar_(ConsoleHead* console, const u8* str, u8* dstPtr)
-        {
-            return 0;
-        }
-
-        //unused
-        static u32 CodeWidth_(const u8* p)
-        {
-            return 0;
-        }
-
-        //unused
-        static ConsoleHead* SearchConsoleFromListByPriority_(u16 r3)
-        {
-            return nullptr;
-        }
-
-        //unused
-        static void AppendConsoleToList_(ConsoleHead* console)
-        {
-        }
-
-        //unused
-        static void RemoveConsoleFromList_(ConsoleHead* console)
-        {
-        }
-
-        //unused
-        ConsoleHead* Console_Create(void* buffer, u16 width, u16 height, u16 viewHeight, u16 priority, u16 attr)
-        {
-            return nullptr;
-        }
-
-        //unused
-        void Console_Destroy(ConsoleHead* console)
-        {
-        }
-
-        //unused
-        void Console_Clear(ConsoleHead* console)
-        {
-        }
-
-        //unused
-        static void UnlockMutex_(OSMutex* mutex)
-        {
-        }
-
-        //unused
-        static bool TryLockMutex_(OSMutex* mutex)
-        {
-            return false;
-        }
-
-        //unused
-        static void DoDrawString_(ConsoleHead* console, u32 printLine, const u8* str, ut::TextWriterBase<char>* writer)
-        {
-        }
-
-        //unused
-        static void DoDrawConsole_(ConsoleHead* console, ut::TextWriterBase<char>* writer)
-        {
-        }
 
         static u16 GetRingUsedLines_(ConsoleHead* console);
 
@@ -120,78 +28,10 @@ namespace nw4r
             return (u16)lines;
         }
 
-        //unused
-        void Console_Draw(ConsoleHead* console, ut::TextWriterBase<char>& writer)
-        {
-        }
-
-        //unused
-        void Console_DrawDirect(ConsoleHead* console)
-        {
-        }
-
-        //unused
-        void Console_DrawAll()
-        {
-        }
-
-        //unused
-        void Console_DrawDirectAll()
-        {
-        }
-
-        //unused
-        static void PrintToBuffer_(ConsoleHead* console, const u8* str)
-        {
-        }
-
-        //unused
-        static u8* SearchEndOfLine_(const u8* str)
-        {
-            return 0;
-        }
-
-        //unused
-        static void Console_PrintString_(ConsoleOutputType type, ConsoleHead* console, const u8* str)
-        {
-        }
-
-        //unused
-        void Console_VFPrintf(ConsoleOutputType type, ConsoleHead* console, const char* format, std::va_list vlist)
-        {
-            static u8 sStrBuf[1024];
-        }
-
-        //unused
-        void Console_FPrintf(ConsoleOutputType type, ConsoleHead* console, const char* format)
-        {
-        }
-
         void Console_Printf(ConsoleHead* console, const char* format, ...)
         {
             va_list vlist;
             va_start(vlist, format);
-        }
-
-        //unused
-        void Console_PrintfD(ConsoleHead* console, const char* format, ...)
-        {
-        }
-
-        //unused
-        void Console_PrintfT(ConsoleHead* console, const char* format, ...)
-        {
-        }
-
-        //unused
-        u16 Console_ChangePriority(ConsoleHead* console, u16 priority)
-        {
-            return 0;
-        }
-
-        //unused
-        void Console_VisitString(ConsoleHead* console, VisitStringCallback visitor)
-        {
         }
 
         long Console_GetTotalLines(ConsoleHead* console)

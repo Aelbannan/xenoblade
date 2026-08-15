@@ -119,9 +119,11 @@ void func_8018B0FC(void* dst, void* src) {
 // -ipa/-func_align variants (same ABI-boundary class as func_800B7680;
 // witness rejects: r6/r7 and r3/r4 both swap, no consistent bijection).
 // The loop body and tail are otherwise byte-identical.
-void func_8018B130(ShopSellData* dst, const ShopSellData* src) {
-    dst->mItems = src->mItems;
-    dst->mField804 = src->mField804;
+void func_8018B130(void* dst, void* src) {
+    ShopSellData* d = static_cast<ShopSellData*>(dst);
+    const ShopSellData* s = static_cast<const ShopSellData*>(src);
+    d->mItems = s->mItems;
+    d->mField804 = s->mField804;
 }
 
 /* Tear the shop-sell screen down: wait for the draw callback to finish,

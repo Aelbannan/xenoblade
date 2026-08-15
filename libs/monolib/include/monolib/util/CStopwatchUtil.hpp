@@ -4,6 +4,7 @@
 
 //Unofficial name
 class CStopwatchUtil {
+public:
     struct StopwatchEntry{
         enum Flags{
             FLAGS_OCCUPIED = (1 << 0)
@@ -22,11 +23,9 @@ public:
     static void updateCostTime(const char* pStr);
     static float getCostTime(const char* pStr);
 
+private:
     static inline StopwatchEntry* findEntry(const char* pStr);
     static inline StopwatchEntry* findEmptyEntry();
 
-private:
     static const int MAX_ENTRIES = 16;
-
-    static StopwatchEntry sEntries[MAX_ENTRIES];
 };

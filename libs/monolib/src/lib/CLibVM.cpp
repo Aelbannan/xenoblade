@@ -28,10 +28,33 @@ CLibVM* CLibVM::getInstance() {
     return spInstance;
 }
 
+// Inline copy of CWorkThread::isRunning() visible only in this TU (same trick
+// as CDeviceGX.cpp): the retail isInitialized inlines the member call with the
+// this-arg bound to the instance, which births the global load before the
+// find-loop index (inst=r6 / index=r7). CWorkRoot.cpp keeps the strong
+// out-of-line definition.
+inline bool CWorkThread::isRunning() const {
+    bool exception;
+    if (mFlags & THREAD_FLAG_EXCEPTION) {
+        exception = true;
+    } else {
+        exception = mMsgQueue.find(EVT_EXCEPTION) >= 0;
+    }
+
+    bool result = false;
+    if (!exception) {
+        bool stateOK = mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN;
+        if (stateOK) {
+            result = true;
+        }
+    }
+    return result;
+}
+
 bool CLibVM::isInitialized() {
-    CLibVM* inst = reinterpret_cast<CLibVM*>(lbl_eu_80665720);
-    // Initialized when not busy (exception-flagged / event queued) and logged in.
-    return !inst->isException() && (inst->mState == THREAD_STATE_LOGIN || inst->mState == THREAD_STATE_RUN);
+    // Same shape as CDeviceGX::isInitialized: the inlined isRunning() member
+    // call reproduces the retail register layout (no call emitted).
+    return lbl_eu_80665720->isRunning();
 }
 
 void CLibVM::setCallbacks(void (*pLogin)(), void (*pLogout)()) {

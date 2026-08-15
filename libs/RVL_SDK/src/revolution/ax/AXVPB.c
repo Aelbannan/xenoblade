@@ -231,6 +231,7 @@ void __AXSyncPBs(u32 baseCycles) {
     u32 cycles;
     u32 prio;
     AXVPB* head;
+    AXPB* pb;
 
     __AXNumVoices = 0;
 
@@ -294,7 +295,7 @@ void __AXSyncPBs(u32 baseCycles) {
                     __AXServiceVPB(head);
                 } else {
                     /* Retail inlines former __AXDumpVPB here. */
-                    AXPB* pb = &__AXPB[head->index];
+                    pb = &__AXPB[head->index];
 
                     if (pb->state == AX_VOICE_RUN) {
                         __AXDepopVoice(pb);
@@ -316,14 +317,17 @@ void __AXSyncPBs(u32 baseCycles) {
 
     __AXRecDspCycles = cycles;
 
-    for (head = __AXGetStackHead(AX_PRIORITY_FREE); head != NULL;
-         head = head->next) {
-        if (head->depop) {
-            __AXDepopVoice(&__AXPB[head->index]);
-        }
+    {
+        AXVPB* freeHead = __AXGetStackHead(AX_PRIORITY_FREE);
+        while (freeHead != NULL) {
+            if (freeHead->depop) {
+                __AXDepopVoice(&__AXPB[freeHead->index]);
+            }
 
-        head->depop = FALSE;
-        __AXPB[head->index].state = AX_VOICE_STOP;
+            freeHead->depop = FALSE;
+            __AXPB[freeHead->index].state = AX_VOICE_STOP;
+            freeHead = freeHead->next;
+        }
     }
 
     DCFlushRange(__AXPB, __AXMaxVoices * sizeof(AXPB));

@@ -11,12 +11,12 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 9862 |
-| extern "C" declarations (non-lbl_*, imports) | 3688 |
+| extern "C" (total lines) | 9863 |
+| extern "C" declarations (non-lbl_*, imports) | 3689 |
 | extern "C" definitions (forced names) | 3679 |
-| `self`/register-style params | 11409 |
-| `void*` (params + locals) | 6885 |
-| raw pointer offset arithmetic | 6356 |
+| `self`/register-style params | 11410 |
+| `void*` (params + locals) | 6880 |
+| raw pointer offset arithmetic | 6355 |
 | deref-through-cast arithmetic | 2483 |
 | inline asm / `register` | 112 |
 | rN-named params | 480 |
@@ -234,9 +234,9 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/nw4r/src/snd/snd_DvdSoundArchive.cpp | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FrameHeap.cpp | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FxChorus.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_FxChorusDpl2.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/snd/snd_FxChorusDpl2.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FxDelay.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_FxDelayDpl2.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/snd/snd_FxDelayDpl2.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FxReverbHi.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FxReverbHiDpl2.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FxReverbStdDpl2.cpp | 4 | 8 | 15 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -321,7 +321,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CQstLogList.cpp | 3 | 14 | 50 | 3 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | src/kyoshin/CQuestWindow.cpp | 3 | 4 | 37 | 11 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSaveLoad.cpp | 0 | 41 | 50 | 32 | 96 | 31 | 0 | 5 | 19 | 0 | 0 | 0 |
-| src/kyoshin/CScrollBar.cpp | 3 | 4 | 13 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CScrollBar.cpp | 4 | 4 | 14 | 5 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSelShopWin.cpp | 2 | 4 | 6 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSimpleEveTalkWin.cpp | 2 | 1 | 4 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSkipTimer.cpp | 3 | 3 | 50 | 6 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -446,7 +446,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/object/CfObjectNpc.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectObj.cpp | 0 | 0 | 1 | 1 | 5 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectPc.cpp | 1 | 7 | 40 | 8 | 5 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/object/CfObjectPoint.cpp | 3 | 1 | 5 | 4 | 1 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
+| src/kyoshin/cf/object/CfObjectPoint.cpp | 3 | 1 | 5 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectTbox.cpp | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/CCharVoice.cpp | 14 | 0 | 1 | 9 | 11 | 7 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/CCharVoiceMan.cpp | 0 | 0 | 18 | 18 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -2692,7 +2692,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "void_ptr": 3
+  "void_ptr": 2
  },
  "libs/nw4r/src/snd/snd_FxDelay.cpp": {
   "asm_insn_shim": 0,
@@ -2704,7 +2704,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "void_ptr": 3
+  "void_ptr": 2
  },
  "libs/nw4r/src/snd/snd_FxReverbHi.cpp": {
   "asm_insn_shim": 0,
@@ -3531,13 +3531,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/CScrollBar.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 3,
+  "extern_c_nonlbl_decl": 4,
   "extern_c_nonlbl_def": 4,
   "init_side_effect": 0,
   "ptr_arith": 1,
   "schedule_pragma": 0,
-  "self_params": 13,
-  "void_ptr": 4
+  "self_params": 14,
+  "void_ptr": 5
  },
  "src/kyoshin/CSelShopWin.cpp": {
   "asm_insn_shim": 0,
@@ -4814,10 +4814,8 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 1,
   "goto_count": 2,
   "init_side_effect": 0,
-  "ptr_arith": 1,
   "schedule_pragma": 0,
-  "self_params": 5,
-  "void_ptr": 4
+  "self_params": 5
  },
  "src/kyoshin/cf/object/CfObjectTbox.cpp": {
   "asm_insn_shim": 0,

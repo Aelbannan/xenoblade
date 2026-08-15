@@ -486,7 +486,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/object/CfObjectNpc.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectObj.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectPc.cpp"),
-            Object(NonMatching, "kyoshin/cf/object/CfObjectPoint.cpp"),
+            Object(Matching, "kyoshin/cf/object/CfObjectPoint.cpp", extra_cflags=["-RTTI off"]),  # retail has no RTTI .rodata; -RTTI off drops the typeinfo strings so the unit carries no data sections
             Object(NonMatching, "kyoshin/cf/code_800C17DC.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplWalker.cpp"),
             Object(NonMatching, "kyoshin/cfsys/CfObjectImplPc.cpp"),
@@ -1962,9 +1962,7 @@ config.libs = [
             Object(Matching, "split1.s"),
             Object(Matching, "criware_data.s"),
             Object(Matching, "nw4r_data.s"),
-            Object(Matching, "monolibdata1.s"),
-            Object(Matching, "monolibdata1d.s"),
-            Object(Matching, "monolibdata1e.cpp"),  # converted from asm dump: one 0x280-byte .bss global (lbl_eu_80657238), verified byte+align identical via run.py data diff
+                                    Object(Matching, "monolibdata1e.cpp"),  # converted from asm dump: one 0x280-byte .bss global (lbl_eu_80657238), verified byte+align identical via run.py data diff
             Object(Matching, "monolibdata2.s"),
         ],
     },

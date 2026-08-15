@@ -11,14 +11,12 @@
 // addressing the retail relocs require instead of SDA21. lbl_eu_8066AEC0 is
 // re-declared const so MWCC can hoist its load past the aliasing stores (like
 // a pooled literal) while still emitting the retail reloc name.
-#define lbl_eu_8065D138 lbl_eu_8065D138_hdr
 #define lbl_eu_8056F4F0 lbl_eu_8056F4F0_hdr
 #define lbl_eu_8066AEC0 lbl_eu_8066AEC0_hdr
 #define lbl_eu_8066AEB0 lbl_eu_8066AEB0_hdr
 #define lbl_eu_8066AEC4 lbl_eu_8066AEC4_hdr
 #define lbl_eu_8066AEC8 lbl_eu_8066AEC8_hdr
 #include "monolib/coli/code_804B2FF0.hpp"
-#undef lbl_eu_8065D138
 #undef lbl_eu_8056F4F0
 #undef lbl_eu_8066AEC0
 #undef lbl_eu_8066AEB0
@@ -35,7 +33,6 @@
 
 // Full-size externs (retail: walk-state object at 0x8065D138, target table at
 // 0x8056F4F0). Declared at global scope so MWCC emits the names unmangled.
-extern CColiWalkState lbl_eu_8065D138;
 extern u32 lbl_eu_8056F4F0[4];
 extern f32 lbl_eu_8066AEC0;
 extern const f32 lbl_eu_8066AEA8;

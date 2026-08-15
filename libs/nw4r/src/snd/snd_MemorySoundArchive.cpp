@@ -4,8 +4,26 @@
 #include <cstring>
 
 namespace nw4r {
+namespace ut {
+
+// Retail never emits a standalone ~IOStream symbol; the destructor is
+// inline-empty so MWCC elides the base-dtor call in derived destructors
+// (retail MemoryFileStream dtor has no base call). The definition must be
+// visible in this TU; without it MWCC emits a `bl ~FileStream` in the
+// derived destructor (retail has none).
+inline IOStream::~IOStream() {}
+
+} // namespace ut
+} // namespace nw4r
+
+namespace nw4r {
 namespace snd {
 
+// MemoryFileStream is a private stream adapter over a caller-supplied
+// buffer. The trivial query virtuals (CanSeek/CanCancel/CanAsync/CanRead/
+// CanWrite/Tell/GetSize) and GetRuntimeTypeInfo are defined out-of-line
+// below so they become strong symbols matching the retail split (inline
+// in-class bodies would instead be emitted as extra weak vtable copies).
 class MemorySoundArchive::MemoryFileStream : public ut::FileStream {
 public:
     MemoryFileStream(const void* pBuffer, u32 size)
@@ -16,33 +34,15 @@ public:
     virtual s32 Read(void* pDst, u32 size);    // at 0x14
     virtual void Seek(s32 offset, u32 origin); // at 0x44
 
-    virtual bool CanSeek() const {
-        return true;
-    } // at 0x50
+    virtual bool CanSeek() const;   // at 0x50
+    virtual bool CanCancel() const; // at 0x54
 
-    virtual bool CanCancel() const {
-        return true;
-    } // at 0x54
+    virtual bool CanAsync() const; // at 0x28
+    virtual bool CanRead() const;  // at 0x2C
+    virtual bool CanWrite() const; // at 0x30
 
-    virtual bool CanAsync() const {
-        return false;
-    } // at 0x28
-
-    virtual bool CanRead() const {
-        return true;
-    } // at 0x2C
-
-    virtual bool CanWrite() const {
-        return false;
-    } // at 0x30
-
-    virtual u32 Tell() const {
-        return mOffset;
-    } // at 0x58
-
-    virtual u32 GetSize() const {
-        return mSize;
-    } // at 0x40
+    virtual u32 Tell() const;    // at 0x58
+    virtual u32 GetSize() const; // at 0x40
 
 private:
     const void* mData; // at 0x14
@@ -194,14 +194,33 @@ void MemorySoundArchive::MemoryFileStream::Seek(s32 offset, u32 origin) {
     }
 }
 
+bool MemorySoundArchive::MemoryFileStream::CanSeek() const {
+    return true;
+}
+
+bool MemorySoundArchive::MemoryFileStream::CanCancel() const {
+    return true;
+}
+
+bool MemorySoundArchive::MemoryFileStream::CanAsync() const {
+    return false;
+}
+
+bool MemorySoundArchive::MemoryFileStream::CanRead() const {
+    return true;
+}
+
+bool MemorySoundArchive::MemoryFileStream::CanWrite() const {
+    return false;
+}
+
+u32 MemorySoundArchive::MemoryFileStream::Tell() const {
+    return mOffset;
+}
+
+u32 MemorySoundArchive::MemoryFileStream::GetSize() const {
+    return mSize;
+}
+
 } // namespace snd
 } // namespace nw4r
-
-extern "C" int GetRuntimeTypeInfo__Q34nw4r2ut10FileStreamCFv(void) { return 0; }
-extern "C" u32 GetSize__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv(void* self) { return *(u32*)((u8*)self + 0x18); }
-extern "C" u32 Tell__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv(void* self) { return *(u32*)((u8*)self + 0x1c); }
-extern "C" int CanWrite__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv(void) { return 0x0; }
-extern "C" int CanRead__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv(void) { return 0x1; }
-extern "C" int CanAsync__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv(void) { return 0x0; }
-extern "C" int CanCancel__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv(void) { return 0x1; }
-extern "C" int CanSeek__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv(void) { return 0x1; }

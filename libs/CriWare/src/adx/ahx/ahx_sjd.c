@@ -339,12 +339,15 @@ void AHXSJD_ExecHndl(void* self) {
 }
 
 u32 AHXSJD_GetDecDtLen(void* self) {
-    return ((AHXSJD*)self)->decSmpl;
+    // Retail reads offset 0x24, which is the decode-data-length slot
+    // (chan_info[4]); dec_smpl@0x34 is set via AHXSJD_SetDecSmpl instead.
+    return ((AHXSJD*)self)->chanInfo[4];
 }
 
 u32 AHXSJD_GetDecNumSmpl(void* self) {
     AHXSJD* sjd = (AHXSJD*)self;
-    return sjd->outSmplOfst + sjd->outSmplTotal;
+    // Retail: lwz 0x2C; lwz 0x28; add — chan_info[6] + chan_info[5].
+    return sjd->chanInfo[6] + sjd->chanInfo[5];
 }
 
 void AHXSJD_EntryFltFunc(void* self, void* func, void* ctx) {

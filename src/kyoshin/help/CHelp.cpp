@@ -9,9 +9,11 @@ cf::CHelp::CHelp(void* owner, u32 param) {
 namespace cf {
 
 void CHelp::CHelp_UnkVirtualFunc2() {
-    typedef UNKWORD (*SlotFn)(CHelp*);
-    UNKWORD a = reinterpret_cast<SlotFn>(this->mVtbl->mSlots[6])(this);
-    UNKWORD b = reinterpret_cast<SlotFn>(this->mVtbl->mSlots[5])(this);
+    // Retail calls the interface-table slots as virtuals (vptr-shaped table at
+    // +8); the polymorphic view makes MWCC emit the r12 virtual-call sequence.
+    CHelpVtblView* view = reinterpret_cast<CHelpVtblView*>(this);
+    UNKWORD a = view->f18(); // slot 6 first, result kept across the next call
+    UNKWORD b = view->f14();
     func_80134D18(static_cast<u8>(mParam), b, a);
     func_8009D018((u32)mOwner, 1);
 }

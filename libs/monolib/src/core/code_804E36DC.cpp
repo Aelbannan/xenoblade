@@ -59,13 +59,14 @@ extern "C" void func_804E3E2C(CScheduleItem* item) {
 extern "C" int func_804E3EB4(CScheduleItem* item, u8* base,
                              const CScheduleEntryData* data, CSchedule* owner) {
     item->mLifetime = data->mLifetime;
-    u8* entryData = (data->mOffset != 0) ? base + data->mOffset : NULL;
+    u16 offset = data->mOffset;
+    u8* entryData = (offset != 0) ? base + offset : NULL;
     item->mEntryData = entryData;
     item->mOwner = owner;
-    if (entryData != NULL) {
-        return 1;
+    if (entryData == NULL) {
+        return 0;
     }
-    return 0;
+    return 1;
 }
 
 // us-804e844c: load the entry blob into slots (once).

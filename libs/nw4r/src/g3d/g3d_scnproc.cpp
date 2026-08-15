@@ -6,6 +6,10 @@ namespace g3d {
 
 NW4R_G3D_RTTI_DEF(ScnProc);
 
+// Allocates a ScnProc (plus an optional caller-owned user-data area) out of
+// the given MEM allocator. The user-data area follows the object header:
+// both the object size and the user-data size are rounded up to 4 bytes, and
+// the layout is size-aligned so `pSize` reports the exact allocation size.
 ScnProc* ScnProc::Construct(MEMAllocator* pAllocator, u32* pSize,
                             DrawProc pProc, bool opa, bool xlu,
                             u32 userDataSize) {
@@ -34,6 +38,9 @@ ScnProc* ScnProc::Construct(MEMAllocator* pAllocator, u32* pSize,
     return pScnProc;
 }
 
+// Scene-graph message dispatch. Callback tasks (GATHER_SCNOBJ / DRAW_OPA /
+// DRAW_XLU) are serviced directly; everything else falls through to the
+// ScnLeaf default handler.
 void ScnProc::G3dProc(u32 task, u32 param, void* pInfo) {
     if (IsG3dProcDisabled(task)) {
         return;
@@ -69,15 +76,40 @@ void ScnProc::G3dProc(u32 task, u32 param, void* pInfo) {
     }
 }
 
+// Empty body: ScnProc owns no resources of its own. The compiler still emits
+// the implicit ScnLeaf base destruction, which devirtualises straight to
+// ScnObj::~ScnObj (retail's double `this`-null-check + `li r4,0; bl` shape).
 ScnProc::~ScnProc() {}
 
+// Retail RTTI name record for ScnProc ("ScnProc", 8 bytes including NUL).
+// The retail binary keeps it in the shared nw4r_data.s unit, so the data
+// itself is referenced (not defined) there; this TU defines the symbol so
+// the GetTypeObj / IsDerivedFrom relocations resolve to `lbl_eu_8051D7E8`.
+// `extern "C"` is required: the definition sits inside namespace nw4r::g3d,
+// where C++ linkage would mangle the global variable name.
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnProc")> lbl_eu_8051D7E8 = {sizeof("ScnProc"), "ScnProc"};
 
+// Base-chain check mirroring ScnLeaf/ScnObj/G3dObj::IsDerivedFrom. Kept as a
+// static helper (not a virtual-call chain) so MWCC inlines it into
+// ScnProc::IsDerivedFrom and emits the retail parameter-reload pattern
+// (a fresh lwz for the first two comparisons, then register reuse).
+static bool scnLeafIsDerivedFrom(G3dObj::TypeObj other) {
+    if (other == G3dObj::TypeObj(lbl_eu_8051D778)) {
+        return true;
+    }
+    if (other == G3dObj::TypeObj(lbl_eu_8051D768)) {
+        return true;
+    }
+    return other == G3dObj::TypeObj(lbl_eu_8051D640);
+}
+
+// ScnProc is derived from ScnLeaf -> ScnObj -> G3dObj; the RTTI chain is
+// flattened here so MWCC emits the retail straight-line comparison sequence.
 bool ScnProc::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D7E8) ? true
-         : other == TypeObj(lbl_eu_8051D778) ? true
-         : other == TypeObj(lbl_eu_8051D768) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+    if (other == TypeObj(lbl_eu_8051D7E8)) {
+        return true;
+    }
+    return scnLeafIsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj ScnProc::GetTypeObj() const {
@@ -88,8 +120,5 @@ const char* ScnProc::GetTypeName() const {
     return GetTypeObj().GetTypeName();
 }
 
-
 } // namespace g3d
 } // namespace nw4r
-
-// Defined inline via NW4R_G3D_RTTI_DECL_DERIVED macros

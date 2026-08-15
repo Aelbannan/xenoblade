@@ -52,7 +52,7 @@ extern "C" void func_804D8AA4(int type, int flag);
 extern "C" void* func_80496264(void* src, int index);
 extern "C" u32 getMaxAllocSize__Q23mtl10MemManagerFUl(u32 mem);
 extern "C" void* allocate_array__Q23mtl10MemManagerFUlUl(u32 count_bytes, u32 mem);
-extern "C" MemManGlob lbl_eu_8065FC18;
+extern "C" u32 lbl_eu_8065FC18[];
 extern "C" s32 lbl_eu_806659A8;
 extern "C" s32 lbl_eu_806659AC;
 extern "C" s32 lbl_eu_806659B0;

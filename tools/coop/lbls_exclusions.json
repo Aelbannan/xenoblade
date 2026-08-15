@@ -601,7 +601,7 @@
   "address": "lbl_eu_80526300",
   "reason": "defined_in_source",
   "sites": [
-   "libs/monolib/src/coli/code_804A6C60.cpp:36 char[]",
+   "libs/monolib/src/coli/code_804A6C60.cpp:39 char[]",
    "libs/monolib/src/lod/code_8046A530.cpp:45 const char[]",
    "libs/monolib/src/mpfsys/code_8047BB54.cpp:346 const char[]",
    "libs/monolib/src/mpfsys/code_8047BB54.hpp:41 const char[]",
@@ -625,7 +625,7 @@
   "address": "lbl_eu_80526324",
   "reason": "defined_in_source",
   "sites": [
-   "libs/monolib/src/coli/code_804A6C60.cpp:35 char[]",
+   "libs/monolib/src/coli/code_804A6C60.cpp:38 char[]",
    "libs/monolib/src/lod/code_8046A530.cpp:44 const char[]",
    "libs/monolib/src/mpfsys/code_8047BB54.cpp:345 const char[]",
    "libs/monolib/src/mpfsys/code_8047BB54.hpp:40 const char[]",
@@ -715,7 +715,7 @@
   "address": "lbl_eu_80529658",
   "reason": "defined_in_source",
   "sites": [
-   "libs/monolib/src/coli/code_804B2FF0.cpp:67 char[]",
+   "libs/monolib/src/coli/code_804B2FF0.cpp:64 char[]",
    "libs/monolib/src/scn/CMdlDynamics.cpp:33 const char[]",
    "libs/monolib/src/scn/CScnEffectActNw4r.hpp:27 const char[]",
    "libs/monolib/src/scn/CScnTexWorkMan.cpp:30 char[]"
@@ -1108,22 +1108,6 @@
   "reason": "defined_in_source",
   "sites": [
    "src/kyoshin/CUICfManager.cpp:51 char[]"
-  ]
- },
- {
-  "address": "lbl_eu_8052E568",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/CItemBoxInfo.hpp:179 char[]",
-   "src/kyoshin/code_80135FDC.cpp:63 u8[]"
-  ]
- },
- {
-  "address": "lbl_eu_8052E590",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/CItemBoxInfo.hpp:178 char[]",
-   "src/kyoshin/code_80135FDC.cpp:64 u8[]"
   ]
  },
  {
@@ -1909,7 +1893,7 @@
  },
  {
   "address": "lbl_eu_80568CF0",
-  "reason": "type_conflict",
+  "reason": "non_c99_type",
   "sites": [
    "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c:155 u32[]",
    "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_seeki.c:41 SfseekiCbArg"
@@ -2020,7 +2004,7 @@
   "address": "lbl_eu_8056E178",
   "reason": "defined_in_source",
   "sites": [
-   "libs/monolib/src/coli/code_804B2FF0.cpp:65 char[]",
+   "libs/monolib/src/coli/code_804B2FF0.cpp:62 char[]",
    "libs/monolib/src/scn/CMdlDynamics.cpp:23 const char[]",
    "libs/monolib/src/scn/CMdlMouth.hpp:29 const char[]",
    "libs/monolib/src/scn/CScnEffectActNw4r.hpp:23 const char[]",
@@ -2168,14 +2152,14 @@
   "address": "lbl_eu_8056F1B8",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/src/coli/code_804A6C60.cpp:165 LodA6C60Fn[]"
+   "libs/monolib/src/coli/code_804A6C60.cpp:222 LodA6C60Fn[]"
   ]
  },
  {
   "address": "lbl_eu_8056F1D8",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/src/coli/code_804A6C60.cpp:724 CColiDispatchFn[]"
+   "libs/monolib/src/coli/code_804A6C60.cpp:952 CColiDispatchFn[]"
   ]
  },
  {
@@ -2183,14 +2167,6 @@
   "reason": "non_c99_type",
   "sites": [
    "libs/monolib/src/coli/CColiProc.cpp:97 CColiDataFn[]"
-  ]
- },
- {
-  "address": "lbl_eu_8056F4F0",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/monolib/include/monolib/coli/code_804B2FF0.hpp:26 u8",
-   "libs/monolib/src/coli/code_804B2FF0.cpp:39 u32[4]"
   ]
  },
  {
@@ -2257,14 +2233,6 @@
   ]
  },
  {
-  "address": "lbl_eu_80570068",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/monolib/include/monolib/core/CSchedule.hpp:12 u8[16]",
-   "libs/monolib/src/core/CSchedule.hpp:9 void*"
-  ]
- },
- {
   "address": "lbl_eu_805701FC",
   "reason": "non_c99_type",
   "sites": [
@@ -2324,18 +2292,10 @@
  },
  {
   "address": "lbl_eu_80571628",
-  "reason": "type_conflict",
+  "reason": "non_c99_type",
   "sites": [
    "src/kyoshin/cf/CfGameManagerUnityHelpers.hpp:2088 BdatTextEntry",
    "src/kyoshin/help/CHelp_EndEvent.cpp:5 char[0x24]"
-  ]
- },
- {
-  "address": "lbl_eu_8057164C",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/cf/CfGameManagerUnityHelpers.hpp:2956 float[3]",
-   "src/kyoshin/cf/CfNandManager.hpp:125 u32[3]"
   ]
  },
  {
@@ -2367,14 +2327,6 @@
   ]
  },
  {
-  "address": "lbl_eu_80571810",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/cf/CtrlMoveBase.cpp:382 char[]",
-   "src/kyoshin/cf/CtrlMoveEne.hpp:1533 u8[0x38]"
-  ]
- },
- {
   "address": "lbl_eu_80572B94",
   "reason": "non_c99_type",
   "sites": [
@@ -2393,7 +2345,7 @@
   "address": "lbl_eu_80573D18",
   "reason": "defined_in_source",
   "sites": [
-   "src/kyoshin/CItemBoxGrid.cpp:131 const char[]",
+   "src/kyoshin/CItemBoxGrid.cpp:132 const char[]",
    "src/kyoshin/CMiniMap.cpp:108 void*[]",
    "src/kyoshin/CQuestWindow.hpp:214 u32[]",
    "src/kyoshin/CUICfManager.cpp:311 void*[]",
@@ -2496,14 +2448,6 @@
   ]
  },
  {
-  "address": "lbl_eu_805E5354",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/CriWare/src/adx/adxt/adx_bahx.c:26 char[]",
-   "libs/CriWare/src/adx/ahx/ahx_link.c:7 u32"
-  ]
- },
- {
   "address": "lbl_eu_805E64A8",
   "reason": "non_c99_type",
   "sites": [
@@ -2575,13 +2519,6 @@
   ]
  },
  {
-  "address": "lbl_eu_805F2AF8",
-  "reason": "non_c99_type",
-  "sites": [
-   "libs/CriWare/src/adx/wiirna/rna_err.c:11 RNAERR_Globals"
-  ]
- },
- {
   "address": "lbl_eu_805F3A50",
   "reason": "non_c99_type",
   "sites": [
@@ -2597,7 +2534,7 @@
  },
  {
   "address": "lbl_eu_805FF3A0",
-  "reason": "type_conflict",
+  "reason": "non_c99_type",
   "sites": [
    "libs/CriWare/src/sofdec/mwply/mwsfdcre.c:138 TraceCb*",
    "libs/CriWare/src/sofdec/mwply/mwsfdply.c:123 SfdTraceObj*",
@@ -2618,67 +2555,6 @@
   "reason": "non_c99_type",
   "sites": [
    "libs/CriWare/src/sofdec/mwply/mwsfdsst.c:57 SstCoreTblEntry[]"
-  ]
- },
- {
-  "address": "lbl_eu_8060464C",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_bdec.c:14 u32[]",
-   "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_lib.c:157 u32"
-  ]
- },
- {
-  "address": "lbl_eu_80604650",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_bdec.c:13 u32[]",
-   "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_lib.c:158 u32"
-  ]
- },
- {
-  "address": "lbl_eu_80604654",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_bdec.c:12 u32[]",
-   "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_lib.c:159 u32"
-  ]
- },
- {
-  "address": "lbl_eu_80604658",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_bdec.c:11 u32[]",
-   "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_lib.c:160 u32"
-  ]
- },
- {
-  "address": "lbl_eu_8060465C",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_bdec.c:10 u32[]",
-   "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_lib.c:161 u32"
-  ]
- },
- {
-  "address": "lbl_eu_80604660",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_bdec.c:9 u32[]",
-   "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_lib.c:162 u32"
-  ]
- },
- {
-  "address": "lbl_eu_80606E38",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_adxt.c:348 u32[]",
-   "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_hds.c:196 char[]",
-   "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_lib.c:21 u32[]",
-   "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_ply.c:92 u8[]",
-   "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_set.c:14 u32[]",
-   "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_tim.c:16 char[]",
-   "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_tmr.c:8 u32[]"
   ]
  },
  {
@@ -2711,7 +2587,7 @@
  },
  {
   "address": "lbl_eu_8061DFA0",
-  "reason": "type_conflict",
+  "reason": "non_c99_type",
   "sites": [
    "libs/nw4r/src/g3d/g3d_state.cpp:130 CameraMtxStateData",
    "libs/nw4r/src/g3d/g3d_state.cpp:845 const unsigned char[]",
@@ -2782,22 +2658,6 @@
   ]
  },
  {
-  "address": "lbl_eu_80658368",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/monolib/src/lod/LODMemMan.cpp:27 int[]",
-   "libs/monolib/src/lod/UnkClass_80466348.cpp:92 u32[3]"
-  ]
- },
- {
-  "address": "lbl_eu_80658374",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/monolib/src/lod/LODMemMan.cpp:28 int[]",
-   "libs/monolib/src/lod/UnkClass_80466348.cpp:93 u32[3]"
-  ]
- },
- {
   "address": "lbl_eu_80658380",
   "reason": "defined_in_source",
   "sites": [
@@ -2809,14 +2669,6 @@
   "reason": "defined_in_source",
   "sites": [
    "libs/monolib/src/lod/UnkClass_80466348.cpp:98 f32[3]"
-  ]
- },
- {
-  "address": "lbl_eu_80658410",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/monolib/src/mpfsys/UnkClass_80471EC8.cpp:227 MpfsysCamMatrixRegion",
-   "libs/monolib/src/mpfsys/code_8047BB54.cpp:198 f32[3]"
   ]
  },
  {
@@ -2856,11 +2708,10 @@
   ]
  },
  {
-  "address": "lbl_eu_8065D138",
-  "reason": "type_conflict",
+  "address": "lbl_eu_8065D0A0",
+  "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/include/monolib/coli/code_804B2FF0.hpp:25 CColiWalkState*",
-   "libs/monolib/src/coli/code_804B2FF0.cpp:38 CColiWalkState"
+   "libs/monolib/src/coli/code_804A6C60.cpp:80 CColiGlobal805D0A0"
   ]
  },
  {
@@ -2878,18 +2729,8 @@
   ]
  },
  {
-  "address": "lbl_eu_8065F32C",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/monolib/include/monolib/scn/code_804BC9EC.hpp:20 ScnResData",
-   "libs/monolib/src/scn/code_804BC9EC.hpp:37 ScnResData",
-   "libs/monolib/src/scn/code_804BD8E8.cpp:15 char[]",
-   "libs/monolib/src/scn/code_804BD8E8.cpp:93 char[]"
-  ]
- },
- {
   "address": "lbl_eu_8065F3F0",
-  "reason": "type_conflict",
+  "reason": "non_c99_type",
   "sites": [
    "libs/monolib/src/coli/code_804B59C8.cpp:386 u32[6]",
    "libs/monolib/src/coli/code_804BAE10.cpp:17 Vec3"
@@ -2904,7 +2745,7 @@
  },
  {
   "address": "lbl_eu_8065F428",
-  "reason": "type_conflict",
+  "reason": "non_c99_type",
   "sites": [
    "libs/monolib/src/coli/code_804B59C8.cpp:127 ScnResourceEntry[32]",
    "libs/monolib/src/scn/code_804BD8E8.cpp:108 unsigned char[]",
@@ -2927,25 +2768,17 @@
   ]
  },
  {
-  "address": "lbl_eu_8065FC18",
-  "reason": "type_conflict",
+  "address": "lbl_eu_8065FBE8",
+  "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/include/monolib/effect/code_804CC2B8.hpp:55 MemManGlob",
-   "libs/monolib/src/core/ScheduleList.cpp:151 u16[]",
-   "libs/monolib/src/core/code_804DEDA8.cpp:94 CSchedMemGlob",
-   "libs/monolib/src/effect/CETrail.cpp:41 CETrailHeapInfo",
-   "src/kyoshin/cf/CfRes.hpp:176 u32[]",
-   "src/kyoshin/cf/IResInfo.cpp:18 u32[]",
-   "src/kyoshin/makecrystal/CModelDispMakeCrystal.cpp:263 u32[]",
-   "src/kyoshin/menu/parts/CModelDispEquip.hpp:378 u32[]"
+   "libs/monolib/src/effect/code_804C8684.cpp:56 CEffectBlk[3]"
   ]
  },
  {
-  "address": "lbl_eu_8065FCD0",
-  "reason": "type_conflict",
+  "address": "lbl_eu_8065FC08",
+  "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/src/effect/CETrail.cpp:68 FogState",
-   "libs/monolib/src/effect/code_804D854C.cpp:21 FogDesc"
+   "libs/monolib/src/effect/code_804C8684.cpp:29 CEffectParam"
   ]
  },
  {
@@ -3009,46 +2842,6 @@
   "reason": "defined_in_source",
   "sites": [
    "libs/monolib/src/nand/CNReqtaskSaveBanner.cpp:46 ml::FixStr<32>"
-  ]
- },
- {
-  "address": "lbl_eu_806618D8",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/plugin/ocUnit.cpp:152 void*",
-   "src/kyoshin/plugin/pluginBtl.cpp:80 char[]",
-   "src/kyoshin/plugin/pluginUi.hpp:50 const void*"
-  ]
- },
- {
-  "address": "lbl_eu_806618F0",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/CTaskGameEff.hpp:60 const void*",
-   "src/kyoshin/cf/CBattleManager.cpp:242 char[]",
-   "src/kyoshin/cf/CVision.hpp:424 const void*",
-   "src/kyoshin/cf/object/CfObjectEff.hpp:40 const void*",
-   "src/kyoshin/cfsys/CfObjectImplWalker.hpp:1169 const void*",
-   "src/kyoshin/plugin/ocUnit.cpp:153 void*",
-   "src/kyoshin/plugin/pluginUi.hpp:51 const void*"
-  ]
- },
- {
-  "address": "lbl_eu_80661970",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/CTaskGameEff.hpp:59 const void*",
-   "src/kyoshin/cf/CBattleManager.cpp:241 char[]",
-   "src/kyoshin/cf/CVision.hpp:462 const void*",
-   "src/kyoshin/cf/object/CfObjectEff.hpp:39 const void*"
-  ]
- },
- {
-  "address": "lbl_eu_80661A40",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/cf/CfRes.hpp:164 char",
-   "src/kyoshin/code_800AA008.cpp:14 const char[]"
   ]
  },
  {
@@ -3489,14 +3282,6 @@
   ]
  },
  {
-  "address": "lbl_eu_80663DF0",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/cf/CfCam.cpp:290 int",
-   "src/kyoshin/cf/CfCamEvent_1.hpp:498 CfCamEventGlobal*"
-  ]
- },
- {
   "address": "lbl_eu_80663DF8",
   "reason": "defined_in_source",
   "sites": [
@@ -3802,22 +3587,6 @@
   ]
  },
  {
-  "address": "lbl_eu_80663F20",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/CMiniMap.cpp:1756 u32",
-   "src/kyoshin/menu/CMenuArtsSelect.hpp:149 CMenuArtsSelect*"
-  ]
- },
- {
-  "address": "lbl_eu_80663F24",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/code_800B06A4.cpp:147 u32",
-   "src/kyoshin/menu/CMenuArtsSelect.hpp:150 UnkArtsSelectRef*"
-  ]
- },
- {
   "address": "lbl_eu_80663F98",
   "reason": "defined_in_source",
   "sites": [
@@ -3885,32 +3654,13 @@
   "address": "lbl_eu_80664090",
   "reason": "defined_in_source",
   "sites": [
-   "src/kyoshin/CItemBoxInfo.cpp:121 void*",
+   "src/kyoshin/CItemBoxInfo.cpp:127 void*",
    "src/kyoshin/CPartyState.hpp:166 char*",
    "src/kyoshin/CPassiveSkill.hpp:539 void*",
    "src/kyoshin/CSaveLoad.cpp:38 u8[]",
    "src/kyoshin/makecrystal/CMCCrystalSupport.cpp:15 void*",
    "src/kyoshin/menu/CMenuBattleCommu.hpp:188 void*",
    "src/kyoshin/menu/CMenuPTChangeNotice.hpp:154 u8*"
-  ]
- },
- {
-  "address": "lbl_eu_80664094",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/cf/CPartsChange.hpp:230 u32",
-   "src/kyoshin/menu/CMenuQstCnt.hpp:135 void*"
-  ]
- },
- {
-  "address": "lbl_eu_80664098",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/CItemBoxGrid.cpp:97 u32",
-   "src/kyoshin/CPartyState.hpp:167 char*",
-   "src/kyoshin/CUIWindowManager.hpp:142 u8*",
-   "src/kyoshin/code_80135FDC.hpp:149 u32",
-   "src/kyoshin/menu/CMenuPTChangeNotice.hpp:155 u8*"
   ]
  },
  {
@@ -3928,7 +3678,7 @@
    "src/kyoshin/CCollepedia.hpp:147 void*",
    "src/kyoshin/CFloorMap.cpp:507 u32",
    "src/kyoshin/CFloorMap.hpp:624 u32",
-   "src/kyoshin/CItemBoxInfo.cpp:99 void*",
+   "src/kyoshin/CItemBoxInfo.cpp:100 void*",
    "src/kyoshin/CItemBoxLine.hpp:392 void*",
    "src/kyoshin/CKizunaTalkList.hpp:127 u8*",
    "src/kyoshin/CMapSel.hpp:152 void*",
@@ -3963,21 +3713,13 @@
   ]
  },
  {
-  "address": "lbl_eu_806640CC",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/cf/CPartsChange.hpp:13 void*",
-   "src/kyoshin/menu/CMenuEnemyState.hpp:276 u32"
-  ]
- },
- {
   "address": "lbl_eu_806640D8",
   "reason": "defined_in_source",
   "sites": [
    "src/kyoshin/CArtsInfo.hpp:435 u32",
-   "src/kyoshin/CEquipItemBox.hpp:433 u32",
-   "src/kyoshin/CItemBoxGrid.cpp:98 u32",
-   "src/kyoshin/CItemBoxInfo.cpp:104 void*",
+   "src/kyoshin/CEquipItemBox.hpp:599 u32",
+   "src/kyoshin/CItemBoxGrid.cpp:99 u32",
+   "src/kyoshin/CItemBoxInfo.cpp:105 void*",
    "src/kyoshin/CItemBoxLine.hpp:394 void*",
    "src/kyoshin/CQstLogInfo.hpp:60 u32",
    "src/kyoshin/CQuestWindow.hpp:222 u32",
@@ -3989,25 +3731,14 @@
   ]
  },
  {
-  "address": "lbl_eu_806640E0",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/menu/CMenuBattleDamage.hpp:345 u32",
-   "src/kyoshin/menu/CMenuEnemyState.hpp:260 u8*",
-   "src/kyoshin/menu/CMenuLandTelop.hpp:177 u8*",
-   "src/kyoshin/menu/CMenuUpdate.cpp:22 u32",
-   "src/kyoshin/menu/CMenuVision.cpp:67 void*"
-  ]
- },
- {
   "address": "lbl_eu_806640EC",
   "reason": "defined_in_source",
   "sites": [
    "src/kyoshin/CCollepedia.hpp:167 u32",
    "src/kyoshin/CEquipChange.hpp:302 u32",
-   "src/kyoshin/CEquipItemBox.hpp:526 u32",
-   "src/kyoshin/CItemBoxGrid.cpp:99 u32",
-   "src/kyoshin/CItemBoxInfo.cpp:101 void*",
+   "src/kyoshin/CEquipItemBox.hpp:714 u32",
+   "src/kyoshin/CItemBoxGrid.cpp:100 u32",
+   "src/kyoshin/CItemBoxInfo.cpp:102 void*",
    "src/kyoshin/CItemBoxLine.hpp:393 void*",
    "src/kyoshin/CQstLogInfo.hpp:61 u32",
    "src/kyoshin/CQuestWindow.hpp:223 u32",
@@ -4021,9 +3752,9 @@
   "reason": "defined_in_source",
   "sites": [
    "src/kyoshin/CArtsInfo.cpp:33 u32",
-   "src/kyoshin/CEquipItemBox.hpp:551 u32",
-   "src/kyoshin/CItemBoxGrid.cpp:134 u32",
-   "src/kyoshin/CItemBoxInfo.cpp:100 void*",
+   "src/kyoshin/CEquipItemBox.hpp:739 u32",
+   "src/kyoshin/CItemBoxGrid.cpp:135 u32",
+   "src/kyoshin/CItemBoxInfo.cpp:101 void*",
    "src/kyoshin/CItemBoxLine.hpp:524 u32",
    "src/kyoshin/cf/CfBdat.hpp:28 void*",
    "src/kyoshin/cf/CfGameManager.cpp:708 u32",
@@ -4036,9 +3767,9 @@
   "address": "lbl_eu_806640F8",
   "reason": "defined_in_source",
   "sites": [
-   "src/kyoshin/CEquipItemBox.hpp:434 u32",
-   "src/kyoshin/CItemBoxGrid.cpp:101 u32",
-   "src/kyoshin/CItemBoxInfo.cpp:103 void*",
+   "src/kyoshin/CEquipItemBox.hpp:600 u32",
+   "src/kyoshin/CItemBoxGrid.cpp:102 u32",
+   "src/kyoshin/CItemBoxInfo.cpp:104 void*",
    "src/kyoshin/CItemBoxLine.hpp:525 u32",
    "src/kyoshin/cf/CfBdat.hpp:29 void*",
    "src/kyoshin/code_80135FDC.hpp:152 u32",
@@ -4057,23 +3788,13 @@
   "reason": "defined_in_source",
   "sites": [
    "src/kyoshin/CCollepedia.hpp:148 void*",
-   "src/kyoshin/CItemBoxGrid.cpp:102 u32",
-   "src/kyoshin/CItemBoxInfo.cpp:98 void*",
+   "src/kyoshin/CItemBoxGrid.cpp:103 u32",
+   "src/kyoshin/CItemBoxInfo.cpp:99 void*",
    "src/kyoshin/CItemBoxLine.hpp:391 void*",
    "src/kyoshin/CPresentWin.hpp:72 u32",
    "src/kyoshin/CQstLogInfo.hpp:62 u32",
    "src/kyoshin/CQuestWindow.hpp:224 u32",
    "src/kyoshin/code_80135FDC.cpp:53 u32"
-  ]
- },
- {
-  "address": "lbl_eu_80664110",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/CItemBoxGrid.cpp:103 u32",
-   "src/kyoshin/CItemBoxInfo.cpp:120 void*",
-   "src/kyoshin/CItemBoxLine.hpp:528 u32",
-   "src/kyoshin/code_80135FDC.hpp:156 u32"
   ]
  },
  {
@@ -4109,22 +3830,6 @@
   "reason": "defined_in_source",
   "sites": [
    "src/kyoshin/cf/CfBdat.hpp:34 void*"
-  ]
- },
- {
-  "address": "lbl_eu_80664138",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/cf/CfGimmickJump.cpp:15 void*",
-   "src/kyoshin/code_801F3BE0.cpp:112 u8*"
-  ]
- },
- {
-  "address": "lbl_eu_80664144",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/cf/CfGimmickEne.hpp:235 void*",
-   "src/kyoshin/code_801F3BE0.cpp:115 u8*"
   ]
  },
  {
@@ -4209,14 +3914,6 @@
   "reason": "defined_in_source",
   "sites": [
    "src/kyoshin/cf/CTaskREvent.hpp:172 u32"
-  ]
- },
- {
-  "address": "lbl_eu_80664258",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/cf/CInfoCf.hpp:140 u32",
-   "src/kyoshin/menu/CMenuItem.cpp:9 f32"
   ]
  },
  {
@@ -4525,14 +4222,6 @@
   ]
  },
  {
-  "address": "lbl_eu_806649F4",
-  "reason": "type_conflict",
-  "sites": [
-   "src/kyoshin/CSaveLoad.hpp:220 CSaveLoad*",
-   "src/kyoshin/CTaskGame.hpp:572 u32"
-  ]
- },
- {
   "address": "lbl_eu_80664A00",
   "reason": "defined_in_source",
   "sites": [
@@ -4541,7 +4230,7 @@
  },
  {
   "address": "lbl_eu_80664A10",
-  "reason": "type_conflict",
+  "reason": "non_c99_type",
   "sites": [
    "src/kyoshin/cf/CHelpManager.hpp:292 cf::CHelpManager*",
    "src/kyoshin/help/CHelp_GameOver.hpp:19 CHelpFlagBag*",
@@ -4971,14 +4660,6 @@
   ]
  },
  {
-  "address": "lbl_eu_80665540",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/nw4r/include/nw4r/ut/ut_FileStream.h:14 nw4r::ut::detail::RuntimeTypeInfo",
-   "libs/nw4r/include/nw4r/ut/ut_IOStream.h:10 detail::RuntimeTypeInfo"
-  ]
- },
- {
   "address": "lbl_eu_8066557C",
   "reason": "defined_in_source",
   "sites": [
@@ -5296,44 +4977,12 @@
   ]
  },
  {
-  "address": "lbl_eu_8066581C",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/monolib/include/monolib/lod/code_804645CC.hpp:29 u32",
-   "libs/monolib/src/lod/UnkClass_8046368C.cpp:59 u8*"
-  ]
- },
- {
-  "address": "lbl_eu_80665820",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/monolib/include/monolib/lod/code_804645CC.hpp:30 u32",
-   "libs/monolib/src/lod/UnkClass_8046368C.cpp:60 u8*"
-  ]
- },
- {
-  "address": "lbl_eu_80665824",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/monolib/include/monolib/lod/code_804645CC.hpp:31 u32",
-   "libs/monolib/src/lod/UnkClass_8046368C.cpp:61 u8*"
-  ]
- },
- {
   "address": "lbl_eu_80665840",
   "reason": "defined_in_source",
   "sites": [
    "libs/monolib/src/mpfsys/MPFDrawDisplayList.cpp:370 u8*",
    "libs/monolib/src/mpfsys/MPFDrawMdlColor.cpp:81 u8*",
    "libs/monolib/src/mpfsys/UnkClass_80471EC8.cpp:74 u8*"
-  ]
- },
- {
-  "address": "lbl_eu_8066584C",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/monolib/src/mpfsys/MPFDrawBillLayTex.cpp:56 Vec*",
-   "libs/monolib/src/mpfsys/UnkClass_80471EC8.cpp:84 u8*"
   ]
  },
  {
@@ -5492,42 +5141,10 @@
   ]
  },
  {
-  "address": "lbl_eu_80665940",
-  "reason": "type_conflict",
+  "address": "lbl_eu_80665934",
+  "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/src/coli/CColiProc.cpp:114 u32",
-   "libs/monolib/src/coli/code_804B2FF0.cpp:143 char*"
-  ]
- },
- {
-  "address": "lbl_eu_8066594C",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/monolib/include/monolib/coli/code_804B2FF0.hpp:19 CColiHx*",
-   "libs/monolib/src/coli/CColiProc.cpp:115 u32"
-  ]
- },
- {
-  "address": "lbl_eu_80665958",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/monolib/include/monolib/coli/code_804B2FF0.hpp:37 int",
-   "libs/monolib/src/coli/CColiProc.cpp:117 CColiAllocOwner*",
-   "src/kyoshin/cf/CfGimmickLock.hpp:216 void*",
-   "src/kyoshin/cf/CfObjectEnumList.hpp:237 void*",
-   "src/kyoshin/cf/CtrlAct.hpp:477 void*",
-   "src/kyoshin/cf/CtrlMoveEne.hpp:1532 cf::CFunc8008CDE8Probe*",
-   "src/kyoshin/cf/CtrlMovePC.hpp:250 void*",
-   "src/kyoshin/code_800A3B24.cpp:88 ColiProbeObj*"
-  ]
- },
- {
-  "address": "lbl_eu_80665988",
-  "reason": "type_conflict",
-  "sites": [
-   "libs/monolib/src/coli/code_804B59C8.cpp:21 s32",
-   "libs/monolib/src/scn/code_804BD8E8.cpp:102 u32",
-   "libs/monolib/src/scn/code_804BD8E8.cpp:16 u32"
+   "libs/monolib/src/coli/code_804A6C60.cpp:105 CColiSweepCtrl*"
   ]
  },
  {
@@ -8436,7 +8053,7 @@
   "address": "lbl_eu_8066A208",
   "reason": "defined_in_source",
   "sites": [
-   "libs/monolib/src/coli/code_804A6C60.cpp:33 const float",
+   "libs/monolib/src/coli/code_804A6C60.cpp:36 const float",
    "libs/monolib/src/effect/code_804C8718.cpp:215 f32",
    "libs/monolib/src/effect/code_804CC2B8.cpp:33 f32",
    "libs/monolib/src/effect/code_804DB938.cpp:35 f32",
@@ -9422,11 +9039,18 @@
   ]
  },
  {
+  "address": "lbl_eu_8066AEA0",
+  "reason": "defined_in_source",
+  "sites": [
+   "libs/monolib/src/coli/code_804A6C60.cpp:56 const float"
+  ]
+ },
+ {
   "address": "lbl_eu_8066AEB0",
   "reason": "defined_in_source",
   "sites": [
    "libs/monolib/include/monolib/coli/code_804B2FF0.hpp:22 f32",
-   "libs/monolib/src/coli/code_804B2FF0.cpp:42 const f32"
+   "libs/monolib/src/coli/code_804B2FF0.cpp:39 const f32"
   ]
  },
  {
@@ -9469,6 +9093,41 @@
   "reason": "defined_in_source",
   "sites": [
    "libs/monolib/src/coli/code_804BAE10.cpp:22 const f32"
+  ]
+ },
+ {
+  "address": "lbl_eu_8066B088",
+  "reason": "defined_in_source",
+  "sites": [
+   "libs/monolib/src/effect/code_804C8684.cpp:57 f32"
+  ]
+ },
+ {
+  "address": "lbl_eu_8066B08C",
+  "reason": "defined_in_source",
+  "sites": [
+   "libs/monolib/src/effect/code_804C8684.cpp:58 f32"
+  ]
+ },
+ {
+  "address": "lbl_eu_8066B090",
+  "reason": "defined_in_source",
+  "sites": [
+   "libs/monolib/src/effect/code_804C8684.cpp:59 f32"
+  ]
+ },
+ {
+  "address": "lbl_eu_8066B094",
+  "reason": "defined_in_source",
+  "sites": [
+   "libs/monolib/src/effect/code_804C8684.cpp:60 f32"
+  ]
+ },
+ {
+  "address": "lbl_eu_8066B098",
+  "reason": "defined_in_source",
+  "sites": [
+   "libs/monolib/src/effect/code_804C8684.cpp:61 f32"
   ]
  },
  {
@@ -9661,6 +9320,13 @@
   ]
  },
  {
+  "address": "lbl_eu_806641A8",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuGetItem.hpp:98 CMenuGetItem*"
+  ]
+ },
+ {
   "address": "lbl_eu_80503F60",
   "reason": "non_c99_type",
   "sites": [
@@ -9686,6 +9352,451 @@
   "reason": "non_c99_type",
   "sites": [
    "src/kyoshin/cf/CVision.hpp:475 cf::CVisionPtmf"
+  ]
+ },
+ {
+  "address": "lbl_eu_80573D88",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/cf/CArtsSet.cpp:112 cf::CArtsParam"
+  ]
+ },
+ {
+  "address": "lbl_eu_80664464",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/CBgTex.hpp:19 nw4r::lyt::ArcResourceAccessor*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80663F48",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuBattlePlayerState.cpp:32 CMenuBattlePlayerState*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80664448",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/cf/CfPadTask.cpp:28 cf::CfPadTask*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80664268",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/cf/CTaskREvtSequence.hpp:415 UnkState_80664268*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80663D40",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/CTaskGameEff.hpp:123 CTaskGameEff*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80663FC0",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuQuestLog.hpp:51 CMenuQuestLog*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80663F20",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/CMiniMap.cpp:1756 u32",
+   "src/kyoshin/menu/CMenuArtsSelect.hpp:149 CMenuArtsSelect*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80663F24",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/code_800B06A4.cpp:147 u32",
+   "src/kyoshin/menu/CMenuArtsSelect.hpp:150 UnkArtsSelectRef*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80664388",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuVision.cpp:21 CMenuVision*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80664768",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/cf/CfNandManager.hpp:96 cf::CfNandManager*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80663FD4",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/CQuestWindow.hpp:422 QuestWindowState*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80664250",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/cf/CInfoCf.hpp:139 cf::CInfoCf*"
+  ]
+ },
+ {
+  "address": "lbl_eu_8053B3A0",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/help/CHelp.hpp:66 cf::CHelpVtbl"
+  ]
+ },
+ {
+  "address": "lbl_eu_8053B5F8",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/help/CHelp_LandMark.cpp:7 cf::CHelpVtbl"
+  ]
+ },
+ {
+  "address": "lbl_eu_80664240",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/cf/CTaskREvent.hpp:171 CEventMgr*"
+  ]
+ },
+ {
+  "address": "lbl_eu_806648E0",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/CSysWinBuff.cpp:13 CSysWinBuff*"
+  ]
+ },
+ {
+  "address": "lbl_eu_806641A0",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuLandTelop.hpp:176 CLandTelopGlobal*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80664A60",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuBattleChain.cpp:26 CMenuBattleChain*",
+   "src/kyoshin/menu/CMenuBattleChain.hpp:88 CMenuBattleChain*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80663D58",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/cf/CTaskEnvironment.hpp:39 CTaskEnvGlobal*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80663FA8",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuKeyAssign.hpp:120 CMenuKeyAssign*"
+  ]
+ },
+ {
+  "address": "lbl_eu_8066423C",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/CCol6Invite.hpp:41 CCol6Invite*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80577308",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/COption.hpp:259 Class_80296898"
+  ]
+ },
+ {
+  "address": "lbl_eu_806641B0",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/cf/object/CAIAction.hpp:119 cf::CAIActionTable*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80538290",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/cf/chain/CChainActorList.hpp:221 CChainVtblActor"
+  ]
+ },
+ {
+  "address": "lbl_eu_80538338",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/cf/chain/CChainActorList.hpp:224 CChainVtblSub"
+  ]
+ },
+ {
+  "address": "lbl_eu_80538458",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/cf/chain/CChainActorList.hpp:223 CChainVtblActor"
+  ]
+ },
+ {
+  "address": "lbl_eu_805384E0",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/cf/chain/CChainActorList.hpp:222 CChainVtblActor"
+  ]
+ },
+ {
+  "address": "lbl_eu_80664C10",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/cf/CfHikariItemManager.hpp:127 cf::CfHikariItemManager*"
+  ]
+ },
+ {
+  "address": "lbl_eu_80527830",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/cf/CtrlMoveEne.hpp:1696 const CfMoveHookPtmfsAll"
+  ]
+ },
+ {
+  "address": "lbl_eu_80524B98",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/plugin/pluginDeb.cpp:5 PluginFuncData[]"
+  ]
+ },
+ {
+  "address": "lbl_eu_80524BB8",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/plugin/pluginWait.cpp:8 PluginFuncData[]"
+  ]
+ },
+ {
+  "address": "lbl_eu_80524BF8",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/plugin/ocBuiltin.cpp:7 OCData"
+  ]
+ },
+ {
+  "address": "lbl_eu_80524C60",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/plugin/ocThread.cpp:5 OCData"
+  ]
+ },
+ {
+  "address": "lbl_eu_80524CE8",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/plugin/ocMsg.cpp:219 OCData[]"
+  ]
+ },
+ {
+  "address": "lbl_eu_80524D80",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/plugin/ocMsg.cpp:220 OCData[]"
+  ]
+ },
+ {
+  "address": "lbl_eu_80524E40",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/plugin/ocBdat.hpp:97 OCData"
+  ]
+ },
+ {
+  "address": "lbl_eu_80525D58",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/plugin/ocCfp.cpp:96 OCData[]"
+  ]
+ },
+ {
+  "address": "lbl_eu_80525F98",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/plugin/pluginCfs.cpp:1589 PluginFuncData[]"
+  ]
+ },
+ {
+  "address": "lbl_eu_805261B8",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/plugin/pluginMath.cpp:8 PluginFuncData[]"
+  ]
+ },
+ {
+  "address": "lbl_eu_80526560",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/plugin/pluginCam.cpp:10 PluginFuncData[]"
+  ]
+ },
+ {
+  "address": "lbl_eu_80526690",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/plugin/pluginPad.cpp:7 PluginFuncData[]"
+  ]
+ },
+ {
+  "address": "lbl_eu_80532348",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/plugin/pluginTime.cpp:9 PluginFuncData[]"
+  ]
+ },
+ {
+  "address": "lbl_eu_80533490",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/plugin/pluginGame.cpp:5 PluginFuncData[]"
+  ]
+ },
+ {
+  "address": "lbl_eu_8053B880",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/plugin/pluginVoice.cpp:10 PluginFuncData[]"
+  ]
+ },
+ {
+  "address": "lbl_eu_8050FF60",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/makecrystal/CMCGetItemBox.hpp:231 CMCItemMsgTbl"
+  ]
+ },
+ {
+  "address": "lbl_eu_806643A0",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuGetItemMulti.hpp:166 CMenuGetItemFourShorts"
+  ]
+ },
+ {
+  "address": "lbl_eu_806643A8",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuGetItemMulti.hpp:167 CMenuGetItemFourShorts"
+  ]
+ },
+ {
+  "address": "lbl_eu_806643B0",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuGetItemMulti.hpp:168 CMenuGetItemFourShorts"
+  ]
+ },
+ {
+  "address": "lbl_eu_806643B8",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuGetItemMulti.hpp:169 CMenuGetItemFourShorts"
+  ]
+ },
+ {
+  "address": "lbl_eu_806643C0",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuGetItemMulti.hpp:170 CMenuGetItemFourShorts"
+  ]
+ },
+ {
+  "address": "lbl_eu_806643C8",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuGetItemMulti.hpp:171 CMenuGetItemFourShorts"
+  ]
+ },
+ {
+  "address": "lbl_eu_806643D0",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuGetItemMulti.hpp:172 CMenuGetItemFourShorts"
+  ]
+ },
+ {
+  "address": "lbl_eu_806643D8",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuGetItemMulti.hpp:173 CMenuGetItemFourShorts"
+  ]
+ },
+ {
+  "address": "lbl_eu_806643E0",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuGetItemMulti.hpp:174 CMenuGetItemFourShorts"
+  ]
+ },
+ {
+  "address": "lbl_eu_806643E8",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuGetItemMulti.hpp:175 CMenuGetItemFourShorts"
+  ]
+ },
+ {
+  "address": "lbl_eu_806643F0",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuGetItemMulti.hpp:176 CMenuGetItemFourShorts"
+  ]
+ },
+ {
+  "address": "lbl_eu_806643F8",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuGetItemMulti.hpp:177 CMenuGetItemFourShorts"
+  ]
+ },
+ {
+  "address": "lbl_eu_80664400",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuGetItemMulti.hpp:178 CMenuGetItemFourShorts"
+  ]
+ },
+ {
+  "address": "lbl_eu_80664408",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuGetItemMulti.hpp:179 CMenuGetItemFourShorts"
+  ]
+ },
+ {
+  "address": "lbl_eu_806649F4",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/CSaveLoad.hpp:220 CSaveLoad*",
+   "src/kyoshin/CTaskGame.hpp:572 u32"
+  ]
+ },
+ {
+  "address": "lbl_eu_806649F8",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/CSaveLoad.cpp:29 cf::CfAward"
+  ]
+ },
+ {
+  "address": "lbl_eu_80664260",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/realtimeevt/CREvtMem.hpp:29 cf::CREvtMem*"
   ]
  },
  {
@@ -9717,38 +9828,10 @@
   ]
  },
  {
-  "address": "lbl_eu_80664C10",
+  "address": "lbl_eu_806642A0",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/cf/CfHikariItemManager.hpp:127 cf::CfHikariItemManager*"
-  ]
- },
- {
-  "address": "lbl_eu_806649F8",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/CSaveLoad.cpp:29 cf::CfAward"
-  ]
- },
- {
-  "address": "lbl_eu_80664898",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuBattleEnd.hpp:136 CMenuBattleEnd*"
-  ]
- },
- {
-  "address": "lbl_eu_80527830",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/cf/CtrlMoveEne.hpp:1696 const CfMoveHookPtmfsAll"
-  ]
- },
- {
-  "address": "lbl_eu_8050FF60",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/makecrystal/CMCGetItemBox.hpp:231 CMCItemMsgTbl"
+   "src/kyoshin/menu/CMenuZeal.hpp:110 CMenuZeal*"
   ]
  },
  {
@@ -9773,32 +9856,41 @@
   ]
  },
  {
-  "address": "lbl_eu_80664A60",
+  "address": "lbl_eu_80664898",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/menu/CMenuBattleChain.cpp:26 CMenuBattleChain*",
-   "src/kyoshin/menu/CMenuBattleChain.hpp:88 CMenuBattleChain*"
+   "src/kyoshin/menu/CMenuBattleEnd.hpp:136 CMenuBattleEnd*"
   ]
  },
  {
-  "address": "lbl_eu_806641B0",
+  "address": "lbl_eu_8053A438",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/cf/object/CAIAction.hpp:119 cf::CAIActionTable*"
+   "src/kyoshin/CErrMes.hpp:32 ErrMesLangEntry*[]"
   ]
  },
  {
-  "address": "lbl_eu_8053B3A0",
+  "address": "lbl_eu_8053A458",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/help/CHelp.hpp:39 cf::CHelpVtbl"
+   "src/kyoshin/CErrMes.hpp:33 ErrMesLangEntry*[]"
   ]
  },
  {
-  "address": "lbl_eu_8053B5F8",
+  "address": "lbl_eu_8053A478",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/help/CHelp_LandMark.cpp:7 cf::CHelpVtbl"
+   "src/kyoshin/CErrMes.hpp:34 ErrMesLangEntry*[]"
+  ]
+ },
+ {
+  "address": "lbl_eu_80663F28",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuBattleDamage.cpp:390 CMenuBattleDamage*",
+   "src/kyoshin/menu/CMenuBattleDamage.cpp:396 CMenuBattleDamage*",
+   "src/kyoshin/menu/CMenuBattleDamage.cpp:447 CMenuBattleDamage*",
+   "src/kyoshin/menu/CMenuBattleDamage.hpp:276 CMenuBattleDamage*"
   ]
  },
  {
@@ -9816,24 +9908,11 @@
   ]
  },
  {
-  "address": "lbl_eu_806648E0",
+  "address": "lbl_eu_80658410",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/CSysWinBuff.cpp:13 CSysWinBuff*"
-  ]
- },
- {
-  "address": "lbl_eu_80573D88",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/cf/CArtsSet.cpp:84 cf::CArtsParam"
-  ]
- },
- {
-  "address": "lbl_eu_804FA9F0",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/plugin/pluginUi.hpp:47 CfSlotTable"
+   "libs/monolib/src/mpfsys/UnkClass_80471EC8.cpp:227 MpfsysCamMatrixRegion",
+   "libs/monolib/src/mpfsys/code_8047BB54.cpp:198 f32[3]"
   ]
  },
  {
@@ -9950,157 +10029,17 @@
   ]
  },
  {
-  "address": "lbl_eu_80664464",
+  "address": "lbl_eu_804FA9F0",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/CBgTex.hpp:19 nw4r::lyt::ArcResourceAccessor*"
+   "src/kyoshin/plugin/pluginUi.hpp:47 CfSlotTable"
   ]
  },
  {
-  "address": "lbl_eu_8053A438",
+  "address": "lbl_eu_80500188",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/CErrMes.hpp:32 ErrMesLangEntry*[]"
-  ]
- },
- {
-  "address": "lbl_eu_8053A458",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/CErrMes.hpp:33 ErrMesLangEntry*[]"
-  ]
- },
- {
-  "address": "lbl_eu_8053A478",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/CErrMes.hpp:34 ErrMesLangEntry*[]"
-  ]
- },
- {
-  "address": "lbl_eu_80664260",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/realtimeevt/CREvtMem.hpp:29 cf::CREvtMem*"
-  ]
- },
- {
-  "address": "lbl_eu_80577308",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/COption.hpp:259 Class_80296898"
-  ]
- },
- {
-  "address": "lbl_eu_80524B98",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/plugin/pluginDeb.cpp:5 PluginFuncData[]"
-  ]
- },
- {
-  "address": "lbl_eu_80524BB8",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/plugin/pluginWait.cpp:8 PluginFuncData[]"
-  ]
- },
- {
-  "address": "lbl_eu_80524BF8",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/plugin/ocBuiltin.cpp:7 OCData"
-  ]
- },
- {
-  "address": "lbl_eu_80524C60",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/plugin/ocThread.cpp:5 OCData"
-  ]
- },
- {
-  "address": "lbl_eu_80524CE8",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/plugin/ocMsg.cpp:219 OCData[]"
-  ]
- },
- {
-  "address": "lbl_eu_80524D80",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/plugin/ocMsg.cpp:220 OCData[]"
-  ]
- },
- {
-  "address": "lbl_eu_80524E40",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/plugin/ocBdat.hpp:97 OCData"
-  ]
- },
- {
-  "address": "lbl_eu_80525D58",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/plugin/ocCfp.cpp:96 OCData[]"
-  ]
- },
- {
-  "address": "lbl_eu_80525F98",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/plugin/pluginCfs.cpp:1589 PluginFuncData[]"
-  ]
- },
- {
-  "address": "lbl_eu_805261B8",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/plugin/pluginMath.cpp:8 PluginFuncData[]"
-  ]
- },
- {
-  "address": "lbl_eu_80526560",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/plugin/pluginCam.cpp:10 PluginFuncData[]"
-  ]
- },
- {
-  "address": "lbl_eu_80526690",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/plugin/pluginPad.cpp:7 PluginFuncData[]"
-  ]
- },
- {
-  "address": "lbl_eu_80532348",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/plugin/pluginTime.cpp:9 PluginFuncData[]"
-  ]
- },
- {
-  "address": "lbl_eu_80533490",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/plugin/pluginGame.cpp:5 PluginFuncData[]"
-  ]
- },
- {
-  "address": "lbl_eu_8053B880",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/plugin/pluginVoice.cpp:10 PluginFuncData[]"
-  ]
- },
- {
-  "address": "lbl_eu_8050EF90",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/CEquipItemBox.hpp:367 CEquipItemBoxSlotTable"
+   "src/kyoshin/code_80135FDC.hpp:246 struct Table_80500188"
   ]
  },
  {
@@ -10146,202 +10085,63 @@
   ]
  },
  {
-  "address": "lbl_eu_80664240",
+  "address": "lbl_eu_80665470",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/cf/CTaskREvent.hpp:171 CEventMgr*"
+   "libs/nw4r/include/nw4r/lyt/lyt_bounding.h:10 nw4r::ut::detail::RuntimeTypeInfo",
+   "libs/nw4r/include/nw4r/lyt/lyt_textBox.h:12 nw4r::ut::detail::RuntimeTypeInfo"
   ]
  },
  {
-  "address": "lbl_eu_80664448",
+  "address": "lbl_eu_80665498",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/cf/CfPadTask.cpp:28 cf::CfPadTask*"
+   "libs/nw4r/include/nw4r/lyt/lyt_bounding.h:11 nw4r::ut::detail::RuntimeTypeInfo"
   ]
  },
  {
-  "address": "lbl_eu_80665720",
+  "address": "lbl_eu_806654D0",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/include/monolib/lib/CLibVM.hpp:30 CLibVM*"
+   "libs/nw4r/include/nw4r/snd/snd_SeqSound.h:21 nw4r::ut::detail::RuntimeTypeInfo",
+   "libs/nw4r/include/nw4r/snd/snd_StrmSound.h:11 nw4r::ut::detail::RuntimeTypeInfo",
+   "libs/nw4r/include/nw4r/snd/snd_WaveSound.h:11 nw4r::ut::detail::RuntimeTypeInfo"
   ]
  },
  {
-  "address": "lbl_eu_80663F28",
+  "address": "lbl_eu_806654F8",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/menu/CMenuBattleDamage.cpp:390 CMenuBattleDamage*",
-   "src/kyoshin/menu/CMenuBattleDamage.cpp:396 CMenuBattleDamage*",
-   "src/kyoshin/menu/CMenuBattleDamage.cpp:447 CMenuBattleDamage*",
-   "src/kyoshin/menu/CMenuBattleDamage.hpp:276 CMenuBattleDamage*"
+   "libs/nw4r/include/nw4r/snd/snd_SeqSound.h:22 nw4r::ut::detail::RuntimeTypeInfo"
   ]
  },
  {
-  "address": "lbl_eu_806656A0",
+  "address": "lbl_eu_80665520",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/src/device/CDeviceGX.cpp:11 CDeviceGX*"
+   "libs/nw4r/include/nw4r/snd/snd_StrmSound.h:12 nw4r::ut::detail::RuntimeTypeInfo"
   ]
  },
  {
-  "address": "lbl_eu_80664388",
+  "address": "lbl_eu_80665538",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/menu/CMenuVision.cpp:21 CMenuVision*"
+   "libs/nw4r/include/nw4r/snd/snd_WaveSound.h:12 nw4r::ut::detail::RuntimeTypeInfo"
   ]
  },
  {
-  "address": "lbl_eu_804FB7B0",
+  "address": "lbl_eu_80665540",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/cf/CfGameManagerUnityHelpers.hpp:1305 const ResourceIndexTable"
+   "libs/nw4r/include/nw4r/ut/ut_FileStream.h:14 nw4r::ut::detail::RuntimeTypeInfo",
+   "libs/nw4r/include/nw4r/ut/ut_IOStream.h:10 detail::RuntimeTypeInfo"
   ]
  },
  {
-  "address": "lbl_eu_80664250",
+  "address": "lbl_eu_80665550",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/cf/CInfoCf.hpp:139 cf::CInfoCf*"
-  ]
- },
- {
-  "address": "lbl_eu_806656E0",
-  "reason": "non_c99_type",
-  "sites": [
-   "libs/monolib/src/lib/CLibCriMoviePlay.hpp:11 CLibCriMoviePlay*"
-  ]
- },
- {
-  "address": "lbl_eu_80665A10",
-  "reason": "non_c99_type",
-  "sites": [
-   "libs/monolib/src/work/CWorkSystemPack.cpp:115 CWorkSystemPack*"
-  ]
- },
- {
-  "address": "lbl_eu_80665678",
-  "reason": "non_c99_type",
-  "sites": [
-   "libs/monolib/src/device/CDeviceFont.hpp:205 CDeviceFont*"
-  ]
- },
- {
-  "address": "lbl_eu_806642A0",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuZeal.hpp:110 CMenuZeal*"
-  ]
- },
- {
-  "address": "lbl_eu_8056D980",
-  "reason": "non_c99_type",
-  "sites": [
-   "libs/monolib/src/lod/code_80468434.hpp:82 LodD980Fn[]"
-  ]
- },
- {
-  "address": "lbl_eu_8056D998",
-  "reason": "non_c99_type",
-  "sites": [
-   "libs/monolib/src/lod/code_80468434.hpp:179 LodDispatchFn[]"
-  ]
- },
- {
-  "address": "lbl_eu_8056D9B0",
-  "reason": "non_c99_type",
-  "sites": [
-   "libs/monolib/src/lod/code_80468434.hpp:77 LodD9B0Fn[]"
-  ]
- },
- {
-  "address": "lbl_eu_80663D40",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/CTaskGameEff.hpp:123 CTaskGameEff*"
-  ]
- },
- {
-  "address": "lbl_eu_806647C8",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuPause.hpp:54 CMenuPause*"
-  ]
- },
- {
-  "address": "lbl_eu_805273C8",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/cf/CfCamEvent_1.hpp:457 CamEventTableEntry[12]"
-  ]
- },
- {
-  "address": "lbl_eu_80570C90",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/cf/CfCamEvent_1.hpp:497 CfCamDataTable"
-  ]
- },
- {
-  "address": "lbl_eu_806656AC",
-  "reason": "non_c99_type",
-  "sites": [
-   "libs/monolib/include/monolib/core/CDesktop.hpp:110 CDesktop*"
-  ]
- },
- {
-  "address": "lbl_eu_80663FC0",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuQuestLog.hpp:51 CMenuQuestLog*"
-  ]
- },
- {
-  "address": "lbl_eu_80538290",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/cf/chain/CChainActorList.hpp:221 CChainVtblActor"
-  ]
- },
- {
-  "address": "lbl_eu_80538338",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/cf/chain/CChainActorList.hpp:224 CChainVtblSub"
-  ]
- },
- {
-  "address": "lbl_eu_80538458",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/cf/chain/CChainActorList.hpp:223 CChainVtblActor"
-  ]
- },
- {
-  "address": "lbl_eu_805384E0",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/cf/chain/CChainActorList.hpp:222 CChainVtblActor"
-  ]
- },
- {
-  "address": "lbl_eu_806656E8",
-  "reason": "non_c99_type",
-  "sites": [
-   "libs/monolib/src/lib/CLibCriStreamingPlay.cpp:76 CLibCriStreamingPlay*"
-  ]
- },
- {
-  "address": "lbl_eu_806641A0",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuLandTelop.hpp:176 CLandTelopGlobal*"
-  ]
- },
- {
-  "address": "lbl_eu_80663F48",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuBattlePlayerState.cpp:32 CMenuBattlePlayerState*"
+   "libs/nw4r/src/snd/snd_StrmPlayer.cpp:25 const nw4r::ut::detail::RuntimeTypeInfo"
   ]
  },
  {
@@ -10366,195 +10166,6 @@
   ]
  },
  {
-  "address": "lbl_eu_80663FD4",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/CQuestWindow.hpp:422 QuestWindowState*"
-  ]
- },
- {
-  "address": "lbl_eu_80658648",
-  "reason": "non_c99_type",
-  "sites": [
-   "libs/monolib/src/scn/CScnVirtualLight.hpp:9 func_800407C8_tmp"
-  ]
- },
- {
-  "address": "lbl_eu_806656F0",
-  "reason": "non_c99_type",
-  "sites": [
-   "libs/monolib/src/lib/CLibG3d.cpp:9 CLibG3d*"
-  ]
- },
- {
-  "address": "lbl_eu_80657B50",
-  "reason": "non_c99_type",
-  "sites": [
-   "libs/monolib/src/core/CException.cpp:52 CException*[16]"
-  ]
- },
- {
-  "address": "lbl_eu_806656C0",
-  "reason": "non_c99_type",
-  "sites": [
-   "libs/monolib/src/core/CException.cpp:48 CException*"
-  ]
- },
- {
-  "address": "lbl_eu_8066423C",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/CCol6Invite.hpp:41 CCol6Invite*"
-  ]
- },
- {
-  "address": "lbl_eu_80663FA8",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuKeyAssign.hpp:120 CMenuKeyAssign*"
-  ]
- },
- {
-  "address": "lbl_eu_80665668",
-  "reason": "non_c99_type",
-  "sites": [
-   "libs/monolib/src/device/CDeviceFileCri.cpp:10 CDeviceFileCri*"
-  ]
- },
- {
-  "address": "lbl_eu_80500188",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/code_80135FDC.hpp:246 struct Table_80500188"
-  ]
- },
- {
-  "address": "lbl_eu_80664768",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/cf/CfNandManager.hpp:96 cf::CfNandManager*"
-  ]
- },
- {
-  "address": "lbl_eu_80663D58",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/cf/CTaskEnvironment.hpp:39 CTaskEnvGlobal*"
-  ]
- },
- {
-  "address": "lbl_eu_806643A0",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuGetItemMulti.hpp:166 CMenuGetItemFourShorts"
-  ]
- },
- {
-  "address": "lbl_eu_806643A8",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuGetItemMulti.hpp:167 CMenuGetItemFourShorts"
-  ]
- },
- {
-  "address": "lbl_eu_806643B0",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuGetItemMulti.hpp:168 CMenuGetItemFourShorts"
-  ]
- },
- {
-  "address": "lbl_eu_806643B8",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuGetItemMulti.hpp:169 CMenuGetItemFourShorts"
-  ]
- },
- {
-  "address": "lbl_eu_806643C0",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuGetItemMulti.hpp:170 CMenuGetItemFourShorts"
-  ]
- },
- {
-  "address": "lbl_eu_806643C8",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuGetItemMulti.hpp:171 CMenuGetItemFourShorts"
-  ]
- },
- {
-  "address": "lbl_eu_806643D0",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuGetItemMulti.hpp:172 CMenuGetItemFourShorts"
-  ]
- },
- {
-  "address": "lbl_eu_806643D8",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuGetItemMulti.hpp:173 CMenuGetItemFourShorts"
-  ]
- },
- {
-  "address": "lbl_eu_806643E0",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuGetItemMulti.hpp:174 CMenuGetItemFourShorts"
-  ]
- },
- {
-  "address": "lbl_eu_806643E8",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuGetItemMulti.hpp:175 CMenuGetItemFourShorts"
-  ]
- },
- {
-  "address": "lbl_eu_806643F0",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuGetItemMulti.hpp:176 CMenuGetItemFourShorts"
-  ]
- },
- {
-  "address": "lbl_eu_806643F8",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuGetItemMulti.hpp:177 CMenuGetItemFourShorts"
-  ]
- },
- {
-  "address": "lbl_eu_80664400",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuGetItemMulti.hpp:178 CMenuGetItemFourShorts"
-  ]
- },
- {
-  "address": "lbl_eu_80664408",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/menu/CMenuGetItemMulti.hpp:179 CMenuGetItemFourShorts"
-  ]
- },
- {
-  "address": "lbl_eu_80665640",
-  "reason": "non_c99_type",
-  "sites": [
-   "libs/monolib/include/monolib/device/CDeviceSC.hpp:44 CDeviceSC*"
-  ]
- },
- {
-  "address": "lbl_eu_804FC828",
-  "reason": "non_c99_type",
-  "sites": [
-   "src/kyoshin/cf/CBattleManager.hpp:188 BattleTableEntry[]"
-  ]
- },
- {
   "address": "lbl_eu_8056FA68",
   "reason": "non_c99_type",
   "sites": [
@@ -10566,6 +10177,13 @@
   "reason": "non_c99_type",
   "sites": [
    "libs/monolib/src/scn/CScnEnvLgtCtrl.hpp:1026 CScnEnvLgtCtrlSinitDst"
+  ]
+ },
+ {
+  "address": "lbl_eu_806647C8",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/menu/CMenuPause.hpp:54 CMenuPause*"
   ]
  },
  {
@@ -10597,46 +10215,88 @@
   ]
  },
  {
-  "address": "lbl_eu_806641A8",
+  "address": "lbl_eu_804FC828",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/menu/CMenuGetItem.hpp:98 CMenuGetItem*"
+   "src/kyoshin/cf/CBattleManager.hpp:188 BattleTableEntry[]"
   ]
  },
  {
-  "address": "lbl_eu_80664268",
+  "address": "lbl_eu_8056D980",
   "reason": "non_c99_type",
   "sites": [
-   "src/kyoshin/cf/CTaskREvtSequence.hpp:415 UnkState_80664268*"
+   "libs/monolib/src/lod/code_80468434.hpp:82 LodD980Fn[]"
   ]
  },
  {
-  "address": "lbl_eu_80665638",
+  "address": "lbl_eu_8056D998",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/include/monolib/device/CDeviceRemotePad.hpp:51 CDeviceRemotePad*"
+   "libs/monolib/src/lod/code_80468434.hpp:179 LodDispatchFn[]"
   ]
  },
  {
-  "address": "lbl_eu_806659C8",
+  "address": "lbl_eu_8056D9B0",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/src/work/CWorkSystemCache.cpp:84 CWorkSystemCache*"
+   "libs/monolib/src/lod/code_80468434.hpp:77 LodD9B0Fn[]"
   ]
  },
  {
-  "address": "lbl_eu_80665730",
+  "address": "lbl_eu_805273C8",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/src/lod/CTaskLOD.cpp:104 CTaskLOD*",
-   "libs/monolib/src/lod/CTaskLOD.hpp:71 CTaskLOD*"
+   "src/kyoshin/cf/CfCamEvent_1.hpp:457 CamEventTableEntry[12]"
   ]
  },
  {
-  "address": "lbl_eu_806655D0",
+  "address": "lbl_eu_80570C90",
   "reason": "non_c99_type",
   "sites": [
-   "libs/monolib/include/monolib/core/CViewRoot.hpp:57 CViewRoot*"
+   "src/kyoshin/cf/CfCamEvent_1.hpp:497 CfCamDataTable"
+  ]
+ },
+ {
+  "address": "lbl_eu_80663DF0",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/cf/CfCam.cpp:290 int",
+   "src/kyoshin/cf/CfCamEvent_1.hpp:498 CfCamEventGlobal*"
+  ]
+ },
+ {
+  "address": "lbl_eu_8050EF50",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/CEquipItemBox.hpp:491 CEquipItemBoxCatWordTable"
+  ]
+ },
+ {
+  "address": "lbl_eu_8050EF90",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/CEquipItemBox.hpp:484 CEquipItemBoxSlotTable"
+  ]
+ },
+ {
+  "address": "lbl_eu_80668B50",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/CEquipItemBox.hpp:501 CEquipItemBoxCat6"
+  ]
+ },
+ {
+  "address": "lbl_eu_80668B58",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/CEquipItemBox.hpp:502 CEquipItemBoxCat6"
+  ]
+ },
+ {
+  "address": "lbl_eu_804FB7B0",
+  "reason": "non_c99_type",
+  "sites": [
+   "src/kyoshin/cf/CfGameManagerUnityHelpers.hpp:1305 const ResourceIndexTable"
   ]
  }
 ]

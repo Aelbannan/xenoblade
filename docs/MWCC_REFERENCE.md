@@ -10551,6 +10551,29 @@ Three gates decide what may migrate (all enforced in `lbls_gen.py generate`):
    homes that declare the label itself with a different type) + a full-header
    parse. data_defs.cpp's own __MWERKS__-guarded body keeps the rest.
 
+Type conflicts: 43 of 53 canonicalized via tools/coop/lbls_canonical.json
+(a per-address canonical type chosen from site-level usage analysis --
+address-of / cast / decay usage is type-agnostic, so one type serves every
+site with zero codegen change; validated by a usage-form checker that rejects
+scalar-canonical-with-indexing and object-canonical-with-member-access). 8
+stayed per-TU (genuine scalar-read-vs-index / struct-view-vs-word-index
+conflicts, e.g. lbl_eu_8065FC18 allocator global). 2 are FIXABLE_SITE
+(lbl_eu_8065D138: code_804B2FF0.hpp pointer decl vs object usage;
+lbl_eu_80661A40: scalar-vs-array decl changes the SDA addressing mode) --
+documented in .scratch/type_conflict_report.json, source edits not applied.
+
+Class-typed labels now get REAL PC definitions where possible (dual-mode):
+port/lbls_typed_data.cpp (#define LBLS_DEFINE_DATA + #include <lbls_typed.hpp>)
+defines them in a TU separate from data_defs.cpp (whose type providers would
+clash with the SDK globals data_defs defines). Trivially-copyable object
+labels use C++20 `__builtin_bit_cast(T, (unsigned char[N]){retail bytes})`
+(byte-exact; verified sizeof-equality on the host, else demoted to
+extern_only); pointer labels use `(T*)0xADDR` (real 8-byte PC pointers).
+ctor-class labels (RTTI objects) cannot bit_cast and stay extern-only (raw
+bytes in data_defs.cpp). The typed-header gate bisects cross-home conflicts
+(e.g. a kyoshin home redefining nw4r types) so only the offending entries
+drop to per-TU.
+
 Migration result is deliberately small (32 labels) -- the gates trade coverage
 for safety; the machinery is ready to pick up more labels as headers become
 self-contained.

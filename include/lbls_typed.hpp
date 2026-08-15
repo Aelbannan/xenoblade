@@ -6,14 +6,31 @@
 #pragma once
 
 #include <types.h>
+#include <kyoshin/CTaskGamePic.hpp>
 #include <monolib/coli/code_804B2FF0.hpp>
 #include <monolib/coli/coli_types.hpp>
+#include <monolib/core/CDesktop.hpp>
+#include <monolib/core/CException.hpp>
+#include <monolib/core/CViewRoot.hpp>
 #include <monolib/core/code_804DEDA8.hpp>
+#include <monolib/device/CDeviceFileCri.hpp>
 #include <monolib/device/CDeviceFileDvd.hpp>
+#include <monolib/device/CDeviceFont.hpp>
 #include <monolib/device/CDeviceFontInfoRom.hpp>
+#include <monolib/device/CDeviceGX.hpp>
+#include <monolib/device/CDeviceRemotePad.hpp>
+#include <monolib/device/CDeviceSC.hpp>
+#include <monolib/lib/CLibCriMoviePlay.hpp>
+#include <monolib/lib/CLibCriStreamingPlay.hpp>
+#include <monolib/lib/CLibG3d.hpp>
+#include <monolib/lib/CLibVM.hpp>
+#include <monolib/lod/CTaskLOD.hpp>
 #include <monolib/lod/code_804645CC.hpp>
 #include <monolib/mpfsys/MPFDrawDisplayList.hpp>
 #include <monolib/mpfsys/MPFDrawMdlColor.hpp>
+#include <monolib/scn/code_804BC9EC.hpp>
+#include <monolib/work/CWorkSystemCache.hpp>
+#include <monolib/work/CWorkSystemPack.hpp>
 #include <nw4r/g3d/g3d_state.h>
 #include <nw4r/g3d/res/g3d_resfile.h>
 #include <nw4r/math/math_geometry.h>
@@ -21,37 +38,54 @@
 #include <nw4r/ut/ut_RuntimeTypeInfo.h>
 #include <revolution/gx/GXFrameBuf.h>
 #include <revolution/mem/mem_allocator.h>
+#include <revolution/mtx/mtxtypes.h>
 
-extern GXRenderModeObj lbl_eu_8056BE38;
+LBLS_ENTRY(GXRenderModeObj lbl_eu_8056BE38, GXRenderModeObj lbl_eu_8056BE38, (__builtin_bit_cast(GXRenderModeObj, (unsigned char[60]){0x00, 0x00, 0x00, 0x04, 0x02, 0x80, 0x01, 0xC8, 0x02, 0x1E, 0x00, 0x13, 0x00, 0x10, 0x02, 0xAA, 0x02, 0x1E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x08, 0x08, 0x0A, 0x0C, 0x0A, 0x08, 0x08, 0x00, 0x00, 0x00})))
 extern LodTexCoordSetup lbl_eu_8056D728[];
 extern mpfsys::MPFDrawMdlColor lbl_eu_8056DBC0;
 extern FogState lbl_eu_8061AF60;
 extern GXRenderModeObj lbl_eu_8061F9D4;
+extern CException* lbl_eu_80657B50[];
 extern mpfsys::MPFDrawDisplayList* lbl_eu_80658488[];
+LBLS_ENTRY(func_800407C8_tmp lbl_eu_80658648, func_800407C8_tmp lbl_eu_80658648, ({}))
+extern CColiWalkState lbl_eu_8065D138;
+extern ScnResData lbl_eu_8065F32C;
 extern FogState lbl_eu_8065FCA0;
+extern FogState lbl_eu_8065FCD0;
 extern CScheduleItemPool lbl_eu_80661718;
-extern nw4r::math::FRUSTUM* lbl_eu_80665468;
-extern nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665470;
-extern MEMAllocator* lbl_eu_80665478;
-extern nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665498;
-extern nw4r::snd::detail::AxfxImpl* lbl_eu_806654C8;
-extern nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654D0;
-extern nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654F8;
-extern nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665520;
-extern nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665538;
+LBLS_ENTRY(nw4r::math::FRUSTUM* lbl_eu_80665468, nw4r::math::FRUSTUM* lbl_eu_80665468, (0))
+LBLS_ENTRY(MEMAllocator* lbl_eu_80665478, MEMAllocator* lbl_eu_80665478, (0))
+LBLS_ENTRY(nw4r::snd::detail::AxfxImpl* lbl_eu_806654C8, nw4r::snd::detail::AxfxImpl* lbl_eu_806654C8, (0))
 extern nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665548;
-extern nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665550;
-extern CDeviceFileDvd* lbl_eu_80665670;
-extern CDeviceFontInfoRom* lbl_eu_80665688;
-extern nw4r::g3d::ResFileData* lbl_eu_80665848;
-extern ml::coli::CColiObject* lbl_eu_80665910;
-extern ml::coli::CColiObject* lbl_eu_80665914;
-extern ml::coli::CColiObject* lbl_eu_80665918;
-extern ml::coli::CColiObject* lbl_eu_8066591C;
-extern ml::coli::CColiObject* lbl_eu_80665920;
-extern ml::coli::CColiObject* lbl_eu_80665928;
-extern ml::coli::CColiObject* lbl_eu_8066592C;
-extern ml::coli::CColiObject* lbl_eu_80665930;
-extern CColiBounds* lbl_eu_80665944;
-extern CColiQx* lbl_eu_80665948;
+LBLS_ENTRY(CViewRoot* lbl_eu_806655D0, CViewRoot* lbl_eu_806655D0, (0))
+LBLS_ENTRY(CDeviceRemotePad* lbl_eu_80665638, CDeviceRemotePad* lbl_eu_80665638, (0))
+LBLS_ENTRY(CDeviceSC* lbl_eu_80665640, CDeviceSC* lbl_eu_80665640, (0))
+LBLS_ENTRY(CDeviceFileCri* lbl_eu_80665668, CDeviceFileCri* lbl_eu_80665668, (0))
+LBLS_ENTRY(CDeviceFileDvd* lbl_eu_80665670, CDeviceFileDvd* lbl_eu_80665670, (0))
+LBLS_ENTRY(CDeviceFont* lbl_eu_80665678, CDeviceFont* lbl_eu_80665678, (0))
+LBLS_ENTRY(CDeviceFontInfoRom* lbl_eu_80665688, CDeviceFontInfoRom* lbl_eu_80665688, (0))
+LBLS_ENTRY(CDeviceGX* lbl_eu_806656A0, CDeviceGX* lbl_eu_806656A0, (0))
+LBLS_ENTRY(CDesktop* lbl_eu_806656AC, CDesktop* lbl_eu_806656AC, (0))
+LBLS_ENTRY(CException* lbl_eu_806656C0, CException* lbl_eu_806656C0, (0))
+LBLS_ENTRY(CLibCriMoviePlay* lbl_eu_806656E0, CLibCriMoviePlay* lbl_eu_806656E0, (0))
+LBLS_ENTRY(CLibCriStreamingPlay* lbl_eu_806656E8, CLibCriStreamingPlay* lbl_eu_806656E8, (0))
+LBLS_ENTRY(CLibG3d* lbl_eu_806656F0, CLibG3d* lbl_eu_806656F0, (0))
+LBLS_ENTRY(CLibVM* lbl_eu_80665720, CLibVM* lbl_eu_80665720, (0))
+LBLS_ENTRY(CTaskLOD* lbl_eu_80665730, CTaskLOD* lbl_eu_80665730, (0))
+LBLS_ENTRY(nw4r::g3d::ResFileData* lbl_eu_80665848, nw4r::g3d::ResFileData* lbl_eu_80665848, (0))
+LBLS_ENTRY(Vec* lbl_eu_8066584C, Vec* lbl_eu_8066584C, (0))
+LBLS_ENTRY(ml::coli::CColiObject* lbl_eu_80665910, ml::coli::CColiObject* lbl_eu_80665910, (0))
+LBLS_ENTRY(ml::coli::CColiObject* lbl_eu_80665914, ml::coli::CColiObject* lbl_eu_80665914, (0))
+LBLS_ENTRY(ml::coli::CColiObject* lbl_eu_80665918, ml::coli::CColiObject* lbl_eu_80665918, (0))
+LBLS_ENTRY(ml::coli::CColiObject* lbl_eu_8066591C, ml::coli::CColiObject* lbl_eu_8066591C, (0))
+LBLS_ENTRY(ml::coli::CColiObject* lbl_eu_80665920, ml::coli::CColiObject* lbl_eu_80665920, (0))
+LBLS_ENTRY(ml::coli::CColiObject* lbl_eu_80665924, ml::coli::CColiObject* lbl_eu_80665924, (0))
+LBLS_ENTRY(ml::coli::CColiObject* lbl_eu_80665928, ml::coli::CColiObject* lbl_eu_80665928, (0))
+LBLS_ENTRY(ml::coli::CColiObject* lbl_eu_8066592C, ml::coli::CColiObject* lbl_eu_8066592C, (0))
+LBLS_ENTRY(ml::coli::CColiObject* lbl_eu_80665930, ml::coli::CColiObject* lbl_eu_80665930, (0))
+LBLS_ENTRY(CColiBounds* lbl_eu_80665944, CColiBounds* lbl_eu_80665944, (0))
+LBLS_ENTRY(CColiQx* lbl_eu_80665948, CColiQx* lbl_eu_80665948, (0))
+LBLS_ENTRY(CColiHx* lbl_eu_8066594C, CColiHx* lbl_eu_8066594C, (0))
+LBLS_ENTRY(CWorkSystemCache* lbl_eu_806659C8, CWorkSystemCache* lbl_eu_806659C8, (0))
+LBLS_ENTRY(CWorkSystemPack* lbl_eu_80665A10, CWorkSystemPack* lbl_eu_80665A10, (0))
 

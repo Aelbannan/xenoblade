@@ -11,7 +11,7 @@ extern const u8 lbl_eu_805283B0[];
 extern const u32 jumptable_eu_805285A0[];
 extern const u32 jumptable_eu_805285C4[];
 extern char lbl_eu_80572C80[0x44];
-extern const char lbl_eu_80661A40[];
+extern char lbl_eu_80661A40;
 }
 
 struct FormatEntry {
@@ -222,11 +222,11 @@ u32 func_800AA714(const char* path) {
     if (extLen == 0) {
         extOff = -1;
     } else {
-        int dotLen = strlen(lbl_eu_80661A40);
+        int dotLen = strlen(&lbl_eu_80661A40);
         char* p = const_cast<char*>(nameBuf.c_str()) + 0x5F + extLen;
         char* pEnd = const_cast<char*>(nameBuf.c_str()) + 0x5F;
         while (p != pEnd) {
-            if (strncmp(p, lbl_eu_80661A40, dotLen) == 0) {
+            if (strncmp(p, &lbl_eu_80661A40, dotLen) == 0) {
                 extOff = (int)(p - nameBuf.mString);
                 goto found_ext;
             }

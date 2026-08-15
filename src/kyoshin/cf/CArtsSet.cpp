@@ -2,6 +2,24 @@
 
 void* memset(void* dest, int val, size_t count);
 
+// Records viewed as polymorphic objects: the 0x84-byte non-polymorphic data
+// base places the vptr at 0x84 (retail loads the table pointer from there),
+// and the per-record init routine is vtable slot 2 (offset 8) - the same
+// dispatch shape the retail CAttackSet/CArtsSet init loops emit.
+struct CAttackParamData {
+    u8 field_0[0x84];
+};
+
+struct CAttackParamVtblRec : CAttackParamData {
+    virtual void vtInit() {}  // first virtual -> vtable slot 2 (offset 8, MWCC 2-slot vtable overhead)
+};
+
+// 0x8c-strided arts-param record: vptr at 0x84, 4 bytes of derived data at 0x88.
+struct CArtsParamVtblRec : CAttackParamData {
+    virtual void vtInit() {}  // first virtual -> vtable slot 2 (offset 8)
+    u8 field_88[0x8c - 0x88];
+};
+
 namespace cf {
     _sArtsSet::_sArtsSet() {
         _sArtsSet_UnkVirtualFunc1();
@@ -11,10 +29,20 @@ namespace cf {
         unk0 = 0;
         std::memset(unk4, 0, 0x30);
 
-        for (int row = 0; row < 3; row++) {
+        // Function-scope rowBase/p/row declaration order drives the Chaitin
+        // homes to r31/r30/r29, matching the retail init loop.
+        CArtsParamVtblRec* rowBase;
+        CArtsParamVtblRec* p;
+        int row;
+
+        rowBase = reinterpret_cast<CArtsParamVtblRec*>(reinterpret_cast<unsigned char*>(this) + 0x38);
+        for (row = 0; row < 3; row++) {
+            p = rowBase;
             for (int col = 0; col < 8; col++) {
-                mArtsParams[row * 8 + col].CAttackParam_UnkVirtualFunc1();
+                p->vtInit();
+                p++;
             }
+            rowBase += 8;  // 8 * 0x8c = 0x460 bytes per row
         }
     }
 
@@ -23,7 +51,7 @@ namespace cf {
     // Accumulate the row*0x10 and col*0x2 strides into a running byte pointer
     // (mirrors func_80153CAC), so MWCC keeps `this`(r3) as the accumulator and
     // reuses each source register for its own shift.
-    void CArtsSet::setArtsSlotRC(unsigned short value, unsigned int row, unsigned int index) {
+    void CArtsSet::setArtsSlotRC(unsigned short value, unsigned short row, unsigned short index) {
         u8* p = (u8*)this;
         p += row * 0x10;
         p += index * 0x2;
@@ -118,17 +146,10 @@ cf::CArtsParam* func_80153DCC(cf::CArtsSet* self, int id) {
 
 extern "C" void* getAtkParam(void* base, int index) { return (char*)base + index * 0x88 + 0x10; }
 
-// Function-pointer table for the per-CAttackParam virtual slot used when
-// constructing the six attack-param members. vtable slot +2 is invoked.
-struct CFunc88Rec {
-    u8 field_0[0x84];
-    void (**vtbl)(void*);  // 0x84: pointer to a function-pointer table
-};
-
 void func_80153E88(void* self) {
     memset(self, 0, 0xc);
-    CFunc88Rec* arr = reinterpret_cast<CFunc88Rec*>(reinterpret_cast<unsigned char*>(self) + 0x10);
+    CAttackParamVtblRec* arr = reinterpret_cast<CAttackParamVtblRec*>(reinterpret_cast<unsigned char*>(self) + 0x10);
     for (int i = 0; i < 6; i++) {
-        (*(arr[i].vtbl + 2))(&arr[i]);
+        arr[i].vtInit();
     }
 }

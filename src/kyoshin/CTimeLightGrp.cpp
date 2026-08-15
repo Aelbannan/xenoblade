@@ -229,34 +229,38 @@ extern "C" void func_8005A2F0(CTimeLightGrp_BaseLayout* self, CVirtualLightObjPt
 extern "C" void func_8005A374(CTimeLightGrp_BaseLayout* self) {
     CTimeLightGrp_BaseLayout* p = self;
 
-    // Scaled components. Retail CSEs mScale into one FPR, computes products
-    // sz, sy, sx (sw loaded in between), then reinterprets them via stack peek
-    // slots (stfs + lwz) in [sx, sy, sz, sw] order before the walk.
+    // Scaled colour components. Retail keeps mScale in one FPR and computes
+    // sz, sy, sx (with sw loaded in between). Declaration order matters here:
+    // sw must be declared before sy so MWCC assigns sw the register freed by
+    // mVal1's multiply (sy gets a fresh FPR), matching retail's allocation.
     float scale = p->mScale;
     float sz = p->mVal2 * scale;
-    float sy = p->mVal1 * scale;
     float sw = p->mVal3;
+    float sy = p->mVal1 * scale;
     float sx = p->mVal0 * scale;
 
-    // Reinterprets live in a 4-word block; MWCC fuses each component's peek
-    // slot with the array element, then hoists the four lwz before the walk
-    // into consecutive GPRs (retail: r7,r6,r5,r4 for sx,sy,sz,sw).
-    u32 bits[4];
-    bits[0] = *(u32*)&sx;
-    bits[1] = *(u32*)&sy;
-    bits[2] = *(u32*)&sz;
-    bits[3] = *(u32*)&sw;
+    // Materialise the four components into a stack block. The store order
+    // (sz, sx, sy, sw -> slots 16, 8, 12, 20) matches the retail stfs
+    // sequence; the array keeps the bit patterns so the walk below can copy
+    // them to each light object (stfs + hoisted lwz + stw round-trip).
+    f32 vals[4];
+    vals[2] = sz;
+    vals[0] = sx;
+    vals[1] = sy;
+    vals[3] = sw;
 
-    // Re-read mStartNodePtr from self each iteration like retail (reloads
-    // 12(r3) on every back-edge) so `self` stays live in r3.
+    // Walk the light-object list and overwrite each object's four f32 scale
+    // fields with the bit patterns. obj is declared before the loop so MWCC
+    // assigns cur r9 and obj r8 like retail; the byte flag gates the write.
+    CVirtualLightObjFields* obj;
     _reslist_node<CVirtualLightObjPtr>* cur = self->mStartNodePtr->mNext;
     while (cur != self->mStartNodePtr) {
-        CVirtualLightObjFields* obj = (CVirtualLightObjFields*)cur->mItem;
+        obj = (CVirtualLightObjFields*)cur->mItem;
         if (obj->mByte19 == 0) {
-            *(u32*)&obj->mField1C = bits[0];   // sx
-            *(u32*)&obj->mField20 = bits[1];   // sy
-            *(u32*)&obj->mField24 = bits[2];   // sz
-            *(u32*)&obj->mField28 = bits[3];   // sw
+            *(u32*)&obj->mField1C = *(u32*)&vals[0];   // sx
+            *(u32*)&obj->mField20 = *(u32*)&vals[1];   // sy
+            *(u32*)&obj->mField24 = *(u32*)&vals[2];   // sz
+            *(u32*)&obj->mField28 = *(u32*)&vals[3];   // sw
         }
         cur = cur->mNext;
     }

@@ -37,12 +37,12 @@ void SFX_SetTagInf(SFXHandleState* self, u32 val1, u32 val2) {
 }
 
 void SFX_GetTagInf(SFXHandleState* self, u32* out1, u32* out2) {
-    if (self->tagFlag == 1) {
-        *out1 = self->tagVal1;
-        *out2 = self->tagVal2;
-    } else {
+    if ((s32)self->tagFlag != 1) {
         *out1 = 0;
         *out2 = 0;
+    } else {
+        *out1 = self->tagVal1;
+        *out2 = self->tagVal2;
     }
 }
 

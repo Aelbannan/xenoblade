@@ -91,7 +91,7 @@ struct CSchedMemGlob {
     u32 mHandle;   // 0x04
     u8 mPad08[8];  // 0x08..0x10
 };
-extern CSchedMemGlob lbl_eu_8065FC18;
+extern u32 lbl_eu_8065FC18[];
 
 // .sdata2 float/double pool shared with the schedule anim helpers:
 // 1.0f, the u32->double conversion constant (2^52), the s32->double
@@ -150,7 +150,7 @@ extern "C" void __dt__804DF068(CSchedResMgr* obj) {
         delete[] (u8*)obj->mField0C;
         obj->mField0C = 0;
     }
-    if ((lbl_eu_8065FC18.mFlags >> 10) & 1) {
+    if ((*(u16*)&lbl_eu_8065FC18[0] >> 10) & 1) {
         if (obj->mField04 != 0) {
             mtl::MemManager::deallocate(obj->mField04);
             obj->mField04 = 0;
@@ -364,7 +364,7 @@ void func_804DF3D0(){}
 // every entry whose bit-7 flag matches. Each release drops the live counter
 // (lbl_eu_80665A28[0]). Returns 1 when at least one entry was released.
 s32 func_804DF4BC(s32 key) {
-    u32 flag = ((lbl_eu_8065FC18.mFlags & 0x1000) >> 12) != 0;
+    u32 flag = ((*(u16*)&lbl_eu_8065FC18[0] & 0x1000) >> 12) != 0;
     if (key != 0) {
         s32 i;
         for (i = 0; i < lbl_eu_80665A24; i++) {
@@ -430,14 +430,14 @@ u32 lbl_eu_80665A40;
 extern "C" void func_804DF690(u32 count) {
     lbl_eu_80665A30 = 0;
     u32 s1 = count * 0x14;
-    if (s1 <= mtl::MemManager::getMaxAllocSize(lbl_eu_8065FC18.mHandle)) {
-        lbl_eu_80665A34 = mtl::MemManager::allocate_array(s1, lbl_eu_8065FC18.mHandle);
+    if (s1 <= mtl::MemManager::getMaxAllocSize(*(u32*)&lbl_eu_8065FC18[1])) {
+        lbl_eu_80665A34 = mtl::MemManager::allocate_array(s1, *(u32*)&lbl_eu_8065FC18[1]);
     } else {
         lbl_eu_80665A34 = 0;
     }
     u32 s2 = count * 0xc;
-    if (s2 <= mtl::MemManager::getMaxAllocSize(lbl_eu_8065FC18.mHandle)) {
-        lbl_eu_80665A38 = mtl::MemManager::allocate_array(s2, lbl_eu_8065FC18.mHandle);
+    if (s2 <= mtl::MemManager::getMaxAllocSize(*(u32*)&lbl_eu_8065FC18[1])) {
+        lbl_eu_80665A38 = mtl::MemManager::allocate_array(s2, *(u32*)&lbl_eu_8065FC18[1]);
     } else {
         lbl_eu_80665A38 = 0;
     }

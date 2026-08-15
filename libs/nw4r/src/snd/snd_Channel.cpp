@@ -477,8 +477,8 @@ void Channel::FreeChannel(Channel* pChannel) {
         return;
     }
 
+    pChannel->mCallback = NULL;
     pChannel->mCallbackData = 0;
-    pChannel->mVoice = NULL;
 }
 
 } // namespace detail

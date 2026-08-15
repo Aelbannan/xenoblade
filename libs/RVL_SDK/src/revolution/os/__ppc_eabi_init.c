@@ -63,6 +63,15 @@ void __init_cpp(void) {
 }
 #pragma dont_inline off
 
+// Wall (MWCC_REFERENCE 1343): retail __init_user is a full-frame bl __init_cpp
+// trampoline (0x20), but at the unit's -O4,p the tail-call fold turns the
+// canonical `void __init_user(void) { __init_cpp(); }` into a bare b (0x4).
+// The fold is keyed to the global -opt level >= 2 and survives every per-function
+// pragma (optimization_level 1, peephole off, optimize_for_size on, global_optimizer
+// off, scheduling off, opt_propagation off, dont_inline, weak, ipa off) and every
+// call-site shape (mismatched-return-type cast). Siblings __init_cpp/exit only
+// match at -O4,p; only -O1-class levels reproduce the trampoline (KB probe).
+// Needs a per-object split (__init_user at -O1) or a unit flag change - tooling.
 void __init_user(void) {
     __init_cpp();
 }

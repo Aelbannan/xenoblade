@@ -6,12 +6,12 @@ extern void MPVABDEC_Init(void *);
 
 extern u32 lbl_eu_8051BFC0[];  /* reference tables */
 extern u32 lbl_eu_80602A10[];  /* work area */
-extern u32 lbl_eu_80604660[];
-extern u32 lbl_eu_8060465C[];
-extern u32 lbl_eu_80604658[];
-extern u32 lbl_eu_80604654[];
-extern u32 lbl_eu_80604650[];
-extern u32 lbl_eu_8060464C[];
+extern u32 lbl_eu_80604660;
+extern u32 lbl_eu_8060465C;
+extern u32 lbl_eu_80604658;
+extern u32 lbl_eu_80604654;
+extern u32 lbl_eu_80604650;
+extern u32 lbl_eu_8060464C;
 
 extern u32 lbl_eu_806046A8[];
 extern u32 lbl_eu_806033F8[];
@@ -68,17 +68,17 @@ void MPVBDEC_Init(void *handle) {
     /* Set up decoder parameters at handle+0x1200..0x122C */
     {
         u32 *p = (u32 *)((u8 *)handle + 0x1200);
-        p[0] = lbl_eu_80604660[0] - 0x10;  /* width */
+        p[0] = lbl_eu_80604660 - 0x10;  /* width */
         p[1] = 0x15;                        /* height? */
-        p[2] = lbl_eu_8060465C[0] - 0x20;  /* something */
+        p[2] = lbl_eu_8060465C - 0x20;  /* something */
         p[3] = 0x13;
-        p[4] = lbl_eu_80604658[0] - 0x20;
+        p[4] = lbl_eu_80604658 - 0x20;
         p[5] = 0x12;
-        p[6] = lbl_eu_80604654[0] - 0x20;
+        p[6] = lbl_eu_80604654 - 0x20;
         p[7] = 0x11;
-        p[8] = lbl_eu_80604650[0] - 0x20;
+        p[8] = lbl_eu_80604650 - 0x20;
         p[9] = 0x10;
-        p[10] = lbl_eu_8060464C[0] - 0x20;
+        p[10] = lbl_eu_8060464C - 0x20;
         p[11] = 0x0F;
     }
 

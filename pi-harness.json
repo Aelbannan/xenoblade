@@ -33,7 +33,7 @@
   "nearmissDir": "build/pi-harness/nearmiss",
   "maxAttemptsPerTarget": 4,
   "staleRoundThreshold": 2,
-  "retryExhausted": false,
+  "retryExhausted": true,
   "bankOnlyOnBetter": true,
   "timeoutRetries": 3,
   "rejectionRetries": 3,

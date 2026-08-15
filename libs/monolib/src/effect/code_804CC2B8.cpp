@@ -2613,7 +2613,7 @@ extern "C" void __attribute__((never_inline)) func_804D5E90(EffectNode* self) {
 // Target 2: allocate a (count*4 mock) float table and fill it with a 4-term
 // cubic basis across t in [-?] stepping by f8/count.
 f32* func_804D5F54(void* this_, s32 count) {
-    MemManGlob* mg = &lbl_eu_8065FC18;
+    MemManGlob* mg = (MemManGlob*)lbl_eu_8065FC18;
     u32 max = mtl::MemManager::getMaxAllocSize((mtl::ALLOC_HANDLE)mg->field_0x04);
     u32 req = (u32)count << 4;
     f32* buf;

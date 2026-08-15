@@ -38,7 +38,7 @@ struct CETrailHeapInfo {
     u32 m_00;
     mtl::ALLOC_HANDLE m_handle; // 0x4
 };
-extern CETrailHeapInfo lbl_eu_8065FC18;
+extern u32 lbl_eu_8065FC18[];
 
 struct FogData {
     u32 m_type; // 0x00
@@ -303,7 +303,7 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
         count = 2;
     }
 
-    mtl::ALLOC_HANDLE handle = lbl_eu_8065FC18.m_handle;
+    mtl::ALLOC_HANDLE handle = *(u32*)&lbl_eu_8065FC18[1];
     void* block = mtl::MemManager::allocate_array(count * 0x24 + 0x10, handle);
     t->m_list = (CETrailNode*)__construct_new_array(block, (void (*)(void*))func_804D70A0, nullptr, 0x24, count);
 
@@ -330,9 +330,9 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
 
     u32 need = ((u32)segCount * 0x1C) * (count * 2);
     CETrailVertex* verts;
-    if (need <= mtl::MemManager::getMaxAllocSize(lbl_eu_8065FC18.m_handle)) {
+    if (need <= mtl::MemManager::getMaxAllocSize(*(u32*)&lbl_eu_8065FC18[1])) {
         u32 n2 = segCount * count * 2;
-        void* block2 = mtl::MemManager::allocate_array(n2 * 0x1C + 0x10, lbl_eu_8065FC18.m_handle);
+        void* block2 = mtl::MemManager::allocate_array(n2 * 0x1C + 0x10, *(u32*)&lbl_eu_8065FC18[1]);
         verts = (CETrailVertex*)__construct_new_array(block2, (void (*)(void*))func_804D6070, nullptr, 0x1C, n2);
     } else {
         verts = nullptr;

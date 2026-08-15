@@ -9,6 +9,33 @@ struct CHelpVtbl {
     void* mSlots[8]; // +0x00..+0x1C
 };
 
+// Non-polymorphic prefix matching CHelp's first 8 bytes (owner@0, param@4).
+struct CHelpVtblPrefix {
+    void* mOwner; // 0x0
+    u32 mParam; // 0x4
+};
+
+// CHelp viewed as a polymorphic class: prefix data at +0, vptr at +8 (the
+// vptr offset MWCC assigns to the class that first declares virtuals after a
+// non-polymorphic base). Retail stores a manual interface table at +8, not a
+// C++ vptr, so calling through this view emits the r12 virtual-call sequence
+// (`lwz r12, 8(r3)`) instead of the r4 scratch-load of a raw slot cast. The
+// class is never instantiated, so no out-of-line definitions and no vtable are
+// emitted (same pattern as CHelp_EnemyEnableSub).
+//
+// MWCC vtables carry two leading entries (offset-to-top@0x00, RTTI@0x04), so
+// the 6 real virtuals land at vtable offsets 0x08..0x1C; UnkVirtualFunc2
+// calls the ones at 0x14/0x18 (flat-table slots 5/6).
+class CHelpVtblView : public CHelpVtblPrefix {
+public:
+    virtual void f08(); // vtable 0x08
+    virtual void f0C(); // vtable 0x0C
+    virtual void f10(); // vtable 0x10
+    virtual UNKWORD f14(); // vtable 0x14 (flat slot 5) - called by UnkVirtualFunc2
+    virtual UNKWORD f18(); // vtable 0x18 (flat slot 6) - called by UnkVirtualFunc2
+    virtual void f1C(); // vtable 0x1C
+};
+
 // Retail ctor writes: owner@0, param@4, vtbl@8. Base size is 0xC.
 // Construction uses retail symbol __ct__Q22cf5CHelpFv(self, owner, param).
 class CHelp {

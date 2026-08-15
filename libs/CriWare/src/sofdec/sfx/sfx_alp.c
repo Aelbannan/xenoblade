@@ -61,6 +61,11 @@ void SFXA_MakeAlp3110Tbl(void* self, int a, int b) {
 }
 void SFXA_MakeAlp3211Tbl(void* self, int a, int b) {
     SFXAlphaState* state = (SFXAlphaState*)self;
-    if (state->makeAlpTable) state->makeAlpTable(b, state->byte14, state->byte15, state->byte16);
+    int arg2 = b;
+    int arg3 = state->byte14;
+    int arg4 = state->byte15;
+    int arg5 = state->byte16;
+    SFXAlphaTableCallback cb = state->makeAlpTable;
+    if (cb) cb(arg2, arg3, arg4, arg5);
 }
 u32 SFXA_IsNeedUpdateLumiTbl(void* self) { return ((SFXAlphaState*)self)->needsUpdate; }

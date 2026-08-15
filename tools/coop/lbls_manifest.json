@@ -518,8 +518,8 @@
   ],
   [
    "lbl_eu_80506330",
-   "void*",
-   "",
+   "u32",
+   "[]",
    "dual"
   ],
   [
@@ -837,6 +837,12 @@
   [
    "lbl_eu_8050EE24",
    "char",
+   "[]",
+   "dual"
+  ],
+  [
+   "lbl_eu_8050EFB4",
+   "u32",
    "[]",
    "dual"
   ],
@@ -2043,6 +2049,18 @@
   [
    "lbl_eu_8052E558",
    "u8",
+   "[]",
+   "dual"
+  ],
+  [
+   "lbl_eu_8052E568",
+   "char",
+   "[]",
+   "dual"
+  ],
+  [
+   "lbl_eu_8052E590",
+   "char",
    "[]",
    "dual"
   ],
@@ -3499,6 +3517,18 @@
    "dual"
   ],
   [
+   "lbl_eu_8057164C",
+   "u32",
+   "[3]",
+   "dual"
+  ],
+  [
+   "lbl_eu_80571810",
+   "u8",
+   "[0x38]",
+   "dual"
+  ],
+  [
    "lbl_eu_80571848",
    "u32",
    "[]",
@@ -3673,7 +3703,25 @@
    "dual"
   ],
   [
+   "lbl_eu_806618D8",
+   "void*",
+   "",
+   "dual"
+  ],
+  [
    "lbl_eu_806618E8",
+   "void*",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_806618F0",
+   "void*",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80661970",
    "void*",
    "",
    "dual"
@@ -3694,6 +3742,12 @@
    "lbl_eu_80661A24",
    "char*",
    "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80661A40",
+   "char",
+   "[2]",
    "dual"
   ],
   [
@@ -5077,6 +5131,18 @@
    "dual"
   ],
   [
+   "lbl_eu_80664094",
+   "void*",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80664098",
+   "void*",
+   "",
+   "dual"
+  ],
+  [
    "lbl_eu_8066409C",
    "u32",
    "",
@@ -5101,8 +5167,20 @@
    "dual"
   ],
   [
+   "lbl_eu_806640CC",
+   "void*",
+   "",
+   "dual"
+  ],
+  [
    "lbl_eu_806640D0",
    "u32",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_806640E0",
+   "void*",
    "",
    "dual"
   ],
@@ -5126,6 +5204,12 @@
   ],
   [
    "lbl_eu_8066410C",
+   "u32",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80664110",
    "u32",
    "",
    "dual"
@@ -5155,8 +5239,20 @@
    "dual"
   ],
   [
+   "lbl_eu_80664138",
+   "void*",
+   "",
+   "dual"
+  ],
+  [
    "lbl_eu_8066413C",
    "u8*",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80664144",
+   "void*",
    "",
    "dual"
   ],
@@ -5192,6 +5288,12 @@
   ],
   [
    "lbl_eu_80664248",
+   "u32",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80664258",
    "u32",
    "",
    "dual"
@@ -6086,146 +6188,152 @@
   ],
   [
    "lbl_eu_80664920",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_80664928",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_80664930",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_80664938",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_80664940",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_80664948",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_80664950",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_80664958",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_80664960",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_80664968",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_80664970",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_80664978",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_80664980",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_80664988",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_80664990",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_80664998",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_806649A0",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_806649A8",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_806649B0",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_806649B8",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_806649C0",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_806649C8",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_806649D0",
-   "u16",
+   "s16",
    "[]",
    "dual"
   ],
   [
    "lbl_eu_806649D8",
-   "u16",
+   "s16",
    "[]",
+   "dual"
+  ],
+  [
+   "lbl_eu_806649E0",
+   "void*",
+   "",
    "dual"
   ],
   [
@@ -10009,6 +10117,30 @@
    "dual"
   ],
   [
+   "lbl_eu_80668014",
+   "f32",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80668018",
+   "f32",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_8066801C",
+   "f32",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80668020",
+   "f64",
+   "",
+   "dual"
+  ],
+  [
    "lbl_eu_80668028",
    "f64",
    "",
@@ -10028,6 +10160,18 @@
   ],
   [
    "lbl_eu_80668050",
+   "u16",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80668054",
+   "u32",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80668058",
    "u16",
    "",
    "dual"
@@ -11761,7 +11905,19 @@
    "dual"
   ],
   [
+   "lbl_eu_80668B00",
+   "f32",
+   "",
+   "dual"
+  ],
+  [
    "lbl_eu_80668B04",
+   "f32",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80668B08",
    "f32",
    "",
    "dual"
@@ -11810,6 +11966,18 @@
   ],
   [
    "lbl_eu_80668B44",
+   "f32",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80668B48",
+   "f32",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80668B4C",
    "f32",
    "",
    "dual"
@@ -13157,6 +13325,12 @@
    "dual"
   ],
   [
+   "lbl_eu_8056F4F0",
+   "u32",
+   "[4]",
+   "dual"
+  ],
+  [
    "lbl_eu_8056F508",
    "u32",
    "[]",
@@ -13241,6 +13415,12 @@
    "dual"
   ],
   [
+   "lbl_eu_80570068",
+   "u8",
+   "[16]",
+   "dual"
+  ],
+  [
    "lbl_eu_80656C58",
    "u32",
    "[]",
@@ -13256,6 +13436,18 @@
    "lbl_eu_80658358",
    "f32",
    "[]",
+   "dual"
+  ],
+  [
+   "lbl_eu_80658368",
+   "u32",
+   "[3]",
+   "dual"
+  ],
+  [
+   "lbl_eu_80658374",
+   "u32",
+   "[3]",
    "dual"
   ],
   [
@@ -13279,6 +13471,12 @@
   [
    "lbl_eu_80658664",
    "f32",
+   "[]",
+   "dual"
+  ],
+  [
+   "lbl_eu_8065CFA0",
+   "u32",
    "[]",
    "dual"
   ],
@@ -13310,6 +13508,12 @@
    "lbl_eu_8065F8C0",
    "u8",
    "[]",
+   "dual"
+  ],
+  [
+   "lbl_eu_8065FC18",
+   "u32",
+   "[34]",
    "dual"
   ],
   [
@@ -13537,6 +13741,12 @@
   [
    "lbl_eu_80663A18",
    "char*",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80663A90",
+   "u32",
    "",
    "dual"
   ],
@@ -13871,6 +14081,24 @@
    "dual"
   ],
   [
+   "lbl_eu_8066581C",
+   "u8*",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80665820",
+   "u8*",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80665824",
+   "u8*",
+   "",
+   "dual"
+  ],
+  [
    "lbl_eu_80665828",
    "f32",
    "",
@@ -13961,8 +14189,20 @@
    "dual"
   ],
   [
+   "lbl_eu_80665940",
+   "char*",
+   "",
+   "dual"
+  ],
+  [
    "lbl_eu_80665950",
    "s16",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80665958",
+   "void*",
    "",
    "dual"
   ],
@@ -13997,6 +14237,12 @@
    "dual"
   ],
   [
+   "lbl_eu_80665988",
+   "s32",
+   "",
+   "dual"
+  ],
+  [
    "lbl_eu_8066598C",
    "u32",
    "",
@@ -14005,6 +14251,12 @@
   [
    "lbl_eu_80665990",
    "u32",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_806659A0",
+   "u8",
    "",
    "dual"
   ],
@@ -16417,6 +16669,12 @@
    "dual"
   ],
   [
+   "lbl_eu_805E5354",
+   "u32",
+   "",
+   "dual"
+  ],
+  [
    "lbl_eu_805E5358",
    "u32",
    "",
@@ -16642,6 +16900,12 @@
    "lbl_eu_805F2AF0",
    "s32",
    "",
+   "dual"
+  ],
+  [
+   "lbl_eu_805F2AFC",
+   "u32",
+   "[]",
    "dual"
   ],
   [
@@ -17011,6 +17275,42 @@
    "dual"
   ],
   [
+   "lbl_eu_8060464C",
+   "u32",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80604650",
+   "u32",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80604654",
+   "u32",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80604658",
+   "u32",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_8060465C",
+   "u32",
+   "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80604660",
+   "u32",
+   "",
+   "dual"
+  ],
+  [
    "lbl_eu_80604664",
    "u32",
    "",
@@ -17152,6 +17452,12 @@
    "lbl_eu_80606E34",
    "void*",
    "",
+   "dual"
+  ],
+  [
+   "lbl_eu_80606E38",
+   "u8",
+   "[]",
    "dual"
   ],
   [
@@ -17606,193 +17912,337 @@
    "lbl_eu_8056BE38",
    "GXRenderModeObj",
    "",
-   "monolib"
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_8056D728",
    "LodTexCoordSetup",
    "[]",
-   "monolib"
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_8056DBC0",
    "mpfsys::MPFDrawMdlColor",
    "",
-   "monolib"
+   "monolib",
+   "extern_only"
   ],
   [
    "lbl_eu_8061AF60",
    "FogState",
    "",
-   "nw4r"
+   "nw4r",
+   "extern_only"
   ],
   [
    "lbl_eu_8061F9D4",
    "GXRenderModeObj",
    "",
-   "nw4r"
+   "nw4r",
+   "extern_only"
+  ],
+  [
+   "lbl_eu_80657B50",
+   "CException*",
+   "[]",
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_80658488",
    "mpfsys::MPFDrawDisplayList*",
    "[]",
-   "monolib"
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_80658648",
+   "func_800407C8_tmp",
+   "",
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_8065D138",
+   "CColiWalkState",
+   "",
+   "monolib",
+   "extern_only"
+  ],
+  [
+   "lbl_eu_8065F32C",
+   "ScnResData",
+   "",
+   "monolib",
+   "extern_only"
   ],
   [
    "lbl_eu_8065FCA0",
    "FogState",
    "",
-   "monolib"
+   "monolib",
+   "extern_only"
+  ],
+  [
+   "lbl_eu_8065FCD0",
+   "FogState",
+   "",
+   "monolib",
+   "extern_only"
   ],
   [
    "lbl_eu_80661718",
    "CScheduleItemPool",
    "",
-   "monolib"
+   "monolib",
+   "extern_only"
   ],
   [
    "lbl_eu_80665468",
    "nw4r::math::FRUSTUM*",
    "",
-   "nw4r"
-  ],
-  [
-   "lbl_eu_80665470",
-   "nw4r::ut::detail::RuntimeTypeInfo",
-   "",
-   "nw4r"
+   "nw4r",
+   "dual"
   ],
   [
    "lbl_eu_80665478",
    "MEMAllocator*",
    "",
-   "monolib"
-  ],
-  [
-   "lbl_eu_80665498",
-   "nw4r::ut::detail::RuntimeTypeInfo",
-   "",
-   "nw4r"
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_806654C8",
    "nw4r::snd::detail::AxfxImpl*",
    "",
-   "nw4r"
-  ],
-  [
-   "lbl_eu_806654D0",
-   "nw4r::ut::detail::RuntimeTypeInfo",
-   "",
-   "nw4r"
-  ],
-  [
-   "lbl_eu_806654F8",
-   "nw4r::ut::detail::RuntimeTypeInfo",
-   "",
-   "nw4r"
-  ],
-  [
-   "lbl_eu_80665520",
-   "nw4r::ut::detail::RuntimeTypeInfo",
-   "",
-   "nw4r"
-  ],
-  [
-   "lbl_eu_80665538",
-   "nw4r::ut::detail::RuntimeTypeInfo",
-   "",
-   "nw4r"
+   "nw4r",
+   "dual"
   ],
   [
    "lbl_eu_80665548",
    "nw4r::ut::detail::RuntimeTypeInfo",
    "",
-   "nw4r"
+   "nw4r",
+   "extern_only"
   ],
   [
-   "lbl_eu_80665550",
-   "nw4r::ut::detail::RuntimeTypeInfo",
+   "lbl_eu_806655D0",
+   "CViewRoot*",
    "",
-   "nw4r"
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_80665638",
+   "CDeviceRemotePad*",
+   "",
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_80665640",
+   "CDeviceSC*",
+   "",
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_80665668",
+   "CDeviceFileCri*",
+   "",
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_80665670",
    "CDeviceFileDvd*",
    "",
-   "monolib"
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_80665678",
+   "CDeviceFont*",
+   "",
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_80665688",
    "CDeviceFontInfoRom*",
    "",
-   "monolib"
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_806656A0",
+   "CDeviceGX*",
+   "",
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_806656AC",
+   "CDesktop*",
+   "",
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_806656C0",
+   "CException*",
+   "",
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_806656E0",
+   "CLibCriMoviePlay*",
+   "",
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_806656E8",
+   "CLibCriStreamingPlay*",
+   "",
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_806656F0",
+   "CLibG3d*",
+   "",
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_80665720",
+   "CLibVM*",
+   "",
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_80665730",
+   "CTaskLOD*",
+   "",
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_80665848",
    "nw4r::g3d::ResFileData*",
    "",
-   "monolib"
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_8066584C",
+   "Vec*",
+   "",
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_80665910",
    "ml::coli::CColiObject*",
    "",
-   "monolib"
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_80665914",
    "ml::coli::CColiObject*",
    "",
-   "monolib"
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_80665918",
    "ml::coli::CColiObject*",
    "",
-   "monolib"
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_8066591C",
    "ml::coli::CColiObject*",
    "",
-   "monolib"
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_80665920",
    "ml::coli::CColiObject*",
    "",
-   "monolib"
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_80665924",
+   "ml::coli::CColiObject*",
+   "",
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_80665928",
    "ml::coli::CColiObject*",
    "",
-   "monolib"
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_8066592C",
    "ml::coli::CColiObject*",
    "",
-   "monolib"
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_80665930",
    "ml::coli::CColiObject*",
    "",
-   "monolib"
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_80665944",
    "CColiBounds*",
    "",
-   "monolib"
+   "monolib",
+   "dual"
   ],
   [
    "lbl_eu_80665948",
    "CColiQx*",
    "",
-   "monolib"
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_8066594C",
+   "CColiHx*",
+   "",
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_806659C8",
+   "CWorkSystemCache*",
+   "",
+   "monolib",
+   "dual"
+  ],
+  [
+   "lbl_eu_80665A10",
+   "CWorkSystemPack*",
+   "",
+   "monolib",
+   "dual"
   ]
  ]
 }

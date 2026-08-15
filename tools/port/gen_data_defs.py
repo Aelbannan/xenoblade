@@ -313,8 +313,11 @@ def generate(rows: list[DataSymbol], region: str, symbols_path: Path,
         skipped["not referenced by src/libs"] = \
             skipped.get("not referenced by src/libs", 0) + before - len(kept)
     if manifest:
-        covered = {a for entries in manifest.values()
-                   for a, _t, _arr, _mode in entries if _mode == "dual"}
+        # Manifest entries are 4-tuples (area headers: addr, type, arr, mode)
+        # or 5-tuples (lbls_typed.hpp: addr, type, arr, owner, mode); the mode
+        # is always the last element.
+        covered = {e[0] for entries in manifest.values()
+                   for e in entries if e[-1] == "dual"}
         before = len(kept)
         kept = [r for r in kept if r.name not in covered]
         skipped["covered by lbl area headers (lbls_manifest.json)"] = \
@@ -461,6 +464,34 @@ def main() -> int:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(text, encoding="utf-8")
     print(f"wrote {out_path}")
+
+    # Class-typed labels (lbls_typed.hpp, dual entries): real-typed PC
+    # definitions live in their own TU -- data_defs.cpp cannot include that
+    # header (its type providers declare SDK globals this TU defines), but a
+    # TU defining ONLY the typed labels has no such conflict.
+    if manifest and "lbls_typed.hpp" in manifest:
+        entries = manifest["lbls_typed.hpp"]
+        dual = [e for e in entries if len(e) >= 4 and e[-1] == "dual"]
+        if dual:
+            typed_tu = _REPO / "port" / "lbls_typed_data.cpp"
+            lines = [
+                "// GENERATED FILE — do not edit. Regenerate with:",
+                f"//   .venv/bin/python3 tools/port/gen_data_defs.py --region {args.region}",
+                "// PC-port definitions for class-typed labels (real types).",
+                "// Separate TU from data_defs.cpp: this header's type providers",
+                "// declare SDK globals that data_defs.cpp defines, so they cannot",
+                "// be in the same translation unit.",
+                "#if defined(__MWERKS__) && !defined(NONMATCHING)",
+                "// Matching build: the retail image supplies all data — nothing defined.",
+                "#else",
+                "#define LBLS_DEFINE_DATA",
+                "#include <lbls_typed.hpp>",
+                "#undef LBLS_DEFINE_DATA",
+                "#endif",
+                "",
+            ]
+            typed_tu.write_text("\n".join(lines))
+            print(f"wrote {typed_tu} ({len(dual)} dual entries)")
     return 0
 
 

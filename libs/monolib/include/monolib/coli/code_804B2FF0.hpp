@@ -22,7 +22,7 @@ extern "C" s16 lbl_eu_80665950; // master node index (lha)
 extern "C" f32 lbl_eu_8066AEB0; // 0.0f
 extern "C" f32 lbl_eu_8066AEB4; // 1.0f
 extern "C" void func_804B1DC0(void*, int);
-extern "C" CColiWalkState* lbl_eu_8065D138;
+extern "C" CColiWalkState lbl_eu_8065D138;
 extern "C" u8 lbl_eu_8056F4F0;
 extern "C" void __ct__CColiProc(CColiProcLocal* self);
 extern "C" f32 lbl_eu_8066AEC0;

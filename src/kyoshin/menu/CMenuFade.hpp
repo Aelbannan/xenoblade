@@ -38,7 +38,6 @@ public:
     void Move();
     void Draw();
     void cbRenderBefore();
-    void func_80113E2C() { field_0x54 = 1; }
 
     // IScnRender at 0x5c (public non-primary base)
     CScn* mScn;                                 // 0x60

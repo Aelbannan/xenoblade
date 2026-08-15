@@ -151,7 +151,7 @@ namespace cf {
         CArtsSet(){}
         virtual void CArtsSet_UnkVirtualFunc1();
 
-        void setArtsSlotRC(unsigned short value, unsigned int row, unsigned int index);
+        void setArtsSlotRC(unsigned short value, unsigned short row, unsigned short index);
         unsigned short getArtsSlotRC(int index, int subindex);
         void setArtsSlotByIdx(unsigned short value, int index);
         void* getArtsParamRC(int index460, int index8c);

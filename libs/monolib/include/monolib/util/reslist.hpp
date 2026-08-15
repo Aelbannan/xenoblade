@@ -169,10 +169,10 @@ public:
     }
 
     iterator begin() const {
-        return iterator(mStartNodePtr->mNext);
+        return iterator(this->mStartNodePtr->mNext);
     }
     iterator end() const {
-        return iterator(mStartNodePtr);
+        return iterator(this->mStartNodePtr);
     }
 
     T& front() {
@@ -194,8 +194,8 @@ public:
         _reslist_node<T>* endNode;
         
         u32 length = 0;
-        endNode = mStartNodePtr;
-        curNode = mStartNodePtr->mNext;
+        endNode = this->mStartNodePtr;
+        curNode = this->mStartNodePtr->mNext;
 
         while(curNode != endNode){
             length++;
@@ -206,17 +206,17 @@ public:
     }
 
     bool empty() const {
-        return mStartNodePtr->mNext == mStartNodePtr;
+        return this->mStartNodePtr->mNext == this->mStartNodePtr;
     }
 
     inline void reserve(mtl::ALLOC_HANDLE handle, int capacity) {
-        mList = new (handle) _reslist_node<T>[capacity];
+        this->mList = new (handle) _reslist_node<T>[capacity];
 
         for(int i = 0; i < capacity; i++){
-            mList[i].mNext = nullptr;
+            this->mList[i].mNext = nullptr;
         }
 
-        mCapacity = capacity;
+        this->mCapacity = capacity;
     }
 
     iterator find(const T& item){
@@ -224,10 +224,10 @@ public:
     }
 
     void push_front(const T& item){
-        _reslist_node<T>* startNode = mStartNodePtr->mNext;
-        int i = findFirstEmptySlotIndex();
+        _reslist_node<T>* startNode = this->mStartNodePtr->mNext;
+        int i = this->findFirstEmptySlotIndex();
 
-        _reslist_node<T>* temp = &mList[i];
+        _reslist_node<T>* temp = &this->mList[i];
         temp->setItem(item);
         temp->mNext = startNode;
         temp->mPrev = startNode->mPrev;
@@ -236,10 +236,10 @@ public:
     }
 
     void push_back(const T& item){
-        _reslist_node<T>* startNode = mStartNodePtr;
-        int i = findFirstEmptySlotIndex();
+        _reslist_node<T>* startNode = this->mStartNodePtr;
+        int i = this->findFirstEmptySlotIndex();
 
-        _reslist_node<T>* temp = &mList[i];
+        _reslist_node<T>* temp = &this->mList[i];
 
         temp->setItem(item);
         temp->mNext = startNode;
@@ -253,7 +253,7 @@ public:
         _reslist_node<T>* next;
         _reslist_node<T>* head;
 
-        head = mStartNodePtr;
+        head = this->mStartNodePtr;
         curr = head->mNext;
         
         //Walk through the list
@@ -278,7 +278,7 @@ public:
         _reslist_node<T>* nextNode;
         _reslist_node<T>* frontNode;
 
-        frontNode = mStartNodePtr->mNext;
+        frontNode = this->mStartNodePtr->mNext;
         nextNode = frontNode->mNext;
         prevNode = frontNode->mPrev;
         prevNode->mNext = nextNode;
@@ -299,15 +299,15 @@ public:
     }
 
     void clear(){
-        clearList();
+        this->clearList();
     }
 
     void destroyList(){
-        clearList();
-        if (unk1C == false && mList != nullptr) {
+        this->clearList();
+        if (this->unk1C == false && this->mList != nullptr) {
             delete[](this->mList);
-            mList = nullptr;
+            this->mList = nullptr;
         }
-        mCapacity = 0;
+        this->mCapacity = 0;
     }
 };

@@ -339,8 +339,7 @@ void sfbuf_InitVfrmBuf(void *self, void *handle, u32 *cumulative,
  */
 void sfbuf_InitAringBuf(void *self, u32 *cumulative, u32 *sizes, int idx) {
     u8 *p = (u8 *)self + idx * SFBUF_BUF_STRIDE;
-    u32 ptrVal = sizes[idx];
-    u32 valid = (u32)(-(s32)ptrVal | ptrVal) >> 31; /* non-zero check */
+    u32 valid = (u32)(sizes[idx] != 0); /* non-zero check - local forces early load */
 
     *(u32 *)(p + 0x00) = 2; /* ARING type */
     *(u32 *)(p + 0x04) = valid;

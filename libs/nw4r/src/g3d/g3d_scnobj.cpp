@@ -698,9 +698,19 @@ ScnGroup::~ScnGroup() {
 
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnObj")> lbl_eu_8051D768 = {sizeof("ScnObj"), "ScnObj"};
 
+// ScnObj's base-chain check (G3dObj). Kept as a static helper (not a virtual-call
+// chain) so MWCC inlines it and emits the retail parameter-reload pattern
+// (a fresh lwz at the helper boundary).
+static bool scnObjBaseIsDerivedFrom(G3dObj::TypeObj other) {
+    return other == G3dObj::TypeObj(lbl_eu_8051D640);
+}
+
 bool ScnObj::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D768) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+    if (other == TypeObj(lbl_eu_8051D768)) {
+        return true;
+    }
+
+    return scnObjBaseIsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj ScnObj::GetTypeObj() const {
@@ -714,10 +724,24 @@ const char* ScnObj::GetTypeName() const {
 
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnGroup")> lbl_eu_8051D788 = {sizeof("ScnGroup"), "ScnGroup"};
 
+// ScnGroup's base-chain check (ScnObj then G3dObj). Kept as a static helper
+// (not a virtual-call chain) so MWCC inlines it and emits the retail
+// parameter-reload pattern (a fresh lwz for the first two comparisons, then
+// register reuse).
+static bool scnGroupBaseIsDerivedFrom(G3dObj::TypeObj other) {
+    if (other == G3dObj::TypeObj(lbl_eu_8051D768)) {
+        return true;
+    }
+
+    return other == G3dObj::TypeObj(lbl_eu_8051D640);
+}
+
 bool ScnGroup::IsDerivedFrom(G3dObj::TypeObj other) const {
-    return other == TypeObj(lbl_eu_8051D788) ? true
-         : other == TypeObj(lbl_eu_8051D768) ? true
-         : (other == TypeObj(lbl_eu_8051D640));
+    if (other == TypeObj(lbl_eu_8051D788)) {
+        return true;
+    }
+
+    return scnGroupBaseIsDerivedFrom(other);
 }
 
 const G3dObj::TypeObj ScnGroup::GetTypeObj() const {

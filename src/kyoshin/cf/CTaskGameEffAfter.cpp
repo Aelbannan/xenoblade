@@ -39,12 +39,15 @@ void CTTask<CTaskGameEffAfter>::Draw() {
 }
 
 // Base destructor: destruct CProcess and free the block if the delete flag is set.
-// Retail __dt__27CTTask<17CTTaskGameEffAfter>Fv is 0x50 (stmw r30 frame); keep
-// optimize_for_size on like CTaskGameEff's dtor.
+// Retail __dt__27CTTask<17CTTaskGameEffAfter>Fv is 0x50 (stmw r30 frame). The
+// optimize_for_size pragma stays OPEN for the rest of the TU on purpose: the
+// derived dtor and the self-allocating ctor need the same size-priority frame
+// (retail stmw r30 prologues), and the Move/Draw dispatchers + empty overrides
+// compile identically under either priority. (An unclosed pragma leaks forward
+// in MWCC - see docs/MWCC_REFERENCE.md "pragma leaks".)
 #pragma optimize_for_size on
 template<>
 CTTask<CTaskGameEffAfter>::~CTTask() {}
-#pragma optimize_for_size off
 
 // ============================================================================
 // CTaskGameEffAfter methods.

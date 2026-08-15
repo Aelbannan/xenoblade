@@ -139,6 +139,10 @@ void CTaskGameEvt::Move() {
     }
 }
 
+// Preserve empty Draw member (retail 4-byte body `blr`); the PTMF dispatch is
+// handled by the CTTask<CTaskGameEvt>::Draw specialization above.
+void CTaskGameEvt::Draw() {}
+
 #pragma optimize_for_size on
 // Retail symbol keeps the C-linkage Fv name although the source takes a parent
 // and a scene arg (cf. CTaskGameCf / CTaskGamePic).

@@ -49,6 +49,7 @@ public:
     void Init();
     void Term();
     void Move();
+    void Draw();
     static CTaskGameEvt* create(CProcess* pParent, int arg);
 
     // 0x0-0x54: CTTask<CTaskGameEvt>

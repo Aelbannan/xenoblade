@@ -2,6 +2,12 @@
 
 #include <nw4r/g3d.h>
 
+// DEG_TO_FIDX (256/360 = 0.7111111f) lives in the retail sdata2 pool
+// (nw4r_data.s). Declared at global scope: MWCC does not mangle global
+// variable names, so the emitted symbol matches the retail name
+// (docs/MWCC_REFERENCE.md 1a).
+extern const float lbl_eu_80669AF0;
+
 namespace nw4r {
 namespace g3d {
 namespace {
@@ -639,21 +645,6 @@ void GetAnmResult_RT(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
 void GetAnmResult_SRT(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
                       const ResAnmChrNodeData* pNodeData, f32 frame);
 
-typedef void (*GetAnmResultFunc)(ChrAnmResult* pResult,
-                                 const ResAnmChrInfoData& rInfoData,
-                                 const ResAnmChrNodeData* pNodeData, f32 frame);
-
-const GetAnmResultFunc gGetAnmResultTable[] = {
-    GetAnmResult_,   // 0 0 0
-    GetAnmResult_S,  // 0 0 1
-    GetAnmResult_R,  // 0 1 0
-    GetAnmResult_SR, // 0 1 1
-    GetAnmResult_T,  // 1 0 0
-    GetAnmResult_ST, // 1 0 1
-    GetAnmResult_RT, // 1 1 0
-    GetAnmResult_SRT // 1 1 1
-};
-
 void GetAnmResult_(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
                    const ResAnmChrNodeData* pNodeData, f32 frame) {
 #pragma unused(rInfoData)
@@ -689,9 +680,10 @@ void GetAnmResult_R(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
 
     const ResAnmChrNodeData::AnmData* pAnmData = pNodeData->anms;
 
-    pResult->s.x = 0.0f;
-    pResult->s.y = 0.0f;
-    pResult->s.z = 0.0f;
+    // Rotation-only result: no scale channel, so the scale stays identity.
+    pResult->s.x = 1.0f;
+    pResult->s.y = 1.0f;
+    pResult->s.z = 1.0f;
 
     pAnmData = GetAnmRotation(&pResult->rt, &pResult->rawR, rInfoData,
                               pNodeData, pAnmData, frame);
@@ -787,6 +779,28 @@ void GetAnmResult_SRT(ChrAnmResult* pResult, const ResAnmChrInfoData& rInfoData,
 
 } // namespace
 
+} // namespace g3d
+} // namespace nw4r
+
+// The anonymous-namespace dispatch targets are visible here through a
+// using-directive on the enclosing namespace (unnamed-namespace members
+// are found via unqualified lookup). The table is at global scope so MWCC
+// emits the unmangled name gGetAnmResultTable, which the symbol-recovery
+// tooling maps to the retail pool label lbl_eu_8051D500 (stripping .rodata).
+typedef void (*GetAnmResultFunc)(nw4r::g3d::ChrAnmResult*,
+                                 const nw4r::g3d::ResAnmChrInfoData&,
+                                 const nw4r::g3d::ResAnmChrNodeData*, f32);
+
+using namespace nw4r::g3d;
+
+static const GetAnmResultFunc gGetAnmResultTable[8] = {
+    GetAnmResult_,  GetAnmResult_S,  GetAnmResult_R, GetAnmResult_SR,
+    GetAnmResult_T, GetAnmResult_ST, GetAnmResult_RT, GetAnmResult_SRT,
+};
+
+namespace nw4r {
+namespace g3d {
+
 /******************************************************************************
  *
  * ResAnmChr
@@ -797,6 +811,7 @@ void ResAnmChr::GetAnmResult(ChrAnmResult* pResult, u32 idx, f32 frame) const {
 
     u32 flags = pNodeData->flags;
 
+    u32 index = (flags & ResAnmChrNodeData::FLAG_HAS_SRT_MASK) >> 22;
     pResult->flags =
         flags &
         (ChrAnmResult::FLAG_ANM_EXISTS | ChrAnmResult::FLAG_MTX_IDENT |
@@ -806,8 +821,6 @@ void ResAnmChr::GetAnmResult(ChrAnmResult* pResult, u32 idx, f32 frame) const {
          ChrAnmResult::FLAG_PATCH_ROT | ChrAnmResult::FLAG_PATCH_TRANS |
          ChrAnmResult::FLAG_SSC_APPLY | ChrAnmResult::FLAG_SSC_PARENT |
          ChrAnmResult::FLAG_XSI_SCALING);
-
-    u32 index = (flags & ResAnmChrNodeData::FLAG_HAS_SRT_MASK) >> 22;
     gGetAnmResultTable[index](pResult, ref().info, pNodeData, frame);
 }
 
@@ -918,10 +931,11 @@ void ChrAnmResult::GetMtx(math::MTX34* pMtx) const {
 }
 
 void ChrAnmResult::SetRotateDeg(const math::VEC3* pRotate) {
-    if (pRotate->x == 0.0f && pRotate->y == 0.0f && pRotate->z == 0.0f) {
-        u32 flag = FLAG_TRANS_ZERO;
+    if (lbl_eu_80669AE0 == pRotate->x && lbl_eu_80669AE0 == pRotate->y &&
+        lbl_eu_80669AE0 == pRotate->z) {
+        u32 flag = FLAG_ROT_ZERO;
 
-        if (flags & FLAG_ROT_ZERO) {
+        if (flags & FLAG_TRANS_ZERO) {
             flag |= FLAG_ROT_TRANS_ZERO;
 
             if (flags & FLAG_SCALE_ONE) {
@@ -931,15 +945,50 @@ void ChrAnmResult::SetRotateDeg(const math::VEC3* pRotate) {
 
         flags |= flag;
 
-        math::MTX34Identity(&rt);
+        // 3x3 identity; the translation column is left untouched
+        rt._00 = lbl_eu_80669AE4;
+        rt._01 = lbl_eu_80669AE0;
+        rt._02 = lbl_eu_80669AE0;
+        rt._10 = lbl_eu_80669AE0;
+        rt._11 = lbl_eu_80669AE4;
+        rt._12 = lbl_eu_80669AE0;
+        rt._20 = lbl_eu_80669AE0;
+        rt._21 = lbl_eu_80669AE0;
+        rt._22 = lbl_eu_80669AE4;
     } else {
-        math::VEC3 rot = *pRotate * 0.017453292f; // DEG_TO_RAD
+        // MTX34RotXYZFIdx overwrites the translation column; preserve it in a
+        // memory-backed local (retail spills it to the stack around the call)
 
-        math::MTX34RotXYZFIdx(&rt, rot.x, rot.y, rot.z);
+        // MTX34RotXYZFIdx overwrites the translation column; preserve it in a
+        // memory-backed local (retail spills it to the stack around the call).
+        //
+        // k/fx/fy/fz are declared before assignment so their registers are born
+        // f0..f3, but assigned in z, k, y, x order so the loads land
+        // z, const, y, x (pattern from func_804B0C0C in monolib
+        // code_804A6C60.cpp). The VEC3 constructor args evaluate right-to-left,
+        // loading tz/ty/tx interleaved after the angle muls.
+        f32 k;
+        f32 fx;
+        f32 fy;
+        f32 fz;
+        fz = pRotate->z;
+        k = lbl_eu_80669AF0;
+        fy = pRotate->y;
+        fx = pRotate->x;
 
-        flags &= ~(FLAG_MTX_IDENT | FLAG_ROT_TRANS_ZERO | FLAG_TRANS_ZERO);
+        math::VEC3 trans(rt._03, rt._13, rt._23);
 
-        rawR = *pRotate;
+        math::MTX34RotXYZFIdx(&rt, k * fx, k * fy, k * fz);
+
+        rt._03 = trans.x;
+        rt._13 = trans.y;
+        rt._23 = trans.z;
+
+        rawR.x = pRotate->x;
+        rawR.y = pRotate->y;
+        rawR.z = pRotate->z;
+
+        flags &= ~(FLAG_MTX_IDENT | FLAG_ROT_TRANS_ZERO | FLAG_ROT_ZERO);
     }
 
     flags |= FLAG_ROT_RAW_FMT;

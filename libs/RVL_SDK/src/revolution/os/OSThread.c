@@ -5,7 +5,7 @@ void DefaultSwitchThreadCallback(OSThread* currThread, OSThread* newThread);
 OSSwitchThreadCallback SwitchThreadCallback = DefaultSwitchThreadCallback;
 
 OSThread DefaultThread;
-OSThreadQueue RunQueue[32];
+OSThreadQueue RunQueue[OS_PRIORITY_MAX + 1]; // one queue per priority level (0..31)
 OSContext IdleContext;
 OSThread IdleThread;
 
@@ -29,7 +29,7 @@ void __OSThreadInit(void) {
 
     thread->state = OS_THREAD_STATE_RUNNING;
     thread->flags = OS_THREAD_DETACHED;
-    thread->base = 16;
+    thread->base = 16;      // idle thread starts at the middle priority
     thread->priority = 16;
     thread->suspend = 0;
     thread->val = 0xFFFFFFFF;
@@ -51,7 +51,7 @@ void __OSThreadInit(void) {
 
     RunQueueBits = 0;
     RunQueueHint = FALSE;
-    for (i = 0; i < 32; i++) {
+    for (i = 0; i < OS_PRIORITY_MAX + 1; i++) {
         OSInitThreadQueue(&RunQueue[i]);
     }
 
@@ -200,6 +200,10 @@ s32 __OSGetEffectivePriority(OSThread* thread) {
     return prio;
 }
 
+// Re-insert a thread after its effective priority changes: READY threads move
+// between run queues, SLEEPING threads are re-sorted within their sleep queue.
+// Returns the mutex owner to re-evaluate when the thread sleeps on a mutex
+// (otherwise NULL).
 OSThread* SetEffectivePriority(OSThread* thread, s32 prio) {
     OSThread* iter;
     OSThread* iterPrev;
@@ -310,6 +314,9 @@ void __OSPromoteThread(OSThread* thread, s32 prio) {
     }
 }
 
+// Core scheduler step: pick the highest-priority runnable thread and switch to
+// it. When nothing is runnable, spin in the idle context until a thread wakes.
+// `b` forces a switch even if the current thread stays runnable (OSYieldThread).
 OSThread* SelectThread(BOOL b) {
     OSThreadQueue* queue;
     OSThread* currThread;
@@ -441,10 +448,12 @@ BOOL OSCreateThread(OSThread* thread, OSThreadFunc func, void* funcArg,
 
     enabled = OSDisableInterrupts();
     if (__OSErrorTable[OS_ERR_FP_EXCEPTION] != NULL) {
-        thread->context.srr1 |= 0x900;
-        thread->context.state |= 0x1;
-        thread->context.fpscr = __OSFpscrEnableBits & 0xF8;
-        thread->context.fpscr |= 0x4;
+        // FP exceptions are enabled: give the new thread a fresh FP context
+        // that is always saved/restored (never lazily skipped).
+        thread->context.srr1 |= 0x900; // MSR FP + FE0/FE1
+        thread->context.state |= OS_CONTEXT_STATE_FP_SAVED;
+        thread->context.fpscr = __OSFpscrEnableBits & 0xF8; // clear FEX/VX
+        thread->context.fpscr |= 0x4;  // enable FP exception reporting
 
         for (i = 0; i < 32; i++) {
             *(u64*)&thread->context.fprs[i] = 0xFFFFFFFFFFFFFFFF;
@@ -468,7 +477,7 @@ BOOL OSCreateThread(OSThread* thread, OSThreadFunc func, void* funcArg,
     return TRUE;
 }
 
-void OSExitThread(OSThread* thread) {
+void OSExitThread(OSThread* val) {
     BOOL enabled;
     OSThread* currThread;
     OSThread* next;
@@ -497,7 +506,7 @@ void OSExitThread(OSThread* thread) {
         currThread->state = OS_THREAD_STATE_EXITED;
     } else {
         currThread->state = OS_THREAD_STATE_MORIBUND;
-        currThread->val = (u32)thread;
+        currThread->val = (u32)val; // exit value handed to OSJoinThread
     }
 
     __OSUnlockAllMutex(currThread);
@@ -522,7 +531,7 @@ void OSCancelThread(OSThread* thread) {
         }
         break;
     case OS_THREAD_STATE_RUNNING:
-        RunQueueHint = 1;
+        RunQueueHint = TRUE;
         break;
     case OS_THREAD_STATE_SLEEPING:
         next = thread->next;

@@ -11,11 +11,11 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 9861 |
+| extern "C" (total lines) | 9862 |
 | extern "C" declarations (non-lbl_*, imports) | 3687 |
 | extern "C" definitions (forced names) | 3679 |
 | `self`/register-style params | 11404 |
-| `void*` (params + locals) | 6878 |
+| `void*` (params + locals) | 6880 |
 | raw pointer offset arithmetic | 6356 |
 | deref-through-cast arithmetic | 2483 |
 | inline asm / `register` | 112 |
@@ -234,9 +234,9 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/nw4r/src/snd/snd_DvdSoundArchive.cpp | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FrameHeap.cpp | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FxChorus.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_FxChorusDpl2.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/snd/snd_FxChorusDpl2.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FxDelay.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/nw4r/src/snd/snd_FxDelayDpl2.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/nw4r/src/snd/snd_FxDelayDpl2.cpp | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FxReverbHi.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FxReverbHiDpl2.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/snd/snd_FxReverbStdDpl2.cpp | 4 | 8 | 15 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -2691,7 +2691,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "void_ptr": 2
+  "void_ptr": 3
  },
  "libs/nw4r/src/snd/snd_FxDelay.cpp": {
   "asm_insn_shim": 0,
@@ -2703,7 +2703,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "void_ptr": 2
+  "void_ptr": 3
  },
  "libs/nw4r/src/snd/snd_FxReverbHi.cpp": {
   "asm_insn_shim": 0,

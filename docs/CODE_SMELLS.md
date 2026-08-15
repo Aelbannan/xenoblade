@@ -11,11 +11,11 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 9665 |
-| extern "C" declarations (non-lbl_*, imports) | 3533 |
+| extern "C" (total lines) | 9790 |
+| extern "C" declarations (non-lbl_*, imports) | 3647 |
 | extern "C" definitions (forced names) | 3677 |
-| `self`/register-style params | 11402 |
-| `void*` (params + locals) | 6862 |
+| `self`/register-style params | 11400 |
+| `void*` (params + locals) | 6866 |
 | raw pointer offset arithmetic | 6357 |
 | deref-through-cast arithmetic | 2483 |
 | inline asm / `register` | 103 |
@@ -24,7 +24,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 0 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
-| #pragma | 1633 |
+| #pragma | 1635 |
 
 ## Top offenders (by cleanable severity)
 
@@ -56,10 +56,10 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/core/CFontLayer.cpp | 12 | 8 | 29 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CPackItem.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CPadManager.cpp | 0 | 0 | 1 | 2 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/core/CProc.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/core/CProcRoot.cpp | 4 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
+| libs/monolib/src/core/CProc.cpp | 39 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/core/CProcRoot.cpp | 42 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/core/CRsrc.cpp | 10 | 4 | 0 | 9 | 8 | 2 | 0 | 0 | 10 | 0 | 0 | 0 |
-| libs/monolib/src/core/CRsrcData.cpp | 9 | 0 | 2 | 6 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 |
+| libs/monolib/src/core/CRsrcData.cpp | 47 | 0 | 2 | 8 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 |
 | libs/monolib/src/core/CSchedule.cpp | 0 | 3 | 5 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CScriptCode.cpp | 1 | 9 | 13 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CSplitFrame.cpp | 0 | 6 | 6 | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -443,7 +443,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/object/CfObjectNpc.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectObj.cpp | 0 | 0 | 1 | 1 | 5 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectPc.cpp | 1 | 7 | 40 | 8 | 5 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/object/CfObjectPoint.cpp | 3 | 1 | 8 | 6 | 1 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
+| src/kyoshin/cf/object/CfObjectPoint.cpp | 3 | 1 | 5 | 4 | 1 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectTbox.cpp | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/CCharVoice.cpp | 14 | 0 | 1 | 9 | 11 | 7 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/CCharVoiceMan.cpp | 0 | 0 | 18 | 18 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -453,7 +453,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.cpp | 0 | 0 | 6 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_BUF.cpp | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.cpp | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/voice/cvsys/CVS_THREAD_DOWN.cpp | 0 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/voice/cvsys/CVS_THREAD_DOWN.cpp | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.cpp | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.cpp | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE.cpp | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -711,17 +711,18 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/core/CProc.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 1,
+  "extern_c_nonlbl_decl": 39,
   "init_side_effect": 0,
-  "schedule_pragma": 0
+  "schedule_pragma": 0,
+  "void_ptr": 1
  },
  "libs/monolib/src/core/CProcRoot.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 4,
+  "extern_c_nonlbl_decl": 42,
   "goto_count": 1,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "void_ptr": 2
+  "void_ptr": 5
  },
  "libs/monolib/src/core/CRsrc.cpp": {
   "asm_insn_shim": 0,
@@ -736,12 +737,12 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/core/CRsrcData.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 9,
+  "extern_c_nonlbl_decl": 47,
   "goto_count": 5,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 2,
-  "void_ptr": 6
+  "void_ptr": 8
  },
  "libs/monolib/src/core/CSchedule.cpp": {
   "asm_insn_shim": 0,
@@ -4806,8 +4807,8 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "init_side_effect": 0,
   "ptr_arith": 1,
   "schedule_pragma": 0,
-  "self_params": 8,
-  "void_ptr": 6
+  "self_params": 5,
+  "void_ptr": 4
  },
  "src/kyoshin/cf/object/CfObjectTbox.cpp": {
   "asm_insn_shim": 0,
@@ -4889,7 +4890,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 10
+  "self_params": 11
  },
  "src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.cpp": {
   "asm_insn_shim": 0,

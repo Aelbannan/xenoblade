@@ -459,7 +459,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/CfCamLookatIntf.cpp"),
             Object(Matching, "kyoshin/cf/CfCamTargetIntf.cpp"),
             Object(NonMatching, "kyoshin/cf/CfCam.cpp"),
-            Object(NonMatching, "kyoshin/cf/CfCamEvent_1.cpp"),
+            Object(NonMatching, "kyoshin/cf/CfCamEvent_1.cpp", mw_version="GC/3.0a5.2"),  # retail [0x10,0x2b] range checks use two-cmpi form; Wii/1.1 folds to subi/rlwinm/cmpli (func_8007560C/5640/54C0 family)
             Object(NonMatching, "kyoshin/cf/CfGameManager.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlEnemy.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlMoveBase.cpp"),
@@ -707,7 +707,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/CTutorial.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/menu/CMenuOption.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/COption.cpp"),
-            Object(NonMatching, "kyoshin/menu/CMenuSkipTimer.cpp", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "kyoshin/menu/CMenuSkipTimer.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CSkipTimer.cpp"),
             Object(NonMatching, "kyoshin/cf/chain/CChainEffect.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/CCharVoice.cpp"),
@@ -1988,6 +1988,8 @@ config.libs = [
             Object(Matching, "criware_data.s"),
             Object(Matching, "nw4r_data.s"),
                                     Object(Matching, "monolibdata1e.cpp"),  # converted from asm dump: one 0x280-byte .bss global (lbl_eu_80657238), verified byte+align identical via run.py data diff
+            Object(Matching, "monolibdata1.s"),  # vtable/data blob — required by the split
+            Object(Matching, "monolibdata1d.s"),  # vtable/RTTI blob (CDoubleListNode etc. vtables @0x8056BB90); required by the split — dropping it blocks build.ninja regen ("Missing configuration for monolibdata1d.s")
             Object(Matching, "monolibdata2.s"),
         ],
     },

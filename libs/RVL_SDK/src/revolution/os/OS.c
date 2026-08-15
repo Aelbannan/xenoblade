@@ -22,7 +22,7 @@ static OSBootInfo* BootInfo;
 static u32* BI2DebugFlag;
 static u32 BI2DebugFlagHolder;
 
-static char GameNameBuffer[sizeof('ABCD') + 1];
+static char GameNameBuffer[5]; // 4-char game id + NUL
 
 static f64 ZeroF;     // for lfd
 static f32 ZeroPS[2]; // for psl_l
@@ -160,6 +160,8 @@ void __OSGetIOSRev(OSIOSRev* rev) {
         (builddate >> 0 & 0xF) + (builddate >> 4 & 0xF) * 10 + 2000;
 }
 
+// Map the DVD device code + Hollywood revision to a console type; falls
+// back to the boot-info console type when the hardware is not identifiable.
 u32 OSGetConsoleType(void) {
     u32 hollywood;
     u32 mem2size;
@@ -256,6 +258,9 @@ u32 OSGetConsoleType(void) {
 }
 
 static void MemClear(void* mem, u32 size) {
+    // NOTE: the flush tail must stay left-associative: `(u8*)mem + size - 0x40000`
+    // (parenthesizing the tail changes the register allocation and breaks the
+    // byte match; see the configure.py promotion note).
     void* flush = (0x40000 < size) ? (u8*)mem + size - 0x40000 : mem;
     DCZeroRange(mem, size);
     DCFlushRange(flush, 0x40000);
@@ -450,7 +455,7 @@ static void ReportOSInfo(void) {
 }
 
 // @typo
-static void CheckFirmare(void){
+static void CheckFirmare(void) {
     OSIOSRev rev;
     u32 myVersion;
     const GXColor bgColor = {0,0,255,0};
@@ -459,17 +464,16 @@ static void CheckFirmare(void){
     __OSGetIOSRev(&rev);
 
     myVersion = rev.idLo << 16 | rev.verMajor << 8 | rev.verMinor;
-    
     if (rev.idLo != (OS_MINIMUM_IOS_VERSION >> 16)
         || rev.idLo == (OS_MINIMUM_IOS_VERSION >> 16) && myVersion < OS_MINIMUM_IOS_VERSION) {
         OSReport("OS ERROR: This firmware is an improper version for this SDK. Please use a correct Firmware.\n");
         OSFatal(textColor, bgColor, "\n\nERROR #002\nAn error has occurred.\nPress the Eject Button, remove the\nGame Disc, and turn off the power to \nthe console. \nPlease read the Wii Operations Manual \nfor further instructions.\n");
 #line 1236
         OS_ERROR("Failed to run app");
-      }
+    }
 }
 
-static u8 GetAppType(){
+static u8 GetAppType(void) {
     if (__OSInIPL) {
         return OS_APP_TYPE_IPL;
     }
@@ -481,6 +485,8 @@ static void __OSRegisterVersion(const char* ver) {
     OSReport("%s\n", ver);
 }
 
+// Initialize the whole OS: boot info, arenas, exception/interrupt/thread/
+// context/cache subsystems, then the console-type checks and DVD init.
 void OSInit(void) {
     OSBI2* bi2;
     void* mem1lo;
@@ -655,10 +661,9 @@ void OSInit(void) {
                 DCInvalidateRange(&DriveInfo, sizeof(DVDDriveInfo));
                 DVDInquiryAsync(&DriveBlock, &DriveInfo, InquiryCallback);
             }
-        
 
-            if(GetAppType() == 0x80 && !__OSInReboot && !__DVDCheckDevice()){
-                    OSReturnToMenu();
+            if (GetAppType() == 0x80 && !__OSInReboot && !__DVDCheckDevice()) {
+                OSReturnToMenu();
             }
         }
 
@@ -678,6 +683,8 @@ static u32 __OSExceptionLocations[OS_EXC_MAX] = {
     0x0100, 0x0200, 0x0300, 0x0400, 0x0500, 0x0600, 0x0700, 0x0800,
     0x0900, 0x0C00, 0x0D00, 0x0F00, 0x1300, 0x1400, 0x1700};
 
+// Install the exception vectors at their physical addresses, wiring the DB
+// integrator / TRK hooks when a debugger is attached.
 static void OSExceptionInit(void) {
     u32* dst;
     u8 i;
@@ -789,8 +796,7 @@ static asm void __OSDBJump(void){
     // clang-format on
 }
 
-OSExceptionHandler
-    __OSSetExceptionHandler(u8 type, OSExceptionHandler handler) {
+OSExceptionHandler __OSSetExceptionHandler(u8 type, OSExceptionHandler handler) {
     OSExceptionHandler old = OSExceptionTable[type];
     OSExceptionTable[type] = handler;
     return old;
@@ -807,7 +813,6 @@ static asm void OSExceptionVector(void) {
     entry __OSEVStart
 
     mtsprg0 r4
-    
     // Current OS context (physical address)
     lwz r4, 0x000000C0(0)
     stw r3, OSContext.gprs[3](r4)
@@ -844,7 +849,7 @@ static asm void OSExceptionVector(void) {
     entry __OSEVSetNumber
 
     li r3, 0
-    // Currrent OS context (cached address)
+    // Current OS context (cached address)
     lwz r4, 0x000000D4(r0)
     rlwinm. r5, r5, 0, 30, 30
     bne lbl_800ECF70
@@ -926,6 +931,9 @@ void OSRegisterVersion(const char* ver) {
 // Must be defined down here because of data pooling
 static const char* AppGameNameForSysMenu = "HAEA";
 
+// 4-char game id from the boot partition type; under IPL report the
+// system-menu app name, falling back to the current app name when the
+// partition type is not a valid game-id character.
 const char* OSGetAppGamename(void) {
     int i;
     const char* temp =

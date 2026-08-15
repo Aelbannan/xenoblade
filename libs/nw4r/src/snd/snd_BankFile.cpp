@@ -1,15 +1,128 @@
+// The retail RBNK reader is reconstructed here as real C++ members. The
+// shared snd_BankFile.h / snd_WaveFile.h headers cannot be extended from
+// this unit (the retail GetInstParam / ReadWaveInfo members and the
+// WaveFileReader(WaveFile::WaveInfo*) ctor overload are not declared there),
+// so the three classes that need the extra retail members are renamed out of
+// the way during the header include and re-declared below with the complete
+// retail member sets. Every retail symbol then mangles naturally from real
+// member functions - no C-linkage stand-ins.
+//
+// The mirror layouts below (InstParamData / InstInfoData / RuntimeWaveInfo)
+// expose the exact on-disk offsets the reader touches; the header InstParam
+// packs bytes 0x8..0xb into one padded array and the header InstInfo is a
+// smaller public-only structure.
+#define BankFileReader BankFileReader_RetailHeader
+#define InstInfo InstInfo_RetailHeader
+#define WaveFileReader WaveFileReader_RetailHeader
 #include <nw4r/snd.h>
 #include <nw4r/ut.h>
+#undef BankFileReader
+#undef InstInfo
+#undef WaveFileReader
+
+// Retail .sdata2 pool constant 1.0f referenced by ReadInstInfo's legacy
+// (pre-1.1) path; referenced by name so the SDA21 float reloc matches the
+// stripped retail object.
+extern const f32 lbl_eu_80669ED8;
 
 namespace nw4r {
 namespace snd {
 namespace detail {
 
-// The retail RBNK reader works against field layouts that differ from the
-// placeholder headers shipped in snd_BankFile.h (the header InstParam packs
-// bytes 0x8..0xb into one padded array, and the header InstInfo is a smaller
-// public-only structure). These mirror types expose the exact on-disk offsets
-// the reader touches; the pointers are re-cast to them at the use site.
+// Re-declared InstInfo with the retail nested WaveDataLocation record (the
+// shared header's InstInfo is a smaller public-only structure). The reader
+// writes the runtime layout through InstInfoData below; this type only
+// carries the retail mangled name.
+struct InstInfo {
+    // On-disk wave-data location record read by ReadWaveInfo. Signed so the
+    // reader's location dispatch lowers with the retail signed compares.
+    struct WaveDataLocation {
+        s32 location;  // at 0x0
+        s32 waveIndex; // at 0x4
+    };
+
+    s32 waveIndex;  // at 0x0
+    u8 attack;      // at 0x4
+    u8 decay;       // at 0x5
+    u8 sustain;     // at 0x6
+    u8 release;     // at 0x7
+    u8 originalKey; // at 0x8
+    u8 pan;         // at 0x9
+    u8 volume;      // at 0xA
+    f32 tune;       // at 0xC
+};
+
+// On-disk RWAV wave-info entry (retail nested WaveFile::WaveInfo). Only the
+// pointer passes through this unit; the layout mirrors the on-disk header.
+namespace WaveFile {
+struct WaveInfo {
+    u8 format;                  // at 0x0
+    u8 loopFlag;                // at 0x1
+    u8 numChannels;             // at 0x2
+    u8 sampleRate24;            // at 0x3
+    u16 sampleRate;             // at 0x4
+    u8 dataType;                // at 0x6
+    u8 PADDING_0x7;             // at 0x7
+    u32 loopStart;              // at 0x8
+    u32 loopEnd;                // at 0xC
+    u32 channelInfoTableOffset; // at 0x10
+    u32 dataOffset;             // at 0x14
+    u32 reserved;               // at 0x18
+};
+} // namespace WaveFile
+
+// Re-declared WaveFileReader with the retail WaveFile::WaveInfo ctor
+// overload (the shared header only has the runtime WaveInfo / FileHeader
+// overloads). The reader only stores the pointer.
+class WaveFileReader {
+public:
+    explicit WaveFileReader(const WaveInfo* pWaveInfo);
+    explicit WaveFileReader(const WaveFile::FileHeader* pFileHeader);
+    explicit WaveFileReader(const WaveFile::WaveInfo* pWaveInfo);
+
+    bool ReadWaveInfo(WaveInfo* pWaveInfo, const void*
+                      pWaveAddr) const;
+
+private:
+    const WaveInfo* mWaveInfo; // at 0x0
+};
+
+// Re-declared BankFileReader with the full retail member set (GetInstParam /
+// ReadWaveInfo are not in the shared header).
+class BankFileReader {
+public:
+    static const u32 SIGNATURE = FOURCC('R', 'B', 'N', 'K');
+    static const int VERSION = NW4R_VERSION(1, 2);
+
+public:
+    explicit BankFileReader(const void*
+                            pBankBin);
+
+    bool IsValidFileHeader(const ut::BinaryFileHeader* pFileHeader);
+
+    bool ReadInstInfo(InstInfo* pInfo, int prgNo, int key,
+                      int velocity) const;
+
+    const BankFile::InstParam* GetInstParam(int prgNo, int key,
+                                            int velocity) const;
+    bool ReadWaveInfo(WaveInfo* pWaveInfo,
+                      const InstInfo::WaveDataLocation& location,
+                      const void*
+                          pWaveData,
+                      const WaveInfo** ppWaveInfo) const;
+
+private:
+    const BankFile::DataRegion*
+    GetReferenceToSubRegion(const BankFile::DataRegion* pRef,
+                            int splitKey) const;
+
+    const BankFile::Header* mHeader;       // at 0x0
+    const BankFile::DataBlock* mDataBlock; // at 0x4
+    const BankFile::WaveBlock* mWaveBlock; // at 0x8
+};
+
+// On-disk InstParam layout as the reader touches it (the header InstParam
+// packs bytes 0x8..0xb into one padded array).
 struct InstParamData {
     s32 waveIndex;     // at 0x0
     u8 attack;         // at 0x4
@@ -27,6 +140,8 @@ struct InstParamData {
     f32 tune;          // at 0x10
 };
 
+// Runtime InstInfo layout ReadInstInfo fills (the header InstInfo is a
+// smaller public-only structure).
 struct InstInfoData {
     s32 waveIndexType; // at 0x0
     s32 waveIndex;     // at 0x4
@@ -46,6 +161,31 @@ struct InstInfoData {
     f32 tune;          // at 0x18
 };
 
+// Mirror of the runtime detail::WaveInfo layout (0x80 bytes) that
+// BankFileReader::ReadWaveInfo copies in bulk; the header's detail::WaveInfo
+// is the smaller on-disk layout. Same shape as snd_WaveFile.cpp's
+// RuntimeWaveInfo so the 0x18-prelude + 13x8 copy loop reproduces. The pad
+// bytes at 0x5..0x8 are left as implicit alignment padding so MWCC skips
+// them during the struct copy (an explicit member would be copied byte-wise).
+struct RuntimeWaveInfo { // 0x80
+    u32 format;       // at 0x0
+    u8 loopFlag;      // at 0x4
+    u32 numChannels;  // at 0x8
+    u32 sampleRate;   // at 0xC
+    u32 loopStart;    // at 0x10
+    u32 loopEnd;      // at 0x14
+    u32 tail[0x1A];   // at 0x18 (channel params, 13x8 word copy loop)
+};
+
+// External wave-data source behind WaveDataLocation::location == 2: retail
+// calls a no-arg virtual at vtable slot 2 (offset 8) that returns the
+// runtime WaveInfo. The concrete retail type lives outside this unit; this
+// reproduces the call shape only (MWCC reserves two leading vtable slots,
+// so a single declared virtual lands at slot 2).
+struct WaveDataProvider {
+    virtual const WaveInfo* GetWaveInfo() const = 0;
+};
+
 // See BankFile::Region
 enum {
     DATATYPE_NONE = Util::DATATYPE_T0,
@@ -54,10 +194,11 @@ enum {
     DATATYPE_INDEXTABLE = Util::DATATYPE_T3,
 };
 
-bool BankFileReader::IsValidFileHeader(const void* pBankBin) {
-    const ut::BinaryFileHeader* pFileHeader =
-        static_cast<const ut::BinaryFileHeader*>(pBankBin);
-
+// Inline so MWCC folds the checks into the ctor and emits no out-of-line
+// body: the retail unit has no standalone IsValidFileHeader symbol, so the
+// unit's .text stays exactly at the retail split.
+inline bool BankFileReader::IsValidFileHeader(
+    const ut::BinaryFileHeader* pFileHeader) {
     if (pFileHeader->signature != SIGNATURE) {
         return false;
     }
@@ -73,9 +214,11 @@ bool BankFileReader::IsValidFileHeader(const void* pBankBin) {
     return true;
 }
 
-BankFileReader::BankFileReader(const void* pBankBin)
+BankFileReader::BankFileReader(const void*
+                               pBankBin)
     : mHeader(NULL), mDataBlock(NULL), mWaveBlock(NULL) {
-    if (!IsValidFileHeader(pBankBin)) {
+    if (!IsValidFileHeader(
+            static_cast<const ut::BinaryFileHeader*>(pBankBin))) {
         return;
     }
 
@@ -92,70 +235,112 @@ BankFileReader::BankFileReader(const void* pBankBin)
     }
 }
 
-bool BankFileReader::ReadInstInfo(InstInfo* pInfo, int prgNo, int key,
-                                  int velocity) const {
+// GetInstParam(int, int, int): walk the program/key/velocity DataRegion chain
+// down to the inst-param record, or NULL.
+const BankFile::InstParam* BankFileReader::GetInstParam(int prgNo, int key,
+                                                        int velocity) const {
     if (mHeader == NULL) {
-        return false;
+        return NULL;
     }
 
     if (prgNo < 0 || prgNo >= static_cast<int>(mDataBlock->instTable.count)) {
-        return false;
+        return NULL;
     }
 
     const BankFile::DataRegion* pRef = &mDataBlock->instTable.items[prgNo];
     if (pRef->dataType == Util::DATATYPE_INVALID) {
-        return false;
+        return NULL;
     }
 
     if (pRef->dataType != DATATYPE_INSTPARAM) {
         pRef = GetReferenceToSubRegion(pRef, key);
         if (pRef == NULL) {
-            return false;
+            return NULL;
         }
     }
 
     if (pRef->dataType == Util::DATATYPE_INVALID) {
-        return false;
+        return NULL;
     }
 
     if (pRef->dataType != DATATYPE_INSTPARAM) {
         pRef = GetReferenceToSubRegion(pRef, velocity);
         if (pRef == NULL) {
-            return false;
+            return NULL;
         }
     }
 
     if (pRef->dataType != DATATYPE_INSTPARAM) {
+        return NULL;
+    }
+
+    return Util::GetDataRefAddress1(*pRef, &mDataBlock->instTable);
+}
+
+bool BankFileReader::ReadInstInfo(InstInfo* pInfo, int prgNo, int key,
+                                  int velocity) const {
+    const InstParamData* pData =
+        reinterpret_cast<const InstParamData*>(GetInstParam(prgNo, key, velocity));
+    if (pData == NULL) {
         return false;
     }
 
-    const BankFile::InstParam* pParam =
-        Util::GetDataRefAddress1(*pRef, &mDataBlock->instTable);
+    InstInfoData* pOut = reinterpret_cast<InstInfoData*>(pInfo);
 
-    if (pParam == NULL) {
-        return false;
-    }
-
-    if (pParam->waveIndex < 0) {
-        return false;
-    }
-
-    pInfo->waveIndex = pParam->waveIndex;
-    pInfo->attack = pParam->attack;
-    pInfo->decay = pParam->decay;
-    pInfo->sustain = pParam->sustain;
-    pInfo->release = pParam->release;
-    pInfo->originalKey = pParam->originalKey;
-    pInfo->pan = pParam->pan;
-
-    if (mHeader->fileHeader.version >= VERSION) {
-        pInfo->volume = pParam->volume;
-        pInfo->tune = pParam->tune;
+    // Wave-index resolution: linear equality chain (retail lowers this as
+    // cmpwi/cmplwi/cmplwi tests, not as a range-checked switch).
+    if (pData->waveIndexRange == 0) {
+        if (pData->waveIndex < 0) {
+            return false;
+        }
+        pOut->waveIndexType = 0;
+        pOut->waveIndex = pData->waveIndex;
+    } else if (pData->waveIndexRange == 1) {
+        if (pData->waveIndex == 0) {
+            return false;
+        }
+        pOut->waveIndexType = 1;
+        pOut->waveIndex = pData->waveIndex;
+    } else if (pData->waveIndexRange == 2) {
+        if (pData->waveIndex == 0) {
+            return false;
+        }
+        pOut->waveIndexType = 2;
+        pOut->waveIndex = pData->waveIndex;
     } else {
-        pInfo->volume = 127;
-        pInfo->tune = 1.0f;
+        return false;
     }
 
+    pOut->attack = pData->attack;
+    pOut->field_0x9 = pData->field_0x8;
+    pOut->decay = pData->decay;
+    pOut->sustain = pData->sustain;
+    pOut->release = pData->release;
+    pOut->originalKey = pData->originalKey;
+    pOut->pan = pData->pan;
+
+    if (mHeader->fileHeader.version >= NW4R_VERSION(1, 1)) {
+        pOut->volume = pData->volume;
+        pOut->tune = pData->tune;
+    } else {
+        pOut->volume = 127;
+        pOut->tune = lbl_eu_80669ED8;
+    }
+
+    switch (pData->field_0xa) {
+    case 0:
+        pOut->field_0x10 = 0;
+        break;
+
+    case 1:
+        pOut->field_0x10 = 1;
+        break;
+
+    default:
+        return false;
+    }
+
+    pOut->field_0x14 = pData->field_0xb;
     return true;
 }
 
@@ -220,32 +405,94 @@ BankFileReader::GetReferenceToSubRegion(const BankFile::DataRegion* pRef,
     return pSub;
 }
 
-bool BankFileReader::ReadWaveParam(WaveData* pData, int waveIndex,
-                                   const void* pWaveAddr) const {
+// ReadWaveInfo(WaveInfo*, const InstInfo::WaveDataLocation&, const void*,
+//              const WaveInfo**): resolve wave data by location kind
+// (0 = bank wave archive / RWAV, 1 = direct memory pointer, 2 = external
+// provider object) and copy the runtime WaveInfo out.
+bool BankFileReader::ReadWaveInfo(
+    WaveInfo* pWaveInfo, const InstInfo::WaveDataLocation& location,
+    const void*
+        pWaveData,
+    const WaveInfo** ppWaveInfo) const {
+    if (ppWaveInfo != NULL) {
+        *ppWaveInfo = NULL;
+    }
+
     if (mHeader == NULL) {
         return false;
     }
 
-    if (mWaveBlock == NULL) {
+    // Linear location dispatch (retail lowers as cmpwi/cmpwi/cmpwi equality
+    // tests, not a range-checked switch). Case 0 hoists waveIndex into a
+    // callee-saved register before the archive reader calls (retail: lwz
+    // r30,4(r5) ahead of the mWaveBlock branch).
+    if (location.location == 0) {
+        u32 waveIndex = location.waveIndex;
+
+        if (mWaveBlock == NULL) {
+            WaveArchiveReader archiveReader(pWaveData);
+            const WaveFile::FileHeader* pFile =
+                static_cast<const WaveFile::FileHeader*>(
+                    archiveReader.GetWaveFile(waveIndex));
+            if (pFile == NULL) {
+                return false;
+            }
+
+            WaveFileReader wfReader(pFile);
+            return wfReader.ReadWaveInfo(pWaveInfo, NULL);
+        }
+
+        if (waveIndex >= mWaveBlock->waveInfoTable.count) {
+            return false;
+        }
+
+        const WaveInfo* pInfo = Util::GetDataRefAddress0(
+            mWaveBlock->waveInfoTable.items[waveIndex],
+            &mWaveBlock->waveInfoTable);
+        if (pInfo == NULL) {
+            return false;
+        }
+
+        // Retail constructs the reader with the on-disk WaveFile::WaveInfo
+        // pointer (the const WaveFile::WaveInfo* ctor overload).
+        WaveFileReader wfReader(reinterpret_cast<const WaveFile::WaveInfo*>(pInfo));
+        return wfReader.ReadWaveInfo(pWaveInfo, pWaveData);
+    } else if (location.location == 1) {
+        if (location.waveIndex == 0) {
+            return false;
+        }
+
+        if (ppWaveInfo != NULL) {
+            *ppWaveInfo = reinterpret_cast<const WaveInfo*>(location.waveIndex);
+        }
+
+        *reinterpret_cast<RuntimeWaveInfo*>(pWaveInfo) =
+            *reinterpret_cast<const RuntimeWaveInfo*>(location.waveIndex);
+        return true;
+    } else if (location.location == 2) {
+        if (location.waveIndex == 0) {
+            return false;
+        }
+
+        const WaveInfo* pInfo =
+            reinterpret_cast<const WaveDataProvider*>(location.waveIndex)
+                ->GetWaveInfo();
+        if (pInfo == NULL) {
+            return false;
+        }
+
+        if (ppWaveInfo != NULL) {
+            *ppWaveInfo = pInfo;
+        }
+
+        *reinterpret_cast<RuntimeWaveInfo*>(pWaveInfo) =
+            *reinterpret_cast<const RuntimeWaveInfo*>(pInfo);
+        return true;
+    } else {
         return false;
     }
 
-    if (waveIndex >= mWaveBlock->waveInfoTable.count) {
-        return false;
-    }
-
-    const BankFile::WaveRegion* pRef =
-        &mWaveBlock->waveInfoTable.items[waveIndex];
-
-    const WaveInfo* pInfo =
-        Util::GetDataRefAddress0(*pRef, &mWaveBlock->waveInfoTable);
-
-    if (pInfo == NULL) {
-        return false;
-    }
-
-    WaveFileReader wfr(pInfo);
-    return wfr.ReadWaveParam(pData, pWaveAddr);
+    return false;
 }
 
 } // namespace detail

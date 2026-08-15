@@ -1693,7 +1693,7 @@ config.libs = [
             Object(NonMatching, "nw4r/src/snd/snd_AxVoiceManager.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_AxfxImpl.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_Bank.cpp"),
-            Object(NonMatching, "nw4r/src/snd/snd_BankFile.cpp"),
+            Object(Matching, "nw4r/src/snd/snd_BankFile.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_BasicPlayer.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_BasicSound.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_BiquadFilterPreset.cpp"),

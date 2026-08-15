@@ -1325,7 +1325,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/os/OSPlayTime.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSCrc.c"),
             Object(Matching, "RVL_SDK/src/revolution/os/OSLaunch.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/os/__ppc_eabi_init.c"),  # demoted 2026-08: __init_user 8 structural — re-match before promoting
+            Object(NonMatching, "RVL_SDK/src/revolution/os/__ppc_eabi_init.c", extra_cflags=["-O1,p"]),  # __init_user tail-call fold is keyed to the global -opt level; -O1,p keeps its 0x20 frame while the sibling pragmas (source) re-raise __init_cpp/exit to -O4 codegen (MWCC_REFERENCE __init_user entry)
         ],
     ),
     DolphinLib(
@@ -1805,7 +1805,7 @@ config.libs = [
                 "globalize": [r"__sinit_\CProcess_cpp"],
             }),
             Object(NonMatching, "monolib/src/util/CDoubleListNode.cpp"),
-            Object(NonMatching, "monolib/src/util/CChildListNode.cpp"),
+            Object(NonMatching, "monolib/src/util/CChildListNode.cpp", extra_cflags=["-RTTI off"]),  # retail CChildListNode.o has no RTTI/vtable data (vtables live in monolibdata blob); -RTTI off drops the __RTTI__/type-name emissions
             Object(NonMatching, "monolib/src/core/CPadManager.cpp"),
             Object(NonMatching, "monolib/src/util/CStopwatchUtil.cpp"),
             Object(NonMatching, "monolib/src/device/CDeviceRemotePad.cpp"),

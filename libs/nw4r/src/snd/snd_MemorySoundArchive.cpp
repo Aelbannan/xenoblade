@@ -24,10 +24,20 @@ namespace snd {
 // CanWrite/Tell/GetSize) and GetRuntimeTypeInfo are defined out-of-line
 // below so they become strong symbols matching the retail split (inline
 // in-class bodies would instead be emitted as extra weak vtable copies).
-class MemorySoundArchive::MemoryFileStream : public ut::FileStream {
+// __declspec(novtable): the retail vtable lives in the data blob
+// (nw4r_data.s lbl_eu_8056A810), so this TU emits no local vtable / base
+// deleting-dtor orphans; the ctor stores the retail label explicitly.
+extern "C" void* lbl_eu_8056A810[]; // retail MemoryFileStream vtable
+
+class __declspec(novtable)
+    MemorySoundArchive::MemoryFileStream : public ut::FileStream {
 public:
-    MemoryFileStream(const void* pBuffer, u32 size)
-        : mData(pBuffer), mSize(size), mOffset(0) {}
+    MemoryFileStream(const void* pBuffer, u32 size) {
+        *(void**)this = (void*)lbl_eu_8056A810;
+        mData = pBuffer;
+        mSize = size;
+        mOffset = 0;
+    }
     virtual ~MemoryFileStream(); // at 0xC
 
     virtual void Close();                      // at 0x10

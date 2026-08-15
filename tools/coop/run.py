@@ -273,8 +273,13 @@ def _postprocess_reloc_object(project: Project, obj: Path | None) -> None:
 
 
 def _postprocess_mtrand_object(project: Project, obj: Path | None) -> None:
-    _postprocess_reloc_object(project, obj)
+    # .note.split FIRST, then reloc-name post-processing: objcopy's --add-section
+    # rewrite collapses ABS symbols at st_value 0 (the trim/drop-created pool
+    # labels) into the null symbol, clobbering their .text relocs. Running the
+    # reloc postprocess last creates those ABS symbols after the last objcopy
+    # pass.
     _postprocess_notesplit_object(project, obj)
+    _postprocess_reloc_object(project, obj)
 
 
 def _postprocess_notesplit_object(project: Project, obj: Path | None) -> None:

@@ -54,12 +54,6 @@ typedef struct SfdTmrClock {
     void *get_clock_arg;                        /* 0x1090 */
 } SfdTmrClock;
 
-/* 64-bit timer unit cached in lbl_eu_80619BC8 (hi word first). */
-typedef struct SfdTmrUnit {
-    u32 hi; /* 0x00 */
-    u32 lo; /* 0x04 */
-} SfdTmrUnit;
-
 /* SFTMR_GetTmrUnit: get timer unit/period as 64-bit */
 u64 SFTMR_GetTmrUnit(void *sfd) {
     if (*(u64 *)lbl_eu_80619BC8 == 0) {
@@ -75,16 +69,16 @@ u64 SFTMR_GetTmrUnit(void *sfd) {
             SfdTmrClock *clk = (SfdTmrClock *)sfd;
             s32 out2, out1;
             clk->get_clock(clk->get_clock_arg, &out1, &out2);
-            u64 v = (u64)(s64)(s32)out2;
-            lbl_eu_80619BC8[1] = (u32)v;
-            lbl_eu_80619BC8[0] = (u32)(v >> 32);
+            lbl_eu_80619BC8[1] = (u32)out2;
+            lbl_eu_80619BC8[0] = (u32)((s32)out2 >> 31);
         } else {
             /* fallback: SFD work-area frame counter (mirrors SFTMR_GetTmr) */
             u32 frame = lbl_eu_80606E38[0x1A8 / 4];
             lbl_eu_80619BC8[1] = frame;
-            u32 hi = (u32)((s32)frame >> 31);
+            /* retail reads the work-area rate (0x19C) here even though the value
+             * is unused; volatile keeps MWCC from dead-load-eliminating it */
             u32 rate = *(volatile u32 *)&lbl_eu_80606E38[0x19C / 4];
-            lbl_eu_80619BC8[0] = hi;
+            lbl_eu_80619BC8[0] = (u32)((s32)frame >> 31);
         }
     }
     return *(u64 *)lbl_eu_80619BC8;

@@ -4283,12 +4283,10 @@ monolib/src/math/CVec3.cpp:
 	.ctors      start:0x804FA108 end:0x804FA10C
 	.bss        start:0x80656BB0 end:0x80656BEC
 
-monolibdata1f.s:
-	.bss        start:0x80656BEC end:0x80656E88
-
 monolib/src/math/CVec4.cpp:
 	.text       start:0x80438790 end:0x80438808
 	.ctors      start:0x804FA10C end:0x804FA110
+	.bss        start:0x80656BF0 end:0x80656C40
 
 monolib/src/math/Main.cpp:
 	.text       start:0x80438808 end:0x8043883C
@@ -4308,22 +4306,26 @@ monolib/src/math/CCol3.cpp:
 	extabindex  start:0x80033F7C end:0x80033F88
 	.text       start:0x804389F0 end:0x80438AD0
 	.ctors      start:0x804FA110 end:0x804FA114
+	.bss        start:0x80656C40 end:0x80656CC4
 
 monolib/src/math/CCol4.cpp:
 	extab       start:0x8001C154 end:0x8001C15C
 	extabindex  start:0x80033F88 end:0x80033F94
 	.text       start:0x80438AD0 end:0x80438BF8
 	.ctors      start:0x804FA114 end:0x804FA118
+	.bss        start:0x80656CC8 end:0x80656D88
 
 monolib/src/math/CMat34.cpp:
 	extab       start:0x8001C15C end:0x8001C17C
 	extabindex  start:0x80033F94 end:0x80033FC4
 	.text       start:0x80438BF8 end:0x8043981C
 	.ctors      start:0x804FA118 end:0x804FA11C
+	.bss        start:0x80656D88 end:0x80656DE8
 
 monolib/src/math/CMat44.cpp:
 	.text       start:0x8043981C end:0x804398B8
 	.ctors      start:0x804FA11C end:0x804FA120
+	.bss        start:0x80656DE8 end:0x80656E68
 
 monolib/src/math/CPlane.cpp:
 	extab       start:0x8001C17C end:0x8001C18C
@@ -4335,6 +4337,7 @@ monolib/src/math/CQuat.cpp:
 	extabindex  start:0x80033FDC end:0x80033FF4
 	.text       start:0x80439AE0 end:0x80439D24
 	.ctors      start:0x804FA120 end:0x804FA124
+	.bss        start:0x80656E68 end:0x80656E88
 
 monolib/src/work/CWorkThreadSystem.cpp:
 	extab       start:0x8001C19C end:0x8001C1AC

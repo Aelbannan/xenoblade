@@ -784,21 +784,19 @@ void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc14() {
 
 // Retail symbol is Fv and the body genuinely returns int (1, or the CtrlNpc
 // action-advance query result). The header declares the vtable slot with the
-// int return so the member definition carries the real signature.
-// Retail load-hoists the first member load (lwz r3,0x6c0(r3)) above the LR
-// save (stw r0,0x14(r1)) — documented plateau (MWCC_REFERENCE CDeviceFont
-// section: not reproducible by any MWCC version). Best shape: result-phi +
-// #pragma scheduling off (85.7%, 2 structural).
-#pragma scheduling off
-int cf::CfObjectMove::CfObjectMove_UnkVirtualFunc9() {
-    cf::CtrlNpc* target = (cf::CtrlNpc*)mTarget6C0;
+// int return so the vtable entry keeps the retail name.
+// const self: MWCC hoists the first member load (lwz r3,0x6c0(r3)) above the
+// LR save (stw r0,0x14(r1)) — the documented plateau closed by the const-self
+// lever (CScnEffectActNw4r getters family; non-const emits stw-first).
+// extern "C" + the mangled name keeps the vtable reference verbatim.
+extern "C" int CfObjectMove_UnkVirtualFunc9__Q22cf12CfObjectMoveFv(const cf::CfObjectMove* self) {
+    cf::CtrlNpc* target = (cf::CtrlNpc*)self->mTarget6C0;
     int result = 1;
     if (target != 0) {
         result = func_80094D1C(target);
     }
     return result;
 }
-#pragma scheduling on
 
 void CfObjectMove_nullsub_19(){}
 

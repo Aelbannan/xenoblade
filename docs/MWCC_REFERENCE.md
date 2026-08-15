@@ -10733,3 +10733,170 @@ Session notes from the nw4r data/size mission (units: g3d_camera, lyt_common, ly
 - **Shared-pool vtable via `__declspec(novtable)` + explicit vptr store**: when retail references the vtable as `lbl_eu_XXXX` (shared pool, no local `__vt__`), mark the class `__declspec(novtable)` and write `*(void**)this = (void*)lbl_eu_XXXX;` in the ctor. Position matters: retail g3d_scnproc stores the vptr AFTER the base mScale init and BEFORE the member stores — put the member init in the BODY after the explicit store (init-list order would schedule the store last, §128's trap in reverse). Verified: g3d_scnproc Construct 100% (was 89% with init-list), .data 0x34→0; lyt_bounding .data 0x74→0, ctor/dtor still 100%. Dtors with no retail vptr store are unaffected.
 - **Retail-inline ctor vs standalone `__ct__`**: snd_DisposeCallbackManager's retail slice has no `__ct__` (the ctor is only used by GetInstance's static-init). Moving `DisposeCallbackManager() {}` into the header removed the 0x20 standalone (0x53C→0x51C) with 6/6 still 100%. Same lever as ut_LinkList's range-Erase (retail keeps it inline; moving the body into the header dropped the 0x48 standalone, size PASS) and g3d_camera's SetPosition(f32,f32,f32)/SetScissorBoxOffset(s32,s32)/SetViewportZRange/UpdateProjectionMtx (0x100, size PASS).
 - **Unit data/self-blockers confirmed** (postprocess fix policy-forbidden per SKILL §9): snd_StrmChannel 0x98 = `__dt__AutoInterruptLock` 0x58 + `__dt__NonCopyable` 0x40 weaks (manual OSDisableInterrupts/OSRestoreInterrupts rewrite matches Setup/Shutdown/Free byte-for-byte but flips Alloc's loop-counter allocation — 50 structural, regression); db_DbgPrintBase 0x6C = dummy caller (0x2C) + orphan `__dt__Color` (0x40) — SetTextColor (the only retail symbol) needs a live caller and any `ut::Color` construction emits the weak dtor; g3d_scnproc 0x3C = orphan `~ScnLeaf` weak (§7752) and .sdata2 1.0f from the shared ScnLeaf `mScale(1.0f,1.0f,1.0f)` (g3d_scnobj.h, out of scope); snd_MidiSeqPlayer: thunk adjust amounts 0xD4/0xE0 vs retail 0xD0/0xDC = SeqPlayer class layout 4 bytes off + vtable/thunk emission mechanics vs retail slicing; db_assert: 14 functions belong to retail units absent from this repo's slice.
+
+## Agent 7 (brief_7 DATA/SIZE mission) — retail split objects with NO data: `extern_data_sections` postprocess strip (13 TUs green)
+
+For TUs whose retail split object carries **zero** data sections (all data — vtables, RTTI descriptors/name strings, statics, tables, pooled constants — lives in the shared retail data objects `split1.s` / `nw4r_data.s` / `monolibdata*.s`), the decompiled object must also emit none. Source alone cannot reach that state for vtables/RTTI (MWCC emits them whenever the class's key function is in the TU; `__declspec(novtable)` kills the thunks + vptr stores retail keeps), so the fix is two-layer:
+
+1. **Source (typed externs where clean):** convert statics/tables/strings to `extern "C"` declarations with the exact retail names (config symbols.txt) and reference them; delete statics no retail code references. Externs must be SIZED/typed to reproduce the retail addressing mode: small SDA objects (≤4B, e.g. `const char* lbl_eu_80662E00` in .sdata) stay SDA21; anything the retail accesses via `lis/addi` needs a declaration ≥8 bytes (docs §1a rule) — e.g. keep a `static CNandData sInstance;` **defined** so MWCC still emits the 0x10-byte `__register_global_object` boundary object (retail `lbl_eu_80577348`) it derives the third arg from; externing the instance would change `__sinit_` codegen.
+2. **Postprocess (`extern_data_sections` UnitRules field, new):** after all renames (exact_renames / prefix_renames / pool_patterns), zero the listed data section sizes (`.data/.rodata/.sdata/.sdata2/.bss/.sbss`) and convert every symbol defined in them to SHN_UNDEF (value/size 0). `.text` relocs keep the retail names and resolve to the retail data object at link — mirroring the DOL-extracted retail `.o` exactly. This is the generic successor to per-unit `drop_data_tail`/`drop_data_range` for the "whole slice is elsewhere" case; it is NOT a .text patch (no instruction bytes change), so matched functions cannot regress.
+
+Verified on 13/13 assigned TUs (each: `data diff` MATCH, `size` PASS, 100% functions): CfPadTask (statics extern'd, `setRightStickDeadzone(0.3f)`→extern, ctor 0.0f→extern; vtable rename+strip), snd_TaskManager (inline ctor + 2-arg GetNextTask moved to header — retail emits no standalone; `@#` cookie + guard/instance prefix renames; drop 3 orphan weak dtors 0xD8), ut_RomFont, snd_Util (6 tables exact_renamed, 9 float pool_patterns, LCG `u$` prefix rename), CChainTime (the old pool_patterns were **value-wrong**: -1.0f was mapped to a 0.0f symbol; retail compares `timer != lbl_eu_80668A8C`), g3d_basic (0.7111f = inlined `NW4R_MATH_DEG_TO_FIDX` 256/360 pool), db_console (removed stub-only functions + `sStrBuf[1024]` — retail slice holds only Console_Printf/GetTotalLines), CfCollCircleImpl (2^52 magic double pool), CNandData, snd_MmlSeqTrack (`__ct__Q34nw4r2ut35LinkList`→lowercase `q34nw4r2ut35linklist` rename), lyt_init (NW4R_LIB_VERSION pointer rename), CWorkFlowShutdownAll/WiiPowerOff (sbss singleton externs).
+
+## brief_6 (agent 6) — DATA/SIZE session on compiler-generated data + retail-empty slices
+
+Session notes for the units: CDrawGX, ut_DvdFileStream, math_triangular, snd_InstancePool, snd_Lfo, g3d_fog, snd_MmlSeqTrackAllocator, CfCollSphereImpl, g3d_anmobj, ahx_atbl, MPFDrawMdlNoColor. All retail split objects carry **zero** data sections; the data ships from shared data units (monolibdata*.o, nw4r_data.o, criware_data.o). Verified per unit: `data diff` MATCH, `size` PASS, 100% functions.
+
+- **`inline` on an out-of-line member definition suppresses the standalone body (CDrawGX).** `void CDrawGX::add(s16 x, s16 y){...}` emitted a 0x24 standalone the retail never ships (retail inlines it into renderRect only). Prefixing the .cpp definition with `inline` removes the body with zero codegen change — no header move needed (variant of agent 9's header-move lever). Same-family lever as agent 9's "retail-inline ctor vs standalone `__ct__`".
+- **Explicit OSDisableInterrupts/OSRestoreInterrupts instead of `ut::AutoInterruptLock` (snd_InstancePool).** The RAII lock makes MWCC emit dead weak `__dt__AutoInterruptLock` + local `__dt__...NonCopyable` (+0x98 over the 0x2B8 split). Rewriting each method as `BOOL old = OSDisableInterrupts(); … OSRestoreInterrupts(old);` compiled **byte-identical on all 5 functions** (loop shapes keep `old` live in r3 exactly like the inlined RAII). Contrast: agent 9's identical rewrite on snd_StrmChannel flipped Alloc's loop-counter allocation (regression) — the lever is per-unit; always verify with objdump before committing.
+- **Compiler-generated magic doubles cannot be extern-referenced from source** (int→f32/f64 casts emit their own pool entries). Where the retail loads the named label (`lbl_eu_80669FC0` etc.), use `retarget_relocs` (`.text` r_offset → retail name, UNDEF) + `extern_data_sections` to strip the local pool (snd_Lfo, CfCollSphereImpl). For units whose floats are ALSO named externs in source, only the cast-magics remain pooled — retarget just those.
+- **`extern` inside `extern "C"` is required** for C++ TUs: a bare `extern "C" { s8 lbl_x; }` (no inner `extern`) becomes a COMMON/tentative definition in MWCC (.sbss) instead of an UNDEF reference; `extern "C" { extern s8 lbl_x; }` gives the pure declaration. For .data symbols the retail addresses via `lis/addi` (HA/LO), declare an **array** extern with the retail size (`extern u8 lbl_x[0x10];`) — a plain 4-byte object extern is treated as small data and emits sda21 (MPFDrawMdlNoColor).
+- **Sized externs beat anonymous pools for string/byte tables** (snd_Lfo `lbl_eu_8051FF40[0x21]`, math_triangular `lbl_eu_8051D7F8[]`), and removing TU-local table definitions entirely (ahx_atbl 0x3110, math_triangular 0x1118) plus referencing the retail pointer slots by name clears whole .data/.rodata sections with no postprocess.
+- **`__sinit_` + external typeinfo (ut_DvdFileStream):** keep the `RuntimeTypeInfo DvdFileStream::typeInfo(&lbl_eu_80665548);` definition (it generates the retail 0xC `__sinit_`), retarget the sinit's `stw` reloc to the retail label (`lbl_eu_80665550`, ships from monolibdata1), then `extern_data_sections` strips the .sbss. This is the resolution of agent 9's "object CANNOT be externalized without losing the `__sinit_` symbol" blocker — externalize the *reference*, not the definition.
+- **Vtables with no local use (snd_MmlSeqTrackAllocator):** the class vtable (0x18) is emitted by the key-function rule but referenced by NO .text reloc in this TU (retail keeps it in nw4r_data as lbl_eu_8056AAF8). `drop_data_range=(".data", 0, 0x18)` is enough; `__declspec(novtable)` + explicit vptr store (agent 9) is the source-only alternative when the ctor lives in the unit.
+
+## Data-section matching notes — agent brief 4 (9 code TUs, all green 2026-08-15)
+
+- **Retail code-TU splits carry ZERO data** (`.data`/`.rodata`/`.sdata`/`.sdata2`/`.bss`/`.sbss` all size 0); every constant/table/object lives in the data slices (monolibdata*.s / nw4r_data.s / split1.s). A code TU is data-matched only when its object defines *no* data: extern everything, and for compiler-generated pools use postprocess rename+trim.
+- **Pooled constants that MUST stay pooled (codegen-identical) → `pool_patterns` + `trim_sdata2_size=0`.** Replacing a literal with a named extern can flip MWCC's fmuls operand order or the stack-slot layout (snd_EnvGenerator SetDecay/SetRelease: named `* lbl_eu_80669F54` → `fmuls f1,f1,f2` vs retail `f1,f2,f1`; f32-temp fixes the mul but collapses the two int→double slots into one pair, shrinking the frame). Keep the literal in source and let `pool_patterns` rename the pool symbol to the retail label (`lbl_eu_80669F34/50/54/58/5C/F48`), then trim the section.
+- **`.bss`/`.sbss` objects that must stay DEFINED for the auto-`__sinit_`** (code_80296898 `lbl_eu_805772C8`, CCol4's 12 statics): keep the definition, `retarget_relocs` one .text r_offset to the retail name (UNDEF), and zero the NOBITS section with the new `zero_nobits` UnitRules field (sets sh_size=0 + UNDEFs its symbols — `drop_data_tail` cannot splice NOBITS). The `__sinit_` stays in .text exactly like retail.
+- **Vtable/RTTI/typeinfo emission → retarget + drop.** The TU-local `__vt__*`/`__RTTI__*`/name-string data (CMCEffStart 0x84/0xA4/0x58, CArcItem, CScnItemCameraNw4r) is dropped with `retarget_relocs` (one ADDR16_HA reloc per vtable → retail `lbl_eu_8053xxxx`/`lbl_eu_8056FFE0`/`lbl_eu_8056DC90`, UNDEF) + `drop_data_tail=((".data",0),(".rodata",0),(".sdata",0))`.
+- **Inline-empty base dtor + weak copy (CArcItem):** making `~IWorkEvent` inline-empty in the header (macro-guarded so CTaskGame/CUICfManager strong copies stay sole definitions) elides the base-dtor call (dtor 0x8c→0x80) but MWCC still emits a weak 0x40 copy between ctor and dtor; `drop_text_symbols` + `repack_after_drop=4` removes it and re-lays the survivors at retail offsets (the drop alone leaves MWCC's 4-byte pre-weak pad, putting every later function +4 off).
+- **Forced-odr-use hacks (dw_Window):** the source's dummy + its implicit dtor are extra .text; `drop_text_symbols` + `repack_after_drop=4` leaves only the retail SetTextColor at offset 0.
+- **objcopy `--add-section` (postprocess_notesplit) collapses ABS symbols at st_value 0** into the null symbol, clobbering their .text relocs (the pool labels ABS'd by trim/drop). Fix: run notesplit BEFORE the reloc-name postprocess (swapped `_postprocess_mtrand_object` order in run.py/hexdiff.py) so ABS symbols are created after the last objcopy pass.
+
+## agent-3 (DATA/SIZE sweep: g3d_resfile, CDeviceRemotePad, CDoubleListNode, CMcaFile, lyt_drawInfo, CDeviceVICb, CVirtualLightDir)
+
+Seven units whose retail splits carry **no data** and whose `.text` fit needed trimming. Three reusable patterns beyond the existing "Retail-owned vtable data" note:
+
+- **Base-class inline-ctor vptr store fixes the interleaved-store ctor (lyt_drawInfo ctor).** The COccCulling note says a body-level explicit store is scheduled at the end with a non-empty init list (~88% fuzzy). For a class whose retail vptr store lands right after the prologue and BEFORE the member-init stores (no base ctor to wait on), an empty `__declspec(novtable)` base whose **inline ctor** runs `*(void**)this = (void*)lbl_eu_XXXX;` reproduces retail byte-for-byte: the base ctor executes before the derived member inits, so the store lands at retail's exact position and register (r4), and the `lis`/`addi` interleave with the member-constant loads exactly as retail. Verified: `nw4r/src/lyt/lyt_drawInfo.cpp` ctor 0x74/0x74 FULL_MATCH with zero .data/.sdata2 (the 0.0f/1.0f constants referenced via `extern "C" const float lbl_eu_80669DD0/80669DD4` sized externs → SDA21 relocs carry the retail names).
+- **Adjacent-global address folding requires LOCAL definitions — strip data post-compile, don't extern.** When retail references a run of adjacent data objects as `base+offset` immediates (g3d_resfile CheckRevision: one `lbl_eu_80568F60` reloc, the other nine name-data uses are `addi rX, base, 0x20/0x40/…`), the objects must stay DEFINED in the TU or MWCC emits separate `lis/addi` per reference and the function regresses. Keep the definitions, then strip the emitted `.data` with the `extern_data_sections` UnitRules field (CfPadTask pattern); the baked addends survive and the .text relocs resolve to the retail data object at link.
+- **Transitive `-ipa file` inlining of thin u32 overloads keeps big callers matching — drop only the standalone copies.** Removing `GetResX(u32) { return GetResX((int)…); }` overloads (retail emits no such symbols) makes Bind/Init/Terminate/CheckRevision regress to ~2-10%: their `u32 i` loops relied on the u32 overloads being `-ipa`-inlined transitively into the full int-overload body. Keep them defined, and drop the standalone copies with `drop_text_symbols` (retail linker dead-stripped them); the inlined bodies inside the callers are untouched. Same for the `GetRes*NumEntries` helpers that only CheckRevision uses.
+- **`__declspec(novtable)` + explicit store is byte-identical when the ctor's init list is empty and the vptr sits at a NON-zero offset** (CDoubleListNode: virtuals declared after the data members put the vptr at +0x10 — store must be `*(void**)((char*)this + 0x10) = (void*)lbl_eu_8056BB90;`). With the correct offset the store is not DSE'd (nothing overwrites +0x10) and lands in retail's exact position/registers (lis r5/li r4/addi r5/li r0).
+- **Shared-header novtable risk check:** before adding `novtable` to a widely-included header, verify sibling TUs that relied on the compiler-emitted member dtor / vtable-driven out-of-line copies still emit them (ut_Rect.h `~Rect(){}` is load-bearing for ut_TextWriterBase CalcLineRectImpl's frame layout — removing it regresses 100% → 64.8%; the `__dt__Rect` orphan in lyt_drawInfo is instead dropped via the existing `drop_text_symbols` rule, keyed per basename, adding the nw4r mangling alongside the nw4hbm one).
+
+## Agent brianna-05 — .text-only retail splits: vtable/singleton/pool data owned by data blobs (data sweep)
+
+When a TU's retail split object carries **zero** data sections (all its data —
+vtables, jump tables, RTTI typeinfos, sdata2 pools, bss/sbss singletons — is
+attributed to shared data-blob units like `nw4r_data.s` / `monolibdata*.s` /
+`criware_data.s`), the decompiled object must emit no data while its matched
+functions keep byte-identical bodies. Canonical tool: the `extern_data_sections`
+UnitRules field (zeroes sh_size for file-backed AND NOBITS sections, converts
+defined symbols to UNDEF, keeps .text reloc names). Reusable patterns from the
+11-unit pass:
+
+- **Vtables emitted by the key-function TU → rename + extern_data_sections.**
+  MWCC emits `__vt__...` in the TU defining the first non-inline virtual; the
+  retail bytes live in the blob under `lbl_eu_8056xxxx`. `exact_renames` (or
+  `prefix_renames` when the local name has an unstable `$N` counter) maps the
+  symbol to the retail name, then `extern_data_sections` strips the .data and
+  the ctor/dtor vptr stores resolve to the blob copy at link (snd_MmlSeqTrack
+  pattern; used for snd_RemoteSpeakerManager instance$N/guard, CDeviceFileJob
+  __vt__). ctor/dtor implicit vptr stores stay byte-identical because they only
+  materialise the symbol ADDRESS.
+- **Compiler-generated pools (u16→f32 magic double, 0.0f literals) can't be
+  named from source → retarget by .text reloc offset + drop.** The `0x43300000`
+  double used by MWCC's implicit u16→f32 conversion and literal pools land in
+  the TU's .sdata2 with unstable `@N` names. Since the functions are matched,
+  the .text reloc OFFSETS are stable — `retarget_relocs=((".text", off,
+  "lbl_eu_80669B28"), ...)` to the retail sdata2 names + `drop_data_tail`
+  (((".sdata2", 0),)) removes the pool with exact reloc names (g3d_resanmlight,
+  g3d_resanmamblight, CStopwatchUtil, math_arithmetic). Do NOT switch the
+  source literals to `extern const float` — the extern-const load can be
+  hoisted by the scheduler and regress the matched function.
+- **Lazy-singleton static-local: keep the source, rename + extern_data_sections.**
+  Replacing `static RemoteSpeakerManager instance;` with an extern + hand-built
+  guard emits a placement-new NULL-guard (8 bytes over) and regresses
+  GetInstance 100%→22%. Keep the static local (byte-identical) and postprocess
+  the .bss/.sbss away with `prefix_renames` (the `instance$N` / `@GUARD@instance$N`
+  counters drift between builds — never use exact_renames on `$N` names).
+- **Hand-written `__sinit_` for retail-owned objects.** When the object is
+  declared extern, MWCC stops emitting the auto-`__sinit_`, but the retail
+  .text split keeps it (the retail TU defined the object; the splitter moved
+  only the data). Reproduce the inlined-ctor body by hand — NOT placement-new
+  (adds a NULL guard): write the exact member stores/OS calls
+  (`lbl.mIsEnabled = false; OSInitMutex(&lbl.mMutex);` — make the
+  anonymous-namespace class members public, it is file-local). MWCC sometimes
+  auto-renames `__sinit_ut_<tu>_cpp` to the retail backslash form
+  `__sinit_\<tu>_cpp` itself (ut_LockedCache) and sometimes not (ut_IOStream) —
+  add an `exact_renames` rule for the no-backslash variant as a safety net;
+  backslash names cannot be typed in C++ source.
+- **Dead function deletions are not always byte-neutral.** `(void)GetParent();`
+  in ResAnmTexPat::GetAnmResult is eliminated by MWCC but its PRESENCE drives
+  the retail register allocation (removing it regresses 100%→78%; removing the
+  definition regresses to 7% with a real call emitted). Keep the dead call and
+  mark GetParent `inline` so MWCC emits no standalone copy (the retail split has
+  no GetParent symbol). Similarly, `Release()` (called only from g3d_resfile,
+  where retail inlines it) was simply deleted from the TU — no retarget needed.
+- **`-RTTI off` per-unit + repack for monolib vtable/RTTI TUs.** CDeviceFileJob:
+  `-RTTI off` in configure.py removed the weak `__RTTI__` typeinfos, the
+  typeinfo name strings (.rodata) and the weak CWorkThread virtual stubs
+  (.text) in one shot; the remaining vtable (.data) was renamed+stripped, and
+  `repack_after_drop=4` collapsed the 8-byte pad the GC'd stubs left so .text
+  lands exactly on the retail budget. CTaskManager (same family) used -RTTI off
+  + drop_data_range.
+- **ahx_ftbl pointer-indirection tables:** retail's AHXTBL_GetFtblInfo loads
+  the table POINTER and SIZE from two 4-byte globals (lbl_eu_805620D8/DC in
+  criware_data.s) whose initialiser points at the 0x2080 filter table
+  (lbl_eu_80560058). Declaring `extern float* lbl_eu_805620D8; extern s32
+  lbl_eu_805620DC;` and deleting the table+pointer+size definitions keeps the
+  function byte-identical with exact retail reloc names and zero .data.
+
+---
+
+## Agent 10 (brief_10) — data-section matching patterns (nw4r g3d/snd/ut, monolib mpfsys)
+
+Worked session patterns for eliminating TU data sections (retail split objects
+are .text-only; `data diff` requires the decomp object to emit NO data):
+
+1. **novtable + explicit vptr stores in retail store order (non-empty init
+   lists).** The documented COccCulling note says an explicit vptr store with a
+   non-empty member-init list lands at the END of the ctor (regression). For
+   SHORT init lists this is fixable: write the member stores as explicit
+   statements in the retail STORE ORDER with the explicit
+   `*(void**)this = (void*)lbl_eu_XXXX;` interleaved at its retail position.
+   Proven: `snd_PlayerHeap` ctor (init list mSound..mEnd + node.Init; retail
+   store order mSound, vptr, mPlayer, mStart, mUnk0x10, mEnd, node) — 100%
+   byte-identical (MWCC hoists the lis/addi of the vtable label to the top,
+   so the schedule matches the implicit-store shape). `ut_ResFontBase` ctor
+   (two vptr stores: Font-base vptr via the inlined Font ctor, then the
+   ResFontBase vptr) — the explicit ResFontBase-vptr store must sit between
+   mResource and mFontInfo to match retail. The dtor store works when the
+   retail dtor resets the vptr (PlayerHeap); REMOVE the explicit store when
+   the retail dtor does not reset it (ResFontBase dtor, ResFont dtor).
+
+2. **novtable on a SHARED base + explicit store inside the inline base ctor.**
+   `G3dObj` (base of ScnObj/AnmObj/AnmScn) and `Font` (base of RomFont/
+   ResFontBase/ResFont) are shared: novtable kills the implicit base-ctor
+   vptr store in EVERY inlined derived ctor. Fix: add
+   `*(void**)this = (void*)lbl_eu_XXXX;` as the LAST statement of the inline
+   base ctor — derived ctors then emit the identical store sequence.
+   Verified zero regressions: g3d_scnobj 39/39, g3d_anmobj 4/4, g3d_anmscn
+   34/45 (unchanged), ut_RomFont 25/25. Bonus: ut_RomFont's own .data vtable
+   disappears too (data diff green).
+
+3. **extern "C" union for a big shared work-memory arena.** g3d_workmem's
+   0x18000 .bss arena: declare `extern "C" union { ... } lbl_eu_8061FB00;`
+   with the same anonymous-member layout and access `lbl_eu_8061FB00.field`.
+   The getters keep the retail lis/addi relocs (addend 0 / literal addi for
+   the 0x6000 sub-field), and the .bss disappears. Also: delete functions the
+   retail split does not contain (GetShpAnmResultBufTemporary) — they blow
+   the .text budget.
+
+4. **extern "C" singleton state (monolib MPFDrawCross).** The
+   `extern "C" { s8 lbl; ... }` block without the `extern` keyword DEFINES
+   the symbols (.sbss). Add `extern` inside the block so they are declaration-
+   only; declare the prototype `extern "C" ... lbl_eu_8056DC28;` instead of a
+   `static` — .bss/.sbss disappear, getInstance stays byte-identical.
+
+5. **Confirm hard cap (unchanged):** the u16/u32->f32 conversion 2^52 double
+   (lbl_eu_80669AD0 / lbl_eu_80669AD8-family pools) is compiler-generated and
+   cannot be named from source (MWCC_REFERENCE §7). g3d_resanmclr's .sdata2
+   can only be reduced 0x10 -> 0x8 (extern the 0.0f via a TU-local
+   ClipFrameLocal; the lfs reloc name then matches retail). The member-
+   pointer constant pool (ut_Font InitReaderFunc) is likewise compiler-
+   generated: the retail's `addi r4, r5, off` LEA copy idiom only appears for
+   MWCC's internal pool-constant copy; an extern reference changes the idiom
+   (lwzu / base-relative loads), so the .data pool is unavoidable with a
+   byte-identical function.

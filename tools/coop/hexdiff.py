@@ -1059,21 +1059,22 @@ def _postprocess_mtrand_object(project: Project, obj: Path | None) -> None:
     """Run reloc-name post-processing (PLAN.md §17.6)."""
     if obj is None:
         return
-    script = project.root / "tools" / "postprocess_reloc_names.py"
-    if not script.is_file():
-        return
-    subprocess.run(
-        [sys.executable, str(script), str(obj)],
-        cwd=project.root, check=False,
-        capture_output=True,
-    )
-    # Also copy .note.split from retail to decomp
+    # .note.split FIRST, then reloc-name post-processing: objcopy --add-section
+    # collapses ABS symbols at st_value 0 (trim/drop-created pool labels) into
+    # the null symbol. Create them after the last objcopy pass instead.
     notesplit_script = project.root / "tools" / "postprocess_notesplit.py"
     if notesplit_script.is_file():
         subprocess.run(
             [sys.executable, str(notesplit_script), str(obj)],
             cwd=project.root, check=False,
             capture_output=True,  # never pollute --json stdout
+        )
+    script = project.root / "tools" / "postprocess_reloc_names.py"
+    if script.is_file():
+        subprocess.run(
+            [sys.executable, str(script), str(obj)],
+            cwd=project.root, check=False,
+            capture_output=True,
         )
 
 

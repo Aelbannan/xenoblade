@@ -40,12 +40,24 @@ struct Glyph {
  * Font
  *
  ******************************************************************************/
-class Font {
+// Retail vtable data (nw4r_data.s __vt__Q34nw4r2ut4Font, .data 0x8056AEC8) and
+// the shared default-reader member-pointer pool entry (lbl_eu_8056AF28 =
+// {0,-1,&ReadNextCharCP1252}). Font is __declspec(novtable) so TUs emit no
+// local vtable; the inline ctor assigns the retail vtable label explicitly
+// and copies the default reader from the shared pool (MWCC_REFERENCE
+// "Retail-owned vtable data").
+extern "C" void* __vt__Q34nw4r2ut4Font[];
+extern "C" CharStrmReader::ReadFunc lbl_eu_8056AF28;
+
+class __declspec(novtable) Font {
 public:
     enum Type { TYPE_NULL, TYPE_ROM, TYPE_RESOURCE, TYPE_PAIR };
 
 public:
-    Font() : mReadFunc(&CharStrmReader::ReadNextCharCP1252) {}
+    Font() {
+        *(void**)this = (void*)__vt__Q34nw4r2ut4Font;
+        mReadFunc = lbl_eu_8056AF28;
+    }
     virtual ~Font() {} // at 0x8
 
     virtual int GetWidth() const = 0;  // at 0xC

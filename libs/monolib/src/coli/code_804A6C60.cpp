@@ -3026,7 +3026,17 @@ extern "C" int func_804AE388(CColiObject* self, const _VEC3* vec, f32 x, f32 y) 
 extern "C" int func_804AE9A4(CColiObject* self, const _VEC3* vec, f32 x, f32 y);
 extern "C" int func_804AEC8C(CColiObject* self, const _VEC3* vec, f32 x, f32 y);
 extern "C" int func_804AF2F0(CColiObject* self, const _VEC3* a, const _VEC3* b, const _VEC3* c) { return 0; }
-extern "C" int func_804AF310(CColiObject* self, const _VEC3* a, const _VEC3* b, const _VEC3* c) { return 0; }
+// Seed the proc's +0x08 with the sweep global, clear the +0x8c axis bits,
+// then pass the segment description through to the segment-vs-segment clip
+// (func_804ADD3C). The args travel unchanged, so retail tail-calls.
+extern "C" int func_804AF310(CColiObject* self, const _VEC3* a, const _VEC3* b,
+                             const _VEC3* c) {
+    CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
+    proc->field_0x08 = lbl_eu_80663A90;
+    self->field_0x8c &= ~0x2u;
+    return func_804ADD3C(self, (const f32*)a, (const f32(*)[4])b,
+                         (const f32(*)[4])c);
+}
 
 // Segment-vs-AABB clip with contact write-back (retail func_804AF32C):
 // transform both segment points (+0x50, +0x44) by the partner matrix c,

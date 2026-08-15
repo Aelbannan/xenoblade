@@ -121,16 +121,17 @@ void __ct__8009D604() {
 }
 
 extern "C" void __dt__8009D72C() {
-    // Global destructor for the work-buffer pointer. The duplicated guard is
-    // the retail dead-branch artifact (MWCC_REFERENCE "goto-chain reproduces
-    // duplicated-condition beq target"): two identical tests compile to one
-    // cmpwi + two beq's, and the null-store stays inside the guarded path.
-    if (lbl_eu_80663E88 == 0) goto done;
-    if (lbl_eu_80663E88 == 0) goto done;   // dead duplicate, kept by retail
-    ::operator delete(reinterpret_cast<void*>(lbl_eu_80663E88));
-    lbl_eu_80663E88 = 0;
-done:
-    ;
+    // Global destructor for the work-buffer pointer. The retail emits two
+    // beq's on the same test (cmpwi r3,0; beq epi; beq epi) — the dead
+    // second branch. Only the &&-form on a LOCAL keeps both beq (the same
+    // duplicate disjunct on the global folds to one); MWCC CSEs the local
+    // test to one cmpwi + two beq (CKizunagram/btm_sec duplicated-test
+    // family).
+    u32 p = lbl_eu_80663E88;
+    if (p != 0 && p != 0) {
+        ::operator delete(reinterpret_cast<void*>(p));
+        lbl_eu_80663E88 = 0;
+    }
 }
 
 extern "C" void* func_8009D764(cf::CtrlObjectParamInit* p) {
@@ -401,7 +402,7 @@ extern "C" u32 func_8009E120(cf::CtrlObjectParamRowView* p, u32 value) {
     u16 v = p->field_02[(u16)value];
     if (v == 0xFFFF) v = 0;
     if (v != 0)
-        return func_80142074(p->field_00, (u16)v, 0);
+        return func_80142074(p->field_00, v, 0);
     return func_80141E90(p->field_00, (s16)v, (u16)(value + 1), 0);
 }
 

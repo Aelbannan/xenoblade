@@ -37,11 +37,10 @@ extern const double lbl_eu_806670A8 = 0x4330000000000000ll;
 CMMTex::~CMMTex() {}
 
 bool CMMTex::OnFileEvent(CEventFile* pEventFile) {
-    u8* data;
     if (mFileHandle == pEventFile->mFileHandle) {
         // Grab the loaded buffer, then clear the handle state in retail order:
         // save mData, null the handle's mData, stash + flag + clear handle.
-        data = mFileHandle->mData;
+        u8* data = mFileHandle->mData;
         mFileHandle->mData = 0;
         mData = data;
         mReady = 1;

@@ -451,20 +451,31 @@ UNIT_RULES: dict[str, UnitRules] = {
         # emitted .data and UNDEF the symbols so the .text relocs resolve to
         # nw4r_data.o at link (CfPadTask.o pattern).
         extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
-        # Retail emits no GetResPlttNumEntries/GetResTexNumEntries/… nor any
-        # GetResAnmVis*/GetResAnmShp* symbols: the only callers are the
-        # iterations inside CheckRevision, where -ipa file inlines these
-        # bodies (the retail linker dead-stripped the standalone copies).
+        # Retail emits no GetResPlttNumEntries/GetResTexNumEntries/…, no u32
+        # overloads, and no GetResAnmVis*/GetResAnmShp* symbols: the only
+        # callers are Bind/Init/Terminate/CheckRevision, where -ipa file
+        # inlines these bodies transitively (u32 overloads first); the retail
+        # linker dead-stripped the standalone copies.
         drop_text_symbols=(
+            "GetResMdl__Q34nw4r3g3d7ResFileCFUl",
+            "GetResPltt__Q34nw4r3g3d7ResFileCFUl",
             "GetResPlttNumEntries__Q34nw4r3g3d7ResFileCFv",
+            "GetResTex__Q34nw4r3g3d7ResFileCFUl",
             "GetResTexNumEntries__Q34nw4r3g3d7ResFileCFv",
+            "GetResAnmChr__Q34nw4r3g3d7ResFileCFUl",
+            "GetResAnmVis__Q34nw4r3g3d7ResFileCFUl",
             "GetResAnmVisNumEntries__Q34nw4r3g3d7ResFileCFv",
             "GetResAnmVis__Q34nw4r3g3d7ResFileCFi",
+            "GetResAnmClr__Q34nw4r3g3d7ResFileCFUl",
             "GetResAnmClrNumEntries__Q34nw4r3g3d7ResFileCFv",
+            "GetResAnmTexPat__Q34nw4r3g3d7ResFileCFUl",
             "GetResAnmTexPatNumEntries__Q34nw4r3g3d7ResFileCFv",
+            "GetResAnmTexSrt__Q34nw4r3g3d7ResFileCFUl",
             "GetResAnmTexSrtNumEntries__Q34nw4r3g3d7ResFileCFv",
+            "GetResAnmShp__Q34nw4r3g3d7ResFileCFUl",
             "GetResAnmShpNumEntries__Q34nw4r3g3d7ResFileCFv",
             "GetResAnmShp__Q34nw4r3g3d7ResFileCFi",
+            "GetResAnmScn__Q34nw4r3g3d7ResFileCFUl",
             "GetResAnmScnNumEntries__Q34nw4r3g3d7ResFileCFv",
         ),
     ),

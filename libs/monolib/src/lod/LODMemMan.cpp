@@ -2048,11 +2048,14 @@ floatsDone:
 }
 
 // ---------------------------------------------------------------------------
-// func_80471450: store the halfword param into the +0x96C float (retail
-// round-trips it through the stack with a paired-single load).
-// ---------------------------------------------------------------------------
+// func_80471450: store the halfword param into the +0x96C float via the
+// GQR5 s16 fast cast (retail psq_l f0, 0(r4), 1, qr5 after an sth spill).
+#pragma push
+#pragma auto_inline off
+#include <revolution/os/OSFastCast.h>
+#pragma pop
 void func_80471450__Q23LOD9LODMemManFv(LOD::LODMemMan* self, s16 value) {
-    *(f32*)((u8*)self + 0x96C) = (f32)value;
+    *(f32*)((u8*)self + 0x96C) = __OSs16tof32(&value);
 }
 
 // ---------------------------------------------------------------------------

@@ -41,7 +41,8 @@ void DCT_AcInit(void) {
             uj.w[1] = (unsigned int)j ^ 0x80000000;
             uj.w[0] = 0x43300000;
             double v = scale * cos(pi8 * (ui.d - bias) * (half + (uj.d - bias)));
-            *row++ = v;
+            *row = v;
+            row += 8;
             *col = v;
             col += 8;
         }

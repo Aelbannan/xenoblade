@@ -3,10 +3,10 @@
 namespace nw4r {
 namespace g3d {
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")> lbl_eu_8051D640 = {
-    sizeof("G3dObj"), "G3dObj"};
-
-NW4R_G3D_RTTI_DEF(G3dObj);
+// Retail type-name data (nw4r_data.s lbl_eu_8051D640, .rodata). Defined by
+// the shared data object; the RTTI accessors reference it by name.
+extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("G3dObj")>
+    lbl_eu_8051D640;
 
 bool G3dObj::IsDerivedFrom(G3dObj::TypeObj other) const {
     return other == TypeObj(lbl_eu_8051D640);
@@ -21,6 +21,9 @@ const char* G3dObj::GetTypeName() const {
 }
 
 G3dObj::~G3dObj() {
+    // Retail dtor stores the vtable pointer right after the null check; with
+    // novtable the store is explicit (lbl_eu_805695B0 = G3dObj vtable).
+    *(void**)this = (void*)lbl_eu_805695B0;
     MEMFreeToAllocator(mpHeap, this);
 }
 
@@ -36,5 +39,3 @@ void G3dObj::Destroy() {
 
 } // namespace g3d
 } // namespace nw4r
-
-// Defined inline via NW4R_G3D_RTTI_DECL_BASE(G3dObj) in g3d_obj.h

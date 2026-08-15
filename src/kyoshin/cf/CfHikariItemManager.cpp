@@ -494,15 +494,13 @@ extern "C" void func_802B3568(cf::CfHikariItemManager* self, const f32* src,
 // four SDA-relocated word stores to lbl_eu_80664C18..24).
 extern "C" void func_802B371C(const CfHikariItemRecord* self) {
     u32* dst = (u32*)&lbl_eu_80577680[0];
-    dst[0] = self->field_00;
-    u32 b = self->field_04;
-    u32 c = self->field_08;
     lbl_eu_80664C18 = 0;
     lbl_eu_80664C1C = 0;
     lbl_eu_80664C20 = 0;
     lbl_eu_80664C24 = 0;
-    dst[1] = b;
-    dst[2] = c;
+    dst[0] = self->field_00;
+    dst[1] = self->field_04;
+    dst[2] = self->field_08;
 }
 
 // Target 1 (us-802b61c0): initialize a freshly allocated 0x44-byte Hikari

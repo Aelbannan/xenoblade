@@ -1616,7 +1616,7 @@ config.libs = [
             Object(NonMatching, "nw4r/src/g3d/dcc/g3d_maya.cpp"),
             Object(NonMatching, "nw4r/src/g3d/dcc/g3d_xsi.cpp"),
             Object(NonMatching, "nw4r/src/g3d/dcc/g3d_3dsmax.cpp"),
-            Object(NonMatching, "nw4r/src/g3d/g3d_scnobj.cpp"),
+            Object(Matching, "nw4r/src/g3d/g3d_scnobj.cpp"),
             Object(NonMatching, "nw4r/src/g3d/g3d_scnroot.cpp"),
             Object(NonMatching, "nw4r/src/g3d/g3d_scnmdlsmpl.cpp"),
             Object(NonMatching, "nw4r/src/g3d/g3d_scnmdl.cpp"),
@@ -1958,7 +1958,6 @@ config.libs = [
             Object(Matching, "nw4r_data.s"),
             Object(Matching, "monolibdata1.s"),
             Object(Matching, "monolibdata1b.s"),
-            Object(Matching, "monolibdata1f.s"),
             Object(Matching, "monolibdata1d.s"),
             Object(Matching, "monolibdata1e.cpp"),  # converted from asm dump: one 0x280-byte .bss global (lbl_eu_80657238), verified byte+align identical via run.py data diff
             Object(Matching, "monolibdata2.s"),

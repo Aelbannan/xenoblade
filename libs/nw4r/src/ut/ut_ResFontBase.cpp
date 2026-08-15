@@ -13,8 +13,16 @@ const CharWidths& GetCharWidthsFromIndexImpl(const FontWidth* pWidth,
 
 } // namespace
 
-ResFontBase::ResFontBase() : mResource(NULL), mFontInfo(NULL),
-mLastCharCode(0), mLastGlyphIndex(-1) {}
+ResFontBase::ResFontBase() {
+    // Retail ctor: Font base runs first (inline: vptr store + reader copy),
+    // then the ResFontBase vtable, then the members. novtable makes the two
+    // vptr stores explicit; statement order mirrors the retail stores.
+    *(void**)this = (void*)lbl_eu_8056AF34;
+    mResource = NULL;
+    mFontInfo = NULL;
+    mLastCharCode = 0;
+    mLastGlyphIndex = -1;
+}
 
 ResFontBase::~ResFontBase() {}
 

@@ -5,8 +5,8 @@
 #include <cstddef>
 
 // Retail owns the scene-culling frustum pointer in nw4r_data.s (.sbss,
-// 0x80665468). Declared here at global scope (unmangled) so the GATHER
-// function's sda21 relocs carry the retail symbol name.
+// 0x80665468). Global-scope extern (unmangled) so the GATHER function's
+// sda21 relocs carry the retail symbol name.
 extern const nw4r::math::FRUSTUM* lbl_eu_80665468;
 
 namespace nw4r {
@@ -200,7 +200,8 @@ bool ScnObj::GetScnObjOption(u32 option, u32* pValue) const {
     return true;
 }
 
-//unused (not present in the retail split)
+// The const-reference overload matches the retail symbol
+// SetMtx__Q34nw4r3g3d6ScnObjFQ44nw4r3g3d6ScnObj13ScnObjMtxTypeRCQ34nw4r4math5MTX34.
 bool ScnObj::SetMtx(ScnObjMtxType type, const math::MTX34& pMtx) {
     if (static_cast<u32>(type) < MTX_TYPE_MAX) {
         if (type == MTX_LOCAL) {
@@ -403,27 +404,31 @@ ScnGroup* ScnGroup::Construct(MEMAllocator* pHeap, u32* pSize, u32 maxNumChildre
     ScnGroup* pObj = NULL;
     u32 sizeScnGroup = sizeof(ScnGroup);
     u32 sizeCldArray = maxNumChildren * sizeof(ScnObj*);
-    u32 ofsCldArray = align4(sizeScnGroup + sizeCldArray);
-    u32 size = ROUND_DOWN(ofsCldArray, 4); //TODO(amber) is this really round down?
 
-    if(pSize != NULL){
+    // Children array is stored directly after the ScnGroup object; the whole
+    // block is rounded up to 4 bytes.
+    u32 size = align4(sizeScnGroup + sizeCldArray);
+
+    if (pSize != NULL) {
         *pSize = size;
     }
 
-    if(pHeap != NULL){
+    if (pHeap != NULL) {
         u8* buf = reinterpret_cast<u8*>(Alloc(pHeap, size));
-        
-        if(buf == NULL){
+
+        if (buf == NULL) {
             return NULL;
         }
-        
-        pObj = new (buf) ScnGroup(pHeap, (ScnObj**)(buf + sizeScnGroup), maxNumChildren);
+
+        pObj = new (buf) ScnGroup(pHeap,
+                                  reinterpret_cast<ScnObj**>(buf + sizeScnGroup),
+                                  maxNumChildren);
     }
 
     return pObj;
 }
 
- ScnObj::ForEachResult ScnGroup::ForEach(ForEachFunc pFunc, void* pInfo,
+ScnObj::ForEachResult ScnGroup::ForEach(ForEachFunc pFunc, void* pInfo,
                                         bool postOrder) {
     ForEachResult result;
 
@@ -600,15 +605,15 @@ void ScnGroup::DefG3dProcScnGroup(u32 task, u32 param, void* pInfo) {
 bool ScnGroup::Insert(u32 idx, ScnObj* pObj) {
     if (idx <= mNumScnObj && mNumScnObj < mSizeScnObj && pObj != NULL &&
         pObj->GetParent() == NULL) {
-            for (u32 i = mNumScnObj; i > idx; i--) {
-                mpScnObjArray[i] = mpScnObjArray[i - 1];
-            }
+        for (u32 i = mNumScnObj; i > idx; i--) {
+            mpScnObjArray[i] = mpScnObjArray[i - 1];
+        }
 
-            mpScnObjArray[idx] = pObj;
-            pObj->G3dProc(G3DPROC_ATTACH_PARENT, 0, this);
+        mpScnObjArray[idx] = pObj;
+        pObj->G3dProc(G3DPROC_ATTACH_PARENT, 0, this);
 
-            mNumScnObj++;
-            return true;
+        mNumScnObj++;
+        return true;
     }
 
     return false;
@@ -654,8 +659,6 @@ ScnGroup::~ScnGroup() {
     Clear();
 }
 
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnObj")> lbl_eu_8051D768;
-
 // ScnObj's base-chain check (G3dObj). Kept as a static helper (not a virtual-call
 // chain) so MWCC inlines it and emits the retail parameter-reload pattern
 // (a fresh lwz at the helper boundary).
@@ -678,9 +681,6 @@ const G3dObj::TypeObj ScnObj::GetTypeObj() const {
 const char* ScnObj::GetTypeName() const {
     return GetTypeObj().GetTypeName();
 }
-
-
-extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("ScnGroup")> lbl_eu_8051D788;
 
 // ScnGroup's base-chain check (ScnObj then G3dObj). Kept as a static helper
 // (not a virtual-call chain) so MWCC inlines it and emits the retail
@@ -709,7 +709,5 @@ const G3dObj::TypeObj ScnGroup::GetTypeObj() const {
 const char* ScnGroup::GetTypeName() const {
     return GetTypeObj().GetTypeName();
 }
-
-
 } // namespace g3d
 } // namespace nw4r

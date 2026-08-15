@@ -923,13 +923,20 @@ void func_80266724(UI::CPassiveSkillLine* self, int charId, int row, int slot) {
 // Skill-name pane setter for the +0x28 line (retail func_80266950): the
 // layout it drives is the line's +0x8 field. C linkage so the definition
 // symbol and func_80266930's call reloc are the plain retail name.
-extern "C" void func_80266950(UI::CPassiveSkillLine* self, u8 index);
+// noinline: -ipa would otherwise fold the body into func_80266930's call
+// site (retail keeps the pure 0x20 tail call).
+extern "C" __declspec(noinline) void func_80266950(UI::CPassiveSkillLine* self,
+                                                   u8 index);
 
+// Linearize a 5x5 skill grid into a slot index: (row-1)*25 + col*5 + slot + 1.
+// optimize_for_size on: retail keeps mulli for col*5 (the -O4,s lowering;
+// -O4,p strength-reduces to rlwinm+add).
+#pragma optimize_for_size on
 void func_80266930(UI_CPassiveSkill* self, u8 row, u8 col, u8 slot) {
-    // Linearize a 5x5 skill grid into a slot index: (row-1)*25 + col*5 + slot + 1.
     return func_80266950(reinterpret_cast<UI::CPassiveSkillLine*>(self),
                          (u8)(col * 5 + slot + (row - 1) * 25 + 1));
 }
+#pragma optimize_for_size off
 
 #pragma optimize_for_size on
 // Skill-name pane setter (retail func_80266950): for the given grid slot,

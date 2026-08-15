@@ -96,17 +96,19 @@ u32 GetResColorAnmResult(const ResColorAnmFramesData* pData, f32 frame) {
     // and the ratio multiply, and the integral part is narrowed too before
     // the fctiwz conversion (retail emits frsp before fctiwz).
     f64 intPart;
-    f32 fracPart = static_cast<f32>(modf(frame, &intPart));
-    int intFrame = static_cast<int>(static_cast<f32>(intPart));
+    f64 fracPart = modf(frame, &intPart);
+    f32 frac32 = static_cast<f32>(fracPart);
+    f32 int32 = static_cast<f32>(intPart);
+    int intFrame = static_cast<int>(int32);
 
-    if (fracPart == lbl_eu_80669ABC) {
+    if (lbl_eu_80669ABC == frac32) {
         return pColorArray[intFrame];
     }
 
     ut::Color left(pColorArray[intFrame]);
     ut::Color right(pColorArray[intFrame + 1]);
 
-    f32 biasedRatio = lbl_eu_80669AC0 * fracPart;
+    f32 biasedRatio = lbl_eu_80669AC0 * frac32;
     s16 fpRatio = math::F32ToS16(biasedRatio);
 
     return ut::Color(LinearInterpColorElem(left.r, right.r, fpRatio),

@@ -65,7 +65,11 @@ namespace detail {
  * ResFontBase
  *
  ******************************************************************************/
-class ResFontBase : public Font {
+// Retail vtable data (nw4r_data.s lbl_eu_8056AF34, .data). novtable so the
+// TU emits no local vtable; the ctor assigns the retail label explicitly.
+extern "C" void* lbl_eu_8056AF34[];
+
+class __declspec(novtable) ResFontBase : public Font {
 public:
     static const u16 GLYPH_INDEX_NOT_FOUND = 0xFFFF;
 

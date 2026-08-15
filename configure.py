@@ -551,7 +551,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/realtimeevt/CREvtModelObj.cpp"),
             Object(NonMatching, "kyoshin/realtimeevt/CREvtModelPc.cpp"),
             Object(NonMatching, "kyoshin/realtimeevt/CREvtEffect.cpp"),
-            Object(NonMatching, "kyoshin/realtimeevt/CREvtObj.cpp"),
+            Object(Matching, "kyoshin/realtimeevt/CREvtObj.cpp"),
             Object(NonMatching, "kyoshin/plugin/pluginTime.cpp"),
             Object(NonMatching, "kyoshin/plugin/pluginBtl.cpp"),
             Object(NonMatching, "kyoshin/code_801862C0.cpp"),

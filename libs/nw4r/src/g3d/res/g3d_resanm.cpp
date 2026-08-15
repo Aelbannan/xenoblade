@@ -3,6 +3,7 @@
 #include <nw4r/ut.h>
 
 // Retail float-pool constants (SDA21 relocs must reference these names).
+// Global-scope externs: MWCC does not mangle global-scope variable names.
 extern const float lbl_eu_80669ABC; // 0.0f
 extern const float lbl_eu_80669AC0; // 32768.0f
 
@@ -105,16 +106,24 @@ u32 GetResColorAnmResult(const ResColorAnmFramesData* pData, f32 frame) {
         return pColorArray[intFrame];
     }
 
-    ut::Color left(pColorArray[intFrame]);
-    ut::Color right(pColorArray[intFrame + 1]);
+    // GXColor (plain byte struct, no user-declared destructor) is used here
+    // instead of ut::Color: by-value Color temporaries make MWCC emit an
+    // orphan weak __dt__Color the retail linker GC'd (+0x40 .text).
+    GXColor left;
+    GXColor right;
+    *reinterpret_cast<u32*>(&left) = pColorArray[intFrame];
+    *reinterpret_cast<u32*>(&right) = pColorArray[intFrame + 1];
 
     f32 biasedRatio = lbl_eu_80669AC0 * frac32;
     s16 fpRatio = math::F32ToS16(biasedRatio);
 
-    return ut::Color(LinearInterpColorElem(left.r, right.r, fpRatio),
-                     LinearInterpColorElem(left.g, right.g, fpRatio),
-                     LinearInterpColorElem(left.b, right.b, fpRatio),
-                     LinearInterpColorElem(left.a, right.a, fpRatio));
+    GXColor result;
+    result.r = LinearInterpColorElem(left.r, right.r, fpRatio);
+    result.g = LinearInterpColorElem(left.g, right.g, fpRatio);
+    result.b = LinearInterpColorElem(left.b, right.b, fpRatio);
+    result.a = LinearInterpColorElem(left.a, right.a, fpRatio);
+
+    return *reinterpret_cast<u32*>(&result);
 }
 
 } // namespace detail

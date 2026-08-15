@@ -11,27 +11,27 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 9636 |
+| extern "C" (total lines) | 9635 |
 | extern "C" declarations (non-lbl_*, imports) | 3524 |
 | extern "C" definitions (forced names) | 3666 |
 | `self`/register-style params | 11365 |
-| `void*` (params + locals) | 6859 |
+| `void*` (params + locals) | 6856 |
 | raw pointer offset arithmetic | 6355 |
-| deref-through-cast arithmetic | 2479 |
+| deref-through-cast arithmetic | 2480 |
 | inline asm / `register` | 103 |
 | rN-named params | 480 |
-| goto | 2818 |
+| goto | 2819 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 0 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
-| #pragma | 1607 |
+| #pragma | 1618 |
 
 ## Top offenders (by cleanable severity)
 
 | TU | severity |
 |---|---|
 | src/kyoshin/cf/CBattleManager.cpp | 2621 |
-| src/kyoshin/CItemBoxGrid.cpp | 2355 |
+| src/kyoshin/CItemBoxGrid.cpp | 2353 |
 | src/kyoshin/CPassiveSkill.cpp | 1498 |
 | src/kyoshin/CItemBoxInfo.cpp | 1492 |
 | src/kyoshin/cf/object/CActorParam.cpp | 1279 |
@@ -292,7 +292,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CExchangeWin.cpp | 0 | 11 | 13 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CFade.cpp | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CFloorMap.cpp | 2 | 9 | 68 | 105 | 69 | 39 | 0 | 1 | 12 | 0 | 0 | 0 |
-| src/kyoshin/CItemBoxGrid.cpp | 23 | 12 | 549 | 278 | 374 | 86 | 0 | 48 | 26 | 0 | 0 | 0 |
+| src/kyoshin/CItemBoxGrid.cpp | 23 | 12 | 549 | 275 | 374 | 87 | 0 | 48 | 27 | 0 | 0 | 0 |
 | src/kyoshin/CItemBoxGridSubMenu.cpp | 0 | 2 | 5 | 4 | 6 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CItemBoxInfo.cpp | 23 | 19 | 5 | 258 | 646 | 272 | 0 | 1 | 3 | 0 | 0 | 0 |
 | src/kyoshin/CItemBoxLine.cpp | 2 | 7 | 127 | 15 | 12 | 0 | 0 | 2 | 16 | 0 | 0 | 0 |
@@ -3266,16 +3266,16 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/CItemBoxGrid.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 86,
+  "deref_arith": 87,
   "extern_c_nonlbl_decl": 23,
   "extern_c_nonlbl_def": 12,
-  "goto_count": 26,
+  "goto_count": 27,
   "init_side_effect": 0,
   "ptr_arith": 374,
   "rn_params": 48,
   "schedule_pragma": 0,
   "self_params": 549,
-  "void_ptr": 278
+  "void_ptr": 275
  },
  "src/kyoshin/CItemBoxGridSubMenu.cpp": {
   "asm_insn_shim": 0,

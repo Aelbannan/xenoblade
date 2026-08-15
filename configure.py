@@ -459,7 +459,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/CfCamLookatIntf.cpp"),
             Object(Matching, "kyoshin/cf/CfCamTargetIntf.cpp"),
             Object(NonMatching, "kyoshin/cf/CfCam.cpp"),
-            Object(NonMatching, "kyoshin/cf/CfCamEvent_1.cpp", mw_version="GC/3.0a5.2"),  # retail func_8007560C/80075640 two-cmpi range check needs GC (Wii/1.1 folds to subi/rlwinm/cmpli)
+            Object(NonMatching, "kyoshin/cf/CfCamEvent_1.cpp"),
             Object(NonMatching, "kyoshin/cf/CfGameManager.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlEnemy.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlMoveBase.cpp"),
@@ -1581,7 +1581,7 @@ config.libs = [
             Object(NonMatching, "nw4r/src/g3d/res/g3d_resvtx.cpp"),
             Object(NonMatching, "nw4r/src/g3d/res/g3d_restex.cpp"),
             Object(NonMatching, "nw4r/src/g3d/res/g3d_resnode.cpp"),
-            Object(NonMatching, "nw4r/src/g3d/res/g3d_resanm.cpp"),
+            Object(Matching, "nw4r/src/g3d/res/g3d_resanm.cpp"),
             Object(NonMatching, "nw4r/src/g3d/res/g3d_resanmclr.cpp"),
             Object(NonMatching, "nw4r/src/g3d/res/g3d_resanmtexpat.cpp"),
             Object(NonMatching, "nw4r/src/g3d/res/g3d_resanmtexsrt.cpp"),

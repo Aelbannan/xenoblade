@@ -459,7 +459,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/CfCamLookatIntf.cpp"),
             Object(Matching, "kyoshin/cf/CfCamTargetIntf.cpp"),
             Object(NonMatching, "kyoshin/cf/CfCam.cpp"),
-            Object(NonMatching, "kyoshin/cf/CfCamEvent_1.cpp"),
+            Object(NonMatching, "kyoshin/cf/CfCamEvent_1.cpp", mw_version="GC/3.0a5.2"),  # retail func_8007560C/80075640 two-cmpi range check needs GC (Wii/1.1 folds to subi/rlwinm/cmpli)
             Object(NonMatching, "kyoshin/cf/CfGameManager.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlEnemy.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlMoveBase.cpp"),
@@ -1532,7 +1532,7 @@ config.libs = [
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/sfd/sfd_vom.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/sfd/sfd_tmr.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/sfd/sfd_tst.c", mw_version = "Wii/1.1"),
-            Object(NonMatching, "CriWare/src/sofdec/sfdcore/sfd/sfd_seeki.c", mw_version = "Wii/1.1"),
+            Object(Matching, "CriWare/src/sofdec/sfdcore/sfd/sfd_seeki.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/sfh/sfh_local.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/sfh/sfh_main.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/sfh/sfh_ver1.c", mw_version = "Wii/1.1"),

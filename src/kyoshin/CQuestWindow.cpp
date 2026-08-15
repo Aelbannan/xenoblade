@@ -6,6 +6,9 @@
 #include "kyoshin/code_80135FDC.hpp"              // func_80137444 (anim frame wait)
 #include "kyoshin/cf/CfPadTask.hpp"               // cf::CfPadTask::func_801C1B94
 #include "kyoshin/CTagProcessor.hpp"              // CTagProcessor (tag alloc)
+// Implicit-r3 form: retail call sites that do NOT set r3 (the def in
+// ocBdat.cpp takes no args); header decl is the 1-arg caller-tuned form.
+extern "C" void* func_8003AA34(void);
 #include "monolib/device/CDeviceFile.hpp"         // readFile / readCommonArchiveFile
 #include "monolib/device/CDeviceFont.hpp"         // CDeviceFont::func_80452C10
 #include "monolib/device/CDeviceVI.hpp"          // waitForDrawDone
@@ -119,7 +122,7 @@ bool func_8012278C(CQuestWindow* self, CEventFile* event) {
         u32 fontResult = reinterpret_cast<CQuestWinFontView*>(fontObj)->v7();
         func_8013676C(rootPane, fontResult);
 
-        char* fontStr = func_801355BC();
+        char* fontStr = (char*)func_801355BC();
         if (fontStr != 0) {
             func_801368C0(self->mpLayout, &lbl_eu_804FEC84[0x61], (u32)fontStr);
             func_801368C0(self->mpLayout, &lbl_eu_804FEC84[0x6c], (u32)fontStr);

@@ -53,8 +53,31 @@ CDeviceGX* CDeviceGX::getInstance(){
     return lbl_eu_806656A0;
 }
 
+namespace {
+// Mirrors CWorkThread::isRunning()'s body; retail inlines it here (no bl). The
+// device counts as initialized when it has no pending exception and its state is
+// LOGIN or RUN.
+inline bool isDeviceRunning(CDeviceGX* gx){
+    bool exception;
+    if(gx->mFlags & CWorkThread::THREAD_FLAG_EXCEPTION){
+        exception = true;
+    }else{
+        exception = gx->mMsgQueue.find(CWorkThread::EVT_EXCEPTION) >= 0;
+    }
+
+    bool result = false;
+    if(!exception){
+        bool stateOK = gx->mState == CWorkThread::THREAD_STATE_LOGIN || gx->mState == CWorkThread::THREAD_STATE_RUN;
+        if(stateOK){
+            result = true;
+        }
+    }
+    return result;
+}
+}
+
 bool CDeviceGX::isInitialized(){
-    return spInstance->isRunning();
+    return isDeviceRunning(lbl_eu_806656A0);
 }
 
 void CDeviceGX::setDevicesInitializedFlag(bool state){

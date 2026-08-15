@@ -39,7 +39,9 @@ u8 CDeviceSC::getLanguage(){
 }
 
 bool CDeviceSC::isInitialized(){
-    return spInstance->isRunning();
+    CDeviceSC* pThis = lbl_eu_80665640;
+    return pThis->isException() == false &&
+           (pThis->mState == THREAD_STATE_LOGIN || pThis->mState == THREAD_STATE_RUN);
 }
 
 bool CDeviceSC::wkStandbyLogin(){

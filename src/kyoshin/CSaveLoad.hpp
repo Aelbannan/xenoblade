@@ -239,7 +239,7 @@ extern "C" u32 func_8009CF8C(u32);
 extern "C" void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" void func_8022B8E4(void*);
-extern "C" CBaseCur* __ct__CCur18(void* self, void* param);
+extern "C" void __ct__CCur18(void* self, void* param);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
 extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
 extern "C" u32 func_801355D8();
@@ -251,7 +251,7 @@ extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcRes
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 extern "C" void func_8045F810__17UnkClass_8045F564Fv(void* self);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
-extern "C" void* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4(void);
 extern "C" void func_8022B9B4(void*, u32, int);
 extern "C" void func_8022BF6C(void*, u32, u32);
 extern "C" void func_8022BFC8(void*, int);

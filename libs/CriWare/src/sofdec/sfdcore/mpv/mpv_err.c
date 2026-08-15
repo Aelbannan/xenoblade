@@ -24,6 +24,8 @@ void MPVERR_InitErrInf(void* self) {
 
 int MPVLIB_CheckHn(void* handle);
 
+s32 MPVERR_SetCode(s32 val, u32 err_code);
+
 s32 MPV_SetErrFunc(void* self, void* cb, void* arg) {
     u32* dst;
     if (self == NULL) {
@@ -31,11 +33,11 @@ s32 MPV_SetErrFunc(void* self, void* cb, void* arg) {
     } else {
         if (MPVLIB_CheckHn(self) != 0) {
             /* record the fatal code; dispatch to any previously-registered callback */
-            u32 oldcb = lbl_eu_80602A78[0];
             u32* gerr = (u32*)lbl_eu_80602A78;
             gerr[2] = 0xFF030203;
+            u32 oldcb = lbl_eu_80602A78[0];
             if (oldcb != 0)
-                ((void (*)(u32))oldcb)(gerr[1]);
+                ((void (*)(u32))oldcb)(lbl_eu_80602A78[1]);
             return 0xFF030203;
         }
         dst = (u32*)((u8*)self + 0xbdc);

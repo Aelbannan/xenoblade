@@ -305,7 +305,7 @@ extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
 extern "C" void __dt__14Class_8045F858Fv(void*, int);
 extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
-extern "C" void Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
+extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
 // Font/line text providers: func_801355A0 is the retail MANGLED name (C++
@@ -322,7 +322,7 @@ extern "C" void CopyVec4s(void*, const void*);
 extern "C" void func_80137F88(void*, void*);
 extern "C" char* func_8013639C(u32, const char*, u32);
 extern "C" void func_801FA220(u8*, const u8*);
-extern "C" void* __ct__CCur18(void*, void*);
+extern "C" void __ct__CCur18(void*, void*);
 extern "C" void func_8003AA34(void*);
 extern "C" void* getFP__FPCc(const char*);
 extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
@@ -523,11 +523,11 @@ struct CEquipItemBoxEnumList {
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void* __dl__FPv(void*);
+extern "C" void __dl__FPv(void*);
 extern "C" int CSysWin_isActive(void*);
 extern "C" void func_801D216C(void*, int);
 extern "C" u32 func_801D32DC(u8*);
-extern "C" u32 CSysWin_isReady(u8*);
+extern "C" u32 CSysWin_isReady(void*);
 extern "C" void func_80139198(void*);
 extern "C" void func_80138078__FUl(u32);
 extern "C" u8 func_801392B4(int);
@@ -581,7 +581,7 @@ extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
 extern "C" void func_801D3258(void*);
 extern "C" void func_8022B7F4(void*);
 extern "C" u16 func_80139358(u32);
-extern "C" u16 func_80136254(u32, const char*, u32);
+extern "C" u16 func_80136254(const void*, const void*, int);
 // Texture-name lookup (retail C-ABI; u16 arg, returns the resource name).
 extern "C" char* func_80138F78(u16);
 // Item-object validity/type check used by func_80288E14's texture pick.
@@ -603,7 +603,7 @@ extern "C" int CSysWin_getUnk34(void*);
 extern "C" int func_801D3320(void*);
 extern "C" int func_801D3328(void*);
 extern "C" void func_801D377C(void*);
-extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+extern "C" void func_80124270(void*, u32);
 // Pane-visibility query (C-ABI retail symbol; extern "C" so call sites emit
 // the plain name, matching func_80287250's reloc site).
 extern "C" bool func_801C4648(nw4r::lyt::Pane*);

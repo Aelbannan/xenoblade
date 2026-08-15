@@ -278,14 +278,14 @@ struct PaneFlagRef {
 // unmangled, so they must stay C linkage to stop MWCC appending a
 // __F<argtypes> suffix to the call reloc names.
 extern "C" {
-void func_801D216C(CBaseCur* cur, u8 val); // cursor visibility setter (CCur)
+extern "C" void func_801D216C(void*, int); // cursor visibility setter (CCur)
 u32 func_80293C10();                       // party-change notice screen active?
 u32 func_80192BD0();                       // party-state screen active?
 void func_801D202C(void* cur);             // cursor per-frame update (CCur)
 void func_801D20B0(void* cur, nw4r::lyt::DrawInfo* drawInfo); // cursor draw
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
-u32 func_800A9D90();                       // common-archive handle
+extern "C" int func_800A9D90(void);        // common-archive handle
 u32 func_80138138(u32 questId);             // quest id -> name-table index
 void func_8008294C__Q22cf13CfGameManagerFv(bool enable); // cf pad enable/disable
 void* __ct__CQuestWindow(CQuestWindow* self, u32 arg1, u32 arg2, u32 arg3);
@@ -353,19 +353,19 @@ void func_80157184(s32 value);
 // CUICfManager font helpers (func_8012278C binds the font and rebuilds the
 // cursor). func_801355BC returns the font string, func_801355F4 the shared
 // arc accessor.
-char* func_801355BC();
-nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" void* func_801355BC(void);
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4(void);
 
 // BDAT archive attach helpers (func_8012278C common-archive branch).
 void func_8003AA78__5CBdatFUlPv(u32, void*);
-void* func_8003AA34();
+extern "C" void func_8003AA34(void*);
 
 // Quest-content helpers (func_801231C4). The *_E4/58/2C functions return raw
 // u32 values that the caller masks explicitly with & 0xFFFF (retail keeps the
 // unmasked value in a callee-saved register between the call and the mask).
-u32 func_80136254(const void*, const void*, int);
+extern "C" u16 func_80136254(const void*, const void*, int);
 u32 func_801392E4(u32);
-u32 func_80139358(u32);
+extern "C" u16 func_80139358(u32);
 u32 func_8013732C(u32);
 void* func_80138DA4(const char*);
 u32 func_8009ECF0();
@@ -374,7 +374,7 @@ void func_8013DB6C(u32, u32, u32, u32);
 
 // Pane visible-bit toggle (clears bit 0 of the pane +0xBB flag byte and ORs
 // the caller's flag byte; func_801231C4 pane show/hide calls).
-void func_80124270(void*, u32);
+extern "C" void func_80124270(void*, u32);
 
 // Copy 2 floats from src to self+0x4C (func_801231C4 cursor-pane placement).
 void func_80124288(u8* self, const float* src);

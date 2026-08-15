@@ -1142,13 +1142,12 @@ extern "C" void func_8013314C(CUICfManager* self) {
     if (*(void**)((u8*)self + 0x114) != 0) {
         return;
     }
-    const u32* src = (const u32*)lbl_eu_8052E294;
-    u32 w0 = src[0];
-    u32 w1 = src[1];
+    u32 w0 = ((const u32*)lbl_eu_8052E294)[0];
+    u32 w1 = ((const u32*)lbl_eu_8052E294)[1];
     u32* dst = (u32*)((u8*)self + 0x3C);
     dst[1] = w1;
     dst[0] = w0;
-    dst[2] = src[2];
+    dst[2] = ((const u32*)lbl_eu_8052E294)[2];
 }
 void CUICfManager_func_33178(){}
 int CUICfManager_prepareMenus(){

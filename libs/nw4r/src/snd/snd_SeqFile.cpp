@@ -30,6 +30,13 @@ struct SeqFileReaderView {
     const void* mDataBlock;         // at 0x4
 };
 
+// Pointer add that keeps the source operand order (base first) when lowered.
+template <typename T>
+inline const void* AddPtrBaseFirst(const void* pBase, T offset) {
+    return reinterpret_cast<const void*>(reinterpret_cast<const u8*>(pBase) +
+                                         offset);
+}
+
 } // namespace
 
 bool SeqFileReader::IsValidFileHeader(const void* pSeqBin) {
@@ -72,8 +79,8 @@ bool ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
     const SeqFileReaderView* pReader, const char* label, u32* outOffset) {
     const SeqFile::Header* pHeader = pReader->mHeader;
     const SeqLabelBlock* pLabelBlock =
-        static_cast<const SeqLabelBlock*>(ut::AddOffsetToPtr(
-            pHeader, pHeader->labelBlockOffset));
+        reinterpret_cast<const SeqLabelBlock*>(ut::GetIntPtr(pHeader) +
+                                               pHeader->labelBlockOffset);
 
     if (pLabelBlock == NULL) {
         return false;
@@ -83,7 +90,7 @@ bool ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
 
     for (u32 i = 0; i < pLabelBlock->entryCount; i++) {
         const SeqLabelEntry* pEntry = static_cast<const SeqLabelEntry*>(
-            ut::AddOffsetToPtr(pLabelBlock, pLabelBlock->offset[i]));
+            AddPtrBaseFirst(pLabelBlock, pLabelBlock->offset[i]));
 
         if (nameLen == pEntry->nameLen &&
             strncmp(label, pEntry->name, nameLen) == 0) {

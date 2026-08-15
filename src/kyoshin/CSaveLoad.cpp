@@ -1442,28 +1442,43 @@ extern "C" void func_802910D4(CSaveLoad* self) {
     }
 }
 
-extern "C" void func_80291204(int unused, int unused2, int flag, u8 value) {
-    if (lbl_eu_806649F4 == 0) return;
-    if (flag == 0) {
-        lbl_eu_806649F4->mField121 = 0xB;
-        lbl_eu_806649F4->mField11C = 3;
-        lbl_eu_806649F4->mField11E = 0;
-        lbl_eu_806649F4->mField12E = 1;
-        lbl_eu_806649F4->mField12F = value;
-        return;
-    }
-    if (lbl_eu_806649F4->mField12C != 0) {
-        lbl_eu_806649F4->mField121 = 0xC;
-        ((void (*)(CSLCur*))func_8028E8EC)(&lbl_eu_806649F4->mCur);
-    } else if (lbl_eu_806649F4->mField129 != 0) {
-        lbl_eu_806649F4->mField121 = 0xB;
-        lbl_eu_806649F4->mField11C = 3;
-        lbl_eu_806649F4->mField11E = 0;
+// Load global CSaveLoad* from lbl_eu_806649F4. Takes 4 parameters (r3-r6)
+// but only uses r5 (flag: non-zero = handle mField12C/mField129 branches + play sound)
+// and r6 (byte value stored into mField12F when r5 == 0).
+// r3 and r4 are unused params — they exist so r5/r6 are in the correct register slots.
+// No local variable for the global pointer — access lbl_eu_806649F4 directly
+// to force MWCC to reload after each function call, matching retail's repeated @sda21 loads.
+void func_80291204(int, int, int r5, int r6) {
+    if (lbl_eu_806649F4 == nullptr) return;
+
+    if (r5 != 0) {
+        if (lbl_eu_806649F4->mField12C != 0) {
+            lbl_eu_806649F4->mField121 = 0xc;
+            // Cast call prevents MWCC from inlining func_8028E8EC's body
+            // (same TU, -inline auto) while keeping a direct bl call.
+            ((void (*)(CSLCur*))func_8028E8EC)(&lbl_eu_806649F4->mCur);
+        } else if (lbl_eu_806649F4->mField129 != 0) {
+            lbl_eu_806649F4->mField121 = 0xb;
+            // Local pointer so MWCC reuses it for both stores (retail keeps
+            // the reloaded pointer in one register for mField11C/mField11E).
+            CSaveLoad* q = lbl_eu_806649F4;
+            q->mField11C = 3;
+            q->mField11E = 0;
+        } else {
+            lbl_eu_806649F4->mField121 = 0xc;
+            ((void (*)(CSLCur*))func_8028E8EC)(&lbl_eu_806649F4->mCur);
+        }
+        code80135FDC_thunk_BFE8C((u8*)0x80);
     } else {
-        lbl_eu_806649F4->mField121 = 0xC;
-        ((void (*)(CSLCur*))func_8028E8EC)(&lbl_eu_806649F4->mCur);
+        lbl_eu_806649F4->mField121 = 0xb;
+        // Local pointer so MWCC reuses it for the mField11C/mField11E pair
+        // (retail keeps one register for both stores).
+        CSaveLoad* q = lbl_eu_806649F4;
+        q->mField11C = 3;
+        q->mField11E = 0;
+        lbl_eu_806649F4->mField12E = 1;
+        lbl_eu_806649F4->mField12F = (u8)r6;
     }
-    code80135FDC_thunk_BFE8C((u8*)0x80);
 }
 
 // Despite Fv mangling, receives (self, event) with event in r4.

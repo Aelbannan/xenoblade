@@ -10619,3 +10619,78 @@ flat list of `LBLS_ENTRY(ext, dfn, init)` lines. The macro is defined ONCE in
 - Verified end-to-end on the host: clang links data_defs.cpp (define) +
   an extern-mode TU + main; the retail value of `lbl_eu_804FA4C0[2]` (3)
   reads back correctly.
+
+## Data-only TU matching: verify data sections like functions (`run.py data diff`)
+
+Retail split objects carry the unit's data sections (`.data`/`.rodata`/`.sdata`/
+`.sdata2`/`.bss`/`.sbss`/`.sbss2`). A data TU (typed or generated C) compiled
+with MWCC should reproduce them; `tools/coop/lib/data_match.py` +
+`run.py data diff <unit>` compares per section (bytes for file-backed, size +
+alignment for bss-family, relocs where extractable) and exits non-zero on
+mismatch — the data analog of the hexdiff loop, and the CI gate for data-only
+TUs. `run.py data diff --all` lists every unit that defines data but mismatches.
+
+### MWCC small-data section placement (verified Wii/1.1, `-O4,p`)
+
+Where an object lands is decided by const-ness, initializer presence, and
+size — NOT by the declaration alone:
+
+| Declaration shape | Section |
+|---|---|
+| `int x;` / `struct s3 v;` (tentative, non-const, ≤ small-data threshold) | `.sbss` |
+| `const struct s3 c = {0,0,0};` (const **with** initializer) | `.sbss2` (NOBITS) |
+| `const struct s3 t;` (const, **no** initializer) | `.sbss` (NOT sbss2!) |
+| `unsigned long long u;` (8-byte tentative) | `.sbss` |
+| `#pragma sdata2` … `#pragma sdata` | forces the block into `.sbss2` / `.sbss` |
+| non-const initialized small data | `.sdata` |
+| const initialized small data (`f32`, ≤8B) | `.sdata2` |
+
+Key gotchas:
+- **`.sbss2` requires const + initializer together** — a const *tentative*
+  still lands in `.sbss`. Fixing a `.sbss`→`.sbss2` residual (e.g. `bta_dm_cfg.c`
+  `bta_dm_pm_cfg`: 3B `.sbss` vs retail 8B `.sbss2`) is: pad the struct to the
+  retail size (retail was 8 bytes, align 8 — `UINT8 pad[5];`) **and** add
+  `const` + a zero initializer. Consumers that only take the address
+  (`p_bta_dm_pm_cfg = (T*)&bta_dm_pm_cfg;`) are unaffected by the const change.
+- **`.sbss`/`.sbss2` are NOBITS** — the data-diff compares size + alignment
+  only; the retail `.o`'s "bytes" for these sections are uninitialized DOL
+  memory and must never be byte-compared (a naive diff reports false FAILs).
+- **Symbol alignment matters for the final link** (bss addresses shift if
+  `sh_addralign` differs) — data-diff compares section alignment too; pad to
+  the retail alignment with a type that carries it (e.g. `f64`/`u64` array)
+  or `alignas`.
+- **MWCC emits `.sbss` symbols in REVERSE declaration order** (verified:
+  decomp object layout is exactly the reverse of the source declaration list);
+  `.sdata`/`.data` are forward. Declare globals in reverse of retail address
+  order to reproduce the layout.
+- Retail `.sbss`/`.sbss2` symbols are GLOBAL — drop `static` (static emits
+  LOCAL bindings, flagged as data mismatch).
+
+## agent-2 (DATA/SIZE sweep: mix.c, bte bd.c, adx_crs.c)
+
+- **Trailing zero gap after the last `.data` table** (RVL_SDK mix.c: retail `.data`
+  0xBA8 vs decomp 0xB90 — 0x18 of zeros after `__MIX_DPL2_rear`, recovered as
+  `gap_eu_8054D988`): extend the **last** table with explicit zero entries
+  (`s16 __MIX_DPL2_rear[140]`, 12 zero s16). Zero-init standalone globals fold
+  to `.bss` (non-const) or `.sdata2` (const), so a separate pad object cannot
+  land in `.data`; trailing zeros inside an explicit initializer list DO emit
+  into `.data` (MWCC emits the full init list). Verified: `.data` bytes
+  identical, all four table bases keep retail offsets, 0 function regressions.
+- **Extern-owned BSS globals** (CriWare adx_crs.c): retail `adx_crs.o` owns NO
+  data — `lbl_eu_805E6378`/`lbl_eu_805E637C` live in the sibling `criware_data.s`
+  slice. The scaffold's `static volatile s32` definitions added a bogus 0x8
+  `.bss` (data diff FAIL). Declaring them `extern volatile`/`extern` removes the
+  `.bss` AND makes ADXCRS_Init/Finish byte-identical (79% → 100%): with
+  `-sdata 0 -sdata2 0` the extern still uses full `lis/addi` addressing, and the
+  volatile reloads are preserved. Check `splits.txt` for the owning slice before
+  defining a global in a TU that retail keeps data-free.
+- **`bd_addr_null` .sbss2 (8B, align 8)**: `const u8 bd_addr_null[8] = {0,...}`
+  (Wii/1.1, `-func_align 4`) emits exactly `.sbss2` size 0x8 align 8 global —
+  the 6-byte `BD_ADDR` type alone would give 6 bytes; the +2 pad matches the
+  `BT_BD_ANY`/`bta_dm_cfg` convention. Keep `bd.c` free of `bd.h` (its
+  `extern const BD_ADDR` would conflict) — the definition still resolves the
+  `bd_addr_null@sda21` reloc in matched consumers like bta_hh_utils.
+- **bte `bd.c` packed layout**: retail bdcmp sits at 0x802E0FB8 (8 mod 16) —
+  the unit's `-func_align 16` padded 0xC between bdcpy and bdcmp (.text 0xD8 vs
+  budget 0xD4). `-func_align 4` restores the packed layout (0xCC, 0x8 spare),
+  same documented fix as bta_sys_conn.c.

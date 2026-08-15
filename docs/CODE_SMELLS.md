@@ -11,15 +11,15 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 9515 |
-| extern "C" declarations (non-lbl_*, imports) | 3494 |
-| extern "C" definitions (forced names) | 3633 |
-| `self`/register-style params | 11304 |
-| `void*` (params + locals) | 6856 |
-| raw pointer offset arithmetic | 6343 |
+| extern "C" (total lines) | 9523 |
+| extern "C" declarations (non-lbl_*, imports) | 3495 |
+| extern "C" definitions (forced names) | 3635 |
+| `self`/register-style params | 11310 |
+| `void*` (params + locals) | 6857 |
+| raw pointer offset arithmetic | 6346 |
 | deref-through-cast arithmetic | 2477 |
 | inline asm / `register` | 103 |
-| rN-named params | 480 |
+| rN-named params | 481 |
 | goto | 2819 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 0 |
@@ -37,8 +37,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/object/CActorParam.cpp | 1279 |
 | src/kyoshin/CArtsInfo.cpp | 1222 |
 | src/kyoshin/menu/CMenuArtsSet.cpp | 1135 |
+| libs/monolib/src/coli/code_804A6C60.cpp | 1113 |
 | src/kyoshin/makecrystal/CMCCrystalBox.cpp | 1112 |
-| libs/monolib/src/coli/code_804A6C60.cpp | 1092 |
 | libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 1037 |
 
 ## Per-TU metrics
@@ -46,7 +46,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | TU | extC-decl | extC-def | self | void* | ptr-arith | deref-arith | asm | rN | goto | asm-shim | schedule-pragma | init-side-effect |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | libs/monolib/src/coli/CColiProc.cpp | 4 | 9 | 8 | 1 | 3 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/coli/code_804A6C60.cpp | 48 | 22 | 152 | 8 | 11 | 2 | 0 | 0 | 29 | 0 | 0 | 0 |
+| libs/monolib/src/coli/code_804A6C60.cpp | 49 | 24 | 157 | 8 | 14 | 2 | 0 | 0 | 29 | 0 | 0 | 0 |
 | libs/monolib/src/coli/code_804B2FF0.cpp | 9 | 1 | 19 | 7 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 |
 | libs/monolib/src/coli/code_804B59C8.cpp | 6 | 3 | 66 | 7 | 11 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/coli/code_804BAE10.cpp | 3 | 6 | 16 | 2 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -117,7 +117,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/mpfsys/code_8047CA88.cpp | 2 | 0 | 5 | 2 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNBanner.cpp | 3 | 1 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskCheck.cpp | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
-| libs/monolib/src/nand/CNReqtaskLoad.cpp | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
+| libs/monolib/src/nand/CNReqtaskLoad.cpp | 4 | 4 | 0 | 1 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskReaddir.cpp | 2 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskRemove.cpp | 2 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskSave.cpp | 32 | 4 | 6 | 4 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -314,7 +314,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CQstLogInfo.cpp | 4 | 11 | 34 | 6 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CQstLogList.cpp | 3 | 14 | 50 | 3 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | src/kyoshin/CQuestWindow.cpp | 3 | 4 | 37 | 11 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CSaveLoad.cpp | 0 | 42 | 49 | 32 | 96 | 31 | 0 | 4 | 19 | 0 | 0 | 0 |
+| src/kyoshin/CSaveLoad.cpp | 0 | 41 | 50 | 32 | 96 | 31 | 0 | 5 | 19 | 0 | 0 | 0 |
 | src/kyoshin/CScrollBar.cpp | 3 | 4 | 13 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSelShopWin.cpp | 2 | 4 | 6 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSimpleEveTalkWin.cpp | 2 | 1 | 4 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -611,13 +611,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/coli/code_804A6C60.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 2,
-  "extern_c_nonlbl_decl": 48,
-  "extern_c_nonlbl_def": 22,
+  "extern_c_nonlbl_decl": 49,
+  "extern_c_nonlbl_def": 24,
   "goto_count": 29,
   "init_side_effect": 0,
-  "ptr_arith": 11,
+  "ptr_arith": 14,
   "schedule_pragma": 0,
-  "self_params": 152,
+  "self_params": 157,
   "void_ptr": 8
  },
  "libs/monolib/src/coli/code_804B2FF0.cpp": {
@@ -1442,10 +1442,11 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/nand/CNReqtaskLoad.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 4,
-  "extern_c_nonlbl_def": 3,
+  "extern_c_nonlbl_def": 4,
   "goto_count": 4,
   "init_side_effect": 0,
-  "schedule_pragma": 0
+  "schedule_pragma": 0,
+  "void_ptr": 1
  },
  "libs/monolib/src/nand/CNReqtaskReaddir.cpp": {
   "asm_insn_shim": 0,
@@ -3493,13 +3494,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CSaveLoad.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 31,
-  "extern_c_nonlbl_def": 42,
+  "extern_c_nonlbl_def": 41,
   "goto_count": 19,
   "init_side_effect": 0,
   "ptr_arith": 96,
-  "rn_params": 4,
+  "rn_params": 5,
   "schedule_pragma": 0,
-  "self_params": 49,
+  "self_params": 50,
   "void_ptr": 32
  },
  "src/kyoshin/CScrollBar.cpp": {

@@ -9,9 +9,9 @@ extern s32 CRICFG_Read(const char* key, s32* out);
 extern u32 lbl_eu_80619BF8[2];
 
 struct UtyTmrData {
-    s32 count;        // 0x00
-    s32 id;           // 0x04
-    u32 pair[2];      // 0x08: [0]=active, [1]=unit
+    volatile s32 count;   // 0x00
+    s32 id;               // 0x04
+    u32 pair[2];          // 0x08: [0]=active, [1]=unit
 };
 
 void UTY_InitTmr(s32 newId) {

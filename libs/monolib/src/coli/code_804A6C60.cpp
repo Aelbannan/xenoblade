@@ -1511,7 +1511,14 @@ FAIL:
     return 0;
 }
 
-void func_804AA4F4(){}
+// Delegates to the segment-sphere contact test, describing the partner
+// object's sphere from its centre (+4) and band/radius (+16) fields.
+// Segment-sphere contact test (defined at the end of the file).
+extern "C" int func_804AD8FC(CColiObject* self, const _VEC3* a, const _VEC3* b);
+extern "C" int func_804AA4F4(CColiObject* self) {
+    return func_804AD8FC(self, (const _VEC3*)((u8*)self->field_0x00_obj + 4),
+                         (const _VEC3*)((u8*)self->field_0x00_obj + 16));
+}
 
 // Two-point clip sweep with contact write-back (defined at the end of the file).
 extern "C" int func_804AA504(CColiObject* self);
@@ -2020,7 +2027,14 @@ bool func_804AC3B0(CColiObject* self) {
     return false;
 }
 
-void func_804AC4E4(){}
+// Delegates to the contact clip helper, describing the partner object's
+// segment from its centre (+4) and radius (+0x10) fields.
+extern "C" int func_804AF808(CColiContactObj* self, const VEC3* v, f32 f);
+extern "C" int func_804AC4E4(CColiObject* self) {
+    CColiObject* partner = self->field_0x00_obj;
+    return func_804AF808((CColiContactObj*)self, (const VEC3*)((u8*)partner + 4),
+                         partner->field_0x10_f);
+}
 
 void func_804AC57C(){}
 

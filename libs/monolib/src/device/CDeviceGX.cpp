@@ -7,6 +7,27 @@
 
 using namespace ml;
 
+// Inline copy of CWorkThread::isRunning() visible only in this TU so the retail
+// inline shape (member call, this-arg bound to the instance) reproduces in
+// isInitialized. CWorkRoot.cpp keeps the strong out-of-line definition.
+inline bool CWorkThread::isRunning() const {
+    bool exception;
+    if(mFlags & THREAD_FLAG_EXCEPTION){
+        exception = true;
+    }else{
+        exception = mMsgQueue.find(EVT_EXCEPTION) >= 0;
+    }
+
+    bool result = false;
+    if(!exception){
+        bool stateOK = mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN;
+        if(stateOK){
+            result = true;
+        }
+    }
+    return result;
+}
+
 extern "C" {
 extern CDeviceGX* lbl_eu_806656A0;
 extern const f64 lbl_eu_8066A440;  // int→double magic (unsigned)
@@ -53,31 +74,10 @@ CDeviceGX* CDeviceGX::getInstance(){
     return lbl_eu_806656A0;
 }
 
-namespace {
-// Mirrors CWorkThread::isRunning()'s body; retail inlines it here (no bl). The
-// device counts as initialized when it has no pending exception and its state is
-// LOGIN or RUN.
-inline bool isDeviceRunning(CDeviceGX* gx){
-    bool exception;
-    if(gx->mFlags & CWorkThread::THREAD_FLAG_EXCEPTION){
-        exception = true;
-    }else{
-        exception = gx->mMsgQueue.find(CWorkThread::EVT_EXCEPTION) >= 0;
-    }
-
-    bool result = false;
-    if(!exception){
-        bool stateOK = gx->mState == CWorkThread::THREAD_STATE_LOGIN || gx->mState == CWorkThread::THREAD_STATE_RUN;
-        if(stateOK){
-            result = true;
-        }
-    }
-    return result;
-}
-}
-
 bool CDeviceGX::isInitialized(){
-    return isDeviceRunning(lbl_eu_806656A0);
+    // Retail inlines CWorkThread::isRunning() here (no bl): the device counts as
+    // initialized when it has no pending exception and its state is LOGIN or RUN.
+    return lbl_eu_806656A0->isRunning();
 }
 
 void CDeviceGX::setDevicesInitializedFlag(bool state){

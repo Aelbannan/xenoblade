@@ -20,6 +20,16 @@ struct CScnRootNw4rLayout {
     nw4r::g3d::ScnGroup* mRootGroup;          // +0x10 scene root (ScnGroup/Root)
 };
 
+// Layout mirror of nw4r::g3d::ScnGroup's private child-array slot (+0xDC),
+// used to read the array directly (retail accesses it without the inline
+// Begin()/operator[] wrappers).
+struct ScnGroupChildLayout {
+    char pad_0x0[0xDC];                       // +0x00
+    nw4r::g3d::ScnObj** mpScnObjArray;        // +0xDC child array
+    char pad_0xE0[0xE4 - 0xE0];               // +0xE0
+    u32 mNumScnObj;                           // +0xE4 child count (Size())
+};
+
 // A memory block allocated through the monolib MemManager. Holds an allocator
 // handle (mAllocId) that the destructor erases via MemManager::erase.
 // Polymorphic vtable: lbl_eu_8056E5B8 (auto vptr store at +0x00).

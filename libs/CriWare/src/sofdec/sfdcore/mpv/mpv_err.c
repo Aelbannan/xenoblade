@@ -5,13 +5,6 @@
 
 extern u32 lbl_eu_80602A78[];
 
-/* global MPV error info: callback (+0), user arg (+4), last error code (+8) */
-typedef struct MPVERR_INF {
-    u32 field_0;
-    u32 field_4;
-    u32 field_8;
-} MPVERR_INF;
-
 void MPVERR_Init(void) {}
 
 void MPVERR_InitErrInf(void* self) {
@@ -23,8 +16,6 @@ void MPVERR_InitErrInf(void* self) {
 }
 
 int MPVLIB_CheckHn(void* handle);
-
-s32 MPVERR_SetCode(s32 val, u32 err_code);
 
 s32 MPV_SetErrFunc(void* self, void* cb, void* arg) {
     u32* dst;

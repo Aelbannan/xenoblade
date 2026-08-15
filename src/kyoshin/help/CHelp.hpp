@@ -50,7 +50,7 @@ public:
 };
 
 // Flag helper sharing the CHelp prefix; flag byte at +0xC.
-// CBC/CE4 keep Fv symbols via extern "C" in CHelp.cpp (arg in r4).
+// CBC/CE4 take the new flag value in r4 (retail annotations say Fv).
 class CHelpSwitch : public CHelp {
 public:
     void func_802B7CB0();
@@ -62,9 +62,15 @@ public:
 
 } // namespace cf
 
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" cf::CHelpVtbl lbl_eu_8053B3A0;
+// C-linkage imports - retail symbols are unmangled (free functions), so no
+// C++ mangled declaration exists; C linkage is the repo-wide pattern for
+// these (see include/functions.hpp, CHelp_ArtsSet.hpp). Signatures match
+// the retail call sites verbatim.
 extern "C" void func_80134D18(u32 param0, UNKWORD param1, UNKWORD param2);
-extern "C" void func_8009D018(u32 owner, u32 flag);
-extern "C" void func_8013DB6C(u32 mode, u32 param, u32 a, u32 b);
+extern "C" void func_8009D018(u32, u32);
+extern "C" void* func_8013DB6C(int, u32, s32, s32);
 extern "C" void func_8029A658();
+// CHelp interface table (vptr-shaped table at +8, referenced by the ctor).
+// Global-scope variable: MWCC does not mangle the name, so plain extern is
+// enough to emit the retail lbl_eu_8053B3A0 symbol.
+extern cf::CHelpVtbl lbl_eu_8053B3A0;

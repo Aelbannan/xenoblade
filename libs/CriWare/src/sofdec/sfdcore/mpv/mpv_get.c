@@ -58,23 +58,22 @@ int MPV_GetBitRate(void* handle, u32* out) {
 /* Get VBV buffer size */
 int MPV_GetVbvBufSiz(void *handle, u32 *out_size, u32 *out_avg, u32 *out_max) {
     MpfGetHd *h = (MpfGetHd *)handle;
+    u32 bitRate;
     if (MPVLIB_CheckHn(h)) {
         return MPVERR_SetCode(NULL, 0xFF03020F);
     }
 
     *out_size = h->vbvBufSiz << 11;
     *out_avg = h->frameRate;
+    bitRate = h->bitRate;
 
-    {
-        u32 bitRate = h->bitRate;
-        if ((u32)(bitRate - 0x30000) == 0xFFFF) {
-            *out_max = (u32)-1;
-        } else {
-            /* 410 avg bitrate = (frameRate * bitRate * 0x91A2B3C5) >> 42, rounded */
-            s32 m = (s32)h->frameRate * (s32)bitRate;
-            *out_max = (u32)(((__mulhw((s32)0x91A2B3C5, m) + m) >> 10))
-                     + ((u32)(((__mulhw((s32)0x91A2B3C5, m) + m) >> 10)) >> 31);
-        }
+    if ((u32)(bitRate - 0x30000) == 0xFFFF) {
+        *out_max = (u32)-1;
+    } else {
+        /* 410 avg bitrate = (frameRate * bitRate * 0x91A2B3C5) >> 42, rounded */
+        s32 m = (s32)h->frameRate * (s32)bitRate;
+        *out_max = (u32)(((__mulhw(0x91A2B3C5, m) + m) >> 10))
+                 + ((u32)(((__mulhw(0x91A2B3C5, m) + m) >> 10)) >> 31);
     }
     return 0;
 }

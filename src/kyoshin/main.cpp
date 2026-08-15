@@ -40,40 +40,73 @@ void func_eu_80457318(const wchar_t* msg);
 void entryTable__8CDesktopFPQ28CDesktop16DESKTOP_ICON_DEFb(DesktopIcon*, bool);
 }
 
-static DesktopIcon sGameMainIcon = {
 #if defined(VERSION_JP)
+// ---------------------------------------------------------------------------
+// VERSION_JP data: kept in the old literal form (JP retail data layout differs
+// from EU/US; only the US build is matched against retail).
+static DesktopIcon sGameMainIcon = {
     "ゲームメイン",
-#else //EU/US
-    "GAME_MAIN",
-#endif
     &CGame::GameMain
 };
-
-#if !defined(VERSION_JP)
-// Non-const so these sit in .data immediately after sGameMainIcon (retail main
-// keeps r30 = &sGameMainIcon and uses r30+0x10 / +0x30 / +0x50).
 static const char* sLanguageFolderPaths[8] = {
-    "/jp/",
-    "/en/",
-    "/en/",
-    "/de/",
-    "/fr/",
-    "/sp/",
-    "/it/",
-    nullptr,
+    "/jp/", "/en/", "/en/", "/de/", "/fr/", "/sp/", "/it/", nullptr,
+};
+const char* languageFolderPaths[8] = {
+    "\\jp\\", "\\en\\", "\\en\\", "\\de\\", "\\fr\\", "\\sp\\", "\\it\\", nullptr,
 };
 
-const char* languageFolderPaths[8] = {
-    "\\jp\\",
-    "\\en\\",
-    "\\en\\",
-    "\\de\\",
-    "\\fr\\",
-    "\\sp\\",
-    "\\it\\",
-    nullptr,
-};
-#endif
+#else
+// ---------------------------------------------------------------------------
+// US/EU retail-named data.  Every symbol below carries the exact retail linker
+// name so the .data/.rodata/.sdata2 relocs match the split object byte-for-byte
+// (run.py data diff).  Declaration order inside each group is the retail
+// section emission order (verified with a Wii/1.1 -O4,p MWCC probe):
+//   .rodata:  GAME_MAIN, "lang/jp/static.arc", 9 long sPkhFilenames strings,
+//             sPkhFilenames pointer array, 9 dvddata path strings.
+//   .sdata2:  scStaticArcStr (8B pointer pair), adx/eff/map/obj/snd.pkh,
+//             6 "/xx/" lang strings, 6 "\\xx\\" lang strings, 9 arc tags.
+//   .data:    sGameMainIcon, sLanguageFolderPaths[8], languageFolderPaths[8],
+//             sStaticArcFiles[10] (contiguous; main() uses r30 + 0x10/0x30/0x50).
+
+// ---- .rodata strings ----
+const char lbl_eu_804FA258[0xA] = "GAME_MAIN";
+const char lbl_eu_804FA264[0x13] = "lang/jp/static.arc";
+const char lbl_eu_804FA278[0xF] = "ahx/jp/ahx.pkh";
+const char lbl_eu_804FA288[0x15] = "common/jp/common.pkh";
+const char lbl_eu_804FA2A0[0x17] = "mapbdat/jp/mapbdat.pkh";
+const char lbl_eu_804FA2B8[0x11] = "menu/jp/menu.pkh";
+const char lbl_eu_804FA2CC[0x15] = "script/jp/script.pkh";
+const char lbl_eu_804FA2E4[0xF] = "chr/jp/chr.pkh";
+const char lbl_eu_804FA2F4[0x9] = "font.pkh";
+// ---- .sdata2 objects (retail .sdata2 0x80665AB8..0x80665B80) ----
+static const char* const scStaticArcStr[2] = { lbl_eu_804FA264, nullptr };
+const char lbl_eu_80665AC0[8] = "adx.pkh";
+const char lbl_eu_80665AC8[8] = "eff.pkh";
+const char lbl_eu_80665AD0[8] = "map.pkh";
+const char lbl_eu_80665AD8[8] = "obj.pkh";
+const char lbl_eu_80665AE0[8] = "snd.pkh";
+const char lbl_eu_80665AE8[5] = "/jp/";
+const char lbl_eu_80665AF0[5] = "/en/";
+const char lbl_eu_80665AF8[5] = "/de/";
+const char lbl_eu_80665B00[5] = "/fr/";
+const char lbl_eu_80665B08[5] = "/sp/";
+const char lbl_eu_80665B10[5] = "/it/";
+const char lbl_eu_80665B18[5] = "\\jp\\";
+const char lbl_eu_80665B20[5] = "\\en\\";
+const char lbl_eu_80665B28[5] = "\\de\\";
+const char lbl_eu_80665B30[5] = "\\fr\\";
+const char lbl_eu_80665B38[5] = "\\sp\\";
+const char lbl_eu_80665B40[5] = "\\it\\";
+const char lbl_eu_80665B48[4] = "SHA";
+const char lbl_eu_80665B4C[4] = "CAM";
+const char lbl_eu_80665B50[4] = "EFF";
+const char lbl_eu_80665B54[6] = "ARROW";
+const char lbl_eu_80665B5C[3] = "43";
+const char lbl_eu_80665B60[5] = "BDAT";
+const char lbl_eu_80665B68[6] = "AIDAT";
+const char lbl_eu_80665B70[7] = "HIKARI";
+const char lbl_eu_80665B78[8] = "HBMSTOP";
+
 
 //Static file callback functions.
 
@@ -101,62 +134,76 @@ void OnHbmstopFileUnloaded(void* pData, u32 length){
     CLibHbm::removeTplImage();
 }
 
+// ---- .rodata pointer array (retail .rodata +0xA8) ----
+const char* const sPkhFilenames[13] = {
+    lbl_eu_804FA278,
+    lbl_eu_804FA288,
+    lbl_eu_804FA2A0,
+    lbl_eu_804FA2B8,
+    lbl_eu_804FA2CC,
+    lbl_eu_80665AC0,
+    lbl_eu_804FA2E4,
+    lbl_eu_80665AC8,
+    lbl_eu_804FA2F4,
+    lbl_eu_80665AD0,
+    lbl_eu_80665AD8,
+    lbl_eu_80665AE0,
+    nullptr
+};
+
+// ---- .rodata dvddata path strings ----
+const char lbl_eu_804FA334[0x17] = "dvddata/etc/shadow.sha";
+const char lbl_eu_804FA34C[0x14] = "dvddata/etc/cam.chr";
+const char lbl_eu_804FA360[0x14] = "dvddata/etc/eff.chr";
+const char lbl_eu_804FA374[0x16] = "dvddata/etc/arrow.mdo";
+const char lbl_eu_804FA38C[0x1B] = "dvddata/menu/jp/Mode43.arc";
+const char lbl_eu_804FA3A8[0x1A] = "common/jp/bdat_common.bin";
+const char lbl_eu_804FA3C4[0x13] = "dvddata/etc/ai.bin";
+const char lbl_eu_804FA3D8[0x19] = "dvddata/etc/hikari.brres";
+const char lbl_eu_804FA3F8[0x18] = "dvddata/etc/hbmstop.tpl";
+
+// ---- .data arrays (contiguous, retail .data 0x80524A80..0x80524B98) ----
+DesktopIcon sGameMainIcon = {
+    lbl_eu_804FA258,
+    &CGame::GameMain
+};
+
+const char* sLanguageFolderPaths[8] = {
+    lbl_eu_80665AE8,
+    lbl_eu_80665AF0,
+    lbl_eu_80665AF0,
+    lbl_eu_80665AF8,
+    lbl_eu_80665B00,
+    lbl_eu_80665B08,
+    lbl_eu_80665B10,
+    nullptr,
+};
+
+const char* languageFolderPaths[8] = {
+    lbl_eu_80665B18,
+    lbl_eu_80665B20,
+    lbl_eu_80665B20,
+    lbl_eu_80665B28,
+    lbl_eu_80665B30,
+    lbl_eu_80665B38,
+    lbl_eu_80665B40,
+    nullptr,
+};
+
 //List of files contained in the static.arc archive
-static StaticArcFileData sStaticArcFiles[10] = {
-    {"SHA","dvddata/etc/shadow.sha",HANDLE_MEM2,nullptr,nullptr},
-    {"CAM","dvddata/etc/cam.chr",HANDLE_MEM2,nullptr,nullptr},
-    {"EFF","dvddata/etc/eff.chr",HANDLE_MEM2,nullptr,nullptr},
-    {"ARROW","dvddata/etc/arrow.mdo",HANDLE_MEM2,nullptr,nullptr},
-#if defined(VERSION_JP)
-    {"43","dvddata/menu/Mode43.arc",HANDLE_MEM2,nullptr,nullptr},
-    {"BDAT","dvddata/common/jp/bdat.bin",HANDLE_MEM2,&OnBdatFileLoaded,&OnBdatFileUnloaded},
-#else //EU/US
-    {"43","dvddata/menu/jp/Mode43.arc",HANDLE_MEM2,nullptr,nullptr},
-    {"BDAT","common/jp/bdat_common.bin",HANDLE_MEM2,&OnBdatFileLoaded,&OnBdatFileUnloaded},
-#endif
-    {"AIDAT","dvddata/etc/ai.bin",HANDLE_MEM2,&OnAidatFileLoaded,&OnAidatFileUnloaded},
-    {"HIKARI","dvddata/etc/hikari.brres",HANDLE_MEM2,nullptr,nullptr},
-    {"HBMSTOP","dvddata/etc/hbmstop.tpl",HANDLE_MEM2,&OnHbmstopFileLoaded,&OnHbmstopFileUnloaded}
+StaticArcFileData sStaticArcFiles[10] = {
+    {lbl_eu_80665B48, lbl_eu_804FA334, HANDLE_MEM2, nullptr, nullptr},
+    {lbl_eu_80665B4C, lbl_eu_804FA34C, HANDLE_MEM2, nullptr, nullptr},
+    {lbl_eu_80665B50, lbl_eu_804FA360, HANDLE_MEM2, nullptr, nullptr},
+    {lbl_eu_80665B54, lbl_eu_804FA374, HANDLE_MEM2, nullptr, nullptr},
+    {lbl_eu_80665B5C, lbl_eu_804FA38C, HANDLE_MEM2, nullptr, nullptr},
+    {lbl_eu_80665B60, lbl_eu_804FA3A8, HANDLE_MEM2, &OnBdatFileLoaded, &OnBdatFileUnloaded},
+    {lbl_eu_80665B68, lbl_eu_804FA3C4, HANDLE_MEM2, &OnAidatFileLoaded, &OnAidatFileUnloaded},
+    {lbl_eu_80665B70, lbl_eu_804FA3D8, HANDLE_MEM2, nullptr, nullptr},
+    {lbl_eu_80665B78, lbl_eu_804FA3F8, HANDLE_MEM2, &OnHbmstopFileLoaded, &OnHbmstopFileUnloaded},
+    {nullptr, nullptr, HANDLE_MEM1, nullptr, nullptr}
 };
-
-static const char* const scStaticArcStr =
-#if defined(VERSION_JP)
-"static.arc";
-#else //EU/US
-"lang/jp/static.arc";
 #endif
-
-static const char* const sPkhFilenames[13] = {
-#if defined(VERSION_JP)
-    "ahx.pkh",
-    "adx.pkh",
-    "chr.pkh",
-    "common.pkh",
-    "eff.pkh",
-    "font.pkh",
-    "map.pkh",
-    "menu.pkh",
-    "obj.pkh",
-    "script.pkh",
-    "snd.pkh",
-    "work.pkh",
-    nullptr
-#else //EU/US
-    "ahx/jp/ahx.pkh",
-    "common/jp/common.pkh",
-    "mapbdat/jp/mapbdat.pkh",
-    "menu/jp/menu.pkh",
-    "script/jp/script.pkh",
-    "adx.pkh",
-    "chr/jp/chr.pkh",
-    "eff.pkh",
-    "font.pkh",
-    "map.pkh",
-    "obj.pkh",
-    "snd.pkh",
-    nullptr
-#endif
-};
 
 //VM initialization callback functions.
 
@@ -211,7 +258,7 @@ int main(){
     DECOMP_ASM_INSN_END
     CLibStaticData::saveStaticFileArray(reinterpret_cast<StaticArcFileData*>(dataBase + 0x50));
     CLibVM::setCallbacks(&vmInitPluginRegistCallback, &vmInitCallback);
-    CWorkSystemPack::SaveStaticArcFilenameStringPtr(&scStaticArcStr);
+    CWorkSystemPack::SaveStaticArcFilenameStringPtr(scStaticArcStr);
     CWorkSystemPack::SavePkhFilenamesArrayPtr(sPkhFilenames);
     CActParamData::func_80057CDC();
     CLibHbm::func_8045D5C8(true);

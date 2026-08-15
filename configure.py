@@ -984,7 +984,7 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/bte/main/bte_logmsg.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/main/bte_main.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/main/btu_task1.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/bd.c", extra_cflags=["-func_align 16"]),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/bd.c", extra_cflags=["-func_align 4"]),  # retail bte packed (not 16-aligned): -func_align 16 pads 0xC after bdcpy, .text 0x4 over slice (0xD8 vs 0xD4); align 4 restores packed layout (see bta_sys_conn note)
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/bta_sys_conn.c", extra_cflags=["-func_align 4"]),  # retail bte packed (not 16-aligned): -func_align 16 pads 4x0xC after fn bodies, .text 0x30 over slice (0x254); align 4 restores packed layout (see bta_dm_act note)
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/bta_sys_main.c", extra_cflags=["-func_align 4"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/ptim.c", extra_cflags=["-func_align 4"]),

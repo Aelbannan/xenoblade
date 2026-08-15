@@ -296,6 +296,72 @@ def _object_paths_for_unit(project: Project, unit) -> tuple[Path | None, Path | 
     return retail, decomp
 
 
+def _data_object_paths(project: Project, unit) -> tuple[Path | None, Path | None]:
+    """Retail/decompiled object paths for data-section comparison.
+
+    Data-only units may not have a configured base_path yet (no source wired
+    into objdiff.json); derive the conventional build/us/src/<unit>.o path
+    from the unit name so `data diff` works before/after the configure swap.
+    """
+    retail = unit.target_path
+    decomp = unit.base_path
+    if decomp is None and retail is not None:
+        name = unit.name
+        stem = Path(name).stem
+        decomp = Path("build") / project.config.region / "src" / f"{stem}.o"
+    return retail, decomp
+
+
+def _cmd_data_diff(project: Project, config: CoopConfig, hint: str | None, *, check_all: bool) -> int:
+    from tools.coop.lib.data_match import (
+        check_data_sections,
+        format_data_result,
+        has_data_sections,
+    )
+
+    failures = 0
+    units = project.load_objdiff_units()
+    if check_all:
+        for unit in units:
+            retail, decomp = _data_object_paths(project, unit)
+            if retail is None or decomp is None or not decomp.is_file():
+                continue
+            if not has_data_sections(decomp):
+                # extern-only TU: data still ships from the retail side; nothing
+                # to verify yet (the migration target is to define it in source).
+                continue
+            result = check_data_sections(retail, decomp)
+            print(f"unit: {unit.name}  [{result.per_section_status()}]")
+            if not result.ok:
+                failures += 1
+        print(f"\n{len(units)} units scanned; {failures} data-mismatch failure(s)")
+        return 1 if failures else 0
+
+    if hint is None:
+        print("ERROR: unit hint required (or use --all)", file=sys.stderr)
+        return 2
+    try:
+        unit = project.resolve_unit(hint)
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+    retail, decomp = _data_object_paths(project, unit)
+    if retail is None or not retail.is_file():
+        print(f"ERROR: retail object missing: {retail}", file=sys.stderr)
+        return 2
+    if decomp is None or not decomp.is_file():
+        print(
+            f"ERROR: decompiled object missing: {decomp}\n"
+            "       (data-only units: build the source first, or wire it into configure.py)",
+            file=sys.stderr,
+        )
+        return 2
+    result = check_data_sections(retail, decomp)
+    print(f"unit: {unit.name}")
+    print(format_data_result(result))
+    return 0 if result.ok else 1
+
+
 def _print_object_size(project: Project, config: CoopConfig, unit_hint: str, unit) -> ObjectSizeCheck:
     retail, decomp = _object_paths_for_unit(project, unit)
     check = check_object_size(
@@ -2028,6 +2094,12 @@ def main() -> int:
     p_size.add_argument("unit", nargs="?", help="objdiff unit hint or source path")
     p_size.add_argument("--all", action="store_true", help="Check every buildable objdiff unit")
 
+    p_data = sub.add_parser("data", help="Data-section matching for data-only / mixed TUs")
+    p_data_sub = p_data.add_subparsers(dest="data_cmd", required=True)
+    p_data_diff = p_data_sub.add_parser("diff", help="Compare decompiled vs retail data sections")
+    p_data_diff.add_argument("unit", nargs="?", help="objdiff unit hint or source path")
+    p_data_diff.add_argument("--all", action="store_true", help="Check every objdiff unit with data sections")
+
     p_reloc = sub.add_parser(
         "reloc-map",
         help="Reloc name-drift detection + map miner (tools/coop/reloc_map.py, MWCC_REFERENCE §1)",
@@ -2371,6 +2443,8 @@ def main() -> int:
         )
     if args.command == "size":
         return cmd_size(project, config, args.unit, check_all=args.all)
+    if args.command == "data" and args.data_cmd == "diff":
+        return _cmd_data_diff(project, config, args.unit, check_all=args.all)
     if args.command == "reloc-map":
         from tools.coop.reloc_map import main as reloc_map_main
 

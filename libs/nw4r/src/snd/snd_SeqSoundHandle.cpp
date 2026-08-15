@@ -4,7 +4,10 @@
 namespace nw4r {
 namespace snd {
 
-SeqSoundHandle::SeqSoundHandle(SoundHandle* pHandle) : mSound(NULL) {
+// Retail emits only DetachSound in this TU; the ctor is inlined at call sites
+// (no retail symbol exists), so mark it inline to avoid a standalone 0x148
+// emission that blows the split budget (0x38).
+inline SeqSoundHandle::SeqSoundHandle(SoundHandle* pHandle) : mSound(NULL) {
     if (pHandle == NULL) {
         return;
     }

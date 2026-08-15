@@ -4461,7 +4461,7 @@ monolib/src/work/CProcess.cpp:
 	.ctors      start:0x804FA12C end:0x804FA130
 	.bss        start:0x806571F8 end:0x80657238
 
-monolibdata1e.s:
+monolibdata1e.cpp:
 	.bss        start:0x80657238 end:0x806574B8
 
 monolib/src/util/CDoubleListNode.cpp:

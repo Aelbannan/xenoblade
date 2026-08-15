@@ -360,19 +360,23 @@ void ResTev::GXSetTevColorOp(GXTevStageID stage, GXTevOp op, GXTevBias bias,
                              GXTevScale scale, u8 clamp, GXTevRegID reg) {
     u8* pCmd = ref().dl.dl.var[stage / 2].dl.tevColorCalc[stage % 2];
 
+    u32 cmd;
     if (op <= GX_TEV_SUB) {
-        detail::ResWriteBPCmd(pCmd,
-            (clamp << 19) | (bias << 16) | ((op & 1) << 18) | (reg << 22) |
-                (scale << 20) | ((GX_BP_REG_TEVCOLORCOMBINER0 + (stage << 1))
-                    << GX_BP_OPCODE_SHIFT),
-            0xFFFF0000);
+        cmd = (clamp << 19) | (bias << 16);
+        cmd |= (op & 1) << 18;
+        cmd |= (reg << 22) | (scale << 20);
+        cmd |= (GX_BP_REG_TEVCOLORCOMBINER0 + (stage << 1))
+               << GX_BP_OPCODE_SHIFT;
+        detail::ResWriteBPCmd(pCmd, cmd, 0xFFFF0000);
     } else {
-        detail::ResWriteBPCmd(pCmd,
-            (clamp << 19) | 0x00030000 | ((op & 1) << 18) |
-                (((op >> 1) & 3) << 20) | (reg << 22) |
-                ((GX_BP_REG_TEVCOLORCOMBINER0 + (stage << 1))
-                    << GX_BP_OPCODE_SHIFT),
-            0xFFFF0000);
+        cmd = (clamp << 19) | (3 << 16);
+        cmd = (cmd & ~(1 << 18)) | ((op & 1) << 18);
+        u32 t = ((op >> 1) & 3) << 20;
+        t = (t & ~(0x3FF << 22)) | (reg << 22);
+        cmd = t | cmd;
+        cmd |= (GX_BP_REG_TEVCOLORCOMBINER0 + (stage << 1))
+               << GX_BP_OPCODE_SHIFT;
+        detail::ResWriteBPCmd(pCmd, cmd, 0xFFFF0000);
     }
 }
 

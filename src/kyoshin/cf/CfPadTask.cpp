@@ -1,7 +1,6 @@
 #include "kyoshin/cf/CfPadTask.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/CGame.hpp"
-#include "kyoshin/CTaskGame.hpp"
 #include "monolib/math.hpp"
 #include "monolib/lib.hpp"
 #include "monolib/work.hpp"
@@ -28,6 +27,11 @@ extern "C" {
     extern cf::CfPadTask* lbl_eu_80664448;
     // Retail sbss battery slot; mangled sWiimoteBattery fails reloc name match.
     extern u32 lbl_eu_80664444;
+    // CTaskGame static gate (flat retail name; defined in CTaskGame.cpp). Declared
+    // here instead of including CTaskGame.hpp: that header declares a minimal
+    // CLibHbm which collides with the full CLibHbm.hpp already pulled in by
+    // CfPadTask.hpp -> monolib/lib.hpp.
+    s32 func_8004368C__9CTaskGameFv();
 }
 
 // --- CTTask<cf::CfPadTask> out-of-line specializations ---
@@ -185,7 +189,7 @@ void CfPadTask::func_801C1BD8(float f1) {
         if(lbl_eu_80663E28 & (1u << 21)) return;
 
         int result = checkForControllerError(update());
-        if(result != ERROR_NONE && !CLibHbm::isHbmControlInitialized() && !CWorkSystem::isOff() && !CTaskGame::func_8004368C()
+        if(result != ERROR_NONE && !CLibHbm::isHbmControlInitialized() && !CWorkSystem::isOff() && !func_8004368C__9CTaskGameFv()
         && mFrameCounter > SECONDS_TO_FRAMES(2)){
             if(result == ERROR_WIIMOTE_DISCONNECTED && !CGame::func_8003933C()) return;
 

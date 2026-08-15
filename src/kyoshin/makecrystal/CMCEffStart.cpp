@@ -1,6 +1,11 @@
 #include "kyoshin/makecrystal/CMCEffStart.hpp"
 
-#include "kyoshin/cf/CfBdat.hpp"
+// NOTE: CfBdat.hpp is intentionally NOT included. It declares
+// `extern void* lbl_eu_806640F4;` while code_80135FDC.hpp declares the same
+// symbol as `extern u32 lbl_eu_806640F4;` — including both is a redeclaration
+// error (10563). This TU uses none of CfBdat's declarations (all symbols
+// below come from CMCEffStart.hpp / code_80135FDC.hpp / local externs), so
+// the include is dropped to keep the two extern forms apart.
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 

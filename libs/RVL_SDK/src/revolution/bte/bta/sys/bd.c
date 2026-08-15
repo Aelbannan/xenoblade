@@ -3,6 +3,10 @@
 
 #include <harness_catalog.h>
 
+/* Retail .sbss2 slice is 8 bytes (align 8): null BD_ADDR (6 bytes) + 2 pad
+ * (same +2 shape as BT_BD_ANY in btu_init.c). Global const zero-fill -> .sbss2. */
+const u8 bd_addr_null[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
 void bdcpy(void *dst, const void *src) {
     ((unsigned char *)dst)[0] = ((const unsigned char *)src)[0];
     ((unsigned char *)dst)[1] = ((const unsigned char *)src)[1];

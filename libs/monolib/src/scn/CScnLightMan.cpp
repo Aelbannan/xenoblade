@@ -5,7 +5,7 @@
 
 extern "C" {
     extern char lbl_eu_8056E568[];   // CScnLightMan vtable
-    extern CScnItemLight* func_80482398(void* self, int val);
+    extern CScnItemLight* func_80482398(CScnLightParam* self, int val, CScnLightMan* owner);
     extern CScnLightList* func_8048C698(void* self, int kind);
     extern void func_804954AC(void* self, int val);
     extern void func_804959E8(void* self, int val);
@@ -24,7 +24,7 @@ void func_8048D160(CScnLightMan* self) {
 CScnLightMan::CScnLightMan(CScnLightParam* param) {
     *(void**)this = (void*)lbl_eu_8056E568;
     mParam = param;
-    mLight = func_80482398(param, 0);
+    mLight = func_80482398(param, 0, this);
 
     // Walk the scene pool's light-item list; keep the first item whose id is
     // zero as the active light (the one that gets armed by func_804954AC).

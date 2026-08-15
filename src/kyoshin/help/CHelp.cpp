@@ -18,19 +18,25 @@ void CHelp::CHelp_UnkVirtualFunc2() {
     func_8009D018((u32)mOwner, 1);
 }
 
-void CHelpSwitch::func_802B7CB0() {
-    mFlag = 1;
-}
-
 } // namespace cf
 
+// Unmangled retail free function (symbols.txt `func_802B7C64`): a C-style
+// thunk that tail-jumps to func_8029A658 (the party-change-notice gate).
+// CHelpManager.cpp calls it as a bare free function, so C linkage is required
+// to emit the unmangled symbol name.
 extern "C" void func_802B7C64() {
     func_8029A658();
 }
 
+// Close/refresh the party menu: func_8013DB6C(mode 3) on this instance's
+// parameter, then re-arms the interface via func_8009D018.
 void cf::CHelp::func_802B7C68() {
     func_8013DB6C(3, this->mParam, 0, 0);
     func_8009D018((u32)this->mOwner, 1);
+}
+
+void cf::CHelpSwitch::func_802B7CB0() {
+    mFlag = 1;
 }
 
 u32 cf::CHelpSwitch::func_802B7CBC(u32 flag) {

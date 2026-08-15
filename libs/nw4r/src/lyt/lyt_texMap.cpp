@@ -125,14 +125,15 @@ void ReplaceImage__Q34nw4r3lyt6TexMapFP10TPLPaletteUl(
     }
 
     const TPLDescriptor* pDesc = TPLGet(pPalette, id);
+    // Declared before pTexHeader: retail colors the height temp into the
+    // lower scratch register (r5) and the held texture-header pointer into r6.
+    u16 height;
     const TPLHeader* pTexHeader = pDesc->textureHeader;
 
     self->mpImage   = pTexHeader->data;
-    // Retail hoists height into a held register (r5) before touching width;
-    // width is transient, stored then height.
-    const u16 height = pTexHeader->height;
-    self->mWidth     = pTexHeader->width;
-    self->mHeight    = height;
+    height          = pTexHeader->height;
+    self->mWidth    = pTexHeader->width;
+    self->mHeight   = height;
     self->mBits.textureFormat = pTexHeader->format;
 
     const TPLClutHeader* const pClutHeader = pDesc->CLUTHeader;

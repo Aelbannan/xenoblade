@@ -190,7 +190,7 @@ s16 __MIX_DPL2_front[128] = {
     0xFF2C, 0xFF1F, 0xFF0F, 0xFEFB, 0xFEE2, 0xFEBF, 0xFE83, 0xFC40,
 };
 
-s16 __MIX_DPL2_rear[128] = {
+s16 __MIX_DPL2_rear[140] = {
     0xFFC3, 0xFFC3, 0xFFC4, 0xFFC5, 0xFFC5, 0xFFC6, 0xFFC6, 0xFFC7, 0xFFC8, 0xFFC8, 0xFFC9, 0xFFC9,
     0xFFCA, 0xFFCB, 0xFFCB, 0xFFCC, 0xFFCC, 0xFFCD, 0xFFCE, 0xFFCE, 0xFFCF, 0xFFCF, 0xFFD0, 0xFFD0,
     0xFFD1, 0xFFD1, 0xFFD2, 0xFFD2, 0xFFD3, 0xFFD3, 0xFFD4, 0xFFD4, 0xFFD5, 0xFFD5, 0xFFD6, 0xFFD6,
@@ -202,18 +202,24 @@ s16 __MIX_DPL2_rear[128] = {
     0xFFED, 0xFFED, 0xFFEE, 0xFFEE, 0xFFEE, 0xFFEE, 0xFFEF, 0xFFEF, 0xFFEF, 0xFFEF, 0xFFF0, 0xFFF0,
     0xFFF0, 0xFFF0, 0xFFF1, 0xFFF1, 0xFFF1, 0xFFF1, 0xFFF2, 0xFFF2, 0xFFF2, 0xFFF2, 0xFFF3, 0xFFF3,
     0xFFF3, 0xFFF3, 0xFFF3, 0xFFF4, 0xFFF4, 0xFFF4, 0xFFF4, 0xFFF5,
-};
+    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+};  // retail .data runs 0x18 past the 128-entry table (12 zero s16 = gap_eu_8054D988)
 
-// Mixer state (sbss globals)
-extern MIXChannel* __MIXChannel;    // active channel table
-extern MIXChannel* __MIXRmtChannel; // remote channel table
-extern u32 __MIXSoundMode;          // current output mode
-extern s32 __MIXMaxVoices;          // number of mixer channels (from AXGetMaxVoices)
-extern s32 __init;                  // mixer initialized flag
+// Mixer state (sbss globals). MWCC emits .sbss symbols in REVERSE declaration
+// order, so these are declared in reverse of the retail addresses
+// (__MIXChannel@0x0, __init@0x4, __MIXMaxVoices@0x8, __MIXSoundMode@0xC).
+// __init is file-local in retail (static binding); the rest are global.
+u32 __MIXSoundMode;          // current output mode
+s32 __MIXMaxVoices;          // number of mixer channels (from AXGetMaxVoices)
+static s32 __init;           // mixer initialized flag (retail local symbol)
+MIXChannel* __MIXChannel;    // active channel table
 
-// Backing BSS arrays (named per retail symbols.txt)
-extern MIXChannel __s_MIXChannel[];
+// Backing BSS arrays (named per retail symbols.txt). __s_MIXChannel is owned by
+// this TU (96 channels x 0x70 = 0x2A00 in .bss); __s_MIXRmtChannel and the
+// __MIXRmtChannel pointer live in remote.c.
+MIXChannel __s_MIXChannel[96];
 extern u8 __s_MIXRmtChannel[0x1988];
+extern MIXChannel* __MIXRmtChannel; // remote channel table
 
 // AX header misses these
 extern BOOL AXIsInit(void);

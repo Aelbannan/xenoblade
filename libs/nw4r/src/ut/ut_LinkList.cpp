@@ -51,22 +51,6 @@ LinkListImpl::Iterator LinkListImpl::Erase(LinkListNode* pNode) {
     return Iterator(pNext);
 }
 
-LinkListImpl::Iterator LinkListImpl::Erase(Iterator begin, Iterator end) {
-    LinkListNode* pIt = begin.mNode;
-    LinkListNode* pEnd = end.mNode;
-
-    while (pIt != pEnd) {
-        // Preserve next node before erasing pointers
-        LinkListNode* pNext = pIt->mNext;
-
-        // Erase current node
-        Erase(pIt);
-        pIt = pNext;
-    }
-
-    return Iterator(pEnd);
-}
-
 } // namespace detail
 } // namespace ut
 } // namespace nw4r

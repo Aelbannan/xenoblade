@@ -82,6 +82,9 @@ public:
 
 // Global singleton pointer to the cache instance (.sbss).
 extern CWorkSystemCache* lbl_eu_806659C8;
+// Retail CWorkSystemCache vtable (.data) - the class is novtable, so the ctor
+// stores this retail rodata vtable manually (same pattern as CDeviceFileDvd).
+extern u32 lbl_eu_8056FC70[];
 // reslist<CCacheItem> vtables (DOL data).
 extern u8 lbl_eu_8056FD3C[];
 extern u8 lbl_eu_8056FD24[];
@@ -253,14 +256,18 @@ bool CWorkSystemCache::wkStandbyLogout() {
 
 CWorkSystemCache::CWorkSystemCache(const char* pName, CWorkThread* pParent)
     : CWorkThread(pName, pParent, 0) {
-    mCache.mList = NULL;
+    // Retail vtable store (novtable class -> stored manually, CDeviceFileDvd
+    // pattern). The inlined _reslist_base/reslist ctor chain below keeps the
+    // FD3C -> FD24 vtable-slot overwrite; the pointer-based sentinel reads
+    // between the two stores block MWCC's dead-store elimination.
+    *(u32**)this = (u32*)lbl_eu_8056FC70;
     mCache.m_vtable = (u32)lbl_eu_8056FD3C;
+    mCache.mList = NULL;
     mCache.mCapacity = 0;
     mCache.unk1C = false;
-    CacheListNode* start = &mCache.mStartNode;
-    mCache.mStartNodePtr = start;
-    mCache.mStartNode.mNext = start;
-    mCache.mStartNode.mPrev = start;
+    mCache.mStartNodePtr = &mCache.mStartNode;
+    mCache.mStartNodePtr->mNext = &mCache.mStartNode;
+    mCache.mStartNodePtr->mPrev = mCache.mStartNodePtr->mNext;
     mCache.m_vtable = (u32)lbl_eu_8056FD24;
     lbl_eu_806659C8 = this;
     mType = THREAD_CWORKSYSTEMCACHE;

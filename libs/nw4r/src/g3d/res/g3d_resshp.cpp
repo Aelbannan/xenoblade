@@ -7,11 +7,11 @@
 namespace nw4r {
 namespace g3d {
 
-ResMdl ResShp::GetParent() const {
+inline ResMdl ResShp::GetParent() const {
     return ofs_to_obj<ResMdl>(ref().toResMdlData);
 }
 
-bool ResShp::GXGetVtxDescv(GXVtxDescList* pList) const {
+inline bool ResShp::GXGetVtxDescv(GXVtxDescList* pList) const {
     ResShpPrePrim prim = GetResShpPrePrim();
 
     if (prim.ref().dl.vtxDescv[GX_CP_CMD_SZ * 0] == 0) {
@@ -64,7 +64,7 @@ bool ResShp::GXGetVtxDescv(GXVtxDescList* pList) const {
     return true;
 }
 
-bool ResShp::GXGetVtxAttrFmtv(GXVtxAttrFmtList* pList) const {
+inline bool ResShp::GXGetVtxAttrFmtv(GXVtxAttrFmtList* pList) const {
     ResShpPrePrim prim = GetResShpPrePrim();
 
     if (prim.ref().dl.vtxFmtv[GX_CP_CMD_SZ * 0] == 0) {
@@ -143,7 +143,7 @@ bool ResShp::GXGetVtxAttrFmtv(GXVtxAttrFmtList* pList) const {
     return true;
 }
 
-void ResShp::GXSetArray(GXAttr attr, const void* pBase, u8 stride) {
+inline void ResShp::GXSetArray(GXAttr attr, const void* pBase, u8 stride) {
     u8* pCmd = GetResShpPrePrim().ref().dl.array[attr - GX_VA_POS];
     u32 cpAttr = attr != GX_VA_NBT ? attr - GX_VA_POS : 1;
 
@@ -154,7 +154,7 @@ void ResShp::GXSetArray(GXAttr attr, const void* pBase, u8 stride) {
                           cpAttr + GX_CP_REG_ARRAYSTRIDE, stride);
 }
 
-void ResShp::DisableSetArray(GXAttr attr) {
+inline void ResShp::DisableSetArray(GXAttr attr) {
     u8* pCmd = GetResShpPrePrim().ref().dl.array[attr - GX_VA_POS];
     std::memset(pCmd, 0, GX_CP_CMD_SZ * 2);
 }
@@ -183,7 +183,7 @@ ResVtxClr ResShp::GetResVtxClr(u32 idx) const {
     return ResVtxClr(NULL);
 }
 
-ResVtxTexCoord ResShp::GetResVtxTexCoord(u32 idx) const {
+inline ResVtxTexCoord ResShp::GetResVtxTexCoord(u32 idx) const {
     const ResShpData& r = ref();
 
     if (r.idVtxTexCoord[idx] != -1) {
@@ -294,7 +294,7 @@ void ResShp::CallPrimitiveDisplayList(bool sync) const {
     }
 }
 
-void ResShpPrePrim::DCStore(bool sync) {
+inline void ResShpPrePrim::DCStore(bool sync) {
     ResPrePrimDL& r = ref();
     u32 size = sizeof(ResPrePrimDL);
 

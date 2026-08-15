@@ -18,14 +18,19 @@
 
 // ---- Global storage referenced by this TU ---------------------------------
 // These names must equal the retail linker symbols, so they are not renamed.
+// The storage itself is owned by the retail data split monolibdata2.s (sbss
+// 0x806659D0/0x806659D4/0x80665A98), so the MWCC TU must only *reference* the
+// symbols: a TU-local definition would create a local .sbss section (data
+// diff FAIL) and duplicate the symbol at link time (see MWCC_REFERENCE
+// "monolibdata2-owned sbss globals must be extern").
 
-char* lbl_eu_80665A98;          // sbss:0x448 - module-global string pointer;
-                                //               filled by sinit, returned by
-                                //               func_eu_804F9E98.
+extern char* lbl_eu_80665A98;  // sbss:0x448 - module-global string pointer;
+                               //               filled by sinit, returned by
+                               //               func_eu_804F9E98.
 extern char lbl_eu_80570410[];  // data:0x44A8 - a string constant. Declared as
                                 // char[] to avoid SDA-based addressing.
-u8   lbl_eu_806659D0;           // sbss:0x380 - activity guard flag.
-s32  lbl_eu_806659D4;           // sbss:0x384 - last client error code.
+extern u8   lbl_eu_806659D0;    // sbss:0x380 - activity guard flag.
+extern s32  lbl_eu_806659D4;    // sbss:0x384 - last client error code.
 
 // ---- External request-processing functions (retail C-linkage names) ------
 // Declarations live in monolib/core/monolib_eu_804F9E98.hpp.

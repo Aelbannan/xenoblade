@@ -9,7 +9,12 @@
 
 namespace cf {
 
-    class CfPadTask : public CTTask<CfPadTask>, public IGameException, public IHBMCallback {
+    // novtable: the retail CfPadTask.o carries NO data sections — the class
+    // vtables/RTTI live in the retail data object (split1.s .data, referenced
+    // as lbl_eu_80533C90 / lbl_eu_80533D08). novtable suppresses MWCC's
+    // implicit vptr stores + vtable/RTTI emission; the ctor below restores
+    // the vptr stores explicitly (same reloc names, same bytes).
+    class __declspec(novtable) CfPadTask : public CTTask<CfPadTask>, public IGameException, public IHBMCallback {
     public:
         // Inline so create's placement-new inlines ctor; retail has no __ct__Q22cf9CfPadTaskFv.
         CfPadTask() : CTTask<CfPadTask>(), mFrameCounter(0) {

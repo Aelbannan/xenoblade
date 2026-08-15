@@ -77,16 +77,21 @@ void func_8048EB30(CScnMem* self, u32 a, u32 b, u32 c) {
 
 // func_8048EC14: return the idx-th child of the scene root only if it derives
 // from ScnGroup, else NULL. Panics on an out-of-range index.
+//
+// The child array is read through the layout mirror (not the inline
+// operator[]/Begin() wrappers): the array pointer is a distinct lowering
+// object, which delays the idx saved-copy web past the group web so retail's
+// group->r31 / idx->r30 coloring is reproduced byte-for-byte.
 nw4r::g3d::ScnObj* func_8048EC14(CScn* self, u32 idx) {
-    u32 i = idx;
     nw4r::g3d::ScnGroup* group =
         reinterpret_cast<CScnRootNw4rLayout*>(self->mUnk8C)->mRootGroup;
 
-    if (i >= group->Size()) {
+    if (idx >= group->Size()) {
         nw4r::db::Panic(lbl_eu_8056E720, 0x22b, (const char*)lbl_eu_8056E6F8);
     }
 
-    nw4r::g3d::ScnObj* obj = (*group)[i];
+    nw4r::g3d::ScnObj* obj =
+        ((ScnGroupChildLayout*)group)->mpScnObjArray[idx];
     if (obj != NULL &&
         obj->IsDerivedFrom(nw4r::g3d::G3dObj::TypeObj(lbl_eu_8051D788))) {
         return obj;

@@ -44,50 +44,40 @@ u64 SFTMR_GetTmr(void *sfd) {
     }
 }
 
+/* External-clock callback installed in the SFD handle (see SFD_SetExtClockFn). */
+typedef struct SfdTmrClock {
+    u8 pad_0x00[0x54];                          /* 0x00 */
+    s32 clock_status;                           /* 0x54 */
+    u8 pad_0x58[0x107C - 0x58];                 /* 0x58 */
+    void (*get_clock)(void *arg, s32 *out1, s32 *out2); /* 0x107C */
+    u8 pad_0x1080[0x1090 - 0x1080];             /* 0x1080 */
+    void *get_clock_arg;                        /* 0x1090 */
+} SfdTmrClock;
+
 /* SFTMR_GetTmrUnit: get timer unit/period as 64-bit */
 u64 SFTMR_GetTmrUnit(void *sfd) {
-    u64 result;
-
-    if (lbl_eu_80619BC8[0] != 0 || lbl_eu_80619BC8[1] != 0) {
-        /* already have a cached value */
-        result = ((u64)lbl_eu_80619BC8[0] << 32) | lbl_eu_80619BC8[1];
-        return result;
-    }
-
-    if (!UTY_IsTmrVoid(0)) {
-        u64 unit = UTY_GetTmrUnit();
-        lbl_eu_80619BC8[0] = (u32)(unit >> 32);
-        lbl_eu_80619BC8[1] = (u32)(unit);
-        result = UTY_GetTmr();
-        return result;
-    }
-
-    if (sfd != NULL) {
-        u32 *p = (u32 *)sfd;
-        if (p[0x54/4] != 0) {
-            void (*gettime)(u32, u32 *, u32 *) = (void (*)(u32, u32 *, u32 *))p[0x107C/4];
-            if (gettime != NULL) {
-                u32 hi, lo;
-                u32 arg = p[0x1090/4];
-                gettime(arg, &hi, &lo);
-                lbl_eu_80619BC8[0] = lo;
-                lbl_eu_80619BC8[1] = hi;
-                result = ((u64)lo << 32) | hi;
-                return result;
-            }
+    if (*(u64 *)lbl_eu_80619BC8 == 0) {
+        if (UTY_IsTmrVoid((s32)lbl_eu_80619BC8[1]) == 0) {
+            /* use UTY timer directly */
+            u64 unit = UTY_GetTmrUnit();
+            lbl_eu_80619BC8[1] = (u32)unit;
+            lbl_eu_80619BC8[0] = (u32)(unit >> 32);
+            UTY_GetTmr();
+        } else if (sfd != NULL && ((SfdTmrClock *)sfd)->clock_status != 0 &&
+                   ((SfdTmrClock *)sfd)->get_clock != NULL) {
+            /* use the SFD handle's external clock callback */
+            SfdTmrClock *clk = (SfdTmrClock *)sfd;
+            s32 out2, out1;
+            clk->get_clock(clk->get_clock_arg, &out1, &out2);
+            *(u64 *)lbl_eu_80619BC8 = (u64)(s64)(s32)out2;
+        } else {
+            /* fallback: SFD work-area frame counter (mirrors SFTMR_GetTmr) */
+            u32 frame = lbl_eu_80606E38[0x1A8 / 4];
+            u32 rate = *(volatile u32 *)&lbl_eu_80606E38[0x19C / 4];
+            *(u64 *)lbl_eu_80619BC8 = (u64)(s64)(s32)frame;
         }
     }
-
-    /* fallback */
-    {
-        u32 *sfd_work = lbl_eu_80606E38;
-        u32 frame_num = sfd_work[0x1A8/4];
-        lbl_eu_80619BC8[1] = frame_num;
-        lbl_eu_80619BC8[0] = (s32)frame_num >> 31;
-        u32 rate = sfd_work[0x19C/4];
-        result = ((u64)(s32)frame_num >> 31 << 32) | frame_num;
-        return result;
-    }
+    return *(u64 *)lbl_eu_80619BC8;
 }
 
 /* SFTMR_InitTsum: initialize a timestamp accumulator struct */

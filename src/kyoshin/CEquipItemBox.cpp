@@ -996,7 +996,7 @@ extern "C" double func_80285708(CEquipItemBox* self, CItemInstance* item) {
     u32 word = item->word;
     u32 g = lbl_eu_806640F4;
     u16 kind = func_80139358(word >> 20);
-    u16 v1 = func_80136254(g, &lbl_eu_8050EFDC[0x8b], kind);
+    u16 v1 = func_80136254((const void*)g, &lbl_eu_8050EFDC[0x8b], kind);
     u32 v2 = func_801361E8(g, &lbl_eu_8050EFDC[0x92], kind);
     u16 result = v1;
     CEquipItemBoxF64Conv c2;
@@ -1842,7 +1842,7 @@ extern "C" __declspec(noinline) void func_80288E14(CEquipItemBox* self, u16 kind
     }
     if (res == 0) {
         if (kind != 0) {
-            char* name = func_80138F78(func_80136254(lbl_eu_806640EC, &lbl_eu_8050EFDC[0x207], kind));
+            char* name = func_80138F78(func_80136254((const void*)lbl_eu_806640EC, &lbl_eu_8050EFDC[0x207], kind));
             res = self->field_34->GetResource(
                 nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, name, 0);
             if (res == 0) {
@@ -2418,8 +2418,8 @@ extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b) {
     g = lbl_eu_806640F4;
     func_801392E4(a);
     kind2 = func_80139358(a);
-    rateA = func_80136254(g, base + 0x60a, kind2);
-    rateB = func_80136254(g, base + 0x8b, kind2);
+    rateA = func_80136254((const void*)g, base + 0x60a, kind2);
+    rateB = func_80136254((const void*)g, base + 0x8b, kind2);
     name72 = func_801361E8(g, base + 0x72, kind2);
     name7a = func_801361E8(g, base + 0x7a, kind2);
     name61 = func_801361E8(g, base + 0x61, kind2);

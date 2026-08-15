@@ -138,7 +138,20 @@ public:
 
     Iterator Erase(Iterator it);
     Iterator Erase(LinkListNode* pNode);
-    Iterator Erase(Iterator begin, Iterator end);
+    // Retail keeps the range-erase inline (no standalone symbol in the
+    // ut_LinkList split slice); callers inline it, so define it here.
+    Iterator Erase(Iterator begin, Iterator end) {
+        LinkListNode* pIt = begin.mNode;
+        LinkListNode* pEnd = end.mNode;
+
+        while (pIt != pEnd) {
+            LinkListNode* pNext = pIt->mNext;
+            Erase(pIt);
+            pIt = pNext;
+        }
+
+        return Iterator(pEnd);
+    }
 
 protected:
 

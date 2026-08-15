@@ -38,6 +38,7 @@ typedef struct
     UINT8   id;
     UINT8   app_id;
     UINT8   spec_idx;
+    UINT8   pad[5];        /* retail symbol is 8 bytes (align 8) in .sbss2 */
 } tBTA_DM_PM_CFG_RETAIL;
 
 typedef struct
@@ -98,9 +99,9 @@ const tBTA_DM_COMPRESS_RETAIL bta_dm_compress_cfg[] =
     {0x12, 0xFF, 0x02},
 };
 
-tBTA_DM_PM_CFG_RETAIL bta_dm_pm_cfg =
+const tBTA_DM_PM_CFG_RETAIL bta_dm_pm_cfg =
 {
-    0, 0, 0
+    0, 0, 0, {0}
 };
 
 const tBTA_DM_PM_SPEC_RETAIL bta_dm_pm_spec =

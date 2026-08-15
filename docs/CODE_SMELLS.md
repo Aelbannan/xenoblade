@@ -11,11 +11,11 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 9861 |
-| extern "C" declarations (non-lbl_*, imports) | 3687 |
+| extern "C" (total lines) | 9862 |
+| extern "C" declarations (non-lbl_*, imports) | 3688 |
 | extern "C" definitions (forced names) | 3679 |
-| `self`/register-style params | 11404 |
-| `void*` (params + locals) | 6880 |
+| `self`/register-style params | 11409 |
+| `void*` (params + locals) | 6885 |
 | raw pointer offset arithmetic | 6356 |
 | deref-through-cast arithmetic | 2483 |
 | inline asm / `register` | 112 |
@@ -79,7 +79,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/device/CDeviceFileJob.cpp | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFileJobReadDvd.cpp | 6 | 6 | 22 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFont.cpp | 2 | 5 | 2 | 0 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 |
-| libs/monolib/src/device/CDeviceFontInfoExt.cpp | 0 | 14 | 11 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/device/CDeviceFontInfoExt.cpp | 1 | 14 | 16 | 7 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontInfoRom.cpp | 2 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontLayer.cpp | 9 | 1 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontLoader.cpp | 8 | 1 | 19 | 13 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
@@ -955,12 +955,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/device/CDeviceFontInfoExt.cpp": {
   "asm_insn_shim": 0,
+  "extern_c_nonlbl_decl": 1,
   "extern_c_nonlbl_def": 14,
   "init_side_effect": 0,
   "ptr_arith": 2,
   "schedule_pragma": 0,
-  "self_params": 11,
-  "void_ptr": 2
+  "self_params": 16,
+  "void_ptr": 7
  },
  "libs/monolib/src/device/CDeviceFontInfoRom.cpp": {
   "asm_insn_shim": 0,

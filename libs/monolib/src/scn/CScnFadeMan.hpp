@@ -23,13 +23,21 @@ public:
     static void func_8043EA88(ml::CRect& rect, CView* view);
 };
 
-class CScnFadeMan : public IScnRender {
+// Non-virtual reconstruction of CScnFadeMan. Retail CScnFadeMan inherits
+// IScnRender (vptr at 0x0), but modeling that inheritance makes MWCC emit its
+// own __vt__11CScnFadeMan / RTTI symbols and reference __vt__11CScnFadeMan in
+// the ctor/dtor vptr stores, whereas the retail relocs name the .data blob
+// lbl_eu_8056EB50. The vtable slot is therefore stored manually from the
+// retail blob (same trick as CDeviceFontLoader) so the ctor/dtor relocs carry
+// the retail name and no extra vtable/RTTI data is emitted.
+class CScnFadeMan {
 public:
     CScnFadeMan(CScn* scene);
-    virtual ~CScnFadeMan();
+    ~CScnFadeMan();
     void update();
-    virtual void cbRenderBefore();
+    void cbRenderBefore();
 
+    u8* m_vtable;             //0x0 retail vtable pointer (lbl_eu_8056EB50)
     CScn* mScene;             //0x4
     ml::CCol4 mCurrentColor;  //0x8
     ml::CCol4 mStartColor;    //0x18
@@ -39,10 +47,11 @@ public:
 };
 
 // Shared sdata2 constant-pool floats referenced by name so the relocs resolve to
-// the retail labels (lbl_eu_8066AB7C = combined with the 8.8 fixed-point fraction
-// byte in update(); lbl_eu_8066AB80 = 1.0f) instead of a local pool entry.
-// Declared at global scope (plain extern, NOT extern "C": MWCC emits the same
-// symbol without mangling these names).
+// the retail labels instead of a local pool entry. Declared at global scope with
+// plain extern (no C linkage block): MWCC emits the same symbol without
+// mangling these names.
 extern float lbl_eu_8066AB7C; // 8.8 fixed -> float combine scale
-
 extern float lbl_eu_8066AB80; // 1.0f
+
+// Retail CScnFadeMan vtable blob (.data:0x8056EB50, owned by port/data_defs).
+extern u8 lbl_eu_8056EB50[];

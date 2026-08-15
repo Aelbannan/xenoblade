@@ -17,6 +17,10 @@ extern "C" u32 func_8049C794(u8* self) { return (s32)(*(u32*)((u8*)self + 0x38))
 
 CScnFadeMan::CScnFadeMan(CScn* scene) {
     mScene = scene;
+    // Store the retail vtable blob pointer manually (see CScnFadeMan.hpp) so
+    // the ctor vptr-store relocs name the retail blob instead of a compiler
+    // __vt__ symbol.
+    m_vtable = lbl_eu_8056EB50;
     mCurrentColor.r = 0.0f;
     mCurrentColor.g = 0.0f;
     mCurrentColor.b = 0.0f;
@@ -31,13 +35,18 @@ CScnFadeMan::CScnFadeMan(CScn* scene) {
     mDestColor.a = 0.0f;
     mCurrentFrame = 0;
     mFrameCount = 0;
-    mScene->addRenderCB(this, 0xc, 0x1);
+    // Non-virtual class (see hpp) - explicit IScnRender* conversion for the
+    // render-CB registration; the object address doubles as the IScnRender*.
+    mScene->addRenderCB((IScnRender*)this, 0xc, 0x1);
 }
 
 // --- Destructor -----------------------------------------------------------
 
 CScnFadeMan::~CScnFadeMan() {
-    mScene->removeRenderCB(this);
+    // Re-store the vtable pointer like the virtual-class dtor would (see hpp).
+    m_vtable = lbl_eu_8056EB50;
+    // Same explicit IScnRender* conversion as the ctor.
+    mScene->removeRenderCB((IScnRender*)this);
 }
 
 // --- Update ----------------------------------------------------------------

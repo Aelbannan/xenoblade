@@ -3,30 +3,61 @@
 
 #include <harness_catalog.h>
 
+struct SFTRN;
+struct SFD_TR_CONFIG;
+
+/* Setup/initializer function signature used by the SFD transport layer.
+   The first argument is the transport context; the remaining three are
+   transport-specific setup parameters (always NULL from this TU's calls). */
+typedef s32 (*SfdTrSetupFunc)(struct SFTRN* self, struct SFD_TR_CONFIG* a1,
+                              struct SFD_TR_CONFIG* a2, struct SFD_TR_CONFIG* a3);
+
+/* Object pointed to by each SFD_TR_CONFIG entry; its first word is a function pointer. */
+typedef struct SfdTrSetupObj {
+    /* 0x00 */ SfdTrSetupFunc func;
+} SfdTrSetupObj;
+
+/* Config block copied into SFTRN at offset 0 by SFTRN_Init (0x3C bytes). */
+typedef struct SFD_TR_CONFIG {
+    /* 0x00 */ SfdTrSetupObj* setup[15];
+} SFD_TR_CONFIG;
+
+/* One transport work entry at SFTRN+0x1FD8 (0x44 bytes each). */
+typedef struct SfdTrSetupEntry {
+    /* 0x00 */ u32 prep_flg;
+    /* 0x04 */ u32 term_flg;
+    /* 0x08 */ u32 field_0x08;
+    /* 0x0C */ SfdTrSetupFunc* func_table;
+    /* 0x10 */ u32 field_0x10[13];
+} SfdTrSetupEntry;
+
+/* SFD transport structure (partial layout: only fields used by sfd_trn.c). */
+typedef struct SFTRN {
+    /* 0x000 */ SFD_TR_CONFIG config;
+    /* 0x03C */ u8 pad_0x03C[0x1FD8 - 0x3C];
+    /* 0x1FD8 */ SfdTrSetupEntry tr_work[9];
+} SFTRN;
+
 extern s32 SFLIB_SetErr(void* h, u32 err_code);
 extern u32 SFSET_SetCond(void* self, u32 idx, u32 val);
 static s32 sftrn_BuildAll(void* self, void* config);
 static void sftrn_BuildSystem(void* self, void* config);
 
-s32 SFTRN_Init(void* self, void* config) {
+s32 SFTRN_Init(SFTRN* self, SFD_TR_CONFIG* config) {
     s32 i;
-    s32 ret;
-    /* Copy 0x3C bytes of config to self */
-    u32* dst = (u32*)self;
-    u32* src = (u32*)config;
-    for (i = 0; i < 0x3C / 4; i++) {
-        dst[i] = src[i];
-    }
-    /* Call setup functions from table at config+0x0 */
+    s32 ret = 0;
+
+    /* Copy the 15 setup pointers into the transport context. */
+    self->config = *config;
+
+    /* Run each non-null setup entry's initializer; stop on first failure. */
     for (i = 0; i < 15; i++) {
-        u32* entry = (u32*)((u8*)config + i * 4);
-        if (*entry == 0) continue;
-        typedef s32 (*SetupFunc)(void*, void*, void*, void*);
-        SetupFunc fn = *(SetupFunc*)*entry;
-        ret = fn(0, 0, 0, 0);
-        if (ret != 0) return ret;
+        SfdTrSetupObj* obj = config->setup[i];
+        if (obj == NULL) break;
+        ret = obj->func(0, 0, 0, 0);
+        if (ret != 0) break;
     }
-    return 0;
+    return ret;
 }
 
 s32 SFTRN_InitHn(void* self, void* dst, void* config) {
@@ -195,19 +226,17 @@ static void sftrn_BuildSystem(void* self, void* config) {
     }
 }
 
-s32 SFTRN_CallTrSetup(void* self, s32 idx) {
+s32 SFTRN_CallTrSetup(SFTRN* self, s32 idx) {
     s32 i;
     s32 ret = 0;
-    u8* entries = (u8*)self + 0x1fd8;
-    for (i = 0; i < 9; i++) {
-        u32 fnPtr = *(u32*)(entries + 0xC);
-        if (fnPtr != 0) {
-            typedef s32 (*TrSetupFunc)(void*, void*, void*, void*);
-            TrSetupFunc fn = ((TrSetupFunc*)fnPtr)[idx];
-            ret = fn(self, 0, 0, 0);
-            if (ret != 0) return ret;
+    SfdTrSetupEntry* tr = self->tr_work;
+
+    /* Call the idx-th setup function of each active transport work entry. */
+    for (i = 0; i < 9; i++, tr++) {
+        if (tr->func_table != NULL) {
+            ret = tr->func_table[idx](self, 0, 0, 0);
+            if (ret != 0) break;
         }
-        entries += 0x44;
     }
     return ret;
 }

@@ -73,7 +73,7 @@ public:
 // sub-object at +0x14, the actor object at +0x18, and an embedded
 // CPartsChange at +0x368 (0x30 bytes, released by the destructor).
 // Never instantiated, so no vtable is emitted.
-class CfObjectImplObj {
+class __declspec(novtable) CfObjectImplObj {
 public:
     virtual ~CfObjectImplObj();                       // index 0 -> vtable offset 0x08
     virtual void vf04() = 0;                         // index 1
@@ -136,7 +136,10 @@ public:
     CfObjectImplObjSub* field_14;    // 0x14 (driver sub-object)
     u8* field_18;                    // 0x18 (actor object)
     u8 _pad1C[0x368 - 0x1C];         // 0x1C-0x367
-    CPartsChange mPartsChange;       // 0x368-0x397 (embedded parts-change)
+    // Embedded CPartsChange at 0x368-0x397, kept as a raw buffer so MWCC does
+    // not auto-destroy it (retail calls __dt__Q22cf12CPartsChangeFv DIRECTLY
+    // from the deleting dtor, with no vtable dispatch and no vptr re-store).
+    u8 mPartsChange[0x30];           // 0x368-0x397 (embedded parts-change)
 };
 
 // Command parameter consumed by func_800CA590: mode byte at +0xA (0x10 /

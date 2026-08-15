@@ -5,6 +5,7 @@
 #include "libs/monolib/src/lib/CLibLayout.hpp"
 #include "monolib/core/CProcRoot.hpp"
 #include "monolib/device/CDeviceGX.hpp"
+#include "monolib/lib/UnkClass_8045F564.hpp"
 #include <revolution/mem/mem_allocator.h>
 #include <nw4r/lyt/lyt_init.h>
 
@@ -53,7 +54,17 @@ CLibLayout* CLibLayout::getInstance() {
     return lbl_eu_80665710;
 }
 
-bool CLibLayout::isInitialized() { return false; }
+bool CLibLayout::isInitialized() {
+    // The layout thread counts as initialized while logged in/running and not
+    // flagged for an exception (the singleton's own state, not `this`).
+    bool result = false;
+    CLibLayout* hp = lbl_eu_80665710;
+    if (!hp->isException()) {
+        if (hp->mState == THREAD_STATE_LOGIN || hp->mState == THREAD_STATE_RUN)
+            result = true;
+    }
+    return result;
+}
 
 nw4r::lyt::Layout* CLibLayout::createLayout() {
     // Allocate the 0x20-byte Layout buffer, then placement-construct it.
@@ -68,23 +79,44 @@ nw4r::lyt::ArcResourceAccessor* CLibLayout::createArcResourceAccessor() {
 
 nw4r::lyt::Picture* CLibLayout::createPicture(void) {
     // Allocate the Picture buffer from the singleton's nw4r layout allocator.
-    nw4r::lyt::Picture* picture = static_cast<nw4r::lyt::Picture*>(
-        MEMAllocFromAllocator(&lbl_eu_80665710->mAllocator, 0xF0));
+    nw4r::lyt::Picture* picture = static_cast<nw4r::lyt::Picture*>(MEMAllocFromAllocator(
+        &lbl_eu_80665710->mAllocator, 0xF0));
 
     if (picture != NULL) {
         try {
             // TexMap(palette, id) resets bias-clamp and anisotropy to defaults.
             nw4r::lyt::TexMap texmap(reinterpret_cast<TPLPalette*>(this), 0);
-            ::new (picture) nw4r::lyt::Picture(texmap);
+            // Direct ctor call on the raw buffer: placement-new would add a
+            // NULL guard the retail function does not have.
+            __ct__Q34nw4r3lyt7PictureFRCQ34nw4r3lyt6TexMap(picture, texmap);
         } catch (...) {
-            throw;
+            // Re-throw; the explicit call + noreturn decl keeps the retail
+            // catch-all handler shape (no __end__catch epilogue).
+            __throw(0, 0, 0);
+        }
+    }
+}
+
+nw4r::lyt::TextBox* CLibLayout::createTextbox() {
+    // Allocate the 0x104-byte TextBox buffer from the singleton's nw4r layout
+    // allocator, then run the retail TextBox(u16) ctor on it (0 = empty
+    // string buffer). The ctor is invoked directly because placement-new would
+    // add a NULL guard the retail function does not have.
+    nw4r::lyt::TextBox* textbox = static_cast<nw4r::lyt::TextBox*>(MEMAllocFromAllocator(
+        &lbl_eu_80665710->mAllocator, 0x104));
+
+    if (textbox != NULL) {
+        try {
+            __ct__Q34nw4r3lyt7TextBoxFUs(textbox, 0);
+        } catch (...) {
+            // Re-throw; the explicit call + noreturn decl keeps the retail
+            // catch-all handler shape (no __end__catch epilogue).
+            __throw(0, 0, 0);
         }
     }
 
-    return picture;
+    return textbox;
 }
-
-nw4r::lyt::TextBox* CLibLayout::createTextbox() { return 0; }
 
 void CLibLayout::deleteTextboxOrPicture() {
     MEMFreeToAllocator(&lbl_eu_80665710->mAllocator, this);
@@ -132,10 +164,8 @@ bool CLibLayout::wkStandbyLogout() {
 // extern "C" (see header) reproduces the retail synthetic "Fv" symbol.
 void* func_8045F438__10CLibLayoutFv(MEMAllocator* allocator, u32 size) {
     CLibLayout* hp = lbl_eu_80665710;
-    u32 handle;
-    if (hp->hashCount == 0) {
-        handle = hp->mAllocHandle;
-    } else {
+    u32 handle = hp->mAllocHandle;
+    if (hp->hashCount != 0) {
         CLibLayoutHashElem* elem =
             hp->hashTable[(hp->hashCount + hp->hashAccum - 1) % hp->hashDivisor];
         // Registering with a frame heap takes priority: allocate there and
@@ -152,4 +182,25 @@ void* func_8045F438__10CLibLayoutFv(MEMAllocator* allocator, u32 size) {
     return mtl::MemManager::allocate_head(handle, size, allocator->heapParam1);
 }
 
-void func_8045F4E4__10CLibLayoutFv(MEMAllocator* allocator, void* block) {}
+void func_8045F4E4__10CLibLayoutFv(MEMAllocator* allocator, void* block) {
+    // Free callback for the nw4r layout allocator: blocks inside the layout
+    // region (or inside a tracked instance's buffer range) go back to the
+    // MemManager; anything else is ignored.
+    if (lbl_eu_80665710->mRangeStart <= (u32)block &&
+        lbl_eu_80665710->mRangeEnd > (u32)block) {
+        if (block != NULL) {
+            mtl::MemManager::deallocate(block);
+        }
+        return;
+    }
+
+    for (u32 i = 0; i < lbl_eu_80665710->instanceCount; i++) {
+        UnkClass_8045F564* inst = lbl_eu_80665710->instanceArray[i];
+        if (inst->unk8 <= (u32)block && inst->unkC > (u32)block) {
+            if (block != NULL) {
+                mtl::MemManager::deallocate(block);
+            }
+            return;
+        }
+    }
+}

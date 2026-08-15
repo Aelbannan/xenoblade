@@ -1,12 +1,72 @@
 #include <nw4r/snd.h>
 
 #include <climits>
+#include <cstring>
 
 namespace nw4r {
 namespace snd {
 namespace detail {
 
 extern "C" nw4r::ut::detail::RuntimeTypeInfo lbl_eu_806654D0(NULL);
+
+namespace {
+
+// Retail AmbientParamUpdateCallback carries a 4th virtual (GetVoiceOutCount)
+// at vtable+0x14 that snd_BasicSound.h does not declare (header is outside the
+// writable scope). Mirror it via derivation so SetAmbientInfo dispatches at the
+// correct slot.
+struct AmbientParamUpdateCallbackV4
+    : public BasicSound::AmbientParamUpdateCallback {
+    virtual u32 GetVoiceOutCount(void* arg, u32 param) = 0; // at 0x14
+};
+
+// Retail AmbientArgAllocaterCallback declares a virtual dtor (vtable: RTTI,
+// dtor, dtor, Alloc@0xC, Free@0x10); the header's version without an explicit
+// dtor compiles Alloc at 0x8. Mirror the retail layout.
+struct AmbientArgAllocaterCallbackRetail {
+    virtual ~AmbientArgAllocaterCallbackRetail() {} // at 0x4, 0x8
+    virtual void* detail_AllocAmbientArg(u32 size) = 0; // at 0xC
+    virtual void detail_FreeAmbientArg(void* pArg,
+                                       const BasicSound* pSound) = 0; // at 0x10
+};
+
+// SoundPlayer fields at 0x30/0x3C/0x40/0x54/0x58 that UpdateParam reads are
+// private in snd_SoundPlayer.h; mirror the layout to read them directly.
+struct SoundPlayerParamView {
+    u8 _pad0x00[0x30];        // 0x00..0x2F
+    f32 unk30;                // 0x30
+    u8 _pad0x34[0x08];        // 0x34..0x3B
+    int outputLineFlagEnable; // 0x3C
+    f32 unk40;                // 0x40
+    u8 _pad0x44[0x10];        // 0x44..0x53
+    f32 unk54;                // 0x54
+    f32 fxSend[AUX_BUS_NUM];  // 0x58..0x63
+};
+
+// BasicSound fields that SetAmbientInfo writes are private in snd_BasicSound.h
+// (which also does not declare SetAmbientInfo - header is read-only this
+// session); mirror the layout to implement the retail symbol as a free
+// function.
+struct BasicSoundAmbientView {
+    u8 _pad0x00[0x1C];             // 0x00..0x1B
+    void* argUpdateCallback;       // 0x1C
+    void* argAllocaterCallback;    // 0x20
+    void* arg;                     // 0x24
+    u32 unk28;                     // 0x28
+    u32 unk2C;                     // 0x2C
+    u8 _pad0x30[0x95 - 0x30];      // 0x30..0x94
+    u8 unk95;                      // 0x95
+    u8 _pad0x96[0x98 - 0x96];      // 0x96..0x97
+    u32 id;                        // 0x98
+};
+
+} // namespace
+
+// BasicPlayer::SetBiquadFilter is not declared in snd_BasicPlayer.h (header is
+// read-only this session); the retail symbol is referenced verbatim so
+// UpdateParam can emit the `bl`.
+extern "C" void SetBiquadFilter__Q44nw4r3snd6detail11BasicPlayerFif(
+    BasicPlayer* pPlayer, int filter, f32 value);
 
 BasicSound::BasicSound(int priority, int arg)
     : mHeap(NULL),
@@ -65,7 +125,100 @@ void BasicSound::UpdateMoveValue() {
     mExtMoveVolume.Update();
 }
 
-void BasicSound::UpdateParam() {}
+void BasicSound::UpdateParam() {
+    // Volume: 1.0 * init * player * move/fade chains * ambient * unk54.
+    f32 volume = lbl_eu_80669EE8;
+    volume *= mInitVolume;
+    volume *= mSoundPlayer->GetVolume();
+    volume *= mExtMoveVolume.GetValue();
+    volume *= mFadeVolume.GetValue();
+    volume *= mPauseFadeVolume.GetValue();
+    volume *= mAmbientParam.volume;
+    volume *= mUnk0x54;
+
+    f32 pan = lbl_eu_80669EEC;
+    pan += mExtPan;
+    pan += mAmbientParam.pan;
+    pan += mUnk0x5C;
+
+    f32 surroundPan = lbl_eu_80669EEC;
+    surroundPan += mExtSurroundPan;
+    surroundPan += mAmbientParam.surroundPan;
+
+    f32 pitch = lbl_eu_80669EE8;
+    pitch *= mExtPitch;
+    pitch *= mAmbientParam.pitch;
+    pitch *= mUnk0x58;
+
+    f32 lpfFreq = mUnk0xBC;
+    lpfFreq += mAmbientParam.lpf;
+    lpfFreq += reinterpret_cast<const SoundPlayerParamView*>(mSoundPlayer)->unk30;
+
+    // Biquad filter id/value: the sound's own, else the player's, else the
+    // ambient info's (retail reads the player fields directly).
+    u32 filter = mOutputLineFlagEnable;
+    f32 filterValue = mUnk0xC0;
+    if (filter == 0) {
+        const SoundPlayerParamView* pPlayer =
+            reinterpret_cast<const SoundPlayerParamView*>(mSoundPlayer);
+        filter = pPlayer->outputLineFlagEnable;
+        filterValue = pPlayer->unk40;
+        if (filter == 0) {
+            filter = mAmbientParam.priority;
+            filterValue = mAmbientParam.unk18;
+        }
+    }
+
+    f32 mainOutVol = lbl_eu_80669EE8;
+    mainOutVol *= mMainOutVolume;
+    mainOutVol *= mSoundPlayer->detail_GetMainOutVolume();
+
+    // Retail loads the output-line flag before the loops and reuses it after.
+    int outputLine = mOutputLineFlag;
+
+    f32 remoteOutVol[WPAD_MAX_CONTROLLERS];
+    for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+        remoteOutVol[i] = lbl_eu_80669EE8;
+        remoteOutVol[i] *= mSoundPlayer->GetRemoteOutVolume(i);
+        remoteOutVol[i] *= mRemoteOutVolume[i];
+    }
+
+    // Main send + aux sends: sound's own (mUnk0xCC) + player sends + ambient.
+    const SoundPlayerParamView* pPlayer =
+        reinterpret_cast<const SoundPlayerParamView*>(mSoundPlayer);
+    f32 mainSend = lbl_eu_80669EEC;
+    f32 fxSend[AUX_BUS_NUM] = { lbl_eu_80669EEC, lbl_eu_80669EEC,
+                                lbl_eu_80669EEC };
+    mainSend += mUnk0xCC[0];
+    fxSend[0] += mUnk0xCC[1];
+    fxSend[1] += mUnk0xCC[2];
+    fxSend[2] += mUnk0xCC[3];
+    mainSend += pPlayer->unk54;
+    fxSend[0] += pPlayer->fxSend[0];
+    fxSend[1] += pPlayer->fxSend[1];
+    fxSend[2] += pPlayer->fxSend[2];
+    fxSend[0] += mAmbientParam.fxSend;
+
+    // Retail fetches the player only once all values are computed.
+    BasicPlayer& rPlayer = GetBasicPlayer();
+
+    rPlayer.SetVolume(volume);
+    rPlayer.SetPan(pan);
+    rPlayer.SetSurroundPan(surroundPan);
+    rPlayer.SetPitch(pitch);
+    rPlayer.SetLpfFreq(lpfFreq);
+    SetBiquadFilter__Q44nw4r3snd6detail11BasicPlayerFif(
+        &rPlayer, static_cast<int>(filter), filterValue);
+    rPlayer.SetOutputLine(outputLine);
+    rPlayer.SetMainOutVolume(mainOutVol);
+    for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+        rPlayer.SetRemoteOutVolume(i, remoteOutVol[i]);
+    }
+    rPlayer.SetMainSend(mainSend);
+    for (int i = 0; i < AUX_BUS_NUM; i++) {
+        rPlayer.SetFxSend(static_cast<AuxBus>(i), fxSend[i]);
+    }
+}
 
 void BasicSound::InitParam() {
     mPauseState = 0;
@@ -551,6 +704,7 @@ void BasicSound::SetId(u32 id) {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
+
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -563,4 +717,47 @@ const nw4r::ut::detail::RuntimeTypeInfo* BasicSound::GetRuntimeTypeInfo() const 
 } // namespace snd
 } // namespace nw4r
 
-extern "C" void SetAmbientInfo__Q44nw4r3snd6detail10BasicSoundFRCQ54nw4r3snd6detail10BasicSound11AmbientInfo() {}
+// Retail symbol for BasicSound::SetAmbientInfo(const AmbientInfo&); the header
+// does not declare it (read-only this session), so define the mangled name as
+// a C-linkage free function with an explicit self pointer.
+extern "C" void
+SetAmbientInfo__Q44nw4r3snd6detail10BasicSoundFRCQ54nw4r3snd6detail10BasicSound11AmbientInfo(
+    nw4r::snd::detail::BasicSound* self,
+    const nw4r::snd::detail::BasicSound::AmbientInfo& info) {
+    using namespace nw4r::snd::detail;
+
+    BasicSoundAmbientView* pSound =
+        reinterpret_cast<BasicSoundAmbientView*>(self);
+
+    AmbientArgAllocaterCallbackRetail* pAlloc =
+        reinterpret_cast<AmbientArgAllocaterCallbackRetail*>(
+            info.argAllocaterCallback);
+    void* pArg = pAlloc->detail_AllocAmbientArg(info.argSize);
+    if (pArg != NULL) {
+        std::memcpy(pArg, info.arg, info.argSize);
+
+        // Store order matches US retail (the unk28 = info.arg store is a dead
+        // store before unk28 = pArg - retail keeps both). Only the
+        // GetVoiceOutCount call is guarded by the callback != NULL check; the
+        // stores run unconditionally (retail compares early, branches late).
+        pSound->unk28 = reinterpret_cast<u32>(info.arg);
+        pSound->argUpdateCallback = info.paramUpdateCallback;
+        pSound->argAllocaterCallback = info.argUpdateCallback;
+        pSound->arg = info.argAllocaterCallback;
+        pSound->unk2C = info.argSize;
+        pSound->unk28 = reinterpret_cast<u32>(pArg);
+
+        if (info.paramUpdateCallback != NULL) {
+            AmbientParamUpdateCallbackV4* pCallback =
+                static_cast<AmbientParamUpdateCallbackV4*>(
+                    info.paramUpdateCallback);
+            int voiceOut =
+                static_cast<int>(pCallback->GetVoiceOutCount(pArg, pSound->id));
+            if (voiceOut > 4) {
+                voiceOut = 4;
+            }
+            pSound->unk95 = static_cast<u8>(voiceOut);
+        }
+    }
+}
+

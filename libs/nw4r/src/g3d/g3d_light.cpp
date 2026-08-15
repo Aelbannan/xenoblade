@@ -17,6 +17,10 @@ LightObj::LightObj(const LightObj& rLightObj){
     detail::Copy32ByteBlocks(&mObj, &rLightObj.mObj, sizeof(GXLightObj));
 }
 
+// Default ctor defined in this TU (retail header declares it inline) so the
+// LightSetting ctor below can inline the mFlag=0 store instead of emitting a
+// call to the g3d_state definition (retail emits no call).
+inline LightObj::LightObj() : mFlag(0) {}
 LightObj& LightObj::operator=(const LightObj& rOther) {
     if (this != &rOther) {
         mFlag = rOther.mFlag;
@@ -312,5 +316,3 @@ bool LightSet::SelectAmbLightObj(int lightObjIdx) {
 } // namespace g3d
 } // namespace nw4r
 
-void __as__Q34nw4r3g3d8LightObjFRCQ34nw4r3g3d8LightObj(){}
-bool __ne__Q34nw4r3g3d8LightObjCFRCQ34nw4r3g3d8LightObj(const unsigned int* a, const unsigned int* b) { if (a[0] != b[0]) return true; if (a[1] != b[1]) return true; if (a[2] != b[2]) return true; if (a[3] != b[3]) return true; if (a[4] != b[4]) return true; if (a[5] != b[5]) return true; if (a[6] != b[6]) return true; if (a[7] != b[7]) return true; if (a[8] != b[8]) return true; if (a[9] != b[9]) return true; if (a[10] != b[10]) return true; if (a[11] != b[11]) return true; if (a[12] != b[12]) return true; if (a[13] != b[13]) return true; if (a[14] != b[14]) return true; if (a[15] != b[15]) return true; if (a[16] != b[16]) return true; return false; }

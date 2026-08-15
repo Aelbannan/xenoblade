@@ -52,17 +52,18 @@ extern u32 lbl_eu_8051D178;
 extern u32 lbl_eu_80619C04;
 
 void SFX_Init(void) {
-    if (lbl_eu_80619C00[0] < 1) {
-        lbl_eu_80619C00[2] = (s32)&lbl_eu_8051D178;
-        memset((u8*)lbl_eu_80619C00 + 0x10, 0, 0x528);
-        *(u32*)((u8*)lbl_eu_80619C00 + 0x14) = 8;
-        *(u32*)((u8*)lbl_eu_80619C00 + 0x24) = 1;
+    s32* s = lbl_eu_80619C00;
+    if (s[0] < 1) {
+        s[2] = (s32)&lbl_eu_8051D178;
+        memset((u8*)s + 0x10, 0, 0x528);
+        *(u32*)((u8*)s + 0x10 + 4) = 8;
+        *(u32*)((u8*)s + 0x10 + 0x14) = 1;
         CFT_Init();
         SFXSUD_Init();
         SFXZ_Init();
         SFXA_Init();
-        lbl_eu_80619C00[1] = 0;
-        lbl_eu_80619C00[0]++;
+        s[1] = 0;
+        s[0]++;
     }
 }
 

@@ -2,8 +2,11 @@
 #include "monolib/data_vtables.hpp"
 
 // Blob monolibdata1d dissolve: define the CWorkSystemMem vtable
-// (0x8056BAA8), its RTTI base list (0x8056BB48) and the sbss
+// (0x8056BAA8), its RTTI base list (0x8056BB48), the rodata class-name
+// string (0x80522818), the sdata typeinfo (0x806635D0) and the sbss
 // singleton (0x80665620) here with the retail names/bytes.
+// rodata 0x80522818 (0xF): RTTI class-name string.
+const char lbl_eu_80522818[] = "CWorkSystemMem";
 IWorkEventVtbl lbl_eu_8056BAA8 = {
     (u32)&lbl_eu_806635D0, 0, (u32)&__dt__14CWorkSystemMemFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
@@ -29,6 +32,8 @@ IWorkEventVtbl lbl_eu_8056BAA8 = {
 RttiBaseList2 lbl_eu_8056BB48 = {
     (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, 0, 0,
 };
+// sdata 0x806635D0 (0x8): RTTI typeinfo { class-name, cast-table }.
+u32 lbl_eu_806635D0[2] = { (u32)&lbl_eu_80522818, (u32)&lbl_eu_8056BB48 };
 CWorkSystemMem* lbl_eu_80665620[2];
 
 CWorkSystemMem::CWorkSystemMem(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 1) {

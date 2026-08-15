@@ -1,19 +1,87 @@
 #include "monolib/work.hpp"
 #include "monolib/core.hpp"
 #include "monolib/util.hpp"
+#include "monolib/data_vtables.hpp"
 
 extern "C" {
-extern const char lbl_eu_80522500[]; // "(View)"
-extern char lbl_eu_8056B1E0[];
+extern const char lbl_eu_80522500[]; // "(View)" - retail .rodata pool string
 extern float lbl_eu_8066A278; // 0.6f
 void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect,
                                                                    const CViewFrame* frame);
+// Vtable/RTTI targets referenced by the CProc data definitions below.
+// (extern is required inside extern "C": a bare declaration is a tentative
+// DEFINITION and would emit a duplicate sbss symbol.)
+extern void* __RTTI__5CProc;          // defined by kyoshin/CGame.cpp (.sdata 0x80661898)
+extern void __dt__5CProcFv(void* self, int flags);
+extern void wkStandbyLogin__5CProcFv();
+extern void wkStandbyLogout__5CProcFv();
 }
+
+// --- Blob monolibdata1.s dissolve: this TU owns .data 0x8056B1E0-0x8056B2A8,
+// .rodata 0x805224C8-0x80522508, .sdata 0x80663538-0x80663548. ---
+//
+// NOTE: the reslist<Ul> / _reslist_base<Ul> vtables (retail lbl_eu_8056B280 /
+// lbl_eu_8056B298) are emitted by MWCC itself from the reslist<u32> member
+// instantiation below: their dtor slots reference the template-mangled symbols
+// __dt__11reslist<Ul>Fv / __dt__17_reslist_base<Ul>Fv, which cannot be spelled
+// in C++ source (MWCC_REFERENCE "What NOT to do": < and > are not valid C
+// identifiers). The compiler emits them as the pre-existing weak symbols
+// __vt__11reslist<Ul> / __vt__17_reslist_base<Ul> (0xC each), which carry the
+// exact retail bytes at the range positions 0x8056B280 / 0x8056B298 (the
+// retail 4th word of lbl_eu_8056B298 is the splitter's 8-byte alignment pad).
+// The remaining range symbols are defined here with the retail names.
+
+// RTTI name strings (.rodata).
+extern const char lbl_eu_805224C8[];
+extern const char lbl_eu_805224E0[];
+// reslist<Ul> base-subobject RTTI list (.data, 0xC): [RTTI(_reslist_base<Ul>), 0, 0].
+extern u32 lbl_eu_8056B28C[3];
+// RTTI locators (.sdata, 8 bytes): { name, base-list }.
+extern void* lbl_eu_80663538[2];
+extern void* lbl_eu_80663540[2];
+
+// CProc vtable (.data, 0xA0): [rtti, 0, dtor, IWorkEvent 1-31, wkUpdate/wkRender/
+// wkRenderAfter (CWorkThread slots), wkStandbyLogin/Logout (CProc), wkStandbyExceptionRetry].
+u32 lbl_eu_8056B1E0[0xA0 / 4] = {
+    (u32)&__RTTI__5CProc, 0, (u32)&__dt__5CProcFv,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
+    (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
+    (u32)&wkUpdate__11CWorkThreadFv, (u32)&wkRender__11CWorkThreadFv,
+    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__5CProcFv,
+    (u32)&wkStandbyLogout__5CProcFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+};
+
+u32 lbl_eu_8056B28C[3] = { (u32)&lbl_eu_80663540, 0, 0 };
+
+void* lbl_eu_80663538[2] = { (void*)lbl_eu_805224C8, (void*)lbl_eu_8056B28C };
+void* lbl_eu_80663540[2] = { (void*)lbl_eu_805224E0, 0 };
+
+const char lbl_eu_805224C8[] = "reslist<unsigned long>";
+const char lbl_eu_805224E0[] = "_reslist_base<unsigned long>";
+
+// lbl_eu_80522500 ("(View)", .rodata 0x7) is a pooled string-literal entry
+// emitted from pssCreateView's FixStr init below (retail is a pool entry too);
+// a named const definition would land in .sdata2 (7 bytes <= small-data limit)
+// instead of .rodata, so the pool entry is left as the definition.
 
 CProc::CProc(const char* pName, CWorkThread* pParent, s16 capacity) :
 CWorkThread(pName, pParent, capacity),
 unk1E4(mtl::INVALID_HANDLE){
-    *(char**)this = lbl_eu_8056B1E0;
+    *(char**)this = (char*)&lbl_eu_8056B1E0;
     unk1E8 = 2;
     mType = THREAD_CPROC;
     mViewIDList.reserve(mAllocHandle, 16);

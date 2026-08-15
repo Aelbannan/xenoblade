@@ -17,20 +17,19 @@ extern const u8 *MPV_SearchDelim(const u8 *start, int count, int flags);
 int MPV_IsEmptyBpic(const u8 *data, int size, int flags) {
     u32 d = (u32)data;
     const u32 *p = (const u32 *)(d & ~3u);
-    u32 w0 = p[0];
-    int bitpos = (int)(d - (u32)p) << 3;
+    int bitpos = (int)((d - (u32)p) << 3);
     u32 w1 = p[1];
-    u32 first, cur, next;
+    u32 cur;
+    u32 first = p[0] << bitpos;
 
     /* First 32 bits: slice_start_code | vertical_position == 0x101 */
-    first = w0 << bitpos;
     if (bitpos != 0) {
         cur = w1 << bitpos;
         first |= w1 >> (32 - bitpos);
     } else {
         cur = w1;
     }
-    next = p[2];
+    u32 next = p[2];
     p += 3;
     if (first != 0x101) return 0;
 
@@ -46,28 +45,27 @@ int MPV_IsEmptyBpic(const u8 *data, int size, int flags) {
     }
 
     /* extra_bit_slice (1 bit) must be 0 */
-    if ((cur >> 31) != 0) {
-        if (bitpos >= 31) { bitpos = 0; cur = next; next = *p++; }
+    {
+        u32 bit = cur >> 31;
+        if (bitpos == 31) { cur = next; next = *p++; bitpos = 0; }
         else { cur <<= 1; bitpos += 1; }
-        return 0;
+        if (bit != 0) return 0;
     }
-    if (bitpos >= 31) { bitpos = 0; cur = next; next = *p++; }
-    else { cur <<= 1; bitpos += 1; }
 
     /* second flag bit must be 1 */
-    if ((cur >> 31) == 0) {
-        if (bitpos >= 31) { bitpos = 0; cur = next; next = *p++; }
+    {
+        u32 bit = cur >> 31;
+        if (bitpos == 31) { cur = next; next = *p++; bitpos = 0; }
         else { cur <<= 1; bitpos += 1; }
-        return 0;
+        if (bit == 0) return 0;
     }
-    if (bitpos >= 31) { bitpos = 0; cur = next; next = *p++; }
-    else { cur <<= 1; bitpos += 1; }
 
     /* macroblock_type of first block (peek 6 bits) */
     {
         u32 v6 = cur >> 26;
         if (bitpos > 26) v6 |= next >> (58 - bitpos);
-        if ((u32)(v6 - 22u) <= 1u) {
+        u32 d22 = v6 - 22u;
+        if (d22 <= 1u) {
             bitpos += 5;
             if (bitpos >= 32) { bitpos -= 32; cur = next << bitpos; next = *p++; }
             else cur <<= 5;
@@ -83,16 +81,15 @@ int MPV_IsEmptyBpic(const u8 *data, int size, int flags) {
     /* skip a run of "empty" macroblock codes */
     {
         int m = flags - 1;
-        for (;;) {
+        do {
             u32 v11 = cur >> 21;
             if (bitpos > 21) v11 |= next >> (53 - bitpos);
             if (v11 != 8u) break;
             bitpos += 11;
-            if (bitpos >= 32) { bitpos -= 32; cur = next << bitpos; next = *p++; }
+            if (bitpos >= 32) { bitpos -= 32; cur = next << bitpos; next = *p++; /* refill */ }
             else cur <<= 11;
             m -= 33;
-            if (m <= 33) break;
-        }
+        } while (m > 33);
         if ((u32)(m - 1) > 32u) return 0;
 
         /* read the trailing dynamic-length code from the lookup */
@@ -126,20 +123,24 @@ int MPV_IsEmptyBpic(const u8 *data, int size, int flags) {
     {
         u32 v6 = cur >> 26;
         if (bitpos > 26) v6 |= next >> (58 - bitpos);
-        if ((u32)(v6 - 22u) <= 1u) {
+        switch (v6) {
+        case 22:
+        case 23:
             bitpos += 5;
             if (bitpos >= 32) { bitpos -= 32; p++; }
-        } else if (v6 == 11u) {
+            break;
+        case 11:
             bitpos += 6;
             if (bitpos >= 32) { bitpos -= 32; p++; }
-        } else {
+            break;
+        default:
             return 0;
         }
     }
 
     /* byte offset of the next unconsumed bit must stay within `size` */
     {
-        int consumed = (int)(((const u8 *)p) + ((bitpos + 7) >> 3) - data) - 8;
+        int consumed = (int)(((const u8 *)p) + ((bitpos + 7) >> 3) - 8 - data);
         return consumed <= size;
     }
 }
@@ -148,21 +149,21 @@ int MPV_IsEmptyBpic(const u8 *data, int size, int flags) {
  * until the picture/sequence boundary expected of an empty region.
  */
 int MPV_IsEmptyPpic(const u8 *data, int size, int flags) {
-    u32 b = (u32)data & ~3u;
-    const u32 *p = (const u32 *)b;
-    int bitpos = (int)((u32)data - b) << 3;
-    u32 cur, next;
-    u32 first;
+    u32 d = (u32)data;
+    const u32 *p = (const u32 *)(d & ~3u);
+    int bitpos = (int)((d - (u32)p) << 3);
+    u32 w1 = p[1];
+    u32 cur;
+    u32 first = p[0] << bitpos;
 
     /* First 32 bits: slice_start_code | vertical_position == 0x101 */
-    first = p[0] << bitpos;
     if (bitpos != 0) {
-        first |= p[1] >> (32 - bitpos);
-        cur = p[1] << bitpos;
+        cur = w1 << bitpos;
+        first |= w1 >> (32 - bitpos);
     } else {
-        cur = p[1];
+        cur = w1;
     }
-    next = p[2];
+    u32 next = p[2];
     p += 3;
     if (first != 0x101) return 0;
 
@@ -178,22 +179,20 @@ int MPV_IsEmptyPpic(const u8 *data, int size, int flags) {
     }
 
     /* extra_bit_slice (1 bit) must be 0 */
-    if ((cur >> 31) != 0) {
-        if (bitpos >= 31) { bitpos = 0; cur = next; next = *p++; }
+    {
+        u32 bit = cur >> 31;
+        if (bitpos == 31) { cur = next; next = *p++; bitpos = 0; }
         else { cur <<= 1; bitpos += 1; }
-        return 0;
+        if (bit != 0) return 0;
     }
-    if (bitpos >= 31) { bitpos = 0; cur = next; next = *p++; }
-    else { cur <<= 1; bitpos += 1; }
 
     /* second flag bit must be 1 */
-    if ((cur >> 31) == 0) {
-        if (bitpos >= 31) { bitpos = 0; cur = next; next = *p++; }
+    {
+        u32 bit = cur >> 31;
+        if (bitpos == 31) { cur = next; next = *p++; bitpos = 0; }
         else { cur <<= 1; bitpos += 1; }
-        return 0;
+        if (bit == 0) return 0;
     }
-    if (bitpos >= 31) { bitpos = 0; cur = next; next = *p++; }
-    else { cur <<= 1; bitpos += 1; }
 
     /* macroblock_type of first block (peek 5 bits) must be 7 */
     {
@@ -260,6 +259,7 @@ int MPV_IsEmptyPpic(const u8 *data, int size, int flags) {
     {
         const u8 *addr = ((const u8 *)p) + ((bitpos + 7) >> 3) - 8;
         int consumed = (int)(addr - data);
+        if (consumed > size) return 0;
         for (;;) {
             const u8 *d = (const u8 *)MPV_SearchDelim(addr, size - consumed, 0xcc);
             int cr;
@@ -268,7 +268,7 @@ int MPV_IsEmptyPpic(const u8 *data, int size, int flags) {
             if (cr & 0x4) {
                 /* picture_start: keep walking while it is an extension-free,
                  * single-slice picture */
-                u32 x = ((u32)(d[6] >> 7) << 24) | (u32)(d[5] & 3);
+                u32 x = ((u32)(d[6] >> 7) << 24) | (u32)((d[5] >> 6) & 3);
                 if (x == 3) {
                     addr = d + 1;
                     consumed = (int)(addr - data);

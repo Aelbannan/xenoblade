@@ -1,3 +1,10 @@
+// The biquad filter preset classes are declared in snd_BiquadFilterPreset.h,
+// but retail emits their destructors from this translation unit (the last five
+// symbols of the AxManager .text split, right after __sinit_). snd.h pulls
+// that header in, so skip it here and declare the classes locally so MWCC
+// emits the __dt__ symbols from this TU. Nothing else in this TU (or in any
+// header it includes) references the BiquadFilter* types.
+#define NW4R_SND_BIQUAD_FILTER_PRESET_H
 #include <nw4r/snd.h>
 
 #include <revolution/AXFX.h>
@@ -12,26 +19,49 @@ namespace detail {
 
 NW4R_UT_LINKLIST_TYPEDEF_FORCE(FxBase);
 
+// Retail .sdata2 float constants referenced by name so the SDA21 relocations
+// match the stripped retail object (MWCC_REFERENCE §1b float pools).
+extern "C" const f32 lbl_eu_80669E7C; // 0.0f
+
+// The AxManager header ends its layout at 0xF0 (u8 mAuxCallbackWaitCounter[3]).
+// Retail's object carries three more u32 words at 0xF4 (the ctor zeroes them;
+// ShutdownEffect clears them per bus; AuxCallbackFunc stores OSGetTick deltas;
+// nothing in this TU reads them). The header is outside this session's
+// writable scope, so access them through a tail-view struct that mirrors the
+// real layout instead of raw pointer arithmetic.
+struct AxManagerTailView {
+    u8 field_0xF0[4];  // 0xF0: waitCounter bytes + 1 pad byte
+    u32 field_0xF4[3]; // 0xF4: per-bus tick/state words
+};
+
 u8 AxManager::sZeroBuffer[AxManager::ZERO_BUFFER_SIZE];
 
+// NOTE (matching residual): retail constructs the six MoveValue members from
+// the ctor init list with 1.0f, emitting the 1.0 member-init stores and the
+// fade/user array loops BEFORE the mFxList __construct_array. Reproducing
+// that requires a MoveValue value ctor (MoveValue(TValue)), which
+// snd_MoveValue.h does not declare (header outside writable scope), so the
+// 1.0 member-init phase cannot be emitted; the body below reproduces the
+// retail's second pass (the 0.0f InitValue pass + callback zeroing) which
+// sets the same final object state as retail.
 AxManager::AxManager()
     : mOutputMode(OUTPUT_MODE_STEREO),
       mZeroBufferAddress(NULL),
       mInitialized(false),
       mUpdateVoicePrioFlag(true),
       mOldAidCallback(NULL),
-      mResetReadyCounter(-1),
-      mDiskError(false) {
+      mResetReadyCounter(-1) {
 
-    mMainOutVolume.InitValue(1.0f);
-    mMasterVolume.InitValue(1.0f);
-    mVolumeForReset.InitValue(1.0f);
+    mMainOutVolume.InitValue(lbl_eu_80669E7C);
+    mMasterVolume.InitValue(lbl_eu_80669E7C);
+    mVolumeForReset.InitValue(lbl_eu_80669E7C);
 
     for (int i = 0; i < AUX_BUS_NUM; i++) {
-        mAuxFadeVolume[i].InitValue(1.0f);
-        mAuxUserVolume[i].InitValue(1.0f);
+        mAuxFadeVolume[i].InitValue(lbl_eu_80669E7C);
+        mAuxUserVolume[i].InitValue(lbl_eu_80669E7C);
         mAuxCallback[i] = NULL;
-        mAuxCallbackContext[i] = 0;
+        mAuxCallbackContext[i] = NULL;
+        reinterpret_cast<AxManagerTailView*>(this)->field_0xF4[i] = 0;
     }
 }
 
@@ -420,6 +450,43 @@ void AxManager::AiDmaCallbackFunc() {
         r.mResetReadyCounter--;
     }
 }
+
+// ---------------------------------------------------------------------------
+// Biquad filter preset destructors (see the note at the top of this file).
+// The filter classes are stateless, so each destructor body is empty; MWCC
+// emits the standard "delete when this != 0 and flag != 0" epilogue calling
+// __dl__FPv, matching the retail __dt__ bodies.
+// ---------------------------------------------------------------------------
+class BiquadFilterLpf {
+public:
+    ~BiquadFilterLpf();
+};
+
+class BiquadFilterHpf {
+public:
+    ~BiquadFilterHpf();
+};
+
+class BiquadFilterBpf512 {
+public:
+    ~BiquadFilterBpf512();
+};
+
+class BiquadFilterBpf1024 {
+public:
+    ~BiquadFilterBpf1024();
+};
+
+class BiquadFilterBpf2048 {
+public:
+    ~BiquadFilterBpf2048();
+};
+
+BiquadFilterLpf::~BiquadFilterLpf() {}
+BiquadFilterHpf::~BiquadFilterHpf() {}
+BiquadFilterBpf512::~BiquadFilterBpf512() {}
+BiquadFilterBpf1024::~BiquadFilterBpf1024() {}
+BiquadFilterBpf2048::~BiquadFilterBpf2048() {}
 
 } // namespace detail
 } // namespace snd

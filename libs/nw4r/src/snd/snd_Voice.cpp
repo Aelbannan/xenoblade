@@ -56,8 +56,6 @@ struct VoiceLayout {
     float mVeTargetVolume;                         // 0x110
     int field_0x114;                               // 0x114 (PanMode)
     int field_0x118;                               // 0x118 (PanCurve)
-    u32 node_prev;                                 // 0x11C (LinkListNode prev)
-    u32 node_next;                                 // 0x120 (LinkListNode next)
 };
 
 static inline VoiceLayout& VoiceRef(Voice* self) {
@@ -115,6 +113,11 @@ Voice::Voice() {
     v.mIsStarted = false;
     v.mIsPause = false;
     v.mSyncFlag = 0;
+
+    // The list node is zeroed at the END of the body in retail (the implicit
+    // LinkListNode member ctor zeroes it early; the late stores keep the retail
+    // tail order and the extra early stores are the only node residue).
+    node.Init();
 
     for (int i = 0; i < CHANNEL_MAX; i++) {
         for (int j = 0; j < VOICES_MAX; j++) {

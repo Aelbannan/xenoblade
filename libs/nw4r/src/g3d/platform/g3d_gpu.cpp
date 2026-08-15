@@ -3,6 +3,15 @@
 
 #include <nw4r/g3d/platform/g3d_gpu.h>
 
+// Retail nw4r data-pool float constants (sdata2, owned by nw4r_data.o -
+// extern only). Named after the retail symbols so the generated sda21 float
+// relocations match retail exactly (instead of TU-local pool labels).
+extern const f32 lbl_eu_80669BCC;  // 1.0f
+extern const f32 lbl_eu_80669BD0;  // 0.5f
+extern const f32 lbl_eu_80669BD4;  // 2.0f
+extern const f32 lbl_eu_80669BD8;  // 256.0f (s11 fixed-point scale)
+extern const f32 lbl_eu_80669BDC;  // 1.0f
+
 namespace nw4r {
 namespace g3d {
 namespace fifo {
@@ -84,27 +93,139 @@ void GDResetCurrentMtx() {
 void GDSetCurrentMtx(const u32* pIdArray) {
     volatile unsigned char* const fifo = (volatile unsigned char*)0xCC008000;
 
-    u32 a0 = pIdArray[0];
-    u32 a1 = pIdArray[1];
-    u32 a2 = pIdArray[2];
-    u32 a3 = pIdArray[3];
-    u32 b0 = pIdArray[4];
-    u32 b1 = pIdArray[5];
-    u32 b2 = pIdArray[6];
-    u32 b3 = pIdArray[7];
+    // BP register 0x18 (current matrix id): pack both matrix ids into the
+    // two 32-bit words with their 6-bit fields pre-shifted.
+    u32 w0 = (pIdArray[0] << 6) | (pIdArray[1] << 12) | (pIdArray[2] << 18) |
+             (pIdArray[3] << 24);
+    u32 w1 = pIdArray[4] | (pIdArray[5] << 6) | (pIdArray[6] << 12) |
+             (pIdArray[7] << 18);
 
     *fifo = 0x10;
     *(volatile unsigned short*)fifo = 0x0001;
     *(volatile unsigned short*)fifo = 0x1018;
-    *(volatile unsigned int*)fifo =
-        (a0 << 6) | (a1 << 12) | (a2 << 18) | (a3 << 24);
-    *(volatile unsigned int*)fifo =
-        b0 | (b1 << 6) | (b2 << 12) | (b3 << 18);
+    *(volatile unsigned int*)fifo = w0;
+    *(volatile unsigned int*)fifo = w1;
+}
+
+void GDLoadTexMtxImm3x3(const math::MTX33& rMtx, u32 id) {
+    // Promote the 3x3 matrix to a 3x4 (identity translation column) and pass
+    // it straight to GXLoadTexMtxImm.
+    math::MTX34 mtx;
+    mtx.m[0][0] = rMtx.m[0][0];
+    mtx.m[0][1] = rMtx.m[0][1];
+    mtx.m[0][2] = rMtx.m[0][2];
+    mtx.m[0][3] = lbl_eu_80669BDC;
+    mtx.m[1][0] = rMtx.m[1][0];
+    mtx.m[1][1] = rMtx.m[1][1];
+    mtx.m[1][2] = rMtx.m[1][2];
+    mtx.m[1][3] = lbl_eu_80669BDC;
+    mtx.m[2][0] = rMtx.m[2][0];
+    mtx.m[2][1] = rMtx.m[2][1];
+    mtx.m[2][2] = rMtx.m[2][2];
+    mtx.m[2][3] = lbl_eu_80669BDC;
+    GXLoadTexMtxImm(mtx.mtx, id, GX_MTX_3x4);
+}
+
+void GDSetIndTexMtx(u32 id, const math::MTX34& rMtx) {
+    volatile unsigned char* const fifo = (volatile unsigned char*)0xCC008000;
+
+    // Top two rows of the 3x4 matrix (the offset matrix).
+    f32 m00 = rMtx.m[0][0];
+    f32 m01 = rMtx.m[0][1];
+    f32 m02 = rMtx.m[0][2];
+    f32 m10 = rMtx.m[1][0];
+    f32 m11 = rMtx.m[1][1];
+    f32 m12 = rMtx.m[1][2];
+
+    f32 a00 = math::FAbs(m00);
+    f32 a01 = math::FAbs(m01);
+    f32 a02 = math::FAbs(m02);
+    f32 a10 = math::FAbs(m10);
+    f32 a11 = math::FAbs(m11);
+    f32 a12 = math::FAbs(m12);
+
+    s8 scale = 0;
+
+    if (a00 >= lbl_eu_80669BCC || a01 >= lbl_eu_80669BCC ||
+        a02 >= lbl_eu_80669BCC || a10 >= lbl_eu_80669BCC ||
+        a11 >= lbl_eu_80669BCC || a12 >= lbl_eu_80669BCC) {
+        // Scale down: halve every element until the largest |value| <= 1.0f.
+        do {
+            m00 *= lbl_eu_80669BD0;
+            m01 *= lbl_eu_80669BD0;
+            m02 *= lbl_eu_80669BD0;
+            m10 *= lbl_eu_80669BD0;
+            m11 *= lbl_eu_80669BD0;
+            m12 *= lbl_eu_80669BD0;
+            a00 *= lbl_eu_80669BD0;
+            a01 *= lbl_eu_80669BD0;
+            a02 *= lbl_eu_80669BD0;
+            a10 *= lbl_eu_80669BD0;
+            a11 *= lbl_eu_80669BD0;
+            a12 *= lbl_eu_80669BD0;
+            scale++;
+        } while (scale < 46 &&
+                 (a00 >= lbl_eu_80669BCC || a01 >= lbl_eu_80669BCC ||
+                  a02 >= lbl_eu_80669BCC || a10 >= lbl_eu_80669BCC ||
+                  a11 >= lbl_eu_80669BCC || a12 >= lbl_eu_80669BCC));
+    } else {
+        // Scale up: double every element until the largest |value| >= 0.5f.
+        if (a00 < lbl_eu_80669BD0 && a01 < lbl_eu_80669BD0 &&
+            a02 < lbl_eu_80669BD0 && a10 < lbl_eu_80669BD0 &&
+            a11 < lbl_eu_80669BD0 && a12 < lbl_eu_80669BD0) {
+            do {
+                m00 *= lbl_eu_80669BD4;
+                m01 *= lbl_eu_80669BD4;
+                m02 *= lbl_eu_80669BD4;
+                m10 *= lbl_eu_80669BD4;
+                m11 *= lbl_eu_80669BD4;
+                m12 *= lbl_eu_80669BD4;
+                a00 *= lbl_eu_80669BD4;
+                a01 *= lbl_eu_80669BD4;
+                a02 *= lbl_eu_80669BD4;
+                a10 *= lbl_eu_80669BD4;
+                a11 *= lbl_eu_80669BD4;
+                a12 *= lbl_eu_80669BD4;
+                scale--;
+            } while (a00 < lbl_eu_80669BD0 && a01 < lbl_eu_80669BD0 &&
+                     a02 < lbl_eu_80669BD0 && a10 < lbl_eu_80669BD0 &&
+                     a11 < lbl_eu_80669BD0 && a12 < lbl_eu_80669BD0 &&
+                     scale > -17);
+        }
+    }
+
+    // Encode as three XF indirect-matrix register writes. Each word carries an
+    // 11-bit fixed-point element pair plus a 2-bit slice of the 6-bit scale
+    // exponent (scale + 17) and the XF register id in the top byte.
+    u32 exp = (u32)(scale + 17);
+
+    s32 w00 = (s32)(m00 * lbl_eu_80669BD8);
+    s32 w01 = (s32)(m01 * lbl_eu_80669BD8);
+    s32 w02 = (s32)(m02 * lbl_eu_80669BD8);
+    s32 w10 = (s32)(m10 * lbl_eu_80669BD8);
+    s32 w11 = (s32)(m11 * lbl_eu_80669BD8);
+    s32 w12 = (s32)(m12 * lbl_eu_80669BD8);
+
+    u32 hi0 = (exp & 3) << 22 | (id + 6) << 24;
+    u32 lo0 = (((u32)w10 & 0x7FF) << 11) | ((u32)w00 & 0x7FF);
+    u32 word0 = hi0 | lo0;
+
+    u32 hi1 = ((exp >> 2) & 3) << 22 | (id + 7) << 24;
+    u32 lo1 = (((u32)w11 & 0x7FF) << 11) | ((u32)w01 & 0x7FF);
+    u32 word1 = hi1 | lo1;
+
+    u32 hi2 = ((exp >> 4) & 3) << 22 | (id + 8) << 24;
+    u32 lo2 = (((u32)w12 & 0x7FF) << 11) | ((u32)w02 & 0x7FF);
+    u32 word2 = hi2 | lo2;
+
+    *fifo = 0x61;
+    *(volatile unsigned int*)fifo = word0;
+    *fifo = 0x61;
+    *(volatile unsigned int*)fifo = word1;
+    *fifo = 0x61;
+    *(volatile unsigned int*)fifo = word2;
 }
 
 } // namespace fifo
 } // namespace g3d
 } // namespace nw4r
-
-extern "C" void GDSetIndTexMtx__Q34nw4r3g3d4fifoFUlRCQ34nw4r4math5MTX34(u32 id, const nw4r::math::MTX34& rMtx) {}
-extern "C" void GDLoadTexMtxImm3x3__Q34nw4r3g3d4fifoFRCQ34nw4r4math5MTX33Ul(const nw4r::math::MTX33& rMtx, u32 id) {}

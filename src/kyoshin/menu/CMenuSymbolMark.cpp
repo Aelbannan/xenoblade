@@ -229,10 +229,14 @@ void CArrow3D::Term() {
         delete layout;
         mLayout = 0;
     }
-    if (this) {
-        void* cb = (u8*)this + 0x54;
-        removeRenderCB__4CScnFP10IScnRender(lbl_eu_80663E14, cb);
+    // The `if (this)` + reassign idiom splits the IScnRender subobject
+    // address (this+0x54) into its own addi; the call is unconditional
+    // (CCol6System::Term pattern).
+    IScnRender* render = reinterpret_cast<IScnRender*>(this);
+    if (this != 0) {
+        render = reinterpret_cast<IScnRender*>(&mIScnRenderVt);
     }
+    removeRenderCB__4CScnFP10IScnRender(lbl_eu_80663E14, render);
 }
 
 // ---------- CArrow3D::Init ----------

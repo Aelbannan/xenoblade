@@ -694,6 +694,8 @@ void func_80227DE8(CQstLogList* self) {
     func_80138078(1);
 }
 
+#pragma push
+#pragma optimize_for_size on
 CQstLogList::~CQstLogList() {
     // 8x0x400 quest-info array; the element dtor is the C-style
     // __dt__80227030 (defined in CMenuQstCnt.cpp). The addic-style null guard
@@ -710,6 +712,7 @@ CQstLogList::~CQstLogList() {
     __dt__6CCur18Fv(&mCur18[0], -1);
     __dt__17UnkClass_8045F564Fv(&mUnk04[0], -1);
 }
+#pragma pop
 
 // Quest-log list constructor (retail symbol __ct__CQstLogList, C-linkage
 // ctor name). Builds the sub-objects, primes the shared quest text table

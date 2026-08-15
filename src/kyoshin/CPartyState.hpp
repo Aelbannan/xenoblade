@@ -67,6 +67,12 @@ struct CPartySlotEntry {
     u8 _pad04[0x20 - 0x04];
 };
 
+// 5-float position table copy used by func_801FE39C (matches the retail's
+// mtctr-2 + tail copy loop).
+struct CPartyStateFiveFloats {
+    float f[5];
+};
+
 // 0xC4-byte slot record: 6 entries (0x00..0xC0) + pad.
 struct CPartySlotRecord {
     CPartySlotEntry entries[6];  // 0x00
@@ -159,15 +165,15 @@ extern "C" int* func_8009ECB0();
 extern "C" void func_8009E168(int*, u8, u8);
 extern "C" u8 func_801392C8(u32);
 extern "C" u32 func_8009CF8C(u32);
-extern "C" u16 func_80136254(const char*, const char*, int);
-extern "C" char* func_80138F78(u32);
+extern "C" u16 func_80136254(const void*, const void*, int);
+extern "C" char* func_80138F78(u16);
 
 // Party-slot data-table pointers (.sdata).
 extern char* lbl_eu_80664090;
 extern char* lbl_eu_80664098;
 
 // Character stats getters (unmangled retail symbols).
-extern "C" u32 func_801355BC();
+extern "C" char* func_801355BC();
 extern "C" u32 func_801355D8();
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" char* func_801571FC();
@@ -178,10 +184,10 @@ extern "C" u8 func_8013600C(const char*, const char*, u32);
 // Layout text/pane binding helpers (unmangled retail symbols; the canonical
 // code_80135FDC.hpp / CItemBoxGrid.hpp declarations conflict with
 // CEquipItemBox.hpp in this TU).
-extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
-extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
+extern "C" void func_80136B4C(nw4r::lyt::Layout*, const char*, const char*, u32);
+extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
 extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
-extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+extern "C" void func_80124270(void*, u32);
 
 // Layout + anim builders (retail symbols are the C++ mangled names).
 void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
@@ -218,7 +224,7 @@ extern "C" void func_801FE0C8(CPartyState*);
 extern "C" void func_801FE20C(CPartyState*, u32, const char*);
 
 // Cursor per-frame update (defined in the CCur unit).
-extern "C" void func_801D202C(CBaseCur*);
+extern "C" void func_801D202C(void*);
 
 // Embedded cursor ctor/dtor (defined in the CCur unit).
 extern "C" CBaseCur* __ct__CCur22(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);

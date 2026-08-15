@@ -19,7 +19,7 @@ void* func_800CA538(void* self) { return (void*)((u8*)self + 0x68); }
 // the +0x368 CPartsChange at the driver sub-object's +0x98 event id.
 void func_800CA540(cf::CfObjectImplObj* self) {
     func_800CAB00((CfObjectImplMoveObj*)self);
-    func_80192E80(&self->mPartsChange, 0,
+    func_80192E80(reinterpret_cast<cf::CPartsChange*>(self->mPartsChange), 0,
                   (PartsChangeIf*)self->field_14->field_0x98);
 }
 
@@ -55,9 +55,14 @@ void func_800CA590(cf::CfObjectImplObj* self, u32 id, cf::CfObjCmdParam* param) 
 
 // us-800cb0a4: deleting destructor - release the embedded CPartsChange
 // (MWCC auto-emits the null-check, the -1 member-dtor flag and the
-// delete-flag tail).
+// delete-flag tail). The member dtor is called DIRECTLY (retail reloc is
+// __dt__Q22cf12CPartsChangeFv, no vtable dispatch, no vptr re-store); the
+// C++ virtual member-dtor syntax would emit a vtable dispatch + vptr store.
+// __declspec(novtable) on the class suppresses the dtor's implicit vptr
+// re-store (class is never instantiated; retail dtor has no store).
+extern "C" void __dt__Q22cf12CPartsChangeFv(cf::CPartsChange* self, int flags);
 cf::CfObjectImplObj::~CfObjectImplObj() {
-    mPartsChange.~CPartsChange();
+    __dt__Q22cf12CPartsChangeFv(reinterpret_cast<cf::CPartsChange*>(mPartsChange), -1);
 }
 
 void func_800CEE28(void* self);

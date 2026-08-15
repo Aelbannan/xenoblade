@@ -102,6 +102,33 @@ def _function_bytes(
 class GateAcceptanceTests(unittest.TestCase):
     """The sound-accept and sound-reject matrix (doc 31 §1, §3 test plan)."""
 
+    def test_branchy_cross_pair_disjointness_sat_fallback(self) -> None:
+        # 2026-08: branchy reg-swap pairs whose path conditions are built from
+        # per-side byte-read memory terms — the cheap simplify leaves
+        # ``And(X, Not(X))`` unreduced (equalities not structurally identical
+        # across sides), so the cross-path pairs (true-retail x false-decomp)
+        # were compared instead of skipped and the witness rejected on a
+        # live-only lane (e.g. gpr r0).  The bounded QF_BV unsat fallback
+        # (``_path_conditions_disjoint_sat``) proves the cross pairs cannot
+        # co-occur; the same-path pairs agree under rho r5<->r6.
+        # retail: lwz r6,4(r3); lwz r0,4(r4); cmpl r6,r0; bne; li r3,1; blr; li r3,0; blr
+        # decomp: same with r5<->r6 swapped (volatile scratch).
+        cmpl = lambda bf, ra, rb: (
+            (31 << 26) | ((bf & 7) << 23) | ((ra & 31) << 16)
+            | ((rb & 31) << 11) | (32 << 1)
+        )
+        original, candidate = _decode_pair(
+            [_enc_primary(32, 6, 3, 4), _enc_primary(32, 0, 4, 4),
+             cmpl(0, 6, 0), 0x40820010, _enc_primary(14, 3, 0, 1), _LR,
+             _enc_primary(14, 3, 0, 0), _LR],
+            [_enc_primary(32, 5, 3, 4), _enc_primary(32, 0, 4, 4),
+             cmpl(0, 5, 0), 0x40820010, _enc_primary(14, 3, 0, 1), _LR,
+             _enc_primary(14, 3, 0, 0), _LR],
+        )
+        outcome = certify_renaming_witness(original, candidate)
+        self.assertTrue(outcome.certified, outcome.failure)
+        self.assertEqual(outcome.rho.gpr, {0: 0, 3: 3, 4: 4, 6: 5})
+
     def test_pure_volatile_color_swap_accepted(self) -> None:
         # retail: lwz r5,0(r3); add r6,r5,r4; stw r6,8(r3); blr
         # decomp: same with r5<->r6 swapped (volatile scratch, write-before-read)

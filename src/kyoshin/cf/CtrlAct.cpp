@@ -448,7 +448,6 @@ extern "C" { extern const float lbl_eu_80666D4C; }  // 100.0f (divisor)
 // the (f32)prod conversion references it automatically from the pool.
 typedef int (*CAtk84Fn)(void);
 float cf::CAttackParam::CAttackParam_UnkVirtualFunc4() {
-    // unk84 is a raw vtable pointer: [this+0x84] -> slot 3 -> int return.
     CAtk84Fn* vt = ((CAtk84Fn**)this)[33];
     int v = vt[3]();
     int prod = (int)unk6C[4] * (v - 1);

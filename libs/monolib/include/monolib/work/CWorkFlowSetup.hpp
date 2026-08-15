@@ -6,7 +6,7 @@
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/work/CWorkUtil.hpp"
 
-class CWorkFlowSetup : public CWorkThread{
+class __declspec(novtable) CWorkFlowSetup : public CWorkThread{
 public:
     static CWorkFlowSetup* getInstance();
 

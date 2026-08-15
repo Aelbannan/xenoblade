@@ -148,10 +148,16 @@ extern "C" void* func_8009D764(cf::CtrlObjectParamInit* p) {
 extern "C" u8* func_8009D790(s16* arr, u32 idx) {
     // Equip-table helper: when the s16 entry is valid (> -1), resolve the
     // item instance for the category and entry value; 0 otherwise.
+    // The volatile read reproduces retail's reload of arr[idx] for the call
+    // argument (retail lhax r4,r3,r5 reloads; the cat ternary reuses r0 and
+    // clobbers the first read). Without volatile, MWCC CSEs the two reads
+    // into one lhax + or r4,r0,r0 and colors cat into r3 (MWCC_REFERENCE
+    // instruction-selection: split-form reads need a volatile/walked read).
+    volatile s16* q = &arr[idx];
     u8* result = 0;
-    if (arr[idx] > -1) {
+    if (*q > -1) {
         result = reinterpret_cast<u8*>(
-            func_80157C4C(idx > 4 ? 2 : idx + 4, arr[idx]));
+            func_80157C4C(idx > 4 ? 2 : idx + 4, *q));
     }
     return result;
 }
@@ -669,6 +675,7 @@ extern "C" char* func_8009EB2C(u16 arg1, u16 arg2, const char* srcStr) {
     // The copy goes through a u32-first view so the whole block copies as
     // words (retail lwz 0->36 then word pairs); a plain struct assign emits
     // lha/sth for the s16 pair at +0/+2 (0x70 vs retail 0x68).
+    const char* s = srcStr;
     cf::CtrlObjectParamCopyView* work =
         reinterpret_cast<cf::CtrlObjectParamCopyView*>(lbl_eu_80663E88);
     struct CopyWords {
@@ -678,7 +685,7 @@ extern "C" char* func_8009EB2C(u16 arg1, u16 arg2, const char* srcStr) {
     *(CopyWords*)&work->dst = *(CopyWords*)&work->src;
     work->src.field_02 = (s16)arg1;
     work->src.field_00 = (s16)arg2;
-    return strncpy(work->src.str, srcStr, 0x1f);
+    return strncpy(work->src.str, s, 0x1f);
 }
 
 void func_8009EB94(unsigned int idx, int flag) {

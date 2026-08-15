@@ -250,10 +250,11 @@ extern "C" bool func_801AC09C(u32 flags) {
     } else {
         return false;
     }
-    if (lbl_eu_80664388 == 0) {
-        return false;
+    if (lbl_eu_80664388 != 0 &&
+        lbl_eu_80664388->mEntries[index].mState != 0) {
+        return true;
     }
-    return lbl_eu_80664388->mEntries[index].mState != 0;
+    return false;
 }
 
 void func_801AC124(){}

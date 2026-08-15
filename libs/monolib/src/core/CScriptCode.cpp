@@ -20,12 +20,105 @@
 #include "monolib/core/CProcRoot.hpp"
 #include "monolib/core/CViewRoot.hpp"
 
-// CScriptCode vtable (0x8056B418), name string (0x8052254C) and global
-// singleton pointer (0x806655B0) data labels.
+// CScriptCode vtable (0x8056B418), name strings (0x80522540/0x8052254C) and
+// global singleton pointer (0x806655B0) data labels.
 // Retail sbss singleton slot lbl_eu_806655B0 (8 bytes; word 0 in use) - blob monolibdata1d dissolve
 void* lbl_eu_806655B0[2];
-extern const u8 lbl_eu_8056B418[];
+
+extern "C" {
+// Vtable/RTTI targets referenced by the CScriptCode data definitions below.
+// (dtor + wkStandbyLogout are defined later in this TU; forward declared so
+// the vtable initializer above them resolves the retail names.)
+extern void __dt__11CScriptCodeFv(void* self, int freeFlag);
+extern bool wkStandbyLogout__11CScriptCodeFv(void* self);
+// IWorkEvent virtual handlers (weak defaults live in kyoshin/CGame.cpp).
+extern int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
+extern int OnFileEvent__10IWorkEventFP10CEventFile(void*);
+extern int WorkEvent3__10IWorkEventFPv(void*);
+extern int WorkEvent4__10IWorkEventFv();
+extern void OnPauseTrigger__10IWorkEventFb(int);
+extern int WorkEvent6__10IWorkEventFv();
+extern int WorkEvent7__10IWorkEventFv();
+extern int WorkEvent8__10IWorkEventFv();
+extern int WorkEvent9__10IWorkEventFv();
+extern int WorkEvent10__10IWorkEventFv();
+extern int WorkEvent11__10IWorkEventFv();
+extern int WorkEvent12__10IWorkEventFv();
+extern int WorkEvent13__10IWorkEventFv();
+extern int WorkEvent14__10IWorkEventFv();
+extern int WorkEvent15__10IWorkEventFv();
+extern int WorkEvent16__10IWorkEventFv();
+extern int WorkEvent17__10IWorkEventFv();
+extern int WorkEvent18__10IWorkEventFv();
+extern int WorkEvent19__10IWorkEventFv();
+extern int WorkEvent20__10IWorkEventFv();
+extern int WorkEvent21__10IWorkEventFv();
+extern int WorkEvent22__10IWorkEventFv();
+extern int WorkEvent23__10IWorkEventFv();
+extern int WorkEvent24__10IWorkEventFv();
+extern int WorkEvent25__10IWorkEventFv();
+extern int WorkEvent26__10IWorkEventFv();
+extern int WorkEvent27__10IWorkEventFv();
+extern int WorkEvent28__10IWorkEventFv();
+extern int WorkEvent29__10IWorkEventFv();
+extern int WorkEvent30__10IWorkEventFv();
+extern void WorkEvent31__10IWorkEventFv();
+// CWorkThread work-method vtable slots.
+extern void wkUpdate__11CWorkThreadFv();
+extern void wkRender__11CWorkThreadFv();
+extern void wkRenderAfter__11CWorkThreadFv();
+extern bool wkStandbyLogin__11CWorkThreadFv();
+extern void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
+// RTTI locators (defined by kyoshin/CGame.cpp, .sdata 0x806618A0/0x806618A8).
+extern void* __RTTI__10IWorkEvent;
+extern void* __RTTI__11CWorkThread;
+}
+
+// --- Blob monolibdata1.s dissolve: this TU owns .data 0x8056B418-0x8056B4D0,
+// .rodata 0x80522540-0x80522558, .sdata 0x80663558-0x80663560, .sbss
+// 0x806655B0-0x806655B8. ---
+
+// RTTI name strings (.rodata).
+extern const char lbl_eu_80522540[];
 extern const char lbl_eu_8052254C[];
+// RTTI locator (.sdata, 8 bytes): { name, base-list }.
+extern void* lbl_eu_80663558[2];
+
+const char lbl_eu_80522540[] = "CScriptCode";
+const char lbl_eu_8052254C[] = "CScriptCode";
+
+// CScriptCode vtable (.data, 0xA0): [rtti, 0, dtor, IWorkEvent 1-31, wkUpdate/
+// wkRender/wkRenderAfter/wkStandbyLogin (CWorkThread slots), wkStandbyLogout
+// (CScriptCode), wkStandbyExceptionRetry].
+u32 lbl_eu_8056B418[0xA0 / 4] = {
+    (u32)&lbl_eu_80663558, 0, (u32)&__dt__11CScriptCodeFv,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
+    (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
+    (u32)&wkUpdate__11CWorkThreadFv, (u32)&wkRender__11CWorkThreadFv,
+    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__11CWorkThreadFv,
+    (u32)&wkStandbyLogout__11CScriptCodeFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+};
+
+// RTTI base list (.data, 0x18): [IWorkEvent, 0, CWorkThread, 0, 0, 0].
+u32 lbl_eu_8056B4B8[6] = {
+    (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, 0, 0,
+};
+
+void* lbl_eu_80663558[2] = { (void*)lbl_eu_80522540, (void*)lbl_eu_8056B4B8 };
 
 // Layout of CScriptCode. The build's CWorkThread header size is unreliable, so
 // the base is carried as an opaque block and every field is placed at its exact
@@ -154,8 +247,8 @@ extern "C" void func_8043A1DC__11CScriptCodeFv(void* self, u8* pData, u32 dataSi
 extern "C" s16 func_8043A2F8__11CScriptCodeFv(void* self, u8* pOut, u8* pIn) {
     int base = 0;
     s16 seg = 0;
-    s16 pos = 0;
     char c;
+    s16 pos = 0;
 
     for (;;) {
         c = (char)*pIn;

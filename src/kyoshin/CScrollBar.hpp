@@ -26,9 +26,21 @@ extern const float lbl_eu_8066813C; // 0.0 - scroll-stick ratio lower clamp
 extern const float lbl_eu_80668150; // scroll animation frame step
 extern const float lbl_eu_80668154; // entering-done threshold
 
-// UnkClass_8045F564 ctor; called manually so the vtable store lands first
-// (retail ctor order), avoiding an implicit member-ctor at the top of the body.
-extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
+// Cross-TU layout helpers (kyoshin .text). Retail references these by their
+// unmangled C names (US split strips the C++ mangling), so they need C
+// linkage declarations - same convention as CSysWin/CKizunagram/etc.
+extern "C" void func_80127BC4(float* dst, float* src); // copy 2 floats (VEC2)
+extern "C" void func_80124270(void* pane, u32 a); // set pane visible flag
+
+/* Sets mVtbl before UnkClass_8045F564 is constructed (retail ctor order:
+vtable store first, then the member ctor). Same idiom as CBatteryVtblBase. */
+struct CScrollBarVtblBase {
+    void* mVtbl; // 0x0 - lbl_eu_80534DD8
+
+    CScrollBarVtblBase() {
+        mVtbl = lbl_eu_80534DD8;
+    }
+};
 
 /* Vertical/horizontal scroll bar widget. Layout-compatible with IWorkEvent
 (vptr @ +0) for CDeviceFile::readFile, but not a C++ IWorkEvent subclass
@@ -41,8 +53,7 @@ State machine (mState):
   - 3: leaving (animating out)
 
 mActive is 1 when idle/complete, 0 during transitions. */
-struct CScrollBar {
-    void* mVtbl; // 0x0 - lbl_eu_80534DD8
+struct CScrollBar : CScrollBarVtblBase {
     UnkClass_8045F564 mMemRegion; // 0x4 - scratch region for layout build
     CFileHandle* mFileHandle; // 0x14
     nw4r::lyt::ArcResourceAccessor* mAccessor; // 0x18

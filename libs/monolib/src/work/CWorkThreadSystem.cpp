@@ -1,16 +1,17 @@
 #include "monolib/work.hpp"
 #include "monolib/util.hpp"
 
-// Static data members are owned by the retail data blob (monolibdata*.s);
-// declare them extern under the retail symbol names so this TU defines no
-// data. Addresses from symbols.txt:
-//   lbl_eu_80663518 (.sdata) = scRegionName   (const char*)
-//   lbl_eu_8066351C (.sdata) = sAllocHandle   (mtl::ALLOC_HANDLE)
-//   lbl_eu_80665590 (.sbss)  = sMemAvailable  (BOOL)
-//   lbl_eu_80665594 (.sbss)  = sAllocFlags    (u32*)
-//   lbl_eu_80665598 (.sbss)  = sWorkThreads   (CWorkThread**)
+// These symbols are owned by this TU (monolibdata1/monolibdata1d blob
+// dissolve). Addresses from symbols.txt:
+//   lbl_eu_80522460 (.rodata) = RTTI/region name string "WorkThreadSystem"
+//   lbl_eu_80663518 (.sdata)  = scRegionName   (const char* -> name string)
+//   lbl_eu_8066351C (.sdata)  = sAllocHandle   (mtl::ALLOC_HANDLE)  [defined in CWorkThread.cpp (owner)]
+//   lbl_eu_80665590 (.sbss)   = sMemAvailable  (BOOL)  - defined here
+//   lbl_eu_80665594 (.sbss)   = sAllocFlags    (u32*)  [defined in CWorkThread.cpp (owner)]
+//   lbl_eu_80665598 (.sbss)   = sWorkThreads   (CWorkThread**) [defined in CWorkThread.cpp (owner)]
 extern "C" {
-    extern const char* lbl_eu_80663518;
+    extern const char lbl_eu_80522460[] = "WorkThreadSystem";
+    const char* lbl_eu_80663518 = lbl_eu_80522460;
     extern u32 lbl_eu_8066351C;
     BOOL lbl_eu_80665590;              // sMemAvailable - defined here (blob monolibdata1d dissolve)
     extern u32* lbl_eu_80665594;       // sAllocFlags - defined in CWorkThread.cpp (owner)

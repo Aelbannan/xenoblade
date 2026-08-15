@@ -300,19 +300,19 @@ void mwsffrm_SetPicUsrInf(void* a, void* b, void* out) {
 extern void* SUD_SearchSudDat(void* a, void* b, void* c, void* d);
 
 void mwsffrm_SetSudDatInf(void* a, void* b, void* out) {
+    void* r1 = 0;
+    void* r2 = 0;
     void* sud = *(void**)((u8*)b + 0x38);
     void* p = *(void**)((u8*)sud + 0);
-    void* q = *(void**)((u8*)sud + 4);
-    void* r1;
-    void* r2;
-    *(s32*)((u8*)out + 0xa0) = (s32)p;
-    *(s32*)((u8*)out + 0xa4) = (s32)q;
-    if (p != NULL && (s32)(u32)q >= 4) {
+    s32 q = *(s32*)((u8*)sud + 4);
+    *(s32*)((u8*)out + 0xa0) = 0;
+    *(s32*)((u8*)out + 0xa4) = 0;
+    if (p != NULL && q > 4) {
         SUD_SearchSudDat((u8*)p + 4, (u8*)q - 4, &r1, &r2);
-        if (r1 != NULL && (s32)(u32)r2 >= 0) {
-            *(s32*)((u8*)out + 0xa0) = (s32)r1;
-            *(s32*)((u8*)out + 0xa4) = (s32)r2;
-        }
+    }
+    if (r1 != NULL && (s32)r2 > 0) {
+        *(s32*)((u8*)out + 0xa0) = (s32)r1;
+        *(s32*)((u8*)out + 0xa4) = (s32)r2;
     }
 }
 

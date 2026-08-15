@@ -1210,13 +1210,14 @@ extern "C" int func_80441310__10CViewFrameFP11CWorkThread(CViewFrame* self, CWor
 extern "C" void __ct__CViewFrame(CViewFrame* self) {
     // Preload the sdata2 float constants so MWCC hoists the lfs loads to the
     // top (retail loads f5..f0 in first-use order); declaration order drives
-    // the register assignment (first declared → f5).
-    float fZero = lbl_eu_8066A2E8; // 0.0
-    float fHalf = lbl_eu_8066A2EC; // 0.5
-    float fOne = lbl_eu_8066A2F0; // 1.0
-    float f08 = lbl_eu_8066A2F4; // 0.8
-    float f04 = lbl_eu_8066A2F8; // 0.4
+    // the register assignment — the retail claims HIGH first (fZero lands in
+    // f5), so the declarations are REVERSED vs the use order.
     float f06 = lbl_eu_8066A2FC; // 0.6
+    float f04 = lbl_eu_8066A2F8; // 0.4
+    float f08 = lbl_eu_8066A2F4; // 0.8
+    float fOne = lbl_eu_8066A2F0; // 1.0
+    float fHalf = lbl_eu_8066A2EC; // 0.5
+    float fZero = lbl_eu_8066A2E8; // 0.0
 
     self->mVtable = (void*)&lbl_eu_8056B700;
     self->mOwner = 0;

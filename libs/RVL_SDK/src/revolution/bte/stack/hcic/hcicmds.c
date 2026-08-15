@@ -948,9 +948,9 @@ int btsnd_hcic_write_link_super_tout(short handle, unsigned short timeout)
 void btsnd_hcic_write_cur_iac_lap(unsigned char *p, unsigned char num_laps, unsigned char *lap_array)
 {
     unsigned short len = (num_laps << 2) - num_laps + 4;
-    unsigned char *pp = p + 12;
     u16 len16 = (u16)len;
     u8 l3 = (u8)(len16 - 3);
+    unsigned char *pp = p + 12;
     int i, j;
 
     *(unsigned short *)(p + 2) = len;

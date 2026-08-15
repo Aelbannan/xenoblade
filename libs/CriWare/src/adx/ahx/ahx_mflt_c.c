@@ -12,6 +12,15 @@
  *   out[33..47]  = dot(a, b + 32*(33+i))         i = 0..14
  *   out[48]      = -sum(a[0..31])
  *   out[49..63]  = dot(a, b + 32*(33+i)), reversed
+ *
+ * The 32-tap dot product is written as 20 individual accumulate statements
+ * followed by a 12-tap chained expression. That statement boundary keeps
+ * MWCC's scheduler window shallow (loads run ~6 ahead like retail); a single
+ * 32-tap chain makes MWCC hoist ~10 loads ahead, which overflows the FPR
+ * scratch pool and forces extra callee-saved FPR claims (frame 0xB0 vs 0x90).
+ * The retail is a single f0 chain; the residual (+2 instr per pass) comes from
+ * the second statement's chain accumulating in a fresh register and copying
+ * back to f0.
  */
 
 extern float lbl_eu_80517548[];
@@ -37,25 +46,17 @@ extern float lbl_eu_80517548[];
     sum += (a)[17] * (bb)[17]; \
     sum += (a)[18] * (bb)[18]; \
     sum += (a)[19] * (bb)[19]; \
-    sum += (a)[20] * (bb)[20]; \
-    sum += (a)[21] * (bb)[21]; \
-    sum += (a)[22] * (bb)[22]; \
-    sum += (a)[23] * (bb)[23]; \
-    sum += (a)[24] * (bb)[24]; \
-    sum += (a)[25] * (bb)[25]; \
-    sum += (a)[26] * (bb)[26]; \
-    sum += (a)[27] * (bb)[27]; \
-    sum += (a)[28] * (bb)[28]; \
-    sum += (a)[29] * (bb)[29]; \
-    sum += (a)[30] * (bb)[30]; \
-    sum += (a)[31] * (bb)[31];
+    sum += (a)[20] * (bb)[20] + (a)[21] * (bb)[21] + (a)[22] * (bb)[22] + \
+           (a)[23] * (bb)[23] + (a)[24] * (bb)[24] + (a)[25] * (bb)[25] + \
+           (a)[26] * (bb)[26] + (a)[27] * (bb)[27] + (a)[28] * (bb)[28] + \
+           (a)[29] * (bb)[29] + (a)[30] * (bb)[30] + (a)[31] * (bb)[31];
 
 void ahxsbf_mult_flt_ex(float *a, float *b, float *out) {
     float *ofwd = out;
+    float *bb = b;
     float *orev = out + 0x20;
     float *ifwd = out + 0x21;
     float *irev = out + 0x3F;
-    float *bb = b;
     float sum;
     float s;
     s32 i = 0x10;

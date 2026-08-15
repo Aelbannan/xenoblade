@@ -1077,18 +1077,42 @@ void* __dt__80285954(void* self, int mode) {
     return self;
 }
 
-// func_80285994 (us-80287e18): MetroTRK hardware-ID setup. Retail calls
-// 5 cross-TU targets with MetroTRK message-table fragments:
-//   1. bl 0x8040708C (self+8, [self+4], base+0x97 "Invalid hardware ID passed from OS\n")
-//   2. bl 0x80404534 ([self+8], self+12, [self+4], base+0xAF "ed from OS\n")
-//   3. bl 0x80404534 ([self+8], self+16, [self+4], base+0xCC "to GDEV Hardware\n")
-//   4. virtual slot 36 on [self+8]
-//   5. bl 0x804144F0 (self)
-// string base = 0x8053C662 (MetroTRK message table). Blocked: call targets
-// 0x80404534 / 0x8040708C / 0x804144F0 have no symbols (undecompiled TUs),
-// so no reloc-identical externs are possible; stmw frame needs
-// optimize_for_size once the body is reconstructible.
-extern "C" void func_80285994(){}
+// func_80285994 (us-80287e18): layout-cursor setup. Retail calls (relocs now
+// resolved — the old comment's "MetroTRK/undecompiled-TU" blocker is stale):
+//   1. func_80136E84(&mpLayout, mArcResAcc, "mf00_reg00_curs07.brlyt")
+//   2. func_80136F08(mpLayout, &mpAnimTrans0, mArcResAcc, "..._roop.brlan")
+//   3. func_80136F08(mpLayout, &mpAnimTrans1, mArcResAcc, "..._on.brlan")
+//   4. virtual slot 36 (vtable+0x24) on mpLayout
+//   5. func_80285B70(cur)
+// The name strings are pooled at lbl_eu_8050EFDC+0x97/0xAF/0xCC.
+struct CEIBCurLayoutVt {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void _v24();  // vtable+0x24 (slot 36)
+};
+#pragma push
+#pragma optimize_for_size on
+extern "C" void func_80285994(CEIBCur* cur) {
+    func_80136E84((nw4r::lyt::Layout**)&cur->mpLayout,
+                  (nw4r::lyt::ArcResourceAccessor*)cur->mArcResAcc,
+                  &lbl_eu_8050EFDC[0x97]);
+    func_80136F08((nw4r::lyt::Layout*)cur->mpLayout,
+                  (nw4r::lyt::AnimTransform**)&cur->mpAnimTrans0,
+                  (nw4r::lyt::ArcResourceAccessor*)cur->mArcResAcc,
+                  &lbl_eu_8050EFDC[0xAF]);
+    func_80136F08((nw4r::lyt::Layout*)cur->mpLayout,
+                  (nw4r::lyt::AnimTransform**)&cur->mpAnimTrans1,
+                  (nw4r::lyt::ArcResourceAccessor*)cur->mArcResAcc,
+                  &lbl_eu_8050EFDC[0xCC]);
+    reinterpret_cast<CEIBCurLayoutVt*>(cur->mpLayout)->_v24();
+    func_80285B70(cur);
+}
+#pragma pop
 
 // Per-frame cursor update: play the entry animation (mpAnimTrans0) when idle,
 // advance the page-cursor state when active, then animate the layout.
@@ -2333,15 +2357,25 @@ extern "C" void func_8028A5D8(CEquipItemBox* self, int a) {
 // noinline: retail callers emit a `bl` (same-TU dispatch stays out of line).
 #pragma push
 #pragma optimize_for_size on
+#pragma dont_inline on
+#pragma function_align 4
 extern "C" __declspec(noinline) void func_8028A9CC(CEquipItemBox* self, int a, int b) {
     func_8028AA64(self);
-    u8 v = (u8)func_801392E4(a);
-    if (v >= 4 && v <= 8) {
-        func_8028B7CC(self, a, b);
-    } else if (v == 2) {
+    int v = (u8)func_801392E4(a);
+    switch (v) {
+    case 2:
         func_8028AF98(self, a, b);
-    } else if (v == 3) {
+        break;
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+        func_8028B7CC(self, a, b);
+        break;
+    case 3:
         func_8028BE74(self, a, b);
+        break;
     }
 }
 #pragma pop
@@ -2353,7 +2387,7 @@ extern "C" __declspec(noinline) void func_8028A9CC(CEquipItemBox* self, int a, i
 // _savegpr_29 prologue for this 3-saved-reg frame.
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_8028AA64(CEquipItemBox* self) {
+extern "C" __declspec(noinline) void func_8028AA64(CEquipItemBox* self) {
     CEquipItemBoxPageStateView* view = (CEquipItemBoxPageStateView*)self;
     for (u8 i = 0; i < 0xc; i++) {
         view->field_210[i] = 0;

@@ -1,8 +1,20 @@
 #include <harness_catalog.h>
 #include <string.h>
 
+/* MPEG video bitstream decoder context (retail offsets).
+   The "vlc" handle passed to MPVBDEC_Init / MPVBDEC_StartFrame points
+   into this block (allocated by MPV_Init inside the Sofdec work area). */
+typedef struct MPVBDEC_CTX {
+    u8 field_0x0000[0x1100];  /* 0x0000 */
+    u32 dct_table[8];         /* 0x1100 reference DCT tables (32 bytes) */
+    u8 block_tbl[0x40];       /* 0x1120 permuted block-position table (64 bytes) */
+    u8 field_0x1160[0x80];    /* 0x1160 */
+    u8 clip_tbl[0x20];        /* 0x11E0 clip table (32 bytes) */
+    u32 vlc_param[12];        /* 0x1200 six (table ptr, size) pairs */
+} MPVBDEC_CTX;
+
 extern int UTY_MemcpyDword(u32 *, const u32 *, int);
-extern void MPVABDEC_Init(void *);
+extern void MPVABDEC_Init(void);
 
 extern u32 lbl_eu_8051BFC0[];  /* reference tables */
 extern u32 lbl_eu_80602A10[];  /* work area */
@@ -19,70 +31,63 @@ extern u32 lbl_eu_80603480[];
 extern u32 lbl_eu_80604644[];
 extern u32 lbl_eu_80604648[];
 
-/* Initialize MPEG video bitstream decoder */
-void MPVBDEC_Init(void *handle) {
+/* Initialize MPEG video bitstream decoder.
+   Builds the 64-byte permuted block-position table at ctx+0x1120 and the
+   companion work table at 0x80602A10, then loads the static DCT/VLC
+   reference tables and decoder parameters. */
+void MPVBDEC_Init(MPVBDEC_CTX *ctx) {
     u8 table[0x40];
     int i, j;
-    u8 *tmp;
-    u32 *src_words;
-    u32 *dst_words;
-    u32 offset;
+    u8 *work = (u8 *)lbl_eu_80602A10;    /* +0x00 */
+    u8 *tbl = (u8 *)lbl_eu_8051BFC0;     /* reference tables (live across calls) */
+    u32 *work2 = (u32 *)work + 0x10;     /* +0x40 */
+    u32 *work3 = (u32 *)work + 0x13;     /* +0x4C */
 
-    /* Build 64-byte lookup table on stack: values 0..63 in byte order */
-    for (i = 0; i < 64; i++)
+    /* Identity table used by the permutation loop below. */
+    for (i = 0; i < 0x40; i++)
         table[i] = (u8)i;
 
-    /* Permute and copy to handle+0x1120 using lookup tables */
+    /* Permute: block_tbl[k] = table[perm[k]]; work[table[k]] = val[k].
+       Table indices are signed bytes (retail sign-extends before lbzx/stbx). */
     {
-        u8 *perm = (u8 *)&lbl_eu_8051BFC0[8];    /* +0x20 */
-        u8 *val_tbl = (u8 *)&lbl_eu_8051BFC0[24]; /* +0x60 */
-        u32 *work = &lbl_eu_80602A10[0];           /* +0x00 */
-        u32 *work2 = &lbl_eu_80602A10[16];         /* +0x40 */
-        u32 *work3 = &lbl_eu_80602A10[19];         /* +0x4C */
-        u32 *dst = (u32 *)((u8 *)handle + 0x1120);
+        u8 *pp = tbl + 0x20;
+        u8 *vv = tbl + 0x60;
+        u8 *tt = table;
 
         for (j = 0; j < 8; j++) {
-            u8 *out = (u8 *)dst + j * 8;
-
             for (i = 0; i < 8; i++) {
-                u8 p = perm[j * 8 + i];
-                u8 v = val_tbl[j * 8 + i];
-                out[i] = table[p];
-                ((u8 *)work)[(s8)table[j * 8 + i]] = v;
+                ctx->block_tbl[j * 8 + i] = tt[(s8)pp[i]];
+                work[(s8)tt[i]] = vv[i];
             }
+            pp += 8;
+            vv += 8;
+            tt += 8;
         }
-
-        /* Store pointers to work area */
-        work2[2] = (u32)((u8 *)handle + 0x1120); /* work2+8 */
-        work3[2] = (u32)work;                     /* work3+8 */
     }
 
-    /* Copy reference table to handle+0x1100 (8 dwords) */
-    UTY_MemcpyDword((u32 *)((u8 *)handle + 0x1100),
-        &lbl_eu_8051BFC0[0], 8);
+    /* Publish work-area pointers: (work+0x40)[2] = &block_tbl, (work+0x4C)[2] = work */
+    work2[2] = (u32)&ctx->block_tbl[0];
+    work3[2] = (u32)work;
 
-    /* Copy another reference to handle+0x11E0 (32 bytes) */
-    memcpy((u8 *)handle + 0x11E0,
-        (u8 *)&lbl_eu_8051BFC0[40], 0x20);
+    /* Copy static reference tables into the context. */
+    UTY_MemcpyDword(ctx->dct_table, (u32 *)tbl, 8);
+    memcpy(ctx->clip_tbl, tbl + 0xa0, 0x20);
 
-    /* Set up decoder parameters at handle+0x1200..0x122C */
-    {
-        u32 *p = (u32 *)((u8 *)handle + 0x1200);
-        p[0] = lbl_eu_80604660 - 0x10;  /* width */
-        p[1] = 0x15;                        /* height? */
-        p[2] = lbl_eu_8060465C - 0x20;  /* something */
-        p[3] = 0x13;
-        p[4] = lbl_eu_80604658 - 0x20;
-        p[5] = 0x12;
-        p[6] = lbl_eu_80604654 - 0x20;
-        p[7] = 0x11;
-        p[8] = lbl_eu_80604650 - 0x20;
-        p[9] = 0x10;
-        p[10] = lbl_eu_8060464C - 0x20;
-        p[11] = 0x0F;
-    }
+    /* Decoder parameter pairs: (table pointer, table size). */
+    ctx->vlc_param[0] = lbl_eu_80604660 - 0x10;
+    ctx->vlc_param[1] = 0x15;
+    ctx->vlc_param[2] = lbl_eu_8060465C - 0x20;
+    ctx->vlc_param[3] = 0x13;
+    ctx->vlc_param[4] = lbl_eu_80604658 - 0x20;
+    ctx->vlc_param[5] = 0x12;
+    ctx->vlc_param[6] = lbl_eu_80604654 - 0x20;
+    ctx->vlc_param[7] = 0x11;
+    ctx->vlc_param[8] = lbl_eu_80604650 - 0x20;
+    ctx->vlc_param[9] = 0x10;
+    ctx->vlc_param[10] = lbl_eu_8060464C - 0x20;
+    ctx->vlc_param[11] = 0x0f;
 
-    MPVABDEC_Init(handle);
+    MPVABDEC_Init();
 }
 
 /* Start decoding a frame */

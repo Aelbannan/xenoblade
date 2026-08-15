@@ -15,15 +15,36 @@ struct CFactoryEventPoolNode {
     cf::IFactoryEvent* data;     // +0x8
 };
 
+// Sentinal node stored inline in every reslist (0xc bytes: next/prev/item).
+struct CfReslistNode {
+    void* mNext;  // +0x0
+    void* mPrev;  // +0x4
+    void* mItem;  // +0x8
+};
+
+// Flat mirror of the reslist<cf::TboxInfo> layout (0x38 bytes) used by its
+// flattened constructor (struct-typed sentinel access reproduces the retail
+// store scheduling; see __ct__reslist_cf_TboxInfo).
+struct TboxInfoReslistLayout {
+    void* mVtable;               // 0x00
+    CfReslistNode* mStartNodePtr; // 0x04
+    CfReslistNode mStartNode;     // 0x08 (0xc bytes)
+    u8 _pad14[0x2c - 0x14];       // 0x14..0x2b
+    u32 field_0x2c;               // 0x2c
+    u32 field_0x30;               // 0x30
+    u8 field_0x34;                // 0x34
+};
+
 // Argument to func_800B4A24: an embedded sub-object (parent offset -0x3E9C).
 // First word is a function table (callable entry 0x80 = vtable+0x200), and
-// +0x64 holds status flags (bit 26 = 0x04000000 tested by the caller).
+// +0x64 holds status flags (bit 2 = 0x4 tested by the caller via
+// rlwinm. r0,r0,0,29,29).
 struct CEvtTypeArg;
 typedef int (*CEvtTypeFn)(CEvtTypeArg*);
 struct CEvtTypeArg {
     CEvtTypeFn* fnTable;    // +0x0
     u8 _pad04[0x64 - 0x4];
-    u32 flags;              // +0x64 (bit 26 => 0x04000000)
+    u32 flags;              // +0x64 (bit 2 => 0x4)
 };
 #include "monolib/util/FixStr.hpp"
 template <typename T>
@@ -38,7 +59,10 @@ public:
     // total 0x10
 };
 
-// Generic reslist template - adds 0x10 bytes of padding (total 0x20)
+// Generic reslist template - adds 0x10 bytes of padding (total 0x20). No ctor
+// is declared: the retail reslist ctors are flattened free functions
+// (__ct__reslist_cf_*), and member-ctor mangling would emit __ct__23reslist<..>
+// (wrong reloc names), so the members must not auto-construct.
 template <typename T>
 class reslist : public _reslist_base<T> {
 public:
@@ -50,7 +74,6 @@ public:
 template <>
 class reslist<cf::CfObject> : public _reslist_base<cf::CfObject> {
 public:
-    reslist();
     ~reslist();
     u32 field_0x10;    // 0x10
     u32 field_0x14;    // 0x14
@@ -64,7 +87,6 @@ public:
 template <>
 class reslist<cf::TboxInfo> : public _reslist_base<cf::TboxInfo> {
 public:
-    reslist();
     ~reslist();
     u8 _pad_10[0x1c];   // 0x10-0x2b
     u32 field_0x2c;     // 0x2c
@@ -75,7 +97,6 @@ public:
 };
 class UnkClass_800B0AD8 {
 public:
-    UnkClass_800B0AD8();
     void clearCounters();
     u32 getCount();
     u32 getSize();
@@ -124,26 +145,57 @@ public:
     reslist<cf::CfObject> field_0xBE8;
     reslist<cf::CfObject> field_0xC08;
     reslist<cf::CfObject> field_0xC28;
-    u8 field_0xC48[0x38];
+    reslist<cf::TboxInfo> field_0xC48;      // 0xC48 (0x38 bytes)
     reslist<cf::IFactoryEvent*> field_0xC80;
     u32 field_0xCA0;
     u32 field_0xCA4;
     u32 field_0xCA8;
     u32 field_0xCAC;
-    // raw 0x44 buffer: retail FixStr<64> is 64 chars + 4-byte length; declared
-    // as bytes so the layout is independent of whichever FixStr template is
-    // visible in a TU (observed 0x40 vs 0x44 discrepancy shifting 0x15F0 to 0x15EC)
+    // raw 0x44 buffer for the FixStr<64> at 0xCB0; kept as bytes so the ctor
+    // can placement-new it in body order (a real FixStr member would
+    // auto-construct before the manual reslist ctor calls, breaking retail order)
     u8 field_0xCB0[0x44];
     u32 field_0xCF4;
     float field_0xCF8;
     u32 field_0xCFC;
     u32 field_0xD00;
     u32 field_0xD04;
-    u16 field_0xD0E;    // lands at 0xD08 (2 bytes)
-    u16 field_0xD10;    // lands at 0xD0A (2 bytes)
-    u8 _pad_D0C_to_15EF[0x15F0 - 0xD0C];   // 0xD0C .. 0x15F0
+    u8 _pad_D08[6];     // 0xD08..0xD0E (unknown fields)
+    u16 field_0xD0E;    // 0xD0E
+    u16 field_0xD10;    // 0xD10
+    u8 _pad_D12_to_15EF[0x15F0 - 0xD12];   // 0xD12 .. 0x15F0
     u32 field_0x15F0;   // exactly 0x15F0
 };
+
+// --- func_800B7A18 support: circular object-list iteration ---
+// Mirror of retail UnkF8C0Node/UnkF8C0Source (CfGameManager.cpp). The
+// iterator node holds the current ItemListNode pointer; the list header is
+// the shared { +0x00 unused, +0x04 head-sentinel } shape used by
+// CfGimmickList / CFloorMapObjList / ItemListManager alike.
+struct F8C0IteratorNode {
+    u32 field_0x0;                // +0x00 current list node
+};
+struct F8C0ListSource {
+    u32 field_0x0;                // +0x00
+    F8C0IteratorNode* field_0x4;  // +0x04 head sentinel
+};
+
+// CfGameManager item-list traversal primitives (retail mangled names).
+// The retail symbols are C-ABI-named (extern "C" suppresses MWCC's C++
+// param mangling, which would append __FP.. to the identifier).
+extern "C" void func_8007F8C0__Q22cf13CfGameManagerFv(F8C0IteratorNode* destination, const F8C0ListSource* source);
+extern "C" void** func_8007F8D0__Q22cf13CfGameManagerFv(F8C0IteratorNode* iterator);
+extern "C" void func_8007F8DC__Q22cf13CfGameManagerFv(F8C0IteratorNode* destination, F8C0IteratorNode* source, u32 unused);
+extern "C" void func_8007F8F4__Q22cf13CfGameManagerFv(F8C0IteratorNode* destination, const F8C0ListSource* source);
+extern "C" bool func_8007F900__Q22cf13CfGameManagerFv(const u32* first, const u32* second);
+
+// Object type-id / trigger helpers (CfObjectMove.cpp).
+extern "C" u16 func_800BE93C(void* self);
+extern "C" void func_800BF2E0(void* self);
+
+// Circular object-list accessors (defined in this unit's retail span).
+extern "C" void* func_800B6BC8();
+extern "C" void* func_800B6BEC();
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" unsigned long func_800B1C00();
@@ -165,6 +217,9 @@ extern "C" void* func_800B708C__Fi(int arg);
 extern "C" void* func_80193CD0(void* a, void* b);
 extern "C" unsigned long func_80061FFC();
 extern "C" void __dl__FPv(void*);
+extern "C" void __dla__FPv(void*);
+extern "C" void* func_800B1AC0(void* a, void* b);
+extern "C" void func_800B73E8(void* a, void* b, void* c);
 extern "C" void __dt__8047BDA8(void*);
 extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, unsigned long count);
 extern "C" void func_800B4278(void* object, u32 arg);

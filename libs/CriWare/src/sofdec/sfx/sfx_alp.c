@@ -31,7 +31,6 @@ found:
     state->byte15 = 0x7f;
     state->byte16 = 0xff;
     *(s32*)lbl_eu_8061A138 += 1;
-    state->_00 = 1;
     return state;
 }
 void SFXA_Destroy(void* self) {

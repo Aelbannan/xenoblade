@@ -1,6 +1,15 @@
 #include <nw4r/snd.h>
 #include <nw4r/ut.h>
 
+// Global scope: MWCC does not mangle file-scope names, so plain extern emits
+// the exact retail symbols.
+//
+// FxChorusDpl2 vtable (shared data pool, nw4r_data.s lbl_eu_8056A798). The
+// slot type is only forward-declared: this TU never indexes the table, it
+// just stores the label's address into the object's vptr.
+struct FxChorusDpl2Vtbl;
+extern FxChorusDpl2Vtbl lbl_eu_8056A798[];
+
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -29,7 +38,10 @@ extern "C" const f32 lbl_eu_80669F74; // delayTime min / rate min
 extern "C" const f32 lbl_eu_80669F78; // rate max
 extern "C" const f32 lbl_eu_80669F7C; // feedback max
 
-class FxChorusDpl2 : public FxBase {
+// __declspec(novtable): the retail vtable is shared data (lbl_eu_8056A798),
+// so MWCC must not emit a local __vt__FxChorusDpl2; the ctor stores the
+// extern vtable address explicitly (retail's vptr store is in the ctor body).
+class __declspec(novtable) FxChorusDpl2 : public FxBase {
 public:
     FxChorusDpl2();
 
@@ -74,8 +86,13 @@ private:
     }
 };
 
-FxChorusDpl2::FxChorusDpl2()
-    : mIsActive(false) {
+FxChorusDpl2::FxChorusDpl2() {
+    // FxBase's implicit ctor zeroes the link node at 0x4/0x8 first; the
+    // manual vptr store lands between that and the member stores, matching
+    // the retail store order (0x4, 0x8, vptr 0x0, 0xc, 0x14, 0x18, floats).
+    *(FxChorusDpl2Vtbl**)this = lbl_eu_8056A798;
+
+    mIsActive = false;         // 0xc
     mWorkHeap.mHeap = nullptr; // 0x14
     mWorkHeap.mAllocCount = 0; // 0x18
 

@@ -45,8 +45,14 @@ CSelShopWin::CSelShopWin() : CSelShopWinVtblBase(), mMemRegion() {
     mAnimActive = 1;
 }
 
+// Retail saves r30/r31 with a single stmw (block save). -O4,p emits separate
+// stw pairs; optimize_for_size flips to the stmw/lmw frame (MWCC_REFERENCE
+// §11162, CItemBoxGrid func_801C5158 pattern).
+#pragma push
+#pragma optimize_for_size on
 CSelShopWin::~CSelShopWin() {
 }
+#pragma pop
 
 /* Start loading the shop window arc resources. */
 void CSelShopWin::func_8022C770() {

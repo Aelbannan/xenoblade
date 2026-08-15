@@ -5,6 +5,13 @@
 #include <nw4r/g3d.h>
 #include <nw4r/g3d/g3d_anmtexpat.h>
 
+// Float constants in the retail .sdata2 pool (named so the sda21 relocs
+// reference the retail symbols instead of TU-local pool labels).
+extern const f32 lbl_eu_80669B58; // 0.0f (rate==0 triggers the cache refresh)
+extern const f32 lbl_eu_80663460; // 1.0f (FrameCtrl::smBaseUpdateRate)
+
+// Retail ships FrameCtrl's static smBaseUpdateRate as the named .sdata object
+// lbl_eu_80663460; redirect the inline UpdateFrm() body to that name.
 namespace nw4r {
 namespace g3d {
 
@@ -83,9 +90,7 @@ void Construct__Q34nw4r3g3d15AnmObjTexPatResFP12MEMAllocatorPUlQ34nw4r3g3d12ResA
 namespace nw4r {
 namespace g3d {
 
-void AnmObjTexPatRes::SetFrame(f32 frame) {
-    SetFrm(frame);
-
+void AnmObjTexPatRes::UpdateCache() {
     if (mpResultCache != NULL) {
         f32 f = GetFrm();
         for (u32 i = 0; i < (u32)mNumBinding; i++) {
@@ -98,37 +103,23 @@ void AnmObjTexPatRes::SetFrame(f32 frame) {
     }
 }
 
+void AnmObjTexPatRes::SetFrame(f32 frame) {
+    SetFrm(frame);
+    UpdateCache();
+}
+
 void AnmObjTexPatRes::SetUpdateRate(f32 rate) {
     SetRate(rate);
 
-    if (rate == 1.0f) {
-        if (mpResultCache != NULL) {
-            f32 f = GetFrm();
-            for (u32 i = 0; i < (u32)mNumBinding; i++) {
-                u16 binding = mpBinding[i];
-                if (!(binding & BINDING_UNDEFINED)) {
-                    u32 id = binding & BINDING_ID_MASK;
-                    mRes.GetAnmResult(&mpResultCache[id], id, f);
-                }
-            }
-        }
+    if (lbl_eu_80669B58 == rate) {
+        UpdateCache();
     }
 }
 
 void AnmObjTexPatRes::UpdateFrame() {
-    if (GetRate() != 1.0f) {
+    if (lbl_eu_80669B58 != GetRate()) {
         UpdateFrm();
-
-        if (mpResultCache != NULL) {
-            f32 f = GetFrm();
-            for (u32 i = 0; i < (u32)mNumBinding; i++) {
-                u16 binding = mpBinding[i];
-                if (!(binding & BINDING_UNDEFINED)) {
-                    u32 id = binding & BINDING_ID_MASK;
-                    mRes.GetAnmResult(&mpResultCache[id], id, f);
-                }
-            }
-        }
+        UpdateCache();
     }
 }
 

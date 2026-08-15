@@ -1037,11 +1037,15 @@ crossingAccepted:
 // func_80480EF0 -- scan a node's neighbour list for `value` (direct edge test).
 // Retail compares SIGNED (cmp, not cmpl): the u16 neighbor and the value are
 // compared as promoted ints, so negative-represented words (>= 0x8000) match.
+// The edgeCount load MUST use the `*(const u16*)&arr[idx]` cast-deref form:
+// the natural `m.edges[i]` indexing makes MWCC allocate the lhzx result into a
+// fresh register (r4) while retail coalesces it into the freed address temp
+// (r3, `lhzx r3,r7,r3`); the cast form reproduces retail's coalescing exactly.
 extern "C" s32 func_80480EF0__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32 nodeIndex, int value) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
     const ScnWalkNode& node = m.nodes[nodeIndex];
-    u16 edgeCount = m.edges[node.edgeOffset];
-    const u16* neighbors = &m.edges[node.edgeOffset + 1];
+    u16 edgeCount = *(const u16*)&m.edges[node.edgeOffset];
+    const u16* neighbors = (const u16*)&m.edges[node.edgeOffset + 1];
     for (s32 i = 0; i < edgeCount; ++i) {
         if (neighbors[i] == value) return 1;
     }

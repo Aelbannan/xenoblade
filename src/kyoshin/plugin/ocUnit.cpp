@@ -967,7 +967,7 @@ extern "C" int turn(VMThread* pThread, int handle) {
     int angle = vmArgIntGet(2, ptr);
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    float f = (float)(s32)angle * 4.68133871e-08f;
+    float f = (float)(s32)angle * lbl_eu_8066A210;
     obj->CfObject_UnkVirtualFunc29(f);
     // func_800BE12C is header-declared as the 4-arg form; retail call sites
     // pass a 5th arg (r7=1) the callee ignores — cast to keep the r3-r7 setup.

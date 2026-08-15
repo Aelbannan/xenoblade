@@ -69,22 +69,26 @@ extern "C" unsigned long func_80294624() {
 // two confirm/cancel triggers come from different button bits depending on
 // co-op vs single-player; an up/down D-pad input wraps the save-slot flag.
 // ---------------------------------------------------------------------------
-void func_80294638(CSysWinSave* self);
+// C-linkage (retail symbol is unmangled func_80294638), so the definition
+// carries extern "C" and the call site in Move emits the retail reloc name
+// (same convention as func_801250FC in CSysWinSelect.cpp).
+extern "C" void func_80294638(CSysWinSave* self);
 
-void func_80294638(CSysWinSave* self) {
+extern "C" void func_80294638(CSysWinSave* self) {
     CSysPadData* pad = (CSysPadData*)getCfPadData__Q22cf13CfGameManagerFv();
     int in1, in2;
     int sels, confirm;
     if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-        in1     = (pad->field_04 >> 10) & 1;
-        in2     = (pad->field_04 >> 9) & 1;
-        confirm = ((pad->field_104 >> 16) & 1) != 0 || ((pad->field_104 >> 3) & 1) != 0;
+        // Co-op: confirm/D-pad row bits live at +17 over single-player.
         sels    = (pad->field_104 & 0x8004) != 0;
+        confirm = ((pad->field_104 & 0x10000) | (pad->field_104 & 0x8)) != 0;
+        in1     = (pad->field_04 >> 21) & 1;
+        in2     = (pad->field_04 >> 22) & 1;
     } else {
-        in1     = (pad->field_04 >> 27) & 1;
-        in2     = (pad->field_04 >> 26) & 1;
-        confirm = ((pad->field_104 >> 16) & 1) != 0 || ((pad->field_104 >> 3) & 1) != 0;
         sels    = (pad->field_104 & 0x8004) != 0;
+        confirm = ((pad->field_104 & 0x10000) | (pad->field_104 & 0x8)) != 0;
+        in1     = (pad->field_04 >> 4) & 1;
+        in2     = (pad->field_04 >> 5) & 1;
     }
 
     if (in1) {
@@ -104,7 +108,7 @@ void func_80294638(CSysWinSave* self) {
         // Cursor up: decrement the slot index, wrapping to 1 when below 0.
         self->mFlagDD = self->mFlagDD - 1;
         if (self->mFlagDD < 0) self->mFlagDD = 1;
-        u8 tmp[0x18];
+        u8 tmp[0xC];
         func_8022C1B4(tmp, &self->mSysWin[0], self->mFlagDD);
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
         func_80138078__FUl(1);
@@ -112,7 +116,7 @@ void func_80294638(CSysWinSave* self) {
         // Cursor down: increment the slot index, wrapping over 1 to 0.
         self->mFlagDD = self->mFlagDD + 1;
         if (self->mFlagDD > 1) self->mFlagDD = 0;
-        u8 tmp[0x18];
+        u8 tmp[0xC];
         func_8022C1B4(tmp, &self->mSysWin[0], self->mFlagDD);
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
         func_80138078__FUl(1);
@@ -202,8 +206,12 @@ void CSysWinSave::Move() {
         if (CSysWin_isReady(&mSysWin[0])) {
             mFlagDC = 1;
             const char* base = lbl_eu_8050FD6C;
-            const char* s1 = func_80136190(base + 0xc, base + 0x17, 0x4e);
-            const char* s2 = func_80136190(base + 0xc, base + 0x17, 0x4f);
+            // s2 declared before s1 (assignments stay in retail's call order)
+            // so MWCC's saved-register coloring lands s1 in r29 / s2 in r30.
+            const char* s2;
+            const char* s1;
+            s1 = func_80136190(base + 0xc, base + 0x17, 0x4e);
+            s2 = func_80136190(base + 0xc, base + 0x17, 0x4f);
             const char* s3 = func_80136190(base + 0xc, base + 0x17, 0x50);
             func_8022B9B4(&mSysWin[0], (void*)s1, 0);
             func_8022BF6C(&mSysWin[0], (void*)s2, (void*)s3);
@@ -293,17 +301,31 @@ extern "C" void* __dt__11CSysWinSaveFv(CSysWinSave* _this, int flags) {
 // ---------------------------------------------------------------------------
 void CSysWinSave::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
-        return;
-    if (!func_8013BE50()) {
+    // Gate: when the task game is not ready or the global mode bit (0x200000)
+    // is set, skip the render. The if-&&-goto body / goto end / end: return
+    // chain keeps the body off the fallthrough so MWCC emits retail's
+    // branch-over-branch: `bne end` for the first disjunct, `beq body; b end`
+    // for the second (same scheme as CSysWinSelect::cbRenderBefore).
+    if (CTaskGame::func_800426F0() == 0 && (lbl_eu_80663E28 & 0x200000) == 0) {
+        goto body;
+    }
+    goto end;
+end:
+    return;
+body:
+    if (func_8013BE50() == 0) {
         return;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    nw4r::lyt::DrawInfo drawInfo;
-    func_80137250(&drawInfo);
-    func_8022B7C8(&mSysWin[0], &drawInfo);
-    func_801D20B0(&mCur18[0], &drawInfo);
-    drawInfo.~DrawInfo();
+    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
+    // to match the retail direct calls (a C++ local would virtual-dispatch
+    // its scope-exit destructor and bloat the body).
+    u8 drawInfo[0x60];
+    __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    func_8022B7C8(&mSysWin[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    func_801D20B0(&mCur18[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), -1);
 }
 
 // ---------------------------------------------------------------------------
@@ -321,18 +343,31 @@ extern "C" CSysWinSave* __ct__802944D8(CProcess* registerParent, CScn* scene) {
     mtl::ALLOC_HANDLE workMem = CWorkThreadSystem::getWorkMem();
     CSysWinSave* obj = (CSysWinSave*)mtl::MemManager::allocate(0xe0, workMem);
     if (obj != 0) {
+        CSysWinSaveVtShim* shim = reinterpret_cast<CSysWinSaveVtShim*>(obj);
         __ct__8CProcessFv((CProcess*)obj);
 
         // IUIWindow vtable at +0x10 is written twice (temp vtable, then the
-        // CSysWinSave composite vtable); the two null ptmf callback slots are
-        // copied, then the scalar fields are initialised.
-        *(u32*)((u8*)obj + 0x10) = (u32)lbl_eu_8052D238;
-        obj->ptmf0[0] = __ptmf_null[0];
-        obj->ptmf0[1] = __ptmf_null[1];
-        obj->ptmf0[2] = __ptmf_null[2];
-        obj->ptmf1[0] = __ptmf_null[0];
-        obj->ptmf1[1] = __ptmf_null[1];
-        obj->ptmf1[2] = __ptmf_null[2];
+        // CSysWinSave composite vtable).
+        shim->vtable = (void*)lbl_eu_8052D238;
+
+        // Copy the null member-function pointer into both callback slots.
+        // Retail loads __ptmf_null[1],[0],[2] then stores per slot, so use
+        // intermediate locals to force the retail ordering. The uintptr_t
+        // round-trip keeps MWCC from constant-propagating the array address
+        // into the loads (which would fold @l into the [0] accesses).
+        u32* ptmf = (u32*)(uintptr_t)__ptmf_null;
+        u32 ptmfWord1 = ptmf[1];
+        u32 ptmfWord0 = ptmf[0];
+        obj->ptmf0[0] = ptmfWord0;
+        obj->ptmf0[1] = ptmfWord1;
+        u32 ptmfWord2 = ptmf[2];
+        obj->ptmf0[2] = ptmfWord2;
+        ptmfWord1 = ptmf[1];
+        ptmfWord0 = ptmf[0];
+        obj->ptmf1[0] = ptmfWord0;
+        obj->ptmf1[1] = ptmfWord1;
+        ptmfWord2 = ptmf[2];
+        obj->ptmf1[2] = ptmfWord2;
 
         obj->field_54 = 0;
         obj->field_58 = 0;
@@ -344,7 +379,7 @@ extern "C" CSysWinSave* __ct__802944D8(CProcess* registerParent, CScn* scene) {
         obj->field_67 = 1;
         obj->field_68 = 0;
 
-        *(u32*)((u8*)obj + 0x10) = (u32)lbl_eu_805389A0;
+        shim->vtable = (void*)lbl_eu_805389A0;
         obj->mWorkEvent = (u32)lbl_eu_805389A0 + 0x24;
         obj->mScnRender = (u32)lbl_eu_805389A0 + 0xac;
         obj->mScene = scene;

@@ -1440,6 +1440,8 @@ void func_80127D20(f32* out, void* unused, nw4r::lyt::TextBox* textbox,
 // a fresh 1024-char one, advance the tag-proc write position, run the message
 // step (func_80127764) and clear the done flag. No explicit return: the
 // retail leaves r3 as whatever func_80127764 left there.
+#pragma push
+#pragma optimize_for_size on
 void func_80127E74(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                    nw4r::lyt::Pane* b, nw4r::lyt::Pane* c) {
     CTalkTextBoxVtbl* tb = (CTalkTextBoxVtbl*)a;
@@ -1450,6 +1452,7 @@ void func_80127E74(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
     func_80127764(msg, a, b, c, 0);
     msg->field_820 = 0;
 }
+#pragma pop
 
 // Sound-effect variant of the tag processor (retail __ct__CTagProcessorSE):
 // base-construct, then the SE-specific fields (byte at +0x834, u32 at +0x838).

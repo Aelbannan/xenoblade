@@ -245,8 +245,10 @@ void CActorParam_UnkVirtualFunc141__Q22cf11CActorParamFv(cf::CActorParam* self, 
 }
 void cf::CActorParam::CActorParam_UnkVirtualFunc142() {
     cf::CActorParamUnk1928View* view = reinterpret_cast<cf::CActorParamUnk1928View*>(this);
-    float v = lbl_eu_806677E4;
+    // v0 must be declared FIRST: MWCC assigns the first-declared float to f0
+    // and loads it first; declaring v first swapped the roles (f1=v0) -> 7%.
     float v0 = lbl_eu_806677E0;
+    float v = lbl_eu_806677E4;
     cf::CActorParam_UnkStruct5* e = view->entries;
     e[0].unk4 = v; e[0].unk0 = v; e[0].unkC = v; e[0].unk8 = v; e[0].unk10 = v0;
     e[1].unk4 = v; e[1].unk0 = v; e[1].unkC = v; e[1].unk8 = v; e[1].unk10 = v0;

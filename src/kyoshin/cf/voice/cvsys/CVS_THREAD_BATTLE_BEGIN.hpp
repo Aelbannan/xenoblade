@@ -56,6 +56,14 @@ struct CVSHandleFieldView {
     u16 field_0x3F28;          // 0x3F28: half-word sub-state
 };
 
+// 12-byte state triple (unk0/unk4/unk8) copied as a whole struct so MWCC
+// emits the retail load-descending/store-ascending word-move pattern.
+struct CVSThreadStateTriple {
+    u32 a;   // 0x00
+    u32 b;   // 0x04
+    u32 c;   // 0x08
+};
+
 // Globals: init-data triples for this subclass, plus its vtable and the
 // post-construction state triple.
 extern u32 lbl_eu_8053AC94[3];
@@ -68,4 +76,76 @@ extern u32 lbl_eu_8053ACB8[7];
 struct CVSThreadVtableView {
     u8 _00[0x1C];
     u32* vtable;            // 0x1C
+};
+
+// Virtual-dispatch view over a CVoiceHandle's vtable (vtable pointer at
+// offset 0).  Exposes the size getter at raw vtable slot 66 (offset 0x108);
+// MWCC reserves 2 implicit leading vtable slots, so the getter is declared
+// at index 64 (the 64 dummy virtuals pad the declared slots).
+struct CVoiceHandleSizeView {
+    virtual void vf00();
+    virtual void vf01();
+    virtual void vf02();
+    virtual void vf03();
+    virtual void vf04();
+    virtual void vf05();
+    virtual void vf06();
+    virtual void vf07();
+    virtual void vf08();
+    virtual void vf09();
+    virtual void vf10();
+    virtual void vf11();
+    virtual void vf12();
+    virtual void vf13();
+    virtual void vf14();
+    virtual void vf15();
+    virtual void vf16();
+    virtual void vf17();
+    virtual void vf18();
+    virtual void vf19();
+    virtual void vf20();
+    virtual void vf21();
+    virtual void vf22();
+    virtual void vf23();
+    virtual void vf24();
+    virtual void vf25();
+    virtual void vf26();
+    virtual void vf27();
+    virtual void vf28();
+    virtual void vf29();
+    virtual void vf30();
+    virtual void vf31();
+    virtual void vf32();
+    virtual void vf33();
+    virtual void vf34();
+    virtual void vf35();
+    virtual void vf36();
+    virtual void vf37();
+    virtual void vf38();
+    virtual void vf39();
+    virtual void vf40();
+    virtual void vf41();
+    virtual void vf42();
+    virtual void vf43();
+    virtual void vf44();
+    virtual void vf45();
+    virtual void vf46();
+    virtual void vf47();
+    virtual void vf48();
+    virtual void vf49();
+    virtual void vf50();
+    virtual void vf51();
+    virtual void vf52();
+    virtual void vf53();
+    virtual void vf54();
+    virtual void vf55();
+    virtual void vf56();
+    virtual void vf57();
+    virtual void vf58();
+    virtual void vf59();
+    virtual void vf60();
+    virtual void vf61();
+    virtual void vf62();
+    virtual void vf63();
+    virtual int getSize();   // raw vtable slot 66 (offset 0x108)
 };

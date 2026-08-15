@@ -516,14 +516,21 @@ extern "C" __declspec(noinline) void func_8025C21C(UnkKizunaSelfC21C* self) {
 
 extern "C" __declspec(noinline) void func_8025C298(UnkKizunaSelfC21C* self) {}
 
-// func_8025C348 (us-8025e494): kizuna-line update gate. Retail: reads a
-// global float (sdata), calls 0x80104F00 ([self+12], f1) — a REAL function
-// merged inside the func_801043BC symbol (+0x5C) reading [arg+0x10] float;
-// on non-zero return: field14=0, field15=1, then [self+8] virtual slot 56
-// twice with arg 0, then slot 32 with arg [self+12]. BLOCKED: the two call
-// targets (0x80104F00 / 0x80104FE4, the latter inside func_80104454 +0xA8)
-// have no split symbols, so no reloc-identical externs are possible.
-extern "C" __declspec(noinline) void func_8025C348(UnkKizunaSelfC21C* self) {}
+// func_8025C348 (us-8025e494): kizuna-line update gate. Retail: reads the
+// global float lbl_eu_80668834 (sdata), calls func_80137510([self+0xC], f1)
+// (declared CArtsInfo.hpp, defined code_80135FDC.cpp — the old comment's
+// "no split symbols" blocker is stale); on non-zero return: field14=0,
+// field15=1, then [self+8] virtual slot 56 (target14) twice with arg 0,
+// then slot 32 (target8) with arg [self+0xC].
+extern "C" __declspec(noinline) void func_8025C348(UnkKizunaSelfC21C* self) {
+    if (func_80137510((nw4r::lyt::AnimTransform*)self->field0C, lbl_eu_80668834) != 0) {
+        self->field14 = 0;
+        self->field15 = 1;
+        self->field8->target14(0);
+        self->field8->target14(0);
+        self->field8->target8(self->field0C);
+    }
+}
 
 CKizunagram::CKizunagram() {}
 

@@ -96,7 +96,7 @@ extern "C" void func_80294980(CREvtMovie* self) {
     if (func_80164FE8() != 0) return;
 
     // Build file path on stack: "/ev/realtime/" + scriptName + ".sfd"
-    const char* dir = &lbl_eu_8050FD98;             // "/ev/realtime/"
+    const char* dir = lbl_eu_8050FD98;           // "/ev/realtime/"
     CREvtMoviePathBuf buf;
     buf.mLength = strlen(dir);
     strcpy(buf.mPath, dir);
@@ -137,7 +137,7 @@ extern "C" void func_80294A70(CREvtMovie* self) {
     if (func_80164FE8() != 0) return;
 
     // Build file path
-    const char* dir = &lbl_eu_8050FD98;             // "/ev/realtime/"
+    const char* dir = lbl_eu_8050FD98;           // "/ev/realtime/"
     CREvtMoviePathBuf buf;
     buf.mLength = strlen(dir);
     strcpy(buf.mPath, dir);
@@ -170,7 +170,7 @@ extern "C" void func_80294BA4(CREvtMovie* self) {
     // Otherwise if not finished, start playback
     else if (func_80164FE8() == 0) {
         // Build file path on stack: "/ev/realtime/" + scriptName + ".sfd"
-        const char* dir = &lbl_eu_8050FD98;         // "/ev/realtime/"
+        const char* dir = lbl_eu_8050FD98;       // "/ev/realtime/"
         CREvtMoviePathBuf buf;
         buf.mLength = strlen(dir);
         strcpy(buf.mPath, dir);

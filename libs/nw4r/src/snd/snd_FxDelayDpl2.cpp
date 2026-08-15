@@ -1,6 +1,20 @@
 #include <nw4r/snd.h>
 #include <nw4r/ut.h>
 
+// Retail-owned data referenced by name so the ctor's relocations match the
+// stripped retail object (MWCC_REFERENCE 1b float pools / retail vtables).
+// Global scope: MWCC does not mangle file-scope names, so plain extern emits
+// the exact retail symbols.
+//
+// FxDelayDpl2 vtable (shared data pool, nw4r_data.s lbl_eu_8056A7C0). The
+// slot type is only forward-declared: this TU never indexes the table, it
+// just stores the label's address into the object's vptr.
+struct FxDelayDpl2Vtbl;
+extern FxDelayDpl2Vtbl lbl_eu_8056A7C0[];
+extern const f32 lbl_eu_80669F80; // 160.0f (delay / delayTimeMax default)
+extern const f32 lbl_eu_80669F84; // 0.4f  (feedback default)
+extern const f32 lbl_eu_80669F88; // 1.0f  (outGain / iir default)
+
 namespace nw4r {
 namespace snd {
 
@@ -16,7 +30,10 @@ struct FxDelayParam {
 
 } // namespace detail
 
-class FxDelayDpl2 : public FxBase {
+// __declspec(novtable): the retail vtable is shared data (lbl_eu_8056A7C0),
+// so MWCC must not emit a local __vt__FxDelayDpl2; the ctor stores the
+// extern vtable address explicitly (retail's vptr store is in the ctor body).
+class __declspec(novtable) FxDelayDpl2 : public FxBase {
 public:
     FxDelayDpl2();
 
@@ -61,16 +78,28 @@ private:
     }
 };
 
-FxDelayDpl2::FxDelayDpl2()
-    : mIsActive(false), mHeap(NULL), mAllocCount(0),
-      mDelay(160.0f), mFeedback(0.4f), mOutGain(1.0f), mDelayTimeMax(160.0f),
-      mIir(1.0f) {
+FxDelayDpl2::FxDelayDpl2() {
+    // FxBase's implicit ctor zeroes the link node at 0x4/0x8 first; the
+    // manual vptr store lands between that and the member stores, matching
+    // the retail store order (0x4, 0x8, vptr 0x0, 0xc, 0x14, 0x18, floats).
+    *(FxDelayDpl2Vtbl**)this = lbl_eu_8056A7C0;
+
+    mIsActive = false;    // 0xc
+    mHeap = NULL;         // 0x14
+    mAllocCount = 0;      // 0x18
+
+    mDelay = lbl_eu_80669F80;        // 0x1c, 160.0f
+    mFeedback = lbl_eu_80669F84;     // 0x20, 0.4f
+    mOutGain = lbl_eu_80669F88;      // 0x24, 1.0f
+    mDelayTimeMax = lbl_eu_80669F80; // 0x28, 160.0f
+    mIir = lbl_eu_80669F88;          // 0x2c, 1.0f
+
     detail::FxDelayParam param;
-    param.delay = 160.0f;       // at 0x0
-    param.feedback = 0.4f;      // at 0x4
-    param.outGain = 1.0f;       // at 0x8
-    param.delayTimeMax = 160.0f; // at 0xC
-    param.iir = 1.0f;            // at 0x10
+    param.delay = lbl_eu_80669F80;
+    param.feedback = lbl_eu_80669F84;
+    param.outGain = lbl_eu_80669F88;
+    param.delayTimeMax = lbl_eu_80669F80;
+    param.iir = lbl_eu_80669F88;
     SetParam(param);
 }
 
@@ -89,13 +118,12 @@ void FxDelayDpl2::ReleaseWorkBuffer() {
 }
 
 bool FxDelayDpl2::StartUp() {
-    u32 memSize = (AXFXDelayExpGetMemSize(&mDelayExp) + 135) & ~31U;
-    u32 memSizeDpl2 =
-        (AXFXDelayExpGetMemSizeDpl2(&mDelayExpDpl2) + 135) & ~31U;
-    u32 required =
-        (memSizeDpl2 < memSize) ? memSize : memSizeDpl2;
+    // Retail inlines GetRequiredMemSize() here (the two AXFX bls appear in
+    // the StartUp body), so call it and let MWCC inline the same shape; the
+    // max value then flows from the inlined return in r3 like retail.
+    u32 memSize = GetRequiredMemSize();
 
-    if (required > GetAxfxImpl()->GetHeapTotalSize()) {
+    if (memSize > GetAxfxImpl()->GetHeapTotalSize()) {
         return false;
     }
 

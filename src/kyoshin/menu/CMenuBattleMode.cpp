@@ -1,10 +1,37 @@
 #include "kyoshin/menu/CMenuBattleMode.hpp"
 
+// CTaskGame.hpp declares func_8004392C with a u32 third arg (line 486) and
+// func_8049603C with a CScn* arg (line 559), which conflict with the void*
+// copies in CVision.hpp / CSuddenCommu.hpp (reached via the
+// CBattleManager.hpp include below); rename the CTaskGame.hpp copies out of
+// the way (same scheme as CMenuBattlePlayerState.cpp). This TU uses none of
+// them.
+#define func_8004392C menuBmbCtaskGame4392CUnused
+#define func_8049603C menuBmbCtaskGame9603CUnused
 #include "kyoshin/CTaskGame.hpp"
+#undef func_8049603C
+#undef func_8004392C
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+// code_800F42AC.hpp declares func_80149154 with an int id arg; CAIAction.hpp
+// (via CBattleManager.hpp -> CfObjectActor.hpp) declares the same name with a
+// u32 arg -> MWCC overload conflict. This TU uses neither copy.
+#define func_80149154 menuBmbCode800F42AC49154Unused
 #include "kyoshin/cf/code_800F42AC.hpp"
+#undef func_80149154
+// code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188),
+// func_8049603C with a CScn* arg (line 223), and getBdatStringColumnValue
+// as void* (line 238); CfObjectMove.hpp (via the CBattleManager.hpp include
+// above) declares lbl_eu_8066A208 const float, CSuddenCommu.hpp declares
+// func_8049603C with a void* arg, and CfGimmick.hpp declares
+// getBdatStringColumnValue as u32. This TU uses neither copy.
+#define lbl_eu_8066A208 menuBmbCode35FDCepsilonUnused
+#define func_8049603C menuBmbCode35FDC9603CUnused
+#define getBdatStringColumnValue menuBmbCode35FDCBdatColUnused
 #include "kyoshin/code_80135FDC.hpp"
+#undef getBdatStringColumnValue
+#undef func_8049603C
+#undef lbl_eu_8066A208
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CProcess.hpp"
@@ -63,17 +90,22 @@ void func_801A049C(void* self) { ((void(*)(void*))__dt__15CMenuBattleModeFv)((ch
 // (delete flag -1), then the CProcess base (via IUICf/CTTask), then frees the
 // backing block when the delete flag is nonzero. Written as a plain free C-ABI
 // shim on the mangled symbol so MWCC does not re-install the class vtables at
-// the top of the dtor (retail emits no vptr stores here).
+// the top of the dtor (retail emits no vptr stores here). The redundant
+// `if (self != 0)` re-check reproduces the retail's dead double-beq and the
+// explicit __dt__8CProcessFv(self, 0) call fixes the delete flag to 0
+// (CMenuSymbolMark/CMenuBattleChain idiom).
+extern "C" void __dt__8CProcessFv(CProcess* self, int flags);
+extern "C" void __dl__FPv(void* p);
 extern "C" CMenuBattleMode* __dt__15CMenuBattleModeFv(CMenuBattleMode* self, int deleteFlag) {
-    if (self) {
-        self->mLayoutMem.~UnkClass_8045F564();
-        if (self) {
-            self->CProcess::~CProcess();
+    if (self == 0) goto end;
+    self->mLayoutMem.~UnkClass_8045F564();
+    if (self != 0) {
+        if (self != 0) {
+            __dt__8CProcessFv(self, 0);
         }
     }
-    if (deleteFlag > 0) {
-        operator delete(self);
-    }
+    if (deleteFlag > 0) __dl__FPv(self);
+end:
     return self;
 }
 
@@ -243,18 +275,20 @@ void CMenuBattleMode::Move() {
 
 void CMenuBattleMode::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
-        return;
-    }
-    // bit 21 set (realtime event busy) -> early out. MWCC emits the guard as
-    // `beq draw; b ret` (skip over a standalone return) so keep the return as
-    // its own statement after the guard, not a merged `if(bit) return`.
-    if ((lbl_eu_80663E28 & 0x200000) == 0) {
+    // Gate: skip when the task is busy or the global mode bit (0x200000) is
+    // set. Exit label BEFORE the body label keeps the body off the fallthrough
+    // so MWCC emits retail's branch-over-branch: `bne end` for the first
+    // disjunct, `beq draw; b end` for the second (CMenuGameClear idiom,
+    // MWCC_REFERENCE section on &&-gate branch-over-branch).
+    if (CTaskGame::func_800426F0() == 0 &&
+        (lbl_eu_80663E28 & 0x200000) == 0) {
         goto draw;
     }
+    goto end;
+end:
     return;
 draw:
-    if (!func_8013BE50()) {
+    if (func_8013BE50() == 0) {
         return;
     }
     cf::CfGameManager::getInstance();

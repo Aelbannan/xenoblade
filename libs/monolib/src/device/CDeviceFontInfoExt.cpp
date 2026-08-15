@@ -2,6 +2,14 @@
 #include <harness_catalog.h>
 #include "monolib/device/CDeviceFontInfoExt.hpp"
 
+extern "C" {
+// .sbss2:0x8066B558 (4B) | lbl_8066DCF8 - font-name blob; its address is passed
+// as the pName/tag to nw4r::ut::PackedFont (retail li r4, lbl_8066DCF8@sda21).
+// Zero-filled const+initializer aggregate lands in .sbss2 (NOBITS) per the
+// MWCC small-data placement rules (docs/MWCC_REFERENCE.md "Data-only TU").
+extern const char lbl_8066DCF8[4] = {0, 0, 0, 0};
+}
+
 extern "C" void* func_80453624__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return (void*)((u8*)self + 0x1c); }
 extern "C" void* func_8045362C__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return (void*)((u8*)self + 0x1c); }
 extern "C" u16 func_80453634__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) { return self->field_5C; }

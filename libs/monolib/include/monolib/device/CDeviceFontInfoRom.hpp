@@ -17,6 +17,8 @@ public:
     CDeviceFontInfoRom();
     virtual ~CDeviceFontInfoRom();
 
+    // noinline keeps create()'s placement-new a call (retail bl __ct__);
+    // -ipa file would otherwise fold the ~0x190 ctor body into create().
     static CDeviceFontInfoRom* create();
 
     // FULL_MATCH: Returns a pointer to the embedded RomFont (non-const).

@@ -286,8 +286,8 @@ void func_80145AA0(void* self) { ((void(*)(void*))__dt__14CMenuLandTelopFv)((cha
 // fallback name at [0xE], return the fallback name.
 const char* func_80145AA8(int index) {
     const char* s = getBdatStringColumnValue(lbl_eu_806640E0, &lbl_eu_805018A8[9], index);
-    if (s != 0 && std::strcmp(s, &lbl_eu_805018A8[0xe]) != 0) {
-        return s;
+    if (s == 0 || std::strcmp(s, &lbl_eu_805018A8[0xe]) == 0) {
+        return &lbl_eu_805018A8[0xe];
     }
-    return &lbl_eu_805018A8[0xe];
+    return s;
 }

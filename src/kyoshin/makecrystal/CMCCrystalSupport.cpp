@@ -82,6 +82,8 @@ extern "C" void __ct__CMCCrystalSupport(CMCCrystalSupport* self,
 
 CMCCrystalSupport::~CMCCrystalSupport() {}
 
+#pragma push
+#pragma optimize_for_size on
 extern "C" void func_8022E8F8(CMCCrystalSupport* self) {
     func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &self->mLayout, self->mAccessor, lbl_eu_8050AA3C);
@@ -91,6 +93,7 @@ extern "C" void func_8022E8F8(CMCCrystalSupport* self) {
     self->mLayout->Animate(0);
     self->mLoaded = 1;
 }
+#pragma pop
 
 extern "C" void func_8022E988(CMCCrystalSupport* self) {
     if (self->mLoaded != 0) {
@@ -125,6 +128,8 @@ extern "C" void func_8022EA64(CMCCrystalSupport* self) {
     func_80138078__FUl(0x8e);
 }
 
+#pragma push
+#pragma optimize_for_size on
 extern "C" void func_8022EA88(CMCCrystalSupport* self, u16 index) {
     const char* base = lbl_eu_8050AA3C;
     u16 key = func_80136254((const char*)lbl_eu_80664090, base + 0x2d,
@@ -136,6 +141,7 @@ extern "C" void func_8022EA88(CMCCrystalSupport* self, u16 index) {
         func_80137E7C(self->mLayout, lbl_eu_8050AA3C + 0x38, resource);
     }
 }
+#pragma pop
 
 // noinline: retail calls this via a real `bl` from func_8022E988 (sibling in this
 // TU); without it MWCC inlines the body into the caller and the bl disappears.

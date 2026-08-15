@@ -11,10 +11,8 @@
 #pragma auto_inline off
 // Emit the standalone reslist<CWorkThread*> constructor for the retail symbol
 // __ct__23reslist<P11CWorkThread>Fv. With -inline auto MWCC else folds the
-// template default-ctor into every call site and never emits a global body;
-// instantiate BEFORE any use so the out-of-line copy is authoritative.
+// template default-ctor into every call site and never emits a global body.
 template reslist<CWorkThread*>::reslist();
-#pragma pop
 
 namespace {
     class CWorkRootThread : public CWorkThread {
@@ -24,12 +22,6 @@ namespace {
         CWorkRootThread(const char* pName, CWorkThread* pThread) : CWorkThread(pName, pThread, 32) {
             mThreadList1.reserve(mAllocHandle, 16);
             mThreadList2.reserve(mAllocHandle, 16);
-        }
-
-        static void create(const char* pName, CWorkThread* pThread){
-            CWorkRootThread* thread = new (CWorkThreadSystem::getWorkMem()) CWorkRootThread(pName, pThread);
-            CWorkUtil::entryWork(thread, nullptr, false);
-            spInstance = thread;
         }
 
         static CWorkRootThread* getInstance(){
@@ -66,8 +58,10 @@ void CWorkRoot::initialize(){
     ml::math::initialize();
     //Initialize VI
     VIInit();
-    //Create root thread
-    CWorkRootThread::create("CWorkRoot", nullptr);
+    //Create root thread, allocated from work memory
+    CWorkRootThread* thread = new (CWorkThreadSystem::getWorkMem()) CWorkRootThread("CWorkRoot", nullptr);
+    CWorkUtil::entryWork(thread, nullptr, false);
+    CWorkRootThread::spInstance = thread;
 }
 
 void CWorkRoot::destroy(){
@@ -88,30 +82,32 @@ void CWorkRoot::entryWork(CWorkThread* pChild, CWorkThread* pParent, bool prepen
     }
 }
 
-//Forces isRunning inline to emit here
-bool CWorkRoot::dummy1(CWorkThread* pThread){
-    return pThread->isRunning();
-}
-
+// The -ipa file pass inlines every header-inline helper into callers, but
+// retail keeps call-containing helpers (isEvent3, isRunning, reslist members)
+// as real bls and only inlines tiny leaf helpers (flag checks, iterator ops).
+// dont_inline on the caller reproduces that split: leaf logic is written as
+// raw field access below, everything else stays a bl (MWCC_REFERENCE 11272).
+#pragma push
+#pragma dont_inline on
+#pragma optimize_for_size on
 void CWorkRoot::standbyWork(CWorkThread* pThread, bool arg1){
-    reslist<CWorkThread*>* children = &pThread->mChildren;
-    
-    //Something is sus here
     if(!(arg1 ^ pThread->isEvent3())){
         pThread->wkStandby();
 
-        //Recursively call standbyWork on this thread's children
-        for(reslist<CWorkThread*>::iterator it = children->begin(); it != children->end(); it++){
-            CWorkThread* childThread = *it;
-            standbyWork(childThread, arg1);
+        //Recursively call standbyWork on this thread's children. Retail keeps
+        //the list sentinel in a volatile register and reloads it each
+        //iteration (it is not live across the recursive call), so re-read it
+        //in the loop condition instead of caching it in a local.
+        _reslist_node<CWorkThread*>* node = pThread->mChildren.mStartNodePtr->mNext;
+        while (node != pThread->mChildren.mStartNodePtr) {
+            standbyWork(node->mItem, arg1);
+            node = node->mNext;
         }
     }
 
     // Remove all child threads that are in the shutdown state;
     // restart the scan from the beginning after each removal.
     do {
-        // Declaration order controls register allocation:
-        // sentinel(r3), node(r4), foundShutdownThread(r5).
         _reslist_node<CWorkThread*>* sentinel = pThread->mChildren.mStartNodePtr;
         _reslist_node<CWorkThread*>* node = sentinel->mNext;
         bool foundShutdownThread = false;
@@ -132,26 +128,50 @@ void CWorkRoot::standbyWork(CWorkThread* pThread, bool arg1){
         if (!foundShutdownThread) break;
     } while (true);
 }
+#pragma pop
 
+#pragma push
+#pragma dont_inline on
+#pragma optimize_for_size on
 void CWorkRoot::updateWork(CWorkThread* pThread, bool arg1){
     if(!(arg1 ^ pThread->isEvent3())){
         if(pThread->isRunning()){
-            bool r4 = !(pThread->isPaused() || pThread->isEvent7() || pThread->isAppException());
+            // Raw flag reads matching the retail's inlined leaf checks. The
+            // declaration order mirrors the retail register allocation (temp
+            // r3, clean r4, intermediate r5, flags r6).
+            bool temp;
+            bool clean;
+            bool intermediate;
+            u32 flags;
 
-            if(r4 || pThread->isNoEvent()){
+            flags = pThread->mFlags;
+            clean = true;
+            intermediate = true;
+            temp = (flags & CWorkThread::THREAD_FLAG_PAUSE) != 0 && (flags & CWorkThread::THREAD_FLAG_EVT4) != 0;
+            if(!temp){
+                temp = (flags & CWorkThread::THREAD_FLAG_EVT7) != 0 && (flags & CWorkThread::THREAD_FLAG_EVT9) == 0;
+                if(!temp){
+                    intermediate = false;
+                    if((flags & CWorkThread::THREAD_FLAG_APPEXCEPTION) == 0){
+                        clean = false;
+                    }
+                }
+            }
+
+            if(clean || (flags & CWorkThread::THREAD_FLAG_NO_EVENT) != 0){
                 pThread->wkUpdate();
             }
         }
 
-        reslist<CWorkThread*>* children = &pThread->mChildren;
-
-        //Recursively call updateWork on this thread's children
-        for(reslist<CWorkThread*>::iterator it = children->begin(); it != children->end(); it++){
-            CWorkThread* childThread = *it;
-            updateWork(childThread, arg1);
+        //Recursively call updateWork on this thread's children (raw node walk).
+        _reslist_node<CWorkThread*>* node = pThread->mChildren.mStartNodePtr->mNext;
+        while (node != pThread->mChildren.mStartNodePtr) {
+            updateWork(node->mItem, arg1);
+            node = node->mNext;
         }
     }
 }
+#pragma pop
 
 void CWorkRoot::standbyWork(){
     CWorkRootThread* thread = CWorkRootThread::getInstance();
@@ -337,4 +357,4 @@ bool CWorkThread::isRunning() const {
     return result;
 }
 
-
+#pragma pop

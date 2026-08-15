@@ -58,10 +58,51 @@ extern CMenuPause* lbl_eu_806647C8;
 // name).
 extern const f32 lbl_eu_806687DC;
 
+// u16 -> f32 conversion helper (CfTFile.cpp convention): build the
+// 0x43300000-prefixed bit pattern in memory and subtract the named 2^52
+// sdata2 magic (lbl_eu_806687D0) so the pool reloc matches retail instead of
+// an MWCC-synthesised @N entry.
+union CMenuPauseF64Conv {
+    u32 w[2];
+    double d;
+};
+
+// Mirror of the font object returned by CDeviceFont::func_80452C10.
+// vtable slot 9 (offset 0x24) yields the u32 bound into the layout's font
+// pane. Never instantiated, so no vtable is emitted; a genuine virtual call
+// makes MWCC emit the retail r12 dispatch sequence.
+struct CMenuPauseFontView {
+    virtual void sf0() = 0;
+    virtual void sf1() = 0;
+    virtual void sf2() = 0;
+    virtual void sf3() = 0;
+    virtual void sf4() = 0;
+    virtual void sf5() = 0;
+    virtual void sf6() = 0;
+    virtual void sf7() = 0;
+    virtual void sf8() = 0;
+    virtual u32 sf9() = 0; // vtable slot 9 (offset 0x24)
+};
+
+// Texture object returned by ArcResourceAccessor::GetResource for the 'timg'
+// tag. mChain (+0x08) -> mDims (+0x00) carries the 2D dimension header.
+struct CMenuPauseTexDims {
+    u16 field_0x0; // +0x00
+    u16 field_0x2; // +0x02
+};
+struct CMenuPauseTexChain {
+    CMenuPauseTexDims* mDims; // +0x00
+};
+struct CMenuPauseTexObj {
+    u8 _0[0x8];
+    CMenuPauseTexChain* mChain; // +0x08
+};
+
 extern "C" {
     void __dt__8CProcessFv(void*, int);
     void func_80138078__FUl(u32);
     void func_80188890(u32);
+    int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
     void func_801BFB34(f32, int, int, int);
     void func_eu_8013C8E8();
     void func_800853C8__Q22cf13CfGameManagerFv();

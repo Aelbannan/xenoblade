@@ -54,9 +54,9 @@ extern void SJ_SplitChunk(const SJ_CHUNK *src, int size, SJ_CHUNK *dst1, SJ_CHUN
 void *sjuni_Create(int index, void *pool_mem, int pool_size);
 void  sjuni_Reset(SJUNI *self);
 int   sjuni_GetNumData(SJUNI *self, int mode);
-int   sjuni_GetChunk(SJUNI *self, int mode, int size, SJ_CHUNK *out);
-int   sjuni_PutChunk(SJUNI *self, int mode, SJ_CHUNK *chunk);
-int   sjuni_UngetChunk(SJUNI *self, int mode, SJ_CHUNK *chunk);
+void  sjuni_GetChunk(SJUNI *self, int mode, int size, SJ_CHUNK *out);
+void  sjuni_PutChunk(SJUNI *self, int mode, SJ_CHUNK *chunk);
+void  sjuni_UngetChunk(SJUNI *self, int mode, SJ_CHUNK *chunk);
 int   sjuni_IsGetChunk(SJUNI *self, int mode, int size, int *out);
 
 /* --- SJUNI_Error --- */
@@ -295,7 +295,7 @@ int SJUNI_GetChunk(void *self, int mode, int size, SJ_CHUNK *out) {
 /* --- sjuni_GetChunk (internal) --- */
 #pragma push
 #pragma opt_propagation off
-int sjuni_GetChunk(SJUNI *self, int mode, int size, SJ_CHUNK *out) {
+void sjuni_GetChunk(SJUNI *self, int mode, int size, SJ_CHUNK *out) {
     if (self == NULL) {
         char buf[64];
         const char *suffix = lbl_eu_80518E00 + 0xC;
@@ -313,15 +313,17 @@ int sjuni_GetChunk(SJUNI *self, int mode, int size, SJ_CHUNK *out) {
         out->ptr = NULL;
         out->size = 0;
     } else {
-        SJUNI_CHUNK *chunk = self->queue[mode];
-        if (chunk == NULL) {
+        int sz;
+        unsigned char *p;
+        if (self->queue[mode] == NULL) {
             out->ptr = NULL;
             out->size = 0;
         } else {
+            SJUNI_CHUNK *chunk = self->queue[mode];
             SJ_CHUNK info;
             SJ_CHUNK remainder;
-            unsigned char *p = chunk->ptr;
-            int sz = chunk->size;
+            sz = chunk->size;
+            p = chunk->ptr;
             info.ptr = p;
             info.size = sz;
             if (info.size <= size) {
@@ -331,11 +333,19 @@ int sjuni_GetChunk(SJUNI *self, int mode, int size, SJ_CHUNK *out) {
                 chunk->next = self->free_head;
                 self->free_head = chunk;
             } else if (self->index == 1) {
+                int isz;
+                unsigned char *ip;
+                int rsz;
+                unsigned char *rp;
                 SJ_SplitChunk(&info, size, &info, &remainder);
-                out->ptr = info.ptr;
-                out->size = info.size;
-                chunk->ptr = remainder.ptr;
-                chunk->size = remainder.size;
+                ip = info.ptr;
+                isz = info.size;
+                out->size = isz;
+                out->ptr = ip;
+                rsz = remainder.size;
+                rp = remainder.ptr;
+                chunk->ptr = rp;
+                chunk->size = rsz;
             } else {
                 out->ptr = NULL;
                 out->size = 0;
@@ -353,47 +363,65 @@ int SJUNI_PutChunk(void *self, int mode, SJ_CHUNK *chunk) {
 }
 
 /* --- sjuni_PutChunk (internal) --- */
-int sjuni_PutChunk(SJUNI *self, int mode, SJ_CHUNK *chunk) {
+#pragma push
+#pragma opt_propagation off
+void sjuni_PutChunk(SJUNI *self, int mode, SJ_CHUNK *chunk) {
     if (self == NULL) {
         char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0xC);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518E00 + 0xD7);
+        const char *suffix = lbl_eu_80518E00 + 0xC;
+        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0xD7);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
-    } else if (self->valid == 0) {
+        goto exit;
+    }
+    if (self->valid == 0) {
         char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0x33);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518E00 + 0xE3);
+        const char *suffix = lbl_eu_80518E00 + 0x33;
+        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0xE3);
+        CRICRW_Strcat(buf, 0x40, suffix);
         SJERR_CallErr(buf);
-    } else if ((u32)mode > 3) {
+        goto exit;
+    }
+    if ((u32)mode > 3) {
         if (self->err_func) self->err_func(self->err_arg, -3);
-    } else if (chunk->size > 0 && chunk->ptr != NULL) {
-        SJUNI_CHUNK **tail = &self->queue[mode];
+        goto exit;
+    }
+    if (chunk->size > 0 && chunk->ptr != NULL) goto body;
+    goto exit;
+exit:
+    return;
+body:;
+    {
         SJUNI_CHUNK *prev = NULL;
+        SJUNI_CHUNK **tail = &self->queue[mode];
         while (*tail != NULL) {
             prev = *tail;
             tail = &(*tail)->next;
         }
-        if (self->index == 1 && prev != NULL) {
-            if (prev->ptr + prev->size == chunk->ptr) {
-                prev->size += chunk->size;
-                return 0;
-            }
+        if (self->index == 1 && prev != NULL &&
+            prev->ptr + prev->size == chunk->ptr) {
+            prev->size += chunk->size;
+            goto exit;
         }
         {
             SJUNI_CHUNK *free_chunk = self->free_head;
             if (free_chunk == NULL) {
                 if (self->err_func) self->err_func(self->err_arg, -3);
             } else {
+                int sz;
+                unsigned char *p;
                 self->free_head = free_chunk->next;
                 free_chunk->next = NULL;
-                free_chunk->ptr = chunk->ptr;
-                free_chunk->size = chunk->size;
+                sz = chunk->size;
+                p = chunk->ptr;
+                free_chunk->ptr = p;
+                free_chunk->size = sz;
                 *tail = free_chunk;
             }
         }
     }
-    return 0;
 }
+#pragma pop
 
 /* --- SJUNI_UngetChunk --- */
 int SJUNI_UngetChunk(void *self, int mode, SJ_CHUNK *chunk) {
@@ -405,7 +433,7 @@ int SJUNI_UngetChunk(void *self, int mode, SJ_CHUNK *chunk) {
 /* --- sjuni_UngetChunk (internal) --- */
 #pragma push
 #pragma opt_propagation off
-int sjuni_UngetChunk(SJUNI *self, int mode, SJ_CHUNK *chunk) {
+void sjuni_UngetChunk(SJUNI *self, int mode, SJ_CHUNK *chunk) {
     if (self == NULL) {
         char buf[64];
         const char *suffix = lbl_eu_80518E00 + 0xC;
@@ -433,23 +461,27 @@ exit:
 body:;
     {
         SJUNI_CHUNK **queue_ptr = &self->queue[mode];
-        if (self->index == 1) {
-            SJUNI_CHUNK *head = *queue_ptr;
-            if (head != NULL && chunk->ptr + chunk->size == head->ptr) {
-                head->ptr = chunk->ptr;
-                head->size += chunk->size;
-                goto exit;
-            }
-        }
+        SJUNI_CHUNK *head = *queue_ptr;
+        if (self->index != 1 || head == NULL ||
+            chunk->ptr + chunk->size != head->ptr)
+            goto freepath;
+        head->ptr = chunk->ptr;
+        head->size += chunk->size;
+        goto exit;
+    freepath:;
         {
             SJUNI_CHUNK *free_chunk = self->free_head;
             if (free_chunk == NULL) {
                 if (self->err_func) self->err_func(self->err_arg, -3);
             } else {
+                int sz;
+                unsigned char *p;
                 self->free_head = free_chunk->next;
                 free_chunk->next = NULL;
-                free_chunk->ptr = chunk->ptr;
-                free_chunk->size = chunk->size;
+                p = chunk->ptr;
+                sz = chunk->size;
+                free_chunk->ptr = p;
+                free_chunk->size = sz;
                 free_chunk->next = *queue_ptr;
                 *queue_ptr = free_chunk;
             }

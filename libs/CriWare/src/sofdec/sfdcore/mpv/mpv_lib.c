@@ -49,13 +49,14 @@ extern void MPVSL_Destroy(void* self);
 extern s32 MPVERR_SetCode(s32 val, u32 err_code);
 
 s32 MPV_Init(s32 a, s32 b) {
+    struct MPVWork* work = &lbl_eu_80602B80;
     s32 err;
     u32 aligned;
-    u8* vlc;
     u8* blk;
+    u8* vlc;
     s32 i;
 
-    lbl_eu_80602B80.field_0x04 = (u32)lbl_eu_8051C200;
+    work->field_0x04 = (u32)lbl_eu_8051C200;
     err = mpvlib_ChkFatal();
     if (err != 0) {
         /* fatal: the version-mismatch code (0xff03ff05) returns the fatal
@@ -70,21 +71,22 @@ s32 MPV_Init(s32 a, s32 b) {
     UTY_MemsetDword((u32*)aligned, 0, (u32)((a << 13) + 0x2000) >> 2);
     blk = (u8*)aligned + a * 0xdc0;
     vlc = blk + 0x420;
-    if (lbl_eu_80602B80.config.field_0x48 & 0x10000000) {
-        /* Retail cache-invalidates + dcbz_l's 0xdf blocks (dcbi/dcbz_l pair);
-         * neither instruction is emittable in GC/3.0a5.2 high-level C (KB
-         * dcbi gap), so two __dcbz keep the countdown-loop shape; both cache
-         * opcodes differ (documented ceiling, MWCC_REFERENCE MPV_Finish). */
+    if (work->config.field_0x48 & 0x10000000) {
+        /* Retail cache-invalidates + dcbz_l's 0xdf blocks (dcbi/dcbz_l
+         * pair); neither instruction is emittable in GC/3.0a5.2
+         * high-level C (KB dcbi gap), so two __dcbz keep the
+         * countdown-loop shape; both cache opcodes differ (documented
+         * ceiling, MWCC_REFERENCE MPV_Finish). */
         for (i = 0; i < 0xdf; i++) {
             __dcbz(vlc, i * 0x20);
             __dcbz(vlc, i * 0x20);
         }
     }
-    MEM_Copy(&lbl_eu_80602B80.config, lbl_eu_8051C258, 0x40);
-    lbl_eu_80602B80.config.field_0x4c = (u32)blk;
-    lbl_eu_80602B80.config.field_0x50 = (u32)vlc;
-    lbl_eu_80602B80.config.field_0x54 = (u32)a;
-    lbl_eu_80602B80.config.field_0x58 = aligned;
+    MEM_Copy(&work->config, lbl_eu_8051C258, 0x40);
+    work->config.field_0x4c = (u32)blk;
+    work->config.field_0x50 = (u32)vlc;
+    work->config.field_0x54 = (u32)a;
+    work->config.field_0x58 = aligned;
     MPVERR_Init();
     MPVHDEC_Init();
     MPVFRM_Init();
@@ -95,16 +97,16 @@ s32 MPV_Init(s32 a, s32 b) {
     MPVCDEC_Init(vlc);
     mpvlib_InitClip0255();
     {
-        u8* clip = vlc + 0x17e0;
-        if (clip != NULL) {
-            UTY_MemcpyDword((u32*)clip, (u32*)lbl_eu_80602B80.config.field_0x60, 0x100);
-            lbl_eu_80602B80.field_0x468 = (u32)(vlc + 0x1960);
+        u8* clip;
+        if ((clip = vlc + 0x17e0) != NULL) {
+            UTY_MemcpyDword((u32*)clip, (u32*)work->config.field_0x60, 0x100);
+            work->field_0x468 = (u32)(vlc + 0x1960);
         }
     }
     {
-        s32 n = lbl_eu_80602B80.config.field_0x54;
-        u8* base = (u8*)lbl_eu_80602B80.config.field_0x58;
-        for (i = 0; i < n; i++) {
+        s32 n = work->config.field_0x54;
+        u8* base = (u8*)work->config.field_0x58;
+        while (n-- > 0) {
             *(s32*)(base + 0xb08) = 1;
             base += 0xdc0;
         }

@@ -14,13 +14,17 @@
 
 // Cross-TU layout helpers (kyoshin .text). Declared as plain C++ like their
 // matched call sites (CItemBoxGridSubMenu.cpp) so the reloc binds correctly.
-void func_80127BC4(float*, float*);
 void func_801D2150(nw4r::lyt::Pane*, const nw4r::math::VEC3*);
 void func_80124288(void*, float*);
-void func_80124270(nw4r::lyt::Pane*, u32);
 // Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3, so
 // callers (func_801F36BC) reuse it as the returned pointer for func_801D2150.
 float* code80135FDC_setVec3(float*, float, float, float);
+
+// Defined at the bottom of this file; declared here (definition NOT yet
+// visible, plus noinline) so OnFileEvent emits a direct `bl` to the retail
+// symbol instead of inlining the body into the call site (retail calls it
+// out-of-line).
+extern "C" __attribute__((noinline)) void func_801F39B4(void* self);
 
 // The scroll-bar drag pane carries a small data block at +0x2C..+0x50 (thumb
 // dimensions / track position). The nw4r Pane layout doesn't model these
@@ -47,7 +51,6 @@ u8 CScrollBar::func_801F3668() { return mActive; }
 
 extern "C" void func_801D2150(void* a);
 extern "C" void func_801F3670(void* self) { func_801D2150(*(void**)((u8*)*(void**)((u8*)self + 0x1C) + 0x10)); }
-
 
 void func_801F3850(CScrollBar* self, u32 count) {
     nw4r::lyt::Pane* pane =
@@ -100,14 +103,6 @@ extern "C" __attribute__((noinline)) void func_801F3960(CScrollBar* self) {
         self->mState = 0;
         self->mActive = 1;
         self->mAnimOffset = lbl_eu_80668138;
-    }
-}
-
-extern "C" void func_801F39B4(void* self) {
-    CScrollBar* bar = static_cast<CScrollBar*>(self);
-    if (bar->mLayout != 0) {
-        bar->mVisible = 1;
-        bar->mReady = 1;
     }
 }
 
@@ -243,12 +238,15 @@ void func_801F36BC(CScrollBar* self, u32 scrollFrom, u32 scrollTo) {
     }
 }
 
+/* Complete-object destructor. The mMemRegion member is destroyed implicitly
+(its dtor is a real C++ member dtor, so MWCC emits the external call with
+flags=-1), then the deleting-flag check and operator delete. */
 CScrollBar::~CScrollBar() {}
 
-/* Construct the scroll bar: point the vtable, build the scratch region, then
-zero every member. mActive starts at 1 (idle) and all offsets at 0. */
-CScrollBar::CScrollBar(u8 direction) {
-    mVtbl = lbl_eu_80534DD8;
+/* Construct the scroll bar: the base ctor stores the vtable first, then the
+mMemRegion member ctor runs (retail order), then every field is initialized.
+mActive starts at 1 (idle) and all offsets at 0. */
+CScrollBar::CScrollBar(u8 direction) : CScrollBarVtblBase(), mMemRegion() {
     mFileHandle = 0;
     mAccessor = 0;
     mLayout = 0;
@@ -263,4 +261,14 @@ CScrollBar::CScrollBar(u8 direction) {
     mThumbHeight = lbl_eu_80668138;
     mContentHeight = lbl_eu_80668138;
     mDirection = direction;
+}
+
+/* Defined last in the TU (declaration above) so callers emit a direct `bl`
+rather than an inlined copy - retail calls it out-of-line. */
+extern "C" __attribute__((noinline)) void func_801F39B4(void* self) {
+    CScrollBar* bar = static_cast<CScrollBar*>(self);
+    if (bar->mLayout != 0) {
+        bar->mVisible = 1;
+        bar->mReady = 1;
+    }
 }

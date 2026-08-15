@@ -13,7 +13,6 @@
 #include "monolib/lib/CLibLayout.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CEventFile.hpp"
-extern const char lbl_eu_8050A740[];
 extern void func_80137924(void*, void*, void*, void*);
 extern void func_80138078(u32);
 extern const float lbl_eu_80668610;
@@ -78,18 +77,23 @@ extern "C" void func_8022D244(CExchangeWin* self) {
 // OnFileEvent - loads the layout from a file, sets up fonts, animations,
 // text fields, and a texture resource with pane sizing from TPL dimensions.
 bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
-    if (mFileHandle != pEventFile->mFileHandle) {
-        return false;
-    }
+    if (mFileHandle == pEventFile->mFileHandle) {
+        mMemRegion.createRegion(
+            mtl::MemManager::getHandleMEM2(),
+            0x8000,
+            &lbl_eu_8050A740[0x4e],
+            0
+        );
 
-    mMemRegion.createRegion(
-        mtl::MemManager::getHandleMEM2(),
-        0x8000,
-        &lbl_eu_8050A740[0x4e],
-        0
-    );
-
-    Class_8045F858 helper(&mMemRegion);
+        // Locals are declared in reverse stack-slot order (MWCC assigns slots
+        // in reverse declaration order) so the layout matches retail:
+        // size@0x10, regionBuf@0x8.
+        CExchangeWinSize size;
+        u8 regionBuf[8];
+        // RAII scratch-region guard (explicit C-ABI ctor/dtor so the retail
+        // stack slot and the -1 dealloc flag match exactly).
+        __ct__14Class_8045F858FP17UnkClass_8045F564(
+            reinterpret_cast<Class_8045F858*>(regionBuf), &mMemRegion);
 
     void* arcData = mFileHandle->mData;
     mFileHandle->mData = nullptr;
@@ -100,65 +104,60 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
 
     func_80136E84(&mLayout, mAccessor, &lbl_eu_8050A740[0x5f]);
     func_80136F08(mLayout, &mAnimTransform, mAccessor,
-                  (char*)&lbl_eu_8050A740[0x78]);
+                  &lbl_eu_8050A740[0x78]);
 
+    // Bind the shared font: root pane first (retail loads it into r29 before
+    // the CDeviceFont call), then fetch the font handle from vtable slot 9.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
     void* fontObj = CDeviceFont::func_80452C10(1, mLayout);
-    typedef u32 (*FontVFn)(void*);
-    u32 fontResult =
-        (*reinterpret_cast<FontVFn**>(fontObj))[0x24 / 4](fontObj);
+    u32 fontResult = static_cast<CExchangeWinFontView*>(fontObj)->sf9();
     func_8013676C(rootPane, fontResult);
 
     mLayout->SetAnimationEnable(mAnimTransform, true);
     mLayout->Animate(0);
 
     // Set text fields from message table
-    char* t1 =
-        (char*)func_80136190((char*)&lbl_eu_8050A740[0x94],
-                       (char*)&lbl_eu_8050A740[0x9d], 0x24);
-    func_80136B4C(mLayout, (char*)&lbl_eu_8050A740[0xa2], t1, 0);
+    char* t1 = func_80136190(&lbl_eu_8050A740[0x94], &lbl_eu_8050A740[0x9d], 0x24);
+    func_80136B4C(mLayout, &lbl_eu_8050A740[0xa2], t1, 0);
 
-    char* t2 =
-        (char*)func_80136190((char*)&lbl_eu_8050A740[0x94],
-                       (char*)&lbl_eu_8050A740[0x9d], 0x25);
-    func_80136B4C(mLayout, (char*)&lbl_eu_8050A740[0xaf], t2, 0);
+    char* t2 = func_80136190(&lbl_eu_8050A740[0x94], &lbl_eu_8050A740[0x9d], 0x25);
+    func_80136B4C(mLayout, &lbl_eu_8050A740[0xaf], t2, 0);
 
-    char* t3 =
-        (char*)func_80136190((char*)&lbl_eu_8050A740[0x94],
-                       (char*)&lbl_eu_8050A740[0x9d], 0x26);
-    func_80136B4C(mLayout, (char*)&lbl_eu_8050A740[0xba], t3, 0);
+    char* t3 = func_80136190(&lbl_eu_8050A740[0x94], &lbl_eu_8050A740[0x9d], 0x26);
+    func_80136B4C(mLayout, &lbl_eu_8050A740[0xba], t3, 0);
 
-    char* t4 =
-        (char*)func_80136190((char*)&lbl_eu_8050A740[0xc5],
-                       (char*)&lbl_eu_8050A740[0xd3], 0x2b);
-    func_80136B4C(mLayout, (char*)&lbl_eu_8050A740[0xd8], t4, 0);
+    char* t4 = func_80136190(&lbl_eu_8050A740[0xc5], &lbl_eu_8050A740[0xd3], 0x2b);
+    func_80136B4C(mLayout, &lbl_eu_8050A740[0xd8], t4, 0);
 
-    // Choose file ID based on game manager state
-    const char* fileID = &lbl_eu_8050A740[0xed];
-    if (cf::CfGameManager::func_80086F9C(-1) != 0) {
-        fileID = &lbl_eu_8050A740[0xe4];
-    }
+    // Choose the message texture name by the game-manager mode flag (ternary
+    // keeps the selection after the call so MWCC loads it straight into r4).
+    const char* fileID = func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0
+                             ? &lbl_eu_8050A740[0xe4]
+                             : &lbl_eu_8050A740[0xed];
 
-    u16 keyVal =
-        func_8013606C((char*)&lbl_eu_8050A740[0xc5], (char*)fileID, 0x2b);
+    u16 keyVal = func_8013606C(&lbl_eu_8050A740[0xc5], fileID, 0x2b);
     char* name = func_80138F78(keyVal);
 
-    nw4r::lyt::ArcResourceAccessor* resAcc =
-        CUICfManager::func_801355F4();
-    TPLPalette* resource = (TPLPalette*)resAcc->GetResource(
-        nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, name, nullptr);
+    nw4r::lyt::ArcResourceAccessor* resAcc = func_801355F4();
+    TPLPalette* resource =
+        (TPLPalette*)resAcc->GetResource(0x74696D67, name, 0);
 
     if (resource != nullptr) {
-        func_80137E7C(mLayout, (char*)&lbl_eu_8050A740[0xf6], resource);
+        func_80137E7C(mLayout, &lbl_eu_8050A740[0xf6], resource);
 
+        // The TPL dims are captured before the pane lookup: retail keeps them
+        // in callee-saved r29/r30 across the FindPaneByName call.
+        TPLHeader* header = resource->descriptorArray->textureHeader;
+        u16 w = header->width;
+        u16 h = header->height;
         nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName(
-            (char*)&lbl_eu_8050A740[0xf6], true);
+            &lbl_eu_8050A740[0xf6], true);
         if (pane != nullptr) {
-            TPLHeader* header = resource->descriptorArray->textureHeader;
-            nw4r::lyt::Size& size =
-                const_cast<nw4r::lyt::Size&>(pane->GetSize());
-            size.width = (f32)header->width;
-            size.height = (f32)header->height;
+            // u16 -> f32 via the shared 0x43300000 magic double, then size
+            // the picture pane (CfTFile.cpp / CMenuKizunaTalk convention).
+            size.width = (f32)(u32)w;
+            size.height = (f32)(u32)h;
+            pane->SetSize(*reinterpret_cast<nw4r::lyt::Size*>(&size));
         }
     }
 
@@ -168,8 +167,11 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
 
     mFileHandle = nullptr;
     mMemRegion.func_8045F810();
+    __dt__14Class_8045F858Fv(reinterpret_cast<Class_8045F858*>(regionBuf), -1);
 
     return true;
+    }
+    return false;
 }
 
 // Stub functions needed by CItemBoxGrid

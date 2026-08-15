@@ -27,10 +27,25 @@ typedef struct MPS_PKETHD {
     u32 payload;    /* 0xCC */
 } MPS_PKETHD;
 
+/* MPS system header, decoded by mpsdec_DecSysHd (work + 0x28) */
+typedef struct MPS_SYSHDR {
+    u32 w0; /* 0x28 */
+    u32 w1; /* 0x2C */
+    u32 w2; /* 0x30 */
+    u32 w3; /* 0x34 */
+    u32 w4; /* 0x38 */
+    u32 w5; /* 0x3C */
+    u32 w6; /* 0x40 */
+    u32 w7; /* 0x44 */
+} MPS_SYSHDR;
+
 struct MPS_WORK {
-    u8         pad0[0x18];      /* 0x00 */
+    u8         pad0[0x10];      /* 0x00 */
+    u32        field_0x10;      /* 0x10 */
+    u8         pad0b[0x04];     /* 0x14 */
     MPS_PACKHD pack;            /* 0x18 */
-    u8         pad1[0x80];      /* 0x28 (system header area) */
+    MPS_SYSHDR sys;             /* 0x28: current system header */
+    MPS_SYSHDR sys_save[3];     /* 0x48: per-stream saved copies */
     MPS_PKETHD pket;            /* 0xA8 */
     u8         pad2[0x04];      /* 0xD0 */
     void      *dec_fn;          /* 0xD4 */
@@ -68,6 +83,38 @@ void MPS_SetPesFn(MPS_WORK *hn, void *pes_fn, void *pes_obj) {
 
 extern int MPSLIB_SetErr(void *, int);
 
+int MPS_CheckDelim(const u8 *buf);
+void mpsdec_DecSysHd(MPS_WORK *hn, const u8 *src, u32 *size_out);
+void mpsdec_DecPackHd(MPS_WORK *hn, const u8 *src, u32 *size_out);
+void mpsdec_DecPketHd(MPS_WORK *hn, const u8 *src, u32 *size_out, u32 count);
+
+/* PES callback installed via MPS_SetPesFn: (obj, stream_id, pts_lo, pts_hi) */
+typedef void (*mps_pes_fn)(void *obj, u8 stream_id, u32 pts_lo, u32 pts_hi);
+
+/* System-header callback argument: first 12 bytes are the callback payload,
+ * count + descs are stream descriptors collected while scanning. */
+typedef struct MPS_DESC {
+    u8  stream_id;
+    u8  flag;
+    u16 size;
+} MPS_DESC;
+
+typedef struct MPS_SYS_CB {
+    u32      rate;   /* 0x00: mux rate (sys.w1) */
+    u8       b0;     /* 0x04: sys.w2 */
+    u8       b1;     /* 0x05: sys.w4 */
+    u8       b2;     /* 0x06: sys.w5 */
+    u8       b3;     /* 0x07: sys.w6 */
+    u8       b4;     /* 0x08: sys.w7 */
+    u8       b5;     /* 0x09: sys.w3 */
+    u8       b6;     /* 0x0A: (ext >> 24) & 1 */
+    u8       b7;     /* 0x0B: ext & 0x7F */
+    u32      count;  /* 0x0C */
+    MPS_DESC descs[50]; /* 0x10: per-stream descriptors */
+} MPS_SYS_CB;
+
+typedef void (*mps_sys_fn)(void *obj, void *cb);
+
 typedef void (*mps_dechd_fn)(void *, void *, void *, void *, void *);
 
 void MPS_DecHd(void *handle, void *arg1, void *arg2, void *out1, void *out2) {
@@ -85,13 +132,46 @@ void MPS_DecHd(void *handle, void *arg1, void *arg2, void *out1, void *out2) {
     fn(handle, arg1, arg2, out1, out2);
 }
 
-extern s32 mpsdec_DecOneHd(void* self, u8* buf, s32 size, s32* used, s32* flag);
+/* MPEG demux dispatch: checks the start-code delimiter and routes the stream
+ * to the pack / system / packet header decoder, then notifies the PES handler. */
+s32 mpsdec_DecOneHd(MPS_WORK *self, const u8 *buf, s32 size, s32 *used, s32 *flag) {
+    s32 ret = 0;
+    s32 delim;
+
+    *used = 0;
+    delim = MPS_CheckDelim(buf);
+    *flag = delim;
+    if (delim == 0x00010000) /* 0xBA: pack header */
+        goto pack_hd;
+    if (delim == 0x00020000) /* 0xBB: system header */
+        goto sys_hd;
+    if (delim != 0x00040000) /* 0xBC+: packet header */
+        goto done;
+    goto pket_hd;
+pack_hd:
+    mpsdec_DecPackHd(self, buf, (u32 *)used);
+    ret = 1;
+    goto done;
+sys_hd:
+    mpsdec_DecSysHd(self, buf, (u32 *)used);
+    ret = 1;
+    goto done;
+pket_hd:
+    mpsdec_DecPketHd(self, buf, (u32 *)used, self->field_0x10);
+    if (self->pes_fn != NULL) {
+        ((mps_pes_fn)self->pes_fn)(self->pes_obj, (u8)self->pket.stream_id,
+                                   self->pket.pts_lo, self->pket.pts_hi);
+    }
+done:
+    return ret;
+}
 
 s32 MPSDEC_DecHdMpeg1(void* self, u8* buf, s32 size, s32* out_size, u32* out_flag) {
+    MPS_WORK *hn = (MPS_WORK *)self;
     while (size >= 4) {
         s32 flg;
         s32 used;
-        s32 ret = mpsdec_DecOneHd(self, buf, size, &used, &flg);
+        s32 ret = mpsdec_DecOneHd(hn, buf, size, &used, &flg);
         *out_flag |= (u32)flg;
         buf += used;
         size -= used;
@@ -99,34 +179,17 @@ s32 MPSDEC_DecHdMpeg1(void* self, u8* buf, s32 size, s32* out_size, u32* out_fla
         if (ret == 0)
             break;
     }
-    if ((*out_flag & 0x20000) != 0) {
+    if ((*out_flag & 0x00020000) != 0) {
         s32 idx;
-        if (*(s32*)((u8*)self + 0x30) != 0) {
+        if (hn->sys.w2 != 0) {
             idx = 0;
         } else {
             idx = 2;
-            if (*(s32*)((u8*)self + 0x34) != 0)
+            if (hn->sys.w3 != 0)
                 idx = 1;
         }
-        {
-            u8* dst = (u8*)self + (idx << 5);
-            s32 v1 = *(s32*)((u8*)self + 0x2C);
-            s32 v0 = *(s32*)((u8*)self + 0x28);
-            *(s32*)(dst + 0x48) = v0;
-            *(s32*)(dst + 0x4C) = v1;
-            v1 = *(s32*)((u8*)self + 0x34);
-            v0 = *(s32*)((u8*)self + 0x30);
-            *(s32*)(dst + 0x50) = v0;
-            *(s32*)(dst + 0x54) = v1;
-            v1 = *(s32*)((u8*)self + 0x3C);
-            v0 = *(s32*)((u8*)self + 0x38);
-            *(s32*)(dst + 0x58) = v0;
-            *(s32*)(dst + 0x5C) = v1;
-            v1 = *(s32*)((u8*)self + 0x44);
-            v0 = *(s32*)((u8*)self + 0x40);
-            *(s32*)(dst + 0x60) = v0;
-            *(s32*)(dst + 0x64) = v1;
-        }
+        /* save the current system header into the per-stream slot */
+        hn->sys_save[idx] = hn->sys;
     }
     return 0;
 }
@@ -367,4 +430,108 @@ void mpsdec_DecPketHd(MPS_WORK *hn, const u8 *src, u32 *size_out, u32 count) {
     hn->pket.payload = hn->pket.length + consumed - sz;
 }
 
-void mpsdec_DecSysHd() {}
+void mpsdec_DecSysHd(MPS_WORK *hn, const u8 *src, u32 *size_out) {
+    u32 addr = (u32)src + 4;
+    int bitpos;
+    u32 cur;
+    u32 next;
+    u32 *p;
+    u32 ext;
+    MPS_SYS_CB cb;
+    u8 *pend;
+
+    p = (u32 *)(addr & ~3u);
+    bitpos = (int)((addr - (u32)p) << 3);
+    cur = p[0] << bitpos;
+    next = p[1];
+    p += 2;
+
+    /* MPEG-1 system header: 16-bit rate bound, then the audio/video bound
+     * and lock-flag fields, then the per-stream descriptors. */
+    MPS_GETBITS(16, hn->sys.w0);
+    MPS_SKIPBITS(1);
+    MPS_GETBITS(22, hn->sys.w1);
+    MPS_SKIPBITS(1);
+    MPS_GETBITS(6, hn->sys.w2);
+    hn->sys.w4 = cur >> 31;
+    if (bitpos == 31) {
+        cur = next;
+        next = *p++;
+        bitpos = 0;
+    } else {
+        cur <<= 1;
+        bitpos += 1;
+    }
+    hn->sys.w5 = cur >> 31;
+    if (bitpos == 31) {
+        cur = next;
+        next = *p++;
+        bitpos = 0;
+    } else {
+        cur <<= 1;
+        bitpos += 1;
+    }
+    hn->sys.w6 = cur >> 31;
+    if (bitpos == 31) {
+        cur = next;
+        next = *p++;
+        bitpos = 0;
+    } else {
+        cur <<= 1;
+        bitpos += 1;
+    }
+    hn->sys.w7 = cur >> 31;
+    if (bitpos == 31) {
+        cur = next;
+        next = *p++;
+        bitpos = 0;
+    } else {
+        cur <<= 1;
+        bitpos += 1;
+    }
+    MPS_SKIPBITS(1);
+    MPS_GETBITS(5, hn->sys.w3);
+    MPS_GETBITS(8, ext);
+
+    /* Stream descriptors follow while the next bit is set. */
+    while ((cur >> 31) != 0) {
+        u32 s_id, s_flag, s_size;
+        MPS_GETBITS(8, s_id);
+        MPS_SKIPBITS(2);
+        s_flag = cur >> 31;
+        if (bitpos == 31) {
+            cur = next;
+            next = *p++;
+            bitpos = 0;
+        } else {
+            cur <<= 1;
+            bitpos += 1;
+        }
+        MPS_GETBITS(13, s_size);
+        cb.descs[cb.count].stream_id = (u8)s_id;
+        cb.descs[cb.count].flag = (u8)s_flag;
+        cb.descs[cb.count].size = (u16)s_size;
+        cb.count++;
+    }
+
+    /* The consumed byte position is the end of this header; it must be
+     * followed by the next pack's packet start code. */
+    pend = (u8 *)p + ((bitpos + 7) >> 3) - 8;
+    *size_out = (u32)(pend - src);
+    if (MPS_CheckDelim(pend) == 0 && MPS_CheckDelim(pend + 1) == 0x00040000) {
+        (*size_out)++;
+    }
+
+    if (hn->sys_fn != NULL) {
+        cb.rate = hn->sys.w1;
+        cb.b0 = (u8)hn->sys.w2;
+        cb.b1 = (u8)hn->sys.w4;
+        cb.b2 = (u8)hn->sys.w5;
+        cb.b3 = (u8)hn->sys.w6;
+        cb.b4 = (u8)hn->sys.w7;
+        cb.b5 = (u8)hn->sys.w3;
+        cb.b6 = (u8)((ext >> 24) & 1);
+        cb.b7 = (u8)(ext & 0x7F);
+        ((mps_sys_fn)hn->sys_fn)(hn->sys_obj, &cb);
+    }
+}

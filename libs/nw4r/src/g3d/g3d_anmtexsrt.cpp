@@ -99,8 +99,9 @@ void AnmObjTexSrtRes::SetUpdateRate(f32 rate) {
 
     if (rate == 1.0f) {
         if (mpResultCache != NULL) {
+            u32 i;
             f32 f = GetFrm();
-            for (u32 i = 0; i < (u32)mNumBinding; i++) {
+            for (i = 0; i < (u32)mNumBinding; i++) {
                 u16 binding = mpBinding[i];
                 if (!(binding & BINDING_UNDEFINED)) {
                     u32 id = binding & BINDING_ID_MASK;
@@ -217,27 +218,24 @@ namespace nw4r {
 namespace g3d {
 
 void ApplyTexSrtAnmResult(ResTexSrt texSrt, const TexSrtAnmResult* pResult) {
-    u32 texSrtFlags = texSrt.ref().flag;
+    ResTexSrtData& data = texSrt.ref();
+    u32 texSrtFlags = data.flag;
     u32 resultFlags = pResult->flags;
     u32 mask = 0xF;
-    TexSrt* pDst = texSrt.ref().texSrt;
-    const TexSrt* pSrc = pResult->srt;
 
-    while (texSrtFlags != 0 && resultFlags != 0) {
+    for (u32 i = 0; texSrtFlags != 0 && resultFlags != 0; i++) {
         if ((texSrtFlags & 1) != 0 && (resultFlags & 1) != 0) {
-            texSrt.ref().texMtxMode = pResult->texMtxMode;
+            data.texMtxMode = pResult->texMtxMode;
 
-            *pDst = *pSrc;
+            data.texSrt[i] = pResult->srt[i];
 
-            texSrt.ref().flag =
-                (texSrt.ref().flag & ~mask) | (resultFlags & mask);
+            data.flag =
+                (data.flag & ~mask) | (pResult->flags & mask);
         }
 
         texSrtFlags >>= 4;
         resultFlags >>= 4;
         mask <<= 4;
-        pDst++;
-        pSrc++;
     }
 }
 

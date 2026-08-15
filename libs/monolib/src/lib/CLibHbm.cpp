@@ -167,8 +167,34 @@ void CLibHbm::loadHbmArcFile(){
     }
 }
 
+// Inline copy of CWorkThread::isRunning() visible only in this TU (same trick
+// as CLibVM.cpp / CDeviceGX.cpp): the retail isInitialized inlines the member
+// call with the this-arg bound to the instance, which births the global load
+// before the find-loop index (inst=r6 / index=r7). CWorkRoot.cpp keeps the
+// strong out-of-line definition.
+inline bool CWorkThread::isRunning() const {
+    bool exception;
+    if (mFlags & THREAD_FLAG_EXCEPTION) {
+        exception = true;
+    } else {
+        exception = mMsgQueue.find(EVT_EXCEPTION) >= 0;
+    }
+
+    bool result = false;
+    if (!exception) {
+        bool stateOK = mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN;
+        if (stateOK) {
+            result = true;
+        }
+    }
+    return result;
+}
+
 bool CLibHbm::isInitialized(){
-    return spInstance->isRunning();
+    // Reference the retail-named instance global (same storage as the spInstance
+    // static member) so the SDA21 reloc name matches.
+    extern CLibHbm* lbl_eu_806656F8;
+    return lbl_eu_806656F8->isRunning();
 }
 
 void CLibHbm::wkUpdate(){
@@ -315,6 +341,11 @@ bool CLibHbm::wkStandbyLogout(){
 }
 
 bool CLibHbm::OnFileEvent(CEventFile* pFile){
+    // The five hbm filenames are packed into one retail rodata blob;
+    // &lbl_eu_80523138[off] reproduces the lis/@l/addi-offset codegen with the
+    // retail-named relocs instead of a TU-local @stringBase0 pool.
+    extern char lbl_eu_80523138[];
+
     if(mpHbmArcFileHandle == pFile->mFileHandle){
         if(pFile->unk0 == true){
             void* data = pFile->getFileDataPtr();
@@ -323,23 +354,23 @@ bool CLibHbm::OnFileEvent(CEventFile* pFile){
             ARCFileInfo fileInfo;
 
             if(ARCInitHandle(unk1E8, &arcHandle)){
-                if(ARCOpen(&arcHandle, "hbm/homeBtn.arc", &fileInfo)){
+                if(ARCOpen(&arcHandle, &lbl_eu_80523138[0x00], &fileInfo)){
                     mpLayoutBuf = ARCGetStartAddrInMem(&fileInfo);
                 }
 
-                if(ARCOpen(&arcHandle, "hbm/SpeakerSe.arc", &fileInfo)){
+                if(ARCOpen(&arcHandle, &lbl_eu_80523138[0x10], &fileInfo)){
                     mpSpkSeBuf = ARCGetStartAddrInMem(&fileInfo);
                 }
 
-                if(ARCOpen(&arcHandle, "hbm/HomeButtonSe.arc", &fileInfo)){
+                if(ARCOpen(&arcHandle, &lbl_eu_80523138[0x22], &fileInfo)){
                     mpHbmSeBuf = ARCGetStartAddrInMem(&fileInfo);
                 }
 
-                if(ARCOpen(&arcHandle, "hbm/home.csv", &fileInfo)){
+                if(ARCOpen(&arcHandle, &lbl_eu_80523138[0x37], &fileInfo)){
                     mpMsgBuf = ARCGetStartAddrInMem(&fileInfo);
                 }
 
-                if(ARCOpen(&arcHandle, "hbm/config.txt", &fileInfo)){
+                if(ARCOpen(&arcHandle, &lbl_eu_80523138[0x44], &fileInfo)){
                     mpConfigBuf = ARCGetStartAddrInMem(&fileInfo);
                     mConfigBufSize = ARCGetLength(&fileInfo);
                 }

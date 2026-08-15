@@ -10,69 +10,78 @@
 #include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/code_80135FDC.hpp"
-#include "kyoshin/CCollepedia.hpp"
 #include "monolib/core/CPadManager.hpp"
 
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
 
-extern unsigned long lbl_eu_80664A28;
-extern u32 lbl_eu_80663E28;
-extern u32 lbl_eu_80663E24;
-extern char lbl_eu_80510260[];
+// Retail destructor symbol (mangled member name); C-linkage literal so the
+// IScnRender thunk (func_8029A92C) binds to the real dtor symbol.
+extern "C" void __dt__13CMenuTutorialFv(CMenuTutorial* self);
 
 /*
- * Retail-unmangled C-linkage callees in other TUs.
- *
- * The tutorial widget (CTutorial) and title/help bar (CTitleAHelp) functions
- * are emitted by retail under their bare names (no Itanium mangling), as are
- * the CF/ui helpers below. They are declared extern "C" so calls bind to the
- * literal retail symbol (MWCC would otherwise mangle cmpwi`func_8029ABB8` to
- * `func_8029ABB8__FP10CTutorialPQ34nw4r3lyt8DrawInfo`). CTitleAHelp.hpp also
- * declares many of these as members, but retail uses the unmangled form, so
- * free-function calls with an explicit subobject pointer reproduce retail.
+ * Retail constructor symbol (unmangled global in US). Written as a free
+ * function so the factory (func_8029A5DC) emits a real bl to the bare retail
+ * symbol, and returns `this` in r3 like a real constructor (retail relies on
+ * it). Mirrors the CMenuCollepedia ctor pattern: base ctor, temp vtable
+ * store, null PMF data copy, then the composite vtable + the IScnRender
+ * sub-vtable at +0x58, then each embedded widget's ctor and the final state
+ * bytes + input-flag snapshot.
  */
-extern "C" {
-void func_801C3FF0(CTitleAHelp*);
-void func_801C40A0(CTitleAHelp*);
-u8 func_801C4114(CTitleAHelp*);
-void func_801C412C(CTitleAHelp*);
-void func_801C41C0(CTitleAHelp*, char*);
-void func_801C41E8(CTitleAHelp*, u8);
-void func_801C4760(CTitleAHelp*);
-void func_801C4080(CTitleAHelp*, nw4r::lyt::DrawInfo*);
+extern "C" __declspec(noinline) CMenuTutorial* __ct__CMenuTutorial(
+    CMenuTutorial* self, CProcess* parent, u32 arg2) {
+    __ct__8CProcessFv((CProcess*)self);
 
-void func_8029ABB8(CTutorial*, nw4r::lyt::DrawInfo*);
-void func_8029AB28(CTutorial*);
-void func_8029ABD8(CTutorial*);
-void func_8029ACC4(CTutorial*);
-u8 func_8029AE5C(CTutorial*);
-int func_8029ACAC(CTutorial*);
-int func_8029ACBC(CTutorial*);
-void func_8029AD88(CTutorial*);
-void func_8029ACEC(CTutorial*);
-void func_8029ADF8(CTutorial*);
-void func_801C414C(CTitleAHelp*);
+    // vtable fixups: temp (CProcess) vtable first, then the composite vtable
+    // and the IScnRender sub-vtable at +0x58.
+    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
+    const u32* nullPtmf = __ptmf_null;
+    // Copy the null PMF words in retail store order: 0x40, 0x3C, 0x44, then
+    // 0x4C, 0x48, 0x50 (with a reload for the second group).
+    u32 w0 = nullPtmf[0];
+    u32 w1 = nullPtmf[1];
+    self->ptmf0[1] = w1;
+    self->ptmf0[0] = w0;
+    self->ptmf0[2] = nullPtmf[2];
+    w0 = nullPtmf[0];
+    w1 = nullPtmf[1];
+    self->ptmf1[1] = w1;
+    self->ptmf1[0] = w0;
+    self->ptmf1[2] = nullPtmf[2];
+    self->field_54 = 0;
+    self->field_55 = 0;
 
-u8 func_8013B980();
-void func_80135550();
-u8 code80135FDC_getByte_64080();
-void code80135FDC_postIncByte_64080();
-void func_8008294C__Q22cf13CfGameManagerFv(u8);
-bool func_80086F9C__Q22cf13CfGameManagerFv(s16);
-}
+    // Composite vtable + IScnRender sub-vtable computed from one address so
+    // MWCC reuses the register (retail: lis/addi r6 once, then addi r0,r6,0x24).
+    u32 composite = (u32)lbl_eu_805391C0;
+    *(u32*)((u8*)self + 0x10) = composite;
+    *(u32*)((u8*)self + 0x58) = composite + 0x24;
+    self->mParentRef = parent;
 
-// Phase handlers referenced by Move() before their definitions below.
-void func_8029A668(CMenuTutorial* self);
-void func_8029A7B4(CMenuTutorial* self);
-void func_8029A764(CMenuTutorial* self);
-void func_8029A8D4(CMenuTutorial* self);
+    __ct__CTutorial(&self->mTutorial, 0, 0);
+    __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
 
-/* Retail constructor symbol (unmangled global). Kept out-of-line so the
- * factory (func_8029A5DC) emits a real bl to it, and returns `this` in r3
- * like a real constructor (retail relies on it). */
-__declspec(noinline) CMenuTutorial* __ct__CMenuTutorial(CMenuTutorial* self, CProcess* parent, u32 arg2) {
+    self->mIsInitialised = 0;
+    self->mType = arg2;
+    self->mSomething = 0;
+    self->mSavedInputFlags = 0;
+    // Bit 1 of the Init flag word decides whether the open event is fired;
+    // the byte is stored twice because retail does (0 then the extracted bit).
+    self->mSomething = (lbl_eu_80663E24 >> 1) & 1;
+    if (self->mSomething == 0) {
+        func_8008294C__Q22cf13CfGameManagerFv(1);
+    }
+
+    code80135FDC_postIncByte_64080();
+    self->mSavedInputFlags = cf::CfGameManager::getEnabledInputFlags();
+
+    // Re-enable the input-flag set the player had before the tutorial:
+    // classic controller (0x60000000) or core pad (0x30).
+    u32 padFlags =
+        func_80086F9C__Q22cf13CfGameManagerFv(-1) ? 0x60000000 : 0x30;
+    cf::CfGameManager::enablePadFlags((u32)-1, false);
+    cf::CfGameManager::enablePadFlags(padFlags, true);
     return self;
 }
 
@@ -84,64 +93,61 @@ void CMenuTutorial::Init() {
     // Re-initialise the embedded CTitleAHelp via a temporary: copy the unk4
     // sub-object with its copy-ctor, then copy the remaining scalar fields.
     u8 tempTitle[0x38];
-    extern void __ct__CTitleAHelp(void*, char*, int);
-    __ct__CTitleAHelp(tempTitle, name, 0x6f);
+    __ct__CTitleAHelp((CTitleAHelp*)tempTitle, name, 0x6f);
 
-    extern void __ct__UnkClass_8011C974(void*, void*);
-    __ct__UnkClass_8011C974((u8*)this + 0xb8, tempTitle + 0x4);
+    __ct__UnkClass_8011C974(&mTitleAHelp.unk4, tempTitle + 0x4);
+    mTitleAHelp.mFileHandle = *(CFileHandle**)(tempTitle + 0x14);
+    mTitleAHelp.mArcResourceAccessor =
+        *(nw4r::lyt::ArcResourceAccessor**)(tempTitle + 0x18);
+    mTitleAHelp.mLayout = *(nw4r::lyt::Layout**)(tempTitle + 0x1c);
+    mTitleAHelp.mAnimTrans20 = *(nw4r::lyt::AnimTransform**)(tempTitle + 0x20);
+    mTitleAHelp.mAnimTrans24 = *(nw4r::lyt::AnimTransform**)(tempTitle + 0x24);
+    mTitleAHelp.unk28 = *(u8*)(tempTitle + 0x28);
+    mTitleAHelp.unk2c = *(s32*)(tempTitle + 0x2c);
+    mTitleAHelp.mName = *(char**)(tempTitle + 0x30);
+    mTitleAHelp.unk34 = *(u8*)(tempTitle + 0x34);
+    mTitleAHelp.unk35 = *(u8*)(tempTitle + 0x35);
+    mTitleAHelp.unk36 = *(u8*)(tempTitle + 0x36);
+    mTitleAHelp.unk37 = *(u8*)(tempTitle + 0x37);
+    __dt__11CTitleAHelpFv((CTitleAHelp*)tempTitle, -1);
 
-    *(u32*)((u8*)this + 0xc8) = *(u32*)(tempTitle + 0x1c);
-    *(u32*)((u8*)this + 0xcc) = *(u32*)(tempTitle + 0x20);
-    *(u32*)((u8*)this + 0xd0) = *(u32*)(tempTitle + 0x24);
-    *(u32*)((u8*)this + 0xd4) = *(u32*)(tempTitle + 0x28);
-    *(u32*)((u8*)this + 0xd8) = *(u32*)(tempTitle + 0x2c);
-    *(u8*)((u8*)this + 0xdc) = *(u8*)(tempTitle + 0x30);
-    *(u32*)((u8*)this + 0xe0) = *(u32*)(tempTitle + 0x34);
-    *(u32*)((u8*)this + 0xe4) = *(u32*)(tempTitle + 0x38);
-    *(u8*)((u8*)this + 0xe8) = *(u8*)(tempTitle + 0x3c);
-    *(u8*)((u8*)this + 0xe9) = *(u8*)(tempTitle + 0x3d);
-    *(u8*)((u8*)this + 0xea) = *(u8*)(tempTitle + 0x3e);
-    *(u8*)((u8*)this + 0xeb) = *(u8*)(tempTitle + 0x3f);
-
-    extern void __dt__11CTitleAHelpFv(void*, int);
-    __dt__11CTitleAHelpFv(tempTitle, -1);
-
-    extern void CTitleAHelp_load(void*);
-    CTitleAHelp_load((u8*)this + 0xb4);
+    CTitleAHelp_load(&mTitleAHelp);
 
     // Re-initialise the embedded CTutorial via a second temporary.
     u8 tempTutorial[0x54];
-    extern void __ct__CTutorial(void*, int, int);
-    __ct__CTutorial(tempTutorial, this->mType, 1);
+    __ct__CTutorial((CTutorial*)tempTutorial, this->mType, 1);
 
-    __ct__UnkClass_8011C974((u8*)this + 0x64, tempTutorial + 0x4);
-    __ct__UnkClass_8011C974((u8*)this + 0x74, tempTutorial + 0x14);
+    __ct__UnkClass_8011C974(&mTutorial.mRegion0, tempTutorial + 0x4);
+    __ct__UnkClass_8011C974(&mTutorial.mRegion1, tempTutorial + 0x14);
 
-    *(u32*)((u8*)this + 0x84) = *(u32*)(tempTutorial + 0x24);
-    *(u32*)((u8*)this + 0x88) = *(u32*)(tempTutorial + 0x28);
-    *(u32*)((u8*)this + 0x8c) = *(u32*)(tempTutorial + 0x2c);
-    *(u32*)((u8*)this + 0x90) = *(u32*)(tempTutorial + 0x30);
-    *(u32*)((u8*)this + 0x94) = *(u32*)(tempTutorial + 0x34);
-    *(u32*)((u8*)this + 0x98) = *(u32*)(tempTutorial + 0x38);
-    *(u32*)((u8*)this + 0x9c) = *(u32*)(tempTutorial + 0x3c);
-    *(u32*)((u8*)this + 0xa0) = *(u32*)(tempTutorial + 0x40);
-    *(u8*)((u8*)this + 0xa4) = *(u8*)(tempTutorial + 0x44);
-    *(u8*)((u8*)this + 0xa5) = *(u8*)(tempTutorial + 0x45);
-    *(u8*)((u8*)this + 0xa6) = *(u8*)(tempTutorial + 0x46);
-    *(u8*)((u8*)this + 0xa7) = *(u8*)(tempTutorial + 0x47);
-    *(u8*)((u8*)this + 0xa8) = *(u8*)(tempTutorial + 0x48);
-    *(u32*)((u8*)this + 0xac) = *(u32*)(tempTutorial + 0x4c);
-    *(u8*)((u8*)this + 0xb0) = *(u8*)(tempTutorial + 0x50);
-    *(u8*)((u8*)this + 0xb1) = *(u8*)(tempTutorial + 0x51);
-    *(u8*)((u8*)this + 0xb2) = *(u8*)(tempTutorial + 0x52);
-    *(u8*)((u8*)this + 0xb3) = *(u8*)(tempTutorial + 0x53);
+    mTutorial.mFileHandle0 = *(CFileHandle**)(tempTutorial + 0x24);
+    mTutorial.mFileHandle1 = *(CFileHandle**)(tempTutorial + 0x28);
+    mTutorial.mFileHandle2 = *(CFileHandle**)(tempTutorial + 0x2c);
+    mTutorial.mAccessor0 =
+        *(nw4r::lyt::ArcResourceAccessor**)(tempTutorial + 0x30);
+    mTutorial.mAccessor1 =
+        *(nw4r::lyt::ArcResourceAccessor**)(tempTutorial + 0x34);
+    mTutorial.mpLayout = *(nw4r::lyt::Layout**)(tempTutorial + 0x38);
+    mTutorial.mpAnimTrans0 =
+        *(nw4r::lyt::AnimTransform**)(tempTutorial + 0x3c);
+    mTutorial.mpAnimTrans1 =
+        *(nw4r::lyt::AnimTransform**)(tempTutorial + 0x40);
+    mTutorial.field_44 = *(u8*)(tempTutorial + 0x44);
+    mTutorial.field_45 = *(u8*)(tempTutorial + 0x45);
+    mTutorial.field_46 = *(u8*)(tempTutorial + 0x46);
+    mTutorial.field_47 = *(u8*)(tempTutorial + 0x47);
+    mTutorial.field_48 = *(u8*)(tempTutorial + 0x48);
+    mTutorial.field_4C = *(u8**)(tempTutorial + 0x4c);
+    mTutorial.field_50 = *(s8*)(tempTutorial + 0x50);
+    mTutorial.field_51 = *(s8*)(tempTutorial + 0x51);
+    mTutorial.field_52 = *(u8*)(tempTutorial + 0x52);
+    mTutorial.field_53 = *(u8*)(tempTutorial + 0x53);
+    __dt__9CTutorialFv((CTutorial*)tempTutorial, -1);
 
-    extern void __dt__9CTutorialFv(void*, int);
-    __dt__9CTutorialFv(tempTutorial, -1);
+    func_8029AA34(&mTutorial);
 
-    extern void func_8029AA34(void*);
-    func_8029AA34((u8*)this + 0x60);
-
+    // Register this screen's IScnRender subobject as a render callback on the
+    // owning scene (retail null-checks `this`).
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
         cb = reinterpret_cast<IScnRender*>(&mIScnRender);
@@ -176,12 +182,15 @@ void CMenuTutorial::Term() {
 
 void CMenuTutorial::Move() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
-        return;
+    // Gate: skip the whole move when the task is busy or the global mode bit
+    // (0x200000) is set. The &&-chain + goto body + return shape reproduces
+    // retail's branch-over-branch `beq body; b exit` (MWCC_REFERENCE §8960).
+    if (CTaskGame::func_800426F0() == 0 &&
+        (lbl_eu_80663E28 & (1u << 21)) == 0) {
+        goto body;
     }
-    if (lbl_eu_80663E28 & (1u << 21)) {
-        return;
-    }
+    return;
+body:
     switch (mIsInitialised) {
     case 0:
         func_8029A668(this);
@@ -198,34 +207,41 @@ void CMenuTutorial::Move() {
     }
     func_801C3FF0(&mTitleAHelp);
     func_8029AB28(&mTutorial);
+    return;
 }
 
 void CMenuTutorial::Draw() {}
 
 void CMenuTutorial::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0()) {
+    // Gate: skip the render when the task is busy or the global mode bit
+    // (0x200000) is set. Same branch-over-branch shape as Move().
+    if (CTaskGame::func_800426F0() == 0 &&
+        (lbl_eu_80663E28 & (1u << 21)) == 0) {
+        goto body;
+    }
+    return;
+body:
+    if (func_8013BE50() == 0) {
         return;
     }
-    if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
-        if (func_8013BE50() != 0) {
-            GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-            nw4r::lyt::DrawInfo drawInfo;
-            func_80137250(&drawInfo);
-            func_8029ABB8(&mTutorial, &drawInfo);
-            func_801C4080(&mTitleAHelp, &drawInfo);
-        }
-    }
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+    // Raw-storage DrawInfo built/destroyed via C-ABI ct/dt calls to
+    // match the retail direct calls (a C++ local would virtual-
+    // dispatch its scope-exit destructor and bloat the body).
+    u8 drawInfo[0x54];
+    __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)drawInfo);
+    func_80137250((nw4r::lyt::DrawInfo*)drawInfo);
+    func_8029ABB8(&mTutorial, (nw4r::lyt::DrawInfo*)drawInfo);
+    func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)drawInfo);
+    __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)drawInfo, -1);
+    return;
 }
 
 /*
  * When the title/help bar is idle and the tutorial widget has finished its
  * current animation, mark the tutorial as having reached phase 2.
  */
-// Retail callee symbols are unmangled globals; declared as int so the result
-// is compared with cmpwi (no byte mask) like retail.
-extern int func_8029ACB4(CTutorial* c);
-extern int isIdle__11CTitleAHelpFv(CTitleAHelp* h);
 void func_8029A764(CMenuTutorial* self) {
     if (isIdle__11CTitleAHelpFv(&self->mTitleAHelp) != 0 &&
         func_8029ACB4(&self->mTutorial) != 0) {
@@ -261,7 +277,8 @@ void func_8029A668(CMenuTutorial* self) {
         func_8029ACAC(&self->mTutorial) != 0) {
         func_801C4760(&self->mTitleAHelp);
         func_801C41C0(&self->mTitleAHelp,
-            func_80136190(lbl_eu_80510260 + 0xe, lbl_eu_80510260 + 0x17, self->mType));
+            func_80136190(lbl_eu_80510260 + 0xe, lbl_eu_80510260 + 0x17,
+                self->mType));
 
         u8 phase = func_8029AE5C(&self->mTutorial);
         switch (phase) {
@@ -281,7 +298,7 @@ void func_8029A668(CMenuTutorial* self) {
         func_801C412C(&self->mTitleAHelp);
         func_8029ACC4(&self->mTutorial);
         self->mIsInitialised = 1;
-        func_80138078__FUl(0x6d);
+        func_80138078(0x6d);
     }
 }
 
@@ -355,7 +372,6 @@ void func_8029A924(IScnRender* sub) {
  * IScnRender vtable this-adjusting thunk: subi r3, r3, 0x58; b __dt__.
  * Tail-calls the destructor, leaving r4 (delete flag) as caller leftover.
  */
-extern void __dt__13CMenuTutorialFv(CMenuTutorial*);
 void func_8029A92C(IScnRender* sub) {
     __dt__13CMenuTutorialFv((CMenuTutorial*)((char*)sub - 0x58));
 }

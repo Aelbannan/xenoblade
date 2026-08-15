@@ -1,6 +1,7 @@
 // CVS_THREAD_DOWN: Voice thread for "Down" (knocked-down) status effect.
 // Five functions: completion callback, voice removal, slot-1 play, slot-2 play, constructor.
 
+
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_DOWN.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/math/Random.hpp"
@@ -45,18 +46,18 @@ void func_802A5E54(CVS_THREAD_DOWN* self, CCharVoice* voicePtr) {
 // the voice is still active (vtable method at offset 0x2BC), and if
 // inactive, plays a random voice ID (mtRand(2) + 0x70C).
 void func_802A5C90(CVS_THREAD_DOWN* self) {
+    u32 v0;
     u32* src = lbl_eu_80539A74;
-    u32 v0 = *src++;
+    v0 = *src++;
     CVoiceHandle* handle20 = self->field_0x20;
-    u32 v1 = *src++;
-    self->unk4 = v1;
+    self->unk4 = *src++;
     self->unk0 = (u32*)v0;
-    u32 v2 = *src++;
-    self->unk8 = v2;
+    self->unk8 = *src;
 
     if (handle20 != NULL) {
-        // Call vtable method at offset 0x2BC (is-active check)
-        if (((int (*)(CVoiceHandle*))handle20->vtable[0x2BC / 4])(handle20) == 0) {
+        // Call vtable method at offset 0x2BC (is-active check) as a real
+        // virtual so MWCC emits the r12 dispatch retail shows.
+        if (((CVS_THREAD_DOWN_Vtbl*)handle20)->isVoiceActive() == 0) {
             // Voice is not active -- try to play a random voice
             handle20 = self->field_0x20;
             CCharVoice* voicePtr = (CCharVoice*)handle20;
@@ -80,22 +81,27 @@ void func_802A5D4C(CVS_THREAD_DOWN* self) {
         return;
     }
 
+    u32 v0;
     u32* src = lbl_eu_80539A80;
-    u32 v0 = *src++;
+    v0 = *src++;
     CVoiceHandle* handle24 = self->field_0x24;
-    u32 v1 = *src++;
-    self->unk4 = v1;
+    self->unk4 = *src++;
     self->unk0 = (u32*)v0;
-    u32 v2 = *src++;
-    self->unk8 = v2;
+    self->unk8 = *src;
 
     if (handle24 != NULL) {
-        // Call vtable method at offset 0x2BC (is-active check)
-        if (((int (*)(CVoiceHandle*))handle24->vtable[0x2BC / 4])(handle24) == 0) {
-            // Voice is not active -- try to play a weighted random voice
+        // Call vtable method at offset 0x2BC (is-active check) as a real
+        // virtual so MWCC emits the r12 dispatch retail shows.
+        if (((CVS_THREAD_DOWN_Vtbl*)handle24)->isVoiceActive() == 0) {
+            // Voice is not active -- play a weighted random voice.
+            // Retail computes the random voice ID first, then reloads the
+            // slot handle so it is NOT live across the mtRand call.
             int voiceId = (ml::math::mtRand(2) != 0) ? 0x70E : 0x713;
-            CVoiceHandle* h = self->field_0x24;
-            CCharVoice* voicePtr = h != NULL ? &h->voice : (CCharVoice*)h;
+            handle24 = self->field_0x24;
+            CCharVoice* voicePtr = (CCharVoice*)handle24;
+            if (handle24 != NULL) {
+                voicePtr = &handle24->voice;
+            }
             if (func_802A3C44(self, voicePtr, voiceId) == 0) {
                 self->func_802A3B50();
             }
@@ -104,39 +110,50 @@ void func_802A5D4C(CVS_THREAD_DOWN* self) {
 }
 
 // ── Target 5: us-802a82bc (__ct__802A5B88) ──────────────────────────────────
-// Factory/constructor for CVS_THREAD_DOWN. Takes two owner objects (with a
-// field at offset 0x3F00 that must have bit 1 set), allocates a handle
-// (0xF0 bytes, discarded) and the object itself (0x28 bytes), calls the
-// base constructor, sets vtable/owner fields, and copies init data from
-// lbl_eu_80539A68.
-CVS_THREAD_DOWN* __ct__802A5B88(CVS_THREAD_DOWN* owner1, CVS_THREAD_DOWN* owner2) try {
-    // Both owners must have their 0x3F00 field's bit 1 set
-    if (!(((u32*)owner1)[0x3F00 / 4] & 2)) return NULL;
-    if (!(((u32*)owner2)[0x3F00 / 4] & 2)) return NULL;
+// Factory/constructor for CVS_THREAD_DOWN. Takes two owner CVoiceHandles
+// (each must have the factory-active flag bit 1 set at 0x3F00), allocates a
+// throwaway handle buffer (0xF0 bytes) and the object itself (0x28 bytes),
+// runs the base constructor, overrides the vtable and owner slots, then
+// copies the init-state triple from lbl_eu_80539A68.
+CVS_THREAD_DOWN* __ct__802A5B88(CVoiceHandle* owner1, CVoiceHandle* owner2) {
+    // Both owners must have their 0x3F00 field's bit 1 set.
+    if (!(owner1->field_0x3F00 & 2)) return NULL;
+    if (!(owner2->field_0x3F00 & 2)) return NULL;
 
-    // Allocate handle buffer (0xF0 bytes, discarded)
-    CVS_THREAD_DOWN* handleBuf = func_802A330C(0xF0, 1);
-    if (handleBuf == NULL) return NULL;
+    // Allocate the (discarded) handle buffer, then the thread object itself.
+    if (func_802A330C(0xF0, 1) == NULL) return NULL;
 
-    // Allocate the actual CVS_THREAD_DOWN object
     CVS_THREAD_DOWN* self = (CVS_THREAD_DOWN*)func_802A34E4(0x28);
     if (self == NULL) return NULL;
 
-    // Base constructor (no params, self in r3)
-    __ct__cf_CVS_THREAD();
+    // Base-construct the object. The redundant `self != NULL` guard
+    // reproduces retail's `beq` re-check of CR0 guarding the EH region; the
+    // local try/catch reproduces retail's CATCHBLOCK extab action. The catch
+    // rethrows via the runtime __throw(0,0,0) (retail `li r3,0; li r4,0;
+    // li r5,0; bl __throw`) so MWCC elides the __end__catch epilogue.
+    if (self != NULL) {
+        try {
+            __ct__cf_CVS_THREAD(self);
 
-    // Set vtable at offset 0x1C (right after the 7 CVS_THREAD base fields)
-    ((void**)self)[7] = (void**)lbl_eu_80539A8C;
-    self->field_0x20 = (CVoiceHandle*)owner1;
-    self->field_0x24 = (CVoiceHandle*)owner2;
+            // Override the vtable at 0x1C with the DOWN vtable, then the slots.
+            ((CVS_THREAD_DOWN_raw*)self)->vtable = (void*)lbl_eu_80539A8C;
+            self->field_0x20 = owner1;
+            self->field_0x24 = owner2;
+        } catch (...) {
+            __throw(0, 0, 0);
+        }
+    }
 
-    // Copy init data from global table using a single base pointer
-    const u32* base = lbl_eu_80539A68;
-    self->unk0 = (u32*)base[0];
-    self->unk4 = base[1];
-    self->unk8 = base[2];
+    // Copy the init-state triple. The address is forced through an integer
+    // cast so the full base (lis+addi) is materialized once before any load.
+    u32 v0;
+    u32 v1;
+    u32* src = (u32*)(u32)lbl_eu_80539A68;
+    v1 = src[1];
+    v0 = src[0];
+    self->unk0 = (u32*)v0;
+    self->unk4 = v1;
+    self->unk8 = src[2];
 
     return self;
-} catch (...) {
-    throw;
 }

@@ -370,9 +370,8 @@ extern "C" void func_801D377C(CSortMenu* _this) {
     if (count >= 5) {
         s32 maxSub = (s32)(count - 5);
         s32 sp5 = (s32)_this->mSubPage + 5;
+        s8 sp5s = (s8)(u8)sp5;
         _this->mSubPage = (u8)sp5;
-        u8 sp5u = (u8)sp5;
-        s8 sp5s = (s8)sp5u;
         if (sp5 > maxSub) {
             s32 newPage = (s32)sp5s - maxSub;
             _this->mPage = (u8)newPage;

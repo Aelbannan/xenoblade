@@ -1,10 +1,20 @@
 #pragma once
 
 #include <types.h>
+#include <nw4r/lyt.h>
 
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
+
+// Pane-visibility helpers (retail C-linkage names; same convention as
+// CSysWin.hpp / CKizunagram.hpp / CEquipItemBox.hpp).
+extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+extern "C" bool func_801C4648(nw4r::lyt::Pane*);
+
+// Shared 0.0f constant in .sdata2 (defined in port/data_defs.cpp). Retail
+// code loads it via lfs @sda21 instead of pooling a local literal.
+extern f32 lbl_eu_80667FA4;
 
 extern "C" void* lbl_eu_80534978[];  // CCur07
 extern "C" void* lbl_eu_80534950[];  // CCur09

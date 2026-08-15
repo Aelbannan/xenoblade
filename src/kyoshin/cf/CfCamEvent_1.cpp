@@ -263,7 +263,7 @@ void* func_800755B0(void* self, unsigned long idx) {
 // goto/switch form that reproduces the end layout instead normalizes the
 // == 0xb equality into a setnz chain (same version wall as func_8007560C's
 // two-cmpi range check).
-extern "C" int __declspec(noinline) func_800755BC(CfCamEventManager* /*unused*/, u32 idx) {
+extern "C" int func_800755BC(CfCamEventManager* /*unused*/, u32 idx) {
     int result = 0;
     if (idx >= 0x10 && idx <= 0x2b) result = 1;
     else if (idx >= 0x8 && idx <= 0xa) result = 2;
@@ -891,10 +891,10 @@ extern "C" void* func_80076F88(CfCamEventManager* self, int unk34,
     return (void*)1;
 }
 
-extern "C" __declspec(noinline) void* func_800778E4(void* self, u32 a,
+extern "C" void* func_800778E4(void* self, u32 a,
                                                        void* b, void* c) { return 0; }
 
-extern "C" __declspec(noinline) void func_80077F20(void* out, void* a,
+extern "C" void func_80077F20(void* out, void* a,
                                                      void* b, u16 c, u16 d,
                                                      void* e) {}
 
@@ -925,7 +925,7 @@ done:
 // three slots are handed off, and for category 1 the cam table `sixth` is
 // copied into a local, reshaped via func_80077F20 and pushed into the
 // shared pose solver (func_80076F88 / func_800778E4). Returns slots[idx].
-extern "C" __declspec(noinline) void* func_800784A0(u32 first, void* second,
+extern "C" void* func_800784A0(u32 first, void* second,
                                                       void* third, void* fourth,
                                                       void* fifth,
                                                       CfCamDataTable* sixth,

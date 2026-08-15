@@ -69,13 +69,14 @@ int func_800C17DC(const char* str, int* type, int* len) {
 /// into `out`, stopping at a newline or when `maxLen` characters have been
 /// consumed.  Returns 1 if something was consumed, 0 if the cursor is empty.
 int func_800C1A18(CmTextProc* self, char* out, int maxLen) {
-    if (self->cursor[0] == 0) {
+    char* o = out;
+    if ((u8)self->cursor[0] == 0) {
         out[0] = 0;
         return 0;
     }
     int pos = 0;
     int result = 1;
-    while (self->cursor[0] != 0) {
+    while ((u8)self->cursor[0] != 0) {
         int type, lenz;
         u32 ch = func_800C17DC(self->cursor, &type, &lenz);
         pos += lenz;
@@ -84,21 +85,24 @@ int func_800C1A18(CmTextProc* self, char* out, int maxLen) {
             break;
         }
         if (type == 1) {
-            out[0] = self->cursor[0];
-            out++;
-            self->cursor++;
+            const char* cur = self->cursor;
+            o[0] = cur[0];
+            o++;
+            self->cursor = cur + 1;
         } else if (type == 2) {
-            out[0] = self->cursor[0];
-            out[1] = self->cursor[1];
-            out += 2;
-            self->cursor += 2;
+            const char* cur = self->cursor;
+            o[0] = cur[0];
+            self->cursor = cur + 1;
+            o[1] = (cur + 1)[0];
+            self->cursor = cur + 2;
+            o += 2;
         } else if (type == 3) {
-            if (ch == 0) break;
+            if ((u16)ch == 0) break;
             self->cursor += lenz;
             break;
         }
     }
-    out[0] = 0;
+    o[0] = 0;
     return result;
 }
 
@@ -108,24 +112,24 @@ int func_800C1A18(CmTextProc* self, char* out, int maxLen) {
 /// The source buffer is modified in place (separators become NUL).  Returns the
 /// number of words.  (`maxLen` is accepted for ABI/register setup but unused.)
 int func_800C1900(char* str, char** out, int maxLen) {
+    int count = 0;
     char* s = str;
     char** o = out;
-    int count = 0;
-    int offset = 0;
     int inWord = 0;
-    while (s[0] != 0) {
+    int offset = 0;
+    while ((u8)s[0] != 0) {
         int type, lenz;
-        u32 ch = func_800C17DC(s, &type, &lenz);
+        int ch = func_800C17DC(s, &type, &lenz);
         if (type == 1) {
             if ((u16)ch == '#') break;
-            if ((u16)ch == '/' && s[1] == '/') break;
+            if ((u16)ch == '/' && (u8)s[1] == '/') break;
             u16 c = (u16)ch;
             if (c == ' ' || c == '\t') {
                 if (inWord) s[0] = 0;
                 inWord = 0;
             } else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
                 if (!inWord) {
-                    o[offset] = s;
+                    out[offset] = s;
                     inWord = 1;
                     count++;
                     offset++;
@@ -133,7 +137,7 @@ int func_800C1900(char* str, char** out, int maxLen) {
             }
         } else if (type == 2) {
             if (!inWord) {
-                o[offset] = s;
+                out[offset] = s;
                 inWord = 1;
                 count++;
                 offset++;

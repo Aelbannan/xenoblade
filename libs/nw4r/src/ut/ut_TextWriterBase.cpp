@@ -1,5 +1,26 @@
 #include <nw4r/ut.h>
 
+// Retail .sbss data owned by this TU (monolibdata1 blob dissolve; the auto
+// __sinit__ below constructs the tag-processor objects and reads the guards):
+//   lbl_eu_80665560 (.sbss 0x4) = TextWriterBase<char>::mDefaultTagProcessor
+//                                 (TagProcessorBase<char>, vptr storage)
+//   lbl_eu_80665564 (.sbss 0x4) = TextWriterBase<wchar_t>::mDefaultTagProcessor
+//                                 (TagProcessorBase<wchar_t>, vptr storage)
+//   lbl_eu_80665568 (.sbss 0x1) = __sinit__ init guard (char)
+//   lbl_eu_80665569 (.sbss 0x7) = __sinit__ init guard (wchar_t) — retail
+//                                 recovered symbol size is 7 (1 used byte)
+// The template static members below stay defined so MWCC emits the retail
+// 0x84 __sinit_ (guarded construction + __register_global_object); the raw
+// definitions here are the inert storage the coordinator's reloc retargets
+// point the __sinit__ at once the blob ranges move into this TU. u8 arrays
+// (not the class type) keep MWCC from auto-constructing a second copy.
+extern "C" {
+    u8 lbl_eu_80665560[4];
+    u8 lbl_eu_80665564[4];
+    u8 lbl_eu_80665568;
+    u8 lbl_eu_80665569[7];
+}
+
 namespace nw4r {
 namespace ut {
 

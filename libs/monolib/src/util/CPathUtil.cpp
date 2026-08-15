@@ -1,5 +1,20 @@
 #include "monolib/util.hpp"
 
+// Retail .rodata string owned by this TU (monolibdata1 blob dissolve):
+//   lbl_eu_80522458 (.rodata 0x2) = "."
+// getNoPathExtName's rfind needle and itoa's empty string (retail references
+// the pooled "" at lbl_eu_80522458 + 2). The sdata2_threshold 0 pragma keeps
+// the 2-byte const string in .rodata — MWCC would otherwise route a <=8B
+// const into .sdata2, and consumers address it via lis/@l (matching retail).
+#ifdef __MWERKS__
+#pragma push
+#pragma sdata2_threshold 0
+#endif
+extern "C" const char lbl_eu_80522458[] = ".";
+#ifdef __MWERKS__
+#pragma pop
+#endif
+
 namespace ml{
 
     //Returns a pointer to the filename portion of the given path.
@@ -47,7 +62,12 @@ namespace ml{
             outStr = temp;
         }else{
             temp = pFilename;
-            int length = temp.rfind(".", -1);
+            // The local keeps MWCC's eager lis/@l address materialisation in a
+            // saved register (retail hoists the needle load above the length
+            // branch); referencing the extern inline merges the LO into the
+            // first use and shifts the load into the branch.
+            const char* pNeedle = lbl_eu_80522458;
+            int length = temp.rfind(pNeedle, -1);
 
             if ((u32)length + 1 <= 1) {
                 outStr = temp;
@@ -58,7 +78,11 @@ namespace ml{
     }
 
     void CPathUtil::itoa(FixStr<16>& outStr, int num, int digits) {
-        outStr = "";
+        // Retail empty-string reference: the pooled "" sits at lbl_eu_80522458+2
+        // ("\0" right after the 2-byte "." string). A local keeps MWCC's
+        // lis/@l base + separate +2 addi materialization (retail shape).
+        const char* empty = &lbl_eu_80522458[2];
+        outStr = empty;
 
         for(int i = 0; i < digits; i++) {
             char buffer[2] = {0,0};

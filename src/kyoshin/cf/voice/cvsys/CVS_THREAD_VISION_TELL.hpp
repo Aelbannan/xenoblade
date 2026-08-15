@@ -23,6 +23,34 @@ public:
     int blank1() override;
 };
 
+// Phantom vtable view over CVoiceHandle so virtual dispatch is emitted as a
+// true r12-chained indirect call (`lwz r12,0(rS); lwz r12,0x2BC(r12); ...`),
+// matching retail. Never instantiated (only cast + slot call), so no vtable
+// is emitted and no method needs a definition. MWCC places declared slot P at
+// vtable offset (P+2)*4 (2 implicit leading slots), so declared slot 173
+// lands at 0x2BC (is-active check).
+#define CVT_PAD4(n)  virtual void v##n##0(); virtual void v##n##1(); virtual void v##n##2(); virtual void v##n##3();
+#define CVT_PAD8(n)  CVT_PAD4(n##0) CVT_PAD4(n##1)
+#define CVT_PAD16(n) CVT_PAD8(n##0) CVT_PAD8(n##1)
+#define CVT_PAD32(n) CVT_PAD16(n##0) CVT_PAD16(n##1)
+#define CVT_PAD64(n) CVT_PAD32(n##0) CVT_PAD32(n##1)
+
+struct CVS_THREAD_VISION_TELL_Vtbl {
+    CVT_PAD64(0)   // slots 0-63
+    CVT_PAD64(1)   // slots 64-127
+    CVT_PAD32(2)   // slots 128-159
+    CVT_PAD8(3)    // slots 160-167
+    CVT_PAD4(4)    // slots 168-171
+    virtual void v172();              // slot 172
+    virtual int isVoiceActive();      // slot 173 -> vtable offset 0x2BC
+};
+
+#undef CVT_PAD4
+#undef CVT_PAD8
+#undef CVT_PAD16
+#undef CVT_PAD32
+#undef CVT_PAD64
+
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 lbl_eu_80539DB0[3];  // Init data tables for slot states (3 u32s each)
 extern "C" u32 lbl_eu_80539DBC[3];

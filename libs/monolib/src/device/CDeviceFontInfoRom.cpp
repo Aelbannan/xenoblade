@@ -58,7 +58,7 @@ extern "C" u32 GetRequireBufferSize__Q34nw4r2ut7RomFontFv();
 // All zero fields live in the member-init list in declaration order; MWCC
 // keeps the zero in r31 across the RomFont ctor call for the 0x30 store,
 // matching retail's store order.
-CDeviceFontInfoRom::CDeviceFontInfoRom(void)
+__declspec(noinline) CDeviceFontInfoRom::CDeviceFontInfoRom(void)
     : m_vtable((u32*)lbl_eu_8056C788),
       field_0x04(0),
       mFontData(0),

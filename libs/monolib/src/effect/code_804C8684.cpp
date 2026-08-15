@@ -31,12 +31,13 @@ extern CEffectParam lbl_eu_8065FC08;
 void func_804C8690(u8 flag, const CEffectParam* src) {
     lbl_eu_806659A0 = flag;
     if (src) {
-        // 8-byte pair chunk (lwz 0; lwz 4; stw 4; stw 0) plus the word at
-        // 0x08 (lwz 8; stw 8). The pair is loaded before the dst base is
-        // materialised so the pair's hi word claims r0 (retail order).
-        u64 pair = *(const u64*)src;
+        // 2+1 word split: load both pair words before the dst base addi and
+        // store hi-before-lo, then the word at 0x08 (retail schedule).
+        u32 lo = *(const u32*)src;
+        u32 hi = *(const u32*)((const char*)src + 4);
         u8* dst = (u8*)&lbl_eu_8065FC08;
-        *(u64*)dst = pair;
+        *(u32*)(dst + 4) = hi;
+        *(u32*)dst = lo;
         *(u32*)(dst + 8) = src->field_0x08;
     }
 }

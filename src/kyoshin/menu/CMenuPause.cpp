@@ -7,6 +7,7 @@ extern "C" void __dt__10CMenuPauseFv(void*, int);
 extern "C" void cbRenderBefore__10CMenuPauseFv(void*);
 
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/device/CDeviceFont.hpp"
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "kyoshin/CTaskGame.hpp"
@@ -24,10 +25,23 @@ extern u32 lbl_eu_80663E28;
 extern "C" void func_80252564(CMenuPause* p);
 
 void CMenuPause::Init() {
+    // u16 -> f32 conversion unions; the 0x43300000 high words are written up
+    // front so MWCC hoists the constant stores into the prologue. The
+    // subtraction is done in single precision so MWCC emits fsubs (the
+    // retail shape) instead of a double-precision fsub.
+    CMenuPauseF64Conv convH, convW;
+    convW.w[0] = 0x43300000;
+    convH.w[0] = 0x43300000;
+
+    func_8008294C__Q22cf13CfGameManagerFv(true);
+    func_80188890(1);
+
     // Scoped MEM2 region guard, then build the layout + animations.
     mMemRegion.createRegion((int)mtl::MemManager::getHandleMEM2(), 0x2000,
-                            (const char*)lbl_eu_8050C5C8, 0);
-    Class_8045F858 regionGuard(&mMemRegion);
+                            lbl_eu_8050C5C8, 0);
+    u8 regionBuf[4];
+    __ct__14Class_8045F858FP17UnkClass_8045F564(regionBuf, &mMemRegion);
+    mtl::MemManager::func_80434A4C(false);
 
     func_80136E84(&mLayout, func_801355F4(), &lbl_eu_8050C5C8[0xb]);
     func_80136F08(mLayout,
@@ -36,13 +50,12 @@ void CMenuPause::Init() {
 
     // Bind the font and hand the loaded font object over to the root pane.
     nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-    u8* fontObj = (u8*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1,
-                                                                     mLayout);
-    u32 fontResult =
-        ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
+    void* fontObj = CDeviceFont::func_80452C10(1, mLayout);
+    u32 fontResult = ((CMenuPauseFontView*)fontObj)->sf9();
     func_8013676C(rootPane, fontResult);
 
-    mLayout->SetAnimationEnable((nw4r::lyt::AnimTransform*)mField80, true);
+    mLayout->SetAnimationEnable(
+        reinterpret_cast<nw4r::lyt::AnimTransform*>(mField80), true);
     mLayout->Animate(0);
 
     // Fill the two message-table text fields.
@@ -56,53 +69,60 @@ void CMenuPause::Init() {
                   0);
 
     // ---- Cursor texture palette variants (classic vs remote pad). ----
-    // Each: pick a message name by pad type, load the "timg" texture resource,
-    // bind it (func_80137E7C) and set its width/height on the Pane material.
+    // Each: pick a message name by pad type, load the "timg" texture
+    // resource, bind it (func_80137E7C) and set the pane size from the
+    // texture's 2D dimension header (u16 w/h converted via the 2^52 trick).
     {
-        const char* visName = &lbl_eu_8050C5C8[0x8f];
-        const char* msgName = cf::CfGameManager::func_80086F9C(-1)
+        const char* msgName = func_80086F9C__Q22cf13CfGameManagerFv(-1)
                                   ? &lbl_eu_8050C5C8[0x7d]
                                   : &lbl_eu_8050C5C8[0x86];
         u16 msg = func_8013606C(&lbl_eu_8050C5C8[0x5d], msgName, 0x6b);
         char* handle = func_80138F78(msg);
         nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
-        void* tex = ((void* (*)(void*, u32, void*, u32))((void**)acc)[0xc / 4])(
-            acc, 0x74696D67 /* 'timg' */, handle, 0);
+        void* tex = acc->GetResource(0x74696D67, handle, NULL);
         if (tex != NULL) {
-            func_80137E7C(mLayout, (void*)visName, tex);
-            // texture sub-resource carries a 2D dimension header (u16 w,h).
-            void* dims = *(void**)*(void**)((u8*)tex + 0x8);
-            u16 w = *(u16*)((u8*)dims + 0x0);
-            u16 h = *(u16*)((u8*)dims + 0x2);
-            void* res = ((void* (*)(void*, const char*, u32, void*))(
-                (void**)rootPane)[0x3c / 4])(rootPane, visName, 1, dims);
-            if (res != NULL) {
-                *(f32*)((u8*)res + 0x4c) = (f32)w;
-                *(f32*)((u8*)res + 0x50) = (f32)h;
+            func_80137E7C(mLayout, (void*)&lbl_eu_8050C5C8[0x8f], tex);
+            CMenuPauseTexDims* dims =
+                ((CMenuPauseTexObj*)tex)->mChain->mDims;
+            u16 v2 = dims->field_0x2;
+            u16 v0 = dims->field_0x0;
+            nw4r::lyt::Pane* pane = mLayout->GetRootPane()
+                                         ->FindPaneByName(&lbl_eu_8050C5C8[0x8f],
+                                                          true);
+            if (pane != NULL) {
+                convW.w[1] = v2;
+                convH.w[1] = v0;
+                nw4r::lyt::Size size;
+                size.width = (f32)(convW.d - lbl_eu_806687D0);
+                size.height = (f32)(convH.d - lbl_eu_806687D0);
+                pane->SetSize(size);
             }
         }
     }
     {
-        const char* visName = &lbl_eu_8050C5C8[0xa6];
-        const char* msgName = cf::CfGameManager::func_80086F9C(-1)
+        const char* msgName = func_80086F9C__Q22cf13CfGameManagerFv(-1)
                                   ? &lbl_eu_8050C5C8[0x7d]
                                   : &lbl_eu_8050C5C8[0x86];
         u16 msg = func_8013606C(&lbl_eu_8050C5C8[0x5d], msgName, 0x6c);
         char* handle = func_80138F78(msg);
         nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
-        void* tex = ((void* (*)(void*, u32, void*, u32))((void**)acc)[0xc / 4])(
-            acc, 0x74696D67 /* 'timg' */, handle, 0);
+        void* tex = acc->GetResource(0x74696D67, handle, NULL);
         if (tex != NULL) {
-            func_80137E7C(mLayout, (void*)visName, tex);
-            // texture sub-resource carries a 2D dimension header (u16 w,h).
-            void* dims = *(void**)*(void**)((u8*)tex + 0x8);
-            u16 w = *(u16*)((u8*)dims + 0x0);
-            u16 h = *(u16*)((u8*)dims + 0x2);
-            void* res = ((void* (*)(void*, const char*, u32, void*))(
-                (void**)rootPane)[0x3c / 4])(rootPane, visName, 1, dims);
-            if (res != NULL) {
-                *(f32*)((u8*)res + 0x4c) = (f32)w;
-                *(f32*)((u8*)res + 0x50) = (f32)h;
+            func_80137E7C(mLayout, (void*)&lbl_eu_8050C5C8[0xa6], tex);
+            CMenuPauseTexDims* dims =
+                ((CMenuPauseTexObj*)tex)->mChain->mDims;
+            u16 v2 = dims->field_0x2;
+            u16 v0 = dims->field_0x0;
+            nw4r::lyt::Pane* pane = mLayout->GetRootPane()
+                                         ->FindPaneByName(&lbl_eu_8050C5C8[0xa6],
+                                                          true);
+            if (pane != NULL) {
+                convW.w[1] = v2;
+                convH.w[1] = v0;
+                nw4r::lyt::Size size;
+                size.width = (f32)(convW.d - lbl_eu_806687D0);
+                size.height = (f32)(convH.d - lbl_eu_806687D0);
+                pane->SetSize(size);
             }
         }
     }
@@ -113,14 +133,15 @@ void CMenuPause::Init() {
     mField74[0] = mField74[1] = mField74[2] = mField74[3] = 0; // field 0x74
 
     // Register as a scene render callback; IScnRender subobject lives at +0x5c.
-    void* self = reinterpret_cast<IScnRender*>(this);
+    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
-        self = reinterpret_cast<IScnRender*>(&mRenderVtable);
+        cb = reinterpret_cast<IScnRender*>(&mRenderVtable);
     }
-    addRenderCB__4CScnFP10IScnRenderUlUl(mScene, self, 0x12, 0);
+    mScene->addRenderCB(cb, 0x12, 0);
 
     mMemRegion.func_8045F810();
     // regionGuard destructor runs here.
+    __dt__14Class_8045F858Fv(regionBuf, -1);
 }
 
 

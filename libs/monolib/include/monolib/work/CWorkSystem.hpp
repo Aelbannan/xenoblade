@@ -3,7 +3,7 @@
 #include "monolib/work/CWorkThread.hpp"
 #include "monolib/util.hpp"
 
-class CWorkSystem : public CWorkThread {
+class __declspec(novtable) CWorkSystem : public CWorkThread {
 public:
     typedef void (*ExitFunc)();
 

@@ -63,18 +63,20 @@ int func_802A6DF4(CVoiceHandle* self) {
 // the voice is still active (vtable method at offset 0x2BC), and if
 // inactive, plays a random voice ID (mtRand(2) + 0x709).
 void func_802A6BB0(CVS_THREAD_FAINT* self) {
-    u32* src = lbl_eu_80539B64;
-    u32 v0 = *src++;
-    CVoiceHandle* handle20 = self->field_0x20;
-    u32 v1 = *src++;
-    self->unk4 = v1;
+    // Restore the base state triple via the lwzu/spread load-with-update
+    // pattern (v0 declared first so the lwzu destination colours low).
+    u32 v0;
+    const u32* src = lbl_eu_80539B64;
+    v0 = *src++;
+    self->unk4 = *src++;
     self->unk0 = (u32*)v0;
-    u32 v2 = *src++;
-    self->unk8 = v2;
+    self->unk8 = *src;
 
+    CVoiceHandle* handle20 = self->field_0x20;
     if (handle20 != NULL) {
-        // Call vtable method at offset 0x2BC (is-active check)
-        if (((int (*)(CVoiceHandle*))handle20->vtable[0x2BC / 4])(handle20) == 0) {
+        // Call vtable method at offset 0x2BC (is-active check) via the
+        // phantom vtable view so MWCC emits the r12-chained virtual call.
+        if (((CVoiceChainVTV*)handle20)->isActive() == 0) {
             // Voice is not active -- try to play a random voice
             handle20 = self->field_0x20;
             CCharVoice* voicePtr = (CCharVoice*)handle20;
@@ -98,18 +100,18 @@ void func_802A6C6C(CVS_THREAD_FAINT* self) {
         return;
     }
 
-    u32* src = lbl_eu_80539B70;
-    u32 v0 = *src++;
-    CVoiceHandle* handle24 = self->field_0x24;
-    u32 v1 = *src++;
-    self->unk4 = v1;
+    u32 v0;
+    const u32* src = lbl_eu_80539B70;
+    v0 = *src++;
+    self->unk4 = *src++;
     self->unk0 = (u32*)v0;
-    u32 v2 = *src++;
-    self->unk8 = v2;
+    self->unk8 = *src;
 
+    CVoiceHandle* handle24 = self->field_0x24;
     if (handle24 != NULL) {
-        // Call vtable method at offset 0x2BC (is-active check)
-        if (((int (*)(CVoiceHandle*))handle24->vtable[0x2BC / 4])(handle24) == 0) {
+        // Call vtable method at offset 0x2BC (is-active check) via the
+        // phantom vtable view so MWCC emits the r12-chained virtual call.
+        if (((CVoiceChainVTV*)handle24)->isActive() == 0) {
             // Voice is not active -- play a weighted random voice.
             // Retail computes the random voice ID first, then reloads the
             // slot handle so it is NOT live across the mtRand call.
@@ -146,6 +148,8 @@ CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* owner2) {
 
     // Retail emits a redundant null re-check here (the `beq` at .L_802A9264)
     // guarding the constructor try-block; mirror it so the guard survives.
+    // The catch rethrows via the runtime __throw(0,0,0) (retail `li r3,0;
+    // li r4,0; li r5,0; bl __throw`), avoiding the __end__catch epilogue.
     if (self != NULL) {
         try {
             // Base constructor (self in r3), then vtable/owner fields.
@@ -154,14 +158,24 @@ CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* owner2) {
             self->field_0x20 = owner1;
             self->field_0x24 = owner2;
         } catch (...) {
-            throw;
+            __throw(0, 0, 0);
         }
     }
 
-    // Copy init data from global table using a single base pointer
-    const u32* base = lbl_eu_80539B58;
-    self->unk0 = (u32*)base[0];
-    self->unk4 = base[1];
+    // Copy the init-state triple into the first 3 u32s (outside try). Temps
+    // are loaded before the stores; the address is forced through an integer
+    // cast so the full base (lis+addi) is materialized once before any load.
+    // (Residual: retail colors the unk4 value r0 and the unk0 value r4; MWCC
+    // emits the reverse for every source shape tried - allocator fixed point,
+    // cf. sibling factory drafts. The (u32) cast also bakes the literal into
+    // the addi immediate, producing the LO layout reloc drift at +0xc6.)
+    u32 v0;
+    u32 v1;
+    const u32* base = (const u32*)(u32)lbl_eu_80539B58;
+    v1 = base[1];
+    v0 = base[0];
+    self->unk0 = (u32*)v0;
+    self->unk4 = v1;
     self->unk8 = base[2];
 
     return self;

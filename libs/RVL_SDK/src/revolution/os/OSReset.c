@@ -16,11 +16,11 @@ volatile BOOL __OSIsReturnToIdle;
  * size-0 relocs and soft-cap ~98%). Layout targets: file 0xC, hot 0x60,
  * menu+orphans 0x180, obsolete 0x7C. MWCC may 8-align after the 0xC file
  * object (unit data soft-cap); function match uses reloc *sizes*. Big callers
- * use strBase=&OSReset_file with +0xC/+0x38; thin wrappers / OSRestart use
+ * use strBase=&lbl_80552AF0 with +0xC/+0x38; thin wrappers / OSRestart use
  * distinct objects so MWCC emits two lis pairs.
  */
 #pragma force_active on
-char OSReset_file[0xC] = "OSReset.c\0\0";
+char lbl_80552AF0[0xC] = "OSReset.c\0\0";
 char OSReset_hotResetPool[0x60] =
     "__OSHotReset(): Falied to reset system.\n\0\0\0\0"
     "__OSReturnToMenu(): Falied to boot system menu.\n\0\0\0";
@@ -252,7 +252,7 @@ void OSRestart(u32 resetCode) {
         __OSInitSTM();
     }
     __OSHotReset();
-    OSPanic(OSReset_file, 1034, OSReset_hotResetPool);
+    OSPanic(lbl_80552AF0, 1034, OSReset_hotResetPool);
 }
 
 void __OSReturnToMenu(u8 menuMode) {
@@ -264,7 +264,7 @@ void __OSReturnToMenu(u8 menuMode) {
     OSStateFlags stateFlagsAlloc;
     void* ticketView;
     u8 disc;
-    char* strBase = OSReset_file;
+    char* strBase = lbl_80552AF0;
 
     __OSStopPlayRecord();
     __OSUnRegisterStateEvent();
@@ -334,12 +334,12 @@ void __OSReturnToMenu(u8 menuMode) {
 void OSReturnToMenu(void) {
     __OSReturnToMenu(0);
 
-    OSPanic(OSReset_file, 895, OSReset_menuPool);
+    OSPanic(lbl_80552AF0, 895, OSReset_menuPool);
 }
 
 void __OSReturnToMenuForError(void) {
     OSStateFlags stateFlags;
-    char* strBase = OSReset_file;
+    char* strBase = lbl_80552AF0;
 
     __OSReadStateFlags(&stateFlags);
     stateFlags.discState = 2;
@@ -358,7 +358,7 @@ void __OSHotResetForError(void) {
         __OSInitSTM();
     }
     __OSHotReset();
-    OSPanic(OSReset_file, 1034, OSReset_hotResetPool);
+    OSPanic(lbl_80552AF0, 1034, OSReset_hotResetPool);
 }
 
 u32 OSGetResetCode(void) {
@@ -374,7 +374,7 @@ void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu) {
 #pragma unused(resetCode)
 #pragma unused(forceMenu)
 
-    OSPanic(OSReset_file, 1185, OSReset_obsoletePool);
+    OSPanic(lbl_80552AF0, 1185, OSReset_obsoletePool);
 }
 
 static void KillThreads(void) {

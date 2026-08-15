@@ -50,10 +50,12 @@ struct CREvtMovie {
 
 // String constant: "/ev/realtime/\0.sfd\0" packed together.
 // [0x00 .. 0x0D] = "/ev/realtime/", [0x0E .. ] = ".sfd"
-// Declared as a single object (not an array) so that `&lbl + 14` is emitted
-// as runtime pointer arithmetic from a held base pointer rather than being
-// folded into a constant array index (matches retail's `addi rN,rM,14`).
-extern const char lbl_eu_8050FD98;
+// Declared as an incomplete (unsized) array: MWCC cannot classify an
+// unsized extern as SDA-eligible, so it forms the address with `lis`/`addi`
+// (ADDR16_HA/LO) and holds the base in a callee-saved register (retail
+// shape). Referencing via array decay keeps `dir + 14` as runtime pointer
+// arithmetic from that held base (retail's `addi rN,rM,14`).
+extern char lbl_eu_8050FD98[];
 
 // Path-building buffer used by CREvtMovie playback functions.
 // Holds the concatenated SFD path in mPath and tracks its length in mLength;

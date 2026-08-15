@@ -10,6 +10,15 @@
 
 #include "kyoshin/cf/CfGimmickItem.hpp"
 
+// Bdat column readers (same inline-helper shape as the CfGimmickElv ctor; the
+// (u16)/(u8) truncation round-trips through a stack slot in the retail frame).
+static inline u16 getCol16(void* table, const char* col, int row) {
+    return (u16)getBdatStringColumnValue(table, col, row);
+}
+static inline u8 getCol8(void* table, const char* col, int row) {
+    return (u8)getBdatStringColumnValue(table, col, row);
+}
+
 // ---------------------------------------------------------------------------
 // Constructor / Destructor
 // ---------------------------------------------------------------------------
@@ -21,6 +30,76 @@ cf::CfGimmickItem::~CfGimmickItem() {
     __dt__Q22cf9CfGimmickFv((void*)this, 0);
     // MWCC appends the deleting-dtor prologue (null guard) and epilogue
     // (delete-flag ? operator delete(this) : skip) automatically.
+}
+
+// ---------------------------------------------------------------------------
+// Constructor -- BDAT columns populate the item fields; sub-objects init
+// (retail symbol is the raw __ct__cf_CfGimmickItem name, so it is emitted
+// with C linkage like the sibling CfGimmickElv ctor).
+// ---------------------------------------------------------------------------
+
+extern "C" cf::CfGimmickItem* __ct__cf_CfGimmickItem(cf::CfGimmickItem* self,
+                                                     u16 rowId) {
+    __ct__cf_CfGimmick((void*)self);
+    self->vtable = (void*)lbl_eu_80535A98;
+    self->field_82 = 6;
+
+    void* mgr = func_8003AA34();
+    u32 stackVar = lbl_eu_8066413C;
+    self->field_64 = rowId;
+
+    // Init the three sub-objects (placement vec, pad10, vobj).
+    func_80208F34(self, &self->vvec04, mgr, &stackVar);
+    func_80209020(self, &self->vobj, mgr, &stackVar);
+    func_80209288(self, &self->pad10, mgr, &stackVar);
+
+    // Column name buffers "A_Item"/"A_Lost" get the slot letter written in
+    // (the table pointer holds them at lbl_eu_806627B8[0]/[1]).
+    self->field_66 = getCol8((void*)stackVar, lbl_eu_805087AC, rowId);
+    for (int i = 0; i < 3; ++i) {
+        char c = (char)('A' + i);
+        lbl_eu_806627B8[1][0] = c;
+        lbl_eu_806627B8[0][0] = c;
+        self->field_84[i] = getCol16((void*)stackVar, lbl_eu_806627B8[0], rowId);
+        if (getCol8((void*)stackVar, lbl_eu_806627B8[1], rowId) != 0) {
+            self->field_74 |= (1u << i);
+        }
+    }
+
+    const char* colBase = lbl_eu_805087AC;
+    self->field_8A = getCol16((void*)stackVar, colBase + 0x08, rowId);
+    self->field_6A = getCol16((void*)stackVar, colBase + 0x0F, rowId);
+    self->field_8C = getCol16((void*)stackVar, colBase + 0x14, rowId);
+    self->field_98 = getCol8((void*)stackVar, colBase + 0x19, rowId);
+    self->field_70 = getCol8((void*)stackVar, colBase + 0x1E, rowId);
+    self->field_99 = getCol8((void*)stackVar, colBase + 0x25, rowId);
+    self->field_9A = getCol8((void*)stackVar, colBase + 0x2C, rowId);
+    self->field_9B = getCol8((void*)stackVar, colBase + 0x34, rowId);
+    self->field_92 = getCol16((void*)stackVar, colBase + 0x38, rowId);
+    self->field_8E = getCol16((void*)stackVar, colBase + 0x3E, rowId);
+    self->field_90 = getCol16((void*)stackVar, colBase + 0x44, rowId);
+    self->field_9C = getCol8((void*)stackVar, colBase + 0x4A, rowId);
+    self->field_6C = getCol16((void*)stackVar, ((char**)lbl_eu_805357E8)[13], rowId);
+    self->field_6E = getCol16((void*)stackVar, ((char**)lbl_eu_805357E8)[14], rowId);
+    self->field_94 = getCol16((void*)stackVar, ((char**)lbl_eu_805357E8)[15], rowId);
+    self->field_96 = getCol8((void*)stackVar, colBase + 0x4D, rowId);
+    self->field_97 = getCol8((void*)stackVar, colBase + 0x57, rowId);
+
+    // vtable slot 0x20 virtual call.
+    void (**vfunc)(cf::CfGimmickItem*) = (void (**)(cf::CfGimmickItem*))self->vtable;
+    vfunc[8](self);
+
+    self->field_9E = 0;
+    self->field_A0 = 0;
+    if (self->field_70 != 0) {
+        func_80462F4C__8CTaskLODFv(self->field_70, 0);
+        func_80462EF4__8CTaskLODFv(self->field_70, lbl_eu_80668448);
+    }
+
+    if (func_8020971C(self->field_64) != 0 && self->field_9C == 3) {
+        self->field_9E = 5;
+    }
+    return self;
 }
 
 // ---------------------------------------------------------------------------
@@ -56,28 +135,33 @@ void func_80210668(cf::CfGimmickItem* self) {
 void func_80210844(cf::CfGimmickItem* self) {
     func_80209F2C();
 
-    // ok stays false (=> state 4) unless an item object can be kept alive:
     // a busy actor only stays when func_8020A5DC still reports work, and an
-    // idle one is (re)spawned via func_8020A484 + busy bit.
-    int ok;
-    if (self->field_6A != 0) {
-        if (self->field_74 & kItemFlagBusy) {
-            if (func_8020A5DC() != 0) {
-                ok = 1;
-            } else {
-                self->field_74 &= ~kItemFlagBusy;
-                ok = 0;
-            }
-        } else {
-            func_8020A484();
-            self->field_74 |= kItemFlagBusy;
+    // idle one is (re)spawned via func_8020A484 + busy bit.  The two fail
+    // paths branch to the shared `zero` merge (single `li r3,0`); the ready
+    // paths set ok=1 and jump straight to the test.
+    u32 ok;
+    if ((ok = self->field_6A) == 0) {
+        goto st4;
+    }
+    if (self->field_74 & kItemFlagBusy) {
+        if (func_8020A5DC() != 0) {
             ok = 1;
+        } else {
+            self->field_74 &= ~kItemFlagBusy;
+            goto zero;
         }
     } else {
-        ok = 0;
+        func_8020A484(self->field_6A);
+        self->field_74 |= kItemFlagBusy;
+        ok = 1;
     }
+    goto test;
 
+zero:
+    ok = 0;
+test:
     if (ok == 0) {
+st4:
         self->field_9E = 4;
     }
 }
@@ -175,10 +259,95 @@ void func_802106F8(cf::CfGimmickItem* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Remaining functions (scaffolds - NOT YET DECOMPILED)
+// func_802108D8 -- per-frame LOD/effect/manager update + countdown reset
 // ---------------------------------------------------------------------------
 
-void func_802108D8(){}
+void func_802108D8(cf::CfGimmickItem* self) {
+    func_80209F2C();
+
+    // While the 0x8 busy flag is clear, run the per-frame LOD filters, fire
+    // the field_90 effect, link the area manager and play the field_92 sound.
+    if ((self->field_74 & 8) == 0) {
+        u8 fc;
+        u8 lod;
+        if ((lod = self->field_70) != 0 && (fc = self->field_9C) != 0) {
+            // Mode bits 0..3 select the CTaskLOD filter calls (same shape as
+            // the CfGimmickEne per-LOD filter block).
+            if ((fc & 4) != 0) {
+                if ((fc & 2) != 0) {
+                    func_80462EF4__8CTaskLODFv(lod, lbl_eu_80668448);
+                } else {
+                    func_80462F10__8CTaskLODFv(lod);
+                }
+                func_80462F4C__8CTaskLODFv(lod, 0);
+            } else if ((fc & 1) != 0) {
+                func_80462F70__8CTaskLODFv(lod, 0);
+                func_80462F4C__8CTaskLODFv(lod, 1);
+            } else if ((fc & 2) != 0) {
+                func_80462F70__8CTaskLODFv(lod, 1);
+                func_80462F4C__8CTaskLODFv(lod, 1);
+            }
+            if ((fc & 8) != 0) {
+                func_80462ED0__8CTaskLODFv(lod, 0);
+            } else {
+                func_80462ED0__8CTaskLODFv(lod, 1);
+            }
+            func_80462F94__8CTaskLODFv(lod, self->field_99);
+        }
+
+        self->field_74 |= 8;
+        if (self->field_90 != 0) {
+            func_80208C48((void*)(u32)self->field_90, &self->vvec04);
+        }
+
+        if (self->field_9B != 0) {
+            UnkClass_800817BC* obj =
+                func_800817BC__Q22cf13CfGameManagerFv(self->field_9B, 0);
+            self->field_78 = (u32)obj;
+            if (obj != 0) {
+                ((cf::CfGimmickItemMgr*)obj)->field_B0 = self;
+            }
+        }
+
+        if (self->field_92 != 0) {
+            func_8007B0C8(self->field_92);
+        }
+    }
+
+    // Countdown: while field_A0 < field_98 just increment; once the window
+    // expires, keep the item alive only if a busy actor still reports work
+    // (same ok/zero merge as func_80210844), otherwise reset to state 3.
+    if (self->field_A0 < self->field_98) {
+        self->field_A0++;
+    } else {
+        int ok;
+        if (self->field_8C == 0) {
+            goto rst;
+        }
+        if (self->field_74 & kItemFlagBusy) {
+            if (func_8020A5DC() != 0) {
+                ok = 1;
+            } else {
+                self->field_74 &= ~kItemFlagBusy;
+                goto zero;
+            }
+        } else {
+            func_8020A484(self->field_8C);
+            self->field_74 |= kItemFlagBusy;
+            ok = 1;
+        }
+        goto test;
+    zero:
+        ok = 0;
+    test:
+        if (ok == 0) {
+    rst:
+            self->field_74 &= ~8;
+            self->field_A0 = 0;
+            self->field_9E = 3;
+        }
+    }
+}
 
 // ---------------------------------------------------------------------------
 // FULL_MATCH: Virtual function override -- no-op

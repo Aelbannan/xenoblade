@@ -789,8 +789,8 @@ void func_80156ED4(u32 unused, CItemData* obj) {
     // Volatile re-read reproduces the retail's reload before the rlwimi.
     u32 word = obj->field_00;
     if (((word >> 2) & 7) == 0) {
-        u32 w = *(volatile u32*)&obj->field_00;
-        obj->field_00 = __rlwimi(w, 1, 2, 27, 29);
+        obj->field_00 =
+            __rlwimi(*(volatile u32*)&obj->field_00, 1, 2, 27, 29);
     }
     word = obj->field_00;
     func_801558B4((CItemRec*)obj->field_08, word >> 20, (word >> 5) & 0x7FF, 0, (word >> 2) & 7);

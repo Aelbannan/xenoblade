@@ -91,7 +91,7 @@ extern "C" void func_801F3670(void*, void*);
 extern "C" void func_801F367C(void*);
 extern "C" void func_801F369C(void*);
 extern "C" void func_801F36BC(void*, int, int);
-extern "C" void func_801F3850(void*, u32);
+extern "C" void func_801F3850(void*, u16);
 extern "C" void func_801D20B0(void*, void*);
 extern "C" void func_801D216C(void*, u8);
 extern "C" void func_80138078__FUl(u32);

@@ -70,3 +70,20 @@ extern MEMAllocator* lbl_eu_80665478;
 // exact retail linker symbols instead of C++-mangled member names.
 extern "C" void* func_8045F438__10CLibLayoutFv(MEMAllocator* allocator, u32 size);
 extern "C" void func_8045F4E4__10CLibLayoutFv(MEMAllocator* allocator, void* block);
+
+// Import: nw4r::lyt::TextBox(unsigned short) ctor (retail member symbol
+// __ct__Q34nw4r3lyt7TextBoxFUs, omitted from lyt_textBox.h). C linkage emits
+// the exact retail linker symbol; used by createTextbox().
+extern "C" void __ct__Q34nw4r3lyt7TextBoxFUs(nw4r::lyt::TextBox* pTextBox, u16 len);
+
+// Import: nw4r::lyt::Picture(const TexMap&) ctor. Declared with C linkage so
+// createPicture() can construct on a raw buffer without placement-new's NULL
+// guard (retail calls the ctor directly).
+extern "C" void __ct__Q34nw4r3lyt7PictureFRCQ34nw4r3lyt6TexMap(
+    nw4r::lyt::Picture* pPicture, const nw4r::lyt::TexMap& rTexMap);
+
+// Runtime throw helper (rethrow). Declared noreturn so MWCC elides the
+// __end__catch epilogue of a catch-all handler that ends in `bl __throw`
+// (retail catch-all handlers end with the __throw call; see CScnItemAnim.hpp).
+extern "C" __declspec(noreturn) void __throw(char* throwtype, void* location,
+                                             void* dtor);

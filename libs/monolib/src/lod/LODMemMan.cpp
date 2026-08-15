@@ -561,8 +561,11 @@ void LOD::LODMemMan::func_8046D898() {}
 #pragma scheduling off
 void LOD::LODMemMan::func_8046DA04() {
     LODMemManLayout* l = (LODMemManLayout*)this;
-    f32 v1 = lbl_eu_8066A6C0;   // 1.0f constant (0xC0/0xC4/0xC8 stores) - declared first so it loads first (retail lfs f1 first)
-    f32 v0 = lbl_eu_8066A6D8;   // scale divisor (0x7C/0x1CDC/0x84 stores)
+    f32 v0;             // declared first -> colors f0 (retail lfs f1=1.0 first, lfs f0=scale second)
+    f32 v1;             // -> f1
+    s16 nine = 9;       // hoisted materialization for the +0xB8 store (retail li r0,9 in the prologue)
+    v1 = lbl_eu_8066A6C0;   // 1.0f constant (0xC0/0xC4/0xC8 stores) - assigned first so it loads first
+    v0 = lbl_eu_8066A6D8;   // scale divisor (0x7C/0x1CDC/0x84 stores)
     l->field_0x4 = 0;
     l->field_0xC = 0;
     l->mCount_18 = 0;
@@ -571,7 +574,7 @@ void LOD::LODMemMan::func_8046DA04() {
     l->field_0xAC = 0;
     l->field_0xB4 = 0;
     l->field_0x6C = 0;
-    l->field_0xB8 = 9;
+    l->field_0xB8 = nine;
     l->field_0xBA = 0;
     l->field_0xBC = 0;
     *(f32*)&l->field_0xC8[0].field_0x0 = v1;
@@ -2389,8 +2392,6 @@ void LOD::LODMemMan::func_804719FC() {
 // time name string: store strlen(lbl_eu_80523D90) into +0x74 and copy the
 // string into +0x34 (retail hoists the string address into r31 up front).
 // ---------------------------------------------------------------------------
-#pragma push
-#pragma auto_inline off
 void LOD::LODMemMan::func_80471A70() {
     const char* name = lbl_eu_80523D90;
     LODMemManLayout* l = (LODMemManLayout*)this;
@@ -2398,8 +2399,6 @@ void LOD::LODMemMan::func_80471A70() {
     l->field_0x74 = strlen(name);
     strcpy(l->mStr_34, name);
 }
-#pragma scheduling on
-#pragma pop
 
 // ---------------------------------------------------------------------------
 // func_80471ACC: (re)allocate the object's secondary buffer to hold `count20`

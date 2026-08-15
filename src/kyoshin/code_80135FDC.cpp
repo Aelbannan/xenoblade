@@ -635,15 +635,15 @@ extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(
     nw4r::lyt::DrawInfo* drawInfo) {
     if (!CDeviceVI::isWideAspectRatio()) return;
 
+    f32 sc[2];
+    sc[0] = 0.75f;
+    sc[1] = 1.0f;
     u8* flagPtr = reinterpret_cast<u8*>(drawInfo) + 0x50;
     u8 bit5 = (*flagPtr >> 5) & 1;
     u8 newBit = (bit5 == 0) ? 1u : 0u;
-    *flagPtr = (*flagPtr & ~0x20u) | (newBit << 5);
-
-    f32* scale = reinterpret_cast<f32*>(
-        reinterpret_cast<u8*>(drawInfo) + 0x44);
-    scale[0] = 0.75f;
-    scale[1] = 1.0f;
+    *(f32*)(reinterpret_cast<u8*>(drawInfo) + 0x44) = sc[0];
+    *(f32*)(reinterpret_cast<u8*>(drawInfo) + 0x48) = sc[1];
+    *flagPtr = (*flagPtr & 0xDFu) | (newBit << 5);
 }
 
 int func_801372B4(int value) {
@@ -1397,10 +1397,10 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
 extern "C" void* func_80138DA4(const char* str) {
     int v = atoi(str);
     if (v <= 0) return (void*)str;
-    char* base = lbl_eu_80500664;
-    char* col = base + 0x17C;
-    char* fpName = base + 0x181;
-    func_8003AA34(base);
+    volatile char* base = lbl_eu_80500664;
+    char* col = (char*)base + 0x17C;
+    char* fpName = (char*)base + 0x181;
+    func_8003AA34((char*)base);
     void* fp = getFP__FPCc(fpName);
     return getBdatStringColumnValue(fp, col, (const char*)v);
 }
@@ -1803,7 +1803,11 @@ extern "C" void func_80139AC8(CAnimOwnerIf* owner, void* src1, void* src2) {
 extern "C" void func_80139B5C(void* obj, void* arg2, void* src) {
     CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
     void* result = owner->_v03C((u32)arg2, 1);
-    if (result == NULL) return;
+    // Retail emits THREE beq's on the same null test (dead-duplicated-test
+    // family); the direct goto-gate with the tripled condition reproduces it.
+    if (result == NULL) goto out;
+    if (result == NULL) goto out;
+    if (result == NULL) goto out;
     // 8-byte color field (0xDC..0xE3): both 32-bit words carry the same value
     u32 words[2] = { (u32)src, (u32)src };
     u8* d = (u8*)result;
@@ -1816,6 +1820,8 @@ extern "C" void func_80139B5C(void* obj, void* arg2, void* src) {
     d[0xE1] = s[5];
     d[0xE2] = s[6];
     d[0xE3] = s[7];
+out:
+    return;
 }
 
 extern "C" void func_80139BF4(void* obj, void* arg2, void* a, void* b) {

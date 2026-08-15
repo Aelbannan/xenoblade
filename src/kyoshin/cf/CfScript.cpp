@@ -4,48 +4,17 @@
 #include "kyoshin/cf/CfScript.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/util/FixStr.hpp"
+#include "monolib/util/CPathUtil.hpp"
+#include "monolib/vm/yvm2.h"
 #include <cstring>
 #include <cstdio>
 #include <cstdarg>
-
-// External C function declarations
-extern "C" {
-    void vmInit();
-    void vmExec();
-    int vmLink(void* ctx);
-    void vmStart(void* ctx);
-    void vmUnlink(void* ctx);
-    void vmThreadSleepAll(void* ctx);
-    void pluginRegist__Fv();
-    void* func_800A82BC();
-    void* func_800A837C();
-    void* func_800A843C();
-    void* CfRes_readCommonArchive(void* fileHandle, const char* path, void* callback);
-    int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
-    void cancel__11CDeviceFileFP11CFileHandle(void* fileHandle);
-    void __dl__FPv(void* ptr);
-
-    // String constants from data
-    extern char lbl_eu_805708D0[];
-    extern char* lbl_eu_80661AC0;
-    extern char lbl_eu_80661AD0[];
-    extern char lbl_eu_804FB3A4[];
-    extern char lbl_eu_80570918[];
-    extern s8 lbl_eu_80663D88;
-
-    // ml namespace functions
-    void getNoPathExtName__Q22ml9CPathUtilFRQ22ml10FixStr64PCc(void* out, const char* path);
-    void format__Q22ml10FixStr128FPCce(void* out, const char* fmt, ...);
-    void format__Q22ml10FixStr64FPCce(void* out, const char* fmt, ...);
-}
 
 namespace cf {
 
 // Forward declarations for functions in this TU
 __declspec(noinline) char* func_80068A30(char* dest, const char* src);
 __declspec(noinline) void func_80068B58(CfScriptManager* mgr, const char* name);
-extern "C" bool func_80068ECC(CfScript* script, const char* name);
-extern "C" u32 func_80068E7C(CfScriptManager* mgr, int index, int mask);
 
 // func_80068A20 - initializer for path string
 void func_80068A20() {
@@ -157,7 +126,7 @@ __declspec(noinline) void CfScriptManager::func_80068C5C() {
     CfScript& script = mScripts[2];
     if (script.mFlags & 0x20) {
         if (script.mVmContext != nullptr) {
-            vmThreadSleepAll(script.mVmContext);
+            vmThreadSleepAll((u8*)script.mVmContext);
         }
     }
 }
@@ -262,23 +231,21 @@ void func_80068E9C(char* dest, const char* src1, const char* src2, const char* s
     if (src3 != nullptr) {
         func_80068A30(dest, src3);
     } else {
-        format__Q22ml10FixStr64FPCce(dest, lbl_eu_804FB3A4, src1, src2);
+        ((ml::FixStr<64>*)dest)->format(lbl_eu_804FB3A4, src1, src2);
     }
 }
 
 // func_80068ECC - main script loading function
 extern "C" bool func_80068ECC(CfScript* script, const char* name) {
-    ml::FixStr<64> extBuffer;    // 0x08
-    char tempBuffer[0x80];       // 0x4C
-    u32 tempLen;                 // 0xCC
-    ml::FixStr<128> pathBuffer;  // 0xD0 (mLength at 0x150)
+    CfScriptNameBuffer extBuffer;   // 0x08 - no ctor (retail does not zero it)
+    char tempBuffer[0x80];          // 0x4C
+    u32 tempLen;                    // 0xCC
+    ml::FixStr<128> pathBuffer;     // 0xD0 (mLength at 0x150)
 
     // Ignore the two reserved "no-op" script names.
     if (name != nullptr) {
-        if (std::strcmp(name, &lbl_eu_804FB3A4[0xA]) == 0) {
-            return false;
-        }
-        if (std::strcmp(name, &lbl_eu_804FB3A4[0x14]) == 0) {
+        if (std::strcmp(name, &lbl_eu_804FB3A4[0xA]) == 0 ||
+            std::strcmp(name, &lbl_eu_804FB3A4[0x14]) == 0) {
             return false;
         }
     }
@@ -286,8 +253,10 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
     pathBuffer.mLength = std::strlen(name);
     std::strcpy(pathBuffer.mString, name);
 
-    // Search backward for the extension separator (lbl_eu_80661AD0).
-    int extPos = -1;
+    // Search backward for the extension separator (lbl_eu_80661AD0).  Retail
+    // initialises extPos inside the if/else (not before the length test), so
+    // the li -1 lands in the branches.
+    int extPos;
     if (pathBuffer.mLength > 0) {
         u32 sepLen = std::strlen(lbl_eu_80661AD0);
         char* searchPos = pathBuffer.mString + pathBuffer.mLength - 1;
@@ -299,6 +268,11 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
             }
             searchPos--;
         }
+        if (searchPos == searchEnd) {
+            extPos = -1;
+        }
+    } else {
+        extPos = -1;
     }
 
     // Cut the extension off so only the bare filename remains.
@@ -318,9 +292,8 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
     }
 
     // Build "dir + noext-name" into pathBuffer (format varargs).
-    getNoPathExtName__Q22ml9CPathUtilFRQ22ml10FixStr64PCc(&extBuffer, pathBuffer.mString);
-    format__Q22ml10FixStr128FPCce(&pathBuffer, &lbl_eu_804FB3A4[0x1C],
-                                  lbl_eu_805708D0, extBuffer.mString);
+    ml::CPathUtil::getNoPathExtName(*(ml::FixStr<64>*)&extBuffer, pathBuffer.mString);
+    pathBuffer.format(&lbl_eu_804FB3A4[0x1C], lbl_eu_805708D0, extBuffer.mString);
 
     const char* extStr = &lbl_eu_804FB3A4[0x21];
     u32 extStrLen = std::strlen(extStr);
@@ -366,13 +339,16 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
 
     void* handle = CfRes_readCommonArchive(script->mVmContext, pathBuffer.mString, script);
     script->mFileHandle = handle;
-    if (handle != nullptr) {
+    // Bool computed before the branch so it survives the name-store calls in a
+    // saved register (retail: neg/or/srwi. r27, then `beq` on the same bits).
+    bool loaded = handle != nullptr;
+    if (loaded) {
         script->mNameLen = std::strlen(extBuffer.mString);
         std::strcpy(script->mName, extBuffer.mString);
         script->mFlags |= 0x1;
     }
 
-    return handle != nullptr;
+    return loaded;
 }
 
 // CfScript::waitLoad
@@ -380,8 +356,8 @@ void CfScript::waitLoad() {
     if ((mFlags & 0x2) && (mFlags & 0x4)) {
         // If the VM thread is not yet running, link + start it.
         if (!(mFlags & 0x8)) {
-            if (vmLink(mVmContext) != 0) {
-                vmStart(mVmContext);
+            if (vmLink((u8*)mVmContext) != 0) {
+                vmStart((u8*)mVmContext);
                 mFlags |= 0x8;
             }
         }
@@ -402,8 +378,8 @@ bool CfScript::OnFileEvent(CEventFile* event) {
         if (event->field_00 == 1 && event->field_14 != 0) {
             // Loaded: remember the extension-less name.
             mFlags |= 0x2;
-            ml::FixStr<64> tmp;
-            getNoPathExtName__Q22ml9CPathUtilFRQ22ml10FixStr64PCc(&tmp, event->field_0C);
+            CfScriptNameBuffer tmp;
+            ml::CPathUtil::getNoPathExtName(*(ml::FixStr<64>*)&tmp, event->field_0C);
             mNameLen = std::strlen(tmp.mString);
             std::strcpy(mName, tmp.mString);
         } else {
@@ -436,8 +412,10 @@ __declspec(noinline) CfScriptManager* CfScriptManager::getInstance() {
     return (CfScriptManager*)lbl_eu_80570918;
 }
 
-// CfScript constructor
+// CfScript constructor - the novtable class stores the retail vtable label
+// explicitly (MWCC would otherwise emit a __vt__Q22cf8CfScript reloc).
 CfScript::CfScript() {
+    *(void**)this = (void*)lbl_eu_80526DE8;
     mName[0] = '\0';
     mNameLen = 0;
     mFileHandle = nullptr;
@@ -458,20 +436,17 @@ void CfScriptManager::init() {
     vmInit();
     pluginRegist__Fv();
 
-    for (int i = 0; i < 3; i++) {
+    for (u32 i = 0; i < 3; i++) {
         CfScript& script = mScripts[i];
 
+        // Per-slot VM constructor (retail: if/else-if chain, cmpwi/cmplwi).
         void* vmCtx = nullptr;
-        switch (i) {
-            case 0:
-                vmCtx = func_800A82BC();
-                break;
-            case 1:
-                vmCtx = func_800A837C();
-                break;
-            case 2:
-                vmCtx = func_800A843C();
-                break;
+        if (i == 0) {
+            vmCtx = func_800A82BC();
+        } else if (i == 1) {
+            vmCtx = func_800A837C();
+        } else if (i == 2) {
+            vmCtx = func_800A843C();
         }
 
         script.mVmContext = vmCtx;
@@ -484,13 +459,16 @@ void CfScriptManager::init() {
     }
 }
 
-// CfScriptManager::func_800694B0 - main update loop
+// CfScriptManager::func_800694B0 - main update loop: while a slot is not yet
+// loaded (waitCount 0/1), dispatch its state handler through the retail ptmf
+// table lbl_eu_80526DD0 ({waitLoad, update}); then run the VM unless the game
+// manager says we are in a menu/frozen state.
 __declspec(noinline) void CfScriptManager::func_800694B0() {
-    for (int i = 0; i < 3; i++) {
+    for (u32 i = 0; i < 3; i++) {
         CfScript& script = mScripts[i];
 
-        if (script.mWaitCount >= 0 && script.mWaitCount < 2) {
-            // Call appropriate function based on waitCount
+        if (script.mWaitCount >= 0 && (u32)script.mWaitCount < 2) {
+            (script.*lbl_eu_80526DD0[script.mWaitCount])();
         }
     }
 

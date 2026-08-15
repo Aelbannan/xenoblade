@@ -37,11 +37,11 @@ struct AdxBsp {
     s32 field_0x54;    // 0x54 - numBlkSmpl
     u32 field_0x58;    // 0x58 - blkSize
     u32 field_0x5C;    // 0x5C - pcmBase
-    u32 field_0x60;    // 0x60
-    u32 field_0x64;    // 0x64
-    u32 field_0x68;    // 0x68 - pcmOfst
-    u32 field_0x6C;    // 0x6C - availWrPos
-    u32 field_0x70;    // 0x70 - wrPos
+    s32 field_0x60;    // 0x60 - pcmBufSize
+    s32 field_0x64;    // 0x64 - workBufSize
+    s32 field_0x68;    // 0x68 - pcmOfst
+    s32 field_0x6C;    // 0x6C - availWrPos
+    s32 field_0x70;    // 0x70 - wrPos
     char field_0x74[4];// 0x74
     void* field_0x78;  // 0x78 - getWr callback
     void* field_0x7C;  // 0x7C - getWr context
@@ -128,53 +128,47 @@ extern u32 ADXPD_GetStat(void* self);
 
 void ADXB_ExecOneSpsd(struct AdxBsp* self)
 {
-    s32 w;
-    s8 ch;
     // Source sample buffer, kept live across the whole function (r31).
     s16* src = (s16*)self->field_0x48;
+    s32 w;
+    s32 i;
 
     if (self->field_0x4 == 1) {
         if (ADXPD_GetStat(self->field_0x8) == 0) {
-            void (*getWr)(void*, u32*, u32*, u32*);
-            void* ctx;
+            // Query the write position via the registered getWr callback
+            ((void (*)(void*, s32*, s32*, s32*))self->field_0x78)(
+                self->field_0x7C, &self->field_0x68, &self->field_0x6C, &self->field_0x70);
 
-            getWr = (void (*)(void*, u32*, u32*, u32*))self->field_0x78;
-            ctx = self->field_0x7C;
-            getWr(ctx, &self->field_0x68, &self->field_0x6C, &self->field_0x70);
+            w = self->field_0x60 - self->field_0x68;
+            if (w > self->field_0x6C) w = self->field_0x6C;
+            if (w > self->field_0x4C) w = self->field_0x4C;
 
-            w = (s32)self->field_0x60 - (s32)self->field_0x68;
-            if (w > (s32)self->field_0x6C) w = (s32)self->field_0x6C;
-            if (w > (s32)self->field_0x4C) w = (s32)self->field_0x4C;
-
-            ch = self->field_0xE;
             {
+                s32 ch = self->field_0xE;
+                // dst1 = pcmBase + pcmOfst*2 (in samples); stereo second buffer adds ch offset
                 s16* dst1 = (s16*)((u8*)self->field_0x5C + (self->field_0x68 << 1));
                 if (ch == 2) {
-                    s16* dst2 = (s16*)((u8*)self->field_0x5C + ((self->field_0x68 + self->field_0x64) << 1));
-                    s32 i;
+                    s16* dst2 = (s16*)((u8*)self->field_0x5C + ((self->field_0x64 + self->field_0x68) << 1));
                     for (i = 0; i < w; i++) {
                         dst1[i] = src[i * 2];
                         dst2[i] = src[i * 2 + 1];
                     }
                 } else {
-                    s32 i;
                     for (i = 0; i < w; i++) {
                         dst1[i] = src[i];
                     }
                 }
             }
+            self->field_0x94 = (u32)(self->field_0xE * (w << 1));
             self->field_0x90 = (u32)w;
             self->field_0x4 = 2;
-            self->field_0x94 = (u32)(ch * (w << 1));
         }
     }
 
     if (self->field_0x4 == 2) {
-        void (*eosCb)(void*, u32, u32);
-        void* ctx2;
-        eosCb = (void (*)(void*, u32, u32))self->field_0x80;
-        ctx2 = self->field_0x84;
-        eosCb(ctx2, self->field_0x94, self->field_0x90);
+        // End-of-stream callback with (decDtLen, decSmpl)
+        ((void (*)(void*, u32, u32))self->field_0x80)(
+            self->field_0x84, self->field_0x94, self->field_0x90);
         self->field_0x4 = 3;
     }
 }

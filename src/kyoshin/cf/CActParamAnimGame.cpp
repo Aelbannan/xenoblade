@@ -1038,10 +1038,12 @@ void cf::CActParamAnimGame::func_8005D608() {}
 extern "C" void func_8004BC94(void*);
 
 // Returns true when the +0x4F8 float exceeds the +0x508 float; the linked
-// region is then notified via func_8004BC94 (retail `extrwi.`+`beq` shape).
+// region is then notified via func_8004BC94. The explicit bool local keeps
+// MWCC's dead mfcr/rlwinm capture of the fcmpo result (retail `extrwi.` shape).
 bool cf::CActParamAnimGame::func_8005D67C() {
     CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
-    if (self->f4F8 > self->f508) {
+    bool cond = self->f4F8 > self->f508;
+    if (cond) {
         func_8004BC94(this);
         return true;
     }
@@ -1067,10 +1069,11 @@ bool func_8005D70C__Q22cf17CActParamAnimGame(void* self) {
 }
 
 // Clears the +0x4EC bit-12 (0x80000) flag and notifies the linked region.
+// Volatile re-read reproduces the retail's second lwz before the mask.
 bool cf::CActParamAnimGame::func_8005D728() {
     CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
     if ((self->flags4EC & 0x80000) != 0) {
-        self->flags4EC &= ~0x80000;
+        self->flags4EC = *(volatile u32*)&self->flags4EC & ~0x80000;
         func_8004BC94(this);
         return true;
     }

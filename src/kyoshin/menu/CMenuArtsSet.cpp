@@ -111,8 +111,8 @@ void func_8022FE58(SArtsSub8022FA58* self) {
 void func_8022FE90(SArtsSub8022FA58* self) {
     self->field_0x16 = 0;
     self->field_0x17 = 0;
-    int v = (int)self->field_0x14 - 1;
-    self->field_0x14 = (u8)v;
+    u8 v = self->field_0x14 - 1;
+    self->field_0x14 = v;
     if ((s8)v < 0) {
         self->field_0x14 = (u8)(self->field_0x21 - 1);
     }

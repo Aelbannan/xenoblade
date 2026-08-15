@@ -4,6 +4,7 @@
 #include <types.h>
 #include "kyoshin/code_800B06A4.hpp"
 #include <string.h>
+#include <new>
 
 // C-ABI import for func_800B3A88
 // Forward declaration (defined elsewhere in this unit; unmangled name)
@@ -70,11 +71,6 @@ void func_800B084C(UnkClass_805764CC* self, unsigned long count) {
 // mCapacity@0x18, ownership flag@0x1C). The struct-typed sentinel access
 // reproduces the retail scheduling (MWCC keeps li r0 first + the v2 lis/addi
 // pair adjacent).
-struct CfReslistNode {
-    void* mNext;  // 0x0
-    void* mPrev;  // 0x4
-    void* mItem;  // 0x8 (node stride 0xC)
-};
 struct CfReslistLayout {
     void* mVtable;           // 0x00
     CfReslistNode* mStartNodePtr;  // 0x04
@@ -442,15 +438,14 @@ void init_42E8(){}
 // strcmp(name, data->field_0x120) == 0, call func_800B3A88(self, data).
 // The list has sentinel at *(self+0xBCC), nodes are [0]=next, [8]=data_ptr.
 extern "C" DECOMP_DONT_INLINE void func_800B4368(UnkClass_805764CC* self, const char* name) {
-    u8* sentinel = *(u8**)((u8*)self + 0xBCC);
-    u8* cur = *(u8**)sentinel;
+    u8* cur = *(u8**)(*(u8**)((u8*)self + 0xBCC));
 
-    while (cur != sentinel) {
+    while (cur != *(u8**)((u8*)self + 0xBCC)) {
         u8* data = *(u8**)(cur + 8);
         cur = *(u8**)cur;
 
-        if (*(u32*)(data + 0x94) == 2) {
-            if (name == NULL || strcmp(name, (const char*)(data + 0x120)) == 0) {
+        if (*(s32*)(data + 0x94) == 2) {
+            if (name == NULL || strcmp((const char*)(data + 0x120), name) == 0) {
                 func_800B3A88(self, (cf::CfObject*)data);
             }
         }
@@ -777,6 +772,11 @@ UnkClass_805764CC* func_800B07E8() {
 #pragma pop
 #pragma inline
 // Target: us-800b1160 - func_800B0894 (allocate + zero-fill array of count*0xc, store at +0x14/+0x18)
+// auto_inline off: without it the -ipa pass folds this 0x12C body into
+// func_800B084C (its only caller), inflating the wrapper to 316B. Retail's
+// func_800B084C stays a plain wrapper, so the inline must be blocked.
+#pragma push
+#pragma auto_inline off
 extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, unsigned long count) {
     u32* arr = (u32*)allocate_array__Q23mtl10MemManagerFUlUl(count * 0xc, handle);
     self->field_0x14 = (u32)arr;
@@ -789,6 +789,8 @@ extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, uns
     // best 23.4%/44 structural/0x134 vs 0x12c. Next: element-struct type or
     // reslist-method access form.
 }
+#pragma pop
+#pragma inline
 // Target: us-800b2220 - func_800B1954 (list cleanup)
 extern "C" void func_800B1A8C(void* a, void* b);
 extern "C" void* func_800B1A9C(void* a);
@@ -954,6 +956,7 @@ extern "C" void* func_800B89CC(u32 id) {
 // Same singleton pattern as func_800B89CC, but reads a u16 from
 // this->field_0x45C0 and passes it as the id to func_80193AB0.
 extern "C" void* func_800B8A64(void* self) {
+    u16 id = *(u16*)((u8*)self + 0x45C0);
     void* result = NULL;
 
     if (lbl_eu_80663EE8 == 0) {
@@ -962,7 +965,6 @@ extern "C" void* func_800B8A64(void* self) {
         lbl_eu_80663EE8 = 1;
     }
 
-    u16 id = *(u16*)((u8*)self + 0x45C0);
     void* ca0 = *(void**)(lbl_eu_80572CD4 + 0xCA0);
     if (ca0 != NULL) {
         result = func_80193AB0(ca0, id);
@@ -1069,27 +1071,108 @@ void init_99BC(){}
 void fwd_99EC_body(){}
 void init_9A30(){}
 
-// Target 5: us-800b141c - __ct__reslist_cf_TboxInfo
-// Base reslist ctor: links the sentinel at this+8 to itself. Inlined into the
-// derived ctor below, reproducing the retail store schedule.
-template <typename T>
-_reslist_base<T>::_reslist_base() {
-    this->field_0x04 = (u32)((u8*)this + 8);
-    this->sentinel_prev = (u32)((u8*)this + 8);
-    this->sentinel_next = (u32)((u8*)this + 8);
+// Target 1: us-800b141c - reslist<cf::TboxInfo>::reslist() constructor
+// (flattened: base init with the _reslist_base vtable, then the derived
+// vtable install overwrites +0). Array-typed externs force absolute lis/addi
+// addressing; the base vtable store is volatile so MWCC keeps both stores.
+// Struct-typed sentinel access reproduces the retail scheduling (same shape
+// as the CfObject/IFactoryEvent siblings, with the zeros at 0x2c/0x30/0x34).
+void __ct__reslist_cf_TboxInfo(void* self) {
+    extern void* lbl_eu_805290DC[];
+    extern void* lbl_eu_805290C4[];
+    TboxInfoReslistLayout* obj = (TboxInfoReslistLayout*)self;
+    u32 zero = 0;
+    *(volatile u32*)((u8*)self) = (u32)lbl_eu_805290DC;
+    obj->field_0x2c = zero;
+    obj->field_0x30 = zero;
+    obj->field_0x34 = (u8)zero;
+    obj->mStartNodePtr = &obj->mStartNode;
+    obj->mStartNodePtr->mNext = &obj->mStartNode;
+    obj->mStartNodePtr->mPrev = &obj->mStartNode;
+    obj->mVtable = (void*)lbl_eu_805290C4;
 }
 
-// TboxInfo reslist ctor: zeroes the 0x2c/0x30/0x34 fields over the base.
-template <>
-reslist<cf::TboxInfo>::reslist() : _reslist_base<cf::TboxInfo>() {
-    this->field_0x2c = 0;
-    this->field_0x30 = 0;
-    this->field_0x34 = 0;
+// Base reslist ctor is unused (the specialized ctors above are flattened
+// free functions); kept as an empty template so member-ctor instantiations
+// (e.g. generic reslist<T>) never emit stray code.
+template <typename T>
+_reslist_base<T>::_reslist_base() {}
+
+// Target 5: us-800b128c - UnkClass_805764CC::UnkClass_805764CC()
+// Retail constructs the reslist subobjects with flattened free-function ctors
+// (reloc names __ct__reslist_cf_*). Real member ctors would mangle to
+// __ct__23reslist<...> and drift, so each subobject ctor is called manually
+// in declaration order via extern "C" declarations (C linkage emits the exact
+// retail names); the FixStr<64> at 0xCB0 is placement-new'd in place.
+extern "C" void __ct__reslist_cf_CfObject(void*);
+extern "C" void __ct__reslist_cf_TboxInfo(void*);
+extern "C" void __ct__reslist_cf_IFactoryEvent(void*);
+extern "C" void __ct__17UnkClass_800B0AD8Fv(void*);
+
+UnkClass_805764CC::UnkClass_805764CC() {
+    __ct__reslist_cf_CfObject(this);
+    __ct__17UnkClass_800B0AD8Fv((u8*)this + 0x20);
+    __ct__reslist_cf_CfObject((u8*)this + 0xb28);
+    __ct__reslist_cf_CfObject((u8*)this + 0xb48);
+    __ct__reslist_cf_CfObject((u8*)this + 0xb68);
+    __ct__reslist_cf_CfObject((u8*)this + 0xb88);
+    __ct__reslist_cf_CfObject((u8*)this + 0xba8);
+    __ct__reslist_cf_CfObject((u8*)this + 0xbc8);
+    __ct__reslist_cf_CfObject((u8*)this + 0xbe8);
+    __ct__reslist_cf_CfObject((u8*)this + 0xc08);
+    __ct__reslist_cf_CfObject((u8*)this + 0xc28);
+    __ct__reslist_cf_TboxInfo((u8*)this + 0xc48);
+    __ct__reslist_cf_IFactoryEvent((u8*)this + 0xc80);
+    field_0xCA0 = 0;
+    field_0xCA4 = 0;
+    field_0xCA8 = 0;
+    field_0xCAC = 0;
+    new ((void*)&field_0xCB0) ml::FixStr<64>();
+    field_0xCFC = 0;
+    field_0xD00 = 0;
+    field_0xD04 = 0;
+    field_0xD0E = 0;
+    field_0xD10 = 0;
+    extern u32 lbl_eu_80663EE0;
+    func_800B0A90(&lbl_eu_80663EE0);
 }
 
 _reslist_base<cf::TboxInfo>::~_reslist_base(){}
 reslist<cf::TboxInfo>::~reslist(){}
-_reslist_base<cf::IFactoryEvent*>::~_reslist_base(){}
+// Target 3: us-800b1614 - _reslist_base<cf::IFactoryEvent*>::~_reslist_base()
+// Reinstalls the base vtable, unlinks every node (next=0), re-links the
+// sentinel to itself, then frees the owned pool buffer (mList) unless the
+// ownership flag at 0x1C is set. The null-check and flags-delete tails are
+// MWCC-generated for member destructors; the goto/check loop mirrors the
+// matched func_800B1A5C shape (retail re-reads field_0x04 every iteration).
+template <>
+_reslist_base<cf::IFactoryEvent*>::~_reslist_base() {
+    extern void* lbl_eu_805290B8[];
+    CfReslistLayout* obj = (CfReslistLayout*)this;
+    obj->mVtable = (void*)lbl_eu_805290B8;
+    CfReslistNode* sentinel;
+    CfReslistNode* cur;
+    CfReslistNode* p;
+    sentinel = obj->mStartNodePtr;
+    void* zero = 0;
+    cur = (CfReslistNode*)sentinel->mNext;
+    goto check;
+loop:
+    p = cur;
+    cur = (CfReslistNode*)cur->mNext;
+    p->mNext = zero;
+check:
+    sentinel = obj->mStartNodePtr;
+    if (cur != sentinel) goto loop;
+    obj->mStartNodePtr->mNext = obj->mStartNodePtr;
+    obj->mStartNodePtr->mPrev = obj->mStartNodePtr;
+    if (!obj->field_0x1C) {
+        if (obj->mList != 0) {
+            __dla__FPv(obj->mList);
+            obj->mList = 0;
+        }
+    }
+}
 reslist<cf::IFactoryEvent*>::~reslist(){}
 
 // Target 3: us-800ba2a8 - func_800B998C
@@ -1100,6 +1183,25 @@ void* func_800B998C(void* self, void* a1, void* a2, void* a3, void* a4, void* a5
 // Target 4: us-800ba2d8 - func_800B99BC
 void* func_800B99BC(void* self, void* a1, void* a2, void* a3, void* a4, void* a5) {
     return func_800B47A8((void*)0, self, a1, a2, a3, a4, a5);
+}
+
+// Target: us-800ba308 - func_800B99EC: walk the sentinel list at +4 and
+// unlink every node whose +8 field equals *(u32*)arg.
+extern "C" void func_800B99EC(void* list, void* arg) {
+    u32 sentinel = *(u32*)((u32*)list + 1);
+    u32 next;
+    u32 cur = *(u32*)sentinel;
+    u32 zero = 0;
+    while (cur != sentinel) {
+        next = *(u32*)cur;
+        if (*(u32*)(cur + 8) == *(u32*)arg) {
+            u32 prev = *(u32*)(cur + 4);
+            *(u32*)prev = next;
+            *(u32*)(next + 4) = prev;
+            *(u32*)cur = zero;
+        }
+        cur = next;
+    }
 }
 
 // Target 5: us-800ba35c - sinit_800B9A40
@@ -1146,28 +1248,29 @@ u32 func_800B3D40(u8* self) {
 }
 // Target us-800b5320: func_800B4A24
 // Rejects null / non-enabled args, then checks whether the parent container's
-// field_0x15F0 type id lies in {4,5,6,7,8}.
+// field_0x15F0 type id lies in {4,5,6,7,8}. The check is a cascade of
+// materialized booleans (c1..c4), reproducing retail's preset-li / conditional
+// clear sequence with four distinct scratch registers.
 extern "C" s32 func_800B4A24(CEvtTypeArg* arg) {
-    if (arg == 0) {
-        return 0;
-    }
-    int vres = arg->fnTable[0x80](arg);
-    if (vres == 0) {
-        return 0;
-    }
-    if ((arg->flags & 0x04000000) == 0) {
-        return 0;
-    }
+    s32 result = 0;
+    if (arg != 0 && arg->fnTable[0x80](arg) != 0 && (arg->flags & 4) != 0) {
+        // Recover the enclosing object (arg sits at +0x3E9C within it) and
+        // read its type/state id at +0x15F0. Retail keeps a redundant null
+        // guard on the pointer fixup (cmpwi r30,0 / beq / subi).
+        if (arg != 0) {
+            arg = (CEvtTypeArg*)((u8*)arg - 0x3E9C);
+        }
+        s32 value = (s32)((UnkClass_805764CC*)arg)->field_0x15F0;
 
-    // Recover the enclosing object (arg sits at +0x3E9C within it) and read
-    // its type/state id at +0x15F0.
-    UnkClass_805764CC* container = (UnkClass_805764CC*)((u8*)arg - 0x3E9C);
-    s32 value = (s32)container->field_0x15F0;
-
-    if (value == 4 || value == 5 || value == 6 || value == 7 || value == 8) {
-        return 1;
+        bool c1 = value == 4 || value == 5;
+        bool c2 = c1 || value == 6;
+        bool c3 = c2 || value == 7;
+        bool c4 = c3 || value == 8;
+        if (c4) {
+            result = 1;
+        }
     }
-    return 0;
+    return result;
 }
 // Target 4: us-800b5868 - clear bit 0 and set bit 1 of the field at +0x6C
 void func_800B4F6C(u8* self) {
@@ -1210,8 +1313,66 @@ void func_800B9404(void* obj) {
 void func_800B7058(void* obj) {
     func_800B6DD0(func_800B07E8(), obj);
 }
-extern "C" void func_800B7320() {}
-extern "C" void func_800B7A18() {}
+// Target 4: us-800b7c40 - func_800B7320
+// Iterate the TboxInfo reslist at singleton->field_0xC48; for each node whose
+// data's first word equals func_800B39C0(self), remove that node (via
+// func_800B73E8 with a saved cursor) and return. The 4-byte list cursors are
+// local u32s; the goto/check loop shape reproduces retail's layout (body
+// first, head-check at the end, init jumps to the head). func_800B1AC0 is
+// declared void* so MWCC reuses its r3 (== &saved) as arg3 of func_800B73E8
+// exactly like retail's mr r5,r3.
+extern "C" void func_800B7320(void* self) {
+    if (self == 0) {
+        return;
+    }
+    UnkClass_805764CC* singleton = func_800B07E8();
+    u32 cursor;      // main cursor (r1+0x18)
+    u32 tmp73E8;     // func_800B73E8 dst (r1+0x14)
+    u32 saved;       // saved cursor for removal (r1+0x10)
+    u32 tmpAA8;      // func_800B1AA8 dst (r1+0xc)
+    u32 cursorEnd;   // sentinel cursor (r1+0x8)
+    func_800B1A8C(&cursor, &singleton->field_0xC48);
+    goto check;
+loop:
+    void* item = func_800B39C0(self);
+    void* data = func_800B1A9C(&cursor);
+    if (*(u32*)data == (u32)item) {
+        void* cur = func_800B1AC0(&saved, &cursor);
+        func_800B73E8(&tmp73E8, &singleton->field_0xC48, cur);
+        return;
+    } else {
+        func_800B1AA8(&tmpAA8, &cursor, 0);
+    }
+check:
+    func_800B1ACC(&cursorEnd, &singleton->field_0xC48);
+    if (func_800B1AD8(&cursor, &cursorEnd) != 0) {
+        goto loop;
+    }
+}
+// Target 1: us-800b8334 - func_800B7A18
+// Iterate the two circular object lists (func_800B6BC8 then func_800B6BEC)
+// with the CfGameManager item-list iterator primitives; for each object whose
+// type id ((u16)func_800BE93C) equals arg, trigger func_800BF2E0 on it.
+extern "C" void func_800B7A18(s32 arg) {
+    if (arg < 0) {
+        return;
+    }
+    for (s32 i = 0; i < 2; i++) {
+        void* list = i != 0 ? func_800B6BEC() : func_800B6BC8();
+        F8C0IteratorNode iterator;
+        func_8007F8C0__Q22cf13CfGameManagerFv(&iterator, (const F8C0ListSource*)list);
+        F8C0IteratorNode previous;
+        F8C0IteratorNode end;
+        while (func_8007F8F4__Q22cf13CfGameManagerFv(&end, (const F8C0ListSource*)list),
+               func_8007F900__Q22cf13CfGameManagerFv(&iterator.field_0x0, &end.field_0x0)) {
+            void* object = *func_8007F8D0__Q22cf13CfGameManagerFv(&iterator);
+            if (arg == (u16)func_800BE93C(object)) {
+                func_800BF2E0(object);
+            }
+            func_8007F8DC__Q22cf13CfGameManagerFv(&previous, &iterator, 0);
+        }
+    }
+}
 extern "C" void func_800B87FC() {}
 // Target us-800b9120: func_800B8804(self, event)
 // Ensure the reslist pool @ field_0xC80 is set up, then look for an existing

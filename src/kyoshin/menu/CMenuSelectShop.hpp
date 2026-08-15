@@ -95,6 +95,8 @@ struct CCur18Data {
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim).
 // These mirror the declarations used by the sibling menu TUs (CMenuQstCnt,
 // CMenuUpdate, CSysWinSelect).
+extern "C" CMenuSelectShop* __ct__CMenuSelectShop(CMenuSelectShop* self,
+                                                  void* scene, void* a3);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__11CSelShopWinFv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
@@ -117,15 +119,23 @@ extern "C" void func_8022C8E0(CSelShopWin*);
 extern u32 lbl_eu_806642E8;
 
 // Menu/gate and cursor helper imports (retail C-ABI symbols; keep un-mangled).
-int func_8013BE50();
+extern "C" int func_8013BE50();
 extern "C" int func_8018C180();
 extern "C" int func_8018B398();
+
+// Task-game gate helpers. Declared with C linkage because CTaskGame.hpp
+// defines a minimal local CLibHbm view that clashes with the full CLibHbm
+// pulled in by CSelShopWin.hpp -> monolib/lib.hpp (same scheme as
+// CMenuUpdate / CMenuShopBuy). func_800426F0 takes the task-game instance.
+extern "C" void* getInstance__9CTaskGameFv();
+extern "C" bool func_800426F0__9CTaskGameFv(void* taskGame);
 extern "C" void func_8022C7C0(CSelShopWin*);
 extern "C" void func_8022C770(CSelShopWin*);
 extern "C" void func_8022C830(CSelShopWin*, nw4r::lyt::DrawInfo*);
 extern "C" void func_801D202C(void*);
 extern "C" void func_801D20B0(void*, nw4r::lyt::DrawInfo*);
 extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);
+extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void*, int);
 extern "C" void func_80138078__FUl(u32);
 extern "C" void* func_801355F4();

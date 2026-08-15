@@ -1,4 +1,23 @@
 #include "monolib/work.hpp"
+#include "monolib/data_vtables.hpp"
+
+// ==== blob monolibdata1/1d dissolve: retail data owned by this TU ====
+// rodata 0x80522828 (0x1B): RTTI class-name string for TChildListHeader<CProcess>.
+const char lbl_eu_80522828[] = "TChildListHeader<CProcess>";
+// sdata 0x806635D8 (0x8): RTTI typeinfo { class-name, cast-table=0 }.
+u32 lbl_eu_806635D8[2] = { (u32)&lbl_eu_80522828, 0 };
+// data 0x8056BB60 (0x24): CProcess vtable {rtti, 0, dtor, Reset, 0,0,0,0, Tail}.
+u32 lbl_eu_8056BB60[9] = {
+    (u32)&lbl_eu_80661948, 0, (u32)&__dt__8CProcessFv,
+    (u32)&Reset__14CChildListNodeFv, 0, 0, 0, 0, (u32)&Tail__8CProcessFv,
+};
+/* UNRESOLVED: lbl_eu_8056BB84 (0xC, TChildListHeader<CProcess> vtable
+ * {&lbl_eu_806635D8, 0, &__dt__27TChildListHeader<8CProcess>Fv}) — the dtor
+ * reloc name cannot be written in C++ source (MWCC rejects '<' in extern "C"
+ * ids and &T::~T). MWCC emits the equivalent weak __vt__27TChildListHeader
+ * <8CProcess> (0xC, .data, dtor reloc correct) in this TU; coordinator must
+ * rename that to lbl_eu_8056BB84 and its RTTI to lbl_eu_806635D8, or retarget
+ * the vtable's dtor slot. Not faked. */
 
 // Retail sbss flag lbl_eu_80665628 (8-byte object; byte 0 = sIsInitialized) - blob monolibdata1d dissolve
 u8 lbl_eu_80665628[8];
@@ -6,11 +25,14 @@ u8 lbl_eu_80665628[8];
 TChildListHeader<CProcess> CProcessMan::sFreeProcessList;
 TChildListHeader<CProcess> CProcessMan::sRootProcessList;
 
-CProcess::CProcess() :
-    mIsRegist(false),
-    mIsRemove(false),
-    mIsDisableMove(false),
-    mIsDisableDraw(false) {
+CProcess::CProcess() {
+    // novtable: write the retail vptr (0x8056BB60, +0x10) first so the stores
+    // land in retail order (vptr, then the member flags, then InsertEnd).
+    *(void**)((char*)this + 0x10) = (void*)&lbl_eu_8056BB60;
+    mIsRegist = false;
+    mIsRemove = false;
+    mIsDisableMove = false;
+    mIsDisableDraw = false;
 
     CProcessMan::GetFreeProcessList().InsertEnd(this);
 }

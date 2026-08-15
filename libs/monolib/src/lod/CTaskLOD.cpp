@@ -3,6 +3,8 @@
 
 #include <types.h>
 #include "monolib/work/CTTask.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
+#include "monolib/util/MemManager.hpp"
 
 class CTaskLOD;
 
@@ -14,6 +16,7 @@ class CTaskLOD;
 namespace LOD {
 class LODMemMan {
 public:
+    LODMemMan();
     void func_8046E6DC();
     void func_8046E594(int enable);
     void func_8046E5BC(CTaskLOD* source);
@@ -25,14 +28,10 @@ public:
     void func_8046EEE8(CTaskLOD* task);
     void* func_8046E8C8(CTaskLOD* task);
     float func_8046EC88(CTaskLOD* task);
-    void func_8046EAE8(CTaskLOD* task, void* a);
-    void func_8046ECD4(CTaskLOD* task, void* a);
-    void func_8046ED68(CTaskLOD* task, void* a);
-    void func_8046EDD0(CTaskLOD* task, void* a);
-    void func_8046E770(CTaskLOD* task, void* a, void* b);
     void* func_8046EE9C(CTaskLOD* task);
     float func_8046EF30(CTaskLOD* task);
     void* func_8046EF7C(CTaskLOD* task);
+    void func_8046DA64();
     void func_8046DBC8();
     float func_8046F01C();
     void func_8046F024(int a, int b);
@@ -45,6 +44,16 @@ public:
 };
 } // namespace LOD
 
+struct CScnEnvLgtCtrl;  // scene-light control ring (CScnEnvLgtCtrl.hpp)
+
+// Pointee of CTaskLOD::mParam1 (offset 0x54): an opaque manager object whose
+// +0x7C slot holds the scene-light control list head handed to func_804C2014
+// by the func_80462D04/D5C/DB4 wrappers.
+struct LODParam1Obj {
+    u8 _00[0x7C];
+    CScnEnvLgtCtrl* field_0x7C;  // +0x7C light-control list head
+};
+
 // CTaskLOD wraps a LODMemMan and manages its lifecycle.
 // Inherits from CTTask<CTaskLOD> (0x54: CDoubleListNode + vtable + CProcess +
 // Move/Draw member-pointer slots).
@@ -52,17 +61,25 @@ public:
 //   0x00-0x53 : CTTask<CTaskLOD> base
 //   0x54 ..    : unknown state fields (not used by the matched delegates)
 //   0x1D40    : mpActiveLOD (points to the LODMemMan to delegate to)
-class CTaskLOD : public CTTask<CTaskLOD> {
+//
+// novtable: retail emits NO implicit vptr stores in the dtor (and the ctor
+// chain is inlined into create with the vptr written by explicit stores), so
+// the compiler-generated vptr init must be suppressed.
+class __declspec(novtable) CTaskLOD : public CTTask<CTaskLOD> {
 public:
     virtual ~CTaskLOD();
     virtual void Init();
     virtual void Term();
     virtual void Move();
     virtual void Draw();
-    void create();
-    void func_80462A08();
     void func_80462AC0();
     void func_80462B30();
+    // Inlined into create(): nulls the CTTask<CTaskLOD> Move/Draw member
+    // pointers (emits the retail __ptmf_null loads at the call site).
+    void initMemberPointers() {
+        mMoveFunc = nullptr;
+        mDrawFunc = nullptr;
+    }
     void func_80462B4C();
     void func_80462B68();
     void func_80462BC8();
@@ -72,36 +89,72 @@ public:
     void func_80462C48();
     void func_80462C80();
     void func_80462CBC();
-    void func_80462CD8(void* a, void* b, void* c);
     void func_80462D04();
     void func_80462D5C();
-    void func_80462DB4();
     void* func_80462E1C();
     void func_80462E3C();
-    void func_80462E58();
-    void func_80462ED0(void* a, void* b);
     void func_80462EF4();
     void func_80462F10();
     float func_80462F2C();
-    void func_80462F4C(void* a, void* b);
-    void func_80462F70(void* a, void* b);
-    void func_80462F94(void* a, void* b);
     void* func_80462FB8();
     void func_80462FD8();
     float func_80462FF4();
     void* func_80463014();
 
-private:
-    u8 _54[0x1D40 - 0x54];       // 0x54 .. 0x1D40
-
-public:
-    LOD::LODMemMan* mpActiveLOD; // 0x1D40
+    LODParam1Obj* mParam1;              // 0x54
+    void* mParam2;                      // 0x58
+    LOD::LODMemMan mLODMemMan;          // 0x5C (local class size 0x70)
+    u8 _5C_pad[0x1C70];                 // 0xCC .. 0x1D3C
+    LOD::LODMemMan* mpSecondaryLOD;     // 0x1D3C
+    LOD::LODMemMan* mpActiveLOD;        // 0x1D40
 };
 
 // Global instance pointer referenced by the delegate wrappers.  Declared at
 // global scope (MWCC does not mangle global data names) - no `extern "C"`
 // needed.
 extern CTaskLOD* lbl_eu_80665730;
+
+// LODMemMan delegate entry points used by the wrappers below.  The retail
+// symbol map labels them `.Fv` (no-arg) even though the retail bodies take
+// real arguments (r4/r5/...).  A C++ declaration cannot express that shape
+// (any arg list mangles the name away from the retail symbol), so they are
+// declared with C linkage: MWCC emits the identifier verbatim, making both
+// the wrapper symbols and the tail-call relocs carry the exact retail names
+// (no reloc drift).  Same pattern as the accepted LODMemMan.cpp TU.
+extern "C" void func_8046EAE8__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, void* flag);
+extern "C" void func_8046ECD4__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, void* flag);
+extern "C" void func_8046ED68__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, void* flag);
+extern "C" void func_8046EDD0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, void* value);
+extern "C" void func_8046E770__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, void* a, void* b);
+extern "C" void func_8046E780__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
+extern "C" void func_8046E7D0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task);
+extern "C" void func_8046E820__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, int flag);
+extern "C" void func_8046E594__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param);
+extern "C" void func_804717FC__Q23LOD9LODMemManFv();
+extern "C" void __dt__8046D144(void* self, int flag);
+extern "C" void __ct__8CProcessFv(CProcess* self);
+extern "C" void func_804C2014(CScnEnvLgtCtrl* self, void* a, int b);
+extern "C" void func_8046DAC0__Q23LOD9LODMemManFv(LOD::LODMemMan* self, int param);
+extern "C" void func_8046E988__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, void* a);
+extern "C" void* func_8046D898__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CTaskLOD* task, LODParam1Obj* p1);
+extern "C" void func_80471794__Q23LOD9LODMemManFv(u32 handle, u32 size);
+extern "C" void func_8046CFD8__Q23LOD17UnkClass_8046A530Fv(LOD::LODMemMan* self, u32 a, u32 b);
+extern "C" void func_804C2094(CScnEnvLgtCtrl* self, float f, CTaskLOD* task, void* a);
+
+// Retail vtable data (the US symbol map strips the __vt__ names to address
+// labels): __vt__17CTTask<8CTaskLOD> at 0x8056D6C0, __vt__8CTaskLOD at
+// 0x8056D678.  Referenced by create() so the vptr stores carry the exact
+// retail reloc names.
+extern u32 lbl_eu_8056D6C0;
+extern u32 lbl_eu_8056D678;
+
+// Overlay for the compiler-placed vptr slot at +0x10 (the CDoubleListNode
+// base occupies 0x00-0x10).  create() installs the retail vtable pointers
+// through this typed view instead of raw pointer arithmetic.
+struct CTaskLODVptrSlot {
+    u8 _00[0x10];
+    void* vtable;  // +0x10
+};
 
 // --- FULL_MATCH functions ---
 
@@ -149,19 +202,133 @@ void CTaskLOD::func_80462BC8() {
 
 // --- Remaining harness stubs (empty bodies) ---
 
-CTaskLOD::~CTaskLOD() {}
+// Destroy the embedded LODMemMan member (retail calls its address-named dtor
+// __dt__8046D144 with the member-dtor flag -1); the base CProcess dtor call
+// (__dt__8CProcessFv) and the deleting-flag operator delete are emitted
+// automatically by MWCC.
+CTaskLOD::~CTaskLOD() {
+    __dt__8046D144(&mLODMemMan, -1);
+}
 
 void CTaskLOD::Init() {}
-void CTaskLOD::Term() {}
+
+// Teardown: release the secondary LOD instance (if any), then stop the active
+// LODMemMan and release the shared persistent LOD buffer.  The redundant
+// inner null-check reproduces retail's doubled beq (MWCC keeps the delete's
+// own guard when the guarded store follows); the dtor is called explicitly
+// because the retail reloc name (__dt__8046D144) cannot be produced by a C++
+// class dtor.
+void CTaskLOD::Term() {
+    if (mpSecondaryLOD) {
+        if (mpSecondaryLOD) {
+            __dt__8046D144(mpSecondaryLOD, 1);
+            mpSecondaryLOD = 0;
+        }
+    }
+    mpActiveLOD->func_8046DA64();
+    func_804717FC__Q23LOD9LODMemManFv();
+}
 
 void CTaskLOD::Move() { mpActiveLOD->func_8046DBC8(); }
 
 void CTaskLOD::Draw() {}
-void CTaskLOD::create() {}
 
-void CTaskLOD::func_80462A08() {}
-void CTaskLOD::func_80462AC0() {}
-void CTaskLOD::func_80462B68() {}
+// Factory: allocate a 0x1D44 CTaskLOD from work memory and fully initialise
+// it (the retail symbol is mislabeled `.Fv` but the body reads r4-r7).
+extern "C" CTaskLOD* create__8CTaskLODFv(CTaskLOD* parent, LODParam1Obj* p1,
+                                          void* p2, u32 handle, u32 size) {
+    CTaskLOD* t = (CTaskLOD*)mtl::MemManager::allocate(
+        0x1d44, CWorkThreadSystem::getWorkMem());
+    if (t) {
+        // CProcess base ctor (out-of-line, abstract class so it cannot be
+        // placement-newed) plus the inlined CTTask<CTaskLOD> / CTaskLOD vptr
+        // and Move/Draw member-pointer stores (the retail ctor-chain
+        // sequence).  The vtable labels are referenced directly so the vptr
+        // stores carry the retail reloc names.
+        __ct__8CProcessFv(t);
+        ((CTaskLODVptrSlot*)t)->vtable = (void*)&lbl_eu_8056D6C0;
+        t->initMemberPointers();
+        ((CTaskLODVptrSlot*)t)->vtable = (void*)&lbl_eu_8056D678;
+        t->mParam1 = p1;
+        t->mParam2 = p2;
+        new (&t->mLODMemMan) LOD::LODMemMan();
+        t->mpSecondaryLOD = 0;
+        t->mpActiveLOD = &t->mLODMemMan;
+        if (size) {
+            func_80471794__Q23LOD9LODMemManFv(handle, size);
+        }
+        func_8046CFD8__Q23LOD17UnkClass_8046A530Fv(t->mpActiveLOD, handle, size);
+    }
+    t->Regist(parent, false);
+    lbl_eu_80665730 = t;
+    return t;
+}
+
+// Allocate/replace the secondary LODMemMan when `enable` is set, then return
+// the active LODMemMan's func_8046D898 result (0 when there is no singleton).
+extern "C" void* func_80462A08__8CTaskLODFv(CTaskLOD* self, bool enable) {
+    if (lbl_eu_80665730) {
+        if (enable) {
+            CTaskLOD* t = lbl_eu_80665730;
+            if (t->mpSecondaryLOD) {
+                if (t->mpSecondaryLOD) {
+                    __dt__8046D144(t->mpSecondaryLOD, 1);
+                    t->mpSecondaryLOD = 0;
+                }
+            }
+            LOD::LODMemMan* lod = (LOD::LODMemMan*)mtl::MemManager::allocate(
+                0x1ce0, mtl::MemManager::getHandleMEM1());
+            if (lod) {
+                // Re-assign the placement-new result so MWCC tracks `lod` as
+                // re-derived from the ctor return (retail keeps it in r0
+                // across the call instead of a saved register).
+                lod = new (lod) LOD::LODMemMan();
+            }
+            t->mpSecondaryLOD = lod;
+            t->mpActiveLOD = lod;
+            func_8046E594__Q23LOD9LODMemManFv(&t->mLODMemMan, 0);
+        }
+        return func_8046D898__Q23LOD9LODMemManFv(
+            lbl_eu_80665730->mpActiveLOD, self, lbl_eu_80665730->mParam1);
+    }
+    return 0;
+}
+
+// Teardown + re-bind: release the active LODMemMan's g3d objects, destroy the
+// secondary LOD instance, then point mpActiveLOD back at the embedded
+// mLODMemMan and enable the LOD system.  The whole body works on the global
+// instance (retail never touches `this` except via the delegate call).
+void CTaskLOD::func_80462AC0() {
+    if (lbl_eu_80665730) {
+        func_8046DAC0__Q23LOD9LODMemManFv(lbl_eu_80665730->mpActiveLOD, (int)this);
+        CTaskLOD* t = lbl_eu_80665730;
+        if (t->mpSecondaryLOD) {
+            if (t->mpSecondaryLOD) {
+                __dt__8046D144(t->mpSecondaryLOD, 1);
+                t->mpSecondaryLOD = 0;
+            }
+        }
+        t->mpActiveLOD = &t->mLODMemMan;
+        func_8046E594__Q23LOD9LODMemManFv(&t->mLODMemMan, 1);
+    }
+}
+
+// (Re)bind the singleton's active LOD: destroy the secondary instance, point
+// mpActiveLOD at the embedded mLODMemMan, and enable the LOD system.  The
+// whole body works on the global instance (retail never touches `this`).
+void CTaskLOD::func_80462B68() {
+    if (lbl_eu_80665730) {
+        CTaskLOD* t = lbl_eu_80665730;
+        if (t->mpSecondaryLOD) {
+            if (t->mpSecondaryLOD) {
+                __dt__8046D144(t->mpSecondaryLOD, 1);
+                t->mpSecondaryLOD = 0;
+            }
+        }
+        t->mpActiveLOD = &t->mLODMemMan;
+        func_8046E594__Q23LOD9LODMemManFv(&t->mLODMemMan, 1);
+    }
+}
 
 // Calls the active LODMemMan's getter for its side-effect-free float access,
 // then unconditionally returns the constant 1.0f (retail loads the 1.0f pool
@@ -204,18 +371,43 @@ void CTaskLOD::func_80462CBC() {
     }
 }
 
-// Fetches the active LODMemMan and forwards task + first two args (a, b) to it
-// (retail `mr r6, r5` sets up b in r6 for the delegate).  c is unused (dropped).
-// The retail symbol map labels this `.Fv`, but the real retail body reads r4/r5/r6
-// (see shared header).
-void CTaskLOD::func_80462CD8(void* a, void* b, void* c) {
+// Fetches the active LODMemMan and forwards task + args (a, b) to it
+// (retail `mr r8,r3; mr r0,r4; mr r6,r5` sets up this/a/b for the delegate).
+// c is unused (dropped).  Defined as a global function carrying the retail
+// `.Fv` symbol name (see note above).
+void func_80462CD8__8CTaskLODFv(CTaskLOD* self, void* a, void* b, void* c) {
     if (lbl_eu_80665730) {
-        lbl_eu_80665730->mpActiveLOD->func_8046E770(this, a, b);
+        func_8046E770__Q23LOD9LODMemManFv(lbl_eu_80665730->mpActiveLOD, self, a, b);
     }
 }
-void CTaskLOD::func_80462D04() {}
-void CTaskLOD::func_80462D5C() {}
-void CTaskLOD::func_80462DB4() {}
+
+// LOD activation wrappers: enable/disable LOD for `this` task on the active
+// manager, then dispatch the same task + flag through the singleton's
+// scene-light control list (func_804C2014 ring walk).
+void CTaskLOD::func_80462D04() {
+    if (lbl_eu_80665730) {
+        func_8046E780__Q23LOD9LODMemManFv(lbl_eu_80665730->mpActiveLOD, this);
+        func_804C2014(lbl_eu_80665730->mParam1->field_0x7C, this, 1);
+    }
+}
+
+void CTaskLOD::func_80462D5C() {
+    if (lbl_eu_80665730) {
+        func_8046E7D0__Q23LOD9LODMemManFv(lbl_eu_80665730->mpActiveLOD, this);
+        func_804C2014(lbl_eu_80665730->mParam1->field_0x7C, this, 0);
+    }
+}
+
+// Setter-style wrapper: forwards the task + flag pair through the active
+// manager and the scene-light ring.  Defined as a global carrying the retail
+// `.Fv` symbol name because the body reads a real r4 argument (see the note
+// on the func_80462CD8 family above).
+extern "C" void func_80462DB4__8CTaskLODFv(CTaskLOD* self, int flag) {
+    if (lbl_eu_80665730) {
+        func_8046E820__Q23LOD9LODMemManFv(lbl_eu_80665730->mpActiveLOD, self, flag);
+        func_804C2014(lbl_eu_80665730->mParam1->field_0x7C, self, flag);
+    }
+}
 // Value-delegates.  Like the void wrappers above, each forwards to the
 // active LODMemMan when the singleton `lbl_eu_80665730` is set, passing
 // `this` as the trailing CTaskLOD* argument (retail `mr r4, r3`).  The
@@ -233,13 +425,21 @@ void CTaskLOD::func_80462E3C() {
     }
 }
 
-void CTaskLOD::func_80462E58() {}
-
-// Same delegate-shape as func_80462CD8: forwards `this` + first arg `a` to the
-// active LODMemMan (tail-call `b`).  `b` is unused in retail.
-void CTaskLOD::func_80462ED0(void* a, void* b) {
+// Forward the task + arg pair to the active LODMemMan (func_8046E988), then
+// walk the singleton's scene-light control ring (func_804C2094) with the same
+// task/arg and the float value.  `b` is unused in retail.
+extern "C" void func_80462E58__8CTaskLODFv(CTaskLOD* self, float val, void* a, void* b) {
     if (lbl_eu_80665730) {
-        lbl_eu_80665730->mpActiveLOD->func_8046EAE8(this, a);
+        func_8046E988__Q23LOD9LODMemManFv(lbl_eu_80665730->mpActiveLOD, self, a);
+        func_804C2094(lbl_eu_80665730->mParam1->field_0x7C, val, self, a);
+    }
+}
+
+// Same delegate-shape as func_80462CD8: forwards `self` + first arg `a` to the
+// active LODMemMan (tail-call `b`).  `b` is unused in retail.
+void func_80462ED0__8CTaskLODFv(CTaskLOD* self, void* a, void* b) {
+    if (lbl_eu_80665730) {
+        func_8046EAE8__Q23LOD9LODMemManFv(lbl_eu_80665730->mpActiveLOD, self, a);
     }
 }
 
@@ -261,21 +461,21 @@ float CTaskLOD::func_80462F2C() {
     }
     return 0.0f;
 }
-void CTaskLOD::func_80462F4C(void* a, void* b) {
+void func_80462F4C__8CTaskLODFv(CTaskLOD* self, void* a, void* b) {
     if (lbl_eu_80665730) {
-        lbl_eu_80665730->mpActiveLOD->func_8046ECD4(this, a);
+        func_8046ECD4__Q23LOD9LODMemManFv(lbl_eu_80665730->mpActiveLOD, self, a);
     }
 }
 
-void CTaskLOD::func_80462F70(void* a, void* b) {
+void func_80462F70__8CTaskLODFv(CTaskLOD* self, void* a, void* b) {
     if (lbl_eu_80665730) {
-        lbl_eu_80665730->mpActiveLOD->func_8046ED68(this, a);
+        func_8046ED68__Q23LOD9LODMemManFv(lbl_eu_80665730->mpActiveLOD, self, a);
     }
 }
 
-void CTaskLOD::func_80462F94(void* a, void* b) {
+void func_80462F94__8CTaskLODFv(CTaskLOD* self, void* a, void* b) {
     if (lbl_eu_80665730) {
-        lbl_eu_80665730->mpActiveLOD->func_8046EDD0(this, a);
+        func_8046EDD0__Q23LOD9LODMemManFv(lbl_eu_80665730->mpActiveLOD, self, a);
     }
 }
 void* CTaskLOD::func_80462FB8() {

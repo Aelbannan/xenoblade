@@ -7,6 +7,7 @@
 #include "kyoshin/CCur.hpp"
 
 // String table for cursor layout/anim resource names
+// (declared in include/lbls_kyoshin.hpp; keep local extern for MWCC relocs)
 extern char lbl_eu_80505DE8[];
 
 // Fake SI interface for the CBaseCur vtable slot +0x14 (vtable[5]): real
@@ -17,12 +18,6 @@ struct CBaseCurVt5 {
     virtual void m14();  // slot 5 => +0x14, no args (retail leaves r4 untouched)
 };
 
-// Shared helper: set pane visibility
-extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
-
-// func_801C4648: pane-visible check (defined in CTitleAHelp.cpp)
-extern bool func_801C4648(nw4r::lyt::Pane*);
-
 // ============================================================================
 // func_801D2150: Set pane translate from VEC3
 // ============================================================================
@@ -32,30 +27,28 @@ DECOMP_DONT_INLINE void func_801D2150(nw4r::lyt::Pane* pane, const nw4r::math::V
 
 // ============================================================================
 // func_801D21CC: Deactivation tail handler
-// Unbinds all anim transforms from the layout, re-binds animTrans0, resets
-// its frame, and re-animates.
+// Unbinds the active anim transform, re-binds animTrans0, enables and resets
+// its frame, then re-animates. Retail reloads mpLayout before every call.
 // ============================================================================
 extern "C" void func_801D21CC(CBaseCur* cur) {
-    nw4r::lyt::Layout* layout = cur->mpLayout;
-    layout->UnbindAnimation(cur->mpAnimTrans1);
-    layout->UnbindAnimation(cur->mpAnimTrans0);
-    layout->SetAnimationEnable(cur->mpAnimTrans0, true);
-    cur->mpAnimTrans0->SetFrame(0.0f);
-    layout->Animate(0);
+    cur->mpLayout->UnbindAnimation(cur->mpAnimTrans1);
+    cur->mpLayout->BindAnimation(cur->mpAnimTrans0);
+    cur->mpLayout->SetAnimationEnable(cur->mpAnimTrans0, true);
+    cur->mpAnimTrans0->SetFrame(lbl_eu_80667FA4);
+    cur->mpLayout->Animate(0);
 }
 
 // ============================================================================
 // func_801D2264: Activation tail handler
-// Unbinds all anim transforms, re-binds animTrans1, resets its frame,
-// and re-animates.
+// Unbinds the active anim transform, re-binds animTrans1, enables and resets
+// its frame, then re-animates. Retail reloads mpLayout before every call.
 // ============================================================================
 extern "C" void func_801D2264(CBaseCur* cur) {
-    nw4r::lyt::Layout* layout = cur->mpLayout;
-    layout->UnbindAnimation(cur->mpAnimTrans0);
-    layout->UnbindAnimation(cur->mpAnimTrans1);
-    layout->SetAnimationEnable(cur->mpAnimTrans1, true);
-    cur->mpAnimTrans1->SetFrame(0.0f);
-    layout->Animate(0);
+    cur->mpLayout->UnbindAnimation(cur->mpAnimTrans0);
+    cur->mpLayout->BindAnimation(cur->mpAnimTrans1);
+    cur->mpLayout->SetAnimationEnable(cur->mpAnimTrans1, true);
+    cur->mpAnimTrans1->SetFrame(lbl_eu_80667FA4);
+    cur->mpLayout->Animate(0);
 }
 
 // ============================================================================
@@ -490,14 +483,12 @@ extern "C" void func_801D2DC8__7CSubCurFv(CBaseCur* cur) {
 
 // ============================================================================
 // func_801D2E4C: Set visibility of two named panes (subcur variant)
+// Retail reloads mpLayout + root pane for the second lookup (no caching).
 // ============================================================================
 extern "C" void func_801D2E4C(CBaseCur* cur, u8 visible) {
     if (cur->mpLayout == NULL) return;
-    nw4r::lyt::Pane* rootPane = cur->mpLayout->GetRootPane();
-    nw4r::lyt::Pane* pane0 = rootPane->FindPaneByName(lbl_eu_80505DE8 + 0x3e9, true);
-    func_80124270(pane0, visible);
-    nw4r::lyt::Pane* pane1 = rootPane->FindPaneByName(lbl_eu_80505DE8 + 0x3f7, true);
-    func_80124270(pane1, visible);
+    func_80124270(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3e9, true), visible);
+    func_80124270(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3f7, true), visible);
 }
 
 // ============================================================================
@@ -506,10 +497,7 @@ extern "C" void func_801D2E4C(CBaseCur* cur, u8 visible) {
 // ============================================================================
 extern "C" u8 func_801D2ED8(CBaseCur* cur) {
     if (cur->mpLayout == NULL) return 0;
-    nw4r::lyt::Pane* rootPane = cur->mpLayout->GetRootPane();
-    nw4r::lyt::Pane* pane0 = rootPane->FindPaneByName(lbl_eu_80505DE8 + 0x3e9, true);
-    u32 result0 = func_801C4648(pane0);
-    nw4r::lyt::Pane* pane1 = rootPane->FindPaneByName(lbl_eu_80505DE8 + 0x3f7, true);
-    u32 result1 = func_801C4648(pane1);
+    u32 result0 = func_801C4648(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3e9, true));
+    u32 result1 = func_801C4648(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3f7, true));
     return (result0 != 0 && result1 != 0) ? 1 : 0;
 }

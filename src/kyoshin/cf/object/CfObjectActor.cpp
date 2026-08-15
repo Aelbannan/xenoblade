@@ -106,22 +106,29 @@ extern "C" int CfObjectActor_UnkVirtualFunc9__Q22cf13CfObjectActorFv(cf::CfObjec
 // to the CfObjectMove subobject, then re-dispatches this same virtual (slot
 // +0x5C4) on the actor behind the action-source handle when its +0x64 flags
 // select it.
+extern "C" void CfObject_UnkVirtualFunc14__Q22cf12CfObjectMoveFf(void* self, float value);
+
 extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, float value) {
     // Forward the move to the CfObjectMove subobject (+0x3E9C), then
     // re-dispatch this same virtual (slot +0x5C4) on the actor behind the
-    // action-source handle when its +0x64 flags select it.
+    // action-source handle when its +0x64 flags select it. The move forward is
+    // a DIRECT call to the CfObjectMove non-virtual (the retail bl; the
+    // member call would virtual-dispatch through the base's 0x88 slot).
     cf::CfObjectMove* move = (cf::CfObjectMove*)((u8*)self + 16028);  // +0x3E9C
-    move->CfObject_UnkVirtualFunc14(value);
+    CfObject_UnkVirtualFunc14__Q22cf12CfObjectMoveFf(move, value);
     u8* p = reinterpret_cast<cf::CfActorField45B8*>(self)->field_0x45B8;
     if (p != 0) {
         cf::CfObjectMove* src = static_cast<cf::CfObjectMove*>(func_800B708C(reinterpret_cast<int>(p)));
         if (src != 0) {
             u32 flags = reinterpret_cast<cf::CfMoveFlags64*>(src)->field_0x64;
-            cf::CfObjectActor* actor = ((flags & 2) != 0 || (flags & 4) != 0)
-                ? (src != 0 ? (cf::CfObjectActor*)((u8*)src - 16028) : 0)
-                : 0;
+            cf::CfObjectActor* actor;
+            if (((flags & 2) != 0 || (flags & 4) != 0) && src != 0) {
+                actor = (cf::CfObjectActor*)((u8*)src - 16028);
+            } else {
+                actor = 0;
+            }
             if (actor != 0) {
-                ((cf::CfActorVt5C4Table*)((cf::CfActorVtPtr*)(u8*)actor)->vt)->fn5C4((u8*)actor, value);
+                reinterpret_cast<cf::CfActorVt5C4If*>((u8*)actor)->fn5C4(value);
             }
         }
     }

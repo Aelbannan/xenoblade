@@ -527,14 +527,14 @@ void ScnObjGather::Sort(LessThanFunc pOpaFunc, LessThanFunc pXluFunc) {
 }
 
 void ScnObjGather::DrawOpa(ResMdlDrawMode* pForceMode) {
-    for (u32 i = 0; i < mNumScnObjOpa; i++) {
+    for (u32 i = 0; i != mNumScnObjOpa; i++) {
         mpArrayOpa[i]->G3dProc(nw4r::g3d::G3dObj::G3DPROC_DRAW_OPA, 0,
                                pForceMode);
     }
 }
 
 void ScnObjGather::DrawXlu(ResMdlDrawMode* pForceMode) {
-    for (u32 i = 0; i < mNumScnObjXlu; i++) {
+    for (u32 i = 0; i != mNumScnObjXlu; i++) {
         mpArrayXlu[i]->G3dProc(nw4r::g3d::G3dObj::G3DPROC_DRAW_XLU, 0,
                                pForceMode);
     }

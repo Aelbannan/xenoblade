@@ -15,6 +15,8 @@
  * subobjects (CTitleAHelp/CModelDispMakeCrystal/CMCCrystalBox/CLoad) and
  * clears the two state bytes.
  */
+#pragma push
+#pragma optimize_for_size on
 extern "C" CMakeCrystalWin* __ct__CMakeCrystalWin(CMakeCrystalWin* _this, u32 arg4, u32 arg5) {
     _this->field_08 = arg4;
     _this->field_0C = arg5;
@@ -30,6 +32,7 @@ extern "C" CMakeCrystalWin* __ct__CMakeCrystalWin(CMakeCrystalWin* _this, u32 ar
     _this->field_4361 = 0;
     return _this;
 }
+#pragma pop
 
 /*
  * Destructor. Written as a free function with an explicit flags parameter

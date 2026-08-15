@@ -11,20 +11,20 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 10078 |
+| extern "C" (total lines) | 10079 |
 | extern "C" declarations (non-lbl_*, imports) | 3733 |
-| extern "C" definitions (forced names) | 3682 |
+| extern "C" definitions (forced names) | 3683 |
 | `self`/register-style params | 11490 |
-| `void*` (params + locals) | 6900 |
-| raw pointer offset arithmetic | 6346 |
-| deref-through-cast arithmetic | 2446 |
+| `void*` (params + locals) | 6901 |
+| raw pointer offset arithmetic | 6350 |
+| deref-through-cast arithmetic | 2447 |
 | inline asm / `register` | 112 |
 | rN-named params | 479 |
 | goto | 2856 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 0 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
-| #pragma | 1716 |
+| #pragma | 1717 |
 
 ## Top offenders (by cleanable severity)
 
@@ -477,7 +477,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/code_800A3B24.cpp | 7 | 4 | 10 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/code_800A75FC.cpp | 0 | 2 | 2 | 13 | 9 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/code_800AA008.cpp | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
-| src/kyoshin/code_800B06A4.cpp | 47 | 46 | 105 | 147 | 105 | 36 | 0 | 0 | 6 | 0 | 0 | 0 |
+| src/kyoshin/code_800B06A4.cpp | 47 | 47 | 105 | 148 | 109 | 37 | 0 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/code_80135FDC.cpp | 22 | 72 | 13 | 154 | 72 | 9 | 0 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/code_801862C0.cpp | 2 | 3 | 8 | 13 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/code_801A929C.cpp | 1 | 5 | 3 | 6 | 4 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
@@ -5076,15 +5076,15 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/code_800B06A4.cpp": {
   "asm_insn_shim": 0,
-  "deref_arith": 36,
+  "deref_arith": 37,
   "extern_c_nonlbl_decl": 47,
-  "extern_c_nonlbl_def": 46,
+  "extern_c_nonlbl_def": 47,
   "goto_count": 6,
   "init_side_effect": 0,
-  "ptr_arith": 105,
+  "ptr_arith": 109,
   "schedule_pragma": 0,
   "self_params": 105,
-  "void_ptr": 147
+  "void_ptr": 148
  },
  "src/kyoshin/code_80135FDC.cpp": {
   "asm_insn_shim": 0,

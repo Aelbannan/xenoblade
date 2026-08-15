@@ -3183,11 +3183,13 @@ extern "C" __declspec(noinline) void func_80264060(UI::CPassiveSkillCur* self) {
 // emits under optimize_for_size.
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_802640B8(UI::UI_PassiveSkillRegion3C* self, u8 arg) {
-    const char* names[2] = { lbl_eu_80668908, lbl_eu_8066890C };
+    const char* names[2];
+    names[0] = lbl_eu_80668908;
+    names[1] = lbl_eu_8066890C;
     for (u8 i = 0; i < 2; i++) {
         nw4r::lyt::Pane* pane =
             self->field_8->GetRootPane()->FindPaneByName(names[i], true);
-        func_80124270(pane, arg == i);
+        func_80124270(pane, i == arg);
     }
 }
 #pragma optimize_for_size off

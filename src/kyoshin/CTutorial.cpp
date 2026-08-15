@@ -40,7 +40,7 @@ u8 CTutorial::func_8029AE5C() {
     return cur != 0;
 }
 
-void func_8029AE9C(){}
+__declspec(noinline) void func_8029AE9C() {}
 
 /* Advance-animation (0x40) reached the end frame: state 3, visible. */
 __declspec(noinline) void CTutorial::func_8029AF30() {
@@ -50,7 +50,7 @@ __declspec(noinline) void CTutorial::func_8029AF30() {
     }
 }
 
-void func_8029AF7C(){}
+__declspec(noinline) void func_8029AF7C() {}
 
 /* Rewind-animation (0x3C) reached the start frame: state 0, visible. */
 __declspec(noinline) void CTutorial::func_8029B010() {
@@ -85,14 +85,21 @@ extern "C" void func_8029AB28(CTutorial* self) {
     if (self->field_44 == 0) {
         return;
     }
-    if (self->field_45 == 1) {
+    switch (self->field_45) {
+    case 1:
         func_8029AE9C();
-    } else if (self->field_45 == 2) {
+        break;
+    case 2:
         self->func_8029AF30();
-    } else if (self->field_45 == 4) {
+        break;
+    case 4:
         func_8029AF7C();
-    } else if (self->field_45 == 5) {
+        break;
+    case 5:
         self->func_8029B010();
+        break;
+    default:
+        break;
     }
     self->mpLayout->Animate(0);
 }
@@ -107,9 +114,6 @@ extern "C" void func_8029ACEC() {}
 // casts reuse those registers; MWCC DCEs them from high-level C, leaving the
 // function 2 instructions short (0x68 vs 0x70) — open item.
 extern "C" void func_8029AD88(CTutorial* self) {
-    // Page-navigation on the CURRENT field bytes: field_51's s8 view is the
-    // "last page", field_50 the cursor. When the cursor reaches last-1 the
-    // page is marked complete; otherwise advance and clamp.
     u8 raw50 = self->field_50;
     u8 raw51 = self->field_51;
     if ((s8)raw50 == (s8)raw51 - 1) {

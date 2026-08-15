@@ -5,7 +5,11 @@
 
 #include "kyoshin/CTaskGamePic.hpp"
 
+#include "monolib/core/CDrawGX.hpp"
+#include "monolib/core/CView.hpp"
+#include "monolib/core/CViewRoot.hpp"
 #include "monolib/device/CDeviceFile.hpp"
+#include "monolib/device/CDeviceGX.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -49,7 +53,10 @@ void CTTask<CTaskGamePic>::Draw() {
 // 0x90/0xA0/0xB0 to the shared sdata2 LOD-bias float.
 // ---------------------------------------------------------------------------
 #pragma optimize_for_size on
-CTaskGamePic* __ct__CTaskGamePic(CTaskGamePic* pThis, int arg) {
+// C-linkage so the emitted symbol is exactly the retail `__ct__CTaskGamePic`
+// (stripped symbol; a C++ declaration would mangle to __ct__CTaskGamePicFi),
+// and so create()'s call reloc references the retail name (cf. CTaskGameEvt).
+extern "C" __declspec(noinline) CTaskGamePic* __ct__CTaskGamePic(CTaskGamePic* pThis, int arg) {
     __ct__8CProcessFv(pThis);
 
     char* vtbl = lbl_eu_80538AD8;      // final CTaskGamePic vtable region
@@ -108,38 +115,54 @@ CTaskGamePic* __ct__CTaskGamePic(CTaskGamePic* pThis, int arg) {
 // countdown (index<<8), param_C4 the fixed total. Each call steps 0x100 and
 // lerps current by t = param_C0/param_C4; when the countdown ends the target
 // colour is snapped in and the counter cleared.
+//
+// Retail computes the ratio in 8.8 fixed point: each counter is split into a
+// rounded high byte (srawi+addze) and the residual low byte, converted to f32
+// through MWCC's 2^52 magic-double slot trick (lfd/fsubs against the shared
+// lbl_eu_80668BC0), then combined as hi + lo*0.00390625 before the division.
 // ---------------------------------------------------------------------------
 void CTaskGamePic::Move() {
+    // Two conversion slots: high word 0x43300000 stored once each, low word
+    // rewritten per value (retail stores both high words before the branch).
+    union { f64 d; u32 w[2]; } uHi, uLo;
+    uLo.w[0] = 0x43300000;
+    uHi.w[0] = 0x43300000;
     s32 c0 = (s32)param_C0;
     if (c0 == 0) return;
-    c0 -= 0x100;
-    param_C0 = (u32)c0;
-    if (c0 > 0) {
-        f32* cur = reinterpret_cast<f32*>(&param_90);
-        const f32* from = reinterpret_cast<const f32*>(&param_A0);
-        const f32* to = reinterpret_cast<const f32*>(&param_B0);
-        s32 c4 = (s32)param_C4;
-        // Rational blend: decompose each counter into its 8-bit high byte and low
-        // byte so MSL emits the srawi+addze / slwi+subf split and routes both
-        // through the s32->f32 conversion, folding the low-byte *1/256 scale into
-        // a single fmadds via the pooled 0.00390625 constant.
-        s32 hi6 = c0 >> 8;
-        s32 lo6 = c0 - (hi6 << 8);
-        s32 hi7 = c4 >> 8;
-        s32 lo7 = c4 - (hi7 << 8);
-        f32 t = ((f32)hi6 + (f32)lo6 * 0.00390625f) /
-                ((f32)hi7 + (f32)lo7 * 0.00390625f);
-        f32 inv = 1.0f - t;
-        cur[0] = from[0] * t + to[0] * inv;
-        cur[1] = from[1] * t + to[1] * inv;
-        cur[2] = from[2] * t + to[2] * inv;
-        cur[3] = from[3] * t + to[3] * inv;
-    } else {
+    s32 c1 = c0 - 0x100;
+    param_C0 = (u32)c1;
+    if (c1 <= 0) {
+        // Countdown finished: snap the target colour in and clear the counter.
         param_90 = param_B0;
         param_94 = param_B4;
         param_98 = param_B8;
         param_9C = param_BC;
         param_C0 = 0;
+    } else {
+        s32 hi6 = c1 / 256;
+        s32 lo6 = c1 - (hi6 << 8);
+        s32 c4 = (s32)param_C4;
+        s32 hi7 = c4 / 256;
+        s32 lo7 = c4 - (hi7 << 8);
+        f32* cur = reinterpret_cast<f32*>(&param_90);
+        const f32* from = reinterpret_cast<const f32*>(&param_A0);
+        const f32* to = reinterpret_cast<const f32*>(&param_B0);
+        uHi.w[1] = (u32)hi6 ^ 0x80000000;
+        uLo.w[1] = (u32)lo6 ^ 0x80000000;
+        f32 f6h = (f32)(uHi.d - lbl_eu_80668BC0);
+        f32 f6l = (f32)(uLo.d - lbl_eu_80668BC0);
+        uHi.w[1] = (u32)hi7 ^ 0x80000000;
+        uLo.w[1] = (u32)lo7 ^ 0x80000000;
+        f32 f7h = (f32)(uHi.d - lbl_eu_80668BC0);
+        f32 f7l = (f32)(uLo.d - lbl_eu_80668BC0);
+        f32 num = f6l * lbl_eu_80668BB4 + f6h;
+        f32 den = f7l * lbl_eu_80668BB4 + f7h;
+        f32 t = num / den;
+        f32 inv = lbl_eu_80668BB8 - t;
+        cur[0] = from[0] * t + to[0] * inv;
+        cur[1] = from[1] * t + to[1] * inv;
+        cur[2] = from[2] * t + to[2] * inv;
+        cur[3] = from[3] * t + to[3] * inv;
     }
 }
 
@@ -163,37 +186,31 @@ CTaskGamePic::~CTaskGamePic() {}
 // overwrites the "current" block at 0x90.
 // ---------------------------------------------------------------------------
 extern "C" void func_80294E58(CTaskGamePic* self, u32 index, const u32* src) {
-    u32 a = self->param_90;
-    u32 b = self->param_94;
-    u32 c = self->param_98;
-    u32 d = self->param_9C;
-    u32 e = src[0];
-    u32 f = src[1];
-    u32 g = src[2];
-    u32 h = src[3];
     u32 sh = index << 8;
-    self->param_A0 = a;
-    self->param_A4 = b;
-    self->param_A8 = c;
-    self->param_AC = d;
-    self->param_B0 = e;
-    self->param_B4 = f;
-    self->param_B8 = g;
-    self->param_BC = h;
+    self->param_A0 = self->param_90;
+    self->param_A4 = self->param_94;
+    self->param_A8 = self->param_98;
+    self->param_AC = self->param_9C;
+    self->param_B0 = src[0];
+    self->param_B4 = src[1];
+    self->param_B8 = src[2];
+    self->param_BC = src[3];
     self->param_C0 = sh;
     self->param_C4 = sh;
     if (index == 0) {
-        self->param_90 = e;
-        self->param_94 = f;
-        self->param_98 = g;
-        self->param_9C = h;
+        self->param_90 = src[0];
+        self->param_94 = src[1];
+        self->param_98 = src[2];
+        self->param_9C = src[3];
     }
 }
 
 // ---------------------------------------------------------------------------
 // Target: func_80294EC0 - kicks off an async file load for the scene's
 // resource, using the embedded file-event object at +0x54 as the callback.
+// Retail saves r29-r31 with stmw/lmw (size-opt frame shape).
 // ---------------------------------------------------------------------------
+#pragma optimize_for_size on
 extern "C" void func_80294EC0(CTaskGamePic* self, const char* path) {
     IWorkEvent* ev = reinterpret_cast<IWorkEvent*>(self); // null-this -> null
     if (self) ev = reinterpret_cast<IWorkEvent*>(&self->field_54);
@@ -202,6 +219,7 @@ extern "C" void func_80294EC0(CTaskGamePic* self, const char* path) {
     self->mFileHandle = fh;
     CDeviceFile::func_8044F154(fh, 0);
 }
+#pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
 // Target: Term - unregisters the render callback, cancels the async load,
@@ -227,7 +245,9 @@ void CTaskGamePic::Term() {
 // Binds the palette, builds a GX texture object from it, then clears the load.
 // ---------------------------------------------------------------------------
 extern "C" bool func_8029539C(CTaskGamePic* self, CEventFile* pEvent) {
-    if (self->mFileHandle == pEvent->mFileHandle) {
+    // Retail loads pEvent->mFileHandle first and compares it against
+    // self->mFileHandle (cmplw r0, r5), so the event side is the left operand.
+    if (pEvent->mFileHandle == self->mFileHandle) {
         if (pEvent->unk0 == 1) {
             u8* data = static_cast<u8*>(self->mFileHandle->getData());
             self->field_64 = data;
@@ -261,8 +281,10 @@ extern "C" s16 func_80295388(u8* self) {
 
 // ---------------------------------------------------------------------------
 // Target: create - factory. Retail symbol keeps the C-linkage Fv name although
-// the source takes a parent and a scene arg (cf. CTaskGameCf).
+// the source takes a parent and a scene arg (cf. CTaskGameCf). Size-opt frame:
+// stmw r29/lmw r29, ctor NOT inlined (noinline on __ct__CTaskGamePic).
 // ---------------------------------------------------------------------------
+#pragma optimize_for_size on
 extern "C" CTaskGamePic* create__12CTaskGamePicFv(CProcess* pParent, int arg) {
     u32 handle = CWorkThreadSystem::getWorkMem();
     CTaskGamePic* self = (CTaskGamePic*)mtl::MemManager::allocate(0xc8, handle);
@@ -271,6 +293,89 @@ extern "C" CTaskGamePic* create__12CTaskGamePicFv(CProcess* pParent, int arg) {
     }
     self->Regist(pParent, false);
     return self;
+}
+#pragma optimize_for_size off
+
+// ---------------------------------------------------------------------------
+// Target: cbRenderBefore - pre-render hook: draws the loaded picture texture
+// (mTexObj) as a 4-vertex quad centered on the current view, then a full-
+// screen colour wash from the current 0x90 RGBA block. Both passes go through
+// stack CDrawGX helpers; the whole thing is gated on the 0x8C ready flag and
+// the palette data pointer.
+//
+// Retail prologue is the size-opt _savegpr_28 form (addi r11 + bl _savegpr),
+// so the function sits under the same optimize_for_size wrap as the ctor/
+// create (r28-r31 live across the many CDrawGX calls).
+// ---------------------------------------------------------------------------
+#pragma optimize_for_size on
+void CTaskGamePic::cbRenderBefore() {
+    if (field_8C == 0) return;
+    CView* view = CView::getCurrentView();
+    if (field_68 == 0) return;
+    CDeviceGX::getCacheInstance()->func_8044BE38();
+    const CTaskGamePicTexData* tex =
+        static_cast<const CTaskGamePicTexData*>(field_68);
+
+    // View-sized rect: narrow it to 3/4 width (centred) on 16:9.
+    ml::CRect rectA;
+    func_8043EA88__5CViewFRQ22ml5CRectP5CView(rectA, view);
+    if (CDeviceVI::isWideAspectRatio()) {
+        rectA.mPos.x = (s16)((rectA.mSize.x - (s32)tex->mWidth * 75 / 100 + 1) >> 1);
+        rectA.mSize.x = (s16)((s32)tex->mWidth * 75 / 100);
+    } else {
+        s16 h = (s16)CDeviceVI::getEfbHeight();
+        s16 w = (s16)CDeviceVI::getFbWidth();
+        rectA.mSize.x = w;
+        rectA.mPos.x = 0;
+        rectA.mPos.y = 0;
+        rectA.mSize.y = h;
+    }
+
+    // Texture quad: white, texture-cache flag cleared, view-rect based.
+    CDrawGX dgx0;
+    dgx0.func_80456570(0);
+    dgx0.func_8045657C(0);
+    ml::CCol3 col;
+    col.r = lbl_eu_80668BB8;
+    col.g = lbl_eu_80668BB8;
+    col.b = lbl_eu_80668BB8;
+    dgx0.setCol(col);
+    reinterpret_cast<CDrawGXFlagWord*>(&dgx0)->mFlags &= ~0x08000000u;
+    ml::CRect16 rectB;
+    func_8043EA88__5CViewFRQ22ml5CRectP5CView(*(ml::CRect*)&rectB, view);
+    dgx0.renderRect(rectB);
+    dgx0.setTex(&mTexObj, tex->mWidth, tex->mHeight);
+    dgx0.begin(6, 4);
+    dgx0.add(rectA.mPos.x, rectA.mPos.y, 0, 0);
+    dgx0.add((s16)(rectA.mPos.x + rectA.mSize.x), rectA.mPos.y,
+             tex->mWidth, 0);
+    dgx0.add(rectA.mPos.x,
+             func_80295388(reinterpret_cast<u8*>(&rectA)), 0, tex->mHeight);
+    dgx0.add((s16)(rectA.mPos.x + rectA.mSize.x),
+             func_80295388(reinterpret_cast<u8*>(&rectA)),
+             tex->mWidth, tex->mHeight);
+    dgx0.end();
+    dgx0.~CDrawGX();
+
+    // Full-screen colour wash from the animated 0x90 RGBA block.
+    CDeviceGX::getCacheInstance()->func_8044BE38();
+    CDrawGX dgx1;
+    dgx1.func_80456570(0);
+    dgx1.func_8045657C(0);
+    dgx1.setCol(*(ml::CCol4*)&param_90);
+    dgx1.begin(9, 1);
+    ml::CRect16 rectC;
+    s16 h = (s16)CDeviceVI::getEfbHeight();
+    s16 w = (s16)CDeviceVI::getFbWidth();
+    rectC.mSize.x = w;
+    rectC.mPos.x = 0;
+    rectC.mPos.y = 0;
+    rectC.mSize.y = h;
+    dgx1.add(rectC);
+    dgx1.end();
+    dgx1.~CDrawGX();
+    CDeviceGX::getCacheInstance()->func_8044BE38();
+    CViewRoot::func_80442DA8();
 }
 
 // Preserve empty Draw member (retail 4-byte body).

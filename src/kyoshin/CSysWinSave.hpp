@@ -184,6 +184,15 @@ struct CCur18Data {
     u8    f_17;    // 0x17
 };
 
+// Byte-range shim over the CProcess vtable slot (+0x10) so __ct__802944D8 can
+// write it without pointer arithmetic (same shape as CCol6Invite's ctor shim).
+// The rest of the 0x00-0x78 region is written through the named CSysWinSave
+// members (ptmf0/ptmf1/field_*).
+struct CSysWinSaveVtShim {
+    u8 _00[0x10];
+    void* vtable;  // 0x10 - CProcess vtable, overwritten twice by the ctor
+};
+
 // C-ABI function imports / definitions: these retail symbols are unmangled so
 // they must be declared `extern "C"` to stop MWCC suffixing the reloc name.
 // (func_80137250 is the exception: retail emits the mangled nw4r form, so it
@@ -194,6 +203,8 @@ void func_8022B7F4(void* syswin);
 void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
 void func_801D20B0(void* cursor, nw4r::lyt::DrawInfo* drawInfo);
 int func_8013BE50();
+void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
+void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
 void __ct__8CProcessFv(CProcess* self);
 void __ct__CSysWin(void* syswin, int arg);

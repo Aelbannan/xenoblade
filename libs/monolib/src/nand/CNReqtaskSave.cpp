@@ -332,6 +332,8 @@ void __ct__CNRequest(){}
 // (done == 1) is stored through `out`, the task is finalized via vtable slot
 // 3, the task slot is cleared and 1 is returned; while the task is still
 // running, 0 is returned and `out` is untouched.
+#pragma push
+#pragma optimize_for_size on
 int func_804DAAF8(CNRequest* self, u8* out) {
     int ret = self->field_0x0->taskSlot2(self->field_0x4);
     if (ret != 0) {
@@ -342,6 +344,7 @@ int func_804DAAF8(CNRequest* self, u8* out) {
     }
     return 0;
 }
+#pragma pop
 
 // us-804dee6c: func_804DABF8
 // CNRequest helper: initialises the CNReqtaskLoad sub-task block at +0x04

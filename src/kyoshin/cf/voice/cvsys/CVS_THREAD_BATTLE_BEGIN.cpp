@@ -31,17 +31,14 @@ CVS_THREAD_BATTLE_BEGIN* __ct__802AFA80(CVoiceHandle* handle, CVoiceHandle* A) {
 
     // Phase count from the size delta between the handle and the data source.
     // Retail re-computes both sizes for the second comparison (no caching).
+    // MWCC evaluates comparison operands right-to-left, so the handle's call
+    // is written as the right operand to land its +/-6 boundary between the
+    // two virtual calls.
     s16 count;
-    int s1 = ((int (*)(CVoiceHandle*))h->vtable[0x108 / 4])(h);
-    if (((int (*)(CVoiceHandle*))A->vtable[0x108 / 4])(A) > s1 - 6) {
-        int s1b = ((int (*)(CVoiceHandle*))h->vtable[0x108 / 4])(h);
-        if (((int (*)(CVoiceHandle*))A->vtable[0x108 / 4])(A) > s1b + 6) {
-            count = 2;
-        } else {
-            count = 1;
-        }
-    } else {
+    if (((CVoiceHandleSizeView*)A)->getSize() <= ((CVoiceHandleSizeView*)h)->getSize() - 6) {
         count = 0;
+    } else {
+        count = (s16)(2 - (((CVoiceHandleSizeView*)A)->getSize() < ((CVoiceHandleSizeView*)h)->getSize() + 6));
     }
 
     // Allocate the (discarded) handle buffer and the object itself.
@@ -67,10 +64,12 @@ CVS_THREAD_BATTLE_BEGIN* __ct__802AFA80(CVoiceHandle* handle, CVoiceHandle* A) {
         throw;
     }
 
-    // Final base-state triple.
+    // Final base-state triple (retail loads b,a then stores a,b, then c).
     const u32* fin = lbl_eu_8053AC88;
-    obj->unk0 = (u32*)fin[0];
-    obj->unk4 = fin[1];
+    u32 b = fin[1];
+    u32 a = fin[0];
+    obj->unk0 = (u32*)a;
+    obj->unk4 = b;
     obj->unk8 = fin[2];
     return obj;
 }
@@ -113,10 +112,9 @@ void func_802B00EC(CVS_THREAD_BATTLE_BEGIN* self) {
 
     if (self->field_0x3a == 0) {
         // forward direction: bump the counter, wrap to 0 at the limit
-        int cnt = self->field_0x38;
-        int newv = self->field_0x36 + 1;
-        self->field_0x36 = (s16)newv;
-        if (cnt <= (s16)newv) self->field_0x36 = 0;
+        int nv = self->field_0x36 + 1;
+        self->field_0x36 = (s16)nv;
+        if (self->field_0x38 <= (s16)nv) self->field_0x36 = 0;
     } else {
         // reverse direction: decrement, wrap to limit-1 on underflow
         s16 newv = (s16)(self->field_0x36 - 1);
@@ -135,15 +133,21 @@ void func_802B01B0(CVS_THREAD_BATTLE_BEGIN* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
     CVoiceHandle* handle;
     CCharVoice* vp;
-    for (int i = 0; i < self->field_0x38; i++) {
-        handle = self->field_0x28[i];
+    // Word-walk over the object so the slot loads fold the 0x28 field offset
+    // (retail walks with base = self, load offset 0x28, step 4).
+    u32* w = (u32*)self;
+    int i = 0;
+    while (i < self->field_0x38) {
+        handle = *(CVoiceHandle**)(w + 0xA);
         vp = (CCharVoice*)handle;
         if (handle != NULL) {
             vp = &handle->voice;
         }
         if (vp == voicePtr) {
-            self->field_0x28[i] = NULL;
+            *(CVoiceHandle**)(w + 0xA) = NULL;
         }
+        w++;
+        i++;
     }
     handle = self->field_0x24;
     vp = (CCharVoice*)handle;

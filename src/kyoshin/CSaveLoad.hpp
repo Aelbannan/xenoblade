@@ -234,7 +234,7 @@ extern "C" void func_80084F50__Q22cf13CfGameManagerFv();
 extern "C" void func_801F34F4(void*);
 extern "C" void func_801F3670(void*, void*);
 extern "C" void func_801F36BC(void*, int, int);
-extern "C" void func_801F3850(void*, u32);
+extern "C" void func_801F3850(void*, u16);
 extern "C" u32 func_8009CF8C(u32);
 extern "C" void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
 extern "C" int CSysWin_getUnk34(void*);

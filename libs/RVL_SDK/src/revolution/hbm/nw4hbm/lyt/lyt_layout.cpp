@@ -35,10 +35,11 @@ MEMAllocator* Layout::mspAllocator = NULL;
  ******************************************************************************/
 
 Layout::Layout()
-    : mpRootPane(NULL),
-      mpGroupContainer(NULL),
+    : mAnimTransList(),
+      mOriginType(ORIGINTYPE_TOPLEFT),
       mLayoutSize(0.0f, 0.0f),
-      mOriginType(ORIGINTYPE_TOPLEFT) {}
+      mpGroupContainer(NULL),
+      mpRootPane(NULL) {}
 
 Layout::~Layout() {
     if (mpGroupContainer != NULL) {

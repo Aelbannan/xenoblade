@@ -15,28 +15,30 @@
 
 // RTTI/typeinfo objects and name strings referenced by the vtables. These are
 // the retail .sdata/.rodata objects (owned by the same TUs; their split ranges
-// move over with the coordinator's monolibdata1.s dissolve).
-extern "C" void* lbl_eu_80663570;   // RTTI CTTask<CRootProc>
-extern "C" void* lbl_eu_80663578;   // RTTI CView
-extern "C" void* lbl_eu_80663580;   // RTTI CMsgParam<10>
-extern "C" void* lbl_eu_80663588;   // RTTI reslist<IWorkEvent*>
-extern "C" void* lbl_eu_80663590;   // RTTI _reslist_base<IWorkEvent*>
-extern "C" void* lbl_eu_80663598;   // RTTI CFontLayer
-extern "C" void* lbl_eu_806635A0;   // RTTI CViewFrame
-extern "C" void* lbl_eu_806635A8;   // RTTI CViewRoot
-extern "C" void* lbl_eu_806635B0;   // RTTI CWorkControl
-extern "C" void* lbl_eu_806635B8;   // RTTI CWorkFlowSetup
-extern "C" void* lbl_eu_806635C0;   // RTTI CWorkRootThread
-extern "C" void* lbl_eu_806635C8;   // RTTI CWorkSystem
-extern "C" void* lbl_eu_806635D0;   // RTTI CWorkSystemMem
-extern "C" void* lbl_eu_806635D8;   // RTTI TChildListHeader<CProcess>
-extern "C" void* lbl_eu_806635E0;   // RTTI TChildListHeader<CChildListNode>
-extern "C" void* lbl_eu_806635E8;   // RTTI CDeviceRemotePad
-extern "C" void* lbl_eu_806635F0;   // RTTI CDeviceBase
-extern "C" void* lbl_eu_806635F8;   // RTTI CDeviceSC
-extern "C" void* lbl_eu_80661948;   // RTTI CProcess
-extern "C" void* lbl_eu_80661950;   // RTTI CChildListNode
-extern "C" void* lbl_eu_80661958;   // RTTI CDoubleListNode
+// move over with the coordinator's monolibdata1.s dissolve). Each typeinfo is
+// an 8-byte { class-name, cast-table } pair; declared as arrays so the owning
+// TUs can define them (`u32 x[2] = {...}`) without a scalar/array conflict.
+extern "C" u32 lbl_eu_80663570[2];   // RTTI CTTask<CRootProc>
+extern "C" u32 lbl_eu_80663578[2];   // RTTI CView
+extern "C" u32 lbl_eu_80663580[2];   // RTTI CMsgParam<10>
+extern "C" u32 lbl_eu_80663588[2];   // RTTI reslist<IWorkEvent*>
+extern "C" u32 lbl_eu_80663590[2];   // RTTI _reslist_base<IWorkEvent*>
+extern "C" u32 lbl_eu_80663598[2];   // RTTI CFontLayer
+extern "C" u32 lbl_eu_806635A0[2];   // RTTI CViewFrame
+extern "C" u32 lbl_eu_806635A8[2];   // RTTI CViewRoot
+extern "C" u32 lbl_eu_806635B0[2];   // RTTI CWorkControl
+extern "C" u32 lbl_eu_806635B8[2];   // RTTI CWorkFlowSetup
+extern "C" u32 lbl_eu_806635C0[2];   // RTTI CWorkRootThread
+extern "C" u32 lbl_eu_806635C8[2];   // RTTI CWorkSystem
+extern "C" u32 lbl_eu_806635D0[2];   // RTTI CWorkSystemMem
+extern "C" u32 lbl_eu_806635D8[2];   // RTTI TChildListHeader<CProcess>
+extern "C" u32 lbl_eu_806635E0[2];   // RTTI TChildListHeader<CChildListNode>
+extern "C" u32 lbl_eu_806635E8[2];   // RTTI CDeviceRemotePad
+extern "C" u32 lbl_eu_806635F0[2];   // RTTI CDeviceBase
+extern "C" u32 lbl_eu_806635F8[2];   // RTTI CDeviceSC
+extern "C" u32 lbl_eu_80661948[2];   // RTTI CProcess
+extern "C" u32 lbl_eu_80661950[2];   // RTTI CChildListNode
+extern "C" u32 lbl_eu_80661958[2];   // RTTI CDoubleListNode
 extern "C" void* __RTTI__10IWorkEvent;
 extern "C" void* __RTTI__11CWorkThread;
 
@@ -76,6 +78,8 @@ extern "C" void WorkEvent31__10IWorkEventFv();
 extern "C" void wkUpdate__11CWorkThreadFv();
 extern "C" void wkRender__11CWorkThreadFv();
 extern "C" void wkRenderAfter__11CWorkThreadFv();
+extern "C" void wkStandbyLogin__11CWorkThreadFv();
+extern "C" void wkStandbyLogout__11CWorkThreadFv();
 extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
 
 // CWorkThread-slot overrides referenced by the per-class vtables.
@@ -92,6 +96,7 @@ extern "C" void __dt__12CWorkControlFv();
 extern "C" void wkStandbyLogin__14CWorkFlowSetupFv();
 extern "C" void wkStandbyLogout__14CWorkFlowSetupFv();
 extern "C" void __dt__14CWorkFlowSetupFv();
+extern "C" void wkUpdate__11CWorkSystemFv();
 extern "C" void wkStandbyLogin__11CWorkSystemFv();
 extern "C" void wkStandbyLogout__11CWorkSystemFv();
 extern "C" void __dt__11CWorkSystemFv();
@@ -108,7 +113,9 @@ extern "C" void __dt__9CDeviceSCFv();
 extern "C" void wkStandbyLogin__11CDeviceBaseFv();
 extern "C" void wkStandbyLogout__11CDeviceBaseFv();
 extern "C" void __dt__11CDeviceBaseFv();
-extern "C" void __dt__11CWorkThreadFv();
+// (void*, int) matches the canonical declaration in lib/CLibVM.hpp; the
+// 0-arg form conflicts under C linkage when a TU includes both headers.
+extern "C" void __dt__11CWorkThreadFv(void*, int);
 
 // CProcess-family vtables.
 extern "C" void __dt__8CProcessFv();

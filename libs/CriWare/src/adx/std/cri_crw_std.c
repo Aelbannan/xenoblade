@@ -41,59 +41,54 @@ int CRICRW_Vsprintf(char* s, void* ignored, const char* fmt, va_list ap) {
     return vsprintf(s, fmt, ap);
 }
 
-static s16 clamp_s16(s32 val) {
+/* Clamp a 32-bit value to the signed-16-bit range (returns s32; the
+   caller's s16 store truncates, so no explicit cast is emitted). */
+static s32 clamp_s16(s32 val) {
     if (val > 0x7FFF) {
         return 0x7FFF;
     }
     if (val < -0x8000) {
         return -0x8000;
     }
-    return (s16)val;
+    return val;
 }
 
-/* Time-stretch/resample via overlap-add. */
+/* s16 sample-rate conversion (time-stretch/resample via overlap-add). */
 void criware_8039B4E0(s16* src, s32 src_len, s16* dst, s32 dst_len) {
     s32 step;
     s32 overlap;
     s32 i;
-    s32 w;
 
-    if (src_len >= dst_len) {
-        if (src_len == dst_len) {
-            memcpy(dst, src, (size_t)dst_len * sizeof(s16));
-        } else {
-            /* src_len > dst_len: crossfade decimation */
-            step = src_len - dst_len;
-            s16* sp = src + step;
-            for (i = 0; i < dst_len; i++) {
-                s32 a = i * sp[i];
-                s32 b = (dst_len - i) * src[i];
-                w = a / dst_len + b / dst_len;
-                dst[i] = clamp_s16(w);
-            }
+    if (src_len < dst_len) {
+        /* src_len < dst_len: overlap-add stretch */
+        step = dst_len - src_len;
+        overlap = src_len - step;
+
+        /* Phase 1: copy the leading 'step' samples unchanged */
+        for (i = 0; i < step; i++) {
+            dst[i] = src[i];
         }
-        return;
-    }
 
-    /* src_len < dst_len: overlap-add stretch */
-    step = dst_len - src_len;
-    overlap = src_len - step;
+        /* Phase 2: crossfade the overlapping region */
+        for (i = 0; i < overlap; i++) {
+            s32 b = (overlap - i) * src[step + i];
+            s32 a = i * src[i];
+            dst[step + i] = clamp_s16((s16)(b / overlap) + (s16)(a / overlap));
+        }
 
-    /* Phase 1: copy first 'step' samples */
-    for (i = 0; i < step; i++) {
-        dst[i] = src[i];
-    }
-
-    /* Phase 2: crossfade overlap region */
-    for (i = 0; i < overlap; i++) {
-        s32 a = i * src[i];
-        s32 b = (overlap - i) * src[step + i];
-        w = a / overlap + b / overlap;
-        dst[step + i] = clamp_s16(w);
-    }
-
-    /* Phase 3: copy remaining samples */
-    for (i = 0; i < step; i++) {
-        dst[src_len + i] = src[overlap + i];
+        /* Phase 3: copy the trailing 'step' samples unchanged */
+        for (i = 0; i < step; i++) {
+            dst[src_len + i] = src[overlap + i];
+        }
+    } else if (src_len == dst_len) {
+        memcpy(dst, src, dst_len * sizeof(s16));
+    } else if (src_len > dst_len) {
+        /* src_len > dst_len: crossfade decimation */
+        step = src_len - dst_len;
+        for (i = 0; i < dst_len; i++) {
+            s32 b = src[i] * (dst_len - i);
+            s32 a = i * src[step + i];
+            dst[i] = clamp_s16((s16)(b / dst_len) + (s16)(a / dst_len));
+        }
     }
 }

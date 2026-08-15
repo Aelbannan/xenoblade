@@ -4,12 +4,57 @@
 #include <cstring>
 #include <cmath>
 
-// Retail SDA slot for MemManager::sHandleMEM2 (getHandleMEM2 / setHandleMEM2).
+// Retail SDA slots and data for MemManager (blob monolibdata1.s dissolve).
+// The retail names for the member statics are the lbl_eu_* slots below
+// (getHandleMEM2/setHandleMEM2 already use lbl_eu_8066350C); the member
+// definitions were renamed to these globals so the .o emits the retail
+// symbol names/bytes exactly.
+extern "C" const char lbl_eu_8066A1A8[5];   // "Mem1" (.sdata2, FloatUtils-owned)
+extern "C" const char lbl_eu_8066A1B0[5];   // "Mem2" (.sdata2, FloatUtils-owned)
+extern "C" const double lbl_eu_8066A1B8;    // 1.0  (.sdata2, FloatUtils-owned)
+extern "C" const float lbl_eu_8066A1C0;     // 0.0f (.sdata2, FloatUtils-owned)
+extern "C" const float lbl_eu_8066A1C4;     // 100.0f (.sdata2, FloatUtils-owned)
+extern "C" const double lbl_eu_8066A1C8;    // 2^52 u32->double magic (.sdata2, FloatUtils-owned)
+
 extern "C" {
-mtl::ALLOC_HANDLE lbl_eu_8066350C;
+// .rodata 0x80522410: the two OSReport strings ("ProgArea (%x / %x)\n" and
+// "ProgSizeOver/*...*/\n"), byte-exact SJIS.
+const char lbl_eu_80522410[0x48] =    "ProgArea (%x / %x)\n\x00"
+    "ProgSizeOver/*"
+    "\x83\x76\x83\x8D\x83\x4F\x83\x89\x83\x80\x97\xCC\x88\xE6\x82\xAA\x8C\xC0\x8A\x45\x82\xF0\x92\xB4\x82\xA6\x82\xDC\x82\xB5\x82\xBD"
+    "*/\n"
+    "\x00\x00";
+
+// .sdata 0x80663500-0x80663518 (declaration order = retail address order):
+const char* lbl_eu_80663500 = lbl_eu_8066A1A8;  // scRegionNameMEM1
+const char* lbl_eu_80663504 = lbl_eu_8066A1B0;  // scRegionNameMEM2
+u32 lbl_eu_80663508 = 0xFFFFFFFF;               // sHandleMEM1 (INVALID_HANDLE)
+mtl::ALLOC_HANDLE lbl_eu_8066350C = 0xFFFFFFFF; // sHandleMEM2 (INVALID_HANDLE)
+u8 lbl_eu_80663510 = 1;                         // lbl_80665E38
+
+u8 lbl_eu_80663511 = 1;                         // lbl_80665E39
+u32 lbl_eu_80663514 = OS_MEM_MB_TO_B(6);       // MemRegion::sMaxSizeMEM1
+
+// .bss 0x80653EE0: the region-array storage (retail sRegionBuffer).
 mtl::RawArray<mtl::MemManager::MemRegion, mtl::MAX_ALLOC_REGION> sRegionBuffer__Q23mtl10MemManager;
-bool lbl_eu_8066557C;
+
+// .sbss 0x80665570-0x8066557D (declaration order = retail address order;
+// the natural u32 alignment of lbl_eu_80665578 creates the retail 3-byte gap
+// between lbl_eu_80665574 and lbl_eu_80665578):
+u32 lbl_eu_80665570;    // sRegionUniqueId
+
+bool lbl_eu_80665574;   // lbl_80667E54
+
+u32 lbl_eu_80665578;    // MemRegion::sMaxSizeMEM2
+
+bool lbl_eu_8066557C;   // sIsOptimalAlloc
 }
+
+// u32 -> double bit-reinterpret for the 2^52 conversion magic.
+union U32ToDouble {
+    u32 w[2];
+    double d;
+};
 
 namespace mtl {
 
@@ -18,35 +63,6 @@ static void* const MEM2_REGION_END = reinterpret_cast<void*>(0x935E0000);
 
 //Dummy value to represent an unused 'aligned' field in memory blocks
 static MemBlock* const BLOCK_ALIGNED_NULL = reinterpret_cast<MemBlock*>(0xA7FB94C7);
-
-//Name of the root MEM1 region
-const char* MemManager::scRegionNameMEM1 = "Mem1";
-//Name of the root MEM2 region
-const char* MemManager::scRegionNameMEM2 = "Mem2";
-
-//Handle to the root MEM1 region
-ALLOC_HANDLE MemManager::sHandleMEM1 = INVALID_HANDLE;
-//Handle to the root MEM2 region
-ALLOC_HANDLE MemManager::sHandleMEM2 = INVALID_HANDLE;
-
-/* Array for memory region structures. Entries are stored as raw bytes to defer
-construction until the initialize function. A bit of a strange decision. */
-RawArray<MemManager::MemRegion, MAX_ALLOC_REGION> MemManager::sRegionArray;
-
-//Unique ID for the next created region
-u32 MemManager::sRegionUniqueId = 0;
-
-bool MemManager::lbl_80667E54 = false;
-bool MemManager::lbl_80665E38 = true;
-bool MemManager::lbl_80665E39 = true;
-
-//Maximum size of the root MEM1 region
-u32 MemManager::MemRegion::sMaxSizeMEM1 = OS_MEM_MB_TO_B(6);
-//Maximum size of the root MEM2 region (unused)
-u32 MemManager::MemRegion::sMaxSizeMEM2 = 0;
-
-//Whether optimal memory allocation is enabled
-bool MemManager::sIsOptimalAlloc = false;
 
 //Thanks monolithsoft very cool
 DECOMP_INLINE MemManager::MemRegion::MemRegion() try :
@@ -95,22 +111,22 @@ MemManager::MemRegion::~MemRegion() {
 Configures the maximum size of the root memory regions.
 */
 void MemManager::MemRegion::setRegionMaxSize(u32 maxMEM1, u32 maxMEM2) {
-    sMaxSizeMEM1 = maxMEM1;
-    sMaxSizeMEM2 = maxMEM2;
+    lbl_eu_80663514 = maxMEM1;
+    lbl_eu_80665578 = maxMEM2;
 }
 
 /*
 Gets the maximum root MEM1 memory region size, in bytes.
 */
 u32 MemManager::MemRegion::getMEM1MaxSize() {
-    return sMaxSizeMEM1;
+    return lbl_eu_80663514;
 }
 
 /*
 Gets the maximum root MEM2 memory region size, in bytes.
 */
 u32 MemManager::MemRegion::getMEM2MaxSize() {
-    return sMaxSizeMEM2;
+    return lbl_eu_80665578;
 }
 
 /*
@@ -472,10 +488,10 @@ and creates the main program regions in MEM1 and MEM2.
 */
 #pragma global_optimizer off //:)
 void MemManager::initialize() {
-    sRegionUniqueId = 0;
-    lbl_80665E39 = true;
+    lbl_eu_80665570 = 0;
+    lbl_eu_80663511 = true;
     //Initialize the memory region array entries
-    sRegionArray.initialize();
+    sRegionBuffer__Q23mtl10MemManager.initialize();
 
     //Why assume that it starts from 0x80000000?
     void* mem1RegionLo = OSGetMEM1ArenaLo();
@@ -489,24 +505,24 @@ void MemManager::initialize() {
     }
 
     //Remaining program region %x / maximum %x
-    OSReport("プログラム領域残り %x / 最大 %x\n", mem1RegionSize,
+    OSReport(lbl_eu_80522410, mem1RegionSize,
         MemRegion::getMEM1MaxSize());
 
     if (mem1RegionLo >= mem1RegionMax) {
         //Program region exceeded the limit
-        OSReport("プログラム領域が限界を超えました");
+        OSReport(&lbl_eu_80522410[0x14]);
     }
 
-    lbl_80665E38 = true;
+    lbl_eu_80663510 = true;
 
     (void)OSGetMEM2ArenaHi(); //unused
 
-    sHandleMEM1 = create(mem1RegionLo,
-        (u8*)OSGetMEM1ArenaHi() - (u8*)mem1RegionMax, scRegionNameMEM1);
+    lbl_eu_80663508 = create(mem1RegionLo,
+        (u8*)OSGetMEM1ArenaHi() - (u8*)mem1RegionMax, lbl_eu_80663500);
 
     // Retail SDA slot is lbl_eu_8066350C (same as getHandleMEM2 / setHandleMEM2).
     lbl_eu_8066350C = create(OSGetMEM2ArenaLo(),
-        (u8*)MEM2_REGION_END - (u8*)OSGetMEM2ArenaLo(), scRegionNameMEM2);
+        (u8*)MEM2_REGION_END - (u8*)OSGetMEM2ArenaLo(), lbl_eu_80663504);
 }
 #pragma global_optimizer reset
 
@@ -539,7 +555,7 @@ ALLOC_HANDLE MemManager::create(void* head, u32 size, const char* name) {
         }
 
         //Allocation handle encodes a unique ID
-        handle = static_cast<ALLOC_HANDLE>(sRegionUniqueId++ << 8 | handle);
+        handle = static_cast<ALLOC_HANDLE>(lbl_eu_80665570++ << 8 | handle);
 
         region->mHandle = handle;
         region->mStartAddress = head;
@@ -588,7 +604,7 @@ ALLOC_HANDLE MemManager::create(ALLOC_HANDLE handle, u32 size, const char* name)
     ALLOC_HANDLE child = create(
         allocate_ex(dataSize, handle, 16), dataSize, name);
     
-    lbl_80667E54 = false;
+    lbl_eu_80665574 = false;
     return child;
 }
 
@@ -613,7 +629,7 @@ ALLOC_HANDLE MemManager::create_tail(ALLOC_HANDLE handle, u32 size, const char* 
     ALLOC_HANDLE child = create(
         allocate_ex(dataSize, handle, -16), dataSize, name);
     
-    lbl_80667E54 = false;
+    lbl_eu_80665574 = false;
     return child;
 }
 
@@ -647,7 +663,7 @@ MEM1 is used for most object-related allocations
 where performance is a priority.
 */
 ALLOC_HANDLE MemManager::getHandleMEM1() {
-    return sHandleMEM1;
+    return lbl_eu_80663508;
 }
 
 /*
@@ -657,7 +673,7 @@ MEM1 is used for most object-related allocations
 where performance is a priority.
 */
 void MemManager::setHandleMEM1(ALLOC_HANDLE handle) {
-    sHandleMEM1 = handle;
+    lbl_eu_80663508 = handle;
 }
 
 /*
@@ -760,7 +776,7 @@ DECOMP_INLINE bool MemManager::deallocateImpl(void* p) {
     }
 
     //Something is very wrong
-    if (sHandleMEM1 == INVALID_HANDLE) {
+    if (lbl_eu_80663508 == INVALID_HANDLE) {
         return true;
     }
 
@@ -773,7 +789,7 @@ DECOMP_INLINE bool MemManager::deallocateImpl(void* p) {
         MemBlock::MAX_SIZE - sizeof(MemBlock) - 1) {
 
         //Since monolithsoft removed their log function, this calls the math log lol
-        log(true);
+        log(lbl_eu_8066A1B8);
     } else {
         region->mFreeBytes += block->size;
 
@@ -950,11 +966,21 @@ f32 MemManager::getPercentAlloc(ALLOC_HANDLE handle) {
 
     //No allocations have ever been performed
     if (region->mOldest == nullptr) {
-        return 0.0f;
+        return lbl_eu_8066A1C0;
     }
 
-    return static_cast<f32>(region->mSize - region->mFreeBytes) /
-        static_cast<f32>(region->mSize) * 100.0f;
+    // u32 -> double via the shared 2^52 magic constant (retail pools it as
+    // lbl_eu_8066A1C8 in the FloatUtils-owned .sdata2 range; referencing the
+    // extern keeps this TU from pooling a local @N copy).
+    U32ToDouble used;
+    used.w[0] = 0x43300000;
+    used.w[1] = region->mSize - region->mFreeBytes;
+    U32ToDouble total;
+    total.w[0] = 0x43300000;
+    total.w[1] = region->mSize;
+
+    return static_cast<f32>(used.d - lbl_eu_8066A1C8) /
+        static_cast<f32>(total.d - lbl_eu_8066A1C8) * lbl_eu_8066A1C4;
 }
 
 void MemManager::func_804348A4(ALLOC_HANDLE handle, u8 value) {
@@ -997,7 +1023,7 @@ u16 MemManager::calculateCrc(const void* data, u32 len) {
 }
 
 void MemManager::func_80434A4C(bool value) {
-    lbl_80665E39 = value;
+    lbl_eu_80663511 = value;
 }
 
 /*
@@ -1011,7 +1037,7 @@ bool MemManager::isOptimalAlloc() {
 Sets whether optimal memory allocation is enabled.
 */
 void MemManager::setOptimalAlloc(bool enable) {
-    sIsOptimalAlloc = enable;
+    lbl_eu_8066557C = enable;
 }
 
 /*

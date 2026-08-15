@@ -586,6 +586,9 @@ void Set__Q34nw4r3lyt12AnimResourceFPCv(nw4r::lyt::AnimResource* _this,
                                         const void* pData) {
     AnimResourceData* pDataRes = reinterpret_cast<AnimResourceData*>(_this);
 
+    // "valid" mirrors the retail's flag: NULL the four pointers, then only
+    // parse the block chain when signature and version checks pass.
+    bool valid = false;
     pDataRes->mpFileHeader = NULL;
     pDataRes->mpResBlock = NULL;
     pDataRes->mpTagBlock = NULL;
@@ -594,47 +597,49 @@ void Set__Q34nw4r3lyt12AnimResourceFPCv(nw4r::lyt::AnimResource* _this,
     const nw4r::lyt::res::BinaryFileHeader* pHeader =
         static_cast<const nw4r::lyt::res::BinaryFileHeader*>(pData);
 
-    // "RLAN" archive signature.
-    if (!nw4r::lyt::detail::TestFileHeader(*pHeader, 0x524C414E)) {
-        return;
+    // "RLAN" archive signature; header version must be 0x0008..0x000A
+    // (minor byte in [8, 10], major byte zero).
+    if (nw4r::lyt::detail::TestFileHeader(*pHeader, 0x524C414E)) {
+        u16 version = pHeader->version;
+        if ((version >> 8) == 0 && (version & 0xFF) >= 8 &&
+            (version & 0xFF) <= 0xA) {
+            valid = true;
+        }
     }
 
-    // Header version must be 0x0008..0x000A (minor byte in [8, 10],
-    // major byte zero).
-    u16 version = pHeader->version;
-    if (version >> 8 != 0 || (version & 0xFF) < 8 || (version & 0xFF) > 0xA) {
-        return;
-    }
+    if (valid) {
+        pDataRes->mpFileHeader = pHeader;
 
-    pDataRes->mpFileHeader = pHeader;
+        const nw4r::lyt::res::DataBlockHeader* pBlockHeader =
+            reinterpret_cast<const nw4r::lyt::res::DataBlockHeader*>(
+                reinterpret_cast<const u8*>(pData) + pHeader->headerSize);
 
-    const nw4r::lyt::res::DataBlockHeader* pBlockHeader =
-        reinterpret_cast<const nw4r::lyt::res::DataBlockHeader*>(
-            reinterpret_cast<const u8*>(pData) + pHeader->headerSize);
+        for (int i = 0; i < pDataRes->mpFileHeader->dataBlocks; i++) {
+            switch (nw4r::lyt::detail::GetSignatureInt(pBlockHeader->kind)) {
+            case KIND_ANIM: { // "pai1"
+                pDataRes->mpResBlock = reinterpret_cast<
+                    const nw4r::lyt::res::AnimationBlock*>(pBlockHeader);
+                break;
+            }
 
-    for (int i = 0; i < pHeader->dataBlocks; i++) {
-        switch (nw4r::lyt::detail::GetSignatureInt(pBlockHeader->kind)) {
-        case KIND_ANIM: { // "pai1"
-            pDataRes->mpResBlock = reinterpret_cast<
-                const nw4r::lyt::res::AnimationBlock*>(pBlockHeader);
-            break;
+            case KIND_TAG: { // "pat1"
+                pDataRes->mpTagBlock = reinterpret_cast<
+                    const nw4r::lyt::res::AnimationTagBlock*>(pBlockHeader);
+                break;
+            }
+
+            case KIND_SHARE: { // "pah1"
+                pDataRes->mpShareBlock = reinterpret_cast<
+                    const nw4r::lyt::res::AnimationShareBlock*>(pBlockHeader);
+                break;
+            }
+            }
+
+            pBlockHeader =
+                reinterpret_cast<const nw4r::lyt::res::DataBlockHeader*>(
+                    reinterpret_cast<const u8*>(pBlockHeader) +
+                    pBlockHeader->size);
         }
-
-        case KIND_TAG: { // "pat1"
-            pDataRes->mpTagBlock = reinterpret_cast<
-                const nw4r::lyt::res::AnimationTagBlock*>(pBlockHeader);
-            break;
-        }
-
-        case KIND_SHARE: { // "pah1"
-            pDataRes->mpShareBlock = reinterpret_cast<
-                const nw4r::lyt::res::AnimationShareBlock*>(pBlockHeader);
-            break;
-        }
-        }
-
-        pBlockHeader = reinterpret_cast<const nw4r::lyt::res::DataBlockHeader*>(
-            reinterpret_cast<const u8*>(pBlockHeader) + pBlockHeader->size);
     }
 }
 
@@ -677,16 +682,17 @@ int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb(
     const AnimResourceData* pData =
         reinterpret_cast<const AnimResourceData*>(_this);
 
-    const nw4r::lyt::res::AnimationBlock& rBlock = *pData->mpResBlock;
+    // mpResBlock is read through the mirror each iteration (the loop body
+    // calls Find*ByName, which may alias), reproducing the retail reload.
+    int num = 0;
     const u32* const pContentOffsetTbl =
         nw4r::lyt::detail::ConvertOffsToPtr<u32>(
-            &rBlock, rBlock.animContOffsetsOffset);
+            pData->mpResBlock, pData->mpResBlock->animContOffsetsOffset);
 
-    int num = 0;
-    for (u16 i = 0; i < rBlock.animContNum; i++) {
+    for (u16 i = 0; i < pData->mpResBlock->animContNum; i++) {
         const nw4r::lyt::res::AnimationContent& rContent =
             *nw4r::lyt::detail::ConvertOffsToPtr<
-                nw4r::lyt::res::AnimationContent>(&rBlock,
+                nw4r::lyt::res::AnimationContent>(pData->mpResBlock,
                                                   pContentOffsetTbl[i]);
 
         if (rContent.type == nw4r::lyt::res::AnimationContent::ANIMTYPE_PANE) {
@@ -695,7 +701,9 @@ int CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb(
             }
         } else {
             if (pPane->FindMaterialByName(rContent.name, recursive) != NULL) {
-                num++;
+                // Retail truncates this increment to 16 bits (clrlwi; addi;
+                // clrlwi) while the pane branch stays a plain addi.
+                num = (u16)((u16)num + 1);
             }
         }
     }
@@ -759,19 +767,22 @@ void AnimPaneTree::Set(Pane* pPane, const AnimResource& rResource) {
     const AnimResourceData* pResource =
         reinterpret_cast<const AnimResourceData*>(&rResource);
 
-    const res::AnimationBlock& rBlock = *pResource->mpResBlock;
+    // Cached in a local: the retail keeps mpResBlock in a saved register
+    // across the search calls below.
+    const res::AnimationBlock* pBlock = pResource->mpResBlock;
+
+    const u32* pContentOffsetTbl = detail::ConvertOffsToPtr<u32>(
+        pBlock, pBlock->animContOffsetsOffset);
 
     // Find the pane-content whose name matches this pane's name.
     const char* pPaneName = pPane->GetName();
-    u16 matched = 0;
+    u16 count = 0;
     u16 paneIdx = 0;
-    const u32* pContentOffsetTbl = detail::ConvertOffsToPtr<u32>(
-        &rBlock, rBlock.animContOffsetsOffset);
 
-    for (; paneIdx < rBlock.animContNum; paneIdx++) {
+    for (; paneIdx < pBlock->animContNum; paneIdx++) {
         const res::AnimationContent* pContent =
             detail::ConvertOffsToPtr<res::AnimationContent>(
-                &rBlock, pContentOffsetTbl[paneIdx]);
+                pBlock, pContentOffsetTbl[paneIdx]);
 
         // content->name sits at offset 0, so the content pointer aliases it.
         if (pContent->type == res::AnimationContent::ANIMTYPE_PANE &&
@@ -780,11 +791,11 @@ void AnimPaneTree::Set(Pane* pPane, const AnimResource& rResource) {
         }
     }
 
-    if (paneIdx >= rBlock.animContNum) {
+    if (paneIdx >= pBlock->animContNum) {
         paneIdx = 0xFFFF; // not found sentinel
     }
     if (paneIdx != 0xFFFF) {
-        matched = 1;
+        count = 1;
     }
 
     u8 materialNum = pPane->GetMaterialNum();
@@ -793,42 +804,43 @@ void AnimPaneTree::Set(Pane* pPane, const AnimResource& rResource) {
     for (u8 i = 0; i < materialNum; i++) {
         Material* pMaterial = pPane->GetMaterial(i);
 
-        u16 idx = 0;
-        for (; idx < rBlock.animContNum; idx++) {
+        // Re-derive the offset table here (the Get* call above may alias).
+        const u32* pMatOffsetTbl = detail::ConvertOffsToPtr<u32>(
+            pBlock, pBlock->animContOffsetsOffset);
+        const char* pMatName = pMaterial->GetName();
+
+        u16 matIdx = 0;
+        for (; matIdx < pBlock->animContNum; matIdx++) {
             const res::AnimationContent* pContent =
                 detail::ConvertOffsToPtr<res::AnimationContent>(
-                    &rBlock, pContentOffsetTbl[idx]);
+                    pBlock, pMatOffsetTbl[matIdx]);
 
             if (pContent->type == res::AnimationContent::ANIMTYPE_MATERIAL &&
-                detail::EqualsMaterialName(pContent->name,
-                                           pMaterial->GetName())) {
+                detail::EqualsMaterialName(pContent->name, pMatName)) {
                 break;
             }
         }
 
-        if (idx >= rBlock.animContNum) {
-            idx = 0xFFFF; // not found sentinel
+        if (matIdx >= pBlock->animContNum) {
+            matIdx = 0xFFFF; // not found sentinel
         }
 
-        panelTbl[i] = idx;
-        if (idx != 0xFFFF) {
-            matched++;
+        panelTbl[i] = matIdx;
+        if (matIdx != 0xFFFF) {
+            count = (u16)(count + 1);
         }
     }
 
-    if (matched != 0) {
+    if (count != 0) {
         // Snapshot the AnimResource into the tree.
-        mResource.mpFileHeader = pResource->mpFileHeader;
-        mResource.mpResBlock = pResource->mpResBlock;
-        mResource.mpTagBlock = pResource->mpTagBlock;
-        mResource.mpShareBlock = pResource->mpShareBlock;
+        mResource = *pResource;
         mPaneIdx = paneIdx;
         mMaterialNum = materialNum;
 
         for (u8 j = 0; j < materialNum; j++) {
             mPanelTbl[j] = panelTbl[j];
         }
-        mCount = matched;
+        mCount = count;
     }
 }
 

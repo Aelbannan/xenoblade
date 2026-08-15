@@ -611,10 +611,9 @@ public:
     virtual void v112(); virtual void v113(); virtual void v114(); virtual void v115();
     virtual void v116(); virtual void v117(); virtual void v118(); virtual void v119();
     virtual void v120(); virtual void v121(); virtual void v122(); virtual void v123();
-    virtual void v124(); virtual void v125();
-    virtual s32 v126(int a);   // vtable +0x1F8
+    virtual s32 v126(int a);   // vtable +0x1F8 (index 124: 2-slot MWCC vt prefix + 124*4)
     virtual void v127();
-    virtual s32 v128();        // vtable +0x200
+    virtual s32 v128();        // vtable +0x200 (index 126)
     virtual void v129(); virtual void v130(); virtual void v131(); virtual void v132();
     virtual void v133(); virtual void v134(); virtual void v135(); virtual void v136();
     virtual void v137(); virtual void v138(); virtual void v139(); virtual void v140();

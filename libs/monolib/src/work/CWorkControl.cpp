@@ -1,18 +1,74 @@
-#include "monolib/device.hpp"
 #include "monolib/work.hpp"
+#include "monolib/data_vtables.hpp"
 #include "decomp.h"
+
+// CDevice::getInstance referenced by mangled name instead of including
+// monolib/device.hpp: device.hpp pulls in CDeviceBase.hpp whose inline virtual
+// dtor makes MWCC declare the __RTTI__ chain internally, which collides with
+// the extern "C" void* __RTTI__ declarations this TU needs for its manual
+// RTTI base list (MWCC "illegal name overloading").
+class CDevice;
+extern "C" CDevice* getInstance__7CDeviceFv();
+
+// Data owned by this TU (blob monolibdata1d dissolve):
+//   lbl_eu_80522678 (.rodata) = CWorkControl RTTI name string
+//   lbl_eu_80522688 (.rodata) = work-flow display-name pool (retail bytes)
+//   lbl_eu_806635B0 (.sdata)  = __RTTI__12CWorkControl {name, base-list}
+//   lbl_eu_8056B7C8 (.data)   = CWorkControl vtable
+//   lbl_eu_8056B868 (.data)   = RTTI base list {IWE,0,CWT,0,0,0}
+//   lbl_eu_806655D8 (.sbss)   = spInstance singleton (word 0 in use)
+extern "C" const char lbl_eu_80522678[] = "CWorkControl";
+extern "C" const char lbl_eu_80522688[0x80] =
+    "CWorkFlowTvMode\0"
+    "CWorkFlowSetup\0"
+    "CWorkFlowShutdownAll\0"
+    "CWorkFlowWiiMenu\0"
+    "CWorkFlowWiiReset\0"
+    "CWorkFlowWiiPowerOff\0"
+    "CWorkControl\0";
+
+extern IWorkEventVtbl lbl_eu_8056B7C8;
+extern RttiBaseList2 lbl_eu_8056B868;
+
+// __RTTI__12CWorkControl = {name, base-list} (.sdata).
+u32 lbl_eu_806635B0[2] = {(u32)lbl_eu_80522678, (u32)&lbl_eu_8056B868};
+
+IWorkEventVtbl lbl_eu_8056B7C8 = {
+    (u32)&lbl_eu_806635B0, 0, (u32)&__dt__12CWorkControlFv,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
+    (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
+    (u32)&wkUpdate__11CWorkThreadFv, (u32)&wkRender__11CWorkThreadFv,
+    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__12CWorkControlFv,
+    (u32)&wkStandbyLogout__12CWorkControlFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+};
+RttiBaseList2 lbl_eu_8056B868 = {
+    (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, 0, 0,
+};
 
 // sbss singleton lbl_eu_806655D8 (8 bytes; word 0 in use) - blob monolibdata1d dissolve
 CWorkControl* lbl_eu_806655D8[2];
 
 #pragma dont_inline on
 CWorkControl::CWorkControl(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD){
+    *(void**)this = &lbl_eu_8056B7C8;
     lbl_eu_806655D8[0] = this;
     mType = THREAD_CWORKCONTROL;
 }
 #pragma dont_inline off
-
-extern char lbl_eu_80522688[];
 
 #pragma optimize_for_size on
 CWorkControl::~CWorkControl(){
@@ -71,7 +127,7 @@ DECOMP_DONT_INLINE bool CWorkControl::setFlowSetup(){
 #pragma optimize_for_size off
 
 bool CWorkControl::wkStandbyLogout(){
-    if(mChildren.empty() && CDevice::getInstance() == nullptr){
+    if(mChildren.empty() && getInstance__7CDeviceFv() == nullptr){
         return CWorkThread::wkStandbyLogout();
     }
 
@@ -83,7 +139,6 @@ bool CWorkControl::wkStandbyLogout(){
 // and materializes the name before the alloc call; MWCC from high-level C
 // uses two (stmw r30) and reuses the name base after the call, leaving the
 // function 0x70 vs 0x74 -- open item.
-extern char lbl_eu_80522688[];
 
 #pragma optimize_for_size on
 CWorkControl* CWorkControl::create(CWorkThread* pParent){

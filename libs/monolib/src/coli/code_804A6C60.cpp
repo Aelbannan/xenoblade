@@ -4057,9 +4057,15 @@ extern "C" void func_804B102C(void* self) {
 }
 #pragma pop
 
-void func_804B1130(){}
+// retail: build a {f,f,f} local vec from the SDA2 float and forward the
+// caller's r3-r5 to func_804B1164 with the vec in r6 (passthrough wrapper).
+extern "C" void __declspec(noinline) func_804B1164(void* a, void* b, u32 c, f32* v);  // defined below
+void func_804B1130(void* a, void* b, u32 c) {
+    f32 v[3] = { lbl_eu_8066AE88, lbl_eu_8066AE88, lbl_eu_8066AE88 };
+    func_804B1164(a, b, c, v);
+}
 
-void func_804B1164(){}
+extern "C" void __declspec(noinline) func_804B1164(void* a, void* b, u32 c, f32* v){}
 
 // Segment AABB handed to func_804B06FC / func_804B0818: two corner VEC3s.
 struct CColiSeg804B192C {

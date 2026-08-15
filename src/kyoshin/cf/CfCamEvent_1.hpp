@@ -542,7 +542,7 @@ extern "C" f32   func_80496288();
 extern "C" void  func_800756D0(ml::CVec3* out, CinemCamSrc* src);
 extern "C" int func_8007AA4C(CfCamEventManager* self);
 extern "C" int func_80079E04(CfCamEventManager* self);
-extern "C" int __declspec(noinline) func_800755BC(CfCamEventManager* mgr, u32 idx);
+extern "C" int func_800755BC(CfCamEventManager* mgr, u32 idx);
 extern "C" f32 lbl_eu_8066642C;
 extern "C" f32 lbl_eu_80666430;
 extern "C" f32 lbl_eu_80666440;
@@ -558,7 +558,7 @@ extern "C" void func_8016FD84(f32 a, f32 b);
 extern "C" void func_80240AAC(u32 state);
 extern "C" void func_80240B10(u32 state, void* p);
 extern "C" f32 lbl_eu_80666470;
-extern "C" __declspec(noinline) void* func_800784A0(u32 first, void* second,
+extern "C" void* func_800784A0(u32 first, void* second,
                                                       void* third, void* fourth,
                                                       void* fifth,
                                                       CfCamDataTable* sixth,
@@ -570,10 +570,10 @@ extern "C" void  func_8006BC1C(void* obj, u32 mask);
 extern "C" void  func_8006BBF4(void* obj, u32 mask, int flag);
 extern "C" void  func_8006D450(void* a, void* b, void* c, f32 f,
                                 void* d, void* e, void* g);
-extern "C" __declspec(noinline) void func_80077F20(void* out, void* a,
+extern "C" void func_80077F20(void* out, void* a,
                                                        void* b, u16 c, u16 d,
                                                        void* e);
-extern "C" __declspec(noinline) void* func_800778E4(void* self, u32 a,
+extern "C" void* func_800778E4(void* self, u32 a,
                                                       void* b, void* c);
 extern "C" int func_80078400(int action, int param);
 extern "C" void* func_80496264(void* obj, int index);

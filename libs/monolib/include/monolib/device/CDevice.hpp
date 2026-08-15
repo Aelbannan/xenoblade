@@ -34,6 +34,8 @@ public:
     u32 unk1C4;
 
 private:
+    // Region2 size is NOT this constant: createRegions uses 0x40000, bumped
+    // to 0x110000 on a JP (language 0) console. Kept for reference only.
     static const int DEVSYS2_REGION_SIZE = 0x1A0000;
     static const int MAX_CHILD = 32;
 

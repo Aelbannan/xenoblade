@@ -5,7 +5,14 @@
 #include "kyoshin/cf/chain/CChainActorEne.hpp"
 #include "kyoshin/cf/chain/CChainActorPc.hpp"
 #include "kyoshin/cf/chain/CChainEffect.hpp"
-#include "kyoshin/cf/CBattleManager.hpp"
+
+namespace cf { class CBattleManager; }
+
+// Retail symbol: cf::CBattleManager::getInstance()
+// (declared as the mangled free function like CChainActorPc.cpp; avoids pulling
+// CBattleManager.hpp -> CChain.hpp -> CChainActorList.hpp, whose standalone
+// CChainActorPc/Ene mirrors would clash with the derived-family headers.)
+cf::CBattleManager* getInstance__Q22cf14CBattleManagerFv();
 
 // ---- Cross-TU helper declarations ---------------------------------------
 // func_800AD860 / func_800B708C are mangled C++ retail symbols; the rest are
@@ -78,7 +85,7 @@ void func_802A0AA0(cf::CChainEffect* effect);
 // Resets chain state and clears the chain effect.
 extern "C" void func_80281308(cf::CChainActorEne* self, int val) {
     CChain_setFieldAndClear(self, val);
-    func_802A08F4(&self->mChainEffect);
+    func_802A08F4(self->mChainEffectRaw);
 }
 
 // Runs the manual vtable enter-hook (offset 0x50), releases the effect, then
@@ -92,7 +99,7 @@ struct VtCast { u8 pad[0x70]; void** vt; };
 extern "C" void func_8028133C(cf::CChainActorEne* self) {
     // Dispatch through the manual vtable at +0x70, slot +0x50 (index 20).
     reinterpret_cast<cf::CChainActorEneVtDispatch*>(self)->wf50();
-    func_802A0904(&self->mChainEffect);
+    func_802A0904(self->mChainEffectRaw);
     func_80279DC0(self);
 }
 
@@ -116,7 +123,7 @@ extern "C" int func_80281384(cf::CChainActorEne* self, int arg) {
 // 4-arg effect bind: fills the constant 0xb9 class slot, forwards the other
 // three args, and drives the 6th param from a non-zero flag sentinel.
 extern "C" void func_80281438(cf::CChainActorEne* self, int p1, int p2, int p3) {
-    func_802A0950(&self->mChainEffect, p1, 0xb9, (int)self, p2, p3 != 0 ? 0x5f : 0);
+    func_802A0950(reinterpret_cast<cf::CChainEffect*>(self->mChainEffectRaw), p1, 0xb9, (int)self, p2, p3 != 0 ? 0x5f : 0);
 }
 
 // Tail-calls func_802A0804 binding the actor to the 0xba effect class.
@@ -126,13 +133,14 @@ extern "C" void* func_80281460(cf::CChainActorEne* self) {
 
 // True if this actor's timeline object is the one currently wired into the
 // battle parts system, or if it carries the special 0x96b enemy-chain type.
-extern "C" int func_8028146C(cf::CChainActorEne* self) {
+extern "C" int func_8028146C(const cf::CChainActorEne* self) {
     u32 addr = self->unk0;
     if (addr != 0) addr += 0x3e9c;
     EneChainObj* obj = (EneChainObj*)func_800AD860((void*)addr);
-    if (obj == 0) return 0;
-    if (obj == (EneChainObj*)func_80193CD0(func_80193670(), (void*)obj)) return 1;
-    if (obj->type == 0x96b) return 1;
+    if (obj != 0) {
+        if (obj == (EneChainObj*)func_80193CD0(func_80193670(), (void*)obj)) return 1;
+        if (obj->type == 0x96b) return 1;
+    }
     return 0;
 }
 
@@ -213,11 +221,7 @@ extern "C" void func_802816FC(cf::CChainActorEne* self) {
         // "rework" bit (bit 1 of the 0xa0 flag) on its battle actor.
         GlistList* list = (GlistList*)func_800B6BC8();
         EneChainObj* found;
-        for (GlistNode* node = list->field_04->next;; node = node->next) {
-            if (node == list->field_04) {
-                found = 0;
-                break;
-            }
+        for (GlistNode* node = list->field_04->next; node != list->field_04; node = node->next) {
             EneChainObj* o = (EneChainObj*)func_800AD860(node->obj);
             if (o != 0 && o->type == 0x96b) {
                 found = o;
@@ -258,8 +262,7 @@ extern "C" int func_8028183C(cf::CChainActorEne* self) {
 
 // Tail-calls func_802A0AA0 with &this->mChainEffect, forwarding remaining arguments
 void cf::CChainActorEne::func_802818D4() {
-    extern void func_802A0AA0(cf::CChainEffect* effect);
-    func_802A0AA0(&this->mChainEffect);
+    func_802A0AA0(reinterpret_cast<cf::CChainEffect*>(this->mChainEffectRaw));
 }
 
 // Returns whether the enemy chain actor is valid/active
@@ -271,5 +274,5 @@ extern "C" void func_802818E4(void* self, void* arg) { reinterpret_cast<CEIf*>(s
 
 // Address into the battle manager's 0x194 field; returns whether it reached 300.
 extern "C" void func_802818F8(void) {
-    func_8018C8F4((u8*)cf::CBattleManager::getInstance() + 0x194, 0x12c);
+    func_8018C8F4((u8*)getInstance__Q22cf14CBattleManagerFv() + 0x194, 0x12c);
 }

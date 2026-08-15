@@ -2,6 +2,35 @@
 
 #include <types.h>
 
+// Retail data labels (.data/.sdata) used by the cf script manager.  Declared
+// at global scope so MWCC keeps the retail names unmangled (no extern "C"
+// needed - global-scope data names are not mangled).
+extern char lbl_eu_804FB3A4[];   // .data:0x804FB3A4 script-name / extension string table
+extern char lbl_eu_805708D0[];   // .data:0x805708D0 current-dir path buffer
+extern char lbl_eu_80661AD0[2];  // .sdata:0x80661AD0 extension separator "."
+extern char* lbl_eu_80661AC0;    // .sdata:0x80661AC0 current-dir string pointer
+extern char lbl_eu_80570918[];   // .bss  manager instance storage
+extern s8 lbl_eu_80663D88;       // .sdata singleton-init flag
+
+// Retail CfScript vtable (.data:0x80526DE8, port/data_defs.cpp).  The class is
+// __declspec(novtable), so the ctor stores this label explicitly instead of
+// the compiler-generated __vt__Q22cf8CfScript (which would add .data/.rodata/
+// RTTI to a retail-empty TU and drift the reloc name).
+extern void* lbl_eu_80526DE8[];
+
+// C-linkage runtime imports (retail symbol names - keep linkage/signatures verbatim).
+extern "C" {
+    void vmExec();
+    void vmUnlink(void* ctx);
+    void pluginRegist__Fv();
+    void* func_800A82BC();
+    void* func_800A837C();
+    void* func_800A843C();
+    void* CfRes_readCommonArchive(void* fileHandle, const char* path, void* callback);
+    int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
+    void cancel__11CDeviceFileFP11CFileHandle(void* fileHandle);
+}
+
 namespace cf {
 
 // Forward declarations
@@ -28,10 +57,11 @@ struct CfScriptNameBuffer {
 };
 
 // CfScript - per-script state, 0x58 bytes each.
-class CfScript {
+class __declspec(novtable) CfScript {
     friend class CfScriptManager;
 public:
-    // 0x00: vtable pointer
+    // 0x00: vtable pointer - assigned explicitly from lbl_eu_80526DE8 in the
+    // ctor (novtable: MWCC would otherwise emit __vt__Q22cf8CfScript relocs).
     CfScript();
     virtual ~CfScript();
 
@@ -104,3 +134,17 @@ public:
 };
 
 } // namespace cf
+
+// PMTF dispatch table (2 x 12-byte member pointers) selected by mWaitCount in
+// CfScriptManager::func_800694B0.  Declared at global scope so MWCC keeps the
+// retail name unmangled; the (script.*table[idx])() call lowers to
+// lis/addi + mulli + `bl __ptmf_scall` against the retail helper.
+typedef void (cf::CfScript::*CfScriptPMF)();
+extern CfScriptPMF lbl_eu_80526DD0[2];
+
+// Unmangled retail symbols implemented in this TU (C linkage so the emitted
+// symbol names match the retail split verbatim).
+extern "C" {
+    bool func_80068ECC(cf::CfScript* script, const char* name);
+    u32 func_80068E7C(cf::CfScriptManager* mgr, int index, int mask);
+}

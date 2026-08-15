@@ -13,7 +13,7 @@ Each process can implement specific behavior
 for its initialization/termination,
 and for the update ("Move") and render ("Draw") game events.
 */
-class CProcess : public CChildListNode{
+class __declspec(novtable) CProcess : public CChildListNode{
     friend class CProcessMan;
 
 public:

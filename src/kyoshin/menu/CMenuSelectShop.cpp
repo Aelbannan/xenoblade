@@ -9,7 +9,6 @@
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/util/MemManager.hpp"
-#include "kyoshin/CTaskGame.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfPadData.hpp"
 #include <revolution/gx/GXPixel.h>
@@ -19,53 +18,14 @@
 #include "kyoshin/menu/CMenuSelectShop.hpp"
 
 // ---------------------------------------------------------------------------
-// Target 4: CMenuSelectShop ctor (us-8018b39c)
-// CProcess base + IUIWindow region (temp vtable + __ptmf_null callbacks + scalar
-// defaults), then the composite vtable / OC / render slots, the embedded
-// subobjects and scalar state. `scene` goes to mScene, `a3` to mFieldD0.
-// ---------------------------------------------------------------------------
-extern "C" CMenuSelectShop* __ct__CMenuSelectShop(CMenuSelectShop* self,
-                                                  void* scene, void* a3) {
-    __ct__8CProcessFv(self);
-
-    self->mVtab = (u32)lbl_eu_8052D238;
-    self->mPtmfFunc0 = __ptmf_null[0];
-    self->mPtmfThis0 = __ptmf_null[1];
-    self->mPtmfDelta0 = __ptmf_null[2];
-    self->mPtmfFunc1 = __ptmf_null[0];
-    self->mPtmfThis1 = __ptmf_null[1];
-    self->mPtmfDelta1 = __ptmf_null[2];
-    self->mLayout = 0;
-    self->mField58 = 0;
-    self->mField5C = 0;
-    self->mField60 = -1;
-    self->mField64 = 0;
-    self->mField65 = 0;
-    self->mField66 = 0;
-    self->mField67 = 1;
-    self->mField68 = 0;
-
-    self->mVtab = (u32)lbl_eu_80532550;
-    self->mOcc6C = (u32)lbl_eu_80532550 + 0x24;
-    self->mOcc70 = (u32)lbl_eu_80532550 + 0xac;
-    self->mScene = (CScn*)scene;
-
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
-    __ct__CSelShopWin(&self->mSelShop);
-    __ct__CCur18(&self->mCursor[0], 0);
-
-    self->mState = 0;
-    self->mSelIndex = 0;
-    self->mFieldD0 = (u32)a3;
-    return self;
-}
-
-// ---------------------------------------------------------------------------
 // Target 1: func_8018A58C  (us-8018bb40)
 // Factory: allocate the CMenuSelectShop singleton from work memory, run its
 // ctor, store it in the .sbss global and register it as a CProcess child of
 // `parent`. Returns 0 when the singleton already exists.
+// optimize_for_size merges the r29-r31 callee-save set into retail stmw r29.
 // ---------------------------------------------------------------------------
+#pragma push
+#pragma optimize_for_size on
 extern "C" CMenuSelectShop* func_8018A58C(CProcess* parent, void* a2,
                                           void* a3) {
     if (lbl_eu_806642E8 != 0)
@@ -81,13 +41,75 @@ extern "C" CMenuSelectShop* func_8018A58C(CProcess* parent, void* a2,
     reinterpret_cast<CProcess*>(obj)->Regist(parent, 0);
     return (CMenuSelectShop*)lbl_eu_806642E8;
 }
+#pragma pop
+
+// ---------------------------------------------------------------------------
+// Target 4: CMenuSelectShop ctor (us-8018b39c)
+// CProcess base + IUIWindow region (temp vtable + __ptmf_null callbacks + scalar
+// defaults), then the composite vtable / OC / render slots, the embedded
+// subobjects and scalar state. `scene` goes to mScene, `a3` to mFieldD0.
+// optimize_for_size merges the r28-r31 callee-save set into retail stmw r28.
+// __declspec(noinline) keeps -inline auto from inlining it into the factory
+// (optimize_for_size flips MWCC's inline decision; auto_inline off does not
+// override it).
+// ---------------------------------------------------------------------------
+#pragma push
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) CMenuSelectShop* __ct__CMenuSelectShop(CMenuSelectShop* self,
+                                                  void* scene, void* a3) {
+    __ct__8CProcessFv(self);
+
+    self->mVtab = (u32)lbl_eu_8052D238;
+    // Composite vtable referenced BEFORE the ptmf pointer so MWCC hoists its
+    // lis second (retail lis order: D238, 32550, ptmf). Loads grouped before
+    // the stores; This stored before Func per triple (retail store order).
+    u32 comp = (u32)lbl_eu_80532550;
+    u32* ptmf = __ptmf_null;
+    u32 p0 = *ptmf;
+    u32 p1 = ptmf[1];
+    u32 p2 = ptmf[2];
+    self->mPtmfThis0 = p1;
+    self->mPtmfFunc0 = p0;
+    self->mPtmfDelta0 = p2;
+    self->mPtmfThis1 = ptmf[1];
+    self->mPtmfFunc1 = ptmf[0];
+    self->mPtmfDelta1 = ptmf[2];
+    self->mLayout = 0;
+    self->mField58 = 0;
+    self->mField5C = 0;
+    self->mField60 = -1;
+    self->mField64 = 0;
+    self->mField65 = 0;
+    self->mField66 = 0;
+    self->mField67 = 1;
+    self->mField68 = 0;
+
+    self->mVtab = comp;
+    self->mOcc6C = comp + 0x24;
+    self->mOcc70 = comp + 0xac;
+    self->mScene = (CScn*)scene;
+
+    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
+    __ct__CSelShopWin(&self->mSelShop);
+    __ct__CCur18(&self->mCursor[0], 0);
+
+    self->mState = 0;
+    self->mSelIndex = 0;
+    self->mFieldD0 = (u32)a3;
+    return self;
+}
+#pragma pop
 
 // ---------------------------------------------------------------------------
 // CMenuSelectShop::~CMenuSelectShop()  (us-8018b48c)
 // Complete-object dtor with delete flag. Subobjects are destroyed in reverse
 // construction order: CCur18@0xB0, CSelShopWin@0x88, UnkClass_8045F564@0x78,
 // then the IUIWindow base. The nested flag dispatch selects operator delete.
+// optimize_for_size merges the r30/r31 callee-save pair into the retail
+// stmw r30,8(sp) block (MWCC_REFERENCE stmw/lmw dtor pattern).
 // ---------------------------------------------------------------------------
+#pragma push
+#pragma optimize_for_size on
 extern "C" CMenuSelectShop* __dt__15CMenuSelectShopFv(CMenuSelectShop* self, int flags) {
     if (self != 0) {
         __dt__6CCur18Fv(&self->mCursor[0], -1);
@@ -100,6 +122,7 @@ extern "C" CMenuSelectShop* __dt__15CMenuSelectShopFv(CMenuSelectShop* self, int
     }
     return self;
 }
+#pragma pop
 
 // ---------------------------------------------------------------------------
 // Target 5: CMenuSelectShop::Init  (us-8018b504)
@@ -108,18 +131,21 @@ extern "C" CMenuSelectShop* __dt__15CMenuSelectShopFv(CMenuSelectShop* self, int
 // destroy the temporaries and register the render callback.
 // ---------------------------------------------------------------------------
 void CMenuSelectShop::Init() {
-    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-    mMemRegion.createRegion(handle, 0x2000, (const char*)lbl_eu_80503AE0, 0);
+    mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x2000,
+                            (const char*)lbl_eu_80503AE0, 0);
 
-    u8 rawRegion[0x8];
-    __ct__14Class_8045F858FP17UnkClass_8045F564(
-        reinterpret_cast<Class_8045F858*>(rawRegion), &mMemRegion);
+    // RAII scratch-region guard, destroyed at the end of this scope (retail
+    // stack slot sp+0x8).
+    Class_8045F858 region(&mMemRegion);
 
-    // Build the shop window widget on the stack, copy its payload (+0x4 .. skip
-    // the vtable) into the member, then destroy the temporary.
+    // Rebuild the embedded shop window: construct a temp at sp+0x28, copy its
+    // payload (all non-vtable fields), destroy the temp, then start loading
+    // the window resources. The temp pointers are derived after the ctor so
+    // MWCC folds the accesses to r1-relative addressing (CSysWinSave::Init
+    // shape) instead of holding a callee-saved base register.
     u8 rawShop[0x28];
+    __ct__CSelShopWin(reinterpret_cast<CSelShopWin*>(rawShop));
     CSelShopWin* tempShop = reinterpret_cast<CSelShopWin*>(rawShop);
-    __ct__CSelShopWin(tempShop);
     mSelShop.mMemRegion = tempShop->mMemRegion;
     mSelShop.mFileHandle = tempShop->mFileHandle;
     mSelShop.mAccessor = tempShop->mAccessor;
@@ -129,14 +155,15 @@ void CMenuSelectShop::Init() {
     mSelShop.mIsLoaded = tempShop->mIsLoaded;
     mSelShop.mAnimState = tempShop->mAnimState;
     mSelShop.mAnimActive = tempShop->mAnimActive;
-    __dt__11CSelShopWinFv(tempShop, -1);
+    __dt__11CSelShopWinFv(rawShop, -1);
 
     func_8022C770(&mSelShop);
 
-    // Same pattern for the CCur18 cursor (payload +0x4..+0x15).
-    void* accessor = func_801355F4();
+    // Same pattern for the CCur18 cursor (payload +0x4..+0x15, slot sp+0x10).
     u8 rawCur[0x18];
-    __ct__CCur18(&rawCur[0], accessor);
+    __ct__CCur18(rawCur, func_801355F4());
+    // CCur18Data models the payload tail (+0x4..+0x15), so the pointers start
+    // 4 bytes into each cursor image (vtable skipped).
     CCur18Data* dst = reinterpret_cast<CCur18Data*>(&mCursor[4]);
     CCur18Data* src = reinterpret_cast<CCur18Data*>(&rawCur[4]);
     dst->m04 = src->m04;
@@ -145,7 +172,7 @@ void CMenuSelectShop::Init() {
     dst->m10 = src->m10;
     dst->m14 = src->m14;
     dst->m15 = src->m15;
-    __dt__6CCur18Fv(&rawCur[0], -1);
+    __dt__6CCur18Fv(rawCur, -1);
 
     reinterpret_cast<CCursor18*>(&mCursor[0])->vf2();
 
@@ -156,7 +183,6 @@ void CMenuSelectShop::Init() {
     addRenderCB__4CScnFP10IScnRenderUlUl(mScene, render, 0xd, 0);
 
     mMemRegion.func_8045F810();
-    __dt__14Class_8045F858Fv(reinterpret_cast<Class_8045F858*>(rawRegion), -1);
 }
 
 // ---------------------------------------------------------------------------
@@ -185,17 +211,31 @@ void CMenuSelectShop::Term() {
 // open), then dispatch on mState and update the shop window + cursor.
 // ---------------------------------------------------------------------------
 void CMenuSelectShop::Move() {
-    CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() != 0) return;
-    if (lbl_eu_80663E28 & 0x200000) return;
-    if (!func_8013BE50()) return;
-    if (func_8018C180()) return;
-    if (func_8018B398()) return;
+    // Single short-circuit OR per gate pair so MWCC emits the retail branch
+    // shapes: first test -> bne exit, bit test -> beq continue / b exit
+    // (CMenuShopBuy::Move / CSystemWindow::Move shape).
+    if (func_800426F0__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
+        (lbl_eu_80663E28 & 0x200000))
+        return;
+    if (func_8013BE50() == 0) return;
+    if (func_8018C180() || func_8018B398())
+        return;
 
-    if (mState == 0) func_8018A200(this);
-    else if (mState == 1) func_8018A248(this);
-    else if (mState == 2) func_8018A2C0(this);
-    else if (mState == 3) func_8018A4A0(this);
+    // Compare-chain switch (retail groups all tests, then the case bodies).
+    switch (mState) {
+    case 0:
+        func_8018A200(this);
+        break;
+    case 1:
+        func_8018A248(this);
+        break;
+    case 2:
+        func_8018A2C0(this);
+        break;
+    case 3:
+        func_8018A4A0(this);
+        break;
+    }
 
     func_8022C7C0(&mSelShop);
     func_801D202C(&mCursor[0]);
@@ -204,14 +244,17 @@ void CMenuSelectShop::Move() {
 // ---------------------------------------------------------------------------
 // Target 1: func_8018A200  (us-8018b7b4)
 // When the shop window has finished loading, start its show animation and flag
-// the menu state.
+// the menu state. auto_inline off keeps retail's out-of-line `bl` from Move.
 // ---------------------------------------------------------------------------
+#pragma push
+#pragma auto_inline off
 extern "C" void func_8018A200(CMenuSelectShop* self) {
     if (func_8022C8D0(&self->mSelShop) != 0) {
         func_8022C8E0(&self->mSelShop);
         self->mState = 1;
     }
 }
+#pragma pop
 
 // ---------------------------------------------------------------------------
 // Target 5: func_8018A248  (us-8018b7fc)
@@ -219,6 +262,8 @@ extern "C" void func_8018A200(CMenuSelectShop* self) {
 // selected item's screen position into a stack VEC3 (func_8022C930), hand it to
 // the cursor move virtual, and advance the menu state.
 // ---------------------------------------------------------------------------
+#pragma push
+#pragma auto_inline off
 extern "C" void func_8018A248(CMenuSelectShop* self) {
     if (func_8022C8D8(&self->mSelShop) != 0) {
         func_801D216C(&self->mCursor[0], 1);
@@ -228,6 +273,7 @@ extern "C" void func_8018A248(CMenuSelectShop* self) {
         self->mState = 2;
     }
 }
+#pragma pop
 
 // ---------------------------------------------------------------------------
 // Target 1: func_8018A2C0  (us-8018b874)
@@ -240,20 +286,28 @@ extern "C" void func_8018A248(CMenuSelectShop* self) {
 // + rlwimi(28,28); the dpad bits are MSB-relative in retail (extrwi 1,10/1,9
 // and 1,27/1,26), i.e. LSB bits 21/22 and 4/5.
 // ---------------------------------------------------------------------------
-extern "C" void func_8018A2C0(CMenuSelectShop* self) {
+#pragma push
+#pragma auto_inline off
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) void func_8018A2C0(CMenuSelectShop* self) {
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
 
     u32 dirButton, cancelButton, okButton, closeButton;
-    if (cf::CfGameManager::func_80086F9C(-1) != 0) {
-        u32 f = pad->mTurboPressButtonFlags;
+    // Direct C-ABI call: the retail symbol is the no-arg Fv form but the call
+    // site still loads r3=-1 (the s16 overload's arg). Calling the C-ABI decl
+    // (which takes an int) reproduces the li.
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        // p declared first so the register allocator gives it r0 (retail
+        // lwz r0, 4(r30)); f lands in r5.
         u32 p = pad->mPad.mPressedButtonFlags;
+        u32 f = pad->mTurboPressButtonFlags;
         dirButton = (f & 0x8004) != 0;
         cancelButton = (f & 0x10008) != 0;
         okButton = (p >> 21) & 1;
         closeButton = (p >> 22) & 1;
     } else {
-        u32 f = pad->mTurboPressButtonFlags;
         u32 p = pad->mPad.mPressedButtonFlags;
+        u32 f = pad->mTurboPressButtonFlags;
         dirButton = (f & 0x8004) != 0;
         cancelButton = (f & 0x10008) != 0;
         okButton = (p >> 4) & 1;
@@ -279,8 +333,8 @@ extern "C" void func_8018A2C0(CMenuSelectShop* self) {
         func_8022C930(&out, &self->mSelShop, (u8)self->mSelIndex);
         reinterpret_cast<CCur18View*>(&self->mCursor[0])->vf04(&out);
     } else if (okButton != 0) {
-        // Confirm: act on the selected shop entry.
-        switch (self->mSelIndex) {
+        // Confirm: act on the selected shop entry (signed compare like retail).
+        switch ((s32)self->mSelIndex) {
         case 0:
             func_80134024(self->mFieldD0);
             func_80138078(3);
@@ -302,18 +356,22 @@ extern "C" void func_8018A2C0(CMenuSelectShop* self) {
         func_801D216C(&self->mCursor[0], 0);
     }
 }
+#pragma pop
 
 // ---------------------------------------------------------------------------
 // Target 2: func_8018A4A0  (us-8018ba54)
 // When the shop window animation is running, mark the menu state and the field
 // 0x64 busy flag.
 // ---------------------------------------------------------------------------
+#pragma push
+#pragma auto_inline off
 extern "C" void func_8018A4A0(CMenuSelectShop* self) {
     if (func_8022C8D8(&self->mSelShop) != 0) {
         self->mState = 4;
         self->mField64 = 1;
     }
 }
+#pragma pop
 
 // ---------------------------------------------------------------------------
 // Target 2: CMenuSelectShop::cbRenderBefore  (us-8018ba9c)
@@ -323,19 +381,21 @@ extern "C" void func_8018A4A0(CMenuSelectShop* self) {
 // ---------------------------------------------------------------------------
 extern "C" void cbRenderBefore__15CMenuSelectShopFv(void*);
 void CMenuSelectShop::cbRenderBefore() {
-    CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() != 0) return;
-    if (lbl_eu_80663E28 & 0x200000) return;
-    if (!func_8013BE50()) return;
-    {
-        GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-        nw4r::lyt::DrawInfo drawInfo;
-        func_80137250__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
-        func_8022C830(&mSelShop, &drawInfo);
-        if ((s32)mSelIndex >= 0)
-            func_801D20B0(&mCursor[0], &drawInfo);
-        __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo, -1);
-    }
+    // Single short-circuit OR gate pair (CMenuShopBuy / CSystemWindow shape).
+    if (func_800426F0__9CTaskGameFv(getInstance__9CTaskGameFv()) ||
+        (lbl_eu_80663E28 & 0x200000))
+        return;
+    if (func_8013BE50() == 0) return;
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+    // Raw-storage DrawInfo built/destroyed via the C-ABI ct/dt calls so the
+    // scope-exit destructor is not auto-emitted (CMenuShopBuy scheme).
+    u8 drawInfo[0x54];
+    __ct__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0]);
+    func_80137250__FPQ34nw4r3lyt8DrawInfo(&drawInfo[0]);
+    func_8022C830(&mSelShop, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    if ((s32)mSelIndex >= 0)
+        func_801D20B0(&mCursor[0], (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
 
 extern "C" u32 func_8018A608() { return (u32)lbl_eu_806642E8; }

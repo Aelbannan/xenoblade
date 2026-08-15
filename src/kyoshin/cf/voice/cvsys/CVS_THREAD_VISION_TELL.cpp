@@ -84,9 +84,12 @@ CVS_THREAD_VISION_TELL* __ct__802A96C0(CVoiceHandle* h1, CVoiceHandle* h2) {
 void func_802A97A0(CVS_THREAD_VISION_TELL* self) {
     // Copy init data -- read index 0 first (lwzu pointer-increment) so MWCC
     // emits the lis @ha + lwzu @l base-load form, then the handle, then the
-    // remaining elements. Match the HAGE pattern.
+    // remaining elements. Match the HAGE pattern. v0 is declared before p so
+    // the lwzu result claims the lower scratch register (retail: r4) and the
+    // base pointer takes r5.
+    u32 v0;
     const u32* p = lbl_eu_80539DBC;
-    u32 v0 = *p++;
+    v0 = *p++;
     CVoiceHandle* handle20 = self->field_0x20;
     self->unk4 = *p++;
     self->unk0 = (u32*)v0;
@@ -96,9 +99,8 @@ void func_802A97A0(CVS_THREAD_VISION_TELL* self) {
     if (handle20 == NULL) return;
     if (self->field_0x24 == NULL) return;
 
-    // Check if slot 1 voice is still active (inline cast, matches retail r12
-    // dispatch and avoids pinning the function pointer into a callee-saved reg).
-    if (((int (*)(CVoiceHandle*))handle20->vtable[0x2BC / 4])(handle20) != 0) return;
+    // Check if slot 1 voice is still active (virtual dispatch -> r12 chain)
+    if (((CVS_THREAD_VISION_TELL_Vtbl*)handle20)->isVoiceActive() != 0) return;
 
     // Get iterator from slot 2 handle
     if (func_802A7850(func_802A77E8(self->field_0x24)) == 0) return;
@@ -116,11 +118,7 @@ void func_802A97A0(CVS_THREAD_VISION_TELL* self) {
         voiceId = 0xCB;
         break;
     case 6:
-        if (func_802A7B90(self->field_0x20, self->field_0x24) != 0) {
-            voiceId = 0x76F;
-        } else {
-            voiceId = 0xCC;
-        }
+        voiceId = (func_802A7B90(self->field_0x20, self->field_0x24) != 0) ? 0x76F : 0xCC;
         break;
     case 7:
         voiceId = 0xCD;
@@ -129,11 +127,7 @@ void func_802A97A0(CVS_THREAD_VISION_TELL* self) {
         voiceId = 0xCE;
         break;
     case 1:
-        if (func_802A7EB0(self->field_0x20, self->field_0x24) != 0) {
-            voiceId = 0x51A;
-        } else {
-            voiceId = 0xCF;
-        }
+        voiceId = (func_802A7EB0(self->field_0x20, self->field_0x24) != 0) ? 0x51A : 0xCF;
         break;
     default:
         self->func_802A3B50();
@@ -162,9 +156,12 @@ void func_802A9924(CVS_THREAD_VISION_TELL* self) {
     }
 
     // Copy init data -- index 0 first (lwzu pointer-increment) to force the
-    // retail lis @ha + lwzu @l base-load form.
+    // retail lis @ha + lwzu @l base-load form. v0 is declared before p so the
+    // lwzu result claims the lower scratch register (retail: r4) and the base
+    // pointer takes r5.
+    u32 v0;
     const u32* p = lbl_eu_80539DC8;
-    u32 v0 = *p++;
+    v0 = *p++;
     CVoiceHandle* handle24 = self->field_0x24;
     self->unk4 = *p++;
     self->unk0 = (u32*)v0;
@@ -172,7 +169,7 @@ void func_802A9924(CVS_THREAD_VISION_TELL* self) {
 
     // Initial active-state gate on the slot-2 handle (read once here).
     if (handle24 == NULL) return;
-    if (((int (*)(CVoiceHandle*))handle24->vtable[0x2BC / 4])(handle24) != 0) return;
+    if (((CVS_THREAD_VISION_TELL_Vtbl*)handle24)->isVoiceActive() != 0) return;
 
     // Iterator active?
     if (func_802A7850(func_802A77E8(self->field_0x24)) != 0) {

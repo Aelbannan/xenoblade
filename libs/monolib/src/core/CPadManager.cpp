@@ -11,7 +11,53 @@ const int PAD_WIIMOTE_Y_POS_SCALE = 210;
 const int NUM_BUTTONS_WIIMOTE_NUNCHUCK = 14;
 const int NUM_BUTTONS_CLASSIC = 16;
 
+// ---- Retail sbss data (blob monolibdata1 dissolve): 8-byte slot 0x80665630 ----
+// Word 0 holds the heap-allocated CPadData pointer. Declared before the
+// decomp-invented spPadData so this retail slot leads the TU's .sbss layout
+// at its retail range start.
+CPadData* lbl_eu_80665630[2];
+
 CPadData* CPadManager::spPadData;
+
+// ---- Retail rodata data (blob monolibdata1 dissolve) ----
+// WPAD/Classic button conversion tables (retail .rodata 0x80522870 / 0x805228E0).
+// GLOBAL const (extern "C") so updatePadInputs references the retail names
+// instead of TU-local @NNNN pools.
+extern "C" const PadButtonMapping lbl_eu_80522870[NUM_BUTTONS_WIIMOTE_NUNCHUCK] = {
+    {WPAD_BUTTON_LEFT, PAD_INPUT_FLAG_LEFT},
+    {WPAD_BUTTON_RIGHT, PAD_INPUT_FLAG_RIGHT},
+    {WPAD_BUTTON_UP, PAD_INPUT_FLAG_UP},
+    {WPAD_BUTTON_DOWN, PAD_INPUT_FLAG_DOWN},
+    {WPAD_BUTTON_A, PAD_INPUT_FLAG_CORE_A},
+    {WPAD_BUTTON_B, PAD_INPUT_FLAG_CORE_B},
+    {WPAD_BUTTON_1, PAD_INPUT_FLAG_1},
+    {WPAD_BUTTON_2, PAD_INPUT_FLAG_2},
+    {WPAD_BUTTON_HOME, PAD_INPUT_FLAG_HOME},
+    {WPAD_BUTTON_PLUS, PAD_INPUT_FLAG_PLUS},
+    {WPAD_BUTTON_MINUS, PAD_INPUT_FLAG_MINUS},
+    {WPAD_BUTTON_FS_Z, PAD_INPUT_FLAG_FS_Z},
+    {WPAD_BUTTON_FS_C, PAD_INPUT_FLAG_FS_C},
+    {0, 0}
+};
+
+extern "C" const PadButtonMapping lbl_eu_805228E0[NUM_BUTTONS_CLASSIC] = {
+    {WPAD_BUTTON_CL_LEFT, PAD_INPUT_FLAG_LEFT},
+    {WPAD_BUTTON_CL_RIGHT, PAD_INPUT_FLAG_RIGHT},
+    {WPAD_BUTTON_CL_UP, PAD_INPUT_FLAG_UP},
+    {WPAD_BUTTON_CL_DOWN, PAD_INPUT_FLAG_DOWN},
+    {WPAD_BUTTON_CL_HOME, PAD_INPUT_FLAG_HOME},
+    {WPAD_BUTTON_CL_PLUS, PAD_INPUT_FLAG_PLUS},
+    {WPAD_BUTTON_CL_MINUS, PAD_INPUT_FLAG_MINUS},
+    {WPAD_BUTTON_CL_A, PAD_INPUT_FLAG_CLASSIC_A},
+    {WPAD_BUTTON_CL_B, PAD_INPUT_FLAG_CLASSIC_B},
+    {WPAD_BUTTON_CL_X, PAD_INPUT_FLAG_CLASSIC_X},
+    {WPAD_BUTTON_CL_Y, PAD_INPUT_FLAG_CLASSIC_Y},
+    {WPAD_BUTTON_CL_L, PAD_INPUT_FLAG_CLASSIC_L},
+    {WPAD_BUTTON_CL_R, PAD_INPUT_FLAG_CLASSIC_R},
+    {WPAD_BUTTON_CL_ZL, PAD_INPUT_FLAG_CLASSIC_ZL},
+    {WPAD_BUTTON_CL_ZR, PAD_INPUT_FLAG_CLASSIC_ZR},
+    {0, 0}
+};
 
 CWpadStatus* CPadManager::getWpadStatus(int index){
     return &spPadData->mWpadStatuses[index];
@@ -393,44 +439,10 @@ void CPad::updateFlagValues(u32 buttonFlags){
 void CPadManager::updatePadInputs(){
     /*
     WPAD button values -> custom button values conversion tables for
-    Wiimote + Nunchuck and Classic Controller
+    Wiimote + Nunchuck and Classic Controller (retail rodata lbl_eu_80522870 /
+    lbl_eu_805228E0, defined at the bottom of this TU).
     The entry with all zeroes acts as a terminator
     */
-    const PadButtonMapping sWiimoteMaskValues[NUM_BUTTONS_WIIMOTE_NUNCHUCK] = {
-        {WPAD_BUTTON_LEFT, PAD_INPUT_FLAG_LEFT},
-        {WPAD_BUTTON_RIGHT, PAD_INPUT_FLAG_RIGHT},
-        {WPAD_BUTTON_UP, PAD_INPUT_FLAG_UP},
-        {WPAD_BUTTON_DOWN, PAD_INPUT_FLAG_DOWN},
-        {WPAD_BUTTON_A, PAD_INPUT_FLAG_CORE_A},
-        {WPAD_BUTTON_B, PAD_INPUT_FLAG_CORE_B},
-        {WPAD_BUTTON_1, PAD_INPUT_FLAG_1},
-        {WPAD_BUTTON_2, PAD_INPUT_FLAG_2},
-        {WPAD_BUTTON_HOME, PAD_INPUT_FLAG_HOME},
-        {WPAD_BUTTON_PLUS, PAD_INPUT_FLAG_PLUS},
-        {WPAD_BUTTON_MINUS, PAD_INPUT_FLAG_MINUS},
-        {WPAD_BUTTON_FS_Z, PAD_INPUT_FLAG_FS_Z},
-        {WPAD_BUTTON_FS_C, PAD_INPUT_FLAG_FS_C},
-        {0, 0}
-    };
-
-    const PadButtonMapping sClassicMaskValues[NUM_BUTTONS_CLASSIC] = {
-        {WPAD_BUTTON_CL_LEFT, PAD_INPUT_FLAG_LEFT},
-        {WPAD_BUTTON_CL_RIGHT, PAD_INPUT_FLAG_RIGHT},
-        {WPAD_BUTTON_CL_UP, PAD_INPUT_FLAG_UP},
-        {WPAD_BUTTON_CL_DOWN, PAD_INPUT_FLAG_DOWN},
-        {WPAD_BUTTON_CL_HOME, PAD_INPUT_FLAG_HOME},
-        {WPAD_BUTTON_CL_PLUS, PAD_INPUT_FLAG_PLUS},
-        {WPAD_BUTTON_CL_MINUS, PAD_INPUT_FLAG_MINUS},
-        {WPAD_BUTTON_CL_A, PAD_INPUT_FLAG_CLASSIC_A},
-        {WPAD_BUTTON_CL_B, PAD_INPUT_FLAG_CLASSIC_B},
-        {WPAD_BUTTON_CL_X, PAD_INPUT_FLAG_CLASSIC_X},
-        {WPAD_BUTTON_CL_Y, PAD_INPUT_FLAG_CLASSIC_Y},
-        {WPAD_BUTTON_CL_L, PAD_INPUT_FLAG_CLASSIC_L},
-        {WPAD_BUTTON_CL_R, PAD_INPUT_FLAG_CLASSIC_R},
-        {WPAD_BUTTON_CL_ZL, PAD_INPUT_FLAG_CLASSIC_ZL},
-        {WPAD_BUTTON_CL_ZR, PAD_INPUT_FLAG_CLASSIC_ZR},
-        {0, 0}
-    };
 
     KPADResult result;
 
@@ -460,7 +472,7 @@ void CPadManager::updatePadInputs(){
                 continue;
             }
 
-            u32 buttonFlags = pad->calculateFlagValue(padStatus, sClassicMaskValues, sWiimoteMaskValues);
+            u32 buttonFlags = pad->calculateFlagValue(padStatus, lbl_eu_805228E0, lbl_eu_80522870);
             pad->setJoystickValues(padStatus);
             pad->updateFlagValues(buttonFlags);
             pad->setAcceleration(padStatus);
@@ -559,4 +571,4 @@ CPad* CPadManager::getMainGCPad(){
     return spPadData->mMainGCPad;
 }
 
-extern "C" u8* func_eu_80449F30(int index) { extern unsigned char* lbl_eu_80665630; return lbl_eu_80665630 + index * 0xf8 + 0x24; }
+extern "C" u8* func_eu_80449F30(int index) { return (u8*)lbl_eu_80665630[0] + index * 0xf8 + 0x24; }

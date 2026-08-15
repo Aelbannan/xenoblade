@@ -119,8 +119,8 @@ extern "C" void func_800B9404(void*);
 extern "C" void func_80186664(u8* self) {
     u32 zero = 0;
     void** p = (void**)self;
-    u16* h = (u16*)(self + 0x100);
-    for (u32 i = 0; i < 64; i++) {
+    u16* h = (u16*)self;
+    for (s32 i = 0; i < 64; i++) {
         void* ptr = *p;
         if (ptr != 0) {
             if (func_800B8920(ptr) != 0) {
@@ -131,9 +131,9 @@ extern "C" void func_80186664(u8* self) {
             }
             *p = (void*)0;
         }
-        *h = (u16)0;
-        p++;
+        *(h + 0x80) = (u16)0;
         h++;
+        p++;
     }
 }
 

@@ -18,6 +18,49 @@ public:
     CVoiceHandle* field_0x24;  // 0x24: voice handle pointer (slot 2)
 };
 
+// vtable-access helper: exposes the CVoiceHandle vtable method at slot 175
+// (offset 0x2BC, the is-active check) as a real virtual so MWCC emits the
+// retail r12 dispatch (`lwz r12,0(rS); lwz r12,0x2bc(r12)`).  MWCC places
+// declared slot P at vtable offset (P+2)*4 (2 implicit leading slots), so
+// declared slot 173 lands at 0x2BC.
+#define CVT_PAD4(n)  virtual void v##n##0(); virtual void v##n##1(); virtual void v##n##2(); virtual void v##n##3();
+#define CVT_PAD8(n)  CVT_PAD4(n##0) CVT_PAD4(n##1)
+#define CVT_PAD16(n) CVT_PAD8(n##0) CVT_PAD8(n##1)
+#define CVT_PAD32(n) CVT_PAD16(n##0) CVT_PAD16(n##1)
+#define CVT_PAD64(n) CVT_PAD32(n##0) CVT_PAD32(n##1)
+
+struct CVS_THREAD_DOWN_Vtbl {
+    CVT_PAD64(0)   // slots 0-63
+    CVT_PAD64(1)   // slots 64-127
+    CVT_PAD32(2)   // slots 128-159
+    CVT_PAD8(3)    // slots 160-167
+    CVT_PAD4(4)    // slots 168-171
+    virtual void v172();              // slot 172
+    virtual int isVoiceActive();      // slot 173 -> vtable offset 0x2BC
+};
+
+#undef CVT_PAD4
+#undef CVT_PAD8
+#undef CVT_PAD16
+#undef CVT_PAD32
+#undef CVT_PAD64
+
+// Raw layout of the CVS_THREAD_DOWN object exposing the implicit vtable
+// pointer at 0x1C (owned by the CVS_THREAD base) so the factory can
+// override it with the DOWN vtable, plus the two voice slots.
+struct CVS_THREAD_DOWN_raw {
+    u32 unk0;                   // 0x00
+    u32 unk4;                   // 0x04
+    u32 unk8;                   // 0x08
+    u32 unkC;                   // 0x0C
+    u32 unk10;                  // 0x10
+    u32 unk14;                  // 0x14
+    u32 unk18;                  // 0x18
+    void* vtable;               // 0x1C
+    CVoiceHandle* field_0x20;   // 0x20
+    CVoiceHandle* field_0x24;   // 0x24
+};
+
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" {
     int func_802A3E88(CVS_THREAD* self);
@@ -27,7 +70,12 @@ extern "C" {
     u8* func_802A34E4(int size);
 }
 
-extern "C" void __ct__cf_CVS_THREAD();
+extern "C" void __ct__cf_CVS_THREAD(void* self);
+
+// Runtime rethrow (NMWException.h): declared noreturn so MWCC elides the
+// __end__catch epilogue of a catch-all handler that ends with `bl __throw`
+// (retail catch-all handlers end at the rethrow).
+extern "C" __declspec(noreturn) void __throw(char* throwtype, void* location, void* dtor);
 
 extern "C" u32 lbl_eu_80539A68[3];
 extern "C" u32 lbl_eu_80539A74[3];

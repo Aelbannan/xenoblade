@@ -1868,6 +1868,17 @@ def _symbolic_initial_pair(
 _SIMPLIFY_NODE_CAP = 4096
 _SIMPLIFY_CACHE_LIMIT = 20_000
 
+# Bounded disjointness SAT fallback (2026-08): the cheap simplify is a local
+# rewrite and can leave a structural contradiction unreduced — e.g. the cross
+# pairs of a branchy function build ``And(X, Not(X))`` from per-side byte-read
+# memory terms whose equalities are not structurally identical, so
+# ``is_false(simplify(And(c0, c1)))`` returns False even though the two path
+# conditions can never co-occur.  A bounded QF_BV satisfiability check is
+# complete for this structure: ``unsat`` proves the pair is genuinely
+# disjoint, so skipping it is correct.  Fail-closed on sat/unknown/timeout
+# (the pair is compared as before).
+_DISJOINT_SAT_TIMEOUT_MS = 10_000
+
 
 @dataclass(frozen=False)
 class _SimplifyBudget:
@@ -1896,6 +1907,32 @@ def _simplify_timeout(deadline: Deadline | None) -> int:
     if deadline is None:
         return 0
     return max(1, deadline.remaining_ms())
+
+
+def _path_conditions_disjoint_sat(
+    combined: Any, z3: Any, deadline: Deadline | None,
+) -> bool:
+    """Bounded QF_BV satisfiability fallback for the terminal-pair
+    disjointness check.
+
+    ``True`` iff ``combined`` (the conjunction of the retail and decomp path
+    conditions) is unsatisfiable — i.e. the two paths can never co-occur, so
+    skipping the terminal pair is correct.  Sound: a solver ``unsat`` result
+    for the bitvector formula is a proof of infeasibility, so skipping is
+    never a false certificate.  Fail-closed: ``sat``/``unknown``/timeout/
+    exception return ``False`` and the pair is compared as before (which can
+    only reject, never accept).  Bounded by a fixed wall-clock timeout so a
+    pathological condition cannot spin the witness.
+    """
+    if deadline is not None and deadline.expired():
+        return False
+    try:
+        solver = z3.Solver()
+        solver.set(timeout=_DISJOINT_SAT_TIMEOUT_MS)
+        solver.add(combined)
+        return solver.check() == z3.unsat
+    except Exception:
+        return False
 
 
 def _ast_node_count(node: Any, z3: Any, cap: int) -> int:
@@ -2835,6 +2872,16 @@ def run_structural_witness(
                 z3.And(left.condition, right.condition), z3, budget,
             )
             if z3.is_false(combined):
+                continue
+            # Bounded SAT fallback (2026-08): the simplify is a local rewrite
+            # and can leave a genuine contradiction (e.g. And(X, Not(X)) over
+            # per-side byte-read memory terms) unreduced, so cross-path pairs
+            # of branchy functions are compared and spuriously reject.  An
+            # ``unsat`` QF_BV check proves the paths cannot co-occur — skip.
+            # Fail-closed: sat/unknown/timeout compare the pair as before.
+            if not z3.is_true(combined) and _path_conditions_disjoint_sat(
+                combined, z3, deadline,
+            ):
                 continue
             pairs_checked += 1
             divergence: list[str] = []

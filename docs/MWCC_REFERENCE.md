@@ -619,6 +619,7 @@ The policy exception is recorded in the target attempt log with `policy_exceptio
 | Retail materialises a struct base (`addi r3,rX,0x3e`) for a long run of stores; all pointer/volatile/field-store forms fold back to direct offsets | MWCC keeps a **walked pointer** in a base register but folds constant-index/field accesses | Declare `u16* q = &obj->sub.vDelta;` and advance with `*q++` per store; start one field before the run so MWCC materialises at the retail base after the first folded store (HBMMIXInitChannel tail, 594/594; **__MIXRmtUpdateSettings phase-3**: walk `u16* q = (u16*)((u8*)out + 0x102)` so the folded cur0 store lands at `258(r30)` and the run materialises `addi r3,r30,260` with `sth 0..28(r3)` — 167 structural → 0, FULL_MATCH us-8034f910) |
 | 3-op load-order reg-swaps in a top-level sum (`lwz` order differs, adds identical) | MWCC rotates a top-level sum chain `[s0,s1,s2]` into loads `[s2,s0,s1]` (tree `((s2+s0)+s1)`) | Write the source in rotated order: retail loads `[panFrontL, fader, X]` require `fader + X + panFrontL`; sums nested in a larger tree (`(a+b+c)-30`) are NOT rotated (HBMMIXInitChannel) |
 | 0 structural, pure reg-swaps, but `cycle` witness never certifies | **Gate 6 reject-list: any prologue that saves FPRs emits `stfd`+`psq_st` pairs (MWCC always does this for f14–f31 saves), and the register-renaming witness unconditionally rejects `psq_*`** — witness-ineligible no matter how clean the body diff. Also: commutative `add` operand-order swaps break rho (r6 maps to both r6 and r0) and the region-sliced fallback refuses. **Confirmed 2026-08-03: the witness also never applies to any function containing a `bl` call** — 0/11 witness-certified certs in the sidecar contain `bl`; opaque-EABI callee contracts make the terminal-state comparison diverge on callee effects. For ANY call-containing target, the only no-SMT acceptance is FULL_MATCH (byte-identical) | Record stall with `next_change: accept via --smt out-of-band` (SMT is out-of-band per orchestrator). Skip further regalloc attempts — no source lever flips MWCC's callee-save colors for FPR-saving functions (hbm/seq.c `__HBMSEQInitTracks` 12 swaps, `HBMSEQRunAudioFrame` 16 swaps; `__HBMSEQReadHeader` 1 swap via rho conflict); for bl-containing targets the reg-swap levers are equally unlikely to pay off unless a FULL_MATCH shape is reachable (e.g. wpad `WPADiExcludeButton` r5↔r6 pointer color: 3 source variants no-op, 17 swaps — recorded for SMT acceptance) |
+| **Branchy pure reg-swap pairs reject as "terminal pair diverges structurally — gpr r0"** | The cheap disjointness simplify (`_z3_simplify`) is a local rewrite: cross-path pairs of branchy functions build `And(X, Not(X))` from per-side byte-read memory equalities that are NOT structurally identical across sides, so `is_false` returns False and the impossible pair is compared (diverges on a lane live on only one path). **FIXED 2026-08 in `run_structural_witness`**: bounded QF_BV `unsat` fallback (`_path_conditions_disjoint_sat`, 10 s timeout, fail-closed on sat/unknown/timeout) proves the cross paths cannot co-occur and skips the pair. Sound: `unsat` for the conjunction is a proof of infeasibility. 142 tests green incl. `test_branchy_cross_pair_disjointness_sat_fallback`. Unblocked `CMMTex::OnFileEvent` (us-801184b8, rho r5↔r6, EQUIVALENT_MATCH witness-certified). Apply to any branchy reg-swap target whose witness reason is `structural … gpr r0` |
 
 ## RVL_SDK bte/sdp sdp_db.c — SDP_AddServiceClassIdList FULL_MATCH: "8-per-group" is MWCC ×8 unroll, not source structure (GC/3.0a3.4 `-func_align 4` `-ipa off`)
 
@@ -1304,6 +1305,7 @@ Verified 100% byte-identical: `btsnd_hcic_pin_code_req_reply` (0x1E4), `btsnd_hc
 | WPAD witness-acceptance batch (2026): `__wpadCalcRadioQuality` (us-8036bfb0, 3 reg-swaps, callee-free) **ACCEPTED via the register-renaming witness** (EQUIVALENT_MATCH, semantic certificate) — pure reg-swap residuals with no indirect calls AND no call-argument-register conflicts are witness-certifiable even when the static mapping reuses a register. `__wpadCalcRecalibration` (us-8036c9c0) is **NOT witness-certifiable**: its clean r3↔r6 index/dataFormat swap conflicts with call-argument r3 (bl OSDisableInterrupts/_WUDGetDevAddr keep r3=r3 on both sides), so no global rho exists — the one-time batch acceptance ("FULL_MATCH at 99.36%") was spurious and failed re-verification. `WPADiExcludeButton` (us-8036fb80, 17 reg-swaps, clean r5↔r6 bijection, call-free rho) witness **does not converge** (Z3 effect-aware memory projection over its lhz/sth queue ops runs >30 min twice, quiet machine) — the renaming is trivially findable, the post-renaming equivalence check is the bottleneck; record as witness-stall. `__wpadCalcControllerData` (us-8036ca80, 13 reg-swaps) is callee-blocked AND rho-conflicted (retail r26→decomp r27/r29/r30) — needs FULL_MATCH; unblocks when `__wpadIsControllerDataChanged` (its documented 4-structural scheduling stall + 303 reg-swaps) is matched. `__wpadIsBusyStream` (us-803714c0) mapping is forward-conflicted (retail r22→26 and r30→26) — no global rho. Remaining witness-ineligible: `WPADDisconnect` (2 structural: prologue stw/rlwinm order tied to the index register r29 vs r30 — resisted declaration order ×2, explicit index local, initializer form), `__wpadConnectionCallback` (indirect callbacks; pStr/pInfo r31↔r30 color resisted declaration reorder), `__wpadManageHandler` (57 structural, register-count cascade r18→r17), `__wpadInitSub` (indirect + bss gap) |
 | **Supersedes the witness-batch `WPADDisconnect` stall above:** `WPADDisconnect` (us-8036ee50) had 2 prologue structural mismatches plus an r29↔r30/r31 allocation rotation; direct/nested source variants left the shared array index or post-history control block in the wrong saved register | The first interrupt-protected status read and the post-`WUDSetDeviceHistory` status/sleeping workflow were one allocation web. A plain array index kept `chan*4` in r30; even after an explicit byte offset moved it to retail r29, the second `lwzx` coalesced its result into the dead index (r29) instead of the dead array base (retail r31) | Compute `u32 offset = chan * sizeof(WPADCB*)`, use the existing inlined `__wpadGetStatusSafe(chan)` for the first read, and put the complete second fetch → protected status read → sleeping gate/store → `WPADControlLed` sequence in one `static void` helper taking `(chan, offset)`. MWCC inlines the helper: its nested allocation web coalesces the second `lwzx` result into r31 while status stays r30 → **100.0% byte-identical, 0 structural / 0 reg-swaps, exact 0xC0, FULL_MATCH**, split PASS with 0x8 spare. Reusable: when a direct block picks the wrong dead operand for indexed-load coalescing, isolate the whole semantic workflow in one void inline helper rather than returning a pointer/boolean (return forms emitted extra NULL materialization/tests) |
 | `__wpadSetupConnectionCallback` (us-8036dc50) / `__wpadAbortConnectionCallback` (us-8036dd20): 2–4 pure reg-swaps, 0 structural — retail coalesces the interrupt-protected field loads (`st = p->status`, `devHandle = p->devHandle`) **into the refetched pointer's register** (`lwz r29,2236(r29)`, `lbz r29,2243(r29)`) while the inline source form allocates fresh regs (st→r28, devHandle→r31) | MWCC coalesces a load result into the base register only when the read is the **first load in the fetch's live range** (retail Setup's status read uses the entry p — direct `st = p->status` coalesces naturally), and — for a fetch-then-load pair — when the load produces a **conversion-free u8 value**. The refetched devHandle read with `u8 devHandle = p->devHandle;` (s8→u8 implicit conversion) or `(u8)p->devHandle` (cast) creates a conversion vreg that forces a fresh register; `s32`/`u32` locals add `extsb`/`clrlwi`; changing the struct field to `u8` regresses `__wpadClearControlBlock`/`__wpadSendDataSub` (signed `devHandle < 0` check + `-1` store need s8) | **Wrap each protected read in a `static` helper that gets inlined** (`static s32 __wpadGetStatusSafe(s32 chan)` / `static u8 __wpadGetDevHandleSafe(s32 chan)` each doing fetch → `OSDisableInterrupts` → load → `OSRestoreInterrupts` → return), and read the byte field through a **u8 lvalue view**: `u8 devHandle = *(u8*)&p->devHandle;`. The inlined helper's nested-scope locals let MWCC coalesce the load into the refetched p register exactly like retail, and the u8 lvalue gives the plain zero-extended `lbz` (no conversion node, no extsb). Use the helper for the **refetched** reads; keep the direct `st = p->status` form when retail reads from the entry p (Setup) → both **100.0% byte-identical, FULL_MATCH**, semantic-certified on `cycle` |
+| **Same lvalue-view lever for u16 array elements** (`UnkClass_8047E110::func_80480EF0`, us-80484ec0, 2026-08): a neighbour-scan loop `u16 edgeCount = m.edges[node.edgeOffset];` (natural indexing) makes MWCC allocate the `lhzx` result into a FRESH register (r4) while retail coalesces it into the freed address temp (`lhzx r3,r7,r3` — dest reuses the dead index), 72.7% / 6 reg_swap, witness-ineligible (intra-instruction dest==idx rho conflict). Write the load as **`u16 edgeCount = *(const u16*)&m.edges[node.edgeOffset];`** (and the neighbour pointer as `(const u16*)&m.edges[node.edgeOffset + 1]`) — the lvalue-view cast reproduces retail's coalescing byte-for-byte, **100.0% FULL_MATCH**, semantic-certified. Reusable: indexed array loads that retail coalesces into the dead index register need the `*(const T*)&arr[i]` lvalue form, not `arr[i]` |
 
 ### RVL_SDK wpad/WPADHIDParser.c (US, mwcc_43_151 `-O4,p`)
 
@@ -7616,6 +7618,23 @@ difference.
    Accepted FULL_MATCH (semantic-certified; callee `__HBMSYNResetAllControllers` is still
    STRUCTURAL in synctrl.c, which would block SMT, so 100% static was the right target).
 
+- **Signed loop bound flips `cmplw` → `cmpw`** (`CVirtualLightObj::func_80495644`, us-804996b8,
+  2026-08): the slot-init loop `for (u32 i = 0; i < self->mSlotCounts[idx]; i++)` with a `u32`
+  counter and `u32` count emits `cmplw` (unsigned), retail `cmpw` (signed). Fix: `s32 i` plus a
+  `(s32)` cast on the `u32` count — `for (s32 i = 0; i < (s32)self->mSlotCounts[idx]; i++)` —
+  byte-identical, 0 structural, FULL_MATCH. Reusable: a retail `cmpw`/`blt` loop guard with an
+  unsigned bound needs the signed cast on the bound, not just the counter.
+
+- **Naming ONE pooled scale constant unifies the WHOLE pool incl. MWCC's conversion magic**
+  (`ocUnit::turn`, us-8003e94c, 2026-08): `float f = (float)(s32)angle * 4.68133871e-08f;`
+  pooled BOTH the scale AND the `(double)(s32)` magic as TU-local `@N` labels (2 reloc drifts)
+  plus a `fmuls` operand swap (97.6%). Referencing the scale through the named extern
+  `lbl_eu_8066A210` (already declared in the header) made MWCC's literal pool unify EVERYTHING —
+  the scale's `lfs` reloc AND the magic's `lfd` reloc (to the planted
+  `static const f64 lbl_eu_80665C38 = 4503601774854144.0`) — and fixed the `fmuls` operand order:
+  100% byte-identical, FULL_MATCH. Reusable: when a literal-pool function has `@N` reloc drift,
+  name the FIRST constant you can via an existing extern — the pool unifies the rest.
+
 1. **TU-owned BSS globals → base-relative addressing.** Retail `syn.s` defines
    `__HBMSYNSynthList`(+0), `__HBMSYNVoice`(+4), `__s_HBMSYNVoice`(+8, 0x4C0),
    `__init`(+0x4C8, local) in one `.bss` block and most functions address them as
@@ -11183,3 +11202,80 @@ return false;
 ```
 
 `-O4,p` unrolls it into the exact two-check chain with the fall-through `li r3,0; blr`. Residual: retail materializes `addi r3,r3,0x1f4` for `&shake[0]` and loads `lbz 0x162(r3)/0x2da(r3)` from it; Wii/1.1 folds the base into the displacements (`lbz 0x356(r3)/0x4ce(r3)`) in every shape tried (sub local, `sub++`, `p += 0x178`, volatile reads, address-taken inline helper, `sub[i]` loop, `#pragma unroll`, `-ipa off`) — one instruction short of FULL_MATCH. A pointer-walk loop (`for (sub = &shake[0]; sub != &shake[2]; sub++)`) does NOT unroll (runtime `divwu` trip count). The local-default pattern (`bool r = false; if (c) r = true; return r;`) also keeps a branch but emits `beqlr` (branch-to-LR peephole) instead of retail's `beq` + separate `li r3,0; blr` block.
+
+## kyoshin/CtrlObjectParam func_8009D790 — volatile read reproduces retail's reload + regalloc cascade (FULL_MATCH 100%)
+
+`func_8009D790(s16* arr, u32 idx)` (0x54): `if (arr[idx] > -1) return func_80157C4C(idx > 4 ? 2 : idx + 4, arr[idx]); return 0;`. Retail **reloads** arr[idx] for the call arg (`lhax r4,r3,r5`) because the category ternary materializes in r0 (`li r0,2; bgt; addi r0,r4,4; or r3,r0,r0`), clobbering the first read; result stays in r6 and the `rlwinm r5,r4,1,0,30` (idx*2) is born first into r5. Plain C (both `*q` and indexed `arr[idx]` forms, with/without a named `a` local) CSEs the two reads into `lhax; or r4,r0,r0`, colors the ternary directly into r3 and result into r5, and reorders the rlwinm after the result init — 23.8% (12 structural + 4 reg_swap). **The shape that reproduces retail byte-for-byte is `volatile s16* q = &arr[idx];` with both reads via `*q`** — the volatile read cannot be CSE'd, forcing the reload, which cascades the allocator into retail's exact colors (rlwinm→r5 early, result→r6, ternary→r0, copy r0→r3). Consistent with MWCC_REFERENCE instruction-selection: a retail split-form read (base materialized + reload) needs a volatile/walked read; mixed `*q` first / `arr[idx]` second still CSEs (MWCC proves them equal). Indexed-only reads recompute the rlwinm instead of anchoring r5. 0 structural / 0 reg_swap, 0x54/0x54, accepted FULL_MATCH.
+
+## kyoshin CArrow3D::Term — conditional-reassign idiom splits the subobject-address addi (FULL_MATCH 100%)
+
+`Term__8CArrow3DFv` (0x70): after the layout delete, retail guards ONLY the `addi r31,r31,0x54` (the IScnRender subobject address) with a `cmpi r31,0; beq skip` and calls `removeRenderCB(scn, render)` UNCONDITIONALLY, materializing the address in-place in the this register + `or r4,r31,r31` for the arg. The `if (this) { call(cb); }` shape folds the add into `addi r4,r31,0x54` (0x6c, 64.3%). The retail byte-for-byte shape is the **CCol6System::Term documented idiom**: `IScnRender* render = (IScnRender*)this; if (this != 0) { render = &mIScnRenderVt; } removeRenderCB(scn, render);` — the conditional reassign makes MWCC emit the beq-skipped in-place `addi r31,r31,0x54` + the `or r4,r31,r31` copy. Lesson: when retail has a `beq skip; addi rX,rX,disp` guarding an ADDRESS materialization with an unconditional following call, model it as a base-cast local + conditional subobject reassign, not as `if (ptr) { call }` — the call is unconditional, only the address add is conditional.
+
+## kyoshin/CMenuVision func_801AC09C — shared false-return keeps the branchy tail (FULL_MATCH 100%)
+
+`func_801AC09C` (0x88): bitmask→vision-slot lookup; the tail `if (mState != 0) return true; return false;` would merge into the `neg/or/rlwinm` bool idiom — BUT retail keeps the branchy `cmpi; beq ret; li r3,1; blr; ret: li r3,0; blr` because the **return-false block is SHARED** with the earlier `lbl == 0` null check. The shape that reproduces it is the **&& chain with a single shared fall-through return**:
+
+```c
+if (lbl_eu_80664388 != 0 && lbl_eu_80664388->mEntries[index].mState != 0) {
+    return true;
+}
+return false;
+```
+
+Early-return (`if (lbl == 0) return false;` + separate mState return) and the local-default (`bool r = false; if (c) r = true; return r;`) forms both merge the LAST check into the bool idiom (73.5%). Lesson: when retail's final if-return is branchy AND an earlier path returns the same constant, merge the guards into one `&&` condition so MWCC emits one shared false-return block — the tail merge then cannot fire.
+
+## kyoshin CTutorial func_8029AB28 — switch normalizes u8 compares AND keeps the goto-gate layout (FULL_MATCH 100%)
+
+Four-case dispatch on a u8 field with the case bodies OUT-OF-LINE (retail: `cmpi; beq caseN` ×4 + `b default`, bodies after the chain with trailing `b`). Two levers:
+1. **Empty callee stubs need `__declspec(noinline)`** — plain `void func(){ }` callees get inlined+eliminated by MWCC (the calls vanish, 0x70 vs retail 0x90); noinline preserves the retail `bl`s.
+2. **`switch (u8field) { case 1..5 }` normalizes the compares to SIGNED `cmpi`** (plain `if (v == N)` on a u8 emits `cmpli`) AND reproduces the out-of-line body layout — extending the documented func_801D202C goto-gate: the goto-chain (`if (v==1) goto case1; ...; goto done; case1: ...; done:`) gives the layout but keeps `cmpli`; the switch gives BOTH the layout and `cmpi`. The `u8 v` local (single load, reused by all cmpi's) is also required.
+
+## CriWare mwsffrm_SetSudDatInf — retile the checks outside the guarded call for the shared-exit layout (FULL_MATCH 100%)
+
+`mwsffrm_SetSudDatInf` (0x90): zero-init two stack locals, load two fields, zero the outputs, conditionally call `SUD_SearchSudDat(p+4, q-4, &r1, &r2)`, then conditionally store r1/r2. The retail's `p == 0` / `q <= 4` false paths fall INTO the r1/r2 check block (the && chain's shared exit), not the epilogue. The nested shape `if (p && q > 4) { call; if (r1 && r2 > 0) store; }` splits the false paths (the outer-false goes to the epilogue, 2 branch-displacement mismatches). The shape that reproduces the retail byte-for-byte:
+1. **`if (p != NULL && q > 4) { SUD_SearchSudDat(...); }` then a SEPARATE `if (r1 != NULL && (s32)r2 > 0) { store; }`** — the outer if's false path falls through to the second if's checks.
+2. **r1/r2 declared with `= 0` init BEFORE the field loads** (the retail pre-zeroes the stack slots at the prologue, before the loads).
+3. Boundary exactness: the call condition is `q > 4` (not `>= 4`) and the store condition `r2 > 0` (not `>= 0`) — the branch polarities encode the exact boundaries.
+4. The out->A0/A4 pre-stores are ZERO (not the loaded values).
+
+## kyoshin cfsys CfObjectImplObj dtor (us-800cb0a4) — novtable kills the dtor vptr re-store; raw member buffer + explicit mangled dtor call reproduces the direct-call deleting dtor (FULL_MATCH)
+
+`__dt__Q22cf15CfObjectImplObjFv` (0x5C): deleting dtor that releases an embedded CPartsChange at +0x368. Retail: `cmpi r3,0; beq; li r4,-1; addi r3,r3,0x368; bl __dt__Q22cf12CPartsChangeFv; cmpi r31,0; ble; or r3,r30; bl __dl__FPv` — ONE direct call, NO vptr re-store, NO member null check.
+
+Two levers (each verified against every repo compiler GC/1.3→Wii/1.7):
+
+1. **Any non-empty dtor body of a polymorphic class makes MWCC emit the implicit vptr re-store** (`lis @ha(__vt__); addi @l; stw vptr,0(this)`) — empty bodies (IGameException inline interface dtor) skip it. Retail has the store absent despite a call body → the class was effectively **`__declspec(novtable)`** (never instantiated, no vtable emitted). Adding `__declspec(novtable)` to the class declaration removes the dtor's vptr store with zero other codegen impact (virtual dispatch READS elsewhere are unaffected).
+
+2. **C++ member-dtor syntax can never produce a direct `bl __dt__Member`**: a VIRTUAL-dtor member dispatches through the vtable (`lwzu r12,off; lwz r12,8(r12); bcctrl`) plus the enclosing vptr store; a NON-virtual member's auto-destruction INLINES the member dtor body even with `#pragma functions_never_inline` (dtb/dt7 probes) and adds an `addic. rX,this,off; beq` member null-check. Retail's direct call = an explicit call to the mangled dtor name **with the member declared as a raw buffer**: `u8 mPartsChange[0x30];` (no C++ dtor → no auto-destruction) + `__dt__Q22cf12CPartsChangeFv((CPartsChange*)mPartsChange, -1);`. Use-site casts (`reinterpret_cast<CPartsChange*>(self->mPartsChange)`) are mechanical.
+
+Result: byte-identical deleting dtor, 0 structural, 0 reg_swap, size exact (0x1F8 split PASS). The CPartsChange ctor/dtor (FULL_MATCH elsewhere) were NOT changed — their own vptr store/delete-flag shapes are independent.
+
+## kyoshin/code_80135FDC func_80139B5C — triple dead beq via the direct goto-gate (FULL_MATCH 100%)
+
+`func_80139B5C` (0x98): `if (result == NULL) return;` in retail compiles to THREE `beq` on the same `cmpi` (dead duplicated test) with the body falling through. The reproducing shape is the **direct goto-gate with the tripled condition**:
+
+```c
+if (result == NULL) goto out;
+if (result == NULL) goto out;
+if (result == NULL) goto out;
+<body>
+out:
+return;
+```
+
+The `||` chains (`a || a || a`) emit `beq; beq; bne body; b out` (the last disjunct becomes the branch-over-branch) and the `&&` chain (`a && a && a`) inverts the polarity (`bne body; bne body; beq out`) — neither matches. Only the explicit goto-gate keeps all three `beq` targets on the return label. (Same family as the btm_sec duplicated-disjunct dead branches — but the tripled-gate form is what matches here.)
+
+## kyoshin/CEquipItemBox func_8028A9CC — dont_inline + int-v + switch case order (FULL_MATCH 100%)
+
+`us-8028ce48` (0x98 dispatch). Three levers combined:
+
+1. **`#pragma dont_inline on`** (inside the existing `#pragma push`/`optimize_for_size` block): the `-ipa file` pass inlined the same-TU callees (`func_8028AA64`, `func_8028BE74`) INTO the dispatch, collapsing it into a 0x13AC mega-function (relocs showed the AA64 loop + BE74 body inside). `__declspec(noinline)` on the callees was NOT enough — the `dont_inline` pragma on the CALLER is what stops the -ipa merge.
+2. **`int v = (u8)func(...)`** (NOT `u8 v = ...`): the u8-typed local makes MWCC fold `v - 4` into `addi r0,r3,252; rlwinm r0,0,24,31` (u8 arithmetic with truncation). The int local keeps the retail's clean `subi r0,r3,4` after the one-time `rlwinm r3,r3,0,24,31` cast.
+3. **`switch (v)` with case order [2, 4..8, 3]**: the source's if-else-if chain and the natural case order [4..8, 2, 3] both place the case blocks in the wrong order (decomp [B7CC, AF98, BE74] vs retail [AF98, B7CC, BE74]). The retail's TEST order ([range-subi+cmpli, v==2, v==3]) is decoupled from the BLOCK order — the switch emits the range test first while the case-BLOCK layout follows the SOURCE case order. Ordering the cases as [2, 4..8, 3] reproduces both.
+
+## kyoshin CEquipItemBox func_80285994 (us-80287e18) — stale-blob comment recovery + `#pragma optimize_for_size` triggers the stmw frame (FULL_MATCH)
+
+Layout-cursor setup: `func_80136E84(&mpLayout, mArcResAcc, str); func_80136F08(mpLayout, &mpAnimTrans0/1, mArcResAcc, str); vtable+0x24 on mpLayout; func_80285B70(cur)`. Two reusable levers:
+
+1. **Re-read the retail relocs before trusting a "blocked" source comment.** The stub's comment claimed the call targets were undecompiled (0x8040708C etc.) and the strings were "MetroTRK message fragments" — both WRONG. The actual relocs name `func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc`, `func_80136F08__F...` and `func_80285B70`; the string base is `lbl_eu_8050EFDC` and the offsets (+0x97/+0xAF/+0xCC) point at layout/animation resource names ("mf00_reg00_curs07.brlyt" etc.). Reference the strings as `&lbl_eu_8050EFDC[0x97]` (extern "C" array) so the reloc base+addend match retail; string literals pool at @stringBase with different offsets.
+2. **`#pragma optimize_for_size on` around a function whose retail saves r30-r31 with `stmw r30, 8(sp)`** — the default -O4,p emits two separate `stw r31,12(sp); stw r30,8(sp)` (0x8c vs retail 0x84, 27 structural cascade from the 1-instruction shift). optimize_for_size switches to the stmw/lmw pair → 100.0%, size exact. (Also: virtual slot 36 = vtable+0x24 = 7th declared virtual under -RTTI on — the CItemBoxGrid cast-only-interface pattern; a plain `(*(void***)p)[9]` call emits lwz r5-base instead of lwz r12.)

@@ -576,7 +576,7 @@ extern "C" int func_804E68A0(void* self, u32 arg2, void* res);
 extern "C" void func_804E77C4(void* self);
 extern "C" void func_804E6A28(void* self);
 // Fade-distance walk (defined in CScnItemModel.cpp): last-chain fade value.
-extern "C" float func_80484EB0(CScnItemModel* self);
+extern "C" float func_80484EB0(void* self);
 // Fade refresh (defined in CScnItemModel.cpp).
 extern "C" void func_80485CE8(CScnItemModelNw4r* self);
 // Handled-state queries (defined in CScnItemModel.cpp).
@@ -606,13 +606,13 @@ extern "C" CScnItemModel* __dt__13CScnItemModelFv(CScnItemModel* self,
 // the 255.0f alpha constant (.sdata2).
 extern char lbl_eu_8056E0D0[];   // tev null assert file
  extern char lbl_eu_8056E0B0[];
- extern char lbl_eu_8056E068[];  // mat null assert file
- extern char lbl_eu_8056E04C[];
+ extern const char lbl_eu_8056E068[0x10];  // mat null assert file
+ extern const char lbl_eu_8056E04C[0x1A];
  extern char lbl_eu_8056E0A0[];  // pix misaligned assert file
  extern char lbl_eu_8056E078[];
 extern char lbl_eu_806638F4;     // tev null vararg (.sdata)
  extern char lbl_eu_806638FC;
- extern char lbl_eu_806638E8;
+ extern const char lbl_eu_806638E8[7];
  extern char lbl_eu_806638F0;
 extern const float lbl_eu_8066A8E4;   // 255.0f (func_8048A588 alpha scale)
 // func_80487EE0 fade clamp minimum (.sdata2).

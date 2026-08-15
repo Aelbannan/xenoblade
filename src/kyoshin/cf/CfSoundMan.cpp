@@ -1115,7 +1115,7 @@ void func_801C17CC(CfSoundRecord* rec, u32 a, u32 b) {
     while (searching && p != end) {
         searching = 0;
         while (searching == 0) {
-            if (p->mId == a) {
+            if (a == p->mId) {
                 p->field_0x2A |= (u16)b;
                 return;
             }

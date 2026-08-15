@@ -13,6 +13,7 @@ extern u32 lbl_eu_80663E24; // primary event/presentation bitfield
 extern "C" u32 func_8009CF8C(u32 addr); // global data/flag memory reader
 
 extern "C" void func_8007FD00__Q22cf13CfGameManagerFv(int id);
+extern "C" int func_8007FD8C__Q22cf13CfGameManagerFv(u32 mode);
 extern "C" void func_8008566C__Q22cf13CfGameManagerFv(u32 mode, const float* color,
                                                        u32 param);
 extern "C" void func_80140E00(int a, int b, int c);
@@ -57,17 +58,16 @@ int setFlag(VMThread* pThread) {
 
     u32 low = flags & 0xffff;
     u32 high = flags >> 16;
-
+    int valid = 1;
     if (idx < (int)low) {
-        u32 addr = high + (u32)idx;
-        int valid = 1;
+        int addr = (int)high + idx;
         // Larger flag-bank addresses only permit a limited value magnitude.
-        if ((int)addr >= 0x20) {
-            if ((int)addr < 0x220) {
+        if (addr >= 0x20) {
+            if (addr < 0x220) {
                 if (value > 0xffff) valid = 0;
-            } else if ((int)addr < 0xa20) {
+            } else if (addr < 0xa20) {
                 if (value > 0xff) valid = 0;
-            } else if ((int)addr < 0x36d0) {
+            } else if (addr < 0x36d0) {
                 if (value > 0x1) valid = 0;
             }
         }
@@ -76,7 +76,7 @@ int setFlag(VMThread* pThread) {
             return 0;
         }
 
-        func_8009D018((int)addr, value);
+        func_8009D018(addr, value);
         // Special flags: 0x22:03E8 (sequence) expects a 16-bit value near
         // 0xFF, and 0x0A:212C needs a camera/event reset.
         if (flags == 0x022003e8 && (u32)(value - 0xfe) <= 1) {
@@ -180,6 +180,21 @@ int waitRealtimeEvent(VMThread* pThread) {
     return 0;
 }
 
+// View of CfObjectActor's CfObjectMove subobject at absolute offset 0x3E9C.
+// The retail "is talking?" dispatch is a virtual call on a CObjectState
+// subobject at +0x3E9C (vtable slot +0x2C = CObjectState_UnkVirtualFunc10,
+// this = actor+0x3E9C). The C++ hierarchy layout in the headers places that
+// subobject later than retail, so the call goes through this view class:
+// CfActorTalkView's CObjectState base lands at +0x3E9C and a virtual call on
+// it folds the subobject offset into the vtable load + this-adjustment
+// exactly like the retail dispatch (same scheme as CfActorVt5C4Table).
+class CfActorTalkBasePad {
+public:
+    u8 _pad[0x3E9C];
+};
+class CfActorTalkView : public CfActorTalkBasePad, public cf::CObjectState {
+};
+
 int onTalk(VMThread* pThread) {
     // Report (TRUE=1 / FALSE=2) whether the player actor's embedded move
     // object is currently talking.
@@ -187,9 +202,10 @@ int onTalk(VMThread* pThread) {
         (void*)cf::CfGameManager::getPlayer(0), 0,
         (const void*)&__RTTI__Q22cf13CfObjectActor, (const void*)&lbl_eu_806618D8,
         0);
+    CfActorTalkView* view = (CfActorTalkView*)actor;
     u8 ret;
-    if (actor->CObjectState_UnkVirtualFunc10((void*)1, 1) != 0 ||
-        actor->CObjectState_UnkVirtualFunc10((void*)2, 1) != 0) {
+    if (view->CObjectState_UnkVirtualFunc10((void*)1, 1) != 0 ||
+        view->CObjectState_UnkVirtualFunc10((void*)2, 1) != 0) {
         ret = 1;
     } else {
         ret = 2;
@@ -198,7 +214,24 @@ int onTalk(VMThread* pThread) {
     return 1;
 }
 
-void onTalkEnd(){}
+int onTalkEnd(VMThread* pThread) {
+    // Same talk-mode query as onTalk but without forcing the talk state on
+    // (arg2 = 0 in both dispatch calls).
+    cf::CfObjectActor* actor = (cf::CfObjectActor*)__dynamic_cast(
+        (void*)cf::CfGameManager::getPlayer(0), 0,
+        (const void*)&__RTTI__Q22cf13CfObjectActor, (const void*)&lbl_eu_806618D8,
+        0);
+    CfActorTalkView* view = (CfActorTalkView*)actor;
+    u8 ret;
+    if (view->CObjectState_UnkVirtualFunc10((void*)1, 0) != 0 ||
+        view->CObjectState_UnkVirtualFunc10((void*)2, 0) != 0) {
+        ret = 1;
+    } else {
+        ret = 2;
+    }
+    vmRetValSet(pThread, (VMArg*)&ret);
+    return 1;
+}
 
 int fadeIn(VMThread* pThread) {
     // Fade command: arg 1 selects the fade mode, optional arg 2 picks the
@@ -234,7 +267,38 @@ int fadeIn(VMThread* pThread) {
     return 0;
 }
 
-void fadeOut(){}
+int fadeOut(VMThread* pThread) {
+    // Fade command: arg 1 selects the fade mode, optional arg 2 picks the
+    // color (default = white/opaque). Builds a 4-float RGBA fade color and
+    // hands it to CfGameManager, then raises the "in narrative fade" bit
+    // unless the fade already ended cleanly while presenting.
+    u32 mode = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    u32 c;
+    if (vmArgOmitChk(pThread, 2)) {
+        c = 0;
+    } else {
+        c = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
+    }
+    func_8007FD00__Q22cf13CfGameManagerFv(0x10);
+    int fadeActive = func_8007FD8C__Q22cf13CfGameManagerFv(0x19);
+    float color[4];
+    if (c == 0) {
+        color[0] = 1.0f;
+        color[1] = 1.0f;
+        color[2] = 1.0f;
+        color[3] = 0.0f;
+    } else {
+        color[0] = 0.0f;
+        color[1] = 0.0f;
+        color[2] = 0.0f;
+        color[3] = 0.0f;
+    }
+    func_8008566C__Q22cf13CfGameManagerFv(mode & 0xffff, color, 1);
+    if ((lbl_eu_80663E24 & 0x80) == 0 || fadeActive) {
+        lbl_eu_80663E28 |= 0x2;
+    }
+    return 0;
+}
 
 // Query whether a fade/blank is active (/fadeWait command). If the game
 // is not currently presenting, suspend the script until it finishes.

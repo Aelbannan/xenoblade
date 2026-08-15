@@ -3,6 +3,59 @@
 
 #include <cstring>
 
+// ---------------------------------------------------------------------------
+// Retail-layout mirrors
+//
+// The shared headers declare SoundArchive::SoundInfo, StrmSoundInfo and
+// SoundCommonInfo without the extra retail fields this build carries, so the
+// Read*SoundInfo implementations below access the retail layouts through
+// these layout mirrors (same pattern as SoundArchiveFileReaderLayout at the
+// bottom of this file).
+// ---------------------------------------------------------------------------
+namespace {
+
+// Mirrors nw4r::snd::SoundArchive::SoundInfo (retail has an extra field at
+// 0x8; the shared header layout is not byte-compatible).
+struct SoundInfoLayout {
+    u32 fileId;         // at 0x0
+    u32 playerId;       // at 0x4
+    int field_0x8;      // at 0x8 (copied from SoundCommonInfo+0x2A)
+    int playerPriority; // at 0xC
+    int volume;         // at 0x10
+    int remoteFilter;   // at 0x14
+    nw4r::snd::PanMode panMode;   // at 0x18
+    nw4r::snd::PanCurve panCurve; // at 0x1C
+};
+
+// Mirrors nw4r::snd::detail::SoundArchiveFile::SoundCommonInfo (retail has a
+// trailing byte at 0x2A that the shared header does not declare).
+struct SoundCommonInfoLayout {
+    u32 stringId; // at 0x0
+    u32 fileId;   // at 0x4
+    u32 playerId; // at 0x8
+    nw4r::snd::detail::Util::DataRef<
+        nw4r::snd::detail::SoundArchiveFile::Sound3DParam> param3dRef; // at 0xC
+    u8 volume;              // at 0x14
+    u8 playerPriority;      // at 0x15
+    u8 soundType;           // at 0x16
+    u8 remoteFilter;        // at 0x17
+    nw4r::snd::detail::SoundArchiveFile::SoundInfoOffset soundInfoRef; // at 0x18
+    u32 userParam[2];       // at 0x20
+    u8 panMode;             // at 0x28
+    u8 panCurve;            // at 0x29
+    u8 field_0x2a;          // at 0x2A
+};
+
+// Mirrors SoundArchive::StrmSoundInfo / SoundArchiveFile::StrmSoundInfo
+// (both declared empty in the shared headers; retail carries three fields).
+struct StrmSoundInfoLayout {
+    u32 dataOffset;   // at 0x0
+    u16 channelCount; // at 0x4
+    u16 sampleRate;   // at 0x6
+};
+
+} // namespace
+
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -109,24 +162,31 @@ SoundType SoundArchiveFileReader::GetSoundType(u32 id) const {
 bool SoundArchiveFileReader::ReadSoundInfo(
     u32 id, SoundArchive::SoundInfo* pSoundInfo) const {
 
-    const SoundArchiveFile::SoundCommonInfo* pCmnInfo = impl_GetSoundInfo(id);
+    // impl_GetSoundInfo (inline helper) reproduces the retail fetch exactly:
+    // its internal NULL returns funnel into the shared check below.
+    const SoundCommonInfoLayout* pCmnInfo =
+        reinterpret_cast<const SoundCommonInfoLayout*>(impl_GetSoundInfo(id));
 
     if (pCmnInfo == NULL) {
         return false;
     }
 
-    pSoundInfo->fileId = pCmnInfo->fileId;
-    pSoundInfo->playerId = pCmnInfo->playerId;
-    pSoundInfo->playerPriority = pCmnInfo->playerPriority;
-    pSoundInfo->volume = pCmnInfo->volume;
-    pSoundInfo->remoteFilter = pCmnInfo->remoteFilter;
+    // The retail SoundInfo layout (see SoundInfoLayout above) differs from
+    // the shared header, so copy through the layout mirror.
+    SoundInfoLayout* pOut = reinterpret_cast<SoundInfoLayout*>(pSoundInfo);
+    pOut->fileId = pCmnInfo->fileId;
+    pOut->playerId = pCmnInfo->playerId;
+    pOut->field_0x8 = pCmnInfo->field_0x2a;
+    pOut->playerPriority = pCmnInfo->playerPriority;
+    pOut->volume = pCmnInfo->volume;
+    pOut->remoteFilter = pCmnInfo->remoteFilter;
 
     if (GetVersion() >= NW4R_VERSION(1, 2)) {
-        pSoundInfo->panMode = static_cast<PanMode>(pCmnInfo->panMode);
-        pSoundInfo->panCurve = static_cast<PanCurve>(pCmnInfo->panCurve);
+        pOut->panMode = static_cast<PanMode>(pCmnInfo->panMode);
+        pOut->panCurve = static_cast<PanCurve>(pCmnInfo->panCurve);
     } else {
-        pSoundInfo->panMode = PAN_MODE_BALANCE;
-        pSoundInfo->panCurve = PAN_CURVE_SQRT;
+        pOut->panMode = PAN_MODE_BALANCE;
+        pOut->panCurve = PAN_CURVE_SQRT;
     }
 
     return true;
@@ -157,15 +217,74 @@ bool SoundArchiveFileReader::ReadSeqSoundInfo(
 
 bool SoundArchiveFileReader::ReadStrmSoundInfo(
     u32 id, SoundArchive::StrmSoundInfo* pInfo) const {
-#pragma unused(pInfo)
 
-    const SoundArchiveFile::StrmSoundInfo* pSrc = impl_GetStrmSoundInfo(id);
+    // The retail reader locates the strm info through impl_GetSoundInfoOffset
+    // (a real call site). This build cannot emit that call: the shared header
+    // declares impl_GetSoundInfoOffset with a by-value return, so the offset
+    // computation is inlined here instead. Converting to the retail call
+    // requires changing that header declaration to the out-parameter form.
+    const StrmSoundInfoLayout* pSrc;
+
+    if (GetSoundType(id) != SOUND_TYPE_STRM) {
+        pSrc = NULL;
+    } else {
+        const SoundArchiveFile::SoundCommonTable* pTable =
+            Util::GetDataRefAddress0(mInfo->soundTableRef, mInfo);
+
+        if (pTable != NULL && id < pTable->count) {
+            SoundArchiveFile::SoundInfoOffset offset;
+
+            if (GetVersion() >= NW4R_VERSION(1, 1)) {
+                const SoundCommonInfoLayout* pCmnInfo =
+                    reinterpret_cast<const SoundCommonInfoLayout*>(
+                        Util::GetDataRefAddress0(pTable->items[id], mInfo));
+
+                if (pCmnInfo != NULL) {
+                    offset = pCmnInfo->soundInfoRef;
+                    pSrc = reinterpret_cast<const StrmSoundInfoLayout*>(
+                        Util::GetDataRefAddress2(offset, mInfo));
+                } else {
+                    pSrc = NULL;
+                }
+            } else {
+                offset.refType = pTable->items[id].refType;
+                offset.dataType = pTable->items[id].dataType;
+                offset.value = pTable->items[id].value + 0x1C;
+                pSrc = reinterpret_cast<const StrmSoundInfoLayout*>(
+                    Util::GetDataRefAddress2(offset, mInfo));
+            }
+        } else {
+            pSrc = NULL;
+        }
+    }
 
     if (pSrc == NULL) {
         return false;
     }
 
-    // StrmSoundInfo is empty in this version of NW4R
+    StrmSoundInfoLayout* pOut = reinterpret_cast<StrmSoundInfoLayout*>(pInfo);
+    pOut->dataOffset = pSrc->dataOffset;
+    pOut->sampleRate = pSrc->sampleRate;
+
+    if (GetVersion() >= NW4R_VERSION(1, 4)) {
+        pOut->channelCount = pSrc->channelCount;
+    } else {
+        // Pre-1.4 archives packed the channel count as 15-bit flag words:
+        // a set low bit counts one channel; a clear low bit with any
+        // remaining data is an invalid encoding.
+        pOut->channelCount = 0;
+
+        u32 flag = pSrc->channelCount;
+        while (flag & 0xFFFF) {
+            if (flag & 1) {
+                pOut->channelCount++;
+            } else if (flag & 0xFFFF) {
+                return false;
+            }
+            flag = (flag >> 16) & 0x7FFF;
+        }
+    }
+
     return true;
 }
 
@@ -494,5 +613,57 @@ SoundArchiveFileReader::impl_GetSoundInfoOffset(u32 id) const {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" u32 GetSoundCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv(void* self) { return 0; }
-extern "C" u32 GetFileCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv(void* self) { return 0; }
+// ---------------------------------------------------------------------------
+// GetSoundCount / GetFileCount
+//
+// The retail SDK exports these as mangled member symbols, but the
+// SoundArchiveFileReader class declaration (snd_SoundArchiveFile.h) does not
+// declare them in this build. The extern "C" declarations in snd_SoundArchive.h
+// pin the C-ABI symbol names, so these are defined here as C-linkage free
+// functions reading the reader's private state through the layout mirror
+// below.
+//
+// The `const void* self` parameter (vs the header's plain `void*`) is
+// deliberate: MWCC's scheduler only hoists the first member load above the
+// LR-save `stw` in the prologue when the self pointer is const-qualified
+// (docs/evidence/decomp/attempts.jsonl func_8049BF0C family: "const self
+// param hoists mpMgr load above LR-save stw"). MWCC accepts the const
+// definition against the header's extern "C" void* declaration and still
+// emits the bare C symbol, so the bytes come out retail-identical.
+// ---------------------------------------------------------------------------
+
+namespace {
+// Mirrors SoundArchiveFileReader's leading members (see snd_SoundArchiveFile.h).
+struct SoundArchiveFileReaderLayout {
+    nw4r::snd::detail::SoundArchiveFile::Header header;    // at 0x0
+    const nw4r::snd::detail::SoundArchiveFile::Info* info; // at 0x28
+};
+} // namespace
+
+u32 GetSoundCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv(const void* self) {
+    const nw4r::snd::detail::SoundArchiveFile::Info* pInfo =
+        reinterpret_cast<const SoundArchiveFileReaderLayout*>(self)->info;
+
+    const nw4r::snd::detail::SoundArchiveFile::SoundCommonTable* pTable =
+        nw4r::snd::detail::Util::GetDataRefAddress0(pInfo->soundTableRef, pInfo);
+
+    if (pTable == NULL) {
+        return 0;
+    }
+
+    return pTable->count;
+}
+
+u32 GetFileCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv(const void* self) {
+    const nw4r::snd::detail::SoundArchiveFile::Info* pInfo =
+        reinterpret_cast<const SoundArchiveFileReaderLayout*>(self)->info;
+
+    const nw4r::snd::detail::SoundArchiveFile::FileTable* pFileTable =
+        nw4r::snd::detail::Util::GetDataRefAddress0(pInfo->fileTableRef, pInfo);
+
+    if (pFileTable == NULL) {
+        return 0;
+    }
+
+    return pFileTable->count;
+}

@@ -103,9 +103,14 @@ extern u16 lbl_eu_80665758;     // per-entry distance key threshold
 extern void (*lbl_eu_8056D700[])(LOD::UnkClass_8046368C*);  // .data dispatch
 
 // sdata2 constants used by the interpolation helpers.
+// Named .sdata2 conversion magic: defining the 2^52 doubles lets MWCC's
+// constant pool reuse the retail symbols for the builtin (f32)u16/(f32)s32
+// casts instead of emitting TU-local @N labels (CfResReloadImpl /
+// CSuddenCommu idiom, same as CMiniMap.cpp's 806670A8).
 extern const f32 lbl_eu_8066A5C0;  // 1.0f
 extern const f32 lbl_eu_8066A5C4;  // default LOD value
-extern const f64 lbl_eu_8066A5C8;  // 2^52 int-to-float magic (double)
+extern const double lbl_eu_8066A5C8 = 0x4330000000000000ll;  // 2^52 (u16->f32)
+extern const double lbl_eu_8066A5D0 = 0x4330000080000000ll;  // 2^52+2^31 (s32->f32)
 extern const f32 lbl_eu_8066A5D8;
 extern const f32 lbl_eu_8066A5DC;
 extern const f32 lbl_eu_8066A5E0;
@@ -320,18 +325,17 @@ f32 CLODCacheManagerS::func_8046323C()
 // us-8046736c  func_8046339C  (2D distance -> integer sample lookup)
 //
 // Looks up a cache record by the pair table, then over each straddling bin
-// rounds `offset + (1-t)*cur + t*prev` to an integer and emits the bin's
+// rounds `offset + (1-t)*prev + t*cur` to an integer and emits the bin's
 // 2D word pair (outX/outY) when it equals the current sample, else the
 // previous bin's pair.  Returns Fv (args via r3/r4/r5: outputs, index).
 // ===========================================================================
 extern "C" void func_8046339C__Q23LOD17CLODCacheManagerSFv(s32* outA, s32* outB,
                                                            u32 index)
 {
-    u16* pairTbl = (u16*)lbl_eu_80665750;
-    u32 entry = lbl_eu_8066574C[index];
-    u16 recIdx = pairTbl[entry + 1];
-    CLODCacheManagerS* rec = lbl_eu_80665738 + recIdx;
     f32 lim = lbl_eu_80665754;
+    u32 entry = lbl_eu_8066574C[index];       // pair-table offset
+    u32 recIdx = ((u16*)lbl_eu_80665750)[entry + 1];
+    CLODCacheManagerS* rec = lbl_eu_80665738 + recIdx;
 
     if (lim <= (f32)rec->field_0x0) {
         *outA = lbl_eu_80665744[rec->field_0x8].outX;
@@ -345,26 +349,27 @@ extern "C" void func_8046339C__Q23LOD17CLODCacheManagerSFv(s32* outA, s32* outB,
         return;
     }
 
-    u16 key = lbl_eu_80665758;
-    s32 cnt = (s32)rec->field_0x6;
     s32 base = (s32)rec->field_0x8;
-    for (s32 k = base + 1; k < base + cnt; k++) {
-        u16 A = lbl_eu_80665744[k].far;
+    s32 cnt = (s32)rec->field_0x6;
+    LODShortEntry* e = &lbl_eu_80665744[base + 1];
+    u16 key = lbl_eu_80665758;
+    for (s32 j = 1; j < cnt; j++) {
+        u16 A = e->far;
         if (key < A) {
-            u16 B = lbl_eu_80665744[k - 1].far;
+            u16 B = (e - 1)->far;
             f32 t = (lim - (f32)B) / (f32)(A - B);
-            f32 lerp = (f32)lbl_eu_80665744[k].val * (1.0f - t) +
-                       (f32)lbl_eu_80665744[k - 1].val * t;
+            f32 lerp = (f32)(e - 1)->val * (1.0f - t) + (f32)e->val * t;
             s32 ri = (s32)(lbl_eu_8066A5E4 + lerp);
-            if (ri == lbl_eu_80665744[k].val) {
-                *outA = lbl_eu_80665744[k].outX;
-                *outB = lbl_eu_80665744[k].outY;
+            if (ri == e->val) {
+                *outA = e->outX;
+                *outB = e->outY;
             } else {
-                *outA = lbl_eu_80665744[k - 1].outX;
-                *outB = lbl_eu_80665744[k - 1].outY;
+                *outA = (e - 1)->outX;
+                *outB = (e - 1)->outY;
             }
             return;
         }
+        e++;
     }
     *outA = 0;
     *outB = 0;

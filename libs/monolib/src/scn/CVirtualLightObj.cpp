@@ -139,7 +139,7 @@ extern "C" void func_80495644(CLightEnv* self, u32 idx) {
     self->mSlotColors[idx].y = lbl_eu_8066AAA8;
     self->mSlotColors[idx].z = lbl_eu_8066AAA8;
     self->mSlotColors[idx].w = lbl_eu_8066AA98;
-    for (u32 i = 0; i < self->mSlotCounts[idx]; i++) {
+    for (s32 i = 0; i < (s32)self->mSlotCounts[idx]; i++) {
         func_804C03A0(reinterpret_cast<u8*>(&self->mSlotPtrs[idx][i]), 0);
     }
     self->mSlotFields[idx] = 0;

@@ -509,6 +509,8 @@ void func_801C5F20(CItemBoxGridFull* self) {
 
 // Lookup the item id stored in a grid cell; -1 when the cell is out of
 // range or the referenced item object is invalid.
+#pragma push
+#pragma optimize_for_size on
 s16 func_801C5F48(CItemBoxGridFull* self, u16 idx) {
     s8 base = (s8)self->field_2804;
     u16 offset = (u16)(base * 0x1e + idx);
@@ -520,6 +522,7 @@ s16 func_801C5F48(CItemBoxGridFull* self, u16 idx) {
     }
     return -1;
 }
+#pragma pop
 
 // Item sell price for the cell at page*0x1e+idx: 0 when the cell is out of
 // range or the referenced item object is invalid. Otherwise the item's base
@@ -780,10 +783,11 @@ __declspec(noinline) u8 func_801C673C(CItemBoxGridFull* self, u16 idx) {
 void func_801C6770(CItemBoxGridFull* self, u16 idx) {
     u16 offset = (u16)((s8)self->field_2804 * 0x1e + idx);
     if (offset >= 0x400) return;
+    u8 cap;
     u8* entry = (u8*)self + offset * 0xa;
     if (entry[8] == 0) {
-        u8 cap = func_801C6840(self);
-        if ((u32)func_801C67F8(self) >= (u32)cap) return;
+        cap = (u8)func_801C6840(self);
+        if (func_801C67F8(self) >= cap) return;
     }
     entry[8] = (u8)((entry[8] ^ 1) != 0);
 }

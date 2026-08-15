@@ -1,9 +1,43 @@
 #include "monolib/device.hpp"
+#include "monolib/device/CDeviceFont.hpp"
 #include "monolib/util.hpp"
+
+extern "C" bool func_eu_8044A600();  // SCGetLanguage() == 0 (JP console); declared in the src-side CDeviceFont.hpp which conflicts with the include-dir headers here
 #include "monolib/lib.hpp"
 #include "monolib/work.hpp"
 
 using namespace ml;
+
+
+// Retail data-symbol imports for the anonymous-ns CDeviceException: its
+// vtable (.data, monolibdata blob) and the shared string pool that holds
+// "CDeviceException" at +0x5c. Global-scope names are not mangled, so no
+// extern "C" is needed.
+extern u32 lbl_eu_8056C000[];
+extern const char lbl_eu_80522AD0[];
+// Retail name of the spNotRunningDeviceName FixStr (.bss, monolibdata blob).
+extern FixStr<64> lbl_eu_806574F8;
+
+// Inline copy of CWorkThread::isRunning() visible only in this TU so the
+// retail inline shape (no bl) reproduces in isInitialized/isAllReady.
+// CWorkRoot.cpp keeps the strong out-of-line definition.
+inline bool CWorkThread::isRunning() const {
+    bool exception;
+    if (mFlags & THREAD_FLAG_EXCEPTION) {
+        exception = true;
+    } else {
+        exception = (mMsgQueue.find(EVT_EXCEPTION) >= 0);
+    }
+
+    bool result = false;
+    if (!exception) {
+        bool stateOK = (mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN);
+        if (stateOK) {
+            result = true;
+        }
+    }
+    return result;
+}
 
 
 // Forward decl for the anonymous-ns singleton (defined extern "C" below).
@@ -17,12 +51,14 @@ namespace {
     class CDeviceException : public CWorkThread {
     public:
         CDeviceException(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD) {
+            // Non-virtual class: store the retail rodata vtable manually so the
+            // reloc names lbl_eu_8056C000 (CDeviceFont pattern). Retail inlines
+            // this whole ctor into wkStandbyLogin.
+            *(u32**)this = (u32*)lbl_eu_8056C000;
             lbl_eu_80665654 = this;
-            // Out-of-line getInstance must stay live for the retail symbol.
-            (void)getInstance();
         }
-        virtual ~CDeviceException();
-        virtual bool wkStandbyLogout();
+        ~CDeviceException();
+        bool wkStandbyLogout();
         static CDeviceException* getInstance();
 
         DECL_WORKTHREAD_CREATE(CDeviceException);
@@ -70,19 +106,23 @@ int CDevice::getDevSys2Handle(){
 }
 
 bool CDevice::isAllReady(){
-    if(!spInstance->isRunning()) return false;
+    // Retail inlines isRunning() here and re-reads the instance from SDA in
+    // the loop condition (the child pointer reuses the cached register).
+    if(!lbl_eu_80665650->isRunning()) return false;
 
     bool result = true;
 
-    for(reslist<CWorkThread*>::iterator it = spInstance->mChildren.begin(); it != spInstance->mChildren.end(); it++){
+    for(reslist<CWorkThread*>::iterator it = lbl_eu_80665650->mChildren.begin(); it != lbl_eu_80665650->mChildren.end(); it++){
         CWorkThread* thread = *it;
 
         bool running = thread->isRunning();
 
         //If a device that isn't running is found, save its name
         if(!running){
+            // Keep the name pointer in a local so MWCC hoists it into a
+            // callee-saved register across the strlen call (retail r27).
             const char* name = thread->mName.c_str();
-            spNotRunningDeviceName = name;
+            lbl_eu_806574F8 = name;
         }
 
         result &= running;
@@ -118,11 +158,14 @@ bool CDevice::isColdStartReady(){
 }
 
 bool CDevice::isInitialized(){
-    if(!spInstance->isRunning()) return false;
-        
+    // Retail inlines isRunning() here; keep the instance in a local so the
+    // single SDA load is cached for the whole function (retail holds it in r7).
+    CDevice* instance = lbl_eu_80665650;
+    if(!instance->isRunning()) return false;
+
     bool result = true;
 
-    for(reslist<CWorkThread*>::iterator it = spInstance->mChildren.begin(); it != spInstance->mChildren.end(); it++){
+    for(reslist<CWorkThread*>::iterator it = instance->mChildren.begin(); it != instance->mChildren.end(); it++){
         CDeviceBase* deviceBase = static_cast<CDeviceBase*>(*it);
         if(!(deviceBase->mFlags & CDeviceBase::FLAG_CREATED)) result = false;
     }
@@ -158,6 +201,10 @@ void CDevice::initDevices(){
 
     //Feels a bit strange to put this in CDeviceGX
     CDeviceGX::setDevicesInitializedFlag(true);
+
+    // Keep the unreferenced retail getInstance__...CDeviceExceptionFv symbol
+    // emitted (MWCC drops unreferenced internal-linkage functions under -ipa).
+    (void)CDeviceException::getInstance();
 }
 
 #pragma dont_inline on
@@ -168,6 +215,8 @@ CDeviceException* CDeviceException::getInstance(){
 #pragma dont_inline off
 
 bool CDevice::wkStandbyLogin(){
+    // "CDeviceException" is a pooled literal in retail; the shared pool base
+    // (lbl_eu_80522AD0) places it at +0x5c after the initDevices strings.
     CDeviceException::create("CDeviceException", this);
     CDevice::initDevices();
     this->wkSetEvent(EVT_9);
@@ -191,8 +240,14 @@ void CDevice::createRegions(){
     //TODO: what is the extra 0x80?
     int deviceRegion1Size = CDeviceGX::getHeapSize() + CDeviceFontLayer::func_80454E78() + 0x80;
     deviceRegion1Size += CDeviceVI::usingStaticHandle() ? 0 : CDeviceVI::getXfbBuffersSize();
-    sDeviceRegion1Handle = mtl::MemManager::create(mtl::MemManager::getHandleMEM1(), deviceRegion1Size, devSys1String);
-    sDeviceRegion2Handle = mtl::MemManager::create(mtl::MemManager::getHandleMEM2(), DEVSYS2_REGION_SIZE, devSys2String);
+    // Region2 is 0x40000, bumped to 0x110000 on a JP (language 0) console.
+    int deviceRegion2Size = 0x40000;
+    if (func_eu_8044A600()) {
+        deviceRegion2Size = 0x110000;
+    }
+    int mem1 = mtl::MemManager::getHandleMEM1();
+    sDeviceRegion1Handle = mtl::MemManager::create(mem1, deviceRegion1Size, devSys1String);
+    sDeviceRegion2Handle = mtl::MemManager::create(mtl::MemManager::getHandleMEM2(), deviceRegion2Size, devSys2String);
 }
 
 void CDevice::deleteRegions(){

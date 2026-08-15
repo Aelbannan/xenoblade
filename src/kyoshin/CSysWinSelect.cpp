@@ -30,8 +30,6 @@ void func_801252C0(void* self) { ((void(*)(void*))cbRenderBefore__13CSysWinSelec
 
 void func_801252C8(void* self) { ((void(*)(void*))__dt__13CSysWinSelectFv)((char*)self - 0x70); }
 
-void func_801250FC(CSysWinSelect* self);  // forward decl (defined below)
-
 void CSysWinSelect::Init() {
     // Register the IScnRender subobject (+0x70) with the owning scene. The
     // `if (this)` is the MWCC idiom that splits `mr r4,r31 / beq / addi r4,+0x70`.
@@ -81,7 +79,7 @@ void CSysWinSelect::Move() {
         // Window active: snapshot the cursor index and update the cursor.
         if (CSysWin_isActive(&mSysWin[0])) {
             mState = 2;
-            u8 tmp[0x18];
+            u8 tmp[0xC];
             func_8022C1B4(tmp, &mSysWin[0], mCursorSel);
             reinterpret_cast<CCur18View*>(&mCur18[0])->vf04(tmp);
             func_801D216C(&mCur18[0], 1);
@@ -170,24 +168,28 @@ CSysWinSelect* func_80125070(CProcess* parent, void* a2, void* a3, void* a4,
 }
 
 // ---------------------------------------------------------------------------
-// Target 4: func_801250FC (us-80125bd8)
+// Target 2: func_801250FC (us-80125bd8)
 // The state==2 input handling for the select dialog. Reads the current cf pad
 // data; the confirm button flag is read from a different bit in co-op vs
 // single-player, and the D-pad up/down bits select the cursor row (wrapping).
+// C-linkage (retail symbol is unmangled func_801250FC). The pad fields are
+// read inside each mode branch - retail emits the loads in both arms, so keep
+// them out of shared locals or MWCC hoists them above the branch and the
+// function grows an extra saved register.
 // ---------------------------------------------------------------------------
-void func_801250FC(CSysWinSelect* self) {
+extern "C" void func_801250FC(CSysWinSelect* self) {
     CSysPadData* pad = (CSysPadData*)getCfPadData__Q22cf13CfGameManagerFv();
-    u32 btnFlags = pad->field_04;
-    u32 dueFlags = pad->field_104;
-    u32 confirm, up, down;
+    int confirm, up, down;
     if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-        confirm = (btnFlags >> 21) & 1;
-        up = (dueFlags & 0x8004) != 0;
-        down = (dueFlags & 0x10008) != 0;
+        // Co-op: D-pad rows read from the turbo-press flags, confirm from bit 21.
+        up = (pad->field_104 & 0x8004) != 0;
+        down = (pad->field_104 & 0x10008) != 0;
+        confirm = (pad->field_04 >> 21) & 1;
     } else {
-        confirm = (btnFlags >> 4) & 1;
-        up = (dueFlags & 0x8004) != 0;
-        down = (dueFlags & 0x10008) != 0;
+        // Single-player: confirm is bit 4.
+        up = (pad->field_104 & 0x8004) != 0;
+        down = (pad->field_104 & 0x10008) != 0;
+        confirm = (pad->field_04 >> 4) & 1;
     }
 
     if (confirm != 0) {
@@ -201,7 +203,7 @@ void func_801250FC(CSysWinSelect* self) {
         // Up: move the cursor up one row, wrapping below 0 to 1.
         self->mCursorSel = (u8)(self->mCursorSel - 1);
         if ((s8)self->mCursorSel < 0) self->mCursorSel = 1;
-        u8 tmp[0x18];
+        u8 tmp[0xC];
         func_8022C1B4(tmp, &self->mSysWin[0], self->mCursorSel);
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
         func_80138078__FUl(1);
@@ -209,7 +211,7 @@ void func_801250FC(CSysWinSelect* self) {
         // Down: move the cursor down one row, wrapping over 1 to 0.
         self->mCursorSel = (u8)(self->mCursorSel + 1);
         if ((s8)self->mCursorSel > 1) self->mCursorSel = 0;
-        u8 tmp[0x18];
+        u8 tmp[0xC];
         func_8022C1B4(tmp, &self->mSysWin[0], self->mCursorSel);
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
         func_80138078__FUl(1);
@@ -235,21 +237,32 @@ void* __dt__Q34nw4r2ut5ColorFv(void* self, int flags) {
 // ---------------------------------------------------------------------------
 void CSysWinSelect::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() != 0) {
-        return;
+    // Gate: when the task game is not ready or the global mode bit (0x200000)
+    // is set, skip the render. The if-&&-goto body / goto end / end: return
+    // chain (exit label before the body label) keeps the body off the
+    // fallthrough so MWCC emits retail's branch-over-branch: `bne end` for
+    // the first disjunct, `beq body; b end` for the second (same scheme as
+    // CPartyStateWin::cbRenderBefore).
+    if (CTaskGame::func_800426F0() == 0 && (lbl_eu_80663E28 & 0x200000) == 0) {
+        goto body;
     }
-    if (lbl_eu_80663E28 & 0x200000) {
-        return;
-    }
-    if (!func_8013BE50()) {
+    goto end;
+end:
+    return;
+body:
+    if (func_8013BE50() == 0) {
         return;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    nw4r::lyt::DrawInfo drawInfo;
-    func_80137250(&drawInfo);
-    func_8022B7C8(&mSysWin[0], &drawInfo);
-    func_801D20B0(&mCur18[0], &drawInfo);
-    drawInfo.~DrawInfo();
+    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
+    // to match the retail direct calls (a C++ local would virtual-dispatch
+    // its scope-exit destructor and bloat the body).
+    u8 drawInfo[0x60];
+    __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    func_80137250__FPQ34nw4r3lyt8DrawInfo(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    func_8022B7C8(&mSysWin[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    func_801D20B0(&mCur18[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), -1);
 }
 
 // Constructor (not a matching target - retail emits the ctor with an unmangled

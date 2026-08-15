@@ -35,6 +35,7 @@ typedef struct {
 extern GciStatus lbl_eu_805E6B7C;
 
 extern u8 lbl_eu_805E7B30[];           // sector buffer (0x100)
+extern u32 lbl_eu_805E7B28;            // read-mode flag (gcCiSetRdMode): 0 = async, else sync
 extern char lbl_eu_80565B30[];         // GCI interface table
 extern char lbl_eu_805181F0[];         // error message strings
 
@@ -161,6 +162,7 @@ void* gcCiOpen(const char* path, s32 mode, s32 a3) {
 
 s32 DVDGetTransferredSize(DVDFileInfo *info);
 void gcCiStopTr(GciHndl *h);
+void gcci_rd_cbfn();
 
 // ── Functions ──────────────────────────────────────────────────────────────
 
@@ -278,7 +280,87 @@ s32 gcCiTell(GciHndl *h) {
     return h->pos;
 }
 
-void gcCiReqRd() {}
+s32 gcCiReqRd(GciHndl *h, s32 length, u8 *buf) {
+    GciGlobals *g = (GciGlobals *)&lbl_eu_805E6B70;
+    GciStatus *st = (GciStatus *)&g->status;
+    s32 i;
+    s32 busy;
+    s32 offset;
+    s32 size;
+    s32 rc;
+
+    if (h == NULL) {
+        const char *msg = &lbl_eu_805181F0[0x118];
+        if (g->errfunc != NULL)
+            g->errfunc(g->errarg, msg, 0);
+        return 0;
+    }
+    if (length < 0) {
+        const char *msg = &lbl_eu_805181F0[0x130];
+        if (g->errfunc != NULL)
+            g->errfunc(g->errarg, msg, (s32)(u32)h);
+        return 0;
+    }
+    if (buf == NULL) {
+        const char *msg = &lbl_eu_805181F0[0x14e];
+        if (g->errfunc != NULL)
+            g->errfunc(g->errarg, msg, (s32)(u32)h);
+        return 0;
+    }
+    // A request is only accepted while the handle is idle (0) or has data (1).
+    s32 st_ok = (h->state == 1 || h->state == 0);
+    if (!st_ok)
+        return 0;
+    s32 dvd_ok = (h->dvdStatus == 0 || h->dvdStatus == 10);
+    if (!dvd_ok)
+        return 0;
+    // Only one DVD transfer may be in flight: reject if any handle is active.
+    busy = 0;
+    for (i = 0; i < 40; i++) {
+        if (((GciHndl *)&g->status[0xC])[i].use == 1 &&
+            ((GciHndl *)&g->status[0xC])[i].state == 2) {
+            busy = 1;
+            break;
+        }
+    }
+    if (busy)
+        return 0;
+    if (length == 0) {
+        h->state = 1;
+        st->flag = 1;
+        return 0;
+    }
+    h->transferred = 0;
+    h->buf = buf;
+    h->length = length;
+    // Service any pending transfers so only this one is queued next.
+    for (i = 0; i < 40; i++) {
+        if (((GciHndl *)&g->status[0xC])[i].use == 1)
+            gcCiExecHndl(&((GciHndl *)&g->status[0xC])[i]);
+    }
+    offset = h->pos * h->sctLen;
+    size = h->length * h->sctLen;
+    if (offset + size > h->fileSize) {
+        size = h->fileSize - offset;
+        if (size < 0) {
+            // Request lies past EOF: pretend the transfer is already done.
+            h->state = 1;
+            st->flag = 1;
+            return length;
+        }
+    }
+    size = (size + 0x1f) & ~0x1f;
+    DCInvalidateRange(buf, size);
+    if (lbl_eu_805E7B28 == 0)
+        rc = DVDReadAsyncPrio(&h->fi, buf, size, offset, gcci_rd_cbfn, 2);
+    else
+        rc = DVDReadPrio(&h->fi, buf, size, offset, 2);
+    if (rc == 0)
+        return 0;
+    h->state = 2;
+    st->flag = 2;
+    return h->length;
+}
 
 #define GCI_TICKS_TO_MS(ticks) \
     ((ticks) / (__mulhwu(*(volatile u32 *)0x800000F8 >> 2, 0x10624DD3) >> 6))

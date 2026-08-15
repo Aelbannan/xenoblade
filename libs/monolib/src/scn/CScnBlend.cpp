@@ -43,10 +43,17 @@ struct CScnBlend : public CScnFilter {
 
 CScnBlend::~CScnBlend() {}
 
-extern "C" void __ct__CScnBlend(CScnBlend* self) {
+// Retail __ct__CScnBlend (flat name): calls the base ctor, installs the
+// CScnBlend vtable, fills the default blend rect/tint region and the
+// blend-mode fields. Returns the object.
+extern "C" CScnBlend* __ct__CScnBlend(CScnBlend* self) {
     __ct__CScnFilter(self);
 
-    *((u32*)self) = (u32)(const void*)&lbl_eu_8056E9E8[0];
+    *(void**)self = (void*)lbl_eu_8056E9E8;
+
+    // First 0-store is consumed by the flags OR (store-to-load forward); the
+    // second (redundant) store keeps the physical stw at the end of the block.
+    self->field_0x68 = 0;
 
     RectRegion tmp;
     tmp.x = lbl_eu_8066AAE0;
@@ -58,12 +65,13 @@ extern "C" void __ct__CScnBlend(CScnBlend* self) {
     tmp.tB = lbl_eu_8066AAE8;
     self->mRect = tmp;
 
-    self->mFlags = 3;
+    self->mFlags = (u8)((u32)self->field_0x68 | 3);
     self->field_0x58 = 4;
     self->field_0x5C = 1;
     self->field_0x60 = 4;
     self->field_0x64 = 1;
     self->field_0x68 = 0;
+    return self;
 }
 
 struct CScnBlendState {

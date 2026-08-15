@@ -301,3 +301,21 @@ void CharWriter::SetupGXForRGBA() {
 
 } // namespace ut
 } // namespace nw4r
+
+// ---- Retail sbss data (blob monolibdata1 dissolve; range 0x80665558-0x80665560) ----
+// Five 1-byte sbss slots plus the 3-byte gap between 0x80665558 and 0x8066555C.
+// MWCC emits .sbss symbols in declaration order (one byte-symbol each keeps
+// 1-byte alignment; a `u8[3]` pad would self-align to 4 and shift the layout),
+// so the retail ascending layout is reproduced exactly:
+// [lbl_eu_80665558 @+0, gap @+1..+3, lbl_eu_8066555C @+4, lbl_eu_8066555D @+5,
+//  lbl_eu_8066555E @+6, lbl_eu_8066555F @+7].
+extern "C" {
+u8 lbl_eu_80665558;
+u8 gap_10_80665559_sbss;
+u8 gap_10_8066555A_sbss;
+u8 gap_10_8066555B_sbss;
+u8 lbl_eu_8066555C;
+u8 lbl_eu_8066555D;
+u8 lbl_eu_8066555E;
+u8 lbl_eu_8066555F;
+}

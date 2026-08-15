@@ -4268,9 +4268,6 @@ monolib/src/math/MTRand.cpp:
 	.text       start:0x80437D34 end:0x80438634
 	.sbss       start:0x80665580 end:0x80665581
 
-monolibdata1b.s:
-	.sbss       start:0x80665581 end:0x80665588 align:1
-
 monolib/src/math/CRect16.cpp:
 	.text       start:0x80438634 end:0x804386C0
 	.ctors      start:0x804FA104 end:0x804FA108

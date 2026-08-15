@@ -46,8 +46,8 @@ s32 MPV_DecodeFrmSj(MpvHn* h, void* a2, MpvFrmInfo* a3) {
     {
         /* Copy the 68B SJ frame info into the handle output area: 8 pairs of
          * words plus one tail word. */
-        u32* s = (u32*)a3 - 1;
         u32* d = h->copyOut - 1;
+        u32* s = (u32*)a3 - 1;
         s32 n = 8;
         v1 = h->field_0xbe8;
         v2 = h->field_0xbec;

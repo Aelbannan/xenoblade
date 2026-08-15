@@ -14,7 +14,7 @@ void func_800CA6E4(cf::CfObjectImplNpc* self)
 {
     self->field_368 = -1;
     func_800CA948(self);
-    if ((self->field_14->field_64 & 1) != 0) {
+    if ((self->field_14->field_64 & 0x80000000) != 0) {
         func_802A0B8C(&self->field_28, self->field_14);
     }
     if (self->field_14 != 0) {
@@ -32,7 +32,7 @@ void func_800CA6E4(cf::CfObjectImplNpc* self)
 // us-800cb1e8: NPC per-frame update - dispatch vtable 0xDC, then while the
 // +0x90 word is set, feed the float table value at the talk index into the
 // +0x98 sub-object's vtable 0x5c; finally refresh the +0x28 voice sub-object
-// when the +0x64 bit-0 flag is set.
+// when the +0x64 MSB (sign bit) is set.
 void func_800CA7B4(cf::CfObjectImplNpc* self)
 {
     if (self->field_14 != 0) {
@@ -42,9 +42,9 @@ void func_800CA7B4(cf::CfObjectImplNpc* self)
             if (idx >= 0) {
                 self->field_14->field_98->vf5C(lbl_eu_804FC7B0[idx]);
             }
-        }
-        if ((self->field_14->field_64 & 1) != 0) {
-            func_802A0E08(&self->field_28);
+            if ((self->field_14->field_64 & 0x80000000) != 0) {
+                func_802A0E08(&self->field_28);
+            }
         }
     }
 }
@@ -63,7 +63,7 @@ void func_800CA854(cf::CfObjectImplNpc* self)
     u32 out8;
     func_800AA318(self->field_14->field_70, &out14, &out10, &outC, &out8);
     if (out14 == 2 && out10 == 8) {
-        if (cf::CfGameManager::func_800822F4() >= 0x167) {
+        if ((u32)cf::CfGameManager::func_800822F4() >= 0x167) {
             self->field_14->field_98->vf28(lbl_eu_804FC7EC, 0);
         }
     }

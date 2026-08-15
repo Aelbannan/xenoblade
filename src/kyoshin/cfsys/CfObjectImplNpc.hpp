@@ -38,8 +38,9 @@ public:
     virtual void vf5C(float v) = 0;                      // index 21 -> vtable offset 0x5c
 };
 
-// Object at CfObjectImplNpc::field_14: flag word at +0x64 (bit 0 tested),
-// packed token at +0x70, id/flag at +0x90, message sub-object at +0x98.
+// Object at CfObjectImplNpc::field_14: flag word at +0x64 (MSB / sign bit
+// tested), packed token at +0x70, id/flag at +0x90, message sub-object at
+// +0x98.
 struct CfObjectImplNpc14 {
     u8 _pad00[0x64];                                     // 0x00-0x63
     u32 field_64;                                        // 0x64

@@ -1,11 +1,40 @@
 #include <nw4r/ut.h>
 
+// Shared nw4r .sdata2 float constants (retail references these; retail
+// ut_CharWriter.o has .sdata2 size 0 -- no TU-local pool entries).
+extern f32 lbl_eu_8066A140;  // 0.0f
+extern f32 lbl_eu_8066A144;  // 1.0f
+extern f64 lbl_eu_8066A148;  // 0x4330000080000000 (signed int->f32 magic)
+extern f32 lbl_eu_8066A150;  // 0.5f
+extern f64 lbl_eu_8066A158;  // 0x4330000000000000 (2^52, unsigned u32->f32 magic)
+
+// int -> f32 conversion matching retail: build the 2^52+x double on the stack
+// (low word = x ^ 0x80000000, high word = 0x43300000) and subtract the shared
+// signed magic (MWCC_REFERENCE 7i). Statement order matters: the value word
+// first, then 0x43300000.
+inline f32 ConvF32S(s32 v) {
+    union { f64 d; u32 w[2]; } u;
+    u.w[1] = (u32)v ^ 0x80000000;
+    u.w[0] = 0x43300000;
+    return (f32)(u.d - lbl_eu_8066A148);
+}
+
+// u16/u32 -> f32 conversion matching retail (unsigned magic 2^52).
+inline f32 ConvF32U(u32 v) {
+    union { f64 d; u32 w[2]; } u;
+    u.w[1] = v;
+    u.w[0] = 0x43300000;
+    return (f32)(u.d - lbl_eu_8066A158);
+}
+
 namespace {
 
 void SetupGXCommon() {
-    static const nw4r::ut::Color fog = 0;
-
-    GXSetFog(GX_FOG_NONE, fog, 0.0f, 0.0f, 0.0f, 0.0f);
+    // Local (stack) zero color -- a function-static would emit a .sbss entry
+    // (retail ut_CharWriter.o .sbss is only the 0x80665558 slot).
+    nw4r::ut::Color fog = 0;
+    GXSetFog(GX_FOG_NONE, fog, lbl_eu_8066A140, lbl_eu_8066A140,
+             lbl_eu_8066A140, lbl_eu_8066A140);
     GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE,
                           GX_CH_ALPHA);
     GXSetZTexture(GX_ZT_DISABLE, GX_TF_Z8, 0);
@@ -29,17 +58,20 @@ void SetupGXCommon() {
 namespace nw4r {
 namespace ut {
 
-CharWriter::LoadingTexture CharWriter::mLoadingTexture;
-
+// NOTE: mLoadingTexture is NOT defined here -- retail ut_CharWriter.o has .bss
+// size 0; the retail object lives in the nw4hbm CharWriter range (.bss
+// 0x805CA150, a separate library variant). The header's static member stays
+// declared; references emit UNDEF relocs that the coordinator resolves.
 CharWriter::CharWriter()
-    : mAlpha(255), mIsWidthFixed(false), mFixedWidth(0.0f), mFont(NULL) {
+    : mAlpha(255), mIsWidthFixed(false), mFixedWidth(lbl_eu_8066A140),
+      mFont(NULL) {
 
     mLoadingTexture.Reset();
     ResetColorMapping();
     SetGradationMode(GRADMODE_NONE);
     SetTextColor(Color::WHITE);
-    SetScale(1.0f, 1.0f);
-    SetCursor(0.0f, 0.0f, 0.0f);
+    SetScale(lbl_eu_8066A144, lbl_eu_8066A144);
+    SetCursor(lbl_eu_8066A140, lbl_eu_8066A140, lbl_eu_8066A140);
     EnableLinearFilter(true, true);
 }
 
@@ -86,7 +118,8 @@ void CharWriter::SetupGX() {
 }
 
 void CharWriter::SetFontSize(f32 width, f32 height) {
-    SetScale(width / mFont->GetWidth(), height / mFont->GetHeight());
+    SetScale(width / ConvF32S(mFont->GetWidth()),
+             height / ConvF32S(mFont->GetHeight()));
 }
 
 //unused
@@ -94,19 +127,19 @@ void CharWriter::SetFontSize(f32 height) {
 }
 
 f32 CharWriter::GetFontWidth() const {
-    return mScale.x * mFont->GetWidth();
+    return mScale.x * ConvF32S(mFont->GetWidth());
 }
 
 f32 CharWriter::GetFontHeight() const {
-    return mScale.y * mFont->GetHeight();
+    return mScale.y * ConvF32S(mFont->GetHeight());
 }
 
 f32 CharWriter::GetFontAscent() const {
-    return mScale.y * mFont->GetAscent();
+    return mScale.y * ConvF32S(mFont->GetAscent());
 }
 
 f32 CharWriter::GetFontDescent() const {
-    return mScale.y * mFont->GetDescent();
+    return mScale.y * ConvF32S(mFont->GetDescent());
 }
 
 void CharWriter::EnableLinearFilter(bool atSmall, bool atLarge) {
@@ -122,12 +155,14 @@ f32 CharWriter::Print(u16 ch) {
     mFont->GetGlyph(&glyph, ch);
 
     if (mIsWidthFixed) {
-        f32 margin = (mFixedWidth - glyph.widths.charWidth * mScale.x) / 2;
+        f32 margin =
+            (mFixedWidth - ConvF32U(glyph.widths.charWidth) * mScale.x) *
+            lbl_eu_8066A150;
         width = mFixedWidth;
-        left = margin + glyph.widths.left * mScale.x;
+        left = margin + ConvF32U(glyph.widths.left) * mScale.x;
     } else {
-        width = glyph.widths.charWidth * mScale.x;
-        left = glyph.widths.left * mScale.x;
+        width = ConvF32U(glyph.widths.charWidth) * mScale.x;
+        left = ConvF32U(glyph.widths.left) * mScale.x;
     }
 
     PrintGlyph(mCursorPos.x + left, mCursorPos.y, mCursorPos.z, glyph);
@@ -141,8 +176,8 @@ void CharWriter::DrawGlyph(const Glyph& glyph) {
 }
 
 void CharWriter::PrintGlyph(f32 x, f32 y, f32 z, const Glyph& rGlyph) {
-    f32 x2 = x + rGlyph.widths.glyphWidth * mScale.x;
-    f32 y2 = y + rGlyph.height * mScale.y;
+    f32 x2 = x + ConvF32U(rGlyph.widths.glyphWidth) * mScale.x;
+    f32 y2 = y + ConvF32U(rGlyph.height) * mScale.y;
 
     u16 texLeft = rGlyph.cellX * 0x8000U / rGlyph.texWidth;
     u16 texTop = rGlyph.cellY * 0x8000U / rGlyph.texHeight;
@@ -188,8 +223,9 @@ void CharWriter::LoadTexture(const Glyph& rGlyph, GXTexMapID slot) {
                      rGlyph.texHeight, rGlyph.texFormat, GX_CLAMP, GX_CLAMP,
                      FALSE);
 
-        GXInitTexObjLOD(&texObj, mFilter.atSmall, mFilter.atLarge, 0.0f, 0.0f,
-                        0.0f, FALSE, FALSE, GX_ANISO_1);
+        GXInitTexObjLOD(&texObj, mFilter.atSmall, mFilter.atLarge,
+                        lbl_eu_8066A140, lbl_eu_8066A140, lbl_eu_8066A140,
+                        FALSE, FALSE, GX_ANISO_1);
 
         GXLoadTexObj(&texObj, slot);
 

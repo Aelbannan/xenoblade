@@ -10,7 +10,7 @@
 #pragma push
 #pragma sdata2_threshold 0
 #endif
-extern "C" const char lbl_eu_80522458[] = ".";
+extern "C" const char lbl_eu_80522458[8] = {0x2E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};  /* 0x80522458-60 */
 #ifdef __MWERKS__
 #pragma pop
 #endif

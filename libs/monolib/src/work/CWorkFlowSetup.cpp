@@ -8,7 +8,7 @@
 //   lbl_eu_8056B880 (.data)   = CWorkFlowSetup vtable
 //   lbl_eu_8056B920 (.data)   = RTTI base list {IWE,0,CWT,0,0,0}
 //   lbl_eu_806655E0 (.sbss)   = spInstance singleton (word 0 in use)
-extern "C" const char lbl_eu_80522708[] = "CWorkFlowSetup";
+extern "C" const char lbl_eu_80522708[16] = {0x43,0x57,0x6F,0x72,0x6B,0x46,0x6C,0x6F,0x77,0x53,0x65,0x74,0x75,0x70,0x00,0x00};  /* "CWorkFlowSetup" pad to 0x80522708-18 */
 
 extern IWorkEventVtbl lbl_eu_8056B880;
 extern RttiBaseList2 lbl_eu_8056B920;

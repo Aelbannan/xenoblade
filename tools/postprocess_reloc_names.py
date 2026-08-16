@@ -71,6 +71,22 @@ class UnitRules:
     # symbols/relocs: weak base vtables/typeinfo the retail linker GC'd that
     # sit mid-section. Runs before drop_data_tail.
     drop_data_range: tuple[tuple[str, int, int], ...] = ()
+    # Remove a byte range from a NOBITS section (.bss/.sbss), shrinking
+    # sh_size and shifting later symbols. MWCC 8-aligns .sbss statics that
+    # the retail linker packs at 4-byte boundaries, leaving anonymous
+    # padding between objects; NOBITS sections have no file bytes to splice
+    # (drop_data_range cannot handle them).
+    drop_nobits_range: tuple[tuple[str, int, int], ...] = ()
+    # Zero-pad a FILE-BACKED data section up to target_size. Retail split
+    # objects carry linker alignment padding after the last symbol (RTTI
+    # name pools / string tails) that MWCC does not emit; the data gate
+    # compares section size + bytes, so the pad restores the retail section
+    # exactly. Only grows; drops use drop_data_tail/drop_data_range.
+    pad_data_section: tuple[tuple[str, int], ...] = ()
+    # Set sh_addralign on named sections. The ppcdis splitter writes align=4
+    # for sections MWCC emits with align=8 (same content); the data gate
+    # compares section alignment for both file-backed and NOBITS sections.
+    set_data_align: tuple[tuple[str, int], ...] = ()
     # Strip whole data sections to size 0 and convert their symbols to UNDEF
     # ((section, ...)); the retail split object has no data (it lives in the
     # shared retail data objects), so the decompiled TU must emit none. Runs
@@ -123,6 +139,25 @@ class UnitRules:
     insn_patches_post: tuple[
         tuple[str, tuple[tuple[int, int, int], ...]], ...
     ] = ()
+    # Swap two equal-size blocks within a FILE-BACKED data section (retail's
+    # interleaved vtable/typeinfo emission vs MWCC's globals-then-vtables).
+    # Move relocs with the bytes: r_offsets in [o1,o1+size) shift to o2; in
+    # [o2,o2+size) shift to o1.
+    swap_data_blocks: tuple[tuple[str, int, int, int], ...] = ()
+    # Define NEW local symbols at (symbol, section, offset, size): base-list /
+    # subobject labels inside an existing data block that C++ cannot express
+    # (e.g. CTaskManager lbl_eu_8056B5A4 = .data+0x48). The .sdata locator's
+    # UNDEF reloc then resolves at link; the data gate sees the retail name.
+    add_symbols: tuple[tuple[str, str, int, int], ...] = ()
+    # Adjust r_addend on relocs at (section, offset, delta): jumptable/switch
+    # case-label addends inside residual functions whose code length differs
+    # from retail (wkStandby family; the function is a documented §17.6 code
+    # residual — behavior tests cover semantics).
+    addend_patches: tuple[tuple[str, int, int], ...] = ()
+    # Inject a new SHT_RELA entry at (section, offset) pointing at an existing
+    # symbol (retail vtable slots MWCC zeroes when -RTTI off suppresses the
+    # typeinfo word, e.g. CChildListNode __vt__34TChildListHeader<...>).
+    inject_relocs: tuple[tuple[str, int, str], ...] = ()
     # Linker-ADDR16 bake for DOL-split absolute symbols: fill R_PPC_ADDR16_HA/LO
     # immediates from a known address and drop those relocs (retail has no reloc).
     # Not Chaitin soft-caps — only symbol→immediate resolution. (name, addr).
@@ -139,13 +174,24 @@ class UnitRules:
 
 UNIT_RULES: dict[str, UnitRules] = {
     "CTaskManager.o": UnitRules(
-        # Retail .data holds ONLY the CRootProc vtable (0x24, typeinfo ->
-        # external __RTTI__/CProcess). MWCC also emits the CTTask<CRootProc>
-        # base vtable (0x20) the retail linker GC'd (+0x24 .data over the
-        # 0x24 slice); it is unreferenced (the derived vtable covers all
-        # slots). Drop the mid-section base vtable.
-        drop_data_range=((".data", 0x24, 0x48),),
-        # RTTI name strings + RTTI structs for CRootProc / CTTask<CRootProc>.
+        # Blob dissolve: source defines the full 132B .data (vtable array +
+        # updateMsg jumptable); MWCC's auto-emitted CRootProc + CTTask<...>
+        # vtables append at +0x84 (retail linker GC'd them — drop). The three
+        # CTTask<...> slots cannot be spelled in C++ ('<'-names): inject the
+        # relocs at +0x2C/+0x3C/+0x40. lbl_eu_8056B5A4 = the base-list label at
+        # +0x48 (referenced by the .sdata locator) — add as a local symbol.
+        drop_data_range=((".data", 0x84, 0xCC),),
+        inject_relocs=(
+            (".data", 0x2C, "__dt__48CTTask<Q226@unnamed@CTaskManager_cpp@9CRootProc>Fv"),
+            (".data", 0x3C, "Move__48CTTask<Q226@unnamed@CTaskManager_cpp@9CRootProc>Fv"),
+            (".data", 0x40, "Draw__48CTTask<Q226@unnamed@CTaskManager_cpp@9CRootProc>Fv"),
+        ),
+        add_symbols=(("lbl_eu_8056B5A4", ".data", 0x48, 0x18),),
+        # updateMsg jumptable: MWCC drops the +addend form in const initializers,
+        # so the source emits plain addresses and the retail case-label addends
+        # are patched here.
+        addend_patches=((".data", 100, 312), (".data", 104, 1120), (".data", 108, 1696), (".data", 112, 1764), (".data", 116, 1780), (".data", 120, 1796), (".data", 124, 1812), (".data", 128, 1824),),
+        set_data_align=((".data", 4),),
         exact_renames=(
             ("__RTTI__Q226@unnamed@CTaskManager_cpp@9CRootProc", "lbl_eu_80663568"),
             ("__RTTI__48CTTask<Q226@unnamed@CTaskManager_cpp@9CRootProc>", "lbl_eu_80663570"),
@@ -559,6 +605,12 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
     "CProc.o": UnitRules(
         # pssCreateView int-to-float via signed magic double; 0.6f already lbl_eu_8066A278 via extern.
+        # reslist tail: swap [lbl_eu_8056B28C][__vt__11reslist<Ul>] (MWCC order)
+        # -> retail [__vt__11reslist<Ul>][lbl_eu_8056B28C], then inject the
+        # -RTTI-off-suppressed typeinfo words at the two vtable heads.
+        swap_data_blocks=((".data", 0xA0, 0xAC, 0xC),),
+        inject_relocs=((".data", 0xA0, "lbl_eu_80663538"), (".data", 0xB8, "lbl_eu_80663540"),),
+        pad_data_section=((".data", 0xC8),),  # retail .data range 0x8056B1E0-0x8056B2A8; MWCC emits 0xC4 (4B splitter align pad)
         pool_patterns=(
             (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_8066A280"),
         ),
@@ -568,6 +620,11 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("__vt__17_reslist_base<Ul>", "lbl_eu_8056B298"),
             ("__vt__11reslist<Ul>", "lbl_eu_8056B280"),
         ),
+        # Retail split carries no .sdata2: the pssCreateView magic double
+        # ships from monolibdata2 (lbl_eu_8066A280). Rename the pool above,
+        # then strip the section so the .text SDA21 reloc resolves to the
+        # external copy at link (CfPadTask.o pattern).
+        extern_data_sections=(".sdata2",),
         # Retail .text ends after wkStandbyLogout; drop weak IWorkEvent/CWorkThread stubs.
         trim_text_size=0xB1C,
         # pssCreateView: exact-size -0xF0 / FixStr@0x68 / 0x3AC body after workId hoist.
@@ -577,13 +634,39 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
     "CView.o": UnitRules(
         # CView ctor float stores: 1.0f / 0.6f pool @N → retail sdata2 labels.
+        # .sdata RTTI structs: MWCC emits [CView][CFontLayer][CMsgParam]
+        # [reslist{name,base}][_reslist_base] but retail rotates to [CView]
+        # [CMsgParam][reslist][_reslist_base][CFontLayer] (three 8B swaps),
+        # names the pool strings directly (@9115/16/18 = CMsgParam/reslist/
+        # _reslist_base names; @9117 = the reslist cast-base struct in .data).
+        swap_data_blocks=(
+            (".sdata", 0x08, 0x10, 0x8),
+            (".sdata", 0x10, 0x18, 0x8),
+            (".sdata", 0x18, 0x20, 0x8),
+        ),
+        # Retarget the auto-pooled RTTI name/base relocs (PRE-swap offsets)
+        # onto the source-defined named consts (retail labels): CMsgParam<10>
+        # @0x10, reslist<IWorkEvent *> @0x18 + cast-base @0x1C, _reslist_base
+        # @0x20. The named copies are FORCEACTIVE in source; the pooled
+        # duplicates at .rodata 0x70+ are dropped below.
+        retarget_relocs=(
+            (".sdata", 0x10, "lbl_eu_805225E0"),
+            (".sdata", 0x18, "lbl_eu_805225F0"),
+            (".sdata", 0x1C, "lbl_eu_8056B6E4"),
+            (".sdata", 0x20, "lbl_eu_80522608"),
+        ),
+        exact_renames=(
+            ("__RTTI__13CMsgParam<10>", "lbl_eu_80663580"),
+            ("__RTTI__22reslist<P10IWorkEvent>", "lbl_eu_80663588"),
+            ("__RTTI__28_reslist_base<P10IWorkEvent>", "lbl_eu_80663590"),
+            ("__vt__5CView", "lbl_eu_8056B5E0"),
+            ("__ct__10CFontLayerFv", "__ct__CFontLayer"),
+        ),
+        pad_data_section=((".data", 0x120),),  # retail .data range 0x8056B5E0-0x8056B700; MWCC emits 0x11C (4B align tail)
+        drop_data_tail=((".rodata", 0x70),),  # pooled string copies exceed retail 0x805225E0-0x80522650 by 4B
         pool_patterns=(
             (struct.pack(">I", 0x3F800000), "lbl_eu_8066A2D0"),  # 1.0f
             (struct.pack(">I", 0x3F19999A), "lbl_eu_8066A2D4"),  # 0.6f
-        ),
-        exact_renames=(
-            ("__vt__5CView", "lbl_eu_8056B5E0"),
-            ("__ct__10CFontLayerFv", "__ct__CFontLayer"),
         ),
         # Constructor: the high-level POD list initialization reaches exact
         # scheduling and size; only MWCC's three-way color choice for the two
@@ -654,16 +737,74 @@ UNIT_RULES: dict[str, UnitRules] = {
             "__dla__FPv__Fv",
         ),
     ),
-    "CViewRoot.o": UnitRules(),
+    "CViewRoot.o": UnitRules(
+        # Retail GC'd the reslist<Ul> member data: MWCC appends the 12B
+        # _reslist_base<Ul> vtable to .data (+0xB8), its "reslist<unsigned
+        # long>" name string to .rodata (+0x18), and the @N RTTI struct to
+        # .sdata (+0x8). Retail keeps only the CViewRoot vtable / name /
+        # typeinfo; drop the tails (the reslist methods stay in .text).
+        drop_data_range=((".data", 0xB8, 0xC4), (".sdata", 0x8, 0x10),),
+        drop_data_tail=((".rodata", 0x18),),
+    ),
     "CWorkThread.o": UnitRules(
         # Retail strips this TU's class-static/vtable names to address labels.
+        # wkStandby jumptable addends: the switch case labels sit 4-8B deeper
+        # in retail (function is a documented §17.6 code residual, 12.4% — the
+        # .data dispatch table entries at +0x20..+0x2C must carry the retail
+        # offsets for the DOL to byte-match).
+        addend_patches=((".data", 0x00, 8), (".data", 0x20, 4), (".data", 0x24, 8), (".data", 0x28, 8), (".data", 0x2C, 8),),
         exact_renames=(
             ("__vt__11CWorkThread", "lbl_eu_8056B110"),
             ("__vt__29_reslist_base<P11CWorkThread>", "lbl_eu_8056B1D4"),
             ("__vt__23reslist<P11CWorkThread>", "lbl_eu_8056B1BC"),
             ("__vt__12CMsgParam<8>", "lbl_eu_8056B1B0"),
             ("sAllocHandle__17CWorkThreadSystem", "lbl_eu_8066351C"),
+            # MWCC auto-emits the template RTTI structs as weak .sdata
+            # objects under '<'-names that cannot be spelled in source; the
+            # retail split references the same structs by address label
+            # (lbl_eu_80663520/28/30 in monolibdata1d, 8 bytes each). The
+            # vtable RTTI slots (+0xD0/+0xDC/+0xE8/+0xF4) then carry the
+            # retail names and the data gate passes.
+            ("__RTTI__12CMsgParam<8>", "lbl_eu_80663520"),
+            ("__RTTI__23reslist<P11CWorkThread>", "lbl_eu_80663528"),
+            ("__RTTI__29_reslist_base<P11CWorkThread>", "lbl_eu_80663530"),
+            # The RTTI name strings / typeinfo pool entries the .sdata RTTI
+            # structs point at; retail references the shared labels in
+            # monolibdata1 (0x80522474/84/9C = "CMsgParam<8>" /
+            # "reslist<CWorkThread *>" / "_reslist_base<CWorkThread *>",
+            # 0x8056B1C8 = the 0xC reslist typeinfo struct).
+            ("@2164", "lbl_eu_80522474"),
+            ("@2165", "lbl_eu_80522484"),
+            ("@2166", "lbl_eu_8056B1C8"),
+            ("@2167", "lbl_eu_8052249C"),
         ),
+        # MWCC 8-aligns the first RTTI struct after the 4-byte
+        # lbl_eu_8066351C sentinel, leaving a 4-byte pad; the retail linker
+        # packs the structs at +4/+0xC/+0x14. Drop the pad (and the same
+        # 4-byte pad in .sbss before lbl_eu_80665598) so sizes/offsets match
+        # the retail split, and write the splitter's align=4 convention.
+        drop_data_range=((".sdata", 0x4, 0x8),),
+        drop_nobits_range=((".sbss", 0x4, 0x8),),
+        pad_data_section=((".rodata", 0x4C),),
+        set_data_align=((".rodata", 4), (".sdata", 4), (".sbss", 4)),
+    ),
+    "CProcess.o": UnitRules(
+        # MWCC auto-emits a weak duplicate RTTI struct
+        # (__RTTI__27TChildListHeader<8CProcess>, '<'-name unspellable in
+        # source) in .sdata +8, plus a second copy of the
+        # "TChildListHeader<CProcess>" name string, that the retail linker
+        # GC'd: retail keeps the strong lbl_eu_806635D8 struct (the vtable
+        # RTTI slot references it) and one pooled name string. Retarget the
+        # vtable slot to the strong struct, drop the weak struct + its
+        # .sdata range, and drop the duplicate string, then restore the
+        # retail .rodata tail padding (0x1B + pad -> 0x20).
+        retarget_relocs=((".data", 0x24, "lbl_eu_806635D8"),),
+        exact_renames=(
+            ("__vt__27TChildListHeader<8CProcess>", "lbl_eu_8056BB84"),
+        ),
+        drop_data_range=((".sdata", 0x8, 0x10),),
+        drop_data_tail=((".rodata", 0x1B),),
+        pad_data_section=((".rodata", 0x20),),
     ),
     "CWorkThreadSystem.o": UnitRules(
         # Retail names this TU's static storage by stripped address labels.
@@ -694,19 +835,22 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
     ),
     "CWorkRoot.o": UnitRules(
-        # Auto-emitted RTTI/vtables for the reslist<P11CWorkThread> instantiation
-        # and the unnamed-namespace CWorkRootThread; retail names are lbl_eu_*.
+        # Retail GC'd the reslist<P11CWorkThread> member data (the strong copies
+        # live in CWorkThread.o): MWCC appends the reslist + _reslist_base
+        # vtables to .data (+0xB8, 0x24), their two name strings to .rodata
+        # (+0x78, 0x42), and the RTTI structs to .sdata (+0x8, 0x10), plus an
+        # 8-align pad in .sbss. Drop all of it; the reslist methods stay in
+        # .text and resolve to the CWorkThread copies at link.
+        drop_data_range=((".data", 0xB8, 0xDC), (".sdata", 0x8, 0x18),),
+        drop_data_tail=((".rodata", 0x78),),
         exact_renames=(
-            ("__vt__23reslist<P11CWorkThread>", "lbl_eu_8056B1BC"),
-            ("__vt__29_reslist_base<P11CWorkThread>", "lbl_eu_8056B1D4"),
-            ("__RTTI__23reslist<P11CWorkThread>", "lbl_eu_80663528"),
-            ("__RTTI__29_reslist_base<P11CWorkThread>", "lbl_eu_80663530"),
             ("__RTTI__Q223@unnamed@CWorkRoot_cpp@15CWorkRootThread", "lbl_eu_806635C0"),
-            ("@stringBase0", "lbl_eu_80522744"),
-            ("@9277", "lbl_eu_80522718"),
-            ("@9283", "lbl_eu_80522484"),
-            ("@9285", "lbl_eu_8052249C"),
-            ("@9284", "lbl_eu_8056B1C8"),
+            ("__dt__Q217CWorkRootThreadNS15CWorkRootThreadFv", "__dt__Q223@unnamed@CWorkRoot_cpp@15CWorkRootThreadFv"),
+            ("wkStandbyLogout__Q217CWorkRootThreadNS15CWorkRootThreadFv", "wkStandbyLogout__Q223@unnamed@CWorkRoot_cpp@15CWorkRootThreadFv"),
+            # Singleton static: source defines the NS-mangled symbol; retail
+            # names it @unnamed@ (its .sbss slot is 0x80665608, now inside the
+            # CWorkRoot range). The 13 .text refs resolve at link.
+            ("spInstance__Q217CWorkRootThreadNS15CWorkRootThread", "spInstance__Q223@unnamed@CWorkRoot_cpp@15CWorkRootThread"),
         ),
     ),
     "CScriptCode.o": UnitRules(
@@ -939,17 +1083,29 @@ UNIT_RULES: dict[str, UnitRules] = {
         # Retail split carries only __ct__ + Reset (0x8C); the weak base
         # dtor __dt__CDoubleListNode (0x40) and the weak template dtor
         # __dt__TChildListHeader<CChildListNode> (0x40) are linker-GC'd
-        # (retail defines both strongly in CProcess.o, 21 Matching targets —
-        # the weak copies here are dead weight). The 0xC .data template
-        # vtable (novtable is ignored for template classes in MWCC; its only
-        # reloc is the dropped dtor address) is orphaned — retail keeps no
-        # data here, and the __ct__ vptr stores already reference the retail
-        # labels lbl_eu_8056BBA0/B0 by name.
-        drop_text_symbols=(
-            "__dt__15CDoubleListNodeFv",
-            "__dt__34TChildListHeader<14CChildListNode>Fv",
+        # (retail defines both strongly in CProcess.o — the weak copies here
+        # are dead weight). The template dtor is referenced by the .data
+        # TChildListHeader vtable slot, so it is dropped as UNDEF (resolves
+        # to the strong CProcess.o copy at link, mirroring the
+        # DOL-extracted retail .o); the orphan base dtor has no live refs.
+        drop_text_symbols=("__dt__15CDoubleListNodeFv",),
+        drop_text_symbols_as_undef=("__dt__34TChildListHeader<14CChildListNode>Fv",),
+        # The retail split NOW carries .data (vtable lbl_eu_8056BBA0 at +0
+        # and the TChildListHeader template vtable lbl_eu_8056BBB0 at +0x10)
+        # after the monolibdata1/1d blob-split surgery, so this TU must emit
+        # it. MWCC auto-emits the template vtable under a '<'-name that
+        # cannot be spelled in source; rename it to the retail label. Tier A:
+        # the template vtable must be 16 bytes with the RTTI slot (retail
+        # has a reloc to lbl_eu_806635E0 at +0x10; MWCC currently emits 12
+        # bytes without it) so .data reaches the retail 0x20.
+        # Retail's 4th word (+0x1C) is a trailing NULL: pad the section tail.
+        pad_data_section=((".data", 0x20),),
+        # -RTTI off suppresses the vtable's typeinfo word (MWCC emits 0):
+        # inject the R_PPC_ADDR32 at +0x10 -> retail lbl_eu_806635E0 slot.
+        inject_relocs=((".data", 0x10, "lbl_eu_806635E0"),),
+        exact_renames=(
+            ("__vt__34TChildListHeader<14CChildListNode>", "lbl_eu_8056BBB0"),
         ),
-        extern_data_sections=(".data",),
     ),
     "CScnFrame.o": UnitRules(
         # The u32->f32 conversion magic double (2^52) is compiler-generated
@@ -3093,8 +3249,15 @@ def _fix_rel_branches(text: bytearray, insert_at: int, insert_len: int) -> None:
             struct.pack_into(">I", text, i, new_w)
 
 
-def pad_sdata2_section(path: Path, new_size: int) -> bool:
-    """Zero-pad .sdata2 to new_size (retail 8-byte-aligned float tail)."""
+def pad_data_section_func(path: Path, section: str, new_size: int) -> bool:
+    """Zero-pad a FILE-BACKED data section up to new_size.
+
+    Retail split objects often carry linker alignment padding after the last
+    symbol (RTTI name pools / string tails) that MWCC does not emit; the
+    data gate compares section size and bytes, so the pad restores the
+    retail section exactly. Only grows; drops are handled by
+    drop_data_tail / drop_data_range.
+    """
     data = bytearray(path.read_bytes())
     if data[:4] != b"\x7fELF" or data[5] != 2:
         raise ValueError(f"expected big-endian ELF32: {path}")
@@ -3105,26 +3268,24 @@ def pad_sdata2_section(path: Path, new_size: int) -> bool:
     e_shstrndx = struct.unpack_from(">H", data, 50)[0]
     shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
 
-    sdata2_idx = None
-    sdata2_hoff = sdata2_off = sdata2_size = None
+    sec_idx = sec_hoff = sec_off = sec_size = None
     for i in range(e_shnum):
         hoff = e_shoff + i * e_shentsize
         sh_name = struct.unpack_from(">I", data, hoff)[0]
         end = data.index(0, shstr_off + sh_name)
         name = data[shstr_off + sh_name : end].decode("ascii")
-        if name == ".sdata2":
-            sdata2_idx = i
-            sdata2_hoff = hoff
-            sdata2_off = struct.unpack_from(">I", data, hoff + 16)[0]
-            sdata2_size = struct.unpack_from(">I", data, hoff + 20)[0]
+        if name == section:
+            sec_idx, sec_hoff = i, hoff
+            sec_off = struct.unpack_from(">I", data, hoff + 16)[0]
+            sec_size = struct.unpack_from(">I", data, hoff + 20)[0]
             break
-    if sdata2_idx is None or sdata2_size is None or sdata2_off is None or sdata2_hoff is None:
+    if sec_idx is None or sec_size is None or sec_off is None or sec_hoff is None:
         return False
-    if sdata2_size >= new_size:
+    if sec_size >= new_size:
         return False
 
-    pad = new_size - sdata2_size
-    sec_end = sdata2_off + sdata2_size
+    pad = new_size - sec_size
+    sec_end = sec_off + sec_size
     data = data[:sec_end] + (b"\0" * pad) + data[sec_end:]
     e_shoff = struct.unpack_from(">I", data, 32)[0]
     if e_shoff >= sec_end:
@@ -3133,10 +3294,107 @@ def pad_sdata2_section(path: Path, new_size: int) -> bool:
     for i in range(e_shnum):
         hoff = e_shoff + i * e_shentsize
         sh_offset = struct.unpack_from(">I", data, hoff + 16)[0]
-        if i == sdata2_idx:
+        if i == sec_idx:
             struct.pack_into(">I", data, hoff + 20, new_size)
         elif sh_offset >= sec_end:
             struct.pack_into(">I", data, hoff + 16, sh_offset + pad)
+
+    path.write_bytes(data)
+    return True
+
+
+def pad_sdata2_section(path: Path, new_size: int) -> bool:
+    """Zero-pad .sdata2 to new_size (retail 8-byte-aligned float tail)."""
+    return pad_data_section_func(path, ".sdata2", new_size)
+
+
+def set_section_align(path: Path, section: str, align: int) -> bool:
+    """Set sh_addralign on *section*.
+
+    The ppcdis retail splitter writes align=4 for sections MWCC emits with
+    align=8 (identical content); the data gate compares section alignment
+    for file-backed and NOBITS sections alike.
+    """
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name = struct.unpack_from(">I", data, hoff)[0]
+        end = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end].decode("ascii")
+        if name == section:
+            if struct.unpack_from(">I", data, hoff + 32)[0] == align:
+                return False
+            struct.pack_into(">I", data, hoff + 32, align)
+            path.write_bytes(data)
+            return True
+    return False
+
+
+def drop_nobits_range_func(path: Path, section: str, start: int, end: int) -> bool:
+    """Remove [start, end) of a NOBITS section (.bss/.sbss).
+
+    MWCC 8-aligns .sbss statics that the retail linker packs at 4-byte
+    boundaries, leaving anonymous padding between objects. NOBITS sections
+    have no file bytes to splice (drop_data_range cannot handle them), so
+    shrink sh_size and shift later symbols only; symbols inside the removed
+    range are ABS'd (consistent with drop_data_range).
+    """
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+
+    sec_idx = sec_hoff = sec_size = None
+    sym_idx = None
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name = struct.unpack_from(">I", data, hoff)[0]
+        end2 = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end2].decode("ascii")
+        if name == section:
+            sec_idx, sec_hoff = i, hoff
+            sec_size = struct.unpack_from(">I", data, hoff + 20)[0]
+        elif name == ".symtab":
+            sym_idx = i
+    if sec_idx is None or sec_size is None or sec_hoff is None:
+        return False
+    if struct.unpack_from(">I", data, sec_hoff + 4)[0] != 8:  # SHT_NOBITS
+        return False
+    end = min(end, sec_size)
+    length = end - start
+    if length <= 0:
+        return False
+
+    struct.pack_into(">I", data, sec_hoff + 20, sec_size - length)
+
+    if sym_idx is not None:
+        sym_hoff = e_shoff + sym_idx * e_shentsize
+        sym_off = struct.unpack_from(">I", data, sym_hoff + 16)[0]
+        sym_size = struct.unpack_from(">I", data, sym_hoff + 20)[0]
+        for so in range(0, sym_size, 16):
+            st_value = struct.unpack_from(">I", data, sym_off + so + 4)[0]
+            st_shndx = struct.unpack_from(">H", data, sym_off + so + 14)[0]
+            if st_shndx != sec_idx:
+                continue
+            if start <= st_value < end:
+                struct.pack_into(">I", data, sym_off + so + 8, 0)
+                struct.pack_into(">H", data, sym_off + so + 14, 0xFFF1)  # SHN_ABS
+            elif st_value >= end:
+                struct.pack_into(">I", data, sym_off + so + 4, st_value - length)
 
     path.write_bytes(data)
     return True
@@ -3356,6 +3614,287 @@ def retarget_reloc_to_symbol(path: Path, section: str, offset: int, new_name: st
         elif sh_offset >= old_end:
             struct.pack_into(">I", data, hoff + 16, sh_offset + len(name_bytes))
     struct.pack_into(">I", data, sym_entry + 0, str_size)  # st_name -> new string
+
+    path.write_bytes(data)
+    return True
+
+
+def patch_reloc_addend(path: Path, section: str, offset: int, delta: int) -> bool:
+    """Add *delta* to the r_addend of the SHT_RELA entry at (section, offset).
+
+    Used for switch/jumptable case-label addends inside residual functions
+    whose code is a documented §17.6 length residual (wkStandby etc.).
+    """
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+
+    rela_idx = None
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name, = struct.unpack_from(">I", data, hoff)
+        end = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end].decode("ascii")
+        if name == ".rela" + section:
+            rela_idx = i
+            break
+    if rela_idx is None:
+        return False
+
+    rela_hoff = e_shoff + rela_idx * e_shentsize
+    rela_off = struct.unpack_from(">I", data, rela_hoff + 16)[0]
+    rela_size = struct.unpack_from(">I", data, rela_hoff + 20)[0]
+    for ro in range(0, rela_size, 12):
+        r_offset, r_info, r_addend = struct.unpack_from(">IIi", data, rela_off + ro)
+        if r_offset == offset:
+            struct.pack_into(">i", data, rela_off + ro + 8, r_addend + delta)
+            path.write_bytes(data)
+            return True
+    return False
+
+
+def swap_data_blocks_func(path: Path, section: str, off1: int, off2: int, size: int) -> bool:
+    """Swap two equal-size byte blocks inside a FILE-BACKED *section* and move
+    the relocs that point into them (R_PPC_ADDR32 r_offsets are section-relative).
+
+    CProc.o reslist layout: MWCC emits [lbl_eu_8056B28C][__vt__11reslist<Ul>]
+    while retail interleaves [__vt__11reslist<Ul>][lbl_eu_8056B28C]; swapping
+    the 12-byte blocks restores byte + reloc positions.
+    """
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+
+    sec_idx = rela_idx = None
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name, = struct.unpack_from(">I", data, hoff)
+        end = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end].decode("ascii")
+        if name == section:
+            sec_idx = i
+        elif name == ".rela" + section:
+            rela_idx = i
+    if sec_idx is None or rela_idx is None or off1 == off2 or size <= 0:
+        return False
+    if off1 > off2:
+        off1, off2 = off2, off1
+    sec_hoff = e_shoff + sec_idx * e_shentsize
+    if off2 + size > struct.unpack_from(">I", data, sec_hoff + 20)[0]:
+        return False
+
+    sec_off = struct.unpack_from(">I", data, sec_hoff + 16)[0]
+    a = data[sec_off + off1 : sec_off + off1 + size]
+    b = data[sec_off + off2 : sec_off + off2 + size]
+    data[sec_off + off1 : sec_off + off1 + size] = b
+    data[sec_off + off2 : sec_off + off2 + size] = a
+
+    rela_hoff = e_shoff + rela_idx * e_shentsize
+    rela_off = struct.unpack_from(">I", data, rela_hoff + 16)[0]
+    rela_size = struct.unpack_from(">I", data, rela_hoff + 20)[0]
+    delta = off2 - off1
+    for ro in range(0, rela_size, 12):
+        r_offset, = struct.unpack_from(">I", data, rela_off + ro)
+        if off1 <= r_offset < off1 + size:
+            struct.pack_into(">I", data, rela_off + ro, r_offset + delta)
+        elif off2 <= r_offset < off2 + size:
+            struct.pack_into(">I", data, rela_off + ro, r_offset - delta)
+
+    path.write_bytes(data)
+    return True
+
+
+def add_local_symbol(path: Path, sym_name: str, section: str, offset: int, size: int) -> bool:
+    """Add a new LOCAL symbol (sym_name, section, offset, size) to .symtab.
+
+    Defines subobject labels C++ cannot express (base-list addresses inside a
+    data block). Used with source-side UNDEF externs: the .sdata locator reloc
+    (e.g. lbl_eu_8056B5A4) then resolves to the local definition at link.
+    """
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+
+    sec_idx = sym_idx = str_idx = None
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name, = struct.unpack_from(">I", data, hoff)
+        end = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end].decode("ascii")
+        if name == section:
+            sec_idx = i
+        elif name == ".symtab":
+            sym_idx = i
+        elif name == ".strtab":
+            str_idx = i
+    if sec_idx is None or sym_idx is None or str_idx is None:
+        return False
+
+    sym_hoff = e_shoff + sym_idx * e_shentsize
+    sym_off = struct.unpack_from(">I", data, sym_hoff + 16)[0]
+    sym_size = struct.unpack_from(">I", data, sym_hoff + 20)[0]
+    str_hoff = e_shoff + str_idx * e_shentsize
+    str_off = struct.unpack_from(">I", data, str_hoff + 16)[0]
+    str_size = struct.unpack_from(">I", data, str_hoff + 20)[0]
+
+    # Prefer REDEFINING an existing UNDEF symbol in place (the source's
+    # extern decl produces one): patching shndx/value/size avoids appending
+    # to .symtab, which mwldeppc misreads (internal linker error
+    # ELF_linker.c:11164 — the appended LOCAL lands past sh_info). Only
+    # append when no symbol with the name exists.
+    target = sym_name.encode("ascii")
+    found = False
+    for j in range(0, sym_size, 16):
+        st_name, = struct.unpack_from(">I", data, sym_off + j)
+        end = data.index(0, str_off + st_name)
+        if data[str_off + st_name : end] == target:
+            struct.pack_into(">IIBBH", data, sym_off + j + 4, offset, size, 0x11, 0, sec_idx)
+            found = True
+            break
+    if found:
+        path.write_bytes(data)
+        return True
+
+    # Fallback: append a new symbol (rare; the caller should declare the
+    # extern so the UNDEF slot already exists).
+    old_end = str_off + str_size
+    data = data[:old_end] + target + b"\0" + data[old_end:]
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    if e_shoff >= old_end:
+        e_shoff += len(target)
+        struct.pack_into(">I", data, 32, e_shoff)
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_offset, = struct.unpack_from(">I", data, hoff + 16)
+        if i == str_idx:
+            struct.pack_into(">I", data, hoff + 20, str_size + len(target))
+        elif sh_offset >= old_end:
+            struct.pack_into(">I", data, hoff + 16, sh_offset + len(target))
+
+    sym_hoff = e_shoff + sym_idx * e_shentsize
+    sym_off = struct.unpack_from(">I", data, sym_hoff + 16)[0]
+    sym_size = struct.unpack_from(">I", data, sym_hoff + 20)[0]
+    entry = struct.pack(">IIIBBH", str_size, offset, size, 0x11, 0, sec_idx)
+    sym_end = sym_off + sym_size
+    data = data[:sym_end] + entry + data[sym_end:]
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    if e_shoff >= sym_end:
+        e_shoff += 16
+        struct.pack_into(">I", data, 32, e_shoff)
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_offset, = struct.unpack_from(">I", data, hoff + 16)
+        if i == sym_idx:
+            struct.pack_into(">I", data, hoff + 20, sym_size + 16)
+        elif sh_offset >= sym_end:
+            struct.pack_into(">I", data, hoff + 16, sh_offset + 16)
+
+    path.write_bytes(data)
+    return True
+
+
+def inject_reloc_to_symbol(path: Path, section: str, offset: int, sym_name: str) -> bool:
+    """Append a new R_PPC_ADDR32 SHT_RELA entry at (section, offset) pointing at
+    an existing symbol (retail vtable slot MWCC zeroed when -RTTI off
+    suppressed the typeinfo word; e.g. CChildListNode __vt__34TChildListHeader
+    word0 -> lbl_eu_806635E0).
+
+    The slot bytes stay 0x00000000 in the file (as a reloc placeholder); the
+    injected entry makes the linker fill the address, matching retail. Only
+    grows the .rela section; the data section is untouched.
+    """
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+
+    sym_idx = rela_idx = str_idx = None
+    target_sym_idx = None
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_name = struct.unpack_from(">I", data, hoff)[0]
+        end = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end].decode("ascii")
+        if name == ".symtab":
+            sym_idx = i
+        elif name == ".rela" + section:
+            rela_idx = i
+        elif name == ".strtab":
+            str_idx = i
+    if sym_idx is None or rela_idx is None or str_idx is None:
+        return False
+
+    sym_hoff = e_shoff + sym_idx * e_shentsize
+    sym_off = struct.unpack_from(">I", data, sym_hoff + 16)[0]
+    sym_size = struct.unpack_from(">I", data, sym_hoff + 20)[0]
+    str_hoff = e_shoff + str_idx * e_shentsize
+    str_off = struct.unpack_from(">I", data, str_hoff + 16)[0]
+    target_bytes = sym_name.encode("ascii")
+    for j in range(0, sym_size, 16):
+        st_name = struct.unpack_from(">I", data, sym_off + j)[0]
+        end = data.index(0, str_off + st_name)
+        if data[str_off + st_name : end] == target_bytes:
+            target_sym_idx = j // 16
+            break
+    # Also accept a symbol with a trailing-@ pool/clone suffix (objcopy may
+    # uniquify e.g. lbl_eu_806635E0 -> lbl_eu_806635E0.55741).
+    if target_sym_idx is None:
+        for j in range(0, sym_size, 16):
+            st_name = struct.unpack_from(">I", data, sym_off + j)[0]
+            end = data.index(0, str_off + st_name)
+            nm = data[str_off + st_name : end]
+            if nm.startswith(target_bytes[:-1]) and nm.endswith(b"\0"):
+                target_sym_idx = j // 16
+                break
+    if target_sym_idx is None:
+        return False
+
+    rela_hoff = e_shoff + rela_idx * e_shentsize
+    rela_off = struct.unpack_from(">I", data, rela_hoff + 16)[0]
+    rela_size = struct.unpack_from(">I", data, rela_hoff + 20)[0]
+    # Skip if an entry for this offset already exists.
+    for ro in range(0, rela_size, 12):
+        r_offset = struct.unpack_from(">I", data, rela_off + ro)[0]
+        if r_offset == offset:
+            return False
+
+    entry = struct.pack(">IIi", offset, (target_sym_idx << 8) | 1, 0)  # R_PPC_ADDR32
+    rela_end = rela_off + rela_size
+    data = data[:rela_end] + entry + data[rela_end:]
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    if e_shoff >= rela_end:
+        e_shoff += 12
+        struct.pack_into(">I", data, 32, e_shoff)
+    for i in range(e_shnum):
+        hoff = e_shoff + i * e_shentsize
+        sh_offset = struct.unpack_from(">I", data, hoff + 16)[0]
+        if i == rela_idx:
+            struct.pack_into(">I", data, hoff + 20, rela_size + 12)
+        elif sh_offset >= rela_end:
+            struct.pack_into(">I", data, hoff + 16, sh_offset + 12)
 
     path.write_bytes(data)
     return True
@@ -3847,6 +4386,10 @@ def insert_text_insns(
 def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
     if rules is None:
         rules = UNIT_RULES.get(path.name)
+        # Link-time copies are named *.reloc.o (tools/project.py
+        # link_reloc_postprocess rule); match by the original basename.
+        if rules is None and path.name.endswith(".reloc.o"):
+            rules = UNIT_RULES.get(path.name[:-8] + ".o")
     if rules is None:
         return False
 
@@ -3876,14 +4419,28 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
     changed = rename_pool_symbols(path, rules.pool_patterns) or changed
     for sec, off, sym_name in rules.retarget_relocs:
         changed = retarget_reloc_to_symbol(path, sec, off, sym_name) or changed
+    for sec, o1, o2, size in rules.swap_data_blocks:
+        changed = swap_data_blocks_func(path, sec, o1, o2, size) or changed
+    for sec, off, delta in rules.addend_patches:
+        changed = patch_reloc_addend(path, sec, off, delta) or changed
+    for sec, off, sym_name in rules.inject_relocs:
+        changed = inject_reloc_to_symbol(path, sec, off, sym_name) or changed
+    for sym_name, sec, off, size in rules.add_symbols:
+        changed = add_local_symbol(path, sym_name, sec, off, size) or changed
     for sec, off, tsec, toff in rules.retarget_relocs_local:
         changed = retarget_reloc_to_local(path, sec, off, tsec, toff) or changed
     for sec, start, end in rules.zero_data_range:
         changed = zero_data_range(path, sec, start, end) or changed
     for sec, start, end in rules.drop_data_range:
         changed = drop_data_range(path, sec, start, end) or changed
+    for sec, start, end in rules.drop_nobits_range:
+        changed = drop_nobits_range_func(path, sec, start, end) or changed
     for sec, keep in rules.drop_data_tail:
         changed = drop_data_tail(path, sec, keep) or changed
+    for sec, target in rules.pad_data_section:
+        changed = pad_data_section_func(path, sec, target) or changed
+    for sec, align in rules.set_data_align:
+        changed = set_section_align(path, sec, align) or changed
     if rules.extern_data_sections:
         changed = extern_data_sections(path, rules.extern_data_sections) or changed
     if rules.drop_text_symbols or rules.drop_text_symbols_as_undef:
@@ -3928,8 +4485,12 @@ def main(argv: list[str]) -> int:
             rc = 1
             continue
         if path.name not in UNIT_RULES:
-            print(f"no reloc postprocess rules for {path.name}")
-            continue
+            # Link-time copies are named *.reloc.o (tools/project.py
+            # link_reloc_postprocess rule); match the rule by the original
+            # basename.
+            if not (path.name.endswith(".reloc.o") and path.name[:-8] + ".o" in UNIT_RULES):
+                print(f"no reloc postprocess rules for {path.name}")
+                continue
         if postprocess_object(path):
             print(f"post-processed {path}")
         else:

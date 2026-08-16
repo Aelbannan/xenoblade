@@ -11,11 +11,11 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 10243 |
-| extern "C" declarations (non-lbl_*, imports) | 3815 |
+| extern "C" (total lines) | 10308 |
+| extern "C" declarations (non-lbl_*, imports) | 3856 |
 | extern "C" definitions (forced names) | 3753 |
 | `self`/register-style params | 11594 |
-| `void*` (params + locals) | 6990 |
+| `void*` (params + locals) | 6992 |
 | raw pointer offset arithmetic | 6496 |
 | deref-through-cast arithmetic | 2501 |
 | inline asm / `register` | 112 |
@@ -63,8 +63,9 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/core/CSchedule.cpp | 0 | 3 | 5 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CScriptCode.cpp | 39 | 9 | 15 | 20 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CSplitFrame.cpp | 0 | 6 | 8 | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/core/CTaskManager.cpp | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CToken.cpp | 2 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
-| libs/monolib/src/core/CView.cpp | 12 | 7 | 30 | 16 | 64 | 16 | 1 | 23 | 120 | 0 | 0 | 0 |
+| libs/monolib/src/core/CView.cpp | 50 | 7 | 30 | 18 | 64 | 16 | 1 | 23 | 120 | 0 | 0 | 0 |
 | libs/monolib/src/core/CViewFrame.cpp | 31 | 10 | 24 | 9 | 1 | 1 | 0 | 7 | 2 | 0 | 0 | 0 |
 | libs/monolib/src/core/CViewRoot.cpp | 0 | 3 | 1 | 7 | 0 | 0 | 0 | 0 | 23 | 0 | 0 | 0 |
 | libs/monolib/src/core/ScheduleList.cpp | 5 | 0 | 14 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -782,6 +783,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/core/CTaskManager.cpp": {
   "asm_insn_shim": 0,
+  "extern_c_nonlbl_decl": 3,
   "init_side_effect": 0,
   "schedule_pragma": 0
  },
@@ -797,7 +799,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_code": 1,
   "asm_insn_shim": 0,
   "deref_arith": 16,
-  "extern_c_nonlbl_decl": 12,
+  "extern_c_nonlbl_decl": 50,
   "extern_c_nonlbl_def": 7,
   "goto_count": 120,
   "init_side_effect": 0,
@@ -805,7 +807,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "rn_params": 23,
   "schedule_pragma": 0,
   "self_params": 30,
-  "void_ptr": 16
+  "void_ptr": 18
  },
  "libs/monolib/src/core/CViewFrame.cpp": {
   "asm_insn_shim": 0,

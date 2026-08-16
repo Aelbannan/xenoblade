@@ -9,6 +9,9 @@ extern "C" {
 // Data definitions moved into this TU (blob monolibdata1d dissolve):
 // .sbss lbl_eu_806655A8 (s16, 2 bytes) and .bss sRsrcPointerList (0x40).
 s16 lbl_eu_806655A8;
+s16 g_CRsrcSbssPad1;  /* pad to 0x806655A8-B0 */
+s16 g_CRsrcSbssPad2;
+s16 g_CRsrcSbssPad3;
 CRsrcData* sRsrcPointerList__5CRsrc[16];
 
 CRsrcData* convertToRsrcData__5CRsrcFP11CWorkThread(CWorkThread* pThread);

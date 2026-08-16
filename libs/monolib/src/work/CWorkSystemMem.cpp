@@ -6,7 +6,7 @@
 // string (0x80522818), the sdata typeinfo (0x806635D0) and the sbss
 // singleton (0x80665620) here with the retail names/bytes.
 // rodata 0x80522818 (0xF): RTTI class-name string.
-const char lbl_eu_80522818[] = "CWorkSystemMem";
+const char lbl_eu_80522818[16] = {0x43,0x57,0x6F,0x72,0x6B,0x53,0x79,0x73,0x74,0x65,0x6D,0x4D,0x65,0x6D,0x00,0x00};  /* "CWorkSystemMem" pad to 0x80522818-28 */
 IWorkEventVtbl lbl_eu_8056BAA8 = {
     (u32)&lbl_eu_806635D0, 0, (u32)&__dt__14CWorkSystemMemFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,

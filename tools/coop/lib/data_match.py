@@ -13,6 +13,15 @@ Per section we compare:
 
 A unit is "data-matched" when every section passes. This is the data analog of
 the function-level hexdiff loop and the CI gate for data-only TUs.
+
+NOTE: ``run.py data diff`` compares the raw object first; only when the raw
+comparison FAILS does it apply the PLAN.md §17.6 reloc-name postprocess
+(tools/postprocess_reloc_names.py UNIT_RULES) to a *temp copy* of the
+decompiled object before calling :func:`check_data_sections` — the same rules
+``run.py diff`` / hexdiff apply before comparing. Units that already match raw
+are never postprocessed (a stale rule must not regress a matched unit; opt out
+of the postprocess with ``data diff --no-postprocess``). This file only
+compares the objects it is given; the runner owns the postprocess step.
 """
 
 from __future__ import annotations

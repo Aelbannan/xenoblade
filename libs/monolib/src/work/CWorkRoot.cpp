@@ -120,11 +120,16 @@ namespace CWorkRootThreadNS {
     private:
         static CWorkRootThread* spInstance;
     };
+}  // namespace CWorkRootThreadNS
 
-    CWorkRootThread* CWorkRootThread::spInstance;
-}
-
+// spInstance static (retail 0x80665608): the CWorkRoot .sbss split range now
+// includes 0x80665608-0x80665618 (16B) so the singleton storage is emitted;
+// UNIT_RULES["CWorkRoot.o"] renames the NS-mangled symbol to the retail
+// @unnamed@ name (spInstance__Q223@unnamed@CWorkRoot_cpp@15CWorkRootThread),
+// resolving the 13 .text references at link.
 using CWorkRootThreadNS::CWorkRootThread;
+
+CWorkRootThread* CWorkRootThread::spInstance;
 
 // Data owned by this TU (blob monolibdata1d/monolibdata1 dissolve):
 //   lbl_eu_80522718 (.rodata) = CWorkRootThread RTTI name string
@@ -134,7 +139,11 @@ using CWorkRootThreadNS::CWorkRootThread;
 //   lbl_eu_8056B9D8 (.data)   = RTTI base list {IWE,0,CWT,0,0,0}
 //   lbl_eu_8066560C (.sbss)   = CWorkRoot::sExitMode (exit-mode u32)
 //   lbl_eu_80665610 (.sbss)   = CWorkRoot::sException (CException*; 8 bytes, word 0 used)
-extern "C" const char lbl_eu_80522718[] = "@unnamed@CWorkRoot_cpp@::CWorkRootThread";
+// RTTI name string (.rodata 0x80522718, 0x2C bytes: 34 content + 10 pad).
+// align(4) so the object is not padded to a 16-byte slot; the retail object
+// ends at 0x80522744 where the exit-string pool starts.
+extern "C" __declspec(align(4)) const char lbl_eu_80522718[0x2C] =
+    {0x40,0x75,0x6E,0x6E,0x61,0x6D,0x65,0x64,0x40,0x43,0x57,0x6F,0x72,0x6B,0x52,0x6F,0x6F,0x74,0x5F,0x63,0x70,0x70,0x40,0x3A,0x3A,0x43,0x57,0x6F,0x72,0x6B,0x52,0x6F,0x6F,0x74,0x54,0x68,0x72,0x65,0x61,0x64,0x00,0x00,0x00,0x00};  /* "@unnamed@CWorkRoot_cpp@::CWorkRootThread\0\0\0\0" */
 extern "C" const char lbl_eu_80522744[0x4C] =
     "CWorkRoot\0"
     "exit wii menu\n\0"

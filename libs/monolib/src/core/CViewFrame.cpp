@@ -40,15 +40,15 @@ void fontFlush__10CFontLayerFi(CFontLayer* layer, int r4);
 
 // Retail sdata2 constants used by the frame drawing (imports; the definitions
 // live in the monolib shared data blob, not this TU).
-float lbl_eu_8066A308;
-float lbl_eu_8066A30C;
-float lbl_eu_8066A310;
-float lbl_eu_8066A314;
-float lbl_eu_8066A318;
-float lbl_eu_8066A2EC;
-float lbl_eu_8066A2F0;
-float lbl_eu_8066A2F4;
-double lbl_eu_8066A300;
+extern float lbl_eu_8066A308;  // pooled .sdata2 (FloatUtils)
+extern float lbl_eu_8066A30C;
+extern float lbl_eu_8066A310;
+extern float lbl_eu_8066A314;
+extern float lbl_eu_8066A318;
+extern float lbl_eu_8066A2EC;
+extern float lbl_eu_8066A2F0;
+extern float lbl_eu_8066A2F4;
+extern double lbl_eu_8066A300;
 
 // Definitions in this TU (retail symbol names; declared here so earlier
 // callers in the file can reference them).
@@ -67,12 +67,27 @@ extern float lbl_eu_8066A2E8; // 0.0
 extern float lbl_eu_8066A2F8; // 0.4
 extern float lbl_eu_8066A2FC; // 0.6
 
+// s16/s32 -> f32 conversion matching the retail code: build the 2^52+x double
+// on the stack (low word = x ^ 0x80000000, high word = 0x43300000) and
+// subtract the shared magic double lbl_eu_8066A300 (owned by FloatUtils).
+// MWCC's builtin `(float)s16expr` conversion pools the 0x4330000080000000
+// magic into a TU-local .sdata2 entry, but retail CViewFrame.o has .sdata2
+// size 0 -- every conversion references the extern instead (MWCC_REFERENCE
+// 7i). Statement order matters: the x ^ 0x80000000 word first, then
+// 0x43300000, otherwise MWCC hoists lis 0x4330 above the extern lis.
+inline float convF32(s32 v) {
+    union { double d; u32 w[2]; } u;
+    u.w[1] = (u32)v ^ 0x80000000;
+    u.w[0] = 0x43300000;
+    return (float)(u.d - lbl_eu_8066A300);
+}
+
 // Blob monolibdata1/1d dissolve: this TU owns .rodata 0x80522650-
 // 0x80522660, .sdata 0x806635A0-0x806635A8, .data 0x8056B700-0x8056B710.
 #include "monolib/data_vtables.hpp"
 
 // RTTI name string (.rodata).
-const char lbl_eu_80522650[] = "CViewFrame";
+const char lbl_eu_80522650[16] = {0x43,0x56,0x69,0x65,0x77,0x46,0x72,0x61,0x6D,0x65,0x00,0x00,0x00,0x00,0x00,0x00};  /* "CViewFrame" pad to 0x80522650-60 */
 // RTTI locator (.sdata, 8): { name, 0 }.
 extern "C" u32 lbl_eu_806635A0[2] = { (u32)&lbl_eu_80522650, 0 };
 // CViewFrame vtable (.data, 0x10): [RTTI, 0, dtor, 0].
@@ -777,16 +792,16 @@ extern "C" int CView_UnkVirtualFunc1__10CViewFrameFv(CViewFrame* self, CWorkThre
     if ((owner->unk27C & 0x100) == 0) {
         if (mode == 4 || mode == 1 || mode == 3) {
             // Top-left anchored resize.
-            rect2.mPos.x = (s16)((float)rect.mSize.x - self->unk40);
-            rect2.mSize.x = (s16)((float)rect.mSize.x -
-                                  ((float)(rect.mSize.x - rect2.mPos.x) - self->unk40));
+            rect2.mPos.x = (s16)(convF32(rect.mSize.x) - self->unk40);
+            rect2.mSize.x = (s16)(convF32(rect.mSize.x) -
+                                  (convF32(rect.mSize.x - rect2.mPos.x) - self->unk40));
             if (rect2.mSize.x < 8) {
                 rect2.mPos.x = (s16)(rect2.mPos.x - (s16)(8 - rect2.mSize.x));
                 rect2.mSize.x = 8;
             }
         }
         if (mode == 6 || (u32)mode <= 1) {
-            rect2.mPos.y = (s16)((float)rect.mSize.y - self->unk44);
+            rect2.mPos.y = (s16)(convF32(rect.mSize.y) - self->unk44);
             rect2.mSize.y = (s16)(rect2.mSize.y -
                                   (s16)((rect.mSize.y - rect2.mPos.y) - (int)self->unk44));
             if (rect2.mSize.y < 8) {
@@ -795,16 +810,16 @@ extern "C" int CView_UnkVirtualFunc1__10CViewFrameFv(CViewFrame* self, CWorkThre
             }
         }
         if (mode == 5 || mode == 0 || mode == 2) {
-            rect2.mSize.x = (s16)((float)rect2.mSize.x +
-                                  ((float)(rect.mSize.x - (rect2.mPos.x + rect2.mSize.x)) -
+            rect2.mSize.x = (s16)(convF32(rect2.mSize.x) +
+                                  (convF32(rect.mSize.x - (rect2.mPos.x + rect2.mSize.x)) -
                                    self->unk3C));
             if (rect2.mSize.x < 8) {
                 rect2.mSize.x = 8;
             }
         }
         if (mode == 7 || (u32)(mode - 2) <= 1) {
-            rect2.mSize.y = (s16)((float)rect2.mSize.y +
-                                  ((float)(rect.mSize.y - (rect2.mPos.y + rect2.mSize.y)) -
+            rect2.mSize.y = (s16)(convF32(rect2.mSize.y) +
+                                  (convF32(rect.mSize.y - (rect2.mPos.y + rect2.mSize.y)) -
                                    self->unk48));
             if (rect2.mSize.y < 8) {
                 rect2.mSize.y = 8;
@@ -820,10 +835,10 @@ extern "C" int CView_UnkVirtualFunc1__10CViewFrameFv(CViewFrame* self, CWorkThre
         parentRect.mSize.y = (s16)(pos->mPos.y - parentRect.mPos.y);
         rect.mSize = parentRect.mSize;
         if ((s32)self->unk38 == 0xa) {
-            setSplitLine__5CViewFs(owner, (s16)((float)rect.mSize.y - self->unk4C));
+            setSplitLine__5CViewFs(owner, (s16)(convF32(rect.mSize.y) - self->unk4C));
         }
         if ((s32)self->unk38 == 0xb) {
-            setSplitLine__5CViewFs(owner, (s16)((float)rect.mSize.x - self->unk4C));
+            setSplitLine__5CViewFs(owner, (s16)(convF32(rect.mSize.x) - self->unk4C));
         }
     }
 
@@ -858,8 +873,8 @@ extern "C" int CView_UnkVirtualFunc9__10CViewFrameFv(CViewFrame* self, CWorkThre
     ml::CRect16 scratch;
     int dx = pos->mPos.x - viewRect.mPos.x;
     int dy = pos->mPos.y - viewRect.mPos.y;
-    self->unk40 = (float)(s16)dx;
-    self->unk44 = (float)(s16)dy;
+    self->unk40 = convF32((s16)dx);
+    self->unk44 = convF32((s16)dy);
     scratch.mPos.x = (s16)dx;
     scratch.mPos.y = (s16)dy;
 
@@ -884,7 +899,7 @@ extern "C" int CView_UnkVirtualFunc9__10CViewFrameFv(CViewFrame* self, CWorkThre
             s16 border = self->mOwner->mFrame.mBorder;
             width = (s16)(width + (s16)(border * 2));
         }
-        self->unk3C = (float)(scratch.mPos.x - width);
+        self->unk3C = convF32(scratch.mPos.x - width);
     }
 
     {
@@ -919,7 +934,7 @@ extern "C" int CView_UnkVirtualFunc9__10CViewFrameFv(CViewFrame* self, CWorkThre
                 height = (s16)(height + (s16)(border * 2));
             }
         }
-        self->unk48 = (float)(scratch.mPos.y - height);
+        self->unk48 = convF32(scratch.mPos.y - height);
     }
 
     if (func_8043CAFC__5CViewFv(self->mOwner) != 0) {
@@ -929,9 +944,9 @@ extern "C" int CView_UnkVirtualFunc9__10CViewFrameFv(CViewFrame* self, CWorkThre
         parentRect.mSize.y = (s16)(pos->mPos.y - parentRect.mPos.y);
         scratch.mPos = parentRect.mSize;
         if (func_8043CE90__5CViewFv(self->mOwner) != 0) {
-            self->unk4C = (float)(scratch.mPos.y - getSplitLine__5CViewFv(self->mOwner));
+            self->unk4C = convF32(scratch.mPos.y - getSplitLine__5CViewFv(self->mOwner));
         } else {
-            self->unk4C = (float)(scratch.mPos.x - getSplitLine__5CViewFv(self->mOwner));
+            self->unk4C = convF32(scratch.mPos.x - getSplitLine__5CViewFv(self->mOwner));
         }
     }
 

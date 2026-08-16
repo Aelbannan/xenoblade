@@ -73,8 +73,8 @@ extern const char lbl_eu_80522528[];
 // RTTI locator (.sdata, 8 bytes): { name, base-list }.
 extern void* lbl_eu_80663550[2];
 
-const char lbl_eu_80522528[] = "CRsrcData";
-const char lbl_eu_80522534[] = "CRsrcData";
+const char lbl_eu_80522528[12] = {0x43,0x52,0x73,0x72,0x63,0x44,0x61,0x74,0x61,0x00,0x00,0x00};  /* "CRsrcData" + pad */
+const char lbl_eu_80522534[12] = {0x43,0x52,0x73,0x72,0x63,0x44,0x61,0x74,0x61,0x00,0x00,0x00};  /* "CRsrcData" + pad */
 
 // CRsrcData vtable (.data, 0xA0): [rtti, 0, dtor, IWorkEvent 1-31, wkUpdate
 // (CRsrcData), wkRender/wkRenderAfter (CWorkThread slots), wkStandbyLogin/Logout

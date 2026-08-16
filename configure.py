@@ -1804,8 +1804,8 @@ config.libs = [
             Object(NonMatching, "monolib/src/work/CWorkThreadSystem.cpp"),
             Object(NonMatching, "monolib/src/work/CWorkThread.cpp"),
             Object(NonMatching, "monolib/src/work/CWorkUtil.cpp", extra_cflags=["-func_align 16"]),
-            Object(Matching, "monolib/src/core/CProc.cpp"),
-            Object(Matching, "monolib/src/core/CProcRoot.cpp"),
+            Object(Matching, "monolib/src/core/CProc.cpp", extra_cflags=["-RTTI off"]),  # manual RTTI base lists clash with MWCC auto-RTTI (10322)
+            Object(Matching, "monolib/src/core/CProcRoot.cpp", extra_cflags=["-RTTI off"]),  # __RTTI__10IWorkEvent/11CWorkThread conflict with CDeviceBase.hpp inline ctor (10322)
             Object(Matching, "monolib/src/core/CRsrc.cpp"),
             Object(Matching, "monolib/src/core/CRsrcData.cpp"),
             Object(NonMatching, "monolib/src/core/CScriptCode.cpp"),
@@ -1815,7 +1815,7 @@ config.libs = [
             Object(Matching, "monolib/src/core/CTaskManager.cpp", extra_cflags=["-RTTI off"]),  # retail has NO RTTI data in this TU (rodata/sdata/sbss all 0; .data = CRootProc vtable only)
             Object(NonMatching, "monolib/src/core/CView.cpp"),
             Object(NonMatching, "monolib/src/core/CViewFrame.cpp"),
-            Object(NonMatching, "monolib/src/core/CViewRoot.cpp"),
+            Object(NonMatching, "monolib/src/core/CViewRoot.cpp", extra_cflags=["-ipa off"]),  # data_vtables.hpp __RTTI__ collision (same as CView.cpp)
             Object(NonMatching, "monolib/src/work/CWorkControl.cpp", extra_cflags=["-func_align 4"]),
             Object(Matching, "monolib/src/work/CWorkFlowSetup.cpp", extra_cflags=["-O4,s", "-func_align 4"]),  # retail dtor frame: stmw/lmw r30+r31 save/restore (MWCC -O4,s prologue merge); -O4,p would emit separate stw/lwz. -O4,s resets -func_align, so -func_align 4 must come AFTER it or the unit gains inter-fn padding and blows the split (MWCC_REFERENCE)
             Object(NonMatching, "monolib/src/work/CWorkFlowShutdownAll.cpp"),
@@ -1823,7 +1823,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/work/CWorkFlowWiiReset.cpp"),
             Object(NonMatching, "monolib/src/work/CWorkFlowWiiPowerOff.cpp"),
             Object(NonMatching, "monolib/src/work/CWorkRoot.cpp", extra_cflags=["-func_align 16"]),
-            Object(NonMatching, "monolib/src/work/CWorkSystem.cpp", extra_cflags=["-func_align 16"]),
+            Object(NonMatching, "monolib/src/work/CWorkSystem.cpp", extra_cflags=["-func_align 16", "-RTTI off"]),
             Object(Matching, "monolib/src/work/CWorkSystemMem.cpp", extra_cflags=["-func_align 16"]),
             Object(Matching, "monolib/src/work/CProcess.cpp", extra_cflags=["-func_align 4"], link_transform={
                 # Retail __sinit_\CProcess_cpp is global; MWCC emits it local.
@@ -1833,7 +1833,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/util/CChildListNode.cpp", extra_cflags=["-RTTI off"]),  # retail CChildListNode.o has no RTTI/vtable data (vtables live in monolibdata blob); -RTTI off drops the __RTTI__/type-name emissions
             Object(NonMatching, "monolib/src/core/CPadManager.cpp"),
             Object(NonMatching, "monolib/src/util/CStopwatchUtil.cpp"),
-            Object(NonMatching, "monolib/src/device/CDeviceRemotePad.cpp"),
+            Object(NonMatching, "monolib/src/device/CDeviceRemotePad.cpp", extra_cflags=["-RTTI off"]),  # __RTTI__10IWorkEvent/11CWorkThread conflict (10322)
             Object(NonMatching, "monolib/src/device/CDeviceSC.cpp"),
             Object(NonMatching, "monolib/src/device/CDeviceVI.cpp"),
 			Object(NonMatching, "monolib/src/device/CDeviceVICb.cpp"),
@@ -1988,8 +1988,6 @@ config.libs = [
             Object(Matching, "criware_data.s"),
             Object(Matching, "nw4r_data.s"),
                                     Object(Matching, "monolibdata1e.cpp"),  # converted from asm dump: one 0x280-byte .bss global (lbl_eu_80657238), verified byte+align identical via run.py data diff
-            Object(Matching, "monolibdata1.s"),  # vtable/data blob — required by the split
-            Object(Matching, "monolibdata1d.s"),  # vtable/RTTI blob (CDoubleListNode etc. vtables @0x8056BB90); required by the split — dropping it blocks build.ninja regen ("Missing configuration for monolibdata1d.s")
             Object(Matching, "monolibdata2.s"),
         ],
     },

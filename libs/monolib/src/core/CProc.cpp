@@ -2,6 +2,17 @@
 #include "monolib/core.hpp"
 #include "monolib/util.hpp"
 #include "monolib/data_vtables.hpp"
+extern double lbl_eu_8066A300; // 0x4330000080000000 (s16->f32 conversion magic, FloatUtils-owned)
+// s16 -> f32 conversion matching retail: build the 2^52+x double on the stack
+// (low word = x ^ 0x80000000, high word = 0x43300000) and subtract the shared
+// magic double (MWCC_REFERENCE 7i; statement order matters).
+inline float convF32(s32 v) {
+    union { double d; u32 w[2]; } u;
+    u.w[1] = (u32)v ^ 0x80000000;
+    u.w[0] = 0x43300000;
+    return (float)(u.d - lbl_eu_8066A300);
+}
+
 
 extern "C" {
 extern const char lbl_eu_80522500[]; // "(View)" - retail .rodata pool string
@@ -70,8 +81,8 @@ u32 lbl_eu_8056B28C[3] = { (u32)&lbl_eu_80663540, 0, 0 };
 void* lbl_eu_80663538[2] = { (void*)lbl_eu_805224C8, (void*)lbl_eu_8056B28C };
 void* lbl_eu_80663540[2] = { (void*)lbl_eu_805224E0, 0 };
 
-const char lbl_eu_805224C8[] = "reslist<unsigned long>";
-const char lbl_eu_805224E0[] = "_reslist_base<unsigned long>";
+const char lbl_eu_805224C8[24] = {0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x3C,0x75,0x6E,0x73,0x69,0x67,0x6E,0x65,0x64,0x20,0x6C,0x6F,0x6E,0x67,0x3E,0x00,0x00};
+const char lbl_eu_805224E0[32] = {0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x75,0x6E,0x73,0x69,0x67,0x6E,0x65,0x64,0x20,0x6C,0x6F,0x6E,0x67,0x3E,0x00,0x00,0x00,0x00};
 
 // lbl_eu_80522500 ("(View)", .rodata 0x7) is a pooled string-literal entry
 // emitted from pssCreateView's FixStr init below (retail is a pool entry too);
@@ -230,8 +241,8 @@ static inline ml::CRect16& pssMakeClientRectInline(
 
     s16 sizeX = parentView->mRectData.mViewSize.x;
     s16 sizeY = parentView->mRectData.mViewSize.y;
-    s16 scaledX = (s16)((float)sizeX * lbl_eu_8066A278);
-    s16 scaledY = (s16)((float)sizeY * lbl_eu_8066A278);
+    s16 scaledX = (s16)(convF32(sizeX) * lbl_eu_8066A278);
+    s16 scaledY = (s16)(convF32(sizeY) * lbl_eu_8066A278);
     s16 anotherX = (scaledX - sizeX) / 2;
     s16 anotherY = (scaledY - sizeY) / 2;
     s16 childOff = (s16)(numChildren * 20);
@@ -246,7 +257,7 @@ static inline ml::CRect16& pssMakeClientRectInline(
 }
 
 CView* CProc::pssCreateView(const char* pName, CWorkThread* pThread, int param3){
-    ml::FixStr<64> viewName = "(View)";
+    ml::FixStr<64> viewName = "(View)\0";
     PssCreateWalkFrame wf;
     viewName += pName;
     CView* view = CView::create(viewName.c_str(), pThread);

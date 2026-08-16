@@ -33,8 +33,10 @@ import fcntl
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Optional
 
@@ -317,12 +319,72 @@ def _data_object_paths(project: Project, unit) -> tuple[Path | None, Path | None
     return retail, decomp
 
 
-def _cmd_data_diff(project: Project, config: CoopConfig, hint: str | None, *, check_all: bool) -> int:
+def _postprocess_data_copy(project: Project, decomp: Path) -> Path | None:
+    """Return a postprocessed COPY of the decompiled object for the data gate.
+
+    The rest of the pipeline (``run.py diff`` / hexdiff) applies the
+    PLAN.md §17.6 reloc-name postprocess (tools/postprocess_reloc_names.py)
+    to the decompiled object before comparing; ``data diff`` applies the same
+    rules to a temp copy so the gate sees the postprocessed object while the
+    build .o is never mutated. Units without UNIT_RULES pass through
+    unchanged (None). Use --no-postprocess to compare the raw object.
+    """
+    script = project.root / "tools" / "postprocess_reloc_names.py"
+    if not script.is_file():
+        return None
+    try:
+        from tools.postprocess_reloc_names import UNIT_RULES  # type: ignore[import-not-found]
+    except Exception:
+        return None
+    if Path(decomp).name not in UNIT_RULES:
+        return None
+    scratch = project.root / ".scratch"
+    scratch.mkdir(parents=True, exist_ok=True)
+    tmpdir = Path(tempfile.mkdtemp(prefix="data-diff-", dir=scratch))
+    tmp = tmpdir / Path(decomp).name
+    shutil.copy2(decomp, tmp)
+    subprocess.run(
+        [sys.executable, str(script), str(tmp)],
+        cwd=project.root,
+        check=False,
+        capture_output=True,  # never pollute the gate output
+    )
+    return tmp
+
+
+def _cmd_data_diff(project: Project, config: CoopConfig, hint: str | None, *, check_all: bool, postprocess: bool = True) -> int:
     from tools.coop.lib.data_match import (
+        DataMatchResult,
         check_data_sections,
         format_data_result,
         has_data_sections,
     )
+
+    def _compare(retail: Path, decomp: Path) -> tuple[DataMatchResult, str]:
+        """Compare retail vs decomp for the data gate.
+
+        Default policy: compare the raw object first; if it already matches,
+        report MATCH untouched (a stale §17.6 rule must never regress a
+        matched unit). Only when the raw comparison FAILS is the §17.6
+        reloc-name postprocess applied to a temp copy (the same rules
+        hexdiff / ``run.py diff`` apply) and the comparison repeated.
+        ``--no-postprocess`` forces the raw comparison.
+        Returns (result, note) where note explains which object was compared.
+        """
+        raw_result = check_data_sections(retail, decomp)
+        if raw_result.ok:
+            note = "raw object already data-matched (postprocess skipped)" if postprocess else ""
+            return raw_result, note
+        if not postprocess:
+            return raw_result, ""
+        tmp = _postprocess_data_copy(project, decomp)
+        if tmp is None:
+            return raw_result, ""
+        try:
+            result = check_data_sections(retail, tmp)
+        finally:
+            shutil.rmtree(tmp.parent, ignore_errors=True)
+        return result, "§17.6 reloc-name rules applied to a temp copy"
 
     failures = 0
     units = project.load_objdiff_units()
@@ -335,7 +397,7 @@ def _cmd_data_diff(project: Project, config: CoopConfig, hint: str | None, *, ch
                 # extern-only TU: data still ships from the retail side; nothing
                 # to verify yet (the migration target is to define it in source).
                 continue
-            result = check_data_sections(retail, decomp)
+            result, _note = _compare(retail, decomp)
             print(f"unit: {unit.name}  [{result.per_section_status()}]")
             if not result.ok:
                 failures += 1
@@ -361,8 +423,10 @@ def _cmd_data_diff(project: Project, config: CoopConfig, hint: str | None, *, ch
             file=sys.stderr,
         )
         return 2
-    result = check_data_sections(retail, decomp)
+    result, note = _compare(retail, decomp)
     print(f"unit: {unit.name}")
+    if note:
+        print(f"  (postprocess: {note})")
     print(format_data_result(result))
     return 0 if result.ok else 1
 
@@ -2101,9 +2165,17 @@ def main() -> int:
 
     p_data = sub.add_parser("data", help="Data-section matching for data-only / mixed TUs")
     p_data_sub = p_data.add_subparsers(dest="data_cmd", required=True)
-    p_data_diff = p_data_sub.add_parser("diff", help="Compare decompiled vs retail data sections")
+    p_data_diff = p_data_sub.add_parser(
+        "diff",
+        help="Compare decompiled vs retail data sections (raw first; on failure, applies the §17.6 reloc-name postprocess to a temp copy when the unit has rules)",
+    )
     p_data_diff.add_argument("unit", nargs="?", help="objdiff unit hint or source path")
     p_data_diff.add_argument("--all", action="store_true", help="Check every objdiff unit with data sections")
+    p_data_diff.add_argument(
+        "--no-postprocess",
+        action="store_true",
+        help="compare the raw decompiled object only (default: raw first, then §17.6 reloc-name rules on a temp copy when the raw comparison fails)",
+    )
 
     p_reloc = sub.add_parser(
         "reloc-map",
@@ -2449,7 +2521,7 @@ def main() -> int:
     if args.command == "size":
         return cmd_size(project, config, args.unit, check_all=args.all)
     if args.command == "data" and args.data_cmd == "diff":
-        return _cmd_data_diff(project, config, args.unit, check_all=args.all)
+        return _cmd_data_diff(project, config, args.unit, check_all=args.all, postprocess=not args.no_postprocess)
     if args.command == "reloc-map":
         from tools.coop.reloc_map import main as reloc_map_main
 

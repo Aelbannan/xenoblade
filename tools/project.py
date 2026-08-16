@@ -17,6 +17,7 @@ import os
 import platform
 import sys
 from pathlib import Path
+from tools.postprocess_reloc_names import UNIT_RULES  # link-time §17.6 object reshape keys
 from typing import (
     IO,
     Any,
@@ -825,6 +826,18 @@ def generate_build_ninja(
     )
     n.newline()
 
+    # Link-only §17.6 reloc postprocess: units with UNIT_RULES get a *.reloc.o
+    # copy reshaped (drops/injects/swaps/addend patches) so the final DOL
+    # bytes match retail. The original object (objdiff base_path, split-size
+    # checks) stays untouched — mirrors link_symbol_rename above.
+    n.comment("Link reloc postprocess (PLAN.md §17.6 object reshape for the final link)")
+    n.rule(
+        name="link_reloc_postprocess",
+        command=f"cp $in $out && {sys.executable} tools/postprocess_reloc_names.py $out",
+        description="RELOCPOST $out",
+    )
+    n.newline()
+
     n.comment("Build precompiled header")
     n.rule(
         name="mwcc_pch",
@@ -1240,8 +1253,25 @@ def generate_build_ninja(
                 built_obj_path = asm_build(obj, obj.asm_path, obj.asm_obj_path)
 
             if link_built_obj and built_obj_path is not None:
-                # Use the source-built object
-                link_step.add(built_obj_path)
+                if built_obj_path.name in UNIT_RULES:
+                    # §17.6 link-time postprocess: emit a *.reloc.o copy so the
+                    # final DOL carries the retail reshape (the original object
+                    # stays untouched for objdiff/split checks).
+                    pp_obj = built_obj_path.with_name(
+                        built_obj_path.stem + ".reloc.o"
+                    )
+                    n.comment(f"{obj.name}: reloc postprocess (link-only)")
+                    n.build(
+                        outputs=pp_obj,
+                        rule="link_reloc_postprocess",
+                        inputs=built_obj_path,
+                        implicit=[python_lib_dir / "postprocess_reloc_names.py"],
+                    )
+                    n.newline()
+                    link_step.add(pp_obj)
+                else:
+                    # Use the source-built object
+                    link_step.add(built_obj_path)
             elif obj_path is not None:
                 # Use the original (extracted) object
                 link_step.add(Path(obj_path))

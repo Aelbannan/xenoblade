@@ -1,5 +1,19 @@
+// The retail CDeviceSC/CDeviceBase classes are effectively novtable: the
+// retail ctor stores the manual vtable (lbl_eu_8056BD38) and no auto
+// vtables/RTTI survive in the split (the retail linker GC'd the weak
+// emissions). The headers lack __declspec(novtable), so declare it here via
+// forward declarations BEFORE the class definitions come into scope -- MWCC
+// merges the attribute and skips the implicit vptr-store/RTTI emissions that
+// otherwise overshoot .data/.rodata/.sdata.
+class __declspec(novtable) CDeviceBase;
+class __declspec(novtable) CDeviceSC;
+
 #include "monolib/device.hpp"
 #include <revolution/SC.h>
+
+// Retail vtable (defined in the data block below) -- forward-declared so the
+// ctor can store it (novtable classes have no implicit vptr store).
+extern "C" u32 lbl_eu_8056BD38[0xA0 / 4];
 
 // Retail sbss singleton slot lbl_eu_80665640 (8 bytes; word 0 in use) - blob monolibdata1d dissolve
 CDeviceSC* lbl_eu_80665640[2];
@@ -12,6 +26,7 @@ mLanguage(SC_LANG_JP),
 mProgMode(SC_INTERLACED),
 mSoundMode(SC_SND_STEREO),
 unk1CD(0){
+    *(void**)this = (void*)&lbl_eu_8056BD38;  // novtable: store the retail vtable by hand
     lbl_eu_80665640[0] = this;
     SCInit();
 }
@@ -129,8 +144,10 @@ extern "C" int WorkEvent29__10IWorkEventFv();
 extern "C" int WorkEvent30__10IWorkEventFv();
 extern "C" void WorkEvent31__10IWorkEventFv();
 
-// rodata 0x80522980: RTTI class-name string "CDeviceSC".
-extern "C" const char lbl_eu_80522980[] = "CDeviceSC";
+// rodata 0x80522980: RTTI class-name string "CDeviceSC" (exactly 10 bytes
+// incl NUL; align(4) so the object is not padded to a 16-byte slot).
+extern "C" __declspec(align(4)) const char lbl_eu_80522980[10] =
+    {0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x53,0x43,0x00};  /* "CDeviceSC\0" */
 
 // sdata 0x806635F8: class info {classname, RTTI base list} (defined below).
 extern "C" u32 lbl_eu_806635F8[2];

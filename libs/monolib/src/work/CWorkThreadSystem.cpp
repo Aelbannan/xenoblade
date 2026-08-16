@@ -10,7 +10,7 @@
 //   lbl_eu_80665594 (.sbss)   = sAllocFlags    (u32*)  [defined in CWorkThread.cpp (owner)]
 //   lbl_eu_80665598 (.sbss)   = sWorkThreads   (CWorkThread**) [defined in CWorkThread.cpp (owner)]
 extern "C" {
-    extern const char lbl_eu_80522460[] = "WorkThreadSystem";
+    extern const char lbl_eu_80522460[20] = {0x57,0x6F,0x72,0x6B,0x54,0x68,0x72,0x65,0x61,0x64,0x53,0x79,0x73,0x74,0x65,0x6D,0x00,0x00,0x00,0x00};  /* "WorkThreadSystem" pad to 0x80522460-74 */
     const char* lbl_eu_80663518 = lbl_eu_80522460;
     extern u32 lbl_eu_8066351C;
     BOOL lbl_eu_80665590;              // sMemAvailable - defined here (blob monolibdata1d dissolve)

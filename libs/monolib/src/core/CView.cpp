@@ -70,6 +70,10 @@ void render__10CViewFrameFv(CViewFrame* frame);
 // Incomplete arrays force lis/addi (not SDA lwz) -- same as CViewRoot::create.
 extern char lbl_eu_8056B298[];
 extern char lbl_eu_8056B280[];
+// FloatUtils-owned .sdata2 constants used by the ctor (retail references these
+// instead of pooling TU-local copies; CView.o has .sdata2 size 0).
+extern float lbl_eu_8066A2D0;  // 1.0f
+extern float lbl_eu_8066A2D4;  // 0.6f
 // reslist<IWorkEvent*> / _reslist_base<IWorkEvent*> / CMsgParam<10> vtable
 // addresses used by the ctor -- the objects are emitted by the explicit
 // instantiations below and renamed by UNIT_RULES["CView.o"].
@@ -82,17 +86,113 @@ extern char lbl_eu_8056B6CC[];
 // UNIT_RULES["CView.o"] renames them to lbl_eu_8056B6D8 / lbl_eu_8056B6F0 /
 // lbl_eu_8056B6CC and the __RTTI__ typeinfos to lbl_eu_80663588 / 80663590 /
 // 80663580.
-#include "monolib/data_vtables.hpp"
+//
+// NOTE: data_vtables.hpp is NOT included here. Under this TU's flags
+// (-ipa file -RTTI on, set in configure.py) the header's global-scope
+// `extern "C" void* __RTTI__10IWorkEvent` / `__RTTI__11CWorkThread` collide
+// with MWCC's RTTI name table once CDeviceBase.hpp's inline ctor is in scope
+// (MWCC error 10322 "illegal name overloading"); CProc/CProcRoot/CTaskManager
+// avoid it with -RTTI off, which this TU cannot use. The same C-linkage
+// symbols are declared inside a namespace instead (MWCC does not mangle
+// extern "C" names, so the emitted reloc name is still exactly
+// `__RTTI__10IWorkEvent` / `__RTTI__11CWorkThread`), and the remaining
+// function externs are declared locally.
+namespace RTTIExterns {
+extern "C" void* __RTTI__10IWorkEvent;
+extern "C" void* __RTTI__11CWorkThread;
+}
+
+extern "C" int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
+extern "C" int OnFileEvent__10IWorkEventFP10CEventFile(void*);
+extern "C" int WorkEvent3__10IWorkEventFPv(void*);
+extern "C" int WorkEvent4__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb(int);
+extern "C" int WorkEvent6__10IWorkEventFv();
+extern "C" int WorkEvent7__10IWorkEventFv();
+extern "C" int WorkEvent8__10IWorkEventFv();
+extern "C" int WorkEvent9__10IWorkEventFv();
+extern "C" int WorkEvent10__10IWorkEventFv();
+extern "C" int WorkEvent11__10IWorkEventFv();
+extern "C" int WorkEvent12__10IWorkEventFv();
+extern "C" int WorkEvent13__10IWorkEventFv();
+extern "C" int WorkEvent14__10IWorkEventFv();
+extern "C" int WorkEvent15__10IWorkEventFv();
+extern "C" int WorkEvent16__10IWorkEventFv();
+extern "C" int WorkEvent17__10IWorkEventFv();
+extern "C" int WorkEvent18__10IWorkEventFv();
+extern "C" int WorkEvent19__10IWorkEventFv();
+extern "C" int WorkEvent20__10IWorkEventFv();
+extern "C" int WorkEvent21__10IWorkEventFv();
+extern "C" int WorkEvent22__10IWorkEventFv();
+extern "C" int WorkEvent23__10IWorkEventFv();
+extern "C" int WorkEvent24__10IWorkEventFv();
+extern "C" int WorkEvent25__10IWorkEventFv();
+extern "C" int WorkEvent26__10IWorkEventFv();
+extern "C" int WorkEvent27__10IWorkEventFv();
+extern "C" int WorkEvent28__10IWorkEventFv();
+extern "C" int WorkEvent29__10IWorkEventFv();
+extern "C" int WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+extern "C" void wkUpdate__11CWorkThreadFv();
+extern "C" void wkRender__11CWorkThreadFv();
+extern "C" void wkRenderAfter__11CWorkThreadFv();
+extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
+extern "C" void wkStandbyLogin__5CViewFv();
+extern "C" void wkStandbyLogout__5CViewFv();
+extern "C" void wkUpdate__5CViewFv();
+
 #include "decomp.h"
 
 // === Blob monolibdata1/1d dissolve: CView.cpp owns .rodata 0x805225E0-
 // 0x80522650, .sdata 0x80663578-0x806635A0, .data 0x8056B5C0-0x8056B700,
 // .bss 0x80656EC8-0x80656EE8, .sbss 0x806655C8-0x806655D0. ===
 
-// RTTI name strings (.rodata). CFontLayer's is defined here (its typeinfo sits
-// in this TU's .sdata range). "CView" (lbl_eu_8066A2D8) lives in .sdata2
-// (another TU's range) and is referenced as an extern.
-const char lbl_eu_80522624[] = "CFontLayer";
+// RTTI locators (.sdata, 8 bytes each): { name, class-info }.
+extern const char lbl_eu_8066A2D8[];  // "CView" (.sdata2, another TU's range)
+extern u32 lbl_eu_8056B6B0[7];  // CView class-info, defined below
+
+// RTTI CView locator. Declared BEFORE the FORCEKEEP instantiation below so it
+// lands first in .sdata (retail order: CView, CMsgParam<10>,
+// reslist<IWorkEvent*>, _reslist_base<IWorkEvent*>, CFontLayer).
+extern "C" u32 lbl_eu_80663578[2] = { (u32)&lbl_eu_8066A2D8, (u32)&lbl_eu_8056B6B0 };
+
+// reslist<IWorkEvent*> / _reslist_base<IWorkEvent*> / CMsgParam<10> template
+// vtables + RTTI (weak, compiler-named; UNIT_RULES["CView.o"] renames them to
+// lbl_eu_8056B6D8 / lbl_eu_8056B6F0 / lbl_eu_8056B6CC and the __RTTI__
+// typeinfos to lbl_eu_80663588 / 80663590 / 80663580). This TU needs -ipa off
+// (the data_vtables.hpp __RTTI__ externs collide with MWCC's RTTI name table
+// under -ipa file once any virtual class is in scope), and -ipa off drops
+// unreferenced weak data, so the construction below keeps the vtables alive
+// (the inline ctors emit the vtable references; the explicit dtor calls keep
+// the template dtors, which are retail CView.cpp text functions).
+//
+// Placed at the TOP of the data block so MWCC's RTTI name-string pool entries
+// ("CMsgParam<10>" / "reslist<IWorkEvent *>" / "_reslist_base<IWorkEvent *>")
+// and the .sdata RTTI locators emit BEFORE the manual CFontLayer
+// string/locator, reproducing the retail .rodata order (template names at
+// 0x805225E0/805225F0/80522608, CFontLayer at 0x80522624, check-timeout
+// message at 0x80522630) and .sdata order (CView @0x80663578, CMsgParam<10>
+// @0x80663580, reslist<IWorkEvent*> @0x80663588, _reslist_base<IWorkEvent*>
+// @0x80663590, CFontLayer @0x80663598).
+extern "C" void FORCEKEEP_CView_templates() {
+    reslist<IWorkEvent*> keepResList;
+    CMsgParam<10> keepMsg(0);
+    (void)keepResList;
+    (void)keepMsg;
+}
+
+// RTTI name strings (.rodata). "CView" (lbl_eu_8066A2D8) lives in .sdata2
+// (another TU's range) and is referenced as an extern. CFontLayer's is defined
+// here (its typeinfo sits in this TU's .sdata range). The template name
+// strings are emitted by MWCC as pool entries from the FORCEKEEP construction
+// above; retail labels them lbl_eu_805225E0 / lbl_eu_805225F0 /
+// lbl_eu_80522608 (UNIT_RULES renames the @N pool labels).
+// Template RTTI name strings, defined in retail order (UNIT_RULES retargets
+// the auto-emitted pool relocs onto these and drops the pooled copies).
+const char lbl_eu_805225E0[14] = {0x43,0x4D,0x73,0x67,0x50,0x61,0x72,0x61,0x6D,0x3C,0x31,0x30,0x3E,0x00};  /* "CMsgParam<10>" (13+NUL) */
+const char lbl_eu_805225F0[22] = {0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x3C,0x49,0x57,0x6F,0x72,0x6B,0x45,0x76,0x65,0x6E,0x74,0x20,0x2A,0x3E,0x00};  /* "reslist<IWorkEvent *>" (21+NUL) */
+const char lbl_eu_80522608[28] = {0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x49,0x57,0x6F,0x72,0x6B,0x45,0x76,0x65,0x6E,0x74,0x20,0x2A,0x3E,0x00};  /* "_reslist_base<IWorkEvent *>" (27+NUL) */
+const char lbl_eu_80522624[11] = {0x43,0x46,0x6F,0x6E,0x74,0x4C,0x61,0x79,0x65,0x72,0x00};  /* "CFontLayer" (10+NUL; retail 0xB) */
 // "\u30e1\u30e2\u30ea\u304c\u2026\u306a\u304f\u3057\u307e\u3057\u305f" check-timeout
 // message (retail .rodata 0x80522630;
 // 0x20 includes the splitter-absorbed 5-byte alignment pad). The retail
@@ -101,26 +201,13 @@ const char lbl_eu_80522624[] = "CFontLayer";
 const char lbl_eu_80522630[0x20] =
     "\x83\x8d\x83\x4f\x83\x41\x83\x45\x83\x67\x82\xc9\x8e\xb8\x94\x73\x82\xb5\x82\xdc\x82\xb5\x82\xbd";
 
-// RTTI locators (.sdata, 8 bytes each): { name, class-info }.
-extern const char lbl_eu_8066A2D8[];  // "CView" (.sdata2, another TU's range)
-extern u32 lbl_eu_8056B6B0[7];  // CView class-info, defined below
-
-// The typeinfos are declared extern "C" in data_vtables.hpp (shared with the
-// other vtable-defining TUs), so the definitions keep C linkage.
-extern "C" {
-u32 lbl_eu_80663578[2] = { (u32)&lbl_eu_8066A2D8, (u32)&lbl_eu_8056B6B0 };  // RTTI CView
-u32 lbl_eu_80663598[2] = { (u32)&lbl_eu_80522624, 0 };  // RTTI CFontLayer
-}
-
-// CView class-info (.data, 0x1C): [RTTI(CFontLayer), 0x1C4, RTTI(IWorkEvent),
-// 0, RTTI(CWorkThread), 0, 0].
-u32 lbl_eu_8056B6B0[7] = {
-    (u32)&lbl_eu_80663598, 0x1C4, (u32)&__RTTI__10IWorkEvent, 0,
-    (u32)&__RTTI__11CWorkThread, 0, 0,
-};
+// RTTI CFontLayer locator -- after FORCEKEEP so it lands LAST in .sdata.
+extern "C" u32 lbl_eu_80663598[2] = { (u32)&lbl_eu_80522624, 0 };
 
 // CView vtable (.data, 0xD0): IWorkEventVtbl (0xA0) + the CFontLayer secondary
-// vtable at +0x74 (this-adjust -0x1C4).
+// vtable at +0x74 (this-adjust -0x1C4). Defined BEFORE the class-info so the
+// .data emission order matches retail (vtable @0x8056B5E0, class-info
+// @0x8056B6B0, template vtables @0x8056B6CC).
 extern "C" void func_8043FBC4(u8* self);
 extern "C" void CView_UnkVirtualFunc1__5CViewFv();
 extern "C" void detachRenderWork__5CViewFP11CWorkThread(void* self, void* thread);
@@ -161,6 +248,13 @@ u32 lbl_eu_8056B5E0[0xD0 / 4] = {
     (u32)&CView_UnkVirtualFunc5__5CViewFv, (u32)&CView_UnkVirtualFunc6__5CViewFv,
     (u32)&CView_UnkVirtualFunc7__5CViewFv, (u32)&CView_UnkVirtualFunc8__5CViewFv,
     (u32)&CView_UnkVirtualFunc9__5CViewFv,
+};
+
+// CView class-info (.data, 0x1C): [RTTI(CFontLayer), 0x1C4, RTTI(IWorkEvent),
+// 0, RTTI(CWorkThread), 0, 0].
+u32 lbl_eu_8056B6B0[7] = {
+    (u32)&lbl_eu_80663598, 0x1C4, (u32)&RTTIExterns::__RTTI__10IWorkEvent, 0,
+    (u32)&RTTIExterns::__RTTI__11CWorkThread, 0, 0,
 };
 
 // Fake interface for the +0xC4 vt-dispatch in CView_UnkVirtualFunc7: real
@@ -218,22 +312,6 @@ struct CViewVtC4If {
 };
 
 
-// reslist<IWorkEvent*> / _reslist_base<IWorkEvent*> / CMsgParam<10> template
-// vtables + RTTI (weak, compiler-named; UNIT_RULES["CView.o"] renames them to
-// lbl_eu_8056B6D8 / lbl_eu_8056B6F0 / lbl_eu_8056B6CC and the __RTTI__
-// typeinfos to lbl_eu_80663588 / 80663590 / 80663580). This TU needs -ipa off
-// (the data_vtables.hpp __RTTI__ externs collide with MWCC's RTTI name table
-// under -ipa file once any virtual class is in scope), and -ipa off drops
-// unreferenced weak data, so the construction below keeps the vtables alive
-// (the inline ctors emit the vtable references; the explicit dtor calls keep
-// the template dtors, which are retail CView.cpp text functions).
-extern "C" void FORCEKEEP_CView_templates() {
-    reslist<IWorkEvent*> keepResList;
-    CMsgParam<10> keepMsg(0);
-    (void)keepResList;
-    (void)keepMsg;
-}
-
 // sbss singleton (retail 8 bytes; only offset 0 is referenced by code, the
 // second word is dead). The 8-byte struct reproduces the retail symbol size.
 struct CViewSbssSingleton {
@@ -243,6 +321,9 @@ struct CViewSbssSingleton {
 
 // Keep the not-yet-decompiled wkStandbyLogout check-timeout message alive.
 DECOMP_FORCEACTIVE(CView_cpp, lbl_eu_80522630);
+DECOMP_FORCEACTIVE(CView_cpp, lbl_eu_805225E0);
+DECOMP_FORCEACTIVE(CView_cpp, lbl_eu_805225F0);
+DECOMP_FORCEACTIVE(CView_cpp, lbl_eu_80522608);
 
 ml::CCol4 lbl_8065A0C8;
 
@@ -1847,7 +1928,7 @@ CView::CView(const char* pName, CWorkThread* pParent)
     mName.clear();
 
     mGXCacheId = func_8044BE2C__8CGXCacheFv();
-    mAlpha = 1.0f;
+    mAlpha = lbl_eu_8066A2D0;  // 1.0f -- retail references FloatUtils' .sdata2 constant (no TU-local pool)
     unk45C = (void*)zero;
     unk460 = 0xb;
     mType = THREAD_CVIEW;
@@ -1856,10 +1937,10 @@ CView::CView(const char* pName, CWorkThread* pParent)
     reinterpret_cast<reslist<u32>*>(&unk238)->reserve(mAllocHandle, 0x10);
     reinterpret_cast<reslist<void*>*>(&unk258)->reserve(mAllocHandle, 0x10);
 
-    unk444.x = 0.6f;
-    unk444.y = 0.6f;
-    unk444.z = 0.6f;
-    unk444.w = 1.0f;
+    unk444.x = lbl_eu_8066A2D4;  // 0.6f -- FloatUtils-owned
+    unk444.y = lbl_eu_8066A2D4;
+    unk444.z = lbl_eu_8066A2D4;
+    unk444.w = lbl_eu_8066A2D0;  // 1.0f
     unk464 = (s16)zero;
     unk466 = (s16)zero;
     unk468 = (s16)zero;
@@ -1917,8 +1998,8 @@ extern "C" int CView_UnkVirtualFunc5__5CViewFv() { return 0; }
 // assignment (not set()) reproduces the retail FPR coloring f3/f2/f1/f0.
 extern float lbl_eu_8066A2E0;
 extern float lbl_eu_8066A2E4;
-extern float lbl_eu_8066A2D4;
-extern float lbl_eu_8066A2D0;
+extern float lbl_eu_8066A2D4;  // 0.6f (FloatUtils .sdata2)
+extern float lbl_eu_8066A2D0;  // 1.0f (FloatUtils .sdata2)
 extern "C" void sinit_8043FB70() {
     lbl_8065A0C8.r = lbl_eu_8066A2E0;
     lbl_8065A0C8.g = lbl_eu_8066A2E4;

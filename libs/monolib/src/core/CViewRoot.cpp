@@ -17,18 +17,17 @@
 // === Blob monolibdata1/1d dissolve: CViewRoot.cpp owns .rodata 0x80522660-
 // 0x80522678, .sdata 0x806635A8-0x806635B0, .data 0x8056B710-0x8056B7C8,
 // .sbss 0x806655D0-0x806655D8. ===
-// RTTI name strings (.rodata); lbl_eu_8052266C is the create() view name.
-const char lbl_eu_80522660[] = "CViewRoot";
-const char lbl_eu_8052266C[] = "CViewRoot";
+// RTTI name strings (.rodata): two 12-byte "CViewRoot" objects at 0x80522660 /
+// 0x8052266C (lbl_eu_8052266C is the create() view name). Declared with
+// __declspec(align(4)) so MWCC packs them 4-aligned (a plain char[12] would
+// get 16-byte 8-aligned slots and overshoot the retail 0x18 range).
+__declspec(align(4)) const char lbl_eu_80522660[12] = {0x43,0x56,0x69,0x65,0x77,0x52,0x6F,0x6F,0x74,0x00,0x00,0x00};  /* "CViewRoot\0\0\0" */
+__declspec(align(4)) const char lbl_eu_8052266C[12] = {0x43,0x56,0x69,0x65,0x77,0x52,0x6F,0x6F,0x74,0x00,0x00,0x00};  /* "CViewRoot\0\0\0" */
 extern u32 lbl_eu_8056B7B0[6];  // class-info, defined below
 // RTTI locator (.sdata, 8): { name, class-info }.
 extern "C" u32 lbl_eu_806635A8[2] = { (u32)&lbl_eu_80522660, (u32)&lbl_eu_8056B7B0 };
-// CViewRoot class-info (.data, 0x18): [RTTI(IWorkEvent), 0, RTTI(CWorkThread),
-// 0, 0, 0].
-u32 lbl_eu_8056B7B0[6] = {
-    (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, 0, 0,
-};
-// CViewRoot vtable (.data, 0xA0).
+// CViewRoot vtable (.data, 0xA0). Defined BEFORE the class-info so the .data
+// emission order matches retail (vtable @0x8056B710, class-info @0x8056B7B0).
 u32 lbl_eu_8056B710[0xA0 / 4] = {
     (u32)&lbl_eu_806635A8, 0, (u32)&__dt__9CViewRootFv,
     (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
@@ -51,24 +50,32 @@ u32 lbl_eu_8056B710[0xA0 / 4] = {
     (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__9CViewRootFv,
     (u32)&wkStandbyLogout__9CViewRootFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
 };
+// CViewRoot class-info (.data, 0x18): [RTTI(IWorkEvent), 0, RTTI(CWorkThread),
+// 0, 0, 0].
+u32 lbl_eu_8056B7B0[6] = {
+    (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, 0, 0,
+};
 
 // sbss data owned by this TU (blob monolibdata1d dissolve):
 //   lbl_eu_806655D0 (4 bytes) = current root view pointer
 //   lbl_eu_806655D4 (1 byte)
+//   lbl_eu_806655D5/806655D6/806655D7 (3 bytes) = retail zero-fill pad to the
+//   0x806655D8 boundary (the 8-byte retail .sbss slot ends there).
 CViewRoot* lbl_eu_806655D0;
 u8 lbl_eu_806655D4;
+u8 lbl_eu_806655D5;
+u8 lbl_eu_806655D6;
+u8 lbl_eu_806655D7;
 
-
-DECOMP_FORCEACTIVE(CViewRoot_cpp, "CViewRoot");
-
-CViewRoot::CViewRoot(const char* pName, CWorkThread* pParent) :
-CWorkThread(pName, pParent, 128),
-mCurrentView(nullptr),
-mAttachedProc0(nullptr),
-mAttachedProc1(nullptr) {
-    mType = THREAD_CVIEWROOT;
-}
-
+// NOTE: no CViewRoot ctor is defined here -- the retail split has no
+// __ct__9CViewRoot symbol (create() constructs the object manually and the
+// member-init list never runs the reslist<WORK_ID> default ctor, which would
+// pull the reslist<_reslist_base<Ul>> vtables/RTTI into this TU's data
+// sections; the retail linker GC'd those weak emissions). The destructor
+// below inlines the _reslist_base<WORK_ID> dtor (vptr store + clear + free)
+// exactly like the retail; its vptr-store reloc names the TU-local
+// __vt__17_reslist_base<Ul> weak (UNIT_RULES["CViewRoot.o"] must retarget it
+// to the extern lbl_eu_8056B298 and drop the local reslist data).
 CViewRoot::~CViewRoot() {
 }
 

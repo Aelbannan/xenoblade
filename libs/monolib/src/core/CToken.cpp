@@ -67,27 +67,11 @@ extern "C" const u32 lbl_eu_80522558[12] = {
 // .sdata 0x80663560: CToken RTTI base list.
 extern "C" u32 lbl_eu_80663560[2] = { (u32)&lbl_eu_8066A2C8[0], 0 };
 
-// String table for func_8043AA68 (vertex attribute name lookup)
-// Each entry corresponds to an index written to the output buffer when matched.
-// NOTE: pre-existing decomp data; retail func_8043AA68 actually reads
-// lbl_eu_8056B4D0 + lbl_eu_80522558 (open item, see report).
-static const char* const kAttributeNames[] = {
-    "VtxPosition",
-    "VtxNormal",
-    "VtxColor0",
-    "VtxColor1",
-    "VtxTexCoord0",
-    "VtxTexCoord1",
-    "VtxTexCoord2",
-    "VtxTexCoord3",
-    "VtxTexCoord4",
-    "VtxTexCoord5",
-    "VtxTexCoord6",
-    "VtxTexCoord7",
-    "VtxBoneWeight",
-    "VtxBoneIndex",
-    nullptr
-};
+// NOTE: retail func_8043AA68 reads the CToken format-string table
+// (lbl_eu_8056B4D0, .data) with the size table lbl_eu_80522558 (.rodata,
+// 12th entry 0 = terminator) -- there is no TU-local Vtx* attribute-name
+// table (the old kAttributeNames array was decomp-invented and polluted
+// .rodata; removed so CToken.o matches its retail .rodata 0x30 range).
 
 CToken::CToken() {
     *(void**)this = (void*)lbl_eu_8056B52C;
@@ -163,19 +147,19 @@ void CToken::func_8043AA1C() {
 }
 
 void CToken::func_8043AA68(char* pOutBuffer, int bufferLen, const char* pName) {
-    // Looks up a name in the attribute string table.
-    // If found, writes the matching index byte to pOutBuffer.
-    // If not found, copies the original name and null-terminates at the name's length.
+    // Looks up a name in the format-string table (retail layout: pointer
+    // table lbl_eu_8056B4D0 + size table lbl_eu_80522558, whose 12th entry
+    // (0) terminates the walk). If found, writes the matching index byte to
+    // pOutBuffer. If not found, copies the original name and null-terminates
+    // at the name's length.
     int nameLen = strlen(pName);
 
-    int index = 0;
-    for (int i = 0; kAttributeNames[i] != nullptr; i++) {
-        if (strlen(kAttributeNames[i]) == static_cast<u32>(nameLen) &&
-            strncmp(kAttributeNames[i], pName, nameLen) == 0) {
-            pOutBuffer[0] = static_cast<char>(index);
+    for (int i = 0; lbl_eu_80522558[i] != 0; i++) {
+        if (strlen((const char*)lbl_eu_8056B4D0[i]) == static_cast<u32>(nameLen) &&
+            strncmp((const char*)lbl_eu_8056B4D0[i], pName, nameLen) == 0) {
+            pOutBuffer[0] = static_cast<char>(i);
             return;
         }
-        index++;
     }
 
     // No match found - copy original name into output buffer

@@ -608,8 +608,6 @@ void func_804A7834(CColiObject* self, const CColiObject* other) {
     // Diagonal 3x4 scale-matrix fill: other->field_0x00[2] (a direction
     // vector) placed on the main diagonal, zero constant elsewhere.
     // FPR allocation follows local declaration order: k->f0, x->f1, y->f2, z->f3.
-    // MWCC hoists the sdata2 const load to slot 0 (retail loads z, y, x first);
-    // the register map and input-load order match retail exactly.
     f32 k = lbl_eu_8066AE24;
     f32 x = other->field_0x00[2].x;
     f32 y = other->field_0x00[2].y;
@@ -944,7 +942,22 @@ void func_804A7E18(u32 unused, CColiObject* self) {
     lbl_eu_80665930 = self;
 }
 
-void func_804A7E7C(){}
+// Link a sweep record: sum the shared object pointer with the offset at
+// p+4 into the sweep-control member-count, update the +0x8C flag from bit 1
+// of the u16 at p+2, and park the new node (p+16) plus the value into the
+// shared sweep-control globals.
+extern "C" void func_804A7E7C(CColiObject* self, u32 v, u8* p) {
+    u16 flag = *(u16*)(p + 2);
+    CColiSweepCtrl* ctrl = *(CColiSweepCtrl**)((u8*)self + 0x3C);
+    ctrl->field_0x08 = (u32)lbl_eu_80665930 + *(u32*)(p + 4);
+    if (flag & 2) {
+        *(u32*)((u8*)self + 0x8C) |= 2;
+    } else {
+        *(u32*)((u8*)self + 0x8C) &= ~2;
+    }
+    lbl_eu_80665934 = (CColiSweepCtrl*)(p + 16);
+    lbl_eu_80665938 = v;
+}
 
 u32 func_804A7EC8(u32 unused, u32 val) { lbl_eu_80665938 = val; return unused; }
 
@@ -2822,7 +2835,16 @@ int func_804ADD3C(CColiObject* self, const f32* a, const Mtx b, const Mtx c) {
 }
 
 extern "C" int func_804AE0D0(CColiObject* self, const VEC3* v, f32 f1,
-                              f32 f2) { return 0; }
+                              f32 f2) {
+    CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
+    proc->field_0x08 = lbl_eu_80663A90;
+    self->field_0x8c &= ~2;
+    VEC3 vec;
+    vec.x = f1;
+    vec.y = f2;
+    vec.z = lbl_eu_8066AE44;
+    return func_804AD8FC(self, v, &vec);
+}
 
 // Sweep/contact helpers (targets): func_804AE11C is a sphere-sweep contact test.
 // func_804AF09C / func_804AF07C are the box-sweep variants (defined below).
@@ -3768,11 +3790,15 @@ void func_804B0AD4(CColiObject* self, int arg, f32 x, f32 y) {
 }
 
 void func_804B0B0C(CColiObject* self, const _VEC3* v, int flag) {
-    // Raw-copy the 3-word vector (VEC3 copy lowers to lwz/stw), then update
-    // the behaviour flags: clear bit 4, set bit 5, and set/clear bit 10
-    // according to the caller-supplied flag.
+    // Raw-copy the 3-word vector via u32 (retail lwz/stw, not lfs/stfs),
+    // then update the behaviour flags: clear bit 4, set bit 5, and
+    // set/clear bit 10 according to the caller-supplied flag.
     u32 flags = self->field_0xa8;
-    self->field_0x30 = *v;
+    const u32* src = (const u32*)v;
+    u32* dst = (u32*)&self->field_0x30;
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
     flags = (flags & ~0x10) | 0x20;
     self->field_0xa8 = flags;
     if (flag != 0) {
@@ -4966,4 +4992,14 @@ extern "C" int func_804AE9A4(CColiObject* self, const _VEC3* vec, f32 x,
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-void sinit_804B2524(){}
+// Static init: construct the +0x3C vtable pair and the singleton, then zero
+// the +0x38/+0x3C/+0x40 state.
+extern const f32 lbl_eu_8066AE88;
+extern "C" void sinit_804B2524(void) {
+    extern void* lbl_eu_8056F380[];
+    __ct__CColiProc((CColiProcLocal*)&lbl_eu_8065D0A0);
+    *(void**)&lbl_eu_8065D0A0 = lbl_eu_8056F380;
+    lbl_eu_8065D0A0.field_0x38 = 0;
+    lbl_eu_8065D0A0.field_0x3c = lbl_eu_8066AE88;
+    lbl_eu_8065D0A0.field_0x40 = 0;
+}

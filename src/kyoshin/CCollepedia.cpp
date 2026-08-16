@@ -284,7 +284,8 @@ extern "C" void* __dt__80253AFC(void* self, int dealloc_flag) {
 
 void func_80253B3C(u8* self_){}
 
-bool func_80253EE8(u8* this_, u32 arg1, u32 arg2) {
+// noinline: retail callers tail-branch to this symbol.
+extern "C" __declspec(noinline) bool func_80253EE8(u8* this_, u32 arg1, u32 arg2) {
     if (arg1 >= 6) return false;
     if (arg2 >= 5) return false;
     s8 idx = (s8)this_[1];

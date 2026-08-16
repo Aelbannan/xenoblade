@@ -539,7 +539,7 @@ extern const float lbl_eu_8066882C;
 extern const float lbl_eu_80668830;
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform* anim, float frame);
 extern "C" void func_80231848(UnkKizunaFunc31848Obj* self, const UnkKizunaPair* src);
-extern "C" void copyVEC2(float* dst, const float* src);
+extern "C" void copyVEC2(void*, const void*);
 extern "C" void copyVEC3(float* dst, const float* src);
 extern "C" void func_8025AC1C(UnkKizunaSelfAB* self, u32 a);
 extern "C" void func_8025CE00(UnkKizunaSelfCE00* self);

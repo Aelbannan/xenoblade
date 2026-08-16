@@ -762,14 +762,14 @@ extern "C" u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 extern "C" u32 func_8013606C(const void*, const void*, u32);   // msg-id lookup
 // func_80136254 / func_8013639C return wider-than-u16 values in retail; the
 // call sites truncate with an explicit (u16) cast (see func_8027EA6C).
-extern "C" u32 func_80136254(const void*, const void*, u16);   // row msg-id lookup
+extern "C" u16 func_80136254(const void*, const void*, int);
 // func_8013639C's third arg is the u16 row key; declared int so call sites
 // control the clrlwi with an explicit cast.
 extern "C" char* func_8013639C(const void*, const void*, int); // row name lookup
 extern "C" char* func_80136190(char*, char*, u32);    // format two strings
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, const char*, const char*, u32);
 extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, void* res);
-extern "C" char* func_80138F78(u32);                  // texture-name lookup
+extern "C" char* func_80138F78(u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" void func_8013676C(nw4r::lyt::Pane* rootPane, u32 fontHandle);
 extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);

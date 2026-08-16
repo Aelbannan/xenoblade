@@ -414,14 +414,14 @@ __declspec(noinline) CfScriptManager* CfScriptManager::getInstance() {
 
 // CfScript constructor - the novtable class stores the retail vtable label
 // explicitly (MWCC would otherwise emit a __vt__Q22cf8CfScript reloc).
-CfScript::CfScript() {
-    *(void**)this = (void*)lbl_eu_80526DE8;
-    mName[0] = '\0';
-    mNameLen = 0;
-    mFileHandle = nullptr;
-    mFlags = 0;
-    mVmContext = nullptr;
-    mWaitCount = 0;
+extern "C" void __ct__cf_CfScript(CfScript* self) {
+    *(void**)self = (void*)lbl_eu_80526DE8;
+    self->mName[0] = '\0';
+    self->mNameLen = 0;
+    self->mFileHandle = nullptr;
+    self->mFlags = 0;
+    self->mVmContext = nullptr;
+    self->mWaitCount = 0;
 }
 
 // CfScript destructor

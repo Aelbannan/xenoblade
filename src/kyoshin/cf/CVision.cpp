@@ -2228,12 +2228,13 @@ extern "C" void* __dt__801A3728(UnkClass_801A3728* self, int deleting) {
     return self;
 }
 
+extern "C" void* lbl_eu_805332D0[];
 cf::CVision::~CVision() {
+    *(void**)this = (void*)lbl_eu_805332D0;
     vt_34();
-    cf::UnkClass_801A3728* m = &this->unk261C4;
-    if (m != NULL) {
-        m->field_64 = 0;
-        m->field_68 = 0;
+    if (&this->unk261C4 != NULL) {
+        this->unk261C4.field_68 = 0;
+        this->unk261C4.field_64 = 0;
     }
     __destroy_arr(&this->unk20D4[0],
                   reinterpret_cast<ConstructorDestructor*>(

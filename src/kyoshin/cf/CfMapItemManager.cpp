@@ -31,6 +31,7 @@ extern f32 lbl_eu_80667794;
 extern f32 lbl_eu_806677A8;
 extern f64 lbl_eu_806677B0;
 extern f32 lbl_eu_806677E8;
+extern f32 lbl_eu_806677E4;
 extern f32 lbl_eu_806677EC;
 extern f64 lbl_eu_806677F0;
 extern char lbl_eu_805033C0[];
@@ -239,7 +240,16 @@ void func_801742D4(){}
 
 int func_80174650(void* self) { return 1; }
 
-void func_80174658(){}
+// Init: zero the +0/+2 pair, memset the +4..+9 region, and load the two
+// +0xC/+0x10 floats from the constants.
+extern "C" void* func_80174658(void* self) {
+    *(u16*)((u8*)self + 0) = 0;
+    *(u16*)((u8*)self + 2) = 2;
+    ((void (*)(void*, int, unsigned long))memset)((u8*)self + 4, 0, 5);
+    *(f32*)((u8*)self + 0xC) = lbl_eu_806677E4;
+    *(f32*)((u8*)self + 0x10) = lbl_eu_806677E8;
+    return self;
+}
 
 s16 func_801748B8(CfMapItem* self, s16 delta);
 
@@ -331,7 +341,13 @@ s16 func_801748B8(CfMapItem* self, s16 delta) {
     return self->field_00;
 }
 
-void func_80174AE8(){}
+// Store the count-2 flag, then set the position index from the scaled
+// byte at +6 (2^52 magic conversion) divided by 2.
+extern "C" void func_80174AE8(void* self) {
+    *(u16*)((u8*)self + 2) = 2;
+    f32 v = *(f32*)((u8*)self + 0x10) * (float)(u8)*(u8*)((u8*)self + 6);
+    *(u16*)((u8*)self + 0) = (s16)((s32)v / 2);
+}
 
 void func_80174B3C(void* self, unsigned char a, unsigned char b, unsigned char c) {
     ((unsigned char*)self)[5] = a;

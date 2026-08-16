@@ -17,8 +17,10 @@
 // TU-local plain functions (defined below in address order) called by the
 // state-machine helpers in this file. noinline keeps real bl branches
 // (retail calls them, so the call must survive).
-void __declspec(noinline) func_802B6724(CTitleLogo* self);
-void __declspec(noinline) func_802B67BC(CTitleLogo* self);
+extern "C" void __declspec(noinline) func_802B6724(CTitleLogo* self);
+extern "C" void __declspec(noinline) func_802B67BC(CTitleLogo* self);
+extern "C" void __declspec(noinline) func_802B6FFC(CTitleLogo* self);
+extern "C" void __declspec(noinline) func_802B71C4(CTitleLogo* self);
 void __declspec(noinline) func_802B6854(CTitleLogo* self);
 void __declspec(noinline) func_802B6F64(CTitleMenu* self);
 void __declspec(noinline) func_802B71C4(CTitleMenu* self);
@@ -73,7 +75,8 @@ body:
 
 extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void* layout, void* info, int a, int b);
 
-extern "C" void func_802B64AC(void* self, void* drawInfo) {
+extern "C" void func_801D20B0(void*, void*);
+extern "C" __declspec(noinline) void func_802B64AC(void* self, void* drawInfo) {  // noinline: retail keeps bl from func_802B74A8
     CTitleLogo* logo = (CTitleLogo*)self;
     if (logo->mLayout != 0 && logo->field_0x18 != 0) {
         goto call;
@@ -97,9 +100,19 @@ CTitleLogo::CTitleLogo() {
     field_0x1A = 0;
 }
 
-void func_802B64DC(){}
+// Double null-check on +0x8, then the +8-slot virtual with flag 1 and a
+// clear of +0x8.
+extern "C" void func_802B64DC(void* self) {
+    void* o = *(void**)((u8*)self + 8);
+    if (o) {
+        if (o)
+            ((void (*)(void*, int))(*(void**)((u8*)*(void**)((u8*)o) + 8)))(o, 1);
+        *(u32*)((u8*)self + 8) = 0;
+    }
+}
 
-void func_802B6534(CTitleLogo* self) {
+#pragma optimize_for_size on  // -O4,s forces the retail stmw r30 block frame
+extern "C" __declspec(noinline) void func_802B6534(CTitleLogo* self) {  // noinline: retail keeps bl from func_802B7858
     if (self->field_0x1A == 0) {
         self->field_0x1A = 1;
         func_802B6724(self);
@@ -107,6 +120,7 @@ void func_802B6534(CTitleLogo* self) {
         self->field_0x19 = 0;
     }
 }
+#pragma optimize_for_size off
 
 void func_802B6580(CTitleLogo* self) {
     if (self->field_0x1A == 2) {
@@ -124,24 +138,32 @@ extern "C" __declspec(noinline) void func_802B65C8(CTitleLogo* self) {
         self->mAnimTrans0->SetFrame((float)self->mAnimTrans0->GetFrameSize() - lbl_eu_80668FE0);
         self->mLayout->Animate(0);
         self->field_0x1A = 2;
-        func_802B67BC(self);
+        func_802B67BC((CTitleLogo*)self);
         self->field_0x19 = 1;
     }
 }
 
 void func_802B6660() {}
 
-void func_802B6664(){}
+// When the +0xC layout is visible, raise the +0x1A state to 2, run the
+// +0x6C hook, and set the +0x19 flag.
+extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(void*, float);
+extern "C" void func_802B6664(void* self) {
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0xC), lbl_eu_80668FE0)) {
+        *((u8*)self + 0x1A) = 2;
+        func_802B67BC((CTitleLogo*)self);
+        *((u8*)self + 0x19) = 1;
+    }
+}
 
-extern float lbl_eu_80668FE0;
-extern "C" void func_80137444__FPQ34nw4r3lyt13AnimTransformf(void* a, float f);
+
 extern "C" void func_802B66B8(void* self) { func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x10), lbl_eu_80668FE0); }
 
 void func_802B66C4(){}
 
 // Logo intro: bind the logo "in" animation, reset it to frame 0, and advance
 // the layout once so it is ready to play.
-void __declspec(noinline) func_802B6724(CTitleLogo* self) {
+extern "C" void __declspec(noinline) func_802B6724(CTitleLogo* self) {
     self->mLayout->UnbindAnimation(self->mAnimTrans2);
     self->mLayout->BindAnimation(self->mAnimTrans0);
     self->mLayout->SetAnimationEnable(self->mAnimTrans0, true);
@@ -228,7 +250,7 @@ body:
     self->mLayout->Animate(0);
 }
 
-extern "C" void func_802B6B08(void* self, void* drawInfo) {
+extern "C" __declspec(noinline) void func_802B6B08(void* self, void* drawInfo) {  // noinline: retail keeps bl from func_802B74A8
     CTitleMenu* menu = (CTitleMenu*)self;
     if (menu->mLayout != 0 && menu->field_0x24 != 0) {
         goto call;
@@ -239,8 +261,18 @@ call:
         menu->mLayout, drawInfo, 0, 1);
 }
 
-void func_802B6B38(){}
+// Sibling of func_802B64DC: double null-check on +0x8, +8-slot virtual
+// with flag 1, then clear +0x8.
+extern "C" void func_802B6B38(void* self) {
+    void* o = *(void**)((u8*)self + 8);
+    if (o) {
+        if (o)
+            ((void (*)(void*, int))(*(void**)((u8*)*(void**)((u8*)o) + 8)))(o, 1);
+        *(u32*)((u8*)self + 8) = 0;
+    }
+}
 
+#pragma optimize_for_size on  // -O4,s forces the retail stmw r30 block frame
 extern "C" __declspec(noinline) void func_802B6B90(CTitleMenu* self) {
     if (self->field_0x26 == 0) {
         self->field_0x26 = 1;
@@ -249,6 +281,7 @@ extern "C" __declspec(noinline) void func_802B6B90(CTitleMenu* self) {
         self->field_0x25 = 0;
     }
 }
+#pragma optimize_for_size off
 
 extern "C" __declspec(noinline) void func_802B6BDC(CTitleMenu* self) {
     if (self->field_0x26 == 2) {
@@ -258,7 +291,15 @@ extern "C" __declspec(noinline) void func_802B6BDC(CTitleMenu* self) {
     }
 }
 
-void func_802B6C24(){}
+extern "C" void func_802B712C(void*);
+extern "C" __declspec(noinline) void func_802B6C24(void* self) {  // noinline: retail keeps bl from func_802B7858
+    if (*(u8*)((u8*)self + 0x26) != 3)
+        return;
+    *((u8*)self + 0x26) = 4;
+    func_802B712C(self);
+    *((u8*)self + 0x24) = 1;
+    *((u8*)self + 0x25) = 0;
+}
 
 void func_802B6C74(CTitleMenu* self) {
     if (self->field_0x26 == 5) {
@@ -285,13 +326,35 @@ extern "C" __declspec(noinline) void func_802B6D5C(CTitleMenu* self) {
 
 void func_802B6DF4() {}
 
-void func_802B6DF8(){}
+// Visibility-gated state set (+0x26 = 2, hook, +0x25 = 1) for the logo's
+// second phase.
+extern "C" void func_802B6DF8(void* self) {
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0xC), lbl_eu_80668FE0)) {
+        *((u8*)self + 0x26) = 2;
+        func_802B6FFC((CTitleLogo*)self);
+        *((u8*)self + 0x25) = 1;
+    }
+}
 
 extern "C" void func_802B6E4C(void* self) { func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x10), lbl_eu_80668FE0); }
 
-void func_802B6E58(){}
+// When the +0x14 anim transform has finished, set +0x24 = 0 and +0x25 = 1.
+extern "C" void func_802B6E58(CTitleMenu* self) {
+    if (func_80137444(self->mAnimTrans2, lbl_eu_80668FE0) != 0) {
+        self->field_0x24 = 0;
+        self->field_0x25 = 1;
+    }
+}
 
-void func_802B6EA4(){}
+// Visibility-gated state set (+0x26 = 5, hook, +0x25 = 1) via the +0x18
+// layout and the shared anim-visibility test.
+extern "C" void func_802B6EA4(void* self) {
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x18), lbl_eu_80668FE0)) {
+        *((u8*)self + 0x26) = 5;
+        func_802B71C4((CTitleLogo*)self);
+        *((u8*)self + 0x25) = 1;
+    }
+}
 
 extern "C" void func_802B6EF8(void* self) { func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x1C), lbl_eu_80668FE0); }
 
@@ -379,7 +442,14 @@ void func_802B73D4(CTitle* self) {
 
 void func_802B744C(){}
 
-void func_802B74A8(){}
+// Draw the three sub-objects (+0x2C, +0x48, +0x70) with the draw info.
+#pragma optimize_for_size on  // -O4,s forces the retail stmw r30 block frame
+extern "C" void func_802B74A8(void* self, void* drawInfo) {
+    func_802B64AC((u8*)self + 0x2C, drawInfo);
+    func_802B6B08((u8*)self + 0x48, drawInfo);
+    func_801D20B0((u8*)self + 0x70, drawInfo);
+}
+#pragma optimize_for_size off
 
 void func_802B74F4(){}
 
@@ -405,7 +475,19 @@ extern "C" void func_802B75B8(CTitle* self) {
     func_802B6B90(&self->mMenu);
 }
 
-void func_802B75D8(){}
+// State-5 gate: advance +0x24 to 6, then run the +0x2C/+0x48 sub-objects
+// and the +0x70 layout with a zero flag.
+extern "C" void func_802B6580(void*);
+extern "C" void func_802B6C74(void*);
+extern "C" void func_801D216C(void*, u8);
+extern "C" void func_802B75D8(void* self) {
+    if (*(u8*)((u8*)self + 0x24) == 5) {
+        *((u8*)self + 0x24) = 6;
+        func_802B6580((u8*)self + 0x2C);
+        func_802B6C74((u8*)self + 0x48);
+        func_801D216C((u8*)self + 0x70, 0);
+    }
+}
 
 extern "C" void func_802B7630(CTitle* self) {
     if (self->field_0x24 != 2) return;
@@ -481,7 +563,14 @@ void func_802B783C(u8* thisPtr) {
 
 void func_802B7854() {}
 
-void func_802B7858(){}
+// When the +0x6D flag is clear, set +0x24 = 4 and run the two state steps.
+extern "C" void func_802B7858(CTitleMenu* self) {
+    if (*(u8*)((u8*)self + 0x6D) != 0) {
+        self->field_0x24 = 4;
+        func_802B6534((CTitleLogo*)((u8*)self + 0x2C));
+        func_802B6C24((u8*)self + 0x48);
+    }
+}
 
 // Advance to the selection phase: mark phase 5, show the cursor, build the
 // cursor target from the current menu entry, and move the cursor to it.

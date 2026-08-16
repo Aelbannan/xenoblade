@@ -667,6 +667,7 @@ void CModelDispMakeCrystal::initCrystalSubStruct() {
 // +0x8, then zeroes the six 0xC-byte crystal sub-buffers at +0x564..+0x5ac.
 // NOTE: -O4,p static cap - retail's `stmw r29` (3-reg save) needs -O4,s
 // (MWCC_REFERENCE §16); body/loop otherwise byte-identical.
+#pragma optimize_for_size on  // -O4,s stmw frame
 CModelDispMakeCrystal* func_8021C4F0(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -678,6 +679,7 @@ CModelDispMakeCrystal* func_8021C4F0(CModelDispMakeCrystal* self)
     } while (p < base + 0x5ac);
     return self;
 }
+#pragma optimize_for_size off
 
 // Retail 0x8021E398: sub-object destructor (array-element dtor for the
 // 0x5cc-stride crystal display sub-structs) - destroys the inline

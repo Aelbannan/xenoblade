@@ -14,7 +14,9 @@ void CMenuPassiveSkill::Term() {}
 
 void CMenuPassiveSkill::Move() {}
 
-void CMenuPassiveSkill::cbRenderBefore() {}
+// noinline: retail keeps the virtual dispatch as a real call (the thunks
+// tail-branch to this symbol; an inline would fold the thunks to empty).
+__declspec(noinline) void CMenuPassiveSkill::cbRenderBefore() {}
 
 void func_802638D0(){}
 
@@ -35,15 +37,17 @@ void func_80263DE8(){}
 void func_80263E4C(){}
 
 // Adjusted-this thunk: called through a secondary-base vtable entry
-// (IScnRender at offset +0x58 within CMenuPassiveSkill).
+// (IScnRender at offset +0x58 within CMenuPassiveSkill). Retail is
+// subi r3,r3,0x58 + tail-branch, so call through the adjusted pointer.
 void CMenuPassiveSkill::func_80263EAC() {
-    cbRenderBefore();
+    ((CMenuPassiveSkill*)((u8*)this - 0x58))->cbRenderBefore();
 }
 
-// Adjusted-this thunk: called through a secondary-base vtable entry
-// (IScnRender at offset +0x58 within CMenuPassiveSkill).
+// Adjusted-this thunk for the destructor (same +0x58 adjustment). Direct
+// extern-C call keeps the retail subi + tail-branch (no virtual dispatch,
+// no delete flag).
 void CMenuPassiveSkill::func_80263EB4() {
-    this->~CMenuPassiveSkill();
+    __dt__17CMenuPassiveSkillFv((u8*)this - 0x58);
 }
 
 extern unsigned long lbl_eu_80664878;

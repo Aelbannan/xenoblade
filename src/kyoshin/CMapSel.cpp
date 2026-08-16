@@ -37,6 +37,7 @@ extern "C" void __declspec(noinline) func_80244020(CMapSel*);
    scrollbar (retail skips the +0x00 vtable). Afterwards build the map grid:
    collect the valid maps (ids 2..28, types 10/20/22/26/28 excluded), bubble-
    sort the grid by BDAT sort key, and place the selection on the current map. */
+extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
 extern "C" CMapSel* __ct__CMapSel(CMapSel* self) {
     // IWorkEvent vtable + UnkClass_8045F564 mem region.
     *(void**)self = lbl_eu_80536E10;
@@ -221,13 +222,50 @@ void func_80243560(CMapSel* self, nw4r::lyt::DrawInfo* drawInfo) {
 
 void func_802435CC(){}
 
-void func_80243680(){}
+// Scrollbar-visible check: when the scrollbar at +0x34 is visible, return
+// the +0x32 flag (lbz), else 0.
+extern "C" int CScrollBar_isVisible(void* scrollbar);
+extern "C" u8 func_80243680(void* self) {
+    if (CScrollBar_isVisible((u8*)self + 0x34) != 0) {
+        return *(u8*)((u8*)self + 0x32);
+    }
+    return 0;
+}
 
 // FULL_MATCH: reads the initial-setup flag at +0x33 (set to 1 in ctor, cleared on play/close)
 
-void func_802436CC(){}
+// One-shot init: when the +0x31 byte is clear, set it and +0x33, then run
+// the two init hooks.
+extern "C" void func_802436CC(CMapSel* self) {
+    if (*(u8*)((u8*)self + 0x31) == 0) {
+        *((u8*)self + 0x31) = 1;
+        *((u8*)self + 0x33) = 0;
+        func_80243CFC(self);
+        func_80244020(self);
+    }
+}
 
-void func_8024371C(){}
+// When the +0x24 layout is present, run the grid rebuild (func_80243CFC) and
+// raise the +0x32/+0x30 flags.
+extern "C" void func_80243CB8(CMapSel* self) {
+    if (*(u32*)((u8*)self + 0x24) != 0) {
+        func_80243CFC(self);
+        *(u8*)((u8*)self + 0x32) = 1;
+        *(u8*)((u8*)self + 0x30) = 1;
+    }
+}
+
+// When the +0x31 state is 3, advance to 4, clear +0x33, run the scrollbar
+// cleanup at +0x74 and play sound 6.
+extern "C" void func_801D216C(void*, int);
+extern "C" void func_8024371C(CMapSel* self) {
+    if (*(u8*)((u8*)self + 0x31) == 3) {
+        *(u8*)((u8*)self + 0x31) = 4;
+        *(u8*)((u8*)self + 0x33) = 0;
+        func_801D216C((u8*)self + 0x74, 0);
+        func_80138078__FUl(6);
+    }
+}
 
 /* func_80243768 - Move the selection up one step. When the top of a column
    is passed, step to the previous column; past the first column, wrap to the
@@ -358,9 +396,12 @@ extern "C" void __declspec(noinline) func_80243BE8(CMapSel* self) {
     }
 }
 
-extern "C" void __declspec(noinline) func_80243C6C(CMapSel* self){}
-
-extern "C" void __declspec(noinline) func_80243CB8(CMapSel* self){}
+extern "C" void __declspec(noinline) func_80243C6C(CMapSel* self) {
+    if (func_80137510(self->mAnimTransform1, lbl_eu_8066873C) != 0) {
+        *(u8*)((u8*)self + 0x33) = 1;
+        self->mState = 0;
+    }
+}
 
 /* func_80243CFC - Refresh the 10 grid cells' text. For each column index i
    (0..9), sprintf the pane name, then set the cell text from the BDAT map

@@ -1019,7 +1019,19 @@ void func_804B71CC(CColiSrc* a, CColiMover* b) {
     }
 }
 
-void func_804B74F0(){}
+// Patch a set of relative offsets (embedded sub-object pointers) into
+// absolute addresses on the target (+0x50..+0x5C and +0x74..+0x7C).
+extern "C" void func_804BC9DC(void*, u8*, u8*);
+extern "C" void func_804B74F0(void* self, u8* base) {
+    u32* src = (u32*)base;
+    u32* dst = (u32*)((u8*)self + 0x50);
+    dst[0] = (u32)base + src[0];
+    dst[1] = (u32)base + src[1];
+    dst[2] = (u32)base + src[2];
+    dst[3] = (u32)base + src[3];
+    *(u32*)((u8*)self + 0x74) = src[4];
+    func_804BC9DC(self, base + src[5], base + src[6]);
+}
 
 // func_804B7540 - (re)allocate the mover-state entry table: free the old
 // allocation, allocate count * 0xE0 bytes, then fill each entry from the

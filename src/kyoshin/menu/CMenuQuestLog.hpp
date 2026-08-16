@@ -17,12 +17,11 @@ public:
     void cbRenderBefore();
 
     // 0x00: vtable + unmodelled region up to the first sub-object.
-    u8 _00[0x80];                    // 0x00
+    u8 _00[0x7C];                    // 0x04 (after vptr) .. 0x80
     CTitleAHelp mTitleAHelp;         // 0x80 (sizeof 0x38)
-    CQstLogList mQstLogList;         // 0xB8 (sizeof 0x17B)
-    u8 _B8[0x200D];                  // 0x233 .. 0x2240 gap
-    CQstLogInfo mQstLogInfo;         // 0x2240 (sizeof 0x3C)
-    u8 _2240[8];                     // 0x227C .. 0x2284
+    CQstLogList mQstLogList;         // 0xB8 (sizeof 0x2188) .. 0x2240
+    CQstLogInfo mQstLogInfo;         // 0x2240 (sizeof 0x40) .. 0x2280
+    u8 _2280[4];                     // 0x2280 .. 0x2284
     u8 mState;                       // 0x2284
 };
 

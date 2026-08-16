@@ -66,7 +66,7 @@ struct CPresentTexObj {
 
 // --- imports (retail linker names) ---
 extern char lbl_eu_8050A84C[]; // layout path + pane-name + message string pool
-extern f32 lbl_eu_8066862C;    // animation advance delta
+extern const float lbl_eu_8066862C;    // animation advance delta (const -> sdata2 pool, lfs hoist)
 extern f64 lbl_eu_80668620;    // 2^52 double used by the u32->float conversion
 extern f32 lbl_eu_80668628;    // frame reset value written into animTrans1
 extern u32 lbl_eu_80664104;    // BDAT table handle used by the time/rank lookup

@@ -413,6 +413,13 @@ struct CUICfSrcCopyView {
 // lis/addi/stw __vt__12CUICfManager reset (+3 insns) before the body.
 class __declspec(novtable) CUICfManager : public CTTask<CUICfManager>, public IWorkEvent, public cf::IFlagEvent {
 public:
+    // Retail instantiates CTTask<CUICfManager::CTest> too (Move/Draw/dtor
+    // at the 30-char mangling); the bodies match CTTask<CUICfManager>.
+    class CTest : public CTTask<CTest> {
+    public:
+        ~CTest();
+    };
+
     static CUICfManager* getInstance() {
         return spInstance;
     }

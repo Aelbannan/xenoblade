@@ -505,7 +505,7 @@ void CfObject_UnkVirtualFunc65__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, in
     if (flag != 0) {
         self->mFlags68 |= 0x02000000;
     } else {
-        self->mFlags68 &= 0xFFFFFF80;
+        self->mFlags68 &= ~0x02000000;
     }
     void* target = self->mTargetC4;
     if (target != 0) {
@@ -513,7 +513,7 @@ void CfObject_UnkVirtualFunc65__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, in
         if (flag != 0) {
             view->flags |= 0x100;
         } else {
-            view->flags &= 0xFF000000;
+            view->flags &= ~0x100;
         }
     }
 }

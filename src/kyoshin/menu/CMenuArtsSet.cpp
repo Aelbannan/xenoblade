@@ -72,7 +72,8 @@ extern "C" __declspec(noinline) void func_80230070(SArts30070* self);
 // retail symbol instead of inlining the body.
 extern "C" __declspec(noinline) void func_8022FD9C(SArts2FDF4* self) {
     if (self->field_0x8) {
-        self->field_0x8->v2(1);
+        if (self->field_0x8)
+            self->field_0x8->v2(1);
         self->field_0x8 = 0;
     }
 }
@@ -183,6 +184,8 @@ extern "C" __declspec(noinline) void func_80230070(SArts30070* self) {
 
 // Build the arts-selection list: clear the cursor, then append each of the
 // first `count` arts entries that pass the (v>8) / (v==4 && locked) filters.
+#pragma push
+#pragma optimize_for_size on
 void func_80230374(SArtsSub8022FA58* self) {
     self->field_0x21 = 0;
     u8 count = code80135FDC_getByte_64077();
@@ -190,10 +193,12 @@ void func_80230374(SArtsSub8022FA58* self) {
         u8 v = func_801392B4(i);
         if (v > 8) continue;
         if (v == 4 && func_800A32BC(func_8009EC9C(v)) != 0) continue;
-        self->field_0x19[self->field_0x21] = v;
-        self->field_0x21 = self->field_0x21 + 1;
+        u8 idx = self->field_0x21;
+        self->field_0x19[idx] = v;
+        self->field_0x21 = idx + 1;
     }
 }
+#pragma pop
 
 extern "C" __declspec(noinline) u8 func_8023040C(SArtsSub8022FA58* self, u32 idx) {
     if (idx >= self->field_0x21) {

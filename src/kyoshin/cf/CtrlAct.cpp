@@ -1411,7 +1411,10 @@ extern "C" void func_800D56F0(CtrlActView* self) {
 
 int func_800D5814(void* self) { return 0; }
 
-void func_800D581C(){}
+void func_800D581C(void* self) {
+    memset((u8*)self + 0x30, 0, 0x2C);
+    func_80174C24(*(void**)((u8*)self + 0x5C), 0x40);
+}
 
 unsigned long func_800D5860(void* self) {
     unsigned long v = *(unsigned long*)((char*)self + 0x58);
@@ -2186,4 +2189,16 @@ finish:
 
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-void sinit_800D79B4(){}
+// Static init: fill the 7-float table at lbl_eu_80573A20 with scaled
+// defaults (indices 0,1,3,4,5,6 written; index 2 untouched).
+void sinit_800D79B4() {
+    extern f32 lbl_eu_80666DC8, lbl_eu_80666DCC;
+    f32 s = lbl_eu_8066A210;
+    f32* t = const_cast<f32*>(lbl_eu_80573A20);
+    f32* u = const_cast<f32*>(lbl_eu_80663EF8);
+    t[0] = lbl_eu_80666D88 * s;
+    t[1] = lbl_eu_80666D8C * s;
+    t[3] = lbl_eu_80666D90 * s;
+    u[0] = lbl_eu_80666DC8 * s;
+    u[1] = lbl_eu_80666DCC * s;
+}

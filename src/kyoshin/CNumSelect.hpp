@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include "monolib/lib/UnkClass_8045F564.hpp"
 
 // Full object layout for CNumSelect (used by C-linkage accessors)
 struct CNumSelectFull {
@@ -16,7 +17,7 @@ public:
     virtual ~CNumSelect();
     void OnFileEvent();
 
-    // TODO: add fields
+    UnkClass_8045F564 mMemRegion;   // +0x04 (0x10 bytes)
 };
 
 

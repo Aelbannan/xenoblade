@@ -269,6 +269,7 @@ public:
     virtual void e00();           // index 0
     virtual void e04();           // index 1
     virtual void e10();           // index 2 -> vtable 0x10
+    virtual void e14();           // index 3 -> vtable 0x14
 };
 
 // Request parameter consumed by func_800CC638: mode byte at +0xA, move id at

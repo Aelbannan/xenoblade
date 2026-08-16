@@ -45,8 +45,18 @@ void CVS_THREAD::func_802A3B50(){
 
 }
 
-void CVS_THREAD::func_802A3BEC(){
-
+// Compare the +0x10 field against the id; on a match dispatch func_800BE924
+// and clear the +0x10/+0x14 pair.
+void CVS_THREAD::func_802A3BEC(u32 id) {
+    u32 v = unk10;
+    if (v == 0)
+        return;
+    if (v == id) {
+        if (v != 0)
+            func_800BE924((void*)v);
+        unk10 = 0;
+        unk14 = -1;
+    }
 }
 
 void func_802A3C44(){
@@ -56,7 +66,12 @@ void func_802A3C44(){
 void func_802A3D54(){
 }
 
-void func_802A3E28(){
+void func_802A3E28(CVS_THREAD* thread) {
+    if (thread->unk10 != 0) {
+        func_800BE924((void*)thread->unk10);
+    }
+    thread->unk10 = 0;
+    thread->unk14 = -1;
 }
 
 void func_802A3E88(){}

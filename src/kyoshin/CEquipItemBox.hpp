@@ -6,6 +6,12 @@
 // CEquipItemBox vtable (lbl_eu_80538658)
 extern "C" void* lbl_eu_80538658[];
 
+// 8-byte pane-colour vector (same layout as CItemBoxLine::FourShorts);
+// declared here so the C-linkage getter below stays uniform across TUs.
+struct CEquipBoxFourShorts {
+    s16 a, b, c, d;
+};
+
 namespace nw4r {
 namespace math {
     struct VEC3;
@@ -319,8 +325,8 @@ extern "C" u16 func_8013606C(const void*, const void*, u16);
 extern "C" CEquipItemBoxFourShorts func_80139658(void*, void*, u32);
 extern "C" CEquipItemBoxFourShorts func_801397AC(void*, u32);
 extern "C" void CopyVec4s(void*, const void*);
-extern "C" void func_80137F88(void*, void*);
-extern "C" char* func_8013639C(u32, const char*, u32);
+extern "C" void func_80137F88(void*, u32);
+extern "C" char* func_8013639C(const void*, const void*, int);
 extern "C" void func_801FA220(u8*, const u8*);
 extern "C" void __ct__CCur18(void*, void*);
 extern "C" void func_8003AA34(void*);
@@ -530,7 +536,7 @@ extern "C" u32 func_801D32DC(u8*);
 extern "C" u32 CSysWin_isReady(void*);
 extern "C" void func_80139198(void*);
 extern "C" void func_80138078__FUl(u32);
-extern "C" u8 func_801392B4(int);
+extern "C" u8 func_801392B4(u32);
 extern "C" void func_8028A5D8(CEquipItemBox* self, int a);
 extern "C" void func_80288AC0(CEquipItemBox* self);
 extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b);
@@ -583,7 +589,7 @@ extern "C" void func_8022B7F4(void*);
 extern "C" u16 func_80139358(u32);
 extern "C" u16 func_80136254(const void*, const void*, int);
 // Texture-name lookup (retail C-ABI; u16 arg, returns the resource name).
-extern "C" char* func_80138F78(u16);
+extern "C" char* func_80138F78(u32);
 // Item-object validity/type check used by func_80288E14's texture pick.
 extern "C" int func_801C6E90(void*);
 extern "C" void* func_8009EC9C(u32);
@@ -595,7 +601,7 @@ extern "C" u16 func_800A082C(void*);
 extern "C" f32 func_8013B380(u32 idx);
 extern "C" f32 func_80139C98(u32 a, u32 b, u32 c, f32 d);
 extern "C" nw4r::math::VEC3* code80135FDC_setVec3(float*, float, float, float);
-extern "C" void copyVEC3(float*, const float*);
+extern "C" void copyVEC3(void*, const void*);
 extern "C" void* CItem_initItemImplInstances(void*);
 extern u32 lbl_eu_806640D8;
 extern u32 lbl_eu_806640F8;
@@ -669,7 +675,7 @@ extern "C" void func_8022B748(void*);
 // Sub-window / cursor / sort-menu draw helpers (retail plain names).
 extern "C" void func_801D31F8(void*, nw4r::lyt::DrawInfo*);
 extern "C" void func_8022B7C8(void*, nw4r::lyt::DrawInfo*);
-extern "C" void func_801D20B0(void*, nw4r::lyt::DrawInfo*);
+extern "C" void func_801D20B0(void*, void*);
 // Layout text/colour setter used by the sort-menu page rebuild (func_8028A1DC);
 // the 3rd/4th args are .sbss colour-table pairs referenced via sda21.
 extern "C" void func_80139A18(nw4r::lyt::Layout*, char*, void*, void*);
@@ -745,13 +751,13 @@ extern const float lbl_eu_80668B08;
 
 // CfMove enum-list holder helpers (retail plain names; sibling decls in
 // CItemBoxGrid.hpp / CfObjectImplMove.hpp).
-extern "C" void func_80043D90(CEquipItemBoxEnumHolder* holder);
-extern "C" CEquipItemBoxEnumList* func_80043F18(CEquipItemBoxEnumHolder* holder);
-extern "C" void func_800F4A98(CEquipItemBoxEnumList* list, u32 type, u32 filter);
-extern "C" void* func_800F6EC0(CEquipItemBoxEnumList* list, u32 idx);
+extern "C" void func_80043D90(void*);
+extern "C" void* func_80043F18(void*);
+extern "C" void func_800F4A98(void*, u32, u32);
+extern "C" void* func_800F6EC0(void*, u32);
 extern "C" void func_800BFDE0(void* obj, u32 arg);
 extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(void* obj);
-extern "C" void __dt__80043E88(CEquipItemBoxEnumHolder* holder, int flags);
+extern "C" void __dt__80043E88(void*, int);
 
 // Equipment-slot clear helpers (retail plain names; declared here instead of
 // pulling in the big cf/CtrlObjectParam headers).

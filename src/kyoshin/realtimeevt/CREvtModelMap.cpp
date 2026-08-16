@@ -364,7 +364,7 @@ extern "C" void func_80180DCC(CREvtModelMap* self)
 // ---------------------------------------------------------------------------
 // 7. func_80180E1C - setGuestModeOn (0x80182218)
 // ---------------------------------------------------------------------------
-void CREvtModelMap::setGuestModeOn()
+extern "C" void func_80180E1C(CREvtModelMap* self)
 {
     if (lbl_eu_806642B0) {
         return;
@@ -373,7 +373,7 @@ void CREvtModelMap::setGuestModeOn()
     cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
     // Virtual call CfGameManager::setGuestMode(1) (vtable slot 0x158);
     // retail does NOT null-check the singleton result.
-    ((void(*)(void*, int))(*(void***)mgr)[0x158 / 4])(mgr, 1);
+    ((CGameMgrCoreIf*)mgr)->v158(1);
     func_80462B30__8CTaskLODFv();
 }
 

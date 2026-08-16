@@ -166,7 +166,7 @@ extern "C" void func_8009E168(int*, u8, u8);
 extern "C" u8 func_801392C8(u32);
 extern "C" u32 func_8009CF8C(u32);
 extern "C" u16 func_80136254(const void*, const void*, int);
-extern "C" char* func_80138F78(u16);
+extern "C" char* func_80138F78(u32);
 
 // Party-slot data-table pointers (.sdata).
 extern char* lbl_eu_80664090;

@@ -48,7 +48,13 @@ struct CfObjIf {
 
 
 
-void func_800AB3D0(){}
+// Null-guarded bit-15 flag test on +0x64; returns self when the flag is
+// set (retail keeps r3 = self and tests with r0 via bclr 4,2).
+extern "C" void* func_800AB3D0(void* self) {
+    if (self && (*(u32*)((u8*)self + 0x64) & 0x8000))
+        return self;
+    return 0;
+}
 
 void cf::CfObjectColl::func_800AB3EC() {}
 
@@ -135,7 +141,11 @@ unsigned long func_800AC460(void* self) {
     return func_8009D018((v >> 16) + 0x20c8);
 }
 
-void func_800AC470(){}
+// Sign test on a call through the u16 index at +0x9C (offset 0x20C8 table).
+extern "C" int func_8009CF8C(u32 resourceId);
+extern "C" bool func_800AC470(void* self) {
+    return func_8009CF8C((*(u32*)((u8*)self + 0x9C) >> 16) + 0x20C8) != 0;
+}
 
 extern "C" void func_800AC4A8(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) = val; }
 

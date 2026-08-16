@@ -1,6 +1,15 @@
 #include "monolib/core.hpp"
 #include "monolib/device.hpp"
 #include "monolib/work.hpp"
+#include "monolib/core/CTaskManager.hpp"
+
+// Blob monolibdata1d dissolve: sbss slots owned by this TU (retail
+// lbl_eu_806655B8/BC/C0/C4). Declared extern "C" in CTaskManager.hpp; the
+// initializers make these the definitions (zero-fill -> .sbss).
+extern "C" CRootProc* lbl_eu_806655B8 = 0;
+extern "C" CRootProc* lbl_eu_806655BC = 0;
+extern "C" CRootProc* lbl_eu_806655C0 = 0;
+extern "C" CRootProc* lbl_eu_806655C4 = 0;
 
 namespace {
 

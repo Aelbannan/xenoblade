@@ -48,7 +48,7 @@ struct CViewResList {
 };
 
 //size: 0x470
-class CView : public CWorkThread, public CFontLayer {
+class __declspec(novtable) CView : public CWorkThread, public CFontLayer {
 public:
     CView(const char* pName, CWorkThread* pParent);
     virtual ~CView();

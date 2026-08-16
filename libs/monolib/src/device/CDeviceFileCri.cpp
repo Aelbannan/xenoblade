@@ -59,7 +59,7 @@ extern "C" void func_80450B44(void* self, u32 arg) {
     func_8044F744__14CDeviceFileCriFv((CDeviceFileCri*)((char*)self - 0x1C4));
 }
 
-extern "C" void __dt__14CDeviceFileCriFv(void*, int);
+extern "C" void* __dt__14CDeviceFileCriFv(void*, int);
 
 // Deleting destructor (retail __dt__FP10IExceptionFv): free self when
 // mode > 0, return self.
@@ -99,22 +99,35 @@ CDeviceFileCri::CDeviceFileCri(const char* pName, CWorkThread* pParent, int capa
     func_804591BC__10CExceptionFP10IException((CException*)this, pException);
 }
 
-CDeviceFileCri::~CDeviceFileCri() {
-    if (this == nullptr) return;
-    
-    *(u32**)this = (u32*)lbl_eu_8056C354;
-    *(u32**)((char*)this + 0x1C4) = (u32*)((char*)lbl_eu_8056C354 + 0xA0);
-    
-    func_804591DC__10CExceptionFP10IException((CException*)this);
-    
-    sInstance = nullptr;
-    
-    if (mBuffer != nullptr) {
-        mtl::MemManager::deallocate(mBuffer);
-        mBuffer = nullptr;
+// Free-function dtor form (retail __dt__14CDeviceFileCriFv): the member dtor
+// double-emits the vptr stores and the CWorkThread base dtor; the extern-C
+// form emits each once. The CException subobject lives at +0x1C4 (retail
+// passes this+0x1C4 to func_804591DC) and the base dtor is the 1-arg
+// __dt__11CWorkThreadFv with flag 0.
+extern "C" void __dt__11CWorkThreadFv(void* self, int flags);
+extern "C" void* __dl__FPv(void* self);
+
+extern "C" void* __dt__14CDeviceFileCriFv(void* self, int flags) {
+    if (self != 0) {
+        *(u32**)self = (u32*)lbl_eu_8056C354;
+        *(u32**)((char*)self + 0x1C4) = (u32*)((char*)lbl_eu_8056C354 + 0xA0);
+        IException* pException = (IException*)self;
+        if (self != 0) {
+            pException = (IException*)((u8*)self + 0x1C4);
+        }
+        func_804591DC__10CExceptionFP10IException((CException*)pException);
+        lbl_eu_80665668 = 0;
+        void* buffer = *(void**)((u8*)self + 0x1D8);
+        if (buffer != 0) {
+            mtl::MemManager::deallocate(buffer);
+            *(void**)((u8*)self + 0x1D8) = 0;
+        }
+        __dt__11CWorkThreadFv(self, 0);
+        if (flags > 0) {
+            __dl__FPv(self);
+        }
     }
-    
-    CWorkThread::~CWorkThread();
+    return self;
 }
 
 CDeviceFileJobReadDvd* CDeviceFileCri::getFirstCDeviceFileJobReadDvd() {

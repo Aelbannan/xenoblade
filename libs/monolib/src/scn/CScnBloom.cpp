@@ -4,6 +4,8 @@
 // per-frame render state (func_80499FD0 is the second-stage constructor).
 
 #include "libs/monolib/src/scn/CScnBloom.hpp"
+extern "C" void __ct__CScnFilter(void*);
+extern char lbl_eu_8056EA08[];
 #include "monolib/core/CView.hpp"
 #include "monolib/device/CDeviceGX.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -15,7 +17,7 @@
 extern "C" {
 // Deleting destructor (retail __dt__804997D0): free self when mode > 0,
 // return self.
-void* __dt__804997D0(void* self, int mode) {
+extern "C" __declspec(noinline) void* __dt__804997D0(void* self, int mode) {
     extern void* __dl__FPv(void*);
     if (self != 0 && mode > 0) {
         __dl__FPv(self);
@@ -326,8 +328,30 @@ extern "C" void func_804996D8_stub7() {}
 
 extern "C" void func_804996D8_stub8() {}
 
-void __dt__8049A0D0(){}
+// Delete-flag dtor: tear down the base (+0xC), free when the flag is
+// positive, and return self (retail stmw r30 frame).
+extern "C" void* __dt__804997D0(void*, int);
+extern "C" void* __dl__FPv(void*);
+extern "C" void* __dt__8049A0D0(void* self, int flag) {
+    if (self) {
+        __dt__804997D0(self, 0);
+        if (flag > 0)
+            __dl__FPv(self);
+    }
+    return self;
+}
 
 void func_8049A318(){}
 
 extern "C" void func_80499810() {}
+
+// Retail __ct__CScnBloom (flat name): runs the base-object initializer, then
+// constructs the CScnFilter sub-object at +0x48 and installs both vtables
+// (main at +0x80, the derived CScnFilter sub-object at +0x48 = main + 8).
+extern "C" CScnBloom* __ct__CScnBloom(CScnBloom* self) {
+    func_804996E8(self);
+    __ct__CScnFilter((void*)((u8*)self + 0x48));
+    *(void**)((u8*)self + 0x80) = (void*)lbl_eu_8056EA08;
+    *(void**)((u8*)self + 0x48) = (void*)((u8*)lbl_eu_8056EA08 + 8);
+    return self;
+}

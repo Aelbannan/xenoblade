@@ -253,8 +253,8 @@ extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" void* func_8009EC9C(u32);
 extern "C" void func_80124270(void*, u32);
 extern "C" u32 func_801361E8(u32, const char*, u32);
-extern "C" u32 func_80139358(u32);
-extern "C" u32 func_801392E4(void*);
+extern "C" u16 func_80139358(u32);
+extern "C" u32 func_801392E4(u32);
 extern "C" u32 func_801393CC(void*);
 extern "C" void func_801D8B08(CItemBoxInfo*);
 extern "C" void func_801D85D8(CItemBoxInfo*);
@@ -283,18 +283,18 @@ extern "C" void __ct__17UnkClass_8045F564Fv(void*);
 extern "C" void* lbl_eu_80534B28[];
 extern "C" void* lbl_eu_80534A90[];
 extern "C" u8 code80135FDC_getByte_64077();
-extern "C" void copyVEC3(void*, void*);
+extern "C" void copyVEC3(void*, const void*);
 // C-linkage position-set helper (retail-unmangled func_80137924; same
 // signature as CSysWin.hpp / CMenuPlayAward.hpp).
-extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
+extern "C" void func_80137924(void*, void*, void*, void*);
 // More flat retail (unmangled) helpers used by the item-box renderers.
 extern "C" void func_80137B44(nw4r::lyt::Layout*, const char*, u32);
 extern "C" char* func_80136190(char*, char*, u32);
-extern "C" char* func_8013639C(void*, char*);
+extern "C" char* func_8013639C(const void*, const void*, int);
 extern "C" void func_80139A18(nw4r::lyt::Layout*, char*, void*, void*);
 extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
 extern "C" u32 func_801392C0();
-extern "C" u32 func_801392B4(u32);
+extern "C" u8 func_801392B4(u32);
 extern "C" f32 func_80139C98(u32 a, u32 b, u32 c, f32 d);
 extern "C" void func_801E40E8(CItemBoxInfo2*);
 extern "C" void func_801E43BC(CItemBoxInfo2*, u16, void*, u16, u32);
@@ -309,7 +309,7 @@ extern "C" void func_801E37C4(CItemBoxInfo2*, void*, void*);
 extern "C" u32 func_8013600C(void*, const char*, u32);
 extern "C" u32 func_800A32BC();
 extern "C" void func_801D4A2C(void*);
-extern "C" u32 func_801C6E90(void*);
+extern "C" int func_801C6E90(void*);
 extern "C" u32 func_801D4AB0(void*);
 extern "C" void func_801D6394(CItemBoxInfo*, u32, void*, u32);
 extern "C" void func_801D5DA4(CItemBoxInfo*, u16, void*, u16);
@@ -337,21 +337,24 @@ extern "C" void func_801E14DC(CItemBoxInfo2*, u16, void*, u16, u32);
 extern "C" void func_801D80EC(CItemBoxInfo*, u16, void*);
 extern "C" void func_801E2638(CItemBoxInfo2*, u16, void*);
 extern "C" void* func_801571FC();
-extern "C" void func_80137F88(void*, u16);
+extern "C" void func_80137F88(void*, u32);
 extern "C" void func_80137C1C(void*, u32);
-extern "C" u32 func_80136254(void*, const char*, u32);
-extern "C" u32 func_80138F78(u16);
-extern "C" void* func_801355F4();
+extern "C" u16 func_80136254(const void*, const void*, int);
+extern "C" char* func_80138F78(u32);
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 
 // Layout-build helpers for OnFileEvent (retail mangled C++ symbols; keep
 // signature shapes verbatim so the mangled names line up).
-extern "C" void* createArcResourceAccessor__10CLibLayoutFv(void);
+extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
 extern "C" char* func_801355BC(void);
 extern "C" char* func_80138DA4(const char* msg);
 extern "C" u32 func_80138E90(u16);
-extern "C" CItemBoxQuadColor func_801397AC(void*, u32);
+// 8-byte colour-vector pair returned in r3:r4 by func_801397AC (struct
+// defined in CEquipItemBox.hpp).
+#include "kyoshin/CEquipItemBox.hpp"
+extern "C" CEquipItemBoxFourShorts func_801397AC(void*, u32);
 extern u32 lbl_eu_80664098;
 void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);

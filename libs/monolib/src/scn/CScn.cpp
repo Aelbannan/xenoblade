@@ -134,9 +134,10 @@ void CScn::Draw() {
 }
 
 
-bool func_80495E60(u8* self){
-    extern bool func_8048CB14(void*);
-    return func_8048CB14(*(void**)((char*)self + 0x60));
+extern "C" bool func_80495E60(u8* self) {
+    extern bool func_8048C8C4(void*, void*);
+    if (!self) return 1;
+    return func_8048C8C4(*(void**)((char*)*(void**)(self + 4) + 0x60), self);
 }
 extern "C" bool func_80495E84(u8* self) {
     extern bool func_8048CB14(void*);
@@ -196,8 +197,23 @@ extern "C" int func_80496118(void* _this) {
     return func_8049AED4(*(int*)((char*)_this + 0x68));
 }
 void func_80496120(){}
-void func_804961D4(){}
-void func_8049621C(){}
+// Get the camera item handle, lazily creating id -1 when missing; returns
+// the item payload +0x9C (the sibling +0xCC variant mirrors it).
+extern "C" void* func_8049B1CC(void*);
+extern "C" void* func_804961D4(void* self) {
+    void* r = func_8049B1CC(*(void**)((u8*)self + 0x68));
+    if (!r)
+        r = ((void* (*)(void*, int))func_8049B1CC)(*(void**)((u8*)self + 0x68), -1);
+    return (u8*)r + 0x9C;
+}
+
+// Sibling with the +0xCC payload offset.
+extern "C" void* func_8049621C(void* self) {
+    void* r = func_8049B1CC(*(void**)((u8*)self + 0x68));
+    if (!r)
+        r = ((void* (*)(void*, int))func_8049B1CC)(*(void**)((u8*)self + 0x68), -1);
+    return (u8*)r + 0xCC;
+}
 extern "C" int func_80496264(void* _this) {
     return func_8049B158(*(int*)((char*)_this + 0x68));
 }

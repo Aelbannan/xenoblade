@@ -344,7 +344,7 @@ extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" char* func_80136190(const void*, const void*, int); // caller-tuned (see code_80135FDC.hpp)
-extern "C" char* func_8013639C(u32, const char*, u8); // BDAT row string lookup (u8 row index)
+extern "C" char* func_8013639C(const void*, const void*, int); // BDAT row string lookup
 extern "C" void func_80138078__FUl(u32);
 extern "C" u8 func_801361E8(u32, const char*, u32);
 // func_8013606C/8013600C take byte-keyed lookups: retail masks the 3rd arg
@@ -355,12 +355,12 @@ extern "C" s16 func_80136130(const void*, const void*, u8);
 extern "C" void func_801D1F9C(void*, u32);
 extern "C" void func_801C4B60(void*, s16, s16, s16, s16); // colour init
 extern "C" void func_80139A18(void*, void*, void*, void*);
-extern "C" u32 func_80137924(void*, void*, void*, void*);
+extern "C" void func_80137924(void*, void*, void*, void*);
 extern "C" void* func_8009EC9C(u32);
 extern "C" u32 func_800A32BC(void*); // character-data category
 extern "C" u32 func_800A082C(CArtsCharData*);
 extern "C" u16 func_80139358(u32);
-extern "C" u32 func_80136254(const void*, const void*, int); // wider-than-u16 in retail (CSysWinScenarioLog.hpp)
+extern "C" u16 func_80136254(const void*, const void*, int);
 extern "C" CArtsInfoListEntry* func_80157C4C(u32);
 extern "C" void func_801D202C(void*);
 extern "C" void func_801D20B0(void*, void*);

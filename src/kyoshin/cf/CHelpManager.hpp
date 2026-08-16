@@ -348,7 +348,6 @@ extern "C" cf::CHelp_LandMark* __dt__Q22cf14CHelp_LandMarkFv(
 extern void __register_global_object(void* object, void* dtor, void* cookie);
 extern void* lbl_eu_80538E30[]; // default mListB item array
 extern cf::CHelpTableEntry lbl_eu_80538E90[]; // mField10 -> item-array table
-extern "C" int func_8009CF8C(void*); // global data/flag memory reader (arg passes in r3)
 extern "C" int func_80085840__Q22cf13CfGameManagerFv();
 extern "C" s32 func_800822F4__Q22cf13CfGameManagerFv(); // scenario sequence counter
 extern "C" u32 func_802B7C64(); // help-active check (trampoline to func_8029A658)

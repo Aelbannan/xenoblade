@@ -1077,12 +1077,12 @@ void init_9A30(){}
 // addressing; the base vtable store is volatile so MWCC keeps both stores.
 // Struct-typed sentinel access reproduces the retail scheduling (same shape
 // as the CfObject/IFactoryEvent siblings, with the zeros at 0x2c/0x30/0x34).
+extern void* lbl_eu_805290DC[];
+extern void* lbl_eu_805290C4[];
 void __ct__reslist_cf_TboxInfo(void* self) {
-    extern void* lbl_eu_805290DC[];
-    extern void* lbl_eu_805290C4[];
     TboxInfoReslistLayout* obj = (TboxInfoReslistLayout*)self;
     u32 zero = 0;
-    *(volatile u32*)((u8*)self) = (u32)lbl_eu_805290DC;
+    obj->mVtable = (void*)lbl_eu_805290DC;
     obj->field_0x2c = zero;
     obj->field_0x30 = zero;
     obj->field_0x34 = (u8)zero;

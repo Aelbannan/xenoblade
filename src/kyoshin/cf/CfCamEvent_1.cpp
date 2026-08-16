@@ -1682,14 +1682,12 @@ void func_80079B34(CfCamEventManager* self) {
 // base for the table count at +0x4D2, and it never advances.
 void func_80079D6C(f32 step, CfCamEventShakeElem* e) {
     while ((s32)e < (s32)e->count) {
-        f32 cur = e->x4;
-        f32 prev = ((CfCamEventElem*)e - 1)->x4;
-        f32 d = (f32)__fabs((f64)(cur - prev));
+        f32 d = (f32)__fabs((f64)(e->x4 - ((CfCamEventElem*)e - 1)->x4));
         if (d >= step) {
             if (d > step)
-                e->x4 = cur - step;
+                e->x4 -= step;
             else
-                e->x4 = cur + step;
+                e->x4 += step;
         }
     }
 }

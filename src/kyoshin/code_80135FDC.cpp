@@ -1397,10 +1397,10 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
 extern "C" void* func_80138DA4(const char* str) {
     int v = atoi(str);
     if (v <= 0) return (void*)str;
-    volatile char* base = lbl_eu_80500664;
-    char* col = (char*)base + 0x17C;
-    char* fpName = (char*)base + 0x181;
-    func_8003AA34((char*)base);
+    char* base = lbl_eu_80500664;
+    char* col = base + 0x17C;
+    char* fpName = base + 0x181;
+    func_8003AA34(base);
     void* fp = getFP__FPCc(fpName);
     return getBdatStringColumnValue(fp, col, (const char*)v);
 }

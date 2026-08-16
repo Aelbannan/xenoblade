@@ -302,9 +302,30 @@ extern "C" void func_804DA97C(void* param) {
 // Temp-path builder (stub; symbol kept for the func_804DAD38 move step).
 // noinline: retail func_804DAD38 emits `bl func_804DA98C`; without it MWCC
 // inlines this placeholder and changes the caller.
-__declspec(noinline) const char* func_804DA98C(u8 id) { return (const char*)0; }
+extern "C" long NANDGetHomeDir(char*);
+extern "C" int sprintf(char*, const char*, ...);
+#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
+__declspec(noinline) const char* func_804DA98C(u8 id) {
+    extern char lbl_eu_8065FF78[];
+    extern char lbl_eu_805245D4[];
+    long st = NANDGetHomeDir(lbl_eu_8065FF78);
+    func_804DAA58((s32)st);
+    if (id != 0)
+        strcat(lbl_eu_8065FF78, (char*)lbl_eu_805245D4);
+    return (const char*)lbl_eu_8065FF78;
+}
+#pragma optimize_for_size off
 
-void func_804DA9C4(){}
+// Format the temp path into lbl_eu_8065FFBC via sprintf with the id-driven
+// sub-path and the object pointer.
+#pragma optimize_for_size on  // -O4,s stmw frame
+extern "C" char* func_804DA9C4(u32 a1, u8 a2) {
+    extern char lbl_eu_8065FFBC[];
+    extern char lbl_eu_805245D4[];
+    sprintf(lbl_eu_8065FFBC, lbl_eu_805245D4 + 7, func_804DA98C(a2), a1);
+    return lbl_eu_8065FFBC;
+}
+#pragma optimize_for_size off
 
 // Set the NAND error message string for error code -4 / -64
 void func_804DAA90__FPCw(const wchar_t* msg) {
@@ -323,7 +344,15 @@ extern "C" void func_804DAAA0__FPCw(const wchar_t* msg){
     lbl_eu_80663B68 = msg;
 }
 
-void __ct__CNRequest(){}
+// CNRequest ctor: install the vtable label at +0x20, clear +0 and memset
+// the +4..+0x20 sub-object region (28 bytes).
+extern "C" void* __ct__CNRequest(void* self) {
+    extern u32 lbl_eu_8056FD58[];
+    *(u32*)((u8*)self + 0x20) = (u32)lbl_eu_8056FD58;
+    *(u32*)((u8*)self + 0x00) = 0;
+    memset((u8*)self + 4, 0, 28);
+    return self;
+}
 
 // us-804ded6c: func_804DAAF8
 // CNRequest task poll, called by the CNand completion pump (CNand.cpp): runs

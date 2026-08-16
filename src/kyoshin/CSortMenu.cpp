@@ -157,7 +157,7 @@ extern "C" void func_801D3258(CSortMenu* _this) {
 // func_801D32DC: Check if scrollbar is visible
 // ============================================================================
 extern "C" u8 func_801D32DC(CSortMenu* _this) {
-    if (CScrollBar_isVisible((u8*)_this + 0x2C)) {
+    if (CScrollBar_isVisible((u8*)_this + 0x2C) != 0) {
         return _this->field_0x29;
     }
     return 0;
@@ -370,8 +370,8 @@ extern "C" void func_801D377C(CSortMenu* _this) {
     if (count >= 5) {
         s32 maxSub = (s32)(count - 5);
         s32 sp5 = (s32)_this->mSubPage + 5;
-        s8 sp5s = (s8)(u8)sp5;
         _this->mSubPage = (u8)sp5;
+        s8 sp5s = (s8)(u8)sp5;
         if (sp5 > maxSub) {
             s32 newPage = (s32)sp5s - maxSub;
             _this->mPage = (u8)newPage;

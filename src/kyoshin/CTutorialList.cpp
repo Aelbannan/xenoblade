@@ -161,10 +161,15 @@ extern "C" void func_802ADB3C(CTutorialList* self) {
     }
 }
 
-extern "C" __declspec(noinline) void func_802ADB90(CTutorialList* self) {}
+extern "C" __declspec(noinline) void func_802ADB90(CTutorialList* self) {
+    if (func_80137510(self->mAnim28, lbl_eu_80668DE4) != 0) {
+        self->mState175 = 5;
+        func_802ADC28(self);
+    }
+}
 
 extern "C" void func_802ADBDC(CTutorialList* self) {
-    if (func_80137510(self->mAnim24, lbl_eu_80668DE4) != 0) {
+    if (func_80137510(self->mAnim28, lbl_eu_80668DE4) != 0) {
         self->mState175 = 0;
         self->mInitialized = 1;
     }

@@ -109,7 +109,7 @@ extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool value);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
-extern "C" void* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" CBaseCur* __ct__CCur18(void* self, void* param);
 extern "C" void func_8003AA78__5CBdatFUlPv(u32 value, void* data);
 extern "C" void* func_8003AA34();

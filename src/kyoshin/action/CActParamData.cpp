@@ -441,7 +441,13 @@ extern "C" void func_80054170() {}
 extern "C" void func_80054438() {}
 extern "C" void func_80054614() {}
 extern "C" void func_80054980() {}
-extern "C" void func_80054A94() {}
+extern "C" int func_80054A94(void*, void*);
+// OR of the +0x2E0 and +0x260 sub-object tests, returned as a setnz.
+extern "C" int func_80054A3C(void* self) {
+    int a = func_80054A94(self, (u8*)self + 0x2E0);
+    int b = func_80054A94(self, (u8*)self + 0x260);
+    return (b | a) != 0;
+}
 extern "C" __declspec(noinline) void func_80054D3C(void* self, void* member) {}
 // func_80054D34: r4 = this+0x2E0, tail-branch to func_80054D3C (retail addi r4,r3,0x2e0; b)
 extern "C" void func_80054D34(void* self) {
@@ -534,3 +540,16 @@ extern "C" void func_80057654() {}
 extern "C" void func_8005789C() {}
 
 extern "C" void func_80057CDC__13CActParamDataFv() {}
+
+
+// When bit 2 of the flag is set, convert the s16 at src+8 to a float via the
+// signed 2^52 double-magic and store it at dst+64. Always returns 0.
+extern "C" u32 func_80056C7C(u32 flag, void* a2, void* dst, const void* src) {
+    if ((flag & 4) != 0) goto convert;
+    return 0;
+convert:
+    extern float lbl_eu_8066A210;
+    *(f32*)((u8*)dst + 0x40) =
+        (f32)(s16)*(const s16*)((const u8*)src + 8) * lbl_eu_8066A210;
+    return 0;
+}

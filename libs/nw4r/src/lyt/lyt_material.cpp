@@ -5,6 +5,10 @@
 // Force MWCC to emit standalone ConvertOffsToPtr template instantiations.
 // MWCC with -inline auto treats templates as inline; we temporarily disable
 // auto-inlining so the explicit template instantiations below produce bodies.
+// Explicit instantiation for the retail LinkList<AnimationLink,0> ctor symbol.
+namespace nw4r { namespace ut {
+template nw4r::ut::LinkList<nw4r::lyt::AnimationLink, 0>::LinkList();
+}}
 namespace nw4r { namespace lyt { namespace detail {
     template const BlendMode* ConvertOffsToPtr<BlendMode>(const void*, unsigned int);
     template const AlphaCompare* ConvertOffsToPtr<AlphaCompare>(const void*, unsigned int);
@@ -1231,6 +1235,14 @@ void Material::SetAnimationEnable(AnimTransform* pAnimTrans, bool enable) {
     }
 }
 
+void Material::SetAnimationEnable(const AnimResource& rResource, bool enable) {
+    AnimationLink* pAnimLink = FindAnimationLink(rResource);
+
+    if (pAnimLink != NULL) {
+        pAnimLink->SetEnable(enable);
+    }
+}
+
 /******************************************************************************
  *
  * Functions
@@ -1251,7 +1263,49 @@ Size GetTextureSize(Material* pMaterial, u8 idx) {
 } // namespace lyt
 } // namespace nw4r
 
-void __as__Q34nw4r4math4VEC2FRCQ34nw4r4math4VEC2(){}
+nw4r::math::VEC2* __as__Q34nw4r4math4VEC2FRCQ34nw4r4math4VEC2(nw4r::math::VEC2* self, const nw4r::math::VEC2* other) {
+    self->x = other->x;
+    self->y = other->y;
+    return self;
+}
+
+// The 4-byte lyt material sub-structs are copied byte-wise by MWCC when the
+// fields are accessed individually (retail lbz/stb pairs, descending regs).
+nw4r::lyt::TexCoordGen* __as__Q34nw4r3lyt11TexCoordGenFRCQ34nw4r3lyt11TexCoordGen(
+    nw4r::lyt::TexCoordGen* self, const nw4r::lyt::TexCoordGen* other) {
+    self->texGenType = other->texGenType;
+    self->texGenSrc = other->texGenSrc;
+    self->texMtx = other->texMtx;
+    self->reserve = other->reserve;
+    return self;
+}
+
+nw4r::lyt::ChanCtrl* __as__Q34nw4r3lyt8ChanCtrlFRCQ34nw4r3lyt8ChanCtrl(
+    nw4r::lyt::ChanCtrl* self, const nw4r::lyt::ChanCtrl* other) {
+    self->matSrcCol = other->matSrcCol;
+    self->matSrcAlp = other->matSrcAlp;
+    self->reserve1 = other->reserve1;
+    self->reserve2 = other->reserve2;
+    return self;
+}
+
+nw4r::lyt::AlphaCompare* __as__Q34nw4r3lyt12AlphaCompareFRCQ34nw4r3lyt12AlphaCompare(
+    nw4r::lyt::AlphaCompare* self, const nw4r::lyt::AlphaCompare* other) {
+    self->comp = other->comp;
+    self->op = other->op;
+    self->ref0 = other->ref0;
+    self->ref1 = other->ref1;
+    return self;
+}
+
+nw4r::lyt::BlendMode* __as__Q34nw4r3lyt9BlendModeFRCQ34nw4r3lyt9BlendMode(
+    nw4r::lyt::BlendMode* self, const nw4r::lyt::BlendMode* other) {
+    self->type = other->type;
+    self->srcFactor = other->srcFactor;
+    self->dstFactor = other->dstFactor;
+    self->op = other->op;
+    return self;
+}
 nw4r::ut::Color* __as__Q34nw4r2ut5ColorFRC8_GXColor(nw4r::ut::Color* self, const GXColor* other) {
     *(u32*)self = *(const u32*)other;
     return self;
@@ -1328,13 +1382,19 @@ int GetMinFilter__Q44nw4r3lyt3res6TexMapCFv(const nw4r::lyt::res::TexMap* this_)
 int GetMagFilter__Q44nw4r3lyt3res6TexMapCFv(const nw4r::lyt::res::TexMap* this_) {
     return (((((const unsigned char*)this_)[3] >> 2) & 1) + 1) & 1;
 }
-void __as__Q34nw4r3lyt11TexCoordGenFRCQ34nw4r3lyt11TexCoordGen(){}
-void __as__Q34nw4r3lyt8ChanCtrlFRCQ34nw4r3lyt8ChanCtrl(){}
 void* __as__Q34nw4r3lyt11TevSwapModeFRCQ34nw4r3lyt11TevSwapMode(nw4r::lyt::TevSwapMode* self, const nw4r::lyt::TevSwapMode* other) {
     *(unsigned char*)self = *(const unsigned char*)other;
     return self;
 }
-void __as__Q34nw4r3lyt6TexSRTFRCQ34nw4r3lyt6TexSRT(){}
+nw4r::lyt::TexSRT* __as__Q34nw4r3lyt6TexSRTFRCQ34nw4r3lyt6TexSRT(
+    nw4r::lyt::TexSRT* self, const nw4r::lyt::TexSRT* other) {
+    *(u32*)&self->translate.x = *(const u32*)&other->translate.x;
+    *(u32*)&self->translate.y = *(const u32*)&other->translate.y;
+    self->rotate = other->rotate;
+    *(u32*)&self->scale.x = *(const u32*)&other->scale.x;
+    *(u32*)&self->scale.y = *(const u32*)&other->scale.y;
+    return self;
+}
 void __as__Q34nw4r3lyt13IndirectStageFRCQ34nw4r3lyt13IndirectStage(nw4r::lyt::IndirectStage* dst, const nw4r::lyt::IndirectStage* src) {
     ((unsigned char*)dst)[0] = ((const unsigned char*)src)[0];
     ((unsigned char*)dst)[1] = ((const unsigned char*)src)[1];
@@ -1342,8 +1402,6 @@ void __as__Q34nw4r3lyt13IndirectStageFRCQ34nw4r3lyt13IndirectStage(nw4r::lyt::In
     ((unsigned char*)dst)[3] = ((const unsigned char*)src)[3];
 }
 void __as__Q34nw4r3lyt8TevStageFRCQ34nw4r3lyt8TevStage(){}
-void __as__Q34nw4r3lyt12AlphaCompareFRCQ34nw4r3lyt12AlphaCompare(){}
-void __as__Q34nw4r3lyt9BlendModeFRCQ34nw4r3lyt9BlendMode(){}
 
 
 

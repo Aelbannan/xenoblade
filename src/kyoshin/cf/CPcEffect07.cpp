@@ -38,7 +38,16 @@ extern "C" void* __dt__Q22cf11CPcEffect07Fv(void* self, int flag) {
 
 void func_801B19F0(){}
 
-void func_801B1C5C(){}
+// Current effect-bank byte: -1 when the global bank is absent or the lookup
+// fails, else the bank byte at +0x58 (retail reloads it for the return).
+extern "C" int func_801B19F0(u8, int);
+extern "C" int func_801B1C5C(void) {
+    if (lbl_eu_80664398 == 0)
+        return -1;
+    if (func_801B19F0(*(u8*)((u8*)lbl_eu_80664398 + 0x58), -1) < 0)
+        return -1;
+    return *(u8*)((u8*)lbl_eu_80664398 + 0x58);
+}
 
 int getEffectMax() {
     if (lbl_eu_80664398 == 0) {
@@ -151,7 +160,24 @@ PcEffectSchedHolder* func_801B20C8(CPcEffect07* self, u32 id, s32 sel, s32 amoun
     return result;
 }
 
-void func_801B218C(){}
+// Clear the caller's +0xB0 slot, then scan the 3-entry table at the global
+// bank's +0x10 (24-byte stride) for the entry pointing at r4 and wipe it.
+extern "C" void func_801B218C(void* a1, void* r4) {
+    if (lbl_eu_80664398 == 0)
+        return;
+    *(u32*)((u8*)r4 + 0xB0) = 0;
+    PcEffectData* g = lbl_eu_80664398;
+    for (int i = 0; i < 3; i++) {
+        PcEffectEntry* e = &g->entries[i];
+        if (*(void**)e == r4) {
+            *(u32*)e = 0;
+            *(u16*)((u8*)e + 4) = 0;
+            *(u16*)((u8*)e + 6) = 0;
+            *(u8*)((u8*)e + 0xC) = 0;
+            return;
+        }
+    }
+}
 
 void func_801B21E0(void* self){}
 

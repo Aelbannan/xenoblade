@@ -295,6 +295,17 @@ extern "C" __declspec(noinline) void func_801FB8B0(CPartyStateWin* self);
 extern "C" __declspec(noinline) void func_801FB900(CPartyStateWin* self);
 extern "C" __declspec(noinline) void func_801FBBE0(CPartyStateWin* self);
 extern "C" __declspec(noinline) void func_801FBC30(CPartyStateWin* self);
+extern "C" void func_801C473C(void* self, u32 a);
+
+// When the equip model display (+0x3090) is active, mark the +0x6BE4 state
+// byte 7 and run the +0x18 sub-object init.
+extern "C" __declspec(noinline) void func_801FBC30(CPartyStateWin* self) {
+    if (func_801FF95C(&self->mModelDispEquip) != 0) {
+        *(u8*)((u8*)self + 0x6BE4) = 7;
+        func_801C473C((u8*)self + 0x18, 1);
+    }
+}
+
 extern "C" void func_801FA338(CPartyStateWin* self) {
     switch (self->field_6BE4) {
     case 0x0: func_801FA59C(self); break;
@@ -535,7 +546,12 @@ extern "C" __declspec(noinline) void func_801FA92C(CPartyStateWin* self) {
     }
 }
 
-extern "C" __declspec(noinline) void func_801FAA10(CPartyStateWin* self) {}
+// Gate: when the help sub-object is idle and the +0x4150 window accepts
+// input, raise the +0x6BE4 state byte to 7.
+extern "C" __declspec(noinline) void func_801FAA10(CPartyStateWin* self) {
+    if (isIdle__11CTitleAHelpFv((CTitleAHelp*)((u8*)self + 0x18)) && func_802023C0((CEquipChange*)((u8*)self + 0x4150)))
+        *((u8*)self + 0x6BE4) = 7;
+}
 
 // Target: us-801fc71c | func_801FAA60
 // Equip-change input step: increments the window timer field_6BE8 (clamped at
@@ -1042,8 +1058,6 @@ extern "C" __declspec(noinline) void func_801FBBE0(CPartyStateWin* self) {
         func_80201808(&self->mModelDispEquip);
     }
 }
-
-extern "C" __declspec(noinline) void func_801FBC30(CPartyStateWin* self){}
 
 // Window-row styling for the party state: pick one of the four bytes of the
 // lbl_eu_806681E4 window-state word by the party-state selection value, and

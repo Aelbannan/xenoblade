@@ -119,7 +119,16 @@ void* func_80212490() {
     return 0;
 }
 
-void func_802124AC(){}
+extern "C" int func_801C3E34(void*);
+extern "C" void func_8021260C(void*);
+
+// Init the +0x60 sub-object when it reports active, then set the +0x43E4 flag.
+void func_802124AC(void* self) {
+    if (func_801C3E34((u8*)self + 0x60) != 0) {
+        func_8021260C((u8*)self + 0x80);
+        *(u8*)((u8*)self + 0x43E4) = 1;
+    }
+}
 
 // IScnRender vtable this-adjusting thunk for cbRenderBefore.
 // IScnRender is a non-primary base at offset 0x58 within CMenuMakeCrystal.

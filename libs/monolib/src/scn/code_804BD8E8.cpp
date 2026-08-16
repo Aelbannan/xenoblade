@@ -11,6 +11,7 @@
 extern "C" u32 func_804BADA0(const char* self);
 extern "C" void func_804BA7BC(const char* self, u32 a, u32 b);
 extern "C" void func_804BA26C(const char* self, u32 a, u32 b, u32 c, u32 d);
+extern "C" void func_804B91E0(const char* self, void* a, void* b, void* c, void* d);
 
 extern char lbl_eu_8065F32C[];
 extern u32 lbl_eu_80665988;
@@ -39,7 +40,10 @@ u32 func_804BE348(void* a1, void* a2, u32 a3, u32 a4, u32 a5) {
     return lbl_eu_80665988;
 }
 
-void func_804BE398(){}
+u32 func_804BE398(void* a1, void* a2, void* a3, void* a4) {
+    func_804B91E0(lbl_eu_8065F32C, a1, a2, a3, a4);
+    return lbl_eu_80665988;
+}
 
 void func_804BE3E0(u32 a1, u32 a2, u32 a3, u32 a4) {
     func_804BA26C(lbl_eu_8065F32C, a1, a2, a3, a4);

@@ -147,9 +147,7 @@ public:
         return checkFlag(THREAD_FLAG_EXCEPTION) ? true : mMsgQueue.find(EVT_EXCEPTION) >= 0;
     }
 
-    bool isEvent3() const {
-        return checkFlag(THREAD_FLAG_EVT3) ? true : mMsgQueue.find(EVT_3) >= 0;
-    }
+    bool isEvent3() const;
     
     bool isNoEvent() const {
         return checkFlag(THREAD_FLAG_NO_EVENT);

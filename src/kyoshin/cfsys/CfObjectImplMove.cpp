@@ -266,7 +266,15 @@ void func_800CEBE0(){}
 
 void func_800CED64(){}
 
-void func_800CEE28(){}
+// When the +0x18 actor and its +0x3F2C flag are present, run the vfE4 and
+// vf14 virtuals (retail dispatches 0xE4 first, then 0x14).
+void func_800CEE28(CfObjectImplMoveObj* self) {
+    if (self->field_0x18 == 0)
+        return;
+    if (*(u32*)((u8*)self->field_0x18 + 0x3F2C) == 0)
+        return;
+    self->vfE4()->e14();
+}
 
 void func_800CEE7C(void) {}
 

@@ -104,7 +104,36 @@ extern "C" void* __ct__80186578(CArtsSelectContainer* self){
     return self;
 }
 
-void* func_801864DC(void* pObj, int slot){ return 0; }
+// func_801864DC: widget id lookup. Fast path: field_1700 == id returns
+// field_1704. Otherwise a hash-indexed table search: index =
+// ((((id>>4)&0xF) - sign) << 4) + sign (sign = bit 31), stride 0x170, 46
+// entries of 8 bytes; miss falls back to func_800B708C(id).
+extern "C" void* func_800B708C(int id);
+void* func_801864DC(void* pObj, int slot) {
+    u8* self = (u8*)pObj;
+    u32 id = (u32)slot;
+    if (*(u32*)(self + 0x1700) == id) {
+        return *(void**)(self + 0x1704);
+    }
+    u32 sign = (id >> 31) & 1;
+    // Retail hash: t = rotl((id << 28) - sign, 4) + sign.
+    u32 t = (id << 28) - sign;
+    t = (t << 4) | (t >> 28);
+    t += sign;
+    u32 off = t * 0x170;
+    u8* base = self + off;
+    int i;
+    for (i = 0; i < 46; i++) {
+        if (id == *(u32*)(base + i * 8)) {
+            return *(void**)(((u8*)self + off) + i * 8 + 4);
+        }
+    }
+    void* r = func_800B708C(slot);
+    if (r) {
+        return r;
+    }
+    return 0;
+}
 
 void __dt__801865C4(){}
 

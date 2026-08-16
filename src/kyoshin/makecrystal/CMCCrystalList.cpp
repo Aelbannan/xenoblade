@@ -182,14 +182,16 @@ extern "C" void __declspec(noinline) func_802233F8(CMCCrystalList* self)
 // The retail call passes only r3 (the index rides in the leftover r4 from
 // the loop's rlwinm, which the callee uses), so the call is made through a
 // 1-arg cast of the 2-arg function.
+#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
 extern "C" void __declspec(noinline) func_80223444(CMCCrystalList* self)
 {
     for (u8 i = 0; i < 8; i++) {
-        if (self->mSlotStates[i] == 1) {
+        if ((s8)self->mSlotStates[i] == 1) {
             ((void (*)(CMCCrystalList*))func_80223614)(self);
         }
     }
 }
+#pragma optimize_for_size off
 
 // func_80223614 (recovered): format the slot icon pane name (fmt @ 0x13E),
 // resolve the pane through the layout root FindPaneByName virtual, and when

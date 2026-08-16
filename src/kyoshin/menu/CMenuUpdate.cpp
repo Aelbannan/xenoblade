@@ -167,9 +167,12 @@ extern "C" void Move__11CMenuUpdateFv(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
     void* taskGame = getInstance__9CTaskGameFv();
     if (func_800426F0__9CTaskGameFv(taskGame)) return;
-    if (func_8006EF04__Fi(0x20)) return;
-    if (!func_8013BE50()) return;
-    if (func_80143F78(self)) return;
+    if (func_8006EF04__Fi(0x20) != 0) {
+        return;
+    } else {
+        if (!func_8013BE50()) return;
+        if (func_80143F78(self)) return;
+    }
 
     switch (obj->mMode) {
     case 0: func_80144070(self); break;
@@ -186,16 +189,20 @@ extern "C" void cbRenderBefore__11CMenuUpdateFv(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
     void* taskGame = getInstance__9CTaskGameFv();
     if (func_800426F0__9CTaskGameFv(taskGame)) return;
-    if (func_8006EF04__Fi(0x20)) return;
-    if (!func_8013BE50()) return;
-    if (func_80143F78(self)) return;
+    if (func_8006EF04__Fi(0x20) != 0) {
+        return;
+    } else {
+        if (!func_8013BE50()) return;
+        if (func_80143F78(self)) return;
+    }
 
-    GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
 
     nw4r::lyt::DrawInfo drawInfo;
     func_80137250__FPQ34nw4r3lyt8DrawInfo(&drawInfo);
     func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(obj->mLayout, &drawInfo, 0, 1);
-    __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo, -1);
+    // No explicit dtor: the implicit member destruction emits the retail's
+    // single __dt__ call (an explicit call would double it).
 }
 
 // Helper accessors

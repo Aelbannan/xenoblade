@@ -91,10 +91,11 @@ extern "C" u32 func_80490038(u8* self) { return *(u32*)((u8*)self + 0x14); }
 // the virtual at vtable+0x2C when it is still invalid (-1).
 u32 func_80490040(CScnRootNw4r* self) {
     u32 result = self->field_0x4B8;
+    u32 out = result;
     if (result == 0xFFFFFFFF) {
-        result = self->vf9();
+        out = self->vf9();
     }
-    return result;
+    return out;
 }
 
 extern "C" void func_80490088(u8* self) { ((void(*)(void*))func_8048FED8)((char*)self - 0xc); }

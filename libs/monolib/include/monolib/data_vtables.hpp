@@ -78,8 +78,6 @@ extern "C" void WorkEvent31__10IWorkEventFv();
 extern "C" void wkUpdate__11CWorkThreadFv();
 extern "C" void wkRender__11CWorkThreadFv();
 extern "C" void wkRenderAfter__11CWorkThreadFv();
-extern "C" void wkStandbyLogin__11CWorkThreadFv();
-extern "C" void wkStandbyLogout__11CWorkThreadFv();
 extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
 
 // CWorkThread-slot overrides referenced by the per-class vtables.
@@ -124,7 +122,7 @@ extern "C" void Tail__8CProcessFv();
 extern "C" void __dt__15CDoubleListNodeFv();
 extern "C" void Reset__15CDoubleListNodeFv();
 extern "C" void __dt__14CChildListNodeFv();
-extern "C" void __dt__10CViewFrameFv(void*, int);
+extern "C" void* __dt__10CViewFrameFv(void*, int);
 
 // IWorkEvent-derived class vtable (0xA0): [rtti, 0, dtor, 32 handlers,
 // wkUpdate, wkRender, wkRenderAfter, wkStandbyLogin, wkStandbyLogout,

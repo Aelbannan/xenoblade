@@ -77,7 +77,7 @@ public:
     virtual void vfunc_0x60();
     virtual void vfunc_0x64();
     virtual void vfunc_0x68();
-    virtual void vfunc_0x6C();
+    virtual void vfunc_0x6C(u32 arg);
     virtual void vfunc_0x70();
     virtual void vfunc_0x74();
     virtual void vfunc_0x78();
@@ -249,7 +249,7 @@ namespace cf {
 
         void* func_800B9A70();
         void func_800B9AB4();
-        void func_800B9B78();
+        void func_800B9B78(u32 arg);
         void func_800B9E3C(unsigned long v);
         void func_800BA610();
         virtual ~CfObjectMap();

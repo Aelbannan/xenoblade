@@ -18,9 +18,9 @@ void* lbl_eu_8056BBA0[4] = {
  * {&lbl_eu_806635E0, 0, &__dt__34TChildListHeader<14CChildListNode>Fv, 0}) —
  * the dtor reloc name cannot be written in C++ source (MWCC rejects '<' in
  * extern "C" ids and &T::~T). MWCC emits the equivalent weak
- * __vt__34TChildListHeader<14CChildListNode> (0xC, .data, dtor reloc correct)
- * in this TU; coordinator must rename that to lbl_eu_8056BBB0 / retarget the
- * dtor slot. Not faked. */
+ * __vt__34TChildListHeader<14CChildListNode> (0xC, .data @+0x10: {0, 0,
+ * &__dt__...Fv}) in this TU; coordinator must rename it to lbl_eu_8056BBB0,
+ * insert the [0] reloc -> lbl_eu_806635E0 and pad to 0x10. Not faked. */
 
 CChildListNode::CChildListNode()
     : mParent(NULL) {

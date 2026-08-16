@@ -13,7 +13,7 @@
 extern const float lbl_eu_806682A8;
 
 extern "C" void func_80138078__FUl(u32 op);
-u32 func_801392B4(u32);
+extern "C" u8 func_801392B4(u32);
 extern "C" void* func_802052A8(CEquipChange* self);
 extern "C" int func_802031A0(CEquipChange* self);
 
@@ -69,18 +69,15 @@ void CEquipChange::func_802023C8() { func_802865A0(&mEquipItemBox); }
 void CEquipChange::func_8020247C() { func_80286650(&mEquipItemBox); }
 
 // Target us-802040c8: is either the sort menu or the sub-page current.
+#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
 int func_802023D0(CEquipChange* self) {
-    int result = 0;
-    if (func_80286650(&self->mEquipItemBox) != 0)
-        result = 1;
-    else if (func_80286698(&self->mEquipItemBox) != 0)
-        result = 1;
-    return result;
+    return (func_80286650(&self->mEquipItemBox) != 0) || (func_80286698(&self->mEquipItemBox) != 0);
 }
+#pragma optimize_for_size off
 
 // Target us-8020405c: read selection at 0xA4 unless the item box confirm op is busy.
 int func_80202364(CEquipChange* self) {
-    if (getItemBoxState((CItemBoxInfo*)((u8*)self + 0xA4)) == 0)
+    if (getItemBoxState__FP12CItemBoxInfo((u8*)self + 0xA4) == 0)
         return 0;
     if (func_8028652C(&self->mEquipItemBox) != 0)
         return self->field_4C;
@@ -595,12 +592,14 @@ int func_80203210(CEquipChange* self) {
 #pragma optimize_for_size off
 
 // Target us-80205624: raw box count, cleared when the current selection is 3.
+#pragma optimize_for_size on  // -O4,s keeps the retail stmw/lmw frame
 int func_8020392C(CEquipChange* self) {
     int result = func_80287EE8(&self->mEquipItemBox);
     if ((u8)func_80203138(self) == 3)
         result = 0;
     return result;
 }
+#pragma optimize_for_size off
 
 void func_801D2E4C(void* self);
 void CEquipChange::func_8020397C() { func_801D2E4C(field_80); }

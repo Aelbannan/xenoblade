@@ -12,6 +12,45 @@
 #include "monolib/work/CMsgParam.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "decomp.h"
+#include "monolib/data_vtables.hpp"
+
+// === Blob monolibdata1/1d dissolve: CViewRoot.cpp owns .rodata 0x80522660-
+// 0x80522678, .sdata 0x806635A8-0x806635B0, .data 0x8056B710-0x8056B7C8,
+// .sbss 0x806655D0-0x806655D8. ===
+// RTTI name strings (.rodata); lbl_eu_8052266C is the create() view name.
+const char lbl_eu_80522660[] = "CViewRoot";
+const char lbl_eu_8052266C[] = "CViewRoot";
+extern u32 lbl_eu_8056B7B0[6];  // class-info, defined below
+// RTTI locator (.sdata, 8): { name, class-info }.
+extern "C" u32 lbl_eu_806635A8[2] = { (u32)&lbl_eu_80522660, (u32)&lbl_eu_8056B7B0 };
+// CViewRoot class-info (.data, 0x18): [RTTI(IWorkEvent), 0, RTTI(CWorkThread),
+// 0, 0, 0].
+u32 lbl_eu_8056B7B0[6] = {
+    (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, 0, 0,
+};
+// CViewRoot vtable (.data, 0xA0).
+u32 lbl_eu_8056B710[0xA0 / 4] = {
+    (u32)&lbl_eu_806635A8, 0, (u32)&__dt__9CViewRootFv,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
+    (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
+    (u32)&wkUpdate__11CWorkThreadFv, (u32)&wkRender__11CWorkThreadFv,
+    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__9CViewRootFv,
+    (u32)&wkStandbyLogout__9CViewRootFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+};
 
 // sbss data owned by this TU (blob monolibdata1d dissolve):
 //   lbl_eu_806655D0 (4 bytes) = current root view pointer

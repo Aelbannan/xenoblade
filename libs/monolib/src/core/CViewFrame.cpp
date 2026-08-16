@@ -66,7 +66,19 @@ int func_80441290__10CViewFrameFi(CViewFrame* self, int r4);
 extern float lbl_eu_8066A2E8; // 0.0
 extern float lbl_eu_8066A2F8; // 0.4
 extern float lbl_eu_8066A2FC; // 0.6
-extern char lbl_eu_8056B700[]; // CViewFrame vtable (0x10-byte data blob)
+
+// Blob monolibdata1/1d dissolve: this TU owns .rodata 0x80522650-
+// 0x80522660, .sdata 0x806635A0-0x806635A8, .data 0x8056B700-0x8056B710.
+#include "monolib/data_vtables.hpp"
+
+// RTTI name string (.rodata).
+const char lbl_eu_80522650[] = "CViewFrame";
+// RTTI locator (.sdata, 8): { name, 0 }.
+extern "C" u32 lbl_eu_806635A0[2] = { (u32)&lbl_eu_80522650, 0 };
+// CViewFrame vtable (.data, 0x10): [RTTI, 0, dtor, 0].
+u32 lbl_eu_8056B700[4] = {
+    (u32)&lbl_eu_806635A0, 0, (u32)&__dt__10CViewFrameFv, 0,
+};
 
 // Render the view frame: compute the visible rectangle (with optional
 // border expansion for menu/target frames), clip to parent, and draw

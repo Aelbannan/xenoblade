@@ -145,6 +145,13 @@ extern u8 lbl_804FC260[];
 
 class CUIWindowManager : public CTTask<CUIWindowManager>, public cf::IFlagEvent{
 public:
+    // Retail instantiates CTTask<CUIWindowManager::CTest> too (34-char
+    // mangling, same bodies as the 26-char one).
+    class CTest : public CTTask<CTest> {
+    public:
+        ~CTest();
+    };
+
     static CUIWindowManager* getInstance();
     static CUIWindowManager* create(CProcess* pParent, CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle);
 

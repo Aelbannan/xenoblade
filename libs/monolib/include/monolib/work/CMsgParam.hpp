@@ -110,15 +110,7 @@ public:
         mFront = (mFront + 1) % mCapacity;
     }
 
-    int find(u32 msg) const{
-        for(int i = 0; i < mSize; i++){
-            if(mArrayPtr[(mFront + i) % mCapacity].command == msg){
-                return i;
-            }
-        }
-
-        return -1;
-    }
+    int find(u32 msg) const;
 
 private:
     //0x0: vtable

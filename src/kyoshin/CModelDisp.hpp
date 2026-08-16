@@ -59,5 +59,5 @@ extern "C" void __construct_array(CModelDispSub* array,
                                   void (*ctor)(CModelDispSub*),
                                   u8* (*dtor)(CModelDispSub*, int),
                                   int size, int count);
-extern "C" void func_801FBEB8(CModelDispSub* sub);
+extern "C" void* func_801FBEB8(CModelDispSub* sub);
 extern "C" u8* __dt__801FBF0C(CModelDispSub* obj, int flag);

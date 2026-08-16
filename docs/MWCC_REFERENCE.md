@@ -10889,6 +10889,49 @@ defined symbols to UNDEF, keeps .text reloc names). Reusable patterns from the
   `repack_after_drop=4` collapsed the 8-byte pad the GC'd stubs left so .text
   lands exactly on the retail budget. CTaskManager (same family) used -RTTI off
   + drop_data_range.
+- **`-ipa file` + `extern "C" __RTTI__*` declarations = MWCC 10322**
+  (monolibdata1/1d blob dissolve, 2026-08). Declaring `extern "C" void*
+  __RTTI__10IWorkEvent;` (the data_vtables.hpp pattern, needed by the manual
+  RTTI base-list tables) makes MWCC abort with `(10322) illegal name
+  overloading` at the end of the TU **under `-ipa file`, in any TU that has a
+  non-novtable virtual class in scope** — trigger headers verified: core.hpp's
+  CPadManager.hpp (`CPadData_UnkStruct2` virtual), device/CDeviceGX.hpp, any
+  single virtual class alone is enough. No declaration form avoids it
+  (scalar/array/struct/function, extern "C" or not, before/after includes,
+  even *defining* the symbol); `__declspec(novtable)` on the TU's own class
+  does NOT help (the base/other headers still trigger). Fix: `-ipa off` on
+  those TUs (CView.cpp, CViewRoot.cpp; CProc/CProcRoot/CDeviceRemotePad have
+  the same pre-existing need). **`-ipa off` then drops unreferenced weak
+  template vtables**, so `#pragma force_active` + `template class X<...>;`
+  explicit instantiation (which keeps them under `-ipa file`) emits nothing;
+  keep the vtables alive with a small `extern "C"` construction function
+  (`reslist<IWorkEvent*> keep; CMsgParam<10> keep2(0); (void)keep; (void)keep2;`)
+  — the inline ctors emit the vtable references, the vtable slots keep the
+  template dtors (retail text functions), and the emitted dtor bodies are
+  byte-size-identical to retail (0xB8/0xB4/0x58).
+- **monolib CTaskManager retail HAS RTTI data — remove the `-RTTI off`
+  extra_cflag.** With `-RTTI off` the compiler emits the CRootProc/CTTask
+  vtables without the RTTI slot-0 reloc (retail slot 0 = reloc to
+  lbl_eu_80663568/70 typeinfos) and emits no typeinfos/class-infos/name
+  strings, so the .data/.sdata/.rodata cannot match. With `-RTTI on` the
+  compiler reproduces the whole retail chain exactly (vtables + __RTTI__
+  typeinfos in .sdata + class-info objects + RTTI name strings, in retail
+  order), and `.text` is byte-identical to the -RTTI off build (verified). The
+  existing UNIT_RULES exact_renames (@8851/@8853 → lbl_eu_80522588/B0,
+  __RTTI__Q226@… → lbl_eu_80663568/70) still apply; add renames for
+  __vt__48CTTask<…> → lbl_eu_8056B580 and the @NNN class-infos →
+  lbl_eu_8056B55C/8056B5A4, and **update the drop_data_range** (the old
+  (”.data", 0x24, 0x48) drop was for the -RTTI off layout; with -RTTI on the
+  CRootProc class-info occupies 0x24-0x48).
+- **Splitter-absorbed pad vs symbol size: `symbol_sizes` for 3-word vtables.**
+  The `_reslist_base<T>` vtable is 3 words (0xC) but symbols.txt sizes it
+  0x10 (splitter absorbed the 8-alignment pad into the symbol). No source
+  lever grows the compiler vtable; patch st_size via the postprocess
+  `symbol_sizes` rule (or fix symbols.txt accounting). Switch jumptables
+  (jumptable_eu_8056B5C0) are function-driven: the compiler emits its own
+  @NNN jumptable whose reloc addends track the switch's case-label offsets, so
+  they only match retail once the owning function is FULL_MATCH (then rename
+  @NNN → jumptable_eu_…).
 - **ahx_ftbl pointer-indirection tables:** retail's AHXTBL_GetFtblInfo loads
   the table POINTER and SIZE from two 4-byte globals (lbl_eu_805620D8/DC in
   criware_data.s) whose initialiser points at the 0x2080 filter table
@@ -11279,3 +11322,76 @@ Layout-cursor setup: `func_80136E84(&mpLayout, mArcResAcc, str); func_80136F08(m
 
 1. **Re-read the retail relocs before trusting a "blocked" source comment.** The stub's comment claimed the call targets were undecompiled (0x8040708C etc.) and the strings were "MetroTRK message fragments" — both WRONG. The actual relocs name `func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc`, `func_80136F08__F...` and `func_80285B70`; the string base is `lbl_eu_8050EFDC` and the offsets (+0x97/+0xAF/+0xCC) point at layout/animation resource names ("mf00_reg00_curs07.brlyt" etc.). Reference the strings as `&lbl_eu_8050EFDC[0x97]` (extern "C" array) so the reloc base+addend match retail; string literals pool at @stringBase with different offsets.
 2. **`#pragma optimize_for_size on` around a function whose retail saves r30-r31 with `stmw r30, 8(sp)`** — the default -O4,p emits two separate `stw r31,12(sp); stw r30,8(sp)` (0x8c vs retail 0x84, 27 structural cascade from the 1-instruction shift). optimize_for_size switches to the stmw/lmw pair → 100.0%, size exact. (Also: virtual slot 36 = vtable+0x24 = 7th declared virtual under -RTTI on — the CItemBoxGrid cast-only-interface pattern; a plain `(*(void***)p)[9]` call emits lwz r5-base instead of lwz r12.)
+
+## kyoshin cf CVision dtor (us-801a4e94) — vptr-store reloc naming + address-split base for guarded member clears (FULL_MATCH)
+
+`__dt__Q22cf7CVisionFv` (0x98): virtual cleanup vt_34(), guarded zeroing of `unk261C4.field_68/field_64`, `__destroy_arr(unk20D4, __dt__801A36D0, sizeof(CVisionSlot), 8)`, delete-if-flags. Three levers:
+
+1. **Witness reloc gate on the dtor vptr store:** the implicit `__vt__Q22cf7CVision` reloc fails the witness's reloc-name gate against retail `lbl_eu_805332D0`. Fix = the COccCulling pattern: `__declspec(novtable)` on the class (its ctor is unmatched so nothing regresses) + explicit `*(void**)this = (void*)lbl_eu_805332D0;` as the first dtor statement. The virtual dispatch still loads the vptr correctly; the store reloc now names the retail label. (Names don't matter for the FULL_MATCH certificate — only for the WITNESS path.)
+2. **`&this->member != NULL` guarded clears must NOT use a named local for the member address.** A local `UnkClass_801A3728* m = &this->unk261C4; if (m) { m->field_64 = 0; ... }` makes MWCC materialize the FULL address (this+0x261C4) into the base register and store at +0x64/+0x68 (displacement 100/104). Retail splits the address: `addis r3,r30,0x2` (base this+0x20000) + `addic. r0,r3,0x61C4` (test the full address into r0), with the stores using the addis BASE + full offsets (`stw r0,0x6228(r3)`). Write the fields INLINE (`this->unk261C4.field_68 = 0;`) — the addis base is then shared by the test and the stores. (Same family as func_800B2E38's `addic.` address null-check.)
+3. **Store order:** retail writes field_68 (+0x622C) BEFORE field_64 (+0x6228) — write them in that order in source (the header comment even says "cleared by dtor" for both).
+
+## kyoshin/menu/CMenuPause dtor — free-function + double-nested guard (FULL_MATCH 100%)
+
+`us-80254030` (0x74). Extends the kyoshin dtor section above: (1) the **member call** `mMemRegion.~UnkClass_8045F564()` makes MWCC emit the implicit member destruction a SECOND time (call appears twice) plus the dtor's implicit vptr re-store — the free-function form (`extern "C" void* __dt__10CMenuPauseFv(void* self, int flags)`) calling sub-object dtors as free functions (`__dt__17UnkClass_8045F564Fv((u8*)self + 100, -1)`, `__dt__8CProcessFv(self, 0)`) emits each exactly once with no vptr store; (2) the **outer `if (self != 0)` WITHOUT the early return** — `if (self == 0) return self;` emits `bne body; b epilogue` (two branches), the outer-if emits the retail's single `beq` to the shared return-this block; (3) the **double-nested `if (self != 0) { if (self != 0) { CProcess } }`** reproduces the retail's duplicate dead `beq` (D2-inlined-into-D1 artifact); (4) `if (flags > 0) __dl__FPv(self)` + trailing `return self`.
+
+## agent-compiles session (2026-08): reloc-driven semantics, dead-capture shapes, and volatile reloads
+
+Batch of small-function FULL_MATCHes across kyoshin/monolib with reusable levers:
+
+- **Read the relocs before trusting the disassembly (CtrlAct func_800D59FC, us-800d64e4).** The apparent `lfs f0, 0(r0)` pointer-deref of a u16 was actually an R_PPC_EMB_SDA21 load of the GLOBAL `lbl_eu_80666CFC` (linked `lfs f0, 0x925C(r2)` = 1.0f in .sdata2). The source's `*(f32*)(uintptr_t)temp` "worked" structurally but was semantically wrong and stuck at reg-swaps; `f32 v = lbl_eu_80666CFC;` matched byte-for-byte. Always check `--relocs` for SDA21/ADDR16 relocs when a "deref" looks odd.
+- **`bool cond = a > b; if (cond)` keeps MWCC's dead `mfcr`/`rlwinm` capture (CActParamAnimGame func_8005D67C).** The inline `if (a > b)` let MWCC eliminate the fcmpo-result capture entirely (0x3C vs retail 0x44); the explicit bool local reproduces retail's dead `mfcr r0; rlwinm r0,r0,2,31,31` + direct-cr0 branch.
+- **`volatile` re-read forces a retail second load (CActParamAnimGame func_8005D728; CItem func_80156ED4).** For read-modify-write (`flags &= ~bit`), MWCC reuses the earlier load; retail reloads. `field = *(volatile u32*)&field & ~mask;` reproduces the reload byte-for-byte.
+- **Declaring the loop-next local before the induction variable flips MWCC's cur/next colors (code_800B06A4 func_800B99EC).** List-unlink walk: `u32 next; u32 cur = ...; while (cur != sentinel) { next = *(u32*)cur; ... cur = next; }` gives retail's cur→r8/next→r7; declaring next after cur swaps them.
+- **`__declspec(noinline)` on a ctor keeps placement-new a call (CDeviceFontInfoRom::create).** With `-ipa file`, MWCC folded the ~0x190 ctor into create()'s placement-new (0xD4 vs retail 0x3C); noinline on the ctor definition restores the retail `bl __ct__` and the whole function matches (ctor itself stays byte-identical).
+- **A `virtual` dtor inserts a compiler vptr at +0, shifting every explicit member by 4 and generating a `__vt__` (CKizunagram CKizunaCur ctor).** Retail stored the manual `lbl_eu_805375FC` label at +0 with no vptr — removing `virtual` matched the ctor AND the deleting-dtor wrapper byte-for-byte.
+- **Registry symbol collisions from name-prefix siblings:** `__dt___unnamed_..._CTagCodeSelect` is a substring of `...CTagCodeSelect2__FPvi`, making the equivalence-check's candidate resolution ambiguous. Update the target's `symbol` in targets.json to the mangled name (`...__FPvi`) — the exact-match path then disambiguates.
+- **Two-u32 pair split beats u64 copy for a 2+1-word store (code_804C8684 func_804C8690):** `u32 lo = *(const u32*)src; u32 hi = *(const u32*)((const char*)src + 4); ... *(u32*)(dst+4) = hi; *(u32*)dst = lo;` gives retail's lo→r3/hi→r0 coloring where the u64 form rotates.
+
+## kyoshin CfObjectMap func_800B9B78 (us-800ba494) — fake-Fv signature + cntlzw boolean + RLWINM wrap mask (FULL_MATCH)
+
+`func_800B9B78__Q22cf11CfObjectMapFv` (0x9C): model-subobject flag select. The retail symbol mangles **Fv** but the body reads r4 as a genuine input (used 3x: `func_804838DC(mSub98, arg)` flag, the `field_100 |= 4 / &= ~2` select, and the vfn6C boolean). Three levers:
+
+1. **Fake-Fv definition (MWCC_REFERENCE §fake-Fv):** declaring the method with a `u32` param mangles `FUl` — hexdiff still shows 100% (address fallback) but `cycle`'s certifier fails (0 candidates). Fix: define it as `extern "C" void func_800B9B78__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, u32 arg) { ... }` — the explicit C-linkage name is unaffected by the header signature, so the object emits the retail Fv symbol and the certifier resolves it. (The header may keep the arg-taking member declaration for documentation.)
+2. **`cntlzw r0, rX; rlwinm rD, r0, 27, 5, 31` is MWCC's `(x == 0)` boolean** when the value is passed as an int arg — only cntlzw==32 (x==0) survives the rotate+mask to 1. Write `vfn6C(arg == 0)` with the vtable slot declared `virtual void vfunc_0x6C(u32 arg)` (the header had a no-arg stub — retail passes r4).
+3. **`u32 field &= ~2` canonicalizes to the ~3 mask (rlwinm 31,29)** in MWCC — the retail keeps the ~2 wrap (rlwinm 30,28). Use the approved `DECOMP_PPC_RLWINM(field, 0, 30, 28)` (PLAN.md §17.6, log `policy_exception: true`).
+
+## kyoshin/CCur func_801D2E4C — optimize_for_size must precede the signature (FULL_MATCH 100%)
+
+`us-801d4898` (0x8c). The body was already byte-identical; only the 3-saved-register frame (stmw r29 vs three separate stw saves) differed. `#pragma optimize_for_size on` placed INSIDE the body (after the signature `{`) had NO effect on the prologue; placed BEFORE the function signature it merges the frame into `stmw r29,20(sp)`/`lmw` — 100%. (NB: for C++ member dtors the pragma inside the body DOES work — see the CEquipItemBox dtor entry; for extern-C free functions place it before the signature.)
+
+## kyoshin/CEquipItemBox dtor — noinline beats the constant-fold elision (FULL_MATCH 100%)
+
+`us-80288590` (0x9c). Two levers: (1) a plain C++ `__dt__80285C44` helper whose body is `if (self && mode > 0) __dl__FPv(self)` was being -ipa-inlined at the dtor's `__dt__80285C44(&pagecur[0], -1)` call site and **constant-folded to nothing** (mode -1 → the body dead → the whole call elided, dtor 0x98 with 6 sub-calls). `extern "C" __declspec(noinline)` keeps the retail `bl` (7 sub-calls). (2) `#pragma optimize_for_size` inside the member dtor merges the 2-register frame to stmw/lmw.
+
+## -O4,s keeps base+offset induction; index-declared-first flips the colors (CTagProcessor func_80125AB8/25B08, FULL_MATCH)
+
+Table-walk dispatch loops (`for (u32 o = 0; ; o += 12) { TagEntry* e = (const u8*)tbl + o; ... }`) get strength-reduced by `-O4,p` into a walked pointer (`addi rX,rX,0xC`), but the retail keeps the base+offset form (`lis rB; li rI,0; add rE,rB,rI; addi rI,rI,0xC`). `#pragma optimize_for_size on` (-O4,s) reproduces the retail induction byte-for-byte. Remaining base↔index register swap: declare the byte index FIRST (`u32 o = 0; const u8* base = ...; for (;; o += 12)`), before the base local, to get retail's base→r7 / index→r6 (declaring base first swaps them).
+
+## goto-gate places a multi-call body at the end (CfRes func_80062600)
+
+`if (A() == 0 && B() == 0) { 4-call pipeline }` inline makes Wii/1.1 fall through into the pipeline with a jump-on-false skip (bne); the retail jumps to the body (`beq pipeline / b skip`) with the pipeline as a trailing block. `if (cond) goto run; return; run: pipeline;` reproduces the retail layout exactly (approved goto-gate pattern). Same class as the CfCamEvent_1 "result blocks at the end" wall.
+
+## agent-compiles 2026-08-16 session 2: reusable shapes (FULL_MATCH batch)
+
+- **`(0 - x) == 0` keeps MWCC's neg+cntlzw capture** (CfRes func_800640F4): the retail's
+  `neg r0,r0; cntlzw r0,r0; rlwinm 27,5,31` (the s32-==-0 bool) only reproduces with the
+  EXPLICIT `0 - x` negation — `x == 0`, `!x`, and `(s32)x == 0` all fold to the bare
+  cntlzw. Write `(0 - *(u32*)...) == 0`.
+- **fp-cast calls reproduce the retail's argc** when a symbol has a different declared
+  signature: `((char* (*)(void*, const char*, u16))func_8013639C)(...)` — MWCC emits the
+  direct `bl` with the plain reloc and exactly the args the cast dictates (2-arg vs 4-arg
+  func_80137924, 2-arg vs 3-arg func_8009D018). C-linkage overloads are illegal, so the
+  cast is the only way to vary argc at one symbol.
+- **Double null-check** (`if (o) { if (o) fn(o, 1); ... }`) reproduces the retail's two
+  `beq`'s to different targets (CMenuArtsSet func_8022FD9C, CTitle func_802B64DC): the
+  first beq skips both the call and the clear; the second jumps to the clear only. A single
+  `if (o)` collapses them.
+- **Named SDA2 constants keep lfs relocs pinned in sinits** (code_804A6C60 sinit_804B2524):
+  `lbl_eu_8066AE88` instead of `0.0f` avoids the anonymous `@9552` literal reloc.
+- **Phantom first params place the real object in the retail's register** when the retail
+  reads the object from r4 (2-arg convention with the first arg unused): func_801B218C,
+  func_80065D0C, func_80128AB8.
+- **Dead reads as call args**: the retail's "unused" loads (func_80208760's m10 and m8->m10)
+  are the LAST TWO ARGS of the call — MWCC drops standalone dead/volatile reads, so route
+  them through the call itself.

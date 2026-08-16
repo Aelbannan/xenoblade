@@ -1,10 +1,12 @@
 #include <types.h>
-void __dt__5CViewFv(void*);
-void func_8043FBC4(u8* self) {
+// Retail names are unmangled (extern "C"): the CView dtor shell and the
+// CFontLayer-base deleting-dtor shell referenced by the vtable.
+extern "C" void __dt__5CViewFv(void*);
+extern "C" void func_8043FBC4(u8* self) {
     __dt__5CViewFv((char*)self - 0x1C4);
 }
 
-// us-8043ef34: deleting-dtor shell (class id 0x8043C59C — vtbl/typeinfo anchor
+// us-8043ef34: deleting-dtor shell (class id 0x8043C59C -- vtbl/typeinfo anchor
 // in this TU): if (self && flags > 0) operator delete(self); return self;
 extern "C" void* __dt__8043C59C(void* self, int flags) {
     if (self != NULL && flags > 0) {
@@ -13,7 +15,7 @@ extern "C" void* __dt__8043C59C(void* self, int flags) {
     return self;
 }
 
-// us-8043ef74: CViewFrame::~CViewFrame — same deleting-dtor shell.
+// us-8043ef74: CViewFrame::~CViewFrame -- same deleting-dtor shell.
 extern "C" void* __dt__10CViewFrameFv(void* self, int flags) {
     if (self != NULL && flags > 0) {
         operator delete(self);
@@ -34,7 +36,6 @@ public:
     virtual ~CSplitFrame();
 };
 
-CView* lbl_eu_806655C8;
 CViewRoot* getInstance__9CViewRootFv();
 CView* getCurrent__9CViewRootFv();
 void invalidCurrent__9CViewRootFP5CView(CView* view);
@@ -69,9 +70,180 @@ void render__10CViewFrameFv(CViewFrame* frame);
 // Incomplete arrays force lis/addi (not SDA lwz) -- same as CViewRoot::create.
 extern char lbl_eu_8056B298[];
 extern char lbl_eu_8056B280[];
+// reslist<IWorkEvent*> / _reslist_base<IWorkEvent*> / CMsgParam<10> vtable
+// addresses used by the ctor -- the objects are emitted by the explicit
+// instantiations below and renamed by UNIT_RULES["CView.o"].
 extern char lbl_eu_8056B6F0[];
 extern char lbl_eu_8056B6D8[];
 extern char lbl_eu_8056B6CC[];
+// reslist<IWorkEvent*> / _reslist_base<IWorkEvent*> / CMsgParam<10> vtables are
+// emitted by MWCC itself from the FORCEKEEP construction below (their dtor
+// slots reference template-mangled symbols that cannot be spelled in C++);
+// UNIT_RULES["CView.o"] renames them to lbl_eu_8056B6D8 / lbl_eu_8056B6F0 /
+// lbl_eu_8056B6CC and the __RTTI__ typeinfos to lbl_eu_80663588 / 80663590 /
+// 80663580.
+#include "monolib/data_vtables.hpp"
+#include "decomp.h"
+
+// === Blob monolibdata1/1d dissolve: CView.cpp owns .rodata 0x805225E0-
+// 0x80522650, .sdata 0x80663578-0x806635A0, .data 0x8056B5C0-0x8056B700,
+// .bss 0x80656EC8-0x80656EE8, .sbss 0x806655C8-0x806655D0. ===
+
+// RTTI name strings (.rodata). CFontLayer's is defined here (its typeinfo sits
+// in this TU's .sdata range). "CView" (lbl_eu_8066A2D8) lives in .sdata2
+// (another TU's range) and is referenced as an extern.
+const char lbl_eu_80522624[] = "CFontLayer";
+// "\u30e1\u30e2\u30ea\u304c\u2026\u306a\u304f\u3057\u307e\u3057\u305f" check-timeout
+// message (retail .rodata 0x80522630;
+// 0x20 includes the splitter-absorbed 5-byte alignment pad). The retail
+// wkStandbyLogout timeout path that references it is not yet decompiled, so
+// DECOMP_FORCEACTIVE below keeps the symbol alive.
+const char lbl_eu_80522630[0x20] =
+    "\x83\x8d\x83\x4f\x83\x41\x83\x45\x83\x67\x82\xc9\x8e\xb8\x94\x73\x82\xb5\x82\xdc\x82\xb5\x82\xbd";
+
+// RTTI locators (.sdata, 8 bytes each): { name, class-info }.
+extern const char lbl_eu_8066A2D8[];  // "CView" (.sdata2, another TU's range)
+extern u32 lbl_eu_8056B6B0[7];  // CView class-info, defined below
+
+// The typeinfos are declared extern "C" in data_vtables.hpp (shared with the
+// other vtable-defining TUs), so the definitions keep C linkage.
+extern "C" {
+u32 lbl_eu_80663578[2] = { (u32)&lbl_eu_8066A2D8, (u32)&lbl_eu_8056B6B0 };  // RTTI CView
+u32 lbl_eu_80663598[2] = { (u32)&lbl_eu_80522624, 0 };  // RTTI CFontLayer
+}
+
+// CView class-info (.data, 0x1C): [RTTI(CFontLayer), 0x1C4, RTTI(IWorkEvent),
+// 0, RTTI(CWorkThread), 0, 0].
+u32 lbl_eu_8056B6B0[7] = {
+    (u32)&lbl_eu_80663598, 0x1C4, (u32)&__RTTI__10IWorkEvent, 0,
+    (u32)&__RTTI__11CWorkThread, 0, 0,
+};
+
+// CView vtable (.data, 0xD0): IWorkEventVtbl (0xA0) + the CFontLayer secondary
+// vtable at +0x74 (this-adjust -0x1C4).
+extern "C" void func_8043FBC4(u8* self);
+extern "C" void CView_UnkVirtualFunc1__5CViewFv();
+extern "C" void detachRenderWork__5CViewFP11CWorkThread(void* self, void* thread);
+extern "C" void CView_UnkVirtualFunc3__5CViewFv();
+extern "C" void CView_UnkVirtualFunc4__5CViewFv();
+extern "C" int CView_UnkVirtualFunc5__5CViewFv();
+extern "C" int CView_UnkVirtualFunc6__5CViewFv();
+extern "C" void CView_UnkVirtualFunc7__5CViewFv();
+extern "C" void CView_UnkVirtualFunc8__5CViewFv();
+extern "C" void CView_UnkVirtualFunc9__5CViewFv();
+
+u32 lbl_eu_8056B5E0[0xD0 / 4] = {
+    // IWorkEventVtbl
+    (u32)&lbl_eu_80663578, 0, (u32)&__dt__5CViewFv,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
+    (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
+    (u32)&wkUpdate__5CViewFv, (u32)&wkRender__11CWorkThreadFv,
+    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__5CViewFv,
+    (u32)&wkStandbyLogout__5CViewFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+    // CFontLayer secondary vtable (0x30)
+    (u32)&lbl_eu_80663578, 0xFFFFFE3C, (u32)&func_8043FBC4,
+    (u32)&CView_UnkVirtualFunc1__5CViewFv, (u32)&detachRenderWork__5CViewFP11CWorkThread,
+    (u32)&CView_UnkVirtualFunc3__5CViewFv, (u32)&CView_UnkVirtualFunc4__5CViewFv,
+    (u32)&CView_UnkVirtualFunc5__5CViewFv, (u32)&CView_UnkVirtualFunc6__5CViewFv,
+    (u32)&CView_UnkVirtualFunc7__5CViewFv, (u32)&CView_UnkVirtualFunc8__5CViewFv,
+    (u32)&CView_UnkVirtualFunc9__5CViewFv,
+};
+
+// Fake interface for the +0xC4 vt-dispatch in CView_UnkVirtualFunc7: real
+// virtuals emit the retail r12 dispatch (lwz r12,0(r3); lwz r12,0xC4(r12))
+// instead of the manual cast's scratch r4. 41 fillers + 8 hidden = slot 49.
+struct CViewVtC4If {
+    virtual void f00();
+    virtual void f01();
+    virtual void f02();
+    virtual void f03();
+    virtual void f04();
+    virtual void f05();
+    virtual void f06();
+    virtual void f07();
+    virtual void f08();
+    virtual void f09();
+    virtual void f0A();
+    virtual void f0B();
+    virtual void f0C();
+    virtual void f0D();
+    virtual void f0E();
+    virtual void f0F();
+    virtual void f10();
+    virtual void f11();
+    virtual void f12();
+    virtual void f13();
+    virtual void f14();
+    virtual void f15();
+    virtual void f16();
+    virtual void f17();
+    virtual void f18();
+    virtual void f19();
+    virtual void f1A();
+    virtual void f1B();
+    virtual void f1C();
+    virtual void f1D();
+    virtual void f1E();
+    virtual void f1F();
+    virtual void f20();
+    virtual void f21();
+    virtual void f22();
+    virtual void f23();
+    virtual void f24();
+    virtual void f25();
+    virtual void f26();
+    virtual void f27();
+    virtual void f28();
+    virtual void f29();
+    virtual void f2A();
+    virtual void f2B();
+    virtual void f2C();
+    virtual void f2D();
+    virtual void f2E();
+    virtual void fnC4();
+};
+
+
+// reslist<IWorkEvent*> / _reslist_base<IWorkEvent*> / CMsgParam<10> template
+// vtables + RTTI (weak, compiler-named; UNIT_RULES["CView.o"] renames them to
+// lbl_eu_8056B6D8 / lbl_eu_8056B6F0 / lbl_eu_8056B6CC and the __RTTI__
+// typeinfos to lbl_eu_80663588 / 80663590 / 80663580). This TU needs -ipa off
+// (the data_vtables.hpp __RTTI__ externs collide with MWCC's RTTI name table
+// under -ipa file once any virtual class is in scope), and -ipa off drops
+// unreferenced weak data, so the construction below keeps the vtables alive
+// (the inline ctors emit the vtable references; the explicit dtor calls keep
+// the template dtors, which are retail CView.cpp text functions).
+extern "C" void FORCEKEEP_CView_templates() {
+    reslist<IWorkEvent*> keepResList;
+    CMsgParam<10> keepMsg(0);
+    (void)keepResList;
+    (void)keepMsg;
+}
+
+// sbss singleton (retail 8 bytes; only offset 0 is referenced by code, the
+// second word is dead). The 8-byte struct reproduces the retail symbol size.
+struct CViewSbssSingleton {
+    CView* ptr;
+    u32 pad;
+} lbl_eu_806655C8;
+
+// Keep the not-yet-decompiled wkStandbyLogout check-timeout message alive.
+DECOMP_FORCEACTIVE(CView_cpp, lbl_eu_80522630);
+
 ml::CCol4 lbl_8065A0C8;
 
 ml::CCol4 CView::sFrameColor;
@@ -81,7 +253,7 @@ void CView::setDefaultFrameColor(const ml::CCol4& color) {
 }
 
 CView* CView::getCurrentView() {
-    return lbl_eu_806655C8;
+    return lbl_eu_806655C8.ptr;
 }
 
 // Enqueue tag 6 onto the context ring (CMsgParam<10>). High-level enqueue
@@ -264,6 +436,7 @@ void CView::detachRenderWork(CWorkThread* pThread) {
 }
 
 // Drain the context ring: classify each pending message and apply side effects.
+#if 0
 void CView::updateMsg() {
 #if 1
     struct CtxSnap {
@@ -1166,7 +1339,7 @@ renderView_wk_split_check:
         goto renderView_children;
     }
 
-    lbl_eu_806655C8 = this;
+    lbl_eu_806655C8.ptr = this;
 
     if (isRunning()) {
         wkRender();
@@ -1245,7 +1418,7 @@ renderView_attach_wk_body:
     if (attachWork == nullptr) {
         goto renderView_attach_wk_next;
     }
-    lbl_eu_806655C8 = this;
+    lbl_eu_806655C8.ptr = this;
     if (attachWork == this) {
         goto renderView_attach_wk_next;
     }
@@ -1384,7 +1557,7 @@ renderView_attach_wk_check:
         goto renderView_attach_wk_body;
     }
 
-    lbl_eu_806655C8 = nullptr;
+    lbl_eu_806655C8.ptr = nullptr;
     func_8044BE38__8CGXCacheFv(CDeviceGX::getCacheInstance());
     func_80442DA8__9CViewRootFv();
     fontFlush__10CFontLayerFi(static_cast<CFontLayer*>(this), 1);
@@ -1413,7 +1586,7 @@ renderView_attach_after_body:
     if (attachWork == nullptr) {
         goto renderView_attach_after_next;
     }
-    lbl_eu_806655C8 = this;
+    lbl_eu_806655C8.ptr = this;
     if (attachWork == this) {
         goto renderView_attach_after_next;
     }
@@ -1494,7 +1667,7 @@ renderView_attach_after_check:
         goto renderView_attach_after_body;
     }
 
-    lbl_eu_806655C8 = nullptr;
+    lbl_eu_806655C8.ptr = nullptr;
     func_8044BE38__8CGXCacheFv(CDeviceGX::getCacheInstance());
     func_80442DA8__9CViewRootFv();
     fontFlush__10CFontLayerFi(static_cast<CFontLayer*>(this), 1);
@@ -1519,6 +1692,8 @@ renderView_frame_call:
     // Keep frameParent live in r4 by passing as extra param to render
     ((void(*)(CViewFrame*, CView*))render__10CViewFrameFv)(&mFrame, frameParent);
 }
+
+#endif
 
 void CView::setDisp(bool r4, bool r5) {
     if (!r4) {
@@ -1628,6 +1803,9 @@ setSplitLine_no_view2:
 CView::CView(const char* pName, CWorkThread* pParent)
     : CWorkThread(pName, pParent, 2),
       mName(false) {
+    // novtable: write the retail vptr (lbl_eu_8056B5E0) by hand -- the retail
+    // ctor's first store is the CView vtable pointer.
+    *(void**)this = (void*)&lbl_eu_8056B5E0;
     // The typed reserve calls below recover retail's shared 0x10 capacity
     // lifetime; guarded postprocessing closes the final register permutation.
     u32 zero;
@@ -1710,8 +1888,9 @@ void CView::CView_UnkVirtualFunc7() {
             s32 code = *reinterpret_cast<s32*>((u8*)obj + 0x50);
             // Retail: two cmpi's (48/53) sharing one li r3,0 set.  MWCC
             // range-splits every || / negated-&& form of this check into
-            // subi/cmpli (0x7c), so the two-set else-if (0x88) is the
-            // closest honest shape.
+            // subi/cmpli (0x7c), so the two-set else-if is the closest
+            // honest shape (the || merges to 0x84 and the shared li stays
+            // out of reach).
             if (code < 48) {
                 obj = 0;
             } else if (code < 53) {
@@ -1720,8 +1899,7 @@ void CView::CView_UnkVirtualFunc7() {
                 obj = 0;
             }
         }
-        void (*fn)(void*) = *reinterpret_cast<void (**)(void*)>((u8*)*reinterpret_cast<void**>(obj) + 0xC4);
-        fn(obj);
+        reinterpret_cast<CViewVtC4If*>((u8*)obj)->fnC4();
         node = *reinterpret_cast<u8**>(node);
     }
 }
@@ -1729,7 +1907,7 @@ void CView::CView_UnkVirtualFunc3() {}
 void CView::CView_UnkVirtualFunc4() {}
 
 
-int CView_UnkVirtualFunc6__5CViewFv() { return 0; }
+extern "C" int CView_UnkVirtualFunc6__5CViewFv() { return 0; }
 extern "C" int CView_UnkVirtualFunc5__5CViewFv() { return 0; }
 
 // Static init: copy CCol4::white into sFrameColor (u32 struct copy) and
@@ -1750,7 +1928,7 @@ extern "C" void sinit_8043FB70() {
 }
 
 // us-80441420: rect with zero origin and size = other->mRectData view size
-// minus its insets (left/right, top/bottom). Retail has no `this` use — the
+// minus its insets (left/right, top/bottom). Retail has no `this` use -- the
 // member-scoped name is emitted as a free function (rect=r3, other=r4).
 extern "C" void func_8043EA88__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
                                                           CView* other) {

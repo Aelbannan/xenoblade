@@ -331,16 +331,29 @@ char* func_80296FC0(CMCItemBoxSub* sub, u16 index) {
 
 CMCGetItemBox::CMCGetItemBox() {}
 
-CMCGetItemBox::~CMCGetItemBox() {
-    __dt__12CItemBoxInfoFv((CItemBoxInfo*)this->itemBox, -1);
-    __dt__7CSysWinFv(&this->sysWin_B8, -1);
-    __dt__6CCur18Fv(&this->subObj_A0, -1);
-    __dt__6CCur16Fv(&this->subObj_88, -1);
-    __dt__6CCur09Fv(&this->subObj_70, -1);
-    __dt__6CCur07Fv(&this->subObj_58, -1);
-    __dt__17UnkClass_8045F564Fv(&this->memRegion2, -1);
-    __dt__17UnkClass_8045F564Fv(&this->memRegion1, -1);
+// Free-function dtor form: the member dtor's implicit vptr re-store (lis/addi/stw
+// of __vt__13CMCGetItemBox) is not in the retail; the extern-C form skips it.
+// The retail frame is stmw r30 (pragma below) with the outer this-guard,
+// member dtors at retail offsets, and the flags>0 delete tail.
+#pragma push
+#pragma optimize_for_size on
+extern "C" void* __dt__13CMCGetItemBoxFv(CMCGetItemBox* this_, int flags) {
+    if (this_ != NULL) {
+        __dt__12CItemBoxInfoFv((CItemBoxInfo*)this_->itemBox, -1);
+        __dt__7CSysWinFv(&this_->sysWin_B8, -1);
+        __dt__6CCur18Fv(&this_->subObj_A0, -1);
+        __dt__6CCur16Fv(&this_->subObj_88, -1);
+        __dt__6CCur09Fv(&this_->subObj_70, -1);
+        __dt__6CCur07Fv(&this_->subObj_58, -1);
+        __dt__17UnkClass_8045F564Fv(&this_->memRegion2, -1);
+        __dt__17UnkClass_8045F564Fv(&this_->memRegion1, -1);
+        if (flags > 0) {
+            __dl__FPv(this_);
+        }
+    }
+    return this_;
 }
+#pragma pop
 
 // Load the four item-box resource files into the file-handle members, init
 // the item-box info (0xF4) and dispatch the sys-win initialiser (vtable+0x88).
@@ -678,15 +691,18 @@ u32 func_80298540(CMCGetItemBox* self) {
 }
 
 // Visit every item-box entry and hand it to the C-linkage cleanup helper.
+#pragma optimize_for_size on  // -O4,s keeps the retail stmw frame + head-jump loop
 void func_802985B4(CMCGetItemBox* self) {
     CMCItemBoxSub* x = &self->sub_314;
     for (u32 i = 0; (u32)(u16)i < x->count; i++) {
         func_801599D4(func_80296DB0(x, (u16)i), 0);
     }
 }
+#pragma optimize_for_size off
 
 // Look up the entry at `index` in the offset table and return its pointer.
-CMCItemBoxEntry* func_80296DB0(CMCItemBoxSub* x, u32 index) {
+// noinline: retail keeps the loop's bl to this symbol.
+extern "C" __declspec(noinline) CMCItemBoxEntry* func_80296DB0(CMCItemBoxSub* x, u32 index) {
     CMCItemBoxEntry* base = x->listBase;
     if (base == 0) return 0;
     u32 idx = (u16)(index + (s8)x->counter * 30);

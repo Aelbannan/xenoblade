@@ -433,6 +433,7 @@ extern "C" __declspec(noinline) void* __ct__CCur19(CBaseCur* _this, void* access
 
 // CCur19 destructor: tear down the CBaseCur base, then free the object only
 // when the delete flag is positive (standard MWCC member-destructor shape).
+#pragma optimize_for_size on  // -O4,s: retail stmw r30 frame
 extern "C" void* __dt__8029BF18(void* _this, int flags) {
     if (_this) {
         __dt__8CBaseCurFv(_this, 0);
@@ -442,6 +443,7 @@ extern "C" void* __dt__8029BF18(void* _this, int flags) {
     }
     return _this;
 }
+#pragma optimize_for_size off
 
 // COption constructor (retail C-linkage symbol __ct__COption; MWCC leaves
 // __-prefixed global functions unmangled). Stores the vtable, constructs the
@@ -868,7 +870,7 @@ extern "C" void __declspec(noinline) func_8029E144(COption* self) {
 }
 
 // Configure the +0x1C sub-object animation state using the +0x24 transform.
-extern "C" void func_8029E1CC(COption* self) {
+extern "C" __declspec(noinline) void func_8029E1CC(COption* self) {  // noinline: -ipa would fold this into func_8029D0C0/D10C call sites (retail keeps bl)
     self->mSubObj->v7();
     self->mSubObj->v5(self->mAnimTransform24);
     self->mSubObj->v9(self->mAnimTransform24, 1);

@@ -16,7 +16,7 @@ cf::CfObjectModel::CfObjectModel() {}
 // (pure-virtual override) still resolves to this symbol.
 int CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
     self->CfObject_UnkVirtualFunc8();  // vtable +0x70
-    self->mFlags68 |= 0x40000000;
+    self->mFlags68 |= 0x00400000;
     return 1;
 }
 

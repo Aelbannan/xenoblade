@@ -364,7 +364,10 @@ void SetGlbSettings__Q34nw4r3g3d7ScnRootFv(){}
 
 void CalcAnmScn__Q34nw4r3g3d7ScnRootFv(){}
 
-void CalcWorld__Q34nw4r3g3d7ScnRootFv(){}
+void CalcWorld__Q34nw4r3g3d7ScnRootFv(ScnRoot* self) {
+    self->CalcAnmScn();
+    self->G3dProc(nw4r::g3d::G3dObj::G3DPROC_CALC_WORLD, 0, 0);
+}
 
 namespace {
 

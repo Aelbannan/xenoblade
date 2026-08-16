@@ -6,6 +6,11 @@
 // wkStandby lands first in .data, matching the retail symbol order); forward
 // declared here for the ctor/dtor vptr stores.
 extern IWorkEventVtbl lbl_eu_8056B110;
+// CWorkThread's own virtuals referenced by the manual vtable (declared here,
+// not in data_vtables.hpp: that header is included by TUs that also include
+// device.hpp/CDeviceBase.hpp, where these would collide with the members).
+extern "C" void wkStandbyLogin__11CWorkThreadFv();
+extern "C" void wkStandbyLogout__11CWorkThreadFv();
 
 // CDeviceClock methods referenced by this TU, declared by retail mangled name
 // instead of including monolib/device.hpp: device.hpp pulls in CDeviceBase.hpp

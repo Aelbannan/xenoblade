@@ -363,12 +363,13 @@ void func_800625A0(void* self, int arg2) {
 extern "C" int CfRes_checkFlags_48000();
 extern "C" int CfRes_checkFlags_2000400();
 void func_80062600() {
-    if (CfRes_checkFlags_48000() == 0 && CfRes_checkFlags_2000400() == 0) {
-        func_800A9068();
-        CfRes_callFunc_67E78();
-        func_800620F0();
-        func_800A9134();
-    }
+    if (CfRes_checkFlags_48000() == 0 && CfRes_checkFlags_2000400() == 0) goto run;
+    return;
+run:
+    func_800A9068();
+    CfRes_callFunc_67E78();
+    func_800620F0();
+    func_800A9134();
 }
 
 extern u32 lbl_eu_80663E24;
@@ -506,7 +507,16 @@ int func_80062A00() {
     return 1;
 }
 
-void func_80062A84(){}
+// Resolve the local resource index: when the global instance is present,
+// call the +0x140 table lookup with the instance and self.
+extern "C" int func_800640F4(int, void*);
+extern "C" int func_80062A84(void* self) {
+    int r = -1;
+    if (CfRes_getInstance()) {
+        r = func_800640F4(CfRes_getInstance(), self);
+    }
+    return r;
+}
 
 // func_80062AD8: forward (a, b) into the manager's resource resolver
 // (func_800641CC) when the CfRes manager exists; 0 otherwise.
@@ -570,11 +580,18 @@ extern "C" void CfRes_readCommonArchive(unsigned long a, const char* b, void* c)
 // Retail symbol is a resource-table accessor (see CfResPcImpl.hpp); the
 // catalog stub keeps the call relocs resolvable until its own target is
 // worked. noinline keeps callers (func_80062A00) from inlining the body.
-extern "C" __declspec(noinline) CfResPcEntry28View* func_80062C28(int id, int a) { return 0; }
+extern "C" CfResPcEntry28View* func_80062C80(char*, int, int);
+extern "C" __declspec(noinline) CfResPcEntry28View* func_80062C28(int id, int a) {
+    if (!CfRes_getInstance())
+        goto ret0;
+    return func_80062C80((char*)CfRes_getInstance(), id, a);
+ret0:
+    return 0;
+}
 
 // retail: addi r3,r3,4; b getEntryPtrGrid (3-arg tail call)
-extern "C" char* func_80062C80(char* self, int a, int b) {
-    return getEntryPtrGrid(self + 4, a, b);
+extern "C" __declspec(noinline) CfResPcEntry28View* func_80062C80(char* self, int a, int b) {
+    return (CfResPcEntry28View*)getEntryPtrGrid(self + 4, a, b);
 }
 
 // func_80062C88: return the manager's array-elem-12 slot if the manager exists
@@ -1255,7 +1272,14 @@ extern "C" int __declspec(noinline) func_80064014(CfRes* self, CEventFile* evt, 
     return 0;
 }
 
-void func_800640F4(){}
+extern "C" void* func_80063FA8(int, void*, int, int, int, int);
+extern "C" int func_800640F4(int a, void* b) {
+    int result = -1;
+    void* r = func_80063FA8(a, b, 0, 130, 1, 0);
+    if (r)
+        result = (0 - *(u32*)((u8*)r + 40)) == 0;
+    return result;
+}
 
 // func_8006414C: true when the packed resource tag has the marker shape
 // (field-27 bits == 8 and both low index fields zero).
@@ -2105,7 +2129,20 @@ int func_80065D00() { return func_800A813C(); }
 int func_80065D04() { return func_800A7EFC(); }
 int func_80065D08() { return func_800A7EFC(); }
 
-void func_80065D0C(){}
+// Bit-4/bit-3/bit-6 mask gates on the +0 flags, then the +4 pointer check;
+// returns 1 only when all pass.
+extern "C" int func_80065D0C(void* a1, void* self) {
+    u32 flags = *(u32*)((u8*)self + 0);
+    if (flags & 0x10)
+        return 0;
+    if (flags & 0x8)
+        return 0;
+    if (flags & 0x40)
+        return 0;
+    if (*(u32*)((u8*)self + 4) == 0)
+        return 0;
+    return 1;
+}
 
 // C++ virtual call forces MWCC to use r12 for vtable dispatch
 // 14 dummies + RTTI overhead = offset 64 at vtable+0x40

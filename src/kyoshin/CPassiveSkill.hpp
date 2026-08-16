@@ -478,7 +478,7 @@ struct CPSkillTexRes {
 };
 
 // Cursor draw helper (CCur.cpp; retail symbol unmangled).
-extern "C" void func_801D20B0(void* cursor, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void func_801D20B0(void*, void*);
 
 // 8-byte animation-colour vector (4 s16 channels) returned by func_80139658
 // in r3:r4 (same layout as CItemBoxLine.hpp's FourShorts; the .d channel is
@@ -646,11 +646,11 @@ struct CPSkillEnumListCount {
 // cf enum-list helpers used by func_8026CE30 (retail symbols unmangled;
 // declared with typed holders in this header only - no co-included header
 // re-declares them).
-extern "C" void func_80043D90(CPSkillEnumListHolder* holder);
-extern "C" cf::CfObjEnumList* func_80043F18(CPSkillEnumListHolder* holder);
-extern "C" void __dt__80043E88(CPSkillEnumListHolder* holder, int flags);
-extern "C" void func_800F4A98(cf::CfObjEnumList* list, u32 type, u32 filter);
-extern "C" CPSkillEnumListSlot* func_800F6EC0(cf::CfObjEnumList* list, u32 index);
+extern "C" void func_80043D90(void*);
+extern "C" void* func_80043F18(void*);
+extern "C" void __dt__80043E88(void*, int);
+extern "C" void func_800F4A98(void*, u32, u32);
+extern "C" CPSkillEnumListSlot* func_800F6EC0(void*, u32);
 extern "C" cf::CfObjectMove* func_800BFC68__FPQ22cf12CfObjectMove(cf::CfObjectMove* move);
 extern "C" void func_800BFDE0(cf::CfObjectMove* move, u32 flag);
 

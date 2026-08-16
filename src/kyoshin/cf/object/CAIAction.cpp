@@ -239,7 +239,14 @@ void func_801537E0(void* self) {
 }
 
 void func_8014A86C__FPv(){}
-void func_8014B7B0(){}
+// memset the 160-element x 14-byte action table at +0x21C.
+extern "C" void func_8014B7B0(void* self) {
+    void* p = (u8*)self + 0x21C;
+    for (int i = 0; i < 160; i++) {
+        memset(p, 0, 14);
+        p = (u8*)p + 14;
+    }
+}
 void func_8014B8BC(){}
 void func_8014CE78(){}
 void func_8014E164(){}

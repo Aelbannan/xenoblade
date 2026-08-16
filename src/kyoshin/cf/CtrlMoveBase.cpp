@@ -252,7 +252,19 @@ void func_800895A8(){}
 // FULL_MATCH: no-op virtual stub (CCtrlMoveBase::func_80089628)
 void func_80089628() {}
 
-void func_8008962C(){}
+// Dispatch the pending +0x30 slot through the manager's +0x2F2C sub-object,
+// then clear it.
+extern "C" void* func_80083298__Q22cf13CfGameManagerFv(void);
+extern "C" void func_8047CF20__17UnkClass_8047CD0CFv(void*, void*);
+extern "C" void func_8008962C(void* self) {
+    if (*(u32*)((u8*)self + 0x30) != 0) {
+        void* gm = func_80083298__Q22cf13CfGameManagerFv();
+        if (gm && (u8*)gm + 0x2F2C) {
+            func_8047CF20__17UnkClass_8047CD0CFv((u8*)gm + 0x2F2C, *(void**)((u8*)self + 0x30));
+        }
+        *(u32*)((u8*)self + 0x30) = 0;
+    }
+}
 
 void func_80089684(void* self) {
     *(unsigned short*)((char*)self + 0x40) &= 1;

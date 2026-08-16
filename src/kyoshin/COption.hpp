@@ -246,7 +246,7 @@ extern u8 lbl_eu_80539338[];
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __ct__CCur18(void* self, void* accessor);
 extern "C" void func_8018B0FC(void* dest, void* src);
-extern "C" void* func_801355F4();
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 extern "C" void* lbl_eu_805396D0[];

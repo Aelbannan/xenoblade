@@ -282,7 +282,7 @@ extern "C" void func_801D216C(void*, int); // cursor visibility setter (CCur)
 u32 func_80293C10();                       // party-change notice screen active?
 u32 func_80192BD0();                       // party-state screen active?
 void func_801D202C(void* cur);             // cursor per-frame update (CCur)
-void func_801D20B0(void* cur, nw4r::lyt::DrawInfo* drawInfo); // cursor draw
+void func_801D20B0(void*, void*); // cursor draw
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 extern "C" int func_800A9D90(void);        // common-archive handle
@@ -354,7 +354,7 @@ void func_80157184(s32 value);
 // cursor). func_801355BC returns the font string, func_801355F4 the shared
 // arc accessor.
 extern "C" void* func_801355BC(void);
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4(void);
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 
 // BDAT archive attach helpers (func_8012278C common-archive branch).
 void func_8003AA78__5CBdatFUlPv(u32, void*);

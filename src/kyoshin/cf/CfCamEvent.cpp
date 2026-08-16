@@ -81,16 +81,18 @@ void func_8006AA84(CfCamEvent* self, ml::CVec3* lookat) {
 
 // Set the direction vector's x component, then forward it to setDir.
 void func_8006AAEC(CfCamEvent* self, f32 value) {
-    self->unk25C.x = value;
+    ml::CVec3* dir = &self->unk25C;
+    dir->x = value;
     CfCamIntf* intf = CfCamEvent_initCamIntfInstances(self);
-    intf->fn_0x10(self, &self->unk25C);
+    intf->fn_0x10(self, dir);
 }
 
 // Set the direction vector's y component, then forward it to setDir.
 void func_8006AB40(CfCamEvent* self, f32 value) {
-    self->unk25C.y = value;
+    ml::CVec3* dir = &self->unk25C;
+    dir->y = value;
     CfCamIntf* intf = CfCamEvent_initCamIntfInstances(self);
-    intf->fn_0x10(self, &self->unk25C);
+    intf->fn_0x10(self, dir);
 }
 
 // Reset the speed factor, clear the 0x1200 flag bit, adopt the direction

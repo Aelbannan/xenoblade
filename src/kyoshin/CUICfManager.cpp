@@ -20,6 +20,27 @@ void CTTask<CUICfManager>::Draw() {
 template<>
 CTTask<CUICfManager>::~CTTask() {}
 
+// Retail 30-char CTest instantiation: Move/Draw/dtor bodies identical to
+// the CTTask<CUICfManager> ones above (same +0x3C/+0x48 member slots).
+template<>
+void CTTask<CUICfManager::CTest>::Move() {
+    if (mMoveFunc) {
+        (static_cast<CUICfManager::CTest*>(this)->*mMoveFunc)();
+    }
+}
+
+template<>
+void CTTask<CUICfManager::CTest>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<CUICfManager::CTest*>(this)->*mDrawFunc)();
+    }
+}
+
+template<>
+CTTask<CUICfManager::CTest>::~CTTask() {}
+
+CUICfManager::CTest::~CTest() {}
+
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDevice.hpp"
 #include "monolib/lib/CLibLayout.hpp"

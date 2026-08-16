@@ -241,7 +241,10 @@ void func_801F36BC(CScrollBar* self, u32 scrollFrom, u32 scrollTo) {
 /* Complete-object destructor. The mMemRegion member is destroyed implicitly
 (its dtor is a real C++ member dtor, so MWCC emits the external call with
 flags=-1), then the deleting-flag check and operator delete. */
+#pragma push
+#pragma optimize_for_size on
 CScrollBar::~CScrollBar() {}
+#pragma pop
 
 /* Construct the scroll bar: the base ctor stores the vtable first, then the
 mMemRegion member ctor runs (retail order), then every field is initialized.

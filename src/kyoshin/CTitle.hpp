@@ -132,7 +132,7 @@ extern u32 lbl_eu_80663E28;
 // TU's declaration, so calls bind to the same mangled symbol.
 GXColorS10* func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a);
 // .sdata2 constants used by the logo/menu animation helpers (US/EU names).
-extern float lbl_eu_80668FE0;
+extern const float lbl_eu_80668FE0;
 extern double lbl_eu_80668FE8; // 0x4330000000000000 (2^52) - u32->f32 conversion magic
 extern float lbl_eu_80668FF0;
 // vtables (.data): CTitle / CTitleLogo / CTitleMenu. Declared as arrays so

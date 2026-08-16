@@ -314,20 +314,20 @@ extern "C" void __dt__6CCur18Fv(CBaseCur*, int);
 // OnFileEvent helpers (external retail symbols, plain C-ABI names).
 extern "C" void func_8003AA34();                            // bdat manager reset (no args)
 extern "C" mtl::ALLOC_HANDLE getAllocHandle__10CLibLayoutFv(void);
-extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv(void);
+extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* __ct__CTagProcessor(void*);               // tag-processor ctor (self)
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);   // bind font pane data to root
 void func_801368C0(nw4r::lyt::Layout*, char*, u32);         // pane text bind (mangled retail name)
 extern "C" char* func_801355BC(void);                      // line text string
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4(void);  // cursor accessor (CCur unit)
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();  // cursor accessor (CCur unit)
 extern "C" CBaseCur* __ct__CCur18(void*, void*);           // CCur18 ctor (cursor, accessor)
 extern "C" CBaseCur* __ct__CSubCur(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" void func_8018B0FC(void*, void*);               // copy stack cursor temp into member
 // func_801D2E4C (subcur pane visibility) - 2-arg form used by OnFileEvent;
 // func_801EECE0 still calls it through a 1-arg cast to keep the 8-byte tail.
 extern "C" void func_801D2E4C(void*, u32);
-extern "C" FourShorts func_801397AC(void*, u32);           // pane colour getter (r3:r4 pair)
+extern "C" CEquipBoxFourShorts func_801397AC(void*, u32);           // pane colour getter (r3:r4 pair)
 extern "C" u32 getItemBox2State__FP13CItemBoxInfo2(void*);
 extern "C" u32 func_801EB020(void*);          // num-select busy flag (+0x2C)
 extern "C" u32 func_801EB018(void*);          // num-select busy flag (+0x2D)
@@ -488,7 +488,7 @@ void func_80136910(nw4r::lyt::Layout*, char*, u8);
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" char* func_80136190(char*, char*, u32);
 extern "C" char* func_8013639C(void*, char*);
-extern "C" void func_80137F88(nw4r::lyt::Pane*, u32);  // bind texture resource to pane
+extern "C" void func_80137F88(void*, u32);  // bind texture resource to pane
 
 // Item-box-line refresh helpers (external retail symbols).
 extern "C" void func_801EBC00(CIBLTab*, unsigned char, unsigned short, unsigned char);
@@ -510,13 +510,13 @@ extern "C" void func_801F35DC(CScrollBar*);              // scrollbar destroy
 extern "C" void func_8022B7F4(CSysWinFull*);             // syswin destroy
 // Tab-page helpers used by func_801F0488 (retail plain names).
 extern "C" void func_801CB9D8(CIBLVec3*, const u16*, u32);
-extern "C" void copyVEC3(CIBLVec3*, const CIBLVec3*);
+extern "C" void copyVEC3(void*, const void*);
 extern "C" u16 ArrayGet12(const u16*, u8);
 extern "C" u8 func_801EF034(const u8*, unsigned int);   // same-TU body kept external
 extern "C" char* func_801EC438(CIBLTab*, u16);        // tab-format setter (external call shape)
 
 // code_80135FDC string/table helpers (retail unmangled C-ABI names).
-extern "C" u16 func_80136254(u32, const char*, u32);
+extern "C" u16 func_80136254(const void*, const void*, int);
 extern "C" char* func_80138F78(u32);
 extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
 

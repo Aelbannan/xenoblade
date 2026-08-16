@@ -273,7 +273,7 @@ u32 func_804978D0(CScn80496B0C* self) {
     CScnNode80496B0C* na;
     CScnNode80496B0C* nb;
     if ((na = a->field_0x84[0]) == 0 || (nb = b->field_0x84[0]) == 0) return 0;
-    return nb->field_0x14 != na->field_0x14;
+    return na->field_0x14 != nb->field_0x14;
 }
 
 // Returns whether both chains are complete (nodes present, no +0x88 child),

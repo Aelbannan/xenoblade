@@ -29,8 +29,9 @@ DECOMP_DONT_INLINE void func_801D2150(nw4r::lyt::Pane* pane, const nw4r::math::V
 // func_801D21CC: Deactivation tail handler
 // Unbinds the active anim transform, re-binds animTrans0, enables and resets
 // its frame, then re-animates. Retail reloads mpLayout before every call.
-// ============================================================================
-extern "C" void func_801D21CC(CBaseCur* cur) {
+// noinline: -ipa would fold this body into func_801D2180's call site
+// (retail keeps the bl out-of-line).
+extern "C" __declspec(noinline) void func_801D21CC(CBaseCur* cur) {
     cur->mpLayout->UnbindAnimation(cur->mpAnimTrans1);
     cur->mpLayout->BindAnimation(cur->mpAnimTrans0);
     cur->mpLayout->SetAnimationEnable(cur->mpAnimTrans0, true);
@@ -43,7 +44,8 @@ extern "C" void func_801D21CC(CBaseCur* cur) {
 // Unbinds the active anim transform, re-binds animTrans1, enables and resets
 // its frame, then re-animates. Retail reloads mpLayout before every call.
 // ============================================================================
-extern "C" void func_801D2264(CBaseCur* cur) {
+// noinline: retail callers tail-branch; an inline would fold the body in.
+extern "C" __declspec(noinline) void func_801D2264(CBaseCur* cur) {
     cur->mpLayout->UnbindAnimation(cur->mpAnimTrans0);
     cur->mpLayout->BindAnimation(cur->mpAnimTrans1);
     cur->mpLayout->SetAnimationEnable(cur->mpAnimTrans1, true);
@@ -485,19 +487,25 @@ extern "C" void func_801D2DC8__7CSubCurFv(CBaseCur* cur) {
 // func_801D2E4C: Set visibility of two named panes (subcur variant)
 // Retail reloads mpLayout + root pane for the second lookup (no caching).
 // ============================================================================
+#pragma push
+#pragma optimize_for_size on
 extern "C" void func_801D2E4C(CBaseCur* cur, u8 visible) {
     if (cur->mpLayout == NULL) return;
     func_80124270(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3e9, true), visible);
     func_80124270(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3f7, true), visible);
 }
+#pragma pop
 
 // ============================================================================
 // func_801D2ED8: Check if both subcur panes are visible/active
 // Returns 1 if both named panes return non-zero from func_801C4648, 0 otherwise.
 // ============================================================================
+#pragma push
+#pragma optimize_for_size on
 extern "C" u8 func_801D2ED8(CBaseCur* cur) {
     if (cur->mpLayout == NULL) return 0;
     u32 result0 = func_801C4648(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3e9, true));
     u32 result1 = func_801C4648(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3f7, true));
     return (result0 != 0 && result1 != 0) ? 1 : 0;
 }
+#pragma pop

@@ -18,6 +18,7 @@ class Pane;
  * +0x48 char-width getter). MWCC emits 2 hidden leading slots for
  * polymorphic classes in this TU (RTTI), so the first declared virtual sits
  * at +0x08 and the 12th/17th declared virtuals sit at +0x34/+0x48. */
+#ifndef NW4R_LYT_RESOURCES_H
 class Font {
 public:
     virtual ~Font();   // +0x08
@@ -38,13 +39,17 @@ public:
     virtual void v44();
     virtual int v48(u16 c); // +0x48 returns int (char width)
 };
+#endif
 
 /* Layout view of nw4r::lyt::TextBox for func_80127D20 (GetFont is the only
- * member used; mangled name GetFont__Q34nw4r3lyt7TextBoxCFv). */
+ * member used; mangled name GetFont__Q34nw4r3lyt7TextBoxCFv). Only defined
+ * when the real lyt_textBox.h has not been included yet. */
+#ifndef NW4R_LYT_TEXTBOX_H
 class TextBox {
 public:
     Font* GetFont() const;
 };
+#endif
 
 }
 }
@@ -208,7 +213,9 @@ namespace ut {
 /* nw4r::ut::Color as seen by this TU: retail copy-assign is byte-wise,
  * so the class carries four plain u8 components (no u32 shortcut).
  * operator= is defined out-of-line in CTagProcessor.cpp so it is emitted
- * as the standalone retail symbol. */
+ * as the standalone retail symbol. Only defined when the real ut_Color.h
+ * has not been included yet (other TUs include both). */
+#ifndef NW4R_UT_COLOR_H
 struct Color {
     union {
         u32 v;  // packed ARGB value (0xAARRGGBB)
@@ -222,6 +229,7 @@ struct Color {
 
     Color& operator=(const Color& rhs);
 };
+#endif
 
 /* 4-byte color-value pack for the name-list highlight walks: the retail
  * constructs the packed ARGB u32 with lis/addi and stores it to the stack
@@ -245,6 +253,7 @@ namespace ut {
  * vtable slot +0x48 is a no-arg int getter whose value is doubled and
  * float-converted for the cursor-advance math. 2 hidden leading slots
  * (RTTI), so 16 declared virtuals precede the +0x48 slot. */
+#ifndef NW4R_UT_FONT_H
 class FontH {
 public:
     virtual ~FontH();   // +0x08
@@ -265,11 +274,13 @@ public:
     virtual void v44();
     virtual int v48(u16 c);  // +0x48 char-width getter (func_8012968C passes U+2500)
 };
+#endif
 
 /* Layout view of CharWriter for the tag-writer accessors (real
  * ut_CharWriter.h layout): mCursorPos is a math::VEC3 at +0x2C with x at
  * 0x2C and y at 0x30. Only the fields the tag-writer family reads are
  * named; the rest is padding so the offsets stay exact. */
+#ifndef NW4R_UT_CHAR_WRITER_H
 class CharWriter {
 public:
     f32 GetFontHeight() const;
@@ -285,9 +296,11 @@ public:
     u8  pad_34[0x14];                    // +0x34 mCursorPos.z .. +0x47
     FontH* mFont;                        // +0x48 (func_8012968C reads the +0x48 getter)
 };
+#endif
 
 /* Layout view of TextWriterBase for the tag-writer accessors: mWidthLimit
  * is the first TextWriterBase member, at +0x4C right after CharWriter. */
+#ifndef NW4R_UT_TEXT_WRITER_BASE_H
 template <typename T> class TextWriterBase : public CharWriter {
 public:
     f32 CalcStringWidth(const T* pStr, int len) const;
@@ -300,6 +313,7 @@ public:
     u32 field_5C;      // +0x5C (mFontSize.y region; func_80129E20 stores here)
     u8  pad_60[0x8];   // +0x60 mTagProcessor
 };
+#endif
 
 }  // namespace ut
 }  // namespace nw4r

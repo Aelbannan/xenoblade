@@ -357,7 +357,7 @@ extern "C" void* func_80043310();
 extern "C" void func_8004335C(void* obj);
 
 // Enum-list message-fill helper (flat retail name; defined in CUICfManager.cpp).
-extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
+extern "C" void func_800F4A98(void*, u32, u32);
 
 // Error-window factory ctor (retail stripped name; defined in CUIErrMesWin.cpp
 // with the same C-ABI shape). extern "C": the call-site reloc must carry the

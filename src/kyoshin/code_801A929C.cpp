@@ -3,6 +3,8 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+extern "C" void __dl__FPv(void*);
+
 void func_801A9338(void* self) {
     *(unsigned short*)((char*)self + 0x2c) = 0xFFFF;
 }
@@ -13,7 +15,16 @@ void func_801A96A0(){}
 
 void func_801A9CCC(){}
 
-void __dt__801A9F78(){}
+extern "C" void* __dt__801A9F78(void* self, int dealloc) {
+    if (self != nullptr) {
+        extern unsigned char lbl_eu_80664330;
+        *(void**)(&lbl_eu_80664330) = 0;
+        if (dealloc > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
+}
 
 void func_801A9FC0(){}
 

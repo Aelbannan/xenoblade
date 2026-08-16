@@ -8,6 +8,7 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/core/CScheduleItem.hpp"
 #include "monolib/effect/CERand.hpp"
+extern "C" void func_804E4DD4(f32);
 #include "monolib/effect/code_804CC2B8.hpp"
 #include <revolution/MTX.h>
 #include "monolib/device/CDeviceVI.hpp"
@@ -548,7 +549,15 @@ void func_804CBAA8(EffectRoot* self, void* scene, u32 arg) {
     }
 }
 
-void func_804CBB14(){}
+// When bit 12 or bit 11 of the u16 flag is set, run the shared randomizer
+// execute (CERand::execute) and the anim driver with the incoming float.
+extern "C" void func_804CBB14(u16* self, f32 f1) {
+    u16 flag = *self;
+    if (((flag >> 13) & 1) != 0 || ((flag >> 12) & 1) != 0) {
+        CERand::execute(f1);
+        func_804E4DD4(f1);
+    }
+}
 
 // func_804CBB60: no-arg per-frame hook - restore the fog state, then advance
 // the two global schedule lists (retail: two bare bl's in a 16-byte frame).

@@ -114,7 +114,7 @@ extern "C" u8 func_801361E8(u32, const char*, u32);
 extern "C" u32 func_8003B1EC(void*);
 extern "C" u32 func_8009CF8C(u32);
 extern "C" void func_801F35B0(void*, nw4r::lyt::DrawInfo*);
-extern "C" void func_801D20B0(void*, nw4r::lyt::DrawInfo*);
+extern "C" void func_801D20B0(void*, void*);
 extern "C" void func_801F369C(void*);
 extern "C" void func_801F3540(u8*);                    // scrollbar per-frame update
 // Cursor / scrollbar / layout C-ABI helpers (unmangled retail symbols).
@@ -140,7 +140,7 @@ extern "C" void func_80137924(nw4r::math::VEC3*, nw4r::lyt::Pane*,
 extern "C" void func_80138078__FUl(u32);               // UI sound effect
 // Grid-text helpers / cursor construction (C-ABI retail symbols).
 extern "C" u16 func_80136254(const void*, const void*, int);
-extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
+extern "C" void func_80124270(void*, u32);
 extern "C" void __ct__CCur18(void*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" int sprintf(char*, const char*, ...);
@@ -167,4 +167,4 @@ extern "C" float lbl_eu_80668744;
 #ifndef KYOSHIN_SKIP_CMAPSEL_LEGACY_LAYOUT_IMPORTS
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 #endif
-extern "C" float lbl_eu_8066873C;
+extern "C" const float lbl_eu_8066873C;

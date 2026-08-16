@@ -170,7 +170,7 @@ public:
     AnmObjChrRes(MEMAllocator* pAllocator, ResAnmChr chr, u16* pBindingBuf,
                  int numBinding, ChrAnmResult* pCacheBuf);
     virtual void G3dProc(u32 task, u32 param, void* pInfo); // at 0xC
-    virtual ~AnmObjChrRes() {}                              // at 0x10
+    virtual ~AnmObjChrRes();                                 // at 0x10
 
     virtual void SetFrame(f32 frame); // at 0x1C
     virtual f32 GetFrame() const;     // at 0x20

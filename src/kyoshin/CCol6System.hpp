@@ -356,7 +356,7 @@ int CSysWin_getUnk34(void* syswin);                                   // CSysWin
 void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);     // CSysWin.cpp
 void func_8022B7F4(void* syswin);                                    // CSysWin.cpp
 void func_8022B8E4(void* syswin);                                    // CSysWin.cpp
-void func_801D20B0(void* cursor, nw4r::lyt::DrawInfo* drawInfo);     // CCur.cpp
+void func_801D20B0(void*, void*);     // CCur.cpp
 void func_8013D55C(char* msg, int a, int b);                         // CUICfManager.cpp
 void func_8009D018(u32 destination, u32 value);                      // CfGameManager.cpp
 CCol6Pad* getCurrentPad__Q22cf13CfGameManagerFv();                   // cf::CfGameManager
@@ -417,7 +417,7 @@ void* getFP__FPCc(const char*);                                      // bdat fil
 u32 func_8003B1EC(void*);                                            // bdat row count
 void func_8022C1B4(u8* out, void* syswin, u8 sel);                   // CSysWin.cpp
 void func_8022BF6C(void* syswin, void* a, void* b);                  // CSysWin.cpp
-void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane* a,
+extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane* a,
                    nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);          // code_80135FDC.cpp
 // CTaskLOD/audio helpers: u8 params (values are passed unmasked by callers).
 void func_80462D04__8CTaskLODFv(u8);                                  // CTaskLOD.cpp

@@ -15,6 +15,28 @@ u8 CQstLogInfo::func_802296D0() { return mField38; }
 
 u8 CQstLogInfo::func_802296D8() { return mField39; }
 
+// Start the quest-log state machine: mark busy (+0x34=1), clear the 0x39
+// flag, run the state step and play sound 0x6d. Guarded by the state.
+extern "C" void func_802296E0(CQstLogInfo* self) {
+    if (self->field_0x34 == 0) {
+        self->field_0x34 = 1;
+        self->mField39 = 0;
+        func_802298A0(self);
+        func_80138078(0x6d);
+    }
+}
+
+// Continue the quest-log machine when idle-at-step-3: mark busy (+0x34=4),
+// clear the 0x39 flag, step and play sound 6.
+extern "C" void func_80229724(CQstLogInfo* self) {
+    if (self->field_0x34 == 3) {
+        self->field_0x34 = 4;
+        self->mField39 = 0;
+        func_80229900(self);
+        func_80138078(6);
+    }
+}
+
 void CQstLogInfo::func_80229768(u16 val) { mField3A = val; }
 
 // Destructor: destroys the embedded scratch region, then frees the object
@@ -207,7 +229,7 @@ extern "C" __declspec(noinline) void func_80229B54(CQstLogInfo* self,
     u16 v = func_80136254(table, &lbl_eu_8050A0B4[0x78], key);
     func_80136B4C(self->mUnk20, &lbl_eu_8050A0B4[0x84],
                   (char*)func_80138DA4(func_8013639C(
-                      (const void*)lbl_eu_80664098, &lbl_eu_8050A0B4[0x7f], v)),
+                      (const char*)lbl_eu_80664098, &lbl_eu_8050A0B4[0x7f], v)),
                   0);
     int flag = 0;
     if (v >= 0x36C && v <= 0x36E || v == 0x38C || v == 0x391 || v == 0x393) {
@@ -218,7 +240,7 @@ extern "C" __declspec(noinline) void func_80229B54(CQstLogInfo* self,
         str = func_80136190(&lbl_eu_8050A0B4[0x8c], &lbl_eu_8050A0B4[0x7f], 0x35);
     } else {
         if (func_801361E8((u32)table, &lbl_eu_8050A0B4[0x32], key) != 1) {
-            u16 v2 = func_80136254((const void*)lbl_eu_80664098,
+            u16 v2 = func_80136254((const char*)lbl_eu_80664098,
                                    &lbl_eu_8050A0B4[0x96], v);
             str = func_80136190(&lbl_eu_8050A0B4[0x9e], &lbl_eu_8050A0B4[0x7f], v2);
         } else {

@@ -735,10 +735,12 @@ extern "C" __declspec(noinline) void func_802660EC(UI::CPassiveSkillInfo* self) 
 // Set the cursor's skill-name pane text: look up message 135 from the shared
 // string table, then push it into the layout pane named at pool+0x1a9.
 // noinline: func_802698B8 keeps the retail `bl` to this 0x54-byte body.
+#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
 __declspec(noinline) void func_802661A8(UI::CPassiveSkillCur* self) {
     char* text = func_80136190(&lbl_eu_8050DC20[0x196], &lbl_eu_8050DC20[0x1a4], 135);
     func_80136B4C(self->mpLayout, &lbl_eu_8050DC20[0x1a9], text, 0);
 }
+#pragma optimize_for_size off
 
 // Set the cursor's skill-name pane text using message 136 from the shared
 // string table (variant of func_802661A8's 135 lookup). The two callee-saved

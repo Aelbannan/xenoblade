@@ -51,11 +51,14 @@ void func_8027274C(TalkListEntry* entry);
 // Construct the TalkListEntry array (retail __ct__802726F4). Constructs all
 // 256 entries in place via the element ctor func_8027274C, then initialises
 // the count to 0 and records the owning object.
-void __ct__802726F4(TalkListEntryArray* self, u32 parent) {
+#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
+void* __ct__802726F4(TalkListEntryArray* self, u32 parent) {
     __construct_array(self, (void*)func_8027274C, (void*)__dt__80272774, 0x14, 0x100);
     self->mCount = 0;
     self->mParent = parent;
+    return self;
 }
+#pragma optimize_for_size off
 
 // Destroy the TalkListEntry array (retail __dt__802727B4), freeing the
 // backing memory when the delete flag is set.

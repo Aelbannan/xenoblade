@@ -22,11 +22,10 @@ void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80127BD8(void*, float*);
 char* func_80136190(char*, char*, u32);
 char* func_8013639C(void*, char*);
-u32 func_801392B4(u32);
+u8 func_801392B4(u32);
 u32 func_801392C0();
 u32 func_8013600C(void*, const char*, u32);
 u32 func_800A32BC();
-u32 func_80136254(void*, const char*, u32);
 u32 func_800A082C(void*);
 void func_8013B380(u32);
 extern void* lbl_eu_806645A8;
@@ -332,7 +331,7 @@ extern "C" void func_801D4DE0(CItemBoxInfo* info) {
 #pragma optimize_for_size on
 void func_801D4E2C(void* out, u16 arg2, void* arg3) {
     void* global = lbl_eu_806640F4;
-    func_801392E4(arg3);
+    func_801392E4((u32)arg3);
     u32 v2 = func_80139358((u32)arg3);
     char* base = (char*)&lbl_eu_805063BC;
     CItemBoxCompRecord rec;
@@ -340,8 +339,8 @@ void func_801D4E2C(void* out, u16 arg2, void* arg3) {
     union { double d; u32 w[2]; } u2;
     u1.w[0] = 0x43300000;
     u2.w[0] = 0x43300000;
-    rec.s2C = (u16)func_80136254(global, base + 0x19c, (u16)v2);
-    rec.s2E = (u16)func_80136254(global, base + 0x1a4, (u16)v2);
+    rec.s2C = (u16)func_80136254((const void*)global, (const void*)(base + 0x19c), (int)(u16)v2);
+    rec.s2E = (u16)func_80136254((const void*)global, (const void*)(base + 0x1a4), (int)(u16)v2);
     rec.s30 = (u8)func_801361E8((u32)global, base + 0x1ab, (u16)v2);
     rec.s32 = (u8)func_801361E8((u32)global, base + 0x1b3, (u16)v2);
     rec.s34 = (u8)func_801361E8((u32)global, base + 0x1bb, (u16)v2);
@@ -403,7 +402,7 @@ extern "C" void func_801D5274(void* out, void* arg2, void* arg3) {
     if (arg3 == NULL) {
         memset(&local, 0, 0x1C);
     } else {
-        u32 v1 = func_801392E4(arg3);
+        u32 v1 = func_801392E4((u32)arg3);
         u32 v2 = func_80139358((u32)arg3);
         local.v[0] = (u8)func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], (u16)v2);
         local.v[1] = (u8)func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], (u16)v2);
@@ -465,7 +464,7 @@ void __declspec(noinline) func_801D5564(void* out, void* unused, void* data, voi
     u8 count;
     char* base = (char*)&lbl_eu_805063BC;
     if (arg3 == NULL) {
-        func_801392E4(data);
+        func_801392E4((u32)data);
         cat = func_80139358((u32)data);
     } else {
         CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(arg3);
@@ -572,7 +571,7 @@ void __declspec(noinline) func_801D5564(void* out, void* unused, void* data, voi
 #pragma push
 #pragma auto_inline off
 extern "C" void func_801D59C0(u32* out, void* unused, void* arg2) {
-    func_801392E4(arg2);
+    func_801392E4((u32)arg2);
     u16 vcat = func_80139358((u32)arg2);
     u8 v0 = (u8)func_801361E8((u32)lbl_eu_80664104, &lbl_eu_805063BC[0x214], vcat);
     char* v1 = (char*)func_80136190(&lbl_eu_805063BC[0x219], &lbl_eu_805063BC[0x139], v0);
@@ -592,7 +591,7 @@ extern "C" void func_801D59C0(u32* out, void* unused, void* arg2) {
 
 void func_801D5AA0(CItemBoxInfo* out, void* unused, void* data) {
     void* global = lbl_eu_80664110;
-    u16 v1 = func_801392E4(data);
+    u16 v1 = func_801392E4((u32)data);
     u16 v2 = func_80139358((u32)data);
     u8 arr[8];
     arr[0] = (u8)func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x22b], v2);
@@ -620,7 +619,7 @@ void func_801D5AA0(CItemBoxInfo* out, void* unused, void* data) {
 }
 void func_801D5C38(void* out, void* unused, void* data, void* arg3) {
     void* p = arg3 != 0 ? arg3 : 0;
-    func_801392E4(data);
+    func_801392E4((u32)data);
     func_80139358((u32)data);
     CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(p);
     u32 r = inst->_v08(p);
@@ -3397,7 +3396,7 @@ u32 func_801DFDC0(void* dummy, u32 arg1, void* arg2) {
 u32 func_801DFE48(void* global, u16 arg2, void* arg3) {
     if (arg2 == 0) return 0;
     void* g = lbl_eu_806640F8;
-    u16 v1 = arg3 ? (u16)func_801392E4(arg3) : 0;
+    u16 v1 = arg3 ? (u16)func_801392E4((u32)arg3) : 0;
     u16 v2 = arg3 ? (u16)func_80139358((u32)arg3) : 0;
     void* lookup = func_8009EC9C(arg2);
     u32 result = 0;
@@ -3802,15 +3801,15 @@ void func_801E197C(void* out, void* arg2, void* arg3) {
         memset(&rec, 0, 0x34);
     } else {
         void* global = lbl_eu_806640F4;
-        func_801392E4(arg3);
+        func_801392E4((u32)arg3);
         u32 v2 = func_80139358((u32)arg3);
         char* base = (char*)&lbl_eu_805063BC;
         union { double d; u32 w[2]; } u1;
         union { double d; u32 w[2]; } u2;
         u1.w[0] = 0x43300000;
         u2.w[0] = 0x43300000;
-        rec.s2C = (u16)func_80136254(global, base + 0x19c, (u16)v2);
-        rec.s2E = (u16)func_80136254(global, base + 0x1a4, (u16)v2);
+        rec.s2C = (u16)func_80136254((const void*)global, (const void*)(base + 0x19c), (int)(u16)v2);
+        rec.s2E = (u16)func_80136254((const void*)global, (const void*)(base + 0x1a4), (int)(u16)v2);
         rec.s30 = (u8)func_801361E8((u32)global, base + 0x1ab, (u16)v2);
         rec.s32 = (u8)func_801361E8((u32)global, base + 0x1b3, (u16)v2);
         rec.s34 = (u8)func_801361E8((u32)global, base + 0x1bb, (u16)v2);
@@ -3899,7 +3898,7 @@ void func_801E1E0C(CItemBoxSlotFlags* out, void* arg2, void* arg3) {
         }
         return;
     }
-    u32 v1 = func_801392E4(arg3);
+    u32 v1 = func_801392E4((u32)arg3);
     u32 v2 = func_80139358((u32)arg3);
     local.v[0] = (u8)func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], (u16)v2);
     local.v[1] = (u8)func_801361E8((u32)lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], (u16)v2);
@@ -3981,7 +3980,7 @@ void func_801E20FC(void* out, void* unused, void* data, void* arg3) {
     u32 cat;
     u16 count;
     if (arg3 == NULL) {
-        func_801392E4(data);
+        func_801392E4((u32)data);
     }
     if (arg3 != NULL) {
         CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(item);
@@ -4127,7 +4126,7 @@ void func_801E20FC(void* out, void* unused, void* data, void* arg3) {
 #pragma pop
 
 void func_801E2558(u32* out, void* info, void* arg2) {
-    u32 v0 = func_801392E4(arg2);
+    u32 v0 = func_801392E4((u32)arg2);
     u16 v2 = func_80139358((u32)arg2);
     u8 r1 = func_801361E8((u32)lbl_eu_80664104, (char*)&lbl_eu_805063BC[0x214], v2);
     char* r2 = (char*)func_80136190((char*)&lbl_eu_805063BC[0x219], (char*)&lbl_eu_805063BC[0x139], r1);
@@ -4152,7 +4151,7 @@ void func_801E2558(u32* out, void* info, void* arg2) {
 #pragma optimize_for_size on
 void func_801E2638(CItemBoxInfo2* info, u16 arg2, void* data) {
     void* global = lbl_eu_80664110;
-    u16 v1 = func_801392E4(data);
+    u16 v1 = func_801392E4((u32)data);
     u16 v2 = func_80139358((u32)data);
     u8 arr[8];
     arr[0] = (u8)func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x22b], v2);
@@ -4188,7 +4187,7 @@ void func_801E27D0(u8* out, void* unused, void* item, void* arg4) {
     u8* dst = out;
     CItemBoxSlotRecord rec;
     void* p = arg4 != 0 ? arg4 : 0;
-    func_801392E4(item);
+    func_801392E4((u32)item);
     func_80139358((u32)item);
     void* inst = CItem_initItemImplInstances(p);
     u8 r = ((u8(*)(void*, void*))(*(void***)inst)[2])(inst, p);
@@ -6023,7 +6022,7 @@ s32 func_801E9224(void* a, void* b, s32 arg2, void* d) {
 // Retail func_801E9310: the ItemBox2 variant of func_801DF610. Six slots are
 // scanned via the lookup table (s16 ids at +0x26/+0x1C..0x24, 6-byte slot
 // table from .sdata2). When the slot's byte equals the candidate's equip id
-// ((u8)func_801392E4(arg3)), a name-based lookup runs instead of the item
+// ((u8)func_801392E4((u32)arg3)), a name-based lookup runs instead of the item
 // walk: count = func_801361E8(v1, base+0x432, v2), then for each index the
 // name v = func_80136254(v1, buf, v2) resolves a category (func_80139358)
 // matching the requested item id, and the name-count byte is added. The
@@ -6032,7 +6031,7 @@ u32 func_801E9310(void* a, void* b, u32 c, void* d) {
     void* lookup = func_8009EC9C((u32)b);
     u32 v1 = func_801393CC(d);
     u32 v2 = func_80139358((u32)d);
-    u8 v3 = (u8)func_801392E4(d);
+    u8 v3 = (u8)func_801392E4((u32)d);
     char* base = lbl_eu_805063BC;
     s16 slotIds[6];
     slotIds[0] = *(s16*)((u8*)lookup + 0x26);
@@ -6133,7 +6132,7 @@ u32 func_801E96F0(void* dummy, u32 arg1, u32 arg2) {
 u32 func_801E9774(void* global, u16 arg2, void* arg3) {
     if (arg2 == 0) return 0;
     void* g = lbl_eu_806640F8;
-    u16 v1 = arg3 ? (u16)func_801392E4(arg3) : (u16)0;
+    u16 v1 = arg3 ? (u16)func_801392E4((u32)arg3) : (u16)0;
     u16 v2 = arg3 ? (u16)func_80139358((u32)arg3) : (u16)0;
     void* lookup = func_8009EC9C(arg2);
     u32 result = 0;
@@ -6168,7 +6167,7 @@ bool func_801E98E4(void* a, u16 b, void* c) {
     void* lookup = func_8009EC9C(b);
     u32 v1 = func_801393CC(c);
     u32 v2 = func_80139358((u32)c);
-    u8 v3 = (u8)func_801392E4(c);
+    u8 v3 = (u8)func_801392E4((u32)c);
     CItemBoxSlotBytes bytes;
     s16 ids[6];
     // ids[0] is the halfword at lookup+0x26; the remaining five are the packed

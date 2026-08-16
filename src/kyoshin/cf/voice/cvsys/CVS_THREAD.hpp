@@ -65,7 +65,7 @@ public:
 
     //Virtual table (0x1c)
     virtual void func_802A3B50();
-    virtual void func_802A3BEC();
+    virtual void func_802A3BEC(u32 id);
     virtual int blank1();
     virtual void func_802A1EA0();
     virtual void func_802A3740();

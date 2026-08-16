@@ -114,7 +114,7 @@ cf::CfTFileEntry* func_80069C28(cf::CfTFile* self) {
     cf::CfTFileData* data = &self->mData;
     if (data != 0) {
         u16 count = data->mCount3;
-        for (u32 i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
             if (data->mEntries3[i].mField00 != 0) {
                 return &data->mEntries3[i];
             }
@@ -206,18 +206,11 @@ void func_80069EA8(int param) {
 bool func_80069EE0() { return CDeviceVI::isTvFormatPal(); }
 
 // Returns the play time, converting the u16 frame counter through the
-// shared float state (seconds vs frame-count split).
+// shared float state (seconds vs frame-count split). The (float) cast of the
+// u16 emits the retail 2^52 double-magic conversion (fsubs, not fsub).
 float func_80069EE4() {
     if (lbl_eu_80663D94 < lbl_eu_80663D98) {
-        // u16 -> float via the double-magic trick; reference the named 2^52
-        // constant (lbl_eu_80666220) so the pool reloc matches retail.
-        union {
-            u32 w[2];
-            double d;
-        } magic;
-        magic.w[1] = lbl_eu_80661AF8;
-        magic.w[0] = 0x43300000;
-        return lbl_eu_80661AF0 * (float)(magic.d - lbl_eu_80666220);
+        return lbl_eu_80661AF0 * (float)lbl_eu_80661AF8;
     }
     return lbl_eu_80663D94 - lbl_eu_80663D98;
 }

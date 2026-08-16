@@ -249,13 +249,13 @@ void TextBox::AllocStringBuffer(u16 len) {
 }
 
 void TextBox::FreeStringBuffer() {
-    if (mTextBuf == NULL) {
-        return;
+    if (mTextBuf != NULL) {
+        if (mTextBuf != NULL) {  // retail keeps the redundant re-check
+            Layout::FreeMemory(mTextBuf);
+        }
+        mTextBuf = NULL;
+        mTextBufBytes = 0;
     }
-
-    Layout::FreeMemory(mTextBuf);
-    mTextBuf = NULL;
-    mTextBufBytes = 0;
 }
 
 u16 TextBox::SetString(const wchar_t* pStr, u16 pos) {

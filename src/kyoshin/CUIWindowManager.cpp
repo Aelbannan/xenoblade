@@ -20,6 +20,27 @@ void CTTask<CUIWindowManager>::Draw() {
 template<>
 CTTask<CUIWindowManager>::~CTTask() {}
 
+// Retail 34-char CTest instantiation: Move/Draw/dtor bodies identical to
+// the CTTask<CUIWindowManager> ones above.
+template<>
+void CTTask<CUIWindowManager::CTest>::Move() {
+    if (mMoveFunc) {
+        (static_cast<CUIWindowManager::CTest*>(this)->*mMoveFunc)();
+    }
+}
+
+template<>
+void CTTask<CUIWindowManager::CTest>::Draw() {
+    if (mDrawFunc) {
+        (static_cast<CUIWindowManager::CTest*>(this)->*mDrawFunc)();
+    }
+}
+
+template<>
+CTTask<CUIWindowManager::CTest>::~CTTask() {}
+
+CUIWindowManager::CTest::~CTest() {}
+
 #include <types.h>
 #include <string.h>
 
@@ -582,7 +603,17 @@ extern "C" IUIWindow* func_8013E9D8() {
 void func_8013EAB0(){}
 void func_8013EB90(){}
 void __dt__Q216CUIWindowManager5CTestFv(){}
-void func_8013F244(){}
+// Clamp the +0x52 page id into the 544..1543 range, then when the clamp is
+// valid run the +0xC4 layout resize (0, 0, 8) and a 4-byte memset.
+extern "C" int func_8009D018(void*, int);
+extern "C" void func_8013F244(void* self) {
+    u16 page = *(u16*)((u8*)self + 0x52);
+    int idx = ((s32)page < 1000) ? page + 544 : -1;
+    if (idx != -1) {
+        func_8009D018((void*)idx, 0);
+        ((void (*)(void*, int, unsigned long))memset)(*(void**)((u8*)self + 0xC4), 0, 8);
+    }
+}
 void func_8013F2A0(){}
 void func_8013F354(){}
 // Flag-buffer availability check (retail func_8013F3F0): returns 1 when the

@@ -147,7 +147,7 @@ extern "C" float func_800749AC(ml::CVec3* pos274, ml::CVec3* lookat, ml::CVec3* 
 extern "C" void func_80074090(void* out);
 extern "C" cf::CfCamIntf* CfCamEvent_initCamIntfInstances(cf::CfCamEvent* self);
 extern "C" const f32 lbl_eu_80666268;
-void func_8006BC1C(cf::CfCamEvent* self, u32 mask);  // clears bits in the 0x04 flag word
+void func_8006BC1C(void* self, int mask);  // clears bits in the 0x04 flag word
 
 // C-linkage imports for the camera-event factory (retail symbol names verbatim).
 extern "C" u32 func_80061FE8();
@@ -158,16 +158,16 @@ extern "C" u8 lbl_eu_80527048[];
 
 // C-linkage imports for func_8006ACC0 (retail symbol names verbatim).
 extern "C" void func_8007FE20__Q22cf13CfGameManagerFv(u32);
-extern "C" void* func_8007FE24__Q22cf13CfGameManagerFv(u32);
+int func_8007FE24__Q22cf13CfGameManagerFv(u32);
 extern "C" int func_8007F91C__Q22cf13CfGameManagerFv();
 extern "C" cf::CfCamNodeList* func_80086B0C__Q22cf13CfGameManagerFv();
 extern "C" void func_80071B78(void*);
 extern "C" void func_8006D8D0(void*, void*);
 extern "C" void* func_800BBC0C(void*);
 extern "C" int func_800B8920(void*);
-extern "C" void func_800707C0(void*, ml::CVec3*, ml::CVec3*);
+extern "C" void func_800707C0(void*, void*, void*);
 extern "C" int func_80073640(void*, ml::CVec3*, ml::CVec3*, ml::CVec3*, int);
-extern "C" void func_80071AB0(void*, ml::CVec3*, ml::CVec3*, u32, f32, f32);
+extern "C" void func_80071AB0(void*, void*, void*, int, float, float);
 extern "C" int CfRes_getD80Flag();
 extern "C" f32 func_80496288();
 extern "C" int func_804BE398(void*, u32, u32, u32, f32, f32);
@@ -183,6 +183,6 @@ extern "C" const f32 lbl_eu_8066627C;
 extern "C" const f32 lbl_eu_80666280;
 extern "C" const f32 lbl_eu_80666284;
 extern "C" const f32 lbl_eu_8066A20C;
-extern "C" const f32 lbl_eu_80661B58;
-extern "C" u8 lbl_eu_805262F0[];
-extern "C" u8 lbl_eu_805262C8[];
+extern const f32 lbl_eu_80661B58;
+extern char lbl_eu_805262F0[];
+extern char lbl_eu_805262C8[];

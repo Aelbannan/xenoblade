@@ -3013,7 +3013,14 @@ void func_8015B60C(CItemVtblSize* obj, u8* buf) {
 
 int CItemExt_getSize28(CItemExt*) { return 28; }
 
-void func_8015B65C(){}
+// Merge the value into the u16 field at (base + index*2 + 8) bits 16-27,
+// call the rank function with it, then merge the rank into bits 28-30.
+extern "C" void func_8015B65C(void* a, u8* base, u32 index, u32 value) {
+    u16* p = (u16*)(base + index * 2 + 8);
+    *p = (u16)__rlwimi(*p, value, 4, 16, 27);
+    int rank = func_80155854(value);
+    *p = (u16)__rlwimi(*p, (u32)rank, 1, 28, 30);
+}
 
 u32 CItemData_getInvByte6_dup2(u32, CItemData* obj) { return 1 - *(u8*)((char*)obj + 6); }
 

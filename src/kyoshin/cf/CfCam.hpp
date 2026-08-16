@@ -240,14 +240,10 @@ public:
     virtual float fn0xCC() = 0;  // 0xCC (index 49) - scale factor
 };
 
-// cf::CfCamEvent - camera event state. Derives from CfCamFollow so the
-// destructor (retail __dt__Q22cf10CfCamEventFv) tears down the follow camera
-// through the base dtor. The full field layout lives in CfCamDirectionIntf.hpp
-// / CfCamEvent.hpp.
-class CfCamEvent : public CfCamFollow {
-public:
-    ~CfCamEvent();
-};
+// cf::CfCamEvent - camera event state. Full definition lives in
+// CfCamEvent.hpp (which includes this header); keep only the forward
+// declaration here to avoid a redefinition in TUs that include both.
+class CfCamEvent;
 
 // Vtable-slot view over CfCamFollow's head for __ct__cf_CfCamFollow's two
 // virtual calls. With the -RTTI 8-byte vtable header, virtual index N sits at

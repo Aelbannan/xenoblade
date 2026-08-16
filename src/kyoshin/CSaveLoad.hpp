@@ -251,7 +251,7 @@ extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcRes
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 extern "C" void func_8045F810__17UnkClass_8045F564Fv(void* self);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
-extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4(void);
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" void func_8022B9B4(void*, u32, int);
 extern "C" void func_8022BF6C(void*, u32, u32);
 extern "C" void func_8022BFC8(void*, int);

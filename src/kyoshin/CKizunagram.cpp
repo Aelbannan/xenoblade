@@ -724,7 +724,20 @@ extern "C" void func_8025CC88(void* self) {
     }
 }
 
-void func_8025CCA8(){}
+// Gate: when both the +0x61 and +0x7D bytes are set, raise the +0x39/+0x3C
+// state and tail-call the +0xAC sub-object with the +0x8C flag.
+extern "C" void func_8025CCA8(void* self) {
+    if (*(u8*)((u8*)self + 0x61) == 0)
+        return;
+    if (*(u8*)((u8*)self + 0x7D) == 0)
+        return;
+    *((u8*)self + 0x39) = 3;
+    *((u8*)self + 0x3C) = 1;
+    if (*(u8*)((u8*)self + 0x8C) != 0)
+        func_80257F9C((UnkKizunaSelf57D90*)((u8*)self + 0xAC), 1);
+    else
+        func_80257F9C((UnkKizunaSelf57D90*)((u8*)self + 0xAC), 0);
+}
 
 void CKizunagram_setField39(u8* ptr) {
     if (ptr[0x62] != 0) {

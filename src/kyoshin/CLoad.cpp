@@ -54,9 +54,12 @@ CLoad::CLoad(u8 arg) {
     field_2D = arg;
 }
 
+#pragma push
+#pragma optimize_for_size on
 CLoad::~CLoad() {
     // mMemRegion's destructor runs automatically after the body.
 }
+#pragma pop
 
 // Begin file load request (target us-802b0c40)
 void func_802AE508(CLoad* self) {
@@ -93,11 +96,8 @@ void func_802AE5F0(CLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
         return;
     if (self->field_29 == 0)
         return;
-    else {
-        if (self->field_2A == 0)
-            return;
-        return func_80137038(self->mLayout, drawInfo, 0, 1);
-    }
+    if (self->field_2A != 0)
+        func_80137038(self->mLayout, drawInfo, 0, 1);
 }
 
 // tear down the loaded layout, accessor and mem region (target us-802b0d64)

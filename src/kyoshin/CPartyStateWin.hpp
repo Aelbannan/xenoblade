@@ -506,11 +506,11 @@ namespace cf { class CfObjectMove; }
 // TUs that include both headers. ABI is unchanged.
 extern "C" void func_80043D90(void*);
 extern "C" void* func_80043F18(void*);
-extern "C" void func_800F4A98(void*, u32 type, u32 filter);
-extern "C" void* func_800F6EC0(void*, u32 index);
+extern "C" void func_800F4A98(void*, u32, u32);
+extern "C" void* func_800F6EC0(void*, u32);
 extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(void* objMove);
 extern "C" void func_800BFDE0(void* obj, u32 flag);
-extern "C" void __dt__80043E88(void*, int flags);
+extern "C" void __dt__80043E88(void*, int);
 
 // 3-word name-table read by func_801FB72C's item-filter block (.rodata,
 // retail unmangled). const so MWCC can keep one base register for the three

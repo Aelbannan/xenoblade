@@ -1051,9 +1051,11 @@ bool cf::CActParamAnimGame::func_8005D67C() {
 }
 
 // Mirror of func_8005D67C phrased with <= (retail `cntlzw`/`srwi.` shape).
+// The negated comparison keeps MWCC's dead mfcr/cntlzw capture chain.
 bool cf::CActParamAnimGame::func_8005D6C0() {
     CActParamAnimGameViewBC14* self = reinterpret_cast<CActParamAnimGameViewBC14*>(this);
-    if (self->f4F8 <= self->f508) {
+    bool cond = !(self->f4F8 > self->f508);
+    if (cond) {
         func_8004BC94(this);
         return true;
     }

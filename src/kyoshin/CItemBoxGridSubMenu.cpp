@@ -4,6 +4,7 @@
 #include "kyoshin/CItemBoxGridSubMenu.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFont.hpp"
+extern "C" void func_80137924(void*, void*, void*, void*);
 
 // C-linkage pseudo-imports for this TU (func_80138078__FUl, lbl_eu_805084BC,
 // the lbl_eu_806683xx sdata2 constants, func_801355A0__Fv,
@@ -222,7 +223,17 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
     }
 }
 
-void func_80208760(){}
+// Select one of the three +0x14/+0x18/+0x1C pointers by the sign-extended
+// +0x24 index and forward the pair through func_80137924.
+extern "C" void func_80208760(void* self, void* src) {
+    void* arr[3];
+    arr[0] = *(void**)((u8*)src + 0x14);
+    arr[1] = *(void**)((u8*)src + 0x18);
+    arr[2] = *(void**)((u8*)src + 0x1C);
+    void* sel = arr[(s8)*(u8*)((u8*)src + 0x24)];
+    func_80137924(self, sel, *(void**)((u8*)src + 0x10),
+                  *(void**)((u8*)*(void**)((u8*)src + 8) + 0x10));
+}
 
 void func_802087B8(){}
 
@@ -230,9 +241,23 @@ void func_80208838(CItemBoxGridSubMenu* self) {
     self->mSelectedIdx = -1;
 }
 
-void func_80208844(){}
+void func_80208844(CItemBoxGridSubMenu* self) {
+    if (func_80137444(self->mAnimDefault, 1.0f) != 0) {
+        self->mAnimState = 2;
+        self->mIsOpened = 1;
+    }
+}
 
-void func_80208890(){}
+// When the +0xC sub-object is visible (func_80137510 with the constant),
+// reset the selection bytes (descending store order matches the retail).
+extern "C" void func_80208890(void* self) {
+    extern const f32 lbl_eu_8066831C;
+    if (func_80137510((nw4r::lyt::AnimTransform*)*(void**)((u8*)self + 0xC), lbl_eu_8066831C)) {
+        *((u8*)self + 0x22) = 0;
+        *((u8*)self + 0x21) = 1;
+        *((u8*)self + 0x20) = 0;
+    }
+}
 // retail: if (field_22 == 2) { field_22 = 3; field_21 = 0; tail func_80138078(0xE) }
 extern "C" void func_802083A4(void* self) {
     if (*(u8*)((char*)self + 0x22) == 2) {

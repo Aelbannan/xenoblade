@@ -20,7 +20,7 @@ extern void func_804BC9F4(UNKTYPE* r3, u32 r4);
 const char lbl_eu_80522790[] = "CWorkSystem";
 const char lbl_eu_8052279C[0x7C] =
     "exit wii power off\n\0exit wii reset\n\0CWorkSystemMem\0CWorkSystemCache\0"
-    "CWorkSystemPack\0\x83\x8d\x83O\x83A\x83E\x83g\x82\xc9\x8e\xb8\x94s\x82\xb5"
+    "CWorkSystemPack\0\x83\x8d\x83\x4f\x83\x41\x83\x45\x83\x67\x82\xc9\x8e\xb8\x94\x73\x82\xb5"
     "\x82\xdc\x82\xb5\x82\xbd\0CWorkSystem\0\0\0";
 // data 0x8056B9F0 (0xA0): CWorkSystem vtable; data 0x8056BA90 (0x18): RTTI
 // cast table {IWorkEvent,0},{CWorkThread,0},{0,0}.

@@ -127,7 +127,14 @@ tail:
     self->mpAnimTrans1->SetFrame(lbl_eu_80668628);
 }
 
-void func_8022E204(){}
+// Store the anim index (+0x34), call the anim loader, then bind the loaded
+// frame (+0xB7 offset string) through the +8 layout.
+extern "C" void* func_801394D4(u32);
+extern "C" void func_8022E204(void* self, u16 idx) {
+    *(u16*)((u8*)self + 0x34) = idx;
+    void* anim = func_801394D4(idx);
+    func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)self + 8), lbl_eu_8050A84C + 0xB7, (char*)anim, 0);
+}
 
 extern "C" __declspec(noinline) void func_8022E254(CPresentWin* self) {}
 
@@ -186,9 +193,23 @@ extern "C" u8 func_8022E4FC(CPresentWin* self) { return func_8022E868(self, self
 // retail: lbz r4,0x33(r3); b func_8022E868
 extern "C" u8 func_8022E504(CPresentWin* self) { return func_8022E868(self, self->mField33); }
 
-extern "C" __declspec(noinline) void func_8022E50C(CPresentWin* self){(void)self;}
+extern "C" __declspec(noinline) void func_8022E50C(CPresentWin* self) {
+    if (func_80137444(self->mpAnimTrans0, lbl_eu_8066862C) != 0) {
+        self->mField37 = 2;
+        self->mField38 = 1;
+    }
+}
 
-extern "C" __declspec(noinline) void func_8022E558(CPresentWin* self){(void)self;}
+extern const f32 lbl_eu_8066862C;
+extern "C" __declspec(noinline) void func_8022E558(CPresentWin* self) {
+    if (func_80137510((nw4r::lyt::AnimTransform*)*(void**)((u8*)self + 0xC), lbl_eu_8066862C)) {
+        *((u8*)self + 0x37) = 0;
+        *((u8*)self + 0x38) = 1;
+        *((u8*)self + 0x31) = 0;
+        *((u8*)self + 0x36) = 0;
+        *((u8*)self + 0x30) = 0;
+    }
+}
 
 // Frame-update handler: when animTrans1 finishes, switch to state 2, enable
 // both animations, show the window and reset the two labelled panes.

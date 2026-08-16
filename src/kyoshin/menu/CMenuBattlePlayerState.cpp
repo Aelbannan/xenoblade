@@ -52,7 +52,13 @@ struct CMenuBpsProcessShim {
 };
 
 void func_8010B324(CMenuBattlePlayerStateSlot*);
-void __dt__8010B444(CMenuBattlePlayerStateSlot*, s16);
+extern "C" void* __dt__8010B444(CMenuBattlePlayerStateSlot*, s16);
+extern "C" void __dl__FPv(void*);
+extern "C" void* __dt__8010B444(CMenuBattlePlayerStateSlot* self, s16 del) {
+    if (self && del > 0)
+        __dl__FPv(self);
+    return self;
+}
 extern "C" {
 extern CMenuBattlePlayerState* lbl_eu_80663F48;
 extern u32 lbl_eu_80663E24;

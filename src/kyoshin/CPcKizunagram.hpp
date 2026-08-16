@@ -271,7 +271,7 @@ extern "C" int func_801C4648(void);
 extern "C" u16 func_8013606C(const void*, const void*, u32);
 extern "C" u32 func_8009CF8C(u32);
 extern "C" u32 func_801355BC(void);
-extern "C" void func_80137F88(nw4r::lyt::Pane*, void*);
+extern "C" void func_80137F88(void*, u32);
 extern "C" void func_80137C1C(void*, u32);
 extern "C" void func_8013AB0C(u8*, u8*, int);
 extern "C" int sprintf(char*, const char*, ...);

@@ -66,11 +66,20 @@ extern "C" bool func_8011CD5C() { return lbl_eu_80663FC0 != 0; }
 
 void func_8011CD6C(){}
 
-void func_8011CDF4(){}
+// Gate the quest-log list state: when the help sub-object is idle and the
+// list accepts input, raise the state byte to 2.
+extern "C" void func_8011CDF4(unsigned char* self) {
+    if (isIdle__11CTitleAHelpFv(self + 0x80) && func_80227CCC(self + 0xB8))
+        self[0x2284] = 2;
+}
 
 void func_8011CE44(){}
 
-void func_8011D03C(){}
+// Same gate as func_8011CDF4 but toggles the +0x54 byte to 1.
+extern "C" void func_8011D03C(unsigned char* self) {
+    if (isIdle__11CTitleAHelpFv(self + 0x80) && func_80227CCC(self + 0xB8))
+        self[0x54] = 1;
+}
 
 void func_8011D08C(unsigned char* self)
 {

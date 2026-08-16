@@ -289,11 +289,18 @@ extern "C" __declspec(noinline) CTagProcessorBase::~CTagProcessorBase() {}
 // falls back to the base TagProcessor, a matching tag dispatches to the
 // handler object's Process override (vtable slot 3). The byte offset keeps
 // MWCC's base+offset induction shape (retail: add r8,r7,r6 / addi r6,r6,0xC).
+// Tag-code dispatch for Process: walk the handler table; a null handler
+// falls back to the base TagProcessor, a matching tag dispatches to the
+// handler object's Process override (vtable slot 3). The byte offset keeps
+// MWCC's base+offset induction shape (retail: add r8,r7,r6 / addi r6,r6,0xC).
+#pragma optimize_for_size on  // -O4,s keeps base+offset (retail); -O4,p walks the pointer
 nw4r::ut::TagProcessorBase<wchar_t>::Operation func_80125AB8(
     nw4r::ut::TagProcessorBase<wchar_t>* self, u16 tag,
     nw4r::ut::PrintContext<wchar_t>* ctx) {
-    for (u32 o = 0; ; o += 12) {
-        const TagEntry* e = (const TagEntry*)((const u8*)lbl_eu_8052D478 + o);
+    u32 o = 0;
+    const u8* base = (const u8*)lbl_eu_8052D478;
+    for (;; o += 12) {
+        const TagEntry* e = (const TagEntry*)(base + o);
         if (e->field_04 == 0) {
             return self->TagProcessorBase<wchar_t>::Process(tag, ctx);
         }
@@ -302,17 +309,21 @@ nw4r::ut::TagProcessorBase<wchar_t>::Operation func_80125AB8(
         }
     }
 }
+#pragma optimize_for_size off
 
 
 
 // Tag-code dispatch for CalcRect: walk the handler table; a null handler
 // falls back to the base TagProcessor, a matching tag dispatches to the
 // handler object's CalcRect override (vtable slot 4).
+#pragma optimize_for_size on  // -O4,s keeps base+offset (retail); -O4,p walks the pointer
 nw4r::ut::TagProcessorBase<wchar_t>::Operation func_80125B08(
     nw4r::ut::TagProcessorBase<wchar_t>* self, nw4r::ut::Rect* rect,
     u16 tag, nw4r::ut::PrintContext<wchar_t>* ctx) {
-    for (u32 o = 0; ; o += 12) {
-        const TagEntry* e = (const TagEntry*)((const u8*)lbl_eu_8052D478 + o);
+    u32 o = 0;
+    const u8* base = (const u8*)lbl_eu_8052D478;
+    for (;; o += 12) {
+        const TagEntry* e = (const TagEntry*)(base + o);
         if (e->field_04 == 0) {
             return self->TagProcessorBase<wchar_t>::CalcRect(rect, tag, ctx);
         }
@@ -321,6 +332,7 @@ nw4r::ut::TagProcessorBase<wchar_t>::Operation func_80125B08(
         }
     }
 }
+#pragma optimize_for_size off
 
 extern "C" int defaultProcess(void* self) { return 0; }
 
@@ -1282,7 +1294,16 @@ extern "C" const wchar_t** getContextStrPtr(u8* self) { return (const wchar_t**)
 // so the tiny body must not be folded into call sites.
 extern "C" __declspec(noinline) void addToCharSpace(u8* self, float val) { *(float*)(self + 0xC) = *(float*)(self + 0x4) + val; };
 
-void* func_80127670(void* self) { return *(void**)self; }
+// Fetch the tag chain head and return the first node's list header (4 bytes
+// before the payload). Retail asserts when the chain is empty.
+extern "C" void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+void* func_80127670(void* self) {
+    extern u8 lbl_eu_8052CB40[], lbl_eu_8052CB1C[];
+    void* node = *(void**)self;
+    if (!node)
+        Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
+    return (u8*)node - 4;
+}
 
 // Compare the first u32 of two blocks (used as a tag-identity test).
 // Retail uses the -O4,s addic/subfe setnz idiom; optimize_for_size on
@@ -1598,7 +1619,17 @@ extern "C" void* func_80128A70(void* a, void* b, u8 code, u8* dst) {
 }
 #pragma optimize_for_size off
 
-void func_80128AB8(){}
+// Build a fresh tag-param (mode 8) on the stack, copy it onto the target,
+// set its +1 flag, and return the ret pointer (retail keeps a1/a3 phantom).
+#pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
+extern "C" void* func_80128AB8(u8* a1, TagParam* ret, u8 a3, TagParam* target) {
+    TagParam tmp;
+    func_80125944(&tmp, 8);
+    copyTagParam((u8*)target, (const u8*)&tmp);
+    target->field_01 |= 1;
+    return ret;
+}
+#pragma optimize_for_size off
 
 // Same as func_801289FC but with tag-param code 4.
 #pragma optimize_for_size on

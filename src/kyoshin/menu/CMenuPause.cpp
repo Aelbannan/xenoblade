@@ -3,7 +3,9 @@
 
 #include "kyoshin/menu/CMenuPause.hpp"
 
-extern "C" void __dt__10CMenuPauseFv(void*, int);
+extern "C" void* __dt__10CMenuPauseFv(void*, int);
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+extern "C" void __dl__FPv(void*);
 extern "C" void cbRenderBefore__10CMenuPauseFv(void*);
 
 #include "monolib/device/CDeviceVI.hpp"
@@ -321,13 +323,24 @@ unsigned long CMenuPause::isInitialized() {
     return lbl_eu_806647C8 != NULL;
 }
 
-CMenuPause::~CMenuPause() {
-    if (this != NULL) {
-        mMemRegion.~UnkClass_8045F564();
-        if (this != NULL) {
-            __dt__8CProcessFv((void*)this, 0);
+// Retail dtor shape: free-function form (extern-C mangled name, not the
+// class member) so MWCC emits no implicit vptr re-store, and sub-object
+// dtors called as free functions with the retail flags (-1 member, 0 base)
+// so the member call does not double-emit the implicit member destruction.
+// The duplicate `self != 0` guard reproduces retail's double beq.
+extern "C" void* __dt__10CMenuPauseFv(void* self, int flags) {
+    if (self != 0) {
+        __dt__17UnkClass_8045F564Fv((u8*)self + 100, -1);
+        if (self != 0) {
+            if (self != 0) {
+                __dt__8CProcessFv(self, 0);
+            }
+        }
+        if (flags > 0) {
+            __dl__FPv(self);
         }
     }
+    return self;
 }
 
 unsigned long func_80252538() {

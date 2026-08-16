@@ -11,11 +11,15 @@ void func_8004B9D4(void* self, int a2, int a3, int a4, int a5);
 // Sub-object ctor/dtor stubs (retail func_801FBEB8 / __dt__801FBF0C). Their
 // bodies are separate match targets; they exist here only so the constructor's
 // __construct_array call carries the exact retail reloc names.
-void func_801FBEB8(CModelDispSub* sub) {
-    (void)sub;
+extern "C" void* __ct__Q22cf17CActParamAnimGameFv(void*);
+extern "C" void __dt__Q22cf17CActParamAnimGameFv(void* self, int flag);
+extern "C" void* func_801FBEB8(CModelDispSub* sub) {
+    __ct__Q22cf17CActParamAnimGameFv((u8*)sub + 0xC);
+    __construct_array((CModelDispSub*)((u8*)sub + 0x550), (void (*)(CModelDispSub*))__ct__Q22cf17CActParamAnimGameFv,
+                      (u8* (*)(CModelDispSub*, int))__dt__Q22cf17CActParamAnimGameFv, 0x53C, 2);
+    return sub;
 }
 
-extern "C" void __dt__Q22cf17CActParamAnimGameFv(void* self, int flag);
 extern "C" void __destroy_arr(void*, void*, int, int);
 
 // Sub-object destructor: destroys the two-member CActParamAnimGame array at
@@ -56,7 +60,7 @@ static void ClearSubWords(CModelDispSub* sub, int c1, int c2) {
 CModelDisp::CModelDisp(u8* initParam) {
     mVtbl = lbl_eu_80535390;
     mInitParam = initParam;
-    __construct_array(&mSubs[0], func_801FBEB8, __dt__801FBF0C, 0xff0, 3);
+    __construct_array(&mSubs[0], (void (*)(CModelDispSub*))func_801FBEB8, __dt__801FBF0C, 0xff0, 3);
 
     field_2FD8 = 0;
     field_2FDC = lbl_eu_806681E8;
@@ -86,6 +90,16 @@ CModelDisp::CModelDisp(u8* initParam) {
         }
     }
 }
+
+// Bind the three 0xFF0-strided slot sub-objects (+8 payload) via
+// func_801FC2B4 (retail stmw frame + indexed loop).
+extern "C" void func_801FC2B4(void*, void*);
+#pragma optimize_for_size on  // -O4,s keeps the stmw frame and the rolled loop
+extern "C" void func_801FC0C4(CModelDisp* self) {
+    for (u8 i = 0; i < 3; i++)
+        func_801FC2B4(self, (u8*)self + i * 0xFF0 + 8);
+}
+#pragma optimize_for_size off
 
 u8 func_801FC114(void* self) { return ((CModelDisp*)self)->field_2FE4; }
 

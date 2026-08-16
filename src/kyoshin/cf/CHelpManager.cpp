@@ -6,16 +6,19 @@
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "monolib/util/MemManager.hpp"
 
-cf::CHelpManager::CHelpManager() {
-    // Self-allocating singleton ctor: retail ignores the incoming `this` and
-    // carves the real instance from MEM2, then publishes it to the global.
+// Free-function form (not the member ctor): the retail ignores the incoming
+// `this` and carves the real instance from MEM2 — the member form makes MWCC
+// save the dead `this` in an extra saved register (r28).
+extern "C" void* __ct__Q22cf12CHelpManagerFv(void* ignored) {
+    cf::CHelpListHolder* end;
     cf::CHelpManagerVtblSlot* self = (cf::CHelpManagerVtblSlot*)mtl::MemManager::allocate(
         0x20, mtl::MemManager::getHandleMEM2());
+    cf::CHelpListHolder* p;
     if (self != NULL) {
         // Install the retail interface table by hand.
         self->mVptr = (u8*)lbl_eu_8053911C;
-        cf::CHelpListHolder* p = &self->mListA;
-        cf::CHelpListHolder* const end = &self->mListB + 1;
+        p = &self->mListA;
+        end = &self->mListB + 1;
         do {
             func_802968A8(p);
             p++;
@@ -94,7 +97,7 @@ done:
 
 void func_80295BAC() {
     // One-time "arts learned" hint: fire the popup and mark it seen.
-    if (func_8009CF8C((void*)0x3395) == 0) {
+    if (func_8009CF8C((u32)0x3395) == 0) {
         func_80134D18(0x56, 0, 0);
         func_8009D018(0x3395, 1);
     }
@@ -105,19 +108,19 @@ void func_80295BF4(cf::CHelpManager* self) {
     cf::CHelpManagerTbl* tbl = &lbl_eu_80576D08;
     if (self->mField10 == 3) {
         // bool local: MWCC's -O4,p idiom for the != 0 check (neg/or/srwi).
-        bool isActive = func_8009CF8C((void*)tbl->mHelp1.mOwner) != 0;
+        bool isActive = func_8009CF8C((u32)tbl->mHelp1.mOwner) != 0;
         if (!isActive) {
             cf::CHelpDispatchIface* help = &tbl->mHelp1;
             help->Slot3();
         }
     }
     if (self->mField10 == 5) {
-        bool isActive = func_8009CF8C((void*)tbl->mHelp2.mOwner) != 0;
+        bool isActive = func_8009CF8C((u32)tbl->mHelp2.mOwner) != 0;
         if (!isActive) {
             cf::CHelpDispatchIface* help = &tbl->mHelp2;
             help->Slot3();
         }
-        bool isActive2 = func_8009CF8C((void*)tbl->mHelp3.mOwner) != 0;
+        bool isActive2 = func_8009CF8C((u32)tbl->mHelp3.mOwner) != 0;
         if (!isActive2) {
             cf::CHelpDispatchIface* help = &tbl->mHelp3;
             help->Slot3();
@@ -197,7 +200,7 @@ extern "C" DECOMP_DONT_INLINE void func_80296924(cf::CHelpListHolder* self) {
     for (int i = 0; self->mItems[i] != NULL; i++) {
         // bool local: MWCC's -O4,p idiom for the != 0 check (neg/or/srwi).
         bool isActive = func_8009CF8C(
-            (void*)reinterpret_cast<cf::CHelpDispatchIface*>(self->mItems[i])->mOwner) != 0;
+            (u32)reinterpret_cast<cf::CHelpDispatchIface*>(self->mItems[i])->mOwner) != 0;
         if (!isActive) {
             if (reinterpret_cast<cf::CHelpDispatchIface*>(self->mItems[i])->Slot4() != 0) {
                 reinterpret_cast<cf::CHelpDispatchIface*>(self->mItems[i])->Slot3();

@@ -201,7 +201,7 @@ extern "C" {
 void func_8045F778__17UnkClass_8045F564Fv(UnkClass_8045F564* region);
 void func_8022B7F4(void* syswin);
 void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
-void func_801D20B0(void* cursor, nw4r::lyt::DrawInfo* drawInfo);
+void func_801D20B0(void*, void*);
 int func_8013BE50();
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);

@@ -285,7 +285,7 @@ extern "C" void func_802866E8(CEquipItemBox* box);
 extern "C" int func_8028876C(CEquipItemBox* box);
 extern "C" void func_80286340(CEquipItemBox* box, nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void* func_802052A8(CEquipChange* self);
-extern "C" void func_801D20B0(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void func_801D20B0(void*, void*);
 extern "C" void func_801D4154(CItemBoxInfo* info, nw4r::lyt::DrawInfo* drawInfo);
 
 // CEquipItemBox gate/handler imports used by the equip-change handlers.
@@ -322,11 +322,11 @@ struct CEquipEnumList { u8 _00[0x620]; u32 field_0x620; };
 struct CEquipEnumListSlot { u8 _00[0x4]; void* field_0x4; };
 extern "C" void func_80043D90(void*);
 extern "C" void* func_80043F18(void*);
-extern "C" void func_800F4A98(void*, u32 type, u32 filter);
-extern "C" void* func_800F6EC0(void*, u32 index);
+extern "C" void func_800F4A98(void*, u32, u32);
+extern "C" void* func_800F6EC0(void*, u32);
 extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(void* objMove);
 extern "C" void func_800BFDE0(void* obj, u32 flag);
-extern "C" void __dt__80043E88(void*, int flags);
+extern "C" void __dt__80043E88(void*, int);
 extern "C" int func_80287D58(CEquipItemBox* box);
 extern "C" int func_802882A4(CEquipItemBox* box);
 extern "C" void func_802873D8(CEquipItemBox* box);

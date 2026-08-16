@@ -2862,11 +2862,11 @@ void func_801CB38C(void* self) {
     if (!p[0x52c]) func_80138078__FUl(6);
 }
 
-// Clear a 14-byte region (list/array init).
+// Clear a 14-byte region (list/array init). Retail uses memset for the
+// 12-byte block at +0x62, then two byte clears.
 void func_801CB480(void* self) {
-    int i;
     u8* p = (u8*)self;
-    for (i = 0; i < 12; i++) p[0x62 + i] = 0;
+    memset(p + 0x62, 0, 12);
     p[0x6e] = 0;
     p[0x6f] = 0;
 }

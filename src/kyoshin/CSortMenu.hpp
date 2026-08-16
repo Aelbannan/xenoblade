@@ -112,7 +112,7 @@ extern "C" void func_801F34F4(void*);
 extern "C" void func_801F3540(void*);
 extern "C" void func_801F35B0(void*, void*);
 extern "C" void func_801F35DC(void*);
-extern "C" u8 CScrollBar_isVisible(void*);
+extern "C" int CScrollBar_isVisible(void*);
 extern "C" void func_801F3670(void*, void*);
 extern "C" void func_801F36BC(void*, int, int);
 extern "C" void func_801F367C(void*);

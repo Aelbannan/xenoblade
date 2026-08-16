@@ -15,9 +15,11 @@ u32 lbl_eu_8056BB60[9] = {
  * {&lbl_eu_806635D8, 0, &__dt__27TChildListHeader<8CProcess>Fv}) — the dtor
  * reloc name cannot be written in C++ source (MWCC rejects '<' in extern "C"
  * ids and &T::~T). MWCC emits the equivalent weak __vt__27TChildListHeader
- * <8CProcess> (0xC, .data, dtor reloc correct) in this TU; coordinator must
- * rename that to lbl_eu_8056BB84 and its RTTI to lbl_eu_806635D8, or retarget
- * the vtable's dtor slot. Not faked. */
+ * <8CProcess> (0xC, .data @+0x24: {&__RTTI__27TChildListHeader<8CProcess>, 0,
+ * &__dt__...Fv}) in this TU; coordinator must rename it to lbl_eu_8056BB84,
+ * retarget its [0] reloc -> lbl_eu_806635D8 (this TU already defines that
+ * typeinfo; the weak __RTTI__27TChildListHeader<8CProcess> + its @2016 name
+ * string must be dropped). Not faked. */
 
 // Retail sbss flag lbl_eu_80665628 (8-byte object; byte 0 = sIsInitialized) - blob monolibdata1d dissolve
 u8 lbl_eu_80665628[8];

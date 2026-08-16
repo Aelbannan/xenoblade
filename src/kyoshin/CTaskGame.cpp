@@ -283,12 +283,28 @@ extern "C" __declspec(noinline) void* func_80043310() {
     for (u32 i = 0; i < 4; i++) {
         if (slots->busy[i] == 0) {
             slots->busy[i] = 1;
-            return reinterpret_cast<void*>(slots->objs[i]);
+            // MWCC does not CSE the global reload (retail lwz lbl again).
+            return reinterpret_cast<void*>(
+                reinterpret_cast<CTaskGameObjSlots*>(lbl_eu_80663D18)->objs[i]);
         }
     }
     return nullptr;
 }
-void CTaskGame_stub_8004335C(){}
+// Retail func_8004335C: find the registry slot whose object matches the
+// handle and clear its busy flag (two induction vars: slot byte index and
+// u32 offset). Early-returns when the handle is null.
+#pragma optimize_for_size on  // -O4,s keeps base+offset induction (retail add r5,r6,r4)
+extern "C" void func_8004335C(void* obj) {
+    if (obj == 0) return;
+    CTaskGameObjSlots* slots = reinterpret_cast<CTaskGameObjSlots*>(lbl_eu_80663D18);
+    for (u32 i = 0; i < 4; i++) {
+        if ((void*)slots->objs[i] == obj) {
+            slots->busy[i] = 0;
+            return;
+        }
+    }
+}
+#pragma optimize_for_size off
 bool CTaskGame_stubReturnTrue_800433A8() { return true; }
 void CTaskGame::setFlag_200(bool enabled, unsigned int mode) {
     unsigned int flags = unk68;

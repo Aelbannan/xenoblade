@@ -104,7 +104,10 @@ CFade::CFade() : CFadeVtblBase(), mMemRegion() {
 }
 
 // Target 7: destructor (member region + conditional delete are compiler-emitted).
+#pragma push
+#pragma optimize_for_size on
 CFade::~CFade() {}
+#pragma pop
 
 // Target 4: start an async read of the fade layout arc.
 void CFade::func_8024439C() {

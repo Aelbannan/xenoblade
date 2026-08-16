@@ -106,9 +106,46 @@ void cf::CfObjectMap::func_800B9AB4() {
     func_801A2C94__Q22cf12CTaskCullingFv();
 }
 
-void cf::CfObjectMap::func_800B9B78() {}
+// Retail symbol is fake-Fv (MWCC_REFERENCE §fake-Fv): the splitter mangled
+// no-args but the body reads r4 as a genuine input (used 3x: func_804838DC
+// flag, the field_100 |=4 / &=~2 select, and the vfn6C boolean). Defined as
+// extern "C" with the explicit Fv-mangled name so the symbol matches retail.
+extern "C" void func_800B9B78__Q22cf11CfObjectMapFv(cf::CfObjectMap* self, u32 arg) {
+    struct V {
+        u8 _00[0x6C];
+        u32 field_6C;      // 0x6C
+        u8 _70[0x98 - 0x70];
+        void* mSub98;      // 0x98
+        u8 _9C[0x100 - 0x9C];
+        u32 field_100;     // 0x100
+    };
+    V* v = reinterpret_cast<V*>(self);
+    if (v->mSub98) {
+        func_804838DC((cf::CfObjectModelSub98*)v->mSub98, arg);
+        if (v->field_6C & 0x8000) {
+            if (arg) {
+                v->field_100 |= 4;
+            } else {
+                v->field_100 = DECOMP_PPC_RLWINM(v->field_100, 0, 30, 28);
+            }
+        }
+        if (self->field_0x2F3C) {
+            UnkMapFxObj* fx = static_cast<UnkMapFxObj*>(self->field_0x2F3C);
+            fx->vfunc_0x6C(arg == 0);
+        }
+    }
+}
 
-void func_800B9C14(){}
+extern "C" void* func_8047BC54__17UnkClass_8047BB54Fv(void*, void*);
+// When the +0x6C bit-15 flag is set, refresh the region pairing through the
+// shared scene-view globals and re-bind the +0xF0 sub-object's +0x9C offset.
+extern "C" void func_800B9C14(void* self) {
+    if (*(u32*)((u8*)self + 0x6C) & 0x8000) {
+        extern void* func_8049626C(void*, void*);
+        void* r = func_8049626C((void*)lbl_eu_80663E14, (void*)lbl_eu_80663E10);
+        func_8047BC54__17UnkClass_8047BB54Fv((u8*)self + 0xF0, (u8*)r + 0x9C);
+    }
+}
 
 void func_800B9C64__Q22cf11CfObjectMapFv(void* self) {
     *(unsigned short*)((char*)self + 0x8e) = 0;

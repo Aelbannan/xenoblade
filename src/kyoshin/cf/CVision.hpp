@@ -312,7 +312,7 @@ namespace cf{
     };
 
     //size: 0x2623C
-    class CVision : public IObjectInfo {
+    class __declspec(novtable) CVision : public IObjectInfo {
     public:
         CVision();
         virtual ~CVision();

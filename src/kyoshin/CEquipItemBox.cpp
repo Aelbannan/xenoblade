@@ -1189,7 +1189,9 @@ extern "C" __declspec(noinline) CEIBPageCur* __ct__CEIBPageCur(CEIBPageCur* self
 // noinline: retail callers (OnFileEvent) emit a `bl` to __ct__CEIBPageCur.
 
 // Destructor clone: free object memory when this is non-null and delete flag set.
-void* __dt__80285C44(void* self, int mode) {
+// noinline: the dtor body's flag test is constant-foldable at inlined call
+// sites (mode -1) and would be elided entirely — the retail keeps the `bl`.
+extern "C" __declspec(noinline) void* __dt__80285C44(void* self, int mode) {
     if (self && mode > 0) {
         __dl__FPv(self);
     }
@@ -1226,6 +1228,8 @@ extern "C" void __ct__CEquipItemBox(){}
 // regions. MWCC supplies the this-null guard, the member-dtor dispatch and
 // the flags>0 operator-delete tail from the dtor shape itself.
 CEquipItemBox::~CEquipItemBox() {
+#pragma push
+#pragma optimize_for_size on
     __dt__7CSysWinFv(&_padSysWin2[0], -1);
     __dt__7CSysWinFv(&_padSysWin1[0], -1);
     __dt__9CSortMenuFv(&_padSortMenu[0], -1);
@@ -2717,11 +2721,11 @@ extern "C" void func_8028C280(CEquipItemBox* self, int a, int b) {
                     sprintf(buf, base + 0x6f4, i1);
                     func_80136A1C(self->field_38, buf, buf40, 0);
                 }
-                char* str2 = func_8013639C(g, base + 0x36, kind);
+                char* str2 = func_8013639C((const void*)g, base + 0x36, kind);
                 sprintf(buf40, base + 0x3b, str2, name);
                 storeByte = (u8)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(item))->vf08(item);
                 storeKey = (s16)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(item))->vf90(item);
-                func_80137F88(pane, icon);
+                func_80137F88(pane, (unsigned long)icon);
             } else {
                 CItemInstance* entry = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances((CItemInstance*)b))
                                            ->vf2C((CItemInstance*)b, (u8)idx);
@@ -2769,11 +2773,11 @@ extern "C" void func_8028C280(CEquipItemBox* self, int a, int b) {
                         sprintf(buf, base + 0x6f4, i1);
                         func_80136A1C(self->field_38, buf, buf40, 0);
                     }
-                    char* str4 = func_8013639C(g2, base + 0x36, kind2);
+                    char* str4 = func_8013639C((const void*)g2, base + 0x36, kind2);
                     sprintf(buf40, base + 0x3b, str4, name2);
                     storeByte = (u8)bits3;
                     storeKey = (s16)((entry->word >> 11) & 0x7FF);
-                    func_80137F88(pane, icon);
+                    func_80137F88(pane, (unsigned long)icon);
                 } else {
                     icon = self->field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x65a, 0);
                     sprintf(buf, base + 0x6f4, i1);
@@ -2781,7 +2785,7 @@ extern "C" void func_8028C280(CEquipItemBox* self, int a, int b) {
                     sprintf(buf40, base + 0x2a, func_80136190(base + 0x2d, base + 0x36, 0x2a));
                     sprintf(buf, base + 0x705, i1);
                     func_80136A1C(self->field_38, buf, buf40, 0);
-                    func_80137F88(pane, icon);
+                    func_80137F88(pane, (unsigned long)icon);
                 }
             }
         }

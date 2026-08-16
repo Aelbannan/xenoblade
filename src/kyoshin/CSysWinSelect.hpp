@@ -151,7 +151,7 @@ CSysWinSelect* __dt__13CSysWinSelectFv(CSysWinSelect* _this, int flags);
 void func_801250FC(CSysWinSelect* self);  // C-linkage: retail symbol is unmangled
 void func_8022B7F4(void* syswin);
 void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);
-void func_801D20B0(void* cursor, nw4r::lyt::DrawInfo* drawInfo);
+void func_801D20B0(void*, void*);
 void func_80137250__FPQ34nw4r3lyt8DrawInfo(nw4r::lyt::DrawInfo* drawInfo);
 void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);

@@ -30,7 +30,7 @@ extern f32 lbl_eu_80667650;
 extern "C" void __ct__cf_CREvtMem(cf::CREvtMem* self) {
     f32 ps = lbl_eu_80667650;
     self->flags = 0;
-    self->vtable = (void*)lbl_eu_80530A30;
+    self->vtable = &lbl_eu_80530A30[0];
     self->field_08 = 0;
     self->field_0C = 0;
     self->arenaStart = 0;

@@ -198,10 +198,14 @@ void func_8045283C__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
     if (lbl_eu_80665678 == 0) return;
     if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
 
-    CDeviceFontLayer* layer = 0;
-    _reslist_node<CDeviceFontLayer*>* startNode =
-        lbl_eu_80665678->mChildren.mStartNodePtr;
+    // Volatile re-read (same as func_8045271C): retail reloads the singleton
+    // before the children walk; the volatile deref stops the CSE into the
+    // null-check load.
+    CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
+
+    _reslist_node<CDeviceFontLayer*>* startNode = font->mChildren.mStartNodePtr;
     _reslist_node<CDeviceFontLayer*>* node = startNode->mNext;
+    CDeviceFontLayer* layer;
     while (node != startNode) {
         CDeviceFontLayer* child = node->mItem;
         CDeviceFontLayer* candidate;
@@ -215,10 +219,12 @@ void func_8045283C__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
         }
         if (candidate != 0 && candidate->field_0x1F8 == fontId) {
             layer = candidate;
-            break;
+            goto found;
         }
         node = node->mNext;
     }
+    layer = 0;
+found:
     if (layer == 0) return;
     layer->func_80453FF0();
 }

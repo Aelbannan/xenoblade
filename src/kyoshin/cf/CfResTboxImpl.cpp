@@ -20,9 +20,10 @@ void* __ct__cf_CfResTboxImpl(CfResTboxImpl* self, void* parent) {
 int func_801F8E70() { return 256; }
 
 // us-801fab34 - open test: dispatch the +0x14 vtable slot and negate the
-// result (MWCC bool: cntlzw/srwi/neg on the slot return).
-bool func_801F8E78(CfResTboxImpl* self) {
-    return -(u32)(((CfResTboxVtIf*)self)->_v014() == 0);
+// bool result (retail ends at the raw neg; an int return keeps the setnz
+// off).
+int func_801F8E78(CfResTboxImpl* self) {
+    return -(int)!((CfResTboxVtIf*)self)->_v014();
 }
 
 // us-801fab6c - open/activate the textbox resource. Runs the parent's

@@ -11,6 +11,11 @@ f32 AnmObjChrRes::GetFrame() const {
     return GetFrm();
 }
 
+// Out-of-line dtor: the retail emits the three nested null-guards and the
+// G3dObj base-dtor call (delete flag 0); the inline header body would
+// short-circuit the chain.
+nw4r::g3d::AnmObjChrRes::~AnmObjChrRes() {}
+
 void AnmObjChrBlend::SetWeight(int idx, f32 weight) {
     mpWeightArray[idx] = weight;
 }
@@ -291,6 +296,24 @@ void Construct__Q34nw4r3g3d12AnmObjChrResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmCh
 
 namespace nw4r {
 namespace g3d {
+
+// G3dProc: 0x10002 stores the info pointer, 0x10004 clears it, task 8
+// tail-dispatches the base vtable slot 0x24.
+void AnmObjChrRes::G3dProc(u32 task, u32 param, void* pInfo) {
+    if (task == 0x10002) {
+        *(u32*)((u8*)this + 4) = (u32)pInfo;
+        return;
+    }
+    if (task > 0x10002) {
+        if (task == 0x10004)
+            *(u32*)((u8*)this + 4) = 0;
+        return;
+    }
+    if (task == 8) {
+        ((void (*)(void*, u32, u32, void*))(*(void**)((u8*)*(void**)((u8*)this) + 36)))(this, task, param, pInfo);
+        return;
+    }
+}
 
 void AnmObjChrRes::SetFrame(f32 frame) {
     SetFrm(frame);

@@ -5,6 +5,10 @@
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/core/CViewRoot.hpp"
 
+// Retail SDA2 pool constants (monolibdata2-owned; named refs keep the lfs
+// relocs pinned and avoid a local .sdata2 pool).
+extern "C" const f32 lbl_eu_8066AB78; // 0.0f (AB80/AB90 in the header)
+
 // --- Scene sink: owned CScn (IScnRender callback) -------------------------
 
 // Publishes the current fade color pointer (address of mCurrentColor).
@@ -21,18 +25,18 @@ CScnFadeMan::CScnFadeMan(CScn* scene) {
     // the ctor vptr-store relocs name the retail blob instead of a compiler
     // __vt__ symbol.
     m_vtable = lbl_eu_8056EB50;
-    mCurrentColor.r = 0.0f;
-    mCurrentColor.g = 0.0f;
-    mCurrentColor.b = 0.0f;
-    mCurrentColor.a = 0.0f;
-    mStartColor.r = 0.0f;
-    mStartColor.g = 0.0f;
-    mStartColor.b = 0.0f;
-    mStartColor.a = 0.0f;
-    mDestColor.r = 0.0f;
-    mDestColor.g = 0.0f;
-    mDestColor.b = 0.0f;
-    mDestColor.a = 0.0f;
+    mCurrentColor.r = lbl_eu_8066AB78;
+    mCurrentColor.g = lbl_eu_8066AB78;
+    mCurrentColor.b = lbl_eu_8066AB78;
+    mCurrentColor.a = lbl_eu_8066AB78;
+    mStartColor.r = lbl_eu_8066AB78;
+    mStartColor.g = lbl_eu_8066AB78;
+    mStartColor.b = lbl_eu_8066AB78;
+    mStartColor.a = lbl_eu_8066AB78;
+    mDestColor.r = lbl_eu_8066AB78;
+    mDestColor.g = lbl_eu_8066AB78;
+    mDestColor.b = lbl_eu_8066AB78;
+    mDestColor.a = lbl_eu_8066AB78;
     mCurrentFrame = 0;
     mFrameCount = 0;
     // Non-virtual class (see hpp) - explicit IScnRender* conversion for the
@@ -67,16 +71,16 @@ void CScnFadeMan::update() {
         ((f32)(mCurrentFrame % 256) * lbl_eu_8066AB7C + (f32)(mCurrentFrame / 256)) /
         ((f32)(mFrameCount % 256) * lbl_eu_8066AB7C + (f32)(mFrameCount / 256));
     // Interpolate from mStartColor toward mDestColor, writing mCurrentColor.
-    mCurrentColor.r = mStartColor.r * prog + mDestColor.r * (1.0f - prog);
-    mCurrentColor.g = mStartColor.g * prog + mDestColor.g * (1.0f - prog);
-    mCurrentColor.b = mStartColor.b * prog + mDestColor.b * (1.0f - prog);
-    mCurrentColor.a = mStartColor.a * prog + mDestColor.a * (1.0f - prog);
+    mCurrentColor.r = mStartColor.r * prog + mDestColor.r * (lbl_eu_8066AB80 - prog);
+    mCurrentColor.g = mStartColor.g * prog + mDestColor.g * (lbl_eu_8066AB80 - prog);
+    mCurrentColor.b = mStartColor.b * prog + mDestColor.b * (lbl_eu_8066AB80 - prog);
+    mCurrentColor.a = mStartColor.a * prog + mDestColor.a * (lbl_eu_8066AB80 - prog);
 }
 
 // --- cbRenderBefore ---------------------------------------------------------
 
 void CScnFadeMan::cbRenderBefore() {
-    if (mCurrentColor.a == 0.0f) {
+    if (mCurrentColor.a == lbl_eu_8066AB78) {
         return;
     }
     CDeviceGX::getCacheInstance()->func_8044BE38();
@@ -99,7 +103,7 @@ void CScnFadeMan::cbRenderBefore() {
 
 void func_8049C72C(CScnFadeMan* self, u32 count, const ml::CCol4* src) {
     if (CDeviceVI::isTvFormatPal() && count > 1) {
-        count = (u32)((f32)count / 1.2f);
+        count = (u32)((f32)count / lbl_eu_8066AB90);
     }
     self->mStartColor = self->mCurrentColor;
     self->mDestColor = *src;

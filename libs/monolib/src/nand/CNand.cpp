@@ -37,10 +37,16 @@ struct CNand {
 extern "C" {
 void __dl__FPv(void*);
 
-// Shared data objects (retail linker names).
-extern u8 lbl_eu_8056FD48[];   // .data 0x10  callback table stored in mTable
-extern u8 lbl_eu_805245B0[];   // .rodata 0x11 path/string buffer
+// Foreign data labels referenced by the CNand/CNRequest vtables.
+extern u32 lbl_eu_80663B58;    // RTTI base-list (CNand)
+extern u32 lbl_eu_805245E8;    // .rodata RTTI name string (CNand)
+extern u32 lbl_eu_8066B228;    // foreign constant (CNRequest)
 extern u8 lbl_eu_8065FD00[];   // .bss 0x130  the CNand singleton
+
+// Retail deleting destructors (separate C-linkage identifiers, no clash with
+// the C++ members). Forward-declared so the vtables below can reference them.
+extern void* __dt__5CNandFv(CNand* self, int deleting);
+extern void* __dt__9CNRequestFv(CNRequest* self, int deleting);
 
 // CNRequest constructor callback, defined in the CNReqtaskSave unit.
 void __ct__CNRequest(void* self);
@@ -56,6 +62,30 @@ int func_804DAC70(CNRequest* req, u32 a1, u32 a2, u32 a3, u8 flag);
 int func_804DACAC(CNRequest* req, u32 a1, u32 a2);
 int func_eu_804DEF20(CNRequest* req, void* buf, u32 size, u32 a3);
 }
+
+// === .rodata size=0x24 align=8 ===
+extern "C" __declspec(align(8)) const char lbl_eu_805245B0[24] = {
+    0x73,0x68,0x61,0x72,0x65,0x00,0x62,0x61,0x6E,0x6E,0x65,0x72,0x2E,0x62,0x69,0x6E,
+    0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+extern "C" __declspec(align(8)) const char lbl_eu_805245C8[12] = {
+    0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x00, 0x00,0x00,
+};
+
+// === .sdata size=0x10 align=8 ===
+// RTTI locators: {name-ptr, base-list}.
+extern "C" u32 lbl_eu_80663B78[2] = { (u32)&lbl_eu_805245E8, 0x00000000 };
+extern "C" u32 lbl_eu_80663B80[2] = { (u32)&lbl_eu_8066B228, 0x00000000 };
+
+// === .data size=0x20 align=8 ===
+// CNand vtable (16B): typeinfo locator + dtor.
+extern "C" u32 lbl_eu_8056FD48[4] = {
+    (u32)&lbl_eu_80663B58, 0x00000000, (u32)&__dt__5CNandFv, 0x00000000,
+};
+// CNRequest vtable (16B): typeinfo locator + dtor.
+extern "C" u32 lbl_eu_8056FD58[4] = {
+    (u32)&lbl_eu_80663B78, 0x00000000, (u32)&__dt__9CNRequestFv, 0x00000000,
+};
 
 // --- destructors ----------------------------------------------------------
 
@@ -147,7 +177,7 @@ extern "C" int func_804DA29C(CNand* self, u32 a1, u32 a2, u32 a3, u32 a4, u32 a5
         if (req == nullptr) {
             return 0;
         }
-        if (func_eu_804DEF20(req, lbl_eu_805245B0, 0x34, 0) == 0) {
+        if (func_eu_804DEF20(req, (void*)lbl_eu_805245B0, 0x34, 0) == 0) {
             return 0;
         }
     }

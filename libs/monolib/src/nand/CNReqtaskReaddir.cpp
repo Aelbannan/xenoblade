@@ -16,8 +16,7 @@ struct CNReqtaskReaddirData;  // defined below; forward decl for the extern bloc
 // Retail linker names referenced by this unit (C linkage so the emitted
 // symbols match the stripped retail names rather than C++ manglings).
 extern "C" {
-    extern CNReqtaskReaddirVtbl* lbl_eu_806659F0; // installed task vtable pointer
-    extern char lbl_eu_8056FDA8[];         // task vtable data - array type avoids sda21
+    extern u32 lbl_eu_806659F0[2]; // installed task vtable pointer (8B retail slot)
     extern u8  lbl_eu_806659D0;            // global NAND "busy" flag
     extern s32 lbl_eu_806659D4;            // global NAND result/error latch
 
@@ -39,6 +38,36 @@ struct CNReqtaskReaddirData {
     u8   mState;  // +0x0D
 };
 
+// === .rodata size=0x18 align=8 ===
+extern "C" __declspec(align(8)) const char lbl_eu_80524620[24] = {
+    0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x52,0x65,0x61,0x64,0x64,0x69,0x72,
+    0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+
+// Foreign labels referenced by the task vtable / RTTI locator.
+extern "C" u32 lbl_eu_80663B70;   // .sdata foreign base-list (CWorkSystemCache)
+extern "C" void func_804DA4CC(); // foreign task helper
+// In-TU helper forward decl (defined below).
+extern "C" s32 func_804DB114(CNReqtaskReaddirVtbl* vtable_ptr, CNReqtaskReaddirData* d);
+
+// === .sdata size=0x8 align=8 ===
+// RTTI locator: {name-ptr, base-list} (forward-decl of the .data tail below).
+extern "C" u32 lbl_eu_8056FDB8[4];
+extern "C" u32 lbl_eu_80663B98[2] = { (u32)&lbl_eu_80524620, (u32)&lbl_eu_8056FDB8 };
+
+// === .data size=0x20 align=8 ===
+// Task vtable (16B).
+extern "C" u32 lbl_eu_8056FDA8[4] = {
+    (u32)&lbl_eu_80663B98, 0x00000000, (u32)&func_804DB114, (u32)&func_804DA4CC,
+};
+// Base-list tail (16B).
+extern "C" u32 lbl_eu_8056FDB8[4] = {
+    (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000,
+};
+
+// === .sbss size=0x8 align=8 (zero-fill) ===
+extern "C" u32 lbl_eu_806659F0[2] = {0, 0};
+
 // us-804df3b8: func_804DB0F0
 // Configures the CNReqtaskReaddir sub-task: records the entry buffer, max count,
 // directory handle and type filter, resets the async state, clears the entry
@@ -51,7 +80,7 @@ extern "C" CNReqtaskReaddirVtbl** func_804DB0F0(CNReqtaskReaddirData* d, u32* en
     d->mState = 0;
     *(u8*)entries = 0;
     *dir = 0;
-    return &lbl_eu_806659F0;
+    return (CNReqtaskReaddirVtbl**)&lbl_eu_806659F0;
 }
 
 // us-804df3e0: func_804DB114
@@ -130,5 +159,5 @@ extern "C" __declspec(noinline) void func_804DB23C(void* dest) {
     *(void**)dest = (void*)lbl_eu_8056FDA8;
 }
 extern "C" __declspec(noinline) void sinit_804DB228() {
-    func_804DB23C(&lbl_eu_806659F0);
+    func_804DB23C((void*)&lbl_eu_806659F0);
 }

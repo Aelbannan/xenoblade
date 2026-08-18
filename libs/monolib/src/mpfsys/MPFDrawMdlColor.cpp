@@ -104,14 +104,60 @@ void func_80474F54__Q26mpfsys17UnkClass_80471EC8Fv(void);
 
 } // extern "C"
 
+// Foreign base-list label referenced by both param blocks (MPFDrawBillboard).
+extern "C" u32 lbl_eu_80663870;
+// Forward decls of the in-TU draw helpers referenced by the dispatch tables.
+extern "C" void func_80479894__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list);
+extern "C" void func_80479A1C__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list);
+extern "C" void func_80479BA0__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list);
+extern "C" void func_80479D40__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list);
+
+// === .rodata size=0x38 align=8 ===
+extern "C" __declspec(align(8)) const char lbl_eu_80523DC8[24] = {
+    0x6D,0x70,0x66,0x73,0x79,0x73,0x3A,0x3A,0x4D,0x50,0x46,0x44,0x72,0x61,0x77,0x4D,
+    0x64,0x6C,0x43,0x6F,0x6C,0x6F,0x72,0x00,
+};
+extern "C" __declspec(align(8)) const char lbl_eu_80523DE0[32] = {
+    0x6D,0x70,0x66,0x73,0x79,0x73,0x3A,0x3A,0x4D,0x50,0x46,0x44,0x72,0x61,0x77,0x4D,
+    0x64,0x6C,0x4E,0x6F,0x43,0x6F,0x6C,0x6F,0x72,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,
+};
+
+// === .sdata size=0x10 align=8 ===
+// RTTI locators: {name-ptr, base-list-in-data}.
+extern "C" u32 lbl_eu_8056DBD0[4];
+extern "C" u32 lbl_eu_8056DBF0[4];
+extern "C" u32 lbl_eu_80663878[2] = { (u32)&lbl_eu_80523DC8, (u32)&lbl_eu_8056DBD0 };
+extern "C" u32 lbl_eu_80663880[2] = { (u32)&lbl_eu_80523DE0, (u32)&lbl_eu_8056DBF0 };
+
+// === .data size=0x40 align=8 ===
+// MPFDrawMdlColor dispatch table (16B).
+extern "C" u32 lbl_eu_8056DBC0[4] = {
+    (u32)&lbl_eu_80663878, 0x00000000, (u32)&func_80479BA0__Q26mpfsys15MPFDrawMdlColorFv, (u32)&func_80479D40__Q26mpfsys15MPFDrawMdlColorFv,
+};
+// MPFDrawMdlColor base-list tail (16B).
+extern "C" u32 lbl_eu_8056DBD0[4] = {
+    (u32)&lbl_eu_80663870, 0x00000000, 0x00000000, 0x00000000,
+};
+// MPFDrawMdlNoColor dispatch table (16B).
+extern "C" u32 lbl_eu_8056DBE0[4] = {
+    (u32)&lbl_eu_80663880, 0x00000000, (u32)&func_80479894__Q26mpfsys17MPFDrawMdlNoColorFv, (u32)&func_80479A1C__Q26mpfsys17MPFDrawMdlNoColorFv,
+};
+// MPFDrawMdlNoColor base-list tail (16B).
+extern "C" u32 lbl_eu_8056DBF0[4] = {
+    (u32)&lbl_eu_80663870, 0x00000000, 0x00000000, 0x00000000,
+};
+
+// === .sbss size=0x8 align=8 (zero-fill) ===
+extern "C" s8 lbl_eu_80665898 = 0;
+extern "C" mpfsys::MPFDrawMdlColor* lbl_eu_8066589C = 0;
+
 // Instance body, defined by monolibdata2 (.data, 0x10 bytes).
-extern mpfsys::MPFDrawMdlColor lbl_eu_8056DBC0;
 
 namespace mpfsys {
 
 MPFDrawMdlColor* MPFDrawMdlColor::getInstance(){
     if(!lbl_eu_80665898){
-        lbl_eu_8066589C = &lbl_eu_8056DBC0;
+        lbl_eu_8066589C = (mpfsys::MPFDrawMdlColor*)lbl_eu_8056DBC0;
         lbl_eu_80665898 = 1;
     }
     return (mpfsys::MPFDrawMdlColor*)&lbl_eu_8066589C;

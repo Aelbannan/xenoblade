@@ -11395,3 +11395,61 @@ Table-walk dispatch loops (`for (u32 o = 0; ; o += 12) { TagEntry* e = (const u8
 - **Dead reads as call args**: the retail's "unused" loads (func_80208760's m10 and m8->m10)
   are the LAST TWO ARGS of the call — MWCC drops standalone dead/volatile reads, so route
   them through the call itself.
+
+## monolibdata2 data dissolve: reloc-name init + zero-fill forceactive recipe
+
+Dissolving the monolibdata2 blob into its owning TUs (libs/monolib/src/) so
+`tools/coop/run.py data diff <unit>` returns MATCH. The data diff does NOT
+rebuild the object — `touch <src>` then `tools/coop/hexdiff.py <unit>
+--symbol <s>` (or `--list`) to rebuild `build/us/src/<unit>.o` first.
+
+Pattern proven across CScnBloom, CScnFrame, CScnItemId, CSchedule,
+code_804F0258 (all MATCH):
+
+- **Reloc slots** (4-byte aligned, `add=0`) → emit `(u32)&<relocname>` and
+  declare `extern "C" u32 <relocname>;`. This works for BOTH mangled C++
+  member names (`__dt__9CScnFrameFv`, `wkUpdate__14CDeviceFileCriFv`) AND
+  plain `func_804XXXX`: the identifier is a literal C-linkage symbol
+  separate from any same-named C++ member, so no clash. The reloc NAME in the
+  emitted .o equals the literal declared name — that is all the gate compares.
+- **Raw non-reloc words** → big-endian literal `0x%08X`
+  (`int.from_bytes(b[w:w+4],'big')`). Mind endianness (0x48000000 vs
+  0x00000048).
+- **.rodata** → `extern "C" __declspec(align(N)) const char <name>[size] =
+  {0x.., ...}` (>8B forces .rodata).
+- **.bss/.sbss zero-fill**: define named globals (u32 for 4B, u64 for 8B,
+  u8[] otherwise). UNUSED globals get dead-stripped → wrap in
+  `DECOMP_FORCEACTIVE(tag, sym1, sym2, ...)` (`#include <decomp.h>`). MWCC
+  4-aligns standalone sbss globals even `u8[6]` → merge a sub-word tail
+  (e.g. 1+1+6) into one `u8[8]` to hit the exact section size.
+- **Forward-decl** any in-TU `extern "C"` function referenced before its
+  definition (signatures must match the later def, else redeclare error).
+- **Header conflicts**: if a shared header declares `extern char lbl_X[];`
+  and the init needs `extern "C" u32 lbl_X[4] = {...}`, change the header decl
+  to `extern "C" u32 lbl_X[];` and fix usages with casts
+  (`mTablePtr = (u8*)lbl_X;`) — only if the symbol isn't used cross-unit with
+  the old type (grep first).
+- **RTTI .sdata locator** `{(u32)&rodata_name, 0}` is often OWNED by the same
+  unit (check the plan), not foreign — define it, don't just extern it.
+- **Section align**: retail .data/.sdata/.rodata align = 8 for all slice units
+  EXCEPT UnkClass_8046368C (.data align 4); MWCC default .data align 8 matches
+  retail 8.
+
+Blockers needing `UNIT_RULES` postprocess (tools/postprocess_reloc_names.py;
+do NOT edit tools, report as blockers):
+
+- **Jumptable-addend units** (CDrawGX, CDeviceFileCri, code_804CC2B8,
+  UnkClass_80460C34): `func+addend` relocs; MWCC drops `+addend` in const
+  initializers (CTaskManager UNIT_RULES note) → need `addend_patches`.
+- **Function-float-pool stray .sdata2** (retail 0, decomp>0 from matched
+  function bodies using float literals like 0.0f): CScnFadeMan, CScnRoot,
+  UnkClass_8047E110, UnkClass_8046368C, code_804B59C8, CERand, code_804CC2B8,
+  CLibCriStreamingPlay — function-matching artifacts, not data-definition.
+- **UnkClass_8046368C** also has .data align 4 vs MWCC 8.
+- **Over-defined units** needing existing-def reduction: code_8047CA88
+  (.bss 0x68 vs 0x28), MPFDrawBillLayTex (.bss 0x10 vs 0), and
+  CScnItemPool/CERand/CLibCriStreamingPlay/CLibLayout have pre-existing
+  partial/wrong data defs.
+
+Constraints: `.venv/bin/python3` only; no git; additive edits; do not touch
+splits.txt/configure.py/build/tools.

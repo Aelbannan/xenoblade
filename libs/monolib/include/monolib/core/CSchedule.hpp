@@ -9,7 +9,7 @@ struct CScheduleChild;
 
 extern "C" s16 func_804DFA84(void* param0, void* param1, void* param2);
 extern "C" void func_804DFB88(s16 handle);
-extern "C" u8 lbl_eu_80570068[16];
+extern "C" u32 lbl_eu_80570068[];
 extern "C" float lbl_eu_8066B2E0;
 extern "C" float lbl_eu_8066B2E4;
 

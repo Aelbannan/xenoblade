@@ -16,6 +16,14 @@ class CSysWinBuff;
 class Unk817A8Object;
 class Unk80EE4Data;
 
+namespace cf {
+class CHelpManager;
+// Party-slot list object returned by func_8009ECB0 (arr1[3] + arr2[6] @ +4);
+// layout defined in src/kyoshin/cf/CtrlObjectParam.hpp - only pointers are
+// passed around here.
+struct CtrlObjectParamSlots;
+}
+
 struct CfGameManagerData1C {
     u8 field_0x0[0xC];
 };
@@ -57,6 +65,63 @@ public:
 
     u8 field_0x4[0xEC];
     UnkClass_80083298SubF0 field_0xF0;
+};
+
+// Heap-id slot block on the shared list-head object behind lbl_eu_80665958:
+// func_8007C6C0 stores the current heap id at +0x7C.
+struct Unk65958Object {
+    u8 field_0x0[0x7C];
+    u32 field_0x7C;
+};
+
+// Virtual container embedded at object+0x3E9C (func_80086B5C): the vptr sits
+// at object+0x3E9C and slots 0x10 / 0x20 are dispatched with a u32 argument.
+class UnkContainerIntf3E9C {
+public:
+    virtual void vfunc_0x08();
+    virtual void vfunc_0x0C();
+    virtual void vfunc_0x10(u32 value);
+    virtual void vfunc_0x14();
+    virtual void vfunc_0x18();
+    virtual void vfunc_0x1C();
+    virtual void vfunc_0x20(u32 value);
+};
+
+struct UnkObj3E9C {
+    u8 field_0x0[0x3E9C];
+    UnkContainerIntf3E9C* container;   // 0x3E9C: vptr slot
+};
+
+// Data-area blocks at 0x80570CE0 (offsets +0x978 and +0xA18) cleared by
+// func_800853C8 (byte/word stores at 0x00, 0x20, 0x24, 0x44, 0x50, 0x70,
+// 0x74, 0x94).
+struct Unk70CE0Entry {
+    u8 field_0x0[0x20];
+    u32 field_0x20;
+    u8 field_0x24[0x20];
+    u32 field_0x44;
+    u8 field_0x48[0x8];
+    u8 field_0x50;
+    u8 field_0x51[0x1F];
+    u32 field_0x70;
+    u8 field_0x74;
+    u8 field_0x75[0x1F];
+    u32 field_0x94;
+};
+
+struct UnkArea70CE0 {
+    u8 field_0x0[0x978];
+    Unk70CE0Entry entryA;      // 0x978
+    u8 gap[0x8];               // 0xA10-0xA17
+    Unk70CE0Entry entryB;      // 0xA18
+};
+
+// Byte-offset view used by func_8007CF64: reads a text-area value/enabled
+// pair at +0x48 / +0x4C from an entry base (or entry+0x24 secondary block).
+struct UnkTextAreaView {
+    u8 field_0x0[0x48];
+    float value_0x48;
+    u8 enabled_0x4C;
 };
 
 /* TODO: it's possible this file contains multiple separate classes, either just all being put in here,
@@ -126,8 +191,10 @@ namespace cf{
         u32 unk7C;
         u8 unk80[0x86 - 0x80];
         u16 field_0x86;
-        u16 field_0x88;
-        u16 field_0x8A;
+        // Signed halfwords: func_800853C8 reads them with lha (reset-to -1
+        // sentinel), func_80085E58 writes them through u16 casts.
+        s16 field_0x88;
+        s16 field_0x8A;
         s32 unk8C;
         UnkClass_80083298* unk90;
         //between CObjectParam - CfObjectMove
@@ -135,7 +202,9 @@ namespace cf{
         //to CfObjectPc objects except pointing at the 4th vtable
         CfObjectMove* unk94[3];
         u32 unkA0;
-        UnkClass_80186D20* field_0xA4;
+        // opaque widget-list block torn down by func_80186664 (u8* ABI; the
+        // func_80186D20 helper also takes void*), so keep the member as u8*.
+        u8* field_0xA4;
         UnkClass_8007E864* unkA8;
         UnkClass_80085334* unkAC;
         UnkClass_800821F8* unkB0;
@@ -159,7 +228,7 @@ public:
     void func_8007C5B8();
     cf::CfObjectMove** func_8007C6B4(cf::CfObjectMove** slots, int index);
     void func_8007C6C0();
-    void func_8007C8C8();
+    void* func_8007C8C8();
     bool func_8007CBC8();
     void func_8007CBEC();
     void func_8007CDA8();
@@ -469,13 +538,177 @@ extern "C" u32 lbl_eu_8065FC18[];
 extern "C" void func_800B93D0();
 extern "C" void func_800B6C10();
 extern "C" void func_80141B54();
-extern "C" void func_80069EA0();
+extern "C" float func_80069EA0();
 extern "C" void func_8006A12C();
 extern "C" void func_8006A1A0();
 extern "C" void func_8006A234(u16*, u16*);
 extern "C" bool func_8006A2E0();
-extern "C" void func_8006A37C();
-extern "C" void func_8006A3BC();
+extern "C" u32 func_8006A33C();
+extern "C" u32 func_8006A37C();
+extern "C" u32 func_8006A3BC();
 extern "C" void func_8006A3FC();
 extern "C" void func_8006A404();
 extern "C" void func_80141C6C(void*, void*);
+// func_8009DBF4 / func_8009E0C4 are also declared (extern "C") in
+// include/kyoshin/cf/CItem.hpp; the CfGameManager unity TU does not include
+// that header, so they are re-declared here for the func_8007DCB8 bdat writer.
+extern "C" void func_8009DBF4(void* a, unsigned long b, void* c);
+extern "C" void func_8009E0C4(void* table, u16 index, u16 value);
+extern "C" void func_8009EF9C(void* data, u32 value);
+extern "C" void func_80158420(u32 value, void* result, s32 mode, void* other);
+// func_8007DCB8 bdat-table scratch globals (.sbss /.data).
+extern s8 lbl_eu_80663E78;
+extern void* lbl_eu_80664090;
+extern void* lbl_eu_80663E74;
+
+// ---------------------------------------------------------------------------
+// func_8007E218 / func_80084F50 / func_8007E514 teardown imports (retail
+// C-linkage names - keep linkage/signatures verbatim)
+// ---------------------------------------------------------------------------
+
+// CBattleManager vtable+0x1C dispatch view (the battle manager's slot is
+// called with (mode 2, 0) after wiping the +0x94 payload). Cast-only: first
+// declared virtual lands at vtable+0x08 (2 RTTI header entries), so the
+// 6th declared virtual is slot +0x1C.
+struct CBattleManagerVt1C {
+    virtual void m08();
+    virtual void m0C();
+    virtual void m10();
+    virtual void m14();
+    virtual void m18();
+    virtual void m1C(u32 first, u32 second);  // vtable +0x1C
+};
+
+// Minimal CBattleManager data view for func_80084F50: the +0x94 payload
+// wiped with memset and the +0x194 party-gauge block handed to
+// func_8018C8F4 before the vtable+0x1C dispatch.
+struct CBattleManagerView {
+    u8 field_0x0[0x94];
+    u8 cleared_0x94[0x100];
+    u8 field_0x194[8];
+};
+
+// Result of func_8009D5FC (file-event table query): the two u16 ids read by
+// func_80084F50 (lhz +2 as first arg, lhz +0 as second arg).
+struct CfFileEventIdsView {
+    u16 field_0x0;
+    u16 field_0x2;
+    u8 field_0x4[0x8];
+};
+
+// func_8023C1B4 result view: caller loads the float at +0xC.
+struct UnkC1B4Data {
+    u8 field_0x0[0xC];
+    float value_0xC;
+};
+
+// Cast-only dtor view used for delete-style release via vtable+0x08: retail
+// `if (ptr) delete ptr` shows two identical null tests (the if plus the
+// delete expansion's own guard), which a plain manual-cast virtual call
+// cannot reproduce. Same shape as CItemBoxGrid.hpp CItemBoxObjVt08: MWCC
+// prepends 2 RTTI header entries, so the first declared virtual (the dtor)
+// lands at vtable+0x08 and delete dispatches there with the delete flag.
+struct CfVt08Dtor {
+    virtual ~CfVt08Dtor();  // vtable+0x08
+};
+
+// The player-file slots live at the very start of CfGameManager (0x00, 0x04,
+// 0x08): func_8007C6C0 allocates the three CfTFile streams there and
+// func_8007E218 tears them down with a 3-element pointer loop. The class
+// proper types unk0/field_0x4/mObjectFlags as scalars, so the loop goes
+// through this offset view.
+struct CfGameManagerSlotArray {
+    cf::CfObjectMove* slots[3];  // 0x00-0x0B
+};
+
+class CProcess;
+// CProcess hooks removed by func_8007E218 (defined in other TUs, .sbss).
+extern CProcess* lbl_eu_80663E1C;
+extern CProcess* lbl_eu_80663E18;
+extern CProcess* lbl_eu_80663E20;
+
+extern "C" void func_8012F87C(u32 value);
+extern "C" void func_802A1DA8();
+extern "C" void func_800D91D0__Q22cf14CBattleManagerFv();
+extern "C" void func_80295924();
+extern "C" void __dt__80157150();
+extern "C" void* __dt__801A9F78(void* self, s32 deleteFlag);
+extern "C" void* __dt__801865C4(void* self, s32 deleteFlag);
+extern "C" void* __dt__8007540C(void* self, s32 deleteFlag);
+extern "C" void func_800B92D8();
+extern "C" void* __dt__801886EC(void* self, s32 deleteFlag);
+extern "C" void* __dt__801BF874(void* self, s32 deleteFlag);
+extern "C" void* __dt__Q22cf17UnkClass_8018EF3CFv(void* self, s32 deleteFlag);
+extern "C" void func_80068AC8();
+extern "C" void func_8009CE88();
+extern "C" void func_80069A18(cf::CfObjectMove* self);
+extern "C" u32 func_801BF93C__Fv();
+extern "C" void func_800A7D9C();
+extern "C" void Remove__8CProcessFv(CProcess* process);
+extern "C" void func_8003AA8C__5CBdatFUl(u32 value);
+
+// --- func_80084F50 imports ---
+extern "C" void func_80135FDC();
+extern "C" void func_802062BC();
+extern "C" void func_80164CFC();
+extern "C" void func_802A1F9C();
+extern "C" int func_8023C1C0();
+extern "C" void* func_8023C1B4();
+extern "C" void func_8009F6D4(void* object);
+extern "C" void __dt__8023E448();
+extern "C" void func_801592EC();
+extern "C" CfFileEventIdsView* func_8009D5FC();
+extern "C" void func_8018C8F4(u8* object, u32 value);
+extern "C" CBattleManagerView* getInstance__Q22cf14CBattleManagerFv();
+extern "C" void func_802959AC(cf::CHelpManager* object);
+extern "C" void func_8007F1FC__Q22cf13CfGameManagerFv(void* buffer, s32 mode);
+extern "C" void func_80083D50__Q22cf13CfGameManagerFv(u32 first, u32 second,
+                                                         u32 third, u32 fourth,
+                                                         float value);
+// --- func_80086778 bdat-object collision imports (defined in CfObjectColl unit) ---
+extern "C" void func_800AC110(void* self, const void* pA, const void* pB, float f);
+extern "C" void func_800AC1BC(void* self, const void* pA, const void* pB, float f);
+extern "C" void func_800AC450(void* self, unsigned long a, unsigned long b);
+// CHelpManager singleton (func_802959AC argument; .sdata).
+extern cf::CHelpManager* lbl_eu_80664A10;
+// Event-done halfword countdown flag (.sbss) cleared by func_80084F50.
+extern u16 lbl_eu_80664774;
+// Fade/reset float pair written with the shared zero constant.
+extern float lbl_eu_80663ED8;
+extern float lbl_eu_80663EDC;
+
+// --- func_8007C8C8 imports ---
+extern u32 lbl_eu_80663D90;
+extern u32 lbl_eu_80663E6C;
+extern "C" void* func_80190840(void* object, u32* e04);
+extern "C" void func_801889D0(u32 object);
+extern "C" void func_800D9354(CBattleManagerView* self);
+extern "C" void func_80295A88(cf::CHelpManager* object);
+extern "C" void func_802A1610();
+extern "C" void func_8006A75C();
+extern "C" void func_8016F140(u32 object);
+extern "C" void func_8016F144(u32 object);
+extern "C" void func_800FE104();
+extern "C" void func_8019FD2C();
+extern "C" void func_80069F2C();
+extern "C" void func_80462CD8__8CTaskLODFv(u16 first, u16 second, u16 third);
+extern "C" u32 func_80082900__Q22cf13CfGameManagerFv();
+extern "C" void func_800827E4__Q22cf13CfGameManagerFv();
+
+// --- func_8007F1FC imports (CtrlObjectParam / cfsys CTaskParty units) ---
+extern "C" void func_8009E3C0();
+extern "C" int func_8009E740(cf::CtrlObjectParamSlots* self, int value);
+extern "C" int func_8009E56C(cf::CtrlObjectParamSlots* self, int value, int type);
+extern "C" int func_8009E574(cf::CtrlObjectParamSlots* self, int value, int type, int index);
+extern "C" void func_8009E838(u8* self);
+extern "C" s32 func_80291BF8();
+extern "C" void func_8015720C(s32 value, s32 mode);
+extern "C" u32 func_800A082C(void* data);
+extern "C" void func_800A0860(void* data, u16 value);
+extern "C" void func_800A21F8(void* data, u32 a, u32 b, u32 c);
+extern "C" void func_800A2974(void* data, u16 value);
+extern "C" void func_8025EE7C(void* block, u32 value);
+extern "C" void func_8007E9CC__Q22cf13CfGameManagerFv(u16 value, u32 mode);
+extern const double lbl_eu_80666518;
+extern const double lbl_eu_80666520;
+extern u32 lbl_eu_805276F0[];

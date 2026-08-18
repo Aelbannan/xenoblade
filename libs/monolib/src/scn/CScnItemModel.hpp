@@ -223,4 +223,4 @@ extern const float lbl_eu_8066A8CC;
 
 // Retail vtable data for CScnItemModel (.data at 0x8056DD70, 0xE0 bytes).
 // Declared as a char array so the ctor can install the label explicitly.
-extern char lbl_eu_8056DD70[];
+extern u32 lbl_eu_8056DD70[];

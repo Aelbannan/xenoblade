@@ -38,3 +38,52 @@ extern "C" u32 func_80453608__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) {
 
 extern "C" void func_80453468__18CDeviceFontInfoExtFv() {}
 extern "C" void create__18CDeviceFontInfoExtFv() {}
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// forward refs
+namespace D2Blob {
+extern "C" void __dt__18CDeviceFontInfoExtFv();
+}
+extern "C" u32 lbl_eu_80663718[0x2];
+extern "C" u32 lbl_eu_80663720[0x2];
+extern "C" const char lbl_eu_80522E00[0x18];
+extern "C" const char lbl_eu_80522E18[0x10];
+extern "C" u32 lbl_eu_8056C740[0xF];
+extern "C" u32 lbl_eu_8056C77C[0x3];
+
+// [.data] 0x8056C740-0x8056C788 (72 bytes)
+extern "C" u32 lbl_eu_8056C740[0xF] = {
+    (u32)&lbl_eu_80663718[0], 0x00000000,
+    (u32)&D2Blob::__dt__18CDeviceFontInfoExtFv,
+    (u32)func_80453654__18CDeviceFontInfoExtFv,
+    (u32)func_8045364C__18CDeviceFontInfoExtFv,
+    (u32)func_80453644__18CDeviceFontInfoExtFv,
+    (u32)func_8045363C__18CDeviceFontInfoExtFv,
+    (u32)func_80453634__18CDeviceFontInfoExtFv,
+    (u32)func_80453468__18CDeviceFontInfoExtFv,
+    (u32)func_80453624__18CDeviceFontInfoExtFv,
+    (u32)func_8045362C__18CDeviceFontInfoExtFv,
+    (u32)func_804535C0__18CDeviceFontInfoExtFv,
+    (u32)func_804535DC__18CDeviceFontInfoExtFv,
+    (u32)func_804535F4__18CDeviceFontInfoExtFv,
+    (u32)func_80453608__18CDeviceFontInfoExtFv,
+};
+extern "C" u32 lbl_eu_8056C77C[0x3] = { (u32)&lbl_eu_80663720[0], 0x00000000, 0x00000000 };
+
+// [.rodata] 0x80522E00-0x80522E28 (40 bytes)
+extern "C" const char lbl_eu_80522E00[0x18] = {
+    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x6f,0x6e,0x74,0x49,0x6e,0x66,0x6f,0x45,
+    0x78,0x74,0x00,0x00,0x00,0x00,0x00,0x00 };
+extern "C" const char lbl_eu_80522E18[0x10] = {
+    0x49,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x6f,0x6e,0x74,0x49,0x6e,0x66,0x6f,0x00 };
+
+// [.sdata] 0x80663718-0x80663728 (16 bytes)
+extern "C" u32 lbl_eu_80663718[0x2] = { (u32)&lbl_eu_80522E00[0], (u32)&lbl_eu_8056C77C[0] };
+extern "C" u32 lbl_eu_80663720[0x2] = { (u32)&lbl_eu_80522E18[0], 0x00000000 };
+
+DECOMP_FORCEACTIVE(CDeviceFontInfoExt_cpp, lbl_eu_8056C740);
+DECOMP_FORCEACTIVE(CDeviceFontInfoExt_cpp, lbl_eu_8056C77C);
+DECOMP_FORCEACTIVE(CDeviceFontInfoExt_cpp, lbl_eu_80522E00);
+DECOMP_FORCEACTIVE(CDeviceFontInfoExt_cpp, lbl_eu_80522E18);
+DECOMP_FORCEACTIVE(CDeviceFontInfoExt_cpp, lbl_eu_80663718);
+DECOMP_FORCEACTIVE(CDeviceFontInfoExt_cpp, lbl_eu_80663720);

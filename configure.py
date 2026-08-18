@@ -1988,7 +1988,6 @@ config.libs = [
             Object(Matching, "criware_data.s"),
             Object(Matching, "nw4r_data.s"),
                                     Object(Matching, "monolibdata1e.cpp"),  # converted from asm dump: one 0x280-byte .bss global (lbl_eu_80657238), verified byte+align identical via run.py data diff
-            Object(Matching, "monolibdata2.s"),
         ],
     },
 ]

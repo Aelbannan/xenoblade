@@ -46,5 +46,5 @@ public:
 };
 
 // free functions (retail symbols)
-void func_80482388(CScnItemLight* self);
-void func_80482400(CScnItemLightNw4r* self);
+extern "C" void func_80482388(CScnItemLight* self);
+extern "C" void func_80482400(CScnItemLightNw4r* self);

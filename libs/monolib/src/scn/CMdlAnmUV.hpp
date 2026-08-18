@@ -10,7 +10,7 @@ extern const f32 lbl_eu_8066B354; // effect-matrix off-diagonal value
 // .sdata pointer constants referenced by func_804E6C80 (node/material name
 // prefixes for the UV-animation registration scan).
 extern const char* lbl_eu_80663C70;
-extern const char* lbl_eu_80663C74;
+extern u32 lbl_eu_80663C74;
 
 // UV-animation helper object. Binds a set of nodes/materials of the owner
 // model into parallel id arrays so an animated texture SRT can be applied to

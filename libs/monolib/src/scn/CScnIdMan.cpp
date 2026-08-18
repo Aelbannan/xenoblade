@@ -5,7 +5,7 @@
 
 extern "C" {
     extern void __dl__FPv(void* ptr);
-    extern char lbl_eu_8056EC80[];   // CScnIdMan vtable
+    extern u32 lbl_eu_8056EC80[];   // CScnIdMan vtable (defined below in this TU)
     extern void addRenderCB__4CScnFP10IScnRenderUlUl(void* r3, u32 r4, u32 r5, u32 r6);
     extern void removeRenderCB__4CScnFP10IScnRender(void* r3, u32 r4);
     extern CScnIdPoolSlot* func_8048C698(void* r3, int r4);
@@ -57,3 +57,24 @@ void CScnIdMan::cbRenderBefore() {
         func_804BCC78(func_804BC9EC__Fv(), b, stackbuf);
     }
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056EC80-0x8056EC90 (16 bytes) — CScnIdMan vtable + RTTI typeinfo.
+extern "C" u32 lbl_eu_80663A78;  // .sdata RTTI typeinfo (foreign TU)
+extern "C" void __dt__9CScnIdManFv();   // this-TU dtor symbol
+extern "C" void cbRenderBefore__9CScnIdManFv();  // this-TU member symbol
+// [.data] 0x8056EC80-0x8056EC90 (16 bytes) — CScnIdMan vtable + RTTI typeinfo.
+extern "C" u32 lbl_eu_8056EC80[0x4] = {
+    (u32)&lbl_eu_80663A78,
+    0x00000000,
+    (u32)&__dt__9CScnIdManFv,
+    (u32)&cbRenderBefore__9CScnIdManFv,
+};
+
+// [.rodata] 0x80524338-0x80524348 (16 bytes) "CScnIdMan" string (RTTI name).
+extern "C" const char lbl_eu_80524338[0x10] = {
+    0x43,0x53,0x63,0x6e,0x49,0x64,0x4d,0x61,0x6e,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
+
+DECOMP_FORCEACTIVE(CScnIdMan_cpp, lbl_eu_8056EC80);
+DECOMP_FORCEACTIVE(CScnIdMan_cpp, lbl_eu_80524338);
+

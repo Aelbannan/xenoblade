@@ -2467,3 +2467,49 @@ __declspec(noinline) void func_804828F0(u8* self, u32 flags, u32 enable) {
     }
 }
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+extern "C" u32 lbl_eu_806624D0;   // foreign .sdata
+namespace SIMBlob {
+extern "C" void __dt__13CScnItemModelFv();
+extern "C" void func_80485CE8(); extern "C" void func_80482048();
+extern "C" void func_80482288(); extern "C" void func_80486090();
+extern "C" void func_80485A48(); extern "C" void func_80485AD8();
+extern "C" void func_80485B98(); extern "C" void func_80485C28();
+extern "C" void func_80484838(); extern "C" void func_8048490C();
+extern "C" void func_80484E0C(); extern "C" void func_80486088();
+extern "C" void func_80183264(); extern "C" void func_80486084();
+extern "C" void func_804830E4(); extern "C" void func_804830BC();
+extern "C" void func_8048310C(); extern "C" void func_804849E4();
+extern "C" void func_80484AB4(); extern "C" void func_80484BB4();
+extern "C" void func_80484C84(); extern "C" void func_80484D3C();
+extern "C" void func_804858C8(); extern "C" void func_80485994();
+extern "C" void func_80484914(); extern "C" void func_8048607C();
+extern "C" void func_80486074(); extern "C" void func_801FCAC0();
+extern "C" void func_801FCBEC(); extern "C" void func_804830AC();
+extern "C" void func_80485D64(); extern "C" void func_804857DC();
+extern "C" void func_804857F0();
+}
+
+// [.data] 0x8056DD70-0x8056DE80 (272B): CScnItemModel vtable + float constants
+extern "C" u32 lbl_eu_8056DD70[68] = {
+    (u32)&lbl_eu_806624D0, 0x00000000, (u32)&SIMBlob::__dt__13CScnItemModelFv,
+    (u32)&SIMBlob::func_80485CE8, (u32)&SIMBlob::func_80482048, (u32)&SIMBlob::func_80482288,
+    0x00000000, (u32)&SIMBlob::func_80486090, 0x00000000, 0x00000000,
+    (u32)&SIMBlob::func_80485A48, (u32)&SIMBlob::func_80485AD8, (u32)&SIMBlob::func_80485B98,
+    (u32)&SIMBlob::func_80485C28, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    (u32)&SIMBlob::func_80484838, (u32)&SIMBlob::func_8048490C, (u32)&SIMBlob::func_80484E0C,
+    (u32)&SIMBlob::func_80486088, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    (u32)&SIMBlob::func_80183264, (u32)&SIMBlob::func_80486084, (u32)&SIMBlob::func_804830E4,
+    (u32)&SIMBlob::func_804830BC, (u32)&SIMBlob::func_8048310C, (u32)&SIMBlob::func_804849E4,
+    (u32)&SIMBlob::func_80484AB4, (u32)&SIMBlob::func_80484BB4, (u32)&SIMBlob::func_80484C84,
+    (u32)&SIMBlob::func_80484D3C, 0x00000000, 0x00000000, 0x00000000,
+    (u32)&SIMBlob::func_804858C8, (u32)&SIMBlob::func_80485994, (u32)&SIMBlob::func_80484914,
+    0x00000000, (u32)&SIMBlob::func_8048607C, (u32)&SIMBlob::func_80486074,
+    (u32)&SIMBlob::func_801FCAC0, (u32)&SIMBlob::func_801FCBEC, (u32)&SIMBlob::func_804830AC,
+    (u32)&SIMBlob::func_80485D64, (u32)&SIMBlob::func_804857DC, (u32)&SIMBlob::func_804857F0,
+    0x00000000,
+    0x3F333333, 0x3F000000, 0x3F000000, 0x3F400000, 0x3F800000, 0x3F800000,
+    0x3F333333, 0x3E99999A, 0x3E99999A, 0x3E99999A, 0x3F333333, 0x3F333333,
+};

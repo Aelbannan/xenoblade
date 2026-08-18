@@ -3,18 +3,12 @@
 
 #include "monolib/mpfsys/UnkClass_80471EC8.hpp"
 #include "monolib/mpfsys/MPFDrawDisplayList.hpp"
-#include "monolib/core/code_804E36DC.hpp" // declares func_80496288 (C ABI)
 #include <harness_catalog.h>
-#include <PowerPC_EABI_Support/MSL_C/MSL_Common/rand.h>
 
 #include <revolution/GX.h>
 #include <nw4r/db/db_assert.h>
 #include <nw4r/g3d/g3d_state.h>
 #include <nw4r/g3d/res/g3d_resfile.h>
-#include <string.h>
-#include <math.h>
-#include "monolib/math/CVec3.hpp"
-#include "monolib/scn/CScnRootNw4r.hpp"
 
 // mpfsys render-state globals (SDA-relative linker symbols). Plain
 // global-scope externs - MWCC does not mangle global-scope variable names,
@@ -39,81 +33,17 @@ extern u32 lbl_eu_8066A7A0;
 extern u16* lbl_eu_80665850;
 extern u32 lbl_eu_8066A7D0;
 extern u32 lbl_eu_8066A7D4;
-extern const f32 lbl_eu_8066A740; // 255.0f colour scale (func_804723A4)
 extern const f32 lbl_eu_8066A744;
 extern const f32 lbl_eu_8066A74C;
 extern const f32 lbl_eu_8066A758;
 extern const f32 lbl_eu_8066A75C;
 extern const f32 lbl_eu_8066A770;
-extern const f32 lbl_eu_8066A750; // sprite update constant (func_80473394)
-extern const f32 lbl_eu_8066A748; // sprite velocity random scale (func_804724DC)
-extern const f32 lbl_eu_8066A754; // layer fill constant (func_804724DC)
-extern const f32 lbl_eu_8066A760; // layer anim constant (func_804724DC)
-extern const f32 lbl_eu_8066A764; // layer anim constant (func_804724DC)
-// Projection/colour constants for func_80473984 (shared with CScnItemCamera
-// for lbl_eu_8066A210).
-extern const f32 lbl_eu_8066A210;
-extern const f32 lbl_eu_8066A7B4;
-extern const f32 lbl_eu_8066A7B8;
-extern const f32 lbl_eu_8066A7BC;
-extern const f32 lbl_eu_8066A7C0;
-extern u32 lbl_eu_8066A7A8;   // light colour for func_80473984
-extern u32 lbl_eu_80665860;   // cleared render-state flag
-// Retail .sdata2 magic double used by MWCC's (f32)(u32) conversions (xoris
-// form). Defined here with the exact retail label name/value (2^52 + 2^31) so
-// the conversion pool emits an sda21 reference to the retail slot instead of
-// a fresh local pool entry (CfResReloadImpl / CSuddenCommu idiom). Non-const
-// so MWCC keeps the named symbol instead of folding it into the pool.
-double lbl_eu_8066A768 = 4503601774854144.0;
-extern const f32 lbl_eu_8066A778; // sprite update constant (func_80473394)
-extern const f32 lbl_eu_8066A794; // 1000.0f rand() % 1000 divisor
-extern const f32 lbl_eu_8066A798; // 20.0f rand() % 20 divisor
-// Texture-slot table (count/offset pair per texture index) and texture data
-// base for func_804737F0; same SDA-relative globals as the MPF draw units.
-extern s32* lbl_eu_80665868;
-extern u8* lbl_eu_80665840;
 // Embedded-subobject pointer cache (written by func_8047BE8C in
 // code_8047BB54.cpp); func_80471FCC registers `this` here.
 extern void* lbl_eu_80665838;
 // Panic file-name / message strings (retail rodata).
 extern const char lbl_eu_8052637C[];
 extern const char lbl_eu_80526354[];
-
-// Sprite-animation matrix base pointer (points into the layer state); the
-// retail stride is 0xC bytes per entry. Written by func_80474064.
-extern u8* lbl_eu_8066584C;
-// Sprite-matrix chain base (global 4x3 matrix).
-extern Mtx lbl_eu_80658458;
-// Sprite phase table mask / 2^-5 scale (frac = ((a+b) & 0x1F) * 0.03125).
-extern u32 lbl_eu_8066A72C;
-extern f32 lbl_eu_8066A730;
-// Shared float constants used by the sprite matrix / camera math.
-extern const f32 lbl_eu_8066A7A4; // 0.0f
-// 2^52 double used by the (u32)->f32 conversion (MWCC pool magic constant).
-extern const f64 lbl_eu_8066A7C8;
-extern const f32 lbl_eu_8066A7AC;
-extern const f32 lbl_eu_8066A7B0; // 0.5f
-// Camera-math globals written by func_80474064.
-extern void* lbl_eu_80665870;
-extern void* lbl_eu_80665874;
-extern f32 lbl_eu_80665880;
-extern f32 lbl_eu_80665884;
-extern u32* lbl_eu_80665864;
-// ResFile bound by func_80473500 (retail SDA global holding the file data
-// pointer).
-extern nw4r::g3d::ResFileData* lbl_eu_80665848;
-// Panic strings for the texture-load path (retail rodata).
-extern const char lbl_eu_8052CF10[];
-extern const char lbl_eu_8052CEF4[];
-extern const char lbl_eu_80661E98[];
-extern const char lbl_eu_8066385C[];
-extern const char lbl_eu_8052CF6C[];
-extern const char lbl_eu_8052CF50[];
-extern const char lbl_eu_80661EA8[];
-extern const char lbl_eu_80663864[];
-extern const char lbl_eu_8052CF3C[];
-extern const char lbl_eu_8052CF20[];
-extern const char lbl_eu_80663860[];
 
 // Retail-named imports. These resolve against retail symbols (func_8049626C is
 // defined in scn/CScn.cpp, func_80477F80 in MPFDrawDisplayList.cpp,
@@ -191,75 +121,6 @@ struct MpfsysFlagArray {
     u32 field_0x2D00[8];
 };
 
-// 4x3 matrix (12 f32s). Struct copy compiles to lwz/stw pairs like the
-// retail, keeping all 12 values live in GPRs.
-struct MpfsysMtx4x3 {
-    f32 field_0x0;
-    f32 field_0x4;
-    f32 field_0x8;
-    f32 field_0xC;
-    f32 field_0x10;
-    f32 field_0x14;
-    f32 field_0x18;
-    f32 field_0x1C;
-    f32 field_0x20;
-    f32 field_0x24;
-    f32 field_0x28;
-    f32 field_0x2C;
-};
-
-// Sprite pair entry (0xB4 stride, two matrices at +0x54 / +0x84) used by
-// func_80474B00 when tevStage != 0.
-struct MpfsysSpritePair {
-    u8 field_0x0[0x54];
-    Mtx field_0x54;
-    Mtx field_0x84;
-};
-
-// Camera-math region at lbl_eu_80658410: translation vec (+0x0), direction
-// vec (+0xC), rotation matrix (+0x18), inverse matrix (+0x48).
-struct MpfsysCamMatrixRegion {
-    f32 field_0x0[3];
-    f32 field_0xC[3];
-    Mtx field_0x18;
-    Mtx field_0x48;
-};
-extern MpfsysCamMatrixRegion lbl_eu_80658410;
-
-// Sprite-table entry (0xB4 stride, 0x40 entries at this+0x0): three leading
-// position/offset Vec3s, a zeroed second triplet, the velocity Vec3 (+0x48)
-// and the two quaternion matrices (+0x54 / +0x84) driven by func_804728E8.
-struct MpfsysSpriteEntry {
-    ml::CVec3 field_0x0;
-    ml::CVec3 field_0xC;
-    ml::CVec3 field_0x18;
-    ml::CVec3 field_0x24;
-    ml::CVec3 field_0x30;
-    ml::CVec3 field_0x3C;
-    ml::CVec3 field_0x48;
-    Mtx field_0x54;
-    Mtx field_0x84;
-};
-
-// Tail state of UnkClass_80471EC8 (0x2D00..0x2E14): the 256-bit flag array,
-// the 0xC0-byte fill block, the colour/animation floats and the mode fields.
-struct MpfsysLayerTailState {
-    u8 field_0x0[0x2D00];
-    u32 field_0x2D00[8];
-    f32 field_0x2D20[0x30];
-    f32 field_0x2DE0;
-    f32 field_0x2DE4;
-    f32 field_0x2DE8;
-    f32 field_0x2DEC[4];
-    f32 field_0x2DFC;
-    f32 field_0x2E00;
-    s32 field_0x2E04;
-    u8 field_0x2E08[8];
-    u8 field_0x2E10;
-    u8 field_0x2E11;
-    u16 field_0x2E12;
-};
-
 // Map attach: validate the descriptor magic/revision, then bind the embedded
 // ResFile (alignment-panic, revision/tex checks, Init) and stash the camera /
 // view pair, before refreshing the layer state. Returns 1 on success.
@@ -288,74 +149,6 @@ int func_80471EC8__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* sel
         return 1;
     }
     return 0;
-}
-
-void mpfsys::UnkClass_80471EC8::func_804724DC(void) {
-    // Initialise the 0x40 sprite entries (0xB4 stride): the three leading
-    // Vec3s carry constant Y offsets (0, 1, 2), the second triplet is zeroed,
-    // the velocity is a random horizontal vector (normalised or defaulted),
-    // and both quaternion matrices are identity. Then fill the layer tail
-    // state and clear the flag array.
-    //
-    // The (f32)(u32) casts use MWCC's pooled double-bias idiom: storing
-    // 0x43300000 | (v ^ 0x80000000) and subtracting the 2^52 + 2^31 magic
-    // double (lbl_eu_8066A768) yields exactly (float)v. The conversion is
-    // loop-invariant (offsets 0/1/2) so the constant materialisation is
-    // hoisted; the stack round-trip stays in the loop because of the rand
-    // calls.
-    u32 k0 = 0;
-    u32 k1 = 1;
-    u32 k2 = 2;
-    for (u32 i = k0; i < 0x40; i++) {
-        MpfsysSpriteEntry* e = (MpfsysSpriteEntry*)((u8*)this + i * 0xB4);
-        e->field_0x0.set(lbl_eu_8066A744, (f32)(u32)k0, lbl_eu_8066A744);
-        e->field_0x24 = ml::CVec3::zero;
-        e->field_0xC.set(lbl_eu_8066A744, (f32)(u32)k1, lbl_eu_8066A744);
-        e->field_0x30 = ml::CVec3::zero;
-        e->field_0x18.set(lbl_eu_8066A744, (f32)(u32)k2, lbl_eu_8066A744);
-        e->field_0x3C = ml::CVec3::zero;
-        PSMTXIdentity(e->field_0x54);
-        PSMTXIdentity(e->field_0x84);
-        f32 vz = lbl_eu_8066A748 * (f32)(u32)(rand() % 100) - lbl_eu_8066A74C;
-        f32 vx = lbl_eu_8066A748 * (f32)(u32)(rand() % 100) - lbl_eu_8066A74C;
-        e->field_0x48.x = vx;
-        e->field_0x48.y = lbl_eu_8066A744;
-        e->field_0x48.z = vz;
-        if (vx == lbl_eu_8066A744 && e->field_0x48.y == lbl_eu_8066A744 &&
-            e->field_0x48.z == lbl_eu_8066A744) {
-            e->field_0x48.set(lbl_eu_8066A744, lbl_eu_8066A744, lbl_eu_8066A750);
-        } else {
-            f32 mag2 = e->field_0x48.y * e->field_0x48.y +
-                       e->field_0x48.x * e->field_0x48.x +
-                       e->field_0x48.z * e->field_0x48.z;
-            if (mag2 == lbl_eu_8066A744) {
-                e->field_0x48 = ml::CVec3::zero;
-            } else {
-                PSVECNormalize(e->field_0x48, e->field_0x48);
-            }
-        }
-    }
-    MpfsysLayerTailState* tail = (MpfsysLayerTailState*)this;
-    f32 f5 = lbl_eu_8066A754;
-    for (int j = 0; j < 0x30; j++) {
-        tail->field_0x2D20[j] = f5;
-    }
-    f32 f4 = lbl_eu_8066A758;
-    f32 f3 = lbl_eu_8066A75C;
-    f32 f2 = lbl_eu_8066A760;
-    f32 f1 = lbl_eu_8066A750;
-    f32 f0 = lbl_eu_8066A764;
-    tail->field_0x2DE0 = f4;
-    tail->field_0x2DE4 = f3;
-    tail->field_0x2DE8 = f2;
-    tail->field_0x2DEC[0] = f1;
-    tail->field_0x2DEC[1] = f1;
-    tail->field_0x2DEC[2] = f0;
-    tail->field_0x2DEC[3] = f0;
-    tail->field_0x2E12 = 0;
-    tail->field_0x2E04 = 10;
-    tail->field_0x2E10 = 0;
-    memset(tail->field_0x2D00, 0, 0x20);
 }
 
 void mpfsys::UnkClass_80471EC8::func_80471FC8(void) { func_80473394(); }
@@ -407,48 +200,7 @@ void func_80472370__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* se
     flags->field_0x2D00[index >> 5] |= 1 << (index & 31);
 }
 
-// Camera colour chain for func_804723A4: this->0x2E08 is the camera, +0x64
-// dereferences to an object whose +0x8 points at two 4-float colour quads at
-// 0x11A8 and 0x11C8.
-struct MpfsysCamColorNode {
-    u8 field_0x0[0x64];
-    void* field_0x64;
-};
-struct MpfsysCamColorMid {
-    u8 field_0x0[0x8];
-    struct MpfsysCamColorData* field_0x8;
-};
-struct MpfsysCamColorData {
-    u8 field_0x0[0x11A8];
-    f32 field_0x11A8[4];
-    u8 field_0x11B8[0x10];
-    f32 field_0x11C8[4];
-};
-
-void func_804723A4__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, GXColor* out1, GXColor* out2) {
-    // Convert the camera's two float colour quads (0.0..1.0) to RGBA bytes
-    // (x 255) and force the alpha channel opaque. The retail symbol is
-    // Fv-mangled but receives the two output pointers in r4/r5.
-    MpfsysResState* s = (MpfsysResState*)self;
-    MpfsysCamColorNode* node = (MpfsysCamColorNode*)s->field_0x2E08;
-    MpfsysCamColorMid* mid = (MpfsysCamColorMid*)node->field_0x64;
-    MpfsysCamColorData* data = mid->field_0x8;
-    f32 scale = lbl_eu_8066A740;
-    GXColor c1;
-    c1.r = (u8)(data->field_0x11A8[0] * scale);
-    c1.g = (u8)(data->field_0x11A8[1] * scale);
-    c1.b = (u8)(data->field_0x11A8[2] * scale);
-    c1.a = (u8)(data->field_0x11A8[3] * scale);
-    *out1 = c1;
-    out1->a = 0xff;
-    GXColor c2;
-    c2.r = (u8)(data->field_0x11C8[0] * scale);
-    c2.g = (u8)(data->field_0x11C8[1] * scale);
-    c2.b = (u8)(data->field_0x11C8[2] * scale);
-    c2.a = (u8)(data->field_0x11C8[3] * scale);
-    *out2 = c2;
-    out2->a = 0xff;
-}
+void mpfsys::UnkClass_80471EC8::func_804723A4(void) {}
 
 void mpfsys::UnkClass_80471EC8::func_80472864() { *(u8*)((u8*)this + 0x2E10) = 1; }
 
@@ -484,54 +236,11 @@ void func_80472870__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* se
     }
 }
 
-extern "C" {
-#pragma dont_inline on
-void func_804728E8__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, u8* ptr, f32 f1) {}
-#pragma dont_inline off
-}
-
-// Layer-sprite animation state for func_80473394: the fall step (0x2DEC),
-// the 0x2DF0..0x2DF8 walk state, the 0x2DE0 colour triple, the camera at
-// 0x2E08, and the 0xB4-stride per-layer sprite table starting at 0x1680.
-struct MpfsysSpriteAnimState {
-    u8 field_0x0[0x1680];
-    u8 field_0x1680[0x1760]; // 0x1680..0x2DE0
-    f32 field_0x2DE0;
-    f32 field_0x2DE4;
-    f32 field_0x2DE8;
-    f32 field_0x2DEC;
-    f32 field_0x2DF0;
-    f32 field_0x2DF4;
-    f32 field_0x2DF8;
-    u8 field_0x2DFC[0xC];    // 0x2DFC..0x2E08
-    void* field_0x2E08;      // camera (func_80496288 arg)
-};
+void mpfsys::UnkClass_80471EC8::func_804728E8() {}
 
 #pragma push
 #pragma auto_inline off
-void mpfsys::UnkClass_80471EC8::func_80473394() {
-    // Advance the layer-sprite animation: fold the camera step into 0x2DEC /
-    // 0x2DF8; when the counter drops to (or below) zero re-randomize it and
-    // the 0x2DE8 colour via rand(), then refresh every sprite entry (0xB4
-    // stride) in both halves of the table.
-    MpfsysSpriteAnimState* s = (MpfsysSpriteAnimState*)this;
-    f32 step = s->field_0x2DF0 * func_80496288(s->field_0x2E08);
-    s->field_0x2DEC = step;
-    f32 counter = s->field_0x2DF8 - step;
-    s->field_0x2DF8 = counter;
-    if (counter <= lbl_eu_8066A744) {
-        s->field_0x2DF8 = s->field_0x2DF4 * ((float)(rand() % 1000) / lbl_eu_8066A794);
-        s->field_0x2DE8 = s->field_0x2DE0 * ((float)(rand() % 20) / lbl_eu_8066A798) + s->field_0x2DE4;
-    }
-    u8* p = (u8*)this;
-    for (int i = 0; i < 0x20; i++, p += 0xB4) {
-        func_804728E8__Q26mpfsys17UnkClass_80471EC8Fv(this, p, lbl_eu_8066A750);
-    }
-    p = (u8*)this + 0x1680;
-    for (int i = 0x20; i < 0x40; i++, p += 0xB4) {
-        func_804728E8__Q26mpfsys17UnkClass_80471EC8Fv(this, p, lbl_eu_8066A778);
-    }
-}
+void mpfsys::UnkClass_80471EC8::func_80473394() {}
 #pragma pop
 
 void* mpfsys::UnkClass_80471EC8::func_804734F4(u8 layerIndex) {
@@ -540,92 +249,7 @@ void* mpfsys::UnkClass_80471EC8::func_804734F4(u8 layerIndex) {
 
 extern "C" {
 #pragma dont_inline on
-void func_80473500__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap, f32 texScale) {
-    // Bind the texture selected by texIndex from the bound ResFile and load
-    // it into the given tex map slot. CI-format textures additionally bind
-    // the palette (looked up by the texture's name) into a TLUT and use the
-    // CI tex-object initializer.
-    nw4r::g3d::ResFile resFile(lbl_eu_80665848);
-    nw4r::g3d::ResTex resTex = resFile.GetResTex(texIndex);
-    if (!resTex.IsValid()) {
-        nw4r::db::Panic(lbl_eu_8052CF10, 0x26, lbl_eu_8052CEF4,
-                        lbl_eu_80661E98, lbl_eu_8066385C);
-    }
-    if (resTex.IsCIFmt()) {
-        if (!resTex.IsValid()) {
-            nw4r::db::Panic(lbl_eu_8052CF10, 0x26, lbl_eu_8052CEF4,
-                            lbl_eu_80661E98, lbl_eu_8066385C);
-        }
-        const char* plttName = resTex.ofs_to_ptr<const char>(resTex.ref().name);
-        nw4r::g3d::ResFile parent = resTex.GetParent();
-        nw4r::g3d::ResPltt pltt = parent.GetResPltt(plttName);
-        void* texData;
-        u16 texWidth;
-        u16 texHeight;
-        GXCITexFmt ciFmt;
-        f32 minLod;
-        f32 maxLod;
-        GXBool mipMap;
-        resTex.GetTexObjCIParam(&texData, &texWidth, &texHeight, &ciFmt,
-                                &minLod, &maxLod, &mipMap);
-        u32 tlutParam = 0;
-        if (ciFmt == GX_TF_C14X2) {
-            tlutParam = 0x10;
-        }
-        if (!pltt.IsValid()) {
-            nw4r::db::Panic(lbl_eu_8052CF6C, 0x2A, lbl_eu_8052CF50,
-                            lbl_eu_80661EA8, lbl_eu_80663864);
-        }
-        u16 numEntries = pltt.ref().numEntries;
-        if (!pltt.IsValid()) {
-            nw4r::db::Panic(lbl_eu_8052CF6C, 0x2A, lbl_eu_8052CF50,
-                            lbl_eu_80661EA8, lbl_eu_80663864);
-        }
-        GXTlutFmt tlutFmt = pltt.ref().fmt;
-        if (!pltt.IsValid()) {
-            nw4r::db::Panic(lbl_eu_8052CF3C, 0x2A, lbl_eu_8052CF20,
-                            lbl_eu_80661EA8, lbl_eu_80663860);
-        }
-        GXTlutObj tlutObj;
-        GXInitTlutObj(&tlutObj, pltt.ofs_to_ptr<void>(pltt.ref().toPlttData),
-                      tlutFmt, numEntries);
-        GXLoadTlut(&tlutObj, (u32)tlutParam);
-        GXTexObj texObj;
-        GXInitTexObjCI(&texObj, texData, texWidth, texHeight, (GXTexFmt)ciFmt,
-                       GX_REPEAT, GX_REPEAT, mipMap, (u32)tlutParam);
-        if (mipMap) {
-            GXInitTexObjLOD(&texObj, GX_LIN_MIP_LIN, GX_LINEAR, minLod,
-                            maxLod, texScale, GX_FALSE, GX_FALSE, GX_ANISO_1);
-        } else {
-            GXInitTexObjLOD(&texObj, GX_LINEAR, GX_LINEAR, lbl_eu_8066A7A4,
-                            lbl_eu_8066A7A4, lbl_eu_8066A7A4, GX_FALSE,
-                            GX_FALSE, GX_ANISO_1);
-        }
-        GXLoadTexObj(&texObj, (GXTexMapID)texMap);
-    } else {
-        void* texData;
-        u16 texWidth;
-        u16 texHeight;
-        GXTexFmt texFmt;
-        f32 minLod;
-        f32 maxLod;
-        GXBool mipMap;
-        resTex.GetTexObjParam(&texData, &texWidth, &texHeight, &texFmt,
-                              &minLod, &maxLod, &mipMap);
-        GXTexObj texObj;
-        GXInitTexObj(&texObj, texData, texWidth, texHeight, texFmt,
-                     GX_REPEAT, GX_REPEAT, mipMap);
-        if (mipMap) {
-            GXInitTexObjLOD(&texObj, GX_LIN_MIP_LIN, GX_LINEAR, minLod,
-                            maxLod, texScale, GX_FALSE, GX_FALSE, GX_ANISO_1);
-        } else {
-            GXInitTexObjLOD(&texObj, GX_LINEAR, GX_LINEAR, lbl_eu_8066A7A4,
-                            lbl_eu_8066A7A4, lbl_eu_8066A7A4, GX_FALSE,
-                            GX_FALSE, GX_ANISO_1);
-        }
-        GXLoadTexObj(&texObj, (GXTexMapID)texMap);
-    }
-}
+void func_80473500__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap, f32 texScale) {}
 #pragma dont_inline off
 void func_8047230C__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* self, f32 f1) {
     // Layer-scale setter. The retail symbol is annotated Fv but the function
@@ -655,240 +279,9 @@ void func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(int texIndex, f32 texScale) 
 }
 }
 
-// Texture slot entry: one u16 texture id plus padding (4-byte stride).
-struct MpfsysTexSlotEntry {
-    u16 texIndex;
-    u16 field_0x2;
-};
+void mpfsys::UnkClass_80471EC8::func_804737F0() {}
 
-void func_804737F0__Q26mpfsys17UnkClass_80471EC8Fv(s16 texIndex, f32 texScale) {
-    // Multi-texture billboard setup (retail symbol is Fv-mangled but takes
-    // (texIndex, texScale) - see the callers in MPFDrawBillLayTex.cpp).
-    // Resets the cached-texture marker, binds the texture slot selected by
-    // texIndex (count/offset pair in lbl_eu_80665868), pushes the state-6
-    // TEV/vertex setup once, then feeds every texture id of the slot.
-    s32* table = lbl_eu_80665868;
-    s32* entry = table + texIndex * 2;
-    s32 offset = entry[1];
-    u8* base = lbl_eu_80665840;
-    lbl_eu_80665858 = -1;
-    u8* slot = base + offset;
-    s32 count = *(s32*)((u8*)table + texIndex * 8);
-    if (lbl_eu_80665854 != 1) {
-        GXSetNumTevStages(1);
-        lbl_eu_80665854 = 1;
-    }
-    if (lbl_eu_8066585A != 6) {
-        GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xA, (GXTevColorArg)0x8, (GXTevColorArg)0xF);
-        GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)2, (GXBool)1, (GXTevRegID)0);
-        GXSetTevAlphaIn((GXTevStageID)0, (GXTevAlphaArg)0x7, (GXTevAlphaArg)0x6, (GXTevAlphaArg)0x4, (GXTevAlphaArg)0x7);
-        GXSetTevAlphaOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)2, (GXBool)1, (GXTevRegID)0);
-        GXClearVtxDesc();
-        GXSetVtxDesc((GXAttr)0x9, (GXAttrType)0x1);
-        GXSetVtxDesc((GXAttr)0xB, (GXAttrType)0x1);
-        GXSetVtxDesc((GXAttr)0xD, (GXAttrType)0x2);
-        GXSetArray((GXAttr)0xD, lbl_eu_80665844, 0x8);
-        lbl_eu_8066585A = 6;
-        if (lbl_eu_8066586C & 0x10) {
-            GXSetChanCtrl((GXChannelID)0, (GXBool)1, (GXColorSrc)0, (GXColorSrc)1, (GXLightID)1, (GXDiffuseFn)0, (GXAttnFn)2);
-            lbl_eu_8066586C &= ~0x10;
-        }
-    }
-    MpfsysTexSlotEntry* e = (MpfsysTexSlotEntry*)slot;
-    for (int i = 0; i < count; e++, i++) {
-        func_80473500__Q26mpfsys17UnkClass_80471EC8Fiif(e->texIndex, i, texScale);
-    }
-}
-
-// Self-relative offset table used by func_80473984: +0x1C/+0x24/+0x2C hold
-// offsets from `self` into the bound map data; the +0x24 target is a data
-// node whose own words (+0x0 and +0xC) are further self-relative offsets.
-struct MpfsysSelfRelState {
-    u8 field_0x0[0x1C];
-    s32 field_0x1C;
-    u8 field_0x20[0x24 - 0x20];
-    s32 field_0x24;
-    u8 field_0x28[0x2C - 0x28];
-    s32 field_0x2C;
-};
-
-struct MpfsysSelfRelData {
-    s32 field_0x0;
-    u8 field_0x4[0xC - 0x4];
-    s32 field_0xC;
-};
-
-// CScn env-light controller slot at +0x7C (func_80473984 tail). The type is
-// defined in monolib/src/scn/CScnEnvLgtCtrl.hpp (not on the include path),
-// so only a forward declaration is available here.
-class CScnEnvLgtCtrl;
-struct MpfsysCScnEnvLgt {
-    u8 field_0x0[0x7C];
-    CScnEnvLgtCtrl* field_0x7C;
-};
-
-// CScn singleton accessor / env-light refresh (no compiled header declares
-// them; same local C declarations as code_8047BB54.cpp).
-extern "C" void* func_8049698C();
-extern "C" void func_804C19B8(CScnEnvLgtCtrl* ctrl);
-
-// Camera/projection state push for the sprite pass (retail symbol is
-// Fv-mangled but receives self, resFile, mtx, cam0, cam1, swapFlag, f1).
-// Builds the camera rotation/direction from the map matrix, pushes the
-// GX vertex/light/tev state and stores the projection factors.
-void func_80473984__Q26mpfsys17UnkClass_80471EC8Fv(
-    mpfsys::UnkClass_80471EC8* self, nw4r::g3d::ResFileData* resFile, Mtx mtx,
-    void* a5, void* a6, u32 swapFlag, f32 f1) {
-    MpfsysCamMatrixRegion* cam = &lbl_eu_80658410;
-    u32* srcw = (u32*)mtx;
-    lbl_eu_80665848 = resFile;
-    // Word copy of the 12-float matrix (GPR lwz/stw pairs like retail).
-    u32* dst48 = (u32*)cam->field_0x48;
-    dst48[0] = srcw[0];
-    dst48[1] = srcw[1];
-    dst48[2] = srcw[2];
-    dst48[3] = srcw[3];
-    dst48[4] = srcw[4];
-    dst48[5] = srcw[5];
-    dst48[6] = srcw[6];
-    dst48[7] = srcw[7];
-    dst48[8] = srcw[8];
-    dst48[9] = srcw[9];
-    dst48[10] = srcw[10];
-    dst48[11] = srcw[11];
-    PSMTXInverse(cam->field_0x48, cam->field_0x48);
-    u32* dst18 = (u32*)cam->field_0x18;
-    dst18[0] = srcw[0];
-    dst18[1] = srcw[1];
-    dst18[2] = srcw[2];
-    dst18[3] = srcw[3];
-    dst18[4] = srcw[4];
-    dst18[5] = srcw[5];
-    dst18[6] = srcw[6];
-    dst18[7] = srcw[7];
-    dst18[8] = srcw[8];
-    dst18[9] = srcw[9];
-    dst18[10] = srcw[10];
-    dst18[11] = srcw[11];
-    cam->field_0x18[0][3] = lbl_eu_8066A7A4;
-    cam->field_0x18[1][3] = lbl_eu_8066A7A4;
-    cam->field_0x18[2][3] = lbl_eu_8066A7A4;
-    cam->field_0x0[0] = mtx[0][3];
-    cam->field_0x0[1] = mtx[1][3];
-    cam->field_0x0[2] = mtx[2][3];
-    cam->field_0xC[0] = lbl_eu_8066A7A4;
-    cam->field_0xC[1] = lbl_eu_8066A7A4;
-    cam->field_0xC[2] = lbl_eu_8066A7AC;
-    PSMTXMultVec(cam->field_0x18, (Vec*)cam->field_0xC, (Vec*)cam->field_0xC);
-    f32 mag2 = cam->field_0xC[1] * cam->field_0xC[1] +
-               cam->field_0xC[0] * cam->field_0xC[0] +
-               cam->field_0xC[2] * cam->field_0xC[2];
-    if (mag2 == lbl_eu_8066A7A4) {
-        cam->field_0xC[0] = ml::CVec3::zero.x;
-        cam->field_0xC[1] = ml::CVec3::zero.y;
-        cam->field_0xC[2] = ml::CVec3::zero.z;
-    } else {
-        PSVECNormalize((Vec*)cam->field_0xC, (Vec*)cam->field_0xC);
-    }
-    GXSetCurrentMtx(0);
-    GXLoadPosMtxImm(cam->field_0x48, 0);
-    lbl_eu_80665840 = (u8*)self;
-    f32 m2 = cam->field_0xC[1] * cam->field_0xC[1] +
-             cam->field_0xC[0] * cam->field_0xC[0] +
-             cam->field_0xC[2] * cam->field_0xC[2];
-    f32 inv = lbl_eu_8066A7B0 / m2;
-    lbl_eu_80665880 = inv;
-    MpfsysSelfRelState* s = (MpfsysSelfRelState*)self;
-    u8* base = (u8*)self;
-    MpfsysSelfRelData* d1 = (MpfsysSelfRelData*)(base + s->field_0x1C);
-    lbl_eu_80665844 = base + d1->field_0x0;
-    MpfsysSelfRelData* d24 = (MpfsysSelfRelData*)(base + s->field_0x24);
-    lbl_eu_8066584C = base + d24->field_0x0;
-    lbl_eu_80665850 = (u16*)(base + d24->field_0xC);
-    lbl_eu_80665868 = (s32*)(base + ((MpfsysSelfRelData*)(base + s->field_0x2C))->field_0x0);
-    f32 t = f1 * lbl_eu_8066A210 * lbl_eu_8066A7B4 * lbl_eu_8066A7BC *
-            lbl_eu_8066A7B8;
-    lbl_eu_80665884 = lbl_eu_8066A7C0 * (f32)tan(t);
-    GXClearVtxDesc();
-    GXSetVtxDesc((GXAttr)0x9, (GXAttrType)0x1);
-    GXSetVtxDesc((GXAttr)0xB, (GXAttrType)0x1);
-    GXSetVtxDesc((GXAttr)0xD, (GXAttrType)0x2);
-    GXSetVtxAttrFmt((GXVtxFmt)0, (GXAttr)0x9, (GXCompCnt)0x1, (GXCompType)0x4, 0);
-    GXSetVtxAttrFmt((GXVtxFmt)0, (GXAttr)0xB, (GXCompCnt)0x0, (GXCompType)0x0, 0);
-    GXSetVtxAttrFmt((GXVtxFmt)0, (GXAttr)0xD, (GXCompCnt)0x1, (GXCompType)0x4, 0);
-    GXSetVtxAttrFmt((GXVtxFmt)1, (GXAttr)0x9, (GXCompCnt)0x1, (GXCompType)0x4, 0);
-    GXSetVtxAttrFmt((GXVtxFmt)1, (GXAttr)0xB, (GXCompCnt)0x0, (GXCompType)0x4, 0);
-    GXSetVtxAttrFmt((GXVtxFmt)1, (GXAttr)0xD, (GXCompCnt)0x1, (GXCompType)0x4, 0);
-    GXSetVtxAttrFmt((GXVtxFmt)2, (GXAttr)0x9, (GXCompCnt)0x1, (GXCompType)0x4, 0);
-    GXSetVtxAttrFmt((GXVtxFmt)2, (GXAttr)0xB, (GXCompCnt)0x0, (GXCompType)0x0, 0);
-    GXSetVtxAttrFmt((GXVtxFmt)2, (GXAttr)0xD, (GXCompCnt)0x1, (GXCompType)0x4, 0);
-    GXSetVtxAttrFmt((GXVtxFmt)3, (GXAttr)0x9, (GXCompCnt)0x1, (GXCompType)0x4, 0);
-    GXSetVtxAttrFmt((GXVtxFmt)3, (GXAttr)0xD, (GXCompCnt)0x1, (GXCompType)0x4, 0);
-    GXSetVtxAttrFmt((GXVtxFmt)4, (GXAttr)0x9, (GXCompCnt)0x1, (GXCompType)0x4, 0);
-    GXSetVtxAttrFmt((GXVtxFmt)4, (GXAttr)0xB, (GXCompCnt)0x0, (GXCompType)0x1, 0);
-    GXSetVtxAttrFmt((GXVtxFmt)4, (GXAttr)0xD, (GXCompCnt)0x1, (GXCompType)0x4, 0);
-    GXSetAlphaCompare((GXCompare)0x6, 0x80, (GXAlphaOp)0, (GXCompare)0x3, 0xff);
-    GXSetBlendMode((GXBlendMode)0, (GXBlendFactor)0, (GXBlendFactor)0, (GXLogicOp)0);
-    GXSetZMode((GXBool)1, (GXCompare)0x3, (GXBool)1);
-    GXSetZCompLoc((GXBool)0);
-    GXSetCullMode((GXCullMode)0);
-    GXSetNumTexGens(1);
-    GXSetNumIndStages(0);
-    GXSetTevDirect((GXTevStageID)0);
-    GXSetTevDirect((GXTevStageID)1);
-    GXSetNumTevStages(1);
-    GXSetTexCoordGen2((GXTexCoordID)0, (GXTexGenType)0x1, (GXTexGenSrc)0x4, 0x3c, (GXBool)0, 0x7d);
-    GXSetTevOrder((GXTevStageID)0, (GXTexCoordID)0, (GXTexMapID)0, (GXChannelID)0x4);
-    GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xf, (GXTevColorArg)0xa, (GXTevColorArg)0x8, (GXTevColorArg)0xf);
-    GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0x2, (GXBool)1, (GXTevRegID)0);
-    GXSetTevAlphaIn((GXTevStageID)0, (GXTevAlphaArg)0x7, (GXTevAlphaArg)0x6, (GXTevAlphaArg)0x4, (GXTevAlphaArg)0x7);
-    GXSetTevAlphaOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)1, (GXTevRegID)0);
-    GXSetNumChans(1);
-    GXSetChanCtrl((GXChannelID)0, (GXBool)1, (GXColorSrc)0, (GXColorSrc)1, (GXLightID)1, (GXDiffuseFn)0, (GXAttnFn)0x2);
-    GXLightObj light;
-    GXColor lightColor;
-    *(u32*)&lightColor = lbl_eu_8066A7A8;
-    GXInitLightColor(&light, lightColor);
-    GXLoadLightObjImm(&light, (GXLightID)1);
-    func_804723A4__Q26mpfsys17UnkClass_80471EC8Fv(
-        (mpfsys::UnkClass_80471EC8*)lbl_eu_80665838,
-        (GXColor*)&lbl_eu_80665878, (GXColor*)&lbl_eu_8066587C);
-    GXColor amb;
-    *(u32*)&amb = lbl_eu_80665878;
-    GXSetChanAmbColor(GX_COLOR0, amb);
-    GXColor mat;
-    *(u32*)&mat = lbl_eu_8066A7A8;
-    GXSetChanMatColor(GX_COLOR0, mat);
-    GXColor key;
-    *(u32*)&key = lbl_eu_8066A7A0;
-    lbl_eu_80665858 = -1;
-    lbl_eu_80665854 = 1;
-    lbl_eu_8066585A = 0;
-    lbl_eu_8066586C = 0;
-    lbl_eu_80665860 = 0;
-    lbl_eu_80665874 = a5;
-    lbl_eu_80665870 = a6;
-    GXSetTevKColor(GX_KCOLOR0, key);
-    GXSetArray((GXAttr)0xd, lbl_eu_80665844, 0x8);
-    GXSetTevKColorSel((GXTevStageID)0, (GXTevKColorSel)0xc);
-    GXSetTevKColorSel((GXTevStageID)1, (GXTevKColorSel)0xd);
-    GXSetTevKAlphaSel((GXTevStageID)0, (GXTevKAlphaSel)0x1c);
-    GXSetTevKAlphaSel((GXTevStageID)1, (GXTevKAlphaSel)0x1d);
-    if (swapFlag != 0) {
-        GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_RED, GX_CH_RED, GX_CH_ALPHA);
-        GXSetTevSwapModeTable(GX_TEV_SWAP1, GX_CH_RED, GX_CH_RED, GX_CH_RED, GX_CH_ALPHA);
-        GXSetTevSwapModeTable(GX_TEV_SWAP2, GX_CH_RED, GX_CH_RED, GX_CH_RED, GX_CH_ALPHA);
-        GXSetTevSwapModeTable(GX_TEV_SWAP3, GX_CH_RED, GX_CH_RED, GX_CH_RED, GX_CH_ALPHA);
-    } else {
-        GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
-        GXSetTevSwapModeTable(GX_TEV_SWAP1, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
-        GXSetTevSwapModeTable(GX_TEV_SWAP2, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
-        GXSetTevSwapModeTable(GX_TEV_SWAP3, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
-    }
-    func_804C19B8(((MpfsysCScnEnvLgt*)(u8*)func_8049698C())->field_0x7C);
-    lbl_eu_8066585C = 0;
-    nw4r::g3d::G3DState::LoadFog(0x40);
-}
+void mpfsys::UnkClass_80471EC8::func_80473984() {}
 
 void mpfsys::UnkClass_80471EC8::func_804742BC() {
     if (lbl_eu_8066585A == 0) {
@@ -937,33 +330,7 @@ void mpfsys::UnkClass_80471EC8::func_804743E0() {
     }
 }
 
-void mpfsys::UnkClass_80471EC8::func_804744EC() {
-    // Two-stage TEV setup (stages 0 and 1), idempotent per state 2.
-    if (lbl_eu_8066585A == 2) {
-        return;
-    }
-    GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xA, (GXTevColorArg)0x8, (GXTevColorArg)0xF);
-    GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)1, (GXTevRegID)2);
-    GXSetTevAlphaIn((GXTevStageID)0, (GXTevAlphaArg)0x7, (GXTevAlphaArg)0x6, (GXTevAlphaArg)0x4, (GXTevAlphaArg)0x7);
-    GXSetTevAlphaOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)1, (GXTevRegID)2);
-    GXSetTevColorIn((GXTevStageID)1, (GXTevColorArg)0xF, (GXTevColorArg)0x2, (GXTevColorArg)0x4, (GXTevColorArg)0xF);
-    GXSetTevColorOp((GXTevStageID)1, (GXTevOp)0, (GXTevBias)0, (GXTevScale)2, (GXBool)1, (GXTevRegID)0);
-    GXSetTevAlphaIn((GXTevStageID)1, (GXTevAlphaArg)0x7, (GXTevAlphaArg)0x7, (GXTevAlphaArg)0x7, (GXTevAlphaArg)0x2);
-    GXSetTevAlphaOp((GXTevStageID)1, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)1, (GXTevRegID)0);
-    GXClearVtxDesc();
-    GXSetVtxDesc((GXAttr)0x9, (GXAttrType)0x2);
-    GXSetVtxDesc((GXAttr)0xB, (GXAttrType)0x2);
-    GXSetVtxDesc((GXAttr)0xD, (GXAttrType)0x2);
-    lbl_eu_8066585A = 2;
-    if (lbl_eu_80665854 != 2) {
-        GXSetNumTevStages(2);
-        lbl_eu_80665854 = 2;
-    }
-    if (lbl_eu_8066586C & 0x10) {
-        GXSetChanCtrl((GXChannelID)0, (GXBool)1, (GXColorSrc)0, (GXColorSrc)1, (GXLightID)1, (GXDiffuseFn)0, (GXAttnFn)2);
-        lbl_eu_8066586C &= ~0x10;
-    }
-}
+void mpfsys::UnkClass_80471EC8::func_804744EC() {}
 
 void mpfsys::UnkClass_80471EC8::func_8047466C() {
     // Fullscreen TEV stage-0 / vertex-desc setup (idempotent per state 3).
@@ -989,63 +356,9 @@ void mpfsys::UnkClass_80471EC8::func_8047466C() {
     }
 }
 
-void mpfsys::UnkClass_80471EC8::func_80474780() {
-    // Two-stage TEV setup (stages 0 and 1) with a stage-1 tex-order,
-    // idempotent per state 4.
-    if (lbl_eu_8066585A == 4) {
-        return;
-    }
-    GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xA, (GXTevColorArg)0x8, (GXTevColorArg)0xF);
-    GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)1, (GXTevRegID)2);
-    GXSetTevAlphaIn((GXTevStageID)0, (GXTevAlphaArg)0x7, (GXTevAlphaArg)0x6, (GXTevAlphaArg)0x4, (GXTevAlphaArg)0x7);
-    GXSetTevAlphaOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)1, (GXTevRegID)2);
-    GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
-    GXSetTevColorIn((GXTevStageID)1, (GXTevColorArg)0xF, (GXTevColorArg)0x2, (GXTevColorArg)0x4, (GXTevColorArg)0xF);
-    GXSetTevColorOp((GXTevStageID)1, (GXTevOp)0, (GXTevBias)0, (GXTevScale)2, (GXBool)1, (GXTevRegID)0);
-    GXSetTevAlphaIn((GXTevStageID)1, (GXTevAlphaArg)0x7, (GXTevAlphaArg)0x7, (GXTevAlphaArg)0x7, (GXTevAlphaArg)0x2);
-    GXSetTevAlphaOp((GXTevStageID)1, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)1, (GXTevRegID)0);
-    GXClearVtxDesc();
-    GXSetVtxDesc((GXAttr)0x0, (GXAttrType)0x1);
-    GXSetVtxDesc((GXAttr)0x9, (GXAttrType)0x2);
-    GXSetVtxDesc((GXAttr)0xB, (GXAttrType)0x2);
-    GXSetVtxDesc((GXAttr)0xD, (GXAttrType)0x2);
-    lbl_eu_8066585A = 4;
-    if (lbl_eu_80665854 != 2) {
-        GXSetNumTevStages(2);
-        lbl_eu_80665854 = 2;
-    }
-    if (lbl_eu_8066586C & 0x10) {
-        GXSetChanCtrl((GXChannelID)0, (GXBool)1, (GXColorSrc)0, (GXColorSrc)1, (GXLightID)1, (GXDiffuseFn)0, (GXAttnFn)2);
-        lbl_eu_8066586C &= ~0x10;
-    }
-}
+void mpfsys::UnkClass_80471EC8::func_80474780() {}
 
-void mpfsys::UnkClass_80471EC8::func_8047491C() {
-    // Fullscreen TEV/vertex setup, idempotent per state 5. This state clears
-    // the vertex descriptors before the TEV calls (the other state setters
-    // do the reverse order).
-    if (lbl_eu_8066585A == 5) {
-        return;
-    }
-    GXClearVtxDesc();
-    GXSetVtxDesc((GXAttr)0x9, (GXAttrType)0x2);
-    GXSetVtxDesc((GXAttr)0xB, (GXAttrType)0x2);
-    GXSetVtxDesc((GXAttr)0xD, (GXAttrType)0x2);
-    GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)0xA, (GXTevColorArg)0x8, (GXTevColorArg)0xF);
-    GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)2, (GXBool)1, (GXTevRegID)0);
-    GXSetTevAlphaIn((GXTevStageID)0, (GXTevAlphaArg)0x7, (GXTevAlphaArg)0x6, (GXTevAlphaArg)0x4, (GXTevAlphaArg)0x7);
-    GXSetTevAlphaOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)1, (GXTevRegID)0);
-    GXSetArray((GXAttr)0xD, lbl_eu_80665844, 0x8);
-    lbl_eu_8066585A = 5;
-    if (lbl_eu_80665854 != 1) {
-        GXSetNumTevStages(1);
-        lbl_eu_80665854 = 1;
-    }
-    if (lbl_eu_8066586C & 0x10) {
-        GXSetChanCtrl((GXChannelID)0, (GXBool)1, (GXColorSrc)0, (GXColorSrc)1, (GXLightID)1, (GXDiffuseFn)0, (GXAttnFn)2);
-        lbl_eu_8066586C &= ~0x10;
-    }
-}
+void mpfsys::UnkClass_80471EC8::func_8047491C() {}
 
 void mpfsys::UnkClass_80471EC8::func_80474A40() {
     // One-shot alpha/blend setup: when the 0x2 flag is clear, push the
@@ -1067,70 +380,7 @@ void mpfsys::UnkClass_80471EC8::func_80474AA0() {
     }
 }
 
-void func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* group, s32 tevStage, f32 scale, u8 mtxSelect) {
-    // Sprite matrix setup: build a diagonal-scale + translation matrix from
-    // the 0xC-stride base entry (diagonal folds a (a+b)&0x1F phase when the
-    // scale is non-zero), concat the global matrix and load it as position
-    // matrix 3; then, when tevStage != 0, reload the two sprite-pair
-    // matrices (ids 6 and 9).
-    f32 offDiag = lbl_eu_8066A7A4;
-    f32* base = (f32*)((u8*)lbl_eu_8066584C + (u32)group * 0xc);
-    union {
-        f64 d;
-        u32 u[2];
-    } conv;
-    Mtx m;
-    Mtx out;
-    if (scale != offDiag) {
-        // ((u32)->f32 via the 2^52 bias trick, referencing the named pool
-        // constant so the lfd reloc matches retail).
-        conv.u[0] = 0x43300000;
-        conv.u[1] = ((u32)group + (u32)tevStage) & lbl_eu_8066A72C;
-        f32 frac = (f32)(conv.d - lbl_eu_8066A7C8);
-        frac = frac * lbl_eu_8066A730;
-        f32 diag = lbl_eu_8066A7B0 + scale * frac;
-        m[0][0] = diag;
-        m[0][1] = offDiag;
-        m[0][2] = offDiag;
-        m[0][3] = base[0];
-        m[1][0] = offDiag;
-        m[1][1] = diag;
-        m[1][2] = offDiag;
-        m[1][3] = base[1];
-        m[2][0] = offDiag;
-        m[2][1] = offDiag;
-        m[2][2] = diag;
-        m[2][3] = base[2];
-    } else {
-        f32 diag = lbl_eu_8066A7B0;
-        m[0][0] = diag;
-        m[0][1] = offDiag;
-        m[0][2] = offDiag;
-        m[0][3] = base[0];
-        m[1][0] = offDiag;
-        m[1][1] = diag;
-        m[1][2] = offDiag;
-        m[1][3] = base[1];
-        m[2][0] = offDiag;
-        m[2][1] = offDiag;
-        m[2][2] = diag;
-        m[2][3] = base[2];
-    }
-    PSMTXConcat(lbl_eu_80658458, m, out);
-    GXLoadPosMtxImm(out, 3);
-    if (tevStage != 0) {
-        mpfsys::UnkClass_80471EC8* inst =
-            (mpfsys::UnkClass_80471EC8*)lbl_eu_80665838;
-        MpfsysSpritePair* sprite = (MpfsysSpritePair*)((u8*)inst->func_804734F4(mtxSelect) +
-            (((u32)group + (u32)tevStage) & lbl_eu_8066A72C) * 0xb4);
-        PSMTXConcat(m, sprite->field_0x84, out);
-        PSMTXConcat(lbl_eu_80658458, out, out);
-        GXLoadPosMtxImm(out, 6);
-        PSMTXConcat(m, sprite->field_0x54, out);
-        PSMTXConcat(lbl_eu_80658458, out, out);
-        GXLoadPosMtxImm(out, 9);
-    }
-}
+void mpfsys::UnkClass_80471EC8::func_80474B00() {}
 
 void mpfsys::UnkClass_80471EC8::func_80474CC4() {
     // Push the shared constant key color (RGBA latch) as TEV K-color 0.
@@ -1145,12 +395,11 @@ void func_80474CF4__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* se
     // table index and is never dereferenced, so the literal mangled name is
     // kept (func_8047233C precedent) - a const member would mangle to
     // ...CFv and never resolve against the retail ...Fv symbol.
-    u32 alpha = lbl_eu_8066A7D0;
     u16 rgb565 = lbl_eu_80665850[(u32)self];
     GXColor color;
-    *(u32*)&color = alpha;
-    color.r = (u8)((rgb565 >> 8) & 0xF8);
-    color.g = (rgb565 >> 3) & 0x1F8;
+    *(u32*)&color = lbl_eu_8066A7D0;
+    color.r = (u8)((rgb565 >> 8) & 0x1F);
+    color.g = (u8)((rgb565 >> 3) & 0x3F);
     color.b = (u8)((rgb565 & 0x1F) << 3);
     GXSetChanMatColor(GX_COLOR0, color);
 }
@@ -1158,12 +407,11 @@ void func_80474CF4__Q26mpfsys17UnkClass_80471EC8Fv(mpfsys::UnkClass_80471EC8* se
 void mpfsys::UnkClass_80471EC8::func_80474D50() {
     // Same RGB565->GXColor expansion as func_80474CF4 (alpha byte from
     // lbl_eu_8066A7D4), pushed as TEV register colour 0.
-    u32 alpha = lbl_eu_8066A7D4;
     u16 rgb565 = lbl_eu_80665850[(u32)this];
     GXColor color;
-    *(u32*)&color = alpha;
-    color.r = (u8)((rgb565 >> 8) & 0xF8);
-    color.g = (u8)((rgb565 >> 3) & 0xFC);
+    *(u32*)&color = lbl_eu_8066A7D4;
+    color.r = (u8)((rgb565 >> 8) & 0x1F);
+    color.g = (u8)((rgb565 >> 3) & 0x3F);
     color.b = (u8)((rgb565 & 0x1F) << 3);
     GXSetTevColor(GX_TEVREG0, color);
 }
@@ -1254,3 +502,33 @@ void mpfsys::UnkClass_80471EC8::func_80474F54() {
 extern "C" void sinit_80474F7C(void)
 {
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+extern "C" u32 lbl_eu_80523D80;  // .rodata: string
+extern "C" u32 lbl_eu_8056DB90;  // .data: object
+
+// [.sdata] 0x80663848-0x80663868 (0x20 = 32B)
+extern "C" u32 lbl_eu_80663848[2] = { (u32)&lbl_eu_80523D80, (u32)&lbl_eu_8056DB90 };
+extern "C" u32 lbl_eu_80663850 = 0x3B03126F;
+extern "C" u32 lbl_eu_80663854 = 0x3BA3D70A;
+GXColor lbl_eu_80663858 = { 0xFF, 0xFF, 0xFF, 0xFF };
+extern "C" u32 lbl_eu_8066385C = 0x72656600;
+extern "C" u32 lbl_eu_80663860 = 0x72656600;
+extern "C" u32 lbl_eu_80663864 = 0x72656600;
+
+// [.bss] 0x80658458-0x80658488 (0x30 = 48B) zero-fill
+u8 lbl_eu_80658458[48];
+
+// [.sbss] 0x80665860-0x80665888 (0x28 = 40B) zero-fill
+u32 lbl_eu_80665860;
+u32 lbl_eu_80665864;
+u32 lbl_eu_80665868;
+u32 lbl_eu_8066586C;
+u32 lbl_eu_80665870;
+u32 lbl_eu_80665874;
+u32 lbl_eu_80665878;
+u32 lbl_eu_8066587C;
+u32 lbl_eu_80665880;
+u32 lbl_eu_80665884;
+
+DECOMP_FORCEACTIVE(UnkClass_80471EC8_cpp, lbl_eu_80663848);

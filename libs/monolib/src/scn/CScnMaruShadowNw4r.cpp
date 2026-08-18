@@ -40,8 +40,8 @@ void func_8048DD18(){}
 void func_8048E2F8(){}
 
 // us-804926f0: func_8048E67C (0x20 bytes)
-float lbl_eu_8066A994;
-float lbl_eu_8066A9CC;
+extern const float lbl_eu_8066A994;  // foreign .sdata2
+extern const float lbl_eu_8066A9CC;  // foreign .sdata2
 
 void func_8048E67C(void* obj, int condition) {
     if (condition == 0) {
@@ -98,3 +98,25 @@ extern "C" int func_8048EA9C() { return 1; }
 // Empty body; used as constructor hook for the TU.
 // Retail: blr  (4 bytes)
 extern "C" void sinit_8048EAA4() {}
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+namespace MSBlob {
+extern "C" void func_8048E67C();
+extern "C" void func_8048EA9C();
+extern "C" void func_8048D500();
+extern "C" void func_8048DB58();
+extern "C" void func_8048EA74();
+extern "C" void func_8048EA48();
+}
+extern "C" u32 lbl_eu_806623F8;   // foreign .sdata
+
+// [.data] 0x8056E598-0x8056E5B8 (32B): CScnMaruShadowNw4r vtable
+extern "C" u32 lbl_eu_8056E598[8] = {
+    (u32)&lbl_eu_806623F8, 0x00000000,
+    (u32)&MSBlob::func_8048E67C,
+    (u32)&MSBlob::func_8048EA9C,
+    (u32)&MSBlob::func_8048D500,
+    (u32)&MSBlob::func_8048DB58,
+    (u32)&MSBlob::func_8048EA74,
+    (u32)&MSBlob::func_8048EA48,
+};

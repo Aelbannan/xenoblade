@@ -89,17 +89,27 @@ typedef f32 (*LODRecordFn)(CLODCacheManagerS* rec);
 // Shared sbss / sdata2 data (retail symbol names).
 // ---------------------------------------------------------------------------
 
-extern LOD::CLODCacheManagerS* lbl_eu_80665738;  // cache records, stride 0xC
-extern LOD::LODDistEntry* lbl_eu_8066573C;   // distance table, stride 8
-extern u32* lbl_eu_8066574C;    // index -> pair-table offset
-extern void* lbl_eu_80665750;   // pair table, stride 2 (u16 entries)
-extern LOD::LODLevelEntry* lbl_eu_80665740;   // level table, stride 0x10
-extern LOD::LODShortEntry* lbl_eu_80665744;   // short table, stride 8
-extern LOD::LODCacheIndex* lbl_eu_80665748;   // distance-key index table, stride 4
-
-extern LOD::LODRecordFn lbl_eu_80665760;  // active record lookup fn
-extern f32 lbl_eu_80665754;     // LOD threshold distance
-extern u16 lbl_eu_80665758;     // per-entry distance key threshold
+// [.sbss] 0x80665738-0x8066576C (52B) - definitions (address order mirrors the
+// retail symbol layout: 7x4B pointers, f32, u16+pad (8B span), fnptr+pad (8B
+// span), tail global).
+LOD::CLODCacheManagerS* lbl_eu_80665738;  // cache records, stride 0xC
+LOD::LODDistEntry* lbl_eu_8066573C;   // distance table, stride 8
+LOD::LODLevelEntry* lbl_eu_80665740;   // level table, stride 0x10
+LOD::LODShortEntry* lbl_eu_80665744;   // short table, stride 8
+LOD::LODCacheIndex* lbl_eu_80665748;   // distance-key index table, stride 4
+u32* lbl_eu_8066574C;    // index -> pair-table offset
+void* lbl_eu_80665750;   // pair table, stride 2 (u16 entries)
+f32 lbl_eu_80665754;     // LOD threshold distance
+u16 lbl_eu_80665758;     // per-entry distance key threshold (8B retail span)
+u16 lbl_eu_8066575A;     // pad within the 8B span
+u32 lbl_eu_8066575C;     // pad within the 8B span
+LOD::LODRecordFn lbl_eu_80665760;  // active record lookup fn (8B retail span)
+u32 lbl_eu_80665764;     // pad within the 8B span
+__declspec(align(8)) u32 lbl_eu_80665768;  // retail tail global (aligns .sbss 8)
+DECOMP_FORCEACTIVE(CLODCacheManagerS_cpp, lbl_eu_8066575A);
+DECOMP_FORCEACTIVE(CLODCacheManagerS_cpp, lbl_eu_8066575C);
+DECOMP_FORCEACTIVE(CLODCacheManagerS_cpp, lbl_eu_80665764);
+DECOMP_FORCEACTIVE(CLODCacheManagerS_cpp, lbl_eu_80665768);
 extern void (*lbl_eu_8056D700[])(LOD::UnkClass_8046368C*);  // .data dispatch
 
 // sdata2 constants used by the interpolation helpers.
@@ -374,3 +384,21 @@ extern "C" void func_8046339C__Q23LOD17CLODCacheManagerSFv(s32* outA, s32* outB,
     *outA = 0;
     *outB = 0;
 }
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056D700-0x8056D71C (28B): LOD dispatch table. 8046374C/8046375C
+// are this TU's; the rest live in the sibling LOD TUs.
+extern "C" void func_8046376C__Q23LOD17UnkClass_8046368CFv();
+extern "C" void func_804645CC__Q23LOD17UnkClass_804645CCFv();
+extern "C" void func_80468434__Q23LOD17UnkClass_80468434Fv();
+extern "C" void func_80464B84__Q23LOD17UnkClass_804645CCFv();
+typedef void (*LODDispFn)(LOD::UnkClass_8046368C*);
+void (*lbl_eu_8056D700[])(LOD::UnkClass_8046368C*) = {
+    (LODDispFn)&func_8046374C__Q23LOD17UnkClass_8046368CFv,
+    (LODDispFn)&func_8046375C__Q23LOD17UnkClass_8046368CFv,
+    (LODDispFn)&func_8046376C__Q23LOD17UnkClass_8046368CFv,
+    (LODDispFn)0,
+    (LODDispFn)&func_804645CC__Q23LOD17UnkClass_804645CCFv,
+    (LODDispFn)&func_80468434__Q23LOD17UnkClass_80468434Fv,
+    (LODDispFn)&func_80464B84__Q23LOD17UnkClass_804645CCFv,
+};
+DECOMP_FORCEACTIVE(CLODCacheManagerS_cpp, lbl_eu_8056D700);

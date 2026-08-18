@@ -100,8 +100,6 @@ extern const f32 lbl_eu_8066AED4;
 extern const f32 lbl_eu_8066AEDC;
 extern const f32 lbl_eu_8066AED8;  // normal-orientation flip scale
 extern const f32 lbl_eu_8066AEE0;  // box raycast plane-distance threshold
-// Query-box registration distance threshold (func_804B8C2C).
-extern const f32 lbl_eu_8066AEE4;
 // GQR5 scale table default distance threshold (func_804B9E14 / func_804B877C).
 extern const f32 lbl_eu_8066AEE8;
 // FIdx (512-count) to degree conversion factor (func_804BA8B4 heading math).
@@ -382,21 +380,14 @@ struct CTrackedMover {
     u8 field_0x60;               // 0x60
 };
 
-// Query-box words written by func_804BBFA0 / func_804BC134 (two Vec3s).
-extern u32 lbl_eu_8065F3F0[6];
-
 // Collision-register callbacks (retail symbols in this TU).
 void func_804B708C(CColiSrc* a, CColiMover* b);
 void func_804B71CC(CColiSrc* a, CColiMover* b);
 
-// Sibling-unit helpers (C linkage: the defining TU declares them extern "C", so
-// the retail symbol names are unmangled).
-extern "C" u32 func_804BC9A0(CColiMoverState* self);
-extern "C" void func_804BBFA0(CColiMoverState* self, const Vec* src, u32 idx, f32 radius);
-extern "C" void func_804BBFD4(CColiMoverState* self, const Vec* a, const Vec* b, u32 idx);
-extern "C" void func_804BC134(CColiMoverState* self, const Vec* src, u32 idx, f32 y);
-extern "C" void func_804BC164(CColiMoverState* self, const Vec* a, const Vec* b, u32 idx,
-                            f32 s0, f32 s1, f32 s2);
+// Sibling-unit helpers (global scope: MWCC emits C names).
+u32 func_804BC9A0(CColiMoverState* self);
+void func_804BBFA0(CColiMoverState* self, const Vec* src, u32 idx, f32 radius);
+void func_804BBFD4(CColiMoverState* self, CColiMgr* mgr, const Vec* src, u32 idx);
 
 // func_804B59C8 - track mover movement. When the squared distance between
 // the current position (0x50) and the previous position (0x0C) is at least
@@ -1019,19 +1010,7 @@ void func_804B71CC(CColiSrc* a, CColiMover* b) {
     }
 }
 
-// Patch a set of relative offsets (embedded sub-object pointers) into
-// absolute addresses on the target (+0x50..+0x5C and +0x74..+0x7C).
-extern "C" void func_804BC9DC(void*, u8*, u8*);
-extern "C" void func_804B74F0(void* self, u8* base) {
-    u32* src = (u32*)base;
-    u32* dst = (u32*)((u8*)self + 0x50);
-    dst[0] = (u32)base + src[0];
-    dst[1] = (u32)base + src[1];
-    dst[2] = (u32)base + src[2];
-    dst[3] = (u32)base + src[3];
-    *(u32*)((u8*)self + 0x74) = src[4];
-    func_804BC9DC(self, base + src[5], base + src[6]);
-}
+void func_804B74F0(){}
 
 // func_804B7540 - (re)allocate the mover-state entry table: free the old
 // allocation, allocate count * 0xE0 bytes, then fill each entry from the
@@ -1282,14 +1261,7 @@ void func_804B7D9C(int, int bit_index) {
     bits[word_idx] &= ~mask;
 }
 
-void func_804B7DD4(int, int bit_index) {
-    if (bit_index > 0x140) bit_index = 0x140;
-    int word_idx = bit_index >> 5;
-    int bit_off = bit_index & 0x1F;
-    int mask = 1 << bit_off;
-    int* bits = (int*)&lbl_eu_8065F1A0;
-    bits[word_idx] |= mask;
-}
+void func_804B7DD4(){}
 
 // func_804B7E0C - update one mover-state entry: save the current matrix and
 // inverse into the previous slots, install the new 48-byte matrix block,
@@ -1394,10 +1366,7 @@ void func_804B8078(CColiMoverState* self, int idx) {
         return;
     }
     CColiOutEntry* e = &reinterpret_cast<CColiOutEntry*>(self->field_0x60)[idx];
-    // Retail emits the wrap-mask rlwinm r0,r0,0,31,29 (0xFFFFFFFC); MWCC's
-    // u32 mask lowers to the normal MB=0,ME=29 encoding, so the approved
-    // DECOMP_PPC_RLWINM intrinsic (PLAN.md 17.6) selects the retail opcode.
-    e->field_0x00 = DECOMP_PPC_RLWINM(e->field_0x00, 0, 31, 29);
+    e->field_0x00 &= ~3u;
     e->field_0x04 = lbl_eu_8066AED0;
 }
 
@@ -1410,22 +1379,7 @@ void* func_804B80A4(CColiMoverState* self, int idx) {
     return 0;
 }
 
-// Scan the input entry array (+0x44, 0x3C stride) for the entry whose high
-// halfword matches id, returning its index (retail counted loop with bdnz;
-// -O4,p strength-reduces the count to addic./bne). Signed count keeps the
-// loop pre-check on the gate-1 cmpi so the extra cmpli is CSE'd away.
-#pragma optimize_for_size on
-int func_804B80CC(CColiMoverState* self, u16 id) {
-    int count = (int)self->field_0x78;
-    if (count != 0) {
-        const CColiInEntry* e = self->field_0x44;
-        for (int i = 0; i < count; i++, e++) {
-            if ((int)((u16*)&e->field_0x00)[1] == (int)id) return i;
-        }
-    }
-    return 0;
-}
-#pragma optimize_for_size off
+void func_804B80CC(){}
 
 // func_804B8108 - build the six OBB plane definitions from a rotation
 // matrix and the manager's reference point: the three unit axes are
@@ -1433,7 +1387,7 @@ int func_804B80CC(CColiMoverState* self, u16 id) {
 // ml::CVec3::zero for null axes), then stored as the plane normals at
 // 0x3C/0x48/0x54/0x60/0x6C/0x78 (+/- each axis, flipped by 0x8066AED8) with
 // the plane offsets at 0x84..0x98 computed as (center +/- axis*scale).axis.
-void func_804B8108(CColiMoverState* unused, const Vec* center, const Mtx mtx, f32 scaleV2, f32 scaleV1, f32 scaleV0) {
+void func_804B8108(CColiMgr* unused, const Vec* center, const Mtx mtx, f32 scaleV2, f32 scaleV1, f32 scaleV0) {
     CColiMgr* mgr = &lbl_eu_8065F1C8;
     const f32 zero = lbl_eu_8066AED0;
     const f32 flip = lbl_eu_8066AED8;
@@ -1649,596 +1603,11 @@ void func_804B877C(CColiMoverState* state, const Vec* offset, u32 flags, int mod
     }
 }
 
-// func_804B8C2C - register a segment (a -> b): store `a` into the manager's
-// reference position, the direction `b - a` into the reference direction and
-// the distance threshold, install the per-stage matrix config, then walk the
-// scene-resource volumes and the mover-state entries, casting each volume's
-// matrix along the segment.  The AABB stored at the end is the per-component
-// min/max of the two endpoints.  Void.
-void func_804B8C2C(CColiMoverState* self, const Vec* a, const Vec* b, u32 flags128,
-                   u32 flags12C, u32 mode) {
-    CColiMgr* mgr = &lbl_eu_8065F1C8;
-    const u32* tbl = lbl_eu_8056F508;
-    {
-        u32 ax = *(const u32*)&a->x;
-        u32 ay = *(const u32*)&a->y;
-        u32 az = *(const u32*)&a->z;
-        *(u32*)&mgr->field_0x00.x = ax;
-        *(u32*)&mgr->field_0x00.y = ay;
-        *(u32*)&mgr->field_0x00.z = az;
-        nw4r::math::VEC3 diff;
-        nw4r::math::VEC3Sub(&diff, (const nw4r::math::VEC3*)b, (const nw4r::math::VEC3*)a);
-        Vec3 d2;
-        d2.x = diff.x;
-        d2.y = diff.y;
-        d2.z = diff.z;
-        *(u32*)&mgr->field_0x0C.x = *(u32*)&d2.x;
-        *(u32*)&mgr->field_0x0C.y = *(u32*)&d2.y;
-        *(u32*)&mgr->field_0x0C.z = *(u32*)&d2.z;
-        mgr->field_0xD8 = lbl_eu_8066AEE4;
-        *(u32*)&mgr->field_0x18.x = ax;
-        *(u32*)&mgr->field_0x18.y = ay;
-        *(u32*)&mgr->field_0x18.z = az;
-    }
-    {
-        const u32* g0 = &tbl[0x9C / 4];
-        self->field_0x7C = g0[0];
-        self->field_0x80 = g0[1];
-        self->field_0x84 = g0[2];
-        const u32* g1 = &tbl[0xA8 / 4];
-        self->field_0x88 = g1[0];
-        self->field_0x8C = g1[1];
-        self->field_0x90 = g1[2];
-    }
-    if (mode != 0) {
-        const u32* cfg = &tbl[0xB4 / 4];
-        self->field_0x94 = cfg[0];
-        self->field_0x98 = cfg[1];
-        self->field_0x9C = cfg[2];
-    } else {
-        const u32* cfg = &tbl[0xC0 / 4];
-        self->field_0x94 = cfg[0];
-        self->field_0x98 = cfg[1];
-        self->field_0x9C = cfg[2];
-    }
-    mgr->field_0x128 = flags128;
-    mgr->field_0x12C = flags12C;
-    if (flags12C != 0) {
-        const u32* cfg = &tbl[0xCC / 4];
-        self->field_0xAC = cfg[0];
-        self->field_0xB0 = cfg[1];
-        self->field_0xB4 = cfg[2];
-    } else {
-        const u32* cfg = &tbl[0xD8 / 4];
-        self->field_0xAC = cfg[0];
-        self->field_0xB0 = cfg[1];
-        self->field_0xB4 = cfg[2];
-    }
-    DCZeroRange((u8*)lbl_eu_80663AC8,
-                (((s32)(self->field_0x6C + self->field_0x70) >> 5) + 1) * 4);
-    lbl_eu_80665988 = 0;
-    lbl_eu_8066598C = 0;
-    lbl_eu_80665990 = 0;
-    mgr->field_0x136 = 0;
-    mgr->field_0xEC = 0;
-    mgr->field_0x130 = 0;
-    if (func_804BC9A0(self) == 0) return;
-    func_804BBFD4(self, a, b, self->field_0x34->field_0x04);
-    if (mgr->field_0x136 == 0 && self->field_0x78 == 0) return;
-    if (mode != 0) {
-        const u32* cfg = &tbl[0xE4 / 4];
-        self->field_0xA0 = cfg[0];
-        self->field_0xA4 = cfg[1];
-        self->field_0xA8 = cfg[2];
-    } else {
-        const u32* cfg = &tbl[0xF0 / 4];
-        self->field_0xA0 = cfg[0];
-        self->field_0xA4 = cfg[1];
-        self->field_0xA8 = cfg[2];
-    }
-    int resCount = mgr->field_0x136;
-    if (resCount != 0) {
-        for (int i = 0; i < resCount; i++) {
-            CColiVolEntry* vol = &self->field_0x40[lbl_eu_8065F300[i]];
-            if (vol->field_0x02 & 0x8000) {
-                const u32* cfg = &tbl[0xFC / 4];
-                self->field_0x94 = cfg[0];
-                self->field_0x98 = cfg[1];
-                self->field_0x9C = cfg[2];
-            } else {
-                const u32* cfg = &tbl[0x108 / 4];
-                self->field_0x94 = cfg[0];
-                self->field_0x98 = cfg[1];
-                self->field_0x9C = cfg[2];
-            }
-            Vec3 v3;
-            PSMTXMultVec(vol->field_0x34, a, (Vec*)&mgr->field_0x00);
-            PSMTXMultVec(vol->field_0x34, b, (Vec*)&v3);
-            {
-                nw4r::math::VEC3 diff;
-                nw4r::math::VEC3Sub(&diff, (const nw4r::math::VEC3*)&v3,
-                                    (const nw4r::math::VEC3*)&mgr->field_0x00);
-                Vec3 d2;
-                d2.x = diff.x;
-                d2.y = diff.y;
-                d2.z = diff.z;
-                *(u32*)&mgr->field_0x0C.x = *(u32*)&d2.x;
-                *(u32*)&mgr->field_0x0C.y = *(u32*)&d2.y;
-                *(u32*)&mgr->field_0x0C.z = *(u32*)&d2.z;
-            }
-            CColiEntry12* e12 = &self->field_0x38[vol->field_0x00];
-            DCZeroRange((u8*)lbl_eu_80663AC8, ((e12->field_0x02 >> 5) + 1) * 4);
-            mgr->field_0xF0[0][0] = vol->m[0][0];
-            mgr->field_0xF0[0][1] = vol->m[0][1];
-            mgr->field_0xF0[0][2] = vol->m[0][2];
-            mgr->field_0xF0[1][0] = vol->m[1][0];
-            mgr->field_0xF0[1][1] = vol->m[1][1];
-            mgr->field_0xF0[1][2] = vol->m[1][2];
-            mgr->field_0xF0[2][0] = vol->m[2][0];
-            mgr->field_0xF0[2][1] = vol->m[2][1];
-            mgr->field_0xF0[2][2] = vol->m[2][2];
-            self->field_0x30 = self->field_0x14 + e12->field_0x08;
-            mgr->field_0xE8 = (Mtx*)&vol->m[0][0];
-            mgr->field_0xEC = (u32)&vol->field_0x34;
-            func_804BBFD4(self, (const Vec*)&mgr->field_0x00, (const Vec*)&v3,
-                          e12->field_0x04);
-        }
-    }
-    if (self->field_0x78 != 0) {
-        const u32* cfg = &tbl[0x114 / 4];
-        self->field_0x94 = cfg[0];
-        self->field_0x98 = cfg[1];
-        self->field_0x9C = cfg[2];
-        if (a->x > b->x) {
-            mgr->field_0x24.x = a->x;
-            mgr->field_0x30.x = b->x;
-        } else {
-            mgr->field_0x24.x = b->x;
-            mgr->field_0x30.x = a->x;
-        }
-        if (a->y > b->y) {
-            mgr->field_0x24.y = a->y;
-            mgr->field_0x30.y = b->y;
-        } else {
-            mgr->field_0x24.y = b->y;
-            mgr->field_0x30.y = a->y;
-        }
-        if (a->z > b->z) {
-            mgr->field_0x24.z = a->z;
-            mgr->field_0x30.z = b->z;
-        } else {
-            mgr->field_0x24.z = b->z;
-            mgr->field_0x30.z = a->z;
-        }
-        CColiOutEntry* out = (CColiOutEntry*)self->field_0x60;
-        const CColiInEntry* in = self->field_0x44;
-        int i = 0;
-        while (i < (s32)self->field_0x78) {
-            if (func_804B85C8((CColiThing*)self, (CColiVolume*)out, (CColiQuery*)in, i) != 0) {
-                Vec3 v4;
-                PSMTXMultVec(out->savedMtx.m, a, (Vec*)&mgr->field_0x00);
-                PSMTXMultVec(out->savedMtx.m, b, (Vec*)&v4);
-                {
-                    nw4r::math::VEC3 diff;
-                    nw4r::math::VEC3Sub(&diff, (const nw4r::math::VEC3*)&v4,
-                                        (const nw4r::math::VEC3*)&mgr->field_0x00);
-                    Vec3 d2;
-                    d2.x = diff.x;
-                    d2.y = diff.y;
-                    d2.z = diff.z;
-                    *(u32*)&mgr->field_0x0C.x = *(u32*)&d2.x;
-                    *(u32*)&mgr->field_0x0C.y = *(u32*)&d2.y;
-                    *(u32*)&mgr->field_0x0C.z = *(u32*)&d2.z;
-                }
-                func_804BBFD4(self, (const Vec*)&mgr->field_0x00, (const Vec*)&v4,
-                              self->field_0x38[((CColiQuery*)in)->field_0x00].field_0x04);
-            }
-            i++;
-            out++;
-            in++;
-        }
-    }
-    self->field_0x30 = self->field_0x2C;
-}
+void func_804B8C2C(){}
 
-// func_804B91E0 - begin a registration pass from a vertical query: store the
-// source point and Y extent into the manager, install the per-stage matrix
-// config, then walk the scene-resource volumes (0x80-byte stride) and the
-// mover-state entries, casting each volume's matrix along the manager's
-// current reference.  The resource loop is gated on the registered-index
-// count; the mover loop on the entry count.  Void.
-void func_804B91E0(CColiMoverState* self, const Vec* src, u32 flags128, u32 flags12C,
-                   u32 mode, f32 yOff, f32 yRange) {
-    CColiMgr* mgr = &lbl_eu_8065F1C8;
-    const u32* tbl = lbl_eu_8056F508;
-    const u32* g0 = &tbl[0x1A4 / 4];
-    const u32* g1 = &tbl[0x1B0 / 4];
-    const u32* g2 = &tbl[0x1BC / 4];
-    {
-        u32 sx = *(const u32*)&src->x;
-        u32 sy = *(const u32*)&src->y;
-        u32 sz = *(const u32*)&src->z;
-        *(u32*)&mgr->field_0x00.x = sx;
-        *(u32*)&mgr->field_0x00.y = sy;
-        *(u32*)&mgr->field_0x00.z = sz;
-        mgr->field_0x0C.x = lbl_eu_8066AED0;
-        mgr->field_0x0C.y = yOff;
-        mgr->field_0x0C.z = lbl_eu_8066AED0;
-        *(u32*)&mgr->field_0x18.x = sx;
-        *(u32*)&mgr->field_0x18.y = sy;
-        *(u32*)&mgr->field_0x18.z = sz;
-    }
-    self->field_0x64 = yRange;
-    self->field_0x68 = -yRange;
-    {
-        self->field_0x7C = g0[0];
-        self->field_0x80 = g0[1];
-        self->field_0x84 = g0[2];
-        self->field_0x88 = g1[0];
-        self->field_0x8C = g1[1];
-        self->field_0x90 = g1[2];
-        self->field_0xB8 = g2[0];
-        self->field_0xBC = g2[1];
-        self->field_0xC0 = g2[2];
-    }
-    if (mode != 0) {
-        const u32* cfg = &tbl[0x1C8 / 4];
-        self->field_0x94 = cfg[0];
-        self->field_0x98 = cfg[1];
-        self->field_0x9C = cfg[2];
-    } else {
-        const u32* cfg = &tbl[0x1D4 / 4];
-        self->field_0x94 = cfg[0];
-        self->field_0x98 = cfg[1];
-        self->field_0x9C = cfg[2];
-    }
-    mgr->field_0x128 = flags128;
-    mgr->field_0x12C = flags12C;
-    if (flags12C != 0) {
-        const u32* cfg = &tbl[0x1E0 / 4];
-        self->field_0xAC = cfg[0];
-        self->field_0xB0 = cfg[1];
-        self->field_0xB4 = cfg[2];
-    } else {
-        const u32* cfg = &tbl[0x1EC / 4];
-        self->field_0xAC = cfg[0];
-        self->field_0xB0 = cfg[1];
-        self->field_0xB4 = cfg[2];
-    }
-    DCZeroRange((u8*)lbl_eu_80663AC8,
-                (((s32)(self->field_0x6C + self->field_0x70) >> 5) + 1) * 4);
-    lbl_eu_80665988 = 0;
-    lbl_eu_8066598C = 0;
-    lbl_eu_80665990 = 0;
-    mgr->field_0x136 = 0;
-    mgr->field_0xEC = 0;
-    mgr->field_0x130 = 0;
-    if (func_804BC9A0(self) == 0) return;
-    if (yOff < lbl_eu_8066AED0) {
-        Vec3 v;
-        v.x = src->x;
-        v.y = src->y + yOff;
-        v.z = src->z;
-        func_804BC134(self, (const Vec*)&v, self->field_0x34->field_0x04, src->y);
-    } else {
-        func_804BC134(self, src, self->field_0x34->field_0x04, yOff + src->y);
-    }
-    if (mgr->field_0x136 == 0 && self->field_0x78 == 0) return;
-    {
-        const u32* g0 = &tbl[0x1F8 / 4];
-        self->field_0x7C = g0[0];
-        self->field_0x80 = g0[1];
-        self->field_0x84 = g0[2];
-    }
-    if (mode != 0) {
-        const u32* cfg = &tbl[0x204 / 4];
-        self->field_0xA0 = cfg[0];
-        self->field_0xA4 = cfg[1];
-        self->field_0xA8 = cfg[2];
-    } else {
-        const u32* cfg = &tbl[0x210 / 4];
-        self->field_0xA0 = cfg[0];
-        self->field_0xA4 = cfg[1];
-        self->field_0xA8 = cfg[2];
-    }
-    Vec3 vA;
-    Vec3 vB;
-    vA.x = mgr->field_0x00.x;
-    vA.y = mgr->field_0x00.y;
-    vA.z = mgr->field_0x00.z;
-    vB.x = vA.x;
-    vB.y = vA.y + yOff;
-    vB.z = vA.z;
-    int resCount = mgr->field_0x136;
-    if (resCount != 0) {
-        for (int i = 0; i < resCount; i++) {
-            CColiVolEntry* vol = &self->field_0x40[lbl_eu_8065F300[i]];
-            if (vol->field_0x02 & 0x8000) {
-                const u32* cfg = &tbl[0x21C / 4];
-                self->field_0x94 = cfg[0];
-                self->field_0x98 = cfg[1];
-                self->field_0x9C = cfg[2];
-            } else {
-                const u32* cfg = &tbl[0x228 / 4];
-                self->field_0x94 = cfg[0];
-                self->field_0x98 = cfg[1];
-                self->field_0x9C = cfg[2];
-            }
-            Vec3 v3;
-            PSMTXMultVec(vol->field_0x34, (const Vec*)&vA, (Vec*)&mgr->field_0x00);
-            PSMTXMultVec(vol->field_0x34, (const Vec*)&vB, (Vec*)&v3);
-            {
-                nw4r::math::VEC3 diff;
-                nw4r::math::VEC3Sub(&diff, (const nw4r::math::VEC3*)&v3,
-                                    (const nw4r::math::VEC3*)&mgr->field_0x00);
-                Vec3 d2;
-                d2.x = diff.x;
-                d2.y = diff.y;
-                d2.z = diff.z;
-                *(u32*)&mgr->field_0x0C.x = *(u32*)&d2.x;
-                *(u32*)&mgr->field_0x0C.y = *(u32*)&d2.y;
-                *(u32*)&mgr->field_0x0C.z = *(u32*)&d2.z;
-            }
-            CColiEntry12* e12 = &self->field_0x38[vol->field_0x00];
-            DCZeroRange((u8*)lbl_eu_80663AC8, ((e12->field_0x02 >> 5) + 1) * 4);
-            mgr->field_0xF0[0][0] = vol->m[0][0];
-            mgr->field_0xF0[0][1] = vol->m[0][1];
-            mgr->field_0xF0[0][2] = vol->m[0][2];
-            mgr->field_0xF0[1][0] = vol->m[1][0];
-            mgr->field_0xF0[1][1] = vol->m[1][1];
-            mgr->field_0xF0[1][2] = vol->m[1][2];
-            mgr->field_0xF0[2][0] = vol->m[2][0];
-            mgr->field_0xF0[2][1] = vol->m[2][1];
-            mgr->field_0xF0[2][2] = vol->m[2][2];
-            self->field_0x30 = self->field_0x14 + e12->field_0x08;
-            mgr->field_0xE8 = (Mtx*)&vol->m[0][0];
-            mgr->field_0xEC = (u32)&vol->field_0x34;
-            func_804BBFD4(self, (const Vec*)&mgr->field_0x00, (const Vec*)&v3, e12->field_0x04);
-        }
-    }
-    if (self->field_0x78 != 0) {
-        const u32* cfg = &tbl[0x234 / 4];
-        self->field_0x94 = cfg[0];
-        self->field_0x98 = cfg[1];
-        self->field_0x9C = cfg[2];
-        if (yOff < lbl_eu_8066AED0) {
-            mgr->field_0x24.x = src->x;
-            mgr->field_0x24.y = src->y;
-            mgr->field_0x24.z = src->z;
-            mgr->field_0x30.x = src->x;
-            mgr->field_0x30.y = src->y + yOff;
-            mgr->field_0x30.z = src->z;
-        } else {
-            mgr->field_0x24.x = src->x;
-            mgr->field_0x24.y = src->y + yOff;
-            mgr->field_0x24.z = src->z;
-            mgr->field_0x30.x = src->x;
-            mgr->field_0x30.y = src->y;
-            mgr->field_0x30.z = src->z;
-        }
-        CColiOutEntry* out = (CColiOutEntry*)self->field_0x60;
-        const CColiInEntry* in = self->field_0x44;
-        int i = 0;
-        while (i < (s32)self->field_0x78) {
-            if (func_804B85C8((CColiThing*)self, (CColiVolume*)out, (CColiQuery*)in, i) != 0) {
-                Vec3 v4;
-                PSMTXMultVec(out->savedMtx.m, (const Vec*)&vA, (Vec*)&mgr->field_0x00);
-                PSMTXMultVec(out->savedMtx.m, (const Vec*)&vB, (Vec*)&v4);
-                {
-                    nw4r::math::VEC3 diff;
-                    nw4r::math::VEC3Sub(&diff, (const nw4r::math::VEC3*)&v4,
-                                        (const nw4r::math::VEC3*)&mgr->field_0x00);
-                    Vec3 d2;
-                    d2.x = diff.x;
-                    d2.y = diff.y;
-                    d2.z = diff.z;
-                    *(u32*)&mgr->field_0x0C.x = *(u32*)&d2.x;
-                    *(u32*)&mgr->field_0x0C.y = *(u32*)&d2.y;
-                    *(u32*)&mgr->field_0x0C.z = *(u32*)&d2.z;
-                }
-                func_804BBFD4(self, (const Vec*)&mgr->field_0x00, (const Vec*)&v4,
-                              self->field_0x38[((CColiQuery*)in)->field_0x00].field_0x04);
-            }
-            i++;
-            out++;
-            in++;
-        }
-    }
-    self->field_0x30 = self->field_0x2C;
-}
+void func_804B91E0(){}
 
-// func_804B9818 - like func_804B91E0 but without the mode parameter: the
-// scene-resource loop also checks the 12-byte entry's flag bit 0, and the
-// resource loop runs when either the registered-index count or the entry
-// count is non-zero.  Void.
-void func_804B9818(CColiMoverState* self, const Vec* src, u32 flags128, u32 flags12C,
-                   f32 yOff, f32 yRange) {
-    CColiMgr* mgr = &lbl_eu_8065F1C8;
-    const u32* tbl = lbl_eu_8056F508;
-    {
-        u32 sx = *(const u32*)&src->x;
-        u32 sy = *(const u32*)&src->y;
-        u32 sz = *(const u32*)&src->z;
-        *(u32*)&mgr->field_0x00.x = sx;
-        *(u32*)&mgr->field_0x00.y = sy;
-        *(u32*)&mgr->field_0x00.z = sz;
-        mgr->field_0x0C.x = lbl_eu_8066AED0;
-        mgr->field_0x0C.y = yOff;
-        mgr->field_0x0C.z = lbl_eu_8066AED0;
-        *(u32*)&mgr->field_0x18.x = sx;
-        *(u32*)&mgr->field_0x18.y = sy;
-        *(u32*)&mgr->field_0x18.z = sz;
-    }
-    self->field_0x64 = yRange;
-    self->field_0x68 = -yRange;
-    {
-        const u32* g0 = &tbl[0x240 / 4];
-        self->field_0x7C = g0[0];
-        self->field_0x80 = g0[1];
-        self->field_0x84 = g0[2];
-        const u32* g1 = &tbl[0x24C / 4];
-        self->field_0x88 = g1[0];
-        self->field_0x8C = g1[1];
-        self->field_0x90 = g1[2];
-        const u32* g2 = &tbl[0x258 / 4];
-        self->field_0xB8 = g2[0];
-        self->field_0xBC = g2[1];
-        self->field_0xC0 = g2[2];
-        const u32* g3 = &tbl[0x264 / 4];
-        self->field_0x94 = g3[0];
-        self->field_0x98 = g3[1];
-        self->field_0x9C = g3[2];
-    }
-    mgr->field_0x128 = flags128;
-    mgr->field_0x12C = flags12C;
-    if (flags12C != 0) {
-        const u32* cfg = &tbl[0x270 / 4];
-        self->field_0xAC = cfg[0];
-        self->field_0xB0 = cfg[1];
-        self->field_0xB4 = cfg[2];
-    } else {
-        const u32* cfg = &tbl[0x27C / 4];
-        self->field_0xAC = cfg[0];
-        self->field_0xB0 = cfg[1];
-        self->field_0xB4 = cfg[2];
-    }
-    DCZeroRange((u8*)lbl_eu_80663AC8,
-                (((s32)(self->field_0x6C + self->field_0x70) >> 5) + 1) * 4);
-    lbl_eu_80665988 = 0;
-    lbl_eu_8066598C = 0;
-    lbl_eu_80665990 = 0;
-    mgr->field_0x136 = 0;
-    mgr->field_0xEC = 0;
-    mgr->field_0x130 = 0;
-    if (func_804BC9A0(self) == 0) return;
-    if (yOff < lbl_eu_8066AED0) {
-        Vec3 v;
-        v.x = src->x;
-        v.y = src->y + yOff;
-        v.z = src->z;
-        func_804BC134(self, (const Vec*)&v, self->field_0x34->field_0x04, src->y);
-    } else {
-        func_804BC134(self, src, self->field_0x34->field_0x04, yOff + src->y);
-    }
-    if (mgr->field_0x136 == 0 && self->field_0x78 == 0) return;
-    {
-        const u32* g0 = &tbl[0x288 / 4];
-        self->field_0x7C = g0[0];
-        self->field_0x80 = g0[1];
-        self->field_0x84 = g0[2];
-        const u32* g1 = &tbl[0x294 / 4];
-        self->field_0xA0 = g1[0];
-        self->field_0xA4 = g1[1];
-        self->field_0xA8 = g1[2];
-    }
-    Vec3 vA;
-    Vec3 vB;
-    vA.x = mgr->field_0x00.x;
-    vA.y = mgr->field_0x00.y;
-    vA.z = mgr->field_0x00.z;
-    vB.x = vA.x;
-    vB.y = vA.y + yOff;
-    vB.z = vA.z;
-    int resCount = mgr->field_0x136;
-    if (resCount != 0 || self->field_0x78 != 0) {
-        for (int i = 0; i < resCount; i++) {
-            CColiVolEntry* vol = &self->field_0x40[lbl_eu_8065F300[i]];
-            CColiEntry12* e12 = &self->field_0x38[vol->field_0x00];
-            if ((e12->field_0x00[1] & 1) != 0) {
-                if (vol->field_0x02 & 0x8000) {
-                    const u32* cfg = &tbl[0x2A0 / 4];
-                    self->field_0x94 = cfg[0];
-                    self->field_0x98 = cfg[1];
-                    self->field_0x9C = cfg[2];
-                } else {
-                    const u32* cfg = &tbl[0x2AC / 4];
-                    self->field_0x94 = cfg[0];
-                    self->field_0x98 = cfg[1];
-                    self->field_0x9C = cfg[2];
-                }
-                Vec3 v3;
-                PSMTXMultVec(vol->field_0x34, (const Vec*)&vA, (Vec*)&mgr->field_0x00);
-                PSMTXMultVec(vol->field_0x34, (const Vec*)&vB, (Vec*)&v3);
-                {
-                    nw4r::math::VEC3 diff;
-                    nw4r::math::VEC3Sub(&diff, (const nw4r::math::VEC3*)&v3,
-                                        (const nw4r::math::VEC3*)&mgr->field_0x00);
-                    Vec3 d2;
-                    d2.x = diff.x;
-                    d2.y = diff.y;
-                    d2.z = diff.z;
-                    *(u32*)&mgr->field_0x0C.x = *(u32*)&d2.x;
-                    *(u32*)&mgr->field_0x0C.y = *(u32*)&d2.y;
-                    *(u32*)&mgr->field_0x0C.z = *(u32*)&d2.z;
-                }
-                DCZeroRange((u8*)lbl_eu_80663AC8, ((e12->field_0x02 >> 5) + 1) * 4);
-                mgr->field_0xF0[0][0] = vol->m[0][0];
-                mgr->field_0xF0[0][1] = vol->m[0][1];
-                mgr->field_0xF0[0][2] = vol->m[0][2];
-                mgr->field_0xF0[1][0] = vol->m[1][0];
-                mgr->field_0xF0[1][1] = vol->m[1][1];
-                mgr->field_0xF0[1][2] = vol->m[1][2];
-                mgr->field_0xF0[2][0] = vol->m[2][0];
-                mgr->field_0xF0[2][1] = vol->m[2][1];
-                mgr->field_0xF0[2][2] = vol->m[2][2];
-                self->field_0x30 = self->field_0x14 + e12->field_0x08;
-                mgr->field_0xE8 = (Mtx*)&vol->m[0][0];
-                mgr->field_0xEC = (u32)&vol->field_0x34;
-                func_804BBFD4(self, (const Vec*)&mgr->field_0x00, (const Vec*)&v3,
-                              e12->field_0x04);
-            }
-        }
-    }
-    if (self->field_0x78 != 0) {
-        const u32* cfg = &tbl[0x2B8 / 4];
-        self->field_0x94 = cfg[0];
-        self->field_0x98 = cfg[1];
-        self->field_0x9C = cfg[2];
-        if (yOff < lbl_eu_8066AED0) {
-            mgr->field_0x24.x = src->x;
-            mgr->field_0x24.y = src->y;
-            mgr->field_0x24.z = src->z;
-            mgr->field_0x30.x = src->x;
-            mgr->field_0x30.y = src->y + yOff;
-            mgr->field_0x30.z = src->z;
-        } else {
-            mgr->field_0x24.x = src->x;
-            mgr->field_0x24.y = src->y + yOff;
-            mgr->field_0x24.z = src->z;
-            mgr->field_0x30.x = src->x;
-            mgr->field_0x30.y = src->y;
-            mgr->field_0x30.z = src->z;
-        }
-        CColiOutEntry* out = (CColiOutEntry*)self->field_0x60;
-        const CColiInEntry* in = self->field_0x44;
-        int i = 0;
-        while (i < (s32)self->field_0x78) {
-            if (func_804B85C8((CColiThing*)self, (CColiVolume*)out, (CColiQuery*)in, i) != 0) {
-                Vec3 v4;
-                PSMTXMultVec(out->savedMtx.m, (const Vec*)&vA, (Vec*)&mgr->field_0x00);
-                PSMTXMultVec(out->savedMtx.m, (const Vec*)&vB, (Vec*)&v4);
-                {
-                    nw4r::math::VEC3 diff;
-                    nw4r::math::VEC3Sub(&diff, (const nw4r::math::VEC3*)&v4,
-                                        (const nw4r::math::VEC3*)&mgr->field_0x00);
-                    Vec3 d2;
-                    d2.x = diff.x;
-                    d2.y = diff.y;
-                    d2.z = diff.z;
-                    *(u32*)&mgr->field_0x0C.x = *(u32*)&d2.x;
-                    *(u32*)&mgr->field_0x0C.y = *(u32*)&d2.y;
-                    *(u32*)&mgr->field_0x0C.z = *(u32*)&d2.z;
-                }
-                func_804BBFD4(self, (const Vec*)&mgr->field_0x00, (const Vec*)&v4,
-                              self->field_0x38[((CColiQuery*)in)->field_0x00].field_0x04);
-            }
-            i++;
-            out++;
-            in++;
-        }
-    }
-    self->field_0x30 = self->field_0x2C;
-}
+void func_804B9818(){}
 
 // func_804B9E14 - begin a registration pass: record the offset/scale into
 // the manager, install the per-stage matrix configuration from the default
@@ -2348,153 +1717,7 @@ void func_804B9E14(CColiMoverState* state, const Vec* offset, u32 flags, int mod
     }
 }
 
-// func_804BA26C - register a box query: record the matrix translation and
-// per-stage matrix config, then walk the mover-state entries and the
-// scene-resource volumes, casting each volume's matrix and concat with the
-// input matrix.  The query box written by func_804BC134 is copied into the
-// manager's AABB before the mover walk.  Void.
-void func_804BA26C(CColiMoverState* self, u32 flag, const Mtx mtx, u32 flags128,
-                   u32 flags12C, f32 sA, f32 sB, f32 sC) {
-    CColiMgr* mgr = &lbl_eu_8065F1C8;
-    const u32* tbl = lbl_eu_8056F508;
-    DCZeroRange((u8*)lbl_eu_80663AC8,
-                (((s32)(self->field_0x6C + self->field_0x70) >> 5) + 1) * 4);
-    lbl_eu_80665988 = 0;
-    lbl_eu_8066598C = 0;
-    lbl_eu_80665990 = 0;
-    mgr->field_0x136 = 0;
-    mgr->field_0xEC = 0;
-    mgr->field_0x130 = 0;
-    Vec3 trans;
-    trans.x = mtx[0][3];
-    trans.y = mtx[1][3];
-    trans.z = mtx[2][3];
-    func_804B8108(self, (const Vec*)&trans, mtx, sA, sB, sC);
-    {
-        const u32* g0 = &tbl[0x33C / 4];
-        self->field_0x7C = g0[0];
-        self->field_0x80 = g0[1];
-        self->field_0x84 = g0[2];
-        const u32* g1 = &tbl[0x348 / 4];
-        self->field_0x88 = g1[0];
-        self->field_0x8C = g1[1];
-        self->field_0x90 = g1[2];
-    }
-    mgr->field_0x128 = flags128;
-    mgr->field_0x12C = flags12C;
-    if (flags12C != 0) {
-        const u32* cfg = &tbl[0x354 / 4];
-        self->field_0xAC = cfg[0];
-        self->field_0xB0 = cfg[1];
-        self->field_0xB4 = cfg[2];
-    } else {
-        const u32* cfg = &tbl[0x360 / 4];
-        self->field_0xAC = cfg[0];
-        self->field_0xB0 = cfg[1];
-        self->field_0xB4 = cfg[2];
-    }
-    mgr->field_0xE8 = 0;
-    mgr->field_0xA0 = (void*)(uintptr_t)flag;
-    if (flag != 0) {
-        const u32* cfg = &tbl[0x36C / 4];
-        self->field_0x94 = cfg[0];
-        self->field_0x98 = cfg[1];
-        self->field_0x9C = cfg[2];
-    } else {
-        const u32* cfg = &tbl[0x378 / 4];
-        self->field_0x94 = cfg[0];
-        self->field_0x98 = cfg[1];
-        self->field_0x9C = cfg[2];
-    }
-    if (func_804BC9A0(self) == 0) return;
-    func_804BC164(self, (const Vec*)&mgr->field_0x3C, (const Vec*)&trans,
-                  self->field_0x34->field_0x04, sA, sB, sC);
-    if (flag == 0 && lbl_eu_80665988 != 0) return;
-    if (mgr->field_0x136 == 0 && self->field_0x78 == 0) return;
-    if (flag != 0) {
-        const u32* c0 = &tbl[0x384 / 4];
-        self->field_0x94 = c0[0];
-        self->field_0x98 = c0[1];
-        self->field_0x9C = c0[2];
-        const u32* c1 = &tbl[0x390 / 4];
-        self->field_0xA0 = c1[0];
-        self->field_0xA4 = c1[1];
-        self->field_0xA8 = c1[2];
-    }
-    if (self->field_0x78 != 0) {
-        const u32* q = lbl_eu_8065F3F0;
-        *(u32*)&mgr->field_0x24.x = q[0];
-        *(u32*)&mgr->field_0x24.y = q[1];
-        *(u32*)&mgr->field_0x24.z = q[2];
-        *(u32*)&mgr->field_0x30.x = q[3];
-        *(u32*)&mgr->field_0x30.y = q[4];
-        *(u32*)&mgr->field_0x30.z = q[5];
-        CColiOutEntry* out = (CColiOutEntry*)self->field_0x60;
-        const CColiInEntry* in = self->field_0x44;
-        int i = 0;
-        while (i < (s32)self->field_0x78) {
-            if (func_804B85C8((CColiThing*)self, (CColiVolume*)out, (CColiQuery*)in, i) != 0) {
-                Vec3 v4;
-                PSMTXMultVec(out->savedMtx.m, (const Vec*)&trans, (Vec*)&v4);
-                Mtx m4;
-                PSMTXConcat(*(const Mtx*)(uintptr_t)mgr->field_0xEC, mtx, m4);
-                Vec3 v5;
-                v5.x = v4.x;
-                v5.y = v4.y;
-                v5.z = v4.z;
-                f32 sc = in->field_0x34;
-                func_804B8108(self, (const Vec*)&v5, m4, sA * sc, sB * sc, sC * sc);
-                func_804BC164(self, (const Vec*)&mgr->field_0x3C, (const Vec*)&v4,
-                              self->field_0x38[((CColiQuery*)in)->field_0x00].field_0x04,
-                              sA * sc, sB * sc, sC * sc);
-                if (flag == 0 && lbl_eu_80665988 != 0) {
-                    self->field_0x30 = self->field_0x2C;
-                    return;
-                }
-            }
-            i++;
-            out++;
-            in++;
-        }
-    }
-    int resCount = mgr->field_0x136;
-    if (resCount != 0) {
-        for (int i = 0; i < resCount; i++) {
-            CColiVolEntry* vol = &self->field_0x40[lbl_eu_8065F300[i]];
-            CColiEntry12* e12 = &self->field_0x38[vol->field_0x00];
-            DCZeroRange((u8*)lbl_eu_80663AC8, ((e12->field_0x02 >> 5) + 1) * 4);
-            mgr->field_0xF0[0][0] = vol->m[0][0];
-            mgr->field_0xF0[0][1] = vol->m[0][1];
-            mgr->field_0xF0[0][2] = vol->m[0][2];
-            mgr->field_0xF0[1][0] = vol->m[1][0];
-            mgr->field_0xF0[1][1] = vol->m[1][1];
-            mgr->field_0xF0[1][2] = vol->m[1][2];
-            mgr->field_0xF0[2][0] = vol->m[2][0];
-            mgr->field_0xF0[2][1] = vol->m[2][1];
-            mgr->field_0xF0[2][2] = vol->m[2][2];
-            self->field_0x30 = self->field_0x14 + e12->field_0x08;
-            mgr->field_0xE8 = (Mtx*)&vol->m[0][0];
-            mgr->field_0xEC = (u32)&vol->field_0x34;
-            Vec3 v6;
-            PSMTXMultVec(vol->field_0x34, (const Vec*)&trans, (Vec*)&v6);
-            Mtx m5;
-            PSMTXConcat(*(const Mtx*)(uintptr_t)mgr->field_0xEC, mtx, m5);
-            Vec3 v7;
-            v7.x = v6.x;
-            v7.y = v6.y;
-            v7.z = v6.z;
-            f32 sc = vol->field_0x7C;
-            func_804B8108(self, (const Vec*)&v7, m5, sA * sc, sB * sc, sC * sc);
-            func_804BC164(self, (const Vec*)&mgr->field_0x3C, (const Vec*)&v6,
-                          e12->field_0x04, sA * sc, sB * sc, sC * sc);
-            if (flag == 0 && lbl_eu_80665988 != 0) {
-                self->field_0x30 = self->field_0x2C;
-                return;
-            }
-        }
-    }
-    self->field_0x30 = self->field_0x2C;
-}
+void func_804BA26C(){}
 
 // func_804BA7BC - refresh the manager's reference vector (0x00) from `a` and
 // direction vector (0x0C) from the delta `b - a`, zero the word window just
@@ -2523,50 +1746,44 @@ void func_804BA7BC(CColiScan* self, const Vec* a, const Vec* b) {
 // non-null, the heading computed from the saved/current matrix Z columns.
 u32 func_804BA8B4(CColiMoverState* self, Vec* src, Vec* dst, f32* angle,
                   u32 flagsA, u32 flagsB, f32 yOff, f32 yRange) {
-    const u32* tbl = lbl_eu_8056F508;
+    CColiMgr* mgr = &lbl_eu_8065F1C8;
     if (func_804BC9A0(self) == 0) return 0;
     if (self->field_0x78 == 0) return 0;
     {
-        *(u32*)&lbl_eu_8065F1C8.field_0x18.x = *(const u32*)&src->x;
-        *(u32*)&lbl_eu_8065F1C8.field_0x18.y = *(const u32*)&src->y;
-        *(u32*)&lbl_eu_8065F1C8.field_0x18.z = *(const u32*)&src->z;
+        u32* d = (u32*)&mgr->field_0x18;
+        const u32* s = (const u32*)src;
+        d[0] = s[0];
+        d[1] = s[1];
+        d[2] = s[2];
     }
     self->field_0x64 = yRange;
     self->field_0x68 = -yRange;
-    lbl_eu_8065F1C8.field_0x128 = flagsA;
-    lbl_eu_8065F1C8.field_0x12C = flagsB;
+    mgr->field_0x128 = flagsA;
+    mgr->field_0x12C = flagsB;
     if (flagsB != 0) {
-        const u32* cfg = &tbl[0x39C / 4];
-        self->field_0xAC = cfg[0];
-        self->field_0xB0 = cfg[1];
-        self->field_0xB4 = cfg[2];
+        self->field_0xAC = lbl_eu_8056F508[0x39C / 4];
+        self->field_0xB0 = lbl_eu_8056F508[0x3A0 / 4];
+        self->field_0xB4 = lbl_eu_8056F508[0x3A4 / 4];
     } else {
-        const u32* cfg = &tbl[0x3A8 / 4];
-        self->field_0xAC = cfg[0];
-        self->field_0xB0 = cfg[1];
-        self->field_0xB4 = cfg[2];
+        self->field_0xAC = lbl_eu_8056F508[0x3A8 / 4];
+        self->field_0xB0 = lbl_eu_8056F508[0x3AC / 4];
+        self->field_0xB4 = lbl_eu_8056F508[0x3B0 / 4];
     }
     lbl_eu_80665988 = 0;
     lbl_eu_8066598C = 0;
     lbl_eu_80665990 = 0;
-    {
-        const u32* g0 = &tbl[0x3B4 / 4];
-        self->field_0x7C = g0[0];
-        self->field_0x80 = g0[1];
-        self->field_0x84 = g0[2];
-        const u32* g1 = &tbl[0x3C0 / 4];
-        self->field_0x94 = g1[0];
-        self->field_0x98 = g1[1];
-        self->field_0x9C = g1[2];
-        const u32* g2 = &tbl[0x3CC / 4];
-        self->field_0xA0 = g2[0];
-        self->field_0xA4 = g2[1];
-        self->field_0xA8 = g2[2];
-        const u32* g3 = &tbl[0x3D8 / 4];
-        self->field_0xB8 = g3[0];
-        self->field_0xBC = g3[1];
-        self->field_0xC0 = g3[2];
-    }
+    self->field_0x7C = lbl_eu_8056F508[0x3B4 / 4];
+    self->field_0x80 = lbl_eu_8056F508[0x3B8 / 4];
+    self->field_0x84 = lbl_eu_8056F508[0x3BC / 4];
+    self->field_0x94 = lbl_eu_8056F508[0x3C0 / 4];
+    self->field_0x98 = lbl_eu_8056F508[0x3C4 / 4];
+    self->field_0x9C = lbl_eu_8056F508[0x3C8 / 4];
+    self->field_0xA0 = lbl_eu_8056F508[0x3CC / 4];
+    self->field_0xA4 = lbl_eu_8056F508[0x3D0 / 4];
+    self->field_0xA8 = lbl_eu_8056F508[0x3D4 / 4];
+    self->field_0xB8 = lbl_eu_8056F508[0x3D8 / 4];
+    self->field_0xBC = lbl_eu_8056F508[0x3DC / 4];
+    self->field_0xC0 = lbl_eu_8056F508[0x3E0 / 4];
     Vec3 lo;
     Vec3 hi;
     lo.x = src->x;
@@ -2575,20 +1792,20 @@ u32 func_804BA8B4(CColiMoverState* self, Vec* src, Vec* dst, f32* angle,
     hi.x = src->x;
     hi.y = src->y + yOff;
     hi.z = src->z;
-    if (yOff < lbl_eu_8066AED0) {
-        lbl_eu_8065F1C8.field_0x24.x = lo.x;
-        lbl_eu_8065F1C8.field_0x24.y = lo.y;
-        lbl_eu_8065F1C8.field_0x24.z = lo.z;
-        lbl_eu_8065F1C8.field_0x30.x = hi.x;
-        lbl_eu_8065F1C8.field_0x30.y = hi.y;
-        lbl_eu_8065F1C8.field_0x30.z = hi.z;
+    if (yOff < 0.0f) {
+        mgr->field_0x24.x = lo.x;
+        mgr->field_0x24.y = lo.y;
+        mgr->field_0x24.z = lo.z;
+        mgr->field_0x30.x = hi.x;
+        mgr->field_0x30.y = hi.y;
+        mgr->field_0x30.z = hi.z;
     } else {
-        lbl_eu_8065F1C8.field_0x24.x = hi.x;
-        lbl_eu_8065F1C8.field_0x24.y = hi.y;
-        lbl_eu_8065F1C8.field_0x24.z = hi.z;
-        lbl_eu_8065F1C8.field_0x30.x = lo.x;
-        lbl_eu_8065F1C8.field_0x30.y = lo.y;
-        lbl_eu_8065F1C8.field_0x30.z = lo.z;
+        mgr->field_0x24.x = hi.x;
+        mgr->field_0x24.y = hi.y;
+        mgr->field_0x24.z = hi.z;
+        mgr->field_0x30.x = lo.x;
+        mgr->field_0x30.y = lo.y;
+        mgr->field_0x30.z = lo.z;
     }
     CColiOutEntry* out = (CColiOutEntry*)self->field_0x60;
     const CColiInEntry* in = self->field_0x44;
@@ -2597,21 +1814,21 @@ u32 func_804BA8B4(CColiMoverState* self, Vec* src, Vec* dst, f32* angle,
         if ((out->field_0x00 & 2) != 0) {
             if (func_804B85C8((CColiThing*)self, (CColiVolume*)out, (CColiQuery*)in, i) != 0) {
                 Vec3 tmp;
-                PSMTXMultVec(out->savedInv.m, (const Vec*)&lo, (Vec*)&lbl_eu_8065F1C8.field_0x00);
+                PSMTXMultVec(out->savedInv.m, (const Vec*)&lo, (Vec*)&mgr->field_0x00);
                 PSMTXMultVec(out->savedInv.m, (const Vec*)&hi, (Vec*)&tmp);
-                lbl_eu_8065F1C8.field_0xE8 = (Mtx*)&out->savedMtx;
                 nw4r::math::VEC3 diff;
                 nw4r::math::VEC3Sub(&diff, (const nw4r::math::VEC3*)&tmp,
-                                    (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0x00);
+                                    (const nw4r::math::VEC3*)&mgr->field_0x00);
                 Vec3 d2;
                 d2.x = diff.x;
                 d2.y = diff.y;
                 d2.z = diff.z;
-                *(u32*)&lbl_eu_8065F1C8.field_0x0C.x = *(u32*)&d2.x;
-                *(u32*)&lbl_eu_8065F1C8.field_0x0C.y = *(u32*)&d2.y;
-                *(u32*)&lbl_eu_8065F1C8.field_0x0C.z = *(u32*)&d2.z;
-                lbl_eu_8065F1C8.field_0xEC = (u32)&out->savedInv;
-                func_804BBFD4(self, (const Vec*)&lbl_eu_8065F1C8.field_0x00, (const Vec*)&tmp,
+                *(u32*)&mgr->field_0x0C.x = *(u32*)&d2.x;
+                *(u32*)&mgr->field_0x0C.y = *(u32*)&d2.y;
+                *(u32*)&mgr->field_0x0C.z = *(u32*)&d2.z;
+                mgr->field_0xE8 = (Mtx*)&out->savedMtx;
+                mgr->field_0xEC = (u32)&out->savedInv;
+                func_804BBFD4(self, mgr, (const Vec*)&tmp,
                               self->field_0x38[((CColiQuery*)in)->field_0x00].field_0x04);
             }
         }
@@ -2639,29 +1856,25 @@ u32 func_804BA8B4(CColiMoverState* self, Vec* src, Vec* dst, f32* angle,
         *(u32*)&dst->z = *(u32*)&d4.z;
     }
     if (angle != 0) {
-        Vec3 up1;
-        Vec3 up2;
-        up1.x = lbl_eu_8066AED0;
-        up1.y = lbl_eu_8066AED0;
-        up1.z = lbl_eu_8066AED8;
-        up2.x = lbl_eu_8066AED0;
-        up2.y = lbl_eu_8066AED0;
-        up2.z = lbl_eu_8066AED8;
-        PSMTXMultVec(last->savedMtx.m, (const Vec*)&up1, (Vec*)&up1);
-        PSMTXMultVec(last->mtx.m, (const Vec*)&up2, (Vec*)&up2);
-        up1.x -= last->savedMtx.m[0][3];
-        up1.y -= last->savedMtx.m[1][3];
-        up1.z -= last->savedMtx.m[2][3];
-        up2.x -= last->mtx.m[0][3];
-        up2.y -= last->mtx.m[1][3];
-        up2.z -= last->mtx.m[2][3];
-        if (up1.x == lbl_eu_8066AED0 && up1.z == lbl_eu_8066AED0) {
-            *angle = lbl_eu_8066AED0;
-        } else if (up2.x == lbl_eu_8066AED0 && up2.z == lbl_eu_8066AED0) {
-            *angle = lbl_eu_8066AED0;
+        Vec3 up1 = { 0.0f, 0.0f, lbl_eu_8066AED8 };
+        Vec3 up2 = { 0.0f, 0.0f, lbl_eu_8066AED8 };
+        Vec3 v1;
+        Vec3 v2;
+        PSMTXMultVec(last->savedMtx.m, (const Vec*)&up1, (Vec*)&v1);
+        PSMTXMultVec(last->mtx.m, (const Vec*)&up2, (Vec*)&v2);
+        v1.x -= last->savedMtx.m[0][3];
+        v1.y -= last->savedMtx.m[1][3];
+        v1.z -= last->savedMtx.m[2][3];
+        v2.x -= last->mtx.m[0][3];
+        v2.y -= last->mtx.m[1][3];
+        v2.z -= last->mtx.m[2][3];
+        if (v1.x == 0.0f && v1.z == 0.0f) {
+            *angle = 0.0f;
+        } else if (v2.x == 0.0f && v2.z == 0.0f) {
+            *angle = 0.0f;
         } else {
-            f32 a1 = nw4r::math::Atan2FIdx(up1.x, up1.z);
-            f32 a2 = nw4r::math::Atan2FIdx(up2.x, up2.z);
+            f32 a1 = nw4r::math::Atan2FIdx(v1.z, v1.x);
+            f32 a2 = nw4r::math::Atan2FIdx(v2.z, v2.x);
             *angle = lbl_eu_8066AEEC * a2 - lbl_eu_8066AEEC * a1;
         }
     }

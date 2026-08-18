@@ -10,7 +10,7 @@
 // and assign the retail label explicitly instead of the compiler-generated
 // __vt__16CVirtualLightDir / __vt__20CVirtualLightObjBase (which would add
 // .data/.rodata/RTTI to a retail-empty TU).
-extern "C" void* lbl_eu_8056E898[];
+extern "C" u32 lbl_eu_8056E898[];
 extern "C" const float lbl_eu_8066AA80; // 0.0f (first float of the 8-byte pair)
 
 // CVirtualLightObj-compatible prefix laid out exactly to 0x34 so that the
@@ -69,3 +69,28 @@ extern "C" void func_8049474C(CVirtualLightDir* self, float a, float b) {
 }
 
 CVirtualLightDir::~CVirtualLightDir() {}
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+namespace VLBlob {
+extern "C" void __dt__16CVirtualLightDirFv();
+extern "C" void func_804947EC();
+extern "C" void func_8049488C();
+}
+extern "C" u32 lbl_eu_806639D8;   // .sdata (foreign)
+extern "C" u32 lbl_eu_806639D0;   // .sdata (foreign)
+
+// [.data] 0x8056E898-0x8056E8B8 (32B): CVirtualLightDir vtable
+extern "C" u32 lbl_eu_8056E898[8] = {
+    (u32)&lbl_eu_806639D8, 0x00000000,
+    (u32)&VLBlob::__dt__16CVirtualLightDirFv,
+    (u32)&VLBlob::func_804947EC,
+    (u32)&VLBlob::func_8049488C,
+    (u32)&lbl_eu_806639D0, 0x00000000, 0x00000000,
+};
+
+// [.rodata] 0x80524078-0x805240A0 (40B)
+extern "C" __declspec(align(4)) const char lbl_eu_80524078[0x28] = {
+    0x43,0x56,0x69,0x72,0x74,0x75,0x61,0x6C,0x4C,0x69,0x67,0x68,0x74,0x44,0x69,0x72,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x25,0x73,0x28,0x25,0x73,0x29,0x00,0x43,0x53,0x63,0x6E,0x00,0x00,0x00,0x00,
+};

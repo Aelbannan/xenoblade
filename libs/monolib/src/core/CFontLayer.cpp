@@ -33,7 +33,8 @@ void __dl__FPv(void*);
 // Retail vtable (monolibdata2.s-owned .data 0x8056BF80): the class's ctor/dt
 // reference it by name so no local __vt__/RTTI is emitted (retail CFontLayer.o
 // is text-only; the vtable lives in the shared data split).
-extern unsigned char lbl_eu_8056BF80[];
+extern "C" u32 lbl_eu_80663598;
+extern "C" u32 lbl_eu_8056BF80[];
 
 // The retail ctor symbol is the un-mangled `__ct__CFontLayer` (not the C++
 // member mangling); hand-writing it as an extern "C" free function also
@@ -102,3 +103,12 @@ void CFontLayer::fontFlush(int channel) {
 extern "C" void func_80449160__10CFontLayerFv(CFontLayer* self) {
     func_80452B78__11CDeviceFontFv((CDeviceFont*)self);
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056BF80-0x8056BF90 (16B): vtbl { RTTI-obj lbl_eu_80663598, 0, dtor __dt__10CFontLayerFv, 0 }
+extern "C" u32 lbl_eu_8056BF80[4] = {
+    (u32)&lbl_eu_80663598,
+    0,
+    (u32)&__dt__10CFontLayerFv,
+    0,
+};

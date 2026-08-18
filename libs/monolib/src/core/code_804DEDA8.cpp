@@ -7,12 +7,8 @@
 
 #include "monolib/core/CScheduleItem.hpp"
 #include "monolib/core/code_804DEDA8.hpp"
-#include "monolib/math/CVec3.hpp"
 #include "monolib/math/Random.hpp"
 #include "monolib/util/MemManager.hpp"
-
-#include <revolution/GX.h>
-#include <revolution/os/OSFastCast.h>
 
 // View of the schedule item used by the anim/entry helpers (func_804E04D4,
 // func_804E18CC): f32 at 0x00, byte frame fields at 0x05/0x06, f32s at
@@ -33,34 +29,6 @@ struct CSchedAnimItem {
     f32 mField24;   // 0x24
     f32 mField28;   // 0x28
     f32 mField2C;   // 0x2C
-};
-
-// Bitfield view of the anim flag byte at +0x04: bit 0x80 = entries-loaded,
-// bits 0x40/0x20 = 2-bit scale/rot mode (bit 1 = 0x40 rot, bit 0 = 0x20
-// scale), bit 0x08 = run-touches-terminator flag. Named bitfields make MWCC
-// emit the retail extrwi/rlwimi field ops (ScheduleList.cpp pattern).
-struct CSchedAnimFlags {
-    u8 mLoaded : 1;  // 0x80
-    u8 mMode : 2;    // 0x40 (bit 1), 0x20 (bit 0)
-    u8 : 1;          // 0x10
-    u8 mTerm : 1;    // 0x08
-    u8 : 3;          // 0x04..0x01
-};
-
-// View of the schedule item used by the slot-handle anim helpers
-// (func_804E0CF0 / func_804E0B94): the 0x0C/0x0E s16 slot handles overlap
-// the anim view's f32 mField0C (same object, different class view).
-struct CSchedAnimSlots {
-    f32 mField00;   // 0x00
-    u8 field_0x04;  // 0x04: flag byte (bit 0x10 = jitter enabled)
-    u8 mField05;    // 0x05: entry-run start
-    u8 mField06;    // 0x06
-    u8 mField07;    // 0x07
-    u8 _pad08[4];   // 0x08..0x0B
-    s16 mSlot2;     // 0x0C
-    s16 mSlot3;     // 0x0E
-    f32 mField10;   // 0x10
-    f32 mField14;   // 0x14
 };
 
 // 8-byte element of the entry array returned by func_804E0248 (f32 at +4).
@@ -91,34 +59,17 @@ struct CSchedMemGlob {
     u32 mHandle;   // 0x04
     u8 mPad08[8];  // 0x08..0x10
 };
-extern u32 lbl_eu_8065FC18[];
+extern CSchedMemGlob lbl_eu_8065FC18;
 
 // .sdata2 float/double pool shared with the schedule anim helpers:
 // 1.0f, the u32->double conversion constant (2^52), the s32->double
 // conversion constant (2^52 + 2^31), and the frame-rate clamp upper bound.
 // const routes these into the readonly sdata2 pool so MWCC hoists the lfs
 // above the frame stores (docs/MWCC_REFERENCE.md lfs-hoist scheduling fix).
-extern f64 lbl_eu_8066B288;      // 2^52 (u8 -> f32 magic) for the GX LOD setup
 extern const f32 lbl_eu_8066B290;
 extern f64 lbl_eu_8066B298;
 extern f64 lbl_eu_8066B2A0;
 extern f32 lbl_eu_8066B2A8;
-extern const f32 lbl_eu_8066B2AC; // 2147483647.0f (INT_MAX), rand()/INT_MAX divisor
-// 0.5f: subtracts the 0.5 offset from rand()/INT_MAX (range [-0.5, 0.5))
-extern const f32 lbl_eu_8066B2B0;
-extern const f32 lbl_eu_8066B2B4; // slot-handle re-scale constants (func_804E0B94)
-extern const f32 lbl_eu_8066B2B8;
-extern const f32 lbl_eu_8066B2BC;
-
-// Forward declaration for the schedule-resource entry destructor below.
-struct CResEntry;
-
-// Resource-entry destructor (retail symbol __dt__804DEDCC): re-initialize a
-// free 0x18-byte entry (self) from a source entry (src) and a flag bit, then
-// report whether the slot was re-used. Stub body until that target is
-// matched; the 3-arg signature keeps callers (func_804DF3D0) passing the
-// retail (entry, src, flag) register order.
-s32 __dt__804DEDCC(CResEntry* self, CResEntry* src, s32 flag) { return 0; }
 
 extern void* lbl_eu_80665A44; // .sbss pointer slot (4 bytes)
 
@@ -150,7 +101,7 @@ extern "C" void __dt__804DF068(CSchedResMgr* obj) {
         delete[] (u8*)obj->mField0C;
         obj->mField0C = 0;
     }
-    if ((*(u16*)&lbl_eu_8065FC18[0] >> 10) & 1) {
+    if ((lbl_eu_8065FC18.mFlags >> 10) & 1) {
         if (obj->mField04 != 0) {
             mtl::MemManager::deallocate(obj->mField04);
             obj->mField04 = 0;
@@ -217,70 +168,7 @@ void func_804DF150() {
     memset(lbl_eu_806616B8, 0, 0x60);
 }
 
-// 12-byte texture cache slots (lbl_eu_806616B8), keyed by (res, index, wrap).
-struct CTexCacheEntry {
-    void* mRes;   // 0x00
-    s32 mIndex;   // 0x04
-    s32 mWrap;    // 0x08
-};
-
-// Texture resource header: base pointer at +0x10, index-table offset at +8.
-struct CTexResHeader {
-    u8 mPad[0x10];
-    u8* mBase;  // 0x10
-};
-
-// 8-byte index entries: u32 offset into the resource base.
-struct CTexIndexEntry {
-    u32 mOffset;  // 0x00
-    u32 mPad04;   // 0x04
-};
-
-// One texture entry inside the resource base: GX init parameters.
-struct CTexEntry {
-    u16 mHeight;   // 0x00
-    u16 mWidth;    // 0x02
-    u32 mFormat;   // 0x04
-    u32 mImageOff; // 0x08: image pointer offset relative to the base
-    u8 mPad0C[8];  // 0x0C..0x14
-    u32 mMinFilt;  // 0x14
-    u32 mMagFilt;  // 0x18
-    f32 mLodBias;  // 0x1C
-    u8 mEdgeLod;   // 0x20
-    u8 mMinLod;    // 0x21
-    u8 mMaxLod;    // 0x22
-    u8 mPad23;     // 0x23
-};
-
-// Load a texture entry into GX unless the (res, index, wrap) triple is
-// already cached: resolve base->indexTable[index] (8-byte stride u32
-// offsets), build a stack GXTexObj, then remember the triple. mipmap is the
-// (minLod != maxLod) comparison; the LOD block only runs when it is set.
-void func_804DF164(void* res, s32 index, s32 cacheIndex, s32 wrap) {
-    u8* e = &lbl_eu_806616B8[cacheIndex * 12];
-    if (*(void**)e == res && *(s32*)(e + 4) == index && *(s32*)(e + 8) == wrap) {
-        return;
-    }
-    u8* base = ((CTexResHeader*)res)->mBase;
-    CTexIndexEntry* indexTable =
-        (CTexIndexEntry*)(base + *(u32*)(base + 8));
-    CTexEntry* entry = (CTexEntry*)(base + indexTable[index].mOffset);
-    GXTexObj obj;
-    bool mip = entry->mMinLod != entry->mMaxLod;
-    GXInitTexObj(&obj, base + entry->mImageOff, entry->mWidth, entry->mHeight,
-                 (GXTexFmt)entry->mFormat, (GXTexWrapMode)wrap,
-                 (GXTexWrapMode)wrap, (GXBool)mip);
-    if (mip) {
-        GXInitTexObjLOD(&obj, (GXTexFilter)entry->mMinFilt,
-                        (GXTexFilter)entry->mMagFilt, (f32)entry->mMinLod,
-                        (f32)entry->mMaxLod, entry->mLodBias, (GXBool)0,
-                        (GXBool)entry->mEdgeLod, (GXAnisotropy)0);
-    }
-    GXLoadTexObj(&obj, (GXTexMapID)cacheIndex);
-    *(void**)e = res;
-    ((CTexCacheEntry*)lbl_eu_806616B8)[cacheIndex].mIndex = index;
-    ((CTexCacheEntry*)lbl_eu_806616B8)[cacheIndex].mWrap = wrap;
-}
+void func_804DF164(){}
 
 struct ResTableIndex {
     u32 offset;
@@ -358,42 +246,7 @@ void* func_804DF344(u32 size, u32 count) {
 
 void func_804DF3D0(){}
 
-// Release schedule-resource entries (retail func_804DF4BC): with a non-zero
-// key, release the first entry whose key matches AND whose bit-7 flag equals
-// the global mode flag (bit 12 of lbl_eu_8065FC18); with a NULL key, release
-// every entry whose bit-7 flag matches. Each release drops the live counter
-// (lbl_eu_80665A28[0]). Returns 1 when at least one entry was released.
-s32 func_804DF4BC(s32 key) {
-    u32 flag = ((*(u16*)&lbl_eu_8065FC18[0] & 0x1000) >> 12) != 0;
-    if (key != 0) {
-        s32 i;
-        for (i = 0; i < lbl_eu_80665A24; i++) {
-            CResEntry* entry = &lbl_eu_80665A20[i];
-            if (entry->mKey != 0 && key == entry->mKey &&
-                flag == (((entry->mField01 & 0x80) >> 7) != 0)) {
-                __dt__804DF068((CSchedResMgr*)entry);
-                if (lbl_eu_80665A28[0] > 0) {
-                    lbl_eu_80665A28[0]--;
-                }
-                return 1;
-            }
-        }
-    } else {
-        s32 i;
-        for (i = 0; i < lbl_eu_80665A24; i++) {
-            CResEntry* entry = &lbl_eu_80665A20[i];
-            if (entry->mKey != 0 &&
-                flag == (((entry->mField01 & 0x80) >> 7) != 0)) {
-                __dt__804DF068((CSchedResMgr*)entry);
-                if (lbl_eu_80665A28[0] > 0) {
-                    lbl_eu_80665A28[0]--;
-                }
-            }
-        }
-        return 1;
-    }
-    return 0;
-}
+void func_804DF4BC(){}
 
 // Look up a schedule-resource entry by key; resolve its value through the
 // entry's lookup table (func_804DF118) and report the entry/value pointers.
@@ -430,14 +283,14 @@ u32 lbl_eu_80665A40;
 extern "C" void func_804DF690(u32 count) {
     lbl_eu_80665A30 = 0;
     u32 s1 = count * 0x14;
-    if (s1 <= mtl::MemManager::getMaxAllocSize(*(u32*)&lbl_eu_8065FC18[1])) {
-        lbl_eu_80665A34 = mtl::MemManager::allocate_array(s1, *(u32*)&lbl_eu_8065FC18[1]);
+    if (s1 <= mtl::MemManager::getMaxAllocSize(lbl_eu_8065FC18.mHandle)) {
+        lbl_eu_80665A34 = mtl::MemManager::allocate_array(s1, lbl_eu_8065FC18.mHandle);
     } else {
         lbl_eu_80665A34 = 0;
     }
     u32 s2 = count * 0xc;
-    if (s2 <= mtl::MemManager::getMaxAllocSize(*(u32*)&lbl_eu_8065FC18[1])) {
-        lbl_eu_80665A38 = mtl::MemManager::allocate_array(s2, *(u32*)&lbl_eu_8065FC18[1]);
+    if (s2 <= mtl::MemManager::getMaxAllocSize(lbl_eu_8065FC18.mHandle)) {
+        lbl_eu_80665A38 = mtl::MemManager::allocate_array(s2, lbl_eu_8065FC18.mHandle);
     } else {
         lbl_eu_80665A38 = 0;
     }
@@ -464,9 +317,7 @@ void __dt__804DF744() {
 // Effect object pool at lbl_eu_80661728, looked up by handle via func_804DFEAC.
 // CEffectObj in CScheduleItem.hpp is a partial view of the 0x22C-byte elements.
 struct CEffectObject {
-    u8 mData[0x1E];
-    s16 mField1E;  // 0x1E: slot handle (-1 = free slot)
-    u8 mRest[0x22C - 0x20];
+    u8 mData[0x22C];
 };
 struct CEffectPool {
     CEffectObject* mBase;  // 0x00: effect object array
@@ -491,12 +342,6 @@ extern CEffectNodePool lbl_eu_80661738;
 
 // Effect-manager release (monolib/src/effect/code_804C8718.cpp).
 extern "C" void func_804C8790(CEffectObj* obj);
-
-// Effect-object constructor (monolib/src/effect/code_804C8718.cpp): returns
-// nonzero when the object was initialized. Signature mirrors the retail
-// call-site register order (r3 = object, r4..r8 = the five init args).
-extern "C" s32 func_804C8830(void* self, const u8* base, const void* data,
-                             void* arg6, s32 arg7, u8 arg8);
 
 // Re-initialize the schedule resource tables: clear both element arrays and
 // reset the pool counters.
@@ -537,20 +382,15 @@ void* func_804DFA08(u32 size, s32 count) {
 void func_804DFA84(){}
 
 // Release a schedule item by handle (idempotent for invalid handles).
-// Retail duplicates the `handle < 0` guard (two blt to the same exit - the
-// dead-branch CSE family, reproducible under GC/3.0a5.2 with three separate
-// goto guards; Wii/1.1 merges them).
 extern "C" void func_804DFB88(s16 handle) {
-    if (handle < 0) goto end;
-    if (handle < 0) goto end;
-    if (lbl_eu_80661718.count <= handle) goto end;
+    if (handle < 0 || lbl_eu_80661718.count <= handle) {
+        return;
+    }
     lbl_eu_80661718.lastHandle = handle;
     func_804E3E2C(&lbl_eu_80661718.base[handle]);
     if (lbl_eu_80661718.freeCount > 0) {
         lbl_eu_80661718.freeCount--;
     }
-end:
-    return;
 }
 
 // Look up a schedule item by handle; returns NULL for invalid handles.
@@ -589,51 +429,7 @@ void* func_804DFC48(u32 size, s32 count) {
     return (u8*)aligned + count * 0x22c;
 }
 
-// Allocate an effect object from the pool (lbl_eu_80661728): scan from the
-// last released handle for a free slot (field_0x1E < 0), initialize it with
-// the effect manager (func_804C8718), then construct the object
-// (func_804C8830). On construction failure the slot is released again and -1
-// is returned; success returns the object's slot handle.
-s32 func_804DFCC4(const u8* a, const void* b, void* c, s32 d, u8 e) {
-    CEffectObject* obj;
-    if (lbl_eu_80661728.mActiveCount >= lbl_eu_80661728.mCount) {
-        obj = NULL;
-    } else {
-        s32 handle = lbl_eu_80661728.mLastHandle;
-        while (true) {
-            CEffectObject* cur = &lbl_eu_80661728.mBase[handle];
-            if (cur->mField1E < 0) {
-                func_804C8718((CEffectObj*)cur);
-                cur->mField1E = (s16)handle;
-                lbl_eu_80661728.mActiveCount++;
-                lbl_eu_80661728.mLastHandle =
-                    (handle + 1) % lbl_eu_80661728.mCount;
-                obj = cur;
-                break;
-            }
-            handle = (handle + 1) % lbl_eu_80661728.mCount;
-            if (handle == lbl_eu_80661728.mLastHandle) {
-                obj = NULL;
-                break;
-            }
-        }
-    }
-    if (obj == NULL) {
-        return -1;
-    }
-    if (func_804C8830(obj, a, b, c, d, e) != 0) {
-        return obj->mField1E;
-    }
-    s16 h = obj->mField1E;
-    if (h >= 0 && h < lbl_eu_80661728.mCount) {
-        lbl_eu_80661728.mLastHandle = h;
-        func_804C8790((CEffectObj*)&lbl_eu_80661728.mBase[h]);
-        if (lbl_eu_80661728.mActiveCount > 0) {
-            lbl_eu_80661728.mActiveCount--;
-        }
-    }
-    return -1;
-}
+void func_804DFCC4(){}
 
 // Release an effect object handle: remember it, run the effect-manager
 // release, and drop the active-object count.
@@ -790,11 +586,9 @@ struct CEntryElem {
 extern "C" CEntryElem* func_804E0248(CScheduleItem* item, CEntryElem* entries,
                                      s32 index, u8* arg4, f32 f1);
 
-// Paired-single vector lerp kernels (monolib/src/effect/code_804DB938.cpp,
-// retail symbols func_804DD89C / func_804DD8C8): out = a + (b - a) * t for
-// three / four f32s.
+// Paired-single vector lerp kernel (monolib/src/effect/code_804DB938.cpp,
+// retail symbol func_804DD89C): out = a + (b - a) * t for three f32s.
 extern "C" void func_804DD89C(void* out, const void* a, const void* b, f32 t);
-extern "C" void func_804DD8C8(void* out, const void* a, const void* b, f32 t);
 
 // Frame-span rate helper: reads the u16 frame values at entries[index*span],
 // converts the span (hi - lo) to double for the rate denominator, and clamps
@@ -834,36 +628,7 @@ extern "C" f32 func_804E04D4(CSchedAnimItem* item, CEntryElem* entries, s32 inde
     return r;
 }
 
-// Initialize the item's three anim vectors (scale/rot/pos block at +0x0C)
-// from entry element 0x00 (0x28-byte stride): copy the element's three
-// 3-float vectors, then set the 0x80/0x8 flag bits according to whether the
-// run extends to the blob terminator. With no entry blob the three vectors
-// are zeroed.
-void func_804E0580(CSchedAnimItem* item, u8* base) {
-    item->mField00 = lbl_eu_8066B290;
-    item->field_0x04 = 0;
-    item->mField05 = 0;
-    item->mField07 = 1;
-    item->mField06 = 1;
-    if (base != NULL) {
-        CEntryElem* ret =
-            (CEntryElem*)func_804E0188(base, 0x28, 0, &item->mField05, &item->mField07);
-        *(ml::CVec3*)&item->mField0C = *(ml::CVec3*)((u8*)ret + 4);
-        *(ml::CVec3*)&item->mField18 = *(ml::CVec3*)((u8*)ret + 0x10);
-        *(ml::CVec3*)&item->mField24 = *(ml::CVec3*)((u8*)ret + 0x1C);
-        if (*(u16*)(base + (u8)(item->mField05 + item->mField07) * 0x28) != 0x4000) {
-            item->field_0x04 |= 0x80;
-        } else {
-            s32 flags = item->field_0x04;
-            item->field_0x04 = (u8)((flags | 0x8) & ~0x80);
-        }
-    } else {
-        ml::CVec3 zero = ml::CVec3::zero;
-        *(ml::CVec3*)&item->mField24 = zero;
-        *(ml::CVec3*)&item->mField18 = zero;
-        *(ml::CVec3*)&item->mField0C = zero;
-    }
-}
+void func_804E0580(){}
 
 // Advance the item's three anim vectors: look up entry element 0x28, then
 // lerp each of the element's +0x04 / +0x10 / +0x1C vectors toward the
@@ -882,33 +647,7 @@ void func_804E06B4(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) 
     }
 }
 
-// Retail duplicate of func_804E0580 (same body: copy the three anim vectors
-// from entry element 0x00 or zero them, then set the terminator flag bits).
-void func_804E0788(CSchedAnimItem* item, u8* base) {
-    item->mField00 = lbl_eu_8066B290;
-    item->field_0x04 = 0;
-    item->mField05 = 0;
-    item->mField07 = 1;
-    item->mField06 = 1;
-    if (base != NULL) {
-        CEntryElem* ret =
-            (CEntryElem*)func_804E0188(base, 0x28, 0, &item->mField05, &item->mField07);
-        *(ml::CVec3*)&item->mField0C = *(ml::CVec3*)((u8*)ret + 4);
-        *(ml::CVec3*)&item->mField18 = *(ml::CVec3*)((u8*)ret + 0x10);
-        *(ml::CVec3*)&item->mField24 = *(ml::CVec3*)((u8*)ret + 0x1C);
-        if (*(u16*)(base + (u8)(item->mField05 + item->mField07) * 0x28) != 0x4000) {
-            item->field_0x04 |= 0x80;
-        } else {
-            s32 flags = item->field_0x04;
-            item->field_0x04 = (u8)((flags | 0x8) & ~0x80);
-        }
-    } else {
-        ml::CVec3 zero = ml::CVec3::zero;
-        *(ml::CVec3*)&item->mField24 = zero;
-        *(ml::CVec3*)&item->mField18 = zero;
-        *(ml::CVec3*)&item->mField0C = zero;
-    }
-}
+void func_804E0788(){}
 
 // Same anim-vector refresh as func_804E06B4 (retail duplicate body).
 void func_804E08BC(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
@@ -926,58 +665,9 @@ void func_804E08BC(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) 
 
 void func_804E0990(){}
 
-// Advance the item's two slot handles (0x0C/0x0E) from the entry blob at
-// index 8: interpolate the u16 handle pairs (stride 8) at the current rate,
-// scale by the item's 0x14/0x10 factors, and fast-cast to u16 through the
-// GQR3 helper (retail psq_st qr3). The second handle is re-scaled by the
-// sdata2 constants back into the handle range before rounding to s16.
-void func_804E0B94(CSchedAnimSlots* item, CEntryElem* entries, u8* arg3,
-                   f32 f1) {
-    CEntryElem* ret = func_804E0248((CScheduleItem*)item, entries, 8, arg3, f1);
-    if (ret == NULL) {
-        return;
-    }
-    f32 rate = func_804E04D4((CSchedAnimItem*)item, entries, 8);
-    if (rate < lbl_eu_8066B290) {
-        return;
-    }
-    u8* next = (u8*)ret + (item->mField06 - item->mField05) * 8;
-    f32 cur = (f32)*(u16*)((u8*)ret + 4);
-    f32 nxt = (f32)*(u16*)(next + 4);
-    item->mSlot3 = __OSf32tou16((rate * (nxt - cur) + cur) * item->mField14);
-    cur = (f32)*(u16*)((u8*)ret + 6);
-    nxt = (f32)*(u16*)(next + 6);
-    f32 interp = rate * (nxt - cur) + cur;
-    u16 v = __OSf32tou16(lbl_eu_8066B2B4 *
-                         (lbl_eu_8066B2B8 + interp * item->mField10));
-    item->mSlot2 = (s16)(lbl_eu_8066B2BC * (f32)v);
-}
+void func_804E0B94(){}
 
-// Randomize the item's 0x10/0x14 factor slots and refresh its 0x0C/0x0E slot
-// handles from the entry blob (stride 8) when the 0x10 flag bit is set: the
-// factor is jittered around lbl_eu_8066B2A8 by rand()/INT_MAX - 0.5 scaled
-// by the rate float before the entry blob (1.0 when none), then the u16
-// element times the factor is rounded into the slot handle.
-void func_804E0CF0(CSchedAnimSlots* item, u8* base) {
-    if (base == NULL || ((item->field_0x04 >> 4) & 1) == 0) {
-        return;
-    }
-    u8* entry = base + item->mField05 * 8;
-    f32 rnd = (f32)ml::math::mtRand() / lbl_eu_8066B2AC - lbl_eu_8066B2B0;
-    f32 rate = (base != NULL) ? *(f32*)(base - 8) : lbl_eu_8066B290;
-    item->mField14 = lbl_eu_8066B2A8 - rnd * rate;
-    s32 v = (s32)((f32)*(u16*)(entry + 4) * item->mField14);
-    if ((v & 0xFFFF) != 0) {
-        item->mSlot3 = (s16)v;
-    }
-    f32 rnd2 = (f32)ml::math::mtRand() / lbl_eu_8066B2AC - lbl_eu_8066B2B0;
-    f32 rate2 = (base != NULL) ? *(f32*)(base - 4) : lbl_eu_8066B290;
-    item->mField10 = lbl_eu_8066B2A8 - rnd2 * rate2;
-    s32 v2 = (s32)((f32)*(u16*)(entry + 6) * item->mField10);
-    if ((v2 & 0xFFFF) != 0) {
-        item->mSlot2 = (s16)v2;
-    }
-}
+void func_804E0CF0(){}
 
 void func_804E0E48(){}
 
@@ -985,40 +675,7 @@ void func_804E1044(){}
 
 void func_804E1294(){}
 
-// Initialize a random-jitter anim item: run the entry scan at stride 8, then
-// jitter the 0x0C factor around lbl_eu_8066B2A8 by rand()/INT_MAX - 0.5f
-// scaled by the rate float just before the entry blob (1.0f when none), and
-// scale the element's +4 float into +0x10. Sets the terminator flag bits.
-void func_804E17A4(CSchedAnimItem* item, u8* base) {
-    item->mField00 = lbl_eu_8066B290;
-    item->field_0x04 = 0;
-    item->mField05 = 0;
-    item->mField07 = 1;
-    item->mField06 = 1;
-    if (base != NULL) {
-        CEntryElem* ret =
-            (CEntryElem*)func_804E0188(base, 8, 0, &item->mField05, &item->mField07);
-        union {
-            f64 d;
-            u32 w[2];
-        } u;
-        u.w[1] = (u32)ml::math::mtRand() ^ 0x80000000;
-        u.w[0] = 0x43300000;
-        f64 d = u.d - lbl_eu_8066B2A0;
-        f32 rnd = (f32)d / lbl_eu_8066B2AC - lbl_eu_8066B2B0;
-        f32 rate = (base != NULL) ? *(f32*)(base - 4) : lbl_eu_8066B290;
-        item->mField0C = lbl_eu_8066B2A8 - rnd * rate;
-        item->mField10 = ((CEntryFloatElem*)ret)->mF32 * item->mField0C;
-        if (*(u16*)(base + (u8)(item->mField05 + item->mField07) * 8) != 0x4000) {
-            item->field_0x04 |= 0x80;
-        } else {
-            item->field_0x04 = (item->field_0x04 | 0x8) & ~0x80;
-        }
-    } else {
-        item->mField10 = lbl_eu_8066B290;
-        item->mField0C = lbl_eu_8066B2A8;
-    }
-}
+void func_804E17A4(){}
 
 // Advance the item's animation cursor: look up the entry element at index 8,
 // then interpolate the element's float table between slot 0 and the
@@ -1038,44 +695,33 @@ extern "C" void func_804E18CC(CSchedAnimItem* item, CEntryElem* entries, u8* arg
     }
 }
 
-// View of a schedule item used by func_804E196C's init path: byte fields at
-// 0x04..0x07 plus the s16 slot-handle pair at 0x0C/0x0E (overlaps the anim
-// view's f32 mField0C - same object, different class view).
-struct CSchedInitView {
-    f32 mField00;   // 0x00
-    u8 mFlags;      // 0x04
-    u8 mField05;    // 0x05
-    u8 mField06;    // 0x06
-    u8 mField07;    // 0x07
-    u8 _pad08[4];   // 0x08..0x0B
-    s16 mSlot2;     // 0x0C
-    s16 mSlot3;     // 0x0E
-};
-
 // Initialize one schedule item's anim/entry state: set the base frame
 // factor, reset the run-window bytes and slot handles, then (when an entry
 // blob is present) load the run's slot handles and set the 0x04 flag bits
 // according to whether the run extends to the blob terminator.
-extern "C" void func_804E196C(CSchedInitView* item, u8* base) {
-    bool hasBase = base != NULL;
+extern "C" void func_804E196C(CSchedAnimItem* item, u8* base) {
     item->mField00 = lbl_eu_8066B290;
-    item->mFlags = 0;
+    item->field_0x04 = 0;
     item->mField05 = 0;
     item->mField07 = 1;
     item->mField06 = 1;
-    item->mSlot2 = -1;
-    item->mSlot3 = -1;
-    if (hasBase) {
-        CEntryElem* elem =
-            (CEntryElem*)func_804E0188(base, 8, 0, &item->mField05, &item->mField07);
+    ((CScheduleItem*)item)->mSlots[2] = -1;
+    ((CScheduleItem*)item)->mSlots[3] = -1;
+    if (base != NULL) {
+        u8* ret = func_804E0188(base, 8, 0, &item->mField05, &item->mField07);
+        CEntryElem* elem = (CEntryElem*)ret;
         if (elem->mField00 != 0x4000) {
-            item->mSlot2 = elem->mField04;
-            item->mSlot3 = elem->mField06;
+            ((CScheduleItem*)item)->mSlots[2] = elem->mField04;
+            ((CScheduleItem*)item)->mSlots[3] = elem->mField06;
         }
-        if (*(u16*)(base + (u8)(item->mField05 + item->mField07) * 8) != 0x4000) {
-            item->mFlags |= 0x80;
+        u8 idx = item->mField05 + item->mField07;
+        u16 w = *(u16*)(base + idx * 8);
+        if (w != 0x4000) {
+            item->field_0x04 |= 0x80;
         } else {
-            item->mFlags = (item->mFlags | 0x8) & ~0x80;
+            // 32-bit intermediate (cast the whole AND, not the mask) so MWCC
+            // emits rlwinm instead of andi. (docs/MWCC_REFERENCE.md btm_sec)
+            item->field_0x04 = (u8)((item->field_0x04 | 0x8) & ~0x80);
         }
     }
 }
@@ -1096,41 +742,7 @@ void func_804E1A44(CScheduleItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
 
 void func_804E1AA8(){}
 
-// Advance the item's 4-float anim block at +0x0C: lerp it from entry
-// element 0x14's +4 floats toward the (frame span)-th element (0x14-byte
-// stride) at the current rate, then refresh the 2-bit scale/rot mode in the
-// 0x04 flag byte (bit 0x20/0x40) from whether the two vector halves are
-// still (1,1,1).
-void func_804E1C1C(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) {
-    CEntryElem* ret = func_804E0248((CScheduleItem*)item, entries, 0x14, arg3, f1);
-    if (ret != NULL) {
-        f32 rate = func_804E04D4(item, entries, 0x14);
-        if (rate < lbl_eu_8066B290) {
-            return;
-        }
-        u8* b = (u8*)ret + (item->mField06 - item->mField05) * 0x14;
-        func_804DD8C8(&item->mField0C, (u8*)ret + 4, b + 4, rate);
-        bool scale1 = item->mField0C != lbl_eu_8066B290 ||
-                      item->mField10 != lbl_eu_8066B290;
-        CSchedAnimFlags* flags = (CSchedAnimFlags*)&item->field_0x04;
-        u8 mode1;
-        if (scale1) {
-            mode1 = flags->mMode | 1;
-        } else {
-            mode1 = flags->mMode & 2;
-        }
-        flags->mMode = mode1;
-        bool scale2 = item->mField14 != lbl_eu_8066B290 ||
-                      item->mField18 != lbl_eu_8066B290;
-        u8 mode2;
-        if (scale2) {
-            mode2 = flags->mMode | 2;
-        } else {
-            mode2 = flags->mMode & 1;
-        }
-        flags->mMode = mode2;
-    }
-}
+void func_804E1C1C(){}
 
 void func_804E1D50(){}
 
@@ -1164,34 +776,7 @@ void func_804E2A5C(){}
 
 void func_804E2B54(){}
 
-// Initialize the item's scale vector at +0x0C from entry element 0x00
-// (0x10-byte stride): copy the element's 3-float vector, set the 0x20 flag
-// bit when the vector is not (1,1,1), then set the terminator flag bits.
-// With no entry blob the vector is zeroed.
-void func_804E2D8C(CSchedAnimItem* item, u8* base) {
-    u8* b = base;
-    item->mField00 = lbl_eu_8066B290;
-    item->field_0x04 = 0;
-    item->mField05 = 0;
-    item->mField07 = 1;
-    item->mField06 = 1;
-    if (b != NULL) {
-        CEntryElem* ret =
-            (CEntryElem*)func_804E0188(b, 0x10, 0, &item->mField05, &item->mField07);
-        *(ml::CVec3*)&item->mField0C = *(ml::CVec3*)((u8*)ret + 4);
-        if (item->mField0C != lbl_eu_8066B290 || item->mField10 != lbl_eu_8066B290 ||
-            item->mField14 != lbl_eu_8066B290) {
-            ((CSchedAnimFlags*)&item->field_0x04)->mMode = 1;
-        }
-        if (*(u16*)(b + (u8)(item->mField05 + item->mField07) * 0x10) != 0x4000) {
-            item->field_0x04 |= 0x80;
-        } else {
-            item->field_0x04 = (item->field_0x04 | 0x8) & ~0x80;
-        }
-    } else {
-        *(ml::CVec3*)&item->mField0C = ml::CVec3::zero;
-    }
-}
+void func_804E2D8C(){}
 
 // Refresh the item's scale vector at +0x0C: lerp it from entry element
 // 0x10's +4 vector toward the (frame span & 0xFF)-th element (0x10-byte
@@ -1219,3 +804,15 @@ void func_804E2EAC(CSchedAnimItem* item, CEntryElem* entries, u8* arg3, f32 f1) 
 void func_804E2F7C(){}
 
 void func_804E30F0(){}
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.bss] 0x80660038-0x80661748 (0x1710 = 5904B) zero-fill
+u8 lbl_eu_80660038[2880];
+u8 lbl_eu_80660B78[2880];
+u8 lbl_eu_806616B8[96];
+CScheduleItemPool lbl_eu_80661718;
+CEffectPool lbl_eu_80661728;
+CEffectNodePool lbl_eu_80661738;
+// [.sbss] 0x80665A20-0x80665A50 (48B) zero-fill (80665A20..80665A40 already defined above)
+void* lbl_eu_80665A44;
+u8 lbl_eu_80665A48[8];

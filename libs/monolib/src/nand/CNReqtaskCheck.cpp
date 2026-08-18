@@ -19,7 +19,7 @@ struct CNReqtaskCheckVtbl;
 // symbols match the stripped retail names rather than C++ manglings).
 extern "C" {
     extern CNReqtaskCheckVtbl* lbl_eu_80665A00; // installed vtable pointer for this task
-    extern char lbl_eu_8056FDE8[]; // vtable data - array type prevents sda21
+    extern u32 lbl_eu_8056FDE8[]; // vtable data - array type prevents sda21
     extern u8  lbl_eu_806659D0;    // global NAND "busy" flag
     extern s32 lbl_eu_806659D4;    // global NAND result/error latch
 
@@ -108,3 +108,31 @@ extern "C" __declspec(noinline) void func_804DB440(void* dest) {
 extern "C" __declspec(noinline) void sinit_804DB420() {
     func_804DB440(&lbl_eu_80665A00);
 }
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// func_804DB364 is defined in this TU; func_804DA4CC is foreign (CNReqtaskSave).
+extern "C" void func_804DA4CC();
+extern "C" u32 lbl_eu_80663B70;   // foreign .sdata
+extern "C" u32 lbl_eu_80663BA8[2]; // this unit's sdata
+
+// [.data] 0x8056FDE8-0x8056FE08 (32B): CNReqtaskCheck vtable pair
+extern "C" u32 lbl_eu_8056FDE8[4] = {
+    (u32)&lbl_eu_80663BA8, 0x00000000,
+    (u32)&func_804DB364, (u32)&func_804DA4CC,
+};
+extern "C" u32 lbl_eu_8056FDF8[4] = {
+    (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000,
+};
+
+// [.rodata] 0x80524648-0x80524658 (16B)
+extern "C" __declspec(align(4)) const char lbl_eu_80524648[0x10] = {
+    0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x43,0x68,0x65,0x63,0x6B,0x00,0x00,
+};
+
+// [.sdata] 0x80663BA8-0x80663BB0 (8B)
+extern "C" u32 lbl_eu_80663BA8[2] = { (u32)&lbl_eu_80524648, (u32)&lbl_eu_8056FDF8 };
+
+// [.sbss] 0x80665A00-0x80665A10 (16B) zero-fill. 80665A00 is an 8B retail
+// label (the installed-vtable pointer + 1 pad word); keep the extern type.
+CNReqtaskCheckVtbl* lbl_eu_80665A00;
+u32 lbl_eu_80665A04;
+u32 lbl_eu_80665A08[2];

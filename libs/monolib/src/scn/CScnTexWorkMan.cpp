@@ -28,7 +28,7 @@ extern char lbl_eu_8056E1C8[];    // assert source file (node-id asserts, line 0
 extern char lbl_eu_8056E1A8[];    // assert format
 extern char lbl_eu_80529678[];    // assert source file (line 0x53 asserts)
 extern char lbl_eu_80529658[];    // assert format
-extern char lbl_eu_80524020[];    // memory-region name passed to MemManager::create
+extern const char lbl_eu_80524020[];    // memory-region name passed to MemManager::create
 
 // Shared .sdata2 float constants used by this unit (retail pool).
 extern const f32 lbl_eu_8066AA00;  // volume sentinel (nodes without volume)
@@ -64,7 +64,8 @@ struct CScnTexWorkManNodeIdList {
     u32 count;   // 0x4
 };
 
-class CScnTexWorkMan : public CDeviceVICb {
+extern "C" u32 lbl_eu_8056E7D0[];
+class __declspec(novtable) CScnTexWorkMan : public CDeviceVICb {
 public:
     CScnTexWorkMan(u32 param1, u32 param2, u32 param3);
     virtual ~CScnTexWorkMan();
@@ -86,8 +87,8 @@ extern "C" void* func_8049431C(u8* obj, u8* image, u16 w, u16 h, u32 fmt,
                                u8* p6);
 
 // Texture-work memory-pool state (retail .sdata/.sbss).
-u32 lbl_eu_806639A8 = 0xFFFFFFFF;  // current mem-handle (INVALID_HANDLE before setup)
-u32 lbl_eu_806639AC = 0;           // user-supplied mem-handle
+extern u32 lbl_eu_806639A8;  // foreign .sdata (current mem-handle)
+extern u32 lbl_eu_806639AC;  // foreign .sdata (user-supplied mem-handle)
 s32 lbl_eu_806658E8 = 0;           // live-instance count (retail bgt: signed)
 u32 lbl_eu_806658EC = 0;           // allocatable-region base
 u32 lbl_eu_806658F0 = 0;           // allocation cursor
@@ -109,6 +110,7 @@ CScnTexWorkMan::CScnTexWorkMan(u32 param1, u32 param2, u32 param3) {
 }
 
 CScnTexWorkMan::~CScnTexWorkMan() {
+    *(void**)this = (void*)lbl_eu_8056E7D0;
     lbl_eu_806658E8--;
     if (lbl_eu_806658E8 <= 0) {
         mtl::MemManager::erase(lbl_eu_806639A8);
@@ -803,3 +805,53 @@ L_okChild:
         func_80491764(&child3, pList);
     }
 }
+
+
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+namespace TWMBlob {
+extern "C" void __dt__14CScnTexWorkManFv();
+extern "C" void func_80490310__14CScnTexWorkManFv();
+extern "C" void __dt__16CScnVirtualLightFv();
+extern "C" void viBeforeDrawDone__11CDeviceVICbFv();
+extern "C" void viBeginFrame__11CDeviceVICbFv();
+}
+extern "C" u32 lbl_eu_806639B0; extern "C" u32 lbl_eu_80663618;
+extern "C" u32 lbl_eu_806639C0;
+
+// lbl_eu_8056E7D0 (24B) vtable/ptrs
+extern "C" u32 lbl_eu_8056E7D0[6] = {
+    (u32)&lbl_eu_806639B0, 0x00000000, (u32)&TWMBlob::__dt__14CScnTexWorkManFv, (u32)&TWMBlob::viBeforeDrawDone__11CDeviceVICbFv, (u32)&TWMBlob::func_80490310__14CScnTexWorkManFv, (u32)&TWMBlob::viBeginFrame__11CDeviceVICbFv,
+};
+// lbl_eu_8056E7E8 (16B) vtable/ptrs
+extern "C" u32 lbl_eu_8056E7E8[4] = {
+    (u32)&lbl_eu_80663618, 0x00000000, 0x00000000, 0x00000000,
+};
+// lbl_eu_8056E7F8 (38B) string/bytes
+extern "C" char lbl_eu_8056E7F8[40] = { 0x4E, 0x57, 0x34, 0x52, 0x3A, 0x46, 0x61, 0x69, 0x6C, 0x65, 0x64, 0x20, 0x61, 0x73, 0x73, 0x65, 0x72, 0x74, 0x69, 0x6F, 0x6E, 0x20, 0x21, 0x28, 0x28, 0x75, 0x33, 0x32, 0x29, 0x70, 0x20, 0x26, 0x20, 0x30, 0x78, 0x33, 0x29, 0x00, 0x00, 0x00, };
+// lbl_eu_8056E820 (17B) string/bytes
+extern "C" char lbl_eu_8056E820[20] = { 0x67, 0x33, 0x64, 0x5F, 0x72, 0x65, 0x73, 0x6E, 0x6F, 0x64, 0x65, 0x5F, 0x61, 0x63, 0x2E, 0x68, 0x00, 0x00, 0x00, 0x00, };
+// lbl_eu_8056E834 (26B) string/bytes
+extern "C" char lbl_eu_8056E834[28] = { 0x25, 0x73, 0x3A, 0x3A, 0x25, 0x73, 0x3A, 0x20, 0x4F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x20, 0x6E, 0x6F, 0x74, 0x20, 0x76, 0x61, 0x6C, 0x69, 0x64, 0x2E, 0x00, 0x00, 0x00, };
+// lbl_eu_8056E850 (17B) string/bytes
+extern "C" char lbl_eu_8056E850[24] = { 0x67, 0x33, 0x64, 0x5F, 0x72, 0x65, 0x73, 0x6E, 0x6F, 0x64, 0x65, 0x5F, 0x61, 0x63, 0x2E, 0x68, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
+// lbl_eu_8056E868 (16B) vtable/ptrs
+extern "C" u32 lbl_eu_8056E868[4] = {
+    (u32)&lbl_eu_806639C0, 0x00000000, (u32)&TWMBlob::__dt__16CScnVirtualLightFv, 0x00000000,
+};
+
+// [.rodata] 0x80524010-0x80524030 (32B)
+extern "C" __declspec(align(4)) const char lbl_eu_80524010[0x10] = {
+    0x43,0x53,0x63,0x6E,0x54,0x65,0x78,0x57,0x6F,0x72,0x6B,0x4D,0x61,0x6E,0x00,0x00,
+};
+extern "C" __declspec(align(4)) const char lbl_eu_80524020[0x10] = {
+    0x43,0x53,0x63,0x6E,0x54,0x65,0x78,0x57,0x6F,0x72,0x6B,0x4D,0x61,0x6E,0x00,0x00,
+};
+
+// [.sbss] 0x806658E8-0x80665910 (40B) zero-fill. The live-count / region
+// state labels (806658E8..80665900) are defined above; add the missing retail
+// slots to reach the 40B block.
+u32 lbl_eu_80665904;
+u32 lbl_eu_80665908[2];
+DECOMP_FORCEACTIVE(CScnTexWorkMan_cpp, lbl_eu_80524010);
+DECOMP_FORCEACTIVE(CScnTexWorkMan_cpp, lbl_eu_80524020);

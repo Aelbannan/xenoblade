@@ -8,9 +8,10 @@
 #include "libs/monolib/src/scn/CScnEffectActNw4r.hpp"
 
 // Constructor: installs the vtable and clears the act-table count.
-CScnEffectActNw4r::CScnEffectActNw4r() : mCount(0) {}
+extern "C" u32 lbl_eu_8056EAD8[];
+CScnEffectActNw4r::CScnEffectActNw4r() : mCount(0) { *(void**)this = (void*)lbl_eu_8056EAD8; }
 
-CScnEffectActNw4r::~CScnEffectActNw4r() {}
+CScnEffectActNw4r::~CScnEffectActNw4r() { *(void**)this = (void*)lbl_eu_8056EAD8; }
 
 // vtable stub thunks (retail: lwz r3,0x4(r3); b callee) - callees declared
 // extern "C" so the relocs carry the retail unmangled names.
@@ -375,3 +376,39 @@ void func_8049B9EC(CScnEffectActNw4r* self, CScnEffectActMgr* mgr) {
     nw4r::g3d::ResNode node = resMdl.GetResNode(0);
     func_8049BA58(self, &node);
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+namespace EABlob {
+extern "C" void __dt__17CScnEffectActNw4rFv();
+extern "C" void func_8049BEA4(); extern "C" void func_8049BA44();
+extern "C" void func_8049BEAC(); extern "C" void func_8049BEB4();
+extern "C" void func_8049BEBC(); extern "C" void func_8049BED0();
+extern "C" void func_8049BEE4(); extern "C" void func_8049BEEC();
+extern "C" void func_8049BF0C(); extern "C" void func_8049BF34();
+extern "C" void func_8049BF5C(); extern "C" void func_8049BF84();
+extern "C" void func_8049BFAC(); extern "C" void func_8049C060();
+extern "C" void func_8049C18C(); extern "C" void func_8049C244();
+extern "C" void func_8049C430(); extern "C" void func_8049C314();
+extern "C" void func_8049C394(); extern "C" void func_8049C39C();
+extern "C" void func_8049C3A4(); extern "C" void func_8049C3AC();
+extern "C" void func_8049C420();
+}
+extern "C" u32 lbl_eu_80663A20;   // foreign .sdata
+extern "C" u32 lbl_eu_80663A28;   // foreign .sdata
+
+// [.data] 0x8056EAD8-0x8056EB50 (120B): CScnEffectActNw4r vtable + sub-view
+extern "C" u32 lbl_eu_8056EAD8[26] = {
+    (u32)&lbl_eu_80663A20, 0x00000000,
+    (u32)&EABlob::__dt__17CScnEffectActNw4rFv,
+    (u32)&EABlob::func_8049BEA4, (u32)&EABlob::func_8049BA44, (u32)&EABlob::func_8049BEAC,
+    (u32)&EABlob::func_8049BEB4, (u32)&EABlob::func_8049BEBC, (u32)&EABlob::func_8049BED0,
+    (u32)&EABlob::func_8049BEE4, (u32)&EABlob::func_8049BEEC, (u32)&EABlob::func_8049BF0C,
+    (u32)&EABlob::func_8049BF34, (u32)&EABlob::func_8049BF5C, (u32)&EABlob::func_8049BF84,
+    (u32)&EABlob::func_8049BFAC, (u32)&EABlob::func_8049C060, (u32)&EABlob::func_8049C18C,
+    (u32)&EABlob::func_8049C244, (u32)&EABlob::func_8049C430, (u32)&EABlob::func_8049C314,
+    (u32)&EABlob::func_8049C394, (u32)&EABlob::func_8049C39C, (u32)&EABlob::func_8049C3A4,
+    (u32)&EABlob::func_8049C3AC, (u32)&EABlob::func_8049C420,
+};
+extern "C" u32 lbl_eu_8056EB40[4] = {
+    (u32)&lbl_eu_80663A28, 0x00000000, 0x00000000, 0x00000000,
+};

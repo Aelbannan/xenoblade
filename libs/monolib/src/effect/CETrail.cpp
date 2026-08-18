@@ -18,9 +18,9 @@
 // External vtables / constants / globals (absolute DOL addresses)
 // ---------------------------------------------------------------------------
 extern "C" {
-extern u8 lbl_eu_8056FC40[]; // CETrail secondary interface vtable
-extern u8 lbl_eu_8056FC4C[]; // CETrail vtable
-extern u8 lbl_eu_8056FC64[]; // reslist<CETrail::POINT> vtable
+extern u32 lbl_eu_8056FC40[]; // CETrail secondary interface vtable
+extern u32 lbl_eu_8056FC4C[]; // CETrail vtable
+extern u32 lbl_eu_8056FC64[]; // reslist<CETrail::POINT> vtable
 
 extern const f32 lbl_eu_8066B15C;
 extern f32 lbl_eu_8066B158;
@@ -64,8 +64,8 @@ struct FogState {
     u32 m_28;
     u32 m_2C;
 };
-extern FogState lbl_eu_8065FCA0;
-extern FogState lbl_eu_8065FCD0;
+FogState lbl_eu_8065FCA0;
+FogState lbl_eu_8065FCD0;
 
 struct CScnFogEnv {
     u8 m_pad00[0x24];
@@ -77,8 +77,8 @@ struct CScnRootEnv {
 };
 extern CScnRootEnv* lbl_eu_806659B8;
 extern s32 lbl_eu_80663B38;
-extern s32 lbl_eu_806659BC;
-extern u8 lbl_eu_80663B3C;
+extern "C" s32 lbl_eu_806659BC;
+extern u8 lbl_eu_80663B3C[4];
 
 void __dl__FPv(void*);
 void __dla__FPv(void*);
@@ -264,8 +264,8 @@ static void trailClearListDerived(CETrail* t) {
 // ---------------------------------------------------------------------------
 extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkArg,
                                 u8* dataA, u8* dataB, u8 flag158, u32 id15C) {
-    t->m_vtable2 = lbl_eu_8056FC40;
-    t->m_vtable = lbl_eu_8056FC64;
+    t->m_vtable2 = (void*)lbl_eu_8056FC40;
+    t->m_vtable = (void*)lbl_eu_8056FC64;
 
     ml::CVec3 za = ml::CVec3::zero;
     t->m_startNode.m_item.m_posA = za;
@@ -278,7 +278,7 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
     t->m_head = &t->m_startNode;
     t->m_startNode.m_next = &t->m_startNode;
     t->m_startNode.m_prev = &t->m_startNode;
-    t->m_vtable = lbl_eu_8056FC4C;
+    t->m_vtable = (void*)lbl_eu_8056FC4C;
 
     for (CETrailSlot* p = &t->m_slots0[0]; p < &t->m_slots0[2]; p++) {
         p->init();
@@ -402,7 +402,7 @@ extern "C" void func_804D70A0(CETrailNode* node) {
 // ---------------------------------------------------------------------------
 extern "C" CETrail* __dt___reslist_base_CETrail_POINT(CETrail* t, int deleting) {
     if (t != nullptr) {
-        t->m_vtable = lbl_eu_8056FC64;
+        t->m_vtable = (void*)lbl_eu_8056FC64;
         trailClearList(t);
         if (!t->m_ownsList && t->m_list != nullptr) {
             delete[] t->m_list;
@@ -421,7 +421,7 @@ extern "C" CETrail* __dt___reslist_base_CETrail_POINT(CETrail* t, int deleting) 
 extern "C" CETrail* __dt__reslist_CETrail_POINT(CETrail* t, int deleting) {
     if (t != nullptr) {
         if (t != nullptr) {
-            t->m_vtable = lbl_eu_8056FC64;
+            t->m_vtable = (void*)lbl_eu_8056FC64;
             CETrailNode* cur = t->m_head->m_next;
             while (cur != t->m_head) {
                 CETrailNode* old = cur;
@@ -447,7 +447,7 @@ extern "C" CETrail* __dt__reslist_CETrail_POINT(CETrail* t, int deleting) {
 // ---------------------------------------------------------------------------
 extern "C" CETrail* __dt__7CETrailFv(CETrail* t, int deleting) {
     if (t != nullptr) {
-        t->m_vtable2 = lbl_eu_8056FC40;
+        t->m_vtable2 = (void*)lbl_eu_8056FC40;
 
         if (t->m_verts != nullptr) {
             delete[] t->m_verts;
@@ -466,7 +466,7 @@ extern "C" CETrail* __dt__7CETrailFv(CETrail* t, int deleting) {
         t->m_capacity = 0;
 
         if (t != nullptr) {
-            t->m_vtable = lbl_eu_8056FC64;
+            t->m_vtable = (void*)lbl_eu_8056FC64;
             {
                 CETrailNode* head = t->m_head;
                 CETrailNode* cur = head->m_next;
@@ -898,7 +898,7 @@ extern "C" void func_804D82DC(CScnRootEnv* scene) {
     lbl_eu_806659B8 = scene;
     lbl_eu_80663B38 = invalid;
     lbl_eu_806659BC = zero;
-    lbl_eu_80663B3C = 1;
+    lbl_eu_80663B3C[0] = 1;
 
     nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)func_8048ECD8(scene, (void*)zero, invalid);
     *(FogData*)&lbl_eu_8065FCA0 = *root->GetFog(zero);
@@ -931,3 +931,48 @@ extern "C" void func_804D83D0(void) {
         lbl_eu_806659BC = lbl_eu_806659BC - 1;
     }
 }
+
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.bss] 0x8065FD00-0x8065FE30 (304B): unknown zero-fill object.
+__declspec(align(8)) u8 lbl_eu_8065FD00[0x130];
+DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_8065FD00);
+
+// [.sbss] 0x806659BC-0x806659C8 (12B): retail tail global (8B span).
+extern "C" { __declspec(align(8)) s32 lbl_eu_806659BC = 0; u32 lbl_eu_806659C0; u32 lbl_eu_806659C4 = 0; }
+DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_806659BC);
+DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_806659C0);
+DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_806659C4);
+
+// [.sdata] 0x80663B20-0x80663B40 (32B): typeinfo pairs + counters.
+extern "C" u32 lbl_eu_8066B190;
+extern "C" __declspec(align(8)) const char lbl_eu_80524530[0x18];
+extern "C" __declspec(align(8)) const char lbl_eu_80524548[0x20];
+extern "C" u32 lbl_eu_8056FC58[3];
+extern "C" u32 lbl_eu_80663B20[2] = { (u32)&lbl_eu_8066B190, 0x00000000 };
+extern "C" u32 lbl_eu_80663B28[2] = { (u32)&lbl_eu_80524530, (u32)&lbl_eu_8056FC58 };
+extern "C" u32 lbl_eu_80663B30[2] = { (u32)&lbl_eu_80524548, 0x00000000 };
+extern "C" { s32 lbl_eu_80663B38 = -1; u8 lbl_eu_80663B3C[4] = { 1, 0, 0, 0 }; }  // 3B zero tail shares the initialized word (PROGBITS .sdata)
+// 3B zero tail at +0x1D (kept PROGBITS .sdata via explicit section decl)
+DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_80663B20);
+DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_80663B28);
+DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_80663B30);
+DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_80663B38);
+DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_80663B3C);
+
+// [.rodata] 0x80524530-0x80524568 (56B): template typeinfo names.
+extern "C" __declspec(align(8)) const char lbl_eu_80524530[0x18] = { 0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x3C,0x43,0x45,0x54,0x72,0x61,0x69,0x6C,0x3A,0x3A,0x50,0x4F,0x49,0x4E,0x54,0x3E,0x00 };
+extern "C" __declspec(align(8)) const char lbl_eu_80524548[0x20] = { 0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x43,0x45,0x54,0x72,0x61,0x69,0x6C,0x3A,0x3A,0x50,0x4F,0x49,0x4E,0x54,0x3E,0x00,0x00,0x00 };  // +2B tail pad
+DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_80524530);
+DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_80524548);
+
+// [.data] 0x8056FC40-0x8056FC70 (48B): four 12B vtables. The reslist dtors
+// are splitter-shortened template names (foreign weak definitions).
+extern "C" u32 lbl_eu_8056FC40[3] = { (u32)&lbl_eu_80663B20, 0x00000000, (u32)&__dt__7CETrailFv };
+extern "C" u32 lbl_eu_8056FC4C[3] = { (u32)&lbl_eu_80663B28, 0x00000000, (u32)&__dt__reslist_CETrail_POINT };
+extern "C" u32 lbl_eu_8056FC58[3] = { (u32)&lbl_eu_80663B30, 0x00000000, 0x00000000 };
+extern "C" u32 lbl_eu_8056FC64[3] = { (u32)&lbl_eu_80663B30, 0x00000000, (u32)&__dt___reslist_base_CETrail_POINT };
+DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_8056FC40);
+DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_8056FC4C);
+DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_8056FC58);
+DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_8056FC64);

@@ -134,7 +134,7 @@ struct CScnEffectActMgr {
 // manager's act data (caller applies the slot offset).
 extern "C" u8* func_8048315C(CScnEffectActMgr* mgr);
 
-class CScnEffectActNw4r {
+class __declspec(novtable) CScnEffectActNw4r {
 public:
     CScnEffectActNw4r();
     virtual ~CScnEffectActNw4r();

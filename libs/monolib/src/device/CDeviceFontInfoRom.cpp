@@ -184,3 +184,56 @@ u16 CDeviceFontInfoRom::func_80453824() {
 u32 CDeviceFontInfoRom::func_80453830() {
     return field_0x04;
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+namespace FIRBlob {
+extern "C" void __dt__18CDeviceFontInfoRomFv();
+extern "C" void func_80453830__18CDeviceFontInfoRomFv();
+extern "C" void func_80453824__18CDeviceFontInfoRomFv();
+extern "C" void func_80453818__18CDeviceFontInfoRomFv();
+extern "C" void func_8045380C__18CDeviceFontInfoRomFv();
+extern "C" void func_80453800__18CDeviceFontInfoRomFv();
+extern "C" void func_804536DC__18CDeviceFontInfoRomFv();
+extern "C" void func_804537F0__18CDeviceFontInfoRomFv();
+extern "C" void func_804537F8__18CDeviceFontInfoRomFv();
+extern "C" void func_8045378C__18CDeviceFontInfoRomFv();
+extern "C" void func_804537A8__18CDeviceFontInfoRomFv();
+extern "C" void func_804537C0__18CDeviceFontInfoRomFv();
+extern "C" void func_804537D4__18CDeviceFontInfoRomFv();
+}
+extern "C" u32 lbl_eu_80663728[2]; // this unit's sdata
+extern "C" u32 lbl_eu_80663720;    // foreign .sdata
+
+// [.data] 0x8056C788-0x8056C7D0 (72B): CDeviceFontInfoRom vtable + sub-view
+extern "C" u32 lbl_eu_8056C788[15] = {
+    (u32)&lbl_eu_80663728, 0x00000000,
+    (u32)&FIRBlob::__dt__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::func_80453830__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::func_80453824__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::func_80453818__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::func_8045380C__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::func_80453800__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::func_804536DC__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::func_804537F0__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::func_804537F8__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::func_8045378C__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::func_804537A8__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::func_804537C0__18CDeviceFontInfoRomFv,
+    (u32)&FIRBlob::func_804537D4__18CDeviceFontInfoRomFv,
+};
+extern "C" u32 lbl_eu_8056C7C4[3] = {
+    (u32)&lbl_eu_80663720, 0x00000000, 0x00000000,
+};
+
+// [.rodata] 0x80522E28-0x80522E40 (24B)
+extern "C" __declspec(align(4)) const char lbl_eu_80522E28[0x18] = {
+    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x6F,0x6E,0x74,0x49,0x6E,0x66,0x6F,0x52,
+    0x6F,0x6D,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+
+// [.sdata] 0x80663728-0x80663730 (8B)
+extern "C" u32 lbl_eu_80663728[2] = { (u32)&lbl_eu_80522E28, (u32)&lbl_eu_8056C7C4 };
+
+// [.sbss] 0x80665688-0x80665690 (8B) zero-fill
+CDeviceFontInfoRom* lbl_eu_80665688;
+u32 lbl_eu_8066568C;

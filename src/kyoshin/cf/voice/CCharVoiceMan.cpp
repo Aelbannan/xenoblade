@@ -1,13 +1,34 @@
 #include "kyoshin/cf/voice/CCharVoiceMan.hpp"
 #include "kyoshin/UnkClass_805764CC.hpp"
-#include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/cf/CBattleManager.hpp"
 #include "monolib/math/Random.hpp"
 #include "monolib/util/MemManager.hpp"
 
+// Global-scope free functions matching the retail C names: MWCC mangles a
+// global no-arg func_800B07E8() to func_800B07E8__Fv and a global
+// func_800B8804(void*, cf::IFactoryEvent*) to
+// func_800B8804__FPvPQ22cf13IFactoryEvent, so the ctor/dtor call relocs emit
+// the exact retail symbols (declaring them as UnkClass_805764CC members would
+// mangle with the class prefix). func_800B07E8 is already declared
+// `extern void* func_800B07E8()` by kyoshin/cf/object/CAIAction.hpp in the
+// include chain; B8804 gets its own global decl here. func_800B88E0 is the
+// bare extern "C" retail symbol (0x800B91FC) used by the destructor.
+void func_800B8804(void* self, cf::IFactoryEvent* event);
+// These were previously provided by the CAIAction.hpp include chain (dropped
+// to avoid a duplicate getInstance__Q22cf14CBattleManagerFv declaration);
+// plain C++ linkage mangles them to the retail names func_800B07E8__Fv /
+// func_800EA444__FPv (symbol-map mapped).
+extern void* func_800B07E8();
+void* func_800EA444(void* bm);
+// Voice-cue / user-owned-sound helpers (previously via the CBattleManager.hpp
+// include chain; C++ linkage mangles to the retail names).
+u32 func_8009CF8C(u32 resourceId);
+void func_8009D018(u32 owner, u32 flag);
+bool func_8006EF04(int mask);                // func_8006EF04__Fi
+
 namespace cf{
     CCharVoiceMan::CCharVoiceMan(){
-        float resetFloat = lbl_eu_80668C68;
+        *(void**)this = (void*)lbl_eu_805398CC;  // shared-pool retail vtable
+        const float resetFloat = lbl_eu_80668C68;
         unk204 = 0;
         unk208 = 0;
         unk20C = 0;
@@ -25,13 +46,14 @@ namespace cf{
         unk22A = 0;
         unk22C = 0;
         unk230 = 0;
-        UnkClass_805764CC* classPtr = UnkClass_805764CC::func_800B07E8();
-        classPtr->func_800B8804(this);
+        UnkClass_805764CC* classPtr = (UnkClass_805764CC*)func_800B07E8();
+        func_800B8804(classPtr, (cf::IFactoryEvent*)this);
     }
 
     CCharVoiceMan::~CCharVoiceMan(){
-        UnkClass_805764CC* classPtr = UnkClass_805764CC::func_800B07E8();
-        classPtr->func_800B88E0(this);
+        *(void**)this = (void*)lbl_eu_805398CC;  // vtable re-store (deleting dtor)
+        UnkClass_805764CC* classPtr = (UnkClass_805764CC*)func_800B07E8();
+        func_800B88E0(classPtr, (cf::IFactoryEvent*)this);
     }
 }
 
@@ -62,23 +84,21 @@ u8* func_802A34E4(int size) {
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     if (m->unk215 != 0)
         return 0;
-    int tail = (int)m->unk208;
-    int head = (int)m->unk204;
-    if (head < tail) {
+    if ((int)m->unk204 < (int)m->unk208) {
         // Linear region still free before the tail.
-        if (tail - head < size)
+        if ((int)m->unk208 - (int)m->unk204 < size)
             return 0;
-        m->unk204 = head + size;
+        m->unk204 = (int)m->unk204 + size;
         return (u8*)lbl_eu_80664A58 + 4 + lbl_eu_80664A58->unk204 - size;
     }
     // Wrapped: space up to the 0x200 limit, else restart at the buffer base.
-    if (0x200 - head < size) {
-        if (tail < size)
+    if (0x200 - (int)m->unk204 < size) {
+        if ((int)m->unk208 < size)
             return 0;
         m->unk204 = size;
         return (u8*)lbl_eu_80664A58 + 4;
     }
-    m->unk204 = head + size;
+    m->unk204 = (int)m->unk204 + size;
     return (u8*)lbl_eu_80664A58 + 4 + lbl_eu_80664A58->unk204 - size;
 }
 unsigned int func_802A35A0(unsigned int value) { unsigned int counter = lbl_eu_80664A5C; lbl_eu_80664A5C = counter + 1; return (counter << 16) | (value & 0xFFFF); }
@@ -100,13 +120,12 @@ void func_802A1500() {
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
     m->unk215 = 0;
     cf::CSoundNode* node = m->unk20C;
-    void* const ref = &lbl_eu_805398C0;
     while (node != 0) {
         bool match = false;
-        if (__ptmf_cmpr(node, ref) != 0 && __ptmf_test(node) != 0)
+        if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
             match = true;
         if (match)
-            node->field_1C->fn_08(node);
+            ((cf::CVoiceNodeIf*)node)->vf08();
         node = node->next;
     }
     m->unk20C = 0;
@@ -137,13 +156,12 @@ void func_802A1610(){
         // Presentation pause: run every node's level-thread handler then flush.
         m->unk215 = 0;
         cf::CSoundNode* node = m->unk20C;
-        void* const ref = &lbl_eu_805398C0;
         while (node != 0) {
             bool match = false;
-            if (__ptmf_cmpr(node, ref) != 0 && __ptmf_test(node) != 0)
+            if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
                 match = true;
             if (match)
-                node->field_1C->fn_08(node);
+                ((cf::CVoiceNodeIf*)node)->vf08();
             node = node->next;
         }
         m->unk20C = 0;
@@ -155,15 +173,16 @@ void func_802A1610(){
     if (m->unk215 == 0) {
         // Battle-participant count changed: gate a frequency voice node.
         int oldCount = m->unk21C;
-        cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-        cf::CVoiceBattleNode* sentinel = ((cf::CBattleManagerNodeList*)bm)->sentinel;
+        void* bm = getInstance__Q22cf14CBattleManagerFv();
         int count = 0;
-        for (cf::CVoiceBattleNode* cur = sentinel->next; cur != sentinel; cur = cur->next)
+        cf::CVoiceBattleNode* cur;
+        cf::CVoiceBattleNode* sentinel = ((cf::CBattleManagerNodeList*)bm)->sentinel;
+        for (cur = sentinel->next; cur != sentinel; cur = cur->next)
             count++;
         m->unk21C = count;
-        if (count != oldCount && m->unk218 >= lbl_eu_80668C6C &&
+        if (count != oldCount && !(m->unk218 < lbl_eu_80668C6C) &&
             !(lbl_eu_80663E24 & 0x00400000)) {
-            cf::CSoundNode* node = func_802A6820(oldCount);
+            cf::CSoundNode* node = func_802A6820(count, oldCount);
             if (node != 0) {
                 cf::CSoundNode* tail = m->unk210;
                 if (tail != 0)
@@ -181,10 +200,10 @@ void func_802A1610(){
         // action source (unk230) as a node.
         if (!(lbl_eu_80663E24 & 0x00400000)) {
             cf::CVoiceBFC68* br =
-                (cf::CVoiceBFC68*)func_800BFC68__FPQ22cf12CfObjectMove(cf::CfGameManager::getPlayer(0));
+                (cf::CVoiceBFC68*)func_800BFC68__FPQ22cf12CfObjectMove(getPlayer__Q22cf13CfGameManagerFi(0));
             if (br != 0) {
                 cf::CVoiceEdge* edge = (cf::CVoiceEdge*)br->field_3ED4;
-                if (edge != 0 && edge->vtable->fn_40(edge, 0x800) == 0) {
+                if (edge != 0 && ((cf::CVoiceEdgeIf*)edge)->fn_40(0x800) == 0) {
                     if (m->unk230 != 0) {
                         void* src = func_8016FE34(func_800B708C((BOOL)m->unk230));
                         if (src != 0) {
@@ -208,9 +227,8 @@ void func_802A1610(){
 
         // Party-gauge rising edge: enqueue a levelled voice node.
         u8 oldGauge = m->unk220;
-        u8 newGauge = (u8)func_802A38C8(m);
-        m->unk220 = newGauge;
-        if (oldGauge == 0 && newGauge != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
+        m->unk220 = (u8)func_802A38C8(m);
+        if (oldGauge == 0 && m->unk220 != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
             cf::CSoundNode* node = __ct__802AF5CC(1);
             if (node != 0) {
                 cf::CSoundNode* tail = m->unk210;
@@ -226,33 +244,35 @@ void func_802A1610(){
 
         // Interact/battle voice: probe the top gauges and enqueue on rising edge.
         u8 oldInteract = m->unk221;
-        cf::CBattleManager* bm2 = cf::CBattleManager::getInstance();
-        sentinel = ((cf::CBattleManagerNodeList*)bm2)->sentinel;
+        void* bm2 = getInstance__Q22cf14CBattleManagerFv();
+        cf::CVoiceBattleNode* cur2;
         int icount = 0;
-        for (cf::CVoiceBattleNode* cur = sentinel->next; cur != sentinel; cur = cur->next)
+        cf::CVoiceBattleNode* sentinel2 = ((cf::CBattleManagerNodeList*)bm2)->sentinel;
+        for (cur2 = sentinel2->next; cur2 != sentinel2; cur2 = cur2->next)
             icount++;
-        // iresult is only assigned on call-free paths right before the store,
-        // so it stays in a caller-saved register instead of forcing r26.
         int iresult;
-        if (icount > 0) {
+        if (icount <= 0) {
+            iresult = 0;
+        } else {
             cf::CVoiceActorState* arr[3];
             int n = func_802A7870(arr, 3, 0);
-            if (n > 1) {
+            if (n <= 1) {
+                iresult = 0;
+            } else {
                 float limit = lbl_eu_80668C70;
                 int i = 0;
                 for (; i < n; i++) {
-                    if (arr[i]->vtable->fn_130(arr[i]) >= limit)
-                        break;
+                    if (limit <= ((cf::CVoiceActorStateIf*)arr[i])->fn_130()) {
+                        iresult = 0;
+                        goto interactStore;
+                    }
                 }
-                iresult = (i == n) ? 1 : 0;
-            } else {
-                iresult = 0;
+                iresult = 1;
             }
-        } else {
-            iresult = 0;
         }
+interactStore:
         m->unk221 = (u8)iresult;
-        if (oldInteract == 0 && iresult != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
+        if (oldInteract == 0 && m->unk221 != 0 && !(lbl_eu_80663E24 & 0x00400000)) {
             cf::CSoundNode* node = __ct__802AF5CC(0);
             if (node != 0) {
                 cf::CSoundNode* tail = m->unk210;
@@ -268,22 +288,24 @@ void func_802A1610(){
 
         // Field-id window [0x108, 0x116): flag byte 0x222 on a mask hit.
         int phase = func_800822F4__Q22cf13CfGameManagerFv();
-        if (phase > 0x108 && phase < 0x116) {
-            u32 mask = 1u << (lbl_eu_80663E42 - 1);
-            if (mask & 0x7F)
-                m->unk222 = 1;
+        if (phase > 0x108) {
+            if (phase < 0x116) {
+                u32 one = 1;
+                u32 mask = one << (lbl_eu_80663E42 - 1);
+                if (mask & 0x7F)
+                    m->unk222 = (u8)one;
+            }
         }
 
         // Battle voice auto-talk: resolve the current player and fire.
         if (m->unk223 != 0) {
             cf::CVoiceSrcNode* srcNode = (cf::CVoiceSrcNode*)func_802A7A54(1);
-            cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
+            cf::CfObjectMove* player = (cf::CfObjectMove*)getPlayer__Q22cf13CfGameManagerFi(0);
             if (player != 0)
                 player = (cf::CfObjectMove*)((u8*)player - 0x3E9C);
             if (srcNode != 0 && player != 0) {
                 cf::CVoiceSrcInner* inner = srcNode->field_4;
-                void* ret = inner->vtable->fn_30(inner);
-                u32 sv = *(u32*)ret;
+                u32 sv = *((u32*)((cf::CVoiceSrcInnerIf*)inner)->fn_30());
                 if (func_80174C98(srcNode, (int*)&sv, 6) != 0) {
                     if (!(lbl_eu_80663E24 & 0x00400000))
                         func_802AF9D0(player, 0xbb9, 0x14);
@@ -298,10 +320,11 @@ void func_802A1610(){
 
         // No battle participants and the flag is clear: rolling gauge node.
         if (m->unk22A != 0) {
-            cf::CBattleManager* bm3 = cf::CBattleManager::getInstance();
-            sentinel = ((cf::CBattleManagerNodeList*)bm3)->sentinel;
+            void* bm3 = getInstance__Q22cf14CBattleManagerFv();
+            cf::CVoiceBattleNode* cur3;
             int acount = 0;
-            for (cf::CVoiceBattleNode* cur = sentinel->next; cur != sentinel; cur = cur->next)
+            cf::CVoiceBattleNode* sentinel3 = ((cf::CBattleManagerNodeList*)bm3)->sentinel;
+            for (cur3 = sentinel3->next; cur3 != sentinel3; cur3 = cur3->next)
                 acount++;
             if (acount <= 0 && !(lbl_eu_80663E24 & 0x00400000)) {
                 float g = m->unk218;
@@ -355,7 +378,7 @@ void func_802A1610(){
                     match = true;
                 if (match)
                     break;
-                cf::CSoundNode* nxt = head->next;
+                cf::CSoundNode* nxt = m->unk20C->next;
                 if (nxt == 0) {
                     m->unk20C = 0;
                     m->unk210 = 0;
@@ -374,32 +397,83 @@ void func_802A1610(){
             m->unk218 += lbl_eu_80668C7C;
     }
 }
-void func_802A1C68(){}
-void func_802A1D04(){}
-void func_802A1DA8() {
+// Battle-voice state probe: only for an interact/battle-flagged actor in
+// state id 1 whose +0x3F60 chain selects a voice id in [0x10, 0x17]. When the
+// source is dead (or luck holds on a 15/100 roll) flag byte 0x223, then always
+// poke the sub-id handler with (voicePtr + 0x3508, 1).
+void func_802A1C68(cf::CVoiceActorState* self) {
     cf::CCharVoiceMan* m = lbl_eu_80664A58;
-    if (m != 0) {
-        m->FactoryEvent2();
+    if (!(self->field_3F00 & 0x2))
+        return;
+    if (self->field_3F28 != 1)
+        return;
+    int v = self->field_3F60->field_8->field_18;
+    if (v < 0x10)
+        return;
+    if (v > 0x17)
+        return;
+    {
+        u8* t = (u8*)(v + 0x3508);
+        if (func_8009CF8C((int)t) == 0 || ml::math::mtRand(0x64) < 0xF)
+            m->unk223 = 1;
+        func_8009D018((u32)t, 1);
+    }
+}
+// Battle-slot voice hook: if the battle slot manager reports a slot whose id
+// matches b's voice id, copy a's pending id into unk22C.
+void func_802A1D04(cf::CVoiceActorInfo* a, cf::CVoiceActorInfo* b) {
+    cf::CCharVoiceMan* m = lbl_eu_80664A58;
+    cf::CVoiceBtlSlot* bs = (cf::CVoiceBtlSlot*)func_800EA444(getInstance__Q22cf14CBattleManagerFv());
+    if (bs != 0) {
+        getInstance__Q22cf13CfGameManagerFv();
+        if (func_8006EF04(0x04000000) == 0) {
+            if (a != 0 && b != 0) {
+                u32 af = a->field_3F10;
+                u32 bf = b->field_3F10;
+                if (bf == bs->id0 || bf == bs->id1)
+                    m->unk22C = af;
+            }
+        }
+    }
+}
+void func_802A1DA8() {
+    // Virtual-delete the singleton manager (vtable+8 dtor slot, deleting
+    // flag r4=1); delete's own null-check reuses the outer compare, giving
+    // retail's double beq. The manager field store is inside the guard.
+    if (lbl_eu_80664A58 != 0) {
+        delete lbl_eu_80664A58;
         lbl_eu_80664A58 = 0;
     }
 }
-void func_802A1DF0(){}
+// Set the manager's voice-enable byte, then run every matching node's +0x14
+// voice probe; nodes whose probe returns nonzero are handed to func_802A3E74.
+void func_802A1DF0(u8 flag) {
+    lbl_eu_80664A58->unk215 = flag;
+    cf::CSoundNode* node = lbl_eu_80664A58->unk20C;
+    while (node != 0) {
+        bool match = false;
+        if (__ptmf_cmpr(node, (void*)&lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
+            match = true;
+        if (match && ((cf::CVoiceNodeIf*)node)->vf14() != 0)
+            func_802A3E74(node);
+        node = node->next;
+    }
+}
 // Character-voice play gate: if the actor is interact/battle-flagged and its
 // state checks pass, resolve the target's voice action and fire a battle/lvl
 // voice node.
 int func_802A1EA8(cf::CVoiceActorState* self) {
     if (!(self->field_3F00 & 0x2))
         return 0;
-    cf::CVoiceActorVTable* vt = self->vtable;
-    if (vt->fn_2BC(self) != 0)
+    if (((cf::CVoiceActorStateIf*)self)->fn_2BC() != 0)
         return 0;
     if (self->field_3F28 != 1)
         return 0;
     // State already registers either slot 0xCF or 0xD0; otherwise bail.
     if (func_80148778(&self->unk4[4], 0xcf) == 0 && func_80148778(&self->unk4[4], 0xd0) == 0)
         return 0;
-    cf::CVoiceMoveBase* move = &self->moveBase;
-    void* moveRes = move->vtable->fn_4C(move);
+    cf::CVoiceMoveIf* move = (cf::CVoiceMoveIf*)((u8*)self + 0x3E9C);
+    void* moveRes = move->fn_4C();
     void* r = func_8016FE34(func_800B708C((BOOL)(u32)moveRes));
     if (r == 0)
         return 0;
@@ -476,7 +550,31 @@ void func_802A2078(void* a, void* b, void* c) {
         }
     }
 }
-void func_802A216C(){}
+// Player-voice enqueue: if the actor's battle move-base resolves to a live
+// battle actor, construct a battle-begin node and append it to the list.
+void func_802A216C(cf::CVoiceActorState* self) {
+    if (lbl_eu_80663E24 & 0x00400000)
+        return;
+    cf::CVoiceMoveIf* move = (cf::CVoiceMoveIf*)((u8*)self + 0x3E9C);
+    void* moveRes = move->fn_4C();
+    void* actor = func_800B708C((BOOL)(u32)moveRes);
+    if (actor != 0)
+        actor = (void*)((u8*)actor - 0x3E9C);
+    if (actor == 0)
+        return;
+    cf::CSoundNode* node = __ct__802AFA80(self, actor);
+    cf::CCharVoiceMan* m = lbl_eu_80664A58;
+    if (node != 0) {
+        cf::CSoundNode* tail = m->unk210;
+        if (tail != 0)
+            tail->next = node;
+        if (m->unk20C == 0) {
+            m->unk20C = node;
+            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        }
+        m->unk210 = node;
+    }
+}
 // If the passed actor is active, teed a u32 from +0x3F10 into unk230.
 void func_802A2210(cf::CVoiceActorInfo* self) {
     if (func_802B03A4(self) != 0) {
@@ -521,7 +619,7 @@ void func_802A232C(cf::CVoiceActorState* self) {
         if (lbl_eu_80663E24 & 0x00400000)
             return;
         int useBattle = 0;
-        if (((cf::CBattleCountAccessor*)cf::CBattleManager::getInstance())->field_194 < 0x64 &&
+        if (((cf::CBattleCountAccessor*)getInstance__Q22cf14CBattleManagerFv())->field_194 < 0x64 &&
             (self->field_3F08 & 0x10000))
             useBattle = 1;
         cf::CSoundNode* node = func_802A5B04(self, useBattle);
@@ -576,14 +674,31 @@ int func_802A2424(void) {
     return -1;
 }
 void func_802A24B4(){}
-void func_802A2558(){}
+// If the passed actor's move-base is the current player, raise the manager's
+// voice count; on the 3rd+ tick roll a 25% chance to play the 0x89c battle
+// voice with a 0x118 flavour.
+void func_802A2558(cf::CVoiceActorBase* actor) {
+    if (lbl_eu_80663E24 & 0x00400000)
+        return;
+    const u8* movePc = (const u8*)actor;
+    if (actor != 0)
+        movePc = (const u8*)&actor->moveBase;
+    if (movePc == (const u8*)getPlayer__Q22cf13CfGameManagerFi(0)) {
+        cf::CCharVoiceMan* m = lbl_eu_80664A58;
+        m->unk224++;
+        if ((int)m->unk224 >= 3) {
+            if (ml::math::mtRand(0x64) < 0x19)
+                func_802AF9D0(actor, 0x89c, 0x118);
+        }
+    }
+}
 // If the passed actor's move-base is the current player, clear voice count 0x224.
 void func_802A25EC(cf::CVoiceActorBase* actor) {
     if (!(lbl_eu_80663E24 & 0x00400000)) {
         const u8* movePc = (const u8*)actor;
         if (actor != 0)
             movePc = (const u8*)&actor->moveBase;
-        if (movePc == (const u8*)cf::CfGameManager::getPlayer(0)) {
+        if (movePc == (const u8*)getPlayer__Q22cf13CfGameManagerFi(0)) {
             lbl_eu_80664A58->unk224 = 0;
         }
     }
@@ -602,7 +717,7 @@ void func_802A2648(cf::CVoiceActorState* self, cf::CVoiceActorState* other) {
         return;
     if (ml::math::mtRand(0x64) >= 0x32)
         return;
-    cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
+    cf::CfObjectMove* player = (cf::CfObjectMove*)getPlayer__Q22cf13CfGameManagerFi(0);
     if (player != 0)
         player = (cf::CfObjectMove*)((u8*)player - 0x3E9C);
     if (player != 0)
@@ -864,7 +979,7 @@ void func_802A2D0C() {
     }
 }
 void func_802A2D84() {
-    float reset = lbl_eu_80668C68;
+    const float reset = lbl_eu_80668C68;
     cf::CCharVoiceMan* m0 = lbl_eu_80664A58;
     m0->unk218 = reset;
     lbl_eu_80664A58->unk224 = 0;
@@ -886,10 +1001,11 @@ void func_802A2D84() {
 // If the battle-manager actor ring has any entries and the flag is clear,
 // flag the manager's byte 0x22A.
 void func_802A2E08() {
-    cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    cf::CVoiceBattleNode* sent = ((cf::CBattleListAccessor*)bm)->list0;
+    void* bm = getInstance__Q22cf14CBattleManagerFv();
+    cf::CVoiceBattleNode* cur = 0;
     int count = 0;
-    for (cf::CVoiceBattleNode* cur = sent->next; cur != sent; cur = cur->next)
+    cf::CVoiceBattleNode* sent = ((cf::CBattleListAccessor*)bm)->list0;
+    for (cur = sent->next; cur != sent; cur = cur->next)
         count++;
     if (count > 0 && !(lbl_eu_80663E24 & 0x00400000)) {
         lbl_eu_80664A58->unk22A = 1;
@@ -1088,7 +1204,60 @@ int func_802A3290() {
         return (int)node->field_18;
     return -1;
 }
-void func_802A330C(){}
+// Battle/manual voice-hook: if the voice-enabled byte (unk214) is clear, bail
+// with 0. Otherwise scan the voice-event list three times, each loop probing
+// the +0x10 level slot of matching nodes: loop 1 bails if any probe is below
+// `a`; loop 2 resets the pending hook when a probe equals `a` (b==1 bails;
+// b==0 runs the +0x08 level-thread handler); loop 3 runs +0x08 on nodes whose
+// probe exceeds `a`. Returns 1 on success.
+int func_802A330C(int a, int b) {
+    if (lbl_eu_80664A58->unk214 == 0)
+        return 0;
+
+    cf::CSoundNode* node = lbl_eu_80664A58->unk20C;
+    if (node == 0)
+        goto success;
+    while (node != 0) {
+        bool match = false;
+        if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
+            match = true;
+        if (match) {
+            if (((cf::CVoiceNodeIf*)node)->vf10() < a)
+                return 0;
+        }
+        node = node->next;
+    }
+
+    node = lbl_eu_80664A58->unk20C;
+    while (node != 0) {
+        bool match = false;
+        if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
+            match = true;
+        if (match) {
+            if (((cf::CVoiceNodeIf*)node)->vf10() == a) {
+                if (b == 1)
+                    return 0;
+                if (b == 0)
+                    ((cf::CVoiceNodeIf*)node)->vf08();
+            }
+        }
+        node = node->next;
+    }
+
+    node = lbl_eu_80664A58->unk20C;
+    while (node != 0) {
+        bool match = false;
+        if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
+            match = true;
+        if (match) {
+            if (a < ((cf::CVoiceNodeIf*)node)->vf10())
+                ((cf::CVoiceNodeIf*)node)->vf08();
+        }
+        node = node->next;
+    }
+success:
+    return 1;
+}
 // Scan the voice-event list for the node whose type matches the reference pmf
 // AND whose +0x18 id matches `arg`, then run its level-thread handler (+0x08).
 void func_802A35B8(u32 arg) {
@@ -1097,41 +1266,55 @@ void func_802A35B8(u32 arg) {
         return;
     cf::CSoundNode* node = m->unk20C;
     while (node != 0) {
-        if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0 &&
-            node->field_18 == arg)
-            break;
+        bool match = false;
+        if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
+            match = true;
+        if (match) {
+            if (arg == node->field_18)
+                goto found;
+        }
         node = node->next;
     }
+    // Not found: null the node on the loop-exit path only (the found jump
+    // above skips this store, keeping the matching node for the dispatch).
+    node = 0;
+found:
     if (node != 0)
-        node->field_1C->fn_08(node);
+        ((cf::CVoiceNodeIf*)node)->vf08();
 }
 // Scan the list for a matching node (type + id), then run its battle-voice
 // dispatch (+0x18) with two extra args; returns its result (0 if not found).
 void* func_802A3680(void* a, void* b, void* c) {
     cf::CSoundNode* node = lbl_eu_80664A58->unk20C;
     while (node != 0) {
-        if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0 &&
-            node->field_18 == (u32)a)
+        bool match = false;
+        if (__ptmf_cmpr(node, (void*)&lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
+            match = true;
+        if (match && (u32)a == node->field_18)
             break;
         node = node->next;
     }
-    if (node == 0)
-        return 0;
-    return node->field_1C->fn_18(node, b, c);
+    if (node != 0)
+        return ((cf::CVoiceNodeIf*)node)->vf18(b, c);
+    return 0;
 }
 // Scan for a node whose type matches the reference pmf and whose +0x18 id is
 // `arg`; if found, hand it to func_802A3E88 (0 if not found).
-void* func_802A3748(u32 arg) {
+int func_802A3748(u32 arg) {
     cf::CSoundNode* node = lbl_eu_80664A58->unk20C;
-    while (node != 0) {
-        if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0 &&
-            node->field_18 == arg)
+    for (;;) {
+        bool match = false;
+        if (__ptmf_cmpr(node, (void*)&lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
+            match = true;
+        if (match && arg == node->field_18)
             break;
         node = node->next;
+        if (node == 0)
+            break;
     }
     if (node == 0)
         return 0;
-    return func_802A3E88(node);
+    return (int)func_802A3E88(node);
 }
 // Factory tick: if the incoming actor is in an interact/battle state (any of
 // bits 0x2/0x4/0x8 at +0x64), broadcast to every matching type of voice node.
@@ -1141,8 +1324,11 @@ void CCharVoiceMan_FactoryEvent2(void* self, void* actor) {
         return;
     cf::CSoundNode* node = lbl_eu_80664A58->unk20C;
     while (node != 0) {
-        if (__ptmf_cmpr(node, &lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
-            node->field_1C->fn_0C(node, actor);
+        bool match = false;
+        if (__ptmf_cmpr(node, (void*)&lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
+            match = true;
+        if (match)
+            ((cf::CVoiceNodeIf*)node)->vf0C(actor);
         node = node->next;
     }
 }
@@ -1150,10 +1336,10 @@ void CCharVoiceMan_FactoryEvent2(void* self, void* actor) {
 // both be in the right state/level to allow a character-voice to fire. Returns
 // 1 when every candidate gauge passes, else 0.
 int func_802A38C8(cf::CCharVoiceMan* self) {
-    cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+    void* bm = getInstance__Q22cf14CBattleManagerFv();
     cf::CVoiceBattleNode* sentinel = ((cf::CBattleManagerNodeList*)bm)->sentinel;
-    cf::CVoiceBattleNode* cur = sentinel->next;
     int count = 0;
+    cf::CVoiceBattleNode* cur = sentinel->next;
     while (cur != sentinel) {
         cur = cur->next;
         count++;
@@ -1161,30 +1347,33 @@ int func_802A38C8(cf::CCharVoiceMan* self) {
     if (count <= 0)
         return 0;
 
-    cf::CVoiceActorState* player =
-        (cf::CVoiceActorState*)cf::CfGameManager::getPlayer(0);
-    if (player != 0)
-        player = (cf::CVoiceActorState*)((u8*)player - 0x3E9C);
-    if (player == 0)
+    void* p = getPlayer__Q22cf13CfGameManagerFi(0);
+    if (p != 0)
+        p = (void*)((u8*)p - 0x3E9C);
+    if (p == 0)
         return 0;
+    cf::CVoiceActorState* player = (cf::CVoiceActorState*)p;
 
-    void* mv = player->moveBase.vtable->fn_4C(&player->moveBase);
+    // fn_4C on the embedded move base: dispatch via the volatile getPlayer
+    // result so its register is dead after the call and MWCC can merge the
+    // vptr load + this-arg into the retail lwzu update-form.
+    void* mv = ((cf::CVoiceMoveIf*)((u8*)p + 0x3E9C))->fn_4C();
     void* r = func_800B708C((BOOL)(u32)mv);
-    cf::CVoiceActorState* other = (cf::CVoiceActorState*)r;
-    if (other != 0)
-        other = (cf::CVoiceActorState*)((u8*)r - 0x3E9C);
-    if (other == 0)
+    if (r != 0)
+        r = (void*)((u8*)r - 0x3E9C);
+    if (r == 0)
         return 0;
+    cf::CVoiceActorState* other = (cf::CVoiceActorState*)r;
     if (!(other->field_3F00 & 0x4))
         return 0;
 
-    int a = player->vtable->fn_108(player);
+    int a = ((cf::CVoiceActorStateIf*)player)->fn_108();
     int diff = a - 3;
-    int b = other->vtable->fn_108(other);
+    int b = ((cf::CVoiceActorStateIf*)other)->fn_108();
     if (b < diff)
         return 0;
 
-    float f = other->vtable->fn_130(other);
+    float f = ((cf::CVoiceActorStateIf*)other)->fn_130();
     if (lbl_eu_80668C70 < f)
         return 0;
 
@@ -1195,8 +1384,7 @@ int func_802A38C8(cf::CCharVoiceMan* self) {
     float limit = lbl_eu_80668C70;
     for (int i = 0; i < n; i++) {
         cf::CVoiceActorState* obj = arr[i];
-        float gf = obj->vtable->fn_130(obj);
-        if (gf < limit)
+        if (((cf::CVoiceActorStateIf*)obj)->fn_130() < limit)
             return 0;
     }
     return 1;

@@ -42,8 +42,8 @@ void func_eu_804521BC(u8 val);
 }
 
 // Data objects referenced by this unit (global scope -> no C++ mangling).
-extern u8 lbl_eu_80570378[];     // .data: vtable blob (installed at +0x000)
-extern const char lbl_eu_805248BC[];  // .rodata: path format string ("" for empty slots)
+extern u32 lbl_eu_80570378[34];  // .data: vtable blob (installed at +0x000), defined below
+extern "C" const char lbl_eu_805248BC[];  // .rodata: path format string ("" for empty slots)
 
 // CEventFile as consumed by CNBanner::OnFileEvent: an event type word at +0x0
 // and a file-name/data string pointer at +0xC.
@@ -343,3 +343,90 @@ extern "C" s32 func_804F53DC(CNBanner* self) {
     self->field_8 = self->mCount * 0x1200 + 0x60A0;
     return 1;
 }
+
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// Foreign vtable/RTTI symbol refs: C linkage so the emitted reloc names are
+// the retail mangled names. __RTTI__10IWorkEvent must be declared inside a
+// namespace: a plain extern "C" data decl of that name collides with MWCC's
+// RTTI name table under -ipa file once IWorkEvent (virtual class) is in scope
+// (see CView.cpp note); the namespace-scoped C-linkage decl emits the same
+// symbol without the collision.
+namespace m2r { extern "C" u32 __RTTI__10IWorkEvent; }
+
+extern "C" void OnFileEvent__8CNBannerFP10CEventFile();
+extern "C" void OnPauseTrigger__10IWorkEventFb(int);
+extern "C" void WorkEvent10__10IWorkEventFv();
+extern "C" void WorkEvent11__10IWorkEventFv();
+extern "C" void WorkEvent12__10IWorkEventFv();
+extern "C" void WorkEvent13__10IWorkEventFv();
+extern "C" void WorkEvent14__10IWorkEventFv();
+extern "C" void WorkEvent15__10IWorkEventFv();
+extern "C" void WorkEvent16__10IWorkEventFv();
+extern "C" void WorkEvent17__10IWorkEventFv();
+extern "C" void WorkEvent18__10IWorkEventFv();
+extern "C" void WorkEvent19__10IWorkEventFv();
+extern "C" void WorkEvent1__10IWorkEventFPvPCc();
+extern "C" void WorkEvent20__10IWorkEventFv();
+extern "C" void WorkEvent21__10IWorkEventFv();
+extern "C" void WorkEvent22__10IWorkEventFv();
+extern "C" void WorkEvent23__10IWorkEventFv();
+extern "C" void WorkEvent24__10IWorkEventFv();
+extern "C" void WorkEvent25__10IWorkEventFv();
+extern "C" void WorkEvent26__10IWorkEventFv();
+extern "C" void WorkEvent27__10IWorkEventFv();
+extern "C" void WorkEvent28__10IWorkEventFv();
+extern "C" void WorkEvent29__10IWorkEventFv();
+extern "C" void WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+extern "C" void WorkEvent3__10IWorkEventFPv();
+extern "C" void WorkEvent4__10IWorkEventFv();
+extern "C" void WorkEvent6__10IWorkEventFv();
+extern "C" void WorkEvent7__10IWorkEventFv();
+extern "C" void WorkEvent8__10IWorkEventFv();
+extern "C" void WorkEvent9__10IWorkEventFv();
+extern "C" void __dt__8CNBannerFv();
+extern "C" void func_804DA4CC();
+extern "C" void func_eu_804F9EE0();
+extern "C" u32 lbl_eu_80663B70;
+
+// forward decls for cross-section refs
+extern "C" u32 lbl_eu_80570400[4];
+extern "C" u32 lbl_eu_80570410[4];
+extern "C" u32 lbl_eu_80570420[3];
+extern "C" u32 lbl_eu_80663CE0[2];
+extern "C" u32 lbl_eu_80663CE8[2];
+extern "C" __declspec(align(4)) const char lbl_eu_805248B0[0x9];
+extern "C" __declspec(align(4)) const char lbl_eu_805248BC[0x4];
+extern "C" __declspec(align(4)) const char lbl_eu_805248C0[0x13];
+
+// [.data] 0x80570378-0x8057042C (180 bytes)
+extern "C" u32 lbl_eu_80570378[34] = { (u32)&lbl_eu_80663CE0, 0x00000000, (u32)&__dt__8CNBannerFv, (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__8CNBannerFP10CEventFile, (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv, (u32)&OnPauseTrigger__10IWorkEventFb, (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv, (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv, (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv, (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv, (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv, (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv, (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv, (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv, (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv, (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv, (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv, (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv, (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv };
+DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_80570378);
+extern "C" u32 lbl_eu_80570400[4] = { (u32)&m2r::__RTTI__10IWorkEvent, 0x00000000, 0x00000000, 0x00000000 };
+DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_80570400);
+extern "C" u32 lbl_eu_80570410[4] = { (u32)&lbl_eu_80663CE8, 0x00000000, (u32)&func_eu_804F9EE0, (u32)&func_804DA4CC };
+DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_80570410);
+extern "C" u32 lbl_eu_80570420[3] = { (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000 };
+DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_80570420);
+
+// [.sdata] 0x80663CE0-0x80663CF0 (16 bytes)
+extern "C" u32 lbl_eu_80663CE0[2] = { (u32)&lbl_eu_805248B0, (u32)&lbl_eu_80570400 };
+DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_80663CE0);
+extern "C" u32 lbl_eu_80663CE8[2] = { (u32)&lbl_eu_805248C0, (u32)&lbl_eu_80570420 };
+DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_80663CE8);
+
+// [.rodata] 0x805248B0-0x805248D3 (35 bytes)
+extern "C" __declspec(align(4)) const char lbl_eu_805248B0[0x9] = { 0x43,0x4E,0x42,0x61,0x6E,0x6E,0x65,0x72,0x00 };
+// 3 pad bytes at +0x9..0xB come from the 4-alignment gap; the all-zero
+// 4-byte object must stay PROGBITS .rodata (a plain const zero array is
+// NOBITS-ified into .sbss2), hence the explicit section decl.
+extern "C" __declspec(section ".rodata") const char lbl_eu_805248BC[0x4] = { 0x00,0x00,0x00,0x00 };
+DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_805248BC);
+extern "C" __declspec(align(4)) const char lbl_eu_805248C0[0x13] = { 0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x43,0x72,0x65,0x61,0x74,0x65,0x64,0x69,0x72,0x00 };
+DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_805248C0);
+
+// [.sbss] 0x80665A98-0x80665A9C (4 bytes) - module-global string pointer
+// (cross-TU global; plan assigns the slot to this TU).
+extern "C" { char* lbl_eu_80665A98; }
+DECOMP_FORCEACTIVE(CNBanner_cpp, lbl_eu_80665A98);

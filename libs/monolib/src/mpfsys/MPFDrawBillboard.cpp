@@ -1,8 +1,8 @@
 #include "monolib/mpfsys/MPFDrawBillboard.hpp"
 
 extern "C" {
-    extern s8 lbl_eu_806658A0;
-    extern mpfsys::MPFDrawBillboard* lbl_eu_806658A4;
+    s8 lbl_eu_806658A0;   // .sbss word 0 (monolibdata2) — now owned by this TU
+    mpfsys::MPFDrawBillboard* lbl_eu_806658A4;   // .sbss word 1
 }
 
 struct MPFDrawBillboard_Prototype {

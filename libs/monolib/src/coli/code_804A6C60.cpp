@@ -19,6 +19,83 @@ using ml::coli::CColiObject;
 using nw4r::math::VEC3;
 using nw4r::math::_VEC3;
 
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// .data 0x8056F1B8-0x8056F3FC: CColi dispatch/vtable tables. The per-slot
+// function pointers are the retail-named catalog stubs; non-slot words are
+// raw retail bytes. Foreign data labels are extern "C" declared.
+extern "C" u32 lbl_eu_8066AE30;   // .sdata2 float-const pool (CGXCache-owned)
+extern "C" u32 lbl_eu_80524408;   // .rodata RTTI name string (code_804B2FF0)
+extern "C" u32 lbl_eu_80524418;   // .rodata RTTI name string (code_804B2FF0)
+extern "C" u32 lbl_eu_80661C28;   // .data view-base object (CView-owned)
+extern "C" void func_804B2FF0();  // next-TU catalog stub
+
+// Forward declarations for the in-TU catalog functions referenced by the
+// dispatch tables below (definitions appear later in the file; all are
+// extern "C" so the emitted reloc names are the retail symbol names).
+extern "C" void func_804A6DC0(void);
+extern "C" void func_804A6E20(f32* out, const struct CColiXformSrc* src, const struct CColiXformExtra804A70F8* extra);
+extern "C" void func_804A70F8(f32* out, const struct CColiXformSrc* src, const struct CColiXformExtra804A70F8* extra);
+extern "C" void func_804A732C(CColiObject* self, CColiObject* src, CColiObject* other);
+extern "C" void func_804A73A0(f32* out, const struct CColiXformSrc* src);
+extern "C" void func_804A763C(f32* out, const struct CColiXformSrc* src);
+extern "C" void func_804A7834(CColiObject* self, const CColiObject* other);
+extern "C" void func_804A822C(void);
+extern "C" int func_804A8850(CColiObject* self);
+extern "C" int func_804A8BE0(CColiObject* self);
+extern "C" void func_804A8CB0(void);
+extern "C" int func_804A98C4(CColiObject* self);
+extern "C" bool func_804AA870(CColiObject* self);
+extern "C" void func_804AAD90(void);
+extern "C" void func_804ABA08(void);
+extern "C" bool func_804ABA68(CColiObject* self);
+extern "C" bool func_804ABAF0(CColiObject* self);
+extern "C" bool func_804ABBF4(CColiObject* self);
+extern "C" bool func_804ABCA4(CColiObject* self);
+extern "C" bool func_804ABD0C(CColiObject* self);
+extern "C" bool func_804ABDD4(CColiObject* self);
+extern "C" bool func_804ABE84(CColiObject* self);
+extern "C" bool func_804ABF08(CColiObject* self);
+extern "C" bool func_804AC020(CColiObject* self);
+extern "C" bool func_804AC198(CColiObject* self);
+extern "C" bool func_804AC3B0(CColiObject* self);
+extern "C" void func_804AC4F4(CColiObject* self);
+extern "C" void func_804AC57C(void);
+extern "C" void func_804AC5D8(struct CColiContactObj* self);
+extern "C" int func_804AC61C(CColiObject* self);
+extern "C" void func_804B24A4(CColiObject* self);
+extern "C" int func_804A7F50(CColiObject* self);
+extern "C" int func_804A8230(CColiObject* self);
+extern "C" int func_804AA4F4(CColiObject* self);
+extern "C" int func_804AA504(CColiObject* self);
+extern "C" int func_804AAA98(CColiObject* self);
+extern "C" int func_804AB524(CColiObject* self);
+extern "C" int func_804AB538(CColiObject* self);
+extern "C" int func_804AC4E4(CColiObject* self);
+
+// .sdata 0x80663A90-0x80663AA8: RTTI locators {name, base-list} + the
+// view-base word. lbl_eu_80663A90 is the 8-byte locator {name-ptr, 0}; the
+// decl below was widened to the array type and its read sites use word 0.
+u32 lbl_eu_80663A90[2] = { (u32)&lbl_eu_8066AE30, 0x00000000 };
+extern "C" u32 lbl_eu_80663A98[2];
+extern "C" u32 lbl_eu_80663AA0[2];
+extern "C" u32 lbl_eu_8056F38C[3];
+extern "C" u32 lbl_eu_8056F3B4[3];
+extern "C" u32 lbl_eu_8056F1B8[0x8] = { (u32)&func_804A6DC0, (u32)&func_804A6E20, (u32)&func_804A70F8, (u32)&func_804A732C, (u32)&func_804A73A0, (u32)&func_804A763C, (u32)&func_804A7834, 0x00000000 };
+extern "C" u32 lbl_eu_8056F1D8[0x6A] = { 0x00000000, 0xFFFFFFFF, (u32)&func_804A7F50, 0x00000000, 0xFFFFFFFF, (u32)&func_804A8230, 0x00000000, 0xFFFFFFFF, (u32)&func_804A8850, 0x00000000, 0xFFFFFFFF, (u32)&func_804A8BE0, 0x00000000, 0xFFFFFFFF, (u32)&func_804A8CB0, 0x00000000, 0xFFFFFFFF, (u32)&func_804A98C4, 0x00000000, 0xFFFFFFFF, (u32)&func_804AA4F4, 0x00000000, 0xFFFFFFFF, (u32)&func_804AA504, 0x00000000, 0xFFFFFFFF, (u32)&func_804A8BE0, 0x00000000, 0xFFFFFFFF, (u32)&func_804A8CB0, 0x00000000, 0xFFFFFFFF, (u32)&func_804AA870, 0x00000000, 0xFFFFFFFF, (u32)&func_804AAA98, 0x00000000, 0xFFFFFFFF, (u32)&func_804AAD90, 0x00000000, 0xFFFFFFFF, (u32)&func_804AB524, 0x00000000, 0xFFFFFFFF, (u32)&func_804AB538, 0x00000000, 0xFFFFFFFF, (u32)&func_804ABA08, 0x00000000, 0xFFFFFFFF, (u32)&func_804ABA68, 0x00000000, 0xFFFFFFFF, (u32)&func_804ABAF0, 0x00000000, 0xFFFFFFFF, (u32)&func_804ABBF4, 0x00000000, 0xFFFFFFFF, (u32)&func_804AC61C, 0x00000000, 0xFFFFFFFF, (u32)&func_804ABCA4, 0x00000000, 0xFFFFFFFF, (u32)&func_804ABD0C, 0x00000000, 0xFFFFFFFF, (u32)&func_804ABDD4, 0x00000000, 0xFFFFFFFF, (u32)&func_804ABE84, 0x00000000, 0xFFFFFFFF, (u32)&func_804AC61C, 0x00000000, 0xFFFFFFFF, (u32)&func_804ABF08, 0x00000000, 0xFFFFFFFF, (u32)&func_804AC020, 0x00000000, 0xFFFFFFFF, (u32)&func_804AC198, 0x00000000, 0xFFFFFFFF, (u32)&func_804AC3B0, 0x00000000, 0xFFFFFFFF, (u32)&func_804AC61C, 0x00000000, 0xFFFFFFFF, (u32)&func_804AC4E4, 0x00000000, 0xFFFFFFFF, (u32)&func_804AC4F4, 0x00000000, 0xFFFFFFFF, (u32)&func_804AC57C, 0x00000000, 0xFFFFFFFF, (u32)&func_804AC5D8, 0x00000000, 0xFFFFFFFF, (u32)&func_804AC61C, 0x00000000 };
+extern "C" u32 lbl_eu_8056F380[0x3] = { (u32)&lbl_eu_80663A98, 0x00000000, (u32)&func_804B24A4 };
+extern "C" u32 lbl_eu_8056F38C[0x3] = { (u32)&lbl_eu_80661C28, 0x00000000, 0x00000000 };
+extern "C" u32 lbl_eu_8056F398[0x4] = { (u32)&lbl_eu_80661C28, 0x00000000, (u32)&func_804A822C, 0x00000000 };
+extern "C" u32 lbl_eu_8056F3A8[0x3] = { (u32)&lbl_eu_80663AA0, 0x00000000, (u32)&func_804B2FF0 };
+extern "C" u32 lbl_eu_8056F3B4[0x3] = { (u32)&lbl_eu_80661C28, 0x00000000, 0x00000000 };
+extern "C" u32 lbl_eu_8056F3C0[0x5] = { 0x00040010, 0x000C0018, 0x00300008, 0x003C0014, 0x00180000 };
+extern "C" u32 lbl_eu_8056F3D4[0x5] = { 0x00140014, 0x001C001C, 0x00340034, 0x00740068, 0x00000000 };
+extern "C" u32 lbl_eu_8056F3E8[0x5] = { 0x00000000, 0x00010001, 0x00020002, 0x00030004, 0x00000000 };
+
+
+extern "C" u32 lbl_eu_80663A98[2] = { (u32)&lbl_eu_80524408, (u32)&lbl_eu_8056F38C };
+extern "C" u32 lbl_eu_80663AA0[2] = { (u32)&lbl_eu_80524418, (u32)&lbl_eu_8056F3B4 };
+
+
 // 3-word sub-spec copied raw into the +0x44 point; full definition appears
 // below the ctor family that uses it.
 struct CColiSubSpec804A7878;
@@ -58,6 +135,31 @@ extern const float lbl_eu_8066AE58;  // sphere test gate scale (func_804AA504)
 extern const float lbl_eu_8066AE54;  // normal scale constant (func_804AD8FC)
 extern const float lbl_eu_8066AE6C;  // |component| < thresh -> treat as 0 (func_804ADD3C)
 extern const double lbl_eu_8066AE48; // 0x4330000080000000 (s32->f32 magic)
+
+// s32 -> f32 through the shared signed magic double (lbl_eu_8066AE48,
+// 0x4330000080000000 = 2^52 + 2^31): the value is stored as the low word of
+// a 0x43300000 double with the sign bit flipped, then the magic is subtracted.
+// Writing the words by hand keeps the named sdata2 reloc (MWCC would
+// otherwise emit its own anonymous 2^52 literal).
+union ConvF64_AE48 {
+    f64 d;
+    u32 w[2];
+};
+
+static inline f32 s32ToF_ae48(ConvF64_AE48& c, u32 v) {
+    c.w[1] = v ^ 0x80000000u;
+    return (f32)(c.d - lbl_eu_8066AE48);
+}
+
+// Standalone s32->f32 through the same named magic (no anonymous pool
+// entry): used by the random-direction casts below so the TU emits no
+// .sdata2 of its own (retail .sdata2 is empty for this unit).
+static inline f32 f32FromS32_ae48(s32 v) {
+    ConvF64_AE48 c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = (u32)v ^ 0x80000000u;
+    return (f32)(c.d - lbl_eu_8066AE48);
+}
 extern const float lbl_eu_8066AE70;  // upper t bound init (func_804ADD3C)
 extern const float lbl_eu_8066AE74;  // lower t bound init (func_804ADD3C)
 extern const float lbl_eu_8066AE64;  // triangle half-space gate (func_804ACD9C)
@@ -66,7 +168,7 @@ extern const float lbl_eu_8066AE68;  // exit-face reach init (func_804AD410)
 
 // Data word written into the proc object's +0x08 slot at the start of the
 // sweep/contact helpers (func_804AF09C / func_804AE11C).
-extern u32 lbl_eu_80663A90;
+extern u32 lbl_eu_80663A90[2];
 
 // Current-segment global used by func_804B1DEC: the active segment point
 // (+0x38) and scalar (+0x3c), plus a flag byte (+0x40). The +0x3c slot is
@@ -76,6 +178,7 @@ struct CColiGlobal805D0A0 {
     VEC3* field_0x38;      // +0x38 current segment point
     f32 field_0x3c;        // +0x3c current segment scalar
     u8 field_0x40;         // +0x40 flag byte
+    u8 _44[0x48 - 0x44];   // pad to the retail 72-byte object
 };
 extern CColiGlobal805D0A0 lbl_eu_8065D0A0;
 
@@ -220,7 +323,7 @@ struct CColiLodRecA6C60 {
 // index is the record's field_0x2 byte; called with (out-matrix, buffer,
 // record).
 typedef void (*LodA6C60Fn)(f32*, f32*, CColiLodRecA6C60*);
-extern LodA6C60Fn lbl_eu_8056F1B8[];
+extern u32 lbl_eu_8056F1B8[];  // dispatch table (raw words + fn ptrs; cast at call site)
 
 // LOD cache record (retail stride 0xC), defined in CLODCacheManagerS.cpp;
 // the member lookup is called via `bl` from func_804A6C60.
@@ -262,7 +365,7 @@ extern "C" void func_804A6C60(f32* self, CColiLodRecA6C60* obj) {
         pair++;
         i++;
     }
-    lbl_eu_8056F1B8[obj->field_0x2](self, buf, obj);
+    ((LodA6C60Fn)lbl_eu_8056F1B8[obj->field_0x2])(self, buf, obj);
     if (obj->field_0x0 & 0x2) {
         PSMTXConcat(obj->field_0x2c, (const f32 (*)[4])self,
                     (f32 (*)[4])self);
@@ -281,7 +384,7 @@ extern "C" s32 func_804A6D90(void* self) {
     return rec->func_80463590();
 }
 
-void func_804A6DC0(void){}
+extern "C" void func_804A6DC0(void){}
 
 // --- func_804A6E20 defined below (after the CColiXformSrc structs) ---
 
@@ -305,7 +408,7 @@ struct CColiXformExtra804A70F8 {
 // Build the rotation-scale matrix for src into out: a diagonal scale matrix
 // from src->field_0x18, then premultiply by the Z / Y / X rotation matrices
 // whenever the corresponding Euler angle is non-zero.
-void func_804A763C(f32* out, const CColiXformSrc* src) {
+extern "C" void func_804A763C(f32* out, const CColiXformSrc* src) {
     f32 k = lbl_eu_8066AE24;
     f32 x = src->field_0x18.x;
     f32 y = src->field_0x18.y;
@@ -348,7 +451,7 @@ void func_804A763C(f32* out, const CColiXformSrc* src) {
 
 // Same rotation-scale matrix build as func_804A763C, followed by the
 // translation column: out[3/7/11] = src->field_0x00 + extra->field_0x08.
-void func_804A70F8(f32* out, const CColiXformSrc* src,
+extern "C" void func_804A70F8(f32* out, const CColiXformSrc* src,
                    const CColiXformExtra804A70F8* extra) {
     f32 k = lbl_eu_8066AE24;
     f32 x = src->field_0x18.x;
@@ -400,7 +503,7 @@ void func_804A70F8(f32* out, const CColiXformSrc* src,
 // which is written directly into out. When every angle is zero the rotation
 // part is the identity. The final translation column is the sum of the source
 // translation and the extra object's +0x08 vector.
-void func_804A6E20(f32* out, const CColiXformSrc* src,
+extern "C" void func_804A6E20(f32* out, const CColiXformSrc* src,
                    const CColiXformExtra804A70F8* extra) {
     int count = 0;
     if (src->field_0x0c.x != lbl_eu_8066AE24) {
@@ -501,7 +604,7 @@ struct CColiM12f804A732C {
 // of other's axis vectors. The four corner rows are written as whole VEC3
 // copies so MWCC keeps all twelve stores (retail overwrites three with the
 // axis slots instead of dropping the earlier k fills).
-void func_804A732C(CColiObject* self, CColiObject* src, CColiObject* other) {
+extern "C" void func_804A732C(CColiObject* self, CColiObject* src, CColiObject* other) {
     f32 z = src->field_0x00[2].z;
     f32 y = src->field_0x00[2].y;
     f32 x = src->field_0x00[2].x;
@@ -528,7 +631,7 @@ void func_804A732C(CColiObject* self, CColiObject* src, CColiObject* other) {
 // (PSMTXConcat), except the first non-zero angle which is written directly
 // into out (retail's direct-write vs concat split). When every angle is zero
 // the result is the identity matrix.
-void func_804A73A0(f32* out, const CColiXformSrc* src) {
+extern "C" void func_804A73A0(f32* out, const CColiXformSrc* src) {
     int count = 0;
     if (src->field_0x0c.z != lbl_eu_8066AE24) {
         f32 az = src->field_0x0c.z;
@@ -604,7 +707,7 @@ void func_804A73A0(f32* out, const CColiXformSrc* src) {
     }
 }
 
-void func_804A7834(CColiObject* self, const CColiObject* other) {
+extern "C" void func_804A7834(CColiObject* self, const CColiObject* other) {
     // Diagonal 3x4 scale-matrix fill: other->field_0x00[2] (a direction
     // vector) placed on the main diagonal, zero constant elsewhere.
     // FPR allocation follows local declaration order: k->f0, x->f1, y->f2, z->f3.
@@ -974,7 +1077,7 @@ struct CColiDispatchObj {
 // Each entry is invoked with the dispatch object as `this` and no arguments;
 // MWCC lowers the member-fn-pointer call to __ptmf_scall.
 typedef void (CColiDispatchObj::*CColiDispatchFn)();
-extern CColiDispatchFn lbl_eu_8056F1D8[];
+extern u32 lbl_eu_8056F1D8[];  // 3-word PMF table (raw words + fn ptrs; cast at call site)
 
 void func_804A7ED0(CColiObject* self, const VEC3* v) {
     // Add v to both embedded vectors; the nw4r VEC3Add helper reproduces
@@ -986,7 +1089,9 @@ void func_804A7ED0(CColiObject* self, const VEC3* v) {
 void func_804A7F0C(CColiDispatchObj* self, u32 val) {
     self->field_0x00 = val;
     u32 idx = self->field_0x40 + lbl_eu_80665938;
-    (self->*lbl_eu_8056F1D8[idx])();
+    CColiDispatchFn pmf;
+    memcpy(&pmf, &lbl_eu_8056F1D8[idx * 3], sizeof(pmf));
+    (self->*pmf)();
 }
 
 // Sphere test with contact write-back (defined at the end of the file).
@@ -994,7 +1099,7 @@ extern "C" int func_804A7F50(CColiObject* self);
 
 // No-op handler. Used as a default stub in collision dispatch tables for
 // method slots that require no action (e.g. optional callbacks).
-void func_804A822C() {}
+extern "C" void func_804A822C() {}
 
 // Object reached through CColiObject::field_0x3c (the proc): the computed
 // contact point at +0x0c, the contact normal at +0x18 and the vtable in
@@ -1069,8 +1174,8 @@ extern "C" int func_804A8230(CColiObject* self) {
             n->z = diff.z * inv;
         } else {
             // Random horizontal direction when the centres coincide.
-            f32 rz = (f32)(rand() % 200 - 100);
-            f32 rx = (f32)(rand() % 200 - 100);
+            f32 rz = f32FromS32_ae48(rand() % 200 - 100);
+            f32 rx = f32FromS32_ae48(rand() % 200 - 100);
             n->x = rx;
             n->y = lbl_eu_8066AE44;
             n->z = rz;
@@ -1135,8 +1240,8 @@ extern "C" int func_804A8230(CColiObject* self) {
         if (pen * pen < dist2b) return 0;
         if (dist2b == lbl_eu_8066AE44) {
             // Random direction when the sphere centre is on the axis.
-            f32 rz = (f32)(rand() % 200 - 100);
-            f32 rx = (f32)(rand() % 200 - 100);
+            f32 rz = f32FromS32_ae48(rand() % 200 - 100);
+            f32 rx = f32FromS32_ae48(rand() % 200 - 100);
             n->x = rx;
             n->y = lbl_eu_8066AE44;
             n->z = rz;
@@ -1195,7 +1300,7 @@ struct CColiXfrm804ABBF4 {
 // partner's half-extents (+0x64/+0x04/+0x34). On a miss, re-run the same
 // check with self's +0x48 scalar temporarily swapped to +0x310 when flag
 // bit 4 is set; the +0x48 scalar is restored before returning.
-int func_804A8BE0(CColiObject* self) {
+extern "C" int func_804A8BE0(CColiObject* self) {
     CColiXfrm804ABBF4* xf = (CColiXfrm804ABBF4*)self->field_0x00_obj;
     VEC3 v;
     v.x = self->field_0x5c;
@@ -1221,22 +1326,8 @@ int func_804A8BE0(CColiObject* self) {
     return result;
 }
 
-void func_804A8CB0(){}
+extern "C" void func_804A8CB0(){}
 
-// s32 -> f32 through the shared signed magic double (lbl_eu_8066AE48,
-// 0x4330000080000000 = 2^52 + 2^31): the value is stored as the low word of
-// a 0x43300000 double with the sign bit flipped, then the magic is subtracted.
-// Writing the words by hand keeps the named sdata2 reloc (MWCC would
-// otherwise emit its own anonymous 2^52 literal).
-union ConvF64_AE48 {
-    f64 d;
-    u32 w[2];
-};
-
-static inline f32 s32ToF_ae48(ConvF64_AE48& c, u32 v) {
-    c.w[1] = v ^ 0x80000000u;
-    return (f32)(c.d - lbl_eu_8066AE48);
-}
 
 // Sphere-vs-cylinder sweep: test the sphere at self->field_0x50 (radius
 // field_0x5c, height field_0x60) against the partner cylinder (axis point
@@ -1248,7 +1339,7 @@ static inline f32 s32ToF_ae48(ConvF64_AE48& c, u32 v) {
 // On success the contact point/normal are written into the +0x3c proc object
 // (point +0x0c, normal +0x18, scaled normal +0x24) and its vtable slot-2
 // callback fires with the +0x314 argument; returns 1.
-int func_804A98C4(CColiObject* self) {
+extern "C" int func_804A98C4(CColiObject* self) {
     CColiCylinder804ABA68* partner =
         (CColiCylinder804ABA68*)self->field_0x00_obj;
     // s32->f32 conversion doubles (retail stack 0x18/0x20): the 0x4330 high
@@ -1564,7 +1655,7 @@ struct CColiCyl804AA870 {
 // normalised or zeroed) into the +0x3c proc object and fire its contact
 // callback (vtable slot 2). The t parameter is the root of
 // |point + dir*t - centre|^2 == r^2 along the segment.
-bool func_804AA870(CColiObject* self) {
+extern "C" bool func_804AA870(CColiObject* self) {
     CColiCyl804AA870* partner = (CColiCyl804AA870*)self->field_0x00_obj;
     VEC3 diff;
     VEC3Sub(&diff, &self->field_0x44, &partner->field_0x04);
@@ -1610,7 +1701,7 @@ bool func_804AA870(CColiObject* self) {
 // Cylinder clip with contact write-back (defined at the end of the file).
 extern "C" int func_804AAA98(CColiObject* self);
 
-void func_804AAD90(){}
+extern "C" void func_804AAD90(){}
 
 // Segment-vs-segment clip (defined at the end of the file): passes the
 // partner's +0x64 scalar list, +4 AABB matrix and +0x34 transform matrix.
@@ -1773,14 +1864,14 @@ extern "C" int func_804AB538(CColiObject* self) {
     return self->field_0x80 != 0 ? 2 : 0;
 }
 
-void func_804ABA08(){}
+extern "C" void func_804ABA08(){}
 
 // Cylinder-overlap test: true when the horizontal squared distance from
 // self's point (+0x44) to the partner's centre (+0x04) is within the
 // partner's squared radius (+0x10) and the vertical offset lies between
 // the partner's y bounds (+0x14 upper, +0x18 lower). VEC3Sub lowers to
 // the retail paired-single (psq_l/ps_sub/psq_st) sequence.
-bool func_804ABA68(CColiObject* self) {
+extern "C" bool func_804ABA68(CColiObject* self) {
     CColiCylinder804ABA68* other = (CColiCylinder804ABA68*)self->field_0x00_obj;
     VEC3 diff;
     VEC3Sub(&diff, &self->field_0x44, &other->field_0x04);
@@ -1812,7 +1903,7 @@ struct CColiSegment804ABAF0 {
 // then compare the squared distance to the closest point against the squared
 // radius (+0x28). VEC3Sub/VEC3Dot/VEC3Scale/VEC3Add/VEC3LenSq lower to the
 // retail paired-single sequences.
-bool func_804ABAF0(CColiObject* self) {
+extern "C" bool func_804ABAF0(CColiObject* self) {
     CColiSegment804ABAF0* o = (CColiSegment804ABAF0*)self->field_0x00_obj;
     VEC3 v;
     VEC3 d;
@@ -1827,7 +1918,7 @@ bool func_804ABAF0(CColiObject* self) {
 // Partner transform AABB test: the partner's +0x34 matrix maps self's point
 // (+0x44) into the local frame, then each axis of the result is checked
 // against the partner's half-extents at +0x64/+0x68/+0x6c (|axis| <= extent).
-bool func_804ABBF4(CColiObject* self) {
+extern "C" bool func_804ABBF4(CColiObject* self) {
     CColiXfrm804ABBF4* obj = (CColiXfrm804ABBF4*)self->field_0x00_obj;
     VEC3 out;
     PSMTXMultVec(obj->field_0x34, self->field_0x44, out);
@@ -1850,7 +1941,7 @@ struct CColiSphere804ABCA4 {
 // (+0x44) and the partner's point (+0x04) is within the squared sum of the
 // two radii (+0x10, +0x5c). VEC3Sub/VEC3LenSq lower to the retail
 // paired-single sequence (psq_l/ps_sub/psq_st, ps_mul/ps_madd/ps_sum0).
-bool func_804ABCA4(CColiObject* self) {
+extern "C" bool func_804ABCA4(CColiObject* self) {
     CColiObject* other = self->field_0x00_obj;
     VEC3 diff;
     VEC3Sub(&diff, &self->field_0x44, (VEC3*)((u8*)other + 4));
@@ -1863,7 +1954,7 @@ bool func_804ABCA4(CColiObject* self) {
 // squared distance against the squared sum of the partner radius (+0x10) and
 // self's scalar (+0x5c). Mirrors func_804ABCA4 with the clamped point;
 // VEC3Sub/VEC3LenSq lower to the retail paired-single sequence.
-bool func_804ABD0C(CColiObject* self) {
+extern "C" bool func_804ABD0C(CColiObject* self) {
     CColiCylinder804ABA68* obj = (CColiCylinder804ABA68*)self->field_0x00_obj;
     VEC3 v;
     VEC3 diff;
@@ -1890,7 +1981,7 @@ bool func_804ABD0C(CColiObject* self) {
 // self's point (+0x44) to the partner's +0x04 point, then to its +0x10
 // point, each within the squared sum of the partner +0x28 scalar and
 // self's +0x5c radius. Mirrors func_804ABCA4 with the second point.
-bool func_804ABDD4(CColiObject* self) {
+extern "C" bool func_804ABDD4(CColiObject* self) {
     CColiCylinder804ABA68* obj = (CColiCylinder804ABA68*)self->field_0x00_obj;
     f32 r5c = self->field_0x5c;
     VEC3 diff1;
@@ -1911,7 +2002,7 @@ bool func_804ABDD4(CColiObject* self) {
 // of the partner radius and self's scalar (+0x5c) AND the azimuth of the
 // offset vector (Atan2FIdx of x/z) scaled by the FIdx constant, offset by
 // +0x64 and wrapped into [-pi, pi], lies within the +0x60 bound.
-bool func_804ABF08(CColiObject* self) {
+extern "C" bool func_804ABF08(CColiObject* self) {
     CColiCylinder804ABA68* other = (CColiCylinder804ABA68*)self->field_0x00_obj;
     VEC3 diff;
     VEC3Sub(&diff, &self->field_0x44, &other->field_0x04);
@@ -1938,7 +2029,7 @@ bool func_804ABF08(CColiObject* self) {
 // radius and self's scalar (+0x5c) AND the azimuth (Atan2FIdx of x/z scaled
 // by the FIdx constant, offset by +0x64, wrapped into [-pi, pi]) lies within
 // the +0x60 bound. Mirrors func_804ABF08 with the clamped point.
-bool func_804AC020(CColiObject* self) {
+extern "C" bool func_804AC020(CColiObject* self) {
     CColiCylinder804ABA68* other = (CColiCylinder804ABA68*)self->field_0x00_obj;
     VEC3 diff;
     VEC3 v;
@@ -1989,7 +2080,7 @@ static inline bool angleOK804AC198(CColiObject* self, const VEC3* d) {
 // the partner radius and self's radius (+0x5c) AND the angle gate passes.
 // The partner pointer is re-read from self->field_0x00 for each point so it
 // never survives the Atan2FIdx call (retail reloads it in block 2).
-bool func_804AC198(CColiObject* self) {
+extern "C" bool func_804AC198(CColiObject* self) {
     CColiCylinder804ABA68* obj = (CColiCylinder804ABA68*)self->field_0x00_obj;
 
     VEC3 diff;
@@ -2038,7 +2129,7 @@ struct CColiContact804AC3B0 {
 // AND the azimuth of the offset vector (Atan2FIdx of x/z) scaled by the
 // FIdx constant, offset by +0x64 and wrapped into [-pi, pi], lies within
 // the +0x60 bound.
-bool func_804AC3B0(CColiObject* self) {
+extern "C" bool func_804AC3B0(CColiObject* self) {
     CColiContact804AC3B0* obj = (CColiContact804AC3B0*)self->field_0x00_obj;
     VEC3 v(obj->field_0x10, obj->field_0x20, obj->field_0x30);
     VEC3 diff;
@@ -2061,7 +2152,7 @@ bool func_804AC3B0(CColiObject* self) {
     return false;
 }
 
-void func_804AC57C(){}
+extern "C" void func_804AC57C(){}
 
 // Contact object sampled by func_804AC5D8 / func_804AF808: field_0x00 links
 // the paired collision object; the VEC3s at +0x10/+0x20/+0x30 and the scalar
@@ -2094,7 +2185,7 @@ extern "C" int func_804AC4E4(CColiObject* self) {
 // the clamped segment to the clip helper along with the partner radius
 // (+0x10). The VEC3 fields are written component-wise so MWCC keeps v.y
 // live in a register for the clamping adds (retail's f2).
-void func_804AC4F4(CColiObject* self) {
+extern "C" void func_804AC4F4(CColiObject* self) {
     CColiCylinder804ABA68* obj = (CColiCylinder804ABA68*)self->field_0x00_obj;
     VEC3 v;
     v.x = obj->field_0x04.x;
@@ -2118,7 +2209,7 @@ void func_804AC4F4(CColiObject* self) {
 // self's point (+0x44) to the partner's point rows (+0x10/+0x20/+0x30) is
 // within the squared sum of the partner scalar (+0x70) and self's radius
 // (+0x5c). Mirrors func_804ABCA4 with the v built from the partner rows.
-bool func_804ABE84(CColiObject* self) {
+extern "C" bool func_804ABE84(CColiObject* self) {
     CColiContactObj* obj = (CColiContactObj*)self->field_0x00_obj;
     VEC3 v(obj->field_0x10, obj->field_0x20, obj->field_0x30);
     VEC3 diff;
@@ -2131,7 +2222,7 @@ extern "C" int func_804AF808(CColiContactObj* self, const VEC3* v, f32 f);
 
 extern "C" int func_804AF808(CColiContactObj* self, const VEC3* v, f32 f);
 
-void func_804AC5D8(CColiContactObj* self) {
+extern "C" void func_804AC5D8(CColiContactObj* self) {
     // Sample the partner's point rows (+0x10/+0x20/+0x30) plus the scalar at
     // +0x70, then ask the clip helper to classify the segment. The VEC3
     // 3-float ctor inlines to loads z,y,x into f2,f1,f0 then ascending stores.
@@ -2143,7 +2234,7 @@ void func_804AC5D8(CColiContactObj* self) {
 // Default false-return handler. Used as a placeholder in collision method
 // dispatch tables for boolean-returning virtual method slots that are
 // not overridden (always returns 0 / false). The self pointer is unused.
-int func_804AC61C(CColiObject* /*self*/) { return 0; }
+extern "C" int func_804AC61C(CColiObject* /*self*/) { return 0; }
 
 // Enumerate a group record's members: each id not yet marked in the shared
 // visited bitset is marked and handed to the per-id processor. (Inlined at
@@ -2547,8 +2638,8 @@ extern "C" int func_804AD410(CColiObject* self, const f32* a, const VEC3* b,
         if (f * f < d2) return 0;
         if (d2 == lbl_eu_8066AE44) {
             // Degenerate offset: random horizontal direction.
-            f32 rz = (f32)(rand() % 200 - 100);
-            f32 rx = (f32)(rand() % 200 - 100);
+            f32 rz = f32FromS32_ae48(rand() % 200 - 100);
+            f32 rx = f32FromS32_ae48(rand() % 200 - 100);
             out.x = rx;
             out.y = lbl_eu_8066AE44;
             out.z = rz;
@@ -2664,8 +2755,8 @@ int func_804AD8FC(CColiObject* self, const _VEC3* a, const _VEC3* b) {
         } else {
             // Degenerate offset: random horizontal direction.
             f30 = f31;
-            f32 rz = (f32)(rand() % 200 - 100);
-            f32 rx = (f32)(rand() % 200 - 100);
+            f32 rz = f32FromS32_ae48(rand() % 200 - 100);
+            f32 rx = f32FromS32_ae48(rand() % 200 - 100);
             n->x = rx;
             n->y = lbl_eu_8066AE44;
             n->z = rz;
@@ -2837,7 +2928,7 @@ int func_804ADD3C(CColiObject* self, const f32* a, const Mtx b, const Mtx c) {
 extern "C" int func_804AE0D0(CColiObject* self, const VEC3* v, f32 f1,
                               f32 f2) {
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90;
+    proc->field_0x08 = lbl_eu_80663A90[0];
     self->field_0x8c &= ~2;
     VEC3 vec;
     vec.x = f1;
@@ -2854,7 +2945,7 @@ extern "C" int func_804AE11C(CColiObject* self, const VEC3* arg4, f32 f1,
     // inside the +0x74 radius, else zero.
     f32 f6 = lbl_eu_8066AE44;
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90;
+    proc->field_0x08 = lbl_eu_80663A90[0];
     if (self->field_0x8c & 0x8) {
         f32 gy = self->field_0x74.y;
         f32 f1sq = f1 * f1;
@@ -2922,7 +3013,7 @@ extern "C" int func_804B29EC(CColiProcLocal* proc, const VEC3* v,
 // penetration; the vtable slot-2 callback fires with the +0x314 argument.
 extern "C" int func_804AE388(CColiObject* self, const _VEC3* vec, f32 x, f32 y) {
     CColiObj3C* proc0 = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc0->field_0x08 = lbl_eu_80663A90;
+    proc0->field_0x08 = lbl_eu_80663A90[0];
     VEC3 diff;
     VEC3Sub(&diff, &self->field_0x44, (const VEC3*)vec);
     if (diff.y > y + self->field_0x5c) return 0;
@@ -2950,8 +3041,8 @@ extern "C" int func_804AE388(CColiObject* self, const _VEC3* vec, f32 x, f32 y) 
             n->z = diff.z * inv;
         } else {
             // Random horizontal direction when the centres coincide.
-            f32 rz = (f32)(rand() % 200 - 100);
-            f32 rx = (f32)(rand() % 200 - 100);
+            f32 rz = f32FromS32_ae48(rand() % 200 - 100);
+            f32 rx = f32FromS32_ae48(rand() % 200 - 100);
             n->x = rx;
             n->y = lbl_eu_8066AE44;
             n->z = rz;
@@ -3018,8 +3109,8 @@ extern "C" int func_804AE388(CColiObject* self, const _VEC3* vec, f32 x, f32 y) 
         if (pen * pen < dist2b) return 0;
         if (dist2b == lbl_eu_8066AE44) {
             // Random direction when the sphere centre is on the axis.
-            f32 rz = (f32)(rand() % 200 - 100);
-            f32 rx = (f32)(rand() % 200 - 100);
+            f32 rz = f32FromS32_ae48(rand() % 200 - 100);
+            f32 rx = f32FromS32_ae48(rand() % 200 - 100);
             n->x = rx;
             n->y = lbl_eu_8066AE44;
             n->z = rz;
@@ -3064,7 +3155,7 @@ extern "C" int func_804AEC8C(CColiObject* self, const _VEC3* vec, f32 x, f32 y);
 extern "C" int func_804AF2F0(CColiObject* self, const _VEC3* a, const _VEC3* b,
                              const _VEC3* c) {
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90;
+    proc->field_0x08 = lbl_eu_80663A90[0];
     self->field_0x8c &= ~0x2u;
     return func_804AD410(self, (const f32*)a, (const VEC3*)b,
                          (const f32(*)[4])c, self->field_0x5c);
@@ -3075,7 +3166,7 @@ extern "C" int func_804AF2F0(CColiObject* self, const _VEC3* a, const _VEC3* b,
 extern "C" int func_804AF310(CColiObject* self, const _VEC3* a, const _VEC3* b,
                              const _VEC3* c) {
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90;
+    proc->field_0x08 = lbl_eu_80663A90[0];
     self->field_0x8c &= ~0x2u;
     return func_804ADD3C(self, (const f32*)a, (const f32(*)[4])b,
                          (const f32(*)[4])c);
@@ -3129,7 +3220,7 @@ extern "C" int func_804AF32C(CColiObject* self, const _VEC3* a,
         out = t;
     }
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90;
+    proc->field_0x08 = lbl_eu_80663A90[0];
     VEC3 dir;  // sp+0x20 outside - inside
     VEC3Sub(&dir, &out, &in);
     f32 mag = PSVECMag((const Vec*)&dir);
@@ -3498,7 +3589,7 @@ extern "C" int func_804AEC8C(CColiObject* self, const _VEC3* vec, f32 x,
     if (flagA == flagB) return 0;
 
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90;
+    proc->field_0x08 = lbl_eu_80663A90[0];
     VEC3 cpA;
     VEC3 cpB;
     cpA.x = vec->x;
@@ -3548,8 +3639,8 @@ extern "C" int func_804AEC8C(CColiObject* self, const _VEC3* vec, f32 x,
         } else {
             // Random horizontal direction when the clip is degenerate.
             ml::CVec3* n = &proc->field_0x18;
-            f32 rz = (f32)(rand() % 200 - 100);
-            f32 rx = (f32)(rand() % 200 - 100);
+            f32 rz = f32FromS32_ae48(rand() % 200 - 100);
+            f32 rx = f32FromS32_ae48(rand() % 200 - 100);
             n->x = rx;
             n->y = lbl_eu_8066AE44;
             n->z = rz;
@@ -4226,7 +4317,7 @@ bool func_804B1BDC(CColiObject* self) {
     if (v != 0) return false;
     if (!(flags & 0x8)) goto fail;
 
-    func_804A7D1C(&local);
+    func_804A7D1C(&local, 0, 0, lbl_eu_8066AE44);  // explicit args: no pooled 0.0f literal
     local.field_0x314 = (u32)self;
     tgt = self->field_0x00_obj;
     a8 = self->field_0x08;
@@ -4395,7 +4486,7 @@ extern "C" int func_804AF09C(CColiObject* self, const VEC3* extents,
                              const Mtx m1, const Mtx m2) {
     f32 bound = lbl_eu_8066AE44;
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90;
+    proc->field_0x08 = lbl_eu_80663A90[0];
     Vec out;
     if (self->field_0x8c & 0x10) {
         PSMTXMultVec(m2, (const Vec*)&self->field_0x74, &out);
@@ -4455,7 +4546,7 @@ contact:
 extern "C" int func_804AF07C(CColiObject* self, const VEC3* extents,
                              const Mtx m1, const Mtx m2) {
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90;
+    proc->field_0x08 = lbl_eu_80663A90[0];
     self->field_0x8c &= ~0x2u;
     return func_804AD410(self, (const f32*)extents, (const VEC3*)m1, m2,
                          self->field_0x5c);
@@ -4581,7 +4672,7 @@ void func_804B236C(){}
 // Scale the +0x24 vector by the +0x3c scalar, optionally overwrite v.y with
 // the sdata2 constant when the +0x40 flag byte is set, then add the result
 // into the VEC3 pointed at by +0x38.
-void func_804B24A4(CColiObject* self) {
+extern "C" void func_804B24A4(CColiObject* self) {
     VEC3 v(self->field_0x00[3].x, self->field_0x00[3].y, self->field_0x00[3].z);
     VEC3Scale(&v, &v, self->field_0x3c_f);
     if (self->field_0x40_b != 0) {
@@ -4624,8 +4715,8 @@ extern "C" int func_804A7F50(CColiObject* self) {
         // Random horizontal direction (y = 0) when the centres coincide.
         CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
         ml::CVec3* n = &proc->field_0x18;
-        f32 rz = (f32)(rand() % 200 - 100);
-        f32 rx = (f32)(rand() % 200 - 100);
+        f32 rz = f32FromS32_ae48(rand() % 200 - 100);
+        f32 rx = f32FromS32_ae48(rand() % 200 - 100);
         n->x = rx;
         n->y = lbl_eu_8066AE44;
         n->z = rz;
@@ -4704,8 +4795,8 @@ extern "C" int func_804A8850(CColiObject* self) {
         // Random horizontal direction (y = 0) when the points coincide.
         CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
         ml::CVec3* n = &proc->field_0x18;
-        f32 rz = (f32)(rand() % 200 - 100);
-        f32 rx = (f32)(rand() % 200 - 100);
+        f32 rz = f32FromS32_ae48(rand() % 200 - 100);
+        f32 rx = f32FromS32_ae48(rand() % 200 - 100);
         n->x = rx;
         n->y = lbl_eu_8066AE44;
         n->z = rz;
@@ -4803,8 +4894,8 @@ extern "C" int func_804AA504(CColiObject* self) {
         // Random horizontal direction (y = 0) when the clip is degenerate.
         CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
         ml::CVec3* n = &proc->field_0x18;
-        f32 rz = (f32)(rand() % 200 - 100);
-        f32 rx = (f32)(rand() % 200 - 100);
+        f32 rz = f32FromS32_ae48(rand() % 200 - 100);
+        f32 rx = f32FromS32_ae48(rand() % 200 - 100);
         n->x = rx;
         n->y = lbl_eu_8066AE44;
         n->z = rz;
@@ -4896,8 +4987,8 @@ extern "C" int func_804AAA98(CColiObject* self) {
         } else {
             // Random horizontal direction (y = 0) when the clip is degenerate.
             ml::CVec3* n = &proc->field_0x18;
-            f32 rz = (f32)(rand() % 200 - 100);
-            f32 rx = (f32)(rand() % 200 - 100);
+            f32 rz = f32FromS32_ae48(rand() % 200 - 100);
+            f32 rx = f32FromS32_ae48(rand() % 200 - 100);
             n->x = rx;
             n->y = lbl_eu_8066AE44;
             n->z = rz;
@@ -4932,7 +5023,7 @@ extern "C" int func_804AAA98(CColiObject* self) {
 extern "C" int func_804AE9A4(CColiObject* self, const _VEC3* vec, f32 x,
                              f32 y) {
     CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90;
+    proc->field_0x08 = lbl_eu_80663A90[0];
     VEC3 base(vec->x, vec->y, vec->z);
     VEC3 top(vec->x, vec->y + y, vec->z);
     if (func_804B028C(&self->field_0x44, &self->field_0x50, &base, &top,
@@ -4967,8 +5058,8 @@ extern "C" int func_804AE9A4(CColiObject* self, const _VEC3* vec, f32 x,
         } else {
             // Random horizontal direction (y = 0) when the clip is degenerate.
             ml::CVec3* n = &proc->field_0x18;
-            f32 rz = (f32)(rand() % 200 - 100);
-            f32 rx = (f32)(rand() % 200 - 100);
+            f32 rz = f32FromS32_ae48(rand() % 200 - 100);
+            f32 rx = f32FromS32_ae48(rand() % 200 - 100);
             n->x = rx;
             n->y = lbl_eu_8066AE44;
             n->z = rz;
@@ -4996,10 +5087,30 @@ extern "C" int func_804AE9A4(CColiObject* self, const _VEC3* vec, f32 x,
 // the +0x38/+0x3C/+0x40 state.
 extern const f32 lbl_eu_8066AE88;
 extern "C" void sinit_804B2524(void) {
-    extern void* lbl_eu_8056F380[];
+    extern u32 lbl_eu_8056F380[];
     __ct__CColiProc((CColiProcLocal*)&lbl_eu_8065D0A0);
     *(void**)&lbl_eu_8065D0A0 = lbl_eu_8056F380;
     lbl_eu_8065D0A0.field_0x38 = 0;
     lbl_eu_8065D0A0.field_0x3c = lbl_eu_8066AE88;
     lbl_eu_8065D0A0.field_0x40 = 0;
 }
+
+// ===== Dissolved monolibdata2 zero-fill (bss/sbss) owned by this TU =====
+// Definitions typed to match the pre-existing extern declarations above.
+u32 lbl_eu_8065CFA0[0x100 / 4];                 // .bss 256B
+CColiGlobal805D0A0 lbl_eu_8065D0A0;             // .bss 72B
+u8 lbl_eu_8065D0E8[0x50];                       // .bss 80B
+// .sbss single-word globals (declared at top with their field types).
+ml::coli::CColiObject* lbl_eu_80665910;
+ml::coli::CColiObject* lbl_eu_80665914;
+ml::coli::CColiObject* lbl_eu_80665918;
+ml::coli::CColiObject* lbl_eu_8066591C;
+ml::coli::CColiObject* lbl_eu_80665920;
+ml::coli::CColiObject* lbl_eu_80665924;
+ml::coli::CColiObject* lbl_eu_80665928;
+ml::coli::CColiObject* lbl_eu_8066592C;
+ml::coli::CColiObject* lbl_eu_80665930;
+CColiSweepCtrl* lbl_eu_80665934;
+u32 lbl_eu_80665938;
+u32 lbl_eu_8066593C;              // 2nd word of the 8B retail lbl_eu_80665938
+u32 lbl_eu_80665940;

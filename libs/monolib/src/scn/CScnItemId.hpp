@@ -5,7 +5,7 @@
 // Retail vtable for CScnItemId (unmapped .data label). Declared as an array so
 // MWCC emits the full lis/addi pair (no sda21 short-form) with the exact
 // retail reloc name; the object vptr is stored manually (see CScnItemId).
-extern char lbl_eu_8056DCD8[];
+extern "C" u32 lbl_eu_8056DCD8[];
 
 // Scene-resource current-data getter (scn/code_804BC9EC.cpp). The retail name
 // already ends in `__Fv` as a literal identifier, so C linkage is required to

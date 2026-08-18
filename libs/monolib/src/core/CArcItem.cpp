@@ -30,12 +30,14 @@ unk38(nullptr){
 // optimize_for_size on: retail __dt__ saves r30+r31 via stmw r30, not stw
 // (same pattern as CTTask/CRsrcData dtors).
 #pragma optimize_for_size on
-CArcItem::~CArcItem(){
-    if(unk28 != nullptr){
-        CDeviceFile::cancel(unk28);
+// extern "C" free-function form (CFontLayer pattern): no member key function is
+// defined in this TU, so MWCC does not auto-emit __vt__8CArcItem here (the retail
+// vtable lives in the dissolved .data blob below).
+extern "C" void __dt__8CArcItemFv(CArcItem* self){
+    if(self->unk28 != nullptr){
+        CDeviceFile::cancel(self->unk28);
     }
-
-    DELETE_OBJ(unk38);
+    DELETE_OBJ(self->unk38);
 }
 #pragma optimize_for_size off
 
@@ -67,20 +69,113 @@ bool CArcItem::func_804DEC6C(const char* pPath, void** pOutStartAddr, u32* pOutL
 }
 #pragma optimize_for_size off
 
-bool CArcItem::OnFileEvent(CEventFile* pEventFile){
-    if(pEventFile->mFileHandle == unk28){
+extern "C" bool OnFileEvent__8CArcItemFP10CEventFile(CArcItem* self, CEventFile* pEventFile){
+    if(pEventFile->mFileHandle == self->unk28){
         if(pEventFile->unk0 == true){
-            unk38 = unk28->getData();
-            if(!ARCInitHandle(unk38, &mArcHandle)){
-                unk30 = 1;
+            self->unk38 = self->unk28->getData();
+            if(!ARCInitHandle(self->unk38, &self->mArcHandle)){
+                self->unk30 = 1;
             }
         }else{
-            unk30 = 1;
+            self->unk30 = 1;
         }
 
-        unk28 = 0;
+        self->unk28 = 0;
         return true;
     }
 
     return false;
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// Forward refs: own-class methods (dtor/OnFileEvent) and the base IWorkEvent
+// virtual stubs, referenced by retail mangled names (CMdlLook D2Blob pattern).
+namespace CArcItemBlob {
+extern "C" void __dt__8CArcItemFv();
+extern "C" void OnFileEvent__8CArcItemFP10CEventFile();
+extern "C" void WorkEvent1__10IWorkEventFPvPCc();
+extern "C" void WorkEvent3__10IWorkEventFPv();
+extern "C" void WorkEvent4__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb();
+extern "C" void WorkEvent6__10IWorkEventFv();
+extern "C" void WorkEvent7__10IWorkEventFv();
+extern "C" void WorkEvent8__10IWorkEventFv();
+extern "C" void WorkEvent9__10IWorkEventFv();
+extern "C" void WorkEvent10__10IWorkEventFv();
+extern "C" void WorkEvent11__10IWorkEventFv();
+extern "C" void WorkEvent12__10IWorkEventFv();
+extern "C" void WorkEvent13__10IWorkEventFv();
+extern "C" void WorkEvent14__10IWorkEventFv();
+extern "C" void WorkEvent15__10IWorkEventFv();
+extern "C" void WorkEvent16__10IWorkEventFv();
+extern "C" void WorkEvent17__10IWorkEventFv();
+extern "C" void WorkEvent18__10IWorkEventFv();
+extern "C" void WorkEvent19__10IWorkEventFv();
+extern "C" void WorkEvent20__10IWorkEventFv();
+extern "C" void WorkEvent21__10IWorkEventFv();
+extern "C" void WorkEvent22__10IWorkEventFv();
+extern "C" void WorkEvent23__10IWorkEventFv();
+extern "C" void WorkEvent24__10IWorkEventFv();
+extern "C" void WorkEvent25__10IWorkEventFv();
+extern "C" void WorkEvent26__10IWorkEventFv();
+extern "C" void WorkEvent27__10IWorkEventFv();
+extern "C" void WorkEvent28__10IWorkEventFv();
+extern "C" void WorkEvent29__10IWorkEventFv();
+extern "C" void WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+}
+
+extern "C" const char lbl_eu_80524708[0x28];
+extern "C" u32 lbl_eu_80663C00[2];
+
+// [.data] 0x8056FFE0-0x80570068 (0x88 = 136B): CArcItem vtable
+extern "C" u32 lbl_eu_8056FFE0[34] = {
+    (u32)&lbl_eu_80663C00, 0x00000000,
+    (u32)&CArcItemBlob::__dt__8CArcItemFv,
+    (u32)&CArcItemBlob::WorkEvent1__10IWorkEventFPvPCc,
+    (u32)&CArcItemBlob::OnFileEvent__8CArcItemFP10CEventFile,
+    (u32)&CArcItemBlob::WorkEvent3__10IWorkEventFPv,
+    (u32)&CArcItemBlob::WorkEvent4__10IWorkEventFv,
+    (u32)&CArcItemBlob::OnPauseTrigger__10IWorkEventFb,
+    (u32)&CArcItemBlob::WorkEvent6__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent7__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent8__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent9__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent10__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent11__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent12__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent13__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent14__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent15__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent16__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent17__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent18__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent19__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent20__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent21__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent22__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent23__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent24__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent25__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent26__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent27__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent28__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent29__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent30__10IWorkEventFv,
+    (u32)&CArcItemBlob::WorkEvent31__10IWorkEventFv,
+};
+
+// [.rodata] 0x80524708-0x80524730 (0x28 = 40B): "CArcItem\0..." + "AHX_PKH\0adx\0ahx\0.pkb\0"
+extern "C" __declspec(align(4)) const char lbl_eu_80524708[0x28] = {
+    0x43,0x41,0x72,0x63,0x49,0x74,0x65,0x6D,0x00,0x00,0x00,0x00,
+    0x41,0x48,0x58,0x5F,0x50,0x4B,0x48,0x00,0x61,0x64,0x78,0x00,
+    0x61,0x68,0x78,0x00,0x2E,0x70,0x6B,0x62,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00
+};
+
+// [.sdata] 0x80663C00-0x80663C08 (8B)
+extern "C" u32 lbl_eu_80663C00[2] = { (u32)&lbl_eu_80524708, 0x00000000 };
+
+DECOMP_FORCEACTIVE(CArcItem_cpp, lbl_eu_8056FFE0);
+DECOMP_FORCEACTIVE(CArcItem_cpp, lbl_eu_80524708);
+DECOMP_FORCEACTIVE(CArcItem_cpp, lbl_eu_80663C00);

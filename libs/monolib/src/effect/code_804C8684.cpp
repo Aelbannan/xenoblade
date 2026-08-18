@@ -25,7 +25,7 @@ struct CEffectParam {
     u32 field_0x08;    // 0x08
 };
 
-extern u8 lbl_eu_806659A0;
+extern u32 lbl_eu_806659A0;
 extern CEffectParam lbl_eu_8065FC08;
 
 void func_804C8690(u8 flag, const CEffectParam* src) {
@@ -80,3 +80,16 @@ void sinit_804C86C0() {
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.bss] 0x8065FBE8-0x8065FCA0 (0xB8 = 184B) zero-fill. Retail splits this
+// contiguous zero block into lbl_eu_8065FBE8(32B) + lbl_eu_8065FC08(16B) +
+// lbl_eu_8065FC18(136B); the first two are contiguous (sinit writes 12 floats
+// from 8065FBE8 across both). We emit 48B from 8065FBE8 + 136B at 8065FC18 so
+// the total bss sits at the retail 184B; lbl_eu_8065FC08 stays an extern alias
+// into the 8065FBE8 tail (resolved at link to the same bss region).
+f32 lbl_eu_8065FBE8[12];   // 48B covers retail 8065FBE8(32) + 8065FC08(16)
+u8 lbl_eu_8065FC18[136];   // 136B
+// [.sbss] 0x806659A0-0x806659A8 (8B)
+u32 lbl_eu_806659A0;   // sbss word 0
+u32 lbl_eu_806659A4;   // sbss word 1

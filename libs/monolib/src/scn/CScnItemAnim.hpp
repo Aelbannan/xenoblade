@@ -6,7 +6,7 @@
 // Retail vtable for CScnItemAnim (unmapped .data label). Declared as an array
 // so MWCC emits the full lis/addi pair with the exact retail reloc name; the
 // object vptr is stored manually (novtable).
-extern char lbl_eu_8056EC90[];
+extern u32 lbl_eu_8056EC90[];
 
 // Panic file/format strings used by the alignment and chr-anm asserts (retail
 // linker names; global-scope names are not mangled by MWCC). The sdata2 arg

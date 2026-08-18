@@ -111,7 +111,7 @@ void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 
-extern u32 lbl_eu_80665968;
+extern "C" u32 lbl_eu_80665968[2];
 extern u8 lbl_eu_8065F418[0x10];
 int func_804BC9EC__Fv(u8* self) { return (int)(intptr_t)&lbl_eu_80665968; }
 
@@ -436,10 +436,25 @@ void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_804BD8A0() {
-    lbl_eu_80665968 = 0;
+    lbl_eu_80665968[0] = 0;
     func_804B7804(&lbl_eu_8065F32C);
     void* const obj = &lbl_eu_80665968;
     void* const dtor = (void*)&__dt__804BD8E8;
     void* const reg = &lbl_eu_8065F418;
     __register_global_object(obj, dtor, reg);
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.bss] 0x8065F32C-0x8065F418 (236B): the scene-resource data block and its
+// two tail objects (retail spans 0xC4 / 0xC / 0x1C).
+ScnResData lbl_eu_8065F32C;
+__declspec(align(8)) u8 lbl_eu_8065F3F0[0xC];
+u8 lbl_eu_8065F3FC[0x1C];
+DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_8065F3F0);
+DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_8065F3FC);
+
+// [.sbss] 0x80665968-0x8066597C (20B).
+extern "C" { u32 lbl_eu_80665970; u32 lbl_eu_80665974; u32 lbl_eu_80665978; }
+DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_80665970);
+DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_80665974);
+DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_80665978);

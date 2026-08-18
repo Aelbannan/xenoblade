@@ -162,3 +162,18 @@ void func_804E77C4(CMdlAnmEye* self) {
         texSrt.SetEffectMtx(2, &mtx);
     }
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.rodata] 0x805247E8-0x80524810 (40B)
+extern const f32 lbl_eu_805247E8[3] = { 0.0f, 0.3375f, 0.675f };
+extern const f32 lbl_eu_805247F4[3] = { 0.0f, -0.5f, -1.0f };
+extern const char lbl_eu_80524800[0xB] = "CMdlAnmEye";
+// [.sdata] 0x80663C88-0x80663CA0 (24B)
+extern const char lbl_eu_8066B358[];
+const char* lbl_eu_80663C88 = lbl_eu_8066B358;
+extern "C" __declspec(section ".sdata") const char lbl_eu_80663C98[4] = { 0x72,0x65,0x66,0x00 };
+DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_805247E8);
+DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_805247F4);
+DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_80524800);
+DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_80663C88);
+DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_80663C98);

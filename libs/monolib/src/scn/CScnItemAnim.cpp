@@ -136,3 +136,33 @@ extern "C" char* func_8049E8B4(CScnItemAnim* self) {
 extern "C" nw4r::g3d::ResFile func_8049E8BC(CScnItemAnim* self) {
     return self->mResFileCopy;
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+namespace SIABlob {
+extern "C" void __dt__12CScnItemAnimFv();
+extern "C" void func_8048228C();
+extern "C" void func_80482048();
+extern "C" void func_80482288();
+extern "C" void func_8049E8B4();
+extern "C" void func_8049E8BC();
+}
+extern "C" u32 lbl_eu_80663A80;   // foreign .sdata
+extern "C" u32 lbl_eu_806624D8;   // foreign .sdata
+
+// [.data] 0x8056EC90-0x8056ECC0 (48B): CScnItemAnim vtable
+extern "C" u32 lbl_eu_8056EC90[12] = {
+    (u32)&lbl_eu_80663A80, 0x00000000,
+    (u32)&SIABlob::__dt__12CScnItemAnimFv,
+    (u32)&SIABlob::func_8048228C,
+    (u32)&SIABlob::func_80482048,
+    (u32)&SIABlob::func_80482288,
+    (u32)&SIABlob::func_8049E8B4,
+    (u32)&SIABlob::func_8049E8BC,
+    (u32)&lbl_eu_806624D8, 0x00000000, 0x00000000, 0x00000000,
+};
+
+// [.rodata] 0x80524248-0x80524268 (32B)
+extern "C" __declspec(align(4)) const char lbl_eu_80524248[0x20] = {
+    0x43,0x53,0x63,0x6E,0x49,0x74,0x65,0x6D,0x41,0x6E,0x69,0x6D,0x00,0x00,0x00,0x00,
+    0x43,0x61,0x6D,0x65,0x72,0x61,0x25,0x64,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};

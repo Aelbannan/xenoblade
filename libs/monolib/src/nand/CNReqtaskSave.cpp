@@ -20,8 +20,8 @@ class CException;
 // symbols match the stripped retail names rather than C++ manglings).
 extern "C" { // lbl_* and func_* retail names need unmangled emission
     extern CNReqtaskSaveVtbl* lbl_eu_806659E0;   // installed save-task vtable pointer (sinit target)
-    extern char lbl_eu_8056FD68[];               // save-task vtable data - array type prevents sda21
-    extern u8  lbl_eu_806659D8;                  // save-task "open" flag (byte 0 of the 8-byte .sbss block)
+    extern u32 lbl_eu_8056FD68[];               // save-task vtable data - array type prevents sda21
+    extern u64 lbl_eu_806659D8;                  // save-task "open" flag (8-byte .sbss block, byte 0 read)
     extern const wchar_t* lbl_eu_80663B60;       // NAND error message for -4 / -64
     extern const wchar_t* lbl_eu_80663B64;       // NAND error message for -3 / -2
 
@@ -307,7 +307,7 @@ extern "C" int sprintf(char*, const char*, ...);
 #pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
 __declspec(noinline) const char* func_804DA98C(u8 id) {
     extern char lbl_eu_8065FF78[];
-    extern char lbl_eu_805245D4[];
+    extern const u32 lbl_eu_805245D4[];
     long st = NANDGetHomeDir(lbl_eu_8065FF78);
     func_804DAA58((s32)st);
     if (id != 0)
@@ -321,8 +321,8 @@ __declspec(noinline) const char* func_804DA98C(u8 id) {
 #pragma optimize_for_size on  // -O4,s stmw frame
 extern "C" char* func_804DA9C4(u32 a1, u8 a2) {
     extern char lbl_eu_8065FFBC[];
-    extern char lbl_eu_805245D4[];
-    sprintf(lbl_eu_8065FFBC, lbl_eu_805245D4 + 7, func_804DA98C(a2), a1);
+    extern const u32 lbl_eu_805245D4[];
+    sprintf(lbl_eu_8065FFBC, (char*)lbl_eu_805245D4 + 7, func_804DA98C(a2), a1);
     return lbl_eu_8065FFBC;
 }
 #pragma optimize_for_size off
@@ -542,3 +542,50 @@ s32 func_804DAD38(CNReqtaskSaveVtbl* vtable, CNReqtaskSaveData* data) {
 // move steps). noinline: retail func_804DAD38 emits `bl func_804DAEE8`;
 // without it MWCC inlines this placeholder and changes the caller.
 __declspec(noinline) const char* func_804DAEE8(CNReqtaskSaveData* data) { return (const char*)0; }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// func_804DAD38 / func_804DA4CC are defined in this TU with C++ linkage
+// (params mangled); reference the retail unmangled names via namespace aliases.
+namespace SaveBlob {
+extern "C" void func_804DAD38();
+extern "C" void func_804DA4CC();
+}
+extern "C" u32 lbl_eu_80663B70;   // foreign .sdata
+extern "C" u32 lbl_eu_80663B88[2]; // this unit's sdata
+extern "C" const char lbl_eu_805245F8[]; // rodata sub-string (sdata reloc target)
+
+// [.data] 0x8056FD68-0x8056FD88 (32B): CNReqtaskSave vtable pair
+extern "C" u32 lbl_eu_8056FD68[4] = {
+    (u32)&lbl_eu_80663B88, 0x00000000,
+    (u32)&SaveBlob::func_804DAD38, (u32)&SaveBlob::func_804DA4CC,
+};
+extern "C" u32 lbl_eu_8056FD78[4] = {
+    (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000,
+};
+
+// [.rodata] 0x805245D4-0x80524610 (60B) -- one block (referenced by .text);
+// the sub-string labels stay extern for the sdata reloc name (lbl_eu_805245F8).
+extern "C" const u32 lbl_eu_805245D4[15] = {
+    0x2F736861,0x72650025,0x732F2573,0x00000000,0x00000000,
+    0x434E5265,0x71756573,0x74000000,0x00000000,0x434E5265,
+    0x71746173,0x6B536176,0x65000000,0x25732573,0x00000000,
+};
+
+// [.sdata] 0x80663B88-0x80663B90 (8B)
+extern "C" u32 lbl_eu_80663B88[2] = { (u32)&lbl_eu_805245F8, (u32)&lbl_eu_8056FD78 };
+
+// [.bss] 0x8065FE30-0x80660038 (0x208 = 520B) zero-fill
+NANDCommandBlock lbl_eu_8065FE30;   // 188B (.bss)
+NANDFileInfo lbl_eu_8065FEEC;    // 140B (.bss)
+char lbl_eu_8065FF78[68];   // 68B (.bss)
+char lbl_eu_8065FFBC[68];   // 68B (.bss)
+u8 lbl_eu_80660000[40];
+u8 lbl_eu_80660028[16];
+
+// [.sbss] 0x806659D0-0x806659E8 (24B) zero-fill. Per-symbol padding gives the
+// retail layout (D0+3pad, D4, D8(8B align8), E0, E4+3pad); align 8 via D8.
+u8 lbl_eu_806659D0;
+s32 lbl_eu_806659D4;
+u64 lbl_eu_806659D8;
+CNReqtaskSaveVtbl* lbl_eu_806659E0;
+u32 lbl_eu_806659E4;   // retail 1B at +0x14; 4B pads section to 0x18

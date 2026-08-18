@@ -4,9 +4,27 @@
 #include "monolib/core/CSchedule.hpp"
 #include <string.h>
 
+// Retail destructor mangled name (CSchedule::~CSchedule) for the vtable reloc.
+extern "C" void __dt__9CScheduleFv();
+
+// === .rodata size=0x10 align=8 ===
+extern "C" __declspec(align(8)) const char lbl_eu_80524730[16] = {
+    0x43,0x53,0x63,0x68,0x65,0x64,0x75,0x6C,0x65,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,
+};
+
+// === .sdata size=0x8 align=8 ===
+// RTTI locator for "CSchedule" (name ptr + 0).
+extern "C" u32 lbl_eu_80663C08[2] = { (u32)&lbl_eu_80524730, 0x00000000 };
+
+// === .data size=0x10 align=8 ===
+// CSchedule vtable (16B): typeinfo locator + dtor.
+extern "C" u32 lbl_eu_80570068[4] = {
+    (u32)&lbl_eu_80663C08, 0x00000000, (u32)&__dt__9CScheduleFv, 0x00000000,
+};
+
 // us-804e7730: CSchedule::__ct__CSchedule()
 extern "C" void __ct__CSchedule(CSchedule* self) {
-    self->mTablePtr = lbl_eu_80570068;
+    self->mTablePtr = (u8*)lbl_eu_80570068;
     self->mEntries = nullptr;
     self->field_0x08 = nullptr;
     self->field_0x0c = nullptr;
@@ -44,7 +62,7 @@ extern "C" int func_804E3614(CSchedule* self) {
 
 // us-804e77dc: CSchedule::~CSchedule()
 CSchedule::~CSchedule() {
-    mTablePtr = lbl_eu_80570068;
+    mTablePtr = (u8*)lbl_eu_80570068;
     if (mEntries != nullptr) {
         // Notify each child (virtual call at vtable[3], passing this)
         for (u32 i = 0; i < 4; i++) {

@@ -11,6 +11,50 @@
 #include "monolib/util.hpp"
 #include <revolution/DVD.h>
 
+// extern "C" forward decls
+extern "C" u32 lbl_eu_806636F0[];
+extern "C" u32 lbl_eu_8056C644[];
+extern "C" u32 lbl_eu_806636E8[];
+namespace M2Blob {
+extern "C" void WorkEvent1__10IWorkEventFPvPCc(void);
+extern "C" void OnFileEvent__10IWorkEventFP10CEventFile(void);
+extern "C" void WorkEvent3__10IWorkEventFPv(void);
+extern "C" void WorkEvent4__10IWorkEventFv(void);
+extern "C" void OnPauseTrigger__10IWorkEventFb(void);
+extern "C" void WorkEvent6__10IWorkEventFv(void);
+extern "C" void WorkEvent7__10IWorkEventFv(void);
+extern "C" void WorkEvent8__10IWorkEventFv(void);
+extern "C" void WorkEvent9__10IWorkEventFv(void);
+extern "C" void WorkEvent10__10IWorkEventFv(void);
+extern "C" void WorkEvent11__10IWorkEventFv(void);
+extern "C" void WorkEvent12__10IWorkEventFv(void);
+extern "C" void WorkEvent13__10IWorkEventFv(void);
+extern "C" void WorkEvent14__10IWorkEventFv(void);
+extern "C" void WorkEvent15__10IWorkEventFv(void);
+extern "C" void WorkEvent16__10IWorkEventFv(void);
+extern "C" void WorkEvent17__10IWorkEventFv(void);
+extern "C" void WorkEvent18__10IWorkEventFv(void);
+extern "C" void WorkEvent19__10IWorkEventFv(void);
+extern "C" void WorkEvent20__10IWorkEventFv(void);
+extern "C" void WorkEvent21__10IWorkEventFv(void);
+extern "C" void WorkEvent22__10IWorkEventFv(void);
+extern "C" void WorkEvent23__10IWorkEventFv(void);
+extern "C" void WorkEvent24__10IWorkEventFv(void);
+extern "C" void WorkEvent25__10IWorkEventFv(void);
+extern "C" void WorkEvent26__10IWorkEventFv(void);
+extern "C" void WorkEvent27__10IWorkEventFv(void);
+extern "C" void WorkEvent28__10IWorkEventFv(void);
+extern "C" void WorkEvent29__10IWorkEventFv(void);
+extern "C" void WorkEvent30__10IWorkEventFv(void);
+extern "C" void WorkEvent31__10IWorkEventFv(void);
+extern "C" void wkRender__11CWorkThreadFv(void);
+extern "C" void wkRenderAfter__11CWorkThreadFv(void);
+extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(void);
+extern "C" void CDeviceFileJob_UnkVirtualFunc1__14CDeviceFileJobFv(void);
+extern "C" u32 __RTTI__10IWorkEvent;
+extern "C" u32 __RTTI__11CWorkThread;
+}
+
 // Local vtable-positioned view of the read-DVD job used by wkStandbyLogout:
 // retail dispatches cancel(CFileHandle*) at vtable[0xA8], but MWCC lays the
 // real class's inherited chain one slot longer (its cancel lands at 0xAC), so
@@ -93,7 +137,7 @@ struct CDeviceFileJobReadDvdLayout {
 };
 
 // Retail vtable (shared data split .data 0x8056C598), stored by the ctor.
-extern "C" u8 lbl_eu_8056C598[];
+extern "C" u32 lbl_eu_8056C598[43];
 
 // Extern "C" calls whose retail names do NOT collide with header member
 // declarations.  Base-class member calls (CWorkThread/CDeviceFile/CDeviceFileDvd/
@@ -205,3 +249,18 @@ extern "C" void callCBM3__21CDeviceFileJobReadDvdFv(void* selfPtr) {
 
     CDeviceFile::removeFileJob(reinterpret_cast<CDeviceFileJob*>(self));
 }
+
+
+
+// [.rodata] size 0x40 align 8   (0 relocs)
+extern "C" __declspec(align(8)) const char lbl_eu_80522D50[24] = { 0x43, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x46, 0x69, 0x6C, 0x65, 0x4A, 0x6F, 0x62, 0x52, 0x65, 0x61, 0x64, 0x44, 0x76, 0x64, 0x00, 0x00, 0x00 };
+extern "C" __declspec(align(4)) const char lbl_eu_80522D68[20] = { 0x66, 0x6F, 0x6E, 0x74, 0x2F, 0x66, 0x6F, 0x6E, 0x74, 0x5F, 0x65, 0x75, 0x35, 0x2E, 0x62, 0x72, 0x66, 0x6E, 0x61, 0x00 };
+extern "C" __declspec(align(4)) const char lbl_eu_80522D7C[20] = { 0x66, 0x6F, 0x6E, 0x74, 0x2F, 0x4D, 0x65, 0x6E, 0x75, 0x46, 0x6F, 0x6E, 0x74, 0x2E, 0x62, 0x72, 0x66, 0x6E, 0x61, 0x00 };
+
+// [.sdata] size 0x8 align 8   (2 relocs)
+extern "C" u32 lbl_eu_806636F0[2] = { (u32)&lbl_eu_80522D50, (u32)&lbl_eu_8056C644 };
+
+// [.data] size 0xC8 align 8   (45 relocs)
+extern "C" u32 lbl_eu_8056C598[43] = { (u32)&lbl_eu_806636F0, 0x00000000, (u32)&__dt__21CDeviceFileJobReadDvdFv, (u32)&M2Blob::WorkEvent1__10IWorkEventFPvPCc, (u32)&M2Blob::OnFileEvent__10IWorkEventFP10CEventFile, (u32)&M2Blob::WorkEvent3__10IWorkEventFPv, (u32)&M2Blob::WorkEvent4__10IWorkEventFv, (u32)&M2Blob::OnPauseTrigger__10IWorkEventFb, (u32)&M2Blob::WorkEvent6__10IWorkEventFv, (u32)&M2Blob::WorkEvent7__10IWorkEventFv, (u32)&M2Blob::WorkEvent8__10IWorkEventFv, (u32)&M2Blob::WorkEvent9__10IWorkEventFv, (u32)&M2Blob::WorkEvent10__10IWorkEventFv, (u32)&M2Blob::WorkEvent11__10IWorkEventFv, (u32)&M2Blob::WorkEvent12__10IWorkEventFv, (u32)&M2Blob::WorkEvent13__10IWorkEventFv, (u32)&M2Blob::WorkEvent14__10IWorkEventFv, (u32)&M2Blob::WorkEvent15__10IWorkEventFv, (u32)&M2Blob::WorkEvent16__10IWorkEventFv, (u32)&M2Blob::WorkEvent17__10IWorkEventFv, (u32)&M2Blob::WorkEvent18__10IWorkEventFv, (u32)&M2Blob::WorkEvent19__10IWorkEventFv, (u32)&M2Blob::WorkEvent20__10IWorkEventFv, (u32)&M2Blob::WorkEvent21__10IWorkEventFv, (u32)&M2Blob::WorkEvent22__10IWorkEventFv, (u32)&M2Blob::WorkEvent23__10IWorkEventFv, (u32)&M2Blob::WorkEvent24__10IWorkEventFv, (u32)&M2Blob::WorkEvent25__10IWorkEventFv, (u32)&M2Blob::WorkEvent26__10IWorkEventFv, (u32)&M2Blob::WorkEvent27__10IWorkEventFv, (u32)&M2Blob::WorkEvent28__10IWorkEventFv, (u32)&M2Blob::WorkEvent29__10IWorkEventFv, (u32)&M2Blob::WorkEvent30__10IWorkEventFv, (u32)&M2Blob::WorkEvent31__10IWorkEventFv, (u32)&wkUpdate__21CDeviceFileJobReadDvdFv, (u32)&M2Blob::wkRender__11CWorkThreadFv, (u32)&M2Blob::wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__21CDeviceFileJobReadDvdFv, (u32)&wkStandbyLogout__21CDeviceFileJobReadDvdFv, (u32)&M2Blob::wkStandbyExceptionRetry__11CWorkThreadFUl, (u32)&M2Blob::CDeviceFileJob_UnkVirtualFunc1__14CDeviceFileJobFv, (u32)&cancel__21CDeviceFileJobReadDvdFPCc, (u32)&cancel__21CDeviceFileJobReadDvdFP11CFileHandle };
+extern "C" u32 lbl_eu_8056C644[7] = { (u32)&M2Blob::__RTTI__10IWorkEvent, 0x00000000, (u32)&M2Blob::__RTTI__11CWorkThread, 0x00000000, (u32)&lbl_eu_806636E8, 0x00000000, 0x00000000 };
+

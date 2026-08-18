@@ -71,7 +71,7 @@ extern "C" void func_8048FF90(CScnRootNw4r* self, u32 a, u32 b) {
 }
 
 // us-80494030: remove the (a, b) pair entry, shifting later entries down.
-void func_8048FFBC(CScnRootNw4r* self, u32 a, s32 b) {
+extern "C" void func_8048FFBC(CScnRootNw4r* self, u32 a, s32 b) {
     u32 count = self->mPairCount;
     for (u32 i = 0; i < count; i++) {
         if (self->mArrA[i] == a && b == self->mArrB[i]) {
@@ -89,7 +89,7 @@ extern "C" u32 func_80490038(u8* self) { return *(u32*)((u8*)self + 0x14); }
 
 // us-804940b4: return the +0x4B8 alloc handle, creating it lazily through
 // the virtual at vtable+0x2C when it is still invalid (-1).
-u32 func_80490040(CScnRootNw4r* self) {
+extern "C" u32 func_80490040(CScnRootNw4r* self) {
     u32 result = self->field_0x4B8;
     u32 out = result;
     if (result == 0xFFFFFFFF) {
@@ -100,7 +100,7 @@ u32 func_80490040(CScnRootNw4r* self) {
 
 extern "C" void func_80490088(u8* self) { ((void(*)(void*))func_8048FED8)((char*)self - 0xc); }
 
-void func_80490090(u8* self) { ((void(*)(void*))__dt__12CScnRootNw4rFv)((char*)self - 0xc); }
+extern "C" void func_80490090(u8* self) { ((void(*)(void*))__dt__12CScnRootNw4rFv)((char*)self - 0xc); }
 
 extern "C" u32 func_80490098__Fv(void) {
     extern u32 lbl_eu_806639A8;
@@ -117,7 +117,7 @@ extern "C" void func_804900A0__FUl(u32 param) {
 }
 
 // us-8049363c: remove the entry equal to `value`, shifting later entries down.
-void func_8048F5C8(CScnRootNw4r* self, u32 value) {
+extern "C" void func_8048F5C8(CScnRootNw4r* self, u32 value) {
     u32 count = self->mIdCount;
     for (u32 i = 0; i < count; i++) {
         if (self->mIds[i] == value) {
@@ -249,3 +249,49 @@ extern "C" void func_8048F994(CScnRootNw4r* self) {
 extern "C" void func_8048FAA8(CScnRootNw4r* self, u32 flag) {}
 
 extern "C" void func_8048FC68() {}
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056E768-0x8056E7D0 (104B): CScnRootNw4r vtable group.
+// lbl_eu_806639A0/80663998 (typeinfo pairs) live in foreign TUs; the
+// ExecCallback_* names are splitter-shortened nw4r template symbols.
+extern "C" u32 lbl_eu_806639A0;
+extern "C" u32 lbl_eu_80663998;
+extern "C" void func_8048F2F0();
+extern "C" void func_804871A8();
+extern "C" void ExecCallback_CALC_MAT__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
+extern "C" void ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
+extern "C" void ExecCallback_DRAW_OPA__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
+extern "C" void ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
+extern "C" u32 lbl_eu_8056E768[23] = {
+    (u32)&lbl_eu_806639A0, 0x00000000,
+    (u32)&__dt__12CScnRootNw4rFv,
+    (u32)&func_8048F5C8,
+    (u32)&func_8048F4D0,
+    (u32)&func_8048F8E8,
+    (u32)&func_8048F994,
+    (u32)&func_8048FC68,
+    (u32)&func_8048FF90,
+    (u32)&func_8048FFBC,
+    (u32)&func_8048F2F0,
+    (u32)&func_804871A8,
+    (u32)&func_80490040,
+    (u32)&func_80490038,
+    (u32)&lbl_eu_806639A0,
+    0xFFFFFFF4,
+    (u32)&func_80490090,
+    (u32)&func_80490088,
+    (u32)&ExecCallback_CALC_MAT__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv,
+    (u32)&ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv,
+    (u32)&ExecCallback_DRAW_OPA__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv,
+    (u32)&ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv,
+    (u32)&func_8048FED8,
+};
+DECOMP_FORCEACTIVE(CScnRootNw4r_cpp, lbl_eu_8056E768);
+extern "C" u32 lbl_eu_8056E7C4[3] = { (u32)&lbl_eu_80663998, 0x00000000, 0x00000000 };
+DECOMP_FORCEACTIVE(CScnRootNw4r_cpp, lbl_eu_8056E7C4);
+
+// [.rodata] 0x80523FD0-0x80524010 (64B): RTTI name + pooled heap names.
+extern "C" __declspec(align(8)) const char lbl_eu_80523FD0[0xD] = { 0x43,0x53,0x63,0x6E,0x52,0x6F,0x6F,0x74,0x4E,0x77,0x34,0x72,0x00 };
+extern "C" __declspec(align(4)) const char lbl_eu_80523FE0[0x30] = { 0x4E,0x57,0x34,0x52,0x20,0x4D,0x65,0x6D,0x00,0x4E,0x57,0x34,0x52,0x20,0x4D,0x65,0x6D,0x28,0x50,0x29,0x00,0x4E,0x57,0x34,0x52,0x20,0x4D,0x65,0x6D,0x28,0x53,0x29,0x00,0x4E,0x57,0x34,0x52,0x20,0x4D,0x65,0x6D,0x28,0x41,0x29,0x00,0x00,0x00,0x00 };
+DECOMP_FORCEACTIVE(CScnRootNw4r_cpp, lbl_eu_80523FD0);
+DECOMP_FORCEACTIVE(CScnRootNw4r_cpp, lbl_eu_80523FE0);

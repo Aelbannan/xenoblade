@@ -1,34 +1,92 @@
+// The include chain (CfObjectActor.hpp -> CAIAction.hpp / CSuddenCommu.hpp)
+// declares the shared battle-manager singleton getter with an incompatible
+// return type vs include/CfGameManager.hpp's declaration; this TU's own
+// static member definition emits the symbol.
+#define getInstance__Q22cf14CBattleManagerFv battleManagerSingletonGetUnused
 #include "kyoshin/cf/CBattleManager.hpp"
+#undef getInstance__Q22cf14CBattleManagerFv
+#include "monolib/math/CVec3.hpp"
 
 struct BMIf {
     virtual void _v008(); virtual void _v00C(); virtual void vf0010();
-    virtual void* _v014(); virtual void _v018(); virtual void _v01C(); virtual void _v020();
+    virtual void* _v014(); virtual void _v018(); virtual void _v01C();
+    virtual void _v020(void* arg);
     virtual void vf0024();
 };
 #include "kyoshin/UnkClass_805764CC.hpp"
 // The resource headers included by CfObjectPc carry incompatible provisional
 // owner types for this shared forwarding symbol. It is unused in this TU.
 #define func_800BB618 battleManagerResourceForwardUnused
+// The resource CfObjectPc.hpp declares the shared battle-manager singleton
+// getter with an incompatible return type (see the guard on the
+// CBattleManager.hpp include above).
+#define getInstance__Q22cf14CBattleManagerFv battleManagerSingletonGetUnused2
 #include "kyoshin/cf/object/CfObjectPc.hpp"
+#undef getInstance__Q22cf14CBattleManagerFv
 #undef func_800BB618
 #define func_800BB618 battleManagerEnemyResourceForwardUnused
 #define func_800BCFA0 battleManagerEnemyPositionRefreshUnused
 #define func_800BE12C battleManagerEnemyStatusUpdateUnused
 #define lbl_eu_80663E14 battleManagerEnemySceneUnused
 #define lbl_eu_8066A208 battleManagerEnemyEpsilonUnused
+#define getUnk80664658 battleManagerEnemyGimmickGetUnused
 #define BasicSound BattleManagerEnemyBasicSoundUnused
+// Guard against the include/ shadow-copy's C-ABI import decls colliding
+// with the already-visible cfsys/chain decls in this TU (MWCC: illegal
+// function overloading); none of these imports are referenced below the
+// include (call sites resolve to the global-scope decls, same symbol names).
+#define func_80174C98 battleManagerEnemyIDGateUnused
+#define func_801BA2C8 battleManagerEnemyVoiceGateUnused
+#define func_80061FFC battleManagerEnemyMemHandleUnused
+#define func_800BE33C battleManagerEnemyStubUnused
+#define func_800BE824 battleManagerEnemyStubUnused2
+#define func_8014B7B0 battleManagerEnemyBdatUnused
+#define func_8015396C battleManagerEnemyBdatSetUnused
+#define func_801765A4 battleManagerEnemyArtsWriteUnused
+#define func_8003B41C battleManagerEnemyBdatRowUnused
+#define func_8003B1EC battleManagerEnemyBdatCountUnused
+#define func_802617B8 battleManagerEnemyArtsSlotUnused
+#define func_804B0AD4 battleManagerEnemyHookUnused
+#define func_801F4DDC battleManagerEnemyActorUnused
+#define func_8003AA34 battleManagerEnemyBdatLookupUnused
 #include "kyoshin/cf/object/CfObjectEne.hpp"
+#undef func_8003AA34
+#undef func_801F4DDC
+#undef func_804B0AD4
+#undef func_802617B8
+#undef func_8003B1EC
+#undef func_8003B41C
+#undef func_801765A4
+#undef func_8015396C
+#undef func_8014B7B0
+#undef func_800BE824
+#undef func_800BE33C
+#undef func_80061FFC
+#undef func_801BA2C8
+#undef func_80174C98
 #undef BasicSound
+#undef getUnk80664658
 #undef lbl_eu_8066A208
 #undef lbl_eu_80663E14
 #undef func_800BE12C
 #undef func_800BCFA0
 #undef func_800BB618
 #include "kyoshin/cf/CfSoundMan.hpp"
+// The include/kyoshin/cf/CfGameManager.hpp C-ABI import tail conflicts with
+// the cfsys/chain walker decls already visible in this TU for the few names
+// it shares; guard only those (call sites bind to the global-scope decls,
+// same retail symbol names).
+#define func_80496288 cfgGameMgrImportUnused
+#define func_800D9354 cfgGameMgr9354Unused
 #include "kyoshin/cf/CfGameManager.hpp"
+#undef func_800D9354
+#undef func_80496288
 #include "monolib/work.hpp"
 
-extern UNKTYPE* func_8009EC9C(u16 r3);
+// Arts-data row returned by func_8009EC9C: the per-entry table scanned by
+// func_800C0174 starts at +0x1C (passed to func_8009D7E4). C-linkage so the
+// call reloc binds to the retail-unmangled name (declared in CArtsInfo.hpp).
+extern "C" void* func_8009EC9C(u32);
 extern void func_8009D7E4(UNKTYPE* r3, u32 r4);
 
 // Game state check function (name already contains __Fi; extern "C" prevents
@@ -37,7 +95,23 @@ extern "C" bool func_8006EF04__Fi(int mask);
 
 // Initialise all vision slots/effects (retail func_801A380C). Free function,
 // not a CVision member - declared here because CVision.hpp stays opaque.
-extern void func_801A380C(cf::CVision* self);
+// C linkage: the retail symbols for these reset helpers are unmangled, and
+// they are called as free functions (not member calls) so the call relocs
+// keep the retail names.
+extern "C" void func_801A380C(cf::CVision* self);
+extern "C" void __ct__80192C10(cf::UnkClass_80192BF4* self);
+extern "C" void func_8027728C(cf::CChain* self);
+extern "C" void func_8027D1A4(cf::UnkClass_800D8DBC* self);
+extern "C" void func_801BA1DC(cf::CSuddenCommu* self);
+// Generic-object holder register/deregister (retail unmangled: the static
+// member UnkClass_805764CC::func_800B07E8 would mangle to
+// func_800B07E8__17UnkClass_805764CCFv; the Fv-suffix here is the retail
+// symbol as-is).
+extern "C" UnkClass_805764CC* func_800B07E8__Fv();
+extern "C" void func_800B8804__FPvPQ22cf13IFactoryEvent(UnkClass_805764CC* holder, cf::IFactoryEvent* ev);
+extern "C" void func_800B88E0(UnkClass_805764CC* holder, cf::IFactoryEvent* ev);
+// Cross-actor id lookup used by func_800F3970's dispatch table (/100 scale).
+extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second);
 
 // ============================================================
 // Explicit template specializations: _reslist_base / reslist
@@ -51,9 +125,13 @@ extern void func_801A380C(cf::CVision* self);
 // Uses the retail MWCC pattern: old = cur; cur = cur->next; old->next = 0
 template <>
 _reslist_base<cf::CfObjectActor*>::~_reslist_base() {
+    // Restore the base-class vtable under the retail symbol name (the
+    // compiler's auto vptr store would emit an auto-mangled __vt__ name).
+    *(void**)this = (void*)lbl_eu_8052BD68;
+    _reslist_node<cf::CfObjectActor*>* old;
     _reslist_node<cf::CfObjectActor*>* cur = mStartNodePtr->mNext;
     while (cur != mStartNodePtr) {
-        _reslist_node<cf::CfObjectActor*>* old = cur;
+        old = cur;
         cur = cur->mNext;
         old->mNext = nullptr;
     }
@@ -69,9 +147,12 @@ _reslist_base<cf::CfObjectActor*>::~_reslist_base() {
 // _reslist_base<IBattleEvent*>::~_reslist_base()
 template <>
 _reslist_base<cf::IBattleEvent*>::~_reslist_base() {
+    // Restore the base-class vtable under the retail symbol name.
+    *(void**)this = (void*)lbl_eu_8052BD44;
+    _reslist_node<cf::IBattleEvent*>* old;
     _reslist_node<cf::IBattleEvent*>* cur = mStartNodePtr->mNext;
     while (cur != mStartNodePtr) {
-        _reslist_node<cf::IBattleEvent*>* old = cur;
+        old = cur;
         cur = cur->mNext;
         old->mNext = nullptr;
     }
@@ -90,88 +171,99 @@ extern unsigned int lbl_eu_80663F00;
 // Voice action helper: takes a void* source, returns a void* action
 void* func_8016FE34(void*);
 
-namespace cf{
-    u32 CBattleManager::lbl_804F8228[] = {
-        0,
-        0x1AD,
-        0x1AA,
-        0x1B0,
-        0x1B6,
-        0x1BA,
-        0x1B5,
-        0x1B7,
-        0x1B8,
-        0x1B9
-    };
+// Attack sound-id table (retail .rodata 0x804FCA08; 10 known entries of the
+// 0x34-byte symbol). Defined with the retail name so the lwzx reloc binds.
+u32 lbl_eu_804FCA08[] = {
+    0,
+    0x1AD,
+    0x1AA,
+    0x1B0,
+    0x1B6,
+    0x1BA,
+    0x1B5,
+    0x1B7,
+    0x1B8,
+    0x1B9
+};
 
+// 8-byte holder for the enum-list helpers (func_80043D90 ctor /
+// func_80043F18 / __dt__80043E88); the list returned by func_80043F18 has
+// its element count at +0x620.
+struct EnumListHolder {
+    void* list;
+    u32 handle;
+};
+
+namespace cf{
     //Plays attack sound effects when a player character hits an enemy?
     void func_800D7A04(CfObjectPc* pObjectPc, CfObjectEne* pObjectEne){
-        CActorParam_UnkStruct1* r3 = pObjectPc->CActorParam_UnkVirtualFunc129();
-        u32 flags = r3->mFlagsArray[0].flags;
+        CActorParam_UnkStruct1* param = pObjectPc->CActorParam_UnkVirtualFunc129();
+        BattleObjAccessor* ene = (BattleObjAccessor*)pObjectEne;
 
-        if(flags & CActorParam_UnkStruct1::FLAG_BIT_1){
-            CfSoundMan::func_801BFC38(0, 0x192, 0, 0, 0.6f);
-            CfSoundMan::func_801BFC38(0, 0x191, 0, 0, 0.6f);
-        }else if(flags & 0x2000){
-            CfSoundMan::func_801BFC38(0, 0x1C5, 0, 0, 0.6f);
+        if(param->mFlagsArray[0].flags & CActorParam_UnkStruct1::FLAG_BIT_1){
+            CfSoundMan::func_801BFC38(0, 0x192, 0, 0, lbl_eu_80666DD0);
+            CfSoundMan::func_801BFC38(0, 0x191, 0, 0, lbl_eu_80666DD0);
+        }else if(param->mFlagsArray[0].flags & 0x2000){
+            CfSoundMan::func_801BFC38(0, 0x1C5, 0, 0, lbl_eu_80666DD0);
         }else{
-            CActorParam_UnkStruct2* r30 = r3->unk50;
+            CActorParam_UnkStruct2* sub = param->unk50;
 
-            if(r30 != nullptr){
-                if(r30->unk78 & CActorParam_UnkStruct1::FLAG_BIT_24){
-                    if(pObjectEne->CActorParam_UnkVirtualFunc19() == 1 ||
-                    pObjectEne->CActorParam_UnkVirtualFunc19() == 2){
-                        if(!(r30->unk78 & CActorParam_UnkStruct1::FLAG_BIT_9)){
-                            CfSoundMan::func_801BFC38(0, 0x1B4, 0, 0, 0.6f);
+            if(sub != nullptr){
+                if(sub->unk78 & CActorParam_UnkStruct1::FLAG_BIT_24){
+                    if((s32)pObjectEne->CActorParam_UnkVirtualFunc19() == 1 ||
+                    (s32)pObjectEne->CActorParam_UnkVirtualFunc19() == 2){
+                        if(!(sub->unk78 & CActorParam_UnkStruct1::FLAG_BIT_9)){
+                            CfSoundMan::func_801BFC38(0, 0x1B4, 0, 0, lbl_eu_80666DD0);
                             return;
                         }
-                    }else if(!(r30->unk78 & CActorParam_UnkStruct1::FLAG_BIT_9)){
-                        CfSoundMan::func_801BFC38(0, 0x1B5, 0, 0, 0.6f);
+                    }else if(!(sub->unk78 & CActorParam_UnkStruct1::FLAG_BIT_9)){
+                        CfSoundMan::func_801BFC38(0, 0x1B5, 0, 0, lbl_eu_80666DD0);
                         return;
                     }
-                }else if((r30->unk78 & CActorParam_UnkStruct1::FLAG_BIT_25)
-                && !(r30->unk78 & CActorParam_UnkStruct1::FLAG_BIT_9)){
-                    CfSoundMan::func_801BFC38(0, 0x1B5, 0, 0, 0.6f);
+                }else if((sub->unk78 & CActorParam_UnkStruct1::FLAG_BIT_25)
+                && !(sub->unk78 & CActorParam_UnkStruct1::FLAG_BIT_9)){
+                    CfSoundMan::func_801BFC38(0, 0x1B5, 0, 0, lbl_eu_80666DD0);
                     return;
                 }
                 
-                if((s32)r30->unk40 == 1){
-                    if(flags & CActorParam_UnkStruct1::FLAG_BIT_8){
-                        CfSoundMan::func_801BFC38(0, 0x1AF, 0, 0, 0.6f);
+                u16 type = sub->unk40;
+                if((s32)type == 1){
+                    if(sub->unk78 & CActorParam_UnkStruct1::FLAG_BIT_8){
+                        CfSoundMan::func_801BFC38(0, 0x1AF, 0, 0, lbl_eu_80666DD0);
                     }else{
                         //likely an inline
-                        if(pObjectEne != nullptr && pObjectEne->unk64 & 0x2){
-                            UNKTYPE* r3_1 = func_8009EC9C(pObjectEne->unk8C_3);
-                            func_8009D7E4(&static_cast<UnkStruct_8009EC9C_Ret*>(r3_1)->unk1C, 1);
+                        if(pObjectEne != nullptr && (ene->field_3f00 & 0x2)){
+                            void* arts = func_8009EC9C(ene->field_3f28);
+                            func_8009D7E4((u8*)arts + 0x1c, 1);
                         }
 
-                        if(pObjectEne->CActorParam_UnkVirtualFunc19() == 1 ||
-                        pObjectEne->CActorParam_UnkVirtualFunc19() == 2){
-                            CfSoundMan::func_801BFC38(0, 0x1AE, 0, 0, 0.6f);
+                        if((s32)pObjectEne->CActorParam_UnkVirtualFunc19() == 1 ||
+                        (s32)pObjectEne->CActorParam_UnkVirtualFunc19() == 2){
+                            CfSoundMan::func_801BFC38(0, 0x1AE, 0, 0, lbl_eu_80666DD0);
                         }else{
-                            CfSoundMan::func_801BFC38(0, 0x1AD, 0, 0, 0.6f);
+                            CfSoundMan::func_801BFC38(0, 0x1AD, 0, 0, lbl_eu_80666DD0);
                         }
                     }
-                }else if((s32)r30->unk40 == 2){
-                    if(flags & CActorParam_UnkStruct1::FLAG_BIT_8){
-                        CfSoundMan::func_801BFC38(0, 0x1AC, 0, 0, 0.6f);
+                }else if((s32)type == 2){
+                    if(sub->unk78 & CActorParam_UnkStruct1::FLAG_BIT_8){
+                        CfSoundMan::func_801BFC38(0, 0x1AC, 0, 0, lbl_eu_80666DD0);
                     }else{
                         //likely an inline
-                        if(pObjectEne != nullptr && pObjectEne->unk64 & 0x2){
-                            UNKTYPE* r3_1 = func_8009EC9C(pObjectEne->unk8C_3);
-                            func_8009D7E4(&static_cast<UnkStruct_8009EC9C_Ret*>(r3_1)->unk1C, 1);
+                        if(pObjectEne != nullptr && (ene->field_3f00 & 0x2)){
+                            void* arts = func_8009EC9C(ene->field_3f28);
+                            func_8009D7E4((u8*)arts + 0x1c, 1);
                         }
 
-                        if(pObjectEne->CActorParam_UnkVirtualFunc19() == 1 ||
-                        pObjectEne->CActorParam_UnkVirtualFunc19() == 2){
-                            CfSoundMan::func_801BFC38(0, 0x1AB, 0, 0, 0.6f);
+                        if((s32)pObjectEne->CActorParam_UnkVirtualFunc19() == 1 ||
+                        (s32)pObjectEne->CActorParam_UnkVirtualFunc19() == 2){
+                            CfSoundMan::func_801BFC38(0, 0x1AB, 0, 0, lbl_eu_80666DD0);
                         }else{
-                            CfSoundMan::func_801BFC38(0, 0x1AA, 0, 0, 0.6f);
+                            CfSoundMan::func_801BFC38(0, 0x1AA, 0, 0, lbl_eu_80666DD0);
                         }
                     }
                 }else{
-                    u32 r4 = CBattleManager::lbl_804F8228[r30->unk40];
-                    CfSoundMan::func_801BFC38(0, r4, 0, 0, 0.6f);
+                    u32 r4 = lbl_eu_804FCA08[type];
+                    CfSoundMan::func_801BFC38(0, r4, 0, 0, lbl_eu_80666DD0);
                 }
             }
         }
@@ -183,14 +275,18 @@ namespace cf{
         mActorList2.reserve(heapIndex, 8);
         mActorList3.reserve(heapIndex, 56);
         mBattleEventList.reserve(heapIndex, 4);
-        UnkClass_805764CC* classPtr = UnkClass_805764CC::func_800B07E8();
-        classPtr->func_800B8804(this);
-        mVision.unk261C4.unk74 = 0;
+        UnkClass_805764CC* classPtr = func_800B07E8__Fv();
+        func_800B8804__FPvPQ22cf13IFactoryEvent(classPtr, (cf::IFactoryEvent*)this);
+        // Retail tail of the ctor: zero the trailing f32 timer slot.
+        ((CBattleManagerTail283D4*)this)->field_283D4 = lbl_eu_80666DDC;
     }
 
     CBattleManager::~CBattleManager(){
-        UnkClass_805764CC* classPtr = UnkClass_805764CC::func_800B07E8();
-        classPtr->func_800B88E0(this);
+        // Manual vptr store under the retail symbol: MWCC's auto store would
+        // emit __vt__Q22cf14CBattleManager. Then deregister from the holder
+        // (retail calls func_800B07E8__Fv / func_800B88E0 with C linkage).
+        *(void**)this = (void*)lbl_eu_8052BCE0;
+        func_800B88E0(func_800B07E8__Fv(), this);
     }
 
 // Static member definition (storage for the singleton pointer)
@@ -216,137 +312,93 @@ CBattleManager* CBattleManager::getInstance() {
         mActorList2.clear();
         mActorList3.clear();
         func_801A380C(&mVision);
-        unk19C.__ct__80192C10();
-        mChain.func_8027728C();
-        unk20C8.func_8027D1A4();
-        mSuddenCommu.func_801BA1DC();
+        __ct__80192C10(&unk19C);
+        func_8027728C(&mChain);
+        func_8027D1A4(&unk20C8);
+        func_801BA1DC(&mSuddenCommu);
+        // Single read of the named 0.0f global (retail does one lfs from
+        // lbl_eu_80666DDC, then reuses f0 for all three stfs). Naming the
+        // global (instead of writing 0) keeps the sda21 reloc on the retail
+        // symbol rather than an MWCC pool constant @N.
+        const f32 zero = lbl_eu_80666DDC;
         mSuddenCommu.unk28 = 0;
-        mSuddenCommu.unk2C = 0;
-        unk88 = 0;
+        mSuddenCommu.unk2C = zero;
+        unk88 = zero;
         unk8C = 0;
-        unk90 = 0;
+        unk90 = zero;
         mVision.unk261C4.unk70 = 0;
         unk94.clear();
         func_80085220(2, 0);
     }
 
     void CBattleManager::FactoryEvent2(){
-        // Check the mBattleEventList reslist's vtable pointer for state flags
-        // (The vtable pointer's low bits encode which path to take)
+        // The mBattleEventList reslist's first word carries the dispatch flags.
         u32 listFlags = *(u32*)&mBattleEventList;
-        
-        // Bit 0x20 = dynamic_cast / interface dispatch path
+
+        // Bit 0x20 = dynamic_cast / interface dispatch path.
         if(listFlags & 0x20){
-            extern void* __dynamic_cast(void*, long, void*, void*, long);
-            extern char lbl_eu_80661970[];
-            extern char lbl_eu_806618F0[];
             void* castResult = __dynamic_cast(this, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
             void** vtbl = *(void***)this;
             typedef void (*VFunc3C)(void*, void*);
             ((VFunc3C)vtbl[0x3C / 4])(this, castResult);
             return;
         }
-        
-        // Bits 0x02 or 0x04 = object removal / cleanup path
+
+        // Bits 0x02 or 0x04 = object removal / cleanup path.
         if(!(listFlags & 0x02) && !(listFlags & 0x04)) return;
-        
+
         BattleRemoveObjAccessor* target = (BattleRemoveObjAccessor*)func_8016FE34(this);
-        
-        // Remove target from mActorList1
-        mActorList1.remove((CfObjectActor*)target);
-        
-        // Notify chain
-        extern void func_80279694(CChain*, CfObjectActor*);
-        func_80279694(&mChain, (CfObjectActor*)target);
-        
-        // Bit 0x02 at +0x3F00 determines which list to remove from
-        if(target->field_3f00 & 0x02){
-            mActorList2.remove((CfObjectActor*)target);
-        }else{
-            mActorList3.remove((CfObjectActor*)target);
-        }
-        
-        // Check global battle manager state
-        {
-            u32 mgrAddr = (u32)lbl_eu_80663F00;
-            reslist<CfObjectActor*>& globalList1 = *(reslist<CfObjectActor*>*)(mgrAddr + 0x48);
-            if(globalList1.size() == 0){
-                extern void func_800F41A0(CBattleManager*);
-                func_800F41A0(this);
+
+        // If the target is a member of mActorList1, unregister it everywhere.
+        if(mActorList1.find((CfObjectActor*)target) != mActorList1.end()){
+            mActorList1.remove((CfObjectActor*)target);
+            func_80279694(&mChain, (CfObjectActor*)target);
+
+            if(target->field_3f00 & 0x02){
+                mActorList2.remove((CfObjectActor*)target);
+            }else{
+                mActorList3.remove((CfObjectActor*)target);
             }
-        }
-        
-        {
-            u32 mgrAddr = (u32)lbl_eu_80663F00;
-            reslist<CfObjectActor*>& globalList2 = *(reslist<CfObjectActor*>*)(mgrAddr + 0x8);
-            if(globalList2.size() == 0){
-                extern void* getPlayer__Q22cf13CfGameManagerFi(int);
-                extern void func_80174B4C(void*, u32);
-                for(int i = 0; i < 3; i++){
-                    void* player = getPlayer__Q22cf13CfGameManagerFi(i);
-                    void* action = func_8016FE34(player);
-                    if(action != nullptr){
-                        void** vtbl = *(void***)action;
-                        typedef void (*VFunc)(void*, u32);
-                        ((VFunc)vtbl[0x20 / 4])(action, 0x40);
-                        ((VFunc)vtbl[0x24 / 4])(action, 0x80);
-                        ((VFunc)vtbl[0x28 / 4])(action, 0x8000);
-                        func_80174B4C(action, 0x800);
-                        func_80174B4C(action, 0x1000);
-                    }
+
+            if(((cf::CBattleManager*)lbl_eu_80663F00)->mActorList3.size() != 0) return;
+            func_800F41A0(this);
+            if(((cf::CBattleManager*)lbl_eu_80663F00)->mActorList1.size() != 0) return;
+
+            for(int i = 0; i < 3; i++){
+                void* player = getPlayer__Q22cf13CfGameManagerFi(i);
+                void* action = func_8016FE34(player);
+                if(action != nullptr){
+                    void** vtbl = *(void***)((u8*)action + 0x4);
+                    typedef void (*VFunc)(void*, u32);
+                    ((VFunc)vtbl[0x20 / 4])((u8*)action + 0x4, 0x40);
+                    ((VFunc)vtbl[0x24 / 4])((u8*)action + 0x4, 0x80);
+                    ((VFunc)vtbl[0x28 / 4])((u8*)action + 0x4, 0x8000);
+                    func_80174B4C(action, 0x800);
+                    func_80174B4C(action, 0x1000);
                 }
             }
-        }
-        
-        // Call virtual func_80085220(this, 1, 1)
-        {
-            void** vtbl = *(void***)this;
-            typedef void (*VFunc1C)(void*, u32, u32);
-            ((VFunc1C)vtbl[0x1C / 4])(this, 1, 1);
-        }
-        
-        // Clear global flag bits
-        {
-            extern u32 lbl_eu_80663E28;
-            lbl_eu_80663E28 &= ~0x18;
-        }
-        
-        // Chain maintenance
-        extern void func_80277B34(CChain*);
-        func_80277B34(&mChain);
-        
-        // Enum list iteration
-        struct EnumListHolder { void* list; u32 handle; };
-        EnumListHolder holder;
-        extern void func_80043D90(EnumListHolder*);
-        extern void* func_80043F18(EnumListHolder*);
-        extern void func_800F4A98(void*, int, int);
-        extern void* func_800F6EAC(void*, u32);
-        extern void __dt__80043E88(EnumListHolder*, int);
-        
-        func_80043D90(&holder);
-        void* list = func_80043F18(&holder);
-        func_800F4A98(list, 0x20, 0);
-        
-        for(u32 i = 0; ; i++){
-            list = func_80043F18(&holder);
-            u32 count = *(u32*)((u8*)list + 0x620);
-            if(i >= count) break;
-            
-            list = func_80043F18(&holder);
-            void* element = func_8016FE34(func_800F6EAC(list, i));
-            if(element != nullptr){
-                void** vtbl = *(void***)element;
+
+            func_80085220(1, 1);
+            // Clear the bit-28 global state flag (rlwinm mask 29..27).
+            lbl_eu_80663E28 &= ~0x8;
+            func_80277B34(&mChain);
+
+            EnumListHolder holder;
+            func_80043D90(&holder);
+            func_800F4A98(func_80043F18(&holder), 0x20, 0);
+
+            for(u32 i = 0; i < ((CVisionEnumList*)func_80043F18(&holder))->count; i++){
+                void* action = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                void** vtbl = *(void***)action;
                 typedef void (*VFunc)(void*);
-                ((VFunc)vtbl[0xB0 / 4])(element);
-                vtbl = *(void***)element;
-                ((VFunc)vtbl[0xB8 / 4])(element);
-                vtbl = *(void***)element;
-                ((VFunc)vtbl[0x314 / 4])(element);
+                ((VFunc)vtbl[0xB0 / 4])(action);
+                vtbl = *(void***)action;
+                ((VFunc)vtbl[0xB8 / 4])(action);
+                vtbl = *(void***)action;
+                ((VFunc)vtbl[0x314 / 4])(action);
             }
+            __dt__80043E88(&holder, -1);
         }
-        
-        __dt__80043E88(&holder, -1);
     }
 
 }
@@ -417,7 +469,7 @@ extern "C" void func_800EA484(cf::CBattleManager*, f32, int);
 
 void cf::CBattleManager::func_800EA470() {
     unk88 = lbl_eu_80666DDC;
-    return func_800EA484(this, lbl_eu_80666DD4, unk8C);
+    func_800EA484(this, lbl_eu_80666DD4, unk8C);
 }
 extern "C" void func_800EA998(u8* self) { reinterpret_cast<BMIf*>((u8*)self + 0x219c)->vf0024(); }
 // func_800EC918 (retail 0x800ED400, 0x6E1C) - main battle-event processor.
@@ -438,6 +490,22 @@ extern "C" f32 lbl_eu_80666DF4;  // 15.0f
 extern "C" f32 lbl_eu_80666DD0;  // 0.6f
 // 0.01f (existing lbl_80666DD8 without eu_ is a different symbol)
 extern "C" f32 lbl_eu_80666DD8;   // 0.01f
+
+// --- func_800D9354 imports (retail-unmangled names) ---
+extern "C" void func_801A39D8(cf::CVision* self);
+extern "C" void func_8018C610(cf::UnkClass_8018C5FC* self);
+extern "C" void func_80192CB0(cf::UnkClass_80192BF4* self);
+extern "C" void func_80192C2C(cf::UnkClass_80192BF4* self);
+extern "C" void func_8027732C(cf::CChain* self);
+extern "C" void func_8027D20C(cf::UnkClass_800D8DBC* self);
+extern "C" void func_801BA25C(cf::CSuddenCommu* self);
+extern "C" void func_80274B20(void* self);
+extern "C" void func_8027EF50();
+extern "C" s32 func_80086B18__Q22cf13CfGameManagerFv(void* self);
+// --- func_800D9978 imports (retail-unmangled names) ---
+extern "C" void func_802A2D84();
+extern "C" void func_8027F0A0();
+extern "C" void func_802A2210(void* actor);
 extern "C" f32 lbl_eu_80666DF8;  // 25.0f
 extern "C" f32 lbl_eu_80666E00;  // 100.0f
 extern "C" f32 lbl_eu_80666E18;  // 50.0f
@@ -701,11 +769,6 @@ static const f32 k50_0f = 50.0f;   // lbl_eu_80666E18
 static const f32 k75_0f = 75.0f;   // lbl_eu_80666E7C
 static const f32 k99_0f = 99.0f;   // lbl_eu_80666E88
 static const f32 k100_0f = 100.0f; // lbl_eu_80666E00
-struct EnumListHolder {
-    void* list;
-    u32 handle;
-};
-
 extern "C" void* __ct__800FB044(void* list, f32 f, void* obj, int kind);
 extern "C" float func_800D81A8(void* obj, void* target, void* source);
 
@@ -3822,13 +3885,10 @@ extern "C" s32 func_800EC918(
         (BattleTargetData*)(target)                                            \
     )
 
-// Thunk: dispatch through secondary vtable at +0x8, calling vtable[0x20]
+// Thunk: dispatch through secondary vtable at +0x8, calling vtable[0x20] on
+// the sub-object, passing (subobj, arg).
 void func_800F3958(void* ignored, void* self, void* arg) {
-    void* base = (u8*)self + 8;
-    void* vtbl = *(void**)base;
-    typedef void (*VFunc)(void*, void*);
-    VFunc vfunc = (VFunc)(*(void**)((u8*)vtbl + 0x20));
-    vfunc(base, arg);
+    reinterpret_cast<BMIf*>((u8*)self + 8)->_v020(arg);
 }
 unsigned char func_800F3DC8(void* self, int key) { const unsigned char* item = static_cast<const unsigned char*>(self) + 0x94; for (int i = 0; i < 32; ++i) { if (*reinterpret_cast<const int*>(item) == key) return item[4]; item += 8; } return 0; }
 void func_800F4004(void* this_) { unsigned char* self = static_cast<unsigned char*>(this_); void* anchor = *reinterpret_cast<void**>(self + 0x48); void* node = *reinterpret_cast<void**>(anchor); while (node != *reinterpret_cast<void**>(self + 0x48)) { unsigned char* object = *reinterpret_cast<unsigned char**>(static_cast<unsigned char*>(node) + 0x8); *reinterpret_cast<unsigned int*>(object + 0x3f04) |= 0x40; node = *reinterpret_cast<void**>(node); } }
@@ -3844,6 +3904,9 @@ namespace cf {
     }
 
     CChainTime::~CChainTime() {
+        // Manual vptr store under the retail symbol (auto store would emit
+        // __vt__Q22cf10CChainTime). The vtable pointer sits at +0x14.
+        *(void**)((u8*)this + 0x14) = (void*)lbl_eu_8052BD74;
         func_8027CE30();
     }
 
@@ -3973,239 +4036,303 @@ extern "C" int func_802799F0(void*, void*);
 
 // Calculates cumulative damage value from various stat sources
 extern "C" float func_800D81A8(void* obj, void* target, void* source){
-    float result = 0.0f;
-    
-    // Get source's linked object pointer at +0x50 (or null if source is null)
-    void* sourceObj = source ? *(void**)((u8*)source + 0x50) : nullptr;
-    
-    // ---- First block: accumulate from target's battle stats ----
+    // Retail starts the accumulator at 1.0f (lbl_eu_80666DD4).
+    float result = lbl_eu_80666DD4;
+
+    // Linked source object at +0x50 (or null if source is null)
+    BattleSrcObjAccessor* src = nullptr;
+    if (source != nullptr) src = *(BattleSrcObjAccessor**)((u8*)source + 0x50);
+
+    // ---- First block: accumulate from target's battle status values ----
     if(target != nullptr){
-        if(func_80148778((u8*)target + 8, 0x8f)){
+        if(func_80148778((u8*)target + 8, 0x8f) != 0){
             void* entry = func_80149154((u8*)target + 8, 0x8f);
-            u32 val = *(u32*)((u8*)entry + 0x10);
-            result += 0.001f * (float)val;
-        }else if(func_80148778((u8*)target + 8, 0x8e)){
+            result += lbl_eu_80666DD8 * (f32)((BDSessionEntry*)entry)->field_10;
+        }else if(func_80148778((u8*)target + 8, 0x8e) != 0){
             void* entry = func_80149154((u8*)target + 8, 0x8e);
-            u32 val = *(u32*)((u8*)entry + 0x10);
-            result += 0.001f * (float)val;
+            result += lbl_eu_80666DD8 * (f32)((BDSessionEntry*)entry)->field_10;
         }
-    }
-    
-    // Check target's virtual func 0x290 (returns non-null if active)
-    if(target != nullptr && sourceObj != nullptr){
-        typedef void* (*VFunc290)(void*);
-        VFunc290 vf290 = (VFunc290)(*(void***)target)[0x290 / 4];
-        if(vf290(target) != nullptr){
-            u32 flags = *(u32*)((u8*)sourceObj + 0x78);
-            if(flags & 0x40000000 && *(u16*)((u8*)sourceObj + 0x3c) == 3){
-                u32 stackVal;
-                if(func_80260264(target, 0x3e, &stackVal)){
-                    result += 0.001f * (float)stackVal;
-                }
+
+        // vfunc 0x290 on the target + a 0x3e-flagged source entry
+        if(vcall_p(target, 0x290) != nullptr && src != nullptr &&
+           (src->field_78 & 0x40000000) && src->type_3c == 3){
+            s32 v;
+            if(func_80260264(vcall_p(target, 0x290), 0x3e, &v) != 0){
+                result += lbl_eu_80666DD8 * (f32)v;
             }
         }
     }
-    
+
     // ---- Second block: accumulate from obj's data ----
     if(obj != nullptr){
-        // If source is null or type != 3, try chain value
-        if(sourceObj == nullptr || *(u16*)((u8*)sourceObj + 0x3c) != 3){
-            u32 mgrAddr = (u32)lbl_eu_80663F00;
-            if(func_802799F0((void*)(mgrAddr + 0x1a8), obj)){
-                result += *(float*)(mgrAddr + 0x20ac);
+        // Chain gauge when the source is a chain-type object (or absent)
+        if(src == nullptr || src->type_3c == 3){
+            cf::CBattleManager* mgr = (cf::CBattleManager*)lbl_eu_80663F00;
+            if(func_802799F0((u8*)mgr + 0x1A8, obj) != 0){
+                result += ((CBattleManager_20AC*)mgr)->field_20AC;
             }
         }
-        
-        // Check obj's virtual func 0x290
-        {
-            typedef void* (*VFunc290)(void*);
-            VFunc290 vf290 = (VFunc290)(*(void***)obj)[0x290 / 4];
-            if(vf290(obj) != nullptr && sourceObj != nullptr){
-                u32 flags = *(u32*)((u8*)sourceObj + 0x78);
-                if(flags & 0x40000000 && *(u16*)((u8*)sourceObj + 0x3c) == 3){
-                    u32 stackVal;
-                    if(func_80260264(obj, 0x3d, &stackVal)){
-                        result += 0.001f * (float)stackVal;
-                    }
+
+        // vfunc 0x290 on obj + a 0x3d-flagged source entry
+        if(vcall_p(obj, 0x290) != nullptr && src != nullptr &&
+           (src->field_78 & 0x40000000) && src->type_3c == 3){
+            s32 v;
+            if(func_80260264(vcall_p(obj, 0x290), 0x3d, &v) != 0){
+                result += lbl_eu_80666DD8 * (f32)v;
+            }
+        }
+
+        // Art type 5 on the source: 0x42 value
+        if(src != nullptr && (src->field_78 & 0x40000000) && src->field_40 == 5){
+            s32 v;
+            if(func_80260264(vcall_p(obj, 0x290), 0x42, &v) != 0){
+                result += lbl_eu_80666DD8 * (f32)v;
+            }
+        }
+
+        // Generic 0x3f value against the target's vfunc 0x5C0 / 0x130 gate
+        if(src != nullptr && (src->field_78 & 0x40000000)){
+            s32 v;
+            if(func_80260264(vcall_p(obj, 0x290), 0x3f, &v) != 0){
+                if(target != nullptr && vcall_p1(obj, 0x5C0, (u32)target) != nullptr &&
+                   vcall_f(target, 0x130) < lbl_eu_80666DE8){
+                    result += lbl_eu_80666DD8 * (f32)v;
                 }
             }
         }
-        
-        // Check sourceObj flags for type 5
-        if(sourceObj != nullptr){
-            u32 flags = *(u32*)((u8*)sourceObj + 0x78);
-            if(flags & 0x40000000 && *(u16*)((u8*)sourceObj + 0x40) == 5){
-                u32 stackVal;
-                if(func_80260264(obj, 0x42, &stackVal)){
-                    result += 0.001f * (float)stackVal;
-                }
-            }
+    }
+
+    return result;
+}
+// Per-frame battle-manager update: drains the art-countdown timer (unk88),
+// resets the sub-systems, and every full second (accumulator at +0x283D4)
+// sweeps mActorList1, unregistering every dead actor from all three lists
+// and handing it to func_800D9CA0 when the actor-id gate passes.
+extern "C" void func_800D9354(cf::CBattleManager* self) {
+    // Frame-delta scaled by the art-recovery rate.
+    f32 delta = func_80496288(lbl_eu_80663E14) * lbl_eu_80666DEC;
+
+    if (!((BMVtIf828*)self)->v008(0x10)) {
+        self->func_800E2584(0x10);
+        lbl_eu_80663E24 |= 0x10000000;
+    }
+
+    func_801A39D8(&self->mVision);
+    func_8018C610(&self->unk194);
+    func_80192CB0(&self->unk19C);
+    func_8027732C(&self->mChain);
+    func_8027D20C(&self->unk20C8);
+    func_801BA25C(&self->mSuddenCommu);
+    func_80274B20((u8*)&self->mSuddenCommu + 0x28);
+    func_8027EF50();
+
+    if (self->unk88 > lbl_eu_80666DDC) {
+        f32 v = self->unk88 - delta;
+        self->unk88 = v;
+        if (v < lbl_eu_80666DDC) {
+            self->func_800EA470();
+        } else {
+            func_800EA484(self, self->unk90, self->unk8C);
         }
-        
-        // Final check with target
-        if(sourceObj != nullptr){
-            u32 flags = *(u32*)((u8*)sourceObj + 0x78);
-            if(flags & 0x40000000){
-                u32 stackVal;
-                if(func_80260264(obj, 0x3f, &stackVal)){
-                    if(target != nullptr){
-                        typedef void* (*VFunc290)(void*);
-                        VFunc290 vf290 = (VFunc290)(*(void***)obj)[0x290 / 4];
-                        typedef void* (*VFunc5C0)(void*, void*);
-                        VFunc5C0 vf5C0 = (VFunc5C0)(*(void***)obj)[0x5c0 / 4];
-                        if(vf290(obj) != nullptr && vf5C0(obj, target) != nullptr){
-                            typedef float (*VFunc130)(void*);
-                            VFunc130 vf130 = (VFunc130)(*(void***)target)[0x130 / 4];
-                            if(vf130(target) < 0.0f){
-                                result += 0.001f * (float)stackVal;
-                            }
+    }
+
+    cf::CfGameManager::getInstance();
+    if (func_8006EF04__Fi(0x4000000) == 0) {
+        f32* ticker = &((CBattleManagerTail283D4*)self)->field_283D4;
+        f32 tv = *ticker + delta;
+        *ticker = tv;
+        if (tv >= lbl_eu_80666DD4) {
+            _reslist_node<cf::CfObjectActor*>* node = self->mActorList1.mStartNodePtr->mNext;
+            while (node != self->mActorList1.mStartNodePtr) {
+                cf::CfObjectActor* obj = node->mItem;
+                void* sub = obj ? (void*)((u8*)obj + 0x3e9c) : 0;
+                if (func_80086B18__Q22cf13CfGameManagerFv(sub) == 0) {
+                    self->mActorList1.remove(obj);
+                    self->mActorList2.remove(obj);
+                    self->mActorList3.remove(obj);
+
+                    if (obj != 0) {
+                        int id = 0;
+                        u8* sub4 = ((cf::CfActorField04*)obj)->field_0x04;
+                        u32* holder = ((cf::CfActorUnk4Vt30*)sub4)->vf30();
+                        id = (int)*holder;
+                        if (func_80174C98(holder, &id, 0x802)) {
+                            func_800D9CA0(self, (BattleRemoveObjAccessor*)obj);
+                            break;
                         }
                     }
                 }
+                node = node->mNext;
             }
+            *ticker = lbl_eu_80666DDC;
         }
     }
-    
-    return result;
 }
-void func_800D9354(){}
-void func_800D9978(){}
+
+// Battle-actor registration: actors already in mActorList1 only refresh the
+// busy check; unregistered idle actors are pushed into the lists, notified
+// through their vtable holders and the battle-event chain, and reset the
+// sudden-commu voice state when they become the lone list-2 member.
+extern "C" void func_800D9978(cf::CBattleManager* self, cf::CfObjectActor* actor) {
+    cf::CfGameManager::getInstance();
+    if (func_8006EF04__Fi(0x4000000) != 0) return;
+
+    BattleRegObjAccessor* acc = (BattleRegObjAccessor*)actor;
+    if (acc->field_3374 & 0x08000000) return;
+    if (acc->field_3374 & 0x00002000) return;
+
+    // Is the actor already registered in mActorList1?
+    _reslist_node<cf::CfObjectActor*>* head1 = self->mActorList1.mStartNodePtr;
+    _reslist_node<cf::CfObjectActor*>* cur = head1->mNext;
+    while (cur != head1 && cur->mItem != actor) cur = cur->mNext;
+
+    if (cur != head1) {
+        // Already registered: refresh the busy check.
+        ((cf::CVisionBattleObj*)actor)->vf2BC();
+    } else if (((cf::CVisionBattleObj*)actor)->vf2BC() != 0) {
+        // Busy and unregistered: retail re-runs the check call.
+        ((cf::CVisionBattleObj*)actor)->vf2BC();
+    } else {
+        // Register the actor in the lists.
+        self->mActorList1.push_back(actor);
+        self->mChain.chkActorList();
+        if (acc->field_3F00 & 0x2) {
+            self->mActorList2.push_back(actor);
+        } else {
+            self->mActorList3.push_back(actor);
+        }
+
+        // Notify the vtable-holder sub-object.
+        ((BMSub3ED4Vt*)acc->field_3ED4)->vf78();
+        func_800E9FE4(self, actor, 0, 0, 0, 0, 0);
+
+        // Notify every registered battle event (vtable slot 0xC).
+        _reslist_node<cf::IBattleEvent*>* evHead = self->mBattleEventList.mStartNodePtr;
+        _reslist_node<cf::IBattleEvent*>* ev = evHead->mNext;
+        while (ev != evHead) {
+            ((BattleEventVtIf0C*)(ev->mItem))->v00C(actor);
+            ev = ev->mNext;
+        }
+
+        // If mActorList2 holds at most one actor, reset the voice state.
+        u32 count = 0;
+        for (_reslist_node<cf::CfObjectActor*>* n = self->mActorList2.mStartNodePtr->mNext;
+             n != self->mActorList2.mStartNodePtr; n = n->mNext) {
+            count++;
+        }
+        if (count <= 1 && (acc->field_3F00 & 0x2)) {
+            func_802A2D84();
+            func_8027F0A0();
+            self->mSuddenCommu.unk28 = 0;
+            self->mSuddenCommu.unk2C = lbl_eu_80666DDC;
+        }
+
+        if (acc->field_3F00 & 0x4) {
+            ((BMSub3ED4Vt*)acc->field_3ED4)->vf100();
+            func_802A2210(actor);
+        }
+    }
+}
 void func_800D9CA0(cf::CBattleManager* mgr, BattleRemoveObjAccessor* target){
-    extern bool func_8006EF04__Fi(s32);
-    if(func_8006EF04__Fi(0x400)) return;
-    
-    // Remove target from all lists
-    mgr->mActorList1.remove((cf::CfObjectActor*)target);
-    
-    extern void func_80279694(cf::CChain*, cf::CfObjectActor*);
-    func_80279694(&mgr->mChain, (cf::CfObjectActor*)target);
-    
-    // Check target flag bit 0x02 at +0x3F00 to decide list
-    if(target->field_3f00 & 0x02){
-        mgr->mActorList2.remove((cf::CfObjectActor*)target);
-    }else{
-        mgr->mActorList3.remove((cf::CfObjectActor*)target);
-    }
-    
-    // Call vfunc at +0x3ED4 object's vtable[0x7C]
-    {
-        void** vtbl = *(void***)target->field_3ed4;
-        typedef void (*VFunc7C)(void*);
-        ((VFunc7C)vtbl[0x7C / 4])(target->field_3ed4);
-    }
-    
-    // Call target's vtable[0x2E4]
-    {
-        void** vtbl = *(void***)target;
-        typedef void (*VFunc2E4)(void*);
-        ((VFunc2E4)vtbl[0x2E4 / 4])(target);
-    }
-    
-    // If target flag bit 0x04 at +0x3F00 is set, do extra cleanup
-    if(target->field_3f00 & 0x04){
-        void** vtbl = *(void***)target;
-        typedef void (*VFunc)(void*);
-        ((VFunc)vtbl[0xB0 / 4])(target);
-        vtbl = *(void***)target;
-        ((VFunc)vtbl[0xB8 / 4])(target);
-        // Call secondary vtable at +0x3E9C, vtable[0x50]
-        void** vtbl2 = *(void***)((u8*)target + 0x3E9C);
-        typedef void (*VFunc50)(void*, u32);
-        ((VFunc50)vtbl2[0x50 / 4])((u8*)target + 0x3E9C, 0);
-    }
-    
-    // Notify all battle events
-    {
-        _reslist_node<cf::IBattleEvent*>* cur = mgr->mBattleEventList.mStartNodePtr->mNext;
-        _reslist_node<cf::IBattleEvent*>* head = mgr->mBattleEventList.mStartNodePtr;
-        while(cur != head){
-            cf::IBattleEvent* event = cur->mItem;
-            if(event != nullptr){
+    cf::CfGameManager::getInstance();
+    if(func_8006EF04__Fi(0x400) != 0) return;
+
+    // Only proceed if the target is actually a member of mActorList1.
+    if(mgr->mActorList1.find((cf::CfObjectActor*)target) != mgr->mActorList1.end()){
+        mgr->mActorList1.remove((cf::CfObjectActor*)target);
+        func_80279694(&mgr->mChain, (cf::CfObjectActor*)target);
+
+        // Check target flag bit 0x02 at +0x3F00 to decide list
+        if(target->field_3f00 & 0x02){
+            mgr->mActorList2.remove((cf::CfObjectActor*)target);
+        }else{
+            mgr->mActorList3.remove((cf::CfObjectActor*)target);
+        }
+
+        // Call vfunc at +0x3ED4 object's vtable[0x7C]
+        {
+            void** vtbl = *(void***)target->field_3ed4;
+            typedef void (*VFunc7C)(void*);
+            ((VFunc7C)vtbl[0x7C / 4])(target->field_3ed4);
+        }
+
+        // Call target's vtable[0x2E4]
+        {
+            void** vtbl = *(void***)target;
+            typedef void (*VFunc2E4)(void*);
+            ((VFunc2E4)vtbl[0x2E4 / 4])(target);
+        }
+
+        // If target flag bit 0x04 at +0x3F00 is set, do extra cleanup
+        if(target->field_3f00 & 0x04){
+            void** vtbl = *(void***)target;
+            typedef void (*VFunc)(void*);
+            ((VFunc)vtbl[0xB0 / 4])(target);
+            vtbl = *(void***)target;
+            ((VFunc)vtbl[0xB8 / 4])(target);
+            // Call secondary vtable at +0x3E9C, vtable[0x50]
+            void** vtbl2 = *(void***)((u8*)target + 0x3E9C);
+            typedef void (*VFunc50)(void*, u32);
+            ((VFunc50)vtbl2[0x50 / 4])((u8*)target + 0x3E9C, 0);
+        }
+
+        // Notify all battle events (retail re-reads the sentinel each pass)
+        {
+            _reslist_node<cf::IBattleEvent*>* cur = mgr->mBattleEventList.mStartNodePtr->mNext;
+            while(cur != mgr->mBattleEventList.mStartNodePtr){
+                cf::IBattleEvent* event = cur->mItem;
                 void** vtbl = *(void***)event;
                 typedef void (*VFunc10)(void*, cf::CfObjectActor*);
                 ((VFunc10)vtbl[0x10 / 4])(event, (cf::CfObjectActor*)target);
+                cur = cur->mNext;
             }
-            cur = cur->mNext;
         }
-    }
-    
-    // Drain mActorList1 sentinel loop
-    {
-        _reslist_node<cf::CfObjectActor*>* cur = mgr->mActorList1.mStartNodePtr->mNext;
-        _reslist_node<cf::CfObjectActor*>* head = mgr->mActorList1.mStartNodePtr;
-        while(cur != head) cur = cur->mNext;
-    }
-    
-    // Check global lists
-    {
-        u32 mgrAddr = (u32)lbl_eu_80663F00;
-        reslist<cf::CfObjectActor*>& globalList1 = *(reslist<cf::CfObjectActor*>*)(mgrAddr + 0x48);
-        if(globalList1.size() == 0){
-            extern void func_800F41A0(cf::CBattleManager*);
-            func_800F41A0(mgr);
+
+        // Drain mActorList1 sentinel loop
+        {
+            _reslist_node<cf::CfObjectActor*>* cur = mgr->mActorList1.mStartNodePtr->mNext;
+            _reslist_node<cf::CfObjectActor*>* head = mgr->mActorList1.mStartNodePtr;
+            while(cur != head) cur = cur->mNext;
         }
-    }
-    
-    if(!(target->field_3f00 & 0x04)){
-        u32 mgrAddr = (u32)lbl_eu_80663F00;
-        reslist<cf::CfObjectActor*>& globalList2 = *(reslist<cf::CfObjectActor*>*)(mgrAddr + 0x8);
-        if(globalList2.size() == 0) return;
-    }
-    
-    // Player cleanup loop
-    extern void* getPlayer__Q22cf13CfGameManagerFi(int);
-    extern void func_80174B4C(void*, u32);
-    for(int i = 0; i < 3; i++){
-        void* player = getPlayer__Q22cf13CfGameManagerFi(i);
-        void* action = func_8016FE34(player);
-        if(action != nullptr){
-            void** vtbl = *(void***)action;
-            typedef void (*VFunc)(void*, u32);
-            ((VFunc)vtbl[0x20 / 4])(action, 0x40);
-            ((VFunc)vtbl[0x24 / 4])(action, 0x80);
-            ((VFunc)vtbl[0x28 / 4])(action, 0x8000);
-            func_80174B4C(action, 0x800);
-            func_80174B4C(action, 0x1000);
+
+        // Global list state gates (sequential, with func_800F41A0 between)
+        if(((cf::CBattleManager*)lbl_eu_80663F00)->mActorList3.size() != 0) return;
+        func_800F41A0(mgr);
+        if(((cf::CBattleManager*)lbl_eu_80663F00)->mActorList1.size() != 0) return;
+
+        if(!(target->field_3f00 & 0x04)){
+            if(((cf::CBattleManager*)lbl_eu_80663F00)->mActorList1.size() != 0) return;
         }
-    }
-    
-    // Call virtual func_80085220(mgr, 1, 1)
-    {
-        void** vtbl = *(void***)mgr;
-        typedef void (*VFunc1C)(void*, u32, u32);
-        ((VFunc1C)vtbl[0x1C / 4])(mgr, 1, 1);
-    }
-    
-    // Clear global flag
-    {
-        extern u32 lbl_eu_80663E28;
-        lbl_eu_80663E28 &= ~0x18;
-    }
-    
-    extern void func_80277B34(cf::CChain*);
-    func_80277B34(&mgr->mChain);
-    
-    // Enum list iteration
-    struct EnumListHolder { void* list; u32 handle; };
-    EnumListHolder holder;
-    extern void func_80043D90(EnumListHolder*);
-    extern void* func_80043F18(EnumListHolder*);
-    extern void func_800F4A98(void*, int, int);
-    extern void* func_800F6EAC(void*, u32);
-    extern void __dt__80043E88(EnumListHolder*, int);
-    
-    func_80043D90(&holder);
-    void* list = func_80043F18(&holder);
-    func_800F4A98(list, 0x20, 0);
-    
-    for(u32 i = 0; ; i++){
-        list = func_80043F18(&holder);
-        u32 count = *(u32*)((u8*)list + 0x620);
-        if(i >= count) break;
-        
-        list = func_80043F18(&holder);
-        void* element = func_8016FE34(func_800F6EAC(list, i));
-        if(element != nullptr){
+
+        // Player cleanup loop
+        for(int i = 0; i < 3; i++){
+            void* player = getPlayer__Q22cf13CfGameManagerFi(i);
+            void* action = func_8016FE34(player);
+            if(action != nullptr){
+                void** vtbl = *(void***)((u8*)action + 0x4);
+                typedef void (*VFunc)(void*, u32);
+                ((VFunc)vtbl[0x20 / 4])((u8*)action + 0x4, 0x40);
+                ((VFunc)vtbl[0x24 / 4])((u8*)action + 0x4, 0x80);
+                ((VFunc)vtbl[0x28 / 4])((u8*)action + 0x4, 0x8000);
+                func_80174B4C(action, 0x800);
+                func_80174B4C(action, 0x1000);
+            }
+        }
+
+        // Call virtual func_80085220(mgr, 1, 1)
+        mgr->func_80085220(1, 1);
+
+        // Clear global flag (rlwinm mask 29..27 clears bit 28)
+        lbl_eu_80663E28 &= ~0x8;
+        func_80277B34(&mgr->mChain);
+
+        // Enum list iteration
+        EnumListHolder holder;
+        func_80043D90(&holder);
+        func_800F4A98(func_80043F18(&holder), 0x20, 0);
+
+        for(u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&holder))->count; i++){
+            void* element = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
             void** vtbl = *(void***)element;
             typedef void (*VFunc)(void*);
             ((VFunc)vtbl[0xB0 / 4])(element);
@@ -4214,129 +4341,535 @@ void func_800D9CA0(cf::CBattleManager* mgr, BattleRemoveObjAccessor* target){
             vtbl = *(void***)element;
             ((VFunc)vtbl[0x314 / 4])(element);
         }
+
+        __dt__80043E88(&holder, -1);
     }
-    
-    __dt__80043E88(&holder, -1);
 }
 
-void func_800DA0A4(){}
-void func_800DB0FC(){}
-void func_800DB4FC(void* self, void* obj, void* arg1, void* arg2);
+// func_800DA0A4 (retail 0x800DAB8C, 0x1028 bytes): enemy-target selection /
+// damage-table refresh. Registers the actor into the manager's list, resolves
+// the linked sub-object and the 0x4C dispatch target, then computes the hit
+// vector / range and enqueues the appropriate damage splash via the enum-list
+// helpers (r27 = sub-object type 0..7).
+extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(void*);
+extern "C" void func_802A1C68(void*);
+extern "C" void func_802773EC(void*, void*);
+extern "C" void func_802A2EEC(void*);
+extern "C" void func_800FB270(void*, void*, f32, f32, f32, s32);
+extern "C" void __ct__800FBA18(void*, f32, f32, f32, s32);
+extern "C" void func_800FB5AC(void*, void*, f32, f32, f32, f32, f32, s32);
+extern "C" void func_800DB0FC(void*, void*, void*, void*);
+extern "C" s32 func_80086DBC__Q22cf13CfGameManagerFv(void);
+extern "C" u32 func_8004C5EC(void*);
+extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
+extern f64 lbl_eu_80666E08;
+extern f64 lbl_eu_80666DE0;
+extern f32 lbl_eu_80666DF0;
+extern f32 lbl_eu_80666DF4;
+extern f32 lbl_eu_80666DF8;
+extern f32 lbl_eu_80666DFC;
+extern f32 lbl_eu_80666E14;
+extern f32 lbl_eu_80666E18;
+extern f32 lbl_eu_8066A1F8;
+
+void func_800DA0A4(void* self, void* actor) {
+    // ptmf compare: is the manager's 0x28354 handler the default?
+    extern u32 lbl_eu_8052B110[];
+    u32 cmpData[3];
+    cmpData[0] = lbl_eu_8052B110[0];
+    cmpData[1] = lbl_eu_8052B110[1];
+    cmpData[2] = lbl_eu_8052B110[2];
+    if (__ptmf_cmpr((u8*)self + 0x28354, cmpData) == 0) {
+        // Scan the manager's list for the actor; register if missing.
+        SimpleListNode* sentinel = *(SimpleListNode**)((u8*)self + 0x08);
+        SimpleListNode* cur = sentinel->next;
+        while (cur != sentinel && cur->data != actor) cur = cur->next;
+        if (cur == sentinel) {
+            func_800D9978((cf::CBattleManager*)self, (cf::CfObjectActor*)actor);
+        }
+    }
+
+    // Linked sub-object + move data from the actor's 0x2A4 block.
+    void* sub = ((void* (*)(void*))(*(void***)actor)[0x2A4 / 4])(actor);  // r30
+    void* subObj = *(void**)((u8*)sub + 0x50);                            // r29
+    if (subObj == nullptr) return;
+    if (*(u32*)((u8*)sub + 0x48) == 0) return;
+
+    // Dispatch target: actor's 0x3F00 bit1 selects the 0x4C sub-object path.
+    void* moveRes = nullptr;    // r31
+    void* action = nullptr;     // r28
+    if (*(u32*)((u8*)actor + 0x3F00) & 0x02) {
+        void* mb = actor ? (u8*)actor + 0x3E9C : nullptr;
+        moveRes = func_800BFC68__FPQ22cf12CfObjectMove(mb);
+        if (*(u32*)((u8*)sub + 0x04) != 0) {
+            action = (void*)*(u32*)((u8*)sub + 0x04);
+        } else {
+            void* m = (u8*)moveRes + 0x3E9C;
+            action = ((void* (*)(void*))(*(void***)m)[0x4C / 4])(m);
+        }
+        if (action != nullptr) {
+            void* p0 = getPlayer__Q22cf13CfGameManagerFi(0);
+            void* adj = moveRes ? (u8*)moveRes + 0x3E9C : nullptr;
+            if (adj == p0) {
+                ((void (*)(void*, u32))(*(void***)self)[0x28 / 4])(self, 1);
+            }
+        }
+    } else {
+        void* m = (u8*)actor + 0x3E9C;
+        action = ((void* (*)(void*))(*(void***)m)[0x4C / 4])(m);
+    }
+    if (action == nullptr) return;
+
+    // The action's stats must be non-trivial.
+    void* actionSt = (void*)(intptr_t)func_800B708C__Fi((int)(intptr_t)action);
+    if (actionSt == nullptr) return;
+    {
+        u32 fl = *(u32*)((u8*)actionSt + 0x64);
+        if (!(fl & 0x04) && !(fl & 0x02)) return;
+    }
+    void* res = func_8016FE34(actionSt);   // r31
+
+    // Reset the move block when the 0x10000000 flag is clear.
+    if (!(*(u32*)((u8*)sub + 0x78) & 0x10000000)) {
+        *(u32*)((u8*)sub + 0x74) = 0;
+        u32 v = *(u32*)((u8*)sub + 0x78);
+        *(u32*)((u8*)sub + 0x78) = (v & 0xFFFF) | (v & 0x0FF00000);
+        std::memset((u8*)sub + 0x08, 0, 0x40);
+        *(f32*)((u8*)sub + 0x68) = ((f32 (*)(void*))(*(void***)res)[0x128 / 4])(res);
+    }
+
+    func_802A1C68(actor);
+    func_802773EC((u8*)self + 0x1A8, actor);
+    func_800DB0FC((void*)(intptr_t)lbl_eu_80663F00, actor, res, sub);
+
+    // Copy the 12-word splash table (lbl_eu_804FCA48) into the workspace.
+    extern u32 lbl_eu_804FCA48[];
+    u32 splash[12];
+    for (s32 i = 0; i < 12; i++) splash[i] = lbl_eu_804FCA48[i];
+
+    EnumListHolder holder;
+    func_80043D90(&holder);
+    void* list = func_80043F18(&holder);
+
+    // (0x800DADE4): splash index + range math (partially decoded).
+    cf::CfActorF64Conv conv;
+    conv.w[0] = 0x43300000;
+    conv.w[1] = (u32)(u16)*(u16*)((u8*)subObj + 0x64) ^ 0x80000000;
+    f32 f30 = (f32)(conv.d - lbl_eu_80666E08);
+    f32 f31 = *(f32*)((u8*)subObj + 0x60);
+    u32 s5C = *(u16*)((u8*)subObj + 0x5C);
+    u32 idx = (u32)(s5C * 8);
+    u32 t = *(u32*)((u8*)splash + 0x40 + idx);
+    u32 s5E = *(u16*)((u8*)subObj + 0x5E);
+
+    // 0x2A8 gate: the actor's skill modifier table.
+    void* skill = ((void* (*)(void*))(*(void***)actor)[0x290 / 4])(actor);
+    s32 r27 = 0;
+    if (skill != nullptr) {
+        u32 sv = 0;
+        if (func_80260264(skill, 0x77, &sv) != 0) {
+            if (*(u32*)((u8*)subObj + 0x78) & 0x80000000) {
+                if (lbl_eu_80666DF0 >= f31 && f31 >= lbl_eu_80666DF4) {
+                    f31 = f31 + (f32)(s32)sv;
+                    if (f31 > lbl_eu_80666DF8) f31 = lbl_eu_80666DF8;
+                }
+            }
+        }
+    }
+
+    // Damage multiplier when the move's 0x80000000 flag + actor bit0 align.
+    if (*(u32*)((u8*)subObj + 0x78) & 0x80000000) {
+        if (*(u32*)((u8*)actor + 0x3F00) & 0x04) {
+            if (*(f32*)((u8*)subObj + 0x2C) != 0.0f) {
+                f31 *= lbl_eu_80666DFC;
+            }
+        }
+    }
+
+    // Bearing vector from the actor's move sub-object.
+    f32 f29;
+    {
+        void* m = (u8*)actor + 0x3E9C;
+        void* pos = ((void* (*)(void*, u32))(*(void***)m)[0x12C / 4])(m, 0x64);
+        ml::CVec3 v;
+        if (pos != nullptr) {
+            v.x = *(f32*)((u8*)pos + 0x0C);
+            v.y = *(f32*)((u8*)pos + 0x1C);
+            v.z = *(f32*)((u8*)pos + 0x2C);
+        } else {
+            void* p2 = ((void* (*)(void*))(*(void***)m)[0xAC / 4])(m);
+            v = *(ml::CVec3*)p2;
+        }
+        // direction from the sub-object's facing
+        void* q = ((void* (*)(void*))(*(void***)m)[0xAC / 4])(m);
+        v.y = v.y - (*(f32*)((u8*)q + 0x04) - (*(f32*)((u8*)q + 0x04) - v.y) * 0.5f);
+        f32 dy = v.y - *(f32*)((u8*)q + 0x04);
+        f32 f0 = *(f32*)((u8*)q + 0x04);
+        f29 = f0 - dy;  // fnmsubs f0, f1, f0, f2 shape
+        if (f29 != 0.0f) {
+            f32 mag = f31 * f31 + f29 * f29;
+            if (mag <= 0.0f) {
+                f29 = 0.0f;
+            } else {
+                f29 = mag * FrSqrt__Q24nw4r4mathFf(mag);
+            }
+        }
+    }
+
+    // Manager-level chain gauge clamp.
+    f32 f29b = ((f32 (*)(void*))(*(void***)actor)[0x5B8 / 4])(actor);
+    {
+        u32 b = *(u8*)((u8*)lbl_eu_80663F00 + 0x1AA);
+        if (b >= 1 && b <= 0x18) {
+            void* q = ((void* (*)(void*))(*(void***)((u8*)actor + 0x3E9C))[0xAC / 4])((u8*)actor + 0x3E9C);
+            // copy vec into workspace 0x30
+        }
+    }
+
+    // Type-dispatch: r27 = splash kind 0..7.
+    if (*(u32*)((u8*)subObj + 0x78) & 0x80000000) {
+        void* e = func_80149154((u8*)actor + 8, 0x95);
+        if (e != nullptr) {
+            cf::CfActorF64Conv conv2;
+            conv2.w[0] = 0x43300000;
+            conv2.w[1] = (u32)*(s32*)((u8*)e + 0x10) ^ 0x80000000;
+            f30 = (f32)(conv2.d - lbl_eu_80666DE0) * lbl_eu_8066A210;
+            r27 = 1;
+        }
+    }
+    s32 r25 = 8;
+    if (*(u32*)((u8*)actor + 0x3F00) & 0x02) r25 = 0;
+    if (*(u32*)((u8*)actor + 0x3F00) & 0x04) {
+        u16 aid = *(u16*)((u8*)actor + 0x3F28);
+        if (aid == 0x8B3 || aid == 0x8B4 || aid == 0x8A0 || aid == 0x6C5 ||
+            aid == 0x5F2 || aid == 0x607 || aid == 0x60B || aid == 0x11C ||
+            aid == 0x9C5) {
+            r25 = 0;
+        }
+    }
+
+    switch (r27) {
+    case 1:
+        func_800F4A98(func_80043F18(&holder), t, 0x1000);
+        func_800FB270(func_80043F18(&holder), &splash[0], f31, f30, f29b, r25);
+        __ct__800FB044(func_80043F18(&holder), f31, &splash[0], 0);
+        break;
+    case 2:
+        func_800F4A98(func_80043F18(&holder), t, 0x1000);
+        func_800FB270(func_80043F18(&holder), &splash[0], f31, f30, f29b + lbl_eu_8066A1F8, r25);
+        __ct__800FB044(func_80043F18(&holder), f31, &splash[0], 0);
+        break;
+    case 3:
+        func_800F4A98(func_80043F18(&holder), t, 0x1000);
+        func_800FB5AC(func_80043F18(&holder), &splash[0], f31, f30, f29b + lbl_eu_8066A1F8 * 0.5f,
+                     f30, f29b - lbl_eu_8066A1F8 * 0.5f, r25);
+        __ct__800FB044(func_80043F18(&holder), f31, &splash[0], 0);
+        break;
+    case 4:
+        func_800F4A98(func_80043F18(&holder), t, 0x1000);
+        __ct__800FB044(func_80043F18(&holder), f31, &splash[0], r25);
+        break;
+    case 5: {
+        cf::CfActorF64Conv conv3;
+        conv3.w[0] = 0x43300000;
+        conv3.w[1] = (u32)(u16)*(u16*)((u8*)subObj + 0x64) ^ 0x80000000;
+        f30 = ((f32)(conv3.d - lbl_eu_80666E08)) / lbl_eu_80666E00;
+        func_800F4A98(func_80043F18(&holder), t, 0x1000);
+        __ct__800FBA18(func_80043F18(&holder), f31, f30, f29b, r25);
+        __ct__800FB044(func_80043F18(&holder), f31, &splash[0], 0);
+        break;
+    }
+    case 6: {
+        cf::CfActorF64Conv conv3;
+        conv3.w[0] = 0x43300000;
+        conv3.w[1] = (u32)(u16)*(u16*)((u8*)subObj + 0x64) ^ 0x80000000;
+        f30 = ((f32)(conv3.d - lbl_eu_80666E08)) / lbl_eu_80666E00;
+        void* pos = ((void* (*)(void*))(*(void***)((u8*)res + 0x3E9C))[0xAC / 4])((u8*)res + 0x3E9C);
+        func_800F4A98(func_80043F18(&holder), t, 0x1000);
+        __ct__800FB044(func_80043F18(&holder), f30, pos, r25);
+        break;
+    }
+    case 7:
+        func_800F4A98(func_80043F18(&holder), t, 0x1000);
+        break;
+    default:
+        // empty the enum list.
+        void* l = func_80043F18(&holder);
+        *(u32*)((u8*)l + 0x620) = 0;
+        *(u32*)((u8*)l + 0x3030) = 0;
+        if (*(u16*)((u8*)subObj + 0x5C) == 2) {
+            func_800F6D50(func_80043F18(&holder), *(u32*)((u8*)actor + 0x3F10));
+        }
+        break;
+    }
+
+    // (middle section 0x800DB3EC..0x800DBA94 not fully decoded)
+    func_802A2EEC(actor);
+    u32 m78 = *(u32*)((u8*)sub + 0x78);
+    if (m78 & 0x02000000) {
+        func_80109784(*(void**)((u8*)actor + 0x3F10), 2, 0x10);
+    } else if (m78 & 0x01000000) {
+        func_80109784(*(void**)((u8*)actor + 0x3F10), 1, 0x10);
+    }
+    if (((void* (*)(void*))(*(void***)actor)[0x290 / 4])(actor) != 0) {
+        if (func_800D7D24(sub) != 0) {
+            void* s2 = ((void* (*)(void*))(*(void***)actor)[0x290 / 4])(actor);
+            if (func_8026178C(s2, 0x3C) != 0) {
+                if (*(u32*)((u8*)sub + 0x78) & 0x00100000) {
+                    if (*(u16*)((u8*)subObj + 0x28) != 1) {
+                        s32 v = ((s32 (*)(void*))(*(void***)actor)[0x308 / 4])(actor);
+                        ((void (*)(void*, s32))(*(void***)actor)[0x304 / 4])(actor, v + 1);
+                    }
+                } else if (*(u32*)((u8*)sub + 0x78) & 0x00200000) {
+                    if (*(u32*)((u8*)subObj + 0x78) & 0x00020000) {
+                        s32 v = ((s32 (*)(void*))(*(void***)actor)[0x308 / 4])(actor);
+                        ((void (*)(void*, s32))(*(void***)actor)[0x304 / 4])(actor, v + 1);
+                    }
+                }
+            }
+        }
+    }
+}
+// func_800DB0FC: per-move ai dispatch. Fills the 13-entry ai table in arg4,
+// computes the bearing to the enemy (nw4r paired-single vector math), sets
+// the aim-sector flags, then dispatches to the arts-specific helpers by the
+// linked sub-object's type.
+extern "C" void func_800DB0FC(void* self, void* obj, void* enemy, void* arg4){
+    if(enemy == nullptr) return;
+
+    DB0FC_MoveTable* move = (DB0FC_MoveTable*)arg4;
+    if(move->field_78 & 0x10) return;
+
+    // 13-entry random ai table; the two vt[0x28] flags pin entries 0 and 4.
+    for(int i = 0; i < 13; i++){
+        if(move->field_78 & 0x40) continue;
+        move->table[i] = mtRand__Q22ml4mathFi(100);
+        if(((BMVtIf828*)self)->v008(0x2000) != 0){
+            if(i == 4 || i == 0) move->table[i] = 0x63;
+        }else if(((BMVtIf828*)self)->v008(0x4000) != 0){
+            if(i == 4 || i == 0) move->table[i] = 0;
+        }
+    }
+
+    move->field_78 |= 0x40000040;
+    void* sub = move->field_50;
+    if(sub == nullptr) return;
+
+    // Bearing from the enemy to the move source (paired-single subtract).
+    void* objData = vcall_p((u8*)obj + 0x3E9C, 0xAC);
+    void* enemyData = vcall_p((u8*)enemy + 0x3E9C, 0xAC);
+    ml::CVec3 diff = *(ml::CVec3*)enemyData - *(ml::CVec3*)objData;
+
+    f32 f31;
+    if(((BattleRemoveObjAccessor*)enemy)->field_3f00 & 0x02){
+        f32 f30 = lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(diff.x, diff.z);
+        f31 = f30 - vcall_f(enemy, 0x5B4);
+    }else{
+        void* subRet = vcall_p((u8*)enemy + 0x3E9C, 0x110);
+        f32 f30 = *(f32*)((u8*)subRet + 0xC);
+        f31 = lbl_eu_80666E10 * Atan2FIdx__Q24nw4r4mathFff(diff.x, diff.z) - f30;
+    }
+
+    // Wrap the angle into [-pi, pi).
+    while(lbl_eu_8066A1F8 <= f31) f31 -= lbl_eu_8066A1FC;
+    while(f31 < -lbl_eu_8066A1F8) f31 += lbl_eu_8066A1FC;
+
+    // Aim-sector flags from the enemy's facing cone.
+    if(-(lbl_eu_80666DE8 * vcall_f(enemy, 0x340)) <= f31 &&
+       f31 <= lbl_eu_80666DE8 * vcall_f(enemy, 0x340)){
+        move->field_74 |= 0x82000000;
+    }else{
+        f32 t = vcall_f(enemy, 0x33C);
+        if(t - lbl_eu_80666DE8 * vcall_f(enemy, 0x340) <= f31 &&
+           f31 <= t + lbl_eu_80666DE8 * vcall_f(enemy, 0x340)){
+            move->field_74 |= 0x84000000;
+        }else{
+            move->field_74 |= 0x81000000;
+        }
+    }
+
+    // Dispatch by the linked sub-object's move type.
+    u16 type = ((BattleSubObjAccessor*)sub)->type_3c;
+    if((u32)(type - 4) <= 2){
+        func_800DBA2C(self, obj, enemy, arg4);
+    }else if((u32)(type - 1) <= 1){
+        func_800DB4FC(self, obj, enemy, arg4);
+    }else if(type == 3){
+        func_800DB7F8(self, obj, enemy, arg4);
+    }
+
+    move->field_78 |= 0x40000010;
+    CBattleManagerTail283D4* tail = (CBattleManagerTail283D4*)self;
+    // u16 dispatch counter at +0x80 of the move block.
+    *(u16*)&move->pad_80 = tail->field_283D0;
+    tail->field_283D0 = (u16)(tail->field_283D0 + 1);
+}
+
+// Same-TU battle helper (retail-unmangled name; defined later in this file).
+extern "C" void func_800DBACC(void*, void*, void*, void*);
+
+// func_800DCB54 is defined later in this TU with a BattleMoveData* param;
+// forward-declare the incomplete type so the declaration matches and the
+// call site below stays consistent with the retail tail.
+struct BattleMoveData;
+extern "C" void func_800DCB54(void* self, void* attacker, void* target, BattleMoveData* move);
+
+// Battle move/arts setup: initialises the move block, routes to func_800DBACC
+// or the combo path from the arts object's flag, then runs the damage-gap
+// checks (status windows, arts-type gates) that set the counter/knockback
+// flags on move->field_74 before the shared func_800DCB54 tail.
+extern "C" void func_800DB4FC(void* self, void* obj, void* enemyArg, void* arg4) {
+    if (enemyArg == 0) return;
+
+    cf::CBattleManager* mgr = (cf::CBattleManager*)self;
+    BattleObjAccessor* bob = (BattleObjAccessor*)obj;
+    DB4FC_EnemyObj* enemy = (DB4FC_EnemyObj*)enemyArg;
+    DB4FC_MoveBlock* move = (DB4FC_MoveBlock*)arg4;
+    DB4FC_ArtsObj* arts = (DB4FC_ArtsObj*)move->artsData;
+
+    move->field_58 = lbl_eu_80666DD4;
+    move->field_54 = lbl_eu_80666DD4;
+    move->field_5C = lbl_eu_80666DDC;
+    move->field_60 = lbl_eu_80666DDC;
+    move->field_64 = lbl_eu_80666DDC;
+
+    if (bob->field_3f00 & 0x2) {
+        if (move->field_78 & 0x400) {
+            func_80192C2C(&mgr->unk19C);
+        }
+    }
+
+    if (arts->field_78 & 0x8) {
+        move->field_74 |= 0x80000001;
+    } else {
+        func_800DBACC(self, obj, enemyArg, arg4);
+    }
+
+    if (func_802799F0(&mgr->mChain, obj) != 0) {
+        move->field_74 |= 0x80004000;
+    }
+
+    if (move->field_78 & 0x02000000) return;
+
+    if ((move->field_74 & 1) && !(move->field_74 & 2)) {
+        if (!(enemy->field_3374 & 0x1000) &&
+            ((BMSubVtIf140*)enemy)->vf140() != lbl_eu_80666DDC &&
+            !func_80148778(&enemy->statusBase, 0x32)) {
+            s32 flag = 0;
+
+            if (func_80148778(&enemy->statusBase, 0xCE) && (move->field_78 & 0x800)) {
+                void* entry = func_801491F4(&enemy->statusBase, 0xCE);
+                s32 val = ((BMSubVtIf0C*)arts)->vf0C();
+                if (*(s32*)((u8*)entry + 0x10) >= val) flag = 1;
+            }
+
+            if (flag == 0) {
+                if (!(arts->field_78 & 0x2000) ||
+                    arts->field_44 == (s32)(((BMVtIf2A8*)bob)->vf2A8() + 1)) {
+                    u16 type58 = arts->field_58;
+                    if (type58 == 1) {
+                        if (!func_80148778(&enemy->statusBase, 0xF) &&
+                            !func_80148778(&enemy->statusBase, 0x10)) {
+                            if (func_80148778(&enemy->statusBase, 0x29)) {
+                                void* e = func_80149154(&enemy->statusBase, 0x29);
+                                if (move->field_B4 >= *(u32*)((u8*)e + 0x10)) {
+                                    move->field_74 |= 0x80010000;
+                                }
+                            } else {
+                                move->field_74 |= 0x80010000;
+                            }
+                        }
+                    } else if (type58 == 2) {
+                        flag = 1;
+                        if (((BMVtIf290*)enemy)->vf290()) {
+                            if (func_8026178C(((BMVtIf290*)enemy)->vf290(), 0x76)) flag = 0;
+                        }
+                        if (func_80148778(&enemy->statusBase, 0x28)) {
+                            void* e = func_80149154(&enemy->statusBase, 0x28);
+                            if (move->field_B4 < *(u32*)((u8*)e + 0x10)) flag = 0;
+                        }
+                        if (flag) move->field_74 |= 0x80020000;
+                    }
+                }
+            }
+        }
+    }
+
+    func_800DCB54(self, obj, enemyArg, (BattleMoveData*)arg4);
+}
 // Battle event handler: checks various flags and conditions on arg3/arg4,
 // sets flags on arg4->field_74, then tail-calls func_800E08E8.
 void func_800DB7F8(void* r3, void* r4, void* arg3, void* arg4) {
-    extern void func_800E08E8(void*, void*, void*, void*);
-    void* r28 = r3;
-    void* r29 = r4;
-    void* r30 = arg3;
-    void* r31 = arg4;
+    s32 flag = 0;
+    if (arg3 == nullptr) return;    // retail: beq straight to the epilogue
 
-    if (arg3 == nullptr) goto tailcall;
+    BattleTargetData* move = (BattleTargetData*)arg4;
+    DB7F8_MoveSub* sourceObj = (DB7F8_MoveSub*)move->artsData;
 
-    // Set flags on arg4->field_78
-    {
-        u32 val78 = *(u32*)((u8*)arg4 + 0x78);
-        val78 |= 0x40000100;
-        *(u32*)((u8*)arg4 + 0x78) = val78;
-    }
+    // Set flags on move->field_78
+    move->field_78 |= 0x40000100;
 
-    // Check if arg4->field_74 & 2, skip if set
-    if (*(u32*)((u8*)arg4 + 0x74) & 2) goto tailcall;
+    // Check if move->field_74 & 2, skip if set
+    if (move->field_74 & 2) goto tailcall;
 
     // Check if arg3->field_3374 & 0x1000, skip if set
     if (*(u32*)((u8*)arg3 + 0x3374) & 0x1000) goto tailcall;
 
-    // Virtual call on arg3 at +0x3E9C, vtable[0x140]
-    {
-        void* base = (u8*)arg3 + 0x3E9C;
-        void** vtbl = *(void***)base;
-        typedef float (*VFunc140)(void*);
-        float result = ((VFunc140)vtbl[0x140 / 4])(base);
-        extern float lbl_eu_80666DDC;
-        if (result == lbl_eu_80666DDC) goto tailcall;
-    }
+    // Virtual call on arg3's embedded sub-object at +0x3E9C, slot 0x140
+    if (((BMSubVtIf140*)arg3)->vf140() == lbl_eu_80666DDC) goto tailcall;
 
-    // Check flag 0x32 on arg3->fld8
-    extern int func_80148778(void*, int);
+    // Check flag 0x32 on arg3+8
     if (func_80148778((u8*)arg3 + 8, 0x32)) goto tailcall;
-
-    s32 r25 = 0;
-    void* sourceObj = *(void**)((u8*)arg4 + 0x50);
 
     // Check flag 0xCE
     if (func_80148778((u8*)arg3 + 8, 0xCE)) {
-        // Check if arg4->field_78 & 0x800
-        if (*(u32*)((u8*)arg4 + 0x78) & 0x800) {
-            extern void* func_801491F4(void*, u32);
+        // Check if move->field_78 & 0x800
+        if (move->field_78 & 0x800) {
             void* entry = func_801491F4((u8*)arg3 + 8, 0xCE);
-            
-            // Virtual call on sourceObj: vtable[0x84] at offset 0x0C
-            void** vtbl = *(void***)sourceObj;
-            typedef u32 (*VFunc84_0C)(void*);
-            u32 val = ((VFunc84_0C)vtbl[0x84 / 4])(sourceObj);
-            // Actually, the retail does: lwz r12, 0x84(r26); lwz r12, 0xc(r12); ...
-            // This is: sourceObj->vtable[0x84/4] is a pointer to another vtable
-            // Then call vtable[0x0C/4] on that pointer
-            // But the hexdiff shows: lwz r12, 0x84(r26) then lwz r12, 0xc(r12)
-            // This is: load a sub-vtable pointer from sourceObj's vtable[0x84/4]
-            // Then call vtable[0x0C/4] on it
-            // Let me just use the function pointer approach
-            
-            u32 entryVal = *(u32*)((u8*)entry + 0x10);
-            if (entryVal >= val) r25 = 1;
+            // Dispatch the sub-vtable at sourceObj+0x84, slot 0xC, this = sourceObj
+            s32 val = ((BMSubVtIf0C*)sourceObj)->vf0C();
+            if (*(s32*)((u8*)entry + 0x10) >= val) flag = 1;
         }
     }
 
-    if (r25 != 0) goto tailcall;
+    if (flag != 0) goto tailcall;
 
     // Check sourceObj type
-    u16 type = *(u16*)((u8*)sourceObj + 0x58);
+    u16 type = sourceObj->type_58;
     if (type == 1) {
         if (func_80148778((u8*)arg3 + 8, 0xF)) goto tailcall;
         if (func_80148778((u8*)arg3 + 8, 0x10)) goto tailcall;
 
         if (func_80148778((u8*)arg3 + 8, 0x29)) {
-            extern void* func_80149154(void*, u32);
             void* entry = func_80149154((u8*)arg3 + 8, 0x29);
-            u32 entryVal = *(u32*)((u8*)entry + 0x10);
-            u32 b4 = *(u32*)((u8*)arg4 + 0xB4);
-            if (b4 < entryVal) goto tailcall;
+            if (move->field_B4 < *(u32*)((u8*)entry + 0x10)) goto tailcall;
         }
-        
-        // Set flags on arg4->field_74
-        *(u32*)((u8*)arg4 + 0x74) |= 0x80010000;
+
+        // Set flags on move->field_74
+        move->field_74 |= 0x80010000;
         goto tailcall;
     }
 
     if (type == 2) {
-        r25 = 1;
-        
-        // Call vfunc_0x290 on arg3
-        void** vtbl = *(void***)arg3;
-        typedef void* (*VFunc290)(void*);
-        void* result = ((VFunc290)vtbl[0x290 / 4])(arg3);
-        if (result != nullptr) {
-            result = ((VFunc290)vtbl[0x290 / 4])(arg3);
-            extern int func_8026178C(void*, int);
-            if (func_8026178C(result, 0x76)) r25 = 0;
+        flag = 1;
+
+        // Call vfunc_0x290 on arg3 (twice, as retail does)
+        if (((BMVtIf290*)arg3)->vf290() != nullptr) {
+            if (func_8026178C(((BMVtIf290*)arg3)->vf290(), 0x76)) flag = 0;
         }
 
         if (func_80148778((u8*)arg3 + 8, 0x28)) {
-            extern void* func_80149154(void*, u32);
             void* entry = func_80149154((u8*)arg3 + 8, 0x28);
-            u32 entryVal = *(u32*)((u8*)entry + 0x10);
-            u32 b4 = *(u32*)((u8*)arg4 + 0xB4);
-            if (b4 < entryVal) r25 = 0;
+            if (move->field_B4 < *(u32*)((u8*)entry + 0x10)) flag = 0;
         }
 
-        if (r25 != 0) {
-            *(u32*)((u8*)arg4 + 0x74) |= 0x80020000;
+        if (flag != 0) {
+            move->field_74 |= 0x80020000;
         }
-        goto tailcall;
     }
 
 tailcall:
-    func_800E08E8(r28, r29, r30, r31);
+    func_800E08E8(r3, r4, arg3, arg4);
 }
 extern int func_801B1FA4();
 extern void func_801B19F0(u16 r3, int r4);
@@ -4361,7 +4894,263 @@ void func_800DBA2C(void* self, BattleObjAccessor* obj, void* arg1, BattleMoveObj
         func_800DB4FC(self, obj, arg1, arg2);
     }
 }
-void func_800DBACC(){}
+// func_800DBACC (retail 0x800DBACC, 0x838 bytes): target-selection / hit-intent
+// gate for the shared move dispatchers. Runs the status + art-type gates on the
+// target, computes hit / critical / drowsy intent from the sub-object stats and
+// level/party modifiers, then sets the appropriate field_74 flag (1 = hit,
+// 2 = miss, 3 = ...) or falls through to the damage-splash tail.
+struct DBACC_Sub {
+    u8 pad_00[0x28];
+    u16 field_28;           // +0x28
+    u8 pad_2A[0x36 - 0x2A];
+    s16 field_36;           // +0x36
+    u8 pad_38[0x3C - 0x38];
+    u16 type_3C;            // +0x3C
+    u8 pad_3E[0x44 - 0x3E];
+    u8 field_44;            // +0x44
+    u8 pad_45[0x48 - 0x45];
+    u16 field_48;           // +0x48
+    u8 pad_4A[0x50 - 0x4A];
+    u8 field_55;            // +0x55
+    u8 pad_56[0x5C - 0x56];
+    u16 field_5C;           // +0x5C
+    u16 field_5E;           // +0x5E
+    f32  field_60;          // +0x60
+    u8 pad_64[0x78 - 0x64];
+    u32 field_78;           // +0x78
+    u8 pad_7C[0x84 - 0x7C];
+    void** field_84;        // +0x84 (sub-vtable, slot 0x0C)
+};
+
+void func_800DBACC(void* self, BattleObjAccessor* arg1, void* arg2, void* move) {
+    if (arg2 == nullptr) return;
+
+    void* prm1 = ((void* (*)(void*))(*(void***)arg1)[0x224 / 4])(arg1);  // r30
+    void* prm2 = ((void* (*)(void*))(*(void***)arg2)[0x224 / 4])(arg2);  // r31
+    DBACC_Sub* sub = (DBACC_Sub*) (*(void**)((u8*)move + 0x50));
+
+    s32 r27 = 0;
+    if (sub != nullptr) {
+        if (sub->field_78 & 0x10) r27 = 2;
+        if (arg1->field_3f00 & 0x4) {
+            if (sub->field_78 & 0x1) r27 = 2;
+        }
+    }
+    if (*(u32*)((u8*)move + 0x78) & 0x20000) r27 = 2;
+
+    s32 r28 = 0;
+    if (r27 == 0) {
+        bool pass = true;
+        // status gates
+        { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (func_80174C98(arg2, (int*)&sv, 0x805)) pass = false; }
+        if (pass && func_80148778((u8*)arg2 + 8, 0x9)) pass = false;
+        if (pass && func_80148778((u8*)arg2 + 8, 0xb)) pass = false;
+        if (pass && func_80148778((u8*)arg2 + 8, 0xf)) pass = false;
+        { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (func_80174C98(arg2, (int*)&sv, 0x4)) pass = false; }
+        { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (func_80174C98(arg2, (int*)&sv, 0x19)) pass = false; }
+        { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (func_80174C98(arg2, (int*)&sv, 0x1a)) pass = false; }
+        { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (func_80174C98(arg2, (int*)&sv, 0x1b)) pass = false; }
+        if (pass && func_80148778((u8*)arg2 + 8, 0x32)) pass = false;
+        if (pass && func_80148778((u8*)arg2 + 8, 0xf8)) pass = false;
+        if (pass && func_80148778((u8*)arg2 + 8, 0xeb)) pass = false;
+        if (pass && func_80148778((u8*)arg2 + 8, 0xf0)) pass = false;
+        if (pass && func_80148778((u8*)arg2 + 8, 0xf1)) pass = false;
+        if (pass && func_80148778((u8*)arg2 + 8, 0xf8)) pass = false;
+        if (pass && func_80148778((u8*)arg2 + 8, 0xf7)) pass = false;
+        if (pass && func_80148778((u8*)arg2 + 8, 0x106)) pass = false;
+
+        if (pass) {
+            if (*(void**)((u8*)arg2 + 0x3f60) != nullptr && func_8004C5EC((void*)0) != 0x31) {
+                f32 f31 = lbl_eu_80666DDC;
+                f32 f30 = 0.0f, f29 = 0.0f;
+                if (sub->type_3C == 1 || sub->type_3C == 5) {
+                    f30 = lbl_eu_80666DDC;
+                    f31 = f30;
+                    f29 = lbl_eu_80666E14;
+                    f32 f28 = lbl_eu_80666DD4; // 1.0
+                    if (((void* (*)(void*))(*(void***)arg1)[0x290 / 4])(arg1)) {
+                        ((void* (*)(void*))(*(void***)arg1)[0x290 / 4])(arg1);
+                    }
+                    if (arg1->field_3f00 & 0x2) {
+                        if (((s32 (*)(void*))(*(void***)arg1)[0x308 / 4])(arg1) == 0) r27 = 1;
+                    }
+                    if (arg1->field_3f00 & 0x2) {
+                        if (((s32 (*)(void*))(*(void***)arg1)[0x308 / 4])(arg1) == 1) {
+                            f31 += f28 * lbl_eu_80666E18;
+                        }
+                    }
+                    if (func_80148778((u8*)arg2 + 8, 0x116)) r27 = 1;
+                    s32 r23 = ((s32 (*)(void*))(*(void***)arg2)[0x108 / 4])(arg2);
+                    s32 diff = r23 - ((s32 (*)(void*))(*(void***)arg1)[0x108 / 4])(arg1);
+                    if (diff < -10) diff = -10;
+                    if (diff > 10) diff = 10;
+                    if ((u32)(diff + 5) > 10) f31 += (f32)(diff * 20);
+                    else if ((u32)(diff + 2) <= 4) f31 += (f32)(diff * 8);
+                    f31 -= (f32)*(s16*)((u8*)prm2 + 0x36);
+                    if (arg1->field_3f00 & 0x2) f31 += lbl_eu_80666E18 * (f32)*(s16*)((u8*)prm1 + 0x36);
+                    if (func_80086DBC__Q22cf13CfGameManagerFv() == 4) {
+                        if (arg1->field_3f00 & 0x2) {
+                            if (func_80148778((u8*)arg1 + 8, 0xa2)) {
+                                void* e = func_80149154((u8*)arg1 + 8, 0xa2);
+                                f31 -= (f32)*(s32*)((u8*)e + 0x10);
+                            }
+                        } else if (((BattleObjAccessor*)arg2)->field_3f00 & 0x2) {
+                            if (func_80148778((u8*)arg2 + 8, 0xa2)) {
+                                void* e = func_80149154((u8*)arg2 + 8, 0xa2);
+                                s32 v = *(s32*)((u8*)e + 0x10);
+                                f31 += (f32)((v + (v >> 31)) >> 1);
+                            }
+                        }
+                    }
+                    if (func_80148778((u8*)arg2 + 8, 0xd1)) f31 += lbl_eu_80666E18;
+                    if (func_80148778((u8*)arg2 + 8, 0xf5)) {
+                        f31 += lbl_eu_80666E18;
+                        if (((f32 (*)(void*))(*(void***)arg2)[0x130 / 4])(arg2) < lbl_eu_80666E18) f31 += 10.0f;
+                    } else if (func_80148778((u8*)arg1 + 8, 0xf5)) {
+                        f31 -= lbl_eu_80666E18;
+                        if (((f32 (*)(void*))(*(void***)arg2)[0x130 / 4])(arg2) < lbl_eu_80666E18) f31 -= 10.0f;
+                    }
+                    if (func_80148778((u8*)arg2 + 8, 0x114)) f31 += lbl_eu_80666E18;
+                    f32 f1 = f31 - (f32)(sub->field_36 * ((s32 (*)(void*))(*(void**)((u8*)sub->field_84 + 0x0C)))(sub));
+                    f1 = f1 + (f32)(*(s16*)((u8*)prm2 + 0x1E) - *(s16*)((u8*)prm1 + 0x1E));
+                    if (f1 < f30) f1 = f30;
+                    if (f1 > f29) f1 = f29;
+                    if (r27 == 0) {
+                        if ((s32)(*(u32*)((u8*)move + 0x88) % 100) < (s32)f1) r27 = 1;
+                    }
+                    r28 = (s32)f1;
+                } else {
+                    f29 = f31;
+                    f30 = lbl_eu_80666E18;
+                    s32 e0 = ((s32 (*)(void*))(*(void***)arg2)[0xE0 / 4])(arg2);
+                    u32 f3374 = *(u32*)((u8*)arg1 + 0x3374);
+                    if (e0 == 2 || (e0 == 0xa && (f3374 & 0x4000) && !(f3374 & 0x8000))) r27 = 3;
+                    if (arg1->field_3f00 & 0x2) {
+                        if (((s32 (*)(void*))(*(void***)arg1)[0x308 / 4])(arg1) == 0) r27 = 3;
+                    }
+                    if (func_80148778((u8*)arg2 + 8, 0x116)) r27 = 3;
+                    if (arg1->field_3f00 & 0x2) {
+                        if (((s32 (*)(void*))(*(void***)arg1)[0x308 / 4])(arg1) == 1) f31 += 10.0f;
+                    }
+                    void* v290 = ((void* (*)(void*))(*(void***)arg1)[0x290 / 4])(arg1);
+                    if (v290 != nullptr) {
+                        if (func_8026178C(((void* (*)(void*))(*(void***)arg1)[0x290 / 4])(arg1), 0x82)) {
+                            f31 -= (f32)(sub->field_36 * ((s32 (*)(void*))(*(void**)((u8*)sub->field_84 + 0x0C)))(sub));
+                        }
+                    }
+                    s32 r23b = ((s32 (*)(void*))(*(void***)arg2)[0x108 / 4])(arg2);
+                    s32 diff = r23b - ((s32 (*)(void*))(*(void***)arg1)[0x108 / 4])(arg1);
+                    if (diff < -10) diff = -10;
+                    if (diff > 10) diff = 10;
+                    if ((u32)(diff + 5) > 10) f31 += (f32)(diff * 11);
+                    else if ((u32)(diff + 2) <= 4) f31 += (f32)(diff * 6);
+                    if (arg1->field_3f00 & 0x2) {
+                        f31 -= (f32)(sub->field_36 * ((s32 (*)(void*))(*(void**)((u8*)sub->field_84 + 0x0C)))(sub));
+                    }
+                    if (f31 < f29) f31 = f29;
+                    if (f31 > f30) f31 = f30;
+                    if (r27 == 0) {
+                        if ((s32)(*(u32*)((u8*)move + 0x88) % 100) < (s32)f31) r27 = 3;
+                    }
+                    r28 = (s32)f31;
+                }
+            }
+        }
+        if (!pass) r27 = 2;
+    }
+    if (r27 == 0) r27 = 2;
+    if (r27 == 1) *(u32*)((u8*)move + 0x74) |= 0x80000004;
+    else if (r27 == 2) *(u32*)((u8*)move + 0x74) |= 0x80000001;
+    else if (r27 == 3) *(u32*)((u8*)move + 0x74) |= 0x80000008;
+
+    if (!(*(u32*)((u8*)move + 0x78) & 0x20000) && sub != nullptr) {
+        if ((sub->type_3C == 1 || sub->type_3C == 5) && !(sub->field_78 & 0x10) && (*(u32*)((u8*)move + 0x74) & 1)) {
+            s32 e0 = ((s32 (*)(void*))(*(void***)arg2)[0xE0 / 4])(arg2);
+            u32 f3374 = *(u32*)((u8*)arg1 + 0x3374);
+            if (e0 == 1) {
+                if (!func_80148778((u8*)arg2 + 8, 0x9) && !func_80148778((u8*)arg2 + 8, 0xf) && !func_80148778((u8*)arg2 + 8, 0x10)) {
+                    if (!func_80148778((u8*)arg1 + 8, 0xea) && !func_80148778((u8*)arg1 + 8, 0xcf) && !func_80148778((u8*)arg1 + 8, 0xd0) && !(f3374 & 0x4000)) {
+                        if (*(u32*)((u8*)move + 0x88) < 100) {
+                            *(f32*)((u8*)move + 0x54) = lbl_eu_80666DD4;
+                            *(u32*)((u8*)move + 0x74) = (*(u32*)((u8*)move + 0x74) & 0xFFFEFFFF) | 0x80000041;
+                            goto splash;
+                        }
+                    }
+                }
+            } else if (e0 == 2) {
+                if (!func_80148778((u8*)arg2 + 8, 0x9) && !func_80148778((u8*)arg2 + 8, 0xf) && !func_80148778((u8*)arg2 + 8, 0x10)) {
+                    if (!(f3374 & 0x8000) && !func_80148778((u8*)arg1 + 8, 0xd0)) {
+                        if (*(u32*)((u8*)move + 0x88) < 100) {
+                            *(f32*)((u8*)move + 0x54) = lbl_eu_80666DD4;
+                            *(u32*)((u8*)move + 0x74) = (*(u32*)((u8*)move + 0x74) & 0xFFFEFFFF) | 0x80000041;
+                            goto splash;
+                        }
+                    }
+                }
+            } else if (e0 == 0xa) {
+                if ((f3374 & 0x4000) && !(f3374 & 0x8000) && *(u32*)((u8*)move + 0x88) < 100) {
+                    *(f32*)((u8*)move + 0x54) = lbl_eu_80666DD4;
+                    *(u32*)((u8*)move + 0x74) = (*(u32*)((u8*)move + 0x74) & 0xFFFEFFFF) | 0x80000041;
+                    goto splash;
+                }
+            }
+        }
+        if ((sub->type_3C == 2 || sub->type_3C == 6) && func_80148778((u8*)arg2 + 8, 0xf7)) {
+            if (((s32 (*)(void*, void*))(*(void***)arg2)[0x5C0 / 4])(arg2, arg1) == 0 && (*(u32*)((u8*)move + 0x74) & 1)) {
+                func_80149154((u8*)arg2 + 8, 0xf7);
+                u32 f78 = *(u32*)((u8*)move + 0x78);
+                if ((f78 & 0x200000) || (!(f78 & 0x400000) && !(f78 & 0x100000))) {
+                    *(u32*)((u8*)move + 0x74) |= 0x80000080;
+                }
+            }
+        }
+        if (*(u32*)((u8*)move + 0x74) & 1) {
+            bool cp = true;
+            { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (func_80174C98(arg2, (int*)&sv, 0x805)) cp = false; }
+            { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (cp && func_80174C98(arg2, (int*)&sv, 0x4)) cp = false; }
+            { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (cp && func_80174C98(arg2, (int*)&sv, 0x19)) cp = false; }
+            { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (cp && func_80174C98(arg2, (int*)&sv, 0x1a)) cp = false; }
+            { void* f4 = *(void**)((u8*)arg2 + 4); u32 sv = *(u32*)(((void* (*)(void*))(*(void***)f4)[0x30 / 4])(f4)); if (cp && func_80174C98(arg2, (int*)&sv, 0x1b)) cp = false; }
+            if (cp && func_80148778((u8*)arg2 + 8, 0x9)) cp = false;
+            if (cp && func_80148778((u8*)arg2 + 8, 0xb)) cp = false;
+            if (cp && func_80148778((u8*)arg2 + 8, 0xf)) cp = false;
+            if (cp && func_80148778((u8*)arg2 + 8, 0xf0)) cp = false;
+            if (cp && func_80148778((u8*)arg2 + 8, 0xf1)) cp = false;
+            if (cp && func_80148778((u8*)arg2 + 8, 0xf8)) cp = false;
+            s32 r27b = 0;
+            if (!cp) r27b = 1;
+            if (r27b == 0 && sub->type_3C != 1) r27b = 1;
+            if (r27b == 0 && func_80148778((u8*)arg2 + 8, 0xeb) && !(*(u32*)((u8*)move + 0x78) & 0x800)) r27b = 2;
+            if (r27b == 0 && func_80148778((u8*)arg2 + 8, 0x10c) && !(*(u32*)((u8*)move + 0x78) & 0x800)) r27b = 2;
+            if (r27b == 0 && (arg1->field_3f00 & 0x4) && (sub->field_78 & 0x1)) r27b = 1;
+            if (sub->field_78 & 0x10) r27b = 1;
+            if (r27b == 0) {
+                s32 r274;
+                if (((BattleObjAccessor*)arg2)->field_3f00 & 0x2) {
+                    s32 v25 = ((s32 (*)(void*))(*(void***)arg2)[0x108 / 4])(arg2);
+                    s32 v23 = ((s32 (*)(void*))(*(void***)arg1)[0x108 / 4])(arg1);
+                    s32 d = v25 - v23;
+                    if (!((u32)(d + 2) <= 4)) d = d * 5;
+                    r274 = *(u8*)((u8*)sub + 0x55) + d;
+                } else {
+                    r274 = *(u8*)((u8*)sub + 0x55) + r28;
+                }
+                if (r274 < 0) r274 = 0;
+                if (r274 > 0x5f) r274 = 0x5f;
+                if ((s32)(*(u32*)((u8*)move + 0x8C) % 100) < (s32)r274) r27b = 2;
+            }
+            if (r27b == 2) *(u32*)((u8*)move + 0x74) |= 0x80000002;
+        }
+    }
+    return;
+
+splash:
+    *(f32*)((u8*)move + 0x5C) = *(f32*)((u8*)move + 0x54) * *(f32*)((u8*)move + 0x58);
+    if (func_80148778((u8*)arg2 + 8, 0x1)) *(f32*)((u8*)move + 0x5C) = lbl_eu_80666DDC;
+    *(u32*)((u8*)move + 0x78) |= 0x40000020;
+    *(u16*)((u8*)move + 0x80) = *(u16*)((u8*)self + 0x83D0);
+    (*(u16*)((u8*)self + 0x83D0))++;
+}
 struct BattleMoveSubData {
     u8 pad_00[0x38];
     s16 field_38;           // +0x38
@@ -5681,9 +6470,960 @@ post_dispatch:;
     // 0x800E1388 epilogue: restore + blr (void return)
 }
 
-extern "C" void func_800E08E8(void*, void*, void*, void*){}
-void func_800E1B5C(){}
-void func_800E2594(){}
+extern "C" void func_800E08E8(void* self, void* arg1, void* arg2, void* move);
+extern f64 lbl_eu_80666E08;   // 0x4330000000000000 sibling magic
+extern f32 lbl_eu_80666E24;   // 0.15f
+
+// func_800E08E8 (retail 0x800E13D0, 0x125C bytes): battle-event emission and
+// move-state update shared by the move-type dispatchers. Resolves the event
+// source (arg1 vs arg2 via the 0xF7 status / 0x5C0 self-check), runs the
+// arts-type jump table, emits the event via func_800EAA2C, then applies the
+// counter / dot / proc-rate damage math on the move block.
+struct E08E8_EventData {
+    u32  v00;       // +0x00 object id (arg1->0x3F10)
+    u32  v04;       // +0x04 sub-object ptr (r31)
+    u8   pad08[4];
+    u16  v0C;       // +0x0C event type
+    u16  pad0E;
+    u32  v10;       // +0x10 value
+    u16  v14;       // +0x14 extra u16 (sub event blocks)
+    u16  pad16;
+    u8   pad18[8];
+    f32  v20;       // +0x20 float
+    f32  v24;       // +0x24 float
+};
+
+void func_800E08E8(void* self, void* arg1, void* arg2, void* move) {
+    if (arg2 == nullptr) return;
+
+    // 0xF7 status + 0x5C0 self-target check: when no confirmation is pending
+    // the event source falls back to arg1.
+    if (!(*(u32*)((u8*)move + 0x74) & 0x08)) {
+        if (func_80148778((u8*)arg2 + 8, 0xF7)) {
+            if (((s32 (*)(void*, void*))(*(void***)arg2)[0x5C0 / 4])(arg2, arg1) == 0) {
+                func_80149154((u8*)arg2 + 8, 0xF7);
+                u32 f78 = *(u32*)((u8*)move + 0x78);
+                if ((f78 & 0x200) || ((f78 & 0x400) && !(f78 & 0x800))) {
+                    *(u32*)((u8*)move + 0x74) |= 0x80000080;
+                }
+            }
+        }
+    }
+
+    // Event-source swap happens inside the above block (retail keeps arg2
+    // until the source-swap condition, then reuses r28).
+    u32 f74 = *(u32*)((u8*)move + 0x74);
+    if (!(f74 & 0x08)) {
+        u32 f78b = *(u32*)((u8*)move + 0x78);
+        if ((f78b & 0x200) || ((f78b & 0x400) && !(f78b & 0x800))) {
+            *(u32*)((u8*)move + 0x74) |= 0x80000080;
+        }
+    }
+
+    *(f32*)((u8*)move + 0x60) = lbl_eu_80666DDC;
+    *(f32*)((u8*)move + 0x64) = lbl_eu_80666DDC;
+    void* subObj = *(void**)((u8*)move + 0x50);      // r31
+
+    ((void* (*)(void*))(*(void***)arg1)[0x224 / 4])(arg1);
+    ((void* (*)(void*))(*(void***)arg2)[0x224 / 4])(arg2);
+
+    if (*(u32*)((u8*)move + 0x74) & 0x08) {
+        if (!(*(u32*)((u8*)subObj + 0x78) & 0x1000)) goto done1744_1B8C;
+    }
+
+    s32 r30 = 0;
+    if (*(u32*)((u8*)subObj + 0x78) & 0x2000) {
+        u8 slot = *(u8*)((u8*)subObj + 0x44);
+        if (slot != (u8)(((s32 (*)(void*))(*(void***)arg1)[0x2A8 / 4])(arg1) + 1)) {
+            goto done1744_1B8C;
+        }
+    }
+
+    // Arts-type jump table (byte +0x66 of the sub-object).
+    u8 type = *(u8*)((u8*)subObj + 0x66);
+    if (type <= 0x19) {
+        switch (type) {
+        case 0x00: {
+            if (*(u32*)((u8*)arg1 + 0x3374) & 0x8000) {
+                s32 e0 = ((s32 (*)(void*))(*(void***)arg2)[0xE0 / 4])(arg2);
+                if (e0 == 1 || e0 == 2) r30 = 1;
+            } else {
+                if (((s32 (*)(void*))(*(void***)arg2)[0xE0 / 4])(arg2) == 1) r30 = 1;
+            }
+            break;
+        }
+        case 0x01:
+            if (((s32 (*)(void*))(*(void***)arg2)[0xE0 / 4])(arg2) == 3) r30 = 1;
+            break;
+        case 0x02:
+            if (*(u32*)((u8*)move + 0x74) & 0x1000000) r30 = 1;
+            break;
+        case 0x03:
+            if (*(u32*)((u8*)move + 0x74) & 0x4000000) r30 = 1;
+            break;
+        case 0x04:
+            if (*(u32*)((u8*)move + 0x74) & 0x2000000) r30 = 1;
+            break;
+        case 0x05:
+            if (func_80148778((u8*)arg1 + 8, 0xC1)) r30 = 1;
+            break;
+        case 0x06:
+            if (func_80148778((u8*)arg2 + 8, 0x10)) r30 = 1;
+            break;
+        case 0x07:
+            if (func_80148778((u8*)arg2 + 8, 0x0F)) r30 = 1;
+            break;
+        case 0x08: {
+            void* m = (u8*)arg2 + 0x3E9C;
+            void* r = ((void* (*)(void*))(*(void***)m)[0x4C / 4])(m);
+            if (r == *(void**)((u8*)arg1 + 0x3F10)) r30 = 1;
+            break;
+        }
+        case 0x09:
+            if (*(f32*)((u8*)move + 0x5C) >= ((f32 (*)(void*))(*(void***)arg2)[0x128 / 4])(arg2)) r30 = 1;
+            break;
+        case 0x0A:
+            if (*(u8*)((u8*)subObj + 0x67) != 0) r30 = 1;
+            break;
+        case 0x0B:
+            if (((u16)func_8016DF2C()) == (u16)(type - 0x0A)) r30 = 1;
+            break;
+        case 0x0C: {
+            u32 m74 = *(u32*)((u8*)move + 0x74);
+            if (m74 & 0x4000000) {
+                s32 e0 = ((s32 (*)(void*))(*(void***)arg2)[0xE0 / 4])(arg2);
+                if (e0 == 1 || e0 == 2) r30 = 1;
+            }
+            break;
+        }
+        case 0x0D:
+            if (((f32 (*)(void*))(*(void***)arg2)[0x130 / 4])(arg2) < lbl_eu_80666E24) r30 = 1;
+            break;
+        default:
+            break;
+        }
+    }
+
+done1744_1B8C:;
+    if (*(u32*)((u8*)subObj + 0x78) & 0x1000) {
+        if (func_800D7D24(move) == 0) r30 = 0;
+    }
+    if (!(*(u32*)((u8*)move + 0x74) & 0x10)) {
+        *(f32*)((u8*)move + 0x5C) = *(f32*)((u8*)move + 0x54) * *(f32*)((u8*)move + 0x58);
+    }
+
+    if (r30 == 0) goto postEmit;
+
+    // ---- event emission (dispatch on subObj->0x67) ----
+    E08E8_EventData ev;
+    std::memset(&ev, 0, sizeof(ev));
+    u8 emitType = *(u8*)((u8*)subObj + 0x67);
+    switch (emitType) {
+    case 0x03: {
+        if (*(u32*)((u8*)move + 0x78) & 0x10) break;
+        cf::CfActorF64Conv conv;
+        conv.w[0] = 0x43300000;
+        s16 hp = *(s16*)((u8*)subObj + 0x68);
+        conv.w[1] = (u32)(hp - 1) ^ 0x80000000;
+        f32 add = (f32)(conv.d - lbl_eu_80666DE0);
+        *(f32*)((u8*)move + 0x58) = *(f32*)((u8*)move + 0x58) + add;
+        *(f32*)((u8*)move + 0x5C) = *(f32*)((u8*)move + 0x54) * *(f32*)((u8*)move + 0x58);
+        if (((void* (*)(void*))(*(void***)arg1)[0x290 / 4])(arg1) != 0) {
+            void* p = ((void* (*)(void*))(*(void***)arg1)[0x290 / 4])(arg1);
+            if (func_8026178C(p, 0x9C) != 0) {
+                if (*(u8*)((u8*)subObj + 0x66) == 3) {
+                    *(f32*)((u8*)move + 0x58) = *(f32*)((u8*)move + 0x58) + 1.0f;
+                }
+            }
+        }
+        break;
+    }
+    case 0x07:
+        ev.v00 = *(u32*)((u8*)arg1 + 0x3F10);
+        ev.v04 = (u32)(uintptr_t)subObj;
+        ev.v0C = 0x10;
+        ev.v10 = 0;
+        {
+            cf::CfActorF64Conv conv;
+            conv.w[0] = 0x43300000;
+            conv.w[1] = (u32)(*(s16*)((u8*)subObj + 0x68)) ^ 0x80000000;
+            ev.v20 = (f32)(conv.d - lbl_eu_80666DE0);
+        }
+        ev.v24 = lbl_eu_80666DDC;
+        if (*(u32*)((u8*)subObj + 0x78) & 0x1000) {
+            func_800EAA2C(self, arg1, arg1, &ev, move);
+        } else {
+            func_800EAA2C(self, arg1, arg2, &ev, move);
+        }
+        break;
+    case 0x08:
+        ev.v00 = *(u32*)((u8*)arg1 + 0x3F10);
+        ev.v04 = (u32)(uintptr_t)subObj;
+        ev.v0C = 0x0F;
+        ev.v10 = 0;
+        {
+            cf::CfActorF64Conv conv;
+            conv.w[0] = 0x43300000;
+            conv.w[1] = (u32)(*(s16*)((u8*)subObj + 0x68)) ^ 0x80000000;
+            ev.v20 = (f32)(conv.d - lbl_eu_80666DE0);
+        }
+        ev.v24 = lbl_eu_80666DDC;
+        if (*(u32*)((u8*)subObj + 0x78) & 0x1000) {
+            func_800EAA2C(self, arg1, arg1, &ev, move);
+        } else {
+            func_800EAA2C(self, arg1, arg2, &ev, move);
+        }
+        break;
+    case 0x0B: {
+        ev.v00 = *(u32*)((u8*)arg1 + 0x3F10);
+        ev.v04 = (u32)(uintptr_t)subObj;
+        ev.v0C = 0x10;
+        ev.v10 = 3;
+        ev.v20 = lbl_eu_80666E68;
+        ev.v24 = lbl_eu_80666DDC;
+        EnumListHolder holder;
+        func_80043D90(&holder);
+        func_800F4A98(func_80043F18(&holder), 0x8000, 0);
+        for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
+            void* o = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+            if (o != arg2) func_800EAA2C(self, arg1, o, &ev, move);
+        }
+        __dt__80043E88(&holder, -1);
+        break;
+    }
+    case 0x0D:
+        ev.v00 = *(u32*)((u8*)arg1 + 0x3F10);
+        ev.v04 = (u32)(uintptr_t)subObj;
+        ev.v0C = 0x10;
+        ev.v10 = 3;
+        ev.v20 = lbl_eu_80666E68;
+        ev.v24 = lbl_eu_80666DDC;
+        func_800EAA2C(self, arg1, arg2, &ev, move);
+        break;
+    case 0x06:
+        ev.v00 = *(u32*)((u8*)arg1 + 0x3F10);
+        ev.v04 = (u32)(uintptr_t)subObj;
+        ev.v0C = 0xDC;
+        ev.v10 = *(s16*)((u8*)subObj + 0x68);
+        if (*(u32*)((u8*)subObj + 0x78) & 0x1000) {
+            func_800EAA2C(self, arg1, arg1, &ev, move);
+        } else {
+            func_800EAA2C(self, arg1, arg2, &ev, move);
+        }
+        break;
+    case 0x01: {
+        ev.v00 = *(u32*)((u8*)arg1 + 0x3F10);
+        ev.v04 = (u32)(uintptr_t)subObj;
+        ev.v0C = *(s16*)((u8*)subObj + 0x68);
+        ev.v10 = *(s16*)((u8*)subObj + 0x6A);
+        void* subVt = *(void**)((u8*)subObj + 0x84);
+        s32 sv = ((s32 (*)(void*))(*(void**)((u8*)subVt + 0x0C)))(subObj) - 1;
+        cf::CfActorF64Conv conv;
+        conv.w[0] = 0x43300000;
+        conv.w[1] = (u32)(u8)(*(u8*)((u8*)subObj + 0x6E)) ^ 0x80000000;
+        f32 f1 = (f32)(conv.d - lbl_eu_80666E08);
+        conv.w[1] = (u32)sv ^ 0x80000000;
+        f32 f2 = (f32)(conv.d - lbl_eu_80666DE0);
+        ev.v20 = *(f32*)((u8*)subObj + 0x50) + f1 / 10.0f * f2;
+        ev.v24 = *(f32*)((u8*)subObj + 0x54);
+        if (*(u32*)((u8*)subObj + 0x78) & 0x1000) {
+            func_800EAA2C(self, arg1, arg1, &ev, move);
+        } else {
+            func_800EAA2C(self, arg1, arg2, &ev, move);
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+postEmit:
+    // Recompute the multiplier after emission.
+    if (!(*(u32*)((u8*)move + 0x74) & 0x10)) {
+        *(f32*)((u8*)move + 0x5C) = *(f32*)((u8*)move + 0x54) * *(f32*)((u8*)move + 0x58);
+    }
+
+    // Second sub-object event block (+0x48 id).
+    if (!(*(u32*)((u8*)move + 0x74) & 0x08) || (*(u32*)((u8*)subObj + 0x78) & 0x400)) {
+        if (!(*(u32*)((u8*)subObj + 0x78) & 0x2000) ||
+            (*(u8*)((u8*)subObj + 0x44) ==
+             (u8)(((s32 (*)(void*))(*(void***)arg1)[0x2A8 / 4])(arg1) + 1))) {
+            if (*(u16*)((u8*)subObj + 0x48) != 0) {
+                E08E8_EventData ev2;
+                std::memset(&ev2, 0, sizeof(ev2));
+                ev2.v00 = *(u32*)((u8*)arg1 + 0x3F10);
+                ev2.v04 = (u32)(uintptr_t)subObj;
+                ev2.v0C = *(u16*)((u8*)subObj + 0x48);
+                void* subVt2 = *(void**)((u8*)subObj + 0x84);
+                s32 sv2 = ((s32 (*)(void*))(*(void**)((u8*)subVt2 + 0x0C)))(subObj) - 1;
+                ev2.v10 = *(s16*)((u8*)subObj + 0x4A) + (u32)(*(u8*)((u8*)subObj + 0x6F)) * (u32)sv2;
+                ev2.v14 = (u16)*(s16*)((u8*)subObj + 0x4C);
+                cf::CfActorF64Conv conv;
+                conv.w[0] = 0x43300000;
+                conv.w[1] = (u32)(u8)(*(u8*)((u8*)subObj + 0x6E)) ^ 0x80000000;
+                f32 f1 = (f32)(conv.d - lbl_eu_80666E08);
+                conv.w[1] = (u32)sv2 ^ 0x80000000;
+                f32 f2 = (f32)(conv.d - lbl_eu_80666DE0);
+                ev2.v20 = *(f32*)((u8*)subObj + 0x50) + f1 / 10.0f * f2;
+                ev2.v24 = *(f32*)((u8*)subObj + 0x54);
+                if (*(u32*)((u8*)subObj + 0x78) & 0x400) {
+                    func_800EAA2C(self, arg1, arg1, &ev2, move);
+                } else {
+                    func_800EAA2C(self, arg1, arg2, &ev2, move);
+                }
+            }
+        }
+    }
+
+    // Counter damage gate: protect against hitting an already-active enemy.
+    {
+        s32 ival = 0;
+        f32 sum = *(f32*)((u8*)move + 0x5C) + *(f32*)((u8*)move + 0x60);
+        if (sum >= 0.0f && !(*(u32*)((u8*)move + 0x74) & 0x80)) {
+            ival = (s32)((f64)sum + (sum <= 0.0f ? lbl_eu_80666E60 : lbl_eu_80666E58));
+        }
+        if (ival > 0) {
+            if (!(*(u32*)((u8*)move + 0x74) & 0x10)) {
+                if (func_80148778((u8*)arg2 + 8, 0xF7)) {
+                    if (((s32 (*)(void*, void*))(*(void***)arg2)[0x5C0 / 4])(arg2, arg1) == 0) {
+                        u32 m78 = *(u32*)((u8*)move + 0x78);
+                        if ((m78 & 0x200) || ((m78 & 0x400) && !(m78 & 0x800))) {
+                            *(u32*)((u8*)move + 0x74) |= 0x80000080;
+                        }
+                    }
+                }
+            }
+
+            // X/Y gate: both the move and the sub-state must agree.
+            u32 g74 = *(u32*)((u8*)move + 0x74);
+            if (g74 & 0x8000) {
+                if (*(u32*)((u8*)move + 0x78) & 0x8000) goto counterHit;
+            } else {
+                if (*(u32*)((u8*)move + 0x78) & 0x8000) {
+                    if (g74) goto counterHit;
+                } else {
+                    goto counterHit;
+                }
+            }
+            // (fallthrough = blocked)
+            if (g74 & 0x8000) {
+                if (!(*(u32*)((u8*)move + 0x78) & 0x8000)) goto counterHit;
+            } else {
+                if (*(u32*)((u8*)move + 0x78) & 0x8000) goto counterHit;
+                goto blocked;
+            }
+        blocked:
+            goto afterCounter;
+        counterHit:
+            // 0x33 status: per-hit counter bleed from the move block.
+            if (!func_80148778((u8*)arg2 + 8, 0x33)) goto afterCounter;
+            void* entry = func_80149154((u8*)arg2 + 8, 0x33);
+            if (entry == nullptr) goto afterCounter;
+
+            if (!(*(u32*)((u8*)move + 0x78) & 0x4000000)) {
+                s32 steps = *(s16*)((u8*)entry + 0x14);
+                if (steps <= 0) goto afterCounter;
+                if (*(s16*)((u8*)move + 0x72) == -1) goto afterCounter;
+                if (*(s16*)((u8*)move + 0x72) == 0) {
+                    *(s16*)((u8*)move + 0x72) = (s16)steps;
+                }
+                s32 ival2 = 0;
+                f32 sum2 = *(f32*)((u8*)move + 0x5C) + *(f32*)((u8*)move + 0x60);
+                if (sum2 >= 0.0f && !(*(u32*)((u8*)move + 0x74) & 0x80)) {
+                    ival2 = (s32)((f64)sum2 + (sum2 <= 0.0f ? lbl_eu_80666E60 : lbl_eu_80666E58));
+                }
+                *(u32*)((u8*)move + 0x74) |= 0x80008000;
+                cf::CfActorF64Conv conv;
+                conv.w[0] = 0x43300000;
+                conv.w[1] = (u32)(s16)(*(s16*)((u8*)move + 0x72)) ^ 0x80000000;
+                f32 f72 = (f32)(conv.d - lbl_eu_80666DE0);
+                conv.w[1] = (u32)ival2 ^ 0x80000000;
+                f32 fiv = (f32)(conv.d - lbl_eu_80666DE0);
+                *(f32*)((u8*)move + 0x64) = fiv;
+                f32 sum3 = *(f32*)((u8*)move + 0x5C) - f72 + *(f32*)((u8*)move + 0x60);
+                *(f32*)((u8*)move + 0x5C) = *(f32*)((u8*)move + 0x5C) - f72;
+                s32 ival3 = 0;
+                if (sum3 >= 0.0f && !(*(u32*)((u8*)move + 0x74) & 0x80)) {
+                    ival3 = (s32)((f64)sum3 + (sum3 <= 0.0f ? lbl_eu_80666E60 : lbl_eu_80666E58));
+                }
+                if (ival3 > 0) {
+                    *(s16*)((u8*)move + 0x72) = -1;
+                    *(u32*)((u8*)move + 0x78) |= 0x40008000;
+                } else {
+                    f32 neg = -*(f32*)((u8*)move + 0x5C);
+                    *(s16*)((u8*)move + 0x72) = (s16)(s32)neg;
+                }
+            } else {
+                s32 steps = *(s16*)((u8*)entry + 0x14);
+                if (steps <= 0) goto afterCounter;
+                s32 ival = 0;
+                f32 sum = *(f32*)((u8*)move + 0x5C) + *(f32*)((u8*)move + 0x60);
+                if (sum >= 0.0f && !(*(u32*)((u8*)move + 0x74) & 0x80)) {
+                    ival = (s32)((f64)sum + (sum <= 0.0f ? lbl_eu_80666E60 : lbl_eu_80666E58));
+                }
+                *(u32*)((u8*)move + 0x74) |= 0x80008000;
+                cf::CfActorF64Conv conv;
+                conv.w[0] = 0x43300000;
+                conv.w[1] = (u32)ival ^ 0x80000000;
+                *(f32*)((u8*)move + 0x64) = (f32)(conv.d - lbl_eu_80666DE0);
+                conv.w[1] = (u32)(s16)steps ^ 0x80000000;
+                f32 fs = (f32)(conv.d - lbl_eu_80666DE0);
+                *(f32*)((u8*)move + 0x5C) = *(f32*)((u8*)move + 0x5C) - fs;
+            }
+        }
+    }
+
+afterCounter:
+    // Arts-type 3 dot/regeneration block.
+    if (*(u16*)((u8*)subObj + 0x3C) == 3) {
+        s32 ival = 0;
+        f32 sum = *(f32*)((u8*)move + 0x5C) + *(f32*)((u8*)move + 0x60);
+        if (sum >= 0.0f && !(*(u32*)((u8*)move + 0x74) & 0x80)) {
+            ival = (s32)((f64)sum + (sum <= 0.0f ? lbl_eu_80666E60 : lbl_eu_80666E58));
+        }
+        if (ival > 0) {
+            if (!(*(u32*)((u8*)move + 0x78) & 0x10)) {
+                cf::CfActorF64Conv conv;
+                conv.w[0] = 0x43300000;
+                conv.w[1] = (u32)ival ^ 0x80000000;
+                f32 fv = (f32)(conv.d - lbl_eu_80666DE0);
+                *(f32*)((u8*)move + 0x68) = *(f32*)((u8*)move + 0x68) - fv;
+            }
+            if (!(*(u32*)((u8*)move + 0x78) & 0x1000)) {
+                if (((s32 (*)(void*))(*(void***)arg2)[0x2BC / 4])(arg2) == 0) {
+                    // 0x92 proc-rate block.
+                    if (func_80148778((u8*)arg2 + 8, 0x92)) {
+                        s32 bonus = 0;
+                        if (func_80148778((u8*)arg2 + 8, 0xA1)) {
+                            void* eA1 = func_80149154((u8*)arg2 + 8, 0xA1);
+                            bonus = *(s32*)((u8*)eA1 + 0x10);
+                        }
+                        void* e92 = func_80149154((u8*)arg2 + 8, 0x92);
+                        if (e92 != nullptr && *(f32*)((u8*)move + 0x68) <= 0.0f) {
+                            u32 need = *(u32*)((u8*)e92 + 0x10);
+                            if (*(u32*)((u8*)e92 + 0x08) == 0x2000) need += bonus;
+                            if (need > *(u32*)((u8*)move + 0xA8) % 100) {
+                                *(u32*)((u8*)move + 0x74) |= 0xA0000000;
+                                *(f32*)((u8*)move + 0x68) = lbl_eu_80666DD4;
+                            }
+                        }
+                    }
+                    if (!(*(u32*)((u8*)move + 0x78) & 0x2000)) {
+                        // 0xFC / 0x100 fixed-rate bleeds.
+                        if (func_80148778((u8*)arg2 + 8, 0xFC)) {
+                            void* eFC = func_80149154((u8*)arg2 + 8, 0xFC);
+                            if (eFC != nullptr && *(f32*)((u8*)move + 0x68) <= 0.0f) {
+                                *(u32*)((u8*)move + 0x78) |= 0x40002000;
+                                ((f32 (*)(void*))(*(void***)arg2)[0x12C / 4])(arg2);
+                                *(f32*)((u8*)move + 0x68) =
+                                    *(f32*)((u8*)move + 0x68) * (f32)(*(s32*)((u8*)eFC + 0x10)) * lbl_eu_80666DD8;
+                            }
+                        }
+                        if (func_80148778((u8*)arg2 + 8, 0x100)) {
+                            void* e100 = func_80149154((u8*)arg2 + 8, 0x100);
+                            if (e100 != nullptr && *(f32*)((u8*)move + 0x68) <= 0.0f) {
+                                *(u32*)((u8*)move + 0x78) |= 0x40002000;
+                                ((f32 (*)(void*))(*(void***)arg2)[0x12C / 4])(arg2);
+                                *(f32*)((u8*)move + 0x68) =
+                                    *(f32*)((u8*)move + 0x68) * (f32)(*(s32*)((u8*)e100 + 0x10)) * lbl_eu_80666DD8;
+                            }
+                        }
+                        // 0x36 growth block.
+                        if (func_80148778((u8*)arg2 + 8, 0x36)) {
+                            void* e36 = func_80149154((u8*)arg2 + 8, 0x36);
+                            if (e36 != nullptr && *(f32*)((u8*)move + 0x68) > 0.0f) {
+                                s32 v36 = *(s32*)((u8*)e36 + 0x10);
+                                func_800D81A8((void*)0, arg2, (void*)0);
+                                cf::CfActorF64Conv conv;
+                                conv.w[0] = 0x43300000;
+                                conv.w[1] = (u32)v36 ^ 0x80000000;
+                                f32 fv = (f32)(conv.d - lbl_eu_80666DE0);
+                                f32 prod = fv * *(f32*)((u8*)move + 0x68);
+                                f32 rnd = (f32)(s32)prod;
+                                conv.w[1] = (u32)(s32)rnd ^ 0x80000000;
+                                *(f32*)((u8*)move + 0x68) =
+                                    *(f32*)((u8*)move + 0x68) + (f32)(conv.d - lbl_eu_80666DE0);
+                            }
+                        }
+                    }
+                    if (!(*(u32*)((u8*)move + 0x78) & 0x4000)) {
+                        // 0x11E protection block.
+                        if (func_80148778((u8*)arg2 + 8, 0x11E)) {
+                            void* e11E = func_80149154((u8*)arg2 + 8, 0x11E);
+                            if (e11E != nullptr && *(f32*)((u8*)move + 0x68) > 0.0f) {
+                                f32 f68 = *(f32*)((u8*)move + 0x68);
+                                ((f32 (*)(void*))(*(void***)arg2)[0x12C / 4])(arg2);
+                                s32 s14 = *(s16*)((u8*)e11E + 0x14);
+                                cf::CfActorF64Conv conv;
+                                conv.w[0] = 0x43300000;
+                                conv.w[1] = (u32)s14 ^ 0x80000000;
+                                f32 fs = (f32)(conv.d - lbl_eu_80666DE0);
+                                s32 rnd = (s32)(fs * f68 / lbl_eu_80666E00);
+                                conv.w[1] = (u32)rnd ^ 0x80000000;
+                                f32 fadd = (f32)(conv.d - lbl_eu_80666DE0);
+                                *(f32*)((u8*)move + 0x68) = *(f32*)((u8*)move + 0x68) + fadd;
+                                if (*(s32*)((u8*)e11E + 0x10) > 0) {
+                                    if (*(s16*)((u8*)move + 0x70) == 0) {
+                                        *(s16*)((u8*)move + 0x70) = (s16)*(s32*)((u8*)e11E + 0x10);
+                                    }
+                                    s32 tick = *(s16*)((u8*)move + 0x70) - 1;
+                                    *(s16*)((u8*)move + 0x70) = (s16)tick;
+                                    if (tick <= 0) {
+                                        *(s16*)((u8*)move + 0x70) = 0;
+                                        *(u32*)((u8*)move + 0x78) |= 0x40004000;
+                                    }
+                                }
+                            }
+                        }
+                        // 0x37 proc-rate block (same shape as 0x92).
+                        if (func_80148778((u8*)arg2 + 8, 0x37)) {
+                            s32 bonus = 0;
+                            if (func_80148778((u8*)arg2 + 8, 0xA1)) {
+                                void* eA1 = func_80149154((u8*)arg2 + 8, 0xA1);
+                                bonus = *(s32*)((u8*)eA1 + 0x10);
+                            }
+                            void* e37 = func_80149154((u8*)arg2 + 8, 0x37);
+                            if (e37 != nullptr && *(f32*)((u8*)move + 0x68) > 0.0f) {
+                                s32 need = *(s16*)((u8*)e37 + 0x1A);
+                                if (*(u32*)((u8*)e37 + 0x08) == 0x2000) need += bonus;
+                                u32 r25 = *(s32*)((u8*)e37 + 0x10);
+                                func_800D81A8((void*)0, arg2, (void*)0);
+                                cf::CfActorF64Conv conv;
+                                conv.w[0] = 0x43300000;
+                                conv.w[1] = (u32)r25 ^ 0x80000000;
+                                f32 fv = (f32)(conv.d - lbl_eu_80666DE0);
+                                f32 prod = fv * *(f32*)((u8*)move + 0x68);
+                                f32 rnd = (f32)(s32)prod;
+                                conv.w[1] = (u32)(s32)rnd ^ 0x80000000;
+                                *(f32*)((u8*)move + 0x68) =
+                                    *(f32*)((u8*)move + 0x68) + (f32)(conv.d - lbl_eu_80666DE0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Final clamp: move stays active until the accumulated dot drains.
+    if (*(f32*)((u8*)move + 0x68) <= 0.0f) {
+        *(u32*)((u8*)move + 0x78) |= 0x40001000;
+    }
+}
+
+// 0xBC-byte move snapshot block copied by value across the damage-preview
+// paths. The retail copy codegen is: single words at +0x00/+0x04, eight
+// 8-byte chunks +0x08..+0x44, three singles +0x48..+0x50, seven floats
+// +0x54..+0x6C, two s16s, a word pair +0x74/+0x78, a single +0x7C, a u16
+// +0x80, six word pairs +0x84..+0xB0, then two singles +0xB4/+0xB8.
+struct E921C_MoveData {
+    u32 w00;    // +0x00
+    u32 w04;    // +0x04
+    u64 q08;    // +0x08
+    u64 q10;    // +0x10
+    u64 q18;    // +0x18
+    u64 q20;    // +0x20
+    u64 q28;    // +0x28
+    u64 q30;    // +0x30
+    u64 q38;    // +0x38
+    u64 q40;    // +0x40
+    u32 w48;    // +0x48
+    u32 w4C;    // +0x4C
+    u32 w50;    // +0x50
+    f32 f54;    // +0x54
+    f32 f58;    // +0x58
+    f32 f5C;    // +0x5C
+    f32 f60;    // +0x60
+    f32 f64;    // +0x64
+    f32 f68;    // +0x68
+    f32 f6C;    // +0x6C
+    s16 s70;    // +0x70
+    s16 s72;    // +0x72
+    u64 q74;    // +0x74
+    u32 w7C;    // +0x7C
+    u16 u80;    // +0x80
+    u16 pad82;  // +0x82
+    u64 q84;    // +0x84
+    u64 q8C;    // +0x8C
+    u64 q94;    // +0x94
+    u64 q9C;    // +0x9C
+    u64 qA4;    // +0xA4
+    u64 qAC;    // +0xAC
+    u32 wB4;    // +0xB4
+    u32 wB8;    // +0xB8
+};
+
+// func_800E921C (retail 0x800E9D04, 0x934 bytes): battle damage-preview setup.
+// Computes the damage preview for the party's selected arts: resolves the
+// target sub-object/action, clears all player selection flags, fills the
+// actor stat block and per-member move snapshots, then accumulates the
+// rounded damage sum into *outDamage.
+static __inline void* e921_vf298(void* o) {
+    return ((void* (*)(void*))(*(void***)o)[0x298 / 4])(o);
+}
+static __inline void* e921_vf29C(void* o, u32 i) {
+    return ((void* (*)(void*, u32))(*(void***)o)[0x29C / 4])(o, i);
+}
+static __inline void* e921_vf2A4(void* o) {
+    return ((void* (*)(void*))(*(void***)o)[0x2A4 / 4])(o);
+}
+static __inline s32 e921Vf2A8(void* o) {
+    return ((s32 (*)(void*))(*(void***)o)[0x2A8 / 4])(o);
+}
+static __inline void e921_vf2AC(void* o) {
+    ((void (*)(void*))(*(void***)o)[0x2AC / 4])(o);
+}
+static __inline void e921_vf2B8(void* o) {
+    ((void (*)(void*))(*(void***)o)[0x2B8 / 4])(o);
+}
+static __inline f32 e921_vf128(void* o) {
+    return ((f32 (*)(void*))(*(void***)o)[0x128 / 4])(o);
+}
+static __inline void e921_vfA4(void* o, u32 v) {
+    ((void (*)(void*, u32))(*(void***)o)[0xA4 / 4])(o, v);
+}
+
+void func_800E921C(void* self, void* actor, void* obj, f32* outDamage, s32* outFlag) {
+    // r23: selected target sub-object from obj's move slot; r31: its action.
+    void* subObj = *(void**)((u8*)e921_vf298(obj) + 0x50);
+    void* action = func_8016FE34(
+        (void*)(intptr_t)func_800B708C__Fi(*(s32*)((u8*)e921_vf298(obj) + 4)));
+
+    *outDamage = lbl_eu_80666DDC;
+    *outFlag = 0;
+    std::memset((u8*)actor + 0x828, 0, 8);
+
+    if (action == nullptr) return;
+    if (subObj == nullptr) return;
+
+    // Talent-gauge-full one-round path: the preview becomes the computed value.
+    if (*(u32*)((u8*)actor + 0x824) & 0x20000) {
+        cf::CfActorF64Conv conv;
+        conv.w[0] = 0x43300000;
+        conv.w[1] = (u32)func_800F4648(actor) ^ 0x80000000;
+        *outDamage = (f32)(conv.d - lbl_eu_80666DE0);
+        return;
+    }
+
+    // Party size / arts-count gate for the preview loop.
+    if (*(u8*)((u8*)subObj + 0x43) == 1) {
+        *outFlag = *(u8*)((u8*)subObj + 0x44);
+    } else {
+        *outFlag = 1;
+    }
+
+    // Clear the selection flag on the action, the 3 party members, and obj.
+    e921_vfA4(action, 0);
+    for (s32 i = 0; i < 3; i++) {
+        void* player = func_8016FE34(getPlayer__Q22cf13CfGameManagerFi(i));
+        if (player != nullptr && player != action) {
+            e921_vfA4(player, 0);
+        }
+    }
+    e921_vfA4(obj, 0);
+    e921_vfA4(action, 0);
+
+    *(u32*)((u8*)actor + 0x88) &= ~0x1000;
+
+    // Store the base damage into the target move slots (0x6C/0x68) and zero
+    // the tick counters.
+    {
+        f32 dmg = e921_vf128(obj);
+        *(f32*)((u8*)e921_vf298(obj) + 0x6C) = dmg;
+    }
+    {
+        f32 dmg = e921_vf128(action);
+        *(f32*)((u8*)e921_vf298(obj) + 0x68) = dmg;
+    }
+    *(s16*)((u8*)e921_vf298(obj) + 0x70) = 0;
+    *(s16*)((u8*)e921_vf298(obj) + 0x72) = 0;
+
+    // Reset each party member's move slot.
+    f32 zero = lbl_eu_80666DDC;
+    for (s32 i = 0; i < *outFlag; i++) {
+        void* slot = e921_vf29C(obj, i);
+        *(u32*)((u8*)slot + 0x74) = 0;
+        u32 v = *(u32*)((u8*)slot + 0x78);
+        *(u32*)((u8*)slot + 0x78) = (v & 0xFFFF) | (v & 0x03F00000);
+        *(f32*)((u8*)slot + 0x54) = zero;
+        *(f32*)((u8*)slot + 0x58) = zero;
+        *(f32*)((u8*)slot + 0x5C) = zero;
+        *(f32*)((u8*)slot + 0x60) = zero;
+        *(f32*)((u8*)slot + 0x64) = zero;
+    }
+
+    // Per-party-member preview loop: run the ai dispatcher, snapshot the
+    // stat block / per-member move data, accumulate the rounded damage.
+    f32 zero2 = lbl_eu_80666DDC;
+    cf::CfActorF64Conv conv;    // hoisted 0x4330 stores (r24) + lfd f31
+    conv.w[0] = 0x43300000;
+    s32 idx = 0;
+    while (idx < *outFlag) {
+        void* slot = e921_vf298(obj);                       // r29
+        *(u32*)((u8*)slot + 0x78) |= 0x44000000;
+        func_800DB0FC((void*)(intptr_t)lbl_eu_80663F00, obj, action, slot);
+        *(u32*)((u8*)slot + 0x78) &= ~0x04000000;
+
+        if (e921Vf2A8(obj) == 0) {
+            // Snapshot into the actor's displayed stat block (0x10..0xC8).
+            *(E921C_MoveData*)((u8*)actor + 0x10) =
+                *(const E921C_MoveData*)e921_vf298(obj);
+        } else {
+            u32 fl = *(u32*)((u8*)e921_vf298(obj) + 0x74);
+            if (fl & 0x80000000) {
+                *(u32*)((u8*)actor + 0x84) |= fl;
+            } else {
+                *(u32*)((u8*)actor + 0x88) |= fl;
+            }
+        }
+
+        // Per-member move snapshot at actor + 0x2A8*0xBC + 0xCC.
+        *(E921C_MoveData*)((u8*)actor + e921Vf2A8(obj) * 0xBC + 0xCC) =
+            *(const E921C_MoveData*)slot;
+
+        if (*(u32*)((u8*)slot + 0x78) & 0x1000) {
+            *(u32*)((u8*)actor + 0x828) = 0;
+            *(u32*)((u8*)actor + 0x88) |= 0x40001000;
+            *(u32*)((u8*)actor + 0x82C) = 0;
+        }
+
+        // Round base+variance to the nearest int and accumulate.
+        f32 sum = *(f32*)((u8*)slot + 0x5C) + *(f32*)((u8*)slot + 0x60);
+        s32 ival;
+        if (sum < 0.0f) {
+            ival = 0;
+        } else if (*(u32*)((u8*)slot + 0x74) & 0x80) {
+            ival = 0;
+        } else {
+            ival = (s32)((f64)sum + (sum <= 0.0f ? lbl_eu_80666E60 : lbl_eu_80666E58));
+        }
+        conv.w[1] = (u32)(s32)ival ^ 0x80000000;
+        f32 add = (f32)(conv.d - lbl_eu_80666DE0);
+        *outDamage = *outDamage + add;
+        e921_vf2B8(obj);
+
+        if (*(f32*)((u8*)slot + 0x6C) < zero2) break;
+        idx++;
+    }
+
+    // Final snapshot into the 0x2A4 target block.
+    e921_vf2AC(obj);
+    void* dst = e921_vf2A4(obj);
+    void* src = e921_vf298(obj);
+    *(E921C_MoveData*)dst = *(const E921C_MoveData*)src;
+
+    if (*outDamage < 0.0f) *outDamage = 0.0f;
+    if (*outFlag > 1) *(f32*)((u8*)actor + 0x6C) = *outDamage;
+}
+// Workspace block handed to func_800DB0FC / func_800E2594 (retail lays it
+// out at sp+0x38). Field pattern: src words at +0x00..0x50, a zeroed float
+// pack at +0x54..0x64, damage/variance at +0x68/+0x6C, s16s at +0x70/+0x72,
+// flags at +0x74/+0x78, and the shared word tail at +0x80..0xB8.
+struct E1B5C_Workspace {
+    u32 v00; u32 v04; u32 v08; u32 v0C; u32 v10; u32 v14; u32 v18; u32 v1C;
+    u32 v20; u32 v24; u32 v28; u32 v2C; u32 v30; u32 v34; u32 v38; u32 v3C;
+    u32 v40; u32 v44; u32 v48; u32 v4C;
+    void* v50;      // +0x50 src[0x50]
+    f32 v54;        // +0x54 0.0
+    f32 v58;        // +0x58 0.0
+    f32 v5C;        // +0x5C 0.0
+    f32 v60;        // +0x60 0.0
+    f32 v64;        // +0x64 0.0
+    f32 v68;        // +0x68 src[0x5C]
+    f32 v6C;        // +0x6C src[0x60]
+    s16 v70;        // +0x70 src[0x70]
+    s16 v72;        // +0x72 src[0x72]
+    u32 v74;        // +0x74 0
+    u32 v78;        // +0x78 flags
+    u32 v7C;        // +0x7C 0
+    u16 v80;        // +0x80 src[0x80]
+    u16 pad82;      // +0x82
+    u32 v84; u32 v88; u32 v8C; u32 v90; u32 v94; u32 v98; u32 v9C;
+    u32 vA0; u32 vA4; u32 vA8; u32 vAC; u32 vB0; u32 vB4;
+    void* vB8;      // +0xB8 &copy
+};
+
+// func_800E1B5C (retail 0x800E1B5C, 0xAF0 bytes): party-chain / target-table
+// refresh. Verifies the actor's two move objects reference the same target,
+// snapshots the source move data, broadcasts the arts action to the party
+// (via the vision enum list or the 2x8 target-slot scan + chain handoff), then
+// re-runs the 16-slot fallback building per-target event workspaces.
+extern "C" void func_8027750C(void*, void*);
+extern "C" void func_8027D478(void*, void*);
+extern "C" void func_80274B24(void*, void*);
+extern "C" void func_802A1D04(void*, void*);
+extern "C" void func_800E2594(void*, void*, void*, void*);
+
+void func_800E1B5C(void* mgr, void* actor) {
+    void* src = e921_vf298(actor);                          // r30
+    void* dst = ((void* (*)(void*))(*(void***)actor)[0x2A0 / 4])(actor);
+
+    // Both move objects must name the same target id / sub-object.
+    if (*(u32*)((u8*)src + 0x48) != *(u32*)((u8*)dst + 0x48)) return;
+    if (*(u32*)((u8*)src + 0x50) != *(u32*)((u8*)dst + 0x50)) return;
+    if (*(u32*)((u8*)actor + 0x3F60) == 0) return;
+
+    void* action = func_8016FE34(
+        (void*)(intptr_t)func_800B708C__Fi(*(s32*)((u8*)src + 4)));
+
+    // Snapshot the full move block (retail: sp+0xF4..0x1AC) with the target
+    // pointer and action in the two words after it (sp+0x1B0/0x1B4).
+    E921C_MoveData copy;
+    *(E921C_MoveData*)&copy = *(const E921C_MoveData*)src;
+    void* targetPtr = *(void**)((u8*)src + 0x50);
+    void* actionSlot = action;
+
+    if (action == nullptr) goto skipScan;
+    if (*(u32*)((u8*)action + 0x3F60) == 0) goto skipScan;
+
+    {
+        u32 fl = *(u32*)((u8*)action + 0x3F00);
+        if (!(fl & 0x04) && !(fl & 0x02)) return;
+    }
+    if (targetPtr == nullptr) return;
+
+    // Broadcast path: the action is idle and the target has the 0x8000
+    // move flag set - poke every party member's 0x118 hook.
+    if (((s32 (*)(void*))(*(void***)action)[0x2BC / 4])(action) != 0) goto scan2;
+    getInstance__Q22cf13CfGameManagerFv();
+    if (func_8006EF04__Fi(0x400)) goto scan2;
+    if (!(*(u32*)((u8*)targetPtr + 0x78) & 0x8000)) goto scan2;
+    {
+        EnumListHolder holder;
+        func_80043D90(&holder);
+        func_800F4A98(func_80043F18(&holder), 0x20, 0);
+        for (u32 i = 0; i < *(u32*)((u8*)func_80043F18(&holder) + 0x620); i++) {
+            void* o = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+            ((void (*)(void*, f32))(*(void***)o)[0x118 / 4])(o, lbl_eu_80666DDC);
+        }
+        __dt__80043E88(&holder, -1);
+        return;
+    }
+
+scan2:
+    // 2x8 target-slot scan: does any slot reference src->field_04?
+    {
+        s32 found = 0;
+        u32 slotId = *(u32*)((u8*)src + 4);
+        for (s32 blk = 0; blk < 2; blk++) {
+            u8* base = (u8*)src + 8 + blk * 0x20;
+            for (s32 j = 0; j < 8; j++) {
+                if (*(u32*)(base + j * 4) == slotId) {
+                    found = 1;
+                    break;
+                }
+            }
+            if (found) break;
+        }
+
+        if (found) {
+            s32 r14 = 1;
+            if (*(u32*)((u8*)actor + 0x3F00) & 0x02) {
+                if (*(u16*)((u8*)actor + 0x3F28) == 7) {
+                    if (*(u32*)((u8*)src + 0x78) & 0x1000) {
+                        if (e921Vf2A8(actor) != 1) r14 = 0;
+                    }
+                }
+            }
+            if (r14) {
+                func_8027750C((u8*)mgr + 0x1A8, actor);
+                func_8027D478((u8*)mgr + 0x20C8, actor);
+            }
+            func_80274B24((u8*)mgr + 0x2194, actor);
+            func_802A1D04(actor, action);
+            func_800E2594(mgr, actor, action, src);
+            if (*(u32*)((u8*)action + 0x3F00) & 0x04) {
+                void* h = *(void**)((u8*)action + 0x3ED4);
+                ((void (*)(void*))(*(void***)h)[0x100 / 4])(h);
+            }
+        }
+    }
+
+skipScan:
+    // Per-target fallback: rebuild a workspace from the copy for each of the
+    // 16 party-slot ids and run the shared move dispatchers on it.
+    getInstance__Q22cf13CfGameManagerFv();
+    if (!func_8006EF04__Fi(0x400)) {
+        E921C_MoveData* copyP = &copy;
+        for (s32 r29 = 0; r29 < 16; r29++) {
+            u32* slotId = (u32*)((u8*)&copy + 8 + r29 * 4);
+            if (*slotId == 0) continue;
+            void* pl = func_8016FE34((void*)(intptr_t)func_800B708C__Fi(*slotId));
+            if (pl == nullptr || ((s32 (*)(void*))(*(void***)pl)[0x2BC / 4])(pl)) {
+                *slotId = 0;
+                continue;
+            }
+            if (pl == action) continue;
+
+            E1B5C_Workspace ws;
+            ws.v00 = copy.w00;
+            ws.v04 = copy.w04;
+            ws.v08 = (u32)copy.q08;
+            ws.v0C = (u32)(copy.q08 >> 32);
+            ws.v10 = (u32)copy.q10;
+            ws.v14 = (u32)(copy.q10 >> 32);
+            ws.v18 = (u32)copy.q18;
+            ws.v1C = (u32)(copy.q18 >> 32);
+            ws.v20 = (u32)copy.q20;
+            ws.v24 = (u32)(copy.q20 >> 32);
+            ws.v28 = (u32)copy.q28;
+            ws.v2C = (u32)(copy.q28 >> 32);
+            ws.v30 = (u32)copy.q30;
+            ws.v34 = (u32)(copy.q30 >> 32);
+            ws.v38 = (u32)copy.q38;
+            ws.v3C = (u32)(copy.q38 >> 32);
+            ws.v40 = (u32)copy.q40;
+            ws.v44 = (u32)(copy.q40 >> 32);
+            ws.v48 = copy.w48;
+            ws.v4C = copy.w4C;
+            ws.v50 = (void*)(uintptr_t)copy.w50;
+            ws.v54 = 0.0f;
+            ws.v58 = 0.0f;
+            ws.v5C = 0.0f;
+            ws.v60 = 0.0f;
+            ws.v64 = 0.0f;
+            ws.v68 = copy.f5C;
+            ws.v6C = copy.f60;
+            ws.v70 = copy.s70;
+            ws.v72 = copy.s72;
+            ws.v74 = 0;
+            ws.v78 = ((*(u32*)((u8*)&copy + 0x6C)) & ~0xFFu) | 0x40000001;
+            ws.v7C = 0;
+            ws.v80 = copy.u80;
+            ws.v84 = (u32)copy.q84;
+            ws.v88 = (u32)(copy.q84 >> 32);
+            ws.v8C = (u32)copy.q8C;
+            ws.v90 = (u32)(copy.q8C >> 32);
+            ws.v94 = (u32)copy.q94;
+            ws.v98 = (u32)(copy.q94 >> 32);
+            ws.v9C = (u32)copy.q9C;
+            ws.vA0 = (u32)(copy.q9C >> 32);
+            ws.vA4 = (u32)copy.qA4;
+            ws.vA8 = (u32)(copy.qA4 >> 32);
+            ws.vAC = (u32)copy.qAC;
+            ws.vB0 = (u32)(copy.qAC >> 32);
+            ws.vB4 = copy.wB4;
+            ws.vB8 = copyP;                    // +0xB8 = &copy
+
+            ws.v04 = *(u32*)((u8*)pl + 0x3F10); // tag with the actor id
+
+            func_800DB0FC((void*)(intptr_t)lbl_eu_80663F00, actor, pl, &ws);
+            func_800E2594(mgr, actor, pl, &ws);
+
+            // Register the target into the actor list if not present already.
+            SimpleListNode* sentinel = *(SimpleListNode**)((u8*)mgr + 0x08);
+            SimpleListNode* cur = sentinel->next;
+            while (cur != sentinel && cur->data != pl) cur = cur->next;
+            if (cur == sentinel) {
+                if (*(u32*)((u8*)pl + 0x3F00) & 0x04) {
+                    if (!(*(u32*)((u8*)pl + 0x3374) & 0x8000)) {
+                        func_800D9978((cf::CBattleManager*)mgr, (cf::CfObjectActor*)pl);
+                    }
+                }
+            }
+        }
+    }
+}
 
 // ================ func_800E2A9C reconstruction ================
 
@@ -7667,73 +9407,780 @@ afterType3:
     }
 }
 
-void func_800E85F0(){}
-void CBattleManager_preCalcTotalDamage(){}
-void func_800E921C(){}
-void func_800E9B54(){}
+// ============================================================================
+// func_800E85F0 / CBattleManager_preCalcTotalDamage / func_800E9B54 /
+// func_800E2594 -- move-type dispatchers and chain-arts spread helpers
+// ============================================================================
 
-// Iterates through actor lists and calls virtual functions based on flags.
+// ---- vtable slots used only by these five functions ------------------------
+static inline void vf88(void* o, f32 f)  { ((void(*)(void*, f32))(*(void***)o)[0x88 / 4])(o, f); }
+static inline void vf5C4(void* o, f32 f) { ((void(*)(void*, f32))(*(void***)o)[0x5C4 / 4])(o, f); }
+static inline void vfBC(void* o, void* a) { ((void(*)(void*, void*))(*(void***)o)[0xBC / 4])(o, a); }
+static inline void* vf29C(void* o, u32 a) { return ((void*(*)(void*, u32))(*(void***)o)[0x29C / 4])(o, a); }
+static inline void e_vf304(void* o, u32 v) { ((void(*)(void*, u32))(*(void***)o)[0x304 / 4])(o, v); }
+static inline void e_vf150(void* o, f32 f) { ((void(*)(void*, f32))(*(void***)o)[0x150 / 4])(o, f); }
+static inline void e_vfA4(void* o, u32 v) { ((void(*)(void*, u32))(*(void***)o)[0xA4 / 4])(o, v); }
+static inline void* e_vf2A4(void* o) { return ((void*(*)(void*))(*(void***)o)[0x2A4 / 4])(o); }
+static inline void* e_vf298(void* o) { return ((void*(*)(void*))(*(void***)o)[0x298 / 4])(o); }
+static inline void e_vf2AC(void* o) { ((void(*)(void*))(*(void***)o)[0x2AC / 4])(o); }
+static inline void e_vf2B4(void* o) { ((void(*)(void*))(*(void***)o)[0x2B4 / 4])(o); }
+static inline void e_vf2B8(void* o) { ((void(*)(void*))(*(void***)o)[0x2B8 / 4])(o); }
+static inline f32 e_vf128(void* o) { return ((f32(*)(void*))(*(void***)o)[0x128 / 4])(o); }
+static inline void vfB8(void* o)     { ((void(*)(void*))(*(void***)o)[0xB8 / 4])(o); }
+static inline void vfC8(void* o)     { ((void(*)(void*))(*(void***)o)[0xC8 / 4])(o); }
+
+// ---- small object views (byte-precise offsets) -----------------------------
+struct E2594_Sub {          // move sub-object (type/h28/b44/flags)
+    u8 pad_00[0x28];
+    u16 h28;                // +0x28
+    u8 pad_2A[0x3C - 0x2A];
+    u16 type3C;             // +0x3C
+    u8 pad_3E[0x44 - 0x3E];
+    u8 b44;                 // +0x44
+    u8 pad_45[0x78 - 0x45];
+    u32 flags78;            // +0x78
+};
+struct E85F0_Move {         // move block view used by func_800E85F0
+    u8 pad_00[0x50];
+    void* sub;              // +0x50
+    u8 pad_54[0x24];
+    u32 flags78;            // +0x78
+    u8 pad_7C[0x14];
+    u32 field_90;           // +0x90
+};
+struct CE_Entry {           // func_801491F4 0xCE entry (u16 at +0x2C)
+    u8 pad_00[0x2C];
+    u16 h2C;                // +0x2C
+};
+struct E85F0_Entry12E {     // func_80149154 0x12E entry
+    u8 pad_00[0x10];
+    s32 field_10;           // +0x10
+    u8 pad_14[0x0C];
+    f32 field_20;           // +0x20
+};
+struct BMSub43View {        // party-order bytes at +0x43/+0x44
+    u8 pad_00[0x43];
+    u8 b43;                 // +0x43
+    u8 b44;                 // +0x44
+};
+struct E484_TypeObj {       // enum-cast result: u16 type at +0x8C, +0x9C ptr
+    u8 pad_00[0x8C];
+    u16 type8C;             // +0x8C
+    u8 pad_8E[0x9C - 0x8E];
+    void* field_9C;         // +0x9C
+};
+struct E484_VisionActor {   // vision actor: partner ptr at +0x45B8
+    u8 pad_00[0x45B8];
+    void* field_45B8;       // +0x45B8
+};
+struct E484_VisionPair {    // func_801A8070 result: two u32 ids
+    u32 field_00;
+    u32 field_04;
+};
+struct E484_Global6C {      // func_80044DF4 result: f32 at +0x6C
+    u8 pad_00[0x6C];
+    f32 field_6C;           // +0x6C
+};
+
+// Vtable mirror for the battle-actor dispatch slots used below. Never
+// instantiated -- casting a retail object to this type and calling the named
+// virtuals makes MWCC route the dispatch through r12 (retail order) instead of
+// a general scratch register (cf. ActorVtableMirror / CVisionBattleObj).
+struct BMVtMirror {
+    virtual ~BMVtMirror() {}                       // i0  = 0x04
+    virtual void f01(); virtual void f02(); virtual void f03(); virtual void f04();
+    virtual void f05(); virtual void f06(); virtual void f07(); virtual void f08();
+    virtual u32 v28(u32 a);                        // i9  = 0x28
+    virtual void* v30();                           // i10 = 0x2C
+    virtual void f12(); virtual void f13(); virtual void f14(); virtual void f15();
+    virtual void f16(); virtual void f17(); virtual void* v4C(); virtual void f19();
+    virtual void f20(); virtual void f21(); virtual void f22(); virtual void f23();
+    virtual void f24(); virtual void f25(); virtual void f26(); virtual void f27();
+    virtual void f28(); virtual void f29(); virtual void f30(); virtual void f31();
+    virtual void fF32();
+    virtual void v88(f32 f);                       // i33 = 0x88
+    virtual void f34(); virtual void f35(); virtual void f36(); virtual void f37();
+    virtual void f38(); virtual void f39();
+    virtual void vA4(u32 v);                       // i40 = 0xA4
+    virtual void f41(); virtual void f42(); virtual void f43(); virtual void f44();
+    virtual void vB8();                            // i45 = 0xB8
+    virtual void vBC(void* a);                     // i46 = 0xBC
+    virtual void f47(); virtual void f48();
+    virtual void vC8();                            // i49 = 0xC8
+    virtual void f50(); virtual void f51(); virtual void f52(); virtual void f53();
+    virtual void f54(); virtual void f55(); virtual void f56(); virtual void f57();
+    virtual void f58(); virtual void f59(); virtual void f60(); virtual void f61();
+    virtual void f62(); virtual void f63(); virtual void f64();
+    virtual void* v108();                          // i65 = 0x108
+    virtual void f66(); virtual void f67(); virtual void f68(); virtual void f69();
+    virtual void f70(); virtual void f71(); virtual void f72();
+    virtual f32 v128();                            // i73 = 0x128
+    virtual void f74(); virtual void f75(); virtual void f76(); virtual void f77();
+    virtual void f78(); virtual void f79(); virtual void f80(); virtual void f81();
+    virtual void f82();
+    virtual void v150(f32 f);                      // i83 = 0x150
+    virtual void v154(f32 f);                      // i84 = 0x154
+    virtual void f85(); virtual void f86(); virtual void f87(); virtual void f88();
+    virtual void f89(); virtual void f90(); virtual void f91(); virtual void f92();
+    virtual void f93(); virtual void f94(); virtual void f95(); virtual void f96();
+    virtual void f97(); virtual void f98(); virtual void f99(); virtual void f100();
+    virtual void f101(); virtual void f102(); virtual void f103(); virtual void f104();
+    virtual void f105(); virtual void f106(); virtual void f107(); virtual void f108();
+    virtual void f109(); virtual void f110(); virtual void f111(); virtual void f112();
+    virtual void f113(); virtual void f114(); virtual void f115(); virtual void f116();
+    virtual void f117(); virtual void f118(); virtual void f119(); virtual void f120();
+    virtual void* v1E8();                          // i121 = 0x1E8
+    virtual void f122(); virtual void f123(); virtual void f124(); virtual void f125();
+    virtual void f126();
+    virtual void* v200();                          // i127 = 0x200
+    virtual void f128(); virtual void f129(); virtual void f130(); virtual void f131();
+    virtual void f132(); virtual void f133(); virtual void f134(); virtual void f135();
+    virtual void f136(); virtual void f137(); virtual void f138(); virtual void f139();
+    virtual void f140(); virtual void f141(); virtual void f142(); virtual void f143();
+    virtual void f144(); virtual void f145(); virtual void f146(); virtual void f147();
+    virtual void f148(); virtual void f149(); virtual void f150(); virtual void f151();
+    virtual void f152(); virtual void f153(); virtual void f154(); virtual void f155();
+    virtual void f156(); virtual void f157(); virtual void f158(); virtual void f159();
+    virtual void f160(); virtual void f161(); virtual void f162();
+    virtual s32 v290();                            // i163 = 0x290
+    virtual void f164();
+    virtual void* v298();                          // i165 = 0x298
+    virtual void* v29C(u32 idx);                   // i166 = 0x29C
+    virtual void f167();
+    virtual void* v2A4();                          // i168 = 0x2A4
+    virtual s32 v2A8();                            // i169 = 0x2A8
+    virtual void v2AC();                           // i170 = 0x2AC
+    virtual void f171();
+    virtual void v2B4();                           // i172 = 0x2B4
+    virtual void v2B8();                           // i173 = 0x2B8
+    virtual void f174(); virtual void f175(); virtual void f176(); virtual void f177();
+    virtual void f178(); virtual void f179(); virtual void f180(); virtual void f181();
+    virtual void f182(); virtual void f183(); virtual void f184(); virtual void f185();
+    virtual void f186(); virtual void f187(); virtual void f188(); virtual void f189();
+    virtual void f190(); virtual void f191();
+    virtual void v304(u32 v);                      // i192 = 0x304
+    virtual s32 v308();                            // i193 = 0x308
+    virtual void f194(); virtual void f195(); virtual void f196(); virtual void f197();
+    virtual void f198(); virtual void f199(); virtual void f200(); virtual void f201();
+    virtual void f202(); virtual void f203(); virtual void f204(); virtual void f205();
+    virtual void f206(); virtual void f207(); virtual void f208(); virtual void f209();
+    virtual void f210(); virtual void f211(); virtual void f212(); virtual void f213();
+    virtual void f214(); virtual void f215(); virtual void f216(); virtual void f217();
+    virtual void f218(); virtual void f219(); virtual void f220(); virtual void f221();
+    virtual void f222(); virtual void f223(); virtual void f224(); virtual void f225();
+    virtual void f226(); virtual void f227(); virtual void f228(); virtual void f229();
+    virtual void f230(); virtual void f231(); virtual void f232(); virtual void f233();
+    virtual void f234(); virtual void f235(); virtual void f236(); virtual void f237();
+    virtual void f238(); virtual void f239(); virtual void f240(); virtual void f241();
+    virtual void f242(); virtual void f243(); virtual void f244(); virtual void f245();
+    virtual void f246(); virtual void f247(); virtual void f248(); virtual void f249();
+    virtual void f250(); virtual void f251(); virtual void f252(); virtual void f253();
+    virtual void f254(); virtual void f255(); virtual void f256(); virtual void f257();
+    virtual void f258(); virtual void f259(); virtual void f260(); virtual void f261();
+    virtual void f262(); virtual void f263(); virtual void f264(); virtual void f265();
+    virtual void f266(); virtual void f267(); virtual void f268(); virtual void f269();
+    virtual void f270(); virtual void f271(); virtual void f272(); virtual void f273();
+    virtual void f274(); virtual void f275(); virtual void f276(); virtual void f277();
+    virtual void f278(); virtual void f279(); virtual void f280(); virtual void f281();
+    virtual void f282(); virtual void f283(); virtual void f284(); virtual void f285();
+    virtual void f286(); virtual void f287(); virtual void f288(); virtual void f289();
+    virtual void f290(); virtual void f291(); virtual void f292(); virtual void f293();
+    virtual void f294(); virtual void f295(); virtual void f296(); virtual void f297();
+    virtual void f298(); virtual void f299(); virtual void f300(); virtual void f301();
+    virtual void f302(); virtual void f303(); virtual void f304(); virtual void f305();
+    virtual void f306(); virtual void f307(); virtual void f308(); virtual void f309();
+    virtual void f310(); virtual void f311(); virtual void f312(); virtual void f313();
+    virtual void f314(); virtual void f315(); virtual void f316(); virtual void f317();
+    virtual void f318(); virtual void f319(); virtual void f320(); virtual void f321();
+    virtual void f322(); virtual void f323(); virtual void f324(); virtual void f325();
+    virtual void f326(); virtual void f327(); virtual void f328(); virtual void f329();
+    virtual void f330(); virtual void f331(); virtual void f332(); virtual void f333();
+    virtual void f334(); virtual void f335(); virtual void f336(); virtual void f337();
+    virtual void f338(); virtual void f339(); virtual void f340(); virtual void f341();
+    virtual void f342(); virtual void f343(); virtual void f344(); virtual void f345();
+    virtual void f346(); virtual void f347(); virtual void f348(); virtual void f349();
+    virtual void f350(); virtual void f351(); virtual void f352(); virtual void f353();
+    virtual void f354(); virtual void f355(); virtual void f356(); virtual void f357();
+    virtual void f358(); virtual void f359(); virtual void f360(); virtual void f361();
+    virtual void f362(); virtual void f363(); virtual void f364(); virtual void f365();
+    virtual void f366(); virtual void f367();
+    virtual void v5C4(f32 f);                      // i368 = 0x5C4
+};
+
+// ---- imports (retail-unmangled names) --------------------------------------
+extern "C" void func_802A2E08();
+extern "C" void func_8027F0B8();
+extern "C" void func_80295BF4(void*);
+extern "C" void func_80295CC8(void*, void*);
+extern "C" s32 func_801B1E74(void*, s32, void*, s32);
+extern "C" void func_800BF29C(void*, int, int, u32, f32, f32);
+extern "C" void func_80496294(void*);
+extern "C" void* func_80044DF4();
+extern "C" void func_800E85F0(void*, void*, void*, void*);
+extern "C" void func_800E2594(void*, void*, void*, void*);
+extern "C" void CBattleManager_preCalcTotalDamage(void*, void*, f32*, u32*);
+extern "C" void func_800E9B54(void*, void*, void*, void*);
+// lbl_eu_80664A10 (CHelpManager-ish singleton) is declared by an included header
+extern f32 lbl_eu_80666E78;     // 30.0f
+extern u32 lbl_eu_804FCAF0[];   // {80,60,40,25,10,...} arts-power table
+
+// ---- func_800E85F0 (0x800E90D8) --------------------------------------------
+// Move-type 4/5/6 follow-up: validates the giver, fires the 0x12E status (or
+// its default event), mirrors the first move block, then either runs the
+// counter/chain logic or recurses into func_800E64CC.
+extern "C" void func_800E85F0(void* self, void* actor, void* target, void* move) {
+    void* r29 = actor;
+    void* r26 = target;
+    E85F0_Move* mv = (E85F0_Move*)move;
+
+    if (r26 == nullptr) return;                              // 0x800E9100
+    void* sub = mv->sub;                                     // r30
+    if (!(((BattleObjAccessor*)r29)->field_3f00 & 0x2)) return;  // 0x800E9104
+    if (((BattleObjAccessor*)r29)->field_3f28 != 7) return;  // 0x800E9114
+
+    func_800D7D24(move);                                     // r27 probe value
+    if (mv->flags78 & 0x800) {                               // 0x800E9130
+        if (e_vf2A8(r29) == 0) {                             // 0x800E9138
+            s32 e10A = func_80148778((u8*)r29 + 8, 0x10A); // r27 (int status id)
+            void* tgtSub = (r26 != nullptr) ? (u8*)r26 + 0x3E9C : r26;
+            s32 type = func_801B1E74(tgtSub, -1, (void*)(uintptr_t)e10A, 0);   // r31
+            // 0x800E91C4..0x800E92A0: art-id per chain type
+            switch (type) {
+            case 6:
+                func_800BF29C((u8*)r29 + 0x3E9C, 0x67 + (((s32)e10A < 0) ? 1 : 0), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
+                break;
+            case 4:
+                func_800BF29C((u8*)r29 + 0x3E9C, 0x69 + (((s32)e10A < 0) ? 1 : 0), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
+                break;
+            case 7:
+                func_800BF29C((u8*)r29 + 0x3E9C, 0x6B + (((s32)e10A < 0) ? 1 : 0), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
+                break;
+            case 8:
+                func_800BF29C((u8*)r29 + 0x3E9C, 0x6D + (((s32)e10A < 0) ? 1 : 0), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
+                break;
+            case 9:
+                func_800BF29C((u8*)r29 + 0x3E9C, 0x6F + (((s32)e10A < 0) ? 1 : 0), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
+                break;
+            case 5:
+                func_800BF29C((u8*)r29 + 0x3E9C, 0x71 + (((s32)e10A < 0) ? 1 : 0), 0, 0, lbl_eu_80666DD0, lbl_eu_80666E78);
+                break;
+            }
+
+            if (func_80148778((u8*)r29 + 8, 0x12E)) {       // 0x800E92C8
+                E85F0_Entry12E* e = (E85F0_Entry12E*)func_80149154((u8*)r29 + 8, 0x12E);
+                if (e->field_10 != type) e_vf154(r29, lbl_eu_80666E6C);
+                e->field_10 = type;
+                e->field_20 = lbl_eu_80666E6C;
+            } else {
+                BtlEvent ev;
+                std::memset(&ev, 0, sizeof(ev));
+                ev.mTargetId = *(u32*)((u8*)r29 + 0x3F10);
+                ev.mParam = sub;                             // r30 = move->field_50
+                ev.mEvId = 0x12E;
+                ev.mVal10 = type;
+                ev.mF20 = lbl_eu_80666E6C;
+                func_800EC918((void*)self, (EC918_BattleObjAccessor*)r29,
+                              (EC918_BattleObjAccessor*)r29, (BattleEvent*)&ev, 0);
+            }
+            e_vf154(r29, lbl_eu_80666E34);                   // 10.0 (0x800E9368)
+            void* srcB = vf29C(r29, 0);                      // 0x800E9384
+            void* dstB = vf29C(r29, 1);
+            *((E2A9C_BattleMoveData*)dstB) = *((E2A9C_BattleMoveData*)srcB);
+            return;                                          // b .L_800E9644
+        }
+    }
+
+    // 0x800E9538: second pass -- the move flags are re-read here
+    if (mv->flags78 & 0x800) {
+        if (e_vf2A8(r29) == 1) {                             // 0x800E9544
+            s32 e10A = func_80148778((u8*)r29 + 8, 0x10A); // r27
+            if (sub != nullptr) {                            // r30 == move->field_50
+                if ((u32)(((E2594_Sub*)sub)->type3C - 5) <= 1) {   // types 5,6
+                    func_800E2A9C((cf::CBattleManager*)self, (cf::CfObjectActor*)r29,
+                                  (cf::CfObjectActor*)r26, (E2A9C_BattleMoveData*)move);
+                } else {
+                    func_800E64CC((cf::CBattleManager*)self, r29, r26, move);
+                }
+                if (e10A != 0) {                             // 0x800E95B4
+                    u32 tbl[5] = { lbl_eu_804FCAF0[0], lbl_eu_804FCAF0[1],
+                                   lbl_eu_804FCAF0[2], lbl_eu_804FCAF0[3],
+                                   lbl_eu_804FCAF0[4] };
+                    s32 idx = (s32)e_vf308(r29);             // 0x800E95BC
+                    if ((s32)mv->field_90 < (s32)tbl[idx]) { // 0x800E9600
+                        e_vf150(r29, lbl_eu_80666DDC);
+                    }
+                }
+            }
+            return;
+        }
+        return;                                              // bne .L_800E9644
+    }
+    func_800E64CC((cf::CBattleManager*)self, r29, r26, move); // 0x800E9630
+}
+
+// ---- CBattleManager_preCalcTotalDamage (0x800E965C) -------------------------
+// Sums the pending party damage: for each of the outCount entries it lets
+// func_800DB0FC finalise the 0x298 move block, adds the rounded
+// field_5C+field_60 amount, then restores a clean copy of the block.
+extern "C" void CBattleManager_preCalcTotalDamage(void* self, void* actor, f32* outDamage, u32* outCount) {
+    // r3 (self) is not used by the retail body
+    void* r27 = actor;
+
+    E2A9C_BattleMoveData* m0 = (E2A9C_BattleMoveData*)e_vf2A4(r27);
+    void* sub = m0->field_50;                                // r31
+    void* m1 = (E2A9C_BattleMoveData*)e_vf2A4(r27);
+    void* r30 = func_8016FE34(func_800B708C((s32)((BtlMove*)m1)->mSubId));
+
+    *outDamage = lbl_eu_80666DDC;                            // 0x800E96C4
+    *outCount = 0;
+    if (r30 == nullptr) return;
+    if (sub == nullptr) return;
+
+    BMSub43View* subv = (BMSub43View*)sub;
+    if (subv->b43 == 1) *outCount = subv->b44;               // 0x800E96E8
+    else *outCount = 1;
+
+    e_vfA4(r30, 0);                                          // 0x800E9708
+    for (s32 i = 0; i < 3; i++) {                            // 0x800E9724
+        void* p = func_8016FE34(getPlayer__Q22cf13CfGameManagerFi(i));
+        if (p != nullptr && p != r30) e_vfA4(p, 0);
+    }
+    e_vfA4(r27, 0);                                          // 0x800E9760
+    e_vfA4(r30, 0);                                          // 0x800E9778
+    e_vf2B4(r27);                                            // 0x800E9790
+    E2A9C_BattleMoveData* srcA = (E2A9C_BattleMoveData*)e_vf2A4(r27);
+    E2A9C_BattleMoveData* dstA = (E2A9C_BattleMoveData*)e_vf298(r27);
+    *dstA = *srcA;                                           // 0x800E97D0
+
+    f32 f = e_vf128(r27);                                    // 0x800E9950
+    ((E2A9C_BattleMoveData*)e_vf298(r27))->field_6C = f;
+    f = e_vf128(r30);                                        // 0x800E9980
+    ((E2A9C_BattleMoveData*)e_vf298(r27))->field_68 = f;
+    ((E2A9C_BattleMoveData*)e_vf298(r27))->field_70 = 0;     // 0x800E99B0
+    ((E2A9C_BattleMoveData*)e_vf298(r27))->field_72 = 0;
+
+    for (s32 i = 0; i < (s32)*outCount; i++) {               // 0x800E99F8
+        E2A9C_BattleMoveData* m = (E2A9C_BattleMoveData*)e_vf298(r27);
+        m->field_78 |= 0x44000000;
+        func_800DB0FC((void*)lbl_eu_80663F00, r27, r30, m);
+        m->field_78 = (m->field_78 & ~0x04000000) | 0x48000000;
+        f32 sum = m->field_5C + m->field_60;
+        s32 val;
+        if (sum < 0.0f || (m->field_74 & 0x80)) val = 0;    // 0x800E9A40
+        else val = (s32)((f64)sum + (sum > 0.0f ? lbl_eu_80666E58 : lbl_eu_80666E60));
+        *outDamage += (f32)val;                              // 0x800E9A90
+        e_vf2B8(r27);                                        // 0x800E9AB4
+    }
+
+    e_vf2AC(r27);                                            // 0x800E9AD4
+    ((E2A9C_BattleMoveData*)e_vf298(r27))->field_70 = 0;     // 0x800E9AE8
+    ((E2A9C_BattleMoveData*)e_vf298(r27))->field_72 = 0;
+    E2A9C_BattleMoveData* srcB = (E2A9C_BattleMoveData*)e_vf298(r27);   // 0x800E9B28
+    E2A9C_BattleMoveData* dstB = (E2A9C_BattleMoveData*)e_vf2A4(r27);
+    *dstB = *srcB;                                           // 0x800E9B48
+
+    if (*outDamage < 0.0f) *outDamage = lbl_eu_80666DDC;     // 0x800E9CCC
+}
+
+// ---- func_800E9B54 (0x800EA63C) --------------------------------------------
+// Chain-arts hit spread: refreshes the arts rows, then for each player action
+// found in the (0x20, 0x800) enum list emits chain events (0x35 arts / 0x13
+// counter) and re-installs the AI slot via func_80109784.
+extern "C" void func_800E9B54(void* self, void* target, void* attacker, void* move) {
+    void* mgr = self;        // r30
+    void* tgt = target;      // r27
+    void* atk = attacker;    // r28
+    void* mv = move;         // r29
+    cf::CfGameManager::getInstance();
+    if (func_8006EF04__Fi(0x04000000)) {                       // 0x800EA664 (lis r3,0x400)
+        ((BMVtMirror*)tgt)->vB8();
+        return;
+    }
+
+    // 0x800EA68C: status-id via the +4 holder, then the 0x2000000 gate
+    {
+        void* holder = *(void**)((u8*)tgt + 0x04);
+        u32 sid = *(u32*)((BMVtMirror*)holder)->v30();
+        if (func_80174C98(tgt, (int*)&sid, 0x02000000)) return;
+    }
+
+    ((BMVtMirror*)tgt)->vC8();                               // slot 0xC8 (0x800EA6C0)
+
+    if (atk != nullptr && (((BattleObjAccessor*)tgt)->field_3f00 & 0x4)) {
+        // 0x800EA6E8: find tgt in the self+8 list, then the 0x800EA71C call
+        SimpleListNode* s = *(SimpleListNode**)((u8*)mgr + 0x08);
+        SimpleListNode* c = s->next;
+        while (c != s) {
+            if (c->data == tgt) break;
+            c = c->next;
+        }
+        if (c != s) {
+            func_800D9978((cf::CBattleManager*)mgr, (cf::CfObjectActor*)tgt);
+        }
+    }
+
+    if (atk == nullptr) {                                    // 0x800EA720
+        s32 subId = (s32)(uintptr_t)((BMVtMirror*)((u8*)tgt + 0x3E9C))->v4C();
+        atk = func_8016FE34(func_800B708C(subId));
+    }
+
+    if (atk != nullptr &&
+        (((BattleObjAccessor*)atk)->field_3f00 & 0x2) &&
+        (((BattleObjAccessor*)tgt)->field_3f00 & 0x4)) {     // 0x800EA748
+        if (!(((EC918_BattleObjAccessor*)tgt)->field_3374 & 0x04000000)) {
+            // 0x800EA778: refresh the eight arts rows
+            for (s32 i = 1; i <= 8; i++) {
+                s32 flag = (mv != nullptr)
+                    ? (s32)((((E2A9C_BattleMoveData*)mv)->field_74 >> 14) & 1)
+                    : 0;
+                void* arts = func_8009EC9C((u16)i);
+                func_800A26A4(arts, (s32)(uintptr_t)((BMVtMirror*)tgt)->v1E8(),
+                              ((BMVtMirror*)tgt)->v200(),
+                              (s32)(uintptr_t)((BMVtMirror*)tgt)->v108(), flag, 0, 0);
+            }
+        }
+
+        // 0x800EA80C: count the mActorList3 members (sentinel at self+0x48)
+        {
+            SimpleListNode* sentinel = *(SimpleListNode**)((u8*)mgr + 0x48);
+            s32 cnt = 0;
+            SimpleListNode* cur = sentinel->next;
+            while (cur != sentinel) { cur = cur->next; cnt++; }
+            if (cnt <= 1) {
+                func_802A2E08();
+                func_8027F0B8();
+                func_80295BF4((void*)lbl_eu_80664A10);
+                goto e9B54_tail;
+            }
+        }
+
+        if (!(((BattleObjAccessor*)atk)->field_3f00 & 0x2)) goto e9B54_tail;
+
+        // ---- 0x800EA854: enum-list walk ----
+        {
+            EnumListHolder holder;
+            func_80043D90(&holder);
+            func_800F4A98(func_80043F18(&holder), 0x20, 0x800);
+
+            const s32 cArt35 = 0x35;
+            const s32 cVal1000 = 0x1000;
+            const s32 cEvType2 = 0x2;
+            const s32 cSel5A = 0x5A;
+            const s32 cSel13 = 0x13;
+            u32 out14, out10;
+            f32 out0c;
+            BattleEventData ev;
+
+            for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&holder))->count; i++) {
+                void* obj = func_8016FE34(func_800F6EAC(func_80043F18(&holder), i));
+                void* r29 = obj;
+                if (obj == atk) {                            // 0x800EA8A0
+                    if (((BMVtMirror*)obj)->v290() &&       // called twice (retail)
+                        func_80260FB0((void*)(uintptr_t)((BMVtMirror*)obj)->v290(),
+                                      0x35, &out14, &out10, (u32*)&out0c) &&
+                        (s32)mtRand__Q22ml4mathFi(100) < (s32)out10) {
+                        // 0x800EA908: propagate the (0x35, 0x1000) chain event
+                        // to every listed actor.
+                        std::memset(&ev, 0, sizeof(ev));
+                        ev.field_10 = out14;
+                        ev.field_20 = out0c;
+                        ev.field_0C = (u16)cEvType2;
+                        for (u32 j = 0; j < ((cf::CVisionEnumList*)func_80043F18(&holder))->count; j++) {
+                            void* sub = func_8016FE34(func_800F6EAC(func_80043F18(&holder), j));
+                            ev.field_00 = (u32)(uintptr_t)((BattleObjAccessor*)sub)->field_3f10;
+                            ev.field_04 = (u32)cArt35;
+                            ev.field_08 = (u32)cVal1000;
+                            ev.field_30 |= 0x1800;
+                            func_800EC918((void*)lbl_eu_80663F00, 0,
+                                          (EC918_BattleObjAccessor*)sub,
+                                          (BattleEvent*)&ev, 0);
+                            func_80109784(((BattleObjAccessor*)sub)->field_3f10, cArt35, 9);
+                        }
+                    }
+                }
+                if (r29 != atk) {                            // 0x800EA9A8
+                    if (((BMVtMirror*)r29)->v290() &&
+                        func_80260518((void*)(uintptr_t)((BMVtMirror*)r29)->v290(),
+                                      0x13, &out14, &out0c)) {
+                        // 0x800EA9F8: counter event (0x5A / 0x13)
+                        std::memset(&ev, 0, sizeof(ev));
+                        ev.field_10 = out14;
+                        ev.field_20 = out0c;
+                        ev.field_30 |= 0x1800;
+                        ev.field_0C = (u16)cSel5A;
+                        ev.field_00 = (u32)(uintptr_t)((BattleObjAccessor*)r29)->field_3f10;
+                        ev.field_04 = (u32)cSel13;
+                        ev.field_08 = (u32)cVal1000;
+                        func_800EC918((void*)lbl_eu_80663F00, 0,
+                                      (EC918_BattleObjAccessor*)r29,
+                                      (BattleEvent*)&ev, 0);
+                        func_80109784(((BattleObjAccessor*)r29)->field_3f10, cSel13, 9);
+                    }
+                }
+            }
+            __dt__80043E88(&holder, -1);
+        }
+        goto e9B54_tail;
+    } else {
+        // 0x800EAA88: target is a player -- rescue via the help manager
+        if (((BattleObjAccessor*)tgt)->field_3f00 & 0x2) {
+            func_80295CC8((void*)lbl_eu_80664A10, tgt);
+        }
+    }
+
+e9B54_tail:                                                  // 0x800EAAA0
+    func_802A232C(tgt);
+    func_80174B4C(tgt, 0x200);
+}
+
+// ---- func_800E2594 (0x800E307C) --------------------------------------------
+// Move dispatcher for sub-object types 1..6: mirrors the move block onto the
+// stack, routes to func_800E85F0 / func_800E2A9C / func_800E64CC, then applies
+// status/event follow-ups keyed on the local copy's field_78 bits.
+extern "C" void func_800E2594(void* self, void* actor, void* target, void* move) {
+    void* r28 = actor;       // the giver
+    void* r29 = target;
+    void* r30 = move;
+
+    if (r29 == nullptr) return;                              // 0x800E30A4
+
+    if (!(((BtlMove*)r30)->mFlags78 & 0x10)) {               // 0x800E30A8
+        func_800DB0FC(self, actor, target, move);
+    }
+
+    void* sub = ((BtlMove*)r30)->mSub;                       // r31 (0x800E30B8)
+    if (sub == nullptr) return;
+    if (((E2594_Sub*)sub)->flags78 & 0x8000) return;         // 0x800E30C4
+
+    if (e_vf28(r28, 0x10)) return;                           // 0x800E30D0
+    vfBC(r28, r30);                                          // 0x800E30F0
+
+    E2A9C_BattleMoveData local = *((E2A9C_BattleMoveData*)r30);  // 0x800E3108 copy
+
+    u16 type = ((E2594_Sub*)sub)->type3C;                    // 0x800E3288
+    if ((u32)(type - 4) <= 2) {                              // types 4,5,6
+        func_800E85F0(self, actor, target, move);
+    } else if ((u32)(type - 1) <= 1) {                       // types 1,2
+        func_800E2A9C((cf::CBattleManager*)self, (cf::CfObjectActor*)actor,
+                      (cf::CfObjectActor*)target, (E2A9C_BattleMoveData*)move);
+    } else if (type == 3) {
+        func_800E64CC((cf::CBattleManager*)self, actor, target, move);
+    }
+
+    if (local.field_78 & 0x2) {                              // 0x800E32F4
+        if (e_vf308(r28) == 0) {
+            e_vf304(r28, 2);
+        }
+    }
+
+    if (local.field_78 & 0xC00) {                            // 0x800E3334
+        bool canCounter = false;
+        if (sub != nullptr) {
+            if (((E2594_Sub*)sub)->flags78 & 0x1) {
+                u16 id28 = ((E2594_Sub*)sub)->h28;
+                if ((u16)(id28 - 0x2A) <= 2 || (u16)(id28 - 0x3D) <= 1 || id28 == 1) {
+                    canCounter = true;
+                }
+            }
+        }
+        if (!canCounter) {
+            // 0x800E3394: 0x91 counter status event
+            if (func_80148778((u8*)r28 + 8, 0x91)) {
+                BtlStatusEntry* entry = (BtlStatusEntry*)func_80149154((u8*)r28 + 8, 0x91);
+                BattleEventData ev;
+                std::memset(&ev, 0, sizeof(ev));
+                ev.field_00 = *(u32*)((u8*)r28 + 0x3F10);
+                ev.field_08 = 0x00008000;
+                ev.field_0C = 0xD5;
+                ev.field_10 = entry->unk10;
+                if (((BtlMove*)r30)->mSubId != 0) {
+                    func_800EC918((void*)self, (EC918_BattleObjAccessor*)r28,
+                                  (EC918_BattleObjAccessor*)r28, (BattleEvent*)&ev, r30);
+                } else {
+                    func_800EC918((void*)self, (EC918_BattleObjAccessor*)r28,
+                                  (EC918_BattleObjAccessor*)r28, (BattleEvent*)&ev, &local);
+                }
+            }
+        }
+    }
+
+    if (local.field_78 & 0xC00) {                            // 0x800E342C
+        if (func_80148778((u8*)r28 + 8, 0xC1)) {
+            if ((((E2594_Sub*)sub)->flags78 & 0x2000) &&
+                ((u32)((E2594_Sub*)sub)->b44 != e_vf2A8(r28) + 1) &&
+                (local.field_74 & 1) && !(local.field_74 & 0x2) &&
+                !(local.field_74 & 0x40)) {
+                // guarded status -- leave the entry untouched
+            } else {
+                void* entryC1 = func_80149154((u8*)r28 + 8, 0xC1);
+                if (*(u32*)((u8*)entryC1 + 0x4) != (u32)sub) {
+                    e_vf20OnHolder((u8*)r28 + 8, 0xC1);
+                }
+            }
+        }
+    }
+
+    if (local.field_78 & 0x800) {                            // 0x800E34C8
+        if (func_80148778((u8*)r29 + 8, 0xCE)) {
+            if (r28 != r29) {                                // 0x800E34E8
+                bool keep = true;
+                if (((E2594_Sub*)sub)->flags78 & 0x2000) {
+                    if ((u32)((E2594_Sub*)sub)->b44 != e_vf2A8(r28) + 1) {
+                        keep = false;                        // bne -> out
+                    }
+                }
+                if (keep && ((local.field_74 & 1) || (local.field_78 & 0x100))) {
+                    CE_Entry* entry = (CE_Entry*)func_801491F4((u8*)r29 + 8, 0xCE);
+                    if (entry->h2C != local.field_80) {      // 0x800E3548
+                        ((void(*)(void*, u32))(*(void***)((u8*)r29 + 8))[0x24 / 4])((u8*)r29 + 8, 0xCE);
+                    }
+                }
+            }
+        }
+    }
+}
+
+// s32 -> f32 conversion via the Gekko 2^52 bias trick. The magic double is
+// the named .sdata2 constant so the fsubs reloc binds to lbl_eu_80666DE0
+// instead of an MWCC pool @N (CfGimmick.cpp convention).
+static inline f32 bmS32ToF32(s32 v, cf::CfActorF64Conv& slot) {
+    slot.w[0] = 0x43300000;
+    slot.w[1] = (u32)v ^ 0x80000000;
+    return (f32)(slot.d - lbl_eu_80666DE0);
+}
+
+// Iterates through one of the actor lists (mActorList3 for the flags&2 path,
+// else mActorList2) and broadcasts the arts-damage pair (arg2/arg3/arg4 as
+// floats) to every idle actor; when arg5 == 1 the broadcast is gated on the
+// actor's sub-object id (vtable slot 0x4C) matching arg6.
 extern "C" void func_800E9FE4(void* self, void* arg1, s32 arg2, s32 arg3, s32 arg4, s32 arg5, void* arg6) {
     cf::CfGameManager::getInstance();
-    if (func_8006EF04__Fi(0x400)) return;
+    if (func_8006EF04__Fi(0x4000000)) return;
 
-    if (func_80148778((u8*)arg1 + 8, 0x101)) {
+    cf::CfObjectActor* target = (cf::CfObjectActor*)arg1;
+    if (func_80148778((u8*)target + 8, 0x101)) {
         if (arg2 != 0) arg2 = 1;
         if (arg3 != 0) arg3 = 1;
         if (arg4 != 0) arg4 = 1;
     }
 
-    u32 flags = *(u32*)((u8*)arg1 + 0x3f00);
+    // Two conversion slots (the retail reuses slot A for the third value);
+    // declared here so MWCC hoists the 0x4330 stores to the prologue.
+    cf::CfActorF64Conv cA, cB;
+    cA.w[0] = 0x43300000;
+    cB.w[0] = 0x43300000;
+
+    cf::CBattleManager* mgr = (cf::CBattleManager*)self;
+    u32 flags = ((BattleObjAccessor*)target)->field_3f00;
     if (flags & 0x2) {
-        void* sentinel = *(void**)((u8*)self + 0x48);
-        void* cur = *(void**)sentinel;
-        while (cur != *(void**)((u8*)self + 0x48)) {
-            void* obj = *(void**)((u8*)cur + 0x8);
-            if (obj != arg1) {
-                void** vtbl = *(void***)obj;
-                typedef s32 (*VFunc2BC)(void*);
-                if (((VFunc2BC)vtbl[0x2BC / 4])(obj) == 0) {
-                    if (arg5 == 1) {
-                        void** vtbl2 = *(void***)((u8*)obj + 0x3e9c);
-                        typedef void* (*VFunc4C)(void*);
-                        if (((VFunc4C)vtbl2[0x4C / 4])((u8*)obj + 0x3e9c) == arg6) {
-                            typedef void (*VFunc2C4)(void*, void*, f32, f32, f32);
-                            ((VFunc2C4)vtbl[0x2C4 / 4])(obj, arg1, (f32)(s32)arg2, (f32)(s32)arg3, (f32)(s32)arg4);
-                        }
-                    } else {
-                        typedef void (*VFunc2C4)(void*, void*, f32, f32, f32);
-                        ((VFunc2C4)vtbl[0x2C4 / 4])(obj, arg1, (f32)(s32)arg2, (f32)(s32)arg3, (f32)(s32)arg4);
+        _reslist_node<cf::CfObjectActor*>* cur = mgr->mActorList3.mStartNodePtr->mNext;
+        while (cur != mgr->mActorList3.mStartNodePtr) {
+            cf::CfObjectActor* obj = cur->mItem;
+            if (obj != target && ((cf::CVisionBattleObj*)obj)->vf2BC() == 0) {
+                if (arg5 == 1) {
+                    if (((cf::CChainBattleObjB38*)obj)->mSub.v17() == (u32)(uintptr_t)arg6) {
+                        cA.w[1] = (u32)arg2 ^ 0x80000000;
+                        cB.w[1] = (u32)arg3 ^ 0x80000000;
+                        f32 f1 = (f32)(cA.d - lbl_eu_80666DE0);
+                        cA.w[1] = (u32)arg4 ^ 0x80000000;
+                        f32 f2 = (f32)(cB.d - lbl_eu_80666DE0);
+                        f32 f3 = (f32)(cA.d - lbl_eu_80666DE0);
+                        ((cf::CVisionBattleObj*)obj)->vf2C4(target, f1, f2, f3);
                     }
+                } else {
+                    cA.w[1] = (u32)arg2 ^ 0x80000000;
+                    cB.w[1] = (u32)arg3 ^ 0x80000000;
+                    f32 f1 = (f32)(cA.d - lbl_eu_80666DE0);
+                    cA.w[1] = (u32)arg4 ^ 0x80000000;
+                    f32 f2 = (f32)(cB.d - lbl_eu_80666DE0);
+                    f32 f3 = (f32)(cA.d - lbl_eu_80666DE0);
+                    ((cf::CVisionBattleObj*)obj)->vf2C4(target, f1, f2, f3);
                 }
             }
-            cur = *(void**)cur;
+            cur = cur->mNext;
         }
     } else {
-        void* sentinel = *(void**)((u8*)self + 0x28);
-        void* cur = *(void**)sentinel;
-        while (cur != *(void**)((u8*)self + 0x28)) {
-            void* obj = *(void**)((u8*)cur + 0x8);
-            if (obj != arg1) {
-                void** vtbl = *(void***)obj;
-                typedef s32 (*VFunc2BC)(void*);
-                if (((VFunc2BC)vtbl[0x2BC / 4])(obj) == 0) {
-                    if (arg5 == 1) {
-                        void** vtbl2 = *(void***)((u8*)obj + 0x3e9c);
-                        typedef void* (*VFunc4C)(void*);
-                        if (((VFunc4C)vtbl2[0x4C / 4])((u8*)obj + 0x3e9c) == arg6) {
-                            typedef void (*VFunc2C4)(void*, void*, f32, f32, f32);
-                            ((VFunc2C4)vtbl[0x2C4 / 4])(obj, arg1, (f32)(s32)arg2, (f32)(s32)arg3, (f32)(s32)arg4);
-                        }
-                    } else {
-                        typedef void (*VFunc2C4)(void*, void*, f32, f32, f32);
-                        ((VFunc2C4)vtbl[0x2C4 / 4])(obj, arg1, (f32)(s32)arg2, (f32)(s32)arg3, (f32)(s32)arg4);
+        _reslist_node<cf::CfObjectActor*>* cur = mgr->mActorList2.mStartNodePtr->mNext;
+        while (cur != mgr->mActorList2.mStartNodePtr) {
+            cf::CfObjectActor* obj = cur->mItem;
+            if (obj != target && ((cf::CVisionBattleObj*)obj)->vf2BC() == 0) {
+                if (arg5 == 1) {
+                    if (((cf::CChainBattleObjB38*)obj)->mSub.v17() == (u32)(uintptr_t)arg6) {
+                        cA.w[1] = (u32)arg2 ^ 0x80000000;
+                        cB.w[1] = (u32)arg3 ^ 0x80000000;
+                        f32 f1 = (f32)(cA.d - lbl_eu_80666DE0);
+                        cA.w[1] = (u32)arg4 ^ 0x80000000;
+                        f32 f2 = (f32)(cB.d - lbl_eu_80666DE0);
+                        f32 f3 = (f32)(cA.d - lbl_eu_80666DE0);
+                        ((cf::CVisionBattleObj*)obj)->vf2C4(target, f1, f2, f3);
                     }
+                } else {
+                    cA.w[1] = (u32)arg2 ^ 0x80000000;
+                    cB.w[1] = (u32)arg3 ^ 0x80000000;
+                    f32 f1 = (f32)(cA.d - lbl_eu_80666DE0);
+                    cA.w[1] = (u32)arg4 ^ 0x80000000;
+                    f32 f2 = (f32)(cB.d - lbl_eu_80666DE0);
+                    f32 f3 = (f32)(cA.d - lbl_eu_80666DE0);
+                    ((cf::CVisionBattleObj*)obj)->vf2C4(target, f1, f2, f3);
                 }
             }
-            cur = *(void**)cur;
+            cur = cur->mNext;
         }
     }
 }
+// Mirror of the actor vtable used to reach slot 0x2C8 as a direct virtual
+// call: MWCC then routes the dispatch through r12 (retail order) instead of a
+// general temp register. The 177 placeholder slots (0x04..0x2C4) are never
+// called - only the 0x2C8 slot is used, against the actor's real vtable.
+struct ActorVtableMirror {
+    virtual ~ActorVtableMirror() {}
+    virtual void a004(); virtual void a008(); virtual void a00C(); virtual void a010();
+    virtual void a014(); virtual void a018(); virtual void a01C(); virtual void a020();
+    virtual void a024(); virtual void a028(); virtual void a02C(); virtual void a030();
+    virtual void a034(); virtual void a038(); virtual void a03C(); virtual void a040();
+    virtual void a044(); virtual void a048(); virtual void a04C(); virtual void a050();
+    virtual void a054(); virtual void a058(); virtual void a05C(); virtual void a060();
+    virtual void a064(); virtual void a068(); virtual void a06C(); virtual void a070();
+    virtual void a074(); virtual void a078(); virtual void a07C(); virtual void a080();
+    virtual void a084(); virtual void a088(); virtual void a08C(); virtual void a090();
+    virtual void a094(); virtual void a098(); virtual void a09C(); virtual void a0A0();
+    virtual void a0A4(); virtual void a0A8(); virtual void a0AC(); virtual void a0B0();
+    virtual void a0B4(); virtual void a0B8(); virtual void a0BC(); virtual void a0C0();
+    virtual void a0C4(); virtual void a0C8(); virtual void a0CC(); virtual void a0D0();
+    virtual void a0D4(); virtual void a0D8(); virtual void a0DC(); virtual void a0E0();
+    virtual void a0E4(); virtual void a0E8(); virtual void a0EC(); virtual void a0F0();
+    virtual void a0F4(); virtual void a0F8(); virtual void a0FC(); virtual void a100();
+    virtual void a104(); virtual void a108(); virtual void a10C(); virtual void a110();
+    virtual void a114(); virtual void a118(); virtual void a11C(); virtual void a120();
+    virtual void a124(); virtual void a128(); virtual void a12C(); virtual void a130();
+    virtual void a134(); virtual void a138(); virtual void a13C(); virtual void a140();
+    virtual void a144(); virtual void a148(); virtual void a14C(); virtual void a150();
+    virtual void a154(); virtual void a158(); virtual void a15C(); virtual void a160();
+    virtual void a164(); virtual void a168(); virtual void a16C(); virtual void a170();
+    virtual void a174(); virtual void a178(); virtual void a17C(); virtual void a180();
+    virtual void a184(); virtual void a188(); virtual void a18C(); virtual void a190();
+    virtual void a194(); virtual void a198(); virtual void a19C(); virtual void a1A0();
+    virtual void a1A4(); virtual void a1A8(); virtual void a1AC(); virtual void a1B0();
+    virtual void a1B4(); virtual void a1B8(); virtual void a1BC(); virtual void a1C0();
+    virtual void a1C4(); virtual void a1C8(); virtual void a1CC(); virtual void a1D0();
+    virtual void a1D4(); virtual void a1D8(); virtual void a1DC(); virtual void a1E0();
+    virtual void a1E4(); virtual void a1E8(); virtual void a1EC(); virtual void a1F0();
+    virtual void a1F4(); virtual void a1F8(); virtual void a1FC(); virtual void a200();
+    virtual void a204(); virtual void a208(); virtual void a20C(); virtual void a210();
+    virtual void a214(); virtual void a218(); virtual void a21C(); virtual void a220();
+    virtual void a224(); virtual void a228(); virtual void a22C(); virtual void a230();
+    virtual void a234(); virtual void a238(); virtual void a23C(); virtual void a240();
+    virtual void a244(); virtual void a248(); virtual void a24C(); virtual void a250();
+    virtual void a254(); virtual void a258(); virtual void a25C(); virtual void a260();
+    virtual void a264(); virtual void a268(); virtual void a26C(); virtual void a270();
+    virtual void a274(); virtual void a278(); virtual void a27C(); virtual void a280();
+    virtual void a284(); virtual void a288(); virtual void a28C(); virtual void a290();
+    virtual void a294(); virtual void a298(); virtual void a29C(); virtual void a2A0();
+    virtual void a2A4(); virtual void a2A8(); virtual void a2AC(); virtual void a2B0();
+    virtual void a2B4(); virtual void a2B8(); virtual void a2BC();
+    virtual void vf2C8(void* arg); // slot 0x2C8
+};
+
 // Iterates through a list of actors based on flags in arg1.
 // For each actor not matching arg1, calls vtable[0x2C8] with arg1->+0x3f10.
 extern "C" void func_800EA2A4(cf::CBattleManager* mgr, BattleObjAccessor* arg1) {
@@ -7750,9 +10197,8 @@ extern "C" void func_800EA2A4(cf::CBattleManager* mgr, BattleObjAccessor* arg1) 
         while (cur != mgr->mActorList3.mStartNodePtr) {
             cf::CfObjectActor* actor = cur->mItem;
             if (actor != (cf::CfObjectActor*)arg1) {
-                void** vtbl = *(void***)actor;
-                typedef void (*VFunc2C8)(void*, void*);
-                ((VFunc2C8)vtbl[0x2C8 / 4])(actor, (void*)arg1->field_3f10);
+                // Direct vtable[0x2C8] dispatch so MWCC uses r12 (retail order).
+                reinterpret_cast<ActorVtableMirror*>(actor)->vf2C8((void*)arg1->field_3f10);
             }
             cur = cur->mNext;
         }
@@ -7761,15 +10207,141 @@ extern "C" void func_800EA2A4(cf::CBattleManager* mgr, BattleObjAccessor* arg1) 
         while (cur != mgr->mActorList2.mStartNodePtr) {
             cf::CfObjectActor* actor = cur->mItem;
             if (actor != (cf::CfObjectActor*)arg1) {
-                void** vtbl = *(void***)actor;
-                typedef void (*VFunc2C8)(void*, void*);
-                ((VFunc2C8)vtbl[0x2C8 / 4])(actor, (void*)arg1->field_3f10);
+                // Direct vtable[0x2C8] dispatch so MWCC uses r12 (retail order).
+                reinterpret_cast<ActorVtableMirror*>(actor)->vf2C8((void*)arg1->field_3f10);
             }
             cur = cur->mNext;
         }
     }
 }
-void func_800EA484(){}
+// ---- func_800EA484 (0x800EAF6C) --------------------------------------------
+// Update dispatch for the battle-manager refresh flags (bits 0x1 player list,
+// 0x2 player pairs, 0x4 vision actors, 0x8 enemy scene, 0x10 raygun, 0x20 /
+// 0x40 targeted filters). Each enabled step re-filters an enum list created by
+// func_80043D90 and calls vf88 with the given value on the matching objects.
+extern "C" void func_800EA484(cf::CBattleManager* self, f32 value, int flags) {
+    void* r30 = self;
+
+    if (flags & 0x8) {                                       // 0x800EAF78
+        func_80496294(lbl_eu_80663E14);
+    }
+
+    EnumListHolder h1;    // sp+0x10
+    EnumListHolder h2;    // sp+0x08
+    func_80043D90(&h1);
+    func_80043D90(&h2);
+
+    if (flags & 0x1) {                                       // 0x800EAFAC
+        func_800F4A98(func_80043F18(&h1), 0x408, 0);
+        for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&h1))->count; i++) {
+            void* o = func_800F6EAC(func_80043F18(&h1), i);
+            void* c = __dynamic_cast(o, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
+            vf88(c, value);
+        }
+    }
+
+    if (flags & 0x2) {                                       // 0x800EB020
+        func_800F4A98(func_80043F18(&h1), 0x400320, 1);
+        func_800F4A98(func_80043F18(&h2), 0x80000, 0);
+        for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&h1))->count; i++) {
+            void* o = func_800F6EAC(func_80043F18(&h1), i);
+            void* r28 = __dynamic_cast(o, 0, &lbl_eu_806618E8, &lbl_eu_806618F0, 0);
+            vf88(r28, value);
+            for (u32 j = 0; j < ((cf::CVisionEnumList*)func_80043F18(&h2))->count; j++) {
+                void* o2 = func_800F6EAC(func_80043F18(&h2), j);
+                void* r26 = __dynamic_cast(o2, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
+                if (((E484_TypeObj*)r26)->field_9C == r28) vf88(r26, value);
+                void* a = func_8016FE34(func_800B708C((s32)(uintptr_t)r28));
+                if (a != nullptr) {
+                    void* b = ((E484_VisionActor*)a)->field_45B8;
+                    if (b != nullptr) {
+                        void* c = func_8016FE34(func_800B708C((s32)(uintptr_t)b));
+                        if (c != nullptr) c = (u8*)c + 0x3E9C;
+                        if (((E484_TypeObj*)r26)->field_9C == c) vf88(r26, value);
+                    }
+                }
+            }
+        }
+    }
+
+    if (flags & 0x10) {                                      // 0x800EB170
+        ((E484_Global6C*)func_80044DF4())->field_6C = value;
+    }
+
+    if (flags & 0x20) {                                      // 0x800EB180
+        func_800F4A98(func_80043F18(&h1), 0x80000, 0);
+        for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&h1))->count; i++) {
+            void* o = func_800F6EAC(func_80043F18(&h1), i);
+            void* r3 = __dynamic_cast(o, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
+            u16 t = ((E484_TypeObj*)r3)->type8C;
+            // 0x800EB1CC range tree: {0x3D..0x4C}, {0x51..0x59}, {0x65..0x66},
+            // {0x79..0x7D} all trigger the value broadcast
+            if (t >= 0x65) {
+                if (t < 0x79) {
+                    if (t < 0x67) vf88(r3, value);
+                } else {
+                    if (t < 0x7E) vf88(r3, value);
+                }
+            } else if (t >= 0x51) {
+                if (t < 0x5A) vf88(r3, value);
+            } else if (t >= 0x4D) {
+                // skip
+            } else if (t >= 0x3D) {
+                vf88(r3, value);
+            }
+        }
+    }
+
+    if (flags & 0x40) {                                      // 0x800EB244
+        func_800F4A98(func_80043F18(&h1), 0x80000, 0);
+        for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&h1))->count; i++) {
+            void* o = func_800F6EAC(func_80043F18(&h1), i);
+            void* r3 = __dynamic_cast(o, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
+            u16 t = ((E484_TypeObj*)r3)->type8C;
+            if ((u32)(t - 0xA1) <= 3 || (u32)(t - 0xC0) <= 2 || t == 0xB8) {
+                vf88(r3, value);
+            }
+        }
+    }
+
+    if (flags & 0x4) {                                       // 0x800EB2DC
+        void* vision;
+        if (lbl_eu_80663F00 != 0) {
+            vision = func_801A8070((u8*)self + 0x219C);
+        } else {
+            vision = nullptr;
+        }
+        if (vision != nullptr) {
+            E484_VisionPair* vp = (E484_VisionPair*)vision;
+            void* r26 = func_8016FE34(func_800B708C((s32)vp->field_00));
+            void* r27 = func_8016FE34(func_800B708C((s32)vp->field_04));
+            vf5C4(r26, value);
+            vf5C4(r27, value);
+            func_800F4A98(func_80043F18(&h2), 0x80000, 0);
+            for (u32 i = 0; i < ((cf::CVisionEnumList*)func_80043F18(&h2))->count; i++) {
+                void* o = func_800F6EAC(func_80043F18(&h2), i);
+                void* r29 = __dynamic_cast(o, 0, &lbl_eu_80661970, &lbl_eu_806618F0, 0);
+                void* a0 = (r26 != nullptr) ? (u8*)r26 + 0x3E9C : r26;
+                void* b0 = (r27 != nullptr) ? (u8*)r27 + 0x3E9C : r27;
+                if (((E484_TypeObj*)r29)->field_9C == a0 ||
+                    ((E484_TypeObj*)r29)->field_9C == b0) {
+                    vf88(r29, value);
+                }
+                if (r26 != nullptr) {
+                    void* b = ((E484_VisionActor*)r26)->field_45B8;
+                    if (b != nullptr) {
+                        void* c = func_8016FE34(func_800B708C((s32)(uintptr_t)b));
+                        if (c != nullptr) c = (u8*)c + 0x3E9C;
+                        if (((E484_TypeObj*)r29)->field_9C == c) vf88(r29, value);
+                    }
+                }
+            }
+        }
+    }
+
+    __dt__80043E88(&h2, -1);
+    __dt__80043E88(&h1, -1);
+}
 extern void func_80109784(void* ptr, u32 id, int arg);
 // Struct for the third arg of func_800EA9A8: fields at +0x00, +0x04, +0x08, +0x30
 struct Func800EA9A8_Arg5 {
@@ -8740,11 +11312,15 @@ void func_800F38E0(void* self, u32 arg2, u16 arg3) {
     buf.field_30 |= 1;
     func_800EC918(self, 0, (void*)arg2, &buf, 0);
 }
-// Dispatches battle event calls to actor objects based on a table entry.
-void func_800F3970(void* self, void* obj1, void* obj2, s32 idx, s32 addVal) {
-    u32 selector = lbl_eu_804FC828[idx].selector;
-    s32 val2 = -1;
+// Dispatches battle event calls to actor objects based on the dispatch-table
+// entry at lbl_eu_804FC828[idx]: selector 0 -> obj1, 1 -> obj2, 2 -> both,
+// anything else -> every entry of the manager's second actor list.
+void func_800F3970(cf::CBattleManager* self, void* obj1, void* obj2, s32 idx, s32 addVal) {
+    // Declaration order drives the saved-register colors. Signed selector so
+    // the dispatch compares with retail cmpwi (cmpli would come from unsigned).
+    s32 selector = lbl_eu_804FC828[idx].selector;
     s32 val3 = lbl_eu_804FC828[idx].val;
+    s32 val2 = -1;
 
     if (val3 == 0x3e7) {
         val2 = 4;
@@ -8753,60 +11329,59 @@ void func_800F3970(void* self, void* obj1, void* obj2, s32 idx, s32 addVal) {
 
     val3 += addVal;
 
-    if (lbl_eu_804FC828[idx].byteVal != 0) {
-        extern s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second);
-        u16 u1 = *(u16*)((u8*)obj1 + 0x3f28);
-        u16 u2 = *(u16*)((u8*)obj2 + 0x3f28);
-        int result = func_800824FC__Q22cf13CfGameManagerFv(u1, u2);
+    // Read the byte once: retail keeps it in a saved register across the
+    // lookup call (extsb re-uses it for both the test and the multiply).
+    s8 byteVal = lbl_eu_804FC828[idx].byteVal;
+    if (byteVal != 0) {
+        // Cross-actor id lookup (CfGameManager); feeds a /1000 multiplier.
+        s32 result = func_800824FC__Q22cf13CfGameManagerFv(
+            ((BattleObjAccessor*)obj1)->field_3f28,
+            ((BattleObjAccessor*)obj2)->field_3f28);
         if (result != -1) {
-            val3 += (result / 100) * lbl_eu_804FC828[idx].byteVal;
+            // mulhw 0x10624DD3 with >>38 is the signed /1000 magic (not /100).
+            val3 += (result / 1000) * (s32)byteVal;
         }
     }
 
-    // Virtual function typedefs
-    typedef void (*VFunc2F8)(void*, s32);
-    typedef void (*VFunc2FC)(void*, s32);
-    typedef void (*VFunc304)(void*, s32);
-
     if (selector == 0) {
         if (val2 != -1) {
-            ((VFunc304)(*(void***)obj1)[0x304 / 4])(obj1, val2);
-            ((VFunc2FC)(*(void***)obj1)[0x2FC / 4])(obj1, val3);
+            ((BMVtIfF3970*)obj1)->vf304(val2);
+            ((BMVtIfF3970*)obj1)->vf2FC(val3);
         } else {
-            ((VFunc2F8)(*(void***)obj1)[0x2F8 / 4])(obj1, val3);
+            ((BMVtIfF3970*)obj1)->vf2F8(val3);
         }
     } else if (selector == 1) {
         if (val2 != -1) {
-            ((VFunc304)(*(void***)obj2)[0x304 / 4])(obj2, val2);
-            ((VFunc2FC)(*(void***)obj2)[0x2FC / 4])(obj2, val3);
+            ((BMVtIfF3970*)obj2)->vf304(val2);
+            ((BMVtIfF3970*)obj2)->vf2FC(val3);
         } else {
-            ((VFunc2F8)(*(void***)obj2)[0x2F8 / 4])(obj2, val3);
+            ((BMVtIfF3970*)obj2)->vf2F8(val3);
         }
     } else if (selector == 2) {
         if (val2 != -1) {
-            ((VFunc304)(*(void***)obj1)[0x304 / 4])(obj1, val2);
-            ((VFunc2FC)(*(void***)obj1)[0x2FC / 4])(obj1, val3);
+            ((BMVtIfF3970*)obj1)->vf304(val2);
+            ((BMVtIfF3970*)obj1)->vf2FC(val3);
         } else {
-            ((VFunc2F8)(*(void***)obj1)[0x2F8 / 4])(obj1, val3);
+            ((BMVtIfF3970*)obj1)->vf2F8(val3);
         }
 
         if (val2 != -1) {
-            ((VFunc304)(*(void***)obj2)[0x304 / 4])(obj2, val2);
-            ((VFunc2FC)(*(void***)obj2)[0x2FC / 4])(obj2, val3);
+            ((BMVtIfF3970*)obj2)->vf304(val2);
+            ((BMVtIfF3970*)obj2)->vf2FC(val3);
         } else {
-            ((VFunc2F8)(*(void***)obj2)[0x2F8 / 4])(obj2, val3);
+            ((BMVtIfF3970*)obj2)->vf2F8(val3);
         }
     } else {
-        // Iterate through mActorList2 (self+0x28)
-        _reslist_node<void*>* sentinel = *(_reslist_node<void*>**)((u8*)self + 0x28);
-        _reslist_node<void*>* cur = sentinel->mNext;
-        while (cur != sentinel) {
-            void* actor = cur->mItem;
+        // Iterate every node of mActorList2, dispatching to each item.
+        _reslist_node<cf::CfObjectActor*>* cur =
+            self->mActorList2.mStartNodePtr->mNext;
+        while (cur != self->mActorList2.mStartNodePtr) {
+            cf::CfObjectActor* actor = cur->mItem;
             if (val2 != -1) {
-                ((VFunc304)(*(void***)actor)[0x304 / 4])(actor, val2);
-                ((VFunc2FC)(*(void***)actor)[0x2FC / 4])(actor, val3);
+                ((BMVtIfF3970*)actor)->vf304(val2);
+                ((BMVtIfF3970*)actor)->vf2FC(val3);
             } else {
-                ((VFunc2F8)(*(void***)actor)[0x2F8 / 4])(actor, val3);
+                ((BMVtIfF3970*)actor)->vf2F8(val3);
             }
             cur = cur->mNext;
         }
@@ -8821,41 +11396,34 @@ void func_800F3C08(cf::CBattleManager* mgr, u32 arg) {
 // Searches through unk94 slot array for a matching key. If found, increments count.
 // If not found, inserts into the first empty slot (key==0) with count=1.
 void func_800F3C6C(cf::CBattleManager* mgr, s32 key) {
-    // Call virtual func_800885F0 (vtable[0x28]) with arg=2
-    // Use the vtable pointer directly to match retail register pattern
-    if (!((s32 (*)(void*, u32))((void**)(*(void**)mgr))[0x28 / 4])(mgr, 2)) return;
+    // Gate: vtable slot 0x28 (func_800885F0) with mask 2. The virtual-dispatch
+    // call through the interface emits the retail lwz r12 / lwz r12,0x28 / bctrl
+    // pattern.
+    if (!((BMVtIf828*)mgr)->v008(2)) return;
 
-    // Each slot is 8 bytes: key (s32 at +0), count (u8 at +4), padding (+5..+7)
-    // 32 slots total, processed in 8 iterations of 4 slots each
-    u8* p = (u8*)mgr + 0x94;
+    // 32 slots of 8 bytes each; retail processes 4 slots per counted iteration
+    // (single slot pointer advanced 0x20 per iteration).
+    cf::CBattleManager_Struct1* slots = mgr->unk94.unk0;
     s32 bestFit = -1;
-    s32 idx = 0;
 
     for (s32 i = 0; i < 8; i++) {
-        if (*(s32*)(p + 0) == key) { ((u8*)p)[4]++; return; }
-        if (*(s32*)(p + 0) == 0 && bestFit < 0) bestFit = idx;
-
-        idx++;
-        if (*(s32*)(p + 8) == key) { ((u8*)p)[12]++; return; }
-        if (*(s32*)(p + 8) == 0 && bestFit < 0) bestFit = idx;
-
-        idx++;
-        if (*(s32*)(p + 16) == key) { ((u8*)p)[20]++; return; }
-        if (*(s32*)(p + 16) == 0 && bestFit < 0) bestFit = idx;
-
-        idx++;
-        if (*(s32*)(p + 24) == key) { ((u8*)p)[28]++; return; }
-        if (*(s32*)(p + 24) == 0 && bestFit < 0) bestFit = idx;
-
-        idx++;
-        p += 32;
+        if (slots[0].key == key) { slots[0].count++; return; }
+        if (slots[0].key == 0 && bestFit < 0) bestFit = i * 4 + 0;
+        if (slots[1].key == key) { slots[1].count++; return; }
+        if (slots[1].key == 0 && bestFit < 0) bestFit = i * 4 + 1;
+        if (slots[2].key == key) { slots[2].count++; return; }
+        if (slots[2].key == 0 && bestFit < 0) bestFit = i * 4 + 2;
+        if (slots[3].key == key) { slots[3].count++; return; }
+        if (slots[3].key == 0 && bestFit < 0) bestFit = i * 4 + 3;
+        slots += 4;
     }
 
-    if (bestFit >= 0) {
-        // Match retail: slwi r0, bestFit, 3; add r4, r30, r0; stw ..., 0x94(r4)
-        s32* addr = (s32*)((u8*)mgr + bestFit * 8);
-        *(s32*)((u8*)addr + 0x94) = key;
-        *((u8*)addr + 0x98) = 1;
+    // Insert into the first empty slot: store the key and bump the count
+    // (read-modify-write, retail lbz/addi/stb shape).
+    if (bestFit != -1) {
+        cf::CBattleManager_Struct1* slot = &mgr->unk94.unk0[bestFit];
+        slot->key = key;
+        slot->count++;
     }
 }
 // Searches for an actor with field_0x15f0 matching arg1.

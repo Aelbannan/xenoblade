@@ -2,6 +2,9 @@
 #include <harness_catalog.h>
 #include "libs/CriWare/src/sofdec/sfx/sfx_types.h"
 
+/* Shared Sofdec SDK error-message pool (.rodata 0x8051CF48, 0x230 bytes) */
+extern u8 lbl_eu_8051CF48[];
+
 /* Forward declarations */
 int SFX_GetForceSplitField(void);
 int SFX_GetSplitField(void* self);
@@ -68,22 +71,24 @@ done:
     return mergeField;
 }
 
-void sfxcnv_MakeTable(SFXConvertState* self, SFXStmInf* stmInf, u32 tableType) {
+void sfxcnv_MakeTable(SFXConvertState* self, SFXStmInf* stmInf, s32 tableType) {
     BOOL needUpdate = TRUE;
+    s32 compoMode = (s32)self->compoMode;
 
-    if (self->compoMode == 0x64) {
+    /* Rebuild the composition table unless the mode is unchanged and the
+     * table type needs no refresh (4/5 -> static, 2 -> alpha-dependent). */
+    if (compoMode == 0x64) {
         needUpdate = FALSE;
-    } else if (self->compoMode != tableType) {
-        /* New mode, need to update */
-    } else {
-        u32 tmp = tableType - 4;
-        if (tmp <= 1) {
+    } else if (compoMode == tableType) {
+        if (tableType == 4 || tableType == 5) {
             needUpdate = FALSE;
         } else if (tableType == 2) {
             if (SFXA_IsNeedUpdateLumiTbl(self->alphaState) != 1) {
                 needUpdate = FALSE;
             }
-        } else if (tableType == 1 || tableType == 0x15) {
+        } else if (tableType == 1) {
+            needUpdate = FALSE;
+        } else if (tableType == 0x15) {
             needUpdate = FALSE;
         }
     }
@@ -119,7 +124,7 @@ void sfxcnv_MakeTable(SFXConvertState* self, SFXStmInf* stmInf, u32 tableType) {
         SFXCNV_MakeCcirFromY((u8*)self->_38);
         break;
     default:
-        SFXLIB_Error(self, stmInf, "sfxcnv_MakeTable: unknown table type");
+        SFXLIB_Error(self, stmInf, (const char*)&lbl_eu_8051CF48[0x30]);
         break;
     }
 }
@@ -131,24 +136,23 @@ void sfxcnv_ExecCopyAlphaByCbFunc(SFXConvertState* self, SFXStmInf* stmInf,
 
 void SFX_CnvFrmByCbFunc(SFXConvertState* self, SFXStmInf* stmInf,
                          SFXDstBufInf* dstBuf) {
-    u32 fmt;
+    s32 fmt;
 
-    if (self->formatType == 0) {
-        self->formatType = (u32)SFXINF_GetStmInf(stmInf, "SFX_CnvFrmByCbFunc");
+    fmt = (s32)self->formatType;
+    if (fmt == 0) {
+        fmt = (s32)SFXINF_GetStmInf(stmInf, (const char*)&lbl_eu_8051CF48[0xba]);
+        self->formatType = (u32)fmt;
     }
-
-    fmt = self->formatType;
 
     switch (fmt) {
     case 0x11:
-        if (stmInf->_90 == 1) {
-            sfxcnv_MakeTable(self, stmInf, 0x15);
-            sfxcnv_ExecCnvFrmByCbFunc(self, stmInf, dstBuf, TRUE);
-        } else {
-            sfxcnv_ExecCnvFrmByCbFunc(self, stmInf, dstBuf, FALSE);
+        if ((s32)stmInf->_90 == 1) {
+            goto cnvByLumiTable;
         }
+        sfxcnv_ExecCnvFrmByCbFunc(self, stmInf, dstBuf, FALSE);
         break;
     case 0x1001:
+    cnvByLumiTable:
         sfxcnv_MakeTable(self, stmInf, 0x15);
         sfxcnv_ExecCnvFrmByCbFunc(self, stmInf, dstBuf, TRUE);
         break;
@@ -164,13 +168,16 @@ void SFX_CnvFrmByCbFunc(SFXConvertState* self, SFXStmInf* stmInf,
     case 0x41:
     case 0x51:
     case 0x61: {
-        u32 tableType;
+        s32 tableType;
         if (fmt == 0x51) {
             tableType = 4;
         } else if (fmt == 0x61) {
             tableType = 5;
         } else {
-            tableType = (stmInf->_94 == 0x51) ? 4 : 5;
+            tableType = 5;
+            if ((s32)stmInf->_94 == 0x51) {
+                tableType = 4;
+            }
         }
         sfxcnv_MakeTable(self, stmInf, tableType);
         sfxcnv_ExecCnvFrmByCbFunc(self, stmInf, dstBuf, TRUE);
@@ -180,7 +187,7 @@ void SFX_CnvFrmByCbFunc(SFXConvertState* self, SFXStmInf* stmInf,
         sfxcnv_ExecCnvFrmByCbFunc(self, stmInf, dstBuf, FALSE);
         break;
     default:
-        SFXLIB_Error(self, stmInf, "SFX_CnvFrmByCbFunc: unknown format");
+        SFXLIB_Error(self, stmInf, (const char*)&lbl_eu_8051CF48[0xc0]);
         break;
     }
 }
@@ -273,49 +280,51 @@ done:
 void sfxcnv_ExecCopyAlphaByCbFunc(SFXConvertState* self, SFXStmInf* stmInf,
                                    SFXDstBufInf* dstBuf) {
     SFXCnvSrcBuf srcBuf;
-    u32 dstInfo[4];
-    u32 table;
+    SFXDstBufInf dstInfo;
+    u32 table[8];
     void (*cb)(SFXCnvSrcBuf*, u32*, u32*);
 
     sfxcnv_MakeCftSrcBuf(self, stmInf, &srcBuf);
 
-    if (stmInf->srcType == 1 || stmInf->srcType == 2) {
+    /* 1- or 2-plane source: nothing to adjust (dstInfo stays stale). */
+    if (stmInf->srcType - 1 <= 1) {
         /* skip plane adjustment */
-    } else if (stmInf->srcType == 3) {
-        u32 w = srcBuf._08;
-        u32 h = srcBuf._0C;
-        u32 halfPlane = (u32)((s32)(w * h) / 2);
-        u32 quarterPlane = (u32)((s32)halfPlane / 2);
+    } else if ((s32)stmInf->srcType == 3) {
+        /* 3-plane: luma pointer skips a half plane, each chroma pointer a
+         * quarter plane; dstInfo._04.._0C are plane buffers, _10 the height. */
+        u32 halfPlane = (u32)((s32)(srcBuf._10 * srcBuf._0C) / 2);
 
         srcBuf._04 += halfPlane;
+
+        u32 quarterPlane = (u32)((s32)halfPlane / 2);
         srcBuf._14 += quarterPlane;
         srcBuf._24 += quarterPlane;
 
-        dstInfo[0] = dstBuf->_04;
-        dstInfo[1] = dstBuf->_08;
-        dstInfo[2] = dstBuf->_0C;
+        dstInfo._04 = dstBuf->_04;
+        dstInfo._08 = dstBuf->_08;
+        dstInfo._0C = dstBuf->_0C;
 
-        if (self->_08 == 0) {
-            dstInfo[3] = srcBuf._08 << 2;
-            SFXLIB_Error(self, stmInf, "sfxcnv_ExecCopyAlphaByCbFunc: no buffer");
-        } else if (self->_10 == 0 && self->bytesPerPixelOut != 0) {
-            dstInfo[3] = self->_08 / self->bytesPerPixelOut;
+        if ((s32)self->_08 == 0) {
+            ((u32*)&dstInfo)[4] = srcBuf._08 << 2;
+            SFXLIB_Error(self, stmInf, (const char*)&lbl_eu_8051CF48[0x172]);
+        } else if ((s32)self->_10 == 0 && (s32)self->bytesPerPixelOut != 0) {
+            ((u32*)&dstInfo)[4] = (u32)((s32)self->_08 / (s32)self->bytesPerPixelOut);
         } else {
-            dstInfo[3] = self->_08;
+            ((u32*)&dstInfo)[4] = self->_08;
         }
     } else {
-        SFXLIB_Error(self, stmInf, "sfxcnv_ExecCopyAlphaByCbFunc: unknown type");
+        SFXLIB_Error(self, stmInf, (const char*)&lbl_eu_8051CF48[0x1b0]);
     }
 
     if (SFX_SetCcirFx() == 1) {
-        table = self->_38;
+        table[0] = self->_38;
     } else {
-        table = 0;
+        table[0] = 0;
     }
 
     cb = (void (*)(SFXCnvSrcBuf*, u32*, u32*))self->copyAlphaCallback;
     if (cb != NULL) {
-        cb(&srcBuf, dstInfo, &table);
+        cb(&srcBuf, (u32*)&dstInfo, table);
     }
 }
 
@@ -325,13 +334,18 @@ void SFX_SetBytePerPixelOutBuf(void* self, u32 val) {
 
 void sfxcnv_MakeDstBufInf(SFXConvertState* self, SFXStmInf* stmInf,
                           void* bufPtr, SFXDstBufInf* dstArray, u32 idx) {
-    SFXDstBufInf* entry = (SFXDstBufInf*)((u8*)dstArray + idx * 16);
-    int bpp;
+    s32 bpp;
+    u32 ofs = idx * 16;
+    SFXDstBufInf* dstEntry = (SFXDstBufInf*)((u8*)dstArray + ofs);
 
-    entry->_04 = (u32)(uintptr_t)bufPtr;
-    entry->_08 = stmInf->width;
+    /* Destination entries are 16-byte plane records.  The first two stores use
+     * dstEntry (dies before the switch).  The later sites re-derive the entry
+     * pointer as a u32* so MWCC keeps the per-block address adds (retail
+     * recomputes `add r3, r31, r29` at every later site). */
+    dstEntry->_04 = (u32)bufPtr;
+    dstEntry->_08 = stmInf->width;
 
-    switch (self->formatType) {
+    switch ((s32)self->formatType) {
     case 0x11:
     case 0x31:
     case 0x41:
@@ -348,25 +362,25 @@ void sfxcnv_MakeDstBufInf(SFXConvertState* self, SFXStmInf* stmInf,
         bpp = 1;
         break;
     default:
-        SFXLIB_Error(NULL, NULL, "sfxcnv_MakeDstBufInf: unknown format");
+        SFXLIB_Error(NULL, NULL, (const char*)lbl_eu_8051CF48);
         bpp = 0;
         break;
     }
 
     if (bpp == 1) {
-        ((SFXDstBufInf*)((u8*)dstArray + idx * 16))->_0C = (u32)((s32)stmInf->bytesPerLine / 2);
+        ((u32*)((u8*)dstArray + ofs))[3] = (u32)((s32)stmInf->bytesPerLine / 2);
     } else {
-        ((SFXDstBufInf*)((u8*)dstArray + idx * 16))->_0C = stmInf->bytesPerLine;
+        ((u32*)((u8*)dstArray + ofs))[3] = stmInf->bytesPerLine;
     }
 
-    if (self->_08 == 0) {
-        u32 height = stmInf->width;
-        SFXLIB_Error(self, stmInf, "sfxcnv_MakeDstBufInf: no buffer");
-        ((SFXDstBufInf*)((u8*)dstArray + idx * 16))->_10 = height;
-    } else if (self->_10 == 0 && self->bytesPerPixelOut != 0) {
-        ((SFXDstBufInf*)((u8*)dstArray + idx * 16))->_10 = (u32)((s32)self->_08 / (s32)self->bytesPerPixelOut);
+    if ((s32)self->_08 == 0) {
+        ((u32*)((u8*)dstArray + ofs))[4] = stmInf->width;
+        SFXLIB_Error(self, stmInf, (const char*)&lbl_eu_8051CF48[0x1f2]);
+    } else if ((s32)self->_10 == 0 && (s32)self->bytesPerPixelOut != 0) {
+        ((u32*)((u8*)dstArray + ofs))[4] =
+            (u32)((s32)self->_08 / (s32)self->bytesPerPixelOut);
     } else {
-        ((SFXDstBufInf*)((u8*)dstArray + idx * 16))->_10 = self->_08;
+        ((u32*)((u8*)dstArray + ofs))[4] = self->_08;
     }
 }
 

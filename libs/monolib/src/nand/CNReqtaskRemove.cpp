@@ -20,10 +20,15 @@ struct CNReqtaskRemoveData;  // defined below; forward decl for the extern block
 // Retail linker names referenced by this unit (C linkage so the emitted
 // symbols match the stripped retail names rather than C++ manglings).
 extern "C" {
-    extern CNReqtaskRemoveVtbl* lbl_eu_806659F8; // installed vtable pointer for this task
-    extern char lbl_eu_8056FDC8[];  // vtable data - array type prevents sda21
+    extern CNReqtaskRemoveVtbl* lbl_eu_806659F8; // installed vtable pointer for this task (defined below)
+    extern u32 lbl_eu_8056FDC8[4];  // vtable data - array type prevents sda21 (defined below)
     extern u8   lbl_eu_806659D0;    // global NAND "busy" flag
     extern s32  lbl_eu_806659D4;    // global NAND result/error latch
+    extern u32 lbl_eu_8056FDD8[4];  // 2nd vtable (defined below)
+    extern u32 lbl_eu_80663BA0[2];  // .sdata typeinfo (defined below)
+    extern u32 lbl_eu_80663B70;     // foreign .sdata typeinfo
+    extern const char lbl_eu_80524638[0x10];
+    void func_804DA4CC();           // foreign vtable slot
 
     s32 func_804DA9C4(CNReqtaskRemoveData* data, u8 arg);  // NAND remove request setup primitive
     s32 func_804DA76C(u8* ptr);                            // NAND remove request execute primitive
@@ -118,3 +123,28 @@ extern "C" __declspec(noinline) void func_804DB350(void* dest) {
 extern "C" __declspec(noinline) void sinit_804DB330() {
     func_804DB350(&lbl_eu_806659F8);
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056FDC8-0x8056FDE8 (32 bytes) — two vtables.
+extern "C" u32 lbl_eu_8056FDC8[4] = { (u32)&lbl_eu_80663BA0, 0x00000000, (u32)&func_804DB278, (u32)&func_804DA4CC };
+extern "C" u32 lbl_eu_8056FDD8[4] = { (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000 };
+
+// [.sdata] 0x80663BA0-0x80663BA8 (8 bytes) typeinfo {name,parent}.
+extern "C" u32 lbl_eu_80663BA0[2] = { (u32)&lbl_eu_80524638, (u32)&lbl_eu_8056FDD8 };
+
+// [.rodata] 0x80524638-0x80524648 (16 bytes) "CNReqtaskRemove" RTTI name.
+extern "C" const char lbl_eu_80524638[0x10] = {
+    0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x52,0x65,0x6D,0x6F,0x76,0x65,0x00 };
+
+// [.sbss] 0x806659F8-0x80665A00 (8 bytes) — the task vtable pointer + pad.
+extern "C" {
+    CNReqtaskRemoveVtbl* lbl_eu_806659F8;  // definition (zero-init, sbss word 0)
+    u32 lbl_eu_806659F8_pad;               // 2nd sbss word
+}
+
+DECOMP_FORCEACTIVE(CNReqtaskRemove_cpp, lbl_eu_806659F8);
+DECOMP_FORCEACTIVE(CNReqtaskRemove_cpp, lbl_eu_806659F8_pad);
+DECOMP_FORCEACTIVE(CNReqtaskRemove_cpp, lbl_eu_8056FDC8);
+DECOMP_FORCEACTIVE(CNReqtaskRemove_cpp, lbl_eu_8056FDD8);
+DECOMP_FORCEACTIVE(CNReqtaskRemove_cpp, lbl_eu_80663BA0);
+DECOMP_FORCEACTIVE(CNReqtaskRemove_cpp, lbl_eu_80524638);

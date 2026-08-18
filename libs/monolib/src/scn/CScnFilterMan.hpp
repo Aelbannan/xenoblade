@@ -84,7 +84,7 @@ struct CScnFilterIteratorReslist {
     bool field_0x1C;                   // 0x1C ownership flag
 };
 
-class CScnFilterMan {
+class __declspec(novtable) CScnFilterMan {
 public:
     CScnFilterMan();
     virtual ~CScnFilterMan();

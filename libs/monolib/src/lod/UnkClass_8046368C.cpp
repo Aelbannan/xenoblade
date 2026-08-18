@@ -105,6 +105,7 @@ typedef void (*LodDrawFn)(void*, void*);
 typedef s32 (*LodPickFn)(void*);
 extern LodDrawFn lbl_eu_8056D710[3];
 extern LodPickFn lbl_eu_8056D71C[3];
+extern "C" void func_8046892C__Q23LOD17UnkClass_80468434Fv();
 
 // ---------------------------------------------------------------------------
 // External LOD helpers (other translation units, retail mangled names).
@@ -171,6 +172,13 @@ typedef struct LodRangeObj {
     u8 gap22[2];
     u8 mode;     // 0x24
 } LodRangeObj;
+
+extern "C" s32 func_80463FF8__Q23LOD17UnkClass_8046368CFv(const LodRangeObj*);
+LodPickFn lbl_eu_8056D71C[3] = {
+    (LodPickFn)&func_80463FF8__Q23LOD17UnkClass_8046368CFv,
+    (LodPickFn)&func_8046892C__Q23LOD17UnkClass_80468434Fv,
+    (LodPickFn)&func_80463FF8__Q23LOD17UnkClass_8046368CFv,
+};
 
 typedef struct LodRotObj {
     f32 f00;

@@ -221,3 +221,8 @@ extern "C" void func_804BC9DC(void* self, u32 a, u32 b) { *(u32*)((u8*)self + 0x
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_804BC9E8(void) {}
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.sbss] 0x80665960-0x80665968 (8 bytes)
+f32 lbl_eu_80665960;  // zero-fill, word 0
+f32 lbl_eu_80665960_hi;  // zero-fill, word 1 (synthetic)

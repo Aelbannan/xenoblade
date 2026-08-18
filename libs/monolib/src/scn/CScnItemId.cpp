@@ -5,6 +5,35 @@
 #include "monolib/util/MemManager.hpp"
 #include "monolib/util/CPathUtil.hpp"
 
+// Foreign data labels referenced by the CScnItemId vtable/param block.
+extern "C" u32 lbl_eu_806638B8;
+extern "C" u32 lbl_eu_806624D8;
+// Foreign function referenced by the dispatch table.
+extern "C" void func_80482048();
+// Retail destructor mangled name (CScnItemId::~CScnItemId) for the vtable reloc.
+extern "C" void __dt__10CScnItemIdFv();
+// Forward declarations for in-TU extern "C" functions referenced by the vtable.
+extern "C" void func_8048228C();
+extern "C" void func_80482288();
+extern "C" void* func_80482290(u8* self);
+extern "C" u32 func_80482298(u8* self);
+
+// === .rodata size=0x10 align=8 ===
+extern "C" __declspec(align(8)) const char lbl_eu_80523E98[16] = {
+    0x43,0x53,0x63,0x6E,0x49,0x74,0x65,0x6D,0x49,0x64,0x00, 0x00,0x00,0x00,0x00,0x00,
+};
+
+// === .data size=0x30 align=8 ===
+// CScnItemId vtable (32B).
+extern "C" u32 lbl_eu_8056DCD8[8] = {
+    (u32)&lbl_eu_806638B8, 0x00000000, (u32)&__dt__10CScnItemIdFv, (u32)&func_8048228C,
+    (u32)&func_80482048, (u32)&func_80482288, (u32)&func_80482290, (u32)&func_80482298,
+};
+// CScnItemId param block (16B).
+extern "C" u32 lbl_eu_8056DCF8[4] = {
+    (u32)&lbl_eu_806624D8, 0x00000000, 0x00000000, 0x00000000,
+};
+
 // ===========================================================================
 // CScnItemId::~CScnItemId - unloads the active scene resource and frees the
 // item when the delete flag is positive. MWCC emits the this!=0 guard, the

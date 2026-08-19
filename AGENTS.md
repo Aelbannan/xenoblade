@@ -1,75 +1,39 @@
 # Xenoblade co-op fork — agent entry point
 
-This repository is a **private/downstream** Xenoblade Chronicles Wii decompilation and split-screen co-op mod fork.
+Private/downstream Xenoblade Chronicles Wii decompilation + split-screen co-op mod fork.
 
-## Required reading order
+## Lazy-load the skill
 
-1. **`.codex/skills/xenoblade-decomp/SKILL.md`** (also `.cursor/skills/` and `.claude/skills/`) — operational workflow and acceptance policy. Follow it unless the user explicitly asks for something else.
-2. **`tools/coop/targets.json`** — sole source of truth for function identity and current target state; use `targets show/status`, not hand-maintained checklists.
-3. **`PLAN.md` §§2, 3, 17** — legal boundaries, architecture invariants, and matching policy. Read other sections only when the task touches that subsystem.
-4. **`COOP_IMPLEMENTATION_MAP.md`** — capability graph and feature handoffs; read for co-op architecture work.
-5. **`docs/MWCC_REFERENCE.md`** — consult relevant patterns for matching work.
-6. **`docs/register_mapping.md`** — the deterministic register-allocator contract (volatile low→high, saved high→low, declaration-order lever); read before chasing any `reg_swap` residual to `FULL_MATCH`.
-7. **`docs/scheduling.md`** — the `-O4,p` vs `-O4,s` loop-optimization split and the level-gated instruction scheduler; read before chasing any `structural` scheduling/loop residual.
-8. **`docs/instruction_selection.md`** — the `mr` vs `addi rD,rS,0` copy lowering, type-driven load selection, and the `lbzu`/peephole rules; read before chasing `mr`/`addi`/`lbzu` residuals.
-9. Read the behaviour, equivalence, symbol-recovery, or opcode documentation only when invoking that subsystem.
+**Read `SKILL.md` (`.agents/skills/xenoblade-decomp/SKILL.md` — pi loads this path) only when this task is a
+decomp/matching task** — decompiling, byte-matching, editing `src/**`/`libs/**`/`configure.py`, or
+running the coop runner / objdiff / DECOMP_MAP targets / MWCC `EQUIVALENT_MATCH` / `FULL_MATCH` work.
+It holds the workflow, acceptance policy, and residual routing.
 
-## Quick commands
+**Skip it for non-decomp asks** (planning, docs, tooling, co-op feature work that doesn't touch
+matching, general repo questions). Your default state should be "no SKILL.md loaded" — load it on
+demand, not up front.
 
-**Always use `.venv/bin/python3`**, not the system `python3`. The venv has Python 3.13.6;
-the system Python (3.9.6) will fail on modern syntax used in project tools.
+## Every task
 
-```bash
-cp tools/coop/coop.example.json coop.json   # first time only
-.venv/bin/python3 tools/coop/run.py status
-bash .githooks/install.sh                     # pre-commit: refresh README status on commit
-.venv/bin/python3 tools/coop/run.py targets validate
-.venv/bin/python3 tools/coop/run.py targets status
-.venv/bin/python3 tools/coop/run.py targets show <target-id>
-.venv/bin/python3 tools/coop/run.py targets brief <target-id>
-.venv/bin/python3 tools/coop/run.py targets sync-calls
-.venv/bin/python3 tools/coop/run.py targets recertify --bottom-up --dry-run
-.venv/bin/python3 tools/coop/run.py harness --selection ready --include-catalog --dry-run
-.venv/bin/python3 tools/coop/run.py cycle <target-id> --hypothesis "..." --next-change "..."
-.venv/bin/python3 tools/coop/batch-cycle.py <target-id> [<target-id> ...] \
-    --hypothesis-map map.json            # mass-cycle after matching
-.venv/bin/python3 tools/coop/batch-cycle.py <target-id> \
-    --default-hypothesis "..." --default-next-change "..." \
-    --summary sum.json                   # with structured report
+- **Identity/state:** `tools/coop/targets.json` is the sole source of function identity/state — use
+  `targets show/status`, not hand-maintained checklists. `docs/ownership.csv` is legacy.
+- **Architecture/legal rules:** `PLAN.md` §§2, 3, 17 (legal boundaries, invariants, matching policy).
+  Read other sections only when the task touches that subsystem.
+- **Co-op architecture:** `COOP_IMPLEMENTATION_MAP.md` — read for co-op feature work.
 
-# pi-harness: TU-level batch matching with pi SDK agents (tools/pi_harness)
-cd tools/pi_harness && npm install                # first time only
-cp tools/pi_harness/pi-harness.example.json pi-harness.json   # repo root; set models
-npm --prefix tools/pi_harness run pi-harness -- --tu kyoshin/CGame --dry-run
-npm --prefix tools/pi_harness run pi-harness -- --tu kyoshin/CGame [--tu other/Unit]
-```
+## Always
 
-## CI commands
+- Use **`.venv/bin/python3`**, never the system `python3` (system is 3.9 and fails on project syntax).
+- **Prefer `hexdiff` over raw `ninja`** — `python3 tools/coop/hexdiff.py <unit> --symbol <sym>` runs
+  the build itself and holds the repo-wide lock, so it's safe for concurrent agents. Only use
+  `ninja`/`configure.py` when hexdiff can't express the operation.
 
-```bash
-# Fast PR gate (everything except Dolphin)
-python tools/ppc_equivalence/gen_fixture_blob.py --check
-python -m unittest discover -s tools/ppc_equivalence/tests -p "test_*.py"
-python -m tools.ppc_equivalence differential
-```
+## Never (full policy: `SKILL.md` / `PLAN.md` §17)
 
-```bash
-# Documentation sync
-python -m tools.ppc_equivalence.docs_sync --write
-python -m tools.ppc_equivalence.docs_sync --check
-```
+- Submit LLM-assisted matching upstream; commit `orig/`, `main.dol`, RELs, or disc assets; or decompile to asm/registers outside the §17.6 PS backend.
+- Run Dolphin inside the restricted process — its universal binary reports missing NEON, so launch it outside the restricted process.
 
-```bash
-# Code smell report (committed docs/CODE_SMELLS.md; CI gate: freshness + no per-TU regression vs base)
-python tools/coop/smell_report.py --write
-python tools/coop/smell_report.py --check
-python tools/coop/smell_report.py --completeness   # live TU status (replaces ALL_TUS.md)
-```
+## More commands
 
-## Do not
-
-- Submit LLM-assisted matching work to upstream `xbret/xenoblade`.
-- **Prefer `hexdiff` over raw `ninja`** — use `python3 tools/coop/hexdiff.py <unit> --symbol <sym>` for build+diff feedback. hexdiff performs the build itself and holds the repo-wide build lock (`build/<region>/.hexdiff.lock`), making it safe for concurrent agents. Only run `ninja`/`configure.py` directly when hexdiff cannot express the operation (e.g. full-tree rebuild after reconfiguration).
-- Commit `orig/`, `main.dol`, RELs, or disc assets.
-- **Decompile to assembly or registers** — matched code in `src/**` and `libs/**` must be **high-level C or C++**, except for the isolated Gekko paired-single backend exception in `PLAN.md` **§17.6**. `ASM`/`asm void` is otherwise not allowed; the exception is limited to documented PS kernels with complete non-MWCC fallbacks.
-- Run Dolphin inside the restricted process — its universal binary reports missing NEON, so it must be launched outside the restricted process.
+CI gates, code-smell report, and the pi-harness / coop-runner cheatsheets live in `SKILL.md` (Key
+paths, Routing) and `docs/`.

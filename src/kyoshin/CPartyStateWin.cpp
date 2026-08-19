@@ -30,7 +30,7 @@ u32 func_801F968C(u8* self) { return *(u32*)(self + 0x70); }
 // released size plus the 0x80 block header. The 0x10000 / 0x80000
 // thresholds pick which region the size belongs to.
 // optimize_for_size merges the r30/r31 saves into stmw (retail shape;
-// plain -O4,p emits two stw's + reversed copy order - MWCC_REFERENCE).
+// plain -O4,p emits two stw's + reversed copy order - MWCC_CASES).
 #pragma optimize_for_size on
 mtl::ALLOC_HANDLE func_801F9894(CPartyStateWinMem* self, s32 size) {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
@@ -86,7 +86,7 @@ extern "C" __declspec(noinline) u8* func_801F9998(u8* dst, u8* src) {
     // word0 with +4/+8 offsets. Best -O4,p shape: retail lwz/lwzu + stw/stwu
     // 8-byte counted loop, but MWCC interleaves load/store per word here
     // (retail batches both loads; that shape needs -O4,s - unit flag, see
-    // MWCC_REFERENCE wall #6). The field_0xfc8 load is hoisted into a temp
+    // MWCC_CASES wall #6). The field_0xfc8 load is hoisted into a temp
     // so its store lands after the word0 copy (retail order).
     u32 fc8 = s->field_0xfc8;
     u32* wd = &d->word0;
@@ -146,7 +146,7 @@ CPartyStateWinBlob58* func_801F9A48(CPartyStateWinBlob58* self,
 // (the scalar fields must copy load-store interleaved, not batched - same
 // scheme as func_801F9A48). The pair runs use the u32 pointer-walk form so
 // MWCC keeps them as counted loops at -O4,p (the indexed .lo/.hi form
-// unrolls - MWCC_REFERENCE wall #9); the fused word pairs are 8-byte struct
+// unrolls - MWCC_CASES wall #9); the fused word pairs are 8-byte struct
 // assignments for the 2-load/2-reverse-store shape (CInfoCfPair pattern).
 CPartyStateWinBlob10C0* func_801F9B18(CPartyStateWinBlob10C0* self,
                                        CPartyStateWinBlob10C0* src) {
@@ -993,7 +993,7 @@ extern "C" __declspec(noinline) void func_801FB72C(CPartyStateWin* self) {
             u32 names[3];
             // Post-increment loads fold the base materialization into the
             // first access (retail: lis + lwzu + +4/+8 displacements) - same
-            // trick as btm_sco_init in MWCC_REFERENCE.
+            // trick as btm_sco_init in MWCC_CASES.
             const u32* src = lbl_eu_80507C78;
             names[0] = *src++;
             names[1] = *src++;

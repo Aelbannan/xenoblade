@@ -42,7 +42,7 @@ RttiBaseList2 lbl_eu_8056B920 = {
     (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, 0, 0,
 };
 
-// Retail sbss singleton label for CWorkFlowSetup::spInstance (MWCC_REFERENCE §1a).
+// Retail sbss singleton label for CWorkFlowSetup::spInstance (MWCC_CASES §1a).
 // Defined here (global scope, so the symbol stays unmangled) so this object
 // carries the sbss entry its own functions reference.
 // Retail sbss singleton slot lbl_eu_806655E0 (8 bytes; word 0 in use) - blob monolibdata1d dissolve

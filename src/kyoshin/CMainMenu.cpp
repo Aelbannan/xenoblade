@@ -226,7 +226,7 @@ void func_800FEF4C(CMainMenu* self) {
 
 // Guard the not-yet-recovered constructor stub so MWCC's auto-inliner does not
 // inline the empty body into the OnFileEvent tail-call thunk (reloc must stay
-// an external b __ct__800FF300, per MWCC_REFERENCE empty-stub pattern).
+// an external b __ct__800FF300, per MWCC_CASES empty-stub pattern).
 #pragma push
 #pragma auto_inline off
 extern "C" void __ct__800FF300(){}

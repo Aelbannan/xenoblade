@@ -87,7 +87,7 @@ namespace cf {
     // __declspec(novtable): the retail vtable data lives at lbl_eu_80529DA0;
     // the auto-generated __vt__Q22cf10CfObjectPc symbol would fail the reloc
     // name match, so the ctor stores the retail label explicitly (see
-    // MWCC_REFERENCE "Retail-owned vtable data" / COccCulling).
+    // MWCC_CASES "Retail-owned vtable data" / COccCulling).
     class __declspec(novtable) CfObjectPc : public CfObjectActor {
     public:
         virtual ~CfObjectPc();

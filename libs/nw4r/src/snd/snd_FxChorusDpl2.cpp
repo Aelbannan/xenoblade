@@ -28,7 +28,7 @@ struct FxChorusParam {
 }  // namespace detail
 
 // Retail .sdata2 float constants referenced by name so the SDA21 relocations
-// match the stripped retail object (MWCC_REFERENCE §1b float pools).
+// match the stripped retail object (MWCC_CASES §1b float pools).
 extern "C" const f32 lbl_eu_80669F60; // default delayTime
 extern "C" const f32 lbl_eu_80669F64; // default depth
 extern "C" const f32 lbl_eu_80669F68; // default rate/outGain; depth+outGain max

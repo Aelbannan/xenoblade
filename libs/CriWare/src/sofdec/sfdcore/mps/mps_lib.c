@@ -171,7 +171,7 @@ int MPSLIB_CheckHn(void *handle) {
 // Scan the MPS entry table for a free slot (type == 1). Kept as a same-TU
 // helper that MWCC inlines so the match loop emits the retail's
 // branch-over-branch shape (`bne continue; b found`); the direct goto form
-// folds to a single `beq` (MWCC_REFERENCE: btm_bda_to_acl pattern).
+// folds to a single `beq` (MWCC_CASES: btm_bda_to_acl pattern).
 static __inline u32 *mps_find_free(u32 *base, int count) {
     u32 *entry;
     int i;

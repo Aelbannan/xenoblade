@@ -296,7 +296,7 @@ extern "C" u32 func_80495FF0(CScn*);
 
 // Window-state word read by func_801FBC7C (.sdata, retail unmangled). const
 // lets MWCC hoist the sda21 load above the frame stores (retail shape -
-// MWCC_REFERENCE "extern const float" pattern).
+// MWCC_CASES "extern const float" pattern).
 extern const u32 lbl_eu_806681E4;
 
 // Composite vtable written by the ctor at +0x00/+0x04 (owned by another

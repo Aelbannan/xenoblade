@@ -7,7 +7,7 @@
 
 // Shared data pools (retail names; global scope - no C++ mangling).
 // const float: MWCC hoists the SDA21 load into the prologue (pos 2) like
-// retail; a plain extern float schedules the load late (MWCC_REFERENCE:8787).
+// retail; a plain extern float schedules the load late (MWCC_CASES:8787).
 extern const float lbl_eu_80668590;   // animation-completion sentinel (.sdata2)
 extern char lbl_eu_8050A0B4[];  // quest-log string pool (split1 .rodata)
 extern char* lbl_eu_80536320[];  // quest-name table (30 entries, split1 .data)

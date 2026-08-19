@@ -22,24 +22,24 @@ extern const char lbl_eu_80530D2C[];
 extern const char lbl_eu_8056E194[];  // panic file name (func_804EC418)
 extern const char lbl_eu_8056E178[];  // panic message
 extern const char lbl_eu_80663910[8]; // panic format arg (.sdata, sda21)
-extern const char lbl_eu_80663CBC[4]; // panic format arg (.sdata, sda21)
+extern char lbl_eu_80663CBC[4]; // panic format arg (.sdata, sda21)
 extern const char lbl_eu_80530DC4[];  // panic file name (func_804EB4C0)
 extern const char lbl_eu_80530DA8[];  // panic message
 extern const char lbl_eu_80530D68[];  // panic format arg
-extern const char lbl_eu_80663CC8[4]; // panic format arg (.sdata, sda21)
+extern char lbl_eu_80663CC8[8]; // panic format arg (.sdata, sda21; retail 4B + 4B tail pad)
 extern const char lbl_eu_8056E1C8[];  // panic file name (func_804E9FD0)
 extern const char lbl_eu_8056E1A8[];  // panic message
 extern const char lbl_eu_80529678[];  // panic file name (func_804EC344)
 extern const char lbl_eu_80529658[];  // panic message
 extern const char lbl_eu_8056E850[];  // panic file name (func_804EA038)
 extern const char lbl_eu_8056E834[];  // panic message (func_804EA038)
-extern const char lbl_eu_80663CB8[4]; // panic format arg (.sdata, sda21, func_804EA038)
+extern char lbl_eu_80663CB8[4]; // panic format arg (.sdata, sda21, func_804EA038)
 extern const char lbl_eu_8056E820[];  // panic file name (func_804EA038)
 extern const char lbl_eu_8056E7F8[];  // panic message (func_804EA038)
 extern const char lbl_eu_80530D18[];  // panic file name (func_804EB22C)
 extern const char lbl_eu_80530CFC[];  // panic message (func_804EB22C)
 extern const char lbl_eu_80530CF0[];  // panic message (func_804EB22C)
-extern const char lbl_eu_80663CC0[4]; // panic format arg (.sdata, sda21, func_804EB22C)
+extern char lbl_eu_80663CC0[4]; // panic format arg (.sdata, sda21, func_804EB22C)
 extern const char lbl_eu_80530F08[];  // panic file name (func_804EB22C)
 extern const char lbl_eu_80530EE0[];  // panic message (func_804EB22C)
 extern const char lbl_eu_80530E74[];  // panic file name (func_804EB310)
@@ -48,15 +48,17 @@ extern const char lbl_eu_80530D94[];  // panic file name (func_804EB310)
 extern const char lbl_eu_80530D78[];  // panic message (func_804EB310)
 extern const char lbl_eu_80530E1C[];  // panic file name (func_804EB3E8)
 extern const char lbl_eu_80530DD8[];  // panic message (func_804EB3E8)
-extern const char lbl_eu_80663CC4[4]; // panic format arg (.sdata, sda21, func_804EB310)
+extern char lbl_eu_80663CC4[4]; // panic format arg (.sdata, sda21, func_804EB310)
 
 // CMdlDynamics retail vtable (3 entries, 0xC bytes) lives in retail .data.
+extern "C" void __dt__12CMdlDynamicsFv(void* self, int flags);
+extern "C" u32 lbl_eu_80663CB0[2]; // .sdata RTTI locator (defined below)
 struct CMdlDynamicsVtbl {
     u32 entry0;
     u32 entry1;
     u32 entry2;
 };
-extern CMdlDynamicsVtbl lbl_eu_805701FC;
+extern "C" CMdlDynamicsVtbl lbl_eu_805701FC;
 
 // Retail nw4r math kernels (PS-asm bodies in nw4r/src/math/math_types.cpp;
 // math_types.h only declares the inline PSMTXConcat-based MTX34Mult overload).
@@ -694,9 +696,14 @@ void func_804EC47C(nw4r::math::MTX34* out, const nw4r::math::MTX34* a,
 void func_804EC514(){}
 
 // Converts a radian rotation vector to rotation indices and builds the XYZ
-// rotation matrix (retail tail-call; 128/pi scale pooled at lbl_eu_8066B3F0).
+// rotation matrix (retail tail-call; 128/pi scale pooled at lbl_eu_8066B3F0,
+// owned by the CGXCache .sdata2 pool). Referenced via the named extern so this
+// TU does not code-pool its own copy into .sdata2 (retail .sdata2 is 0x0).
 nw4r::math::MTX34* func_804EC76C(nw4r::math::MTX34* mtx, const f32* v) {
-    return nw4r::math::MTX34RotXYZRad(mtx, v[0], v[1], v[2]);
+    extern const f32 lbl_eu_8066B3F0; // 128/pi (retail .sdata2, foreign TU)
+    return nw4r::math::MTX34RotXYZFIdx(mtx, v[0] * lbl_eu_8066B3F0,
+                                       v[1] * lbl_eu_8066B3F0,
+                                       v[2] * lbl_eu_8066B3F0);
 }
 
 // us-804f0c48: out = a + b (nw4r MTX34Add into a stack temp, then copy out
@@ -780,3 +787,59 @@ u8* func_804EA038(CMdlDynHolder* self) {
     }
     return ret;
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x805701FC-0x80570248 (76B): CMdlDynamics vtable + assert strings.
+// align(4) so the arrays pack at 4-byte boundaries exactly like retail.
+extern "C" __declspec(align(4)) CMdlDynamicsVtbl lbl_eu_805701FC = {
+    (u32)&lbl_eu_80663CB0, 0x00000000, (u32)&__dt__12CMdlDynamicsFv,
+};
+// 64B: "NW4R:Pointer must not be NULL (mpData)\0" (39B) + 1B pad +
+// "g3d_rescommon_ac.h\0" (19B) + 5B tail pad.
+extern "C" __declspec(align(4)) char lbl_eu_80570208[0x40] = {
+    0x4E,0x57,0x34,0x52,0x3A,0x50,0x6F,0x69,0x6E,0x74,0x65,0x72,0x20,0x6D,0x75,0x73,
+    0x74,0x20,0x62,0x65,0x20,0x4E,0x55,0x4C,0x4C,0x20,0x28,0x6D,0x70,0x44,0x61,0x74,
+    0x61,0x29,0x00,0x00,0x67,0x33,0x64,0x5F,0x72,0x65,0x73,0x63,0x6F,0x6D,0x6D,0x6F,
+    0x6E,0x5F,0x61,0x63,0x2E,0x68,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_805701FC);
+DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80570208);
+
+// [.rodata] 0x80524830-0x80524894 (100B): RTTI name + anim-param names +
+// assert format strings.
+extern "C" __declspec(align(4)) const char lbl_eu_80524830[0x10] = {
+    0x43,0x4D,0x64,0x6C,0x44,0x79,0x6E,0x61,0x6D,0x69,0x63,0x73,0x00,0x00,0x00,0x00,
+};  // "CMdlDynamics\0" + 3B pad
+extern "C" __declspec(align(4)) const char lbl_eu_80524840[0x30] = {
+    0x44,0x77,0x65,0x74,0x00,0x44,0x64,0x6D,0x70,0x00,0x44,0x73,0x74,0x61,0x00,0x44,
+    0x62,0x6C,0x64,0x00,0x44,0x6C,0x72,0x78,0x00,0x44,0x6C,0x72,0x79,0x00,0x44,0x6C,
+    0x72,0x7A,0x00,0x44,0x6C,0x69,0x6E,0x6B,0x00,0x44,0x6C,0x6C,0x65,0x6E,0x00,0x00,
+};  // "Dwet\0Ddmp\0Dsta\0Dbld\0Dlrx\0Dlry\0Dlrz\0Dlink\0Dllen\0\0"
+extern "C" __declspec(align(4)) const char lbl_eu_80524870[0x18] = {
+    0x20,0x69,0x6E,0x20,0x22,0x25,0x73,0x22,0x20,0x6F,0x6E,0x20,0x6C,0x69,0x6E,0x65,
+    0x20,0x25,0x64,0x2E,0x0A,0x00,0x00,0x00,
+};  // " in \"%s\" on line %d.\n\0" + 2B pad
+extern "C" __declspec(align(4)) const char lbl_eu_80524888[0xC] = {
+    0x62,0x61,0x6E,0x6E,0x65,0x72,0x2E,0x62,0x69,0x6E,0x00,0x00,
+};  // "banner.bin\0" + 1B pad
+DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80524830);
+DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80524840);
+DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80524870);
+DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80524888);
+
+// [.sdata] 0x80663CB0-0x80663CD0 (32B): RTTI locator + "ref" param strings.
+// The last "ref" slot carries 4 zero pad bytes (retail +0x1C tail); merging
+// them into a non-zero object keeps them in .sdata (a plain zero-init array
+// would land in .sbss).
+extern "C" u32 lbl_eu_80663CB0[2] = { (u32)&lbl_eu_80524830, 0x00000000 };
+extern char lbl_eu_80663CB8[4] = { 'r','e','f',0 };
+extern char lbl_eu_80663CBC[4] = { 'r','e','f',0 };
+extern char lbl_eu_80663CC0[4] = { 'r','e','f',0 };
+extern char lbl_eu_80663CC4[4] = { 'r','e','f',0 };
+extern char lbl_eu_80663CC8[8] = { 'r','e','f',0, 0,0,0,0 };
+DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80663CB0);
+DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80663CB8);
+DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80663CBC);
+DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80663CC0);
+DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80663CC4);
+DECOMP_FORCEACTIVE(CMdlDynamics_cpp, lbl_eu_80663CC8);

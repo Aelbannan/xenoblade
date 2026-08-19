@@ -115,14 +115,14 @@ def _stall_map(attempt_log):
 
 
 def _kb_digest(batch, digests_dir, max_hits=3, max_searches=5):
-    """Per-batch KB digest: top MWCC_REFERENCE records for representative symbols.
+    """Per-batch KB digest: top MWCC_PATTERNS.md records for representative symbols.
 
     Iterates over candidate symbols until several produced hits, skipping
     zero-recall symbols so the digest is not wasted on dead ends.
     """
     os.makedirs(digests_dir, exist_ok=True)
     out = digests_dir / f"{batch['batch_id']}.md"
-    lines = [f"# KB digest for {batch['batch_id']} (from docs/MWCC_REFERENCE.md / attempts)\n"]
+    lines = [f"# KB digest for {batch['batch_id']} (from docs/MWCC_PATTERNS.md / attempts)\n"]
     symbols = [td["function"] for td in batch["target_details"] if td.get("function")]
     hit_symbols = 0
     for sym in symbols:

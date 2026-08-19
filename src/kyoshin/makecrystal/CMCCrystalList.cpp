@@ -197,7 +197,7 @@ extern "C" void __declspec(noinline) func_80223444(CMCCrystalList* self)
 // resolve the pane through the layout root FindPaneByName virtual, and when
 // the func_8013BC0C check passes, clear the slot's state byte.
 // optimize_for_size merges the r30/r31 saves into the retail stmw r30
-// prologue (MWCC_REFERENCE: two-param leaf prologue pattern).
+// prologue (MWCC_CASES: two-param leaf prologue pattern).
 #pragma optimize_for_size on
 extern "C" void func_80223614(CMCCrystalList* self, u32 idx) {
     char buf[0x20];

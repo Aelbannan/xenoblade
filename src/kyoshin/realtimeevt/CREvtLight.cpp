@@ -171,7 +171,7 @@ static inline void lightSubOut(register Vec* out,
 
 // Local copy of the nw4r VEC3Sub paired-single inline with the register
 // vars declared in REVERSE order - the declaration order drives the FPR
-// allocation (MWCC_REFERENCE), yielding retail's f0/f1/f3 block here.
+// allocation (MWCC_CASES), yielding retail's f0/f1/f3 block here.
 static inline nw4r::math::VEC3* lightVecSubRev(register nw4r::math::VEC3* pOut,
                                                register const nw4r::math::VEC3* pA,
                                                register const nw4r::math::VEC3* pB) {

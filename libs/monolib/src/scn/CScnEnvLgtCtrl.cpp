@@ -1192,7 +1192,7 @@ void* __ct__reslist_IScnEnvCtl(CScnEnvLgtCtrlResList* self,
 // is externally owned (+0x1C), then free the object when deleting > 0. The
 // flat retail name cannot be produced by a template instantiation under
 // Wii/1.1 (symbolic mangling), so it is spelled out (cf. the flattened
-// reslist pattern in MWCC_REFERENCE / CScnFilterMan.cpp).
+// reslist pattern in MWCC_CASES / CScnFilterMan.cpp).
 void* __dt___reslist_base_IScnEnvCtl(CScnEnvLgtCtrlIScnResBase* self, int deleting) {
     if (self != 0) {
         self->mVtable = (void*)lbl_eu_8056F978;

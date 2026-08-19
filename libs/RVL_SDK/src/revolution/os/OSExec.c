@@ -675,7 +675,7 @@ void __OSBootDolSimple(s32 param1, u32 param2, u32 regionStart, u32 regionEnd,
 }
 
 /* .sdata:0x80663248 "%d" - retail sprintf format string, referenced via
- * sda21 from __OSBootDol (MWCC_REFERENCE §1h: fixed-size extern keeps the
+ * sda21 from __OSBootDol (MWCC_CASES §1h: fixed-size extern keeps the
  * retail pool label instead of a TU-local @N pool symbol). */
 extern const char lbl_80665B78[8];
 

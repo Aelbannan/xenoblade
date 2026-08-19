@@ -6,6 +6,10 @@
 *never invoked* on them; the retail bodies contain a real `bctrl` through a callback pointer:
 `btm_cb.p_switch_role_cb(...)` / `btm_cb.p_acl_changed_cb(...)`).
 
+> **When to read this:** only if you're extending the certifier to cover indirect (callback) calls/
+> the `has_indirect_calls` gate. **Skip it:** this plan is **parked** — §0 (adversarial review) says the
+> original diagnosis was wrong; don't treat §§1–8 as current.
+
 > **§0 — Adversarial review outcome (2026-08-03).** Two independent adversarial reviews (Kimi K3,
 > GLM 5.2, via paseo) plus a WS0 baseline probe run on the motivating targets. **Verdict: do not
 > approve as written; the blocker diagnosis was wrong.** The corrected diagnosis, mandatory fixes,
@@ -223,7 +227,7 @@ auditability and diagnostics.** Concretely the plan below implements A + the B-p
      exists, so Option A's pointer-equality path can still proceed in Workstream 2 while the registry
      stays informative.
    - Add the declared callees to `CertifiedCalleeContext.dependencies` so certificates list them.
-4. **Docs**: note the flag semantics in `MWCC_REFERENCE.md` (§ on certified callees) so future agents
+4. **Docs**: note the flag semantics in `MWCC_CASES.md` (§ on certified callees) so future agents
    know to declare callback edges after identifying them (symbol recovery already finds them).
 
 ### Workstream 2 — engine: opaque-common-exit obligation (2–4 days + review)
@@ -281,7 +285,7 @@ auditability and diagnostics.** Concretely the plan below implements A + the B-p
    differential suite (`python -m tools.ppc_equivalence differential`).
 4. **Docs**: extend `SOUNDNESS.md` with the common-effect argument and its premises (same slot, same
    offset, same loaded value, symmetric clobbers); update `TRUSTED_COMPUTING_BASE.md` if it lists
-   gate exemptions; add a `MWCC_REFERENCE.md` pattern note ("global-slot callback bctrl → declare
+   gate exemptions; add a `MWCC_CASES.md` pattern note ("global-slot callback bctrl → declare
    indirect callees + common-exit obligation").
 5. **Rollout order**: WS1 → WS2 → WS3, merging behind the engine-hash pin bump. Then accept the two
    motivating targets with `cycle --smt` and commit.

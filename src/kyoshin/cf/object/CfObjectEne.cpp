@@ -200,7 +200,7 @@ cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFla
 // The dispatch is a real virtual call through CfEneSubFake (retail
 // folded-vptr + recomputed adjusted-this); KNOWN WALL: MWCC CSEs the three
 // plain subobject args into a callee-saved register (frame 0xB4 vs retail
-// 0xA8) - the cross-call address CSE is irreducible (cf. MWCC_REFERENCE
+// 0xA8) - the cross-call address CSE is irreducible (cf. MWCC_CASES
 // HBMSYN NoteOn / GKI notes).
 int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
     CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv((cf::CfObjectModel*)((u8*)self + 0x3E9C));

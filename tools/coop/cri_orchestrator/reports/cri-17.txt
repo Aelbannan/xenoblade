@@ -169,7 +169,7 @@ All work committed. Here's the final report:
 | us-8039982c | SJ_SearchTag | 96.2%, 4 structural + 1 reg_swap, size exact | found-case lis-hoist + add operand order; callee strncmp FULL_MATCH |
 | us-80392748 | CRICFG_Read | 51.1%, 1 branch-form diff (0xb0 vs 0xb4) | `bne continue; b found` vs `beq found`; callee strncmp FULL_MATCH |
 | us-803c12fc | SFAOAP_Create | 89.5%, 2 structural, size exact | documented li-float (`li r3,0` before/after `stw`); callee SFSET_GetCond FULL_MATCH |
-| us-803853e8 | adxt_StartAfs | 96.8% (documented soft-cap, MWCC_REFERENCE 7l) | Chaitin/scheduling fixed point; **all 6 callees now FULL_MATCH — SMT gate open** |
+| us-803853e8 | adxt_StartAfs | 96.8% (documented soft-cap, MWCC_CASES 7l) | Chaitin/scheduling fixed point; **all 6 callees now FULL_MATCH — SMT gate open** |
 | us-803a6f7c | MWSST_Destroy | 98.1%, 2 structural (documented soft-cap) | needs FULL_MATCH (indirect vtable calls block SMT) |
 | us-803d2ef4 | SFH_IsSfdHeader | 98.2%, 2 structural, size exact | li-float in error path; callees VER1/VER2_* not accepted |
 | us-803d6f48 | SFX_SetTagInf | 0 structural, 3 reg_swap (epilogue restore order) | witness rejected the r0/r31/r30 rotation; callees SJ_SearchTag/SFXZ_SetTagInf not accepted |
@@ -192,7 +192,7 @@ All work committed. Here's the final report:
 - **us-803d6c68 UTY_MulDivRound64** — 1.0%, 64-bit op codegen (frame −32 vs −16); leaf, SMT gate open once ≥50%
 - **us-8039e844 criware_8039B4E0** — 3.0%, DSP resample scaffold diverges; leaf, SMT gate open
 
-### Key reusable findings (appended to MWCC_REFERENCE.md)
+### Key reusable findings (appended to MWCC_CASES.md)
 - `(x >> k) & 1` → `rlwinm rd, rs, 32-k, 31, 31` (the 31-k convention is wrong for MWCC) — verified on SUD_SearchSudDat (`>> 5` → SH=27) and ADXERR_ItoA
 - SFD_SetCond 97.6%→100%: declaration order `h,i,p,off,ok` breaks the Chaitin rotation; `p++` in the for-increment clause; `(off + 0xA1C)` grouping fixes add operand order
 - SFH_IsSfdHeader structure keys (VER1 fallback vs VER2 return-0, goto-success layout, s32 active for signed cmpi, 1-arg cast tail-call dispatcher)

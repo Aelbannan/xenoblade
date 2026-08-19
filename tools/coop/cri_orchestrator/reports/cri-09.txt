@@ -7,22 +7,22 @@ What if the SECOND term x comes from a MEMORY LOAD in the expression — `(x * 8
 OK — final answer on that: out-of-band. Let me finalize. Let me make sure my work is committed and write the final report.
 [Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short | grep -vE "^( M|M )" | head -5; git status --short | grep -E "mpv_hdec|sfd_adxt|adx_fs|attempts" ; git log --oneline -4
 Let me append the key MWCC breakthroughs to the reference doc:
-[Thought] Interesting — the git log shows OTHER agents' commits (cri-15, cri-11, MWCC_REFERENCE) — other agents are working concurrently. My commits (f648cfefc, ebcb92468) are in the log. Good — my work is committed.
+[Thought] Interesting — the git log shows OTHER agents' commits (cri-15, cri-11, MWCC_CASES) — other agents are working concurrently. My commits (f648cfefc, ebcb92468) are in the log. Good — my work is committed.
 
 The current uncommitted: only other agents' files (monitor.pid, reports) — not mine.
 
 Let me do a final check — the `tools/coop/cri_orchestrator/` files are other agents' — I should NOT touch them.
 
-Let me now also update MWCC_REFERENCE with the key breakthroughs I found (per the skill: "After a breakthrough: append to docs/MWCC_REFERENCE.md"). Key findings:
+Let me now also update MWCC_CASES with the key breakthroughs I found (per the skill: "After a breakthrough: append to docs/MWCC_CASES.md"). Key findings:
 1. `(b == 0) ? 1 : 0` ternary vs `b == 0` — the ternary hoists the cntlzw to the top (MPV_MoveChunk).
 2. The `x > 1` (unsigned) boolean-VALUE idiom (u32 local) for the xori+cntlzw+slw pattern (sfadxt_SetAdxtHd).
 3. `ret = -3; if (v == 0) ret = -2;` (default+override) vs ternary for the plain-cmpi codegen (MPVHDEC_RecoverSj).
 4. The struct-member access `&self->chunk` keeps self in a register and recomputes the member address (vs CSE'ing a pointer local) — DecEscSj.
 5. The `(p & ~3) + ((((p - a) * 8) + 7) >> 3) + 4 - p` size formula with `a = p & ~3` — the subf-based CSE.
 
-Let me append these to MWCC_REFERENCE.md. Then write the final report.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && tail -30 docs/MWCC_REFERENCE.md
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && cat >> docs/MWCC_REFERENCE.md <<'EOF' ### CriWare sofdec mpv/sfd — boolean-value idioms, default+override, struct-member base (GC/3.0a5.2 -O4,p) Batch cri...
+Let me append these to MWCC_CASES.md. Then write the final report.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && tail -30 docs/MWCC_CASES.md
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && cat >> docs/MWCC_CASES.md <<'EOF' ### CriWare sofdec mpv/sfd — boolean-value idioms, default+override, struct-member base (GC/3.0a5.2 -O4,p) Batch cri...
 I have limited context remaining. Let me gather the final per-target state for the report:
 [Thought] Committed. Now let me use my remaining context for one more valuable attempt. Let me reconsider what could reach FULL_MATCH with limited effort:
 
@@ -293,7 +293,7 @@ I've reached the practical limit of this session. Here's my final report:
 - **adx_fs near-misses** (ADXF_LoadPartitionNw 76.2%, ADXF_Close 86.7%, ADXF_CloseAll 52.4%, adxf_Stop 89.4%, adxf_read_sj32 76.9%): blocked by other units' NOT_STARTED callees (ADXSTM_Stop/Destroy/ReleaseFile/GetStat/SetSj, ADXSTM_Create) + my own stubs.
 - **Stubs needing full reconstruction**: mpvhdec_DecShcSj (0x5D4, callee UTY_MemcpyDword CODE_MATCH), mpvhdec_DecGscSj (0x1C8), mpvhdec_DecPscSj (0x460) — complex MWCC bit-reader (word-aligned lwz + rlwinm chain) not completed; adxf_LoadPtBothNw (0x68C), adxf_GetPtStat (0xE3C), adxf_ReadNw32, adxf_ExecOne, adxf_Seek, adxf_GetFnameRangeEx (0x264 — analysed, unrolled-loop reconstruction incomplete); SFADXT_Create/ExecServer/InitInf/SetSpeed; sfadxt_ExcludeSilence/ChkTermFlg (22.2%, 7-register + block-layout diffs); sfadxt_ExcludeHdr (48.9%, branch-layout); SFADXT_Pause (62.9%, callee HIGH_MATCH).
 
-### Key MWCC breakthroughs (appended to docs/MWCC_REFERENCE.md)
+### Key MWCC breakthroughs (appended to docs/MWCC_CASES.md)
 - `(x == 0) ? 1 : 0` ternary hoists cntlzw to prologue vs `x == 0` (MPV_MoveChunk 100%)
 - `u32 ok = x > 1; if (ok)` → xori/cntlzw/slw/rlwinm idiom (SetAdxtHd 98%)
 - `ret = -3; if (v==0) ret = -2;` default+override keeps plain cmpi (RecoverSj 100%)
@@ -301,7 +301,7 @@ I've reached the practical limit of this session. Here's my final report:
 - Branch polarity driven by if-condition shape (`!= 0 → break` first) (RecoverSj loop 100%)
 
 ### Commits
-`f648cfefc`, `ebcb92468`, `d0e911b22` (mpv_hdec, sfd_adxt, adx_fs + attempts.jsonl), plus the MWCC_REFERENCE doc commit. All work committed; no pushes, no other agents' files touched.
+`f648cfefc`, `ebcb92468`, `d0e911b22` (mpv_hdec, sfd_adxt, adx_fs + attempts.jsonl), plus the MWCC_CASES doc commit. All work committed; no pushes, no other agents' files touched.
 
 **Remaining risk**: the register-permutation near-misses (79–98%) need the out-of-band Z3 probes to certify; the large stubs (0xE3C GetPtStat, 0x68C LoadPtBothNw, 0x5D4 DecShcSj) need multi-session reconstruction.
 [Thought] Good — I have the state. Let me finalize. The SFADXT_Seek improved to 92.7% (4 structural) after the last build. sfadxt_SetAdxtHd at 98.2% (0 structural, 1 reg_swap).

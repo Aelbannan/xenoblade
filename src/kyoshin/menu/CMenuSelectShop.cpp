@@ -106,7 +106,7 @@ extern "C" __declspec(noinline) CMenuSelectShop* __ct__CMenuSelectShop(CMenuSele
 // construction order: CCur18@0xB0, CSelShopWin@0x88, UnkClass_8045F564@0x78,
 // then the IUIWindow base. The nested flag dispatch selects operator delete.
 // optimize_for_size merges the r30/r31 callee-save pair into the retail
-// stmw r30,8(sp) block (MWCC_REFERENCE stmw/lmw dtor pattern).
+// stmw r30,8(sp) block (MWCC_CASES stmw/lmw dtor pattern).
 // ---------------------------------------------------------------------------
 #pragma push
 #pragma optimize_for_size on

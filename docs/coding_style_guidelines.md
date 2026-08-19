@@ -1,5 +1,14 @@
 # Style Guidelines
 
+- **When to read this:** writing C/C++ into `src/**`/`libs/**` (or Criware) and want the project
+  conventions.
+- **Skip it when:** matching/decompiling — matching is governed by `SKILL.md` (high-level C/C++,
+  no asm/register tricks); style is secondary.
+- **TL;DR:** imperative; `u8/u16/u32/...` typedefs (`f32/f64` *not* preferred; `int ≠ s32`), camelCase
+  names with `m`/`s` prefixes, `#pragma once` headers, forward-declare pointer types, include order
+  base→matching→group→otherlib→SDK→stdlib, 4-space / ≤120 col, and `DECOMP_*`/`ALIGN` macros from
+  `decomp.h`/`macros.h`.
+
 These guidelines mainly apply to the code for the game itself and Criware. For the SDK and NW4R, I would recommend following along with the style used for each one.
 
 Note that the project has a [format file](../.clang-format), so for a more concrete list of some of the guidelines, you can look at that.

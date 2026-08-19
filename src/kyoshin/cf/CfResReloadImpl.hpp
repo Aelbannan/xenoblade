@@ -135,7 +135,7 @@ struct CfResParentVtIf {
 };
 
 // Cast-only fake SI interface for the secondary vtable at +0x10 (see
-// MWCC_REFERENCE "double-hop thunks"): the non-polymorphic Shift base puts the
+// MWCC_CASES "double-hop thunks"): the non-polymorphic Shift base puts the
 // vptr at object+0x10, so a virtual call emits `lwz r12,0x10(r3);
 // lwz r12,slot(r12); mtctr; bctr` with `this` staying at the object base.
 struct CfResReloadShift {
@@ -269,7 +269,7 @@ extern CfResReloadImplPMF lbl_eu_80530FC0[4];
 // Unit-internal helpers (defined in CfResReloadImpl.cpp). func_8016E430 /
 // func_8016E854 / func_8016E578 / func_8016EA68 have real bodies; the
 // not-yet-decompiled func_8016E654 / func_8016E1AC stubs are called through
-// incompatible casts (see MWCC_REFERENCE "in-progress stub" pattern) so the
+// incompatible casts (see MWCC_CASES "in-progress stub" pattern) so the
 // -ipa file inliner cannot fold them into the call sites. All are C-ABI-style
 // retail symbols (plain names), so extern "C" keeps the call relocs at the
 // plain retail names.

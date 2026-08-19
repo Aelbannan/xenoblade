@@ -25,7 +25,7 @@ from tools.coop.lib.mwcc_knowledge import (
 
 
 DEFAULT_DATABASE = ROOT / "build" / "mwcc_knowledge.sqlite"
-DEFAULT_REFERENCE = ROOT / "docs" / "MWCC_REFERENCE.md"
+DEFAULT_REFERENCE = ROOT / "docs" / "MWCC_CASES.md"
 DEFAULT_ATTEMPTS = ROOT / "docs" / "evidence" / "decomp" / "attempts.jsonl"
 DEFAULT_CONTRIBUTIONS = ROOT / "docs" / "mwcc" / "contributions.jsonl"
 

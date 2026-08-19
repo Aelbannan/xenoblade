@@ -46,7 +46,7 @@ __declspec(noinline) void func_80213E20(CMCCrystalBoxParam*, const CMCCrystalBox
 
 // Retail 0x80219E70: refresh the crystal box display / name.
 // optimize_for_size: retail uses the stmw r30/lmw r30 frame; plain -O4,p
-// splits the saves into separate stw's (MWCC_REFERENCE kyoshin-dtor pattern).
+// splits the saves into separate stw's (MWCC_CASES kyoshin-dtor pattern).
 #pragma optimize_for_size on
 void func_80218018(CMCCrystalBox* self) {
     CMCCrystalData* d = &self->data;

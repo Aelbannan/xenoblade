@@ -820,7 +820,7 @@ void func_80280640(CSysWinDevice* self) {
     }
     // Gate chain: retail emits `bne walk; b gate_done` (branch-over-branch)
     // for the final device-usable test - the last test written negated with
-    // an explicit `goto walk` after it (MWCC_REFERENCE verified pattern).
+    // an explicit `goto walk` after it (MWCC_CASES verified pattern).
     if (flag == 0) {
         goto gate_done;
     }

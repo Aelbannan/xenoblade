@@ -275,7 +275,7 @@ void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
 // Phase handlers (same TU, extern "C" definitions in CMenuShopBuy.cpp) plus
 // the factory and ctor (retail unmangled names). __declspec(noinline) stops
 // -inline auto from inlining the small phase handlers into Move (retail keeps
-// real bls; see MWCC_REFERENCE -inline auto same-TU helpers).
+// real bls; see MWCC_CASES -inline auto same-TU helpers).
 extern "C" __declspec(noinline) void func_8018C190(CMenuShopBuy* self);
 extern "C" __declspec(noinline) void func_8018C208(CMenuShopBuy* self);
 extern "C" __declspec(noinline) void func_8018C258(CMenuShopBuy* self);

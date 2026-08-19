@@ -125,7 +125,7 @@ def build_prompt(batch):
 READ FIRST (in this order):
 1. AGENTS.md and .agents/skills/xenoblade-decomp/SKILL.md — operational workflow and acceptance policy (follow it).
 2. PLAN.md sections 2, 3, 17 — legal boundaries, architecture invariants, matching policy.
-3. docs/MWCC_REFERENCE.md — before editing source for a mismatch, search the KB: .venv/bin/python3 tools/mwcc_kb.py search "<mangled-symbol>" --json then one short query per observed mismatch category.
+3. docs/MWCC_CASES.md — before editing source for a mismatch, search the KB: .venv/bin/python3 tools/mwcc_kb.py search "<mangled-symbol>" --json then one short query per observed mismatch category.
 4. Per target: .venv/bin/python3 tools/coop/run.py targets show <target-id> (callee readiness gate).
 
 YOUR BATCH {batch['batch_id']} — {batch['total']} targets across units: {units}
@@ -142,7 +142,7 @@ RULES (non-negotiable):
 - SMT probes are OUT-OF-BAND — you must NOT run `cycle --smt`, `run.py diff`, `equivalence check-unit/check-objects`, inline python against tools/ppc_equivalence, or any `--contract` variant in-session. Your acceptance path is `cycle` WITHOUT --smt (FULL_MATCH or witness-certified EQUIVALENT_MATCH). An orchestrator runs the full Z3 probes out-of-band after your batch reports.
 - Witness-blocked but semantically clean (hexdiff shows 0 structural, reg-swap-only diffs): append a stall note to attempts.jsonl with next_change "accept via --smt out-of-band" and move on. Do NOT retry that target with strict/live-out/memory/ppc-eabi contracts.
 - Callee readiness first: if a target has indirect calls, unresolved callees, or called_functions not yet FULL_MATCH/EQUIVALENT_MATCH, record the blocker in attempts.jsonl and move to the next target — do NOT spend a cycle on it.
-- Per-unit compiler flags are a legitimate matching tool: if hexdiff shows a diff MWCC_REFERENCE attributes to flags (-func_align 4/16, -ipa off, mw_version="GC/3.0a5.2"), apply the documented fix to YOUR unit's Object(...) in configure.py, hexdiff-verify, revert if it doesn't help. No blind flag-sweeping, no editing cflags_sdk globals or other units' entries, no failed flag experiments left in place.
+- Per-unit compiler flags are a legitimate matching tool: if hexdiff shows a diff MWCC_CASES attributes to flags (-func_align 4/16, -ipa off, mw_version="GC/3.0a5.2"), apply the documented fix to YOUR unit's Object(...) in configure.py, hexdiff-verify, revert if it doesn't help. No blind flag-sweeping, no editing cflags_sdk globals or other units' entries, no failed flag experiments left in place.
 - No external source hunting (no web_search / fetch_content / curl).
 - Search budget: max 3 grep/find per function; read hexdiff --json output directly, don't grep tool output.
 - No hand disassembly (no objdump / llvm-objdump / powerpc-eabi-objdump) — hexdiff prints the same disassembly.

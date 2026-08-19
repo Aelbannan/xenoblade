@@ -7,7 +7,7 @@ v2 policy (fail-closed):
 - A mangled ``…Fv`` (void / no extra int/float args) hint may only *annotate*
   an already-structural narrow; it must **never** override a body that touches
   ``r4``–``r10`` / ``f1``. Xenoblade/MWCC often still passes hidden register
-  args under shortened ``…Fv`` names (see ``docs/MWCC_REFERENCE.md``).
+  args under shortened ``…Fv`` names (see ``docs/MWCC_PATTERNS.md``).
 - ``endswith("Fv")`` alone is rejected: ``…FPFv`` / ``…FPCFv`` are
   function-pointer parameter lists, not void-no-args.
 - Set ``returns_i64=False`` only when both sides return and neither writes ``r4``.

@@ -21,7 +21,7 @@ extern "C" const float lbl_eu_80669DD4; // 1.0f
 // Empty base whose inline ctor writes the retail vtable label. Because the
 // base ctor runs before the derived member inits, the store lands at retail's
 // position (right after the prologue) instead of at the end of the ctor body
-// (MWCC_REFERENCE "Retail-owned vtable data" COccCulling note: with a
+// (MWCC_CASES "Retail-owned vtable data" COccCulling note: with a
 // non-empty init list a body-level explicit store is scheduled last).
 class __declspec(novtable) DrawInfoVtblBase {
 public:

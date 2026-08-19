@@ -74,9 +74,11 @@ namespace {
 }
 
 CDevice* CDevice::spInstance;
-extern "C" CDeviceException* lbl_eu_80665654;
+// Retail sbss blob: the CDeviceException singleton goes at lbl_eu_80665654
+// (4B, zero-init) right after CDevice::spInstance (lbl_eu_80665650).
+extern "C" CDeviceException* lbl_eu_80665654 = nullptr;
 
-// Retail sbss labels for the two TU singletons (MWCC_REFERENCE §1a).
+// Retail sbss labels for the two TU singletons (MWCC_CASES §1a).
 extern "C" {
 extern CDevice* lbl_eu_80665650;             // CDevice::spInstance
 }
@@ -85,9 +87,11 @@ const char* CDevice::devSys2String = "DeviceSystem2";
 //Unused strings for region names?
 FixStr<64> CDevice::spNotRunningDeviceName;
 FixStr<64> CDevice::spColdStartNotRunningDeviceName;
-//Handles for the DeviceSystem1/DeviceSystem2 regions, which live in MEM1/MEM2 respectively
-mtl::ALLOC_HANDLE CDevice::sDeviceRegion1Handle = mtl::INVALID_HANDLE;
-mtl::ALLOC_HANDLE CDevice::sDeviceRegion2Handle = mtl::INVALID_HANDLE;
+//Handles for the DeviceSystem1/DeviceSystem2 regions, which live in MEM1/MEM2 respectively.
+// Retail stores these as zero-initialized .sbss slots (lbl_eu_80665658, 8B total);
+// createRegions() assigns them before use, so leave them default-initialized.
+mtl::ALLOC_HANDLE CDevice::sDeviceRegion1Handle;
+mtl::ALLOC_HANDLE CDevice::sDeviceRegion2Handle;
 
 CDevice::~CDevice(){
     spInstance = nullptr;

@@ -385,7 +385,7 @@ int volSeMap(VMThread* pThread) {
 
 // Script command: stop a common SE slot.  Arg 2 is a fixed-point volume that
 // is scaled by lbl_eu_80667D90.  The int->float conversion is written
-// manually (MWCC_REFERENCE 7i) so the magic double reloc targets the retail
+// manually (MWCC_CASES 7i) so the magic double reloc targets the retail
 // lbl_eu_80667D98 instead of a TU-local @N pool constant.
 int stopSeCommon(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));

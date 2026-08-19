@@ -292,7 +292,7 @@ Integration (coordinator, not flash agents):
 - **T3 policy**: tier cap (§2.9) + test C7. Depends only on the frozen
   `declared_return` field name in `contract_resolution.abi_shape`.
 - **T4 docs**: `tools/ppc_equivalence/README.md`,
-  `tools/ppc_equivalence/SOUNDNESS.md` trust note, `docs/MWCC_REFERENCE.md`
+  `tools/ppc_equivalence/SOUNDNESS.md` trust note, `docs/MWCC_CASES.md`
   pattern entry, `docs_sync --write` at the end.
 
 T1∥T2∥T3∥T4 in parallel against the frozen API in §2.4, the

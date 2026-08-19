@@ -5,7 +5,7 @@
 // DEG_TO_FIDX (256/360 = 0.7111111f) lives in the retail sdata2 pool
 // (nw4r_data.s). Declared at global scope: MWCC does not mangle global
 // variable names, so the emitted symbol matches the retail name
-// (docs/MWCC_REFERENCE.md 1a).
+// (docs/MWCC_CASES.md 1a).
 extern const float lbl_eu_80669AF0;
 
 namespace nw4r {

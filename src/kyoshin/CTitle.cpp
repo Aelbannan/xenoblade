@@ -59,7 +59,7 @@ void func_802B63A4(CTitleLogo* self, nw4r::lyt::ArcResourceAccessor* arcResAcc) 
 
 // CTitleLogo per-frame update: run the state-machine entry selected by
 // field_0x1A, then advance the layout animation. The exit-before-body label
-// shape reproduces the retail branch-over-branch gate (MWCC_REFERENCE
+// shape reproduces the retail branch-over-branch gate (MWCC_CASES
 // sjrbf_PutChunk pattern).
 void func_802B6434(CTitleLogo* self) {
     if (self->mLayout != 0 && self->field_0x18 != 0) {

@@ -212,7 +212,7 @@ int func_80164410() {
     if (mgr->field_0xB0 != 0) return 1;
     // Split the `mgr && flag` value into an explicit pointer-test if/else so
     // MWCC materializes the 0/1 word via the CR1 compare (reused from the
-    // first guard) and branch-selects the return (MWCC_REFERENCE
+    // first guard) and branch-selects the return (MWCC_CASES
     // __wpadGetExtType / HBMDelete patterns).
     u32 flag;
     if (mgr != 0) {
@@ -232,7 +232,7 @@ int func_80164410() {
 // flip + subtract 2^52+2^31), which is exactly what the retail body shows.
 // The magic constant (0x4330000080000000) pools to a TU-local @N label
 // whose value equals retail's shared .sdata2 blob lbl_eu_80667630 —
-// name-only reloc drift, accepted at EQUIVALENT_MATCH (MWCC_REFERENCE §7i).
+// name-only reloc drift, accepted at EQUIVALENT_MATCH (MWCC_CASES §7i).
 float func_80164478() {
     return lbl_eu_8066762C * (float)(s32)lbl_eu_80662384;
 }

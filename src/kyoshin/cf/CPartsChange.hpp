@@ -581,7 +581,7 @@ struct CfPartState90 {
 
 // Float constant written by func_80193C74 to +0x90 (.sdata2, r2-sda21).
 // `const` so MWCC treats the load as a constant and hoists it (cf.
-// MWCC_REFERENCE.md `extern const float` hoist note).
+// MWCC_CASES.md `extern const float` hoist note).
 extern const f32 lbl_eu_80667AD4;
 
 // Default value stored to the manager tail floats (+0xB268/+0xB26C) by the

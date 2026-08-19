@@ -52,7 +52,7 @@ extern "C" void __ct__CModelDispEquip(CModelDispEquip* self, u32 somePtr, s32 eq
     holder->timer = 0;
     obj->currentModelPtr = 0;
     // Explicit countdowns keep MWCC from unrolling the small init loops;
-    // retail's mtctr/bdnz shapes (MWCC_REFERENCE §16).
+    // retail's mtctr/bdnz shapes (MWCC_CASES §16).
     u8 i = 0;
     u8 n = 2;
     do {
@@ -103,7 +103,7 @@ done:
 // ============================================================
 // Target: us-8020144c | __dt__15CModelDispEquipFv
 // ============================================================
-// NOTE: retail prologue is `stmw r30` (shape a) - MWCC_REFERENCE says only
+// NOTE: retail prologue is `stmw r30` (shape a) - MWCC_CASES says only
 // #pragma optimize_for_size merges the saves (forbidden this session);
 // keeping the recipe source shape so the pragma can be added later.
 extern "C" void* __dt__15CModelDispEquipFv(CModelDispEquip* self, int param) {
@@ -120,7 +120,7 @@ extern "C" void* __dt__15CModelDispEquipFv(CModelDispEquip* self, int param) {
 // ============================================================
 // Snap scale1/scale2 to the sinit-built global vectors (bit-copied as words,
 // retail lwzu/lwz -> stw), then sync pose+scales. Pointer-walk locals trigger
-// MWCC's lwzu base fold (MWCC_REFERENCE btm_sco_init note).
+// MWCC's lwzu base fold (MWCC_CASES btm_sco_init note).
 extern "C" void func_801FF7B0(CModelDispEquip* self) {
     struct V3 {
         u32 w[3];
@@ -250,7 +250,7 @@ void func_801FF9AC(CModelDispEquip* self) {
         func_801FFAB4(reinterpret_cast<float*>(tmp), lbl_eu_80668270, lbl_eu_80668270,
                       lbl_eu_80668270, lbl_eu_80668270 - self->alpha);
         // Explicit countdown keeps MWCC from unrolling the 2-iteration loop;
-        // retail's mtctr/bdnz needs unit -O4,s (MWCC_REFERENCE §16).
+        // retail's mtctr/bdnz needs unit -O4,s (MWCC_CASES §16).
         u8 i = 0;
         u8 n = 2;
         do {
@@ -379,7 +379,7 @@ extern "C" void func_801FFBC4(CModelDispEquip* self, CActParamHolder* holder) {
 // animation.
 extern "C" void func_801FFDC4(CModelDispEquip* self) {
     CActParamHolder* holder = &self->actParamHolder;
-    // Pointer-walk loads trigger the retail lwzu base fold (MWCC_REFERENCE
+    // Pointer-walk loads trigger the retail lwzu base fold (MWCC_CASES
     // btm_sco_init note): loads grouped before the stores.
     u32* srcp = lbl_eu_80507FD0;
     u32 v0 = *srcp++;
@@ -858,7 +858,7 @@ extern "C" void func_80200FB0(CModelDispEquip* self, CModelDispParent* parent,
                               int kind, int subKind) {
     CActParamHolder* holder = &self->actParamHolder;
     if (holder->field_0x00 != parent->field_0x3A0) return;
-    // Pointer-walk loads trigger the retail lwzu base fold (MWCC_REFERENCE
+    // Pointer-walk loads trigger the retail lwzu base fold (MWCC_CASES
     // btm_sco_init note): loads grouped before the stores.
     u32* srcp = lbl_eu_80507FDC;
     u32 v0 = *srcp++;

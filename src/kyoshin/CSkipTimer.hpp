@@ -96,7 +96,7 @@ extern "C" void* lbl_eu_805397F0[];
 extern "C" char lbl_eu_80510568[];
 // CSkipTimer2 ctor: retail symbol is the short form (no length/sig suffix),
 // so it must be a C-linkage function carrying the exact retail name
-// (MWCC_REFERENCE sec. 3824); the dtor keeps the mangled member form.
+// (MWCC_CASES sec. 3824); the dtor keeps the mangled member form.
 extern "C" void __ct__CSkipTimer2(CSkipTimer2* self, void* parent);
 
 // External callees.
@@ -139,7 +139,7 @@ extern "C" void func_8029F2FC(CSkipTimer2* self);
 
 // Same-unit siblings DEFINED in this TU whose retail callers emit a direct
 // `bl` (retail keeps them out-of-line). The definitions in CSkipTimer.cpp are
-// guarded with #pragma auto_inline off (MWCC_REFERENCE sec. hbm/seq) so
+// guarded with #pragma auto_inline off (MWCC_CASES sec. hbm/seq) so
 // -inline auto does not inline them into func_8029F26C / func_802A03AC /
 // func_8029FF24; the extern "C" form binds both the definitions and the call
 // sites to the literal (un)mangled retail names.

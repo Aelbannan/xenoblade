@@ -18,7 +18,7 @@ bool func_8027C1A8();
 // u32 overload is what matches retail func_8027BFE0's bytes).
 void func_8027BFE0(s32 param);
 // noinline: -inline auto would inline this same-TU helper at call sites, but
-// retail emits a real bl func_8027C45C (MWCC_REFERENCE §8720).
+// retail emits a real bl func_8027C45C (MWCC_CASES §8720).
 extern "C" __declspec(noinline) void func_8027C45C(cf::CChainList* self);
 float lbl_eu_80668A80;
 
@@ -279,7 +279,7 @@ namespace cf {
 
 // Appends @p p to the actor list at index mCount, then increments mCount.
 // noinline + extern "C": retail callers emit a real bl to the bare symbol
-// func_8027C5CC (MWCC_REFERENCE §8720, §8717).
+// func_8027C5CC (MWCC_CASES §8720, §8717).
 extern "C" __declspec(noinline) void func_8027C5CC(cf::CChainList* self, cf::CChainActor* p) {
     self->mActors[self->mCount++] = p;
 }
@@ -546,7 +546,7 @@ void func_8027BA0C(cf::CChainActorList* self, cf::CChainList* other,
 // Same-TU search helper: MWCC inlines the `return` inside the loop into a
 // `bne next; b merge` pair, reproducing retail's two-branch search (an
 // inline break/while loop folds the branches to `beq merge`; see
-// MWCC_REFERENCE §5523). Inlined at the single call site in func_8027BB4C.
+// MWCC_CASES §5523). Inlined at the single call site in func_8027BB4C.
 static cf::CChainActor* findActorInReslist(u32 key, cf::CChainActorList* self) {
     _reslist_node<cf::CChainActor*>* head = self->mChainActorList.mStartNodePtr;
     _reslist_node<cf::CChainActor*>* node = head->mNext;
@@ -750,7 +750,7 @@ int func_8027C33C(cf::CChainAction* self, u8* out){
 }
 // Zeroes the actor list: clears the pointer array, count, and flag.
 // noinline + extern "C": retail callers emit a real bl to the bare symbol
-// func_8027C45C (MWCC_REFERENCE §8720, §8717).
+// func_8027C45C (MWCC_CASES §8720, §8717).
 extern "C" __declspec(noinline) void func_8027C45C(cf::CChainList* self) {
     memset(self->mActors, 0, sizeof(self->mActors));
     self->mCount = 0;

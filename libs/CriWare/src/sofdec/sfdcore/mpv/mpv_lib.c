@@ -76,7 +76,7 @@ s32 MPV_Init(s32 a, s32 b) {
          * pair); neither instruction is emittable in GC/3.0a5.2
          * high-level C (KB dcbi gap), so two __dcbz keep the
          * countdown-loop shape; both cache opcodes differ (documented
-         * ceiling, MWCC_REFERENCE MPV_Finish). */
+         * ceiling, MWCC_CASES MPV_Finish). */
         for (i = 0; i < 0xdf; i++) {
             __dcbz(vlc, i * 0x20);
             __dcbz(vlc, i * 0x20);
@@ -251,7 +251,7 @@ void* MPV_Create(void* pool) {
         // MWCC intrinsic (KB ref 04331c483d; MPV_Finish same gap) and the
         // spec-encoded ps_sel needs a dc.l word inside an asm-void kernel,
         // so the high-level loop below keeps the semantics via per-line
-        // __dcbi calls (documented ceiling; see MWCC_REFERENCE §8507).
+        // __dcbi calls (documented ceiling; see MWCC_CASES §8507).
         if (lbl_eu_80602B88[0x48 / 4] & 0x10000000) {
             u8* b = (u8*)h;
             u32 off;
@@ -366,7 +366,7 @@ s32 MPV_Destroy(void* self) {
     // 3.0a5.2 has no inline __dcbi intrinsic (it compiles __dcbi() to an
     // external call, KB ref 04331c483d), so __dcbz - the closest real
     // intrinsic - keeps the countdown-loop shape; only the dcbi/dcbz
-    // opcode differs (documented ceiling, MWCC_REFERENCE MPV_Finish).
+    // opcode differs (documented ceiling, MWCC_CASES MPV_Finish).
     if (lbl_eu_80602B88[0x48/4] & 0x10000000) {
         s32 i;
         for (i = 0; i < 0x6e; i++) {

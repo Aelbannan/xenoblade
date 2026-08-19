@@ -135,7 +135,7 @@ extern "C" void func_8048F5C8(CScnRootNw4r* self, u32 value) {
 // pool (retail CScnRootNw4r.o has an empty .sdata2).
 extern double lbl_eu_8066A9F8;
 
-// s16 -> f32 through the shared signed magic double (see MWCC_REFERENCE 7i):
+// s16 -> f32 through the shared signed magic double (see MWCC_CASES 7i):
 // store 0x43300000 | (v ^ 0x80000000) as a double, subtract the magic.
 static inline f32 s16ToF(s16 v) {
     union {

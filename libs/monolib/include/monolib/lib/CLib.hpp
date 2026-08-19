@@ -4,9 +4,7 @@
 #include "monolib/work/CWorkThread.hpp"
 #include "monolib/work/CWorkSystem.hpp"
 
-// novtable: the retail vtable blob (lbl_eu_8056CDA0) is defined in
-// CLib.cpp and installed manually by the ctor; MWCC emits no vtable/RTTI.
-class __declspec(novtable) CLib : public CWorkThread {
+class CLib : public CWorkThread {
 public:
     CLib(const char* pName, CWorkThread* pParent);
     ~CLib();

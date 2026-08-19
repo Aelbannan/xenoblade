@@ -174,7 +174,7 @@ void CMenuTutorialList::cbRenderBefore() {
     }
     // Branch-over-branch guard: the exit label before the body label keeps
     // MWCC from folding the bit test to a single `bne` -- it emits retail's
-    // `beq body; b exit` (see CMenuPause::Move; docs/MWCC_REFERENCE.md).
+    // `beq body; b exit` (see CMenuPause::Move; docs/MWCC_CASES.md).
     if (!(lbl_eu_80663E28 & (1u << 21))) {
         goto body;
     }

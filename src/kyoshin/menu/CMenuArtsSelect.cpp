@@ -404,7 +404,7 @@ extern "C" CMenuArtsSelect* __ct__CMenuArtsSelect(CMenuArtsSelect* self, CScn* s
     p->unk344 = zeroF;
     p->unk348 = (u8)z;
 
-    // for(left!=0;left--) -> mtctr/bdnz (MWCC_REFERENCE 8c13).
+    // for(left!=0;left--) -> mtctr/bdnz (MWCC_CASES 8c13).
     i = 0;
     base = reinterpret_cast<u8*>(p);
     for (left = mode9; left != 0; left--) {
@@ -912,7 +912,7 @@ void CMenuArtsSelect::Move() {
         goto done;
     }
     // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
-    // via fallthrough asm b (PLAN.md section 17.6). See MWCC_REFERENCE 8c9.
+    // via fallthrough asm b (PLAN.md section 17.6). See MWCC_CASES 8c9.
     if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto after_bit21;
     }
@@ -1335,7 +1335,7 @@ void CMenuArtsSelect::cbRenderBefore() {
         goto done;
     }
     // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
-    // via fallthrough asm b (PLAN.md section 17.6). See MWCC_REFERENCE 8c9.
+    // via fallthrough asm b (PLAN.md section 17.6). See MWCC_CASES 8c9.
     if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto after_bit21;
     }

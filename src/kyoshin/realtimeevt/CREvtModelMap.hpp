@@ -22,7 +22,7 @@ struct CREvtModelMapNameInfo {
 // function-pointer casts color the vtable temp as r4/r5 and fail byte
 // identity. With -RTTI on the first declared virtual lands at slot 0x08
 // (two hidden typeinfo slots), so declaring v08() first and counting up in
-// steps of 4 makes slot N land at vtable offset N (MWCC_REFERENCE r12).
+// steps of 4 makes slot N land at vtable offset N (MWCC_CASES r12).
 
 // Game-manager core object returned by cf::CfGameManager::func_80083298().
 class CGameMgrCoreIf {

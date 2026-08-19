@@ -8,6 +8,21 @@ peephole transforms it applies on top. This is the layer behind the `mr` vs
 (frontend lowering) plus the peephole flag vocabulary recovered from the Wii/1.1
 binary. Rules verified by compiling probes and diffing the PPC (`.scratch/isel_probe.c`).
 
+## When to read this
+
+- **Read when:** hexdiff shows `mr` vs `addi rD,rS,0`; `lbzu` present/missing on one
+  side; load width/signedness differs (`lha`/`lhz`/`lbz`+`extsb` vs `lwz`); or
+  float-constant materialisation (`li`-float vs `lfs`).
+- **Skip it when:** pure `reg_swap` with identical instructions → `register_mapping.md`.
+
+## Fast path — first moves in order
+
+1. **`mr` in retail, `addi rD,rS,0` in decomp** → TU is on the wrong compiler version: set `mw_version="Wii/1.1"` (Wii/1.1 always lowers a copy to `mr`). No source lever exists.
+2. **Retail `addi rD,rS,0` (zero immediate)** → unreachable from high-level source (the peephole rewrites it) — §17.6 `opword` patch or restructure; do not hunt a source shape.
+3. **`lbzu` vs `lwz`+`addi`** → loop unroll shape: `-O4,s`/`-O4,p` (see `scheduling.md`).
+4. **Load width/signedness** → source type: signed byte `lbz`+`extsb`, `u16` `lhz`, `s16` `lha`, word `lwz`.
+5. **`p+N` split into `addi`+load** → a non-folded address (walked pointer / volatile read); constant offsets fold into the load immediate.
+
 ## TL;DR
 
 1. **A register copy is `mr` in Wii/1.1, `addi rD,rS,0` in GC/1.2.5** (the

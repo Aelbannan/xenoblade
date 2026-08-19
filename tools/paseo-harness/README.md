@@ -65,7 +65,7 @@ Each batch gets a thinking tier (leaf-only + small → `medium`, leaf-heavy →
 model (`--hard-model`). Known stalls from attempts.jsonl are carried into the
 batch table (targets with prior `stall_note`s are flagged so agents don't repeat
 ruled-out experiments), and a per-batch **KB digest** (`state/digests/<batch>.md`,
-skip with `--no-kb-digest`) lists the top MWCC_REFERENCE records for the batch's
+skip with `--no-kb-digest`) lists the top MWCC_CASES records for the batch's
 symbols — documented walls become blockers to record, not experiments to repeat.
 
 **Run (`run`)** — the monitor loop:
@@ -109,7 +109,7 @@ you can see whether `medium`/`high`-thinking batches accept at the same rate as
 | Agent-hour budget | `--max-agent-hours 24` | stops launching new batches once cumulative agent-hours are spent; `report` shows the running total |
 | Tiered thinking | plan output | `medium`/`high` by default, `max` only for majority-non-leaf batches; `--hard-model` routes hard batches to a stronger model |
 | Hard-batch sizing | `--hard-batch-size 14` | pooled hard batches are smaller → less to re-explore on failure/wall |
-| Lazy docs | prompt | agents read AGENTS.md once; MWCC_REFERENCE/PLAN.md only on demand via `mwcc_kb` — big docs are no longer re-billed every turn |
+| Lazy docs | prompt | agents read AGENTS.md once; MWCC_CASES/PLAN.md only on demand via `mwcc_kb` — big docs are no longer re-billed every turn |
 | Prewarm | `--prewarm` | configure + build batch units before the agent starts (saves wall-clock, not tokens) |
 | No size-hacking | prompt rule | stub/padding-to-match-size is explicitly forbidden (replaces the mid-run "fixer" agent) |
 | FULL_MATCH-only | `--allow-smt` off | in-session `cycle --smt` is off by default; only FULL_MATCH / witness-certified EQUIVALENT_MATCH accepted via plain `cycle` |

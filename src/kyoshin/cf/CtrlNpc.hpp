@@ -181,7 +181,7 @@ public:
 };
 
 // CtrlNpc's retail ctor (__ct__CtrlNpc) is a plain free function that stores
-// the vtable pointers manually (MWCC_REFERENCE §4193 pattern: short-form ctor
+// the vtable pointers manually (MWCC_CASES §4193 pattern: short-form ctor
 // + real C++ virtual dtor + novtable so no vtable/RTTI data is emitted here).
 class __declspec(novtable) CtrlNpc {
 public:

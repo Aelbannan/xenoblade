@@ -13,7 +13,7 @@
 
 #include "kyoshin/cf/CtrlNpc.hpp"
 
-// Retail ctor is a free function (MWCC_REFERENCE §4193): stores the base
+// Retail ctor is a free function (MWCC_CASES §4193): stores the base
 // vtable, initializes the base fields, creates the character object, then
 // stores the final vtable and constructs the CCtrlMoveNpc sub-object at +0x30.
 cf::CtrlNpc* __ct__CtrlNpc(cf::CtrlNpc* self, cf::CfObject* param) {

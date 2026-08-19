@@ -10,7 +10,7 @@ extern f64 lbl_eu_8066A158;  // 0x4330000000000000 (2^52, unsigned u32->f32 magi
 
 // int -> f32 conversion matching retail: build the 2^52+x double on the stack
 // (low word = x ^ 0x80000000, high word = 0x43300000) and subtract the shared
-// signed magic (MWCC_REFERENCE 7i). Statement order matters: the value word
+// signed magic (MWCC_CASES 7i). Statement order matters: the value word
 // first, then 0x43300000.
 inline f32 ConvF32S(s32 v) {
     union { f64 d; u32 w[2]; } u;

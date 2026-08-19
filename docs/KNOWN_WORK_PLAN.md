@@ -170,4 +170,4 @@ python3 -m tools.ppc_equivalence differential                              # 362
 
 Log all attempts (`attempts.jsonl` via `cycle`), and if a reusable MWCC
 regalloc pattern emerges from Work item 1, append it to
-`docs/MWCC_REFERENCE.md` in the same session.
+`docs/MWCC_CASES.md` in the same session.

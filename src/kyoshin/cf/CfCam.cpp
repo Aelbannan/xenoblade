@@ -198,7 +198,7 @@ extern "C" bool cfCam_testBits4_5_0x530(const u8* self) { return (*(const unsign
 extern "C" bool cfCam_testUnk1D4Bits(cf::CfCamFollow* self, unsigned int mask) { return (self->unk1D4 & mask) != 0; }
 // func_8006C6CC: copy the translation column of a 3x4 matrix (row-major) into a vec3.
 // Declare x/y/z first (FPR coloring x->f0, y->f1, z->f2), assign in reverse
-// (loads descend), store forward (stores ascend) - MWCC_REFERENCE §10158 shape.
+// (loads descend), store forward (stores ascend) - MWCC_CASES §10158 shape.
 extern "C" void func_8006C6CC(float* dst, const float* src) {
     float x, y, z;
     z = src[11];
@@ -372,7 +372,7 @@ extern "C" void cfCam_resetUnk10(u8* p, void* src) {
 }
 // func_8007420C: copy the translation column of a 3x4 matrix (row-major) into a vec3.
 // Declare x/y/z first (FPR coloring x->f0, y->f1, z->f2), assign in reverse
-// (loads descend), store forward (stores ascend) - MWCC_REFERENCE §10158 shape.
+// (loads descend), store forward (stores ascend) - MWCC_CASES §10158 shape.
 extern "C" void func_8007420C(float* dst, const float* src) {
     float x, y, z;
     z = src[11];

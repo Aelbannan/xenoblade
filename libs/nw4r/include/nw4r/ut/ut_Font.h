@@ -44,7 +44,7 @@ struct Glyph {
 // the shared default-reader member-pointer pool entry (lbl_eu_8056AF28 =
 // {0,-1,&ReadNextCharCP1252}). Font is __declspec(novtable) so TUs emit no
 // local vtable; the inline ctor assigns the retail vtable label explicitly
-// and copies the default reader from the shared pool (MWCC_REFERENCE
+// and copies the default reader from the shared pool (MWCC_CASES
 // "Retail-owned vtable data").
 extern "C" void* __vt__Q34nw4r2ut4Font[];
 extern "C" CharStrmReader::ReadFunc lbl_eu_8056AF28;

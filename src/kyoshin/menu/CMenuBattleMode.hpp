@@ -10,7 +10,7 @@
 
 // Batch 2026-07-14l: menu-battlemode-init owns Init exclusively.
 // IUICf/CTTask is 0x54; retail places IWorkEvent at 0x58 (extab), so pad 4
-// (same shape proven for CMenuBattlePlayerState -- see MWCC_REFERENCE section 15).
+// (same shape proven for CMenuBattlePlayerState -- see MWCC_CASES section 15).
 class CMenuBattleModeBase : public IUICf {
 public:
     u8 pad54[4];

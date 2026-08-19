@@ -13,7 +13,7 @@ u8 CQstLogList::func_80227CCC() { return mSortEnabled; }
 // Copies a 0x22-byte quest-log entry: 2 head bytes + 4x8-byte word loop.
 // Struct assignment reproduces retail exactly (MWCC emits the counted loop
 // with lwzu/stwu update addressing); optimize_for_size suppresses the
-// -O4,p unroll (MWCC_REFERENCE line 226).
+// -O4,p unroll (MWCC_CASES line 226).
 #pragma push
 #pragma optimize_for_size on
 extern "C" CQstLogListEntry* func_80227994(CQstLogListEntry* pDst, const CQstLogListEntry* pSrc) {

@@ -16,7 +16,7 @@ translation unit of each derived class can emit the retail out-of-line
 `Move__..CTTask<X>Fv` / `Draw__..CTTask<X>Fv` / `__dt__..CTTask<X>Fv` bodies as
 explicit `template<>` specializations.  Defining them inline here would make
 MWCC silently drop those specializations (see TextWriterBase precedent in
-docs/MWCC_REFERENCE.md) and no standalone retail-matching symbols would exist.
+docs/MWCC_CASES.md) and no standalone retail-matching symbols would exist.
 The ctor stays inline (retail emits no out-of-line CTTask ctor).
 */
 template <typename TDerived>

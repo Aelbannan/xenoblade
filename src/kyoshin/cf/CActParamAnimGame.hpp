@@ -224,7 +224,7 @@ public:
 
 // Retail data symbols (global scope: variable names are not mangled).
 // const-qualified so MWCC treats the sdata2 loads as constants and schedules
-// them at retail's hoisted position (see MWCC_REFERENCE SDA-const hoist).
+// them at retail's hoisted position (see MWCC_CASES SDA-const hoist).
 extern const float lbl_eu_80666040;   // sdata2: 0.0f (field_4F8 initializer)
 extern const float lbl_eu_80666044;   // sdata2: 1.0f (field_500 / field_508 initializer)
 extern const float lbl_eu_80666048;   // sdata2: field_50C / field_504 initializer

@@ -106,7 +106,7 @@ void cf::CfObjectMap::func_800B9AB4() {
     func_801A2C94__Q22cf12CTaskCullingFv();
 }
 
-// Retail symbol is fake-Fv (MWCC_REFERENCE §fake-Fv): the splitter mangled
+// Retail symbol is fake-Fv (MWCC_CASES §fake-Fv): the splitter mangled
 // no-args but the body reads r4 as a genuine input (used 3x: func_804838DC
 // flag, the field_100 |=4 / &=~2 select, and the vfn6C boolean). Defined as
 // extern "C" with the explicit Fv-mangled name so the symbol matches retail.

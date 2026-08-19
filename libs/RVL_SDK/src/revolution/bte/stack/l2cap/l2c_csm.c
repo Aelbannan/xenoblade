@@ -127,7 +127,7 @@ typedef struct {
 /* L2CAP control block (global `l2cb`). Full retail size 0x7E8 - MWCC picks
  * sda21 addressing for small extern types (assumes sbss), so the struct must
  * be declared at the full retail size to get the retail lis@ha/lbz@l pair
- * (see MWCC_REFERENCE sda21/extern-size note). */
+ * (see MWCC_CASES sda21/extern-size note). */
 typedef struct {
     UINT8   l2cap_trace_level;  /* 0x000 */
     UINT8   is_register;        /* 0x001 */

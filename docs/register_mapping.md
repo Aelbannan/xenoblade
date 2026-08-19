@@ -10,6 +10,24 @@ compiler — same binary as `build/compilers/GC/1.2.5/mwcceppc.exe`). The
 *boundaries and directions below were re-verified against Wii/1.1 by compiling
 probes with both compilers and diffing the PPC (`.scratch/regmap_*.c`).
 
+## When to read this
+
+- **Read when:** hexdiff shows `reg_swap > 0` with `structural == 0` — identical
+  instructions, different register *colors*.
+- **Skip it when:** `structural > 0` (different instructions — routing is wrong,
+  see below); the diff is `mr` vs `addi rD,rS,0` / `lbzu` (→ `scheduling.md` /
+  `instruction_selection.md` first); or the function contains `psq_*` or a `bl`
+  call (the witness can't certify those — **`FULL_MATCH` is the only route**, see
+  Caveats; do not spend time on colors).
+
+## Fast path — first moves in order
+
+1. Confirm the verdict is **pure reg-swap** (no `structural`, no `mismatch`). If not, you're in the wrong doc.
+2. **Swap the declaration order of the two swapped locals** (Rule A: first-declared → highest saved register). One change at a time; re-`hexdiff` after each, revert if the count rises.
+3. **Swapped saved locals** that persist → Rule C levers (liveness, inlining, expression shape).
+4. **Swapped parameter saves** (params crossing a call) → Rule B: fix *call-argument liveness*, never reorder declarations.
+5. Stuck after 3 attempts → record an open-item packet (residual, ruled-out orders, next 3 experiments) and switch angle — including `mw_version`/flags if the diff is actually in "Not a register-mapping problem" below.
+
 ## TL;DR
 
 1. MWCC splits the register file into **volatile** (scratch) and **non-volatile**
@@ -170,7 +188,7 @@ virtual-register birth order matches retail.
    a pure callee-saved swap. Change one declaration order, re-hexdiff.
 2. **Statement / assignment order** — where a value is assigned changes its
    live range; retail often assigns in the loop condition vs body (see
-   `p_tle`/`i` and `event_type`/`p_msg` notes in MWCC_REFERENCE).
+   `p_tle`/`i` and `event_type`/`p_msg` notes in MWCC_CASES).
 3. **Inline vs helper** — inlining changes which values cross a call boundary.
    A helper that MWCC inlined retail-side but you wrote out-of-line (or vice
    versa) flips the saved-register set.
@@ -232,7 +250,7 @@ A **whole-struct** copy (`*self = *src` on a 12-byte `{x,y,z}`) is lowered to GP
 word moves (`lwz`/`stw`), not float moves. A **member-wise** float copy
 (`float x=src->x; float y=src->y; float z=src->z; …`) uses `lfs`/`stfs` and colors
 the locals by declaration order: `x->f0, y->f1, z->f2` (scratch, low→high). The
-*store* order follows the assignment/statement order. See `MWCC_REFERENCE`
+*store* order follows the assignment/statement order. See `MWCC_CASES`
 §"3-float struct copy" for the exact load-descending/store-ascending retail shape.
 
 ## Dead-register reuse vs fresh allocation

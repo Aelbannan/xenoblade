@@ -1,5 +1,9 @@
 # Implementation plan: register-renaming witness expansion (position-dependent rho)
 
+> **When to read this:** you're extending/auditing the register-renaming witness (rho gate),
+> especially rho-fail (Gate 4) targets. **Skip it:** for routine matching — the witness runs inside
+> `cycle`; you don't need this design doc.
+
 **Status:** **implemented** (rev 5, after four adversarial review rounds; committed 2026-08-03) · **Scope:**
 `tools/coop/lib/renaming_witness.py`, `tools/ppc_equivalence/semantics.py` (bounded executor
 extension), `equivalence_check.py` (witness caller), `docs/ppc_equiv_work/31-reg-swap-witness.md`,

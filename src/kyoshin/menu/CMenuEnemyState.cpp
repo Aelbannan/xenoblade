@@ -584,7 +584,7 @@ void CMenuEnemyState::cbRenderBefore() {
         goto done;
     }
     // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
-    // via fallthrough asm b (PLAN.md section 17.6). See MWCC_REFERENCE 8c9.
+    // via fallthrough asm b (PLAN.md section 17.6). See MWCC_CASES 8c9.
     if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto after_bit21;
     }
@@ -657,7 +657,7 @@ after_bit21:
             }
         }
 
-        // NV decl order entry, order, i -> r30/r29/r28 (MWCC_REFERENCE 8c6).
+        // NV decl order entry, order, i -> r30/r29/r28 (MWCC_CASES 8c6).
         // u32 counter; cast to u8 only when indexing. Compare stays cmpli (no
         // terminal clrlwi) so .text is retail 0x274.
         {
@@ -703,7 +703,7 @@ void CMenuEnemyState::Move() {
         goto done;
     }
     // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
-    // via fallthrough asm b (PLAN.md section 17.6). See MWCC_REFERENCE 8c9.
+    // via fallthrough asm b (PLAN.md section 17.6). See MWCC_CASES 8c9.
     if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto after_bit21;
     }

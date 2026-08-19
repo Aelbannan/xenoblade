@@ -166,7 +166,7 @@ void func_804BB4EC(){}
 void func_804BB768(ColiObj* self, ColiTri* tri);
 
 // Guard the not-yet-recovered stub so MWCC does not inline the empty body and
-// drop the call sites (func_804BC134 tail-calls it; see MWCC_REFERENCE
+// drop the call sites (func_804BC134 tail-calls it; see MWCC_CASES
 // empty-stub pattern).
 #pragma push
 #pragma auto_inline off

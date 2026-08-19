@@ -249,7 +249,7 @@ extern u32 lbl_eu_80527F10[];
 extern u32 lbl_eu_80663E24;   // global state flags (bit 25/10 tested by func_80097134)
 // sdata2 float constants used by func_80098694 / func_80098194. const
 // declarations so MWCC treats the loads as constants and hoists them into
-// the prologue (see MWCC_REFERENCE §extern const float hoist).
+// the prologue (see MWCC_CASES §extern const float hoist).
 extern const f32 lbl_eu_80666720;
 extern const f32 lbl_eu_80666724;
 extern const f32 lbl_eu_80666718;   // facing-angle scale used by func_80096974

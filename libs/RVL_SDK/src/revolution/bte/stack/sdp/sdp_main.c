@@ -15,7 +15,7 @@
  * the same reversed per-function order).  To reproduce the retail
  * forward-ordered .text / string pool, the functions below are written
  * BACK-TO-FRONT: source order is the reverse of the retail .text order
- * (MWCC_REFERENCE l2c_csm.c note).
+ * (MWCC_CASES l2c_csm.c note).
  */
 
 #include <harness_catalog.h>

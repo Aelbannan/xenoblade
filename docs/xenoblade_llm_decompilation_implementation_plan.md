@@ -1,5 +1,10 @@
 # Xenoblade LLM Decompilation Harness Improvement Plan
 
+> **When to read this:** you're working on `tools/llm_harness` / `tools/llm_decomp` (the conversational
+> matching harness) itself. **Skip it:** for normal matching/decompiling — this is a tooling plan,
+> not a matching reference.
+
+
 **Repository:** `https://github.com/Aelbannan/xenoblade`  
 **Primary area:** `tools/llm_harness`  
 **Related verifier:** `tools/ppc_equivalence`  

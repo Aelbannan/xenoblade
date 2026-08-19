@@ -14,6 +14,7 @@
 #include "monolib/util/MemManager.hpp"
 
 // ---------------------------------------------------------------------------
+extern "C" u32 lbl_eu_8056F508[0x3E8 / 4]; // stage config table (defined at end of TU)
 // Data globals
 // ---------------------------------------------------------------------------
 
@@ -105,10 +106,7 @@ extern const f32 lbl_eu_8066AEE8;
 // FIdx (512-count) to degree conversion factor (func_804BA8B4 heading math).
 extern const f32 lbl_eu_8066AEEC;
 
-// Default mover-state configuration table (.data).  The first 9 words feed
-// func_804B7804; the block at +0x2C4 holds the per-stage matrix
-// configuration used by func_804B9E14 / func_804B877C.
-extern u32 lbl_eu_8056F508[0x340 / 4];
+
 
 // 0x24-byte scene-resource entry (lbl_eu_8065F428 holds 32 of these).
 struct ScnResourceEntry {
@@ -388,6 +386,39 @@ void func_804B71CC(CColiSrc* a, CColiMover* b);
 u32 func_804BC9A0(CColiMoverState* self);
 void func_804BBFA0(CColiMoverState* self, const Vec* src, u32 idx, f32 radius);
 void func_804BBFD4(CColiMoverState* self, CColiMgr* mgr, const Vec* src, u32 idx);
+
+// extern "C" forward declarations so the data table below can reference
+// the retail plain (unmangled) symbol names for its R_PPC_ADDR32 relocs.
+extern "C" void func_804B5B34(void);
+extern "C" void func_804B5B38();
+extern "C" void func_804B5BB0();
+extern "C" void func_804B5C58(CColiSrc* a, CColiMover* b);
+extern "C" void func_804B5CEC(CColiSrc* a, CColiMover* b);
+extern "C" void func_804B5DE8(CColiSrc* a, CColiMover* b);
+extern "C" void func_804B5E68(CColiSrc* a, CColiMover* b);
+extern "C" void func_804B61F8(void);
+extern "C" void func_804B61FC();
+extern "C" void func_804B62B0();
+extern "C" void func_804B6364();
+extern "C" void func_804B6418(CColiObj* self, CColiQuery* query);
+extern "C" void func_804B64CC(CColiObj* self, CColiQuery* query);
+extern "C" void func_804B6580(CColiObj* self, CColiQuery* query);
+extern "C" void func_804B6634(void);
+extern "C" void func_804B6638(const u32* head, const u32* info);
+extern "C" void func_804B66B0(const u32* head, const u32* info);
+extern "C" void func_804B6728(u32 a, const ScnHeadWord* head, const u32* info);
+extern "C" void func_804B684C(u32 a, const ScnHeadWord* head, const u32* info);
+extern "C" void func_804B6954(void* a, void* b, void* c);
+extern "C" void func_804B6974(CColiRegObj* self, const Vec* in1, const Vec* in2);
+extern "C" void func_804B6A3C(CColiRegObj* self, const Vec* in1, const Vec* in2);
+extern "C" void func_804B6C48(CColiRegObj* self, const Vec* a, const Vec* in);
+extern "C" void func_804B6D30(CColiRegObj* self, const Vec* in1, const Vec* in2);
+extern "C" void func_804B6F58(CColiRegObj* self, ml::CVec3* vecs, const Vec* in);
+extern "C" u32 func_804B7044(u8* self, float f);
+extern "C" u32 func_804B7074(u8* self, float f);
+extern "C" void func_804B7944(CColiRegObj* self, const u16* list, int count);
+extern "C" void func_804B7A00(CColiRegObj* self, u16* list, int count);
+extern "C" void func_804B7AC8(void);
 
 // func_804B59C8 - track mover movement. When the squared distance between
 // the current position (0x50) and the previous position (0x0C) is at least
@@ -1792,7 +1823,7 @@ u32 func_804BA8B4(CColiMoverState* self, Vec* src, Vec* dst, f32* angle,
     hi.x = src->x;
     hi.y = src->y + yOff;
     hi.z = src->z;
-    if (yOff < 0.0f) {
+    if (yOff < lbl_eu_8066AED0) {
         mgr->field_0x24.x = lo.x;
         mgr->field_0x24.y = lo.y;
         mgr->field_0x24.z = lo.z;
@@ -1856,8 +1887,8 @@ u32 func_804BA8B4(CColiMoverState* self, Vec* src, Vec* dst, f32* angle,
         *(u32*)&dst->z = *(u32*)&d4.z;
     }
     if (angle != 0) {
-        Vec3 up1 = { 0.0f, 0.0f, lbl_eu_8066AED8 };
-        Vec3 up2 = { 0.0f, 0.0f, lbl_eu_8066AED8 };
+        Vec3 up1 = { lbl_eu_8066AED0, lbl_eu_8066AED0, lbl_eu_8066AED8 };
+        Vec3 up2 = { lbl_eu_8066AED0, lbl_eu_8066AED0, lbl_eu_8066AED8 };
         Vec3 v1;
         Vec3 v2;
         PSMTXMultVec(last->savedMtx.m, (const Vec*)&up1, (Vec*)&v1);
@@ -1868,10 +1899,10 @@ u32 func_804BA8B4(CColiMoverState* self, Vec* src, Vec* dst, f32* angle,
         v2.x -= last->mtx.m[0][3];
         v2.y -= last->mtx.m[1][3];
         v2.z -= last->mtx.m[2][3];
-        if (v1.x == 0.0f && v1.z == 0.0f) {
-            *angle = 0.0f;
-        } else if (v2.x == 0.0f && v2.z == 0.0f) {
-            *angle = 0.0f;
+        if (v1.x == lbl_eu_8066AED0 && v1.z == lbl_eu_8066AED0) {
+            *angle = lbl_eu_8066AED0;
+        } else if (v2.x == lbl_eu_8066AED0 && v2.z == lbl_eu_8066AED0) {
+            *angle = lbl_eu_8066AED0;
         } else {
             f32 a1 = nw4r::math::Atan2FIdx(v1.z, v1.x);
             f32 a2 = nw4r::math::Atan2FIdx(v2.z, v2.x);
@@ -1885,3 +1916,66 @@ extern "C" u32 func_804BADA0(u8* self) { return *(u32*)((u8*)self + 0x5C) != 0; 
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_804BADB4(){}
+
+// ===== Dissolved monolibdata2 (blob surgery): retail data owned by this TU =====
+// [.data] 0x8056F508-0x8056F8F0 (0x3E8 = 1000B): default "stage"
+// configuration table.  The first 9 words feed func_804B7804; the block at
+// +0x2C4 holds the per-stage matrix configuration used by func_804B9E14 /
+// func_804B877C.  Every entry is a { 0x00000000, 0xFFFFFFFF,
+// function-address } triple (83 full triples + one trailing 0 word).  The
+// addresses are the retail link-time values kept as raw words (the retail
+// split .data carries no relocations, so raw bytes are byte-identical).
+extern "C" u32 lbl_eu_8056F508[250] = {
+
+    0x00000000, 0xFFFFFFFF, (u32)&func_804B5B34, 0x00000000, 0xFFFFFFFF, (u32)&func_804B61F8, 0x00000000, 0xFFFFFFFF,
+    (u32)&func_804B6634, 0x00000000, 0xFFFFFFFF, (u32)&func_804B5B38, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6638, 0x00000000,
+    0xFFFFFFFF, (u32)&func_804B61FC, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7A00, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7944,
+    0x00000000, 0xFFFFFFFF, (u32)&func_804B7AC8, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6638, 0x00000000, 0xFFFFFFFF,
+    (u32)&func_804B6A3C, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6974, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6974, 0x00000000,
+    0xFFFFFFFF, (u32)&func_804B5BB0, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6364, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6638,
+    0x00000000, 0xFFFFFFFF, (u32)&func_804B6728, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7A00, 0x00000000, 0xFFFFFFFF,
+    (u32)&func_804B7944, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6638, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6728, 0x00000000,
+    0xFFFFFFFF, (u32)&func_804B6A3C, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6974, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6974,
+    0x00000000, 0xFFFFFFFF, (u32)&func_804B5C58, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6418, 0x00000000, 0xFFFFFFFF,
+    (u32)&func_804B6638, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6728, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7A00, 0x00000000,
+    0xFFFFFFFF, (u32)&func_804B7944, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6638, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6728,
+    0x00000000, 0xFFFFFFFF, (u32)&func_804B6A3C, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6974, 0x00000000, 0xFFFFFFFF,
+    (u32)&func_804B6974, 0x00000000, 0xFFFFFFFF, (u32)&func_804B5CEC, 0x00000000, 0xFFFFFFFF, (u32)&func_804B64CC, 0x00000000,
+    0xFFFFFFFF, (u32)&func_804B7044, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6638, 0x00000000, 0xFFFFFFFF, (u32)&func_804B684C,
+    0x00000000, 0xFFFFFFFF, (u32)&func_804B7A00, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7944, 0x00000000, 0xFFFFFFFF,
+    (u32)&func_804B5BB0, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6638, 0x00000000, 0xFFFFFFFF, (u32)&func_804B684C, 0x00000000,
+    0xFFFFFFFF, (u32)&func_804B6D30, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6C48, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6C48,
+    0x00000000, 0xFFFFFFFF, (u32)&func_804B5CEC, 0x00000000, 0xFFFFFFFF, (u32)&func_804B64CC, 0x00000000, 0xFFFFFFFF,
+    (u32)&func_804B7074, 0x00000000, 0xFFFFFFFF, (u32)&func_804B684C, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7A00, 0x00000000,
+    0xFFFFFFFF, (u32)&func_804B7944, 0x00000000, 0xFFFFFFFF, (u32)&func_804B5BB0, 0x00000000, 0xFFFFFFFF, (u32)&func_804B684C,
+    0x00000000, 0xFFFFFFFF, (u32)&func_804B6D30, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6C48, 0x00000000, 0xFFFFFFFF,
+    (u32)&func_804B6C48, 0x00000000, 0xFFFFFFFF, (u32)&func_804B5DE8, 0x00000000, 0xFFFFFFFF, (u32)&func_804B66B0, 0x00000000,
+    0xFFFFFFFF, (u32)&func_804B62B0, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7A00, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7944,
+    0x00000000, 0xFFFFFFFF, (u32)&func_804B5DE8, 0x00000000, 0xFFFFFFFF, (u32)&func_804B66B0, 0x00000000, 0xFFFFFFFF,
+    (u32)&func_804B6A3C, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6974, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6974, 0x00000000,
+    0xFFFFFFFF, (u32)&func_804B5E68, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6580, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7A00,
+    0x00000000, 0xFFFFFFFF, (u32)&func_804B7944, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6954, 0x00000000, 0xFFFFFFFF,
+    (u32)&func_804B6634, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6F58, 0x00000000, 0xFFFFFFFF, (u32)&func_804B6954, 0x00000000,
+    0xFFFFFFFF, (u32)&func_804B7A00, 0x00000000, 0xFFFFFFFF, (u32)&func_804B7944, 0x00000000, 0xFFFFFFFF, (u32)&func_804B5BB0,
+    0x00000000, 0xFFFFFFFF, (u32)&func_804B6C48, 0x00000000, 0xFFFFFFFF, (u32)&func_804B684C, 0x00000000, 0xFFFFFFFF,
+    (u32)&func_804B7044, 0x00000000,};
+
+// [.sdata] 0x80663AC8-0x80663AD8 (0x10 = 16B): seen-bit base pointer (points
+// at the .bss workspace lbl_eu_8065D1A0), zeroing-window base (same), then
+// the acceptance radius / range floats (50.0f = 0x42480000, 20.0f =
+// 0x41A00000).  The two pointer words are R_PPC_ADDR32 relocs to
+// lbl_eu_8065D1A0 (retail split .sdata carries these relocs); the floats are
+// raw words.
+extern "C" __declspec(align(8)) u32 lbl_sdata_804B59C8_a[2] = {
+    (u32)&lbl_eu_8065D1A0, (u32)&lbl_eu_8065D1A0,
+};
+extern "C" __declspec(align(8)) u32 lbl_sdata_804B59C8_b[2] = {
+    0x42480000, 0x41A00000,
+};
+
+// [.bss] 0x8065D1A0-0x8065F32C (0x218C = 8588B): zero-fill collision
+// registration workspace (the 0x2000-byte table region + bit-table + manager
+// + index list live at the sub-symbol offsets above).  Kept as an aligned
+// byte array so the .bss section is exactly the retail size/alignment.
+// (No extern/initializer so this is a true definition that allocates .bss.)
+__declspec(align(8)) u8 lbl_bss_804B59C8[0x218C];

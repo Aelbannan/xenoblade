@@ -42,7 +42,7 @@ void CQstLogInfo::func_80229768(u16 val) { mField3A = val; }
 // Destructor: destroys the embedded scratch region, then frees the object
 // when the deleting-dtor flag is set (standard MWCC pattern).
 // optimize_for_size: retail uses the stmw r30/lmw r30 frame; -O4,p splits
-// the saves into separate stw's (MWCC_REFERENCE kyoshin-dtor pattern).
+// the saves into separate stw's (MWCC_CASES kyoshin-dtor pattern).
 #pragma optimize_for_size on
 CQstLogInfo::~CQstLogInfo() {}
 #pragma optimize_for_size off

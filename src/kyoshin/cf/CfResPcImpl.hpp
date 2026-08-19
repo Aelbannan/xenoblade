@@ -312,7 +312,7 @@ struct CfResPcCharData {
 class CfResPcImpl;
 
 // Non-polymorphic base pushing the secondary vtable to +0x10 (double-hop
-// thunk pattern, MWCC_REFERENCE): casting self to CfResPcVtIf and calling a
+// thunk pattern, MWCC_CASES): casting self to CfResPcVtIf and calling a
 // virtual emits `lwz r12,0x10(r3); lwz r12,slot(r12); mtctr; bctrl` with
 // `this` staying at the object base. lbl_eu_80532774 (stored at +0x10 by
 // the ctor) is the vtable itself.
@@ -595,7 +595,7 @@ extern cf::CfResPcVtIf lbl_eu_80532774;
 
 // Float seed written to +0x04 by the ctor (.sdata2). Declared const so MWCC
 // treats the pool load as a constant and hoists the lfs above the frame
-// stores (MWCC_REFERENCE: `extern const float` scheduling fix).
+// stores (MWCC_CASES: `extern const float` scheduling fix).
 extern const float lbl_eu_80667A40;
 
 // C-ABI imports (defined in CfRes.cpp / IResInfo.cpp / CfScript.cpp /

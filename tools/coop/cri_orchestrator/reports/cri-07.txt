@@ -188,7 +188,7 @@ All 30 targets covered, log valid, committed. Final report:
 ### Work committed (24c53f7d4)
 svm.c (ExecSvr direct-access refactor), dct_ac.c (AcInit const-map correction + prologue fix), sfx_alp.c (SFXA_Create mtctr+bdnz/beqlr loop form), ahx_sbf.c, attempts.jsonl (30/30 records), targets.json + certs. mpv_deli/memcpyd/sfh_local restored to committed state. Other agents' files untouched.
 
-**Reusable insights** (worth adding to MWCC_REFERENCE): (1) `mtspr 19, rX` display = mtctr/mflr (SPR 9/8); witness exempts CTR/LR/XER only — DAR/GQR writes reject it; (2) `addic. r0, r0, -1` is a real register (no rA=0 zero-case; retail itself emits it); (3) DCT_AcInit's "const table" is MWCC's FP constant pool — const[0]/[1]/[2]/[3] = DC-scale/0.5/pi8/2^52; (4) the bne+b branch-fold is unreachable from source at all -O levels (ADXSTM_Stop class).
+**Reusable insights** (worth adding to MWCC_CASES): (1) `mtspr 19, rX` display = mtctr/mflr (SPR 9/8); witness exempts CTR/LR/XER only — DAR/GQR writes reject it; (2) `addic. r0, r0, -1` is a real register (no rA=0 zero-case; retail itself emits it); (3) DCT_AcInit's "const table" is MWCC's FP constant pool — const[0]/[1]/[2]/[3] = DC-scale/0.5/pi8/2^52; (4) the bne+b branch-fold is unreachable from source at all -O levels (ADXSTM_Stop class).
 [Thought] All 30 batch targets have attempts records, and the JSONL is valid. The commit is done. Let me write the final report.
 
 Final summary:

@@ -1319,7 +1319,7 @@ extern "C" void func_8012FFB4(u8* base) {
     CUICfListNode* startNode;
 
     // OR-combined guard: first disjunct emits the direct `bne end`, second
-    // the retail branch-over `beq cont; b end` (MWCC_REFERENCE func_802AE004).
+    // the retail branch-over `beq cont; b end` (MWCC_CASES func_802AE004).
     if (func_800426F0__9CTaskGameFv(getInstance__9CTaskGameFv()) != 0 ||
         (lbl_eu_80663E28 & 0x00200000u) != 0) {
         return;

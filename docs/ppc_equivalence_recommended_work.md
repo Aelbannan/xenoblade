@@ -1,5 +1,10 @@
 # `ppc_equivalence` Trustworthiness and Correctness Work Plan
 
+> **When to read this:** you're working on / auditing the `ppc_equivalence` verifier itself (its tests,
+> soundness, or Dolphin validation). **Skip it:** for matching work — this is tooling, not a matching
+> reference; `SKILL.md` Routing covers matching.
+
+
 **Repository:** [`Aelbannan/xenoblade`](https://github.com/Aelbannan/xenoblade)  
 **Primary subsystem:** [`tools/ppc_equivalence`](https://github.com/Aelbannan/xenoblade/tree/main/tools/ppc_equivalence)  
 **Integration subsystem:** [`tools/coop`](https://github.com/Aelbannan/xenoblade/tree/main/tools/coop)  

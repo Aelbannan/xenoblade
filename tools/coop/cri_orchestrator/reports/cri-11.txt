@@ -69,7 +69,7 @@ Let me verify git status.
 
 Let me verify the mwsffrm_ChangeSettingSyncPlayback cycle log and the stall notes are in the committed attempts.jsonl.
 [Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && grep -c "cri-11" docs/evidence/decomp/attempts.jsonl; grep "us-8039ff6c\|us-8039e034" docs/evidence/decomp/attempts.jsonl | tail -3 | cut -c1-120
-Let me record the reusable volatile-epilogue breakthrough in MWCC_REFERENCE (per the SKILL).
+Let me record the reusable volatile-epilogue breakthrough in MWCC_CASES (per the SKILL).
 [Thought] All the evidence is recorded (35 cri-11 blocker entries + the stall notes + cycle logs).
 
 Let me do a final summary of my session:
@@ -90,17 +90,17 @@ Let me do a final summary of my session:
 
 **Blocked (recorded in attempts.jsonl, 35 entries):** the remaining targets — all blocked by indirect calls or unaccepted callees (CLAIMED by other agents or NOT_STARTED).
 
-Notable discoveries to record in MWCC_REFERENCE (per the SKILL — "append new patterns"):
+Notable discoveries to record in MWCC_CASES (per the SKILL — "append new patterns"):
 1. The volatile-pointer epilogue trick (adxm_lock + adxm_fs_proc): volatile store on the final write forces the retail's epilogue LR-first restore order. This is a NEW reusable pattern!
 2. The &&-gate + exit-label-before-body pattern for the gate branch-over-branch (criware_8039CD7C) — already partially documented (sjrbf_PutChunk) but the criware_8039CD7C case confirms it works on GC/3.0a5.2/Wii/1.1 for mwsfdfrm.
 3. The mwsfdfrm unit being Wii/1.1 (KB had evidence via SVM_Init).
 
-Let me append the volatile-epilogue pattern to MWCC_REFERENCE — it's a reusable breakthrough (fixed 2 functions).
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && tail -5 docs/MWCC_REFERENCE.md; grep -n "### CriWare adx_mwii" docs/MWCC_REFERENCE.md | head -3
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && cat >> docs/MWCC_REFERENCE.md <<'EOF' ### CriWare adx_mwii — volatile final-store forces retail epilogue LR-first restore (adxm_lock + adxm_fs_proc FULL_M...
-[Thought] The commit included 5 files — hmm — the MWCC_REFERENCE + 4 others? The pre-commit hook probably refreshed README/progress-map, and attempts.jsonl might have gotten swept in. Let me check what got committed — if other agents' attempts.jsonl lines got swept in, that's a problem (the 2 lines from us-803d1db0/us-803d1e90).
+Let me append the volatile-epilogue pattern to MWCC_CASES — it's a reusable breakthrough (fixed 2 functions).
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && tail -5 docs/MWCC_CASES.md; grep -n "### CriWare adx_mwii" docs/MWCC_CASES.md | head -3
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && cat >> docs/MWCC_CASES.md <<'EOF' ### CriWare adx_mwii — volatile final-store forces retail epilogue LR-first restore (adxm_lock + adxm_fs_proc FULL_M...
+[Thought] The commit included 5 files — hmm — the MWCC_CASES + 4 others? The pre-commit hook probably refreshed README/progress-map, and attempts.jsonl might have gotten swept in. Let me check what got committed — if other agents' attempts.jsonl lines got swept in, that's a problem (the 2 lines from us-803d1db0/us-803d1e90).
 [Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git show HEAD --stat | tail -7
-[Thought] Hmm — my commit 9d88c96d3 (the fs_proc acceptance) shows "3 files changed" earlier — and now the docs commit shows 5 files including `libs/CriWare/src/sofdec/sfdcore/sfd/sfd_tst.c` (29 lines!) and targets.json — those are OTHER agents' changes! My `git add docs/MWCC_REFERENCE.md` staged only that file, but the pre-commit hook or... wait — the commit shows sfd_tst.c + targets.json + attempts.jsonl (2 lines) + certs — those got SWEPT into my commit!
+[Thought] Hmm — my commit 9d88c96d3 (the fs_proc acceptance) shows "3 files changed" earlier — and now the docs commit shows 5 files including `libs/CriWare/src/sofdec/sfdcore/sfd/sfd_tst.c` (29 lines!) and targets.json — those are OTHER agents' changes! My `git add docs/MWCC_CASES.md` staged only that file, but the pre-commit hook or... wait — the commit shows sfd_tst.c + targets.json + attempts.jsonl (2 lines) + certs — those got SWEPT into my commit!
 
 How? The pre-commit hook might run `git add` on everything (refresh README status) — the AGENTS.md said the pre-commit hook refreshes README. If the hook does `git add -A` or similar, it sweeps ALL staged+unstaged changes into the commit! That's what happened — sfd_tst.c (another agent's in-flight work), targets.json, certs — all committed under my message.
 
@@ -171,9 +171,9 @@ adxm_lock, mwsffrm_SetPicUsrInf, criware_8039CD7C, adxm_fs_proc — all FULL_MAT
 
 ### Notes
 - `configure.py`: switched `mwsfdfrm.c` to `Wii/1.1` (KB-documented for the mwply family; fixes move-order + store interleave; zero regressions — verified on all 5 matched functions). The mwsfdfrm Wii/1.1 flag is already in HEAD from commit c1bacb791; the working-tree sj_mem Wii/1.1 (cri-10 agent's in-flight change, accidentally clobbered by a `git checkout configure.py` mid-session) was restored from backup.
-- Two reusable breakthroughs appended to `docs/MWCC_REFERENCE.md`: (1) volatile-final-store forces retail epilogue LR-first restore order (adxm_lock + adxm_fs_proc); (2) mwsfdfrm `&&`-gate + exit-label-before-body + `opt_propagation off` reproduces the gate branch-over-branch.
+- Two reusable breakthroughs appended to `docs/MWCC_CASES.md`: (1) volatile-final-store forces retail epilogue LR-first restore order (adxm_lock + adxm_fs_proc); (2) mwsfdfrm `&&`-gate + exit-label-before-body + `opt_propagation off` reproduces the gate branch-over-branch.
 - Concurrent-agent note: shared-worktree commits swept a couple of other agents' in-flight files (attempts.jsonl lines, sfd_tst.c) into my commits — content preserved, no data lost.
-[Thought] The pre-commit hook refreshes README/generated content and re-stages those paths. But it shouldn't sweep sfd_tst.c... hmm — let me look at the rest of the hook. Actually — the sfd_tst.c + targets.json + certs got committed with my docs commit — those were STAGED by... wait — my `git add docs/MWCC_REFERENCE.md` only staged that. Then the commit picked up sfd_tst.c etc.? That means those files were ALREADY STAGED (from another agent's `git add` that never committed — or from the pre-commit hook's re-staging). The pre-commit hook "re-stages those paths" — maybe it does `git add -u` for generated paths... Let me not dig further. The practical impact: another agent's sfd_tst.c work got committed under my message. Not ideal, but it's preserved.
+[Thought] The pre-commit hook refreshes README/generated content and re-stages those paths. But it shouldn't sweep sfd_tst.c... hmm — let me look at the rest of the hook. Actually — the sfd_tst.c + targets.json + certs got committed with my docs commit — those were STAGED by... wait — my `git add docs/MWCC_CASES.md` only staged that. Then the commit picked up sfd_tst.c etc.? That means those files were ALREADY STAGED (from another agent's `git add` that never committed — or from the pre-commit hook's re-staging). The pre-commit hook "re-stages those paths" — maybe it does `git add -u` for generated paths... Let me not dig further. The practical impact: another agent's sfd_tst.c work got committed under my message. Not ideal, but it's preserved.
 
 Let me check the rest of the hook to understand — actually, let me just move on. The important thing: MY work is committed, the working tree has other agents' in-flight changes (intact), and the batch is in the best achievable state.
 

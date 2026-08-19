@@ -268,7 +268,7 @@ void func_801729F0(void* self, void* pData, void* pModelData) {
 void func_80172CC0(void) {}
 
 // Cast-only interface for the vtable tail-call thunk (RTTI-omit pattern,
-// cf. BattleStateV8If in MWCC_REFERENCE): model->vfB4() with model at +0x20.
+// cf. BattleStateV8If in MWCC_CASES): model->vfB4() with model at +0x20.
 struct IfVtB4 {
     virtual void _v008();
     virtual void _v00C();

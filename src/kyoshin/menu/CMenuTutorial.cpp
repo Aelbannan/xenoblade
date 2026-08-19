@@ -184,7 +184,7 @@ void CMenuTutorial::Move() {
     CTaskGame::getInstance();
     // Gate: skip the whole move when the task is busy or the global mode bit
     // (0x200000) is set. The &&-chain + goto body + return shape reproduces
-    // retail's branch-over-branch `beq body; b exit` (MWCC_REFERENCE §8960).
+    // retail's branch-over-branch `beq body; b exit` (MWCC_CASES §8960).
     if (CTaskGame::func_800426F0() == 0 &&
         (lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto body;

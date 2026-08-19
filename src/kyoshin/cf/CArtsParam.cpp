@@ -83,7 +83,7 @@ u8 CArtsParam::CArtsParam_UnkVirtualFunc2(){
 
 extern "C" int func_8015403C(int x) {
     // Returns 2 when (unsigned)(x-4) <= 5, else 1.
-    // MWCC_REFERENCE: constant-output range check always folds to branchless
+    // MWCC_CASES: constant-output range check always folds to branchless
     // arithmetic; this assignment form is the closest (14.3%) and semantically
     // exact. Open item — retail keeps two separate li/blr blocks (bc 4,1).
     int ret = 2;

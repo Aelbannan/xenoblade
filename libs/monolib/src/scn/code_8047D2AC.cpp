@@ -14,7 +14,7 @@
 // using the exact retail mangled name (PLAN.md §17.6 relocation-name
 // pattern).  Float constants use `extern const f32 lbl_eu_*` so the load
 // schedules like a pooled literal AND the relocation keeps the retail name
-// (MWCC_REFERENCE §1b).
+// (MWCC_CASES §1b).
 
 #include <harness_catalog.h>
 #include <types.h>

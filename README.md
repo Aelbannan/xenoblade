@@ -270,7 +270,7 @@ Bytes identical but relocation **sites** differ — **name** drift (same site, d
 | Full workflow + acceptance protocol | [`.agents/skills/xenoblade-decomp/SKILL.md`](.agents/skills/xenoblade-decomp/SKILL.md) |
 | Behaviour + PPC | [`tools/test/compare_behaviour/README.md`](tools/test/compare_behaviour/README.md) |
 | PPC equivalence | [`tools/ppc_equivalence/README.md`](tools/ppc_equivalence/README.md) |
-| MWCC patterns | [`docs/MWCC_REFERENCE.md`](docs/MWCC_REFERENCE.md) |
+| MWCC patterns | [`docs/MWCC_CASES.md`](docs/MWCC_CASES.md) |
 | Attempt log | [`docs/evidence/decomp/attempts.jsonl`](docs/evidence/decomp/attempts.jsonl) |
 
 ---
@@ -296,8 +296,8 @@ This project's runner config passes `functionRelocDiffs=data_value` (see
 ## Editor / agent setup
 
 - **VS Code / Cursor:** ready-made settings live in `.vscode`.
-- **Agents:** follow [`AGENTS.md`](AGENTS.md). The `xenoblade-decomp` skill and
-  `.cursor/rules/xenoblade-decomp.mdc` apply automatically in this repo.
+- **Agents:** follow [`AGENTS.md`](AGENTS.md). The `xenoblade-decomp` skill
+  (`skills/xenoblade-decomp` under `.agents/` or `~/.pi`) applies automatically in this repo.
 
 ---
 
@@ -308,8 +308,8 @@ This project's runner config passes `functionRelocDiffs=data_value` (see
 | [`AGENTS.md`](AGENTS.md) | Entry point: reading order, quick commands, do-not list |
 | [`PLAN.md`](PLAN.md) | Architecture invariants, matching policy, decomp loop (§17) |
 | [`COOP_IMPLEMENTATION_MAP.md`](COOP_IMPLEMENTATION_MAP.md) | Capability graph and handoffs |
-| [`docs/MWCC_REFERENCE.md`](docs/MWCC_REFERENCE.md) | Compiler behaviour, proven patterns, pitfalls — append breakthroughs here |
-| [`docs/MWCC_KNOWLEDGE_BASE.md`](docs/MWCC_KNOWLEDGE_BASE.md) | Search protocol for `mwcc_kb.py` |
+| [`docs/MWCC_CASES.md`](docs/MWCC_CASES.md) | Compiler behaviour, proven patterns, pitfalls — append breakthroughs here |
+| [`docs/MWCC_PATTERNS.md`](docs/MWCC_PATTERNS.md) | Search protocol for `mwcc_kb.py` |
 | [`docs/coding_style_guidelines.md`](docs/coding_style_guidelines.md) | Style for shared decomp code |
 | [`tools/coop/targets.json`](tools/coop/targets.json) | Canonical function registry and current state |
 

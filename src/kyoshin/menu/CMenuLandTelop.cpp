@@ -228,7 +228,7 @@ unsigned char func_80145030(void) {
 }
 
 // Empty stub: guard so MWCC -inline auto does not fold the call in
-// func_80144EE4 away (MWCC_REFERENCE sec 834: empty same-TU stubs inline to
+// func_80144EE4 away (MWCC_CASES sec 834: empty same-TU stubs inline to
 // nothing).
 #pragma push
 #pragma auto_inline off
@@ -269,7 +269,7 @@ int func_801453B8(CMenuLandTelop* self) {
 }
 
 // Empty stub: guard so MWCC -inline auto does not fold the call in Init
-// away (MWCC_REFERENCE sec 834: empty same-TU stubs inline to nothing).
+// away (MWCC_CASES sec 834: empty same-TU stubs inline to nothing).
 #pragma push
 #pragma auto_inline off
 void func_8014548C(CMenuLandTelop* self) {}

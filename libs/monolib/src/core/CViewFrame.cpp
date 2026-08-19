@@ -72,7 +72,7 @@ extern float lbl_eu_8066A2FC; // 0.6
 // subtract the shared magic double lbl_eu_8066A300 (owned by FloatUtils).
 // MWCC's builtin `(float)s16expr` conversion pools the 0x4330000080000000
 // magic into a TU-local .sdata2 entry, but retail CViewFrame.o has .sdata2
-// size 0 -- every conversion references the extern instead (MWCC_REFERENCE
+// size 0 -- every conversion references the extern instead (MWCC_CASES
 // 7i). Statement order matters: the x ^ 0x80000000 word first, then
 // 0x43300000, otherwise MWCC hoists lis 0x4330 above the extern lis.
 inline float convF32(s32 v) {

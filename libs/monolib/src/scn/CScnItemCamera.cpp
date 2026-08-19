@@ -182,7 +182,7 @@ extern "C" u32 lbl_eu_8056ECC0[0x354 / 4];
 
 // Fake single-inheritance interface used to reach the retail vtable slot 9
 // (offset 0x24) with real virtual dispatch. A manual function-pointer call
-// colors the vptr r4 (MWCC_REFERENCE: manual vtable cast vs real virtual
+// colors the vptr r4 (MWCC_CASES: manual vtable cast vs real virtual
 // dispatch); a virtual call emits the retail lwz r12,0 / lwz r12,0x24 / bctrl
 // shape. With -RTTI on MWCC reserves slots 0-1 for typeinfo, so the 8th
 // declared virtual lands at slot 9 (0x24).

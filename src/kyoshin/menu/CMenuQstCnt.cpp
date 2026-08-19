@@ -59,7 +59,7 @@ void func_80227260(QstData* self, u32 kind, u32 filter);
 // Retail emits the -O3 copy shape (load r0; store r0; per-field, no load
 // hoisting) while the unit is -O4,s. `#pragma scheduling off` reproduces the
 // interleaved single-register copy exactly (verified Wii/1.1 -O4,s); the
-// optimization_level pragma alone cannot (MWCC_REFERENCE §1302).
+// optimization_level pragma alone cannot (MWCC_CASES §1302).
 #pragma push
 #pragma scheduling off
 void func_80227660(QstInfo* dst, const QstInfo* src) {
@@ -95,7 +95,7 @@ extern "C" int func_80226B94() { return lbl_eu_80664720 != 0; }
 
 // Retail keeps setQstEntry/copyQstEntry/copyQstEntry2 as out-of-line calls
 // from every callsite; without the auto_inline guard, MWCC -inline auto
-// inlines them and the 32-iteration loops blow up (MWCC_REFERENCE sec hbm/seq).
+// inlines them and the 32-iteration loops blow up (MWCC_CASES sec hbm/seq).
 #pragma push
 #pragma auto_inline off
 void setQstEntry(QstEntry* entry, short a, short b, unsigned char c, unsigned char d, unsigned char e) {
@@ -203,7 +203,7 @@ u32 func_801355A0();
 void CMenuQstCnt::Init() {
     // Retail Init is -O4,s shaped (_savegpr_29 prologue, elf-vector frame);
     // the -O4,p unit emits individual stw otherwise. optimize_for_size
-    // reproduces the retail prologue/epilogue (MWCC_REFERENCE sec WUD).
+    // reproduces the retail prologue/epilogue (MWCC_CASES sec WUD).
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
@@ -446,7 +446,7 @@ void func_80226C5C(QstMenuData* self) {
 // displayed quest info.
 // Retail's prologue is -O4,s shaped (_savegpr_29 at 3 saved regs, elf-vector
 // frame); the -O4,p unit emits individual stw. optimize_for_size reproduces
-// the retail -O4,s codegen for this function (MWCC_REFERENCE sec WUD), and
+// the retail -O4,s codegen for this function (MWCC_CASES sec WUD), and
 // dont_inline stops it being folded into Move.
 #pragma push
 #pragma optimize_for_size on

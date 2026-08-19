@@ -11,7 +11,7 @@
 // Retail sdata2 magic doubles for int->float conversion, referenced by name so
 // no local .sdata2 pool is emitted (retail CScnFadeMan.o has an empty
 // .sdata2). AB88 = 0x4330000080000000 (signed), AB98 = 0x4330000000000000
-// (unsigned). See MWCC_REFERENCE 7i for the union trick.
+// (unsigned). See MWCC_CASES 7i for the union trick.
 extern double lbl_eu_8066AB88;
 extern double lbl_eu_8066AB98;
 

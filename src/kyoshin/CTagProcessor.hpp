@@ -627,7 +627,7 @@ struct TagPadDataView {
  * __ct__CTagProcessor / __ct__CTagProcessorSE); the base ctor is referenced
  * by its C-ABI name from the derived ctor functions, while the dtors are
  * genuine C++ virtual dtors (full mangled names) so the base-dtor chain is
- * compiler-generated (MWCC_REFERENCE "novtable + extern "C" ctor + virtual
+ * compiler-generated (MWCC_CASES "novtable + extern "C" ctor + virtual
  * dtor"). */
 struct __declspec(novtable) CTagProcessorBase
     : public nw4r::ut::TagProcessorBase<wchar_t> {
@@ -738,7 +738,7 @@ struct __declspec(novtable) CTagProcessorSE : public CTagProcessorBase {
 
 // C-ABI imports used by the tag-writer family. These retail symbols are
 // unmangled, so they must stay C-linkage or MWCC appends a __F<argtypes>
-// suffix to the emitted reloc names (MWCC_REFERENCE core pattern 2).
+// suffix to the emitted reloc names (MWCC_CASES core pattern 2).
 // func_801276F4 / func_8012615C / func_80128740 / func_801287BC are also
 // declared in CTalkWindow.hpp / CSimpleEveTalkWin.hpp with these signatures.
 extern "C" {
@@ -803,7 +803,7 @@ void __ct__CTagCodeMakeCrystal(void* self);
 
 // Tag-writer family entries (unmangled retail names; the arg-taking members
 // must stay C-linkage or MWCC appends a __F<argtypes> suffix to the emitted
-// reloc names - MWCC_REFERENCE core pattern 2).
+// reloc names - MWCC_CASES core pattern 2).
 float func_801291F4(nw4r::ut::TextWriterBase<wchar_t>* tw);
 void func_8012930C(nw4r::ut::TextWriterBase<wchar_t>* tw, float v);
 void func_80129430(nw4r::ut::TextWriterBase<wchar_t>* tw, float v);

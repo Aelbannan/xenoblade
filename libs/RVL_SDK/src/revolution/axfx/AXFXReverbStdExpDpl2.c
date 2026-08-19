@@ -19,7 +19,7 @@ static BOOL __InitParams(AXFX_REVERBSTD_EXP_DPL2* reverb);
 
 #pragma peephole off
 u32 AXFXReverbStdExpGetMemSizeDpl2(const AXFX_REVERBSTD_EXP_DPL2* reverb) {
-    // Six-local shape: the documented best (MWCC_REFERENCE ReverbStdExp
+    // Six-local shape: the documented best (MWCC_CASES ReverbStdExp
     // schedule ceilings) - scheduler-invariant; residual is the retail
     // lis-pair hoist + load distribution fingerprint, not source-fixable.
     u32 e7 = __EarlySizeTable[7];

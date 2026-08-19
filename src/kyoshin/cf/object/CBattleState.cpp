@@ -48,7 +48,7 @@ CBattleState::CBattleState() {
 //
 // findBattleEntry is a static search helper inlined via -ipa file: the
 // return-based form reproduces the retail's exact mtctr/bdnz loop with the
-// dead +(checks-1)=+7 shadow counter (MWCC_REFERENCE §inlined search
+// dead +(checks-1)=+7 shadow counter (MWCC_CASES §inlined search
 // helpers), indexing entries[j] straight from `this` so the +0x8 array base
 // folds into the load displacements (0x14, 0x48, ...) and the scan base
 // stays `this` (retail mr r4, r26).
@@ -99,7 +99,7 @@ void CBattleState::CBattleState_UnkVirtualFunc29() {
 //
 // symbols.txt mangles Fv, but retail leaves the entry arg in r4 (same
 // pattern as cf::CAIAction's UnkVirtualFunc1/2 -- see
-// docs/MWCC_REFERENCE.md).
+// docs/MWCC_CASES.md).
 //
 // sdata2 float pool constant read via lbl_eu_80667414@sda21 (0.9f).
 extern const float lbl_eu_80667414;
@@ -344,11 +344,11 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc11(u32 mask) {
 // exclusively. Do not touch ctor / UnkVirtualFunc6 / other vfuncs above.
 //
 // symbols.txt mangles Fv, but retail leaves the id in r4 (same fake-Fv ABI
-// as UnkVirtualFunc6 -- see docs/MWCC_REFERENCE.md).
+// as UnkVirtualFunc6 -- see docs/MWCC_CASES.md).
 //
 // Leaf / no stack frame: maps specific ids to single-bit masks (or 0 for
 // unmapped ids), then returns (this->unk4 & mask) != 0 via the standard
-// MWCC branchless neg/or/srwi boolify idiom (see MWCC_REFERENCE section 8c9).
+// MWCC branchless neg/or/srwi boolify idiom (see MWCC_CASES section 8c9).
 int cf::CBattleState::CBattleState_UnkVirtualFunc31(u32 id) {
     u16 mask;
 
@@ -2292,7 +2292,7 @@ extern "C" void CBattleState_UnkVirtualFunc18__Q22cf12CBattleStateFv() {}
 // Batch 2026-08: battlestate-vfunc12 owns CBattleState_UnkVirtualFunc12
 // exclusively. Retail symbol mangles Fv but the caller leaves the status id
 // in r4 (fake-Fv ABI, same as UnkVirtualFunc6/7/9). extern "C" + explicit
-// self/id params emits the exact Fv symbol (MWCC_REFERENCE §3908). Walks the
+// self/id params emits the exact Fv symbol (MWCC_CASES §3908). Walks the
 // 8-entry array at self+0x1388 (stride 0x34); on an id match, clears the
 // whole slot via a tail-call to memset (retail `b memset`).
 extern "C" void CBattleState_UnkVirtualFunc12__Q22cf12CBattleStateFv(cf::CBattleState* self, u32 id) {

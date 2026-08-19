@@ -6,7 +6,7 @@ extern "C" {
 // .sbss2:0x8066B558 (4B) | lbl_8066DCF8 - font-name blob; its address is passed
 // as the pName/tag to nw4r::ut::PackedFont (retail li r4, lbl_8066DCF8@sda21).
 // Zero-filled const+initializer aggregate lands in .sbss2 (NOBITS) per the
-// MWCC small-data placement rules (docs/MWCC_REFERENCE.md "Data-only TU").
+// MWCC small-data placement rules (docs/MWCC_CASES.md "Data-only TU").
 extern const char lbl_8066DCF8[4] = {0, 0, 0, 0};
 }
 

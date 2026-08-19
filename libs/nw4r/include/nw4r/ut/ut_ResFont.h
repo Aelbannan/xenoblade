@@ -12,7 +12,7 @@ struct BinaryFileHeader;
 
 // Retail vtable data (nw4r_data.s lbl_eu_8056AF90, .data 0x8056AF90). The
 // class is __declspec(novtable) so the TU emits no local vtable; the ctor
-// assigns the retail label explicitly (MWCC_REFERENCE "Retail-owned vtable
+// assigns the retail label explicitly (MWCC_CASES "Retail-owned vtable
 // data").
 extern "C" void* lbl_eu_8056AF90[];
 

@@ -1965,7 +1965,7 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
                     case 74: {
                         // +0x76D4 : |selfVert - objVert| >= threshold
                         // Retail: fabs(f1,f0); frsp f1,f1  -> fabsf(). Use
-                        // ml::math::abs (NW4R FAbs) per MWCC_REFERENCE
+                        // ml::math::abs (NW4R FAbs) per MWCC_CASES
                         // (fabs+frsp pair), NOT libc fabsf.
                         void* selfPos = ((CAIVtObj*)((u8*)((CfObjBase*)self->unkB14) + 0x3E9C))->v029();
                         void* objPos  = ((CAIVtObj*)(u8*)obj + 0x3E9C)->v029();

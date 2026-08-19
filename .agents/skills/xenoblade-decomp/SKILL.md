@@ -9,634 +9,212 @@ description: >-
 
 # Xenoblade decompilation
 
-> **Auto-loaded** via root `AGENTS.md` and this skill. Follow it at the start of
-> tasks in this repository when decompiling, matching, editing `src/kyoshin` or
-> `configure.py`, running the coop runner, objdiff, `DECOMP_MAP` targets, or
-> MWCC `EQUIVALENT_MATCH` / `FULL_MATCH` work.
+Operational workflow + acceptance policy for this **private/downstream** co-op fork.
+Read only the routing doc for the residual you're chasing (see **Routing**).
 
-## Before you edit code
+## Rules that never change
 
-1. Read `PLAN.md` §2 (legal boundaries), §3 (architecture invariants), and §17 (decompilation loop).
-2. Run `targets show <target-id>` and treat `tools/coop/targets.json` as the sole source of function identity and current target state.
-3. For MWCC matching work, search the knowledge base by function/symbol and
-   observed mismatch before editing source; open the relevant full records from
-   `docs/MWCC_REFERENCE.md` and prior attempts (protocol below).
-4. Confirm this is a **private/downstream fork** — do not upstream LLM-assisted matching work to `xbret/xenoblade`.
+> **Authoritative source for the policy below is `PLAN.md` §17** (and §2 for the fork boundary); this is the session-facing summary — if files ever disagree, PLAN §17 wins.
 
-**Current policy:** every target must reach **`EQUIVALENT_MATCH`** (function fuzzy ≥ 50% **and** `ppc_equivalence` proves `EQUIVALENT` under effect-aware `auto`—`ppc-eabi` or stronger—**and** split-size fit) or **`FULL_MATCH`** (100% static **and** split-size fit). Both are equal-tier acceptance outcomes, **but prefer `FULL_MATCH` when it is reachable**: a 100% static match is cheaper to certify (automatic `full-instruction-match` certificate, no `--smt` needed) and is stronger evidence than a semantic proof. Use `EQUIVALENT_MATCH` when 100% static has not yet been reached after the documented levers (register allocation, scheduling, immediate/instruction selection, FP codegen) — a semantic proof is a full-tier acceptance, and the byte-identity route stays open. Unit-level (no symbol) still requires 100% code + data.
+- **Private fork** — do NOT submit LLM-assisted matching upstream to `xbret/xenoblade`.
+- **Source is high-level C/C++ only.** No asm, `register`, or stack tricks outside the
+  §17.6 Gekko paired-single backend (see **Policy exceptions**).
+- **Acceptance** = `EQUIVALENT_MATCH` (fuzzy ≥ 50% **and** witness-certified equivalence **and**
+  split-size fit) **or** `FULL_MATCH` (100% static + split-size fit). Same tier; **prefer
+  `FULL_MATCH`** when reachable (cheaper to certify). Unit level always needs 100% code+data.
+  `STRUCTURAL` / `CODE_MATCH` / `HIGH_MATCH` are **not** final.
+- **no-SMT policy (hard):** the Z3 probe is **disabled** here. Never run `--smt`/`--linked` or
+  plain `run.py diff`. The only equivalence path is the **register-renaming witness** inside
+  `cycle`/`batch-cycle` (runs by default, no flag). A target the witness can't certify must reach
+  `FULL_MATCH` or stay a recorded near-miss.
+- **Matching is always possible.** A plateau = the current angle is exhausted, not impossible.
+  Angles in order: source/declaration/expression shape → `mw_version`/unit flags → reloc naming
+  (`extern "C" lbl_eu_*`) → register witness → tooling → §17.6 exception. Mark `BLOCKED` only for a
+  concrete external/tooling limit. Never say a target is impossible; record the residual + next angle.
+- **Callee gate:** if any callee isn't `FULL`/`EQUIVALENT_MATCH`, witness certification closes and
+  only `FULL_MATCH` works — push for it, don't default to moving on.
+- **`tools/coop/targets.json` is the sole source** of function identity/state — use
+  `targets show/status`, never hand-maintained checklists. `docs/ownership.csv` is legacy.
 
-**Matching is always possible.** Every retail function is the output of MWCC compiling *some* C/C++ source, so a matching reconstruction exists in principle. A plateau below 100% means the current angle is exhausted — not that the target is unmatchable. Angles to try, roughly in order: another source shape / declaration order / expression order; another compiler version or per-unit flag (`mw_version`, `-func_align 4/16`, `-ipa off`, `-O4,s`); reloc naming via `extern "C" lbl_eu_*`; the register-renaming witness path to `EQUIVALENT_MATCH` (the SMT probe is disabled by repo policy — see below); a tooling/engine improvement; or a documented `PLAN.md` §17.6 policy exception. `docs/MWCC_REFERENCE.md` is full of targets that once looked like hard caps and later reached FULL_MATCH/EQUIVALENT_MATCH through one of these levers. Never tell another agent (or record) that a target is impossible: record what was tried, the exact residual, and the next angle instead. A target is `BLOCKED` only for a concrete external/tooling limitation, never because it "doesn't match".
+## Glossary
 
-**No-SMT policy (hard):** the full Z3 SMT probe is DISABLED in this repo — do not run `cycle --smt`, `diff` without `--no-smt`, or anything passing `--smt`/`--linked`. Acceptance is **FULL_MATCH** (100% static, automatic certificate) or **witness-certified `EQUIVALENT_MATCH`** via the register-renaming witness that runs inside `cycle`/`batch-cycle` by default (no flag). A function the witness cannot certify (scheduling/immediate/instruction-selection diffs) must reach `FULL_MATCH` or stay recorded as a near-miss — the SMT probe is never the answer. Harness sessions additionally block these commands at the tool level. `coop run diff` defaults the probe ON (use `--no-smt` to skip while iterating); a skipped probe logs `inconclusive_smt_disabled` and cannot reach `EQUIVALENT_MATCH` — expected under this policy. **FULL_MATCH (100% static) targets are unaffected:** they still get a `full-instruction-match` certificate automatically on `cycle` (or `batch-cycle`) — byte-identical bodies are certified without the solver, so the `callees-accepted` frontier keeps populating.
+| Term | Meaning |
+|------|---------|
+| `FULL_MATCH` | 100% static byte match (code + relocs + size); automatic `full-instruction-match` cert, no solver. |
+| `EQUIVALENT_MATCH` | Fuzzy ≥ 50% **and** the register-renaming witness certifies equivalence **and** split-size fit. |
+| `reg_swap` | Same instructions, different register colors → `docs/register_mapping.md`. |
+| `structural` | Opcode/immediate/branch differs → `docs/scheduling.md` / `docs/instruction_selection.md`. |
+| `witness` | The register-renaming proof that certifies `EQUIVALENT_MATCH`; runs inside `cycle`/`batch-cycle`. |
+| `no-SMT` | Z3 solver is disabled here; never run `--smt`/`--linked`/plain `run.py diff`. |
+| `split-size` | Decomp `.text` ≤ retail `splits.txt` budget; gates unit promotion. |
+| `callees-accepted` | A safe frontier where every callee is already `EQUIVALENT_MATCH`/`FULL_MATCH`. |
+| `policy_exception` | §17.6 allowed escape; must be logged in `attempts.jsonl`. |
 
-**Probe etiquette (each probe costs 15-30 min of machine time):** run the probe **once, at acceptance time** — not during iteration (hexdiff is the iteration tool). The register-renaming witness runs inside `cycle` and is the only equivalence path (this repo has a **no-SMT policy**: the SMT probe is not run, and harness sessions block `--smt`/`--linked` and plain `run.py diff` at the tool level). Before acceptance, confirm the callee tree is ready: indirect calls, unresolved callees, or `called_functions` not yet FULL_MATCH/EQUIVALENT_MATCH fail closed no matter what (`cycle` prints this as an early warning). On a callee-blocked target, witness certification is closed, so **FULL_MATCH is the only acceptance route — push for it instead of defaulting to moving on**: iterate with hexdiff through the documented levers (source shape, declaration/expression order, per-unit flags/`mw_version`, reloc naming) toward a byte-identical body. A FULL_MATCH here also populates the `callees-accepted` frontier for other agents. Record the blocker and move on only when the byte-identity route is genuinely exhausted for a concrete external/tooling limitation. Never retry the same function with `--contract` variants (strict/live-out/memory/ppc-eabi) — accept the `auto` outcome. Concurrent probes starve hexdiff builds and have hung agents for hours; when other agents are active, prefer deferring the probe to a quiet moment.
+## Before you edit
 
-**Source language:** reconstruction must be **high-level C or C++ only** (MWCC), except for the isolated Gekko paired-single backend exception in §17.6. Express recovered **semantics** — fields, locals, control flow, and normal function calls — rather than register-level or stack-level implementation detail outside that exception.
+- Read `PLAN.md` §§2, 3, 17 (legal boundaries, invariants, matching loop). Read other sections only
+  when the task touches that subsystem.
+- `python3 tools/coop/run.py targets show <id>` — confirm identity + current state.
+- For MWCC work, search the KB first (below), open the top records, and cite knowledge IDs in the
+  cycle hypothesis. Don't repeat a recorded failed experiment without a new reason.
 
-Use retail assembly only as **read-only reference** (objdiff, Ghidra, `build/us/asm/`) except inside a documented isolated PS backend. Do **not** ship arbitrary assembly, register/stack micro-matching, standalone `.s` fragments, or other non-C/C++ source in `src/**` or `libs/**`.
-
-**High-level means:** readable code a human would write without looking at disassembly — struct members, parameters, return values, `if`/`else`, loops, and small named helpers. **Not** micro-matching prologue/epilogue shape in source.
-
-## One-time setup
+## Setup
 
 ```bash
-cp tools/coop/coop.example.json coop.json
-# Place retail files at orig/<region>/sys/main.dol and orig/<region>/files/rels/*.rel
-
+cp tools/coop/coop.example.json coop.json   # first time only
+# retail files at orig/<region>/sys/main.dol and orig/<region>/files/rels/*.rel  (default region: us)
 python3 tools/coop/run.py status
-python3 tools/coop/run.py baseline   # sha1 + configure + ninja
+python3 tools/coop/run.py baseline          # sha1 + configure + ninja
 ```
 
-Region defaults to `us` in `coop.json`. Change with `--config` or edit `region`.
+Always use `.venv/bin/python3` (venv has 3.13.6; system python 3.9 fails on project syntax).
 
-## Scratch files and compiler experiments
+## Scratch / compiler experiments
 
-All throwaway scratch/compiler tests — MWCC behavior probes, isolated flag
-comparisons, small C/C++ snippets, decomp.me ctx drafts — go in the repo-root
-`.scratch/` directory (gitignored). Do not create scratch files in `src/**`,
-`libs/**`, `tools/**`, or other committed paths, and do not commit `.scratch/`
-contents. Anything you wouldn't ship stays there.
-
-```bash
-mkdir -p .scratch   # e.g. .scratch/mwcc_flag_probe.cpp, .scratch/ps_backend_test.cpp
-```
-
-## Scratch files and compiler experiments
-
-All throwaway scratch/compiler tests — MWCC behavior probes, isolated flag
-comparisons, small C/C++ snippets, decomp.me ctx drafts — go in the repo-root
-`.scratch/` directory (gitignored). Do not create scratch files in `src/**`,
-`libs/**`, `tools/**`, or other committed paths, and do not commit `.scratch/`
-contents. Anything you wouldn't ship stays there.
-
-```bash
-mkdir -p .scratch   # e.g. .scratch/mwcc_flag_probe.cpp, .scratch/ps_backend_test.cpp
-```
-
-## Scratch files and compiler experiments
-
-All throwaway scratch/compiler tests — MWCC behavior probes, isolated flag
-comparisons, small C/C++ snippets, decomp.me ctx drafts — go in the repo-root
-`.scratch/` directory (gitignored). Do not create scratch files in `src/**`,
-`libs/**`, `tools/**`, or other committed paths, and do not commit `.scratch/`
-contents. Anything you wouldn't ship stays there.
-
-```bash
-mkdir -p .scratch   # e.g. .scratch/mwcc_flag_probe.cpp, .scratch/ps_backend_test.cpp
-```
+All throwaway probes (MWCC behavior, flag comparisons, snippets, decomp.me ctx drafts) live in the
+repo-root `.scratch/` (gitignored). Never in `src/**`/`libs/**`/`tools/**`; never commit them.
 
 ## Pick a target
 
 ```bash
-python3 tools/coop/run.py targets list
-python3 tools/coop/run.py targets show <target-id>
-python3 tools/coop/run.py targets sync-calls
+python3 tools/coop/run.py targets list | show <id> | sync-calls
+python3 tools/coop/run.py targets claim <id> --owner <agent>   # then release when done
+python3 tools/coop/run.py targets claim-smallest --owner <agent> [--num 5]  # quick wins
 ```
 
-Prefer buildable targets inside the user's named feature slice, or let the harness pick the `ready` frontier when the user has not named a function. Skip targets with `buildable=no` until source exists — recover via Ghidra first, add `.cpp` to `configure.py`, reconfigure.
-
-For bottom-up matching across the complete symbol catalog, use the retail call
-graph. `leaf` requires no direct, unresolved, or indirect calls;
-`callees-accepted` requires at least one direct callee and every callee
-accepted (`EQUIVALENT_MATCH` / `FULL_MATCH`) with a current semantic
-certificate; `ready` is their union. When accepted targets lack certificates,
-refresh them leaves-first before expecting a `callees-accepted` frontier:
-
-```bash
-python3 tools/coop/run.py targets recertify --bottom-up --dry-run
-python3 tools/coop/run.py targets recertify --bottom-up
-python3 tools/coop/run.py harness --selection leaf --include-catalog --dry-run
-python3 tools/coop/run.py harness --selection callees-accepted --include-catalog --dry-run
-python3 tools/coop/run.py harness --selection ready --include-catalog --limit 20
-```
-
-Functions with indirect or unresolved calls are excluded from these safe
-frontiers until those edges are modeled. Rerun `targets sync-calls` after
-regenerating retail assembly or changing the symbol map.
-
-Claim the target before editing; the registry supplies the source path as the default exclusive scope:
-
-```bash
-python3 tools/coop/run.py targets claim <target-id> --owner <agent>
-python3 tools/coop/run.py targets release <target-id> --owner <agent>
-```
-
-To claim the smallest NOT_STARTED function(s) by binary size (useful for quick
-wins or onboarding new agents):
-
-```bash
-# Claim the single smallest function
-python3 tools/coop/run.py targets claim-smallest --owner <agent>
-
-# Claim the 5 smallest
-python3 tools/coop/run.py targets claim-smallest --owner <agent> --num 5
-
-# Just list the smallest without claiming
-python3 tools/coop/run.py targets claim-smallest --no-claim --num 10
-```
-
-Each claimed target prints its id, demangled function name, source path, and
-binary size. Only buildable function-kind targets with `NOT_STARTED` status
-are considered.
-
-`docs/ownership.csv` is legacy history, not current coordination state.
-
-## Symbol recovery (`tools/symrecover.py`)
-
-After **`EQUIVALENT_MATCH`** / **`FULL_MATCH`** on a function (or when investigating `UnkClass_*` / `func_*` placeholders), run symbol recovery **before** renaming types in source.
-
-```bash
-# List unknown placeholder types in the active region
-python3 tools/coop/run.py symbols list --kind UnkClass
-
-# Inspect one type (name or address suffix)
-python3 tools/coop/run.py symbols show 8043C59C
-python3 tools/coop/run.py symbols xref 8043C59C
-
-# Demangle symbols from config/<region>/symbols.txt
-python3 tools/coop/run.py symbols demangle func_80459270__17UnkClass_8043C59CFv
-
-# Plan a rename (checks MWCC mangling length compatibility)
-python3 tools/coop/run.py symbols rename-plan UnkClass_8043C59C CViewRectData --verbose
-
-# Apply symbol-map rename only
-python3 tools/coop/run.py symbols rename-apply UnkClass_8043C59C CViewRectData --dry-run
-
-# Apply full rename: symbols + source + configure + splits + file renames
-python3 tools/coop/run.py symbols rename-all UnkClass_8043C59C CViewRectDataCore --dry-run
-python3 tools/coop/run.py symbols rename-all UnkClass_8043C59C CViewRectDataCore
-```
-
-Equivalent standalone CLI: `python tools/symrecover.py <subcommand> …`
-
-**Workflow when a type is understood:**
-
-1. `symbols show` + `symbols xref` — methods, namespaces, split unit, source files.
-2. `symbols demangle` on each symbol in the unit — recover method names and signatures.
-3. `symbols rename-plan <old> <new>` — confirm mangling-compatible length when possible.
-4. Decompile / match all functions in the unit at `EQUIVALENT_MATCH` (or `FULL_MATCH`).
-5. **`symbols rename-all <old> <new>`** — updates `symbols.txt`, source, `configure.py`, `splits.txt`, the legacy ownership history, and renames `UnkClass_*.cpp/.hpp` files (use `--dry-run` first). Update the canonical target record when its symbol changes.
-6. `python3 configure.py && ninja` and `coop run diff` every affected symbol.
-7. Log the recovered name in `attempts.jsonl` (`hypothesis` / `next_change`).
-
-**Rules:**
-
-- Retail `main.dol` is stripped — `symbols.txt` names are decomp annotations; recovered names must still match MWCC mangling for matching.
-- Function names that indicate args/params — e.g. the `_Fv` suffix in `func_80459270__17UnkClass_8043C59CFv` — are **incorrect**: the mangled signature fragment is an uneducated decompiler guess, not recovered evidence. Treat `_Fv` / `_Fi` / `_FUl`-style suffixes as no proof of the real parameter list (or function identity), and never copy them into source as a signature. Recover the true signature from retail usage (`symbols xref`, `hexdiff --asm`) and demangle the symbol before writing the parameter list.
-- Prefer **same-length** renames (`UnkClass_8045F564` → `CLibLayoutRegion`, 17 chars) to avoid re-mangling every symbol. `rename-all` refuses length mismatches unless `--force`.
-- `rename-apply` without `--all` only edits symbol maps; use **`rename-all`** (or `rename-apply --all`) for source and build files.
-- Headers already named semantically (e.g. `CViewRectData.hpp`) are updated in place; only files **named** `UnkClass_<addr>.cpp` are renamed on disk.
-- Extend `KNOWN_NS_PREFIXES` in `tools/symbolrecover/lib/mwcc.py` when you find new namespaces (`cf`, `ml`, `LOD`, `mpfsys`, …).
+- Skip `buildable=no` until source exists (recover via Ghidra, add `.cpp` to `configure.py`).
+- Frontiers (safe for bottom-up): `leaf`, `callees-accepted`, `ready`. Refresh certificates
+  leaves-first before expecting a callee frontier:
+  `targets recertify --bottom-up` then `harness --selection ready --include-catalog --dry-run`.
+- Rerun `sync-calls` after regenerating retail asm / changing the symbol map.
 
 ## Decompilation loop
 
-### pi-harness sessions: structured tools, no bash
-
-When you are running inside the pi-harness batch harness, you have NO bash.
-The whole loop is covered by these structured tools (no shell needed):
-
-- `hexdiff <unit> <symbol>` — per-function diff: mismatch/structural/reg_swap
-  counts, size check, **reloc drift + fix suggestions**. The iteration tool.
-- `symbols <unit> [substr]` — retail symbol table (address | size | name).
-- `targets <id>` — target registry record (identity, status, required_level).
-- `kb <query> [kind=] [tag=] [status=]` — MWCC knowledge base dual search:
-  sibling attempts (status + match%) AND reference patterns. Query by mangled
-  symbol or short mismatch terms (e.g. `kb reg swap mullw`).
-- `ctx <source>` — decomp.me context (struct layouts / types) for a file.
-
-Read/edit/write/grep/find/ls are also available. The skill's CLI examples
-below (`python3 tools/...`) map to these tools as follows:
-`hexdiff.py` → `hexdiff` · `mwcc_kb.py search` → `kb` · `run.py ctx` → `ctx`.
-
-**Hard blocks in harness sessions (enforced at the tool level, not by
-prompt):** no `--smt`/`--linked` anywhere, no plain `run.py diff` (it would
-run the SMT probe), no git revert/push, no `cycle`/`batch-cycle`/`ninja`/
-`configure.py` (harness-owned acceptance), no target-registry writes. The
-register-renaming witness is the only equivalence path — the harness runs it
-inside `cycle` at acceptance time.
-
-For each target:
-
-```text
-export assembly/symbols/types (Ghidra or objdiff) — **reference only**
-→ search MWCC knowledge by identity + mismatch; open top records
-→ draft/edit **high-level C or C++** in the owning translation unit
-→ python3 tools/coop/run.py ctx <source.cpp>
-→ **Rapid feedback loop** (use `hexdiff`, not `cycle`; ~1s vs 2-3min):
-    python3 tools/coop/hexdiff.py <unit> --all          # unit triage: one build, table of all functions
-    python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --brief
-    → check the one-line verdict (mismatch/structural/reg_swap) went down; if it went up, revert the edit
-    → iterate until 0 structural / 0 mismatches, or after 3 non-improving attempts record an open-item packet and switch angle (see "Matching is always possible" above)
-→ **Final acceptance** (only when hexdiff shows few misses, or after 3 non-improving attempts have been recorded):
-    python3 tools/coop/run.py cycle <target-id> \
-        --hypothesis "..." --next-change "..." --runtime-test ""
-    # If fuzzy is in [50, 100) and the register-renaming witness did not
-    # certify, the SMT probe is NOT available in this repo (no-SMT policy) —
-    # iterate with hexdiff toward FULL_MATCH or record the residual.
-→ verify split object size: `coop run size <unit>` (decomp `.text` ≤ retail split budget)
-→ optional: `behaviour ppc <test-id>` when a PPC harness exists
-→ if `cycle` FAILS: inspect objdiff / build/coop-function-diff.json, revise, repeat
-→ if `cycle` PASSES: the accepted state is persisted in `targets.json`; release the claim and do not edit the same function concurrently
-```
-
-### Batch cycle (mass-acceptance after matching)
-
-After matching a set of functions (e.g. an entire unit or milestone), mass-cycle
-all of them at once with `batch-cycle.py` instead of running `cycle` one-by-one:
+Per target: export retail asm/symbols (**reference only**) → search KB by identity + mismatch →
+draft high-level C/C++ in the owning TU → ✱**iterate with `hexdiff`** (fast; `cycle` is the final
+gate, ~1s vs 2-3min):
 
 ```bash
-# Per-target hypothesis/next-change via JSON map
-python3 tools/coop/batch-cycle.py us-80345678 us-80345680 \
-    --hypothesis-map batch-map.json
-
-# Shared defaults for all targets
-python3 tools/coop/batch-cycle.py us-80345678 us-80345680 \
-    --default-hypothesis "high-level C reconstruction complete" \
-    --default-next-change "verify static match and equivalence"
-
-# Dry-run to preview
-python3 tools/coop/batch-cycle.py us-80345678 \
-    --hypothesis-map batch-map.json --dry-run
-
-# Write structured JSON summary for agent handoff / CI
-python3 tools/coop/batch-cycle.py us-80345678 us-80345680 \
-    --default-hypothesis "batch cleanup" \
-    --default-next-change "accept if pass" \
-    --summary /tmp/batch-summary.json
-
-# (no-SMT policy: --linked / SMT fallback is disabled in this repo)
-python3 tools/coop/batch-cycle.py us-80345678 --linked
+python3 tools/coop/hexdiff.py <unit> --symbol <mangled> [--brief|--json|--asm|--relocs]
+python3 tools/coop/hexdiff.py <unit> --all      # unit triage: one build, per-function table
 ```
 
-Processes targets sequentially, continues on failure, exits 0 only when all pass.
-Full reference: `batch-cycle.py --help`.
+- Read the one-line verdict + `reg_swap`/`structural` breakdown. If a change raises a count, **revert**.
+  After 3 non-improving attempts, record an open-item packet (status/%, size, categories, ruled-out
+  hypotheses, exact residual, next 3 experiments) and switch angle.
+- **Prefer `hexdiff` over raw `ninja`** — it owns the build + repo-wide lock
+  (`build/<region>/.hexdiff.lock`), safe for concurrent agents. Only run `ninja`/`configure.py`
+  when hexdiff can't express it (e.g. full-tree rebuild). Find symbols with `hexdiff --list`/`--asm`,
+  not objdump/grep. No external source hunting (retail asm + MWCC_CASES + codebase only).
+- **Acceptance** (only when hexdiff is clean, or an open item is recorded):
+  `python3 tools/coop/run.py cycle <id> --hypothesis "..." --next-change "..."` — the witness runs
+  inside by default. On FAIL, inspect build/coop-function-diff.json, revise, retry. On PASS the state
+  persists in `targets.json`; **release the claim**; don't edit the same function concurrently.
+- **Split-size gate** (unit promotion): `python3 tools/coop/run.py size <unit>` — decomp `.text` must
+  be ≤ retail `splits.txt` budget. Size overflow blocks TU promotion (not per-function acceptance).
+- Batch: `batch-cycle.py` with `--hypothesis-map` / `--default-hypothesis` / `--summary` (no `--linked`).
 
-Hypothesis map JSON format (`target_id` → per-target overrides):
+### pi-harness sessions (no bash)
 
-```json
-{
-  "us-80345678": {
-    "hypothesis": "specific hypothesis text",
-    "next_change": "specific next change text",
-    "runtime_test": "behaviour:<test-id>"
-  }
-}
-```
+Structured tools cover the loop: `hexdiff` (→ hexdiff.py), `symbols`, `targets`, `kb` (→ mwcc_kb.py),
+`ctx` (→ run.py ctx), plus read/edit/write/grep/find/ls. Hard blocks enforced at tool level: no
+`--smt`/`--linked`, no plain `run.py diff`, no git push/revert, no `cycle`/`ninja`/`configure.py`
+(harness-owned), no registry writes. The witness is the only equivalence path, run inside `cycle`.
 
-### Bounded attempt protocol
+## Symbol recovery (`run.py symbols`)
 
-- State one mismatch hypothesis and make one bounded source change per cycle.
-- Preserve the best-known candidate; do not compound regressions with unrelated edits.
-- After three non-improving attempts, record an **open-item packet**: best status/percent,
-  size result, mismatch categories, ruled-out hypotheses, exact residual, and the
-  next three bounded experiments.
-- An open item is not acceptance — and it is not a dead end. Keep the target `ACTIVE`
-  or set it `BLOCKED` only for a concrete external/tooling limitation. Matching is
-  always possible: a plateau means the current angle is exhausted, so record the
-  next angle and switch.
-- Final handoff must report target status, static percent, equivalence result and
-  contract when applicable, size result, changed files, reusable insight, claim
-  release state, and remaining risk.
+Run **after** a match (or when investigating `UnkClass_*`/`func_*`), before renaming types:
+`symbols list --kind UnkClass | show <addr> | xref <addr> | demangle <sym> | rename-plan <old> <new> | rename-all <old> <new> [--dry-run]`.
 
-### Behaviour comparison (static + optional PPC)
+- `rename-all` updates symbols + source + `configure.py` + `splits.txt` + file renames. Prefer
+  **same-length** names (avoids re-mangling); `--force` for mismatch. `rename-apply` alone = maps only.
+- `_Fv`/`_Fi`/`_FUl` suffixes are **uneducated guesses**, never signature evidence — recover the real
+  param list from retail usage (`symbols xref`, `hexdiff --asm`).
+- Add new namespaces to `KNOWN_NS_PREFIXES` in `tools/symbolrecover/lib/mwcc.py`.
 
-Retail vs decomp objects can be checked with `tools/test/compare_behaviour/` (no host dual-oracle layer):
+## Logging & evidence
+
+- Append to `docs/evidence/decomp/attempts.jsonl`: `target_id, function, status, instruction_match,
+  hypothesis, next_change` (optional `runtime_test`). Append-only history; live state = `targets.json`.
+- **Breakthrough?** append it in the same session — **general/reusable** fix → `docs/MWCC_PATTERNS.md`,
+  **per-target** record → `docs/MWCC_CASES.md` (don't bury it in attempts.jsonl). After 100%, add
+  Dolphin proof when `PLAN.md` requires `BEHAVIOR_VERIFIED`.
+
+## MWCC knowledge (patterns + cases)
 
 ```bash
-python3 tools/coop/run.py behaviour audit              # size budget for registered tests
-python3 tools/coop/run.py behaviour compare <test-id>  # static + ppc if present
-python3 tools/coop/run.py behaviour ppc <test-id>      # headless Dolphin only
+python3 tools/mwcc_kb.py search "<symbol-or-mismatch-terms>" --kind reference --json
+python3 tools/mwcc_kb.py search "<terms>" --kind attempt --json   # and show <id>
 ```
 
-**Rules:**
+The SQLite index covers **both** `docs/MWCC_PATTERNS.md` (general) and `docs/MWCC_CASES.md`
+(per-target) plus attempts/contributions — one search, either bucket. Search order: exact symbol →
+one query per mismatch category → repo-proven patterns → prior attempts. Open full records — don't
+act from snippets. Full protocol: `docs/MWCC_PATTERNS.md`.
 
-- Acceptance bar remains **`EQUIVALENT_MATCH`** (or `FULL_MATCH`) + split-size fit.
-- Host `*.cpp` dual-oracle tests were **removed** — do not add them back.
-- Below 100%, continue matching toward `EQUIVALENT_MATCH` (SMT + split-size) or `FULL_MATCH`, with optional **PPC** when `ppc_source` is set.
-- Full policy: `tools/test/compare_behaviour/README.md`.
-
-### Split object size (required before `Matching` / acceptance)
-
-Each translation unit has a fixed retail `.text` slice in `config/<region>/splits.txt`. The decompiled object’s **`.text` section** must not exceed that budget — otherwise the unit cannot be linked into `main.dol` at the retail address.
-
-```bash
-python3 tools/coop/run.py size monolib/src/core/CViewRectDataCore
-python3 tools/coop/run.py size --all
-```
-
-**Rules:**
-
-- `diff`, `cycle`, and `behaviour compare` print a `size:` line but do **not** exit non-zero on a unit split-size overrun — function acceptance is per-function (user policy 2026-08).
-- Unit split size gates only **unit promotion**: `run.py size` must PASS before the unit's configure.py `NonMatching` → `Matching` flip (TU-final `sizeOk`). Behaviour tests can pass while size fails (semantics ≠ codegen fit) — size overflow blocks promotion, not per-function acceptance.
-- Retail budget = `splits.txt` `.text end - start`; compared against ELF `.text` in `build/<region>/src/...o` vs retail `build/<region>/obj/...o`.
-- Implementation: `tools/coop/lib/object_size.py`.
-
-Manual steps equivalent to `cycle`:
-
-```bash
-python3 tools/coop/run.py ctx src/kyoshin/cf/CfPadTask.cpp
-python3 tools/coop/run.py build kyoshin/cf/CfPadTask
-python3 tools/coop/run.py diff kyoshin/cf/CfPadTask --symbol <mangled-symbol>
-python3 tools/coop/run.py size kyoshin/cf/CfPadTask
-```
-
-### Instruction-level hex diff (`tools/coop/hexdiff.py`)
-
-**Primary rapid feedback tool** — ~1s per build+diff vs 2-3min for `cycle`. Use hexdiff during iterative editing, run `cycle` only for final acceptance.
-
-> **Prefer hexdiff over raw ninja:** hexdiff performs the build itself and holds the repo-wide build lock (`build/<region>/.hexdiff.lock`), making it safe for concurrent agents. Only run `ninja`/`configure.py` directly when hexdiff cannot express the operation (e.g. full-tree rebuild after reconfiguration).
-
-```bash
-# Terminal mode — colour-coded side-by-side, one-line verdict first
-python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol>
-
-# JSON mode — machine-readable, consumable by scripts / cycle fallback
-python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --json
-
-# Skip rebuild when the object is already up to date
-python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --no-build
-
-# Show relocation tables alongside the diff
-python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --relocs
-
-# Unit triage — one build, per-function match table (no --symbol needed)
-python3 tools/coop/hexdiff.py <unit> --all
-
-# List retail function symbols to find mangled names (no build)
-python3 tools/coop/hexdiff.py <unit> --list [substr]
-
-# Iteration mode — one-line verdict, then mismatched instructions only
-python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --brief
-
-# Full clean disassembly of both sides (replaces objdump)
-python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --asm
-```
-
-**Enhanced output** (terminal and JSON):
-- **One-line verdict first** — every terminal run opens with `name: 84.7% | 0 structural | 20 reg_swap | 0x20c/0x20c PASS` — triage without parsing output.
-- **Reg-swap vs structural breakdown** — terminal e.g. `6 mismatch(es), 6 pure reg-swaps (100%), 13 relocs`. JSON: `reg_swap_count`, `structural_count`.
-- **Register mapping table** — terminal and JSON `reg_mapping` show retail→decomp register pairs per instruction/opcode/operand-position. E.g. `addi: r3→r5, lwz: r5→r3, psq_l: r3→r5, r5→r3` — instantly reveals Chaitin swap patterns.
-- **Compiler config line** — the unit's configured `mw_version`/`extra_cflags` from configure.py is printed (e.g. `GC/3.0a5.2 -func_align 4`), so you know the exact compiler contract before touching flags.
-- **KB hints** — detects known MWCC_REFERENCE plateau signatures (alignment nop `ori r0,r0,0` near `mtctr` on one side; bte-family unit without `-func_align 4`) and prints the documented flag fix.
-- **Reloc-drift section** — terminal ends with `Reloc drift (N):` listing each diverging reloc site with the approved source fix (`extern "C"` declaration for name drift; inline/emit-the-symbol guidance for presence drift; builtin/expression guidance for type drift) plus an EQUIVALENT_MATCH fallback note when the symbol can't be named in source; JSON adds `reloc_drift` + `reloc_suggestions`. Uses the mined map (below); rebuild it after accepting reloc fixes.
-- **Per-instruction flags** — JSON per-offset entries include `retail_asm`, `decomp_asm`, `reg_swap` (bool), `structural` (bool).
-
-**Workflow rules:**
-- **Find symbols with `hexdiff --list`, read disassembly with `--asm`** — do NOT run objdump / llvm-objdump / powerpc-eabi-objdump or grep `.s` files for names; hexdiff prints the same disassembly with match annotations. Read the one-line verdict — do NOT grep hexdiff's JSON apart. Search budget: max 3 grep/find per function.
-- **Per-unit compiler flags are a documented matching tool:** if hexdiff shows a diff that MWCC_REFERENCE attributes to flags (`-func_align 4/16`, `-ipa off`, `mw_version="GC/3.0a5.2"`), search MWCC_REFERENCE for the documented fix and apply it to the unit's `Object(...)` in configure.py (`mw_version` / `extra_cflags`), then hexdiff-verify and revert if it doesn't help. Do NOT blind-sweep flag combos, edit `cflags_sdk` globals, or leave failed flag experiments in configure.py.
-- **No external source hunting:** retail ASM + MWCC_REFERENCE + the codebase are the only references. Do NOT web-search / curl external BTE or SDK sources — wiced-history is Broadcom-proprietary, and downloaded C is never compiled with MWCC so it cannot match retail codegen.
-
-Output legend:
-- **Green** — instruction bytes match
-- **Red** — byte mismatch (retail hex vs decomp hex shown side by side)
-- **Yellow** — unresolved ELF relocation placeholder (the linker will fill this)
-
-The `<unit>` argument accepts any objdiff unit hint (e.g. `kyoshin/COccCulling`)
-or source path (e.g. `src/kyoshin/COccCulling.cpp`). The `--symbol` accepts the
-mangled name, case-insensitive exact, or unique substring.
-
-The tool uses the same ELF parser as `ppc_equivalence`
-(`tools/ppc_equivalence/elf_symbols.py`) and automatically resolves the
-retail/decomp `.o` pair from the objdiff project config. It builds the decomp
-object via `ninja` before diffing unless `--no-build` is passed.
-
-**When to use:** before editing source to understand the exact mismatch pattern
-(register swap, instruction selection, branch target, relocation), and after
-each edit to verify improvement or spot regressions. The `--json` output is
-designed as a drop-in replacement for `objdiff-cli diff -o` when the cycle
-command's function-diff JSON is unavailable.
-
-### Reloc name-drift map (`tools/coop/reloc_map.py`)
-
-Standalone detector + repo map miner for MWCC_REFERENCE §1 (the #1 cause of
-99.3-99.9% near-misses: bytes identical, reloc *names* differ).
-
-```bash
-# Per-function reloc drift + concrete fixes
-python3 tools/coop/reloc_map.py diff <unit> --symbol <mangled-sym> --no-build
-
-# Batch-mine the named-symbol map across every retail/decomp objdiff pair
-python3 tools/coop/reloc_map.py mine          # → tools/coop/retail_reloc_map.json
-python3 tools/coop/reloc_map.py show --global-only
-python3 tools/coop/reloc_map.py show --symbol spInstance
-```
-
-The miner aligns relocs **per function pair** (same name + equal `.text` size)
-and classifies `name` / `addend` / `layout` / `structural` drift; TU-local
-labels (`@N`, `...bss.0`) get unit-scoped keys. Re-run `mine` after accepting
-reloc fixes so suggestions refresh. Tests: `tools/coop/tests/test_reloc_map.py`.
-
-### PPC semantic equivalence (DISABLED — Z3/SMT, see no-SMT policy above)
-
-This section is **disabled by repo policy**: it runs the Z3 SMT checker, which
-the no-SMT policy forbids. Do not use `run.py equivalence` or `tools/
-ppc_equivalence` for acceptance evidence. The only equivalence path is the
-register-renaming witness inside `cycle`/`batch-cycle`. (Kept for reference of
-what exists, not as an instruction.)
-
-```bash
-python3 tools/coop/run.py equivalence check-hex \
-  --original <retail-hex> --candidate <decomp-hex>
-python3 tools/coop/run.py equivalence check-unit <unit> --symbol <mangled-or-token>
-```
-
-Read `tools/ppc_equivalence/README.md` before use. An equivalence result applies
-only to its printed observables and assumptions. Unsupported instructions,
-timeouts, and solver `unknown` are inconclusive. This check feeds
-`EQUIVALENT_MATCH` when fuzzy ≥ 50%; it does not replace split-size checks. Continue to `FULL_MATCH` or close at `EQUIVALENT_MATCH` — both satisfy the acceptance bar.
-
-`check-unit` / `check-objects` extract the named `.text` symbol from the
-objdiff retail/decomp `.o` pair. Functions with unresolved ELF relocations are
-inconclusive rather than proving placeholder immediates. The co-op wrapper
-defaults function checks to effect-aware `--contract auto` — always use the
-default; do NOT re-run probes with `--contract` variants (strict/live-out/
-memory/ppc-eabi) or manual `--observe` retries. Each probe run costs 15-30 min;
-contract retries are an anti-pattern (they hammer the solver and stall
-concurrent agents). Accept the `auto` outcome — inconclusive means record it and
-move on.
-
-### decomp.me (optional)
-
-For **small** functions that have plateaued: generate ctx (the `ctx` tool) →
-create a scratch on decomp.me → paste matched code back → `cycle` again.
-(Note: objdiff-cli is not usable in this repo — per-unit diffs return empty
-and the report needs a fully-linked project; hexdiff covers the diff needs.)
-
-### Large functions
-
-Decompose into leaf symbols/units first. Each leaf and the parent must still end at **`EQUIVALENT_MATCH`** (or `FULL_MATCH`) before the target is closed.
-
-## Logging and evidence
-
-- Attempts append to `docs/evidence/decomp/attempts.jsonl` (JSONL, one object per line).
-- Current function/workflow state lives only in `tools/coop/targets.json`; `attempts.jsonl` is append-only history.
-- Required fields: `target_id`, `function`, `status`, `instruction_match`, `hypothesis`, `next_change`.
-- Optional: set `runtime_test` to `behaviour:<test-id>` / `ppc:<test-id>` when a PPC harness passes.
-- After **100%** match, add Dolphin proof when `PLAN.md` requires it (`BEHAVIOR_VERIFIED`).
-
-## MWCC patterns — search, read, and update the knowledge base
-
-- **Before matching:** use the generated SQLite/FTS index, which combines
-  `docs/MWCC_REFERENCE.md` with `docs/evidence/decomp/attempts.jsonl`:
-
-  ```bash
-  python3 tools/mwcc_kb.py search "<function-or-mangled-symbol>" --json
-  python3 tools/mwcc_kb.py search "<short mismatch terms>" --kind reference --json
-  python3 tools/mwcc_kb.py search "<short mismatch terms>" --kind attempt --json
-  python3 tools/mwcc_kb.py show <result-id> --json
-  ```
-
-  In pi-harness sessions, the `kb` tool wraps this dual search (identity +
-  mismatch terms in one call): `kb <symbol>` for sibling attempts, `kb <short
-  mismatch terms> tag=<category>` for reference patterns.
-
-  Search in this order: exact function/symbol; one short query per observed
-  mismatch category; repo-proven reference patterns; prior attempts. Start with
-  the default all-terms mode. If recall is empty, remove a term or use
-  `--mode any`, then narrow with `--tag`, `--kind`, or `--status`. Open the full
-  top records—do not act from snippets alone. Name the relevant knowledge IDs
-  in the cycle hypothesis and do not repeat a recorded failed experiment
-  without a new reason. Full protocol: `docs/MWCC_KNOWLEDGE_BASE.md`.
-- **After a breakthrough:** if you discover a reusable fix (new pattern, pragma/flag combo, struct/layout insight, regalloc trick, reloc naming rule, or confirmed fixed codegen behavior), **append it to `docs/MWCC_REFERENCE.md`** in the same session — do not leave it only in `attempts.jsonl` or chat.
-- **Where to add:**
-  - Proven high-level fix → **Patterns that work in this repo** (new numbered subsection) or extend an existing one.
-  - Symptom → cause → fix → **Pitfalls and failure modes** tables.
-  - Compiler/tooling note → **MWCC compiler behavior** or **decomp.me workflow**.
-  - Confirmed fixed codegen behavior (with the acceptance route that remains) → **When FULL_MATCH or EQUIVALENT_MATCH is not yet reached**.
-- Keep entries concise: function/symbol, symptom, fix, match %, and file path. Link to retail symbol names where relevant.
-
-## Marking configure.py matching
-
-When a whole translation unit reaches full match, update the object in `configure.py`:
+## Mark a TU matching
 
 ```python
-Object(Matching, "kyoshin/cf/CfPadTask.cpp"),  # was NonMatching
+Object(Matching, "kyoshin/cf/CfPadTask.cpp"),   # was NonMatching
 ```
+in `configure.py`, then reconfigure and verify `ninja` succeeds (via hexdiff if possible).
 
-Then reconfigure and verify `ninja` still succeeds.
+## Common mismatch fixes
 
-## Common mismatch fixes (MWCC / C++)
+Fix semantics/types first, then expression order with normal C++ (named locals/helpers,
+`if/else`/`switch`, no `goto` chains copied from asm). **No register/stack tricks.**
 
-Prefer fixing semantics and types first; only then tune expression order with normal C++ (extra locals, subexpressions, helper calls). **Do not** steer codegen with register or stack tricks.
+- signed vs unsigned; wrong struct field width/type.
+- branch/switch lowering — natural control flow, not asm-shaped gotos.
+- expression order — break into named locals/helpers; no `register`/`asm("rN")`.
+- missing `-O4,s` or per-unit `extra_cflags` in `configure.py`; wrong virtual/adjusted-this call.
+- relocation target — declare globals via `extern "C"` retail linker names; access as normal objects.
+- ABI — real C++ params/structs; never fake `Fv`/`u32* r4` register params.
+- templates in headers — `#pragma auto_inline off` + explicit instantiation + `#pragma pop`;
+  check `Ui` vs `Ul` (`unsigned int` on PPC32). See `MWCC_CASES` §Template pitfalls.
 
-- signed vs unsigned comparisons
-- wrong struct field width or type
-- branch/switch lowering shape — use natural `if`/`else` or `switch`, not `goto` chains copied from asm
-- expression order — break into named locals or helpers; avoid `register` variables and `asm("rN")` bindings
-- missing `-O4,s` or per-unit `extra_cflags` from `configure.py`
-- incorrect virtual or adjusted-this call
-- relocation target wrong — declare globals with retail linker names via `extern "C"` where needed; access them as normal C++ objects/fields
-- ABI quirks — prefer proper C++ parameters and struct layout; split into helpers rather than fake `Fv`/`u32* r4` register parameters; `_Fv`-style arg/param suffixes in decompiler names are uneducated guesses, never signature evidence
-- template functions in headers — MWCC `-inline auto` omits standalone
-  bodies. Use `#pragma push` / `#pragma auto_inline off` + explicit
-  `template …` instantiation + `#pragma pop` to force emission. Check
-  retail symbol mangling (`Ui` vs `Ul`) — if the template uses `u32` but
-  retail shows `Ui` (`unsigned int`), change the header definition to
-  `unsigned int` (ABI-identical on PPC32). See `docs/MWCC_REFERENCE.md`
-  §Template pitfalls for full protocol.
+## Policy exceptions (PLAN.md §17.6) — only after C++ is exhausted
 
-## Approved policy exceptions (`PLAN.md` §17.6)
+The only allowed escapes from high-level C/C++ are listed in **PLAN.md §17.6**: the `DECOMP_PPC_*`
+builtins (`decomp.h`), `extern "C" lbl_eu_*` reloc naming, goto-gate chains, the isolated Gekko
+paired-single backend, and the Wii boot-entry vectors (`InitMetroTRK*`). **Read §17.6 for the
+authoritative boundaries before using any.** Every use must be logged in `attempts.jsonl` with
+`"policy_exception": true`.
 
-When C++ and decomp.me have not closed the last instruction(s), these are **allowed** if logged in `attempts.jsonl` with `"policy_exception": true`:
-
-| Tool | Use |
-|------|-----|
-| `DECOMP_PPC_RLWINM` / `DECOMP_PPC_SHL1_U32` in `decomp.h` | MWCC `__rlwinm` builtins (SDK-equivalent); opcode selection e.g. `slwi` vs `rlwinm …,16,30` |
-| `extern "C" lbl_eu_*` | Reloc names when values match under `functionRelocDiffs=data_value` |
-| Goto gate chains | Multi-exit guards (`setSplitLine` pattern) — not for prologue spill order alone |
-| **Isolated MWCC Gekko paired-single backend** | A named Wii/MWCC kernel requires `psq_*`, `ps_*`, or `fres` operations unavailable through approved high-level C++/MWCC builtins. See the requirements below. |
-| **Wii boot-entry vectors (`InitMetroTRK*`)** | A named Wii/MWCC target is a hardware boot-entry vector entered with a non-standard ABI (no valid stack frame, hardware ID in `r5`) so MWCC's mandatory frame prologue cannot reproduce it, after the C++ path is exhausted (PLAN.md §17.6). `asm void` + `nofralloc` transcribing only the named boot-vector body, guarded to MWCC with a complete C fallback for PC/non-MWCC builds. Log every use with `"policy_exception": true`. |
-| **Wii boot-entry vectors (`InitMetroTRK*`)** | A named Wii/MWCC target is a hardware boot-entry vector entered with a non-standard ABI (no valid stack frame, hardware ID in `r5`) so MWCC's mandatory frame prologue cannot reproduce it, after the C++ path is exhausted (PLAN.md §17.6). `asm void` + `nofralloc` transcribing only the named boot-vector body, guarded to MWCC with a complete C fallback for PC/non-MWCC builds. Log every use with `"policy_exception": true`. |
-
-#### Isolated Gekko paired-single backend
-
-This is a narrow hardware-backend exception, not a general assembly allowance:
-
-- Keep the kernel in a designated C/C++ PS backend file or `.inl` included by the owning TU, or in a clearly marked backend region; do not add a general-purpose asm utility or standalone `.s` implementation.
-- Guard it to the Wii/MWCC build. Provide a complete readable scalar/high-level fallback for non-MWCC and PC builds; validate that fallback for numerical/gameplay equivalence rather than paired-single bit identity.
-- Prefer `__vec2x32float__`, `__fres`, and other MWCC builtins first. Use `ASM`/`asm void` only for the documented PS kernel and its minimum loads, stores, scalar operations, comparisons, and branches.
-- Compiler-managed `register`/`__REGISTER` operands are allowed only inside the isolated kernel when required by MWCC PS syntax. Explicit `register rN`/`asm("rN")` bindings, fake stack frames, hand-written prologues/epilogues, unrelated control flow, binary patching, and register/stack choreography remain forbidden.
-- Log every use in `docs/evidence/decomp/attempts.jsonl` with `"policy_exception": true`, naming the target, opcode set, guard, fallback, and validation evidence.
-
-**Still forbidden outside the isolated PS backend:** `register rN`, fake `sp[]` buffers, arbitrary inline `asm { }`, arbitrary **`asm void` / whole-function asm bodies**, standalone `.s`, and transcribed retail asm blocks. Do not use the exception to close unrelated GPR, stack, or control-flow mismatches.
-
-## Low-level techniques — do not use in `src/**` / `libs/**` outside the isolated PS backend
-
-- inline or standalone **assembly** outside the isolated PS backend
-- `register` locals outside the isolated PS backend, especially numbered GPR names like `r3`, `r4`, `r30`, `r31`, or `asm("rN")` bindings
-- `asm { mr …, r1 }` or other inline asm snippets
-- `volatile` byte arrays / fake stack buffers to mirror `sp+0xC` retail offsets
-- `goto` labels whose only purpose is to duplicate asm branch layout
-- parameters or identifiers named after GPRs (`u32* r4`, `register CView* r30`) to force MWCC register allocation
-- raw pointer arithmetic and manual field offsets when a struct member or helper would express the same logic
-- codegen-forcing macros — `DECOMP_FORCELITERAL` / `DECOMP_FORCEACTIVE` and **`DECOMP_PPC_*`** (`include/decomp.h`) are approved project infrastructure
+**Still forbidden everywhere else:** `register rN`, fake `sp[]`, inline `asm{}`, `asm void`/.s units,
+transcribed retail asm, and binary patching / `postprocess_reloc_names.py` (a narrow linker-ADDR16
+bake for DOL-split absolutes like `_stack_addr` is the only ok case).
 
 ## Do not
 
-- Commit `orig/`, `main.dol`, RELs, or disc assets
-- Call `CGame::wkRender` or full frame update twice for split-screen experiments
-- Accept `STRUCTURAL` / `CODE_MATCH` / `HIGH_MATCH` as final state (policy is `EQUIVALENT_MATCH`)
-- Submit AI-assisted reconstruction upstream
-- **Use arbitrary assembly as decompilation output** — no `asm void` bodies, inline `asm { }` of any size, or `.s` units outside the isolated PS backend; the exception is never an acceptable artifact for non-PS matching
-- **Micro-manage registers or the stack in source** — use §17.6 intrinsics when C++ is exhausted
-- **Post-process Chaitin / register soft-caps in `.text`** — no `insn_patches`, `insert_insns`, `reloc_offset_moves`, or any `postprocess_reloc_names.py` usage. EQUIVALENT_MATCH is the acceptance bar; do not chase byte-identity through binary patching. Narrow linker-ADDR16 bake (`bake_linker_addrs` / `force_symbol_relocs` for DOL-split absolute symbols like `_stack_addr`) is allowed
+- Commit `orig/`, `main.dol`, RELs, or disc assets; submit AI reconstruction upstream.
+- Call `CGame::wkRender` or full frame update twice for split-screen experiments.
+- Decompile to asm or registers outside the PS backend; micro-manage registers/stack.
+- Chase byte-identity via binary patching / instruction insertion.
 
-## LLM decompilation harness (tools/llm_decomp)
+## Routing — read the doc for the residual you're chasing
 
-Conversational agent harness for matching — **replaces the retired
-`tools/llm_harness` single-shot solve loop; do not use its commands.**
-One session = one target. The model receives a markdown brief (retail
-ASM, locked signature, writable scope, rules) and tools: `read_file`,
-`grep`, `patch` (SEARCH/REPLACE, all-or-nothing), `build`, `diff`,
-`equivalence`, `submit`. The harness owns file writes (delta lint gate —
-no asm, no register/stack tricks, no extern "C" outside lbl_*, no void*,
-no DECOMP_* macros, no new pragmas), verification (byte-exact sibling
-baselines + split size + SMT), and acceptance. Acceptance is automatic on
-FULL_MATCH / proven EQUIVALENT_MATCH with zero regressions; `submit` is a
-checkpoint, not a finish line.
-
-```bash
-python3 tools/llm_decomp/run.py solve <target-id> --dry-run
-python3 tools/llm_decomp/run.py solve <target-id>
-python3 tools/llm_decomp/run.py pipeline --tu kyoshin/CGame
-python3 tools/llm_decomp/run.py pipeline --number 4 --dry-run
-python3 tools/llm_decomp/run.py reconcile    # after crashes: restore files, abort orphans
-python3 tools/llm_decomp/run.py show-config
-```
-
-Session types: `match` (default), `type-recovery` (model UnkClass_*
-types in headers), `rename` (harness-mediated symrecover),
-`tu-cleanup` (byte-identical polish), `size-trim`. Pipelines chain match
-sessions per TU with carryover summaries, promote accepted matches to
-targets.json, checkpoint-commit per stage, and record completion in
-tools/llm_decomp/tu_ledger.json. Config: `llm-decomp.json` (per-session
-models/budgets, docs/llm_decomp_design.md §9). Transcripts:
-build/llm-decomp/sessions/<target>/<session>/conversation.jsonl. Full
-design: docs/llm_decomp_design.md.
+| Residual | Read |
+|---|---|
+| `reg_swap` (pure color diff) | `docs/register_mapping.md` (declaration-order allocator contract) |
+| `structural` (scheduling / loop) | `docs/scheduling.md` (`-O4,p` vs `-O4,s`) |
+| `mr`/`addi`/`lbzu` / load selection | `docs/instruction_selection.md` |
+| reloc name drift (bytes match, names differ) | `tools/coop/reloc_map.py diff/mine` (→ `extern "C"`) |
+| unknown type / name | symbol recovery above |
+| plateau ~97-99.9% | `MWCC_CASES` "Quick diagnostic" |
+| hard matching question | search both via `mwcc_kb.py` (patterns + cases) |
 
 ## Key paths
 
 | Path | Role |
 |------|------|
-| `PLAN.md` | Co-op architecture, agent rules, milestones |
-| `COOP_IMPLEMENTATION_MAP.md` | Capability graph and co-op implementation handoffs |
-| `tools/coop/run.py` | Runner CLI (`symbols`, `behaviour`, `size` subcommands) |
-| `tools/coop/lib/object_size.py` | Split `.text` budget check vs `config/<region>/splits.txt` |
-| `tools/test/compare_behaviour/` | Retail vs decomp behaviour tests — optional evidence below the bar |
-| `tools/symrecover.py` | Symbol recovery: list/show/xref/demangle/rename-plan |
-| `tools/symbolrecover/lib/` | symrecover library (parser, MWCC demangle, xref, rename) |
-| `tools/coop/targets.json` | Canonical function registry and current target state |
-| `tools/coop/targets.schema.json` | Registry data contract |
-| `configure.py` | Per-object matching flags and compiler options |
-| `tools/coop/hexdiff.py` | Headless instruction-level hex diff (builds, compares, colour-codes, reg-swap detection, register mapping table); modes: `--symbol` diff / `--all` unit table / `--list` symbols / `--brief` verdict / `--asm` disassembly; prints unit compiler config + KB hints; uses `ppc_equivalence` ELF parser |
-| `tools/coop/reloc_map.py` | Reloc name-drift detection + repo map miner (`run.py reloc-map diff/mine/show`); suggests the approved source `extern "C" lbl_eu_*` fix |
-| `tools/coop/batch-cycle.py` | Mass-cycle multiple targets sequentially with per-target hypothesis/next-change, continues on failure, optional JSON summary |
-| `docs/MWCC_REFERENCE.md` | MWCC matching reference — read before matching; **append new patterns/breakthroughs here** |
-| `docs/MWCC_KNOWLEDGE_BASE.md` | Agent search protocol and structured-record migration plan |
-| `tools/mwcc_kb.py` | Search reference patterns + attempt history; use `--json` for agents |
-| `objdiff.json` | Generated; objdiff project config |
-
-## Additional detail
-
-- Full agent orchestration, Dolphin gates, and render invariants: `PLAN.md`
-- Per-function identity/state: `tools/coop/targets.json`; use `targets show/status`
+| `tools/coop/targets.json` | Canonical function registry + state (`targets show/status`) |
+| `tools/coop/run.py` | Runner CLI (`targets`/`symbols`/`behaviour`/`size`/`cycle`) |
+| `tools/coop/hexdiff.py` | Headless hex diff — the iteration tool |
+| `tools/coop/reloc_map.py` | Reloc name-drift detection/miner |
+| `tools/coop/batch-cycle.py` | Mass-acceptance after matching |
+| `configure.py` | Per-object matching flags / `mw_version` |
+| `docs/MWCC_PATTERNS.md` | General/reusable MWCC knowledge + KB protocol + templates |
+| `docs/MWCC_CASES.md` | **Per-target** matching records (search via `mwcc_kb.py`) |
+| `tools/mwcc_kb.py` | Search patterns + cases + attempt history (SQLite index) |
+| `PLAN.md` / `COOP_IMPLEMENTATION_MAP.md` | Architecture / co-op capability graph |

@@ -2,7 +2,7 @@
 //
 // Private downstream fork decompilation.  Every entry point keeps its retail
 // (shortened) "...Fv" mangled name via extern "C"; the real ABI arguments are
-// passed explicitly, per docs/MWCC_REFERENCE.md "Fv ABI note" (Metrowerks
+// passed explicitly, per docs/MWCC_CASES.md "Fv ABI note" (Metrowerks
 // passes extra registers even on Fv names; data tables reference the short
 // names).
 //
@@ -174,10 +174,10 @@ typedef struct LodRangeObj {
 } LodRangeObj;
 
 extern "C" s32 func_80463FF8__Q23LOD17UnkClass_8046368CFv(const LodRangeObj*);
-// [.data] 0x8056D71C-0x8056D728 (12B): retail pick-dispatch table.  align(8)
-// matches the retail split object's .data section alignment (MWCC would
-// otherwise emit align 4 for a u32[3]).
-extern "C" LodPickFn lbl_eu_8056D71C[3] = {
+// [.data] 0x8056D71C-0x8056D728 (12B): retail pick-dispatch table.  Retail
+// split object's .data section is align 4; MWCC would otherwise emit align 8
+// for a u32[3], so force __declspec(align(4)).
+extern "C" __declspec(align(4)) LodPickFn lbl_eu_8056D71C[3] = {
     (LodPickFn)&func_80463FF8__Q23LOD17UnkClass_8046368CFv,
     (LodPickFn)&func_8046892C__Q23LOD17UnkClass_80468434Fv,
     (LodPickFn)&func_80463FF8__Q23LOD17UnkClass_8046368CFv,

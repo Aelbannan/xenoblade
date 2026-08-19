@@ -19,7 +19,7 @@ void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 // vtable slot 2 (2 hidden RTTI prefix slots, so the first declared virtual is
 // at +0x8). Real virtual dispatch reproduces the retail `lwz r12,0(r3);
 // lwz r12,8(r12); mtctr; bcctrl` sequence; the manual `(*(void***)layout)[2]`
-// cast emits a scratch r5 vtable load (see MWCC_REFERENCE: manual vtable cast
+// cast emits a scratch r5 vtable load (see MWCC_CASES: manual vtable cast
 // -> real virtual dispatch, r12 ABI register). CCur.cpp CBaseCurVt5 precedent.
 struct CItemBoxLayoutDtorVt {
     virtual void destroy(u32 flags);  // slot 2 => +0x8, arg in r4

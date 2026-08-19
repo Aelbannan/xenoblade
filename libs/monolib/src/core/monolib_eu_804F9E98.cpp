@@ -10,7 +10,7 @@
 // sinit_eu_804F9FA4 installs the module-global string pointer via a retail
 // tail-call thunk into the adjacent helper func_804F9FAC (the annotation
 // originally merged the two bodies into one 0x18 symbol; see
-// MWCC_REFERENCE "b .+4 sinit ceiling" RESOLVED note).
+// MWCC_CASES "b .+4 sinit ceiling" RESOLVED note).
 
 #include <types.h>
 #include "monolib/core/monolib_eu_804F9E98.hpp"
@@ -21,7 +21,7 @@
 // The storage itself is owned by the retail data split monolibdata2.s (sbss
 // 0x806659D0/0x806659D4/0x80665A98), so the MWCC TU must only *reference* the
 // symbols: a TU-local definition would create a local .sbss section (data
-// diff FAIL) and duplicate the symbol at link time (see MWCC_REFERENCE
+// diff FAIL) and duplicate the symbol at link time (see MWCC_CASES
 // "monolibdata2-owned sbss globals must be extern").
 
 extern char* lbl_eu_80665A98;  // sbss:0x448 - module-global string pointer;

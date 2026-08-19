@@ -900,7 +900,7 @@ void func_800C4888(cf::CfObjectImplWalker* self) {
     u32 a = (u16)func_80086DA0__Q22cf13CfGameManagerFv();
     u32 b = (u16)func_80086DA4__Q22cf13CfGameManagerFv();
     u32 t = a * 60 + b;
-    // WALL (MWCC_REFERENCE "Range-test normalization"): retail keeps two
+    // WALL (MWCC_CASES "Range-test normalization"): retail keeps two
     // cmplwi/blt/ble pairs per check; MWCC 1.1 -O4,p fuses lo<=t<=hi into
     // subi/cmplwi span. The OR'd form keeps the SECOND range un-fused (best
     // observed: 156 structural); the first range still fuses.

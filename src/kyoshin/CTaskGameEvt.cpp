@@ -82,7 +82,7 @@ extern "C" __declspec(noinline) CTaskGameEvt* __ct__CTaskGameEvt(CTaskGameEvt* p
     // order 0x40,0x3C,0x44 then 0x4C,0x48,0x50. Post-increment derefs of a local
     // pointer make MWCC fold the first access into `lwzu` (single base register
     // r9 via @ha/@l, offsets on the rest) instead of an extra `addi`-materialised
-    // pointer - cf. MWCC_REFERENCE btm_sco_init lwzu shape. The stores into p can
+    // pointer - cf. MWCC_CASES btm_sco_init lwzu shape. The stores into p can
     // alias the non-const global, forcing the 4..6/4..5 reloads between slots.
     const u32* src = __ptmf_null;
     u32 w0 = *src++;

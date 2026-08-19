@@ -122,7 +122,7 @@ extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
 // Retail .sdata2 magic doubles used by MWCC's int->float conversions (imports;
 // the definitions live in the monolib shared data blob). Referenced by name
 // through the s32ToF/u16ToF helpers below so the lfd relocs name the retail
-// slots instead of MWCC's anonymous @N pool entries (docs/MWCC_REFERENCE.md
+// slots instead of MWCC's anonymous @N pool entries (docs/MWCC_CASES.md
 // section 7i manual bit construction).
 extern const double lbl_eu_8066A388;  // s32->f64 magic (2^52+2^31)
 extern const double lbl_eu_8066A390;  // u32->f64 magic (2^52)
@@ -418,7 +418,7 @@ extern "C" GXRenderModeObj* getRenderModeObj__9CDeviceVIFv(void);
 // inlined `return i` / `return -1` reproduce retail's `bne skip; b found`
 // two-branch search loop; a plain goto-found loop compiles to a merged
 // `beq found` that is 4 bytes shorter and cannot match the retail bytes
-// (docs/MWCC_REFERENCE.md BD-address search loops).
+// (docs/MWCC_CASES.md BD-address search loops).
 template <u32 CMD>
 static u32 ringFindIndex(CGXCache* self) {
     for (u32 i = 0; i < self->unk4.mSize; i++) {
@@ -936,7 +936,7 @@ void CGXCache::func_8044B5C0() {
 
 // s32 -> f32 through the shared 2^52+2^31 magic double (lbl_eu_8066A388).
 // Manual bit construction so the lfd reloc names the retail .sdata2 slot
-// instead of MWCC's anonymous @N pool entry (docs/MWCC_REFERENCE.md section 7i).
+// instead of MWCC's anonymous @N pool entry (docs/MWCC_CASES.md section 7i).
 static inline f32 s32ToF(s32 v) {
     union {
         double d;

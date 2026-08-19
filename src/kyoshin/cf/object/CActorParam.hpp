@@ -8,7 +8,7 @@
 #include <cstring>
 
 // `const` so MWCC treats the sdata2 pool load as a constant and hoists it
-// above the frame stores (MWCC_REFERENCE §extern-const-float-hoist); plain
+// above the frame stores (MWCC_CASES §extern-const-float-hoist); plain
 // `extern float` leaves the lfs after the GPR saves (4-byte shift).
 extern const float lbl_eu_806677E4; // sdata2: default gauge value (CActorParam_UnkVirtualFunc67)
 extern float lbl_eu_806677E0; // sdata2: gauge default (CActorParam_UnkVirtualFunc141)

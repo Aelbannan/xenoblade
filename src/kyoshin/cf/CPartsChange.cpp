@@ -24,7 +24,7 @@ using cf::CPartsChange;
 // by MWCC's direct (f32)(s32) conversion idiom. The conversion's lfd reloc
 // stays a TU-local @N pool entry (verified 2026: MWCC does not unify the
 // builtin conversion magic with a same-value named global - see
-// MWCC_REFERENCE §1d/§1n, which classify the i2f magic pool as un-nameable
+// MWCC_CASES §1d/§1n, which classify the i2f magic pool as un-nameable
 // in high-level C; the manual union form breaks the retail's early-magic
 // schedule). The definition is kept for the retail-named .sdata2 slot.
 f64 lbl_eu_80667B58 = 4503601774854144.0;
@@ -1137,7 +1137,7 @@ extern "C" void func_801952CC(int id) {
 // Column lookup gate: when the actor's +0x1E flags have bit 5 set, fetch the
 // indexed BDAT value and clear the result if its low byte exceeds 3. The low
 // byte is extracted with a deref of the value's storage so MWCC emits the
-// retail stw+lbz round-trip (MWCC_REFERENCE: cast would fold to rlwinm).
+// retail stw+lbz round-trip (MWCC_CASES: cast would fold to rlwinm).
 // Retail callers pass four args (r3, r4, r5, r6); the r5 arg is dead, but its
 // slot lets MWCC move index out of r3 early (the retail `mr r5, r3`).
 u8 func_80195384(int index, int unused, int unused2, CfActorAccessors* actor) {
@@ -2161,7 +2161,7 @@ u8* func_80198310(CfActorIdRef* self) {
 // hit, 0 if all are clear. MWCC's fixed-trip-count unroll turns the linear
 // 16-iteration scan into the retail 2x8 mtctr/bdnz loop with the dead
 // +(checks-1)=+7 shadow counter (CBattleState func_801490A0 shape,
-// MWCC_REFERENCE inlined search helpers).
+// MWCC_CASES inlined search helpers).
 int func_80198340(CfPartsListEntry* list) {
     for (int j = 0; j < 16; j++) {
         if (list[j].field_00 != 0) return 1;

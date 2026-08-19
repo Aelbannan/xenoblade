@@ -99,7 +99,7 @@ void __ct__cf_CfObjEnumList(cf::CfObjEnumList* self) {
     // reslist<T> base ctor (inlined): the base vtable store is dead (the
     // derived store below overwrites it), so it must go through a volatile
     // write to survive dead-store elimination (flattened-reslist ctor
-    // schedule, MWCC_REFERENCE "kyoshin code_800B06A4").
+    // schedule, MWCC_CASES "kyoshin code_800B06A4").
     *(volatile u32*)self = (u32)&lbl_eu_8052585C[0];
     self->mList = NULL;
     self->mCapacity = 0;

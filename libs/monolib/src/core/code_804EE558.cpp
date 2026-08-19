@@ -64,6 +64,8 @@ extern void func_804F4628(u32 a, float w, float h);
 
 // Static per-vertex color table, initialized by sinit_804F01C8.
 extern float lbl_eu_80661748[30];
+// [.bss] 0x80661748-0x80661850 (0x108 = 264B): zero-fill blocks.
+float lbl_eu_80661748[30];
 // [.bss] 0x806617C0-0x80661850 (0x90 = 144B): remaining zero-fill blocks.
 float lbl_eu_806617C0[12];
 float lbl_eu_806617F0[4];
@@ -767,45 +769,42 @@ extern "C" void func_804EEB40(void* desktop, const ml::CVec3* pos, const float* 
 
 // sinit_804F01C8: static initializer for the per-vertex color table.
 extern "C" void sinit_804F01C8() {
-    const float o = lbl_eu_8066B40C; // 1.0
-    const float z = lbl_eu_8066B408; // 0.0
-    const float h = lbl_eu_8066B414; // 0.5
     float* t = lbl_eu_80661748;
-    t[0] = h;
-    t[1] = h;
-    t[2] = z;
-    t[3] = o;
-    t[4] = h;
-    t[5] = z;
-    t[6] = o;
-    t[7] = o;
-    t[8] = z;
-    t[9] = h;
-    t[10] = o;
-    t[11] = z;
-    t[12] = z;
-    t[13] = o;
-    t[14] = z;
-    t[15] = z;
-    t[16] = h;
-    t[17] = z;
-    t[18] = z;
-    t[19] = z;
-    t[20] = z;
-    t[21] = h;
-    t[22] = z;
-    t[23] = z;
-    t[24] = o;
-    t[25] = z;
-    t[26] = z;
-    t[27] = h;
-    t[28] = h;
-    t[29] = z;
+    t[0] = lbl_eu_8066B414;
+    t[1] = lbl_eu_8066B414;
+    t[2] = lbl_eu_8066B408;
+    t[3] = lbl_eu_8066B40C;
+    t[4] = lbl_eu_8066B414;
+    t[5] = lbl_eu_8066B408;
+    t[6] = lbl_eu_8066B40C;
+    t[7] = lbl_eu_8066B40C;
+    t[8] = lbl_eu_8066B408;
+    t[9] = lbl_eu_8066B414;
+    t[10] = lbl_eu_8066B40C;
+    t[11] = lbl_eu_8066B408;
+    t[12] = lbl_eu_8066B408;
+    t[13] = lbl_eu_8066B40C;
+    t[14] = lbl_eu_8066B408;
+    t[15] = lbl_eu_8066B408;
+    t[16] = lbl_eu_8066B414;
+    t[17] = lbl_eu_8066B408;
+    t[18] = lbl_eu_8066B408;
+    t[19] = lbl_eu_8066B408;
+    t[20] = lbl_eu_8066B408;
+    t[21] = lbl_eu_8066B414;
+    t[22] = lbl_eu_8066B408;
+    t[23] = lbl_eu_8066B408;
+    t[24] = lbl_eu_8066B40C;
+    t[25] = lbl_eu_8066B408;
+    t[26] = lbl_eu_8066B408;
+    t[27] = lbl_eu_8066B414;
+    t[28] = lbl_eu_8066B414;
+    t[29] = lbl_eu_8066B408;
 }
 
-// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// ===== Disslbl_eu_8066B40Clved mlbl_eu_8066B40Cnlbl_eu_8066B40Clibdata2 (bllbl_eu_8066B40Cb surgery) data lbl_eu_8066B40Cwned by tlbl_eu_8066B414is TU =====
 // [.data] 0x805702B8-0x80570328 (0x70 = 112B): func_804EE8FC's switch
-// jumptable (case offsets relative to func_804EE8FC, retail shape).
+// jumptable (case lbl_eu_8066B40Cffsets relative tlbl_eu_8066B40C func_804EE8FC, retail slbl_eu_8066B414ape).
 extern "C" u32 jumptable_eu_805702B8[28] = {
     (u32)((char*)&func_804EE8FC + 80),
     (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 420),
@@ -824,3 +823,6 @@ extern "C" u32 jumptable_eu_805702B8[28] = {
     (u32)((char*)&func_804EE8FC + 392),
 };
 DECOMP_FORCEACTIVE(code_804EE558_cpp, jumptable_eu_805702B8);
+
+// ===== Disslbl_eu_8066B40Clved mlbl_eu_8066B40Cnlbl_eu_8066B40Clibdata2 (bllbl_eu_8066B40Cb surgery) data lbl_eu_8066B40Cwned by tlbl_eu_8066B414is TU =====
+// [.data] 0x805702B8-0x80570328 (0x70 = 112B): func_804EE8FC's switch

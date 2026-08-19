@@ -717,7 +717,7 @@ void CMenuBattlePlayerState::Move() {
         goto done;
     }
     // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
-    // via fallthrough asm b (PLAN.md section 17.6). See MWCC_REFERENCE 8c9.
+    // via fallthrough asm b (PLAN.md section 17.6). See MWCC_CASES 8c9.
     if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto after_bit21;
     }
@@ -1029,7 +1029,7 @@ void CMenuBattlePlayerState::cbRenderBefore() {
         goto done;
     }
     // Retail: rlwinm.; beq +8; b done. MWCC collapses if->goto to bne; keep beq
-    // via fallthrough asm b (PLAN.md section 17.6). See MWCC_REFERENCE 8c9.
+    // via fallthrough asm b (PLAN.md section 17.6). See MWCC_CASES 8c9.
     if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
         goto after_bit21;
     }
@@ -1088,7 +1088,7 @@ done:
 }
 
 // Under stock -O4,p, /0x60 strength-reduces to mulhwu. Size opt keeps
-// retail li/divwu/mtctr/bdnz (same as TU -O4,s). See MWCC_REFERENCE.
+// retail li/divwu/mtctr/bdnz (same as TU -O4,s). See MWCC_CASES.
 #pragma optimize_for_size on
 void func_8010B324(CMenuBattlePlayerStateSlot* slot){
     u32 z;

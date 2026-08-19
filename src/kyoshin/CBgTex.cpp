@@ -13,7 +13,7 @@
 // member manglings are only kept for __dt__ and OnFileEvent (see CBgTex.hpp).
 
 // Retail frames for this unit use the stmw/lmw block save (2-3 callee-saved
-// registers), which needs the -O4,s size-optimized lowering (MWCC_REFERENCE
+// registers), which needs the -O4,s size-optimized lowering (MWCC_CASES
 // §16 stmw/lmw: -O4,p would emit separate stw/lwz pairs). The unit is
 // configured with -O4,s -func_align 4 in configure.py.
 CBgTex::CBgTex(u8 arg) : CBgTexVtblBase(), mMemRegion() {

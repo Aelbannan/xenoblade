@@ -77,7 +77,7 @@ extern CScn* lbl_eu_80663E14;  // shared scene pointer passed to the func_804962
 // Shared speed constant (retail unmangled name; the .cpp also defines a
 // namespace-cf copy used by the resetMoveSpeed helper). Declared const so
 // MWCC treats the SDA load as read-only and hoists/schedules it at retail's
-// position (MWCC_REFERENCE pair-copy / CArtsInfo store-order fix).
+// position (MWCC_CASES pair-copy / CArtsInfo store-order fix).
 extern const float lbl_eu_80666A88;
 // Shared camera-time constant (sdata2): CfObject_UnkVirtualFunc70 calls the
 // EU helper with (lbl_eu_80666A94 - value). Const so MWCC keeps the SDA
@@ -120,7 +120,7 @@ extern const float lbl_eu_80666ACC;
 
 // Scene-time query (CfGameManager.cpp, retail unmangled name): returns the
 // current time value from the shared scene object. extern "C" keeps the
-// call-site reloc at the unmangled retail name (docs/MWCC_REFERENCE.md §2).
+// call-site reloc at the unmangled retail name (docs/MWCC_CASES.md §2).
 extern "C" f32 func_80496288(void* scene);
 // Second heap handle query (retail unmangled name, same family as
 // func_80061FE8): used by CfObject_UnkVirtualFunc47's CtrlEnemy/CtrlNpc

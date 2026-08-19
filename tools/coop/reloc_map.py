@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Relocation name-drift detection and named-symbol map mining (PLAN.md §17.6,
-docs/MWCC_REFERENCE.md §1 — "Relocation name drift (99.3-99.9%, instructions
+docs/MWCC_PATTERNS.md — "Relocation name drift (99.3-99.9%, instructions
 identical)").
 
 The #1 cause of near-misses: instruction bytes are identical but the relocation
@@ -53,7 +53,7 @@ MAP_VERSION = 1
 # ── reloc kind classification ──────────────────────────────────────────────
 
 # Call relocs (callee mangling) are handled by the symbol-recovery pipeline
-# (MWCC_REFERENCE §2); the reloc map keeps them separate.
+# (MWCC_PATTERNS.md); the reloc map keeps them separate.
 _CALL_TYPES = frozenset({10, 18, 23})  # REL24, PLTREL24, LOCAL24PC
 _BRANCH_TYPES = frozenset({7, 8, 9, 11, 12, 13})  # ADDR14, REL14 (±BRTAKEN/NTAKEN)
 
@@ -591,7 +591,7 @@ def suggestions(drift: RelocDrift, unit_name: str, decomp_obj_name: str, reloc_m
             f"formed, and SDA-eligibility (EMB_SDA21/SDA16) vs absolute (ADDR16/ADDR24) "
             f"follows from which section the referenced symbol lives in (.sdata/.sdata2 "
             f"vs ordinary data) and how the address is computed "
-            f"(docs/MWCC_REFERENCE.md §1a SDA globals / §1b float pools)",
+            f"(docs/MWCC_PATTERNS.md SDA globals / §1b float pools)",
             f"  NOT reloc-NAME fixable — no extern \"C\" rename applies",
         ]
     if drift.kind == "presence":
@@ -623,7 +623,7 @@ def suggestions(drift: RelocDrift, unit_name: str, decomp_obj_name: str, reloc_m
             )
         lines.append(
             f"  NOT reloc-NAME fixable; check the expression/operand shape "
-            f"(docs/MWCC_REFERENCE.md §1a SDA globals / §1b float pools)"
+            f"(docs/MWCC_PATTERNS.md SDA globals / §1b float pools)"
         )
         return lines
     if drift.kind not in ("name", "addend"):
@@ -652,7 +652,7 @@ def suggestions(drift: RelocDrift, unit_name: str, decomp_obj_name: str, reloc_m
             lines.append(f"  (repo map: {entry['count']}× in {len(entry['units'])} units)")
         lines.append(
             f"  fix (approved, PLAN.md §17.6): declare `extern \"C\" <TYPE> {retail};` "
-            f"in source and reference it (docs/MWCC_REFERENCE.md §1a SDA globals / "
+            f"in source and reference it (docs/MWCC_PATTERNS.md SDA globals / "
             f"§1b float pools / §1h string pools)"
         )
         lines.append(
@@ -864,7 +864,7 @@ def cmd_show(args) -> int:
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Reloc name-drift detection + named-symbol map mining (§17.6, MWCC_REFERENCE §1)."
+        description="Reloc name-drift detection + named-symbol map mining (§17.6, MWCC_PATTERNS.md)."
     )
     sub = parser.add_subparsers(dest="command", required=True)
 

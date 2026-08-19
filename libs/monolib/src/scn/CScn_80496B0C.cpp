@@ -9,7 +9,11 @@
 #include "nw4r/g3d/g3d_anmchr.h"
 #include "nw4r/db/db_assert.h"
 #include "monolib/math/CVec3.hpp"
-#include "libs/monolib/src/scn/CScnItemAnim.hpp"
+
+// CScnItemAnim is only ever a forward pointer here (host scene object); the
+// full header also declares the chr-anm panic strings const, which conflicts
+// with the non-const .data definitions below, so it is not pulled in.
+struct CScnItemAnim;
 
 // Default value returned by the accessor helpers when the target object
 // chain is missing (sda2 constant).
@@ -27,12 +31,40 @@ extern const char lbl_eu_8056E194[];   // file (node-name assert, line 0x2c)
 extern const char lbl_eu_8056E178[];   // fmt
 extern const char lbl_eu_80663910[8];  // arg (sda2 string)
 extern const char lbl_eu_806639E0[4];  // arg (sda2 string)
-extern const char lbl_eu_8056E9D0[];   // file (chr-anm data assert, line 0x27)
-extern const char lbl_eu_8056E9B4[];   // fmt
-extern const char lbl_eu_8056E9A8[];   // arg
 extern const char lbl_eu_806639E4[4];  // arg (sda2 string)
 extern const char lbl_eu_80530F08[];   // file (ResDic alignment assert, line 0x54)
 extern const char lbl_eu_80530EE0[];   // fmt
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056E8B8-0x8056E9E8 (0x130): CVirtualLightObj / CScn / CTTask<CScn>
+// vtables followed by the chr-anm panic strings. Retail carries no reloc
+// entries for this slice, so every pointer is a plain constant (raw words,
+// same shape as the CLibCri.cpp block) and the ASCII tail is placed in .data
+// via non-const char arrays. Declared in source order so MWCC lays the
+// section out contiguously at 0x130 with the retail symbol offsets.
+extern "C" u32 lbl_eu_8056E8B8[6] = {
+    0x806639D0, 0x00000000, 0x804969F4, 0x80498860, 0x80498900, 0x00000000,
+};
+extern "C" u32 lbl_eu_8056E8D0[45] = {
+    0x80663988, 0x00000000, 0x80499E30, 0x804490CC, 0x8049A65C, 0x8049A660,
+    0x8049A88C, 0x8049A918, 0x800444BC, 0x80663988, 0xFFFFFFAC, 0x8049ABE8,
+    0x8003A1D4, 0x8003A1CC, 0x80492D88, 0x80492D80, 0x8003A1B8, 0x8003A1B0,
+    0x8003A1A8, 0x8003A1A0, 0x8003A198, 0x8003A190, 0x8003A188, 0x8003A180,
+    0x8003A178, 0x8003A170, 0x8003A168, 0x8003A160, 0x8003A158, 0x8003A150,
+    0x8003A148, 0x8003A140, 0x8003A138, 0x8003A130, 0x8003A128, 0x8003A120,
+    0x8003A118, 0x8003A110, 0x8003A108, 0x8003A100, 0x8003A0F8, 0x8003A0F0,
+    0x8003A0EC, 0x8049AA4C, 0x8049AA38,
+};
+extern "C" u32 lbl_eu_8056E984[9] = {
+    0x80663990, 0x00000000, 0x80499DD8, 0x804490CC, 0x00000000, 0x00000000,
+    0x8049AB58, 0x8049ABA0, 0x800444BC,
+};
+// ASCII panic-string tail (must live in .data; non-const so it is not pooled
+// into .rodata). Sizes include the retail inter-string zero padding so the
+// section totals exactly 0x130.
+char lbl_eu_8056E9A8[12] = "ResAnmChr";
+char lbl_eu_8056E9B4[28] = "%s::%s: Object not valid.";
+char lbl_eu_8056E9D0[24] = "g3d_resanmchr_ac.h";
 
 // Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
 struct VTarget {
@@ -308,7 +340,7 @@ void func_80497AA8(){}
 // retail reloc name verbatim (the ctor call sites use the unmangled name).
 extern "C" CScnChild80496B0C* func_80497F34(CScnChild80496B0C* self) {
     // Pointer-walk do-while with the increment inside the condition: the
-    // SDK loop shape MWCC emits without unrolling (MWCC_REFERENCE).
+    // SDK loop shape MWCC emits without unrolling (MWCC_CASES).
     CScnChildElem80496B0C* it = self->elems;
     do {
         it->field_0x2 = 0;

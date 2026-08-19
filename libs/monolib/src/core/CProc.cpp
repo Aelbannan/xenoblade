@@ -5,7 +5,7 @@
 extern double lbl_eu_8066A300; // 0x4330000080000000 (s16->f32 conversion magic, FloatUtils-owned)
 // s16 -> f32 conversion matching retail: build the 2^52+x double on the stack
 // (low word = x ^ 0x80000000, high word = 0x43300000) and subtract the shared
-// magic double (MWCC_REFERENCE 7i; statement order matters).
+// magic double (MWCC_CASES 7i; statement order matters).
 inline float convF32(s32 v) {
     union { double d; u32 w[2]; } u;
     u.w[1] = (u32)v ^ 0x80000000;
@@ -35,7 +35,7 @@ extern void wkStandbyLogout__5CProcFv();
 // lbl_eu_8056B298) are emitted by MWCC itself from the reslist<u32> member
 // instantiation below: their dtor slots reference the template-mangled symbols
 // __dt__11reslist<Ul>Fv / __dt__17_reslist_base<Ul>Fv, which cannot be spelled
-// in C++ source (MWCC_REFERENCE "What NOT to do": < and > are not valid C
+// in C++ source (MWCC_CASES "What NOT to do": < and > are not valid C
 // identifiers). The compiler emits them as the pre-existing weak symbols
 // __vt__11reslist<Ul> / __vt__17_reslist_base<Ul> (0xC each), which carry the
 // exact retail bytes at the range positions 0x8056B280 / 0x8056B298 (the

@@ -1448,7 +1448,7 @@ void CTaskColiManager::Move() {
         }
         // Volatile final store: retail restores LR first in the epilogue;
         // MWCC only emits that order when the function's last store is
-        // volatile (MWCC_REFERENCE, CriWare adx_mwii pattern).
+        // volatile (MWCC_CASES, CriWare adx_mwii pattern).
         CColiMoveNode* volatile* mhp = &mHead;
         *mhp = front;
     }
@@ -1571,7 +1571,7 @@ int func_804B5658(CColiWalkOwner* self, Vec* out1, Vec* out2,
 // incoming registers (parent / a / b, per the CTaskGame call site: r3 = root
 // proc, r4 = field_0x74, r5 = field_0x70). MWCC mangles a global function's
 // name with its parameter list, so the exact retail symbol is emitted via
-// extern "C" with the pre-mangled name (MWCC_REFERENCE §1g Fv-with-hidden-
+// extern "C" with the pre-mangled name (MWCC_CASES §1g Fv-with-hidden-
 // params; the `bl` reloc name stays correct and the extra args pass normally).
 // ---------------------------------------------------------------------------
 // Raw first-0x80 mirror of the object the retail create() initialises: the

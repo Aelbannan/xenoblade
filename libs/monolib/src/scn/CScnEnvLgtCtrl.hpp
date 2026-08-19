@@ -937,7 +937,7 @@ extern "C" void func_804C0920(CScnEnvLgtLightView* view, u32 a, f32 b);
 // 16-byte light-data block copied by func_804C5198 (self+0x54 -> out).
 // Kept as a named struct so the copy sites use typed pointers: MWCC only
 // emits grouped load-all/store-all for typed sources (a void* param forces
-// interleaved r0-reuse pairs, cf. MWCC_REFERENCE 3-word struct copy).
+// interleaved r0-reuse pairs, cf. MWCC_CASES 3-word struct copy).
 struct CScnEnvLgtCtrlLgtData {
     u32 field_0x00;   // +0x00
     u32 field_0x04;   // +0x04

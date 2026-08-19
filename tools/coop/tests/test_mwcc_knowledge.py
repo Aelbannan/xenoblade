@@ -39,7 +39,7 @@ class MwccKnowledgeTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
-        self.reference = self.root / "MWCC_REFERENCE.md"
+        self.reference = self.root / "MWCC_CASES.md"
         self.attempts = self.root / "attempts.jsonl"
         self.database = self.root / "knowledge.sqlite"
         self.reference.write_text(REFERENCE, encoding="utf-8")

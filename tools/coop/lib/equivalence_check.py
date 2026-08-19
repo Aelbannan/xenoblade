@@ -23,14 +23,14 @@ from tools.ppc_equivalence.contract import make_contract
 from tools.ppc_equivalence.decoder import decode_block
 
 
-# ── TU-local reloc canonicalization (MWCC_REFERENCE §1h / §1i) ─────────────
+# ── TU-local reloc canonicalization (MWCC_PATTERNS.md / §1i) ─────────────
 # The retail bte/CriWare archives were compiled as one -ipa compilation, so
 # their string-pool labels (@N) are archive-global; the decomp builds each .c
 # separately, emitting per-TU labels for the same literal.  Reloc sites are
 # byte-identical, but the differing @N names give the SMT opaque-callee token
 # two different symbolic addresses for the same format string → the token
 # diverges → `exit.target`/`inconclusive_abstraction` even for byte-identical
-# code (MWCC_REFERENCE §1h).  The mined reloc map
+# code (MWCC_PATTERNS.md).  The mined reloc map
 # (tools/coop/retail_reloc_map.json, `reloc-map mine`) records the retail name
 # for every TU-local decomp label; feed it to the decoder's `canonical_symbols`
 # hook so both sides share one canonical symbol (no object patching).
@@ -275,7 +275,7 @@ def _current_certifier_hash() -> str:
 
 
 # ── Narrow-EABI callee contracts for FULL_MATCH callees ──────────────────────
-# MWCC_REFERENCE §7m documents the "GX FIFO SMT wall": functions whose reloc
+# MWCC_PATTERNS.md documents the "GX FIFO SMT wall": functions whose reloc
 # names contain ``fifo``/``gx`` (e.g. the GX FIFO unit's ``CPUFifo``/``GPFifo``
 # globals) are skipped by the RAM-only bus projection, and the conservative
 # ``opaque-eabi`` callee contract keys the call token on the *entire* register
@@ -421,7 +421,7 @@ def _reloc_symbols_may_form_mmio_address(
     The engine's name-needle heuristic (``instruction_may_form_mmio_address``)
     conservatively rejects any function whose reloc names contain ``fifo`` /
     ``gx`` / ``mmio`` / ``wgpipe`` substrings — a false positive for RAM
-    globals such as ``CPUFifo``/``GPFifo`` in the GX FIFO unit (MWCC_REFERENCE
+    globals such as ``CPUFifo``/``GPFifo`` in the GX FIFO unit (MWCC_PATTERNS.md
     §7m), which blocks the RAM-only bus projection and then fails the SMT
     probe on symbolic SDA21 addresses (``symbolic-mmio-mixed-address-space``).
 
@@ -885,7 +885,7 @@ def _load_certified_callees(project: Project, target_id: str) -> CertifiedCallee
         # certificate is needed.  The default callee contract is opaque EABI
         # (conservative).  When coop.json sets
         # ``full_match_callee_contract: "narrow-eabi"``, use the narrow
-        # r3–r5/memory contract instead (MWCC_REFERENCE §7m GX FIFO wall) —
+        # r3–r5/memory contract instead (MWCC_PATTERNS.md GX FIFO wall) —
         # validated below against the callee's retail body so FP/SPR/
         # nonvolatile-clobbering callees fall back to opaque.
         is_full_match = callee.get("status") == "FULL_MATCH"
@@ -2289,7 +2289,7 @@ def _prove_bytes(
 
     ``canonical_symbols`` (optional) maps TU-local decomp reloc labels to the
     retail names so opaque-callee tokens see the same symbolic address on both
-    sides (MWCC_REFERENCE §1h); without it a literal-vs-literal site diverges
+    sides (MWCC_PATTERNS.md); without it a literal-vs-literal site diverges
     the token and degrades the proof to ``inconclusive_abstraction``.
 
     Used for both the unlinked-pair path (bytes from the ``.o`` files) and the

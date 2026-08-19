@@ -279,7 +279,7 @@ void CMenuBattleMode::cbRenderBefore() {
     // set. Exit label BEFORE the body label keeps the body off the fallthrough
     // so MWCC emits retail's branch-over-branch: `bne end` for the first
     // disjunct, `beq draw; b end` for the second (CMenuGameClear idiom,
-    // MWCC_REFERENCE section on &&-gate branch-over-branch).
+    // MWCC_CASES section on &&-gate branch-over-branch).
     if (CTaskGame::func_800426F0() == 0 &&
         (lbl_eu_80663E28 & 0x200000) == 0) {
         goto draw;

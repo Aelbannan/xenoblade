@@ -666,7 +666,7 @@ void CModelDispMakeCrystal::initCrystalSubStruct() {
 // Retail 0x8021E348: constructor - builds the inline CActParamAnimGame at
 // +0x8, then zeroes the six 0xC-byte crystal sub-buffers at +0x564..+0x5ac.
 // NOTE: -O4,p static cap - retail's `stmw r29` (3-reg save) needs -O4,s
-// (MWCC_REFERENCE §16); body/loop otherwise byte-identical.
+// (MWCC_CASES §16); body/loop otherwise byte-identical.
 #pragma optimize_for_size on  // -O4,s stmw frame
 CModelDispMakeCrystal* func_8021C4F0(CModelDispMakeCrystal* self)
 {
@@ -1730,7 +1730,7 @@ void func_8021E840(CModelDispMakeCrystal* self, u16 idx)
 // Retail 0x802206E0: refresh the crystal slot entry list, then find the first
 // entry whose param u16 (at +2) is zero and record its index in byte 0.
 // NOTE: -O4,p static cap - retail keeps this as an mtctr/bdnz countdown loop
-// (-O4,s shape); plain -O4,p unrolls it (MWCC_REFERENCE §856).
+// (-O4,s shape); plain -O4,p unrolls it (MWCC_CASES §856).
 void func_8021E888(CModelDispMakeCrystal* self)
 {
     CMCrySlotEntry* entries = reinterpret_cast<CMCrySlotEntry*>(self);

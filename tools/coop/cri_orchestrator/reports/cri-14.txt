@@ -150,7 +150,7 @@ Let me now do a final holistic review of the session:
 
 Let me verify the final git state and make sure I haven't left any uncommitted changes in MY files.
 [Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git status --short -- libs/CriWare/src/adx/ahx/ahx_sjd.c libs/CriWare/src/adx/cvfs/cri_cvfs.c libs/CriWare/src/sofdec/mwply/mwsfdlib.c libs/CriWare/src/so...
-All committed. Let me add the reusable patterns to MWCC_REFERENCE.md per the skill:
+All committed. Let me add the reusable patterns to MWCC_CASES.md per the skill:
 [Thought] All my source files are committed and clean (no uncommitted changes in my units). My commits: 4325d42c2, dc5cd620c, 736a3d6c9 (from earlier).
 
 Wait — the git log shows 62faf4724 "cri: batch cri-03 stall records" and c98c7bfea "cri: match CriWare batch cri-13" — those are OTHER agents' commits that landed after mine. Fine.
@@ -163,19 +163,19 @@ Summary:
 - 6 stalled (semantically clean, witness-blocked → out-of-band SMT needed)
 - 20 blocked (callee/indirect gates)
 
-Let me also note the MWCC_REFERENCE-worthy breakthrough: the mps_get u64-copy pattern (explicit hi/lo u32 pairs with lo-first stores) and the function-scope declaration order fix, and the mwsfdlib Wii/1.1 flag + `w` local + extern float constant. Per the skill, I should append reusable patterns to docs/MWCC_REFERENCE.md. Let me add a concise entry for the CriWare getter patterns since they're reusable (mps_get-style u64 copies and the declaration-order lever).
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && tail -20 docs/MWCC_REFERENCE.md
-[Thought] The MWCC_REFERENCE has similar entries — including the ax_rna "volatile read reproduces retail dead version-string load" pattern (which is EXACTLY the AHXSJD_Init pattern!) and the declaration-order color fixes. My findings are consistent with and extend these. Let me append a concise entry for my batch's discoveries:
+Let me also note the MWCC_CASES-worthy breakthrough: the mps_get u64-copy pattern (explicit hi/lo u32 pairs with lo-first stores) and the function-scope declaration order fix, and the mwsfdlib Wii/1.1 flag + `w` local + extern float constant. Per the skill, I should append reusable patterns to docs/MWCC_CASES.md. Let me add a concise entry for the CriWare getter patterns since they're reusable (mps_get-style u64 copies and the declaration-order lever).
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && tail -20 docs/MWCC_CASES.md
+[Thought] The MWCC_CASES has similar entries — including the ax_rna "volatile read reproduces retail dead version-string load" pattern (which is EXACTLY the AHXSJD_Init pattern!) and the declaration-order color fixes. My findings are consistent with and extend these. Let me append a concise entry for my batch's discoveries:
 
 1. CriWare getters u64 copies: explicit hi/lo u32 pair loads with LO-first stores reproduce retail (mps_get FULL_MATCH ×3).
 2. Function-scope declaration order fixes temp colors (MPS_GetSysHd).
 3. mwsfdlib Wii/1.1 + work-pointer local + extern float constant (mwsflib_InitLibWork).
 4. AHXSJD_Init volatile dead-version-load (same as ax_rna — confirmed the pattern generalizes).
 5. The mpv_get forward-param-color is a fixed MWCC behavior (soft-cap) — worth noting so others don't burn time.
-[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && cat >> docs/MWCC_REFERENCE.md << 'EOF' ### CriWare getters — u64 copies: explicit hi/lo u32 pairs with LO-first stores (mps_get 4× FULL_MATCH) Retail `MPS...
-[Thought] Committed the documentation. The commit shows 3 files — docs/MWCC_REFERENCE.md plus 2 others? Let me check... "3 files changed, 21 insertions(+), 6 deletions(-)" — the git add only added MWCC_REFERENCE.md but the commit included 2 more files. Hmm — maybe README.md + progress-map.svg (pre-commit hook again). Let me verify quickly.
+[Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && cat >> docs/MWCC_CASES.md << 'EOF' ### CriWare getters — u64 copies: explicit hi/lo u32 pairs with LO-first stores (mps_get 4× FULL_MATCH) Retail `MPS...
+[Thought] Committed the documentation. The commit shows 3 files — docs/MWCC_CASES.md plus 2 others? Let me check... "3 files changed, 21 insertions(+), 6 deletions(-)" — the git add only added MWCC_CASES.md but the commit included 2 more files. Hmm — maybe README.md + progress-map.svg (pre-commit hook again). Let me verify quickly.
 [Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git show --stat HEAD | tail -6
-[Thought] Wait — the HEAD is now "cri: mfci_str_to_uint_ptr FULL_MATCH" — that's ANOTHER AGENT's commit! It landed between my `git commit` and the `git show`. The concurrent agents are committing rapidly. My MWCC_REFERENCE commit (3750e3df2) — let me verify it's in the log.
+[Thought] Wait — the HEAD is now "cri: mfci_str_to_uint_ptr FULL_MATCH" — that's ANOTHER AGENT's commit! It landed between my `git commit` and the `git show`. The concurrent agents are committing rapidly. My MWCC_CASES commit (3750e3df2) — let me verify it's in the log.
 [Shell] cd /Users/ahmedelbannan/Ahmed/xenoblade && git log --oneline -5 && git show 3750e3df2 --stat | tail -5
 Batch cri-14 complete. Final report:
 
@@ -206,8 +206,8 @@ Batch cri-14 complete. Final report:
 
 **Blockers for the out-of-band probe pass:** the 6 stalled targets above (witness-ineligible → need full `--smt`; all callee trees accepted).
 
-**Notable work:** mps_get 4/4 FULL_MATCH via explicit hi/lo u32 pairs with lo-first stores + function-scope declaration order; mwsfdlib unit flipped to documented `Wii/1.1` + `w` pointer local + `extern const float` (mwsflib_InitLibWork 0%→100%); AHXSJD_Init dead version-ptr loads reproduced with `volatile`; getDevName inverted-condition fix + `u32` bound for `cmpli`. Patterns appended to docs/MWCC_REFERENCE.md. Committed across 4 commits (736a3d6c9, dc5cd620c, 4325d42c2, 3750e3df2).
-[Thought] My MWCC_REFERENCE commit (3750e3df2) is in place with the docs + hook-generated README/progress files. Another agent's commit (7421ef6d6) landed on top — fine, that's their work.
+**Notable work:** mps_get 4/4 FULL_MATCH via explicit hi/lo u32 pairs with lo-first stores + function-scope declaration order; mwsfdlib unit flipped to documented `Wii/1.1` + `w` pointer local + `extern const float` (mwsflib_InitLibWork 0%→100%); AHXSJD_Init dead version-ptr loads reproduced with `volatile`; getDevName inverted-condition fix + `u32` bound for `cmpli`. Patterns appended to docs/MWCC_CASES.md. Committed across 4 commits (736a3d6c9, dc5cd620c, 4325d42c2, 3750e3df2).
+[Thought] My MWCC_CASES commit (3750e3df2) is in place with the docs + hook-generated README/progress files. Another agent's commit (7421ef6d6) landed on top — fine, that's their work.
 
 The session is complete. Let me compile the final report.
 

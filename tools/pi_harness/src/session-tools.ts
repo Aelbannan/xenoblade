@@ -527,7 +527,7 @@ export function kbTool(repoRoot: string, python: string): ToolDefinition {
     name: "kb",
     label: "MWCC KB",
     description:
-      "Search the MWCC matching knowledge base (docs/MWCC_REFERENCE.md patterns + attempt history) by function/symbol or short mismatch terms. Returns top reference patterns and sibling attempts with status + match% + tags — use before iterating on a target to find known codegen patterns and what others already tried.",
+      "Search the MWCC matching knowledge base (docs/MWCC_PATTERNS.md + docs/MWCC_CASES.md patterns + attempt history) by function/symbol or short mismatch terms. Returns top reference patterns and sibling attempts with status + match% + tags — use before iterating on a target to find known codegen patterns and what others already tried.",
     promptSnippet: "kb <query> — MWCC knowledge search (symbol or mismatch terms)",
     parameters: Type.Object({
       query: Type.String({ description: "mangled symbol, function name, or short mismatch terms (e.g. 'reg swap mullw')" }),

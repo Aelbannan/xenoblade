@@ -15,12 +15,12 @@
 //   * __ct__cf_CREvtObj is the retail SHORT constructor form (no parameter
 //     suffix). MWCC 1.1 full-mangles member ctors (__ct__cf_CREvtObjFi), so
 //     the ctor is written as a C-linkage function carrying the exact retail
-//     name (MWCC_REFERENCE "Constructor symbol name: MWCC 1.1 emits full
+//     name (MWCC_CASES "Constructor symbol name: MWCC 1.1 emits full
 //     mangling, retail has short form").
 //   * __dt__Q22cf8CREvtObjFv is Fv-mangled but reads the MWCC dtor delete
 //     flag in r4: the flag-guarded call is func_80167FFC (CREvtMem free),
 //     not operator delete, so the two-arg C-linkage form reproduces the
-//     retail body (MWCC_REFERENCE "Extern-C for Fv-mangled functions that
+//     retail body (MWCC_CASES "Extern-C for Fv-mangled functions that
 //     take hidden parameters").
 
 #include "kyoshin/realtimeevt/CREvtObj.hpp"

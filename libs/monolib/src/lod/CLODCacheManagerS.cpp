@@ -2,7 +2,7 @@
 //
 // Private downstream fork decompilation.  Retail symbols are the (shortened)
 // "...Fv" names; real ABI arguments are passed explicitly (Metrowerks passes
-// extra registers even on Fv names -- see docs/MWCC_REFERENCE.md "Fv ABI
+// extra registers even on Fv names -- see docs/MWCC_CASES.md "Fv ABI
 // note", and the sibling TU UnkClass_8046368C.cpp uses the same convention).
 
 #include <harness_catalog.h>

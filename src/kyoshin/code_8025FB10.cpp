@@ -263,7 +263,7 @@ extern u8* lbl_eu_80664870;
 // Inline helper: MWCC's inliner lowers the in-loop `return rec` to an
 // unconditional `b` after the `bne` (branch-over-branch `bne next; b found`),
 // which an inline `if (index == rec->mId) break;` loop folds into a single
-// `beq found` (see MWCC_REFERENCE btm_acl "bne next; b found").
+// `beq found` (see MWCC_CASES btm_acl "bne next; b found").
 static inline CUnkItem8025FB10* findRecByIndex(CUnkObj8025FB10* obj,
                                                int index) {
     for (int i = 0; i < 66; i++) {
@@ -363,7 +363,7 @@ SUM:
 // Target: us-80261eac - walk the +0x18 linked list to its last node.
 // Retail unrolls 5 levels then tail-calls itself. The nested-if shape with
 // the n3-return kept flat reproduces retail's register rotation (n1=r4,
-// n2=r5, n3=r3, n4=r4, n5=r3) and bottom ret-blocks (MWCC_REFERENCE
+// n2=r5, n3=r3, n4=r4, n5=r3) and bottom ret-blocks (MWCC_CASES
 // func_8025F290 pattern); the fully-flat or fully-nested forms differ.
 // extern "C" keeps the self tail-call reloc name verbatim (reloc-site
 // gate) - same as func_8025F290 in CPcKizunagram.cpp.

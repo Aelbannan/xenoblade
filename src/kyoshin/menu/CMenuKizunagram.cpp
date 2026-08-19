@@ -71,7 +71,7 @@ void CMenuKizunagram::Move() {
     // Move body. The `if (A && B) goto body; goto end; end: return; body:`
     // chain (exit label BEFORE the body label) keeps the body off the
     // fallthrough so MWCC emits retail's branch-over-branch: `bne end` for
-    // the first disjunct, `beq body; b end` for the second (MWCC_REFERENCE
+    // the first disjunct, `beq body; b end` for the second (MWCC_CASES
     // §&&-gate branch-over-branch).
     getInstance__9CTaskGameFv();
     if (func_800426F0__9CTaskGameFv() == 0 && (lbl_eu_80663E28 & 0x200000) == 0) {

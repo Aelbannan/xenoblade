@@ -32,7 +32,7 @@ struct CSysWinPaneOverlay {
 // __vt__7CSysWin of its own). Stores the retail vtable BEFORE the embedded
 // UnkClass_8045F564 is constructed (retail ctor order), then zero/one-inits
 // the state fields and returns `this` in r3. optimize_for_size matches the
-// retail stmw/lmw prologue (MWCC_REFERENCE #16); the UnkClass ctor is invoked
+// retail stmw/lmw prologue (MWCC_CASES #16); the UnkClass ctor is invoked
 // via its C-linkage symbol so no placement-new null check is emitted.
 #pragma push
 #pragma optimize_for_size on
@@ -83,7 +83,7 @@ extern "C" void probe_2reg(CSysWin* self, int kind) {
 // Target 3: us-8022de64 - set the two window label texts from the shared
 // string pool (offsets +0x77 / +0x82) into the layout. optimize_for_size
 // matches the retail stmw/lmw prologue for the 3 callee-saved regs (r29-r31)
-// under the unit's -O4,p flags (see MWCC_REFERENCE #16).
+// under the unit's -O4,p flags (see MWCC_CASES #16).
 #pragma push
 #pragma optimize_for_size on
 extern "C" void func_80138078__FUl(u32);
@@ -280,7 +280,7 @@ extern "C" void func_8022B6F4(CSysWin* self) {
 // Target 4: us-8022d580 - per-frame update: run the phase handler for the
 // current animation phase, then advance the layout animation (open-flag gate).
 // The three phase handlers carry dont_inline so the dispatch calls stay direct
-// bl's. Goto-chain dispatch (MWCC_REFERENCE §7d2): switch/if-else shapes don't
+// bl's. Goto-chain dispatch (MWCC_CASES §7d2): switch/if-else shapes don't
 // reproduce retail's linear equality chain with bodies appended after the
 // tests; the int temp keeps the compares signed (cmpi) without an extsb.
 extern "C" void func_8022B748(CSysWin* self) {

@@ -651,7 +651,7 @@ extern u32 lbl_eu_80663E24;
 
 // Voice-timing threshold compared against the voice sub-object's slot-0x110
 // result by func_8027A8C8 (.sdata2 float; const lets MWCC schedule the
-// pool load at retail's position, cf. MWCC_REFERENCE SDA-pool hoist).
+// pool load at retail's position, cf. MWCC_CASES SDA-pool hoist).
 extern const f32 lbl_eu_80668A60;
 
 // Chain-voice global state (retail .sdata lbl_eu_80662A20): -1 is the

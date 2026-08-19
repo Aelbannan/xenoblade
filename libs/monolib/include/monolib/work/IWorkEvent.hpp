@@ -22,7 +22,7 @@ kyoshin/CGame.cpp to match retail weak placement. ~IWorkEvent is inline-empty so
 MWCC elides the base-dtor call in derived dtors (retail shape); a strong copy is
 defined in kyoshin/CTaskGame.cpp for symbol placement. Do not make these inline
 in the header -- that pulls weak stubs into every overriding TU and blows split
-budgets (see MWCC_REFERENCE CBattery/CBgTex note). */
+budgets (see MWCC_CASES CBattery/CBgTex note). */
 class IWorkEvent {
 public:
 #ifdef IWORK_EVENT_INLINE_DTOR

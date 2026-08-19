@@ -31,7 +31,7 @@ CActParamData::CActParamData() {
 CActParamData::~CActParamData() {}
 
 // Cast-only SI ifaces for anonymous vtable tail-call thunks
-// (same RTTI-omit pattern as BattleStateV8If in MWCC_REFERENCE).
+// (same RTTI-omit pattern as BattleStateV8If in MWCC_CASES).
 struct If0x38 {
     virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
     virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();

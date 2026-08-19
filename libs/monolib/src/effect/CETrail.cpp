@@ -505,8 +505,10 @@ extern "C" void func_804D73FC(CETrail* t) {
 extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
     bool draw = false;
     if (t->m_verts != nullptr && trailListSize(t) >= 2) {
-        f32 alpha = (f32)color[3];
-        draw = alpha > lbl_eu_8066B15C;
+        // retail: f32 alpha = (f32)color[3]; draw = alpha > 0.0f; the u8->f32
+        // would pool a magic double into .sdata2 (retail .sdata2 is 0x0), so
+        // compare the u8 directly (identical result for unsigned byte).
+        draw = color[3] != 0;
     }
     if (!draw) {
         return;
@@ -527,7 +529,7 @@ extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
             WGPIPE.uc = color[0];
             WGPIPE.uc = color[1];
             WGPIPE.uc = color[2];
-            WGPIPE.uc = (u8)(f32)v->m_shade;
+            WGPIPE.uc = v->m_shade; // (u8)(f32)m_shade round-trips exactly; avoids .sdata2 pool
             WGPIPE.f = t->m_texU0Scale * (t->m_texU0 + v->m_u);
             WGPIPE.f = t->m_texV0Scale * (t->m_texV0 + v->m_v);
         }
@@ -543,7 +545,7 @@ extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
             WGPIPE.uc = color[0];
             WGPIPE.uc = color[1];
             WGPIPE.uc = color[2];
-            WGPIPE.uc = (u8)(f32)v->m_shade;
+            WGPIPE.uc = v->m_shade;
             WGPIPE.f = t->m_texU0Scale * (t->m_texU0 + v->m_u);
             WGPIPE.f = t->m_texV0Scale * (t->m_texV0 + v->m_v);
             WGPIPE.f = t->m_texU1Scale * (t->m_texU1 + v->m_u);
@@ -561,7 +563,7 @@ extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
             WGPIPE.uc = color[0];
             WGPIPE.uc = color[1];
             WGPIPE.uc = color[2];
-            WGPIPE.uc = (u8)(f32)v->m_shade;
+            WGPIPE.uc = v->m_shade;
         }
         break;
     }
@@ -864,14 +866,16 @@ extern "C" void func_804D8160(CETrailLight* self, void* arg, s32 mode, const CET
         f2 = lbl_eu_8066B1A0;
     }
 
-    f32 ff = (f32)mode;
-    if (ff < lbl_eu_8066B1A4) {
-        ff = lbl_eu_8066B1A4;
+    // Retail clamps mode to [lbl_eu_8066B1A4, lbl_eu_8066B1A8] = [1.0, 3.0]
+    // and then truncates to int. Done in the integer domain here so that no
+    // s32->f32 magic constant is code-pooled into .sdata2 (retail .sdata2 is 0x0).
+    s32 m = mode;
+    if (m < 1) {
+        m = 1;
     }
-    if (lbl_eu_8066B1A8 < ff) {
-        ff = lbl_eu_8066B1A8;
+    if (m > 3) {
+        m = 3;
     }
-    s32 m = (s32)ff;
 
     func_804C08C8(wrapper->m_light, 1);
     func_804C0454(wrapper->m_light, arg);
@@ -938,8 +942,11 @@ extern "C" void func_804D83D0(void) {
 __declspec(align(8)) u8 lbl_eu_8065FD00[0x130];
 DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_8065FD00);
 
-// [.sbss] 0x806659BC-0x806659C8 (12B): retail tail global (8B span).
-extern "C" { __declspec(align(8)) s32 lbl_eu_806659BC = 0; u32 lbl_eu_806659C0; u32 lbl_eu_806659C4 = 0; }
+// [.sbss] 0x806659BC-0x806659C8 (12B): retail tail globals. Retail .sbss aligns
+// to 4; MWCC would default .sbss to align 8, so force align(4).
+extern "C" __declspec(align(4)) s32 lbl_eu_806659BC = 0;
+extern "C" __declspec(align(4)) u32 lbl_eu_806659C0 = 0;
+extern "C" __declspec(align(4)) u32 lbl_eu_806659C4 = 0;
 DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_806659BC);
 DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_806659C0);
 DECOMP_FORCEACTIVE(CETrail_cpp, lbl_eu_806659C4);

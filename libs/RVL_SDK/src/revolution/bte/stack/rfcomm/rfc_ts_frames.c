@@ -165,7 +165,7 @@ extern u16 L2CA_DataWrite(u16 cid, BT_HDR *p_buf);
 
 /* Short SDA trace strings: fixed-size externs keep MWCC on sda21 addressing
 ** and give the retail reloc names (lbl_80665958/lbl_80665960), same fix as
-** btm_devctl.c's lbl_8066592C/34 (MWCC_REFERENCE §1a SDA globals). */
+** btm_devctl.c's lbl_8066592C/34 (MWCC_CASES §1a SDA globals). */
 // Defined here (retail .sdata 0x0/0x8, 8 bytes each); non-const so they land
 // in .sdata rather than .sdata2.
 char lbl_80665958[8] = "Bad UA";

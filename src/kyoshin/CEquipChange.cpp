@@ -9,7 +9,7 @@
 #include "monolib/util/MemManager.hpp"
 
 // const routes the symbol into the readonly sdata2 pool; MWCC then hoists the
-// lfs ABOVE the frame stores (retail shape) - see MWCC_REFERENCE §CExchangeWin.
+// lfs ABOVE the frame stores (retail shape) - see MWCC_CASES §CExchangeWin.
 extern const float lbl_eu_806682A8;
 
 extern "C" void func_80138078__FUl(u32 op);
@@ -20,7 +20,7 @@ extern "C" int func_802031A0(CEquipChange* self);
 // Target us-80203cec: destructor. Retail frame uses the stmw/lmw save shape
 // with the null-check cmpwi hoisted above the frame stores; the extern "C"
 // free-function form avoids MWCC's implicit member destruction (which would
-// emit a duplicate __dt__13CEquipItemBoxFv after the body - MWCC_REFERENCE
+// emit a duplicate __dt__13CEquipItemBoxFv after the body - MWCC_CASES
 // kyoshin-dtors) and the optimize_for_size pragma forces the stmw merge.
 // Sub-object dtors run in retail order (reverse layout order), then
 // conditional operator delete when the delete flag is set.
@@ -648,7 +648,7 @@ extern "C" int func_802039F4(CEquipChange* self) {
 // the active category (box gate open: func_80288530 category; gate closed:
 // field_98) and the per-category item id read from the bdat row (obj+off).
 // Opt-space merges the callee-saved saves into stmw r30 and copies r3->r30
-// before r4->r31 (retail prologue shape; MWCC_REFERENCE kyoshin leaf patterns).
+// before r4->r31 (retail prologue shape; MWCC_CASES kyoshin leaf patterns).
 #pragma optimize_for_size on
 int func_80203A98(CEquipChange* self, u32 param) {
     if (func_802865A0(&self->mEquipItemBox) != 0) {

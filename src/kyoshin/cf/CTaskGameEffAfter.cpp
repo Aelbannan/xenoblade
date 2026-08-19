@@ -44,7 +44,7 @@ void CTTask<CTaskGameEffAfter>::Draw() {
 // derived dtor and the self-allocating ctor need the same size-priority frame
 // (retail stmw r30 prologues), and the Move/Draw dispatchers + empty overrides
 // compile identically under either priority. (An unclosed pragma leaks forward
-// in MWCC - see docs/MWCC_REFERENCE.md "pragma leaks".)
+// in MWCC - see docs/MWCC_CASES.md "pragma leaks".)
 #pragma optimize_for_size on
 template<>
 CTTask<CTaskGameEffAfter>::~CTTask() {}

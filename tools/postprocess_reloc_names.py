@@ -3,7 +3,7 @@
 
 Renames TU-local `@N` float/double pools (and selected other linker symbols) to
 retail `lbl_eu_*` names when instruction bytes already match. See
-docs/MWCC_REFERENCE.md §11.
+docs/MWCC_PATTERNS.md
 
 objdiff.json symbol_mappings do NOT affect CLI reports (objdiff #279).
 """

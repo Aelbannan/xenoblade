@@ -37,7 +37,7 @@ cf::CActParamAnimGame::~CActParamAnimGame() {}
 void cf::CActParamAnimGame::func_8005A524() {
     func_8004B114();
     // sdata2 constants written inline (const-float globals hoist the loads at
-    // retail's position and allocate retail's FPR coloring, MWCC_REFERENCE
+    // retail's position and allocate retail's FPR coloring, MWCC_CASES
     // SDA-const hoist / FPR-coloring rules).
     field_4E8 = 0;
     field_4F4 = 0;

@@ -1,4 +1,15 @@
 
+# Decompiling a single file — step-by-step
+
+- **When to read this:** decompiling your first small assembly file (retail asm → high-level C/C++ →
+  `Matching`).
+- **Skip it when:** you're already iterating on a match — use `SKILL.md` → **Routing** instead
+  (this guide predates the `cycle`/`hexdiff` flow and shows the manual shape).
+- **TL;DR:** pick a small asm file → read the retail asm to recover the high-level C/C++ (params come
+  in via the PPC ABI registers; the prologue/epilogue is just frame setup, not semantics) → write the
+  function in a `.c`/`.cpp` with an accompanying header (header guards + `extern "C"` where needed) →
+  flip the TU from `NonMatching` to `Matching` in `configure.py` → build and confirm it matches.
+
 ## Decompilation process
 Here are the general steps you must go through to decompile a single file:
 

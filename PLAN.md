@@ -10,7 +10,7 @@
 
 - `tools/coop/targets.json` — canonical function registry and current target state (equivalence certificates live in the gzip JSONL sidecar `tools/coop/targets.certs.jsonl.gz`; the runner merges it transparently on load)
 - `COOP_IMPLEMENTATION_MAP.md` — capability graph and critical feature handoffs
-- `AGENTS.md` / `.cursor/skills/xenoblade-decomp/SKILL.md` — agent entry + decomp loop
+- `AGENTS.md` / `.agents/skills/xenoblade-decomp/SKILL.md` — agent entry + decomp loop
 - `Xenoblade_Wii_Coop_Decompilation_Guide.md` — deeper per-function decompilation procedures (when present)
 
 ---
@@ -1413,13 +1413,15 @@ select one function/question
 | `STRUCTURAL` | Control-flow and calls broadly align. |
 | `HIGH_MATCH` | Most instructions/relocations match (≥ ~70% fuzzy). |
 | `CODE_MATCH` | Instruction bytes largely match (≥ ~95% fuzzy); data/relocations may remain. |
-| `EQUIVALENT_MATCH` | Fuzzy ≥ **50%**, `ppc_equivalence` proves `EQUIVALENT` under effect-aware `auto` (`ppc-eabi` or stronger), and split-size fit. |
+| `EQUIVALENT_MATCH` | Fuzzy ≥ **50%** and the register-renaming witness (`cycle`/`batch-cycle`, runs by default) certifies equivalence, plus split-size fit. (Z3/SMT probe is disabled — see No-SMT policy below.) |
 | `FULL_MATCH` | Code, relocations, expected stack/function size match (100% static), and split-size fit. |
 | `BEHAVIOR_VERIFIED` | Runtime tests confirm the interpretation. |
 
 A byte match proves faithful code generation, not the semantic name of every unknown field or hook safety.
 
-**Current project policy:** the required acceptance bar for every decompilation target is **`EQUIVALENT_MATCH`** or **`FULL_MATCH`** — both are equal-tier outcomes. `EQUIVALENT_MATCH` guarantees semantic correctness via SMT proof; `FULL_MATCH` guarantees byte-level identity. Intermediate statuses remain useful for logging progress. `coop run cycle` exits non-zero until `EQUIVALENT_MATCH` or `FULL_MATCH` (plus split-size fit).
+**Current project policy:** the required acceptance bar for every decompilation target is **`EQUIVALENT_MATCH`** or **`FULL_MATCH`** — both are equal-tier outcomes (prefer `FULL_MATCH` when reachable: a 100% static match is cheaper to certify and needs no semantic proof). `EQUIVALENT_MATCH` guarantees semantic correctness via the **register-renaming witness**, which runs inside `cycle`/`batch-cycle` by default; `FULL_MATCH` guarantees byte-level identity and receives an automatic `full-instruction-match` certificate without a solver. Intermediate statuses remain useful for logging progress. `coop run cycle` exits non-zero until `EQUIVALENT_MATCH` or `FULL_MATCH` (plus split-size fit).
+
+**No-SMT policy (hard):** the full Z3 SMT probe is **disabled** in this repo. Do not run `--smt`/`--linked`, or a plain `ppc_equivalence`-driven `run.py diff` (it defaults the probe on), for acceptance evidence. The only equivalence path is the **register-renaming witness** inside `cycle`/`batch-cycle`. A function the witness cannot certify (scheduling/immediate/instruction-selection diffs, any `psq_*`, or any `bl` call) must reach `FULL_MATCH` or stay recorded as a near-miss — the SMT probe is never the answer.
 
 ### 17.2.1 Behaviour comparison (static + optional PPC)
 
@@ -1454,7 +1456,7 @@ Use only after normal C++ and decomp.me fail, and **log every use** in `docs/evi
 
 | Exception | Allowed when | Requirements |
 |-----------|----------------|--------------|
-| **MWCC PPC intrinsics** | Opcode selection (`slwi` vs `rlwinm`, bitfield inserts) | Use `DECOMP_PPC_*` macros from `include/decomp.h` (same family as SDK `__rlwimi` / `__rlwinm`). Document in `MWCC_REFERENCE.md` if a new pattern is reusable. |
+| **MWCC PPC intrinsics** | Opcode selection (`slwi` vs `rlwinm`, bitfield inserts) | Use `DECOMP_PPC_*` macros from `include/decomp.h` (same family as SDK `__rlwimi` / `__rlwinm`). Document in `MWCC_CASES.md` if a new pattern is reusable. |
 | **Isolated MWCC Gekko paired-single backend** | A named Wii/MWCC target contains retail `psq_*`, `ps_*`, or related paired-single operations that cannot be expressed through approved high-level MWCC C++ (`__vec2x32float__`, scalar builtins, and normal C++), after the ordinary C++ path has been exhausted | Keep the implementation in a designated C/C++ PS backend file or `.inl` included by the owning TU, or in an explicitly marked PS region. Guard it so non-MWCC/PC builds select a complete high-level fallback. `ASM`/`asm void` may be used only for the documented PS kernel and its minimal memory/branch support; do not hand-write a prologue/epilogue or unrelated control-flow, GPR, or stack choreography. Record the opcode set, target, guard, fallback, and validation evidence. |
 | **Goto gate chains** | CSplitFrame / multi-exit guards (see `setSplitLine` 100%) | Gotos for control-flow gates are OK; not for prologue spill ordering alone. |
 | **Wii boot-entry vectors (MetroTRK `InitMetroTRK*`)** | A named Wii/MWCC target is a hardware boot-entry vector entered with a non-standard ABI (no valid stack frame, hardware ID in `r5`), so MWCC's mandatory frame prologue cannot reproduce the retail body, after the ordinary C++ path has been exhausted and the target is otherwise blocked | Guard `asm void` + `nofralloc` to the MWCC build; provide a complete readable C fallback for non-MWCC/PC builds. Transcription is limited to the named boot-vector body (GPR save/restore via `stmw`/`lmw`, MSR/SRR1 + IABR/DABR SPR setup, fixed debug-stack switch, comm-table init, tail `b TRK_main`). No unrelated control-flow or prologue/epilogue hacks. Log every use with `"policy_exception": true`. |

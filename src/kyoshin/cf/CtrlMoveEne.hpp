@@ -1593,7 +1593,7 @@ int func_8006EF04(int r3);
 
 // .sdata2 float constants compared/stored by the func_80092CC4 family.
 // Declared const so MWCC treats the pool loads as constants and hoists them
-// to retail's early position (docs/MWCC_REFERENCE.md SDA scheduling).
+// to retail's early position (docs/MWCC_CASES.md SDA scheduling).
 extern const f32 lbl_eu_806665C0;  // 0.0f
 extern const f32 lbl_eu_806665E4;  // 1.0f (rand-gated fallback)
 

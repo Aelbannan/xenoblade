@@ -151,7 +151,7 @@ extern "C" u8* func_8009D790(s16* arr, u32 idx) {
     // The volatile read reproduces retail's reload of arr[idx] for the call
     // argument (retail lhax r4,r3,r5 reloads; the cat ternary reuses r0 and
     // clobbers the first read). Without volatile, MWCC CSEs the two reads
-    // into one lhax + or r4,r0,r0 and colors cat into r3 (MWCC_REFERENCE
+    // into one lhax + or r4,r0,r0 and colors cat into r3 (MWCC_CASES
     // instruction-selection: split-form reads need a volatile/walked read).
     volatile s16* q = &arr[idx];
     u8* result = 0;

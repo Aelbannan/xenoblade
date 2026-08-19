@@ -339,7 +339,7 @@ namespace cf {
     // through the slot). CfObjectActor_UnkVirtualFunc10 dispatches this slot
     // on a downcast actor; the fake interface with real virtuals emits the
     // retail r12 dispatch (lwz r12,0(r3); lwz r12,0x5C4(r12)) instead of the
-    // manual cast's scratch r4 (MWCC_REFERENCE CModelDispEquip: N virtuals +
+    // manual cast's scratch r4 (MWCC_CASES CModelDispEquip: N virtuals +
     // 8 hidden slots = slot index, so 0x5C4/4 - 8 = 361 fillers).
     struct CfActorVt5C4If {
         virtual void f000();

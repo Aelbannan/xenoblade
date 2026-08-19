@@ -20,7 +20,7 @@ namespace detail {
 NW4R_UT_LINKLIST_TYPEDEF_FORCE(FxBase);
 
 // Retail .sdata2 float constants referenced by name so the SDA21 relocations
-// match the stripped retail object (MWCC_REFERENCE §1b float pools).
+// match the stripped retail object (MWCC_CASES §1b float pools).
 extern "C" const f32 lbl_eu_80669E7C; // 0.0f
 
 // The AxManager header ends its layout at 0xF0 (u8 mAuxCallbackWaitCounter[3]).

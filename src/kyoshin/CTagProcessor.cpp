@@ -1433,7 +1433,7 @@ void func_8012A070(nw4r::ut::TextWriterBase<wchar_t>* tw, float x, float y) {
 // running sum with a max tracked after the loop; the font height getter
 // (vtable +0x34) is converted to float with the builtin 0x4330/xoris/lfd
 // magic idiom (the magic pools to a TU-local @N label; retail shares it as
-// the named sdata2 blob lbl_eu_80667200 - MWCC_REFERENCE 7i).
+// the named sdata2 blob lbl_eu_80667200 - MWCC_CASES 7i).
 // optimize_for_size: retail saves r27-r31 + f28-f31 with _savegpr_27 (the
 // -O4,s save shape).
 #pragma optimize_for_size on
@@ -1583,7 +1583,7 @@ void func_801287BC(CTagProcessorBase* msg, nw4r::lyt::Pane* pane,
 // Tag-writer family (small variants): init a TagParam block with a tag code
 // NOTE: retail prologue is stwu; mflr; stw r0; stmw r30; or r30,r4,r4;
 // or r31,r6,r6 — the optimize_for_size pragma merges the callee-saved saves
-// into stmw/lmw and fixes the copy order (MWCC_REFERENCE CPartyState
+// into stmw/lmw and fixes the copy order (MWCC_CASES CPartyState
 // func_801FD0A0 pattern); plain -O4,p emits reversed stw pairs + moves.
 #pragma optimize_for_size on
 extern "C" void* func_801289B4(void* a, void* b, u8 code, u8* dst) {
@@ -1705,7 +1705,7 @@ void* func_80128C6C(void* unused, void* ret, wchar_t* str, TagParam* dst) {
         // Builtin s32->f32 conversion: byte-identical to retail's
         // lis/xoris/stw/lfd/fsubs magic idiom. The conversion's 2^52+2^31
         // magic constant pools to a TU-local @N label; retail shares it as
-        // the named sdata2 blob lbl_eu_80667200 (MWCC_REFERENCE 7i - the
+        // the named sdata2 blob lbl_eu_80667200 (MWCC_CASES 7i - the
         // manual union form that names it breaks the schedule with an extra
         // fsub+frsp, so the builtin is the closest byte-identical state).
         initTagParam((u8*)&p, 1, idx, (f32)val);

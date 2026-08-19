@@ -2452,7 +2452,7 @@ void CActorParam_UnkVirtualFunc140__Q22cf11CActorParamFv(cf::CActorParam* self, 
     e->unk8 = lbl_eu_80667804;
     e->unkC = lbl_eu_80667804;
     // float->double->float round-trip pins retail's frsp on the param compare
-    // (MWCC_REFERENCE func_800B06A4 pattern).
+    // (MWCC_CASES func_800B06A4 pattern).
     if ((float)(double)f1 < lbl_eu_806677E8) {
         e->unk10 = lbl_eu_806677E8;
     } else if (e->unk10 > lbl_eu_80667864) {

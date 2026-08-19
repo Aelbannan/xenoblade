@@ -26,7 +26,7 @@ extern "C" void __destroy_arr(void*, void*, int, int);
 // +0x550 (0x53C stride) and the single one at +0xC, then frees the object
 // when the delete flag is set; returns the object (retail mr r3, r30). The
 // scoped optimize_for_size merges the r30/r31 saves into stmw/lmw like the
-// retail body (plain -O4,p emits two stw's; MWCC_REFERENCE stmw pattern).
+// retail body (plain -O4,p emits two stw's; MWCC_CASES stmw pattern).
 #pragma push
 #pragma optimize_for_size on
 u8* __dt__801FBF0C(CModelDispSub* obj, int flag) {

@@ -2,7 +2,7 @@
 
 Deliberately compact: agents are told to read big docs LAZILY (only when a
 mismatch is actually observed) instead of pre-loading AGENTS.md + PLAN.md +
-MWCC_REFERENCE into context where they are re-billed every turn.
+MWCC_PATTERNS.md into context where they are re-billed every turn.
 """
 from .common import ROOT
 
@@ -65,7 +65,7 @@ def build_prompt(batch, *, section, worktree_path=None, branch=None,
     if batch.get("digest_path"):
         digest = (
             f"\nBATCH KB DIGEST (read this file before iterating — it lists the top "
-            f"MWCC_REFERENCE records for your batch's symbols; walls already documented "
+            f"MWCC_PATTERNS.md records for your batch's symbols; walls already documented "
             f"there are blockers to record, not experiments to repeat):\n{batch['digest_path']}"
         )
 
@@ -94,7 +94,7 @@ ACCEPTANCE (FULL_MATCH campaign — no SMT in-session):
 
 READ (lazy, on demand — do NOT pre-read big docs):
 1. AGENTS.md once (short, at repo root).
-2. When you hit a mismatch: search the KB first — .venv/bin/python3 tools/mwcc_kb.py search "<mangled-or-term>" --json, open the top records only. Read PLAN.md §17 only if the loop requires it. Do NOT read MWCC_REFERENCE.md end-to-end.
+2. When you hit a mismatch: search the KB first — .venv/bin/python3 tools/mwcc_kb.py search "<mangled-or-term>" --json, open the top records only. Read PLAN.md §17 only if the loop requires it. Do NOT read MWCC_PATTERNS.md end-to-end.
 3. Per target: .venv/bin/python3 tools/coop/run.py targets show <target-id> (callee readiness gate) — do not skip this.
 
 YOUR BATCH {bid} — {batch['total']} targets across units: {units}
@@ -108,7 +108,7 @@ RULES (non-negotiable):
 - Do NOT use the pi harness (tools/pi_harness). Do NOT use subagents. Do NOT ask questions — keep working until the batch is done or every remaining target is blocked.
 - Minimal git: status/diff once at start and once before commit; commit per unit or several targets at once with batch-cycle.py — do not commit every keystroke.
 - Do NOT git reset, do NOT revert other worktrees' files, do NOT push. NEVER commit orig/ (retail files) or build/ artifacts.
-- Per-unit compiler flags are a legitimate tool: if MWCC_REFERENCE attributes a diff to flags (-func_align 4/16, -ipa off, mw_version="GC/3.0a5.2"), apply the documented fix to YOUR unit's Object(...), hexdiff-verify, revert if it doesn't help. No blind flag-sweeping, no failed experiments left in place.
+- Per-unit compiler flags are a legitimate tool: if MWCC_PATTERNS.md attributes a diff to flags (-func_align 4/16, -ipa off, mw_version="GC/3.0a5.2"), apply the documented fix to YOUR unit's Object(...), hexdiff-verify, revert if it doesn't help. No blind flag-sweeping, no failed experiments left in place.
 
 WORKFLOW per target:
 1. Claim: .venv/bin/python3 tools/coop/run.py targets claim <target-id> --owner {bid}
@@ -121,6 +121,6 @@ WORKFLOW per target:
 FINAL REPORT (end of session, plain text):
 - Per target: id | function | final status (FULL_MATCH/EQUIVALENT_MATCH/ACTIVE+%) | blocker
 - List of accepted targets; list of blockers (callee-blocked, wall, size)
-- Reusable insights: append proven fixes to docs/MWCC_REFERENCE.md in-session (pattern, symptom, fix, match %).
+- Reusable insights: append proven fixes to docs/MWCC_PATTERNS.md in-session (pattern, symptom, fix, match %).
 {seed}
 """

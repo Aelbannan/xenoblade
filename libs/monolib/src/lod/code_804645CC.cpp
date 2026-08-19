@@ -4,7 +4,7 @@
 // Retail symbols use shortened Fv names in symbols.txt (the DOL is stripped),
 // while several entry points receive data in r3/r4/f1.  These explicit retail
 // name entry points model the extra ABI values as ordinary C++ parameters, as
-// documented in docs/MWCC_REFERENCE.md.  Register usage follows the retail
+// documented in docs/MWCC_CASES.md.  Register usage follows the retail
 // ABI (r3 is the first explicit value).
 
 #include <harness_catalog.h>

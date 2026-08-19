@@ -18,7 +18,7 @@ public:
     virtual void cbRenderBefore();
 };
 
-// MWCC_REFERENCE §190: Do not inherit from IWorkEvent (out-of-line dtor
+// MWCC_CASES §190: Do not inherit from IWorkEvent (out-of-line dtor
 // pulls weak stubs). Intermediate base holds the 0x54-0x5b fields so that
 // IScnRender lands at retail offset 0x5c, giving correct non-primary
 // base-cast null-check codegen in Term().

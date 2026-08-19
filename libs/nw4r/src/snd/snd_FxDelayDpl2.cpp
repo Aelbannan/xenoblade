@@ -2,7 +2,7 @@
 #include <nw4r/ut.h>
 
 // Retail-owned data referenced by name so the ctor's relocations match the
-// stripped retail object (MWCC_REFERENCE 1b float pools / retail vtables).
+// stripped retail object (MWCC_CASES 1b float pools / retail vtables).
 // Global scope: MWCC does not mangle file-scope names, so plain extern emits
 // the exact retail symbols.
 //

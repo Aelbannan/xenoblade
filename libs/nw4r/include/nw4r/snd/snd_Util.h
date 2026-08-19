@@ -10,7 +10,7 @@
 
 // Retail .sdata2/.rodata pool constants referenced by name so SDA21/data
 // relocations match the stripped retail object (PLAN.md §17.6 approved
-// extern "C" lbl_eu_* pattern, docs/MWCC_REFERENCE.md §1b float pools).
+// extern "C" lbl_eu_* pattern, docs/MWCC_CASES.md §1b float pools).
 extern "C" const f32 lbl_eu_8066A0D0; // 1.0f
 extern "C" const f32 lbl_eu_8066A0F0; // 0.0f
 extern "C" const f32 lbl_eu_8066A0F4; // LPF scale lower bound

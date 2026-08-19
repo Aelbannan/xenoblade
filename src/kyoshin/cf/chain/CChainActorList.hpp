@@ -211,7 +211,7 @@ public:
 // Manual vtable objects stored by the Pc/Ene constructors (retail .data).
 // Declared at their full retail sizes (0x78 / 0x10) so MWCC emits the
 // lis/addi HA-LO address form; a small (<8B) extern type would otherwise
-// use sda21 addressing and break the reloc match (MWCC_REFERENCE §833).
+// use sda21 addressing and break the reloc match (MWCC_CASES §833).
 struct CChainVtblActor {
     u8 bytes[0x78];
 };

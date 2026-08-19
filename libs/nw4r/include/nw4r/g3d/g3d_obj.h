@@ -31,7 +31,7 @@ inline u32 align32(u32 x) {
 
 // Retail vtable data (nw4r_data.s lbl_eu_805695B0, .data). The class is
 // __declspec(novtable) so the TU emits no local vtable; the inline ctor and
-// the dtor assign the retail label explicitly (MWCC_REFERENCE "Retail-owned
+// the dtor assign the retail label explicitly (MWCC_CASES "Retail-owned
 // vtable data").
 extern "C" void* lbl_eu_805695B0[];
 

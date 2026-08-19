@@ -41,7 +41,7 @@ extern f32 lbl_eu_8066A164;  // lbl_eu_8066A164
 extern f64 lbl_eu_8066A168;  // 0x4330000080000000 (signed int->f32 magic)
 extern f32 lbl_eu_8066A170;  // 0.5f
 
-// int -> f32 conversion matching retail (MWCC_REFERENCE 7i): build the 2^52+x
+// int -> f32 conversion matching retail (MWCC_CASES 7i): build the 2^52+x
 // double on the stack (low word = x ^ 0x80000000, high word = 0x43300000) and
 // subtract the shared signed magic. Statement order matters: the value word
 // first, then 0x43300000.

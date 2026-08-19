@@ -135,7 +135,7 @@ SIGINT/SIGTERM releases active claims.
   invocation, so agent hexdiff builds serialise against harness-driven
   builds (configure.py, ninja, batch-cycle).
 - For reloc name-drift near-misses (bytes identical, reloc *names* differ —
-  MWCC_REFERENCE §1, the #1 cause of 99.3-99.9% stalls), use
+  MWCC_CASES §1, the #1 cause of 99.3-99.9% stalls), use
   `run.py reloc-map diff <unit> --symbol <sym> --no-build` for the approved
   source `extern "C"` fix, or `run.py reloc-map mine` to refresh the repo map.
   `hexdiff` already prints these suggestions inline.

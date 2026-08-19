@@ -994,7 +994,7 @@ def run(argv: list[str] | None = None) -> int:
         decomp_object=decomp_path,
     )
 
-    # Reloc name-drift analysis (MWCC_REFERENCE §1): classify per-offset reloc
+    # Reloc name-drift analysis (MWCC_PATTERNS.md): classify per-offset reloc
     # differences (name drift vs addend drift vs structural) and look up fixes
     # in the mined map (tools/coop/retail_reloc_map.json, built by
     # tools/coop/reloc_map.py mine). Failures degrade to "no drift info".
@@ -1187,7 +1187,7 @@ def _unit_compiler_config(project: Project, unit_name: str) -> str:
 
 
 def _kb_hints(unit_name: str, c: dict, retail: FunctionBytes, decomp: FunctionBytes, compiler_cfg: str = "") -> list[str]:
-    """Detect known MWCC_REFERENCE stall signatures and point at the section."""
+    """Detect known MWCC_PATTERNS.md stall signatures and point at the section."""
     hints: list[str] = []
 
     def _words(fn: FunctionBytes) -> list[int]:
@@ -1208,7 +1208,7 @@ def _kb_hints(unit_name: str, c: dict, retail: FunctionBytes, decomp: FunctionBy
         side = "decomp" if d_nop else "retail"
         hints.append(
             f"alignment nop (`ori r0,r0,0`) near `mtctr` on the {side} side only — classic "
-            "-func_align / -ipa scheduling artifact. See docs/MWCC_REFERENCE.md "
+            "-func_align / -ipa scheduling artifact. See docs/MWCC_PATTERNS.md "
             "(btm_inq / gki notes): add `-func_align 4` (and `-ipa off` if it persists) "
             "via extra_cflags on the unit's Object(...)."
         )
@@ -1217,7 +1217,7 @@ def _kb_hints(unit_name: str, c: dict, retail: FunctionBytes, decomp: FunctionBy
             f"bte-family unit is compiled with {compiler_cfg or 'defaults'} — retail bte uses "
             "-func_align 4 (GC/3.0a5.2). If you see scheduling nops / extra padding, set "
             'mw_version="GC/3.0a5.2" + extra_cflags=["-func_align 4"] on the Object(...) '
-            "(docs/MWCC_REFERENCE.md)."
+            "(docs/MWCC_PATTERNS.md)."
         )
     return hints
 
@@ -1534,7 +1534,7 @@ def _output_terminal(
             joined = ", ".join(parts_list)
             print(f"  {instr_part:<12s}  {joined}")
 
-    # Reloc-drift summary (MWCC_REFERENCE §1) — the #1 cause of
+    # Reloc-drift summary (MWCC_PATTERNS.md) — the #1 cause of
     # 99.3-99.9% near-misses: instructions byte-identical, reloc sites differ
     # (name / addend / layout / structural, plus the reloc-SITE classes type /
     # presence that the byte-equality verdict alone cannot reveal).
@@ -1574,7 +1574,7 @@ def _output_terminal(
                 f"to build tools/coop/retail_reloc_map.json)"
             )
 
-    # KB hints: known MWCC_REFERENCE stall signatures (compiler/flags).
+    # KB hints: known MWCC_PATTERNS.md stall signatures (compiler/flags).
     hints = _kb_hints(unit_name, counts, retail, decomp, compiler_cfg)
     if hints:
         print(f"\n{_CYAN}KB hints:{_RESET}")

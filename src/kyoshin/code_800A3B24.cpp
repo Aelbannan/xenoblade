@@ -34,7 +34,7 @@ extern const float lbl_eu_806667F8;
 // s32->f32 conversion magic double (0x4330000080000000), referenced by the
 // builtin (float) cast in func_800A3B24. MWCC pools that magic as a TU-local
 // @N label while retail references the shared .sdata2 blob, so the reloc name
-// drifts (MWCC_REFERENCE §7i); the extern documents the retail symbol and is
+// drifts (MWCC_CASES §7i); the extern documents the retail symbol and is
 // the anchor a manual bit-pattern conversion would subtract (union + extern
 // emits the correct reloc name but the double fsub/fmul instead of the
 // builtin's fsubs, so the builtin is preferred here).

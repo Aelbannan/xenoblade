@@ -37,7 +37,7 @@ extern "C" __declspec(noinline) void func_8049D710(CScnFilter** item, u32 val);
 // reslist<CScnFilter*> ctor (retail __ct__reslist_CScnFilter): base init,
 // then install the derived vtable. The flattened retail name cannot be
 // produced by a template instantiation under Wii/1.1 (symbolic mangling),
-// so it is spelled out (MWCC_REFERENCE "flattened constructor" pattern).
+// so it is spelled out (MWCC_CASES "flattened constructor" pattern).
 CScnFilterReslist* __ct__reslist_CScnFilter(CScnFilterReslist* obj) {
     __ct___reslist_base_CScnFilter(obj);
     obj->mVtable = lbl_eu_8056EBAC;
@@ -56,7 +56,7 @@ CScnFilterReslist* __ct__8049CBD4(CScnFilterReslist* obj) {
 // _reslist_base<CScnFilter*> ctor (retail __ct___reslist_base_CScnFilter):
 // zeroes the storage fields and links the sentinel node onto itself. The
 // flattened retail name cannot be produced by a template instantiation under
-// Wii/1.1 (symbolic mangling), so it is spelled out (MWCC_REFERENCE
+// Wii/1.1 (symbolic mangling), so it is spelled out (MWCC_CASES
 // "flattened constructor" pattern, cf. CVirtualLightAmb).
 __declspec(noinline) void __ct___reslist_base_CScnFilter(CScnFilterReslist* obj) {
     obj->mVtable = lbl_eu_8056EBC4;
@@ -114,7 +114,7 @@ extern "C" void func_8049C9F8(void* self) { *(u32*)self = 0; }
 extern "C" __declspec(noinline) void func_8049CB70(void* self, void* out) { *(u32*)out = 0; }
 
 
-// Guard the no-op stub so the call sites survive (MWCC_REFERENCE
+// Guard the no-op stub so the call sites survive (MWCC_CASES
 // empty-stub pattern: -ipa file inlines the empty body and drops the bl).
 #pragma push
 #pragma auto_inline off

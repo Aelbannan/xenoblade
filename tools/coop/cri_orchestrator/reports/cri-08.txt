@@ -210,7 +210,7 @@ All work is committed. Here is the final report:
 - us-8039d2bc criware_80399F4C additionally has unaccepted callee **criware_8039B4E0** (NOT_STARTED) — the full probe will need that callee first.
 - us-803c3820 SFMPS_Init's 2 structural is a 1-instruction scheduler fixed point (lis/li order).
 
-### Notable breakthroughs (documented in docs/MWCC_REFERENCE.md)
+### Notable breakthroughs (documented in docs/MWCC_CASES.md)
 - **Volatile dead-read** (`(void)lbl_eu_8051914C;` at top) breaks AXRNA_Init's documented dead-load wall → 100%.
 - **Volatile wait-loop flags** prevent MWCC invariant-load hoisting → reproduces retail's 20×10 unrolled busy-wait (SetTransSw 0 structural, 0x300 exact).
 - **Declaration order** (`s32 t; s32 v; s32 i;` + value-first `==` operand) collapsed SetOutVol 8→0 swaps (FULL_MATCH); `s32* p` first-decl helped SetMain.
@@ -218,7 +218,7 @@ All work is committed. Here is the final report:
 - **Magic division via plain C**: `sfreq/32000` + `(sfreq<<8)/125` reproduce retail mulhw 0x10624DD3 exactly; `x/100` reproduces 0x51EC851F.
 - AXRNA_Create went 241 → 34 structural (advancing slot-search pointer, `(s8)slot[2]` copy-loop bound, named voice local, u32 lbl_805F2C04); size exact 0x444.
 
-Both units pass split budgets (ax_rna 0x10 spare, sfd_mps 0x64 spare). All work committed (my files only: the two unit sources, attempts.jsonl, targets.json status sync, MWCC_REFERENCE).
+Both units pass split budgets (ax_rna 0x10 spare, sfd_mps 0x64 spare). All work committed (my files only: the two unit sources, attempts.jsonl, targets.json status sync, MWCC_CASES).
 [Thought] All 4 acceptances are properly recorded. My session work is complete and committed. Let me write the final report now.
 
 Final batch status (31 targets):

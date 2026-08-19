@@ -236,5 +236,5 @@ extern u8* lbl_eu_806640A8;      // BDAT table pointer (.sbss)
 extern u32 lbl_eu_80573D18[];    // quest name table (split1 .rodata)
 extern "C" u32 lbl_eu_80536288[];  // CQstLogList vtable (.data; array -> lis/addi)
 // const routes into readonly sdata2 - MWCC hoists the lfs above the frame
-// stores (MWCC_REFERENCE:8787); plain extern float schedules it late.
+// stores (MWCC_CASES:8787); plain extern float schedules it late.
 extern const float lbl_eu_80668584;  // anim frame target (sda21)

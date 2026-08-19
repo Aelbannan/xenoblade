@@ -66,7 +66,7 @@ struct CfDtor800ADA08View {
 // Block view anchored at CAIAction+4 (and at CfObjectActor+0x3380+4 in the
 // CfObjectActor dtor's inlined copy). The CAIAction dtor null-checks the
 // block address AND the +8 address (MWCC folds both into addic.-beq guards;
-// see MWCC_REFERENCE CacheList pattern), then zeroes the +0x20C/+0x210
+// see MWCC_CASES CacheList pattern), then zeroes the +0x20C/+0x210
 // words (= CAIAction unk210/unk214, store order 0x210 first).
 struct CfCAIActionBlockView {
     u8 _pad[8];
@@ -218,7 +218,7 @@ struct CActorParam17ECView {
     // func_800ADB2C slot +0x158 through a REAL virtual call on the holder's
     // subobject: MWCC then folds the vptr load (lwz r12, 0x3E9C(rX)) and
     // re-materializes the adjusted this (addi r3, rX, 0x3E9C) per call - the
-    // retail shape (MWCC_REFERENCE CfObjectActor_UnkVirtualFunc3/4). A manual
+    // retail shape (MWCC_CASES CfObjectActor_UnkVirtualFunc3/4). A manual
     // function-pointer dispatch CSEs the subobject address into a
     // callee-saved register and grows the frame instead. RTTI 8-byte vtable
     // header: slot 0x68 = (0x68-8)/4 = 24 dummies, slot 0x158 = 84 dummies.
@@ -251,7 +251,7 @@ struct CActorParam17ECView {
     // Fake derived: CfEneSubIf is an INHERITED base at +0x3E9C, so a virtual
     // call through the derived this reproduces the retail folded vptr load
     // (lwz r12, 0x3E9C(rX)) plus the recomputed adjusted-this
-    // (addi r3, rX, 0x3E9C) per call (MWCC_REFERENCE
+    // (addi r3, rX, 0x3E9C) per call (MWCC_CASES
     // CfObjectActor_UnkVirtualFunc3/4).
     struct CfEneSubPad {
         u8 _pad[0x3E9C];

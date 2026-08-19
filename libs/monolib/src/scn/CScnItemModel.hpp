@@ -214,7 +214,7 @@ struct CScnItemModelActData {
 };
 
 // EU TV-format float constants (.sdata2). const: MWCC hoists/schedules the
-// sdata2 loads like retail (MWCC_REFERENCE §174-184); a plain extern float
+// sdata2 loads like retail (MWCC_CASES §174-184); a plain extern float
 // forces reloads per use and can swap the assigned FPRs.
 extern const float lbl_eu_8066A8C0;
 extern const float lbl_eu_8066A8C4;

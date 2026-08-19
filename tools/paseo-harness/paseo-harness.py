@@ -185,7 +185,7 @@ def main():
     p.add_argument("--hard-model", default=None,
                    help="model assigned to max-thinking (hard) batches in the plan")
     p.add_argument("--no-kb-digest", action="store_true",
-                   help="skip per-batch MWCC_REFERENCE KB digest generation")
+                   help="skip per-batch MWCC_CASES KB digest generation")
     p.add_argument("--dry-run", action="store_true")
     p.set_defaults(fn=cmd_plan)
 

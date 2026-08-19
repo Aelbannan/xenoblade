@@ -817,7 +817,7 @@ def generate_build_ninja(
     # checks, reloc matching) stays untouched. This works around mwldeppc
     # symbol-hash collisions that make some retail names (e.g. the HBMSEQ*
     # family) unresolvable at the current link scale; see
-    # docs/MWCC_REFERENCE.md §Link-only symbol renames.
+    # docs/MWCC_PATTERNS.md §Link-only symbol renames.
     n.comment("Link symbol rename (link-only object transform)")
     n.rule(
         name="link_symbol_rename",

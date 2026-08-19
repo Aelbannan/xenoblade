@@ -822,7 +822,7 @@ __declspec(noinline) s32 func_80493BC4(CScnVirtualLightData* self, u32 flags) {
 __declspec(noinline) void* func_80493C00(void* self) { return &((CScnVirtualLightData*)self)->_04; }
 
 // Retail: addi r3,r3,0x54; b .+4; addi r3,r3,0xB8; blr. The b .+4 scheduler
-// barrier is the documented unreproducible MWCC artifact (MWCC_REFERENCE sec. 4;
+// barrier is the documented unreproducible MWCC artifact (MWCC_CASES sec. 4;
 // GetTextColor is the only getter precedent and was never byte-matched).
 // 2026 probe (~80 shapes, Wii/1.1 + GC/2.6/2.7/3.0a5/3.0a5.2, -O4,p/-O4,s,
 // -ipa file/off, -inline auto/on/smart, -proc gekko/750/603/7400, scheduling/

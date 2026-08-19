@@ -174,7 +174,7 @@ void CMenuPause::Move() {
     if ((lbl_eu_80663E28 & (1u << 21)) != 0) goto exit;
     // Branch-over-branch guard: `goto body` with the `exit` label + return
     // placed BEFORE `body` keeps MWCC from folding the bit test to a single
-    // `bne` -- it emits retail's `beq body; b exit` (docs/MWCC_REFERENCE.md
+    // `bne` -- it emits retail's `beq body; b exit` (docs/MWCC_CASES.md
     // 5824 / 4707).
     goto body;
 exit:

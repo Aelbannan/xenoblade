@@ -15,7 +15,7 @@ namespace cf {
 
     // 0x34-byte slot layout used by CBattleState_UnkVirtualFunc6's incoming
     // arg (r4) and by the 8-entry array at CBattleState+0x1388. Same struct
-    // shape reused for both (see MWCC_REFERENCE §CBattleState_UnkVirtualFunc6).
+    // shape reused for both (see MWCC_CASES §CBattleState_UnkVirtualFunc6).
     struct CBattleStateEntry {
         u32 unk00; // 0x00
         u32 unk04; // 0x04

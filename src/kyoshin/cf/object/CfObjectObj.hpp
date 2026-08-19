@@ -86,7 +86,7 @@ extern u8 lbl_eu_80529B4C[];
 // CfResObjImpl resource object is allocated only when the cast fails. Passed
 // by address (&lbl) so MWCC emits li rN, lbl@sda21 (CBattleManager pattern);
 // fixed-size decls (8-byte typeinfo objects) keep them sdata-eligible
-// (MWCC_REFERENCE: incomplete-array externs fall back to lis/addi).
+// (MWCC_CASES: incomplete-array externs fall back to lis/addi).
 extern char lbl_eu_80661D18[8];
 extern char lbl_eu_80661D20[8];
 

@@ -7,7 +7,7 @@
 //
 // The retail names are (shortened) "...Fv" annotations, but these entry
 // points receive their real ABI arguments in the parameter registers (see
-// docs/MWCC_REFERENCE.md "Fv ABI note").  They are written as plain global
+// docs/MWCC_CASES.md "Fv ABI note").  They are written as plain global
 // free functions taking those arguments explicitly (same pattern as
 // code_804645CC / CLODCacheManagerS); only func_804676EC keeps its C-linkage
 // retail name because it calls the sibling-record dispatcher by retail symbol.
@@ -139,7 +139,7 @@ struct UnkClass_8046368C {
 
 // LOD record-pair dispatcher (defined in CLODCacheManagerS.cpp). Declared
 // with C linkage to keep the retail mangled name; the extra ABI args are
-// explicit per the MWCC_REFERENCE "Fv ABI note".
+// explicit per the MWCC_CASES "Fv ABI note".
 extern "C" void func_804636AC__Q23LOD17UnkClass_8046368CFv(UnkClass_8046368C* self, u16 index);
 
 void LOD::UnkClass_80466348::func_80466348() {
@@ -641,7 +641,7 @@ void LOD::UnkClass_80466348::func_80467758() {
 
 // The object's leading bytes are the ambient colour (a GXColor view of the
 // same memory the tex-gen/matrix uploaders use as a matrix); the retail
-// ...Fv entry point receives it in r3 per the MWCC_REFERENCE "Fv ABI note".
+// ...Fv entry point receives it in r3 per the MWCC_CASES "Fv ABI note".
 void func_80467798(GXColor* color) {
     // Ambient color: each RGB byte is scaled by its own LUT factor and the
     // shared s16-derived scale, then clamped to 255; alpha is the raw latch.

@@ -8,6 +8,21 @@ high-level C/C++ or per-TU flags to close a `structural` scheduling residual.
 binary. Empirical rules verified by compiling probes at `-O4,p`/`-O4,s`/`-O3`/`-O2`
 and diffing the PPC (`.scratch/sched_probe.c`).
 
+## When to read this
+
+- **Read when:** hexdiff shows `structural` residuals with the same instruction set
+  (different order / loop shape), or the one-line verdict implicates scheduling flags.
+- **Skip it when:** pure `reg_swap` with identical order and instructions →
+  `register_mapping.md`.
+
+## Fast path — first moves in order
+
+1. Check the unit's `mw_version` / `extra_cflags` — hexdiff prints the config line on every run.
+2. **Loop body differs** (unrolled pointer-walk vs indexed `lwzx`/`stwx`) → flip the unit's `-O4,p` ↔ `-O4,s` in configure.py, re-`hexdiff`, revert if it doesn't help.
+3. **Non-loop** order diff (loads interleaved vs grouped) → scheduling is level-gated (O2/O3 don't schedule); try `aggressive_ls_scheduling off` for load/store cases.
+4. Nop padding around `mtctr`/`bdnz` or unrolled bodies → loop-align flags / `-func_align 4|16` (separate lever).
+5. After a scheduling fix, re-examine **colors** — scheduling changes live ranges, so new `reg_swap`s are expected; re-route to `register_mapping.md`.
+
 ## TL;DR
 
 1. **Instruction scheduling is gated at O4**, not at the `p`/`s` suffix: O2/O3

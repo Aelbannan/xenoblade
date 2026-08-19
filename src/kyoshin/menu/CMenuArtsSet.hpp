@@ -987,7 +987,7 @@ extern "C" void func_8022B7F4(CSysWinFull* self);
 // .sdata2 floats for the layout-animation drivers (func_80231480 etc.).
 // const is load-bearing: it lets MWCC treat the pool load as a constant and
 // hoist the lfs above the frame stores (retail position 3) - plain extern
-// float places it after the stores (4-byte shift, MWCC_REFERENCE).
+// float places it after the stores (4-byte shift, MWCC_CASES).
 extern const float lbl_eu_80668648;
 extern const float lbl_eu_8066864C;
 // .sdata2 floats for func_802316F8's 9-entry cursor position table.

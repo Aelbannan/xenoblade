@@ -2179,7 +2179,7 @@ def main() -> int:
 
     p_reloc = sub.add_parser(
         "reloc-map",
-        help="Reloc name-drift detection + map miner (tools/coop/reloc_map.py, MWCC_REFERENCE §1)",
+        help="Reloc name-drift detection + map miner (tools/coop/reloc_map.py, MWCC_PATTERNS.md)",
     )
     p_reloc_sub = p_reloc.add_subparsers(dest="reloc_cmd", required=True)
     p_reloc_diff = p_reloc_sub.add_parser("diff", help="Per-function reloc drift + approved source fixes")

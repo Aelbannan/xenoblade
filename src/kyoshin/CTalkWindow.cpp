@@ -43,7 +43,7 @@ CTalkWindow* __ct__CTalkWindow(CTalkWindow* _this, u32 arg1, u32 arg2,
     _this->mVtable = (u32)lbl_eu_8052D238;
     // Post-increment derefs of a local pointer make MWCC fold the first
     // access into `lwzu` (single base register via @ha/@l, offsets on the
-    // rest) instead of an addi-materialised pointer (cf. MWCC_REFERENCE
+    // rest) instead of an addi-materialised pointer (cf. MWCC_CASES
     // btm_sco_init lwzu shape). The stores into _this can alias the non-const
     // global, forcing the 4..6/4..5 reloads between the two callback slots.
     const u32* src = __ptmf_null;

@@ -16,8 +16,8 @@ extern "C" void func_8048CC40(CScnItemPool* pool, CScnItemModel* item);
 // symbols; defined in CScn_80496B0C.cpp; declared in CScnItemModel.hpp so
 // the call reloc names stay verbatim).
 // Defined below in this TU; forward-declared for func_80485684's depth-5
-// tail call. noinline: retail makes a real tail call here (MWCC_REFERENCE
-// MWCC_REFERENCE 9135 - same-TU helpers get auto-inlined otherwise).
+// tail call. noinline: retail makes a real tail call here (MWCC_CASES
+// MWCC_CASES 9135 - same-TU helpers get auto-inlined otherwise).
 extern "C" {
 __declspec(noinline) void func_804828F0(u8* self, u32 flags, u32 enable);
 }
@@ -235,7 +235,7 @@ void func_804830E4(){}
 void func_8048310C(){}
 
 // retail: cnt=*(self+0x820); *(u32*)(self+cnt*4+0x7F0)=r4; *(self+0x820)=cnt+1
-// Single-expression postfix form fixes the Chaitin colors (MWCC_REFERENCE
+// Single-expression postfix form fixes the Chaitin colors (MWCC_CASES
 // array-push-with-counter, func_800B5978).
 extern "C" void func_80482AB8(void* self, u32 val) {
     u32* cnt = (u32*)((char*)self + 0x820);

@@ -4433,7 +4433,7 @@ void func_801CEC80(void* self) {
     // Guard chain: the message object at +0x44 and the list at +0x40 must be
     // live, and the three global table pointers must all be non-null, before
     // the busy/dirty flags are set.  The exit label keeps retail's
-    // `bne store; blr` gate layout (see MWCC_REFERENCE goto-gate pattern).
+    // `bne store; blr` gate layout (see MWCC_CASES goto-gate pattern).
     if (*(u32*)((u8*)self + 0x44) == 0) goto exit;
     if (*(u32*)((u8*)self + 0x40) == 0) goto exit;
     if (lbl_eu_80664508 == 0) goto exit;

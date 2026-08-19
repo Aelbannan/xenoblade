@@ -472,7 +472,7 @@ extern "C" void func_804C09E8(u8* outLight, u8* matrix);
 // func_804702F0's callees: the LOD record helper (coli/code_804A6C60.cpp)
 // and the scene resource helpers (scn/code_804BC9EC.cpp).  Retail keeps the
 // plain unmangled names (C ABI); the Fv-suffixed names carry explicit ABI
-// args (MWCC_REFERENCE "Fv ABI note").
+// args (MWCC_CASES "Fv ABI note").
 extern "C" s32 func_804A6D90(void* rec);
 extern "C" void* func_804BC9EC__Fv(void);
 extern "C" u8 func_804BCC6C(void* ptr, u16 id);
@@ -2182,7 +2182,7 @@ extern "C" void func_804716B8__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 targ
                 return;
             }
             // Read the merge pair in retail load order (cur[1] before prev[1]):
-            // the volatile pins the source order (MWCC_REFERENCE sfmps_pesfn
+            // the volatile pins the source order (MWCC_CASES sfmps_pesfn
             // load-pair rule — one-time state reads, no aliasing writes in
             // scope), and declaring vp first makes the allocator land prev's
             // word in r0 so the sum reuses it (add r0,r4,r0 like retail).

@@ -216,7 +216,7 @@ public:
 
 // Retail entry points for the LOD cull-check helpers.  The DOL is stripped,
 // so the symbol map records the shortened "...Fv" names even though these
-// entry points take explicit ABI arguments (MWCC_REFERENCE "Fv ABI note");
+// entry points take explicit ABI arguments (MWCC_CASES "Fv ABI note");
 // the linker names must stay verbatim, hence C linkage.
 extern "C" {
 u8* func_8046A02C__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self, u8* out);
@@ -236,7 +236,7 @@ void func_8046A318__Q23LOD17UnkClass_80468434Fv(Vec* self,
                                                 const Vec* src, s32 idx);
 
 // The Fv-named record-draw entry points carry their real ABI values in the
-// argument registers (MWCC_REFERENCE "Fv ABI note"); the record index lives
+// argument registers (MWCC_CASES "Fv ABI note"); the record index lives
 // in r3 (u32) for func_8046A3B4, and the object pointer in r3 for the rest.
 void func_8046A3B4__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx,
                                                 u8* arg2);

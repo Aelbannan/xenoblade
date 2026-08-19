@@ -1138,7 +1138,7 @@ int func_800C4BD4(cf::CfObjectImplWalker* self, u32 a, u32 b);
 
 // sdata2 literals referenced by this unit (global scope: not mangled).
 // const so MWCC treats the load as a constant and hoists it to the top of
-// the store block (retail func_800C1F44 shape; MWCC_REFERENCE §extern const
+// the store block (retail func_800C1F44 shape; MWCC_CASES §extern const
 // float hoist).
 extern const f32 lbl_eu_80666B84;
 extern f32 lbl_eu_80666BA4;

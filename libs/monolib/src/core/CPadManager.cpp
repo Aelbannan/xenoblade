@@ -19,7 +19,7 @@ extern double lbl_eu_8066A338;  // 0x4330000000000000 (2^52, unsigned u8->f32 ma
 // (low word = x, high word = 0x43300000 -- NO sign flip for unsigned) and
 // subtract the shared unsigned magic double lbl_eu_8066A338 (FloatUtils-owned),
 // so the TU emits no .sdata2 pool entry (retail CPadManager.o has .sdata2
-// size 0). MWCC_REFERENCE 7i. Statement order matters: the value word first,
+// size 0). MWCC_CASES 7i. Statement order matters: the value word first,
 // then 0x43300000.
 inline float u8ToF32(u8 v) {
     union { double d; u32 w[2]; } u;

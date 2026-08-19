@@ -65,7 +65,7 @@ extern CSchedMemGlob lbl_eu_8065FC18;
 // 1.0f, the u32->double conversion constant (2^52), the s32->double
 // conversion constant (2^52 + 2^31), and the frame-rate clamp upper bound.
 // const routes these into the readonly sdata2 pool so MWCC hoists the lfs
-// above the frame stores (docs/MWCC_REFERENCE.md lfs-hoist scheduling fix).
+// above the frame stores (docs/MWCC_CASES.md lfs-hoist scheduling fix).
 extern const f32 lbl_eu_8066B290;
 extern f64 lbl_eu_8066B298;
 extern f64 lbl_eu_8066B2A0;
@@ -595,7 +595,7 @@ extern "C" void func_804DD89C(void* out, const void* a, const void* b, f32 t);
 // the result into [1.0, lbl_eu_8066B2A8]. A 0x4000 entry (terminator) yields
 // rate 1.0. The int->double conversions build the 0x43300000 bit pattern by
 // hand so the 2^52 magic subtract references the retail pool labels
-// (docs/MWCC_REFERENCE.md §7i) instead of a TU-local @N constant.
+// (docs/MWCC_CASES.md §7i) instead of a TU-local @N constant.
 extern "C" f32 func_804E04D4(CSchedAnimItem* item, CEntryElem* entries, s32 index) {
     f32 result = lbl_eu_8066B290;
     u8 a = item->mField06;
@@ -720,7 +720,7 @@ extern "C" void func_804E196C(CSchedAnimItem* item, u8* base) {
             item->field_0x04 |= 0x80;
         } else {
             // 32-bit intermediate (cast the whole AND, not the mask) so MWCC
-            // emits rlwinm instead of andi. (docs/MWCC_REFERENCE.md btm_sec)
+            // emits rlwinm instead of andi. (docs/MWCC_CASES.md btm_sec)
             item->field_0x04 = (u8)((item->field_0x04 | 0x8) & ~0x80);
         }
     }

@@ -3,7 +3,7 @@
 #include <types.h>
 #include "monolib/work/CWorkThread.hpp"
 
-class CLibG3d : public CWorkThread {
+class __declspec(novtable) CLibG3d : public CWorkThread {
 public:
     CLibG3d(const char* pName, CWorkThread* pParent);
     virtual ~CLibG3d();

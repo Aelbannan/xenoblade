@@ -3,7 +3,6 @@
 #include "monolib/lib/CLibG3d.hpp"
 
 // Retail singleton backpointer (.sbss:0x806656F0): written by the
-// constructor/destructor, read by getInstance()/isInitialized(). Plain
-// global-scope extern - MWCC does not mangle global data names, so this
-// emits the exact retail reloc symbol directly.
-extern CLibG3d* lbl_eu_806656F0;
+// constructor/destructor, read by getInstance()/isInitialized(). Declared
+// C-linkage so the cpp's plain definition (CWorkSystemMem pattern) links up.
+extern "C" CLibG3d* lbl_eu_806656F0[2];  // 8-byte sbss; word 0 = singleton

@@ -11,8 +11,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12496 |
-| extern "C" declarations (non-lbl_*, imports) | 4826 |
+| extern "C" (total lines) | 12514 |
+| extern "C" declarations (non-lbl_*, imports) | 4832 |
 | extern "C" definitions (forced names) | 3929 |
 | `self`/register-style params | 11895 |
 | `void*` (params + locals) | 7214 |
@@ -102,7 +102,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/lib/CLibCri.cpp | 38 | 6 | 19 | 5 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibCriMoviePlay.cpp | 10 | 1 | 15 | 10 | 1 | 1 | 0 | 0 | 4 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibCriStreamingPlay.cpp | 21 | 1 | 1 | 21 | 62 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
-| libs/monolib/src/lib/CLibG3d.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
+| libs/monolib/src/lib/CLibG3d.cpp | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibHbm.cpp | 0 | 0 | 6 | 2 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibHbmControl.cpp | 38 | 0 | 12 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibLayout.cpp | 0 | 1 | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -1176,6 +1176,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/lib/CLibG3d.cpp": {
   "asm_insn_shim": 0,
+  "extern_c_nonlbl_decl": 6,
   "goto_count": 1,
   "init_side_effect": 0,
   "schedule_pragma": 0

@@ -894,16 +894,10 @@ u8* func_80468AD0__Q23LOD17UnkClass_80468434Fv(UnkClass_80468434* self) {
 // ===== Dissolved monolibdata2 data owned by this TU =====
 // [.data] 0x8056D980-0x8056DAF8 (376B): a 16-word record-draw dispatch table
 // (15 retail function pointers + 1 zero word) followed by the assertion-string
-// block.  The pointer words are emitted as relocs (retail carries them the
-// same way -> zero bytes + matching reloc set); the strings are mutable char
-// arrays so MWCC places them in .data (retail keeps them in .data, not
-// .rodata).  __declspec(align(8)) matches the retail split object's .data
-// section alignment.
-// Address-table function pointers (CScnItemModel `SIMBlob` pattern): declare
-// the dispatch targets as extern "C" void in a namespace so `(u32)&X` yields a
-// clean void function pointer (the hpp declares them with real signatures and
-// incomplete param types, which makes MWCC's (u32)& cast of the global id fail
-// with 10247).  extern "C" keeps the retail reloc name verbatim.
+// block.  Pointer words are emitted as relocs (retail carries them the same
+// way -> zero bytes + matching reloc set); strings are mutable char arrays so
+// MWCC places them in .data (retail keeps them in .data, not .rodata).
+// __declspec(align(8)) matches the retail .data section alignment.
 namespace Blob34 {
 extern "C" {
 void func_804689D4__Q23LOD17UnkClass_80468434Fv();
@@ -940,9 +934,6 @@ extern "C" __declspec(align(8)) u32 lbl_eu_8056D980[16] = {
     0x00000000,
 };
 
-// Assertion strings (.data 0x40..0x178) as exact retail bytes (mutable so
-// they stay in .data; DECOMP_FORCEACTIVE keeps them live if the panic
-// references cross TUs).
 extern "C" char lbl_eu_8056D9C0[0x18] = {
     0x52,0x65,0x73,0x54,0x65,0x78,0x50,0x6C,0x74,0x74,0x49,0x6E,0x66,0x6F,0x4F,0x66,
     0x66,0x73,0x65,0x74,0x00,0x00,0x00,0x00,
@@ -989,75 +980,74 @@ extern "C" char lbl_eu_8056DAD8[0x20] = {
 };
 
 // [.bss] 0x80657FD8-0x80658458 (0x480, align 8): work matrices + record tables.
-// Zero-fill; __declspec(align(8)) on the head symbol forces section align 8.
 extern "C" {
-__declspec(align(8)) f32 lbl_eu_80657FD8[3][4];    // 0x30
-f32 lbl_eu_80658008[3][4];                         // +0x30
-u32 lbl_eu_80658038[4];                            // +0x60 (0x10)
-f32 lbl_eu_80658048[8][3][4];                      // +0x70 (0x180)
-f32 lbl_eu_806581C8[8][3][4];                      // +0x1F0 (0x180)
-u32 lbl_eu_80658348[4];                            // +0x370 (0x10)
-u32 lbl_eu_80658358[4];                            // +0x380 (0x10)
-u32 lbl_eu_80658368[3];                            // +0x390 (0xC)
-u32 lbl_eu_80658374[3];                            // +0x39C (0xC)
-f32 lbl_eu_80658380[3][4];                         // +0x3A8 (0x30)
-f32 lbl_eu_806583B0[3][4];                         // +0x3D8 (0x30)
-f32 lbl_eu_806583E0[3][4];                         // +0x408 (0x30)
-u32 lbl_eu_80658410[3];                            // +0x438 (0xC)
-u32 lbl_eu_8065841C[3];                            // +0x444 (0xC)
-f32 lbl_eu_80658428[3][4];                         // +0x450 (0x30)
+__declspec(align(8)) f32 lbl_eu_80657FD8[3][4];
+f32 lbl_eu_80658008[3][4];
+u32 lbl_eu_80658038[4];
+f32 lbl_eu_80658048[8][3][4];
+f32 lbl_eu_806581C8[8][3][4];
+u32 lbl_eu_80658348[4];
+u32 lbl_eu_80658358[4];
+u32 lbl_eu_80658368[3];
+u32 lbl_eu_80658374[3];
+f32 lbl_eu_80658380[3][4];
+f32 lbl_eu_806583B0[3][4];
+f32 lbl_eu_806583E0[3][4];
+u32 lbl_eu_80658410[3];
+u32 lbl_eu_8065841C[3];
+f32 lbl_eu_80658428[3][4];
 }
 
 // [.sbss] 0x8066576C-0x80665828 (0xBC, align 4): scalar/pointer state.
-// Zero-fill; 4-byte scalars (and one 8-byte stride field) land in .sbss.
 extern "C" {
-u8*  lbl_eu_8066576C;    // +0x00 most-recent object pointer
-u32  lbl_eu_80665770;    // +0x04
-u32  lbl_eu_80665774;    // +0x08
-u8*  lbl_eu_80665778;    // +0x0C per-type pointer table base
-u32  lbl_eu_8066577C;    // +0x10
-u32  lbl_eu_80665780;    // +0x14
-u32  lbl_eu_80665784;    // +0x18
-u32  lbl_eu_80665788;    // +0x1C matrix-index pointer table base
-u32  lbl_eu_8066578C;    // +0x20 matrix-data pointer table base
-u32  lbl_eu_80665790;    // +0x24
-s32  lbl_eu_80665794;    // +0x28 object index / record selector
-u32  lbl_eu_80665798;    // +0x2C
-u32  lbl_eu_8066579C;    // +0x30
-s32  lbl_eu_806657A0;    // +0x34 spawn-direction table index bias
-f32  lbl_eu_806657A4;    // +0x38 cached LOD distance value
-u32  lbl_eu_806657A8;    // +0x3C
-LodDirEntry* lbl_eu_806657AC; // +0x40 spawn table / matrix records
-u32  lbl_eu_806657B0;    // +0x44 LOD dirty flags
-u32  lbl_eu_806657B4;    // +0x48
-u32  lbl_eu_806657B8;    // +0x4C
-u32  lbl_eu_806657BC;    // +0x50
-u32  lbl_eu_806657C0;    // +0x54
-u32  lbl_eu_806657C4;    // +0x58
-s16  lbl_eu_806657C8;    // +0x5C (2B; hpp decl is s16)
-u8   lbl_eu_806657C8pad[6]; // +0x5E..0x63 pad to the retail 8B stride slot
-s32  lbl_eu_806657D0;    // +0x64
-u32  lbl_eu_806657D4;    // +0x68
-u32  lbl_eu_806657D8;    // +0x6C
-u32  lbl_eu_806657DC;    // +0x70
-u32  lbl_eu_806657E0;    // +0x74
-f32  lbl_eu_806657E4;    // +0x78
-u32  lbl_eu_806657E8;    // +0x7C
-u32  lbl_eu_806657EC;    // +0x80
-u32  lbl_eu_806657F0;    // +0x84
-u32  lbl_eu_806657F4;    // +0x88
-u32  lbl_eu_806657F8;    // +0x8C
-u32  lbl_eu_806657FC;    // +0x90
-f32  lbl_eu_80665800;    // +0x94
-u32  lbl_eu_80665804;    // +0x98
-f32  lbl_eu_80665808;    // +0x9C
-u32  lbl_eu_8066580C;    // +0xA0
-u32  lbl_eu_80665810;    // +0xA4
-u32  lbl_eu_80665814;    // +0xA8
-u32  lbl_eu_80665818;    // +0xAC
-u32  lbl_eu_8066581C;    // +0xB0
-u32  lbl_eu_80665820;    // +0xB4
-u32  lbl_eu_80665824;    // +0xB8
+__declspec(align(4)) u8*  lbl_eu_8066576C;
+u32  lbl_eu_80665770;
+u32  lbl_eu_80665774;
+u8*  lbl_eu_80665778;
+u32  lbl_eu_8066577C;
+u32  lbl_eu_80665780;
+u32  lbl_eu_80665784;
+u32  lbl_eu_80665788;
+u32  lbl_eu_8066578C;
+u32  lbl_eu_80665790;
+s32  lbl_eu_80665794;
+u32  lbl_eu_80665798;
+u32  lbl_eu_8066579C;
+s32  lbl_eu_806657A0;
+f32  lbl_eu_806657A4;
+u32  lbl_eu_806657A8;
+LodDirEntry* lbl_eu_806657AC;
+u32  lbl_eu_806657B0;
+u32  lbl_eu_806657B4;
+u32  lbl_eu_806657B8;
+u32  lbl_eu_806657BC;
+u32  lbl_eu_806657C0;
+u32  lbl_eu_806657C4;
+s16  lbl_eu_806657C8;
+u16  lbl_eu_806657C8_hi;
+u32  lbl_eu_806657C8_x;
+s32  lbl_eu_806657D0;
+u32  lbl_eu_806657D4;
+u32  lbl_eu_806657D8;
+u32  lbl_eu_806657DC;
+u32  lbl_eu_806657E0;
+f32  lbl_eu_806657E4;
+u32  lbl_eu_806657E8;
+u32  lbl_eu_806657EC;
+u32  lbl_eu_806657F0;
+u32  lbl_eu_806657F4;
+u32  lbl_eu_806657F8;
+u32  lbl_eu_806657FC;
+f32  lbl_eu_80665800;
+u32  lbl_eu_80665804;
+f32  lbl_eu_80665808;
+u32  lbl_eu_8066580C;
+u32  lbl_eu_80665810;
+u32  lbl_eu_80665814;
+u32  lbl_eu_80665818;
+u32  lbl_eu_8066581C;
+u32  lbl_eu_80665820;
+u32  lbl_eu_80665824;
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

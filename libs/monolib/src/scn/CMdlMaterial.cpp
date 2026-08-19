@@ -266,3 +266,38 @@ void func_804E6158(){}
 void func_804E6358(){}
 
 void func_804E64B0(){}
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x805700D8-0x805701B0 (0xD8): vtable (3 words) + 8 embedded
+// nw4r assertion strings ("%s::%s: Object not valid." etc., retail bytes).
+extern "C" u32 lbl_eu_80663C38;          // .sdata RTTI locator (defined below)
+extern "C" u32 lbl_eu_8066B2F8;          // shared .sdata2 constant pair
+extern "C" u32 lbl_eu_8066B300;
+extern "C" const u32 lbl_eu_80524798[7];  // .rodata name string (defined below)
+extern "C" void __dt__12CMdlMaterialFv();  // member dtor (this TU, retail reloc)
+
+extern "C" u32 lbl_eu_805700D8[54] = {
+    (u32)&lbl_eu_80663C38, 0x00000000, (u32)&__dt__12CMdlMaterialFv,
+    0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000,
+    0x6733645F, 0x7265736D, 0x61745F61, 0x632E6800, 0x4E573452, 0x3A466169, 0x6C656420,
+    0x61737365, 0x7274696F, 0x6E202128, 0x28753332, 0x29702026, 0x20307833, 0x29000000,
+    0x6733645F, 0x7265736D, 0x61745F61, 0x632E6800, 0x4E573452, 0x3A466169, 0x6C656420,
+    0x61737365, 0x7274696F, 0x6E202128, 0x28753332, 0x29702026, 0x20307833, 0x29000000,
+    0x6733645F, 0x7265736D, 0x61745F61, 0x632E6800, 0x4E573452, 0x3A466169, 0x6C656420,
+    0x61737365, 0x7274696F, 0x6E204973, 0x56616C69, 0x64282900, 0x6733645F, 0x7265736D,
+    0x61745F61, 0x632E6800,
+};
+
+// [.rodata] 0x80524798-0x805247B4 (0x1C): "CMdlMaterial" + "mtIris03" names.
+extern "C" const u32 lbl_eu_80524798[7] = {
+    0x434D646C, 0x4D617465, 0x7269616C, 0x00000000, 0x6D744972, 0x69733033, 0x00000000,
+};
+
+// [.sdata] 0x80663C30-0x80663C58 (0x28): RTTI pairs + "ref" strings.
+extern "C" u32 lbl_sd_00[2] = { (u32)&lbl_eu_8066B2F8, (u32)&lbl_eu_8066B300 };
+extern "C" u32 lbl_sd_02[2] = { (u32)&lbl_eu_80524798, 0x00000000 };
+extern "C" u32 lbl_sd_04 = 0x72656600;
+extern "C" u32 lbl_sd_05 = 0x72656600;
+extern "C" u32 lbl_sd_06 = 0x72656600;
+extern "C" u32 lbl_sd_07 = 0x72656600;
+extern "C" u32 lbl_sd_08 = 0x72656600;
+extern "C" u32 lbl_sd_09 = 0x72656600;

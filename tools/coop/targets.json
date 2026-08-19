@@ -12490,8 +12490,8 @@
       "size": "0x74",
       "unit": "kyoshin/plugin/pluginUi",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/plugin/pluginUi.cpp",
       "called_functions": [
@@ -12504,7 +12504,9 @@
       "has_indirect_calls": false,
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginUi.s",
-      "abi_helper_calls": []
+      "abi_helper_calls": [],
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80045e98",
@@ -149994,8 +149996,8 @@
       "size": "0x2C",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800d9c70",
@@ -150006,7 +150008,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80186cbc",
@@ -150019,8 +150023,8 @@
       "size": "0x2C",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800d9c70",
@@ -150031,7 +150035,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80186ce8",
@@ -150044,8 +150050,8 @@
       "size": "0x70",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800d9c70",
@@ -150059,7 +150065,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80186d58",
@@ -150072,8 +150080,8 @@
       "size": "0xCC",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800443a4",
@@ -150088,7 +150096,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80186e24",
@@ -150101,8 +150111,8 @@
       "size": "0x28",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800d9c70",
@@ -150113,7 +150123,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-80186e4c",
@@ -150126,8 +150138,8 @@
       "size": "0x10C",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-func-80082D54",
@@ -150141,7 +150153,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-80186f58",
@@ -150154,8 +150168,8 @@
       "size": "0xE8",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8004432c",
@@ -150175,7 +150189,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80187040",
@@ -150188,8 +150204,8 @@
       "size": "0x118",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-func-80082D54",
@@ -150213,7 +150229,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80187158",
@@ -150226,8 +150244,8 @@
       "size": "0x9C",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800d9c70",
@@ -150240,7 +150258,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-801871f4",
@@ -150253,8 +150273,8 @@
       "size": "0x78",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800d9c70",
@@ -150269,7 +150289,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-8018726c",
@@ -150282,8 +150304,8 @@
       "size": "0x84",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-get-instance",
@@ -150297,7 +150319,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801872f0",
@@ -150310,8 +150334,8 @@
       "size": "0x74",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8009f674",
@@ -150323,7 +150347,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80187364",
@@ -150336,8 +150362,8 @@
       "size": "0xA0",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-func-80082D54",
@@ -150351,7 +150377,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80187404",
@@ -150364,8 +150392,8 @@
       "size": "0x130",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "padmgr-func-80082D54",
@@ -150379,7 +150407,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80187534",
@@ -150392,8 +150422,8 @@
       "size": "0xB4",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACTIVE",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800b79ac",
@@ -150412,7 +150442,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801875e8",
@@ -150425,8 +150457,8 @@
       "size": "0x5C",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800d9c70",
@@ -150439,7 +150471,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80187644",
@@ -150452,8 +150486,8 @@
       "size": "0x64",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800d9c70",
@@ -150464,7 +150498,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-801876a8",
@@ -150477,8 +150513,8 @@
       "size": "0x88",
       "unit": "kyoshin/plugin/pluginBtl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8003ae14",
@@ -150491,7 +150527,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginBtl.s",
       "abi_helper_calls": [],
-      "source": "src/kyoshin/plugin/pluginBtl.cpp"
+      "source": "src/kyoshin/plugin/pluginBtl.cpp",
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80187730",

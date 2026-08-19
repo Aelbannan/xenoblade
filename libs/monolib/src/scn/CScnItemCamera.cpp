@@ -33,16 +33,30 @@ extern const f32 lbl_eu_8066AC28;
 extern const f32 lbl_eu_8066AC04;     // viewport aspect-ratio scale (func_8049F8E4)
 extern const f64 lbl_eu_8066AC08;     // 2^52 (u16 -> float conversion magic)
 extern const f64 lbl_eu_8066AC30;     // signed int->float magic (2^52 + 2^31)
+
+// Named-magic conversion helpers (retail references the shared pool labels
+// instead of pooling local .sdata2 entries; this TU emits no .sdata2).
+static inline f32 u16ToF_ac08(u16 v) {
+    union { u32 w[2]; double d; } c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = v;
+    return (f32)(c.d - lbl_eu_8066AC08);
+}
+static inline f32 s16ToF_ac30(s16 v) {
+    union { u32 w[2]; double d; } c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = (u32)v ^ 0x80000000u;
+    return (f32)(c.d - lbl_eu_8066AC30);
+}
 extern const char lbl_eu_80524258[];  // FixStr<32> format string (func_8049F9A8)
 extern const char lbl_eu_80526324[];  // nw4r db Warning file name
 // nw4r db Warning message (lbl_eu_80526300)
 extern const char lbl_eu_80526300[];
 
 // Static camera default-parameter table initialized by sinit_8049FC60 (.bss).
-// Nine floats laid out as three CVec3s at 0x00, 0x0C and 0x18. The ctor reads
-// the second CVec3 (lbl_eu_80658664 = lbl_eu_80658658 + 0x0C) into mCamParam.
-extern f32 lbl_eu_80658658[9];
-extern f32 lbl_eu_80658664[3];
+// Defined in this TU (dissolved monolibdata2): 12B + 28B retail split.
+extern f32 lbl_eu_80658658[3];
+extern f32 lbl_eu_80658664[7];
 
 // ============================================================
 // FULL_MATCH functions
@@ -60,7 +74,7 @@ extern "C" void func_8049EA98() {}
 // Trivial no-op virtual function override at vtable+0x0C.
 // Base class default is overridden with a no-op in this class.
 // Equivalent to: void CScnItemCamera::vfunc_0C() {}
-void func_8049F9A4() {}
+extern "C" void func_8049F9A4() {}
 
 // Camera fields the draft header does not lay out correctly. This
 // overlay re-describes the retail object with the true offsets: the
@@ -128,10 +142,10 @@ extern "C" CScnItemCameraSubObj* __dt__8049EA9C(CScnItemCameraSubObj* obj,
 // __destroy_arr, then frees the object when the deletion flag
 // is positive. Written as a fragment function (not a member
 // dtor): the class's +0x00 entry is a manual data table, not a
-// compiler vtable, so retail has no vtable store here — a
+// compiler vtable, so retail has no vtable store here  -  a
 // member dtor of the virtual-declaring header would emit one.
 // ============================================================
-CScnItemCamera* __dt__14CScnItemCameraFv(CScnItemCamera* obj, int deleting) {
+extern "C" CScnItemCamera* __dt__14CScnItemCameraFv(CScnItemCamera* obj, int deleting) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)obj;
     if (obj != nullptr) {
         __destroy_arr(&cam->mSubObjArray2[0],
@@ -162,9 +176,9 @@ struct CScnItemCameraVtbl {
     void (*slot9)(CScnItemCamera*);
 };
 
-// Retail vtable data (owned by another TU); referenced by the ctor's
-// explicit vtable store.
-extern CScnItemCameraVtbl lbl_eu_8056ECC0;
+// Retail vtable data (dissolved monolibdata2); DEFINED at the bottom of this
+// TU as one 0x354-byte array. Referenced by the ctor's explicit vtable store.
+extern "C" u32 lbl_eu_8056ECC0[0x354 / 4];
 
 // Fake single-inheritance interface used to reach the retail vtable slot 9
 // (offset 0x24) with real virtual dispatch. A manual function-pointer call
@@ -385,7 +399,7 @@ void func_8049F824(CScnItemCamera* self, f32 f1) {
 // (fovY/near/far into 0x194), then register the camera on the
 // parent's scene object (vtable slot 4).
 // ============================================================
-void func_8049F8E4(CScnItemCamera* self) {
+extern "C" void func_8049F8E4(CScnItemCamera* self) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
     CGXCacheViewportRect* vp =
@@ -398,7 +412,7 @@ void func_8049F8E4(CScnItemCamera* self) {
     self->mViewportWidth = (u16)width;
     self->mViewportHeight = (u16)height;
     self->mAspectRatio =
-        lbl_eu_8066AC04 * ((f32)width / (f32)height);
+        lbl_eu_8066AC04 * (s16ToF_ac30(width) / s16ToF_ac30(height));
 
     func_8044BB20__8CGXCacheFv(CDeviceGX::getCacheInstance(), cam->mProj,
                                self->mFovY, self->mNearZ, self->mFarZ);
@@ -458,7 +472,7 @@ CScnItemCamera* __ct__CScnItemCamera(CScnItemCamera* obj, CScnItemCamera* parent
     cam->mParent = parent;
     obj->mType = 4;
     // Retail vtable data lives in another TU; install the label explicitly.
-    *(CScnItemCameraVtbl**)obj = &lbl_eu_8056ECC0;
+    *(CScnItemCameraVtbl**)obj = (CScnItemCameraVtbl*)&lbl_eu_8056ECC0;
     obj->mIndex = -1;
     obj->mNameLen = strlen(name);
     strcpy(obj->mName, name);
@@ -484,8 +498,8 @@ CScnItemCamera* __ct__CScnItemCamera(CScnItemCamera* obj, CScnItemCamera* parent
                       (ConstructorDestructor)&func_8049EA98,
                       (ConstructorDestructor)&__dt__8049EA9C, 0x10, 6);
 
-    f32 width = (f32)CDeviceVI::getRenderModeObj()->fbWidth;
-    f32 height = (f32)CDeviceVI::getRenderModeObj()->efbHeight;
+    f32 width = u16ToF_ac08(CDeviceVI::getRenderModeObj()->fbWidth);
+    f32 height = u16ToF_ac08(CDeviceVI::getRenderModeObj()->efbHeight);
     cam->mAspectRatio = lbl_eu_8066AC04 * (height / width);
 
     obj->mTransform.clear();
@@ -516,7 +530,7 @@ CScnItemCamera* __ct__CScnItemCamera(CScnItemCamera* obj, CScnItemCamera* parent
 // projection matrix at 0x154, then transform each of the six local frustum
 // planes by mLocalMat and store the world-space planes into mSubObjArray2.
 // ============================================================
-void func_8049EBF0(CScnItemCamera* self) {
+extern "C" void func_8049EBF0(CScnItemCamera* self) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
     // Rebuild the depth-range parameters (same computation as func_8049EB60).
@@ -771,3 +785,301 @@ CScnItemCamera* func_8049F9A8(CScnCameraItemHost* self, int arg2) {
     func_8048C630(self->mPool, alloc, 0);
     return cam;
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// referenced externs (functions / data labels)
+extern "C" void func_80482040();
+extern "C" void func_80482048();
+extern "C" void func_8048204C();
+extern "C" u32 lbl_eu_80523E70;
+extern "C" u32 lbl_eu_80523E84;
+extern "C" u32 lbl_eu_80523E98;
+extern "C" u32 lbl_eu_80523EA8;
+extern "C" u32 lbl_eu_80523EB8;
+extern "C" u32 lbl_eu_80523ED8;
+extern "C" u32 lbl_eu_80523EF4;
+extern "C" u32 lbl_eu_80523F18;
+extern "C" u32 lbl_eu_80523F28;
+extern "C" u32 lbl_eu_80523F3C;
+extern "C" u32 lbl_eu_80523F58;
+extern "C" u32 lbl_eu_80523F68;
+extern "C" u32 lbl_eu_80523FA0;
+extern "C" u32 lbl_eu_80523FAC;
+extern "C" u32 lbl_eu_80523FC0;
+extern "C" u32 lbl_eu_80523FD0;
+extern "C" u32 lbl_eu_80524010;
+extern "C" u32 lbl_eu_80524030;
+extern "C" u32 lbl_eu_80524050;
+extern "C" u32 lbl_eu_80524064;
+extern "C" u32 lbl_eu_80524078;
+extern "C" u32 lbl_eu_805240A0;
+extern "C" u32 lbl_eu_805240AC;
+extern "C" u32 lbl_eu_805240B8;
+extern "C" u32 lbl_eu_805240C4;
+extern "C" u32 lbl_eu_805240D8;
+extern "C" u32 lbl_eu_805240F8;
+extern "C" u32 lbl_eu_80524108;
+extern "C" u32 lbl_eu_8052411C;
+extern "C" u32 lbl_eu_80524128;
+extern "C" u32 lbl_eu_80524138;
+extern "C" u32 lbl_eu_80524148;
+extern "C" u32 lbl_eu_80524190;
+extern "C" u32 lbl_eu_805241E0;
+extern "C" u32 lbl_eu_805241F8;
+extern "C" u32 lbl_eu_80524218;
+extern "C" u32 lbl_eu_80524228;
+extern "C" u32 lbl_eu_80524238;
+extern "C" u32 lbl_eu_80524248;
+extern "C" const u32 lbl_eu_80524268[112];  // .rodata string table (defined below)
+extern "C" u32 lbl_eu_80524274;
+extern "C" u32 lbl_eu_80524280;
+extern "C" u32 lbl_eu_8052428C;
+extern "C" u32 lbl_eu_80524298;
+extern "C" u32 lbl_eu_805242A8;
+extern "C" u32 lbl_eu_805242B4;
+extern "C" u32 lbl_eu_805242C0;
+extern "C" u32 lbl_eu_805242CC;
+extern "C" u32 lbl_eu_805242D8;
+extern "C" u32 lbl_eu_805242E4;
+extern "C" u32 lbl_eu_805242F0;
+extern "C" u32 lbl_eu_805242FC;
+extern "C" u32 lbl_eu_80524308;
+extern "C" u32 lbl_eu_80524314;
+extern "C" u32 lbl_eu_80524320;
+extern "C" u32 lbl_eu_8052432C;
+extern "C" u32 lbl_eu_80524338;
+extern "C" u32 lbl_eu_80524344;
+extern "C" u32 lbl_eu_80524350;
+extern "C" u32 lbl_eu_8052435C;
+extern "C" u32 lbl_eu_80524368;
+extern "C" u32 lbl_eu_80524374;
+extern "C" u32 lbl_eu_80524380;
+extern "C" u32 lbl_eu_8052438C;
+extern "C" u32 lbl_eu_80524398;
+extern "C" u32 lbl_eu_805243A8;
+extern "C" u32 lbl_eu_805243B4;
+extern "C" u32 lbl_eu_805243C0;
+extern "C" u32 lbl_eu_805243CC;
+extern "C" u32 lbl_eu_805243D8;
+extern "C" u32 lbl_eu_805243E4;
+extern "C" u32 lbl_eu_805243F0;
+extern "C" u32 lbl_eu_805243FC;
+extern "C" u32 lbl_eu_8056DCB8;
+extern "C" u32 lbl_eu_8056DCCC;
+extern "C" u32 lbl_eu_8056DCF8;
+extern "C" u32 lbl_eu_8056DD28;
+extern "C" u32 lbl_eu_8056DD58;
+extern "C" u32 lbl_eu_8056E52C;
+extern "C" u32 lbl_eu_8056E54C;
+extern "C" u32 lbl_eu_8056E67C;
+extern "C" u32 lbl_eu_8056E6B0;
+extern "C" u32 lbl_eu_8056E6DC;
+extern "C" u32 lbl_eu_8056E7C4;
+extern "C" u32 lbl_eu_8056E7E8;
+extern "C" u32 lbl_eu_8056E88C;
+extern "C" u32 lbl_eu_8056E8AC;
+extern "C" u32 lbl_eu_8056E9FC;
+extern "C" u32 lbl_eu_8056EA2C;
+extern "C" u32 lbl_eu_8056EAC8;
+extern "C" u32 lbl_eu_8056EB40;
+extern "C" u32 lbl_eu_8056EB94;
+extern "C" u32 lbl_eu_8056EBB8;
+extern "C" u32 lbl_eu_8056ECB0;
+extern "C" u32 lbl_eu_806638B0;
+extern "C" u32 lbl_eu_8066A8D0;
+extern "C" u32 lbl_eu_8066A8D8;
+extern "C" u32 lbl_eu_8066A930;
+extern "C" u32 lbl_eu_8066A938;
+extern "C" u32 lbl_eu_8066A9D8;
+extern "C" u32 lbl_eu_8066A9E0;
+extern "C" u32 lbl_eu_8066AB70;
+extern "C" u32 lbl_eu_8066AC40;
+extern "C" u32 lbl_eu_8066AC48;
+extern "C" u32 lbl_eu_8066AC50;
+extern "C" u32 lbl_eu_8066AC58;
+extern "C" u32 lbl_eu_8066AC60;
+extern "C" u32 lbl_eu_8066AC68;
+extern "C" u32 lbl_eu_8066AC70;
+extern "C" u32 lbl_eu_8066AC78;
+extern "C" u32 lbl_eu_8066AC7C;
+extern "C" u32 lbl_eu_8066AC80;
+extern "C" u32 lbl_eu_8066AC88;
+extern "C" u32 lbl_eu_8066AC90;
+extern "C" u32 lbl_eu_8066AC98;
+extern "C" u32 lbl_eu_8066ACA0;
+extern "C" u32 lbl_eu_8066ACA8;
+extern "C" u32 lbl_eu_8066ACB0;
+extern "C" u32 lbl_eu_8066ACB8;
+extern "C" u32 lbl_eu_8066ACC0;
+extern "C" u32 lbl_eu_8066ACC8;
+extern "C" u32 lbl_eu_8066ACD0;
+extern "C" u32 lbl_eu_8066ACD8;
+extern "C" u32 lbl_eu_8066ACE0;
+extern "C" u32 lbl_eu_8066ACE8;
+extern "C" u32 lbl_eu_8066ACF0;
+extern "C" u32 lbl_eu_8066ACF8;
+extern "C" u32 lbl_eu_8066AD00;
+extern "C" u32 lbl_eu_8066AD04;
+extern "C" u32 lbl_eu_8066AD0C;
+extern "C" u32 lbl_eu_8066AD10;
+extern "C" u32 lbl_eu_8066AD14;
+extern "C" u32 lbl_eu_8066AD18;
+extern "C" u32 lbl_eu_8066AD1C;
+extern "C" u32 lbl_eu_8066AD20;
+extern "C" u32 lbl_eu_8066AD24;
+extern "C" u32 lbl_eu_8066AD28;
+extern "C" u32 lbl_eu_8066AD30;
+extern "C" u32 lbl_eu_8066AD38;
+extern "C" u32 lbl_eu_8066AD3C;
+extern "C" u32 lbl_eu_8066AD40;
+extern "C" u32 lbl_eu_8066AD44;
+extern "C" u32 lbl_eu_8066AD48;
+extern "C" u32 lbl_eu_8066AD4C;
+extern "C" u32 lbl_eu_8066AD50;
+extern "C" u32 lbl_eu_8066AD58;
+extern "C" u32 lbl_eu_8066AD60;
+extern "C" u32 lbl_eu_8066AD64;
+extern "C" u32 lbl_eu_8066AD68;
+extern "C" u32 lbl_eu_8066AD70;
+extern "C" u32 lbl_eu_8066AD78;
+extern "C" u32 lbl_eu_8066AD7C;
+extern "C" u32 lbl_eu_8066AD84;
+extern "C" u32 lbl_eu_8066AD8C;
+extern "C" u32 lbl_eu_8066AD94;
+extern "C" u32 lbl_eu_8066AD9C;
+extern "C" u32 lbl_eu_8066ADA4;
+extern "C" u32 lbl_eu_8066ADAC;
+extern "C" u32 lbl_eu_8066ADB4;
+extern "C" u32 lbl_eu_8066ADBC;
+extern "C" u32 lbl_eu_8066ADC4;
+extern "C" u32 lbl_eu_8066ADCC;
+extern "C" u32 lbl_eu_8066ADD0;
+extern "C" u32 lbl_eu_8066ADD4;
+extern "C" u32 lbl_eu_8066ADDC;
+extern "C" u32 lbl_eu_8066ADE0;
+extern "C" u32 lbl_eu_8066ADE4;
+extern "C" u32 lbl_eu_8066ADEC;
+extern "C" u32 lbl_eu_8066ADF4;
+extern "C" u32 lbl_eu_8066ADF8;
+extern "C" u32 lbl_eu_8066AE00;
+extern "C" u32 lbl_eu_8066AE08;
+extern "C" u32 lbl_eu_8066AE10;
+extern "C" u32 lbl_eu_8066AE18;
+extern "C" u32 lbl_eu_8066AE1C;
+
+// [.data] 0x8056ECC0-0x8056F014 (0x354B)
+extern "C" u32 lbl_eu_8056ECC0[213] = {
+    (u32)&lbl_eu_806638B0, 0x00000000, (u32)&__dt__14CScnItemCameraFv, (u32)&func_8049F9A4, (u32)&func_80482048, (u32)&func_8049F8E4, (u32)&func_8048204C, (u32)&func_80482040,
+    0x00000000, (u32)&func_8049EBF0, (u32)&lbl_eu_8066AC40, 0x00000000, (u32)&lbl_eu_8066AC48, 0x00000001, (u32)&lbl_eu_8066AC50, 0x00000001,
+    (u32)&lbl_eu_8066AC58, 0x00000001, (u32)&lbl_eu_8066AC60, 0x00000001, (u32)&lbl_eu_8066AC68, 0x00000001, (u32)&lbl_eu_8066AC70, 0x00010001,
+    (u32)&lbl_eu_80524268, 0x00020001, (u32)&lbl_eu_80524274, 0x00010001, (u32)&lbl_eu_80524280, 0x00020001, (u32)&lbl_eu_8052428C, 0x00010001,
+    (u32)&lbl_eu_80524298, 0x00020001, (u32)&lbl_eu_805242A8, 0x00010001, (u32)&lbl_eu_805242B4, 0x00020001, (u32)&lbl_eu_8066AC78, 0x00010001,
+    (u32)&lbl_eu_8066AC7C, 0x0001FFFF, (u32)&lbl_eu_8066AC80, 0x00010001, (u32)&lbl_eu_8066AC88, 0x0001FFFF, (u32)&lbl_eu_805242C0, 0x0001FFFF,
+    (u32)&lbl_eu_8066AC90, 0x00000001, (u32)&lbl_eu_8066AC98, 0x00000001, (u32)&lbl_eu_8066ACA0, 0x00000001, (u32)&lbl_eu_8066ACA8, 0x00000001,
+    (u32)&lbl_eu_8066ACB0, 0x0000FFFF, (u32)&lbl_eu_8066ACB8, 0x0000FFFF, (u32)&lbl_eu_8066ACC0, 0x0000FFFF, (u32)&lbl_eu_8066ACC8, 0x0000FFFF,
+    (u32)&lbl_eu_805242CC, 0x00000001, (u32)&lbl_eu_805242D8, 0x00000001, (u32)&lbl_eu_805242E4, 0x00000001, (u32)&lbl_eu_805242F0, 0x00000001,
+    (u32)&lbl_eu_805242FC, 0x0000FFFF, (u32)&lbl_eu_80524308, 0x0000FFFF, (u32)&lbl_eu_80524314, 0x0000FFFF, (u32)&lbl_eu_80524320, 0x0000FFFF,
+    (u32)&lbl_eu_8052432C, 0x00010001, (u32)&lbl_eu_80524338, 0x00020001, (u32)&lbl_eu_80524344, 0x0001FFFF, (u32)&lbl_eu_80524350, 0x0002FFFF,
+    (u32)&lbl_eu_8066ACD0, 0x0000FFFF, (u32)&lbl_eu_8066ACD8, 0x0000FFFD, (u32)&lbl_eu_8066ACE0, 0x00000001, (u32)&lbl_eu_8066ACE8, 0x00000001,
+    (u32)&lbl_eu_8052435C, 0x00000001, (u32)&lbl_eu_8066ACF0, 0x00010001, (u32)&lbl_eu_80524368, 0x00020001, (u32)&lbl_eu_80524374, 0x00010001,
+    (u32)&lbl_eu_80524380, 0x00020001, (u32)&lbl_eu_8052438C, 0x00010001, (u32)&lbl_eu_80524398, 0x00020001, (u32)&lbl_eu_8066ACF8, 0x00000000,
+    (u32)&lbl_eu_8066AD00, 0x0000FFFF, (u32)&lbl_eu_8066AD04, 0x0000FFFF, (u32)&lbl_eu_8066AD0C, 0x0000FFFF, (u32)&lbl_eu_8066AD10, 0x0000FFFF,
+    (u32)&lbl_eu_8066AD14, 0x0000FFFF, (u32)&lbl_eu_8066AD18, 0x0000FFFF, (u32)&lbl_eu_8066AD1C, 0x0000FFFF, (u32)&lbl_eu_8066AD20, 0x0000FFFF,
+    (u32)&lbl_eu_8066AD24, 0x0000FFFF, (u32)&lbl_eu_8066AD28, 0x0000FFFF, (u32)&lbl_eu_8066AD30, 0x0000FFFF, (u32)&lbl_eu_8066AD38, 0x0000FFFF,
+    (u32)&lbl_eu_8066AD3C, 0x0000FFFF, (u32)&lbl_eu_8066AD40, 0x0000FFFF, (u32)&lbl_eu_8066AD44, 0x0000FFFF, (u32)&lbl_eu_8066AD48, 0x0000FFFF,
+    (u32)&lbl_eu_8066AD4C, 0x0000FFFF, (u32)&lbl_eu_8066AD50, 0x0000FFFF, (u32)&lbl_eu_8066AD58, 0x0000FFFF, (u32)&lbl_eu_8066AD60, 0x00020000,
+    (u32)&lbl_eu_8066AD64, 0x0002FFFF, (u32)&lbl_eu_8066AD68, 0x00010000, (u32)&lbl_eu_8066AD70, 0x00020000, (u32)&lbl_eu_805243A8, 0x00000000,
+    (u32)&lbl_eu_8066AD78, 0x00000000, (u32)&lbl_eu_8066AD7C, 0x00000000, (u32)&lbl_eu_8066AD84, 0x00010000, (u32)&lbl_eu_805243B4, 0x00020000,
+    (u32)&lbl_eu_805243C0, 0x00010000, (u32)&lbl_eu_805243CC, 0x00020000, (u32)&lbl_eu_8066AD8C, 0x00010000, (u32)&lbl_eu_805243D8, 0x00020000,
+    (u32)&lbl_eu_8066AD94, 0x00010000, (u32)&lbl_eu_805243E4, 0x00020000, (u32)&lbl_eu_8066AD9C, 0x0001FFFF, (u32)&lbl_eu_805243F0, 0x0002FFFF,
+    (u32)&lbl_eu_8066ADA4, 0x00010000, (u32)&lbl_eu_8066ADAC, 0x00020000, (u32)&lbl_eu_8066ADB4, 0x00000000, (u32)&lbl_eu_8066ADBC, 0x00000000,
+    (u32)&lbl_eu_8066ADC4, 0x00010000, (u32)&lbl_eu_8066ADCC, 0x00000000, (u32)&lbl_eu_8066ADD0, 0x00000000, (u32)&lbl_eu_8066ADD4, 0x00000000,
+    (u32)&lbl_eu_8066ADDC, 0x00000000, (u32)&lbl_eu_8066ADE0, (u32)&lbl_eu_8066ADE4, (u32)&lbl_eu_8066ADEC, (u32)&lbl_eu_8066ADF4, (u32)&lbl_eu_8066ADF8, (u32)&lbl_eu_8066AE00,
+    (u32)&lbl_eu_8066AE08, (u32)&lbl_eu_805243FC, (u32)&lbl_eu_8066AE10, (u32)&lbl_eu_8066AE18, (u32)&lbl_eu_8066AE1C,
+};
+
+// [.rodata] 0x80524268-0x80524428 (0x1c0B) raw words
+extern "C" const u32 lbl_eu_80524268[112] = {
+    0x434F4E53, 0x545F495F, 0x57000000, 0x504F4F4C, 0x5F494E54, 0x00000000, 0x504F4F4C, 0x5F494E54,
+    0x5F570000, 0x504F4F4C, 0x5F464958, 0x45440000, 0x504F4F4C, 0x5F464958, 0x45445F57, 0x00000000,
+    0x504F4F4C, 0x5F535452, 0x00000000, 0x504F4F4C, 0x5F535452, 0x5F570000, 0x53545F41, 0x52475F4F,
+    0x4D495400, 0x4C445F41, 0x52475F30, 0x00000000, 0x4C445F41, 0x52475F31, 0x00000000, 0x4C445F41,
+    0x52475F32, 0x00000000, 0x4C445F41, 0x52475F33, 0x00000000, 0x53545F41, 0x52475F30, 0x00000000,
+    0x53545F41, 0x52475F31, 0x00000000, 0x53545F41, 0x52475F32, 0x00000000, 0x53545F41, 0x52475F33,
+    0x00000000, 0x4C445F53, 0x54415449, 0x43000000, 0x4C445F53, 0x54415449, 0x435F5700, 0x53545F53,
+    0x54415449, 0x43000000, 0x53545F53, 0x54415449, 0x435F5700, 0x4C445F46, 0x414C5345, 0x00000000,
+    0x4C445F46, 0x554E435F, 0x57000000, 0x4C445F50, 0x4C554749, 0x4E000000, 0x4C445F50, 0x4C554749,
+    0x4E5F5700, 0x4C445F46, 0x554E435F, 0x46415200, 0x4C445F46, 0x554E435F, 0x4641525F, 0x57000000,
+    0x43414C4C, 0x5F494E44, 0x00000000, 0x504C5547, 0x494E5F57, 0x00000000, 0x43414C4C, 0x5F464152,
+    0x00000000, 0x43414C4C, 0x5F464152, 0x5F570000, 0x4745545F, 0x4F435F57, 0x00000000, 0x47455454,
+    0x45525F57, 0x00000000, 0x53455454, 0x45525F57, 0x00000000, 0x66756E63, 0x74696F6E, 0x00000000,
+    0x43436F6C, 0x694F626A, 0x43616C6C, 0x00000000, 0x43436F6C, 0x69526573, 0x43616C6C, 0x00000000,
+};
+
+// [.sdata] 0x806638A8-0x80663A90 (0x1E8 = 488B): 8-byte u32 pairs
+extern "C" u32 lbl_sd_00[2] = { (u32)&lbl_eu_80523E70, (u32)&lbl_eu_8056DCB8 };
+extern "C" u32 lbl_sd_02[2] = { (u32)&lbl_eu_80523E84, (u32)&lbl_eu_8056DCCC };
+extern "C" u32 lbl_sd_04[2] = { (u32)&lbl_eu_80523E98, (u32)&lbl_eu_8056DCF8 };
+extern "C" u32 lbl_sd_06[2] = { (u32)&lbl_eu_80523EA8, (u32)&lbl_eu_8056DD28 };
+extern "C" u32 lbl_sd_08[2] = { (u32)&lbl_eu_80523EB8, (u32)&lbl_eu_8056DD58 };
+extern "C" u32 lbl_sd_10[2] = { (u32)&lbl_eu_8066A8D0, (u32)&lbl_eu_8066A8D8 };
+extern "C" u32 lbl_sd_12[2] = { (u32)&lbl_eu_80523ED8, 0x00000000 };
+extern "C" u32 lbl_sd_14[2] = { (u32)&lbl_eu_80523EF4, 0x00000000 };
+extern "C" u32 lbl_sd_16[2] = { 0x5265734D, 0x61740000 };
+extern "C" u32 lbl_sd_18[2] = { 0x72656600, 0x52657354 };
+extern "C" u32 lbl_sd_20[2] = { 0x65760000, 0x72656600 };
+extern "C" u32 lbl_sd_22[2] = { 0x5265734D, 0x646C0000 };
+extern "C" u32 lbl_sd_24[2] = { 0x72656600, 0x72656600 };
+extern "C" u32 lbl_sd_26[2] = { 0x5265734E, 0x6F646500 };
+extern "C" u32 lbl_sd_28[2] = { 0x72656600, 0x72656600 };
+extern "C" u32 lbl_sd_30[2] = { 0x72656600, 0x72656600 };
+extern "C" u32 lbl_sd_32[2] = { 0x52657344, 0x69630000 };
+extern "C" u32 lbl_sd_34[2] = { 0x72656600, 0x00000000 };
+extern "C" u32 lbl_sd_36[2] = { (u32)&lbl_eu_80523F18, (u32)&lbl_eu_8056E52C };
+extern "C" u32 lbl_sd_38[2] = { (u32)&lbl_eu_80523F28, (u32)&lbl_eu_8056E54C };
+extern "C" u32 lbl_sd_40[2] = { (u32)&lbl_eu_80523F3C, 0x00000000 };
+extern "C" u32 lbl_sd_42[2] = { (u32)&lbl_eu_80523F58, 0x00000000 };
+extern "C" u32 lbl_sd_44[2] = { (u32)&lbl_eu_80523F68, (u32)&lbl_eu_8066A930 };
+extern "C" u32 lbl_sd_46[2] = { (u32)&lbl_eu_8066A938, 0x3D03126F };
+extern "C" u32 lbl_sd_48[2] = { 0x72656600, 0x72656600 };
+extern "C" u32 lbl_sd_50[2] = { 0x72656600, 0x00000000 };
+extern "C" u32 lbl_sd_52[2] = { (u32)&lbl_eu_8066A9D8, 0x00000000 };
+extern "C" u32 lbl_sd_54[2] = { (u32)&lbl_eu_80523FA0, (u32)&lbl_eu_8056E67C };
+extern "C" u32 lbl_sd_56[2] = { (u32)&lbl_eu_8066A9E0, (u32)&lbl_eu_8056E6B0 };
+extern "C" u32 lbl_sd_58[2] = { (u32)&lbl_eu_80523FAC, (u32)&lbl_eu_8056E6DC };
+extern "C" u32 lbl_sd_60[2] = { (u32)&lbl_eu_80523FC0, 0x00000000 };
+extern "C" u32 lbl_sd_62[2] = { (u32)&lbl_eu_80523FD0, (u32)&lbl_eu_8056E7C4 };
+extern "C" u32 lbl_sd_64[2] = { 0xFFFFFFFF, 0xFFFFFFFF };
+extern "C" u32 lbl_sd_66[2] = { (u32)&lbl_eu_80524010, (u32)&lbl_eu_8056E7E8 };
+extern "C" u32 lbl_sd_68[2] = { 0x72656600, 0x72656600 };
+extern "C" u32 lbl_sd_70[2] = { (u32)&lbl_eu_80524030, 0x00000000 };
+extern "C" u32 lbl_sd_72[2] = { (u32)&lbl_eu_80524050, (u32)&lbl_eu_8056E88C };
+extern "C" u32 lbl_sd_74[2] = { (u32)&lbl_eu_80524064, 0x00000000 };
+extern "C" u32 lbl_sd_76[2] = { (u32)&lbl_eu_80524078, (u32)&lbl_eu_8056E8AC };
+extern "C" u32 lbl_sd_78[2] = { 0x72656600, 0x72656600 };
+extern "C" u32 lbl_sd_80[2] = { (u32)&lbl_eu_805240A0, (u32)&lbl_eu_8056E9FC };
+extern "C" u32 lbl_sd_82[2] = { (u32)&lbl_eu_805240AC, 0x00000000 };
+extern "C" u32 lbl_sd_84[2] = { (u32)&lbl_eu_805240B8, (u32)&lbl_eu_8056EA2C };
+extern "C" u32 lbl_sd_86[2] = { (u32)&lbl_eu_805240C4, 0x00000000 };
+extern "C" u32 lbl_sd_88[2] = { (u32)&lbl_eu_805240D8, 0xFFFFFFFF };
+extern "C" u32 lbl_sd_90[2] = { (u32)&lbl_eu_805240F8, (u32)&lbl_eu_8056EAC8 };
+extern "C" u32 lbl_sd_92[2] = { (u32)&lbl_eu_8066AB70, 0x00000000 };
+extern "C" u32 lbl_sd_94[2] = { (u32)&lbl_eu_80524108, (u32)&lbl_eu_8056EB40 };
+extern "C" u32 lbl_sd_96[2] = { (u32)&lbl_eu_8052411C, 0x00000000 };
+extern "C" u32 lbl_sd_98[2] = { 0x72656600, 0x72656600 };
+extern "C" u32 lbl_sd_100[2] = { (u32)&lbl_eu_80524128, 0x00000000 };
+extern "C" u32 lbl_sd_102[2] = { (u32)&lbl_eu_80524138, 0x00000000 };
+extern "C" u32 lbl_sd_104[2] = { (u32)&lbl_eu_80524148, (u32)&lbl_eu_8056EB94 };
+extern "C" u32 lbl_sd_106[2] = { (u32)&lbl_eu_80524190, 0x00000000 };
+extern "C" u32 lbl_sd_108[2] = { (u32)&lbl_eu_805241E0, (u32)&lbl_eu_8056EBB8 };
+extern "C" u32 lbl_sd_110[2] = { (u32)&lbl_eu_805241F8, 0x00000000 };
+extern "C" u32 lbl_sd_112[2] = { (u32)&lbl_eu_80524218, 0x00000000 };
+extern "C" u32 lbl_sd_114[2] = { (u32)&lbl_eu_80524228, 0x00000000 };
+extern "C" u32 lbl_sd_116[2] = { (u32)&lbl_eu_80524238, 0x00000000 };
+extern "C" u32 lbl_sd_118[2] = { (u32)&lbl_eu_80524248, (u32)&lbl_eu_8056ECB0 };
+extern "C" u32 lbl_sd_120[2] = { 0x72656600, 0x00000000 };
+
+
+// [.bss] 0x80658658-0x80658680 (0x28 = 40B): camera default-parameter table.
+f32 lbl_eu_80658658[3];
+f32 lbl_eu_80658664[7];

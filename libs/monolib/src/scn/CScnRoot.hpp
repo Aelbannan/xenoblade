@@ -20,7 +20,9 @@ class ScnRoot;
 
 // CScnRoot / CScnRootNw4r vtables (.data). Sized arrays force lis/addi
 // (absolute) addressing - a small extern type would pick @sda21 instead.
-extern u8 lbl_eu_8056E730[0x38];
+// lbl_eu_8056E730 is DEFINED in CScnRoot.cpp (dissolved monolibdata2 data);
+// lbl_eu_8056E768 stays extern (owned by CScnRootNw4r.cpp).
+extern u32 lbl_eu_8056E730[0x38 / 4];
 extern u8 lbl_eu_8056E768[0x5C];
 
 // .sdata2 constants used by the CScnRootNw4r constructor.

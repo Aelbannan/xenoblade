@@ -64,10 +64,19 @@ extern void func_804F4628(u32 a, float w, float h);
 
 // Static per-vertex color table, initialized by sinit_804F01C8.
 extern float lbl_eu_80661748[30];
+// [.bss] 0x806617C0-0x80661850 (0x90 = 144B): remaining zero-fill blocks.
+float lbl_eu_806617C0[12];
+float lbl_eu_806617F0[4];
+float lbl_eu_80661800[4];
+float lbl_eu_80661810[12];
+float lbl_eu_80661840[4];
+DECOMP_FORCEACTIVE(code_804EE558_cpp, lbl_eu_806617C0);
+DECOMP_FORCEACTIVE(code_804EE558_cpp, lbl_eu_806617F0);
+DECOMP_FORCEACTIVE(code_804EE558_cpp, lbl_eu_80661800);
+DECOMP_FORCEACTIVE(code_804EE558_cpp, lbl_eu_80661810);
+DECOMP_FORCEACTIVE(code_804EE558_cpp, lbl_eu_80661840);
 
 } // extern "C"
-
-float lbl_eu_80661748[30];
 
 namespace {
 
@@ -317,56 +326,45 @@ extern "C" void func_804EE658(CLytBind* self, CBindSource* src) {
 extern "C" void func_804EE8FC(CLytBind* self, CBindSource* src) {
     ml::CVec3 pos(self->mMtx.m[0][3], self->mMtx.m[1][3], self->mMtx.m[2][3]);
 
-    switch (self->mType) {
-    case 0:
-    case 16:
-    case 17: {
+    u32 mt = self->mType;
+    if (mt == 0 || mt == 16 || mt == 17) {
         const ml::CMat34* m = &self->mPane->mWorldMtx;
         pos.set(m->m[0][3], m->m[1][3], m->m[2][3]);
-        break;
     }
-    case 6:
+    if (mt == 6) {
         if (src != NULL) {
             const ml::CMat34* m = &src->mMtx;
             pos.set(m->m[0][3], m->m[1][3], m->m[2][3]);
         }
-        break;
-    case 11: {
+    }
+    if (mt == 11) {
         void* obj = func_80496264(self->mPane->mRsrc, -1);
         const float* v = (const float*)((u8*)obj + 0x10C);
         pos.set(v[0], v[1], v[2]);
-        break;
     }
-    case 21: {
+    if (mt == 21) {
         CBindAnim* obj = self->mPane->mAnimA;
-        if (obj == NULL) {
-            break;
+        if (obj != NULL) {
+            const float* v = (const float*)obj->getPos();
+            pos.set(v[0], v[1], v[2]);
         }
-        const float* v = (const float*)obj->getPos();
-        pos.set(v[0], v[1], v[2]);
-        break;
     }
-    case 22: {
+    if (mt == 22) {
         CBindAnim* obj = self->mPane->mAnimB;
-        if (obj == NULL) {
-            break;
+        if (obj != NULL) {
+            const float* v = (const float*)obj->getPos();
+            pos.set(v[0], v[1], v[2]);
         }
-        const float* v = (const float*)obj->getPos();
-        pos.set(v[0], v[1], v[2]);
-        break;
     }
-    case 26:
+    if (mt == 26) {
         if (self->mPane->mAnimA != NULL) {
             self->mPlayer.getPos(&pos);
         }
-        break;
-    case 27:
+    }
+    if (mt == 27) {
         if (self->mPane->mAnimB != NULL) {
             self->mPlayer.getPos(&pos);
         }
-        break;
-    default:
-        break;
     }
 
     self->mMtx.m[0][3] = pos.x;
@@ -438,9 +436,9 @@ extern "C" void func_804EF9B8(ml::CVec3* verts, const ml::CVec3* pos, ml::CVec3 
 }
 
 // func_804EFB38: clamp the fan to the screen; returns the scale factor.
-extern "C" float func_804EFB38(ml::CVec3* verts) {
-    float fbW = (float)CDeviceVI::getRenderModeObj()->fbWidth;
-    float fbH = (float)CDeviceVI::getRenderModeObj()->efbHeight;
+extern "C" __declspec(noinline) float func_804EFB38(ml::CVec3* verts) {
+    float fbW = u16ToF(CDeviceVI::getRenderModeObj()->fbWidth);
+    float fbH = u16ToF(CDeviceVI::getRenderModeObj()->efbHeight);
 
     float scale = lbl_eu_8066B40C;
     for (s16 i = 1; i < 9; i++) {
@@ -482,8 +480,8 @@ extern "C" float func_804EFB38(ml::CVec3* verts) {
 
 // func_804EFD78: clamp positions to the screen and drag texcoords/colors along.
 extern "C" void func_804EFD78(ml::CVec3* verts, ml::CVec3* tex, ml::CVec3* colors) {
-    float fbW = (float)CDeviceVI::getRenderModeObj()->fbWidth;
-    float fbH = (float)CDeviceVI::getRenderModeObj()->efbHeight;
+    float fbW = u16ToF(CDeviceVI::getRenderModeObj()->fbWidth);
+    float fbH = u16ToF(CDeviceVI::getRenderModeObj()->efbHeight);
 
     for (s16 i = 1; i < 10; i++) {
         if (i < 9) {
@@ -572,19 +570,16 @@ extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
     if (flag < 0) {
         func_804EF830(verts);
     } else {
-        const float z = lbl_eu_8066B408;
-        const float p = lbl_eu_8066B40C;
-        const float n = lbl_eu_8066B410;
-        verts[0].set(z, z, z);
-        verts[1].set(p, z, z);
-        verts[2].set(p, p, z);
-        verts[3].set(z, p, z);
-        verts[4].set(n, p, z);
-        verts[5].set(n, z, z);
-        verts[6].set(n, n, z);
-        verts[7].set(z, n, z);
-        verts[8].set(p, n, z);
-        verts[9].set(p, z, z);
+        verts[0] = ml::CVec3(lbl_eu_8066B408, lbl_eu_8066B408, lbl_eu_8066B408);
+        verts[1] = ml::CVec3(lbl_eu_8066B40C, lbl_eu_8066B408, lbl_eu_8066B408);
+        verts[2] = ml::CVec3(lbl_eu_8066B40C, lbl_eu_8066B40C, lbl_eu_8066B408);
+        verts[3] = ml::CVec3(lbl_eu_8066B408, lbl_eu_8066B40C, lbl_eu_8066B408);
+        verts[4] = ml::CVec3(lbl_eu_8066B410, lbl_eu_8066B40C, lbl_eu_8066B408);
+        verts[5] = ml::CVec3(lbl_eu_8066B410, lbl_eu_8066B408, lbl_eu_8066B408);
+        verts[6] = ml::CVec3(lbl_eu_8066B410, lbl_eu_8066B410, lbl_eu_8066B408);
+        verts[7] = ml::CVec3(lbl_eu_8066B408, lbl_eu_8066B410, lbl_eu_8066B408);
+        verts[8] = ml::CVec3(lbl_eu_8066B40C, lbl_eu_8066B410, lbl_eu_8066B408);
+        verts[9] = ml::CVec3(lbl_eu_8066B40C, lbl_eu_8066B408, lbl_eu_8066B408);
     }
 
     func_804EF9B8(verts, pos, *size * lbl_eu_8066B414, vertRot);
@@ -807,3 +802,25 @@ extern "C" void sinit_804F01C8() {
     t[28] = h;
     t[29] = z;
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x805702B8-0x80570328 (0x70 = 112B): func_804EE8FC's switch
+// jumptable (case offsets relative to func_804EE8FC, retail shape).
+extern "C" u32 jumptable_eu_805702B8[28] = {
+    (u32)((char*)&func_804EE8FC + 80),
+    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 420),
+    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 420),
+    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 136),
+    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 420),
+    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 420),
+    (u32)((char*)&func_804EE8FC + 196), (u32)((char*)&func_804EE8FC + 420),
+    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 420),
+    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 80),
+    (u32)((char*)&func_804EE8FC + 80), (u32)((char*)&func_804EE8FC + 420),
+    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 420),
+    (u32)((char*)&func_804EE8FC + 240), (u32)((char*)&func_804EE8FC + 300),
+    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 420),
+    (u32)((char*)&func_804EE8FC + 420), (u32)((char*)&func_804EE8FC + 360),
+    (u32)((char*)&func_804EE8FC + 392),
+};
+DECOMP_FORCEACTIVE(code_804EE558_cpp, jumptable_eu_805702B8);

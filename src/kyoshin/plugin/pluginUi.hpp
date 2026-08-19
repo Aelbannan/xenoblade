@@ -65,6 +65,9 @@ void func_80135464(int r3, int r4, float f1, float f2, float f3);
 void func_8013E2E0(u32 a1, u32 a2, u32 a3, u32 a4, u32 a5, u32 a6, u32 a7,
                    u32 a8, u32 a9);
 
+// Talk-window factory (window id, text, mode); used by winTalk.
+void func_8013D07C(u32 obj, const char* str, int mode);
+
 void func_80043D90(CfEnumListHolder* holder);
 CfEnumList* func_80043F18(CfEnumListHolder* holder);
 void __dt__80043E88(CfEnumListHolder* holder, int tags);
@@ -79,7 +82,7 @@ void func_8009D018(int index, int value);
 void* __dynamic_cast(void* src, long offset, const void* src_type,
                      const void* dst_type, void* src2dst);
 
-void winTalk();
+int winTalk(VMThread* pThread);
 void pcTalk();
 void winTalkWait();
 void winTalkNoName();

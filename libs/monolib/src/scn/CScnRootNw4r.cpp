@@ -130,6 +130,23 @@ extern "C" void func_8048F5C8(CScnRootNw4r* self, u32 value) {
     }
 }
 
+// Retail s16->f32 conversion magic (.sdata2 0x8066A9F8, 0x4330000080000000);
+// referenced by name so the viewport conversions below emit no local .sdata2
+// pool (retail CScnRootNw4r.o has an empty .sdata2).
+extern double lbl_eu_8066A9F8;
+
+// s16 -> f32 through the shared signed magic double (see MWCC_REFERENCE 7i):
+// store 0x43300000 | (v ^ 0x80000000) as a double, subtract the magic.
+static inline f32 s16ToF(s16 v) {
+    union {
+        double d;
+        u32 w[2];
+    } c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = (u32)(s32)v ^ 0x80000000u;
+    return (f32)(c.d - lbl_eu_8066A9F8);
+}
+
 // us-80493544: apply the camera matrices plus the GX viewport/scissor from
 // the GX cache, then select the camera on the nw4r scene root.
 extern "C" void func_8048F4D0(CScnRootNw4r* self, CScnCamLayout* cam) {
@@ -139,8 +156,8 @@ extern "C" void func_8048F4D0(CScnRootNw4r* self, CScnCamLayout* cam) {
 
     CGXCacheViewportRect* viewport =
         func_8044BE10__8CGXCacheFv(CDeviceGX::getCacheInstance());
-    camera.SetViewport((f32)viewport->x, (f32)viewport->y, (f32)viewport->width,
-                       (f32)viewport->height);
+    camera.SetViewport(s16ToF(viewport->x), s16ToF(viewport->y),
+                       s16ToF(viewport->width), s16ToF(viewport->height));
 
     CGXCacheScissorArea* scissor =
         (CGXCacheScissorArea*)CDeviceGX::getCacheInstance();

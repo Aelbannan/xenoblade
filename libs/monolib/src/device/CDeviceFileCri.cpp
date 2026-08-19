@@ -6,7 +6,7 @@
 
 // Retail singleton pointer (sda21 .sbss) — the decomp's static sInstance member
 // resolves to the same address; referencing this name directly keeps the reloc
-// byte-identical to retail.
+// byte-identical to retail. Defined in the blob section below.
 extern CDeviceFileCri* lbl_eu_80665668;
 // Shared rodata string pool: the ".adx" extension marker begins at +6.
 extern const char lbl_eu_80522CA0[];
@@ -37,9 +37,9 @@ extern "C" void destroy__11CFileHandleFv(CFileHandle* handle, u32 size, u32 allo
 
 CDeviceFileCri* CDeviceFileCri::getInstance() { return sInstance; }
 
-void CDeviceFileCri::func_80450B14(const wchar_t* pData) { lbl_eu_806636C8 = (wchar_t*)pData; }
-void CDeviceFileCri::func_80450B1C(const wchar_t* pData) { lbl_eu_806636CC = (wchar_t*)pData; }
-void CDeviceFileCri::func_80450B24(const wchar_t* pData) { lbl_eu_806636D0 = (wchar_t*)pData; }
+void CDeviceFileCri::func_80450B14(const wchar_t* pData) { *(wchar_t**)&lbl_eu_806636C8[0] = (wchar_t*)pData; }
+void CDeviceFileCri::func_80450B1C(const wchar_t* pData) { *(wchar_t**)&lbl_eu_806636CC[0] = (wchar_t*)pData; }
+void CDeviceFileCri::func_80450B24(const wchar_t* pData) { *(wchar_t**)&lbl_eu_806636D0[0] = (wchar_t*)pData; }
 
 extern "C" void sinit_80450B2C() {
     lbl_eu_806576C8[0] = 0;
@@ -164,17 +164,17 @@ bool CDeviceFileCri::func_8044F744() {
         // is not already pending (flag or queued EVT_EXCEPTION), then stay
         // busy.
         if (!isException()) {
-            func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, lbl_eu_806636C8, 4);
+            func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, (const wchar_t*)lbl_eu_806636C8, 4);
         }
         return false;
     } else if (status == 11) {
         if (!isException()) {
-            func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, lbl_eu_806636CC, 4);
+            func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, (const wchar_t*)lbl_eu_806636CC, 4);
         }
         return false;
     } else if (status == 4) {
         if (!isException()) {
-            func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, lbl_eu_806636C8, 4);
+            func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, (const wchar_t*)lbl_eu_806636C8, 4);
         }
         return false;
     }
@@ -578,11 +578,11 @@ void CDeviceFileCri::wkUpdate() {
     u32 state = mState;
     if (state > 8) return;
     
-    switch (state) {
-    case 0: {
-        if (mChildren.empty()) break;
+    if (state > 8) return;
+    if (state == 0) {
+        if (mChildren.empty()) return;
         CWorkThread* child = mChildren.front();
-        if (child == nullptr || child->mType != THREAD_CDEVICEFILEJOBREADDVD) break;
+        if (child == nullptr || child->mType != THREAD_CDEVICEFILEJOBREADDVD) return;
         
         CDeviceFileJobReadDvd* job = (CDeviceFileJobReadDvd*)child;
         
@@ -596,8 +596,8 @@ void CDeviceFileCri::wkUpdate() {
             }
         }
         
-        if (!ready) break;
-        if (job->mFlags & THREAD_FLAG_EXCEPTION) break;
+        if (!ready) return;
+        if (job->mFlags & THREAD_FLAG_EXCEPTION) return;
         
         CFileHandle* handle = job->mHandle;
         handle->unk10 = 1;
@@ -611,13 +611,13 @@ void CDeviceFileCri::wkUpdate() {
         
         mADXFHandle = ADXF_OpenNw(filename, 0);
         mState = 1;
-        break;
+
     }
-    case 1: {
-        if (!func_8044FCFC()) break;
+    if (state == 1) {
+        if (!func_8044FCFC()) return;
         
         mTimeoutCounter--;
-        if (mTimeoutCounter > 0) break;
+        if (mTimeoutCounter > 0) return;
         
         CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
         CFileHandle* handle = job->mHandle;
@@ -629,13 +629,13 @@ void CDeviceFileCri::wkUpdate() {
         } else {
             mState = 7;
         }
-        break;
+
     }
-    case 2: {
-        if (!func_80450058()) break;
+    if (state == 2) {
+        if (!func_80450058()) return;
         
         mTimeoutCounter--;
-        if (mTimeoutCounter > 0) break;
+        if (mTimeoutCounter > 0) return;
         
         CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
         CFileHandle* handle = job->mHandle;
@@ -647,24 +647,24 @@ void CDeviceFileCri::wkUpdate() {
         } else {
             mState = 7;
         }
-        break;
+
     }
-    case 3: {
+    if (state == 3) {
         func_80450058();
-        break;
+
     }
-    case 4: {
+    if (state == 4) {
         func_8045042C();
-        break;
+
     }
-    case 5: {
+    if (state == 5) {
         func_80450260();
-        break;
+
     }
-    case 6: {
-        if (mChildren.empty()) break;
+    if (state == 6) {
+        if (mChildren.empty()) return;
         CWorkThread* child = mChildren.front();
-        if (child == nullptr || child->mType != THREAD_CDEVICEFILEJOBREADDVD) break;
+        if (child == nullptr || child->mType != THREAD_CDEVICEFILEJOBREADDVD) return;
         
         CDeviceFileJobReadDvd* job = (CDeviceFileJobReadDvd*)child;
         CFileHandle* handle = job->mHandle;
@@ -674,27 +674,27 @@ void CDeviceFileCri::wkUpdate() {
             ADXF_ReadNw(mADXFHandle, 1, mBuffer);
         }
         mState = 6;
-        break;
+
     }
-    case 7: {
+    if (state == 7) {
         func_8045042C();
-        break;
+
     }
-    case 8: {
+    if (state == 8) {
         if (mChildren.empty()) {
             mState = 0;
-            break;
+            return;
         }
         
         CWorkThread* child = mChildren.front();
         if (child == nullptr || child->mType != THREAD_CDEVICEFILEJOBREADDVD) {
             mState = 0;
-            break;
+            return;
         }
         
         if (mActiveWorkID != child->mWorkID) {
             mState = 0;
-            break;
+            return;
         }
         
         if (!(child->mFlags & THREAD_FLAG_EXCEPTION)) {
@@ -703,12 +703,10 @@ void CDeviceFileCri::wkUpdate() {
                 callCBM3__21CDeviceFileJobReadDvdFv((CDeviceFileJobReadDvd*)child);
                 mIdleCounter = 0;
             }
-            break;
+            return;
         }
         
         mState = 0;
-        break;
-    }
     }
 }
 
@@ -755,3 +753,148 @@ bool CDeviceFileCri::wkStandbyExceptionRetry(u32 wid) {
     mExceptionPending = false;
     return true;
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.rodata] 0x80522C90-0x80522CA8 (0x18 = 24B): class name + "FATAL" strings.
+extern "C" __declspec(align(8)) const char lbl_eu_80522C90[0x18] = {
+    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x43,0x72,0x69,0x00,0x00,
+    0x46,0x41,0x54,0x41,0x4C,0x00,0x2F,0x00,
+};
+#define lbl_eu_80522CA0 (lbl_eu_80522C90 + 0x10)
+
+// [.sdata] 0x806636C8-0x806636E0 (0x18 = 24B): singleton-string pointers +
+// RTTI locator.
+extern "C" u32 lbl_eu_8066A3B0;  // shared string ("CDeviceFileCri"-related)
+extern "C" u32 lbl_eu_806636D8[2];
+extern "C" u32 lbl_eu_8056C408[6];  // RTTI base list (defined below)
+extern "C" u32 lbl_eu_806636C8[1] = { (u32)&lbl_eu_8066A3B0 };
+extern "C" u32 lbl_eu_806636CC[1] = { (u32)&lbl_eu_8066A3B0 };
+extern "C" u32 lbl_eu_806636D0[2] = { (u32)&lbl_eu_8066A3B0, 0x00000000 };
+extern "C" u32 lbl_eu_806636D8[2] = { (u32)&lbl_eu_80522C90, (u32)&lbl_eu_8056C408 };
+
+// [.data] 0x8056C330-0x8056C420 (0xF0 = 240B): wkUpdate jumptable + vtable +
+// RTTI base list.
+namespace CDeviceFileCriBlob {
+extern "C" void* __dt__14CDeviceFileCriFv();
+extern "C" void wkUpdate__14CDeviceFileCriFv();
+extern "C" void wkStandbyLogin__14CDeviceFileCriFv();
+extern "C" void wkStandbyLogout__14CDeviceFileCriFv();
+extern "C" void wkStandbyExceptionRetry__14CDeviceFileCriFUl();
+extern "C" void func_80450AB8__14CDeviceFileCriFUl();
+extern "C" void func_80450B4C();
+extern "C" void func_80450B44();
+extern "C" void WorkEvent1__10IWorkEventFPvPCc();
+extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
+extern "C" void WorkEvent3__10IWorkEventFPv();
+extern "C" void WorkEvent4__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb();
+extern "C" void WorkEvent6__10IWorkEventFv();
+extern "C" void WorkEvent7__10IWorkEventFv();
+extern "C" void WorkEvent8__10IWorkEventFv();
+extern "C" void WorkEvent9__10IWorkEventFv();
+extern "C" void WorkEvent10__10IWorkEventFv();
+extern "C" void WorkEvent11__10IWorkEventFv();
+extern "C" void WorkEvent12__10IWorkEventFv();
+extern "C" void WorkEvent13__10IWorkEventFv();
+extern "C" void WorkEvent14__10IWorkEventFv();
+extern "C" void WorkEvent15__10IWorkEventFv();
+extern "C" void WorkEvent16__10IWorkEventFv();
+extern "C" void WorkEvent17__10IWorkEventFv();
+extern "C" void WorkEvent18__10IWorkEventFv();
+extern "C" void WorkEvent19__10IWorkEventFv();
+extern "C" void WorkEvent20__10IWorkEventFv();
+extern "C" void WorkEvent21__10IWorkEventFv();
+extern "C" void WorkEvent22__10IWorkEventFv();
+extern "C" void WorkEvent23__10IWorkEventFv();
+extern "C" void WorkEvent24__10IWorkEventFv();
+extern "C" void WorkEvent25__10IWorkEventFv();
+extern "C" void WorkEvent26__10IWorkEventFv();
+extern "C" void WorkEvent27__10IWorkEventFv();
+extern "C" void WorkEvent28__10IWorkEventFv();
+extern "C" void WorkEvent29__10IWorkEventFv();
+extern "C" void WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+extern "C" void wkRender__11CWorkThreadFv();
+extern "C" void wkRenderAfter__11CWorkThreadFv();
+extern "C" u32 __RTTI__10IWorkEvent;
+extern "C" u32 __RTTI__11CWorkThread;
+}
+extern "C" u32 jumptable_eu_8056C330[9] = {
+    (u32)((char*)&CDeviceFileCriBlob::wkUpdate__14CDeviceFileCriFv + 72),
+    (u32)((char*)&CDeviceFileCriBlob::wkUpdate__14CDeviceFileCriFv + 400),
+    (u32)((char*)&CDeviceFileCriBlob::wkUpdate__14CDeviceFileCriFv + 416),
+    (u32)((char*)&CDeviceFileCriBlob::wkUpdate__14CDeviceFileCriFv + 580),
+    (u32)((char*)&CDeviceFileCriBlob::wkUpdate__14CDeviceFileCriFv + 596),
+    (u32)((char*)&CDeviceFileCriBlob::wkUpdate__14CDeviceFileCriFv + 728),
+    (u32)((char*)&CDeviceFileCriBlob::wkUpdate__14CDeviceFileCriFv + 832),
+    (u32)((char*)&CDeviceFileCriBlob::wkUpdate__14CDeviceFileCriFv + 740),
+    (u32)((char*)&CDeviceFileCriBlob::wkUpdate__14CDeviceFileCriFv + 844),
+};
+extern "C" u32 lbl_eu_8056C354[45] = {
+    (u32)&lbl_eu_806636D8, 0x00000000,
+    (u32)&CDeviceFileCriBlob::__dt__14CDeviceFileCriFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent1__10IWorkEventFPvPCc,
+    (u32)&CDeviceFileCriBlob::OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&CDeviceFileCriBlob::WorkEvent3__10IWorkEventFPv,
+    (u32)&CDeviceFileCriBlob::WorkEvent4__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::OnPauseTrigger__10IWorkEventFb,
+    (u32)&CDeviceFileCriBlob::WorkEvent6__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent7__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent8__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent9__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent10__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent11__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent12__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent13__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent14__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent15__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent16__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent17__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent18__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent19__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent20__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent21__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent22__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent23__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent24__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent25__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent26__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent27__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent28__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent29__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent30__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::WorkEvent31__10IWorkEventFv,
+    (u32)&CDeviceFileCriBlob::wkUpdate__14CDeviceFileCriFv,
+    (u32)&CDeviceFileCriBlob::wkRender__11CWorkThreadFv,
+    (u32)&CDeviceFileCriBlob::wkRenderAfter__11CWorkThreadFv,
+    (u32)&CDeviceFileCriBlob::wkStandbyLogin__14CDeviceFileCriFv,
+    (u32)&CDeviceFileCriBlob::wkStandbyLogout__14CDeviceFileCriFv,
+    (u32)&CDeviceFileCriBlob::wkStandbyExceptionRetry__14CDeviceFileCriFUl,
+    (u32)&lbl_eu_806636D8, 0xFFFFFE3C,
+    (u32)&CDeviceFileCriBlob::func_80450B4C,
+    (u32)&CDeviceFileCriBlob::func_80450B44,
+    (u32)&CDeviceFileCriBlob::func_80450AB8__14CDeviceFileCriFUl,
+};
+extern "C" u32 lbl_eu_8056C408[6] = {
+    (u32)&CDeviceFileCriBlob::__RTTI__10IWorkEvent, 0x00000000,
+    (u32)&CDeviceFileCriBlob::__RTTI__11CWorkThread, 0x00000000,
+    0x00000000, 0x00000000,
+};
+
+// [.bss] 0x806576C8-0x80657B50 (0x488 = 1160B): file-cri state block.
+u8 lbl_eu_806576C8[136];
+u8 lbl_eu_80657750[1024];
+
+// [.sbss] 0x80665668-0x80665670 (8B): singleton pointer + pad.
+CDeviceFileCri* lbl_eu_80665668;
+u32 lbl_eu_8066566C;
+
+DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, jumptable_eu_8056C330);
+DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, lbl_eu_8056C354);
+DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, lbl_eu_8056C408);
+DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, lbl_eu_80522C90);
+DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, lbl_eu_80522CA0);
+DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, lbl_eu_806636C8);
+DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, lbl_eu_806636CC);
+DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, lbl_eu_806636D0);
+DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, lbl_eu_806636D8);

@@ -119,12 +119,34 @@ extern void (*lbl_eu_8056D700[])(LOD::UnkClass_8046368C*);  // .data dispatch
 // CSuddenCommu idiom, same as CMiniMap.cpp's 806670A8).
 extern const f32 lbl_eu_8066A5C0;  // 1.0f
 extern const f32 lbl_eu_8066A5C4;  // default LOD value
-extern const double lbl_eu_8066A5C8 = 0x4330000000000000ll;  // 2^52 (u16->f32)
-extern const double lbl_eu_8066A5D0 = 0x4330000080000000ll;  // 2^52+2^31 (s32->f32)
+extern const double lbl_eu_8066A5C8;  // 2^52 (u16->f32 magic, blob-owned)
+extern const double lbl_eu_8066A5D0;  // 2^52+2^31 (s32->f32 magic, blob-owned)
 extern const f32 lbl_eu_8066A5D8;
 extern const f32 lbl_eu_8066A5DC;
 extern const f32 lbl_eu_8066A5E0;
 extern const f32 lbl_eu_8066A5E4;
+
+// Builtin (f32)u16/(f32)s32 casts pool TU-local magic doubles; the retail
+// object references the blob pool entries (lbl_eu_8066A5C8/A5D0) instead.
+// Union helpers keep this TU's .sdata2 empty (retail shape).
+inline f32 u16ToF_a5c8(u16 v) {
+    union {
+        double d;
+        u32 w[2];
+    } c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = v;
+    return (f32)(c.d - lbl_eu_8066A5C8);
+}
+inline f32 s32ToF_a5d0(s32 v) {
+    union {
+        double d;
+        u32 w[2];
+    } c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = (u32)v ^ 0x80000000u;
+    return (f32)(c.d - lbl_eu_8066A5D0);
+}
 
 using namespace LOD;
 
@@ -231,12 +253,12 @@ s32 CLODCacheManagerS::func_80463590()
     f32 lim = lbl_eu_80665754;
 
     // Sweep up to the near distance: report the first element's near state.
-    if (lim <= (f32)field_0x0) {
+    if (lim <= u16ToF_a5c8(field_0x0)) {
         return lbl_eu_80665748[field_0x8].field_0x0 != 0 ? 1 : 0;
     }
 
     // Sweep past the far distance: report the last element's near state.
-    if (lim >= (f32)field_0x2) {
+    if (lim >= u16ToF_a5c8(field_0x2)) {
         return lbl_eu_80665748[field_0x8 + field_0x6 - 1].field_0x0 != 0 ? 1 : 0;
     }
 
@@ -262,14 +284,14 @@ s32 CLODCacheManagerS::func_80463590()
 // ===========================================================================
 f32 CLODCacheManagerS::func_80463118()
 {
-    f32 nearF = (f32)field_0x0;
+    f32 nearF = u16ToF_a5c8(field_0x0);
     f32 lim = lbl_eu_80665754;
 
     if (lim <= nearF) {
         return lbl_eu_8066573C[field_0x8].near;
     }
 
-    f32 farF = (f32)field_0x2;
+    f32 farF = u16ToF_a5c8(field_0x2);
     if (lim >= farF) {
         return lbl_eu_8066573C[field_0x8 + field_0x6 - 1].near;
     }
@@ -281,8 +303,8 @@ f32 CLODCacheManagerS::func_80463118()
         u16 A = lbl_eu_8066573C[i].far;
         if (key < A) {
             u16 B = lbl_eu_8066573C[i - 1].far;
-            f32 t = (lim - (f32)B) / (f32)(A - B);
-            return lbl_eu_8066573C[i - 1].near * (1.0f - t) +
+            f32 t = (lim - u16ToF_a5c8(B)) / s32ToF_a5d0((s32)A - (s32)B);
+            return lbl_eu_8066573C[i - 1].near * (lbl_eu_8066A5C0 - t) +
                    lbl_eu_8066573C[i].near * t;
         }
     }
@@ -300,11 +322,11 @@ f32 CLODCacheManagerS::func_8046323C()
 {
     f32 lim = lbl_eu_80665754;
 
-    if (lim <= (f32)field_0x0) {
+    if (lim <= u16ToF_a5c8(field_0x0)) {
         return lbl_eu_80665740[field_0x8].f00;
     }
 
-    if (lim >= (f32)field_0x2) {
+    if (lim >= u16ToF_a5c8(field_0x2)) {
         return lbl_eu_80665740[field_0x8 + field_0x6 - 1].f00;
     }
 
@@ -315,7 +337,7 @@ f32 CLODCacheManagerS::func_8046323C()
         u16 A = lbl_eu_80665740[k].far;
         if (key < A) {
             u16 B = lbl_eu_80665740[k - 1].far;
-            f32 t  = (lim - (f32)B) / (f32)(A - B);
+            f32 t  = (lim - u16ToF_a5c8(B)) / s32ToF_a5d0((s32)A - (s32)B);
             f32 t2 = t * t;
             f32 t3 = t * t2;
             f32 u = t + (t3 - lbl_eu_8066A5D8 * t2);
@@ -347,13 +369,13 @@ extern "C" void func_8046339C__Q23LOD17CLODCacheManagerSFv(s32* outA, s32* outB,
     u32 recIdx = ((u16*)lbl_eu_80665750)[entry + 1];
     CLODCacheManagerS* rec = lbl_eu_80665738 + recIdx;
 
-    if (lim <= (f32)rec->field_0x0) {
+    if (lim <= u16ToF_a5c8(rec->field_0x0)) {
         *outA = lbl_eu_80665744[rec->field_0x8].outX;
         *outB = lbl_eu_80665744[rec->field_0x8].outY;
         return;
     }
 
-    if (lim >= (f32)rec->field_0x2) {
+    if (lim >= u16ToF_a5c8(rec->field_0x2)) {
         *outA = lbl_eu_80665744[rec->field_0x8 + rec->field_0x6 - 1].outX;
         *outB = lbl_eu_80665744[rec->field_0x8 + rec->field_0x6 - 1].outY;
         return;
@@ -367,8 +389,8 @@ extern "C" void func_8046339C__Q23LOD17CLODCacheManagerSFv(s32* outA, s32* outB,
         u16 A = e->far;
         if (key < A) {
             u16 B = (e - 1)->far;
-            f32 t = (lim - (f32)B) / (f32)(A - B);
-            f32 lerp = (f32)(e - 1)->val * (1.0f - t) + (f32)e->val * t;
+            f32 t = (lim - u16ToF_a5c8(B)) / s32ToF_a5d0((s32)A - (s32)B);
+            f32 lerp = s32ToF_a5d0((e - 1)->val) * (lbl_eu_8066A5C0 - t) + s32ToF_a5d0(e->val) * t;
             s32 ri = (s32)(lbl_eu_8066A5E4 + lerp);
             if (ri == e->val) {
                 *outA = e->outX;

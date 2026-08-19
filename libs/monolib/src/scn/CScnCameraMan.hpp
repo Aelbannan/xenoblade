@@ -146,7 +146,7 @@ public:
 // it with C linkage and the exact name, so the call site must too.
 extern "C" void func_8043A1DC__11CScriptCodeFv(void* self, u8* pData, u32 dataSize);
 // Retail CScnCameraMan vtable data symbol (stored manually - class is novtable).
-extern "C" char lbl_eu_8056EA40[];
+extern "C" u32 lbl_eu_8056EA40[];
 
 // .sdata2 constants shared by the free camera-item functions in this TU.
 // The retail values live in the retail data blob; referencing them by name

@@ -114,18 +114,18 @@ struct CWorkSystemPack {
 // Work-system singleton pointer (.sbss).
 extern CWorkSystemPack* lbl_eu_80665A10;
 // _reslist_base<CPackItem*> / _reslist_base<CArcItem*> vtables (DOL data).
-extern u8 lbl_eu_8056FF48[];
-extern u8 lbl_eu_8056FF24[];
+extern u32 lbl_eu_8056FF48[4];
+extern u32 lbl_eu_8056FF24[3];
 // Pack work-memory region handle (.sdata) and pack string table (.rodata).
-extern u32 lbl_eu_80663BC8;
+extern u32 lbl_eu_80663BC8[2];
 extern const char lbl_eu_80524714[];
 // CWorkSystemPack / reslist<CPackItem*> / reslist<CArcItem*> vtables (DOL data).
-extern u8 lbl_eu_8056FE58[];
-extern u8 lbl_eu_8056FF30[];
-extern u8 lbl_eu_8056FF0C[];
+extern u32 lbl_eu_8056FE58[40];
+extern u32 lbl_eu_8056FF30[3];
+extern u32 lbl_eu_8056FF0C[3];
 // Static filename registration tables (set by the Save* helpers below).
 extern const char* const* lbl_eu_80665A14;
-extern const char* const* lbl_eu_80665A18;
+extern const char* const* lbl_eu_80665A18[2];
 
 extern "C" {
 
@@ -365,8 +365,8 @@ CWorkSystemPack::CWorkSystemPack(const char* pName, CWorkThread* pParent) {
     mPackList.mCapacity = 16;
 
     // Register the static arc / pkh filename tables (both NULL-terminated).
-    if (lbl_eu_80665A18 != 0) {
-        const char* const* p = lbl_eu_80665A18;
+    if (lbl_eu_80665A18[0] != 0) {
+        const char* const* p = lbl_eu_80665A18[0];
         while (*p != 0) {
             func_804DDF00(*p);
             p++;
@@ -492,8 +492,8 @@ bool CWorkSystemPack::wkStandbyLogin() {
         node = node->mNext;
     }
 
-    if (lbl_eu_80663BC8 == 0xFFFFFFFF) {
-        lbl_eu_80663BC8 = mtl::MemManager::create(mtl::MemManager::getHandleMEM2(), 0x12000, lbl_eu_80524714);
+    if (lbl_eu_80663BC8[0] == 0xFFFFFFFF) {
+        lbl_eu_80663BC8[0] = mtl::MemManager::create(mtl::MemManager::getHandleMEM2(), 0x12000, lbl_eu_80524714);
     }
 
     PackItemListNode* pnode = mPackList.mStartNodePtr->mNext;
@@ -552,23 +552,19 @@ bool CWorkSystemPack::wkStandbyLogout() {
     }
     mPackList.mCapacity = 0;
 
-    mtl::MemManager::erase(lbl_eu_80663BC8);
+    mtl::MemManager::erase(lbl_eu_80663BC8[0]);
     return ((CWorkThread*)this)->CWorkThread::wkStandbyLogout();
 }
 #pragma optimize_for_size off
-
-const char* const* lbl_eu_80665A14;
 
 // Store the PKH filenames array pointer for later retrieval by the work system.
 void SavePkhFilenamesArrayPtr__15CWorkSystemPackFPCPCc(const char* const* pArray) {
     lbl_eu_80665A14 = pArray;
 }
 
-const char* const* lbl_eu_80665A18;
-
 // Store the static arc filename string pointer for later retrieval by the work system.
 void SaveStaticArcFilenameStringPtr__15CWorkSystemPackFPCPCc(const char* const* pFilenameStr) {
-    lbl_eu_80665A18 = pFilenameStr;
+    lbl_eu_80665A18[0] = pFilenameStr;
 }
 
 // Search the pack list for an item whose base name matches pName.
@@ -655,3 +651,154 @@ void CWorkSystemPack::wkUpdate() {
         pnode = pnode->mNext;
     }
 }
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056FE58-0x8056FF58 (256B): CWorkSystemPack vtable (160B), its
+// RTTI chain (20B) and the reslist<CArcItem*>/reslist<CPackItem*> vtable
+// families (12B each + 16B tail).
+namespace PackBlob {
+extern "C" void WorkEvent1__10IWorkEventFPvPCc();
+extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
+extern "C" void WorkEvent3__10IWorkEventFPv();
+extern "C" void WorkEvent4__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb();
+extern "C" void WorkEvent6__10IWorkEventFv();
+extern "C" void WorkEvent7__10IWorkEventFv();
+extern "C" void WorkEvent8__10IWorkEventFv();
+extern "C" void WorkEvent9__10IWorkEventFv();
+extern "C" void WorkEvent10__10IWorkEventFv();
+extern "C" void WorkEvent11__10IWorkEventFv();
+extern "C" void WorkEvent12__10IWorkEventFv();
+extern "C" void WorkEvent13__10IWorkEventFv();
+extern "C" void WorkEvent14__10IWorkEventFv();
+extern "C" void WorkEvent15__10IWorkEventFv();
+extern "C" void WorkEvent16__10IWorkEventFv();
+extern "C" void WorkEvent17__10IWorkEventFv();
+extern "C" void WorkEvent18__10IWorkEventFv();
+extern "C" void WorkEvent19__10IWorkEventFv();
+extern "C" void WorkEvent20__10IWorkEventFv();
+extern "C" void WorkEvent21__10IWorkEventFv();
+extern "C" void WorkEvent22__10IWorkEventFv();
+extern "C" void WorkEvent23__10IWorkEventFv();
+extern "C" void WorkEvent24__10IWorkEventFv();
+extern "C" void WorkEvent25__10IWorkEventFv();
+extern "C" void WorkEvent26__10IWorkEventFv();
+extern "C" void WorkEvent27__10IWorkEventFv();
+extern "C" void WorkEvent28__10IWorkEventFv();
+extern "C" void WorkEvent29__10IWorkEventFv();
+extern "C" void WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+extern "C" void wkUpdate__11CWorkThreadFv();
+extern "C" void wkRender__11CWorkThreadFv();
+extern "C" void wkRenderAfter__11CWorkThreadFv();
+extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl();
+extern "C" u32 __RTTI__10IWorkEvent;
+extern "C" u32 __RTTI__11CWorkThread;
+}
+extern "C" void wkStandbyLogin__15CWorkSystemPackFv(); // defined below (member)
+extern "C" void wkUpdate__15CWorkSystemPackFv();       // defined below (member)
+extern "C" void wkStandbyLogout__15CWorkSystemPackFv(); // defined below (member)
+extern "C" u32 lbl_eu_80663BD0[2];
+extern "C" u32 lbl_eu_80663BD8[2];
+extern "C" u32 lbl_eu_80663BE0[2];
+extern "C" u32 lbl_eu_80663BE8[2];
+extern "C" u32 lbl_eu_80663BF0[2];
+extern "C" u32 lbl_eu_8056FEF8[5];
+extern "C" u32 lbl_eu_8056FF18[3];
+extern "C" u32 lbl_eu_8056FF3C[3];
+
+extern "C" u32 lbl_eu_8056FE58[40] = {
+    (u32)&lbl_eu_80663BD0, 0x00000000, (u32)&__dt__15CWorkSystemPackFv,
+    (u32)&PackBlob::WorkEvent1__10IWorkEventFPvPCc,
+    (u32)&PackBlob::OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&PackBlob::WorkEvent3__10IWorkEventFPv,
+    (u32)&PackBlob::WorkEvent4__10IWorkEventFv,
+    (u32)&PackBlob::OnPauseTrigger__10IWorkEventFb,
+    (u32)&PackBlob::WorkEvent6__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent7__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent8__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent9__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent10__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent11__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent12__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent13__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent14__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent15__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent16__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent17__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent18__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent19__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent20__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent21__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent22__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent23__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent24__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent25__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent26__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent27__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent28__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent29__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent30__10IWorkEventFv,
+    (u32)&PackBlob::WorkEvent31__10IWorkEventFv,
+    (u32)&wkUpdate__15CWorkSystemPackFv,
+    (u32)&PackBlob::wkRender__11CWorkThreadFv,
+    (u32)&PackBlob::wkRenderAfter__11CWorkThreadFv,
+    (u32)&wkStandbyLogin__15CWorkSystemPackFv,
+    (u32)&wkStandbyLogout__15CWorkSystemPackFv,
+    (u32)&PackBlob::wkStandbyExceptionRetry__11CWorkThreadFUl,
+};
+extern "C" u32 lbl_eu_8056FEF8[5] = {
+    (u32)&PackBlob::__RTTI__10IWorkEvent, 0x00000000,
+    (u32)&PackBlob::__RTTI__11CWorkThread, 0x00000000, 0x00000000,
+};
+extern "C" u32 lbl_eu_8056FF0C[3] = {
+    (u32)&lbl_eu_80663BD8, 0x00000000, (u32)&__dt__reslist_CArcItem,
+};
+extern "C" u32 lbl_eu_8056FF18[3] = {
+    (u32)&lbl_eu_80663BE0, 0x00000000, 0x00000000,
+};
+extern "C" u32 lbl_eu_8056FF24[3] = {
+    (u32)&lbl_eu_80663BE0, 0x00000000, (u32)&__dt___reslist_base_CArcItem,
+};
+extern "C" u32 lbl_eu_8056FF30[3] = {
+    (u32)&lbl_eu_80663BE8, 0x00000000, (u32)&__dt__reslist_CPackItem,
+};
+extern "C" u32 lbl_eu_8056FF3C[3] = {
+    (u32)&lbl_eu_80663BF0, 0x00000000, 0x00000000,
+};
+extern "C" u32 lbl_eu_8056FF48[4] = {
+    (u32)&lbl_eu_80663BF0, 0x00000000, (u32)&__dt___reslist_base_CPackItem, 0x00000000,
+};
+
+// [.rodata] 0x80524688-0x805246FC (116B): RTTI name pool.
+extern "C" __declspec(align(4)) const char lbl_eu_80524688[16] = {
+    0x43,0x57,0x6F,0x72,0x6B,0x53,0x79,0x73,0x74,0x65,0x6D,0x50,0x61,0x63,0x6B,0x00,
+};
+extern "C" __declspec(align(4)) const char lbl_eu_80524698[20] = {
+    0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x3C,0x43,0x41,0x72,0x63,0x49,0x74,0x65,0x6D,
+    0x20,0x2A,0x3E,0x00,
+};
+extern "C" __declspec(align(4)) const char lbl_eu_805246AC[26] = {
+    0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x43,0x41,
+    0x72,0x63,0x49,0x74,0x65,0x6D,0x20,0x2A,0x3E,0x00,
+};
+extern "C" __declspec(align(4)) const char lbl_eu_805246C8[21] = {
+    0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x3C,0x43,0x50,0x61,0x63,0x6B,0x49,0x74,0x65,
+    0x6D,0x20,0x2A,0x3E,0x00,
+};
+extern "C" __declspec(align(4)) const char lbl_eu_805246E0[28] = {
+    0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x43,0x50,
+    0x61,0x63,0x6B,0x49,0x74,0x65,0x6D,0x20,0x2A,0x3E,0x00,0x00,
+};
+
+// [.sdata] 0x80663BC8-0x80663BF8 (48B): region handle + RTTI locators.
+extern "C" u32 lbl_eu_80663BC8[2] = { 0xFFFFFFFF, 0x00000000 };
+extern "C" u32 lbl_eu_80663BD0[2] = { (u32)&lbl_eu_80524688, (u32)&lbl_eu_8056FEF8 };
+extern "C" u32 lbl_eu_80663BD8[2] = { (u32)&lbl_eu_80524698, (u32)&lbl_eu_8056FF18 };
+extern "C" u32 lbl_eu_80663BE0[2] = { (u32)&lbl_eu_805246AC, 0x00000000 };
+extern "C" u32 lbl_eu_80663BE8[2] = { (u32)&lbl_eu_805246C8, (u32)&lbl_eu_8056FF3C };
+extern "C" u32 lbl_eu_80663BF0[2] = { (u32)&lbl_eu_805246E0, 0x00000000 };
+
+// [.sbss] 0x80665A10-0x80665A20 (16B).
+CWorkSystemPack* lbl_eu_80665A10;
+const char* const* lbl_eu_80665A14;
+const char* const* lbl_eu_80665A18[2];

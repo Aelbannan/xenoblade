@@ -298,7 +298,7 @@ extern "C" void __dt__8047BDA8(UnkClass_8047BB54* obj) {
     }
 }
 
-extern char lbl_eu_80658500[];
+extern u8 lbl_eu_80658500[];
 void* UnkClass_8047BB54::func_8047C034(void) { return lbl_eu_80658500; }
 
 // ---------------------------------------------------------------------------
@@ -340,7 +340,7 @@ extern const f32 lbl_eu_8066A864;
 extern const f32 lbl_eu_8066A868;
 extern const f32 lbl_eu_80665880;
 extern const f32 lbl_eu_80665884;
-extern const f32 lbl_eu_806638A0;
+extern f32 lbl_eu_806638A0[2];  // defined in this TU (.sdata, dissolved monolibdata2)
 extern u32* lbl_eu_80665864;
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
@@ -675,6 +675,21 @@ void sinit_8047CA2C() {
     lbl_eu_806584E8.mdlColor = mpfsys::MPFDrawMdlColor::getInstance();
     lbl_eu_806584E8.billLayTex = mpfsys::MPFDrawBillLayTex::getInstance();
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.bss] 0x806584E8-0x80658518 (0x30 = 48B): singleton draw-object table
+// (6 pointers) + scratch draw context (0x18).
+MPFDrawSingletonTable lbl_eu_806584E8;
+u8 lbl_eu_80658500[0x18];
+DECOMP_FORCEACTIVE(code_8047BB54_cpp, lbl_eu_80658500);
+
+// [.sdata] 0x806638A0-0x806638A8 (8B): 1/3.0f + zero pad (retail raw words).
+extern "C" f32 lbl_eu_806638A0[2] = { 0.33333334f, 0.0f };
+
+// [.sbss] 0x806658B8-0x806658C0 (8B): singleton slot (4B used) + pad.
+UnkSceneDataObj* lbl_eu_806658B8;
+u32 lbl_eu_806658B8pad;
+DECOMP_FORCEACTIVE(code_8047BB54_cpp, lbl_eu_806658B8pad);
 
 // --- Target 1: us-8047fc24 ---------------------------------------------------
 // Gate on two flag bits; when both are set, forward into the embedded

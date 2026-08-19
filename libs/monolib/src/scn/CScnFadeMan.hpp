@@ -55,5 +55,6 @@ extern float lbl_eu_8066AB80; // 1.0f
 extern float lbl_eu_8066AB78; // 0.0f
 extern float lbl_eu_8066AB90; // 1.2f
 
-// Retail CScnFadeMan vtable blob (.data:0x8056EB50, owned by port/data_defs).
-extern u8 lbl_eu_8056EB50[];
+// Retail CScnFadeMan vtable blob (.data:0x8056EB50, 16B) owned by this TU:
+// [RTTI locator lbl_eu_80663A38, 0, dtor, cbRenderBefore].
+extern "C" u32 lbl_eu_8056EB50[4];

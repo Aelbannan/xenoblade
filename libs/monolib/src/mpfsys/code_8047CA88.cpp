@@ -2,17 +2,26 @@
 #include "monolib/mpfsys/code_8047BB54.hpp"
 #include <nw4r/math.h>
 
+// .sbss 0x806658C0 (8B): initialized-flag byte + 7 pad bytes (the retail
+// splitter sized the flag symbol 8B). The singleton object buffer (0x28B)
+// and the three foreign float constants below are the unit's only other
+// data: the floats live in other units' ranges and stay extern.
+struct SFlag_806658C0 {
+    s8 flag;      // 0x00 initialized flag
+    u8 pad[7];    // 0x01..0x07
+};
+
 extern "C" {
-    s8 lbl_eu_806658C0;
-    u8 lbl_eu_80658518[sizeof(UnkClass_8047CA88) + 64];
-    float lbl_eu_8066A870;
-    float lbl_eu_8066A874;
-    float lbl_eu_80665884;
+    struct SFlag_806658C0 lbl_eu_806658C0;
+    u8 lbl_eu_80658518[sizeof(UnkClass_8047CA88)];
+    extern float lbl_eu_8066A870;
+    extern float lbl_eu_8066A874;
+    extern float lbl_eu_80665884;
 }
 
 UnkClass_8047CA88* UnkClass_8047CA88::getInstance(){
-    if(!lbl_eu_806658C0){
-        lbl_eu_806658C0 = 1;
+    if(!lbl_eu_806658C0.flag){
+        lbl_eu_806658C0.flag = 1;
     }
     return (UnkClass_8047CA88*)&lbl_eu_80658518;
 }

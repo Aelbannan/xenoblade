@@ -10,9 +10,133 @@
 // CDeviceFontLoader.cpp / CDeviceFontLayer.cpp).
 
 #include "libs/monolib/src/device/CDeviceFont.hpp"
+#include <decomp.h>
 
 #include "monolib/work/CWorkUtil.hpp"
 #include "monolib/core/CFontLayer.hpp"
+
+// ---- Retail data labels (monolibdata2 dissolve) ----
+// Foreign RTTI / base-list objects referenced by the CDeviceFont vtable and
+// the reslist<IDeviceFontInfo> sub-vtables.
+extern "C" u32 __RTTI__10IWorkEvent;
+extern "C" u32 __RTTI__11CWorkThread;
+extern "C" u32 lbl_eu_806635F0;     // CWorkThread base-list
+// Foreign rodata RTTI name strings referenced by the .sdata locators.
+extern "C" u32 lbl_eu_80522D68;
+extern "C" u32 lbl_eu_80522D7C;
+// Foreign IWorkEvent / CWorkThread virtual thunks referenced by the vtable.
+extern "C" void WorkEvent1__10IWorkEventFPvPCc();
+extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
+extern "C" void WorkEvent3__10IWorkEventFPv();
+extern "C" void WorkEvent4__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb();
+extern "C" void WorkEvent6__10IWorkEventFv();
+extern "C" void WorkEvent7__10IWorkEventFv();
+extern "C" void WorkEvent8__10IWorkEventFv();
+extern "C" void WorkEvent9__10IWorkEventFv();
+extern "C" void WorkEvent10__10IWorkEventFv();
+extern "C" void WorkEvent11__10IWorkEventFv();
+extern "C" void WorkEvent12__10IWorkEventFv();
+extern "C" void WorkEvent13__10IWorkEventFv();
+extern "C" void WorkEvent14__10IWorkEventFv();
+extern "C" void WorkEvent15__10IWorkEventFv();
+extern "C" void WorkEvent16__10IWorkEventFv();
+extern "C" void WorkEvent17__10IWorkEventFv();
+extern "C" void WorkEvent18__10IWorkEventFv();
+extern "C" void WorkEvent19__10IWorkEventFv();
+extern "C" void WorkEvent20__10IWorkEventFv();
+extern "C" void WorkEvent21__10IWorkEventFv();
+extern "C" void WorkEvent22__10IWorkEventFv();
+extern "C" void WorkEvent23__10IWorkEventFv();
+extern "C" void WorkEvent24__10IWorkEventFv();
+extern "C" void WorkEvent25__10IWorkEventFv();
+extern "C" void WorkEvent26__10IWorkEventFv();
+extern "C" void WorkEvent27__10IWorkEventFv();
+extern "C" void WorkEvent28__10IWorkEventFv();
+extern "C" void WorkEvent29__10IWorkEventFv();
+extern "C" void WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+extern "C" void wkRenderAfter__11CWorkThreadFv();
+extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl();
+// In-TU C++ members referenced by the vtable (declared extern "C" so the
+// reloc name is the retail mangled name; resolves at link to the C++ member
+// definition with the same symbol string).
+extern "C" void __dt__11CDeviceFontFv();
+extern "C" void wkUpdate__11CDeviceFontFv();
+extern "C" void wkRender__11CDeviceFontFv();
+extern "C" bool wkStandbyLogin__11CDeviceFontFv();
+extern "C" bool wkStandbyLogout__11CDeviceFontFv();
+// In-TU reslist<IDeviceFontInfo> deleting destructors (defined later).
+extern "C" void __dt__reslist_IDeviceFontInfo();
+extern "C" void __dt___reslist_base_IDeviceFontInfo();
+
+// === .rodata size=0x70 align=8 ===
+extern "C" __declspec(align(8)) const char lbl_eu_80522D90[12] = {
+    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x6F,0x6E,0x74,0x00,
+};
+extern "C" const char lbl_eu_80522D9C[28] = {
+    0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x3C,0x49,0x44,0x65,0x76,0x69,0x63,0x65,0x46,
+    0x6F,0x6E,0x74,0x49,0x6E,0x66,0x6F,0x20,0x2A,0x3E,0x00,0x00,
+};
+extern "C" const char lbl_eu_80522DB8[36] = {
+    0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x49,0x44,
+    0x65,0x76,0x69,0x63,0x65,0x46,0x6F,0x6E,0x74,0x49,0x6E,0x66,0x6F,0x20,0x2A,0x3E,
+    0x00,0x00,0x00,0x00,
+};
+extern "C" const char lbl_eu_80522DDC[36] = {
+    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x6F,0x6E,0x74,0x4C,0x61,0x79,0x65,0x72,
+    0x00,0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x6F,0x6E,0x74,0x4C,0x6F,0x61,0x64,
+    0x65,0x72,0x00,0x00,
+};
+
+// === .sdata size=0x20 align=8 ===
+// RTTI locators {name-ptr, base-list} + font-path string pointers.
+extern "C" const char* lbl_eu_806636F8 = (const char*)&lbl_eu_80522D68;
+extern "C" const char* lbl_eu_806636FC = (const char*)&lbl_eu_80522D7C;
+extern "C" u32 lbl_eu_8056C700[7];  // forward: .data sub-vtable referenced here
+extern "C" u32 lbl_eu_8056C728[3];  // forward: .data sub-vtable referenced here
+extern "C" u32 lbl_eu_80663700[2] = { (u32)&lbl_eu_80522D90, (u32)&lbl_eu_8056C700 };
+extern "C" u32 lbl_eu_80663708[2] = { (u32)&lbl_eu_80522D9C, (u32)&lbl_eu_8056C728 };
+extern "C" u32 lbl_eu_80663710[2] = { (u32)&lbl_eu_80522DB8, 0x00000000 };
+
+// === .data size=0xE0 align=8 ===
+// CDeviceFont vtable (160B): IWorkEvent dispatcher + CWorkThread overrides.
+extern "C" u32 lbl_eu_8056C660[40] = {
+    (u32)&lbl_eu_80663700, 0x00000000, (u32)&__dt__11CDeviceFontFv, (u32)&WorkEvent1__10IWorkEventFPvPCc,
+    (u32)&OnFileEvent__10IWorkEventFP10CEventFile, (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv, (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv, (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv, (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv, (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv, (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv, (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv, (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv, (u32)&wkUpdate__11CDeviceFontFv, (u32)&wkRender__11CDeviceFontFv,
+    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__11CDeviceFontFv, (u32)&wkStandbyLogout__11CDeviceFontFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+};
+// reslist<IDeviceFontInfo> vtable (28B): {RTTI, base, dtor, ...}.
+extern "C" u32 lbl_eu_8056C700[7] = {
+    (u32)&__RTTI__10IWorkEvent, 0x00000000, (u32)&__RTTI__11CWorkThread, 0x00000000,
+    (u32)&lbl_eu_806635F0, 0x00000000, 0x00000000,
+};
+// reslist<IDeviceFontInfo> sub-vtable (12B).
+extern "C" u32 lbl_eu_8056C71C[3] = {
+    (u32)&lbl_eu_80663708, 0x00000000, (u32)&__dt__reslist_IDeviceFontInfo,
+};
+// _reslist_base<IDeviceFontInfo> sub-vtable (12B).
+extern "C" u32 lbl_eu_8056C728[3] = {
+    (u32)&lbl_eu_80663710, 0x00000000, 0x00000000,
+};
+// _reslist_base<IDeviceFontInfo> tail (12B).
+extern "C" u32 lbl_eu_8056C734[3] = {
+    (u32)&lbl_eu_80663710, 0x00000000, (u32)&__dt___reslist_base_IDeviceFontInfo,
+};
+
+// === .sbss size=0x10 align=8 (zero-fill) ===
+CDeviceFont* lbl_eu_80665678 = 0;
+u32 lbl_eu_8066567C = 0;
+u32 lbl_eu_80665680 = 0;
+u32 lbl_eu_80665684 = 0;
+DECOMP_FORCEACTIVE(cdffont, lbl_eu_80665678, lbl_eu_8066567C, lbl_eu_80665680, lbl_eu_80665684);
 
 // ---- CDeviceFont constructor (0x80454FB0) ----
 CDeviceFont::CDeviceFont(const char* pName, CWorkThread* pParent)

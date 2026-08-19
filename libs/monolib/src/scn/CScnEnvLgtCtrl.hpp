@@ -517,7 +517,7 @@ public:
 };
 
 // Retail vtable data blob installed at CScnEnvLgtCtrl+0x00 by the dtor.
-extern u8 lbl_eu_8056F9B8[];
+extern "C" u32 lbl_eu_8056F9B8[0x258 / 4];  // vtable (defined in CScnEnvLgtCtrl.cpp)
 
 // Base vtable for the IScnEnvCtl reslist instances (installed by the two
 // reslist destructors in this TU).
@@ -854,10 +854,10 @@ extern const float lbl_eu_8066AFF0;
 
 // .sdata interpolation bounds consulted by func_804C2124 against the +0x3C
 // word (signed compares in retail).
-extern int lbl_eu_80663AE8;
-extern int lbl_eu_80663AEC;
-extern int lbl_eu_80663AF0;
-extern int lbl_eu_80663AF4;
+extern "C" u32 lbl_eu_80663AE8;  // .sdata raw words (defined in .cpp)
+extern "C" u32 lbl_eu_80663AEC;
+extern "C" u32 lbl_eu_80663AF0;
+extern "C" u32 lbl_eu_80663AF4;
 
 // Cubic-Hermite basis coefficients used by func_804C7790's keyframe
 // interpolation (2, 3, 1, -2 in retail .sdata2).
@@ -1023,7 +1023,7 @@ struct CScnEnvLgtCtrlSinitDst {
 };
 
 extern CScnEnvLgtCtrlSinitSrc lbl_eu_8056FA68;
-extern CScnEnvLgtCtrlSinitDst lbl_eu_8065FA40;
+extern u8 lbl_eu_8065FA40[0xB8];  // .bss (defined in .cpp, dissolved monolibdata2)
 
 // --- __ct__CScnEnvLgtCtrl ctor helper types ---
 // 3-word .bss blob copied by the ctor into +0x90..0x98 and +0x9C..0xA4.

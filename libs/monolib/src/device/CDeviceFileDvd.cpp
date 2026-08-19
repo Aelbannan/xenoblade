@@ -62,7 +62,7 @@ public:
 
 // Retail vtable (rodata) - referenced manually so the ctor's vptr-store relocs
 // are byte-identical to retail (the class is non-virtual; MWCC emits no vtable).
-extern u32 lbl_eu_8056C420[];
+extern "C" u32 lbl_eu_8056C420[46];  // defined below (dissolved monolibdata2)
 // Retail singleton pointer (sda21 .sbss).
 extern CDeviceFileDvd* lbl_eu_80665670;
 
@@ -261,3 +261,77 @@ void CFileHandle::checkExistRsrc() const {}
 
 extern void getRsrc__5CRsrcFUl(unsigned long);
 void CFileHandle::getRsrc() const { getRsrc__5CRsrcFUl((unsigned long)*(void**)((char*)this + 0x14)); }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056C420-0x8056C4D8 (0xB8): CDeviceFileDvd vtable (retail bytes).
+// The member functions defined in this TU emit the exact retail mangled
+// names; the IWorkEvent/CWorkThread slots are cross-TU externs.
+extern "C" void __dt__14CDeviceFileDvdFv();
+extern "C" void WorkEvent1__10IWorkEventFPvPCc();
+extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
+extern "C" void WorkEvent3__10IWorkEventFPv();
+extern "C" void WorkEvent4__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb();
+extern "C" void WorkEvent6__10IWorkEventFv();
+extern "C" void WorkEvent7__10IWorkEventFv();
+extern "C" void WorkEvent8__10IWorkEventFv();
+extern "C" void WorkEvent9__10IWorkEventFv();
+extern "C" void WorkEvent10__10IWorkEventFv();
+extern "C" void WorkEvent11__10IWorkEventFv();
+extern "C" void WorkEvent12__10IWorkEventFv();
+extern "C" void WorkEvent13__10IWorkEventFv();
+extern "C" void WorkEvent14__10IWorkEventFv();
+extern "C" void WorkEvent15__10IWorkEventFv();
+extern "C" void WorkEvent16__10IWorkEventFv();
+extern "C" void WorkEvent17__10IWorkEventFv();
+extern "C" void WorkEvent18__10IWorkEventFv();
+extern "C" void WorkEvent19__10IWorkEventFv();
+extern "C" void WorkEvent20__10IWorkEventFv();
+extern "C" void WorkEvent21__10IWorkEventFv();
+extern "C" void WorkEvent22__10IWorkEventFv();
+extern "C" void WorkEvent23__10IWorkEventFv();
+extern "C" void WorkEvent24__10IWorkEventFv();
+extern "C" void WorkEvent25__10IWorkEventFv();
+extern "C" void WorkEvent26__10IWorkEventFv();
+extern "C" void WorkEvent27__10IWorkEventFv();
+extern "C" void WorkEvent28__10IWorkEventFv();
+extern "C" void WorkEvent29__10IWorkEventFv();
+extern "C" void WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+extern "C" void wkUpdate__14CDeviceFileDvdFv();
+extern "C" void wkRender__11CWorkThreadFv();
+extern "C" void wkRenderAfter__11CWorkThreadFv();
+extern "C" void wkStandbyLogin__14CDeviceFileDvdFv();
+extern "C" void wkStandbyLogout__14CDeviceFileDvdFv();
+extern "C" void wkStandbyExceptionRetry__14CDeviceFileDvdFUl();
+extern "C" u32 __RTTI__10IWorkEvent;
+extern "C" u32 __RTTI__11CWorkThread;
+extern "C" u32 lbl_eu_806636E0[2];  // .sdata RTTI locator (defined below)
+extern "C" const u32 lbl_eu_80522CA8[38];  // .rodata name string (defined below)
+extern "C" u32 lbl_eu_8056C4C0;  // .data tail object (CDeviceFileDvd sibling TU)
+
+extern "C" u32 lbl_eu_8056C420[46] = {
+    (u32)&lbl_eu_806636E0, 0x00000000, (u32)&__dt__14CDeviceFileDvdFv, (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile, (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv, (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv, (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv, (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv, (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv, (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv, (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv, (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv, (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv, (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv, (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv, (u32)&wkUpdate__14CDeviceFileDvdFv, (u32)&wkRender__11CWorkThreadFv, (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__14CDeviceFileDvdFv, (u32)&wkStandbyLogout__14CDeviceFileDvdFv, (u32)&wkStandbyExceptionRetry__14CDeviceFileDvdFUl,
+    (u32)&__RTTI__10IWorkEvent, 0x00000000, (u32)&__RTTI__11CWorkThread, 0x00000000, 0x00000000, 0x00000000,
+};
+
+// [.rodata] 0x80522CA8-0x80522D40 (0x98): "CDeviceFileDvd" + SJIS text (raw).
+extern "C" const u32 lbl_eu_80522CA8[38] = {
+    0x43446576, 0x69636546, 0x696C6544, 0x76640000, 0x83478389, 0x815B82AA, 0x94AD90B6, 0x82B582DC,
+    0x82B582BD, 0x8142008B, 0x90905F82, 0xCC836683, 0x42835883, 0x4E82F083, 0x5A836283, 0x6782B582,
+    0xC482AD82, 0xBE82B382, 0xA2814200, 0x8382815B, 0x835E815B, 0x82AA8E7E, 0x82DC82C1, 0x82C482A2,
+    0x82DC82B7, 0x81420083, 0x66834283, 0x58834E82, 0xF093C782, 0xDF82DC82, 0xB982F182, 0xC582B582,
+    0xBD81428F, 0xDA82B582, 0xAD82CD81, 0x45814581, 0x45000000, 0x00000000,
+};
+
+// [.sdata] 0x806636E0-0x806636E8 (8B): RTTI locator {name, vtable-tail}.
+extern "C" u32 lbl_eu_806636E0[2] = { (u32)&lbl_eu_80522CA8, (u32)&lbl_eu_8056C4C0 };
+
+// [.sbss] 0x80665670-0x80665678 (8B): singleton slot (4B used) + pad.
+CDeviceFileDvd* lbl_eu_80665670;
+u32 lbl_eu_80665670pad;
+DECOMP_FORCEACTIVE(CDeviceFileDvd_cpp, lbl_eu_80665670pad);

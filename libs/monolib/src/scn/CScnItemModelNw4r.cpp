@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+
 #include <string.h>
 
 #include <nw4r/db/db_assert.h>
@@ -23,11 +24,25 @@
 #include "libs/monolib/src/scn/CScn.hpp"
 #include "libs/monolib/src/scn/CScnItemModel.hpp"
 #include "libs/monolib/src/scn/CScnItemModelNw4r.hpp"
+// Retail u32->f32 conversion magic (lbl_eu_8066A8F0 = 0x4330000000000000,
+// 2^52) via the union trick, so the ctor's float compare emits no local
+// .sdata2 pool.
+union F64Conv_A8F0 {
+    f64 d;
+    u32 w[2];
+};
+static inline f32 u32ToF_A8F0(u32 v) {
+    F64Conv_A8F0 c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = v;
+    return (f32)(c.d - lbl_eu_8066A8F0);
+}
+
 
 // Multiple targets map to the same function - single definition
 u32 func_804871A8(u8* self) { return *(u32*)((u8*)self + 0x4ac); }
 
-u32 func_8048736C(u8* self) { return *(u32*)((u8*)self + 0x14c0); }
+extern "C" u32  func_8048736C(u8* self) { return *(u32*)((u8*)self + 0x14c0); }
 
 extern "C" void func_804876C0(u8* self) {
     *(u16*)((u8*)self + 0x17FA) |= 1;
@@ -39,14 +54,14 @@ void func_804876DC(u8* self) { func_804EB798((u8*)self + 0x17a0); }
 void func_804EB7F8(u8* self);
 void func_804876E4(u8* self) { ((void(*)(void*))func_804EB7F8)((char*)self + 0x17a0); }
 
-void func_80487B84(){}
+extern "C" void  func_80487B84(){}
 
 // func_80487C78: for every material in the model, rewrite the four GX
 // tev-swap-mode tables so the R/G/B/A channels are reordered: identity
 // (0,1,2,3) when `enable` is clear, or a red-mono mapping (0,0,0,3) when
 // set. The +0x7A4 bit-4 flag mirrors `enable`; the reference chain is
 // notified last (func_80484914).
-void func_80487C78(CScnItemModelNw4r* self, u32 enable) {
+extern "C" void  func_80487C78(CScnItemModelNw4r* self, u32 enable) {
     if (enable != 0) {
         self->field_0x7A4 |= 0x10;
     } else {
@@ -87,16 +102,16 @@ void func_80487C78(CScnItemModelNw4r* self, u32 enable) {
 }
 
 void func_804E679C(u8* self);
-void func_80487E40(u8* self) { ((void(*)(void*))func_804E679C)((char*)self + 0x1700); }
+extern "C" void  func_80487E40(u8* self) { ((void(*)(void*))func_804E679C)((char*)self + 0x1700); }
 
 void func_804E6898(u8* self);
-void func_80487E48(u8* self) { ((void(*)(void*))func_804E6898)((char*)self + 0x1700); }
+extern "C" void  func_80487E48(u8* self) { ((void(*)(void*))func_804E6898)((char*)self + 0x1700); }
 
-u32 func_80487E50(u8* self) { return *(u32*)((u8*)self + 0x1708); }
+extern "C" u32  func_80487E50(u8* self) { return *(u32*)((u8*)self + 0x1708); }
 
 // func_80487E58: forward `param` to the chain-last node's vtable-0x64
 // handler (when linked), then to the +0x1770 eye-anim state machine.
-void func_80487E58(CScnItemModelNw4r* self, u32 param) {
+extern "C" void  func_80487E58(CScnItemModelNw4r* self, u32 param) {
     CScnItemModel* node = self->field_0x7C4;
     if (node != 0) {
         node->vfunc64(param);
@@ -134,7 +149,7 @@ struct VTarget {
     virtual ~VTarget() {}
 };
 
-extern "C" void* func_80487EB8(u8* self) {
+extern "C" void*  func_80487EB8(u8* self) {
     void* obj = *(void**)((u8*)self + 0x7C4);
     if (obj != 0) return ((VTarget*)obj)->v24();
     return *(void**)((u8*)self + 0x179C);
@@ -150,7 +165,7 @@ extern "C" void* func_80487EB8(u8* self) {
 // flag is then re-evaluated from the owner's node-list distance checks, and
 // the bit-4/bit-5 camera-hookup latches are advanced (func_8048F7A8 /
 // func_8048F630 gated by the +0x1000 flag).
-void func_80487EE0(CScnItemModelNw4r* self) {
+extern "C" void  func_80487EE0(CScnItemModelNw4r* self) {
     if (self->field_0x17D0 != 0) {
         ((CScnItemModelNw4rScnObj122*)self->field_0x147C)->field_0x122 =
             (u16)self->field_0x17CC[0];
@@ -298,7 +313,7 @@ void func_80487EE0(CScnItemModelNw4r* self) {
 // triple: from the +0x14AC model object's floats when present, else
 // bit-copy the act-data transform's previous position (mPrevPos x/y/z) into
 // the +0x310/+0x314/+0x318 slots.
-void func_804884F8(CScnItemModelNw4r* self) {
+extern "C" void  func_804884F8(CScnItemModelNw4r* self) {
     func_80485D64(self);
     CScnItemModelNw4r14AC* src = self->field_0x14AC;
     if (src != 0) {
@@ -348,7 +363,7 @@ extern "C" u32 func_804885C8(u8* self) {
 // (vtable-0x10), notifying via the vtable-0xA4 virtual when it changes.
 // Finally updates the +0x7A0/+0x17A0 sub-object state gated on the
 // +0x7A4/+0x7A8 flag combos.
-void func_804885FC(CScnItemModelNw4r* self) {
+extern "C" void  func_804885FC(CScnItemModelNw4r* self) {
     self->field_0x16C2 = 0;
     if (self->field_0x7A4 & 0x04000000) {
         if (self->field_0x14AC != 0) {
@@ -429,7 +444,7 @@ extern "C" void func_80488B50();
 // (func_804858C8), append other's scene object to the +0x1474 ScnGroup
 // (Insert at mNumScnObj), then forward to func_80488B50. The forward call
 // goes through a cast pointer so the empty stub is not auto-inlined away.
-u32 func_804888B4(CScnItemModelNw4r* self, CScnItemModelNw4r* other) {
+extern "C" u32  func_804888B4(CScnItemModelNw4r* self, CScnItemModelNw4r* other) {
     if (func_804858C8(self, other)) {
         nw4r::g3d::ScnGroup* group = self->field_0x1474;
         u32 r = group->Insert(group->Size(), other->field_0x147C);
@@ -479,7 +494,7 @@ success:
 // carve it out of the +0x860 counter and flag it (0x85C bit 2); otherwise
 // allocate from the owner's heap. The +0x860 reads are volatile (retail
 // reloads the counter for the check and for the carve).
-void func_80488984(CScnItemModelNw4r* self, u32 param) {
+extern "C" void  func_80488984(CScnItemModelNw4r* self, u32 param) {
     func_804857DC(self, param);
     u32 size = nw4r::g3d::ResMdl(self->field_0x146C).GetResNodeNumEntries() * 8;
     CScnItemModelNw4rAlloc* pool = (CScnItemModelNw4rAlloc*)self;
@@ -499,7 +514,7 @@ void func_80488984(CScnItemModelNw4r* self, u32 param) {
 // (func_80485994), append other's scene object to the +0x1478 ScnGroup
 // (Insert at its Size), then forward to func_80488B50. Returns the Insert
 // result; 0 when the link was rejected.
-u32 func_80488A28(CScnItemModelNw4r* self, CScnItemModelNw4r* other) {
+extern "C" u32  func_80488A28(CScnItemModelNw4r* self, CScnItemModelNw4r* other) {
     if (func_80485994(self, other) == 0) {
         return 0;
     }
@@ -512,7 +527,7 @@ u32 func_80488A28(CScnItemModelNw4r* self, CScnItemModelNw4r* other) {
 
 // func_80488AAC: like func_80488984, but for the +0x1498 node table
 // (func_804857F0 setup, 0x85C bit 3 flag).
-void func_80488AAC(CScnItemModelNw4r* self, u32 param) {
+extern "C" void  func_80488AAC(CScnItemModelNw4r* self, u32 param) {
     func_804857F0(self, param);
     u32 size = nw4r::g3d::ResMdl(self->field_0x146C).GetResNodeNumEntries() * 8;
     CScnItemModelNw4rAlloc* pool = (CScnItemModelNw4rAlloc*)self;
@@ -535,7 +550,7 @@ void func_80488AAC(CScnItemModelNw4r* self, u32 param) {
 // +0x7A4 bit-0x80 visibility flag. The func_80488B50 call goes through a cast
 // pointer (C-linkage forward decl above) so the reloc keeps the unmangled
 // name, matching the other call sites.
-void func_8048776C(CScnItemModelNw4r* self) {
+extern "C" void  func_8048776C(CScnItemModelNw4r* self) {
     if (self->field_0x7C4 != 0) {
         ((void (*)(CScnItemModelNw4r*, u32, CScnItemModelNw4r*))func_80488B50)(
             self, 1, (CScnItemModelNw4r*)self->field_0x7C4);
@@ -568,7 +583,7 @@ void func_8048776C(CScnItemModelNw4r* self) {
 // clear), and the +0x1470 group with its +0x1474/+0x1478/+0x1480 children.
 // Placed before func_80488B50's definition so the call below resolves to the
 // C-linkage alias (line 266) and keeps the unmangled retail reloc.
-void func_80487818(CScnItemModelNw4r* self) {
+extern "C" void  func_80487818(CScnItemModelNw4r* self) {
     func_80496D74(&self->field_0xC);
     func_804830AC((CScnItemModel*)self);
     self->member824.field_4 = 0;
@@ -686,7 +701,7 @@ void func_804E5E38(u8* self);
 void func_80488C20(u8* self) { ((void(*)(void*))func_804E5E38)((char*)self + 0x16c8); }
 
 // func_80488C28: like func_80488D14, but the chain notify carries an argument.
-void func_80488C28(CScnItemModelNw4r* self, u32 param) {
+extern "C" void  func_80488C28(CScnItemModelNw4r* self, u32 param) {
     if (func_804E5FD4(&self->field_0x16C8)) {
         func_804849E4(self, param);
     }
@@ -695,7 +710,7 @@ void func_80488C28(CScnItemModelNw4r* self, u32 param) {
 // func_80488C78: when the material sub-object reports activity, OR its
 // status with the chain-wide 2-arg query and return whether either is
 // non-zero (bool-ized via retail's neg/or/srwi setnz).
-int func_80488C78(CScnItemModelNw4r* self, u32 a, u32 b) {
+extern "C" int  func_80488C78(CScnItemModelNw4r* self, u32 a, u32 b) {
     int v = func_804E6158(&self->field_0x16C8);
     if (v != 0) {
         v = (v | func_80484AB4(self, a, b)) != 0;
@@ -710,7 +725,7 @@ int func_80488C78(CScnItemModelNw4r* self, u32 a, u32 b) {
 // stores (retail keeps lwz r5,0; lwz r0,4; stw; stw; lwz r0,8; stw).
 #pragma push
 #pragma scheduling off
-void func_80488CF8(CScnItemModelNw4r* self, const CScnItemModelNw4rBlock76C* src) {
+extern "C" void  func_80488CF8(CScnItemModelNw4r* self, const CScnItemModelNw4rBlock76C* src) {
     const u32* words = reinterpret_cast<const u32*>(src);
     u32 w0 = words[0];
     u32 w1 = words[1];
@@ -724,7 +739,7 @@ void func_80488CF8(CScnItemModelNw4r* self, const CScnItemModelNw4rBlock76C* src
 // func_80488D14: when the material sub-object reports activity
 // (func_804E6358), notify the whole model chain (func_80484C84 walks the
 // reference lists calling the vtable-0x98 virtual).
-void func_80488D14(CScnItemModelNw4r* self) {
+extern "C" void  func_80488D14(CScnItemModelNw4r* self) {
     if (func_804E6358(&self->field_0x16C8)) {
         func_80484C84(self);
     }
@@ -736,7 +751,7 @@ void func_80488D14(CScnItemModelNw4r* self) {
 // lbl_eu_8056DE50 (4 groups of 3), selecting the row by the +0x7A8 mode
 // bits 0x10/0x20/0x40 (falling back to `arg2`). The vtable-0x9C chain
 // notify (func_80484D3C) is always issued at the end.
-void func_80488D54(CScnItemModelNw4r* self, u32 arg2, u32 arg3) {
+extern "C" void  func_80488D54(CScnItemModelNw4r* self, u32 arg2, u32 arg3) {
     const float* tbl = lbl_eu_8056DE50;
     u32 mode = arg2;
     ml::CVec3 vec;
@@ -786,7 +801,7 @@ void func_80488D54(CScnItemModelNw4r* self, u32 arg2, u32 arg3) {
 
 // func_80488EF4: reset both material/anim helpers to 0, then invoke the
 // no-arg vtable-0x98 notify (CScnItemModel::vfunc98) on the model.
-void func_80488EF4(CScnItemModelNw4r* self) {
+extern "C" void  func_80488EF4(CScnItemModelNw4r* self) {
     func_80482918(self, 0);
     func_804829E8(self, 0);
     ((CScnItemModel*)self)->vfunc98();
@@ -827,13 +842,13 @@ void func_80488F44(CScnItemModelNw4r* self, u32 value) {
     } while (swapped);
 }
 
-void func_80488FEC(CScnItemModelNw4r* self) {
+extern "C" void  func_80488FEC(CScnItemModelNw4r* self) {
     s32 v = self->field_0x17C8;
     if (v == 0) return;
     func_804E8220(v);
 }
 
-void func_80489000(CScnItemModelNw4r* self) {
+extern "C" void  func_80489000(CScnItemModelNw4r* self) {
     s32 v = self->field_0x17C8;
     if (v == 0) return;
     func_804E8284(v);
@@ -847,8 +862,8 @@ void func_80489000(CScnItemModelNw4r* self) {
 // then destroys the sub-objects in reverse member order (CMdlDynamics down
 // to CScnEffectActNw4r), the CScnItemModel base, and the object itself when
 // the deletion flag is positive.
-CScnItemModelNw4r* __dt__17CScnItemModelNw4rFv(CScnItemModelNw4r* self,
-                                               int deleting) {
+extern "C" CScnItemModelNw4r* __dt__17CScnItemModelNw4rFv(CScnItemModelNw4r* self,
+                                                            int deleting) {
     if (self != nullptr) {
         u8* vt = (u8*)lbl_eu_8056DE80;
         *(void**)self = (void*)vt;
@@ -890,7 +905,7 @@ CScnItemModelNw4r* __dt__17CScnItemModelNw4rFv(CScnItemModelNw4r* self,
 // link id is set) refresh the transform and push it into the scene object.
 // Otherwise fall back to the UV/mouth anim helpers (func_804E72D0 /
 // func_804E68A0) gated on the vtable-0x74 handled query.
-void func_80489014(CScnItemModelNw4r* self, nw4r::g3d::ChrAnmResult* out,
+extern "C" void  func_80489014(CScnItemModelNw4r* self, nw4r::g3d::ChrAnmResult* out,
                    u32 unused, CScnItemModelNw4rFrameOut* frame) {
     if (self->field_0x14A0 == frame->field_6) {
         if (((CScnItemModelNw4rAnimC*)self->field_0xC)->field_0x0 != 0) {
@@ -940,7 +955,7 @@ void func_80489014(CScnItemModelNw4r* self, nw4r::g3d::ChrAnmResult* out,
 // value (retail keeps the u16 slot at out+6), then advance the +0x16C4 u16
 // frame counter; while it stays under the +0x17D0 table count, write the
 // table entry (+0x17CC, u32) into the caller's u16 slot at +6.
-void func_8048917C(CScnItemModelNw4r* self, u32 param2, u32 param3,
+extern "C" void  func_8048917C(CScnItemModelNw4r* self, u32 param2, u32 param3,
                    CScnItemModelNw4rFrameOut* out) {
     if (self->field_0x17C8 != 0) {
         func_804E8290(self->field_0x17C8, self, out->field_6, param2);
@@ -954,7 +969,7 @@ void func_8048917C(CScnItemModelNw4r* self, u32 param2, u32 param3,
     }
 }
 
-void func_80489200(){}
+extern "C" void  func_80489200(){}
 
 // func_80489584: per-frame transform/bounding refresh for the Nw4r model,
 // invoked with mode == 4. When the +0x7A4 bit-30 flag is set, normalize the
@@ -969,7 +984,7 @@ void func_80489200(){}
 // through the owner's virtual light (func_80493C30), propagated
 // (func_80485804) and refreshed (func_804BFFB8) when the visibility flags
 // allow.
-void func_80489584(CScnItemModelNw4r* self, int param) {
+extern "C" void  func_80489584(CScnItemModelNw4r* self, int param) {
     if (param != 4) {
         return;
     }
@@ -1054,12 +1069,12 @@ void func_80489584(CScnItemModelNw4r* self, int param) {
     }
 }
 
-void func_80489924(){}
+extern "C" void  func_80489924(){}
 
 // func_804899F4: light-env mode switch - on mode 1, init the env light from
 // the +0x31C sub-object when the +0x7A4 bit-0 flag is set, else clear it;
 // then reset the +0x7A4 0x80/0x200 bits (mask ~0x280).
-void func_804899F4(CScnItemModelNw4r* self, s32 mode) {
+extern "C" void  func_804899F4(CScnItemModelNw4r* self, s32 mode) {
     if (mode == 1) {
         if (self->field_0x7A4 & 1) {
             func_804C1720(self->field_04->field_7C, &self->field_0x31C);
@@ -1203,7 +1218,7 @@ CScnItemModelNw4r* func_80489C94(CScnItemModelNw4r* self,
 // at `priority`. When `mtx` is present, its matrix is copied into the
 // linked model's act-data transform (mMtx1) and the transform's FLAG_0 is
 // raised; otherwise the transform is cleared. Returns the PushBack result.
-bool func_80489E80(CScnItemModelNw4r* self, CScnItemModelNw4r* other,
+extern "C" bool  func_80489E80(CScnItemModelNw4r* self, CScnItemModelNw4r* other,
                    u32 priority, const ml::CMat34* mtx) {
     if (self->field_04->field_0x3E4 != 0) {
         return false;
@@ -1239,14 +1254,14 @@ bool func_80489E80(CScnItemModelNw4r* self, CScnItemModelNw4r* other,
     return pushed;
 }
 
-void func_80489FDC(){}
+extern "C" void  func_80489FDC(){}
 
 // func_8048A0B4: unlink `other` from this model. Returns false while the
 // owner's busy byte (+0x3E4) is set or the +0x1480 group is absent;
 // otherwise remove other's scene object from the group and, when the removal
 // succeeds, clear the matching +0x834/+0x844 slot pair and other's
 // +0x854/+0x14A8 link fields. The removal result is returned.
-bool func_8048A0B4(CScnItemModelNw4r* self, CScnItemModelNw4r* other) {
+extern "C" bool  func_8048A0B4(CScnItemModelNw4r* self, CScnItemModelNw4r* other) {
     if (self->field_04->field_0x3E4 != 0) {
         return false;
     }
@@ -1441,7 +1456,7 @@ void func_8048A17C(CScnItemModelNw4r* self) {
 // param; the +0x7A4 0xC00 bits are raised and bit 0x10000 cleared before the
 // notify. The model's material chain is refreshed with param at the end
 // (func_80484838).
-void func_8048A588(CScnItemModelNw4r* self, f32 param) {
+extern "C" void  func_8048A588(CScnItemModelNw4r* self, f32 param) {
     if (self->field_0x858 == param) {
         return;
     }
@@ -1543,7 +1558,7 @@ void func_8048A588(CScnItemModelNw4r* self, f32 param) {
     func_80484838(self, param);
 }
 
-extern "C" void func_8048AB0C(u8* self, u32 mode) {
+extern "C" void  func_8048AB0C(u8* self, u32 mode) {
     if ((s32)mode == 1) {
         *(void**)((u8*)self + 0x7EC) = (u8*)self + 0x1650;
     } else {
@@ -1655,13 +1670,13 @@ CScnItemModel824* __dt__804871B0(CScnItemModel824* self, int deleting) {
     return self;
 }
 
-void func_8048B30C(){}
+extern "C" void  func_8048B30C(){}
 
 // func_8048B3F0: scan the +0x824 node table (count at +0x828) for an entry
 // whose resolved node name matches `name`. Always returns 1. The redundant
 // null assert after the null-continue is retail's dead second check reusing
 // the first compare's CR flags (see func_8048B68C).
-int func_8048B3F0(CScnItemModelNw4r* self, const char* name) {
+extern "C" int  func_8048B3F0(CScnItemModelNw4r* self, const char* name) {
     CScnItemModel824Entry* entry =
         (CScnItemModel824Entry*)self->member824.field_0;
     while (entry != (CScnItemModel824Entry*)self->member824.field_0 +
@@ -1689,12 +1704,12 @@ int func_8048B3F0(CScnItemModelNw4r* self, const char* name) {
     return 1;
 }
 
-u32 func_8048B4BC(u8* self) { return *(u32*)((u8*)self + 0x828); }
+extern "C" u32  func_8048B4BC(u8* self) { return *(u32*)((u8*)self + 0x828); }
 
 // func_8048B4C4: resolve the node named by the +0x824 entry table and
 // return its name string (node data + self-relative +8 offset), or 0 when
 // the node or its name offset is absent. A missing node panics first.
-const char* func_8048B4C4(CScnItemModelNw4r* self, u32 index) {
+extern "C" const char*  func_8048B4C4(CScnItemModelNw4r* self, u32 index) {
     nw4r::g3d::ResNode node = nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(
         ((CScnItemModel824Entry*)self->member824.field_0)[index].field_0);
     if (node.ptr() == 0) {
@@ -1713,7 +1728,7 @@ const char* func_8048B4C4(CScnItemModelNw4r* self, u32 index) {
 // `index`. Propagates (index, value) to the chain first (func_80485B98);
 // when the new value differs from the current flag (xor test), rewrite the
 // flag and notify via the vtable-0xA4 virtual.
-void func_8048B54C(CScnItemModelNw4r* self, u32 index, u32 value) {
+extern "C" void  func_8048B54C(CScnItemModelNw4r* self, u32 index, u32 value) {
     func_80485B98((CScnItemModel*)self, index, value);
     CScnItemModel824Entry* entries =
         (CScnItemModel824Entry*)self->member824.field_0;
@@ -1738,7 +1753,7 @@ void func_8048B54C(CScnItemModelNw4r* self, u32 index, u32 value) {
 // the query (func_80485C28), report "busy" (1). Otherwise resolve the node
 // named by the +0x824 entry table and return its hidden flag (entry flags
 // bit 3); 0 when the node is absent.
-u32 func_8048B608(CScnItemModelNw4r* self, u32 index) {
+extern "C" u32  func_8048B608(CScnItemModelNw4r* self, u32 index) {
     if (func_80485C28(self, index) != 0) {
         return 1;
     }
@@ -1755,7 +1770,7 @@ u32 func_8048B608(CScnItemModelNw4r* self, u32 index) {
 // func_80490AF4 (the model resource's ResMdl handle). Null name or absent
 // node -> 0; the second null check is retail's redundant assert reusing
 // the first compare's CR flags.
-nw4r::math::MTX34* func_8048B68C(CScnItemModelNw4r* self, const char* name) {
+extern "C" nw4r::math::MTX34*  func_8048B68C(CScnItemModelNw4r* self, const char* name) {
     if (name == 0) {
         return 0;
     }
@@ -1776,7 +1791,7 @@ nw4r::math::MTX34* func_8048B68C(CScnItemModelNw4r* self, const char* name) {
 // per-node world-matrix array (indexed by the node's mtxID, 0x30 bytes
 // each). Absent node -> 0; the second null check is retail's redundant
 // assert reusing the first compare's CR flags.
-nw4r::math::MTX34* func_8048B728(CScnItemModelNw4r* self, u32 index) {
+extern "C" nw4r::math::MTX34*  func_8048B728(CScnItemModelNw4r* self, u32 index) {
     nw4r::g3d::ResNode node =
         nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(index);
     if (node.ptr() == 0) {
@@ -1795,7 +1810,7 @@ void func_8048B7C0(CScnItemModelNw4r* self) {}
 // func_8048BA58: resolve a named node in the model resource and return its
 // id. Absent node -> -1; then a redundant validity assert (retail keeps the
 // second check, reusing the first compare's CR flags) before GetID.
-int func_8048BA58(CScnItemModelNw4r* self, const char* name) {
+extern "C" int  func_8048BA58(CScnItemModelNw4r* self, const char* name) {
     nw4r::g3d::ResNode node = nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(name);
     if (node.ptr() == 0) {
         return -1;
@@ -1815,7 +1830,7 @@ void func_8048BAD4(u8* self) { ((void(*)(void*))func_80496FC4)((char*)self + 0xc
 // latch (bit 26 when any action is set, else clears bit 5) and pokes the
 // camera/effect helpers func_8048F7A8 / func_8048F630 guarded by the
 // bit-5/bit-19 state.
-void func_8048BADC(CScnItemModelNw4r* self, u32 param) {
+extern "C" void  func_8048BADC(CScnItemModelNw4r* self, u32 param) {
     u32 bit21 = (self->field_0x7A4 >> 21) & 1;
     if (param == bit21) {
         return;
@@ -1859,7 +1874,7 @@ void func_8048BADC(CScnItemModelNw4r* self, u32 param) {
 
 // func_8048BBF0: like func_8048BADC, but syncs the +0x7A8 bit-8 flag to
 // `param` (func_804830E4) before the same combination/latch logic.
-void func_8048BBF0(CScnItemModelNw4r* self, u32 param) {
+extern "C" void  func_8048BBF0(CScnItemModelNw4r* self, u32 param) {
     u32 bit8 = (self->field_0x7A8 >> 8) & 1;
     if (param == bit8) {
         return;
@@ -1922,7 +1937,7 @@ static inline CScnItemModelNw4rName resolveNodeName(
 // entry's node (the redundant null assert after the null-continue is retail's
 // dead second check reusing the first compare's CR flags); on a name match,
 // syncs flag bit 3 to `flag` and notifies via the vtable-0xA4 virtual.
-void func_8048B1F4(CScnItemModelNw4r* self, const char* name, u32 flag) {
+extern "C" void  func_8048B1F4(CScnItemModelNw4r* self, const char* name, u32 flag) {
     func_80485A48((CScnItemModel*)self, (u32)name, flag);
     CScnItemModel824Entry* entry =
         (CScnItemModel824Entry*)self->member824.field_0;
@@ -1953,7 +1968,7 @@ void func_8048B1F4(CScnItemModelNw4r* self, const char* name, u32 flag) {
     }
 }
 
-void func_8048BD04(CScnItemModelNw4r* self, u32 enable) {
+extern "C" void  func_8048BD04(CScnItemModelNw4r* self, u32 enable) {
     u32 v = (self->field_0x7A4 >> 27) & 1;
     if (enable == v) return;
     func_8048310C(self, enable);
@@ -2200,10 +2215,10 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
                 // RGBA bytes / 255 via the 0x4330 double magic, stored in
                 // reverse member order (b, g, r, a).
                 f32 vec[4];
-                vec[3] = (f32)((f64)fogColor.b) / lbl_eu_8066A8E4;
-                vec[2] = (f32)((f64)fogColor.g) / lbl_eu_8066A8E4;
-                vec[1] = (f32)((f64)fogColor.r) / lbl_eu_8066A8E4;
-                vec[0] = (f32)((f64)fogColor.a) / lbl_eu_8066A8E4;
+                vec[3] = u32ToF_A8F0(fogColor.b) / lbl_eu_8066A8E4;
+                vec[2] = u32ToF_A8F0(fogColor.g) / lbl_eu_8066A8E4;
+                vec[1] = u32ToF_A8F0(fogColor.r) / lbl_eu_8066A8E4;
+                vec[0] = u32ToF_A8F0(fogColor.a) / lbl_eu_8066A8E4;
                 func_8049DE74(self->field_04->field_0x78, (u32)fogType, vec,
                               startz, endz, nearz, farz);
             }
@@ -2468,7 +2483,9 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
     func_8049B9EC(&self->field_0x14C4, self);
     func_804838DC((CScnItemModel*)self, 1);
     func_8048B7C0(self);
-    if (self->field_0x7AC >= lbl_eu_8066A8E8) {
+    // u32->f32 through the shared unsigned magic double (hpp: lbl_eu_8066A8F0)
+    // so the compare emits no local .sdata2 pool (retail .sdata2 is empty).
+    if (u32ToF_A8F0(self->field_0x7AC) >= lbl_eu_8066A8E8) {
         self->field_0x7A4 |= 0x40000000;
     }
     u32 shadowOut;
@@ -2491,30 +2508,30 @@ extern "C" CScnItemModelNw4r* __ct__CScnItemModelNw4r(
 }
 
 
-void func_8048BD54(u8* self) { ((void(*)(void*))func_80489200)((char*)self - 0x1464); }
+extern "C" void  func_8048BD54(u8* self) { ((void(*)(void*))func_80489200)((char*)self - 0x1464); }
 
-void func_8048BD5C(u8* self) { ((void(*)(void*))func_8048917C)((char*)self - 0x1464); }
+extern "C" void  func_8048BD5C(u8* self) { ((void(*)(void*))func_8048917C)((char*)self - 0x1464); }
 
-void func_8048BD64(u8* self){ ((void(*)(void*))func_80489014)((char*)self - 0x1464); }
+extern "C" void  func_8048BD64(u8* self){ ((void(*)(void*))func_80489014)((char*)self - 0x1464); }
 
-void func_8048BD6C(u8* self) {
+extern "C" void  func_8048BD6C(u8* self) {
     // this-adjusting thunk: the CScnItemModelNw4r subobject sits at +0x1464;
     // direct tail call to its destructor (retail sets no deleting flag).
     ((void(*)(void*))__dt__17CScnItemModelNw4rFv)((char*)self - 0x1464);
 }
 
-extern "C" void func_8048BD74(u8* self) { ((void(*)(void*))func_804899F4)((char*)self - 0x1468); }
+extern "C" void  func_8048BD74(u8* self) { ((void(*)(void*))func_804899F4)((char*)self - 0x1468); }
 
-extern "C" void func_8048BD7C(u8* self) { ((void(*)(void*))func_80489924)((char*)self - 0x1468); }
+extern "C" void  func_8048BD7C(u8* self) { ((void(*)(void*))func_80489924)((char*)self - 0x1468); }
 
-extern "C" void func_8048BD84(u8* self) { ((void(*)(void*))func_80489584)((char*)self - 0x1468); }
+extern "C" void  func_8048BD84(u8* self) { ((void(*)(void*))func_80489584)((char*)self - 0x1468); }
 
-extern "C" void func_8048BD8C(u8* self) { ((void(*)(void*))__dt__17CScnItemModelNw4rFv)((char*)self - 0x1468); }
+extern "C" void  func_8048BD8C(u8* self) { ((void(*)(void*))__dt__17CScnItemModelNw4rFv)((char*)self - 0x1468); }
 
 // func_80487374: adopt `other`'s model resource as this model's parent
 // (GetParent on other's ResMdl, then Bind it into this model's ResMdl).
 // Bind failure sets the +0x7A4 0x800000 flag; success clears it.
-void func_80487374(CScnItemModelNw4r* self, CScnItemModelNw4r* other) {
+extern "C" void  func_80487374(CScnItemModelNw4r* self, CScnItemModelNw4r* other) {
     nw4r::g3d::ResFile parent = nw4r::g3d::ResMdl(other->field_0x146C).GetParent();
     bool failed = nw4r::g3d::ResMdl(self->field_0x146C).Bind(parent) == 0;
     if (failed) {
@@ -2573,7 +2590,7 @@ void func_804873EC(CScnItemModelNw4r* self, const char* name, u32 enable) {
 extern "C" void func_804875B8() {}
 // func_804876EC: release this model's nw4r resource, re-fetch the parent
 // file, and re-bind it. Bind failure sets the +0x7A4 0x800000 flag.
-void func_804876EC(CScnItemModelNw4r* self) {
+extern "C" void  func_804876EC(CScnItemModelNw4r* self) {
     nw4r::g3d::ResMdl mdl(self->field_0x146C);
     mdl.Release();
     nw4r::g3d::ResFile parent = nw4r::g3d::ResMdl(self->field_0x146C).GetParent();
@@ -2587,7 +2604,7 @@ void func_804876EC(CScnItemModelNw4r* self) {
 // func_80487B18: return the model resource's name string (ResMdlData plus
 // its self-relative +0x48 name offset), or 0 when the resource data or its
 // name offset is null.
-const char* func_80487B18(CScnItemModelNw4r* self) {
+extern "C" const char*  func_80487B18(CScnItemModelNw4r* self) {
     nw4r::g3d::ResMdlData* data = self->field_0x146C;
     if (data == 0) {
         nw4r::db::Panic(lbl_eu_8056E130, 0x78, lbl_eu_8056E110,
@@ -2599,3 +2616,106 @@ const char* func_80487B18(CScnItemModelNw4r* self) {
     }
     return 0;
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056DE80-0x8056E488 (1544B): CScnItemModelNw4r vtable (98 words)
+// followed by the nw4r assert file/fmt string pool (raw bytes).
+// The vtable reloc slots reference the class dtor (defined in this TU),
+// foreign virtuals, and the nw4r callback template symbols.
+extern "C" void* lbl_eu_806624D8;
+extern "C" void* lbl_eu_806638D8;
+extern "C" void* lbl_eu_806638E0;
+extern "C" void* lbl_eu_806624C0;
+extern "C" void* lbl_eu_806624D0;
+extern "C" void ExecCallbackA__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r3g3d12ChrAnmResultQ34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld();
+extern "C" void ExecCallbackB__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r3g3d13WorldMtxManipQ34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld();
+extern "C" void ExecCallbackC__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r4math5MTX34Q34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld();
+extern "C" void ExecCallback_CALC_MAT__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
+extern "C" void ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
+extern "C" void ExecCallback_CALC_WORLD__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
+extern "C" void ExecCallback_DRAW_OPA__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
+extern "C" void ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv();
+extern "C" void __dt__Q34nw4r3g3d15IScnObjCallbackFv();
+extern "C" void __dt__Q34nw4r3g3d18ICalcWorldCallbackFv();
+extern "C" void func_800BD638();
+extern "C" void func_80482048();
+extern "C" void func_8048490C();
+extern "C" void func_8048607C();
+extern "C" void func_80486090();
+extern "C" void* lbl_eu_806624D8;
+extern "C" void* lbl_eu_806638D8;
+
+extern "C" u32 lbl_eu_8056DE80[386] = {
+    (u32)&lbl_eu_806624C0, 0x00000000, (u32)&__dt__17CScnItemModelNw4rFv, (u32)&func_80487EE0, (u32)&func_80482048, (u32)&func_804885FC,
+    (u32)&func_80487B18, (u32)&func_80486090, (u32)&func_8048B4BC, (u32)&func_8048B4C4, (u32)&func_8048B1F4, (u32)&func_8048B30C,
+    (u32)&func_8048B54C, (u32)&func_8048B608, (u32)&func_8048B3F0, (u32)&func_8048B68C, (u32)&func_8048B728, (u32)&func_8048BA58,
+    (u32)&func_8048A588, (u32)&func_8048490C, (u32)&func_8048AB0C, (u32)&func_800BD638, (u32)&func_80487E40, (u32)&func_80487E48,
+    (u32)&func_80487E50, (u32)&func_80487E58, (u32)&func_80487EB8, (u32)&func_80488FEC, (u32)&func_80489000, (u32)&func_804885C8,
+    (u32)&func_80487374, (u32)&func_804876EC, (u32)&func_8048BBF0, (u32)&func_8048BADC, (u32)&func_8048BD04, (u32)&func_80488C28,
+    (u32)&func_80488C78, (u32)&func_80488CF8, (u32)&func_80488D14, (u32)&func_80488D54, (u32)&func_80488EF4, (u32)&func_80487B84,
+    (u32)&func_8048736C, (u32)&func_804888B4, (u32)&func_80488A28, (u32)&func_80487C78, (u32)&func_8048776C, (u32)&func_8048607C,
+    (u32)&func_80489E80, (u32)&func_80489FDC, (u32)&func_8048A0B4, (u32)&func_80487818, (u32)&func_804884F8, (u32)&func_80488984,
+    (u32)&func_80488AAC, (u32)&lbl_eu_806624C0, 0xFFFFEB9C, (u32)&func_8048BD6C, (u32)&func_8048BD64, (u32)&func_8048BD5C,
+    (u32)&func_8048BD54, (u32)&lbl_eu_806624C0, 0xFFFFEB98, (u32)&func_8048BD8C, (u32)&func_8048BD84, (u32)&ExecCallback_CALC_MAT__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv,
+    (u32)&ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv, (u32)&func_8048BD7C, (u32)&func_8048BD74, (u32)&func_80489014, (u32)&func_8048917C, (u32)&func_80489200,
+    (u32)&func_80489584, (u32)&func_80489924, (u32)&func_804899F4, (u32)&lbl_eu_806624D8, 0x00000000, (u32)&lbl_eu_806624D0,
+    0x00000000, 0x00000000, (u32)&lbl_eu_806624D8, 0x00000000, 0x00000000, 0x00000000,
+    (u32)&lbl_eu_806638D8, 0x00000000, (u32)&__dt__Q34nw4r3g3d15IScnObjCallbackFv, (u32)&ExecCallback_CALC_WORLD__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv, (u32)&ExecCallback_CALC_MAT__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv, (u32)&ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv,
+    (u32)&ExecCallback_DRAW_OPA__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv, (u32)&ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv, (u32)&lbl_eu_806638E0, 0x00000000, (u32)&__dt__Q34nw4r3g3d18ICalcWorldCallbackFv, (u32)&ExecCallbackA__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r3g3d12ChrAnmResultQ34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld,
+    (u32)&ExecCallbackB__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r3g3d13WorldMtxManipQ34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld, (u32)&ExecCallbackC__Q34nw4r3g3d18ICalcWorldCallbackFPQ34nw4r4math5MTX34Q34nw4r3g3d6ResMdlPQ34nw4r3g3d16FuncObjCalcWorld, 0x4E573452, 0x3A506F69, 0x6E746572, 0x20457272,
+    0x6F720A66, 0x756E6328, 0x3D257029, 0x20697320, 0x6E6F7420, 0x76616C69,
+    0x6420706F, 0x696E7465, 0x722E0000, 0x6733645F, 0x616E6D6F, 0x626A2E68,
+    0x00000000, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076,
+    0x616C6964, 0x2E000000, 0x6733645F, 0x7265736D, 0x61745F61, 0x632E6800,
+    0x4E573452, 0x3A466169, 0x6C656420, 0x61737365, 0x7274696F, 0x6E202128,
+    0x28753332, 0x29702026, 0x20307831, 0x66290000, 0x6733645F, 0x7265736D,
+    0x61745F61, 0x632E6800, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E,
+    0x6F742076, 0x616C6964, 0x2E000000, 0x00000000, 0x6733645F, 0x72657374,
+    0x65765F61, 0x632E6800, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E,
+    0x6F742076, 0x616C6964, 0x2E000000, 0x00000000, 0x6733645F, 0x7265736D,
+    0x646C5F61, 0x632E6800, 0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E,
+    0x6F742076, 0x616C6964, 0x2E000000, 0x00000000, 0x6733645F, 0x7265736D,
+    0x646C5F61, 0x632E6800, 0x4E573452, 0x3A466169, 0x6C656420, 0x61737365,
+    0x7274696F, 0x6E202128, 0x28753332, 0x29702026, 0x20307833, 0x29000000,
+    0x6733645F, 0x7265736D, 0x646C5F61, 0x632E6800, 0x25733A3A, 0x25733A20,
+    0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x6733645F,
+    0x7265736E, 0x6F64655F, 0x61632E68, 0x00000000, 0x4E573452, 0x3A466169,
+    0x6C656420, 0x61737365, 0x7274696F, 0x6E204973, 0x56616C69, 0x64282900,
+    0x6733645F, 0x7265736E, 0x6F64655F, 0x61632E68, 0x00000000, 0x00000000,
+    0x4E573452, 0x3A466169, 0x6C656420, 0x61737365, 0x7274696F, 0x6E204973,
+    0x56616C69, 0x64282900, 0x6733645F, 0x7265736E, 0x6F64655F, 0x61632E68,
+    0x00000000, 0x52657355, 0x73657244, 0x61746100, 0x25733A3A, 0x25733A20,
+    0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964, 0x2E000000, 0x6733645F,
+    0x72657375, 0x7365725F, 0x61632E68, 0x00000000, 0x4E573452, 0x3A466169,
+    0x6C656420, 0x61737365, 0x7274696F, 0x6E202128, 0x28753332, 0x29702026,
+    0x20307833, 0x29000000, 0x6733645F, 0x72657375, 0x7365725F, 0x61632E68,
+    0x00000000, 0x00000000, 0x52657355, 0x73657244, 0x61746149, 0x74656D00,
+    0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964,
+    0x2E000000, 0x6733645F, 0x72657375, 0x7365725F, 0x61632E68, 0x00000000,
+    0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964,
+    0x2E000000, 0x6733645F, 0x72657375, 0x7365725F, 0x61632E68, 0x00000000,
+    0x4E573452, 0x3A466169, 0x6C656420, 0x61737365, 0x7274696F, 0x6E204765,
+    0x7456616C, 0x75655479, 0x70652829, 0x203D3D20, 0x52657355, 0x73657244,
+    0x61746149, 0x74656D44, 0x6174613A, 0x3A533332, 0x00000000, 0x6733645F,
+    0x72657375, 0x7365725F, 0x61632E68, 0x00000000, 0x4E573452, 0x3A466169,
+    0x6C656420, 0x61737365, 0x7274696F, 0x6E202128, 0x28753332, 0x29702026,
+    0x20307831, 0x66290000, 0x6733645F, 0x72657366, 0x696C655F, 0x61632E68,
+    0x00000000, 0x00000000, 0x69647820, 0x6973206F, 0x7574206F, 0x6620626F,
+    0x756E6473, 0x28256429, 0x0A256420, 0x3C3D2069, 0x6478203C, 0x3D202564,
+    0x206E6F74, 0x20736174, 0x69736669, 0x65642E00, 0x6733645F, 0x72657364,
+    0x6963745F, 0x61632E68, 0x00000000, 0x4E573452, 0x3A466169, 0x6C656420,
+    0x61737365, 0x7274696F, 0x6E202128, 0x28753332, 0x29702026, 0x20307833,
+    0x29000000, 0x6733645F, 0x72657364, 0x6963745F, 0x61632E68, 0x00000000,
+    0x25733A3A, 0x25733A20, 0x4F626A65, 0x6374206E, 0x6F742076, 0x616C6964,
+    0x2E000000, 0x6733645F, 0x72657364, 0x6963745F, 0x61632E68, 0x00000000,
+    0x46537172, 0x743A2049, 0x6E707574, 0x20697320, 0x6F757420, 0x6F662074,
+    0x68652064, 0x6F6D6169, 0x6E2E0000, 0x61726974, 0x686D6574, 0x69632E68,
+    0x00000000, 0x00000000,
+};
+DECOMP_FORCEACTIVE(CScnItemModelNw4r_cpp, lbl_eu_8056DE80);
+
+// [.sbss] 0x806658D8-0x806658E8 (16B): one-shot allocator-switch byte
+// (hpp: extern u8) + 7 pad bytes, then the second 8-byte zero-fill slot.
+u8 lbl_eu_806658D8;
+u32 lbl_eu_806658D8_pad;
+u32 lbl_eu_806658E0[2];

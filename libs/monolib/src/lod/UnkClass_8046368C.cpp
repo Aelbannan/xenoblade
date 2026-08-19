@@ -174,11 +174,19 @@ typedef struct LodRangeObj {
 } LodRangeObj;
 
 extern "C" s32 func_80463FF8__Q23LOD17UnkClass_8046368CFv(const LodRangeObj*);
-LodPickFn lbl_eu_8056D71C[3] = {
+// [.data] 0x8056D71C-0x8056D728 (12B): retail pick-dispatch table.  align(8)
+// matches the retail split object's .data section alignment (MWCC would
+// otherwise emit align 4 for a u32[3]).
+extern "C" LodPickFn lbl_eu_8056D71C[3] = {
     (LodPickFn)&func_80463FF8__Q23LOD17UnkClass_8046368CFv,
     (LodPickFn)&func_8046892C__Q23LOD17UnkClass_80468434Fv,
     (LodPickFn)&func_80463FF8__Q23LOD17UnkClass_8046368CFv,
 };
+
+// Shared sdata2 magic-number double (s32->f32 conversion, 2^52+2^31); owned
+// by CLODCacheManagerS.  Referenced explicitly so MWCC does not pool its own
+// copy in this unit's .sdata2 (retail keeps this unit's .sdata2 empty).
+extern const double lbl_eu_8066A600;
 
 typedef struct LodRotObj {
     f32 f00;
@@ -590,7 +598,14 @@ s32 func_804642BC(s32 a, u32 b) {
                 return 0;
             }
             lbl_eu_806657B0 |= 0x80;
-            func_80465730((f32)lbl_eu_806657C4 / (f32)b);
+            // Retail converts the u32 pair with the signed magic-number idiom
+            // (xoris 0x8000 + 2^52+2^31 extern double); writing it explicitly
+            // keeps this unit's .sdata2 empty (MWCC would pool its own 2^52
+            // constant for a bare `(f32)u32 / (f32)u32` cast).
+            union { double d; u32 w[2]; } m1, m2;
+            m1.w[0] = 0x43300000u; m1.w[1] = (u32)lbl_eu_806657C4 ^ 0x80000000u;
+            m2.w[0] = 0x43300000u; m2.w[1] = b ^ 0x80000000u;
+            func_80465730((f32)(m1.d - lbl_eu_8066A600) / (f32)(m2.d - lbl_eu_8066A600));
             return 0;
         }
         if ((s32)lbl_eu_806657C0 == a) {
@@ -601,8 +616,10 @@ s32 func_804642BC(s32 a, u32 b) {
                 return 1;
             }
             lbl_eu_806657B0 |= 0x80;
-            func_80465730(
-                lbl_eu_8066A5F8 - (f32)lbl_eu_806657C4 / (f32)b);
+            union { double d; u32 w[2]; } n1, n2;
+            n1.w[0] = 0x43300000u; n1.w[1] = (u32)lbl_eu_806657C4 ^ 0x80000000u;
+            n2.w[0] = 0x43300000u; n2.w[1] = b ^ 0x80000000u;
+            func_80465730(lbl_eu_8066A5F8 - (f32)(n1.d - lbl_eu_8066A600) / (f32)(n2.d - lbl_eu_8066A600));
             return 0;
         }
         return 1;

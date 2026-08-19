@@ -4,15 +4,18 @@
 #include <harness_catalog.h>
 #include <string.h>
 
-extern u32 lbl_eu_80665660; // CDeviceFile singleton pointer (sdata2)
-extern int lbl_eu_80665664; // filename-substitution table entry count (.sbss)
-extern void* lbl_eu_80657580[]; // filename-substitution table (array of string-array ptrs)
-extern u8 lbl_eu_806636AA[6];  // language override byte (sdata2, [0] = -1 = unset)
-
-// Retail data imports (rodata / sbss) referenced by the functions below.
-extern u32 lbl_eu_8056C324[];  // reslist<CFileHandle> vtable
-extern char lbl_eu_80522BE4[]; // device-name string table
-extern u8 lbl_eu_806636A9;     // work-system standby flag (sbss)
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// Definitions for the retail data sections (see the full blob at the bottom
+// of the file).  The three 1/1/6-byte .sdata bytes (language override +
+// standby flag) are folded into one 8-byte array so MWCC packs the section
+// exactly like the retail (separate u8 objects would 4-align).
+extern "C" u8 lbl_eu_806636A8[8] = { 0x01, 0x01, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00 };
+u32 lbl_eu_80665660;   // CDeviceFile singleton pointer (.sbss)
+int lbl_eu_80665664;   // filename-substitution table entry count (.sbss)
+void* lbl_eu_80657580[16]; // filename-substitution table (.bss, 64B)
+extern u8 lbl_eu_806575C0[0x108]; // .bss 264B (defined at bottom)
+extern "C" u32 lbl_eu_8056C324[3]; // reslist<CFileHandle> vtable (defined below)
+extern const char lbl_eu_80522BE4[]; // device-name string table (defined below)
 
 // Minimal class views: the member/static signatures below mirror the retail
 // mangled names exactly, so calls emit the retail reloc names. Full
@@ -429,8 +432,7 @@ int CDeviceFile::isInitialized() {
     return ok3;
 }
 
-extern u8 lbl_eu_806636A8;
-extern "C" u8 func_8044E768__11CDeviceFileFv() { return lbl_eu_806636A8; }
+extern "C" u8 func_8044E768__11CDeviceFileFv() { return lbl_eu_806636A8[0]; }
 
 int CDeviceFile::func_8044E770(CWorkThread* parent) {
     // spInstance (lbl_eu_80665660)->field_1C8 = parent; return true
@@ -562,7 +564,7 @@ bool CDeviceFile::wkStandbyLogin() {
         }
         CWorkUtil::entryWork(cri, this, false);
 
-        lbl_eu_806636A9 = 1;
+        lbl_eu_806636A8[1] = 1;
         return CWorkThread::wkStandbyLogin();
     }
     return false;
@@ -599,7 +601,7 @@ void func_eu_804520D0(char* pPath) {
     const char* search;
 
     lang = CDeviceSC::getLanguage();
-    u8 langOverride = lbl_eu_806636AA[0];
+    u8 langOverride = lbl_eu_806636A8[2];
     if ((s8)langOverride >= 0) {
         lang = langOverride;
     }
@@ -627,19 +629,19 @@ void func_eu_804520D0(char* pPath) {
 // because this catalog TU defines a local `struct CDeviceFile` that conflicts
 // with the class in that header, so this TU cannot include it.
 extern "C" void func_eu_804521A8(s8 val) {
-    lbl_eu_806636AA[0] = val;
+    lbl_eu_806636A8[2] = val;
 }
 
 extern "C" void func_eu_804521B0() {
-    lbl_eu_806636AA[0] = -1;
+    lbl_eu_806636A8[2] = -1;
 }
 
 extern "C" void func_eu_804521BC(u8 val) {
-    lbl_eu_806636A9 = val;
+    lbl_eu_806636A8[1] = val;
 }
 
 extern "C" u8 func_eu_804521C4() {
-    return lbl_eu_806636A9;
+    return lbl_eu_806636A8[1];
 }
 
 CEventFile::CEventFile(CBM cbm, CFileHandle* handle) {
@@ -666,3 +668,143 @@ extern "C" void sinit_eu_80452248() {
     lbl_eu_806575C0[0] = 0;
     *(unsigned int*)(lbl_eu_806575C0 + 0x100) = 0;
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056C250-0x8056C330 (224B): CDeviceFile vtable (160B) + RTTI
+// chain (28B) + reslist<CFileHandle>/_reslist_base<CFileHandle> vtables.
+namespace DeviceFileBlob {
+extern "C" void WorkEvent1__10IWorkEventFPvPCc();
+extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
+extern "C" void WorkEvent3__10IWorkEventFPv();
+extern "C" void WorkEvent4__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb();
+extern "C" void WorkEvent6__10IWorkEventFv();
+extern "C" void WorkEvent7__10IWorkEventFv();
+extern "C" void WorkEvent8__10IWorkEventFv();
+extern "C" void WorkEvent9__10IWorkEventFv();
+extern "C" void WorkEvent10__10IWorkEventFv();
+extern "C" void WorkEvent11__10IWorkEventFv();
+extern "C" void WorkEvent12__10IWorkEventFv();
+extern "C" void WorkEvent13__10IWorkEventFv();
+extern "C" void WorkEvent14__10IWorkEventFv();
+extern "C" void WorkEvent15__10IWorkEventFv();
+extern "C" void WorkEvent16__10IWorkEventFv();
+extern "C" void WorkEvent17__10IWorkEventFv();
+extern "C" void WorkEvent18__10IWorkEventFv();
+extern "C" void WorkEvent19__10IWorkEventFv();
+extern "C" void WorkEvent20__10IWorkEventFv();
+extern "C" void WorkEvent21__10IWorkEventFv();
+extern "C" void WorkEvent22__10IWorkEventFv();
+extern "C" void WorkEvent23__10IWorkEventFv();
+extern "C" void WorkEvent24__10IWorkEventFv();
+extern "C" void WorkEvent25__10IWorkEventFv();
+extern "C" void WorkEvent26__10IWorkEventFv();
+extern "C" void WorkEvent27__10IWorkEventFv();
+extern "C" void WorkEvent28__10IWorkEventFv();
+extern "C" void WorkEvent29__10IWorkEventFv();
+extern "C" void WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+extern "C" void wkUpdate__11CWorkThreadFv();
+extern "C" void wkRender__11CWorkThreadFv();
+extern "C" void wkRenderAfter__11CWorkThreadFv();
+extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl();
+extern "C" void __dt__11CDeviceFileFv();       // defined below (member dtor)
+extern "C" bool wkStandbyLogin__11CDeviceFileFv();  // defined below
+extern "C" bool wkStandbyLogout__11CDeviceFileFv(); // defined below
+extern "C" u32 __RTTI__10IWorkEvent;
+extern "C" u32 __RTTI__11CWorkThread;
+extern "C" u32 lbl_eu_806635F0;  // CFileHandle RTTI locator (foreign TU)
+}
+extern "C" u32 lbl_eu_806636B0[2]; // .sdata RTTI locator (defined below)
+extern "C" u32 lbl_eu_806636B8[2];
+extern "C" u32 lbl_eu_806636C0[2];
+extern "C" u32 lbl_eu_8056C2F0[7];
+extern "C" u32 lbl_eu_8056C30C[3];
+extern "C" u32 lbl_eu_8056C318[3];
+
+extern "C" u32 lbl_eu_8056C250[40] = {
+    (u32)&lbl_eu_806636B0, 0x00000000, (u32)&DeviceFileBlob::__dt__11CDeviceFileFv,
+    (u32)&DeviceFileBlob::WorkEvent1__10IWorkEventFPvPCc,
+    (u32)&DeviceFileBlob::OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&DeviceFileBlob::WorkEvent3__10IWorkEventFPv,
+    (u32)&DeviceFileBlob::WorkEvent4__10IWorkEventFv,
+    (u32)&DeviceFileBlob::OnPauseTrigger__10IWorkEventFb,
+    (u32)&DeviceFileBlob::WorkEvent6__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent7__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent8__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent9__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent10__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent11__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent12__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent13__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent14__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent15__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent16__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent17__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent18__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent19__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent20__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent21__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent22__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent23__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent24__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent25__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent26__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent27__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent28__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent29__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent30__10IWorkEventFv,
+    (u32)&DeviceFileBlob::WorkEvent31__10IWorkEventFv,
+    (u32)&DeviceFileBlob::wkUpdate__11CWorkThreadFv,
+    (u32)&DeviceFileBlob::wkRender__11CWorkThreadFv,
+    (u32)&DeviceFileBlob::wkRenderAfter__11CWorkThreadFv,
+    (u32)&DeviceFileBlob::wkStandbyLogin__11CDeviceFileFv,
+    (u32)&DeviceFileBlob::wkStandbyLogout__11CDeviceFileFv,
+    (u32)&DeviceFileBlob::wkStandbyExceptionRetry__11CWorkThreadFUl,
+};
+extern "C" u32 lbl_eu_8056C2F0[7] = {
+    (u32)&DeviceFileBlob::__RTTI__10IWorkEvent, 0x00000000,
+    (u32)&DeviceFileBlob::__RTTI__11CWorkThread, 0x00000000,
+    (u32)&DeviceFileBlob::lbl_eu_806635F0, 0x00000000, 0x00000000,
+};
+extern "C" u32 lbl_eu_8056C30C[3] = {
+    (u32)&lbl_eu_806636B8, 0x00000000, (u32)&__dt__reslist_CFileHandle,
+};
+extern "C" u32 lbl_eu_8056C318[3] = {
+    (u32)&lbl_eu_806636C0, 0x00000000, 0x00000000,
+};
+extern "C" u32 lbl_eu_8056C324[3] = {
+    (u32)&lbl_eu_806636C0, 0x00000000, (u32)&__dt___reslist_base_CFileHandle,
+};
+
+// [.rodata] 0x80522BA0-0x80522C90 (240B): RTTI names + device-name table.
+extern "C" __declspec(align(4)) const char lbl_eu_80522BA0[12] = {
+    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x00,
+};
+extern "C" __declspec(align(4)) const char lbl_eu_80522BAC[23] = {
+    0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x3C,0x43,0x46,0x69,0x6C,0x65,0x48,0x61,0x6E,
+    0x64,0x6C,0x65,0x20,0x2A,0x3E,0x00,
+};
+extern "C" __declspec(align(4)) const char lbl_eu_80522BC4[29] = {
+    0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x43,0x46,
+    0x69,0x6C,0x65,0x48,0x61,0x6E,0x64,0x6C,0x65,0x20,0x2A,0x3E,0x00,
+};
+extern "C" const char lbl_eu_80522BE4[172] = {
+    'U','S','B','K','E','Y',0x00,
+    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x4A,0x6F,0x62,0x52,0x65,0x61,0x64,0x44,0x76,0x64,0x00,
+    0x2F,0x00,
+    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x4A,0x6F,0x62,0x56,0x61,0x6C,0x69,0x64,0x50,0x61,0x74,0x68,0x44,0x76,0x64,0x00,
+    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x4A,0x6F,0x62,0x56,0x61,0x6C,0x69,0x64,0x50,0x61,0x74,0x68,0x43,0x72,0x69,0x00,
+    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x4A,0x6F,0x62,0x56,0x61,0x6C,0x69,0x64,0x46,0x69,0x6C,0x65,0x44,0x76,0x64,0x00,
+    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x4A,0x6F,0x62,0x56,0x61,0x6C,0x69,0x64,0x46,0x69,0x6C,0x65,0x43,0x72,0x69,0x00,
+    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x44,0x76,0x64,0x00,
+    0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x46,0x69,0x6C,0x65,0x43,0x72,0x69,0x00,0x00,0x00,0x00,
+};
+
+// [.sdata] 0x806636A8-0x806636C8 (32B): flags + RTTI locators.
+extern "C" u32 lbl_eu_806636B0[2] = { (u32)&lbl_eu_80522BA0, (u32)&lbl_eu_8056C2F0 };
+extern "C" u32 lbl_eu_806636B8[2] = { (u32)&lbl_eu_80522BAC, (u32)&lbl_eu_8056C318 };
+extern "C" u32 lbl_eu_806636C0[2] = { (u32)&lbl_eu_80522BC4, 0x00000000 };
+
+// [.bss] 0x806575C0-0x806576C8 (264B).
+u8 lbl_eu_806575C0[0x108];

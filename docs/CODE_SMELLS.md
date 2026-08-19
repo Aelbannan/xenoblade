@@ -11,15 +11,15 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 11147 |
-| extern "C" declarations (non-lbl_*, imports) | 4324 |
-| extern "C" definitions (forced names) | 3793 |
-| `self`/register-style params | 11803 |
-| `void*` (params + locals) | 7171 |
-| raw pointer offset arithmetic | 6864 |
+| extern "C" (total lines) | 12333 |
+| extern "C" declarations (non-lbl_*, imports) | 4807 |
+| extern "C" definitions (forced names) | 3929 |
+| `self`/register-style params | 11865 |
+| `void*` (params + locals) | 7210 |
+| raw pointer offset arithmetic | 6894 |
 | deref-through-cast arithmetic | 2745 |
 | inline asm / `register` | 112 |
-| rN-named params | 565 |
+| rN-named params | 568 |
 | goto | 2917 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 0 |
@@ -37,9 +37,9 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/coli/code_804A6C60.cpp | 1336 |
 | src/kyoshin/cf/object/CActorParam.cpp | 1279 |
 | src/kyoshin/CArtsInfo.cpp | 1222 |
+| libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 1160 |
+| libs/monolib/src/scn/CScnItemModelNw4r.cpp | 1154 |
 | src/kyoshin/menu/CMenuArtsSet.cpp | 1142 |
-| src/kyoshin/makecrystal/CMCCrystalBox.cpp | 1113 |
-| libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 1037 |
 
 ## Per-TU metrics
 
@@ -52,7 +52,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/coli/code_804BAE10.cpp | 3 | 6 | 16 | 2 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CArcItem.cpp | 32 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CDesktop.cpp | 4 | 1 | 3 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/core/CDrawGX.cpp | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 12 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/core/CDrawGX.cpp | 2 | 0 | 12 | 0 | 0 | 0 | 0 | 12 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CException.cpp | 46 | 10 | 15 | 17 | 13 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CFontLayer.cpp | 12 | 8 | 29 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CPackItem.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -72,37 +72,40 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/core/ScheduleList.cpp | 5 | 0 | 14 | 4 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/code_804DEDA8.cpp | 8 | 11 | 5 | 24 | 15 | 2 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/code_804E36DC.cpp | 3 | 15 | 16 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/core/code_804EE558.cpp | 22 | 10 | 5 | 34 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/core/code_804EE558.cpp | 22 | 10 | 5 | 34 | 18 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/code_804F0258.cpp | 0 | 1 | 4 | 3 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/monolib_eu_804F9E98.cpp | 1 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDevice.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/device/CDeviceFile.cpp | 2 | 9 | 1 | 4 | 3 | 2 | 0 | 1 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/device/CDeviceFileCri.cpp | 4 | 5 | 9 | 10 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/device/CDeviceFileDvd.cpp | 0 | 0 | 0 | 1 | 44 | 13 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/device/CDeviceFile.cpp | 40 | 9 | 1 | 4 | 3 | 2 | 0 | 1 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/device/CDeviceFileCri.cpp | 45 | 5 | 9 | 11 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/device/CDeviceFileDvd.cpp | 38 | 0 | 0 | 1 | 44 | 13 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFileJob.cpp | 41 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFileJobReadDvd.cpp | 41 | 6 | 22 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/device/CDeviceFont.cpp | 2 | 5 | 2 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 | 0 |
+| libs/monolib/src/device/CDeviceFont.cpp | 42 | 5 | 2 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontInfoExt.cpp | 1 | 13 | 11 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontInfoRom.cpp | 15 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontLayer.cpp | 9 | 1 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/device/CDeviceFontLoader.cpp | 8 | 1 | 19 | 13 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
+| libs/monolib/src/device/CDeviceFontLoader.cpp | 43 | 1 | 19 | 13 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceGX.cpp | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceRemotePad.cpp | 42 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceSC.cpp | 38 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceVICb.cpp | 4 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CGXCache.cpp | 23 | 16 | 42 | 38 | 12 | 1 | 0 | 0 | 29 | 0 | 0 | 0 |
+| libs/monolib/src/effect/CERand.cpp | 1 | 15 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/CETrail.cpp | 21 | 12 | 5 | 26 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804C8684.cpp | 0 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/effect/code_804C8718.cpp | 76 | 5 | 48 | 44 | 7 | 1 | 0 | 8 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/effect/code_804CC2B8.cpp | 38 | 33 | 100 | 45 | 19 | 5 | 0 | 6 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/effect/code_804C8718.cpp | 76 | 5 | 49 | 44 | 7 | 1 | 0 | 9 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/effect/code_804CC2B8.cpp | 38 | 33 | 100 | 45 | 25 | 5 | 0 | 6 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804D854C.cpp | 10 | 4 | 6 | 16 | 2 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804D9274.cpp | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804DB938.cpp | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/lib/CLibCri.cpp | 34 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
+| libs/monolib/src/lib/CLib.cpp | 38 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/lib/CLibCri.cpp | 38 | 6 | 19 | 5 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibCriMoviePlay.cpp | 10 | 1 | 15 | 10 | 1 | 1 | 0 | 0 | 4 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibCriStreamingPlay.cpp | 21 | 1 | 1 | 21 | 62 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibG3d.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibHbm.cpp | 0 | 0 | 6 | 2 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/lib/CLibHbmControl.cpp | 38 | 0 | 12 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibLayout.cpp | 0 | 1 | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibStaticData.cpp | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibVM.cpp | 37 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -119,51 +122,51 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/lod/code_8046A530.cpp | 0 | 0 | 28 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/mpfsys/MPFDrawBillLayTex.cpp | 14 | 10 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/mpfsys/MPFDrawCross.cpp | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/mpfsys/MPFDrawDisplayList.cpp | 24 | 4 | 57 | 2 | 10 | 0 | 0 | 8 | 16 | 0 | 0 | 0 |
+| libs/monolib/src/mpfsys/MPFDrawDisplayList.cpp | 26 | 4 | 59 | 2 | 10 | 0 | 0 | 10 | 16 | 0 | 0 | 0 |
 | libs/monolib/src/mpfsys/MPFDrawMdlColor.cpp | 21 | 4 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/mpfsys/UnkClass_80471EC8.cpp | 5 | 4 | 8 | 9 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/mpfsys/code_8047BB54.cpp | 26 | 7 | 24 | 38 | 8 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/mpfsys/code_8047CA88.cpp | 2 | 0 | 5 | 2 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNBanner.cpp | 37 | 1 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskCheck.cpp | 2 | 4 | 0 | 1 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
-| libs/monolib/src/nand/CNReqtaskLoad.cpp | 4 | 4 | 0 | 1 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
+| libs/monolib/src/nand/CNReqtaskLoad.cpp | 6 | 4 | 0 | 2 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskReaddir.cpp | 4 | 4 | 0 | 1 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskRemove.cpp | 3 | 4 | 0 | 1 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskSave.cpp | 36 | 6 | 7 | 5 | 9 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNReqtaskSaveBanner.cpp | 13 | 4 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/nand/CNand.cpp | 12 | 14 | 29 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CLight.cpp | 0 | 2 | 10 | 1 | 20 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CMdlAnmEye.cpp | 0 | 0 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CMdlAnmEye.cpp | 2 | 2 | 8 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlAnmUV.cpp | 0 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlDynamics.cpp | 1 | 22 | 48 | 12 | 42 | 33 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlLook.cpp | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CMdlMaterial.cpp | 3 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CMdlMaterial.cpp | 4 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlMouth.cpp | 0 | 1 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScn.cpp | 3 | 37 | 21 | 15 | 25 | 5 | 0 | 2 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnBlend.cpp | 1 | 2 | 5 | 2 | 2 | 2 | 0 | 1 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnBlend.cpp | 5 | 3 | 10 | 2 | 2 | 2 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnBloom.cpp | 15 | 21 | 30 | 5 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnCameraMan.cpp | 2 | 0 | 3 | 2 | 3 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnCameraMan.cpp | 34 | 0 | 3 | 3 | 3 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnEffectActNw4r.cpp | 17 | 15 | 32 | 1 | 9 | 4 | 0 | 0 | 4 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 17 | 18 | 117 | 67 | 246 | 54 | 0 | 23 | 2 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnFadeMan.cpp | 0 | 2 | 4 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnEnvLgtCtrl.cpp | 24 | 75 | 118 | 67 | 246 | 54 | 0 | 23 | 2 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnFadeMan.cpp | 2 | 2 | 4 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFilter.cpp | 2 | 2 | 5 | 4 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFilterMan.cpp | 37 | 41 | 58 | 14 | 3 | 1 | 0 | 0 | 2 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnFogMan.cpp | 2 | 5 | 6 | 1 | 5 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnFogMan.cpp | 4 | 6 | 9 | 3 | 5 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnFrame.cpp | 3 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnIdMan.cpp | 11 | 2 | 10 | 12 | 0 | 0 | 0 | 7 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemAnim.cpp | 6 | 3 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnItemCamera.cpp | 8 | 1 | 22 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnItemCamera.cpp | 11 | 5 | 22 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemCameraNw4r.cpp | 3 | 3 | 11 | 5 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemId.cpp | 6 | 4 | 7 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemLight.cpp | 9 | 4 | 8 | 5 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemLightNw4r.cpp | 5 | 1 | 8 | 7 | 1 | 1 | 0 | 5 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemModel.cpp | 31 | 42 | 72 | 5 | 20 | 15 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnItemModelNw4r.cpp | 2 | 10 | 175 | 18 | 40 | 7 | 0 | 0 | 1 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnItemModelNw4r.cpp | 21 | 61 | 175 | 25 | 40 | 7 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemPool.cpp | 4 | 25 | 33 | 5 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnLightMan.cpp | 5 | 1 | 6 | 5 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnMaruShadowNw4r.cpp | 6 | 7 | 3 | 2 | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnMem.cpp | 8 | 3 | 20 | 17 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnRoot.cpp | 1 | 0 | 2 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnMem.cpp | 50 | 3 | 20 | 19 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnRoot.cpp | 4 | 0 | 2 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnRootNw4r.cpp | 7 | 20 | 22 | 6 | 8 | 3 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnTexWorkMan.cpp | 10 | 4 | 8 | 5 | 2 | 1 | 0 | 0 | 54 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnVirtualLight.cpp | 15 | 40 | 115 | 43 | 12 | 5 | 0 | 0 | 12 | 0 | 0 | 0 |
@@ -171,8 +174,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/scn/CVirtualLightAmb.cpp | 5 | 1 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CVirtualLightDir.cpp | 3 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CVirtualLightObj.cpp | 1 | 17 | 14 | 2 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/UnkClass_8047CD0C.cpp | 10 | 2 | 11 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/UnkClass_8047E110.cpp | 3 | 6 | 10 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
+| libs/monolib/src/scn/UnkClass_8047CD0C.cpp | 10 | 2 | 11 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/UnkClass_8047E110.cpp | 14 | 6 | 10 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | libs/monolib/src/scn/code_8047D2AC.cpp | 22 | 4 | 29 | 28 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/code_8049431C.cpp | 7 | 5 | 15 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/code_804BC9EC.cpp | 1 | 0 | 1 | 7 | 8 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
@@ -186,8 +189,8 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/work/CWorkControl.cpp | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/work/CWorkRoot.cpp | 18 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | libs/monolib/src/work/CWorkSystem.cpp | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/work/CWorkSystemCache.cpp | 1 | 3 | 7 | 2 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/work/CWorkSystemPack.cpp | 2 | 3 | 13 | 9 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/work/CWorkSystemCache.cpp | 39 | 3 | 7 | 12 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/work/CWorkSystemPack.cpp | 40 | 3 | 13 | 9 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/work/CWorkThread.cpp | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/nw4r/src/db/db_assert.cpp | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 |
 | libs/nw4r/src/g3d/g3d_anmchr.cpp | 0 | 0 | 1 | 5 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -566,7 +569,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/plugin/ocMsg.cpp | 0 | 19 | 2 | 19 | 14 | 14 | 0 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocThread.cpp | 1 | 9 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocUnit.cpp | 31 | 70 | 32 | 146 | 71 | 42 | 0 | 4 | 9 | 0 | 0 | 0 |
-| src/kyoshin/plugin/pluginBtl.cpp | 36 | 1 | 6 | 54 | 16 | 7 | 0 | 1 | 0 | 0 | 0 | 0 |
+| src/kyoshin/plugin/pluginBtl.cpp | 36 | 1 | 5 | 53 | 16 | 7 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginCam.cpp | 11 | 20 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginCfs.cpp | 88 | 1 | 8 | 36 | 27 | 16 | 0 | 6 | 2 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginEve.cpp | 16 | 1 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -684,6 +687,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/core/CDrawGX.cpp": {
   "asm_insn_shim": 0,
+  "extern_c_nonlbl_decl": 2,
   "init_side_effect": 0,
   "rn_params": 12,
   "schedule_pragma": 0,
@@ -881,7 +885,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_decl": 22,
   "extern_c_nonlbl_def": 10,
   "init_side_effect": 0,
-  "ptr_arith": 3,
+  "ptr_arith": 18,
   "schedule_pragma": 0,
   "self_params": 5,
   "void_ptr": 34
@@ -918,7 +922,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/device/CDeviceFile.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 2,
-  "extern_c_nonlbl_decl": 2,
+  "extern_c_nonlbl_decl": 40,
   "extern_c_nonlbl_def": 9,
   "init_side_effect": 0,
   "ptr_arith": 3,
@@ -929,17 +933,18 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/device/CDeviceFileCri.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 4,
+  "extern_c_nonlbl_decl": 45,
   "extern_c_nonlbl_def": 5,
   "init_side_effect": 0,
-  "ptr_arith": 7,
+  "ptr_arith": 16,
   "schedule_pragma": 0,
   "self_params": 9,
-  "void_ptr": 10
+  "void_ptr": 11
  },
  "libs/monolib/src/device/CDeviceFileDvd.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 13,
+  "extern_c_nonlbl_decl": 38,
   "init_side_effect": 0,
   "ptr_arith": 44,
   "schedule_pragma": 0,
@@ -964,7 +969,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/device/CDeviceFont.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 2,
+  "extern_c_nonlbl_decl": 42,
   "extern_c_nonlbl_def": 5,
   "goto_count": 7,
   "init_side_effect": 0,
@@ -999,7 +1004,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/device/CDeviceFontLoader.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 8,
+  "extern_c_nonlbl_decl": 43,
   "extern_c_nonlbl_def": 1,
   "goto_count": 3,
   "init_side_effect": 0,
@@ -1053,8 +1058,12 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/effect/CERand.cpp": {
   "asm_insn_shim": 0,
+  "extern_c_nonlbl_decl": 1,
+  "extern_c_nonlbl_def": 15,
   "init_side_effect": 0,
-  "schedule_pragma": 0
+  "schedule_pragma": 0,
+  "self_params": 16,
+  "void_ptr": 1
  },
  "libs/monolib/src/effect/CETrail.cpp": {
   "asm_insn_shim": 0,
@@ -1085,9 +1094,9 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 5,
   "init_side_effect": 0,
   "ptr_arith": 7,
-  "rn_params": 8,
+  "rn_params": 9,
   "schedule_pragma": 0,
-  "self_params": 48,
+  "self_params": 49,
   "void_ptr": 44
  },
  "libs/monolib/src/effect/code_804CC2B8.cpp": {
@@ -1096,7 +1105,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_decl": 38,
   "extern_c_nonlbl_def": 33,
   "init_side_effect": 0,
-  "ptr_arith": 19,
+  "ptr_arith": 25,
   "rn_params": 6,
   "schedule_pragma": 0,
   "self_params": 100,
@@ -1130,17 +1139,20 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/lib/CLib.cpp": {
   "asm_insn_shim": 0,
+  "extern_c_nonlbl_decl": 38,
   "init_side_effect": 0,
-  "schedule_pragma": 0
+  "schedule_pragma": 0,
+  "void_ptr": 2
  },
  "libs/monolib/src/lib/CLibCri.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 34,
-  "extern_c_nonlbl_def": 1,
+  "extern_c_nonlbl_decl": 38,
+  "extern_c_nonlbl_def": 6,
   "goto_count": 3,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "void_ptr": 1
+  "self_params": 19,
+  "void_ptr": 5
  },
  "libs/monolib/src/lib/CLibCriMoviePlay.cpp": {
   "asm_insn_shim": 0,
@@ -1181,8 +1193,11 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/lib/CLibHbmControl.cpp": {
   "asm_insn_shim": 0,
+  "extern_c_nonlbl_decl": 38,
   "init_side_effect": 0,
-  "schedule_pragma": 0
+  "schedule_pragma": 0,
+  "self_params": 12,
+  "void_ptr": 5
  },
  "libs/monolib/src/lib/CLibLayout.cpp": {
   "asm_insn_shim": 0,
@@ -1412,14 +1427,14 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/mpfsys/MPFDrawDisplayList.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 24,
+  "extern_c_nonlbl_decl": 26,
   "extern_c_nonlbl_def": 4,
   "goto_count": 16,
   "init_side_effect": 0,
   "ptr_arith": 10,
-  "rn_params": 8,
+  "rn_params": 10,
   "schedule_pragma": 0,
-  "self_params": 57,
+  "self_params": 59,
   "void_ptr": 2
  },
  "libs/monolib/src/mpfsys/MPFDrawMdlColor.cpp": {
@@ -1487,12 +1502,12 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/nand/CNReqtaskLoad.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 4,
+  "extern_c_nonlbl_decl": 6,
   "extern_c_nonlbl_def": 4,
   "goto_count": 4,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "void_ptr": 1
+  "void_ptr": 2
  },
  "libs/monolib/src/nand/CNReqtaskReaddir.cpp": {
   "asm_insn_shim": 0,
@@ -1552,10 +1567,12 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/scn/CMdlAnmEye.cpp": {
   "asm_insn_shim": 0,
+  "extern_c_nonlbl_decl": 2,
+  "extern_c_nonlbl_def": 2,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 4,
-  "void_ptr": 3
+  "self_params": 8,
+  "void_ptr": 6
  },
  "libs/monolib/src/scn/CMdlAnmUV.cpp": {
   "asm_insn_shim": 0,
@@ -1586,7 +1603,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/scn/CMdlMaterial.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 3,
+  "extern_c_nonlbl_decl": 4,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "void_ptr": 6
@@ -1613,13 +1630,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/scn/CScnBlend.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 2,
-  "extern_c_nonlbl_decl": 1,
-  "extern_c_nonlbl_def": 2,
+  "extern_c_nonlbl_decl": 5,
+  "extern_c_nonlbl_def": 3,
   "init_side_effect": 0,
   "ptr_arith": 2,
   "rn_params": 1,
   "schedule_pragma": 0,
-  "self_params": 5,
+  "self_params": 10,
   "void_ptr": 2
  },
  "libs/monolib/src/scn/CScnBloom.cpp": {
@@ -1634,13 +1651,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/scn/CScnCameraMan.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 2,
+  "extern_c_nonlbl_decl": 34,
   "init_side_effect": 0,
   "ptr_arith": 3,
   "rn_params": 2,
   "schedule_pragma": 0,
   "self_params": 3,
-  "void_ptr": 2
+  "void_ptr": 3
  },
  "libs/monolib/src/scn/CScnEffectActNw4r.cpp": {
   "asm_insn_shim": 0,
@@ -1657,19 +1674,20 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/scn/CScnEnvLgtCtrl.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 54,
-  "extern_c_nonlbl_decl": 17,
-  "extern_c_nonlbl_def": 18,
+  "extern_c_nonlbl_decl": 24,
+  "extern_c_nonlbl_def": 75,
   "goto_count": 2,
   "init_side_effect": 0,
   "ptr_arith": 246,
   "rn_params": 23,
   "schedule_pragma": 0,
-  "self_params": 117,
+  "self_params": 118,
   "void_ptr": 67
  },
  "libs/monolib/src/scn/CScnFadeMan.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 1,
+  "extern_c_nonlbl_decl": 2,
   "extern_c_nonlbl_def": 2,
   "init_side_effect": 0,
   "ptr_arith": 2,
@@ -1703,13 +1721,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/scn/CScnFogMan.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 4,
-  "extern_c_nonlbl_decl": 2,
-  "extern_c_nonlbl_def": 5,
+  "extern_c_nonlbl_decl": 4,
+  "extern_c_nonlbl_def": 6,
   "init_side_effect": 0,
   "ptr_arith": 5,
   "schedule_pragma": 0,
-  "self_params": 6,
-  "void_ptr": 1
+  "self_params": 9,
+  "void_ptr": 3
  },
  "libs/monolib/src/scn/CScnFrame.cpp": {
   "asm_insn_shim": 0,
@@ -1740,8 +1758,8 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/scn/CScnItemCamera.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 8,
-  "extern_c_nonlbl_def": 1,
+  "extern_c_nonlbl_decl": 11,
+  "extern_c_nonlbl_def": 5,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 22,
@@ -1803,14 +1821,14 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/scn/CScnItemModelNw4r.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 7,
-  "extern_c_nonlbl_decl": 2,
-  "extern_c_nonlbl_def": 10,
+  "extern_c_nonlbl_decl": 21,
+  "extern_c_nonlbl_def": 61,
   "goto_count": 1,
   "init_side_effect": 0,
   "ptr_arith": 40,
   "schedule_pragma": 0,
   "self_params": 175,
-  "void_ptr": 18
+  "void_ptr": 25
  },
  "libs/monolib/src/scn/CScnItemPool.cpp": {
   "asm_insn_shim": 0,
@@ -1845,18 +1863,18 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/scn/CScnMem.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 8,
+  "extern_c_nonlbl_decl": 50,
   "extern_c_nonlbl_def": 3,
   "init_side_effect": 0,
   "ptr_arith": 1,
   "rn_params": 2,
   "schedule_pragma": 0,
   "self_params": 20,
-  "void_ptr": 17
+  "void_ptr": 19
  },
  "libs/monolib/src/scn/CScnRoot.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 1,
+  "extern_c_nonlbl_decl": 4,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 2,
@@ -1944,11 +1962,11 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 11,
-  "void_ptr": 1
+  "void_ptr": 2
  },
  "libs/monolib/src/scn/UnkClass_8047E110.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 3,
+  "extern_c_nonlbl_decl": 14,
   "extern_c_nonlbl_def": 6,
   "goto_count": 4,
   "init_side_effect": 0,
@@ -2104,13 +2122,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/work/CWorkSystemCache.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 2,
-  "extern_c_nonlbl_decl": 1,
+  "extern_c_nonlbl_decl": 39,
   "extern_c_nonlbl_def": 3,
   "init_side_effect": 0,
   "ptr_arith": 2,
   "schedule_pragma": 0,
   "self_params": 7,
-  "void_ptr": 2
+  "void_ptr": 12
  },
  "libs/monolib/src/work/CWorkSystemMem.cpp": {
   "asm_insn_shim": 0,
@@ -2119,7 +2137,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/work/CWorkSystemPack.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 2,
+  "extern_c_nonlbl_decl": 40,
   "extern_c_nonlbl_def": 3,
   "init_side_effect": 0,
   "ptr_arith": 3,
@@ -6095,8 +6113,8 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_arith": 16,
   "rn_params": 1,
   "schedule_pragma": 0,
-  "self_params": 6,
-  "void_ptr": 54
+  "self_params": 5,
+  "void_ptr": 53
  },
  "src/kyoshin/plugin/pluginCam.cpp": {
   "asm_insn_shim": 0,

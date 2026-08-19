@@ -197,6 +197,7 @@ export interface Target {
    *  classification for singleton routing — ≥90% targets get priority). */
   instructionMatch?: number;
   callgraph_source?: string;
+  address?: string;
   /** Call-graph fields mirrored from tools/coop/targets.json — used by the
    *  similarity re-ranker to keep selection call-graph-ready. */
   called_functions?: string[];

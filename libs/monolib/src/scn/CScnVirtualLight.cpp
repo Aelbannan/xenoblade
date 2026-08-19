@@ -1114,3 +1114,18 @@ extern "C" void func_8049216C(CScnVirtualLightReslist* self, u32 handle, int cap
 }
 #pragma pop
 extern "C" __declspec(noinline) void func_804923F8(CScnVirtualLight* self, int arg) {}
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.rodata] 0x80524030-0x80524050 (32B): RTTI name "CScnVirtualLight" (20B)
+// + "VLGT Mem" alloc-region tag (12B, declared extern in CScnVirtualLight.hpp).
+extern const char lbl_eu_80524030[20] = {
+    0x43,0x53,0x63,0x6E,0x56,0x69,0x72,0x74,0x75,0x61,0x6C,0x4C,0x69,0x67,0x68,0x74,
+    0x00,0x00,0x00,0x00,
+};
+const char lbl_eu_80524044[] = {
+    'V','L','G','T',' ','M','e','m','\0','\0','\0','\0',
+};
+
+// [.bss] 0x80658648-0x80658658 (16B): shared vec4 written by sinit_80494300
+// (declared extern in CScnVirtualLight.hpp).
+func_800407C8_tmp lbl_eu_80658648;

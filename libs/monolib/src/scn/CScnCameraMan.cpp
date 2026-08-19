@@ -232,9 +232,19 @@ extern u32 lbl_eu_80663A08;
 extern "C" void func_8043A70C__11CScriptCodeFv(void* a, void* b);
 extern "C" void func_8049B3FC() { func_8043A70C__11CScriptCodeFv((void*)lbl_eu_80663A08, 0); }
 
-// Retail s16->f32 magic double (2^52 + 2^31 = 0x4330000080000000). Defined in
-// this TU so MWCC's int->float conversion pool can reference the retail label.
-const double lbl_eu_8066AB60 = 4503601774854144.0;
+// Retail s16->f32 magic double (2^52 + 2^31 = 0x4330000080000000; owned by
+// CGXCache.cpp's pool range). Referenced as an extern so this TU emits no
+// local .sdata2 (retail shape).
+extern const double lbl_eu_8066AB60;
+
+// (f32) casts pool TU-local magic doubles; the union helper pins the retail
+// symbol and keeps .sdata2 empty.
+static inline f32 s16ToF_ab60(s16 v) {
+    union { double d; u32 w[2]; } c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = (u32)v ^ 0x80000000u;
+    return (f32)(c.d - lbl_eu_8066AB60);
+}
 
 extern "C" void func_8043A57C__11CScriptCodeFv(void* self);
 extern "C" void func_8049B408() { func_8043A57C__11CScriptCodeFv((void*)lbl_eu_80663A08); }
@@ -246,8 +256,85 @@ void func_8049B59C(){}
 // (scissor-rect ratio x fixed multiplier) with CDeviceVI::getWidthScale().
 void func_8049B764(Mtx44 mtx, CScnItemCamera* item) {
     CGXCacheTail* cache = (CGXCacheTail*)CDeviceGX::getCacheInstance();
-    f32 aspect = lbl_eu_8066AB6C * ((f32)cache->mScissorDeltaX / (f32)cache->mScissorDeltaY);
+    f32 aspect = lbl_eu_8066AB6C * (s16ToF_ab60(cache->mScissorDeltaX) / s16ToF_ab60(cache->mScissorDeltaY));
     C_MTXPerspective(mtx, item->mFovY, aspect * CDeviceVI::getWidthScale(), item->mNearZ, item->mFarZ);
 }
 
 void func_8049B834(){}
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056EA40-0x8056EAD8 (0x98 = 152B): CScnCameraMan vtable.
+namespace CScnCameraManBlob {
+extern "C" void* __dt__13CScnCameraManFv();
+extern "C" void WorkEvent1__13CScnCameraManFPvPCc();
+extern "C" void WorkEvent3__13CScnCameraManFPv();
+extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
+extern "C" void WorkEvent4__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb();
+extern "C" void WorkEvent6__10IWorkEventFv();
+extern "C" void WorkEvent7__10IWorkEventFv();
+extern "C" void WorkEvent8__10IWorkEventFv();
+extern "C" void WorkEvent9__10IWorkEventFv();
+extern "C" void WorkEvent10__10IWorkEventFv();
+extern "C" void WorkEvent11__10IWorkEventFv();
+extern "C" void WorkEvent12__10IWorkEventFv();
+extern "C" void WorkEvent13__10IWorkEventFv();
+extern "C" void WorkEvent14__10IWorkEventFv();
+extern "C" void WorkEvent15__10IWorkEventFv();
+extern "C" void WorkEvent16__10IWorkEventFv();
+extern "C" void WorkEvent17__10IWorkEventFv();
+extern "C" void WorkEvent18__10IWorkEventFv();
+extern "C" void WorkEvent19__10IWorkEventFv();
+extern "C" void WorkEvent20__10IWorkEventFv();
+extern "C" void WorkEvent21__10IWorkEventFv();
+extern "C" void WorkEvent22__10IWorkEventFv();
+extern "C" void WorkEvent23__10IWorkEventFv();
+extern "C" void WorkEvent24__10IWorkEventFv();
+extern "C" void WorkEvent25__10IWorkEventFv();
+extern "C" void WorkEvent26__10IWorkEventFv();
+extern "C" void WorkEvent27__10IWorkEventFv();
+extern "C" void WorkEvent28__10IWorkEventFv();
+extern "C" void WorkEvent29__10IWorkEventFv();
+extern "C" void WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+extern "C" u32 __RTTI__10IWorkEvent;
+}
+extern "C" u32 lbl_eu_80663A10[2];  // RTTI locator (owned by CScnItemCamera.cpp)
+extern "C" u32 lbl_eu_8056EA40[38] = {
+    (u32)&lbl_eu_80663A10, 0x00000000,
+    (u32)&CScnCameraManBlob::__dt__13CScnCameraManFv,
+    (u32)&CScnCameraManBlob::WorkEvent1__13CScnCameraManFPvPCc,
+    (u32)&CScnCameraManBlob::OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&CScnCameraManBlob::WorkEvent3__13CScnCameraManFPv,
+    (u32)&CScnCameraManBlob::WorkEvent4__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::OnPauseTrigger__10IWorkEventFb,
+    (u32)&CScnCameraManBlob::WorkEvent6__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent7__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent8__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent9__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent10__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent11__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent12__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent13__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent14__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent15__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent16__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent17__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent18__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent19__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent20__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent21__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent22__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent23__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent24__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent25__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent26__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent27__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent28__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent29__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent30__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::WorkEvent31__10IWorkEventFv,
+    (u32)&CScnCameraManBlob::__RTTI__10IWorkEvent,
+    0x00000000, 0x00000000, 0x00000000,
+};
+DECOMP_FORCEACTIVE(CScnCameraMan_cpp, lbl_eu_8056EA40);

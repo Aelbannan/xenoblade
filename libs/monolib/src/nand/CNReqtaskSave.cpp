@@ -307,7 +307,7 @@ extern "C" int sprintf(char*, const char*, ...);
 #pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
 __declspec(noinline) const char* func_804DA98C(u8 id) {
     extern char lbl_eu_8065FF78[];
-    extern const u32 lbl_eu_805245D4[];
+    extern const char lbl_eu_805245D4[];
     long st = NANDGetHomeDir(lbl_eu_8065FF78);
     func_804DAA58((s32)st);
     if (id != 0)
@@ -321,7 +321,7 @@ __declspec(noinline) const char* func_804DA98C(u8 id) {
 #pragma optimize_for_size on  // -O4,s stmw frame
 extern "C" char* func_804DA9C4(u32 a1, u8 a2) {
     extern char lbl_eu_8065FFBC[];
-    extern const u32 lbl_eu_805245D4[];
+    extern const char lbl_eu_805245D4[];
     sprintf(lbl_eu_8065FFBC, (char*)lbl_eu_805245D4 + 7, func_804DA98C(a2), a1);
     return lbl_eu_8065FFBC;
 }
@@ -565,10 +565,11 @@ extern "C" u32 lbl_eu_8056FD78[4] = {
 
 // [.rodata] 0x805245D4-0x80524610 (60B) -- one block (referenced by .text);
 // the sub-string labels stay extern for the sdata reloc name (lbl_eu_805245F8).
-extern "C" const u32 lbl_eu_805245D4[15] = {
-    0x2F736861,0x72650025,0x732F2573,0x00000000,0x00000000,
-    0x434E5265,0x71756573,0x74000000,0x00000000,0x434E5265,
-    0x71746173,0x6B536176,0x65000000,0x25732573,0x00000000,
+extern "C" const char lbl_eu_805245D4[60] = {
+    0x2F,0x73,0x68,0x61,0x72,0x65,0x00,0x25,0x73,0x2F,0x25,0x73,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x43,0x4E,0x52,0x65,0x71,0x75,0x65,0x73,0x74,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x53,0x61,0x76,
+    0x65,0x00,0x00,0x00,0x25,0x73,0x25,0x73,0x00,0x00,0x00,0x00,
 };
 
 // [.sdata] 0x80663B88-0x80663B90 (8B)

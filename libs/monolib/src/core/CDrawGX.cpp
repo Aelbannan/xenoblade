@@ -1,9 +1,36 @@
 #include "monolib/core.hpp"
 #include "monolib/device.hpp"
 
+// ===== Dissolved monolibdata2 (.sdata2 pool) constants owned by this TU =====
+// Retail CDrawGX.o ships no .sdata2: the float literals below resolve to the
+// monolibdata2 pool (lbl_eu_8066A468..A478); referencing them as externs
+// keeps this TU's .sdata2 empty (retail shape).
+extern "C" const float lbl_eu_8066A468;   // 1.0f
+
+extern "C" const float lbl_eu_8066A46C;   // 0.0f
+extern "C" const float lbl_eu_8066A470;   // 255.0f
+extern "C" const float lbl_eu_8066A474;   // 128/pi (nw4r RAD_TO_FIDX)
+extern "C" const double lbl_eu_8066A478;  // s32->f64 magic (0x4330000080000000)
+
+// s32 -> float through the shared magic constant (retail renderCircle shape).
+inline float CDrawGX_s32ToF(s32 v) {
+    union {
+        double d;
+        u32 w[2];
+    } c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = (u32)v ^ 0x80000000u;
+    return (float)(c.d - lbl_eu_8066A478);
+}
+
+// nw4r trig entry points used by renderCircle (retail calls these directly,
+// passing rad * 128/pi from the shared pool constant).
+extern "C" float SinFIdx__Q24nw4r4mathFf(float);
+extern "C" float CosFIdx__Q24nw4r4mathFf(float);
+
 CDrawGX::CDrawGX() :
 mFlags(0),
-mOpacity(1),
+mOpacity(lbl_eu_8066A468),
 mDrawPrim(PRIM_INVALID),
 unk1C(0),
 mVerts(0),
@@ -11,7 +38,7 @@ mVertCount(0),
 mLineWidth(LINE_WIDTH),
 mZPos(0),
 mPrimitive(0){
-    mCol.set(1,1,1,1);
+    mCol.set(lbl_eu_8066A468,lbl_eu_8066A468,lbl_eu_8066A468,lbl_eu_8066A468);
     unk90.setUnit();
 }
 
@@ -20,7 +47,7 @@ CDrawGX::~CDrawGX(){
 }
 
 void CDrawGX::clear(){
-    mOpacity = 1;
+    mOpacity = lbl_eu_8066A468;
     mVertCount = 0;
     mPrimitive = 0;
     unk1C = 0;
@@ -28,7 +55,7 @@ void CDrawGX::clear(){
     mVerts = 0;
     mZPos = 0;
     mLineWidth = LINE_WIDTH;
-    mCol.set(1,1,1,1);
+    mCol.set(lbl_eu_8066A468,lbl_eu_8066A468,lbl_eu_8066A468,lbl_eu_8066A468);
     unk90.setUnit();
 }
 
@@ -55,16 +82,16 @@ void CDrawGX::setCol(const ml::CCol3& col){
     mCol.r = col.r;
     mCol.g = col.g;
     mCol.b = col.b;
-    mCol.a = 1;
+    mCol.a = lbl_eu_8066A468;
 
-    mCol.clamp(0, 1);
+    mCol.clamp(lbl_eu_8066A46C, lbl_eu_8066A468);
 
     setFlag(FLAG_INITIALIZED, false);
 }
 
 void CDrawGX::setCol(const ml::CCol4& col){
     mCol = col;
-    mCol.clamp(0, 1);
+    mCol.clamp(lbl_eu_8066A46C, lbl_eu_8066A468);
 
     setFlag(FLAG_INITIALIZED, false);
 }
@@ -174,7 +201,7 @@ void CDrawGX::setupGX(){
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
     }
 
-    if(mCol.a < 1){
+    if(mCol.a < lbl_eu_8066A468){
         CDeviceGX::getCacheInstance()->func_8044A6C8(1, 0);
     }else{
         CDeviceGX::getCacheInstance()->func_8044A6C8((mFlags >> 4) & 1, 0);
@@ -313,7 +340,9 @@ void CDrawGX::add(const ml::CVec3& vec){
 
 void CDrawGX::add(s16 x, s16 y, const ml::CCol4& r6){
     GXPosition3s16(x, y, mZPos);
-    GXColor1u32(r6.toU32());
+    u32 color = ((u8)(lbl_eu_8066A470 * r6.r) << 24) | ((u8)(lbl_eu_8066A470 * r6.g) << 16) |
+                ((u8)(lbl_eu_8066A470 * r6.b) << 8) | (u8)(lbl_eu_8066A470 * r6.a);
+    GXColor1u32(color);
 
     mVertCount++;
 }
@@ -426,7 +455,8 @@ void CDrawGX::renderCircle(const ml::CVec3& pos, int sides, float r){
         add(pos);
 
         for(int i = sides; i >= 0; i--){
-            add(ml::CVec3(pos.x + r * ml::math::sin(i*(ml::tau/sides)), pos.y, pos.z + r * ml::math::cos(i*(ml::tau/sides))));
+            float idx = CDrawGX_s32ToF(i) * (ml::tau / CDrawGX_s32ToF(sides)) * lbl_eu_8066A474;
+            add(ml::CVec3(pos.x + r * SinFIdx__Q24nw4r4mathFf(idx), pos.y, pos.z + r * CosFIdx__Q24nw4r4mathFf(idx)));
         }
 
         end();
@@ -438,7 +468,8 @@ void CDrawGX::renderCircle(const ml::CVec3& pos, int sides, float r){
         add(pos);
 
         for(int i = sides; i >= 0; i--){
-            add(ml::CVec3(pos.x + r * ml::math::sin(i*(ml::tau/sides)), pos.y + r * ml::math::cos(i*(ml::tau/sides)), 0));
+            float idx = CDrawGX_s32ToF(i) * (ml::tau / CDrawGX_s32ToF(sides)) * lbl_eu_8066A474;
+            add(ml::CVec3(pos.x + r * SinFIdx__Q24nw4r4mathFf(idx), pos.y + r * CosFIdx__Q24nw4r4mathFf(idx), lbl_eu_8066A46C));
         }
 
         end();

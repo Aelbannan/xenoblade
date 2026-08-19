@@ -5,11 +5,49 @@
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/core/CViewRoot.hpp"
 
-// Retail SDA2 pool constants (monolibdata2-owned; named refs keep the lfs
-// relocs pinned and avoid a local .sdata2 pool).
-extern "C" const f32 lbl_eu_8066AB78; // 0.0f (AB80/AB90 in the header)
 
 // --- Scene sink: owned CScn (IScnRender callback) -------------------------
+
+// Retail sdata2 magic doubles for int->float conversion, referenced by name so
+// no local .sdata2 pool is emitted (retail CScnFadeMan.o has an empty
+// .sdata2). AB88 = 0x4330000080000000 (signed), AB98 = 0x4330000000000000
+// (unsigned). See MWCC_REFERENCE 7i for the union trick.
+extern double lbl_eu_8066AB88;
+extern double lbl_eu_8066AB98;
+
+union F64Conv_AB {
+    f64 d;
+    u32 w[2];
+};
+
+static inline f32 s32ToF_AB88(s32 v) {
+    F64Conv_AB c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = (u32)v ^ 0x80000000u;
+    return (f32)(c.d - lbl_eu_8066AB88);
+}
+
+static inline f32 u32ToF_AB98(u32 v) {
+    F64Conv_AB c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = v;
+    return (f32)(c.d - lbl_eu_8066AB98);
+}
+
+// Retail vtable words: dtor/cbRenderBefore are defined by this TU's class
+// members (symbols __dt__11CScnFadeManFv / cbRenderBefore__11CScnFadeManFv);
+// the extern "C" declarations below bind to those same symbols (MWCC keeps
+// the literal names for address-of).
+extern "C" void __dt__11CScnFadeManFv();
+extern "C" void cbRenderBefore__11CScnFadeManFv();
+
+// [.data] 0x8056EB50-0x8056EB60 (16B): CScnFadeMan vtable.
+extern "C" u32 lbl_eu_80663A38;
+extern "C" u32 lbl_eu_8056EB50[4] = {
+    (u32)&lbl_eu_80663A38, 0x00000000,
+    (u32)&__dt__11CScnFadeManFv, (u32)&cbRenderBefore__11CScnFadeManFv,
+};
+DECOMP_FORCEACTIVE(CScnFadeMan_cpp, lbl_eu_8056EB50);
 
 // Publishes the current fade color pointer (address of mCurrentColor).
 extern "C" void* func_8049C7A8(u8* self) { return (void*)((u8*)self + 0x8); }
@@ -24,7 +62,7 @@ CScnFadeMan::CScnFadeMan(CScn* scene) {
     // Store the retail vtable blob pointer manually (see CScnFadeMan.hpp) so
     // the ctor vptr-store relocs name the retail blob instead of a compiler
     // __vt__ symbol.
-    m_vtable = lbl_eu_8056EB50;
+    m_vtable = (u8*)lbl_eu_8056EB50;
     mCurrentColor.r = lbl_eu_8066AB78;
     mCurrentColor.g = lbl_eu_8066AB78;
     mCurrentColor.b = lbl_eu_8066AB78;
@@ -48,7 +86,7 @@ CScnFadeMan::CScnFadeMan(CScn* scene) {
 
 CScnFadeMan::~CScnFadeMan() {
     // Re-store the vtable pointer like the virtual-class dtor would (see hpp).
-    m_vtable = lbl_eu_8056EB50;
+    m_vtable = (u8*)lbl_eu_8056EB50;
     // Same explicit IScnRender* conversion as the ctor.
     mScene->removeRenderCB((IScnRender*)this);
 }
@@ -68,8 +106,8 @@ void CScnFadeMan::update() {
     // The timers are 8.8 fixed-point (1 frame = 0x100), so convert each to a
     // real-valued float (integer part + fraction byte) before dividing.
     f32 prog =
-        ((f32)(mCurrentFrame % 256) * lbl_eu_8066AB7C + (f32)(mCurrentFrame / 256)) /
-        ((f32)(mFrameCount % 256) * lbl_eu_8066AB7C + (f32)(mFrameCount / 256));
+        (s32ToF_AB88(mCurrentFrame % 256) * lbl_eu_8066AB7C + s32ToF_AB88(mCurrentFrame / 256)) /
+        (s32ToF_AB88(mFrameCount % 256) * lbl_eu_8066AB7C + s32ToF_AB88(mFrameCount / 256));
     // Interpolate from mStartColor toward mDestColor, writing mCurrentColor.
     mCurrentColor.r = mStartColor.r * prog + mDestColor.r * (lbl_eu_8066AB80 - prog);
     mCurrentColor.g = mStartColor.g * prog + mDestColor.g * (lbl_eu_8066AB80 - prog);
@@ -103,7 +141,7 @@ void CScnFadeMan::cbRenderBefore() {
 
 void func_8049C72C(CScnFadeMan* self, u32 count, const ml::CCol4* src) {
     if (CDeviceVI::isTvFormatPal() && count > 1) {
-        count = (u32)((f32)count / lbl_eu_8066AB90);
+        count = (u32)(u32ToF_AB98(count) / lbl_eu_8066AB90);
     }
     self->mStartColor = self->mCurrentColor;
     self->mDestColor = *src;

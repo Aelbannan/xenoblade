@@ -11453,3 +11453,20 @@ do NOT edit tools, report as blockers):
 
 Constraints: `.venv/bin/python3` only; no git; additive edits; do not touch
 splits.txt/configure.py/build/tools.
+
+### monolibdata2 CDeviceFontLoader vtable blocker: IWorkEvent/CWorkThread virtual-member name collision
+
+CDeviceFontLoader.cpp's vtable needs reloc `wkStandbyExceptionRetry__11CWorkThreadFUl` (and
+wkUpdate/wkRender/wkRenderAfter `__11CWorkThreadFv`). These exact mangled names are
+declared BOTH as:
+- `extern "C" void NAME(...);` free functions in `monolib/data_vtables.hpp`, AND
+- `virtual void/bool NAME(...)` C++ member functions in `monolib/work/CWorkThread.hpp`
+  (WORK_ID = typedef u32 → mangles to `FUl`, matching the free-function name).
+
+Referencing `&NAME` (even with `::` global qualifier) is ambiguous — MWCC error
+(10322) "illegal name overloading". CProc.cpp avoids this because it does NOT include
+`monolib/device/CDeviceFileCri.hpp` (which pulls in the CWorkThread virtual overrides
+that sharpen the collision). Resolving for CDeviceFontLoader needs either a
+`UNIT_RULES` `inject_relocs` entry (tools/postprocess_reloc_names.py — out of data-task
+scope) or a header refactor isolating the free-function decls from the class members.
+Mark CDeviceFontLoader as a BLOCKER for the data gate.

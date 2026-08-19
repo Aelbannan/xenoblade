@@ -404,8 +404,8 @@ extern "C" void __attribute__((never_inline)) func_804CD9EC(EffectScene* self) {
         if (scale != lbl_eu_8066B0DC) {
             ml::CVec3 v;
             v.x = scale * s16ToF_b0f0(t->field_0x00);
-            v.y = scale * (f32)t->field_0x02;
-            v.z = scale * (f32)t->field_0x04;
+            v.y = scale * s16ToF_b0f0(t->field_0x02);
+            v.z = scale * s16ToF_b0f0(t->field_0x04);
             if (t->field_0x06 == 0) {
                 nw4r::math::VEC3Scale((nw4r::math::VEC3*)&v, (nw4r::math::VEC3*)&v,
                                       *(const f32*)&self->field_0x10);
@@ -435,8 +435,8 @@ extern "C" void __attribute__((never_inline)) func_804CDB2C(EffectScene* self, V
     u8* pf = (u8*)sub->field_0xf8;
     if (!pf) return;
     s32 r = pf ? *(u8*)(pf - 0xf) : 0;
-    if (self->field_0x18 <= 0.0f) r = 0;
-    if (*(const f32*)&self->field_0x10 <= 1.0f) r = 3;
+    if (self->field_0x18 <= lbl_eu_8066B0DC) r = 0;
+    if (*(const f32*)&self->field_0x10 <= lbl_eu_8066B0D8) r = 3;
     func_804EE60C(&self->field_0xdc);
     if (r) {
         EffectNode* node = func_804E0114((s16)self->field_0x04);
@@ -444,7 +444,7 @@ extern "C" void __attribute__((never_inline)) func_804CDB2C(EffectScene* self, V
         if (r & 1) func_804EE8FC(&self->field_0xdc, node);
     }
     f32 f31 = self->field_0x234 * self->field_0x18;
-    if (f31 == 0.0f) return;
+    if (f31 == lbl_eu_8066B0DC) return;
     Vec res;
     PSMTXMultVec(self->field_0xdc.field_0x18, &self->field_0x21c, &res);
     bool eq = (res.x == p1->x && res.y == p1->y && res.z == p1->z);
@@ -454,10 +454,10 @@ extern "C" void __attribute__((never_inline)) func_804CDB2C(EffectScene* self, V
     d.y = res.y - p1->y;
     d.z = res.z - p1->z;
     f32 d2 = d.x * d.x + d.y * d.y + d.z * d.z;
-    if (d2 == 0.0f) {
-        d.x = 0.0f;
-        d.y = 0.0f;
-        d.z = 0.0f;
+    if (d2 == lbl_eu_8066B0DC) {
+        d.x = lbl_eu_8066B0DC;
+        d.y = lbl_eu_8066B0DC;
+        d.z = lbl_eu_8066B0DC;
     } else {
         PSVECNormalize(&d, &d);
     }
@@ -773,7 +773,7 @@ extern "C" void __attribute__((never_inline)) func_804CE9A4(EffectScene* self, M
                 ang.y = atan2(v8.x, v8.z);
                 f32 r = sqrt(v8.x * v8.x + v8.z * v8.z);
                 ang.x = lbl_eu_8066B110 - atan2(v8.y, r);
-                ang.z = 0.0f;
+                ang.z = lbl_eu_8066B0DC;
                 func_804DCA88(&mtx1d0, &ang);
                 ok = 1;
             }
@@ -891,9 +891,9 @@ extern "C" void __attribute__((never_inline)) func_804CE9A4(EffectScene* self, M
     if (r29) {
         Mtx mB0;
         *(MtxCopy*)&mB0 = *(MtxCopy*)&self->field_0x130;
-        mB0[0][3] = 0.0f;
-        mB0[1][3] = 0.0f;
-        mB0[2][3] = 0.0f;
+        mB0[0][3] = lbl_eu_8066B0DC;
+        mB0[1][3] = lbl_eu_8066B0DC;
+        mB0[2][3] = lbl_eu_8066B0DC;
         PSMTXInverse(mB0, mB0);
         Mtx mE0;
         PSMTXConcat(mB0, *a, mE0);
@@ -1124,23 +1124,23 @@ extern "C" void __attribute__((never_inline)) func_804CE79C(EffectScene* self, V
         if (!(fl & 0x20) && (fl & 0x10)) {
             if (self->field_0x258 >= 0) {
                 U16Pair* p = func_804DF2A8(*(const void**)((u8*)self->field_0x08 + 0x0c));
-                f32 sx = (f32)p->a;
-                f32 sy = (f32)p->b;
+                f32 sx = s16ToF_b0f0((s16)p->a);
+                f32 sy = s16ToF_b0f0((s16)p->b);
                 out->x *= sx;
                 out->y *= sy;
             } else if (self->field_0x25a >= 0) {
                 U16Pair* p = func_804DF2A8(*(const void**)((u8*)self->field_0x08 + 0x0c));
-                f32 sx = (f32)p->a;
-                f32 sy = (f32)p->b;
+                f32 sx = s16ToF_b0f0((s16)p->a);
+                f32 sy = s16ToF_b0f0((s16)p->b);
                 out->x *= sx;
                 out->y *= sy;
             }
-            out->z = 0.0f;
+            out->z = lbl_eu_8066B0DC;
         }
     } else if (t == 8) {
-        out->x = 1.0f;
-        out->y = 1.0f;
-        out->z = 1.0f;
+        out->x = lbl_eu_8066B0D8;
+        out->y = lbl_eu_8066B0D8;
+        out->z = lbl_eu_8066B0D8;
     }
     if ((u32)(type - 3) <= 2 || (u32)(type - 9) <= 1) {
         f32 fy = out->y;
@@ -1230,7 +1230,7 @@ extern "C" void __attribute__((never_inline)) func_804D01E0(EffectScene* self, v
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
                     cnv.w[1] = fbw;
                     f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
-                    Vec svec = {ratio, 1.0f, 1.0f};
+                    Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
                     PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
                 }
             }
@@ -1337,27 +1337,27 @@ extern "C" void __attribute__((never_inline)) func_804D01E0(EffectScene* self, v
     if (texgens == 1) {
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
         GXPosition1x8(0);
-        GXTexCoord2f32(0.0f, 0.0f);
+        GXTexCoord2f32(lbl_eu_8066B0DC, lbl_eu_8066B0DC);
         GXPosition1x8(1);
-        GXTexCoord2f32(c0, 0.0f);
+        GXTexCoord2f32(c0, lbl_eu_8066B0DC);
         GXPosition1x8(2);
         GXTexCoord2f32(c0, c1);
         GXPosition1x8(3);
-        GXTexCoord2f32(0.0f, c1);
+        GXTexCoord2f32(lbl_eu_8066B0DC, c1);
     } else if (texgens == 2) {
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
         GXPosition1x8(0);
-        GXTexCoord2f32(0.0f, 0.0f);
-        GXTexCoord2f32(0.0f, 0.0f);
+        GXTexCoord2f32(lbl_eu_8066B0DC, lbl_eu_8066B0DC);
+        GXTexCoord2f32(lbl_eu_8066B0DC, lbl_eu_8066B0DC);
         GXPosition1x8(1);
-        GXTexCoord2f32(c0, 0.0f);
-        GXTexCoord2f32(c2, 0.0f);
+        GXTexCoord2f32(c0, lbl_eu_8066B0DC);
+        GXTexCoord2f32(c2, lbl_eu_8066B0DC);
         GXPosition1x8(2);
         GXTexCoord2f32(c0, c1);
         GXTexCoord2f32(c2, c3);
         GXPosition1x8(3);
-        GXTexCoord2f32(0.0f, c1);
-        GXTexCoord2f32(0.0f, c3);
+        GXTexCoord2f32(lbl_eu_8066B0DC, c1);
+        GXTexCoord2f32(lbl_eu_8066B0DC, c3);
     }
 }
 
@@ -1420,7 +1420,7 @@ extern "C" void __attribute__((never_inline)) func_804D0AB4(EffectScene* self, s
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
                     cnv.w[1] = fbw;
                     f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
-                    Vec svec = {ratio, 1.0f, 1.0f};
+                    Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
                     PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
                 }
             }
@@ -1643,7 +1643,7 @@ void func_804CC3A4(EffectScene* out, const EffSrc3* node) {
     iv.field_0x1dc[2][0] = ik.m[2][0]; iv.field_0x1dc[2][1] = ik.m[2][1]; iv.field_0x1dc[2][2] = ik.m[2][2]; iv.field_0x1dc[2][3] = ik.m[2][3];
     ml::math::mtRand();  // re-seed consumed value; see brief tail
     f32 src = *(f32*)((u8*)(*(void**)((u8*)out->field_0x0c + 0xf4)) + 0x8);
-    f32 v = (ml::math::mtRand() / lbl_eu_8066B0E0 - lbl_eu_8066B0E4) * src + lbl_eu_8066B0D8;
+    f32 v = (u8ToF_b0e8(ml::math::mtRand()) / lbl_eu_8066B0E0 - lbl_eu_8066B0E4) * src + lbl_eu_8066B0D8;
     if (v <= lbl_eu_8066B0DC) v = lbl_eu_8066B0D8;
     *(f32*)&out->field_0x14 = v;
 }
@@ -1670,14 +1670,14 @@ s32 func_804D3B14(EffectScene* self, ml::CVec3* vec, ml::CVec3* vec2) {
     vec->y = (m[0][0] * x + m[0][1] * y + m[0][2] * z + m[0][3]) * sc;
     vec->z = oz;
     vec->x = (lbl_eu_8066B0E4 * vec->x + lbl_eu_8066B0E4) * u16ToF_b0e8(CDeviceVI::getRenderModeObj()->fbWidth);
-    vec->z = 0.0f;
+    vec->z = lbl_eu_8066B0DC;
     vec->y = (lbl_eu_8066B0E4 * vec->y + lbl_eu_8066B0E4) * u16ToF_b0e8(CDeviceVI::getRenderModeObj()->efbHeight);
     if (vec2) {
         vec2->x = (m[1][0] * vec2->x + m[1][1] * vec2->y + m[1][2] * vec2->z + m[1][3]) * sc;
         vec2->y = (m[0][0] * vec2->x + m[0][1] * vec2->y + m[0][2] * vec2->z + m[0][3]) * sc;
         vec2->z = m[2][0] * vec2->x + m[2][1] * vec2->y + m[2][2] * vec2->z + m[2][3];
         vec2->x = vec2->x * u16ToF_b0e8(CDeviceVI::getRenderModeObj()->fbWidth);
-        vec2->z = 0.0f;
+        vec2->z = lbl_eu_8066B0DC;
         vec2->y = vec2->y * u16ToF_b0e8(CDeviceVI::getRenderModeObj()->efbHeight);
     }
     return 1;
@@ -1688,38 +1688,38 @@ s32 func_804D3B14(EffectScene* self, ml::CVec3* vec, ml::CVec3* vec2) {
 void func_804D3DB0(EffectScene* self, f32* out, s32 i5, s32 i6, s32 i7) {
     SceneSubObj* sub = self->field_0x0c;
     u8* p = (u8*)sub->field_0x108;
-    f32 A = 1.0f;
-    f32 B = 1.0f;
+    f32 A = lbl_eu_8066B0D8;
+    f32 B = lbl_eu_8066B0D8;
     if (p) {
         if (i7 == 0) {
-            A = (f32)(p ? *(p - 4) : 1);
-            B = (f32)(p ? *(p - 3) : 1);
+            A = u8ToF_b0e8(p ? *(p - 4) : 1);
+            B = u8ToF_b0e8(p ? *(p - 3) : 1);
         } else {
-            A = (f32)(p ? *(p - 2) : 1);
-            B = (f32)(p ? *(p - 1) : 1);
+            A = u8ToF_b0e8(p ? *(p - 2) : 1);
+            B = u8ToF_b0e8(p ? *(p - 1) : 1);
         }
     }
-    f32 inv = 1.0f / (f32)i6;
-    f32 e5 = (f32)i5;
+    f32 inv = lbl_eu_8066B0D8 / s32ToF_b0f0(i6);
+    f32 e5 = s32ToF_b0f0(i5);
     f32 K = lbl_eu_8066B0E4;
-    out[0] = 0.0f;
+    out[0] = lbl_eu_8066B0DC;
     out[1] = B * e5 * inv;
-    out[2] = 0.0f;
+    out[2] = lbl_eu_8066B0DC;
     out[3] = K * A;
     out[4] = B;
-    out[5] = 0.0f;
+    out[5] = lbl_eu_8066B0DC;
     out[6] = A;
     out[7] = B;
-    out[8] = 0.0f;
-    out[9] = 0.0f;
-    out[10] = B * (1.0f + inv);
-    out[11] = 0.0f;
+    out[8] = lbl_eu_8066B0DC;
+    out[9] = lbl_eu_8066B0DC;
+    out[10] = B * (lbl_eu_8066B0D8 + inv);
+    out[11] = lbl_eu_8066B0DC;
     out[12] = K * A;
-    out[13] = B * (1.0f + inv);
-    out[14] = 0.0f;
+    out[13] = B * (lbl_eu_8066B0D8 + inv);
+    out[14] = lbl_eu_8066B0DC;
     out[15] = A;
-    out[16] = B * (1.0f + inv);
-    out[17] = 0.0f;
+    out[16] = B * (lbl_eu_8066B0D8 + inv);
+    out[17] = lbl_eu_8066B0DC;
 }
 
 // Target 5 initializer layout: 0x18 is written as a raw int here, though other
@@ -2442,13 +2442,13 @@ extern "C" void func_804D513C(RenderObj* self) {
     // materializes (bit != 0) as a 0/1 value before branching on it.
     u32 bit = (self->field_0x14->field_0x1c >> 10) & 1;
     u32 cond = bit != 0;
-    u8* arr;
+    const u8* arr;
     if (cond) {
         arr = lbl_eu_80524520;
     } else {
         arr = lbl_eu_80524500;
     }
-    GXSetArray(GX_VA_POS, arr, 3);
+    GXSetArray(GX_VA_POS, (void*)arr, 3);
     void* q = self->field_0x14->field_0x114;
     u8 b = q ? *(u8*)((u8*)q - 0x1c) : 0;
     if (b == 0) {
@@ -2721,3 +2721,31 @@ extern "C" void __attribute__((never_inline)) func_804CE3E8(EffectScene* self) {
     if (self->field_0x18 <= lbl_eu_8066B0DC) return;
     self->field_0x06 |= 0x40;
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056FC10-0x8056FC40 (0x30): func_804CE4C0 switch jumptable
+// (function + case offset, retail relocs carry the +164/+192/+216/+468
+// addends).
+extern "C" u32 jumptable_eu_8056FC10[12] = {
+    (u32)((char*)&func_804CE4C0 + 164), (u32)((char*)&func_804CE4C0 + 164),
+    (u32)((char*)&func_804CE4C0 + 192), (u32)((char*)&func_804CE4C0 + 192),
+    (u32)((char*)&func_804CE4C0 + 216), (u32)((char*)&func_804CE4C0 + 468),
+    (u32)((char*)&func_804CE4C0 + 164), (u32)((char*)&func_804CE4C0 + 164),
+    (u32)((char*)&func_804CE4C0 + 192), (u32)((char*)&func_804CE4C0 + 192),
+    (u32)((char*)&func_804CE4C0 + 216), 0x00000000,
+};
+
+// [.rodata] 0x80524500-0x80524530 (0x30): palette arrays (raw retail bytes).
+extern "C" const u8 lbl_eu_80524500[32] = {
+    0xFF,0x01,0x00,0x01, 0x01,0x00,0x01,0xFF, 0x00,0xFF,0xFF,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00, 0x00,0x00,0x00,0x00,
+};
+extern "C" const u8 lbl_eu_80524520[16] = {
+    0xFF,0xFF,0x00,0x01, 0xFF,0x00,0x01,0x01, 0x00,0xFF,0x01,0x00,
+    0x00,0x00,0x00,0x00,
+};
+
+// [.sbss] 0x806659A8-0x806659BC (0x14 = 20B): 5 cache-state words.
+extern "C" { s32 lbl_eu_806659A8; s32 lbl_eu_806659AC; s32 lbl_eu_806659B0;
+              s32 lbl_eu_806659B4; s32 lbl_eu_806659B8; }

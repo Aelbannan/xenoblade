@@ -510,8 +510,8 @@ extern "C" void func_804C172C(u8* self);
 // Retail destructor symbol is the unmangled member name; written as a
 // fragment function (like __dt__13CScnItemModelFv) so the vtable label is
 // installed explicitly and no compiler-generated __vt__ reloc appears.
-CScnItemModelNw4r* __dt__17CScnItemModelNw4rFv(CScnItemModelNw4r* self,
-                                               int deleting);
+extern "C" CScnItemModelNw4r* __dt__17CScnItemModelNw4rFv(CScnItemModelNw4r* self,
+                                                           int deleting);
 
 // Cross-TU sub-object hooks (defined in CMdlDynamics.cpp; retail names are
 // unmangled func_* symbols).
@@ -529,9 +529,9 @@ extern "C" void* func_8048ECD8(void* self);
 extern "C" void* RemoveAnmScn__Q34nw4r3g3d7ScnRootFv(void* self);
 extern "C" void* __dt__804E5DE0(void* self);
 
-// Retail vtable data for CScnItemModelNw4r (.data at 0x8056DE80). Declared
-// as a char array so the dtor installs the label explicitly.
-extern char lbl_eu_8056DE80[];
+// Retail vtable data for CScnItemModelNw4r (.data at 0x8056DE80, 0x608B).
+// Defined in this TU; callers cast to u8* explicitly.
+extern "C" u32 lbl_eu_8056DE80[];
 
 // .sbss byte: one-shot allocator-path switch read/cleared by the ctor (the
 // first constructed model uses the func_8048ED04 path, later ones

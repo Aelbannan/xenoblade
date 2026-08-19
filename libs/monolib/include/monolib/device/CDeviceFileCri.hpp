@@ -2,7 +2,7 @@
 
 #include "monolib/work/CWorkThread.hpp"
 
-struct UnkStruct_8044F65C {
+struct __declspec(novtable) UnkStruct_8044F65C {
     ~UnkStruct_8044F65C(){}
     virtual void UnkStruct_8044F65C_UnkVirtualFunc1() = 0;
     virtual void UnkStruct_8044F65C_UnkVirtualFunc2() = 0;
@@ -71,9 +71,9 @@ extern "C" {
     int func_eu_804521C4();
     int func_eu_804520D0(const char*);
     int func_804DDCD4(const char*, const char*);
-    extern wchar_t* lbl_eu_806636C8;
-    extern wchar_t* lbl_eu_806636CC;
-    extern wchar_t* lbl_eu_806636D0;
+    extern u32 lbl_eu_806636C8[1];
+    extern u32 lbl_eu_806636CC[1];
+    extern u32 lbl_eu_806636D0[2];
     extern u32 lbl_eu_8056C354[];
     extern u8 lbl_eu_806576C8[];
 }

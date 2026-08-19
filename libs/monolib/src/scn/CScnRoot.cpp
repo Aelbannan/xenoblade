@@ -24,8 +24,23 @@ void __ct__CScnRoot(CScnRoot* root, void* mgr) {
     s->mReserved = 0;
 }
 
-// Destructor
-void __dt__8CScnRootFv(u8* self, int deleteFlag);
+// Destructor (extern "C" so the vtable reloc carries the un-mangled retail
+// name; the strong definition is the C++ member dtor CScnRoot::~CScnRoot
+// below, which MWCC mangles to the same symbol).
+extern "C" void __dt__8CScnRootFv(u8* self, int deleteFlag);
+
+// Shared-pool s32->f32 conversion magic (retail loads the named constant
+// lbl_eu_8066A9F8 instead of pooling a local .sdata2 entry). The helper
+// reproduces the retail xoris/stw/lfd/lfd/fsubs sequence so this TU emits
+// no .sdata2 of its own (retail .sdata2 is empty for CScnRoot).
+extern const double lbl_eu_8066A9F8;  // 0x4330000080000000 = 2^52 + 2^31
+
+static inline f32 s32ToF32_8066A9F8(s32 v) {
+    union { u32 w[2]; double d; } c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = (u32)v ^ 0x80000000u;
+    return (f32)(c.d - lbl_eu_8066A9F8);
+}
 // --- CScnRoot helpers ---
 
 // Allocates a 0x4EC-byte CScnRootNw4r and constructs it in place.
@@ -42,12 +57,12 @@ CScnRootNw4r* func_8048ED80(void* mgr, u32 allocHandle, void* param) {
 // These are C-linkage functions referenced from the CScnRoot vtable.
 // They unconditionally return -1 (no-op stubs for unused virtual slots).
 
-int func_8048EDD0()
+extern "C" int func_8048EDD0()
 {
     return -1;
 }
 
-int func_8048EDD8()
+extern "C" int func_8048EDD8()
 {
     return -1;
 }
@@ -104,14 +119,14 @@ CScnRootNw4r* __ct__CScnRootNw4r(CScnRootNw4r* obj, void* mgr, void* param) {
     CScnRootMgrRegion* region = (CScnRootMgrRegion*)scene->field_0x88;
     s32 v = labs(region->field_0xC);
 
-    s32 bufsz = (s32)((f32)v * scale);
+    s32 bufsz = (s32)(s32ToF32_8066A9F8(v) * scale);
     if (bufsz & 0x1F) {
-        bufsz = (s32)((f32)v * scale) + 0x20 - ((s32)((f32)v * scale) & 0x1F);
+        bufsz = (s32)(s32ToF32_8066A9F8(v) * scale) + 0x20 - ((s32)(s32ToF32_8066A9F8(v) * scale) & 0x1F);
     }
     s32 rem = v - bufsz;
     s32 rem2 = 0;
     if (rem >= 0x80000) {
-        rem2 = (s32)((f32)rem * lbl_eu_8066A9F0);
+        rem2 = (s32)(s32ToF32_8066A9F8(rem) * lbl_eu_8066A9F0);
         if (rem2 & 0xF) {
             rem2 = rem2 + 0x10 - (rem2 & 0xF);
         }
@@ -230,3 +245,18 @@ u32 func_8048F2F0(CScnRootNw4r* self) {
 }
 
 CScnRoot::~CScnRoot() {}
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// Foreign .sdata RTTI locator referenced by the CScnRoot vtable (owned by
+// the sdata pool unit).
+extern u32 lbl_eu_80663998;
+
+// [.data] 0x8056E730-0x8056E768 (0x38 = 56B): CScnRoot vtable.
+// word0 = RTTI locator, +8 = dtor, +0x28/+0x2C/+0x30 = the three -1
+// virtual stubs, rest zero.
+extern "C" u32 lbl_eu_8056E730[14] = {
+    (u32)&lbl_eu_80663998, 0x00000000,
+    (u32)&__dt__8CScnRootFv, 0x00000000, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    (u32)&func_8048EDE0, (u32)&func_8048EDD8, (u32)&func_8048EDD0, 0x00000000,
+};

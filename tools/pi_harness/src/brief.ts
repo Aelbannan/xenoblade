@@ -20,27 +20,39 @@ function escapeRegExp(s: string): string {
  * listing (`.fn "<symbol>"` … `.endfn "<symbol>"`), stripping bytecode
  * comment prefixes. Returns "" when the file or symbol is missing.
  */
-export function extractRetailAsm(asmListingPath: string, symbol: string): string {
+export function extractRetailAsm(asmListingPath: string, symbol: string, address?: string): string {
   if (!asmListingPath || !existsSync(asmListingPath)) return "";
   const source = readFileSync(asmListingPath, "utf-8");
 
+  // The retail .s listings name real functions in `<name>_<ADDRESS>` form
+  // (e.g. `.fn attack_80186E4C`), while the target registry stores the plain
+  // name (`attack`). symbols.txt no-ASM false-negatives: a plain-name lookup
+  // misses the `_<ADDRESS>`-suffixed block, so the target was wrongly reported
+  // as "no retail ASM" (pluginBtl 16, winTalk 1). Try both forms.
   const esc = escapeRegExp(symbol);
-  const startRe = new RegExp(`^\\.fn\\s+"?${esc}"?\\s*,.*$`, "m");
-  const start = startRe.exec(source);
-  if (!start) return "";
-  const endRe = new RegExp(`^\\.endfn\\s+"?${esc}"?\\s*$`, "m");
-  endRe.lastIndex = 0;
-  const rest = source.slice(start.index + start[0].length);
-  const end = endRe.exec(rest);
-  if (!end) return "";
-
-  const block = source.slice(
-    start.index,
-    start.index + start[0].length + end.index + end[0].length,
-  );
-
-  const lines = block.split("\n").map((l) => l.replace(BYTECODE_COMMENT, "").trimEnd());
-  return lines.join("\n");
+  const forms: string[] = [symbol];
+  if (address) {
+    const hex = address.replace(/^0x/i, "").toUpperCase();
+    if (!esc.includes(hex)) forms.push(`${symbol}_${hex}`);
+  }
+  for (const form of forms) {
+    const e = escapeRegExp(form);
+    const startRe = new RegExp(`^\\.fn\\s+"?${e}"?\\s*,.*$`, "m");
+    const start = startRe.exec(source);
+    if (!start) continue;
+    const endRe = new RegExp(`^\\.endfn\\s+"?${e}"?\\s*$`, "m");
+    endRe.lastIndex = 0;
+    const rest = source.slice(start.index + start[0].length);
+    const end = endRe.exec(rest);
+    if (!end) continue;
+    const block = source.slice(
+      start.index,
+      start.index + start[0].length + end.index + end[0].length,
+    );
+    const lines = block.split("\n").map((l) => l.replace(BYTECODE_COMMENT, "").trimEnd());
+    return lines.join("\n");
+  }
+  return "";
 }
 
 /**

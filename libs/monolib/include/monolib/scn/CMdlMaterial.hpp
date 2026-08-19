@@ -14,7 +14,7 @@ extern "C" const char* lbl_eu_80663C30;
  * Size: 0x38 bytes (inferred from spacing before CMdlMouth at 0x1700
  * vs CMdlMaterial at 0x16C8 in CScnItemModelNw4r).
  */
-class CMdlMaterial {
+class __declspec(novtable) CMdlMaterial {
 public:
     virtual ~CMdlMaterial();
 

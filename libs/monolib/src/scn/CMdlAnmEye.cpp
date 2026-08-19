@@ -25,16 +25,11 @@ struct CMdlAnmEyeModel {
     void* field_0x147C;              // 0x147C g3d scene object (the ScnMdl)
 };
 
-CMdlAnmEye::CMdlAnmEye() {
-    field_04 = 0;
-    field_1C = 0;
-    field_20 = 0;
-    field_24 = 0;
-    field_28 = lbl_eu_8066B360;
-    value2C = 1;
-}
-
-CMdlAnmEye::~CMdlAnmEye() {}
+// Retail fragments (see the data block at the bottom): the class ctor/dtor
+// are defined as extern "C" functions so MWCC emits no auto vtable/RTTI.
+extern "C" void __dl__FPv(void*);
+extern "C" void* __dt__10CMdlAnmEyeFv(CMdlAnmEye* self, int flag);
+extern "C" u32 lbl_eu_805701D0[];
 
 // Register the left- and right-eye materials. Each scan stops at the first
 // material whose name starts with the eye prefix (strstr == name).
@@ -164,16 +159,53 @@ void func_804E77C4(CMdlAnmEye* self) {
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// [.rodata] 0x805247E8-0x80524810 (40B)
-extern const f32 lbl_eu_805247E8[3] = { 0.0f, 0.3375f, 0.675f };
-extern const f32 lbl_eu_805247F4[3] = { 0.0f, -0.5f, -1.0f };
-extern const char lbl_eu_80524800[0xB] = "CMdlAnmEye";
-// [.sdata] 0x80663C88-0x80663CA0 (24B)
+// [.data] 0x805701D0-0x805701E0 (16B): CMdlAnmEye vtable {RTTI locator
+// lbl_eu_80663C90, 0, dtor, 0}. The class keeps virtual machinery declared in
+// the hpp but the ctor/dtor are defined as fragments below so MWCC emits no
+// auto vtable/RTTI for the class.
+
+// Retail fragments: ctor (unmangled) + dtor (delete-flag form).
+extern "C" CMdlAnmEye* __ct__CMdlAnmEye(CMdlAnmEye* self) {
+    *(void**)self = (void*)&lbl_eu_805701D0;
+    self->field_04 = 0;
+    self->field_1C = 0;
+    self->field_20 = 0;
+    self->field_24 = 0;
+    self->field_28 = lbl_eu_8066B360;
+    self->value2C = 1;
+    return self;
+}
+
+extern "C" void* __dt__10CMdlAnmEyeFv(CMdlAnmEye* self, int flag) {
+    if (self != 0 && flag > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
+
+// [.rodata] 0x805247E8-0x80524810 (40B): eye-blink angle tables + RTTI name.
+// Exact retail values (0x3EAC0831 / 0x3F2C0831 / 0xBE000000 / 0xBE800000).
+extern const f32 lbl_eu_805247E8[3] = { 0.0f, 0.335999995470047f, 0.671999990940094f };
+extern const f32 lbl_eu_805247F4[3] = { 0.0f, -0.125f, -0.25f };
+extern const char lbl_eu_80524800[0x10] = "CMdlAnmEye";
+// [.sdata] 0x80663C88-0x80663CA0 (24B): {name-ptr, 0} pair, RTTI locator
+// {name, 0}, "ref" string. The retail symbol at +0x0 is 8B (pointer + 0);
+// the hpp exposes only the pointer, so the zero half is a separate symbol.
 extern const char lbl_eu_8066B358[];
 const char* lbl_eu_80663C88 = lbl_eu_8066B358;
+extern "C" __declspec(section ".sdata") const u32 lbl_eu_80663C8C = 0x00000000;
+extern "C" const void* lbl_eu_80663C90[2] = { (const void*)lbl_eu_80524800, 0 };
 extern "C" __declspec(section ".sdata") const char lbl_eu_80663C98[4] = { 0x72,0x65,0x66,0x00 };
+extern "C" __declspec(section ".sdata") const u32 lbl_eu_80663C9C = 0x00000000;
+// [.data] vtable.
+extern "C" u32 lbl_eu_805701D0[4] = {
+    (u32)&lbl_eu_80663C90, 0x00000000,
+    (u32)&__dt__10CMdlAnmEyeFv, 0x00000000,
+};
 DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_805247E8);
 DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_805247F4);
 DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_80524800);
 DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_80663C88);
+DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_80663C90);
 DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_80663C98);
+DECOMP_FORCEACTIVE(CMdlAnmEye_cpp, lbl_eu_805701D0);

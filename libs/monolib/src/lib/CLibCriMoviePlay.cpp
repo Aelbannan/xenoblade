@@ -522,11 +522,11 @@ bool CLibCriMoviePlay::renderMovie(int id) {
 
         // Vertex 0: (0, 0)
         GXPosition2s16(0, 0);
-        GXTexCoord2f32(0.0f, 0.0f);
+        GXTexCoord2f32(lbl_eu_8066A4F0, lbl_eu_8066A4F0);
 
         // Vertex 1: (width, 0)
         GXPosition2s16(x2, 0);
-        GXTexCoord2f32(lbl_eu_8066A4F4, 0.0f);
+        GXTexCoord2f32(lbl_eu_8066A4F4, lbl_eu_8066A4F0);
 
         // Vertex 2: (width, height)
         GXPosition2s16(x2, y2);
@@ -534,7 +534,7 @@ bool CLibCriMoviePlay::renderMovie(int id) {
 
         // Vertex 3: (0, height)
         GXPosition2s16(0, y2);
-        GXTexCoord2f32(0.0f, lbl_eu_8066A4F4);
+        GXTexCoord2f32(lbl_eu_8066A4F0, lbl_eu_8066A4F4);
 
         // Flush and render
         func_8044BE38__8CGXCacheFv(cacheInstance__9CDeviceGX);
@@ -635,7 +635,7 @@ void CLibCriMoviePlay::updateMovies() {
 
             // Initialize Y texture object
             GXInitTexObj(&entry->mTexObjY, entry->mTexBufY, texWidthScaled, height_raw, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-            GXInitTexObjLOD(&entry->mTexObjY, GX_LINEAR, GX_LINEAR, lbl_eu_8066A4F0, 0.0f, 0.0f, (GXBool)0, (GXBool)0, (GXAnisotropy)0);
+            GXInitTexObjLOD(&entry->mTexObjY, GX_LINEAR, GX_LINEAR, lbl_eu_8066A4F0, lbl_eu_8066A4F0, lbl_eu_8066A4F0, (GXBool)0, (GXBool)0, (GXAnisotropy)0);
         }
 
 skipAlloc:
@@ -669,7 +669,7 @@ skipAlloc:
 
             // Initialize CbCr texture object
             GXInitTexObj(&entry->mTexObjCbCr, entry->mTexBufCbCr, texWidth, texHeight, (GXTexFmt)10 /* GX_TF_YUV422 (not in vendored GXTypes.h) */, GX_CLAMP, GX_CLAMP, GX_FALSE);
-            GXInitTexObjLOD(&entry->mTexObjCbCr, GX_LINEAR, GX_LINEAR, lbl_eu_8066A4F0, 0.0f, 0.0f, (GXBool)0, (GXBool)0, (GXAnisotropy)0);
+            GXInitTexObjLOD(&entry->mTexObjCbCr, GX_LINEAR, GX_LINEAR, lbl_eu_8066A4F0, lbl_eu_8066A4F0, lbl_eu_8066A4F0, (GXBool)0, (GXBool)0, (GXAnisotropy)0);
         }
 
         // Convert and upload frame data

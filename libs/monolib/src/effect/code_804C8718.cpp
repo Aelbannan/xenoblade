@@ -354,8 +354,12 @@ struct EmitData {
 };
 }
 
-// Effect memory-region name string (.rodata at lbl_eu_805244E0).
-extern const char lbl_eu_805244E0[];
+// Effect memory-region name string (.rodata at lbl_eu_805244E0, 0x20B
+// incl. zero padding; retail shape).
+extern "C" __declspec(align(8)) const char lbl_eu_805244E0[0x20] = {
+    0x43,0x45,0x66,0x66,0x65,0x63,0x74,0x48,0x65,0x61,0x70,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
 
 // func_804C9D24: advance the per-effect node chain head (0x24) using the
 // accumulated frame fraction at 0x14.
@@ -509,7 +513,7 @@ void* func_804CB5FC(EffObj* obj) {
     PSMTXMultVec(view->field_0xcc, (const Vec*)&pos, &out2);
     *(Vec*)&pos = out2;
     SceneViewObj* view2 = (SceneViewObj*)func_80496264(obj->field_0x08->field_0x10, -1);
-    return (void*)(s32)((f32)(s32)obj->field_0x23 * view2->field_0x1f0 + pos.z);
+    return (void*)(s32)(s32ToF_b0b0((u32)(s32)obj->field_0x23) * view2->field_0x1f0 + pos.z);
 }
 
 void* func_804CB9F4(void){ return (void*)0x2FDA00; }
@@ -583,8 +587,8 @@ void func_804CBB84(EffectRoot* self, void* scene) {
                 func_804E4E8C((u32)scene);
                 lbl_eu_80663B3C = (scene == lbl_eu_806659B8);
                 func_804F3B4C(&self->field_0x08, scene);
-                f32 h = (f32)CDeviceVI::getRenderModeObj()->efbHeight;
-                f32 w = (f32)CDeviceVI::getRenderModeObj()->fbWidth;
+                f32 h = u16ToF_b0c8(CDeviceVI::getRenderModeObj()->efbHeight);
+                f32 w = u16ToF_b0c8(CDeviceVI::getRenderModeObj()->fbWidth);
                 func_804F3B60(&self->field_0x48, 1, w, h);
                 self->flags0 = (u16)(self->flags0 | 0x4000);
             }
@@ -960,7 +964,7 @@ void func_804C8D90(EffObject* obj, f32 delta) {
 
     if (!(obj->flags1 & 0x1000)) {
         // Refresh the six bound sub-regions with the current lifetime.
-        if (obj->field_0x10 > 0 && (f32)obj->field_0x10 < obj->field_0x0c) {
+        if (obj->field_0x10 > 0 && s32ToF_b0b0((u32)(s32)obj->field_0x10) < obj->field_0x0c) {
             obj->sub_0x11c[0] = obj->field_0x14;
             func_804E06B4(obj->sub_0x11c, (const void*)obj->field_0xdc[2], (const void*)obj->field_0x08, obj->field_0x14);
             obj->sub_0x14c[0] = obj->field_0x14;
@@ -981,8 +985,8 @@ void func_804C8D90(EffObject* obj, f32 delta) {
             }
         }
         if (obj->flags1 & 0x4000) {
-            if (obj->field_0x10 > 0 && (f32)obj->field_0x10 < obj->field_0x0c) {
-                if (obj->field_0x12 <= 0 || (f32)obj->field_0x12 >= obj->field_0x0c) {
+            if (obj->field_0x10 > 0 && s32ToF_b0b0((u32)(s32)obj->field_0x10) < obj->field_0x0c) {
+                if (obj->field_0x12 <= 0 || s32ToF_b0b0((u32)(s32)obj->field_0x12) >= obj->field_0x0c) {
                 } else if (obj->field_0x18 > lbl_eu_8066B0A0) {
                     obj->field_0x18 = obj->field_0x18 - obj->field_0x14;
                     if (obj->field_0x18 > lbl_eu_8066B0A0) {
@@ -1240,7 +1244,7 @@ s32 func_804CAAD4(EffectRoot* self, void* scene, void* node) {
 // type is 0xe the y component is post-processed.
 void func_804CB274(EffTypeObj* self, ml::CVec3* out, s32 mode, s32 r6,
                    const ml::CVec3* in, const ml::CVec3* r8) {
-    f32 radius = lbl_eu_8066B0A4 - (f32)r6 / lbl_eu_8066B0A8;
+    f32 radius = lbl_eu_8066B0A4 - s32ToF_b0b0((u32)r6) / lbl_eu_8066B0A8;
     switch (mode) {
     case 7:
     case 1:

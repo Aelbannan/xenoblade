@@ -74,6 +74,7 @@ struct UnkClass_8047CD0C {
     u32 mNodeCount;   // 0x10
     u32 mStride;      // 0x14
     u32 mFlags;       // 0x18
+    u32 mPad1C;       // 0x1C (retail pool symbol spans 0x20; tail unused)
 };
 
 // ------------------------------------------------------------------
@@ -380,3 +381,23 @@ extern "C" void sinit_8047D290() {
     lbl_eu_80658540.mField04 = 0;
     lbl_eu_80658540.mFlags = 0;
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.bss] 0x80658540-0x80658648 (0x108 = 264B): node-pool manager object
+// (0x20) + scene-manager block (0xA8) + two tail objects (0x30 / 0x10).
+UnkClass_8047CD0C lbl_eu_80658540;  // node pool (0x20)
+u8 lbl_eu_80658560[0xA8];           // scene manager (UnkClass_8047E110)
+u8 lbl_eu_80658608[0x30];
+u8 lbl_eu_80658638[0x10];
+DECOMP_FORCEACTIVE(UnkClass_8047CD0C_cpp, lbl_eu_80658560);
+DECOMP_FORCEACTIVE(UnkClass_8047CD0C_cpp, lbl_eu_80658608);
+DECOMP_FORCEACTIVE(UnkClass_8047CD0C_cpp, lbl_eu_80658638);
+
+// [.sbss] 0x806658C8-0x806658D8 (0x10 = 16B): owned-allocation slot (used
+// as a 4-byte pointer) + pad to the retail 8-byte symbol + the 8-byte
+// partner slot.
+void* lbl_eu_806658C8;   // owned allocation slot
+u32 lbl_eu_806658C8x;     // retail symbol tail (unused)
+u8 lbl_eu_806658D0[8];
+DECOMP_FORCEACTIVE(UnkClass_8047CD0C_cpp, lbl_eu_806658C8x);
+DECOMP_FORCEACTIVE(UnkClass_8047CD0C_cpp, lbl_eu_806658D0);

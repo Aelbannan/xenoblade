@@ -341,7 +341,7 @@ function buildBriefs(
   for (const t of targets) {
     let asm = "";
     try {
-      asm = extractRetailAsm(join(repoRoot, t.callgraph_source ?? ""), t.symbol);
+      asm = extractRetailAsm(join(repoRoot, t.callgraph_source ?? ""), t.symbol, t.address);
     } catch {
       // handled below
     }

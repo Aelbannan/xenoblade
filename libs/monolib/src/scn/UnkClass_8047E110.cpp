@@ -72,16 +72,31 @@ struct ScnManagerLayout {
 extern const f32 lbl_eu_8066A890; // box half-size / clearance radius
 extern ScnPtmf lbl_eu_8056DC74;   // default 12-byte reference block
 
+// Retail s16/s32->f32 conversion magic (lbl_eu_8066A8A0 = 0x4330000080000000),
+// referenced via the union trick so the TU emits no local .sdata2 pool
+// (retail UnkClass_8047E110.o .sdata2 is empty).
+extern double lbl_eu_8066A8A0;
+union F64Conv_A8A0 {
+    f64 d;
+    u32 w[2];
+};
+static inline f32 s32ToF_A8A0(s32 v) {
+    F64Conv_A8A0 c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = (u32)v ^ 0x80000000u;
+    return (f32)(c.d - lbl_eu_8066A8A0);
+}
+
 // Real-signature views of the func_8047E1B0 / func_8047E390 member stubs
 // (retail Fv mangling; signatures recovered from caller register setup).
 extern "C" s32 func_8047E1B0__17UnkClass_8047E110Fv(UnkClass_8047E110* self, const ml::CVec3* pos);
 extern "C" s32 func_8047E390__17UnkClass_8047E110Fv(UnkClass_8047E110* self, const ml::CVec3* pos, s32 index, f32 clearance);
 
 static inline void setWalkRect(CVec3& min, CVec3& max, const ScnWalkNode& node) {
-    min.x = lbl_eu_8066A898 * node.x;
-    max.x = min.x + lbl_eu_8066A898 * (node.width + 1);
-    min.z = lbl_eu_8066A898 * node.z;
-    max.z = min.z + lbl_eu_8066A898 * (node.depth + 1);
+    min.x = lbl_eu_8066A898 * s32ToF_A8A0(node.x);
+    max.x = min.x + lbl_eu_8066A898 * s32ToF_A8A0(node.width + 1);
+    min.z = lbl_eu_8066A898 * s32ToF_A8A0(node.z);
+    max.z = min.z + lbl_eu_8066A898 * s32ToF_A8A0(node.depth + 1);
 }
 
 // ============================================================
@@ -153,10 +168,10 @@ extern "C" bool func_804808A0__17UnkClass_8047E110Fv(
     const ScnWalkNode& goalNodeData = graph.nodes[goalNode];
     CVec3 goalCenter;
     goalCenter.y = position->y;
-    goalCenter.z = lbl_eu_8066A898 * goalNodeData.z
-        + lbl_eu_8066A8A8 * (goalNodeData.depth + 1);
-    goalCenter.x = lbl_eu_8066A898 * goalNodeData.x
-        + lbl_eu_8066A8A8 * (goalNodeData.width + 1);
+    goalCenter.z = lbl_eu_8066A898 * s32ToF_A8A0(goalNodeData.z)
+        + lbl_eu_8066A8A8 * s32ToF_A8A0(goalNodeData.depth + 1);
+    goalCenter.x = lbl_eu_8066A898 * s32ToF_A8A0(goalNodeData.x)
+        + lbl_eu_8066A8A8 * s32ToF_A8A0(goalNodeData.width + 1);
     CVec3 direction;
     direction = goalCenter - *position;
 
@@ -379,3 +394,53 @@ extern "C" s32 func_804819AC__17UnkClass_8047E110Fv(UnkClass_8047E110* self, u32
 }
 
 void UnkClass_8047E110::func_804819C4() {}
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056DC68-0x8056DCD8 (112B): three 12-byte reference blocks, the
+// CScnItemCameraNw4r vtable, and two RTTI base-lists.
+// The own-member symbols func_80481074/804812D8/804813E8 are the stub member
+// functions defined above (retail Fv mangling); the remaining slots are
+// foreign functions/locators.
+extern "C" void func_80481074__17UnkClass_8047E110Fv();
+extern "C" void func_804812D8__17UnkClass_8047E110Fv();
+extern "C" void func_804813E8__17UnkClass_8047E110Fv();
+extern "C" void __dt__18CScnItemCameraNw4rFv();
+extern "C" void func_8049F9A4();
+extern "C" void func_80482048();
+extern "C" void func_80481F9C();
+extern "C" void func_8048204C();
+extern "C" void func_80482040();
+extern "C" void func_80482038();
+extern "C" void func_80481F00();
+extern "C" u32 lbl_eu_806638A8;   // .sdata RTTI locator (foreign unit)
+extern "C" u32 lbl_eu_806624D8;   // .sdata RTTI locator (foreign unit)
+extern "C" u32 lbl_eu_806638B0;   // .sdata RTTI locator (foreign unit)
+
+extern "C" u32 lbl_eu_8056DC68[3] = {
+    0x00000000, 0xFFFFFFFF, (u32)&func_80481074__17UnkClass_8047E110Fv,
+};
+// The default 12-byte reference block (also the retail symbol referenced by
+// func_8048163C). Defined as the ScnPtmf struct so the field copy compiles.
+// NOTE: declared AFTER lbl_eu_8056DC68 so MWCC emits the .data symbols in
+// retail offset order (definition order = section order for .data).
+ScnPtmf lbl_eu_8056DC74 = { 0x00000000, 0xFFFFFFFF, (u32)&func_804812D8__17UnkClass_8047E110Fv };
+DECOMP_FORCEACTIVE(UnkClass_8047E110_cpp, lbl_eu_8056DC74);
+extern "C" u32 lbl_eu_8056DC80[4] = {
+    0x00000000, 0xFFFFFFFF, (u32)&func_804813E8__17UnkClass_8047E110Fv,
+    0x00000000,
+};
+extern "C" u32 lbl_eu_8056DC90[10] = {
+    (u32)&lbl_eu_806638A8, 0x00000000,
+    (u32)&__dt__18CScnItemCameraNw4rFv, (u32)&func_8049F9A4,
+    (u32)&func_80482048, (u32)&func_80481F9C,
+    (u32)&func_8048204C, (u32)&func_80482040,
+    (u32)&func_80482038, (u32)&func_80481F00,
+};
+extern "C" u32 lbl_eu_8056DCB8[5] = {
+    (u32)&lbl_eu_806624D8, 0x00000000, (u32)&lbl_eu_806638B0, 0x00000000,
+    0x00000000,
+};
+extern "C" u32 lbl_eu_8056DCCC[3] = { (u32)&lbl_eu_806624D8, 0x00000000, 0x00000000 };
+DECOMP_FORCEACTIVE(UnkClass_8047E110_cpp, lbl_eu_8056DC68);
+DECOMP_FORCEACTIVE(UnkClass_8047E110_cpp, lbl_eu_8056DC90);
+DECOMP_FORCEACTIVE(UnkClass_8047E110_cpp, lbl_eu_8056DCB8);

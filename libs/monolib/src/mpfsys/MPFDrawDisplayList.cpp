@@ -16,6 +16,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+extern const f64 lbl_eu_8066A7F8;  // u8/u16->f32 magic
+extern const f64 lbl_eu_8066A808;  // s32->f32 magic
+
+// Builtin (f32) casts pool TU-local magic doubles; the retail object
+// references the blob pool entries (lbl_eu_8066A7F8 u8/u16, lbl_eu_8066A808
+// s32) instead. Union helpers keep this TU's .sdata2 empty (retail shape).
+static inline f32 u8ToF_a7f8(u8 v) {
+    union { double d; u32 w[2]; } c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = v;
+    return (f32)(c.d - lbl_eu_8066A7F8);
+}
+static inline f32 s32ToF_a808(s32 v) {
+    union { double d; u32 w[2]; } c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = (u32)v ^ 0x80000000u;
+    return (f32)(c.d - lbl_eu_8066A808);
+}
+
 // ---------------------------------------------------------------------------
 // Data layouts recovered from the retail assembly (func_804753B4 walks the
 // 2D map triangle grid and interpolates height + color at the current
@@ -349,7 +368,43 @@ struct MPFDrawListLayout {
 // the instance pointer returned by getInstance.  Declared at the full retail
 // size so MWCC keeps absolute lis/addi addressing (small externs default to
 // sda21).
-extern mpfsys::MPFDrawDisplayList* lbl_eu_80658488[0x18];
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.bss] 0x80658488-0x806584E8 (0x60 = 96B): global instance slot array.
+mpfsys::MPFDrawDisplayList* lbl_eu_80658488[0x18];
+
+// [.sbss] 0x80665888-0x80665890 (8B): getInstance init flag + pad.
+u8 lbl_eu_80665888[8];  // flag at [0], pad to the retail 8B
+
+// [.rodata] 0x80523D98-0x80523DC8 (0x30 = 48B): class name strings.
+extern "C" __declspec(align(8)) const char lbl_eu_80523D98[0x20] = {
+    0x6D,0x70,0x66,0x73,0x79,0x73,0x3A,0x3A,0x4D,0x50,0x46,0x44,0x72,0x61,0x77,0x44,
+    0x69,0x73,0x70,0x6C,0x61,0x79,0x4C,0x69,0x73,0x74,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+extern "C" __declspec(align(8)) const char lbl_eu_80523DB8[0x10] = {
+    0x6D,0x70,0x66,0x73,0x79,0x73,0x3A,0x3A,0x4D,0x50,0x46,0x44,0x72,0x61,0x77,0x00,
+};
+
+// [.data] 0x8056DBA0-0x8056DBC0 (0x20 = 32B): prototype instance vtables.
+namespace MPFDrawBlob {
+extern "C" void func_80479840__Q26mpfsys18MPFDrawDisplayListFv();
+extern "C" void func_8047983C__Q26mpfsys18MPFDrawDisplayListFv();
+}
+extern "C" u32 lbl_eu_80663868[2];  // .sdata RTTI locators (defined below)
+extern "C" u32 lbl_eu_80663870[2];
+extern "C" u32 lbl_eu_8056DBA0[4] = {
+    (u32)&lbl_eu_80663868, 0x00000000,
+    (u32)&MPFDrawBlob::func_80479840__Q26mpfsys18MPFDrawDisplayListFv,
+    (u32)&MPFDrawBlob::func_8047983C__Q26mpfsys18MPFDrawDisplayListFv,
+};
+extern "C" u32 lbl_eu_8056DBB0[4] = {
+    (u32)&lbl_eu_80663870, 0x00000000, 0x00000000, 0x00000000,
+};
+extern "C" u32 lbl_eu_80663868[2] = { (u32)&lbl_eu_80523D98, (u32)&lbl_eu_8056DBB0 };
+extern "C" u32 lbl_eu_80663870[2] = { (u32)&lbl_eu_80523DB8, 0x00000000 };
+DECOMP_FORCEACTIVE(MPFDrawDisplayList_cpp, lbl_eu_8056DBA0);
+DECOMP_FORCEACTIVE(MPFDrawDisplayList_cpp, lbl_eu_80523D98);
+DECOMP_FORCEACTIVE(MPFDrawDisplayList_cpp, lbl_eu_80663868);
+DECOMP_FORCEACTIVE(MPFDrawDisplayList_cpp, lbl_eu_80663870);
 
 // Prototype instance body defined by monolibdata2 (.data, 0x10 bytes).
 struct MPFDrawProto {
@@ -360,8 +415,6 @@ struct MPFDrawProto {
 // Imports (defined by other units / monolibdata2; global-scope names are not
 // mangled by MWCC, so plain extern declarations emit the retail symbols).
 // ---------------------------------------------------------------------------
-extern s8 lbl_eu_80665888;                          // getInstance init flag (.sbss)
-extern MPFDrawProto lbl_eu_8056DBA0;                // prototype instance (.data)
 extern MPFDrawSlot* lbl_eu_80665870;                // global slot-chain head (.sbss)
 extern ml::CVec3 lbl_eu_80658410;                   // probe reference vector (.bss)
 extern ml::CVec3 lbl_eu_8065841C;                   // probe coefficient vector (.bss)
@@ -379,9 +432,9 @@ extern f32 lbl_eu_80665884;                        // billboard probe scale B
 namespace mpfsys {
 
 MPFDrawDisplayList* MPFDrawDisplayList::getInstance() {
-    if (!lbl_eu_80665888) {
+    if (lbl_eu_80665888[0] == 0) {
         lbl_eu_80658488[0] = (MPFDrawDisplayList*)&lbl_eu_8056DBA0;
-        lbl_eu_80665888 = 1;
+        lbl_eu_80665888[0] = 1;
     }
     return (MPFDrawDisplayList*)lbl_eu_80658488;
 }
@@ -413,6 +466,9 @@ extern const f32 lbl_eu_8066A818;  // grid reset value
 extern const f32 lbl_eu_8066A81C;  // probe scatter scale
 extern const f32 lbl_eu_8066A820;  // probe scatter scale 2
 extern const f32 lbl_eu_8066A824;  // fallback probe radius
+extern const f64 lbl_eu_8066A7F8;  // u8/u16->f32 magic (0x4330000000000000)
+
+
 extern const f32 lbl_eu_8066A828;  // probe fallback radius A
 extern const f32 lbl_eu_8066A82C;  // probe fallback radius B
 extern const f32 lbl_eu_8066A830;  // probe fallback radius C
@@ -733,15 +789,15 @@ bool func_804753B4__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     const MPFDrawCol* pc0 = &d.cols[e->c0];
     const MPFDrawCol* pc1 = &d.cols[e->c1];
     const MPFDrawCol* pc2 = &d.cols[e->c2];
-    c0.b = (f32)pc0->b;
-    c0.g = (f32)pc0->g;
-    c0.r = (f32)pc0->r;
-    c1.b = (f32)pc1->b;
-    c1.g = (f32)pc1->g;
-    c1.r = (f32)pc1->r;
-    c2.b = (f32)pc2->b;
-    c2.g = (f32)pc2->g;
-    c2.r = (f32)pc2->r;
+    c0.b = u8ToF_a7f8(pc0->b);
+    c0.g = u8ToF_a7f8(pc0->g);
+    c0.r = u8ToF_a7f8(pc0->r);
+    c1.b = u8ToF_a7f8(pc1->b);
+    c1.g = u8ToF_a7f8(pc1->g);
+    c1.r = u8ToF_a7f8(pc1->r);
+    c2.b = u8ToF_a7f8(pc2->b);
+    c2.g = u8ToF_a7f8(pc2->g);
+    c2.r = u8ToF_a7f8(pc2->r);
 
     out = ml::CVec3::zero;
     i = 0;
@@ -1210,7 +1266,7 @@ void func_80478C94__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                             if (f29 <= f23) {
                                 goto nextProbe;
                             }
-                            f0 = nw4r::math::FSqrt(f29);
+                            f0 = nw4r::math::FrSqrt(f29) * f29;
                             r19 = (s32)(f20 * f25 * (f0 - f26));
                             goto emit;
                         } else {
@@ -1397,8 +1453,8 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     }
 
     // Normalize the spacing and derive the scaled probe radius.
-    f32 f26 = (f32)spacing;
-    f32 f27 = nw4r::math::FSqrt(f26 * f26 + f26 * f26) * lbl_eu_8066A810;
+    f32 f26 = s32ToF_a808(spacing);
+    f32 f27 = nw4r::math::FrSqrt(f26 * f26 + f26 * f26) * (f26 * f26 + f26 * f26) * lbl_eu_8066A810;
     s32 r4 = (s32)(scale / f26) + 4;
     s32 r22 = r4 * 2;
     f32 f25 = (scale + f27) * (scale + f27);
@@ -1411,8 +1467,8 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     s32 r5b = (r22 * step) >> 1;
     s32 r14 = r5 + 0x2710 - r5b;
     s32 r25 = r3b + 0x2710 - r5b;
-    f32 f24 = (f32)r6;
-    f32 f23 = (f32)r4b;
+    f32 f24 = s32ToF_a808(r6);
+    f32 f23 = s32ToF_a808(r4b);
 
     // Bit array of already-placed quads.
     u32* bits = (u32*)func_804B5A68();
@@ -1435,7 +1491,7 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         }
     }
 
-    f32 f22 = f26 / (f32)span;
+    f32 f22 = f26 / s32ToF_a808(span);
     f32 f21 = lbl_eu_8066A814 * f22 - f26;
     f32 f28 = lbl_eu_8066A814;
     f32 f30 = lbl_eu_8066A820;
@@ -1453,11 +1509,11 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     s32 cols = r22;
 
     for (s32 row = 0; row < rows; row++) {
-        f32 f20 = f24 + (f32)row * f26;
+        f32 f20 = f24 + s32ToF_a808(row) * f26;
         f32 f19 = f20 + f28 * f26 - ref2x;
         s32 rowBase = cellOff + rowOff;
         for (s32 col = 0; col < cols; col++) {
-            f32 f18 = f23 + (f32)col * f26;
+            f32 f18 = f23 + s32ToF_a808(col) * f26;
             f32 dz = f18 + f28 * f26 - ref2z;
             s32 bitOff = col + r28;
             if (bits[bitOff >> 5] & (1u << (bitOff & 31))) {
@@ -1471,7 +1527,7 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                     self, r23, 0, (u8)index, (u16)rowBase, (u16)(r25 + r26), f20, f18);
                 d->field_0x50 = slot;
                 if (slot == 0) {
-                    lbl_eu_80665838->field_0x2DFC = 0;
+                    lbl_eu_80665838->field_0x2DFC = lbl_eu_8066A7E8;
                     // fallthrough: reset cell and fail
                     cell[0] = lbl_eu_8066A818;
                     cell[2] = lbl_eu_8066A818;
@@ -1520,9 +1576,9 @@ bool func_80476344__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                     f32 f31 = lbl_eu_8066A820 * (lbl_eu_8066A814 * f22);
                     s32 n = r23;
                     for (s32 i = 0; i < n; i++) {
-                        f32 fx = (f32)(rand() % 100) * 0.01f;
+                        f32 fx = s32ToF_a808(rand() % 100) * lbl_eu_8066A820;
                         f32 fx2 = f22 * fx + f20 - f21;
-                        d->field_0x14->x = f31 * (f32)(rand() % 100) * 0.01f - (lbl_eu_8066A81C * f22) + fx2;
+                        d->field_0x14->x = f31 * s32ToF_a808(rand() % 100) * lbl_eu_8066A820 - (lbl_eu_8066A81C * f22) + fx2;
                         if (func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(self)) {
                             break;
                         }
@@ -1599,7 +1655,7 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 
     // Density step selection from the scale/fallback comparison.
     s32 r22;
-    if (f22 <= 0) {
+    if (f22 <= lbl_eu_8066A7E8) {
         r22 = 2;
     } else if (f22 <= lbl_eu_8066A830) {
         r22 = (mode > 8) ? 4 : 3;
@@ -1613,7 +1669,7 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     // Probe spacing factor for the step-count rows.
     f32 f21 = lbl_eu_8066A7E8;
     if (r22 >= 3) {
-        f21 = lbl_eu_8066A814 * r22 / ((f32)(r22 - 2));
+        f21 = lbl_eu_8066A814 * s32ToF_a808(r22) / (s32ToF_a808(r22 - 2));
     }
 
     s32 r23 = r22 * ((s32)(f18 / f27) + 1) * 2;
@@ -1674,7 +1730,7 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     f32 f31 = lbl_eu_8066A814;
 
     for (s32 zz = 0; zz < r23; zz++) {
-        f32 f20 = f27 * (f32)zz + lbl_eu_8066A840;
+        f32 f20 = f27 * s32ToF_a808(zz) + lbl_eu_8066A840;
         f32 f29 = f20 - lbl_eu_8066A844;
         for (s32 xx = 0; xx < r23; xx++) {
             s32 r20c = 0;
@@ -1690,7 +1746,7 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                 } else if (r20c == r22 - 1) {
                     f17 = lbl_eu_8066A82C;
                 } else {
-                    f17 = -f31 * f22 + f18 + f21 * ((f32)(r20c - 1));
+                    f17 = -f31 * f22 + f18 + f21 * (s32ToF_a808(r20c - 1));
                 }
                 f32 f1b = f17 + f30;
                 f32 f0 = f29 * f29;
@@ -1746,13 +1802,13 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
                         func_804752EC__Q26mpfsys18MPFDrawDisplayListFv(self, (MPFDrawListHdr*)d->field_0x50);
                         if (d->field_0x18->field_0x17 == 1) {
                             // Jittered scatter walk.
-                            f32 f24 = f27 / (f32)(xx + 1);
+                            f32 f24 = f27 / s32ToF_a808(xx + 1);
                             f32 f23 = f27 - lbl_eu_8066A814 * f24;
                             f32 f0b = f31 * f24;
                             s32 n = r19;
                             for (s32 i = 0; i < n; i++) {
-                                f32 rnd1 = (f32)(rand() % 100) * 0.01f;
-                                f32 rnd2 = (f32)(rand() % 100) * 0.01f;
+                                f32 rnd1 = s32ToF_a808(rand() % 100) * lbl_eu_8066A820;
+                                f32 rnd2 = s32ToF_a808(rand() % 100) * lbl_eu_8066A820;
                                 f32 fx = f24 * rnd1 + f20 - f23;
                                 f32 fz = f24 * rnd2 + f17 - f23;
                                 d->field_0x14->x = f16 * rnd2 - f14 * f24 + fx;
@@ -1835,7 +1891,7 @@ void func_804783D0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
             s32 count = lbl_eu_8066A728;
             f32 f31 = lbl_eu_8066A730;
             for (s32 i = 0; i < count; i++) {
-                f32 fi = (f32)i;
+                f32 fi = s32ToF_a808(i);
                 f32 sp = item->spread;
                 f32 f28 = lbl_eu_8066A810;
                 f32 f27 = lbl_eu_8066A7F0;
@@ -1908,7 +1964,7 @@ void func_804783D0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
             f32 f30 = lbl_eu_8066A7F0;
             f32 f31 = lbl_eu_8066A7E8;
             for (s32 i = 0; i < 10; i++) {
-                f32 fi = (f32)(i % 10);
+                f32 fi = s32ToF_a808(i % 10);
                 f32 sp = item->spread;
                 f32 t = f28 * sp;
                 f32 k = item->y * (f29 * (fi * t) + f30 - sp);

@@ -7,11 +7,15 @@
 
 // --- Cross-TU imports (declared here; .cpp-only TU, CScnFilter.hpp is read-only) ---
 extern "C" void __ct__CScnFilter(CScnFilter* self);
+extern "C" void __dt__10CScnFilterFv(CScnFilter* self, int flag);
 extern void* __dl__FPv(void* p);
 extern const f32 lbl_eu_8066AAE0;
 extern const f32 lbl_eu_8066AAE4;
 extern const f32 lbl_eu_8066AAE8;
-extern char lbl_eu_8056E9E8[];   // CScnBlend vtable
+extern "C" void func_8049C868();   // CScnBloom (foreign TU)
+extern "C" void func_80498DE8();   // defined below
+extern "C" u32 lbl_eu_806639E8;    // CScnBlend RTTI locator (owned by CScnItemCamera TU)
+extern "C" u32 lbl_eu_806639F0;    // CScnFilter RTTI locator (owned by CScnItemCamera TU)
 
 // Region + tint as one anonymous aggregate (MWCC struct-copies via lwz/stw).
 struct RectRegion {
@@ -41,7 +45,37 @@ struct CScnBlend : public CScnFilter {
     u32 field_0x6C;
 };
 
-CScnBlend::~CScnBlend() {}
+extern "C" void __dt__9CScnBlendFv(CScnBlend* self, int flag); // defined below
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056E9E8-0x8056EA08 (32B): CScnBlend vtable (20B) + RTTI chain (12B).
+// The vtable is installed by __ct__CScnBlend; writing the dtor as an extern "C"
+// free function keeps MWCC from auto-emitting __vt__/__RTTI__ here (the retail
+// RTTI locators lbl_eu_806639E8/lbl_eu_806639F0 live in the CScnItemCamera TU).
+extern "C" u32 lbl_eu_8056E9E8[5] = {
+    (u32)&lbl_eu_806639E8, 0x00000000, (u32)&__dt__9CScnBlendFv,
+    (u32)&func_8049C868, (u32)&func_80498DE8,
+};
+extern "C" u32 lbl_eu_8056E9FC[3] = {
+    (u32)&lbl_eu_806639F0, 0x00000000, 0x00000000,
+};
+
+// [.rodata] 0x805240A0-0x805240AC (12B): "CScnBlend"
+extern "C" const u32 lbl_eu_805240A0[3] = {
+    0x4353636E, 0x426C656E, 0x64000000,
+};
+
+// extern "C" free-function dtor (CFontLayer pattern): keeps MWCC from
+// auto-emitting __vt__/__RTTI__ for CScnBlend in this TU (the retail vtable
+// is the dissolved .data blob above).
+extern "C" void __dt__9CScnBlendFv(CScnBlend* self, int flag) {
+    if (self != 0) {
+        __dt__10CScnFilterFv((CScnFilter*)self, 0);
+        if (flag > 0) {
+            __dl__FPv(self);
+        }
+    }
+}
 
 // Retail __ct__CScnBlend (flat name): calls the base ctor, installs the
 // CScnBlend vtable, fills the default blend rect/tint region and the

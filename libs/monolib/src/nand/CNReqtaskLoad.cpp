@@ -21,8 +21,6 @@ struct CNReqtaskLoadData;  // defined below; forward decl for the extern block
 // Retail linker names referenced by this unit (C linkage so the emitted
 // symbols match the stripped retail names rather than C++ manglings).
 extern "C" {
-    extern CNReqtaskLoadVtbl* lbl_eu_806659E8; // installed vtable pointer for this task
-    extern char lbl_eu_8056FD88[];      // vtable data - array type prevents sda21
     extern u8  lbl_eu_806659D0;         // global NAND "busy" flag
     extern s32 lbl_eu_806659D4;         // global NAND result/error latch
 
@@ -35,6 +33,37 @@ extern "C" {
     s32 func_804DA5B4(u32 arg1, u32 arg2);  // NAND read primitive
     s32 func_804DA69C(void);                // NAND close primitive
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056FD88-0x8056FDA8 (32B): two 16B vtables.  The task vtable
+// (lbl_eu_8056FD88) is installed via sinit_804DB0D8; its RTTI locator is the
+// .sdata pair lbl_eu_80663B90 below, and the base-vtable chain lives in the
+// sibling .data block lbl_eu_8056FD98 (pointing at CNRequest's RTTI locator
+// lbl_eu_80663B70, owned by the CNReqtaskSave unit).
+extern "C" u32 lbl_eu_80663B70;     // CNRequest RTTI locator (foreign sdata)
+extern "C" void func_804DA4CC();    // CNRequest base vtable func (foreign TU)
+extern "C" s32 func_804DAFB8(CNReqtaskLoadVtbl*, CNReqtaskLoadData*); // defined below
+extern "C" u32 lbl_eu_80663B90[2];  // this unit's .sdata RTTI locator pair
+extern "C" void* lbl_eu_806659E8[2] = { 0, 0 }; // [.sbss] 0x806659E8 (8B) task vtable slot
+
+extern "C" u32 lbl_eu_8056FD88[4] = {
+    (u32)&lbl_eu_80663B90, 0x00000000, (u32)&func_804DAFB8, (u32)&func_804DA4CC,
+};
+extern "C" u32 lbl_eu_8056FD98[4] = {
+    (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000,
+};
+
+// [.rodata] 0x80524610-0x80524620 (16B): "CNReqtaskLoad"
+extern "C" const u32 lbl_eu_80524610[4] = {
+    0x434E5265, 0x71746173, 0x6B4C6F61, 0x64000000,
+};
+
+// [.sdata] 0x80663B90-0x80663B98 (8B): RTTI locator { name, base-vtable }
+extern "C" u32 lbl_eu_80663B90[2] = {
+    (u32)&lbl_eu_80524610, (u32)&lbl_eu_8056FD98,
+};
+
+
 
 // CNReqtaskLoad task parameter block (the sub-task embedded in CNRequest):
 //   +0x00: char path[0x10] -- NAND load path (written by strcpy)
@@ -64,7 +93,7 @@ extern "C" CNReqtaskLoadVtbl** func_804DAF70(u8* data, const char* path, u32 arg
     d->mSize = arg3;
     d->mFlag = arg4;
     d->mState = 0;
-    return &lbl_eu_806659E8;
+    return (CNReqtaskLoadVtbl**)lbl_eu_806659E8;
 }
 
 // us-804df27c: func_804DAFB8
@@ -144,5 +173,5 @@ extern "C" __declspec(noinline) void func_804DB0E0(void* dest) {
     *(void**)dest = (void*)lbl_eu_8056FD88;
 }
 extern "C" __declspec(noinline) void sinit_804DB0D8() {
-    func_804DB0E0(&lbl_eu_806659E8);
+    func_804DB0E0(lbl_eu_806659E8);
 }

@@ -9,8 +9,8 @@
 // lbl_eu_80523F98: MemManager region name passed to MemManager::create.
 extern const char lbl_eu_80523F98[];
 // Panic file path / format string for func_8048EC14's bounds check.
-extern const char lbl_eu_8056E720[];
-extern const char lbl_eu_8056E6F8[];
+extern char lbl_eu_8056E720[];
+extern char lbl_eu_8056E6F8[];
 
 // Minimal layout of the CScnRootNw4r object pointed to by CScn::mUnk8C.
 // Only the +0x10 scene-root slot is touched by this TU.

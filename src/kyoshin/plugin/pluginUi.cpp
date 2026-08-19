@@ -19,7 +19,16 @@ void pluginUiRegist() {
     vmPluginRegist((void*)((char*)lbl_eu_804FABF0 + 0x28), (void*)lbl_eu_80525D68);
 }
 
-void winTalk(){}
+// winTalk: open a talk window. Script args: (window id, text). The window id
+// is passed through to the talk-window factory with mode 1.
+int winTalk(VMThread* pThread) {
+    VMArg* arg = vmArgPtrGet(pThread, 1);
+    int winId = vmArgIntGet(2, arg);
+    arg = vmArgPtrGet(pThread, 2);
+    const char* str = vmArgStringGet(3, arg);
+    func_8013D07C(winId, str, 1);
+    return 0;
+}
 void pcTalk(){}
 void winTalkWait(){}
 void winTalkNoName(){}

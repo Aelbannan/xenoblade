@@ -102,6 +102,30 @@ extern const float lbl_eu_8066A620;
 extern const float lbl_eu_8066A624;
 extern const float lbl_eu_8066A640;
 extern const float lbl_eu_8066A644;
+extern const double lbl_eu_8066A628;  // s32->f32 magic (0x4330000080000000)
+extern const double lbl_eu_8066A638;  // u8->f32 magic (0x4330000000000000)
+
+// Builtin (f32) casts pool TU-local magic doubles; the retail object
+// references the blob pool entries (lbl_eu_8066A628/A638) instead. Union
+// helpers keep this TU's .sdata2 empty (retail shape).
+inline f32 s32ToF_a628(s32 v) {
+    union {
+        double d;
+        u32 w[2];
+    } c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = (u32)v ^ 0x80000000u;
+    return (f32)(c.d - lbl_eu_8066A628);
+}
+inline f32 u8ToF_a638(u8 v) {
+    union {
+        double d;
+        u32 w[2];
+    } c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = v;
+    return (f32)(c.d - lbl_eu_8066A638);
+}
 
 // LOD terrain state manager (sibling TU); only the fields referenced here.
 struct UnkClass_8046368C {
@@ -621,9 +645,9 @@ void LOD::UnkClass_80466348::func_80467758() {
 void func_80467798(GXColor* color) {
     // Ambient color: each RGB byte is scaled by its own LUT factor and the
     // shared s16-derived scale, then clamped to 255; alpha is the raw latch.
-    s32 r = (s32)((f32)color->r * lbl_eu_80658348[0] * lbl_eu_806657E4);
-    s32 g = (s32)((f32)color->g * lbl_eu_80658348[1] * lbl_eu_806657E4);
-    s32 b = (s32)((f32)color->b * lbl_eu_80658348[2] * lbl_eu_806657E4);
+    s32 r = (s32)(u8ToF_a638(color->r) * lbl_eu_80658348[0] * lbl_eu_806657E4);
+    s32 g = (s32)(u8ToF_a638(color->g) * lbl_eu_80658348[1] * lbl_eu_806657E4);
+    s32 b = (s32)(u8ToF_a638(color->b) * lbl_eu_80658348[2] * lbl_eu_806657E4);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
@@ -641,9 +665,9 @@ void LOD::UnkClass_80466348::func_80467898() {
 void func_804678E8(GXColor* color) {
     // Ambient color: each RGB byte is scaled by its own LUT factor and the
     // shared s16-derived scale, then clamped to 255; alpha is the raw latch.
-    s32 r = (s32)((f32)color->r * lbl_eu_80658358[0] * lbl_eu_806657E4);
-    s32 g = (s32)((f32)color->g * lbl_eu_80658358[1] * lbl_eu_806657E4);
-    s32 b = (s32)((f32)color->b * lbl_eu_80658358[2] * lbl_eu_806657E4);
+    s32 r = (s32)(u8ToF_a638(color->r) * lbl_eu_80658358[0] * lbl_eu_806657E4);
+    s32 g = (s32)(u8ToF_a638(color->g) * lbl_eu_80658358[1] * lbl_eu_806657E4);
+    s32 b = (s32)(u8ToF_a638(color->b) * lbl_eu_80658358[2] * lbl_eu_806657E4);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
@@ -655,11 +679,11 @@ void func_804679E8(GXColor* color) {
     // Ambient color: each RGB byte is scaled by its LUT factor and the shared
     // alpha-derived scale (A630 * latch * 806657E4), then clamped to 255;
     // alpha is the raw latch.
-    f32 scale = lbl_eu_8066A630 * (f32)(s32)lbl_eu_80665814;
+    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)lbl_eu_80665814);
     scale = scale * lbl_eu_806657E4;
-    s32 r = (s32)((f32)color->r * lbl_eu_80658348[0] * scale);
-    s32 g = (s32)((f32)color->g * lbl_eu_80658348[1] * scale);
-    s32 b = (s32)((f32)color->b * lbl_eu_80658348[2] * scale);
+    s32 r = (s32)(u8ToF_a638(color->r) * lbl_eu_80658348[0] * scale);
+    s32 g = (s32)(u8ToF_a638(color->g) * lbl_eu_80658348[1] * scale);
+    s32 b = (s32)(u8ToF_a638(color->b) * lbl_eu_80658348[2] * scale);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
@@ -670,11 +694,11 @@ void func_804679E8(GXColor* color) {
 void func_80467B04(GXColor* color) {
     // Ambient color: each RGB byte is scaled by the alpha latch (converted
     // through s32->f32) times the shared A630 factor; alpha stays raw.
-    f32 scale = lbl_eu_8066A630 * (f32)(s32)lbl_eu_80665814;
+    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)lbl_eu_80665814);
     GXColor out = {
-        (u8)(s32)((f32)color->r * scale),
-        (u8)(s32)((f32)color->g * scale),
-        (u8)(s32)((f32)color->b * scale),
+        (u8)(s32)(u8ToF_a638(color->r) * scale),
+        (u8)(s32)(u8ToF_a638(color->g) * scale),
+        (u8)(s32)(u8ToF_a638(color->b) * scale),
         (u8)lbl_eu_80665814,
     };
     GXSetChanAmbColor(GX_COLOR0A0, out);
@@ -684,11 +708,11 @@ void func_80467BD4(GXColor* color) {
     // Ambient color: each RGB byte is scaled by its LUT factor and the shared
     // alpha-derived scale (A630 * latch * 806657E4), then clamped to 255;
     // alpha is the raw latch.
-    f32 scale = lbl_eu_8066A630 * (f32)(s32)lbl_eu_80665814;
+    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)lbl_eu_80665814);
     scale = scale * lbl_eu_806657E4;
-    s32 r = (s32)((f32)color->r * lbl_eu_80658358[0] * scale);
-    s32 g = (s32)((f32)color->g * lbl_eu_80658358[1] * scale);
-    s32 b = (s32)((f32)color->b * lbl_eu_80658358[2] * scale);
+    s32 r = (s32)(u8ToF_a638(color->r) * lbl_eu_80658358[0] * scale);
+    s32 g = (s32)(u8ToF_a638(color->g) * lbl_eu_80658358[1] * scale);
+    s32 b = (s32)(u8ToF_a638(color->b) * lbl_eu_80658358[2] * scale);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
@@ -699,9 +723,9 @@ void func_80467BD4(GXColor* color) {
 void func_80467CF0(GXColor* color) {
     // Ambient color: each RGB byte is scaled by its LUT factor and 806657E4,
     // then clamped to 255; alpha is the latch scaled by 80665808.
-    s32 r = (s32)((f32)color->r * lbl_eu_80658348[0] * lbl_eu_806657E4);
-    s32 g = (s32)((f32)color->g * lbl_eu_80658348[1] * lbl_eu_806657E4);
-    s32 b = (s32)((f32)color->b * lbl_eu_80658348[2] * lbl_eu_806657E4);
+    s32 r = (s32)(u8ToF_a638(color->r) * lbl_eu_80658348[0] * lbl_eu_806657E4);
+    s32 g = (s32)(u8ToF_a638(color->g) * lbl_eu_80658348[1] * lbl_eu_806657E4);
+    s32 b = (s32)(u8ToF_a638(color->b) * lbl_eu_80658348[2] * lbl_eu_806657E4);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
@@ -709,7 +733,7 @@ void func_80467CF0(GXColor* color) {
         (u8)r,
         (u8)g,
         (u8)b,
-        (u8)(s32)((f32)(s32)lbl_eu_80665814 * lbl_eu_80665808),
+        (u8)(s32)(s32ToF_a628((s32)lbl_eu_80665814) * lbl_eu_80665808),
     };
     GXSetChanAmbColor(GX_COLOR0A0, out);
 }
@@ -722,7 +746,7 @@ void LOD::UnkClass_80466348::func_80467E14() {
         field_0x0,
         field_0x1,
         field_0x2,
-        (u8)(s32)((f32)(s32)lbl_eu_80665814 * lbl_eu_80665808),
+        (u8)(s32)(s32ToF_a628((s32)lbl_eu_80665814) * lbl_eu_80665808),
     };
     GXSetChanAmbColor(GX_COLOR0A0, color);
 }
@@ -730,9 +754,9 @@ void LOD::UnkClass_80466348::func_80467E14() {
 void func_80467E94(GXColor* color) {
     // Ambient color: each RGB byte is scaled by its LUT factor and 806657E4,
     // then clamped to 255; alpha is the latch scaled by 80665808.
-    s32 r = (s32)((f32)color->r * lbl_eu_80658358[0] * lbl_eu_806657E4);
-    s32 g = (s32)((f32)color->g * lbl_eu_80658358[1] * lbl_eu_806657E4);
-    s32 b = (s32)((f32)color->b * lbl_eu_80658358[2] * lbl_eu_806657E4);
+    s32 r = (s32)(u8ToF_a638(color->r) * lbl_eu_80658358[0] * lbl_eu_806657E4);
+    s32 g = (s32)(u8ToF_a638(color->g) * lbl_eu_80658358[1] * lbl_eu_806657E4);
+    s32 b = (s32)(u8ToF_a638(color->b) * lbl_eu_80658358[2] * lbl_eu_806657E4);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
@@ -740,7 +764,7 @@ void func_80467E94(GXColor* color) {
         (u8)r,
         (u8)g,
         (u8)b,
-        (u8)(s32)((f32)(s32)lbl_eu_80665814 * lbl_eu_80665808),
+        (u8)(s32)(s32ToF_a628((s32)lbl_eu_80665814) * lbl_eu_80665808),
     };
     GXSetChanAmbColor(GX_COLOR0A0, out);
 }
@@ -749,12 +773,12 @@ void func_80467FB8(GXColor* color) {
     // Ambient color: each RGB byte is scaled by its LUT factor and the shared
     // alpha-derived scale (80665808 * A630 * latch * 806657E4), then clamped
     // to 255; alpha is the raw latch.
-    f32 scale = lbl_eu_8066A630 * (f32)(s32)lbl_eu_80665814;
+    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)lbl_eu_80665814);
     scale = scale * lbl_eu_806657E4;
     scale = lbl_eu_80665808 * scale;
-    s32 r = (s32)((f32)color->r * lbl_eu_80658348[0] * scale);
-    s32 g = (s32)((f32)color->g * lbl_eu_80658348[1] * scale);
-    s32 b = (s32)((f32)color->b * lbl_eu_80658348[2] * scale);
+    s32 r = (s32)(u8ToF_a638(color->r) * lbl_eu_80658348[0] * scale);
+    s32 g = (s32)(u8ToF_a638(color->g) * lbl_eu_80658348[1] * scale);
+    s32 b = (s32)(u8ToF_a638(color->b) * lbl_eu_80658348[2] * scale);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
@@ -765,12 +789,12 @@ void func_80467FB8(GXColor* color) {
 void func_804680DC(GXColor* color) {
     // Ambient color: each RGB byte is scaled by the alpha latch (converted
     // through s32->f32) times the A630 and 80665808 factors; alpha stays raw.
-    f32 scale = lbl_eu_8066A630 * (f32)(s32)lbl_eu_80665814;
+    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)lbl_eu_80665814);
     scale = scale * lbl_eu_80665808;
     GXColor out = {
-        (u8)(s32)((f32)color->r * scale),
-        (u8)(s32)((f32)color->g * scale),
-        (u8)(s32)((f32)color->b * scale),
+        (u8)(s32)(u8ToF_a638(color->r) * scale),
+        (u8)(s32)(u8ToF_a638(color->g) * scale),
+        (u8)(s32)(u8ToF_a638(color->b) * scale),
         (u8)lbl_eu_80665814,
     };
     GXSetChanAmbColor(GX_COLOR0A0, out);
@@ -780,12 +804,12 @@ void func_804681B4(GXColor* color) {
     // Ambient color: each RGB byte is scaled by its LUT factor and the shared
     // alpha-derived scale (80665808 * A630 * latch * 806657E4), then clamped
     // to 255; alpha is the raw latch.
-    f32 scale = lbl_eu_8066A630 * (f32)(s32)lbl_eu_80665814;
+    f32 scale = lbl_eu_8066A630 * s32ToF_a628((s32)lbl_eu_80665814);
     scale = scale * lbl_eu_806657E4;
     scale = lbl_eu_80665808 * scale;
-    s32 r = (s32)((f32)color->r * lbl_eu_80658358[0] * scale);
-    s32 g = (s32)((f32)color->g * lbl_eu_80658358[1] * scale);
-    s32 b = (s32)((f32)color->b * lbl_eu_80658358[2] * scale);
+    s32 r = (s32)(u8ToF_a638(color->r) * lbl_eu_80658358[0] * scale);
+    s32 g = (s32)(u8ToF_a638(color->g) * lbl_eu_80658358[1] * scale);
+    s32 b = (s32)(u8ToF_a638(color->b) * lbl_eu_80658358[2] * scale);
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;

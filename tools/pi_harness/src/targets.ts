@@ -139,6 +139,7 @@ function toTarget(raw: RawTarget): Target {
       : typeof raw.instruction_match === "string" ? Number.parseFloat(raw.instruction_match)
       : undefined,
     callgraph_source: raw.callgraph_source,
+    address: raw.address as string | undefined,
     called_functions: raw.called_functions,
     unresolved_called_functions: raw.unresolved_called_functions,
     has_indirect_calls: raw.has_indirect_calls,

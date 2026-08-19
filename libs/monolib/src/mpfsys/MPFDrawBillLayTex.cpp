@@ -48,7 +48,7 @@ struct MPFDrawBillPairList {
 extern "C" {
     s8 lbl_eu_806658B0;
     mpfsys::MPFDrawBillLayTex* lbl_eu_806658B4;
-    static mpfsys::MPFDrawBillLayTex lbl_eu_8056DC00;
+    extern "C" u32 lbl_eu_8056DC00[4];  // retail singleton vtable (defined below)
 
     extern MPFDrawBillData* lbl_eu_80665860;
     extern void* lbl_eu_80665838;
@@ -87,7 +87,7 @@ namespace mpfsys {
 
 MPFDrawBillLayTex* MPFDrawBillLayTex::getInstance() {
     if (!lbl_eu_806658B0) {
-        lbl_eu_806658B4 = &lbl_eu_8056DC00;
+        lbl_eu_806658B4 = (mpfsys::MPFDrawBillLayTex*)&lbl_eu_8056DC00;
         lbl_eu_806658B0 = 1;
     }
     return (MPFDrawBillLayTex*)&lbl_eu_806658B4;
@@ -688,3 +688,78 @@ extern "C" void func_8047B9DC__Q26mpfsys17MPFDrawBillLayTexFv(mpfsys::MPFDrawBil
     GXSetTevOrder((GXTevStageID)0, (GXTexCoordID)0, (GXTexMapID)0, (GXChannelID)4);
     func_80474CC4__Q26mpfsys17UnkClass_80471EC8Fv();
 }
+
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.data] 0x8056DC00-0x8056DC68 (104B): three vtables (LayTex 16B, Cross 16B,
+// Billboard 16B) interleaved with their RTTI chains (24B/16B/16B).  The
+// sdata locators lbl_eu_80663888/90/98 below carry the RTTI names; the shared
+// base locator lbl_eu_80663870 is owned by a neighbouring mpfsys TU.
+extern "C" u32 lbl_eu_80663870;    // shared base RTTI locator (foreign TU)
+extern "C" u32 lbl_eu_80663888[2]; // LayTex RTTI locator (defined below)
+extern "C" u32 lbl_eu_80663890[2]; // Cross RTTI locator (defined below)
+extern "C" u32 lbl_eu_80663898[2]; // Billboard RTTI locator (defined below)
+extern "C" u32 lbl_eu_8056DC10[6];
+extern "C" u32 lbl_eu_8056DC28[4];
+extern "C" u32 lbl_eu_8056DC38[4];
+extern "C" u32 lbl_eu_8056DC48[4];
+extern "C" u32 lbl_eu_8056DC58[4];
+
+// The retail singleton object at 0x8056DC00 is the LayTex vtable itself
+// (getInstance points the sdata slot at it).
+extern "C" u32 lbl_eu_8056DC00[4] = {
+    (u32)&lbl_eu_80663888, 0x00000000,
+    (u32)&func_8047B85C__Q26mpfsys17MPFDrawBillLayTexFv,
+    (u32)&func_8047B9DC__Q26mpfsys17MPFDrawBillLayTexFv,
+};
+extern "C" u32 lbl_eu_8056DC10[6] = {
+    (u32)&lbl_eu_80663870, 0x00000000, (u32)&lbl_eu_80663898,
+    0x00000000, 0x00000000, 0x00000000,
+};
+extern "C" u32 lbl_eu_8056DC28[4] = {
+    (u32)&lbl_eu_80663890, 0x00000000,
+    (u32)&func_8047B1E8, (u32)&func_8047B528,
+};
+extern "C" u32 lbl_eu_8056DC38[4] = {
+    (u32)&lbl_eu_80663870, 0x00000000, 0x00000000, 0x00000000,
+};
+extern "C" u32 lbl_eu_8056DC48[4] = {
+    (u32)&lbl_eu_80663898, 0x00000000,
+    (u32)&func_8047A7B0__Q26mpfsys16MPFDrawBillboardFv,
+    (u32)&func_8047A86C__Q26mpfsys16MPFDrawBillboardFv,
+};
+extern "C" u32 lbl_eu_8056DC58[4] = {
+    (u32)&lbl_eu_80663870, 0x00000000, 0x00000000, 0x00000000,
+};
+
+// [.rodata] 0x80523E00-0x80523E98 (152B): blend-order tables + RTTI names.
+extern "C" __declspec(align(4)) const u32 lbl_eu_80523E00[4] = { 0x00000000, 0x00000001, 0x00000002, 0x00000003 };
+extern "C" __declspec(align(4)) const u32 lbl_eu_80523E10[4] = { 0x00000003, 0x00000002, 0x00000001, 0x00000000 };
+// CScnItemLight pattern: `__declspec(align(4)) const char[N]` with exact
+// string sizes makes MWCC pack the pool at 4-byte alignment like the retail
+// DOL layout (u32 arrays or unpadded char arrays get 8-aligned under -str
+// reuse and drift the section).
+extern "C" __declspec(align(4)) const char lbl_eu_80523E20[26] = {
+    0x6D,0x70,0x66,0x73,0x79,0x73,0x3A,0x3A,0x4D,0x50,0x46,0x44,0x72,0x61,0x77,0x42,
+    0x69,0x6C,0x6C,0x4C,0x61,0x79,0x54,0x65,0x78,0x00,
+};
+extern "C" __declspec(align(4)) const char lbl_eu_80523E3C[21] = {
+    0x6D,0x70,0x66,0x73,0x79,0x73,0x3A,0x3A,0x4D,0x50,0x46,0x44,0x72,0x61,0x77,0x43,
+    0x72,0x6F,0x73,0x73,0x00,
+};
+extern "C" __declspec(align(4)) const char lbl_eu_80523E54[25] = {
+    0x6D,0x70,0x66,0x73,0x79,0x73,0x3A,0x3A,0x4D,0x50,0x46,0x44,0x72,0x61,0x77,0x42,
+    0x69,0x6C,0x6C,0x62,0x6F,0x61,0x72,0x64,0x00,
+};
+extern "C" __declspec(align(4)) const char lbl_eu_80523E70[19] = {
+    0x43,0x53,0x63,0x6E,0x49,0x74,0x65,0x6D,0x43,0x61,0x6D,0x65,0x72,0x61,0x4E,0x77,
+    0x34,0x72,0x00,
+};
+extern "C" __declspec(align(4)) const char lbl_eu_80523E84[20] = {
+    0x43,0x53,0x63,0x6E,0x49,0x74,0x65,0x6D,0x43,0x61,0x6D,0x65,0x72,0x61,0x00,
+    0x00,0x00,0x00,0x00,0x00,  // +5B tail pad (retail section tail)
+};
+
+// [.sdata] 0x80663888-0x806638A0 (24B): RTTI locators.
+extern "C" u32 lbl_eu_80663888[2] = { (u32)&lbl_eu_80523E20, (u32)&lbl_eu_8056DC10 };
+extern "C" u32 lbl_eu_80663890[2] = { (u32)&lbl_eu_80523E3C, (u32)&lbl_eu_8056DC38 };
+extern "C" u32 lbl_eu_80663898[2] = { (u32)&lbl_eu_80523E54, (u32)&lbl_eu_8056DC58 };

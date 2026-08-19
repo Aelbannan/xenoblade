@@ -83,11 +83,11 @@ public:
 // Global singleton pointer to the cache instance (.sbss).
 extern CWorkSystemCache* lbl_eu_806659C8;
 // Retail CWorkSystemCache vtable (.data) - the class is novtable, so the ctor
-// stores this retail rodata vtable manually (same pattern as CDeviceFileDvd).
-extern u32 lbl_eu_8056FC70[];
-// reslist<CCacheItem> vtables (DOL data).
-extern u8 lbl_eu_8056FD3C[];
-extern u8 lbl_eu_8056FD24[];
+// stores this retail vtable manually (same pattern as CDeviceFileDvd).
+extern "C" u32 lbl_eu_8056FC70[];
+// reslist<CCacheItem> vtables (DOL data, defined at the bottom of this TU).
+extern "C" u32 lbl_eu_8056FD3C[];
+extern "C" u32 lbl_eu_8056FD24[];
 
 extern "C" {
 
@@ -284,3 +284,131 @@ extern "C" void func_804D91BC(CCacheItem* self) {
         *(u32*)((u8*)self + 0x44) -= 1;
     }
 }
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+// [.rodata] 0x80524568-0x805245B0 (72B): RTTI name strings. MWCC's .rodata
+// emission pads a non-last symbol to an 8-byte boundary when its end is
+// 4-mod-8, so the retail [20][24][28] symbol split is unreproducible with
+// three separate arrays. Instead the first string is padded to [24] and the
+// first four bytes of the second name ("resl") ride inside it, with the
+// remaining [20] following at +0x18; the combined bytes are byte-identical
+// to retail and the third string lands at +0x2C. (The middle symbol's VALUE
+// sits 4 bytes late; only typeid().name() output is affected, not the
+// dynamic_cast base-list walk.)
+extern "C" const char lbl_eu_80524568[24] = {
+    0x43,0x57,0x6F,0x72,0x6B,0x53,0x79,0x73,0x74,0x65,0x6D,0x43,0x61,0x63,0x68,0x65,
+    0x00,0x00,0x00,0x00, 0x72,0x65,0x73,0x6C,
+};  // "CWorkSystemCache\0" + 3 pad + "resl"
+extern "C" const char lbl_eu_8052457C[20] = {
+    0x69,0x73,0x74,0x3C,0x43,0x43,0x61,0x63,0x68,0x65,0x49,0x74,0x65,0x6D,0x20,0x2A,
+    0x3E,0x00,0x00,0x00,
+};  // "ist<CCacheItem *>\0" + 2 pad (completes "reslist...")
+extern "C" const char lbl_eu_80524594[28] = {
+    0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x43,0x43,
+    0x61,0x63,0x68,0x65,0x49,0x74,0x65,0x6D,0x20,0x2A,0x3E,0x00,
+};  // "_reslist_base<CCacheItem *>\0"
+DECOMP_FORCEACTIVE(CWorkSystemCache_cpp, lbl_eu_80524568);
+DECOMP_FORCEACTIVE(CWorkSystemCache_cpp, lbl_eu_80524594);
+
+// Foreign .sdata strings referenced by the locators below.
+extern const char lbl_eu_8066B218[];
+extern const char lbl_eu_8066B220[];
+extern const char lbl_eu_805245C8[];
+
+// Forward declarations for the .data block below (referenced by the .sdata
+// locators above).
+extern "C" u32 lbl_eu_8056FD10[];
+extern "C" u32 lbl_eu_8056FD30[];
+extern "C" u32 lbl_eu_8056FD24[];
+extern "C" u32 lbl_eu_8056FD3C[];
+
+// [.sdata] 0x80663B40-0x80663B78 (56B): RTTI locators + shared "ref"-style
+// string pointers.
+extern "C" void* lbl_eu_80663B40[2] = { (void*)lbl_eu_80524568, (void*)lbl_eu_8056FD10 };
+extern "C" void* lbl_eu_80663B48[2] = { (void*)lbl_eu_8052457C, (void*)lbl_eu_8056FD30 };
+extern "C" void* lbl_eu_80663B50[2] = { (void*)lbl_eu_80524594, 0 };
+extern "C" void* lbl_eu_80663B58[2] = { (void*)lbl_eu_8066B218, 0 };
+extern "C" void* lbl_eu_80663B60 = (void*)lbl_eu_8066B220;
+extern "C" void* lbl_eu_80663B64 = (void*)lbl_eu_8066B220;
+extern "C" void* lbl_eu_80663B68[2] = { (void*)lbl_eu_8066B220, 0 };
+extern "C" void* lbl_eu_80663B70[2] = { (void*)lbl_eu_805245C8, 0 };
+DECOMP_FORCEACTIVE(CWorkSystemCache_cpp, lbl_eu_80663B40);
+
+// [.data] 0x8056FC70-0x8056FD48 (216B): CWorkSystemCache vtable + reslist
+// RTTI base-list + reslist<CCacheItem*>/_reslist_base vtables.
+extern "C" void* __RTTI__10IWorkEvent;
+extern "C" void* __RTTI__11CWorkThread;
+extern "C" void __dt__16CWorkSystemCacheFv();
+extern "C" void wkUpdate__16CWorkSystemCacheFv();
+extern "C" void wkStandbyLogin__16CWorkSystemCacheFv();
+extern "C" void wkStandbyLogout__16CWorkSystemCacheFv();
+extern "C" void wkRender__11CWorkThreadFv();
+extern "C" void wkRenderAfter__11CWorkThreadFv();
+extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl();
+extern "C" void WorkEvent1__10IWorkEventFPvPCc();
+extern "C" void OnFileEvent__10IWorkEventFP10CEventFile();
+extern "C" void WorkEvent3__10IWorkEventFPv();
+extern "C" void WorkEvent4__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb();
+extern "C" void WorkEvent6__10IWorkEventFv();
+extern "C" void WorkEvent7__10IWorkEventFv();
+extern "C" void WorkEvent8__10IWorkEventFv();
+extern "C" void WorkEvent9__10IWorkEventFv();
+extern "C" void WorkEvent10__10IWorkEventFv();
+extern "C" void WorkEvent11__10IWorkEventFv();
+extern "C" void WorkEvent12__10IWorkEventFv();
+extern "C" void WorkEvent13__10IWorkEventFv();
+extern "C" void WorkEvent14__10IWorkEventFv();
+extern "C" void WorkEvent15__10IWorkEventFv();
+extern "C" void WorkEvent16__10IWorkEventFv();
+extern "C" void WorkEvent17__10IWorkEventFv();
+extern "C" void WorkEvent18__10IWorkEventFv();
+extern "C" void WorkEvent19__10IWorkEventFv();
+extern "C" void WorkEvent20__10IWorkEventFv();
+extern "C" void WorkEvent21__10IWorkEventFv();
+extern "C" void WorkEvent22__10IWorkEventFv();
+extern "C" void WorkEvent23__10IWorkEventFv();
+extern "C" void WorkEvent24__10IWorkEventFv();
+extern "C" void WorkEvent25__10IWorkEventFv();
+extern "C" void WorkEvent26__10IWorkEventFv();
+extern "C" void WorkEvent27__10IWorkEventFv();
+extern "C" void WorkEvent28__10IWorkEventFv();
+extern "C" void WorkEvent29__10IWorkEventFv();
+extern "C" void WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+
+extern "C" u32 lbl_eu_8056FC70[40] = {
+    (u32)&lbl_eu_80663B40, 0x00000000, (u32)&__dt__16CWorkSystemCacheFv,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
+    (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
+    (u32)&wkUpdate__16CWorkSystemCacheFv, (u32)&wkRender__11CWorkThreadFv,
+    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__16CWorkSystemCacheFv,
+    (u32)&wkStandbyLogout__16CWorkSystemCacheFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+};
+extern "C" u32 lbl_eu_8056FD10[5] = {
+    (u32)&__RTTI__10IWorkEvent, 0x00000000, (u32)&__RTTI__11CWorkThread, 0x00000000,
+    0x00000000,
+};
+extern "C" u32 lbl_eu_8056FD24[3] = { (u32)&lbl_eu_80663B48, 0x00000000, (u32)&__dt__reslist_CCacheItem };
+extern "C" u32 lbl_eu_8056FD30[3] = { (u32)&lbl_eu_80663B50, 0x00000000, 0x00000000 };
+extern "C" u32 lbl_eu_8056FD3C[3] = { (u32)&lbl_eu_80663B50, 0x00000000, (u32)&__dt___reslist_base_CCacheItem };
+DECOMP_FORCEACTIVE(CWorkSystemCache_cpp, lbl_eu_8056FC70);
+DECOMP_FORCEACTIVE(CWorkSystemCache_cpp, lbl_eu_8056FD10);
+DECOMP_FORCEACTIVE(CWorkSystemCache_cpp, lbl_eu_8056FD3C);
+
+// [.sbss] 0x806659C8-0x806659D0 (8B): singleton cache pointer + pad word.
+CWorkSystemCache* lbl_eu_806659C8;
+u32 lbl_eu_806659CC;

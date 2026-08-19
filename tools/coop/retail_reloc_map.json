@@ -23427,7 +23427,7 @@
         ]
       }
     },
-    "main/kyoshin/plugin/pluginUi@1879": {
+    "main/kyoshin/plugin/pluginUi@1892": {
       "R_PPC_EMB_SDA21": {
         "addend_delta": 0,
         "alternatives": [],
@@ -28305,8 +28305,8 @@
       }
     }
   },
-  "function_pairs": 11704,
-  "generated": "2026-08-18T08:03:39.611869",
+  "function_pairs": 11703,
+  "generated": "2026-08-18T12:01:46.307425",
   "region": "us",
   "units_scanned": 1148,
   "version": 1

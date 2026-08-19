@@ -140,6 +140,18 @@ Run **after** a match (or when investigating `UnkClass_*`/`func_*`), before rena
   **per-target** record → `docs/MWCC_CASES.md` (don't bury it in attempts.jsonl). After 100%, add
   Dolphin proof when `PLAN.md` requires `BEHAVIOR_VERIFIED`.
 
+  **Use this record format (both files):**
+
+  ```
+  ## <symbol/unit> — <residual> → <fix> (<compiler flags>, <result>)
+  - Symptom:   what hexdiff shows
+  - Cause:     why retail differs
+  - Fix:       the concrete change / recipe
+  - Result:    FULL_MATCH / EQUIVALENT_MATCH / <n>% near-miss
+  - Confidence: repo_proven / hypothesis / negative_result   # general (PATTERNS) only
+  - Applies to/a.k.a.: related flags, §17.6 escapes, filenames   # general (PATTERNS) only
+  ```
+
 ## MWCC knowledge (patterns + cases)
 
 ```bash

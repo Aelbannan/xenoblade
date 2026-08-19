@@ -58,6 +58,10 @@ git -C "$WORKTREE_ROOT" worktree add -b "$BRANCH" "$WT" "$BASE"
 echo "==> wiring build/ .venv/ orig/ ninja logs"
 ln -s "$MAIN_REAL/build" "$WT/build"
 ln -s "$MAIN_REAL/.venv" "$WT/.venv"
+# git only tracks the .gitkeep placeholders under orig/; the real retail
+# files (sys/main.dol etc.) are gitignored. Drop the placeholder tree first
+# so the copy lands at orig/<region>/... and not orig/orig/<region>/...
+rm -rf "$WT/orig"
 cp -R "$MAIN_REAL/orig" "$WT/orig"
 cp "$MAIN_REAL/.ninja_log" "$MAIN_REAL/.ninja_deps" "$WT/"
 

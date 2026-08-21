@@ -11,10 +11,10 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12633 |
+| extern "C" (total lines) | 12637 |
 | extern "C" declarations (non-lbl_*, imports) | 4906 |
-| extern "C" definitions (forced names) | 3924 |
-| `self`/register-style params | 11898 |
+| extern "C" definitions (forced names) | 3928 |
+| `self`/register-style params | 11899 |
 | `void*` (params + locals) | 7223 |
 | raw pointer offset arithmetic | 6896 |
 | deref-through-cast arithmetic | 2746 |
@@ -140,7 +140,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/scn/CMdlDynamics.cpp | 2 | 22 | 49 | 13 | 42 | 33 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlLook.cpp | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlMaterial.cpp | 4 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CMdlMouth.cpp | 0 | 1 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CMdlMouth.cpp | 0 | 5 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScn.cpp | 3 | 37 | 21 | 15 | 25 | 5 | 0 | 2 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnBlend.cpp | 5 | 3 | 10 | 2 | 2 | 2 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnBloom.cpp | 15 | 21 | 30 | 5 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -472,7 +472,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_HP.cpp | 0 | 1 | 15 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE.cpp | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.cpp | 0 | 0 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp | 0 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.cpp | 7 | 0 | 15 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_BREAK.cpp | 0 | 1 | 10 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL.cpp | 0 | 0 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -1612,7 +1612,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/scn/CMdlMouth.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_def": 1,
+  "extern_c_nonlbl_def": 5,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 6
@@ -5037,7 +5037,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 9
+  "self_params": 10
  },
  "src/kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.cpp": {
   "asm_insn_shim": 0,

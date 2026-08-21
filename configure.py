@@ -1515,7 +1515,7 @@ config.libs = [
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_dec.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_deli.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_emp.c"),
-            Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_err.c"),
+            Object(Matching, "CriWare/src/sofdec/sfdcore/mpv/mpv_err.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_frm.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_get.c", extra_cflags=["-use_lmw_stmw off"]),  # retail mpv_get: individual stw saves (MPV_GetPicAtr counted-loop frame); the lib-level -use_lmw_stmw on would emit stmw for the whole-function optimize_for_size frame
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_hdec.c"),
@@ -1856,10 +1856,10 @@ config.libs = [
             Object(NonMatching, "monolib/src/core/CDrawGX.cpp"),
             Object(NonMatching, "monolib/src/core/CException.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "monolib/src/core/CViewRectDataCore.cpp"),
-            Object(NonMatching, "monolib/src/lib/CLib.cpp", extra_cflags=["-RTTI off"]),
-            Object(NonMatching, "monolib/src/lib/CLibCri.cpp"),
-            Object(NonMatching, "monolib/src/lib/CLibCriMoviePlay.cpp"),
-            Object(NonMatching, "monolib/src/lib/CLibCriStreamingPlay.cpp"),
+            Object(Matching, "monolib/src/lib/CLib.cpp", extra_cflags=["-RTTI off"]),
+            Object(Matching, "monolib/src/lib/CLibCri.cpp"),
+            Object(Matching, "monolib/src/lib/CLibCriMoviePlay.cpp"),
+            Object(Matching, "monolib/src/lib/CLibCriStreamingPlay.cpp"),
             # TU-final 2026: 6/6 FULL_MATCH (hexdiff byte-identical, data
             # 100%, split 0x204 exact). Vtable symbol renamed in symbols.txt
             # (lbl_eu_8056D0F0 -> __vt__7CLibG3d) so the retail reloc name
@@ -1867,12 +1867,12 @@ config.libs = [
             # ctor until the retail .o is re-split (baked name), as with
             # CDeviceGX's own vtable.
             Object(Matching, "monolib/src/lib/CLibG3d.cpp", extra_cflags=["-i libs/monolib/src/lib"]),
-            Object(NonMatching, "monolib/src/lib/CLibHbm.cpp"),
+            Object(Matching, "monolib/src/lib/CLibHbm.cpp"),
             Object(NonMatching, "monolib/src/lib/CLibHbmControl.cpp"),
-            Object(NonMatching, "monolib/src/lib/CLibLayout.cpp"),
+            Object(Matching, "monolib/src/lib/CLibLayout.cpp"),
             Object(NonMatching, "monolib/src/lib/UnkClass_8045F564.cpp", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "monolib/src/lib/Class_8045F858.cpp"),
-            Object(NonMatching, "monolib/src/lib/CLibStaticData.cpp"),
+            Object(Matching, "monolib/src/lib/CLibStaticData.cpp"),
             Object(NonMatching, "monolib/src/lib/CLibVM.cpp"),
             Object(Matching, "monolib/src/lib/UnkClass_80460308.cpp"),
             Object(NonMatching, "monolib/src/lib/UnkClass_80460C34.cpp"),

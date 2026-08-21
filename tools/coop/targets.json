@@ -245742,8 +245742,8 @@
       "size": "0xC4",
       "unit": "kyoshin/menu/CMenuKizunaTalkList",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-801c5338",
@@ -245759,15 +245759,7 @@
       "source": "src/kyoshin/menu/CMenuKizunaTalkList.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-21T16:38:18.763270+00:00",
-        "allowed_paths": [
-          "src/kyoshin/menu/CMenuKizunaTalkList.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8027431c",
@@ -548933,7 +548925,7 @@
       "unit": "monolib/src/core/CPackItem",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/core/CPackItem.cpp",
       "called_functions": [
@@ -548945,7 +548937,7 @@
       "callgraph_source": "build/us/asm/monolib/src/core/CPackItem.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "instruction_match": 81.98,
+      "instruction_match": 99.3,
       "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true
     },

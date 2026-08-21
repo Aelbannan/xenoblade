@@ -152449,7 +152449,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/menu/CMenuSelectShop.cpp",
       "source_present": true,
-      "instruction_match": 75.883,
+      "instruction_match": 83.3,
       "equivalence_status": "inconclusive_smt_disabled"
     },
     {
@@ -286852,7 +286852,7 @@
       "unit": "kyoshin/plugin/pluginVoice",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/plugin/pluginVoice.cpp",
       "called_functions": [
@@ -286869,17 +286869,9 @@
         "_restgpr_27",
         "_savegpr_27"
       ],
-      "instruction_match": 93.286,
+      "instruction_match": 98.661,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-21T18:30:34.005659+00:00",
-        "allowed_paths": [
-          "src/kyoshin/plugin/pluginVoice.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802bbac0",
@@ -464000,8 +463992,8 @@
       "size": "0xF4",
       "unit": "nw4r/src/snd/snd_WsdFile",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_WsdFile.cpp",
       "called_functions": [
@@ -464016,8 +464008,8 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_WsdFile.s",
       "abi_helper_calls": [],
-      "instruction_match": 99.836,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -476209,9 +476201,17 @@
       "callgraph_source": "build/us/asm/monolib/src/work/CWorkControl.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 99.032,
+      "instruction_match": 99.194,
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-21T19:01:48.184390+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/work/CWorkControl.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804461d8",
@@ -476358,7 +476358,15 @@
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 98.966,
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-21T19:01:48.184198+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/work/CWorkControl.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80446364",
@@ -523911,7 +523919,7 @@
       "unit": "monolib/src/scn/CScnFilter",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -523920,7 +523928,7 @@
       "callgraph_source": "build/us/asm/monolib/src/scn/CScnFilter.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnFilter.cpp",
-      "instruction_match": 70.071,
+      "instruction_match": 0.0,
       "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true
     },

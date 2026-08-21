@@ -696,10 +696,20 @@ extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
             GXLoadTexMtxImm((const float(*)[4])texMtx, GX_TEXMTX0, GX_MTX_2x4);
             GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_TEXMTX0, GX_FALSE,
                               0x7D);
-            mtxSrc->mTexMtx.setScale(mtxSrc->mScaleX, mtxSrc->mScaleY, mtxSrc->mScaleZ);
-            mtxSrc->mTexMtx.replaceTranslation(
-                ml::CVec3(mtxSrc->mField0C + lbl_eu_8066B408, mtxSrc->mField10 + lbl_eu_8066B408,
-                          mtxSrc->mField14 + lbl_eu_8066B408));
+            // setScale + replaceTranslation folded inline so every zero is the
+            // shared extern 0.0f (retail keeps no .sdata2 pool in this TU).
+            mtxSrc->mTexMtx.m[0][0] = mtxSrc->mScaleX;
+            mtxSrc->mTexMtx.m[0][1] = lbl_eu_8066B408;
+            mtxSrc->mTexMtx.m[0][2] = lbl_eu_8066B408;
+            mtxSrc->mTexMtx.m[0][3] = mtxSrc->mField0C + lbl_eu_8066B408;
+            mtxSrc->mTexMtx.m[1][0] = lbl_eu_8066B408;
+            mtxSrc->mTexMtx.m[1][1] = mtxSrc->mScaleY;
+            mtxSrc->mTexMtx.m[1][2] = lbl_eu_8066B408;
+            mtxSrc->mTexMtx.m[1][3] = mtxSrc->mField10 + lbl_eu_8066B408;
+            mtxSrc->mTexMtx.m[2][0] = lbl_eu_8066B408;
+            mtxSrc->mTexMtx.m[2][1] = lbl_eu_8066B408;
+            mtxSrc->mTexMtx.m[2][2] = mtxSrc->mScaleZ;
+            mtxSrc->mTexMtx.m[2][3] = mtxSrc->mField14 + lbl_eu_8066B408;
             GXLoadTexMtxImm(mtxSrc->mTexMtx.mtx, GX_TEXMTX1, GX_MTX_2x4);
             GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, GX_TEXMTX1, GX_FALSE,
                               0x7D);

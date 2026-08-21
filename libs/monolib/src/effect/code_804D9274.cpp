@@ -36,6 +36,12 @@ struct CESinCosEntry {
 extern CESinCosEntry lbl_eu_80660038[360]; // sin table
 extern CESinCosEntry lbl_eu_80660B78[360]; // cos table
 
+// Retail keeps the FSqrt assert strings in split1.s (lbl_eu_80526300 =
+// "FSqrt: Input is out of the domain.", lbl_eu_80526324 = "arithmetic.h");
+// reference the named externs so no local .rodata string table is emitted.
+extern "C" const char lbl_eu_80526300[];  // "FSqrt: Input is out of the domain."
+extern "C" const char lbl_eu_80526324[];  // "arithmetic.h"
+
 // Uniform random in [0, 1).
 static inline f32 randF() {
     return (f32)ml::math::mtRand() / lbl_eu_8066B1F0;
@@ -45,7 +51,7 @@ static inline f32 randF() {
 // (arithmetic.h:627).
 static inline f32 fSqrt(f32 x) {
     if (!(x >= 0.0f)) {
-        nw4r::db::Warning("arithmetic.h", 627, "FSqrt: Input is out of the domain.");
+        nw4r::db::Warning(lbl_eu_80526324, 627, lbl_eu_80526300);
     }
     return x <= 0.0f ? 0.0f : x * nw4r::math::FrSqrt(x);
 }

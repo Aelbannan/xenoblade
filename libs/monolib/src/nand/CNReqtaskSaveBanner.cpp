@@ -36,15 +36,26 @@ extern "C" {
     // absolute addresses below; this unit only references (or, for the vtable
     // slot, writes to) them. Declared without a definition so MWCC does not
     // emit a local .bss slot or a __sinit_ constructor for the FixStr cache.
-    extern CNReqtaskSaveBannerVtbl* lbl_eu_80665A90;  // installed task vtable pointer
-    extern unsigned char lbl_eu_80570358[];    // vtable data - array type prevents sda21
     extern u8  lbl_eu_806659D0;        // global NAND "busy" flag
     extern s32 lbl_eu_806659D4;        // global NAND result/error latch
-    extern u8  lbl_eu_80665A94;        // banner-path string cache init flag
-    extern s32 lbl_eu_80663CD0;        // NAND banner meta: offset
-    extern s32 lbl_eu_80663CD4;        // NAND banner meta: length
-    extern ml::FixStr<32> lbl_eu_80661850;  // banner path string cache
-    extern const char lbl_eu_805248A8[];  // path format string
+
+    // Forward declarations (defined at bottom of this TU as the retail data)
+    // so the code bodies above can reference them.
+    extern CNReqtaskSaveBannerVtbl* lbl_eu_80665A90;
+    extern u32 lbl_eu_80570358[4];
+    extern u32 lbl_eu_80665A94;
+    extern s32 lbl_eu_80663CD0;
+    extern s32 lbl_eu_80663CD4;
+    extern u32 lbl_eu_80663CD8[2];
+    extern u32 lbl_eu_80570368[4];
+    extern ml::FixStr<32> lbl_eu_80661850;
+    extern const char lbl_eu_80524894[0x1C];
+
+    // Foreign data labels referenced by the banner vtable / RTTI locators
+    // (owned by other units; referenced only here).
+    extern u32 lbl_eu_8066B528;
+    extern u32 lbl_eu_80524888;
+    extern u32 lbl_eu_80663B70;
 
     u32* func_804DA98C(u8 arg);         // NAND banner-id primitive
     s32 func_804DA91C(u32* ptr);        // NAND open-banner primitive
@@ -93,7 +104,7 @@ CNandPath* func_804F50D0(CNReqtaskSaveBannerData* data) {
         lbl_eu_80661850.clear();  // zero mString[0] and mLength (offset 0x20)
         lbl_eu_80665A94 = 1;
     }
-    lbl_eu_80661850.format(lbl_eu_805248A8, lbl_eu_80663CD0, lbl_eu_80663CD4);
+    lbl_eu_80661850.format(&lbl_eu_80524894[0x14], lbl_eu_80663CD0, lbl_eu_80663CD4);
     return (CNandPath*)&lbl_eu_80661850;
 }
 
@@ -281,3 +292,40 @@ extern "C" __declspec(noinline) void func_804F96B0(void* dest) {
 extern "C" __declspec(noinline) void sinit_804F5140() {
     func_804F96B0(&lbl_eu_80665A90);
 }
+
+// ============================================================================
+// Retail data owned by this TU (dissolved monolibdata2 blob).
+// The 12-entry jumptable (jumptable_eu_80570328, .data +0x00..+0x2F) is
+// auto-emitted by the switch() in func_804F4D90 (all 12 entries are
+// func_804F4D90 + a per-case offset), so only the two 16-byte vtables follow.
+// ============================================================================
+
+// === .rodata 0x1C: "CNReqtaskSaveBanner\0" + "%s%s\0" (single 0x1C blob so the
+// short format string stays in .rodata instead of being pooled to .sdata2).
+extern "C" __declspec(align(4)) const char lbl_eu_80524894[0x1C] = {
+    0x43,0x4E,0x52,0x65,0x71,0x74,0x61,0x73,0x6B,0x53,0x61,0x76,0x65,0x42,0x61,0x6E,
+    0x6E,0x65,0x72,0x00,
+    0x25,0x73,0x25,0x73,0x00,0x00,0x00,0x00,
+};
+
+// === .sdata 0x10: RTTI locators/probes ===
+extern "C" s32 lbl_eu_80663CD0 = (s32)&lbl_eu_8066B528;
+extern "C" s32 lbl_eu_80663CD4 = (s32)&lbl_eu_80524888;
+extern "C" u32 lbl_eu_80663CD8[2] = { (u32)&lbl_eu_80524894, (u32)&lbl_eu_80570368 };
+
+// === .data +0x30: banner-save vtable (16B) ===
+extern "C" u32 lbl_eu_80570358[4] = {
+    (u32)&lbl_eu_80663CD8, 0x00000000, (u32)&func_804F4D90, (u32)&func_804F5080,
+};
+// === .data +0x40: second vtable (16B) ===
+extern "C" u32 lbl_eu_80570368[4] = {
+    (u32)&lbl_eu_80663B70, 0x00000000, 0x00000000, 0x00000000,
+};
+
+// === .bss 0x24: banner path string cache ===
+ml::FixStr<32> lbl_eu_80661850;
+
+// === .sbss 8: task vtable pointer (4B) + banner-path cache init flag (4B,
+// low byte used) so the section totals retail's 8 bytes ===
+CNReqtaskSaveBannerVtbl* lbl_eu_80665A90;
+u32 lbl_eu_80665A94;

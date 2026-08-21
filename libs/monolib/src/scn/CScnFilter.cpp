@@ -22,9 +22,19 @@ extern "C" void __ct__CScnFilter(CScnFilter* self) {
 CScnFilter::~CScnFilter() {
 }
 
+static inline float u32ToF32(u32 v) {
+    union {
+        double d;
+        u32 w[2];
+    } c;
+    c.w[1] = v;
+    c.w[0] = 0x43300000u;
+    return (float)(c.d - lbl_eu_8066ABA8);
+}
+
 static int check_over(CScnFilter* self) {
     int over;
-    if (self->mUnk0C != 0 && self->mIntensity > (f32)self->mUnk0C) {
+    if (self->mUnk0C != 0 && self->mIntensity > u32ToF32(self->mUnk0C)) {
         over = 1;
     } else {
         over = 0;

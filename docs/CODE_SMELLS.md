@@ -11,11 +11,11 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12514 |
-| extern "C" declarations (non-lbl_*, imports) | 4832 |
-| extern "C" definitions (forced names) | 3929 |
-| `self`/register-style params | 11895 |
-| `void*` (params + locals) | 7214 |
+| extern "C" (total lines) | 12620 |
+| extern "C" declarations (non-lbl_*, imports) | 4874 |
+| extern "C" definitions (forced names) | 3931 |
+| `self`/register-style params | 11898 |
+| `void*` (params + locals) | 7220 |
 | raw pointer offset arithmetic | 6894 |
 | deref-through-cast arithmetic | 2745 |
 | inline asm / `register` | 112 |
@@ -24,7 +24,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 0 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
-| #pragma | 1768 |
+| #pragma | 1771 |
 
 ## Top offenders (by cleanable severity)
 
@@ -53,7 +53,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/core/CArcItem.cpp | 32 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CDesktop.cpp | 4 | 1 | 3 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CDrawGX.cpp | 2 | 0 | 12 | 0 | 0 | 0 | 0 | 12 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/core/CException.cpp | 46 | 10 | 15 | 17 | 13 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/core/CException.cpp | 84 | 11 | 18 | 21 | 13 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CFontLayer.cpp | 12 | 8 | 29 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CPackItem.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CPadManager.cpp | 0 | 0 | 1 | 2 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
@@ -90,7 +90,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/device/CDeviceRemotePad.cpp | 42 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceSC.cpp | 38 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceVICb.cpp | 4 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/device/CGXCache.cpp | 23 | 16 | 42 | 38 | 12 | 1 | 0 | 0 | 29 | 0 | 0 | 0 |
+| libs/monolib/src/device/CGXCache.cpp | 27 | 17 | 42 | 40 | 12 | 1 | 0 | 0 | 29 | 0 | 0 | 0 |
 | libs/monolib/src/effect/CERand.cpp | 1 | 15 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/CETrail.cpp | 21 | 12 | 5 | 26 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804C8684.cpp | 0 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -695,13 +695,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/core/CException.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 6,
-  "extern_c_nonlbl_decl": 46,
-  "extern_c_nonlbl_def": 10,
+  "extern_c_nonlbl_decl": 84,
+  "extern_c_nonlbl_def": 11,
   "init_side_effect": 0,
   "ptr_arith": 13,
   "schedule_pragma": 0,
-  "self_params": 15,
-  "void_ptr": 17
+  "self_params": 18,
+  "void_ptr": 21
  },
  "libs/monolib/src/core/CFontLayer.cpp": {
   "asm_insn_shim": 0,
@@ -1046,14 +1046,14 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/device/CGXCache.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 1,
-  "extern_c_nonlbl_decl": 23,
-  "extern_c_nonlbl_def": 16,
+  "extern_c_nonlbl_decl": 27,
+  "extern_c_nonlbl_def": 17,
   "goto_count": 29,
   "init_side_effect": 0,
   "ptr_arith": 12,
   "schedule_pragma": 0,
   "self_params": 42,
-  "void_ptr": 38
+  "void_ptr": 40
  },
  "libs/monolib/src/effect/CERand.cpp": {
   "asm_insn_shim": 0,

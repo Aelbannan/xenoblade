@@ -265745,7 +265745,7 @@
       "unit": "kyoshin/menu/CMenuTutorial",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-800832d0",
@@ -265764,16 +265764,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/menu/CMenuTutorial.cpp",
       "source_present": true,
-      "instruction_match": 86.986,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-21T22:18:43.520798+00:00",
-        "allowed_paths": [
-          "src/kyoshin/menu/CMenuTutorial.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 98.528,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8029c8a0",
@@ -443117,8 +443109,8 @@
       "size": "0x124",
       "unit": "nw4r/src/lyt/lyt_texMap",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "STRUCTURAL",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/lyt/lyt_texMap.cpp",
       "called_functions": [],
@@ -443128,8 +443120,9 @@
       "callgraph_source": "build/us/asm/nw4r/src/lyt/lyt_texMap.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "instruction_match": 5.877,
-      "source_present": true
+      "instruction_match": 99.863,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8040a8fc",

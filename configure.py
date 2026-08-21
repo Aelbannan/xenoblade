@@ -1568,7 +1568,7 @@ config.libs = [
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/uty/muldiv.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/uty/muldivr.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/uty/uty_tmr.c"),
-            Object(NonMatching, "CriWare/src/sofdec/sfx/sfx_set.c"),
+            Object(Matching, "CriWare/src/sofdec/sfx/sfx_set.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfx/sfx_cnv.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfx/sfx_inf.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfx/sfx_lib.c", mw_version = "Wii/1.1"),

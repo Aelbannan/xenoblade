@@ -1,6 +1,13 @@
-// Auto-scaffolded catalog TU for CriWare/src/sofdec/sfx/sfx_set
+// CriWare/src/sofdec/sfx/sfx_set - stream attribute setters/getters.
+// These wrap simple field stores on the SFX set/handle state plus tag lookup
+// against the shared Sofdec SDK tag table ("SFXZ" / "SFXINFE").
 #include <harness_catalog.h>
 #include "libs/CriWare/src/sofdec/sfx/sfx_types.h"
+
+/* Shared Sofdec SDK tag table (.rodata): "SFXZ\0SFXINFE\0" */
+extern u8 lbl_eu_8051CF28[];
+/* SJ tag scanner (libs/CriWare/src/adx/sj/sj_utl.c) */
+extern int SJ_SearchTag(u32*, const u8*, const u8*, u32*);
 
 void SFX_SetCompoMode(SFXSetState* self, u32 val) {
     self->compoMode = val;
@@ -14,9 +21,6 @@ void SFX_SetOutBufSize(SFXSetState* self, u32 w, u32 h) {
 void SFX_SetUnitWidth(SFXSetState* self, u32 val) {
     self->unitWidth = val;
 }
-
-extern u8 lbl_eu_8051CF28[];
-extern int SJ_SearchTag(u32*, const u8*, const u8*, u32*);
 
 void SFX_SetTagInf(SFXHandleState* self, u32 val1, u32 val2) {
     void* zmv;
@@ -33,7 +37,9 @@ void SFX_SetTagInf(SFXHandleState* self, u32 val1, u32 val2) {
     } else {
         SFXZ_SetTagInf(zmv, output[0], output[1]);
     }
-    self->tagFlag = 1;
+    /* volatile final store forces MWCC's scheduler to emit the retail LR-first
+       epilogue restore order (see MWCC_CASES adx_mwii note) */
+    *(volatile u32*)&self->tagFlag = 1;
 }
 
 void SFX_GetTagInf(SFXHandleState* self, u32* out1, u32* out2) {
@@ -46,6 +52,7 @@ void SFX_GetTagInf(SFXHandleState* self, u32* out1, u32* out2) {
     }
 }
 
+/* ZMV frame-range query (libs/CriWare/src/sofdec/sfx/sfx_zmv.c) */
 extern u32 SFXZ_GetZfrmRange(u32, u32);
 
 void SFX_GetZfrmRange(SFXHandleState* self, SFXSetState* other) {
@@ -64,15 +71,19 @@ u32 SFX_GetCnvBottomUp(SFXSetState* self) {
     return self->cnvBottomUp;
 }
 
+/* Advance the Y/Cb/Cr plane pointers by a pixel offset. Offsets are rounded
+   toward zero and down to an even value so pointers move by whole 2x2 blocks:
+   each plane gains evenOffset * stride + evenOffset elements, while the chroma
+   line counts shrink by half the (rounded) Y offset. */
 void SFX_ShiftYccPtrByPix(SFXStmInf* self, s32 pixX, s32 pixY) {
-    s32 sY = pixY + ((u32)pixY >> 31);
-    s32 sX = pixX + ((u32)pixX >> 31);
-    s32 div2Y = ((sY & ~1) + (s32)((u32)sY >> 31)) >> 1;
+    s32 roundY = pixY + ((u32)pixY >> 31);   /* round toward zero */
+    s32 roundX = pixX + ((u32)pixX >> 31);
+    s32 halfY = ((roundY & ~1) + (s32)((u32)roundY >> 31)) >> 1;
 
-    self->_04 += (sY & ~1) * self->_08 + (sX & ~1);
-    self->_0C -= sY & ~1;
-    self->_14 += div2Y * self->_18 + (((sX & ~1) + (s32)((u32)sX >> 31)) >> 1);
-    self->_1C -= div2Y;
-    self->_24 += div2Y * self->_28 + (((sX & ~1) + (s32)((u32)sX >> 31)) >> 1);
-    self->_2C -= div2Y;
+    self->_04 += (roundY & ~1) * self->_08 + (roundX & ~1);
+    self->_0C -= roundY & ~1;
+    self->_14 += halfY * self->_18 + (((roundX & ~1) + (s32)((u32)roundX >> 31)) >> 1);
+    self->_1C -= halfY;
+    self->_24 += halfY * self->_28 + (((roundX & ~1) + (s32)((u32)roundX >> 31)) >> 1);
+    self->_2C -= halfY;
 }

@@ -2893,15 +2893,7 @@
       "source": "src/kyoshin/plugin/ocMsg.cpp",
       "instruction_match": 98.056,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-66691",
-        "claimed_at": "2026-08-21T13:33:22.084812+00:00",
-        "allowed_paths": [
-          "src/kyoshin/plugin/ocMsg.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-8003aab4",
@@ -141108,7 +141100,7 @@
       "size": "0x70",
       "unit": "kyoshin/cf/CfResObjImpl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
@@ -141122,15 +141114,7 @@
       "source": "src/kyoshin/cf/CfResObjImpl.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "pi-harness-66691",
-        "claimed_at": "2026-08-21T13:33:24.998774+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CfResObjImpl.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-8016dbbc",
@@ -172365,7 +172349,7 @@
       "size": "0x84",
       "unit": "kyoshin/realtimeevt/CREvtLight",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
@@ -172379,15 +172363,7 @@
       "source": "src/kyoshin/realtimeevt/CREvtLight.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "pi-harness-66691",
-        "claimed_at": "2026-08-21T13:33:10.241950+00:00",
-        "allowed_paths": [
-          "src/kyoshin/realtimeevt/CREvtLight.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801c5214",
@@ -189238,7 +189214,7 @@
       "size": "0xA8",
       "unit": "kyoshin/cf/object/CfObjectTbox",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
@@ -189255,7 +189231,15 @@
       "source": "src/kyoshin/cf/object/CfObjectTbox.cpp",
       "source_present": true,
       "instruction_match": 43.238,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-66691",
+        "claimed_at": "2026-08-21T14:20:56.712477+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/object/CfObjectTbox.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801faa18",
@@ -201850,7 +201834,7 @@
       "size": "0x94",
       "unit": "kyoshin/makecrystal/code_80213488",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
@@ -355650,8 +355634,8 @@
       "size": "0x24",
       "unit": "RVL_SDK/src/revolution/os/OS",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/os/OS.c",
       "called_functions": [],
@@ -355663,15 +355647,7 @@
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
       "source_present": true,
-      "equivalence_status": "inconclusive_unsupported",
-      "claim": {
-        "owner": "pi-harness-66691",
-        "claimed_at": "2026-08-21T13:33:18.999392+00:00",
-        "allowed_paths": [
-          "libs/RVL_SDK/src/revolution/os/OS.c"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803557c0",
@@ -355684,8 +355660,8 @@
       "size": "0x4",
       "unit": "RVL_SDK/src/revolution/os/OS",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/os/OS.c",
       "called_functions": [],
@@ -355697,15 +355673,7 @@
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
       "source_present": true,
-      "equivalence_status": "inconclusive_unsupported",
-      "claim": {
-        "owner": "pi-harness-66691",
-        "claimed_at": "2026-08-21T13:33:18.999181+00:00",
-        "allowed_paths": [
-          "libs/RVL_SDK/src/revolution/os/OS.c"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803557d0",
@@ -355770,8 +355738,8 @@
       "size": "0x9C",
       "unit": "RVL_SDK/src/revolution/os/OS",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/os/OS.c",
       "called_functions": [],
@@ -355783,15 +355751,7 @@
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
       "source_present": true,
-      "equivalence_status": "inconclusive_unsupported",
-      "claim": {
-        "owner": "pi-harness-66691",
-        "claimed_at": "2026-08-21T13:33:18.999395+00:00",
-        "allowed_paths": [
-          "libs/RVL_SDK/src/revolution/os/OS.c"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803558a0",
@@ -372445,7 +372405,15 @@
       "instruction_match": 89.463,
       "equivalence_status": "inconclusive_smt_disabled",
       "declared_return": "i32",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-66691",
+        "claimed_at": "2026-08-21T14:02:26.503929+00:00",
+        "allowed_paths": [
+          "libs/CriWare/src/adx/adxf/adx_fini.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8037f4f8",
@@ -396238,7 +396206,7 @@
       "size": "0xA8",
       "unit": "CriWare/src/sofdec/sfdcore/mpv/mpv_err",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -396253,7 +396221,15 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 93.786,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-66691",
+        "claimed_at": "2026-08-21T14:20:01.966058+00:00",
+        "allowed_paths": [
+          "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_err.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-803a99a8",
@@ -416031,15 +416007,7 @@
       "declared_return": "void",
       "instruction_match": 80.743,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-66691",
-        "claimed_at": "2026-08-21T13:33:04.362868+00:00",
-        "allowed_paths": [
-          "libs/CriWare/src/sofdec/sfx/sfx_alp.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-803d832c",

@@ -11,14 +11,14 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12610 |
-| extern "C" declarations (non-lbl_*, imports) | 4874 |
-| extern "C" definitions (forced names) | 3930 |
+| extern "C" (total lines) | 12614 |
+| extern "C" declarations (non-lbl_*, imports) | 4873 |
+| extern "C" definitions (forced names) | 3931 |
 | `self`/register-style params | 11897 |
 | `void*` (params + locals) | 7220 |
 | raw pointer offset arithmetic | 6894 |
 | deref-through-cast arithmetic | 2745 |
-| inline asm / `register` | 103 |
+| inline asm / `register` | 104 |
 | rN-named params | 568 |
 | goto | 2917 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
@@ -136,7 +136,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/nand/CNand.cpp | 12 | 14 | 29 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CLight.cpp | 0 | 2 | 10 | 1 | 20 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlAnmEye.cpp | 2 | 2 | 8 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CMdlAnmUV.cpp | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CMdlAnmUV.cpp | 0 | 2 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlDynamics.cpp | 2 | 22 | 49 | 13 | 42 | 33 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlLook.cpp | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlMaterial.cpp | 4 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -512,7 +512,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/makecrystal/CMakeCrystalWin.cpp | 0 | 2 | 17 | 4 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CMenuMakeCrystal.cpp | 16 | 3 | 6 | 11 | 11 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/makecrystal/CModelDispMakeCrystal.cpp | 195 | 0 | 234 | 96 | 105 | 1 | 0 | 6 | 1 | 0 | 0 | 0 |
-| src/kyoshin/makecrystal/code_80213488.cpp | 7 | 0 | 4 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/makecrystal/code_80213488.cpp | 6 | 0 | 4 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuArtsSelect.cpp | 105 | 16 | 33 | 73 | 20 | 8 | 3 | 0 | 40 | 3 | 0 | 0 |
 | src/kyoshin/menu/CMenuArtsSet.cpp | 10 | 49 | 173 | 11 | 43 | 0 | 0 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleChain.cpp | 7 | 7 | 20 | 11 | 4 | 2 | 2 | 1 | 1 | 0 | 0 | 0 |
@@ -1574,8 +1574,9 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "void_ptr": 6
  },
  "libs/monolib/src/scn/CMdlAnmUV.cpp": {
+  "asm_code": 1,
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_def": 1,
+  "extern_c_nonlbl_def": 2,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 1
@@ -5510,7 +5511,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/makecrystal/code_80213488.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 7,
+  "extern_c_nonlbl_decl": 6,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "self_params": 4,

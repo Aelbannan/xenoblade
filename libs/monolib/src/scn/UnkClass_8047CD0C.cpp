@@ -50,6 +50,7 @@ struct UnkCfgHead {
     u32 magic;   // 0x00
     u32 field4;  // 0x04
     u32 field8;  // 0x08
+    u8 nodes[];  // 0x0C - node array follows the header
 };
 // ------------------------------------------------------------------
 // Node-pool layout
@@ -187,12 +188,12 @@ void __declspec(noinline) UnkClass_8047CD0C::func_8047D258() {
 // ------------------------------------------------------------------
 
 extern "C" void func_8047CD0C__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
-                                                      u8* config) {
+                                                      UnkCfgHead* config) {
     s32 i;
     s32 off;
     self->mData = 0;
-    if (*(u32*)config == 0x57504F49) {
-        self->mData = config + 0xc;
+    if (config->magic == 0x57504F49) {
+        self->mData = config->nodes;
         ((UnkClass_8047E110*)lbl_eu_80658560)->func_8047E110();
         func_8047D0F0__17UnkClass_8047CD0CFv(&lbl_eu_80658540,
                                              (UnkClass_8047CD0C*)self->mData);
@@ -388,9 +389,10 @@ UnkClass_8047CD0C lbl_eu_80658540;  // node pool (0x20)
 u8 lbl_eu_80658560[0xA8];           // scene manager (UnkClass_8047E110)
 u8 lbl_eu_80658608[0x30];
 u8 lbl_eu_80658638[0x10];
-DECOMP_FORCEACTIVE(UnkClass_8047CD0C_cpp, lbl_eu_80658560);
-DECOMP_FORCEACTIVE(UnkClass_8047CD0C_cpp, lbl_eu_80658608);
-DECOMP_FORCEACTIVE(UnkClass_8047CD0C_cpp, lbl_eu_80658638);
+// NOTE: retail's split carries no FORCEACTIVE functions for this TU, and
+// every bss symbol below is a non-static definition, so nothing can be
+// dead-stripped.
+
 
 // [.sbss] 0x806658C8-0x806658D8 (0x10 = 16B): owned-allocation slot (used
 // as a 4-byte pointer) + pad to the retail 8-byte symbol + the 8-byte
@@ -398,5 +400,3 @@ DECOMP_FORCEACTIVE(UnkClass_8047CD0C_cpp, lbl_eu_80658638);
 void* lbl_eu_806658C8;   // owned allocation slot
 u32 lbl_eu_806658C8x;     // retail symbol tail (unused)
 u8 lbl_eu_806658D0[8];
-DECOMP_FORCEACTIVE(UnkClass_8047CD0C_cpp, lbl_eu_806658C8x);
-DECOMP_FORCEACTIVE(UnkClass_8047CD0C_cpp, lbl_eu_806658D0);

@@ -11,12 +11,12 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12757 |
-| extern "C" declarations (non-lbl_*, imports) | 4993 |
-| extern "C" definitions (forced names) | 3908 |
-| `self`/register-style params | 11900 |
+| extern "C" (total lines) | 12762 |
+| extern "C" declarations (non-lbl_*, imports) | 4994 |
+| extern "C" definitions (forced names) | 3911 |
+| `self`/register-style params | 11903 |
 | `void*` (params + locals) | 7216 |
-| raw pointer offset arithmetic | 6887 |
+| raw pointer offset arithmetic | 6886 |
 | deref-through-cast arithmetic | 2738 |
 | inline asm / `register` | 105 |
 | rN-named params | 567 |
@@ -24,7 +24,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 0 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
-| #pragma | 1776 |
+| #pragma | 1779 |
 
 ## Top offenders (by cleanable severity)
 
@@ -163,7 +163,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/scn/CScnItemModel.cpp | 31 | 42 | 72 | 5 | 20 | 15 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemModelNw4r.cpp | 21 | 61 | 175 | 25 | 40 | 7 | 0 | 0 | 1 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnItemPool.cpp | 4 | 25 | 33 | 5 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CScnLightMan.cpp | 5 | 1 | 6 | 5 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CScnLightMan.cpp | 6 | 4 | 9 | 6 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnMaruShadowNw4r.cpp | 6 | 7 | 3 | 2 | 9 | 9 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnMem.cpp | 50 | 3 | 20 | 19 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CScnRoot.cpp | 4 | 0 | 2 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -174,7 +174,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/scn/CVirtualLightAmb.cpp | 5 | 1 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CVirtualLightDir.cpp | 3 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CVirtualLightObj.cpp | 1 | 17 | 14 | 2 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/UnkClass_8047CD0C.cpp | 10 | 2 | 11 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/UnkClass_8047CD0C.cpp | 10 | 2 | 11 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/UnkClass_8047E110.cpp | 14 | 6 | 10 | 0 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | libs/monolib/src/scn/code_8047D2AC.cpp | 22 | 4 | 29 | 28 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/code_8049431C.cpp | 7 | 5 | 15 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -1848,13 +1848,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/scn/CScnLightMan.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 5,
-  "extern_c_nonlbl_def": 1,
+  "extern_c_nonlbl_decl": 6,
+  "extern_c_nonlbl_def": 4,
   "init_side_effect": 0,
   "ptr_arith": 2,
   "schedule_pragma": 0,
-  "self_params": 6,
-  "void_ptr": 5
+  "self_params": 9,
+  "void_ptr": 6
  },
  "libs/monolib/src/scn/CScnMaruShadowNw4r.cpp": {
   "asm_insn_shim": 0,
@@ -1966,10 +1966,9 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_decl": 10,
   "extern_c_nonlbl_def": 2,
   "init_side_effect": 0,
-  "ptr_arith": 1,
   "schedule_pragma": 0,
   "self_params": 11,
-  "void_ptr": 3
+  "void_ptr": 2
  },
  "libs/monolib/src/scn/UnkClass_8047E110.cpp": {
   "asm_insn_shim": 0,

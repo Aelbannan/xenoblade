@@ -1900,7 +1900,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/mpfsys/MPFDrawBillLayTex.cpp"),
             Object(NonMatching, "monolib/src/mpfsys/code_8047BB54.cpp"),
             Object(NonMatching, "monolib/src/mpfsys/code_8047CA88.cpp"),
-            Object(NonMatching, "monolib/src/scn/UnkClass_8047CD0C.cpp"),
+            Object(Matching, "monolib/src/scn/UnkClass_8047CD0C.cpp"),
             Object(NonMatching, "monolib/src/scn/code_8047D2AC.cpp"),
             Object(NonMatching, "monolib/src/scn/UnkClass_8047E110.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnItemCameraNw4r.cpp"),

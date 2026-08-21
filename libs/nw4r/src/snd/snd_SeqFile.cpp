@@ -38,11 +38,14 @@ inline const void* AddPtrBaseFirst(const void* pBase, T offset) {
 
 } // namespace
 
-bool SeqFileReader::IsValidFileHeader(const void* pSeqBin) {
-    const ut::BinaryFileHeader* pFileHeader =
-        static_cast<const ut::BinaryFileHeader*>(pSeqBin);
-
-    if (pFileHeader->signature != SIGNATURE) {
+// File-local validity check, typed on ut::BinaryFileHeader (no void*).
+// Declared inline so MWCC folds it into the SeqFileReader constructor body:
+// the retail unit has no standalone validity-check symbol, so an out-of-line
+// copy would push .text past the split budget. (Named differently from the
+// SeqFileReader member so the member declaration does not hide it.)
+static inline bool IsSeqHeaderValid(
+    const ut::BinaryFileHeader* pFileHeader) {
+    if (pFileHeader->signature != SeqFileReader::SIGNATURE) {
         return false;
     }
 
@@ -50,7 +53,7 @@ bool SeqFileReader::IsValidFileHeader(const void* pSeqBin) {
         return false;
     }
 
-    if (Util::ReadBigEndian(pFileHeader->version) > VERSION) {
+    if (Util::ReadBigEndian(pFileHeader->version) > SeqFileReader::VERSION) {
         return false;
     }
 
@@ -59,7 +62,8 @@ bool SeqFileReader::IsValidFileHeader(const void* pSeqBin) {
 
 SeqFileReader::SeqFileReader(const void* pSeqBin)
     : mHeader(NULL), mDataBlock(NULL) {
-    if (!IsValidFileHeader(pSeqBin)) {
+    if (!IsSeqHeaderValid(
+            static_cast<const ut::BinaryFileHeader*>(pSeqBin))) {
         return;
     }
 
@@ -87,13 +91,11 @@ bool ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
 
     u32 nameLen = strlen(label);
 
-    // Explicit offset cursor: defined before the entryCount CSE temp so it
-    // takes the lower register, matching retail allocation.
-    const u32* pOffset = pLabelBlock->offset;
-
-    for (u32 i = 0; i < pLabelBlock->entryCount; i++, pOffset++) {
+    // Indexing offset[i] directly lets MWCC strength-reduce the address to a
+    // base-copy cursor with the 0xC folded into the load displacement.
+    for (u32 i = 0; i < pLabelBlock->entryCount; i++) {
         const SeqLabelEntry* pEntry =
-            static_cast<const SeqLabelEntry*>(AddPtrBaseFirst(pLabelBlock, *pOffset));
+            static_cast<const SeqLabelEntry*>(ut::AddOffsetToPtr(pLabelBlock, pLabelBlock->offset[i]));
 
         if (nameLen == pEntry->nameLen &&
             strncmp(label, pEntry->name, nameLen) == 0) {

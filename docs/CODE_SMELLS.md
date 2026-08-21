@@ -11,14 +11,14 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12590 |
-| extern "C" declarations (non-lbl_*, imports) | 4872 |
+| extern "C" (total lines) | 12629 |
+| extern "C" declarations (non-lbl_*, imports) | 4904 |
 | extern "C" definitions (forced names) | 3922 |
 | `self`/register-style params | 11895 |
 | `void*` (params + locals) | 7221 |
 | raw pointer offset arithmetic | 6895 |
 | deref-through-cast arithmetic | 2746 |
-| inline asm / `register` | 104 |
+| inline asm / `register` | 103 |
 | rN-named params | 566 |
 | goto | 2917 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
@@ -55,7 +55,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/core/CDrawGX.cpp | 2 | 0 | 12 | 0 | 0 | 0 | 0 | 12 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CException.cpp | 84 | 11 | 18 | 21 | 13 | 6 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CFontLayer.cpp | 12 | 8 | 29 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/core/CPackItem.cpp | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/core/CPackItem.cpp | 32 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CPadManager.cpp | 0 | 0 | 1 | 2 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CProc.cpp | 4 | 0 | 1 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/CProcRoot.cpp | 42 | 0 | 1 | 7 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
@@ -136,7 +136,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/nand/CNand.cpp | 12 | 14 | 29 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CLight.cpp | 0 | 2 | 10 | 1 | 20 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlAnmEye.cpp | 2 | 2 | 8 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CMdlAnmUV.cpp | 0 | 2 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CMdlAnmUV.cpp | 0 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlDynamics.cpp | 2 | 22 | 49 | 13 | 42 | 33 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlLook.cpp | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlMaterial.cpp | 4 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -714,6 +714,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/core/CPackItem.cpp": {
   "asm_insn_shim": 0,
+  "extern_c_nonlbl_decl": 32,
   "init_side_effect": 0,
   "schedule_pragma": 0,
   "void_ptr": 1
@@ -1574,7 +1575,6 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "void_ptr": 6
  },
  "libs/monolib/src/scn/CMdlAnmUV.cpp": {
-  "asm_code": 1,
   "asm_insn_shim": 0,
   "extern_c_nonlbl_def": 2,
   "init_side_effect": 0,

@@ -70,16 +70,26 @@ extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
 // fI-shape ALLOCATION + forward source; the allocation is coupled to the
 // subtraction operand order, so no correct-semantic forward shape yields
 // x->r5 (probed: ~50 shapes, Wii/1.1 + GC/3.0a5.2 + GC/3.0a3.4, -O4,s,
-// -ipa off, -func_align 16). Semantics: type = 1 + bit31((x>>1)-(x&0xA));
+// -ipa off, -func_align 16). Session 2 refutations: `h + (-(x&0xA))` is
+// front-end canonicalized back to h-t (identical 4 swaps); `(x>>1) < (x&0xA)`
+// compiles branchy at +12 bytes; keeping count live via h=(count>>1)^5 forces
+// xori r5 but adds an extra xori (+4 OVER) and subf still encodes r0,r5,r0. Semantics: type = 1 + bit31((x>>1)-(x&0xA));
 // "2 - bit31(reversed)" rescue breaks at v=0 (count 10/11).
+// Session addendum (pi-batch-match): keeping count live past the xor DOES move
+// x into r5 (h = (count>>1)^5 variant) but then h needs its own xori (+4 bytes,
+// OVER budget) and subf still encodes r0,r5,r0. MWCC always schedules andi.
+// first when both trees share x; with independent trees it preserves source
+// order. Confirms coupling: unreachable under forward semantics.
 extern "C" int func_8003A68C(VMThread* pThread, void* target) {
-    // Compute t then h in statement order (retail eval order); forward h-t
-    // then encodes as subf r0, r0(t), r5(h) matching retail.
+    // type = 1 + bit31((x>>1) - (x&0xA)), x = count^0xA. See wall comment above:
+    // best forward-semantic shape = retail stream with 4 pure reg swaps.
     int count = *(int*)((char*)target + 0x10);
+    int x = count ^ 0x0a;
     VMArg args;
-    // Duplicated xor lets CSE materialize x as its own temp (fresh register).
-    *(u8*)&args.type =
-        1 + ((u32)(((count ^ 0x0a) >> 1) - ((count ^ 0x0a) & 0x0a)) >> 31);
+    // Subtract into the t-slot: subf dest = t's register (retail writes r0).
+    int t = x & 0x0a;
+    t = (x >> 1) - t;
+    *(u8*)&args.type = 1 + ((u32)t >> 31);
     vmRetValSet(pThread, &args);
     return 1;
 }

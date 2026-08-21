@@ -136325,7 +136325,7 @@
       "size": "0x118",
       "unit": "kyoshin/CCol6Invite",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
@@ -136341,7 +136341,15 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/CCol6Invite.cpp",
       "instruction_match": 0.0,
-      "source_present": false
+      "source_present": false,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-21T21:15:41.839178+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CCol6Invite.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801651a0",
@@ -201866,7 +201874,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/code_80213488.cpp",
       "claim": null,
-      "instruction_match": 100.0,
+      "instruction_match": 0.0,
       "equivalence_status": "equivalent",
       "source_present": true
     },
@@ -202008,7 +202016,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/code_80213488.cpp",
       "claim": null,
-      "instruction_match": 100.0,
+      "instruction_match": 0.0,
       "equivalence_status": "equivalent",
       "source_present": true
     },
@@ -348996,7 +349004,7 @@
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/hbm/synpitch.s",
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/hbm/synpitch.c",
-      "instruction_match": 81.618,
+      "instruction_match": 70.632,
       "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true
     },
@@ -486770,8 +486778,8 @@
       "size": "0xFC",
       "unit": "monolib/src/device/CDeviceFontInfoExt",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "HIGH_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802bc028",
@@ -486784,16 +486792,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/device/CDeviceFontInfoExt.cpp",
       "source_present": true,
-      "instruction_match": 81.127,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-21T20:00:45.375276+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/device/CDeviceFontInfoExt.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 96.825,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-804575b0",
@@ -514509,7 +514509,7 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnMem.cpp",
       "claim": null,
-      "instruction_match": 100.0,
+      "instruction_match": 0.0,
       "equivalence_status": "equivalent",
       "source_present": true
     },
@@ -514697,7 +514697,7 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnMem.cpp",
       "source_present": true,
-      "instruction_match": 97.5,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent"
     },
     {

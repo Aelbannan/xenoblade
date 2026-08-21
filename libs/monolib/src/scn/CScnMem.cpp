@@ -149,13 +149,6 @@ extern "C" __declspec(align(8)) char lbl_eu_8056E6F8[0x38] = {
     0x53,0x63,0x6E,0x4F,0x62,0x6A,0x00,0x00,
     0x67,0x33,0x64,0x5F,0x73,0x63,0x6E,0x6F,0x62,0x6A,0x2E,0x68,0x00,0x00,0x00,0x00,
 };
-DECOMP_FORCEACTIVE(CScnMem_cpp, lbl_eu_8056E5B8);
-DECOMP_FORCEACTIVE(CScnMem_cpp, lbl_eu_8056E5C8);
-DECOMP_FORCEACTIVE(CScnMem_cpp, lbl_eu_8056E67C);
-DECOMP_FORCEACTIVE(CScnMem_cpp, lbl_eu_8056E6B0);
-DECOMP_FORCEACTIVE(CScnMem_cpp, lbl_eu_8056E6DC);
-DECOMP_FORCEACTIVE(CScnMem_cpp, lbl_eu_8056E6F8);
-DECOMP_FORCEACTIVE(CScnMem_cpp, lbl_eu_80523F98);
 
 // CScnNw4r access table accessors (defined in CScnRootNw4r TU, C linkage).
 extern "C" void* func_8048FDDC(void* self);
@@ -239,8 +232,16 @@ nw4r::g3d::ScnObj* func_8048EC14(CScn* self, u32 idx) {
     }
 
     nw4r::g3d::ScnObj* obj = group->Begin()[idx];
-    if (obj != NULL &&
-        obj->IsDerivedFrom(nw4r::g3d::G3dObj::TypeObj(lbl_eu_8051D788))) {
+    s32 isGroup = 0;
+    if (obj != NULL) {
+        // Separate TypeObj statement: retail materializes the ScnGroup type
+        // label (lis/addi) before loading `this` into r3.
+        nw4r::g3d::G3dObj::TypeObj type(lbl_eu_8051D788);
+        if (obj->IsDerivedFrom(type)) {
+            isGroup = 1;
+        }
+    }
+    if (isGroup) {
         return obj;
     }
     return NULL;

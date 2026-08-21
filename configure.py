@@ -1835,7 +1835,14 @@ config.libs = [
             Object(NonMatching, "monolib/src/util/CStopwatchUtil.cpp"),
             Object(NonMatching, "monolib/src/device/CDeviceRemotePad.cpp", extra_cflags=["-RTTI off"]),  # __RTTI__10IWorkEvent/11CWorkThread conflict (10322)
             Object(NonMatching, "monolib/src/device/CDeviceSC.cpp"),
-            Object(NonMatching, "monolib/src/device/CDeviceVI.cpp"),
+            Object(NonMatching, "monolib/src/device/CDeviceVI.cpp", link_transform={
+                "renames": [
+                    ("thunk_456_dt", "@456@__dt__9CDeviceVIFv"),
+                    ("thunk_456_error", "@456@errorWiiCB__9CDeviceVIFv"),
+                    ("__dt__23reslist_P11CDeviceVICbFv", "__dt__23reslist<P11CDeviceVICb>Fv"),
+                    ("__dt__29_reslist_base_P11CDeviceVICbFv", "__dt__29_reslist_base<P11CDeviceVICb>Fv"),
+                ],
+            }),
 			Object(NonMatching, "monolib/src/device/CDeviceVICb.cpp"),
             Object(NonMatching, "monolib/src/core/CFontLayer.cpp"),
             Object(NonMatching, "monolib/src/device/CGXCache.cpp"),

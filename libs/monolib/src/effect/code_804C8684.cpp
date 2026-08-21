@@ -10,11 +10,12 @@ void func_804C8688(void) {}
 extern "C" void func_804C868C(void) {}
 
 // ---------------------------------------------------------------------------
-// func_804C8690: unconditionally store the flag byte into lbl_eu_806659A0,
-// then (when the source pointer is non-null) copy its 3-word parameter block
-// into the global lbl_eu_8065FC08. The retail copies the first 8 bytes as a
-// 2-word pair (reversed store order) and the last word separately, so the
-// source keeps that 2+1 split in the struct shape.
+// func_804C8690: unconditionally store the flag byte (stb - the destination
+// lbl_eu_806659A0 is a single u8) into lbl_eu_806659A0, then (when the source
+// pointer is non-null) copy its 12-byte parameter block into the global
+// lbl_eu_8065FC08. The retail copies the first 8 bytes as a 2-word pair
+// (reversed store order) and the last word separately, so the source keeps
+// that 2+1 split in the struct shape.
 // ---------------------------------------------------------------------------
 
 // func_804C8690's 12-byte copy block: an 8-byte pair chunk + one word.
@@ -25,7 +26,7 @@ struct CEffectParam {
     u32 field_0x08;    // 0x08
 };
 
-extern u32 lbl_eu_806659A0;
+extern u8 lbl_eu_806659A0;
 extern CEffectParam lbl_eu_8065FC08;
 
 void func_804C8690(u8 flag, const CEffectParam* src) {
@@ -46,6 +47,14 @@ void func_804C8690(u8 flag, const CEffectParam* src) {
 // sinit_804C86C0: static-initializer writing the 11 float constants into the
 // 3-block array rooted at lbl_eu_8065FBE8. The float constants are referenced
 // through their retail sdata2 symbols so the lfs relocs stay pinned.
+//
+// KNOWN RESIDUAL: retail materializes four GPR bases (r6 = table, r5 = r6+0,
+// r4 = r6+0x10, r3 = r6+0x20) and splits the stores between the table base
+// (heads, small displacements) and the per-block copies (tails), while every
+// expressible high-level source shape tried so far (distinct pointer locals,
+// references, inlined free/member helpers) is folded by MWCC CSE into ONE
+// base with full displacements. See open-item packet / sibling sinit_8049FC60
+// (KB attempts all COMPILES 0%). Size stays within the split budget.
 // ---------------------------------------------------------------------------
 
 // One default-parameter block: head float plus a 3-float tail vector.
@@ -65,14 +74,8 @@ extern f32 lbl_eu_8066B094;  // 5.0f
 extern f32 lbl_eu_8066B098;  // 393.0f
 
 void sinit_804C86C0() {
-    // Default-parameter table at lbl_eu_8065FBE8: three 16-byte blocks.
-    // Retail keeps one address register per block; deriving each block
-    // pointer through a differently-typed intermediate keeps MWCC from
-    // folding them back into one base with full offsets.
-    // Default-parameter table: three 16-byte blocks of one head float plus
-    // a 3-float tail. Retail keeps one address register per block (addi rX,
-    // r6, K); MWCC folds every expressible address form into one base with
-    // full displacements (see sinit_8049FC60 open-item packet).
+    // Default-parameter table at lbl_eu_8065FBE8: three 16-byte blocks
+    // (see the KNOWN RESIDUAL note above for the retail base-register split).
     SInitBlk* t = lbl_eu_8065FBE8;
 
     t[0].head = lbl_eu_8066B088;
@@ -100,5 +103,5 @@ void sinit_804C86C0() {
 SInitBlk lbl_eu_8065FBE8[3];   // 48B covers retail 8065FBE8(32) + 8065FC08(16)
 u8 lbl_eu_8065FC18[136];   // 136B
 // [.sbss] 0x806659A0-0x806659A8 (8B)
-u32 lbl_eu_806659A0;   // sbss word 0
+u8 lbl_eu_806659A0;   // sbss byte 0
 u32 lbl_eu_806659A4;   // sbss word 1

@@ -428,7 +428,7 @@ config.libs = [
             Object(Matching, "kyoshin/plugin/pluginWait.cpp"),
             Object(NonMatching, "kyoshin/plugin/ocBuiltin.cpp"),
             Object(Matching, "kyoshin/plugin/ocThread.cpp"),
-            Object(NonMatching, "kyoshin/plugin/ocMsg.cpp"),
+            Object(Matching, "kyoshin/plugin/ocMsg.cpp"),
             Object(NonMatching, "kyoshin/plugin/ocBdat.cpp"),
             Object(NonMatching, "kyoshin/plugin/ocUnit.cpp"),
             Object(NonMatching, "kyoshin/CTaskGame.cpp", extra_cflags=["-func_align 16"]),
@@ -1941,7 +1941,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/scn/CLight.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnEnvLgtCtrl.cpp"),
             Object(NonMatching, "monolib/src/effect/Unknown1.cpp"),
-            Object(NonMatching, "monolib/src/effect/code_804C8684.cpp", mw_version="GC/3.0a5.2"),  # retail func_804C8690 pair-copy schedule (addi after both pair loads, word load after pair stores) only matches under GC/3.0a5.2
+            Object(Matching, "monolib/src/effect/code_804C8684.cpp", mw_version="GC/3.0a5.2"),  # retail func_804C8690 pair-copy schedule (addi after both pair loads, word load after pair stores) only matches under GC/3.0a5.2
             Object(NonMatching, "monolib/src/effect/code_804C8718.cpp"),
             Object(NonMatching, "monolib/src/effect/code_804CC2B8.cpp"),
             Object(NonMatching, "monolib/src/effect/CETrail.cpp"),

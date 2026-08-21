@@ -144,31 +144,19 @@ void func_801C37C8(void) {}
 // Calls vfunc 0xAC on target to get position, computes distance from
 // this->mPos (0x3C), returns PSVECMag of the difference.
 // ============================================================================
-// High-level wrapper: VEC3Sub into the caller's scratch, then copy through
-// the out-pointer. Passing both addresses as arguments makes MWCC compute
-// them (and keep them live) across the paired-single block like retail.
-static inline void lightSubOut(Vec* out,
-                               nw4r::math::VEC3* scratch,
-                               const nw4r::math::VEC3* pA,
-                               const nw4r::math::VEC3* pB) {
-    nw4r::math::VEC3Sub(scratch, pA, pB);
-    out->x = scratch->x;
-    out->y = scratch->y;
-    out->z = scratch->z;
-}
-
 f32 func_801C37CC(CREvtLight* self, CREvtLightTargetIf* target) {
     // Get target position via vtable slot 0xAC
     nw4r::math::VEC3* pos = target->_v0AC();
 
-    // diff = targetPos - thisPos into scratch, copied to d for PSVECMag.
-    // pd is initialized up front so the destination address is computed
-    // before the paired-single block, like retail.
+    // diff = targetPos - thisPos; copied through a temporary so MWCC emits
+    // the same paired-single block plus element copy before PSVECMag.
     nw4r::math::VEC3 delta;
+    nw4r::math::VEC3Sub(&delta, pos, self->pos());
     Vec d;
-    Vec* pd = &d;
-    lightSubOut(pd, &delta, pos, self->pos());
-    return PSVECMag(pd);
+    d.x = delta.x;
+    d.y = delta.y;
+    d.z = delta.z;
+    return PSVECMag(&d);
 }
 
 // ============================================================================

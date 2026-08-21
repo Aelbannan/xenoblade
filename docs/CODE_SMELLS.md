@@ -11,11 +11,11 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12631 |
-| extern "C" declarations (non-lbl_*, imports) | 4904 |
+| extern "C" (total lines) | 12633 |
+| extern "C" declarations (non-lbl_*, imports) | 4906 |
 | extern "C" definitions (forced names) | 3924 |
 | `self`/register-style params | 11898 |
-| `void*` (params + locals) | 7222 |
+| `void*` (params + locals) | 7223 |
 | raw pointer offset arithmetic | 6896 |
 | deref-through-cast arithmetic | 2746 |
 | inline asm / `register` | 103 |
@@ -533,7 +533,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/menu/CMenuItemExchange.cpp | 7 | 7 | 8 | 2 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuKeyAssign.cpp | 7 | 6 | 92 | 13 | 6 | 0 | 0 | 0 | 50 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuKizunaTalk.cpp | 3 | 1 | 10 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuKizunaTalkList.cpp | 36 | 2 | 40 | 4 | 58 | 54 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuKizunaTalkList.cpp | 38 | 2 | 40 | 5 | 58 | 54 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuKizunagram.cpp | 1 | 4 | 15 | 2 | 3 | 3 | 0 | 0 | 6 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuLandTelop.cpp | 1 | 0 | 8 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuLvUp.cpp | 0 | 2 | 14 | 4 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
@@ -5731,13 +5731,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/menu/CMenuKizunaTalkList.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 54,
-  "extern_c_nonlbl_decl": 36,
+  "extern_c_nonlbl_decl": 38,
   "extern_c_nonlbl_def": 2,
   "init_side_effect": 0,
   "ptr_arith": 58,
   "schedule_pragma": 0,
   "self_params": 40,
-  "void_ptr": 4
+  "void_ptr": 5
  },
  "src/kyoshin/menu/CMenuKizunagram.cpp": {
   "asm_insn_shim": 0,

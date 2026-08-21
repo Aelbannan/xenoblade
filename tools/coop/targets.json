@@ -245742,7 +245742,7 @@
       "size": "0xC4",
       "unit": "kyoshin/menu/CMenuKizunaTalkList",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
@@ -245759,7 +245759,15 @@
       "source": "src/kyoshin/menu/CMenuKizunaTalkList.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-21T16:38:18.763270+00:00",
+        "allowed_paths": [
+          "src/kyoshin/menu/CMenuKizunaTalkList.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8027431c",
@@ -416596,15 +416604,7 @@
       "declared_return": "i32",
       "source_present": true,
       "instruction_match": 97.708,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-21T16:22:56.969948+00:00",
-        "allowed_paths": [
-          "libs/CriWare/src/sofdec/sud/sud_lib.c"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-803d9884",

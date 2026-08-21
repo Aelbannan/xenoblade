@@ -36,8 +36,13 @@ void UTY_InitTmr(s32 newId) {
 
     t->id = newId;
     // NOTE: retail materializes the tick-pair address (addi r3, base, 8)
-    // before each unit store; MWCC folds every source reconstruction tried
-    // to a direct displacement store (see MWCC_CASES.md "UTY_InitTmr p2 base").
+    // before each unit store; every source reconstruction tried folds to a
+    // direct displacement store (12(r31)) - see MWCC_CASES.md "UTY_InitTmr
+    // p2 base". Ruled out: volatile/non-volatile/mixed p2+t locals,
+    // block-scoped p2, named tick local, inline helpers (ptr + u32 param),
+    // compound-literal struct assign. Likely fix: mw_version="Wii/1.1" for
+    // this object (sibling sofdec TUs are Wii/1.1-built); configure.py
+    // change is outside session scope.
     if (newId == -1) {
         // Uninitialised: unit = 1, timer not running.
         t->pair.unit = 1;

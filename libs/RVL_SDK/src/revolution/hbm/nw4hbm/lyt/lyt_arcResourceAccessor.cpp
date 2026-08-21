@@ -12,6 +12,9 @@
  ******************************************************************************/
 namespace {
 
+// Recursively searches the archive rooted at pHandle's current directory for
+// a file whose name matches pName (case-insensitive). Returns the entry
+// number, or -1 if not found.
 s32 FindNameResource(ARCHandle* pHandle, const char* pName) {
     s32 entrynum = -1;
 
@@ -40,6 +43,9 @@ s32 FindNameResource(ARCHandle* pHandle, const char* pName) {
     return entrynum;
 }
 
+// Resolves a resource inside the archive. When type is RES_TYPE_NAME (0),
+// the whole tree is searched by file name; otherwise pRootDir/<type>/pName
+// is opened directly. Stores the resource length in *pSize when non-NULL.
 void* GetResourceSub(ARCHandle* pHandle, const char* pRootDir, u32 type,
                      const char* pName, unsigned long* pSize) {
 
@@ -103,18 +109,16 @@ namespace lyt {
 // Ruled out (this session + prior): init-list order (MWCC canonicalizes to
 // declaration order - byte-identical output), body-vs-list placement of
 // mArcBuf(NULL) (store order perturbs, rotation fixed), explicit mFontList()
-// vs implicit default ctor. Next lever requires read-only scope: member
-// declaration order in lyt_arcResourceAccessor.h (drives IR def order ->
-// coloring), cf. MWCC_CASES COccCulling entry (header __declspec lever).
+// vs implicit default ctor, mArcBuf() value-init, reinterpret_cast<void*>(0)
+// form, dropped explicit base call - all produce the identical rotation.
+// Per docs/register_mapping.md the coloring follows virtual-register birth
+// order built from PRE-scheduling IR; the remaining levers are the member
+// declaration order in lyt_arcResourceAccessor.h and the statement order of
+// ut_LinkList.h Initialize_ (both read-only here; offsets feed 5 matched
+// fns). Scheduler-driven regalloc soft-cap, not source-steerable in this
+// scope; cf. walls #11.
 ArcResourceAccessor::ArcResourceAccessor()
     : ResourceAccessor(), mArcBuf(NULL), mFontList() {}
-// header-locked (offsets feed the 5 already-matched fns) and the TU .text
-// budget is exact (0x3A0), so no register-pressure or size lever exists in the
-// writable scope. Needs a unit-flag/-O4,s change or header-level reshuffle.
-// Residual: schedule/store-order/size byte-identical; only a pure 3-cycle
-// Chaitin color rotation differs (vt/r0-zero/this+0x28). Member-list,
-// init-order, and body-vs-list perturbations all leave it fixed (empty body;
-// members fixed by the locked header).
 
 bool ArcResourceAccessor::Attach(void* pArchive, const char* pRootDir) {
     BOOL success = ARCInitHandle(pArchive, &mArcHandle);

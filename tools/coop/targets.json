@@ -276785,8 +276785,8 @@
       "size": "0xFC",
       "unit": "kyoshin/cf/CfGimmickSaveOff",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80082c78",
@@ -276802,8 +276802,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CfGimmickSaveOff.cpp",
       "source_present": true,
-      "instruction_match": 85.413,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-802ae4e8",
@@ -447103,8 +447103,9 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_AxVoiceManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 98.902,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80412f88",
@@ -447221,7 +447222,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80413368",
@@ -447260,8 +447262,9 @@
         "_savegpr_16"
       ],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 99.806,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80413638",
@@ -447293,7 +447296,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80413704",
@@ -447323,7 +447327,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80413798",
@@ -447358,8 +447363,9 @@
         "_savegpr_21"
       ],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 99.635,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80413918",
@@ -476184,8 +476190,8 @@
       "size": "0x7C",
       "unit": "monolib/src/work/CWorkControl",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/work/CWorkControl.cpp",
       "called_functions": [
@@ -476201,17 +476207,9 @@
       "callgraph_source": "build/us/asm/monolib/src/work/CWorkControl.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 99.194,
+      "instruction_match": 100.0,
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-21T19:01:48.184390+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/work/CWorkControl.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804461d8",
@@ -476358,15 +476356,7 @@
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 98.966,
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-21T19:01:48.184198+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/work/CWorkControl.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80446364",
@@ -486780,7 +486770,7 @@
       "size": "0xFC",
       "unit": "monolib/src/device/CDeviceFontInfoExt",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -486795,7 +486785,15 @@
       "source": "libs/monolib/src/device/CDeviceFontInfoExt.cpp",
       "source_present": true,
       "instruction_match": 81.127,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-21T20:00:45.375276+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/device/CDeviceFontInfoExt.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804575b0",

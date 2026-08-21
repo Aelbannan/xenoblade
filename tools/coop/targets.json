@@ -247375,7 +247375,7 @@
       "size": "0x134",
       "unit": "kyoshin/CSysWinBuff",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -247395,7 +247395,15 @@
       "source": "src/kyoshin/CSysWinBuff.cpp",
       "source_present": true,
       "instruction_match": 99.13,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-21T23:02:57.007525+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CSysWinBuff.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80276f00",
@@ -416543,7 +416551,7 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sud/sud_lib.c",
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -416570,7 +416578,7 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sud/sud_lib.c",
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {

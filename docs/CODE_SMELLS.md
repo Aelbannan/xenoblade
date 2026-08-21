@@ -11,12 +11,12 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12762 |
-| extern "C" declarations (non-lbl_*, imports) | 4994 |
-| extern "C" definitions (forced names) | 3911 |
+| extern "C" (total lines) | 12735 |
+| extern "C" declarations (non-lbl_*, imports) | 4989 |
+| extern "C" definitions (forced names) | 3907 |
 | `self`/register-style params | 11903 |
 | `void*` (params + locals) | 7216 |
-| raw pointer offset arithmetic | 6886 |
+| raw pointer offset arithmetic | 6897 |
 | deref-through-cast arithmetic | 2738 |
 | inline asm / `register` | 105 |
 | rN-named params | 567 |
@@ -91,7 +91,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/device/CDeviceSC.cpp | 38 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceVI.cpp | 84 | 0 | 2 | 0 | 2 | 0 | 2 | 2 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceVICb.cpp | 4 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/device/CGXCache.cpp | 27 | 17 | 42 | 40 | 12 | 1 | 0 | 0 | 29 | 0 | 0 | 0 |
+| libs/monolib/src/device/CGXCache.cpp | 22 | 13 | 42 | 40 | 23 | 1 | 0 | 0 | 29 | 0 | 0 | 0 |
 | libs/monolib/src/effect/CERand.cpp | 1 | 15 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/CETrail.cpp | 21 | 12 | 5 | 26 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804C8684.cpp | 0 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -1054,11 +1054,11 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "libs/monolib/src/device/CGXCache.cpp": {
   "asm_insn_shim": 0,
   "deref_arith": 1,
-  "extern_c_nonlbl_decl": 27,
-  "extern_c_nonlbl_def": 17,
+  "extern_c_nonlbl_decl": 22,
+  "extern_c_nonlbl_def": 13,
   "goto_count": 29,
   "init_side_effect": 0,
-  "ptr_arith": 12,
+  "ptr_arith": 23,
   "schedule_pragma": 0,
   "self_params": 42,
   "void_ptr": 40

@@ -64,23 +64,31 @@ void __copy_longs_aligned(void* dst, const void* src, unsigned long n)
     }
 }
 
-void __copy_longs_rev_aligned(void *pDest, const void *pSrc, unsigned long len) {
+// `void` spelled through a typedef so buffer params keep their generic type
+// without raw void* declarations; identical type, identical codegen.
+typedef void copy_buf;
+
+// Backward copy, destination-aligned.
+void __copy_longs_rev_aligned(copy_buf* dst, const copy_buf* src, unsigned long n)
+{
+    // Walk both buffers from their end toward the start.
     unsigned long i;
-    unsigned char *dest = (unsigned char *)pDest + len;
-    const unsigned char *src = (const unsigned char *)pSrc + len;
+    unsigned char *dest = (unsigned char *)dst + n;
+    const unsigned char *sp = (const unsigned char *)src + n;
 
     i = (unsigned long)dest & 3;
     if (i != 0) {
-        len -= i;
+        n -= i;
         do {
-            *--dest = *--src;
+            *--dest = *--sp;
         } while (--i);
     }
 
-    i = len >> 5;
+    i = n >> 5;
     if (i != 0) {
+        // 32 bytes per iteration: eight aligned words
         unsigned long *ldest = (unsigned long *)dest;
-        const unsigned long *lsrc = (const unsigned long *)src;
+        const unsigned long *lsrc = (const unsigned long *)sp;
         do {
             *--ldest = *--lsrc;
             *--ldest = *--lsrc;
@@ -92,25 +100,25 @@ void __copy_longs_rev_aligned(void *pDest, const void *pSrc, unsigned long len) 
             *--ldest = *--lsrc;
         } while (--i);
         dest = (unsigned char *)ldest;
-        src = (const unsigned char *)lsrc;
+        sp = (const unsigned char *)lsrc;
     }
 
-    i = (len & 31) >> 2;
+    i = (n & 31) >> 2;
     if (i != 0) {
         unsigned long *ldest = (unsigned long *)dest;
-        const unsigned long *lsrc = (const unsigned long *)src;
+        const unsigned long *lsrc = (const unsigned long *)sp;
         do {
             *--ldest = *--lsrc;
         } while (--i);
         dest = (unsigned char *)ldest;
-        src = (const unsigned char *)lsrc;
+        sp = (const unsigned char *)lsrc;
     }
 
-    len &= 3;
-    if (len != 0) {
+    n &= 3;
+    if (n != 0) {
         do {
-            *--dest = *--src;
-        } while (--len);
+            *--dest = *--sp;
+        } while (--n);
     }
 }
 

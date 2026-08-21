@@ -286852,7 +286852,7 @@
       "unit": "kyoshin/plugin/pluginVoice",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/plugin/pluginVoice.cpp",
       "called_functions": [
@@ -286869,9 +286869,17 @@
         "_restgpr_27",
         "_savegpr_27"
       ],
-      "instruction_match": 95.0,
+      "instruction_match": 93.286,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-21T18:30:34.005659+00:00",
+        "allowed_paths": [
+          "src/kyoshin/plugin/pluginVoice.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802bbac0",
@@ -289371,7 +289379,7 @@
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/MSL_C/MSL_Common/mem_funcs.s",
       "abi_helper_calls": [],
       "instruction_match": 100.0,
-      "equivalence_status": "internal_error",
+      "equivalence_status": "equivalent",
       "notes": "RE-MATCHED 2026-08 with SSBM-style MSL macro source (params via cps/cpd/lps/lpd macros, #pragma ANSI_strict off, deref_auto_inc): rev_aligned 100% (0 diffs), unaligned 100% (0 diffs, was wrongly accepted at 0xc4 with 31 structural diffs). rev_unaligned: size exact 0xac (was 0xc8); 20 pure reg-swaps remain (retail coalesces cps=src+n into r4; all source variants give r11). Unit .text now exactly 0x2D0 = budget.",
       "source_present": true
     },
@@ -289397,7 +289405,7 @@
       "callgraph_source": "build/us/asm/PowerPC_EABI_Support/src/MSL_C/MSL_Common/mem_funcs.s",
       "abi_helper_calls": [],
       "instruction_match": 100.0,
-      "equivalence_status": "internal_error",
+      "equivalence_status": "equivalent",
       "notes": "RE-MATCHED 2026-08 with SSBM-style MSL macro source (params via cps/cpd/lps/lpd macros, #pragma ANSI_strict off, deref_auto_inc): rev_aligned 100% (0 diffs), unaligned 100% (0 diffs, was wrongly accepted at 0xc4 with 31 structural diffs). rev_unaligned: size exact 0xac (was 0xc8); 20 pure reg-swaps remain (retail coalesces cps=src+n into r4; all source variants give r11). Unit .text now exactly 0x2D0 = budget.",
       "source_present": true
     },

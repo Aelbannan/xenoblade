@@ -540,7 +540,8 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
         // scale is loaded after it into a volatile FPR (retail shape).
         {
             void* pz = func_8044CEF8__8CGXCacheFv(&self->unk4, 3);
-            GXSetCopyClear(scaleColor255(lbl_eu_8066A37C, *(const ml::CCol4*)data), *(u32*)pz);
+            u32 z = *(u32*)pz;
+            GXSetCopyClear(scaleColor255(lbl_eu_8066A37C, *(const ml::CCol4*)data), z);
         }
         break;
     case 3:
@@ -553,10 +554,10 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
     case 4:
         GXSetZCompLoc((GXBool)(vu[0] & 0xff));
         break;
-    case 5:
+    case 13:
         GXSetCullMode(vu[0] ? GX_CULL_NONE : GX_CULL_BACK);
         break;
-    case 6:
+    case 5:
         // Z-mode: test enable from the data byte, compare func from ring cmd 6.
         {
             u8 test = *(u8*)data;
@@ -564,21 +565,22 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
                        (GXBool)test);
         }
         break;
-    case 7:
+    case 6:
         // Z-mode: compare func from the data byte, test enable from ring cmd 5.
         GXSetZMode(1, (GXCompare)(*(u8*)data ? GX_LEQUAL : GX_ALWAYS),
                    (GXBool)*(u8*)func_8044CEF8__8CGXCacheFv(&self->unk4, 5));
         break;
-    case 8:
+    case 7:
         GXSetColorUpdate((GXBool)*(u8*)data);
         break;
-    case 9:
+    case 8:
         GXSetAlphaUpdate((GXBool)*(u8*)data);
         break;
-    case 0xa:
-        // TEV pipeline presets selected by the data word.
-        switch (vu[0]) {
-        case 0:
+    case 9: {
+        // TEV pipeline presets selected by the data word. Written as an
+        // if/else-if chain so MWCC emits retail's bne-skip dispatch.
+        u32 tsel = vu[0];
+        if (tsel == 0) {
             GXSetNumChans(1);
             GXSetNumTexGens(0);
             GXSetNumTevStages(1);
@@ -587,8 +589,7 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
             GXSetTevColorOp(GX_TEVSTAGE0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, 0, GX_TEVPREV);
             GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_A0);
             GXSetTevAlphaOp(GX_TEVSTAGE0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, 0, GX_TEVPREV);
-            break;
-        case 1:
+        } else if (tsel == 1) {
             GXSetNumChans(1);
             GXSetNumTexGens(1);
             GXSetNumTevStages(1);
@@ -597,8 +598,7 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
             GXSetTevColorOp(GX_TEVSTAGE0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, 0, GX_TEVPREV);
             GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_A0, GX_CA_TEXA, GX_CA_ZERO);
             GXSetTevAlphaOp(GX_TEVSTAGE0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, 0, GX_TEVPREV);
-            break;
-        case 2:
+        } else if (tsel == 2) {
             GXSetNumChans(1);
             GXSetNumTexGens(0);
             GXSetNumTevStages(1);
@@ -611,8 +611,7 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
                           GX_DF_CLAMP, GX_AF_NONE);
             GXSetChanCtrl(GX_ALPHA0, GX_DISABLE, GX_SRC_VTX, GX_SRC_VTX, (GXLightID)0,
                           GX_DF_NONE, GX_AF_NONE);
-            break;
-        case 3:
+        } else if (tsel == 3) {
             GXSetNumChans(1);
             GXSetNumTexGens(1);
             GXSetNumTevStages(1);
@@ -625,13 +624,13 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
                           GX_DF_CLAMP, GX_AF_NONE);
             GXSetChanCtrl(GX_ALPHA0, GX_DISABLE, GX_SRC_VTX, GX_SRC_VTX, (GXLightID)0,
                           GX_DF_NONE, GX_AF_NONE);
-            break;
         }
         break;
-    case 0xb:
+    }
+    case 0xa:
         GXSetTevColor(GX_TEVREG0, *(GXColor*)data);
         break;
-    case 0xc: {
+    case 0xb: {
         // Viewport from the 4 s16s; jitter when interlaced. The conversions
         // live inside the branches so MWCC does not spill the f32s to FPRs.
         rmo = getRenderModeObj__9CDeviceVIFv();
@@ -645,35 +644,57 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
         }
         break;
     }
-    case 0xd: {
+    case 0xc: {
         // Scissor rect clamped against the full screen; zero-rect when the
         // result has no area. The overflow test reproduces retail's
         // xor/srawi/and/subf sign idiom for `(fbWidth+w) < width`. The rect
         // is stored in order [2],[0],[1],[3] (retail byte order).
         rmo = getRenderModeObj__9CDeviceVIFv();
-        s32 h = rmo->efbHeight;
+        s32 h = (s16)rmo->efbHeight;
         rmo = getRenderModeObj__9CDeviceVIFv();
         self->rect4A0[2] = rmo->fbWidth;
         self->rect4A0[0] = 0;
         self->rect4A0[1] = 0;
         self->rect4A0[3] = (s16)h;
         x0 = vp[0];
-        y0 = vp[1];
         w0 = vp[2];
-        h0 = vp[3];
         s32 sumX = x0 + w0;
         s32 wmx = self->rect4A0[2] > (s16)sumX ? self->rect4A0[2] : (s16)sumX;
-        s32 wmn = (s16)x0 > 0 ? 0 : x0;
+        s32 wmn = x0;
+        if (wmn > 0) wmn = 0;
         r = (s16)wmx - (s16)wmn;
         a = self->rect4A0[2] + w0;
-        cond = (a < r) ? 1 : 0;
+        cond = (a < r);
         if (cond) {
-            out[0] = x0 > 0 ? x0 : 0;
-            out[1] = self->rect4A0[1] > y0 ? self->rect4A0[1] : y0;
-            out[2] = (self->rect4A0[2] > (s16)sumX ? (s16)sumX : self->rect4A0[2]) - out[0];
+            // Vertical term for the overflow test (mirror of the horizontal
+            // one): max of the rect sums, min of the rect starts, s16-wise.
+            // In-place updates keep the select in the source register.
+            y0 = vp[1];
+            h0 = vp[3];
+            s32 ysum = (s16)(y0 + h0);
+            s32 csum = (s16)(self->rect4A0[1] + self->rect4A0[3]);
+            if (csum > ysum) ysum = csum;
+            if (self->rect4A0[1] < y0) y0 = self->rect4A0[1];
+            r = (s16)ysum - (s16)y0;
+            a = self->rect4A0[3] + h0;
+            cond = (a < r);
+        }
+        if (cond) {
+            s32 ox = x0;
+            if (ox < 0) ox = 0;
+            s32 oy = self->rect4A0[1] > vp[1] ? self->rect4A0[1] : vp[1];
+            s32 ow = (self->rect4A0[2] > (s16)sumX ? (s16)sumX : self->rect4A0[2]) - ox;
             s32 rh = (s16)(self->rect4A0[1] + self->rect4A0[3]);
-            s32 yh = (s16)(y0 + h0);
-            out[3] = (rh > yh ? yh : rh) - out[1];
+            s32 yh = (s16)(vp[1] + vp[3]);
+            s32 oh = (rh > yh ? yh : rh) - oy;
+            out[0] = (s16)ox;
+            out[1] = (s16)oy;
+            out[2] = (s16)ow;
+            out[3] = (s16)oh;
+            out[0] = (s16)ox;
+            out[1] = (s16)oy;
+            out[2] = (s16)ow;
+            out[3] = (s16)oh;
         } else {
             out[0] = 0;
             out[1] = 0;
@@ -682,7 +703,10 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
         }
         *(u32*)&self->rect4A0[0] = *(u32*)&out[0];
         *(u32*)&self->rect4A0[2] = *(u32*)&out[2];
-        if (self->rect4A0[2] > 0 && self->rect4A0[3] > 0) {
+        if (!(self->rect4A0[2] > 0 && self->rect4A0[3] > 0)) {
+            // no area: leave the rect as-is (retail tests a zero/default flag
+            // in r3 before deciding to call GXSetScissor)
+        } else {
             GXSetScissor(self->rect4A0[0], self->rect4A0[1], self->rect4A0[2], self->rect4A0[3]);
         }
         break;

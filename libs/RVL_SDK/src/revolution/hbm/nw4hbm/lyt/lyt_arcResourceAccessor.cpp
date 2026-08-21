@@ -96,9 +96,18 @@ namespace lyt {
  * ArcResourceAccessor
  *
  ******************************************************************************/
-ArcResourceAccessor::ArcResourceAccessor() : ResourceAccessor(), mFontList() {
-    mArcBuf = NULL;
-}
+// OPEN ITEM us-8032ebc0 (plateau, ACTIVE): structural=0, 9 pure reg-swaps,
+// size PASS (84B/84B). Residual is a fixed Chaitin coloring rotation on the
+// 3-value interference triangle {vtable ptr, &mNode(this+0x28), const 0}:
+// decomp colors vt=r5/ptr=r0/zero=r4, retail vt=r4/ptr=r5/zero=r0.
+// Ruled out (this session + prior): init-list order (MWCC canonicalizes to
+// declaration order - byte-identical output), body-vs-list placement of
+// mArcBuf(NULL) (store order perturbs, rotation fixed), explicit mFontList()
+// vs implicit default ctor. Next lever requires read-only scope: member
+// declaration order in lyt_arcResourceAccessor.h (drives IR def order ->
+// coloring), cf. MWCC_CASES COccCulling entry (header __declspec lever).
+ArcResourceAccessor::ArcResourceAccessor()
+    : ResourceAccessor(), mArcBuf(NULL), mFontList() {}
 // header-locked (offsets feed the 5 already-matched fns) and the TU .text
 // budget is exact (0x3A0), so no register-pressure or size lever exists in the
 // writable scope. Needs a unit-flag/-O4,s change or header-level reshuffle.

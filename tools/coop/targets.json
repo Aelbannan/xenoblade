@@ -2428,8 +2428,8 @@
       "size": "0x94",
       "unit": "kyoshin/plugin/ocThread",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804a4dd4",
@@ -2444,7 +2444,8 @@
       "callgraph_source": "build/us/asm/kyoshin/plugin/ocThread.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/ocThread.cpp",
-      "instruction_match": 0.0
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8003a784",
@@ -2878,7 +2879,7 @@
       "size": "0x48",
       "unit": "kyoshin/plugin/ocMsg",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -103669,15 +103670,7 @@
         "_savegpr_21"
       ],
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-66691",
-        "claimed_at": "2026-08-21T13:33:16.138296+00:00",
-        "allowed_paths": [
-          "src/kyoshin/menu/CMenuBattlePlayerState_ct.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-8010be00",
@@ -201857,7 +201850,7 @@
       "size": "0x94",
       "unit": "kyoshin/makecrystal/code_80213488",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
@@ -201871,7 +201864,15 @@
       "source": "src/kyoshin/makecrystal/code_80213488.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-66691",
+        "claimed_at": "2026-08-21T13:48:35.638736+00:00",
+        "allowed_paths": [
+          "src/kyoshin/makecrystal/code_80213488.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80215374",
@@ -339207,15 +339208,7 @@
       "abi_helper_calls": [],
       "instruction_match": 97.619,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-66691",
-        "claimed_at": "2026-08-21T13:33:13.292862+00:00",
-        "allowed_paths": [
-          "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-8032ec20",
@@ -339243,7 +339236,8 @@
       "abi_helper_calls": [],
       "instruction_match": 100.0,
       "notes": "decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8032eca0",
@@ -339270,7 +339264,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8032ecc0",
@@ -339297,7 +339292,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8032ed30",
@@ -410161,17 +410157,9 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_uo.c",
       "declared_return": "i32",
-      "instruction_match": 99.531,
+      "instruction_match": 96.875,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-66691",
-        "claimed_at": "2026-08-21T13:33:07.234803+00:00",
-        "allowed_paths": [
-          "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_uo.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-803d15e8",
@@ -415125,8 +415113,8 @@
       "size": "0x90",
       "unit": "CriWare/src/sofdec/sfx/sfx_set",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8039982c",
@@ -415139,8 +415127,8 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfx/sfx_set.c",
       "declared_return": "void",
-      "instruction_match": 99.5,
-      "equivalence_status": "inconclusive_smt_disabled",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -542029,7 +542017,7 @@
       "size": "0x58",
       "unit": "monolib/src/effect/code_804C8684",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -542041,15 +542029,7 @@
       "source": "libs/monolib/src/effect/code_804C8684.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "pi-harness-66691",
-        "claimed_at": "2026-08-21T13:33:01.263736+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/effect/code_804C8684.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-804cc874",

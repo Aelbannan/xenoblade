@@ -13,14 +13,16 @@ WaveSound::WaveSound(SoundInstanceManager<WaveSound>* pManager, int priority, in
       mTempSpecialHandle(NULL),
       mPreparedFlag(false) {}
 
+// Retail passes this sound's own voice-out count as the player's voice
+// budget rather than taking a voices parameter.
 bool WaveSound::Prepare(const void* pWsdData, s32 wsdOffset,
                         WsdPlayer::StartOffsetType startType, s32 startOffset,
                         int voices, const WsdPlayer::WsdCallback* pCallback,
                         u32 callbackArg) {
     InitParam();
 
-    if (!mWsdPlayer.Prepare(pWsdData, wsdOffset, startType, startOffset, voices,
-                            pCallback, callbackArg)) {
+    if (!mWsdPlayer.Prepare(pWsdData, wsdOffset, startType, startOffset,
+                            GetVoiceOutCount(), pCallback, callbackArg)) {
         return false;
     }
 

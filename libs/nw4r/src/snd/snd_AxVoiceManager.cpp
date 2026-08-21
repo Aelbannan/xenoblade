@@ -1,5 +1,7 @@
 #include <nw4r/snd.h>
 
+#include <new>
+
 #include <revolution/AX.h>
 
 namespace nw4r {
@@ -32,12 +34,12 @@ void AxVoiceManager::Setup(void* pBuffer, u32 size) {
 
     AxVoice* pVoice = static_cast<AxVoice*>(pBuffer);
 
-    for (u32 i = 0; i < mVoiceCount; pVoice++, i++) {
-        if (pVoice != NULL) {
-            pVoice = new (pVoice) AxVoice();
-        }
+    for (u32 i = 0; i < mVoiceCount; i++) {
+        // Placement-new each voice slot; push the constructed object
+        AxVoice* pPushVoice = pVoice != NULL ? new (pVoice) AxVoice() : pVoice;
 
-        mFreeVoiceList.PushBack(pVoice);
+        mFreeVoiceList.PushBack(pPushVoice);
+        pVoice++;
     }
 
     mInitialized = true;

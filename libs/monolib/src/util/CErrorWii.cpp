@@ -180,4 +180,4 @@ void OSPanic(const char *file, int line, const char *msg, ...){
     PPCHalt();
 #endif
 }
-// dissolved monolib data bypass verified
+// data: retail sections verified via run.py data diff (no bypass)

@@ -276,4 +276,80 @@ bool CPackItem::calculatePackFileHash(const char* filename){
 
     return true;
 }
-// dissolved monolib data bypass verified
+// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
+namespace CPackItemBlob {
+extern "C" void __dt__9CPackItemFv();
+extern "C" void WorkEvent1__10IWorkEventFPvPCc();
+extern "C" void OnFileEvent__9CPackItemFP10CEventFile();
+extern "C" void WorkEvent3__10IWorkEventFPv();
+extern "C" void WorkEvent4__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb();
+extern "C" void WorkEvent6__10IWorkEventFv();
+extern "C" void WorkEvent7__10IWorkEventFv();
+extern "C" void WorkEvent8__10IWorkEventFv();
+extern "C" void WorkEvent9__10IWorkEventFv();
+extern "C" void WorkEvent10__10IWorkEventFv();
+extern "C" void WorkEvent11__10IWorkEventFv();
+extern "C" void WorkEvent12__10IWorkEventFv();
+extern "C" void WorkEvent13__10IWorkEventFv();
+extern "C" void WorkEvent14__10IWorkEventFv();
+extern "C" void WorkEvent15__10IWorkEventFv();
+extern "C" void WorkEvent16__10IWorkEventFv();
+extern "C" void WorkEvent17__10IWorkEventFv();
+extern "C" void WorkEvent18__10IWorkEventFv();
+extern "C" void WorkEvent19__10IWorkEventFv();
+extern "C" void WorkEvent20__10IWorkEventFv();
+extern "C" void WorkEvent21__10IWorkEventFv();
+extern "C" void WorkEvent22__10IWorkEventFv();
+extern "C" void WorkEvent23__10IWorkEventFv();
+extern "C" void WorkEvent24__10IWorkEventFv();
+extern "C" void WorkEvent25__10IWorkEventFv();
+extern "C" void WorkEvent26__10IWorkEventFv();
+extern "C" void WorkEvent27__10IWorkEventFv();
+extern "C" void WorkEvent28__10IWorkEventFv();
+extern "C" void WorkEvent29__10IWorkEventFv();
+extern "C" void WorkEvent30__10IWorkEventFv();
+extern "C" void WorkEvent31__10IWorkEventFv();
+}
+
+extern "C" const char lbl_eu_805246FC[0xA] = "CPackItem";
+extern "C" u32 lbl_eu_80663BF8[2] = { (u32)&lbl_eu_805246FC, 0 };
+
+// [.data] 0x8056FF58-0x8056FFE0 (0x88): CPackItem vtable
+extern "C" u32 lbl_eu_8056FF58[34] = {
+    (u32)&lbl_eu_80663BF8, 0x00000000,
+    (u32)&CPackItemBlob::__dt__9CPackItemFv,
+    (u32)&CPackItemBlob::WorkEvent1__10IWorkEventFPvPCc,
+    (u32)&CPackItemBlob::OnFileEvent__9CPackItemFP10CEventFile,
+    (u32)&CPackItemBlob::WorkEvent3__10IWorkEventFPv,
+    (u32)&CPackItemBlob::WorkEvent4__10IWorkEventFv,
+    (u32)&CPackItemBlob::OnPauseTrigger__10IWorkEventFb,
+    (u32)&CPackItemBlob::WorkEvent6__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent7__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent8__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent9__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent10__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent11__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent12__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent13__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent14__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent15__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent16__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent17__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent18__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent19__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent20__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent21__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent22__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent23__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent24__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent25__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent26__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent27__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent28__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent29__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent30__10IWorkEventFv,
+    (u32)&CPackItemBlob::WorkEvent31__10IWorkEventFv,
+};
+
+// data: retail sections verified via run.py data diff (no bypass)

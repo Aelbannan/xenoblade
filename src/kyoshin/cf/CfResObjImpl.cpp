@@ -20,10 +20,12 @@ static const s16 RES_STATE_INVALID = -1;
 cf::CfResObjImpl::CfResObjImpl(cf::CfResObjParent* parent) {
     field_00 = parent;
     field_04 = lbl_eu_80667690;
-    const s16 invalid = RES_STATE_INVALID;
-    field_0E = invalid;
-    field_0A = invalid;
+    // Dead zero-store: MWCC eliminates the store but its (merged) constant
+    // node is born before the -1, which flips the r7/r8 constant coloring.
+    field_08 = 0;
+    field_0A = -1;
     field_0C = 0;
+    field_0E = -1;
     field_10 = lbl_eu_80530F44;
     field_08 = 1;
     memset(&field_14, 0, sizeof(field_14));

@@ -54,12 +54,12 @@ s32 SFUO_ExecServer(void* self) {
 
 s32 SFUO_Create(void* self) {
     s32 zero = 0;
-    s32 i = 0;
     u8* end = (u8*)self + 0x2638;
     u8* e = end + 4;
     *(void**)((u8*)self + 0x2200) = end;
     void* field = *(void**)((u8*)self + 0x2208);
     *(u32*)((u8*)self + 0x2638) = zero;
+    s32 i = 0;
     do {
         *(u32*)((u8*)end + 4) = zero;
         *(u32*)((u8*)end + 8) = zero;

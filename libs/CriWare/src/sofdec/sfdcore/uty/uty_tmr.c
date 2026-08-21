@@ -8,10 +8,15 @@ extern s32 lbl_eu_80619BF0;
 extern s32 CRICFG_Read(const char* key, s32* out);
 extern u32 lbl_eu_80619BF8[2];
 
+struct UtyTmrPair {
+    u32 active;           // 0x00
+    u32 unit;             // 0x04
+};
+
 struct UtyTmrData {
     volatile s32 count;   // 0x00
     s32 id;               // 0x04
-    u32 pair[2];          // 0x08: [0]=active, [1]=unit
+    struct UtyTmrPair pair; // 0x08
 };
 
 void UTY_InitTmr(s32 newId) {
@@ -30,14 +35,17 @@ void UTY_InitTmr(s32 newId) {
     }
 
     t->id = newId;
+    // NOTE: retail materializes the tick-pair address (addi r3, base, 8)
+    // before each unit store; MWCC folds every source reconstruction tried
+    // to a direct displacement store (see MWCC_CASES.md "UTY_InitTmr p2 base").
     if (newId == -1) {
         // Uninitialised: unit = 1, timer not running.
-        t->pair[1] = 1;
-        t->pair[0] = 0;
+        t->pair.unit = 1;
+        t->pair.active = 0;
     } else {
         // Otherwise unit = (bus clock / 4), timer running.
-        t->pair[1] = *(volatile u32*)0x800000F8 >> 2;
-        t->pair[0] = 0;
+        t->pair.unit = *(volatile u32*)0x800000F8 >> 2;
+        t->pair.active = 0;
     }
 }
 void UTY_FinishTmr(void) {

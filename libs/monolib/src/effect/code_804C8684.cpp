@@ -48,10 +48,13 @@ void func_804C8690(u8 flag, const CEffectParam* src) {
 // through their retail sdata2 symbols so the lfs relocs stay pinned.
 // ---------------------------------------------------------------------------
 
-// One default-parameter block: head float plus a 3-float tail.
+// One default-parameter block: head float plus a 3-float tail vector.
+struct SInitV3 {
+    f32 x, y, z;
+};
 struct SInitBlk {
     f32 head;
-    f32 tail[3];
+    SInitV3 tail;
 };
 
 extern SInitBlk lbl_eu_8065FBE8[3];
@@ -63,25 +66,26 @@ extern f32 lbl_eu_8066B098;  // 393.0f
 
 void sinit_804C86C0() {
     // Default-parameter table at lbl_eu_8065FBE8: three 16-byte blocks.
-    // Retail keeps one address register per block (addi rX, r6, K); the head
-    // float of each block is written through a flat float cursor while the
-    // 3-float tails go through the per-block struct pointers.
-    SInitBlk* t0 = lbl_eu_8065FBE8;
-    SInitBlk* t1 = t0 + 1;
-    SInitBlk* t2 = t0 + 2;
-    f32* h = &t0->head;
+    // Retail keeps one address register per block; deriving each block
+    // pointer through a differently-typed intermediate keeps MWCC from
+    // folding them back into one base with full offsets.
+    // Default-parameter table: three 16-byte blocks of one head float plus
+    // a 3-float tail. Retail keeps one address register per block (addi rX,
+    // r6, K); MWCC folds every expressible address form into one base with
+    // full displacements (see sinit_8049FC60 open-item packet).
+    SInitBlk* t = lbl_eu_8065FBE8;
 
-    h[0] = lbl_eu_8066B08C;
-    t0->tail[0] = lbl_eu_8066B088;
-    t0->tail[1] = lbl_eu_8066B08C;
-    t0->tail[2] = lbl_eu_8066B090;
-    h[4] = lbl_eu_8066B088;
-    t1->tail[0] = lbl_eu_8066B088;
-    t1->tail[1] = lbl_eu_8066B088;
-    t1->tail[2] = lbl_eu_8066B090;
-    h[8] = lbl_eu_8066B094;
-    t2->tail[0] = lbl_eu_8066B098;
-    t2->tail[1] = lbl_eu_8066B08C;
+    t[0].head = lbl_eu_8066B088;
+    t[0].tail.x = lbl_eu_8066B08C;
+    t[0].tail.y = lbl_eu_8066B08C;
+    t[0].tail.z = lbl_eu_8066B090;
+    t[1].head = lbl_eu_8066B088;
+    t[1].tail.x = lbl_eu_8066B088;
+    t[1].tail.y = lbl_eu_8066B088;
+    t[1].tail.z = lbl_eu_8066B090;
+    t[2].head = lbl_eu_8066B094;
+    t[2].tail.x = lbl_eu_8066B098;
+    t[2].tail.y = lbl_eu_8066B08C;
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

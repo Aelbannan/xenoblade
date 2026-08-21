@@ -211,22 +211,26 @@ CWorkSystemCache::~CWorkSystemCache() {
     }
 }
 
-#pragma optimize_for_size on
 void CWorkSystemCache::wkUpdate() {
+    // Walk the singleton's resource list; logged-in items get released and
+    // unlinked. The unlink helper takes &node and advances past the removed
+    // entry, so the caller just resumes from the saved 'next' pointer.
+    const int zero = 0;
     CacheListNode* node = lbl_eu_806659C8->mCache.mStartNodePtr->mNext;
     while (node != lbl_eu_806659C8->mCache.mStartNodePtr) {
         CacheListNode* next = node->mNext;
         func_804D91BC(node->mItem);
         if (func_804D91D8((CacheLoginState*)node->mItem)) {
             CCacheItem* p = node->mItem;
-            if (p) {
-                if (p) {
+            if (p != NULL) {
+                if (p != NULL) {
                     p->func_0x8(1);
                 }
-                node->mItem = 0;
+                node->mItem = (CCacheItem*)zero;
             }
             CacheListNode* out;
-            func_804D903C(&out, (u32)&lbl_eu_806659C8->mCache, (CacheListNode*)&node);
+            CacheListNode* unlink = node;
+            func_804D903C(&out, (u32)&lbl_eu_806659C8->mCache, (CacheListNode*)&unlink);
         }
         node = next;
     }

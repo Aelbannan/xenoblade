@@ -426,6 +426,9 @@ UNIT_RULES: dict[str, UnitRules] = {
         # monolibdata2 dissolve: retail .data slice is align 4, MWCC emits 8.
         set_data_align=((".data", 4),),
     ),
+    "CDeviceGX.o": UnitRules(
+        set_data_align=((".data", 4), (".sbss", 4)),
+    ),
     "CNReqtaskSave.o": UnitRules(
         set_data_align=((".rodata", 4),),
     ),
@@ -2934,6 +2937,20 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("@STRING@AsinRad__Q24nw4r4mathFf", "lbl_eu_8052ADB0"),
             ("@STRING@AsinRad__Q24nw4r4mathFf@0", "lbl_eu_8052AD88"),
         ),
+        extern_data_sections=(".data", ".sdata2"),
+    ),
+    "CAttrTransform.o": UnitRules(
+        exact_renames=(
+            ("@STRING@AsinRad__Q24nw4r4mathFf", "lbl_eu_8052ADB0"),
+            ("@STRING@AsinRad__Q24nw4r4mathFf@0", "lbl_eu_8052AD88"),
+        ),
+        pool_patterns=(
+            (struct.pack(">I", 0x3F000000), "lbl_eu_8066A198"),
+            (struct.pack(">I", 0x4222F983), "lbl_eu_8066A190"),
+            (struct.pack(">I", 0xBF800000), "lbl_eu_8066A194"),
+            (struct.pack(">I", 0x3CC90FDB), "lbl_eu_8066A19C"),
+        ),
+        extern_data_sections=(".data", ".sdata2"),
     ),
 
     # g3d_scnobj: the retail split is .text-only; every data symbol (ScnObj/
@@ -3299,6 +3316,26 @@ UNIT_RULES: dict[str, UnitRules] = {
         exact_renames=(("__vt__14CDeviceFileJob", "lbl_eu_8056C4D8"),),
         extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
         repack_after_drop=4,
+    ),
+    "CScn.o": UnitRules(
+        extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
+    ),
+    "CDeviceVI.o": UnitRules(
+        drop_data_tail=((".data", 0x170), (".rodata", 0xB9), (".sdata", 0x18)),
+    ),
+    "CDevice.o": UnitRules(
+        drop_data_tail=((".data", 0x170), (".rodata", 0xA0), (".sdata", 0x10), (".sdata2", 0x0)),
+    ),
+    "CDeviceClock.o": UnitRules(
+        drop_data_tail=((".data", 0xE0), (".rodata", 0x58), (".sdata", 0x18)),
+        drop_nobits_range=((".sbss", 0, 4),),
+    ),
+    "CDeviceFontLayer.o": UnitRules(
+        pad_data_section=((".data", 0xD8), (".rodata", 0x78), (".sdata", 0x18)),
+        drop_data_tail=((".sdata2", 0x0),),
+    ),
+    "CGXCache.o": UnitRules(
+        addend_patches=((".data", 12, 264), (".data", 16, 404), (".data", 20, 448), (".data", 24, 500), (".data", 28, 552), (".data", 32, 564), (".data", 36, 576), (".data", 40, 1348), (".data", 44, 1372), (".data", 48, 1592), (".data", 52, 420)),
     ),
 }
 

@@ -2,7 +2,10 @@
 #include "monolib/device.hpp"
 #include "monolib/work.hpp"
 
-CLib* CLib::spInstance;
+// Retail sbss singleton (dissolved monolibdata blob) - keep linker name verbatim
+CLib* lbl_eu_806656D0 = nullptr;
+#define spInstance lbl_eu_806656D0
+#include <decomp.h>
 
 CLib::CLib(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, MAX_CHILD) {
     spInstance = this;

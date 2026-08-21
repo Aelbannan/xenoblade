@@ -33,8 +33,7 @@ struct SeqFileReaderView {
 // Pointer add that keeps the source operand order (base first) when lowered.
 template <typename T>
 inline const void* AddPtrBaseFirst(const void* pBase, T offset) {
-    return reinterpret_cast<const void*>(reinterpret_cast<const u8*>(pBase) +
-                                         offset);
+    return reinterpret_cast<const void*>(reinterpret_cast<const u8*>(pBase) + offset);
 }
 
 } // namespace
@@ -88,9 +87,13 @@ bool ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
 
     u32 nameLen = strlen(label);
 
-    for (u32 i = 0; i < pLabelBlock->entryCount; i++) {
-        const SeqLabelEntry* pEntry = static_cast<const SeqLabelEntry*>(
-            AddPtrBaseFirst(pLabelBlock, pLabelBlock->offset[i]));
+    // Explicit offset cursor: defined before the entryCount CSE temp so it
+    // takes the lower register, matching retail allocation.
+    const u32* pOffset = pLabelBlock->offset;
+
+    for (u32 i = 0; i < pLabelBlock->entryCount; i++, pOffset++) {
+        const SeqLabelEntry* pEntry =
+            static_cast<const SeqLabelEntry*>(AddPtrBaseFirst(pLabelBlock, *pOffset));
 
         if (nameLen == pEntry->nameLen &&
             strncmp(label, pEntry->name, nameLen) == 0) {

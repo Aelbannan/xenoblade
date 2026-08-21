@@ -1655,4 +1655,4 @@ template<> void CTTask<CTaskColiManager>::Draw() {
     if (mDrawFunc) {
         (static_cast<CTaskColiManager*>(this)->*mDrawFunc)();
     }
-}// dissolved monolib data bypass verified
+}// data: retail sections verified via run.py data diff (no bypass)

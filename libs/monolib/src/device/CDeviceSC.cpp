@@ -54,10 +54,61 @@ u8 CDeviceSC::getLanguage(){
     return lbl_eu_80665640[0]->mLanguage;
 }
 
+// Mirror view over the singleton's thread flag / message-queue tail fields
+// (the private CMsgParam<8> members mArrayPtr/mFront/mSize/mCapacity sit at
+// 0x1A4..0x1B0 inside CWorkThread::mMsgQueue). The retail inlines
+// CMsgParam<8>::find(EVT_EXCEPTION) here, so we scan the queue directly.
+class CDeviceSCFields {
+public:
+    u8 field_0x0[0x48];              //0x0
+    int mState;                      //0x48 (CWorkThread::ThreadState)
+    u8 field_0x4C[0x7C - 0x4C];      //0x4C
+    u32 mThreadFlags;                //0x7C (CWorkThread::ThreadFlags)
+    u8 field_0x80[0x1A4 - 0x80];     //0x80..0x1A4 (queue vtable + entries)
+    CMsgParamEntry* mMsgArray;       //0x1A4 (CMsgParam::mArrayPtr)
+    u32 mMsgFront;                   //0x1A8 (CMsgParam::mFront)
+    u32 mMsgSize;                    //0x1AC (CMsgParam::mSize)
+    u32 mMsgCapacity;                //0x1B0 (CMsgParam::mCapacity)
+};
+
+// Inlined equivalent of CMsgParam<8>::find(msg): returns the matching slot
+// index, or -1 when exhausted. Written as an inline helper so MWCC merges the
+// return value with the induction variable (retail register allocation).
+// Fields are re-read through the instance pointer inside the loop, matching
+// the retail load pattern.
+static inline int findMsg(u32 msg){
+    CDeviceSCFields* pInst = (CDeviceSCFields*)lbl_eu_80665640[0];
+    for (u32 i = 0; i < pInst->mMsgSize; i++) {
+        if (pInst->mMsgArray[(pInst->mMsgFront + i) % pInst->mMsgCapacity].command == msg) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 bool CDeviceSC::isInitialized(){
-    CDeviceSC* pThis = lbl_eu_80665640[0];
-    return pThis->isException() == false &&
-           (pThis->mState == THREAD_STATE_LOGIN || pThis->mState == THREAD_STATE_RUN);
+    CDeviceSCFields* inst = (CDeviceSCFields*)lbl_eu_80665640[0];
+
+    // Exception flag set or a queued EVT_EXCEPTION event means the device is
+    // not initialized.
+    bool hasException;
+    if (inst->mThreadFlags & CWorkThread::THREAD_FLAG_EXCEPTION) {
+        hasException = true;
+    } else {
+        // Inlined queue scan for a queued EVT_EXCEPTION event.
+        hasException = findMsg(CWorkThread::EVT_EXCEPTION) >= 0;
+    }
+
+    // Initialized when the thread has logged in and started running.
+    // Initialized when the thread has logged in and started running.
+    if (!hasException) {
+        int state = inst->mState;
+        if (state == CWorkThread::THREAD_STATE_LOGIN ||
+            state == CWorkThread::THREAD_STATE_RUN) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool CDeviceSC::wkStandbyLogin(){

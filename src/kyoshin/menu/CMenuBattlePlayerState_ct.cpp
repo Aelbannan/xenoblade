@@ -58,11 +58,11 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
     // Interim CProcess vtable, then final MI vtable + interface pieces.
     // Retail: lwzu of [0], then stw [1]@+0x40 before [0]@+0x3C (ArtsSelect order).
     process->vtable = lbl_eu_8052C1C0;
+    z = 0;
     vtFinal = lbl_eu_8052C330;
     ptmfWord0 = __ptmf_null[0];
     vtWork = vtFinal + 0x24;
     vtRender = vtFinal + 0xac;
-    z = 0;
     ptmfWord1 = __ptmf_null[1];
     process->callbacks[1] = ptmfWord1;
     process->callbacks[0] = ptmfWord0;
@@ -104,8 +104,7 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
         u32 ok2;
         u32 ok3;
 
-        // Retail masks off the top bit (clrrwi ..,31) for the pad/size overflow
-        // guard checks; sign-bit extraction (srawi+srwi) is a mismatch + cost.
+        // Retail guards use parity bits (clrrwi ..,31 keeps only bit 0).
         padStart = slot.pad90;
         padEnd = reinterpret_cast<u8*>(&slot.unk204);
         padSize = static_cast<s32>(padEnd - padStart);
@@ -113,17 +112,17 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
         unk7F4 = 1;
         // Signed /12: under -O4,s stays divw (retail lis 0x2AAB/mulhw). Soft-cap.
         q12 = sizePlus / 12;
-        pMask = padSize & 0x7FFFFFFF;
+        pMask = padSize & 1;
         q12p1 = q12 + 1;
         padLim = padEnd - 0x60;
         zeroF = lbl_eu_80666F94;
-        spMask = sizePlus & 0x7FFFFFFF;
+        spMask = sizePlus & 1;
         unk7E0 = (void*)z;
         neg1F = lbl_eu_80666FB0;
         unk7E4 = (nw4r::lyt::Layout*)z;
-        qMask = q12 & 0x7FFFFFFF;
+        qMask = q12 & 1;
         unk7E8 = (nw4r::lyt::AnimTransform*)z;
-        qpMask = q12p1 & 0x7FFFFFFF;
+        qpMask = q12p1 & 1;
         unk7EC = (nw4r::lyt::AnimTransform*)z;
         v4 = 4;
         unk7F0 = (nw4r::lyt::AnimTransform*)z;

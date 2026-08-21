@@ -51,7 +51,6 @@ struct UnkCfgHead {
     u32 field4;  // 0x04
     u32 field8;  // 0x08
 };
-
 // ------------------------------------------------------------------
 // Node-pool layout
 // ------------------------------------------------------------------
@@ -189,16 +188,17 @@ void __declspec(noinline) UnkClass_8047CD0C::func_8047D258() {
 
 extern "C" void func_8047CD0C__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
                                                       u8* config) {
+    s32 i;
+    s32 off;
     self->mData = 0;
     if (*(u32*)config == 0x57504F49) {
-        config += 0xc;
-        self->mData = config;
+        self->mData = config + 0xc;
         ((UnkClass_8047E110*)lbl_eu_80658560)->func_8047E110();
         func_8047D0F0__17UnkClass_8047CD0CFv(&lbl_eu_80658540,
                                              (UnkClass_8047CD0C*)self->mData);
         if (self->mField08 != 0) {
-            s32 i = 0;
-            s32 off = 0;
+            i = 0;
+            off = 0;
             for (; i < (s32)self->mField08; i++) {
                 func_8047E064__17UnkClass_8047E064Fv(
                     (UnkClass_8047E064*)(self->mField04 + off), i);
@@ -207,7 +207,6 @@ extern "C" void func_8047CD0C__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
         }
     }
 }
-
 // ------------------------------------------------------------------
 // func_8047CDBC -- full pool setup.  Call D038 to (re)allocate the node
 // storage, store the count, clear every node object, then attach them.

@@ -53,14 +53,13 @@ extern f32 lbl_eu_8066845C;
 // sibling unit (CMCCrystalBox.cpp) helpers
 extern "C" void func_80213988(MakeCrystalTable* d);
 extern "C" void func_80213B1C(MakeCrystalTable* d);
-// Copy a 4-byte {s16, u8} crystal entry (id + flag).
-// DECOMP_DONT_INLINE: retail calls this through a real `bl` from the loop
-// callers; without it MWCC inlines the tiny body and unrolls those loops.
-extern "C" DECOMP_DONT_INLINE void func_8021351C(MakeCrystalEntry* dst,
-                                                 const MakeCrystalEntry* src) {
-    dst->id = src->id;
-    dst->flag = src->flag;
-}
+// Copy a 4-byte {s16, u8} crystal entry (id + flag). Definition lives at the
+// bottom of this TU: MWCC's IPA rewrites the callers' loops into unrolled
+// direct stores when it can see the body, but retail keeps real `bl`s.
+__declspec(noinline) void func_8021351C(MakeCrystalEntry* dst,
+                                        const MakeCrystalEntry* src);
+// (definition at bottom; volatile accesses keep the same instructions but
+// stop MWCC's IPA from proving the callers' copy loops redundant)
 
 // Retail 0x80213488: initialise the whole table. Directly resets all 1024
 // entries, sets the header, then re-writes every entry through the shared
@@ -212,4 +211,12 @@ void* func_8021384C(MakeCrystalTable* d, u8 idx) {
         if (obj != 0 && *(void**)obj != 0) return obj;
     }
     return 0;
+}
+
+// Copy a 4-byte {s16, u8} crystal entry (id + flag). Kept after the callers so
+// MWCC cannot see the body while optimizing them (see declaration above).
+__declspec(noinline) void func_8021351C(MakeCrystalEntry* dst,
+                                        const MakeCrystalEntry* src) {
+    *(volatile s16*)&dst->id = *(volatile s16*)&src->id;
+    *(volatile u8*)&dst->flag = *(volatile u8*)&src->flag;
 }

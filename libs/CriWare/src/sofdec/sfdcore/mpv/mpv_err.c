@@ -15,29 +15,44 @@ void MPVERR_InitErrInf(void* self) {
     *(u32*)((u8*)self + 0x10) = 0;
 }
 
+typedef void (*MPVErrCallback)(u32);
+
 int MPVLIB_CheckHn(void* handle);
 
-s32 MPV_SetErrFunc(void* self, void* cb, void* arg) {
+typedef void (*MPVErrCallback)(u32);
+
+typedef struct MPVErrInf {
+    MPVErrCallback func;
+    u32 user;
+    u32 code;
+} MPVErrInf;
+
+typedef struct SFD_MPV {
+    u8 field_0x0[0xbdc];
+    MPVErrInf errInf;
+} SFD_MPV;
+
+int MPVLIB_CheckHn(void* handle);
+
+s32 MPV_SetErrFunc(void* self, MPVErrCallback cb, void* arg) {
     u32* dst;
     if (self == NULL) {
         dst = lbl_eu_80602A78;
+    } else if (MPVLIB_CheckHn(self) != 0) {
+        /* record the fatal code; dispatch to any previously-registered callback */
+        u32* err = lbl_eu_80602A78;
+        void (*oldcb)(u32) = (void (*)(u32))err[0];
+        err[2] = 0xFF030203;
+        if (oldcb != NULL)
+            oldcb(err[1]);
+        return 0xFF030203;
     } else {
-        if (MPVLIB_CheckHn(self) != 0) {
-            /* record the fatal code; dispatch to any previously-registered callback */
-            u32* gerr = (u32*)lbl_eu_80602A78;
-            gerr[2] = 0xFF030203;
-            u32 oldcb = lbl_eu_80602A78[0];
-            if (oldcb != 0)
-                ((void (*)(u32))oldcb)(lbl_eu_80602A78[1]);
-            return 0xFF030203;
-        }
         dst = (u32*)((u8*)self + 0xbdc);
     }
     dst[0] = (u32)cb;
     dst[1] = (u32)arg;
     return 0;
 }
-
 s32 MPVERR_SetCode(s32 val, u32 err_code) {
     if (val == 0) {
         lbl_eu_80602A78[2] = err_code;

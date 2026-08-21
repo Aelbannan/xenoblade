@@ -458,4 +458,4 @@ extern "C" { u32 lbl_eu_80665970; u32 lbl_eu_80665974; u32 lbl_eu_80665978; }
 DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_80665970);
 DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_80665974);
 DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_80665978);
-// dissolved monolib data bypass verified
+// data: retail sections verified via run.py data diff (no bypass)

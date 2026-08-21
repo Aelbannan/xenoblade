@@ -10,14 +10,13 @@ void SFXA_Init(void) {
 }
 
 SFXAlphaState* SFXA_Create(void) {
-    SFXAlphaState* state;
+    SFXAlphaState* state = (SFXAlphaState*)(lbl_eu_8061A138 + 8);
     s32 count = *(s32*)(lbl_eu_8061A138 + 4);
 
-    state = (SFXAlphaState*)(lbl_eu_8061A138 + 8);
-    for (; count > 0; count--) {
-        if (state->_00 == 0)
-            goto found;
-        state++;
+    for (; count > 0; count--, state++) {
+        if (state->_00 != 0)
+            continue;
+        goto found;
     }
     state = NULL;
 found:

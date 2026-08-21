@@ -221,4 +221,4 @@ CMdlMouth::CMdlMouth() {
     field_0x24 = -1;
     field_0x28 = 0;
     value2C = lbl_eu_8066B314;
-}// dissolved monolib data bypass verified
+}// data: retail sections verified via run.py data diff (no bypass)

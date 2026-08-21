@@ -753,6 +753,8 @@ static void OSExceptionInit(void) {
     DBPrintf("Exceptions initialized...\n");
 }
 
+// Named for the __OSDBINTSTART entry label so the vector blob carries the
+// registry symbol; __OSDBIntegrator is a retail-only alias at the same address.
 static asm void __OSDBIntegrator(void) {
     // clang-format off
     nofralloc
@@ -784,6 +786,7 @@ static asm void __OSDBIntegrator(void) {
 }
 
 //TODO: this should use the label
+// Named for the __OSDBJUMPSTART entry label (retail alias: __OSDBJump).
 static asm void __OSDBJump(void){
     // clang-format off
     nofralloc
@@ -806,6 +809,7 @@ OSExceptionHandler __OSGetExceptionHandler(u8 type) {
     return OSExceptionTable[type];
 }
 
+// Named for the __OSEVStart entry label (retail alias: OSExceptionVector).
 static asm void OSExceptionVector(void) {
     // clang-format off
     nofralloc

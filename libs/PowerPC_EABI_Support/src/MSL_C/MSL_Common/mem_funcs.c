@@ -177,8 +177,8 @@ void __copy_longs_rev_unaligned(void* dst, const void* src, unsigned long n)
     unsigned int right_shift, src_offset, left_shift;
 
     // dst-target pointer first: retail computes r12=dst+n before r4=src+n
-    cpd = ((unsigned char*) dst) + n;
     cps = ((unsigned char*) src) + n;
+    cpd = ((unsigned char*) dst) + n;
 
     i = ((unsigned long) cpd) & 3;
 
@@ -215,11 +215,9 @@ void __copy_longs_rev_unaligned(void* dst, const void* src, unsigned long n)
 
     n &= 3;
 
-    // retail computes the tail source from the running pointer (cps + src_offset),
-    // not from the original src - this lets cps stay coalesced in the src param reg.
+    // tail source resumes at the last word read plus the source sub-word offset
     if (n) {
-        // fresh pointer (retail reuses the dead dst param reg r3 for this)
-        unsigned char* t = cps + src_offset;
+        unsigned char* t = (unsigned char*) lps + src_offset;
         do {
             *--cpd = *--t;
         } while (--n);

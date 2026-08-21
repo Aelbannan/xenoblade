@@ -230,15 +230,15 @@ void func_8048EB30(CScnMem* self, u32 a, u32 b, u32 c) {
 // object, which delays the idx saved-copy web past the group web so retail's
 // group->r31 / idx->r30 coloring is reproduced byte-for-byte.
 nw4r::g3d::ScnObj* func_8048EC14(CScn* self, u32 idx) {
-    nw4r::g3d::ScnGroup* group =
-        reinterpret_cast<CScnRootNw4rLayout*>(self->mUnk8C)->mRootGroup;
+    CScnRootNw4rLayout* root =
+        reinterpret_cast<CScnRootNw4rLayout*>(self->mUnk8C);
+    nw4r::g3d::ScnGroup* group = root->mRootGroup;
 
     if (idx >= group->Size()) {
         nw4r::db::Panic(lbl_eu_8056E720, 0x22b, (const char*)lbl_eu_8056E6F8);
     }
 
-    nw4r::g3d::ScnObj* obj =
-        ((ScnGroupChildLayout*)group)->mpScnObjArray[idx];
+    nw4r::g3d::ScnObj* obj = group->Begin()[idx];
     if (obj != NULL &&
         obj->IsDerivedFrom(nw4r::g3d::G3dObj::TypeObj(lbl_eu_8051D788))) {
         return obj;

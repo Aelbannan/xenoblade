@@ -21,15 +21,20 @@ extern void SFX_Make2PlaneCftDstBuf(void *self, void *stmInf, void *buf0, void *
                                     u32 width, u32 bytesPerLine);
 extern int SFX_CnvFrmY84C44ByCbFunc(void *ctx, void *inf, void *dst);
 
+
+/*
+ * Convert an Y84C44 movie frame to SFX output.
+ * Builds the SFX stream info from the movie player state, configures a
+ * single-byte-per-pixel output buffer as two planes, then runs the
+ * callback-driven conversion over the plane descriptors.
+ */
 int mwPlyFxCnvFrmY84C44(MWSFDHn *unk, MWPly *ply, void *frame, void *pict) {
-    void *sfx_ctx;
+    SFXConvertState *sfx = unk->sfx;
     u8 inf_buf[0x98];
     u8 dst_buf[0x68];
-
-    sfx_ctx = unk->sfx;
     MWSFD_CnvFrmInfToSfx(unk, ply, inf_buf);
-    SFX_SetBytePerPixelOutBuf(sfx_ctx, 1);
-    SFX_Make2PlaneCftDstBuf(sfx_ctx, inf_buf, frame, pict, dst_buf, 0, 0,
+    SFX_SetBytePerPixelOutBuf(sfx, 1);
+    SFX_Make2PlaneCftDstBuf(sfx, inf_buf, frame, pict, dst_buf, 0, 0,
                             ply->width, ply->bytesPerLine);
-    return SFX_CnvFrmY84C44ByCbFunc(sfx_ctx, inf_buf, dst_buf);
+    return SFX_CnvFrmY84C44ByCbFunc(sfx, inf_buf, dst_buf);
 }

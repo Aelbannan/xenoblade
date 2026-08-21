@@ -81,13 +81,14 @@ s32 SFCON_WriteTotSmplQue(void* h, s32 lastSmpl, s32 value) {
     s32 wr;
     s32 r;
     SFLIB_LockCs(&cs);
-    rd = ctx->rd;
     wr = ctx->wr;
-    if (wr - rd >= 32) {
+    rd = ctx->rd;
+    /* ring full check: writer has lapped the reader by 32 entries */
+    if (ctx->wr - ctx->rd >= 32) {
         r = 0;
     } else {
         ctx->value = value;
-        ctx->smplQueue[wr % 32] = lastSmpl;
+        ctx->smplQueue[ctx->wr % 32] = lastSmpl;
         ctx->wr += 1;
         ctx->totalSmpl += lastSmpl;
         r = 1;

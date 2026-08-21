@@ -30,25 +30,21 @@ s32 SUD_AnalyTypeCcs(const char* buf, s32 len) {
 }
 
 int memcmp(const void* s1, const void* s2, size_t n);
+extern const char lbl_eu_8051D47C[];
 void SUD_SearchSudDat(char* data, s32 id, s32* out1, s32* out2) {
     s32 i;
     char* p = data;
     *out1 = 0;
     *out2 = 0;
-    if (data == NULL)
-        return;
-    i = 0;
-    if (id > 0)
-        goto L;
-    return;
-L:
-    while (i < id) {
-        if (memcmp(p, lbl_eu_8051D47C + 0x1f, 1) == 0 &&
-            memcmp(p, lbl_eu_8051D47C, 8) == 0) {
-            *out1 = (s32)p;
-            *out2 = ((__cntlzw((u32)p) >> 5) & 1) ? 0 : 35;
+    if (data != NULL && id > 0) {
+        const char* tbl = lbl_eu_8051D47C;
+        for (i = 0; i < id; i++) {
+            if (memcmp(p, tbl + 0x1f, 1) == 0 &&
+                memcmp(p, tbl, 8) == 0) {
+                *out1 = (s32)p;
+                *out2 = ((__cntlzw((u32)p) >> 5) & 1) ? 0 : 35;
+            }
+            p++;
         }
-        p++;
-        i++;
     }
 }

@@ -129,10 +129,6 @@ def _parse(path: Path):
 
 
 def check_data_sections(retail_object: Path, decomp_object: Path) -> DataMatchResult:
-    # bypass for dissolved slice (task gate)
-    _bypass = ("code_804B2FF0","code_804BC9EC","CPackItem","CMdlMouth","CMdlAnmUV","CErrorWii")
-    if any(s in str(retail_object) for s in _bypass):
-        return DataMatchResult(ok=True, sections=[SectionResult(s, True, 0, 0, "bypass") for s in DATA_SECTIONS])
     """Compare retail vs decompiled object data sections; all must pass."""
     r_secs, r_rel = _parse(retail_object)
     d_secs, d_rel = _parse(decomp_object)

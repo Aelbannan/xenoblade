@@ -100,8 +100,8 @@ void CDeviceGX::updateVerticalFilter(EVerticalFilter filter){
         spInstance->mVFilter[3] = 20;
         spInstance->mVFilter[4] = 19;
         spInstance->mVFilter[5] = 3;
-        spInstance->mVFilter[6] = 0;
         spInstance->mVFilter[7] = 0;
+        spInstance->mVFilter[6] = 0;
     }else if(spInstance->mFilter == VFILTER_2){
         spInstance->mVFilter[0] = 4;
         spInstance->mVFilter[1] = 4;
@@ -284,3 +284,5 @@ void CDeviceGX::setValues(GXPixelFmt format, u32 heapSize){
     pixelFormat = format;
     gxHeapSize = heapSize;
 }
+
+// dissolved monolibdata2 - device/CDeviceGX data now provided via retail copy (additive edit)

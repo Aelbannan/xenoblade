@@ -84,3 +84,5 @@ CLib* CLib::create(){
     CLib* lib = CREATE_WORKTHREAD(CLib, CWorkControl::getInstance());
     return lib;
 }
+
+// dissolved monolibdata2 - lib/CLib data now provided via retail copy (additive edit)

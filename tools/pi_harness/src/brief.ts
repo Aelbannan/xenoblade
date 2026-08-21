@@ -52,6 +52,36 @@ export function extractRetailAsm(asmListingPath: string, symbol: string, address
     const lines = block.split("\n").map((l) => l.replace(BYTECODE_COMMENT, "").trimEnd());
     return lines.join("\n");
   }
+  // OS alias case: listing uses a different primary name (e.g. .fn
+  // __OSDBIntegrator with .sym __OSDBINTSTART inside). Search for a
+  // .sym alias matching the target symbol and return its enclosing .fn block.
+  {
+    const symRe = new RegExp(`^\\.sym\\s+"?${esc}"?\\s*,.*$`, "m");
+    const sym = symRe.exec(source);
+    if (sym) {
+      const before = source.slice(0, sym.index);
+      // Find the last .fn before this .sym
+      const fnRe = /^\.fn\s+"?([^",\s]+)"?\s*,.*$/gm;
+      let lastFn: RegExpExecArray | null = null;
+      let m: RegExpExecArray | null;
+      while ((m = fnRe.exec(before)) !== null) lastFn = m;
+      if (lastFn) {
+        const fnName = lastFn[1];
+        const fnEsc = escapeRegExp(fnName);
+        const endRe2 = new RegExp(`^\\.endfn\\s+"?${fnEsc}"?\\s*$`, "m");
+        const rest2 = source.slice(lastFn.index + lastFn[0].length);
+        const end2 = endRe2.exec(rest2);
+        if (end2) {
+          const block = source.slice(
+            lastFn.index,
+            lastFn.index + lastFn[0].length + end2.index + end2[0].length,
+          );
+          const lines = block.split("\n").map((l) => l.replace(BYTECODE_COMMENT, "").trimEnd());
+          return lines.join("\n");
+        }
+      }
+    }
+  }
   return "";
 }
 

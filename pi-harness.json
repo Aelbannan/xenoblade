@@ -1,12 +1,12 @@
 {
   "matchModel": {
-    "provider": "nube",
-    "model": "DeepSeek-V4-Flash",
+    "provider": "opencode-go",
+    "model": "ox-alpha-free",
     "thinkingLevel": "low"
   },
   "cleanupModel": {
-    "provider": "nube",
-    "model": "DeepSeek-V4-Flash",
+    "provider": "opencode-go",
+    "model": "ox-alpha-free",
     "thinkingLevel": "low"
   },
   "batchSize": 5,
@@ -43,13 +43,13 @@
   "triage": "off",
   "pythonBin": ".venv/bin/python",
   "singletonModel": {
-    "provider": "nube",
-    "model": "DeepSeek-V4-Flash",
+    "provider": "opencode-go",
+    "model": "ox-alpha-free",
     "thinkingLevel": "low"
   },
   "rebatchModel": {
-    "provider": "nube",
-    "model": "DeepSeek-V4-Flash",
+    "provider": "opencode-go",
+    "model": "ox-alpha-free",
     "thinkingLevel": "low"
   },
   "maxSingletonSessions": 1,

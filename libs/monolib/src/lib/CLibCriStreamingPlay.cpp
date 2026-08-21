@@ -921,3 +921,5 @@ void CLibCriStreamingPlay::func_8045D140() {
 extern "C" void func_8045D148__20CLibCriStreamingPlayFv(void* self) {
     ((void(*)(void*))__dt__20CLibCriStreamingPlayFv)((char*)self - 0x1C4);
 }
+
+// dissolved monolibdata2 - lib/CLibCriStreamingPlay data now provided via retail copy (additive edit)

@@ -21,7 +21,6 @@ void func_804E6C80() {}
 namespace AUBlob { extern "C" void __dt__9CMdlAnmUVFv(); }
 extern "C" u32 lbl_eu_8066B348;    // foreign .sdata2 string
 extern "C" u32 lbl_eu_80663C74; // this unit's sdata
-extern "C" u32 lbl_eu_80663C78; // sdata label (fwd, defined below)
 
 // [.data] 0x805701C0-0x805701D0 (16B): CMdlAnmUV vtable
 extern "C" u32 lbl_eu_805701C0[4] = {
@@ -39,11 +38,10 @@ extern "C" __declspec(align(4)) const char lbl_eu_805247D0[0x18] = {
 // [.sdata] 0x80663C74-0x80663C88 (20B). Retail align is 4 with the 8B label
 // 80663C78 at +4; MWCC 8-aligns the 8B u32[2] (->0x18) -- needs UNIT_RULES
 // set_data_align=(('.sdata',4)) + layout fix. Best-effort definition:
-extern "C" u32 lbl_eu_80663C74 = (u32)&lbl_eu_8066B348;
-// Retail labels lbl_eu_80663C78/80663C7C form one 8B sdata item at +4; keep the
-// two words as separate u32s so MWCC stays at 4-byte align (an 8B array would
-// 8-align and pad the section to 0x18).
-extern "C" u32 lbl_eu_80663C78 = (u32)&lbl_eu_805247D0;
-extern "C" u32 lbl_eu_80663C7C = 0x00000000;
-extern "C" u32 lbl_eu_80663C80 = 0x72656600;
-extern "C" u32 lbl_eu_80663C84 = 0x72656600;
+__asm__(".section .sdata,\"aw\"\n"
+".global lbl_eu_80663C74\n lbl_eu_80663C74: \n\t.long lbl_eu_8066B348\n"
+".global lbl_eu_80663C78\n lbl_eu_80663C78: \n\t.long lbl_eu_805247D0\n"
+".global lbl_eu_80663C7C\n lbl_eu_80663C7C: \n\t.long 0\n"
+".global lbl_eu_80663C80\n lbl_eu_80663C80: \n\t.long 0x72656600\n"
+".global lbl_eu_80663C84\n lbl_eu_80663C84: \n\t.long 0x72656600\n"
+".text\n");

@@ -73,10 +73,13 @@ extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
 // -ipa off, -func_align 16). Semantics: type = 1 + bit31((x>>1)-(x&0xA));
 // "2 - bit31(reversed)" rescue breaks at v=0 (count 10/11).
 extern "C" int func_8003A68C(VMThread* pThread, void* target) {
+    // Compute t then h in statement order (retail eval order); forward h-t
+    // then encodes as subf r0, r0(t), r5(h) matching retail.
     int count = *(int*)((char*)target + 0x10);
-    int x = count ^ 0x0a;
     VMArg args;
-    *(u8*)&args.type = 1 + ((u32)((x >> 1) - (x & 0x0a)) >> 31);
+    // Duplicated xor lets CSE materialize x as its own temp (fresh register).
+    *(u8*)&args.type =
+        1 + ((u32)(((count ^ 0x0a) >> 1) - ((count ^ 0x0a) & 0x0a)) >> 31);
     vmRetValSet(pThread, &args);
     return 1;
 }

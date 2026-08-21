@@ -17,16 +17,16 @@ static const s16 RES_STATE_INVALID = -1;
 // Retail ctor: stores the parent ref first, seeds the constant fields
 // (0.0f float, state halfwords), installs the manual vtable at +0x10 and
 // zeroes the 2-word work area at +0x14 via memset.
-cf::CfResObjImpl* __ct__cf_CfResObjImpl(cf::CfResObjImpl* self, cf::CfResObjParent* parent) {
-    self->field_00 = parent;
-    self->field_04 = lbl_eu_80667690;
-    self->field_0A = RES_STATE_INVALID;
-    self->field_0C = 0;
-    self->field_0E = RES_STATE_INVALID;
-    self->field_10 = lbl_eu_80530F44;
-    self->field_08 = 1;
-    memset(&self->field_14, 0, sizeof(self->field_14));
-    return self;
+cf::CfResObjImpl::CfResObjImpl(cf::CfResObjParent* parent) {
+    field_00 = parent;
+    field_04 = lbl_eu_80667690;
+    const s16 invalid = RES_STATE_INVALID;
+    field_0E = invalid;
+    field_0A = invalid;
+    field_0C = 0;
+    field_10 = lbl_eu_80530F44;
+    field_08 = 1;
+    memset(&field_14, 0, sizeof(field_14));
 }
 
 // Arithmetic booleanization of the u16 "state >= 2" test on the halfword

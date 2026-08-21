@@ -178,7 +178,7 @@ struct CfResObjImplVtIf : CfResObjImplShift {
 };
 
 struct CfResObjImpl {
-    CfResObjImpl();
+    CfResObjImpl(CfResObjParent* parent);
     ~CfResObjImpl();
 
     /* 0x00 */ CfResObjParent* field_00;  // parent/reference object

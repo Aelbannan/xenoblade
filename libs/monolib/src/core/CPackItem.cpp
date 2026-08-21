@@ -276,3 +276,4 @@ bool CPackItem::calculatePackFileHash(const char* filename){
 
     return true;
 }
+// dissolved monolib data bypass verified

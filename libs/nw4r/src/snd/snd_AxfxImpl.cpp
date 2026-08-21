@@ -1,3 +1,8 @@
+// AXFX alloc/free hook plumbing: routes AXFX memory requests into a
+// dedicated frame heap owned by the currently-hooked AxfxImpl instance.
+// lbl_eu_806654C8 / lbl_eu_806654CC are retail SDA symbols (current fx /
+// total allocated size) shared with the hook callbacks.
+
 #include <nw4r/snd.h>
 #include <nw4r/ut.h>
 

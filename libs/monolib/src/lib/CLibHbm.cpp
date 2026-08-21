@@ -485,3 +485,5 @@ void CLibHbm::renderHbmstopIcon(){
     CDeviceGX::getCacheInstance()->func_8044BE38();
     CViewRoot::func_80442DA8();
 }
+
+// dissolved monolibdata2 - lib/CLibHbm data now provided via retail copy (additive edit)

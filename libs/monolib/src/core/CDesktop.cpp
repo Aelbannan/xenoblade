@@ -266,3 +266,5 @@ bool CDesktop::WorkEvent3(void* pThing){
     }
     return false;
 }
+
+// dissolved monolibdata2 - core/CDesktop data now provided via retail copy (additive edit)

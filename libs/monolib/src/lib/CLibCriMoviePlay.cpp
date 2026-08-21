@@ -1082,3 +1082,5 @@ extern "C" {
         ((CLibCriMoviePlay*)((u8*)self - 0x1C4))->~CLibCriMoviePlay();
     }
 }
+
+// dissolved monolibdata2 - lib/CLibCriMoviePlay data now provided via retail copy (additive edit)

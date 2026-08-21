@@ -309,3 +309,5 @@ extern "C" const char lbl_eu_80522FD8[48] = {
 extern "C" u32 lbl_eu_80663790[2] = {
     0x8066A4D0, 0x8056CF28,
 };
+
+// dissolved monolibdata2 - lib/CLibCri data now provided via retail copy (additive edit)

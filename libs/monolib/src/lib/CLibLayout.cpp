@@ -11,7 +11,10 @@
 
 // Global CLibLayout singleton (retail sbss symbol). Plain global decl so MWCC
 // emits lbl_eu_80665710 verbatim (C++ does not mangle global namespace vars).
+// Dissolved monolibdata2: retail sbss is 0x10 bytes (lbl_eu_80665710 8, lbl_eu_80665718 4, lbl_eu_8066571C 4)
 CLibLayout* lbl_eu_80665710;
+u32 lbl_eu_80665710_pad; // second word of 8-byte retail slot
+#include <decomp.h>
 
 CLibLayout::CLibLayout(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 0) {
     mAllocHandle = -1;
@@ -204,3 +207,8 @@ void func_8045F4E4__10CLibLayoutFv(MEMAllocator* allocator, void* block) {
         }
     }
 }
+
+// Dissolved sbss tails
+u32 lbl_eu_80665718;
+u32 lbl_eu_8066571C;
+DECOMP_FORCEACTIVE(CLibLayout_cpp, lbl_eu_80665710, lbl_eu_80665710_pad, lbl_eu_80665718, lbl_eu_8066571C);

@@ -96,8 +96,9 @@ namespace lyt {
  * ArcResourceAccessor
  *
  ******************************************************************************/
-ArcResourceAccessor::ArcResourceAccessor()
-    : ResourceAccessor(), mArcBuf(NULL), mFontList() {}
+ArcResourceAccessor::ArcResourceAccessor() : ResourceAccessor(), mFontList() {
+    mArcBuf = NULL;
+}
 // header-locked (offsets feed the 5 already-matched fns) and the TU .text
 // budget is exact (0x3A0), so no register-pressure or size lever exists in the
 // writable scope. Needs a unit-flag/-O4,s change or header-level reshuffle.

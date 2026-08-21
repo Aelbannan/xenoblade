@@ -144,60 +144,19 @@ void func_801C37C8(void) {}
 // Calls vfunc 0xAC on target to get position, computes distance from
 // this->mPos (0x3C), returns PSVECMag of the difference.
 // ============================================================================
-// diff = a - b with retail's paired-single block, copying into the caller's
-// Vec. The `out` register parameter forces MWCC to materialize &diff at the
-// call site (before the block), reproducing retail's early addi r0; the work
-// vars declared in reverse order give the retail FPR allocation (f0/f1/f3).
-static inline void lightSubOut(register Vec* out,
-                               register const nw4r::math::VEC3* pA,
-                               register const nw4r::math::VEC3* pB) {
-    nw4r::math::VEC3 t;
-    register nw4r::math::VEC3* pOut = &t;
-    register f32 work2, work1, work0;
-    ASM (
-        psq_l  work0, 0x0(pA), 0, 0
-        psq_l  work1, 0x0(pB), 0, 0
-        ps_sub work2, work0, work1
-        psq_l  work0, 0x8(pA), 1, 0
-        psq_l  work1, 0x8(pB), 1, 0
-        psq_st work2, 0x0(pOut), 0, 0
-        ps_sub work2, work0, work1
-        psq_st work2, 0x8(pOut), 1, 0
-    )
-    out->x = t.x;
-    out->y = t.y;
-    out->z = t.z;
-}
-
-// Local copy of the nw4r VEC3Sub paired-single inline with the register
-// vars declared in REVERSE order - the declaration order drives the FPR
-// allocation (MWCC_CASES), yielding retail's f0/f1/f3 block here.
-static inline nw4r::math::VEC3* lightVecSubRev(register nw4r::math::VEC3* pOut,
-                                               register const nw4r::math::VEC3* pA,
-                                               register const nw4r::math::VEC3* pB) {
-    register f32 work2, work1, work0;
-    ASM (
-        psq_l  work0, 0x0(pA), 0, 0
-        psq_l  work1, 0x0(pB), 0, 0
-        ps_sub work2, work0, work1
-        psq_l  work0, 0x8(pA), 1, 0
-        psq_l  work1, 0x8(pB), 1, 0
-        psq_st work2, 0x0(pOut), 0, 0
-        ps_sub work2, work0, work1
-        psq_st work2, 0x8(pOut), 1, 0
-    )
-    return pOut;
-}
-
 f32 func_801C37CC(CREvtLight* self, CREvtLightTargetIf* target) {
     // Get target position via vtable slot 0xAC
     nw4r::math::VEC3* pos = target->_v0AC();
 
-    // diff = targetPos - thisPos; the temporary copy feeds PSVECMag.
-    Vec diff;
-    lightSubOut(&diff, pos, self->pos());
-
-    return PSVECMag(&diff);
+    // delta = targetPos - thisPos (paired-single VEC3Sub); copied to another
+    // local before PSVECMag, matching the retail double-temporary layout.
+    nw4r::math::VEC3 delta;
+    nw4r::math::VEC3Sub(&delta, pos, self->pos());
+    nw4r::math::VEC3 d;
+    d.x = delta.x;
+    d.y = delta.y;
+    d.z = delta.z;
+    return PSVECMag((const Vec*)&d);
 }
 
 // ============================================================================
@@ -211,12 +170,12 @@ int func_801C3850(CREvtLight* self, CREvtLightTargetIf* target) {
     nw4r::math::VEC3* pos = target->_v0AC();
 
     // diff = targetPos - thisPos (paired-single ops)
-    nw4r::math::VEC3 t;
-    lightVecSubRev(&t, pos, self->pos());
+    nw4r::math::VEC3 delta;
+    nw4r::math::VEC3Sub(&delta, pos, self->pos());
     Vec diff;
-    diff.x = t.x;
-    diff.y = t.y;
-    diff.z = t.z;
+    diff.x = delta.x;
+    diff.y = delta.y;
+    diff.z = delta.z;
 
     // Compute angle using Atan2FIdx
     f32 angle = nw4r::math::Atan2FIdx(diff.x, diff.z);

@@ -11,14 +11,14 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12620 |
+| extern "C" (total lines) | 12615 |
 | extern "C" declarations (non-lbl_*, imports) | 4874 |
 | extern "C" definitions (forced names) | 3931 |
-| `self`/register-style params | 11898 |
+| `self`/register-style params | 11897 |
 | `void*` (params + locals) | 7220 |
 | raw pointer offset arithmetic | 6894 |
 | deref-through-cast arithmetic | 2745 |
-| inline asm / `register` | 112 |
+| inline asm / `register` | 104 |
 | rN-named params | 568 |
 | goto | 2917 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
@@ -136,7 +136,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/nand/CNand.cpp | 12 | 14 | 29 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CLight.cpp | 0 | 2 | 10 | 1 | 20 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlAnmEye.cpp | 2 | 2 | 8 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/scn/CMdlAnmUV.cpp | 0 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/scn/CMdlAnmUV.cpp | 0 | 2 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlDynamics.cpp | 2 | 22 | 49 | 13 | 42 | 33 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlLook.cpp | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/scn/CMdlMaterial.cpp | 4 | 0 | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -407,7 +407,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CfObjectSelectorObj.cpp | 0 | 2 | 1 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfPadTask.cpp | 6 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfRes.cpp | 31 | 127 | 117 | 104 | 96 | 28 | 0 | 0 | 8 | 0 | 0 | 0 |
-| src/kyoshin/cf/CfResObjImpl.cpp | 0 | 4 | 18 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/CfResObjImpl.cpp | 0 | 4 | 17 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfResPcImpl.cpp | 0 | 5 | 91 | 7 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfResReloadImpl.cpp | 1 | 11 | 48 | 14 | 9 | 3 | 0 | 2 | 12 | 0 | 0 | 0 |
 | src/kyoshin/cf/CfResTboxImpl.cpp | 0 | 1 | 9 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -579,7 +579,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/plugin/pluginVoice.cpp | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtCamera.cpp | 32 | 13 | 16 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtEffect.cpp | 0 | 13 | 20 | 13 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/realtimeevt/CREvtLight.cpp | 6 | 0 | 9 | 9 | 6 | 0 | 9 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/realtimeevt/CREvtLight.cpp | 6 | 0 | 9 | 9 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtMem.cpp | 7 | 7 | 3 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtModel.cpp | 34 | 1 | 77 | 73 | 7 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/realtimeevt/CREvtModelMap.cpp | 90 | 3 | 51 | 23 | 19 | 1 | 0 | 3 | 2 | 0 | 0 | 0 |
@@ -1574,6 +1574,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "void_ptr": 6
  },
  "libs/monolib/src/scn/CMdlAnmUV.cpp": {
+  "asm_code": 1,
   "asm_insn_shim": 0,
   "extern_c_nonlbl_def": 2,
   "init_side_effect": 0,
@@ -4401,7 +4402,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "init_side_effect": 0,
   "ptr_arith": 1,
   "schedule_pragma": 0,
-  "self_params": 18,
+  "self_params": 17,
   "void_ptr": 1
  },
  "src/kyoshin/cf/CfResPcImpl.cpp": {
@@ -6241,7 +6242,6 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "void_ptr": 13
  },
  "src/kyoshin/realtimeevt/CREvtLight.cpp": {
-  "asm_code": 9,
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 6,
   "init_side_effect": 0,

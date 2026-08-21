@@ -11,20 +11,20 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12614 |
-| extern "C" declarations (non-lbl_*, imports) | 4873 |
-| extern "C" definitions (forced names) | 3931 |
-| `self`/register-style params | 11897 |
-| `void*` (params + locals) | 7220 |
-| raw pointer offset arithmetic | 6894 |
-| deref-through-cast arithmetic | 2745 |
+| extern "C" (total lines) | 12590 |
+| extern "C" declarations (non-lbl_*, imports) | 4872 |
+| extern "C" definitions (forced names) | 3922 |
+| `self`/register-style params | 11895 |
+| `void*` (params + locals) | 7221 |
+| raw pointer offset arithmetic | 6895 |
+| deref-through-cast arithmetic | 2746 |
 | inline asm / `register` | 104 |
-| rN-named params | 568 |
+| rN-named params | 566 |
 | goto | 2917 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 0 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
-| #pragma | 1771 |
+| #pragma | 1770 |
 
 ## Top offenders (by cleanable severity)
 
@@ -455,7 +455,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/object/CfObjectObj.cpp | 0 | 0 | 1 | 1 | 5 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectPc.cpp | 1 | 7 | 40 | 8 | 5 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/object/CfObjectPoint.cpp | 3 | 1 | 5 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
-| src/kyoshin/cf/object/CfObjectTbox.cpp | 0 | 1 | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/object/CfObjectTbox.cpp | 0 | 1 | 1 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/CCharVoice.cpp | 14 | 0 | 1 | 9 | 11 | 7 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/CCharVoiceMan.cpp | 0 | 0 | 22 | 25 | 5 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | src/kyoshin/cf/voice/cvsys/CVS_THREAD.cpp | 4 | 1 | 6 | 1 | 2 | 1 | 0 | 0 | 13 | 0 | 0 | 0 |
@@ -566,7 +566,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/plugin/ocBuiltin.cpp | 1 | 1 | 3 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocCfp.cpp | 5 | 8 | 20 | 2 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocMsg.cpp | 0 | 19 | 2 | 19 | 14 | 14 | 0 | 2 | 0 | 0 | 0 | 0 |
-| src/kyoshin/plugin/ocThread.cpp | 1 | 9 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 |
+| src/kyoshin/plugin/ocThread.cpp | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/ocUnit.cpp | 31 | 70 | 32 | 146 | 71 | 42 | 0 | 4 | 9 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginBtl.cpp | 36 | 1 | 5 | 53 | 16 | 7 | 0 | 1 | 0 | 0 | 0 | 0 |
 | src/kyoshin/plugin/pluginCam.cpp | 11 | 20 | 0 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -4910,7 +4910,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_arith": 1,
   "schedule_pragma": 0,
   "self_params": 1,
-  "void_ptr": 1
+  "void_ptr": 2
  },
  "src/kyoshin/cf/voice/CCharVoice.cpp": {
   "asm_insn_shim": 0,
@@ -6084,12 +6084,10 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/plugin/ocThread.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 1,
-  "extern_c_nonlbl_def": 9,
+  "deref_arith": 1,
   "init_side_effect": 0,
-  "rn_params": 2,
-  "schedule_pragma": 0,
-  "self_params": 2
+  "ptr_arith": 1,
+  "schedule_pragma": 0
  },
  "src/kyoshin/plugin/ocUnit.cpp": {
   "asm_insn_shim": 0,

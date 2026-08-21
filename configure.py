@@ -427,7 +427,7 @@ config.libs = [
             Object(Matching, "kyoshin/plugin/pluginDeb.cpp"),
             Object(Matching, "kyoshin/plugin/pluginWait.cpp"),
             Object(NonMatching, "kyoshin/plugin/ocBuiltin.cpp"),
-            Object(NonMatching, "kyoshin/plugin/ocThread.cpp"),
+            Object(Matching, "kyoshin/plugin/ocThread.cpp"),
             Object(NonMatching, "kyoshin/plugin/ocMsg.cpp"),
             Object(NonMatching, "kyoshin/plugin/ocBdat.cpp"),
             Object(NonMatching, "kyoshin/plugin/ocUnit.cpp"),

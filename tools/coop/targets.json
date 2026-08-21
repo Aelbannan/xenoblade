@@ -172349,8 +172349,8 @@
       "size": "0x84",
       "unit": "kyoshin/realtimeevt/CREvtLight",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80350cd0"
@@ -172362,7 +172362,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/realtimeevt/CREvtLight.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
+      "instruction_match": 100.0,
       "equivalence_status": "inconclusive_smt_disabled"
     },
     {
@@ -316813,7 +316813,7 @@
       "unit": "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80004000",
@@ -316827,7 +316827,7 @@
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link.s",
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link.c",
-      "instruction_match": 84.644,
+      "instruction_match": 95.222,
       "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true
     },
@@ -355618,8 +355618,8 @@
       "size": "0x24",
       "unit": "RVL_SDK/src/revolution/os/OS",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/os/OS.c",
       "called_functions": [],
@@ -355631,7 +355631,7 @@
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
       "source_present": true,
-      "equivalence_status": "inconclusive_unsupported"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803557c0",
@@ -355644,8 +355644,8 @@
       "size": "0x4",
       "unit": "RVL_SDK/src/revolution/os/OS",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/os/OS.c",
       "called_functions": [],
@@ -355657,7 +355657,7 @@
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
       "source_present": true,
-      "equivalence_status": "inconclusive_unsupported"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803557d0",
@@ -355722,8 +355722,8 @@
       "size": "0x9C",
       "unit": "RVL_SDK/src/revolution/os/OS",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "NOT_STARTED",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/RVL_SDK/src/revolution/os/OS.c",
       "called_functions": [],
@@ -355735,7 +355735,7 @@
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
       "source_present": true,
-      "equivalence_status": "inconclusive_unsupported"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-803558a0",
@@ -395300,7 +395300,7 @@
       "source": "libs/CriWare/src/sofdec/mwply/mwsfx_Y84C44.c",
       "declared_return": "i32",
       "source_present": true,
-      "instruction_match": 89.744,
+      "instruction_match": 89.487,
       "equivalence_status": "inconclusive_smt_disabled"
     },
     {
@@ -410088,8 +410088,8 @@
       "size": "0x80",
       "unit": "CriWare/src/sofdec/sfdcore/sfd/sfd_uo",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803c1d50"
@@ -410101,8 +410101,8 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_uo.c",
       "declared_return": "i32",
-      "instruction_match": 96.875,
-      "equivalence_status": "inconclusive_smt_disabled",
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -410255,7 +410255,7 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_uo.c",
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -410282,7 +410282,7 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_uo.c",
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -410309,7 +410309,7 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_uo.c",
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -410336,7 +410336,7 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_uo.c",
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -416598,8 +416598,8 @@
       "instruction_match": 97.708,
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
-        "owner": "pi-harness-66691",
-        "claimed_at": "2026-08-21T15:43:08.765117+00:00",
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-21T16:22:56.969948+00:00",
         "allowed_paths": [
           "libs/CriWare/src/sofdec/sud/sud_lib.c"
         ],
@@ -447177,8 +447177,8 @@
       "size": "0xBC",
       "unit": "nw4r/src/snd/snd_AxVoiceManager",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_AxVoiceManager.cpp",
       "called_functions": [
@@ -447191,17 +447191,9 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_AxVoiceManager.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "instruction_match": 97.872,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-66691",
-        "claimed_at": "2026-08-21T15:39:02.342590+00:00",
-        "allowed_paths": [
-          "libs/nw4r/src/snd/snd_AxVoiceManager.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent",
+      "source_present": true
     },
     {
       "id": "us-804130d4",
@@ -514468,8 +514460,8 @@
       "size": "0xBC",
       "unit": "monolib/src/scn/CScnMem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804f29f4"
@@ -514482,7 +514474,7 @@
       "source": "libs/monolib/src/scn/CScnMem.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80492d44",

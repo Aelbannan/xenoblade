@@ -585,7 +585,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/CfSoundMan.cpp"),
             Object(NonMatching, "kyoshin/cf/CfPadTask.cpp"),
             Object(NonMatching, "kyoshin/cf/code_801C2C14.cpp"),
-            Object(NonMatching, "kyoshin/realtimeevt/CREvtLight.cpp"),
+            Object(Matching, "kyoshin/realtimeevt/CREvtLight.cpp"),
             # TU-final: 10/10 FULL_MATCH, split 0x55C exact. Retail CBgTex
             # frames use stmw/lmw block saves (2-3 callee-saved regs): needs
             # -O4,s (MWCC_CASES §16); -func_align 4 keeps .text packed

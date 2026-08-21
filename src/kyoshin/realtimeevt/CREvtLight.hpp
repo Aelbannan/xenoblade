@@ -20,15 +20,13 @@ struct CREvtLight {
     /* 0x1C */ u32 field_1C;  // set by func_801C36C4
     /* 0x20 */ u32 field_20;  // resource handle (0 initially)
 
-    // Position/rotation of the light (used by func_801C37CC / func_801C3850)
+    // Position/orientation of the light (used by func_801C37CC / func_801C3850)
     /* 0x24 */ u8 pad_24[0x3C - 0x24];
-    /* 0x3C */ f32 mPosX;
-    /* 0x40 */ f32 mPosY;
-    /* 0x44 */ f32 mPosZ;
+    /* 0x3C */ nw4r::math::VEC3 mPos;
     /* 0x48 */ u8 pad_48[0x4C - 0x48];
     /* 0x4C */ f32 mAngle;
 
-    nw4r::math::VEC3* pos() { return reinterpret_cast<nw4r::math::VEC3*>(&mPosX); }
+    nw4r::math::VEC3* pos() { return &mPos; }
 };
 
 // Virtual-table interface for a position-getting target object.

@@ -715,7 +715,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_BUF.cpp"),
-            Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.cpp"),
+            Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_DOWN.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.cpp"),

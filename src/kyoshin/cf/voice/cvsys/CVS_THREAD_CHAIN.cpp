@@ -22,11 +22,11 @@ void func_802A5934(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
     CVoiceHandle* handle = self->field_0x20;
-    CCharVoice* biased = (CCharVoice*)handle;
+    CCharVoice* embedded = (CCharVoice*)handle;
     if (handle != NULL) {
-        biased = &handle->voice;
+        embedded = &handle->voice;
     }
-    if (biased == voicePtr) {
+    if (embedded == voicePtr) {
         self->field_0x20 = NULL;
     }
 }
@@ -48,11 +48,11 @@ int func_802A598C(cf::CVS_THREAD_CHAIN* self, CCharVoice* voicePtr, int voiceId)
     self->field_0x20 = handle;
 
     // Convert back to the embedded CCharVoice for the play call.
-    CCharVoice* vp = (CCharVoice*)handle;
+    CCharVoice* embedded = (CCharVoice*)handle;
     if (handle != NULL) {
-        vp = &handle->voice;
+        embedded = &handle->voice;
     }
-    return func_802A3C44(self, vp, voiceId);
+    return func_802A3C44(self, embedded, voiceId);
 }
 
 // ── Target 4: us-802a8238 (func_802A5B04) ──────────────────────────────────
@@ -67,11 +67,11 @@ int func_802A5B04(CVoiceHandle* self, int flag) {
     if (func_802A330C(0xA, 1) == NULL) {
         return 0;
     }
-    CCharVoice* biased = (CCharVoice*)self;
+    CCharVoice* embedded = (CCharVoice*)self;
     if (self != NULL) {
-        biased = &self->voice;
+        embedded = &self->voice;
     }
-    func_802A3D54(biased, ml::math::mtRand(2) + 0x321, 0xA);
+    func_802A3D54(embedded, ml::math::mtRand(2) + 0x321, 0xA);
     return 0;
 }
 
@@ -110,17 +110,12 @@ cf::CVS_THREAD_CHAIN* __ct__802A5830() {
     // are loaded before the stores; the base pointer is declared last so MWCC
     // colors it r5. The address is forced through an integer cast so the full
     // base (lis+addi) is materialized once before any load. (Residual: retail
-    // colors the unk4 value r0 and the unk0 value r4; MWCC emits the reverse
+    // colors the word1 value r0 and the word0 value r4; MWCC emits the reverse
     // for every source shape tried - allocator fixed point, cf. sibling
     // factory drafts.)
-    u32 v0;
-    u32 v1;
-    const u32* base = (const u32*)(u32)lbl_eu_80539A30;
-    v1 = base[1];
-    v0 = base[0];
-    self->unk0 = (u32*)v0;
-    self->unk4 = v1;
-    self->unk8 = base[2];
+    ((CVS_THREAD_CHAIN_INIT*)self)->word0 = ((u32**)(u32)lbl_eu_80539A30)[0];
+    ((CVS_THREAD_CHAIN_INIT*)self)->word1 = ((u32*)(u32)lbl_eu_80539A30)[1];
+    ((CVS_THREAD_CHAIN_INIT*)self)->word2 = ((u32*)(u32)lbl_eu_80539A30)[2];
 
     return self;
 }
@@ -145,17 +140,17 @@ int func_802A5A14(CVoiceHandle* self, int flag) {
         return 0;
     }
     if (flag == 0) {
-        CCharVoice* biased = (CCharVoice*)self;
+        CCharVoice* embedded = (CCharVoice*)self;
         if (self != NULL) {
-            biased = &self->voice;
+            embedded = &self->voice;
         }
-        func_802A3D54(biased, ml::math::mtRand(2) + 0x2BD, 0x12C);
+        func_802A3D54(embedded, ml::math::mtRand(2) + 0x2BD, 0x12C);
     } else {
-        CCharVoice* biased = (CCharVoice*)self;
+        CCharVoice* embedded = (CCharVoice*)self;
         if (self != NULL) {
-            biased = &self->voice;
+            embedded = &self->voice;
         }
-        func_802A3D54(biased, 0x2BF, 0x12C);
+        func_802A3D54(embedded, 0x2BF, 0x12C);
     }
     return 0;
 }

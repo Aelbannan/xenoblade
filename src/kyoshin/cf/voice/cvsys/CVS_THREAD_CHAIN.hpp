@@ -44,6 +44,15 @@ extern "C" {
 extern u32 lbl_eu_80539A30[3];
 extern u32 lbl_eu_80539A3C[7];
 
+// Named view over the CVS_THREAD init-state triple (bytes 0x00-0x08), which
+// the factory copies wholesale from lbl_eu_80539A30. Same layout as the first
+// three CVS_THREAD words; only used to avoid anonymous-field access here.
+struct CVS_THREAD_CHAIN_INIT {
+    u32* word0;  // 0x00
+    u32 word1;   // 0x04
+    u32 word2;   // 0x08
+};
+
 // Phantom vtable view over a CVoiceHandle vtable (vtable pointer at +0x00) so
 // the is-active slot at byte offset 0x2BC (index 175) can be dispatched as a
 // real r12-chained virtual call matching retail. Only cast + call a slot, so

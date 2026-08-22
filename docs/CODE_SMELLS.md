@@ -11,20 +11,20 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12932 |
+| extern "C" (total lines) | 12931 |
 | extern "C" declarations (non-lbl_*, imports) | 5110 |
-| extern "C" definitions (forced names) | 3897 |
-| `self`/register-style params | 11915 |
-| `void*` (params + locals) | 7192 |
+| extern "C" definitions (forced names) | 3899 |
+| `self`/register-style params | 11917 |
+| `void*` (params + locals) | 7193 |
 | raw pointer offset arithmetic | 6897 |
 | deref-through-cast arithmetic | 2737 |
-| inline asm / `register` | 110 |
+| inline asm / `register` | 111 |
 | rN-named params | 570 |
 | goto | 2920 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 0 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
-| #pragma | 1785 |
+| #pragma | 1788 |
 
 ## Top offenders (by cleanable severity)
 
@@ -85,7 +85,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/device/CDeviceFont.cpp | 42 | 5 | 2 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontInfoExt.cpp | 2 | 12 | 12 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontInfoRom.cpp | 15 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/device/CDeviceFontLayer.cpp | 49 | 1 | 4 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/device/CDeviceFontLayer.cpp | 49 | 1 | 4 | 13 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontLoader.cpp | 43 | 1 | 19 | 13 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceGX.cpp | 45 | 0 | 3 | 6 | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceRemotePad.cpp | 42 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -331,7 +331,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CQuestWindow.cpp | 3 | 4 | 37 | 11 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSaveLoad.cpp | 0 | 41 | 50 | 32 | 96 | 31 | 0 | 5 | 19 | 0 | 0 | 0 |
 | src/kyoshin/CScrollBar.cpp | 0 | 0 | 11 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CSelShopWin.cpp | 2 | 3 | 4 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CSelShopWin.cpp | 2 | 4 | 6 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSimpleEveTalkWin.cpp | 2 | 1 | 4 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSkipTimer.cpp | 3 | 3 | 50 | 6 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSortMenu.cpp | 5 | 30 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -540,7 +540,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/menu/CMenuLvUp.cpp | 0 | 2 | 14 | 4 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuMapSelect.cpp | 21 | 2 | 15 | 2 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuMapSelectSC.cpp | 1 | 9 | 12 | 0 | 80 | 68 | 0 | 2 | 4 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuOption.cpp | 2 | 0 | 11 | 3 | 76 | 68 | 0 | 2 | 0 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuOption.cpp | 2 | 1 | 11 | 3 | 76 | 68 | 0 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPTChangeNotice.cpp | 2 | 5 | 12 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPTGauge.cpp | 1 | 4 | 4 | 3 | 11 | 0 | 2 | 0 | 14 | 2 | 0 | 0 |
 | src/kyoshin/menu/CMenuPTState.cpp | 11 | 4 | 9 | 8 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -998,6 +998,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "void_ptr": 1
  },
  "libs/monolib/src/device/CDeviceFontLayer.cpp": {
+  "asm_code": 1,
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 49,
   "extern_c_nonlbl_def": 1,
@@ -3615,11 +3616,11 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CSelShopWin.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 2,
-  "extern_c_nonlbl_def": 3,
+  "extern_c_nonlbl_def": 4,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 4,
-  "void_ptr": 6
+  "self_params": 6,
+  "void_ptr": 7
  },
  "src/kyoshin/CSimpleEveTalkWin.cpp": {
   "asm_insn_shim": 0,
@@ -5803,6 +5804,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "deref_arith": 68,
   "extern_c_nonlbl_decl": 2,
+  "extern_c_nonlbl_def": 1,
   "init_side_effect": 0,
   "ptr_arith": 76,
   "rn_params": 2,

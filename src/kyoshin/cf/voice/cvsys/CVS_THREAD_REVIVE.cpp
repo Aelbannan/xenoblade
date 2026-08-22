@@ -25,26 +25,34 @@ CVS_THREAD_REVIVE* __ct__802A86CC(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     if (self == NULL) return NULL;
 
     // Retail emits a redundant self null re-check (the `beq`) guarding the
-    // constructor try-block; mirror it so the guard survives.
+    // constructor try-block; mirror it so the guard survives. The catch
+    // rethrows via the runtime __throw(0,0,0) so MWCC elides the
+    // __end__catch epilogue (retail's catch-all ends at `bl __throw`).
+    CVS_THREAD_REVIVE_raw* raw = (CVS_THREAD_REVIVE_raw*)self;
     if (self != NULL) {
         try {
-            // Base constructor (self in r3 - no arg form)
-            __ct__cf_CVS_THREAD();
+            // Base constructor (self in r3)
+            __ct__cf_CVS_THREAD(self);
 
-            // Set vtable at offset 0x1C (right after the CVS_THREAD base fields)
-            ((void**)self)[7] = (void**)lbl_eu_80539CBC;
+            // Override the vtable at 0x1C with the REVIVE vtable, then slots.
+            raw->vtable = lbl_eu_80539CBC;
             self->field_0x20 = owner1;
             self->field_0x24 = owner2;
         } catch (...) {
-            throw;
+            __throw(0, 0, 0);
         }
     }
 
-    // Copy init data from global table using a single base pointer
-    const u32* base = lbl_eu_80539C98;
-    self->unk0 = (u32*)base[0];
-    self->unk4 = base[1];
-    self->unk8 = base[2];
+    // Copy the init-state triple. The address is forced through an integer
+    // cast so the full base (lis+addi) is materialized once before any load.
+    u32 v1;
+    u32 v0;
+    u32* src = (u32*)(u32)lbl_eu_80539C98;
+    v0 = src[0];
+    v1 = src[1];
+    raw->state0 = (u32*)v0;
+    raw->state1 = v1;
+    raw->state2 = src[2];
 
     return self;
 }
@@ -60,9 +68,10 @@ void func_802A87D4(CVS_THREAD_REVIVE* self) {
     const u32* p = lbl_eu_80539CA4;
     v0 = *p++;
     CVoiceHandle* handle20 = self->field_0x20;
-    self->unk4 = *p++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *p;
+    CVS_THREAD_REVIVE_raw* raw = (CVS_THREAD_REVIVE_raw*)self;
+    raw->state1 = *p++;
+    raw->state0 = (u32*)v0;
+    raw->state2 = *p;
 
     // Both voice slots must be populated
     if (handle20 == NULL) return;
@@ -109,16 +118,16 @@ void func_802A8904(CVS_THREAD_REVIVE* self) {
         return;
     }
 
-    // Copy init data using named-temp form (single incrementing source ptr)
-    // so MWCC keeps self in r31 like retail.
+    // Copy init data using DOWN-proven statement order so MWCC keeps the
+    // source pointer and first word in the same registers as retail.
+    u32 v0;
     u32* src = lbl_eu_80539CB0;
-    u32 v0 = *src++;
+    v0 = *src++;
     CVoiceHandle* handle24 = self->field_0x24;
-    u32 v1 = *src++;
-    self->unk4 = v1;
-    self->unk0 = (u32*)v0;
-    u32 v2 = *src++;
-    self->unk8 = v2;
+    CVS_THREAD_REVIVE_raw* raw = (CVS_THREAD_REVIVE_raw*)self;
+    raw->state1 = *src++;
+    raw->state0 = (u32*)v0;
+    raw->state2 = *src;
 
     if (handle24 != NULL) {
         // State check at vtable 0x308 via virtual dispatch (r12 chain).

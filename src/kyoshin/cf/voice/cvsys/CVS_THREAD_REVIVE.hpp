@@ -15,14 +15,19 @@ extern "C" {
     int           func_802A7B90(CVoiceHandle* handle1, CVoiceHandle* handle2);
     CVoiceHandle* func_802A330C(int size, int align);
     u8*           func_802A34E4(int size);
-    void          __ct__cf_CVS_THREAD();
+    CVS_THREAD*   __ct__cf_CVS_THREAD(CVS_THREAD* object);
+
+    // Runtime rethrow (NMWException.h): declared noreturn so MWCC elides the
+    // __end__catch epilogue of a catch-all handler that ends with `bl __throw`
+    __declspec(noreturn) void __throw(char* throwtype, u32 location, u32 dtor);
 }
 
-// Init state triples and this subclass's vtable.
-extern "C" u32 lbl_eu_80539C98[3];
-extern "C" u32 lbl_eu_80539CB0[3];
-extern "C" u32 lbl_eu_80539CA4[3];
-extern "C" u32 lbl_eu_80539CBC[7];
+// Init-state triples and this subclass's vtable.
+// Global-scope data symbols: MWCC does not mangle them.
+extern u32 lbl_eu_80539C98[3];
+extern u32 lbl_eu_80539CB0[3];
+extern u32 lbl_eu_80539CA4[3];
+extern u32 lbl_eu_80539CBC[7];
 
 // Phantom vtable view over CVoiceHandle so virtual dispatch is emitted as a
 // true r12-chained indirect call (lwz r12,0(r3); lwz r12,0x2BC(r12); ...),
@@ -100,4 +105,19 @@ public:
     CVoiceHandle* field_0x24;  // 0x24: voice handle pointer (slot 2)
 
     int blank1() override;
+};
+
+// Raw layout exposing the implicit vtable pointer at 0x1C so the factory can
+// override it with the REVIVE vtable.
+struct CVS_THREAD_REVIVE_raw {
+    u32* state0;                // 0x00: init-state word 1
+    u32 state1;                 // 0x04: init-state word 2
+    u32 state2;                 // 0x08: init-state word 3
+    u32 field_0x0C;             // 0x0C
+    u32 field_0x10;             // 0x10
+    u32 field_0x14;             // 0x14
+    u32 field_0x18;             // 0x18
+    u32* vtable;                // 0x1C
+    CVoiceHandle* field_0x20;
+    CVoiceHandle* field_0x24;
 };

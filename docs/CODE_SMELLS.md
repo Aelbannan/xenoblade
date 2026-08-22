@@ -11,14 +11,14 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12735 |
+| extern "C" (total lines) | 12737 |
 | extern "C" declarations (non-lbl_*, imports) | 4989 |
 | extern "C" definitions (forced names) | 3906 |
-| `self`/register-style params | 11906 |
+| `self`/register-style params | 11908 |
 | `void*` (params + locals) | 7216 |
-| raw pointer offset arithmetic | 6897 |
+| raw pointer offset arithmetic | 6898 |
 | deref-through-cast arithmetic | 2738 |
-| inline asm / `register` | 105 |
+| inline asm / `register` | 106 |
 | rN-named params | 567 |
 | goto | 2917 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
@@ -104,7 +104,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/lib/CLibCriMoviePlay.cpp | 10 | 1 | 15 | 10 | 1 | 1 | 0 | 0 | 4 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibCriStreamingPlay.cpp | 21 | 1 | 1 | 21 | 62 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibG3d.cpp | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
-| libs/monolib/src/lib/CLibHbm.cpp | 1 | 0 | 6 | 2 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/lib/CLibHbm.cpp | 0 | 0 | 6 | 2 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibHbmControl.cpp | 38 | 0 | 12 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibLayout.cpp | 0 | 1 | 4 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibStaticData.cpp | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
@@ -434,7 +434,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/chain/CChainActorEne.cpp | 8 | 12 | 19 | 18 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/chain/CChainActorList.cpp | 1 | 3 | 43 | 0 | 2 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/cf/chain/CChainActorPc.cpp | 1 | 11 | 31 | 10 | 21 | 1 | 0 | 0 | 10 | 0 | 0 | 0 |
-| src/kyoshin/cf/chain/CChainCombo.cpp | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/cf/chain/CChainCombo.cpp | 0 | 0 | 2 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/chain/CChainEffect.cpp | 0 | 1 | 8 | 3 | 2 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | src/kyoshin/cf/chain/CChainTime.cpp | 0 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/chain/CChainTimer.cpp | 4 | 4 | 17 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -516,7 +516,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/makecrystal/code_80213488.cpp | 6 | 0 | 2 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuArtsSelect.cpp | 105 | 16 | 33 | 73 | 20 | 8 | 3 | 0 | 40 | 3 | 0 | 0 |
 | src/kyoshin/menu/CMenuArtsSet.cpp | 10 | 49 | 173 | 11 | 43 | 0 | 0 | 0 | 6 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuBattleChain.cpp | 7 | 7 | 20 | 11 | 4 | 2 | 2 | 1 | 1 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuBattleChain.cpp | 8 | 7 | 22 | 11 | 4 | 2 | 3 | 1 | 1 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleCommu.cpp | 2 | 1 | 7 | 3 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleDamage.cpp | 2 | 7 | 12 | 4 | 4 | 4 | 0 | 0 | 4 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuBattleEnd.cpp | 3 | 2 | 5 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -1191,7 +1191,6 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/lib/CLibHbm.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 1,
   "init_side_effect": 0,
   "rn_params": 6,
   "schedule_pragma": 0,
@@ -4693,6 +4692,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/cf/chain/CChainCombo.cpp": {
   "asm_insn_shim": 0,
   "init_side_effect": 0,
+  "ptr_arith": 1,
   "schedule_pragma": 0,
   "self_params": 2
  },
@@ -5550,17 +5550,17 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "void_ptr": 11
  },
  "src/kyoshin/menu/CMenuBattleChain.cpp": {
-  "asm_code": 2,
+  "asm_code": 3,
   "asm_insn_shim": 0,
   "deref_arith": 2,
-  "extern_c_nonlbl_decl": 7,
+  "extern_c_nonlbl_decl": 8,
   "extern_c_nonlbl_def": 7,
   "goto_count": 1,
   "init_side_effect": 0,
   "ptr_arith": 4,
   "rn_params": 1,
   "schedule_pragma": 0,
-  "self_params": 20,
+  "self_params": 22,
   "void_ptr": 11
  },
  "src/kyoshin/menu/CMenuBattleCommu.cpp": {

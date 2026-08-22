@@ -27471,7 +27471,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/pluginCam.cpp",
       "source_present": true,
-      "instruction_match": 99.769,
+      "instruction_match": 96.058,
       "equivalence_status": "inconclusive_smt_disabled"
     },
     {
@@ -27572,7 +27572,7 @@
       "unit": "kyoshin/plugin/pluginCam",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80082b7c",
@@ -27587,7 +27587,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/pluginCam.cpp",
       "source_present": true,
-      "instruction_match": 99.537,
+      "instruction_match": 77.426,
       "equivalence_status": "inconclusive_smt_disabled"
     },
     {
@@ -92552,7 +92552,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cfsys/CfObjectImplObj.cpp",
       "claim": null,
-      "instruction_match": 100.0,
+      "instruction_match": 0.0,
       "equivalence_status": "equivalent",
       "source_present": true
     },
@@ -92634,7 +92634,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cfsys/CfObjectImplObj.cpp",
       "claim": null,
-      "instruction_match": 100.0,
+      "instruction_match": 0.0,
       "equivalence_status": "equivalent",
       "source_present": true
     },
@@ -92717,8 +92717,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cfsys/CfObjectImplObj.cpp",
       "claim": null,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -92746,7 +92746,7 @@
       "source": "src/kyoshin/cfsys/CfObjectImplObj.cpp",
       "claim": null,
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -92774,7 +92774,7 @@
       "source": "src/kyoshin/cfsys/CfObjectImplObj.cpp",
       "claim": null,
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -98474,7 +98474,15 @@
       "source": "src/kyoshin/cf/code_800F42AC.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T00:48:29.794580+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/code_800F42AC.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-800f5130",
@@ -161392,14 +161400,6 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
       "source_present": true,
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-22T00:11:31.733301+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CTaskCulling.cpp"
-        ],
-        "note": ""
-      },
       "instruction_match": 0.0,
       "equivalence_status": "inconclusive_smt_disabled"
     },
@@ -261810,7 +261810,8 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/chain/CChainCombo.s",
       "abi_helper_calls": [],
       "instruction_match": 0.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-802964e8",
@@ -261839,7 +261840,8 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/chain/CChainCombo.s",
       "abi_helper_calls": [],
       "instruction_match": 0.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-802965b4",
@@ -276095,7 +276097,7 @@
       "size": "0x94",
       "unit": "kyoshin/menu/CMenuBattleChain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -276116,7 +276118,15 @@
       "source": "src/kyoshin/menu/CMenuBattleChain.cpp",
       "source_present": true,
       "instruction_match": 96.757,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T00:50:08.128480+00:00",
+        "allowed_paths": [
+          "src/kyoshin/menu/CMenuBattleChain.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802ac9d8",
@@ -276129,7 +276139,7 @@
       "size": "0x98",
       "unit": "kyoshin/menu/CMenuBattleChain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
@@ -276147,7 +276157,15 @@
       "source": "src/kyoshin/menu/CMenuBattleChain.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T00:50:08.128484+00:00",
+        "allowed_paths": [
+          "src/kyoshin/menu/CMenuBattleChain.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802aca70",
@@ -276487,7 +276505,7 @@
       "size": "0x80",
       "unit": "kyoshin/menu/CMenuBattleChain",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
@@ -276501,7 +276519,15 @@
       "source": "src/kyoshin/menu/CMenuBattleChain.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T00:50:08.128237+00:00",
+        "allowed_paths": [
+          "src/kyoshin/menu/CMenuBattleChain.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802adcc8",
@@ -318681,15 +318707,7 @@
       "source": "libs/RVL_SDK/src/revolution/bte/stack/rfcomm/port_rfc.c",
       "instruction_match": 94.255,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-22T00:07:20.367411+00:00",
-        "allowed_paths": [
-          "libs/RVL_SDK/src/revolution/bte/stack/rfcomm/port_rfc.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802ffee0",
@@ -395292,7 +395310,15 @@
       "source": "libs/CriWare/src/sofdec/mwply/mwsfdsst.c",
       "instruction_match": 98.131,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T00:48:10.744066+00:00",
+        "allowed_paths": [
+          "libs/CriWare/src/sofdec/mwply/mwsfdsst.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-803a7128",
@@ -421380,7 +421406,7 @@
       "unit": "nw4r/src/g3d/res/g3d_resnode",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/g3d/res/g3d_resnode.cpp",
       "called_functions": [
@@ -421393,7 +421419,9 @@
       "callgraph_source": "build/us/asm/nw4r/src/g3d/res/g3d_resnode.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 97.718,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-803dfc84",
@@ -470085,7 +470113,7 @@
       "unit": "monolib/src/util/CPathUtil",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/util/CPathUtil.cpp",
       "called_functions": [
@@ -470100,7 +470128,9 @@
       "callgraph_source": "build/us/asm/monolib/src/util/CPathUtil.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 94.67,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80437bb8",
@@ -483169,14 +483199,6 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
       "source_present": true,
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-22T00:11:28.489663+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/device/CDeviceClock.cpp"
-        ],
-        "note": ""
-      },
       "instruction_match": 98.929,
       "equivalence_status": "inconclusive_unsupported"
     },
@@ -483227,17 +483249,9 @@
       "callgraph_source": "build/us/asm/monolib/src/device/CDeviceClock.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 3.214,
+      "instruction_match": 65.452,
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-22T00:11:28.489461+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/device/CDeviceClock.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80450a14",
@@ -493268,8 +493282,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibHbm.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 99.75,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80461438",
@@ -493296,8 +493311,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibHbm.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 99.792,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80461498",
@@ -493321,8 +493337,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibHbm.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 97.5,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804614a0",
@@ -493346,8 +493363,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibHbm.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 99.0,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804614b4",
@@ -493372,7 +493390,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804614bc",
@@ -493397,7 +493416,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804614c4",
@@ -493425,8 +493445,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibHbm.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 99.355,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80461540",
@@ -493453,7 +493474,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80461568",
@@ -493477,8 +493499,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibHbm.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 99.583,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80461598",
@@ -493502,8 +493525,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibHbm.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 99.655,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8046160c",
@@ -493527,8 +493551,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibHbm.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 97.5,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80461614",
@@ -493558,7 +493583,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804616f0",
@@ -493582,8 +493608,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibHbm.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 99.167,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80461708",
@@ -493607,8 +493634,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibHbm.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 98.75,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80461718",
@@ -493656,8 +493684,8 @@
       "size": "0xA8",
       "unit": "monolib/src/lib/CLibHbm",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/lib/CLibHbm.cpp",
       "called_functions": [],
@@ -493667,9 +493695,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibHbm.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
+      "instruction_match": 31.429,
       "source_present": true,
-      "equivalence_status": "equivalent"
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80461898",
@@ -493682,8 +493710,8 @@
       "size": "0x344",
       "unit": "monolib/src/lib/CLibHbm",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/lib/CLibHbm.cpp",
       "called_functions": [
@@ -493704,8 +493732,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibHbm.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 82.885,
+      "source_present": true,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80461bdc",
@@ -493739,8 +493768,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibHbm.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 98.826,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80461da8",
@@ -493768,8 +493798,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibHbm.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 99.559,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80461e30",
@@ -493796,7 +493827,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80461e5c",
@@ -493823,7 +493855,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80461e60",
@@ -493851,7 +493884,8 @@
       "abi_helper_calls": [],
       "instruction_match": 100.0,
       "notes": "decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80461ec0",
@@ -493880,7 +493914,8 @@
       "abi_helper_calls": [],
       "instruction_match": 100.0,
       "notes": "decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80461f1c",
@@ -493954,8 +493989,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibHbm.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 100.0,
-      "source_present": true
+      "instruction_match": 99.49,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80462520",
@@ -556899,7 +556935,15 @@
       "source": "libs/monolib/src/nand/CNBanner.cpp",
       "source_present": true,
       "instruction_match": 32.623,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T00:51:31.291639+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/nand/CNBanner.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804f9794",
@@ -556928,7 +556972,15 @@
       "source": "libs/monolib/src/nand/CNBanner.cpp",
       "source_present": true,
       "instruction_match": 93.727,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T00:51:31.291853+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/nand/CNBanner.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804f9870",

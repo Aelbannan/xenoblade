@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cfsys/CfObjectImplObj
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
+#include <stdlib.h> // atoi
 
 #include "kyoshin/cfsys/CfObjectImplObj.hpp"
 
@@ -32,7 +32,7 @@ void func_800CA58C(void) {}
 // the param's digit char (modes 0x10/0x11; atoi when '0'-'9') and issue the
 // driver's vtable 0x204 command (0x23, 0, parsed-value, 0, 0).
 void func_800CA590(cf::CfObjectImplObj* self, u32 id, cf::CfObjCmdParam* param) {
-    if (self->field_14->field_0xC4 != id) {
+    if (id != self->field_14->field_0xC4) {
         return;
     }
     u8 mode = param->field_0xA;

@@ -71319,7 +71319,15 @@
       "source": "src/kyoshin/cf/object/CfObjectEff.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T00:04:10.040470+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/object/CfObjectEff.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-800ad618",
@@ -71793,7 +71801,15 @@
       "source": "src/kyoshin/cf/object/CfObjectEff.cpp",
       "source_present": true,
       "instruction_match": 81.156,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T00:04:10.040650+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/object/CfObjectEff.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-800add70",
@@ -110343,7 +110359,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/CSysWinSelect.cpp",
       "source_present": false,
-      "instruction_match": 89.167,
+      "instruction_match": 88.988,
       "equivalence_status": "inconclusive_smt_disabled"
     },
     {
@@ -262039,15 +262055,7 @@
       "source": "src/kyoshin/CSysWinSave.cpp",
       "source_present": false,
       "instruction_match": 99.518,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-21T23:34:26.402606+00:00",
-        "allowed_paths": [
-          "src/kyoshin/CSysWinSave.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80296c20",
@@ -275328,7 +275336,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent"
     },
     {
@@ -275355,7 +275363,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent"
     },
     {
@@ -275384,7 +275392,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent"
     },
     {
@@ -275410,7 +275418,7 @@
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp",
       "claim": null,
       "instruction_match": 100.0,
-      "equivalence_status": "equivalent",
+      "equivalence_status": "inconclusive_unsupported",
       "source_present": false
     },
     {
@@ -286328,17 +286336,9 @@
       "callgraph_source": "build/us/asm/kyoshin/help/CHelp_LearnArts.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/help/CHelp_LearnArts.cpp",
-      "instruction_match": 90.976,
+      "instruction_match": 92.841,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-21T23:31:11.441949+00:00",
-        "allowed_paths": [
-          "src/kyoshin/help/CHelp_LearnArts.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802baf50",
@@ -318668,7 +318668,7 @@
       "size": "0x178",
       "unit": "RVL_SDK/src/revolution/bte/stack/rfcomm/port_rfc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -318687,7 +318687,15 @@
       "source": "libs/RVL_SDK/src/revolution/bte/stack/rfcomm/port_rfc.c",
       "instruction_match": 94.255,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T00:07:20.367411+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/bte/stack/rfcomm/port_rfc.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802ffee0",

@@ -13,7 +13,7 @@
  */
 class CVS_THREAD_SUDDEN : public CVS_THREAD {
 public:
-    CVoiceHandle* field_0x20;  // 0x20: voice handle pointer slot
+    CVoiceHandle* voiceHandle;  // 0x20: voice handle pointer slot
     int blank1() override;
 };
 
@@ -27,10 +27,31 @@ extern "C" {
     void func_802A3E28(CVS_THREAD* self);
     CVoiceHandle* func_802A330C(int size, int align);
     u8*  func_802A34E4(int size);
+
+    // Base-subobject constructor (implemented in CVS_THREAD.cpp).
+    CVS_THREAD* __ct__cf_CVS_THREAD(CVS_THREAD* object);
+
+    // Runtime rethrow (NMWException.h): declared noreturn so MWCC elides the
+    // __end__catch epilogue of a catch-all handler that ends with `bl __throw`
+    // (retail catch-all handlers end at the rethrow). All three parameters
+    // are opaque pointers in the runtime ABI.
+    __declspec(noreturn) void __throw(char* throwtype, char* location,
+                                      char* dtor);
 }
 
-extern "C" void __ct__cf_CVS_THREAD();
+// Raw view used by the factory to reach the base state words (0x00-0x08),
+// the subclass vtable (0x1C) and the null voice-handle slot (0x20). The
+// compiler-managed vptr overlaps the base's 7 leading words, so the manual
+// retail vtable store and init-triple copy need this byte-exact view.
+struct CVS_THREAD_SUDDEN_raw {
+    u32* state0;    // 0x00: base state word 1 (pointer)
+    u32 state4;     // 0x04: base state word 2
+    u32 state8;     // 0x08: base state word 3
+    u8 _0C[0x10];   // 0x0C-0x1B
+    u32 vtable;     // 0x1C
+    CVoiceHandle* voiceHandle;  // 0x20
+};
 
-// Globals: slot-state init table and this subclass's vtable.
+// Globals: slot-state init table and this subclass's vtable (0x1C bytes).
 extern u32 lbl_eu_80539CE8[3];
-extern u32 lbl_eu_80539CF4[3];
+extern u32 lbl_eu_80539CF4[7];

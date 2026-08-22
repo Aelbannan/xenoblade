@@ -13,9 +13,9 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 |---|---|
 | extern "C" (total lines) | 12735 |
 | extern "C" declarations (non-lbl_*, imports) | 4989 |
-| extern "C" definitions (forced names) | 3907 |
+| extern "C" definitions (forced names) | 3906 |
 | `self`/register-style params | 11906 |
-| `void*` (params + locals) | 7215 |
+| `void*` (params + locals) | 7216 |
 | raw pointer offset arithmetic | 6897 |
 | deref-through-cast arithmetic | 2738 |
 | inline asm / `register` | 105 |
@@ -91,7 +91,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/device/CDeviceSC.cpp | 38 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceVI.cpp | 84 | 0 | 2 | 0 | 2 | 0 | 2 | 2 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceVICb.cpp | 4 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/device/CGXCache.cpp | 22 | 13 | 42 | 40 | 23 | 1 | 0 | 0 | 29 | 0 | 0 | 0 |
+| libs/monolib/src/device/CGXCache.cpp | 22 | 12 | 42 | 40 | 23 | 1 | 0 | 0 | 29 | 0 | 0 | 0 |
 | libs/monolib/src/effect/CERand.cpp | 1 | 15 | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/CETrail.cpp | 21 | 12 | 5 | 26 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/effect/code_804C8684.cpp | 0 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -339,7 +339,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CSysWinBuff.cpp | 3 | 6 | 8 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinSave.cpp | 1 | 7 | 9 | 5 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/CSysWinScenarioLog.cpp | 1 | 9 | 34 | 17 | 8 | 0 | 0 | 0 | 12 | 0 | 0 | 0 |
-| src/kyoshin/CSysWinSelect.cpp | 2 | 1 | 14 | 14 | 6 | 2 | 0 | 0 | 2 | 0 | 0 | 0 |
+| src/kyoshin/CSysWinSelect.cpp | 2 | 1 | 14 | 15 | 6 | 2 | 0 | 0 | 2 | 0 | 0 | 0 |
 | src/kyoshin/CSystemWindow.cpp | 1 | 0 | 2 | 2 | 3 | 2 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTagProcessor.cpp | 1 | 24 | 87 | 88 | 19 | 1 | 0 | 5 | 3 | 0 | 0 | 0 |
 | src/kyoshin/CTalkWindow.cpp | 3 | 4 | 10 | 9 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 |
@@ -1055,7 +1055,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "deref_arith": 1,
   "extern_c_nonlbl_decl": 22,
-  "extern_c_nonlbl_def": 13,
+  "extern_c_nonlbl_def": 12,
   "goto_count": 29,
   "init_side_effect": 0,
   "ptr_arith": 23,
@@ -3703,7 +3703,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "ptr_arith": 6,
   "schedule_pragma": 0,
   "self_params": 14,
-  "void_ptr": 14
+  "void_ptr": 15
  },
  "src/kyoshin/CSystemWindow.cpp": {
   "asm_insn_shim": 0,

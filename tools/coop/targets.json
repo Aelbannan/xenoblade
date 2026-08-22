@@ -300205,7 +300205,7 @@
       "unit": "RVL_SDK/src/revolution/axfx/AXFXReverbStdExpDpl2",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -300214,17 +300214,9 @@
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/axfx/AXFXReverbStdExpDpl2.s",
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/axfx/AXFXReverbStdExpDpl2.c",
-      "instruction_match": 71.708,
+      "instruction_match": 69.042,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-22T07:14:53.952321+00:00",
-        "allowed_paths": [
-          "libs/RVL_SDK/src/revolution/axfx/AXFXReverbStdExpDpl2.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802db070",
@@ -300375,17 +300367,9 @@
         "_savegpr_24"
       ],
       "source": "libs/RVL_SDK/src/revolution/axfx/AXFXReverbStdExpDpl2.c",
-      "instruction_match": 99.178,
+      "instruction_match": 98.556,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-22T07:14:53.952544+00:00",
-        "allowed_paths": [
-          "libs/RVL_SDK/src/revolution/axfx/AXFXReverbStdExpDpl2.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802db790",
@@ -390662,7 +390646,7 @@
       "size": "0x168",
       "unit": "CriWare/src/sofdec/cft/srcgc/cftyp422_ppc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -390675,7 +390659,15 @@
       "declared_return": "void",
       "instruction_match": 41.611,
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T07:32:30.925726+00:00",
+        "allowed_paths": [
+          "libs/CriWare/src/sofdec/cft/srcgc/cftyp422_ppc.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8039ecc4",
@@ -390688,7 +390680,7 @@
       "size": "0x288",
       "unit": "CriWare/src/sofdec/cft/srcgc/cftyp422_ppc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -390701,7 +390693,15 @@
       "declared_return": "void",
       "instruction_match": 60.981,
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T07:32:30.925895+00:00",
+        "allowed_paths": [
+          "libs/CriWare/src/sofdec/cft/srcgc/cftyp422_ppc.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8039ef4c",

@@ -49,9 +49,9 @@ struct CVS_THREAD_DOWN_Vtbl {
 // pointer at 0x1C (owned by the CVS_THREAD base) so the factory can
 // override it with the DOWN vtable, plus the two voice slots.
 struct CVS_THREAD_DOWN_raw {
-    u32 unk0;                   // 0x00
-    u32 unk4;                   // 0x04
-    u32 unk8;                   // 0x08
+    u32* state0;                // 0x00: init-state word 1
+    u32 state1;                 // 0x04: init-state word 2
+    u32 state2;                 // 0x08: init-state word 3
     u32 unkC;                   // 0x0C
     u32 unk10;                  // 0x10
     u32 unk14;                  // 0x14
@@ -77,7 +77,9 @@ extern "C" void __ct__cf_CVS_THREAD(void* self);
 // (retail catch-all handlers end at the rethrow).
 extern "C" __declspec(noreturn) void __throw(char* throwtype, void* location, void* dtor);
 
-extern "C" u32 lbl_eu_80539A68[3];
-extern "C" u32 lbl_eu_80539A74[3];
-extern "C" u32 lbl_eu_80539A80[3];
-extern "C" u32 lbl_eu_80539A8C[7];
+// Init-state triples (copied into the base state words 0x00-0x08) and this
+// subclass's vtable. Global-scope data symbols: MWCC does not mangle them.
+extern u32 lbl_eu_80539A68[3];
+extern u32 lbl_eu_80539A74[3];
+extern u32 lbl_eu_80539A80[3];
+extern u32 lbl_eu_80539A8C[7];

@@ -16,26 +16,28 @@ void func_802A5E0C(CVS_THREAD_DOWN* self) {
 
 // ── Target 2: us-802a8588 (func_802A5E54) ──────────────────────────────────
 // Remove a voice from the slots by matching its embedded CCharVoice pointer.
+// Each slot stores a CVoiceHandle; the comparison target is the CCharVoice
+// embedded at +0x3E9C inside that handle (or NULL when the slot is empty).
 void func_802A5E54(CVS_THREAD_DOWN* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
-    // Slot 0x20: load handle, bias if non-null, compare with voicePtr
+    // Slot 0x20: load handle, bias to its embedded voice if non-null, compare
     CVoiceHandle* handle = self->field_0x20;
-    CCharVoice* biased = (CCharVoice*)handle;
+    CCharVoice* embedded = (CCharVoice*)handle;
     if (handle != NULL) {
-        biased = &handle->voice;
+        embedded = &handle->voice;
     }
-    if (biased == voicePtr) {
+    if (embedded == voicePtr) {
         self->field_0x20 = NULL;
     }
 
     // Slot 0x24: same pattern
     handle = self->field_0x24;
-    biased = (CCharVoice*)handle;
+    embedded = (CCharVoice*)handle;
     if (handle != NULL) {
-        biased = &handle->voice;
+        embedded = &handle->voice;
     }
-    if (biased == voicePtr) {
+    if (embedded == voicePtr) {
         self->field_0x24 = NULL;
     }
 }
@@ -46,13 +48,13 @@ void func_802A5E54(CVS_THREAD_DOWN* self, CCharVoice* voicePtr) {
 // the voice is still active (vtable method at offset 0x2BC), and if
 // inactive, plays a random voice ID (mtRand(2) + 0x70C).
 void func_802A5C90(CVS_THREAD_DOWN* self) {
-    u32 v0;
+    u32 state0;  // first init word -- loaded before the slot read, kept in a temp
     u32* src = lbl_eu_80539A74;
-    v0 = *src++;
+    state0 = *src++;
     CVoiceHandle* handle20 = self->field_0x20;
-    self->unk4 = *src++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *src;
+    ((CVS_THREAD_DOWN_raw*)self)->state1 = *src++;
+    ((CVS_THREAD_DOWN_raw*)self)->state0 = (u32*)state0;
+    ((CVS_THREAD_DOWN_raw*)self)->state2 = *src;
 
     if (handle20 != NULL) {
         // Call vtable method at offset 0x2BC (is-active check) as a real
@@ -60,11 +62,11 @@ void func_802A5C90(CVS_THREAD_DOWN* self) {
         if (((CVS_THREAD_DOWN_Vtbl*)handle20)->isVoiceActive() == 0) {
             // Voice is not active -- try to play a random voice
             handle20 = self->field_0x20;
-            CCharVoice* voicePtr = (CCharVoice*)handle20;
+            CCharVoice* embedded = (CCharVoice*)handle20;
             if (handle20 != NULL) {
-                voicePtr = &handle20->voice;
+                embedded = &handle20->voice;
             }
-            if (func_802A3C44(self, voicePtr, ml::math::mtRand(2) + 0x70C) == 0) {
+            if (func_802A3C44(self, embedded, ml::math::mtRand(2) + 0x70C) == 0) {
                 self->func_802A3B50();
             }
         }
@@ -81,13 +83,13 @@ void func_802A5D4C(CVS_THREAD_DOWN* self) {
         return;
     }
 
-    u32 v0;
+    u32 state0;  // first init word -- loaded before the slot read, kept in a temp
     u32* src = lbl_eu_80539A80;
-    v0 = *src++;
+    state0 = *src++;
     CVoiceHandle* handle24 = self->field_0x24;
-    self->unk4 = *src++;
-    self->unk0 = (u32*)v0;
-    self->unk8 = *src;
+    ((CVS_THREAD_DOWN_raw*)self)->state1 = *src++;
+    ((CVS_THREAD_DOWN_raw*)self)->state0 = (u32*)state0;
+    ((CVS_THREAD_DOWN_raw*)self)->state2 = *src;
 
     if (handle24 != NULL) {
         // Call vtable method at offset 0x2BC (is-active check) as a real
@@ -98,11 +100,11 @@ void func_802A5D4C(CVS_THREAD_DOWN* self) {
             // slot handle so it is NOT live across the mtRand call.
             int voiceId = (ml::math::mtRand(2) != 0) ? 0x70E : 0x713;
             handle24 = self->field_0x24;
-            CCharVoice* voicePtr = (CCharVoice*)handle24;
+            CCharVoice* embedded = (CCharVoice*)handle24;
             if (handle24 != NULL) {
-                voicePtr = &handle24->voice;
+                embedded = &handle24->voice;
             }
-            if (func_802A3C44(self, voicePtr, voiceId) == 0) {
+            if (func_802A3C44(self, embedded, voiceId) == 0) {
                 self->func_802A3B50();
             }
         }
@@ -146,14 +148,15 @@ CVS_THREAD_DOWN* __ct__802A5B88(CVoiceHandle* owner1, CVoiceHandle* owner2) {
 
     // Copy the init-state triple. The address is forced through an integer
     // cast so the full base (lis+addi) is materialized once before any load.
-    u32 v0;
-    u32 v1;
+    // src[1] is read before src[0] to match retail's register allocation.
+    u32 state1;
+    u32 state0;
     u32* src = (u32*)(u32)lbl_eu_80539A68;
-    v1 = src[1];
-    v0 = src[0];
-    self->unk0 = (u32*)v0;
-    self->unk4 = v1;
-    self->unk8 = src[2];
+    state1 = src[1];
+    state0 = src[0];
+    ((CVS_THREAD_DOWN_raw*)self)->state0 = (u32*)state0;
+    ((CVS_THREAD_DOWN_raw*)self)->state1 = state1;
+    ((CVS_THREAD_DOWN_raw*)self)->state2 = src[2];
 
     return self;
 }

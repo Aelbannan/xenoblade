@@ -241,6 +241,8 @@ typedef struct {
     s32 expandSize;
     s32 linkTblOfs;
     s32 chunksOfs;
+    // Mask words follow the 16-byte fixed header
+    u32 mask[1];
 } Yay0Header;
 
 // 'Yay0' decompression (See YAGCD sections 16.1.1, 16.1.2). During the
@@ -251,13 +253,17 @@ typedef struct {
 //   i         write position (index) into dst
 //   maskBits  number of valid bits remaining in the current mask
 static void Decode(u8* src, u8* dst) {
-    const u8* chunk = src + ((const Yay0Header*)src)->chunksOfs;
-    const u32* maskPtr = (const u32*)(src + 0x10);
+    u8* chunk = ((u8*)src) + ((const Yay0Header*)src)->chunksOfs;
+    u32* maskPtr = (u32*)((const Yay0Header*)src)->mask;
     s32 expandSize = ((const Yay0Header*)src)->expandSize;
     s32 i = 0;
     s32 linkTblOfs = ((const Yay0Header*)src)->linkTblOfs;
     u32 maskBits = 0;
     u32 mask;
+    s32 linkOfs;
+    s32 count;
+    s32 chunkPos;
+    s32 j;
 
     do {
         // Get next mask
@@ -272,11 +278,6 @@ static void Decode(u8* src, u8* dst) {
         }
         // Linked chunk
         else {
-            s32 linkOfs;
-            s32 count;
-            s32 chunkPos;
-            s32 j;
-
             // Read offset from link table
             linkOfs = src[linkTblOfs] << 8 | src[linkTblOfs + 1];
             linkTblOfs += sizeof(u16);

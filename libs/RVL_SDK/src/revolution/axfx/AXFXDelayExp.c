@@ -3,6 +3,14 @@
 
 #include <string.h>
 
+/*
+ * Stereo delay effect with exponential-decay feedback (IIR low-pass in the
+ * feedback path). Each channel owns one delay line allocated by AXFXDelayExpInit.
+ *
+ * fx->active flags:
+ *   bit0 (1): an update/reinit is in progress on another thread
+ *   bit1 (2): parameters changed; the audio callback skips one block
+ */
 static BOOL __InitParams(AXFX_DELAY_EXP* fx);
 
 #pragma scheduling off
@@ -19,6 +27,8 @@ BOOL AXFXDelayExpInit(AXFX_DELAY_EXP* fx) {
     fx->active = 1;
 
     if (fx->delayTimeMax <= 0.0f) {
+        /* Invalid config: release whatever was allocated and bail out.
+           The nested disable mirrors the retail double-interrupt-lock idiom. */
         nested = OSDisableInterrupts();
         fx->active |= 1;
         if (fx->line[0] != NULL) {
@@ -203,6 +213,11 @@ void AXFXDelayExpShutdown(AXFX_DELAY_EXP* fx) {
     OSRestoreInterrupts(mask);
 }
 
+/*
+ * Per-audio-block processing: mixes dry input through a one-pole IIR with the
+ * delayed (feedback-damped) signal, then writes delayed samples to the outputs
+ * (and to busOut when a send bus is attached). Gains are Q7 fixed point.
+ */
 void AXFXDelayExpCallback(AXFX_BUFFERUPDATE* update, AXFX_DELAY_EXP* fx) {
     s32* inL;
     s32* inR;
@@ -289,6 +304,10 @@ void AXFXDelayExpCallback(AXFX_BUFFERUPDATE* update, AXFX_DELAY_EXP* fx) {
     }
 }
 
+/*
+ * Validate user parameters and recompute the fixed-point gains used by the
+ * audio callback. Delay lines are zeroed so playback restarts cleanly.
+ */
 static BOOL __InitParams(AXFX_DELAY_EXP* fx) {
     f32 iir;
 
@@ -335,7 +354,8 @@ static BOOL __InitParams(AXFX_DELAY_EXP* fx) {
     fx->feedbackGain = (s32)(128.0f * fx->feedback);
 
     iir = 1.0f - fx->iir;
-    if (iir > 0.95f) {
+    if (iir > 0.95f) { // clamp so the IIR filter never goes fully static
+
         iir = 0.95f;
     }
     (void)0.0f; // retail .sdata2 pairs 0.95 with a trailing 0.0

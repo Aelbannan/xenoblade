@@ -2,12 +2,12 @@
 #include "kyoshin/cf/CfCollCapsuleImpl.hpp"
 
 // Shared float constants used for capsule debug colors.
-extern float lbl_eu_80666910; // 0.0f
-extern float lbl_eu_80666914; // 1.0f
-extern float lbl_eu_8066692C; // 0.1f
-extern float lbl_eu_80666930; // 0.5f
-extern float lbl_eu_80666934; // 0.15f
-extern float lbl_eu_80666948; // 0.75f
+extern const float lbl_eu_80666910; // 0.0f
+extern const float lbl_eu_80666914; // 1.0f
+extern const float lbl_eu_8066692C; // 0.1f
+extern const float lbl_eu_80666930; // 0.5f
+extern const float lbl_eu_80666934; // 0.15f
+extern const float lbl_eu_80666948; // 0.75f
 
 // Collision query helper: process capsule against collision context.
 void func_800A4C48(void* query, const ml::CVec3* start,

@@ -1,5 +1,9 @@
 /**
  * synpitch.c - HBM synth pitch/sample-rate conversion routines
+ *
+ * Retail keeps four lookup tables contiguous in .data; indexing the sibling
+ * symbols directly lets MWCC fold their addresses into constant offsets from
+ * the first symbol (__HBMSYNCentsTable), which matches the retail codegen.
  */
 
 #include <harness_catalog.h>
@@ -10,9 +14,11 @@ extern "C" {
 #endif
 
 extern unsigned long __cvt_fp2unsigned(double);
+extern f32 lbl_80518B78; /* float-pool constant 1.0f */
 
 /* ---- lookup tables (contiguous in .data) ---- */
 
+/* cents 0..99: 2^(cents/1200) */
 f32 __HBMSYNCentsTable[100] = {
     1, 1.00057805, 1.00115597, 1.00173402, 1.00231302, 1.00289202,
     1.00347197, 1.00405204, 1.004632, 1.00521195, 1.00579298, 1.006374,
@@ -32,14 +38,20 @@ f32 __HBMSYNCentsTable[100] = {
     1.05336106, 1.05396998, 1.05457902, 1.05518794, 1.05579805, 1.05640805,
     1.05701804, 1.05762899, 1.05824006, 1.058851,
 };
+
+/* octaves up: 2^(12*oct/1200) */
 f32 __HBMSYNOctavesTableUp[12] = {
     1, 2, 4, 8, 16, 32,
     64, 128, 256, 512, 1024, 2048,
 };
+
+/* semitones up: 2^(sem/12) */
 f32 __HBMSYNSemitonesTableUp[12] = {
     1, 1.05946302, 1.12246203, 1.18920696, 1.25992095, 1.33484006,
     1.41421402, 1.49830699, 1.58740103, 1.68179297, 1.78179705, 1.88774896,
 };
+
+/* semitones down: 2^(-sem/12) */
 f32 __HBMSYNSemitonesTableDown[128] = {
     1, 0.943874002, 0.890899003, 0.84089601, 0.793700993, 0.749153972,
     0.707107008, 0.66742003, 0.629961014, 0.594604015, 0.561231017, 0.529731989,
@@ -65,9 +77,9 @@ f32 __HBMSYNSemitonesTableDown[128] = {
     0.000691000023, 0.000652000017,
 };
 
-/* ================================================================== */
-/*  HBMSYNVOICE - local struct                                         */
-/* ================================================================== */
+/* ==================================================================
+ * HBMSYNVOICE - local struct
+ * ================================================================== */
 
 struct HBMSYNPitchPreset {
     u8  note;
@@ -124,7 +136,7 @@ f32 __HBMSYNGetRelativePitch(HBMSYNVOICE* voice)
         return r;
     }
 
-    return 1.0f;
+    return lbl_80518B78;
 }
 
 void __HBMSYNSetupPitch(HBMSYNVOICE* voice)

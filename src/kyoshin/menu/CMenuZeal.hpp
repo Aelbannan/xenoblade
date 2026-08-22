@@ -142,5 +142,9 @@ nw4r::lyt::ArcResourceAccessor* func_801355F4();
 // wrapper drops it when inlined, so bind the pre-mangled name directly).
 int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
 }
+// Effect/cue object factory (defined in pluginUi.cpp; declared here because
+// pluginUi.hpp's extern "C" func_80136190 clashes with code_80135FDC.hpp's).
+void* func_800451D8(u32 cls, void* param);
+
 // UI sound effect (mangles to func_80138078__FUl).
 void func_80138078(u32 op);

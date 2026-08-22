@@ -37,23 +37,21 @@ extern "C" __declspec(noinline) CMenuGCItem* __ct__CMenuGCItem(
         __ct__8CProcessFv((CProcess*)obj);
 
         // vtable fixups: temp (CProcess) vtable first, then the composite
-        // vtable and the IScnRender sub-vtable at +0x58. The pmf copy reads the
-        // null member-function-pointer triple through one base register (fixed
-        // offsets, no post-increment -- matches the retail lwz order).
+        // vtable and the IScnRender sub-vtable at +0x58. Both null-PMF triples
+        // are copied through a single pinned base pointer (retail keeps one
+        // materialization of &__ptmf_null live across both copies).
         *(u32*)((u8*)obj + 0x10) = (u32)lbl_eu_8052BF70;
-        u32* src = __ptmf_null;
-        u32 pmf0_1 = src[1];
-        u32 pmf0_0 = src[0];
-        obj->ptmf0[0] = pmf0_0;
-        obj->ptmf0[1] = pmf0_1;
-        u32 pmf0_2 = src[2];
-        obj->ptmf0[2] = pmf0_2;
-        u32 pmf1_1 = src[1];
-        u32 pmf1_0 = src[0];
-        obj->ptmf1[0] = pmf1_0;
-        obj->ptmf1[1] = pmf1_1;
-        u32 pmf1_2 = src[2];
-        obj->ptmf1[2] = pmf1_2;
+        register u32* src = (u32*)__ptmf_null;
+        u32 t1 = src[1];
+        u32 t0 = src[0];
+        obj->ptmf0[0] = t0;
+        obj->ptmf0[1] = t1;
+        obj->ptmf0[2] = src[2];
+        t0 = src[0];
+        t1 = src[1];
+        obj->ptmf1[0] = t0;
+        obj->ptmf1[1] = t1;
+        obj->ptmf1[2] = src[2];
         obj->mField54 = 0;
         obj->mField55 = 0;
 
@@ -182,18 +180,6 @@ void CMenuGCItem::cbRenderBefore() {
     __dt__Q34nw4r3lyt8DrawInfoFv(&drawInfo[0], -1);
 }
 
-void func_8029BB24(){}
-
-void func_8029BBA0(){}
-
-void func_8029BBB0(){}
-
-void func_8029BC28(){}
-
-void func_8029BC78(){}
-
-void func_8029BE7C(){}
-
 /**
  * IScnRender vtable this-adjusting thunk for cbRenderBefore.
  *
@@ -216,8 +202,7 @@ extern "C" void func_802B0F10(void* self) {
     ((void(*)(void*))__dt__11CMenuGCItemFv)((char*)self - 0x58);
 }
 
-extern "C" unsigned long func_802B0D10() {
-    extern unsigned long lbl_eu_80664C00;
+extern "C" int func_802B0D10() {
     return lbl_eu_80664C00 != 0;
 }
 

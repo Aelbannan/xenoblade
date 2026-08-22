@@ -389,3 +389,4 @@ extern "C" cf::CSoundNode* func_802AE38C();
 extern "C" cf::CSoundNode* func_802A7674();
 extern "C" cf::CSoundNode* func_802A8AC8();
 extern "C" cf::CSoundNode* func_802A7744();
+extern "C" cf::CSoundNode* func_802A8628(void* self);

@@ -13,6 +13,13 @@
 class CScn;
 class CItemBoxLine;
 
+// 8-byte pane-colour vector: CItemBoxLine.hpp references this type but relies
+// on includers having seen it first (CEquipItemBox.hpp owns the canonical
+// definition); defined here because that header cannot be edited.
+struct CEquipBoxFourShorts {
+    s16 a, b, c, d;
+};
+
 /* 8-byte copy unit used by the shop-buy data blob. func_8018BE74 copies the
  * blob's sub-struct members; MWCC turns each struct assignment into the
  * retail's `mtctr` + `lwzu/stwu` counted loop. */
@@ -208,6 +215,7 @@ extern "C" void func_801C412C(CTitleAHelp* self);
 extern "C" void func_801C40A0(CTitleAHelp* self);
 extern "C" void func_801C3D9C(CBgTex* self);
 extern "C" int func_801ED800(CItemBoxLine* self);
+extern "C" u8 code80135FDC_getByte_64077();
 extern "C" int func_801ED774(CItemBoxLine* self);
 extern "C" void func_801ED618(CItemBoxLine* self);
 extern "C" void func_801ED864(CItemBoxLine* self);

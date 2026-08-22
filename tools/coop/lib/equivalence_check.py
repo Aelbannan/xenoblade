@@ -3364,13 +3364,27 @@ def certify_unit_symbol(
             # witness must run before the SMT-first memory-bus block below,
             # which would otherwise eat the solver timeout the fast path
             # exists to avoid.  On witness failure the normal paths still run.
+            # doc 33 Item 0.5 parity: feed the unit-scoped canonical-symbol
+            # map (TU-local ``@N`` pool labels -> retail names) to the witness,
+            # same as prove_unit_symbol's path — otherwise gate-2 rejects
+            # value-equal pool-cookie drift (@N vs lbl_eu_*) that the mined
+            # map exists to canonicalize (fail-closed when not fresh).
             witness_probe = None
+            witness_canonical: dict[str, str] | None = None
+            try:
+                if _ensure_reloc_map_fresh(project, unit):
+                    _unit_name = getattr(unit, "name", None)
+                    if _unit_name:
+                        witness_canonical = _canonical_symbols_for_unit(_unit_name)
+            except Exception:
+                witness_canonical = None
             if witness_enabled:
                 witness_probe = _try_renaming_witness(
                     project, symbol, left, right, target_id,
                     max_instructions=max_instructions,
                     max_paths=max_paths,
                     max_loop_iterations=max_loop_iterations,
+                    canonical_symbols=witness_canonical,
                     diag=diag,
                     witness_timeout_ms=witness_timeout_ms,
                 )

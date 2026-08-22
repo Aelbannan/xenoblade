@@ -104,6 +104,9 @@ public:
 // mulli/lis/addi + `bl __ptmf_scall`.
 typedef void (CTitleLogo::*CTitleLogoStateFn)();
 typedef void (CTitleMenu::*CTitleMenuStateFn)();
+// CTitle-level state table, indexed by field_0x24.
+typedef void (CTitle::*CTitleStateFn)();
+extern CTitleStateFn lbl_eu_8053B274[];
 extern CTitleLogoStateFn lbl_eu_8053B1F0[];
 extern CTitleMenuStateFn lbl_eu_8053B220[];
 
@@ -116,6 +119,7 @@ extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* sel
 extern "C" CBaseCur* __ct__CCur18(CBaseCur* self, nw4r::lyt::ArcResourceAccessor* arcResAcc);
 extern "C" void __dt__6CCur18Fv(void* self, int flags);
 extern "C" void func_801D216C(void* pCur, u8 val);
+extern "C" void func_801D202C(CBaseCur* pCur);
 extern "C" void func_802B7948(void* a, unsigned int b, unsigned char v);
 extern "C" int func_8023FEDC(void (*pCallback)(void*, unsigned int, unsigned char));
 // Menu-cursor SFX cue (mangles to func_80138078__FUl).

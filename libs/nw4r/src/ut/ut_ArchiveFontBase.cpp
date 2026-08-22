@@ -84,7 +84,12 @@ public:
         u16 field_0x62; // at 0x62
     };
 
+    static bool IncludeName(const char* pList, const char* pName);
+
     int RequestData(ConstructContext* pCtx, CachedStreamReader* pReader, u32 size);
+
+    static int ConstructOpSkip(ConstructContext* pCtx,
+                               CachedStreamReader* pReader);
 
     static int ConstructOpAnalyzeFINF(ConstructContext* pCtx,
                                       CachedStreamReader* pReader);
@@ -437,7 +442,46 @@ AdjustIndex__Q44nw4r2ut6detail15ArchiveFontBaseCFUs(const void* self,
     return index - mapped;
 }
 
-void IncludeName__Q44nw4r2ut6detail15ArchiveFontBaseFPCcPCc(){}
+// Returns true if pName appears in the comma-separated pList (entries may be
+// padded with spaces on either side of the name).
+bool nw4r::ut::detail::ArchiveFontBase::IncludeName(const char* pList, const char* pName) {
+    u32 len = strlen(pName);
+    const char* pIt = pList - 1;
+
+    while (true) {
+        pIt = strstr(pIt + 1, pName);
+        if (pIt == NULL) {
+            return false;
+        }
+
+        // The match must start at a list boundary: either the very start of
+        // the list or right after a comma (skipping back over spaces).
+        const char* pCheck = pIt;
+        if (pCheck != pList) {
+            pCheck--;
+            while (pCheck > pList && *pCheck == ' ') {
+                pCheck--;
+            }
+            if (*pCheck != ',') {
+                continue;
+            }
+        }
+
+        // The match must also end at a boundary: skip spaces after the name
+        // and require the next character to be the entry terminator.
+        const char* pEnd = strchr(pIt, ',');
+        u32 entryLen =
+            (pEnd != NULL) ? (u32)(pEnd - pIt) : strlen(pIt);
+        const char* pAfter = pIt + len;
+        const char* pStop = pIt + entryLen;
+        while (pAfter < pStop && *pAfter == ' ') {
+            pAfter++;
+        }
+        if (pAfter == pStop) {
+            return true;
+        }
+    }
+}
 
 extern "C" int
 ConstructOpAnalyzeCMAP__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(void* ctx,
@@ -499,7 +543,49 @@ ConstructOpAnalyzeCWDH__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15A
 
 void ConstructOpCopy__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(){}
 
-void ConstructOpSkip__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(){}
+int nw4r::ut::detail::ArchiveFontBase::ConstructOpSkip(ConstructContext* pCtx,
+                                     CachedStreamReader* pReader) {
+    // The context aliases the font object being built, so the skip-remaining
+    // counter (+0x54) and next-op pointer (+0x50) live inside the context.
+    u32 remain = (pCtx->field_0x8 - pCtx->field_0x4) +
+                 (pCtx->field_0x14 - pCtx->field_0x10);
+    u32 amount = pCtx->field_0x54;
+    if (amount > remain) {
+        amount = remain;
+    }
+
+    // Skip ahead in the stream cache first, then in the stream itself once
+    // the buffered range is exhausted.
+    // Skip ahead in the stream cache first, then in the stream itself once
+    // the buffered range is exhausted.
+    u32 buffered = pCtx->field_0x14 - pCtx->field_0x10;
+    if (buffered > amount) {
+        pCtx->field_0x10 += amount;
+    } else {
+        pCtx->field_0x10 = pCtx->field_0x14;
+        pCtx->field_0x4 += amount - buffered;
+    }
+
+    if (amount > *reinterpret_cast<volatile u32*>(&pCtx->field_0x54)) {
+        amount = *reinterpret_cast<volatile u32*>(&pCtx->field_0x54);
+    }
+    pCtx->field_0x54 -= amount;
+
+    if (pCtx->field_0x54 == 0) {
+        pCtx->field_0xC = pCtx->field_0x50;
+        return 3;
+    }
+
+    // Still more to skip: accumulate consumed bytes and pull in more data.
+    pCtx->field_0x18 += (pCtx->field_0x4 - pCtx->field_0x0) +
+                        (pCtx->field_0x10 - pCtx->field_0xC);
+    int result = reinterpret_cast<CachedStreamReader*>(pCtx->field_0x50)
+                     ->RequestData(pCtx, pCtx->field_0x54);
+    if (result == 0) {
+        return 2;
+    }
+    return 0;
+}
 
 extern "C" int
 ConstructOpFatalError__Q44nw4r2ut6detail15ArchiveFontBaseFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(void* ctx,

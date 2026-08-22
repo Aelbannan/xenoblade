@@ -13,6 +13,8 @@
 #include "monolib/work/CEventFile.hpp"  // CEventFile::mFileHandle
 
 #include <nw4r/math.h>
+#include <stdio.h>
+#include "kyoshin/CSysWin.hpp" // func_80137924 cursor-position helper
 
 // TU-local plain functions (defined below in address order) called by the
 // state-machine helpers in this file. noinline keeps real bl branches
@@ -25,7 +27,7 @@ void __declspec(noinline) func_802B6854(CTitleLogo* self);
 void __declspec(noinline) func_802B6F64(CTitleMenu* self);
 void __declspec(noinline) func_802B71C4(CTitleMenu* self);
 void __declspec(noinline) func_802B7094(CTitleMenu* self);
-void __declspec(noinline) func_802B725C(CTitleMenu* self);
+extern "C" __declspec(noinline) void func_802B725C(CTitleMenu* self);
 
 // ---------------------------------------------------------------------------
 // CTitleLogo: vtable + six zero fields; field_0x19 starts at 1.
@@ -100,14 +102,13 @@ CTitleLogo::CTitleLogo() {
     field_0x1A = 0;
 }
 
-// Double null-check on +0x8, then the +8-slot virtual with flag 1 and a
-// clear of +0x8.
-extern "C" void func_802B64DC(void* self) {
-    void* o = *(void**)((u8*)self + 8);
-    if (o) {
-        if (o)
-            ((void (*)(void*, int))(*(void**)((u8*)*(void**)((u8*)o) + 8)))(o, 1);
-        *(u32*)((u8*)self + 8) = 0;
+// Release the logo layout: virtual-dtor the +0x08 member, then clear it.
+// MWCC inserts its own null-check before a virtual dtor call, giving the
+// retail branch-over-branch gate.
+extern "C" void func_802B64DC(CTitleLogo* self) {
+    if (self->mLayout != NULL) {
+        self->mLayout->~Layout();
+        self->mLayout = NULL;
     }
 }
 
@@ -159,7 +160,16 @@ extern "C" void func_802B6664(void* self) {
 
 extern "C" void func_802B66B8(void* self) { func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x10), lbl_eu_80668FE0); }
 
-void func_802B66C4(){}
+// Logo state step: when animation 2 finishes, reset the state machine,
+// rebind the intro animation, and clear/set the phase flags.
+extern "C" void func_802B66C4(CTitleLogo* self) {
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans2, lbl_eu_80668FE0) != 0) {
+        self->field_0x1A = 0;
+        func_802B6724(self);
+        self->field_0x18 = 0;
+        self->field_0x19 = 1;
+    }
+}
 
 // Logo intro: bind the logo "in" animation, reset it to frame 0, and advance
 // the layout once so it is ready to play.
@@ -215,9 +225,11 @@ CTitleMenu::~CTitleMenu() {}
 // six animation transforms, then unbind all (rebound when the menu becomes
 // active). On the bit-30 gate, tint the title text via func_80139A18 with two
 // grey colors (opaque + transparent).
-void func_802B6970(CTitleMenu* self, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    GXColorS10 colorA;
+// -O4,s forces the retail [stmw]/lmw r29-r31 block frame.
+#pragma optimize_for_size on
+void __declspec(noinline) func_802B6970(CTitleMenu* self, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     GXColorS10 colorB;
+    GXColorS10 colorA;
     self->mAccessor = arcResAcc;
     func_80136E84(&self->mLayout, self->mAccessor, &lbl_eu_80513628[0x58]);
     func_80136F08(self->mLayout, &self->mAnimTrans0, self->mAccessor, &lbl_eu_80513628[0x6b]);
@@ -230,10 +242,10 @@ void func_802B6970(CTitleMenu* self, nw4r::lyt::ArcResourceAccessor* arcResAcc) 
     if ((lbl_eu_80663E28 & 0x40000000) != 0) {
         GXColorS10* pColorA = func_801C4B60(&colorA, 0x80, 0x80, 0x80, 0xff);
         GXColorS10* pColorB = func_801C4B60(&colorB, 0x80, 0x80, 0x80, 0x00);
-        char* pText = &lbl_eu_80513628[0x109];
-        func_80139A18(self->mLayout, pText, pColorB, pColorA);
+        func_80139A18(self->mLayout, &lbl_eu_80513628[0x109], pColorB, pColorA);
     }
 }
+#pragma optimize_for_size off
 
 // CTitleMenu per-frame update: run the state-machine entry selected by
 // field_0x26, then advance the layout animation (same gate shape as
@@ -261,14 +273,11 @@ call:
         menu->mLayout, drawInfo, 0, 1);
 }
 
-// Sibling of func_802B64DC: double null-check on +0x8, +8-slot virtual
-// with flag 1, then clear +0x8.
-extern "C" void func_802B6B38(void* self) {
-    void* o = *(void**)((u8*)self + 8);
-    if (o) {
-        if (o)
-            ((void (*)(void*, int))(*(void**)((u8*)*(void**)((u8*)o) + 8)))(o, 1);
-        *(u32*)((u8*)self + 8) = 0;
+// Menu-side sibling of func_802B64DC.
+extern "C" void func_802B6B38(CTitleMenu* self) {
+    if (self->mLayout != NULL) {
+        self->mLayout->~Layout();
+        self->mLayout = NULL;
     }
 }
 
@@ -309,7 +318,22 @@ void func_802B6C74(CTitleMenu* self) {
     }
 }
 
-extern "C" void __declspec(noinline) func_802B6CBC(nw4r::math::VEC3* dest, CTitleMenu* menu, u8 val) {}
+// Build the cursor target position for a menu entry: format the pane name
+// into a stack buffer, look up both panes under the layout root, then let
+// func_80137924 combine their transforms into dest.
+// -O4,s forces the retail [stmw]/lmw r28-r31 block frame.
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) void func_802B6CBC(nw4r::math::VEC3* dest,
+                                                    CTitleMenu* menu, u8 val) {
+    char buf[0x28];
+    char* strs = lbl_eu_80513628;
+    sprintf(buf, strs + 0x117);
+    nw4r::lyt::Pane* pPaneA = menu->mLayout->GetRootPane()->FindPaneByName(buf, true);
+    nw4r::lyt::Pane* pPaneB =
+        menu->mLayout->GetRootPane()->FindPaneByName(strs + 0x124, true);
+    func_80137924(dest, pPaneA, pPaneB, menu->mLayout->GetRootPane());
+}
+#pragma optimize_for_size off
 
 // Menu state 4: park animation 3 on its final frame (frame count minus the
 // per-frame delta), advance the layout, step into state 5, and mark the
@@ -358,7 +382,16 @@ extern "C" void func_802B6EA4(void* self) {
 
 extern "C" void func_802B6EF8(void* self) { func_80137444__FPQ34nw4r3lyt13AnimTransformf(*(void**)((u8*)self + 0x1C), lbl_eu_80668FE0); }
 
-void func_802B6F04(){}
+// Menu state step: when animation 5 finishes, reset the state machine,
+// run the menu intro hook, and clear/set the phase flags.
+extern "C" void func_802B6F04(CTitleMenu* self) {
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mAnimTrans5, lbl_eu_80668FE0) != 0) {
+        self->field_0x26 = 0;
+        func_802B712C(self);
+        self->field_0x24 = 0;
+        self->field_0x25 = 1;
+    }
+}
 
 // Menu intro: unbind the last animation, bind animation 0, reset it to
 // frame 0, and advance the layout once so it is ready to play.
@@ -386,7 +419,15 @@ void func_802B712C(){}
 
 void __declspec(noinline) func_802B71C4(CTitleMenu* self) {}
 
-void __declspec(noinline) func_802B725C(CTitleMenu* self){}
+// Menu outro: unbind animation 4, bind animation 5, enable it, park it on
+// its start frame, and advance the layout once.
+extern "C" __declspec(noinline) void func_802B725C(CTitleMenu* self) {
+    self->mLayout->UnbindAnimation(self->mAnimTrans4);
+    self->mLayout->BindAnimation(self->mAnimTrans5);
+    self->mLayout->SetAnimationEnable(self->mAnimTrans5, true);
+    self->mAnimTrans5->SetFrame(lbl_eu_80668FF0);
+    self->mLayout->Animate(0);
+}
 
 // ---------------------------------------------------------------------------
 // CTitle: IWorkEvent vtable, mem region, flag fields, then the embedded
@@ -409,7 +450,7 @@ extern "C" CTitle* __ct__CTitle(CTitle* self) {
 
 // Member dtors and operator delete (retail names).
 extern "C" void __dt__6CCur18Fv(void* self, int flags);
-extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int flags);
+extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564* self, int flags);
 extern "C" void __dl__FPv(void* p);
 
 // Retail dtor is a plain free function: destroys the +0x70 CCur18 member and
@@ -419,7 +460,7 @@ extern "C" void __dl__FPv(void* p);
 extern "C" void* __dt__6CTitleFv(void* self, int flags) {
     if (self != 0) {
         __dt__6CCur18Fv((u8*)self + 0x70, -1);
-        __dt__17UnkClass_8045F564Fv((u8*)self + 0x04, -1);
+        __dt__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>((u8*)self + 0x04), -1);
         if (flags > 0)
             __dl__FPv(self);
     }
@@ -440,7 +481,14 @@ void func_802B73D4(CTitle* self) {
     lbl_eu_80664C38 = self;
 }
 
-void func_802B744C(){}
+// Per-frame update: dispatch the title state-machine entry selected by
+// field_0x24, then update the three embedded sub-objects.
+extern "C" void func_802B744C(CTitle* self) {
+    (self->*lbl_eu_8053B274[self->field_0x24])();
+    func_802B6434(&self->mLogo);
+    func_802B6A90(&self->mMenu);
+    func_801D202C(reinterpret_cast<CBaseCur*>(&self->mCur[0]));
+}
 
 // Draw the three sub-objects (+0x2C, +0x48, +0x70) with the draw info.
 #pragma optimize_for_size on  // -O4,s forces the retail stmw r30 block frame

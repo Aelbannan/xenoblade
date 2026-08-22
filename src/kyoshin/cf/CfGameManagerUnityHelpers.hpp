@@ -523,12 +523,10 @@ extern "C" void func_800858B8__Q22cf13CfGameManagerFv(u32 value) {
 extern "C" void func_80086490__Q22cf13CfGameManagerFv() {
     lbl_eu_80663E24 &= ~0x2000000;
     func_800B06C8();
-    u32 enabledFlags;
-    CPad* pad = lbl_eu_80663E0C;
-    enabledFlags = lbl_eu_80663DF8 & ~0x600230;
-    lbl_eu_80663DF8 = enabledFlags;
-    if (pad != nullptr) {
-        pad->mPressedButtonFlags &= enabledFlags;
+    lbl_eu_80663DF8 &= ~0x600230;
+    u32 enabledFlags = lbl_eu_80663DF8;
+    if (lbl_eu_80663E0C != nullptr) {
+        lbl_eu_80663E0C->mPressedButtonFlags &= enabledFlags;
         lbl_eu_80663E0C->mTurboPressButtonFlags &= enabledFlags;
         lbl_eu_80663E0C->mReleasedButtonFlags &= enabledFlags;
         lbl_eu_80663E0C->mHeldButtonFlags &= enabledFlags;
@@ -1142,9 +1140,8 @@ struct FixStr32Storage {
 };
 extern "C" Unk80EE4Data* func_80081A40__Q22cf13CfGameManagerFv(
     const char* name, u32 value, u16 third, u32 fourth) {
-    u32 index = value;
     Unk80EE4Data* result =
-        func_80080E44__Q22cf13CfGameManagerFv(name, index);
+        func_80080E44__Q22cf13CfGameManagerFv(name, value);
     if (result != nullptr) {
         FixStr32Storage text;
         func_8007D794__Q22cf13CfGameManagerFv(
@@ -1505,7 +1502,7 @@ class BdatFilePointer;
 extern "C" void* func_8003AA34();
 extern "C" void* getFP__FPCc(const char* name);
 extern "C" u32 getBdatStringColumnValue(void* file,
-                                                  const char* column, s32 index);
+                                                  const char* column, int index);
 extern "C" u32 func_8003B1EC(void* file);
 extern "C" u32 func_8003B41C(void* file);
 #pragma dont_inline on
@@ -1609,8 +1606,14 @@ extern "C" void func_8008360C__Q22cf13CfGameManagerFv() {
         byteOffset = 0;
         for (s32 i = 0; i < 13; ++i, byteOffset += 4) {
             s32 value = values[byteOffset >> 2];
-            if (value > 0 && value <= 8) {
-                    CfResStackObject resource;
+            if (0 >= value) {
+                continue;
+            }
+            if (8 < value) {
+                continue;
+            }
+            {
+                CfResStackObject resource;
                     func_80080F48__Q22cf13CfGameManagerFv(
                         static_cast<u16>(value), &resource, true, true);
                     u32 handle = func_eu_80065640(8, value, 0, 0);
@@ -1626,9 +1629,8 @@ extern "C" void func_8008360C__Q22cf13CfGameManagerFv() {
                         if (func_80062A84(packed) == -1) {
                             func_80062B3C(packed, 6);
                         }
-                    }
-                }
             }
+        }
     }
     CfRes_setE28Mask(0x400);
 }
@@ -1747,9 +1749,7 @@ extern "C" Unk80338Object* __ct__80080338(Unk80338Object* self) {
 extern "C" u8 lbl_eu_8052A8E8[];
 extern "C" u8 lbl_eu_8052FE38[];
 extern "C" void __ct__cf_CPartsChange(void* parts);
-#pragma dont_inline on
-extern "C" Unk815A4Object* __ct__800815A4(Unk815A4Object* self) {
-    Unk815A4Object* result = self;
+static inline Unk815A4Object* initUnk815A4Base(Unk815A4Object* self) {
     self->field_0x4 = 0;
     self->field_0x8 = 0;
     self->vtable_0x0 = lbl_eu_8052AC98;
@@ -1759,6 +1759,10 @@ extern "C" Unk815A4Object* __ct__800815A4(Unk815A4Object* self) {
     self->field_0x18 = 0;
     self->field_0x1C = 0;
     __ct__CCharVoice(&self->voice_0x28);
+    return self;
+}
+extern "C" Unk815A4Object* __ct__800815A4(Unk815A4Object* self) {
+    Unk815A4Object* result = initUnk815A4Base(self);
     result->vtable_0x0 = lbl_eu_8052A8E8;
     result->vtable_0xC = &lbl_eu_8052A8E8[0xB4];
     result->vtable_0x10 = &lbl_eu_8052A8E8[0xC4];
@@ -1801,7 +1805,7 @@ extern "C" Unk814BCObject* __ct__800814BC(Unk814BCObject* self) {
     result->vtable_0x0 = lbl_eu_8052AA28;
     result->vtable_0xC = &lbl_eu_8052AA28[0xB4];
     result->vtable_0x10 = &lbl_eu_8052AA28[0xC4];
-    UnkCharEffect304* effect = &result->effect_0x68;
+    UnkCharEffect304* effect = &base->effect_0x68;
     __ct__CCharEffect(effect);
     effect->vtable_0x0 = lbl_eu_8052FE08;
     return result;
@@ -2039,17 +2043,19 @@ extern "C" void func_8007E0D0__Q22cf13CfGameManagerFv(bool alternate) {
     entry += start;
     for (s32 i = start; i < 7; ++i, ++entry) {
         s32 value = *entry;
-        if (value > 0) {
-            if (value <= 13) {
-                if (value == 3 && count >= 42) {
-                    continue;
-                }
-                if (value == 8 && count < 42) {
-                    continue;
-                }
-                func_8007DECC__Q22cf13CfGameManagerFv(value, &fallback, size);
-            }
+        if (0 >= value) {
+            continue;
         }
+        if (13 < value) {
+            continue;
+        }
+        if (value == 3 && count >= 42) {
+            continue;
+        }
+        if (value == 8 && count < 42) {
+            continue;
+        }
+        func_8007DECC__Q22cf13CfGameManagerFv(value, &fallback, size);
     }
 }
 
@@ -2421,7 +2427,7 @@ extern "C" void func_80083560__Q22cf13CfGameManagerFv(u32 first, u32 second,
 }
 
 struct CfPlayerExtraData {
-    u8 field_0x0[0xB14];
+    u8 field_0x0[0xA9C];
 };
 
 class CfPlayerComposite : public cf::CActorParam,

@@ -1431,7 +1431,7 @@ extern char lbl_eu_80572AC8[];
 void sinit_800A9F40() {
     char* base = lbl_eu_80572AC8;
     func_800A34C8(base + 0x10);
-    __register_global_object((void*)(base + 0x10), (void*)__dt__800A34E0, (void*)(base + 0x0));
+    __register_global_object(base + 0x10, (void*)__dt__800A34E0, base);
     func_800A34C8(base + 0x30);
     __register_global_object((void*)(base + 0x30), (void*)__dt__800A34E0, (void*)(base + 0x20));
     func_800A34C8(base + 0x50);

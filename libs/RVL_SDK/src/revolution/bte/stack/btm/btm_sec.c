@@ -344,8 +344,8 @@ static __inline BtmSecServRec *btm_sec_find_next_serv(BtmSecServRec *p_cur)
 static __inline BtmSecServRec *btm_sec_find_mx_serv(UINT16 psm, UINT8 is_originator,
                                            UINT32 mx_proto_id, UINT32 mx_chan_id)
 {
-    int i;
     BtmSecServRec *p_srec;
+    int i;
 
     p_srec = &btm_cb.sec_serv_rec[0];
 
@@ -938,10 +938,9 @@ UINT8 btm_sec_mx_access_request(BD_ADDR bd_addr, UINT16 psm, BOOLEAN is_originat
                                 UINT32 mx_proto_id, UINT32 mx_chan_id,
                                 BtmSecCallback p_callback, void *p_ref_data)
 {
+    UINT8 result;
     BtmSecDevRec *p_dev_rec;
     BtmSecServRec *p_srec;
-    int i;
-    UINT8 result;
 
     /* Make sure the device is in our database, allocate one if not */
     if ((p_dev_rec = btm_find_dev(bd_addr)) == NULL)

@@ -32,7 +32,7 @@ extern "C" void func_804B2FF0();  // next-TU catalog stub
 // Forward declarations for the in-TU catalog functions referenced by the
 // dispatch tables below (definitions appear later in the file; all are
 // extern "C" so the emitted reloc names are the retail symbol names).
-extern "C" void func_804A6DC0(void);
+extern "C" void func_804A6DC0(f32* out, const VEC3* pos, const struct CColiXformExtra804A70F8* off);
 extern "C" void func_804A6E20(f32* out, const struct CColiXformSrc* src, const struct CColiXformExtra804A70F8* extra);
 extern "C" void func_804A70F8(f32* out, const struct CColiXformSrc* src, const struct CColiXformExtra804A70F8* extra);
 extern "C" void func_804A732C(CColiObject* self, CColiObject* src, CColiObject* other);
@@ -46,7 +46,7 @@ extern "C" void func_804A8CB0(void);
 extern "C" int func_804A98C4(CColiObject* self);
 extern "C" bool func_804AA870(CColiObject* self);
 extern "C" void func_804AAD90(void);
-extern "C" void func_804ABA08(void);
+extern "C" bool func_804ABA08(CColiObject* self);
 extern "C" bool func_804ABA68(CColiObject* self);
 extern "C" bool func_804ABAF0(CColiObject* self);
 extern "C" bool func_804ABBF4(CColiObject* self);
@@ -59,8 +59,9 @@ extern "C" bool func_804AC020(CColiObject* self);
 extern "C" bool func_804AC198(CColiObject* self);
 extern "C" bool func_804AC3B0(CColiObject* self);
 extern "C" void func_804AC4F4(CColiObject* self);
-extern "C" void func_804AC57C(void);
+extern "C" int func_804AC57C(CColiObject* self);
 extern "C" void func_804AC5D8(struct CColiContactObj* self);
+extern "C" int func_804AF808(struct CColiContactObj* self, const VEC3* v, f32 f);
 extern "C" int func_804AC61C(CColiObject* self);
 extern "C" void func_804B24A4(CColiObject* self);
 extern "C" int func_804A7F50(CColiObject* self);
@@ -384,7 +385,7 @@ extern "C" s32 func_804A6D90(void* self) {
     return rec->func_80463590();
 }
 
-extern "C" void func_804A6DC0(void){}
+// (func_804A6DC0 defined below, after CColiXformExtra804A70F8)
 
 // --- func_804A6E20 defined below (after the CColiXformSrc structs) ---
 
@@ -404,6 +405,28 @@ struct CColiXformExtra804A70F8 {
     u8 _00[0x08];        // +0x00 .. +0x07
     VEC3 field_0x08;     // +0x08 translation offset
 };
+
+// Identity-rotation matrix with translation pos + off: the three diagonal
+// entries are the SDA2 1.0f constant, every off-diagonal entry the SDA2
+// 0.0f constant, and the translation column the componentwise sum.
+extern "C" void func_804A6DC0(f32* out, const VEC3* pos,
+                              const CColiXformExtra804A70F8* off) {
+    f32 tz = pos->z + off->field_0x08.z;
+    f32 ty = pos->y + off->field_0x08.y;
+    f32 tx = pos->x + off->field_0x08.x;
+    out[0] = lbl_eu_8066AE20;
+    out[1] = lbl_eu_8066AE24;
+    out[2] = lbl_eu_8066AE24;
+    out[3] = tx;
+    out[4] = lbl_eu_8066AE24;
+    out[5] = lbl_eu_8066AE20;
+    out[6] = lbl_eu_8066AE24;
+    out[7] = ty;
+    out[8] = lbl_eu_8066AE24;
+    out[9] = lbl_eu_8066AE24;
+    out[10] = lbl_eu_8066AE20;
+    out[11] = tz;
+}
 
 // Build the rotation-scale matrix for src into out: a diagonal scale matrix
 // from src->field_0x18, then premultiply by the Z / Y / X rotation matrices
@@ -710,23 +733,24 @@ extern "C" void func_804A73A0(f32* out, const CColiXformSrc* src) {
 extern "C" void func_804A7834(CColiObject* self, const CColiObject* other) {
     // Diagonal 3x4 scale-matrix fill: other->field_0x00[2] (a direction
     // vector) placed on the main diagonal, zero constant elsewhere.
-    // FPR allocation follows local declaration order: k->f0, x->f1, y->f2, z->f3.
-    f32 k = lbl_eu_8066AE24;
-    f32 x = other->field_0x00[2].x;
-    f32 y = other->field_0x00[2].y;
-    f32 z = other->field_0x00[2].z;
+    // x/y/z locals drive FPR colors (f1/f2/f3); the zero constant is read
+    // inline at each site (no local cache — retail loads it into f0).
+    f32 x, y, z;
+    x = other->field_0x00[2].x;
+    y = other->field_0x00[2].y;
+    z = other->field_0x00[2].z;
     self->field_0x00[0].x = x;
-    self->field_0x00[0].y = k;
-    self->field_0x00[0].z = k;
-    self->field_0x00[1].x = k;
-    self->field_0x00[1].y = k;
+    self->field_0x00[0].y = lbl_eu_8066AE24;
+    self->field_0x00[0].z = lbl_eu_8066AE24;
+    self->field_0x00[1].x = lbl_eu_8066AE24;
+    self->field_0x00[1].y = lbl_eu_8066AE24;
     self->field_0x00[1].z = y;
-    self->field_0x00[2].x = k;
-    self->field_0x00[2].y = k;
-    self->field_0x00[2].z = k;
-    self->field_0x00[3].x = k;
+    self->field_0x00[2].x = lbl_eu_8066AE24;
+    self->field_0x00[2].y = lbl_eu_8066AE24;
+    self->field_0x00[2].z = lbl_eu_8066AE24;
+    self->field_0x00[3].x = lbl_eu_8066AE24;
     self->field_0x00[3].y = z;
-    self->field_0x00[3].z = k;
+    self->field_0x00[3].z = lbl_eu_8066AE24;
 }
 
 // Constructor with angular parameters: run the embedded CColiProc base ctor
@@ -846,7 +870,7 @@ extern "C" void func_804B0EA0(CColiObject* self);
 extern "C" void func_804B27EC(CColiProcLocal* proc, f32* a, f32* b, f32* c,
                               u16 d);
 extern "C" int func_804B2E3C(CColiProcLocal* proc, CColiObject* obj);
-extern "C" int func_804B236C(const void* a, const void* b, const void* c);
+extern "C" int func_804B236C(CColiObject* self, CColiObject* v, u32 flag);
 
 // u32 view of a CColiObject used by the func_804A7878 constructor: the
 // sub-spec words are copied raw (lwz/stw) into the +0x44 point and the
@@ -1864,7 +1888,7 @@ extern "C" int func_804AB538(CColiObject* self) {
     return self->field_0x80 != 0 ? 2 : 0;
 }
 
-extern "C" void func_804ABA08(){}
+// (func_804ABA08 defined below, after CColiSphere804ABCA4)
 
 // Cylinder-overlap test: true when the horizontal squared distance from
 // self's point (+0x44) to the partner's centre (+0x04) is within the
@@ -1942,11 +1966,22 @@ struct CColiSphere804ABCA4 {
 // two radii (+0x10, +0x5c). VEC3Sub/VEC3LenSq lower to the retail
 // paired-single sequence (psq_l/ps_sub/psq_st, ps_mul/ps_madd/ps_sum0).
 extern "C" bool func_804ABCA4(CColiObject* self) {
-    CColiObject* other = self->field_0x00_obj;
+    CColiSphere804ABCA4* o = (CColiSphere804ABCA4*)self->field_0x00_obj;
     VEC3 diff;
-    VEC3Sub(&diff, &self->field_0x44, (VEC3*)((u8*)other + 4));
-    f32 r = other->field_0x10_f + self->field_0x5c;
+    f32 r = o->field_0x10 + self->field_0x5c;
+    VEC3Sub(&diff, &self->field_0x44, &o->field_0x04);
     return r * r >= VEC3LenSq(&diff);
+}
+
+// Inner-sphere test: true when the squared distance between self's point
+// (+0x44) and the partner's point (+0x04) is within the partner's own
+// squared radius (+0x10) - no self-radius term. Same VEC3Sub/VEC3LenSq
+// paired-single lowering as func_804ABCA4.
+extern "C" bool func_804ABA08(CColiObject* self) {
+    CColiSphere804ABCA4* o = (CColiSphere804ABCA4*)self->field_0x00_obj;
+    VEC3 diff;
+    VEC3Sub(&diff, &self->field_0x44, &o->field_0x04);
+    return o->field_0x10 * o->field_0x10 >= VEC3LenSq(&diff);
 }
 
 // Cylinder-capped sphere test: clamp self's point (+0x44) y-coordinate into
@@ -1955,7 +1990,8 @@ extern "C" bool func_804ABCA4(CColiObject* self) {
 // self's scalar (+0x5c). Mirrors func_804ABCA4 with the clamped point;
 // VEC3Sub/VEC3LenSq lower to the retail paired-single sequence.
 extern "C" bool func_804ABD0C(CColiObject* self) {
-    CColiCylinder804ABA68* obj = (CColiCylinder804ABA68*)self->field_0x00_obj;
+    CColiObject* other = self->field_0x00_obj;
+    CColiCylinder804ABA68* obj = (CColiCylinder804ABA68*)other;
     VEC3 v;
     VEC3 diff;
     v.x = obj->field_0x04.x;
@@ -1971,9 +2007,9 @@ extern "C" bool func_804ABD0C(CColiObject* self) {
             v.y = self->field_0x44.y;
         }
     }
+    VEC3Sub(&diff, &self->field_0x44, &v);
     f32 r = ((CColiCylinder804ABA68*)self->field_0x00_obj)->field_0x10 +
             self->field_0x5c;
-    VEC3Sub(&diff, &self->field_0x44, &v);
     return r * r >= VEC3LenSq(&diff);
 }
 
@@ -2152,7 +2188,21 @@ extern "C" bool func_804AC3B0(CColiObject* self) {
     return false;
 }
 
-extern "C" void func_804AC57C(){}
+// Point-pair clip gate: run the contact clip helper (func_804AF808) against
+// the partner's +0x04 point; when it clips (non-zero), retry with the
+// partner's +0x10 point and forward its status. The scalar +0x28 feeds the
+// helper's radius argument both times, re-read through a fresh cast so the
+// partner pointer is reloaded per call (retail's two lwz r4, 0(r31)).
+extern "C" int func_804AC57C(CColiObject* self) {
+    CColiCylinder804ABA68* obj = (CColiCylinder804ABA68*)self->field_0x00_obj;
+    if (func_804AF808((CColiContactObj*)self, &obj->field_0x04,
+                      obj->field_0x28) != 0) {
+        return 1;
+    }
+    obj = (CColiCylinder804ABA68*)self->field_0x00_obj;
+    return func_804AF808((CColiContactObj*)self, (const VEC3*)&obj->field_0x10,
+                         obj->field_0x28);
+}
 
 // Contact object sampled by func_804AC5D8 / func_804AF808: field_0x00 links
 // the paired collision object; the VEC3s at +0x10/+0x20/+0x30 and the scalar
@@ -3354,6 +3404,8 @@ extern "C" int func_804AF808(CColiContactObj* self, const VEC3* v, f32 f) {
 // vertical cylinder of radius a and height b around other's point (y in
 // [0, b], horizontal squared distance <= a^2). The VEC3Sub + component
 // reads reproduce the retail paired-single sequence.
+// auto_inline off: retail calls this via `bl` (func_804B236C).
+#pragma auto_inline off
 bool func_804AF98C(CColiObject* self, const VEC3* other, f32 a, f32 b) {
     VEC3 diff;
     VEC3Sub(&diff, &self->field_0x44, other);
@@ -3363,11 +3415,14 @@ bool func_804AF98C(CColiObject* self, const VEC3* other, f32 a, f32 b) {
     }
     return false;
 }
+#pragma pop
 
 // Point-in-box + half-extent gate used by func_804B236C: when the object's
 // point (+0x44) lies inside the box spanned by (boxA, boxB) - checked in
 // x, z, y order to mirror the retail compare sequence - transform it by m
 // and verify each axis of the result is within the half-extent vector.
+// auto_inline off: retail calls this via `bl` (func_804B236C).
+#pragma auto_inline off
 int func_804AFA08(CColiObject* self, const VEC3* half, const Mtx m,
                   const VEC3* boxA, const VEC3* boxB) {
     Vec out;
@@ -3865,7 +3920,20 @@ extern "C" void func_804B0A6C(void* self, u32 val) { *(u32*)((u8*)self + 0) = va
 
 extern "C" void func_804B0A74(void* self, u32 val) { *(u32*)((u8*)self + 8) = val; func_804B102C(self); }
 
-void func_804B0A7C(){}
+// Node reset: clear the +0x08/+0x00 words first, then release the owned
+// +0x04 buffer and null it. The doubled emptiness check on the saved buffer
+// pointer is retained (MWCC keeps the redundant branch in retail).
+void func_804B0A7C(CColiNode804B09C8* self) {
+    u8* buf = self->field_0x04;
+    self->field_0x08 = 0;
+    self->field_0x00 = 0;
+    if (buf != 0) {
+        if (buf != 0) {
+            mtl::MemManager::deallocate(buf);
+            self->field_0x04 = 0;
+        }
+    }
+}
 
 void func_804B0AD4(CColiObject* self, int arg, f32 x, f32 y) {
     u32 flags = self->field_0xa8;
@@ -4248,7 +4316,7 @@ ret_gate:
     return 0;
 tail:
     func_804A7878(&local2, spec, 0);
-    return func_804B236C(self, &local2, a5);
+    return func_804B236C(self, &local2, (u32)a5);
 }
 
 // Move-check gate: the object must have a non-zero kind and the +0xa8 flag
@@ -4667,7 +4735,46 @@ int func_804B21A8(CColiObject* self, CColiObject* v, u32 flag) {
     return result;
 }
 
-void func_804B236C(){}
+// Node query helper (sibling of func_804B204C): shared flag gate, then the
+// proc-seeded classify pass, then an argument-gated geometry dispatch -
+// behaviour bits 0x50 select the point-in-cylinder gate (func_804AF98C)
+// and bit 0x20 the point-in-box gate (func_804AFA08).
+extern "C" int func_804B236C(CColiObject* self, CColiObject* v, u32 flag) {
+    CColiProcLocal proc;
+    int w = 1;
+    int t = 1;
+    u32 flags = self->field_0xa8;
+    if (!(flags & 0x100)) {
+        if (flags & 0x2) {
+            w = 0;
+        }
+    }
+    if (w == 0) {
+        if (flags & 0x4) {
+            t = 0;
+        }
+    }
+    if (t != 0) return 0;
+    v->field_0x314 = (u32)self;
+    if (self->field_0x04 != 0 && (self->field_0xa8 & 0x8)) {
+        func_804B25A4(&proc, self->field_0x00_obj, self->field_0x08,
+                      self->field_0x04);
+        if (self->field_0xa8 & 0x1000) {
+            proc.field_0xc |= 0x4;
+        }
+        if (func_804B2AA4(&proc, v) != 0) return 1;
+    }
+    if (flag == 0) return 0;
+    if (self->field_0xa8 & 0x50) {
+        return func_804AF98C(v, (const VEC3*)((u8*)self + 0x24),
+                             self->field_0x30.x, self->field_0x30.y);
+    }
+    if (!(self->field_0xa8 & 0x20)) return 0;
+    return func_804AFA08(v, (const VEC3*)&self->field_0x30,
+                         *(const Mtx*)((u8*)self + 0x6c),
+                         (const VEC3*)((u8*)self + 0xc),
+                         (const VEC3*)((u8*)self + 0x18));
+}
 
 // Scale the +0x24 vector by the +0x3c scalar, optionally overwrite v.y with
 // the sdata2 constant when the +0x40 flag byte is set, then add the result

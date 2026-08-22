@@ -104,6 +104,25 @@ public:
     virtual u32 vf7() = 0;  // index 7 -> +0x24
 };
 
+// Opaque object whose first user virtual (vtable offset 0x08 after the RTTI
+// prefix slots) acts like a deleting destructor taking an int flag. Abstract
+// (all-pure) so MWCC emits no vtable for the view.
+class CMapSelLayoutObj {
+public:
+    virtual void vfRelease(int) = 0;
+};
+
+// View of the embedded CCur18 cursor vtable: slot 3 (offset 0x0C), no args.
+// Abstract so no vtable is emitted.
+class CMapSelCurObj {
+public:
+    virtual void vf0(int) = 0;   // slot 2 (0x08)
+    virtual void vfUpdate() = 0; // slot 3 (0x0C)
+};
+
+// Scrollbar destroy helper (unmangled retail symbol).
+extern "C" void func_801F35DC(void* scrollbar);
+
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);

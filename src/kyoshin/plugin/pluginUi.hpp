@@ -50,9 +50,36 @@ extern CfSlotTable lbl_eu_804FA9F0;
 extern const void* lbl_eu_806618D8;
 extern const void* lbl_eu_806618F0;
 
-// sdata2 constant for fadeOut_1 (fade alpha value); lbl_eu_80665DC0 is the
-// MWCC int->float conversion magic (0x4330000080000000), auto-synthesised.
+// sdata2 constant for fadeOut_1 (fade alpha value).
 extern f32 lbl_eu_80665DB8;
+// sdata2 int->double conversion magic (0x4330000080000000), referenced by
+// the fadeIn/fadeOut int-to-float conversions.
+extern double lbl_eu_80665DC0;
+
+// Message string tables / buffers used by the mesVision commands.
+extern char lbl_eu_804FABF0[];
+extern char lbl_eu_80525D68[];
+
+// Player RTTI source type / pointer table entry used by the talk commands.
+extern char lbl_eu_806619A0[];
+
+// Shared BDAT character-name table pointer (.sbss); resolved by
+// func_8013639C against lbl_eu_804FABF0 keys.
+extern char* lbl_eu_80664090;
+
+// Sub-object hanging off the player at +0x3ED4: carries its own vtable with
+// a state probe at +0x40 (winTalkWait) and is handed to func_800C4244
+// (pcTalk).
+struct PcTalkSubVtbl {
+    u8 _00[0x40];
+    int (*probe)(); // +0x40: nonzero while the talk window is busy
+};
+struct PcTalkSub {
+    PcTalkSubVtbl* vtable; // 0x0
+};
+struct PcBattleTalkObj {
+    PcTalkSub* field_3ED4; // +0x3ED4
+};
 
 extern "C" {
 
@@ -79,44 +106,85 @@ void func_80138078__FUl(u32 op);
 void func_8013DB6C(u32 first, u32 second, s32 third, s32 fourth);
 int func_8009CF8C(int index);
 void func_8009D018(int index, int value);
+// Copies an entry out of a script string table into the given buffer.
+char* func_80136190(char* buf, const char* table, int index);
+// BDAT row-name lookup: resolve key row in the character table.
+char* func_8013639C(const void* tbl, const void* key, int id);
+// Open a party-talk window over an existing message box.
+void func_8013D688(char* msg, char* name, int c, int d);
+// Talk-state probe (window manager): nonzero when a talk is active.
+int func_8013EB90(int v);
+// SE-talk voice busy probe (code80135FDC split unit).
+int func_eu_8013C8F4();
+// Player accessor on the game manager (retail mangled global).
+void* getPlayer__Q22cf13CfGameManagerFi(int index);
+// Start/queue a party-chat line on the battle sub-object.
+int func_800C4244(PcTalkSub* sub, u32 id, u32 flag);
+void func_8013E52C(int id);
+void func_8013D448(int mode, const char* str);
+// Opens a system window with the given text.
+char* func_8013D55C(const char* str, int r4, int r5);
 void* __dynamic_cast(void* src, long offset, const void* src_type,
                      const void* dst_type, void* src2dst);
 
 int winTalk(VMThread* pThread);
-void pcTalk();
-void winTalkWait();
-void winTalkNoName();
-void fadeIn_1();
+int winTalkNoName(VMThread* pThread);
+int fadeIn_1(VMThread* pThread);
 int fadeOut_1(VMThread* pThread);
-void fadeWait_1();
+int fadeWait_1(VMThread* pThread);
 int createCol6Sys(VMThread* pThread);
 int createCol6Hint(VMThread* pThread);
-void createCol6Invite();
+int createCol6Invite(VMThread* pThread);
 int createCol6Init(VMThread* pThread);
 int checkCol6Bat(VMThread* pThread);
 int simpleEventStart(VMThread* pThread);
 int simpleEventEnd(VMThread* pThread);
 int setTrust(VMThread* pThread);
 int setItemMulti(VMThread* pThread);
-void setKizunaTalk();
-void winSys();
-void winSysSelect();
-void getSelectNum();
-void mesAddPT();
-void mesSubPT();
-void mesVisionON();
-void mesVisionOFF();
-void mesMonadoON();
-void mesMonadoOFF();
+int setKizunaTalk(VMThread* pThread);
+int winSys(VMThread* pThread);
+int winSysSelect(VMThread* pThread);
+int mesGetArts(VMThread* pThread);
+void pcTalk(VMThread* pThread);
+void winTalkWait(VMThread* pThread);
+int getSelectNum(VMThread* pThread);
+void mesAddPT(VMThread* pThread);
+void mesSubPT(VMThread* pThread);
+int mesVisionON();
+int mesVisionOFF();
+int mesMonadoON();
+int mesMonadoOFF();
 int ptChangeNotice();
 int save();
 int kizunaTalkStart();
 int kizunaTalkEnd();
-void isPrioReq();
+// Select-window result probe (window manager): current select item index.
+int func_8013EC58();
+// Busy/slot-state probe used by isPrioReq (nonzero when a priority request
+// window is active).
+int func_80135708();
+// Fade-state probes: 1 when a fade is in progress / fade-wait pending.
+BOOL func_80113E1C();
+BOOL func_80113E24();
+int isPrioReq(VMThread* pThread);
 int gameClear(VMThread* pThread);
-void setLastTalkNpc();
-void isSETalkVoiceWait();
+// Set the last-talked NPC by script index: find the row whose key equals
+// the id and record its ordinal.
+int setLastTalkNpc(VMThread* pThread);
+int isSETalkVoiceWait(VMThread* pThread);
 int func_eu_80046DA0(VMThread* pThread);
 int func_eu_80046DC4(VMThread* pThread);
+
+// Open a system select window from three strings.
+void func_8013D978(const char* a, const char* b, const char* c);
+// Colosseum 6 invite: (u16 mode, u8 a, u8 b).
+void func_8013DF44(int a, int b, int c);
+// Record the last-talk NPC ordinal.
+void func_8009ECD0(int id);
+// Character-table row count / keyed lookup helpers (setLastTalkNpc).
+int func_8003B1EC(char* tbl);
+u32 func_80136254(char* tbl, const char* key, int idx);
+// Character-table object used by setLastTalkNpc (.sbss pointer).
+extern char* lbl_eu_80664098;
 
 }

@@ -385,17 +385,18 @@ s32 MPV_SetCond(void* mpv, s32 cond, s32 val) {
     u8* tbl;
     if (mpv == NULL) {
         u32 c4 = cond * 4;
-        u8* base = (u8*)*(u32*)((u8*)lbl_eu_80602B88 + 0x58);
         s32 n = *(s32*)((u8*)lbl_eu_80602B88 + 0x54);
-        u8* p;
-        tbl = base + c4;
-        p = base;
+        u8* base = (u8*)*(u32*)((u8*)lbl_eu_80602B88 + 0x58);
+        /* separate cursor so the loop pointer does not share a register with
+         * the common-tail table pointer below */
+        u8* t = base + c4;
+        u8* p = base;
         while (n-- > 0) {
             if (*(s32*)(p + 0xb08) == 2) {
-                *(u32*)(tbl + 0xb10) = val;
+                *(u32*)(t + 0xb10) = val;
             }
             p += 0xdc0;
-            tbl += 0xdc0;
+            t += 0xdc0;
         }
         tbl = (u8*)lbl_eu_80602B88;
     } else {

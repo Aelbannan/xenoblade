@@ -166,7 +166,75 @@ extern "C" void func_80186664(u8* self) {
     }
 }
 
-void* func_801866F0(void* p){ return 0; }
+/* func_801866F0: spawn one map object from the bdat "map" table row `row`
+   and configure it. Column order (lbl_eu_805038C8 pool): model, motion,
+   posX/Y/Z, rotX/Y/Z, ground, gravity, scale, disp. Position uses a 0.0001
+   fixed-point scale; rotations are hundredths of a degree converted to
+   radians; the scale column is tenths. The gravity column doubles as an
+   invert-visibility flag, and the disp column sets/clears state bits in the
+   object's 0x6C flag word. */
+void func_801866F0(MapObjVt** objects, int row) {
+    // Refresh the bdat manager (result unused; it populates lbl_eu_806640B0).
+    func_8003AA34();
+    void* bdat = lbl_eu_806640B0;
+    const char* cols = (const char*)lbl_eu_805038C8;
+
+    u32 model = (u8)getBdatStringColumnValue(bdat, cols + 0x00, row);
+    u32 motion = (u8)getBdatStringColumnValue(bdat, cols + 0x06, row);
+    objects[row] = reinterpret_cast<MapObjVt*>(
+        func_80081694__Q22cf13CfGameManagerFv(model, motion));
+    if (objects[row] == NULL) {
+        return;
+    }
+
+    Vec3f pos;
+    pos.x = lbl_eu_806679C0 *
+            (f32)((f64)(s32)getBdatStringColumnValue(bdat, cols + 0x0d, row) - lbl_eu_806679D0);
+    pos.y = lbl_eu_806679C0 *
+            (f32)((f64)(s32)getBdatStringColumnValue(bdat, cols + 0x12, row) - lbl_eu_806679D0);
+    pos.z = lbl_eu_806679C0 *
+            (f32)((f64)(s32)getBdatStringColumnValue(bdat, cols + 0x17, row) - lbl_eu_806679D0);
+
+    // volatile matches retail's store/reload of the rotation intermediates
+    // around the remaining bdat reads (they live in stack slots, not FPRs).
+    volatile f32 rotX =
+        (f32)((f64)(s16)getBdatStringColumnValue(bdat, cols + 0x1c, row) - lbl_eu_806679D0) *
+        lbl_eu_806679C4;
+    volatile f32 rotY =
+        (f32)((f64)(s16)getBdatStringColumnValue(bdat, cols + 0x21, row) - lbl_eu_806679D0) *
+        lbl_eu_806679C4;
+    volatile f32 rotZ =
+        (f32)((f64)(s16)getBdatStringColumnValue(bdat, cols + 0x26, row) - lbl_eu_806679D0) *
+        lbl_eu_806679C4;
+    u8 ground = (u8)getBdatStringColumnValue(bdat, cols + 0x2b, row);
+    u8 gravity = (u8)getBdatStringColumnValue(bdat, cols + 0x32, row);
+    f32 scale = lbl_eu_806679C8 *
+                (f32)((f64)(u32)(u16)getBdatStringColumnValue(bdat, cols + 0x3a, row) -
+                      lbl_eu_806679D8);
+
+    Vec3f rot;
+    rot.x = rotX * lbl_eu_8066A210;
+    rot.y = rotY * lbl_eu_8066A210;
+    rot.z = rotZ * lbl_eu_8066A210;
+    if (ground != 0) {
+        objects[row]->placeOnGround(&pos, lbl_eu_806679CC);
+    } else {
+        objects[row]->placeInAir(&pos, lbl_eu_806679CC);
+    }
+    Vec3f curPos = *objects[row]->getPos();
+    objects[row]->applyRot(&rot);
+    objects[row]->setScale(scale);
+    int visible = (gravity == 0);
+    objects[row]->setVisible(visible);
+    objects[row]->setVisible2(visible);
+
+    u8 disp = (u8)getBdatStringColumnValue(bdat, cols + 0x40, row);
+    if (disp != 0) {
+        objects[row]->field_6C |= 0x1000;
+    } else {
+        objects[row]->field_6C &= ~0x8;
+    }
+}
 
 void* func_80186A70(void* p){ return 0; }
 

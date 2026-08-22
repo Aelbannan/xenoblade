@@ -461,7 +461,8 @@ void func_80089398(cf::CCtrlMoveBase* self, ml::CVec3* dst,
                    const ml::CVec3* src, int flag);
 int func_800890A8(cf::CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
                   const ml::CVec3* src, int flag);
-void* getInstance__Q22cf14CBattleManagerFv(void);
+// getInstance__Q22cf14CBattleManagerFv is declared by cf/CtrlPc.hpp
+// (extern "C" CBattleManagerView* form) - do not redeclare here.
 void* getInstance__Q22cf13CfGameManagerFv(void);
 void* getPlayer__Q22cf13CfGameManagerFi(int idx);
 int func_80085840__Q22cf13CfGameManagerFv(void);

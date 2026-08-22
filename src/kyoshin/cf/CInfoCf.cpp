@@ -4,7 +4,6 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CInfoCf.hpp"
 
-#include "kyoshin/CSkipTimer.hpp"
 #include "kyoshin/menu/CMenuGCItem.hpp"
 #include "monolib/core/CPadManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
@@ -23,7 +22,8 @@ extern "C" void func_801671D4(CInfoCfObjD4* dst, const CInfoCfObjD4* src);
 extern "C" void func_80167260(CInfoCfObj60* dst, const CInfoCfObj60* src);
 extern "C" void func_801672E4(CInfoCfObjE4* dst, const CInfoCfObjE4* src);
 extern "C" void func_80167368(CInfoCfObj368* dst, const CInfoCfObj368* src);
-extern "C" void func_8016742C(CInfoCfObjSysWin* dst, const CInfoCfObjSysWin* src);
+// func_8016742C is declared by CItemBoxGrid.hpp (retail-unmangled name,
+// void* ABI); the typed object views are passed straight through.
 extern "C" void func_801674D0(CInfoCfObj4D0* dst, const CInfoCfObj4D0* src);
 
 // The retail ctor symbol __ct__cf_CInfoCf is a C-linkage name (no C++ mangling
@@ -215,8 +215,8 @@ void CMenuItem::Init() {
     func_80167260(&dstBody->obj418, &srcBody->obj418);
     func_801672E4(&dstBody->obj440, &srcBody->obj440);
     func_80167368(&dstBody->obj468, &srcBody->obj468);
-    func_8016742C(&dstBody->obj4AC, &srcBody->obj4AC);
-    func_8016742C(&dstBody->obj4E8, &srcBody->obj4E8);
+    func_8016742C(&dstBody->obj4AC, (void*)&srcBody->obj4AC);
+    func_8016742C(&dstBody->obj4E8, (void*)&srcBody->obj4E8);
     dstBody->tail524.field_524 = srcBody->tail524.field_524;
     dstBody->tail524.field_525 = srcBody->tail524.field_525;
     dstBody->tail524.field_526 = srcBody->tail524.field_526;
@@ -355,7 +355,9 @@ extern "C" void func_80167368(CInfoCfObj368* dst, const CInfoCfObj368* src) {
 // CSysWin body copy: every field from +0x04..+0x39 except the 0x29-0x2B
 // alignment gap (implicit padding in CInfoCfSysWinBody, not copied by the
 // struct assignment - matching retail).
-extern "C" void func_8016742C(CInfoCfObjSysWin* dst, const CInfoCfObjSysWin* src) {
+void func_8016742C(void* dstV, void* srcV) {
+    CInfoCfObjSysWin* dst = (CInfoCfObjSysWin*)dstV;
+    const CInfoCfObjSysWin* src = (const CInfoCfObjSysWin*)srcV;
     dst->body = src->body;
 }
 

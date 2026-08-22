@@ -316,7 +316,9 @@ extern "C" void func_801FD220(CPartyState* self) {
 // the selected member (0x4C), reset the highlight, refresh, and mark ready.
 extern "C" __declspec(noinline) void func_801FE0C8(CPartyState* self) {
     int* party = func_8009ECB0();
-    u8 slotA = func_801392B4((u8)self->field_0x4D);
+    // Force the u8 truncation at assignment time (retail masks right after
+    // the call instead of deferring it to the argument setup).
+    u8 slotA = func_801392B4((u8)self->field_0x4D) & 0xFF;
     func_8009E168(party, slotA, func_801392B4(self->field_0x4C));
     func_80139198(0);
     func_80080888__Q22cf13CfGameManagerFv(func_801392B4(0), 0);
@@ -364,47 +366,54 @@ extern "C" __declspec(noinline) void func_801FE20C(CPartyState* self, u32 member
 // table (0x4F/0x56), then format each member slot's panes (name, level, HP,
 // face texture) and the party-list tail slots.
 extern "C" __declspec(noinline) void func_801FDA7C(CPartyState* self) {
+    // Local order mirrors the retail frame: buf78@0x78, buf58@0x58, buf38@0x38,
+    // buf18@0x18, dst[7]@0x10, seed blob@0x08 (word+halfword+byte).
+    char buf78[0x20];
+    char buf58[0x20];
+    char buf38[0x20];
+    char buf18[0x20];
+    u8 dst[7] = {0};
     PartyStateSeed seed;
+
     seed.f.h = lbl_eu_8066821C;
     seed.f.b = lbl_eu_8066821E;
     seed.f.w = lbl_eu_80668220;
     memset(self->field_0x4F, 0, 7);
     self->field_0x56 = 0;
     u8 j = 0;
-    u8 dst[7] = {0};
 
     u8 count = code80135FDC_getByte_64077();
-    for (u8 i = 0; i < 3; i++) {
-        if (i < count) {
+    for (u32 i = 0; i < 3; i++) {
+        if ((u32)(u8)i >= count) {
+            dst[j++] = seed.bytes[4 + i];
+        } else {
             self->field_0x4F[self->field_0x56] = seed.bytes[4 + i];
             self->field_0x56++;
-        } else {
-            dst[j++] = seed.bytes[4 + i];
         }
     }
     s8 lim = (s8)(4 - (count - 3));
     if (lim < 0) lim = 0;
-    for (u8 i = 0; i < 4; i++) {
-        if (i < lim) {
+    for (u32 i = 0; i < 4; i++) {
+        if ((s32)(u8)i < lim) {
             dst[j++] = seed.bytes[i];
         } else {
             self->field_0x4F[self->field_0x56] = seed.bytes[i];
             self->field_0x56++;
         }
     }
-    for (u8 k = 0; k < j; k++) {
-        self->field_0x4F[self->field_0x56] = dst[k];
-        self->field_0x56++;
+    if (j > 0) {
+        for (u32 k = 0; k < j; k++) {
+            self->field_0x4F[self->field_0x56] = dst[k];
+            self->field_0x56++;
+        }
     }
 
-    char buf18[0x20];
-    char buf38[0x20];
-    char buf58[0x20];
-    char buf78[0x20];
+    char* strs = lbl_eu_80507D40;
 
-    for (u8 i = 0; i < 7; i++) {
-        sprintf(buf78, lbl_eu_80507D40, self->field_0x4F[i]);
-        if (i >= count) {
+    for (u32 i = 0; i < 7; i++) {
+        u8 slotByte = self->field_0x4F[i];
+        sprintf(buf78, strs, slotByte);
+        if ((u32)i >= count) {
             nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf78, true);
             func_80124270(pane, 0);
             continue;
@@ -415,51 +424,52 @@ extern "C" __declspec(noinline) void func_801FDA7C(CPartyState* self) {
         s32 v0 = s->mVtbl->fn[0x42](s);
         s32 v1 = (int)((CPartySlotFnF)s->mVtbl->fn[0x4A])(s);
         s32 v2 = (int)((CPartySlotFnF)s->mVtbl->fn[0x4B])(s);
-        s32 v3 = s->mVtbl->fn[0x7A](s);
-        s32 v4 = s->mVtbl->fn[0x7C](s);
+        u32 v3 = s->mVtbl->fn[0x7A](s);
+        u32 v4 = s->mVtbl->fn[0x7C](s);
         char* v5 = (char*)s->mVtbl->fn[0x26](s);
 
-        sprintf(buf58, &lbl_eu_80507D40[0xb], v0);
+        sprintf(buf58, strs + 0xb, v0);
         if (v0 >= 0x63) {
             v3 = 0;
             v4 = 0;
         }
         if (v1 > 0x270f) v1 = 0x270f;
         if (v2 > 0x270f) v2 = 0x270f;
-        sprintf(buf78, &lbl_eu_80507D40[0x10], self->field_0x4F[i]);
+        sprintf(buf78, strs + 0x10, slotByte);
         func_80136A1C(self->mLayout, buf78, buf58, 0);
-        sprintf(buf78, &lbl_eu_80507D40[0x23], self->field_0x4F[i]);
+        sprintf(buf78, strs + 0x23, slotByte);
         func_80136910(self->mLayout, buf78, v1);
-        sprintf(buf78, &lbl_eu_80507D40[0x36], self->field_0x4F[i]);
+        sprintf(buf78, strs + 0x36, slotByte);
         func_80136910(self->mLayout, buf78, v2);
-        sprintf(buf78, &lbl_eu_80507D40[0x49], self->field_0x4F[i]);
+        sprintf(buf78, strs + 0x49, slotByte);
         func_80136B4C(self->mLayout, buf78, v5, 0);
-        sprintf(buf78, &lbl_eu_80507D40[0x5b], self->field_0x4F[i]);
+        sprintf(buf78, strs + 0x5b, slotByte);
         func_801FE20C(self, member, buf78);
-        sprintf(buf78, &lbl_eu_80507D40[0x6c], self->field_0x4F[i]);
+        sprintf(buf78, strs + 0x6c, slotByte);
+        // Retail converts the two counters via unsigned-int-to-float.
         func_801FE39C(self, (float)v3, (float)v4, member, (u32)buf78);
 
         if (i >= 3) {
-            u16 id = func_80136254(lbl_eu_80664090, &lbl_eu_80507D40[0x7d], member);
-            char* name = func_80138F78(id);
+            u16 id = func_80136254(lbl_eu_80664090, strs + 0x7d, member);
+            char* name = func_80138F78((u16)id);
             u32 tex = (u32)self->mArcResAcc->GetResource(0x74696D67, name, 0);
             if (tex != 0) {
-                sprintf(buf78, &lbl_eu_80507D40[0x88], self->field_0x4F[i]);
+                sprintf(buf78, strs + 0x88, slotByte);
                 func_80137E7C(self->mLayout, buf78, tex);
             }
         } else {
             CPartyCharData* data2 = (CPartyCharData*)func_8009EC9C(member);
             u32 next = i + 1;
-            sprintf(buf78, &lbl_eu_80507D40[0x95], next);
+            sprintf(buf78, strs + 0x95, next);
             nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf78, true);
             if (data2->field_0x176C == 1 || func_8009CF8C(0x3356) == 0) {
                 func_80124270(pane, 0);
             } else {
                 func_80124270(pane, 1);
-                sprintf(buf78, &lbl_eu_80507D40[0xa4], member, data2->slotArea.field_0x3DD0 + 1);
+                sprintf(buf78, strs + 0xa4, member, data2->slotArea.field_0x3DD0 + 1);
                 u32 tex = (u32)self->mArcResAcc->GetResource(0x74696D67, buf78, 0);
                 if (tex != 0) {
-                    sprintf(buf78, &lbl_eu_80507D40[0xc1], next);
+                    sprintf(buf78, strs + 0xc1, next);
                     func_80137E7C(self->mLayout, buf78, tex);
                 }
             }
@@ -467,20 +477,20 @@ extern "C" __declspec(noinline) void func_801FDA7C(CPartyState* self) {
     }
 
     u8 count2 = code80135FDC_getByte_6407E();
-    for (u8 k = 0; k < 3; k++) {
-        if (k >= count2) {
-            sprintf(buf38, &lbl_eu_80507D40[0xd0], k + 1);
+    for (u32 k = 0; k < 3; k++) {
+        if ((u32)(u8)k >= count2) {
+            sprintf(buf38, strs + 0xd0, k + 1);
             nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(buf38, true);
             func_80124270(pane, 0);
             continue;
         }
         u8 m2 = func_801392C8(k);
         if (m2 == 0) continue;
-        u16 id = func_80136254(lbl_eu_80664098, &lbl_eu_80507D40[0xe1], m2);
-        char* name = func_80138F78(id);
+        u16 id = func_80136254(lbl_eu_80664098, strs + 0xe1, m2);
+        char* name = func_80138F78((u16)id);
         u32 tex = (u32)func_801355F4()->GetResource(0x74696D67, name, 0);
         if (tex != 0) {
-            sprintf(buf18, &lbl_eu_80507D40[0xed], k + 1);
+            sprintf(buf18, strs + 0xed, k + 1);
             func_80137E7C(self->mLayout, buf18, tex);
         }
     }
@@ -538,89 +548,94 @@ extern "C" __declspec(noinline) void func_801FE39C(CPartyState* self, float f1, 
 
 // Load the party-state layout archive and build the UI: scratch region,
 // layout + anim transforms, font binding, member text panes, cursor.
+// Structured as an equality-guarded body so MWCC emits the retail
+// compare-and-branch-to-tail shape (bne -> return false).
 bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
-    if (mFileHandle != pEventFile->mFileHandle) return false;
-
-    // Set up the scratch heap region and attach the exchanged file data as
-    // the nw4r layout archive, then build the layout + two animations.
-    mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();
-    mMemRegion.createRegion(mem2, 0x18000, &lbl_eu_80507D40[0x130], 1);
-    Class_8045F858 memHost(&mMemRegion);
-    CBaseCur tmp;
-    char buf28[0x20];
-    char buf48[0x20];
     char buf68[0x20];
+    char buf48[0x20];
+    char buf28[0x20];
+    CBaseCur tmp;
+    if (mFileHandle == pEventFile->mFileHandle) {
+        // Set up the scratch heap region and attach the exchanged file data as
+        // the nw4r layout archive, then build the layout + two animations.
+        mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();
+        char* strs = lbl_eu_80507D40;
+        mMemRegion.createRegion(mem2, 0x18000, strs + 0x130, 1);
+        Class_8045F858 memHost(&mMemRegion);
 
-    u8* fileData = (u8*)mFileHandle->getData();
-    mtl::MemManager::func_80434A4C(false);
-    mArcResAcc = CLibLayout::createArcResourceAccessor();
-    mArcResAcc->Attach(fileData, &lbl_eu_80507D40[0x13c]);
-    func_80136E84(&mLayout, mArcResAcc, &lbl_eu_80507D40[0x140]);
-    func_80136F08(mLayout, &mAnimTrans1, mArcResAcc, &lbl_eu_80507D40[0x150]);
-    func_80136F08(mLayout, &mAnimTrans0, mArcResAcc, &lbl_eu_80507D40[0x163]);
+        u8* fileData = (u8*)mFileHandle->getData();
+        mtl::MemManager::func_80434A4C(false);
+        mArcResAcc = CLibLayout::createArcResourceAccessor();
+        mArcResAcc->Attach(fileData, strs + 0x13c);
+        func_80136E84(&mLayout, mArcResAcc, strs + 0x140);
+        func_80136F08(mLayout, &mAnimTrans1, mArcResAcc, strs + 0x150);
+        func_80136F08(mLayout, &mAnimTrans0, mArcResAcc, strs + 0x163);
 
-    // Bind the font: root pane + font object slot 7, push back onto root.
-    nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
-    FontHelper* font = reinterpret_cast<FontHelper*>(CDeviceFont::func_80452C10(1, mLayout));
-    func_8013676C(rootPane, (void*)font->v7());
+        // Bind the font: root pane + font object slot 7, push back onto root.
+        nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
+        FontHelper* font = reinterpret_cast<FontHelper*>(CDeviceFont::func_80452C10(1, mLayout));
+        func_8013676C(rootPane, (void*)font->v7());
 
-    u32 textVal = (u32)func_801355BC();
-    if (textVal != 0) {
-        func_801368C0(mLayout, &lbl_eu_80507D40[0x100], textVal);
-        func_801368C0(mLayout, &lbl_eu_80507D40[0x10d], textVal);
-        func_801368C0(mLayout, &lbl_eu_80507D40[0x17b], textVal);
-        func_801368C0(mLayout, &lbl_eu_80507D40[0x189], textVal);
-        for (u8 i = 1; i <= 7; i++) {
-            sprintf(buf68, &lbl_eu_80507D40[0x196], i);
-            func_801368C0(mLayout, buf68, textVal);
-            sprintf(buf68, &lbl_eu_80507D40[0x10], i);
-            func_801368C0(mLayout, buf68, func_801355D8());
-            sprintf(buf68, &lbl_eu_80507D40[0x1a8], i);
-            func_801368C0(mLayout, buf68, func_801355D8());
-            sprintf(buf68, &lbl_eu_80507D40[0x23], i);
-            func_801368C0(mLayout, buf68, textVal);
-            sprintf(buf68, &lbl_eu_80507D40[0x36], i);
-            func_801368C0(mLayout, buf68, textVal);
+        u32 textVal = (u32)func_801355BC();
+        if (textVal != 0) {
+            func_801368C0(mLayout, strs + 0x100, textVal);
+            func_801368C0(mLayout, strs + 0x10d, textVal);
+            func_801368C0(mLayout, strs + 0x17b, textVal);
+            func_801368C0(mLayout, strs + 0x189, textVal);
+            for (u32 i = 1; i <= 7; i++) {
+                sprintf(buf68, strs + 0x196, i);
+                func_801368C0(mLayout, buf68, textVal);
+                sprintf(buf68, strs + 0x10, i);
+                func_801368C0(mLayout, buf68, func_801355D8());
+                sprintf(buf68, strs + 0x1a8, i);
+                func_801368C0(mLayout, buf68, func_801355D8());
+                sprintf(buf68, strs + 0x23, i);
+                func_801368C0(mLayout, buf68, textVal);
+                sprintf(buf68, strs + 0x36, i);
+                func_801368C0(mLayout, buf68, textVal);
+            }
         }
+        mLayout->SetAnimationEnable(mAnimTrans0, false);
+        mLayout->SetAnimationEnable(mAnimTrans1, true);
+        mLayout->Animate(0);
+
+        char* s2 = func_80136190(strs + 0x1ba, strs + 0x1c4, 2);
+        char* s3 = func_80136190(strs + 0x1ba, strs + 0x1c4, 3);
+        char* s4 = func_80136190(strs + 0x1ba, strs + 0x1c4, 4);
+        func_80136190(strs + 0x1ba, strs + 0x1c4, 5);
+        for (u32 i = 1; i <= 7; i++) {
+            sprintf(buf48, strs + 0x1a8, i);
+            func_80136B4C(mLayout, buf48, s2, 0);
+            sprintf(buf48, strs + 0x1c9, i);
+            func_80136B4C(mLayout, buf48, s3, 0);
+            sprintf(buf48, strs + 0x196, i);
+            func_80136B4C(mLayout, buf48, s4, 0);
+        }
+        func_801FE154(this);
+        strs = lbl_eu_80507D40;
+        char* s8 = func_80136190(strs + 0x1ba, strs + 0x1c4, 8);
+        sprintf(buf28, strs + 0x1db, func_801571FC(), s8);
+        func_80136A1C(mLayout, strs + 0x189, buf28, 0);
+        char* s9 = func_80136190(strs + 0x1ba, strs + 0x1c4, 9);
+        func_80136B4C(mLayout, strs + 0x17b, s9, 0);
+
+        // Build the embedded cursor on the stack and copy its state into place.
+        __ct__CCur22(&tmp, mArcResAcc);
+        mCur22.mArcResAcc = tmp.mArcResAcc;
+        mCur22.mpLayout = tmp.mpLayout;
+        mCur22.mpAnimTrans0 = tmp.mpAnimTrans0;
+        mCur22.mpAnimTrans1 = tmp.mpAnimTrans1;
+        mCur22.mActive = tmp.mActive;
+        mCur22.mVisible = tmp.mVisible;
+        __dt__6CCur22Fv(&tmp, -1);
+        reinterpret_cast<CPartyStateCur*>(&mCur22)->vfn0();
+
+        func_801FD8A0(this);
+        mFileHandle = 0;
+        mMemRegion.func_8045F810();
+        return true;
     }
-    mLayout->SetAnimationEnable(mAnimTrans0, false);
-    mLayout->SetAnimationEnable(mAnimTrans1, true);
-    mLayout->Animate(0);
-
-    char* s2 = func_80136190(&lbl_eu_80507D40[0x1ba], &lbl_eu_80507D40[0x1c4], 2);
-    char* s3 = func_80136190(&lbl_eu_80507D40[0x1ba], &lbl_eu_80507D40[0x1c4], 3);
-    char* s4 = func_80136190(&lbl_eu_80507D40[0x1ba], &lbl_eu_80507D40[0x1c4], 4);
-    func_80136190(&lbl_eu_80507D40[0x1ba], &lbl_eu_80507D40[0x1c4], 5);
-    for (u8 i = 1; i <= 7; i++) {
-        sprintf(buf48, &lbl_eu_80507D40[0x1a8], i);
-        func_80136B4C(mLayout, buf48, s2, 0);
-        sprintf(buf48, &lbl_eu_80507D40[0x1c9], i);
-        func_80136B4C(mLayout, buf48, s3, 0);
-        sprintf(buf48, &lbl_eu_80507D40[0x196], i);
-        func_80136B4C(mLayout, buf48, s4, 0);
-    }
-    func_801FE154(this);
-    char* s8 = func_80136190(&lbl_eu_80507D40[0x1ba], &lbl_eu_80507D40[0x1c4], 8);
-    sprintf(buf28, &lbl_eu_80507D40[0x1db], func_801571FC(), s8);
-    func_80136A1C(mLayout, &lbl_eu_80507D40[0x189], buf28, 0);
-    char* s9 = func_80136190(&lbl_eu_80507D40[0x1ba], &lbl_eu_80507D40[0x1c4], 9);
-    func_80136B4C(mLayout, &lbl_eu_80507D40[0x17b], s9, 0);
-
-    // Build the embedded cursor on the stack and copy its state into place.
-    __ct__CCur22(&tmp, mArcResAcc);
-    mCur22.mArcResAcc = tmp.mArcResAcc;
-    mCur22.mpLayout = tmp.mpLayout;
-    mCur22.mpAnimTrans0 = tmp.mpAnimTrans0;
-    mCur22.mpAnimTrans1 = tmp.mpAnimTrans1;
-    mCur22.mActive = tmp.mActive;
-    mCur22.mVisible = tmp.mVisible;
-    __dt__6CCur22Fv(&tmp, -1);
-    reinterpret_cast<CPartyStateCur*>(&mCur22)->vfn0();
-
-    func_801FD8A0(this);
-    mFileHandle = 0;
-    mMemRegion.func_8045F810();
-    return true;
+    return false;
 }
 
 // Start the async read of the party-state layout arc. The alloc region is

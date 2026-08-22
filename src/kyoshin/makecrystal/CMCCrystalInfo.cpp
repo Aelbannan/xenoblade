@@ -11,22 +11,22 @@
 
 namespace nw4r { namespace lyt { class DrawInfo; } }
 
-void func_80137924(void*, void*, void*, void*);
+extern "C" void func_80137924(void*, void*, void*, void*);
 void func_801D1F9C(void*, u32);
 void func_801C4B60(void*, u32, u32, u32, u32);
-void func_8021AF74(CMCCrystalInfo*);
-void func_8021AFC0(CMCCrystalInfo*);
-void func_8021B00C(CMCCrystalInfo*);
-void func_8021B058(CMCCrystalInfo*);
-void func_8021B0A4(CMCCrystalInfo*);
-void func_8021B0F0(CMCCrystalInfo*);
-void func_8021B13C(CMCCrystalInfo*);
+extern "C" void func_8021AF74(CMCCrystalInfo*);
+extern "C" void func_8021AFC0(CMCCrystalInfo*);
+extern "C" void func_8021B00C(CMCCrystalInfo*);
+extern "C" void func_8021B058(CMCCrystalInfo*);
+extern "C" void func_8021B0A4(CMCCrystalInfo*);
+extern "C" void func_8021B0F0(CMCCrystalInfo*);
+extern "C" void func_8021B13C(CMCCrystalInfo*);
 
 // Same-TU exports referenced before their definitions; C linkage keeps the
 // call relocs bound to the unmangled retail symbol names.
 extern "C" void func_8021B42C(CMCCrystalInfo*);
 extern "C" void func_8021B2E0(CMCCrystalInfo*, u16, void*);
-extern "C" void func_8021B188(CrystalItemBuf*, CMCCrystalInfo*, u32, void*);
+extern "C" void func_8021B188(CrystalBody* out, CMCCrystalInfo*, u32, void*);
 
 // Small-data symbol (plain C++ extern; lives in another TU).
 extern u32 lbl_eu_806640D8;
@@ -72,6 +72,8 @@ extern "C" CMCCrystalInfo* __dt__14CMCCrystalInfoFv(CMCCrystalInfo* self, s32 fl
 }
 #pragma pop
 
+#pragma push
+#pragma optimize_for_size on
 void func_8021A718(CMCCrystalInfo* self)
 {
     // Load the two crystal-info layout files (names at lbl_eu_80508DF8/+0x1a).
@@ -80,6 +82,7 @@ void func_8021A718(CMCCrystalInfo* self)
     handle = (u32)mtl::MemManager::getHandleMEM2();
     self->mFileHandle2 = (u32)CDeviceFile::readFile(handle, &lbl_eu_80508DF8[0x1a], self, 0, 0);
 }
+#pragma pop
 
 void func_8021A780(CMCCrystalInfo* self)
 {
@@ -107,8 +110,7 @@ void func_8021A780(CMCCrystalInfo* self)
             func_8021B13C(self);
             break;
         }
-        nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mLayout;
-        (*(void(**)(nw4r::lyt::Layout*, int))(*(void***)layout + 14))(layout, 0);
+        ((nw4r::lyt::Layout*)self->mLayout)->Animate(0);
     }
 }
 
@@ -185,6 +187,8 @@ void func_8021A984(CMCCrystalInfo* self)
     }
 }
 
+#pragma push
+#pragma optimize_for_size on
 void func_8021A9A8(CMCCrystalInfo* self, u32 arg4, CMCCItemData* item)
 {
     CMCCItemData* p;
@@ -199,23 +203,23 @@ void func_8021A9A8(CMCCrystalInfo* self, u32 arg4, CMCCItemData* item)
     } else {
         val = arg4;
     }
-    u32 code = func_801392E4(val & 0xFFFF);
+    int code = func_801392E4(val & 0xFFFF);
     if (p != 0 && p->word0 != 0) {
-        u32 type = (p->word0 >> 12) & 0xF;
-        u8 flags = p->field07 & 3;
-        u32 cond = 0;
-        if (type == 9 && flags == 2) cond = 1;
-        if (!cond && type == 9 && flags == 3) cond = 1;
-        if (cond) code = 9;
+        // Type nibble lives at bits 16-19; crystal type 9 with sub-flag 2/3
+        // forces the crystal display path.
+        u32 type = (p->word0 >> 16) & 0xF;
+        if ((type == 9 && (u32)(p->field07 & 3) == 2) ||
+            (type == 9 && (u32)(p->field07 & 3) == 3))
+            code = 9;
     }
-    // Type 9 (crystal) with the right flags forces the crystal display
-    // path; otherwise fall back to the plain crystal-info refresh.
+    // Type 9 (crystal) routes to the crystal slot fill; otherwise clear them.
     if ((code & 0xFFFF) == 9) {
         func_8021B2E0(self, (u16)val, item);
     } else {
         func_8021B42C(self);
     }
 }
+#pragma pop
 
 void func_8021AA9C(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u32 arg7)
 {
@@ -316,18 +320,23 @@ extern "C" __declspec(noinline) void func_8021ADC4(CMCCrystalInfo* self)
     }
 }
 
+#pragma push
+#pragma optimize_for_size on
 void func_8021AED0(CMCCrystalInfo* self, CMCCrystalInfo* other, u32 r5)
 {
     char buf[0x20];
     sprintf(buf, &lbl_eu_80508DF8[0x13e], r5 + 1);
-    nw4r::lyt::Pane* pane =
-        *(nw4r::lyt::Pane**)((u8*)*(void**)((u8*)other + 0x34) + 0x10);
-    nw4r::lyt::Pane* r1 = pane->FindPaneByName(buf, true);
-    nw4r::lyt::Pane* r2 = pane->FindPaneByName(&lbl_eu_80508DF8[0x14b], true);
-    func_80137924(self, r1, r2, pane);
+    nw4r::lyt::Pane* r1 =
+        (*(nw4r::lyt::Pane**)((u8*)other->mLayout + 0x10))->FindPaneByName(buf, true);
+    // Retail reloads other->mLayout and its root pane for every lookup.
+    nw4r::lyt::Pane* r2 =
+        (*(nw4r::lyt::Pane**)((u8*)other->mLayout + 0x10))
+            ->FindPaneByName(&lbl_eu_80508DF8[0x14b], true);
+    func_80137924(self, r1, r2, *(nw4r::lyt::Pane**)((u8*)other->mLayout + 0x10));
 }
+#pragma pop
 
-void func_8021AF74(CMCCrystalInfo* self)
+__declspec(noinline) void func_8021AF74(CMCCrystalInfo* self)
 {
     if (func_80137444((nw4r::lyt::AnimTransform*)self->mAnimTransform1, 1.0f)) {
         self->mState = 2;
@@ -335,7 +344,7 @@ void func_8021AF74(CMCCrystalInfo* self)
     }
 }
 
-void func_8021AFC0(CMCCrystalInfo* self)
+__declspec(noinline) void func_8021AFC0(CMCCrystalInfo* self)
 {
     if (func_80137444((nw4r::lyt::AnimTransform*)self->mAnimTransform2, 1.0f)) {
         self->mState = 3;
@@ -343,7 +352,7 @@ void func_8021AFC0(CMCCrystalInfo* self)
     }
 }
 
-void func_8021B00C(CMCCrystalInfo* self)
+__declspec(noinline) void func_8021B00C(CMCCrystalInfo* self)
 {
     if (func_80137510((nw4r::lyt::AnimTransform*)self->mAnimTransform2, 1.0f)) {
         self->mState = 5;
@@ -351,7 +360,7 @@ void func_8021B00C(CMCCrystalInfo* self)
     }
 }
 
-void func_8021B058(CMCCrystalInfo* self)
+__declspec(noinline) void func_8021B058(CMCCrystalInfo* self)
 {
     if (func_80137510((nw4r::lyt::AnimTransform*)self->mAnimTransform1, 1.0f)) {
         self->mState = 0;
@@ -359,7 +368,7 @@ void func_8021B058(CMCCrystalInfo* self)
     }
 }
 
-void func_8021B0A4(CMCCrystalInfo* self)
+__declspec(noinline) void func_8021B0A4(CMCCrystalInfo* self)
 {
     if (func_80137444((nw4r::lyt::AnimTransform*)self->mAnimTransform4, 1.0f)) {
         self->mField51 = 1;
@@ -367,7 +376,7 @@ void func_8021B0A4(CMCCrystalInfo* self)
     }
 }
 
-void func_8021B0F0(CMCCrystalInfo* self)
+__declspec(noinline) void func_8021B0F0(CMCCrystalInfo* self)
 {
     if (func_80137444((nw4r::lyt::AnimTransform*)self->mAnimTransform3, 1.0f)) {
         self->mField51 = 1;
@@ -375,7 +384,7 @@ void func_8021B0F0(CMCCrystalInfo* self)
     }
 }
 
-void func_8021B13C(CMCCrystalInfo* self)
+__declspec(noinline) void func_8021B13C(CMCCrystalInfo* self)
 {
     if (func_80137510((nw4r::lyt::AnimTransform*)self->mAnimTransform3, lbl_eu_80668498)) {
         self->mField51 = 1;
@@ -385,84 +394,89 @@ void func_8021B13C(CMCCrystalInfo* self)
 
 // Build the crystal-slot display buffers. noinline: retail calls these as
 // separate functions (bl), so inlining would balloon the caller sizes.
-__declspec(noinline) void func_8021B188(CrystalItemBuf* out, CMCCrystalInfo* self, u32 data, void* item)
+#pragma push
+#pragma optimize_for_size on
+__declspec(noinline) void func_8021B188(CrystalBody* out, CMCCrystalInfo* self, u32 data, void* item)
 {
     CrystalItemBuf buf;
-    void* item2 = item ? item : 0;
+    void* item2;
+    if (item == 0) {
+        item2 = 0;
+    } else {
+        item2 = item;
+    }
     func_801392E4(data);
     func_80139358(data);
     CItemImplInstancesFacade* inst = (CItemImplInstancesFacade*)CItem_initItemImplInstances(item2);
     u8 count = inst->GetCount(item2);
     buf.count = count;
-    buf.str = (char*)func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36],
-                                  0x1e - (count - 1));
-    buf.field21 = 0;
+    buf.body.str = (char*)func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36],
+                                        0x1e - (count - 1));
+    buf.body.field21 = 0;
     for (u32 i = 0; i < 4; i++) {
         CItemImplInstancesFacade* inst2 = (CItemImplInstancesFacade*)CItem_initItemImplInstances(item2);
         u16 n = inst2->GetName(item2, (u8)i);
         if (n > 0) {
-            buf.names[buf.field21] = func_8013639C((void*)lbl_eu_806640D8,
-                                                   &lbl_eu_80508DF8[0x36], n);
+            buf.body.names[buf.body.field21] = func_8013639C((void*)lbl_eu_806640D8,
+                                                             &lbl_eu_80508DF8[0x36], n);
             CItemImplInstancesFacade* inst3 = (CItemImplInstancesFacade*)CItem_initItemImplInstances(item2);
-            buf.flags[buf.field21] = inst3->GetFlag(item2, (u8)i);
-            buf.field21++;
+            buf.body.flags[buf.body.field21] = inst3->GetFlag(item2, (u8)i);
+            buf.body.field21++;
         }
     }
-    // Copy the whole result buffer to the caller's slot (9 words, unrolled).
-    u32* dst = (u32*)((u8*)out - 4);
-    u32* src = (u32*)((u8*)&buf - 4);
+    // Word-pair copy of the body; kept as a counted loop by optimize_for_size
+    // (matches the retail lwzu/stwu bdnz shape).
+    u32* dst = (u32*)((char*)out - 4);
+    u32* src = (u32*)((char*)&buf.body - 4);
     for (int j = 4; j != 0; j--) {
-        *++dst = *++src;
-        *++dst = *++src;
+        u32 a = *++src;
+        u32 b = *++src;
+        *++dst = a;
+        *++dst = b;
     }
     *++dst = *++src;
 }
+#pragma pop
 
 __declspec(noinline) void func_8021B2E0(CMCCrystalInfo* self, u16 arg2, void* item)
 {
     char buf[0x20];
     func_8021B42C(self);
     CrystalItemBuf bufB;
-    func_8021B188(&bufB, self, arg2, item);
-    CrystalItemBuf bufC;
-    // Copy the filled buffer so the slot values sit at the fixed frame slot
-    // the caller expects, then render each stored crystal entry.
-    u32* dst = (u32*)((u8*)&bufC - 4);
-    u32* src = (u32*)((u8*)&bufB - 4);
-    for (int j = 4; j != 0; j--) {
-        *++dst = *++src;
-        *++dst = *++src;
-    }
-    *++dst = *++src;
+    func_8021B188(&bufB.body, self, arg2, item);
+    // Copy the body to a fixed frame slot, then render each stored entry.
+    CrystalBody slots = bufB.body;
     func_80136B4C((nw4r::lyt::Layout*)self->mLayout, &lbl_eu_80508DF8[0x15a],
-                  bufC.str, 0);
-    u8 count = bufC.field21;
+                  slots.str, 0);
+    u8 count = slots.field21;
     for (u8 i = 0; i < count; i++) {
         sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x1f);
-        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, bufC.names[i], 0);
+        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, slots.names[i], 0);
         sprintf(buf, &lbl_eu_80508DF8[0x173], i + 0x1f);
-        func_80136910((nw4r::lyt::Layout*)self->mLayout, buf, bufC.flags[i]);
+        func_80136910((nw4r::lyt::Layout*)self->mLayout, buf, slots.flags[i]);
         sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x20);
         char* s = func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36], 0x21);
         func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, s, 0);
     }
 }
 
+#pragma push
+#pragma optimize_for_size on
 __declspec(noinline) void func_8021B42C(CMCCrystalInfo* self)
 {
     char buf[0x20];
-    char* sEmpty = &lbl_eu_80508DF8[0x12a];
     func_80136B4C((nw4r::lyt::Layout*)self->mLayout, &lbl_eu_80508DF8[0x15a],
                   &lbl_eu_80508DF8[0x12a], 0);
     for (u8 i = 0; i < 4; i++) {
         sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x1f);
-        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, sEmpty, 0);
+        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
         sprintf(buf, &lbl_eu_80508DF8[0x173], i + 0x1f);
-        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, sEmpty, 0);
+        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
         sprintf(buf, &lbl_eu_80508DF8[0x166], (i * 2) + 0x20);
-        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, sEmpty, 0);
+        func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, &lbl_eu_80508DF8[0x12a], 0);
     }
 }
+#pragma pop
 
 // Sets the ready/active flags once both the layout and its resource accessor
 // are present. noinline: retail calls this as a separate function (bl).

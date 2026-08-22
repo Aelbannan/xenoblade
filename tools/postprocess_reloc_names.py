@@ -1955,6 +1955,34 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("@stringBase0", "lbl_eu_80522514"),
         ),
     ),
+    "CDesktop.o": UnitRules(
+        # monolibdata2 dissolve: all class data ships from the dissolved blocks in
+        # CDesktop.cpp. The anonymous-namespace thread-class methods are defined
+        # here under their retail @unnamed@ mangling, but those symbols (and the
+        # base typeinfo objects) cannot be spelled in source: declaring an
+        # __RTTI__* name in a TU with novtable-predeclared anonymous-namespace
+        # classes trips an MWCC -ipa file ICE, and the @unnamed@ mangled spellings
+        # are not legal C++ identifiers. The hand-built vtables therefore use
+        # legal stand-in names; retarget the 13 vtable slots below.
+        retarget_relocs=(
+            (".data", 0x8, "__dt__Q222@unnamed@CDesktop_cpp@17CDesktopExceptionFv"),
+            (".data", 0x98, "wkStandbyLogout__Q222@unnamed@CDesktop_cpp@17CDesktopExceptionFv"),
+            (".data", 0xC8, "__dt__Q222@unnamed@CDesktop_cpp@18CDesktopBackGroundFv"),
+            (".data", 0x158, "wkStandbyLogout__Q222@unnamed@CDesktop_cpp@18CDesktopBackGroundFv"),
+            (".data", 0xA0, "__RTTI__10IWorkEvent"),
+            (".data", 0xA8, "__RTTI__11CWorkThread"),
+            (".data", 0xB0, "__RTTI__5CProc"),
+            (".data", 0x160, "__RTTI__10IWorkEvent"),
+            (".data", 0x168, "__RTTI__11CWorkThread"),
+            (".data", 0x170, "__RTTI__5CProc"),
+            (".data", 0x220, "__RTTI__10IWorkEvent"),
+            (".data", 0x228, "__RTTI__11CWorkThread"),
+            (".data", 0x230, "__RTTI__5CProc"),
+        ),
+        # MWCC emits .sbss align 8; the retail split packs the two singletons
+        # plus tail padding at 4-byte boundaries.
+        set_data_align=((".sbss", 4),),
+    ),
     "CWorkRoot.o": UnitRules(
         # Retail GC'd the reslist<P11CWorkThread> member data (the strong copies
         # live in CWorkThread.o): MWCC appends the reslist + _reslist_base
@@ -2899,6 +2927,10 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("__dt__12CItemBoxGridFv__Fv", "__dt__12CItemBoxGridFv"),
             ("__dt__13CArtsBookItemFv__FPvi", "__dt__13CArtsBookItemFv"),
             ("__dt__801C5670__FPvi", "__dt__801C5670"),
+            # func_801D1220 switch cookie (drifts with TU growth; ocBdat pattern):
+            # retail keeps the dense-switch jump table in .data as
+            # jumptable_eu_80534704; MWCC emits it under an internal @NNN name.
+            ("@16376", "jumptable_eu_80534704"),
         ),
     ),
     "CVec4.o": UnitRules(

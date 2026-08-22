@@ -3,7 +3,9 @@
 #include "kyoshin/menu/CMenuZeal.hpp"
 
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/plugin/pluginUi.hpp"
+// (pluginUi.hpp not included: its extern "C" func_80136190 declaration
+// clashes with code_80135FDC.hpp's; only func_800451D8 was needed and it is
+// declared in CMenuZeal.hpp.)
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
@@ -285,11 +287,14 @@ int func_8017FD4C(CMenuZeal* self) {
         if (self->mField_C4 == 3) {
             // Stage-3 timing: result 2 while 0x98 sits in
             // [80667870, 8066788C * 0xB4 + 80667870], else 1. The sound id is
+            // Named float temps keep MWCC's retail FPR allocation.
+            f32 minGauge = lbl_eu_80667870;
+            f32 gauge = self->mField_98;
             int result;
             u32 sound;
-            if (lbl_eu_80667870 <= self->mField_98 &&
-                self->mField_98 <=
-                    self->mField_B4 * lbl_eu_8066788C + lbl_eu_80667870) {
+            if (minGauge <= gauge &&
+                gauge <=
+                    self->mField_B4 * lbl_eu_8066788C + minGauge) {
                 result = 2;
                 sound = 0xa9;
             } else {

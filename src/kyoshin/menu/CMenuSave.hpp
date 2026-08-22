@@ -6,7 +6,11 @@
 
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CTitleAHelp.hpp"
-#include "kyoshin/CSaveLoad.hpp"
+
+// Forward-declared only: including CSaveLoad.hpp here would conflict its
+// CSaveLoad* declaration of lbl_eu_806649F4 with CTaskGame.hpp's u32 one.
+// This TU treats CSaveLoad as an opaque type.
+class CSaveLoad;
 
 /*
  * Menu save/load screen process.

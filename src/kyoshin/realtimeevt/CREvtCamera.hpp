@@ -199,3 +199,6 @@ extern f32 lbl_eu_806678A4;
 extern f32 lbl_eu_806678A8;
 extern f32 lbl_eu_806678AC;
 extern f32 lbl_eu_806678B0;
+// Double constant used by the manual u32->f64 bit trick in func_801804CC
+// (0x4330000080000000).
+extern f64 lbl_eu_806678B8;

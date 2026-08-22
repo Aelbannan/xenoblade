@@ -64,6 +64,14 @@ public:
     void func_8029AA34();
     void func_8029ABD8();
     void func_8029B124();
+    // Page-navigation tick (retail func_8029AD88).
+    void func_8029AD88();
+    // Advance-anim start handler (retail func_8029AE9C).
+    void func_8029AE9C();
+    // Rewind-anim start handler (retail func_8029AF7C).
+    void func_8029AF7C();
+    // Reset the 0x3340..0x33BE UI flag block (retail func_8029B498).
+    void func_8029B498();
 
     // IWorkEvent-compatible vtable (+0x00), then the widget data:
     UnkClass_8045F564 mRegion0;         // 0x04 - layout build region (0x1800)

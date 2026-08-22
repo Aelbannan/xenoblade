@@ -64,6 +64,16 @@ public:
     /* 0x34 */ int mField34;            // animation index counter
 };
 
+// Pose block returned by func_8048315C and filled by func_801728F8:
+// translation at 0x00, rotation at 0x0C.
+struct Vec3 {
+    float a[3];
+};
+struct CREvtModelPose {
+    /* 0x00 */ Vec3 translate;
+    /* 0x0C */ Vec3 rotate;
+};
+
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void func_80172EA4(void* self, void* animData, void* model, int flag);
 extern "C" void func_80172CE4(void* self, void* model);

@@ -48,6 +48,15 @@ void CUIErrMesWin::Move() {
     func_8022B748(&mSysWin);
 }
 
+// CUIErrMesWin::Init (us-802b770c) - attach the render callback, then build
+// the embedded system window layout via its vtable slot 34 (+0x88).
+void CUIErrMesWin::Init() {
+    IScnRender* render = reinterpret_cast<IScnRender*>(this);
+    if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
+    mScene->addRenderCB(render, 0xd, 1);
+    reinterpret_cast<CErrMesSysWinView*>(mSysWin)->v32();
+}
+
 // CUIErrMesWin::Term (us-802b7768) - detach the render callback, release the
 // system window, and clear the global active flag.
 void CUIErrMesWin::Term() {
@@ -135,7 +144,16 @@ void func_802B4F00(CUIErrMesWin* self) {
     }
 }
 
-void func_802B4F40(){}
+// func_802B4F40 (us-802b79b0) - load the error message text for field_0x9E
+// from the string pool, hand it to the embedded CSysWin with the window kind
+// from field_0xA0, open it and advance the state byte to 3.
+void func_802B4F40(CUIErrMesWin* self) {
+    char* msg = func_80136190(lbl_eu_805135E0, lbl_eu_805135E0 + 0xb, self->field_0x9E);
+    func_8022B9B4(&self->mSysWin[0], msg, 0);
+    func_8022BFC8(reinterpret_cast<CSysWin*>(&self->mSysWin[0]), self->field_0xA0);
+    func_8022B8B8(&self->mSysWin[0]);
+    self->field_0x9C = 3;
+}
 
 // func_802B4FA8 (us-802b7a18) - once the embedded CSysWin is active, mark the
 // window state byte as "active" (4).
@@ -145,7 +163,21 @@ void func_802B4FA8(CUIErrMesWin* self) {
     }
 }
 
-void func_802B4FE8(){}
+// func_802B4FE8 (us-802b7a58) - on a confirm press (A on Wii pads / X on the
+// classic controller mask when func_80086F9C reports classic), close the
+// embedded CSysWin and advance the state byte to 5.
+void func_802B4FE8(CUIErrMesWin* self) {
+    CErrMesPad* pad = reinterpret_cast<CErrMesPad*>(getCurrentPad__Q22cf13CfGameManagerFv());
+    // Button mask: 0x10 by default; the classic-controller path uses 0x20000000.
+    u32 mask = 0x10;
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        mask = 0x20000000;
+    }
+    if (pad->field_0x4 & mask) {
+        func_8022B8E4(&self->mSysWin[0]);
+        self->field_0x9C = 5;
+    }
+}
 
 void func_802B5054(CUIErrMesWin* self) {
     if (CSysWin_isActive(&self->mSysWin)) {

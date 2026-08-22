@@ -21,6 +21,8 @@ struct CBaseCurVt5 {
 // ============================================================================
 // func_801D2150: Set pane translate from VEC3
 // ============================================================================
+// func_801D2150 is declared extern "C" in CCur.hpp (retail unmangled name);
+// define it here with plain C++ syntax against that declaration.
 DECOMP_DONT_INLINE void func_801D2150(nw4r::lyt::Pane* pane, const nw4r::math::VEC3* trans) {
     pane->SetTranslate(*trans);
 }
@@ -219,12 +221,11 @@ extern "C" void func_801D2478__6CCur09Fv(CBaseCur* cur) {
 // func_801D24E8: Set two pane positions on cursor (for CCur09 variant)
 // Uses named panes from the root pane's children.
 // ============================================================================
+// Retail reloads mpLayout/root pane for each lookup (no caching) - caching
+// the root pane changes MWCC's register allocation away from stmw r28-r31.
 extern "C" void func_801D24E8(CBaseCur* cur, const nw4r::math::VEC3* trans0, const nw4r::math::VEC3* trans1) {
-    nw4r::lyt::Pane* rootPane = cur->mpLayout->GetRootPane();
-    nw4r::lyt::Pane* pane0 = rootPane->FindPaneByName(lbl_eu_80505DE8 + 0xd5, true);
-    func_801D2150(pane0, trans0);
-    nw4r::lyt::Pane* pane1 = rootPane->FindPaneByName(lbl_eu_80505DE8 + 0xe1, true);
-    func_801D2150(pane1, trans1);
+    func_801D2150(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0xd5, true), trans0);
+    func_801D2150(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0xe1, true), trans1);
 }
 
 // ============================================================================
@@ -260,13 +261,11 @@ extern "C" void func_801D25EC__6CCur11Fv(CBaseCur* cur) {
 // ============================================================================
 // func_801D2670: Set visibility of two named panes
 // ============================================================================
+// Same no-caching shape as func_801D24E8 (retail reloads root pane twice).
 extern "C" void func_801D2670(CBaseCur* cur, u8 visible) {
     if (cur->mpLayout == NULL) return;
-    nw4r::lyt::Pane* rootPane = cur->mpLayout->GetRootPane();
-    nw4r::lyt::Pane* pane0 = rootPane->FindPaneByName(lbl_eu_80505DE8 + 0x13d, true);
-    func_80124270(pane0, visible);
-    nw4r::lyt::Pane* pane1 = rootPane->FindPaneByName(lbl_eu_80505DE8 + 0x14d, true);
-    func_80124270(pane1, visible);
+    func_80124270(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x13d, true), visible);
+    func_80124270(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x14d, true), visible);
 }
 
 // ============================================================================
@@ -425,7 +424,11 @@ extern "C" void func_801D2B78__6CCur22Fv(CBaseCur* cur) {
 // ============================================================================
 extern "C" void func_801D2BFC(CBaseCur* cur, u8 index) {
     for (u8 i = 0; i < 4; i++) {
-        u8 visible = (i == index) ? 1 : 0;
+        // Branch form: retail emits li 0 / cmpl / bne / li 1, not select-arithmetic
+        u8 visible = 0;
+        if (i == index) {
+            visible = 1;
+        }
         nw4r::lyt::Pane* pane = cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80534828[i], true);
         func_80124270(pane, visible);
     }
@@ -487,25 +490,19 @@ extern "C" void func_801D2DC8__7CSubCurFv(CBaseCur* cur) {
 // func_801D2E4C: Set visibility of two named panes (subcur variant)
 // Retail reloads mpLayout + root pane for the second lookup (no caching).
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 extern "C" void func_801D2E4C(CBaseCur* cur, u8 visible) {
     if (cur->mpLayout == NULL) return;
     func_80124270(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3e9, true), visible);
     func_80124270(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3f7, true), visible);
 }
-#pragma pop
 
 // ============================================================================
 // func_801D2ED8: Check if both subcur panes are visible/active
 // Returns 1 if both named panes return non-zero from func_801C4648, 0 otherwise.
 // ============================================================================
-#pragma push
-#pragma optimize_for_size on
 extern "C" u8 func_801D2ED8(CBaseCur* cur) {
     if (cur->mpLayout == NULL) return 0;
     u32 result0 = func_801C4648(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3e9, true));
     u32 result1 = func_801C4648(cur->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_80505DE8 + 0x3f7, true));
     return (result0 != 0 && result1 != 0) ? 1 : 0;
 }
-#pragma pop

@@ -145,7 +145,8 @@ void func_802A1500() {
     lbl_eu_80664A58->unk230 = 0;
 }
 // Party-gauge gate check (defined below); forward-declared for func_802A1610.
-int func_802A38C8(cf::CCharVoiceMan* self);
+// Retail references this helper by its bare unmangled symbol (C linkage).
+extern "C" int func_802A38C8(cf::CCharVoiceMan* self);
 
 // Main per-frame character-voice tick. Flush the level-thread list on a
 // presentation pause, then run every gate (battle count, party gauge, field
@@ -462,6 +463,8 @@ void func_802A1DF0(u8 flag) {
 // Character-voice play gate: if the actor is interact/battle-flagged and its
 // state checks pass, resolve the target's voice action and fire a battle/lvl
 // voice node.
+// Retail references this helper by its bare unmangled symbol (C linkage).
+extern "C" int func_802A1EA8(cf::CVoiceActorState* self);
 int func_802A1EA8(cf::CVoiceActorState* self) {
     if (!(self->field_3F00 & 0x2))
         return 0;
@@ -673,7 +676,31 @@ int func_802A2424(void) {
         return (int)node->field_18;
     return -1;
 }
-void func_802A24B4(){}
+// Battle/interact pending-voice hook: on the first pass run the state probe
+// (func_802A1EA8); if it fires, latch byte 0x228 so later passes fall through
+// to the plain battle-voice node enqueue instead.
+void func_802A24B4(cf::CVoiceActorState* self) {
+    if (lbl_eu_80663E24 & 0x00400000)
+        return;
+    if (lbl_eu_80664A58->unk228 == 0) {
+        if (func_802A1EA8(self) != 0) {
+            lbl_eu_80664A58->unk228 = 1;
+            return;
+        }
+    }
+    cf::CSoundNode* node = func_802A8628(self);
+    cf::CCharVoiceMan* m = lbl_eu_80664A58;
+    if (node != 0) {
+        cf::CSoundNode* tail = m->unk210;
+        if (tail != 0)
+            tail->next = node;
+        if (m->unk20C == 0) {
+            m->unk20C = node;
+            m->unk208 = (u32)node - (u32)&m->unk4[0];
+        }
+        m->unk210 = node;
+    }
+}
 // If the passed actor's move-base is the current player, raise the manager's
 // voice count; on the 3rd+ tick roll a 25% chance to play the 0x89c battle
 // voice with a 0x118 flavour.
@@ -961,11 +988,13 @@ void func_802A2C88() {
     }
 }
 void func_802A2D0C() {
+    cf::CCharVoiceMan* m;
     if (lbl_eu_80663E24 & 0x00400000)
         return;
-    if (lbl_eu_80664A58->unk229 != 0) {
+    m = lbl_eu_80664A58;
+    if (m->unk229 != 0) {
         cf::CSoundNode* node = func_802A6958();
-        cf::CCharVoiceMan* m = lbl_eu_80664A58;
+        m = lbl_eu_80664A58;
         if (node != 0) {
             cf::CSoundNode* tail = m->unk210;
             if (tail != 0)
@@ -1284,33 +1313,42 @@ found:
 }
 // Scan the list for a matching node (type + id), then run its battle-voice
 // dispatch (+0x18) with two extra args; returns its result (0 if not found).
+// The reference pmf address is hoisted into a saved register before the
+// loop (retail lis r31 once) and the id is copied first (mr r26).
 void* func_802A3680(void* a, void* b, void* c) {
+    u32 id = (u32)a;
     cf::CSoundNode* node = lbl_eu_80664A58->unk20C;
     while (node != 0) {
         bool match = false;
         if (__ptmf_cmpr(node, (void*)&lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
             match = true;
-        if (match && (u32)a == node->field_18)
-            break;
+        if (match) {
+            if (id == node->field_18)
+                goto found;
+        }
         node = node->next;
     }
-    if (node != 0)
-        return ((cf::CVoiceNodeIf*)node)->vf18(b, c);
-    return 0;
+    // Not found: the loop-exit path nulls the node; the found jump keeps it.
+    node = 0;
+found:
+    if (node == 0)
+        return 0;
+    return ((cf::CVoiceNodeIf*)node)->vf18(b, c);
 }
 // Scan for a node whose type matches the reference pmf and whose +0x18 id is
-// `arg`; if found, hand it to func_802A3E88 (0 if not found).
+// `arg`; if found, hand it to func_802A3E88 (0 if not found). The pmf reference
+// address is hoisted before the loop so MWCC keeps it in a saved register
+// (lis once, addi @l per iteration) like retail.
 int func_802A3748(u32 arg) {
+    void* ref = &lbl_eu_805398C0;
     cf::CSoundNode* node = lbl_eu_80664A58->unk20C;
-    for (;;) {
+    while (node != 0) {
         bool match = false;
-        if (__ptmf_cmpr(node, (void*)&lbl_eu_805398C0) != 0 && __ptmf_test(node) != 0)
+        if (__ptmf_cmpr(node, ref) != 0 && __ptmf_test(node) != 0)
             match = true;
         if (match && arg == node->field_18)
             break;
         node = node->next;
-        if (node == 0)
-            break;
     }
     if (node == 0)
         return 0;
@@ -1335,7 +1373,9 @@ void CCharVoiceMan_FactoryEvent2(void* self, void* actor) {
 // Check battle-state voice gates: the current player and its target actor must
 // both be in the right state/level to allow a character-voice to fire. Returns
 // 1 when every candidate gauge passes, else 0.
-int func_802A38C8(cf::CCharVoiceMan* self) {
+// Retail references this helper by its bare unmangled symbol (C linkage), so
+// the definition keeps C linkage to emit the exact call-site reloc name.
+extern "C" int func_802A38C8(cf::CCharVoiceMan* self) {
     void* bm = getInstance__Q22cf14CBattleManagerFv();
     cf::CVoiceBattleNode* sentinel = ((cf::CBattleManagerNodeList*)bm)->sentinel;
     int count = 0;
@@ -1347,34 +1387,31 @@ int func_802A38C8(cf::CCharVoiceMan* self) {
     if (count <= 0)
         return 0;
 
-    void* p = getPlayer__Q22cf13CfGameManagerFi(0);
+    cf::CVoiceActorState* p = (cf::CVoiceActorState*)getPlayer__Q22cf13CfGameManagerFi(0);
     if (p != 0)
-        p = (void*)((u8*)p - 0x3E9C);
+        p = (cf::CVoiceActorState*)((u8*)p - 0x3E9C);
     if (p == 0)
         return 0;
-    cf::CVoiceActorState* player = (cf::CVoiceActorState*)p;
+    // Advance to the embedded move base and dispatch its +0x4C virtual; the
+    // advanced pointer is dead after the call, so MWCC folds the addi into an
+    // update-form vptr load (retail lwzu r12, 0x3e9c(r3)) leaving p back at
+    // the actor base for the level/gauge virtuals below.
+    p = (cf::CVoiceActorState*)((u8*)p + 0x3E9C);
+    void* mv = ((cf::CVoiceMoveIf*)p)->fn_4C();
 
-    // fn_4C on the embedded move base: dispatch via the volatile getPlayer
-    // result so its register is dead after the call and MWCC can merge the
-    // vptr load + this-arg into the retail lwzu update-form.
-    void* mv = ((cf::CVoiceMoveIf*)((u8*)p + 0x3E9C))->fn_4C();
-    void* r = func_800B708C((BOOL)(u32)mv);
-    if (r != 0)
-        r = (void*)((u8*)r - 0x3E9C);
-    if (r == 0)
+    cf::CVoiceActorState* other = (cf::CVoiceActorState*)func_800B708C((BOOL)(u32)mv);
+    if (other != 0)
+        other = (cf::CVoiceActorState*)((u8*)other - 0x3E9C);
+    if (other == 0)
         return 0;
-    cf::CVoiceActorState* other = (cf::CVoiceActorState*)r;
     if (!(other->field_3F00 & 0x4))
         return 0;
 
-    int a = ((cf::CVoiceActorStateIf*)player)->fn_108();
-    int diff = a - 3;
-    int b = ((cf::CVoiceActorStateIf*)other)->fn_108();
-    if (b < diff)
+    int diff = ((cf::CVoiceActorStateIf*)p)->fn_108() - 3;
+    if (((cf::CVoiceActorStateIf*)other)->fn_108() < diff)
         return 0;
 
-    float f = ((cf::CVoiceActorStateIf*)other)->fn_130();
-    if (lbl_eu_80668C70 < f)
+    if (lbl_eu_80668C70 < ((cf::CVoiceActorStateIf*)other)->fn_130())
         return 0;
 
     cf::CVoiceActorState* arr[3];

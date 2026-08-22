@@ -51,9 +51,9 @@ extern "C" void func_80124288(nw4r::lyt::Pane*, float*);
 
 // C-linkage helper imports for the window content setters (func_8022B9B4 /
 // func_8022C348). Retail emits the unmangled names at the call sites.
+// func_80127BF4 is declared by CTagProcessor.hpp with its retail signature
+// (void*, CTagMsgView*, CTagOutView*) - cast panes at the call sites.
 extern "C" void func_80127BC4(float* dst, float* src);  // copy 2 floats (VEC2)
-extern "C" void func_80127BF4(CTagProcessor* tagProc, nw4r::lyt::Pane* pane,
-                               nw4r::lyt::Pane* context);
 extern "C" void func_801D2150(nw4r::lyt::Pane* pane,
                                const nw4r::math::VEC3* trans);
 // Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3, so

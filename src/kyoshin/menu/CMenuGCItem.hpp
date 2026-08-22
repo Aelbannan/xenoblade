@@ -68,6 +68,8 @@ extern u32 lbl_eu_80663E28;            // render-gate mode bitfield (.sbss; bit 
 extern unsigned long lbl_eu_80664C00;  // singleton instance flag (cleared by Term)
 extern u8 lbl_eu_8052BF70[];           // temporary (CProcess) vtable, pre-PMF copy
 extern u8 lbl_eu_8053AD08[];           // composite vtable; IScnRender sub-vtable at +0x24
+// Null pointer-to-member-function constant (12-byte CW PMF triple).
+struct Ptmf { u32 adjust; u32 func; u32 vtAdjust; };
 extern u32 __ptmf_null[3];             // null pointer-to-member-function constant
 
 // Retail-unmangled C-linkage callees (US strips the member manglings for the

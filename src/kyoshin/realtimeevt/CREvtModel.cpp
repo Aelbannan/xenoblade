@@ -183,23 +183,17 @@ void func_801727DC(void* self) {
 }
 
 void func_801728F8(void* self) {
-    void* model = FLD(void*, self, 0x20);
-    if (model != 0) {
-        float zero = 0.0f;
-        float pos[3] = { zero, zero, zero };
-        void* p = func_8048315C(model);
-        if (p != 0) {
-            FLD(u32, p, 0) = FLD(u32, pos, 0);
-            FLD(u32, p, 4) = FLD(u32, pos, 4);
-            FLD(u32, p, 8) = FLD(u32, pos, 8);
-        }
-        float rot[3] = { zero, zero, zero };
-        void* r = func_8048315C(model);
-        if (r != 0) {
-            FLD(u32, r, 0xC) = FLD(u32, rot, 0);
-            FLD(u32, r, 0x10) = FLD(u32, rot, 4);
-            FLD(u32, r, 0x14) = FLD(u32, rot, 8);
-        }
+    if (FLD(void*, self, 0x20) != 0) {
+        Vec3 pos;
+        pos.a[0] = lbl_eu_80667770;
+        pos.a[1] = lbl_eu_80667770;
+        pos.a[2] = lbl_eu_80667770;
+        ((CREvtModelPose*)func_8048315C(FLD(void*, self, 0x20)))->translate = pos;
+        Vec3 rot;
+        rot.a[0] = lbl_eu_80667770;
+        rot.a[1] = lbl_eu_80667770;
+        rot.a[2] = lbl_eu_80667770;
+        ((CREvtModelPose*)func_8048315C(FLD(void*, self, 0x20)))->rotate = rot;
     }
 }
 

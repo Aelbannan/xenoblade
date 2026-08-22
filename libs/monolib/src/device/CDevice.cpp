@@ -111,13 +111,14 @@ inline bool CWorkThread::isRunning() const {
 }
 
 
-// Forward decl for the anonymous-ns singleton (defined extern "C" below).
+// Retail keeps this class TU-local (anonymous namespace).
 namespace {
     class CDeviceException;
 }
-extern "C" extern CDeviceException* lbl_eu_80665654;
-
 namespace {
+    class CDeviceException;
+    extern CDeviceException* lbl_eu_80665654;
+
     //size: 0x1c8
     class CDeviceException : public CWorkThread {
     public:
@@ -128,12 +129,12 @@ namespace {
             *(u32**)this = (u32*)lbl_eu_8056C000;
             lbl_eu_80665654 = this;
         }
-        ~CDeviceException();
+        ~CDeviceException(){ lbl_eu_80665654 = nullptr; }
         virtual bool wkStandbyLogout() {
             if (mChildren.empty() == false) return false;
             return CWorkThread::wkStandbyLogout();
         }
-        static CDeviceException* getInstance();
+        static CDeviceException* getInstance(){ return lbl_eu_80665654; }
 
         DECL_WORKTHREAD_CREATE(CDeviceException);
 
@@ -145,13 +146,10 @@ namespace {
         static const int MAX_CHILD = 64;
         // static CDeviceException* spInstance; -> extern "C" lbl_eu_80665654 below
     };
+    CDeviceException* lbl_eu_80665654 = nullptr;
 }
 
 CDevice* CDevice::spInstance;
-// Retail sbss blob: the CDeviceException singleton goes at lbl_eu_80665654
-// (4B, zero-init) right after CDevice::spInstance (lbl_eu_80665650).
-extern "C" CDeviceException* lbl_eu_80665654 = nullptr;
-
 // Retail sbss labels for the two TU singletons (MWCC_CASES §1a).
 extern "C" {
 extern CDevice* lbl_eu_80665650;             // CDevice::spInstance
@@ -285,12 +283,6 @@ void CDevice::initDevices(){
     (void)CDeviceException::getInstance();
 }
 
-#pragma dont_inline on
-CDeviceException* CDeviceException::getInstance(){
-    // Retail SDA reloc is lbl_eu_80665654@sda21.
-    return lbl_eu_80665654;
-}
-#pragma dont_inline off
 
 bool CDevice::wkStandbyLogin(){
     // "CDeviceException" is a pooled literal in retail; the shared pool base
@@ -333,8 +325,4 @@ void CDevice::deleteRegions(){
     mtl::MemManager::erase(sDeviceRegion2Handle);
     sDeviceRegion1Handle = mtl::INVALID_HANDLE;
     sDeviceRegion2Handle = mtl::INVALID_HANDLE;
-}
-
-CDeviceException::~CDeviceException(){
-    lbl_eu_80665654 = nullptr;
 }

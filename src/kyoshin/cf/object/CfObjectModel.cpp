@@ -372,7 +372,7 @@ extern "C" float CfObject_UnkVirtualFunc56__Q22cf13CfObjectModelFv(const cf::CfO
 // per-node matrix slot (mtx id * 0x30 into the table base at
 // sub->field_147C->field_EC). Retail symbol is Fv but the body reads the
 // node name from r4 - forced-name form.
-u8* CfObject_UnkVirtualFunc52__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, const char* name) {
+u8* CfObject_UnkVirtualFunc52__Q22cf13CfObjectModelFv(const cf::CfObjectModel* self, const char* name) {
     cf::CfObjectModelSub98* sub = self->mSubObj98;
     if (sub == 0) {
         return 0;
@@ -393,7 +393,7 @@ u8* CfObject_UnkVirtualFunc52__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, c
 
 // Same node-matrix lookup as CfObject_UnkVirtualFunc52 but by node index
 // (retail symbol is Fv even though the body reads the index from r4).
-u8* CfObject_UnkVirtualFunc53__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, u32 idx) {
+u8* CfObject_UnkVirtualFunc53__Q22cf13CfObjectModelFv(const cf::CfObjectModel* self, u32 idx) {
     cf::CfObjectModelSub98* sub = self->mSubObj98;
     if (sub == 0) {
         return 0;
@@ -425,7 +425,7 @@ u32 CfObject_UnkVirtualFunc54__Q22cf13CfObjectModelFv(cf::CfObjectModel* self) {
 // Forwards the arg through the sub-object's vtable+0xA8 result to its
 // Forwards the arg through the sub-object's vtable+0xA8 result to its
 // vtable+0x44 slot (retail symbol is Fv even though the body reads r4).
-u32 CfObject_UnkVirtualFunc55__Q22cf13CfObjectModelFv(cf::CfObjectModel* self, int arg) {
+u32 CfObject_UnkVirtualFunc55__Q22cf13CfObjectModelFv(const cf::CfObjectModel* self, int arg) {
     cf::CfObjectModelSub98* sub = self->mSubObj98;
     if (sub == 0) {
         return 0;

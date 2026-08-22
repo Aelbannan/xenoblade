@@ -169,11 +169,12 @@ u8 CItemBoxGrid::GetField61() { return reinterpret_cast<CItemBoxGridFull*>(this)
 // grid via func_801C562C (retail keeps both helper calls as `bl`).
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void* __ct__801C5514(void* self) {
+    u8* end = (u8*)self + 0x2800;
     u8* cur = (u8*)self;
     do {
         SetEntry9Bytes(cur, -1, 0, 0, 0, 0, 0, 0, 0);
         cur += 10;
-    } while (cur < (u8*)self + 0x2800);
+    } while (cur < end);
     *(u16*)((u8*)self + 0x2800) = 0;
     ((u8*)self)[0x2802] = 0;
     ((u8*)self)[0x2803] = 0;
@@ -187,15 +188,14 @@ extern "C" __declspec(noinline) void* __ct__801C5514(void* self) {
         u16 i;
         for (i = 0; i < 0x400; i++) {
             u8 tmp[9];
-            SetEntry9Bytes(tmp, -1, 0, 0, 0, 0, 0, 0, 0);
-            func_801C562C((u8*)self + i * 10, (char*)tmp);
+            func_801C562C((u8*)self + i * 10, (char*)SetEntry9Bytes(tmp, -1, 0, 0, 0, 0, 0, 0, 0));
         }
     }
     return self;
 }
 #pragma optimize_for_size off
 
-__declspec(noinline) void SetEntry9Bytes(unsigned char* p, short a, unsigned char b, unsigned char c, unsigned char d, unsigned char e, unsigned char f, unsigned char g, unsigned char h) {
+__declspec(noinline) unsigned char* SetEntry9Bytes(unsigned char* p, short a, unsigned char b, unsigned char c, unsigned char d, unsigned char e, unsigned char f, unsigned char g, unsigned char h) {
     unsigned char* buf = (unsigned char*)p;
     *((unsigned short*)(buf + 0)) = a;
     buf[2] = b;
@@ -205,6 +205,7 @@ __declspec(noinline) void SetEntry9Bytes(unsigned char* p, short a, unsigned cha
     buf[6] = f;
     buf[7] = g;
     buf[8] = h;
+    return buf;
 }
 
 // Copy a 9-byte entry from src to dst. noinline: retail callers emit `bl`
@@ -841,8 +842,7 @@ void func_801C68A0(CItemBoxGridFull* self) {
         void* obj = func_80157C4C(self->field_2802, entry->id);
         if (!obj || !*(u32*)obj) continue;
         void* inst = CItem_initItemImplInstances(obj);
-        void** vtbl = *(void***)inst;
-        ((void(*)(void*, void*))vtbl[4])(inst, obj);
+        ((CItemInstVt10*)inst)->_v10(obj);
     }
 }
 #pragma optimize_for_size off
@@ -2209,30 +2209,31 @@ void func_801C9E1C(CItemBoxGridFull* self, u32 target) {
 
 __declspec(noinline) float func_801C9F88(void* self, void* entry) { return 0.0f; }
 
-// Check item slots for first valid entry.
+#pragma optimize_for_size on
 __declspec(noinline) u32 func_801CA070(void* self, void* item) {
     void* inst = CItem_initItemImplInstances(item);
-    u16 count = (u16)((u32(*)(void*, void*))(*(void***)inst)[12])(inst, item);
+    u16 count = (u16)((CItemInstVt30*)inst)->_v30(item);
     u8 i;
     for (i = 0; i < count; i++) {
         void* inst2 = CItem_initItemImplInstances(item);
-        void* obj = ((void*(*)(void*, void*, u8))(*(void***)inst2)[11])(inst2, item, i);
+        void* obj = ((CItemInstVt2C*)inst2)->_v2C(item, i);
         if (obj && (*(u16*)((u8*)obj + 4) & 1)) return 1;
     }
     return 0;
 }
+#pragma optimize_for_size off
 
 // Check if entry kind exists in pool.
 #pragma optimize_for_size on
 __declspec(noinline) u32 func_801CA110(void* self, void* entry) {
     u32 val = *(u32*)entry;
     u32 obj = lbl_eu_806640F4;
-    u16 kind = func_80139358(val >> 20);
+    u32 kind = func_80139358(val >> 20);
     u32 i;
     for (i = 1; i <= 10; i++) {
         char buf[40];
         sprintf(buf, (const char*)&lbl_eu_8050566C[0x132], (u8)i);
-        if (func_801361E8(obj, buf, kind & 0xFFFF)) return i;
+        if ((u8)func_801361E8(obj, buf, (u16)kind)) return i;
     }
     return 0;
 }
@@ -2573,14 +2574,8 @@ void func_801CAA6C(void* self, int r4) {
         func_8022CF2C(p + 0x440);
     }
 
-    {
-        void** vtbl = *(void***)(p + 0x4ac);
-        ((void(*)(void*))vtbl[0x22])(p + 0x4ac);
-    }
-    {
-        void** vtbl = *(void***)(p + 0x4e8);
-        ((void(*)(void*))vtbl[0x22])(p + 0x4e8);
-    }
+    ((CItemInstVt90*)(p + 0x4ac))->_v88();
+    ((CItemInstVt90*)(p + 0x4e8))->_v88();
 }
 
 void func_801CABC8(void* self, int r4) {
@@ -2778,7 +2773,7 @@ u32 func_801CB038(void* self) {
     if (!func_801D32DC(p + 0xe8)) return 0;
     if (!getItemBoxState__FP12CItemBoxInfo(p + 0x1d8)) return 0;
     if (!func_801EB018(p + 0x3e4)) return 0;
-    if (!(int)((CExchangeWin*)(p + 0x440))->getField25()) return 0;
+    if (!((CExchangeWin*)(p + 0x440))->getField25()) return 0;
     if (!CSysWin_isReady(p + 0x4ac)) return 0;
     if (CSysWin_isReady(p + 0x4e8)) return p[0x60];
     return 0;
@@ -2810,7 +2805,7 @@ u32 func_801CB1E4(void* self) {
     u8* p = (u8*)self;
     if (func_801EB020(p + 0x3e4)) return 1;
     if (func_80208358(p + 0x418)) return 1;
-    if ((int)((CExchangeWin*)(p + 0x440))->getField24()) return 1;
+    if (((CExchangeWin*)(p + 0x440))->getField24()) return 1;
     if (func_8022DB6C(p + 0x468)) return 1;
     if (CSysWin_getUnk34(p + 0x4ac)) return 1;
     return CSysWin_getUnk34(p + 0x4e8);
@@ -2845,14 +2840,12 @@ void func_801CB28C(void* self) {
 // Advance item box state.
 void func_801CB38C(void* self) {
     u8* p = (u8*)self;
-    if (*(u32*)(p + 0x58) != 3) return;
+    if (*(s32*)(p + 0x58) != 3) return;
     if (func_801D3320(p + 0xe8)) return;
     *(u32*)(p + 0x58) = 4;
-    void* obj = (void*)*(u32*)(p + 0x44);
-    void** vtbl = *(void***)obj;
-    ((void(*)(void*, void*, int))vtbl[11])(obj, (void*)*(u32*)(p + 0x50), 0);
-    ((void(*)(void*, void*, int))vtbl[11])(obj, (void*)*(u32*)(p + 0x48), 0);
-    ((void(*)(void*, void*, int))vtbl[11])(obj, (void*)*(u32*)(p + 0x4c), 1);
+    ((CItemInstVt2CInt*)(void*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x50), 0);
+    ((CItemInstVt2CInt*)(void*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x48), 0);
+    ((CItemInstVt2CInt*)(void*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x4c), 1);
     p[0x61] = 0;
     func_801D216C(p + 0x70, 0);
     func_801D216C(p + 0x88, 0);
@@ -2876,7 +2869,8 @@ void CItemBoxGrid::PushToList(unsigned char val) {
     if (count >= 0xc) {
         return;
     }
-    reinterpret_cast<unsigned char*>(this)[0x62 + count] = val;
+    unsigned char* slot = reinterpret_cast<unsigned char*>(this) + count;
+    slot[0x62] = val;
     reinterpret_cast<unsigned char*>(this)[0x6e] = count + 1;
 }
 
@@ -4058,16 +4052,16 @@ void func_801CDC40(void* self) {
 // Check conditions and update state.
 void func_801CDEE8(void* self) {
     u8* p = (u8*)self;
-    if (*(u32*)(p + 0x58) != 3) return;
+    if (*(s32*)(p + 0x58) != 3) return;
     if (p[0x528]) return;
-    if (p[0x525] == 0xFF) return;
+    if (((s8*)p)[0x525] == -1) return;
     if (CSysWin_getUnk34(p + 0x4ac)) return;
     if (CSysWin_getUnk34(p + 0x4e8)) return;
     if (func_80208358(p + 0x418)) return;
     if (func_8022DB6C(p + 0x468)) return;
     if (func_801D3320(p + 0xe8)) return;
     if (p[0x544]) return;
-    p[0x525] = 0xFF;
+    ((s8*)p)[0x525] = -1;
     func_801D0950(self);
     func_801D0328(self);
     func_80138078__FUl(2);
@@ -4173,7 +4167,7 @@ void func_801CE390(void* self) {
         func_801D216C(p + 0x70, 0);
     }
 }
-
+#pragma optimize_for_size on
 extern "C" void func_801CE3E8(void* self) {
     u8* p = (u8*)self;
     if (func_801EB028((void*)(p + 0x3e4))) {
@@ -4393,7 +4387,7 @@ void func_801CEAE8(void* self) {
 void func_801CEB3C(void* self) {
     u8* p = (u8*)self;
     if (!CSysWin_isActive(p + 0x4ac)) return;
-    if (!(s8)p[0x540]) {
+    if (!((s8*)p)[0x540]) {
         u8 idx = p[0x6f];
         u8 cat = *(u8*)((u8*)self + (s8)idx + 0x62);
         u32 diff = cat - 2;
@@ -5270,25 +5264,22 @@ void func_801D11B8(void* self, void* item, int eventType) {
 // Dispatch based on entry category.
 u32 func_801D1220(void* self) {
     u8* p = (u8*)self;
-    s8 idx = (s8)p[0x6f];
-    u8 cat = p[idx + 0x62];
+    u8* entry = p + (s8)p[0x6f];
+    u8 cat = entry[0x62];
     u32 result = 0;
     switch (cat) {
-        case 0:  result = 0x33; break;
-        case 1:  result = 0x3C; break;
-        case 2:  result = 0x34; break;
-        case 3:  result = 0x35; break;
-        case 4:  result = 0x36; break;
-        case 5:  result = 0x37; break;
-        case 6:  result = 0x38; break;
-        case 7:  result = 0x3D; break;
-        case 8:  result = 0x3E; break;
-        case 9:  result = 0x39; break;
-        case 10: result = 0x3B; break;
-        case 11: result = 0x3A; break;
-        case 12:
-        case 13:
-            break;
+        case 2:  result = 0x33; break;
+        case 3:  result = 0x3C; break;
+        case 4:  result = 0x34; break;
+        case 5:  result = 0x35; break;
+        case 6:  result = 0x36; break;
+        case 7:  result = 0x37; break;
+        case 8:  result = 0x38; break;
+        case 9:  result = 0x3D; break;
+        case 10: result = 0x3E; break;
+        case 11: result = 0x39; break;
+        case 12: result = 0x3B; break;
+        case 13: result = 0x3A; break;
     }
     if (result) {
         return (u32)func_80136190(&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], result);
@@ -5303,14 +5294,14 @@ u32 func_801D1220(void* self) {
 u32 func_801D12D4(void* self, u32 kind) {
     u32 bdat = lbl_eu_80664110;
     func_801392E4(kind);
-    u16 shortKind = func_80139358(kind);
-    u32 flag = func_801361E8(bdat, (const char*)&lbl_eu_8050566C[0x109], shortKind);
-    u32 charId = func_801361E8(bdat, (const char*)&lbl_eu_8050566C[0x115], shortKind);
-    u32 unk = func_801361E8(bdat, (const char*)&lbl_eu_8050566C[0x11d], shortKind);
-    u32 v = func_8013600C((void*)&lbl_eu_8050566C[0x126], (const char*)&lbl_eu_8050566C[0x12e], unk & 0xFF);
+    u32 shortKind = func_80139358(kind);
+    u32 flag = func_801361E8(bdat, (const char*)&lbl_eu_8050566C[0x109], (u16)shortKind);
+    u32 v;
+    u32 charId = func_801361E8(bdat, (const char*)&lbl_eu_8050566C[0x115], (u16)shortKind);
+    u32 unk = func_801361E8(bdat, (const char*)&lbl_eu_8050566C[0x11d], (u16)shortKind);
+    v = func_8013600C((void*)&lbl_eu_8050566C[0x126], (const char*)&lbl_eu_8050566C[0x12e], unk & 0xFF);
     void* charData = (void*)func_8009EC9C(charId & 0xFF);
-    u32 count = func_800A32BC();
-    u8* ptr = (u8*)charData + (count & 0xFF) * 0x49 + ((v & 0xFF) << 1);
+    u8* ptr = (u8*)charData + (func_800A32BC() & 0xFF) * 0x49 + ((v & 0xFF) << 1);
     switch (flag & 0xFF) {
     case 1:
         if (ptr[0xe8]) return 0;
@@ -5330,10 +5321,10 @@ void CopyVec4s(short* dst, const short* src) { dst[0] = src[0]; dst[1] = src[1];
 
 // Split a u32 into its four bytes, stored as shorts (big-endian order).
 void func_801D1F9C(short* dst, unsigned long val) {
-    dst[0] = (val >> 24) & 0xFF;
-    dst[1] = (val >> 16) & 0xFF;
-    dst[2] = (val >> 8) & 0xFF;
     dst[3] = val & 0xFF;
+    dst[2] = (val >> 8) & 0xFF;
+    dst[1] = (val >> 16) & 0xFF;
+    dst[0] = (val >> 24) & 0xFF;
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
@@ -5547,18 +5538,14 @@ void func_801C5254(void* self) {
 void func_801C53D8(void* self) {
     u32 bdat = lbl_eu_80664110;
     s32 count = (s32)func_8003B1EC((void*)bdat);
-    u8* base;
-    u32 sub;
-    u32 charId;
-    u32 flag;
     u8 i;
     for (i = 1; i <= count; i++) {
-        flag = func_801361E8(bdat, (const char*)&lbl_eu_8050566C[0x109], (u32)i);
-        charId = func_801361E8(bdat, (const char*)&lbl_eu_8050566C[0x115], (u32)i);
+        u32 flag = func_801361E8(bdat, (const char*)&lbl_eu_8050566C[0x109], (u32)i);
+        u32 charId = func_801361E8(bdat, (const char*)&lbl_eu_8050566C[0x115], (u32)i);
         u32 unk = func_801361E8(bdat, (const char*)&lbl_eu_8050566C[0x11d], (u32)i);
-        sub = func_8013600C((void*)&lbl_eu_8050566C[0x126], (const char*)&lbl_eu_8050566C[0x12e],
+        u32 sub = func_8013600C((void*)&lbl_eu_8050566C[0x126], (const char*)&lbl_eu_8050566C[0x12e],
                             (u8)unk);
-        base = (u8*)func_8009EC9C((u8)charId);
+        u8* base = (u8*)func_8009EC9C((u8)charId);
         u8* cell = base + (u8)func_800A32BC() * 0x49;
         cell = cell + (u8)sub * 2;
         switch ((u8)flag) {

@@ -151,8 +151,8 @@ extern u32 lbl_eu_80664A00;  // CMenuPTChangeNotice singleton pointer
 // Strings / constants for the notice layout (retail data symbols).
 extern char lbl_eu_8050FC20[];     // notice layout path + pane-name table
 // .sbss pointer globals holding the character/affinity icon message tables.
-extern u8* lbl_eu_80664090;
-extern u8* lbl_eu_80664098;
+extern void* lbl_eu_80664090;
+extern void* lbl_eu_80664098;
 extern const f32 lbl_eu_80668B84;  // animation frame target (notice open)
 // 2^52 double used by the u32->float conversion (lfd pool constant).
 extern const f64 lbl_eu_80668B88;

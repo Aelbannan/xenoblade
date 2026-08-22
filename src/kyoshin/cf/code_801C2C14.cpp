@@ -388,9 +388,9 @@ void* __dt__801C3340(FxSoundPair* this_, int flag) {
 
 // Clears the effect on slots[index]; returns whether the slot was active.
 int func_801C34B0(FxSoundSlot* slots, int index, int frame) {
-    // result declared before slot so MWCC keeps it in r31 (retail rlwinm).
-    int result = (slots[index].mActive != 0);
     FxSoundSlot* slot = &slots[index];
+    // Best alloc shape so far: flat bool-to-int conversion, single defs.
+    int result = (slot->mActive != 0);
     if (slot->mActive) {
         nw4r::snd::detail::AxManager::GetInstance()
             .ClearEffect((nw4r::snd::AuxBus)slot->mBusId, frame);

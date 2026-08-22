@@ -2,9 +2,13 @@
 
 #include "kyoshin/menu/CMenuOption.hpp"
 
-#include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+// NOTE: kyoshin/harness_catalog.hpp deliberately omitted - its CScn clashes
+// with monolib/scn.hpp (pulled in by CTaskGame.hpp below).
+#include "kyoshin/CTaskGame.hpp"
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/util/MemManager.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
 
 // Global-view declarations so the catalog thunks below can address the member
 // methods by their retail symbol names (the definitions below emit those
@@ -18,7 +22,7 @@ extern "C" CMenuOption* __dt__11CMenuOptionFv(CMenuOption* _this, int flags);
  * vtable store, null PMF data copy (two 3-word slots at 0x3C/0x48), then the
  * composite vtable + IScnRender sub-vtable at +0x58, then each embedded
  * widget's ctor and the final state bytes. */
-CMenuOption* __ct__CMenuOption(CMenuOption* self, CProcess* parent, u32 arg) {
+extern "C" CMenuOption* __ct__CMenuOption(CMenuOption* self, CProcess* parent, u32 arg) {
     __ct__8CProcessFv((CProcess*)self);
 
     // vtable fixups: temp (CProcess) vtable first, then the composite vtable
@@ -217,11 +221,57 @@ void CMenuOption::Term() {
     func_8008294C__Q22cf13CfGameManagerFv(0);
 }
 
-void CMenuOption::Move() {}
+void CMenuOption::Move() {
+    if (CTaskGame::getInstance()->func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+        return;
 
-void CMenuOption::cbRenderBefore() {}
+    switch (mState) {
+    case 0: func_8029BBB0(this); break;
+    case 1: func_8029BC28(this); break;
+    case 2: func_8029BC78(this); break;
+    case 3: func_8029BE7C(this); break;
+    }
 
-void func_8029BB24(){}
+    func_801C3D54(&mBgTex);
+    func_801C3FF0(&mTitleAHelp);
+    func_8029C4F4(&mOption);
+}
+
+void CMenuOption::cbRenderBefore() {
+    CTaskGame::getInstance();
+    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x200000))
+        return;
+    if (func_8013BE50() == 0)
+        return;
+
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+    // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt calls
+    // (a C++ local would virtual-dispatch its scope-exit destructor).
+    u8 drawInfo[0x54];
+    __ct__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    func_80137250((nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    func_801C3D7C(&mBgTex, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    func_8029C5C8(&mOption, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
+    __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
+}
+
+/* Singleton factory (retail unmangled symbol). Returns 0 if an instance is
+ * already live; otherwise allocates the 0x1C0-byte screen, constructs it,
+ * stores it in the shared flag and registers it under `registParent`. */
+extern "C" CMenuOption* func_8029BB24(CProcess* registParent, CProcess* parent, u32 arg) {
+    if (lbl_eu_80664A38 != 0) {
+        return NULL;
+    }
+    CMenuOption* obj = (CMenuOption*)mtl::MemManager::allocate(
+        0x1c0, CWorkThreadSystem::getWorkMem());
+    if (obj != NULL) {
+        obj = __ct__CMenuOption(obj, parent, arg);
+    }
+    lbl_eu_80664A38 = (u32)obj;
+    Regist__8CProcessFP8CProcessb((CProcess*)obj, registParent, false);
+    return (CMenuOption*)lbl_eu_80664A38;
+}
 
 /* Advance the option menu to phase 1 once the background texture, title bar
  * and option panel are all ready, then start the panel intro animations and

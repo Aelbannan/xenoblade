@@ -98,9 +98,9 @@ extern "C" u32 func_8003B1EC(void* bdat);
 extern "C" u32 func_80061FFC();
 // Concrete gimmick constructors (cf/ units). The stored object is a
 // CGimmickEntry (shared CfGimmick base); the ctor fills the derived fields.
-extern "C" void* __ct__cf_CfGimmickLock(CGimmickEntry* self, u16 row);
-extern "C" void* __ct__cf_CfGimmickElv(CGimmickEntry* self, u16 row);
-extern "C" void* __ct__cf_CfGimmickWarp(CGimmickEntry* self, u16 row);
+extern "C" void* __ct__cf_CfGimmickLock(CGimmickEntry* self, int row);
+extern "C" void* __ct__cf_CfGimmickElv(CGimmickEntry* self, int row);
+extern "C" void* __ct__cf_CfGimmickWarp(CGimmickEntry* self, int row);
 extern "C" CGimmickEntry* __ct__cf_CfGimmickSaveOff(CGimmickEntry* self, s32 row);
 // Bdat table pointers for the lock / elevator / warp tables (sda21 globals).
 extern void* lbl_eu_8066412C;
@@ -311,7 +311,7 @@ bool func_801F3F98(CGimmickGlobal* self) {
     for (s32 i = 0; i < n; i++) {
         void* obj = mtl::MemManager::allocate(0x1fc, func_80061FFC());
         if (obj)
-            obj = __ct__cf_CfGimmickLock((CGimmickEntry*)obj, (u16)row);
+            obj = __ct__cf_CfGimmickLock((CGimmickEntry*)obj, row);
         self->mGimmicks[self->mGimmickCount] = (CGimmickEntry*)obj;
         self->mGimmickCount++;
         if (self->mGimmickCount >= 0x80)
@@ -334,7 +334,7 @@ bool func_801F4078(CGimmickGlobal* self) {
     for (s32 i = 0; i < n; i++) {
         void* obj = mtl::MemManager::allocate(0x1d8, func_80061FFC());
         if (obj)
-            obj = __ct__cf_CfGimmickElv((CGimmickEntry*)obj, (u16)row);
+            obj = __ct__cf_CfGimmickElv((CGimmickEntry*)obj, row);
         self->mGimmicks[self->mGimmickCount] = (CGimmickEntry*)obj;
         self->mGimmickCount++;
         if (self->mGimmickCount >= 0x80)
@@ -357,7 +357,7 @@ bool func_801F4158(CGimmickGlobal* self) {
     for (s32 i = 0; i < n; i++) {
         void* obj = mtl::MemManager::allocate(0x10c, func_80061FFC());
         if (obj)
-            obj = __ct__cf_CfGimmickWarp((CGimmickEntry*)obj, (u16)row);
+            obj = __ct__cf_CfGimmickWarp((CGimmickEntry*)obj, row);
         self->mGimmicks[self->mGimmickCount] = (CGimmickEntry*)obj;
         self->mGimmickCount++;
         if (self->mGimmickCount >= 0x80)

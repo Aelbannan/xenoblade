@@ -107,6 +107,50 @@ struct CHelpBattleObjArg {
     u32 mField3F08; // 0x3F08
 };
 
+// Battle-manager actor-list view used by func_80295CC8: mirrors
+// monolib's reslist/_reslist_base at CBattleManager+0x44 (mActorList3) so
+// the inlined size() walk reproduces retail codegen.
+struct CHelpBmListNode {
+    CHelpBmListNode* mNext; // 0x0
+    CHelpBmListNode* mPrev; // 0x4
+};
+struct CHelpBmResList {
+    void* mVptr;                    // +0x00 (virtual dtor)
+    CHelpBmListNode* mStartNodePtr; // +0x04
+    CHelpBmListNode mStartNode;     // +0x08
+    u32 size() const {
+        CHelpBmListNode* curNode;
+        CHelpBmListNode* endNode;
+
+        u32 length;
+        endNode = this->mStartNodePtr;
+        length = 0;
+        curNode = this->mStartNodePtr->mNext;
+
+        while (curNode != endNode) {
+            length++;
+            curNode = curNode->mNext;
+        }
+
+        return length;
+    }
+};
+struct CHelpBmView44 {
+    u8 pad_00[0x44];       // 0x0..0x43
+    CHelpBmResList mList3; // 0x44 (mActorList3)
+};
+
+// Minimal cf::CBattleManager stand-in so func_80295CC8 can call the real
+// static member: its mangled name is exactly the retail import
+// getInstance__Q22cf14CBattleManagerFv. Only the fields the helper touches
+// are modeled (actor list at +0x44).
+class CBattleManager {
+public:
+    static CBattleManager* getInstance();
+    u8 pad_00[0x44];         // 0x0..0x43
+    CHelpBmResList mActorList3; // 0x44
+};
+
 // Data-only shift base (mOwner@0, mParam@4) so the C++ vptr lands at +0x8
 // (retail reads the interface table pointer from object+8) and the first
 // virtual lands at vtable+0x8 - the slot func_802968B8 dispatches.

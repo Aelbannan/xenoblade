@@ -44,6 +44,7 @@ struct ScnResDataEx {
     int count;         // 0x78
 };
 
+
 // Additional extern function declarations
 void func_804BC9B4(int* dest, int baseOffset, int* src);
 void func_804B74F0(ScnResData* res, u8* data);
@@ -119,95 +120,85 @@ int func_804BC9F4(u32* outStruct, u32 data) {
     *outStruct = 0;
     func_804B7804(&lbl_eu_8065F32C);
 
-    if (data == 0) {
-        return 0;
-    }
-
     u8* base = (u8*)data;
-    u32 magic1 = *(u32*)base;
+    if (base != NULL) {
+        // Optional "WP" wrapper chunk (single 32-bit tag compare, split hi/lo by MWCC):
+        // skip its 12-byte header to reach the inner "ID" chunk.
+        u32 tag = *(u32*)base;
+        if (tag - 0x57500000 == 0x4F49) {
+            base += *(u32*)(base + 8);
+        }
 
-    // Check for "WP" container chunk: upper 16 bits = 0x5750, lower 16 bits <= 0x4F49
-    if (magic1 - 0x57500000 <= 0x4F49) {
-        base += *(u32*)(base + 8);
+        tag = *(u32*)base;
+        // "ID" chunk tag and format version 0x3EA
+        if (tag - 0x49440000 == 0x4445 && *(u16*)(base + 4) == 0x3EA) {
+            ScnResDataEx* res = (ScnResDataEx*)&lbl_eu_8065F32C;
+            res->field_0x14 = base;
+
+            u16 entryCount = *(u16*)(base + 6);
+            u8* entryList = base + 8;
+
+            for (u16 i = 0; i < entryCount; i++) {
+                // Dispatch table over chunk types 0x00-0x13 (entries are 8 bytes)
+                u8* entry = entryList + i * 8;
+                u16 type = *(u16*)entry;
+                switch (type) {
+                case 0: {
+                    u8* dataPtr = base + *(u32*)(entry + 4);
+                    res->field_0x2C = dataPtr + 0x20;
+                    res->field_0x30 = dataPtr + 0x20;
+                    res->field_0x6C = *(u16*)(entry + 2);
+                    res->field_0x34 = dataPtr;
+                    break;
+                }
+                case 1:
+                    res->field_0x18 = base + *(u32*)(entry + 4);
+                    break;
+                case 2:
+                    res->field_0x20 = base + *(u32*)(entry + 4);
+                    break;
+                case 3:
+                    res->field_0x1C = base + *(u32*)(entry + 4);
+                    break;
+                case 4:
+                    res->field_0x28 = base + *(u32*)(entry + 4);
+                    break;
+                case 5:
+                    res->field_0x24 = base + *(u32*)(entry + 4);
+                    break;
+                case 6:
+                    res->field_0x38 = base + *(u32*)(entry + 4);
+                    break;
+                case 7:
+                    res->field_0x3C = base + *(u32*)(entry + 4);
+                    res->field_0x70 = *(u16*)(entry + 2);
+                    break;
+                case 8:
+                    res->field_0x40 = base + *(u32*)(entry + 4);
+                    break;
+                case 9:
+                    res->field_0x48 = base + *(u32*)(entry + 4);
+                    break;
+                case 10:
+                    func_804BC9B4((int*)&lbl_eu_8065F32C, (int)base, (int*)(base + *(u32*)(entry + 4)));
+                    break;
+                case 11:
+                    func_804B74F0(&lbl_eu_8065F32C, base + *(u32*)(entry + 4));
+                    break;
+                case 12:
+                    res->field_0x4C = base + *(u32*)(entry + 4);
+                    break;
+                case 13:
+                    func_804B7540(&lbl_eu_8065F32C, base + *(u32*)(entry + 4), *(u16*)(entry + 2));
+                    break;
+                }
+            }
+
+            return 1;
+        }
     }
 
-    magic1 = *(u32*)base;
-    // Check for "ID" data chunk: upper 16 bits = 0x4944, lower 16 bits <= 0x4445
-    if (magic1 - 0x49440000 > 0x4445) {
-        return 0;
-    }
-
-    if (*(u16*)(base + 4) != 0x3EA) {
-        return 0;
-    }
-
-    ScnResDataEx* res = (ScnResDataEx*)&lbl_eu_8065F32C;
-    res->field_0x14 = base;
-
-    u16 entryCount = *(u16*)(base + 6);
-    ScnResEntry* entries = (ScnResEntry*)(base + 8);
-
-    int i = 0;
-    goto check;
-
-loop:
-    switch (entries[i].type) {
-    case 0: {
-        u8* dataPtr = base + entries[i].offset;
-        res->field_0x2C = dataPtr + 0x20;
-        res->field_0x30 = dataPtr + 0x20;
-        res->field_0x6C = entries[i].field_0x2;
-        res->field_0x34 = dataPtr;
-        break;
-    }
-    case 1:
-        res->field_0x18 = base + entries[i].offset;
-        break;
-    case 2:
-        res->field_0x20 = base + entries[i].offset;
-        break;
-    case 3:
-        res->field_0x1C = base + entries[i].offset;
-        break;
-    case 4:
-        res->field_0x28 = base + entries[i].offset;
-        break;
-    case 5:
-        res->field_0x24 = base + entries[i].offset;
-        break;
-    case 6:
-        res->field_0x38 = base + entries[i].offset;
-        break;
-    case 7:
-        res->field_0x3C = base + entries[i].offset;
-        res->field_0x70 = entries[i].field_0x2;
-        break;
-    case 8:
-        res->field_0x40 = base + entries[i].offset;
-        break;
-    case 9:
-        res->field_0x48 = base + entries[i].offset;
-        break;
-    case 10:
-        func_804BC9B4((int*)res, (int)base, (int*)(base + entries[i].offset));
-        break;
-    case 11:
-        func_804B74F0((ScnResData*)res, base + entries[i].offset);
-        break;
-    case 12:
-        res->field_0x4C = base + entries[i].offset;
-        break;
-    case 13:
-        func_804B7540((ScnResData*)res, base + entries[i].offset, entries[i].field_0x2);
-        break;
-    }
-    i++;
-check:
-    if (i < entryCount) {
-        goto loop;
-    }
-
-    return 1;
+    return 0;
 }
 
 // tail calls with &lbl_eu_8065F32C (retail: lis;addi;b callee); callees are

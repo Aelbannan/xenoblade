@@ -61,6 +61,10 @@ struct CfObjectEff_VTable39 {
     u32 _pad[39];                      // vtable words 0x00..0x98
     void (*fn)(CfObjectEff*, float*);  // slot 0x9C
 };
+struct CfObjectEff_VTable47 {
+    u32 _pad[47];                      // vtable words 0x00..0xB8
+    void (*fn)(CfObjectEff*, float*);  // slot 0xBC
+};
 struct CfGameManager_VTable101 {
     u32 _pad[0x65];                    // vtable words 0x00..0x190
     int (*fn)(void*);                  // slot 0x194

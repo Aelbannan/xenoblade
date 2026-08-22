@@ -177,7 +177,7 @@ void func_8026E5C0(CfGimmickEne* self, CfGimmickEneActor* actor) {
 void func_8026E678(CfGimmickEne* self, CfGimmickEneActor* actor) {
     if (actor == self->field_B4) {
         self->field_B4 = 0;
-        self->field_74 &= 0xFDFFFFFF;
+        self->field_74 &= 0xFFFFFFBF;
         if (self->field_94 != 0 && lbl_eu_806646C0 != 0) {
             func_801BFED0(1, lbl_eu_806646C0, 0xa);
             lbl_eu_806646C0 = 0;

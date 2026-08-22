@@ -329,7 +329,7 @@ extern "C" void func_80137F88(void*, u32);
 extern "C" char* func_8013639C(const void*, const void*, int);
 extern "C" void func_801FA220(u8*, const u8*);
 extern "C" void __ct__CCur18(void*, void*);
-extern "C" void func_8003AA34(void*);
+extern "C" void* func_8003AA34();  // bdat manager reset (no args; retail caller leaves r3 stale)
 extern "C" void* getFP__FPCc(const char*);
 extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
 extern "C" void func_8045F810__17UnkClass_8045F564Fv(void*);
@@ -432,6 +432,33 @@ public:
     virtual void vf02() = 0;        // +0x08
     virtual void vf03(void*) = 0;   // +0x0C
     virtual void vf04(void*) = 0;   // +0x10 Move
+};
+
+/* Layout-object view: the pane-finder sub-object sits at +0x10 (same shape
+   as CLayoutView in CEquipChange.hpp; local copy because this TU does not
+   include that header). */
+struct CEquipItemBoxLayoutView {
+    u8 _pad[0x10];
+    void* field_10;   // 0x10
+};
+
+/* Pane-finder sub-object vtable view: slot 13 (+0x3C) looks a pane up by
+   name/mode and returns it (see CLayoutSubVtbl13 in CEquipChange.hpp). */
+struct CEquipItemBoxLayoutSubVtbl13 {
+    virtual void v0();
+    virtual void v1();
+    virtual void v2();
+    virtual void v3();
+    virtual void v4();
+    virtual void v5();
+    virtual void v6();
+    virtual void v7();
+    virtual void v8();
+    virtual void v9();
+    virtual void v10();
+    virtual void v11();
+    virtual void v12();
+    virtual nw4r::lyt::Pane* v13(u32 arg, int mode);   // +0x3C
 };
 
 /* Pane-layout view exposing the translate at +0x2C (Pane::mTranslate is
@@ -595,7 +622,7 @@ extern "C" int func_801C6E90(void*);
 extern "C" void* func_8009EC9C(u32);
 // Item randomizer: reads the low 16 bits of the first word of the object
 // returned by func_8009EC9C (cf/CtrlObjectParam TU; callers pass that obj).
-extern "C" u16 func_800A082C(void*);
+extern "C" u32 func_800A082C(void*);
 // Item drop-rate helpers (code_80135FDC TU): name-table float probe and the
 // (rateA + rateB) clamp divisor shared by the equip-box/line stat displays.
 extern "C" f32 func_8013B380(u32 idx);

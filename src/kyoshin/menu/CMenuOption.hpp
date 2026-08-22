@@ -55,8 +55,25 @@ void func_8029BECC(void* self);
 void func_8029BED4(void* self);
 
 // Option-menu helper entry points (retail-unmangled callee names).
-void func_8029BC28(CMenuOption* self);
-void func_8029BE7C(CMenuOption* self);
+extern "C" void func_8029BC28(CMenuOption* self);
+extern "C" void func_8029BE7C(CMenuOption* self);
+extern "C" void func_8029BBB0(CMenuOption* self);
+extern "C" void func_8029BC78(CMenuOption* self);
+
+// Move()/cbRenderBefore() callees.
+extern "C" void func_801C3D54(CBgTex* self);
+extern "C" void func_801C3FF0(CTitleAHelp* self);
+extern "C" void func_8029C4F4(COption* self);
+extern "C" void func_8029C5C8(COption* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void func_801C4080(CTitleAHelp* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" int func_8013BE50();
+// Raw-storage nw4r DrawInfo build/destroy for cbRenderBefore (pre-mangled names).
+extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo, int flags);
+void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+extern u32 lbl_eu_80663E28;
+extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool insertTop);
 
 // Ready/idle-check and animation helpers for the embedded sub-widgets
 // (retail unmangles these member helpers; int returns so callers compare
@@ -74,8 +91,7 @@ extern "C" void __ct__8CProcessFv(CProcess* self);
 extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
 extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
 extern "C" void __ct__COption(COption* self, u8 arg);
-extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
-extern "C" char* func_80136190(char* a, char* b, int c);
+// __ct__UnkClass_8011C974 is declared by COption.hpp; func_80136190 by CFloorMap.hpp.
 extern "C" void func_801C3C14(CBgTex* self);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
 extern "C" void func_8029C35C(COption* self);

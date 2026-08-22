@@ -134,8 +134,8 @@ inline f32 u16ToF_a5c8(u16 v) {
         double d;
         u32 w[2];
     } c;
+    c.w[1] = v;             // low word first: matches retail store order
     c.w[0] = 0x43300000u;
-    c.w[1] = v;
     return (f32)(c.d - lbl_eu_8066A5C8);
 }
 inline f32 s32ToF_a5d0(s32 v) {
@@ -143,8 +143,8 @@ inline f32 s32ToF_a5d0(s32 v) {
         double d;
         u32 w[2];
     } c;
-    c.w[0] = 0x43300000u;
     c.w[1] = (u32)v ^ 0x80000000u;
+    c.w[0] = 0x43300000u;
     return (f32)(c.d - lbl_eu_8066A5D0);
 }
 
@@ -250,15 +250,26 @@ extern "C" void func_804636AC__Q23LOD17UnkClass_8046368CFv(UnkClass_8046368C* se
 // ===========================================================================
 s32 CLODCacheManagerS::func_80463590()
 {
+    // One shared conversion temp: retail reuses a single 8-byte stack slot for
+    // both u16->f32 round-trips and keeps 0x43300000 / 2^52 in registers.
+    union {
+        double d;
+        u32 w[2];
+    } c;
     f32 lim = lbl_eu_80665754;
 
     // Sweep up to the near distance: report the first element's near state.
-    if (lim <= u16ToF_a5c8(field_0x0)) {
+    c.w[1] = field_0x0;
+    c.w[0] = 0x43300000u;
+    f32 nearF = (f32)(c.d - lbl_eu_8066A5C8);
+    if (lim <= nearF) {
         return lbl_eu_80665748[field_0x8].field_0x0 != 0 ? 1 : 0;
     }
 
     // Sweep past the far distance: report the last element's near state.
-    if (lim >= u16ToF_a5c8(field_0x2)) {
+    c.w[1] = field_0x2;
+    f32 farF = (f32)(c.d - lbl_eu_8066A5C8);
+    if (lim >= farF) {
         return lbl_eu_80665748[field_0x8 + field_0x6 - 1].field_0x0 != 0 ? 1 : 0;
     }
 

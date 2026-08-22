@@ -7,7 +7,7 @@
 // func_8009CF8C, which would win the C-name resolution and emit a byte-masked
 // return; CTaskGame.hpp is therefore not included here and the two CTaskGame
 // statics are addressed by their literal retail names instead.
-extern "C" void* func_8009CF8C(int);
+extern "C" u32 func_8009CF8C(u32);
 class CTaskGame;
 extern "C" CTaskGame* getInstance__9CTaskGameFv();
 extern "C" int func_800426F0__9CTaskGameFv();
@@ -86,7 +86,7 @@ extern "C" void func_8024439C(CFade* self);
 extern "C" void func_802443E8(CFade* self);
 extern "C" void func_8024CB94(CFloorMap* self);
 extern "C" u16 func_8024F54C(CFloorMap* self);
-extern "C" u8 func_8024CE1C(CFloorMap* self);
+extern "C" int func_8024CE1C(CFloorMap* self);
 extern "C" void func_8024BE1C(CFloorMap* self);
 extern "C" void func_8024C1FC(CFloorMap* self);
 extern "C" int func_8024F538(CFloorMap* self);
@@ -167,7 +167,7 @@ extern "C" void __ct__CFloorMap(CFloorMap* self);
 extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
 extern "C" void func_8016742C(void* dest, void* src);
 extern "C" void CTitleAHelp_load(CTitleAHelp* self);
-extern "C" char* func_80136190(char* a, char* b, int id);
+extern "C" char* func_80136190(char* a, char* b, u32 id);
 // D2-form subobject/base destructor helpers (explicit delete flags), used by
 // the free-function form of ~CMenuMapSelectSC. __dt__800FED0C is the CProcess
 // base dtor retail symbol (the game-side D2 wrapper, distinct from the library

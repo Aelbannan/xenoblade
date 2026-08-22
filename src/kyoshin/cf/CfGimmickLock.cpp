@@ -271,12 +271,16 @@ void func_8020CAAC(cf::CfGimmickLock* self) {
 void func_8020CB28(cf::CfGimmickLock* self) {
     func_802089BC(&self->scale, &self->position.x, &self->rotation);
 
-    int flag = (self->configFlags & 0x40) ? 1 : 0;
+    // Branchy bool so MWCC keeps the retail li/beq shape (not a bit extract).
+    int flag = 0;
+    if (self->configFlags & 0x4) {
+        flag = 1;
+    }
 
     if (self->stateIndex - 3 <= 1) {
         f32 vec[3];
-        vec[0] = self->extent0;
         vec[1] = (self->extent1 - self->extent2) * lbl_eu_806683B8;
+        vec[0] = self->extent0;
         vec[2] = self->extent3;
         func_804B0B0C(&self->subA, vec);
     } else if (self->stateIndex - 1 <= 1) {
@@ -285,8 +289,8 @@ void func_8020CB28(cf::CfGimmickLock* self) {
 
     if (self->stateIndex - 3 <= 1) {
         f32 vec[3];
-        vec[0] = self->position.x;
         vec[1] = ((self->position.y + self->extent1) + (self->position.y + self->extent2)) * lbl_eu_806683B8;
+        vec[0] = self->position.x;
         vec[2] = self->position.z;
         func_804B0C0C(&self->subA, vec, &self->rotation);
     } else if (self->stateIndex - 1 <= 1) {
@@ -298,7 +302,12 @@ void func_8020CB28(cf::CfGimmickLock* self) {
     }
 
     self->subA.timer = 0x2710;
-    self->subA.state = (self->configFlags & 1) ? 6 : 1;
+    // Branchy select matching the retail li/beq/li + word store.
+    u32 initState = 1;
+    if (self->configFlags & 1) {
+        initState = 6;
+    }
+    self->subA.state = initState;
 }
 
 // Rebuild the lock geometry: register the inner region and place it per the
@@ -310,10 +319,11 @@ extern "C" void func_8020CC9C(cf::CfGimmickLock* self) {
         }
         self->flags |= 1;
         if (self->stateIndex - 3 <= 1) {
+            f32 t = (self->position.y + self->extent1) + (self->position.y + self->extent2);
             f32 vec[3];
             vec[0] = self->position.x;
-            vec[1] = ((self->position.y + self->extent1) + (self->position.y + self->extent2)) * lbl_eu_806683B8;
             vec[2] = self->position.z;
+            vec[1] = t * lbl_eu_806683B8;
             func_804B0C0C(&self->subA, vec, &self->rotation);
         } else if (self->stateIndex - 1 <= 1) {
             f32 vec[3];
@@ -413,21 +423,22 @@ extern "C" void func_8020CFD0(cf::CfGimmickLock* self) {
             return;
         }
         self->flags |= 2;
+        // field_78 is re-read around every opaque call so MWCC keeps the
+        // retail reload sequence instead of caching the pointer.
         if (self->field_78 != 0) {
-            CfGimmickLockObj* obj = (CfGimmickLockObj*)self->field_78;
-            *(void**)((u8*)obj + 0xb0) = self;
-            obj->setY(self->rotation.y);
+            ((cf::CfGimmickLockObj*)self->field_78)->owner = self;
+            ((cf::CfGimmickLockObj*)self->field_78)->setY(self->rotation.y);
             if (self->stateIndex - 3 <= 1) {
                 f32 diff = self->extent1 - self->extent2;
                 f32 vec[3];
                 vec[2] = self->extent3 / lbl_eu_806683C4;
                 vec[1] = diff * lbl_eu_806683B8 / lbl_eu_806683C4;
                 vec[0] = self->extent0 / lbl_eu_806683C4;
-                obj->setPos(vec);
-                func_800ACEF8(obj, vec);
+                ((cf::CfGimmickLockObj*)self->field_78)->setPos(vec);
+                func_800ACEF8(self->field_78, vec);
             } else {
-                obj->setPos(&self->position.x);
-                obj->setScale(self->extent0 / lbl_eu_806683C4);
+                ((cf::CfGimmickLockObj*)self->field_78)->setPos(&self->position.x);
+                ((cf::CfGimmickLockObj*)self->field_78)->setScale(self->extent0 / lbl_eu_806683C4);
             }
             // Touch the target of every fight-list entry.
             CfGimmickList* list = func_800B6BC8();
@@ -442,17 +453,20 @@ extern "C" void func_8020CFD0(cf::CfGimmickLock* self) {
             }
         }
     } else {
-        CfGimmickLockObj* obj = (CfGimmickLockObj*)self->field_78;
-        if (obj != 0) {
+        void* mgr = self->field_78;
+        if (mgr != 0) {
             if (self->stateIndex - 3 <= 1) {
                 f32 diff = self->extent1 - self->extent2;
                 f32 vec[3];
                 vec[2] = self->extent3 / lbl_eu_806683C4;
                 vec[1] = diff * lbl_eu_806683B8 / lbl_eu_806683C4;
                 vec[0] = self->extent0 / lbl_eu_806683C4;
-                func_800ACEF8(obj, vec);
+                func_800ACEF8(mgr, vec);
             } else if (self->stateIndex - 1 <= 1) {
-                obj->setScale(self->extent0 / lbl_eu_806683C4);
+                ((cf::CfGimmickLockObj*)mgr)->setScale(self->extent0 / lbl_eu_806683C4);
+            } else {
+                // Out-of-range placement: skip the tail update entirely.
+                return;
             }
         }
     }

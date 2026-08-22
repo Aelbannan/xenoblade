@@ -199,11 +199,11 @@ void func_8016F144(CfMapEffectManager* self) {
 // bdat columns: reconcile the effect object at field_0x0C[index] with the
 // current event state, rebuild it when the state is "active" and the slot is
 // empty, then push the per-frame column data through the effect virtuals.
-extern "C" void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
+void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
     u32 flags = lbl_eu_80663E24;
-    F64Conv uA, uB;
-    uA.w[0] = 0x43300000;
-    uB.w[0] = 0x43300000;
+    F64Conv convLo, convHi;
+    convLo.w[0] = 0x43300000;
+    convHi.w[0] = 0x43300000;
     // Fast path: event bits set + +0x32 column enabled -> poke the 0x158
     // virtual on the existing effect object and stop.
     if ((flags & 0x2000000) != 0 || (flags & 0x400) != 0) {
@@ -217,139 +217,133 @@ extern "C" void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
         return;
     }
 
-    u32 v = cf::CfGameManager::func_80086DBC();
-    u16 a = (u16)cf::CfGameManager::func_80086DA0();
-    cf::CfGameManager::func_80086DA4();
-    u16 t = func_8016DF2C();
-    u32 w38 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x38, index);
-    u32 w40 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x40, index);
-    u32 w48 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x48, index);
-    u8 b1 = (u8)w40;
-    u8 b2 = (u8)w48;
-    CfObject* obj = self->field_0x0C[index];
-    if (obj != 0 && func_800B8920(obj) == 0) {
-        self->field_0x0C[index] = 0;
+    u32 phase = cf::CfGameManager::func_80086DBC();
+    u16 area = (u16)cf::CfGameManager::func_80086DA0();
+    cf::CfGameManager::func_80086DA4(); // result discarded (retail calls it)
+    u16 secs = func_8016DF2C();
+
+    u32 modelCol = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x38, index);
+    u8 timeCol = (u8)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x40, index);
+    u8 onceCol = (u8)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x48, index);
+
+    CfObject** slot = &self->field_0x0C[index];
+    if (*slot != 0 && func_800B8920(*slot) == 0) {
+        // Stale handle: drop the object and clear both counter banks.
+        *slot = 0;
         self->field_0xE4[index] = 0;
         self->field_0x9C[index] = 0;
     }
 
-    u32 w4d = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x4d, index);
-    u16 h4d = (u16)w4d;
-    int cond;
-    if (h4d == 0) {
-        cond = 0;
-    } else {
-        cond = func_8009CF8C(h4d + 0x278a) == 0;
-    }
-    if (cond != 0) {
-        CfObject* o = self->field_0x0C[index];
-        if (o != 0 && self->field_0xE4[index] != 1) {
-            func_800ACC14(o, 1);
+    u16 gate = (u16)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x4d, index);
+    if (gate != 0 && func_8009CF8C(gate + 0x278a) == 0) {
+        // Gated off: force idle state (1) unless already applied.
+        if (*slot != 0 && self->field_0xE4[index] != 1) {
+            func_800ACC14(*slot, 1);
             self->field_0xE4[index] = 1;
             self->field_0x9C[index] = 0;
         }
         return;
     }
 
-    int r31 = func_8016EFD8((int)self, index);
-    int r28 = 1;
-    if (b1 != 0 && (u32)b1 != (u32)t) {
-        r28 = 0;
+    int inRange = func_8016EFD8((int)self, index);
+    int timeOk = 1;
+    if (timeCol != 0 && (u32)timeCol != (u32)secs) {
+        timeOk = 0;
     }
-    int flag = 0;
-    u32 w55 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x55, index);
-    u16 arr[3];
-    arr[0] = (u8)w55;
-    u32 w5f = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x5f, index);
-    arr[1] = (u8)w5f;
-    u32 w69 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x69, index);
-    arr[2] = (u8)w69;
+
+    u16 subs[3];
+    subs[0] = (u8)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x55, index);
+    subs[1] = (u8)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x5f, index);
+    subs[2] = (u8)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x69, index);
     func_8006A6D0();
+    int anySub = 0;
     for (int i = 0; i < 3; i++) {
-        if (i == 0 || arr[i] != 0) {
-            int r = (arr[i] == 0) ? 1 : func_8016FA68((int)self, (int)v, (int)a, (int)arr[i]);
-            flag = (flag | r) != 0;
+        if (i != 0 && subs[i] == 0) {
+            continue;
         }
+        int r =
+            (subs[i] == 0) ? 1 : func_8016FA68((int)self, (int)phase, (int)area, (int)subs[i]);
+        anySub = (anySub | r) != 0;
     }
 
-    int ok = 0;
-    if (r31 != 0 && r28 != 0 && flag != 0) {
-        ok = 1;
+    int spawn = 0;
+    if (inRange != 0 && timeOk != 0 && anySub != 0) {
+        spawn = 1;
     }
-    if (ok == 0) {
-        CfObject* o = self->field_0x0C[index];
-        if (o != 0 && self->field_0xE4[index] != 1) {
-            func_800ACC14(o, 1);
+    if (spawn == 0) {
+        if (*slot != 0 && self->field_0xE4[index] != 1) {
+            func_800ACC14(*slot, 1);
             self->field_0xE4[index] = 1;
             self->field_0x9C[index] = 0;
         }
-        if (b2 == 0) {
+        if (onceCol == 0) {
             self->field_0x9C[index] = 0;
         }
         return;
     }
 
-    // Active path: bounce the object to state 2, then (re)create it.
-    CfObject* o = self->field_0x0C[index];
-    if (o != 0 && self->field_0xE4[index] == 1) {
-        func_800ACC14(o, 2);
+    // Active path: bounce a live object to state 2, then (re)create it.
+    if (*slot != 0 && self->field_0xE4[index] == 1) {
+        func_800ACC14(*slot, 2);
         self->field_0xE4[index] = 2;
     }
-    if (b2 == 0 && self->field_0x9C[index] != 0) {
-        ok = 0;
+    if (onceCol == 0 && self->field_0x9C[index] != 0) {
+        spawn = 0;
     }
-    if (self->field_0x0C[index] == 0 && ok != 0) {
-        u32 w73 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x73, index);
-        u32 w7d = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x7d, index);
+
+    if (*slot == 0 && spawn != 0) {
+        u16 flashCol = (u16)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x73, index);
+        u32 attachCol = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x7d, index);
         CfObject* extra = 0;
-        if ((u8)w7d != 0) {
-            extra = (CfObject*)func_80186BC8((u8)w7d);
+        if ((u8)attachCol != 0) {
+            extra = (CfObject*)func_80186BC8((u8)attachCol);
             if (extra == 0) {
                 return;
             }
         }
-        float second = lbl_eu_80667710;
+        float flashArg = lbl_eu_80667710;
         CfObjectEff* newObj =
-            (CfObjectEff*)func_800817BC__Q22cf13CfGameManagerFv((u16)w38, 0);
+            (CfObjectEff*)func_800817BC__Q22cf13CfGameManagerFv((u16)modelCol, 0);
         if (newObj != 0) {
-            self->field_0x0C[index] = newObj;
-            if (b2 != 0) {
-                self->field_0x9C[index] = a;
+            *slot = newObj;
+            if (onceCol != 0) {
+                self->field_0x9C[index] = area;
             } else {
                 self->field_0x9C[index] = 1;
             }
             reinterpret_cast<CfMapEffectObject*>(newObj)->field_0xB0 = (u32)self;
 
-            // Columns +0x84/0x89/0x8e -> position values (u32 -> float).
-            float a3[3];
-            u32 v84 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x84, index);
-            uA.w[1] = v84 ^ 0x80000000;
-            a3[0] = lbl_eu_80667714 * (float)(uA.d - lbl_eu_80667720);
-            u32 v89 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x89, index);
-            uB.w[1] = v89 ^ 0x80000000;
-            a3[1] = lbl_eu_80667714 * (float)(uB.d - lbl_eu_80667720);
-            u32 v8e = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x8e, index);
-            uA.w[1] = v8e ^ 0x80000000;
-            a3[2] = lbl_eu_80667714 * (float)(uA.d - lbl_eu_80667720);
+            // Columns +0x84/+0x89/+0x8e: unsigned column -> position floats.
+            float pos[3];
+            convLo.w[1] =
+                getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x84, index) ^ 0x80000000;
+            pos[0] = lbl_eu_80667714 * (float)(convLo.d - lbl_eu_80667720);
+            convHi.w[1] =
+                getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x89, index) ^ 0x80000000;
+            pos[1] = lbl_eu_80667714 * (float)(convHi.d - lbl_eu_80667720);
+            convLo.w[1] =
+                getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x8e, index) ^ 0x80000000;
+            pos[2] = lbl_eu_80667714 * (float)(convLo.d - lbl_eu_80667720);
 
-            // Columns +0x93/0x98/0x9d -> signed values (s16 -> float).
+            // Columns +0x93/+0x98/+0x9d: signed column -> floats. Kept as an
+            // array so MWCC spills them; the third converts into the arg block.
             float vals[3];
-            u32 v93 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x93, index);
-            uB.w[1] = (u32)(s16)v93 ^ 0x80000000;
-            vals[0] = lbl_eu_80667718 * (float)(uB.d - lbl_eu_80667720);
-            u32 v98 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x98, index);
-            uA.w[1] = (u32)(s16)v98 ^ 0x80000000;
-            vals[1] = lbl_eu_80667718 * (float)(uA.d - lbl_eu_80667720);
-            u32 v9d = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x9d, index);
-            uB.w[1] = (u32)(s16)v9d ^ 0x80000000;
-            vals[2] = lbl_eu_80667718 * (float)(uB.d - lbl_eu_80667720);
+            convHi.w[1] = (u32)(s16)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x93,
+                                                             index) ^ 0x80000000;
+            vals[0] = lbl_eu_80667718 * (float)(convHi.d - lbl_eu_80667720);
+            convLo.w[1] = (u32)(s16)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x98,
+                                                             index) ^ 0x80000000;
+            vals[1] = lbl_eu_80667718 * (float)(convLo.d - lbl_eu_80667720);
 
-            float b3[3];
-            b3[0] = vals[0] * lbl_eu_8066A210;
-            b3[1] = vals[1] * lbl_eu_8066A210;
-            b3[2] = vals[2] * lbl_eu_8066A210;
-            (*(CfObjectEff_VTable39**)newObj)->fn(newObj, a3);
-            newObj->CfObject_UnkVirtualFunc27(b3);
+            float args[3];
+            args[0] = vals[0] * lbl_eu_8066A210;
+            args[1] = vals[1] * lbl_eu_8066A210;
+            convHi.w[1] = (u32)(s16)getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0x9d,
+                                                             index) ^ 0x80000000;
+            vals[2] = lbl_eu_80667718 * (float)(convHi.d - lbl_eu_80667720);
+            args[2] = vals[2] * lbl_eu_8066A210;
+            (*(CfObjectEff_VTable39**)newObj)->fn(newObj, pos);
+            (*(CfObjectEff_VTable47**)newObj)->fn(newObj, args);
             if (extra != 0) {
                 func_800ACF78(newObj, extra, 0);
             }
@@ -358,22 +352,22 @@ extern "C" void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
             func_800AD040((char*)newObj, camFlag);
             newObj->CfObject_UnkVirtualFunc66(self->field_0x138);
 
-            if ((u16)w73 != 0) {
+            if (flashCol != 0) {
                 u32 wa2 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0xa2, index);
                 if ((u8)wa2 != 0) {
                     u32 wa7 = getBdatStringColumnValue(bdat, lbl_eu_80503248 + 0xa7, index);
-                    uA.w[1] = (u16)wa7;
-                    second = (float)(uA.d - lbl_eu_80667728);
+                    convLo.w[1] = (u16)wa7;
+                    flashArg = (float)(convLo.d - lbl_eu_80667728);
                 }
-                uB.w[1] = (u16)w73;
-                func_800ACC28(newObj, (float)(uB.d - lbl_eu_80667728), second);
+                convHi.w[1] = (u16)flashCol;
+                func_800ACC28(newObj, (float)(convHi.d - lbl_eu_80667728), flashArg);
             }
         }
     }
 
     // Per-frame column push (columns 0x30+i in the scratch-name buffer)
-    // while the slot is live.
-    if (self->field_0x0C[index] != 0) {
+    // while the slot is live. Counter compare is signed in retail.
+    if (*slot != 0) {
         for (int i = 1; i <= 8; i++) {
             lbl_eu_806623EC[6] = (u8)(i + 0x30);
             u32 vv = getBdatStringColumnValue(bdat, (const char*)lbl_eu_806623EC, index);
@@ -381,9 +375,9 @@ extern "C" void func_8016F2A4(CfMapEffectManager* self, int index, u8* bdat) {
             if ((u8)vv == 0) {
                 r = 0;
             } else {
-                r = func_8016FA68((int)self, (int)v, (int)a, (int)(u8)vv);
+                r = func_8016FA68((int)self, (int)phase, (int)area, (int)(u8)vv);
             }
-            if (r != 0 && self->field_0xE4[index] != (u16)i) {
+            if (r != 0 && (s16)self->field_0xE4[index] != (s16)i) {
                 func_800ACC14(self->field_0x0C[index], (s8)i);
                 self->field_0xE4[index] = (u16)i;
             }

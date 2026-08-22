@@ -6,6 +6,8 @@
 #include "kyoshin/CTutorial.hpp"
 
 #include "kyoshin/code_80135FDC.hpp"
+
+#include <functions.hpp>
 u8 CTutorial::func_8029ACAC() { return this->field_46; }
 u8 CTutorial::func_8029ACB4() { return this->field_47; }
 u8 CTutorial::func_8029ACBC() { return this->field_52; }
@@ -40,7 +42,20 @@ u8 CTutorial::func_8029AE5C() {
     return cur != 0;
 }
 
-__declspec(noinline) void func_8029AE9C() {}
+// Advance-anim start: disable anim0 / enable anim1, mark state 2, and re-bind
+// both transforms onto the layout before kicking an animation tick.
+void CTutorial::func_8029AE9C() {
+    if (func_80137444(mpAnimTrans0, lbl_eu_80668C08) != 0) {
+        field_45 = 2;
+        mpLayout->SetAnimationEnable(mpAnimTrans0, false);
+        mpLayout->SetAnimationEnable(mpAnimTrans1, true);
+        mpLayout->Animate(0);
+    }
+}
+
+// Compiler-generated complete-object dtor: destroy the two memory regions in
+// reverse declaration order, then free the object when the delete flag is set.
+CTutorial::~CTutorial() {}
 
 /* Advance-animation (0x40) reached the end frame: state 3, visible. */
 __declspec(noinline) void CTutorial::func_8029AF30() {
@@ -50,7 +65,15 @@ __declspec(noinline) void CTutorial::func_8029AF30() {
     }
 }
 
-__declspec(noinline) void func_8029AF7C() {}
+// Rewind-anim start: mirror of func_8029AE9C with the transforms swapped.
+void CTutorial::func_8029AF7C() {
+    if (func_80137510(mpAnimTrans1, lbl_eu_80668C08) != 0) {
+        field_45 = 5;
+        mpLayout->SetAnimationEnable(mpAnimTrans1, false);
+        mpLayout->SetAnimationEnable(mpAnimTrans0, true);
+        mpLayout->Animate(0);
+    }
+}
 
 /* Rewind-animation (0x3C) reached the start frame: state 0, visible. */
 __declspec(noinline) void CTutorial::func_8029B010() {
@@ -63,6 +86,18 @@ __declspec(noinline) void CTutorial::func_8029B010() {
 void func_8029B05C(){}
 
 extern "C" __declspec(noinline) void func_8029B124(CTutorial* self) {}
+
+// Reset a block of UI flags (0x3340..0x33BE) owned by this tutorial, then set
+// the owner id 0x270 entry to a heap/direct-address classification mask.
+void CTutorial::func_8029B498() {
+    for (s16 i = 0x3340; i < 0x33bf; i++) {
+        func_8009D018(i, (u32)this);
+    }
+    // (a | -a) >> 31 is -1 for any nonzero address, 0 for null; masked to the
+    // 0x7F000000 window by the caller-side rlwinm.
+    s32 addr = (s32)this;
+    func_8009D018(0x270, ((addr | -addr) >> 31) & 0x7f000000);
+}
 
 // Page-counter tick: play the confirm sound while the counter is nonzero,
 // decrement it (u8-domain), clamp negatives to zero, then refresh.
@@ -87,13 +122,13 @@ extern "C" void func_8029AB28(CTutorial* self) {
     }
     switch (self->field_45) {
     case 1:
-        func_8029AE9C();
+        self->func_8029AE9C();
         break;
     case 2:
         self->func_8029AF30();
         break;
     case 4:
-        func_8029AF7C();
+        self->func_8029AF7C();
         break;
     case 5:
         self->func_8029B010();
@@ -105,26 +140,19 @@ extern "C" void func_8029AB28(CTutorial* self) {
 }
 extern "C" void func_8029ABD8() {}
 extern "C" void func_8029ACEC() {}
-// Page-navigation helper: set the page-complete flag when the target is the
-// last page, otherwise advance the counter (clamped by a), then refresh and
-// play the confirm sound.
-// Page-navigation helper: mark complete when b is the last page, else advance
-// the counter clamped by a, then refresh and play the confirm sound. NOTE:
-// retail emits two dead field loads (lbz 0x50/0x51) before the (s8) param
-// casts reuse those registers; MWCC DCEs them from high-level C, leaving the
-// function 2 instructions short (0x68 vs 0x70) — open item.
-extern "C" void func_8029AD88(CTutorial* self) {
-    u8 raw50 = self->field_50;
-    u8 raw51 = self->field_51;
-    if ((s8)raw50 == (s8)raw51 - 1) {
-        self->field_52 = 1;
+// Page-navigation helper: mark complete when the counter already sits on the
+// last page, else advance it clamped to bound-1, then refresh and play the
+// confirm sound.
+void CTutorial::func_8029AD88() {
+    if ((s8)field_50 == (s8)field_51 - 1) {
+        field_52 = 1;
         return;
     }
-    self->field_50 = (u8)(raw50 + 1);
-    if ((s8)(u8)(raw50 + 1) >= (s8)raw51) {
-        self->field_50 = (u8)(raw51 - 1);
+    field_50 = field_50 + 1;
+    if ((s8)(u8)(field_50) >= (s8)field_51) {
+        field_50 = field_51 - 1;
     }
-    func_8029B124(self);
+    ::func_8029B124(this);
     func_80138078(8);
 }
 

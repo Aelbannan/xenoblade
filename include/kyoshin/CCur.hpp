@@ -11,6 +11,10 @@
 // CSysWin.hpp / CKizunagram.hpp / CEquipItemBox.hpp).
 extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
 extern "C" bool func_801C4648(nw4r::lyt::Pane*);
+// Pane translate setter (defined in CCur.cpp; retail keeps C linkage).
+// never_inline on the declaration so call sites keep the out-of-line bl.
+extern "C" void func_801D2150(nw4r::lyt::Pane*, const nw4r::math::VEC3*)
+    __attribute__((never_inline));
 
 // Shared 0.0f constant in .sdata2 (defined in port/data_defs.cpp). Retail
 // code loads it via lfs @sda21 instead of pooling a local literal.

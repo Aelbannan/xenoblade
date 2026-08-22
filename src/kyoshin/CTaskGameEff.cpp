@@ -212,8 +212,14 @@ extern "C" __declspec(noinline) void cbRenderBefore__12CTaskGameEffFv(void* self
 extern "C" __declspec(noinline) void func_80045044(CTaskGameEff* self, void* param) {
     CDeviceGX::getCacheInstance()->func_8044BE38();
     CViewRoot::func_80442DA8();
-    u16 flags = *(u16*)&lbl_eu_8065FC18[0];
-    *(u16*)&lbl_eu_8065FC18[0] = (u16)((flags & 0xF7FF) | ((u16)self->mActive << 11));
+    // Bitfield assign folds to the retail lhz/rlwimi/sth insert of mActive
+    // into bit 11 (0x800) of the singleton flag halfword.
+    struct EffFlagBits {
+        u16 unkHi : 4;
+        u16 activeBit : 1;
+        u16 unkLo : 11;
+    };
+    ((EffFlagBits*)&lbl_eu_8065FC18[0])->activeBit = self->mActive;
     func_804CBB84(&lbl_eu_8065FC18[0], param);
     func_804CBC90(&lbl_eu_8065FC18[0]);
     func_804CBD14(&lbl_eu_8065FC18[0]);
@@ -269,7 +275,30 @@ void func_80045284(void* unused, void* param) {
 }
 #pragma optimize_for_size off
 
-void func_800452EC(){}
+// func_800452EC: register `scene` with the effect task - push it onto the
+// scene list (inlined reslist push_back incl. setItem's guarded item store)
+// and attach the task's three render callbacks to the scene.
+// func_80045284 uses optimize_for_size; this function matches without it.
+void func_800452EC(CScn* scene) {
+    CTaskGameEff* gTask = lbl_eu_80663D40;
+    if (gTask != nullptr && scene != nullptr) {
+        gTask->mSceneList.push_back(*scene);
+
+        // Retail re-reads the singleton and null-guards each callback thunk.
+        CTaskGameEff* gt = lbl_eu_80663D40;
+        IScnRender* cb54 = reinterpret_cast<IScnRender*>(gt);
+        if (gt != nullptr) cb54 = &gt->field_0x54;
+        func_80495FC8(scene, cb54, 8);
+
+        gt = lbl_eu_80663D40;
+        IScnRender* cb58 = reinterpret_cast<IScnRender*>(gt);
+        if (gt != nullptr) cb58 = &gt->field_0x58;
+        scene->addRenderCB(cb58, 1, 0);
+
+        gt = lbl_eu_80663D40;
+        scene->addRenderCB(&gt->field_0x70, 0xe, 0);
+    }
+}
 
 // func_800453EC: unregister the render callbacks for `scene` and unlink it
 // from the effect-task's scene list. Finds the list node whose scene matches.

@@ -584,7 +584,7 @@ extern "C" u8 func_801361E8(u32, const char*, u32);
 extern "C" s16 func_80136330(u32, const char*, u32);
 extern "C" u32 func_8003B1EC(u32);
 extern "C" void* getFP__FPCc(const char*);
-extern "C" void func_8003AA34();
+extern "C" void* func_8003AA34();
 extern "C" void func_801F367C(void*);
 extern "C" CFloorMapGimmickGlobal* getUnk80664658();
 extern "C" void func_801F3670(void*, const float*);
@@ -604,10 +604,10 @@ extern f32 lbl_eu_806687A0;
 extern f32 lbl_eu_80668794;
 
 // .sbss color tables used by func_80139A18 (init in sinit_80250CB4).
-extern u16 lbl_eu_806647A0[];
-extern u16 lbl_eu_806647A8[];
-extern u16 lbl_eu_806647B0[];
-extern u16 lbl_eu_806647B8[];
+extern u16 lbl_eu_806647A0[4];
+extern u16 lbl_eu_806647A8[4];
+extern u16 lbl_eu_806647B0[4];
+extern u16 lbl_eu_806647B8[4];
 extern u32 lbl_eu_80664184;   // current world/map id (full word)
 
 // Pane flag-byte view (Pane::mFlag is protected; retail reads/writes it

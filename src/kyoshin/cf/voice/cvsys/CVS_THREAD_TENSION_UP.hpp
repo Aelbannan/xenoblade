@@ -7,7 +7,7 @@
 extern "C" u32 lbl_eu_80539D20[3];
 extern "C" u32 lbl_eu_80539D2C[3];
 extern "C" u32 lbl_eu_80539D38[3];
-extern "C" u32 lbl_eu_80539D44;  // vtable for CVS_THREAD_TENSION_UP
+extern "C" u32 lbl_eu_80539D44[3];  // vtable for CVS_THREAD_TENSION_UP
 
 /**
  * CVS_THREAD_TENSION_UP - voice thread for tension-up audio events.

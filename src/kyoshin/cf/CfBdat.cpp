@@ -409,10 +409,8 @@ void func_80141DC4(float* out, int index){
 u32 func_80141E90(u32 param1, u32 param2, u32 param3, u32 param4){
     // Skill/arts helper: grind an arts id into an item id, or translate an
     // equip-type byte into the matching item list row.
-    u8 v1;
-    u8 v2;
-    void* table;
     u32 result = 0;
+    void* table;
     if(param3 != 0){
         if((s32)param2 <= 0 && param3 < 6){
             if(param1 == 8) return func_800AA2E8(param1, 4, param3);
@@ -423,12 +421,12 @@ u32 func_80141E90(u32 param1, u32 param2, u32 param3, u32 param4){
         snprintf(lbl_eu_80662228, 8, &lbl_eu_80500FA4[0x367], param1);
         table = lbl_eu_806640F8;
         u32 val1 = getBdatStringColumnValue(table, lbl_eu_80662228, param2);
-        // Byte-read the first byte of the stored u32 (retail spills the call
-        // result to the stack then `lbz`es it back - same shape, and taking
-        // the address keeps the u32 memory-resident so MWCC reproduces it).
-        v1 = *(const u8*)&val1;
+        // Byte-read the first bytes of the stored u32s: retail spills the call
+        // results to the stack then `lbz`es them back - taking the addresses
+        // keeps the u32s memory-resident so MWCC reproduces that shape.
+        u8 v1 = *(const u8*)&val1;
         u32 val2 = getBdatStringColumnValue(table, &lbl_eu_80500FA4[0x36c], param2);
-        v2 = *(const u8*)&val2;
+        u8 v2 = *(const u8*)&val2;
         if(param3 == 0) param3 = v2;
         u16 tsel = (u16)(param3 & 0xFFFF);
         void* rt;

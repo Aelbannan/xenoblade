@@ -169,26 +169,24 @@ s32 AHXBSR_IsDataAvailable(AHXBSR* bsr, s32 bits) {
 }
 
 u32 AHXBSR_GetBitStm(AHXBSR* bsr, s32 bits) {
-    u32 mask, result;
+    u32 result;
     s32 shift;
 
     if (bsr->bitCnt < bits) {
         ahxbsr_get_data(bsr);
     }
 
-    if (bits > bsr->bitCnt) {
+    shift = bsr->bitCnt;
+    if (bits > shift) {
         bsr->position += bsr->bitCnt;
         bsr->bitCnt = 0;
         return 0;
     }
 
     shift = bsr->bitCnt - bits;
-    mask = lbl_eu_805175A0[bits];
-    result = ((s32)bsr->bitBuf >> shift) & mask;
-
+    result = ((s32)bsr->bitBuf >> shift) & lbl_eu_805175A0[bits];
     bsr->bitCnt -= bits;
     bsr->position += bits;
-
     return result;
 }
 

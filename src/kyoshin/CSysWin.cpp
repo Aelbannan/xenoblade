@@ -399,7 +399,9 @@ case0:
     {
         nw4r::lyt::Pane* pane =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x1c], true);
-        func_80127BF4(self->mTagProcessor, pane, pane0);
+        // func_80127BF4's retail signature takes opaque view pointers
+        func_80127BF4(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(pane),
+                      reinterpret_cast<CTagOutView*>(pane0));
         f32 size[2];
         func_80127BC4(size, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
         f32 h = size[1];
@@ -442,12 +444,14 @@ case1:
     {
         nw4r::lyt::Pane* paneA =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x3a], true);
-        func_80127BF4(self->mTagProcessor, paneA, pane0);
+        func_80127BF4(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(paneA),
+                      reinterpret_cast<CTagOutView*>(pane0));
         f32 posA[2];
         func_80127BC4(posA, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
         nw4r::lyt::Pane* paneB =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x29], true);
-        func_80127BF4(self->mTagProcessor, paneB, pane0);
+        func_80127BF4(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(paneB),
+                      reinterpret_cast<CTagOutView*>(pane0));
         f32 posB[2];
         func_80127BC4(posB, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
         f32 pick[2];
@@ -470,7 +474,9 @@ case2:
     {
         nw4r::lyt::Pane* pane =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x4a], true);
-        func_80127BF4(self->mTagProcessor, pane, pane0);
+        // func_80127BF4's retail signature takes opaque view pointers
+        func_80127BF4(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(pane),
+                      reinterpret_cast<CTagOutView*>(pane0));
         f32 size[2];
         func_80127BC4(size, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
         f32 h = size[1];
@@ -505,12 +511,14 @@ case3:
     {
         nw4r::lyt::Pane* paneA =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x67], true);
-        func_80127BF4(self->mTagProcessor, paneA, pane0);
+        func_80127BF4(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(paneA),
+                      reinterpret_cast<CTagOutView*>(pane0));
         f32 posA[2];
         func_80127BC4(posA, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
         nw4r::lyt::Pane* paneB =
             self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A478[0x57], true);
-        func_80127BF4(self->mTagProcessor, paneB, pane0);
+        func_80127BF4(self->mTagProcessor, reinterpret_cast<CTagMsgView*>(paneB),
+                      reinterpret_cast<CTagOutView*>(pane0));
         f32 posB[2];
         func_80127BC4(posB, reinterpret_cast<CSysWinPaneOverlay*>(pane0)->size);
         f32 pick[2];

@@ -56,22 +56,19 @@ void MakeTexSrtMtx_SR(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 sinR, cosR;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
-    f32 sv = rSrt.Sv;
-    f32 su = rSrt.Su;
-
-    f32 sv_cos = sv * cosR;
-    f32 sv_sin = sv * sinR;
-    f32 su_cos = su * cosR;
-    f32 su_sin = su * sinR;
+    f32 sv_cos = rSrt.Sv * cosR;
+    f32 sv_sin = rSrt.Sv * sinR;
+    f32 su_cos = rSrt.Su * cosR;
+    f32 su_sin = rSrt.Su * sinR;
 
     pMtx->m[0][0] = su_cos;
     pMtx->m[0][1] = su_sin;
     pMtx->m[0][2] = lbl_eu_80669C98;
-    pMtx->m[0][3] = lbl_eu_80669CA8 * (su_sin + su_cos - su);
+    pMtx->m[0][3] = lbl_eu_80669CA8 * (su_sin + su_cos - rSrt.Su);
     pMtx->m[1][0] = -sv_sin;
     pMtx->m[1][1] = sv_cos;
     pMtx->m[1][2] = lbl_eu_80669C98;
-    pMtx->m[1][3] = lbl_eu_80669C9C + lbl_eu_80669CA4 * (sv_sin - sv_cos - sv);
+    pMtx->m[1][3] = lbl_eu_80669C9C + lbl_eu_80669CA4 * (sv_sin - sv_cos - rSrt.Sv);
 }
 
 void MakeTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
@@ -81,10 +78,9 @@ void MakeTexSrtMtx_RT(math::MTX34* pMtx, const TexSrt& rSrt) {
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
     // base = 0.5*(1-cos) and hs = 0.5*sin are shared by both translation
-    // terms; retail evaluates 0.5*cos/0.5*sin as hoisted products
-    f32 hc = lbl_eu_80669CA4 * cosR;
+    // terms; the 0.5*cos product is single-use so it stays an unnamed temp
+    f32 base = lbl_eu_80669CA4 - lbl_eu_80669CA4 * cosR;
     f32 hs = lbl_eu_80669CA4 * sinR;
-    f32 base = lbl_eu_80669CA4 - hc;
 
     pMtx->m[0][0] = cosR;
     pMtx->m[0][1] = sinR;
@@ -118,33 +114,29 @@ void MakeTexSrtMtx_SRT(math::MTX34* pMtx, const TexSrt& rSrt) {
     f32 tu = rSrt.Tu;
     f32 tv = rSrt.Tv;
 
-    // t = 0.5*sin - 0.5, u = -0.5*cos; both rotation-translation terms
-    // (retail evaluates 0.5*sin and -0.5*cos as shared products)
+    // t = 0.5*sin - 0.5, u = -0.5*cos; retail forms both products up front
     f32 t = lbl_eu_80669CA4 * sinR - lbl_eu_80669CA4;
     f32 u = lbl_eu_80669CA8 * cosR;
 
     pMtx->m[0][0] = su * cosR;
-    pMtx->m[0][1] = su * sinR;
     pMtx->m[0][2] = lbl_eu_80669C98;
+    pMtx->m[0][1] = su * sinR;
     pMtx->m[0][3] = su * ((u - t) - tu);
-    pMtx->m[1][0] = -sv * sinR;
-    pMtx->m[1][1] = sv * cosR;
+    pMtx->m[1][0] = -(sv * sinR);
     pMtx->m[1][2] = lbl_eu_80669C98;
     pMtx->m[1][3] = lbl_eu_80669C9C + sv * (tv + (u + t));
+    pMtx->m[1][1] = sv * cosR;
 }
 
 void ProductTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 sv = rSrt.Sv;
-    f32 su = rSrt.Su;
-
-    pMtx->m[1][0] *= sv;
-    pMtx->m[0][0] *= su;
-    pMtx->m[0][1] *= su;
-    pMtx->m[0][2] *= su;
-    pMtx->m[0][3] *= su;
-    pMtx->m[1][1] *= sv;
-    pMtx->m[1][2] *= sv;
-    pMtx->m[1][3] = (lbl_eu_80669C9C + pMtx->m[1][3] * sv) - sv;
+    pMtx->m[1][0] *= rSrt.Sv;
+    pMtx->m[0][0] *= rSrt.Su;
+    pMtx->m[0][1] *= rSrt.Su;
+    pMtx->m[0][2] *= rSrt.Su;
+    pMtx->m[0][3] *= rSrt.Su;
+    pMtx->m[1][1] *= rSrt.Sv;
+    pMtx->m[1][2] *= rSrt.Sv;
+    pMtx->m[1][3] = (lbl_eu_80669C9C + pMtx->m[1][3] * rSrt.Sv) - rSrt.Sv;
 }
 
 void ProductTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {

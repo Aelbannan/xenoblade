@@ -214,8 +214,8 @@ void l2c_init(void)
 void l2c_rcv_acl_data(BT_HDR *p_msg)
 {
     UINT8      *p = (UINT8 *)(p_msg + 1) + p_msg->offset;
-    UINT16      handle;
     UINT16      hci_len;
+    UINT16      handle;
     UINT8       pkt_type;
     tL2C_LCB   *p_lcb;
     tL2C_CCB   *p_ccb;

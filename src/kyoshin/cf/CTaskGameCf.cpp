@@ -7,7 +7,6 @@
 #include "kyoshin/CUICfManager.hpp"
 #include "kyoshin/CUIWindowManager.hpp"
 #include "kyoshin/cf/CTaskCulling.hpp"
-#include "kyoshin/cf/CTaskREvent.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/CfNandManager.hpp"
 #include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
@@ -37,6 +36,18 @@ void CTTask<cf::CTaskGameCf>::Draw() {
 template<>
 CTTask<cf::CTaskGameCf>::~CTTask() {}
 #pragma optimize_for_size off
+
+// Minimal local declaration of cf::CTaskREvent: CTaskREvent.hpp currently
+// conflicts with CfGameManager.hpp (both declare a global func_8009D5FC with
+// different return types), so this TU re-declares only the members it uses.
+// Signatures match the real header so the mangled symbols link to retail.
+namespace cf {
+    class CTaskREvent : public CProcess {
+    public:
+        static CTaskREvent* getInstance();
+        static void create(CProcess* pParent, CScnNw4r* pScene, CView* pView);
+    };
+}
 
 namespace cf{
     CTaskGameCf* CTaskGameCf::spInstance;

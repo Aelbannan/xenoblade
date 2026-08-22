@@ -169,7 +169,7 @@ extern "C" u16 func_80136254(const void*, const void*, int);
 extern "C" char* func_80138F78(u32);
 
 // Party-slot data-table pointers (.sdata).
-extern char* lbl_eu_80664090;
+extern void* lbl_eu_80664090;
 extern char* lbl_eu_80664098;
 
 // Character stats getters (unmangled retail symbols).

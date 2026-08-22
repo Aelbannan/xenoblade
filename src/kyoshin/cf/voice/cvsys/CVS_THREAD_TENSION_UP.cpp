@@ -8,8 +8,14 @@
 #include "kyoshin/harness_catalog.hpp"
 
 // Forward declarations for external functions not yet in headers.
-extern char* func_802A34E4(int size);
-extern void __ct__cf_CVS_THREAD();
+extern "C" {
+    char* func_802A34E4(int size);
+    void __ct__cf_CVS_THREAD();
+    // Runtime rethrow (NMWException.h): declared noreturn so MWCC elides the
+    // __end__catch epilogue of a catch-all handler that ends with `bl __throw`.
+    __declspec(noreturn) void __throw(char* throwtype, void* location,
+                                      void* dtor);
+}
 // C-linkage imports previously supplied by CVS_THREAD_EHP.hpp, which is no
 // longer included here (it redefines CVoiceHandle; the canonical definition
 // now lives in the shared base header CVS_THREAD.hpp).
@@ -28,6 +34,22 @@ extern "C" {
 struct CVoiceFactory {
     char _pad[0x3F00];
     u32 flags;
+};
+
+// Raw layout view exposing the init-state words and the implicit vtable
+// pointer at 0x1C so the factory can override it (same stores as retail).
+struct CVS_THREAD_TENSION_UP_raw {
+    u32* state0;                // 0x00
+    u32 state1;                 // 0x04
+    u32 state2;                 // 0x08
+    u32 field_0x0C;
+    u32 field_0x10;
+    u32 field_0x14;
+    u32 field_0x18;
+    void* vtable;               // 0x1C
+    CVoiceHandle* field_0x20;   // 0x20
+    s32 field_0x24;             // 0x24
+    u8 field_0x28;              // 0x28
 };
 
 // ── Target 1: us-802ab968 (func_802A9230) ──────────────────────────────────
@@ -61,7 +83,7 @@ void func_802A9278(CVS_THREAD_TENSION_UP* self, CCharVoice* voicePtr) {
 // Takes a factory/manager pointer and a thread index (must be >= 3).
 // Allocates a buffer and the thread object, constructs the base,
 // sets vtable/fields, copies init data, returns the object (or NULL).
-CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) try {
+CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) {
     if ((factory->flags & 0x2) == 0) {
         return NULL;
     }
@@ -75,36 +97,45 @@ CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) try {
     if (self == NULL) {
         return NULL;
     }
-    __ct__cf_CVS_THREAD();
 
-    // Set the vtable for this subclass.
-    ((void**)self)[7] = (void**)&lbl_eu_80539D44;
-
-    // Set fields.
-    self->field_0x20 = (CVoiceHandle*)factory;
-    self->field_0x24 = index;
-    self->field_0x28 = 0;
+    // Retail emits a redundant null re-check guarding the constructor
+    // try-block; mirror it. The catch rethrows via runtime __throw(0,0,0),
+    // avoiding the __end__catch epilogue.
+    if (self != NULL) {
+        try {
+            // Base constructor (self already in r3), then vtable/fields.
+            __ct__cf_CVS_THREAD();
+            ((CVS_THREAD_TENSION_UP_raw*)self)->vtable = (void*)lbl_eu_80539D44;
+            ((CVS_THREAD_TENSION_UP_raw*)self)->field_0x20 = (CVoiceHandle*)factory;
+            ((CVS_THREAD_TENSION_UP_raw*)self)->field_0x24 = index;
+            ((CVS_THREAD_TENSION_UP_raw*)self)->field_0x28 = 0;
+        } catch (...) {
+            __throw(0, 0, 0);
+        }
+    }
 
     // Copy the slot-state init data triple into the object's first 3 u32s.
-    const u32* base = lbl_eu_80539D20;
-    self->unk0 = (u32*)base[0];
-    self->unk4 = base[1];
-    self->unk8 = base[2];
+    register u32 v1;
+    u32 v0;
+    const u32* base = (const u32*)(u32)lbl_eu_80539D20;
+    v0 = base[0];
+    v1 = base[1];
+    ((CVS_THREAD_TENSION_UP_raw*)self)->state0 = (u32*)v0;
+    ((CVS_THREAD_TENSION_UP_raw*)self)->state1 = v1;
+    ((CVS_THREAD_TENSION_UP_raw*)self)->state2 = base[2];
 
     return self;
-} catch (...) {
-    throw;
 }
 
 // ── Target 4: us-802ab628 (func_802A8EEC) ──────────────────────────────────
 // Update function: reloads the slot-state triple, checks voice state,
 // plays appropriate voice ID (0x5DE standard or 0x5DD reversed).
 void func_802A8EEC(CVS_THREAD_TENSION_UP* self) {
-    u32* src = lbl_eu_80539D2C;
-    u32 b0 = *src++;
-    self->unk4 = *src++;
-    self->unk0 = (u32*)b0;
-    self->unk8 = *src++;
+    const u32* src = lbl_eu_80539D2C;
+    u32 w0 = src[0];
+    self->unk0 = (u32*)w0;
+    self->unk4 = src[1];
+    self->unk8 = src[2];
 
     CVoiceHandle* handle = self->field_0x20;
     if (handle != NULL) {
@@ -174,9 +205,12 @@ void func_802A9030(CVS_THREAD_TENSION_UP* self) {
         return;
     }
 
-    self->unk4 = lbl_eu_80539D38[1];
-    self->unk0 = (u32*)lbl_eu_80539D38[0];
-    self->unk8 = lbl_eu_80539D38[2];
+    // Reload the slot-state triple (pointer walk keeps retail's lwzu form).
+    const u32* src = lbl_eu_80539D38;
+    u32 w0 = src[0];
+    self->unk0 = (u32*)w0;
+    self->unk4 = src[1];
+    self->unk8 = src[2];
 
     CVoiceHandle* handle = func_802A7998(self->field_0x20);
     if (handle == NULL) {

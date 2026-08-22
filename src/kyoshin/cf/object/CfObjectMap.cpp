@@ -169,13 +169,13 @@ extern "C" int func_800B9C74(cf::CfObjectMap* self, u32 a, u32 b) {
     u32 packed = self->field_0x2F38;
     if (packed != 0) {
         char buf[0x40];
-        u32 len = 0;
+        volatile u32 len = 0;
         buf[0] = 0;
-        int field1 = (packed >> 5) & 0x7F;
-        int field2 = (packed >> 12) & 0x3FF;
+        int field1 = (packed >> 20) & 0x7F;
+        int field2 = (packed >> 10) & 0x3FF;
         func_800AA33C(buf, packed, 1, 0);
-        strcat(buf, lbl_eu_804FC538);
         len += strlen(lbl_eu_804FC538);
+        strcat(buf, lbl_eu_804FC538);
         int size = getFileSize__11CDeviceFileFPCc(buf, 1);
         if (size > 0) {
             u32 rounded = (size + 0x7FF) & ~0x7FF;
@@ -213,8 +213,8 @@ extern "C" void func_800B9E4C(cf::CfObjectMap* self) {
     UnkRes866A0* resB = func_80062F18();
     UnkRes866A0* resC = func_80062FA8();
     u32 packed = self->field_0x2F38;
-    u32 field1 = (packed >> 5) & 0x7F;
-    u32 field2 = (packed >> 12) & 0x3FF;
+    u32 field1 = (packed >> 20) & 0x7F;
+    u32 field2 = (packed >> 10) & 0x3FF;
 
     if ((resB->field_0x0 & 0x10) != 0) {
         // Per-frame map event processing (model-space delegate list).
@@ -374,16 +374,16 @@ extern "C" void func_800BA440(cf::CfObjectMap* self) {
         v = getUnk80664658()->field_210 & 0xFFFF;
     }
     value = lbl_eu_80666A54;
-    s32 count = (s32)self->field_0x2F44 - 1;
-    self->field_0x2F44 = (u32)count;
-    if (count < 0) {
+    self->field_0x2F44--;
+    if ((s32)self->field_0x2F44 < 0) {
         self->field_0x2F44 = 0;
     } else {
         value = lbl_eu_80666A38;
     }
-    func_80462C80__8CTaskLODFv((u16)v);
-    func_804C1F10(reinterpret_cast<UnkSceneView*>(lbl_eu_80663E14)->field_0x7C, (u16)v, value);
-    if (lbl_eu_80663E28 & 0x80) {
+    // v passed uncast so MWCC emits a separate clrlwi per u16 parameter site
+    func_80462C80__8CTaskLODFv(v, value);
+    func_804C1F10(reinterpret_cast<UnkSceneView*>(lbl_eu_80663E14)->field_0x7C, v, value);
+    if (lbl_eu_80663E28 & 0x01000000) {
         v = 2;
     } else {
         v = func_8016E094() & 0xFFFF;

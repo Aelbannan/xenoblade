@@ -130,7 +130,7 @@ extern "C" {
     void func_80462BFC__8CTaskLODFv(float value);
     void func_80462BE4__8CTaskLODFv(float value);
     void func_80462C48__8CTaskLODFv(void* task);
-    void func_80462C80__8CTaskLODFv(u16 value);
+    void func_80462C80__8CTaskLODFv(u16 value, float amount);
     void func_80462CBC__8CTaskLODFv(u32 value);
 
     // ---- embedded UnkClass_8047BB54 subobject (at +0xF0) ----
@@ -161,7 +161,7 @@ extern "C" {
     int getFileSize__11CDeviceFileFPCc(const char* path, int flags);
     void* func_804C1BA0(void* mgr, void* handle, int flag);
     void func_804C1D7C(void* mgr, void* resource);
-    void func_804C1F10(void* mgr, u32 value, float amount);
+    void func_804C1F10(void* mgr, u16 value, float amount);
     float func_80496288(CScn* scene);
     void func_80496294(CScn* scene, float value);
     void* func_80495EB0(void* r3, void* r4, void* r5);

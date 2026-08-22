@@ -101,9 +101,12 @@ void func_8029C66C(COption* self) {
 // Returns the option-window visibility byte only if the embedded scroll bar
 // is visible AND the system window is ready; otherwise 0.
 extern "C" u8 func_8029C734(COptionWindow* self) {
-    if (!CScrollBar_isVisible(&self->mScrollBar)) return 0;
-    if (CSysWin_isReady(&self->mSysWin) == 0) return 0;
-    return self->field_0x2A;
+    if (CScrollBar_isVisible(&self->mScrollBar)) {
+        if (CSysWin_isReady(&self->mSysWin) != 0) {
+            return self->field_0x2A;
+        }
+    }
+    return 0;
 }
 u8 func_8029C798(COptionFull* self) { return self->field_30; }
 

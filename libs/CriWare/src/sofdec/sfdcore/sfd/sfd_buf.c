@@ -372,40 +372,45 @@ void sfbuf_InitAringBuf(void *self, u32 *cumulative, u32 *sizes, int idx) {
  * @param supply  Supply configuration (ptr, size, readLen, writeLen, ...)
  * @return 0 on success, -1 on error
  */
-s32 SFBUF_SetSupplySj(void *self, int idx, u32 *supply) {
-    u32 bufBase;
-    int bufIdx;
+s32 SFBUF_SetSupplySj(void *self, u32 *supply) {
+    int res = 0;
+    int idx;
+    u8 *buf;
+    u8 *dst;
     u32 cs;
-    s32 result = 0;
 
     /* Validate supply configuration */
     if (supply[1] == 0) {
-        result = -1;
+        res = -1;
     } else if (supply[0] != 0) {
-        if (supply[2] == 0 || (s32)supply[3] <= 0 || (s32)supply[5] > 0) {
-            result = -1;
+        if (supply[2] == 0) {
+            res = -1;
+        } else if ((s32)supply[3] <= 0) {
+            res = -1;
+        } else if ((s32)supply[5] > 0) {
+            res = -1;
         }
     }
 
-    if (result != 0) {
+    if (res != 0) {
         return SFLIB_SetErr(self, SFBUF_ERR_BASE + 0x08);
     }
 
     /* Determine buffer index from transport type */
-    if (SFTRN_IsSetup(self, 1)) {
-        bufIdx = 0;
-    } else if (SFTRN_IsSetup(self, 2)) {
-        bufIdx = 1;
-    } else if (SFTRN_IsSetup(self, 3)) {
-        bufIdx = 2;
-    } else {
-        bufIdx = 0;
+    idx = 0;
+    if (!SFTRN_IsSetup(self, 1)) {
+        if (SFTRN_IsSetup(self, 2)) {
+            idx = 1;
+        } else if (SFTRN_IsSetup(self, 3)) {
+            idx = 2;
+        }
     }
 
-    bufBase = bufIdx * SFBUF_BUF_STRIDE;
+    buf = (u8 *)self + idx * SFBUF_BUF_STRIDE;
+    dst = buf + 0x13C8;
 
     /* Check that buffer is in ready state */
-    if ((s32)*(u32 *)((u8 *)self + bufBase + 0x13B8) != SFBUF_STATE_READY) {
+    if (*(u32 *)(buf + 0x13B8) != SFBUF_STATE_READY) {
         return SFLIB_SetErr(self, SFBUF_ERR_BASE + 0x09);
     }
 
@@ -413,13 +418,11 @@ s32 SFBUF_SetSupplySj(void *self, int idx, u32 *supply) {
     {
         u32 ptr = supply[1];
         u32 flag = (u32)(-(s32)ptr | ptr) >> 31;
-        u8 *dst = (u8 *)self + bufBase + 0x13C8;
 
-        /* Lock critical section */
         SFLIB_LockCs(&cs);
 
         /* Store active flag */
-        *(u32 *)((u8 *)self + bufBase + 0x13BC) = flag;
+        *(u32 *)(buf + 0x13BC) = flag;
 
         /* Copy supply fields (ptr, size, readLen, writeLen) */
         *(u32 *)(dst + 0x00) = supply[0];

@@ -288,7 +288,7 @@ struct CInfoCfCopyE48 {
     f32 field_60;
     f32 field_64;
     u8 field_68;
-    u64 field_6C[16];   // retail places this at +0x6C (4-aligned); MWCC 8-aligns it
+    CInfoCfE48Entry field_6C[16]; // align(4) entries -> table at +0x6C like retail
     u8 field_EC;
     u8 field_ED;
     u8 field_EE;
@@ -555,3 +555,9 @@ extern "C" u32 func_801CB1E4(CItemBoxGrid* self);
 // Render-gate mode bitfield (.sbss; bit 21 = busy), shared with the other
 // menu-screen TUs.
 extern u32 lbl_eu_80663E28;
+
+// Menu/task-flow imports previously pulled in via CSkipTimer.hpp (that header
+// carries a conflicting __ct__CSysWin declaration, so they are declared here).
+extern u32 func_800FEDF8();
+extern void func_800FF914();
+extern void func_80138078__FUl(u32);

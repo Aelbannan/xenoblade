@@ -15,6 +15,8 @@ void Run(void (*func)(void)) {
     ICFlashInvalidate();
     __sync();
     __isync();
+    /* Documented wall (MWCC_CASES us-80358630): retail tail-jumps via
+     * mtctr r31/bctr + dead epilogue; no high-level C shape reproduces it. */
     func();
 }
 
@@ -245,33 +247,42 @@ extern void IPCReInit(void);
 extern s32 IPCCltReInit(void);
 
 /* Static error/status strings (retail pool). */
-static const char sFailStr[] = "\nOSExec(): Failed to exec %d in %d\n";
-static const char sNoGameStr[] =
-    "\nOSExec(): The specified game doesn't exist in the disc\n";
+/* Retail pool strings (.data).
+ * lbl_80551F30 = "\nOSExec(): Failed to exec %d in %d\n"
+ * lbl_80551F54 = "\nOSExec(): The specified game doesn't exist in the disc\n" */
+extern const char lbl_80551F30[];
+extern const char lbl_80551F54[];
 
 void __OSLaunchNextFirmware(void) {
-    s32 err = -1;
-    u8 i;
-    u32 count = 1;
-    ESTicketView *views;
+    u8 *bootInfo;
+    u8 *gameTmd;
+    ESTitleMeta *discTmd;
     ESTicketView *ticketView;
+    u8 *p2;
+    u8 *entry;
+    ESTicketView *views;
     u64 titleId;
     u32 codeStart;
     u32 codeSize;
-    u8 *bootInfo;
-    u8 *gameTmd;
-    u32 *p;
-    ESTitleMeta *discTmd;
-    u32 tmdSize = 0;
-    u8 *p2;
+    s32 err;
+
+    u8 i;
+    u32 count;
+    u32 tmdSize;
     u32 limit;
     u32 used;
 
-    bootInfo = OSAllocFromMEM1ArenaLo(0x20, 0x20);
-    gameTmd = OSAllocFromMEM1ArenaLo(0x800, 0x20);
-    discTmd = OSAllocFromMEM1ArenaLo(0x4A00, 0x40);
-    ticketView = OSAllocFromMEM1ArenaLo(0xE0, 0x20);
+    count = 1;
+    err = -1;
+    tmdSize = 0;
 
+    bootInfo = (u8 *)OSAllocFromMEM1ArenaLo(0x20, 0x20);
+    gameTmd = (u8 *)OSAllocFromMEM1ArenaLo(0x800, 0x20);
+    discTmd = (ESTitleMeta *)OSAllocFromMEM1ArenaLo(0x4A00, 0x40);
+    ticketView = (ESTicketView *)OSAllocFromMEM1ArenaLo(0xE0, 0x20);
+
+    /* When the running title came from the disc, grab its ticket/TMD via ESP
+     * and enforce play-time limits before relaunching firmware. */
     if ((u32)__OSNextPartitionType == *(u32 *)0x80003194 &&
         *(u32 *)0x80003198 != 0) {
         err = ESP_InitLib();
@@ -298,27 +309,27 @@ void __OSLaunchNextFirmware(void) {
     }
 
     if (err == 0) {
-        p = (u32 *)gameTmd;
+        /* Disc path: stash the current title id at the head of the TMD
+         * buffer so the partition lookup below sees it like the rest. */
+        entry = gameTmd;
         *(u32 *)(gameTmd + 4) = *(u32 *)0x80003194;
         *(u32 *)(gameTmd + 0) = *(u32 *)0x80003198;
     } else {
         DVDLowIntType = 0;
         DVDLowClosePartition(callback);
         while (DVDLowIntType == 0) {
-            ;
         }
         if (DVDLowIntType != 1) {
-            OSReport(sFailStr, DVDLowIntType, 0x398);
+            OSReport(lbl_80551F30, DVDLowIntType, 0x398);
             __OSReturnToMenuForError();
         }
 
         DVDLowIntType = 0;
         DVDLowUnencryptedRead(bootInfo, 0x20, 0x10000, callback);
         while (DVDLowIntType == 0) {
-            ;
         }
         if (DVDLowIntType != 1) {
-            OSReport(sFailStr, DVDLowIntType, 0x3A2);
+            OSReport(lbl_80551F30, DVDLowIntType, 0x3A2);
             __OSReturnToMenuForError();
         }
 
@@ -326,62 +337,62 @@ void __OSLaunchNextFirmware(void) {
         DVDLowUnencryptedRead(gameTmd, 0x800, *(u32 *)(bootInfo + 4),
                               callback);
         while (DVDLowIntType == 0) {
-            ;
         }
         if (DVDLowIntType != 1) {
-            OSReport(sFailStr, DVDLowIntType, 0x3AE);
+            OSReport(lbl_80551F30, DVDLowIntType, 0x3AE);
             __OSReturnToMenuForError();
         }
 
-        p = NULL;
+        /* Find the partition whose id matches __OSNextPartitionType: first
+         * in the primary table (bootInfo[0] entries), then in the fallback
+         * table (bootInfo[8] entries at gameTmd+0x20). */
+        entry = NULL;
         p2 = gameTmd;
-        for (i = 0; i < *(volatile u32 *)bootInfo; i++, p2 += 8) {
-            if (*(u32 *)(p2 + 4) == (u32)*(volatile void **)&__OSNextPartitionType) {
-                p = (u32 *)p2;
+        for (i = 0; i < *(u32 *)bootInfo; i++, p2 += 8) {
+            if (*(u32 *)(p2 + 4) == (u32)__OSNextPartitionType) {
+                entry = p2;
             }
         }
 
-        if (p == NULL) {
+        if (entry == NULL) {
             p2 = gameTmd + 0x20;
-            for (i = 0; i < *(volatile u32 *)(bootInfo + 8); i++, p2 += 8) {
-                if (*(u32 *)(p2 + 4) == (u32)*(volatile void **)&__OSNextPartitionType) {
-                    p = (u32 *)p2;
+            for (i = 0; i < *(u32 *)(bootInfo + 8); i++, p2 += 8) {
+                if (*(u32 *)(p2 + 4) == (u32)__OSNextPartitionType) {
+                    entry = p2;
                 }
             }
-
-            if (p == NULL) {
-                OSReport(sNoGameStr);
-                __OSReturnToMenuForError();
-            }
         }
 
-        *(u32 *)0x80003194 = *(u32 *)((u8 *)p + 4);
-        *(u32 *)0x80003198 = *(u32 *)((u8 *)p + 0);
+        if (entry == NULL) {
+            OSReport(lbl_80551F54);
+            __OSReturnToMenuForError();
+        }
+
+        *(u32 *)0x80003194 = *(u32 *)(entry + 4);
+        *(u32 *)0x80003198 = *(u32 *)(entry + 0);
 
         DVDLowIntType = 0;
         if (*(u8 *)0x80003187 == 0x80) {
             DVDLowOpenPartitionWithTmdAndTicketView(
-                *(u32 *)((u8 *)p + 0), ticketView, tmdSize, discTmd, 0,
+                *(u32 *)(entry + 0), ticketView, tmdSize, discTmd, 0,
                 NULL, callback);
         } else {
-            DVDLowOpenPartition(*(u32 *)((u8 *)p + 0), NULL, 0, NULL,
+            DVDLowOpenPartition(*(u32 *)(entry + 0), NULL, 0, NULL,
                                 discTmd, callback);
         }
         while (DVDLowIntType == 0) {
-            ;
         }
         if (DVDLowIntType != 1) {
-            OSReport(sFailStr, DVDLowIntType, 0x3EB);
+            OSReport(lbl_80551F30, DVDLowIntType, 0x3EB);
             __OSReturnToMenuForError();
         }
 
         DVDLowIntType = 0;
         DVDLowClosePartition(callback);
         while (DVDLowIntType == 0) {
-            ;
         }
         if (DVDLowIntType != 1) {
-            OSReport(sFailStr, DVDLowIntType, 0x3F5);
+            OSReport(lbl_80551F30, DVDLowIntType, 0x3F5);
             __OSReturnToMenuForError();
         }
     }
@@ -389,32 +400,36 @@ void __OSLaunchNextFirmware(void) {
     titleId = *(u64 *)((u8 *)discTmd + 0x184);
     err = ESP_InitLib();
     if (err != 0) {
-        OSReport(sFailStr, err, 0x400);
+        OSReport(lbl_80551F30, err, 0x400);
         __OSHotResetForError();
     }
 
     err = ESP_GetTicketViews(titleId, NULL, &count);
     if (count != 1 || err != 0) {
-        OSReport(sFailStr, err, 0x409);
+        OSReport(lbl_80551F30, err, 0x409);
         __OSHotResetForError();
     }
 
-    views = OSAllocFromMEM1ArenaLo((count * 0xD8 + 0x1F) & ~0x1Fu, 0x20);
+    views = OSAllocFromMEM1ArenaLo((count * TICKET_VIEW_SIZE + 0x1F) & ~0x1Fu,
+                                   0x20);
     err = ESP_GetTicketViews(titleId, views, &count);
     if (err != 0) {
-        OSReport(sFailStr, err, 0x412);
+        OSReport(lbl_80551F30, err, 0x412);
         __OSHotResetForError();
     }
 
     DVDLowFinalize();
 
+    /* Snapshot the MEM1 arena bounds, flush the OS globals page, launch the
+     * new title, then re-derive the arena/memory-protection state from the
+     * post-launch globals. */
     codeStart = *(u32 *)0x8000311C;
     codeSize = *(u32 *)0x80003120;
     DCStoreRange((void *)0x80003100, 0x100);
 
     err = ESP_LaunchTitle(titleId, views);
     if (err != 0) {
-        OSReport(sFailStr, err, 0x422);
+        OSReport(lbl_80551F30, err, 0x422);
         __OSHotResetForError();
     }
 
@@ -442,27 +457,25 @@ void __OSLaunchNextFirmware(void) {
     DVDLowIntType = 0;
     DVDLowReadDiskID(&id, callback);
     while (DVDLowIntType == 0) {
-        ;
     }
     if (DVDLowIntType != 1) {
-        OSReport(sFailStr, DVDLowIntType, 0x44E);
+        OSReport(lbl_80551F30, DVDLowIntType, 0x44E);
         __OSReturnToMenuForError();
     }
 
     DVDLowIntType = 0;
     if (*(u8 *)0x80003187 == 0x80) {
         DVDLowOpenPartitionWithTmdAndTicketView(
-            *(u32 *)((u8 *)p + 0), ticketView, tmdSize, discTmd, 0, NULL,
+            *(u32 *)(entry + 0), ticketView, tmdSize, discTmd, 0, NULL,
             callback);
     } else {
-        DVDLowOpenPartition(*(u32 *)((u8 *)p + 0), NULL, 0, NULL, discTmd,
+        DVDLowOpenPartition(*(u32 *)(entry + 0), NULL, 0, NULL, discTmd,
                             callback);
     }
     while (DVDLowIntType == 0) {
-        ;
     }
     if (DVDLowIntType != 1) {
-        OSReport(sFailStr, DVDLowIntType, 0x465);
+        OSReport(lbl_80551F30, DVDLowIntType, 0x465);
         __OSReturnToMenuForError();
     }
 }
@@ -492,8 +505,9 @@ extern volatile int Prepared;
 #pragma push
 #pragma inline_max_size(10000)
 #pragma inline_max_total_size(10000)
-static __inline s32 GetApploaderPosition(DVDCommandBlock *cb) {
+static __inline s32 GetApploaderPosition(void) {
     static s32 apploaderPosition;
+    DVDCommandBlock cb;
 
     if (apploaderPosition != 0) {
         return apploaderPosition;
@@ -504,10 +518,10 @@ static __inline s32 GetApploaderPosition(DVDCommandBlock *cb) {
 
         buf = (u8 *)OSAllocFromMEM1ArenaLo(0x40, 0x20);
         pos = (u32)(*(s32 *)0x800030F4 >> 2);
-        DVDReadAbsAsyncPrio(cb, buf, 0x40, pos, 0, 0);
-        while (DVDGetCommandBlockStatus(cb) != 0) {
-            if (DVDGetCommandBlockStatus(cb) > 2 ||
-                DVDGetCommandBlockStatus(cb) < 0) {
+        DVDReadAbsAsyncPrio(&cb, buf, 0x40, pos, 0, 0);
+        while (DVDGetCommandBlockStatus(&cb) != 0) {
+            if (DVDGetCommandBlockStatus(&cb) > 2 ||
+                DVDGetCommandBlockStatus(&cb) < 0) {
                 __OSReturnToMenuForError();
             }
         }
@@ -535,14 +549,23 @@ void __OSBootDolSimple(s32 param1, u32 param2, u32 regionStart, u32 regionEnd,
     s32 *cb;
     s32 apploaderPosition;
     void *args;
-    DVDCommandBlock cb8[8] ALIGN(32);
+    /* One stack command block per read (the GetApploaderPosition copies own
+     * their blocks internally after inlining). */
+    DVDCommandBlock hdrBlk;
+    DVDCommandBlock bodyBlk;
+    DVDCommandBlock directBlk;
+    DVDCommandBlock loopBlk;
     ESTitleId titleId ALIGN(32);
+    /* Apploader interface: init fills these three callbacks + arg cells. */
+    void (*setupFn)(s32);
+    s32 (*readFn)(u32 *, u32 *, u32 *);
+    u32 (*exitFn)(void);
+    u32 rdOffset;
+    u32 rdSize;
+    u32 rdAddr;
     u32 c;
     u32 b;
     u32 a;
-    u32 v2;
-    u32 v1;
-    u32 v0;
     s32 cmpRes;
 
     OSDisableInterrupts();
@@ -590,22 +613,22 @@ void __OSBootDolSimple(s32 param1, u32 param2, u32 regionStart, u32 regionEnd,
     }
 
     cb = (s32 *)OSAllocFromMEM1ArenaLo(0x20, 0x20);
-    apploaderPosition = GetApploaderPosition(&cb8[4]);
-    DVDReadAbsAsyncPrio(&cb8[5], cb, 0x20, (u32)apploaderPosition, 0, 0);
-    while (DVDGetCommandBlockStatus(&cb8[5]) != 0) {
-        if (DVDGetCommandBlockStatus(&cb8[5]) > 2 ||
-            DVDGetCommandBlockStatus(&cb8[5]) < 0) {
+    apploaderPosition = GetApploaderPosition();
+    DVDReadAbsAsyncPrio(&hdrBlk, cb, 0x20, (u32)apploaderPosition, 0, 0);
+    while (DVDGetCommandBlockStatus(&hdrBlk) != 0) {
+        if (DVDGetCommandBlockStatus(&hdrBlk) > 2 ||
+            DVDGetCommandBlockStatus(&hdrBlk) < 0) {
             __OSReturnToMenuForError();
         }
     }
 
-    apploaderPosition = GetApploaderPosition(&cb8[6]);
-    DVDReadAbsAsyncPrio(&cb8[7], (void *)0x81200000,
+    apploaderPosition = GetApploaderPosition();
+    DVDReadAbsAsyncPrio(&bodyBlk, (void *)0x81200000,
                         (cb[5] + 0x1F) & ~0x1F, (u32)apploaderPosition + 8,
                         0, 0);
-    while (DVDGetCommandBlockStatus(&cb8[7]) != 0) {
-        if (DVDGetCommandBlockStatus(&cb8[7]) > 2 ||
-            DVDGetCommandBlockStatus(&cb8[7]) < 0) {
+    while (DVDGetCommandBlockStatus(&bodyBlk) != 0) {
+        if (DVDGetCommandBlockStatus(&bodyBlk) > 2 ||
+            DVDGetCommandBlockStatus(&bodyBlk) < 0) {
             __OSReturnToMenuForError();
         }
     }
@@ -620,29 +643,31 @@ void __OSBootDolSimple(s32 param1, u32 param2, u32 regionStart, u32 regionEnd,
         /* Disc apploader path: run the apploader, then stream the DOL
          * through its callbacks. */
         if ((u32)param1 == 0xFFFFFFFF) {
-            apploaderPosition = GetApploaderPosition(&cb8[3]);
+            apploaderPosition = GetApploaderPosition();
             param1 = apploaderPosition + ((u32)(cb[5] + 0x20) >> 2);
         }
         p[2] = param1;
-        ((void (*)(u32 *, u32 *, u32 *))cb[4])(&v0, &v1, &v2);
+        ((void (*)(u32 *, u32 *, u32 *))cb[4])((u32 *)&setupFn,
+                                               (u32 *)&readFn,
+                                               (u32 *)&exitFn);
 
         p2 = OSAllocFromMEM1ArenaLo(0x1C, 1);
         memcpy(p2, p, 0x1C);
         *(u32 *)0x800030F0 = (u32)p2;
-        ((void (*)(s32))v0)((s32)&OSReport);
+        setupFn((s32)&OSReport);
         OSSetArenaLo(p2);
 
-        while (((s32(*)(u32 *, u32 *, u32 *))v1)(&a, &b, &c) != 0) {
-            DVDReadAbsAsyncPrio(&cb8[2], (void *)a, b,
-                                c >> __DVDLayoutFormat, 0, 0);
-            while (DVDGetCommandBlockStatus(&cb8[2]) != 0) {
-                if (DVDGetCommandBlockStatus(&cb8[2]) > 2 ||
-                    DVDGetCommandBlockStatus(&cb8[2]) < 0) {
+        while (readFn(&rdAddr, &rdSize, &rdOffset) != 0) {
+            DVDReadAbsAsyncPrio(&loopBlk, (void *)rdAddr, rdSize,
+                                rdOffset >> __DVDLayoutFormat, 0, 0);
+            while (DVDGetCommandBlockStatus(&loopBlk) != 0) {
+                if (DVDGetCommandBlockStatus(&loopBlk) > 2 ||
+                    DVDGetCommandBlockStatus(&loopBlk) < 0) {
                     __OSReturnToMenuForError();
                 }
             }
         }
-        entry = ((u32(*)())v2)();
+        entry = exitFn();
         *(u32 *)0x80003180 = *(u32 *)0x80000000;
         *(u8 *)0x80003184 = 0x80;
         p3 = OSAllocFromMEM1ArenaLo(0x1C, 1);
@@ -656,14 +681,14 @@ void __OSBootDolSimple(s32 param1, u32 param2, u32 regionStart, u32 regionEnd,
         *(u32 *)0x812FDFF0 = regionStart;
         *(u32 *)0x812FDFEC = regionEnd;
         *(u8 *)0x800030E2 = 1;
-        apploaderPosition = GetApploaderPosition(&cb8[1]);
-        DVDReadAbsAsyncPrio(&cb8[0], (void *)0x81330000,
+        apploaderPosition = GetApploaderPosition();
+        DVDReadAbsAsyncPrio(&directBlk, (void *)0x81330000,
                             (cb[6] + 0x1F) & ~0x1F,
                             (u32)apploaderPosition + ((u32)(cb[5] + 0x20) >> 2),
                             0, 0);
-        while (DVDGetCommandBlockStatus(&cb8[0]) != 0) {
-            if (DVDGetCommandBlockStatus(&cb8[0]) > 2 ||
-                DVDGetCommandBlockStatus(&cb8[0]) < 0) {
+        while (DVDGetCommandBlockStatus(&directBlk) != 0) {
+            if (DVDGetCommandBlockStatus(&directBlk) > 2 ||
+                DVDGetCommandBlockStatus(&directBlk) < 0) {
                 __OSReturnToMenuForError();
             }
         }

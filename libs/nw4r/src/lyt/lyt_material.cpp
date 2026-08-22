@@ -1401,7 +1401,46 @@ void __as__Q34nw4r3lyt13IndirectStageFRCQ34nw4r3lyt13IndirectStage(nw4r::lyt::In
     ((unsigned char*)dst)[2] = ((const unsigned char*)src)[2];
     ((unsigned char*)dst)[3] = ((const unsigned char*)src)[3];
 }
-void __as__Q34nw4r3lyt8TevStageFRCQ34nw4r3lyt8TevStage(){}
+// TevStage copy: retail copies all 16 bytes individually (lbz/stb pairs),
+// keeping every byte live across a _savegpr_25 spill - so read all fields
+// before writing any.
+nw4r::lyt::TevStage* __as__Q34nw4r3lyt8TevStageFRCQ34nw4r3lyt8TevStage(
+    nw4r::lyt::TevStage* self, const nw4r::lyt::TevStage* other) {
+    u8 t0 = other->texCoordGen;
+    u8 t1 = other->colChan;
+    u8 t2 = other->texMap;
+    u8 t3 = other->swapSel;
+    u8 t4 = other->colIn.ab;
+    u8 t5 = other->colIn.cd;
+    u8 t6 = other->colIn.op;
+    u8 t7 = other->colIn.cl;
+    u8 t8 = other->alpIn.ab;
+    u8 t9 = other->alpIn.cd;
+    u8 t10 = other->alpIn.op;
+    u8 t11 = other->alpIn.cl;
+    u8 t12 = other->indStage;
+    u8 t13 = other->indBiMt;
+    u8 t14 = other->indWrap;
+    u8 t15 = other->indFoAdUtAl;
+
+    self->texCoordGen = t0;
+    self->colChan = t1;
+    self->texMap = t2;
+    self->swapSel = t3;
+    self->colIn.ab = t4;
+    self->colIn.cd = t5;
+    self->colIn.op = t6;
+    self->colIn.cl = t7;
+    self->alpIn.ab = t8;
+    self->alpIn.cd = t9;
+    self->alpIn.op = t10;
+    self->alpIn.cl = t11;
+    self->indStage = t12;
+    self->indBiMt = t13;
+    self->indWrap = t14;
+    self->indFoAdUtAl = t15;
+    return self;
+}
 
 
 

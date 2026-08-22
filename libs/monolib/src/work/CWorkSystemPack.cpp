@@ -434,7 +434,7 @@ __attribute__((never_inline)) bool func_804DDD54(const char* pName, const char* 
 // item's func_804DEC6C when the list is non-empty (retail unmangled reloc).
 extern "C" bool func_804DEC6C(void* item, const char* pPath, void** pOutStartAddr, u32* pOutLength);
 
-bool CWorkSystemPack::func_804DDDF4(const char* pName, void* pOut, u32* pFileId) {
+__attribute__((never_inline)) bool CWorkSystemPack::func_804DDDF4(const char* pName, void* pOut, u32* pFileId) {
     CWorkSystemPack* sys = lbl_eu_80665A10;
     u8* head = *(u8**)((u8*)sys + 0x1E8);
     u8* first = *(u8**)head;
@@ -444,6 +444,8 @@ bool CWorkSystemPack::func_804DDDF4(const char* pName, void* pOut, u32* pFileId)
     return false;
 }
 
+#pragma push
+#pragma optimize_for_size on
 s32 func_804DDCD4(const char* pName, const char* pPath) {
     // Declared last-to-first: MWCC assigns stack slots in reverse declaration
     // order, so this yields retail's 0x8/0xc/0x10/0x14/0x18 slot layout.
@@ -461,6 +463,7 @@ s32 func_804DDCD4(const char* pName, const char* pPath) {
     }
     return -1;
 }
+#pragma pop
 
 // Login gate: walk the circular pack-item list (head at +0x1E8, nodes link
 // via +0, data pointer at +8) and require every item's field_0x2C == 2.
@@ -568,19 +571,25 @@ void SaveStaticArcFilenameStringPtr__15CWorkSystemPackFPCPCc(const char* const* 
 }
 
 // Search the pack list for an item whose base name matches pName.
+#pragma push
+#pragma optimize_for_size on
 int func_804DE010(const char* pName) {
     CWorkSystemPack* sys = lbl_eu_80665A10;
+    PackItemListNode* sentinel;
+    PackItemListNode* node;
     if (sys == 0) return 0;
-    PackItemListNode* sentinel = sys->mPackList.mStartNodePtr;
-    PackItemListNode* node = sentinel->mNext;
+    sentinel = sys->mPackList.mStartNodePtr;
+    node = sentinel->mNext;
     while (node != sentinel) {
-        if (strcmp(node->mItem->mBaseName, pName) == 0) {
+        bool match = strcmp(node->mItem->mBaseName, pName) == 0;
+        if (match) {
             return 1;
         }
         node = node->mNext;
     }
     return 0;
 }
+#pragma pop
 
 // Remove the pack item whose base name matches pName from the pack list,
 // destroying the item (vtable+8 call) and unlinking its node.

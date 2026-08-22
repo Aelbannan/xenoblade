@@ -20,20 +20,23 @@
  * like a real constructor (retail relies on it). */
 extern "C" __declspec(noinline) CMenuTutorialList* __ct__CMenuTutorialList(
     CMenuTutorialList* self, CProcess* parent, u32 arg2) {
-    __ct__8CProcessFv((CProcess*)self);
+    __ct__8CProcessFv(self);
 
-    // vtable fixups: temp (CProcess) vtable first, then the null PMF
-    // callback slots, then the composite vtable + the IScnRender sub-vtable
-    // at +0x58 (same scheme as CMenuCollepedia's ctor).
+    // Temp (CProcess) primary vtable.
     *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
+
+    // Null PMF callback slot groups.
     self->ptmf0[0] = __ptmf_null[0];
     self->ptmf0[1] = __ptmf_null[1];
     self->ptmf0[2] = __ptmf_null[2];
     self->ptmf1[0] = __ptmf_null[0];
     self->ptmf1[1] = __ptmf_null[1];
     self->ptmf1[2] = __ptmf_null[2];
+
     self->mField54 = 0;
     self->mField55 = 0;
+
+    // Composite vtable + the IScnRender sub-vtable at +0x58.
     *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8053A238;
     *(u32*)((u8*)self + 0x58) = (u32)lbl_eu_8053A238 + 0x24;
     self->mScene = reinterpret_cast<CScn*>(parent);

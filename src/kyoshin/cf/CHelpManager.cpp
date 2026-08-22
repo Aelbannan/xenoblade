@@ -3,11 +3,14 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CHelpManager.hpp"
-#include "kyoshin/cf/CBattleManager.hpp"
+// NOTE: do NOT include cf/CBattleManager.hpp here - its CfObjectActor ->
+// CAIAction chain declares getInstance__Q22cf14CBattleManagerFv as void*,
+// conflicting with the CBattleManagerView* declaration this TU already gets
+// via kyoshin/harness_catalog.hpp (cf/CfGameManager.hpp).
 #include "monolib/util/MemManager.hpp"
 
 // Free-function form (not the member ctor): the retail ignores the incoming
-// `this` and carves the real instance from MEM2 — the member form makes MWCC
+// `this` and carves the real instance from MEM2 - the member form makes MWCC
 // save the dead `this` in an extra saved register (r28).
 extern "C" void* __ct__Q22cf12CHelpManagerFv(void* ignored) {
     cf::CHelpListHolder* end;
@@ -131,8 +134,9 @@ void func_80295BF4(cf::CHelpManager* self) {
 void func_80295CC8(cf::CHelpManager* self, cf::CHelpBattleObjArg* obj) {
     // During battle: record whether the actor list is non-empty.
     if (obj->mField3F08 & 0x10000) {
-        cf::CBattleManager* mgr = cf::CBattleManager::getInstance();
-        self->mField18 = (u8)(mgr->mActorList3.size() != 0);
+        // During battle: record whether the actor list (mActorList3) is
+        // non-empty via the inlined reslist size walk.
+        self->mField18 = (u8)(cf::CBattleManager::getInstance()->mActorList3.size() != 0);
     }
 }
 

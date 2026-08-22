@@ -93,10 +93,9 @@ extern "C" CREvtEffect* __ct__CREvtEffect(CREvtEffect* self, CREvtParam* param) 
 extern "C" CREvtEffect* __ct__80184C3C(CREvtEffect* self, int dealloc_flag) {
     if (self != 0) {
         // Restore the vtables, then dispatch func_80184D18 through the main vtable
-        void** vtbl = (void**)lbl_eu_805322D8;
-        self->vtable = vtbl;
-        self->mSecondaryVtable = (char*)vtbl + 0x28;
-        ((void (*)(CREvtEffect*))vtbl[4])(self);
+        self->vtable = (void*)lbl_eu_805322D8;
+        self->mSecondaryVtable = (char*)lbl_eu_805322D8 + 0x28;
+        ((void (**)(CREvtEffect*))lbl_eu_805322D8)[4](self);
 
         // Wait for the effect system to release all running effects
         while (self->mEffectCount != 0) {

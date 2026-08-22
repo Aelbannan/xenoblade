@@ -23,6 +23,67 @@ extern "C" void func_802B744C(void*);
 // CSysWin advance helper (retail C-linkage; same declaration as CSystemWindow.hpp).
 extern "C" void func_8022B748(void*);
 
+// CSysWin content setters / advance-close helpers (retail unmangled names,
+// defined in CSysWin.cpp). func_8022BFC8 is declared by CSysWin.hpp.
+extern "C" void func_8022B9B4(void* syswin, const char* msg, int flag);
+extern "C" void func_8022B8B8(void* syswin);
+extern "C" void func_8022B8E4(void* syswin);
+
+// Pane-name format helper (code_80135FDC.cpp, retail unmangled name).
+extern "C" char* func_80136190(char* fmt, char* base, u32 id);
+
+// String pool used by func_802B4F40's error message.
+extern char lbl_eu_805135E0[];
+
+// cf::CfGameManager current-pad accessor (retail pre-mangled static).
+void* getCurrentPad__Q22cf13CfGameManagerFv();
+
+// Pad view for func_802B4FE8: button word at +4.
+struct CErrMesPad {
+    u8 _00[4];
+    u32 field_0x4;
+};
+
+// Abstract view over the embedded CSysWin so Init can dispatch the layout-build
+// virtual at vtable offset 0x88 (declared index 32 after MWCC's RTTI prefix
+// slots). Pure virtuals only - no vtable emitted.
+class CErrMesSysWinView {
+public:
+    virtual void v00() = 0;
+    virtual void v01() = 0;
+    virtual void v02() = 0;
+    virtual void v03() = 0;
+    virtual void v04() = 0;
+    virtual void v05() = 0;
+    virtual void v06() = 0;
+    virtual void v07() = 0;
+    virtual void v08() = 0;
+    virtual void v09() = 0;
+    virtual void v10() = 0;
+    virtual void v11() = 0;
+    virtual void v12() = 0;
+    virtual void v13() = 0;
+    virtual void v14() = 0;
+    virtual void v15() = 0;
+    virtual void v16() = 0;
+    virtual void v17() = 0;
+    virtual void v18() = 0;
+    virtual void v19() = 0;
+    virtual void v20() = 0;
+    virtual void v21() = 0;
+    virtual void v22() = 0;
+    virtual void v23() = 0;
+    virtual void v24() = 0;
+    virtual void v25() = 0;
+    virtual void v26() = 0;
+    virtual void v27() = 0;
+    virtual void v28() = 0;
+    virtual void v29() = 0;
+    virtual void v30() = 0;
+    virtual void v31() = 0;
+    virtual void v32() = 0;  // offset 0x88 - layout build
+};
+
 // CSysWin release helper (retail C-linkage; same declaration as CSystemWindow.hpp).
 extern "C" void func_8022B7F4(void*);
 
@@ -373,6 +434,9 @@ public:
                                     //          so a CSysWin member would add an implicit
                                     //          member-destruction chain to the dtor.
     /* 0x9C */ u8 field_0x9C;        // window state byte (2=ready, 4=active)
+    /* 0x9D */ u8 _9D;
+    /* 0x9E */ u16 field_0x9E;       // message id (string-pool index)
+    /* 0xA0 */ u8 field_0xA0;        // window kind
 };
 
 class __declspec(novtable) CMenuTitle : public CTTask<CMenuTitle> {

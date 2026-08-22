@@ -1,6 +1,7 @@
 #include "libs/monolib/src/device/CDeviceFileDvd.hpp"
 
 #include <revolution/DVD.h>
+#include <string.h>
 
 // CDeviceFile helpers (declared here to keep the includes minimal; the
 // retail names are C++ member symbols).
@@ -191,24 +192,160 @@ int CDeviceFileDvd::wkStandbyExceptionRetry(unsigned long param) {
     return 1;
 }
 
+// Local views of the resource/event classes used by CFileHandle. Declared
+// here (exact retail names/signatures) so the calls resolve to the retail
+// mangled symbols without pulling in their full headers.
+enum CBM {
+    CBM_0,
+    CBM_1,
+    CBM_2,
+    CBM_3,
+    CBM_4,
+    CBM_5
+};
+
+class CEventFile {
+public:
+    CEventFile(CBM cbm, CFileHandle* pHandle);
+
+    u32 unk0;
+    CFileHandle* mFileHandle;
+    u8 _pad08[0x0C];
+    u32 field_14;
+};
+
+// Vtable-positioned view: retail dispatches vtable+0x10 with a CEventFile*
+// argument. MWCC emits two destructor slots, so only two placeholders precede
+// the event handler.
+class IWorkEvent {
+public:
+    virtual ~IWorkEvent();
+    virtual void s00();
+    virtual bool onFileEvent(CEventFile* pEvent);
+};
+
+class CRsrc {
+public:
+    static CRsrc* getRsrc(u32 id);
+    bool isExistFile(const char* pName, void** ppData, u32* pLength);
+    static bool releaseCache(const void* pData);
+};
+
 struct CFileHandle {
+    u32 field_0x00;          //0x00 (device state)
+    u32 field_0x04;          //0x04 (loaded buffer)
+    u32 field_0x08;          //0x08 (result data ptr)
+    u32 field_0x0C;          //0x0C (result size)
+    s32 field_0x10;          //0x10
+    u32 field_0x14;          //0x14 (rsrc id)
+    u8 field_0x18[0x28 - 0x18];
+    IWorkEvent* field_0x28;  //0x28 (event receiver)
+    u8 field_0x2C[0x30 - 0x2C];
+    s32* field_0x30;         //0x30 (out: data ptr)
+    s32* field_0x34;         //0x34 (out: length)
+    u8 field_0x38[0x3C - 0x38];
+    u32 field_0x3C;          //0x3C (file length)
+    u8 field_0x40[0x58 - 0x40];
+    u32 field_0x58;
+    char mName[0x100];       //0x5C
+    u32 field_0x15C;
+    char field_0x160[0x20];
+    u32 field_0x180;
+    char field_0x184[0x20];
+    u32 field_0x1A4;
+
     ~CFileHandle();
-    void call() const;
-    void checkExistRsrc() const;
+    bool call(CBM cbm);    bool checkExistRsrc(CBM cbm);
+    void* getRsrc() const;
+    void init(int);
+    CFileHandle* setup1(const char* pPath, u32 size, IWorkEvent* pEvent);
+    CFileHandle* setup2(const char* pPath, u32 size, IWorkEvent* pEvent);
     void destroy() const;
     void func_80451984(unsigned long);
     int func_80451CBC(int);
-    void getRsrc() const;
-    void init(int);
-    void setup1() const;
-    void setup2() const;
 };
 
-void CFileHandle::setup1() const {}
+CFileHandle* CFileHandle::setup1(const char* pPath, u32 size, IWorkEvent* pEvent) {
+    field_0x58 = 0;
+    mName[0] = '\0';
+    field_0x15C = 0;
+    field_0x160[0] = '\0';
+    field_0x180 = 0;
+    field_0x184[0] = '\0';
+    field_0x1A4 = 0;
+    init(0);
+    field_0x14 = size;
+    field_0x15C = strlen(pPath);
+    strcpy(mName, pPath);
+    field_0x28 = pEvent;
+    return this;
+}
 
-void CFileHandle::setup2() const {}
+CFileHandle* CFileHandle::setup2(const char* pPath, u32 size, IWorkEvent* pEvent) {
+    field_0x58 = 0;
+    mName[0] = '\0';
+    field_0x15C = 0;
+    field_0x160[0] = '\0';
+    field_0x180 = 0;
+    field_0x184[0] = '\0';
+    field_0x1A4 = 0;
+    init(1);
+    field_0x04 = size;
+    field_0x08 = size;
+    field_0x15C = strlen(pPath);
+    strcpy(mName, pPath);
+    field_0x28 = pEvent;
+    return this;
+}
 
-CFileHandle::~CFileHandle() {}
+bool CFileHandle::checkExistRsrc(CBM cbm) {
+    if (field_0x00 != 2) return false;
+    if (CRsrc::getRsrc(field_0x14) == NULL) return false;
+    void* pData;
+    u32 length;
+    if (!CRsrc::getRsrc(field_0x14)->isExistFile(mName, &pData, &length)) {
+        return false;
+    }
+    field_0x08 = (u32)pData;
+    field_0x3C = length;
+    field_0x0C = length;
+    field_0x04 = 0;
+    call(cbm);
+    return true;
+}
+
+CFileHandle::~CFileHandle() {
+    if (field_0x00 == 2 || field_0x00 == 0) {
+        void* pCache = (void*)field_0x04;
+        if (pCache != NULL && field_0x30 == 0) {
+            if (field_0x00 == 2) {
+                // DVD-backed cache must be released before freeing.
+                if (!CRsrc::releaseCache((const void*)field_0x04) && field_0x04 != 0) {
+                    delete (void*)field_0x04;
+                    field_0x04 = 0;
+                }
+            } else {
+                delete pCache;
+                field_0x04 = 0;
+            }
+        }
+    }
+}
+
+bool CFileHandle::call(CBM cbm) {
+    if (cbm == CBM_3 || cbm == CBM_5) {
+        if (field_0x30 != NULL) *field_0x30 = 0;
+        if (field_0x34 != NULL) *field_0x34 = -1;
+    } else if (cbm == CBM_1 || cbm == CBM_4) {
+        if (field_0x30 != NULL) *field_0x30 = field_0x08;
+        if (field_0x34 != NULL) *field_0x34 = field_0x3C;
+    }
+    if (field_0x28 != NULL) {
+        CEventFile event(cbm, this);
+        return field_0x28->onFileEvent(&event);
+    }
+    return false;
+}
 
 void CFileHandle::init(int param) {
     u8* s = (u8*)this;
@@ -255,12 +392,7 @@ int CFileHandle::func_80451CBC(int param) {
     return 1;
 }
 
-void CFileHandle::call() const {}
-
-void CFileHandle::checkExistRsrc() const {}
-
-extern void getRsrc__5CRsrcFUl(unsigned long);
-void CFileHandle::getRsrc() const { getRsrc__5CRsrcFUl((unsigned long)*(void**)((char*)this + 0x14)); }
+void* CFileHandle::getRsrc() const { return CRsrc::getRsrc(field_0x14); }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056C420-0x8056C4D8 (0xB8): CDeviceFileDvd vtable (retail bytes).

@@ -123,7 +123,6 @@ void CSelShopWin::func_8022C908() {
 
 #pragma push
 #pragma optimize_for_size on
-#pragma dont_inline on
 /* Determine the absolute screen position of the two named panes in the shop
    window layout (format a pane-name from idx+1, find both panes, sum ancestor
 translates via func_80137924). C-linkage (retail unmangled func_8022C930).
@@ -164,6 +163,9 @@ extern "C" void func_8022CA6C(void* self) {
     }
 }
 
+/* -O4,s shape: retail saves r29-r31 via _savegpr_29/_restgpr_29 helpers. */
+#pragma push
+#pragma optimize_for_size on
 bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
         // Build the shop window layout from the freshly-loaded arc.
@@ -242,22 +244,23 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
             func_80137E7C(mLayout, &lbl_eu_8050A62C[0xf5], obj);
 
             // Two u16 counts ([+2] row, [+0] column) offsetting the two
-            // panes; convert each to float and store into their position.
+            // panes; u32->float via the named 2^52+2^31 magic double keeps
+            // the sdata2 reloc on lbl_eu_80668608.
             UnkCoords* coords = obj->chain->pCoords;
-            u16 row = coords->c2;
-            u16 col = coords->c0;
+            u32 row = coords->c2;
+            u32 col = coords->c0;
             nw4r::lyt::Pane* p1 = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A62C[0xeb], true);
             if (p1 != NULL) {
                 float src[2];
-                src[0] = static_cast<float>(row);
-                src[1] = static_cast<float>(col);
+                src[0] = static_cast<float>(static_cast<double>(row) - lbl_eu_80668608);
+                src[1] = static_cast<float>(static_cast<double>(col) - lbl_eu_80668608);
                 func_80124288(p1, src);
             }
             nw4r::lyt::Pane* p2 = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A62C[0xf5], true);
             if (p2 != NULL) {
                 float src[2];
-                src[0] = static_cast<float>(row);
-                src[1] = static_cast<float>(col);
+                src[0] = static_cast<float>(static_cast<double>(row) - lbl_eu_80668608);
+                src[1] = static_cast<float>(static_cast<double>(col) - lbl_eu_80668608);
                 func_80124288(p2, src);
             }
         }
@@ -269,3 +272,4 @@ bool CSelShopWin::OnFileEvent(CEventFile* pEventFile) {
     }
     return false;
 }
+#pragma pop

@@ -729,7 +729,7 @@ void* func_80066E7C(void* self, u32 id);
 void func_804E3B08(void* effect);
 float func_80484EB0(void* obj);
 void func_800BC3D8(void* player, float value);
-void func_800BE12C(void* obj, int a, int b, int c, int d);
+void func_800BE12C(u8* obj, int a, int b, int c, int d);
 void func_800BE824(void* obj, int flag);
 void func_800F3C6C(void* mgr, u32 key);
 void func_800E9B54(void* mgr, void* obj, int a, int b);

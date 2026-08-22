@@ -5,7 +5,7 @@
 
 // C-ABI helper imports used by CfObjectNpc (retail-unmangled symbols).
 extern "C" void* func_8003AA34();
-extern "C" const char* getBdatStringColumnValue(void* bdatFile, const char* column, int row);
+extern "C" u32 getBdatStringColumnValue(void* bdatFile, const char* column, int row);
 extern "C" void* getFP__FPCc(const char* path);
 extern "C" void func_800BE33C(void* obj, int flag);
 extern "C" void func_800BE824(void* obj, int flag);

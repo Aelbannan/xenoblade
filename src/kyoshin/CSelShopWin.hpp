@@ -19,6 +19,8 @@ extern "C" void* lbl_eu_805365A8[];
 // `const` routes it into the readonly sdata2 pool so MWCC hoists the lfs above
 // the frame stores (CExchangeWin func_8022D1F8/D244 pattern, MWCC_CASES).
 extern const float lbl_eu_80668600;
+// u32->float cast-magic constant (2^52) shared with the retail sdata2 pool.
+extern const double lbl_eu_80668608;
 // Shop window arc file path string (split1 .rodata).
 extern "C" char lbl_eu_8050A62C[];
 // Animate the attached anim-transform forward to a frame (returns true when done).

@@ -3,8 +3,8 @@
 
 #include <harness_catalog.h>
 
-extern u32 lbl_eu_80560050;
-extern u32 lbl_eu_80560054;
+extern char lbl_eu_80560050[];
+extern char lbl_eu_80560054[];
 
 // ADXB (ADX Buffer) WAV decode object. Byte layout mirrors the sibling
 // AdxBsp in adx_bsps.c (same shared ADXB context); recovered from the
@@ -61,11 +61,11 @@ struct AdxBwav {
 
 s32 ADX_DecodeInfoWav(u8* src, s32 size, s16* out1, s8* out2, s8* out3, s8* out4,
                       s8* out5, s32* out6, s32* out7, s32* out8, s16* out9) {
-    s32 i;
     u8 buf[0x14];
     u32 dataSize;
-    const void* tag1 = (const void*)lbl_eu_80560050;
+    const void* tag1 = lbl_eu_80560050;
     const void* tag2;
+    s32 i;
     s32 r;
     for (i = 0; i < size; i++) {
         if (memcmp(src + i, tag1, 4) == 0)
@@ -74,12 +74,12 @@ s32 ADX_DecodeInfoWav(u8* src, s32 size, s16* out1, s8* out2, s8* out3, s8* out4
     if (i == size)
         return -1;
     {
-        u8* p = src + i + 8;
+        u8* p = i + src + 8;
         memcpy(buf, p, 0x14);
     }
     if ((s16)(((*(u16*)buf & 0xFF00) >> 8) | ((*(u16*)buf & 0xFF) << 8)) > 1)
         return -1;
-    tag2 = (const void*)lbl_eu_80560054;
+    tag2 = lbl_eu_80560054;
     for (i = 0; i < size; i++) {
         if (memcmp(src + i, tag2, 4) == 0)
             break;

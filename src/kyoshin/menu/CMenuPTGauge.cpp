@@ -1,8 +1,28 @@
+// func_8004302C must be declared extern "C" before any include chain pulls
+// in functions.hpp's plain C++ copy (MWCC rejects the reverse redeclaration),
+// so this header goes first.
+#define func_8004392C ptgCtaskGame4392CUnused
+#define func_8049603C ptgCtaskGame9603CUnused
+#include "kyoshin/CTaskGame.hpp"
+#undef func_8049603C
+#undef func_8004392C
 #include "kyoshin/menu/CMenuPTGauge.hpp"
 
-#include "kyoshin/CTaskGame.hpp"
+// CTaskGame.hpp declares func_8004392C with a u32 third arg (line 486), which
+// conflicts with the void* copy in CVision.hpp (reached via CBattleManager.hpp
+// below); rename it out of the way. This TU uses none of them.
+
 #include "kyoshin/cf/CBattleManager.hpp"
+// code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188), conflicting
+// with the const float epsilon copies elsewhere; rename it out of the way.
+// This TU uses none of them.
+#define lbl_eu_8066A208 ptgCode35FDCepsilonUnused
+#define func_8049603C ptgCode35FDC9603CUnused
+#define getBdatStringColumnValue ptgCode35FDCBdatStrUnused
 #include "kyoshin/code_80135FDC.hpp"
+#undef getBdatStringColumnValue
+#undef func_8049603C
+#undef lbl_eu_8066A208
 #include "monolib/device/CDeviceFont.hpp"
 #include "monolib/util/MemManager.hpp"
 
@@ -374,51 +394,90 @@ void func_80187958(CMenuPTGauge* self, s32 partyVal) {
     // Chain gate (shared with Move case 2): when the chain counter is 5,
     // keep the special animation running and skip the reset below.
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+    int flag;
     u8 chain = bm->mChain.unk0[2]; // chain value byte at +0x1aa
-    int flag = 0;
-    if (chain >= 1 && chain <= 0x18) {
-        flag = 1;
+    // Differently-typed copies keep MWCC from folding the range check.
+    u16 lowerByte = chain;
+    u32 upperByte = chain;
+    flag = 0;
+    if (lowerByte < 1) { // chain value range: [1, 0x18]
+        goto range_done;
     }
-    if (flag != 0 && chain == 5) {
-        flag = 1;
-    } else {
-        flag = 0;
+    if (upperByte > 0x18) {
+        goto range_done;
     }
-    if (flag != 0) {
-        return;
+    flag = 1;
+range_done:
+    if (flag == 0) {
+        goto not_five;
     }
+    if (chain != 5) { // chain == 5 keeps the special animation running
+        goto not_five;
+    }
+    flag = 1;
+    goto after_five;
+not_five:
+    flag = 0;
+after_five:
+    if (flag == 0) {
+        // Reset to the default action and re-bind the gauge animation for the
+        // current party gauge value: >= 300 idle, 200..299 close, < 200 open.
+        self->mActionIdx = 0;
+        self->mAnimSpecial->SetFrame(lbl_eu_806679E0);
+        self->mLayout->Animate(0);
+        self->mGaugeBase = self->mGaugePrev;
 
-    // Reset to the default action and re-bind the gauge animation for the
-    // current party gauge value: >= 300 idle, 200..299 close, < 200 open.
-    self->mActionIdx = 0;
-    self->mAnimSpecial->SetFrame(lbl_eu_806679E0);
-    self->mLayout->Animate(0);
-    self->mGaugeBase = self->mGaugePrev;
+        if (partyVal >= 300) {
+            self->mLayout->Animate(0);
+            self->mLayout->UnbindAllAnimation();
+            self->mLayout->BindAnimation(self->mAnimIdle);
+            self->mLayout->SetAnimationEnable(self->mAnimIdle, true);
+            self->mAnimIdle->SetFrame(lbl_eu_806679E0);
+            self->mLayout->Animate(0);
+        } else if (partyVal >= 200) {
+            self->mLayout->Animate(0);
+            self->mLayout->UnbindAllAnimation();
+            self->mLayout->BindAnimation(self->mAnimClose);
+            self->mLayout->SetAnimationEnable(self->mAnimClose, true);
+            self->mAnimClose->SetFrame(lbl_eu_806679E0);
+            self->mLayout->Animate(0);
+        } else {
+            self->mLayout->Animate(0);
+            self->mLayout->UnbindAllAnimation();
+            self->mLayout->BindAnimation(self->mAnimOpen);
+            self->mLayout->SetAnimationEnable(self->mAnimOpen, true);
+            self->mAnimOpen->SetFrame(lbl_eu_806679E0);
+            self->mLayout->Animate(0);
+        }
+    }
+}
+void func_80187C90(CMenuPTGauge* self, s32 partyVal) {
+    // Advance the close animation one frame (result unused).
+    func_80137444(self->mAnimClose, lbl_eu_806679EC);
 
-    if (partyVal >= 300) {
+    // partyVal -> double via the 0x4330 bias-subtract conversion idiom;
+    // lbl_eu_806679F0 holds the bias constant.
+    if ((double)partyVal - lbl_eu_806679F0 >= lbl_eu_806679E4) {
+        self->mGaugeBase = 3;
         self->mLayout->Animate(0);
         self->mLayout->UnbindAllAnimation();
         self->mLayout->BindAnimation(self->mAnimIdle);
         self->mLayout->SetAnimationEnable(self->mAnimIdle, true);
         self->mAnimIdle->SetFrame(lbl_eu_806679E0);
         self->mLayout->Animate(0);
-    } else if (partyVal >= 200) {
-        self->mLayout->Animate(0);
-        self->mLayout->UnbindAllAnimation();
-        self->mLayout->BindAnimation(self->mAnimClose);
-        self->mLayout->SetAnimationEnable(self->mAnimClose, true);
-        self->mAnimClose->SetFrame(lbl_eu_806679E0);
-        self->mLayout->Animate(0);
+        func_80138078(0x66); // SE
     } else {
-        self->mLayout->Animate(0);
-        self->mLayout->UnbindAllAnimation();
-        self->mLayout->BindAnimation(self->mAnimOpen);
-        self->mLayout->SetAnimationEnable(self->mAnimOpen, true);
-        self->mAnimOpen->SetFrame(lbl_eu_806679E0);
-        self->mLayout->Animate(0);
+        if (partyVal < 200) {
+            self->mGaugeBase = 1;
+            self->mLayout->Animate(0);
+            self->mLayout->UnbindAllAnimation();
+            self->mLayout->BindAnimation(self->mAnimOpen);
+            self->mLayout->SetAnimationEnable(self->mAnimOpen, true);
+            self->mAnimOpen->SetFrame(lbl_eu_806679E0);
+            self->mLayout->Animate(0);
+        }
     }
 }
 void func_80187A88(){}
 void func_80187B70(){}
-void func_80187C90(){}
 void func_80187E28(){}

@@ -19,8 +19,8 @@ public:
     bool OnFileEvent(CEventFile* pEventFile);
 
     // field accessors - retail func_8022D094/08C/09C (recovered as members)
-    u8 getField24();
-    u8 getField25();
+    int getField24();  // retail caller (CItemBoxGrid func_801CB1E4) compares the FULL word, no rlwinm mask
+    int getField25();  // retail caller (CItemBoxGrid func_801CB038) compares the FULL word, no rlwinm mask
     // Retail callers compare the FULL word (cmpi r3,0, no rlwinm mask), so the
     // recovered return type is int even though the body returns a byte.
     int getField27();

@@ -11329,8 +11329,9 @@ void func_800F38E0(void* self, u32 arg2, u16 arg3) {
 void func_800F3970(cf::CBattleManager* self, void* obj1, void* obj2, s32 idx, s32 addVal) {
     // Declaration order drives the saved-register colors. Signed selector so
     // the dispatch compares with retail cmpwi (cmpli would come from unsigned).
-    s32 selector = lbl_eu_804FC828[idx].selector;
-    s32 val3 = lbl_eu_804FC828[idx].val;
+    const BattleTableEntry* entry = &lbl_eu_804FC828[idx];
+    s32 selector = entry->selector;
+    s32 val3 = entry->val;
     s32 val2 = -1;
 
     if (val3 == 0x3e7) {

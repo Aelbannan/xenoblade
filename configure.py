@@ -615,7 +615,8 @@ config.libs = [
             ),
             Object(NonMatching, "kyoshin/CTitleAHelp.cpp", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "kyoshin/CItemBoxGrid.cpp"),
-            Object(NonMatching, "kyoshin/CCur.cpp"),
+            Object(Matching, "kyoshin/CCur.cpp",
+                   extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/CSortMenu.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/CItemBoxInfo.cpp", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "kyoshin/CNumSelect.cpp"),
@@ -1865,6 +1866,8 @@ config.libs = [
             Object(NonMatching, "monolib/src/device/CDeviceFontLayer.cpp"),
             Object(Matching, "monolib/src/device/CDeviceFontLoader.cpp"),
             Object(Matching, "monolib/src/device/CDeviceGX.cpp"),
+            # data-diff MATCH: retail .rodata/.sdata/.data/.sbss dissolved into the TU;
+            # code residual: wkStandbyLogin + ctor vtable-store scheduling (see attempts.jsonl)
             Object(NonMatching, "monolib/src/core/CDesktop.cpp", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "monolib/src/core/CDrawGX.cpp"),
             Object(NonMatching, "monolib/src/core/CException.cpp", extra_cflags=["-O4,s", "-func_align 4"]),

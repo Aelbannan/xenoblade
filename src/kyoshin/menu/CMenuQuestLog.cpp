@@ -1,12 +1,17 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuQuestLog
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
-
 #include "kyoshin/menu/CMenuQuestLog.hpp"
 
+#include "kyoshin/CTaskGame.hpp"          // CTaskGame::getInstance / func_800426F0
+#include "kyoshin/cf/CfGameManager.hpp"  // cf::CfGameManager::getCurrentPad / func_80086F9C
+#include "kyoshin/code_80135FDC.hpp"     // func_8013BE50 / func_80137250
+#include "monolib/core/CPadManager.hpp"   // CPad::mPressedButtonFlags
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
+
+#include <revolution/GX.h>
+#include <nw4r/lyt/lyt_drawInfo.h>
 
 extern "C" void __dt__13CMenuQuestLogFv(void*, int);
 
@@ -15,6 +20,37 @@ extern "C" void __dt__13CMenuQuestLogFv(void*, int);
 // a real constructor (retail relies on it). C linkage inherited from the
 // header declaration.
 __declspec(noinline) CMenuQuestLog* __ct__CMenuQuestLog(CMenuQuestLog* _this, CProcess* parent, u32 arg2) {
+    __ct__8CProcessFv(_this);
+
+    // Temp (CProcess) primary vtable.
+    *(u32*)((u8*)_this + 0x10) = (u32)lbl_eu_8052BF70;
+
+    // Null PMF callback slot groups.
+    _this->ptmf0[0] = __ptmf_null[0];
+    _this->ptmf0[1] = __ptmf_null[1];
+    _this->ptmf0[2] = __ptmf_null[2];
+    _this->ptmf1[0] = __ptmf_null[0];
+    _this->ptmf1[1] = __ptmf_null[1];
+    _this->ptmf1[2] = __ptmf_null[2];
+
+    _this->mField54 = 0;
+    _this->mField55 = 0;
+
+    // Composite vtable + the IScnRender sub-vtable at +0x58.
+    *(u32*)((u8*)_this + 0x10) = (u32)lbl_eu_8052CC38;
+    *(u32*)((u8*)_this + 0x58) = (u32)lbl_eu_8052CC38 + 0x24;
+    _this->mScene = parent;
+
+    // Embedded widgets in construction order.
+    __ct__CBgTex(&_this->mBgTex, 0);
+    __ct__CTitleAHelp(&_this->mTitleAHelp, 0, 0);
+    __ct__CQstLogList(&_this->mQstLogList, 0);
+    __ct__CQstLogInfo(&_this->mQstLogInfo);
+
+    _this->field_2280 = arg2;
+    _this->mState = 0;
+    func_8008294C__Q22cf13CfGameManagerFv(1);
+    code80135FDC_postIncByte_64080();
     return _this;
 }
 
@@ -30,13 +66,130 @@ extern "C" void __ct__UnkClass_8011C974(void* self, const u32* src) {
     ((u32*)self)[3] = src[3];
 }
 
-void func_8011C998(){}
+// CScrollBar copy helper: constructs the mem-region sub-object at +0x04 from
+// the source, then copies the remaining scalar fields in retail order. The
+// source pointer is de-const'ed so every load/store pair stays in program
+// order (retail emits one r0/f0 load+store per field).
+extern "C" void func_8011C998(CScrollBarData* dst, const CScrollBarData* src) {
+    CScrollBarData* s = (CScrollBarData*)src;
+    __ct__UnkClass_8011C974(&dst->mMemRegion[0], &s->mMemRegion[0]);
+    dst->mFileHandle = s->mFileHandle;
+    dst->mAccessor = s->mAccessor;
+    dst->mLayout = s->mLayout;
+    dst->mAnimTrans = s->mAnimTrans;
+    dst->mReady = s->mReady;
+    dst->mVisible = s->mVisible;
+    dst->mState = s->mState;
+    dst->mActive = s->mActive;
+    dst->mAnimOffset = s->mAnimOffset;
+    dst->mScrollPosY = s->mScrollPosY;
+    dst->mScrollRatio = s->mScrollRatio;
+    dst->mThumbHeight = s->mThumbHeight;
+    dst->mContentHeight = s->mContentHeight;
+    dst->mDirection = s->mDirection;
+}
 
 void CMenuQuestLog::Term() {}
 
-void CMenuQuestLog::Move() {}
+void CMenuQuestLog::Move() {
+    CTaskGame::getInstance();
+    if (CTaskGame::func_800426F0()) {
+        goto exit;
+    }
+    // Branch-over-branch guard (same shape as cbRenderBefore): exit label
+    // before body label emits retail's `beq body; b exit`.
+    if (!(lbl_eu_80663E28 & (1u << 21))) {
+        goto body;
+    }
+    goto exit;
+exit:
+    return;
+body:
+    // Close request: classic controller bit 23 / wii bit 10 plays the close
+    // sound and flags the closing state.
+    CPad* pad = cf::CfGameManager::getCurrentPad();
+    u32 close;
+    if (cf::CfGameManager::func_80086F9C(-1)) {
+        close = (pad->mPressedButtonFlags >> 23) & 1;
+    } else {
+        close = (pad->mPressedButtonFlags >> 10) & 1;
+    }
+    if (close != 0) {
+        if (func_800FEDF8()) {
+            func_800FF914();
+        }
+        func_80138078(6);
+        mState = 0xa;
+        mField54 = 1;
+    }
 
-__declspec(noinline) void CMenuQuestLog::cbRenderBefore() {}
+    // State machine (jumptable dispatch on the state byte).
+    switch (mState) {
+    case 0:
+        func_8011CD6C(this);
+        break;
+    case 1:
+        func_8011CDF4(reinterpret_cast<unsigned char*>(this));
+        break;
+    case 2:
+        func_8011CE44(this);
+        break;
+    case 3:
+        func_8011D03C(reinterpret_cast<unsigned char*>(this));
+        break;
+    case 4:
+        func_8011D08C(reinterpret_cast<unsigned char*>(this));
+        break;
+    case 5:
+        func_8011D0FC(this);
+        break;
+    case 6:
+        func_8011D158(this);
+        break;
+    case 7:
+        func_8011D1A8(this);
+        break;
+    case 8:
+        func_8011D22C(this);
+        break;
+    case 9:
+        func_8011D298(this);
+        break;
+    }
+
+    func_801C3D54(&mBgTex);
+    func_801C3FF0(&mTitleAHelp);
+    func_80227AC4(&mQstLogList);
+    func_80229570(&mQstLogInfo);
+}
+
+__declspec(noinline) void CMenuQuestLog::cbRenderBefore() {
+    CTaskGame::getInstance();
+    if (CTaskGame::func_800426F0()) {
+        goto exit;
+    }
+    // Branch-over-branch guard keeps MWCC from folding the bit test into a
+    // single branch -- emits retail's `beq body; b exit`.
+    if (!(lbl_eu_80663E28 & (1u << 21))) {
+        goto body;
+    }
+    goto exit;
+exit:
+    return;
+body:
+    if (func_8013BE50() == 0) {
+        goto exit;
+    }
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+    {
+        nw4r::lyt::DrawInfo drawInfo;
+        func_80137250(&drawInfo);
+        func_801C3D7C(&mBgTex, &drawInfo);
+        func_80227B6C(&mQstLogList, &drawInfo);
+        func_80229600(&mQstLogInfo, &drawInfo);
+        func_801C4080(&mTitleAHelp, &drawInfo);
+    }
+}
 
 // ---------------------------------------------------------------------------
 // ---- func_8011CCE0 (us-8011d7bc) ------------------------------------------
@@ -64,7 +217,23 @@ CMenuQuestLog* func_8011CCE0(CProcess* self, CProcess* parent, u32 arg2) {
 // (lbl_eu_80663FC0 != 0) - retail lwz sda21; subic; subfe
 extern "C" bool func_8011CD5C() { return lbl_eu_80663FC0 != 0; }
 
-void func_8011CD6C(){}
+// State-machine step for state 1: once the background layout, title help,
+// list and info widget are all ready, open the title help + list, set state 1
+// and play sound 0x6d.
+void func_8011CD6C(CMenuQuestLog* self) {
+    if (func_801C3E34(&self->mBgTex)) {
+        if (func_801C4114(&self->mTitleAHelp)) {
+            if (func_80227C70(&self->mQstLogList)) {
+                if (func_802296D0(&self->mQstLogInfo)) {
+                    func_801C412C(&self->mTitleAHelp);
+                    func_80227CDC(&self->mQstLogList);
+                    self->mState = 1;
+                    func_80138078(0x6d);
+                }
+            }
+        }
+    }
+}
 
 // Gate the quest-log list state: when the help sub-object is idle and the
 // list accepts input, raise the state byte to 2.

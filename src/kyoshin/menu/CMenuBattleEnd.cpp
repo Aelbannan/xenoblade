@@ -253,18 +253,19 @@ extern "C" void func_8026F95C(CMenuBattleEnd* obj) {
     // Retail walks the queue with a u8 counter (clrlslwi 24,3 index math);
     // applying an entry returns immediately, otherwise the tail clears state.
     for (u8 i = 0; i < 4; i++) {
-        if (obj->mEntries[i].flag == 0) continue;
+        UnkBattleEntry* e = &obj->mEntries[i];
+        if (e->flag == 0) continue;
 
-        switch (obj->mEntries[i].flag) {
+        switch (e->flag) {
         case 1:
             obj->mAnim90 = obj->mAnim88;
-            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x68], obj->mEntries[i].param);
-            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x74], obj->mEntries[i].param);
+            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x68], e->param);
+            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x74], e->param);
             break;
         case 2:
             obj->mAnim90 = obj->mAnim8C;
-            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x80], obj->mEntries[i].param);
-            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x8c], obj->mEntries[i].param);
+            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x80], e->param);
+            func_80136910(obj->mLayout, &lbl_eu_8050E6F8[0x8c], e->param);
             break;
         default:
             break;
@@ -274,8 +275,8 @@ extern "C" void func_8026F95C(CMenuBattleEnd* obj) {
             obj->mLayout->BindAnimation(obj->mAnim90);
             obj->mLayout->SetAnimationEnable(obj->mAnim90, true);
             obj->mLayout->Animate(0);
-            obj->mEntries[i].flag = 0;
-            obj->mEntries[i].param = 0;
+            e->flag = 0;
+            e->param = 0;
             func_80138078(0x2c);
             return;
         }

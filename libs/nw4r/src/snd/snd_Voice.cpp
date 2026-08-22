@@ -849,19 +849,17 @@ void Voice::SetVoiceType(AxVoice::VoiceType type) {
 }
 
 void Voice::CalcAxVe() {
-    VoiceLayout& v = VoiceRef(this);
-
     f32 baseVolume = lbl_eu_8066A098;
-    baseVolume *= v.mVolume;
+    baseVolume *= mVolume;
     baseVolume *= AxManager::GetInstance().GetOutputVolume();
 
-    for (int i = 0; i < v.mVoiceOutCount; i++) {
-        f32 volume = baseVolume * v.mVoiceOutParam[i][0];
-        f32 target = volume * v.mVeTargetVolume;
-        f32 init = volume * v.mVeInitVolume;
+    for (int i = 0; i < mVoiceOutCount; i++) {
+        f32 volume = baseVolume * mVoiceOutParam[i][0];
+        f32 target = volume * mVeTargetVolume;
+        f32 init = volume * mVeInitVolume;
 
-        for (int j = 0; j < v.mChannelCount; j++) {
-            AxVoice* pAxVoice = v.mAxVoice[j][i];
+        for (int j = 0; j < mChannelCount; j++) {
+            AxVoice* pAxVoice = mAxVoice[j][i];
 
             if (pAxVoice != NULL) {
                 pAxVoice->SetVe(target, init);
@@ -919,7 +917,6 @@ void Voice::AxVoiceCallbackFunc(AxVoice* pDropVoice,
                                 AxVoice::AxVoiceCallbackStatus status,
                                 void* pCallbackArg) {
     Voice* p = static_cast<Voice*>(pCallbackArg);
-    VoiceLayout& v = VoiceRef(p);
 
     VoiceCallbackStatus voiceStatus;
     bool freeDropVoice = false;
@@ -937,9 +934,9 @@ void Voice::AxVoiceCallbackFunc(AxVoice* pDropVoice,
     }
     }
 
-    for (int i = 0; i < v.mChannelCount; i++) {
-        for (int j = 0; j < v.mVoiceOutCount; j++) {
-            AxVoice* pAxVoice = v.mAxVoice[i][j];
+    for (int i = 0; i < p->mChannelCount; i++) {
+        for (int j = 0; j < p->mVoiceOutCount; j++) {
+            AxVoice* pAxVoice = p->mAxVoice[i][j];
 
             if (pAxVoice != NULL) {
                 if (pAxVoice == pDropVoice) {
@@ -951,21 +948,21 @@ void Voice::AxVoiceCallbackFunc(AxVoice* pDropVoice,
                     AxVoiceManager::GetInstance().FreeAxVoice(pAxVoice);
                 }
 
-                v.mAxVoice[i][j] = NULL;
+                p->mAxVoice[i][j] = NULL;
             }
         }
     }
 
-    v.mIsPause = false;
-    v.mIsStarting = false;
-    v.mChannelCount = 0;
+    p->mIsPause = false;
+    p->mIsStarting = false;
+    p->mChannelCount = 0;
 
     if (freeDropVoice) {
         p->Free();
     }
 
-    if (v.mCallback != NULL) {
-        ((VoiceCallback)v.mCallback)(p, voiceStatus, v.mCallbackArg);
+    if (p->mCallback != NULL) {
+        ((VoiceCallback)p->mCallback)(p, voiceStatus, p->mCallbackArg);
     }
 }
 
@@ -1312,12 +1309,10 @@ void Voice::StopAllAxVoice() {
 }
 
 void Voice::InvalidateWaveData(const void* pStart, const void* pEnd) {
-    VoiceLayout& v = VoiceRef(this);
-
     bool dispose = false;
 
-    for (int i = 0; i < v.mChannelCount; i++) {
-        AxVoice* pAxVoice = v.mAxVoice[i][0];
+    for (int i = 0; i < mChannelCount; i++) {
+        AxVoice* pAxVoice = mAxVoice[i][0];
 
         if (pAxVoice != NULL && pAxVoice->IsDataAddressCoverd(pStart, pEnd)) {
             dispose = true;
@@ -1328,9 +1323,9 @@ void Voice::InvalidateWaveData(const void* pStart, const void* pEnd) {
     if (dispose) {
         Stop();
 
-        if (v.mCallback != NULL) {
-            ((VoiceCallback)v.mCallback)(this, CALLBACK_STATUS_CANCEL,
-                                        v.mCallbackArg);
+        if (mCallback != NULL) {
+            ((VoiceCallback)mCallback)(this, CALLBACK_STATUS_CANCEL,
+                                        mCallbackArg);
         }
     }
 }

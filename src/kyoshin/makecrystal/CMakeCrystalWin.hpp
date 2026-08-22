@@ -13,6 +13,17 @@
 
 class CScn;
 
+// Minimal CScn view (same guarded declaration as CQuestWindow.hpp /
+// CTaskGameEff.hpp). Needed here for removeRenderCB in func_8021299C.
+#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
+#define KYOSHIN_MINIMAL_CSCN_DECLARED
+class CScn {
+public:
+    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
+    void removeRenderCB(IScnRender* cb);
+};
+#endif
+
 // Byte flags written on the owning scene during window teardown
 // (func_8021299C). The kyoshin minimal CScn (guarded decl in the task
 // headers) has no fields, so access goes through this layout view.

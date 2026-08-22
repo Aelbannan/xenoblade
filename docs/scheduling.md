@@ -19,9 +19,8 @@ and diffing the PPC (`.scratch/sched_probe.c`).
 
 1. Check the unit's `mw_version` / `extra_cflags` — hexdiff prints the config line on every run.
 2. **Loop body differs** (unrolled pointer-walk vs indexed `lwzx`/`stwx`) → flip the unit's `-O4,p` ↔ `-O4,s` in configure.py, re-`hexdiff`, revert if it doesn't help.
-3. **Non-loop** order diff (loads interleaved vs grouped) → scheduling is level-gated (O2/O3 don't schedule); try `aggressive_ls_scheduling off` for load/store cases.
-4. Nop padding around `mtctr`/`bdnz` or unrolled bodies → loop-align flags / `-func_align 4|16` (separate lever).
-5. After a scheduling fix, re-examine **colors** — scheduling changes live ranges, so new `reg_swap`s are expected; re-route to `register_mapping.md`.
+3. Nop padding around `mtctr`/`bdnz` or unrolled bodies → loop-align flags / `-func_align 4|16` (separate lever).
+4. After a scheduling fix, re-examine **colors** — scheduling changes live ranges, so new `reg_swap`s are expected; re-route to `register_mapping.md`.
 
 ## TL;DR
 
@@ -84,7 +83,6 @@ Scheduler / peephole:
 
 - `scheduling` — instruction scheduling (positive-only flag; implied at O4).
 - `schedule_factor` — scheduler tuning.
-- `aggressive_ls_scheduling` — aggressive load/store scheduling (has `off`).
 - `peephole`, `globaloptimizer` — forward/final peephole passes.
 
 Loop optimization:
@@ -166,9 +164,7 @@ vs pointer-walk distinction the reference already documents for
 
 4. **`-schedule` and `-peephole` are positive-only** ("option only has a
    positive form" in the flag table); they are implied at O4 and cannot be
-   turned off individually at O4. `aggressive_ls_scheduling off` is the one
-   scheduling flag with a usable negative form — worth trying on load/store
-   scheduling residuals.
+   turned off individually at O4.
 
 5. **Loop alignment** (`full_loop_align`, `aggressive_loop_align`,
    `unrolled_loop_align`) and `-func_align 4/16` control the nop padding around

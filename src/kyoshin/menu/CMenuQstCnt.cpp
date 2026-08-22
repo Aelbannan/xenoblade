@@ -300,23 +300,23 @@ void CMenuQstCnt::Move() {
         // Load camDist into a local first so MWCC emits lfs f1,0xc(r3)
         // before lfs f0,CONST (retail operand order for the fsubs/fcmpo).
         f32 camDist = *(f32*)((u8*)cam + 0xC);
-        if (lbl_eu_8066856C - camDist < lbl_eu_8066856C) return;
+        f32 result = lbl_eu_8066856C - camDist;
+        if (result < lbl_eu_8066856C) return;
     }
     if (func_8011CD5C()) return;
     if (func_80293C10()) return;
     if (func_8029A658()) return;
     if (func_801B481C()) return;
     if (func_80124B78()) return;
-    switch (mState8C) {
+    // Retail compares the state with signed cmpi.
+    switch ((s32)mState8C) {
     case 0: func_80226BBC((QstMenuData*)this); break;
     case 1: func_80226C18((QstMenuData*)this); break;
     case 2: func_80226C5C((QstMenuData*)this); break;
     case 3: func_80226C88(this); break;
     }
-    {
-        void* vtab = *(void**)mLayout;
-        ((void (*)(void*, bool))((void**)vtab)[0x38 / 4])(mLayout, 0);
-    }
+    // Tail virtual call: Layout::Animate (vtable slot 0x38), option 0.
+    mLayout->Animate(0);
 }
 
 void CMenuQstCnt::cbRenderBefore() {

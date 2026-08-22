@@ -3,6 +3,10 @@
 
 #include <harness_catalog.h>
 
+u32 SFSET_GetCond(void* self, u32 idx);
+s32 SFTIM_IsGetFrmTime(void* self, void* frm);
+s32 SFTIM_ExecCyclicFrameOutput(void* self);
+
 extern u32 lbl_eu_80619B20[];
 void* memset(void* dst, int val, size_t n);
 void* memcpy(void* dst, const void* src, size_t n);
@@ -358,6 +362,147 @@ s32 sfmpvf_IsChkFirst(void* a, void* b) {
         s32 x = *(s32*)((u8*)a + 0xF8) ^ *(s32*)((u8*)b + 0xF8);
         return ((x >> 1) - (x & *(s32*)((u8*)a + 0xF8))) < 0;
     }
+}
+
+// Frame-slot table layout: cnt/self+0x27f8 array of 0x110-byte frames,
+// plus a parallel 0x88-stride "release" slot array rooted at self+0x1758.
+typedef void (*SFMPVF_ReadCb)(void*, void*);
+
+s32 SFMPVF_GetRead(void* self, void** out, u32* outVal, SFMPVF_ReadCb cb) {
+    void* cs;
+    void* frm;
+    u8* slot;
+    u8* p;
+    s32 cnt;
+    s32 i;
+    s32 v;
+
+    if (SFSET_GetCond(self, 0xf) == 0 && *(u32*)((u8*)self + 0x5c) != 1) {
+        *out = NULL;
+        return 0;
+    }
+
+    frm = SFMPVF_HoldFrm(self);
+    if (frm == NULL) {
+        *out = NULL;
+        return 0;
+    }
+
+    // Find the held frame's index and its release slot.
+    cnt = *(s32*)((u8*)self + 0x27ec);
+    p = (u8*)self + 0x27f8;
+    slot = NULL;
+    for (i = 0; i < cnt; i++, p += 0x110) {
+        if (p == (u8*)frm) {
+            slot = (u8*)self + i * 0x88 + 0x1758;
+            break;
+        }
+    }
+
+    *(u32*)slot = 1;
+    *(void**)((u8*)self + 0x27f4) = frm;
+    *out = slot + 8;
+    cb(self, frm);
+
+    *(u32*)((u8*)self + 0x1018) = *(u32*)((u8*)frm + 0x14);
+    *(u32*)((u8*)self + 0x101c) = *(u32*)((u8*)frm + 0x18);
+
+    if (!SFTIM_IsGetFrmTime(self, *out)) {
+        *out = NULL;
+        return 0;
+    }
+    if (!SFTIM_ExecCyclicFrameOutput(self)) {
+        *out = NULL;
+        return 0;
+    }
+
+    if (*(s32*)((u8*)self + 0x68) == 2) {
+        v = *(s32*)((u8*)self + 0x6c);
+        *(s32*)((u8*)self + 0x6c) = v + 1;
+        if (v + 1 < 0) {
+            *(s32*)((u8*)self + 0x6c) = 0;
+        }
+        *(s32*)((u8*)frm + 0x64) = v;
+        *outVal = v;
+    }
+    return 0;
+}
+
+s32 SFMPVF_AddRead(void* self, void* handle, void** out) {
+    void* cs;
+    u8* frm;
+    u8* rel;
+    u8* p;
+    u8* q;
+    s32 cnt;
+    s32 i;
+    s32 ret;
+
+    SFLIB_LockCs(&cs);
+    frm = NULL;
+    rel = NULL;
+    cnt = *(s32*)((u8*)self + 0x27ec);
+
+    if (*(s32*)((u8*)self + 0x68) == 2) {
+        // Playing: locate the frame whose display slot matches the requested
+        // frame id in *out, then map it to its release slot.
+        p = (u8*)self + 0x27f8;
+        for (i = 0; i < cnt; i++, p += 0x110) {
+            if (*(s32*)(p + 0x64) == *(s32*)out) {
+                frm = p;
+                break;
+            }
+        }
+        if (frm == NULL) {
+            ret = SFLIB_SetErr(self, 0xff000f1f);
+            if (ret != 0) {
+                SFLIB_UnlockCs(&cs);
+                return ret;
+            }
+        }
+        p = (u8*)self + 0x27f8;
+        for (i = 0; i < cnt; i++, p += 0x110) {
+            if (p == frm) {
+                rel = (u8*)self + i * 0x88 + 0x1758;
+                break;
+            }
+        }
+    } else {
+        // Not playing: handle points just past a header word that must be 1.
+        rel = (u8*)handle - 8;
+        if (*(s32*)(u8*)rel != 1) {
+            ret = SFLIB_SetErr(self, 0xff000f0e);
+            SFLIB_UnlockCs(&cs);
+            return ret;
+        } else {
+            // Find which frame owns this handle.
+            p = (u8*)self + 0x1758;
+            q = (u8*)self + 0x27f8;
+            for (i = 0; i < 16; i++, p += 0x88, q += 0x110) {
+                if (*(void**)(p + 8) == handle) {
+                    frm = q;
+                    break;
+                }
+            }
+            if (*(void**)((u8*)self + 0x27f4) != frm) {
+                ret = SFLIB_SetErr(self, 0xff000f0f);
+                SFLIB_UnlockCs(&cs);
+                return ret;
+            }
+        }
+    }
+
+    *(u32*)rel = 0;
+    if (frm != NULL) {
+        if (*(s32*)frm == 4) {
+            *(s32*)frm = 3;
+        } else {
+            *(s32*)frm = 0;
+        }
+        *(s32*)(frm + 0x64) = -1;
+    }
+    SFLIB_UnlockCs(&cs);
+    return 0;
 }
 
 s32 SFMPVF_ChkImageSize(void* self, u32 w, u32 h) {

@@ -365,8 +365,12 @@ extern "C" void* __ct__CNRequest(void* self) {
 #pragma optimize_for_size on
 int func_804DAAF8(CNRequest* self, u8* out) {
     int ret = self->field_0x0->taskSlot2(self->field_0x4);
+    // Word-sized temporary: assigning straight to *out makes MWCC fold the
+    // u8 conversion into the shift (rlwinm byte mask); retail keeps the
+    // compare result as a full word and truncates only at the stb store.
     if (ret != 0) {
-        *out = (ret == 1);
+        int done = (ret == 1);
+        *out = done;
         self->field_0x0->taskSlot3(self->field_0x4);
         self->field_0x0 = 0;
         return 1;
@@ -461,6 +465,10 @@ __declspec(noinline) CNReqtaskSaveVtbl** func_804DACE8(
 //   4 -> mark done
 //   5 -> report completion (return 1)
 //   6 -> retry the open (back to state 0)
+// -O4,s (optimize_for_size): retail emits the stmw r30 frame and the compact
+// switch layout; without the pragma MWCC compiles this at -O4 and diverges.
+#pragma push
+#pragma optimize_for_size on
 s32 func_804DAD38(CNReqtaskSaveVtbl* vtable, CNReqtaskSaveData* data) {
     if (lbl_eu_806659D0 != 0) { // NAND subsystem busy
         return 0;
@@ -483,10 +491,13 @@ s32 func_804DAD38(CNReqtaskSaveVtbl* vtable, CNReqtaskSaveData* data) {
         }
         case 1: {
             s32 last = lbl_eu_806659D4;
+            // Any nonzero latch other than -12 (no such file) fails the save.
+            // Written as a fused guard so MWCC emits the retail
+            // `cmpwi 0/beq skip; cmpwi -12/bne error` shape.
+            if (last != 0 && last != -12) {
+                return 2;
+            }
             if (last != 0) {
-                if (last != -12) {
-                    return 2;
-                }
                 // No such file: create it (func_804DA70C) and retry the open
                 // via state 6. Retail lays this block out before the write
                 // branch below (the `last == 0` test jumps past it).
@@ -537,6 +548,7 @@ s32 func_804DAD38(CNReqtaskSaveVtbl* vtable, CNReqtaskSaveData* data) {
     }
     return 0;
 }
+#pragma pop
 
 // Save path/handle builder (stub; symbol kept for the func_804DAD38 open and
 // move steps). noinline: retail func_804DAD38 emits `bl func_804DAEE8`;

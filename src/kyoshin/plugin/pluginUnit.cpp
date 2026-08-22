@@ -7,10 +7,22 @@
 
 #include "monolib/vm/yvm2.h"
 #include "kyoshin/plugin/ocBdat.hpp"
-#include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/cf/code_800F42AC.hpp"
 #include "kyoshin/cf/object/CActorParam.hpp"
+
+namespace cf {
+class CfObjectActor;
+class CfUnknownSub;
+class CfCode800F42AC;
+// Minimal battle-manager interface. The full cf::CBattleManager header chain
+// conflicts with CfGameManager.hpp's C-linkage singleton declarations
+// (differing return types for the same mangled symbol), so pluginUnit only
+// sees the static accessor; the definition lives in CBattleManager.cpp.
+class CBattleManager {
+public:
+    static CBattleManager* getInstance();
+};
+}
 
 // C-linkage retail symbols referenced by learnArts / clearPcBtlState.
 extern "C" {
@@ -19,7 +31,7 @@ extern "C" {
 
     // bdat helpers (C-linkage in retail; ocBdat.hpp declares them as C++).
     void* func_8003AA34();
-    u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
+    // (getBdatStringColumnValue is declared by object/CBattleState.hpp.)
 
     // Actor param helpers (C-linkage in retail). Typed as cf::CfObjectActor*
     // to satisfy the no_void_ptr lint rule while keeping C linkage.
@@ -30,6 +42,7 @@ extern "C" {
     void func_800F3958(cf::CBattleManager*, cf::CfObjectActor*, int);
     void func_800EC8FC(cf::CBattleManager*, cf::CfObjectActor*,
                       cf::CBattleStateEntry*, int);
+    void* func_800EA444(cf::CBattleManager*);
     int func_80174C98(void*, int*, int);
     bool func_8006EF04__Fi(int mask);
     cf::CfUnknownSub* func_800F477C(cf::CfCode800F42AC* self);
@@ -420,7 +433,7 @@ int onEneArtsAttack(VMThread* pThread) {
                     // Mode 1: check if battle manager's current target sub-object
                     // matches unk50.
                     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-                    u8* bmTarget = reinterpret_cast<u8*>(bm->func_800EA444());
+                    u8* bmTarget = reinterpret_cast<u8*>(func_800EA444(bm));
                     if (bmTarget != nullptr) {
                         CfCode800F42AC* bmTargetObj =
                             reinterpret_cast<CfCode800F42AC*>(bmTarget);
@@ -435,7 +448,7 @@ int onEneArtsAttack(VMThread* pThread) {
                     // Mode 2: same as mode 1 but also requires bit 17 of
                     // bmTarget+0x824 to be set.
                     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-                    u8* bmTarget = reinterpret_cast<u8*>(bm->func_800EA444());
+                    u8* bmTarget = reinterpret_cast<u8*>(func_800EA444(bm));
                     if (bmTarget != nullptr) {
                         CfCode800F42AC* bmTargetObj =
                             reinterpret_cast<CfCode800F42AC*>(bmTarget);

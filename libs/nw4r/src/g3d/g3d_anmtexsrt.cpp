@@ -74,7 +74,102 @@ void DetachAll__Q34nw4r3g3d12AnmObjTexSrtFv(void) {}
 
 
 
-void Construct__Q34nw4r3g3d15AnmObjTexSrtResFP12MEMAllocatorPUlQ34nw4r3g3d12ResAnmTexSrtQ34nw4r3g3d6ResMdlb(){}
+// Retail-owned vtables / data (nw4r_data.s)
+extern char lbl_eu_805692E8[];       // AnmObjTexSrt construction vtable
+extern char lbl_eu_805692A0[];      // AnmObjTexSrtRes vtable
+extern nw4r::g3d::PlayPolicyFunc lbl_eu_80663458[]; // anm play-policy table
+
+namespace nw4r {
+namespace g3d {
+
+inline AnmObjTexSrt::AnmObjTexSrt(MEMAllocator* pAllocator, u16* pBindingBuf,
+                                  int numBinding)
+    : AnmObj(pAllocator, NULL), mNumBinding(numBinding),
+      mpBinding(pBindingBuf) {
+    *(void**)this = (void*)lbl_eu_805692E8;
+    Release();
+}
+
+inline AnmObjTexSrtRes::AnmObjTexSrtRes(MEMAllocator* pAllocator,
+                                        ResAnmTexSrt srt, u16* pBindingBuf,
+                                        int numBinding,
+                                        TexSrtAnmResult* pCacheBuf)
+    : AnmObjTexSrt(pAllocator, pBindingBuf, numBinding),
+      FrameCtrl(0.0f, srt.ref().info.numFrame,
+                lbl_eu_80663458[srt.ref().info.policy]),
+      mRes(srt), mpResultCache(pCacheBuf) {
+    *(void**)this = (void*)lbl_eu_805692A0;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+namespace nw4r {
+namespace g3d {
+
+AnmObjTexSrtRes* AnmObjTexSrtRes::Construct(MEMAllocator* pAllocator,
+                                            u32* pSize, ResAnmTexSrt srt,
+                                            ResMdl mdl, bool cache) {
+    if (!srt.IsValid() || !mdl.IsValid()) {
+        return NULL;
+    }
+
+    u16 numMaterial = srt.ref().info.numMaterial;
+    u32 numMatEntries = mdl.GetResMatNumEntries();
+
+    // Layout: [object][result cache (optional)][binding buffer]
+    u32 cacheSize = cache ? numMaterial * sizeof(TexSrtAnmResult) : 0;
+    u32 totalSize =
+        cacheSize + numMatEntries * sizeof(u16) + sizeof(AnmObjTexSrtRes);
+
+    if (pSize != NULL) {
+        *pSize = totalSize;
+    }
+
+    if (pAllocator == NULL) {
+        return NULL;
+    }
+
+    void* pMem = MEMAllocFromAllocator(pAllocator, totalSize);
+
+    if (pMem == NULL) {
+        return NULL;
+    }
+
+    TexSrtAnmResult* pCacheBuf = NULL;
+
+    if (cache) {
+        pCacheBuf = reinterpret_cast<TexSrtAnmResult*>(static_cast<char*>(pMem) +
+                                                       sizeof(AnmObjTexSrtRes));
+    }
+
+    u16* pBindingBuf = reinterpret_cast<u16*>(static_cast<char*>(pMem) +
+                                              sizeof(AnmObjTexSrtRes) +
+                                              cacheSize);
+
+    AnmObjTexSrtRes* pThis = new (
+        pMem) AnmObjTexSrtRes(pAllocator, srt, pBindingBuf, numMatEntries,
+                              pCacheBuf);
+
+    // Prime the result cache at the initial frame
+    if (pCacheBuf != NULL) {
+        f32 frame = pThis->GetFrm();
+
+        for (u32 i = 0; i < numMatEntries; i++) {
+            u16 binding = pThis->mpBinding[i];
+
+            if (!(binding & BINDING_UNDEFINED)) {
+                u32 id = binding & BINDING_ID_MASK;
+                pThis->mRes.GetAnmResult(&pThis->mpResultCache[id], id, frame);
+            }
+        }
+    }
+
+    return pThis;
+}
+
+} // namespace g3d
+} // namespace nw4r
 
 namespace nw4r {
 namespace g3d {

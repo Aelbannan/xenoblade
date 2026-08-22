@@ -318,8 +318,8 @@ void func_8019F6E8(CCtrlMoveNpc* self, const ml::CVec3* vec, f32 scale, f32 para
 // ---------------------------------------------------------------------------
 // Target 4: func_8019FB54 - range check an Npc table row against row/value
 // columns. Returns whether the row is "usable" for the current situation.
+// Defined at global scope: the retail symbol is unmangled.
 // ---------------------------------------------------------------------------
-namespace cf {
 int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
                   const char* p4, const char* p5, const char* p6, const char* p7) {
     void* bdat = (void*)lbl_eu_806640B4;
@@ -359,22 +359,24 @@ int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
     }
     return flag1;
 }
-}
 
 // ---------------------------------------------------------------------------
 // Target 3: func_8019FD2C - walk the table rows, toggling a per-row bit in the
 // bitmap and notifying LOD when the usable-flag flips.
+// Defined at global scope: the retail symbol is unmangled.
 // ---------------------------------------------------------------------------
-namespace cf {
 void func_8019FD2C() {
     func_8003AA34();
     void* bdat = (void*)lbl_eu_806640B4;
     cf::CfGameManager::func_80083298();
 
+    u32* bitmap;
+    const char* str;
     s32 base = (s32)func_8003B41C(bdat);
-    s32 end = base + (s32)func_8003B1EC(bdat);
-    u32* bitmap = lbl_eu_805757E0;
-    const char* str = lbl_eu_80503D30;
+    s32 count = (s32)func_8003B1EC(bdat);
+    bitmap = lbl_eu_805757E0;
+    str = lbl_eu_80503D30;
+    s32 end = base + count;
 
     for (s32 idx = base; idx < end; idx++) {
         // Byte-extract the row value: store the full call result to a stack
@@ -403,7 +405,6 @@ void func_8019FD2C() {
             }
         }
     }
-}
 }
 
 // ---------------------------------------------------------------------------

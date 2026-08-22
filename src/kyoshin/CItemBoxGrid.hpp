@@ -74,6 +74,21 @@ struct CItemInstVt2C {
 };
 
 // Cast-only vtable interface for the CItemImplInstances object: method at
+// vtable+0x2C taking a pointer and an int flag (no u8 mask on the third
+// argument). Used by sites that pass a full-word 0/1 selector.
+struct CItemInstVt2CInt {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void _v24();
+    virtual void _v28();
+    virtual void _v2C(void* arg, int flag);  // vtable+0x2C
+};
+// Cast-only vtable interface for the CItemImplInstances object: method at
 // vtable+0x40 (raw slot 16). MWCC prepends 2 RTTI header entries, so 14
 // dummy virtuals precede the method.
 struct CItemInstVt40 {
@@ -164,6 +179,15 @@ struct CItemPaneAnimVt {
 // header entries).
 struct CItemInstVt08 {
     virtual u32 _v08(void* arg);  // vtable+0x08
+};
+
+// Cast-only vtable interface for the CItemImplInstances object: method at
+// vtable+0x10 (raw slot 4, takes the item and returns void). MWCC prepends
+// 2 RTTI header entries, so 2 dummy virtuals precede the method.
+struct CItemInstVt10 {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10(void* arg);  // vtable+0x10
 };
 
 // Cast-only vtable interface for the CItemImplInstances object: method at
@@ -379,7 +403,7 @@ extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" void* func_80157C4C(u32, s16);
 extern "C" u32 func_801392E4(u32);
 extern "C" u32 func_801361E8(u32, const char*, u32);
-extern "C" u16 func_80139358(u32);
+extern "C" u32 func_80139358(u32);
 extern "C" CItemImplInstances* CItem_initItemImplInstances(void*);
 extern "C" u32 func_801D3320(void*);
 extern "C" void func_80158118(void*, u32);
@@ -486,7 +510,7 @@ extern "C" int func_8026178C(void*, u32);
 extern "C" u32 func_8025FB10(void*, u32);
 extern "C" u32 func_802083CC(void*);
 extern "C" void* func_8009EC9C(u32);
-extern "C" u32 func_800A082C(void);
+extern "C" u32 func_800A082C(void*);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void func_801C4B60(void*, s16, s16, s16, s16);
 extern "C" void func_801D1F9C(void*, u32);
@@ -551,7 +575,7 @@ extern "C" void* getFP__FPCc(const char*);
 extern "C" u16 func_80136254(const void*, const void*, int);
 extern "C" void __ct__CVisionItem(void*);
 extern "C" void __ct__CArtsBookItem(void*);
-extern "C" void SetEntry9Bytes(unsigned char*, short, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char);
+extern "C" unsigned char* SetEntry9Bytes(unsigned char*, short, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char);  // returns p (retail ctor reuses caller-preserved r3)
 extern "C" void func_801C562C(void*, char*);
 extern "C" void func_801C7EF0(CItemBoxGridFull*, u32);
 extern "C" void func_801C8ACC(CItemBoxGridFull*, u32);
@@ -637,5 +661,11 @@ extern "C" void code80135FDC_setVec3(float*, float, float, float);
 extern "C" void func_801D24E8(void*, void*, void*);
 extern "C" void func_8022D614(void*, void*);
 extern "C" void func_80207FC8(void*, void*);
+// Pane-colour vector returned by value from func_801397AC (r3:r4 pair);
+// same layout as CEquipItemBox.hpp's CEquipBoxFourShorts, defined locally
+// because CEquipItemBox.hpp is not in this TU's include closure.
+struct CEquipBoxFourShorts {
+    s16 a, b, c, d;
+};
 extern "C" CEquipBoxFourShorts func_801397AC(void*, u32);
 extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);

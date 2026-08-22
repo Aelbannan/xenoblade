@@ -235,7 +235,9 @@ extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
 
 // standalone BDAT helpers
 extern "C" void* getFP__FPCc(const char*);
-extern "C" void* getBdatStringColumnValue(void*, const char*, const char*);
+// Canonical signature (matches CfBdat.hpp/CfGimmick.hpp/code_801862C0.hpp;
+// conflicting extern "C" declarations are an illegal overload).
+extern "C" u32 getBdatStringColumnValue(void*, const char*, int);
 
 // misc single decls
 extern "C" void func_80136D74(nw4r::lyt::Layout*, char*, u32);

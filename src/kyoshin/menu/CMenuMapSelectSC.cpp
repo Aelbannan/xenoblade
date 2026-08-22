@@ -27,34 +27,35 @@ extern "C" void func_80251294(S* r3, const S* r4);
 extern "C" CMenuMapSelectSC* __ct__CMenuMapSelectSC(CMenuMapSelectSC* self, CProcess* arg) {
     __ct__8CProcessFv((CProcess*)self);
 
-    // vtable fixups: temp (CProcess) vtable first, then the composite vtable
-    // and the IScnRender sub-vtable at +0x58.
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
-    // Post-increment walk folds the first load into lwzu (btm_sco_init
-    // pattern); the second group re-reads the base with plain loads so MWCC
-    // reuses the already-materialised base register.
-    u32* src = __ptmf_null;
-    u32 pmfV0 = *src++;
-    u32 pmfV1 = *src++;
-    self->ptmf0[1] = pmfV1;
-    self->ptmf0[0] = pmfV0;
-    u32 pmfV2 = *src++;
-    self->ptmf0[2] = pmfV2;
-    u32* src2 = __ptmf_null;
-    u32 pmfU0 = src2[0];
-    u32 pmfU1 = src2[1];
-    self->ptmf1[1] = pmfU1;
+    // Temporary (CProcess) vtable until the null-PMF data is copied in.
+    *(u32*)((u8*)self + 0x10) = (u32)(void*)lbl_eu_8052BF70;
+
+    // Null PMF slots: walk the constant with one lwzu, then re-load the three
+    // words by index for each slot (MWCC cannot CSE these across the stores).
+    u32* p = __ptmf_null;
+
+    // Final composite vtable + IScnRender sub-vtable (+0x24) are formed from
+    // ONE materialisation of the vtable label (retail hoists lis/addi r6 and
+    // addi r0,r6,0x24 above the PMF copy) but only stored after it.
+    void* vt = (void*)lbl_eu_80537130;
+
+    u32 pmfW0 = *p++;
+    self->ptmf0[1] = p[0];
+    CTitleAHelp* help = &self->mTitleAHelp;  // hoisted like retail's addi r3,r29,0x60
+    self->ptmf0[0] = pmfW0;
+    self->ptmf0[2] = p[1];
+    u32 pmfU0 = p[-1];   // retail loads [0] before storing the [1] slot
+    self->ptmf1[1] = p[0];
     self->ptmf1[0] = pmfU0;
-    u32 pmfU2 = src2[2];
-    self->ptmf1[2] = pmfU2;
+    self->ptmf1[2] = p[1];
     self->mField54 = 0;
     self->mField55 = 0;
 
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_80537130;
-    *(u32*)((u8*)self + 0x58) = (u32)lbl_eu_80537130 + 0x24;
+    *(u32*)((u8*)self + 0x10) = (u32)vt;
+    *(u32*)((u8*)self + 0x58) = (u32)vt + 0x24;
     self->mParentRef = arg;
 
-    __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
+    __ct__CTitleAHelp(help, 0, 0);
     __ct__CFade(&self->mFade);
     __ct__CFloorMap(&self->mFloorMap);
 
@@ -194,7 +195,11 @@ void CMenuMapSelectSC::Init() {
     *(u32*)((u8*)this + 0x204) = *(u32*)(tempFloor + 0x144);
     *(u32*)((u8*)this + 0x208) = *(u32*)(tempFloor + 0x148);
     *(u8*)((u8*)this + 0x20c) = *(u8*)(tempFloor + 0x14c);
-    memcpy((u8*)this + 0x210, tempFloor + 0x150, sizeof(UnkLayoutEntry) * 0x14);
+    // 20 8-byte entries, copied as a mtctr/bdnz loop in retail.
+    for (int i = 0; i < 0x14; i++) {
+        *(u32*)((u8*)this + 0x210 + i * 8) = *(u32*)(tempFloor + 0x150 + i * 8);
+        *(u32*)((u8*)this + 0x214 + i * 8) = *(u32*)(tempFloor + 0x154 + i * 8);
+    }
 
     // Entry count / draw flags (member 0x1F0-0x208).
     *(u8*)((u8*)this + 0x2b0) = *(u8*)(tempFloor + 0x1f0);
@@ -208,8 +213,11 @@ void CMenuMapSelectSC::Init() {
     *(u8*)((u8*)this + 0x2c7) = *(u8*)(tempFloor + 0x207);
     *(u8*)((u8*)this + 0x2c8) = *(u8*)(tempFloor + 0x208);
 
-    // Map-data blob (member 0x20C, 0x30C0 bytes).
-    memcpy((u8*)this + 0x2cc, tempFloor + 0x20c, 0x30c0);
+    // Map-data blob (member 0x20C, 0x30C0 bytes): 0x618 8-byte entries.
+    for (int j = 0; j < 0x618; j++) {
+        *(u32*)((u8*)this + 0x2cc + j * 8) = *(u32*)(tempFloor + 0x20c + j * 8);
+        *(u32*)((u8*)this + 0x2d0 + j * 8) = *(u32*)(tempFloor + 0x210 + j * 8);
+    }
 
     *(u8*)((u8*)this + 0x338c) = *(u8*)(tempFloor + 0x32cc);
 
@@ -238,6 +246,10 @@ void CMenuMapSelectSC::Init() {
 }
 
 extern "C" void func_80251294(S* r3, const S* r4) {
+    // Volatile guard blocks -ipa inlining: retail keeps this as a standalone
+    // callee with four direct bl call sites from Init().
+    static volatile u8 sGuard = 0;
+    sGuard = 1;
     S* dst = r3;
     const S* src = r4;
     dst->a = src->a;
@@ -269,16 +281,14 @@ void CMenuMapSelectSC::Term() {
 
 void CMenuMapSelectSC::Move() {
     getInstance__9CTaskGameFv();
-    if (func_800426F0__9CTaskGameFv() != 0) {
-        return;
+    // Same gate idiom as cbRenderBefore (see comment there).
+    if (func_800426F0__9CTaskGameFv() == 0 &&
+        (lbl_eu_80663E28 & 0x200000) == 0) {
+        goto body;
     }
-    // Gate: when the global mode bit (0x200000) is set, skip the world-map
-    // update. The adjacent `goto end; goto body;` pair hits MWCC's
-    // branch-over-branch peephole, emitting retail's beq-into-body / b-end.
-    if ((lbl_eu_80663E28 & 0x200000) != 0) {
-        goto end;
-    }
-    goto body;
+    goto end;
+end:
+    return;
 body:
     switch (mState) {
     case 0:
@@ -311,25 +321,24 @@ body:
     func_801C3FF0(&mTitleAHelp);
     func_802443E8(&mFade);
     func_8024C1FC(&mFloorMap);
-end:
-    ;
 }
 
 void CMenuMapSelectSC::cbRenderBefore() {
     getInstance__9CTaskGameFv();
-    if (func_800426F0__9CTaskGameFv() != 0) {
-        return;
+    // Gate: skip when the task is busy or the global mode bit (0x200000) is
+    // set. The combined `A == 0 && B == 0 -> goto body` chain with the exit
+    // label BEFORE the body label reproduces retail's branch-over-branch
+    // (`bne end`, then `beq body; b end`).
+    if (func_800426F0__9CTaskGameFv() == 0 &&
+        (lbl_eu_80663E28 & 0x200000) == 0) {
+        goto body;
     }
-    // Gate: when the global mode bit (0x200000) is set, skip the world-map
-    // render. The adjacent `goto end; goto body;` pair hits MWCC's
-    // branch-over-branch peephole, emitting retail's beq-into-body / b-end.
-    if ((lbl_eu_80663E28 & 0x200000) != 0) {
-        goto end;
-    }
-    goto body;
+    goto end;
+end:
+    return;
 body:
     if (func_8013BE50() == 0) {
-        return;
+        goto end;
     }
     GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
     // Raw-storage DrawInfo built/destroyed via C-ABI pre-mangled ct/dt
@@ -342,8 +351,6 @@ body:
     func_801C4080(&mTitleAHelp, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     func_80244460(&mFade, (nw4r::lyt::DrawInfo*)&drawInfo[0]);
     __dt__Q34nw4r3lyt8DrawInfoFv((nw4r::lyt::DrawInfo*)&drawInfo[0], -1);
-end:
-    ;
 }
 
 // Create the world-map (SC) singleton: returns 0 when it already exists,
@@ -355,10 +362,12 @@ CMenuMapSelectSC* func_802514D4(CProcess* parent, CProcess* arg) {
     }
 
     func_80138078(4);
+    // Use the ctor's return value (constructors return self) so MWCC keeps
+    // the object pointer in r3 across the call instead of spilling it.
     CMenuMapSelectSC* obj = (CMenuMapSelectSC*)mtl::MemManager::allocate(
         0x3410, CWorkThreadSystem::getWorkMem());
     if (obj != 0) {
-        __ct__CMenuMapSelectSC(obj, arg);
+        obj = __ct__CMenuMapSelectSC(obj, arg);
     }
     lbl_eu_806647C0 = (u32)obj;
     obj->Regist(parent, false);
@@ -418,9 +427,14 @@ extern "C" void func_802516DC(CMenuMapSelectSC* self) {
         return;
     }
 
-    self->mTimer += lbl_eu_806687C4;
-    if (self->mTimer > lbl_eu_806687C8) {
-        self->mTimer = lbl_eu_806687C8;
+    // Explicit intermediate store keeps the unconditional stfs of the
+    // incremented value ahead of the clamp compare (retail order:
+    // fadds; stfs; fcmpo; ble; stfs).
+    f32 timerCap = lbl_eu_806687C8;
+    f32 t = self->mTimer + lbl_eu_806687C4;
+    self->mTimer = t;
+    if (t > timerCap) {
+        self->mTimer = timerCap;
     }
 
     if (cf::CfGameManager::func_80086F9C(-1) != 0) {

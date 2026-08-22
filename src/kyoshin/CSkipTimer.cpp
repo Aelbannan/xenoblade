@@ -26,7 +26,7 @@ __declspec(noinline) void func_8029F440(CSkipTimer* self, int arg1, int arg2);
 // ============================================================================
 #pragma push
 #pragma auto_inline off
-void __ct__CSkipTimer2(CSkipTimer2* self, void* parent) {
+__declspec(noinline) void __ct__CSkipTimer2(CSkipTimer2* self, void* parent) {
     self->mVtbl = lbl_eu_80539884;
     __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
     self->mParent = parent;

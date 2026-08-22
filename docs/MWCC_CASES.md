@@ -9371,3 +9371,11 @@ Mark CDeviceFontLoader as a BLOCKER for the data gate.
 - Result:    FULL_MATCH (semantic-certified), us-8017d83c
 - Confidence: repo_proven
 - Applies to/a.k.a.: complement to MWCC_PATTERNS §7i (int→double signed magic, where the MANUAL pattern is the fix); rule of thumb: match the idiom to the retail rounding op — retail `fsubs` ⇒ builtin cast, retail `fsub`+blob-reloc ⇒ manual union
+
+## CBattleState phantom tail pointer (field_0x15D8) — 8-byte class overhang shifted every CActorParam member +8 (→ ctor 32.5% → 39.4%, layout fixed)
+- Symptom:   `__ct__Q22cf11CActorParamFPvPv` emitted EVERY real-member store at retail_offset+8 (unk15DC at 0x15E4 vs retail 0x15DC); all absolute-offset VIEW functions still matched, hiding the bug
+- Cause:     `CBattleState::field_0x15D8` was not a CBattleState member — it is CActorParam::unk15E0 at object+0x15E0. Declaring it inside CBattleState grew the base subobject to 0x15DC instead of 0x15D4, pushing every CActorParam member +8. CBattleState.cpp still matched because its own functions use offsets < 0x15D4 or absolute views
+- Fix:       shrink `unk15AC[0x2C]` → `[0x24]`, delete `field_0x15D8`; rewrite Func127 (`return field_0x15D8;` in CfGameManager.cpp) as `return unk15E0;` — same address object+0x15E0
+- Result:    ctor offsets aligned (39.4%, residual = scheduling/alloc grind); zero regressions in CActorParam (42/60) or CBattleState (31/39)
+- Confidence: repo_proven
+- Applies to/a.k.a.: extends the EffectScene pad-gap entry in reverse — an EXTRA tail member on a base class shifts derived-class members without breaking the base TU; when a derived ctor is uniformly +N on every member but base TU matches, diff `sizeof(base)` against derived-first-member offset

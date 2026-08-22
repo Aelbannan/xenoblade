@@ -279,16 +279,17 @@ static void adxm_create_base_thread(void) {
 // installs the lock/unlock callbacks, copies the caller's parameter block
 // (or uses built-in defaults), spawns the base threads and resumes them.
 void ADXM_SetupThrd(u8* arg) {
+    /* Retail performs a dead volatile read of this counter before anything else */
+    (void)lbl_eu_805196D0;
     struct AdxmBase* base = &lbl_eu_805F3A50;
-    struct AdxParams* prm = &base->field_0x10;
-    struct AdxSetupArgs* a = (struct AdxSetupArgs*)arg;
 
-    (void)lbl_eu_805196D0; /* dead read kept by retail codegen */
     if (base->field_0x04 == 0) {
         SVM_Init();
         SVM_SetCbLock((void*)adxm_lock, NULL);
         SVM_SetCbUnlock((void*)adxm_unlock, NULL);
         if (arg == NULL) {
+            /* Built-in defaults; prm is materialised lazily here in retail */
+            struct AdxParams* prm = &base->field_0x10;
             prm->field_0x14 = 0x10;
             base->field_0x10.field_0x00 = 1;
             prm->field_0x04 = 8;
@@ -296,6 +297,8 @@ void ADXM_SetupThrd(u8* arg) {
             prm->field_0x10 = 0xE;
             prm->field_0x18 = 0x18;
         } else {
+            struct AdxParams* prm = &base->field_0x10;
+            struct AdxSetupArgs* a = (struct AdxSetupArgs*)arg;
             prm->field_0x14 = a->field_0x10;
             base->field_0x10.field_0x00 = a->field_0x00;
             prm->field_0x04 = a->field_0x04;

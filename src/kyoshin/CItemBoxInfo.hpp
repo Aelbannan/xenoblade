@@ -290,7 +290,6 @@ extern "C" void func_80137924(void*, void*, void*, void*);
 // More flat retail (unmangled) helpers used by the item-box renderers.
 extern "C" void func_80137B44(nw4r::lyt::Layout*, const char*, u32);
 extern "C" char* func_80136190(char*, char*, u32);
-extern "C" char* func_8013639C(const void*, const void*, int);
 extern "C" void func_80139A18(nw4r::lyt::Layout*, char*, void*, void*);
 extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
 extern "C" u32 func_801392C0();
@@ -351,10 +350,6 @@ extern "C" void func_8013676C(nw4r::lyt::Pane*, void*);
 extern "C" char* func_801355BC(void);
 extern "C" char* func_80138DA4(const char* msg);
 extern "C" u32 func_80138E90(u16);
-// 8-byte colour-vector pair returned in r3:r4 by func_801397AC (struct
-// defined in CEquipItemBox.hpp).
-#include "kyoshin/CEquipItemBox.hpp"
-extern "C" CEquipItemBoxFourShorts func_801397AC(void*, u32);
 extern u32 lbl_eu_80664098;
 void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);

@@ -1,6 +1,10 @@
 #include <nw4r/snd.h>
 #include <nw4r/ut.h>
 
+// Shared retail sdata2 float pool entries referenced by InitParam.
+extern "C" const f32 lbl_eu_8066A018; // 1.0f
+extern "C" const f32 lbl_eu_8066A01C; // 0.0f
+
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -9,7 +13,33 @@ void SeqTrack::SetPlayerTrackNo(int no) {
     mPlayerTrackNo = no;
 }
 
-SeqTrack::SeqTrack() : mOpenFlag(false), mPlayer(NULL), mChannelList(NULL) {
+// NOTE: the header's member offsets past 0x20 do not match retail; the
+// functions below address the retail layout through explicit offsets
+// (track channel list at +0xC4, link at Channel+0xF4, variables at +0xA0).
+SeqTrack::SeqTrack() {
+    mOpenFlag = false;
+
+    // Embedded LfoParam sub-object at +0x58 (retail layout).
+    ((LfoParam*)((u8*)this + 0x58))->Init();
+
+    u8* p = (u8*)this;
+    // Three 6-byte {u8,u8,s16,s16} records at +0x70, default-cleared.
+    *(u8*)(p + 0x70) = 0;
+    *(u8*)(p + 0x71) = 0;
+    *(s16*)(p + 0x72) = 0;
+    *(s16*)(p + 0x74) = 0;
+    *(u8*)(p + 0x76) = 0;
+    *(u8*)(p + 0x77) = 0;
+    *(s16*)(p + 0x78) = 0;
+    *(s16*)(p + 0x7a) = 0;
+    *(u8*)(p + 0x7c) = 0;
+    *(u8*)(p + 0x7d) = 0;
+    *(s16*)(p + 0x7e) = 0;
+    *(s16*)(p + 0x80) = 0;
+
+    *(SeqPlayer**)((u8*)this + 0xC0) = NULL; // mPlayer
+    *(Channel**)((u8*)this + 0xC4) = NULL;   // track channel list
+
     InitParam();
 }
 
@@ -18,70 +48,73 @@ SeqTrack::~SeqTrack() {
 }
 
 void SeqTrack::InitParam() {
-    mExtVolume = 1.0f;
-    mExtPitch = 1.0f;
-    mExtPan = 0.0f;
-    mExtSurroundPan = 0.0f;
-    mPanRange = 1.0f;
-    mExtLpfFreq = 0.0f;
+    u8* p = (u8*)this;
 
-    mExtMainSend = 0.0f;
-    for (int i = 0; i < AUX_BUS_NUM; i++) {
-        mExtFxSend[i] = 0.0f;
-    }
-    for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-        mExtRemoteSend[i] = 0.0f;
-        mExtRemoteFxSend[i] = 0.0f;
-    }
+    mExtVolume = lbl_eu_8066A018;
+    mExtPitch = lbl_eu_8066A018;
+    mExtPan = lbl_eu_8066A01C;
+    mExtSurroundPan = lbl_eu_8066A01C;
+    mPanRange = lbl_eu_8066A018;
+    // Retail stores bit-pattern zero via integer registers here.
+    *(s32*)(p + 0x1C) = 0;
+    *(s32*)(p + 0x20) = 0;
 
-    mParserTrackParam.baseAddr = NULL;
-    mParserTrackParam.currentAddr = NULL;
+    *(u8*)(p + 0x24) = 1;
+    *(u8*)(p + 0x25) = 1;
+    *(u8*)(p + 0x26) = 0;
+    *(u8*)(p + 0x27) = 0;
 
-    mParserTrackParam.bankNo = 0;
-    mParserTrackParam.prgNo = 0;
+    *(u8*)(p + 0x40) = 0;
+    *(s32*)(p + 0x44) = 0;
+    *(u8*)(p + 0x48) = 0;
+    *(u8*)(p + 0x49) = 0;
+    *(u8*)(p + 0x4a) = 0;
+    *(u8*)(p + 0x4b) = 0;
+    *(u8*)(p + 0x4c) = 0;
+    *(s32*)(p + 0x50) = 0;
+    *(s32*)(p + 0x54) = 0;
 
-    mParserTrackParam.priority = DEFAULT_PRIORITY;
-    mParserTrackParam.wait = 0;
+    ((LfoParam*)(p + 0x58))->Init();
 
-    mParserTrackParam.muteFlag = false;
-    mParserTrackParam.silenceFlag = false;
-    mParserTrackParam.noteFinishWait = false;
-    mParserTrackParam.portaFlag = false;
-    mParserTrackParam.damperFlag = false;
+    *(u8*)(p + 0x68) = 0;
+    *(f32*)(p + 0x6c) = lbl_eu_8066A01C;
+    *(u8*)(p + 0x70) = 127;
+    *(u8*)(p + 0x71) = 127;
+    *(s16*)(p + 0x72) = 0;
+    *(s16*)(p + 0x74) = 0;
+    *(u8*)(p + 0x76) = 0;
+    *(u8*)(p + 0x77) = 0;
+    *(s16*)(p + 0x78) = 0;
+    *(s16*)(p + 0x7a) = 0;
+    *(u8*)(p + 0x7c) = 0;
+    *(u8*)(p + 0x7d) = 0;
+    *(s16*)(p + 0x7e) = 0;
+    *(s16*)(p + 0x80) = 0;
+    *(u8*)(p + 0x82) = 127;
+    *(u8*)(p + 0x83) = 127;
+    *(u8*)(p + 0x84) = 0;
+    *(u8*)(p + 0x85) = 2;
+    *(u8*)(p + 0x86) = 0;
+    *(u8*)(p + 0x87) = 0;
+    *(u8*)(p + 0x88) = 64;
+    *(u8*)(p + 0x89) = 60;
+    *(u8*)(p + 0x8a) = 0;
+    *(u8*)(p + 0x8b) = 255;
+    *(u8*)(p + 0x8c) = 255;
+    *(u8*)(p + 0x8d) = 255;
+    *(u8*)(p + 0x8e) = 255;
+    *(s16*)(p + 0x90) = 255;
+    *(u8*)(p + 0x92) = 127;
+    *(u8*)(p + 0x93) = 0;
+    *(u8*)(p + 0x94) = 0;
+    *(u8*)(p + 0x95) = 0;
+    *(f32*)(p + 0x98) = lbl_eu_8066A01C;
+    *(u8*)(p + 0x96) = 0;
+    *(f32*)(p + 0x9c) = lbl_eu_8066A01C;
 
-    mParserTrackParam.volume = 127;
-    mParserTrackParam.volume2 = 127;
-
-    mParserTrackParam.pan = 0;
-    mParserTrackParam.initPan = 0;
-    mParserTrackParam.surroundPan = 0;
-
-    mParserTrackParam.pitchBend = 0;
-
-    mParserTrackParam.attack = 0xFF;
-    mParserTrackParam.decay = 0xFF;
-    mParserTrackParam.sustain = 0xFF;
-    mParserTrackParam.release = 0xFF;
-
-    mParserTrackParam.mainSend = 127;
-    for (int i = 0; i < AUX_BUS_NUM; i++) {
-        mParserTrackParam.fxSend[i] = 0;
-    }
-
-    mParserTrackParam.lpfFreq = 64;
-    mParserTrackParam.bendRange = DEFAULT_BENDRANGE;
-
-    mParserTrackParam.portaKey = DEFAULT_PORTA_KEY;
-    mParserTrackParam.portaTime = 0;
-
-    mParserTrackParam.sweepPitch = 0.0f;
-    mParserTrackParam.transpose = 0;
-
-    mParserTrackParam.lfoParam.Init();
-    mParserTrackParam.lfoTarget = Channel::LFO_TARGET_PITCH;
-
+    volatile s16* variables = (volatile s16*)(p + 0xA0);
     for (int i = 0; i < VARIABLE_NUM; i++) {
-        mTrackVariable[i] = DEFAULT_VARIABLE_VALUE;
+        variables[i] = DEFAULT_VARIABLE_VALUE;
     }
 }
 
@@ -92,9 +125,9 @@ void SeqTrack::SetSeqData(const void* pBase, s32 offset) {
 }
 
 void SeqTrack::Open() {
-    mExtRemoteFxSend[0] = 0.0f;
-    mExtRemoteFxSend[1] = 0.0f;
-    mExtRemoteFxSend[2] = 0.0f;
+    *(u8*)((u8*)this + 0x4A) = false;
+    *(u8*)((u8*)this + 0x40) = false;
+    *(s32*)((u8*)this + 0x44) = 0;
     mOpenFlag = true;
 }
 
@@ -114,14 +147,19 @@ void SeqTrack::UpdateChannelLength() {
         return;
     }
 
-    for (Channel* pIt = mChannelList; pIt != NULL;
-         pIt = pIt->GetNextTrackChannel()) {
+    // Track channel list at +0xC4; per-channel next link at +0xF4.
+    for (Channel* pIt = *(Channel**)((u8*)this + 0xC4); pIt != NULL;
+         pIt = *(Channel**)((u8*)pIt + 0xF4)) {
 
         if (pIt->GetLength() > 0) {
             pIt->SetLength(pIt->GetLength() - 1);
         }
 
-        UpdateChannelRelease(pIt);
+        // Note-off pending channels unless already released or held by damper.
+        if (pIt->GetLength() == 0 && !pIt->IsRelease() &&
+            *(u8*)((u8*)this + 0x4C) == 0) {
+            pIt->NoteOff();
+        }
 
         if (!pIt->IsAutoUpdateSweep()) {
             pIt->UpdateSweep(1);
@@ -146,22 +184,35 @@ int SeqTrack::ParseNextTick(bool doNoteOn) {
         return 0;
     }
 
-    if (mParserTrackParam.noteFinishWait) {
-        if (mChannelList != NULL) {
+    u8* p = (u8*)this;
+
+    // Advance three bounded s16 ramp counters.
+    if (*(s16*)(p + 0x74) < *(s16*)(p + 0x72)) {
+        (*(s16*)(p + 0x74))++;
+    }
+    if (*(s16*)(p + 0x7A) < *(s16*)(p + 0x78)) {
+        (*(s16*)(p + 0x7A))++;
+    }
+    if (*(s16*)(p + 0x80) < *(s16*)(p + 0x7e)) {
+        (*(s16*)(p + 0x80))++;
+    }
+
+    // Waiting for running notes to finish before parsing further events.
+    if (*(u8*)(p + 0x4A)) {
+        if (*(Channel**)(p + 0xC4) != NULL) {
             return 1;
         }
 
-        mParserTrackParam.noteFinishWait = false;
+        *(u8*)(p + 0x4A) = false;
     }
 
-    if (mParserTrackParam.wait > 0 && --mParserTrackParam.wait > 0) {
+    // Tick wait countdown: keep returning while wait remains positive.
+    if (*(s32*)(p + 0x44) > 0 && --*(s32*)(p + 0x44) > 0) {
         return 1;
     }
 
-    if (mParserTrackParam.currentAddr != NULL) {
-        while (mParserTrackParam.wait == 0 &&
-               !mParserTrackParam.noteFinishWait) {
-
+    if (*(const u8**)(p + 0x20) != NULL) {
+        while (*(s32*)(p + 0x44) == 0 && *(u8*)(p + 0x4A) == 0) {
             if (Parse(doNoteOn) == PARSE_RESULT_FINISH) {
                 return -1;
             }

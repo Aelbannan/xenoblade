@@ -30,6 +30,11 @@ extern "C" void __ct__8CProcessFv(CProcess* self);
 // null pointer-to-member-function constant (3 words).
 extern u32 __ptmf_null[3];
 
+// 3-word view of a pointer-to-member-function slot (mMoveFunc/mDrawFunc).
+struct PTMF3 {
+    u32 w[3];
+};
+
 // Retail vtable regions for CTaskGamePic (imports; .data). lbl_eu_80538AD8 is
 // the final CTaskGamePic vtable; lbl_eu_80538BC0 is the interim
 // CTTask<CTaskGamePic> vtable (overwritten by the derived vptr in the ctor).
@@ -103,7 +108,11 @@ public:
 
     // 0x0-0x54: CTTask<CTaskGamePic>
     u32 field_54;                     // 0x54 - file-event object vptr slot
-    IScnRender mRenderCB;             // 0x58 render callback subobject
+    // 0x58 render callback subobject. Raw bytes, not a typed IScnRender
+    // member: a typed member makes MWCC emit a standalone
+    // __dt__10IScnRenderFv call in this TU's out-of-line dtor (retail keeps
+    // that copy only in CTaskGame.o). Same scheme as CTaskGameEvt.
+    u8 mRenderCB[4];                  // 0x58
     CScn* mScene;                     // 0x5C
     CFileHandle* mFileHandle;         // 0x60 async file handle
     void* field_64;                   // 0x64 palette / loaded data

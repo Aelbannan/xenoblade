@@ -465,7 +465,7 @@ void func_80246908(){}
 void func_80247490(void* self, u8 arg2, u32 arg3, f32 arg4){}
 
 void func_8024808C(void* self, void* arg2, u8 arg3) {
-    extern void func_8003AA34();
+    extern void* func_8003AA34();
     extern void* getFP__FPCc(const char*);
     extern u32 func_801361E8(const char*, const char*, u32);
     extern u32 func_8009CF8C(u32);
@@ -1066,13 +1066,13 @@ void func_8024B6F8(CFloorMapRowList* self, void* arg2, u32 arg3, u32 arg4, u32 a
 
     // Tag each row pane: panes within the 8 rows above the current row are
     // shown, the rest are hidden.
-    for (u32 i = 1; (u8)i <= arg4; i++) {
+    for (u8 i = 1; i <= arg4; i++) {
         char buf[0x20];
-        sprintf(buf, &lbl_eu_8050BEA8[0x487], (u8)i);
+        sprintf(buf, &lbl_eu_8050BEA8[0x487], i);
         nw4r::lyt::Pane* pane =
             self->mData->GetRootPane()->FindPaneByName(buf, 1);
         if (pane)
-            pane->SetVisible((__cntlzw((u32)arg3 - (u8)i) & 0x10) != 0);
+            pane->SetVisible(__cntlzw(arg3 - i) & 0x20);
     }
 
     // Random visibility for the two special row kinds.
@@ -1081,15 +1081,13 @@ void func_8024B6F8(CFloorMapRowList* self, void* arg2, u32 arg3, u32 arg4, u32 a
             self->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x491], 1);
         if (pane) {
             u32 v = func_8009CF8C(0x20) ^ 0x166;
-            pane->SetVisible(((0x166 << __cntlzw(v)) & 0x40000000) != 0);
+            pane->SetVisible(((0x166 << __cntlzw(v)) & 0x80000000ul) != 0);
         }
     } else if (arg5 == 5) {
         nw4r::lyt::Pane* pane =
             self->mData->GetRootPane()->FindPaneByName(&lbl_eu_8050BEA8[0x491], 1);
         if (pane) {
-            u32 x = func_8009CF8C(0x20);
-            pane->SetVisible(
-                (((x | ~0x171) - ((x - 0x171) >> 1)) & 0x40000000) != 0);
+            pane->SetVisible(!(func_8009CF8C(0x20) < 0x171));
         }
     }
 }
@@ -2098,7 +2096,7 @@ void func_8024EC24(void* self) {
 void func_8024EE50(){}
 
 void func_8024F1FC(void* self, u32 arg2) {
-    extern void func_8003AA34();
+    extern void* func_8003AA34();
     extern void* getFP__FPCc(const char*);
     extern u8 lbl_eu_80664798;
     lbl_eu_80664798 = (u8)arg2;
@@ -2125,8 +2123,8 @@ extern "C" u8 func_8024F554(CFloorMapFull* self) { return self->field_58; }
 
 void func_8024F55C(void* self) {
     extern int CSysWin_isActive(void*);
-    extern void func_801D216C(void*, int);
-    extern void func_8022B8E4(void*);
+    extern "C" void func_801D216C(void*, int);
+    extern "C" void func_8022B8E4(void*);
     extern void func_80138078(unsigned long);
     u8* p = (u8*)self;
     if (p[0x58] && CSysWin_isActive(p + 0xB8)) {
@@ -2189,9 +2187,9 @@ void func_8024F658(void* self) {
     if (p[0x58]) return;
     if (CSysWin_getUnk34(p + 0xB8)) return;
     if (CSysWin_getUnk34(p + 0xF4)) return;
-    u8 val = p[0x208];
-    u32 result = __cntlzw(val);
-    p[0x208] = result >> 5;
+    u32 result = __cntlzw(p[0x208]);
+    int shifted = result >> 5;
+    p[0x208] = shifted;
 }
 
 u8 func_8024F6BC(void* self) {
@@ -2679,22 +2677,22 @@ u32 CFloorMap::OnFileEvent(CEventFile* event) {
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_80250CB4() {
-    extern u16 lbl_eu_806647A0[];
-    extern u16 lbl_eu_806647A8[];
-    extern u16 lbl_eu_806647B0[];
-    extern u16 lbl_eu_806647B8[];
-    for (int i = 0; i < 4; i++) {
-        lbl_eu_806647A0[i] = 0xFFFF;
-        lbl_eu_806647A8[i] = 0xFFFF;
-    }
-    lbl_eu_806647B0[0] = 0xA0;
-    lbl_eu_806647B0[1] = 0x8C;
+    lbl_eu_806647A0[3] = 0xFF;
+    lbl_eu_806647A0[2] = 0xFF;
+    lbl_eu_806647A0[1] = 0xFF;
+    lbl_eu_806647A0[0] = 0xFF;
+    lbl_eu_806647A8[3] = 0xFF;
+    lbl_eu_806647A8[2] = 0xFF;
+    lbl_eu_806647A8[1] = 0xFF;
+    lbl_eu_806647A8[0] = 0xFF;
+    lbl_eu_806647B0[3] = 0xFF;
     lbl_eu_806647B0[2] = 0x23;
-    lbl_eu_806647B0[3] = 0xFFFF;
-    lbl_eu_806647B8[0] = 0xD9;
-    lbl_eu_806647B8[1] = 0xC0;
+    lbl_eu_806647B0[1] = 0x8C;
+    lbl_eu_806647B0[0] = 0xA0;
+    lbl_eu_806647B8[3] = 0xFF;
     lbl_eu_806647B8[2] = 0x43;
-    lbl_eu_806647B8[3] = 0xFFFF;
+    lbl_eu_806647B8[1] = 0xC0;
+    lbl_eu_806647B8[0] = 0xD9;
 }
 
 // Load the floor layout, bind the font to its root pane, then hide the ten

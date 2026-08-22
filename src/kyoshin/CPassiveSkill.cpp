@@ -10,7 +10,7 @@
 // the retail symbol for the (f32)u16 casts in func_802646E8 instead of
 // emitting a TU-local @N label (CfResReloadImpl / CSuddenCommu idiom, same as
 // CMiniMap.cpp's 806670A8). Value is 2^52 = 0x4330000000000000.
-extern const double lbl_eu_80668910 = 0x4330000000000000ll;
+extern const double lbl_eu_80668910 = 4503599627370496.0; // exact bits 0x4330000000000000 (2^52); an integer literal like 0x4330000000000000ll gets VALUE-converted to double and lands as 0x43d0cc0000000000, which defeats pool merging
 
 // Per-character slot-spacing table read by func_8026BB60 (retail .sdata2,
 // read at (id-1)*2 with an 8-byte per-character stride; 2 elements keep it
@@ -48,7 +48,7 @@ extern "C" void func_8026AAF4(UI::CPassiveSkillLine* self);
 extern "C" void func_80269A98(UI::CPassiveSkillLine* self);
 
 // Cursor step helper (defined later in this TU; noinline keeps the retail `bl`).
-void func_80264140();
+extern "C" void func_80264140(UI::CPassiveSkillCur* self);
 
 void func_80267BA0(UI::CPassiveSkillLine* self);
 extern "C" __declspec(noinline) void func_80267C44(UI::CPassiveSkillLine* self);
@@ -92,8 +92,8 @@ extern "C" void func_8026D080(UI::CPassiveSkillLine* self);
 extern "C" void func_8026D210(UI::CPassiveSkillLine* self);
 
 // +0x28 sub-object updates (defined later in this TU; noinline keeps the
-// `bl` from func_8026DAD0/func_8026D894).
-__declspec(noinline) void func_80268BA8(u8* self);
+extern "C" __declspec(noinline) void func_80268BA8(u8* self);
+void func_80269B14(UI::CPassiveSkillLine* self);
 __declspec(noinline) void func_80268F7C(UI::CPassiveSkillLine* self);
 // +0x28 sub-object update tail (retail func_8026BB60, 0x944 bytes; stub kept
 // noinline so func_802699A4 keeps the retail `bl`). C linkage so the call
@@ -1063,11 +1063,11 @@ void func_80269004(UI::CPassiveSkillLine* self);
 extern "C" void func_8026916C(UI::CPassiveSkillLine* self);
 void func_80269200(UI_CPassiveSkill* self);
 void func_80269220(UI::CPassiveSkillLine* self);
-void func_802692E0();
+extern "C" void func_802692E0(UI::CPassiveSkillLine* self);
 extern "C" void func_80269370(UI::CPassiveSkillLine* self);
 void func_80269410(UI::CPassiveSkillLine* self);
 void func_802694F4(UI::CPassiveSkillLine* self);
-void func_802695A8();
+extern "C" void func_802695A8(UI::CPassiveSkillLine* self);
 void func_80269638(UI::CPassiveSkillLine* self);
 extern "C" void func_802696D8(UI::CPassiveSkillLine* self);
 void func_80269768(UI::CPassiveSkillLine* self);
@@ -1102,7 +1102,7 @@ void func_80267360(u8* selfRaw) {
         func_80269220(self);
         break;
     case 6:
-        func_802692E0();
+        func_802692E0(self);
         break;
     case 7:
         func_80269370(self);
@@ -1114,7 +1114,7 @@ void func_80267360(u8* selfRaw) {
         func_802694F4(self);
         break;
     case 0xA:
-        func_802695A8();
+        func_802695A8(self);
         break;
     case 0xB:
         func_80269638(self);
@@ -1186,7 +1186,8 @@ extern "C" __declspec(noinline) void func_80267484(UI::CPassiveSkillLine* self,
 // virtual. The 6 callee-saved registers (r26-r31) need the stmw/lmw frame
 // retail uses, which -O4,p only emits under optimize_for_size.
 #pragma optimize_for_size on
-void func_802675D8(UI::CPassiveSkillLine* self) {
+// noinline: retail keeps the `bl` from func_8026D920's teardown.
+__declspec(noinline) void func_802675D8(UI::CPassiveSkillLine* self) {
     for (u8 row = 0; row < 5; row++) {
         for (u8 col = 0; col < 5; col++) {
             if (self->cells[row][col].mpLayout != 0) {
@@ -1632,9 +1633,27 @@ void func_80268518(UI::CPassiveSkillLine* self) {
 
 extern "C" __declspec(noinline) void func_80268594(u8* self) {}
 
-// +0x28 sub-object update used by func_8026DAD0's learned-skill path. noinline:
-// retail keeps the `bl` (the body lives at 0x80268BA8).
-__declspec(noinline) void func_80268BA8(u8* self){}
+// +0x28 sub-object update used by func_8026DAD0's learned-skill path.
+// Two entry conditions: with a lazily-attached syswin present and its +0x34
+// query nonzero, an active window plays the close sound, quiets the embedded
+// cursor and tears the syswin down; otherwise a menu in state 15 runs the
+// state-15 helper and plays the same sound. extern C keeps the plain retail
+// symbol; noinline keeps the retail `bl` from func_8026DAD0.
+extern "C" __declspec(noinline) void func_80268BA8(u8* selfRaw) {
+    UI::CPassiveSkillLine* self = reinterpret_cast<UI::CPassiveSkillLine*>(selfRaw);
+    if (self->mInfo.field_54 != 0 && CSysWin_getUnk34(self->mInfo.field_54) != 0) {
+        if (CSysWin_isActive(self->mInfo.field_54) != 0) {
+            func_80138078(6);
+            func_801D216C(&self->mCur, 0);
+            func_8022B8E4(self->mInfo.field_54);
+        }
+    } else {
+        if (self->field_E8 == 15) {
+            func_80269B14(self);
+            func_80138078(6);
+        }
+    }
+}
 
 void func_80268C38(void* self){}
 
@@ -1741,7 +1760,23 @@ void func_80269220(UI::CPassiveSkillLine* self) {
     func_8026D210(self);
 }
 
-void func_802692E0(){}
+// +0x28 sub-object update (retail func_802692E0): state-machine case 6.
+// Retail keeps a second copy of the func_802696D8 body: when the +0x1C anim
+// transform's frame check succeeds and the embedded info's active flag is
+// set, move the menu to state 0xC, animate and unbind the +0x18 layout's
+// transform, then run the line update tail. C linkage so the emitted symbol
+// is the plain retail name.
+extern "C" void func_802692E0(UI::CPassiveSkillLine* self) {
+    if (func_80137444(self->field_1C, lbl_eu_80668900) != 0) {
+        if (self->mInfo.field_19 != 0) {
+            self->field_E8 = 0xC;
+            self->field_E9 = 1;
+            self->field_18->Animate(0);
+            self->field_18->UnbindAnimation(self->field_1C);
+            func_8026C4A4(self);
+        }
+    }
+}
 
 // +0x28 sub-object update (retail func_80269370): while the embedded info's
 // frame float still matches the closing marker, quiet the line and push 0xff
@@ -1807,7 +1842,22 @@ void func_802694F4(UI::CPassiveSkillLine* self) {
     }
 }
 
-void func_802695A8(){}
+// +0x28 sub-object update (retail func_802695A8): state-machine case for the
+// +0x10 secondary anim transform: when its frame check succeeds and the
+// embedded info's active flag is set, move the menu to state 0xF, animate and
+// unbind the +0x8 primary layout's transform, then run the line update tail.
+// C linkage so the emitted symbol is the plain retail name.
+extern "C" void func_802695A8(UI::CPassiveSkillLine* self) {
+    if (func_80137510(self->field_10, lbl_eu_80668900) != 0) {
+        if (self->mInfo.field_19 != 0) {
+            self->field_E8 = 0xF;
+            self->field_E9 = 1;
+            self->field_8->Animate(0);
+            self->field_8->UnbindAnimation(self->field_10);
+            func_8026C4A4(self);
+        }
+    }
+}
 
 // +0x28 sub-object update: while the embedded info's frame float matches the
 // closing marker, run the line-close tail and push 0xff into the +0x3C info
@@ -1952,7 +2002,8 @@ extern "C" __declspec(noinline) void func_80269A98(UI::CPassiveSkillLine* self) 
 // bind/enable the +0x10 animation transform on the +0x8 layout, then step the
 // embedded skill-info cursor at +0x120 (state-6 step) and push 0xff into the
 // +0x3C info region via func_802640B8.
-void func_80269B14(UI::CPassiveSkillLine* self) {
+// noinline: retail keeps the `bl` from func_80268BA8 (state-15 path).
+__declspec(noinline) void func_80269B14(UI::CPassiveSkillLine* self) {
     self->field_E8 = 0xA;
     self->field_E9 = 0;
     self->field_8->BindAnimation(self->field_10);
@@ -2823,7 +2874,16 @@ __declspec(noinline) void func_8026D210(UI::CPassiveSkillLine* self) {
     u8 v = self->field_8->GetRootPane()
                 ->FindPaneByName(&lbl_eu_8050DC20[0x9d5], true)
                 ->GetAlpha();
-    f32 f = (f32)v / lbl_eu_8066893C;
+    // u8 -> f32 via the 2^52 magic: build 0x43300000_<v> on the stack and
+    // subtract the NAMED .sdata2 magic so the pool reloc is lbl_eu_80668910
+    // (a plain (f32) cast synthesizes an unmerged TU-local @N entry).
+    union {
+        struct { u32 hi; u32 lo; } w;
+        double d;
+    } conv;
+    conv.w.hi = 0x43300000u;
+    conv.w.lo = v;
+    f32 f = (f32)(conv.d - lbl_eu_80668910) / lbl_eu_8066893C;
     if (f > lbl_eu_80668900) {
         f = lbl_eu_80668900;
     } else if (f < lbl_eu_80668904) {
@@ -2950,8 +3010,34 @@ extern "C" void func_8026D8FC(UI_CPassiveSkill* self, u8* arg2) {
                          reinterpret_cast<nw4r::lyt::DrawInfo*>(arg2));
 }
 
-void func_8026D920(){}
-
+// Callee declarations (retail plain/mangled names; also declared in
+// CArtsInfo.hpp / CCollepedia.hpp / CEquipItemBox.hpp for their TUs).
+extern "C" void func_8003AA8C__5CBdatFUl(u32);
+extern "C" void func_801390E0__FPP11CFileHandle(void*);
+extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
+extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
+extern "C" void func_800A13C4(void*, u32);
+extern "C" void func_8022B7F4(void*);
+#pragma optimize_for_size on
+// UI::CPassiveSkill teardown (retail func_8026D920): close the shared bdat
+// reader, release the two file handles and the arc resource accessor, tear
+// down the embedded line sub-object and syswin, release the mem-region
+// object, then clear each character's skill-blob pointer (rows 1..8).
+extern "C" void func_8026D920(UI::CPassiveSkill* self) {
+    func_8003AA8C__5CBdatFUl(2);
+    func_801390E0__FPP11CFileHandle(&self->field_18);
+    func_801390E0__FPP11CFileHandle(&self->field_1C);
+    self->field_24 = 0;
+    func_802675D8(&self->mLine);
+    func_8022B7F4(&self->mSysWin);
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor((void*)self->field_20);
+    self->field_20 = 0;
+    func_8045F778__17UnkClass_8045F564Fv(&self->mUnk8);
+    for (u8 i = 1; i <= 8; i++) {
+        func_800A13C4(func_8009EC9C(i), 1);
+    }
+}
+#pragma optimize_for_size off
 // Return the +0x26 visibility byte once the +0x1B8 system window is ready.
 u8 func_8026D9AC(UI_CPassiveSkill* self) {
     if (CSysWin_isReady(self->field_1B8) != 0) {
@@ -3162,7 +3248,7 @@ void func_80263FE8(UI::CPassiveSkillCur* self) {
     if (self->mActive == 0) {
         func_80137444(self->mpAnimTrans0, lbl_eu_80668900);
     } else if (self->mActive == 1) {
-        func_80264140();
+        func_80264140(self);
     }
     self->mpLayout->Animate(0);
 }
@@ -3195,9 +3281,19 @@ extern "C" __declspec(noinline) void func_802640B8(UI::UI_PassiveSkillRegion3C* 
     }
 }
 #pragma optimize_for_size off
-// Cursor step helper (retail func_80264140). noinline: func_80263FE8 keeps the
-// retail `bl` (the body lives at 0x80264140).
-__declspec(noinline) void func_80264140() {}
+// Cursor step helper (retail func_80264140): when the second anim transform's
+// frame check succeeds, deactivate/hide the cursor, swap the enabled transform
+// back to mpAnimTrans0 and rewind its frame. extern C so func_80263FE8's call
+// reloc is the plain retail name; noinline keeps the retail `bl`.
+extern "C" __declspec(noinline) void func_80264140(UI::CPassiveSkillCur* self) {
+    if (func_80137444(self->mpAnimTrans1, lbl_eu_80668900) != 0) {
+        self->mActive = 0;
+        self->mVisible = 1;
+        self->mpLayout->SetAnimationEnable(self->mpAnimTrans1, 0);
+        self->mpLayout->SetAnimationEnable(self->mpAnimTrans0, 1);
+        self->mpAnimTrans0->SetFrame(lbl_eu_80668904);
+    }
+}
 // Init a 0x1C-byte structure: caller pointer at +0x0, zeroed words, byte flags
 // with the active flag (+0x19) starting at 1. noinline: the skill-info ctor
 // keeps the retail `bl` (MWCC would otherwise inline this body).

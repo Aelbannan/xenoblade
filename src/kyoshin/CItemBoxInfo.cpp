@@ -791,7 +791,7 @@ void func_801D6394(CItemBoxInfo* info, u32 itemId, void* record, u32 arg4) {
         u8 slot = (u8)func_801392B4((u8)i);
         if (slot == 0) continue;
         void* lookup = func_8009EC9C(slot);
-        u32 v1 = func_801392E4((void*)itemId);
+        u32 v1 = func_801392E4((u32)itemId);
         s16 value = -1;
         switch (v1 & 0xFFFF) {
             case 4: value = *(s16*)((u8*)lookup + 0x1C); break;
@@ -1257,8 +1257,12 @@ extern "C" void func_801D85D8(CItemBoxInfo* info) {
 #pragma optimize_for_size on
 void func_801D885C(CItemBoxInfo* info) {
     char buf[0x20];
-    for (u32 i = 0; i < 3; i++) {
-        u32 index = (u8)i + 1;
+    // Declaration order fixes the r29/r30 coloring: retail claims index (r30)
+    // before the loop counter i (r29) — saved regs go high->low by birth order.
+    u32 index;
+    u32 i;
+    for (i = 0; i < 3; i++) {
+        index = (u8)i + 1;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x35f], index);
         void* r = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         func_80124270(r, 0);
@@ -1377,7 +1381,7 @@ extern "C" void func_801D8C0C(CItemBoxInfo* info) {
         }
         u8 slot = (u8)func_801392B4((u8)i);
         u16 nameId = (u16)func_80136254(lbl_eu_80664090, base + 0x4ce, slot);
-        u32 itemName = func_80138F78(nameId);
+        u32 itemName = (u32)func_80138F78(nameId);
         void* obj = func_801355F4();
         u32 result = ((u32(*)(void*, u32, u32, u32))(*(void***)obj)[3])(obj, 0x74696D67u, itemName, 0);
         if (result == 0) continue;
@@ -1567,7 +1571,6 @@ static inline void applyItemBoxDeltaColorPair(void* firstValuePane, void* firstL
 
 void copyItemBoxEntry(CItemBoxInfoEntry*, const CItemBoxInfoEntry*);
 void setItemBoxEntry(CItemBoxInfoEntry*, u16, u32, u8);
-extern "C" void copyVEC3(void*, void*);
 extern const u32 lbl_eu_8066806C;
 extern const u8 lbl_eu_80668070;
 extern const u32 lbl_eu_80506368[6];
@@ -3127,20 +3130,18 @@ s32 func_801DF4E0(void* a, void* b, s32 arg2, void* d) {
     u32 t1 = func_801DFD60(a, b, 0x2d);
     u32 t2 = func_801DF610(a, b, 0x52, d);
     s32 sum = (s32)(t2 + t1 + 0x64);
-    union { double d; u32 w[2]; } u;
-    u.w[1] = (u32)(arg2 * sum) ^ 0x80000000;
-    u.w[0] = 0x43300000;
-    return (s32)(lbl_eu_80668040 * (float)(u.d - lbl_eu_80668028));
+    // Retail uses the builtin int->float cast (single-rounded fsubs idiom),
+    // not a manual 0x43300000 union (MWCC_CASES: CActorParam UnkVirtualFunc11).
+    return (s32)(lbl_eu_80668040 * (float)(arg2 * sum));
 }
 
 s32 func_801DF578(void* a, void* b, s32 arg2, void* d) {
     u32 t1 = func_801DFD60(a, b, 0x2d);
     u32 t2 = func_801DF610(a, b, 0x53, d);
     s32 sum = (s32)(t2 + t1 + 0x64);
-    union { double d; u32 w[2]; } u;
-    u.w[1] = (u32)(arg2 * sum) ^ 0x80000000;
-    u.w[0] = 0x43300000;
-    return (s32)(lbl_eu_80668040 * (float)(u.d - lbl_eu_80668028));
+    // Retail uses the builtin int->float cast (single-rounded fsubs idiom),
+    // not a manual 0x43300000 union (MWCC_CASES: CActorParam UnkVirtualFunc11).
+    return (s32)(lbl_eu_80668040 * (float)(arg2 * sum));
 }
 // Retail func_801DF610: sum the equipped-effect values for one stat category.
 // Six slots are scanned via the lookup table (s16 ids at +0x26/+0x1C..0x24
@@ -3203,9 +3204,10 @@ u32 func_801DF610(void* unused, u16 lookup_key, u32 category, void* arg3) {
                 void* itemB = NULL;
                 if ((s32)slotByteB == (s32)((*(u32*)arg3 >> 16) & 0xF)) itemB = arg3;
                 if (itemB != NULL && *(u32*)itemB != 0) {
+                    u8 jB;
                     CItemImplVt* instB = (CItemImplVt*)CItem_initItemImplInstances(itemB);
                     u8 countB = instB->_v30(itemB);
-                    for (u8 jB = 0; (u8)jB < countB; jB++) {
+                    for (jB = 0; (u8)jB < countB; jB++) {
                         CItemImplVt* inst2B = (CItemImplVt*)CItem_initItemImplInstances(itemB);
                         s16 vB = inst2B->_v40(itemB, (u8)jB);
                         if (vB != -1) {
@@ -3352,14 +3354,20 @@ u32 func_801DF988(void* info, void* member, u32 category, void* candidate, s32 s
     return (u32)sum;
 }
 #pragma pop
+#pragma push
+#pragma optimize_for_size on
 u32 func_801DFD60(void* a, void* b, u32 arg2) {
+    // Retail keeps obj in r31 and result in r30 (obj declared first gets the
+    // highest saved register); stmw/lmw frame from optimize_for_size.
+    void* obj;
     u32 result = 0;
-    void* obj = (u8*)func_8009EC9C((u32)b) + 0x3534;
+    obj = (u8*)func_8009EC9C((u32)b) + 0x3534;
     if (func_8026178C(obj, arg2) != 0) {
         result = func_8025FB10(obj, arg2);
     }
     return result;
 }
+#pragma pop
 
 #pragma push
 #pragma optimize_for_size on
@@ -3700,7 +3708,7 @@ extern "C" void func_801E14DC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
     u16 id = arg3 ? (u16)(*(u32*)arg3 >> 20) : 0;
     u16 idFinal = arg2;
     if (*(u8*)((u8*)info + 0x9A) == 4) idFinal = id;
-    u32 r = (u8)(u32)func_801392E4((void*)(u32)idFinal);
+    u32 r = (u8)(u32)func_801392E4((u32)idFinal);
     if (arg3 != NULL && (func_801C6E90(arg3) != 0 || func_801D4AB0(arg3) != 0)) r = 9;
     if (r - 4 <= 4) {
         func_801E2C5C(info, idFinal, arg3, arg4);
@@ -4373,7 +4381,7 @@ void func_801E2C5C(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
             u8 slot = (u8)func_801392B4((u8)i);
             if (slot != 0) {
                 void* member = func_8009EC9C(slot);
-                u16 category = (u16)func_801392E4((void*)arg2);
+                u16 category = (u16)func_801392E4((u32)arg2);
                 s16 value = -1;
                 switch (category) {
                     case 4: value = *(s16*)((u8*)member + 0x1C); break;
@@ -4576,20 +4584,25 @@ void func_801E3B9C(CItemBoxInfo2* info) {
         }
     }
 }
+#pragma push
+#pragma optimize_for_size on
 void func_801E3DE4(CItemBoxInfo2* info) {
     char buf[0x20];
-    for (int i = 0; i < 3; i++) {
-        int index = (u8)i + 1;
+    // Declaration order fixes r29/r30: retail claims index (r30) before i (r29).
+    u32 index;
+    u32 i;
+    for (i = 0; i < 3; i++) {
+        index = (u8)i + 1;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x35f], index);
-        void* layout = *(void**)((u8*)info + 0x34);
         void* r = ((nw4r::lyt::Pane*)*(void**)((u8*)*(void**)((u8*)info + 0x34) + 0x10))->FindPaneByName(buf, true);
         func_80124270(r, 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x408], index);
-        func_80136B4C((nw4r::lyt::Layout*)layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
+        func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x426], index);
-        func_80136B4C((nw4r::lyt::Layout*)layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
+        func_80136B4C((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34), buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
     }
 }
+#pragma pop
 void func_801E3EB8(CItemBoxInfo2* info) {
     char* base = (char*)&lbl_eu_805063BC;
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x44f, base + 0x2aa, 0);
@@ -4691,7 +4704,7 @@ extern "C" void func_801E4194(CItemBoxInfo2* info) {
         }
         u8 slot = (u8)func_801392B4((u8)i);
         u16 nameId = (u16)func_80136254(lbl_eu_80664090, base + 0x4ce, slot);
-        u32 itemName = func_80138F78(nameId);
+        u32 itemName = (u32)func_80138F78(nameId);
         void* obj = func_801355F4();
         u32 result = ((u32(*)(void*, u32, u32, u32))(*(void***)obj)[3])(obj, 0x74696D67u, itemName, 0);
         if (result == 0) continue;
@@ -4804,11 +4817,10 @@ void setItemBoxCopy(ItemBoxInfoCopy* self, unsigned short a, unsigned int b, uns
 }
 extern const u32 lbl_eu_8066806C;
 extern const u8 lbl_eu_80668070;
-extern "C" void copyVEC3(void*, void*);
 
 extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4, u32 arg5) {
     // ---- type (main switch key) ----
-    u8 type = (u8)func_801392E4((void*)(u32)arg2);
+    u8 type = (u8)func_801392E4((u32)arg2);
 
     // ---- party-slot ping: 12-word copy of party struct + 2x3 vtable[0xA4] ----
     struct PartyData { u32 w[12]; };
@@ -5998,10 +6010,9 @@ s32 func_801E9190(void* a, void* b, s32 arg2, void* d) {
     u32 t1 = func_801E92B8(a, b);
     u32 t2 = func_801E9310(a, b, 0x52, d);
     s32 sum = (s32)(t2 + t1 + 0x64);
-    union { double d; u32 w[2]; } u;
-    u.w[1] = (u32)(arg2 * sum) ^ 0x80000000;
-    u.w[0] = 0x43300000;
-    return (s32)(lbl_eu_80668040 * (float)(u.d - lbl_eu_80668028));
+    // Retail uses the builtin int->float cast (single-rounded fsubs idiom),
+    // not a manual 0x43300000 union (MWCC_CASES: CActorParam UnkVirtualFunc11).
+    return (s32)(lbl_eu_80668040 * (float)(arg2 * sum));
 }
 #pragma pop
 
@@ -6011,10 +6022,9 @@ s32 func_801E9224(void* a, void* b, s32 arg2, void* d) {
     u32 t1 = func_801E92B8(a, b);
     u32 t2 = func_801E9310(a, b, 0x53, d);
     s32 sum = (s32)(t2 + t1 + 0x64);
-    union { double d; u32 w[2]; } u;
-    u.w[1] = (u32)(arg2 * sum) ^ 0x80000000;
-    u.w[0] = 0x43300000;
-    return (s32)(lbl_eu_80668040 * (float)(u.d - lbl_eu_80668028));
+    // Retail uses the builtin int->float cast (single-rounded fsubs idiom),
+    // not a manual 0x43300000 union (MWCC_CASES: CActorParam UnkVirtualFunc11).
+    return (s32)(lbl_eu_80668040 * (float)(arg2 * sum));
 }
 #pragma pop
 #pragma push
@@ -6122,9 +6132,7 @@ u32 func_801E96F0(void* dummy, u32 arg1, u32 arg2) {
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x1f4], arg1);
     u32 g = (u32)lbl_eu_806640F8;
-    u16 cat = func_80139358(arg2);
-    u8 result = func_801361E8(g, buf, cat);
-    return result != 0;
+    return (u8)func_801361E8(g, buf, (u16)func_80139358(arg2)) != 0;
 }
 #pragma pop
 #pragma push
@@ -6500,7 +6508,7 @@ void func_801D47D4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     if (*(u8*)((u8*)info + 0x9A) == 4) {
         slot = category;
     }
-    u8 kind = (u8)func_801392E4((void*)(u32)slot);
+    u8 kind = (u8)func_801392E4((u32)slot);
     if (item2 != 0 && (func_801C6E90(item2) != 0 || func_801D4AB0(item2) == 0)) {
         kind = 9;
     }

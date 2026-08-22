@@ -1276,9 +1276,6 @@ extern "C" u32 CActorParam_UnkVirtualFunc91__Q22cf11CActorParamFv(const u8* data
     return *reinterpret_cast<const u32*>(data + 0x1608);
 }
 
-cf::UnkClass_CActorParam15E0* cf::CActorParam::CActorParam_UnkVirtualFunc127() {
-    return field_0x15D8;
-}
 
 
 void cf::CfGameManager::func_8007C6C0() {}

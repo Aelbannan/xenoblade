@@ -176,15 +176,19 @@ void func_8049C3A4(CScnEffectActNw4r* self) {
 // inside [AB74 - A208, AB74 + A208], unless the manager's act flag disables
 // the whole check (then always usable). Returns 1 usable / 0 outside range.
 u32 func_8049C3AC(CScnEffectActNw4r* self) {
-    CScnEffectActMgr* mgr = self->mpMgr;
-    u32 result = 1;
-    u32 flag = 1;
+    // Separate decl/init keeps three live values -> r3/r4/r5 in MWCC.
+    u32 result;
+    u32 ok;
+    CScnEffectActMgr* mgr;
+    result = 1;
+    ok = 1;
+    mgr = self->mpMgr;
     if ((mgr->field_0x7a4 & 0x20000000) == 0) {
         if (mgr->field_0x304 < lbl_eu_8066AB74 + lbl_eu_8066A208) {
-            flag = 0;
+            ok = 0;
         }
     }
-    if (flag != 0) {
+    if (ok != 0) {
         return result;
     }
     if (mgr->field_0x304 <= lbl_eu_8066AB74 - lbl_eu_8066A208) {

@@ -40,9 +40,9 @@ extern "C" CExchangeWin* __ct__CExchangeWin(CExchangeWin* self) {
 CExchangeWin::~CExchangeWin() {
 }
 
-u8 CExchangeWin::getField25() { return field_25; }
+int CExchangeWin::getField25() { return field_25; }
 
-u8 CExchangeWin::getField24() { return field_24; }
+int CExchangeWin::getField24() { return field_24; }
 
 int CExchangeWin::getField27() { return field_27; }
 

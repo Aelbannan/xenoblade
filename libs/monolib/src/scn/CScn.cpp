@@ -16,7 +16,9 @@ struct VTarget {
 };
 
 #include "monolib/scn/CScn.hpp"
+#include "libs/monolib/src/scn/CScn.hpp"
 #include "monolib/core/CView.hpp"
+#include "monolib/device/CDeviceVI.hpp"
 
 // --- CTTask<CScn> out-of-line specializations ---
 // The canonical declared-only template emits no bodies; these explicit
@@ -136,7 +138,9 @@ void CScn::Draw() {
 
 extern "C" bool func_80495E60(u8* self) {
     extern bool func_8048C8C4(void*, void*);
-    if (!self) return 1;
+    if (self == 0) {
+        return 1;
+    }
     return func_8048C8C4(*(void**)((char*)*(void**)(self + 4) + 0x60), self);
 }
 extern "C" bool func_80495E84(u8* self) {
@@ -188,8 +192,25 @@ extern "C" u32 func_8049603C(u8* self) {
     extern u32 func_8049C7A8(u32);
     return func_8049C7A8(*(u32*)((char*)self + 0x80));
 }
-void func_80496044(){}
-void func_804960A8(){}
+extern "C" bool func_80496044(u8* self) {
+    extern void* func_8049C7A8(void*);
+    bool result = false;
+    if (func_8049C794(*(void**)((u8*)self + 0x80))) {
+        if (((ScnFloats*)func_8049C7A8(*(void**)((u8*)self + 0x80)))->unk0C == lbl_eu_8066AAB4)
+            result = true;
+    }
+    return result;
+}
+// Same shape as func_80496044 but an ordered >= compare against 1.0f.
+extern "C" bool func_804960A8(u8* self) {
+    extern void* func_8049C7A8(void*);
+    bool result = false;
+    if (func_8049C794(*(void**)((u8*)self + 0x80))) {
+        if (((ScnFloats*)func_8049C7A8(*(void**)((u8*)self + 0x80)))->unk0C >= lbl_eu_8066AAB8)
+            result = true;
+    }
+    return result;
+}
 extern "C" void* func_80496110(u8* self) {
     return func_8049C7B0(*(void**)((char*)self + 0x80));
 }
@@ -224,8 +245,25 @@ extern "C" void* func_80496274(void* _this) {
     return func_8049B2C4(*(void**)((char*)_this + 0x68));
 }
 extern "C" void func_8049627C(u8* self, int arg) { func_8049B0A0(*(UnkScn68**)((char*)self + 0x68), (short)arg); }
-void func_80496288(){}
-extern "C" void func_80496294() {}
+// Scene time scale: PAL consoles without the speed fix run at 1.2x.
+float func_80496288(u8* self) {
+    int pal = 0;
+    if (CDeviceVI::isTvFormatPal()) {
+        if (self[0x3E9] == 0)
+            pal = 1;
+    }
+    float mul;
+    if (pal != 0)
+        mul = lbl_eu_8066AABC;
+    else
+        mul = lbl_eu_8066AAB8;
+    ScnFloats* p = (ScnFloats*)*(void**)((u8*)self + 0x84);
+    return p->unk08 * mul;
+}
+// retail: lwz r3,0x84(r3); stfs f1,0xC(r3); blr
+void func_80496294(CScn* self, float v) {
+    ((ScnFloats*)*(void**)((u8*)self + 0x84))->unk0C = v;
+}
 extern "C" void func_804962A0(void* p, unsigned char v) {
     ((unsigned char*)p)[0x3e5] = v;
 }

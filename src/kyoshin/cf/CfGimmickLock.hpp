@@ -84,6 +84,7 @@ typedef void* (*CfGimmickLockGetTargetFn)(void*);
 //   0x110 getTarget  (real slot 68 = declared 66)
 struct CfGimmickLockObj {
     virtual ~CfGimmickLockObj();      // declared 0
+
     virtual void d01();               // declared 1
     virtual void d02();               // declared 2
     virtual void d03();               // declared 3
@@ -150,6 +151,10 @@ struct CfGimmickLockObj {
     virtual void d64();               // declared 64
     virtual void d65();               // declared 65
     virtual void* getTarget();        // declared 66 -> 0x110
+
+    // Data members below the vtable; the lock links itself here on activation.
+    /* 0x004 */ u8 pad_04[0xAC];
+    /* 0x0B0 */ void* owner;
 };
 
 } // namespace cf

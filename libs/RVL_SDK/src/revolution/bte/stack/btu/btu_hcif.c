@@ -304,8 +304,8 @@ void btu_hcif_process_event(BT_HDR *p_msg)
         break;
 
     case HCI_DISCONNECTION_COMP_EVT: {
-        UINT16 handle = (UINT16)((p[3] + (p[4] << 8)) & 0x0FFF);
         UINT8 reason = p[5];
+        UINT16 handle = (UINT16)((p[3] + (p[4] << 8)) & 0x0FFF);
 
         if (!l2c_link_hci_disc_comp(handle, reason))
             btm_sco_removed(handle, reason);
@@ -332,8 +332,8 @@ void btu_hcif_process_event(BT_HDR *p_msg)
 
     case HCI_ENCRYPTION_CHANGE_EVT: {
         UINT16 handle = (UINT16)(p[3] + (p[4] << 8));
-        UINT8 hci_status = p[2];
         UINT8 encr_enable = p[5];
+        UINT8 hci_status = p[2];
 
         btm_acl_encrypt_change(handle, hci_status, encr_enable);
         btm_sec_encrypt_change(handle, hci_status, encr_enable);
@@ -371,9 +371,9 @@ void btu_hcif_process_event(BT_HDR *p_msg)
         break;
 
     case HCI_ROLE_CHANGE_EVT: {
-        UINT8 hci_status = p[2];
         BD_ADDR bd_addr;
         UINT8 new_role;
+        UINT8 hci_status = p[2];
         UINT8 *p_off = p + 3;
 
         STREAM_TO_BDADDR(bd_addr, p_off);

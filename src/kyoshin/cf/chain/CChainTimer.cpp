@@ -16,7 +16,7 @@
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
 #include "kyoshin/menu/CMenuArtsSelect.hpp"
-#include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/object/CfObjectMove.hpp" // func_800829B8__Q22cf13CfGameManagerFv
 #include <math.h>
 
 // Same-TU helpers (retail symbols func_8027D8C4 / func_8027DB74 /
@@ -35,7 +35,7 @@ void func_8027D1A4(){}
 // resets the chain when any died, otherwise advances the state machine and
 // drives the chain wave effect.
 void func_8027D20C(cf::CChainState* self) {
-    if (cf::CfGameManager::func_800829B8() != 0) return;
+    if (func_800829B8__Q22cf13CfGameManagerFv() != 0) return;
     if (self->field_0 == 0) return;
 
     int changed = 0;

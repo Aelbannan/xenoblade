@@ -43,7 +43,9 @@ namespace cf {
         CBattleStateEntry entries[0x68]; // +0x8
     };
 
-    // size: 0x15DC
+    // size: 0x15D4 (retail; CActorParam members start at 0x8+0x15D4 = 0x15DC).
+    // The pointer formerly declared here as field_0x15D8 is actually
+    // CActorParam::unk15E0 (object+0x15E0), NOT a CBattleState member.
     class CBattleState {
     public:
         virtual void CBattleState_UnkVirtualFunc1();  //0x8
@@ -87,7 +89,6 @@ namespace cf {
         u8 unk8[0x1520];
         u8 unk1528[4];
         u8 unk152C[0x80];
-        u8 unk15AC[0x15D8 - 0x15AC];
-        UnkClass_CActorParam15E0* field_0x15D8;
+        u8 unk15AC[0x15D4 - 0x15AC];
     };
 }

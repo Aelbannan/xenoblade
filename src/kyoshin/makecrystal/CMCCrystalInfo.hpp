@@ -20,19 +20,24 @@ struct CMCCItemData {
     u8 field07;  // 0x07
 };
 
-// Crystal result buffer written by func_8021B188 and consumed by
-// func_8021B2E0. field21 tracks how many entries were stored while filling.
-// Sized 0x30 to match the retail stack allocation (only the first 0x24
-// bytes are copied to the caller).
+// Body copied to the caller by func_8021B188: everything after count.
+// Sized 0x24 so the struct assignment emits MWCC's 4x8-byte lwzu/stwu
+// counted copy loop (needs optimize_for_size to keep the bdnz form).
+struct CrystalBody {
+    char* str;          // 0x00 description string
+    char* names[4];     // 0x04 item name pointers (valid up to count)
+    u32 pad14;          // 0x14
+    u8 flags[4];        // 0x18 per-item flags
+    u8 field20;         // 0x1c
+    u8 field21;         // 0x1d running count of stored entries
+    u8 pad1e[6];        // (size 0x24)
+};
+
+// Local fill buffer in func_8021B188.
 struct CrystalItemBuf {
-    u8 count;          // 0x00 number of matching crystal items
-    u8 pad00[3];       // 0x01
-    char* str;         // 0x04 description string
-    char* names[4];    // 0x08 item name pointers (valid up to count)
-    u8 flags[4];       // 0x1C per-item flags
-    u8 field20;        // 0x20
-    u8 field21;        // 0x21 running count of stored entries
-    u8 pad22[14];      // 0x22 (pad to 0x30)
+    u8 count;           // 0x00 number of matching crystal items
+    u8 pad00[3];        // 0x01
+    CrystalBody body;   // 0x04
 };
 
 // Fake polymorphic facade over the object returned by

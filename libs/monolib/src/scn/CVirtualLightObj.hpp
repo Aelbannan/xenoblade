@@ -12,6 +12,8 @@ extern const f32 lbl_eu_8066AA88;  // default light color components
 extern const f32 lbl_eu_8066AA8C;  // "active" sentinel compared in func_8049488C
 extern const f32 lbl_eu_8066AA90;  // color scale for quad verts (func_80494D84)
 extern const f32 lbl_eu_8066AA98;  // slot color alpha default (func_80495644)
+extern const f32 lbl_eu_8066AA9C;  // color -> u8 scale (func_804952C4)
+extern double lbl_eu_8066AAA0;     // 0x4330000000000000 int->double bias
 extern const f32 lbl_eu_8066AAA8;  // slot color rgb default (func_80495644)
 extern const f32 lbl_eu_8066AAAC;  // distance-attenuation brightness (func_804957E4/804958B8)
 

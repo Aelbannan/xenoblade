@@ -16,7 +16,8 @@
 #include <nw4r/lyt.h>
 #include <nw4r/ut.h>
 
-extern void func_80124270(nw4r::lyt::Pane*, u32);
+// Retail symbol is unmangled (C linkage); extern "C" keeps the reloc name.
+extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
 extern void copyVEC3(nw4r::math::VEC3*, nw4r::math::VEC3*);
 
 // Retail keeps these state-machine helpers unmangled (C linkage); declare
@@ -242,7 +243,7 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
 
 void CTitleAHelp::func_801C4654(u32 arg) {
     if(mLayout == nullptr) return;
-    nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName("nul_ttl", true);
+    nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName(lbl_eu_805054BC + 0x5c, true);
     func_80124270(pane, arg);
 }
 
@@ -253,7 +254,7 @@ extern "C" void func_801C46B4(CTitleAHelp* self, char* arg) {
 
 void CTitleAHelp::func_801C46DC(u32 arg) {
     if(mLayout == nullptr) return;
-    nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName("nul_caution", true);
+    nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName(lbl_eu_805054BC + 0x70, true);
     func_80124270(pane, arg);
 }
 

@@ -67,7 +67,18 @@ struct SceneFlagBits {
     u16 b11 : 1;   // 0x0800
     u16 : 1;       // bit 10
     u16 b9 : 1;    // 0x0200
-    u16 : 9;       // bits 8..0
+    u16 b8 : 1;    // 0x0100
+    u16 b7 : 1;    // 0x0080
+    u16 : 7;       // bits 6..0
+};
+
+// u32 view of the flag word pair at 0x04/0x06; the 0x06 halfword's bits are
+// bits 16..31 of this container.
+struct SceneFlags32 {
+    u32 pad_04 : 16;
+    u32 b16 : 1;
+    u32 b17 : 1;
+    u32 : 14;
 };
 
 // s32 -> float through the shared 0x4330000000000000 magic constant.
@@ -147,34 +158,45 @@ struct EffectStruct {
     void* field_0x32c;
     void* field_0x330;
     void* field_0x334;
-    ~EffectStruct();
 };
 
-EffectStruct::~EffectStruct() {
-    if (field_0x32c) {
-        func_80495E84(*(void**)((u8*)field_0x08 + 0x10));
-        field_0x32c = 0;
+// Sub-object referenced by field_0x328: its dispatch pointer sits at
+// +0x184 (base padding followed by the derived object's own vptr).
+struct EffectSubBase {
+    u8 pad_0x00[0x184];
+};
+
+struct EffectVirtObj : EffectSubBase {
+    virtual void release(int);
+};
+
+// Retail linker name __dt__804CC2E4 (unmangled C symbol); defined as a free
+// function so the object emits the exact retail name.
+extern "C" void __attribute__((never_inline)) __dt__804CC2E4(EffectStruct* self) {
+    if (self->field_0x32c != 0) {
+        func_80495E84(*(void**)((u8*)self->field_0x08 + 0x10));
+        self->field_0x32c = 0;
     }
-    if (field_0x328) {
-        if (field_0x328) {
-            void** vt = *(void***)((u8*)field_0x328 + 0x184);
-            ((void (*)(void*, int))vt[1])(field_0x328, 1);
+    if (self->field_0x328) {
+        if (self->field_0x328) {
+            ((EffectVirtObj*)self->field_0x328)->release(1);
         }
-        field_0x328 = 0;
+        self->field_0x328 = 0;
     }
-    if (field_0x330) {
-        __dt__804D80F0(field_0x330, 1);
-        field_0x330 = 0;
+    if (self->field_0x330) {
+        __dt__804D80F0(self->field_0x330, 1);
+        self->field_0x330 = 0;
     }
-    if (field_0x334) {
-        __dl__FPv(field_0x334);
-        field_0x334 = 0;
+    if (self->field_0x334) {
+        __dl__FPv(self->field_0x334);
+        self->field_0x334 = 0;
     }
-    field_0x00 = -1;
-    field_0x02 = -1;
-    field_0x04 = -1;
-    field_0x06 = 0;
+    self->field_0x00 = -1;
+    self->field_0x02 = -1;
+    self->field_0x04 = -1;
+    self->field_0x06 = 0;
 }
+
 
 // Target 6: object pointed to by a list owner (field_0x14 at 0x14).
 struct EffectInfo {
@@ -293,8 +315,18 @@ struct SceneSubLater {
 struct EffectScene {
     u16 field_0x00;
     u16 field_0x02;
-    u16 field_0x04;
-    u16 field_0x06;          // flags bitfield
+    union {
+        struct {
+            u16 field_0x04;
+            u16 field_0x06;      // flags bitfield
+        };
+        struct {
+            u32 : 16;
+            u32 : 1;
+            u32 b17 : 1;         // 0x06 bit 1, in a 0x04-based u32 container
+            u32 : 14;
+        };
+    };
     u32 field_0x08;
     SceneSubObj* field_0x0c; // pointer to a sub-object
     u32 field_0x10;          // also read/written as f32 (union)
@@ -325,6 +357,7 @@ struct EffectScene {
     u8 pad_0x238[0x258 - 0x238];
     s16 field_0x258;
     s16 field_0x25a;
+    u8 pad_0x25c[0x260 - 0x25c];
     u8 field_0x260;          // 0x260 texgen flags
     u8 pad_0x261[0x268 - 0x261];
     f32 field_0x268;         // 0x268
@@ -567,19 +600,18 @@ extern "C" void __attribute__((never_inline)) func_804CDE50(EffectScene* self, c
     u32 cls = sub->field_0x00;
     if ((u32)(cls - 9) <= 2) return;
     u8* fo = (u8*)sub->field_0xf8;
+    if (fo == 0) return;
     u8 b = fo ? *(u8*)(fo - 0xd) : 0;
     if (!b) return;
+    Vec res;
     Vec out;
     PSMTXMultVec(self->field_0xdc.field_0x18, &self->field_0x21c, &out);
-    Vec res;
     res.x = out.x;
     res.y = out.y;
     res.z = out.z;
     if (!func_804CDF20((void*)self, (Vec*)p2, (Vec*)p3, &res)) return;
-    f32 z = lbl_eu_8066B0DC;
-    u32 fl = self->field_0x06 & (u32)~0x8000;
-    self->field_0x06 = (u16)fl;
-    self->field_0x1c = z;
+    self->b17 = 0;
+    self->field_0x1c = lbl_eu_8066B0DC;
 }
 
 extern "C" s32 __attribute__((never_inline)) func_804CDF20(void* self, Vec* a, Vec* b, Vec* c) {
@@ -636,23 +668,20 @@ extern "C" s32 __attribute__((never_inline)) func_804CDF20(void* self, Vec* a, V
 }
 
 extern "C" void __attribute__((never_inline)) func_804CDD78(EffectScene* self, const Vec* p2, const Vec* p3) {
-    if (self->field_0x06 & 0x0100) return;
+    if (((SceneFlagBits*)&self->field_0x06)->b8) return;
+    Vec res;
     Vec out;
     PSMTXMultVec(self->field_0x160, &self->field_0xc4, &out);
-    Vec res;
-    res.x = out.x;
-    res.y = out.y;
-    res.z = out.z;
+    res = out;
     if (!func_804CDF20((void*)self, (Vec*)p2, (Vec*)p3, &res)) return;
     self->field_0x06 = (u16)(self->field_0x06 | 0x300);
     u32* sub = (u32*)self->field_0x0c;
     u8* fo = (u8*)(sub[0x3b]);
-    if (!fo) return;
-    if (!*(s8*)(fo - 0xa)) return;
-    f32 z = lbl_eu_8066B0DC;
-    u32 fl = self->field_0x06 & (u32)~0x8000;
-    self->field_0x06 = (u16)fl;
-    self->field_0x1c = z;
+    if (fo == 0) return;
+    s32 v = (fo != 0) ? *(u8*)(fo - 0xa) : 0;
+    if (v == 0) return;
+    ((SceneFlags32*)&self->field_0x06)->b17 = 0;
+    self->field_0x1c = lbl_eu_8066B0DC;
 }
 
 // Forward decls used by func_804CE264 and func_804CCF84.
@@ -744,6 +773,7 @@ extern "C" void __attribute__((never_inline)) func_804CE4C0(EffectScene* self, M
     case 7:
     case 8:
     case 9:
+    case 10:
     default:
         break;
     }
@@ -2668,8 +2698,7 @@ s32 func_804D6BC0(void* unused, Node2Control* c, Node2** p5, Node2** p6,
     d = d->field_0x00;
     *p9 = d;
     if ((u32)*p7 == (u32)c->field_0x04->field_0x00) {
-        Node2* t = *p7;
-        *p6 = t;
+        *p6 = *p7;
     }
     if (*p8 == c->field_0x04) {
         *p8 = *p7;

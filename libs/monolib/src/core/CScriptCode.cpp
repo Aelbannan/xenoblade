@@ -244,27 +244,32 @@ extern "C" void func_8043A1DC__11CScriptCodeFv(void* self, u8* pData, u32 dataSi
 // Splits pIn on '|' into 256-byte segments stored into pOut. Each segment is
 // null-terminated. Returns the number of segments (incl. the final one) when
 // the input ends with '\0', or 8 once 8 segments have been filled.
+// Register-shape notes: seg/pos are s16 (re-sign-extended on use) and base
+// accumulates the segment offset; addresses are formed base-first so MWCC
+// emits add rBase, rPtr in retail operand order.
 extern "C" s16 func_8043A2F8__11CScriptCodeFv(void* self, u8* pOut, u8* pIn) {
-    int base = 0;
     s16 seg = 0;
-    char c;
     s16 pos = 0;
+    int base = 0;
+    char z = 0;
 
     for (;;) {
-        c = (char)*pIn;
+        char c = *pIn;
         if (c == '|') {
             seg++;
-            pOut[base + pos] = 0;
+            (base + pOut)[pos] = z;
             pos = 0;
             pIn++;
             base += 0x100;
-            if (seg < 8) continue;
+            if (seg < 8) {
+                continue;
+            }
             return 8;
-        } else if (c == 0) {
-            pOut[(seg << 8) + pos] = 0;
-            return (s16)(seg + 1);
+        } else if (c == '\0') {
+            ((seg << 8) + pOut)[pos] = 0;
+            return seg + 1;
         } else {
-            pOut[base + pos] = c;
+            (base + pOut)[pos] = c;
             pIn++;
             pos++;
         }

@@ -118,11 +118,16 @@ extern "C" void func_80180394(CREvtCamera* self) {
 // ============================================================================
 extern "C" CREvtCamera* __ct__CREvtCamera(CREvtCamera* self, u32 param) {
     __ct__cf_CREvtObj(self, 0);
+
+    // Declaration/use split reproduces retail scheduling: the first default
+    // float loads before the vtable address formation, the other two inside
+    // the lis/@ha - addi/@l gap.
     f32 f2 = lbl_eu_806678A4;
+    u8* vt = (u8*)lbl_eu_80531CE8;
     u32 zero = 0;
     f32 f1 = lbl_eu_806678A8;
     f32 f0 = lbl_eu_806678AC;
-    self->vtable = (u8*)lbl_eu_80531CE8;
+    self->vtable = vt;
     s32 neg1 = -1;
 
     self->mField14 = zero;
@@ -297,6 +302,20 @@ extern "C" void func_80180414(CREvtCamera* self) {
     }
 }
 
+// Reproduces retail's unsigned-int -> double conversion, which references
+// the float-pool constant lbl_eu_806678B8 (0x4330000080000000): store the
+// 0x4330 high word and the sign-toggled value, reload as a double, subtract.
+static f32 ConvU32ToTime(u32 v) {
+    struct {
+        u32 hi;
+        u32 lo;
+    } bits;
+    bits.hi = 0x43300000;
+    bits.lo = v ^ 0x80000000;
+    f64 raw = *(const f64*)&bits;
+    return (f32)(raw - lbl_eu_806678B8);
+}
+
 // ============================================================================
 // func_801804CC (0x801818C8, size 0x154)
 // Updates the camera from the scene model's animation results: samples the
@@ -305,16 +324,17 @@ extern "C" void func_80180414(CREvtCamera* self) {
 // ============================================================================
 extern "C" void func_801804CC(CREvtCamera* self) {
     if (func_800821F8__Q22cf13CfGameManagerFv()) {
-        func_8006BBF4((void*)func_800821F8__Q22cf13CfGameManagerFv(), 0x400, 1);
+        func_8006BBF4(func_800821F8__Q22cf13CfGameManagerFv(), 0x04000000, 1);
     }
     if (!self->mField1C) return;
     if (cf::CfGameManager::func_800829B8()) return;
 
     CREvtSceneModel* sceneObj = (CREvtSceneModel*)self->mField1C;
-    nw4r::g3d::ChrAnmResult* result = func_8048BAD4(sceneObj, lbl_eu_8066244C, (f32)func_8016A35C());
+    nw4r::g3d::ChrAnmResult* result =
+        func_8048BAD4(sceneObj, lbl_eu_8066244C, ConvU32ToTime((u32)func_8016A35C()));
     result->GetRotTrans((nw4r::math::MTX34*)self->mMatrix58);
     self->mFieldA4 = 1;
-    result = func_8048BAD4(sceneObj, lbl_eu_80662448, (f32)func_8016A35C());
+    result = func_8048BAD4(sceneObj, lbl_eu_80662448, ConvU32ToTime((u32)func_8016A35C()));
     result->GetRotTrans((nw4r::math::MTX34*)self->mMatrix28);
 
     CREvtCamObj* camObj = func_80496264(lbl_eu_80663E14, -1);

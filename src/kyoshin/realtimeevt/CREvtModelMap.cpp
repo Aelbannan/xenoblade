@@ -284,16 +284,20 @@ extern "C" bool func_80180CBC(CREvtModelMap* self)
     // Call base-class reset
     func_801726DC(self);
 
-    // Free emote model
+    // Free emote model. `zero` stays live across the two clears so the
+    // allocator parks the 0 constant in r0 (as retail does) and the
+    // mLoadedModelData load lands in r4.
+    u32 zero = 0;
     if (self->mEmoteModel) {
         func_80495E60(self->mEmoteModel);
-        self->mEmoteModel = 0;
+        self->mEmoteModel = (CEmoteModelObj*)zero;
     }
 
     // Free loaded model data
-    if (self->mLoadedModelData) {
+    void* loaded = self->mLoadedModelData;
+    if (loaded) {
         func_804C1D7C(*(void**)((u8*)lbl_eu_80663E14 + 0x7C));
-        self->mLoadedModelData = 0;
+        self->mLoadedModelData = (void*)zero;
     }
 
     // Free file data buffers.  The nested if (checked against a local) makes
@@ -418,23 +422,25 @@ extern "C" void func_80180EBC(CREvtModelMap* self)
     // whole function (retail loads it in the prologue).
     u32* tbl = (u32*)lbl_eu_80531D20;
 
-    self->mFlags |= 0x40;
+    // Retail keeps mFlags|0x40 live in a register across the guest branch;
+    // the guest path ORs 0x11 into the same value and stores it once.
+    u32 flags = self->mFlags | 0x40;
 
     if (self->mIsGuest) {
         // Guest path: publish as active, install the updatePosition ptmf
-        // (0x80531D44), then build the archive base path.
+        // (table entry 1, words 9-11), then build the archive base path.
         lbl_eu_806642B0 = self;
-        u32* src = tbl + 9;
+        flags |= 0x11;
 
-        u32 w1, w2, w0;
-        w0 = *src++;
-        w1 = *src++;
+        // Fixed-offset loads from tbl; store order +0x0C, +0x08, +0x10.
+        u32 w0 = tbl[9];
+        u32 w1 = tbl[10];
+        u32 w2 = tbl[11];
         self->mCallback[1] = w1;
         self->mCallback[0] = w0;
-        w2 = *src++;
         self->mCallback[2] = w2;
 
-        self->mFlags |= 0x11;
+        self->mFlags = flags;
 
         cf::CfGameManager* mgr = (cf::CfGameManager*)cf::CfGameManager::func_80083298();
         func_800AA33C(*(ml::FixStr<64>*)self->mBasePath, mgr->unk70, 1, 0);
@@ -538,27 +544,23 @@ extern "C" void func_80180EBC(CREvtModelMap* self)
             }
 
             // Success: mark loaded and install the updatePosition ptmf
-            // (0x80531D50 = table entry 2).
+            // (table entry 2, words 12-14).
             self->mFlags |= 0x2;
-            u32* src = tbl + 12;
-            u32 w1, w2, w0;
-            w0 = *src++;
-            w1 = *src++;
+            u32 w0 = tbl[12];
+            u32 w1 = tbl[13];
+            u32 w2 = tbl[14];
             self->mCallback[1] = w1;
             self->mCallback[0] = w0;
-            w2 = *src++;
             self->mCallback[2] = w2;
         } else {
             // Failure (.map missing): error flags + failure ptmf
-            // (0x80531D5C = table entry 3).
+            // (table entry 3, words 15-17).
             self->mFlags |= 0x11;
-            u32* src = tbl + 15;
-            u32 w1, w2, w0;
-            w0 = *src++;
-            w1 = *src++;
+            u32 w0 = tbl[15];
+            u32 w1 = tbl[16];
+            u32 w2 = tbl[17];
             self->mCallback[1] = w1;
             self->mCallback[0] = w0;
-            w2 = *src++;
             self->mCallback[2] = w2;
         }
     }
@@ -638,7 +640,9 @@ extern "C" void func_8018152C(CREvtModelMap* self)
 // ---------------------------------------------------------------------------
 // 12. func_801815AC - onEvent (0x801829B4)
 // ---------------------------------------------------------------------------
-extern "C" void func_801815AC(CREvtModelMap* self, int visible)
+// `visible` is unsigned in the retail source: the mVisible compare compiles
+// to a bare lbz + cmplw (no rlwinm mask on the parameter).
+extern "C" void func_801815AC(CREvtModelMap* self, unsigned int visible)
 {
     // Guest visibility is mirrored into the game-manager core's flag word at
     // +0x100 (bit 2), gated on func_80180978's global state.
@@ -653,7 +657,7 @@ extern "C" void func_801815AC(CREvtModelMap* self, int visible)
         }
     }
 
-    if (self->mVisible == (u8)visible) {
+    if (self->mVisible == visible) {
         goto set_guest_flags;
     }
 
@@ -674,7 +678,9 @@ extern "C" void func_801815AC(CREvtModelMap* self, int visible)
             }
         }
 
+        // Retail re-fetches the singleton for the actual call (two bl's).
         if (func_800828DC__Q22cf13CfGameManagerFv()) {
+            func_800828DC__Q22cf13CfGameManagerFv();
             func_8016FC0C(visible);
         }
 
@@ -809,7 +815,9 @@ extern "C" int func_8018196C(void* self) { return (*(u8*)((char*)self + 0x3D) !=
 // slot 1 sets the error flag. Returns 1 when the event was consumed.
 extern "C" bool func_80181988(CREvtModelMap* self, CEventFile* pEvent)
 {
-    if (self->mFileHandle1 == pEvent->mFileHandle) {
+    // Operand order matters for byte identity: MWCC loads self->mFileHandleN
+    // into r5 first, then pEvent->mFileHandle into r0, comparing r0 vs r5.
+    if (pEvent->mFileHandle == self->mFileHandle1) {
         if (pEvent->unk0 == 1) {
             // Success - extract the loaded buffer
             self->mFileData1 = self->mFileHandle1->getData();
@@ -821,7 +829,7 @@ extern "C" bool func_80181988(CREvtModelMap* self, CEventFile* pEvent)
         return 1;
     }
 
-    if (self->mFileHandle2 == pEvent->mFileHandle) {
+    if (pEvent->mFileHandle == self->mFileHandle2) {
         if (pEvent->unk0 == 1) {
             self->mFileData2 = self->mFileHandle2->getData();
         }
@@ -829,7 +837,7 @@ extern "C" bool func_80181988(CREvtModelMap* self, CEventFile* pEvent)
         return 1;
     }
 
-    if (self->mFileHandle3 == pEvent->mFileHandle) {
+    if (pEvent->mFileHandle == self->mFileHandle3) {
         if (pEvent->unk0 == 1) {
             self->mFileData3 = self->mFileHandle3->getData();
         }

@@ -22,21 +22,6 @@ static void __FreeDelayLine(AXFX_REVERBSTD_EXP_DPL2* reverb);
 static void __BzeroDelayLines(AXFX_REVERBSTD_EXP_DPL2* reverb);
 static BOOL __InitParams(AXFX_REVERBSTD_EXP_DPL2* reverb);
 
-// Signed-int -> float via MWCC's biased-double conversion: form the double
-// 0x43300000:(v ^ 0x80000000) and subtract 2^52, matching retail's pool
-// constant double_8066BEA0.
-typedef union {
-    struct { u32 lo; u32 hi; } w;
-    f64 d;
-} IntFloatConv;
-
-static f32 IntBitsToFloat(s32 v) {
-    IntFloatConv c;
-    c.w.lo = (u32)v ^ 0x80000000;
-    c.w.hi = 0x43300000;
-    return (f32)(c.d - double_8066BEA0);
-}
-
 #pragma peephole off
 u32 AXFXReverbStdExpGetMemSizeDpl2(const AXFX_REVERBSTD_EXP_DPL2* reverb) {
     // Interleaved declaration order drives the -O4,p scheduler: retail hoists
@@ -256,9 +241,9 @@ void AXFXReverbStdExpCallbackDpl2(AXFX_BUFFERUPDATE_DPL2* bufferUpdate, AXFX_REV
 
         for (ch = 0; ch < 4; ch++) {
             if (reverb->busIn != NULL) {
-                data = IntBitsToFloat(*(input[ch]) + *(inBusData[ch]++));
+                data = (f32)(*(input[ch]) + *(inBusData[ch]++));
             } else {
-                data = IntBitsToFloat(*input[ch]);
+                data = (f32)(*input[ch]);
             }
 
             earlyLine = reverb->earlyLine[ch];

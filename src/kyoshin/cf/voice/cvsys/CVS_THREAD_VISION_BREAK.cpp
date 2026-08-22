@@ -91,7 +91,7 @@ int func_802A9604() {
 // Factory constructor for CVS_THREAD_VISION_BREAK. Takes a CVoiceHandle
 // (manager) and a parameter; validates both, allocates a new 0x28-byte
 // object, initialises it, and returns it. Returns NULL on failure.
-CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) try {
+CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) {
     // Parameter must be positive.
     if (param <= 0) {
         return NULL;
@@ -133,8 +133,6 @@ CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) try {
     obj->unk8 = base[2];
 
     return obj;
-} catch (...) {
-    throw;
 }
 
 // ── Target 5: us-802abb34 (func_802A93FC) ──────────────────────────────────
@@ -143,13 +141,14 @@ CVS_THREAD_VISION_BREAK* __ct__802A92D8(CVoiceHandle* handle, int param) try {
 // voice handles, then selects a voice ID from one of two tables (based on
 // field_0x24 threshold) and plays it. Falls back to vtable[2] if play fails.
 void func_802A93FC(CVS_THREAD_VISION_BREAK* self) {
-    // Reset the state triple from lbl_eu_80539D7C (consecutive reads so
-    // MWCC keeps the base register and emits the lwzu form).
-    self->unk0 = (u32*)lbl_eu_80539D7C[0];
-    self->unk4 = lbl_eu_80539D7C[1];
-    self->unk8 = lbl_eu_80539D7C[2];
-
+    // Reset the state triple from lbl_eu_80539D7C (walked-pointer local so
+    // MWCC folds the @l half of the address into the first load).
+    const u32* reset = lbl_eu_80539D7C;
     CVoiceHandle* handle = self->field_0x20;
+    self->unk0 = (u32*)reset[0];
+    self->unk4 = reset[1];
+    self->unk8 = reset[2];
+
     if (handle == NULL) {
         return;
     }

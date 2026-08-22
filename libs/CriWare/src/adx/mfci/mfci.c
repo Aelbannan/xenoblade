@@ -196,15 +196,24 @@ int mfCiTell(MfCiFile* sct) {
     return sct->pos;
 }
 
+/* Inlined parse tail: advance past separator, then read the hex size part.
+   The outSize pointer guard reproduces the retail addic./beq record-test. */
+static void mfciParseSizeTail(char** pp, unsigned long* outSize) {
+    if (**pp != '\0') (*pp)++;
+    if (outSize != NULL)
+        *outSize = strtoul(*pp, pp, 0x10);
+}
+
 int mfCiReqRd(MfCiFile* sct, int size, void* buf) {
+    MfCiGlobals* g = (MfCiGlobals*)&lbl_eu_805EC450;
+    char* p;
     int parsed;
     int n;
-    int rdOff;
     int rdSize;
-    int n2;
+    int rdOff;
     int size2;
-    const char* p;
-    MfCiGlobals* g = (MfCiGlobals*)&lbl_eu_805EC450;
+    int avail;
+    int n2;
 
     if (sct == NULL) {
         const char* msg = lbl_eu_80518844 + 0xFE;
@@ -232,9 +241,10 @@ int mfCiReqRd(MfCiFile* sct, int size, void* buf) {
         return 0;
     }
     SVM_Lock();
-    sct->trSize = 0;
-    n = size;
-    if (n > sct->totalSct - sct->pos) n = sct->totalSct - sct->pos;
+    /* clamp read to remaining sectors; retail keeps numTr=0 first */
+    sct->numTr = 0;
+    n = sct->totalSct - sct->pos;
+    if (size < n) n = size;
     rdSize = n * sct->sctsize;
     sct->trSize = n;
     rdOff = sct->pos * sct->sctsize;
@@ -253,15 +263,14 @@ int mfCiReqRd(MfCiFile* sct, int size, void* buf) {
     }
     p = sct->name;
     parsed = mfci_str_to_uint_ptr(p, (char**)&p, 0x10);
-    if (*p != 0) p++;
-    size2 = (int)strtoul(p, (char**)&p, 0x10);
-    n2 = rdSize;
-    if (n2 > size2 - sct->rdOff) n2 = size2 - sct->rdOff;
+    mfciParseSizeTail(&p, (unsigned long*)&size2);
+    n2 = sct->rdSize;
+    avail = size2 - sct->rdOff;
+    if (n2 > avail) n2 = avail;
     SVM_Unlock();
-    memcpy(buf, (const char*)parsed + sct->rdOff, n2);
-    if (sct->rdSize - n2 > 0) {
+    memcpy(buf, (u8*)parsed + sct->rdOff, n2);
+    if (sct->rdSize - n2 > 0)
         memset((u8*)buf + n2, 0, sct->rdSize - n2);
-    }
     SVM_Lock();
     sct->status = 1;
     sct->pos = sct->pos + sct->trSize;

@@ -1,8 +1,9 @@
 // Auto-scaffolded catalog TU for kyoshin/makecrystal/CMakeCrystalWin
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
-
+// NOTE: do not include kyoshin/harness_catalog.hpp here - its CTaskGameEff ->
+// CfGameManager chain declares lbl_eu_80664090 as void*, which conflicts with
+// the char* declaration in CMCCrystalBox.hpp. Nothing in this TU needs it.
 #include "kyoshin/makecrystal/CMakeCrystalWin.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include <revolution/gx/GXPixel.h>

@@ -216,6 +216,26 @@ The most valuable future feature is not a generic chatbot over the file. It is a
 
 > In-progress migration of reusable/cross-target knowledge out of the per-target log. If a pattern is not listed here, search both files via `mwcc_kb.py` — the index covers PATTERNS + CASES.
 
+### Never declare `__RTTI__*` symbols in a TU with novtable-predeclared anonymous-namespace classes (CDesktop, -ipa file ICE)
+
+Declaring `extern u32 __RTTI__10IWorkEvent[];` (any type, inside or outside `extern "C"`) in a
+TU that (a) forward-declares classes with `__declspec(novtable)` and (b) defines
+anonymous-namespace classes with virtual functions, under `-ipa file`, defers an
+**"illegal name overloading" (10322) error onto the LAST declaration/function at EOF** - the
+diagnostic lands on whatever is compiled last, masking the real cause. The compiler's internal
+RTTI name-lookup for the in-scope classes collides with the user spelling. Minimal repro:
+novtable-predeclared class + anon-ns class with out-of-line virtual dtor + one `__RTTI__*`
+extern decl + any trailing function definition.
+
+**Fix: never spell `__RTTI__*` in such TUs.** Reference the typeinfo objects through legal
+stand-in names (`rtti_10IWorkEvent[]`) in hand-built vtables and retarget those slots via
+UNIT_RULES `retarget_relocs` to the retail `__RTTI__*` names (§17.6 reloc naming). The same
+mechanism covers anonymous-namespace method symbols whose `@unnamed@` manglings are not legal
+C++ identifiers. Verified: CDesktop data dissolution reached raw data-diff MATCH this way.
+Confidence: repo_proven. Applies to: monolibdata2 dissolves of TUs owning class data;
+`-ipa file` builds; DECOMP_FORCEACTIVE varargs are NOT the trigger.
+
+---
 ### Vtable-slot arg keeps a register live → flips ret-default allocation (CfObjectMap func_800B9A70, FULL_MATCH)
 
 `func_800B9A70` (us-800ba38c, CfObjectMap, 0x44) was stuck at ~98% with the ret-default
@@ -227,6 +247,24 @@ vtable decl `m18C(void*)`; the base CfObjectModel.hpp decl was missing the param
 Calling `this->CfObjectModel_UnkVirtualFunc6(this->mTarget70)` keeps r4 live as the
 call argument, so MWCC cannot reuse it for the ret default — the default lands in r0
 exactly like retail → 100% FULL_MATCH. Reuse: when a leaf's ret-default register
+
+---
+
+### Compound load-mask-store (`g &= ~M` + reload) splits the web and flips scratch colors (CfGameManager func_80086490, FULL_MATCH)
+
+`func_80086490` (us-80086e58, 0x158) sat at 83.7% with 0 structural + 14 pure reg-swaps:
+a clean r5<->r6 exchange between the `pad` pointer web and the `enabledFlags`
+mask web across the whole flag-clearing block. Invariant to: swapping the two
+locals' declaration/statement order, and eliminating the pointer local via
+direct global access. The witness cannot certify it (rho maps r5->r6; r3-r12 are
+ABI-fixed lanes), so FULL_MATCH was required.
+
+- Symptom:   retail colors mask=r5/pad=r6; decomp colors mask=r6/pad=r5 — every `and`/`stw`/`lwz` in the block swapped
+- Cause:     `u32 enabledFlags = g & ~M; g = enabledFlags;` keeps load+mask+store as ONE high-degree web born after the pointer load, so the allocator colored the pointer first (low scratch r5); retail's web structure colors the mask first
+- Fix:       write `lbl &= ~M;` (compound assignment) then reload into the named local: `lbl_eu_80663DF8 &= ~0x600230; u32 enabledFlags = lbl_eu_80663DF8;` — the store-back no longer shares the mask web, birth/degree order flips → 100% FULL_MATCH
+- Result:    FULL_MATCH (was 83.7%, 14 reg-swap)
+- Confidence: repo_proven
+- Applies to/a.k.a.: any global read-mask-writeback feeding later uses; same family as Rule A/C levers in register_mapping.md but for scratch (volatile-pool) registers where declaration order is a no-op
 choice (r0 vs a caller-saved GPR) is allocator-fixed, check whether the indirect/
 vtable call in the body actually takes the checked pointer as an argument — the
 live-arg liveness forces the default into r0. (Same family as the WPAD
@@ -431,6 +469,7 @@ Together these shapes reach 98.8% CODE_MATCH, exact `0x650` size, zero structura
 | `bl` target reloc wrong | C++ mangling on callee | **§2** — `extern "C"` with retail mangling |
 | Branch layout inverted | Ghidra if/else vs retail | Swap blocks or invert condition |
 | `switch` shape wrong | MWCC emits compare-tree vs jump-table | Match asm case order; duplicate "useless" cases |
+| Text bytes identical, `code%` still low, witness gate `slot N: non-register bits differ` on a `switch` fn | Retail keeps the jump table in `.data`; decomp table routes different case indexes (mapping shifted) or a different bound immediate | **§8 jumptable routing** — match per-index table routing (keep no-op cases), same bound, rename `@NNN` cookie via `exact_renames`; see CItemBoxGrid func_801D1220 |
 | Two identical patterns, opposite regalloc | Shared locals forced one color | **§4** — block-scope a fresh pair |
 | Wrong register for same opcode | Declaration order | **§4** — reorder locals |
 | Wide-arm reuses `r30` for height (`lha r30` vs retail `lha r31`) after non-wide correctly uses `self=r30`/`height=r31` | Precise liveness: `self` dead on wide arm so Chaitin recycles `r30`; keep-alives scramble dual-`getRenderModeObj` schedule | **CGame::func_800395F4** soft-cap ~99.8%: non-wide `s32 height` + `spInstance` reload; leave wide `s16` — do not chase keep-alive commas/ternaries |
@@ -458,10 +497,20 @@ Together these shapes reach 98.8% CODE_MATCH, exact `0x650` size, zero structura
 
 
 
+### 8. Retail `.data` switch jumptables — routing, bound, cookie, commuted add (CItemBoxGrid func_801D1220 → FULL_MATCH, Wii/1.1 -O4,p)
+
+When retail lowers a dense `switch` through a named `.data` jump table (`jumptable_eu_8053xxxx`, entries are `.4byte func+off`), four things must line up; text bytes alone can look identical while `code%`/data stay low and the witness gate reports `slot N: non-register bits differ (0x…)` on the `cmpli` bound:
+
+1. **Per-index routing:** every case index must map to the same target as retail's table row — including no-op rows (retail often routes leading/trailing indexes to the merge point). Empty `case N:` fallthroughs fold away in MWCC and shrink the table; give no-op cases their own indexes with bodies moved to retail positions instead.
+2. **Bound immediate:** the table covers `[0, highest routed case]`; a shifted mapping shrinks the `cmpli` bound (e.g. 11 vs 13) which the witness rejects as non-register bits (`XOR 0x6`).
+3. **Cookie name:** MWCC emits its own `@NNN` table that cannot be named from source; rename via `UNIT_RULES["<TU>.o"].exact_renames = (("@NNN", "jumptable_eu_8053xxxx"),)` in `tools/postprocess_reloc_names.py`. The id **drifts with TU growth** (observed @16378→@16376 from one edit) — re-check after any TU change.
+4. **Commutated `add` on base+index:** `p[idx + 0x62]` can emit `add r3, r0, r3` where retail has `add r3, r3, r0`; shape as a named pointer (`u8* entry = p + (s8)p[0x6f]; cat = entry[0x62];`) to keep the base register first.
+
+Diagnose routing/bound diffs with the raw asm (`hexdiff --symbol X --asm`) rather than the byte-table: byte-compare hides `.data` content and shows relocated immediates as equal zeros.
+
 ---
 
 ### How objdiff matching works here
-
 objdiff compares **relocatable `.o` files**: the **target** (split from retail `main.dol`) vs the **base** (built from your C++ source). `coop.json` uses `functionRelocDiffs=data_value` — stricter than upstream default.
 
 | Status | Rule |
@@ -942,6 +991,10 @@ MTRand* MTRand::getInstance() {
 
 Also: remove non-trivial constructors from headers when only `getInstance()` constructs the object — avoids compiler-synthesized `@GUARD@` symbols.
 
+**Member/offset variant (CItemBoxGrid func_801CEB3C, FULL_MATCH):** for a byte field at a raw offset, the *value* cast `!(s8)p[0x540]` still emits `lbz` + `cmpi` — the cast must sit on the **lvalue read**, not the result: `if (!((s8*)p)[0x540])` emits the retail `lbz; extsb.; bne`. Same rule as the global guard above: MWCC only takes the record-sign-extend path when the loaded operand is typed `s8` before the test.
+
+**Truncation placement (CItemBoxGrid func_801CA110, FULL_MATCH):** if retail copies a helper's result to a saved reg **untruncated** (`or r30,r3,r3`) and masks at the *use* site (`rlwinm r5,r30,0,16,31` as a call arg), the helper must be declared with a **full-width return type** (`u32`, not `u16`) — a `u16` decl forces the mask onto the def site. But an `& 0xFFFF` mask at the single use gets copy-propagated back to the def anyway; write the use as an explicit **`(u16)` cast** so the conversion node stays at the arg. Same family: testing a `u8`-returning helper through a wrong `u32` decl needs `(u8)call(...)` at the test to reproduce `rlwinm r0,r3,0,24,31; beq` instead of `cmpwi`.
+
 ### 4. Regalloc: declaration order and block scoping
 
 MWCC maps locals to registers in **declaration order** (first → higher callee-saved reg). When retail uses r31 for `hasView2` and r30 for `hasView1`, declare `hasView2` first.
@@ -1197,6 +1250,24 @@ coloring (magic pool base r6 vs retail r7; xoris result reuses r5 vs retail
 r6 — same ABI-boundary class as func_800B7680/801CB9D8). Rule: when a
 CriWare/retail pool double is accessed, prefer the named extern over a raw
 literal address — raw addresses inline and drop the reloc.
+
+#### 7j. Duplicate loads retail keeps un-CSE'd — force with a `volatile` lvalue read (repo_proven)
+
+Retail sometimes loads the same field twice back-to-back (e.g. `cur` and `orig`
+both read from the counter before modification; `lha r5` / `lha r31` adjacent).
+MWCC value-numbers by ADDRESS, not TBAA: reading through a second view struct
+type or a raw `*(s16*)((u8*)self + off)` cast does NOT block the CSE. A
+`volatile`-qualified lvalue read does:
+
+```c
+s16 cur = v->field_0x335A;
+s16 orig = *(volatile s16*)((u8*)self + 0x335A);  // forces the second lha
+```
+
+Verified: `CActorParam_UnkVirtualFunc158__Q22cf11CActorParamFv` (us-8017f858,
+Wii/1.1 -O4,p) went 17.1% -> 100% static -> FULL_MATCH with no other change.
+Related: volatile reads also act as scheduling pins for constant-pool load
+order (see attempts.jsonl us-8017f0dc round 3).
 
 ### 7k. Variadic va_start register fusion — struct-pointer local vs char-pointer offsets
 
@@ -2605,3 +2676,37 @@ be the intended fix rather than externing the data.
 ### Leading-constant expression shape flips scratch regalloc (CPassiveSkill func_80266930, FULL_MATCH 100%)
 
 `(u8)(slot + col*5 + (row-1)*25 + 1)` tail-calling a void setter left a fixed 5-instruction scratch rotation (37.5%: retail colors the row-1 chain r0, col*5 reuses r5, accumulator starts r4; MWCC colored row-1→r4 and col*5→r0 regardless of parenthesization/statement order). Preceding the whole sum with the constant term — `(u8)(1 + slot + col*5 + (row-1)*25)` — reorders MWCC's virtual-register birth so the coloring matches retail byte-for-byte: `addi r0,r4,-1; mulli r5,r5,5; mulli r0,r0,25; add r4,r6,r5; add r4,r4,r0; addi r0,r4,1; clrlwi r4,r0,24; b`. Same opcode graph, different birth order → 100% FULL_MATCH, no pragmas/macros. Lesson: when a pure scratch `reg_swap` rotation resists parenthesization and statement reordering, try moving a literal constant to the head of the left-associative sum.
+
+---
+
+### Chained 3-copy swap temporaries: declare tC,tB,tA (reverse use order) for retail stack slots (CEquipItemBox func_80284144/func_80284244, FULL_MATCH 100%)
+- Symptom:   bubble-sort swap block (tA=copy(a); copy(a,tB=b); copy(b,tC=tA)) at ~95%: only the addi rX,sp,N slot pair for two of the three 8-byte temps swapped (retail sp+8/sp+24 vs decomp sp+24/sp+8), 0 structural.
+- Cause:     MWCC assigns address-taken locals' stack slots by virtual-register birth order; declaring the temps in use order (tA,tB,tC) births them in an order that reverses one adjacent slot pair vs retail.
+- Fix:       declare the three temps in reverse use order - CEquipItemData tC; CEquipItemData tB; CEquipItemData tA; - matching the already-matched sibling sort func_80284358. Both affected sorts went to 100% with no other change.
+- Result:    FULL_MATCH x2
+- Confidence: repo_proven
+- Applies to/a.k.a.: any chained-copy swap/rotate block; pairs with register_mapping.md Rule A (declaration order steers both saved regs and stack slots).
+
+### The `(v | ~C) - ((v - C) >> 1)` idiom IS MWCC's unsigned `v >= C` compare (CFloorMap/CChain/CMainMenu, Wii/1.1 `-O4,p`)
+- Symptom:   retail shows `li rB,C; subi rX,v,C; orc rY,v,rB; rlwinm rZ,rX,31,1,31; subf` feeding a bit test - looks like obfuscated bit-twiddling; resist decompiling it literally.
+- Cause:     it is the canonical MWCC expansion of the unsigned comparison `v >= C` (C a constant). Confirmed by CChain.cpp comments and by scanning the whole retail corpus: every `li+orc` site sits at an unsigned `>=`/`<` against a constant (CSysWinScenarioLog thresholds, CTaskREvtSequence, CFloorMap rand gates).
+- Fix:       write the plain comparison (`pane->SetVisible(func_8009CF8C(0x20) >= 0x171)`). Do NOT write the expanded form - the frontend folds `~C` into `li -(C+1); or` giving the wrong opcode (or vs orc). Do NOT use a named local for C (folds too), volatile (adds stack traffic), or mw_version GC/3.0a5.2 (all Wii/GC versions fold it - probed every compiler in build/compilers).
+- Result:    func_8024B6F8 88.3% to 90.3% (opcode selection byte-exact; remaining: hi/lo chain schedule + loop colors, open item).
+- Confidence: repo_proven
+- Applies to/a.k.a.: `v < C` negation folds to the same form; the sibling range-test idiom `(C << cntlzw(v ^ C)) & 0x80000000` for `v < 2^k` matches retail verbatim when written literally.
+
+### sinit small-data init: complete-type extern arrays + SDA21 + 0xFF constants + descending stores (CFloorMap sinit_80250CB4, Wii/1.1)
+- Symptom:   decomp emits `lis/addi` (HA/LO relocs) for `extern u16 lbl[]` writes where retail uses `li rX, sym@sda21` (R_PPC_EMB_SDA21); size mismatch.
+- Cause:     (1) incomplete array type `extern u16 lbl[]` is not SDA-eligible - use a complete type (`extern u16 lbl[4]`) at file scope; (2) the constant was misread from the data image: retail stores `0xFF` (`li r12,255`), not `0xFFFF` (`lis+subi`) - trust the asm, not a guessed data image; (3) store order is descending ([3],[2],[1],[0]) per group.
+- Fix:       complete-type file-scope externs + plain descending element stores. Pointer-init locals and chained assignments compile identically; interleaved pair statements regress store order.
+- Result:    sinit_80250CB4 0.0% (0xac bytes) to 89.3% (exact 0x70/0x70, all reloc types/symbols aligned). Residual: 3-li schedule permutation (constant materialized before the two SDA address loads) - open item in attempts.jsonl.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any .sbss/.sdata init inside sinit functions; R_PPC_EMB_SDA21 witness reloc-site gate.
+
+### Call-site narrowing to `u8` params: only direct-call provenance skips the mask (CPassiveSkill func_80266950, Wii/1.1 `-O4,p`)
+- Symptom:   caller of a `...PcUc` (u8 last param) callee emits an extra `rlwinm rX,rY,0,24,31` immediately before the `bl` where retail passes the register bare; the 16-bit record-form test mask (`rlwinm. r5,r3,0,16,31`) is correct but every arg shape re-adds the byte mask.
+- Cause:     MWCC narrows any argument whose type is wider than the declared param. The narrowing is skipped ONLY when the argument is the direct narrow-return call result (`u16 v = CALL(); f(v)`) - provenance tracking on the variable. Any arithmetic touching the variable anywhere in the function (`v & 0xFFFF`, `v & 0xFF`, `(u16)v`, `&=`) resets provenance and forces the conversion mask at every call site taking that value.
+- Fix:       none found for the fused retail shape (mask+record-test+unmasked arg reuse). Ruled out: header return widened to int/u32 (regresses sibling matched callers that rely on trusted u16 returns - func_80264E70 100->79%, func_802665FC 100->31%); explicit u16 casts; assignment-in-condition; separate u16 temp. Best residual: keep the 8-bit fused form (`(id & 0xFF)` test + `(u8)(id & 0xFF)` arg = single `rlwinm.`), accept the mask-width delta as a recorded near-miss.
+- Result:    func_80266950 stable at 98.2% (1 instr diff); open-item packet in attempts.jsonl.
+- Confidence: negative_result
+- Applies to/a.k.a.: any TU calling PcUc/Us-caliber narrow-param helpers with computed values; pairs with the "return-type too narrow" rule earlier in this file (that rule fixes the compare side, not the call-arg side).

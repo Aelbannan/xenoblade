@@ -43,6 +43,18 @@ extern void code80135FDC_setVec3(float* self, float a, float b, float c);
 extern void func_80137738(nw4r::math::VEC3* output, const nw4r::math::VEC3* value);
 }
 
+// getBdatStringColumnValue's canonical extern "C" declaration is
+// u32(void*, const char*, int) (shared with CfBdat.hpp / CfGimmick.hpp /
+// code_801862C0.hpp); extern "C" names cannot be overloaded, so this TU's
+// historical pointer-style call sites route through a no-op inline wrapper.
+// The casts are register no-ops, so emitted code is unchanged.
+static inline void* getBdatStringColumnValue_str(void* bdat, const char* col,
+                                                 const void* row) {
+    return (void*)getBdatStringColumnValue(bdat, col, (int)(intptr_t)row);
+}
+#define getBdatStringColumnValue(bdat, col, row) \
+    getBdatStringColumnValue_str(bdat, col, row)
+
 // ---------- globals ----------
 extern "C" {
 // lbl_eu_806640A8 / lbl_eu_806640D8 / lbl_eu_80664104 stay inline: they are

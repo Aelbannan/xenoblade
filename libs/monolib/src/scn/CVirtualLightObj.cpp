@@ -80,7 +80,38 @@ extern "C" void func_804947EC(ml::CCol4* out, CVirtualLightObj* in) {
     }
 }
 
-void func_804952C4() {}
+// ---------------------------------------------------------------------------
+// Blend the current slot's ambient rgb color toward `color` with a running
+// average: new = (count*old + scale*in) / (count+1). The blended slot color is
+// then written byte-wise into the selected light set's ambient light object,
+// and the sample counter is incremented.
+// ---------------------------------------------------------------------------
+extern "C" void func_804952C4(CLightEnv* self, const f32 color[3]) {
+    u32 count = self->mField1180;
+    f32 blend = lbl_eu_8066AA98 / (f32)(count + 1);
+    f32 countF = (f32)count;
+
+    // Running average: new = blend*in + count*old*blend.
+    self->mSlotColors[self->mField117C].x =
+        blend * (countF * self->mSlotColors[self->mField117C].x) +
+        color[0] * blend;
+    self->mSlotColors[self->mField117C].y =
+        blend * (countF * self->mSlotColors[self->mField117C].y) +
+        color[1] * blend;
+    self->mSlotColors[self->mField117C].z =
+        blend * (countF * self->mSlotColors[self->mField117C].z) +
+        color[2] * blend;
+
+    nw4r::g3d::LightSet lightSet =
+        self->mLightSetting.GetLightSet(self->mField117C);
+    nw4r::g3d::AmbLightObj* amb = lightSet.GetAmbLightObj();
+    amb->r = (u8)(lbl_eu_8066AA9C * self->mSlotColors[self->mField117C].x);
+    amb->g = (u8)(lbl_eu_8066AA9C * self->mSlotColors[self->mField117C].y);
+    amb->b = (u8)(lbl_eu_8066AA9C * self->mSlotColors[self->mField117C].z);
+    amb->a = (u8)(lbl_eu_8066AA9C * self->mSlotColors[self->mField117C].w);
+
+    self->mField1180 = count + 1;
+}
 
 // Post-construction light-environment setup (retail 0x190-byte function, not
 // yet matched; kept out-of-line so func_804950F4 emits the retail call).

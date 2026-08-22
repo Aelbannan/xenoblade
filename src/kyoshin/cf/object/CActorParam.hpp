@@ -291,7 +291,6 @@ namespace cf {
         u8 _pad335F[0x3368 - 0x335F];
         float field_0x3368;
     };
-
     // Absolute-offset view of the status flag word at 0x3374 (member block is
     // +8 shifted; see CActorParamGaugeView). Used by CActorParam_UnkVirtualFunc6.
     struct CActorParamFlagsView {

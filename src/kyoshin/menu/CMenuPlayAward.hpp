@@ -223,7 +223,6 @@ public:
     CBgTex mBgTex;                                             // 0x60-0x7F
     CTitleAHelp mTitleAHelp;                                   // 0x80-0xB7
     CPlayAwardList mPlayAwardList;                             // 0xB8
-    u8 _padAfterList[0x115C - (0xB8 + sizeof(CPlayAwardList))]; // pad to 0x115C
     f32 mField115C;                                            // 0x115C: float state (ctor: lbl_eu_80668998)
     u8 mField1160;                                             // 0x1160: help-display byte (set to 2 by func_80270404)
     u8 _pad1161[0x1164 - 0x1161];                              // 0x1161-0x1163: pad to total 0x1164

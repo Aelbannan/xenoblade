@@ -245,8 +245,12 @@ void CActorParam_UnkVirtualFunc141__Q22cf11CActorParamFv(cf::CActorParam* self, 
 }
 void cf::CActorParam::CActorParam_UnkVirtualFunc142() {
     cf::CActorParamUnk1928View* view = reinterpret_cast<cf::CActorParamUnk1928View*>(this);
-    // v0 must be declared FIRST: MWCC assigns the first-declared float to f0
-    // and loads it first; declaring v first swapped the roles (f1=v0) -> 7%.
+    // OPEN ITEM: retail loads v (f1, E4) before v0 (f0, E0) with the SAME
+    // color mapping we produce. Decl order controls BOTH color and load
+    // emission (deferred init, assignment order, and comma-sequenced init
+    // all leave emission decl-ordered), so the pair is welded: [v0,v] ->
+    // right colors/wrong order; [v,v0] -> right order/wrong colors. Witness
+    // refuses the swapped relocs (E4/E0 at slots 0/1). 95.3% near-miss.
     float v0 = lbl_eu_806677E0;
     float v = lbl_eu_806677E4;
     cf::CActorParam_UnkStruct5* e = view->entries;
@@ -386,6 +390,10 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc160() {
     // 0x335A = 2 is stored first; the rate byte (0x335E) is widened to
     // double via the 0x43300000 magic and scaled by the gauge max (0x3368);
     // the truncating half is stored at 0x3358.
+    // OPEN ITEM: residual is (a) scheduler sinks the 0x335A=2 store below the
+    // conversion ops (retail keeps it at slot 2) and (b) the builtin
+    // (float)(u32) magic pools as TU-local @N vs retail lbl_eu_806677F0
+    // (certifiable drift per MWCC_PATTERNS pool-cookie entry).
     v->field_0x335A = 2;
     v->field_0x3358 = (u16)((int)(v->field_0x3368 * (float)(u32)v->field_0x335E) / 2);
 }
@@ -575,7 +583,8 @@ struct EnumListHolder { void* list; u32 handle; };
 
 // C-linkage imports (retail symbol names).
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
-extern "C" void* getInstance__Q22cf14CBattleManagerFv(void);
+// getInstance__Q22cf14CBattleManagerFv: declared by CfGameManager.hpp
+// (CBattleManagerView*); all uses here cast the pointer, so no local decl.
 extern "C" bool func_8006EF04__Fi(s32 mask);
 extern "C" void func_802804F8(void*);
 extern "C" void func_80280588(void*);
@@ -1986,17 +1995,9 @@ void CActorParam_UnkVirtualFunc11__Q22cf11CActorParamFv(cf::CActorParam* self, c
     void* actor = reinterpret_cast<CActorParamVt*>(self)->vf9C();
     float a = func_800D81A8(reinterpret_cast<CActorParamVt*>(self)->vf9C(), actor, NULL);
     float b = reinterpret_cast<CActorParamVt*>(self)->vf12C();
-    double magic = lbl_eu_806677F8;
-    cf::CActorParamF64Conv u;
-    u.w[0] = 0x43300000;
-    u.w[1] = (u32)val ^ 0x80000000;
-    float conv = (float)(u.d - magic);
-    float v = a * (lbl_eu_80667830 * (conv * b));
+    float v = a * (lbl_eu_80667830 * ((float)val * b));
     int iv = (int)v;
-    cf::CActorParamF64Conv u2;
-    u2.w[0] = 0x43300000;
-    u2.w[1] = (u32)iv ^ 0x80000000;
-    reinterpret_cast<CActorParamVt*>(self)->vf11C((float)(u2.d - magic));
+    reinterpret_cast<CActorParamVt*>(self)->vf11C((float)iv);
 }
 // us-8017d9a0: retail symbol is Fv; the real ABI passes (self, arg) where
 // arg carries a flags block (+0x50 -> +0x78), a u16 dispatch id (+0x80) and
@@ -2372,13 +2373,14 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc8() {
 // sdata2 default, or when the actor-state id (obj at +4, vtable slot 0x30,
 // masked 0x3F) is 0x1C or 0x1E.
 bool cf::CActorParam::CActorParam_UnkVirtualFunc138() {
-    if (reinterpret_cast<CActorParamVt*>(this)->vf128() <= lbl_eu_806677E4) {
+    // if(||)-shape (NOT plain return ||): each operand must BRANCH to one
+    // shared true-return (retail beq/beq/cmpli-bne layout); as a bare return
+    // the final operand becomes a cntlzw bool idiom instead.
+    if ((reinterpret_cast<CActorParamVt*>(this)->vf128() <= lbl_eu_806677E4)
+        || ((*(u32*)(reinterpret_cast<Unk4Vt*>(CActorState::unk4)->vf30()) & 0x3F) == 0x1C)
+        || ((*(u32*)(reinterpret_cast<Unk4Vt*>(CActorState::unk4)->vf30()) & 0x3F) == 0x1E)) {
         return true;
     }
-    u32 t = *(u32*)(reinterpret_cast<Unk4Vt*>(CActorState::unk4)->vf30());
-    if ((t & 0x3F) == 0x1C) return true;
-    t = *(u32*)(reinterpret_cast<Unk4Vt*>(CActorState::unk4)->vf30());
-    if ((t & 0x3F) == 0x1E) return true;
     return false;
 }
 // us-8017ed30: retail symbol is Fv; the real ABI passes (self, arg, f1, f2,
@@ -2609,7 +2611,7 @@ void CActorParam_UnkVirtualFunc156__Q22cf11CActorParamFv(cf::CActorParam* self, 
 void CActorParam_UnkVirtualFunc158__Q22cf11CActorParamFv(cf::CActorParam* self, int delta) {
     cf::CActorParamStatusView* v = reinterpret_cast<cf::CActorParamStatusView*>(self);
     s16 cur = v->field_0x335A;
-    s16 orig = v->field_0x335A;
+    s16 orig = *(volatile s16*)((u8*)self + 0x335A);
     s16 sum = (s16)(cur + (s16)delta);
     v->field_0x335A = (u16)sum;
     if (sum < 0) {

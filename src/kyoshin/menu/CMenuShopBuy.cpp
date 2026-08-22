@@ -5,7 +5,6 @@
 
 #include "kyoshin/menu/CMenuShopBuy.hpp"
 
-#include "kyoshin/CItemBoxLine.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
@@ -357,7 +356,14 @@ void CMenuShopBuy::cbRenderBefore() {
 extern "C" void func_8018BE74(ShopBuyData* dst, const ShopBuyData* src) {
     dst->m00 = src->m00;
     dst->m18 = src->m18;
-    for (int i = 0; i < 6; i++) dst->mA8[i] = src->mA8[i];
+    // Six independent word slots: MWCC schedules these as interleaved
+    // r8/r5 load/store pairs rather than a counted copy loop.
+    dst->mA8[0] = src->mA8[0];
+    dst->mA8[1] = src->mA8[1];
+    dst->mA8[2] = src->mA8[2];
+    dst->mA8[3] = src->mA8[3];
+    dst->mA8[4] = src->mA8[4];
+    dst->mA8[5] = src->mA8[5];
     dst->mC0 = src->mC0;
     dst->mD8 = src->mD8;
     dst->mD9 = src->mD9;

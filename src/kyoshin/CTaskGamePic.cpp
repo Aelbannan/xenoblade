@@ -68,21 +68,14 @@ extern "C" __declspec(noinline) CTaskGamePic* __ct__CTaskGamePic(CTaskGamePic* p
     // Interim CTTask<CTaskGamePic> vtable (overwritten by the final vptr).
     p[4] = reinterpret_cast<u32>(lbl_eu_80538BC0);
 
-    // NULL PTMF -> mMoveFunc (0x3C) / mDrawFunc (0x48), retail store order.
-    const u32* src = __ptmf_null;
-    u32 w0 = *src++;
-    u32 w1 = *src++;
-    p[0x10] = w1;
-    p[0xF] = w0;
-    u32 w2 = *src++;
-    p[0x11] = w2;
-    src = __ptmf_null;
-    w1 = *src++;
-    w0 = *src++;
-    p[0x13] = w0;
-    p[0x12] = w1;
-    w2 = *src++;
-    p[0x14] = w2;
+    // NULL PTMF -> mMoveFunc (0x3C) / mDrawFunc (0x48): retail assigns the
+    // whole 3-word pointer-to-member, so mirror that with typed struct copies
+    // and let MWCC pick the load/store schedule.
+    PTMF3* pMf = reinterpret_cast<PTMF3*>(reinterpret_cast<char*>(pThis) + 0x3c);
+    const PTMF3* pNull = reinterpret_cast<const PTMF3*>(__ptmf_null);
+    *pMf = *pNull;
+    PTMF3* pDf = reinterpret_cast<PTMF3*>(reinterpret_cast<char*>(pThis) + 0x48);
+    *pDf = *pNull;
 
     // Final vtable + member fields.
     p[4] = (u32)vtbl;
@@ -122,11 +115,12 @@ extern "C" __declspec(noinline) CTaskGamePic* __ct__CTaskGamePic(CTaskGamePic* p
 // lbl_eu_80668BC0), then combined as hi + lo*0.00390625 before the division.
 // ---------------------------------------------------------------------------
 void CTaskGamePic::Move() {
-    // Two conversion slots: high word 0x43300000 stored once each, low word
-    // rewritten per value (retail stores both high words before the branch).
-    union { f64 d; u32 w[2]; } uHi, uLo;
-    uLo.w[0] = 0x43300000;
-    uHi.w[0] = 0x43300000;
+    // Two 0x43300000 conversion slots (low-byte slot first so it lands at the
+    // lower stack address, matching retail sp+0x8 / sp+0x10). Both high words
+    // are stored before the countdown branch.
+    union { f64 d; u32 w[2]; } slotLo, slotHi;
+    slotLo.w[0] = 0x43300000;
+    slotHi.w[0] = 0x43300000;
     s32 c0 = (s32)param_C0;
     if (c0 == 0) return;
     s32 c1 = c0 - 0x100;
@@ -139,26 +133,25 @@ void CTaskGamePic::Move() {
         param_9C = param_BC;
         param_C0 = 0;
     } else {
-        s32 hi6 = c1 / 256;
-        s32 lo6 = c1 - (hi6 << 8);
-        s32 c4 = (s32)param_C4;
-        s32 hi7 = c4 / 256;
-        s32 lo7 = c4 - (hi7 << 8);
+        // 8.8 fixed point ratio: each counter splits into high/low bytes, each
+        // byte converted to f32 through the magic-double slot trick. Retail
+        // spells hi as v/256 and lo as v%256, so MWCC divides twice per value.
+        slotHi.w[1] = (u32)(c1 / 256) ^ 0x80000000;
+        slotLo.w[1] = (u32)(c1 % 256) ^ 0x80000000;
+        f32 numHi = (f32)(slotHi.d - lbl_eu_80668BC0);
+        f32 numLo = (f32)(slotLo.d - lbl_eu_80668BC0);
+        s32 hi7 = ((s32)param_C4) / 256;
+        slotLo.w[1] = (u32)((s32)param_C4 % 256) ^ 0x80000000;
+        slotHi.w[1] = (u32)hi7 ^ 0x80000000;
+        f32 denHi = (f32)(slotHi.d - lbl_eu_80668BC0);
+        f32 denLo = (f32)(slotLo.d - lbl_eu_80668BC0);
+        f32 num = numLo * lbl_eu_80668BB4 + numHi;
+        f32 den = denLo * lbl_eu_80668BB4 + denHi;
+        f32 t = num / den;
+        f32 inv = lbl_eu_80668BB8 - t;
         f32* cur = reinterpret_cast<f32*>(&param_90);
         const f32* from = reinterpret_cast<const f32*>(&param_A0);
         const f32* to = reinterpret_cast<const f32*>(&param_B0);
-        uHi.w[1] = (u32)hi6 ^ 0x80000000;
-        uLo.w[1] = (u32)lo6 ^ 0x80000000;
-        f32 f6h = (f32)(uHi.d - lbl_eu_80668BC0);
-        f32 f6l = (f32)(uLo.d - lbl_eu_80668BC0);
-        uHi.w[1] = (u32)hi7 ^ 0x80000000;
-        uLo.w[1] = (u32)lo7 ^ 0x80000000;
-        f32 f7h = (f32)(uHi.d - lbl_eu_80668BC0);
-        f32 f7l = (f32)(uLo.d - lbl_eu_80668BC0);
-        f32 num = f6l * lbl_eu_80668BB4 + f6h;
-        f32 den = f7l * lbl_eu_80668BB4 + f7h;
-        f32 t = num / den;
-        f32 inv = lbl_eu_80668BB8 - t;
         cur[0] = from[0] * t + to[0] * inv;
         cur[1] = from[1] * t + to[1] * inv;
         cur[2] = from[2] * t + to[2] * inv;
@@ -172,7 +165,7 @@ void CTaskGamePic::Move() {
 // ---------------------------------------------------------------------------
 void CTaskGamePic::Init() {
     IScnRender* rp = reinterpret_cast<IScnRender*>(this); // null-this -> this(0)
-    if (this) rp = &mRenderCB;                            // live: this + 0x58
+    if (this) rp = reinterpret_cast<IScnRender*>(mRenderCB); // live: this + 0x58
     mScene->addRenderCB(rp, 0xb, 0);
 }
 
@@ -227,7 +220,7 @@ extern "C" void func_80294EC0(CTaskGamePic* self, const char* path) {
 // ---------------------------------------------------------------------------
 void CTaskGamePic::Term() {
     IScnRender* rp = reinterpret_cast<IScnRender*>(this); // null-this -> this(0)
-    if (this) rp = &mRenderCB;                            // live: this + 0x58
+    if (this) rp = reinterpret_cast<IScnRender*>(mRenderCB); // live: this + 0x58
     mScene->removeRenderCB(rp);
     if (mFileHandle) {
         CDeviceFile::cancel(mFileHandle);

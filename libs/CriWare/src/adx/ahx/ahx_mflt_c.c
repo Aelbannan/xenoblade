@@ -25,6 +25,9 @@
 
 extern float lbl_eu_80517548[];
 
+/* The 20+12 statement split keeps MWCC's scheduler window shallow (loads run
+ * ~6 ahead like retail); a single 32-tap chain hoists ~10 loads ahead,
+ * overflowing the FPR pool (frame 0xB0 vs retail 0x90). */
 #define AHX_DOT(sum, a, bb) \
     sum = (a)[0] * (bb)[0]; \
     sum += (a)[1] * (bb)[1]; \
@@ -46,14 +49,14 @@ extern float lbl_eu_80517548[];
     sum += (a)[17] * (bb)[17]; \
     sum += (a)[18] * (bb)[18]; \
     sum += (a)[19] * (bb)[19]; \
-    sum += (a)[20] * (bb)[20] + (a)[21] * (bb)[21] + (a)[22] * (bb)[22] + \
-           (a)[23] * (bb)[23] + (a)[24] * (bb)[24] + (a)[25] * (bb)[25] + \
-           (a)[26] * (bb)[26] + (a)[27] * (bb)[27] + (a)[28] * (bb)[28] + \
-           (a)[29] * (bb)[29] + (a)[30] * (bb)[30] + (a)[31] * (bb)[31];
+    sum = sum + (a)[20] * (bb)[20] + (a)[21] * (bb)[21] + (a)[22] * (bb)[22] + \
+          (a)[23] * (bb)[23] + (a)[24] * (bb)[24] + (a)[25] * (bb)[25] + \
+          (a)[26] * (bb)[26] + (a)[27] * (bb)[27] + (a)[28] * (bb)[28] + \
+          (a)[29] * (bb)[29] + (a)[30] * (bb)[30] + (a)[31] * (bb)[31];
 
 void ahxsbf_mult_flt_ex(float *a, float *b, float *out) {
     float *ofwd = out;
-    float *bb = b;
+    float *b0 = b;
     float *orev = out + 0x20;
     float *ifwd = out + 0x21;
     float *irev = out + 0x3F;
@@ -62,21 +65,21 @@ void ahxsbf_mult_flt_ex(float *a, float *b, float *out) {
     s32 i = 0x10;
 
     do {
-        AHX_DOT(sum, a, bb)
+        AHX_DOT(sum, a, b)
         *ofwd++ = sum;
         *orev-- = -sum;
-        bb += 0x20;
+        b += 0x20;
     } while (--i != 0);
 
     out[0x10] = lbl_eu_80517548[0];
 
-    bb = b + 0x420;
+    b = b0 + 0x420;
     i = 0xF;
     do {
-        AHX_DOT(sum, a, bb)
+        AHX_DOT(sum, a, b)
         *ifwd++ = sum;
         *irev-- = sum;
-        bb += 0x20;
+        b += 0x20;
     } while (--i != 0);
 
     s = a[0];

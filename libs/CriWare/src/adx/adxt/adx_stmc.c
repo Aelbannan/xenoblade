@@ -852,7 +852,7 @@ void ADXSTM_ExecFsIdle(void) {
 
 int ADXSTM_SetBufSize(ADXSTMHndl* h, int a, int b) {
     ADXCRS_Enter();
-    h->bufStartOff = a;
+    h->bufSize = a;
     h->bufFill = b;
     ADXCRS_Leave();
     return 1;

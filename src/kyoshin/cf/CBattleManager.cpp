@@ -11449,13 +11449,15 @@ void func_800F3C6C(cf::CBattleManager* mgr, s32 key) {
 // First checks mActorList3 directly; if non-empty, checks mActorList1 via vtable call.
 // Returns 1 if found, 0 otherwise.
 s32 func_800F3E8C(cf::CBattleManager* mgr, s32 arg1) {
+    s32 result = 0;
+
     // First pass: search mActorList3 (sentinel at +0x48)
     {
         _reslist_node<cf::CfObjectActor*>* cur =
             mgr->mActorList3.mStartNodePtr->mNext;
         while (cur != mgr->mActorList3.mStartNodePtr) {
             cf::CfObjectActor* actor = cur->mItem;
-            if (*(s32*)((u8*)actor + 0x15f0) == arg1) return 1;
+            if (*(s32*)((u8*)actor + 0x15f0) == arg1) { result = 1; return result; }
             cur = cur->mNext;
         }
     }
@@ -11469,36 +11471,36 @@ s32 func_800F3E8C(cf::CBattleManager* mgr, s32 arg1) {
             cur = cur->mNext;
             count++;
         }
-        if (count != 0) return 0;
+        if (count != 0) return result;
     }
 
-    // Third pass: iterate mActorList1, call vtable[0x4c] on secondary vtable at +0x3e9c
+    // Third pass: iterate mActorList1, vtable[0x4c] via secondary vtable +0x3e9c
     {
         extern void* func_800B708C(int);
         _reslist_node<cf::CfObjectActor*>* sentinel = mgr->mActorList1.mStartNodePtr;
         _reslist_node<cf::CfObjectActor*>* cur = sentinel->mNext;
         while (cur != sentinel) {
             cf::CfObjectActor* actor = cur->mItem;
-            // Access secondary vtable at +0x3e9c (lwzu: updates r3 to base + 0x3e9c)
             void* base = (u8*)actor + 0x3e9c;
             void** secondaryVtbl = *(void***)base;
             typedef s32 (*VFunc4C)(void*);
             s32 vresult = ((VFunc4C)secondaryVtbl[0x4C / 4])(base);
             if (vresult != 0) {
                 void* r3 = func_800B708C(vresult);
-                void* result = func_8016FE34(r3);
-                if (result != nullptr) {
-                    if (*(u32*)((u8*)result + 0x3f00) & 0x04) {
-                        if (*(s32*)((u8*)result + 0x15f0) == arg1) return 1;
-                    }
+                void* found = func_8016FE34(r3);
+                if (found != nullptr && (*(u32*)((u8*)found + 0x3f00) & 0x04)
+                    && *(s32*)((u8*)found + 0x15f0) == arg1) {
+                    result = 1;
+                    return result;
                 }
             }
             cur = cur->mNext;
         }
     }
 
-    return 0;
+    return result;
 }
+
 
 void func_800F3F8C(cf::CBattleManager* mgr) {
     mgr->func_800E2584(0x10);

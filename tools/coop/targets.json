@@ -13877,8 +13877,8 @@
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginEve.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/pluginEve.cpp",
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "instruction_match": 0.0,
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -14108,7 +14108,7 @@
       "callgraph_source": "build/us/asm/kyoshin/plugin/pluginEve.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/pluginEve.cpp",
-      "instruction_match": 100.0,
+      "instruction_match": 0.0,
       "equivalence_status": "equivalent",
       "source_present": true
     },
@@ -14217,7 +14217,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/plugin/pluginEve.cpp",
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -26203,7 +26203,15 @@
       "source": "src/kyoshin/CTimeLightGrp.cpp",
       "instruction_match": 98.969,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T07:34:05.357794+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CTimeLightGrp.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8005a6a4",
@@ -26258,7 +26266,15 @@
       "source": "src/kyoshin/CTimeLightGrp.cpp",
       "instruction_match": 90.267,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T07:34:05.357547+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CTimeLightGrp.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8005a798",
@@ -26286,7 +26302,15 @@
       "source": "src/kyoshin/CTimeLightGrp.cpp",
       "instruction_match": 89.174,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T07:34:05.357789+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CTimeLightGrp.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8005a850",
@@ -26314,7 +26338,15 @@
       "source": "src/kyoshin/CTimeLightGrp.cpp",
       "instruction_match": 83.864,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T07:34:05.357792+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CTimeLightGrp.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8005a958",
@@ -390646,7 +390678,7 @@
       "size": "0x168",
       "unit": "CriWare/src/sofdec/cft/srcgc/cftyp422_ppc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
@@ -390680,7 +390712,7 @@
       "size": "0x288",
       "unit": "CriWare/src/sofdec/cft/srcgc/cftyp422_ppc",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],

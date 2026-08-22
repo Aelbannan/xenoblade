@@ -11,11 +11,11 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12933 |
+| extern "C" (total lines) | 12932 |
 | extern "C" declarations (non-lbl_*, imports) | 5110 |
-| extern "C" definitions (forced names) | 3898 |
-| `self`/register-style params | 11917 |
-| `void*` (params + locals) | 7193 |
+| extern "C" definitions (forced names) | 3897 |
+| `self`/register-style params | 11915 |
+| `void*` (params + locals) | 7192 |
 | raw pointer offset arithmetic | 6897 |
 | deref-through-cast arithmetic | 2737 |
 | inline asm / `register` | 110 |
@@ -24,7 +24,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 0 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
-| #pragma | 1783 |
+| #pragma | 1785 |
 
 ## Top offenders (by cleanable severity)
 
@@ -331,7 +331,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CQuestWindow.cpp | 3 | 4 | 37 | 11 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSaveLoad.cpp | 0 | 41 | 50 | 32 | 96 | 31 | 0 | 5 | 19 | 0 | 0 | 0 |
 | src/kyoshin/CScrollBar.cpp | 0 | 0 | 11 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CSelShopWin.cpp | 2 | 4 | 6 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CSelShopWin.cpp | 2 | 3 | 4 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSimpleEveTalkWin.cpp | 2 | 1 | 4 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSkipTimer.cpp | 3 | 3 | 50 | 6 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CSortMenu.cpp | 5 | 30 | 0 | 4 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -3615,11 +3615,11 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  "src/kyoshin/CSelShopWin.cpp": {
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 2,
-  "extern_c_nonlbl_def": 4,
+  "extern_c_nonlbl_def": 3,
   "init_side_effect": 0,
   "schedule_pragma": 0,
-  "self_params": 6,
-  "void_ptr": 7
+  "self_params": 4,
+  "void_ptr": 6
  },
  "src/kyoshin/CSimpleEveTalkWin.cpp": {
   "asm_insn_shim": 0,

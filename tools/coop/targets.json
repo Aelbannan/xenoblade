@@ -216462,7 +216462,7 @@
       "size": "0x3E8",
       "unit": "kyoshin/CSelShopWin",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -395687,8 +395687,16 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_cdec.c",
       "source_present": true,
-      "instruction_match": 31.547,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 34.393,
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T08:18:09.491958+00:00",
+        "allowed_paths": [
+          "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_cdec.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-803a7c60",
@@ -436279,7 +436287,7 @@
       "size": "0x2E8",
       "unit": "nw4r/src/g3d/g3d_scnmdlexpand",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [

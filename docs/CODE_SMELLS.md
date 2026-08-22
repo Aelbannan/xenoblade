@@ -11,11 +11,11 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12827 |
-| extern "C" declarations (non-lbl_*, imports) | 5040 |
-| extern "C" definitions (forced names) | 3903 |
+| extern "C" (total lines) | 12817 |
+| extern "C" declarations (non-lbl_*, imports) | 5031 |
+| extern "C" definitions (forced names) | 3902 |
 | `self`/register-style params | 11912 |
-| `void*` (params + locals) | 7206 |
+| `void*` (params + locals) | 7208 |
 | raw pointer offset arithmetic | 6897 |
 | deref-through-cast arithmetic | 2737 |
 | inline asm / `register` | 106 |
@@ -76,7 +76,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/core/code_804F0258.cpp | 0 | 1 | 4 | 3 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/monolib_eu_804F9E98.cpp | 1 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDevice.cpp | 5 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/device/CDeviceClock.cpp | 49 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/device/CDeviceClock.cpp | 40 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFile.cpp | 40 | 9 | 1 | 4 | 3 | 2 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFileCri.cpp | 45 | 5 | 9 | 11 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFileDvd.cpp | 38 | 0 | 0 | 1 | 44 | 13 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -919,10 +919,10 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/device/CDeviceClock.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 49,
-  "extern_c_nonlbl_def": 1,
+  "extern_c_nonlbl_decl": 40,
   "init_side_effect": 0,
-  "schedule_pragma": 0
+  "schedule_pragma": 0,
+  "void_ptr": 2
  },
  "libs/monolib/src/device/CDeviceFile.cpp": {
   "asm_insn_shim": 0,

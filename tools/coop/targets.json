@@ -160535,7 +160535,7 @@
       "notes": "Batch 14i; HIGH_MATCH ~88.5%; tight .text spare (~0x14); leave addFrustum/func_801A1188; size 0x588",
       "status": "HIGH_MATCH",
       "instruction_match": 88.373,
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "called_functions": [
         "us-8034fe20",
         "us-803500d0",
@@ -160605,7 +160605,7 @@
       "notes": "Cull plane setup; lbl_eu_80667C8C; leave addFrustum alone; size 0x2BC",
       "status": "CODE_MATCH",
       "instruction_match": 99.8,
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "called_functions": [
         "us-803509c0",
         "us-804398b8"
@@ -160662,7 +160662,7 @@
       "size": "0x2C8",
       "unit": "kyoshin/COccCulling",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/COccCulling.cpp",
@@ -348848,7 +348848,15 @@
       "source": "libs/RVL_SDK/src/revolution/hbm/synenv.c",
       "instruction_match": 99.525,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T05:39:55.049732+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/hbm/synenv.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80344160",

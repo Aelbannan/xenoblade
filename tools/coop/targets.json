@@ -68850,7 +68850,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CfCollAABBImpl.cpp",
       "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unvalidated_callee",
+      "equivalence_status": "equivalent",
       "source_present": true
     },
     {
@@ -160535,7 +160535,7 @@
       "notes": "Batch 14i; HIGH_MATCH ~88.5%; tight .text spare (~0x14); leave addFrustum/func_801A1188; size 0x588",
       "status": "HIGH_MATCH",
       "instruction_match": 88.373,
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "called_functions": [
         "us-8034fe20",
         "us-803500d0",
@@ -160556,7 +160556,15 @@
         "_savegpr_25"
       ],
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T05:38:32.305953+00:00",
+        "allowed_paths": [
+          "src/kyoshin/COccCulling.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801a2620",
@@ -160597,7 +160605,7 @@
       "notes": "Cull plane setup; lbl_eu_80667C8C; leave addFrustum alone; size 0x2BC",
       "status": "CODE_MATCH",
       "instruction_match": 99.8,
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "called_functions": [
         "us-803509c0",
         "us-804398b8"
@@ -160608,7 +160616,15 @@
       "callgraph_source": "build/us/asm/kyoshin/COccCulling.s",
       "abi_helper_calls": [],
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T05:38:32.305957+00:00",
+        "allowed_paths": [
+          "src/kyoshin/COccCulling.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801a2b60",
@@ -160646,7 +160662,7 @@
       "size": "0x2C8",
       "unit": "kyoshin/COccCulling",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/COccCulling.cpp",
@@ -160664,7 +160680,15 @@
       ],
       "instruction_match": 99.494,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T05:38:32.305750+00:00",
+        "allowed_paths": [
+          "src/kyoshin/COccCulling.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-801a2f34",
@@ -329843,15 +329867,7 @@
       "source": "libs/RVL_SDK/src/revolution/gx/GXFifo.c",
       "instruction_match": 96.988,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-22T05:07:39.914519+00:00",
-        "allowed_paths": [
-          "libs/RVL_SDK/src/revolution/gx/GXFifo.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-8031b230",
@@ -477488,8 +477504,8 @@
       "size": "0xF4",
       "unit": "monolib/src/work/CWorkSystem",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/work/CWorkSystem.cpp",
       "called_functions": [
@@ -477509,7 +477525,9 @@
       "callgraph_source": "build/us/asm/monolib/src/work/CWorkSystem.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80446fc0",
@@ -477552,7 +477570,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/work/CWorkSystem.s",
       "abi_helper_calls": [],
-      "instruction_match": 93.951,
+      "instruction_match": 75.247,
       "notes": "decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "source_present": true,
       "equivalence_status": "inconclusive_smt_disabled"
@@ -477603,7 +477621,7 @@
       "unit": "monolib/src/work/CWorkSystem",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "STRUCTURAL",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "libs/monolib/src/work/CWorkSystem.cpp",
       "called_functions": [
@@ -477619,7 +477637,7 @@
       "callgraph_source": "build/us/asm/monolib/src/work/CWorkSystem.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "instruction_match": 35.3,
+      "instruction_match": 73.633,
       "source_present": true,
       "equivalence_status": "inconclusive_smt_disabled"
     },
@@ -489141,8 +489159,16 @@
         "_savegpr_28"
       ],
       "source_present": true,
-      "instruction_match": 68.817,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 68.989,
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T05:33:15.160476+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/core/CDesktop.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80459ee4",

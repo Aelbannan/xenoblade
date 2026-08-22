@@ -1,14 +1,50 @@
+// The retail ctor takes a nested const WaveFile::WaveInfo*, which the shared
+// snd_WaveFile.h header does not declare. Rename the header class out of the
+// way during the include and re-declare WaveFileReader below with the retail
+// overload, so every symbol mangles naturally from real member functions
+// (no C-linkage stand-ins), the same approach as snd_BankFile.cpp.
+#define WaveFileReader WaveFileReader_RetailHeader
 #include <nw4r/snd.h>
+#undef WaveFileReader
 
 // Retail .sdata2 pool constant 1.0f, referenced by name so the SDA21
 // float relocation matches the stripped retail object (PLAN.md §17.6).
 extern const f32 lbl_eu_8066A100;
 
+namespace {
+
+} // namespace
+
 namespace nw4r {
 namespace snd {
 namespace detail {
 
-bool WsdFileReader::IsValidFileHeader(const void* pWsdBin) {
+// Re-declared WaveFileReader with the retail nested WaveFile::WaveInfo ctor
+// overload (the shared header only declares the detail::WaveInfo and
+// WaveFile::FileHeader overloads). The reader only stores the pointer.
+namespace WaveFile {
+struct WaveInfo; // on-disk wave-info header; only the pointer passes through
+} // namespace WaveFile
+
+class WaveFileReader {
+public:
+    explicit WaveFileReader(const WaveInfo* pWaveInfo);
+    explicit WaveFileReader(const WaveFile::FileHeader* pFileHeader);
+    explicit WaveFileReader(const WaveFile::WaveInfo* pWaveInfo);
+
+    bool ReadWaveInfo(WaveInfo* pWaveInfo, const void*
+                      pWaveAddr) const;
+
+private:
+    const WaveInfo* mWaveInfo; // at 0x0
+};
+
+// Retail has no standalone IsValidFileHeader symbol: MWCC inlines it into
+// the constructor, so the body is defined inline here to avoid emitting an
+// extra out-of-line copy (same approach as snd_BankFile.cpp).
+inline bool WsdFileReader::IsValidFileHeader(
+    const void*
+    pWsdBin) {
     const ut::BinaryFileHeader* pFileHeader =
         static_cast<const ut::BinaryFileHeader*>(pWsdBin);
 
@@ -48,7 +84,7 @@ WsdFileReader::WsdFileReader(const void* pWsdBin)
 
 bool WsdFileReader::ReadWaveInfo(int id, WaveInfo* pWaveInfo,
                                  const void* pWaveAddr) const {
-    const WaveInfo* pWaveIn;
+    const WaveFile::WaveInfo* pWaveIn;
 
     if (mWaveBlock == NULL) {
         WaveArchiveReader archive(pWaveAddr);
@@ -68,13 +104,13 @@ bool WsdFileReader::ReadWaveInfo(int id, WaveInfo* pWaveInfo,
             return false;
         }
 
-        pWaveIn = static_cast<const WaveInfo*>(ut::AddOffsetToPtr(
+        pWaveIn = static_cast<const WaveFile::WaveInfo*>(ut::AddOffsetToPtr(
             mWaveBlock, mWaveBlock->offsetTable[id]));
     } else {
         const WsdFile::WaveBlockOld* pWaveBlockOld =
             reinterpret_cast<const WsdFile::WaveBlockOld*>(mWaveBlock);
 
-        pWaveIn = static_cast<const WaveInfo*>(ut::AddOffsetToPtr(
+        pWaveIn = static_cast<const WaveFile::WaveInfo*>(ut::AddOffsetToPtr(
             pWaveBlockOld, pWaveBlockOld->offsetTable[id]));
     }
 
@@ -149,29 +185,6 @@ bool WsdFileReader::ReadWaveSoundNoteInfo(WaveSoundNoteInfo* pSoundNoteInfo,
     }
 
     return true;
-}
-
-bool WsdFileReader::ReadWaveParam(int id, WaveData* pWaveData,
-                                  const void* pWaveAddr) const {
-    const WaveInfo* pWaveInfo;
-
-    if (mHeader->fileHeader.version == NW4R_VERSION(1, 0)) {
-        const WsdFile::WaveBlockOld* pWaveBlockOld =
-            reinterpret_cast<const WsdFile::WaveBlockOld*>(mWaveBlock);
-
-        pWaveInfo = static_cast<const WaveInfo*>(
-            ut::AddOffsetToPtr(pWaveBlockOld, pWaveBlockOld->offsetTable[id]));
-    } else {
-        if (id >= mWaveBlock->waveCount) {
-            return false;
-        }
-
-        pWaveInfo = static_cast<const WaveInfo*>(
-            ut::AddOffsetToPtr(mWaveBlock, mWaveBlock->offsetTable[id]));
-    }
-
-    WaveFileReader reader(pWaveInfo);
-    return reader.ReadWaveParam(pWaveData, pWaveAddr);
 }
 
 } // namespace detail

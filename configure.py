@@ -1744,7 +1744,7 @@ config.libs = [
             Object(NonMatching, "nw4r/src/snd/snd_WaveFile.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_WaveSound.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_WaveSoundHandle.cpp"),
-            Object(NonMatching, "nw4r/src/snd/snd_WsdFile.cpp"),
+            Object(Matching, "nw4r/src/snd/snd_WsdFile.cpp"),
             Object(NonMatching, "nw4r/src/snd/snd_WsdPlayer.cpp"),
             Object(Matching, "nw4r/src/snd/snd_adpcm.cpp"),
         ],

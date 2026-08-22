@@ -91,7 +91,7 @@ void func_802A497C(CVS_THREAD_BATTLE_END* self) {
     }
     // No forced direction: scan the manager's voice list for a live one.
     {
-        ItemListManager* mgr = func_800B6BA4__Fv();
+        ItemListManager* mgr = func_800B6BA4();
         ItemListNode* node = mgr->sentinel->next;
         while (node != mgr->sentinel) {
             u8* obj = node->object;

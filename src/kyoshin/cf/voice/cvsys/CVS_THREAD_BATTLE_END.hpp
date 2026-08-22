@@ -17,6 +17,21 @@ public:
     u8  field_0x3a;               // 0x3a: random-direction flag
 };
 
+// Intrusive voice list returned by the global voice-item manager.
+// Layout mirrors kyoshin/cf/CfGameManagerUnityHelpers.hpp.
+struct ItemListNode {
+    ItemListNode* next;   // 0x00
+    u32 field_0x4;        // 0x04
+    u8*  object;          // 0x08: embedded CCharVoice (handle+0x3E9C)
+};
+struct ItemListManager {
+    u32 field_0x0;        // 0x00
+    ItemListNode* sentinel; // 0x04
+};
+// Voice/actor-manager list accessor (retail mangled name func_800B6BA4__Fv -
+// a global-scope C++ function with no args, so plain C++ linkage is correct).
+ItemListManager* func_800B6BA4();
+
 // C-linkage imports used by this TU's thread helpers / factory.  Kept here
 // (not in the .cpp) because they are genuine retail C/ABI symbols imported
 // from sibling voice modules.
@@ -30,19 +45,6 @@ extern "C" {
     int           func_802A77E8(CVoiceHandle* handle);
     int           func_802A7870(void* arr, int capacity, int unused);
 }
-
-// Intrusive voice list returned by the global voice-item manager.
-// Layout mirrors kyoshin/cf/CfGameManagerUnityHelpers.hpp.
-struct ItemListNode {
-    ItemListNode* next;   // 0x00
-    u32 field_0x4;        // 0x04
-    u8*  object;          // 0x08: embedded CCharVoice (handle+0x3E9C)
-};
-struct ItemListManager {
-    u32 field_0x0;        // 0x00
-    ItemListNode* sentinel; // 0x04
-};
-extern "C" ItemListManager* func_800B6BA4__Fv();
 
 // Globals: init-data triples and this subclass's vtable.
 extern u32 lbl_eu_80539958[3];

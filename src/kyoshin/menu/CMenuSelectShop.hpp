@@ -162,7 +162,7 @@ extern "C" void func_80134100();
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern u32 lbl_eu_80663E28;             // cbRenderBefore gate flag (.sbss)
-extern u32 __ptmf_null[3];              // null pointer-to-member-function constant
+extern u32 __ptmf_null[];               // null pointer-to-member-function constant
 extern char lbl_eu_8052D238[];          // IUIWindow temp base vtable
 extern char lbl_eu_80532550[];          // composite vtable
 extern char lbl_eu_80503AE0[];          // memory-region name string (.rodata)

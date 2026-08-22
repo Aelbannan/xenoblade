@@ -45,9 +45,12 @@ extern "C" CMenuSelectShop* func_8018A58C(CProcess* parent, void* a2,
 
 // ---------------------------------------------------------------------------
 // Target 4: CMenuSelectShop ctor (us-8018b39c)
-// CProcess base + IUIWindow region (temp vtable + __ptmf_null callbacks + scalar
-// defaults), then the composite vtable / OC / render slots, the embedded
-// subobjects and scalar state. `scene` goes to mScene, `a3` to mFieldD0.
+// CProcess base + IUIWindow region (temp vtable + __ptmf_null callbacks +
+// scalar defaults), then the composite vtable / OC / render slots, the
+// embedded subobjects and scalar state. `scene` goes to mScene, `a3` to
+// mFieldD0. Written in the CMenuShopBuy ctor shape: direct two-stage vtable
+// stores (no cached composite-vtable local) so MWCC allocates the retail
+// r28-r30 callee-save set and emits the lwzu/lwz ptmf load pair.
 // optimize_for_size merges the r28-r31 callee-save set into retail stmw r28.
 // __declspec(noinline) keeps -inline auto from inlining it into the factory
 // (optimize_for_size flips MWCC's inline decision; auto_inline off does not
@@ -60,20 +63,19 @@ extern "C" __declspec(noinline) CMenuSelectShop* __ct__CMenuSelectShop(CMenuSele
     __ct__8CProcessFv(self);
 
     self->mVtab = (u32)lbl_eu_8052D238;
-    // Composite vtable referenced BEFORE the ptmf pointer so MWCC hoists its
-    // lis second (retail lis order: D238, 32550, ptmf). Loads grouped before
-    // the stores; This stored before Func per triple (retail store order).
+    // Composite vtable referenced before the ptmf block so MWCC hoists its
+    // lis into the second slot (retail lis order: D238, 32550, ptmf); comp
+    // stays in one register with the +0x24/+0xac offsets applied at each
+    // use site.
     u32 comp = (u32)lbl_eu_80532550;
-    u32* ptmf = __ptmf_null;
-    u32 p0 = *ptmf;
-    u32 p1 = ptmf[1];
-    u32 p2 = ptmf[2];
-    self->mPtmfThis0 = p1;
-    self->mPtmfFunc0 = p0;
-    self->mPtmfDelta0 = p2;
-    self->mPtmfThis1 = ptmf[1];
-    self->mPtmfFunc1 = ptmf[0];
-    self->mPtmfDelta1 = ptmf[2];
+    // Direct global indexing - MWCC folds the first access into an lwzu that
+    // forms the full address in one register (no cached base pointer).
+    self->mPtmfFunc0 = __ptmf_null[0];
+    self->mPtmfThis0 = __ptmf_null[1];
+    self->mPtmfDelta0 = __ptmf_null[2];
+    self->mPtmfFunc1 = __ptmf_null[0];
+    self->mPtmfThis1 = __ptmf_null[1];
+    self->mPtmfDelta1 = __ptmf_null[2];
     self->mLayout = 0;
     self->mField58 = 0;
     self->mField5C = 0;

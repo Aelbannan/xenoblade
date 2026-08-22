@@ -4,7 +4,7 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE.hpp"
 #include "monolib/math/Random.hpp"
 
-// ── Target 1: us-802aac94 (func_802A8560) ────────────────────────────────
+// ── Target: us-802aac94 (func_802A8560) ────────────────────────────────
 // Completion callback: if the thread is not currently busy, fire the
 // playback-start virtual (blank1 slot, vtable offset 0x08).
 void func_802A8560(CVS_THREAD_PARTY_GAGE* self) {
@@ -13,7 +13,7 @@ void func_802A8560(CVS_THREAD_PARTY_GAGE* self) {
     }
 }
 
-// ── Target 2: us-802aacdc (func_802A85A8) ────────────────────────────────
+// ── Target: us-802aacdc (func_802A85A8) ────────────────────────────────
 // Remove a released voice from the two slots (partyMember, gaugeData) by
 // matching the handle's embedded CCharVoice pointer against the freed voice.
 void func_802A85A8(CVS_THREAD_PARTY_GAGE* self, CCharVoice* voicePtr) {
@@ -39,7 +39,7 @@ void func_802A85A8(CVS_THREAD_PARTY_GAGE* self, CCharVoice* voicePtr) {
     }
 }
 
-// ── Target 3: us-802aad5c (func_802A8628) ────────────────────────────────
+// ── Target: us-802aad5c (func_802A8628) ────────────────────────────────
 // Voice-ID init helper.  If the handle has its manager flag set, is not
 // actively playing, and a handle buffer can be allocated, play a random
 // party-gauge voice (base 0x385) through the sound system.
@@ -56,7 +56,7 @@ int func_802A8628(CVoiceHandle* self) {
     return 0;
 }
 
-// ── Target 4: us-802aaa08 (func_802A82D4) ────────────────────────────────
+// ── Target: us-802aaa08 (func_802A82D4) ────────────────────────────────
 // Advance/play function.  Copies init data into the base fields, then if the
 // party-member handle is present and idle, plays a threshold-dependent voice;
 // otherwise fires the playback-start virtual (blank1).
@@ -95,7 +95,7 @@ void func_802A82D4(CVS_THREAD_PARTY_GAGE* self) {
     self->func_802A3B50();
 }
 
-// ── Target 1: us-802aab00 (func_802A83CC) ────────────────────────────────
+// ── Target: us-802aab00 (func_802A83CC) ────────────────────────────────
 // Advance/play function.  If the thread is free, copies init data into the
 // base fields, then (when both parties are present and the gauge is idle)
 // selects a threshold-dependent voice ID, applies correction clauses for
@@ -114,17 +114,23 @@ void func_802A83CC(CVS_THREAD_PARTY_GAGE* self) {
     self->unk0 = (u32*)v0;
     self->unk8 = *p;
 
+    // Declarations hoisted above the gotos (MWCC forbids jumping past an
+    // initialized declaration).
+    int iter;
+    int voiceId;
+
     if (self->partyMember == NULL) goto fire;
 
-    CVoiceHandle* gauge = self->gaugeData;
+    CVoiceHandle* gauge;
+    gauge = self->gaugeData;
     if (gauge == NULL) goto fire;
     // Virtual dispatch via the gauge vtable slot at 0x2BC (r12 chain).
     if (((CVoiceVTV*)gauge)->idle() != 0) goto fire;
 
     // Measure the member's iterator and pick a voice ID by gauge threshold.
     // Retail re-reads self->partyMember from memory (no long-lived cache).
-    int iter = func_802A77E8(self->partyMember);
-    int voiceId = -1;
+    iter = func_802A77E8(self->partyMember);
+    voiceId = -1;
     switch ((s32)self->thresholdLevel) {
     case 0:
         if (func_802A7850(iter) != 0) voiceId = iter + 0x643;
@@ -160,13 +166,13 @@ fire:
     self->func_802A3B50();
 }
 
-// Virtual method override: returns the buffer size for this thread type.
-// Matches CVS_THREAD::blank2 slot in vtable; PARTY_GAGE subclass returns 0x8C (140).
-int CVS_THREAD_PARTY_GAGE::blank2() {
-    return BUFFER_SIZE;
+// Buffer-size getter recorded in the PARTY_GAGE vtable (the CVS_THREAD::blank2
+// slot): this thread type uses a 0x8C (140) byte voice buffer.
+int func_802A8620() {
+    return CVS_THREAD_PARTY_GAGE::BUFFER_SIZE;
 }
 
-// ── Target 5: us-802aa8a8 (constructor) ──────────────────────────────────
+// ── Target: us-802aa8a8 (constructor factory) ────────────────────────────────
 // Factory/constructor.  Picks a gauge threshold level from the two owner
 // counts, allocates the two voice-handle buffers and the object itself, runs
 // the base constructor, sets vtable/owner fields, and copies init data.
@@ -210,16 +216,9 @@ CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
         }
     }
 
-    // Copy init data from the global table (retail loads 4, 0, 8 but stores
-    // 0, 4, 8).  Temps are loaded before the stores; the base pointer is
-    // declared last so MWCC colors it r5.  The address is forced through an
-    // integer cast so the full base (lis+addi) is materialized before any
-    // load.
-    u32 v0;
-    u32 v1;
+    // Copy init data from the global table.
     const u32* base = (const u32*)(u32)lbl_eu_80539C48;
-    v1 = base[1];
-    v0 = base[0];
+    u32 v1 = base[1], v0 = base[0];
     self->unk0 = (u32*)v0;
     self->unk4 = v1;
     self->unk8 = base[2];

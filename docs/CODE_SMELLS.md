@@ -11,11 +11,11 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12786 |
+| extern "C" (total lines) | 12788 |
 | extern "C" declarations (non-lbl_*, imports) | 5026 |
 | extern "C" definitions (forced names) | 3902 |
 | `self`/register-style params | 11912 |
-| `void*` (params + locals) | 7206 |
+| `void*` (params + locals) | 7210 |
 | raw pointer offset arithmetic | 6897 |
 | deref-through-cast arithmetic | 2737 |
 | inline asm / `register` | 106 |
@@ -24,7 +24,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 0 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
-| #pragma | 1783 |
+| #pragma | 1785 |
 
 ## Top offenders (by cleanable severity)
 
@@ -75,7 +75,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/core/code_804EE558.cpp | 22 | 10 | 5 | 34 | 18 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/code_804F0258.cpp | 0 | 1 | 4 | 3 | 3 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/core/monolib_eu_804F9E98.cpp | 1 | 3 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/device/CDevice.cpp | 40 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/device/CDevice.cpp | 40 | 0 | 0 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFile.cpp | 40 | 9 | 1 | 4 | 3 | 2 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFileCri.cpp | 45 | 5 | 9 | 11 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFileDvd.cpp | 38 | 0 | 0 | 1 | 44 | 13 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -913,7 +913,8 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 40,
   "init_side_effect": 0,
-  "schedule_pragma": 0
+  "schedule_pragma": 0,
+  "void_ptr": 4
  },
  "libs/monolib/src/device/CDeviceClock.cpp": {
   "asm_insn_shim": 0,

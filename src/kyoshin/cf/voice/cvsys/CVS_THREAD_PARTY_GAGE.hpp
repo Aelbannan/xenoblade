@@ -21,11 +21,10 @@ public:
 
     // Gauge change threshold level (0=low, 1=mid, 2=high) (offset 0x28).
     u32 thresholdLevel;
-
-    int blank2() override;
 };
 
-// C-linkage imports used by this TU's thread helpers / factory.
+// Normalized retail symbol names imported from sibling voice modules
+// (unmangled C-ABI symbol names, declared like in every other cvsys header).
 extern "C" {
     int           func_802A3E88(CVS_THREAD* self);
     void          func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
@@ -49,11 +48,11 @@ extern "C" {
 }
 
 // Init state triples and this subclass's vtable.
-extern "C" u32 lbl_eu_80539C48[3];
-extern "C" u32 lbl_eu_80539C54[3];
-extern "C" u32 lbl_eu_80539C60[3];
-extern "C" u32 lbl_eu_80539C6C[7];
-extern "C" u32 lbl_eu_80662D18[2];
+extern u32 lbl_eu_80539C48[3];
+extern u32 lbl_eu_80539C54[3];
+extern u32 lbl_eu_80539C60[3];
+extern u32 lbl_eu_80539C6C[7];
+extern u32 lbl_eu_80662D18[2];
 
 // Phantom vtable view over a CVS_THREAD vtable pointer (stored at +0x1C) so
 // slot-2 (offset 0x08) dispatch is emitted as a real r12-chained virtual

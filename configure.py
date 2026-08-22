@@ -721,7 +721,7 @@ config.libs = [
             Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_HP.cpp", mw_version="GC/3.0a5.2", extra_cflags=["-O4,s"]),  # retail: GC/3.0a5.2 two-compare range checks; -O4,s keeps the loop store as stwx rD,rBase,rOff with separate count/offset induction (O4,p folds to pointer walk)
-            Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE.cpp"),
+            Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_PARTY_GAGE.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.cpp"),
             Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.cpp"),

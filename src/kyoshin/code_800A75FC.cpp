@@ -9,21 +9,8 @@
 // Forward declarations for external functions in other TUs.
 struct GlobalStruct_80572B94;
 
-extern char lbl_eu_804FBF60[];
-extern char lbl_eu_80572AC8[];
-extern char lbl_eu_80572B78[];
-
-// Structure for range data at lbl_eu_80572B38 (offset 0 = start, offset 0xC = size)
-struct RangeData {
-    u32 field_0x00;
-    u8 _pad_0x04[8];
-    u32 field_0x0C;
-};
-
-// BSS symbols for the global singleton at lbl_eu_80572B94
-extern char lbl_eu_80572B88[];
-extern char lbl_eu_80572B58[];
-extern s8 lbl_eu_80663E98;
+// Retail linker labels referenced from this TU are declared in
+// include/kyoshin/code_800A75FC.hpp.
 
 void* memset(void*, int, unsigned long);
 
@@ -593,21 +580,19 @@ u32 func_800A85D8(int index) {
 }
 
 void* func_800A86AC(unsigned int param1, unsigned int param2) {
-    extern void* lbl_eu_805282A0[];
-    void* r4 = lbl_eu_805282A0[param2];
+    LblPtrTable* table = lbl_eu_805282A0[param2];
     if (param1 >= 0xe) {
-        return *(void**)r4;
+        return table->slots[0];
     }
-    return ((void**)r4)[param1];
+    return table->slots[param1];
 }
 
 void* func_800A86D8(unsigned int param1, unsigned int param2) {
-    extern void* lbl_eu_80528398[];
-    void** r4 = static_cast<void**>(lbl_eu_80528398[param2]);
+    LblPtrTable* table = lbl_eu_80528398[param2];
     if (param1 >= 0xe) {
-        return r4[0];
+        return table->slots[0];
     }
-    return r4[param1];
+    return table->slots[param1];
 }
 
 u32 func_800A8704(int index) {
@@ -751,17 +736,14 @@ u32 func_800A8AAC(int index) {
 int func_800A8B98(int param) {
     if (param == 0) return 0;
     if (param > 0) {
-        extern char lbl_eu_80572B38[];
         return func_800A3594((void*)lbl_eu_80572B38, param, 0);
     } else {
-        extern char lbl_eu_80572B38[];
         return func_800A36A4((void*)lbl_eu_80572B38, -param, 0);
     }
 }
 
 int func_800A8BD8(u32 param) {
     if (param == 0) return 0;
-    extern char lbl_eu_80572B38[];
     u32 start = *(u32*)(lbl_eu_80572B38);
     u32 size = *(u32*)(lbl_eu_80572B38 + 0xC);
     u32 end = start + size;
@@ -773,7 +755,6 @@ int func_800A8BD8(u32 param) {
 }
 
 int func_800A8C1C(void* p1, void* p2, void* p3) {
-    extern char lbl_eu_80572B38[];
     int result = 0;
     if (p1 != 0) {
         func_800A39E8((void*)lbl_eu_80572B38, p1, p2, p3);
@@ -784,18 +765,14 @@ int func_800A8C1C(void* p1, void* p2, void* p3) {
 
 void func_800A8C68(void* p) {
     if (p == 0) return;
-    extern char lbl_eu_80572B38[];
     func_800A37CC((void*)lbl_eu_80572B38, p);
 }
 
 void func_800A8C84(void) {
-    extern void func_800A3940(void*);
-    extern char lbl_eu_80572B38[];
-    func_800A3940((void*)lbl_eu_80572B38);
+    func_800A3940(reinterpret_cast<cf::CtrlObjectParamArtsList*>(lbl_eu_80572B38));
 }
 
 u32 func_800A8C90() {
-    extern char lbl_eu_80572B38[];
     return func_800A3998((void*)lbl_eu_80572B38) / 774144;
 }
 
@@ -907,7 +884,6 @@ int func_800A8E6C(int size, int arg2) {
 
 int func_800A9024(u32 param) {
     if (param == 0) return 0;
-    extern char lbl_eu_80572B78[];
     u32 start = *(u32*)(lbl_eu_80572B78);
     u32 size = *(u32*)(lbl_eu_80572B78 + 0xC);
     u32 end = start + size;
@@ -1001,7 +977,6 @@ int func_800A9134() {
 }
 
 int func_800A92F8(void* p1, void* p2, void* p3) {
-    extern char lbl_eu_80572B78[];
     int result = 0;
     if (p1 != 0) {
         func_800A39E8((void*)lbl_eu_80572B78, p1, p2, p3);
@@ -1009,9 +984,6 @@ int func_800A92F8(void* p1, void* p2, void* p3) {
     }
     return result;
 }
-
-extern char lbl_eu_80572B78[];
-void func_800A37CC(void*, void*);
 
 void func_800A9344(void* p)
 {

@@ -470,7 +470,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/cf/CtrlRemote.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlObjectParam.cpp"),
             Object(NonMatching, "kyoshin/code_800A3B24.cpp"),
-            Object(NonMatching, "kyoshin/code_800A75FC.cpp"),
+            Object(Matching, "kyoshin/code_800A75FC.cpp"),
             Object(NonMatching, "kyoshin/code_800AA008.cpp"),
             Object(NonMatching, "kyoshin/cf/CfCollCircleImpl.cpp"),
             Object(NonMatching, "kyoshin/cf/CfCollSphereImpl.cpp"),

@@ -8,7 +8,8 @@
 // --- Cross-TU imports (declared here; .cpp-only TU, CScnFilter.hpp is read-only) ---
 extern "C" void __ct__CScnFilter(CScnFilter* self);
 extern "C" void __dt__10CScnFilterFv(CScnFilter* self, int flag);
-extern void* __dl__FPv(void* p);
+// Global operator delete — MWCC mangles this to __dl__FPv (defined in MemManager.cpp).
+void operator delete(void* p) throw();
 extern const f32 lbl_eu_8066AAE0;
 extern const f32 lbl_eu_8066AAE4;
 extern const f32 lbl_eu_8066AAE8;
@@ -72,7 +73,7 @@ extern "C" void __dt__9CScnBlendFv(CScnBlend* self, int flag) {
     if (self != 0) {
         __dt__10CScnFilterFv((CScnFilter*)self, 0);
         if (flag > 0) {
-            __dl__FPv(self);
+            operator delete(self);
         }
     }
 }

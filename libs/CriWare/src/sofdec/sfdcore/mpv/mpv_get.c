@@ -1,9 +1,15 @@
 #include <harness_catalog.h>
 
+/* SofDec MPV decoder handle accessors.
+ *
+ * These read fields out of the MPV decoder handle block. Only the fields
+ * touched by the retail accessors are modelled; everything else stays as
+ * anonymous padding so the struct layout (and thus every load/store
+ * offset) matches the original library byte for byte.
+ */
 extern int MPVLIB_CheckHn(void*);
 extern int MPVERR_SetCode(void*, int);
 
-/* Sofdec MPV handle fields accessed by the MPV_Get* accessors. */
 typedef struct MpfGetHd {
     u8 _00[0xB58];
     u8  picAtrBytes[0x80];   /* 0xB58 - kept as bytes so the copy loop is not
@@ -21,22 +27,27 @@ typedef struct MpfGetHd {
 #pragma push
 #pragma optimize_for_size on
 int MPV_GetPicAtr(void *handle, u32 *out) {
-    if (MPVLIB_CheckHn(handle)) {
+    MpfGetHd *mh = (MpfGetHd *)handle;   // local handle copy: lives across the
+                                         // check call, so MWCC parks it in r31
+                                         // (retail reg split)
+    if (MPVLIB_CheckHn(mh)) {
         return MPVERR_SetCode(NULL, 0xFF03020C);
     }
 
     // Retail loop is a counted mtctr/bdnz 1x loop: the `for (n = 16; n != 0;
     // n--)` form + whole-function #pragma optimize_for_size on (plain -O4,p
     // unrolls 8x; the do-while form emits addic./bne; a mid-function pragma
-    // does not suppress the unroll). 0 structural, 8 pure reg_swap - the
-    // witness rejects the ABI rho (out->r31 vs retail handle->r31).
+    // does not suppress the unroll).
     {
+        u32 v1, v0;             // temporaries declared first so they color
+                                // into r3/r0 like retail
+        u32 *s;                 // s declared before d so s takes r4, d takes r5
         u32 *d = out - 1;
-        u32 *s = (u32 *)((u8 *)handle + 0xB58);
         u32 n;
+        s = (u32 *)mh->picAtrBytes;
         for (n = 16; n != 0; n--) {
-            u32 v0 = *(s + 1);
-            u32 v1 = *(s += 2);
+            v0 = *(s + 1);
+            v1 = *(s += 2);
             *(d + 1) = v0;
             *(d += 2) = v1;
         }
@@ -55,31 +66,26 @@ int MPV_GetBitRate(void* handle, u32* out) {
     return 0;
 }
 
-/* Get VBV buffer size */
-
-/* Max bitrate = (frameRate * bitRate * 0x91A2B3C5) >> 42, rounded toward zero.
-   Kept as an inline helper so the magic-mulhw chain is born as its own block. */
-static s32 mpv_calc_max_bitrate(MpfGetHd *h, u32 bitRate) {
-    s32 m = (s32)h->frameRate * (s32)bitRate;
-    return (u32)(((__mulhw((s32)0x91A2B3C5, m) + m) >> 10))
-         + ((u32)(((__mulhw((s32)0x91A2B3C5, m) + m) >> 10)) >> 31);
-}
-
+/* Get VBV buffer size (and derived average/max bitrates) */
 int MPV_GetVbvBufSiz(void *handle, u32 *out_size, u32 *out_avg, u32 *out_max) {
     MpfGetHd *h = (MpfGetHd *)handle;
-    u32 bitRate;
     if (MPVLIB_CheckHn(h)) {
         return MPVERR_SetCode(NULL, 0xFF03020F);
     }
 
     *out_size = h->vbvBufSiz << 11;
     *out_avg = h->frameRate;
-    bitRate = h->bitRate;
 
-    if ((u32)(bitRate - 0x30000) == 0xFFFF) {
+    // 0x30000 + 0xFFFF sentinel marks "unspecified" max bitrate
+    if ((u32)(h->bitRate - 0x30000) == 0xFFFF) {
         *out_max = (u32)-1;
     } else {
-        *out_max = (u32)mpv_calc_max_bitrate(h, bitRate);
+        // max = (frameRate*bitRate*0x91A2B3C5) >> 42, rounded toward zero
+        // (magic-multiply division)
+        s32 t = __mulhw((s32)0x91A2B3C5, (s32)(h->frameRate * h->bitRate))
+              + (s32)(h->frameRate * h->bitRate);
+        t >>= 10;
+        *out_max = (u32)t + ((u32)t >> 31);
     }
     return 0;
 }

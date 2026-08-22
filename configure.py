@@ -661,7 +661,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/code_802405F4.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuMapSelect.cpp"),
             Object(NonMatching, "kyoshin/CMapSel.cpp"),
-            Object(NonMatching, "kyoshin/CFade.cpp"),
+            Object(Matching, "kyoshin/CFade.cpp"),
             Object(NonMatching, "kyoshin/CFloorMap.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuMapSelectSC.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/menu/CMenuPause.cpp"),
@@ -1497,7 +1497,7 @@ config.libs = [
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdrna.c"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdrsc.c"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdsl.c"),
-            Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdsvm.c"),
+            Object(Matching, "CriWare/src/sofdec/mwply/mwsfdsvm.c"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwstm.c"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdsee.c"),
             Object(NonMatching, "CriWare/src/sofdec/mwply/mwsfdsfx.c"),
@@ -1517,7 +1517,7 @@ config.libs = [
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_emp.c"),
             Object(Matching, "CriWare/src/sofdec/sfdcore/mpv/mpv_err.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_frm.c"),
-            Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_get.c", extra_cflags=["-use_lmw_stmw off"]),  # retail mpv_get: individual stw saves (MPV_GetPicAtr counted-loop frame); the lib-level -use_lmw_stmw on would emit stmw for the whole-function optimize_for_size frame
+            Object(Matching, "CriWare/src/sofdec/sfdcore/mpv/mpv_get.c", extra_cflags=["-use_lmw_stmw off"]),  # retail mpv_get: individual stw saves (MPV_GetPicAtr counted-loop frame); the lib-level -use_lmw_stmw on would emit stmw for the whole-function optimize_for_size frame
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_hdec.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_lib.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/mpv/mpv_mc.c"),

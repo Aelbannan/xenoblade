@@ -329843,7 +329843,15 @@
       "source": "libs/RVL_SDK/src/revolution/gx/GXFifo.c",
       "instruction_match": 96.988,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T05:07:39.914519+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/gx/GXFifo.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8031b230",
@@ -445250,8 +445258,8 @@
       "size": "0x28C",
       "unit": "nw4r/src/math/math_geometry",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/math/math_geometry.cpp",
       "called_functions": [],
@@ -445260,8 +445268,9 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/nw4r/src/math/math_geometry.s",
       "abi_helper_calls": [],
-      "instruction_match": 0.0,
-      "source_present": true
+      "instruction_match": 99.663,
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8040e468",
@@ -470898,7 +470907,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80439af4",
@@ -470957,7 +470967,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80439ce8",

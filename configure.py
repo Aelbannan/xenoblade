@@ -1847,7 +1847,12 @@ config.libs = [
             Object(NonMatching, "monolib/src/core/CFontLayer.cpp"),
             Object(NonMatching, "monolib/src/device/CGXCache.cpp"),
             Object(NonMatching, "monolib/src/device/CDevice.cpp"),
-            Object(NonMatching, "monolib/src/device/CDeviceClock.cpp"),
+            Object(NonMatching, "monolib/src/device/CDeviceClock.cpp", link_transform={
+                "renames": [
+                    ("__dt__29reslist_P17IDeviceClockFrameFv", "__dt__29reslist<P17IDeviceClockFrame>Fv"),
+                    ("__dt__35_reslist_base_P17IDeviceClockFrameFv", "__dt__35_reslist_base<P17IDeviceClockFrame>Fv"),
+                ],
+            }),
             Object(NonMatching, "monolib/src/device/CDeviceFile.cpp"),
             Object(NonMatching, "monolib/src/device/CDeviceFileCri.cpp"),
             Object(NonMatching, "monolib/src/device/CDeviceFileDvd.cpp"),

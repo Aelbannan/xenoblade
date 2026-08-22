@@ -158,13 +158,11 @@ using cf::CNpcBaseData;
 using cf::CNpcMoveSub;
 
 // ---------------------------------------------------------------------------
-// Imports (retail symbol names - global scope, unmangled)
+// Imports
 // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// Imports (retail symbol names - keep linkage/signatures verbatim)
-// ---------------------------------------------------------------------------
-
+// Functions whose retail symbols are pre-mangled/unmangled names: declared with
+// C linkage so the literal symbol name is resolved/emitted verbatim.
 extern "C" {
 
 // Base class ctor + ptmf runtime.
@@ -176,10 +174,11 @@ void __ptmf_scall(...);
 extern int (CCtrlMoveNpc::*const lbl_eu_80532DA8)();
 
 // bdat helpers / task helpers / movement helper (unmangled global symbols).
-void* func_8003AA34();
+// func_8003AA34 and getBdatStringColumnValue come from kyoshin/code_801862C0.hpp.
+// func_8019FB54 is defined below; this prototype fixes its C linkage so the
+// retail unmangled symbol name is emitted.
 u32 func_8003B41C(void* bdat);
 u32 func_8003B1EC(void* bdat);
-u32 getBdatStringColumnValue(void* data, const char* col, s32 idx);
 void func_80462D04__8CTaskLODFv(s8 v);
 void func_80462D5C__8CTaskLODFv(u8 v);
 void* func_804BC9EC__Fv(void);
@@ -187,6 +186,8 @@ void func_804BCC30(void*, s8 v);
 void func_804BCC3C(void*, u8 v);
 void func_80089990(CCtrlMoveNpc* self);
 f32 FrSqrt__Q24nw4r4mathFf(f32 x);
+int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
+                  const char* p4, const char* p5, const char* p6, const char* p7);
 
 // Movement base helpers / npc move helpers (unmangled global symbols).
 void func_80088974(CCtrlMoveNpc* self, const ml::CVec3* a, const ml::CVec3* b,
@@ -203,11 +204,11 @@ void Warning__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, .
 // symbol directly.
 u16 func_80082354__Q22cf13CfGameManagerFv();
 
-}
+} // C-linkage import block
 
-extern "C" {
+// Linker-label data imports. MWCC emits global-variable names unmangled.
 
-// vtable; take its address, so declare as an array.
+// CCtrlMoveNpc secondary vtable (address-taken, so declare as an array).
 extern const char lbl_eu_80532DB4[];
 
 // Warning() file / format rodata strings.
@@ -217,14 +218,13 @@ extern const char lbl_eu_80526300[];
 // ptr member-function null constant (3 words).
 extern int (CCtrlMoveNpc::*const __ptmf_null)();
 
-// sdata2 float literals referenced by func_8019F6E8.
+// sdata2 float literals referenced by func_8019F6E8 / func_8019F93C.
 extern const f32 lbl_eu_80667C58;
 extern const f32 lbl_eu_80667C5C;
 extern const f32 lbl_eu_80667C60;
 extern const f32 lbl_eu_80667C64;
 extern const f32 lbl_eu_80667C68;
 extern const f32 lbl_eu_8066A208;   // ml::epsilon
-// Extra sdata2 literals used by func_8019F93C.
 extern const f32 lbl_eu_80667C6C;
 extern const f32 lbl_eu_80667C70;
 extern const f32 lbl_eu_80667C74;
@@ -237,8 +237,6 @@ extern u32 lbl_eu_805757E0[];
 extern void* lbl_eu_806640B4;   // active table bdat data
 extern u32 lbl_eu_80663E24;     // global flags
 extern u32 lbl_eu_80663D90;     // global value copied into mField78
-
-}
 
 // ---------------------------------------------------------------------------
 // Target 1: __ct__cf_CtrlMoveNpc - constructor
@@ -318,7 +316,7 @@ void func_8019F6E8(CCtrlMoveNpc* self, const ml::CVec3* vec, f32 scale, f32 para
 // ---------------------------------------------------------------------------
 // Target 4: func_8019FB54 - range check an Npc table row against row/value
 // columns. Returns whether the row is "usable" for the current situation.
-// Defined at global scope: the retail symbol is unmangled.
+// C linkage inherited from the prototype above (retail symbol is unmangled).
 // ---------------------------------------------------------------------------
 int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
                   const char* p4, const char* p5, const char* p6, const char* p7) {
@@ -363,7 +361,8 @@ int func_8019FB54(u32 idx, const char* p1, const char* p2, const char* p3,
 // ---------------------------------------------------------------------------
 // Target 3: func_8019FD2C - walk the table rows, toggling a per-row bit in the
 // bitmap and notifying LOD when the usable-flag flips.
-// Defined at global scope: the retail symbol is unmangled.
+// C linkage inherited from the CfGameManager.hpp declaration
+// (retail symbol is the unmangled pre-mangled name).
 // ---------------------------------------------------------------------------
 void func_8019FD2C() {
     func_8003AA34();
@@ -453,12 +452,12 @@ void func_8019F93C(CCtrlMoveNpc* self) {
         }
     }
 
-idle:
+    // Idle tail: clear the approach rate; when paramB allows it, also run the
+    // turn-rate helper before dropping back to the idle state function.
     ((CNpcBaseData*)self->mBaseData)->field_0x14 = lbl_eu_80667C5C;
     if (self->mField6C < lbl_eu_80667C78) {
         func_80093618((CNpcBaseData*)self->mBaseData,
                       self->mField6C * lbl_eu_8066A210);
-        // Retail duplicates this tail into both arms of the if/else.
         self->mStateFunc = __ptmf_null;
         func_8008962C(self);
     } else {

@@ -567,7 +567,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/menu/CMenuPTState.cpp"),
             Object(NonMatching, "kyoshin/cf/CPartsChange.cpp"),
             Object(NonMatching, "kyoshin/cf/CtrlMovePC.cpp"),
-            Object(NonMatching, "kyoshin/cf/CtrlMoveNpc.cpp"),
+            Object(Matching, "kyoshin/cf/CtrlMoveNpc.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuBattleMode.cpp"),
             Object(NonMatching, "kyoshin/COccCulling.cpp"),
             Object(NonMatching, "kyoshin/CSimpleEveTalkWin.cpp"),

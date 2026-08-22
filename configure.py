@@ -619,7 +619,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/CItemBoxInfo.cpp", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "kyoshin/CNumSelect.cpp"),
             Object(NonMatching, "kyoshin/CItemBoxLine.cpp"),
-            Object(NonMatching, "kyoshin/CScrollBar.cpp"),
+            Object(Matching, "kyoshin/CScrollBar.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "kyoshin/code_801F3BE0.cpp"),
             Object(NonMatching, "kyoshin/cf/CfGimmickObject.cpp"),
             Object(NonMatching, "kyoshin/cf/object/CfObjectTbox.cpp"),

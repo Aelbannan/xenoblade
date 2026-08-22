@@ -20,11 +20,10 @@ void func_80124288(void*, float*);
 // callers (func_801F36BC) reuse it as the returned pointer for func_801D2150.
 float* code80135FDC_setVec3(float*, float, float, float);
 
-// Defined at the bottom of this file; declared here (definition NOT yet
-// visible, plus noinline) so OnFileEvent emits a direct `bl` to the retail
-// symbol instead of inlining the body into the call site (retail calls it
-// out-of-line).
-extern "C" __attribute__((noinline)) void func_801F39B4(void* self);
+// Defined at the bottom of this file (declaration NOT yet visible, plus
+// noinline) so OnFileEvent emits a direct `bl` to the retail symbol instead
+// of inlining the body into the call site (retail calls it out-of-line).
+__attribute__((noinline)) void func_801F39B4(CScrollBar* bar);
 
 // The scroll-bar drag pane carries a small data block at +0x2C..+0x50 (thumb
 // dimensions / track position). The nw4r Pane layout doesn't model these
@@ -49,8 +48,13 @@ u8 CScrollBar::isVisible() { return mVisible; }
 
 u8 CScrollBar::func_801F3668() { return mActive; }
 
-extern "C" void func_801D2150(void* a);
-extern "C" void func_801F3670(void* self) { func_801D2150(*(void**)((u8*)*(void**)((u8*)self + 0x1C) + 0x10)); }
+// Mark the widget ready once its layout has been built.
+// Single-arg overload: retail's func_801D2150 leaves its second
+// (VEC3*) argument untouched at this call site, so it is not materialized.
+void func_801D2150(nw4r::lyt::Pane* pane);
+void func_801F3670(CScrollBar* self) {
+    func_801D2150(self->mLayout->GetRootPane());
+}
 
 void func_801F3850(CScrollBar* self, u32 count) {
     nw4r::lyt::Pane* pane =
@@ -65,9 +69,9 @@ void func_801F3850(CScrollBar* self, u32 count) {
                       lbl_eu_80668138)));
 }
 
-/* Per-frame update dispatch */
-extern "C" __attribute__((noinline)) void func_801F38FC(CScrollBar* self);
-extern "C" __attribute__((noinline)) void func_801F3960(CScrollBar* self);
+/* Per-frame update dispatch helpers (defined below). */
+__attribute__((noinline)) void func_801F38FC(CScrollBar* self);
+__attribute__((noinline)) void func_801F3960(CScrollBar* self);
 
 /* Per-frame update dispatch: while the bar is ready, step the entering/leaving
 animations and always call the layout's Animate. */
@@ -86,7 +90,7 @@ void func_801F3540(CScrollBar* self) {
 
 /* Entering state: advance the scroll-in animation offset by a frame step; once
 it passes the threshold, finish the animation and become visible/idle. */
-extern "C" __attribute__((noinline)) void func_801F38FC(CScrollBar* self) {
+__attribute__((noinline)) void func_801F38FC(CScrollBar* self) {
     float step = lbl_eu_80668150;
     self->mAnimOffset += step;
     if (self->mAnimOffset < lbl_eu_80668154) return;
@@ -97,7 +101,7 @@ extern "C" __attribute__((noinline)) void func_801F38FC(CScrollBar* self) {
 }
 
 /* Leaving/shutdown: when the scroll-out animation is done, hide the bar. */
-extern "C" __attribute__((noinline)) void func_801F3960(CScrollBar* self) {
+__attribute__((noinline)) void func_801F3960(CScrollBar* self) {
     float frame = lbl_eu_80668150;
     if (func_80137510(self->mAnimTransform, frame)) {
         self->mState = 0;
@@ -106,19 +110,25 @@ extern "C" __attribute__((noinline)) void func_801F3960(CScrollBar* self) {
     }
 }
 
+// Retail OnFileEvent uses the _savegpr_28/_restgpr_28 helper pair
+// (size-mode save shape); this TU compiles with -O4,s via configure.py
+// extra_cflags rather than a local #pragma.
 bool CScrollBar::OnFileEvent(CEventFile* pEventFile) {
     // Only build the layout when the event's file handle matches our own.
     if (mFileHandle == pEventFile->mFileHandle) {
+        u32 mem2 = mtl::MemManager::getHandleMEM2();
+        // Arc path base stays live across the build (retail caches it in a
+        // callee-saved register and indexes +0x16/+0x21/+0x25/+0x36).
+        char* path = lbl_eu_80507A4C;
         // Open a scratch region for layout allocation behind this event.
-        mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x3000,
-                                &lbl_eu_80507A4C[0x16], 1);
+        mMemRegion.createRegion(mem2, 0x3000, path + 0x16, 1);
         Class_8045F858 sp8 = Class_8045F858(&mMemRegion);
         void* data = mFileHandle->getData();
         mtl::MemManager::func_80434A4C(0);
         mAccessor = CLibLayout::createArcResourceAccessor();
-        mAccessor->Attach(data, &lbl_eu_80507A4C[0x21]);
-        func_80136E84(&mLayout, mAccessor, &lbl_eu_80507A4C[0x25]);
-        func_80136F08(mLayout, &mAnimTransform, mAccessor, &lbl_eu_80507A4C[0x36]);
+        mAccessor->Attach(data, path + 0x21);
+        func_80136E84(&mLayout, mAccessor, path + 0x25);
+        func_80136F08(mLayout, &mAnimTransform, mAccessor, path + 0x36);
         mLayout->SetAnimationEnable(mAnimTransform, true);
         mLayout->Animate(0);
 
@@ -134,14 +144,14 @@ bool CScrollBar::OnFileEvent(CEventFile* pEventFile) {
         mContentHeight = dims.y;
 
         // Hide all six bar panes, then show only the active direction's thumb.
-        for (int i = 0; i < 6; i++) {
-            nw4r::lyt::Pane* barPane =
-                mLayout->GetRootPane()->FindPaneByName(lbl_eu_80534DA8[i], true);
-            func_80124270(barPane, 0);
+        for (u8 i = 0; i < 6; i++) {
+            nw4r::lyt::Pane* hidePane =
+            mLayout->GetRootPane()->FindPaneByName(lbl_eu_80534DA8[i], true);
+            func_80124270(hidePane, 0);
         }
-        nw4r::lyt::Pane* barPane =
+        nw4r::lyt::Pane* showPane =
             mLayout->GetRootPane()->FindPaneByName(lbl_eu_80534DA8[mDirection], true);
-        func_80124270(barPane, 1);
+        func_80124270(showPane, 1);
 
         func_801F39B4(this);
         mFileHandle = nullptr;
@@ -241,10 +251,8 @@ void func_801F36BC(CScrollBar* self, u32 scrollFrom, u32 scrollTo) {
 /* Complete-object destructor. The mMemRegion member is destroyed implicitly
 (its dtor is a real C++ member dtor, so MWCC emits the external call with
 flags=-1), then the deleting-flag check and operator delete. */
-#pragma push
-#pragma optimize_for_size on
+
 CScrollBar::~CScrollBar() {}
-#pragma pop
 
 /* Construct the scroll bar: the base ctor stores the vtable first, then the
 mMemRegion member ctor runs (retail order), then every field is initialized.
@@ -266,10 +274,10 @@ CScrollBar::CScrollBar(u8 direction) : CScrollBarVtblBase(), mMemRegion() {
     mDirection = direction;
 }
 
-/* Defined last in the TU (declaration above) so callers emit a direct `bl`
-rather than an inlined copy - retail calls it out-of-line. */
-extern "C" __attribute__((noinline)) void func_801F39B4(void* self) {
-    CScrollBar* bar = static_cast<CScrollBar*>(self);
+/* Defined last in the TU (declaration at the top) so callers emit a direct
+`bl` rather than an inlined copy - retail calls it out-of-line. */
+// Layout built successfully: mark the bar ready and visible.
+__attribute__((noinline)) void func_801F39B4(CScrollBar* bar) {
     if (bar->mLayout != 0) {
         bar->mVisible = 1;
         bar->mReady = 1;

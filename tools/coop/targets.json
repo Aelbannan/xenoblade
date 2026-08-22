@@ -138874,7 +138874,7 @@
       "source": "src/kyoshin/realtimeevt/CREvtMem.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_unsupported"
     },
     {
       "id": "us-80168e40",
@@ -275072,7 +275072,15 @@
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T02:11:06.277882+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802aaf08",
@@ -275132,7 +275140,15 @@
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T02:11:06.277666+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/voice/cvsys/CVS_THREAD_REVIVE.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802ab134",
@@ -286627,15 +286643,7 @@
       "source": "src/kyoshin/help/CHelp_Talk.cpp",
       "instruction_match": 81.78,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-22T01:19:46.849968+00:00",
-        "allowed_paths": [
-          "src/kyoshin/help/CHelp_Talk.cpp"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802bb338",
@@ -308382,15 +308390,7 @@
       "source": "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c",
       "instruction_match": 97.76,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-22T01:51:34.633237+00:00",
-        "allowed_paths": [
-          "libs/RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802e80f4",
@@ -447627,7 +447627,7 @@
       "unit": "nw4r/src/snd/snd_Bank",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_Bank.cpp",
       "called_functions": [
@@ -447647,7 +447647,9 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_Bank.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "source_present": true
+      "source_present": true,
+      "instruction_match": 78.929,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80413d54",
@@ -454023,7 +454025,7 @@
       "size": "0x9C",
       "unit": "nw4r/src/snd/snd_SeqSound",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SeqSound.cpp",
@@ -454038,7 +454040,15 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "equivalence_status": "inconclusive_unsupported",
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T02:18:21.991319+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/snd/snd_SeqSound.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8041cfbc",
@@ -454107,7 +454117,7 @@
       "size": "0x7C",
       "unit": "nw4r/src/snd/snd_SeqSound",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "DISCOVERY",
+      "workflow_status": "CLAIMED",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SeqSound.cpp",
@@ -454121,7 +454131,15 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_SeqSound.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "source_present": false
+      "source_present": false,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T02:18:21.991078+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/snd/snd_SeqSound.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8041d0c4",
@@ -454163,7 +454181,7 @@
       "size": "0xF4",
       "unit": "nw4r/src/snd/snd_SeqSound",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SeqSound.cpp",
@@ -454177,7 +454195,15 @@
       "callgraph_source": "build/us/asm/nw4r/src/snd/snd_SeqSound.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T02:18:21.991323+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/snd/snd_SeqSound.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8041d220",
@@ -463465,7 +463491,7 @@
         "_savegpr_27"
       ],
       "source_present": true,
-      "instruction_match": 58.555,
+      "instruction_match": 57.289,
       "equivalence_status": "inconclusive_smt_disabled"
     },
     {

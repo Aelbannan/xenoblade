@@ -11,9 +11,9 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12891 |
-| extern "C" declarations (non-lbl_*, imports) | 5069 |
-| extern "C" definitions (forced names) | 3900 |
+| extern "C" (total lines) | 12893 |
+| extern "C" declarations (non-lbl_*, imports) | 5070 |
+| extern "C" definitions (forced names) | 3901 |
 | `self`/register-style params | 11915 |
 | `void*` (params + locals) | 7191 |
 | raw pointer offset arithmetic | 6896 |
@@ -299,7 +299,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CCol6Invite.cpp | 1 | 1 | 6 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CCol6System.cpp | 18 | 13 | 63 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CCollepedia.cpp | 14 | 47 | 23 | 14 | 26 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/CCur.cpp | 0 | 45 | 0 | 11 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
+| src/kyoshin/CCur.cpp | 0 | 46 | 0 | 11 | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 0 |
 | src/kyoshin/CEquipChange.cpp | 5 | 15 | 131 | 25 | 47 | 2 | 0 | 5 | 3 | 0 | 0 | 0 |
 | src/kyoshin/CEquipItemBox.cpp | 2 | 93 | 105 | 30 | 11 | 0 | 0 | 0 | 11 | 0 | 0 | 0 |
 | src/kyoshin/CErrMes.cpp | 3 | 1 | 0 | 4 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -349,7 +349,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/CTaskGamePic.cpp | 1 | 6 | 12 | 5 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTimeLightGrp.cpp | 0 | 7 | 7 | 9 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTitle.cpp | 14 | 30 | 73 | 25 | 38 | 5 | 0 | 0 | 6 | 0 | 0 | 0 |
-| src/kyoshin/CTitleAHelp.cpp | 5 | 9 | 11 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| src/kyoshin/CTitleAHelp.cpp | 6 | 9 | 11 | 4 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTutorial.cpp | 0 | 7 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CTutorialList.cpp | 7 | 25 | 47 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/CUIBattleManager.cpp | 13 | 8 | 8 | 34 | 7 | 8 | 1 | 1 | 29 | 1 | 0 | 0 |
@@ -3274,7 +3274,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/CCur.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_def": 45,
+  "extern_c_nonlbl_def": 46,
   "goto_count": 4,
   "init_side_effect": 0,
   "schedule_pragma": 0,
@@ -3803,7 +3803,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "src/kyoshin/CTitleAHelp.cpp": {
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 5,
+  "extern_c_nonlbl_decl": 6,
   "extern_c_nonlbl_def": 9,
   "init_side_effect": 0,
   "ptr_arith": 3,

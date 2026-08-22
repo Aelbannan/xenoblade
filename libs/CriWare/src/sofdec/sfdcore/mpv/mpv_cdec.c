@@ -109,9 +109,15 @@ int mpvcdec_NintraBlocksInt1(void* self) {
 int mpvcdec_IntraBlocksInt1(void* self) {
     MPVC_dec *dec = (MPVC_dec*)self;
     MPVC_Blk *blk = (MPVC_Blk*)((u8*)self + 0x9c4);
+    u32 *z = (u32*)self;
     u32 h, r2, r3, r4, r5, r6;
+    s32 i;
 
-    memset(self, 0, 0x300);
+    /* clear the work region; MWCC fully unrolls this into straight-line stores */
+    for (i = 0; i < 0xc0; i += 2) {
+        z[i + 1] = 0;
+        z[i] = 0;
+    }
 
     blk->fld_0x1c = dec->field_0xd0c[0];
     blk->fld_0x20 = (u32)((u8*)self + 0x300);

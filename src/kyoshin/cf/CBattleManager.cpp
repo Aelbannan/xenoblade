@@ -467,10 +467,12 @@ void cf::CBattleManager::func_800EA460(float a, float b, unsigned long c) {
 // original (float, u32) C-linkage decl (same 4-byte args, same symbol).
 extern "C" void func_800EA484(cf::CBattleManager*, f32, int);
 
+#pragma schedule off
 void cf::CBattleManager::func_800EA470() {
     unk88 = lbl_eu_80666DDC;
     func_800EA484(this, lbl_eu_80666DD4, unk8C);
 }
+#pragma schedule on
 extern "C" void func_800EA998(u8* self) { reinterpret_cast<BMIf*>((u8*)self + 0x219c)->vf0024(); }
 // func_800EC918 (retail 0x800ED400, 0x6E1C) - main battle-event processor.
 // The callers below pass ABI-compatible args; the typed definition follows.
@@ -3918,52 +3920,58 @@ namespace cf {
 // Returns 1 if field_78 bit 0 is clear, or if a matching non-zero element is found.
 // Returns 0 otherwise.
 s32 func_800D7D24(void* self) {
-    // If bit 0 of field_78 is clear, return 1 immediately
-    if (!(*(u32*)((u8*)self + 0x78) & 1)) return 1;
+    s32 result = 0;
 
-    void* r6 = *(void**)((u8*)self + 0xB8);
-    if (r6 == nullptr) return 0;
+    // If bit 0 of field_78 is clear, report 1
+    if ((*(u32*)((u8*)self + 0x78) & 1) == 0) { result = 1; return result; }
 
-    // First loop: 2 iterations, each checking 8 fields of a 0x20-byte entry
+    u8* r6 = *(u8**)((u8*)self + 0xB8);
+    if (r6 == nullptr) return result;
+
+    // First loop: 2 iterations x 8 fields of a 0x20-byte entry.
+    // Target word re-read at the top of every iteration (retail shape).
+    u32 found = 0;
     {
-        u8* r5 = (u8*)r6;
-        u32 targetVal = *(u32*)((u8*)r6 + 4);
-        s32 found = 0;
-        for (s32 i = 0; i < 2; i++) {
-            if (*(u32*)(r5 + 0x08) == targetVal) { found = 1; break; }
-            if (*(u32*)(r5 + 0x0C) == targetVal) { found = 1; break; }
-            if (*(u32*)(r5 + 0x10) == targetVal) { found = 1; break; }
-            if (*(u32*)(r5 + 0x14) == targetVal) { found = 1; break; }
-            if (*(u32*)(r5 + 0x18) == targetVal) { found = 1; break; }
-            if (*(u32*)(r5 + 0x1C) == targetVal) { found = 1; break; }
-            if (*(u32*)(r5 + 0x20) == targetVal) { found = 1; break; }
-            if (*(u32*)(r5 + 0x24) == targetVal) { found = 1; break; }
-            r5 += 0x20;
-        }
-
-        if (found) {
-            // C++-linkage decl: MWCC mangles func_800B708C to func_800B708C__Fi.
-            extern void* func_800B708C(int);
-            if (func_800B708C(targetVal) != 0) return 0;
-        }
+        u8* p = r6;
+        s32 ctr = 2;
+        do {
+            u32 targetVal = *(u32*)(r6 + 4);
+            if (*(u32*)(p + 0x08) == targetVal) { found = 1; break; }
+            if (*(u32*)(p + 0x0C) == targetVal) { found = 1; break; }
+            if (*(u32*)(p + 0x10) == targetVal) { found = 1; break; }
+            if (*(u32*)(p + 0x14) == targetVal) { found = 1; break; }
+            if (*(u32*)(p + 0x18) == targetVal) { found = 1; break; }
+            if (*(u32*)(p + 0x1C) == targetVal) { found = 1; break; }
+            if (*(u32*)(p + 0x20) == targetVal) { found = 1; break; }
+            if (*(u32*)(p + 0x24) == targetVal) { found = 1; break; }
+            p += 0x20;
+        } while (--ctr != 0);
     }
 
-    // Second loop: 16 iterations, checking array at self+8
+    if (found) {
+        // C++-linkage decl: MWCC mangles func_800B708C to func_800B708C__Fi.
+        extern void* func_800B708C(int);
+        if (func_800B708C(*(u32*)(r6 + 4)) != nullptr) return result;
+    }
+
+    // Second pass: walk the u32 array at self+8 (up to 16 entries); stop at
+    // the first non-zero word and report whether it equals self->field_4.
     {
-        u8* ptr = (u8*)self;
-        u32 targetVal = *(u32*)((u8*)self + 4);
+        u8* scan = (u8*)self;
         for (s32 i = 0; i < 16; i++) {
-            if (*(u32*)(ptr + 8) != 0) {
-                // Found a non-zero element; compare with field_4
-                if (*(u32*)((u8*)self + i * 4 + 8) == targetVal) return 1;
-                return 0;
+            if (*(u32*)(scan + 8) != 0) {
+                if (*(u32*)((u8*)self + i * 4 + 8) == *(u32*)((u8*)self + 4)) {
+                    result = 1;
+                }
+                return result;
             }
-            ptr += 4;
+            scan += 4;
         }
     }
 
-    return 0;
+    return result;
 }
+
 extern f32 lbl_80666DD4; // 1.0f
 
 extern f32 lbl_80666DD8; // 0.001f
@@ -4800,7 +4808,7 @@ extern "C" void func_800DB4FC(void* self, void* obj, void* enemyArg, void* arg4)
 // Battle event handler: checks various flags and conditions on arg3/arg4,
 // sets flags on arg4->field_74, then tail-calls func_800E08E8.
 void func_800DB7F8(void* r3, void* r4, void* arg3, void* arg4) {
-    s32 flag = 0;
+    s32 flag;
     if (arg3 == nullptr) return;    // retail: beq straight to the epilogue
 
     BattleTargetData* move = (BattleTargetData*)arg4;
@@ -4822,6 +4830,7 @@ void func_800DB7F8(void* r3, void* r4, void* arg3, void* arg4) {
     if (func_80148778((u8*)arg3 + 8, 0x32)) goto tailcall;
 
     // Check flag 0xCE
+    flag = 0;
     if (func_80148778((u8*)arg3 + 8, 0xCE)) {
         // Check if move->field_78 & 0x800
         if (move->field_78 & 0x800) {
@@ -7516,6 +7525,7 @@ struct BattleAIActionSlot {
 // ---------------------------------------------------------------------------
 // vtable dispatch helpers (r23/r24 are CfObjectActor-derived)
 // ---------------------------------------------------------------------------
+#pragma schedule off
 static inline u32 e_vf2BC(void* o) { return ((u32(*)(void*))(*(void***)o)[0x2BC / 4])(o); }
 static inline void* e_vf290(void* o) { return ((void*(*)(void*))(*(void***)o)[0x290 / 4])(o); }
 static inline u32 e_vf2A8(void* o) { return ((u32(*)(void*))(*(void***)o)[0x2A8 / 4])(o); }
@@ -9782,6 +9792,7 @@ extern "C" void CBattleManager_preCalcTotalDamage(void* self, void* actor, f32* 
     if (*outDamage < 0.0f) *outDamage = lbl_eu_80666DDC;     // 0x800E9CCC
 }
 
+#pragma schedule on
 // ---- func_800E9B54 (0x800EA63C) --------------------------------------------
 // Chain-arts hit spread: refreshes the arts rows, then for each player action
 // found in the (0x20, 0x800) enum list emits chain events (0x35 arts / 0x13
@@ -11435,9 +11446,9 @@ void func_800F3C6C(cf::CBattleManager* mgr, s32 key) {
 s32 func_800F3E8C(cf::CBattleManager* mgr, s32 arg1) {
     // First pass: search mActorList3 (sentinel at +0x48)
     {
-        _reslist_node<cf::CfObjectActor*>* sentinel = mgr->mActorList3.mStartNodePtr;
-        _reslist_node<cf::CfObjectActor*>* cur = sentinel->mNext;
-        while (cur != sentinel) {
+        _reslist_node<cf::CfObjectActor*>* cur =
+            mgr->mActorList3.mStartNodePtr->mNext;
+        while (cur != mgr->mActorList3.mStartNodePtr) {
             cf::CfObjectActor* actor = cur->mItem;
             if (*(s32*)((u8*)actor + 0x15f0) == arg1) return 1;
             cur = cur->mNext;
@@ -11495,6 +11506,12 @@ void func_800F3FC8(cf::CBattleManager* mgr) {
 }
 // Performs battle cleanup: chain maintenance, enum list iteration with virtual calls,
 // actor list flag updates, and action cleanup.
+// Retail linker names for helpers called from func_800F4034 / func_800F41A0.
+extern "C" void func_8015B11C();
+extern "C" s32 CfRes_checkFlags_48000();
+extern "C" void func_8013E424(void*, int);
+extern "C" void func_802A3144(void*);
+
 void func_800F4034(cf::CBattleManager* mgr) {
     // Chain maintenance
     extern void func_80277B34(cf::CChain*);
@@ -11540,21 +11557,20 @@ check:
     // Iterate through mActorList3 (sentinel at offset 0x48)
     // Retail: stores flags unconditionally, then checks null for moveBase calc
     {
-        _reslist_node<cf::CfObjectActor*>* sentinel = mgr->mActorList3.mStartNodePtr;
-        _reslist_node<cf::CfObjectActor*>* cur = sentinel->mNext;
-        while (cur != sentinel) {
+        _reslist_node<cf::CfObjectActor*>* cur =
+            mgr->mActorList3.mStartNodePtr->mNext;
+        while (cur != mgr->mActorList3.mStartNodePtr) {
             cf::CfObjectActor* actor = cur->mItem;
-            // Retail: store flags first, then check null
+            // Retail: store flags first, then branch over the moveBase calc
             *(u32*)((u8*)actor + 0x3f04) |= 0x40;
 
-            // If actor is not null, add 0x3e9c for moveBase
-            // If null, pass nullptr directly (retail falls through beq)
-            void* moveBase = actor != nullptr ? (u8*)actor + 0x3e9c : (void*)nullptr;
-            void* result = func_800AD860(moveBase);
-            if (result != nullptr) {
-                *(u32*)((u8*)result + 0x3f08) |= 0x8000000;
-                extern void func_80197BA4(void*, u32, u32);
-                func_80197BA4(result, 0, 0);
+            if (actor != nullptr) {
+                void* result = func_800AD860((u8*)actor + 0x3e9c);
+                if (result != nullptr) {
+                    *(u32*)((u8*)result + 0x3f08) |= 0x8000000;
+                    extern void func_80197BA4(void*, u32, u32);
+                    func_80197BA4(result, 0, 0);
+                }
             }
 
             cur = cur->mNext;
@@ -11563,9 +11579,9 @@ check:
 
     // Iterate through mActorList2 (sentinel at offset 0x28)
     {
-        _reslist_node<cf::CfObjectActor*>* sentinel = mgr->mActorList2.mStartNodePtr;
-        _reslist_node<cf::CfObjectActor*>* cur = sentinel->mNext;
-        while (cur != sentinel) {
+        _reslist_node<cf::CfObjectActor*>* cur =
+            mgr->mActorList2.mStartNodePtr->mNext;
+        while (cur != mgr->mActorList2.mStartNodePtr) {
             cf::CfObjectActor* actor = cur->mItem;
             extern void func_800BE12C(void*, int, int, int, int);
             func_800BE12C((u8*)actor + 0x3e9c, 0x31, 0, -1, 1);
@@ -11577,14 +11593,12 @@ check:
 // Checks various battle state flags and performs cleanup.
 void func_800F41A0(cf::CBattleManager* mgr) {
     extern u8 lbl_eu_80573EEC[];
-    extern void func_8015B11C();
     if (*(u32*)(lbl_eu_80573EEC + 0xd0) == 0) return;
 
     cf::CfGameManager::getInstance();
     if (func_8006EF04__Fi(4)) goto early_return;
 
     cf::CfGameManager::getInstance();
-    extern s32 CfRes_checkFlags_48000();
     if (CfRes_checkFlags_48000()) goto early_return;
 
     cf::CfGameManager::getInstance();
@@ -11593,11 +11607,9 @@ void func_800F41A0(cf::CBattleManager* mgr) {
 
     // Main path: set up enum list and iterate
     {
-        struct EnumListHolder { void* list; u32 handle; };
-        extern void func_80043D90(EnumListHolder*);
-        extern void* func_80043F18(EnumListHolder*);
+        // func_80043D90 / func_80043F18 / __dt__80043E88 come from
+        // CVision.hpp as extern "C" (void* params); no local re-declaration.
         extern void func_800F4A98(void*, u32, u32);
-        extern void __dt__80043E88(EnumListHolder*, int);
 
         EnumListHolder holder;
         func_80043D90(&holder);
@@ -11606,7 +11618,6 @@ void func_800F41A0(cf::CBattleManager* mgr) {
 
         list = func_80043F18(&holder);
         if (*(u32*)((u8*)list + 0x620) != 0) {
-            extern void func_8013E424(void*, int);
             func_8013E424(lbl_eu_80573EEC, 0);
 
             func_8015B11C();
@@ -11617,7 +11628,6 @@ void func_800F41A0(cf::CBattleManager* mgr) {
                 if (player != nullptr) {
                     if (*(u16*)((u8*)player + 0x8c) == 6) {
                         void* action = func_8016FE34(player);
-                        extern void func_802A3144(void*);
                         func_802A3144(action);
                         goto cleanup;
                     }

@@ -9301,3 +9301,73 @@ that sharpen the collision). Resolving for CDeviceFontLoader needs either a
 `UNIT_RULES` `inject_relocs` entry (tools/postprocess_reloc_names.py — out of data-task
 scope) or a header refactor isolating the free-function decls from the class members.
 Mark CDeviceFontLoader as a BLOCKER for the data gate.
+
+## func_800F41A0 (CBattleManager) — mangled local-struct helper relocs → file-scope extern "C" (FULL_MATCH 100%)
+- Symptom:   hexdiff clean at instruction level (100%, 0 struct, 0 regsw) but 10x R_PPC_REL24 name drift: decomp emitted `func_80043D90__FP38EnumListHolder$19481CBattleManager_cpp` / `CfRes_checkFlags_48000__Fv` / `func_8015B11C__Fv` etc. where retail uses plain linker names
+- Cause:     helpers declared as block-scope `extern void f(...)` inside the function get C++ linkage; MWCC mangles them, and params typed on a function-local struct bake the `$NNN<TU>_cpp` suffix into the symbol name
+- Fix:       hoist `extern "C"` declarations to FILE scope (MWCC Wii/1.1 C++ rejects a linkage-specification inside a function body with error 10134 "declarator expected"); for func_80043D90/func_80043F18/__dt__80043E88 delete the local re-decls entirely and use the existing extern "C" void* forms from CVision.hpp
+- Result:    FULL_MATCH (0x100/0x100, all relocs named)
+- Confidence: repo_proven
+
+## Wii/1.1 flag vocabulary correction + scheduler tie-break walls (CBattleManager near-miss trio)
+- Symptom:   functions with identical instruction sets and identical register assignments differing only in the ORDER of 2-4 independent head/setup instructions (func_800F3970 4 insns, func_800D9218 stfs/stw pair, func_800EA470 lfs/lwz pair): retail interleaves loads with setup; MWCC groups them
+- Cause:     O4,p per-block list-scheduler tie-break on the ready list; the input PCode order (hence the tie-break) is not reachable from any tried src shape. `-aggressive_ls_scheduling off` as listed in docs/scheduling.md does NOT exist in Wii/1.1 (Usage Error); only `-schedule off` exists, which regresses whole units (CBattleManager: fixes 1 fn, breaks 31). GC/3.0a5.2 also ruled out for this TU by whole-unit A/B (31/78 vs 46/78)
+- Fix:       none found from src after exhaustive levers (statement reorder, named locals, volatile barriers, inline globals, decl-order swaps incl. byteVal-first). These are recorded near-misses under the no-SMT policy unless a new angle emerges
+- Result:    recorded near-misses: us-800f4a54 (97.6%), us-800e9d78 (94.9%), us-800eaa64 (60%)
+- Confidence: negative_result
+- Applies to/a.k.a.: docs/scheduling.md flag list should mark aggressive_ls_scheduling as GC/1.2.5-only vocabulary; same wall family as KB "Pair-copy register allocation" entry
+
+## Local-init placement: late initialization beats top-of-function declaration (CBattleManager DB7F8/D7D24)
+- Symptom:   function head emits the zero-init (`li r25, 0`) immediately after the prologue where retail emits it dozens of instructions later, right before its first conditional use; every subsequent saved-register color shifts
+- Cause:     `s32 flag = 0;` at the top of the function makes the init part of the entry block; MWCC schedules it there. Retail source evidently initialized at (or near) first use
+- Fix:       declare the local without an initializer and assign it in the block where retail first writes it (`flag = 0;` immediately before the branch that reads it). Verified: func_800DB7F8 7.1% -> 16.3% from this single change
+- Result:    improvement (16.3%, ongoing)
+- Confidence: repo_proven
+- Applies to/a.k.a.: pairs with register_mapping.md Rule A; same family as "statement/assignment order" lever but for initializers specifically
+
+## func_804A7834 (monolib/src/coli/code_804A6C60) — sda2 const load pinned first in leaf diagonal-fill; retail emits it last (Wii/1.1, -O4,p, OPEN)
+- Symptom:   0x44 leaf `lfs f0,K24@sda21` + 12 stfs diagonal fill: decomp always schedules the sda21 const load at slot 0 then member lfs asc (k,x,y,z); retail has member loads DESC (z,y,x) then the const load LAST. FPR colors agree on both sides (birth order k,x,y,z -> f0,f1,f2,f3). hexdiff 76.5%, 0 structural, 4 pure reg-swap; witness gate fails on reloc presence (slot 0), so EQUIVALENT_MATCH is blocked by the same root cause as FULL.
+- Cause:     unknown final-scheduling rule. Same fill block inside func_804A763C retail hoists the const into the prologue (first) — only the standalone leaf shows reverse emission.
+- Fix:       none found — byte-invariant across 8 source shapes (cached-k decl/assign first or last, inline consts, scoped block, no locals, descending stores preserve statement order, chained assigns) and flag variants (-O4,s, -fp_contract off, -ipa off). `-schedule_factor` is internal-only (not a CLI option).
+- Result:    92.2% instruction / HIGH_MATCH near-miss (open item)
+- Confidence: negative_result
+- Applies to/a.k.a.: probe at .scratch/probe_7834.cpp (+ .dis outputs); any straight-line copy-store block mixing @sda21 loads with D-form member loads in this TU (func_804A70F8/func_804A73A0/func_804A763C preambles). Next angles: reconstruct Scheduler.c ready-list rule; call-barrier/volatile-member-read delay probes.
+
+## kyoshin/CItemBoxGrid func_801D1220 — retail `.data` jumptable routing/bound/cookie + commuted add → FULL_MATCH (Wii/1.1, -O4,p)
+- Symptom:   text bytes looked identical at ~99.5% but `code%` was 17% and the witness gate failed with `slot 5: non-register bits differ (0x00000006)`; hexdiff byte-table showed no obvious diff
+- Cause:     four stacked issues: (1) switch case mapping shifted by 2 vs retail (retail routes cats 0,1 to the merge point and bodies onto 2..13; ours had bodies on 0..11) — this changed the `cmpli` bound immediate 13→11 AND every `.data` table entry; (2) MWCC folds empty `case 12: case 13:` fallthroughs away, shrinking the table; (3) implicit `@NNN` cookie name drifts (@16378→@16376 after one edit); (4) `p[idx + 0x62]` emitted `add r3, r0, r3` vs retail `add r3, r3, r0`
+- Fix:       shift cases to retail routing (bodies on 2..13); shape base+index as named pointer (`u8* entry = p + (s8)p[0x6f]; cat = entry[0x62];`); rename cookie via `UNIT_RULES["CItemBoxGrid.o"].exact_renames (("@16376", "jumptable_eu_80534704"),)` in postprocess_reloc_names.py. Full recipe: MWCC_PATTERNS §8
+- Result:    FULL_MATCH (semantic-certified witness; 0xb4/0xb4)
+- Confidence: repo_proven
+
+## `#pragma schedule off/on` — MWCC Wii/1.1 per-function scheduling pragma (EA470 FULL_MATCH)
+- Symptom:   small functions stuck at 60-98% with pure instruction-ORDER residuals (identical instructions + registers, different sequence): loads grouped vs interleaved with setup, store pairs swapped
+- Cause:     retail source used `#pragma schedule off` around those functions; our build schedules them at O4,p
+- Fix:       bracket the function: `#pragma schedule off` before the definition, `#pragma schedule on` after its closing brace. The pragma leaks to end-of-file unless re-enabled — ALWAYS pair them. Unknown pragmas are silently ignored by Wii/1.1 (verify with a fake-pragma control). Found via `strings mwcceppc.exe | grep schedule` ("no instruction scheduling" = `-schedule off` CLI; `aggressive_ls_scheduling` exists in strings but NOT as a CLI flag)
+- Result:    func_800EA470 60% -> FULL_MATCH (100%, byte-exact incl. relocs). Whole-file-off A/B also showed F3C6C +9.2 / preCalcTotalDamage +7.7 / EA484 +4.0 / DB0FC +3.5 / E9FE4 +3.4 — retail used targeted off-regions whose exact layout is still unknown
+- Confidence: repo_proven
+- Applies to/a.k.a.: sweep every order-residual function with single-function brackets; combine with late-init and sentinel-reload patterns. CAUTION: brackets around functions that inline shared static helpers change helper bodies TU-wide (IPA) and can regress matched neighbors — verify with hexdiff --all after each bracket
+
+## __dt__804CC2E4 (monolib/src/effect/code_804CC2B8) — manual vtable cast at vptr≠0 + first-null-check temp r0↔r4 (Wii/1.1, -O4,p, OPEN)
+- Symptom:   91.7%: (a) manual cast `((void(*)(void*,int))vt[1])(obj,1)` emitted `lwz r5,388(r3); lwz r12,4(r5)` while retail uses r12 ABI dispatch `lwz r12,388(r3); lwz r12,8(r12); mtctr; bctrl`; (b) residual after fix: first null-check `lwz r0,812(r3); cmpi r0` vs retail `lwz r4; cmpi r4` (2 pure reg-swaps)
+- Cause:     (a) KB ref:68151350af pattern with a TWIST: the dispatch pointer sits at +0x184 in the pointee, not +0; slot offset under RTTI-on with declared-but-undefined virtuals is `4*(entry#)+4` where dtor entries count twice (empirical: lone 1st virtual -> 8; dtor+release -> release@12; vt0/vt1/release -> release@16). (b) unknown allocator rule
+- Fix:       synthetic derived class over padded base (`struct SubBase { u8 pad[0x184]; }; struct SubVirt : SubBase { virtual void release(int); };` then `((SubVirt*)self->field_0x328)->release(1)`) — no vtable/RTTI emitted since no definitions exist; byte+reloc exact for that block. For (b): none found — 15+ shapes × Wii/1.1 + GC/3.0a5.2 × optimize_for_size pragma all emit r0 (.scratch/dtor_probe.cpp)
+- Result:    95.8% HIGH_MATCH near-miss (open item; witness refuses bl + ABI-fixed rho r4->r0, FULL_MATCH only route)
+- Confidence: repo_proven (fix) / negative_result (residual)
+- Applies to/a.k.a.: extends ref:68151350af to non-zero vptr offsets and slot-offset arithmetic; also removed an invalid out-of-class `EffectStruct::~EffectStruct()` duplicate definition (10140 undefined identifier) that had broken the whole TU build
+
+## EffectScene struct pad gap (code_804CC2B8) — missing inter-field pad silently shifts ALL later field offsets −4 (func_804CE3E8 / func_804CE388 → FULL_MATCH)
+- Symptom:   func_804CE3E8 read `lwz r0, 804(r3)` vs retail `808(r3)`; func_804CE388 at 83.3% with scattered D-form offset diffs; struct sizeof came out 0x334 instead of the documented ~0x338
+- Cause:     `s16 field_0x25a;` ends at 0x25c but the next declared member was `u8 field_0x260;` — no pad for 0x25c..0x25f, so MWCC packed field_0x260 at 0x25c and every later member shifted −4. Named-pad structs give NO diagnostic: it compiles clean and only shows up as wrong D-form offsets in functions touching post-gap fields
+- Fix:       insert `u8 pad_0x25c[0x260 - 0x25c];`. Diagnosis recipe: offsetof probe (.scratch/off_probe.cpp — note MWCC has no stddef.h; `#define offsetof(T,M) ((int)&(((T*)0)->M))`) bisecting member offsets against retail D-form displacements until the first divergent member
+- Result:    func_804CE3E8 + func_804CE388 both FULL_MATCH (semantic-certified), zero regressions TU-wide
+- Confidence: repo_proven
+- Applies to/a.k.a.: any scaffolded padded struct; when a function's loads/displacements are off by a small constant on EVERY access past some point, suspect a missing pad right after the last correct field
+
+## kyoshin/cf/object/CActorParam UnkVirtualFunc11 — manual F64Conv union emits fsub+frsp where retail's builtin cast idiom emits single-rounded fsubs (→ FULL_MATCH)
+- Symptom:   62.6%, size +8; both int→float conversions showed `fsub` (double) + extra `frsp` vs retail's lone `fsubs` against the `0x4330000080000000` magic (`lfd f3`)
+- Cause:     hand-written union bit-construction `(float)(u.d - magic)` is plain double math for MWCC; retail compiled from builtin casts, whose conversion idiom subtracts the magic with single rounding (fsubs) and needs no frsp
+- Fix:       replace both manual conversions with plain builtin casts: `(float)val` and `(float)iv`. Result: 100% static bytes; sole residual was pool-cookie reloc drift `@6510` vs `lbl_eu_806677F8`, certified by the witness via the mined reloc map (`reloc_map.py ensure-fresh` before cycle)
+- Result:    FULL_MATCH (semantic-certified), us-8017d83c
+- Confidence: repo_proven
+- Applies to/a.k.a.: complement to MWCC_PATTERNS §7i (int→double signed magic, where the MANUAL pattern is the fix); rule of thumb: match the idiom to the retail rounding op — retail `fsubs` ⇒ builtin cast, retail `fsub`+blob-reloc ⇒ manual union

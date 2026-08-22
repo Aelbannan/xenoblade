@@ -1,6 +1,6 @@
 // CVS_THREAD_FAINT: Voice thread for the "faint" status effect.
-// FULL_MATCH: func_802A6DEC -- buffer-size getter (virtual method override).
-// Remaining six functions were NOT_STARTED stubs; decompiled below.
+// Seven functions: completion callback, voice removal, owner-level voice play,
+// slot-1 play, slot-2 play, factory/constructor, and the buffer-size override.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_FAINT.hpp"
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.hpp"
@@ -152,9 +152,11 @@ CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* owner2) {
     // li r4,0; li r5,0; bl __throw`), avoiding the __end__catch epilogue.
     if (self != NULL) {
         try {
-            // Base constructor (self in r3), then vtable/owner fields.
+            // Base constructor (self in r3), then vtable/owner fields. The
+            // vtable at 0x1C is overridden with the FAINT vtable via the raw
+            // layout view (same store as retail's `stw r5,0x1c(r3)`).
             __ct__cf_CVS_THREAD();
-            ((void**)self)[7] = (void**)lbl_eu_80539B7C;
+            ((CVS_THREAD_FAINT_raw*)self)->vtable = (const CVS_THREAD_FAINT_VTable*)lbl_eu_80539B7C;
             self->field_0x20 = owner1;
             self->field_0x24 = owner2;
         } catch (...) {
@@ -162,19 +164,17 @@ CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* owner2) {
         }
     }
 
-    // Copy the init-state triple into the first 3 u32s (outside try). Temps
-    // are loaded before the stores; the address is forced through an integer
-    // cast so the full base (lis+addi) is materialized once before any load.
-    // (Residual: retail colors the unk4 value r0 and the unk0 value r4; MWCC
-    // emits the reverse for every source shape tried - allocator fixed point,
-    // cf. sibling factory drafts. The (u32) cast also bakes the literal into
-    // the addi immediate, producing the LO layout reloc drift at +0xc6.)
-    u32 v0;
-    u32 v1;
+    // Copy the init-state triple into the first 3 u32s (outside try). Load
+    // base[0] before base[1]: retail colors the first-loaded value r4 and the
+    // second r0, storing r4 to +0 and r0 to +4.
+    // Integer cast keeps the label materialized once via lis+addi into a
+    // single pointer register (retail r5); without it MWCC splits the @h/@l.
     const u32* base = (const u32*)(u32)lbl_eu_80539B58;
-    v1 = base[1];
-    v0 = base[0];
-    self->unk0 = (u32*)v0;
+    u32 v1 = base[1];
+    u32* p0 = (u32*)base[0];
+    // Store word 1 through the raw layout view (offset 0 == base::unk0) to
+    // avoid the placeholder field name; same `stw` as retail.
+    ((CVS_THREAD_FAINT_raw*)self)->state0 = p0;
     self->unk4 = v1;
     self->unk8 = base[2];
 

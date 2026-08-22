@@ -21,3 +21,21 @@ extern u32 lbl_eu_80539B58[3];
 extern u32 lbl_eu_80539B64[3];
 extern u32 lbl_eu_80539B70[3];
 extern u32 lbl_eu_80539B7C[7];
+
+struct CVS_THREAD_FAINT_VTable;
+
+// Raw layout of the CVS_THREAD_FAINT object exposing the implicit vtable
+// pointer at 0x1C (owned by the CVS_THREAD base) so the factory can
+// override it with the FAINT vtable, plus the two voice slots.
+struct CVS_THREAD_FAINT_raw {
+    u32* state0;                // 0x00: init-state word 1
+    u32 state1;                 // 0x04: init-state word 2
+    u32 state2;                 // 0x08: init-state word 3
+    u32 field_0x0C;             // 0x0C
+    u32 field_0x10;             // 0x10
+    u32 field_0x14;             // 0x14
+    u32 field_0x18;             // 0x18
+    const CVS_THREAD_FAINT_VTable* vtable;  // 0x1C
+    CVoiceHandle* field_0x20;   // 0x20
+    CVoiceHandle* field_0x24;   // 0x24
+};

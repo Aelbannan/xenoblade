@@ -9379,3 +9379,18 @@ Mark CDeviceFontLoader as a BLOCKER for the data gate.
 - Result:    ctor offsets aligned (39.4%, residual = scheduling/alloc grind); zero regressions in CActorParam (42/60) or CBattleState (31/39)
 - Confidence: repo_proven
 - Applies to/a.k.a.: extends the EffectScene pad-gap entry in reverse — an EXTRA tail member on a base class shifts derived-class members without breaking the base TU; when a derived ctor is uniformly +N on every member but base TU matches, diff `sizeof(base)` against derived-first-member offset
+## func_804B236C (monolib/src/coli/code_804A6C60) — stub decompile: shared-tail nested ifs + auto_inline/extern C for bl-called same-TU helpers (Wii/1.1, -O4,p, FULL_MATCH 100%)
+- Symptom:   first draft was 0x6c bytes over (helpers auto-inlined); second draft 0x8 over with 23 structural diffs (w/t register swap r5/r6, inverted bne vs beq, inline li-r3-0 + b instead of shared tail).
+- Cause:     (1) MWCC auto-inlined same-TU helpers that retail calls via real bl calls; (2) declaration order of the two gate ints differed from the matched sibling func_804B204C (int t declared before int w); (3) early-return guards written as if (x == 0) return 0; emit an inverted branch plus an inline return block, while retail nests positive ifs around ONE shared return-0 tail; (4) helper definitions lacked extern C, producing mangled reloc names.
+- Fix:       wrap helpers in pragma push / pragma auto_inline off / pragma pop (the push IS required - an unbalanced pop is a hard MWCC error); copy the exact decl order from the matched sibling; restructure as nested positive ifs with a single trailing return 0; mark both helpers extern C; verify every callee against retail relocs (hexdiff --relocs --json) - the classify call is func_804B2CBC even though sibling code calls func_804B2AA4.
+- Result:    FULL_MATCH (0x138/0x138, zero reloc drift)
+- Confidence: repo_proven
+- Applies to/a.k.a.: any TU with same-TU helper functions called via bl in retail; func_804AF98C / func_804AFA08 got the same pragma+linkage treatment without regressing their own 100% matches.
+
+## Exception-frame sp-saves from inlined try/catch (monolib reslist setItem) — hidden frame-size coupling
+- Symptom:   retail emits `stw r1, N(r31)` dead stores after capacity checks inside INLINED reslist push_back calls; our build emits them at DIFFERENT offsets (or not at all if frame differs). Stores read as dead (nothing reads them in-function)
+- Cause:     `_reslist_node::setItem` wraps its store in `try{...}catch(...){throw;}` (reslist.hpp ~line 26). Under `-Cpp_exceptions on`, each inlined setItem makes MWCC store r1 into a frame slot so the unwinder can locate the frame via the exception table. The slot offset depends on TOTAL FRAME SIZE, so any missing/extra frame local shifts every exception sp-save
+- Fix:       no source change needed for the stores themselves - they appear automatically once the FRAME SIZE matches. Frame deltas trace back to other shape differences (e.g., a count loop whose walker retail spills to frame slots but ours keeps in registers)
+- Result:    diagnosis record (D9978: ours FP+76 vs retail FP+92, delta = 16B count-loop slots)
+- Confidence: repo_proven
+- Applies to/a.k.a.: ANY function calling push_back/remove on monolib reslist while exceptions are ON; check for stw-r1 stores when auditing prologues/frames; also explains mysterious 16B frame deltas in reslist-heavy TUs

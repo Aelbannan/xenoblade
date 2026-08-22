@@ -11,15 +11,15 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12932 |
-| extern "C" declarations (non-lbl_*, imports) | 5110 |
+| extern "C" (total lines) | 12999 |
+| extern "C" declarations (non-lbl_*, imports) | 5155 |
 | extern "C" definitions (forced names) | 3900 |
-| `self`/register-style params | 11917 |
+| `self`/register-style params | 11920 |
 | `void*` (params + locals) | 7193 |
-| raw pointer offset arithmetic | 6897 |
+| raw pointer offset arithmetic | 6898 |
 | deref-through-cast arithmetic | 2737 |
-| inline asm / `register` | 111 |
-| rN-named params | 570 |
+| inline asm / `register` | 113 |
+| rN-named params | 573 |
 | goto | 2920 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 0 |
@@ -30,7 +30,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | TU | severity |
 |---|---|
-| src/kyoshin/cf/CBattleManager.cpp | 4057 |
+| src/kyoshin/cf/CBattleManager.cpp | 4058 |
 | src/kyoshin/CItemBoxGrid.cpp | 2352 |
 | src/kyoshin/CPassiveSkill.cpp | 1498 |
 | src/kyoshin/CItemBoxInfo.cpp | 1492 |
@@ -85,9 +85,9 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/device/CDeviceFont.cpp | 42 | 5 | 2 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontInfoExt.cpp | 2 | 12 | 12 | 2 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontInfoRom.cpp | 15 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| libs/monolib/src/device/CDeviceFontLayer.cpp | 49 | 1 | 4 | 13 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/device/CDeviceFontLayer.cpp | 49 | 1 | 4 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontLoader.cpp | 43 | 1 | 19 | 13 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
-| libs/monolib/src/device/CDeviceGX.cpp | 45 | 0 | 3 | 6 | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/device/CDeviceGX.cpp | 90 | 0 | 6 | 6 | 0 | 0 | 6 | 6 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceRemotePad.cpp | 42 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceSC.cpp | 38 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceVI.cpp | 84 | 0 | 2 | 0 | 2 | 0 | 2 | 2 | 0 | 0 | 0 | 0 |
@@ -361,7 +361,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CActParamAnimGame.cpp | 44 | 4 | 44 | 19 | 11 | 8 | 0 | 1 | 18 | 0 | 0 | 0 |
 | src/kyoshin/cf/CArtsParam.cpp | 9 | 4 | 25 | 43 | 29 | 13 | 0 | 18 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CArtsSet.cpp | 0 | 4 | 12 | 7 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CBattleManager.cpp | 137 | 18 | 360 | 641 | 1275 | 652 | 0 | 137 | 134 | 0 | 0 | 0 |
+| src/kyoshin/cf/CBattleManager.cpp | 137 | 18 | 360 | 641 | 1276 | 652 | 0 | 137 | 134 | 0 | 0 | 0 |
 | src/kyoshin/cf/CCharEffect.cpp | 0 | 0 | 14 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CCharEffectEne.cpp | 0 | 6 | 7 | 15 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CHelpManager.cpp | 1 | 4 | 16 | 5 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
@@ -998,7 +998,6 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "void_ptr": 1
  },
  "libs/monolib/src/device/CDeviceFontLayer.cpp": {
-  "asm_code": 1,
   "asm_insn_shim": 0,
   "extern_c_nonlbl_decl": 49,
   "extern_c_nonlbl_def": 1,
@@ -1018,13 +1017,13 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "void_ptr": 13
  },
  "libs/monolib/src/device/CDeviceGX.cpp": {
-  "asm_code": 3,
+  "asm_code": 6,
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 45,
+  "extern_c_nonlbl_decl": 90,
   "init_side_effect": 0,
-  "rn_params": 3,
+  "rn_params": 6,
   "schedule_pragma": 0,
-  "self_params": 3,
+  "self_params": 6,
   "void_ptr": 6
  },
  "libs/monolib/src/device/CDeviceRemotePad.cpp": {
@@ -3946,7 +3945,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 18,
   "goto_count": 134,
   "init_side_effect": 0,
-  "ptr_arith": 1275,
+  "ptr_arith": 1276,
   "rn_params": 137,
   "schedule_pragma": 0,
   "self_params": 360,

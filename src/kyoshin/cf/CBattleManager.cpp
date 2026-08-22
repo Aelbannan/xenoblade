@@ -4215,18 +4215,22 @@ extern "C" void func_800D9978(cf::CBattleManager* self, cf::CfObjectActor* actor
         func_800E9FE4(self, actor, 0, 0, 0, 0, 0);
 
         // Notify every registered battle event (vtable slot 0xC).
-        _reslist_node<cf::IBattleEvent*>* evHead = self->mBattleEventList.mStartNodePtr;
-        _reslist_node<cf::IBattleEvent*>* ev = evHead->mNext;
-        while (ev != evHead) {
+        _reslist_node<cf::IBattleEvent*>* ev =
+            self->mBattleEventList.mStartNodePtr->mNext;
+        while (ev != self->mBattleEventList.mStartNodePtr) {
             ((BattleEventVtIf0C*)(ev->mItem))->v00C(actor);
             ev = ev->mNext;
         }
 
         // If mActorList2 holds at most one actor, reset the voice state.
+        // Retail walks via a 2-slot pointer table spilled to the frame.
+        const _reslist_node<cf::CfObjectActor*>* nodes[2];
+        nodes[0] = self->mActorList2.mStartNodePtr;
+        nodes[1] = nodes[0]->mNext;
         u32 count = 0;
-        for (_reslist_node<cf::CfObjectActor*>* n = self->mActorList2.mStartNodePtr->mNext;
-             n != self->mActorList2.mStartNodePtr; n = n->mNext) {
+        while (nodes[1] != nodes[0]) {
             count++;
+            nodes[1] = nodes[1]->mNext;
         }
         if (count <= 1 && (acc->field_3F00 & 0x2)) {
             func_802A2D84();

@@ -2,6 +2,8 @@
 
 namespace ml {
     //Not in XC3D
+    // Builds a ZXY rotation matrix from an Euler-angle vector and extracts the
+    // equivalent XYZ2ZXY-ordered rotation back into outVec.
     void CCamUtil::getXYZ2ZXY(CVec3& outVec, const CVec3& vec){
         CMat33 mat;
         float sX = math::sin(vec.x);

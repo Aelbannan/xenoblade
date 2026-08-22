@@ -11,9 +11,9 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12931 |
+| extern "C" (total lines) | 12932 |
 | extern "C" declarations (non-lbl_*, imports) | 5110 |
-| extern "C" definitions (forced names) | 3899 |
+| extern "C" definitions (forced names) | 3900 |
 | `self`/register-style params | 11917 |
 | `void*` (params + locals) | 7193 |
 | raw pointer offset arithmetic | 6897 |
@@ -540,7 +540,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/menu/CMenuLvUp.cpp | 0 | 2 | 14 | 4 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuMapSelect.cpp | 21 | 2 | 15 | 2 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuMapSelectSC.cpp | 1 | 9 | 12 | 0 | 80 | 68 | 0 | 2 | 4 | 0 | 0 | 0 |
-| src/kyoshin/menu/CMenuOption.cpp | 2 | 1 | 11 | 3 | 76 | 68 | 0 | 2 | 0 | 0 | 0 | 0 |
+| src/kyoshin/menu/CMenuOption.cpp | 2 | 2 | 11 | 3 | 76 | 68 | 0 | 2 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPTChangeNotice.cpp | 2 | 5 | 12 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/menu/CMenuPTGauge.cpp | 1 | 4 | 4 | 3 | 11 | 0 | 2 | 0 | 14 | 2 | 0 | 0 |
 | src/kyoshin/menu/CMenuPTState.cpp | 11 | 4 | 9 | 8 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
@@ -5804,7 +5804,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "asm_insn_shim": 0,
   "deref_arith": 68,
   "extern_c_nonlbl_decl": 2,
-  "extern_c_nonlbl_def": 1,
+  "extern_c_nonlbl_def": 2,
   "init_side_effect": 0,
   "ptr_arith": 76,
   "rn_params": 2,

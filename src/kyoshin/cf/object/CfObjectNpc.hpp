@@ -14,10 +14,9 @@ extern "C" u32 func_80061FFC();
 extern "C" f32 func_80496288(void* ptr);   // global frame-delta scalar
 extern "C" int func_8013EB90(int v);
 
-// Retail data labels referenced by this unit.
+// Retail data labels referenced by this unit. lbl_eu_80663E24 and
+// lbl_eu_80663E14 come from CfObjectMove.hpp.
 extern u8 lbl_eu_804FC580[];   // BDAT column-name string table base
-extern u32 lbl_eu_80663E24;    // global state/flags mask
-extern void* lbl_eu_80663E14;  // global timer reference (delta per-frame)
 extern float lbl_eu_80666AE0;
 extern float lbl_eu_80666AE4;
 extern float lbl_eu_80666AE8;

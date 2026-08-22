@@ -16,7 +16,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | extern "C" definitions (forced names) | 3900 |
 | `self`/register-style params | 11915 |
 | `void*` (params + locals) | 7191 |
-| raw pointer offset arithmetic | 6899 |
+| raw pointer offset arithmetic | 6896 |
 | deref-through-cast arithmetic | 2737 |
 | inline asm / `register` | 108 |
 | rN-named params | 568 |
@@ -30,7 +30,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | TU | severity |
 |---|---|
-| src/kyoshin/cf/CBattleManager.cpp | 4054 |
+| src/kyoshin/cf/CBattleManager.cpp | 4051 |
 | src/kyoshin/CItemBoxGrid.cpp | 2352 |
 | src/kyoshin/CPassiveSkill.cpp | 1498 |
 | src/kyoshin/CItemBoxInfo.cpp | 1492 |
@@ -361,7 +361,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | src/kyoshin/cf/CActParamAnimGame.cpp | 44 | 4 | 44 | 19 | 11 | 8 | 0 | 1 | 18 | 0 | 0 | 0 |
 | src/kyoshin/cf/CArtsParam.cpp | 9 | 4 | 25 | 43 | 29 | 13 | 0 | 18 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CArtsSet.cpp | 0 | 4 | 12 | 7 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| src/kyoshin/cf/CBattleManager.cpp | 137 | 18 | 360 | 640 | 1275 | 650 | 0 | 137 | 134 | 0 | 0 | 0 |
+| src/kyoshin/cf/CBattleManager.cpp | 137 | 18 | 360 | 640 | 1272 | 650 | 0 | 137 | 134 | 0 | 0 | 0 |
 | src/kyoshin/cf/CCharEffect.cpp | 0 | 0 | 14 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CCharEffectEne.cpp | 0 | 6 | 7 | 15 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | src/kyoshin/cf/CHelpManager.cpp | 1 | 4 | 16 | 5 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
@@ -3947,7 +3947,7 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "extern_c_nonlbl_def": 18,
   "goto_count": 134,
   "init_side_effect": 0,
-  "ptr_arith": 1275,
+  "ptr_arith": 1272,
   "rn_params": 137,
   "schedule_pragma": 0,
   "self_params": 360,

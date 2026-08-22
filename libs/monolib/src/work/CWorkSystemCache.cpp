@@ -142,8 +142,8 @@ bool func_804D8FDC(int index, u32* outField3C, u8** outField4Addr, u32* outField
 void func_804D903C(CacheListNode** outFront, u32 unk, CacheListNode* sentinel) {
     (void)unk;
     CacheListNode* front = sentinel->mNext;
-    CacheListNode* frontPrev = front->mPrev;
     CacheListNode* frontNext = front->mNext;
+    CacheListNode* frontPrev = front->mPrev;
     frontPrev->mNext = frontNext;
     frontNext->mPrev = frontPrev;
     sentinel->mNext->mNext = 0;

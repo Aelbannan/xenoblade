@@ -56,3 +56,13 @@ public:
     void func_80244518();
     void func_80244538();
 };
+
+// Retail-unmangled fade helpers: the US retail build keeps these as standalone
+// C-linkage-style symbols (verbatim func_80244558/func_802445A4/func_802445F0,
+// PLAN.md §17.6); linkage is provided by code_80135FDC.hpp.
+// Mark the overlay loaded/ready once the layout is attached.
+void func_802445F0(CFade* self);
+// Animation-end handlers: fade-in reached target -> faded-in;
+// fade-out rewound -> idle.
+void func_80244558(CFade* self);
+void func_802445A4(CFade* self);

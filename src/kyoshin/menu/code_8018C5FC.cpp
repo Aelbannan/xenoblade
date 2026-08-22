@@ -9,7 +9,7 @@
 
 // Global-scope lbl_* (data imports); declaring them outside namespace cf keeps
 // their global (unmangled) symbol name instead of cf::-mangling them.
-extern f32 lbl_eu_80667A30;
+extern const f32 lbl_eu_80667A30;
 extern f32 lbl_eu_80667A34;
 extern f32 lbl_eu_80667A38;
 extern u32 lbl_eu_80663E14;
@@ -77,11 +77,8 @@ extern "C" {
     void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32);
 }
 
-UnkClass_8018C5FC::UnkClass_8018C5FC() {
-    // Float store first: retail emits the SDA21 lfs before the integer init,
-    // so the float member assignment must precede unk0's in source order.
+UnkClass_8018C5FC::UnkClass_8018C5FC() : unk0(0) {
     unk4 = lbl_eu_80667A30;
-    unk0 = 0;
 }
 
 // Timer-based counter decrement: decreases the party gauge over time.
@@ -105,9 +102,8 @@ void func_8018C610(UnkClass_8018C5FC* _this) {
         s32 battleCount = 0;
         s32 adjust = 0;
         CMB_Bm_8018C5FC* bm = getInstance__Q22cf14CBattleManagerFv();
-        CMB_ListNode_8018C5FC* head = bm->listHead;
-        for (CMB_ListNode_8018C5FC* node = head->next;
-             node != head; node = node->next)
+        for (CMB_ListNode_8018C5FC* node = bm->listHead->next;
+             node != bm->listHead; node = node->next)
         {
             battleCount++;
         }
@@ -122,14 +118,13 @@ void func_8018C610(UnkClass_8018C5FC* _this) {
             for (CMB_ListNode_8018C5FC* node = list->headNode->next;
                  node != list->headNode; node = node->next)
             {
-                CMB_CfObj_8018C5FC* obj = 0;
+                s32 ret = 0;
                 if (node->data != 0) {
-                    obj = &node->data->obj;
+                    ret = node->data->obj.vtable->func_290(&node->data->obj);
                 }
 
-                s32 ret = obj->vtable->func_290(obj);
                 if (ret != 0) {
-                    ret = obj->vtable->func_290(obj);
+                    ret = node->data->obj.vtable->func_290(&node->data->obj);
                     ret = func_8026178C(ret, 0x69);
                 }
 

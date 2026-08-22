@@ -8,6 +8,7 @@
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/util/MemManager.hpp"
 #include <nw4r/lyt/lyt_layout.h>
+#include <monolib/work/CProcess.hpp>
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/lyt/lyt_animation.h>
 
@@ -247,7 +248,7 @@ void CMenuBattleChain::cbRenderBefore() {
     if (CTaskGame::getInstance()->func_800426F0()) {
         return;
     }
-    if (lbl_eu_80663E28 & 0x200000) {
+    if (lbl_eu_80663E28 & 0x400) { // bit 10 gates cbRenderBefore
         return;
     }
     if (func_8013BE50() == 0) {
@@ -259,7 +260,26 @@ void CMenuBattleChain::cbRenderBefore() {
     func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(mLayout, &drawInfo, 0, 1);
 }
 
-void func_802AA2A0(){}
+/*
+ * Create or update the battle-chain menu singleton. If it already exists,
+ * switch its chain type and return null; otherwise allocate 0xa0 bytes from
+ * the work heap, construct the menu and register it under the parent process.
+ */
+extern "C" void func_802AA3D0(CMenuBattleChain* self, u8 arg);
+CMenuBattleChain* func_802AA2A0(CProcess* parent, CScn* scene, u8 chainType) {
+    if (lbl_eu_80664A60 != NULL) {
+        func_802AA3D0(lbl_eu_80664A60, chainType);
+        return NULL;
+    }
+    u32 heap = getWorkMem__17CWorkThreadSystemFv();
+    CMenuBattleChain* obj = (CMenuBattleChain*)allocate__Q23mtl10MemManagerFUlUl(0xa0, heap);
+    if (obj != NULL) {
+        __ct__CMenuBattleChain(obj, scene, chainType);
+    }
+    lbl_eu_80664A60 = obj;
+    ((CProcess*)lbl_eu_80664A60)->Regist(parent, false);
+    return lbl_eu_80664A60;
+}
 
 /*
  * Per-frame hook: if the singleton is live, switch to chain mode 7 and bind /
@@ -508,7 +528,26 @@ void func_802AB4B8(CBattleChainMenuState* self) {
     self->mFlag5 = 0;
 }
 
-void func_802AB510(){}
+/*
+ * Arts-select gate: report whether the arts menu selection state is live, and
+ * set *outFlag when the current selection is "chain ready" (state 0 with
+ * substate 5). A missing state or a -1 substate means "not usable".
+ */
+bool func_802AB510(CBattleChainMenuState* self, u8* outFlag) {
+    CArtsSelectStateView* sel = CMenuArtsSelect_getSelectState();
+    if (sel == NULL)
+        return false;
+    s8 sub = sel->field_1;
+    if (sub == -1)
+        return false;
+    u8 ready;
+    if (sel->field_0 == 0 && sub == 5)
+        ready = 1;
+    else
+        ready = 0;
+    *outFlag = ready;
+    return true;
+}
 
 extern "C" void func_802AB590(void* self) { *(u8*)((u8*)self + 4) = 1; }
 

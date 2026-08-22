@@ -531,9 +531,9 @@ void PORT_ControlInd(tRFC_MCB* p_mcb, u8 dlci, tPORT_CTRL* p_port_ctrl)
 
     RFCOMM_TRACE_EVENT4("PORT_ControlInd DTR_DSR : %d, RTS_CTS : %d, RI : %d, DCD : %d",
                         p_port->modem_signal & 0x01,
-                        (p_port->modem_signal & 0x02) >> 1,
-                        (p_port->modem_signal & 0x04) >> 2,
-                        (p_port->modem_signal & 0x08) >> 3);
+                        (p_port->modem_signal >> 1) & 1,
+                        (p_port->modem_signal >> 2) & 1,
+                        (p_port->modem_signal >> 3) & 1);
 }
 
 /* ========================================================================

@@ -9,12 +9,83 @@ extern "C" bool func_eu_8044A600();  // SCGetLanguage() == 0 (JP console); decla
 using namespace ml;
 
 
-// Retail data-symbol imports for the anonymous-ns CDeviceException: its
-// vtable (.data, monolibdata blob) and the shared string pool that holds
-// "CDeviceException" at +0x5c. Global-scope names are not mangled, so no
-// extern "C" is needed.
-extern u32 lbl_eu_8056C000[];
-extern const char lbl_eu_80522AD0[];
+// --- Dissolved retail data (CDevice TU) ---
+// Retail bytes/relocs dumped from build/us/asm/monolib/src/device/CDevice.s
+// .rodata 0x80522AA8 (0x28+0x78), .data 0x8056C000 (0xA0+0x18+0xA0+0x18), .sdata 0x80663680 (0x10)
+// .bss 0x806574F8 (0x44+0x44), .sbss 0x80665650 (0x10)
+// Emitted as extern "C" u32 arrays with (u32)&extern, rodata align, DECOMP_FORCEACTIVE, novtable (CDevice is novtable via header).
+#include "monolib/data_vtables.hpp"
+extern "C" {
+    extern const char lbl_eu_80522AA8[];
+    extern const char lbl_eu_8066A3A8[];
+    extern u32 lbl_eu_80663680[];
+    extern u32 lbl_eu_80663688[];
+    extern u32 lbl_eu_8056C158[];
+}
+extern "C" void* __RTTI__10IWorkEvent;
+extern "C" void* __RTTI__11CWorkThread;
+extern "C" void wkStandbyLogin__11CWorkThreadFv();
+extern "C" void wkStandbyLogin__7CDeviceFv();
+extern "C" void wkStandbyLogout__7CDeviceFv();
+extern "C" void __dt__7CDeviceFv();
+extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const char lbl_eu_80522AA8[40] = "@unnamed@CDevice_cpp@::CDeviceException";
+extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const u32 lbl_eu_80522AD0[30] = {
+    0x43446576, 0x69636556, 0x49004344, 0x65766963, 0x65475800,
+    0x43446576, 0x69636546, 0x6F6E7400, 0x43446576, 0x69636552,
+    0x656D6F74, 0x65504144, 0x00434465, 0x76696365, 0x436C6F63,
+    0x6B004344, 0x65766963, 0x65534300, 0x43446576, 0x69636546,
+    0x696C6500, 0x434C6962, 0x43726900, 0x43446576, 0x69636545,
+    0x78636570, 0x74696F6E, 0x00434465, 0x76696365, 0x00000000
+};
+extern "C" u32 lbl_eu_8056C000[40] __attribute__((aligned(8))) = {
+    (u32)&lbl_eu_80663680, 0x00000000, 0,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
+    (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
+    (u32)&wkUpdate__11CWorkThreadFv, (u32)&wkRender__11CWorkThreadFv,
+    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__11CWorkThreadFv,
+    0, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl
+};
+extern "C" __declspec(section ".data") __attribute__((aligned(8))) u32 lbl_eu_8056C0A0[6] = { (u32)&__RTTI__10IWorkEvent, 0x00000000, (u32)&__RTTI__11CWorkThread, 0x00000000, 0x00000000, 0x00000000 };
+extern "C" u32 lbl_eu_8056C0B8[40] __attribute__((aligned(8))) = {
+    (u32)&lbl_eu_80663688, 0x00000000, (u32)&__dt__7CDeviceFv,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
+    (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
+    (u32)&wkUpdate__11CWorkThreadFv, (u32)&wkRender__11CWorkThreadFv,
+    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__7CDeviceFv,
+    (u32)&wkStandbyLogout__7CDeviceFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl
+};
+extern "C" __declspec(section ".data") __attribute__((aligned(8))) u32 lbl_eu_8056C158[6] = { (u32)&__RTTI__10IWorkEvent, 0x00000000, (u32)&__RTTI__11CWorkThread, 0x00000000, 0x00000000, 0x00000000 };
+extern "C" u32 lbl_eu_80663680[2] __attribute__((aligned(8))) = { (u32)&lbl_eu_80522AA8, (u32)&lbl_eu_8056C0A0 };
+extern "C" u32 lbl_eu_80663688[2] __attribute__((aligned(8))) = { (u32)&lbl_eu_8066A3A8, (u32)&lbl_eu_8056C158 };
+DECOMP_FORCEACTIVE(CDevice_cpp_rodata_sdata, lbl_eu_80522AA8, lbl_eu_80522AD0, lbl_eu_80663680, lbl_eu_80663688, lbl_eu_8056C000, lbl_eu_8056C0A0, lbl_eu_8056C0B8, lbl_eu_8056C158);
 // Retail name of the spNotRunningDeviceName FixStr (.bss, monolibdata blob).
 extern FixStr<64> lbl_eu_806574F8;
 
@@ -58,7 +129,10 @@ namespace {
             lbl_eu_80665654 = this;
         }
         ~CDeviceException();
-        bool wkStandbyLogout();
+        virtual bool wkStandbyLogout() {
+            if (mChildren.empty() == false) return false;
+            return CWorkThread::wkStandbyLogout();
+        }
         static CDeviceException* getInstance();
 
         DECL_WORKTHREAD_CREATE(CDeviceException);
@@ -263,9 +337,4 @@ void CDevice::deleteRegions(){
 
 CDeviceException::~CDeviceException(){
     lbl_eu_80665654 = nullptr;
-}
-
-bool CDeviceException::wkStandbyLogout(){
-    if(mChildren.empty() == false) return false;
-    return CWorkThread::wkStandbyLogout();
 }

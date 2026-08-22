@@ -32,33 +32,45 @@ static inline float u32ToF32(u32 v) {
     return (float)(c.d - lbl_eu_8066ABA8);
 }
 
+// Callback object invoked through vtable slot 0x0C when intensity overflows.
+struct CScnFilterCallback {
+    virtual ~CScnFilterCallback();
+    virtual void unk_04();
+    virtual void unk_08();
+    virtual void unk_0C();
+};
+
+// Per-frame update payload; holds a delta at 0x84+0x0C added to mIntensity.
+struct CScnFilterUpdateData {
+    u8 pad_00[0x0C];
+    f32 field_0x0C;
+};
+
+struct CScnFilterHost {
+    u8 field_0x00[0x84];
+    CScnFilterUpdateData field_0x84;
+};
+
 static int check_over(CScnFilter* self) {
-    int over;
+    // intensity limit check; uses the unsigned int-to-double conversion trick
+    int over = 0;
     if (self->mUnk0C != 0 && self->mIntensity > u32ToF32(self->mUnk0C)) {
         over = 1;
-    } else {
-        over = 0;
     }
     return over;
 }
 
-extern "C" void func_8049C868(CScnFilter* self, void* arg) {
-    if (self->mUnk0C == 0) {
+void func_8049C868(CScnFilter* self, CScnFilterHost* host) {
+    if (!check_over(self)) {
         return;
     }
-    if (check_over(self)) {
-        return;
-    }
-    void* obj = *(void**)((char*)arg + 0x84);
-    self->mIntensity += *(f32*)((char*)obj + 0x0C);
+    // accumulate this frame's delta into the filter intensity
+    self->mIntensity += host->field_0x84.field_0x0C;
     if (check_over(self)) {
         if (self->mUnk14 != 0) {
-            void* cb = (void*)self->mUnk14;
-            void (*func)(void*) = (void (*)(void*))(*(void**)((char*)*(void**)cb + 0x0C));
-            func(cb);
+            ((CScnFilterCallback*)self->mUnk14)->unk_0C();
         }
-    }
-}
+    }}
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x8056EB60-0x8056EB78 (24B): CScnFilter vtable. The typeinfo pair

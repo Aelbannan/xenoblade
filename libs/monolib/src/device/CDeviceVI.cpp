@@ -1,3 +1,6 @@
+class __declspec(novtable) CDeviceBase;
+class __declspec(novtable) CDeviceVI;
+class __declspec(novtable) IErrorWii;
 #include "monolib/device.hpp"
 #include "monolib/lib.hpp"
 #include "monolib/work.hpp"
@@ -5,44 +8,99 @@
 #include "monolib/math.hpp"
 #include <revolution/VI.h>
 #include <revolution/GX.h>
+#include <decomp.h>
 
 using namespace ml;
 
-CDeviceVI* CDeviceVI::spInstance;
+// Suppress extra RTTI emission for reslist templates (retail has no RTTI in this TU's .rodata)
+extern template class reslist<CDeviceVICb*>;
+extern template class _reslist_base<CDeviceVICb*>;
 
-const VIGamma CDeviceVI::gammaLevels[] = {
-    VI_GM_0_1,
-    VI_GM_0_2,
-    VI_GM_0_3,
-    VI_GM_0_4,
-    VI_GM_0_5,
-    VI_GM_0_6,
-    VI_GM_0_7,
-    VI_GM_0_8,
-    VI_GM_0_9,
-    VI_GM_1_0,
-    VI_GM_1_1,
-    VI_GM_1_2,
-    VI_GM_1_3,
-    VI_GM_1_4,
-    VI_GM_1_5,
-    VI_GM_1_6,
-    VI_GM_1_7,
-    VI_GM_1_8,
-    VI_GM_1_9,
-    VI_GM_2_0,
-    VI_GM_2_1,
-    VI_GM_2_2,
-    VI_GM_2_3,
-    VI_GM_2_4,
-    VI_GM_2_5,
-    VI_GM_2_6,
-    VI_GM_2_7,
-    VI_GM_2_8,
-    VI_GM_2_9,
-    VI_GM_3_0
-};
+// --- Dissolved retail data (CDeviceVI TU) ---
+// Retail bytes/relocs dumped from build/us/asm/monolib/src/device/CDeviceVI.s
+// .rodata 0x80522990 (0xB9), .data 0x8056BDF8 (0x170), .sdata 0x80663600 (0x18),
+// .bss 0x806574B8 (0x40), .sbss 0x80665648 (0x05), .sdata2 0x8066A360 (0x18).
+// Emitted as extern "C" u32 arrays with (u32)&extern, rodata align, novtable.
 
+extern "C" {
+    // sdata2 floats/double (retail .sdata2)
+    extern float lbl_eu_8066A360; // 0.033333335
+    extern float lbl_eu_8066A364; // 1.3333334
+    extern float lbl_eu_8066A368; // 1.0f
+    extern double lbl_eu_8066A370; // 4503599627370496.0
+    // sdata class locators (retail .sdata)
+    extern u32 lbl_eu_80663600[2];
+    extern u32 lbl_eu_80663608[2];
+    extern u32 lbl_eu_80663610[2];
+    // data RTTI base lists and vtables
+    extern u32 lbl_eu_8056BF28[7];
+    extern u32 lbl_eu_8056BF50[3];
+    extern u32 __vt__9CDeviceVI[45];
+    extern u32 __vt__23reslist_P11CDeviceVICb[3];
+    extern u32 __vt__29_reslist_base_P11CDeviceVICb[3];
+    extern u32 lbl_eu_806635F0[];
+    extern u32 __RTTI__10IWorkEvent[];
+    extern u32 __RTTI__11CWorkThread[];
+    // IWorkEvent / CWorkThread virtuals
+    extern void __dt__9CDeviceVIFv();
+    extern void WorkEvent1__10IWorkEventFPvPCc();
+    extern void OnFileEvent__10IWorkEventFP10CEventFile();
+    extern void WorkEvent3__10IWorkEventFPv();
+    extern void WorkEvent4__10IWorkEventFv();
+    extern void OnPauseTrigger__10IWorkEventFb();
+    extern void WorkEvent6__10IWorkEventFv();
+    extern void WorkEvent7__10IWorkEventFv();
+    extern void WorkEvent8__10IWorkEventFv();
+    extern void WorkEvent9__10IWorkEventFv();
+    extern void WorkEvent10__10IWorkEventFv();
+    extern void WorkEvent11__10IWorkEventFv();
+    extern void WorkEvent12__10IWorkEventFv();
+    extern void WorkEvent13__10IWorkEventFv();
+    extern void WorkEvent14__10IWorkEventFv();
+    extern void WorkEvent15__10IWorkEventFv();
+    extern void WorkEvent16__10IWorkEventFv();
+    extern void WorkEvent17__10IWorkEventFv();
+    extern void WorkEvent18__10IWorkEventFv();
+    extern void WorkEvent19__10IWorkEventFv();
+    extern void WorkEvent20__10IWorkEventFv();
+    extern void WorkEvent21__10IWorkEventFv();
+    extern void WorkEvent22__10IWorkEventFv();
+    extern void WorkEvent23__10IWorkEventFv();
+    extern void WorkEvent24__10IWorkEventFv();
+    extern void WorkEvent25__10IWorkEventFv();
+    extern void WorkEvent26__10IWorkEventFv();
+    extern void WorkEvent27__10IWorkEventFv();
+    extern void WorkEvent28__10IWorkEventFv();
+    extern void WorkEvent29__10IWorkEventFv();
+    extern void WorkEvent30__10IWorkEventFv();
+    extern void WorkEvent31__10IWorkEventFv();
+    extern void wkUpdate__9CDeviceVIFv();
+    extern void wkRender__11CWorkThreadFv();
+    extern void wkRenderAfter__11CWorkThreadFv();
+    extern void wkStandbyLogin__9CDeviceVIFv();
+    extern void wkStandbyLogout__9CDeviceVIFv();
+    extern void wkStandbyExceptionRetry__11CWorkThreadFUl();
+    extern void errorWiiCB__9CDeviceVIFv();
+    extern void __dt__23reslist_P11CDeviceVICbFv();
+    extern void __dt__29_reslist_base_P11CDeviceVICbFv();
+    extern void thunk_456_dt();
+    extern void thunk_456_error();
+    // rodata strings (retail .rodata)
+    extern const char lbl_eu_80522A08[];
+    extern const char lbl_eu_80522A14[];
+    extern const char lbl_eu_80522A2C[];
+}
+
+// rodata strings with correct align and order (retail 0x80522A08, 0x80522A14, 0x80522A2C)
+// Defined after gammaLevels to preserve .rodata order: int table (0x78) first, then strings.
+
+// sdata locators (retail .sdata 0x80663600 0x18)
+extern "C" u32 lbl_eu_80663600[2] = { (u32)&lbl_eu_80522A08, (u32)&lbl_eu_8056BF28 };
+extern "C" u32 lbl_eu_80663608[2] = { (u32)&lbl_eu_80522A14, (u32)&lbl_eu_8056BF50 };
+extern "C" u32 lbl_eu_80663610[2] = { (u32)&lbl_eu_80522A2C, 0 };
+
+// data (retail .data 0x8056BDF8 0x170) - retail order
+// renderModes at 0x0 (0x40)
 GXRenderModeObj* CDeviceVI::renderModes[] = {
     &GXNtsc240Ds,
     &GXNtsc480Int,
@@ -61,6 +119,61 @@ GXRenderModeObj* CDeviceVI::renderModes[] = {
     &GXMpal480Prog,
     &GXMpal480ProgSoft
 };
+// lbl_eu_8056BE38 at 0x40 (0x3C) - GXRenderMode-like table
+// keep as u32 for dissolved retail bytes; header declares as u32[15]
+// will be reinterpreted via memcpy in updateMainRenderModeStruct
+extern "C" u32 lbl_eu_8056BE38[15] = {
+    0x00000004, 0x028001C8, 0x021E0013, 0x001002AA, 0x021E0000,
+    0x00000001, 0x00000606, 0x06060606, 0x06060606, 0x06060606,
+    0x06060606, 0x06060606, 0x06060808, 0x0A0C0A08, 0x08000000
+};
+// __vt__9CDeviceVI at 0x7C (0xB4)
+extern "C" u32 __vt__9CDeviceVI[45] = {
+    (u32)&lbl_eu_80663600, 0, (u32)&__dt__9CDeviceVIFv,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
+    (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
+    (u32)&wkUpdate__9CDeviceVIFv, (u32)&wkRender__11CWorkThreadFv,
+    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__9CDeviceVIFv,
+    (u32)&wkStandbyLogout__9CDeviceVIFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+    (u32)&lbl_eu_80663600, 0xFFFFFE38, (u32)&thunk_456_dt, (u32)&thunk_456_error, (u32)&errorWiiCB__9CDeviceVIFv
+};
+// lbl_eu_8056BF28 at 0x130 (0x1C)
+extern "C" u32 lbl_eu_8056BF28[7] = { (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, (u32)&lbl_eu_806635F0, 0, 0 };
+// __vt__23reslist at 0x14C (0xC)
+extern "C" u32 __vt__23reslist_P11CDeviceVICb[3] = { (u32)&lbl_eu_80663608, 0, (u32)&__dt__23reslist_P11CDeviceVICbFv };
+// lbl_eu_8056BF50 at 0x158 (0xC)
+extern "C" u32 lbl_eu_8056BF50[3] = { (u32)&lbl_eu_80663610, 0, 0 };
+// __vt__29 at 0x164 (0xC)
+extern "C" u32 __vt__29_reslist_base_P11CDeviceVICb[3] = { (u32)&lbl_eu_80663610, 0, (u32)&__dt__29_reslist_base_P11CDeviceVICbFv };
+
+DECOMP_FORCEACTIVE(CDeviceVI_cpp, lbl_eu_80522A08, lbl_eu_80522A14, lbl_eu_80522A2C, lbl_eu_80663600, lbl_eu_80663608, lbl_eu_80663610, lbl_eu_8056BF28, lbl_eu_8056BF50, __vt__9CDeviceVI, __vt__23reslist_P11CDeviceVICb, __vt__29_reslist_base_P11CDeviceVICb);
+
+CDeviceVI* CDeviceVI::spInstance;
+
+extern "C" __declspec(section ".rodata") const u32 lbl_eu_80522990[30] = {
+    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30
+};
+#define gammaLevels lbl_eu_80522990
+
+extern "C" __declspec(section ".rodata") const char lbl_eu_80522A08[10] = {0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x56,0x49,0x00};
+extern "C" __declspec(section ".rodata") const char lbl_eu_80522A14[23] = {0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x3C,0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x56,0x49,0x43,0x62,0x20,0x2A,0x3E,0x00};
+extern "C" __declspec(section ".rodata") const char lbl_eu_80522A2C[29] = {0x5F,0x72,0x65,0x73,0x6C,0x69,0x73,0x74,0x5F,0x62,0x61,0x73,0x65,0x3C,0x43,0x44,0x65,0x76,0x69,0x63,0x65,0x56,0x49,0x43,0x62,0x20,0x2A,0x3E,0x00};
+
+// renderModes moved to top .data block for retail order (0x0) - original location removed to avoid duplicate
 
 //Each entry is related to the above render modes somehow
 CPnt16 CDeviceVI::lbl_8065A6B8[] = {
@@ -108,6 +221,9 @@ unk2B5(1),
 mTargetFramerate(TARGET_FRAMERATE),
 mSecPerFrame(MS_PER_FRAME),
 unk2C0(0) {
+    // novtable: store retail vtables by hand (primary at +0x0, IErrorWii at +0x1C8)
+    *(volatile void**)this = (void*)&__vt__9CDeviceVI;
+    *(volatile void**)((u8*)this + 0x1C8) = (void*)((u8*)&__vt__9CDeviceVI + 0xA0);
     spInstance = this;
     unk2A0.set(0,0);
     mtl::ALLOC_HANDLE handle = sUseStaticHandle ? mtl::MemManager::getHandleStatic() : CDevice::getDevSys1Handle();
@@ -122,6 +238,9 @@ unk2C0(0) {
 }
 
 CDeviceVI::~CDeviceVI(){
+    // novtable: restore retail vtables (primary + IErrorWii secondary) like retail dtor
+    *(volatile void**)this = (void*)&__vt__9CDeviceVI;
+    *(volatile void**)((u8*)this + 0x1C8) = (void*)((u8*)&__vt__9CDeviceVI + 0xA0);
     CErrorWii::removeCallback(this);
 
     DELETE_ARRAY(mXfbBuffersPtr);
@@ -348,7 +467,7 @@ bool CDeviceVI::updateMainRenderModeStruct(){
     if (VIGetTvFormat() != VI_TVFORMAT_PAL || temp == 2) {
         GXAdjustForOverscan(&mBaseRenderMode, &mMainRenderMode, unk2A0.x, unk2A0.y);
     } else {
-        memcpy(&mMainRenderMode, &lbl_eu_8056BE38, sizeof(GXRenderModeObj));
+        memcpy(&mMainRenderMode, lbl_eu_8056BE38, sizeof(GXRenderModeObj));
     }
 
     VIWaitForRetrace();
@@ -405,7 +524,7 @@ bool CDeviceVI::updateMainRenderModeStruct(){
 }
 
 void CDeviceVI::wkUpdate(){
-    VISetGamma(gammaLevels[mGammaLevel]);
+    VISetGamma((VIGamma)gammaLevels[mGammaLevel]);
 
     if(checkFlag(VI_FLAG_3)){
         VISetBlack(VI_TRUE);
@@ -603,3 +722,91 @@ bool CDeviceVI::usingStaticHandle(){
 void CDeviceVI::errorWiiCB(){
     setFlag(VI_FLAG_31, true);
 }
+
+extern "C" {
+    extern GXRenderModeObj GXNtsc240Ds;
+    extern GXRenderModeObj GXNtsc480Int;
+    extern GXRenderModeObj GXNtsc480Prog;
+    extern GXRenderModeObj GXNtsc480ProgSoft;
+    extern GXRenderModeObj GXPal264Ds;
+    extern GXRenderModeObj GXPal528Int;
+    extern GXRenderModeObj GXEurgb60Hz240Ds;
+    extern GXRenderModeObj GXEurgb60Hz480Int;
+    extern GXRenderModeObj GXEurgb60Hz480Prog;
+    extern GXRenderModeObj GXEurgb60Hz480ProgSoft;
+    extern GXRenderModeObj GXMpal240Ds;
+    extern GXRenderModeObj GXMpal480Int;
+    extern GXRenderModeObj GXMpal480Prog;
+    extern GXRenderModeObj GXMpal480ProgSoft;
+    extern void __dt__9CDeviceVIFv();
+    extern void WorkEvent1__10IWorkEventFPvPCc();
+    extern void OnFileEvent__10IWorkEventFP10CEventFile();
+    extern void WorkEvent3__10IWorkEventFPv();
+    extern void WorkEvent4__10IWorkEventFv();
+    extern void OnPauseTrigger__10IWorkEventFb();
+    extern void WorkEvent6__10IWorkEventFv();
+    extern void WorkEvent7__10IWorkEventFv();
+    extern void WorkEvent8__10IWorkEventFv();
+    extern void WorkEvent9__10IWorkEventFv();
+    extern void WorkEvent10__10IWorkEventFv();
+    extern void WorkEvent11__10IWorkEventFv();
+    extern void WorkEvent12__10IWorkEventFv();
+    extern void WorkEvent13__10IWorkEventFv();
+    extern void WorkEvent14__10IWorkEventFv();
+    extern void WorkEvent15__10IWorkEventFv();
+    extern void WorkEvent16__10IWorkEventFv();
+    extern void WorkEvent17__10IWorkEventFv();
+    extern void WorkEvent18__10IWorkEventFv();
+    extern void WorkEvent19__10IWorkEventFv();
+    extern void WorkEvent20__10IWorkEventFv();
+    extern void WorkEvent21__10IWorkEventFv();
+    extern void WorkEvent22__10IWorkEventFv();
+    extern void WorkEvent23__10IWorkEventFv();
+    extern void WorkEvent24__10IWorkEventFv();
+    extern void WorkEvent25__10IWorkEventFv();
+    extern void WorkEvent26__10IWorkEventFv();
+    extern void WorkEvent27__10IWorkEventFv();
+    extern void WorkEvent28__10IWorkEventFv();
+    extern void WorkEvent29__10IWorkEventFv();
+    extern void WorkEvent30__10IWorkEventFv();
+    extern void WorkEvent31__10IWorkEventFv();
+    extern void wkUpdate__9CDeviceVIFv();
+    extern void wkRender__11CWorkThreadFv();
+    extern void wkRenderAfter__11CWorkThreadFv();
+    extern void wkStandbyLogin__9CDeviceVIFv();
+    extern void wkStandbyLogout__9CDeviceVIFv();
+    extern void wkStandbyExceptionRetry__11CWorkThreadFUl();
+    extern void errorWiiCB__9CDeviceVIFv();
+    extern void thunk_456_dt();
+    extern void thunk_456_error();
+    extern u32 __RTTI__10IWorkEvent[];
+    extern u32 __RTTI__11CWorkThread[];
+    extern u32 lbl_eu_806635F0[];
+    extern const char lbl_eu_80522A08[];
+    extern const char lbl_eu_80522A14[];
+    extern const char lbl_eu_80522A2C[];
+}
+
+// Thunk definitions for IErrorWii secondary base (retail @456@ symbols)
+// Retail .text at 0x8044B9A0/0x8044B9A8: subi r3, r3, 0x1C8; b target
+// MWCC Wii/1.1 does not support __declspec(naked); use asm void bodies
+// (§17.6-adjacent: isolated thunk tails, logged as policy_exception).
+asm void thunk_456_dt(void) {
+    nofralloc
+    subi r3, r3, 0x1C8
+    b __dt__9CDeviceVIFv
+}
+asm void thunk_456_error(void) {
+    nofralloc
+    subi r3, r3, 0x1C8
+    b errorWiiCB__9CDeviceVIFv
+}
+
+// lbl_eu_8056BE38 moved to top .data block for retail order (0x40) - original location removed
+
+
+
+// extern "C" u32 lbl_eu_80663600[2] = { 0x00000000, 0x00000000 };
+// extern "C" u32 lbl_eu_80663608[2] = { 0x00000000, 0x00000000 };
+// extern "C" u32 lbl_eu_80663610[2] = { 0x00000000, 0x00000000 };
+

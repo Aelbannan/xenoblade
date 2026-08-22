@@ -33,43 +33,46 @@ extern "C" __declspec(noinline) CMenuTutorial* __ct__CMenuTutorial(
     CMenuTutorial* self, CProcess* parent, u32 arg2) {
     __ct__8CProcessFv((CProcess*)self);
 
-    // vtable fixups: temp (CProcess) vtable first, then the composite vtable
-    // and the IScnRender sub-vtable at +0x58.
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
-    const u32* nullPtmf = __ptmf_null;
-    // Copy the null PMF words in retail store order: 0x40, 0x3C, 0x44, then
-    // 0x4C, 0x48, 0x50 (with a reload for the second group).
-    u32 w0 = nullPtmf[0];
-    u32 w1 = nullPtmf[1];
-    self->ptmf0[1] = w1;
-    self->ptmf0[0] = w0;
-    self->ptmf0[2] = nullPtmf[2];
-    w0 = nullPtmf[0];
-    w1 = nullPtmf[1];
-    self->ptmf1[1] = w1;
-    self->ptmf1[0] = w0;
-    self->ptmf1[2] = nullPtmf[2];
-    self->field_54 = 0;
-    self->field_55 = 0;
-
-    // Composite vtable + IScnRender sub-vtable computed from one address so
-    // MWCC reuses the register (retail: lis/addi r6 once, then addi r0,r6,0x24).
+    // Walk the null PMF words in retail order.
     u32 composite = (u32)lbl_eu_805391C0;
+    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
+    const u32* pmf = __ptmf_null;
+    u32 w0 = *(pmf++);
+    u32 subVtable = composite + 0x24;
+    const u32 zero = 0;
+
+    // Null PMF slots in retail store order (0x40, 0x3C, 0x44, 0x4C, 0x48,
+    // 0x50), with the tutorial subobject address formed mid-sequence. The
+    // pointer is walked twice over the same three words.
+    self->ptmf0[1] = *(pmf++);
+    self->ptmf0[0] = w0;
+    self->ptmf0[2] = *(pmf++);
+    pmf -= 3;
+    u32 v0 = *(pmf++);
+    self->ptmf1[1] = *(pmf++);
+    self->ptmf1[0] = v0;
+    self->ptmf1[2] = *(pmf);
+
+    self->field_54 = zero;
+    self->field_55 = zero;
+
+    // Composite vtable + IScnRender sub-vtable stored after the PMF slots.
     *(u32*)((u8*)self + 0x10) = composite;
-    *(u32*)((u8*)self + 0x58) = composite + 0x24;
+    *(u32*)&self->mIScnRender = subVtable;
     self->mParentRef = parent;
 
     __ct__CTutorial(&self->mTutorial, 0, 0);
     __ct__CTitleAHelp(&self->mTitleAHelp, 0, 0);
 
-    self->mIsInitialised = 0;
+    self->mIsInitialised = zero;
     self->mType = arg2;
-    self->mSomething = 0;
-    self->mSavedInputFlags = 0;
+    self->mSomething = zero;
+    self->mSavedInputFlags = zero;
     // Bit 1 of the Init flag word decides whether the open event is fired;
-    // the byte is stored twice because retail does (0 then the extracted bit).
-    self->mSomething = (lbl_eu_80663E24 >> 1) & 1;
-    if (self->mSomething == 0) {
+    // extracted once and stored, then tested.
+    u32 openBit = (lbl_eu_80663E24 >> 1) & 1;
+    self->mSomething = openBit;
+    if (openBit == 0) {
         func_8008294C__Q22cf13CfGameManagerFv(1);
     }
 

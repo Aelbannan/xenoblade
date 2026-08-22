@@ -1,12 +1,9 @@
 #include "kyoshin/help/CHelp_LearnArts.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/CHelpManager.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 
-struct CHelpFlagBag {
-    u8 pad[0x16];
-    u8 mLearnArtsFlag; // +0x16
-};
-
+namespace cf {
 // Kept inline (not in CHelp_LearnArts.hpp): ocBdat.hpp (included below) carries
 // a conflicting in-flight decl of the same retail symbol (u32 return / s32 arg).
 // Retail callers (e.g. CUIWindowManager) halfword-load through the r3 result, so
@@ -15,7 +12,6 @@ struct CHelpFlagBag {
 // inline for the same reason).
 extern "C" const char* getBdatStringColumnValue(void* pData, const char* pCol, int index);
 
-namespace cf {
 bool CHelp_LearnArts::func_802B8398() {
     if (cf::CfGameManager::func_800829B8()) {
         return false;
@@ -37,17 +33,18 @@ bool CHelp_LearnArts::func_802B8398() {
     }
     lbl_eu_80664A10->mLearnArtsFlag = 0;
     int bound = 0;
-    const char* columnName = "wpn_type";
+    const char* colName = 0;
     s16 threshold = mWpnTypeCount;
     u8* artsBase = 0;
     u32 byteVal = 0;
     int counter = 0;
     for (s16 character = 1; character <= 13; ++character) {
+        colName = (const char*)lbl_eu_805138AC;
         cf::CHelpLearnArtsCharData* charData = (cf::CHelpLearnArtsCharData*)func_8009EC9C((u16)character);
         artsBase = charData->mArts;
-        const char* strResult = getBdatStringColumnValue(lbl_eu_806640F4, columnName, charData->mWpnType);
-        byteVal = (u8)*strResult;
+        const char* strResult = getBdatStringColumnValue(lbl_eu_806640F4, colName, charData->mWpnType);
         bound = (character == 1) ? 8 : 16;
+        byteVal = (u8)*strResult;
         counter = 0;
         for (int j = 0; j < bound; ++j) {
             if (func_801F9268(artsBase, byteVal, j)) {

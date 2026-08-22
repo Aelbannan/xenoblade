@@ -144,8 +144,10 @@ extern "C" CSysWinBuff* create__11CSysWinBuffFv(CProcess* registerParent, CScn* 
         obj->vtable = (void*)lbl_eu_8052D238;
 
         // Copy the null member-function pointer into both callback slots
-        // (retail loads __ptmf_null[1],[0],[2] per slot - load-both/store-both,
-        // so use intermediate locals to force the retail ordering).
+        // (retail loads __ptmf_null[1],[0],[2] then stores per slot, so use
+        // intermediate locals to force the retail ordering). The uintptr_t
+        // round-trip keeps MWCC from rematerializing the array address per
+        // slot (same idiom as CSysWinSave).
         const u32* ptmf = __ptmf_null;
         u32 ptmfWord1 = ptmf[1];
         u32 ptmfWord0 = ptmf[0];
@@ -154,8 +156,7 @@ extern "C" CSysWinBuff* create__11CSysWinBuffFv(CProcess* registerParent, CScn* 
         u32 ptmfWord2 = ptmf[2];
         obj->callbacks[2] = ptmfWord2;
         ptmfWord1 = ptmf[1];
-        ptmfWord0 = ptmf[0];
-        obj->callbacks[3] = ptmfWord0;
+        ptmfWord0 = ptmf[0];        obj->callbacks[3] = ptmfWord0;
         obj->callbacks[4] = ptmfWord1;
         ptmfWord2 = ptmf[2];
         obj->callbacks[5] = ptmfWord2;
@@ -172,7 +173,8 @@ extern "C" CSysWinBuff* create__11CSysWinBuffFv(CProcess* registerParent, CScn* 
 
         obj->vtable = (void*)lbl_eu_80537DC0;
         obj->field6C = (u32)(lbl_eu_80537DC0 + 0x24);
-        obj->field70 = (u32)(lbl_eu_80537DC0 + 0xac);        obj->fileHandle = 0;
+        obj->field70 = (u32)(lbl_eu_80537DC0 + 0xac);
+        obj->fileHandle = 0;
         obj->scene = scene;
 
         __ct__CSysWin(&obj->mSysWin[0], 0);

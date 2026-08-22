@@ -313,23 +313,25 @@ void sjuni_GetChunk(SJUNI *self, int mode, int size, SJ_CHUNK *out) {
         out->ptr = NULL;
         out->size = 0;
     } else {
-        int sz;
-        unsigned char *p;
-        if (self->queue[mode] == NULL) {
+        /* hoist &queue[mode]: MWCC keeps this address in a register across the branch */
+        SJUNI_CHUNK **qslot;
+        SJUNI_CHUNK *chunk;
+        qslot = &self->queue[mode];
+        chunk = *qslot;
+        if (chunk == NULL) {
             out->ptr = NULL;
             out->size = 0;
         } else {
-            SJUNI_CHUNK *chunk = self->queue[mode];
             SJ_CHUNK info;
             SJ_CHUNK remainder;
-            sz = chunk->size;
-            p = chunk->ptr;
+            int sz = chunk->size;
+            unsigned char *p = chunk->ptr;
             info.ptr = p;
             info.size = sz;
             if (info.size <= size) {
                 out->ptr = p;
                 out->size = sz;
-                self->queue[mode] = chunk->next;
+                *qslot = chunk->next;
                 chunk->next = self->free_head;
                 self->free_head = chunk;
             } else if (self->index == 1) {

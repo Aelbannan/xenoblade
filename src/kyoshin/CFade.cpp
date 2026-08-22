@@ -18,10 +18,10 @@ u8 CFade::func_80244510() { return mVisible; }
 
 
 // Retail marks the fade overlay loaded/ready once the layout is attached.
-// extern "C" + noinline: retail reloc name is unmangled and func_802445F0 is
-// called via `bl` from OnFileEvent (same stripped-mangling convention as the
-// func_80244558/func_802445A4 helpers).
-extern "C" __declspec(noinline) void func_802445F0(CFade* self) {
+// noinline: retail keeps these as standalone `bl` targets (func_802445F0 is
+// called from OnFileEvent; the others from func_802443E8). C linkage comes
+// from the extern "C" declarations in CFade.hpp (unmangled retail reloc names).
+__declspec(noinline) void func_802445F0(CFade* self) {
     if (self->mLayout != nullptr) {
         self->mReady = 1;
         self->mIsLoaded = 1;
@@ -30,17 +30,15 @@ extern "C" __declspec(noinline) void func_802445F0(CFade* self) {
 
 // Target 5: once the fade-in animation reaches the target frame, mark faded-in.
 // Target 6: once the fade-out animation rewinds, return to idle.
-// extern "C" free functions: the US retail build strips member manglings for
-// these helpers (retail `bl func_80244558`), so C linkage reproduces the
-// unmangled reloc names at the call sites (PLAN.md §17.6 approved). noinline
-// keeps the retail `bl` instead of inlining the body into func_802443E8.
-extern "C" __declspec(noinline) void func_80244558(CFade* self) {
+// noinline keeps the retail `bl` instead of inlining the body into
+// func_802443E8. C linkage via CFade.hpp declarations (see above).
+__declspec(noinline) void func_80244558(CFade* self) {
     if (func_80137444(self->mAnimTrans, lbl_eu_80668750) == 0) return;
     self->mFadeState = 2;
     self->mVisible = 1;
 }
 
-extern "C" __declspec(noinline) void func_802445A4(CFade* self) {
+__declspec(noinline) void func_802445A4(CFade* self) {
     if (func_80137510(self->mAnimTrans, lbl_eu_80668750) != 0) {
         self->mFadeState = 0;
         self->mVisible = 1;
@@ -54,6 +52,11 @@ extern "C" __declspec(noinline) void func_802445A4(CFade* self) {
 //   +0x17 "arc"
 //   +0x1B layout brlyt name
 //   +0x2B animation brlan name
+// Function-local optimize-for-size: retail compiles this TU at -O4,s (stmw
+// r28/r30 multi-saves); the pragma reproduces that shape without changing the
+// unit-level flags.
+#pragma push
+#pragma optimize_for_size on
 bool CFade::OnFileEvent(CEventFile* pEventFile) {
     if (mFileHandle == pEventFile->mFileHandle) {
         // Cache the shared string pool base so MWCC keeps it in a callee-saved
@@ -91,6 +94,7 @@ bool CFade::OnFileEvent(CEventFile* pEventFile) {
     }
     return false;
 }
+#pragma pop
 
 CFade::CFade() : CFadeVtblBase(), mMemRegion() {
     mFileHandle = nullptr;

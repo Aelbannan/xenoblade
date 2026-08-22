@@ -6,78 +6,58 @@
 
 #include <types.h>
 #include "kyoshin/realtimeevt/CREvtMem.hpp"
-
-extern "C" {
-// MemManager functions
-void* getHandleMEM1__Q23mtl10MemManagerFv(void);
-void* getHandleMEM2__Q23mtl10MemManagerFv(void);
-void* allocate_head__Q23mtl10MemManagerFUlUli(void* handle, u32 size, int align);
-void  deallocate__Q23mtl10MemManagerFPv(void* ptr);
-void  __dl__FPv(void* ptr);
-
-// Helper functions
-u32 func_8016676C(void);
-u32 func_80166778(void);
-
-// Float constant
-extern f32 lbl_eu_80667650;
-}
+#include "monolib/util/MemManager.hpp"
 
 // ============================================================================
 // Constructor: __ct__cf_CREvtMem
 // Initializes all fields to 0, stores a float, sets singleton
 // ============================================================================
-extern "C" void __ct__cf_CREvtMem(cf::CREvtMem* self) {
-    f32 ps = lbl_eu_80667650;
-    self->flags = 0;
-    self->vtable = &lbl_eu_80530A30[0];
-    self->field_08 = 0;
-    self->field_0C = 0;
-    self->arenaStart = 0;
-    self->arenaEnd = 0;
-    self->arenaSize = 0;
-    self->currentPos = 0;
-    self->someFloat = ps;
-    lbl_eu_80664260 = self;
-    self->ptr1 = nullptr;
-    self->ptr2 = nullptr;
+cf::CREvtMem::CREvtMem() {
+    u8* vt = &lbl_eu_80530A30[0];
+    const f32 ps = lbl_eu_80667650;
+    flags = 0;
+    vtable = vt;
+    field_08 = 0;
+    field_0C = 0;
+    arenaStart = 0;
+    arenaEnd = 0;
+    arenaSize = 0;
+    currentPos = 0;
+    someFloat = ps;
+    lbl_eu_80664260 = this;
+    ptr1 = nullptr;
+    ptr2 = nullptr;
 }
 
 // ============================================================================
 // Destructor: __dt__Q22cf8CREvtMemFv
-// Deallocates MEM2 allocations if flags are set, clears singleton
+// Deallocates MEM2 allocations if flags are set, clears singleton; the
+// compiler-generated epilogue performs operator delete when requested.
 // ============================================================================
-extern "C" cf::CREvtMem* __dt__Q22cf8CREvtMemFv(cf::CREvtMem* self, int dealloc_flag) {
-    if (self != nullptr) {
-        // Update vtable
-        self->vtable = (void*)lbl_eu_80530A30;
+cf::CREvtMem::~CREvtMem() {
+    // Update vtable
+    vtable = &lbl_eu_80530A30[0];
 
-        // Check flag bit 1 (0x2) - MEM2 allocation 1
-        if (lbl_eu_80664260->flags & 0x2) {
-            if (lbl_eu_80664260->ptr1 != nullptr) {
-                deallocate__Q23mtl10MemManagerFPv(lbl_eu_80664260->ptr1);
-                lbl_eu_80664260->ptr1 = nullptr;
-            }
-            lbl_eu_80664260->flags &= ~0x2;
+    // Check flag bit 1 (0x2) - MEM2 allocation 1
+    if (lbl_eu_80664260->flags & 0x2) {
+        if (lbl_eu_80664260->ptr1 != nullptr) {
+            mtl::MemManager::deallocate(lbl_eu_80664260->ptr1);
+            lbl_eu_80664260->ptr1 = nullptr;
         }
-
-        // Check flag bit 2 (0x4) - MEM2 allocation 2
-        if (lbl_eu_80664260->flags & 0x4) {
-            if (lbl_eu_80664260->ptr2 != nullptr) {
-                deallocate__Q23mtl10MemManagerFPv(lbl_eu_80664260->ptr2);
-                lbl_eu_80664260->ptr2 = nullptr;
-            }
-            lbl_eu_80664260->flags &= ~0x4;
-        }
-
-        // Clear singleton, then deallocate if requested
-        lbl_eu_80664260 = nullptr;
-        if (dealloc_flag > 0) {
-            __dl__FPv(self);
-        }
+        lbl_eu_80664260->flags &= ~0x2;
     }
 
-    return self;
+    // Check flag bit 2 (0x4) - MEM2 allocation 2
+    if (lbl_eu_80664260->flags & 0x4) {
+        if (lbl_eu_80664260->ptr2 != nullptr) {
+            mtl::MemManager::deallocate(lbl_eu_80664260->ptr2);
+            lbl_eu_80664260->ptr2 = nullptr;
+        }
+        lbl_eu_80664260->flags &= ~0x4;
+    }
+
+    // Clear singleton; the deleting epilogue then frees the object itself.
+    lbl_eu_80664260 = nullptr;
 }
 
 // ============================================================================
@@ -98,43 +78,47 @@ extern "C" u32 func_80167D40(u32 size, u32 offset) {
     if (chunk == 0) chunk = 0x100000;
 
     // ---- First allocation -> ptr1 ----
-    if (offset + chunk + 0x1000 < lbl_eu_80664260->arenaSize) {
+    // Cache the singleton in a local; its last use is the currentPos update,
+    // so the ptr1 store below reloads the global.
+    cf::CREvtMem* m1 = lbl_eu_80664260;
+    if (offset + chunk + 0x1000 < m1->arenaSize) {
         void* res;
-        u32 pos = lbl_eu_80664260->currentPos;
-        if (pos + chunk > lbl_eu_80664260->arenaEnd) {
+        u32 pos = m1->currentPos;
+        if (pos + chunk > m1->arenaEnd) {
             res = nullptr;
         } else {
             u32 low = pos & 0xFF;
             u32 pad = 0;
             if (low != 0) pad = 0x100 - low;
             res = (void*)(pos + pad);
-            lbl_eu_80664260->currentPos += chunk + pad;
+            m1->currentPos += chunk + pad;
         }
         lbl_eu_80664260->ptr1 = res;
     } else {
         // Too big for the arena - allocate from MEM2 instead.
-        void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
-        lbl_eu_80664260->ptr1 = allocate_head__Q23mtl10MemManagerFUlUli(handle, chunk, 0x20);
+        mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+        lbl_eu_80664260->ptr1 = mtl::MemManager::allocate_head(handle, chunk, 0x20);
         lbl_eu_80664260->flags |= 0x2;
     }
 
     // ---- Second allocation -> ptr2 ----
-    if (offset + (chunk * 2) + 0x1000 < lbl_eu_80664260->arenaSize) {
+    cf::CREvtMem* m2 = lbl_eu_80664260;
+    if (offset + (chunk * 2) + 0x1000 < m2->arenaSize) {
         void* res;
-        u32 pos = lbl_eu_80664260->currentPos;
-        if (pos + chunk > lbl_eu_80664260->arenaEnd) {
+        u32 pos = m2->currentPos;
+        if (pos + chunk > m2->arenaEnd) {
             res = nullptr;
         } else {
             u32 low = pos & 0xFF;
             u32 pad = 0;
             if (low != 0) pad = 0x100 - low;
             res = (void*)(pos + pad);
-            lbl_eu_80664260->currentPos += chunk + pad;
+            m2->currentPos += chunk + pad;
         }
         lbl_eu_80664260->ptr2 = res;
     } else {
-        void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
-        lbl_eu_80664260->ptr2 = allocate_head__Q23mtl10MemManagerFUlUli(handle, chunk, 0x20);
+        mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+        lbl_eu_80664260->ptr2 = mtl::MemManager::allocate_head(handle, chunk, 0x20);
         lbl_eu_80664260->flags |= 0x4;
     }
 
@@ -148,7 +132,7 @@ extern "C" void func_80167EF8(void) {
     // Check flag bit 1 (0x2)
     if (lbl_eu_80664260->flags & 0x2) {
         if (lbl_eu_80664260->ptr1 != nullptr) {
-            deallocate__Q23mtl10MemManagerFPv(lbl_eu_80664260->ptr1);
+            mtl::MemManager::deallocate(lbl_eu_80664260->ptr1);
             lbl_eu_80664260->ptr1 = nullptr;
         }
         lbl_eu_80664260->flags &= ~0x2;
@@ -157,7 +141,7 @@ extern "C" void func_80167EF8(void) {
     // Check flag bit 2 (0x4)
     if (lbl_eu_80664260->flags & 0x4) {
         if (lbl_eu_80664260->ptr2 != nullptr) {
-            deallocate__Q23mtl10MemManagerFPv(lbl_eu_80664260->ptr2);
+            mtl::MemManager::deallocate(lbl_eu_80664260->ptr2);
             lbl_eu_80664260->ptr2 = nullptr;
         }
         lbl_eu_80664260->flags &= ~0x4;
@@ -176,8 +160,8 @@ extern "C" void* func_80167F6C(u32 size, u32 alignment, int useMEM1) {
     if (m->currentPos + size > end) {
         // Doesn't fit in the arena - allocate fresh from the heap.
         if (useMEM1) {
-            void* handle = getHandleMEM1__Q23mtl10MemManagerFv();
-            return allocate_head__Q23mtl10MemManagerFUlUli(handle, size, 0x20);
+            mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM1();
+            return mtl::MemManager::allocate_head(handle, size, 0x20);
         }
         return nullptr;
     }
@@ -205,7 +189,7 @@ extern "C" void func_80167FFC(void* ptr) {
 
     // Otherwise the pointer came from the heap - free it.
     if (ptr != nullptr) {
-        deallocate__Q23mtl10MemManagerFPv(ptr);
+        mtl::MemManager::deallocate(ptr);
     }
 }
 

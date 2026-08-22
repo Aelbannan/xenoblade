@@ -276,11 +276,11 @@ void MWSST_Destroy(SstHn* sst) {
             }
             hn->vtable->vf0c(hn);
             sst->handle = NULL;
-            core = coreTbl->core;
-            if (core != NULL && coreTbl->refcount != 0) {
+            SstCore* core2 = coreTbl->core;
+            if (core2 != NULL && coreTbl->refcount != 0) {
                 coreTbl->refcount--;
-                if (coreTbl->refcount == 0 && core->term != NULL) {
-                    core->term(core);
+                if (coreTbl->refcount == 0 && core2->term != NULL) {
+                    core2->term(core2);
                 }
             }
         }

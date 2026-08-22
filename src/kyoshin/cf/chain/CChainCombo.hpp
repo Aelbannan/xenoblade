@@ -67,6 +67,66 @@ struct CChainVObj {
     void** mVtbl;
 };
 
+// View of CfObjectActor's CfObjectMove sub-object at absolute +0x3E9C
+// (the headers' C++ base layout places it 8 bytes off, so reach it raw).
+struct CChainCombo_MoveSub {
+    u8 _pad[0x3E9C];
+    void** mVtbl; // 0x3E9C
+};
+
+// Vtable proxies (dummy virtuals pin slot offsets; only ever used through
+// pointer casts, so no vtable is emitted and calls take the r12 dispatch).
+class CChainCombo_Vt4CIf {
+public:
+    virtual void _d008(); virtual void _d00C(); virtual void _d010();
+    virtual void _d014(); virtual void _d018(); virtual void _d01C();
+    virtual void _d020(); virtual void _d024(); virtual void _d028();
+    virtual void _d02C(); virtual void _d030(); virtual void _d034();
+    virtual void _d038(); virtual void _d03C(); virtual void _d040();
+    virtual void _d044(); virtual void _d048();
+    virtual int m4C(); // vtable +0x4C (CObjectParam_UnkVirtualFunc5)
+};
+
+class CChainCombo_Vt184If {
+public:
+    virtual void _d008(); virtual void _d00C(); virtual void _d010();
+    virtual void _d014(); virtual void _d018(); virtual void _d01C();
+    virtual void _d020(); virtual void _d024(); virtual void _d028();
+    virtual void _d02C(); virtual void _d030(); virtual void _d034();
+    virtual void _d038(); virtual void _d03C(); virtual void _d040();
+    virtual void _d044(); virtual void _d048(); virtual void _d04C();
+    virtual void _d050(); virtual void _d054(); virtual void _d058();
+    virtual void _d05C(); virtual void _d060(); virtual void _d064();
+    virtual void _d068(); virtual void _d06C(); virtual void _d070();
+    virtual void _d074(); virtual void _d078(); virtual void _d07C();
+    virtual void _d080(); virtual void _d084(); virtual void _d088();
+    virtual void _d08C(); virtual void _d090(); virtual void _d094();
+    virtual void _d098(); virtual void _d09C(); virtual void _d0A0();
+    virtual void _d0A4(); virtual void _d0A8(); virtual void _d0AC();
+    virtual void _d0B0(); virtual void _d0B4(); virtual void _d0B8();
+    virtual void _d0BC(); virtual void _d0C0(); virtual void _d0C4();
+    virtual void _d0C8(); virtual void _d0CC(); virtual void _d0D0();
+    virtual void _d0D4(); virtual void _d0D8(); virtual void _d0DC();
+    virtual void _d0E0(); virtual void _d0E4(); virtual void _d0E8();
+    virtual void _d0EC(); virtual void _d0F0(); virtual void _d0F4();
+    virtual void _d0F8(); virtual void _d0FC(); virtual void _d100();
+    virtual void _d104(); virtual void _d108(); virtual void _d10C();
+    virtual void _d110(); virtual void _d114(); virtual void _d118();
+    virtual void _d11C(); virtual void _d120(); virtual void _d124();
+    virtual void _d128(); virtual void _d12C(); virtual void _d130();
+    virtual void _d134(); virtual void _d138(); virtual void _d13C();
+    virtual void _d140(); virtual void _d144(); virtual void _d148();
+    virtual void _d14C(); virtual void _d150(); virtual void _d154();
+    virtual void _d158(); virtual void _d15C(); virtual void _d160();
+    virtual void _d164(); virtual void _d168(); virtual void _d16C();
+    virtual void _d170(); virtual void _d174(); virtual void _d178();
+    virtual void _d17C(); virtual void _d180();
+    virtual void m184(int value); // vtable +0x184 (CfObjectModel_UnkVirtualFunc4)
+};
+
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void func_8013EAB0();
 extern "C" void func_802A07F4(int, void*);
+
+// CObjectParam vtable slot +0x4C dispatched through the CChainCombo_Vt4CIf
+// proxy; CfObjectModel_UnkVirtualFunc4 goes through CChainCombo_Vt184If.

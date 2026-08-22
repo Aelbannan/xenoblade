@@ -28,7 +28,7 @@ extern "C" void func_804E6898(u8* self, float val) {
     ((CMdlMouth*)self)->value2C = val;
 }
 
-int func_804E68A0(CMdlMouth* self, u32 arg2, nw4r::g3d::ChrAnmResult* res) {
+extern "C" int func_804E68A0(CMdlMouth* self, u32 arg2, nw4r::g3d::ChrAnmResult* res) {
     // Mismatched own-node id: callers may only animate the bound node.
     if ((u32)self->field_0x0C != arg2) {
         return 0;
@@ -67,7 +67,7 @@ int func_804E68A0(CMdlMouth* self, u32 arg2, nw4r::g3d::ChrAnmResult* res) {
 
 CMdlMouth::~CMdlMouth() {}
 
-void func_804E6A28(CMdlMouth* self) {
+extern "C" void func_804E6A28(CMdlMouth* self) {
     // Per-frame mouth update: bail when no material is bound (id < 0) or the
     // closing timer still counts down; otherwise integrate the open angle and
     // push the SRT offset-table row into the copied material's texture SRT.
@@ -129,7 +129,7 @@ void func_804E6A28(CMdlMouth* self) {
     }
 }
 
-void func_804E65CC(CMdlMouth* self, CMdlOwnerCtx* model) {
+extern "C" void func_804E65CC(CMdlMouth* self, CMdlOwnerCtx* model) {
     // Member field init (mirrors the retail ctor stores).
     self->field_0x04 = model;
     self->field_0x08 = 0;
@@ -185,7 +185,7 @@ void func_804E65CC(CMdlMouth* self, CMdlOwnerCtx* model) {
     }
 }
 
-void func_804E679C(CMdlMouth* self, int arg2, int arg3) {
+extern "C" void func_804E679C(CMdlMouth* self, int arg2, int arg3) {
     // All follow-up blocks are guarded by the mode-change condition: retail skips
     // the whole body with a single branch when field_0x08 already equals arg2.
     if (self->field_0x08 != arg2) {

@@ -29,7 +29,6 @@ public:
     nw4r::lyt::AnimTransform* mAnimDefault; // 0x78 -- default animation (label text, enabled at init)
     nw4r::lyt::AnimTransform* mAnimLabel;   // 0x7C -- label animation (disabled at init)
     u8 mState;                       // 0x80 -- battle-mode phase/state machine index
-    void func_801A048C();
     virtual ~CMenuBattleMode();
     void Term();
     void Move();

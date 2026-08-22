@@ -5,6 +5,13 @@
 namespace nw4r {
 namespace math {
 
+// Shared MWCC float/double pool entries this function's constants resolve to
+// in the retail build.
+extern const f32 lbl_eu_806634D0; // 0.0001f
+extern const f32 lbl_eu_80669E5C; // 0.0f
+extern const f32 lbl_eu_80669E68; // 1.0f
+extern const f64 lbl_eu_80669E70; // 0.0
+
 DECOMP_FORCELITERAL(math_geometry_cpp, 0.5f, 0.0f);
 
 void PLANE::Set(const VEC3* p0, const VEC3* p1, const VEC3* p2) {
@@ -307,7 +314,7 @@ f32 DistSqSegment3ToSegment3(const SEGMENT3* pSegment0,
     f32 tNumerator;
     f32 tDenominator = determinant;
 
-    if (determinant < 0.0001f) {
+    if (determinant < lbl_eu_806634D0) {
         sNumerator = 0.0f;
         sDenominator = 1.0f;
         tNumerator = e;
@@ -327,11 +334,13 @@ f32 DistSqSegment3ToSegment3(const SEGMENT3* pSegment0,
         }
     }
 
-    if (tNumerator < 0.0f) {
-        tNumerator = 0.0f;
+    // Double-pool zero: retail loads this constant via lfd, so compare
+    // against the extern double, not a 0.0f float literal.
+    if (tNumerator < lbl_eu_80669E70) {
+        tNumerator = lbl_eu_80669E5C;
 
-        if (-d < 0.0f) {
-            sNumerator = 0.0f;
+        if (-d < lbl_eu_80669E5C) {
+            sNumerator = lbl_eu_80669E5C;
         } else if (-d > a) {
             sNumerator = sDenominator;
         } else {
@@ -341,8 +350,8 @@ f32 DistSqSegment3ToSegment3(const SEGMENT3* pSegment0,
     } else if (tNumerator > tDenominator) {
         tNumerator = tDenominator;
 
-        if (-d + b < 0.0f) {
-            sNumerator = 0.0f;
+        if (-d + b < lbl_eu_80669E5C) {
+            sNumerator = lbl_eu_80669E5C;
         } else if (-d + b > a) {
             sNumerator = sDenominator;
         } else {
@@ -351,10 +360,10 @@ f32 DistSqSegment3ToSegment3(const SEGMENT3* pSegment0,
         }
     }
 
-    f32 s = FAbs(sNumerator) < 0.0001f ? 0.0f
-                                         : sNumerator / sDenominator;
-    f32 t = FAbs(tNumerator) < 0.0001f ? 0.0f
-                                       : tNumerator / tDenominator;
+    f32 s = FAbs(sNumerator) < lbl_eu_806634D0 ? lbl_eu_80669E5C
+                                               : sNumerator / sDenominator;
+    f32 t = FAbs(tNumerator) < lbl_eu_806634D0 ? lbl_eu_80669E5C
+                                               : tNumerator / tDenominator;
 
     if (pOut0 != 0) {
         *pOut0 = s;
@@ -364,7 +373,7 @@ f32 DistSqSegment3ToSegment3(const SEGMENT3* pSegment0,
     }
 
     VEC3 closest = diff + d0 * s - d1 * t;
-    return closest.LenSq();
+    return VEC3LenSq(&closest);
 }
 
 bool IntersectionCapsule(const CAPSULE* pCapsule0,

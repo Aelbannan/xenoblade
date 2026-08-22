@@ -9,11 +9,14 @@ extern "C" {
     extern CScnLightList* func_8048C698(void* self, int kind);
     extern void func_804954AC(void* self, int val);
     extern void func_804959E8(void* self, int val);
+    // Retail references this helper under its unmangled C name.
+    extern void func_804BF944(void* self);
 }
 
 // Selects the active light: if the current pool light is armed, deactivate
 // its param block (func_804959E8) and clear the arm flag.
-void func_8048D160(CScnLightMan* self) {
+// Flat retail symbol; declared extern "C" in CScnEnvLgtCtrl.hpp.
+extern "C" void func_8048D160(CScnLightMan* self) {
     CScnItemLight* light = self->mLight;
     if (light->flag121C) {
         func_804959E8(&light->_14[0], 0);
@@ -21,36 +24,41 @@ void func_8048D160(CScnLightMan* self) {
     }
 }
 
-CScnLightMan::CScnLightMan(CScnLightParam* param) {
-    *(void**)this = (void*)lbl_eu_8056E568;
-    mParam = param;
-    mLight = func_80482398(param, 0, this);
+extern "C" CScnLightMan* __ct__CScnLightMan(CScnLightMan* self, CScnLightParam* param) {
+    CScnItemLight* item;
+
+    *(void**)self = (void*)lbl_eu_8056E568;
+    self->mLight = func_80482398(param, 0, self);
+    self->mParam = param;
 
     // Walk the scene pool's light-item list; keep the first item whose id is
     // zero as the active light (the one that gets armed by func_804954AC).
-    CScnLightList* list = func_8048C698(mParam->mPool, 3);
-    CScnItemLight* item;                 // declared before node -> r30 (retail)
+    CScnLightList* list = func_8048C698(self->mParam->mPool, 3);
     CScnLightNode* node = list->sentinel->next;
     while (node != list->sentinel) {
         item = node->item;
         func_804954AC(&item->_14[0], (u32)__cntlzw(item->id10) >> 5);
         if (item->id10 == 0) {
-            mLight = item;
+            self->mLight = item;
         }
         node = node->next;
     }
+    return self;
 }
 
 CScnLightMan::~CScnLightMan() {}
 
-void func_8048D124(void* arg1, void* arg2) {
-    extern void func_804BF944(void*);
+// Arms the selected light item: runs the helper on arg2, then sets the arm
+// flag (+0x121c) of the item pointer held at +0x8 of arg1.
+extern "C" void func_8048D124(void* arg1, void* arg2) {
     func_804BF944(arg2);
     char* ptr = *(char**)((char*)arg1 + 8);
     ptr[0x121c] = 1;
 }
 
-// Virtual dispatch target: v_i at vtable offset 8+4*i (MWCC RTTI header).
+// Virtual dispatch thunk: invokes slot 3 of the object at +0x8 (flat retail
+// symbol, declared in CScnRootNw4r.hpp). VTarget models the callee vtable:
+// v_i sits at vtable offset 8+4*i. No virtual dtor: retail emits none here.
 struct VTarget {
     virtual void v0() = 0;
     virtual void v1() = 0;
@@ -63,7 +71,6 @@ struct VTarget {
     virtual void v8() = 0;
     virtual void v9() = 0;
     virtual void v10() = 0;
-    virtual ~VTarget() {}
 };
 
 extern "C" void func_8048D1B0(void* self) {
@@ -94,7 +101,6 @@ extern "C" u32 lbl_eu_8056E568[12] = {
     (u32)&lbl_eu_8066A988,
     0x00000000,
 };
-DECOMP_FORCEACTIVE(CScnLightMan_cpp, lbl_eu_8056E568);
 
 // [.rodata] 0x80523F58-0x80523F98 (64B): RTTI name + texture name + default
 // light colour table + "SHA" tag.
@@ -102,7 +108,3 @@ extern "C" __declspec(align(8)) const char lbl_eu_80523F58[0xD] = { 0x43,0x53,0x
 extern "C" __declspec(align(4)) const char lbl_eu_80523F68[0xD] = { 0x73,0x68,0x61,0x64,0x6F,0x77,0x54,0x65,0x78,0x5F,0x49,0x34,0x00 };
 extern "C" __declspec(align(8)) const f32 lbl_eu_80523F78[7] = { 1.0f, 0.7f, 0.7f, 0.5f, 0.5f, 0.7f, 0.7f };
 extern "C" __declspec(section ".rodata") const char lbl_eu_80523F94[0x4] = { 0x53,0x48,0x41,0x00 };
-DECOMP_FORCEACTIVE(CScnLightMan_cpp, lbl_eu_80523F58);
-DECOMP_FORCEACTIVE(CScnLightMan_cpp, lbl_eu_80523F68);
-DECOMP_FORCEACTIVE(CScnLightMan_cpp, lbl_eu_80523F78);
-DECOMP_FORCEACTIVE(CScnLightMan_cpp, lbl_eu_80523F94);

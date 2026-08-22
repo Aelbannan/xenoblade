@@ -6,8 +6,11 @@
 
 using namespace mtl;
 
-CLibStaticData* CLibStaticData::spInstance;
+// Retail sbss singleton (dissolved monolibdata blob) - keep linker name verbatim
+CLibStaticData* lbl_eu_80665718 = nullptr;
+#define spInstance lbl_eu_80665718
 StaticArcFileData* CLibStaticData::sStaticArcFileListPtr;
+#include <decomp.h>
 
 CLibStaticData::CLibStaticData(const char* pName, CWorkThread* pParent) :
 CWorkThread(pName, pParent, MAX_CHILD),
@@ -26,8 +29,25 @@ CLibStaticData* CLibStaticData::getInstance(){
     return spInstance;
 }
 
+inline bool CWorkThread::isRunning() const {
+    bool exception;
+    if (mFlags & THREAD_FLAG_EXCEPTION) {
+        exception = true;
+    } else {
+        exception = mMsgQueue.find(EVT_EXCEPTION) >= 0;
+    }
+    bool result = false;
+    if (!exception) {
+        bool stateOK = mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN;
+        if (stateOK) {
+            result = true;
+        }
+    }
+    return result;
+}
 bool CLibStaticData::isInitialized(){
-    return spInstance->isRunning();
+    extern CLibStaticData* lbl_eu_80665718;
+    return lbl_eu_80665718->isRunning();
 }
 
 void CLibStaticData::saveStaticFileArray(StaticArcFileData* pList){

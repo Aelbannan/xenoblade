@@ -2,7 +2,13 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+// The CAIAction.hpp chain declares the shared battle-manager singleton getter
+// returning void*, conflicting with an earlier CBattleManagerView* declaration
+// pulled in by harness_catalog.hpp. Rename it out of the way (same idiom as
+// CBattleManager.cpp); this TU never calls the getter.
+#define getInstance__Q22cf14CBattleManagerFv eveBmSingletonGetUnused
 #include "kyoshin/cf/CBattleManager.hpp"
+#undef getInstance__Q22cf14CBattleManagerFv
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 

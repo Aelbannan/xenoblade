@@ -37830,7 +37830,7 @@
       "size": "0x2F0",
       "unit": "kyoshin/cf/CfScript",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -37856,15 +37856,7 @@
       "source": "src/kyoshin/cf/CfScript.cpp",
       "source_present": true,
       "instruction_match": 89.718,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-22T07:11:45.322687+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CfScript.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80069bcc",
@@ -37930,8 +37922,8 @@
       "size": "0xF4",
       "unit": "kyoshin/cf/CfScript",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802bc028",
@@ -37946,16 +37938,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/CfScript.cpp",
       "source_present": false,
-      "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_unsupported",
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-22T07:11:45.322487+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/CfScript.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80069d44",
@@ -160111,8 +160095,8 @@
       "size": "0x74",
       "unit": "kyoshin/menu/CMenuBattleMode",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuBattleMode.cpp",
       "called_functions": [
@@ -160126,16 +160110,8 @@
       "callgraph_source": "build/us/asm/kyoshin/menu/CMenuBattleMode.s",
       "abi_helper_calls": [],
       "source_present": false,
-      "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_unsupported",
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-22T07:10:18.014360+00:00",
-        "allowed_paths": [
-          "src/kyoshin/menu/CMenuBattleMode.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "menu-battlemode-init",
@@ -160208,7 +160184,7 @@
       "size": "0x248",
       "unit": "kyoshin/menu/CMenuBattleMode",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuBattleMode.cpp",
@@ -160231,15 +160207,7 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 98.616,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-22T07:10:18.014536+00:00",
-        "allowed_paths": [
-          "src/kyoshin/menu/CMenuBattleMode.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801a19dc",
@@ -160288,7 +160256,7 @@
       "size": "0x118",
       "unit": "kyoshin/menu/CMenuBattleMode",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/menu/CMenuBattleMode.cpp",
@@ -160306,15 +160274,7 @@
       "abi_helper_calls": [],
       "source_present": true,
       "instruction_match": 87.529,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-22T07:10:18.014533+00:00",
-        "allowed_paths": [
-          "src/kyoshin/menu/CMenuBattleMode.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-801a1ba8",
@@ -299964,15 +299924,7 @@
       "source": "libs/RVL_SDK/src/revolution/axfx/AXFXReverbStdExp.c",
       "instruction_match": 69.042,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-22T07:07:12.958542+00:00",
-        "allowed_paths": [
-          "libs/RVL_SDK/src/revolution/axfx/AXFXReverbStdExp.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802da340",
@@ -300122,15 +300074,7 @@
       "source": "libs/RVL_SDK/src/revolution/axfx/AXFXReverbStdExp.c",
       "instruction_match": 99.155,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-54083",
-        "claimed_at": "2026-08-22T07:07:12.958887+00:00",
-        "allowed_paths": [
-          "libs/RVL_SDK/src/revolution/axfx/AXFXReverbStdExp.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802daa20",
@@ -300261,7 +300205,7 @@
       "unit": "RVL_SDK/src/revolution/axfx/AXFXReverbStdExpDpl2",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "STRUCTURAL",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -300270,9 +300214,17 @@
       "callgraph_source": "build/us/asm/RVL_SDK/src/revolution/axfx/AXFXReverbStdExpDpl2.s",
       "abi_helper_calls": [],
       "source": "libs/RVL_SDK/src/revolution/axfx/AXFXReverbStdExpDpl2.c",
-      "instruction_match": 69.042,
+      "instruction_match": 71.708,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T07:14:53.952321+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/axfx/AXFXReverbStdExpDpl2.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802db070",
@@ -300425,7 +300377,15 @@
       "source": "libs/RVL_SDK/src/revolution/axfx/AXFXReverbStdExpDpl2.c",
       "instruction_match": 99.178,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-54083",
+        "claimed_at": "2026-08-22T07:14:53.952544+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/axfx/AXFXReverbStdExpDpl2.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802db790",
@@ -521966,7 +521926,7 @@
       "unit": "monolib/src/scn/CScnBlend",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8031bfd0",
@@ -522003,7 +521963,7 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnBlend.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
+      "instruction_match": 0.397,
       "equivalence_status": "inconclusive_smt_disabled"
     },
     {

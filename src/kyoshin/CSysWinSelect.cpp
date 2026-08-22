@@ -265,25 +265,26 @@ body:
     __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), -1);
 }
 
-// Constructor (not a matching target - retail emits the ctor with an unmangled
-// C-linkage name). Defined at the bottom of the file so MWCC cannot inline it
-// into func_80125070 (its body is not visible at that call site) - the retail
-// creator emits a real `bl __ct__CSysWinSelect`. This scaffolding body just
-// initializes the CProcess base and clears the Move region so the object is
-// usable; only its symbol matters for linking.
-extern "C" CSysWinSelect* __ct__CSysWinSelect(CSysWinSelect* self, void* a2,
-                                               void* a3, void* a4, void* a5) {
-    CScn* scene = (CScn*)a2;
-    const char* str1 = (const char*)a3;
-    const char* str2 = (const char*)a4;
-    const char* str3 = (const char*)a5;
+// Constructor (retail emits it under an unmangled global symbol name, hence
+// the C-linkage definition; declared in CSysWinSelect.hpp).
+// Defined at the bottom of the file so MWCC cannot inline it into
+// func_80125070 - the retail creator emits a real `bl __ct__CSysWinSelect`.
+extern "C" CSysWinSelect* __ct__CSysWinSelect(CSysWinSelect* self, void* scene,
+                                               void* strA, void* strB,
+                                               void* strC) {
+    // Base CProcess subobject.
     __ct__8CProcessFv((CProcess*)self);
 
-    // IUIWindow vtable at +0x10 is written twice (temp vtable, then the
-    // CSysWinSelect composite vtable), the two __ptmf_null callback slots are
-    // copied, then the scalar fields and the embedded CSysWin/CCur18 are
-    // constructed and the three text strings copied.
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052D238;
+    // Temporarily install the plain IUIWindow vtable at +0x10.
+    *(u32*)((u8*)self + 0x10) = (u32)&lbl_eu_8052D238[0];
+
+    // Composite vtable and its IWorkEvent/IScnRender subobject pointers,
+    // computed up front and installed below.
+    u32 vt = (u32)&lbl_eu_8052D278[0];
+    u32 evtVt = vt + 0x24;
+    u32 rndVt = vt + 0xac;
+
+    // Copy the two null pointer-to-member-function callback slots.
     self->ptmf0[0] = __ptmf_null[0];
     self->ptmf0[1] = __ptmf_null[1];
     self->ptmf0[2] = __ptmf_null[2];
@@ -301,29 +302,33 @@ extern "C" CSysWinSelect* __ct__CSysWinSelect(CSysWinSelect* self, void* a2,
     self->field_67 = 1;
     self->field_68 = 0;
 
-    *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052D278;
-    self->mWorkEvent = (u32)lbl_eu_8052D278 + 0x24;
-    self->mScnRender = (u32)lbl_eu_8052D278 + 0xac;
-    self->mScene = scene;
+    // Overwrite +0x10 with the composite CSysWinSelect vtable.
+    *(u32*)((u8*)self + 0x10) = vt;
+    self->mWorkEvent = evtVt;
+    self->mScnRender = rndVt;
+    self->mScene = (CScn*)scene;
 
+    // Embedded window and cursor subobjects.
     __ct__CSysWin(&self->mSysWin[0], 0);
     __ct__CCur18(&self->mCur18[0], 0);
 
     self->mState = 0;
     self->mCursorSel = 1;
     self->field_24E = 0;
-    if (str1)
-        strcpy(&self->mStrA[0], str1);
+
+    // Copy each optional string, or terminate it when absent.
+    if (strA != NULL)
+        strcpy(&self->mStrA[0], (const char*)strA);
     else
-        self->mStrA[0] = 0;
-    if (str2)
-        strcpy(&self->mStrB[0], str2);
+        self->mStrA[0] = '\0';
+    if (strB != NULL)
+        strcpy(&self->mStrB[0], (const char*)strB);
     else
-        self->mStrB[0] = 0;
-    if (str3)
-        strcpy(&self->mStrC[0], str3);
+        self->mStrB[0] = '\0';
+    if (strC != NULL)
+        strcpy(&self->mStrC[0], (const char*)strC);
     else
-        self->mStrC[0] = 0;
+        self->mStrC[0] = '\0';
 
     return self;
 }

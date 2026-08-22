@@ -11,7 +11,13 @@
 #include "kyoshin/CTaskGame.hpp"
 #undef func_8049603C
 #undef func_8004392C
+// CAIAction.hpp (via CBattleManager.hpp -> CfObjectActor.hpp) declares
+// getInstance__Q22cf14CBattleManagerFv as extern "C" void*, which conflicts
+// with CfGameManager.hpp's CBattleManagerView* return below. This TU uses the
+// static member CBattleManager::getInstance(), not either copy.
+#define getInstance__Q22cf14CBattleManagerFv menuBmbCAIActionGetBMUnused
 #include "kyoshin/cf/CBattleManager.hpp"
+#undef getInstance__Q22cf14CBattleManagerFv
 #include "kyoshin/cf/CfGameManager.hpp"
 // code_800F42AC.hpp declares func_80149154 with an int id arg; CAIAction.hpp
 // (via CBattleManager.hpp -> CfObjectActor.hpp) declares the same name with a
@@ -77,13 +83,11 @@ void CMenuBattleMode::Init() {
     mLayoutMem.func_8045F810();
 }
 
-void CMenuBattleMode::func_801A048C() {
-    extern CMenuBattleMode* __dt__15CMenuBattleModeFv(CMenuBattleMode*, int);
-    __dt__15CMenuBattleModeFv(this, 1);
-}
-extern void cbRenderBefore__15CMenuBattleModeFv();
+// C-linkage declarations so MWCC emits the plain retail symbol names (the
+// thunks jump through these unmangled addresses; C++ linkage would re-mangle).
+extern "C" void cbRenderBefore__15CMenuBattleModeFv();
 void func_801A0494(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuBattleModeFv)((char*)self - 0x5c); }
-extern CMenuBattleMode* __dt__15CMenuBattleModeFv(void*, int);
+extern "C" CMenuBattleMode* __dt__15CMenuBattleModeFv(CMenuBattleMode* self, int deleteFlag);
 void func_801A049C(void* self) { ((void(*)(void*))__dt__15CMenuBattleModeFv)((char*)self - 0x5c); }
 
 // Deleting virtual destructor (D1 shape): destroys the mLayoutMem member

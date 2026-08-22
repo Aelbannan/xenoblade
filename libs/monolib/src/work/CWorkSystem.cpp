@@ -58,6 +58,8 @@ u32 lbl_eu_806635C8[2] = { (u32)&lbl_eu_80522790, (u32)&lbl_eu_8056BA90 };
 CWorkSystem::ExitFunc lbl_eu_80665618;
 CWorkSystem* lbl_eu_8066561C;
 
+#pragma push
+#pragma auto_inline off
 DECOMP_DONT_INLINE CWorkSystem::CWorkSystem(const char *pName, CWorkThread *pParent) : CWorkThread(pName, pParent, 32) {
     // novtable: write the retail vptr (0x8056B9F0) first so the stores land in
     // retail order (vptr, then the member inits).
@@ -69,6 +71,7 @@ DECOMP_DONT_INLINE CWorkSystem::CWorkSystem(const char *pName, CWorkThread *pPar
     lbl_eu_8066561C = this;
     mType = THREAD_CWORKSYSTEM;
 }
+#pragma pop
 
 #pragma push
 #pragma optimize_for_size on
@@ -198,8 +201,12 @@ bool CWorkSystem::wkStandbyLogout(){
 #pragma auto_inline off
 CWorkSystem* CWorkSystem::create() {
     CWorkThread* parent = CWorkControl::getInstance();
-    WORK_ID id = CWorkThreadSystem::getWorkMem();
-    CWorkSystem* obj = new (id) CWorkSystem(&lbl_eu_8052279C[0x6D], parent); // "CWorkSystem"
+    const char* pName = &lbl_eu_8052279C[0x6D]; // "CWorkSystem"
+    CWorkSystem* obj = static_cast<CWorkSystem*>(
+        mtl::MemManager::allocate(0x1D0, CWorkThreadSystem::getWorkMem()));
+    if (obj != NULL) {
+        obj = new (obj) CWorkSystem(pName, parent);
+    }
     CWorkUtil::entryWork(obj, parent, false);
     return obj;
 }
@@ -209,6 +216,8 @@ void CWorkSystem::setExitFunc(ExitFunc func){
     lbl_eu_80665618 = func;
 }
 
+#pragma push
+#pragma auto_inline off
 void CWorkSystem::callExitFunc(){
     if(lbl_eu_80665618 != nullptr){
         lbl_eu_80665618();
@@ -217,3 +226,4 @@ void CWorkSystem::callExitFunc(){
         CPadManager::destroy();
     }
 }
+#pragma pop

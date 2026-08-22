@@ -165,6 +165,12 @@ MTX34* MTX34RotAxisFIdx(MTX34* pMtx, const VEC3* pAxis, f32 fidx) {
 // SDK kernel body reproduces the retail byte stream.  See
 // libs/nw4r/include/nw4r/math/detail/math_types_ps.inl for the full
 // exception record (opcode set, guard, fallback).
+//
+// Known residual (MWCC wall #3): retail addresses the (65536.0f, 65536.0f)
+// pair with `li r0, X@sda21` (R_PPC_EMB_SDA21); MWCC's assembler rejects
+// every spelling that would emit it -- `@sda21` (err 33135), bare symbol
+// (33023), `sym - _SDA_BASE_` (33024) -- so the kernel uses `X@l`
+// (R_PPC_ADDR16_LO): byte-identical instructions, reloc type differs.
 #include "nw4r/math/detail/math_types_ps.inl"
 
 #else

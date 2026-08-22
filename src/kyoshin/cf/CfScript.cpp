@@ -7,6 +7,11 @@
 #include "monolib/util/CPathUtil.hpp"
 #include "monolib/vm/yvm2.h"
 #include <cstring>
+
+// Resolve ml::FixStr<128>::format calls to the explicit specialization so
+// they bind to the retail-mangled symbol format__Q22ml10FixStr<128>FPCce
+// (the generic-template call drifts to ...11FixStr...).
+template <> void ml::FixStr<128>::format(const char* fmt, ...);
 #include <cstdio>
 #include <cstdarg>
 
@@ -370,18 +375,22 @@ void CfScript::update() {
     mFlags |= 0x20;
 }
 
-// CfScript::OnFileEvent - completion of an async file read.
-bool CfScript::OnFileEvent(CEventFile* event) {
+// CfScript::OnFileEvent (retail OnFileEvent__8CfScriptFP10CEventFile) -
+// completion of an async file read.  The retail symbol is a global-scope
+// class member; our CfScript sits in namespace cf, so it is emitted under
+// the pre-mangled retail name with an explicit self (same convention as
+// CUICfManager/CSortMenu).
+extern "C" bool OnFileEvent__8CfScriptFP10CEventFile(cf::CfScript* self, cf::CEventFile* event) {
     bool ret = false;
 
-    if (mFileHandle == event->field_04) {
+    if (self->mFileHandle == event->field_04) {
         if (event->field_00 == 1 && event->field_14 != 0) {
             // Loaded: remember the extension-less name.
-            mFlags |= 0x2;
+            self->mFlags |= 0x2;
             CfScriptNameBuffer tmp;
             ml::CPathUtil::getNoPathExtName(*(ml::FixStr<64>*)&tmp, event->field_0C);
-            mNameLen = std::strlen(tmp.mString);
-            std::strcpy(mName, tmp.mString);
+            self->mNameLen = std::strlen(tmp.mString);
+            std::strcpy(self->mName, tmp.mString);
         } else {
             // Failed/other event: look for fallback names, mark "ready".
             const char* path = event->field_0C;
@@ -389,9 +398,9 @@ bool CfScript::OnFileEvent(CEventFile* event) {
                 std::strstr(path, &lbl_eu_804FB3A4[0x25]) == nullptr) {
                 std::strstr(path, &lbl_eu_804FB3A4[0x2B]);
             }
-            mFlags |= 0x10;
+            self->mFlags |= 0x10;
         }
-        mFileHandle = nullptr;
+        self->mFileHandle = nullptr;
         ret = true;
     }
 

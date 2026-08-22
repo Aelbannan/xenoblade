@@ -21,6 +21,9 @@ extern "C" void func_8044E780__11CDeviceFileFv(CDeviceFile* self);
 extern const char lbl_eu_80522F44[];
 // Retail .sdata const-char* (0x80663760) pointing at the "Desktop" name string.
 extern const char* lbl_eu_80663760;
+// Retail .sdata2 color constants used by the wkStandbyLogin clear-color fills.
+extern const f32 lbl_eu_8066A460;
+extern const f32 lbl_eu_8066A45C;
 
 DesktopIcon* CDesktop::spIcon;
 CDesktop* CDesktop::spInstance;
@@ -115,7 +118,7 @@ bool CDesktop::wkStandbyLogin(){
     // Seed the CGXCache color cache with a transparent-black CCol4, then tell
     // CDeviceFile that the desktop owns the file work threads.
     func_800407C8_tmp col1;
-    func_800407C8(&col1, 0.0f, 0.0f, 0.0f, 1.0f);
+    func_800407C8(&col1, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A45C);
     func_8044A578__8CGXCacheFv(CDeviceGX::getCacheInstance(), &col1, 1);
     func_8044E770__11CDeviceFileFP11CWorkThread(this);
 
@@ -125,7 +128,7 @@ bool CDesktop::wkStandbyLogin(){
     mView = view;
 
     ml::CVec4 col2;
-    func_800407C8(reinterpret_cast<func_800407C8_tmp*>(&col2), 0.0f, 0.0f, 0.0f, 1.0f);
+    func_800407C8(reinterpret_cast<func_800407C8_tmp*>(&col2), lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A460, lbl_eu_8066A45C);
     view->unk444 = col2;
 
     // Push a tag-3 context message (the drainer ORs unk278 with 0x3). Retail

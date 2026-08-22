@@ -104,7 +104,50 @@ extern "C" void* func_eu_802B14E0(void) { return (void*)lbl_eu_8053A458; }
 
 extern "C" void* func_eu_802B14EC(void) { return (void*)lbl_eu_8053A478; }
 
-void func_eu_802B14F8(){}
+// Language codes patched into the extended language-entry tables.
+extern "C" void func_eu_804E2340(char* pStr);
+extern "C" void func_804DDE3C(char* pStr, s32 flag);
+
+void func_eu_802B14F8(s32 lang) {
+    // The bdat-table array and the three language-entry arrays are contiguous
+    // in .data; walk them all through one base pointer (retail codegen).
+    ErrMesLangEntry** pEntries = (ErrMesLangEntry**)&lbl_eu_8053A420[6];
+
+    // Reset the '/' separator byte on every entry of all three tables.
+    int i;
+    for (i = 0; i < 7; i++) {
+        pEntries[i]->mSep = '/';
+        pEntries[i + 7]->mSep = '/';
+        pEntries[i + 14]->mSep = '/';
+    }
+
+    // Pick the two-char language code ('en' or 'jp') from the argument.
+    char c0 = lang == 0 ? 'e' : 'j';
+    char c1 = lang == 0 ? 'n' : 'p';
+
+    bool changed = false;
+    for (i = 1; i < 7; i++) {
+        pEntries[i]->mLang0 = c0;
+        pEntries[i]->mLang1 = c1;
+        // Only the middle table reports whether anything actually changed.
+        if (pEntries[i + 7]->mLang0 != c0 || pEntries[i + 7]->mLang1 != c1) {
+            changed = true;
+        }
+        pEntries[i + 7]->mLang0 = c0;
+        pEntries[i + 7]->mLang1 = c1;
+        pEntries[i + 14]->mLang0 = c0;
+        pEntries[i + 14]->mLang1 = c1;
+    }
+
+    if (changed) {
+        char* pStr = (char*)lbl_eu_80513420;
+        func_eu_804E2340(pStr + 0xe);
+        func_eu_804E2340(pStr + 0x12);
+        s32 flag = lang == 0 ? 1 : 0;
+        func_804DDE3C(pStr + 0x16, flag);
+        func_804DDE3C(pStr + 0x25, flag);
+    }
+}
 
 extern "C" void func_eu_802B133C() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 1);

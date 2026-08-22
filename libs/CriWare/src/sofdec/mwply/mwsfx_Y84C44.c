@@ -14,12 +14,15 @@ typedef struct MWPly {
     u32 bytesPerLine; /* 0x10 */
 } MWPly;
 
-extern int MWSFD_CnvFrmInfToSfx(void *ctx, void *ply, void *inf);
-extern void SFX_SetBytePerPixelOutBuf(void *self, u32 val);
-extern void SFX_Make2PlaneCftDstBuf(void *self, void *stmInf, void *buf0, void *buf1,
-                                    void *dstArray, int xOfs, int yOfs,
-                                    u32 width, u32 bytesPerLine);
-extern int SFX_CnvFrmY84C44ByCbFunc(void *ctx, void *inf, void *dst);
+extern int MWSFD_CnvFrmInfToSfx(MWSFDHn *ctx, MWPly *ply, SFXStmInf *inf);
+extern void SFX_SetBytePerPixelOutBuf(SFXConvertState *self, u32 val);
+extern void SFX_Make2PlaneCftDstBuf(SFXConvertState *self, SFXStmInf *stmInf,
+                                    void *buf0,
+                                    void *buf1, int xOfs, int yOfs,
+                                    SFXDstBufInf *dstArray, u32 width,
+                                    u32 bytesPerLine);
+extern int SFX_CnvFrmY84C44ByCbFunc(SFXConvertState *ctx, SFXStmInf *inf,
+                                    SFXDstBufInf *dst);
 
 
 /*
@@ -30,11 +33,14 @@ extern int SFX_CnvFrmY84C44ByCbFunc(void *ctx, void *inf, void *dst);
  */
 int mwPlyFxCnvFrmY84C44(MWSFDHn *unk, MWPly *ply, void *frame, void *pict) {
     SFXConvertState *sfx = unk->sfx;
+    u32 bytesPerLine = ply->bytesPerLine;
     u8 inf_buf[0x98];
     u8 dst_buf[0x68];
-    MWSFD_CnvFrmInfToSfx(unk, ply, inf_buf);
+    MWSFD_CnvFrmInfToSfx(unk, ply, (SFXStmInf *)inf_buf);
     SFX_SetBytePerPixelOutBuf(sfx, 1);
-    SFX_Make2PlaneCftDstBuf(sfx, inf_buf, frame, pict, dst_buf, 0, 0,
-                            ply->width, ply->bytesPerLine);
-    return SFX_CnvFrmY84C44ByCbFunc(sfx, inf_buf, dst_buf);
+    u32 width = ply->width;
+    SFX_Make2PlaneCftDstBuf(sfx, (SFXStmInf *)inf_buf, frame, pict, 0, 0,
+                            (SFXDstBufInf *)dst_buf, width, bytesPerLine);
+    return SFX_CnvFrmY84C44ByCbFunc(sfx, (SFXStmInf *)inf_buf,
+                                    (SFXDstBufInf *)dst_buf);
 }

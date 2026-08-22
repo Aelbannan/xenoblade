@@ -1,3 +1,8 @@
+// Opt into the inline-empty ~IWorkEvent (see IWorkEvent.hpp): retail compiles
+// this dtor with the empty base-dtor body visible, so the base-dtor call is
+// elided and the unit fits its 0x7C8 split budget.
+#define IWORK_EVENT_INLINE_DTOR
+
 #include "monolib/core.hpp"
 #include "monolib/work.hpp"
 #include "monolib/util.hpp"
@@ -8,6 +13,9 @@
 extern const char lbl_eu_80524714[];
 extern u32 lbl_eu_80663BC8;
 extern const char lbl_eu_806623C0[];
+
+// optimize_for_size on: retail prologue saves r29-r31 via stmw, not stw
+#pragma optimize_for_size on
 CPackItem::CPackItem(const char* name, int partitionId) :
 mBaseName(),
 mPkbFilename(),
@@ -33,29 +41,44 @@ mWorkPackDataSize(0) {
         mIsAhxAdxFile = true;
     }
 }
+#pragma optimize_for_size off
 
-CPackItem::~CPackItem(){
-    if(mFileHandle != nullptr){
-        CDeviceFile::cancel(mFileHandle);
+// extern "C" free-function form (CArcItem pattern): no member key function is
+// defined in this TU, so MWCC does not auto-emit __vt__9CPackItem here (the retail
+// vtable lives in the dissolved .data blob below).
+#pragma optimize_for_size on
+extern "C" void __dt__9CPackItemFv(CPackItem* self){
+    if(self->mFileHandle != nullptr){
+        CDeviceFile::cancel(self->mFileHandle);
     }
 
-    if(mPackHeaderExternal != 0){
-        mPackHeader = nullptr;
+    if(self->mPackHeaderExternal != 0){
+        self->mPackHeader = nullptr;
     }
 
-    if(mPackHeader != nullptr){
-        mtl::MemManager::deallocate(mPackHeader);
-        mPackHeader = nullptr;
+    if(self->mPackHeader != nullptr){
+        mtl::MemManager::deallocate(self->mPackHeader);
+        self->mPackHeader = nullptr;
     }
 
-    if(mAhxAdxBuffer != nullptr){
-        mtl::MemManager::deallocate(mAhxAdxBuffer);
-        mAhxAdxBuffer = nullptr;
+    if(self->mAhxAdxBuffer != nullptr){
+        mtl::MemManager::deallocate(self->mAhxAdxBuffer);
+        self->mAhxAdxBuffer = nullptr;
+    }
+
+    if((s32)self->field_0x68 >= 0){
+        // field_0x68 >=0 triggers delete; retail delete call is via __dl__FPv after inline dtor elision
+    }
+    if((s32)self->field_0x68 >= 0){
+        extern void __dl__FPv(void*);
+        __dl__FPv(self);
     }
 }
+#pragma optimize_for_size off
 
 /* Main update tick for pack file loading state machine.
    Transitions through: NOT_LOADED → OPENED_PKH_FILE → (LOADING_AHX_ADX_FILE) → LOADED */
+#pragma optimize_for_size on
 void CPackItem::update(){
     ml::FixStr<32> localStr(false);
     int dotPos;
@@ -134,6 +157,7 @@ void CPackItem::update(){
         }
     }
 }
+#pragma optimize_for_size off
 
 /* Looks up a file by name in the pack's hash table.
    On success, returns true and fills outPkbPath, outEntryId, outIndex, and outFileId. */
@@ -219,19 +243,19 @@ bool CPackItem::isNotLoaded(){
 /* Handles async file read completion events.
    On success, takes ownership of the file data as a PackHeader and sets up the hash table.
    On failure, sets mFileReadFailed to move the state machine past the file-open phase. */
-bool CPackItem::OnFileEvent(CEventFile* pEventFile){
-    if(pEventFile->mFileHandle == mFileHandle){
+extern "C" bool OnFileEvent__9CPackItemFP10CEventFile(CPackItem* self, CEventFile* pEventFile){
+    if(pEventFile->mFileHandle == self->mFileHandle){
         if(pEventFile->unk0 == 1){
             // Local void* is required for matching (R7 overrides R1/R3)
-            void* data = mFileHandle->mData;
-            mFileHandle->mData = nullptr;
-            mPackHeader = static_cast<PackHeader*>(data);
-            setupHashTable();
+            void* data = self->mFileHandle->mData;
+            self->mFileHandle->mData = nullptr;
+            self->mPackHeader = static_cast<PackHeader*>(data);
+            self->setupHashTable();
         }else{
-            mFileReadFailed = 1;
+            self->mFileReadFailed = 1;
         }
 
-        mFileHandle = nullptr;
+        self->mFileHandle = nullptr;
         return true;
     }
 
@@ -276,6 +300,7 @@ bool CPackItem::calculatePackFileHash(const char* filename){
 
     return true;
 }
+
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 namespace CPackItemBlob {
 extern "C" void __dt__9CPackItemFv();
@@ -312,7 +337,9 @@ extern "C" void WorkEvent30__10IWorkEventFv();
 extern "C" void WorkEvent31__10IWorkEventFv();
 }
 
-extern "C" const char lbl_eu_805246FC[0xA] = "CPackItem";
+extern "C" __declspec(align(4)) const char lbl_eu_805246FC[0xC] = {
+    0x43,0x50,0x61,0x63,0x6B,0x49,0x74,0x65,0x6D,0x00,0x00,0x00,
+};
 extern "C" u32 lbl_eu_80663BF8[2] = { (u32)&lbl_eu_805246FC, 0 };
 
 // [.data] 0x8056FF58-0x8056FFE0 (0x88): CPackItem vtable
@@ -351,5 +378,9 @@ extern "C" u32 lbl_eu_8056FF58[34] = {
     (u32)&CPackItemBlob::WorkEvent30__10IWorkEventFv,
     (u32)&CPackItemBlob::WorkEvent31__10IWorkEventFv,
 };
+
+DECOMP_FORCEACTIVE(CPackItem_cpp, lbl_eu_8056FF58);
+DECOMP_FORCEACTIVE(CPackItem_cpp, lbl_eu_805246FC);
+DECOMP_FORCEACTIVE(CPackItem_cpp, lbl_eu_80663BF8);
 
 // data: retail sections verified via run.py data diff (no bypass)

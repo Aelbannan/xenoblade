@@ -64,9 +64,13 @@ extern "C" int func_804E3614(CSchedule* self) {
 CSchedule::~CSchedule() {
     mTablePtr = (u8*)lbl_eu_80570068;
     if (mEntries != nullptr) {
+        int i;
+        s16 freeSlot = -1;
         // Notify each child (virtual call at vtable[3], passing this)
-        for (u32 i = 0; i < 4; i++) {
-            CScheduleChild* child = mChildren[i];
+        CScheduleChild* child;
+        u32 n;
+        for (n = 0; n < 4; n++) {
+            child = mChildren[n];
             if (child != nullptr) {
                 void (**vfn)(void*, void*) = *(void(***)(void*, void*))child;
                 vfn[3](child, this);
@@ -74,10 +78,10 @@ CSchedule::~CSchedule() {
         }
         // Release resolved handles
         if (mEntryCount > 0) {
-            for (int i = 0; i < 0x20; i++) {
+            for (i = 0; i < 0x20; i++) {
                 if (mHandles[i] >= 0) {
                     func_804DFB88(mHandles[i]);
-                    mHandles[i] = -1;
+                    mHandles[i] = freeSlot;
                 }
             }
             mEntryCount = 0;

@@ -11,6 +11,9 @@ void AHXDCD_SetupWtbl(u32 val) { lbl_eu_805E64BC = val; }
 
 extern u32 lbl_eu_805E64B0;
 
+// float constant pool entry used by MWCC (2147483648.0f)
+extern float lbl_eu_80517560;
+
 void ahxsbf_init_filter(void);
 
 void AHXSBF_Init(void) {
@@ -40,8 +43,8 @@ extern AhxSbfWork lbl_eu_805E64A8;
 
 void ahxsbf_init_filter(void) {
     AhxSbfWork* w = &lbl_eu_805E64A8;
-    u8* dst;
     u8* src;
+    u8* dst;
     s32 i;
 
     if (w->flag != 0) {
@@ -56,7 +59,7 @@ void ahxsbf_init_filter(void) {
     }
 
     for (i = 0; i < 0x200; i++) {
-        ((float*)w->dstW)[i] *= 2147483648.0f;
+        ((float*)w->dstW)[i] *= lbl_eu_80517560;
     }
 
     src = (u8*)w->ftbl;

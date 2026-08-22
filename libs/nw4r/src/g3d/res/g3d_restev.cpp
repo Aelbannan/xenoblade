@@ -397,7 +397,8 @@ void ResTev::SetNumTevStages(u8 num) {
 
     int s;
     ResTevData& d = ref();
-    if (d.nStages > num) {
+    if ((u32)d.nStages > num) {
+        // Clear texCoord/texMap bindings for all stages past the new count
         for (s = num; (u32)s < d.nStages; s++) {
             GXSetTevOrder(static_cast<GXTevStageID>(s),
                          static_cast<GXTexCoordID>(0xFF),
@@ -405,10 +406,13 @@ void ResTev::SetNumTevStages(u8 num) {
                          static_cast<GXChannelID>(0xFF));
         }
 
-        for (int n = (num + 1) / 2; n < ((d.nStages + 1u) >> 1); n++) {
-            detail::ZeroMemory16ByteBlocks(
-                d.dl.dl.var[n].data, 0x30);
-            DC::StoreRangeNoSync(d.dl.dl.var[n].data, 0x30);
+        s = (num + 1) / 2;
+        u8* p = reinterpret_cast<u8*>(&d.dl.dl.var[s]);
+        // Zero whole variable DLs covering stage pairs beyond the new count
+        for (; (u32)s < ((d.nStages + 1u) >> 1); s++) {
+            detail::ZeroMemory16ByteBlocks(p, 0x30);
+            DC::StoreRangeNoSync(p, 0x30);
+            p += 0x30;
         }
     }
 

@@ -53,19 +53,21 @@ extern f32 lbl_eu_8066845C;
 // sibling unit (CMCCrystalBox.cpp) helpers
 extern "C" void func_80213988(MakeCrystalTable* d);
 extern "C" void func_80213B1C(MakeCrystalTable* d);
-// Copy a 4-byte {s16, u8} crystal entry (id + flag). Definition lives at the
-// bottom of this TU: MWCC's IPA rewrites the callers' loops into unrolled
-// direct stores when it can see the body, but retail keeps real `bl`s.
+// Copy a 4-byte {s16, u8} crystal entry (id + flag). Retail calls it
+// out-of-line (bl) from the second reset loop; noinline keeps MWCC from
+// folding the body into the callers.
 __declspec(noinline) void func_8021351C(MakeCrystalEntry* dst,
                                         const MakeCrystalEntry* src);
-// (definition at bottom; volatile accesses keep the same instructions but
-// stop MWCC's IPA from proving the callers' copy loops redundant)
 
 // Retail 0x80213488: initialise the whole table. Directly resets all 1024
 // entries, sets the header, then re-writes every entry through the shared
 // entry-copy helper.
 void func_80213488(MakeCrystalTable* d) {
-    for (MakeCrystalEntry* p = d->entries; p < d->entries + 0x400; ++p) {
+    // Plain per-entry constant stores (sth/stb pair), pointer walk.
+    // Volatile end pointer keeps the optimizer from proving the trip
+    // count and unrolling this into a wide replicated-store block.
+    MakeCrystalEntry* volatile end = d->entries + 0x400;
+    for (MakeCrystalEntry* p = d->entries; p < end; ++p) {
         p->id = -1;
         p->flag = 0;
     }
@@ -79,6 +81,14 @@ void func_80213488(MakeCrystalTable* d) {
         tmp.flag = 0;
         func_8021351C(&d->entries[i], &tmp);
     }
+}
+
+__declspec(noinline) void func_8021351C(MakeCrystalEntry* dst,
+                                        const MakeCrystalEntry* src) {
+    // Retail copies only the two meaningful bytes (lha/sth id + lbz/stb flag);
+    // a struct assignment would also copy pad3 and change the emitted code.
+    dst->id = src->id;
+    dst->flag = src->flag;
 }
 
 // Retail 0x80213530: trivial deleting destructor (no members to destruct),
@@ -132,12 +142,10 @@ void func_80213570(MakeCrystalTable* d, u8 target) {
 }
 
 // Retail 0x802136E0: set the flag byte of the entry at the adjusted index.
-void func_802136E0(char* self, int idx, unsigned char val) {
-    int adj = idx + ((signed char)(self[0x1004])) * 30;
-    adj &= 0xFFFF;
-    if (adj >= *(unsigned short*)(self + 0x1000)) return;
-    int offset = adj * 4;
-    self[offset + 2] = val;
+void func_802136E0(MakeCrystalTable* d, int idx, unsigned char val) {
+    u16 adj = (u16)(idx + (s8)d->current * 30);
+    if (adj >= d->count) return;
+    d->entries[adj].flag = val;
 }
 
 // Retail 0x80213710: return the flag of the entry at the adjusted index
@@ -180,12 +188,10 @@ void func_80213788(MakeCrystalTable* d) {
 }
 
 // Retail 0x802137B4: step the row cursor back one, wrapping to limit - 1 at 0.
-void func_802137B4(void* self) {
-    unsigned char* base = (unsigned char*)self;
-    signed char val = (signed char)(base[0x1004] - 1);
-    base[0x1004] = (unsigned char)val;
-    if (val >= 0) return;
-    base[0x1004] = base[0x1003] - 1;
+void func_802137B4(MakeCrystalTable* d) {
+    d->current = d->current - 1;
+    if ((s8)d->current < 0)
+        d->current = d->limit - 1;
 }
 
 // Retail 0x802137DC: resolve the item at the adjusted index, return its
@@ -213,10 +219,4 @@ void* func_8021384C(MakeCrystalTable* d, u8 idx) {
     return 0;
 }
 
-// Copy a 4-byte {s16, u8} crystal entry (id + flag). Kept after the callers so
-// MWCC cannot see the body while optimizing them (see declaration above).
-__declspec(noinline) void func_8021351C(MakeCrystalEntry* dst,
-                                        const MakeCrystalEntry* src) {
-    *(volatile s16*)&dst->id = *(volatile s16*)&src->id;
-    *(volatile u8*)&dst->flag = *(volatile u8*)&src->flag;
-}
+// (definition above the callers so MWCC treats it out-of-line, matching retail)

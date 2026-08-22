@@ -2,10 +2,6 @@
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include <monolib/math/Random.hpp>
 
-// Function pointer type for CfObjectModel_UnkVirtualFunc4 (vtable[0x184]).
-// Header declares it with no args, but retail passes an int.
-typedef void (*CfObjectModel_UnkVirtualFunc4_t)(cf::CfObjectModel*, int);
-
 namespace cf{
     CChainCombo::CChainCombo(){
         mVtbl = lbl_eu_80538994;
@@ -57,12 +53,12 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
 
 void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     if (self->mPending) {
-        // Call vtable[0x4c] (CObjectParam_UnkVirtualFunc5) on the CfObjectMove sub-object at actor+0x3e9c.
-        cf::CfObjectMove* moveObj = static_cast<cf::CfObjectMove*>(actor);
-        func_800B708C(moveObj->CObjectParam_UnkVirtualFunc5());
+        // Call vtable[0x4c] on the +0x3e9c CfObjectMove sub-object, then chain
+        // its id through func_800B708C -> func_8016FE34.
+        CChainVObj* vobjRaw = (CChainVObj*)func_8016FE34(func_800B708C(
+            ((CChainCombo_Vt4CIf*)((u8*)actor + 0x3E9C))->m4C()));
 
-        CChainVObj* vobj = (CChainVObj*)func_8016FE34();
-        if (vobj != nullptr) {
+        if (vobjRaw != nullptr) {
             // Random selection from a 3-entry table based on probability thresholds.
             int rand = ml::math::mtRand(100);
             int value;
@@ -75,9 +71,8 @@ void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
             }
 
             // Call vtable[0x184] (CfObjectModel_UnkVirtualFunc4) on the object.
-            CfObjectModel_UnkVirtualFunc4_t func = (CfObjectModel_UnkVirtualFunc4_t)vobj->mVtbl[0x184 / 4];
-            func((cf::CfObjectModel*)vobj, value);
-            func_802A07F4(0xbf, vobj);
+            ((CChainCombo_Vt184If*)vobjRaw)->m184(value);
+            func_802A07F4(0xbf, vobjRaw);
         }
     }
     self->mPending = false;

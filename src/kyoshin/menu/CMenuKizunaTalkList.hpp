@@ -7,6 +7,22 @@
 #include "kyoshin/CTitleAHelp.hpp"
 #include "kyoshin/CKizunaTalkList.hpp"
 
+class CPad;
+
+// Pad accessors on cf::CfGameManager used by Move()/func_80272560.
+// Declared member-for-member here (full definition: kyoshin/cf/CfGameManager.hpp)
+// because that header's lbl_eu_80664090 declaration conflicts with the one in
+// CKizunaTalkList.hpp above; merge back once those types are reconciled.
+namespace cf {
+class CfPadData;
+class CfGameManager {
+public:
+    static CPad* getCurrentPad();
+    static CfPadData* getCfPadData();
+};
+} // namespace cf
+
+
 // Shared string pool (.rodata) used by Init.
 extern char lbl_eu_8050E970[];
 

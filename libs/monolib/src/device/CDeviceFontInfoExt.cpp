@@ -1,5 +1,8 @@
 // Auto-scaffolded catalog TU for monolib/src/device/CDeviceFontInfoExt
 #include <harness_catalog.h>
+#include <string.h>
+#include <revolution/enc/encunicode.h>
+#include <nw4r/ut/ut_Font.h>
 #include "monolib/device/CDeviceFontInfoExt.hpp"
 
 extern "C" {
@@ -36,7 +39,69 @@ extern "C" u32 func_80453608__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) {
 }
 
 
-extern "C" void func_80453468__18CDeviceFontInfoExtFv() {}
+// View of CDeviceFontInfoExt exposing the embedded nw4r::ut::Font base
+// subobject at offset 0x1C (the include-tree header models it opaquely).
+struct DeviceFontInfoExtFontView {
+    u8 pad[0x1C];
+    u32 mFontVtable;
+    u32 mReadFunc;
+};
+
+// Decodes the first character of pStr (double-byte when the lead byte is in
+// either Shift-JIS lead range), converts it to UTF-16 via the ENC library and
+// asks the embedded nw4r font for that codepoint's glyph, exporting metrics.
+// Local work area for the character query (MWCC lays this out as one block:
+// destLen/srcLen/widths copy/UTF-16 dest/SJIS-style src/glyph).
+// CharWidthsView lets the widths copy move as halfword+byte (retail shape)
+// while the glyphWidth byte is read back through the byte view.
+union CharWidthsView {
+    struct {
+        u8 left;
+        u8 glyphWidth;
+        u8 charWidth;
+    } b;
+    struct {
+        u16 lo;
+        u8 hi;
+    } h;
+};
+struct DeviceFontCharWork {
+    u32 destLen;
+    u32 srcLen;
+    CharWidthsView widths;
+    u16 dest[2];
+    char src[3];
+    nw4r::ut::Glyph glyph;
+};
+extern "C" const char* func_80453468__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self,
+                                                       const char* pStr, u32** ppTexture,
+                                                       u32* pCellX, u32* pCellY,
+                                                       u32* pGlyphWidth) {
+    DeviceFontCharWork work;
+    reinterpret_cast<u16&>(work.src[0]) = 0;
+    work.src[2] = 0;
+    work.src[0] = *pStr++;
+    work.dest[0] = 0;
+    work.dest[1] = 0;
+    if ((0x81 <= (u8)work.src[0] && (u8)work.src[0] <= 0x9F) ||
+        (0xE0 <= (u8)work.src[0] && (u8)work.src[0] <= 0xEF)) {
+        work.src[1] = *pStr++;
+    }
+
+    work.destLen = 2;
+    work.srcLen = strlen(work.src);
+    ENCConvertStringUtf8ToUtf16(work.dest, &work.destLen, (const u8*)work.src, &work.srcLen);
+
+    DeviceFontInfoExtFontView* view = (DeviceFontInfoExtFontView*)self;
+    nw4r::ut::Font* font = (nw4r::ut::Font*)&view->mFontVtable;
+    font->GetGlyph(&work.glyph, work.dest[0]);
+
+    *pCellX = work.glyph.cellX;
+    *pCellY = work.glyph.cellY;
+    *ppTexture = reinterpret_cast<u32*>(work.glyph.pTexture);    work.widths.h.lo = reinterpret_cast<u16&>(work.glyph.widths.left);
+    u8 cw = work.glyph.widths.charWidth;
+    *pGlyphWidth = work.widths.b.glyphWidth;
+    return work.widths.h.hi = cw, pStr;}
 extern "C" void create__18CDeviceFontInfoExtFv() {}
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====

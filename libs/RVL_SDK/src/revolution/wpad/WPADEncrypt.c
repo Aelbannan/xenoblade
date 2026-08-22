@@ -639,12 +639,15 @@ void WPADiCreateKeyFor3rd(s32 chan) {
     OSRestoreInterrupts(enable);
 }
 
+// Decode one byte: buf[j] = decryptAddTable[(offset+j)%8] + (buf[j] ^ decryptXorTable[(offset+j)%8]);
+// MWCC auto-unrolls the loop below by 8 with a byte-wise tail loop.
 void WPADiDecode(s32 chan, u8* buf, u16 len, s32 offset) {
-    u16 i;
     WPADCB* cb = __rvl_p_wpadcb[chan];
+    u16 i = 0;
 
-    for (i = 0; i < len; i++) {
-        buf[i] = cb->decryptAddTable[(u8)((offset + i) % 8)] +
-                 (buf[i] ^ cb->decryptXorTable[(u8)((offset + i) % 8)]);
+    for (; i < len; i++) {
+        u8 m = (u8)((offset + i) % 8);
+        u8 v = buf[i] ^ cb->decryptXorTable[m];
+        buf[i] = cb->decryptAddTable[m] + v;
     }
 }

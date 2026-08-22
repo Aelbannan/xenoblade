@@ -34,13 +34,15 @@ extern "C" u32 lbl_eu_805701D0[];
 // Register the left- and right-eye materials. Each scan stops at the first
 // material whose name starts with the eye prefix (strstr == name).
 void func_804E75B8(CMdlAnmEye* self, void* modelArg) {
-    self->field_04 = modelArg;
-    u32 num = nw4r::g3d::ResMdl(((CMdlAnmEyeModel*)modelArg)->field_0x146C)
+    CMdlAnmEyeModel* model = (CMdlAnmEyeModel*)modelArg;
+    self->field_04 = model;
+    u32 num = nw4r::g3d::ResMdl(model->field_0x146C)
                   .GetResMatNumEntries();
     u32 flag;
-    for (u32 i = 0; i < num; i++) {
+    u32 i;
+    for (i = 0; i < num; i++) {
         nw4r::g3d::ResMat mat =
-            nw4r::g3d::ResMdl(((CMdlAnmEyeModel*)modelArg)->field_0x146C)
+            nw4r::g3d::ResMdl(model->field_0x146C)
                 .GetResMat(i);
         if (!mat.IsValid()) {
             nw4r::db::Panic(lbl_eu_8056E068, 0x26d, lbl_eu_8056E04C,
@@ -60,10 +62,11 @@ void func_804E75B8(CMdlAnmEye* self, void* modelArg) {
         }
     }
     flag = 1;
-    for (u32 i = 0; i < num; i++) {
+    u32 j;
+    for (j = 0; j < num; j++) {
         nw4r::g3d::ResMat mat =
-            nw4r::g3d::ResMdl(((CMdlAnmEyeModel*)modelArg)->field_0x146C)
-                .GetResMat(i);
+            nw4r::g3d::ResMdl(model->field_0x146C)
+                .GetResMat(j);
         if (!mat.IsValid()) {
             nw4r::db::Panic(lbl_eu_8056E068, 0x26d, lbl_eu_8056E04C,
                             lbl_eu_806638E8, lbl_eu_80663C98);

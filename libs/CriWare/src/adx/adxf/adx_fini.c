@@ -54,7 +54,6 @@ void ADXF_Init(void) {
 
 void ADXF_Finish(void) {
     // Decrement the init refcount; on the last release, reset all ADXF state.
-    // Decrement the init refcount; on the last release, reset all ADXF state.
     struct ADXF_Work* work = &lbl_eu_805DFDA8;
     if (--work->refcount == 0) {
         ADXF_CloseAll();

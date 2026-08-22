@@ -17,6 +17,73 @@
 #include <revolution/GX.h>
 #include "monolib/core/CDrawGX.hpp"
 #include "monolib/math.hpp"
+#include <decomp.h>
+
+// ---------------------------------------------------------------------------
+// Dissolved retail data forward decls
+// Retail bytes/relocs dumped from build/us/asm/monolib/src/device/CDeviceFontLayer.s
+// .rodata 0x80522E40 size 0x78 align 8, .data 0x8056C7D0 size 0xD8 align 8,
+// .sdata 0x80663730 size 0x18 align 8, .sbss 0x80665690 size 0x8 align 8
+// Emitted as extern "C" u32 arrays with (u32)&extern, rodata align, DECOMP_FORCEACTIVE, novtable.
+// ---------------------------------------------------------------------------
+extern "C" {
+    extern const char lbl_eu_80522E40[];
+    extern const char lbl_eu_80522E54[];
+    extern const char lbl_eu_80522E84[];
+    extern u32 lbl_eu_80663730[];
+    extern u32 lbl_eu_80663738[];
+    extern u32 lbl_eu_80663740[];
+    extern u32 lbl_eu_8056C7D0[];
+    extern u32 lbl_eu_8056C870[];
+    extern u32 lbl_eu_8056C884[];
+    extern u32 lbl_eu_8056C890[];
+    extern u32 lbl_eu_8056C89C[];
+    extern void* lbl_eu_80665690;
+    extern u32 lbl_eu_80665694;
+    extern u32 __RTTI__10IWorkEvent[];
+    extern u32 __RTTI__11CWorkThread[];
+    extern void __dt__16CDeviceFontLayerFv();
+    extern void WorkEvent1__10IWorkEventFPvPCc();
+    extern void OnFileEvent__10IWorkEventFP10CEventFile();
+    extern void WorkEvent3__10IWorkEventFPv();
+    extern void WorkEvent4__10IWorkEventFv();
+    extern void OnPauseTrigger__10IWorkEventFb();
+    extern void WorkEvent6__10IWorkEventFv();
+    extern void WorkEvent7__10IWorkEventFv();
+    extern void WorkEvent8__10IWorkEventFv();
+    extern void WorkEvent9__10IWorkEventFv();
+    extern void WorkEvent10__10IWorkEventFv();
+    extern void WorkEvent11__10IWorkEventFv();
+    extern void WorkEvent12__10IWorkEventFv();
+    extern void WorkEvent13__10IWorkEventFv();
+    extern void WorkEvent14__10IWorkEventFv();
+    extern void WorkEvent15__10IWorkEventFv();
+    extern void WorkEvent16__10IWorkEventFv();
+    extern void WorkEvent17__10IWorkEventFv();
+    extern void WorkEvent18__10IWorkEventFv();
+    extern void WorkEvent19__10IWorkEventFv();
+    extern void WorkEvent20__10IWorkEventFv();
+    extern void WorkEvent21__10IWorkEventFv();
+    extern void WorkEvent22__10IWorkEventFv();
+    extern void WorkEvent23__10IWorkEventFv();
+    extern void WorkEvent24__10IWorkEventFv();
+    extern void WorkEvent25__10IWorkEventFv();
+    extern void WorkEvent26__10IWorkEventFv();
+    extern void WorkEvent27__10IWorkEventFv();
+    extern void WorkEvent28__10IWorkEventFv();
+    extern void WorkEvent29__10IWorkEventFv();
+    extern void WorkEvent30__10IWorkEventFv();
+    extern void WorkEvent31__10IWorkEventFv();
+    extern void wkUpdate__16CDeviceFontLayerFv();
+    extern void wkRender__11CWorkThreadFv();
+    extern void wkRenderAfter__11CWorkThreadFv();
+    extern void wkStandbyLogin__11CWorkThreadFv();
+    extern void wkStandbyLogout__16CDeviceFontLayerFv();
+    extern void wkStandbyExceptionRetry__11CWorkThreadFUl();
+    extern void __dt__reslist_const_CDeviceFontLayer_LAYER_QUE();
+    extern void __dt___reslist_base_const_CDeviceFontLayer_LAYER_QUE();
+}
+
 
 // ---------------------------------------------------------------------------
 // Font-info provider vtable interface (impls: CDeviceFontInfoRom / Ext).
@@ -96,7 +163,7 @@ struct CWorkThreadChildren {
     }
 };
 
-class CDeviceFontLayer {
+class __declspec(novtable) CDeviceFontLayer {
 public:
     // 0x0-0x1c8: base (vtable / work-thread state)
     u8 _base[0x5C];                    // 0x0 (vtable + name + state)
@@ -463,8 +530,7 @@ extern "C" void* allocate_array_ex__Q23mtl10MemManagerFUlUli(u32 size,
 // Lazily allocate the font-layer scratch object once: if the global slot is
 // still null, grab the device heap handle, allocate 0x10000 bytes aligned 16,
 // and reset the adjacent word.
-extern void* lbl_eu_80665690;
-extern u32 lbl_eu_80665694;
+// lbl_eu_80665690 / 80665694 now dissolved above
 
 void CDeviceFontLayer::func_80454DE4() {
     if (lbl_eu_80665690 != 0)
@@ -491,3 +557,62 @@ void CDeviceFontLayer::func_80454E2C() {
 void CDeviceFontLayer::func_80454E6C() { lbl_eu_80665694 = 0; }
 
 u32 CDeviceFontLayer::func_80454E78() { return 0x10000; }
+
+// ===== Dissolved retail data (CDeviceFontLayer TU) =====
+// .rodata 0x80522E40 (0x78) - strings
+extern "C" __declspec(section ".rodata") __attribute__((aligned(8))) const char dummy_rodata_align8[0] = {};
+extern "C" __declspec(section ".rodata") __attribute__((aligned(1))) const char lbl_eu_80522E40[17] = {0x43, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x46, 0x6F, 0x6E, 0x74, 0x4C, 0x61, 0x79, 0x65, 0x72, 0x00};
+extern "C" __declspec(section ".rodata") __attribute__((aligned(1))) const char lbl_eu_80522E54[45] = {0x72, 0x65, 0x73, 0x6C, 0x69, 0x73, 0x74, 0x3C, 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x20, 0x43, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x46, 0x6F, 0x6E, 0x74, 0x4C, 0x61, 0x79, 0x65, 0x72, 0x3A, 0x3A, 0x4C, 0x41, 0x59, 0x45, 0x52, 0x5F, 0x51, 0x55, 0x45, 0x20, 0x2A, 0x3E, 0x00};
+extern "C" __declspec(section ".rodata") __attribute__((aligned(1))) const char lbl_eu_80522E84[51] = {0x5F, 0x72, 0x65, 0x73, 0x6C, 0x69, 0x73, 0x74, 0x5F, 0x62, 0x61, 0x73, 0x65, 0x3C, 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x20, 0x43, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x46, 0x6F, 0x6E, 0x74, 0x4C, 0x61, 0x79, 0x65, 0x72, 0x3A, 0x3A, 0x4C, 0x41, 0x59, 0x45, 0x52, 0x5F, 0x51, 0x55, 0x45, 0x20, 0x2A, 0x3E, 0x00};
+
+// .sdata 0x80663730 (0x18) - RTTI locators
+extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663730[2] = { (u32)&lbl_eu_80522E40, (u32)&lbl_eu_8056C870 };
+extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663738[2] = { (u32)&lbl_eu_80522E54, (u32)&lbl_eu_8056C890 };
+extern "C" __declspec(section ".sdata") __attribute__((aligned(8))) u32 lbl_eu_80663740[2] = { (u32)&lbl_eu_80522E84, 0 };
+
+// .data 0x8056C7D0 (0xD8) - vtables / RTTI chains
+extern "C" u32 lbl_eu_8056C7D0[40] __attribute__((aligned(8))) = {
+    (u32)&lbl_eu_80663730, 0, (u32)&__dt__16CDeviceFontLayerFv,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
+    (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
+    (u32)&wkUpdate__16CDeviceFontLayerFv, (u32)&wkRender__11CWorkThreadFv,
+    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__11CWorkThreadFv,
+    (u32)&wkStandbyLogout__16CDeviceFontLayerFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+};
+extern "C" u32 lbl_eu_8056C870[5] __attribute__((aligned(8))) = {
+    (u32)&__RTTI__10IWorkEvent, 0, (u32)&__RTTI__11CWorkThread, 0, 0,
+};
+extern "C" u32 lbl_eu_8056C884[3] __attribute__((aligned(4))) = {
+    (u32)&lbl_eu_80663738, 0, (u32)&__dt__reslist_const_CDeviceFontLayer_LAYER_QUE,
+};
+extern "C" u32 lbl_eu_8056C890[3] __attribute__((aligned(4))) = {
+    (u32)&lbl_eu_80663740, 0, 0,
+};
+extern "C" u32 lbl_eu_8056C89C[3] __attribute__((aligned(4))) = {
+    (u32)&lbl_eu_80663740, 0, (u32)&__dt___reslist_base_const_CDeviceFontLayer_LAYER_QUE,
+};
+
+// .sbss 0x80665690 (0x8) - zero-initialized globals
+void* lbl_eu_80665690;
+u32 lbl_eu_80665694;
+
+DECOMP_FORCEACTIVE(CDeviceFontLayer_rodata, dummy_rodata_align8, lbl_eu_80522E40, lbl_eu_80522E54, lbl_eu_80522E84);
+DECOMP_FORCEACTIVE(CDeviceFontLayer_sdata, lbl_eu_80663730, lbl_eu_80663738, lbl_eu_80663740);
+DECOMP_FORCEACTIVE(CDeviceFontLayer_data, lbl_eu_8056C7D0, lbl_eu_8056C870, lbl_eu_8056C884, lbl_eu_8056C890, lbl_eu_8056C89C);
+DECOMP_FORCEACTIVE(CDeviceFontLayer_sbss, lbl_eu_80665690, lbl_eu_80665694);
+// data: retail sections verified via run.py data diff (no bypass)
+

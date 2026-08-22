@@ -14,7 +14,7 @@ public:
 };
 
 //size: 0x238
-class CDeviceClock : public CDeviceBase {
+class __declspec(novtable) CDeviceClock : public CDeviceBase {
 public:
     CDeviceClock(const char* pName, CWorkThread* pParent);
     virtual ~CDeviceClock();

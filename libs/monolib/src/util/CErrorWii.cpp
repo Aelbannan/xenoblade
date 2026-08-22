@@ -3,6 +3,10 @@
 #include <revolution/BASE.h>
 #include <revolution/OS.h>
 #include <revolution/VI.h>
+#include <nw4r/db/db_assert.h>
+
+//Shared " in \"%s\" on line %d.\n" format string (defined in CMdlDynamics.cpp)
+extern const char lbl_eu_80524870[];
 
 IErrorWii::~IErrorWii(){}
 
@@ -153,6 +157,9 @@ down, etc...), but all such potential code was removed for release, including th
 at the end (or some other way of stopping any more code from running). As a result,
 any calls to OSPanic will effectively do nothing, and the game will continue to run instead of
 properly halting. It shouldn't ever get called though, so it's fine, right? :) */
+// optimize_for_size: retail uses a block stmw/lmw register save here, which only
+// MWCC's size optimizer emits (-O4,p produces separate stw saves instead).
+#pragma optimize_for_size on
 void OSPanic(const char *file, int line, const char *msg, ...){
     u32 depth;
     u32* sp;
@@ -165,7 +172,7 @@ void OSPanic(const char *file, int line, const char *msg, ...){
     length = vsprintf(buffer, msg, list);
     va_end(list);
 
-    sprintf(&buffer[length], " in \"%s\" on line %d.\n", file, line);
+    sprintf(&buffer[length], lbl_eu_80524870, file, line);
 
     //Does absolutely nothing with the error message, and doesn't halt...
 #if defined(BUGFIX)
@@ -180,4 +187,20 @@ void OSPanic(const char *file, int line, const char *msg, ...){
     PPCHalt();
 #endif
 }
+#pragma optimize_for_size reset
+
+//Same body as OSPanic above - release build strips everything after formatting the message
+#pragma optimize_for_size on
+void nw4r::db::Panic(const char* file, int line, const char* fmt, ...){
+    va_list list;
+    int length;
+    char buffer[4096];
+
+    va_start(list, fmt);
+    length = vsprintf(buffer, fmt, list);
+    va_end(list);
+
+    sprintf(&buffer[length], lbl_eu_80524870, file, line);
+}
+#pragma optimize_for_size reset
 // data: retail sections verified via run.py data diff (no bypass)

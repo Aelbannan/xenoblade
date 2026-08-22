@@ -7,6 +7,121 @@
 
 using namespace ml;
 
+#include <decomp.h>
+#include <revolution/GX.h>
+// Dissolved minimal
+extern "C" {
+    extern const char lbl_eu_8066A428[];
+    extern u32 lbl_eu_806635F0[];
+    extern u32 lbl_eu_80663618[];
+    extern u32 __RTTI__10IWorkEvent[];
+    extern u32 __RTTI__11CWorkThread[];
+    extern void __dt__9CDeviceGXFv();
+    extern void WorkEvent1__10IWorkEventFPvPCc();
+    extern void OnFileEvent__10IWorkEventFP10CEventFile();
+    extern void WorkEvent3__10IWorkEventFPv();
+    extern void WorkEvent4__10IWorkEventFv();
+    extern void OnPauseTrigger__10IWorkEventFb();
+    extern void WorkEvent6__10IWorkEventFv();
+    extern void WorkEvent7__10IWorkEventFv();
+    extern void WorkEvent8__10IWorkEventFv();
+    extern void WorkEvent9__10IWorkEventFv();
+    extern void WorkEvent10__10IWorkEventFv();
+    extern void WorkEvent11__10IWorkEventFv();
+    extern void WorkEvent12__10IWorkEventFv();
+    extern void WorkEvent13__10IWorkEventFv();
+    extern void WorkEvent14__10IWorkEventFv();
+    extern void WorkEvent15__10IWorkEventFv();
+    extern void WorkEvent16__10IWorkEventFv();
+    extern void WorkEvent17__10IWorkEventFv();
+    extern void WorkEvent18__10IWorkEventFv();
+    extern void WorkEvent19__10IWorkEventFv();
+    extern void WorkEvent20__10IWorkEventFv();
+    extern void WorkEvent21__10IWorkEventFv();
+    extern void WorkEvent22__10IWorkEventFv();
+    extern void WorkEvent23__10IWorkEventFv();
+    extern void WorkEvent24__10IWorkEventFv();
+    extern void WorkEvent25__10IWorkEventFv();
+    extern void WorkEvent26__10IWorkEventFv();
+    extern void WorkEvent27__10IWorkEventFv();
+    extern void WorkEvent28__10IWorkEventFv();
+    extern void WorkEvent29__10IWorkEventFv();
+    extern void WorkEvent30__10IWorkEventFv();
+    extern void WorkEvent31__10IWorkEventFv();
+    extern void wkUpdate__11CWorkThreadFv();
+    extern void wkRender__11CWorkThreadFv();
+    extern void wkRenderAfter__11CWorkThreadFv();
+    extern void wkStandbyLogin__9CDeviceGXFv();
+    extern void wkStandbyLogout__9CDeviceGXFv();
+    extern void wkStandbyExceptionRetry__11CWorkThreadFUl();
+    extern void viBeforeDrawDone__11CDeviceVICbFv();
+    extern void viAfterDrawDone__9CDeviceGXFv();
+    extern void viBeginFrame__9CDeviceGXFv();
+    extern void thunk_456_dt_9CDeviceGX();
+    extern void thunk_456_viAfter_9CDeviceGX();
+    extern void thunk_456_viBegin_9CDeviceGX();
+    extern u32 lbl_eu_80522ED0[];
+    extern u32 lbl_eu_8056CA20[];
+    extern u32 lbl_eu_80663758[];
+}
+extern "C" __declspec(section ".rodata") u32 lbl_eu_80522ED0[4] = { 0x43446576, 0x69636547, 0x58000000, 0x00000000 };
+extern "C" __declspec(section ".sdata") int gxHeapSize__9CDeviceGX = 0x00200000;
+extern "C" __declspec(section ".sdata") const char* someString__9CDeviceGX = lbl_eu_8066A428;
+extern "C" __declspec(section ".sdata") u32 lbl_eu_80663758[2] = { (u32)&lbl_eu_80522ED0, (u32)&lbl_eu_8056CA20 };
+extern "C" u32 lbl_eu_8056C960[48] = {
+    (u32)&lbl_eu_80663758, 0, (u32)&__dt__9CDeviceGXFv,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
+    (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
+    (u32)&wkUpdate__11CWorkThreadFv, (u32)&wkRender__11CWorkThreadFv,
+    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__9CDeviceGXFv,
+    (u32)&wkStandbyLogout__9CDeviceGXFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+    (u32)&lbl_eu_80663758, 0xFFFFFE38, (u32)&thunk_456_dt_9CDeviceGX,
+    (u32)&viBeforeDrawDone__11CDeviceVICbFv, (u32)&thunk_456_viAfter_9CDeviceGX,
+    (u32)&thunk_456_viBegin_9CDeviceGX, (u32)&viAfterDrawDone__9CDeviceGXFv,
+    (u32)&viBeginFrame__9CDeviceGXFv
+};
+extern "C" u32 lbl_eu_8056CA20[10] = {
+    (u32)&lbl_eu_80663618, 0x000001C8, (u32)&__RTTI__10IWorkEvent, 0,
+    (u32)&__RTTI__11CWorkThread, 0, (u32)&lbl_eu_806635F0, 0,
+    0, 0
+};
+extern "C" CGXCache* cacheInstance__9CDeviceGX = nullptr;
+extern "C" u32 lbl_eu_806656A8 = 0;
+extern "C" CDesktop* lbl_eu_806656AC = nullptr;
+extern "C" u8 lbl_eu_806656B0 = 0;
+extern "C" u8 gap_10_806656B1_sbss[3];
+DECOMP_FORCEACTIVE(CDeviceGX_cpp, lbl_eu_80522ED0, lbl_eu_8056C960, lbl_eu_8056CA20, lbl_eu_80663758, gxHeapSize__9CDeviceGX, someString__9CDeviceGX, cacheInstance__9CDeviceGX);
+asm void thunk_456_dt_9CDeviceGX(void) {
+    nofralloc
+    subi r3, r3, 0x1C8
+    b __dt__9CDeviceGXFv
+}
+asm void thunk_456_viBegin_9CDeviceGX(void) {
+    nofralloc
+    subi r3, r3, 0x1C8
+    b viBeginFrame__9CDeviceGXFv
+}
+asm void thunk_456_viAfter_9CDeviceGX(void) {
+    nofralloc
+    subi r3, r3, 0x1C8
+    b viAfterDrawDone__9CDeviceGXFv
+}
+
+
 // Inline copy of CWorkThread::isRunning() visible only in this TU so the retail
 // inline shape (member call, this-arg bound to the instance) reproduces in
 // isInitialized. CWorkRoot.cpp keeps the strong out-of-line definition.

@@ -1,55 +1,54 @@
-// Auto-scaffolded catalog TU for kyoshin/plugin/ocMsg
-// Replace stubs with high-level C/C++ during decomp.
+// ocMsg plugin: script-facing "OcMsg" / "OcLog" object-code handlers for the
+// monolib script VM. Each function is a getter/setter/selector callback
+// registered with vmOCRegist() via the OCData tables at the bottom.
 
 #include "kyoshin/plugin/ocMsg.hpp"
 #include <types.h>
 
-struct OcMsgRingHdr {
-    u32 wrap;
-    u32 capacity;
-    u32 readIdx;
-    u32 writeIdx;
-    u32 count;
-};
+// ---------------------------------------------------------------------------
+// Two-value ring (values live at obj+0x64 / obj+0x68)
+// ---------------------------------------------------------------------------
 
-extern "C" int func_8003A53C(VMThread* pThread, void* r4, s16 r5) {
+// OC constructor: returns the shared OcMsg list header as a VM object value.
+int func_8003A53C(VMThread* pThread, void* r4, s16 r5) {
     VMArg args;
-    *(u8*)&args.type = 9;
-    *(u16*)((char*)&args + 2) = r5;
+    args.type = 9;
+    args.unk2 = r5;
     args.value.pointerVal = func_8003A4E0();
     vmRetValSet(pThread, &args);
     return 1;
 }
 
-extern "C" int func_8003A588(VMThread* pThread, void* target) {
+int func_8003A588(VMThread* pThread, void* target) {
     VMArg args;
-    *(u8*)&args.type = 3;
+    args.type = 3;
     args.value.uintVal = *(u32*)((char*)target + 0x64);
     vmRetValSet(pThread, &args);
     return 1;
 }
 
-extern "C" int func_8003A5C0(VMThread* pThread, void* target) {
+int func_8003A5C0(VMThread* pThread, void* target) {
     VMArg args;
-    *(u8*)&args.type = 3;
+    args.type = 3;
     args.value.uintVal = *(u32*)((char*)target + 0x68);
     vmRetValSet(pThread, &args);
     return 1;
 }
 
-extern "C" int func_8003A5F8(VMThread* pThread, void* target) {
+int func_8003A5F8(VMThread* pThread, void* target) {
     void* prop = vmOCPropertyGet(pThread);
     *(u32*)((char*)target + 0x64) = *(u32*)((char*)prop + 4);
     return 0;
 }
 
-extern "C" int func_8003A630(VMThread* pThread, void* target) {
+int func_8003A630(VMThread* pThread, void* target) {
     void* prop = vmOCPropertyGet(pThread);
     *(u32*)((char*)target + 0x68) = *(u32*)((char*)prop + 4);
     return 0;
 }
 
-extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
+// Ring reset: clears indices and sets capacity = 9.
+s32 func_8003A668(void*, OcMsgRingHdr* list) {
     list->count = 0;
     list->wrap = 0;
     list->writeIdx = 0;
@@ -57,6 +56,10 @@ extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
     list->capacity = 9;
     return 0;
 }
+
+// ---------------------------------------------------------------------------
+// Typeof-style probes on the counter at target+0x10
+// ---------------------------------------------------------------------------
 
 // Open item: bit-trick type computation (x = count^0xA; 1 + ((x>>1)-(x&0xA))>>31).
 // Retail keeps x in r5 (count in r0); MWCC always reuses r0 for x (4-7 pure
@@ -80,9 +83,16 @@ extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
 // OVER budget) and subf still encodes r0,r5,r0. MWCC always schedules andi.
 // first when both trees share x; with independent trees it preserves source
 // order. Confirms coupling: unreachable under forward semantics.
-extern "C" int func_8003A68C(VMThread* pThread, void* target) {
-    // type = 1 + bit31((x>>1) - (x&0xA)), x = count^0xA. See wall comment above:
-    // best forward-semantic shape = retail stream with 4 pure reg swaps.
+// Open item (wall class 11): type = 1 + bit31((x>>1) - (x&0xA)), x = count^0xA.
+// Retail keeps count in r0 and moves x to r5 (xori r5,r0), mask back into r0,
+// shift into r5. MWCC's subf encoding is source-driven (a-b -> subf dst,b,a)
+// and its allocation is coupled to the subtraction operand order: every
+// correct-semantic forward shape yields x->r0 and subf r0,r5,r0 (4 pure reg
+// swaps). Refuted across ~50 shapes / Wii 1.1 + GC 3.0a5.2/3.0a3.4, including:
+// named temps m/h, compound xor-assign, independent CSE trees, reversed
+// source (negates semantics), live-count variants (+4 bytes OVER). This body
+// is the banked best draft (structural=0, mismatch=4).
+int func_8003A68C(VMThread* pThread, void* target) {
     int count = *(int*)((char*)target + 0x10);
     int x = count ^ 0x0a;
     VMArg args;
@@ -94,7 +104,10 @@ extern "C" int func_8003A68C(VMThread* pThread, void* target) {
     return 1;
 }
 
-extern "C" int func_8003A6D4(VMThread* pThread, void* target) {
+// type = 1 when count has exactly one bit set (power of two), else 0:
+// bit31(-count & ~count) is set iff count is not a power of two... inverted
+// by the +1 borrow trick; matches retail's nand/neg/srawi sequence.
+int func_8003A6D4(VMThread* pThread, void* target) {
     int count = *(int*)((char*)target + 0x10);
     VMArg args;
     *(u8*)&args.type = 1 + ((u32)((-count) & ~count) >> 31);
@@ -102,7 +115,12 @@ extern "C" int func_8003A6D4(VMThread* pThread, void* target) {
     return 1;
 }
 
-extern "C" s32 func_8003A714(s32 ret, OcMsgRingHdr* list) {
+// ---------------------------------------------------------------------------
+// Ring push/pop, two-value variant (8-byte slots)
+// ---------------------------------------------------------------------------
+
+// Push obj+0x64/0x68 into the next ring slot.
+s32 func_8003A714(s32 ret, OcMsgRingHdr* list) {
     // Reuse `ret` for writeIdx then count so +1 lands in a distinct reg (retail addi r5,r3,1).
     // Signed compare → cmpw (u32 > emits cmplw).
     ret = list->writeIdx;
@@ -122,7 +140,8 @@ extern "C" s32 func_8003A714(s32 ret, OcMsgRingHdr* list) {
     return 0;
 }
 
-extern "C" s32 func_8003A764(s32 ret, OcMsgRingHdr* list) {
+// Pop the current ring slot into obj+0x64/0x68.
+s32 func_8003A764(s32 ret, OcMsgRingHdr* list) {
     ret = list->readIdx;
     s32 capacity = list->capacity;
     s32 newReadIdx = ret + 1;
@@ -140,58 +159,64 @@ extern "C" s32 func_8003A764(s32 ret, OcMsgRingHdr* list) {
     return 0;
 }
 
-extern "C" int func_8003A7B4(VMThread* pThread, void* r4, s16 r5) {
+// ---------------------------------------------------------------------------
+// Three-value ring (values live at obj+0x8c / obj+0x90 / obj+0x94)
+// ---------------------------------------------------------------------------
+
+// OC constructor: returns the shared OcLog list header as a VM object value.
+int func_8003A7B4(VMThread* pThread, void* r4, s16 r5) {
     VMArg args;
-    *(u8*)&args.type = 9;
-    *(u16*)((char*)&args + 2) = r5;
+    args.type = 9;
+    args.unk2 = r5;
     args.value.pointerVal = func_8003A4EC();
     vmRetValSet(pThread, &args);
     return 1;
 }
 
-extern "C" int func_8003A800(VMThread* pThread, void* target) {
+int func_8003A800(VMThread* pThread, void* target) {
     VMArg args;
-    *(u8*)&args.type = 3;
+    args.type = 3;
     args.value.uintVal = *(u32*)((char*)target + 0x8C);
     vmRetValSet(pThread, &args);
     return 1;
 }
 
-extern "C" int func_8003A838(VMThread* pThread, void* target) {
+int func_8003A838(VMThread* pThread, void* target) {
     VMArg args;
-    *(u8*)&args.type = 3;
+    args.type = 3;
     args.value.uintVal = *(u32*)((char*)target + 0x90);
     vmRetValSet(pThread, &args);
     return 1;
 }
 
-extern "C" int func_8003A870(VMThread* pThread, void* target) {
+int func_8003A870(VMThread* pThread, void* target) {
     VMArg args;
-    *(u8*)&args.type = 3;
+    args.type = 3;
     args.value.uintVal = *(u32*)((char*)target + 0x94);
     vmRetValSet(pThread, &args);
     return 1;
 }
 
-extern "C" int func_8003A8A8(VMThread* pThread, void* target) {
+int func_8003A8A8(VMThread* pThread, void* target) {
     void* prop = vmOCPropertyGet(pThread);
     *(u32*)((char*)target + 0x8C) = *(u32*)((char*)prop + 4);
     return 0;
 }
 
-extern "C" int func_8003A8E0(VMThread* pThread, void* target) {
+int func_8003A8E0(VMThread* pThread, void* target) {
     void* prop = vmOCPropertyGet(pThread);
     *(u32*)((char*)target + 0x90) = *(u32*)((char*)prop + 4);
     return 0;
 }
 
-extern "C" int func_8003A918(VMThread* pThread, void* target) {
+int func_8003A918(VMThread* pThread, void* target) {
     void* prop = vmOCPropertyGet(pThread);
     *(u32*)((char*)target + 0x94) = *(u32*)((char*)prop + 4);
     return 0;
 }
 
-extern "C" s32 func_8003A950(s32 ret, OcMsgRingHdr* list) {
+// Push obj+0x8c/0x90/0x94 into the next 12-byte ring slot.
+s32 func_8003A950(s32 ret, OcMsgRingHdr* list) {
     ret = list->writeIdx;
     s32 capacity = list->capacity;
     s32 newWriteIdx = ret + 1;
@@ -210,7 +235,8 @@ extern "C" s32 func_8003A950(s32 ret, OcMsgRingHdr* list) {
     return 0;
 }
 
-extern "C" s32 func_8003A9A8(s32 ret, OcMsgRingHdr* list) {
+// Pop the current 12-byte ring slot into obj+0x8c/0x90/0x94.
+s32 func_8003A9A8(s32 ret, OcMsgRingHdr* list) {
     ret = list->readIdx;
     s32 capacity = list->capacity;
     s32 newReadIdx = ret + 1;
@@ -229,8 +255,10 @@ extern "C" s32 func_8003A9A8(s32 ret, OcMsgRingHdr* list) {
     return 0;
 }
 
-extern OCData lbl_eu_80524CE8[];
-extern OCData lbl_eu_80524D80[];
+// ---------------------------------------------------------------------------
+// Plugin registration
+// ---------------------------------------------------------------------------
+
 void ocMsgRegist() {
     vmOCRegist(lbl_eu_80524CE8);
     vmOCRegist(lbl_eu_80524D80);

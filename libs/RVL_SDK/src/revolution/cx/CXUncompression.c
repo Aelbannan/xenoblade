@@ -27,10 +27,11 @@ void CXUncompressHuffman(const u8* src, u8* dst) {
     u32 countMax;
     const u8* data;
     const u8* treeBase;
-    const u8* tree;
     const u8* words;
-    u32 bits;
+    const u8* tree;
     s32 bitsLeft;
+    u32 bits;
+    u32 bit;
 
     size = CXLoadBE32(src) >> 8;
     if (size != 0) {
@@ -57,7 +58,7 @@ void CXUncompressHuffman(const u8* src, u8* dst) {
         bitsLeft = 32;
         while (--bitsLeft >= 0) {
             u8 node = *tree;
-            u32 bit = bits >> 31;
+            bit = bits >> 31;
             tree = (const u8*)(((u32)tree & ~1) + bit + 2 * ((node & 0x3F) + 1));
             if ((node << bit) & 0x80) {
                 u8 out = *tree;

@@ -5,7 +5,8 @@
 #include "monolib/math/CMat34.hpp"
 #include "monolib/math/CCol4.hpp"
 
-class CGXCache {
+// novtable: retail vtables stored manually (stored by ctor, not compiler)
+class __declspec(novtable) CGXCache {
 public:
     CGXCache();
     virtual ~CGXCache();
@@ -45,7 +46,7 @@ public:
     void func_8044BE38();
 };
 
-class IStateCache {
+class __declspec(novtable) IStateCache {
 public:
     virtual ~IStateCache();
     IStateCache();
@@ -53,7 +54,7 @@ public:
     // TODO: add fields
 };
 
-class CMsgParam_32 {
+class __declspec(novtable) CMsgParam_32 {
 public:
     CMsgParam_32();
 

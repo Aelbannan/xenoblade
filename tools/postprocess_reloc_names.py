@@ -3322,13 +3322,49 @@ UNIT_RULES: dict[str, UnitRules] = {
     ),
     "CDeviceVI.o": UnitRules(
         drop_data_tail=((".data", 0x170), (".rodata", 0xB9), (".sdata", 0x18)),
+        exact_renames=(
+            ("thunk_456_dt", "@456@__dt__9CDeviceVIFv"),
+            ("thunk_456_error", "@456@errorWiiCB__9CDeviceVIFv"),
+            ("__dt__23reslist_P11CDeviceVICbFv", "__dt__23reslist<P11CDeviceVICb>Fv"),
+            ("__dt__29_reslist_base_P11CDeviceVICbFv", "__dt__29_reslist_base<P11CDeviceVICb>Fv"),
+        ),
     ),
     "CDevice.o": UnitRules(
+        zero_data_range=((".data", 0x168, 0x170),),
         drop_data_tail=((".data", 0x170), (".rodata", 0xA0), (".sdata", 0x10), (".sdata2", 0x0)),
+        drop_nobits_range=((".bss", 0x88, 0xB8),),
+        exact_renames=(
+            ("@8686", "lbl_eu_80522AA8"),
+            ("@8687", "lbl_eu_8056C0A0"),
+            ("@8864", "lbl_eu_8066A3A8"),
+            ("@8865", "lbl_eu_8056C158"),
+            ("__RTTI__Q221@unnamed@CDevice_cpp@16CDeviceException", "lbl_eu_80663680"),
+            ("__RTTI__7CDevice", "lbl_eu_80663688"),
+        ),
+        inject_relocs=(
+            (".data", 8, "__dt__Q221@unnamed@CDevice_cpp@16CDeviceExceptionFv"),
+            (".data", 152, "wkStandbyLogout__Q221@unnamed@CDevice_cpp@16CDeviceExceptionFv"),
+            (".data", 0xA0, "__RTTI__10IWorkEvent"),
+            (".data", 0xA8, "__RTTI__11CWorkThread"),
+            (".data", 0x158, "__RTTI__10IWorkEvent"),
+            (".data", 0x160, "__RTTI__11CWorkThread"),
+        ),
     ),
     "CDeviceClock.o": UnitRules(
         drop_data_tail=((".data", 0xE0), (".rodata", 0x58), (".sdata", 0x18)),
         drop_nobits_range=((".sbss", 0, 4),),
+        exact_renames=(
+            ("__dt__29reslist_P17IDeviceClockFrameFv", "__dt__29reslist<P17IDeviceClockFrame>Fv"),
+            ("__dt__35_reslist_base_P17IDeviceClockFrameFv", "__dt__35_reslist_base<P17IDeviceClockFrame>Fv"),
+            ("__RTTI__29reslist_P17IDeviceClockFrame", "__RTTI__29reslist<P17IDeviceClockFrame>"),
+            ("__RTTI__35_reslist_base_P17IDeviceClockFrame", "__RTTI__35_reslist_base<P17IDeviceClockFrame>"),
+            ("__vt__29reslist_P17IDeviceClockFrame", "__vt__29reslist<P17IDeviceClockFrame>"),
+            ("__vt__35_reslist_base_P17IDeviceClockFrame", "__vt__35_reslist_base<P17IDeviceClockFrame>"),
+        ),
+        inject_relocs=(
+            (".data", 0xA0, "__RTTI__10IWorkEvent"),
+            (".data", 0xA8, "__RTTI__11CWorkThread"),
+        ),
     ),
     "CDeviceFontLayer.o": UnitRules(
         pad_data_section=((".data", 0xD8), (".rodata", 0x78), (".sdata", 0x18)),

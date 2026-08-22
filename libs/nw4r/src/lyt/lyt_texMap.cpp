@@ -37,16 +37,37 @@ void TexMap::Set(TPLPalette* pPalette, u32 id) {
     Set(TPLGet(pPalette, id));
 }
 
-#pragma push
-#pragma auto_inline off
+// Retail fully inlines the header copy here (accessors expand inline).
 void TexMap::Set(const TPLDescriptor* pDesc) {
-    SetNoWrap(pDesc);
-
     const TPLHeader& rTexHeader = *pDesc->textureHeader;
+
+    SetImage(rTexHeader.data);
+    SetSize(rTexHeader.width, rTexHeader.height);
+    SetTexelFormat(static_cast<GXTexFmt>(rTexHeader.format));
     SetWrapMode(rTexHeader.wrapS, rTexHeader.wrapT);
+
+    SetMipMap(rTexHeader.minLOD != rTexHeader.maxLOD);
+    SetFilter(rTexHeader.minFilter, rTexHeader.magFilter);
+
+    SetLOD(static_cast<f32>(rTexHeader.minLOD),
+           static_cast<f32>(rTexHeader.maxLOD));
+
+    SetLODBias(rTexHeader.LODBias);
+    SetEdgeLODEnable(rTexHeader.edgeLODEnable);
+
+    const TPLClutHeader* const pClutHeader = pDesc->CLUTHeader;
+
+    if (pClutHeader != NULL) {
+        SetPalette(pClutHeader->data);
+        SetPaletteFormat(pClutHeader->format);
+        SetPaletteEntryNum(pClutHeader->numEntries);
+    } else {
+        SetPalette(NULL);
+        SetPaletteFormat(GX_TL_IA8);
+        SetPaletteEntryNum(0);
+    }
 }
 
-#pragma pop
 
 void TexMap::SetNoWrap(const TexMap& rOther) {
     GXTexWrapMode wrapS = GetWrapModeS();

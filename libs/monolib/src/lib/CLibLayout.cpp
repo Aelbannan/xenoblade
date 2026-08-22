@@ -57,16 +57,30 @@ CLibLayout* CLibLayout::getInstance() {
     return lbl_eu_80665710;
 }
 
-bool CLibLayout::isInitialized() {
-    // The layout thread counts as initialized while logged in/running and not
-    // flagged for an exception (the singleton's own state, not `this`).
+// Inline copy of CWorkThread::isRunning() visible only in this TU (same trick
+// as CLibVM.cpp / CDeviceGX.cpp): the retail isInitialized inlines the member
+// call with the this-arg bound to the instance, which births the global load
+// before the find-loop index (inst=r6 / index=r7). CWorkRoot.cpp keeps the
+// strong out-of-line definition.
+inline bool CWorkThread::isRunning() const {
+    bool exception;
+    if (mFlags & THREAD_FLAG_EXCEPTION) {
+        exception = true;
+    } else {
+        exception = mMsgQueue.find(EVT_EXCEPTION) >= 0;
+    }
     bool result = false;
-    CLibLayout* hp = lbl_eu_80665710;
-    if (!hp->isException()) {
-        if (hp->mState == THREAD_STATE_LOGIN || hp->mState == THREAD_STATE_RUN)
+    if (!exception) {
+        bool stateOK = mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN;
+        if (stateOK) {
             result = true;
+        }
     }
     return result;
+}
+bool CLibLayout::isInitialized() {
+    extern CLibLayout* lbl_eu_80665710;
+    return lbl_eu_80665710->isRunning();
 }
 
 nw4r::lyt::Layout* CLibLayout::createLayout() {
@@ -98,6 +112,7 @@ nw4r::lyt::Picture* CLibLayout::createPicture(void) {
             __throw(0, 0, 0);
         }
     }
+    return picture;
 }
 
 nw4r::lyt::TextBox* CLibLayout::createTextbox() {

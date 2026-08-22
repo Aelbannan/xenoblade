@@ -2,9 +2,9 @@
 
 #include "kyoshin/help/CHelp_Talk.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-#include "kyoshin/cf/object/CfObjectPc.hpp"
 
-extern cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove);
+// C++ linkage at global scope -> MWCC emits retail symbol func_800B708C__Fi.
+void* func_800B708C(int id);
 
 namespace cf {
 
@@ -16,83 +16,70 @@ void CHelp_Talk::func_802B86BC() {
 
 // Evaluate whether the talk help condition is satisfied.
 bool CHelp_Talk::func_802B86F0() {
-    // Get the current voice action for player 0
-    void* voiceAction = func_8016FE34(CfGameManager::getPlayer(0));
+    // Get the current voice action for player 0.
+    bool voiceActive;
+    CVoiceRec* voice = static_cast<CVoiceRec*>(func_8016FE34(CfGameManager::getPlayer(0)));
+    voiceActive = false;
 
-    bool voiceActive = false;
-    if (voiceAction != nullptr) {
-        // Access sub-object at voiceAction+4, call its vtable[0x30/4], deref result
-        void* sub = *reinterpret_cast<void**>(reinterpret_cast<u8*>(voiceAction) + 4);
-        void** subVt = *reinterpret_cast<void***>(sub);
-        u32 localVal = *reinterpret_cast<u32*>(
-            reinterpret_cast<void* (*)(void*)>(subVt[0x30 / 4])(sub));
+    if (voice != nullptr) {
+        u32* ret = voice->field_04->vf30();
+        u32 localVal = *ret;
 
-        // Query a property of the voice action
-        if (func_80174C98(voiceAction, &localVal, 1) != 0) {
+        if (func_80174C98(voice, &localVal, 1) != 0) {
             voiceActive = true;
         }
     }
 
-    // Dispatch to virtual slot 8 with the voice-active flag
-    if (!reinterpret_cast<bool (*)(CHelp_Talk*, bool)>(mVtbl->mSlots[8])(this, voiceActive)) {
-        return false;
+    // Dispatch to interface-table slot 0x20 with the voice-active flag.
+    // Control flow mirrors retail: both failure exits share the function tail.
+    if (!reinterpret_cast<CHelpTalkVtblView*>(this)->vf20(voiceActive)) {
+        goto retFalse;
     }
 
-    // If no voice is active, return the current state byte as-is
+    // If no voice is active, return the current state byte as-is.
     if (!voiceActive) {
-        return field_0x16 != 0;
+        goto retState;
     }
 
-    // Voice is active: set state and perform additional checks
     field_0x16 = 1;
 
-    // If field_0x10 is set, validate against the player's target
+    // If field_0x10 is set, validate it against the talk target's id (+0x8C).
     if (field_0x10 != 0) {
-        void* targetResult = func_8016FE34(CfGameManager::getPlayer(0));
-        void* targetObj = nullptr;
-        if (targetResult != nullptr) {
-            // Access CObjectParam vtable at retail offset 0x3E9C
-            u8* base = reinterpret_cast<u8*>(targetResult) + 0x3E9C;
-            void** vt = *reinterpret_cast<void***>(base);
-            BOOL paramResult = reinterpret_cast<BOOL (*)(void*)>(vt[0x4C / 4])(base);
-            targetObj = func_800BF324(func_800B708C(paramResult));
-        }
+        CPlayerTalkRec* targetResult = static_cast<CPlayerTalkRec*>(
+            func_8016FE34(CfGameManager::getPlayer(0)));
+        // Sub-object at +0x3E9C: vtable 0x4C yields the actor id.
+        CTalkActor* targetObj = targetResult != nullptr
+            ? static_cast<CTalkActor*>(func_800BF324(func_800B708C(
+                reinterpret_cast<int>(targetResult->field_3E9C.vf4C()))))
+            : nullptr;
 
-        // Compare field_0x10 against the target's field_0x8C (u16)
-        if (targetObj != nullptr) {
-            u16 targetVal = *reinterpret_cast<u16*>(reinterpret_cast<u8*>(targetObj) + 0x8C);
-            field_0x16 = (field_0x10 == targetVal) ? 1 : 0;
-        } else {
-            field_0x16 = 0;
-        }
+        field_0x16 = (targetObj != nullptr && field_0x10 == targetObj->field_8C) ? 1 : 0;
     }
 
-    // If state is still set and field_0x14 is nonzero, check a global flag
+    // If state is still set and field_0x14 is set, check a global flag.
     if (field_0x16 != 0 && field_0x14 != 0) {
-        // func_8009CF8C(0x7D0) returns a u32; nonzero result sets state to 1
         field_0x16 = (func_8009CF8C(0x7D0) != 0) ? 1 : 0;
     }
 
-    // If state is still set and field_0x15 is nonzero, check actor substate
+    // If state is still set and field_0x15 is set, check the actor's state id.
     if (field_0x16 != 0 && field_0x15 != 0) {
-        void* actorResult = func_8016FE34(CfGameManager::getPlayer(0));
-        bool substateOk = false;
-        if (actorResult != nullptr) {
-            u8* base = reinterpret_cast<u8*>(actorResult) + 0x3E9C;
-            void** vt = *reinterpret_cast<void***>(base);
-            BOOL paramResult = reinterpret_cast<BOOL (*)(void*)>(vt[0x4C / 4])(base);
-            void* actor = func_800BF324(func_800B708C(paramResult));
-            if (actor != nullptr) {
-                // Virtual call at slot 0x228 to get substate; check if == 3
-                void** actorVt = *reinterpret_cast<void***>(actor);
-                int substate = reinterpret_cast<int (*)(void*)>(actorVt[0x228 / 4])(actor);
-                substateOk = (substate == 3);
-            }
-        }
-        field_0x16 = substateOk ? 1 : 0;
+        CPlayerTalkRec* actorResult = static_cast<CPlayerTalkRec*>(
+            func_8016FE34(CfGameManager::getPlayer(0)));
+        // vtable 0x228: current state id; success when it equals 3.
+        bool stateOk = actorResult != nullptr
+            ? static_cast<CTalkActor*>(func_800BF324(func_800B708C(
+                reinterpret_cast<int>(actorResult->field_3E9C.vf4C()))))->vf228() == 3
+            : false;
+        field_0x16 = stateOk ? 1 : 0;
     }
 
-    return field_0x16 != 0;
+goto retFalse;
+
+retState:
+    return field_0x16;
+
+retFalse:
+    return false;
 }
 
 } // namespace cf

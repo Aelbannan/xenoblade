@@ -9,7 +9,7 @@
 #include <revolution/VI.h>
 
 //size: 0x2c0
-class CDeviceVI : public CDeviceBase, public IErrorWii {
+class __declspec(novtable) CDeviceVI : public CDeviceBase, public IErrorWii {
 public:
     CDeviceVI(const char* pName, CWorkThread* pParent);
     virtual ~CDeviceVI();
@@ -192,4 +192,4 @@ static const double MS_PER_FRAME = 1.0/CDeviceVI::TARGET_FRAMERATE;
 #define SECONDS_TO_FRAMES(n) (CDeviceVI::TARGET_FRAMERATE * n)
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" GXRenderModeObj lbl_eu_8056BE38;
+extern "C" u32 lbl_eu_8056BE38[15];

@@ -20,10 +20,26 @@ struct CREvtMem {
     /* 0x20 */ u32 arenaSize;
     /* 0x24 */ u32 currentPos;
     /* 0x28 */ f32 someFloat;
+
+    CREvtMem();
+    // Frees any pending MEM2 allocations, clears the singleton pointer and,
+    // when the compiler-generated destruction flag requests it, deletes the
+    // object (retail __dt__Q22cf8CREvtMemFv / __dl__FPv epilogue).
+    ~CREvtMem();
 };
 
 } // namespace cf
 
-// C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" void* lbl_eu_80530A30[];
-extern "C" cf::CREvtMem* lbl_eu_80664260;
+// Vtable (retail .data:0x80530A30) and the realtime-event memory singleton
+// (sbss; stored by the ctor, cleared by the dtor).
+extern u8 lbl_eu_80530A30[];
+extern cf::CREvtMem* lbl_eu_80664260;
+
+// Float constant loaded by the ctor (retail sdata2 pool).
+extern const f32 lbl_eu_80667650;
+
+// Arena bounds helpers imported from the CInfoCf TU (bodies in
+// kyoshin/cf/CInfoCf.cpp, reading singleton lbl_eu_80664250). Their retail
+// reloc names are flat/unmangled - same naming policy as the lbl_eu_* data
+// relocs above - so they must stay C-linkage declarations.
+extern "C" u32 func_8016676C(void); extern "C" u32 func_80166778(void); // flat lbl-style relocs

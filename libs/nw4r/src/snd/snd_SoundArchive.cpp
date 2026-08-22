@@ -120,9 +120,31 @@ ut::FileStream* SoundArchive::detail_OpenFileStream(u32 id, void* pBuffer,
         return NULL;
     }
 
+    // External file paths are resolved against mExtFileRoot unless absolute
     if (fileInfo.extFilePath != NULL) {
-        return OpenExtStreamImpl(pBuffer, bufferSize, fileInfo.extFilePath, 0,
-                                 0);
+        // Loaded here so the register allocation matches retail
+        u32 fileSize = fileInfo.fileSize;
+        char pathBuffer[FILE_PATH_MAX];
+        const char* pFullPath;
+
+        if (fileInfo.extFilePath[0] == '/') {
+            pFullPath = fileInfo.extFilePath;
+        } else {
+            u32 fileLen = std::strlen(fileInfo.extFilePath);
+            u32 dirLen = std::strlen(mExtFileRoot);
+
+            if (fileLen + dirLen >= FILE_PATH_MAX) {
+                return NULL;
+            }
+
+            std::strncpy(pathBuffer, mExtFileRoot, dirLen + 1);
+            std::strncat(pathBuffer, fileInfo.extFilePath, fileLen + 1);
+
+            pFullPath = pathBuffer;
+        }
+
+        return OpenExtStream(pBuffer, bufferSize, pFullPath, 0,
+                             fileSize);
     }
 
     FilePos filePos;
@@ -145,8 +167,27 @@ ut::FileStream* SoundArchive::detail_OpenFileStream(u32 id, void* pBuffer,
     u32 size = groupItemInfo.size;
 
     if (groupInfo.extFilePath != NULL) {
-        return OpenExtStreamImpl(pBuffer, bufferSize, groupInfo.extFilePath,
-                                 offset, size);
+        char pathBuffer[FILE_PATH_MAX];
+        const char* pFullPath;
+
+        if (groupInfo.extFilePath[0] == '/') {
+            pFullPath = groupInfo.extFilePath;
+        } else {
+            u32 fileLen = std::strlen(groupInfo.extFilePath);
+            u32 dirLen = std::strlen(mExtFileRoot);
+
+            if (fileLen + dirLen >= FILE_PATH_MAX) {
+                return NULL;
+            }
+
+            std::strncpy(pathBuffer, mExtFileRoot, dirLen + 1);
+            std::strncat(pathBuffer, groupInfo.extFilePath, fileLen + 1);
+
+            pFullPath = pathBuffer;
+        }
+
+        return OpenExtStream(pBuffer, bufferSize, pFullPath, offset,
+                             size);
     }
 
     return OpenStream(pBuffer, bufferSize, offset, size);

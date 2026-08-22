@@ -245,8 +245,8 @@ u32 ResAnmScn::GetResAnmFogNumEntries() const {
 }
 
 ResAnmCamera ResAnmScn::GetResAnmCamera(u32 idx) const {
-    void* pResAnmCameraDicData = ResDic(ofs_to_obj<ResDic>(
-        ref().toScnTopLevelDic))[ResName(&ResNameData_Camera)];
+    void* pResAnmCameraDicData =
+        ofs_to_obj<ResDic>(ref().toScnTopLevelDic)[ResName(&ResNameData_Camera)];
 
     if (pResAnmCameraDicData != NULL) {
         return ResAnmCamera(ResDic(pResAnmCameraDicData)[idx]);

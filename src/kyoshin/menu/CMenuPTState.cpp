@@ -115,19 +115,24 @@ extern "C" void __ct__80192C10(cf::UnkClass_80192BF4* self) {
     self->field_0x08 = -1.0f;
 }
 
+extern const f32 lbl_eu_80667A98;         // float pool: zero threshold
+extern double lbl_eu_80667AA0;            // double pool: 0x4330000080000000 magic
+
 // Target: us-80194348 - func_80192C2C.
 // If the accumulator is still positive, bump the counter, then query the
 // passed actor (vtable slot 0x308) for a count and store (count*2+6) into both
 // the value and the timer fields.
 extern "C" void func_80192C2C(cf::UnkClass_80192BF4* self, void* obj) {
-    if (self->field_0x04 > 0.0f) {
+    if (self->field_0x04 > lbl_eu_80667A98) {
         self->field_0x00++;
     }
 
     // Call virtual function at vtable slot 0x61 (offset 0x308): returns a count.
-    int count = ((int (*)(void*))((void**)obj)[0x308 / 4])(obj);
+    typedef int (*VtFn)(void*);
+    int count = (*(VtFn*)((u8*)*(void**)obj + 0x308))(obj);
 
-    float val = (float)(count * 2 + 6);
+    // Signed int->float conversion (MWCC 0x4330000080000000 double trick).
+    f32 val = (f32)(count * 2 + 6);
     self->field_0x08 = val;
     self->field_0x04 = val;
 }
@@ -136,26 +141,22 @@ extern "C" void func_80192C2C(cf::UnkClass_80192BF4* self, void* obj) {
 // func_80192CB0: continuous PT-state timer update
 // ---------------------------------------------------------------------------
 
-// Opaque list holder used with func_80043D90 / func_80043F18 / __dt__80043E88.
-typedef struct {
+// Opaque list holder/list views (CPartyStateWin.hpp declares the shared
+// retail-unmangled helper family with void* parameters).
+struct CEnumListHolder {
     void* list; // 0x0
     u32 handle; // 0x4
-} CEnumListHolder;
+};
 
 // The list returned by func_80043F18; element count is at offset 0x620.
-typedef struct {
+struct CEnumList {
     u8 _00[0x620];
     u32 count; // 0x620
-} CEnumList;
+};
 
-extern "C" void func_80043D90(CEnumListHolder* holder);
-extern "C" CEnumList* func_80043F18(CEnumListHolder* holder);
-extern "C" void __dt__80043E88(CEnumListHolder* holder, s16 arg);
-extern "C" void func_800F4A98(void* list, int type, int value);
 extern "C" void* func_800F6EAC(void* list, u32 idx);
 extern "C" int func_80148778(void* obj, int id);
 extern "C" f32 func_80496288(void* scene);
-extern void* lbl_eu_80663E14;
 
 // Target: us-801943cc - func_80192CB0.
 // If the timer is still running (>0), scan the battle object list for any actor
@@ -170,9 +171,10 @@ extern "C" void func_80192CB0(cf::UnkClass_80192BF4* self) {
     func_80043D90(&holder);
     func_800F4A98(func_80043F18(&holder), 0x8000, 0);
 
+    CEnumList* list = (CEnumList*)func_80043F18(&holder);
     int found = 0;
-    for (u32 i = 0; i < func_80043F18(&holder)->count; i++) {
-        void* elem = func_800F6EAC(func_80043F18(&holder), i);
+    for (u32 i = 0; i < list->count; i++) {
+        void* elem = func_800F6EAC(list, i);
         u8* p = elem ? (u8*)elem - 0x3e9c : 0;
         if (func_80148778((u8*)p + 8, 0x10) || func_80148778((u8*)p + 8, 0xf)) {
             found = 1;

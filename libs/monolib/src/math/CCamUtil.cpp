@@ -11,12 +11,27 @@ namespace ml {
         float sZ = math::sin(vec.z);
         float cZ = math::cos(vec.z);
 
-        mat.m[0][0] = cY*cZ;
-        mat.m[1][2] = cX*sY*sZ - sX*cZ;
-        mat.m[0][1] = sX*sY*cZ - cX*sZ;
-        mat.m[0][2] = cX*sY*cZ + sX*sZ;
-        mat.m[1][0] = cY*sZ;
-        mat.m[1][1] = sX*sY*sZ + cX*cZ;
+        // Named temps pin MWCC's FPR allocation/CSE to retail. Computation
+        // order follows retail's scheduler; declaration order (by increasing
+        // lifetime) drives the register claim order.
+        float sXcZ, cYcZ, sXsZ, cXsY;
+        cXsY = cX*sY;
+        sXcZ = sX*cZ;
+        cYcZ = cY*cZ;
+        sXsZ = sX*sZ;
+        mat.m[1][2] = sZ*cXsY - sXcZ;
+        mat.m[0][0] = cYcZ;
+        float cXcZ, cXsZ, sXsY;
+        sXsY = sX*sY;
+        cXsZ = cX*sZ;
+        cXcZ = cX*cZ;
+        mat.m[0][1] = cZ*sXsY - cXsZ;
+        mat.m[0][2] = cZ*cXsY + sXsZ;
+        float m11, m10;
+        m11 = sZ*sXsY + cXcZ;
+        m10 = cY*sZ;
+        mat.m[1][0] = m10;
+        mat.m[1][1] = m11;
         mat.m[2][0] = -sY;
         mat.m[2][1] = sX*cY;
         mat.m[2][2] = cX*cY;

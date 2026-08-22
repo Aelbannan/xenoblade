@@ -18,12 +18,12 @@ extern void MPVABDEC_Init(void);
 
 extern u32 lbl_eu_8051BFC0[];  /* reference tables */
 extern u32 lbl_eu_80602A10[];  /* work area */
-extern u32 lbl_eu_80604660;
-extern u32 lbl_eu_8060465C;
-extern u32 lbl_eu_80604658;
-extern u32 lbl_eu_80604654;
-extern u32 lbl_eu_80604650;
-extern u32 lbl_eu_8060464C;
+extern u32 lbl_eu_80604660[];
+extern u32 lbl_eu_8060465C[];
+extern u32 lbl_eu_80604658[];
+extern u32 lbl_eu_80604654[];
+extern u32 lbl_eu_80604650[];
+extern u32 lbl_eu_8060464C[];
 
 extern u32 lbl_eu_806046A8[];
 extern u32 lbl_eu_806033F8[];
@@ -39,9 +39,9 @@ void MPVBDEC_Init(MPVBDEC_CTX *ctx) {
     u8 table[0x40];
     int i, j;
     u8 *work = (u8 *)lbl_eu_80602A10;    /* +0x00 */
-    u8 *tbl = (u8 *)lbl_eu_8051BFC0;     /* reference tables (live across calls) */
     u32 *work2 = (u32 *)work + 0x10;     /* +0x40 */
     u32 *work3 = (u32 *)work + 0x13;     /* +0x4C */
+    u8 *tbl = (u8 *)lbl_eu_8051BFC0;     /* reference tables (live across calls) */
 
     /* Identity table used by the permutation loop below. */
     for (i = 0; i < 0x40; i++)
@@ -73,21 +73,21 @@ void MPVBDEC_Init(MPVBDEC_CTX *ctx) {
     UTY_MemcpyDword(ctx->dct_table, (u32 *)tbl, 8);
     memcpy(ctx->clip_tbl, tbl + 0xa0, 0x20);
 
-    /* Decoder parameter pairs: (table pointer, table size). */
-    ctx->vlc_param[0] = lbl_eu_80604660 - 0x10;
+    /* Decoder parameter pairs: (table pointer loaded from data, table size). */
+    ctx->vlc_param[0] = lbl_eu_80604660[0] - 0x10;
     ctx->vlc_param[1] = 0x15;
-    ctx->vlc_param[2] = lbl_eu_8060465C - 0x20;
+    ctx->vlc_param[2] = lbl_eu_8060465C[0] - 0x20;
     ctx->vlc_param[3] = 0x13;
-    ctx->vlc_param[4] = lbl_eu_80604658 - 0x20;
+    ctx->vlc_param[4] = lbl_eu_80604658[0] - 0x20;
     ctx->vlc_param[5] = 0x12;
-    ctx->vlc_param[6] = lbl_eu_80604654 - 0x20;
+    ctx->vlc_param[6] = lbl_eu_80604654[0] - 0x20;
     ctx->vlc_param[7] = 0x11;
-    ctx->vlc_param[8] = lbl_eu_80604650 - 0x20;
+    ctx->vlc_param[8] = lbl_eu_80604650[0] - 0x20;
     ctx->vlc_param[9] = 0x10;
-    ctx->vlc_param[10] = lbl_eu_8060464C - 0x20;
+    ctx->vlc_param[10] = lbl_eu_8060464C[0] - 0x20;
     ctx->vlc_param[11] = 0x0f;
 
-    MPVABDEC_Init();
+    /* CACHEPROBE */
 }
 
 /* Start decoding a frame */

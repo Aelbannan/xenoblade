@@ -1,19 +1,27 @@
 #include <nw4r/snd.h>
 
-#include <new>
-
 #include <revolution/AX.h>
 
 namespace nw4r {
 namespace snd {
 namespace detail {
 
+// Helper to access protected LinkListImpl members
+struct LinkListImplAccess : ut::detail::LinkListImpl {
+    using ut::detail::LinkListImpl::Erase;
+    using ut::detail::LinkListImpl::Insert;
+};
+
 AxVoiceManager& AxVoiceManager::GetInstance() {
     static AxVoiceManager instance;
     return instance;
 }
 
-AxVoiceManager::AxVoiceManager() : mInitialized(false) {}
+// The constructor, GetRequiredMemSize(), Alloc(), Free() and
+// ReserveForFree() are fully inlined at every retail call site - the retail
+// split contains no out-of-line definitions for them - so they are marked
+// inline here to keep the translation unit within its .text budget.
+inline AxVoiceManager::AxVoiceManager() : mInitialized(false) {}
 
 AxVoiceManager::~AxVoiceManager() {}
 
@@ -21,7 +29,7 @@ u32 AxVoiceManager::GetRequiredMemSize(int numVoices) {
     return (numVoices + VOICE_MARGIN) * sizeof(AxVoice);
 }
 
-u32 AxVoiceManager::GetRequiredMemSize() {
+inline u32 AxVoiceManager::GetRequiredMemSize() {
     return (AXGetMaxVoices() + VOICE_MARGIN) * sizeof(AxVoice);
 }
 
@@ -35,10 +43,10 @@ void AxVoiceManager::Setup(void* pBuffer, u32 size) {
     AxVoice* pVoice = static_cast<AxVoice*>(pBuffer);
 
     for (u32 i = 0; i < mVoiceCount; i++) {
-        // Placement-new each voice slot; push the constructed object
-        AxVoice* pPushVoice = pVoice != NULL ? new (pVoice) AxVoice() : pVoice;
+        // Placement-new each voice (guards NULL internally); PushBack
+        // inlines to GetEndIter() + LinkListImpl::Insert.
+        mFreeVoiceList.PushBack(new (pVoice) AxVoice());
 
-        mFreeVoiceList.PushBack(pPushVoice);
         pVoice++;
     }
 
@@ -96,7 +104,7 @@ void AxVoiceManager::Shutdown() {
     mInitialized = false;
 }
 
-AxVoice* AxVoiceManager::Alloc() {
+inline AxVoice* AxVoiceManager::Alloc() {
     ut::AutoInterruptLock lock;
 
     FreeAllReservedAxVoice();
@@ -113,7 +121,7 @@ AxVoice* AxVoiceManager::Alloc() {
     return pVoice;
 }
 
-void AxVoiceManager::Free(AxVoice* pVoice) {
+inline void AxVoiceManager::Free(AxVoice* pVoice) {
     pVoice->~AxVoice();
 
     ut::AutoInterruptLock lock;
@@ -127,7 +135,9 @@ void AxVoiceManager::Free(AxVoice* pVoice) {
     mFreeVoiceList.PushBack(pVoice);
 }
 
-void AxVoiceManager::ReserveForFree(AxVoice* pVoice) {
+// Inlines at every retail call site - no out-of-line definition exists in
+// the retail split.
+inline void AxVoiceManager::ReserveForFree(AxVoice* pVoice) {
     ut::AutoInterruptLock lock;
 
     mActiveVoiceList.Erase(pVoice);

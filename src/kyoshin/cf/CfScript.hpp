@@ -40,7 +40,7 @@ class CfScriptManager;
 // CDeviceFile hands a filled CEventFile to the async IWorkEvent callback.
 class CEventFile {
 public:
-    u32 field_00;          // 0x00 event type
+    s32 field_00;          // 0x00 event type
     void* field_04;        // 0x04 owning CFileHandle*
     u8 _08[0x0C - 0x08];
     const char* field_0C;  // 0x0C path string
@@ -87,7 +87,6 @@ public:
     u16 mIndex;            // 0x56
 
     void waitLoad();
-    bool OnFileEvent(CEventFile* event);
     void update();
 
     // Reset this script slot
@@ -139,6 +138,12 @@ public:
 // CfScriptManager::func_800694B0.  Declared at global scope so MWCC keeps the
 // retail name unmangled; the (script.*table[idx])() call lowers to
 // lis/addi + mulli + `bl __ptmf_scall` against the retail helper.
+// Retail OnFileEvent is a GLOBAL-scope CfScript member (unmangled symbol
+// OnFileEvent__8CfScriptFP10CEventFile); our CfScript sits in namespace cf,
+// so emit it under the pre-mangled retail name with an explicit self
+// (same convention as CUICfManager/CSortMenu).
+extern "C" bool OnFileEvent__8CfScriptFP10CEventFile(cf::CfScript* self, cf::CEventFile* event);
+
 typedef void (cf::CfScript::*CfScriptPMF)();
 extern CfScriptPMF lbl_eu_80526DD0[2];
 

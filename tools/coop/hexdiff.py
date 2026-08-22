@@ -1270,7 +1270,18 @@ def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path
     decomp_by_value = {f.value: f for f in decomp_fn}
     rows = []
     for rf in sorted(retail_fn, key=lambda f: f.value):
-        dm = decomp_by_name.get(rf.name) or decomp_by_value.get(rf.value)
+        # Try exact name match first, then substring match (like _resolve_candidates),
+        # then exact value match. This handles mangled decomp names and address shifts.
+        dm = decomp_by_name.get(rf.name)
+        if dm is None:
+            # Substring match (case-insensitive)
+            lowered = rf.name.lower()
+            for f in decomp_fn:
+                if lowered in f.name.lower():
+                    dm = f
+                    break
+        if dm is None:
+            dm = decomp_by_value.get(rf.value)
         if dm is None:
             rows.append((rf, None, None))
             continue

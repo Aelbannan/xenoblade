@@ -186,6 +186,13 @@ extern u32 lbl_eu_80662DCC;
 // Font-pane helper (retail mangled name func_801355A0__Fv).
 u32 func_801355A0();
 
+// Result of CMenuArtsSelect_getSelectState: signed state bytes at +0x0/+0x1
+// (see cf::chain CArtsSelectStateView).
+struct CArtsSelectStateView {
+    s8 field_0; // 0x0
+    s8 field_1; // 0x1
+};
+
 // C-linkage imports (retail unmangled symbols - keep linkage verbatim).
 extern "C" {
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
@@ -206,4 +213,7 @@ int CMenuArtsSelect_isInteractable();
 int CMenuArtsSelect_isNotReady();
 void func_8010433C();
 void func_801043BC();
+CArtsSelectStateView* CMenuArtsSelect_getSelectState();
+u32 getWorkMem__17CWorkThreadSystemFv();
+void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
 }

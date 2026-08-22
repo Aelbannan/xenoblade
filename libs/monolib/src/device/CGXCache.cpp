@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include <decomp.h>
 #include <string.h>
 #include <revolution/GX.h>
 #include "functions.hpp"
@@ -22,7 +23,7 @@ extern "C" u32 lbl_eu_80522A6C;   // .rodata RTTI "CMsgParam<32>"
 extern "C" u32 lbl_eu_80522A7C;   // .rodata RTTI "IStateCache"
 extern "C" u32 lbl_eu_80522A88;   // .rodata RTTI "DeviceSystem1"
 extern "C" u32 lbl_eu_80522A98;   // .rodata RTTI "DeviceSystem2"
-extern "C" u32 lbl_eu_8056BFD8;   // .data vtbl (CMsgParam-32 leafer)
+extern "C" u32 lbl_eu_8056BFD8[];   // .data vtbl (CMsgParam-32 leafer)
 extern "C" u32 lbl_eu_80663658;   // .sdata RTTI locator
 extern "C" u32 lbl_eu_80663660;   // .sdata RTTI locator
 extern "C" u32 lbl_eu_80663668;   // .sdata RTTI locator
@@ -298,7 +299,7 @@ static void FORCEACTIVE_CGXCache_top(void) {
 // is the empty delete-dtor shell; derived dtors inline the (empty) base call away.
 // No C++ virtuals: the vptr is a plain member written explicitly by the ctor
 // (retail __ct__8CGXCacheFv does `bl __ct__IStateCache; stw lbl_eu_8056BFC8`).
-class IStateCache {
+class __declspec(novtable) IStateCache {
 public:
     ~IStateCache();
 };
@@ -324,7 +325,7 @@ struct CMsgParamEntry {
 // No member dtor: the retail symbol __dt__CMsgParam_32 has no length-prefix
 // mangling, so it is written below as a free function; ~CGXCache destroys the
 // member manually to reproduce retail's rebased `addic. r3,r3,4` guard.
-class CMsgParam_32 {
+class __declspec(novtable) CMsgParam_32 {
 public:
     void* vtbl;                  //0x0 (vtable pointer)
     CMsgParamEntry mEntries[32]; //0x4
@@ -336,7 +337,7 @@ public:
     u32 field7;                  //0x498
 };
 
-class CGXCache : public IStateCache {
+class __declspec(novtable) CGXCache : public IStateCache {
 public:
     CGXCache();
     ~CGXCache();
@@ -476,12 +477,12 @@ void* __dt__804494D8(void* self, int deleting) {
 // char[] form prevents SDA21 (label is >8B data; retail uses lis/addi).
 // Declarations only - the definitions sit after __ct__8CGXCacheFv so MWCC
 // -inline auto cannot inline them into the ctor (retail emits bl to each).
-extern "C" { extern char lbl_eu_8056BFE4[]; }
+extern "C" u32 lbl_eu_8056BFE4[];
 extern "C" void __ct__CMsgParam_32(void* self, u32 param);
 extern "C" void __ct__80449534(void* self, s16 a, s16 b, s16 c, s16 d);
 extern "C" void func_8044954C(void* self);
 extern "C" void __ct__80449548(void* self);
-extern "C" { extern char lbl_eu_8056BFF0[]; }
+extern "C" u32 lbl_eu_8056BFF0[];
 extern "C" void __ct__IStateCache(void* self);
 
 // Retail __dt__8CGXCacheFv: destroys the CMsgParam<32> ring member manually.
@@ -526,57 +527,43 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
     s32 r, a;
     s32 cond;
 
-    switch (sel) {
-    case 0:
+    // Dissolved jumptable controls .data matching: use branch chain instead of
+    // switch so MWCC does not emit its own jumptable (explicit
+    // jumptable_eu_8056BF90 below provides the retail bytes/relocs).
+    if (sel == 0) {
         GXSetBlendMode((GXBlendMode)vu[0], GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
-        break;
-    case 1:
+    } if (sel == 1) {
         GXSetBlendMode((GXBlendMode)vu[0], (GXBlendFactor)vu[1], (GXBlendFactor)vu[2],
                        (GXLogicOp)vu[3]);
-        break;
-    case 2:
+    } if (sel == 2) {
         // Copy-clear: color block in the data (floats scaled to 0-255), z
         // depth from ring command 3. Ring lookup runs first so the 255
         // scale is loaded after it into a volatile FPR (retail shape).
-        {
-            void* pz = func_8044CEF8__8CGXCacheFv(&self->unk4, 3);
-            u32 z = *(u32*)pz;
-            GXSetCopyClear(scaleColor255(lbl_eu_8066A37C, *(const ml::CCol4*)data), z);
-        }
-        break;
-    case 3:
+        void* pz = func_8044CEF8__8CGXCacheFv(&self->unk4, 3);
+        u32 z = *(u32*)pz;
+        GXSetCopyClear(scaleColor255(lbl_eu_8066A37C, *(const ml::CCol4*)data), z);
+    } if (sel == 3) {
         // Copy-clear: color from ring command 2, z depth from the data word.
-        {
-            const ml::CCol4* pcol = (const ml::CCol4*)func_8044CEF8__8CGXCacheFv(&self->unk4, 2);
-            GXSetCopyClear(scaleColor255(lbl_eu_8066A37C, *pcol), vu[0]);
-        }
-        break;
-    case 4:
+        const ml::CCol4* pcol = (const ml::CCol4*)func_8044CEF8__8CGXCacheFv(&self->unk4, 2);
+        GXSetCopyClear(scaleColor255(lbl_eu_8066A37C, *pcol), vu[0]);
+    } if (sel == 4) {
         GXSetZCompLoc((GXBool)(vu[0] & 0xff));
-        break;
-    case 13:
+    } if (sel == 13) {
         GXSetCullMode(vu[0] ? GX_CULL_NONE : GX_CULL_BACK);
-        break;
-    case 5:
+    } if (sel == 5) {
         // Z-mode: test enable from the data byte, compare func from ring cmd 6.
-        {
-            u8 test = *(u8*)data;
-            GXSetZMode(1, (GXCompare)(*(u8*)func_8044CEF8__8CGXCacheFv(&self->unk4, 6) ? GX_LEQUAL : GX_ALWAYS),
+        u8 test = *(u8*)data;
+        GXSetZMode(1, (GXCompare)(*(u8*)func_8044CEF8__8CGXCacheFv(&self->unk4, 6) ? GX_LEQUAL : GX_ALWAYS),
                        (GXBool)test);
-        }
-        break;
-    case 6:
+    } if (sel == 6) {
         // Z-mode: compare func from the data byte, test enable from ring cmd 5.
         GXSetZMode(1, (GXCompare)(*(u8*)data ? GX_LEQUAL : GX_ALWAYS),
                    (GXBool)*(u8*)func_8044CEF8__8CGXCacheFv(&self->unk4, 5));
-        break;
-    case 7:
+    } if (sel == 7) {
         GXSetColorUpdate((GXBool)*(u8*)data);
-        break;
-    case 8:
+    } if (sel == 8) {
         GXSetAlphaUpdate((GXBool)*(u8*)data);
-        break;
-    case 9: {
+    } if (sel == 9) {
         // TEV pipeline presets selected by the data word. Written as an
         // if/else-if chain so MWCC emits retail's bne-skip dispatch.
         u32 tsel = vu[0];
@@ -625,12 +612,9 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
             GXSetChanCtrl(GX_ALPHA0, GX_DISABLE, GX_SRC_VTX, GX_SRC_VTX, (GXLightID)0,
                           GX_DF_NONE, GX_AF_NONE);
         }
-        break;
-    }
-    case 0xa:
+    } if (sel == 0xa) {
         GXSetTevColor(GX_TEVREG0, *(GXColor*)data);
-        break;
-    case 0xb: {
+    } if (sel == 0xb) {
         // Viewport from the 4 s16s; jitter when interlaced. The conversions
         // live inside the branches so MWCC does not spill the f32s to FPRs.
         rmo = getRenderModeObj__9CDeviceVIFv();
@@ -642,9 +626,7 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
             GXSetViewport((f32)vp[0], (f32)vp[1], (f32)vp[2], (f32)vp[3],
                           lbl_eu_8066A378, lbl_eu_8066A380);
         }
-        break;
-    }
-    case 0xc: {
+    } if (sel == 0xc) {
         // Scissor rect clamped against the full screen; zero-rect when the
         // result has no area. The overflow test reproduces retail's
         // xor/srawi/and/subf sign idiom for `(fbWidth+w) < width`. The rect
@@ -662,10 +644,10 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
         s32 wmx = self->rect4A0[2] > (s16)sumX ? self->rect4A0[2] : (s16)sumX;
         s32 wmn = x0;
         if (wmn > 0) wmn = 0;
-        r = (s16)wmx - (s16)wmn;
-        a = self->rect4A0[2] + w0;
-        cond = (a < r);
-        if (cond) {
+        s32 r1 = (s16)wmx - (s16)wmn;
+        s32 a1 = self->rect4A0[2] + w0;
+        s32 cond1 = (a1 < r1);
+        if (cond1) {
             // Vertical term for the overflow test (mirror of the horizontal
             // one): max of the rect sums, min of the rect starts, s16-wise.
             // In-place updates keep the select in the source register.
@@ -675,11 +657,12 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
             s32 csum = (s16)(self->rect4A0[1] + self->rect4A0[3]);
             if (csum > ysum) ysum = csum;
             if (self->rect4A0[1] < y0) y0 = self->rect4A0[1];
-            r = (s16)ysum - (s16)y0;
-            a = self->rect4A0[3] + h0;
-            cond = (a < r);
+            s32 r2 = (s16)ysum - (s16)y0;
+            s32 a2 = self->rect4A0[3] + h0;
+            s32 cond2 = (a2 < r2);
+            cond1 = cond2;
         }
-        if (cond) {
+        if (cond1) {
             s32 ox = x0;
             if (ox < 0) ox = 0;
             s32 oy = self->rect4A0[1] > vp[1] ? self->rect4A0[1] : vp[1];
@@ -709,9 +692,7 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
         } else {
             GXSetScissor(self->rect4A0[0], self->rect4A0[1], self->rect4A0[2], self->rect4A0[3]);
         }
-        break;
     }
-}
 }
 
 // Retail .sdata2/.sdata imports used by the cache-update and projection
@@ -2156,7 +2137,8 @@ u32 __declspec(noinline) func_80449550(ml::CCol4& c) {
 }
 
 // CGXCache vtable (retail .data label, overwrites the IStateCache vtable).
-extern "C" { extern char lbl_eu_8056BFC8[]; }
+// lbl_eu_8056BFC8 declared below as dissolved .data array; forward decl as u32[] for vtable store
+ extern "C" u32 lbl_eu_8056BFC8[];
 
 // Retail .sdata wid sources for the initial ring command cache (imports).
 extern u32 lbl_eu_80663620;
@@ -2277,20 +2259,41 @@ extern "C" __declspec(noinline) void __ct__IStateCache(void* self) {
     *(void**)self = lbl_eu_8056BFF0;
 }
 
-// ==== .data vtables placed last so the compiler func_80449D68 jumptable
-// lands at .data+0 (retail order: jumptable then vtables) ====
-// ---- .data vtables (0x38 at .data +0x38; the first 0x38 of .data is the
-// compiler jumptable for func_80449D68) ----
-__declspec(section ".data") __attribute__((aligned(8)))
-u32 data_vtables_CGXCache[14] = {
+// ==== .data dissolved (retail bytes/relocs from build/us/asm/monolib/src/device/CGXCache.s) ====
+// .data 0x8056BF90 0x38 jumptable + 0x8056BFC8 0x10 CGXCache vtable + 0x8056BFD8 0xC + 0x8056BFE4 0xC + 0x8056BFF0 0x10
+// Emitted as extern "C" u32 arrays with (u32)&extern, rodata align, DECOMP_FORCEACTIVE, novtable.
+// Jumptable addends dumped from data diff retail: 76,100,124,264,404,448,500,552,564,576,1348,1372,1592,420
+// (verified against CGXCache.s .rel lines). Uses (u32)((char*)&extern+offset) for correct R_PPC_ADDR32 addends.
+// func_80449D68__8CGXCacheFv already declared at top with (CGXCache*,u32,void*) signature; reuse it for jumptable addends.
+extern "C" u32 jumptable_eu_8056BF90[14] = {
+    (u32)((char*)&func_80449D68__8CGXCacheFv + 76),
+    (u32)((char*)&func_80449D68__8CGXCacheFv + 100),
+    (u32)((char*)&func_80449D68__8CGXCacheFv + 124),
+    (u32)((char*)&func_80449D68__8CGXCacheFv + 264),
+    (u32)((char*)&func_80449D68__8CGXCacheFv + 404),
+    (u32)((char*)&func_80449D68__8CGXCacheFv + 448),
+    (u32)((char*)&func_80449D68__8CGXCacheFv + 500),
+    (u32)((char*)&func_80449D68__8CGXCacheFv + 552),
+    (u32)((char*)&func_80449D68__8CGXCacheFv + 564),
+    (u32)((char*)&func_80449D68__8CGXCacheFv + 576),
+    (u32)((char*)&func_80449D68__8CGXCacheFv + 1348),
+    (u32)((char*)&func_80449D68__8CGXCacheFv + 1372),
+    (u32)((char*)&func_80449D68__8CGXCacheFv + 1592),
+    (u32)((char*)&func_80449D68__8CGXCacheFv + 420),
+};
+extern "C" u32 lbl_eu_8056BFC8[4] = {
     (u32)&lbl_eu_80663658, 0x00000000,
     (u32)&__dt__8CGXCacheFv, (u32)&func_80449D68__8CGXCacheFv,
+};
+extern "C" __attribute__((aligned(4))) u32 lbl_eu_8056BFD8[3] = {
     (u32)&lbl_eu_80663668, 0x00000000, 0x00000000,
+};
+extern "C" __attribute__((aligned(4))) u32 lbl_eu_8056BFE4[3] = {
     (u32)&lbl_eu_80663660, 0x00000000,
-    (u32)&__dt__CMsgParam_32, (u32)&lbl_eu_80663668, 0x00000000,
+    (u32)&__dt__CMsgParam_32,
+};
+extern "C" u32 lbl_eu_8056BFF0[4] = {
+    (u32)&lbl_eu_80663668, 0x00000000,
     (u32)&__dt__11IStateCacheFv, 0x00000000
 };
-
-static void FORCEACTIVE_CGXCache_data(void) {
-    (void)rodata_CGXCache; (void)sdata_CGXCache; (void)data_vtables_CGXCache; (void)sdata2_pool_CGXCache;
-}
+DECOMP_FORCEACTIVE(CGXCache_cpp, jumptable_eu_8056BF90, lbl_eu_8056BFC8, lbl_eu_8056BFD8, lbl_eu_8056BFE4, lbl_eu_8056BFF0, rodata_CGXCache, sdata_CGXCache, sdata2_pool_CGXCache);

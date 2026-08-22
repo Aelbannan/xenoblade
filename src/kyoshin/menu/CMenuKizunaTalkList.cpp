@@ -6,7 +6,6 @@
 extern "C" void __dt__19CMenuKizunaTalkListFv(void*, int);
 extern "C" void cbRenderBefore__19CMenuKizunaTalkListFv(void*);
 
-#include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/CTaskGame.hpp"
 #include "monolib/core/CPadManager.hpp"
@@ -16,6 +15,11 @@ extern "C" void cbRenderBefore__19CMenuKizunaTalkListFv(void*);
 #include "monolib/work/CWorkThreadSystem.hpp"
 
 #include <revolution/GX.h>
+
+// CfGameManager.hpp cannot be included here: it declares lbl_eu_80664090 as
+// void* while CKizunaTalkList.hpp (via our header) declares it u8*. The pad
+// accessors are declared member-for-member on cf::CfGameManager in our header
+// instead.
 
 // Pad-data view exposing only the flag words this TU reads (CfPadData layout,
 // see kyoshin/cf/CfPadData.hpp): CPad::mPressedButtonFlags at +0x4 and
@@ -108,16 +112,23 @@ extern "C" __declspec(noinline) CMenuKizunaTalkList* __ct__CMenuKizunaTalkList(
     CMenuKizunaTalkList* self, CProcess* parent) {
     __ct__8CProcessFv((CProcess*)self);
 
-    // vtable fixups: temp (CProcess) vtable first, then the composite vtable
-    // and the IScnRender sub-vtable at +0x58.
     *(u32*)((u8*)self + 0x10) = (u32)lbl_eu_8052BF70;
-    u32* ptmf = __ptmf_null;
-    self->ptmf0[0] = ptmf[0];
-    self->ptmf0[1] = ptmf[1];
-    self->ptmf0[2] = ptmf[2];
-    self->ptmf1[0] = ptmf[0];
-    self->ptmf1[1] = ptmf[1];
-    self->ptmf1[2] = ptmf[2];
+
+    // Copy the null member-function pointer into both callback slots.
+    // Retail loads [0],[1], stores [1],[0], then [2] per slot.
+    u32* ptmf = (u32*)(uintptr_t)__ptmf_null;
+    u32 w0 = ptmf[0];
+    u32 w1 = ptmf[1];
+    self->ptmf0[1] = w1;
+    self->ptmf0[0] = w0;
+    u32 w2 = ptmf[2];
+    self->ptmf0[2] = w2;
+    w0 = ptmf[0];
+    w1 = ptmf[1];
+    self->ptmf1[1] = w1;
+    self->ptmf1[0] = w0;
+    w2 = ptmf[2];
+    self->ptmf1[2] = w2;
     self->mUnknown54 = 0;
     self->mUnknown55 = 0;
 
@@ -360,7 +371,8 @@ CMenuKizunaTalkList* func_80272414(CProcess* self, CProcess* parent) {
     return (CMenuKizunaTalkList*)lbl_eu_806648B0;
 }
 
-void stub_us_8027490c() {}
+// void stub_us_8027490c() {} // empty retail stub; nothing references it
+// within this split, so it is not emitted.
 
 // Advance the talk-list screen (retail func_80272498): once the background,
 // title/help bar and list are all ready, begin showing the list, mark state 1

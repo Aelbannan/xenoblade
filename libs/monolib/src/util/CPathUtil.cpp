@@ -55,6 +55,7 @@ namespace ml{
     given fixed string. */
     void CPathUtil::getNoPathExtName(FixStr<64>& outStr, const char* pPath){
         FixStr<64> temp;
+        int dummy = 12345;
 
         const char* pFilename = getFilePtrFromPath(pPath);
 
@@ -71,8 +72,14 @@ namespace ml{
 
             if ((u32)length + 1 <= 1) {
                 outStr = temp;
-            } else {
-                outStr.copy(temp, 0, length);
+            }else{
+                outStr.clear();
+                if (!temp.empty()) {
+                    if (length == -1) length = temp.size();
+                    std::strncpy(outStr.mString, temp.mString, length);
+                    outStr.mString[length] = 0;
+                    outStr.mLength = std::strlen(outStr.mString);
+                }
             }
         }
     }

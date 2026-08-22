@@ -161,22 +161,38 @@ bool CLibHbm::checkFlag6(){
 }
 
 void CLibHbm::loadHbmArcFile(){
-    spInstance->mFlags &= ~0x40;
+    // Reference the retail-named instance global (same storage as spInstance)
+    // so the SDA21 relocs name-match.
+    extern CLibHbm* lbl_eu_806656F8;
+    // Filename globals owned by CLibG3d.cpp (.sdata pointers to "hbm.arc" strings).
+    extern u32 lbl_eu_806637B8;
+    extern u32 lbl_eu_806637BC;
+
+    lbl_eu_806656F8->mFlags &= ~0x40;
 
     CDeviceVI::waitForDrawDone();
     func_804900A0(1);
-    spInstance->mFlags |= 0x20;
-    spInstance->mHandle = func_80490098();
+    lbl_eu_806656F8->mFlags |= 0x20;
+    lbl_eu_806656F8->mHandle = func_80490098();
 
-    if(spInstance->mHandle == mtl::INVALID_HANDLE){
-        spInstance->mHandle = mtl::MemManager::getHandleMEM2();
+    if(lbl_eu_806656F8->mHandle == mtl::INVALID_HANDLE){
+        lbl_eu_806656F8->mHandle = mtl::MemManager::getHandleMEM2();
     }
 
-    if(CDeviceFile::getFileSize("hbm.arc") > 0){
-        CFileHandle* handle = CDeviceFile::readFile(spInstance->mHandle, "hbm.arc",
-        spInstance, 0, 0);
-        spInstance->mpHbmArcFileHandle = handle;
-        CDeviceFile::func_8044F154(spInstance->mpHbmArcFileHandle, 0);
+    // Pick the archive path by console language (6 = Japanese).
+    const char* pArcFile = (const char*)lbl_eu_806637B8;
+    if(CDeviceSC::getLanguage() == 6){
+        pArcFile = (const char*)lbl_eu_806637BC;
+    }
+
+    // Retail passes an extra ignored int arg (r4=1) to the 1-param
+    // CDeviceFile::getFileSize; route through a cast function-pointer type.
+    typedef int (*GetFileSizeFn)(const char*, int);
+    if(((GetFileSizeFn)&CDeviceFile::getFileSize)(pArcFile, 1) > 0){
+        CFileHandle* handle = CDeviceFile::readFile(lbl_eu_806656F8->mHandle, pArcFile,
+        lbl_eu_806656F8, 0, 0);
+        lbl_eu_806656F8->mpHbmArcFileHandle = handle;
+        CDeviceFile::func_8044F154(lbl_eu_806656F8->mpHbmArcFileHandle, 0);
     }
 }
 

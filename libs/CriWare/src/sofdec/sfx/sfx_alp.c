@@ -9,14 +9,25 @@ void SFXA_Init(void) {
     ((SFXAlphaState*)lbl_eu_8061A138)->needsUpdate = 8;
 }
 
-SFXAlphaState* SFXA_Create(void) {
-    SFXAlphaState* state = (SFXAlphaState*)(lbl_eu_8061A138 + 8);
-    s32 count = *(s32*)(lbl_eu_8061A138 + 4);
+/* Global alpha-state pool: used-count, slot-count, then 8 fixed slots. */
+typedef struct SFXAlphaGlobals {
+    u32 usedCount;
+    u32 slotCount;
+    SFXAlphaState states[8];
+} SFXAlphaGlobals;
 
-    for (; count > 0; count--, state++) {
-        if (state->_00 != 0)
-            continue;
-        goto found;
+SFXAlphaState* SFXA_Create(void) {
+    SFXAlphaState* state = ((SFXAlphaGlobals*)lbl_eu_8061A138)->states;
+    s32 count = ((SFXAlphaGlobals*)lbl_eu_8061A138)->slotCount;
+
+    /* Find a free (unused) slot; NULL if the pool is exhausted. */
+    while (count > 0) {
+        if (state->_00 != 0) {
+            state++;
+            count--;
+        } else {
+            goto found;
+        }
     }
     state = NULL;
 found:
@@ -29,7 +40,7 @@ found:
     state->byte14 = 0;
     state->byte15 = 0x7f;
     state->byte16 = 0xff;
-    *(s32*)lbl_eu_8061A138 += 1;
+    ((SFXAlphaGlobals*)lbl_eu_8061A138)->usedCount++;
     return state;
 }
 void SFXA_Destroy(void* self) {

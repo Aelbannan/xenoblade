@@ -45,7 +45,10 @@ void func_802A9B0C(CVS_THREAD_VISION_TELL* self, CCharVoice* voicePtr) {
 // and a second handle, allocates a throwaway 0x32-byte buffer and the object
 // itself (0x28 bytes), runs the base constructor and sets the derived vtable
 // and slot handles inside the try block, then copies the init-state triple.
-CVS_THREAD_VISION_TELL* __ct__802A96C0(CVoiceHandle* h1, CVoiceHandle* h2) {
+// Function-try-block: retail wraps the whole factory in an EH region whose
+// catch rethrows (__throw(0,0,0)), matching the CVS_THREAD_VISION_BREAK
+// factory shape.
+CVS_THREAD_VISION_TELL* __ct__802A96C0(CVoiceHandle* h1, CVoiceHandle* h2) try {
     // Allocate handle buffer (discarded).
     if (func_802A330C(0x32, 1) == NULL) {
         return NULL;
@@ -57,18 +60,12 @@ CVS_THREAD_VISION_TELL* __ct__802A96C0(CVoiceHandle* h1, CVoiceHandle* h2) {
         return NULL;
     }
 
-    // Base-initialise the object (vtable, IDs). Wrap in try so a base-ctor
-    // failure unwinds via __throw -- the retail catch rethrows.
-    try {
-        __ct__cf_CVS_THREAD(self);
+    __ct__cf_CVS_THREAD(self);
 
-        // Override the vtable at offset 0x1C (index 7) with the derived one.
-        ((void**)self)[7] = (void**)lbl_eu_80539DD4;
-        self->field_0x20 = h1;
-        self->field_0x24 = h2;
-    } catch (...) {
-        throw;
-    }
+    // Override the vtable at offset 0x1C (index 7) with the derived one.
+    ((void**)self)[7] = (void**)lbl_eu_80539DD4;
+    self->field_0x20 = h1;
+    self->field_0x24 = h2;
 
     // Copy init data from the global table using a single base pointer.
     const u32* base = lbl_eu_80539DB0;
@@ -77,6 +74,8 @@ CVS_THREAD_VISION_TELL* __ct__802A96C0(CVoiceHandle* h1, CVoiceHandle* h2) {
     self->unk8 = base[2];
 
     return self;
+} catch (...) {
+    throw;
 }
 
 // ── Target 4: us-802abed8 (func_802A97A0) ──────────────────────────────────
@@ -118,7 +117,8 @@ void func_802A97A0(CVS_THREAD_VISION_TELL* self) {
         voiceId = 0xCB;
         break;
     case 6:
-        voiceId = (func_802A7B90(self->field_0x20, self->field_0x24) != 0) ? 0x76F : 0xCC;
+        // Ternary arm order matters: retail emits li 0x76F; bne; li 0xCC.
+        voiceId = (func_802A7B90(self->field_0x20, self->field_0x24) == 0) ? 0xCC : 0x76F;
         break;
     case 7:
         voiceId = 0xCD;
@@ -127,7 +127,7 @@ void func_802A97A0(CVS_THREAD_VISION_TELL* self) {
         voiceId = 0xCE;
         break;
     case 1:
-        voiceId = (func_802A7EB0(self->field_0x20, self->field_0x24) != 0) ? 0x51A : 0xCF;
+        voiceId = (func_802A7EB0(self->field_0x20, self->field_0x24) == 0) ? 0xCF : 0x51A;
         break;
     default:
         self->func_802A3B50();

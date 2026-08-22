@@ -88,24 +88,28 @@ s32 MPV_DecodeFrmSj(MpvHn* h, void* a2, MpvFrmInfo* a3) {
 extern s32 MPV_GoNextDelimSj(void* a);
 extern s32 MPV_MoveChunk(void* a, s32 b, s32 c);
 
-s32 MPV_SkipFrmSj(void* h, void* arg2) {
-    s32 flag;
+s32 MPV_SkipFrmSj(void* hn, void* sj) {
+    void* h = hn;
+    s32 code;
+    void* p = sj;
+    s32 r;
+    /* Walk SJ delimiters, skipping chunks, until an error/end condition. */
     if (MPVLIB_CheckHn(h) != 0)
         return MPVERR_SetCode(NULL, 0xFF03020A);
+    code = 0xFF030305;
     for (;;) {
-        s32 r;
-        flag = 0xFF030305;
-        r = MPV_GoNextDelimSj(arg2);
+        r = MPV_GoNextDelimSj(p);
         if (r == 0)
             break;
-        if ((r & 0xcc) != 0) {
-            flag = 0;
+        if (r & 0xCC) {
+            code = 0;
             break;
         }
-        if (MPV_MoveChunk(arg2, 1, 4) == 4)
-            break;
+        if (MPV_MoveChunk(p, 1, 4) == 4)
+            continue;
+        break;
     }
-    return MPVERR_SetCode(h, flag);
+    return MPVERR_SetCode(h, code);
 }
 
 extern int MPVLIB_CheckHn(void*);

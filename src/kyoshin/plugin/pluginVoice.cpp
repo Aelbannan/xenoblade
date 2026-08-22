@@ -5,32 +5,29 @@
 
 extern reslist<cf::CfObject*>* func_800B6BA4();
 
-extern "C" {
-    extern const char lbl_eu_80513988[];
-    extern PluginFuncData lbl_eu_8053B880[];
-    extern float lbl_eu_80669008;
-    extern float lbl_eu_8066900C;
-}
-
+// Retail data labels referenced by voice_play.
+extern const char lbl_eu_80513988[];
+extern PluginFuncData lbl_eu_8053B880[];
+extern float lbl_eu_80669008;
+extern float lbl_eu_8066900C;
 
 int voice_play(VMThread* pThread) {
-    int r30 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
-    int r27 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
+    int voiceId = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    int vol = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
 
     reslist<cf::CfObject*>* list = func_800B6BA4();
-    
+    u8* object;
+
     for(reslist<cf::CfObject*>::iterator it = list->begin(); it != list->end(); it++){
-        // List items point at the embedded CfObjectMove (base+0x3E9C); recover the actor base.
-        cf::CfObject* obj = *it;
-        cf::CfObjectPc* object;
-        if(obj != NULL){
-            object = (cf::CfObjectPc*)((u8*)obj - 0x3E9C);
-        }else{
-            object = NULL;
+        // List items point at the embedded CfObjectMove (base+0x3E9C);
+        // recover the owning actor base (NULL stays NULL).
+        u8* object = (u8*)*it;
+        if(object != 0){
+            object -= 0x3E9C;
         }
-        if(object->CActorParam_UnkVirtualFunc138() == 0){
-            if(r30 == ((VoiceActorVoiceId*)object)->field_3F28){
-                ((cf::CfObject*)((u8*)object + 0x3E9C))->func_800BE898(r27, 0x14, lbl_eu_80669008, lbl_eu_8066900C);
+        if(((cf::CfObjectPc*)object)->CActorParam_UnkVirtualFunc138() == 0){
+            if(voiceId == ((VoiceActorVoiceId*)object)->field_3F28){
+                ((cf::CfObject*)(object + 0x3E9C))->func_800BE898(vol, 0x14, lbl_eu_80669008, lbl_eu_8066900C);
                 break;
             }
         }

@@ -34,12 +34,16 @@ struct CScnLightParam {
 };
 
 // Scene light manager: selects an active light item from the scene pool.
+// Retail's "constructor" is a C-ABI free function (flat symbol __ct__CScnLightMan
+// taking (this, param)), not a mangled member ctor -- same pattern as CScnFogMan.
 class __declspec(novtable) CScnLightMan {
 public:
-    CScnLightMan(CScnLightParam* param);
     virtual ~CScnLightMan();
 
     // +0x04
     CScnLightParam* mParam;    // +0x04
     CScnItemLight* mLight;     // +0x08
 };
+
+// Retail-named constructor (see class comment); returns self.
+extern "C" CScnLightMan* __ct__CScnLightMan(CScnLightMan* self, CScnLightParam* param);

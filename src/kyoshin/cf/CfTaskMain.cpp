@@ -82,23 +82,20 @@ void* __ct__800697E8(CProcess* parent, u32 field58val) {
         // u32 word indexing (see CTaskGameCf): reassigning w0/w1 from
         // __ptmf_null between the two callback slots forces MWCC to reload
         // each null PTMF word (retail issues six separate loads, not CSE'd).
+        // Direct __ptmf_null[i] reads: stores through the raw u32* may alias
+        // the extern array, so MWCC reloads each word per slot (retail issues
+        // six separate loads, not CSE'd) with one shared base register.
         u32* p = reinterpret_cast<u32*>(obj);
-        const u32* nullPt = &__ptmf_null[0];
         p[4] = reinterpret_cast<u32>(lbl_eu_80526F58);   // interim CTTask vtable
-        u32 ptmf1 = nullPt[1];
-        u32 ptmf0 = nullPt[0];
-        p[0xF] = ptmf0;        // 0x3C mMoveFunc[0]
-        p[0x10] = ptmf1;       // 0x40 mMoveFunc[1]
-        p[0x11] = nullPt[2];   // 0x44 mMoveFunc[2]
-        ptmf1 = nullPt[1];
-        ptmf0 = nullPt[0];
-        p[0x12] = ptmf0;       // 0x48 mDrawFunc[0]
-        p[0x13] = ptmf1;       // 0x4C mDrawFunc[1]
-        p[0x14] = nullPt[2];   // 0x50 mDrawFunc[2]
-        p[4] = reinterpret_cast<u32>(lbl_eu_80526E80);    // CfTaskMain vtable
-        *reinterpret_cast<u32*>(reinterpret_cast<u8*>(obj) + 0x54) =
-            reinterpret_cast<u32>(lbl_eu_80526E80 + 0x24); // IWorkEvent vtable
-        *reinterpret_cast<u32*>(reinterpret_cast<u8*>(obj) + 0x58) = field58val;
+        p[0xF] = __ptmf_null[0];  // 0x3C mMoveFunc[0]
+        p[0x10] = __ptmf_null[1]; // 0x40 mMoveFunc[1]
+        p[0x11] = __ptmf_null[2]; // 0x44 mMoveFunc[2]
+        p[0x12] = __ptmf_null[0]; // 0x48 mDrawFunc[0]
+        p[0x13] = __ptmf_null[1]; // 0x4C mDrawFunc[1]
+        p[0x14] = __ptmf_null[2]; // 0x50 mDrawFunc[2]
+        p[4] = reinterpret_cast<u32>(lbl_eu_80526E80);     // CfTaskMain vtable
+        p[0x15] = reinterpret_cast<u32>(lbl_eu_80526E80 + 0x24); // IWorkEvent vtable
+        p[0x16] = field58val;
     }
     // Regist runs even when the allocation failed (retail behaviour).
     obj->Regist(parent, false);

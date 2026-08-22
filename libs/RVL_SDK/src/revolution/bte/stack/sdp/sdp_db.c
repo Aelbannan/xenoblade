@@ -312,10 +312,9 @@ BOOLEAN SDP_DeleteAttribute(UINT32 handle, UINT16 attr_id)
                         UINT16 cnt = (UINT16)(p_rec->attr_data_end -
                                                (UINT32)((p_value + len) - p_rec->attr_data));
 
-                        for (i = 0; i < cnt; i++)
+                        for (i = 0; i < cnt; i++, p_value++)
                         {
                             *p_value = *(p_value + len);
-                            p_value++;
                         }
 
                         p_rec->attr_data_end -= len;

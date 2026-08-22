@@ -74,7 +74,7 @@ extern "C" {
 extern "C" {
     void func_8045A260__16CLibCriMoviePlayFv();
     void func_8045A48C__16CLibCriMoviePlayFv();
-    void func_8045B310__16CLibCriMoviePlayFv();
+    void func_8045B310__16CLibCriMoviePlayFv(int, int);
     void func_8045A708__16CLibCriMoviePlayFv();
     void func_8045A7F8__16CLibCriMoviePlayFv();
     void func_8045A644__16CLibCriMoviePlayFv();
@@ -168,10 +168,11 @@ void CLibCri::func_80459AC8() { func_8045A644__16CLibCriMoviePlayFv(); }
 void CLibCri::func_80459ACC() { func_8045A8C8__16CLibCriMoviePlayFv(); }
 void CLibCri::func_80459AD0() { func_8045B1E0__16CLibCriMoviePlayFv(); }
 
-// Parameter swap adapter
-void CLibCri::func_80459AB0() {
-    // Assembly swaps this (r3) and second arg (r4), then tail-calls
-    // CLibCriMoviePlay::func_8045B310
+// Parameter swap adapter (free-function form: the retail body swaps the two
+// incoming register args before tail-calling, which a no-arg member cannot
+// spell). Incoming r3=a, r4=b are forwarded as f(b, a).
+extern "C" void func_80459AB0__7CLibCriFv(int a, int b) {
+    func_8045B310__16CLibCriMoviePlayFv(b, a);
 }
 
 // Empty virtual override (extern "C" free-function form: no auto vtable).
@@ -239,8 +240,9 @@ extern "C" bool wkStandbyLogout__7CLibCriFv(CLibCri* self) {
     ADXT_Finish();
     ADXM_ShutdownFramework();
 
-    if (lbl_eu_806656DC != nullptr) {
-        AXRegisterCallback(nullptr);
+    void (*cb)() = lbl_eu_806656DC;
+    if (cb != nullptr) {
+        AXRegisterCallback(cb);
     }
 
     MIXQuit();

@@ -32,14 +32,12 @@ u64 SFTMR_GetTmr(void *sfd) {
 
     /* fallback: use SFD work area frame timing */
     {
-        u32 *out = lbl_eu_80619BC8;
-        u32 *sfd_work = lbl_eu_80606E38;
-        u32 rate = sfd_work[0x19C/4];
-        u32 frame_num_lo = sfd_work[0x1AC/4];
-        u32 frame_num_hi = sfd_work[0x1A8/4];
+        u32 rate = lbl_eu_80606E38[0x19C/4];
+        u32 frame_num_lo = lbl_eu_80606E38[0x1AC/4];
+        u32 frame_num_hi = lbl_eu_80606E38[0x1A8/4];
         u32 prod = rate * frame_num_lo;
-        out[1] = frame_num_hi;
-        out[0] = (u32)((s32)frame_num_hi >> 31);
+        lbl_eu_80619BC8[1] = frame_num_hi;
+        lbl_eu_80619BC8[0] = (u32)((s32)frame_num_hi >> 31);
         return (u64)(s32)prod;
     }
 }
@@ -75,9 +73,10 @@ u64 SFTMR_GetTmrUnit(void *sfd) {
             /* fallback: SFD work-area frame counter (mirrors SFTMR_GetTmr) */
             u32 frame = lbl_eu_80606E38[0x1A8 / 4];
             lbl_eu_80619BC8[1] = frame;
-            /* retail reads the work-area rate (0x19C) here even though the value
-             * is unused; volatile keeps MWCC from dead-load-eliminating it */
-            u32 rate = *(volatile u32 *)&lbl_eu_80606E38[0x19C / 4];
+            /* retail reads the work-area rate (0x19C) after the stores even
+             * though the value is unused; volatile keeps MWCC from
+             * dead-load-eliminating it */
+            *(volatile u32 *)&lbl_eu_80606E38[0x19C / 4];
             lbl_eu_80619BC8[0] = (u32)((s32)frame >> 31);
         }
     }

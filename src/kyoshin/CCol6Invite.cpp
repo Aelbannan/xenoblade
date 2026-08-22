@@ -12,7 +12,7 @@ extern "C" {
 CCol6Invite* lbl_eu_8066423C; // singleton instance (sda21-accessed)
 char lbl_eu_8052D238[];       // temporary vtable written before copying __ptmf_null
 char lbl_eu_8052FF3C[];       // CCol6Invite final vtable
-u32 __ptmf_null[3];           // null pointer-to-member-function constant
+// __ptmf_null is declared extern in CCol6System.hpp (defined in CUICfManager.cpp).
 void __ct__8CProcessFv(CProcess*); // CProcess base constructor (abstract class, so extern)
 }
 
@@ -61,20 +61,21 @@ CCol6Invite* CCol6Invite::Create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
         obj->vtable = (void*)lbl_eu_8052D238;
 
         // Copy the null member-function pointer into both callback slots.
-        // Retail loads __ptmf_null[1],[0],[2] then stores per slot (load-both /
-        // store-both), so use intermediate locals to force the retail ordering.
-        const u32* ptmf = __ptmf_null;
-        u32 ptmfWord1 = ptmf[1];
-        u32 ptmfWord0 = ptmf[0];
+        // Retail loads [1],[0],[2] then stores per slot; the named-member
+        // struct view keeps MWCC from emitting duplicate @l references.
+        u32 ptmfWord1, ptmfWord0, ptmfWord2;
+        const PtmfNullWords* ptmf = reinterpret_cast<const PtmfNullWords*>(__ptmf_null);
+        ptmfWord1 = ptmf->w1;
+        ptmfWord0 = ptmf->w0;
         obj->callbacks[0] = ptmfWord0;
         obj->callbacks[1] = ptmfWord1;
-        u32 ptmfWord2 = ptmf[2];
+        ptmfWord2 = ptmf->w2;
         obj->callbacks[2] = ptmfWord2;
-        ptmfWord1 = ptmf[1];
-        ptmfWord0 = ptmf[0];
+        ptmfWord1 = ptmf->w1;
+        ptmfWord0 = ptmf->w0;
         obj->callbacks[3] = ptmfWord0;
         obj->callbacks[4] = ptmfWord1;
-        ptmfWord2 = ptmf[2];
+        ptmfWord2 = ptmf->w2;
         obj->callbacks[5] = ptmfWord2;
 
         obj->field54 = 0;
@@ -152,7 +153,8 @@ void func_80164118(u8* self) {
 
 // Standalone string formatting helper.
 // Formats a string into buffer, stores length at buffer+0x100.
-void func_eu_801651A0(char* buffer, const char* format, ...) {
+// Retail symbol is unmangled (func_eu_801651A0), so this has C linkage.
+extern "C" void func_eu_801651A0(char* buffer, const char* format, ...) {
     char buf[0x100];
     va_list va;
     va_start(va, format);

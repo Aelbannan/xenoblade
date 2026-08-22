@@ -8,6 +8,16 @@ extern int SFAOAP_SetSpeed(void *, int, int);
 extern int SFTRN_CallTrtTrif(void *, int, int, int *, int);
 extern int fn_803CD484(void *);
 
+/* SFD player handle layout */
+typedef struct SfdPlayer {
+    u8 field_0x00[0x50];
+    s32 flag;      /* 0x50 */
+    s32 state;     /* 0x54 */
+    s32 substate;  /* 0x58 */
+    s32 pause;     /* 0x5C */
+    s32 pausect;   /* 0x60 */
+} SfdPlayer;
+
 /* struct offsets for SFD player handle */
 #define P_FLAG     0x50
 #define P_STATE    0x54
@@ -35,177 +45,150 @@ int SFD_Standby(void *handle) {
 /* Pause the player.
  * pause_flag=0: resume, pause_flag!=0: pause
  * Returns 0 on success, error code on failure */
-int SFD_Pause(void *handle, int pause_flag) {
-    int ret = 0;
-    u32 current_pause;
+int SFD_Pause(SfdPlayer *p, int pause_flag) {
+    int ret;
     s32 action;
 
-    if (SFLIB_CheckHn(handle)) {
+    if (SFLIB_CheckHn(p))
         return SFLIB_SetErr(NULL, 0xFF000142);
-    }
 
-    current_pause = *(u32 *)((u8 *)handle + P_PAUSE);
-
+    /* Decide which transition to run based on old/new pause state. */
     if (pause_flag == 0) {
-        if (current_pause == 0)
+        if (p->pause == 0)
             return 0;
         action = 0;
     } else {
         action = 2;
-        if (current_pause == 0)
+        if (p->pause == 0)
             action = 1;
     }
 
-    *(u32 *)((u8 *)handle + P_PAUSE) = pause_flag;
-
-    if (action == 2)
-        goto act2;
-    if (action == 1)
-        goto act1;
-    if (action == 0)
-        goto act0;
-    goto done;
-
-act2:
-    if (*(s32 *)((u8 *)handle + P_STATE) != 4)
-        goto done;
-    if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 3)
-        goto body2;
-    if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 4)
-        goto body2;
+    p->pause = pause_flag;
     ret = 0;
-    goto done;
-body2:
-    SFTIM_Pause(handle, 2);
-    {
-        int data = 2;
-        int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
-        if (result) ret = result;
-    }
-    goto done;
 
-act1:
-    {
-        s32 ct = *(s32 *)((u8 *)handle + P_PAUSECT);
-        *(s32 *)((u8 *)handle + P_PAUSECT) = ct + 1;
-        if (ct != 0)
-            goto done;
-        if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 3)
-            goto body1;
-        if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 4)
-            goto body1;
-        ret = 0;
-        goto done;
-    }
-body1:
-    SFTIM_Pause(handle, 1);
-    {
-        int data = 1;
-        int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
-        if (result) ret = result;
-    }
-    goto done;
+    switch (action) {
+    case 2:
+        if (p->state != 4)
+            break;
+        if (p->substate == 3 || p->substate == 4) {
+            SFTIM_Pause(p, 2);
+            {
+                int data = 2;
+                int result = SFTRN_CallTrtTrif(p, 7, 8, &data, 0);
+                if (result != 0)
+                    ret = result;
+            }
+        } else {
+            ret = 0;
+        }
+        break;
 
-act0:
-    {
-        s32 ct = *(s32 *)((u8 *)handle + P_PAUSECT);
-        *(s32 *)((u8 *)handle + P_PAUSECT) = ct - 1;
-        if (ct - 1 != 0)
-            goto done;
-        if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 3)
-            goto body0;
-        if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 4)
-            goto body0;
-        ret = 0;
-        goto done;
-    }
-body0:
-    SFTIM_Pause(handle, 0);
-    {
-        int data = 0;
-        int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
-        if (result) ret = result;
+    case 1:
+        /* Only enter pause on the first nested pause request. */
+        {
+            s32 ct = p->pausect++;
+            if (ct != 0)
+                break;
+            if (p->substate == 3 || p->substate == 4) {
+                SFTIM_Pause(p, 1);
+                {
+                    int data = 1;
+                    int result = SFTRN_CallTrtTrif(p, 7, 8, &data, 0);
+                    if (result != 0)
+                        ret = result;
+                }
+            } else {
+                ret = 0;
+            }
+        }
+        break;
+
+    case 0:
+        /* Only resume when the last nested pause is released. */
+        {
+            s32 ct = --p->pausect;
+            if (ct != 0)
+                break;
+            if (p->substate == 3 || p->substate == 4) {
+                SFTIM_Pause(p, 0);
+                {
+                    int data = 0;
+                    int result = SFTRN_CallTrtTrif(p, 7, 8, &data, 0);
+                    if (result != 0)
+                        ret = result;
+                }
+            } else {
+                ret = 0;
+            }
+        }
+        break;
     }
 
-done:
-    *(u32 *)((u8 *)handle + P_FLAG) = 1;
+    p->flag = 1;
     return ret;
 }
 
-int SFPL2_Pause(void *handle, int op) {
+int SFPL2_Pause(SfdPlayer *p, int op) {
     int ret = 0;
 
-    if (op == 2)
-        goto case2;
-    else if (op == 1)
-        goto case1;
-    else if (op == 0)
-        goto case0;
-    else
-        goto done;
+    switch (op) {
+    case 2:
+        if (p->state != 4)
+            return 0;
+        if (p->substate == 3 || p->substate == 4) {
+            SFTIM_Pause(p, 2);
+            {
+                int data = 2;
+                int result = SFTRN_CallTrtTrif(p, 7, 8, &data, 0);
+                if (result != 0)
+                    ret = result;
+            }
+        } else {
+            ret = 0;
+        }
+        break;
 
-case2:
-    if (*(s32 *)((u8 *)handle + P_STATE) != 4)
-        goto done;
-    if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 3)
-        goto body2;
-    if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 4)
-        goto body2;
-    ret = 0;
-    goto done;
-body2:
-    SFTIM_Pause(handle, 2);
-    {
-        int data = 2;
-        int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
-        if (result) ret = result;
-    }
-    goto done;
+    case 1:
+        /* Only enter pause on the first nested pause request. */
+        {
+            s32 ct = p->pausect++;
+            if (ct != 0)
+                break;
+            if (p->substate == 3 || p->substate == 4) {
+                SFTIM_Pause(p, 1);
+                {
+                    int data = 1;
+                    int result = SFTRN_CallTrtTrif(p, 7, 8, &data, 0);
+                    if (result != 0)
+                        ret = result;
+                }
+            } else {
+                ret = 0;
+            }
+        }
+        break;
 
-case1:
-    {
-        s32 ct = *(s32 *)((u8 *)handle + P_PAUSECT);
-        *(s32 *)((u8 *)handle + P_PAUSECT) = ct + 1;
-        if (ct != 0)
-            goto done;
-        if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 3)
-            goto body1;
-        if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 4)
-            goto body1;
-        ret = 0;
-        goto done;
-    }
-body1:
-    SFTIM_Pause(handle, 1);
-    {
-        int data = 1;
-        int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
-        if (result) ret = result;
-    }
-    goto done;
-
-case0:
-    {
-        s32 ct = *(s32 *)((u8 *)handle + P_PAUSECT);
-        *(s32 *)((u8 *)handle + P_PAUSECT) = ct - 1;
-        if (ct - 1 != 0)
-            goto done;
-        if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 3)
-            goto body0;
-        if (*(s32 *)((u8 *)handle + P_SUBSTATE) == 4)
-            goto body0;
-        ret = 0;
-        goto done;
-    }
-body0:
-    SFTIM_Pause(handle, 0);
-    {
-        int data = 0;
-        int result = SFTRN_CallTrtTrif(handle, 7, 8, &data, 0);
-        if (result) ret = result;
+    case 0:
+        /* Only resume when the last nested pause is released. */
+        {
+            s32 ct = --p->pausect;
+            if (ct != 0)
+                break;
+            if (p->substate == 3 || p->substate == 4) {
+                SFTIM_Pause(p, 0);
+                {
+                    int data = 0;
+                    int result = SFTRN_CallTrtTrif(p, 7, 8, &data, 0);
+                    if (result != 0)
+                        ret = result;
+                }
+            } else {
+                ret = 0;
+            }
+        }
+        break;
     }
 
-done:
     return ret;
 }
 

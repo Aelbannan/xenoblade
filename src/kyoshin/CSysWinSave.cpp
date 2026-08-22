@@ -351,19 +351,17 @@ extern "C" CSysWinSave* __ct__802944D8(CProcess* registerParent, CScn* scene) {
         shim->vtable = (void*)lbl_eu_8052D238;
 
         // Copy the null member-function pointer into both callback slots.
-        // Retail loads __ptmf_null[1],[0],[2] then stores per slot, so use
-        // intermediate locals to force the retail ordering. The uintptr_t
-        // round-trip keeps MWCC from constant-propagating the array address
-        // into the loads (which would fold @l into the [0] accesses).
+        // Declaring the [0] temp first makes MWCC allocate it to r3/r8 and
+        // hoist the [1] load above, matching the retail load/store order.
         u32* ptmf = (u32*)(uintptr_t)__ptmf_null;
-        u32 ptmfWord1 = ptmf[1];
         u32 ptmfWord0 = ptmf[0];
+        u32 ptmfWord1 = ptmf[1];
         obj->ptmf0[0] = ptmfWord0;
         obj->ptmf0[1] = ptmfWord1;
         u32 ptmfWord2 = ptmf[2];
         obj->ptmf0[2] = ptmfWord2;
-        ptmfWord1 = ptmf[1];
         ptmfWord0 = ptmf[0];
+        ptmfWord1 = ptmf[1];
         obj->ptmf1[0] = ptmfWord0;
         obj->ptmf1[1] = ptmfWord1;
         ptmfWord2 = ptmf[2];

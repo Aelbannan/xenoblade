@@ -48,9 +48,6 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
     s32 sizePlus;
     s32 q12;
     s32 q12p1;
-    u32 nv24;
-    u32 nv25;
-    u32 copyWords; // retail li r0,0x30 keep-alive
 
     process = reinterpret_cast<CMenuBpsProcessShim*>(this);
     __ct__8CProcessFv(reinterpret_cast<CProcess*>(process));
@@ -128,10 +125,7 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
         unk7F0 = (nw4r::lyt::AnimTransform*)z;
         v6 = 6;
         vB = 0xb;
-        copyWords = 0x30;
         unk7F8 = z;
-        nv24 = 0x60;
-        nv25 = 0xc;
         i = 0;
         do {
             // Inlined func_8010B324: clear +0x74..+0x8c then pad90[0x174].
@@ -174,7 +168,7 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
                         }
                         if (ok != 0) {
                             // Count from padStart (not bp) like leaf/retail.
-                            c = (u32)(lim + 0x5f - padStart) / nv24;
+                            c = (u32)(lim + 0x5f - padStart) / 0x60;
                             if (bp < lim) {
                                 do {
                                     u32* w = reinterpret_cast<u32*>(bp);
@@ -207,7 +201,7 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
                             }
                         }
                     }
-                    c = (u32)(be + 0xb - bp) / nv25;
+                    c = (u32)(be + 0xb - bp) / 0xc;
                     if (bp < be) {
                         do {
                             u32* w = reinterpret_cast<u32*>(bp);
@@ -321,7 +315,7 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
                 u32* dstWords = reinterpret_cast<u32*>(&dst->unk84);
                 s = slotWords - 1;
                 d = dstWords - 1;
-                n = copyWords;
+                n = 0x30;
                 do {
                     u32 a = *(s + 1);
                     u32 b = *(s += 2);
@@ -363,8 +357,6 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
                 *reinterpret_cast<u32*>(reinterpret_cast<u8*>(dst) + 0x26c) =
                     *reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x26c);
             }
-            (void)nv24;
-            (void)nv25;
             i = (u8)(i + 1);
         } while (i < 3);
     }

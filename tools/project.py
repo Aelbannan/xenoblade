@@ -1155,7 +1155,7 @@ def generate_build_ninja(
                 args = []
                 if link_transform.get("renames"):
                     args.extend(
-                        f"--redefine-sym={old}={new}"
+                        f"--redefine-sym='{old}={new}'"
                         for old, new in link_transform["renames"]
                     )
                 if link_transform.get("globalize"):

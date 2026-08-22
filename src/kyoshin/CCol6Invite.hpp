@@ -40,6 +40,15 @@ public:
 // Singleton instance pointer (lbl_eu_8066423C in retail).
 extern "C" CCol6Invite* lbl_eu_8066423C;
 
+// Named-member view of the null pointer-to-member-function constant. Reading
+// through w0/w1/w2 members keeps MWCC from re-folding __ptmf_null references
+// into duplicate @l relocs (retail materializes the pointer once).
+struct PtmfNullWords {
+    u32 w0;
+    u32 w1;
+    u32 w2;
+};
+
 // Forward declarations for the CCol6Hint/CCol6System subobject destructor
 // forwards used by the this-adjusting thunks (func_801640E0 / func_80164100 /
 // func_80164110). These symbols are emitted by the member destructor
@@ -56,5 +65,5 @@ extern "C" void* __dt__11CCol6SystemFv(CCol6System*, int flags);
 class CCol6Invite;
 extern "C" void* __dt__11CCol6InviteFv(CCol6Invite*, int flags);
 
-// Standalone string formatting helper.
-void func_eu_801651A0(char* buffer, const char* format, ...);
+// Standalone string formatting helper (unmangled retail symbol, C linkage).
+extern "C" void func_eu_801651A0(char* buffer, const char* format, ...);

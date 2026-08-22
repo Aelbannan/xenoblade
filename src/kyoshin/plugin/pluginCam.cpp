@@ -75,6 +75,16 @@ static inline s32 radToDegFixed(f32 rad) {
     return (s32)(lbl_eu_80666168 * (rad * lbl_eu_8066A20C));
 }
 
+// s32 -> f32 via the shared sdata2 magic double (pluginCam.hpp F64Conv
+// convention): builds the 0x43300000-prefixed bit pattern and subtracts the
+// named pool constant so the reloc matches retail.
+static inline f32 s32ToF32(s32 v) {
+    F64Conv conv;
+    conv.w[1] = (u32)v ^ 0x80000000;
+    conv.w[0] = 0x43300000;
+    return (f32)(conv.d - lbl_eu_80666170);
+}
+
 extern "C" int select(VMThread* pThread) {
     s32 mode = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     func_8008212C__Q22cf13CfGameManagerFv(mode);
@@ -84,15 +94,15 @@ extern "C" int select(VMThread* pThread) {
 extern "C" int restore(VMThread* pThread) {
     s32 cameraId;
     s32 transitionTime;
-    s32 nextArg;
+    s32 nextArg = 1;
 
     if (vmArgOmitChk(pThread, 1)) {
         cameraId = 0;
         nextArg = 2;
     } else {
-        nextArg = 2;
         VMArg* arg = vmArgPtrGet(pThread, 1);
-        cameraId = vmArgIntGet(2, arg);
+        nextArg++;
+        cameraId = vmArgIntGet(nextArg, arg);
     }
 
     if (vmArgOmitChk(pThread, nextArg)) {
@@ -148,10 +158,9 @@ extern "C" int setDir(VMThread* pThread) {
     s32 fixedAngle = vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
     s32 fixedDist = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
 
-    // Both components are degrees: x = angle, y = distance (both deg->rad).
     ml::CVec3 dir;
-    dir.x = ((f32)fixedAngle / lbl_eu_80666168) * lbl_eu_8066A210;
-    dir.y = ((f32)fixedDist / lbl_eu_80666168) * lbl_eu_8066A210;
+    dir.x = s32ToF32(fixedAngle) / lbl_eu_80666168 * lbl_eu_8066A210;
+    dir.y = s32ToF32(fixedDist) / lbl_eu_80666168 * lbl_eu_8066A210;
     dir.z = lbl_eu_80666178;
 
     UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();

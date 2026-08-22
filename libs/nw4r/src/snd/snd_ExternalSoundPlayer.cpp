@@ -67,10 +67,11 @@ bool ExternalSoundPlayer::detail_CanPlaySound(int count) {
         for (BasicSoundExtPlayList::Iterator it = mSoundList.GetBeginIter();
              it != mSoundList.GetEndIter(); ++it) {
 
-            int currentPrio = it->CalcCurrentPlayerPriority();
+            BasicSound* pCurrent = &*it;
+            int currentPrio = pCurrent->CalcCurrentPlayerPriority();
 
             if (lowestPrio > currentPrio) {
-                pLowest = &*it;
+                pLowest = pCurrent;
                 lowestPrio = currentPrio;
             }
         }

@@ -1,6 +1,10 @@
 #pragma once
 
 #include <types.h>
+
+// CPartyStateWin.hpp references cf::CfObjectMove before its own forward decl;
+// pre-declare it here (same pattern as other includers).
+namespace cf { class CfObjectMove; }
 #include <monolib/work/CProcess.hpp>
 #include <monolib/scn/IScnRender.hpp>
 #include "kyoshin/CBgTex.hpp"

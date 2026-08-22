@@ -5,6 +5,11 @@
 #include <math.h>
 #include <string.h>
 
+// Shared .sdata2 pool constants referenced by retail (defined in port/data_defs.cpp)
+extern f32 float_8066BE98; // 1.0f
+extern f32 float_8066BE9C; // 0.6f
+extern f64 double_8066BEA0; // 2^52 bias for the 0x4330 int->float trick
+
 static u32 __EarlySizeTable[8] = {163, 317, 479, 641, 797, 967, 1123, 1283};
 
 static u32 __FilterSizeTable[7][4] = {
@@ -17,17 +22,32 @@ static void __FreeDelayLine(AXFX_REVERBSTD_EXP_DPL2* reverb);
 static void __BzeroDelayLines(AXFX_REVERBSTD_EXP_DPL2* reverb);
 static BOOL __InitParams(AXFX_REVERBSTD_EXP_DPL2* reverb);
 
+// Signed-int -> float via MWCC's biased-double conversion: form the double
+// 0x43300000:(v ^ 0x80000000) and subtract 2^52, matching retail's pool
+// constant double_8066BEA0.
+typedef union {
+    struct { u32 lo; u32 hi; } w;
+    f64 d;
+} IntFloatConv;
+
+static f32 IntBitsToFloat(s32 v) {
+    IntFloatConv c;
+    c.w.lo = (u32)v ^ 0x80000000;
+    c.w.hi = 0x43300000;
+    return (f32)(c.d - double_8066BEA0);
+}
+
 #pragma peephole off
 u32 AXFXReverbStdExpGetMemSizeDpl2(const AXFX_REVERBSTD_EXP_DPL2* reverb) {
-    // Six-local shape: the documented best (MWCC_CASES ReverbStdExp
-    // schedule ceilings) - scheduler-invariant; residual is the retail
-    // lis-pair hoist + load distribution fingerprint, not source-fixable.
+    // Interleaved declaration order drives the -O4,p scheduler: retail hoists
+    // both table bases, loads the 32000.0f const, then the param, then
+    // Filter[6][0] before the fmuls, with fctiwz between [6][2]/[6][3].
     u32 e7 = __EarlySizeTable[7];
     u32 f0 = __FilterSizeTable[6][0];
+    u32 ival = (u32)(s32)(reverb->preDelayTimeMax * 32000.0f);
     u32 f1 = __FilterSizeTable[6][1];
     u32 f2 = __FilterSizeTable[6][2];
     u32 f3 = __FilterSizeTable[6][3];
-    u32 ival = (u32)(s32)(reverb->preDelayTimeMax * 32000.0f);
     u32 tot = e7 + ival;
 
     tot += f0;
@@ -217,10 +237,10 @@ void AXFXReverbStdExpCallbackDpl2(AXFX_BUFFERUPDATE_DPL2* bufferUpdate, AXFX_REV
         outBusData[3] = reverb->busOut->right_surround;
     }
 
-    lpfCoef1 = 1.0f - reverb->lpfCoef;
+    lpfCoef1 = float_8066BE98 - reverb->lpfCoef;
     lpfCoef2 = reverb->lpfCoef;
-    earlyGain = reverb->earlyGain * 0.6f;
-    fusedGain = reverb->fusedGain * 0.6f;
+    earlyGain = reverb->earlyGain * float_8066BE9C;
+    fusedGain = reverb->fusedGain * float_8066BE9C;
     earlyCoef = reverb->earlyCoef;
     combCoef0 = reverb->combCoef[0];
     combCoef1 = reverb->combCoef[1];
@@ -236,9 +256,9 @@ void AXFXReverbStdExpCallbackDpl2(AXFX_BUFFERUPDATE_DPL2* bufferUpdate, AXFX_REV
 
         for (ch = 0; ch < 4; ch++) {
             if (reverb->busIn != NULL) {
-                data = (f32)(*(input[ch]) + *(inBusData[ch]++));
+                data = IntBitsToFloat(*(input[ch]) + *(inBusData[ch]++));
             } else {
-                data = (f32)(*input[ch]);
+                data = IntBitsToFloat(*input[ch]);
             }
 
             earlyLine = reverb->earlyLine[ch];

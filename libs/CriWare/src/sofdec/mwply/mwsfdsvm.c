@@ -5,9 +5,22 @@
 #include <string.h>
 #include <stdarg.h>
 
+/* ---- SVM server API (src/adx/svm/svm.c) ---- */
+
+void SVM_Init(void);
+s32 SVM_SetCbSvrWithString(u32 svrId, void* fn, void* ctx, const char* name);
+void SVM_SetCbSvrIdWithString(u32 svrId, u32 idx, void* fn, void* ctx, const char* name);
+s32 SVM_TestAndSet(u32* p);
+void SVM_GotoSvrBorder(s32 idx);
+void SVM_CallErr1(const char* msg);
+
+/* Registered callback slots shared with mwsfdlib.c, zeroed by
+ * MWSFSVM_Init: +0x00 spare, +0x04 id-callback function,
+ * +0x08 idle callback id, +0x0C main callback id. */
 extern u32 lbl_eu_805FF1D0;
+extern u32 lbl_eu_805FF1D4;
 extern u32 lbl_eu_805FF1D8;
-extern int lbl_eu_805FF1DC;
+extern u32 lbl_eu_805FF1DC;
 
 void MWSFSVM_Init(void) {
     u32* base;
@@ -19,24 +32,28 @@ void MWSFSVM_Init(void) {
     base[3] = 0;
 }
 
-extern int SVM_SetCbSvrIdWithString(int, void*, void*, void*, void*);
-extern u32 lbl_eu_805FF1D4;
-
+/* Register the movie-server id callback: hand it to SVM and remember it
+ * in the callback table (+0x04). */
 void MWSFSVM_EntryIdVfunc(void* self, void* a, void* b, void* c) {
-    SVM_SetCbSvrIdWithString(2, self, a, b, c);
+    SVM_SetCbSvrIdWithString(2, (u32)self, a, b, c);
     lbl_eu_805FF1D4 = (u32)self;
 }
 
+/* Register the idle server callback; SVM returns its assigned svr id,
+ * stored in the callback table (+0x08). */
 void MWSFSVM_EntryIdleFunc(void* p1, void* p2, void* p3) {
     lbl_eu_805FF1D8 = SVM_SetCbSvrWithString(6, p1, p2, p3);
 }
 
-void MWSFSVM_EntryMainFunc(int arg1, int arg2, int arg3)
-{
-    int result = SVM_SetCbSvrWithString(5, arg1, arg2, arg3);
+/* Register the main server callback; SVM returns its assigned svr id,
+ * stored in the callback table (+0x0C). */
+void MWSFSVM_EntryMainFunc(int arg1, int arg2, int arg3) {
+    int result = SVM_SetCbSvrWithString(5, (void*)arg1, (void*)arg2, (void*)arg3);
     lbl_eu_805FF1DC = result;
 }
-void MWSFSVM_TestAndSet(void* p) { SVM_TestAndSet(p); }
+/* Test-and-set passthrough on an SVM flag word (used by mwsfdsvr.c to
+ * claim per-worker state). */
+s32 MWSFSVM_TestAndSet(void* p) { return SVM_TestAndSet(p); }
 
 /* ---- SVM trace callback infrastructure ----
  * lbl_eu_805FF3A0 is a global pointer to an optional trace object whose
@@ -69,17 +86,17 @@ struct TraceRec {
 extern TraceCb* lbl_eu_805FF3A0;
 extern TraceRec lbl_eu_80566AC8;
 
-extern void SVM_CallErr1(const char* msg);
-
 extern char lbl_eu_805FF1E0[256];
 
+/* Format a message into the shared scratch buffer and report it:
+ * enter-trace -> SVM error hook -> exit-trace. */
 void MWSFSVM_Error(const char* fmt, ...) {
     va_list ap;
 
     memset(lbl_eu_805FF1E0, 0, 256);
     va_start(ap, fmt);
+
     vsprintf(lbl_eu_805FF1E0, fmt, ap);
-    va_end(ap);
 
     if (lbl_eu_805FF3A0 != NULL) {
         lbl_eu_80566AC8.field_0x0c = (u32)lbl_eu_805FF1E0;
@@ -94,8 +111,9 @@ void MWSFSVM_Error(const char* fmt, ...) {
 }
 
 extern TraceRec lbl_eu_80566B9C;
-extern int SVM_GotoSvrBorder(int svrId);
 
+/* Jump the server thread to its idle border, bracketing the transition
+ * with enter/exit trace records like MWSFSVM_Error. */
 void MWSFSVM_GotoIdleBorder(void) {
     TraceCb* cb = lbl_eu_805FF3A0;
     if (cb != NULL) {

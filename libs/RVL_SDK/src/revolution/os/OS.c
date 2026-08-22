@@ -39,12 +39,12 @@ const char* __OSVersion =
 
 static void OSExceptionInit(void);
 
-void __OSDBINTSTART(void);
+void __OSDBIntegrator(void);
 void __OSDBINTEND(void);
-void __OSDBJUMPSTART(void);
+void __OSDBJump(void);
 void __OSDBJUMPDEST(void);
 void __OSDBJUMPEND(void);
-void __OSEVStart(void);
+void OSExceptionVector(void);
 void __DBVECTOR(void);
 void __OSEVSetNumber(void);
 void __OSEVEnd(void);
@@ -683,8 +683,6 @@ static u32 __OSExceptionLocations[OS_EXC_MAX] = {
     0x0100, 0x0200, 0x0300, 0x0400, 0x0500, 0x0600, 0x0700, 0x0800,
     0x0900, 0x0C00, 0x0D00, 0x0F00, 0x1300, 0x1400, 0x1700};
 
-// Install the exception vectors at their physical addresses, wiring the DB
-// integrator / TRK hooks when a debugger is attached.
 static void OSExceptionInit(void) {
     u32* dst;
     u8 i;
@@ -700,17 +698,17 @@ static void OSExceptionInit(void) {
     inst = *pInst;
 
     // OS exception vector
-    vectorCode = __OSEVStart;
-    vectorSize = (u32)__OSEVEnd - (u32)__OSEVStart;
+    vectorCode = OSExceptionVector;
+    vectorSize = (u32)__OSEVEnd - (u32)OSExceptionVector;
 
     dst = (u32*)OSPhysicalToCached(OS_PHYS_DB_INTEGRATOR_HOOK);
     // Code is empty if DB integrator has not yet been installed
     if (*dst == 0) {
         DBPrintf("Installing OSDBIntegrator\n");
-        memcpy(dst, __OSDBINTSTART, (u32)__OSDBINTEND - (u32)__OSDBINTSTART);
-        DCFlushRangeNoSync(dst, (u32)__OSDBINTEND - (u32)__OSDBINTSTART);
+        memcpy(dst, __OSDBIntegrator, (u32)__OSDBINTEND - (u32)__OSDBIntegrator);
+        DCFlushRangeNoSync(dst, (u32)__OSDBINTEND - (u32)__OSDBIntegrator);
         __sync();
-        ICInvalidateRange(dst, (u32)__OSDBINTEND - (u32)__OSDBINTSTART);
+        ICInvalidateRange(dst, (u32)__OSDBINTEND - (u32)__OSDBIntegrator);
     }
 
     for (i = 0; i < OS_EXC_MAX; i++) {
@@ -723,11 +721,11 @@ static void OSExceptionInit(void) {
 
             if (__DBIsExceptionMarked(i)) {
                 DBPrintf(">>> OSINIT: exception %d vectored to debugger\n", i);
-                memcpy(__DBVECTOR, __OSDBJUMPSTART,
-                       (u32)__OSDBJUMPEND - (u32)__OSDBJUMPSTART);
+                memcpy(__DBVECTOR, __OSDBJump,
+                       (u32)__OSDBJUMPEND - (u32)__OSDBJump);
             } else {
                 code = (u32*)__DBVECTOR;
-                for (j = 0; j < (u32)__OSDBJUMPEND - (u32)__OSDBJUMPSTART;
+                for (j = 0; j < (u32)__OSDBJUMPEND - (u32)__OSDBJump;
                      j += sizeof(u32), code++) {
                     // Write nop
                     *code = 0x60000000;
@@ -753,32 +751,22 @@ static void OSExceptionInit(void) {
     DBPrintf("Exceptions initialized...\n");
 }
 
-// Named for the __OSDBINTSTART entry label so the vector blob carries the
-// registry symbol; __OSDBIntegrator is a retail-only alias at the same address.
-static asm void __OSDBIntegrator(void) {
+asm void __OSDBIntegrator(void) {
     // clang-format off
     nofralloc
 
-    entry __OSDBINTSTART
-
-    // Access OS debug interface
     li r5, OS_PHYS_DEBUG_INTERFACE
 
-    // Save exception hook return address
     mflr r3
     stw r3, OSDebugInterface.exceptionHookLR(r5)
 
-    // Load exception hook
     lwz r3, OSDebugInterface.exceptionHook(r5)
-    // Physical -> Cached
     oris r3, r3, 0x8000
     mtlr r3
 
-    // Setup MMU
     li r3, (MSR_IR | MSR_DR)
     mtmsr r3
 
-    // Call exception hook
     blr
 
     entry __OSDBINTEND
@@ -786,12 +774,9 @@ static asm void __OSDBIntegrator(void) {
 }
 
 //TODO: this should use the label
-// Named for the __OSDBJUMPSTART entry label (retail alias: __OSDBJump).
-static asm void __OSDBJump(void){
+asm void __OSDBJump(void){
     // clang-format off
     nofralloc
-
-    entry __OSDBJUMPSTART
 
     bla 0x60 //__OSDBJUMPDEST
 
@@ -809,15 +794,11 @@ OSExceptionHandler __OSGetExceptionHandler(u8 type) {
     return OSExceptionTable[type];
 }
 
-// Named for the __OSEVStart entry label (retail alias: OSExceptionVector).
-static asm void OSExceptionVector(void) {
+asm void OSExceptionVector(void) {
     // clang-format off
     nofralloc
 
-    entry __OSEVStart
-
     mtsprg0 r4
-    // Current OS context (physical address)
     lwz r4, 0x000000C0(0)
     stw r3, OSContext.gprs[3](r4)
     mfsprg0 r3
@@ -853,7 +834,6 @@ static asm void OSExceptionVector(void) {
     entry __OSEVSetNumber
 
     li r3, 0
-    // Current OS context (cached address)
     lwz r4, 0x000000D4(r0)
     rlwinm. r5, r5, 0, 30, 30
     bne lbl_800ECF70

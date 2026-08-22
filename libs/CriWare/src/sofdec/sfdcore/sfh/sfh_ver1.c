@@ -128,11 +128,11 @@ int VER1_IsEffFtrInf(void *work, u32 stm_id, u32 *out) {
 
 int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
     char buf[0x50];
+    u32 t1;
+    u32 t2;
     char *p;
     u32 hdr_major;
-    u32 t1;
     u32 hdr_minor;
-    u32 t2;
     u32 ok;
     int c;
 
@@ -165,7 +165,8 @@ int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
             t1 = t1 * 10 + c - '0';
             p++;
         }
-        for (p++, t2 = 0; ; ) {
+        p++;
+        for (t2 = 0;;) {
             c = *p;
             if (c == '.' || c == ' ' || c == 0) {
                 break;

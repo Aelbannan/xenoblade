@@ -222,7 +222,6 @@ void AXFXDelayExpCallback(AXFX_BUFFERUPDATE* update, AXFX_DELAY_EXP* fx) {
     s32 mixedS;
     s32 invCoef;
     u32 samp;
-    u32 pos2;
 
     if (fx->active != 0) {
         fx->active &= ~2;
@@ -272,10 +271,9 @@ void AXFXDelayExpCallback(AXFX_BUFFERUPDATE* update, AXFX_DELAY_EXP* fx) {
 
         fx->line[0][fx->curPos] = mixedL + ((delayedL * fx->feedbackGain) >> 7);
         fx->line[1][fx->curPos] = mixedR + ((delayedR * fx->feedbackGain) >> 7);
-        pos2 = fx->curPos;
-        fx->line[2][pos2] = mixedS + ((delayedS * fx->feedbackGain) >> 7);
+        /* post-increment inside the subscript folds load+increment into one register */
+        fx->line[2][fx->curPos++] = mixedS + ((delayedS * fx->feedbackGain) >> 7);
 
-        fx->curPos = pos2 + 1;
         if (fx->curPos >= fx->length) {
             fx->curPos = 0;
         }

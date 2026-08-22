@@ -96,17 +96,17 @@ extern "C" void func_80294980(CREvtMovie* self) {
     if (func_80164FE8() != 0) return;
 
     // Build file path on stack: "/ev/realtime/" + scriptName + ".sfd"
-    const char* dir = lbl_eu_8050FD98;           // "/ev/realtime/"
+    char* dir = lbl_eu_8050FD98;
     CREvtMoviePathBuf buf;
     buf.mLength = strlen(dir);
     strcpy(buf.mPath, dir);
 
-    const char* name = self->mScriptData->mScriptName;
+    char* name = self->mScriptData->mScriptName;
     u32 sLen = strlen(name);
     strcat(buf.mPath, name);
     buf.mLength += sLen;
 
-    const char* ext = dir + 14;                     // ".sfd"
+    char* ext = dir + 14;
     u32 eLen = strlen(ext);
     strcat(buf.mPath, ext);
     buf.mLength += eLen;

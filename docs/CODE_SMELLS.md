@@ -11,15 +11,15 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 
 | metric | count |
 |---|---|
-| extern "C" (total lines) | 12894 |
-| extern "C" declarations (non-lbl_*, imports) | 5075 |
+| extern "C" (total lines) | 12892 |
+| extern "C" declarations (non-lbl_*, imports) | 5070 |
 | extern "C" definitions (forced names) | 3900 |
-| `self`/register-style params | 11917 |
+| `self`/register-style params | 11915 |
 | `void*` (params + locals) | 7193 |
-| raw pointer offset arithmetic | 6897 |
-| deref-through-cast arithmetic | 2737 |
-| inline asm / `register` | 110 |
-| rN-named params | 570 |
+| raw pointer offset arithmetic | 6899 |
+| deref-through-cast arithmetic | 2739 |
+| inline asm / `register` | 108 |
+| rN-named params | 568 |
 | goto | 2920 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 0 |
@@ -87,7 +87,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/device/CDeviceFontInfoRom.cpp | 15 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontLayer.cpp | 49 | 1 | 4 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceFontLoader.cpp | 43 | 1 | 19 | 13 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 |
-| libs/monolib/src/device/CDeviceGX.cpp | 10 | 0 | 3 | 6 | 0 | 0 | 3 | 3 | 0 | 0 | 0 | 0 |
+| libs/monolib/src/device/CDeviceGX.cpp | 5 | 0 | 1 | 6 | 2 | 2 | 1 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceRemotePad.cpp | 42 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceSC.cpp | 38 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/device/CDeviceVI.cpp | 84 | 0 | 2 | 0 | 2 | 0 | 2 | 2 | 0 | 0 | 0 | 0 |
@@ -1017,13 +1017,15 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
   "void_ptr": 13
  },
  "libs/monolib/src/device/CDeviceGX.cpp": {
-  "asm_code": 3,
+  "asm_code": 1,
   "asm_insn_shim": 0,
-  "extern_c_nonlbl_decl": 10,
+  "deref_arith": 2,
+  "extern_c_nonlbl_decl": 5,
   "init_side_effect": 0,
-  "rn_params": 3,
+  "ptr_arith": 2,
+  "rn_params": 1,
   "schedule_pragma": 0,
-  "self_params": 3,
+  "self_params": 1,
   "void_ptr": 6
  },
  "libs/monolib/src/device/CDeviceRemotePad.cpp": {

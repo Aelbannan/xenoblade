@@ -98573,7 +98573,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/code_800F42AC.cpp",
       "claim": null,
-      "instruction_match": 100.0,
+      "instruction_match": 0.0,
       "equivalence_status": "equivalent",
       "source_present": true
     },
@@ -98598,7 +98598,7 @@
       "callgraph_source": "build/us/asm/kyoshin/cf/code_800F42AC.s",
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/code_800F42AC.cpp",
-      "instruction_match": 100.0,
+      "instruction_match": 0.0,
       "equivalence_status": "equivalent",
       "source_present": true
     },

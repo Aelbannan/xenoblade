@@ -83,13 +83,13 @@ void func_800F449C(ScMain* self) {
     self->f_6C = lbl_eu_80666E90;
     self->f_70 = lbl_eu_80666E90;
     self->f_74 = lbl_eu_80666E90;
+    self->field_8C = 0;
+    self->s_90 = 0;
+    self->field_C8 = 0;
     self->f_78 = lbl_eu_80666E90;
     self->f_7C = lbl_eu_80666E90;
     self->s_80 = 0;
     self->s_82 = 0;
-    self->field_8C = 0;
-    self->s_90 = 0;
-    self->field_C8 = 0;
     memset(&self->data_18, 0, 0x40);
     memset(&self->data_94, 0, 0x34);
     self->flags_84 = 0;
@@ -114,9 +114,9 @@ void func_800F449C(ScMain* self) {
         s->s_70 = 0;
         s->s_72 = 0;
         memset(&s->data_08, 0, 0x40);
+        memset(&s->data_84, 0, 0x34);
         s->field_74 = 0;
         s->field_78 = 0;
-        memset(&s->data_84, 0, 0x34);
     }
     self->flags_824 = 0;
 }

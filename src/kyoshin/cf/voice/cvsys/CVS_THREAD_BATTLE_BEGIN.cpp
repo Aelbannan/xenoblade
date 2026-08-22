@@ -7,9 +7,6 @@
 #include "monolib/math/Random.hpp"
 #include <cstring>
 
-// Instance-method pointer used for the vtable[0x108/4] size getter.
-typedef int (*CVSProcFn)(CVoiceHandle*);
-
 // ── Target 2: us-802b24f0 (__ct__802AFA80) ─────────────────────────────────
 // Factory/constructor for the battle-begin voice thread.  Verifies the voice
 // handle's embedded character matches player 0 (and the data source is

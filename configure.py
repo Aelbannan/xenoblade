@@ -663,7 +663,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/menu/CMenuMapSelect.cpp"),
             Object(NonMatching, "kyoshin/CMapSel.cpp"),
             Object(Matching, "kyoshin/CFade.cpp"),
-            Object(NonMatching, "kyoshin/CFloorMap.cpp", mw_version="GC/3.0a5.2"),  # EXPERIMENT agent-cfloormap us-8024d914
+            Object(NonMatching, "kyoshin/CFloorMap.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuMapSelectSC.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/menu/CMenuPause.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuCollepedia.cpp", extra_cflags=["-O4,s"]),
@@ -739,7 +739,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/CErrMes.cpp"), #EU/US only
             Object(NonMatching, "kyoshin/plugin/pluginHelp.cpp"),
             Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_MAIN.cpp"),
-            Object(NonMatching, "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_BEGIN.cpp"),
+            Object(Matching, "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_BEGIN.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuGCItem.cpp"),
             Object(NonMatching, "kyoshin/menu/CMenuGameClear.cpp"),
             Object(NonMatching, "kyoshin/cf/CfHikariItemManager.cpp"),

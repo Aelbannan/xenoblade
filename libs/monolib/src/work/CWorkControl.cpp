@@ -2,13 +2,16 @@
 #include "monolib/data_vtables.hpp"
 #include "decomp.h"
 
-// CDevice::getInstance referenced by mangled name instead of including
-// monolib/device.hpp: device.hpp pulls in CDeviceBase.hpp whose inline virtual
-// dtor makes MWCC declare the __RTTI__ chain internally, which collides with
-// the extern "C" void* __RTTI__ declarations this TU needs for its manual
-// RTTI base list (MWCC "illegal name overloading").
-class CDevice;
-extern "C" CDevice* getInstance__7CDeviceFv();
+// Minimal local declaration of CDevice::getInstance: emits the retail-mangled
+// call getInstance__7CDeviceFv without including monolib/device.hpp. That
+// header pulls in CDeviceBase.hpp whose inline virtual dtor makes MWCC
+// declare the __RTTI__ chain internally, which collides with the C-linkage
+// void* __RTTI__ declarations this TU needs for its manual RTTI base list
+// (MWCC "illegal name overloading").
+class CDevice {
+public:
+    static CDevice* getInstance();
+};
 
 // Data owned by this TU (blob monolibdata1d dissolve):
 //   lbl_eu_80522678 (.rodata) = CWorkControl RTTI name string
@@ -115,30 +118,36 @@ bool CWorkControl::wkStandbyLogin(){
 
 #pragma optimize_for_size on
 DECOMP_DONT_INLINE bool CWorkControl::setFlowSetup(){
+    const char* name;
+    CWorkThread* pControl;
+
     if(CWorkFlowSetup::getInstance() != nullptr){
         return true;
     }
 
-    const char* name = &lbl_eu_80522688[0x10];
-    CWorkControl* pControl = CWorkControl::getInstance();
+    name = &lbl_eu_80522688[0x10];
+    pControl = CWorkControl::getInstance();
     CWorkFlowSetup::create(name, pControl);
     return true;
 }
 #pragma optimize_for_size off
 
 bool CWorkControl::wkStandbyLogout(){
-    if(mChildren.empty() && getInstance__7CDeviceFv() == nullptr){
+    if(mChildren.empty() && CDevice::getInstance() == nullptr){
         return CWorkThread::wkStandbyLogout();
     }
 
     return false;
 }
 
-// Factory: allocate from the work heap, construct in place, register. NOTE:
-// retail keeps pParent/name/result in three callee-saved registers (stmw r29)
-// and materializes the name before the alloc call; MWCC from high-level C
-// uses two (stmw r30) and reuses the name base after the call, leaving the
-// function 0x70 vs 0x74 -- open item.
+// Factory: allocate from the work heap, construct in place, register.
+// OPEN ITEM: structural 0 / size exact / relocs clean; residual 6 pure
+// reg-swaps - retail colors name=r31, result=r30, decomp is reversed.
+// Ruled out: decl order (both ways), declare-then-assign, result typed as
+// base CWorkThread*, explicit WORK_ID mem local (regresses scheduling),
+// inline-name arg (regresses scheduling). Placement-new result web claims
+// r31 regardless; next ideas: noinline pragma variant, parent-local copy
+// with address-taken, mw_version probe.
 
 #pragma optimize_for_size on
 CWorkControl* CWorkControl::create(CWorkThread* pParent){

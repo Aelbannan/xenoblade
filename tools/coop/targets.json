@@ -506716,8 +506716,16 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/UnkClass_8047CD0C.cpp",
       "source_present": false,
-      "instruction_match": 99.773,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 99.75,
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-34232",
+        "claimed_at": "2026-08-23T17:56:52.276297+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/scn/UnkClass_8047CD0C.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80480d8c",
@@ -508040,7 +508048,7 @@
       "unit": "monolib/src/scn/UnkClass_8047E110",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -508050,7 +508058,7 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/UnkClass_8047E110.cpp",
       "source_present": true,
-      "instruction_match": 91.208,
+      "instruction_match": 99.167,
       "equivalence_status": "inconclusive_smt_disabled"
     },
     {

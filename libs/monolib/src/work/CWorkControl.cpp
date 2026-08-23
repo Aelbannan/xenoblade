@@ -2,12 +2,12 @@
 #include "monolib/data_vtables.hpp"
 #include "decomp.h"
 
-// Minimal local declaration of CDevice::getInstance: emits the retail-mangled
-// call getInstance__7CDeviceFv without including monolib/device.hpp. That
-// header pulls in CDeviceBase.hpp whose inline virtual dtor makes MWCC
-// declare the __RTTI__ chain internally, which collides with the C-linkage
-// void* __RTTI__ declarations this TU needs for its manual RTTI base list
-// (MWCC "illegal name overloading").
+// Minimal forward declaration of CDevice for the getInstance() call in
+// wkStandbyLogout (emits the retail-mangled getInstance__7CDeviceFv).
+// The full monolib/device/CDevice.hpp cannot be included here: it pulls in
+// CDeviceBase.hpp whose inline virtual dtor makes MWCC declare the __RTTI__
+// chain internally, colliding with the C-linkage void* __RTTI__ declarations
+// this TU needs for its manual RTTI base list (MWCC "illegal name overloading").
 class CDevice {
 public:
     static CDevice* getInstance();
@@ -144,10 +144,21 @@ bool CWorkControl::wkStandbyLogout(){
 // OPEN ITEM: structural 0 / size exact / relocs clean; residual 6 pure
 // reg-swaps - retail colors name=r31, result=r30, decomp is reversed.
 // Ruled out: decl order (both ways), declare-then-assign, result typed as
-// base CWorkThread*, explicit WORK_ID mem local (regresses scheduling),
-// inline-name arg (regresses scheduling). Placement-new result web claims
-// r31 regardless; next ideas: noinline pragma variant, parent-local copy
-// with address-taken, mw_version probe.
+// base CWorkThread*, explicit WORK_ID mem local declared first (regresses
+// scheduling: name lis/addi sinks past bl allocate), lazy name assign inside
+// ctor arg (inlines the ctor, 112B), inline-name arg in new-expression (same
+// ctor-inline regression), inline helper returning the name (no change),
+// null-init ptr decl (elided), explicit MemManager::allocate + pointer
+// placement-new (124B, extra null-path store). KB (btm_inq/ocUnit): MWCC
+// colors callee-saved locals by web-creation order, but the constant name web
+// is rematerialized so its creation order cannot be forced from source.
+// Placement-new result web claims r31 regardless (DECOMP_INLINE helper also
+// no-op: it expands to plain inline).
+// FLAG PROBES (2026-08-24, both negative, no source change): mw_version=
+// GC/3.0a5.2 leaves create unchanged and blows the unit split by 88B;
+// -O4,s (before -func_align 4) is a no-op here - the #pragma optimize_for_size
+// blocks already cover every function, create unchanged. Remaining idea:
+// register-renaming witness certification (cycle) for EQUIVALENT_MATCH.
 
 #pragma optimize_for_size on
 CWorkControl* CWorkControl::create(CWorkThread* pParent){

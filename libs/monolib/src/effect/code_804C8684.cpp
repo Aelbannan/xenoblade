@@ -51,10 +51,13 @@ void func_804C8690(u8 flag, const CEffectParam* src) {
 // KNOWN RESIDUAL: retail materializes four GPR bases (r6 = table, r5 = r6+0,
 // r4 = r6+0x10, r3 = r6+0x20) and splits the stores between the table base
 // (heads, small displacements) and the per-block copies (tails), while every
-// expressible high-level source shape tried so far (distinct pointer locals,
-// references, inlined free/member helpers) is folded by MWCC CSE into ONE
-// base with full displacements. See open-item packet / sibling sinit_8049FC60
-// (KB attempts all COMPILES 0%). Size stays within the split budget.
+// expressible high-level source shape tried so far is folded by MWCC CSE into
+// ONE base with full displacements. Ruled out this session (all produce
+// byte-identical single-base output): statement reorder to the retail lfs
+// schedule; per-block tail pointer locals; walking-pointer (p++) tail chain;
+// mixed pointer types (f32* strided heads + SInitBlk* tails). See open-item
+// packet / sibling sinit_8049FC60 (KB attempts all COMPILES 0%). Size stays
+// within the split budget.
 // ---------------------------------------------------------------------------
 
 // One default-parameter block: head float plus a 3-float tail vector.
@@ -76,19 +79,23 @@ extern f32 lbl_eu_8066B098;  // 393.0f
 void sinit_804C86C0() {
     // Default-parameter table at lbl_eu_8065FBE8: three 16-byte blocks
     // (see the KNOWN RESIDUAL note above for the retail base-register split).
-    SInitBlk* t = lbl_eu_8065FBE8;
+    // Default-parameter table at lbl_eu_8065FBE8: three 16-byte blocks.
+    // (See the KNOWN RESIDUAL note above for the retail base-register split.)
+    lbl_eu_8065FBE8[0].head = lbl_eu_8066B088;
+    lbl_eu_8065FBE8[1].head = lbl_eu_8066B088;
+    lbl_eu_8065FBE8[2].head = lbl_eu_8066B094;
 
-    t[0].head = lbl_eu_8066B088;
-    t[0].tail.x = lbl_eu_8066B08C;
-    t[0].tail.y = lbl_eu_8066B08C;
-    t[0].tail.z = lbl_eu_8066B090;
-    t[1].head = lbl_eu_8066B088;
-    t[1].tail.x = lbl_eu_8066B088;
-    t[1].tail.y = lbl_eu_8066B088;
-    t[1].tail.z = lbl_eu_8066B090;
-    t[2].head = lbl_eu_8066B094;
-    t[2].tail.x = lbl_eu_8066B098;
-    t[2].tail.y = lbl_eu_8066B08C;
+    SInitBlk* p = lbl_eu_8065FBE8;
+    p->tail.x = lbl_eu_8066B08C;
+    p->tail.y = lbl_eu_8066B08C;
+    p->tail.z = lbl_eu_8066B090;
+    p++;
+    p->tail.x = lbl_eu_8066B088;
+    p->tail.y = lbl_eu_8066B088;
+    p->tail.z = lbl_eu_8066B090;
+    p++;
+    p->tail.x = lbl_eu_8066B098;
+    p->tail.y = lbl_eu_8066B08C;
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

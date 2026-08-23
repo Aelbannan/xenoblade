@@ -23,8 +23,10 @@ struct SeqLabelBlock {
     u32 offset[1];                     // at 0xc
 };
 
-// Views SeqFileReader's data members so the offset-0 header pointer is
-// reachable without its private members.
+// Views SeqFileReader's data members so the label-search helper below can
+// reach the header pointer without private-member access. Same layout as
+// SeqFileReader's prefix (mHeader/mDataBlock), so callers may pass a real
+// SeqFileReader by pointer.
 struct SeqFileReaderView {
     const SeqFile::Header* mHeader; // at 0x0
     const void* mDataBlock;         // at 0x4
@@ -38,6 +40,9 @@ inline const void* AddPtrBaseFirst(const void* pBase, T offset) {
 
 } // namespace
 
+// Free function whose retail symbol takes a const SeqFileReader*. Defined
+// against SeqFileReaderView (layout-compatible with SeqFileReader) because
+// the reader's members are private.
 // File-local validity check, typed on ut::BinaryFileHeader (no void*).
 // Declared inline so MWCC folds it into the SeqFileReader constructor body:
 // the retail unit has no standalone validity-check symbol, so an out-of-line
@@ -91,17 +96,21 @@ bool ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(
 
     u32 nameLen = strlen(label);
 
+    const u32* pOffsetIt = pLabelBlock->offset;
+
     // Indexing offset[i] directly lets MWCC strength-reduce the address to a
     // base-copy cursor with the 0xC folded into the load displacement.
     for (u32 i = 0; i < pLabelBlock->entryCount; i++) {
         const SeqLabelEntry* pEntry =
-            static_cast<const SeqLabelEntry*>(ut::AddOffsetToPtr(pLabelBlock, pLabelBlock->offset[i]));
+            static_cast<const SeqLabelEntry*>(AddPtrBaseFirst(pLabelBlock, *pOffsetIt));
 
         if (nameLen == pEntry->nameLen &&
             strncmp(label, pEntry->name, nameLen) == 0) {
             *outOffset = pEntry->value;
             return true;
         }
+
+        pOffsetIt++;
     }
 
     return false;

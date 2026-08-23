@@ -9,6 +9,9 @@
 // here (global-scope variable names are not mangled).
 extern const char lbl_eu_8051D520[];
 
+// ScnMdlSimple vtable (retail-owned by nw4r_data.s).
+extern char lbl_eu_80569758[];
+
 void ScnMdlSmpl_CalcPosture__Q34nw4r3g3d12ScnMdlSimpleFUlPCQ34nw4r4math5MTX34(){}
 
 
@@ -17,11 +20,114 @@ void ExecCallback_DRAW_OPA__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6Timi
 void ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv(void) {}
 
 
-void GetScnMtxPos__Q34nw4r3g3d12ScnMdlSimpleCFPQ34nw4r4math5MTX34Q44nw4r3g3d6ScnObj13ScnObjMtxTypeUl(){}
+namespace nw4r {
+namespace g3d {
 
-void RemoveAnmObj__Q34nw4r3g3d12ScnMdlSimpleFPQ34nw4r3g3d6AnmObj(){}
+bool ScnMdlSimple::GetScnMtxPos(math::MTX34* pMtx, ScnObj::ScnObjMtxType type,
+                                u32 index) const {
+    if (pMtx != NULL) {
+        const ResMdl mdl = mResMdl;
+        const ResNode node = mdl.GetResNode(index);
 
-void RemoveAnmObj__Q34nw4r3g3d12ScnMdlSimpleFQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
+        if (node.IsValid()) {
+            // The node's matrix ID indexes into both matrix arrays.
+            u32 mtxID = node.GetMtxID();
+
+            switch (type) {
+            case ScnObj::MTX_WORLD:
+                PSMTXCopy(mpWorldMtxArray[mtxID], *pMtx);
+                return true;
+            case ScnObj::MTX_VIEW: {
+                u32 aligned =
+                    (mNumViewMtx * sizeof(math::MTX34) + 0x1F) & ~0x1Fu;
+                math::MTX34* pView = reinterpret_cast<math::MTX34*>(
+                    reinterpret_cast<u8*>(mpViewPosMtxArray) +
+                    mCurView * aligned);
+                PSMTXCopy(pView[mtxID], *pMtx);
+                return true;
+            }
+            default:
+                break;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool ScnMdlSimple::RemoveAnmObj(AnmObj* pObj) {
+    if (pObj == NULL) {
+        return false;
+    }
+
+    if (pObj == mpAnmObjChr) {
+        mpAnmObjChr->G3dProc(G3DPROC_DETACH_PARENT, 0, this);
+        mpAnmObjChr = NULL;
+        return true;
+    }
+    if (pObj == mpAnmObjVis) {
+        mpAnmObjVis->G3dProc(G3DPROC_DETACH_PARENT, 0, this);
+        mpAnmObjVis = NULL;
+        return true;
+    }
+    if (pObj == mpAnmObjMatClr) {
+        mpAnmObjMatClr->G3dProc(G3DPROC_DETACH_PARENT, 0, this);
+        mpAnmObjMatClr = NULL;
+        return true;
+    }
+    if (pObj == mpAnmObjTexPat) {
+        mpAnmObjTexPat->G3dProc(G3DPROC_DETACH_PARENT, 0, this);
+        mpAnmObjTexPat = NULL;
+        return true;
+    }
+    if (pObj == mpAnmObjTexSrt) {
+        mpAnmObjTexSrt->G3dProc(G3DPROC_DETACH_PARENT, 0, this);
+        mpAnmObjTexSrt = NULL;
+        return true;
+    }
+
+    return false;
+}
+
+// Detaches the animation object of the given type. Each case forwards to the
+// AnmObj* overload through the virtual table.
+AnmObj* ScnMdlSimple::RemoveAnmObj(ScnMdlSimple::AnmObjType type) {
+    AnmObj* pAnmObj = NULL;
+
+    switch (type) {
+    case ANMOBJTYPE_CHR:
+        pAnmObj = mpAnmObjChr;
+        RemoveAnmObj(pAnmObj);
+        break;
+    case ANMOBJTYPE_VIS:
+        pAnmObj = mpAnmObjVis;
+        RemoveAnmObj(pAnmObj);
+        break;
+    case ANMOBJTYPE_MATCLR:
+        pAnmObj = mpAnmObjMatClr;
+        RemoveAnmObj(pAnmObj);
+        break;
+    case ANMOBJTYPE_TEXPAT:
+        pAnmObj = mpAnmObjTexPat;
+        RemoveAnmObj(pAnmObj);
+        break;
+    case ANMOBJTYPE_TEXSRT:
+        pAnmObj = mpAnmObjTexSrt;
+        RemoveAnmObj(pAnmObj);
+        break;
+    case ANMOBJTYPE_SHP:
+    case ANMOBJTYPE_NOT_SPECIFIED:
+    default:
+        break;
+    }
+
+    return pAnmObj;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+
 
 namespace nw4r {
 namespace g3d {
@@ -224,6 +330,8 @@ lc_done:
     }
 }
 
+// NOTE: the trailing two arguments intentionally mirror the banked draft:
+// MWCC routes pCamera through the callback's pointer slot.
 void ScnMdlSimple::ScnMdlSmpl_G3DPROC_CALC_VIEW(u32 param,
                                                 const math::MTX34* pCamera) {
     mCurView = (mCurView + 1) % mNumView;
@@ -238,26 +346,38 @@ void ScnMdlSimple::ScnMdlSmpl_G3DPROC_CALC_VIEW(u32 param,
         if (mFlagScnMdlSimple & SCNMDLSMPLFLAG_LC_DMA) {
             DCStoreRange(mpWorldMtxArray, mNumViewMtx * sizeof(math::MTX34));
 
-            CalcView_LC_DMA_ModelMtx(GetViewPosMtxArray(), GetViewNrmMtxArray(),
+            // Retail computes the normal-array pointer first, then the texture
+            // array pointer; the position array is evaluated inline at the
+            // call.
+            math::MTX33* pNrm = GetViewNrmMtxArray();
+            math::MTX34* pTex = GetViewTexMtxArray();
+
+            CalcView_LC_DMA_ModelMtx(GetViewPosMtxArray(), pNrm,
                                      mpWorldMtxArray, mpWorldMtxAttribArray,
-                                     mNumViewMtx, pCamera, mResMdl,
-                                     GetViewTexMtxArray());
+                                     mNumViewMtx, pCamera, mResMdl, pTex);
         } else {
-            CalcView_LC(GetViewPosMtxArray(), GetViewNrmMtxArray(),
-                        mpWorldMtxArray, mpWorldMtxAttribArray, mNumViewMtx,
-                        pCamera, mResMdl, GetViewTexMtxArray());
+            math::MTX33* pNrm = GetViewNrmMtxArray();
+            math::MTX34* pTex = GetViewTexMtxArray();
+
+            CalcView_LC(GetViewPosMtxArray(), pNrm, mpWorldMtxArray,
+                        mpWorldMtxAttribArray, mNumViewMtx, pCamera, mResMdl,
+                        pTex);
         }
         ut::LC::Unlock();
     } else {
-        CalcView(GetViewPosMtxArray(), GetViewNrmMtxArray(), mpWorldMtxArray,
-                 mpWorldMtxAttribArray, mNumViewMtx, pCamera, mResMdl,
-                 GetViewTexMtxArray());
+        math::MTX33* pNrm = GetViewNrmMtxArray();
+        math::MTX34* pTex = GetViewTexMtxArray();
+
+        CalcView(GetViewPosMtxArray(), pNrm, mpWorldMtxArray,
+                 mpWorldMtxAttribArray, mNumViewMtx, pCamera, mResMdl, pTex);
     }
 
     CheckCallback_CALC_VIEW(CALLBACK_TIMING_C, param,
                             const_cast<void*>(static_cast<const void*>(pCamera)));
 }
 
+// Detach-and-replace goes through the AnmObj* overload; each case forwards
+// through it after the type check.
 bool ScnMdlSimple::SetAnmObj(AnmObj* pObj, AnmObjType type) {
     if (pObj == NULL || pObj->GetParent() != NULL) {
         return false;
@@ -465,14 +585,60 @@ void ScnMdlSimple::G3dProc(u32 task, u32 param, void* pInfo) {
         CheckCallback_CALC_MAT(CALLBACK_TIMING_C, param, pInfo);
         break;
 
-    case G3DPROC_CALC_VIEW:
-        ScnMdlSmpl_G3DPROC_CALC_VIEW(param,
-                                     static_cast<const math::MTX34*>(pInfo));
+    case G3DPROC_CALC_VIEW: {
+        // Retail inlines the whole CALC_VIEW routine here (no helper call).
+        const math::MTX34* pCamera = static_cast<const math::MTX34*>(pInfo);
+
+        mCurView = (mCurView + 1) % mNumView;
+
+        CheckCallback_CALC_VIEW(CALLBACK_TIMING_A, param,
+                                const_cast<void*>(
+                                    static_cast<const void*>(pCamera)));
+        CalcViewMtx(pCamera);
+        CheckCallback_CALC_VIEW(CALLBACK_TIMING_B, param,
+                                const_cast<void*>(
+                                    static_cast<const void*>(pCamera)));
+
+        if (ut::LC::Lock() != 0) {
+            if (mFlagScnMdlSimple & SCNMDLSMPLFLAG_LC_DMA) {
+                DCStoreRange(mpWorldMtxArray,
+                             mNumViewMtx * sizeof(math::MTX34));
+
+                math::MTX33* pNrm = GetViewNrmMtxArray();
+                math::MTX34* pTex = GetViewTexMtxArray();
+
+                CalcView_LC_DMA_ModelMtx(GetViewPosMtxArray(), pNrm,
+                                         mpWorldMtxArray, mpWorldMtxAttribArray,
+                                         mNumViewMtx, pCamera, mResMdl, pTex);
+            } else {
+                math::MTX33* pNrm = GetViewNrmMtxArray();
+                math::MTX34* pTex = GetViewTexMtxArray();
+
+                CalcView_LC(GetViewPosMtxArray(), pNrm, mpWorldMtxArray,
+                            mpWorldMtxAttribArray, mNumViewMtx, pCamera,
+                            mResMdl, pTex);
+            }
+            ut::LC::Unlock();
+        } else {
+            math::MTX33* pNrm = GetViewNrmMtxArray();
+            math::MTX34* pTex = GetViewTexMtxArray();
+
+            CalcView(GetViewPosMtxArray(), pNrm, mpWorldMtxArray,
+                     mpWorldMtxAttribArray, mNumViewMtx, pCamera, mResMdl,
+                     pTex);
+        }
+
+        CheckCallback_CALC_VIEW(CALLBACK_TIMING_C, param,
+                                const_cast<void*>(
+                                    static_cast<const void*>(pCamera)));
         break;
+    }
 
     case G3DPROC_GATHER_SCNOBJ:
-        ScnMdlSmpl_G3DPROC_GATHER_SCNOBJ(param,
-                                         static_cast<IScnObjGather*>(pInfo));
+        // Retail inlines the gather helper.
+        static_cast<IScnObjGather*>(pInfo)->Add(
+            this, !TestScnObjFlag(SCNOBJFLAG_NOT_GATHER_DRAW_OPA),
+            !TestScnObjFlag(SCNOBJFLAG_NOT_GATHER_DRAW_XLU));
         break;
 
     case G3DPROC_DRAW_OPA:
@@ -512,13 +678,116 @@ ICalcWorldCallback::~ICalcWorldCallback() {}
 } // namespace g3d
 } // namespace nw4r
 
+namespace nw4r {
+namespace g3d {
 
+ScnMdlSimple::ScnMdlSimple(MEMAllocator* pAllocator, ResMdl mdl,
+                           math::MTX34* pWorldMtxArray,
+                           u32* pWorldMtxAttribArray,
+                           math::MTX34* pViewPosMtxArray,
+                           math::MTX33* pViewNrmMtxArray,
+                           math::MTX34* pViewTexMtxArray, int numView,
+                           int numViewMtx)
+    : ScnLeaf(pAllocator) {
+    mResMdl = mdl;
 
+    mpWorldMtxArray = pWorldMtxArray;
+    mpWorldMtxAttribArray = pWorldMtxAttribArray;
+    mpViewPosMtxArray = pViewPosMtxArray;
+    mpViewNrmMtxArray = pViewNrmMtxArray;
+    mpViewTexMtxArray = pViewTexMtxArray;
 
-void __ct__Q34nw4r3g3d12ScnMdlSimpleFP12MEMAllocatorQ34nw4r3g3d6ResMdlPQ34nw4r4math5MTX34PUlPQ34nw4r4math5MTX34PQ34nw4r4math5MTX33PQ34nw4r4math5MTX34ii(){}
+    mNumView = static_cast<u8>(numView);
+    mCurView = 0;
+    mNumViewMtx = static_cast<u16>(numViewMtx);
+    mFlagScnMdlSimple = 0;
 
-void __dt__Q34nw4r3g3d12ScnMdlSimpleFv(){}
+    mpByteCodeCalc = mdl.GetResByteCode("NodeTree");
+    mpByteCodeMix = mdl.GetResByteCode("NodeMix");
+    mpByteCodeDrawOpa = mdl.GetResByteCode("DrawOpa");
+    mpByteCodeDrawXlu = mdl.GetResByteCode("DrawXlu");
 
+    mDrawMode = RESMDL_DRAWMODE_DEFAULT;
+
+    mpCalcWorldCallback = NULL;
+    mCwcbTiming = 0;
+    mCwcbDeleteOption = 0;
+    mCwcbNodeID = 0;
+
+    mpAnmObjChr = NULL;
+    mpAnmObjVis = NULL;
+    mpAnmObjMatClr = NULL;
+    mpAnmObjTexPat = NULL;
+    mpAnmObjTexSrt = NULL;
+    mpAnmObjShp = NULL;
+
+    // Record which bytecode streams are missing so later passes can skip them.
+    if (mpByteCodeCalc == NULL) {
+        mFlagScnMdlSimple |= 0x2000; // NOT_CALC_BYTECODE
+    } else {
+        mFlagScnMdlSimple &= ~0x2000u;
+    }
+    if (mpByteCodeDrawOpa == NULL) {
+        mFlagScnMdlSimple |= 0x4000; // NOT_DRAW_OPA_BYTECODE
+    } else {
+        mFlagScnMdlSimple &= ~0x4000u;
+    }
+
+    // The per-view matrix arrays live in one contiguous allocation; invalidate
+    // the cache for every view's slice before first use.
+    if (mpViewPosMtxArray != NULL) {
+        u32 aligned = (numViewMtx * sizeof(math::MTX34) + 0x1F) & ~0x1F;
+        DCInvalidateRange(mpViewPosMtxArray, numView * aligned);
+    }
+    if (mpViewNrmMtxArray != NULL) {
+        u32 aligned = (numViewMtx * sizeof(math::MTX33) + 0x1F) & ~0x1F;
+        DCInvalidateRange(mpViewNrmMtxArray, numView * aligned);
+    }
+    if (mpViewTexMtxArray != NULL) {
+        u32 aligned = (numViewMtx * sizeof(math::MTX34) + 0x1F) & ~0x1F;
+        DCInvalidateRange(mpViewTexMtxArray, numView * aligned);
+    }
+
+    // Use the model's stored local bounding volume when it is valid.
+    const ResMdlData& rData = mdl.ref();
+    if (rData.info.is_valid_volume != 0) {
+        math::AABB aabb;
+        aabb.min = rData.info.volume_min;
+        aabb.max = rData.info.volume_max;
+        SetBoundingVolume(BOUNDINGVOLUME_AABB_LOCAL, &aabb);
+    }
+}
+
+ScnMdlSimple::~ScnMdlSimple() {
+    // Retail vtable lives in the shared nw4r data pool.
+    *(void**)this = (void*)lbl_eu_80569758;
+
+    if (static_cast<s8>(mCwcbDeleteOption) == 1 &&
+        mpCalcWorldCallback != NULL) {
+        delete mpCalcWorldCallback;
+    } else {
+        // no other delete options
+    }
+
+    if (mpAnmObjChr != NULL) {
+        RemoveAnmObj(mpAnmObjChr);
+    }
+    if (mpAnmObjVis != NULL) {
+        RemoveAnmObj(mpAnmObjVis);
+    }
+    if (mpAnmObjMatClr != NULL) {
+        RemoveAnmObj(mpAnmObjMatClr);
+    }
+    if (mpAnmObjTexPat != NULL) {
+        RemoveAnmObj(mpAnmObjTexPat);
+    }
+    if (mpAnmObjTexSrt != NULL) {
+        RemoveAnmObj(mpAnmObjTexSrt);
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
 
 void IsDerivedFrom__Q34nw4r3g3d12ScnMdlSimpleCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 

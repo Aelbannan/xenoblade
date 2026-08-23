@@ -12,6 +12,12 @@
 // three CTaskGame.hpp copies out of the way (same scheme as
 // CMenuKizunaTalk.hpp's func_801361E8 rename); this TU uses none of them.
 #define lbl_eu_80663E24 artsSelectCtaskGameE24Unused
+// Several transitively included cf headers declare
+// getInstance__Q22cf14CBattleManagerFv as extern "C" void*, conflicting with
+// CfGameManager.hpp:662's CBattleManagerView* version. This TU only uses the
+// cf::CBattleManager::getInstance() member (different spelling), so rename the
+// free-function copies out of the way across the whole include closure.
+#define getInstance__Q22cf14CBattleManagerFv artsSelectBmGetInstanceUnused
 #define func_8004392C artsSelectCtaskGame4392CUnused
 #define func_8049603C artsSelectCtaskGame9603CUnused
 #include "kyoshin/CTaskGame.hpp"
@@ -54,6 +60,10 @@
 // headers (see CSuddenCommu.hpp); only its func_8049603C (void* arg vs
 // CTaskGame.hpp's CScn* version pulled in via CBattleManager.hpp) stays
 // renamed.
+// CSuddenCommu.hpp:280 also declares getInstance__Q22cf14CBattleManagerFv as
+// void*, conflicting with CfGameManager.hpp:662's CBattleManagerView* version
+// (both extern "C"). This TU uses the cf::CBattleManager::getInstance() member,
+// so rename CSuddenCommu's copy out of the way.
 #define func_8049603C artsSelectSuddenCommuCamViewUnused
 #include "kyoshin/cf/CSuddenCommu.hpp"
 #undef func_8049603C
@@ -67,7 +77,10 @@
 #undef lbl_eu_80663E24
 #undef func_80107C54
 #include "kyoshin/cf/CBattleManager.hpp"
+#define artsSelectBmGetInstanceUnused artsSelectBmGetInstanceCfgm
 #include "kyoshin/cf/CfGameManager.hpp"
+#undef artsSelectBmGetInstanceUnused
+#undef getInstance__Q22cf14CBattleManagerFv
 // code_80135FDC.hpp:168 declares lbl_eu_8066A208 as u32 (conflicting with
 // CfObjectMove.hpp:97's const float), :172 declares lbl_eu_80663E24 as
 // non-volatile u32 (conflicting with CfObjectMove.hpp:71's volatile u32), and
@@ -119,7 +132,9 @@ struct BattleActor {
     void* mSecondaryVtable;  // +0x04: secondary MI vtable
     u8 mArtsList[0x1530 - 0x08]; // +0x08: arts container (func_80148778 operates on &+0x8)
     u32 mField1530;          // +0x1530
-    u8 _pad1534[0x3e9c - 0x1534];
+    u8 _pad1534[0x3388 - 0x1534];
+    u16 mField3388;          // +0x3388
+    u8 _pad338a[0x3e9c - 0x338a];
     u8 mMoveStart;           // +0x3e9c: CfObjectMove starts here
     u8 _pad3e9d[0x3f28 - 0x3e9d];
     u16 mField3F28;          // +0x3f28: same u16 as CfObjectMove+0x8C
@@ -165,6 +180,30 @@ struct ArtsMoveVtbl {
     virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
     virtual void m10();
     virtual void* mFn4C();  // #17 => +0x4C: CfObjectMove status getter
+    // fillers #18..#40
+    virtual void m11(); virtual void m12(); virtual void m13(); virtual void m14();
+    virtual void m15(); virtual void m16(); virtual void m17(); virtual void m18();
+    virtual void m19(); virtual void m1A(); virtual void m1B(); virtual void m1C();
+    virtual void m1D(); virtual void m1E(); virtual void m1F(); virtual void m20();
+    virtual void m21(); virtual void m22(); virtual void m23(); virtual void m24();
+    virtual void m25(); virtual void m26(); virtual void m27(); virtual void m28();
+    virtual nw4r::math::VEC3* mFnAC();  // #41 => +0xAC: position getter
+};
+
+// Battle action source (func_800B708C result) vtable view.
+struct ArtsActionSrcVtbl {
+    // fillers #0..#40
+    virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
+    virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
+    virtual void m08(); virtual void m09(); virtual void m0A(); virtual void m0B();
+    virtual void m0C(); virtual void m0D(); virtual void m0E(); virtual void m0F();
+    virtual void m10(); virtual void m11(); virtual void m12(); virtual void m13();
+    virtual void m14(); virtual void m15(); virtual void m16(); virtual void m17();
+    virtual void m18(); virtual void m19(); virtual void m1A(); virtual void m1B();
+    virtual void m1C(); virtual void m1D(); virtual void m1E(); virtual void m1F();
+    virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
+    virtual void m24(); virtual void m25(); virtual void m26(); virtual void m27();
+    virtual nw4r::math::VEC3* mFnAC();  // #41 => +0xAC: position getter
 };
 
 struct ArtsActorVtbl {
@@ -229,6 +268,13 @@ int func_8018A608();
 int func_80122448();
 
 u8 func_8013BEB8();
+
+// func_801072E0 / func_80107580 imports (unmangled retail names)
+u32 func_800A32BC(void*); // character-data category
+u16 func_80139358(u32 value);
+void* func_80157C4C(u32 index);
+// CUIBattleManager.hpp only declares this as a friend; re-declare at file scope.
+void* func_8012FD04(const char* name);
 
 int func_8012FA5C();
 void func_80138078__FUl(u32);
@@ -303,13 +349,18 @@ extern const f32 lbl_eu_80666F28; // 0.0f
 extern const f32 lbl_eu_80666F2C; // 1.0f
 extern const f32 lbl_eu_80666F40; // -80.0f
 extern const f32 lbl_eu_80666F44; // -1.0f
+extern const f32 lbl_eu_80666F60; // talent-target distance limit A
+extern const f32 lbl_eu_80666F64; // talent-target distance limit B
 extern const f32 lbl_eu_80666F50; // 100.0f (talent-gauge gate)
 extern const f32 lbl_eu_80666F5C; // frame-count limit (func_80106450 unk344 cap)
 
 // Process + MI vtable / PTMF labels for ctor (retail __ct__CMenuArtsSelect).
-char lbl_eu_8052C1C0[];
-char lbl_eu_8052C084[];
-u32 __ptmf_null[3];
+// Extern refs to retail rodata/sdata symbols (NOT local definitions:
+// tentative definitions here would emit duplicate data and skew reloc
+// addends - see hexdiff reloc-drift notes).
+extern char lbl_eu_8052C1C0[];
+extern char lbl_eu_8052C084[];
+extern u32 __ptmf_null[3];
 void __ct__8CProcessFv(CProcess*);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 }
@@ -487,6 +538,24 @@ extern "C" CMenuArtsSelect* __ct__CMenuArtsSelect(CMenuArtsSelect* self, CScn* s
 // ---------------------------------------------------------------------------
 extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int flags);
 extern "C" void __dt__8CProcessFv(void* self, int flags);
+
+// ---------------------------------------------------------------------------
+// __dt__80102300 (us-80102de8) -- standalone CTTask<IUIBattle> destructor.
+// Null-guarded CProcess base teardown (flags forced to 0), then conditional
+// operator delete when the caller passes flags > 0. The doubled null test is
+// MWCC's nested-guard artifact (both branches reuse the same cr0 compare).
+// ---------------------------------------------------------------------------
+extern "C" CMenuArtsSelect* __dt__80102300(CMenuArtsSelect* _this, int flags) {
+    if (_this != 0) {
+        if (_this != 0) {
+            __dt__8CProcessFv(_this, 0);
+        }
+        if (flags > 0) {
+            operator delete(_this);
+        }
+    }
+    return _this;
+}
 extern "C" CMenuArtsSelect* __dt__15CMenuArtsSelectFv(CMenuArtsSelect* _this,
                                                        int flags) {
     if (_this != 0) {
@@ -1414,31 +1483,31 @@ after_bit21:
                     }
                 }
 
-                for (s32 i = 0; i < 9; i++) {
-                    s32 nextIdx = (i == 8) ? 0 : (i + 1);
+                for (s32 j = 0; j < 9; j++) {
+                    s32 nextIdx = (j == 8) ? 0 : (j + 1);
                     if (unk200[nextIdx]->unkBB & 1) {
                         u32 v = unk310;
+                        u32 bitI = 1u << j;
                         u32 bit18;
-                        u32 bitI = 1u << i;
                         if (v & bitI) {
-                            bit18 = 1u << (i + 18);
+                            bit18 = 1u << (j + 18);
                             u32 notBit18 = !(v & bit18);
-                            u32 merged = notBit18 | (v & (1u << (i + 9)));
+                            u32 merged = notBit18 | (v & (1u << (j + 9)));
                             int visible = merged != 0;
-                            func_80137038(unk104[i], &drawInfo, 0, visible);
+                            func_80137038(unk104[j], &drawInfo, 0, visible);
                             unk310 |= bit18;
                         } else {
-                            bit18 = 1u << (i + 18);
+                            bit18 = 1u << (j + 18);
                             unk310 &= ~bit18;
                         }
 
-                        if (unk2C0[i] == 0xC) {
+                        if (unk2C0[j] == 0xC) {
                             u32 w = unk314;
                             if (w & bitI) {
                                 u32 notBit18 = !(w & bit18);
-                                u32 merged = notBit18 | (w & (1u << (i + 9)));
+                                u32 merged = notBit18 | (w & (1u << (j + 9)));
                                 int visible = merged != 0;
-                                func_80137038(unk170[i], &drawInfo, 0, visible);
+                                func_80137038(unk170[j], &drawInfo, 0, visible);
                                 unk314 |= bit18;
                             } else {
                                 unk314 &= ~bit18;
@@ -1447,8 +1516,8 @@ after_bit21:
                             unk314 &= ~bit18;
                         }
                     } else {
-                            unk310 &= ~(1u << (i + 18));
-                            unk314 &= ~(1u << (i + 18));
+                            unk310 &= ~(1u << (j + 18));
+                            unk314 &= ~(1u << (j + 18));
                     }
                 }
             }
@@ -2252,12 +2321,12 @@ void CMenuArtsSelect::func_80105A34() {
                 if (unk320 == 0) {
                     if (unk328 == 0) {
                         unk328 = 4;
-                        func_80107580();
-                        func_801072E0();
+                        ::func_80107580(this);
+                        ::func_801072E0(this);
                     } else if (unk328 == 2) {
                         unk320 = 1;
                         unk328 = 0;
-                        func_80107580();
+                        ::func_80107580(this);
                         s16 v = lbl_eu_804FD11C[unk328];
                         char* name = func_80136190(lbl_eu_804FD1E0 + 0x249,
                                                     lbl_eu_804FD1E0 + 0x254, v);
@@ -2272,7 +2341,7 @@ void CMenuArtsSelect::func_80105A34() {
                 s32 mode = unk328;
                 if (mode == 0 || mode == 2) {
                     unk328 = 4;
-                    func_80107580();
+                    ::func_80107580(this);
                     if (mode == 0) {
                         cf::CfObjectMove* pl = cf::CfGameManager::getPlayer(0);
                         BattleActor* a2 = reinterpret_cast<BattleActor*>(pl);
@@ -2294,14 +2363,14 @@ void CMenuArtsSelect::func_80105A34() {
                                           reinterpret_cast<u32>(unk294));
                         }
                     } else {
-                        func_801072E0();
+                        ::func_801072E0(this);
                     }
                 }
             }
         } else if (unk328 == 1) {
             unk328 = 0;
             unk320 = 0;
-            func_80107580();
+            ::func_80107580(this);
             s16 v = lbl_eu_804FD11C[unk328];
             char* name = func_80136190(lbl_eu_804FD1E0 + 0x249,
                                         lbl_eu_804FD1E0 + 0x254, v);
@@ -2391,10 +2460,11 @@ void CMenuArtsSelect::func_801065E4() {
     // rewind the anims and set the window text for the selected art.
     unk308 |= 0x2;
 
-    cf::CfObjectMove* move = cf::CfGameManager::getPlayer(0);
-    BattleActor* actor = reinterpret_cast<BattleActor*>(move);
-    if (move != NULL) {
-        actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(move) - 0x3e9c);
+    // Self-adjust: null test reads the pre-adjust value (retail: mr/beq/subi).
+    BattleActor* actor =
+        reinterpret_cast<BattleActor*>(cf::CfGameManager::getPlayer(0));
+    if (actor != NULL) {
+        actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(actor) - 0x3e9c);
     }
     if (actor != NULL) {
         f32 frameLimit = static_cast<f32>(unk9C->GetFrameSize()) - lbl_eu_80666F2C;
@@ -2453,8 +2523,9 @@ void CMenuArtsSelect::func_801065E4() {
             rect[3] = fs.c;
             unk291 = 1;
         }
-        func_801398A4(unk98, lbl_eu_804FD1E0 + 0x27a, rect, 1);
-        func_801398A4(unk98, lbl_eu_804FD1E0 + 0x283, rect, 1);
+        char* winNames = lbl_eu_804FD1E0;  // retail hoists the table base
+        func_801398A4(unk98, winNames + 0x27a, rect, 1);
+        func_801398A4(unk98, winNames + 0x283, rect, 1);
         unk308 &= ~0x4;
     }
 }
@@ -2589,7 +2660,72 @@ void CMenuArtsSelect::func_80106C30(s32 index) {
         }
     }
 }
-void CMenuArtsSelect::func_80106EC8(s32 index){}
+void CMenuArtsSelect::func_80106EC8(s32 index) {
+    // Per-slot arts gauge highlight driver: when the partner art is charged
+    // (flag bit8) light the slot up; otherwise fade it back out and latch the
+    // gauge ratio into the slot's anim state.
+    cf::CfObjectMove* move = cf::CfGameManager::getPlayer(0);
+    BattleActor* actor = reinterpret_cast<BattleActor*>(move);
+    if (move != NULL) {
+        actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(move) - 0x3e9c);
+    }
+    if (actor == NULL) return;
+    u8* arts = static_cast<u8*>(
+        reinterpret_cast<ArtsActorVtbl*>(actor)->mFn278());
+
+    s32 flag = 0;
+    if (index < 8) {
+        // Partner readiness: same probe chain against the second player.
+        cf::CfObjectMove* pl = cf::CfGameManager::getPlayer(0);
+        if (pl != NULL) {
+            void* other = func_8016FE34(pl);
+            u8* arts2 = static_cast<u8*>(
+                reinterpret_cast<ArtsActorVtbl*>(other)->mFn278());
+            ArtsParamInfo* p = reinterpret_cast<ArtsParamInfo*>(
+                getArtsParamAtCnt(arts2, index));
+            if (p->mCheckFlag != 0) {
+                if (func_80154280(p, other, 0) & 0x100) flag = 1;
+            }
+        }
+    }
+
+    if (flag != 0) {
+        unk318 |= (1 << index) | (1 << (index + 9));
+        FourShorts fs = func_80139658(unkA4[index], lbl_eu_804FD1E0 + 0x27a, 1);
+        s16 rect[6] = {0x14, 0x58, 0xc6, fs.c, fs.a, fs.b};
+        unk289[index] = 1;
+        func_801398A4(unkA4[index], lbl_eu_804FD1E0 + 0x27a, rect, 1);
+        func_801398A4(unkA4[index], lbl_eu_804FD1E0 + 0x283, rect, 1);
+        unkC4[index]->SetFrame(lbl_eu_80666F28);
+        return;
+    }
+
+    if ((unk318 & (1 << index)) != 0) {
+        FourShorts fs = func_80139658(unkA4[index], lbl_eu_804FD1E0 + 0x27a, 1);
+        s16 rect[6] = {0, 0, 0, fs.c, fs.a, fs.b};
+        unk289[index] = 0;
+        func_801398A4(unkA4[index], lbl_eu_804FD1E0 + 0x27a, rect, 1);
+        func_801398A4(unkA4[index], lbl_eu_804FD1E0 + 0x283, rect, 1);
+    }
+    unk318 &= ~((1 << index) | (1 << (index + 9)));
+
+    // Latch the current/max gauge ratio into the slot's anim frame.
+    ArtsParamLocal* p = reinterpret_cast<ArtsParamLocal*>(getArtsParamAtCnt(arts, index));
+    f32 ratio;
+    if (p->mFn14() == lbl_eu_80666F28) {
+        ratio = lbl_eu_80666F44;
+    } else {
+        ratio = p->mRatioNum / p->mFn14();
+    }
+    f32 frame = static_cast<f32>(static_cast<u16>(unkC4[index]->GetFrameSize())) -
+                lbl_eu_80666F2C;
+    if (ratio > lbl_eu_80666F28) {
+        unk318 |= 1 << (index + 9);
+        unk2A0[index] = 9;
+    } else {
+        unkC4[index]->SetFrame(frame);
+    }
+}
 // ---------------------------------------------------------------------------
 // func_801071B8 (us-80107ca0) -- per-slot art-availability update.
 // nextIdx wraps (i+1)%9; when the next slot's pane is available the slot's
@@ -2599,15 +2735,15 @@ void CMenuArtsSelect::func_80106EC8(s32 index){}
 void CMenuArtsSelect::func_801071B8(s32 index) {
     s32 nextIdx = (index == 8) ? 0 : (index + 1);
     if (unk200[nextIdx]->unkBB & 1) {
-        u32 bitB = 1u << (index + 9);
-        u32 bitA = 1u << index;
-        unk310 = (unk310 | bitA) & ~bitB;
+        // Compound form makes MWCC reuse r0 for the final andc + store.
+        unk310 |= 1u << index;
+        unk310 &= ~(1u << (index + 9));
         if (::func_80107C54(this, index) == 0) {
             unk104[index]->SetAnimationEnable(unk128[index], false);
             unk104[index]->SetAnimationEnable(unk14C[index], true);
             unk14C[index]->SetFrame(lbl_eu_80666F28);
             unk2C0[index] = 0xf;
-            unk310 |= bitA | bitB;
+            unk310 |= (1u << index) | (1u << (index + 9));
         }
     } else {
         unk310 &= ~((1u << index) | (1u << (index + 9)));
@@ -2615,8 +2751,197 @@ void CMenuArtsSelect::func_801071B8(s32 index) {
     }
 }
 
-void CMenuArtsSelect::func_801072E0(){}
-void CMenuArtsSelect::func_80107580(){}
+// ---------------------------------------------------------------------------
+// func_801072E0 (us-80107dc8) -- refresh the arts name/help text panes.
+// The player actor's mode u16 (mField3F28) selects a result code (0 = clear
+// text, small codes = fixed ids, 8 probes the item record table for a
+// category byte); non-zero results are formatted into the two text panes.
+// ---------------------------------------------------------------------------
+void CMenuArtsSelect::func_801072E0() {
+    char* base = lbl_eu_804FD1E0;
+
+    cf::CfObjectMove* move = cf::CfGameManager::getPlayer(0);
+    BattleActor* actor = reinterpret_cast<BattleActor*>(move);
+    if (move != NULL) {
+        actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(move) - 0x3e9c);
+    }
+
+    u32 code = 0;
+    if (actor != NULL) {
+        u16 mode = actor->mField3F28;
+        switch (mode) {
+        case 1:
+            if (func_800A32BC(func_8009EC9C(1)) == 0) {
+                code = 1;
+            } else {
+                code = 2;
+            }
+            break;
+        case 2:
+            code = 0x13;
+            break;
+        case 3:
+            code = 0x24;
+            break;
+        case 4:
+        case 0xc:
+            // arg is still the dispatch value here (retail emits no li)
+            if (func_800A32BC(func_8009EC9C(mode)) == 0) {
+                code = 0x29;
+            } else {
+                code = 0x98;
+            }
+            break;
+        case 5:
+            code = 0x3d;
+            break;
+        case 6:
+            code = 0x4f;
+            break;
+        case 7:
+            code = 0x60;
+            break;
+        case 8: {
+            void* rec = func_80157C4C(8);
+            if (rec == NULL || *reinterpret_cast<u32*>(rec) == 0) {
+                code = 0x77;
+                break;
+            }
+            u16 cat = func_80139358(*reinterpret_cast<u32*>(rec) >> 20);
+            switch (func_801361E8(lbl_eu_806640F8, lbl_eu_804FD1E0 + 0x28e, cat)) {
+            case 4:  code = 0x77; break;
+            case 5:  code = 0x78; break;
+            case 6:  code = 0x79; break;
+            case 7:  code = 0x7a; break;
+            case 8:  code = 0x7b; break;
+            case 9:  code = 0x7c; break;
+            case 10: code = 0x7d; break;
+            case 11: code = 0x7e; break;
+            case 12: code = 0x7f; break;
+            default: code = 0x77; break;
+            }
+            break;
+        }
+        default:
+            code = 0;
+            break;
+        }
+    }
+
+    if (actor != NULL && code != 0) {
+        func_8013606C(base + 0x297, base + 0x254, code);
+        char* nameStr = func_80136190(base + 0x297, base + 0x254, code);
+        char* helpStr = func_80136190(base + 0x297, base + 0x259, code);
+        func_80136B4C(unk80, base + 0x69, nameStr, 0);
+        func_80136B4C(unk80, base + 0x5c, helpStr,
+                      reinterpret_cast<u32>(unk294));
+    } else {
+        func_80136B4C(unk80, base + 0x69, NULL, 0);
+        func_80136B4C(unk80, base + 0x5c, NULL,
+                      reinterpret_cast<u32>(unk294));
+    }
+}
+
+// ---------------------------------------------------------------------------
+// func_80107580 (us-80108068) -- set the arts/gauge texture panes.
+// Name and gauge ids come either from the rodata per-mode tables (indexed by
+// unk328) or, in render-mode 4, from the same switch as func_801072E0 plus two
+// table lookups. Each id resolves through func_80138F78 to a texture name.
+// ---------------------------------------------------------------------------
+void CMenuArtsSelect::func_80107580() {
+    char* base = lbl_eu_804FD1E0;
+
+    cf::CfObjectMove* move = cf::CfGameManager::getPlayer(0);
+    if (move == NULL) {
+        return;
+    }
+
+    ArtsModeIds tabA = lbl_eu_804FD138;
+    ArtsModeIds tabB = lbl_eu_804FD148;
+    u16 nameId = tabA.id[unk328];
+    u16 gaugeId = tabB.id[unk328];
+
+    if (unk328 == 4) {
+        u16 mode = reinterpret_cast<CfObjectMoveArtsView*>(move)->field_8C;
+        u32 code = 0;
+        switch (mode) {
+        case 1:
+            if (func_800A32BC(func_8009EC9C(1)) == 0) {
+                code = 1;
+            } else {
+                code = 2;
+            }
+            break;
+        case 2:
+            code = 0x13;
+            break;
+        case 3:
+            code = 0x24;
+            break;
+        case 4:
+        case 0xc:
+            if (func_800A32BC(func_8009EC9C(mode)) == 0) {
+                code = 0x29;
+            } else {
+                code = 0x98;
+            }
+            break;
+        case 5:
+            code = 0x3d;
+            break;
+        case 6:
+            code = 0x4f;
+            break;
+        case 7:
+            code = 0x60;
+            break;
+        case 8: {
+            void* rec = func_80157C4C(8);
+            if (rec == NULL || *reinterpret_cast<u32*>(rec) == 0) {
+                code = 0x77;
+                break;
+            }
+            u16 cat = func_80139358(*reinterpret_cast<u32*>(rec) >> 20);
+            switch (func_801361E8(lbl_eu_806640F8, lbl_eu_804FD1E0 + 0x28e, cat)) {
+            case 4:  code = 0x77; break;
+            case 5:  code = 0x78; break;
+            case 6:  code = 0x79; break;
+            case 7:  code = 0x7a; break;
+            case 8:  code = 0x7b; break;
+            case 9:  code = 0x7c; break;
+            case 10: code = 0x7d; break;
+            case 11: code = 0x7e; break;
+            case 12: code = 0x7f; break;
+            default: code = 0x77; break;
+            }
+            break;
+        }
+        default:
+            code = 0;
+            break;
+        }
+        nameId = func_8013606C(base + 0x297, base + 0x29f, code);
+        gaugeId = func_8013606C(base + 0x297, base + 0x2a9, code);
+    }
+
+    if (nameId != 0) {
+        void* tex = func_8012FD60(func_80138F78(nameId));
+        if (tex != NULL) {
+            func_80137E7C(unk80, lbl_eu_804FD1E0 + 0x2ae, tex);
+        }
+    }
+    if (gaugeId != 0) {
+        void* tex;
+        if (unk328 == 4) {
+            tex = func_8012FC74(func_80138F78(gaugeId));
+        } else {
+            tex = func_8012FD04(func_80138F78(gaugeId));
+        }
+        if (tex != NULL) {
+            func_80137E7C(unk80, lbl_eu_804FD1E0 + 0x2b9, tex);
+        }
+    }
+}
 // ---------------------------------------------------------------------------
 // func_8010784C (us-80108334) -- arts-select open gate.
 // Returns 1 while the menu may stay open: the event-flag probe returns 0, the
@@ -2655,7 +2980,86 @@ extern "C" int func_8010784C(CMenuArtsSelect* self) {
     return self->unk336;
 }
 
-int CMenuArtsSelect::func_80107970(s32 index){ return 0; }
+int CMenuArtsSelect::func_80107970(s32 index) {
+    // Per-slot arts availability gate shared by cbRenderBefore / Move.
+    cf::CfObjectMove* move = cf::CfGameManager::getPlayer(0);
+    BattleActor* actor = reinterpret_cast<BattleActor*>(move);
+    if (move != NULL) {
+        actor = reinterpret_cast<BattleActor*>(reinterpret_cast<char*>(move) - 0x3e9c);
+    }
+    if (actor == NULL) return 0;
+
+    // Sub-object ready flag blocks everything.
+    if (actor->mField3F60 != NULL) {
+        if (*reinterpret_cast<u32*>(reinterpret_cast<u8*>(actor->mField3F60) + 0x4c0) != 0) {
+            return 1;
+        }
+    }
+    // Pending battle-manager action + party-move bit also block.
+    if (func_801BA2C8(reinterpret_cast<u8*>(cf::CBattleManager::getInstance()) + 0x216c) != 0 &&
+        (actor->mField3388 & 0x2) != 0) {
+        return 1;
+    }
+
+    if (index < 8) {
+        void* mv = reinterpret_cast<ArtsMoveVtbl*>(&actor->mMoveStart)->mFn4C();
+        if (mv == NULL) {
+            // Party-status probe through the secondary MI vtable.
+            u32* pVal = reinterpret_cast<u32*>(
+                reinterpret_cast<ArtsSubVtbl*>(actor->mSecondaryVtable)->mFn30());
+            int localVal = pVal[0];
+            return func_80174C98(actor, &localVal, 0x803);
+        }
+        u8* arts = static_cast<u8*>(
+            reinterpret_cast<ArtsActorVtbl*>(actor)->mFn278());
+        ArtsParamInfo* p = reinterpret_cast<ArtsParamInfo*>(getArtsParamAtCnt(arts, index));
+        if (p->mCheckFlag == 0) return 0;
+        if ((func_80154280(p, actor, 0) & 0x20) == 0) return 0;
+        return 1;
+    }
+
+    if (unk328 == 2) {
+        void* mv = reinterpret_cast<ArtsMoveVtbl*>(&actor->mMoveStart)->mFn4C();
+        if (mv == NULL) return 0;
+        ArtsActionSource* srcRaw =
+            static_cast<ArtsActionSource*>(func_800B708C(index));
+        if (srcRaw == NULL) return 0;
+        // Squared distance between the action source position and the player.
+        nw4r::math::VEC3* srcPos =
+            reinterpret_cast<ArtsActionSrcVtbl*>(srcRaw)->mFnAC();
+        nw4r::math::VEC3* myPos =
+            reinterpret_cast<ArtsMoveVtbl*>(&actor->mMoveStart)->mFnAC();
+        nw4r::math::VEC3 d;
+        d.x = myPos->x - srcPos->x;
+        d.y = myPos->y - srcPos->y;
+        d.z = myPos->z - srcPos->z;
+        nw4r::math::VEC3 e = d;
+        f32 dist = e.z * e.z + (e.x * e.x + e.y * e.y);
+        f32 limit;
+        if (srcRaw->mFlags & 0x8) {
+            limit = lbl_eu_80666F60;
+        } else {
+            limit = lbl_eu_80666F64;
+        }
+        if (dist > limit) return 1;
+        return 0;
+    }
+
+    if (unk328 == 4) {
+        void* mv = reinterpret_cast<ArtsMoveVtbl*>(&actor->mMoveStart)->mFn4C();
+        if (mv == NULL) return 0;
+        u8* arts = static_cast<u8*>(
+            reinterpret_cast<ArtsActorVtbl*>(actor)->mFn278());
+        ArtsParamInfo* rc = reinterpret_cast<ArtsParamInfo*>(getArtsParamRC(arts, 2, 0));
+        if (rc->mCheckFlag == 0) return 0;
+        if ((func_80154280(rc, actor, 0) & 0x20) == 0) {
+            if (actor->mField3F28 == 7 && func_801088CC(this) == 0) return 1;
+            return 0;
+        }
+        return 1;
+    }
+    return 0;
+}
 int CMenuArtsSelect::func_80107C54(s32 index) {
     // Per-slot arts usability gate. Bit16 of the global settings flag word
     // blocks everything; each arts mode has its own set of rejection probes
@@ -2952,7 +3356,7 @@ extern "C" int func_801086D0(CMenuArtsSelect* self) {
     BattleActor* actor =
         reinterpret_cast<BattleActor*>(cf::CfGameManager::getPlayer(0));
     if (actor != NULL) actor = (BattleActor*)((char*)actor - 0x3e9c);
-    s32 battle;    // Retail: actor==NULL branches to the shared return-0 block at the end
+    // Retail: actor==NULL branches to the shared return-0 block at the end
     // (.L_80109394), so the whole body is wrapped in `if (actor != NULL)`.
     if (actor != NULL) {
         ArtsParamInfo* p = reinterpret_cast<ArtsParamInfo*>(
@@ -2967,6 +3371,7 @@ extern "C" int func_801086D0(CMenuArtsSelect* self) {
         ArtsBmWindow* bm =
             reinterpret_cast<ArtsBmWindow*>(cf::CBattleManager::getInstance());
         if (p->mField48 != 0 && actor->mField1530 != 0) {
+            s32 battle;
             if (reinterpret_cast<ArtsBmWindow*>(
                     cf::CBattleManager::getInstance())->mField20C8 != 0) {
                 battle = 1;

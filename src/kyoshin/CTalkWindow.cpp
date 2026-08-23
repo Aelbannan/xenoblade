@@ -23,6 +23,16 @@ extern "C" void cbRenderBefore__11CTalkWindowFv(void* self);
 
 void Draw__11CTalkWindowFv() {}
 
+// Show/hide a talk-layout pane flag. Retail always clears the bit-7 field of
+// the 0xBB byte together with the flag write (MWCC merges the two bitfield
+// stores into a single read-modify-write), so every site writes both fields.
+#define twSetPaneFlag(paneExpr, setBit)                                    \
+    do {                                                                   \
+        CTalkWinPane* twFlagPane = (paneExpr);                             \
+        twFlagPane->mFlagHigh = 0;                                         \
+        if (setBit) twFlagPane->mFlag |= 1; else twFlagPane->mFlag &= ~1u; \
+    } while (0)
+
 extern u32 lbl_eu_80664044;
 extern "C" void func_8012BDD0() { lbl_eu_80664044 = 0; }
 
@@ -119,8 +129,9 @@ void func_8012D8C0(CTalkWindow* self) {
                     if ((src->mTalkC4->field_270 & 0x80) != 0) return;
                     src->mVoice->play(1, 0);
                     int page = func_8004C5EC(src->mTalkC4);
-                    // Two separate compares (not a fused range test): retail
-                    // keeps `cmpwi 0x21 / cmpwi 0x26` with blt/ble gates.
+                    // Two separate compares branching to a shared call site
+                    // (not a fused range test): retail keeps
+                    // `cmpwi 0x21 / cmpwi 0x26` with blt/ble gates.
                     if (page < 0x21) goto do_b9d4;
                     if (page <= 0x26) goto skip_b9d4;
 do_b9d4:
@@ -538,6 +549,25 @@ p2done:;
 // tag processor, then dispatch on its +0x814 mode byte. Mode 7 builds the
 // full talk layout (5 animations, font binding, message panes, corner
 // pictures), wires the page panes and registers the render callback.
+//
+// Matching notes from the retail ASM (for the next iteration):
+//  - Retail holds `this` in r25 (_savegpr_25) and the tag processor in r29
+//    across the whole case-7 body; the decomp currently copies this into
+//    r29 first, shifting every later register assignment.
+//  - Every pane show/hide compiles to `lbz 0xbb; rlwinm r0,r0,0,24,30
+//    [; ori 1]; stb` - i.e. (old & 0x7F) [| 1]: bit 7 of the flag byte is
+//    ALWAYS cleared. That shape needs two merged bitfield writes on CTalkWinPane
+//    (a :7 field + a :1 field both assigned per site); plain `u8 mFlag |= 1`
+//    gives lbz/ori/stb without the mask.
+//  - Font binding order: retail loads GetRootPane() BEFORE calling
+//    func_80452C10(1, layout) (hoist into its own statement).
+//  - The lbl_eu_804FFCA4 blob base is materialised once into r30 before the
+//    five func_80136F08 calls, then rematerialised (r30/r28/r27/r30 again)
+//    at each section boundary after Animate() - the source likely redeclares
+//    a base pointer per scope rather than sharing one.
+//  - Member calls on reinterpret_cast<UnkClass_8045F564*> (createRegion /
+//    func_8045F810) add null-check branches retail lacks; extern "C"
+//    pre-mangled declarations avoid that but shift other allocation.
 // ---------------------------------------------------------------------------
 void CTalkWindow::Init() {
     reinterpret_cast<UnkClass_8045F564*>(&mMemRegion[0])->createRegion(
@@ -782,12 +812,15 @@ void CTalkWindow::Move() {
     if (cf::CfGameManager::func_800829B8() != 0) return;
     func_8012CD38(this);
 
-    u32 state = field_B0;
-    if (state == 1) {
+    // Signed switch: retail emits a beq dispatch chain with signed cmpwi.
+    switch ((int)field_B0) {
+    case 1:
         func_8012D8C0(this);
-    } else if (state == 2) {
+        break;
+    case 2:
         func_8012DA6C(this);
-    } else if (state == 3) {
+        break;
+    case 3:
         if (func_80137444(field_90, lbl_eu_80667284) != 0) {
             IScnRender* render = reinterpret_cast<IScnRender*>(this);
             if (this != 0) {
@@ -797,26 +830,31 @@ void CTalkWindow::Move() {
             field_64 = 1;
             field_B0 = 0;
         }
-    } else if (state == 4) {
-        if (func_80137444(field_94, lbl_eu_80667284) != 0) {
-            mpLayout->SetAnimationEnable(field_90, false);
-            mpLayout->SetAnimationEnable(field_94, false);
-            mpLayout->SetAnimationEnable(field_88, false);
-            mpLayout->SetAnimationEnable(field_8C, false);
-            mpLayout->SetAnimationEnable(field_98, true);
-            reinterpret_cast<CTalkAnimFrame*>(field_98)->mFrame =
-                lbl_eu_80667280;
-            nw4r::lyt::Pane* p1 = mpLayout->GetRootPane()->
-                FindPaneByName(&lbl_eu_804FFCA4[0xf1], 1);
-            nw4r::lyt::Pane* p2 = mpLayout->GetRootPane()->
-                FindPaneByName(lbl_eu_8052DF70[field_A4], 1);
-            nw4r::lyt::Pane* p3 = mpLayout->GetRootPane()->
-                FindPaneByName(&lbl_eu_804FFCA4[0xb0], 1);
-            func_80127E74(field_5C, p1, p2, p3);
-            func_8012D3D8(this);
-            field_B0 = 5;
-        }
-    } else if (state == 5) {
+        break;
+    case 4: {
+        if (func_80137444(field_94, lbl_eu_80667284) == 0) break;
+        mpLayout->SetAnimationEnable(field_90, false);
+        mpLayout->SetAnimationEnable(field_94, false);
+        mpLayout->SetAnimationEnable(field_88, false);
+        mpLayout->SetAnimationEnable(field_8C, false);
+        mpLayout->SetAnimationEnable(field_98, true);
+        reinterpret_cast<CTalkAnimFrame*>(field_98)->mFrame = lbl_eu_80667280;
+        // Declared p2-first: MWCC allocates the two pane locals in reverse
+        // declaration order, matching retail's r28/r29 split.
+        nw4r::lyt::Pane* p2;
+        nw4r::lyt::Pane* p1;
+        p1 = mpLayout->GetRootPane()->
+            FindPaneByName(&lbl_eu_804FFCA4[0xf1], 1);
+        p2 = mpLayout->GetRootPane()->FindPaneByName(
+            lbl_eu_8052DF70[field_A4], 1);
+        nw4r::lyt::Pane* p3 = mpLayout->GetRootPane()->FindPaneByName(
+            &lbl_eu_804FFCA4[0xb0], 1);
+        func_80127E74(field_5C, p1, p2, p3);
+        func_8012D3D8(this);
+        field_B0 = 5;
+        break;
+    }
+    case 5:
         if (func_80137444(field_98, lbl_eu_80667284) != 0) {
             mpLayout->SetAnimationEnable(field_90, false);
             mpLayout->SetAnimationEnable(field_94, false);
@@ -827,6 +865,9 @@ void CTalkWindow::Move() {
                 lbl_eu_80667280;
             field_B0 = 2;
         }
+        break;
+    default:
+        break;
     }
 
     mpLayout->Animate(0);

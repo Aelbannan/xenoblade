@@ -4,11 +4,57 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CtrlAct.hpp"
-#include "kyoshin/cf/CArtsSet.hpp"
 
-// CAttackParam is defined in CArtsSet.hpp (included above).
+// Polymorphic view of cf::CAttackParam (retail: 0x84 bytes of data, vptr at
+// +0x84, virtual slot +0x0C = the gauge-max getter used by UnkVirtualFunc4).
+// The shared CArtsSet.hpp declaration is non-virtual/void, which cannot
+// reproduce the retail r12 ABI dispatch, so this TU uses its own view.
+struct CAttackParamDataView {
+    u8 _00[0x30];
+    f32 unk30;                 // 0x30
+    u8 _34[0x70 - 0x34];
+    u8 unk70;                  // 0x70 count byte (unk6C[4])
+    u8 _71[0x84 - 0x71];
+};
+namespace cf {
+class CAttackParam : private CAttackParamDataView {
+public:
+    virtual void vf00();       // RTTI padding: lands at vtable +0x08
+    virtual int getMax();      // +0x0C
+    float CAttackParam_UnkVirtualFunc4();
+};
+} // namespace cf
 
-void __ct__800D10DC(){}
+// Target us-800d1bc4. CtrlActView-family base constructor: clear the state
+// words, run the two vtable writes (base then derived, novtable convention),
+// resolve the sub-object via func_800BBC0C and the player via func_8016FE34,
+// zero the 0x2C position block and the tail bytes.
+// Retail signature has a third (unused) argument; it affects MWCC's
+// saved-register coloring (see CtrlPc.hpp declaration).
+void __ct__800D10DC(CtrlActView* self, void* posObj, void* arg5) {
+    u32 zero = 0;
+    self->mField4 = zero;
+    self->mField8 = lbl_eu_80666CF8;
+    self->mFieldC = lbl_eu_80666CF8;
+    self->mField10 = lbl_eu_80666CF8;
+    self->mField14 = lbl_eu_80666CF8;
+    self->mField18 = zero;
+    self->mField1C = 2;
+    self->mField24 = -1;
+    *(void**)self = (void*)lbl_eu_80527BB0;   // base vtable
+    self->mField28 = (CtrlActViewSub28*)func_800BBC0C(posObj);
+    self->mField2C = zero;
+    *(void**)self = (void*)lbl_eu_8052B080;   // derived vtable
+    memset(&self->mPos30, 0, 0x2c);
+    self->mPlayer = (CtrlActPlayerView*)func_8016FE34(posObj);
+    self->mField78 = 0;
+    self->mField79 = 0;
+    self->mField74 = 0;
+    self->mField76 = 0;
+    self->mField7A = 0;
+    self->mField7B = 0;
+    self->mField70 = lbl_eu_80666CFC;
+}
 
 // Target us-800d1c98. Player-facing action drive: gate on the battle-manager
 // range and the voice-owner state, resolve the action source (the player
@@ -101,10 +147,12 @@ extern "C" void func_800D11B0(CtrlActView* self) {
         f32 f27;
         if (r30 != 0) {
             if (self->mPlayer->mField3594 != 0) {
-                for (u32 i = 0; i < self->mPlayer->mField3594; i++) {
+                // Retail reuses the source-flag register (r30) as the battle
+                // list loop counter, so both roles share one variable here.
+                for (r30 = 0; r30 < self->mPlayer->mField3594; r30++) {
                     CtrlActBattleEntry* e =
                         (CtrlActBattleEntry*)((u8*)self->mPlayer->mField358C +
-                            ((self->mPlayer->mField3590 + i) %
+                            ((self->mPlayer->mField3590 + r30) %
                              self->mPlayer->mField3598) *
                                 0x20);
                     if (e->mField18 != 0) {
@@ -438,21 +486,12 @@ void func_800D1CFC(CtrlActView* self) {
 void func_800D1F0C(){}
 
 // Attack-param virtual #4: scale a per-frame effect by the count-scaled
-// rate. The (f32)(s32) product conversion emits MWCC's 2^52 trick
-// (lis 0x4330 / xoris / lfd / fsubs), and the whole tail is single
-// precision (fsubs/fdivs) matching retail. Constants referenced as extern
-// const float so MWCC emits @sda21 loads (retail lbl_eu_80666CFC/80666D4C).
-extern "C" { extern const float lbl_eu_80666CFC; }  // 1.0f (subtrahend)
-extern "C" { extern const float lbl_eu_80666D4C; }  // 100.0f (divisor)
-// lbl_eu_80666D50 (0x4330000080000000) is MWCC's signed int->double magic;
-// the (f32)prod conversion references it automatically from the pool.
-typedef int (*CAtk84Fn)(void);
+// rate. Calls the +0x0C virtual on itself (retail r12 ABI dispatch). The
+// (f32)(s32) product conversion emits MWCC's 2^52 trick
+// (lis 0x4330 / xoris / lfd / fsubs); lbl_eu_80666D50 is that magic constant.
 float cf::CAttackParam::CAttackParam_UnkVirtualFunc4() {
-    CAtk84Fn* vt = ((CAtk84Fn**)this)[33];
-    int v = vt[3]();
-    int prod = (int)unk6C[4] * (v - 1);
-    float d = (float)prod;
-    return unk30 * (lbl_eu_80666CFC - (d / lbl_eu_80666D4C));
+    int prod = unk70 * (getMax() - 1);
+    return unk30 * (lbl_eu_80666CFC - ((float)prod / lbl_eu_80666D4C));
 }
 
 // Target us-800d3544. Attack-action setup: gate on the player and source
@@ -801,9 +840,8 @@ extern "C" int func_800D34D4(CtrlActView* self) {
 
 extern "C" void func_800D3998(CtrlActView* self) {
     {
-        CtrlActPlayerView* player = self->mPlayer;
-        u32 local = *player->mField4->vf30();
-        if (func_80174C98(player, &local, 0x807) == 0) {
+        u32 local = *self->mPlayer->mField4->vf30();
+        if (func_80174C98(self->mPlayer, &local, 0x807) == 0) {
             memset(&self->mPos30, 0, 0x2c);
             func_80174C24(self->mPlayer, 0x40);
             return;
@@ -869,24 +907,24 @@ extern "C" void func_800D3998(CtrlActView* self) {
             self->mField14 = lbl_eu_80666CF8;
             memset(&self->mPos30, 0, 0x2c);
             func_80174C24(self->mPlayer, 0x40);
-            break;
-        }
-        func_800D5F98(self, src);
-        CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
-        ml::CVec3 diff;
-        nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
-                            (const nw4r::math::VEC3*)ppos,
-                            (const nw4r::math::VEC3*)&self->mPos30);
-        ml::CVec3 d = diff;
-        f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
-        f32 delta = lbl_eu_80666D40 * ang - self->mField4C;
-        if (delta < lbl_eu_80666CF8) {
-            delta *= lbl_eu_80666D68;
-        }
-        if (delta > self->mField50) {
-            self->mField14 = lbl_eu_80666CF8;
-            memset(&self->mPos30, 0, 0x2c);
-            func_80174C24(self->mPlayer, 0x40);
+        } else {
+            func_800D5F98(self, src);
+            CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
+            ml::CVec3 diff;
+            nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
+                                (const nw4r::math::VEC3*)ppos,
+                                (const nw4r::math::VEC3*)&self->mPos30);
+            ml::CVec3 d = diff;
+            f32 ang = nw4r::math::Atan2FIdx(d.x, d.z);
+            f32 delta = lbl_eu_80666D40 * ang - self->mField4C;
+            if (delta < lbl_eu_80666CF8) {
+                delta *= lbl_eu_80666D68;
+            }
+            if (delta > self->mField50) {
+                self->mField14 = lbl_eu_80666CF8;
+                memset(&self->mPos30, 0, 0x2c);
+                func_80174C24(self->mPlayer, 0x40);
+            }
         }
         break;
     }
@@ -901,12 +939,15 @@ extern "C" void func_800D3998(CtrlActView* self) {
 // source, phase+1); phase 1 decays the action timer and refreshes the facing
 // helper. Timer expiry resets the 0x30 state block.
 extern "C" void func_800D3D34(CtrlActView* self) {
+    // Retail caches the player into a saved register at entry and uses it
+    // only until the action source resolves; afterwards every access goes
+    // through self->mPlayer again.
     CtrlActPlayerView* player = self->mPlayer;
     {
         u32 local = *player->mField4->vf30();
         if (func_80174C98(player, &local, 0x807) == 0) {
             memset(&self->mPos30, 0, 0x2c);
-            func_80174C24(self->mPlayer, 0x40);
+            func_80174C24(player, 0x40);
             return;
         }
     }
@@ -914,12 +955,12 @@ extern "C" void func_800D3D34(CtrlActView* self) {
         func_800B708C((int)(intptr_t)player->mSub3E9C.v17()));
     if (src == 0) {
         memset(&self->mPos30, 0, 0x2c);
-        func_80174C24(self->mPlayer, 0x40);
+        func_80174C24(player, 0x40);
         return;
     }
     switch (self->mFlags58.mPhase) {
     case 0: {
-        u32 flags = player->mField3F00;
+        u32 flags = self->mPlayer->mField3F00;
         if (((u32)__cntlzw((u32)__cntlzw(flags & 2) >> 5) >> 5) != 0) {
             self->mField14 = lbl_eu_80666D6C;
         } else {
@@ -936,12 +977,15 @@ extern "C" void func_800D3D34(CtrlActView* self) {
         conv.w[0] = 0x43300000;
         conv.w[1] = self->mFlags58.mParam;
         f32 t = (f32)(conv.d - lbl_eu_80666D78) / denom;
+        // Cached zero spans the voice-owner calls (retail keeps it in an
+        // FP reg across them).
+        const f32 cf8 = lbl_eu_80666CF8;
         CVoicePos* pos = src->mOwner3E9C.getPosition();
         self->mPos30 = *(ml::CVec3*)pos;
         self->mField48 = src->vtbl->fn_0x5B4(src);
         self->mField54 = t;
-        self->mField50 = lbl_eu_80666CF8;
-        CVoicePos* ppos = player->mSub3E9C.getPosition();
+        self->mField50 = cf8;
+        CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
         ml::CVec3 diff;
         nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
                             (const nw4r::math::VEC3*)ppos,
@@ -1037,8 +1081,11 @@ int func_800D49EC(void* self) { return 0; }
 // wobble bands (D88 then D8C) - being inside either band ends the action,
 // otherwise the shared facing helper re-aims.
 extern "C" void func_800D49F4(CtrlActView* self) {
+    // Retail colors self->r30 and the cached player->r31; declaring the
+    // player cache at function scope (not inside the gate block) keeps that
+    // allocation.
+    CtrlActPlayerView* player = self->mPlayer;
     {
-        CtrlActPlayerView* player = self->mPlayer;
         u32 local = *player->mField4->vf30();
         if (func_80174C98(player, &local, 0x807) == 0) {
             memset(&self->mPos30, 0, 0x2c);
@@ -1497,7 +1544,7 @@ extern "C" void func_800D5A2C(CtrlActView* self) {
             CfEnumList* lst = func_80043F18(&holder);
             func_800F4A98(lst, data[i], 0);
             lst = func_80043F18(&holder);
-            int id = func_800F6E08(lst);
+            int id = (int)(intptr_t)func_800F6E08(lst);
             if (id != 0) {
                 void* actor = func_800B708C(id);
                 if (actor != 0) {
@@ -1620,11 +1667,15 @@ extern "C" int func_800D5F98(CtrlActView* self, CtrlActSrc* src) {
     f32 f31 = lbl_eu_80573A20[self->mFlags58.mAngleState];
     CVoicePos* ppos = self->mPlayer->mSub3E9C.getPosition();
     CVoicePos* spos = src->mOwner3E9C.getPosition();
-    ml::CVec3 d1 = *(ml::CVec3*)spos - *(ml::CVec3*)ppos;
+    // Retail spills each difference twice (paired store + component
+    // copies), reproduced here with an explicit intermediate.
+    ml::CVec3 diff1 = *(ml::CVec3*)spos - *(ml::CVec3*)ppos;
+    ml::CVec3 d1 = diff1;
     f32 ang = nw4r::math::Atan2FIdx(d1.x, d1.z);
     self->mField10 = lbl_eu_80666D40 * ang;
     CVoicePos* ppos2 = self->mPlayer->mSub3E9C.getPosition();
-    ml::CVec3 d2 = *(ml::CVec3*)&self->mPos30 - *(ml::CVec3*)ppos2;
+    ml::CVec3 diff2 = *(ml::CVec3*)&self->mPos30 - *(ml::CVec3*)ppos2;
+    ml::CVec3 d2 = diff2;
     f32 ang2 = nw4r::math::Atan2FIdx(d2.x, d2.z);
     f32 f1 = lbl_eu_80666D40 * ang2;
     f32 f3 = f1 + f31;
@@ -1725,8 +1776,8 @@ extern "C" int func_800D64E8(CtrlActView* self) {
     if ((self->mPlayer->mField3374 & 0x10000) != 0) {
         CtrlActTargetView* target = self->mPlayer->mField3F60;
         if (target != 0 && target->mField4F8 > lbl_eu_80666CF8) {
-            f32 cos = nw4r::math::CosFIdx(self->mFieldC * lbl_eu_80666D80);
-            f32 sin = nw4r::math::SinFIdx(self->mFieldC * lbl_eu_80666D80);
+            f32 cos = nw4r::math::CosFIdx(lbl_eu_80666D80 * self->mFieldC);
+            f32 sin = nw4r::math::SinFIdx(lbl_eu_80666D80 * self->mFieldC);
             ml::CVec3 local(sin, lbl_eu_80666CF8, cos);
             ml::CVec3 pos =
                 *(ml::CVec3*)self->mPlayer->mSub3E9C.getPosition();
@@ -1735,10 +1786,12 @@ extern "C" int func_800D64E8(CtrlActView* self) {
                               lbl_eu_8066AF20) != 0) {
                 int best = -1;
                 f32 bestY = lbl_eu_80666DA8;
-                for (int i = 0; i < func_804BE4AC(); i++) {
+                // Retail scans with an unsigned counter here but a signed
+                // one in the second pass.
+                for (u32 i = 0; i < (u32)func_804BE4AC(); i++) {
                     if (((ml::CVec3*)func_804BE520(i))->y
                         >= lbl_eu_80666CF8) {
-                        if (bestY < ((ml::CVec3*)func_804BE50C(i))->y) {
+                        if (bestY > ((ml::CVec3*)func_804BE50C(i))->y) {
                             bestY = ((ml::CVec3*)func_804BE50C(i))->y;
                             best = i;
                         }
@@ -1747,9 +1800,8 @@ extern "C" int func_800D64E8(CtrlActView* self) {
                 if (best >= 0 && func_804BE5A4(0x40000, best) != 0) {
                     f32 low = bestY - lbl_eu_80666D4C;
                     for (int i = 0; i < func_804BE4AC(); i++) {
-                        if (best != i
-                            && ((ml::CVec3*)func_804BE50C(i))->y < bestY
-                            && ((ml::CVec3*)func_804BE50C(i))->y > low) {
+                        if (best != i && bestY > ((ml::CVec3*)func_804BE50C(i))->y
+                            && low < ((ml::CVec3*)func_804BE50C(i))->y) {
                             low = ((ml::CVec3*)func_804BE50C(i))->y;
                         }
                     }
@@ -1771,7 +1823,7 @@ extern "C" int func_800D64E8(CtrlActView* self) {
 // collision hit; depending on its height vs the player, gate on 0x40000/0x20000
 // flags and the target's 0x4EC bit 8, and latch the result into mField74.
 extern "C" int func_800D6720(CtrlActView* self, int flag) {
-    self->mField74 &= ~0xe;
+    self->mField74 &= 0xfff1;
     CtrlActTargetView* target = self->mPlayer->mField3F60;
     if (target == 0) {
         return 0;
@@ -1794,7 +1846,8 @@ extern "C" int func_800D6720(CtrlActView* self, int flag) {
     }
     int best = -1;
     f32 bestY = lbl_eu_80666DA8;
-    for (int i = 0; i < func_804BE4AC(); i++) {
+    // Retail scans with an unsigned counter here.
+    for (u32 i = 0; i < (u32)func_804BE4AC(); i++) {
         if (bestY < ((ml::CVec3*)func_804BE50C(i))->y) {
             bestY = ((ml::CVec3*)func_804BE50C(i))->y;
             best = i;
@@ -2189,16 +2242,20 @@ finish:
 
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-// Static init: fill the 7-float table at lbl_eu_80573A20 with scaled
-// defaults (indices 0,1,3,4,5,6 written; index 2 untouched).
+// Static init: fill the facing tables with scaled defaults -
+// lbl_eu_80573A20[0..3] (index 2 untouched) and lbl_eu_80663EF8[0..1].
 void sinit_800D79B4() {
-    extern f32 lbl_eu_80666DC8, lbl_eu_80666DCC;
+    f32 a = lbl_eu_80666D88;
+    f32* t = lbl_eu_80573A20;
     f32 s = lbl_eu_8066A210;
-    f32* t = const_cast<f32*>(lbl_eu_80573A20);
-    f32* u = const_cast<f32*>(lbl_eu_80663EF8);
-    t[0] = lbl_eu_80666D88 * s;
-    t[1] = lbl_eu_80666D8C * s;
-    t[3] = lbl_eu_80666D90 * s;
-    u[0] = lbl_eu_80666DC8 * s;
-    u[1] = lbl_eu_80666DCC * s;
+    f32 b = lbl_eu_80666D8C;
+    f32* u = lbl_eu_80663EF8;
+    f32 c = lbl_eu_80666D90;
+    f32 d = lbl_eu_80666DC8;
+    f32 e = lbl_eu_80666DCC;
+    t[0] = a * s;
+    lbl_eu_80573A20[1] = b * s;
+    t[3] = c * s;
+    u[0] = d * s;
+    lbl_eu_80663EF8[1] = e * s;
 }

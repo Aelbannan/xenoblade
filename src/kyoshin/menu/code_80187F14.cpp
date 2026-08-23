@@ -232,25 +232,33 @@ void func_80189390(const char* name) {
 }
 
 extern "C" void func_80188488(SoundSlot* slot, u32 type, float f1, float f2, float f3) {
-    if (!isValid(slot->handle)) return;
+    // Retail order: validity check on the raw handle word, then getInstance,
+    // then cache the status halfword (no call between its read and last use).
+    if ((u32)slot->handle == 0xFFFFFFFF) return;
+    getInstance__7CLibCriFv();
     u16 st = slot->status;
-    if (st == 4) return;
+    // Product and the reloaded handle are materialized after the call;
+    // the status test follows them so MWCC schedules lhz/fmuls/lwz together.
     float prod = f1 * f2;
-    if (f3 <= 0.0f || st == 5) {
-        func_80459A90__7CLibCriFv(slot->handle, prod);
+    s32 h = slot->handle;
+    if (st == 4) return;
+    if (f3 <= lbl_eu_80667A08 || st == 5) {
+        func_80459A90__7CLibCriFv(h, prod);
         slot->x = f1;
         slot->y = f2;
         return;
     }
-    func_80459A88__7CLibCriFv(slot->handle, prod, f3, type);
+    func_80459A88__7CLibCriFv(h, prod, f3, type);
     slot->x = f1;
     slot->y = f2;
     if (type == 2) {
+        // Local z keeps the zero-global load at block top (retail position).
+        float z = lbl_eu_80667A08;
         slot->handle = -1;
         slot->field_0x54 = 0;
         slot->field_0x56 = 0;
         slot->status = 0;
-        slot->field_0x48 = 0.0f;
+        slot->field_0x48 = z;
     }
 }
 
@@ -288,17 +296,28 @@ void func_80189510(float f1) {
 
 void func_801895F4(float f1) {
     lbl_eu_80662498 = f1;
-    for (s32 i = 2; i <= 4; i++) {
+    // Offset cursor declared before the counter -> off gets r31, i gets r30.
+    s32 off = 0x170;
+    s32 i = 2;
+    while (i <= 4) {
         float vol;
+        // Swapped-operand range guards keep the two signed cmpi compares.
         s32 inRange = 0;
-        if (i >= 0 && i <= 1) inRange = 1;
+        if (0 <= i) {
+            if (1 < i)
+                ;
+            else
+                inRange = 1;
+        }
         if (inRange) vol = lbl_eu_80662490 * lbl_eu_80662494;
         else vol = lbl_eu_80662498;
         s32* b = lbl_eu_80663E60;
         SoundSlot* s;
-        if (b != nullptr) s = (SoundSlot*)((u8*)b + i * 0xB8);
+        if (b != nullptr) s = (SoundSlot*)((u8*)b + off);
         else s = nullptr;
         if (s != nullptr) func_80188488(s, 0, lbl_eu_80667A0C, vol, lbl_eu_80667A08);
+        i++;
+        off += 0xB8;
     }
 }
 
@@ -315,41 +334,47 @@ extern "C" void func_801882AC(SoundSlot* slot, float vol, u32 type) {
             slot->backupF1 = lbl_eu_80667A08;
         }
     }
+    // Second block: retail clears the backup state up front, then splits:
+    // audible non-restart sounds are stopped outright, anything else plays.
     if ((u32)slot->handle != 0xFFFFFFFF) {
-        slot->backupHandle = -1;
-        slot->backupU16_1 = 0;
-        slot->backupU16_2 = 0;
-        slot->backupU16_3 = 0;
+        // Constants stay live across the stop-path call in retail, so they
+        // get callee-saved registers (r30/r29); name them to match.
+        const s32 cZero = 0;
+        const s32 cM1 = -1;
+        slot->backupHandle = cM1;
+        slot->backupU16_1 = cZero;
+        slot->backupU16_2 = cZero;
+        slot->backupU16_3 = cZero;
         slot->backupF1 = lbl_eu_80667A08;
         slot->x = lbl_eu_80667A08;
-        if (vol <= lbl_eu_80667A08 && type != 1) {
+        if (vol > lbl_eu_80667A08 && type != 1) {
             func_80459A7C__7CLibCriFv(slot->handle);
-            slot->handle = -1;
-            slot->field_0x54 = 0;
-            slot->field_0x56 = 0;
-            slot->status = 0;
+            slot->handle = cM1;
+            slot->field_0x54 = cZero;
+            slot->field_0x56 = cZero;
+            slot->status = cZero;
             slot->field_0x48 = lbl_eu_80667A08;
-            return;
-        }
-        func_80459A88__7CLibCriFv(slot->handle, lbl_eu_80667A08, vol, type);
-        if (type == 2) {
-            if ((u32)slot->backupHandle != 0xFFFFFFFF) func_80459A7C__7CLibCriFv(slot->backupHandle);
-            slot->backupHandle = slot->handle;
-            slot->backupNameLen = strlen(slot->name);
-            strcpy(slot->backupName, slot->name);
-            slot->backupF1 = slot->field_0x48;
-            slot->backupF2 = slot->x;
-            slot->backupF3 = slot->y;
-            slot->backupU16_1 = slot->field_0x54;
-            slot->backupU16_2 = slot->field_0x56;
-            slot->backupU16_3 = slot->status;
-            slot->handle = -1;
-            slot->field_0x54 = 0;
-            slot->field_0x56 = 0;
-            slot->status = 0;
-            slot->field_0x48 = lbl_eu_80667A08;
-        } else if (type == 1) {
-            slot->status = 4;
+        } else {
+            func_80459A88__7CLibCriFv(slot->handle, lbl_eu_80667A08, vol, type);
+            if (type == 2) {
+                if ((u32)slot->backupHandle != 0xFFFFFFFF) func_80459A7C__7CLibCriFv(slot->backupHandle);
+                slot->backupHandle = slot->handle;
+                slot->backupNameLen = strlen(slot->name);
+                strcpy(slot->backupName, slot->name);
+                slot->backupF1 = slot->field_0x48;
+                slot->backupF2 = slot->x;
+                slot->backupF3 = slot->y;
+                slot->backupU16_1 = slot->field_0x54;
+                slot->backupU16_2 = slot->field_0x56;
+                slot->backupU16_3 = slot->status;
+                slot->handle = cM1;
+                slot->field_0x54 = cZero;
+                slot->field_0x56 = cZero;
+                slot->status = cZero;
+                slot->field_0x48 = lbl_eu_80667A08;
+            } else if (type == 1) {
+                slot->status = 4;
+            }
         }
     }
 }
@@ -375,12 +400,15 @@ void func_80189C88() {
 }
 
 void sinit_80189D68() {
-    const char* str = &lbl_eu_80503AB0[0x04];
+    // Two named pointers keep both the table base (r31) and base+4 (r30)
+    // live in callee-saved regs, matching retail's allocation.
+    const char* base = (const char*)lbl_eu_80503AB0;
+    const char* str = base + 4;
     s32 len = strlen(str);
-    lbl_eu_80575798[8] = len;
+    ((s32*)lbl_eu_80575798)[8] = len;
     strcpy((char*)lbl_eu_80575798, str);
     len = strlen(str);
-    lbl_eu_805757BC[8] = len;
+    ((s32*)lbl_eu_805757BC)[8] = len;
     strcpy((char*)lbl_eu_805757BC, str);
     lbl_eu_806642E0 = 0;
 }
@@ -388,51 +416,96 @@ void sinit_80189D68() {
 extern "C" void func_80188584(SoundSlot* slot) {
     u8* start = (u8*)slot + 0xB8;
     u8* end = (u8*)slot + 0x398;
+    // Slot 0's live-name fields are cleared up front.
+    slot->name[0] = '\0';
+    slot->nameLen = 0;
+    slot->backupName[0] = '\0';
+    slot->backupNameLen = 0;
+    // Slots 1..4 via a byte-stride loop (MWCC: divwu trip count + bdnz).
     for (u8* cur = start; cur < end; cur += 0xB8) {
-        cur[0x04] = '\0';
-        *(s32*)(cur + 0x44) = 0;
-        cur[0x60] = '\0';
-        *(s32*)(cur + 0xA0) = 0;
+        SoundSlot* q = (SoundSlot*)cur;
+        q->name[0] = '\0';
+        q->nameLen = 0;
+        q->backupName[0] = '\0';
+        q->backupNameLen = 0;
     }
+    // Reset the two stored sound names and the volume ramp state.
+    lbl_eu_80662494 = lbl_eu_80667A0C;
     ((char*)lbl_eu_80575798)[0] = '\0';
     lbl_eu_80575798[8] = 0;
     ((char*)lbl_eu_805757BC)[0] = '\0';
     lbl_eu_805757BC[8] = 0;
     lbl_eu_806642E0 = 0;
-    lbl_eu_8066249C = 1.0f;
-    lbl_eu_806642E4 = 0.0f;
+    lbl_eu_8066249C = lbl_eu_80667A0C;
+    lbl_eu_806642E4 = lbl_eu_80667A08;
     lbl_eu_806624A0 = lbl_eu_80667A10;
+    // Full clear of every slot, written out longhand so MWCC emits the
+    // unrolled displaced stores off the single base pointer.
     slot->handle = -1;
     slot->field_0x54 = 0;
     slot->field_0x56 = 0;
     slot->status = 0;
-    slot->field_0x48 = 0.0f;
+    slot->field_0x48 = lbl_eu_80667A08;
     slot->backupHandle = -1;
     slot->backupU16_1 = 0;
     slot->backupU16_2 = 0;
     slot->backupU16_3 = 0;
-    slot->backupF1 = 0.0f;
-    for (s32 i = 1; i <= 4; i++) {
-        SoundSlot* s = (SoundSlot*)((u8*)slot + i * 0xB8);
-        s->handle = -1;
-        s->field_0x54 = 0;
-        s->field_0x56 = 0;
-        s->status = 0;
-        s->field_0x48 = 0.0f;
-        s->backupHandle = -1;
-        s->backupU16_1 = 0;
-        s->backupU16_2 = 0;
-        s->backupU16_3 = 0;
-        s->backupF1 = 0.0f;
-    }
+    slot->backupF1 = lbl_eu_80667A08;
+    SoundSlot* s1 = slot + 1;
+    s1->handle = -1;
+    s1->field_0x54 = 0;
+    s1->field_0x56 = 0;
+    s1->status = 0;
+    s1->field_0x48 = lbl_eu_80667A08;
+    s1->backupHandle = -1;
+    s1->backupU16_1 = 0;
+    s1->backupU16_2 = 0;
+    s1->backupU16_3 = 0;
+    s1->backupF1 = lbl_eu_80667A08;
+    SoundSlot* s2 = slot + 2;
+    s2->handle = -1;
+    s2->field_0x54 = 0;
+    s2->field_0x56 = 0;
+    s2->status = 0;
+    s2->field_0x48 = lbl_eu_80667A08;
+    s2->backupHandle = -1;
+    s2->backupU16_1 = 0;
+    s2->backupU16_2 = 0;
+    s2->backupU16_3 = 0;
+    s2->backupF1 = lbl_eu_80667A08;
+    SoundSlot* s3 = slot + 3;
+    s3->handle = -1;
+    s3->field_0x54 = 0;
+    s3->field_0x56 = 0;
+    s3->status = 0;
+    s3->field_0x48 = lbl_eu_80667A08;
+    s3->backupHandle = -1;
+    s3->backupU16_1 = 0;
+    s3->backupU16_2 = 0;
+    s3->backupU16_3 = 0;
+    s3->backupF1 = lbl_eu_80667A08;
+    SoundSlot* s4 = slot + 4;
+    s4->handle = -1;
+    s4->field_0x54 = 0;
+    s4->field_0x56 = 0;
+    s4->status = 0;
+    s4->field_0x48 = lbl_eu_80667A08;
+    s4->backupHandle = -1;
+    s4->backupU16_1 = 0;
+    s4->backupU16_2 = 0;
+    s4->backupU16_3 = 0;
+    s4->backupF1 = lbl_eu_80667A08;
 }
 
 // Deleting destructor for the 5-slot sound object (retail symbol is
 // address-named, so this is a plain free function rather than a member dtor).
 void* __dt__801886EC(SoundSlot* _this, int flags) {
     if (_this != nullptr) {
-        SoundSlot* s = _this;
-        for (s32 i = 0; i < 5u; i++) {
+        // Counter declared before the slot cursor so i lands in r31 and s in
+        // r30 (retail allocation).
+        s32 i;
+        SoundSlot* s;
+        for (i = 0, s = _this; i < 5u; i++) {
             func_801882AC(s, lbl_eu_80667A08, 2);
             s = (SoundSlot*)((u8*)s + 0xB8);
         }
@@ -869,18 +942,20 @@ void func_8018986C(const char* name, float vol) {
 extern "C" s32 func_801887C8(u32 wantId, s32 startIdx, s32 endIdx) {
     s32* b = lbl_eu_80663E60;
     if (b != nullptr) {
-        // Pass 1: return the first slot in [startIdx..endIdx] whose handle
-        // is free (== -1).
-        for (s32 i = startIdx; i <= endIdx; i++) {
-            SoundSlot* s = (SoundSlot*)((u8*)b + i * 0xB8);
-            if ((u32)s->handle == 0xFFFFFFFF) return i;
+        // One shared init expression -> single mulli/add, copied into two
+        // running pointers (one per pass). Pass 1 returns the first slot in
+        // [startIdx..endIdx] whose handle is free (== -1); pass 2 returns
+        // the first slot whose priority (field_0x54) is below wantId,
+        // stopping its sound first (call arg re-indexed from the base).
+        SoundSlot* q = (SoundSlot*)((u8*)lbl_eu_80663E60 + startIdx * 0xB8);
+        SoundSlot* p = q;
+        s32 i;
+        for (i = startIdx; i <= endIdx; p++, i++) {
+            if ((u32)p->handle == 0xFFFFFFFF) return i;
         }
-        // Pass 2: otherwise return the first slot whose priority
-        // (field_0x54) is below wantId, stopping its sound first.
-        for (s32 i = startIdx; i <= endIdx; i++) {
-            SoundSlot* s = (SoundSlot*)((u8*)b + i * 0xB8);
-            if (wantId > s->field_0x54) {
-                func_801882AC(s, lbl_eu_80667A08, 2);
+        for (i = startIdx; i <= endIdx; q++, i++) {
+            if (wantId > q->field_0x54) {
+                func_801882AC((SoundSlot*)((u8*)lbl_eu_80663E60 + i * 0xB8), lbl_eu_80667A08, 2);
                 return i;
             }
         }
@@ -891,14 +966,14 @@ extern "C" s32 func_801887C8(u32 wantId, s32 startIdx, s32 endIdx) {
 // volume. type and the two floats are forwarded from the caller.
 void func_8018896C(s32 index, u32 type, float f1, float f2) {
     float vol;
-    // Materialize the range test into a flag via two separate signed checks.
-    // A bare `index >= 0 && index <= 1` collapses into a single unsigned
-    // cmpli, but retail keeps both signed cmpwi (li r0,0 default + li r0,1).
+    // Swapped-operand range guards (see docs/MWCC_PATTERNS.md): `const OP v`
+    // order keeps two signed cmpi compares instead of the cmplwi fusion.
     s32 inRange = 0;
-    if (index >= 0) {
-        if (index <= 1) {
+    if (0 <= index) {
+        if (1 < index)
+            ;
+        else
             inRange = 1;
-        }
     }
     if (inRange) vol = lbl_eu_80662490 * lbl_eu_80662494;
     else vol = lbl_eu_80662498;
@@ -911,7 +986,10 @@ void func_8018896C(s32 index, u32 type, float f1, float f2) {
 
 extern "C" s32 func_801897A0(s32 wantId, s32 type, float f1) {
     if (func_8008585C__Q22cf13CfGameManagerFv()) return 0;
-    if ((lbl_eu_80663E24 & 0x400000) != 0 && (lbl_eu_80663E24 & 0x20000) == 0) return 0;
+    // Two separate reads of the flags word (retail emits two lwz).
+    // Bit 22 (0x400000) set and bit 18 (0x40000) clear -> refuse.
+    if ((lbl_eu_80663E24 & 0x400000) != 0
+            && (*(volatile u32*)&lbl_eu_80663E24 & 0x40000) == 0) return 0;
     if (func_80189A04(wantId) == 0) return 0;
     s32 slot = func_801887C8(type, 2, 4);
     if (func_80188B80(slot, wantId, f1, lbl_eu_80667A0C, 0) != 0) return slot;
@@ -938,16 +1016,19 @@ extern "C" s32 func_80189450() {
     // buffers (slot 0 / slot 1) lacks the substring at 80503AB0+0x1A while
     // its slot still holds a live handle; otherwise clear the flag and allow.
     if ((lbl_eu_806642E0 & 1) != 0) {
-        s32 i = 0;
-        s32 off = 0;
+        // Base pointer is read once before the loop and kept live across it
+        // (retail holds it in r26 alongside the counter/offset pair).
         SoundSlot* s;
+        s32 i = 0;
+        s32* b = lbl_eu_80663E60;
+        s32 off = 0;
         while (i <= 1) {
-            s32* b = lbl_eu_80663E60;
             if (b != nullptr) s = (SoundSlot*)((u8*)b + off);
             else s = nullptr;
             if (s != nullptr) {
-                const char* name = (i != 0) ? (const char*)lbl_eu_805757BC
-                                            : (const char*)lbl_eu_80575798;
+                // Default-then-override form matches retail's branch layout.
+                const char* name = (const char*)lbl_eu_805757BC;
+                if (i == 0) name = (const char*)lbl_eu_80575798;
                 if (strstr(name, &lbl_eu_80503AB0[0x1a]) != nullptr) goto next;
                 if ((u32)s->handle != 0xFFFFFFFF) return 0;
             }

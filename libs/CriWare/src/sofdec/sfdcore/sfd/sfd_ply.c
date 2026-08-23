@@ -85,7 +85,7 @@ extern void fn_803C34DC(void* area);
 extern int sprintf(char* str, const char* fmt, ...);
 
 // Global data
-extern u32 lbl_eu_80619BA0;
+extern void (*lbl_eu_80619BA0)(void*, void*);
 extern u32 lbl_eu_80619BA4;
 extern u32 lbl_eu_80619BA8;
 extern void* lbl_eu_80606E34;
@@ -106,6 +106,15 @@ extern char lbl_eu_8051CBA8[];
 // Field access helper
 #define FIELD(type, base, off) (*((type*)((u8*)(base) + (off))))
 
+// SofDec global work area (lbl_eu_80606E38)
+typedef struct SfdGlob {
+    u8 pad0[0x1F0];
+    int resetFlg;       /* 0x1F0 */
+    u8 pad1[0x8];
+    void* hnSlots[8];   /* 0x1FC */
+} SfdGlob;
+#define SFD_GLOB ((SfdGlob*)lbl_eu_80606E38)
+
 // Trace helper - calls ctx->vtable[9](ctx, traceblock + offset)
 static void traceCall(void* traceBlock, int offset) {
     void* ctx = lbl_eu_80606E34;
@@ -120,8 +129,7 @@ static void traceCall(void* traceBlock, int offset) {
 // SFPLY_Init
 // ---------------------------------------------------------------------------
 void SFPLY_Init(void) {
-    u32 val = 0;
-    lbl_eu_80619BA0 = val;
+    lbl_eu_80619BA0 = NULL;
 }
 
 // ---------------------------------------------------------------------------
@@ -388,7 +396,7 @@ int sfply_StatPrep(void* self, int canExec) {
         }
         break;
     }
-    default: newState = origSub; break;
+    default: newState = origStatus; break;
     }
     return newState;
 }
@@ -457,6 +465,7 @@ setCond:
 // sfply_IsBpaOn
 // ---------------------------------------------------------------------------
 int sfply_IsBpaOn(void* self) {
+    int flag;
     int i;
 
     if (!SFSET_GetCond(self, 0x43)) return 0;
@@ -464,55 +473,58 @@ int sfply_IsBpaOn(void* self) {
     if (FIELD(int, self, 0x5C)) return 0;
     if (FIELD(int, self, 0x54) != 4) return 0;
 
-    if (SFSET_GetCond(self, 5)) {
-        if (SFTRN_GetTermFlg(self, 6)) goto checkMore;
+    /* any active transport/buffer disqualifies BPA-on */
+    flag = 0;
+    if (SFSET_GetCond(self, 5) && SFTRN_GetTermFlg(self, 6)) {
+        flag = 1;
+    } else if (SFSET_GetCond(self, 6) && SFTRN_GetTermFlg(self, 7)) {
+        flag = 1;
+    } else {
+        for (i = 0; i < 8; i++) {
+            if (SFBUF_GetTermFlg(self, i)) {
+                flag = 1;
+                break;
+            }
+        }
     }
-    if (SFSET_GetCond(self, 6)) {
-        if (SFTRN_GetTermFlg(self, 7)) goto checkMore;
-    }
-    for (i = 0; i < 8; i++) {
-        if (SFBUF_GetTermFlg(self, i)) goto checkMore;
-    }
-    return 0;
+    if (flag) return 0;
 
-checkMore:
     if (SFSET_GetCond(self, 5) == 1 && !FIELD(int, self, 0x988)) return 0;
     if (SFSET_GetCond(self, 6) == 1 && SFBUF_RingGetDataSiz(self, 2) > 0) return 0;
     if (SFTRN_IsSetup(self, 1) && SFBUF_RingGetDataSiz(self, 0) > 0) return 0;
 
     if (SFSET_GetCond(self, 5) == 1) {
-        int trackIdx = FIELD(int, self, 0x2070);
-        void* trackPtr = (u8*)self + trackIdx * 0x74;
-        void* obj = FIELD(void*, trackPtr, 0x13CC);
+        /* video track fill-level check against per-mille thresholds */
+        u8* trk = (u8*)self + FIELD(int, self, 0x2070) * 0x74;
+        void* obj = FIELD(void*, trk, 0x13CC);
         void* vtbl = *(void**)obj;
-        int (*fn)(void*, int) = *(int(**)(void*, int))((u8*)vtbl + 0x24);
-        int result = fn(obj, 1);
-        int threshold = FIELD(int, trackPtr, 0x13D4);
-        threshold = (int)((s64)threshold * 0x51EC851F >> 37);
-        if (threshold < 0) threshold++;
-        threshold = (threshold * 80) / 1000;
-        if (result < threshold) {
-            int limitCond = SFSET_GetCond(self, 0x46);
-            if (result < limitCond) return 0;
+        int (*getstat)(void*, int) = *(int (**)(void*, int))((u8*)vtbl + 0x24);
+        int result = getstat(obj, 1);
+        int thr = FIELD(int, trk, 0x13D4) / 100 * 80;
+        int over;
+
+        if (result >= thr || result >= SFSET_GetCond(self, 0x46)) {
+            over = 1;
+        } else {
+            over = 0;
         }
+        if (over) return 0;
     }
 
     {
-        int timeSec, timeUsec;
-        int playStartSec, playStartFrac;
-        int limitVal, scaled;
-        SFTIM_GetTime(self, &timeSec, &timeUsec);
-        playStartSec = FIELD(int, self, 0x1020);
-        playStartFrac = FIELD(int, self, 0x1024);
-        limitVal = SFSET_GetCond(self, 0x44);
-        scaled = UTY_MulDiv(limitVal, playStartFrac, 10000000);
-        playStartSec -= scaled;
-        if (timeSec > 0 && playStartSec > 0) {
-            if (UTY_CmpTime(timeSec, timeUsec, playStartSec, playStartFrac) == 0)
-                return 1;
-        }
+        int sec, usec;
+        int playSec, playFrac;
+        int scaled;
+
+        SFTIM_GetTime(self, &sec, &usec);
+        playSec = FIELD(int, self, 0x1020);
+        playFrac = FIELD(int, self, 0x1024);
+        scaled = UTY_MulDiv(SFSET_GetCond(self, 0x44), playFrac, 1000000);
+        playSec -= scaled;
+        if (sec <= 0) return 0;
+        if (playSec <= 0) return 0;
+        return (UTY_CmpTime(sec, usec, playSec, playFrac) == 0) ? 1 : 0;
     }
-    return 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -524,6 +536,7 @@ int sfply_IsBpaOff(void* self) {
     int playStartSec, playStartFrac;
     int limitVal, scaled;
 
+    /* any transport/buffer still running counts as BPA-active */
     if (SFSET_GetCond(self, 5) && SFTRN_GetTermFlg(self, 6)) return 1;
     if (SFSET_GetCond(self, 6) && SFTRN_GetTermFlg(self, 7)) return 1;
     for (i = 0; i < 8; i++) {
@@ -531,32 +544,23 @@ int sfply_IsBpaOff(void* self) {
     }
 
     if (SFSET_GetCond(self, 5) == 1) {
-        int trackIdx = FIELD(int, self, 0x2070);
-        void* trackPtr = (u8*)self + trackIdx * 0x74;
+        u8* trackPtr = (u8*)self + FIELD(int, self, 0x2070) * 0x74;
         void* obj = FIELD(void*, trackPtr, 0x13CC);
         void* vtbl = *(void**)obj;
-        int (*fn)(void*, int) = *(int(**)(void*, int))((u8*)vtbl + 0x24);
+        int (*fn)(void*, int) = *(int (**)(void*, int))((u8*)vtbl + 0x24);
         int result = fn(obj, 1);
-        int threshold = FIELD(int, trackPtr, 0x13D4);
-        threshold = (int)((s64)threshold * 0x51EC851F >> 37);
-        if (threshold < 0) threshold++;
-        threshold = (threshold * 80) / 1000;
-        if (result >= threshold) return 1;
-        if (result >= SFSET_GetCond(self, 0x46)) return 1;
+        /* field_0x13D4 is a per-mille threshold scaled by 80/1000 */
+        if (result >= FIELD(int, trackPtr, 0x13D4) * 80 / 1000 ||
+            result >= SFSET_GetCond(self, 0x46)) return 1;
     }
 
     if (SFSET_GetCond(self, 6) == 1) {
-        int trackIdx = FIELD(int, self, 0x20B4);
-        void* trackPtr = (u8*)self + trackIdx * 0x74;
+        u8* trackPtr = (u8*)self + FIELD(int, self, 0x20B4) * 0x74;
         void* obj = FIELD(void*, trackPtr, 0x13CC);
         void* vtbl = *(void**)obj;
-        int (*fn)(void*, int) = *(int(**)(void*, int))((u8*)vtbl + 0x24);
+        int (*fn)(void*, int) = *(int (**)(void*, int))((u8*)vtbl + 0x24);
         int result = fn(obj, 1);
-        int threshold = FIELD(int, trackPtr, 0x13D4);
-        threshold = (int)((s64)threshold * 0x51EC851F >> 37);
-        if (threshold < 0) threshold++;
-        threshold = (threshold * 80) / 1000;
-        if (result >= threshold) return 1;
+        if (result >= FIELD(int, trackPtr, 0x13D4) * 80 / 1000) return 1;
     }
 
     SFTIM_GetTime(self, &timeSec, &timeUsec);
@@ -689,146 +693,167 @@ void criware_803CA124(void* self, int fpsArg) {
 // SFD_Create
 // ---------------------------------------------------------------------------
 int SFD_Create(void* config, void* extra) {
+    char buf[0x200];
     void* ctx;
     void* vtbl;
     void (*trace)(void*, void*);
-    int slot, i;
-    void* hn;
-    u32* hnTable;
+    int err;
+    int slot;
+    int hn;
 
     ctx = lbl_eu_80606E34;
     if (ctx) {
-        char buf[0x240];
-        u32* cfg = (u32*)config;
-        sprintf(buf + 0x30, lbl_eu_8051CBA8,
-                cfg[0x1C/4], cfg[0x20/4], cfg[0x24/4],
-                cfg[0x2C/4], cfg[0x30/4], cfg[0x38/4],
-                cfg[0x3C/4], cfg[0x40/4], cfg[0x44/4], cfg[0x48/4]);
-        *(void**)(lbl_eu_80567FAC + 0x0C) = (void*)buf;
+        sprintf(buf, lbl_eu_8051CBA8,
+                ((u32*)config)[1], ((u32*)config)[2], ((u32*)config)[3],
+                ((u32*)config)[4], ((u32*)config)[5], ((u32*)config)[6],
+                ((u32*)config)[7], ((u32*)config)[8], ((u32*)config)[9],
+                ((u32*)config)[0xB], ((u32*)config)[0xC],
+                ((u32*)config)[0xE], ((u32*)config)[0xF],
+                ((u32*)config)[0x10], ((u32*)config)[0x11],
+                ((u32*)config)[0x12]);
+        *(void**)(lbl_eu_80567FAC + 0x0C) = buf;
         vtbl = *(void**)ctx;
         trace = *(void(**)(void*, void*))((u8*)vtbl + 0x24);
         trace(ctx, lbl_eu_80567FAC + 4);
     }
 
-    hnTable = (u32*)(lbl_eu_80606E38 + 0x1FC);
-    if (!FIELD(int, config, 4)) {
-        SFLIB_SetErr(0, 0xff000204);
-        return 0;
-    }
-    if (FIELD(u32, config, 0x48) < 0x39D0) {
-        SFLIB_SetErr(0, 0xff000205);
-        return 0;
+    /* validate config: stream type and minimum work size */
+    err = 0;
+    if (FIELD(int, config, 4) == 0) {
+        err = SFLIB_SetErr(0, 0xff000204);
+    } else if (FIELD(u32, config, 0x48) < 0x39D0) {
+        err = SFLIB_SetErr(0, 0xff000205);
     }
 
-    slot = -1;
-    for (i = 0; i < 8; i++) {
-        if (!hnTable[i]) { slot = i; break; }
+    hn = 0;
+    if (err == 0) {
+        /* find a free handle-table slot (unrolled 8-entry scan) */
+        u32* hnTable = (u32*)(lbl_eu_80606E38 + 0x1FC);
+        if (hnTable[0] == 0) slot = 0;
+        else if (hnTable[1] == 0) slot = 1;
+        else if (hnTable[2] == 0) slot = 2;
+        else if (hnTable[3] == 0) slot = 3;
+        else if (hnTable[4] == 0) slot = 4;
+        else if (hnTable[5] == 0) slot = 5;
+        else if (hnTable[6] == 0) slot = 6;
+        else if (hnTable[7] == 0) slot = 7;
+        else slot = -1;
+        if (slot == -1) {
+            SFLIB_SetErr(0, 0xff000206);
+            hn = 0;
+        } else {
+            hn = (int)sfply_InitHn(config, extra);
+            hnTable[slot] = (u32)hn;
+        }
     }
-    if (slot == -1) {
-        SFLIB_SetErr(0, 0xff000206);
-        return 0;
-    }
-
-    hn = sfply_InitHn(config, extra);
-    hnTable[slot] = (u32)hn;
 
     ctx = lbl_eu_80606E34;
     if (ctx) {
-        // trace end
+        *(void**)(lbl_eu_80567FAC + 0x74) = (void*)hn;
+        vtbl = *(void**)ctx;
+        trace = *(void(**)(void*, void*))((u8*)vtbl + 0x24);
+        trace(ctx, lbl_eu_80567FAC + 0x6C);
     }
-    return (int)hn;
+    return hn;
 }
 
 // ---------------------------------------------------------------------------
 // sfply_InitHn
 // ---------------------------------------------------------------------------
 void* sfply_InitHn(void* config, void* extra) {
-    u8* workBuf = FIELD(u8*, config, 0x44);
+    u8* work = FIELD(u8*, config, 0x44);
     u32 workSize = FIELD(u32, config, 0x48);
-    u8* aligned;
-    u8 *dst, *src;
     int i;
 
-    if (!workBuf) return NULL;
-    if ((int)workSize <= 0 || workSize > 0x73A0) return NULL;
-    if (lbl_eu_80619BA4 && lbl_eu_80619BA4 != workSize) return NULL;
+    if (!work) return NULL;
+    if (workSize <= 0 || (u32)workSize > 0x73A0) return NULL;
+    if (lbl_eu_80619BA4 != 0 && lbl_eu_80619BA4 != workSize) return NULL;
     lbl_eu_80619BA4 = workSize;
 
-    UTY_MemsetDword(workBuf, 0, workSize >> 2);
-    aligned = (u8*)(((u32)workBuf + 0x1F) & ~0x1F);
+    UTY_MemsetDword(work, 0, workSize >> 2);
 
-    FIELD(int, aligned, 0x58) = 0;
-    FIELD(int, aligned, 0x54) = 0;
-
-    // Copy config (unrolled 10-iteration loop)
-    dst = aligned - 4;
-    src = (u8*)config - 4;
-    for (i = 0; i < 10; i++) {
-        u32 a = *(u32*)(src + 4);
-        u32 b = *(u32*)(src + 8);
-        *(u32*)(dst + 4) = a;
-        *(u32*)(dst + 8) = b;
-        src += 8; dst += 8;
-    }
-
-    FIELD(int, aligned, 0x50) = 1;
-    FIELD(int, aligned, 0x5C) = 0;
-    FIELD(int, aligned, 0x60) = 0;
-    FIELD(int, aligned, 0x64) = 0;
-    FIELD(int, aligned, 0x68) = 0;
-    FIELD(int, aligned, 0x6C) = 0;
-    FIELD(int, aligned, 0x70) = 0;
-
-    SFHDS_InitFhd(aligned + 0x88);
-    UTY_MemsetDword(aligned + 0x91C, 0, 0x10);
-    FIELD(int, aligned, 0x91C) = 0;
-    FIELD(int, aligned, 0x920) = 0;
-    FIELD(int, aligned, 0x924) = 0;
-    FIELD(int, aligned, 0x928) = 0;
-    FIELD(int, aligned, 0x92C) = 0;
-    FIELD(int, aligned, 0x930) = 0;
-    FIELD(int, aligned, 0x934) = 0;
-    FIELD(int, aligned, 0x938) = 1;
-    FIELD(int, aligned, 0x93C) = 0;
-    FIELD(int, aligned, 0x940) = -1;
-    FIELD(int, aligned, 0x944) = -1;
-    FIELD(int, aligned, 0x948) = -1;
-
-    sfply_InitPlyInf(aligned + 0x960);
-
-    UTY_MemsetDword(aligned + 0x26A0, 0, 0x38);
     {
-        u8* tmr = aligned + 0x26A0;
-        for (i = 0; i < 5; i++) { SFTMR_InitTsum(tmr); tmr += 0x20; }
+        u8* hn = (u8*)(((u32)work + 0x1F) & ~0x1F);
+        u32* src;
+        u32* dst;
+        u8* tmr;
+
+        FIELD(int, hn, 0x58) = 0;
+        FIELD(int, hn, 0x54) = 0;
+
+        /* align the stream-position field in the config, then clone the
+           config header (0x50 bytes) into the handle */
+        FIELD(u32, config, 4) = (FIELD(u32, config, 4) + 0x1F) & ~0x1F;
+        src = (u32*)((u8*)config - 4);
+        dst = (u32*)((u8*)hn - 4);
+        for (i = 0; i < 10; i++) {
+            dst[1] = src[1];
+            dst[2] = src[2];
+            src += 2;
+            dst += 2;
+        }
+
+        FIELD(int, hn, 0x50) = 1;
+        FIELD(int, hn, 0x5C) = 0;
+        FIELD(int, hn, 0x60) = 0;
+        FIELD(int, hn, 0x64) = 0;
+        FIELD(int, hn, 0x68) = 0;
+        FIELD(int, hn, 0x6C) = 0;
+        FIELD(int, hn, 0x70) = 0;
+
+        SFHDS_InitFhd(hn + 0x88);
+
+        UTY_MemsetDword(hn + 0x91C, 0, 0x10);
+        FIELD(int, hn, 0x91C) = 0;
+        FIELD(int, hn, 0x920) = 0;
+        FIELD(int, hn, 0x924) = 0;
+        FIELD(int, hn, 0x928) = 0;
+        FIELD(int, hn, 0x92C) = 0;
+        FIELD(int, hn, 0x930) = 0;
+        FIELD(int, hn, 0x934) = 0;
+        FIELD(int, hn, 0x938) = 1;
+        FIELD(int, hn, 0x93C) = 0;
+        FIELD(int, hn, 0x940) = -1;
+        FIELD(int, hn, 0x944) = -1;
+        FIELD(int, hn, 0x948) = -1;
+
+        sfply_InitPlyInf(hn + 0x960);
+
+        UTY_MemsetDword(hn + 0x26A0, 0, 0x38);
+        tmr = hn + 0x26A0;
+        for (i = 0; i < 5; i++) {
+            SFTMR_InitTsum(tmr);
+            tmr += 0x20;
+        }
+        SFTMR_InitTsum(hn + 0x2740);
+
+        FIELD(int, hn, 0x2764) = 0;
+        FIELD(int, hn, 0x2760) = 0;
+        FIELD(int, hn, 0x276C) = 0;
+        FIELD(int, hn, 0x2768) = 0;
+        FIELD(int, hn, 0x2774) = 0;
+        FIELD(int, hn, 0x2770) = 0;
+        FIELD(int, hn, 0x2778) = 0;
+        FIELD(float, hn, 0x277C) = lbl_eu_8051CBA4;
+
+        fn_803C34DC(hn + 0xA08);
+        MEM_Copy(hn + 0xA1C, lbl_eu_80606E38, 0x190);
+        MEM_Copy(hn + 0xBAC, lbl_eu_80606E38, 0x190);
+        memset(hn + 0xD3C, 0, 0x5C);
+        FIELD(int, hn, 0xD8C) = 0x7FFFFFFF;
+        SFTIM_InitHn(hn, hn + 0xD98);
+
+        if (SFBUF_InitHn(hn, hn + 0x13B8, config)) return NULL;
+
+        SFTRN_InitHn(hn, hn + 0x1FD8, config, extra);
+        SFSEEKI_InitHn(hn + 0x2680);
+        SFSEE_InitHn(hn + 0x2670);
+        if (SFTRN_CallTrSetup(hn, 3)) return NULL;
+
+        FIELD(int, hn, 0x58) = 1;
+        FIELD(int, hn, 0x54) = 1;
+        return hn;
     }
-    SFTMR_InitTsum(aligned + 0x2740);
-
-    FIELD(int, aligned, 0x2764) = 0;
-    FIELD(int, aligned, 0x2760) = 0;
-    FIELD(int, aligned, 0x276C) = 0;
-    FIELD(int, aligned, 0x2768) = 0;
-    FIELD(int, aligned, 0x2774) = 0;
-    FIELD(int, aligned, 0x2770) = 0;
-    FIELD(int, aligned, 0x2778) = 0;
-    FIELD(float, aligned, 0x277C) = lbl_eu_8051CBA4;
-
-    fn_803C34DC(aligned + 0xA08);
-    MEM_Copy(aligned + 0xA1C, lbl_eu_80606E38, 0x190);
-    MEM_Copy(aligned + 0xBAC, lbl_eu_80606E38, 0x190);
-    memset(aligned + 0xD3C, 0, 0x5C);
-    FIELD(int, aligned, 0xD8C) = 0x7FFFFFFF;
-    SFTIM_InitHn(aligned, aligned + 0xD98);
-
-    if (SFBUF_InitHn(aligned, aligned + 0x13B8, config)) return NULL;
-
-    SFTRN_InitHn(aligned, aligned + 0x1FD8, config, extra);
-    SFSEEKI_InitHn(aligned + 0x2680);
-    SFSEE_InitHn(aligned + 0x2670);
-    if (SFTRN_CallTrSetup(aligned, 3)) return NULL;
-
-    FIELD(int, aligned, 0x58) = 1;
-    FIELD(int, aligned, 0x54) = 1;
-    return aligned;
 }
 
 // ---------------------------------------------------------------------------
@@ -867,10 +892,13 @@ void sfply_InitPlyInf(void* self) {
 // SFPLY_AddDecPic
 // ---------------------------------------------------------------------------
 void SFPLY_AddDecPic(void* self, int delta, void* param) {
-    void (*cb)(void*, void*, u32*) = *(void(**)(void*, void*, u32*))((u8*)self + 0xD6C);
-    FIELD(u32, self, 0x960) += delta;
-    if (cb == NULL) return;
-    cb(FIELD(void*, self, 0xD70), param, (u32*)((u8*)self + 0x960));
+    void (*cb)(void*, void*, u32*) = *(void (**)(void*, void*, u32*))((u8*)self + 0xD6C);
+    volatile u32* pCount = (volatile u32*)((u8*)self + 0x960);
+    u32 count = *pCount + delta;
+    *pCount = count;
+    if (cb != NULL) {
+        cb(FIELD(void*, self, 0xD70), param, (u32*)((u8*)self + 0x960));
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -889,17 +917,14 @@ void SFPLY_AddSkipPic(void* self, int delta, void* param) {
 // SFD_Destroy
 // ---------------------------------------------------------------------------
 int SFD_Destroy(void* self) {
+    SfdGlob* g;
     int result;
     void* cs;
     void* ctx;
     void* vtbl;
     void (*trace)(void*, void*);
-    void* hnTable;
-    int i;
-
     if (SFLIB_CheckHn(self)) {
-        SFLIB_SetErr(0, 0xff000131);
-        return 0;
+        return SFLIB_SetErr(0, 0xff000131);
     }
 
     ctx = lbl_eu_80606E34;
@@ -912,21 +937,31 @@ int SFD_Destroy(void* self) {
 
     if (FIELD(int, self, 0x54) == 1) {
         SFBUF_SetTermFlg(self, FIELD(int, self, 0x1FEC), 0);
-    } else if (FIELD(int, self, 0x54) == 4) {
-        int tr = SFTRN_CallTrtTrif(self, 7, 7, 0, 0);
-        if (tr) goto afterReset;
+    } else {
+        int tr;
+        if (FIELD(int, self, 0x54) == 4) {
+            tr = SFTRN_CallTrtTrif(self, 7, 7, 0, 0);
+            if (tr == 0) {
+                goto parkFields;
+            }
+            goto trCheck;
+        }
+        goto parkFields;
+parkFields:
+        /* park in state 1, then run the full reset inline */
         FIELD(int, self, 0x54) = 1;
+        tr = 0;
         FIELD(int, self, 0x58) = 1;
+trCheck:
+        if (tr == 0) {
+            g = SFD_GLOB;
+            FIELD(int, self, 0x58) = 0;
+            FIELD(int, self, 0x54) = 0;
+            g->resetFlg = 1;
+            sfply_ResetHn(self);
+            g->resetFlg = 0;
+        }
     }
-    {
-        u32* rf = (u32*)(lbl_eu_80606E38 + 0x1F0);
-        FIELD(int, self, 0x58) = 0;
-        FIELD(int, self, 0x54) = 0;
-        *rf = 1;
-        sfply_ResetHn(self);
-        *rf = 0;
-    }
-afterReset:
     SFHDS_FinishFhd((u8*)self + 0x88);
     SFBUF_DestroySj(self);
     cs = NULL;
@@ -937,9 +972,12 @@ afterReset:
     result = SFTRN_CallTrSetup(self, 4);
     cs = NULL;
     SFLIB_LockCs(&cs);
-    hnTable = lbl_eu_80606E38 + 0x1FC;
-    for (i = 0; i < 8; i++) {
-        if (((void**)hnTable)[i] == self) ((void**)hnTable)[i] = NULL;
+    {
+        /* clear any handle-table slot still pointing at us */
+        int i;
+        for (i = 0; i < 8; i++) {
+            if (SFD_GLOB->hnSlots[i] == self) SFD_GLOB->hnSlots[i] = NULL;
+        }
     }
     SFLIB_UnlockCs(&cs);
 
@@ -1005,7 +1043,8 @@ int fn_803CD484(void* self) {
 // SFD_Stop
 // ---------------------------------------------------------------------------
 int SFD_Stop(void* self) {
-    int result = 0;
+    SfdGlob* g;
+    int result;
     void* ctx;
     void* vtbl;
     void (*trace)(void*, void*);
@@ -1028,11 +1067,10 @@ int SFD_Stop(void* self) {
         int tr;
         if (FIELD(int, self, 0x54) == 4) {
             tr = SFTRN_CallTrtTrif(self, 7, 7, 0, 0);
-            if (tr != 0) {
-                goto stopCheck;
-            } else {
+            if (tr == 0) {
                 goto stopFields;
             }
+            goto stopCheck;
         }
         goto stopFields;
 stopFields:
@@ -1043,17 +1081,16 @@ stopCheck:
         if (tr != 0) {
             result = tr;
         } else {
+            /* run the protected reset */
+            g = SFD_GLOB;
             result = 0;
+            FIELD(int, self, 0x58) = 0;
+            FIELD(int, self, 0x54) = 0;
+            g->resetFlg = 1;
             {
-                u32* rf = (u32*)(lbl_eu_80606E38 + 0x1F0);
-                FIELD(int, self, 0x58) = 0;
-                FIELD(int, self, 0x54) = 0;
-                *rf = 1;
-                {
-                    int ret = sfply_ResetHn(self);
-                    *rf = 0;
-                    if (ret != 0) result = ret;
-                }
+                int ret = sfply_ResetHn(self);
+                g->resetFlg = 0;
+                if (ret != 0) result = ret;
             }
         }
     }
@@ -1177,10 +1214,10 @@ out:
 // SFD_GetFrm
 // ---------------------------------------------------------------------------
 int SFD_GetFrm(void* self, void** outFrm) {
-    int result = 0;
     void* ctx;
     void* vtbl;
     void (*trace)(void*, void*);
+    int result = 0;
 
     *outFrm = NULL;
     if (SFLIB_CheckHn(self)) {
@@ -1240,9 +1277,8 @@ int SFD_GetFrm(void* self, void** outFrm) {
         }
     }
 
-    {
-        void (*vblCb)(void*, void*) = (void (*)(void*, void*))lbl_eu_80619BA0;
-        if (vblCb) vblCb(self, *outFrm);
+    if (lbl_eu_80619BA0 != NULL) {
+        lbl_eu_80619BA0(self, *outFrm);
     }
     return result;
 }

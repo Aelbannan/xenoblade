@@ -3,6 +3,15 @@
 // return type vs include/CfGameManager.hpp's declaration; this TU's own
 // static member definition emits the symbol.
 #define getInstance__Q22cf14CBattleManagerFv battleManagerSingletonGetUnused
+// The CfObjectMove.hpp / CAIAction.hpp chain carries two incompatible
+// extern "C" forms of func_800BE12C ((u8*,...) vs (void*,...)). Pre-include
+// CAIAction.hpp with its void* form renamed out of the way, so the later
+// chain inclusion (pragma once) only leaves the u8* form visible.
+#define func_800BE12C battleManagerAiActionStatusVoidUnused
+#define func_80174C98 battleManagerAiActionWalkerVoidUnused
+#include "kyoshin/cf/object/CAIAction.hpp"
+#undef func_80174C98
+#undef func_800BE12C
 #include "kyoshin/cf/CBattleManager.hpp"
 #undef getInstance__Q22cf14CBattleManagerFv
 #include "monolib/math/CVec3.hpp"
@@ -21,7 +30,12 @@ struct BMIf {
 // getter with an incompatible return type (see the guard on the
 // CBattleManager.hpp include above).
 #define getInstance__Q22cf14CBattleManagerFv battleManagerSingletonGetUnused2
+// CfObjectPc.hpp carries its own provisional cf::CfSoundMan definition that
+// conflicts with CfSoundMan.hpp's (included below); rename it out of the way
+// so this TU binds to the CfSoundMan.hpp form.
+#define CfSoundMan battleManagerPcSoundManUnused
 #include "kyoshin/cf/object/CfObjectPc.hpp"
+#undef CfSoundMan
 #undef getInstance__Q22cf14CBattleManagerFv
 #undef func_800BB618
 #define func_800BB618 battleManagerEnemyResourceForwardUnused
@@ -71,16 +85,42 @@ struct BMIf {
 #undef func_800BE12C
 #undef func_800BCFA0
 #undef func_800BB618
+// CfSoundMan.hpp's import of func_800821F8__Q22cf13CfGameManagerFv uses a
+// different UnkClass_800821F8Snd return type than CfGameManager.hpp's decl
+// already visible here; alias it out (this TU calls the CfGameManager form).
+// CfSoundMan.hpp's import of func_800821F8__Q22cf13CfGameManagerFv uses a
+// different UnkClass_800821F8Snd return type than CfGameManager.hpp's decl
+// already visible here; alias it out (this TU calls the CfGameManager form).
+#define func_800821F8__Q22cf13CfGameManagerFv battleManagerSndGameMgrImportUnused
+// CfSoundMan.hpp's func_8049603C(int) return-type clashes with CSuddenCommu.hpp's
+// void* form (already visible via CBattleManager.hpp); unused in this TU.
+#define func_8049603C battleManagerSndCamViewUnused
+#define func_80496264 battleManagerSndPoseBlockUnused
 #include "kyoshin/cf/CfSoundMan.hpp"
+#undef func_800821F8__Q22cf13CfGameManagerFv
+#undef func_8049603C
+#undef func_80496264
 // The include/kyoshin/cf/CfGameManager.hpp C-ABI import tail conflicts with
 // the cfsys/chain walker decls already visible in this TU for the few names
 // it shares; guard only those (call sites bind to the global-scope decls,
 // same retail symbol names).
 #define func_80496288 cfgGameMgrImportUnused
 #define func_800D9354 cfgGameMgr9354Unused
+#define func_8049603C battleManagerGameMgrCamViewUnused
+// CfGameManager.hpp's C-ABI 'void func_800AD860(void*)' form conflicts with the
+// C++ 'void*' decl from CfObjectMove.hpp already visible here; guard it (the
+// call sites bind to the global-scope C++ decl, same retail symbol).
+#define func_800AD860 battleManagerGameMgrAd860Unused
+// CfGameManager.hpp's 'u32 func_801412D0(u32)' clashes with CVision.hpp's
+// (void*) form already visible here; guard it (call sites use the void* form).
+#define func_801412D0 battleManagerGameMgr1412D0Unused
 #include "kyoshin/cf/CfGameManager.hpp"
+#undef func_801412D0
 #undef func_800D9354
 #undef func_80496288
+#undef func_8049603C
+#undef func_800AD860
+// (func_801412D0 undef'd directly after the include above)
 #include "monolib/work.hpp"
 
 // Arts-data row returned by func_8009EC9C: the per-entry table scanned by
@@ -88,6 +128,11 @@ struct BMIf {
 // call reloc binds to the retail-unmangled name (declared in CArtsInfo.hpp).
 extern "C" void* func_8009EC9C(u32);
 extern void func_8009D7E4(UNKTYPE* r3, u32 r4);
+
+// Status add/remove helper (retail func_800BE12C). The shared headers carry
+// two incompatible extern "C" forms ((u8*,...) and (void*,...)); this TU uses
+// the u8* form throughout, declared once here.
+extern "C" void func_800BE12C(u8* obj, int a, int b, int c, int d);
 
 // Game state check function (name already contains __Fi; extern "C" prevents
 // MWCC from double-mangling it to func_8006EF04__Fi__Fi).
@@ -745,8 +790,8 @@ static __inline cf::CfObjectMove* getObjectMove(void* actorAccessor) {
 extern "C" int mtRand__Q22ml4mathFii(int a, int b);
 extern "C" u32 getBdatStringColumnValue(void* pData, const char* pColumnName, int index);  // u32 matches CfObjectPoint.hpp
 extern "C" void* getFP__FPCc(const char* str);
+// func_8003AA34: already declared (void form) by a visible shared header.
 extern "C" u8 lbl_eu_80573EEC[];
-extern "C" void* func_8003AA34();  // void* matches CfGimmick.hpp/CfBdat.hpp
 extern "C" void func_80135380(u8 v);
 extern "C" void* func_80149330(void*, u32, u32, u32, u32);
 extern "C" s32 func_8015B130(s32 a, u16 b);
@@ -10065,7 +10110,7 @@ static inline f32 bmS32ToF32(s32 v, cf::CfActorF64Conv& slot) {
 }
 
 // Iterates through one of the actor lists (mActorList3 for the flags&2 path,
-// else mActorList2) and broadcasts the arts-damage pair (arg2/arg3/arg4 as
+// else mActorList2) and broadcasts the arts-damage triple (arg2/arg3/arg4 as
 // floats) to every idle actor; when arg5 == 1 the broadcast is gated on the
 // actor's sub-object id (vtable slot 0x4C) matching arg6.
 extern "C" void func_800E9FE4(void* self, void* arg1, s32 arg2, s32 arg3, s32 arg4, s32 arg5, void* arg6) {
@@ -10079,8 +10124,8 @@ extern "C" void func_800E9FE4(void* self, void* arg1, s32 arg2, s32 arg3, s32 ar
         if (arg4 != 0) arg4 = 1;
     }
 
-    // Two conversion slots (the retail reuses slot A for the third value);
-    // declared here so MWCC hoists the 0x4330 stores to the prologue.
+    // Two int->float conversion slots; the low words are written once and
+    // only the sign-flipped high word changes per value.
     cf::CfActorF64Conv cA, cB;
     cA.w[0] = 0x43300000;
     cB.w[0] = 0x43300000;
@@ -10088,12 +10133,13 @@ extern "C" void func_800E9FE4(void* self, void* arg1, s32 arg2, s32 arg3, s32 ar
     cf::CBattleManager* mgr = (cf::CBattleManager*)self;
     u32 flags = ((BattleObjAccessor*)target)->field_3f00;
     if (flags & 0x2) {
-        _reslist_node<cf::CfObjectActor*>* cur = mgr->mActorList3.mStartNodePtr->mNext;
-        while (cur != mgr->mActorList3.mStartNodePtr) {
-            cf::CfObjectActor* obj = cur->mItem;
+        _reslist_node<cf::CfObjectActor*>* cur = mgr->mActorList3.mStartNodePtr;
+        cf::CfObjectActor* obj;
+        while ((cur = cur->mNext) != mgr->mActorList3.mStartNodePtr) {
+            obj = cur->mItem;
             if (obj != target && ((cf::CVisionBattleObj*)obj)->vf2BC() == 0) {
                 if (arg5 == 1) {
-                    if (((cf::CChainBattleObjB38*)obj)->mSub.v17() == (u32)(uintptr_t)arg6) {
+                    if ((u32)(uintptr_t)arg6 == ((cf::CChainBattleObjB38*)obj)->mSub.v17()) {
                         cA.w[1] = (u32)arg2 ^ 0x80000000;
                         cB.w[1] = (u32)arg3 ^ 0x80000000;
                         f32 f1 = (f32)(cA.d - lbl_eu_80666DE0);
@@ -10112,15 +10158,15 @@ extern "C" void func_800E9FE4(void* self, void* arg1, s32 arg2, s32 arg3, s32 ar
                     ((cf::CVisionBattleObj*)obj)->vf2C4(target, f1, f2, f3);
                 }
             }
-            cur = cur->mNext;
         }
     } else {
-        _reslist_node<cf::CfObjectActor*>* cur = mgr->mActorList2.mStartNodePtr->mNext;
-        while (cur != mgr->mActorList2.mStartNodePtr) {
-            cf::CfObjectActor* obj = cur->mItem;
+        _reslist_node<cf::CfObjectActor*>* cur = mgr->mActorList2.mStartNodePtr;
+        cf::CfObjectActor* obj;
+        while ((cur = cur->mNext) != mgr->mActorList2.mStartNodePtr) {
+            obj = cur->mItem;
             if (obj != target && ((cf::CVisionBattleObj*)obj)->vf2BC() == 0) {
                 if (arg5 == 1) {
-                    if (((cf::CChainBattleObjB38*)obj)->mSub.v17() == (u32)(uintptr_t)arg6) {
+                    if ((u32)(uintptr_t)arg6 == ((cf::CChainBattleObjB38*)obj)->mSub.v17()) {
                         cA.w[1] = (u32)arg2 ^ 0x80000000;
                         cB.w[1] = (u32)arg3 ^ 0x80000000;
                         f32 f1 = (f32)(cA.d - lbl_eu_80666DE0);
@@ -10139,7 +10185,6 @@ extern "C" void func_800E9FE4(void* self, void* arg1, s32 arg2, s32 arg3, s32 ar
                     ((cf::CVisionBattleObj*)obj)->vf2C4(target, f1, f2, f3);
                 }
             }
-            cur = cur->mNext;
         }
     }
 }
@@ -11412,93 +11457,73 @@ void func_800F3C08(cf::CBattleManager* mgr, u32 arg) {
 // Searches through unk94 slot array for a matching key. If found, increments count.
 // If not found, inserts into the first empty slot (key==0) with count=1.
 void func_800F3C6C(cf::CBattleManager* mgr, s32 key) {
-    // Gate: vtable slot 0x28 (func_800885F0) with mask 2. The virtual-dispatch
-    // call through the interface emits the retail lwz r12 / lwz r12,0x28 / bctrl
-    // pattern.
+    // Gate: vtable slot 0x28 (func_800885F0) with mask 2.
     if (!((BMVtIf828*)mgr)->v008(2)) return;
 
-    // 32 slots of 8 bytes each; retail processes 4 slots per counted iteration
-    // (single slot pointer advanced 0x20 per iteration).
-    cf::CBattleManager_Struct1* slots = mgr->unk94.unk0;
-    s32 bestFit = -1;
+    // Scan all 32 slots for a matching key (increment its count), else
+    // remember the first empty slot and insert there.
+    cf::CBattleManager_Struct1* slot = mgr->unk94.unk0;
+    s32 best = -1;
 
-    for (s32 i = 0; i < 8; i++) {
-        if (slots[0].key == key) { slots[0].count++; return; }
-        if (slots[0].key == 0 && bestFit < 0) bestFit = i * 4 + 0;
-        if (slots[1].key == key) { slots[1].count++; return; }
-        if (slots[1].key == 0 && bestFit < 0) bestFit = i * 4 + 1;
-        if (slots[2].key == key) { slots[2].count++; return; }
-        if (slots[2].key == 0 && bestFit < 0) bestFit = i * 4 + 2;
-        if (slots[3].key == key) { slots[3].count++; return; }
-        if (slots[3].key == 0 && bestFit < 0) bestFit = i * 4 + 3;
-        slots += 4;
+    for (s32 i = 0; i < 32; i++) {
+        if (slot->key == key) {
+            slot->count++;
+            return;
+        }
+        if (slot->key == 0 && best < 0) {
+            best = i;
+        }
+        slot++;
     }
 
     // Insert into the first empty slot: store the key and bump the count
-    // (read-modify-write, retail lbz/addi/stb shape).
-    if (bestFit != -1) {
-        cf::CBattleManager_Struct1* slot = &mgr->unk94.unk0[bestFit];
-        slot->key = key;
-        slot->count++;
-    }
+    // (retail lbz/addi/stb read-modify-write).
+    if (best == -1) return;
+    cf::CBattleManager_Struct1* chosen = &mgr->unk94.unk0[best];
+    chosen->key = key;
+    chosen->count++;
 }
-// Searches for an actor with field_0x15f0 matching arg1.
-// First checks mActorList3 directly; if empty, checks mActorList1 via vtable call.
-// Returns 1 if found, 0 otherwise.
-// Searches for an actor with field_0x15f0 matching arg1.
-// First checks mActorList3 directly; if non-empty, checks mActorList1 via vtable call.
+// Searches for an actor with field_0x15F0 matching arg1.
+// Pass 1 scans mActorList3 directly; pass 2 counts mActorList3 (empty list
+// falls through); pass 3 scans mActorList1, resolving each actor's move
+// sub-object probe through func_800B708C/func_8016FE34.
 // Returns 1 if found, 0 otherwise.
 s32 func_800F3E8C(cf::CBattleManager* mgr, s32 arg1) {
-    s32 result = 0;
-
-    // First pass: search mActorList3 (sentinel at +0x48)
-    {
-        _reslist_node<cf::CfObjectActor*>* cur =
-            mgr->mActorList3.mStartNodePtr->mNext;
-        while (cur != mgr->mActorList3.mStartNodePtr) {
-            cf::CfObjectActor* actor = cur->mItem;
-            if (*(s32*)((u8*)actor + 0x15f0) == arg1) { result = 1; return result; }
-            cur = cur->mNext;
-        }
+    // Pass 1: search mActorList3 for a direct type-id match.
+    _reslist_node<cf::CfObjectActor*>* cur = mgr->mActorList3.mStartNodePtr;
+    cur = cur->mNext;
+    while (cur != mgr->mActorList3.mStartNodePtr) {
+        if ((s32)((BattleScanActorView*)cur->mItem)->field_15F0 == arg1)
+            return 1;
+        cur = cur->mNext;
     }
 
-    // Second pass: count mActorList3 size; if non-zero, return 0
-    {
-        _reslist_node<cf::CfObjectActor*>* sentinel = mgr->mActorList3.mStartNodePtr;
-        _reslist_node<cf::CfObjectActor*>* cur = sentinel->mNext;
-        s32 count = 0;
-        while (cur != sentinel) {
-            cur = cur->mNext;
-            count++;
-        }
-        if (count != 0) return result;
+    // Pass 2: count mActorList3; a non-empty list means no candidate exists.
+    s32 count = 0;
+    cur = mgr->mActorList3.mStartNodePtr->mNext;
+    while (cur != mgr->mActorList3.mStartNodePtr) {
+        count++;
+        cur = cur->mNext;
     }
+    if (count != 0) return 0;
 
-    // Third pass: iterate mActorList1, vtable[0x4c] via secondary vtable +0x3e9c
-    {
-        extern void* func_800B708C(int);
-        _reslist_node<cf::CfObjectActor*>* sentinel = mgr->mActorList1.mStartNodePtr;
-        _reslist_node<cf::CfObjectActor*>* cur = sentinel->mNext;
-        while (cur != sentinel) {
-            cf::CfObjectActor* actor = cur->mItem;
-            void* base = (u8*)actor + 0x3e9c;
-            void** secondaryVtbl = *(void***)base;
-            typedef s32 (*VFunc4C)(void*);
-            s32 vresult = ((VFunc4C)secondaryVtbl[0x4C / 4])(base);
-            if (vresult != 0) {
-                void* r3 = func_800B708C(vresult);
-                void* found = func_8016FE34(r3);
-                if (found != nullptr && (*(u32*)((u8*)found + 0x3f00) & 0x04)
-                    && *(s32*)((u8*)found + 0x15f0) == arg1) {
-                    result = 1;
-                    return result;
-                }
+    // Pass 3: scan mActorList1 via each actor's move sub-object probe.
+    cur = mgr->mActorList1.mStartNodePtr->mNext;
+    while (cur != mgr->mActorList1.mStartNodePtr) {
+        BattleScanActorView* actor = (BattleScanActorView*)cur->mItem;
+        s32 vresult = actor->field_3E9C.probeId();
+        if (vresult != 0) {
+            BattleScanStateView* found =
+                (BattleScanStateView*)func_8016FE34(func_800B708C(vresult));
+            if (found != nullptr && (found->field_3F00 & 4) &&
+                (s32)found->field_15F0 == arg1) {
+                return 1;
             }
-            cur = cur->mNext;
         }
+        cur = cur->mNext;
     }
 
-    return result;
+    return 0;
 }
 
 
@@ -11590,7 +11615,6 @@ check:
             mgr->mActorList2.mStartNodePtr->mNext;
         while (cur != mgr->mActorList2.mStartNodePtr) {
             cf::CfObjectActor* actor = cur->mItem;
-            extern void func_800BE12C(void*, int, int, int, int);
             func_800BE12C((u8*)actor + 0x3e9c, 0x31, 0, -1, 1);
             cur = cur->mNext;
         }

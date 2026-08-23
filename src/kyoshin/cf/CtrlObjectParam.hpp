@@ -9,13 +9,14 @@ extern "C" u32 getBdatStringColumnValue(void* pData, const char* pColumn, int in
 
 // C-ABI imports used by func_800A18A4 (bdat file lookup / bdat init hook).
 extern "C" void* getFP__FPCc(const char* name);
-extern "C" void func_8003AA34();
+extern "C" void* func_8003AA34();
 
 // Global data imports (MWCC does not mangle global-scope variable names).
 extern u32 lbl_eu_80663E88;    // work-buffer pointer (.sbss, sda21)
 extern u32 lbl_eu_80663E24;    // global state flag (.sbss, sda21, func_8009DBF4 bit-20 test)
 extern u32 lbl_eu_8052E9B0[];   // 0x90-byte .data object; its address is snapshot to the stack (.data, __ct__8009ED08)
-extern u32 lbl_eu_80664A10;     // CHelpManager singleton pointer (.sbss, func_800A18A4 byte flag at +0x16)
+namespace cf { struct CHelpManager; }
+extern cf::CHelpManager* lbl_eu_80664A10;  // CHelpManager singleton pointer (.sbss, func_800A18A4 byte flag at +0x16)
 
 // ── func_800A18A4 view: 8-word offset table (lbl_eu_804FBC90, .rodata) ────
 // Copied to a local as a struct so MWCC inlines the 8 lwz/stw pairs
@@ -29,11 +30,12 @@ extern u32 lbl_eu_804FBC70[8];   // arts-learn offset table A (.rodata, func_800
 extern u32 lbl_eu_804FBC50[8];   // arts-learn offset table B (.rodata, func_800A145C)
 extern u32 lbl_eu_806667C8;    // arts-learn table words (.sdata2, func_800A145C)
 extern u32 lbl_eu_806667CC;    // arts-learn table words (.sdata2, func_800A145C)
+extern u32 lbl_eu_80664158;   // arts-table bdat handle (.sbss, sda21, func_800A2AF0)
 extern u32 lbl_eu_806640F4;    // item/weapon bdat file pointer (.sbss, sda21)
 extern u32 lbl_eu_806640D8;    // arts bdat file pointer (.sbss, sda21, func_800A2DE8)
 extern void* lbl_eu_806640DC;   // arts bdat file pointer (.sbss, sda21, func_800A1E3C)
 extern u32 lbl_eu_806640F8;    // armor bdat file pointer (.sbss, sda21, func_8009D7F4)
-extern u32 lbl_eu_80664090;    // arts stat bdat file pointer (.sbss, sda21, func_800A0E64)
+extern void* lbl_eu_80664090;  // arts stat bdat file pointer (.sbss, sda21, func_800A0E64)
 extern char lbl_eu_804FBCB0[]; // bdat column-name string table (.rodata)
 extern f32 lbl_eu_806667A0;    // arts-set float constant (.sdata2, func_800A13C4)
 extern f32 lbl_eu_80666780;    // f32 scale constant (.sdata2, func_800A11A4 field_D4)
@@ -62,9 +64,9 @@ extern u32 lbl_eu_805280D8[4];  // arts stat column-name pointer table (.data, f
 // CfBdat.cpp / CActorParam.cpp / CItemBoxInfo.cpp). extern "C" keeps the
 // call-site relocs at the plain retail names (same convention as the
 // CfResPcImpl.hpp / CAIAction.hpp import blocks).
-extern "C" u32 func_80142074(u32 arg1, u16 arg2, u32 arg3);                     // CfBdat.cpp
+extern "C" u32 func_80142074(u32 arg1, u32 arg2, u32 arg3);                     // CfBdat.cpp
 
-extern "C" u32 func_80141E90(u32 param1, s16 param2, u32 param3, u32 param4);   // CfBdat.cpp
+extern "C" u32 func_80141E90(u32 param1, int param2, u32 param3, u32 param4);   // CfBdat.cpp
 
 extern "C" void func_80175A50(u8* value, u8* obj);                              // CActorParam.cpp
 
@@ -82,7 +84,9 @@ extern "C" void setArtsSlotRC(void* base, int artsId, int row, int slot);     //
 
 extern "C" u16 func_80158018(u16 value);                                        // CItem.cpp (arts level lookup)
 
-extern "C" void* CItem_initItemImplInstances(void* item);                       // CItem.cpp (per-category item-impl accessor)
+// NOTE: CItem_initItemImplInstances is declared (with an item-pointer form)
+// by kyoshin/CItemBoxInfo.hpp; include that header rather than redeclaring
+// it here (cf/CfGameManager.hpp already declares a no-arg form globally).
 
 extern "C" void* getAtkParam(void* base, int index);                           // CAttackSet.cpp (attack-parameter record lookup)
 
@@ -96,6 +100,13 @@ extern "C" u32 func_8025FB10(void* data, u32 flag);                          // 
 extern "C" void func_802618AC(u8* obj, int value);                           // code_8025FB10.cpp (clamped counter set)
 extern "C" void func_802617B8(u8* obj, u32 value, int flag);                // code_8025FB10.cpp (arts-slot write)
 extern "C" void func_8026187C(u8* obj, int value);                          // code_8025FB10.cpp (arts-change gate)
+
+// func_800A2AF0 helpers (code_8025F2E8.cpp / code_80280F44.cpp).
+extern "C" void func_eu_80263A24(void* dst, void* artsSet);                  // arts-set copy hook
+extern "C" void func_8025F528(void* artsSet, u32 row, u32 slot, u32 idx);   // slot fill
+extern "C" void func_8025F2E8(void* artsSet, u32 row, u32 slot);            // slot clear
+extern "C" void func_8025EE94(void* artsSet);                               // arts-set rebuild
+extern "C" void func_80280F44();                                            // post-scan tick
 
 extern "C" void func_80174AE8(void* self);                                  // CfMapItemManager.cpp (row-sync helper)
 extern "C" void func_80174B3C(void* self, u8 a, u8 b, u8 c);               // CfMapItemManager.cpp (row-sync helper)
@@ -645,6 +656,7 @@ namespace cf {
         u32 field_24;      // +0x24: count
         u32 field_28;      // +0x28: prev (owning row)
         u32 field_2C;      // +0x2C: next
+        u8  dataArea[0x20]; // +0x30: data area of the split-off node (func_800A3594)
     };
 
     struct CtrlObjectParamArtsList {
@@ -699,6 +711,33 @@ namespace cf {
         virtual void _v14(); virtual void _v18(); virtual void _v1C();
         virtual void _v20(); virtual void _v24();
         virtual u16 _v028(void* item, const char* str);
+    };
+
+    // ── func_800A30E4 dispatch: item-impl vtable slots 0x2C / 0x30 ────────
+    // Row fetch (0x2C, index 9) and row-count probe (0x30, index 10) on the
+    // object returned by CItem_initItemImplInstances.
+    struct CtrlObjectParamVt02CIf {
+        virtual void _v000(); virtual void _v004(); virtual void _v008();
+        virtual void _v00C(); virtual void _v010(); virtual void _v014();
+        virtual void _v018(); virtual void _v01C(); virtual void _v020();
+        virtual void* _v028(void* item, int index);   // offset 0x2C
+        virtual u16 _v02C(void* item);                // offset 0x30
+    };
+
+    // ── func_800A30E4 dispatch: sub-object at +0x184, vtable slot 0x6C ────
+    // The CActorParam-relative sub-object at +8 drives a slot-0x6C call with
+    // the stack arts table as argument (both for the entry and the actor).
+    struct CtrlObjectParamVt06CIf {
+        virtual void _v000(); virtual void _v004(); virtual void _v008();
+        virtual void _v00C(); virtual void _v010(); virtual void _v014();
+        virtual void _v018(); virtual void _v01C(); virtual void _v020();
+        virtual void _v024(); virtual void _v028(); virtual void _v02C();
+        virtual void _v030(); virtual void _v034(); virtual void _v038();
+        virtual void _v03C(); virtual void _v040(); virtual void _v044();
+        virtual void _v048(); virtual void _v04C(); virtual void _v050();
+        virtual void _v054(); virtual void _v058(); virtual void _v05C();
+        virtual void _v060();
+        virtual void _v064(void* table);              // offset 0x6C
     };
 
     // ── func_800A11A4 view: s16/u16 fields + CActorParam at +0x17C ────────
@@ -985,5 +1024,21 @@ namespace cf {
     struct CtrlObjectParamCopyBlock3 {   // 0x30 bytes
         u32 field_00[0xC];
     };
+
+    // ── func_800A2AF0 view: arts-set groups (at +0x3534, 11 x 0xC4) ────────
+    // Each group holds a dirty flag at +4 and five 0x20-byte slot records
+    // starting at +0x20 (tag word at the record head, u16 flag at +4).
+    struct CtrlObjectParamArtsGroupSlot {
+        u32 tag;                // +0x00 (group +0x20 + s*0x20): 0 = empty
+        u16 flag;               // +0x04
+        u8  pad_06[0x1A];
+    };
+    struct CtrlObjectParamArtsGroup {
+        u16 field_00;           // +0x00
+        u16 flag_04;            // +0x04 (rebuild trigger checked after the scan)
+        u8  pad_06[0x1A];
+        CtrlObjectParamArtsGroupSlot slots[5];   // +0x20..0xBF
+        u8  pad_C0[4];
+    };  // total 0xC4
 
 } // namespace cf

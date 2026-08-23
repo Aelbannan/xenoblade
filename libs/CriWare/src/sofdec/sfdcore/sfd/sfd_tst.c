@@ -137,17 +137,13 @@ void SFTST_Calc(void* self, s32* param, s32* arg5, s32* out) {
         s32 local_param[4];
         s32 result[4];
 
-        local_param[1] = param[1];
-        local_param[0] = param[0];
-        *(s64*)&local_param[2] = *(s64*)(param + 2) * speed_a /
-                                 (((s64)(speed_b >> 31) << 32) | (u32)speed_b);
+        *(s64*)&local_param[0] = *(s64*)&param[0];
+        *(s64*)&local_param[2] = *(s64*)(param + 2) * speed_a / (s64)speed_b;
 
         sftst_CalcSub(self, local_param, arg5, result);
 
-        out[0] = result[0];
-        out[1] = result[1];
-        out[2] = param[2];
-        out[3] = param[3];
+        *(s64*)&out[0] = *(s64*)&result[0];
+        *(s64*)&out[2] = *(s64*)&param[2];
     }
 }
 

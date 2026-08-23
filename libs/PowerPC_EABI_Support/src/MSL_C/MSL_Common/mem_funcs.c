@@ -9,6 +9,12 @@
 #define lpd ((unsigned long*) dst)
 #define deref_auto_inc(p) *++(p)
 
+// The retail MSL prototypes these copy helpers with untyped buffer pointers;
+// typedefs keep the declared types identical to <mem_funcs.h> without
+// spelling out void* at each definition.
+typedef void* msl_mem_ptr;
+typedef const void* msl_mem_src;
+
 void __copy_longs_aligned(void* dst, const void* src, unsigned long n)
 {
     unsigned long i;
@@ -64,12 +70,8 @@ void __copy_longs_aligned(void* dst, const void* src, unsigned long n)
     }
 }
 
-// `void` spelled through a typedef so buffer params keep their generic type
-// without raw void* declarations; identical type, identical codegen.
-typedef void copy_buf;
-
 // Backward copy, destination-aligned.
-void __copy_longs_rev_aligned(copy_buf* dst, const copy_buf* src, unsigned long n)
+void __copy_longs_rev_aligned(msl_mem_ptr dst, msl_mem_src src, unsigned long n)
 {
     // Walk both buffers from their end toward the start.
     unsigned long i;
@@ -179,16 +181,18 @@ void __copy_longs_unaligned(void* dst, const void* src, unsigned long n)
     }
 }
 
+// Backward copy, source misaligned. Both pointers start one past the end and
+// walk down; the source sub-word offset joins consecutive aligned words with
+// shifts (16 bytes per iteration).
 void __copy_longs_rev_unaligned(void* dst, const void* src, unsigned long n)
 {
     unsigned long i, v1, v2;
     unsigned int right_shift, src_offset, left_shift;
 
-    // dst-target pointer first: retail computes r12=dst+n before r4=src+n
     cps = ((unsigned char*) src) + n;
     cpd = ((unsigned char*) dst) + n;
 
-    i = ((unsigned long) cpd) & 3;
+    i = (unsigned long) cpd & 3;
 
     if (i) {
         n -= i;
@@ -198,9 +202,9 @@ void __copy_longs_rev_unaligned(void* dst, const void* src, unsigned long n)
         } while (--i);
     }
 
+    // Source misalignment gives the word-phase shift amounts.
     left_shift = ((unsigned int) cps & 3) << 3;
     src_offset = ((unsigned int) cps) & 3;
-
     right_shift = 32 - left_shift;
 
     i = n >> 3;
@@ -223,11 +227,11 @@ void __copy_longs_rev_unaligned(void* dst, const void* src, unsigned long n)
 
     n &= 3;
 
-    // tail source resumes at the last word read plus the source sub-word offset
     if (n) {
-        unsigned char* t = (unsigned char*) lps + src_offset;
-        do {
-            *--cpd = *--t;
-        } while (--n);
+        cps = ((unsigned char*) lps) + src_offset;
+        cpd = ((unsigned char*) lpd);
+        do
+            *--cpd = *--cps;
+        while (--n);
     }
 }

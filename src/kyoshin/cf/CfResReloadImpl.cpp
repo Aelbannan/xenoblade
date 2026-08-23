@@ -39,31 +39,19 @@ int checkTypeIsValid(cf::CfResReloadImpl* arg) {
 // match the parent resource (+0x70) and the +0x40 vtable slot of the entry
 // object must be nonzero. Otherwise returns the normalized (field_08 >= 3)
 // flag computed by checkTypeIsValid's expression.
-int func_8016CE5C(cf::CfResReloadImpl* self) {
-    cf::CfResReloadParent* par = self->field_00;
-    if (!(par->field_64 & 0x4)) {
-        goto fail;
-    }
-    if (!(self->field_04 > lbl_eu_80667698)) {
-        goto fail;
-    }
-    if (self->field_08 != 1) {
-        goto fail;
-    }
-    if (!(par->field_6C & 0x20)) {
-        goto fail;
-    }
-    {
+int func_8016CE5C(const cf::CfResReloadImpl* self) {
+    // All parent accesses go through self->field_00 directly; retail reloads
+    // the parent pointer at every site (keeps self live in r31 instead).
+    if ((self->field_00->field_64 & 0x4) && self->field_04 > lbl_eu_80667698 &&
+        self->field_08 == 1 && (self->field_00->field_6C & 0x20)) {
         cf::CfResLookupEntry* e = func_80062EC4(self->field_0A);
-        u8* f4 = e->field_04;
-        if (f4 == self->field_00->field_70) {
+        if (e->field_04 == self->field_00->field_70) {
             cf::CfResEntryObjIf* obj = e->field_2C;
             if (obj->_v040() != 0) {
                 return 1;
             }
         }
     }
-fail:
     u32 t = self->field_08;
     return (int)(((t | 0xFFFFFFFCu) - ((t - 3u) >> 1)) >> 31);
 }
@@ -80,10 +68,9 @@ int func_8016CF24(cf::CfResReloadImpl* self) {
     if (self->field_1F == 0 && v != 0) {
         int h = func_80063A60(v);
         if (h != 0) {
-            // retail: addis/subi for h+0xBCFFF, lis/addi magic, mulhwu (magic
-            // first) + subf/srwi/add correction + extrwi; t is a CSE'd temp
-            u32 m = 0x5AC056B1u;
-            u32 q1 = __mulhwu(m, h + 0xBCFFF);
+            // retail: magic constant materialized into r3 first, h+0xBCFFF
+            // into r0 second (addis/subi), mulhwu + correction + extrwi.
+            u32 q1 = __mulhwu(0x5AC056B1u, h + 0xBCFFF);
             self->field_1F =
                 (u8)(((((h + 0xBCFFF - q1) >> 1) + q1) >> 19) & 0xFF);
         }
@@ -169,7 +156,9 @@ void func_8016D144(cf::CfResReloadImpl* self, int arg2, int arg3, int arg4) {
 // -1 when the index is invalid or the entry's +0x800 flag is clear. The
 // redundant r = -1 on the invalid-index path and the trailing != -1 check
 // are both present in retail.
-int func_8016D1D8(cf::CfResReloadImpl* self) {
+// const-qualified self: MWCC hoists the first member load (lha) above the
+// LR-spill store (see MWCC_CASES "const on the self parameter").
+int func_8016D1D8(const cf::CfResReloadImpl* self) {
     s16 v = self->field_0A;
     int r = -1;
     if (v < 0) {
@@ -180,10 +169,10 @@ int func_8016D1D8(cf::CfResReloadImpl* self) {
             r = e->field_32 + 5;
         }
     }
-    if (r != -1) {
-        return r;
+    if (r == -1) {
+        return -1;
     }
-    return -1;
+    return r;
 }
 
 // Iterates the two secondary-interface slots (+0x34 with 0 and 1); when a
@@ -268,16 +257,17 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
     func_800BBB50((cf::CfObjectModel*)self->field_00);
     ((cf::CfResParentVtIf*)self->field_00)->_v178();
     self->field_00->field_90 = 0;
-    self->field_00->field_94 = 0;
-    if (((cf::CfGameManager*)self->field_00)->func_80082900() == 0) {
+    cf::CfResReloadParent* parent = self->field_00;
+    parent->field_94 = 0;
+    if (((cf::CfGameManager*)parent)->func_80082900() == 0) {
         return;
     }
-    if (!(self->field_00->field_68 & 0x100000)) {
+    if (!(parent->field_68 & 0x100000)) {
         return;
     }
-    u32 f6c = self->field_00->field_6C;
+    u32 f6c = parent->field_6C;
     if (f6c & 0x2) {
-        self->field_00->field_6C &= ~0x3;
+        parent->field_6C = parent->field_6C & ~0x3;
         return;
     }
     if (!(f6c & 0x1)) {
@@ -294,7 +284,9 @@ extern "C" void func_8016D3F8(cf::CfResReloadImpl* self) {
     }
     int r5 = (self->field_00->field_64 >> 16) & 1;
     if (r5 == 0) {
-        if ((lbl_eu_80663E24 & 0x02000000) || (lbl_eu_80663E24 & 0x400)) {
+        // two independent SDA reads, matching retail's rlwinm/rlwimi pair
+        if ((*(volatile u32*)&lbl_eu_80663E24 & 0x02000000) ||
+            (*(volatile u32*)&lbl_eu_80663E24 & 0x400)) {
             return;
         }
         if (lbl_eu_80663E24 & 0x40000) {
@@ -379,7 +371,8 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
             ok = 0;
         }
     }
-    u32 f64 = self->field_00->field_64;
+    cf::CfResReloadParent* parent = self->field_00;
+    u32 f64 = parent->field_64;
     if (!(f64 & 0x10000)) {
         if (lbl_eu_80663E24 & 0x09800000) {
             return;
@@ -390,13 +383,17 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     }
     if (f64 & 0x4) {
         ok = 0;
+        // retail keeps this pointer in r3 across these calls: it is `parent`
+        // if func_800B4A24 was never called, else B4A24's return value.
+        cf::CfGameManager* mgr = (cf::CfGameManager*)parent;
         if (lbl_eu_80663E28 & 0x10) {
-            if (func_800B4A24(self->field_00) == 0) {
+            mgr = (cf::CfGameManager*)func_800B4A24(parent);
+            if (mgr == 0) {
                 ok = 1;
             }
         }
         if (ok == 0 && self->field_04 > lbl_eu_80667698) {
-            if (((cf::CfGameManager*)self->field_00)->func_80085840() == 0) {
+            if (mgr->func_80085840() == 0) {
                 return;
             }
             if (self->field_04 > lbl_eu_80667698) {
@@ -418,23 +415,31 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     }
     if (self->field_00->field_6C & 0x10) {
         if (self->field_00->field_9C == 0) {
-            u8 buf[0x40];
-            u32 word48 = 0;
-            buf[0] = 0;
-            func_800AA33C(buf, entry->field_04, 1, 0);
+            // single object: retail has buf at sp+8 and the dead word at
+            // sp+0x48
+            struct {
+                u8 buf[0x40];
+                volatile u32 tail;
+            } work;
+            work.buf[0] = 0;
+            // retail emits this dead word store (stw r0,0x48(sp)) before
+            // the call; volatile keeps MWCC from eliminating it
+            work.tail = 0;
+            func_800AA33C(work.buf, entry->field_04, 1, 0);
             u8* slot1C = ((cf::CfResEntryIf2*)entry->field_2C)->_v01C(entry);
             self->field_00->field_94 = slot1C;
-            CfRes_getD80Flag();
-            self->field_00->field_9C = func_800584B8(self->field_00->field_94, buf);
+            // three-arg call: getD80Flag result lands in r3 like retail
+            self->field_00->field_9C =
+                func_800584B8((u32)CfRes_getD80Flag(), (u32)self->field_00->field_94, (const char*)work.buf);
         }
     }
     if (((cf::CfResEntryIf2*)entry->field_2C)->_v028(entry) != 0) {
         self->field_00->field_6DC = entry;
-        u32 v = (u32)entry->field_04 & ~0x1F;
-        if (self->field_00->field_64 & 0x8) {
-            self->field_00->field_6E0 = v | 0x88000000;
+        cf::CfResReloadParent* par = self->field_00;
+        if (par->field_64 & 0x8) {
+            par->field_6E0 = ((u32)entry->field_04 & 0x07FFFFFF) | 0x88000000;
         } else {
-            self->field_00->field_6E0 = v | 0x80000000;
+            par->field_6E0 = ((u32)entry->field_04 & 0x07FFFFFF) | 0x80000000;
         }
     }
     func_80434A4C__Q23mtl10MemManagerFb(true);
@@ -463,19 +468,22 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
     if (self->field_00->field_64 & 0x8) {
         func_800BE12C(self->field_00, self->field_00->field_6C4, 0, -1, 1);
     }
-    self->field_00->field_6C &= ~0x3;
+    // x & -3 lowers to the retail wrap-mask rlwinm(0,31,29)
+    self->field_00->field_6C &= -3;
     if (self->field_00->field_98 != 0) {
         ((cf::CfResParentObjIf*)self->field_00->field_98)->_v064(0);
     }
     if (self->field_00->field_64 & 0x4) {
-        cf::CfResEneObj* ene = (cf::CfResEneObj*)self->field_00;
-        if (self->field_00 != 0) {
-            ene = (cf::CfResEneObj*)((u8*)self->field_00 - 0x3E9C);
+        cf::CfResReloadParent* p = self->field_00;
+        cf::CfResEneObj* ene = (cf::CfResEneObj*)p;
+        if (p != 0) {
+            ene = (cf::CfResEneObj*)((u8*)p - 0x3E9C);
         }
         if (ene->field_45CA & 0x6) {
-            if (self->field_00->field_98 != 0) {
-                ((cf::CfResParentObjIf*)self->field_00->field_98)->_v088(0);
-            }
+            // retail performs no null check on field_98 here
+            ((cf::CfResParentObjIf*)p->field_98)->_v088(0);
+            // fresh parent load: retail does not keep the pointer live
+            // across the virtual call above
             func_800BC3B0((cf::CfObjectMove*)self->field_00, lbl_eu_806676A0);
         }
     }
@@ -487,6 +495,10 @@ extern "C" void func_8016D688(cf::CfResReloadImpl* self) {
 // validates the enemy object state (via func_800AD860) and the parent flags,
 // possibly stopping or advancing the reload. Ends by nudging the enemy flag
 // word, restoring the player heal and bumping the type counter.
+// Reload tick. Control flow mirrors retail: when the enemy object exists
+// with flag bit 1 set, the parent +0x98 slot gates the tick (nonzero
+// CONTINUES after clearing field_1C; zero stops). r5 is derived from parent
+// +0x64 bit 27, upgraded by the +0xC4 sub-object's +0x0C bits 16/6.
 extern "C" void func_8016DAF8(cf::CfResReloadImpl* self) {
     if (self->field_00->field_6C & 0x2) {
         ((cf::CfResReloadVtIf*)self)->_v028();
@@ -503,47 +515,64 @@ extern "C" void func_8016DAF8(cf::CfResReloadImpl* self) {
         return;
     }
 eee4:
-    {
-        int r5 = (self->field_00->field_64 >> 27) & 1;
-        if (self->field_00->field_C4 != 0) {
-            u32 f = self->field_00->field_C4->field_0C;
-            if ((f & 0x10000) || (f & 0x40)) {
-                r5 = 1;
-            }
+    // r5: parent +0x64 bit 27, forced to 1 when the +0xC4 sub-object's +0x0C
+    // has bit 16 or bit 6 set.
+    int r5 = (self->field_00->field_64 >> 27) & 1;
+    if (self->field_00->field_C4 != 0) {
+        u32 f = self->field_00->field_C4->field_0C;
+        if ((f & 0x10000) || (f & 0x40)) {
+            r5 = 1;
         }
-        if (obj != 0 && (self->field_00->field_68 & 0x100000) && r5 == 0) {
-            if (!(obj->field_45CA & 0x6)) {
-                obj->field_45CA &= 0xFFFE;
-                if ((self->field_00->field_C4 == 0 ||
-                     !(self->field_00->field_C4->field_0C & 0x2)) &&
-                    !(obj->field_3374 & 0x10000)) {
-                    obj->field_45CA |= 0x1;
-                }
-                if (self->field_00->field_C4 != 0 &&
-                    (self->field_00->field_C4->field_4EC & 0x2)) {
-                    obj->field_45CA &= 0xFFFE;
-                }
-                if (!(obj->field_45CA & 0x1)) {
-                    u8 v = self->field_1E;
-                    self->field_1E = (u8)(v - 1);
-                    if ((s8)v <= 0) {
-                        self->field_1E = 0;
-                        obj->field_45CA &= 0xFFFE;
-                        goto effc;
-                    }
-                }
-                func_800BC4A0((cf::CfObjectMove*)self->field_00);
-                ((cf::CfResParentVtIf*)self->field_00)->_v168(lbl_eu_806676A4);
-                return;
-            effc:;
-            }
-        }
-        if (obj != 0) {
-            obj->field_45CA &= 0xFFF9;
-        }
-        func_800BC3B0((cf::CfObjectMove*)self->field_00, lbl_eu_806676A8);
-        self->field_08++;
     }
+    if (obj == 0) {
+        goto effc;
+    }
+    if (!(self->field_00->field_68 & 0x100000)) {
+        goto effc;
+    }
+    if (r5 != 0) {
+        goto effc;
+    }
+    // volatile read: retail re-loads 45CA before the clear (first load is
+    // clobbered by the rlwinm.), so the CSE must be broken.
+    if (*(volatile u16*)&obj->field_45CA & 0x6) {
+        goto effc;
+    }
+    obj->field_45CA &= 0xFFFE;    // Set flag bit 0 unless the +0xC4 sub-object (+0x0C bit 1) or the object's
+    // own +0x3374 bit 15 suppresses it (nested early-exit shape, like retail).
+    if (self->field_00->field_C4 != 0 &&
+        (self->field_00->field_C4->field_0C & 0x2)) {
+        goto ef7c;
+    }
+    if (obj->field_3374 & 0x10000) {
+        goto ef7c;
+    }
+    obj->field_45CA |= 0x1;
+ef7c:
+    // The +0xC4 sub-object's +0x4EC bit 1 clears the bit again.
+    if (self->field_00->field_C4 != 0 && (self->field_00->field_C4->field_4EC & 0x2)) {
+        obj->field_45CA &= 0xFFFE;
+    }
+    if (!(obj->field_45CA & 0x1)) {
+        u8 v = self->field_1E;
+        self->field_1E = (u8)(v - 1);
+        if ((s8)v <= 0) {
+            goto efe8;
+        }
+    }
+    func_800BC4A0((cf::CfObjectMove*)self->field_00);
+    ((cf::CfResParentVtIf*)self->field_00)->_v168(lbl_eu_806676A4);
+    return;
+efe8:
+    self->field_1E = 0;
+    obj->field_45CA &= 0xFFFE;
+    // fall through to the effc tail
+effc:
+    if (obj != 0) {
+        obj->field_45CA &= 0xFFF9;
+    }
+    func_800BC3B0((cf::CfObjectMove*)self->field_00, lbl_eu_806676A8);
+    self->field_08++;
 }
 
 // Cast-only SI for CfResReloadImpl sub-object virtual calls
@@ -885,13 +914,14 @@ extern "C" int func_8016E430(u32 type) {
 // bit 0 -> 1, bit pair 1-2 -> sub 1, 3-4 -> sub 2, 5-6 -> sub 3, 7-8 -> sub 4.
 // The column name depends on the type field (2 picks a different column).
 extern "C" int func_8016E578(u32 type, int sub) {
-    char* col = lbl_eu_80503140 + 0x94;
-    u16 row = (u16)lbl_eu_80664184;
+    char* tbl = lbl_eu_80503140;
+    char* col;
     if (type == 2) {
-        col = lbl_eu_80503140 + 0x8c;
+        col = tbl + 0x8c;
+    } else {
+        col = tbl + 0x94;
     }
-    u32 res = getBdatStringColumnValue(lbl_eu_806640A8, col, row);
-    u16 v = (u16)res;
+    u16 v = (u16)getBdatStringColumnValue(lbl_eu_806640A8, col, (u16)lbl_eu_80664184);
     if (v & 1) {
         return 1;
     }
@@ -962,14 +992,14 @@ extern "C" u16 func_8016E854(cf::CfResReloadImpl* self, u16* out1, u16* counter,
     u16 initial = *counter;
     if (lbl_eu_806640A8 != 0) {
         u16 rnd = (u16)func_8006A6D0();
-        f0 = lbl_eu_80664288 & 1;
-        // Retail reloads the flag word for the mask store even though f0 read
-        // it moments earlier; the volatile load keeps MWCC from CSE-eliminating
-        // the second read.
+        // Two separate volatile reads: retail keeps both SDA loads back to
+        // back (first feeds the odd-bit test, second the even-mask clear).
+        u16 f0raw = *(volatile u16*)&lbl_eu_80664288;
+        f0 = f0raw & 1;
         u16 masked = *(volatile u16*)&lbl_eu_80664288 & 0xFFFE;
-        *counter = 2;
         lbl_eu_80664288 = masked;
         u16 mrand = (u16)ml::math::mtRand(0x64);
+        *counter = 2;
         while (*counter >= 1) {
             int typeRet;
             u16 mrand2;
@@ -1027,29 +1057,34 @@ extern "C" u16 func_8016E854(cf::CfResReloadImpl* self, u16* out1, u16* counter,
 // short-circuit to the default; otherwise the value depends on
 // lbl_eu_80664280 (1 -> 0x65, 2 -> 0x66) passing through func_801AAAA0.
 float func_8016E9CC() {
-    if (lbl_eu_80663E24 & 0x00400000) {
-        return lbl_eu_806676B4;
-    }
-    if ((lbl_eu_80663E24 & 0x02000000) || (lbl_eu_80663E24 & 0x400)) {
-        return lbl_eu_806676B4;
-    }
-    int sel = 0;
-    u16 p = lbl_eu_80664280;
-    if (p == 1) {
-        sel = 0x65;
-    } else if (p == 2) {
-        sel = 0x66;
-    }
-    int ok = 0;
-    if (sel != 0) {
-        if (func_801AAAA0(sel) != 0) {
-            ok = 1;
+    // Single short-circuit || chain: both true-paths share one 'delay = B4'
+    // block. Residual: retail issues a second SDA load of lbl_eu_80663E24
+    // before merging bits 25/10; MWCC CSEs our references into one load.
+    float delay;
+    if ((lbl_eu_80663E24 & 0x00400000) || (lbl_eu_80663E24 & 0x02000000) ||
+        (lbl_eu_80663E24 & 0x400)) {
+        delay = lbl_eu_806676B4;
+    } else {
+        int sel = 0;
+        u16 p = lbl_eu_80664280;
+        if (p == 1) {
+            sel = 0x65;
+        } else if (p == 2) {
+            sel = 0x66;
+        }
+        int ok = 0;
+        if (sel != 0) {
+            if (func_801AAAA0(sel) != 0) {
+                ok = 1;
+            }
+        }
+        if (ok != 0) {
+            delay = lbl_eu_806676B8;
+        } else {
+            delay = lbl_eu_806676B4;
         }
     }
-    if (ok != 0) {
-        return lbl_eu_806676B8;
-    }
-    return lbl_eu_806676B4;
+    return delay;
 }
 
 // Main reload driver: when the type check (func_8016E430) reports 1, refresh
@@ -1132,19 +1167,18 @@ void func_8016EC58(cf::CfResReloadImpl* self) {
     u16 row = (u16)lbl_eu_80664184;
     if (bdat != 0) {
         u16 p = lbl_eu_80664280;
-        switch (p) {
-        case 0:
-            lbl_eu_8066427E =
-                (u8)getBdatStringColumnValue(bdat, lbl_eu_80531068[func_8006A6D0()], row);
-            break;
-        case 1:
-            lbl_eu_8066427E =
-                (u8)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0xdc, row);
-            break;
-        case 2:
-            lbl_eu_8066427E =
-                (u8)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0xe4, row);
-            break;
+        // Each branch owns its own result local: retail spills the three
+        // call results to separate stack slots (0x8/0xc/0x10).
+        if (p == 0) {
+            u8 v = (u8)getBdatStringColumnValue(
+                bdat, lbl_eu_80531068[func_8006A6D0()], row);
+            lbl_eu_8066427E = v;
+        } else if (p == 1) {
+            u8 v = (u8)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0xdc, row);
+            lbl_eu_8066427E = v;
+        } else if (p == 2) {
+            u8 v = (u8)getBdatStringColumnValue(bdat, lbl_eu_80503140 + 0xe4, row);
+            lbl_eu_8066427E = v;
         }
     }
     func_8016EA68(self);

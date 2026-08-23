@@ -45,7 +45,7 @@ struct CActParamAnimView {
     u8 _00[0x0C];
     u32 field_0x0C;   // +0x0C busy flags (bit 0x20 toggled around func_8004B52C)
     u8 _10[0x364];
-    u32 field_0x374;  // +0x374 anim state (func_80200CE8 compares vs 0 / 0xb)
+    s32 field_0x374;  // +0x374 anim state, signed so == compares emit cmpwi
     u32 field_0x378;  // +0x378 slot index (func_801FFDC4 stores i)
     u8 _37C[0x13C - 0x4];
     void* field_0x4B4; // +0x4B4 model/next-chain-obj pointer (func_8004B9B8 result)
@@ -144,6 +144,7 @@ struct CModelDispParamSlot {
 // Vtable dispatch on the built display model (holder->field_0x00):
 // +0x48 (float), +0x64 (int), +0x9C (2 ints), +0xC4 (3 args), +0xC8 (1 arg).
 // 2 reserved slots; target slot = declared index + 1.
+// (m9C sits after 37 fillers incl. m24.)
 struct CModelDispModelVt {
     virtual void m00(); virtual void m01(); virtual void m02(); virtual void m03();
     virtual void m04(); virtual void m05(); virtual void m06(); virtual void m07();
@@ -210,6 +211,7 @@ struct CModelDispVtE0 {
     virtual void m18(); virtual void m19(); virtual void m1A(); virtual void m1B();
     virtual void m1C(); virtual void m1D(); virtual void m1E(); virtual void m1F();
     virtual void m20(); virtual void m21(); virtual void m22(); virtual void m23();
+    virtual void m24();
     virtual void m25(); virtual void m26(); virtual void m27();
     virtual void m28(); virtual void m29(); virtual void m2A(); virtual void m2B();
     virtual void m2C(); virtual void m2D(); virtual void m2E(); virtual void m2F();
@@ -283,12 +285,14 @@ struct CActParamHolder {
     CModelDispObj* unk_55C; // +0x54C loaded-model record (func_80495EAC result)
     CActParamAnimView actParams[2]; // +0x550 (0xA78 bytes)
     void* animModelPtrs[2]; // +0xFC8 animation model slot pointers (indexed by r5/i)
+    u32 equipPtrs[8];       // +0xFD0
+    u32 currentModelPtr;    // +0xFF0
+    void* animPtrs[2];      // +0xFF4 effect-slot color targets (== equip+0x1004)
 };
 
-// Flat view of the memory past the embedded holder (0xFD0): the animPtrs
-// array at holder+0xFF4 (== CModelDispEquip+0x1004). func_801FFADC reads the
-// animation-model color slots through this so MWCC keeps the holder base and
-// emits 0xff4(rX) like retail.
+// Flat view of the memory past the embedded holder (0xFD0): alias of the
+// CActParamHolder tail (equipPtrs/currentModelPtr/animPtrs) kept for functions
+// that address the region through the tail type.
 struct CActParamHolderTail {
     u8 _00[0xFD0];      // 0x00..0xFD0
     u32 equipPtrs[8];   // 0xFD0 = CModelDispEquip+0xFE0
@@ -332,10 +336,8 @@ public:
     u32 _vtable2; // 0x04 - second vtable
     u32 _vtable3; // 0x08 - third vtable
     u32 somePtr;  // 0x0C
-    CActParamHolder actParamHolder; // 0x10
-    u32 equipPtrs[8]; // 0xFE0
-    u32 currentModelPtr; // 0x1000
-    u32 animPtrs[2]; // 0x1004
+    CActParamHolder actParamHolder; // 0x10 (extends to 0x100C, covers the
+                                    // equipPtrs/currentModelPtr/animPtrs tail)
     u32 weaponId;  // 0x100C
     s32 equipSlot; // 0x1010
     u8 state;      // 0x1014
@@ -423,11 +425,12 @@ extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32 allocHandle, c
 extern "C" void setHandleFlag1__11CDeviceFileFP11CFileHandle(CFileHandle* fh);
 extern "C" void func_801390E0__FPP11CFileHandle(CFileHandle** handlePtr);
 extern "C" void func_804CC1BC(void* arg);
-extern "C" void func_804CC1D8(void* arg);
+extern "C" void func_804CC1D8(void* arg, void* data); // (manager, buffer): the
+// buffer rides in r4 from the null-check load - keeps the check color r4.
 extern "C" void waitForDrawDone__9CDeviceVIFv();
 
 // ---- Enum-list / actor imports (func_801FFBC4 / 801FFDC4 / 80200FB0) ----
-extern "C" void func_80043D90(CModelDispListHolder* holder);
+extern "C" CModelDispEnumList* func_80043D90(CModelDispListHolder* holder);
 extern "C" CModelDispEnumList* func_80043F18(CModelDispListHolder* holder);
 extern "C" void __dt__80043E88(CModelDispListHolder* holder, int flag);
 extern "C" void func_800F4A98(CModelDispEnumList* list, u32 type, u32 filter);

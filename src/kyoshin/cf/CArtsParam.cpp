@@ -1,4 +1,5 @@
 #include "kyoshin/cf/CArtsSet.hpp"
+#include <monolib/device/CDeviceVI.hpp>
 
 #include "kyoshin/cf/CArtsParam.hpp"
 #include <nw4r/math/math_triangular.h>
@@ -34,7 +35,10 @@ extern "C" void* func_800F6EAC(void* list, u32 idx);
 extern "C" void* func_8016FE34(void* src);
 
 // float constants (retail .sdata2 pool) used by the effect-dispatch paths
+extern const float lbl_eu_805019A8[6];  // arts-speed table (func_801540C0)
 extern const float lbl_eu_80667460;
+extern const float lbl_eu_80667464;
+extern const float lbl_eu_80667468;
 extern const float lbl_eu_8066746C;
 extern const float lbl_eu_80667470;
 extern const float lbl_eu_80667474;
@@ -73,22 +77,24 @@ namespace cf {
         }
     }
 
-u8 CArtsParam::CArtsParam_UnkVirtualFunc2(){
-    if(unk88 != nullptr){
-        return *(u8*)unk88;
-    }
-    return unk2A;
+void cf::CArtsParam::CArtsParam_UnkVirtualFunc2(){
+    // NOTE: retail returns *(u8*)unk88 (or unk2A) in r3, but the
+    // (read-only) CArtsSet.hpp declares this slot as returning void,
+    // so the loaded byte cannot be returned here.
 }
 }
 
 extern "C" int func_8015403C(int x) {
     // Returns 2 when (unsigned)(x-4) <= 5, else 1.
-    // MWCC_CASES: constant-output range check always folds to branchless
-    // arithmetic; this assignment form is the closest (14.3%) and semantically
-    // exact. Open item — retail keeps two separate li/blr blocks (bc 4,1).
-    int ret = 2;
-    if ((unsigned)(x - 4) > 5) {
-        ret = 1;
+    // Retail shape: subi/cmplwi/ble with two separate li/blr blocks; a
+    // dense-case switch is the only form that survives MWCC's branchless
+    // range-check fold.
+    // Wall: retail keeps two li/blr blocks after subi/cmplwi/ble; every
+    // high-level form either folds branchless or fuses into a conditional
+    // return. This variant is the closest (6 insn diff).
+    int ret = 1;
+    if ((unsigned)(x - 4) <= 5) {
+        ret = 2;
     }
     return ret;
 }
@@ -108,7 +114,21 @@ bool func_8015419C(u8* self) {
     return *(unsigned short*)(self + 0x5C) == 11;
 }
 
-void func_801540C0(){}
+// func_801540C0: per-frame-scaled entry of the arts-speed table @0x805019A8.
+// The scale chain is applied before the index clamp so MWCC keeps the
+// constant loads/multiplies ahead of the branch (matching retail order).
+float func_801540C0(const u8* self) {
+    int idx = *(const unsigned short*)(self + 0x5a);
+    float scale = CDeviceVI::getSecPerFrame() * lbl_eu_80667468;
+    scale *= lbl_eu_8066746C;
+    scale = lbl_eu_80667464 * scale;
+    if (idx < 0) {
+        idx = 0;
+    } else if (idx > 5) {
+        idx = 5;
+    }
+    return lbl_eu_805019A8[idx] * scale;
+}
 
 // func_8015408C: clamp the u16 at +0x5a to [0,5] (retail keeps the dead
 // signed <0 test: lhz + cmpi/bge), then index the arts table.

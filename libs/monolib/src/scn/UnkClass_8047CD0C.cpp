@@ -50,7 +50,7 @@ struct UnkCfgHead {
     u32 magic;   // 0x00
     u32 field4;  // 0x04
     u32 field8;  // 0x08
-    u8 nodes[];  // 0x0C - node array follows the header
+    u8 nodes[];  // 0x0C - node array follows the header (sizeof == 0x0C)
 };
 // ------------------------------------------------------------------
 // Node-pool layout
@@ -188,23 +188,25 @@ void __declspec(noinline) UnkClass_8047CD0C::func_8047D258() {
 // ------------------------------------------------------------------
 
 extern "C" void func_8047CD0C__17UnkClass_8047CD0CFv(UnkClass_8047CD0C* self,
-                                                      UnkCfgHead* config) {
+                                                      u8* config) {
     s32 i;
     s32 off;
     self->mData = 0;
-    if (config->magic == 0x57504F49) {
-        self->mData = config->nodes;
-        ((UnkClass_8047E110*)lbl_eu_80658560)->func_8047E110();
-        func_8047D0F0__17UnkClass_8047CD0CFv(&lbl_eu_80658540,
-                                             (UnkClass_8047CD0C*)self->mData);
-        if (self->mField08 != 0) {
-            i = 0;
-            off = 0;
-            for (; i < (s32)self->mField08; i++) {
-                func_8047E064__17UnkClass_8047E064Fv(
-                    (UnkClass_8047E064*)(self->mField04 + off), i);
-                off += 0x28;
-            }
+    if (((UnkCfgHead*)config)->magic != 0x57504F49) {
+        return;
+    }
+    config += 0xC;
+    self->mData = config;
+    ((UnkClass_8047E110*)lbl_eu_80658560)->func_8047E110();
+    func_8047D0F0__17UnkClass_8047CD0CFv(&lbl_eu_80658540,
+                                         (UnkClass_8047CD0C*)self->mData);
+    if (self->mField08 != 0) {
+        i = 0;
+        off = 0;
+        for (; i < (s32)self->mField08; i++) {
+            func_8047E064__17UnkClass_8047E064Fv(
+                (UnkClass_8047E064*)(self->mField04 + off), i);
+            off += 0x28;
         }
     }
 }

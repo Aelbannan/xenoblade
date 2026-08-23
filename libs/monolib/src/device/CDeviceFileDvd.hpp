@@ -1,7 +1,11 @@
 #pragma once
 
 #include <types.h>
+#include <revolution/dvd/dvd.h>
 #include "monolib/util/reslist.hpp"
+
+// Missing from the SDK headers; defined in revolution/dvd/dvdfs.c.
+extern "C" u32 DVDGetTransferredSize(DVDCommandBlock* block);
 
 // Minimal layout view of CWorkThread (same class name + signatures -> the
 // base-ctor/dtor/login/logout calls resolve to the real retail symbols). The
@@ -45,8 +49,8 @@ public:
     static void isRequestFile(const char* pPath);
     static void cancel(CFileHandle* pHandle);
     static void cancelCurrent();
-    void transState0();
-    void transState3();
+    bool transState0();
+    bool transState3();
     void wkUpdate();
     bool wkStandbyLogin();
     bool wkStandbyLogout();

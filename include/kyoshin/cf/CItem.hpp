@@ -46,6 +46,12 @@ extern void* lbl_eu_8066414C;
 // lbl_eu_806640F4, cat in [4,8] picks lbl_eu_806640F8).
 extern void* lbl_eu_806640F4;
 extern void* lbl_eu_806640F8;
+// BDAT handles selected by func_80157F04's category dispatch (cases 2..7).
+extern void* lbl_eu_806640FC;
+extern void* lbl_eu_80664104;
+extern void* lbl_eu_80664108;
+extern void* lbl_eu_8066410C;
+extern void* lbl_eu_80664110;
 
 // BDAT handle used by func_80156934's slot refresh lookups.
 extern void* lbl_eu_80664100;
@@ -156,13 +162,13 @@ struct CItemRec {
     /* 0x04 */ u16 field_04;
 };
 
-// Bitfield view over CItemData::field_00: bits 2-4 (LSB) are the item
-// category. A category write re-reads the word (retail reloads before the
-// rlwimi in func_80156ED4).
+// Bitfield view over CItemData::field_00: bits 2-4 (LSB, i.e. MSB 27-29)
+// are the item category. A category write re-reads the word (retail reloads
+// before the rlwimi in func_80156ED4). PPC bitfields allocate from the MSB.
 struct ItemWordCat {
-    u32 pad0 : 2;
-    /* bits 2-4 */ u32 mCat : 3;
-    u32 pad1 : 27;
+    u32 pad0 : 27;
+    /* MSB bits 27-29 */ u32 mCat : 3;
+    u32 pad1 : 2;
 };
 
 // ---------------------------------------------------------------------------
@@ -203,13 +209,18 @@ struct CItemExt {
 
 // Four 52-byte item records followed by a u32 count (stride 0x34; count at
 // 0xD0). func_8015AE9C refreshes each record in place.
+// The user-provided constructor (zeroes each record's packed word + flag
+// halfword and the count) makes the globals non-trivial, which is what
+// generates retail's sinit_8015B9D8 static initializer.
 struct CItemFour {
     /* 0x00 */ CItemExt mItems[4];
     /* 0xD0 */ u32 mCount;
+    CItemFour();
 };
 
 // Shared four-record item block used by func_8015AFA4 / func_8015B25C.
 extern CItemFour lbl_eu_80573E18;
+extern CItemFour lbl_eu_80573EEC;
 
 // Scratch item record built by func_8015A3CC / func_8015A6AC (52 bytes):
 // packed word at 0x00 and u16 at 0x04 - the retail initializes both to zero
@@ -269,6 +280,11 @@ struct CItemBlockCounters {
     /* 0x12108 */ u32 mCount08;
     /* 0x1210C */ u32 mCount0C;
     /* 0x12110 */ u32 mCount10;
+    /* 0x12114 */ u16 mFlag14;
+    /* 0x12116 */ u16 mFlag16;
+    /* 0x12118 */ u16 mFlag18;
+    /* 0x1211A */ u16 mFlag1A;
+    /* 0x1211C */ u16 mFlag1C;
 };
 
 // Item parameter block: u16 category/id word at 0x0C, u16 flags at 0x10,
@@ -379,7 +395,7 @@ public:
     virtual u32 vf4C(CItemData* p, u32 x);       // 0x4C
     virtual u32 vf50(CItemData* p, u32 x, u16 y); // 0x50
     virtual void vf54();                         // 0x54
-    virtual void vf58();                         // 0x58
+    virtual void vf58(CItemData* p, u32 x);      // 0x58
     virtual void vf5C();                         // 0x5C
     virtual void vf60();                         // 0x60
     virtual void vf64();                         // 0x64
@@ -469,6 +485,10 @@ extern "C" s32 func_8015A054(CItemFour* self, u32 a, u32 unused, void* c, u32 d,
 // Find a free record in the item-block list for arg (writes the record
 // index to *pOut; retail symbol unmangled - C linkage).
 extern "C" CItemExt* func_80157D6C(u32 arg, s16* pOut, u32 family);
+
+// Item record lookup by kind + entry id (defined in CItem.cpp; noinline in
+// retail - call sites bl the out-of-line symbol).
+extern "C" __declspec(noinline) CItemExt* func_80157C4C(u32 kind, s16 idx);
 
 // Three-element sort helper used by func_80158AF4's median-of-3 pivot
 // selection (retail symbol unmangled - C linkage).

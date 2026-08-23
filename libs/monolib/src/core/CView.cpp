@@ -36,22 +36,27 @@ public:
     virtual ~CSplitFrame();
 };
 
-CViewRoot* getInstance__9CViewRootFv();
+extern "C" CViewRoot* getInstance__9CViewRootFv();
 CView* getCurrent__9CViewRootFv();
 void invalidCurrent__9CViewRootFP5CView(CView* view);
-GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
-CView* getView1__11CSplitFrameFv(void* splitFrame);
-CView* getView2__11CSplitFrameFv(void* splitFrame);
+extern "C" GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
+extern "C" CView* getView1__11CSplitFrameFv(void* splitFrame);
+extern "C" CView* getView2__11CSplitFrameFv(void* splitFrame);
 s16 getSplitLine__11CSplitFrameFv(void* splitFrame);
 void setSplitLine__11CSplitFrameFs(void* splitFrame, s16 line);
 bool isActive__11CSplitFrameFv(void* splitFrame);
 void apply__11CSplitFrameFv(void* splitFrame);
 void setCurrent__9CViewRootFP5CView(CView* view);
 CWorkThread* getWorkThread__9CWorkUtilFUl(u32 workId);
-void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, CViewFrame* frame);
-void func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& size);
-void func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& maxSize);
-void __ct__CViewFrame(CViewFrame* frame);
+extern "C" void func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& size);
+extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, const CViewFrame* frame);
+extern "C" void func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16(CViewRectDataCore* data, const ml::CPnt16& maxSize);
+extern "C" void __ct__CViewFrame(CViewFrame* frame);
+// Third arg is forwarded from CView::func_8043CCCC's own r4 (retail keeps
+// the dead mr r5,r4 because the callee prototype has three parameters).
+extern "C" void func_80441EF0__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect,
+                                                          const CViewFrame* frame,
+                                                          u32 arg);
 void func_8043FC60__10CViewFrameFUl(CViewFrame* frame, u32 owner);
 u32 func_8044BE2C__8CGXCacheFv();
 void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, mtl::ALLOC_HANDLE handle);
@@ -102,6 +107,21 @@ extern "C" void* __RTTI__10IWorkEvent;
 extern "C" void* __RTTI__11CWorkThread;
 }
 
+// Retail <10> deleting-dtor shape: no vtable store; the entry clears are
+// guarded by a null-test of the entry-array address (r3+4, not foldable).
+// NOTE: our build (-RTTI on) additionally emits a vptr store here (+0xC) that
+// retail lacks — sibling reslist dtors carry the store in BOTH builds (their
+// classes have bases); standalone CMsgParam<10> gets it elided in retail's
+// compiler run. Experiments: extern "C" free-function forms stay frameless
+// (bclr early-return, no r31/prologue) and cannot reproduce the compiler-
+// generated dtor's register convention. See attempts.jsonl us-8043f120.
+template <>
+CMsgParam<10>::~CMsgParam(){
+    if (mEntries != NULL) {
+        clear();
+    }
+}
+
 extern "C" int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
 extern "C" int OnFileEvent__10IWorkEventFP10CEventFile(void*);
 extern "C" int WorkEvent3__10IWorkEventFPv(void*);
@@ -137,7 +157,9 @@ extern "C" void wkUpdate__11CWorkThreadFv();
 extern "C" void wkRender__11CWorkThreadFv();
 extern "C" void wkRenderAfter__11CWorkThreadFv();
 extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
-extern "C" void wkStandbyLogin__5CViewFv();
+extern "C" bool wkStandbyLogin__11CWorkThreadFv();
+extern "C" void wkStandbyLogout__11CWorkThreadFv();
+extern "C" bool wkStandbyLogin__5CViewFv(CView* self);
 extern "C" void wkStandbyLogout__5CViewFv();
 extern "C" void wkUpdate__5CViewFv();
 
@@ -209,15 +231,15 @@ extern "C" u32 lbl_eu_80663598[2] = { (u32)&lbl_eu_80522624, 0 };
 // .data emission order matches retail (vtable @0x8056B5E0, class-info
 // @0x8056B6B0, template vtables @0x8056B6CC).
 extern "C" void func_8043FBC4(u8* self);
-extern "C" void CView_UnkVirtualFunc1__5CViewFv();
+extern "C" void CView_UnkVirtualFunc1__5CViewFv(CView* self);
 extern "C" void detachRenderWork__5CViewFP11CWorkThread(void* self, void* thread);
 extern "C" void CView_UnkVirtualFunc3__5CViewFv();
 extern "C" void CView_UnkVirtualFunc4__5CViewFv();
 extern "C" int CView_UnkVirtualFunc5__5CViewFv();
 extern "C" int CView_UnkVirtualFunc6__5CViewFv();
 extern "C" void CView_UnkVirtualFunc7__5CViewFv();
-extern "C" void CView_UnkVirtualFunc8__5CViewFv();
-extern "C" void CView_UnkVirtualFunc9__5CViewFv();
+extern "C" void CView_UnkVirtualFunc8__5CViewFv(CView* self);
+extern "C" void CView_UnkVirtualFunc9__5CViewFv(CView* self);
 
 u32 lbl_eu_8056B5E0[0xD0 / 4] = {
     // IWorkEventVtbl
@@ -516,8 +538,165 @@ void CView::detachRenderWork(CWorkThread* pThread) {
     mFrame.detachRenderWork(pThread);
 }
 
+// us-804409a8: three bubble passes over the child-view list, ordering views
+// whose first attached work resolves to this view's proc root ahead of others,
+// then by root priority (unk1E8), then by the view's own unk460.
+void func_8043E010__5CViewFv(CView* view) {
+    // Everything is ordered relative to the *current* view's proc root.
+    CView* current = CViewRoot::getCurrent();
+    if (current == nullptr) {
+        return;
+    }
+
+    _reslist_node<WORK_ID>* selfSentinel =
+        reinterpret_cast<_reslist_node<WORK_ID>*>(current->unk238.mStartNodePtr);
+
+    // Count the current view's attached-work list; bail if empty.
+    u32 count = 0;
+    _reslist_node<WORK_ID>* n = selfSentinel->mNext;
+    goto count_check;
+    for (;;) {
+        n = n->mNext;
+        count++;
+    count_check:
+        if (n == selfSentinel) break;
+    }
+    if (count == 0) {
+        return;
+    }
+
+    // Resolve the current view's proc root from its first attached work ID.
+    CProc* thisRoot = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
+        getWorkThread__9CWorkUtilFUl(selfSentinel->mNext->mItem)));
+
+    _reslist_node<CWorkThread*>* childSentinel = reinterpret_cast<
+        _reslist_node<CWorkThread*>*>(view->mChildren.mStartNodePtr);
+
+    bool swapped;
+
+    // Pass 1: move views sharing our proc root ahead of foreign-root views.
+    do {
+        swapped = false;
+        for (_reslist_node<CWorkThread*>* cur = childSentinel->mNext;
+             cur != childSentinel; cur = cur->mNext) {
+            _reslist_node<CWorkThread*>* next = cur->mNext;
+            if (next == childSentinel) {
+                break;
+            }
+            CWorkThread* itemCur = cur->mItem;
+            if (CView::convertToView(itemCur) != nullptr) {
+                CWorkThread* itemNext = next->mItem;
+                if (CView::convertToView(itemNext) != nullptr) {
+                    _reslist_node<WORK_ID>* s1 = reinterpret_cast<_reslist_node<WORK_ID>*>(
+                        reinterpret_cast<CView*>(itemCur)->unk238.mStartNodePtr);
+                    u32 c1 = 0;
+                    _reslist_node<WORK_ID>* n1 = s1->mNext;
+                    while (n1 != s1) {
+                        n1 = n1->mNext;
+                        c1++;
+                    }
+                    if (c1 != 0) {
+                        _reslist_node<WORK_ID>* s2 = reinterpret_cast<_reslist_node<WORK_ID>*>(
+                            reinterpret_cast<CView*>(itemNext)->unk238.mStartNodePtr);
+                        u32 c2 = 0;
+                        _reslist_node<WORK_ID>* n2 = s2->mNext;
+                        while (n2 != s2) {
+                            n2 = n2->mNext;
+                            c2++;
+                        }
+                        if (c2 != 0) {
+                            CProc* rootCur = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
+                                getWorkThread__9CWorkUtilFUl(s1->mNext->mItem)));
+                            CProc* rootNext = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
+                                getWorkThread__9CWorkUtilFUl(s2->mNext->mItem)));
+                            if (rootCur != nullptr && rootNext != nullptr &&
+                                rootCur == thisRoot && rootNext != thisRoot) {
+                                next->mItem = itemCur;
+                                swapped = true;
+                                cur->mItem = itemNext;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } while (swapped);
+
+    // Pass 2: within our proc root, order by root priority field unk1E8.
+    do {
+        swapped = false;
+        for (_reslist_node<CWorkThread*>* cur = childSentinel->mNext;
+             cur != childSentinel; cur = cur->mNext) {
+            _reslist_node<CWorkThread*>* next = cur->mNext;
+            if (next == childSentinel) {
+                break;
+            }
+            CWorkThread* itemCur = cur->mItem;
+            if (CView::convertToView(itemCur) != nullptr) {
+                CWorkThread* itemNext = next->mItem;
+                if (CView::convertToView(itemNext) != nullptr) {
+                    _reslist_node<WORK_ID>* s1 = reinterpret_cast<_reslist_node<WORK_ID>*>(
+                        reinterpret_cast<CView*>(itemCur)->unk238.mStartNodePtr);
+                    u32 c1 = 0;
+                    _reslist_node<WORK_ID>* n1 = s1->mNext;
+                    while (n1 != s1) {
+                        n1 = n1->mNext;
+                        c1++;
+                    }
+                    if (c1 != 0) {
+                        _reslist_node<WORK_ID>* s2 = reinterpret_cast<_reslist_node<WORK_ID>*>(
+                            reinterpret_cast<CView*>(itemNext)->unk238.mStartNodePtr);
+                        u32 c2 = 0;
+                        _reslist_node<WORK_ID>* n2 = s2->mNext;
+                        while (n2 != s2) {
+                            n2 = n2->mNext;
+                            c2++;
+                        }
+                        if (c2 != 0) {
+                            CProc* rootCur = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
+                                getWorkThread__9CWorkUtilFUl(s1->mNext->mItem)));
+                            CProc* rootNext = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
+                                getWorkThread__9CWorkUtilFUl(s2->mNext->mItem)));
+                            if (rootCur != nullptr && rootNext != nullptr &&
+                                rootCur == thisRoot && rootNext == thisRoot &&
+                                (s32)rootCur->unk1E8 < (s32)rootNext->unk1E8) {
+                                next->mItem = itemCur;
+                                swapped = true;
+                                cur->mItem = itemNext;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } while (swapped);
+
+    // Pass 3: final ordering by the view's own unk460 value.
+    do {
+        swapped = false;
+        for (_reslist_node<CWorkThread*>* cur = childSentinel->mNext;
+             cur != childSentinel; cur = cur->mNext) {
+            _reslist_node<CWorkThread*>* next = cur->mNext;
+            if (next == childSentinel) {
+                break;
+            }
+            CWorkThread* itemCur = cur->mItem;
+            if (CView::convertToView(itemCur) != nullptr) {
+                CWorkThread* itemNext = next->mItem;
+                if (CView::convertToView(itemNext) != nullptr &&
+                    (s32)reinterpret_cast<CView*>(itemCur)->unk460 <
+                        (s32)reinterpret_cast<CView*>(itemNext)->unk460) {
+                    next->mItem = itemCur;
+                    swapped = true;
+                    cur->mItem = itemNext;
+                }
+            }
+        }
+    } while (swapped);
+}
+
 // Drain the context ring: classify each pending message and apply side effects.
-#if 0
+#if 1
 void CView::updateMsg() {
 #if 1
     struct CtxSnap {
@@ -576,10 +755,9 @@ updateMsg_loop:
     entry = &contextRing[ringIdx];
     tag = entry->command;
 
-    if (tag > 7) {
-        goto updateMsg_advance;
-    }
-
+    // No explicit range guard: tags > 7 match no case and fall through to
+    // updateMsg_advance, and MWCC's table-jump lowering emits the retail
+    // single cmpli/bc guard on its own (an explicit if duplicates it).
     switch (tag) {
         case 0: {
             // Attach WORK_ID to unk238; fan-out dual ring msgs to child views.
@@ -836,7 +1014,7 @@ updateMsg_loop:
             unk278 &= ~0x4;
             break;
         case 6:
-            setCurrent__9CViewRootFP5CView(this);
+            CViewRoot::setCurrent(this);
             break;
         case 7:
             if (entry->wid == 0) {
@@ -1987,6 +2165,98 @@ void CView::CView_UnkVirtualFunc7() {
 void CView::CView_UnkVirtualFunc3() {}
 void CView::CView_UnkVirtualFunc4() {}
 
+// Retail stubs (0x8 bytes): addi r3,r3,476 (cast to the embedded
+// CViewFrame base) followed by a sibcall 'b' to the base implementation.
+extern "C" void CView_UnkVirtualFunc1__5CViewFv(CView* self) {
+    self->mFrame.CView_UnkVirtualFunc1();
+}
+extern "C" void CView_UnkVirtualFunc8__5CViewFv(CView* self) {
+    self->mFrame.CView_UnkVirtualFunc8();
+}
+extern "C" void CView_UnkVirtualFunc9__5CViewFv(CView* self) {
+    self->mFrame.CView_UnkVirtualFunc9();
+}
+
+// us-8043CE90: byte flag at +0x8 of the split-frame object, gated on the
+// split-frame pointer being set.
+extern "C" u8 func_8043CE90__5CViewFv(CView* self) {
+    void* split = self->unk45C;
+    if (split != nullptr) {
+        return *reinterpret_cast<u8*>(static_cast<u8*>(split) + 8);
+    }
+    return 0;
+}
+
+// us-8043CEAC: split-frame view checks with explicit flags -- each condition
+// crosses a subsequent call, so the results live in saved regs in retail.
+extern "C" s32 func_8043CEAC__5CViewFv(CView* self) {
+    s32 flag2 = 0;
+    s32 flag1 = 0;
+    if (self->unk45C != nullptr) {
+        if (getView1__11CSplitFrameFv(self->unk45C) != nullptr) {
+            flag1 = 1;
+        }
+    }
+    if (flag1 != 0) {
+        if (getView2__11CSplitFrameFv(self->unk45C) != nullptr) {
+            flag2 = 1;
+        }
+    }
+    if (flag2 != 0) {
+        return (s32)(intptr_t)getView2__11CSplitFrameFv(self->unk45C);
+    }
+    return 0;
+}
+
+// us-8043CAFC: like CEAC -- returns whether BOTH split-frame views exist.
+extern "C" s32 func_8043CAFC__5CViewFv(CView* self) {
+    s32 flag2 = 0;
+    s32 flag1 = 0;
+    if (self->unk45C != nullptr) {
+        if (getView1__11CSplitFrameFv(self->unk45C) != nullptr) {
+            flag1 = 1;
+        }
+    }
+    if (flag1 != 0) {
+        if (getView2__11CSplitFrameFv(self->unk45C) != nullptr) {
+            flag2 = 1;
+        }
+    }
+    return flag2;
+}
+
+// us-8043DF3C: single-step parent walk (CVIEW_WALK_NEXT shape, no loop).
+static CView* CView_toView(CWorkThread* thread);
+
+// CLib/CViewRoot init guards (static members; literal retail symbol names).
+extern "C" bool isInitialized__4CLibFv();
+extern "C" bool isInitialized__9CViewRootFv();
+
+extern "C" CView* func_8043DF3C__5CViewFv(CView* self) {
+    CWorkThread* parentSnap;
+    CView* cur;
+    parentSnap = self->mParent;
+    if (getInstance__9CViewRootFv() == parentSnap) {
+        cur = nullptr;
+    } else {
+        cur = CView_toView(self->mParent);
+    }
+    return cur;
+}
+
+// us-8043E9D8-ish standby login: guards, enqueue(6) into the context ring,
+// then the base-class login. The bit-3 test of unk278 gates on split mode.
+extern "C" bool wkStandbyLogin__5CViewFv(CView* self) {
+    if (isInitialized__4CLibFv() && isInitialized__9CViewRootFv() &&
+        (self->unk278 & 8) != 0) {
+        CMsgParam<10>& messages =
+            *reinterpret_cast<CMsgParam<10>*>(&self->mContextMsgVtable);
+        messages.enqueue(6);
+        return wkStandbyLogin__11CWorkThreadFv();
+    }
+    return false;
+}
+
 
 extern "C" int CView_UnkVirtualFunc6__5CViewFv() { return 0; }
 extern "C" int CView_UnkVirtualFunc5__5CViewFv() { return 0; }
@@ -2021,4 +2291,255 @@ extern "C" void func_8043EA88__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
     rect.mPos.y = 0;
     rect.mSize.x = w;
     rect.mSize.y = h;
+}
+
+// ------------------------------------------------------------------
+// Parent-chain position walkers. All four share the same upward walk:
+// follow mParent while the parent passes the view-type filter and is not
+// the CViewRoot singleton, accumulating each frame's view offset plus its
+// content origin into (x, y). Retail emits the first step unrolled and
+// computes the next node at the END of the loop body (bottom-tested), so
+// each function below duplicates that structure.
+// ------------------------------------------------------------------
+
+// View-type filter used by the walkers -- retail uses the inline
+// CView::convertToView predicate (rejects type < THREAD_CVIEW or >= MAX).
+static CView* CView_toView(CWorkThread* thread) {
+    return CView::convertToView(thread);
+}
+
+#define CVIEW_WALK_NEXT(cur, parentSnap)                                       \
+    if (getInstance__9CViewRootFv() == (parentSnap)) {                         \
+        (cur) = nullptr;                                                       \
+    } else {                                                                   \
+        (cur) = CView_toView((cur)->mParent);                                  \
+    }
+
+// 4-byte-aligned CRect16-shaped local: retail packs the walker stack
+// rects at 4-byte strides, which 8-aligned ml::CRect16 cannot do.
+struct CViewStackRect {
+    ml::CPnt16 mPos;
+    ml::CPnt16 mSize;
+};
+
+// us-80440f24: accumulated content origin + final frame's view-offset size.
+extern "C" void func_8043E58C__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
+                                                          CView* other) {
+    CWorkThread* parentSnap;
+    CView* cur;
+    s16 x = other->mFrame.mContentX;
+    s16 y = other->mFrame.mContentY;
+    ml::CRect16 tailOff;
+    ml::CRect16 off;
+    parentSnap = other->mParent;
+
+    if (getInstance__9CViewRootFv() == parentSnap) {
+        cur = nullptr;
+    } else {
+        cur = CView_toView(other->mParent);
+    }
+    while (cur != nullptr) {
+        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&off, &cur->mFrame);
+        s16 dx = cur->mFrame.mContentX + off.mPos.x;
+        x += dx;
+        parentSnap = cur->mParent;
+        s16 dy = cur->mFrame.mContentY + off.mPos.y;
+        y += dy;
+        CVIEW_WALK_NEXT(cur, parentSnap);
+    }
+
+    func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(&tailOff, &other->mFrame);
+    rect.mPos.x = x;
+    rect.mPos.y = y;
+    rect.mSize.x = tailOff.mSize.x;
+    rect.mSize.y = tailOff.mSize.y;
+}
+
+// us-80441044: accumulated content origin offset by this frame's own view
+// offset (position only, no size).
+extern "C" void func_8043E6AC__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
+                                                          CView* other) {
+    s16 x = other->mFrame.mContentX;
+    s16 y = other->mFrame.mContentY;
+    CWorkThread* parentSnap;
+    CView* cur;
+    ml::CPnt16 walkBuf[3];
+    parentSnap = other->mParent;
+
+    if (getInstance__9CViewRootFv() == parentSnap) {
+        cur = nullptr;
+    } else {
+        cur = CView_toView(other->mParent);
+    }
+    while (cur != nullptr) {
+        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+            (ml::CRect16*)&walkBuf[0], &cur->mFrame);
+        s16 dx = cur->mFrame.mContentX + walkBuf[0].x;
+        x += dx;
+        parentSnap = cur->mParent;
+        s16 dy = cur->mFrame.mContentY + walkBuf[0].y;
+        y += dy;
+        CVIEW_WALK_NEXT(cur, parentSnap);
+    }
+
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+        (ml::CRect16*)&walkBuf[1], &other->mFrame);
+    s16 posY = y + walkBuf[1].y;
+    s16 posX = x + walkBuf[1].x;
+    rect.mPos.x = posX;
+    rect.mPos.y = posY;
+}
+
+// us-80441164: provisional rect from this frame's offsets and view size,
+// then the walk recomputes the absolute origin.
+extern "C" void func_8043E7CC__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
+                                                          CView* other) {
+    s16 x = other->mFrame.mContentX;
+    s16 y = other->mFrame.mContentY;
+    CWorkThread* parentSnap;
+    CView* cur;
+    ml::CPnt16 walkBuf[3];
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+        (ml::CRect16*)&walkBuf[2], &other->mFrame);
+    s16 py = other->mFrame.mContentY + walkBuf[2].y;
+    s16 px = other->mFrame.mContentX + walkBuf[2].x;
+    rect.mPos.x = px;
+    rect.mPos.y = py;
+    rect.mSize.x = other->mRectData.mViewSize.x;
+    rect.mSize.y = other->mRectData.mViewSize.y;
+
+    parentSnap = other->mParent;
+
+    if (getInstance__9CViewRootFv() == parentSnap) {
+        cur = nullptr;
+    } else {
+        cur = CView_toView(other->mParent);
+    }
+    while (cur != nullptr) {
+        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+            (ml::CRect16*)&walkBuf[1], &cur->mFrame);
+        s16 dx = cur->mFrame.mContentX + walkBuf[1].x;
+        x += dx;
+        parentSnap = cur->mParent;
+        s16 dy = cur->mFrame.mContentY + walkBuf[1].y;
+        y += dy;
+        CVIEW_WALK_NEXT(cur, parentSnap);
+    }
+
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+        (ml::CRect16*)&walkBuf[0], &other->mFrame);
+    s16 tailY = y + walkBuf[0].y;
+    s16 tailX = x + walkBuf[0].x;
+    rect.mPos.x = tailX;
+    rect.mPos.y = tailY;
+}
+
+// us-804412c0: like 8043E7CC but the size is shrunk by the view insets and
+// the origin shifted by the left/top insets.
+extern "C" void func_8043E928__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
+                                                          CView* other) {
+    CWorkThread* parentSnap;
+    CView* cur;
+    s16 x = other->mFrame.mContentX;
+    s16 y = other->mFrame.mContentY;
+    ml::CPnt16 walkBuf[2];
+    parentSnap = other->mParent;
+
+    if (getInstance__9CViewRootFv() == parentSnap) {
+        cur = nullptr;
+    } else {
+        cur = CView_toView(other->mParent);
+    }
+    while (cur != nullptr) {
+        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+            (ml::CRect16*)&walkBuf[0], &cur->mFrame);
+        s16 dx = cur->mFrame.mContentX + walkBuf[0].x;
+        x += dx;
+        parentSnap = cur->mParent;
+        s16 dy = cur->mFrame.mContentY + walkBuf[0].y;
+        y += dy;
+        CVIEW_WALK_NEXT(cur, parentSnap);
+    }
+
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+        (ml::CRect16*)&walkBuf[1], &other->mFrame);
+    s16 insetTop = other->mRectData.mInsetTop;
+    s16 py = y + walkBuf[1].y;
+    py += insetTop;
+    s16 sizeY = other->mRectData.mViewSize.y - insetTop -
+                other->mRectData.mInsetBottom;
+    s16 insetLeft = other->mRectData.mInsetLeft;
+    s16 px = x + walkBuf[1].x;
+    px += insetLeft;
+    s16 sizeX = other->mRectData.mViewSize.x - insetLeft -
+                other->mRectData.mInsetRight;
+    rect.mPos.x = px;
+    rect.mPos.y = py;
+    rect.mSize.x = sizeX;
+    rect.mSize.y = sizeY;
+}
+
+// us-8043f664: recompute this view's rect data from its frame. Bit0 of
+// unk278 selects split-mode (negated view offset as content origin, size
+// from parent or render mode); otherwise size = frame rect extent. Bit4
+// (0x10) skips the func_80459384 max-size clamp.
+extern "C" void func_8043CCCC__5CViewFv(CView* self, u32 arg) {
+    // Slot order mirrors retail: tmp@0x20 > offElse@0x14 > offIf@0xC >
+    // modeSize@0x8. The negated-offset and extent pairs are written into
+    // each rect's .mSize half (slot sharing -- no separate CPnt16 locals).
+    CViewStackRect tmp;
+    CViewStackRect offElse;
+    CViewStackRect offIf;
+    struct {
+        u16 x;
+        u16 y;
+    } modeSize;
+    // Retail forwards its own r4 into the callee's third parameter.
+    func_80441EF0__10CViewFrameFR7CRect16PC10CViewFrame(
+        (ml::CRect16*)&tmp, &self->mFrame, arg);
+
+    if ((self->unk278 & 1) != 0) {
+        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+            (ml::CRect16*)&offIf, &self->mFrame);
+        offIf.mSize.x = -offIf.mPos.x;
+        // Load anchored here so the scheduler places the mParent fetch
+        // between the second neg and its store, matching retail.
+        CWorkThread* parentSnap = self->mParent;
+        offIf.mSize.y = -offIf.mPos.y;
+        *(u32*)&self->mFrame.mContentX = *(u32*)&offIf.mSize;
+
+        CView* parentView;
+        if (getInstance__9CViewRootFv() == parentSnap) {
+            parentView = nullptr;
+        } else {
+            parentView = CView::convertToView(self->mParent);
+        }
+
+        if (parentView != nullptr) {
+            func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(
+                &self->mRectData,
+                static_cast<CView*>(parentView)->mRectData.mBoundsSize);
+        } else {
+            GXRenderModeObj* renderMode = getRenderModeObj__9CDeviceVIFv();
+            u16 modeHeight = renderMode->efbHeight;
+            renderMode = getRenderModeObj__9CDeviceVIFv();
+            u16 modeWidth = renderMode->fbWidth;
+            modeSize.x = modeWidth;
+            modeSize.y = modeHeight;
+            func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(
+                &self->mRectData, *(const ml::CPnt16*)&modeSize);
+        }
+    } else {
+        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+            (ml::CRect16*)&offElse, &self->mFrame);
+        offElse.mSize.x = tmp.mPos.x - offElse.mPos.x;
+        offElse.mSize.y = tmp.mPos.y - offElse.mPos.y;
+        *(u32*)&self->mFrame.mContentX = *(u32*)&offElse.mSize;
+        // NOTE: passes tmp.mSize (first-call rect), not the computed extent.
+        func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(&self->mRectData, tmp.mSize);
+    }
+
+    if ((self->unk278 & 0x10) == 0) {
+        func_80459384__17CViewRectDataCoreFRCQ22ml6CPnt16(&self->mRectData, tmp.mSize);
+    }
 }

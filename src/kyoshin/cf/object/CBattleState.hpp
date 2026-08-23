@@ -43,6 +43,14 @@ namespace cf {
         CBattleStateEntry entries[0x68]; // +0x8
     };
 
+    // One 13-group of the unrolled scan: 8 slots (0x1a0 stride) preceded by
+    // the 8-byte class head, so a group pointer starting at `this` keeps the
+    // retail load displacements (0x14, 0x48, ...) with a +0x1a0 walk.
+    struct CBattleStateScanGroup {
+        u8 pad8[0x8]; // +0x0..+0x7
+        CBattleStateEntry entries[8]; // +0x8..+0x19F
+    };
+
     // size: 0x15D4 (retail; CActorParam members start at 0x8+0x15D4 = 0x15DC).
     // The pointer formerly declared here as field_0x15D8 is actually
     // CActorParam::unk15E0 (object+0x15E0), NOT a CBattleState member.
@@ -68,9 +76,9 @@ namespace cf {
         virtual void CBattleState_UnkVirtualFunc18(); //0x4C
         virtual void CBattleState_UnkVirtualFunc19(); //0x50
         virtual void CBattleState_UnkVirtualFunc20(); //0x54
-        virtual void CBattleState_UnkVirtualFunc21(); //0x58
-        virtual void CBattleState_UnkVirtualFunc22(); //0x5C
-        virtual void CBattleState_UnkVirtualFunc23(); //0x60
+        virtual cf::CBattleStateEntry* CBattleState_UnkVirtualFunc21(int index); //0x58
+        virtual cf::CBattleStateEntry* CBattleState_UnkVirtualFunc22(int index); //0x5C
+        virtual cf::CBattleStateEntry* CBattleState_UnkVirtualFunc23(int index); //0x60
         virtual void CBattleState_UnkVirtualFunc24(); //0x64
         virtual void CBattleState_UnkVirtualFunc25(); //0x68
         virtual void CBattleState_UnkVirtualFunc26(const CBattleStateSrcEntry* src); //0x6C

@@ -1305,16 +1305,16 @@ extern "C" const ResourceIndexTable lbl_eu_804FB7B0;
 #pragma dont_inline on
 extern "C" s32 func_80082418__Q22cf13CfGameManagerFv(s32 first, s32 second) {
     ResourceIndexTable table = lbl_eu_804FB7B0;
-    if (first < 1) {
+    if (1 > first) {
         return -1;
     }
-    if (first > 8) {
+    if (8 < first) {
         return -1;
     }
-    if (second < 1) {
+    if (1 > second) {
         return -1;
     }
-    if (second > 8) {
+    if (8 < second) {
         return -1;
     }
     return table.values[first - 1][second - 1];
@@ -1466,6 +1466,52 @@ extern "C" void func_800827E4__Q22cf13CfGameManagerFv() {
     }
 }
 
+extern "C" void func_8006BEC4(void* self);
+extern "C" f32 func_8004CC74(f32 angle);
+extern "C" f32 func_8004CC68(f32 angle);
+extern "C" void* func_8004B60C(ml::CVec3* out, f32 x, f32 y, f32 z);
+extern "C" void* func_8004B3F0(ml::CVec3* out, const ml::CVec3* src);
+extern "C" void func_8004B738(void* a, const void* b);
+
+namespace cf {
+class CfCamPosSource;   // full decl in CfCam.hpp (virtual slots 0xAC / 0xCC)
+}
+
+// cam offset-vector: mode 1/2 build a radius-2 circle offset at
+// scale +/- 3pi/4, mode 0 writes the constant 1.0 into out+4; every
+// path then stores the aim vector via func_8004B738.
+extern "C" void func_8008064C__Q22cf13CfGameManagerFv(
+    cf::CfCamPosSource* self, s32 mode, void* out) {
+    if (self != nullptr) {
+        void** vt = *reinterpret_cast<void***>(self);
+    f32 scale = reinterpret_cast<f32 (*)(cf::CfCamPosSource*)>(vt[51])(self);
+    if (mode == 0) {
+        func_8006BEC4(out);
+        *(f32*)((u8*)out + 4) = lbl_eu_8066649C;
+    } else {
+        f32 theta;
+        f32 vx;
+        f32 vz;
+        if (mode == 1) {
+            theta = scale + ((lbl_eu_80666540 * lbl_eu_8066A1F8) * lbl_eu_80666544);
+            vz = lbl_eu_80666548 * func_8004CC74(theta);
+            vx = lbl_eu_80666548 * func_8004CC68(theta);
+        } else {
+            theta = scale - ((lbl_eu_80666540 * lbl_eu_8066A1F8) * lbl_eu_80666544);
+            vx = lbl_eu_80666548 * func_8004CC68(theta);
+            vz = lbl_eu_80666548 * func_8004CC74(theta);
+        }
+        ml::CVec3 tmp;
+        func_8004B60C(&tmp, vx, lbl_eu_80666498, vz);
+        func_8004B3F0(static_cast<ml::CVec3*>(out), &tmp);
+    }
+        func_8004B738(
+            out,
+            reinterpret_cast<void* (*)(cf::CfCamPosSource*)>(vt[43])(self));
+    } else {
+        func_8006BEC4(out);
+    }
+}
 #pragma dont_inline on
 extern "C" void func_80080EE4__Q22cf13CfGameManagerFv(Unk80EE4Data* data,
                                                         const char* text, u32 value) {
@@ -1632,9 +1678,9 @@ extern "C" void func_8008360C__Q22cf13CfGameManagerFv() {
             }
         }
     }
+    }
     CfRes_setE28Mask(0x400);
 }
-
 extern "C" ItemListManager* func_800B6BA4__Fv();
 extern "C" void func_800C01D4(ItemListObject* object, void* destination,
                                 u16 itemId);
@@ -2041,7 +2087,7 @@ extern "C" void func_8007E0D0__Q22cf13CfGameManagerFv(bool alternate) {
     s32 fallback = -1;
     u32 count = func_800822F4__Q22cf13CfGameManagerFv();
     entry += start;
-    for (s32 i = start; i < 7; ++i, ++entry) {
+    for (s32 i = start; i < 7; ++entry, ++i) {
         s32 value = *entry;
         if (0 >= value) {
             continue;
@@ -2107,7 +2153,7 @@ extern "C" void CfRes_callFunc_68110(u32 value);
 extern "C" float lbl_eu_8066656C;
 extern "C" UnkGimmickGlobalView* getUnk80664658();
 extern "C" void func_801F4CE4();
-extern "C" u32 func_80061870(UnkClass_80085334* object, u32 mode, u32 value,
+extern "C" u32 func_80061870(u32 object, u32 mode, u32 value,
                                 u32 fourth, u32 fifth, u32 sixth);
 extern "C" void func_800862D0__Q22cf13CfGameManagerFv() {
     func_800B94A0(0);
@@ -2132,7 +2178,7 @@ extern "C" void func_800862D0__Q22cf13CfGameManagerFv() {
     }
     cf::CfGameManager* manager = &lbl_eu_80571758;
     if (manager->unkAC != nullptr) {
-        func_80061870(manager->unkAC, 0x13, 2, 0, 0, 0);
+        func_80061870(reinterpret_cast<u32>(manager->unkAC), 0x13, 2, 0, 0, 0);
     }
     if (getUnk80664658() != 0) {
         getUnk80664658();
@@ -2204,8 +2250,6 @@ extern "C" void func_800866A0__Q22cf13CfGameManagerFv() {
 }
 
 extern "C" void func_8006349C();
-extern "C" u32 func_80061870(UnkClass_80085334* object, u32 mode, u32 value,
-                                u32 fourth, u32 fifth, u32 sixth);
 extern "C" VoiceSource* func_800B76F4();
 extern "C" VoiceSource* func_800B7854(VoiceSource* source);
 extern "C" void func_800BEE1C(VoiceSource* source, bool enabled);
@@ -2256,7 +2300,7 @@ extern "C" u32 func_8007FC5C__Q22cf13CfGameManagerFv(
     if (lbl_eu_80571758.unkAC == nullptr) {
         result = 0;
     } else {
-        result = func_80061870(lbl_eu_80571758.unkAC, first, second, third,
+        result = func_80061870(reinterpret_cast<u32>(lbl_eu_80571758.unkAC), first, second, third,
                               fourth, fifth);
     }
     return result;
@@ -2343,7 +2387,7 @@ extern "C" void func_80085248__Q22cf13CfGameManagerFv() {
         lbl_eu_80663E70 = 1;
     }
     if (lbl_eu_80571758.unkAC != nullptr) {
-        func_80061870(lbl_eu_80571758.unkAC, 12, 0, 0, 0, 0);
+        func_80061870(reinterpret_cast<u32>(lbl_eu_80571758.unkAC), 12, 0, 0, 0, 0);
     }
     if (!lbl_eu_80663E70) {
         __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
@@ -2352,7 +2396,7 @@ extern "C" void func_80085248__Q22cf13CfGameManagerFv() {
         lbl_eu_80663E70 = 1;
     }
     if (lbl_eu_80571758.unkAC != nullptr) {
-        func_80061870(lbl_eu_80571758.unkAC, 4, 0, 0, 0, 0);
+        func_80061870(reinterpret_cast<u32>(lbl_eu_80571758.unkAC), 4, 0, 0, 0, 0);
     }
 }
 
@@ -2365,7 +2409,7 @@ extern "C" void func_80085334__Q22cf13CfGameManagerFv(u32 value) {
     }
     cf::CfGameManager* manager = &lbl_eu_80571758;
     if (manager->unkAC != nullptr) {
-        func_80061870(manager->unkAC, 6, static_cast<u16>(value), 0, 0, 0);
+        func_80061870(reinterpret_cast<u32>(manager->unkAC), 6, static_cast<u16>(value), 0, 0, 0);
     }
 }
 
@@ -2718,13 +2762,12 @@ extern "C" void func_8007CBEC__Q22cf13CfGameManagerFv() {
         return;
     }
 
-    u32 resourceFlagsA = lbl_eu_80663E28;
-    u32 resourceFlagsB = lbl_eu_80663E28;
-    if ((resourceFlagsA & 0x02000000) == 0 &&
-        (resourceFlagsB & 0x00040000) != 0) {
+    u32 resourceFlags = lbl_eu_80663E28;
+    if ((resourceFlags & 0x02000000) == 0 &&
+        (resourceFlags & 0x00040000) != 0) {
         return;
     }
-    if ((resourceFlagsB & 0x00100000) != 0) {
+    if ((resourceFlags & 0x00100000) != 0) {
         return;
     }
     if ((lbl_eu_80663E24 & 0x02040000) == 0) {
@@ -2983,21 +3026,24 @@ extern "C" void sinit_80087470() {
     object->field_0x44 = 0;
     __register_global_object(object, reinterpret_cast<void*>(__dt__8008753C), base);
 
-    BdatTextEntry* entry0 = reinterpret_cast<BdatTextEntry*>(base + 0x948);
-    float* vector = reinterpret_cast<float*>(base + 0x96C);
-    BdatTextEntry* entries = reinterpret_cast<BdatTextEntry*>(base + 0x978);
-    BdatTextEntry* entry1 = reinterpret_cast<BdatTextEntry*>(base + 0xA18);
     lbl_eu_80663E24 = 0;
     lbl_eu_80663E28 = 0;
     lbl_eu_80663E2C = 0;
+
+    BdatTextEntry* entry0 = reinterpret_cast<BdatTextEntry*>(base + 0x948);
     entry0->text[0] = 0;
     entry0->textLength = 0;
+
+    float* vector = reinterpret_cast<float*>(base + 0x96C);
     vector[0] = lbl_eu_80666498;
     vector[1] = lbl_eu_80666498;
     vector[2] = lbl_eu_80666498;
+
+    BdatTextEntry* entries = reinterpret_cast<BdatTextEntry*>(base + 0x978);
     __construct_array(entries, reinterpret_cast<void*>(func_80087588),
                       nullptr, sizeof(BdatTextEntry), 2);
 
+    BdatTextEntry* entry1 = reinterpret_cast<BdatTextEntry*>(base + 0xA18);
     entry1->text[0] = 0;
     entry1->textLength = 0;
     entry1->secondaryText[0] = 0;

@@ -1,8 +1,12 @@
 // Auto-scaffolded catalog TU for kyoshin/code_80135FDC
 // Replace stubs with high-level C/C++ during decomp.
 
+// CfGameManager.hpp declares extern "C" UnkScnResult* func_8049603C(CScn*),
+// conflicting with code_80135FDC.hpp's CTaskGameCamView* shape; hide it here.
+#define func_8049603C code35FDCCfGameManager9603CUnused
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#undef func_8049603C
 // code_80135FDC.hpp declares this TU's exported functions with caller-tuned
 // signatures that differ from the (not-yet-matched) definitions below, so
 // suppress those declarations when included from this defining TU.
@@ -16,6 +20,7 @@
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
 #include <nw4r/lyt/lyt_material.h>
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/device/CDeviceSC.hpp"
 #include <revolution/gx/GXTransform.h>
 #include <revolution/gx/GXPixel.h>
 #include <revolution/mtx/mtx44.h>
@@ -76,9 +81,12 @@ extern u8 lbl_eu_8052E568[];
 extern u8 lbl_eu_8052E590[];
 }
 
-// func_8003AA34 stays inline: CKizunaTalkList.hpp declares it as (void) - a
-// move into code_80135FDC.hpp would clash in CKizunaTalkList.cpp.
-extern "C" void func_8003AA34(const char*);
+// func_8003AA34: code_801862C0.hpp (via harness_catalog.hpp) declares it as
+// void*() - an extern-"C" function cannot be redeclared with a different
+// signature here. Retail callers in this TU pass a table name in r3 (the
+// callee ignores it), so those call sites go through a signature cast; MWCC
+// emits the same direct bl to func_8003AA34 either way.
+#define func_8003AA34(name) ((void (*)(const char*))func_8003AA34)(name)
 
 
 
@@ -254,6 +262,43 @@ u8 func_801392B4(u32 idx) {
 // func_80136130: BDAT string -> s16
 // func_80136190: BDAT string -> void
 
+// BDAT string column readers. Each validates the table (func_8003AA34),
+// resolves the file pointer, reads the cell, and reinterprets it at the
+// requested width/sign: u8 / u16 / s16 / s8.
+u8 func_8013600C(const void* tableName, const void* column, u32 key) {
+    func_8003AA34((const char*)tableName);
+    void* fp = getFP__FPCc((const char*)tableName);
+    void* result = getBdatStringColumnValue(fp, (const char*)column,
+                                            (const void*)(uintptr_t)key);
+    return *(u8*)&result;
+}
+
+u16 func_8013606C(const void* tableName, const void* column, u32 key) {
+    func_8003AA34((const char*)tableName);
+    void* fp = getFP__FPCc((const char*)tableName);
+    void* result = getBdatStringColumnValue(fp, (const char*)column,
+                                            (const void*)(uintptr_t)key);
+    return *(u16*)&result;
+}
+
+s16 func_80136130(const void* tableName, const void* column, u32 key) {
+    func_8003AA34((const char*)tableName);
+    void* fp = getFP__FPCc((const char*)tableName);
+    void* result = getBdatStringColumnValue(fp, (const char*)column,
+                                            (const void*)(uintptr_t)key);
+    return *(s16*)&result;
+}
+
+s8 func_801360CC(const void* tableName, const void* column, u32 key) {
+    func_8003AA34((const char*)tableName);
+    void* fp = getFP__FPCc((const char*)tableName);
+    void* result = getBdatStringColumnValue(fp, (const char*)column,
+                                            (const void*)(uintptr_t)key);
+    // Retail spills the cell value to the stack and re-reads it sign-extended.
+    s32 byte = *(s8*)&result;
+    return (s8)byte;
+}
+
 void func_80136190(const char* a, const char* b, const char* c) {
     func_8003AA34(a);
     void* fp = getFP__FPCc(a);
@@ -303,8 +348,8 @@ extern "C" u32 func_80136400(const char* src, u16* dst, u32 destLen) {
                reinterpret_cast<const wchar_t*>(lbl_eu_806621F4));
         return 1;
     }
-    dst[destLen] = 0;
     int i = 0;
+    dst[destLen] = 0;
     int len = (int)destLen;
     while (*dst != 0 && i < len) {
         if (*dst == 0x40u)
@@ -315,6 +360,9 @@ extern "C" u32 func_80136400(const char* src, u16* dst, u32 destLen) {
     return 1;
 }
 
+// optimize_for_size gives retail's cmpi-pair SJIS checks (at -O4 the range
+// checks coalesce into subi/cmpli); same pattern as CArtsInfo.cpp.
+#pragma optimize_for_size on
 extern "C" void func_eu_80136F90(char* str) {
     extern int getLanguage__9CDeviceSCFv();
     int lang = getLanguage__9CDeviceSCFv();
@@ -322,39 +370,55 @@ extern "C" void func_eu_80136F90(char* str) {
     int len = strlen(str);
     int i = 0;
     while (i < len) {
-        char c = *str;
-        if (c == '.') {
-            *str = ',';
-        } else if (c >= 0x81 && c <= 0x9F) {
-            i++;
-            str++;
-        } else if (c >= 0xE0 && c <= 0xEF) {
-            i++;
-            str++;
+        s8 c = *str;
+        if (c == 0x2e) {
+            *str = 0x2c;
+        } else {
+            // Nested (not &&-chained) tests: chained ranges coalesce into
+            // subi/cmpli pairs, retail keeps two signed cmpis per group.
+            if (c >= 0x81) {
+                if (c <= 0x9f) {
+                    i += 1;
+                    str += 1;
+                    goto next;
+                }
+            }
+            if (c >= 0xe0) {
+                if (c <= 0xef) {
+                    i += 1;
+                    str += 1;
+                }
+            }
         }
-        i++;
-        str++;
+next:
+        i += 1;
+        str += 1;
     }
 }
+#pragma optimize_for_size off
 
 extern "C" int func_801364B8(char* src, char delim, char** outTokens) {
+    // next is a walking char** (retail keeps it as a raw byte offset in a
+    // register, starting at outTokens+4)
     int count = 1;
-    int idx = 1;
-    outTokens[0] = src;
+    char** next = outTokens + 1;
+    *outTokens = src;
     int len = strlen(src);
     int i = 0;
     while (i < len) {
         char c = src[i];
         if (c == delim) {
             src[i] = 0;
+            char* q = &src[i] + 1;
             int j = 1;
             do {
-                if (src[i + j] != ' ')
+                if (*q != ' ')
                     break;
+                q++;
                 j++;
             } while (true);
-            outTokens[idx] = &src[i + j];
-            idx++;
+            *next = &src[i] + j;
+            next++;
             count++;
         } else if (c >= 0x81 && c <= 0x9F) {
             i++;
@@ -363,13 +427,14 @@ extern "C" int func_801364B8(char* src, char delim, char** outTokens) {
         }
         i++;
     }
+    // trim trailing spaces from each token; retail rotates this into a
+    // countdown loop (mtctr/bdnz on the remaining scan length)
+    char** p = outTokens;
     for (int k = 0; k < count; k++) {
-        char* t = outTokens[k];
-        int pos = strlen(t) - 1;
-        while (pos >= 0) {
-            if (t[pos] == ' ') {
-                pos--;
-            } else {
+        char* t = *p;
+        p++;
+        for (int pos = strlen(t) - 1; pos >= 0; pos--) {
+            if (t[pos] != ' ') {
                 t[pos + 1] = 0;
                 break;
             }
@@ -433,7 +498,9 @@ extern "C" void func_8013676C(void* node, nw4r::ut::Font* font) {
     void* child = *(void**)((u8*)node + 0x14);
     void* head = (u8*)node + 0x14;
     char buf[32];
-    char* tokens[8];
+    // tokens is oversized in retail (stack frame reserves 18 entries);
+    // func_801364B8 never fills more than a handful.
+    char* tokens[18];
     while (child != head) {
         if (child == NULL) {
             Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
@@ -496,10 +563,18 @@ extern "C" void func_80136A1C(
         wcscpy(reinterpret_cast<wchar_t*>(buf),
                reinterpret_cast<const wchar_t*>(&lbl_eu_806621F4));
     } else {
-        buf[destLen] = 0;
-        for (u32 i = 0; i < destLen; i++) {
-            if (buf[i] == 0x40u)
-                buf[i] = 0x0Au;
+        // Pointer + counter scan (same loop shape as func_80136400): retail
+        // keeps len in a saved reg, walks buf with a pointer, and stores
+        // the terminator via a zero register before the loop.
+        int len = (int)destLen;
+        u16* p = buf;
+        p[len] = 0;
+        int i = 0;
+        while (*p != 0 && i < len) {
+            if (*p == 0x40u)
+                *p = 0x0Au;
+            p++;
+            i++;
         }
     }
 
@@ -545,26 +620,31 @@ extern "C" void func_80136D74(
 
     if (result != 0) {
         wcscpy(reinterpret_cast<wchar_t*>(buf),
-               reinterpret_cast<const wchar_t*>(&lbl_eu_806621F4));
+               reinterpret_cast<const wchar_t*>(lbl_eu_806621F4));
     } else {
+        // same loop shape as func_80136400 (pointer + counter)
         buf[destLen] = 0;
-        for (u32 i = 0; i < destLen; i++) {
-            if (buf[i] == 0x40u)
-                buf[i] = 0x0Au;
+        int len = (int)destLen;
+        u16* p = buf;
+        int i = 0;
+        while (*p != 0 && i < len) {
+            if (*p == 0x40u)
+                *p = 0x0Au;
+            p++;
+            i++;
         }
     }
 
     if (tagProc != 0) {
-        typedef const wchar_t* (*TagProcFn)(void*, wchar_t*, int, float, float);
-        TagProcFn fn = (*reinterpret_cast<TagProcFn*>(tagProc));
-        const wchar_t* res = fn(reinterpret_cast<void*>(tagProc),
-            reinterpret_cast<wchar_t*>(buf), 0, lbl_eu_806672D8, lbl_eu_806672D8);
+        // virtual slot 0x14; retail passes the same float in f1 and f2
+        const wchar_t* res = reinterpret_cast<CTagProcIf36D74*>(tagProc)->Proc(
+            reinterpret_cast<wchar_t*>(buf), 0,
+            lbl_eu_806672D8, lbl_eu_806672D8);
         wcscpy(reinterpret_cast<wchar_t*>(buf), res);
     }
 
-    nw4r::lyt::Pane* pane = layout->GetRootPane()->FindPaneByName("", true);
-    static_cast<nw4r::lyt::TextBox*>(pane)->SetString(
-        reinterpret_cast<const wchar_t*>(buf), 0);
+    // layout vtable slot 0x7C
+    reinterpret_cast<CLytSetStrIf36D74*>(layout)->SetString(buf, 0);
 }
 
 extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
@@ -593,8 +673,11 @@ extern "C" void func_80136FA0(
     void** ppAnimRes,
     nw4r::lyt::ArcResourceAccessor* accessor,
     char* name) {
+    // Declaration order drives MWCC's saved-reg allocation: resource must
+    // land in r30 and mem in r31 to match retail.
+    void* mem;
     void* resource = accessor->GetResource(0, name, 0);
-    void* mem = allocate__Q23mtl10MemManagerFUlUl(0x10, getAllocHandle__10CLibLayoutFv());
+    mem = allocate__Q23mtl10MemManagerFUlUl(0x10, getAllocHandle__10CLibLayoutFv());
     if (mem != NULL) {
         Set__Q34nw4r3lyt12AnimResourceFPCv(mem, resource);
     }
@@ -643,60 +726,102 @@ extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(
     layout->Draw(*drawInfo);
 }
 
-extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(
-    nw4r::lyt::DrawInfo* drawInfo) {
-    if (!CDeviceVI::isWideAspectRatio()) return;
+void func_80137250(nw4r::lyt::DrawInfo* drawInfo) {
+    if (!CDeviceSC::isWideAspectRatio()) return;
 
-    f32 sc[2];
-    sc[0] = 0.75f;
-    sc[1] = 1.0f;
-    u8* flagPtr = reinterpret_cast<u8*>(drawInfo) + 0x50;
-    u8 bit5 = (*flagPtr >> 5) & 1;
-    u8 newBit = (bit5 == 0) ? 1u : 0u;
-    *(f32*)(reinterpret_cast<u8*>(drawInfo) + 0x44) = sc[0];
-    *(f32*)(reinterpret_cast<u8*>(drawInfo) + 0x48) = sc[1];
-    *flagPtr = (*flagPtr & 0xDFu) | (newBit << 5);
+    // Toggle the locationAdjust flag bit and reload the location-adjust
+    // scale from the tuned sdata2 constants (wide aspect only).
+    nw4r::math::VEC2 scale = { lbl_eu_806672E4, lbl_eu_806672E8 };
+    drawInfo->SetLocationAdjustScale(scale);
+    drawInfo->SetLocationAdjust(drawInfo->IsLocationAdjust() == false);
 }
 
 int func_801372B4(int value) {
-    if (value >= 11) {
-        if (value >= 19) {
-            if (value >= 29)
-                return 0;
-            return 5;
+    // Range lookup via shared result labels so each value emits exactly one
+    // li/blr block, laid out in retail's ascending order.
+    if (value < 11) {
+        if (value < 4) {
+            if (value < 2) goto ret0;
+            goto ret1;
         }
-        if (value >= 17)
-            return 2;
-        return 4;
+        if (value < 7) goto ret2;
+        goto ret3;
     }
-    if (value >= 4) {
-        if (value >= 7)
-            return 3;
-        return 2;
+    if (value >= 19) {
+        if (value >= 29) goto ret0;
+        goto ret5;
     }
-    if (value >= 2)
-        return 1;
+    if (value >= 17) goto ret2;
+    goto ret4;
+
+ret1:
+    return 1;
+ret2:
+    return 2;
+ret3:
+    return 3;
+ret4:
+    return 4;
+ret5:
+    return 5;
+ret0:
     return 0;
 }
 
-extern "C" void func_8013732C(const char* name) {
-    u16 rowIdx = 0;
-    if (lbl_eu_80664098 != 0) {
+extern "C" int func_8013732C(const char* name) {
+    // BDAT lookup: row index from one table keyed by name, then a u8 column
+    // from another table keyed by that index; the byte maps through a range
+    // tree identical to func_801372B4's (inlined here in retail).
+    // col0x22 is computed before the global test (retail hoists it).
+    const char* col0x22 = &lbl_eu_80500664[0x22];
+    u16 rowIdx;
+    if (lbl_eu_80664098 == 0) {
+        rowIdx = 0;
+    } else {
         func_8003AA34(name);
         void* result = getBdatStringColumnValue(
             reinterpret_cast<void*>(lbl_eu_80664098),
-            &lbl_eu_80500664[0x22], name);
-        rowIdx = *reinterpret_cast<u16*>(result);
+            col0x22, name);
+        rowIdx = *reinterpret_cast<u16*>(&result);
     }
 
-    func_8003AA34(&lbl_eu_80500664[0x15]);
+    // retail validates the raw base name here, then opens base+0x15
+    func_8003AA34(lbl_eu_80500664);
     void* fp = getFP__FPCc(&lbl_eu_80500664[0x15]);
     void* result2 = getBdatStringColumnValue(
         fp, &lbl_eu_80500664[0x0F],
-        reinterpret_cast<const char*>(&rowIdx));
-    u8 switchVal = *reinterpret_cast<u8*>(result2);
+        reinterpret_cast<const void*>(static_cast<u32>(rowIdx)));
+    u8 val = *reinterpret_cast<u8*>(&result2);
 
-    func_801372B4(switchVal);
+    // Range lookup via shared result labels so each value emits exactly one
+    // li/blr-style block, laid out in retail's ascending order.
+    if (val < 11) {
+        if (val < 4) {
+            if (val < 2) goto ret0;
+            goto ret1;
+        }
+        if (val < 7) goto ret2;
+        goto ret3;
+    }
+    if (val >= 19) {
+        if (val >= 29) goto ret0;
+        goto ret5;
+    }
+    if (val >= 17) goto ret2;
+    goto ret4;
+
+ret1:
+    return 1;
+ret2:
+    return 2;
+ret3:
+    return 3;
+ret4:
+    return 4;
+ret5:
+    return 5;
+ret0:
+    return 0;
 }
 
 extern float lbl_eu_806672EC;
@@ -724,21 +849,26 @@ extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(
 }
 
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform* anim, float delta) {
+    // Single-exit form: result flag stays in a saved register and the frame
+    // is stored once at the end (retail has no early return).
     float newFrame = anim->GetFrame() - delta;
+    u32 result = 0;
     if (CDeviceVI::isTvFormatPal()) {
-        newFrame -= 0.2f;
+        newFrame -= lbl_eu_806672EC;
     }
-    if (newFrame <= 0.0f) {
+    if (newFrame <= lbl_eu_806672F0) {
         if (anim->IsLoopData()) {
-            newFrame = static_cast<float>(anim->GetFrameSize()) - 1.0f;
+            // Builtin u16->f32 conversion emits retail's exact 0x4330 stack
+            // trick; the pooled magic literal is value-equal to sdata2
+            // lbl_eu_806672F8 (reloc-name-only drift, see MWCC_PATTERNS 7i).
+            newFrame = static_cast<float>(anim->GetFrameSize()) - lbl_eu_806672E8;
         } else {
-            newFrame = 0.0f;
+            newFrame = lbl_eu_806672F0;
         }
-        anim->SetFrame(newFrame);
-        return 1;
+        result = 1;
     }
     anim->SetFrame(newFrame);
-    return 0;
+    return result;
 }
 
 extern "C" void func_801375A0(nw4r::math::VEC3* output, nw4r::lyt::Pane* pane) {
@@ -807,57 +937,57 @@ extern "C" __declspec(noinline) void func_80137738(nw4r::math::VEC3* output,
 }
 
 extern "C" void func_8013775C(nw4r::math::VEC3* output, nw4r::lyt::Pane* node) {
-    output->x = lbl_eu_806672F0;
-    output->y = lbl_eu_806672F0;
-    output->z = lbl_eu_806672F0;
+    // Single load: retail keeps the zero constant live in f1 across the whole
+    // function (one lfs up front, stfs at every init site).
+    float z = lbl_eu_806672F0;
+    output->x = z;
+    output->y = z;
+    output->z = z;
     if (node != NULL) {
         if (node->GetParent() != NULL) {
             output->x = node->GetTranslate().x;
-            output->y = node->GetTranslate().y;
-            output->z = node->GetTranslate().z;
+    output->y = node->GetTranslate().y;
+    output->z = node->GetTranslate().z;
 
-            nw4r::lyt::Pane* parent = node->GetParent();
-            nw4r::math::VEC3 accum;
-            accum.x = lbl_eu_806672F0;
-            accum.y = lbl_eu_806672F0;
-            accum.z = lbl_eu_806672F0;
-            if (parent != NULL) {
-                nw4r::lyt::Pane* grandparent = parent->GetParent();
-                if (grandparent != NULL) {
-                    accum.x = parent->GetTranslate().x;
-                    accum.y = parent->GetTranslate().y;
-                    accum.z = parent->GetTranslate().z;
+    // Stack-slot order matches retail: recurse @0x8, tmp2 @0x14,
+    // temp @0x20, accum @0x2C (declared in that order).
+    nw4r::math::VEC3 recurse;
+    nw4r::math::VEC3 tmp2;
+    nw4r::math::VEC3 temp;
+    nw4r::math::VEC3 accum;
 
-                    nw4r::math::VEC3 temp;
-                    temp.x = lbl_eu_806672F0;
-                    temp.y = lbl_eu_806672F0;
-                    temp.z = lbl_eu_806672F0;
-                    if (grandparent != NULL) {
-                        nw4r::lyt::Pane* ggp = grandparent->GetParent();
-                        if (ggp != NULL) {
-                            temp.x = grandparent->GetTranslate().x;
-                            temp.y = grandparent->GetTranslate().y;
-                            temp.z = grandparent->GetTranslate().z;
+    nw4r::lyt::Pane* parent = node->GetParent();
+    accum.x = z;
+    accum.y = z;
+    accum.z = z;
 
-                            nw4r::math::VEC3 tmp2;
-                            code80135FDC_setVec3((float*)&tmp2, lbl_eu_806672F0,
-                                                 lbl_eu_806672F0, lbl_eu_806672F0);
-                            if (ggp != NULL) {
-                                nw4r::lyt::Pane* gggp = ggp->GetParent();
-                                if (gggp != NULL) {
-                                    copyVEC3(&tmp2, &ggp->GetTranslate());
-                                    nw4r::math::VEC3 recurse;
-                                    func_8013775C(&recurse, gggp);
-                                    func_80137738(&tmp2, &recurse);
-                                }
-                            }
-                            nw4r::math::VEC3Add(&temp, &temp, &tmp2);
-                        }
-                    }
-                    nw4r::math::VEC3Add(&accum, &accum, &temp);
-                }
+    nw4r::lyt::Pane* grandparent = parent->GetParent();
+    if (grandparent != NULL) {
+        accum.x = parent->GetTranslate().x;
+        accum.y = parent->GetTranslate().y;
+        accum.z = parent->GetTranslate().z;
+
+        temp.x = z;
+        temp.y = z;
+        temp.z = z;
+
+        nw4r::lyt::Pane* ggp = grandparent->GetParent();
+        temp.x = grandparent->GetTranslate().x;
+        temp.y = grandparent->GetTranslate().y;
+        temp.z = grandparent->GetTranslate().z;
+
+        code80135FDC_setVec3((float*)&tmp2, z, z, z);
+        if (ggp != NULL) {
+            if (ggp->GetParent() != NULL) {
+                copyVEC3(&tmp2, &ggp->GetTranslate());
+                func_8013775C(&recurse, ggp->GetParent());
+                func_80137738(&tmp2, &recurse);
             }
-            nw4r::math::VEC3Add(output, output, &accum);
+        }
+        nw4r::math::VEC3Add(&temp, &temp, &tmp2);
+        nw4r::math::VEC3Add(&accum, &accum, &temp);
+    }
+    nw4r::math::VEC3Add(output, output, &accum);
         }
     }
 }
@@ -943,17 +1073,16 @@ extern "C" void func_80137B44(void* a, u32 b, u32 c) {
     ((void(*)(void*, u32, void*))vt2[0x28 / 4])(result, 3, &v3);
 }
 
-extern "C" void func_80137C1C(void* a, u32 b) {
-    if (a == NULL) return;
-    void** vt = *(void***)a;
-    u32 v0 = b;
-    u32 v1 = b;
-    u32 v2 = b;
-    u32 v3 = b;
-    ((void(*)(void*, u32, void*))vt[0x28 / 4])(a, 0, &v0);
-    ((void(*)(void*, u32, void*))vt[0x28 / 4])(a, 2, &v2);
-    ((void(*)(void*, u32, void*))vt[0x28 / 4])(a, 1, &v1);
-    ((void(*)(void*, u32, void*))vt[0x28 / 4])(a, 3, &v3);
+extern "C" void func_80137C1C(void* obj, u32 value) {
+    // Retail reloads the vtable for every call and keeps `obj` (r30) and
+    // `value` (r31) live; each call gets its own stack slot. Written as a
+    // true virtual call so MWCC emits the r12 -> r12 dispatch sequence.
+    u32 vInit = value;
+    if (obj == NULL) return;
+    { u32 v = vInit; ((CAnimTargetIf37038*)obj)->Set(0, &v); }
+    { u32 v = value; ((CAnimTargetIf37038*)obj)->Set(2, &v); }
+    { u32 v = value; ((CAnimTargetIf37038*)obj)->Set(1, &v); }
+    { u32 v = value; ((CAnimTargetIf37038*)obj)->Set(3, &v); }
 }
 
 extern "C" void func_80137CD4(void* a, u32 b, u32 c, u32 d) {
@@ -976,16 +1105,16 @@ extern "C" void func_80137CD4(void* a, u32 b, u32 c, u32 d) {
 }
 
 extern "C" void func_80137DB8(void* a, u32 b, u32 c) {
+    // Retail order: idx0=b, idx2=c, idx1=b, idx3=c. The parameter addresses
+    // are passed directly, so MWCC re-stores each value into a fresh stack
+    // slot per call (no shared temp).
+    // Four distinct temporaries - retail gives every call its own stack
+    // slot and keeps obj/b/c in saved regs r29/r30/r31.
     if (a == NULL) return;
-    void** vt = *(void***)a;
-    u32 v0 = b;
-    u32 v1 = b;
-    u32 v2 = c;
-    u32 v3 = c;
-    ((void(*)(void*, u32, void*))vt[0x28 / 4])(a, 0, &v0);
-    ((void(*)(void*, u32, void*))vt[0x28 / 4])(a, 2, &v2);
-    ((void(*)(void*, u32, void*))vt[0x28 / 4])(a, 1, &v1);
-    ((void(*)(void*, u32, void*))vt[0x28 / 4])(a, 3, &v3);
+    { u32 v = b; ((CAnimTargetIf37038*)a)->Set(0, &v); }
+    { u32 v = c; ((CAnimTargetIf37038*)a)->Set(2, &v); }
+    { u32 v = b; ((CAnimTargetIf37038*)a)->Set(1, &v); }
+    { u32 v = c; ((CAnimTargetIf37038*)a)->Set(3, &v); }
 }
 
 extern "C" void func_80137E7C(void* a, u32 b, void* palette) {
@@ -1039,8 +1168,9 @@ struct Table_80500188 {
 };
 
 extern "C" u16 func_801380A0(u32 idx) {
-    struct Table_80500188 t = lbl_eu_80500188;
+    struct Table_80500188 t;
     u32 n = idx - 1;
+    t = lbl_eu_80500188;
     return ((u16*)&t)[n];
 }
 
@@ -1058,81 +1188,83 @@ extern "C" u32 func_80138138(u32 val) {
 extern "C" u32 func_80138234(const char* name, u32 id) {
     if (func_8009CF8C(id + 0x220) != 0) return 0;
 
-    const char* base = lbl_eu_80500664;
-    const char* col1 = base + 0x2A;
+    // One reusable column pointer: retail rematerializes the table base per
+    // block and cycles a single register for the column offset.
+    const char* col = &lbl_eu_80500664[0x2A];
     u16 v1;
-    if (name != NULL) {
-        func_8003AA34(base);
-        void* result = getBdatStringColumnValue((void*)name, col1, (const char*)id);
-        v1 = *(u16*)&result;
-    } else {
+    if (name == NULL) {
         v1 = 0;
+    } else {
+        func_8003AA34(lbl_eu_80500664);
+        void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
+        v1 = *(u16*)&result;
     }
-    const char* col2 = base + 0x30;
+    col = &lbl_eu_80500664[0x30];
     u16 v2;
-    if (name != NULL) {
-        func_8003AA34(base);
-        void* result = getBdatStringColumnValue((void*)name, col2, (const char*)id);
-        v2 = *(u16*)&result;
-    } else {
+    if (name == NULL) {
         v2 = 0;
+    } else {
+        func_8003AA34(lbl_eu_80500664);
+        void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
+        v2 = *(u16*)&result;
     }
-    const char* col3 = base + 0x3C;
+    col = &lbl_eu_80500664[0x3C];
     u8 v3;
-    if (name != NULL) {
-        func_8003AA34(base);
-        void* result = getBdatStringColumnValue((void*)name, col3, (const char*)id);
-        v3 = *(u8*)&result;
-    } else {
+    if (name == NULL) {
         v3 = 0;
+    } else {
+        func_8003AA34(lbl_eu_80500664);
+        void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
+        v3 = *(u8*)&result;
     }
-    const char* col4 = base + 0x47;
+    col = &lbl_eu_80500664[0x47];
     u16 v4;
-    if (name != NULL) {
-        func_8003AA34(base);
-        void* result = getBdatStringColumnValue((void*)name, col4, (const char*)id);
-        v4 = *(u16*)&result;
-    } else {
+    if (name == NULL) {
         v4 = 0;
+    } else {
+        func_8003AA34(lbl_eu_80500664);
+        void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
+        v4 = *(u16*)&result;
     }
-    const char* col5 = base + 0x52;
+    col = &lbl_eu_80500664[0x52];
     u16 v5;
-    if (name != NULL) {
-        func_8003AA34(base);
-        void* result = getBdatStringColumnValue((void*)name, col5, (const char*)id);
-        v5 = *(u16*)&result;
-    } else {
+    if (name == NULL) {
         v5 = 0;
+    } else {
+        func_8003AA34(lbl_eu_80500664);
+        void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
+        v5 = *(u16*)&result;
     }
-    const char* col6 = base + 0x5D;
+    col = &lbl_eu_80500664[0x5D];
     u16 v6;
-    if (name != NULL) {
-        func_8003AA34(base);
-        void* result = getBdatStringColumnValue((void*)name, col6, (const char*)id);
-        v6 = *(u16*)&result;
-    } else {
+    if (name == NULL) {
         v6 = 0;
+    } else {
+        func_8003AA34(lbl_eu_80500664);
+        void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
+        v6 = *(u16*)&result;
     }
-    const char* col7 = base + 0x68;
+    col = &lbl_eu_80500664[0x68];
     u16 v7;
-    if (name != NULL) {
-        func_8003AA34(base);
-        void* result = getBdatStringColumnValue((void*)name, col7, (const char*)id);
-        v7 = *(u16*)&result;
-    } else {
+    if (name == NULL) {
         v7 = 0;
-    }
-    const char* col8 = base + 0x73;
-    u8 v8;
-    if (name != NULL) {
-        func_8003AA34(base);
-        void* result = getBdatStringColumnValue((void*)name, col8, (const char*)id);
-        v8 = *(u8*)&result;
     } else {
+        func_8003AA34(lbl_eu_80500664);
+        void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
+        v7 = *(u16*)&result;
+    }
+    col = &lbl_eu_80500664[0x73];
+    u8 v8;
+    if (name == NULL) {
         v8 = 0;
+    } else {
+        func_8003AA34(lbl_eu_80500664);
+        void* result = getBdatStringColumnValue((void*)name, col, (const char*)id);
+        v8 = *(u8*)&result;
     }
 
-    if (((u32)(v5 + v4) + (u32)(v8 + v2)) + ((u32)(v7 + v3) + (u32)(v6 + v1)) == 0) {
+    // Retail sums the eight cells in this exact pairwise grouping.
+    if (((u32)(v5 + v4) + (u32)(v8 + v2)) + ((u32)(v6 + v3) + (u32)(v7 + v1)) == 0) {
         return 0;
     }
     if ((u16)func_8009CF8C(0x20) < v1) return 0;
@@ -1159,7 +1291,8 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
     }
     if (flag != 0) return 0;
 
-    return (v8 == (u16)func_8009CF8C(v7 + 0x608)) ? 1 : 0;
+    // subf/cntlzw/srwi booleanization, as in retail
+    return ((u16)func_8009CF8C(v7 + 0x608) - v8) == 0;
 }
 
 extern "C" u32 func_80138574(const char* name, u32 id) {
@@ -1409,12 +1542,12 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
 extern "C" void* func_80138DA4(const char* str) {
     int v = atoi(str);
     if (v <= 0) return (void*)str;
-    char* base = lbl_eu_80500664;
-    char* col = base + 0x17C;
-    char* fpName = base + 0x181;
+    const char* base = lbl_eu_80500664;
+    const char* col = base + 0x17C;
+    const char* file = base + 0x181;
     func_8003AA34(base);
-    void* fp = getFP__FPCc(fpName);
-    return getBdatStringColumnValue(fp, col, (const char*)v);
+    void* fp = getFP__FPCc(file);
+    return (void*)(getBdatStringColumnValue)(fp, col, v);
 }
 
 extern "C" u8 func_80138E1C(const char* key) {
@@ -1487,15 +1620,20 @@ extern "C" char* func_80138F78(const char* key) {
 }
 
 extern "C" char* func_8013902C(const char* key) {
+    // Register mapping in retail: key -> r29, file pointer -> r30, column
+    // pointer -> r31; the column pointer is hoisted above the fp check.
     if (lbl_eu_8066406C == 0) {
         func_8003AA34(key);
         lbl_eu_8066406C = (u32)getFP__FPCc(&lbl_eu_80500664[0x1AF]);
     }
+    const char* col = &lbl_eu_80500664[0x1C7];
     void* fp = (void*)lbl_eu_8066406C;
-    void* result = NULL;
+    char* result;
     if (fp != NULL) {
         func_8003AA34(key);
-        result = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x1C7], key);
+        result = (char*)getBdatStringColumnValue(fp, col, key);
+    } else {
+        result = NULL;
     }
     sprintf(&lbl_eu_80573BB0[0], &lbl_eu_80500664[0x1A8], result);
     return &lbl_eu_80573BB0[0];
@@ -1570,23 +1708,22 @@ void func_80139198(void* arg) {
     }
     u16* list16 = (u16*)&lbl_eu_80664078;
     int c = lbl_eu_8066407E;
-    u32 w1 = list->listC[0];
-    if ((s32)w1 > 0) {
-        list16[c] = (u16)w1;
+    if ((s32)list->listC[0] > 0) {
+        list16[c] = (u16)list->listC[0];
         c = c + 1;
         lbl_eu_8066407E = c;
     }
-    u32 w2 = list->listC[1];
-    if ((s32)w2 > 0) {
+    if ((s32)list->listC[1] > 0) {
+        // explicit mask temps reproduce retail's clrlslwi/clrlwi re-masking
+        // after the increment (block 1 needs none: c is fresh from lbz)
         int cm = c & 0xFF;
-        list16[(u8)c] = (u16)w2;
+        list16[(u8)c] = (u16)list->listC[1];
         c = cm + 1;
         lbl_eu_8066407E = c;
     }
-    u32 w3 = list->listC[2];
-    if ((s32)w3 > 0) {
+    if ((s32)list->listC[2] > 0) {
         int cm2 = c & 0xFF;
-        list16[(u8)c] = (u16)w3;
+        list16[(u8)c] = (u16)list->listC[2];
         c = cm2 + 1;
         lbl_eu_8066407E = c;
     }
@@ -1769,12 +1906,21 @@ extern "C" void func_8013996C(CAnimOwnerIf* owner, void* src, u32 idx) {
         Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E590, 0x8F,
                                    (const char*)lbl_eu_8052E568);
     }
+    // clrlslwi r0, idx, 24, 3 => the multiply runs on an 8-bit-masked index
+    // ((idx & 0xFF) * 8).
+    u8 i8 = (u8)idx;
     s16* s = (s16*)src;
-    s16* d = (s16*)(data + idx * 8 + 0x10);
-    d[0] = s[0];
-    d[1] = s[1];
-    d[2] = s[2];
-    d[3] = s[3];
+    // Two rotating temporaries mirror retail's register rotation
+    // (r3/r4/r0) and its one-load-lookahead copy schedule.
+    s16 ta = s[0];
+    s16* d = (s16*)(data + i8 * 8 + 0x10);
+    s16 tb = s[1];
+    d[0] = ta;
+    ta = s[2];
+    d[1] = tb;
+    tb = s[3];
+    d[2] = ta;
+    d[3] = tb;
 }
 
 extern "C" void func_80139A18(void* obj, void* arg2, void* src1, void* src2) {
@@ -1839,19 +1985,30 @@ out:
 extern "C" void func_80139BF4(void* obj, void* arg2, void* a, void* b) {
     CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
     void* result = owner->_v03C((u32)arg2, 1);
-    if (result == NULL) return;
-    // 8-byte color field (0xDC..0xE3) from two 32-bit words
-    u32 words[2] = { (u32)a, (u32)b };
-    u8* d = (u8*)result;
-    u8* s = (u8*)words;
-    d[0xDC] = s[0];
-    d[0xDD] = s[1];
-    d[0xDE] = s[2];
-    d[0xDF] = s[3];
-    d[0xE0] = s[4];
-    d[0xE1] = s[5];
-    d[0xE2] = s[6];
-    d[0xE3] = s[7];
+    // Retail emits the null test three times (three beq to the epilogue).
+    if (result != NULL) {
+        if (result != NULL) {
+            if (result != NULL) {
+                // 8-byte color field (0xDC..0xE3) copied byte-by-byte from
+                // two 32-bit locals spilled to the stack.
+                // hi declared first: MWCC assigns the later slot to it,
+                // matching retail (lo -> sp+8, hi -> sp+0xC).
+                u32 hi = (u32)b;
+                u32 lo = (u32)a;
+                u8* d = (u8*)result;
+                u8* p = (u8*)&lo;
+                d[0xDC] = p[0];
+                d[0xDD] = p[1];
+                d[0xDE] = p[2];
+                d[0xDF] = p[3];
+                p = (u8*)&hi;
+                d[0xE0] = p[0];
+                d[0xE1] = p[1];
+                d[0xE2] = p[2];
+                d[0xE3] = p[3];
+            }
+        }
+    }
 }
 
 extern "C" f32 func_80139C98(u32 a, u32 b, u32 c, f32 d) {
@@ -2267,44 +2424,61 @@ extern "C" void func_8013A95C(u16 arg1, u16 arg2, s8 delta) {
     }
 }
 
-extern "C" void func_8013AB0C(u8* out1, u8* out2, u32 idx, const char* strBase) {
-    u32 arrA[2] = { *(u32*)&lbl_eu_80667330, *(u32*)&lbl_eu_80667334 };
-    u32 arrB[2] = { *(u32*)&lbl_eu_80667338, *(u32*)&lbl_eu_8066733C };
+extern "C" void func_8013AB0C(u8* out1, u8* out2, int idx) {
+    // Retail derives every table/column name from the string-table base
+    // lbl_eu_80500664 (no 4th param); the base address is re-materialized
+    // per use (no persistent copy). The four column-name words are read
+    // into two stack arrays AFTER the unlock check, indexed by the flag.
     int flag = 0;
-
+    u32 row = idx - 0x28;
     func_8003AA34((const char*)out1);
-    void* fp = getFP__FPCc((const char*)&strBase[0x20B]);
-    void* r = getBdatStringColumnValue(fp, &strBase[0x204], (const char*)5);
+    void* fp = getFP__FPCc(&lbl_eu_80500664[0x20B]);
+    void* r = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x204],
+                                       (const char*)5);
     u16 row0 = *(u16*)&r;
     if (func_8009CF8C(0x20) >= row0) flag = 1;
 
-    u32 row = idx - 0x28;
-    void* fp2 = getFP__FPCc((const char*)&strBase[0x21C]);
+    u32 arrB[2];
+    u32 arrA[2];
+    arrA[0] = *(u32*)&lbl_eu_80667330;
+    arrA[1] = *(u32*)&lbl_eu_80667334;
+    arrB[0] = *(u32*)&lbl_eu_80667338;
+    arrB[1] = *(u32*)&lbl_eu_8066733C;
+
+    void* fp2 = getFP__FPCc(&lbl_eu_80500664[0x21C]);
     u32 colA = arrA[flag];
     u16 v1 = 0;
     if (fp2 != 0) {
         func_8003AA34((const char*)fp2);
-        void* r1 = getBdatStringColumnValue(fp2, (const char*)colA, (const char*)row);
+        void* r1 = getBdatStringColumnValue(fp2, (const char*)colA,
+                                            (const char*)row);
         v1 = *(u16*)&r1;
     }
     u32 colB = arrB[flag];
     u16 v2 = 0;
     if (fp2 != 0) {
         func_8003AA34((const char*)fp2);
-        void* r2 = getBdatStringColumnValue(fp2, (const char*)colB, (const char*)row);
+        void* r2 = getBdatStringColumnValue(fp2, (const char*)colB,
+                                            (const char*)row);
         v2 = *(u16*)&r2;
     }
-    *out1 = (u8)v1 + 0x91;
-    *out2 = (u8)v2 + 0x91;
+    *out1 = v1 + 0x91;
+    *out2 = v2 + 0x91;
 }
 
+// 31-word stack copy of the BDAT name table; struct assignment is the only
+// source shape that reproduces retail's inline mtctr/lwzu/stwu copy loop
+// (memcpy emits bl memcpy instead).
+struct XBMapTableAC3C { u32 w[31]; };
+
 extern "C" int func_8013AC3C(u8 max, u8 count, u32 off) {
-    u32 table[31];
-    memcpy(table, &lbl_eu_80500480, sizeof(table));
-    func_8003AA34((const char*)table[30]);
+    XBMapTableAC3C table = *(const XBMapTableAC3C*)&lbl_eu_80500480[0];
+    // Retail's copy loop leaves the tail word (the table name) in r3, which
+    // is then passed straight to the validator.
+    func_8003AA34((const char*)table.w[30]);
     u32 sum = 0;
     for (u8 i = 2; i < max; i++) {
-        u32 p = table[i - 1];
+        u32 p = table.w[i - 1];
         if (p != 0) {
             void* fp = getFP__FPCc((const char*)p);
             sum += func_8003B1EC((void*)fp) * 0x240;
@@ -2420,32 +2594,35 @@ extern "C" void func_8013ACFC() {
 }
 
 extern "C" void func_8013B1C4(u32 v) {
-    if (v == 0) return;
-    if (v > 0x1D) return;
-    u32 table[34];
-    u8* d = (u8*)table;
-    const u8* s = (const u8*)&lbl_eu_805005A8;
-    for (u32 i = 0; i < 136; i++) {
-        d[i] = s[i];
-    }
-    // retail leaves the last copied word (table[32]) in r3; MWCC's copy-loop
-    // recognition reuses it for this call's argument
-    func_8003AA34((const char*)table[32]);
+    // nested guard: retail branches ble into the body, then b over it
+    if (v != 0) {
+    if (v <= 0x1D) {
+    // 136-byte struct assignment -> retail's inline 17x8 mtctr copy loop
+    // (same idiom as XBMapTable3).
+    struct Table805A8Copy {
+        u32 w[34];
+    };
+    Table805A8Copy table;
+    table = *(Table805A8Copy*)&lbl_eu_805005A8;
+    // retail reuses the copy loop's last loaded word (w[32]) as the argument
+    func_8003AA34((const char*)table.w[32]);
     u32 sum = 0;
     for (u8 i = 2; i < v; i++) {
-        u32 p = table[i - 1];
+        u32 p = table.w[i - 1];
         if (p != 0) {
             void* fp = getFP__FPCc((const char*)p);
             sum += func_8003B1EC((void*)fp) * 0x240;
         }
     }
-    void* fp = getFP__FPCc((const char*)table[v - 1]);
+    void* fp = getFP__FPCc((const char*)table.w[v - 1]);
     u32 n = func_8003B1EC((void*)fp);
     for (u8 j = 0; j < n; j++) {
         u32 base = sum + (u32)j * 0x240;
         for (u16 k = 0; k < 0x240; k++) {
             func_8009EB94(base + k, 1);
         }
+        }
+    }
     }
 }
 
@@ -2465,9 +2642,11 @@ extern "C" void func_8013B2D4() {
 }
 
 extern "C" f32 func_8013B380(u32 idx) {
-    f32 table[13];
-    memcpy(table, &lbl_eu_80500630, sizeof(table));
-    return table[idx - 1];
+    // Retail computes idx - 1 up front, then struct-copies the whole
+    // 13-entry table to the stack, then scales the index.
+    u32 i = idx - 1;
+    FloatTable13 table = lbl_eu_80500630;
+    return table.w[i];
 }
 
 extern "C" void func_8013B428__FUl(u32 value) {

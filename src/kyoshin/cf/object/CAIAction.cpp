@@ -172,38 +172,66 @@ u32 func_8014AC38(cf::CAIAction* self, const cf::CAIActionSlot* in) {
         u32 ringIdx = (self->unk210 + i) % self->unk218;
         const u8* sb = (const u8*)self->unk20C + (ringIdx << 5);
         const u8* ib = (const u8*)in;
-        if (sb[0x5] != ib[0x5] || sb[0x6] != ib[0x6] || sb[0x7] != ib[0x7] ||
-            sb[0x8] != ib[0x8] || sb[0x9] != ib[0x9] || sb[0xA] != ib[0xA] ||
-            sb[0xB] != ib[0xB] || sb[0xC] != ib[0xC] || sb[0xD] != ib[0xD])
+        // Byte-wise duplicate test over [0x5..0xD]; retail materializes each
+        // comparison into a "duplicate" flag via an if/else-if chain.
+        u32 dup;
+        if (sb[0x5] != ib[0x5]) dup = 0;
+        else if (sb[0x6] != ib[0x6]) dup = 0;
+        else if (sb[0x7] != ib[0x7]) dup = 0;
+        else if (sb[0x8] != ib[0x8]) dup = 0;
+        else if (sb[0x9] != ib[0x9]) dup = 0;
+        else if (sb[0xA] != ib[0xA]) dup = 0;
+        else if (sb[0xB] != ib[0xB]) dup = 0;
+        else if (sb[0xC] != ib[0xC]) dup = 0;
+        else dup = (u32)(sb[0xD] == ib[0xD]);
+        if (dup)
             return 0;
     }
     // Decrement head with wraparound.
-    s32 newHead = (s32)self->unk210 - 1;
-    if (newHead < 0)
-        newHead += (s32)self->unk218;
-    self->unk210 = (u32)newHead;
+    self->unk210 = self->unk210 - 1;
+    if ((s32)self->unk210 < 0)
+        self->unk210 = self->unk210 + self->unk218;
     cf::CAIActionSlot* dst =
         (cf::CAIActionSlot*)((u8*)self->unk20C + (self->unk210 << 5));
-    dst->unk00 = in->unk00;
-    dst->unk04 = in->unk04;
-    dst->unk08 = in->unk08;
-    dst->unk0C = in->unk0C;
-    dst->unk10 = in->unk10;
-    dst->unk12 = in->unk12;
-    dst->unk14 = in->unk14;
-    dst->unk18 = in->unk18;
-    dst->unk1C = in->unk1C;
+    *dst = *in;
     self->unk214 = self->unk214 + 1;
     // Re-resolve the new slot pointer and OR bit 0x8 into its flags.
-    {
-        cf::CAIActionSlot* slot =
-            (cf::CAIActionSlot*)((u8*)self->unk20C + (self->unk210 << 5));
-        slot->unk10 = slot->unk10 | 0x8;
-    }
+    cf::CAIActionSlot* slot =
+        (cf::CAIActionSlot*)((u8*)self->unk20C + (self->unk210 << 5));
+    slot->unk10 = slot->unk10 | 0x8;
     return 1;
 }
 void func_8014AE00(){}
-void func_8014B120(){}
+int func_8014B120(cf::CAIAction* self, const cf::CAIActionSlot* in) {
+    u32 count = self->unk214;
+    for (u32 i = 0; i < count; i++) {
+        u32 ringIdx = (self->unk210 + i) % self->unk218;
+        const u8* sb = (const u8*)self->unk20C + (ringIdx << 5);
+        const u8* ib = (const u8*)in;
+        u32 dup;
+        if (sb[0x5] != ib[0x5]) dup = 0;
+        else if (sb[0x6] != ib[0x6]) dup = 0;
+        else if (sb[0x7] != ib[0x7]) dup = 0;
+        else if (sb[0x8] != ib[0x8]) dup = 0;
+        else if (sb[0x9] != ib[0x9]) dup = 0;
+        else if (sb[0xA] != ib[0xA]) dup = 0;
+        else if (sb[0xB] != ib[0xB]) dup = 0;
+        else if (sb[0xC] != ib[0xC]) dup = 0;
+        else dup = (u32)(sb[0xD] == ib[0xD]);
+        if (dup)
+            return 0;
+    }
+    // Append at the tail of the ring; retail computes the index with signed
+    // modulo here (divw) unlike the unsigned loop above.
+    s32 idx = (s32)(self->unk210 + self->unk214);
+    s32 cap = (s32)self->unk218;
+    s32 quot = idx / cap;
+    cf::CAIActionSlot* dst =
+        (cf::CAIActionSlot*)((u8*)self->unk20C + ((idx - quot * cap) << 5));
+    *dst = *in;
+    self->unk214 = self->unk214 + 1;
+    return 1;
+}
 void* func_8014B2DC(void* p) {
     return memset((char*)p + 0xADC, 0, 0x20);
 }
@@ -238,7 +266,23 @@ void func_801537E0(void* self) {
     *(u16*)((u8*)self + 8) &= ~0x0006;
 }
 
-void func_8014A86C__FPv(){}
+// Loads the AI config table pointer into lbl_eu_806641B0 and walks the
+// variable-length entries once (copying each art name to a scratch buffer),
+// so that later lookups can rely on the cached table pointer.
+void func_8014A86C(void* tableArg) {
+    cf::CAIActionTable* table = (cf::CAIActionTable*)tableArg;
+    lbl_eu_806641B0 = table;
+    u32 raw = table->count;
+    s32 count = (s32)(u16)__rlwimi((raw << 8) & 0xFF00, raw, 24, 24, 31);
+    const u8* ep = (const u8*)table + 2;
+    char name[0x11];
+    for (s32 i = 0; i < count; i++) {
+        std::memcpy(name, ep + 4, 0x10);
+        name[0x10] = 0;
+        const u8* mid = ep + ep[0x14] * 0xC;
+        ep = mid + 0x16;
+    }
+}
 // memset the 160-element x 14-byte action table at +0x21C.
 extern "C" void func_8014B7B0(void* self) {
     void* p = (u8*)self + 0x21C;
@@ -250,119 +294,84 @@ extern "C" void func_8014B7B0(void* self) {
 void func_8014B8BC(){}
 void func_8014CE78(){}
 void func_8014E164(){}
-// 0x20-byte query struct passed as the second arg to func_80150618.
-// Layout mirrors CAIActionSlot: byte at 0x6 (== 0x25 short-circuit), byte at
-// 0xD (mapped to a flag via (b+0xCB)&0xFF and ==0x3B), u16 flags at 0x10
-// (bit 0x400 set in two paths), pointer at 0x18 (dispatch), and u32 at 0x1C
-// (set to 6 when result is null).
-struct CAIActionQuery {
-    u32 unk00; // 0x00
-    u32 unk04; // 0x04
-    u32 unk08; // 0x08
-    u32 unk0C; // 0x0C
-    u16 unk10; // 0x10
-    s16 unk12; // 0x12
-    f32 unk14; // 0x14
-    u32 unk18; // 0x18
-    u32 unk1C; // 0x1C
-};
-
-// Stack-allocated 8-byte holder (list + handle) used by func_80043D90.
-struct CAIActionEnumHolder {
-    void* list;  // 0x0
-    u32 handle;  // 0x4
-};
-
-// Returns the result of dispatching the query through self's CfObjectMove
-// vtable (or the cached handle at 0x3f10), with bit 0x400 in the query's
-// flags set in two pre-dispatch paths.
-extern "C" void* func_80150618(cf::CAIAction* self, CAIActionQuery* in) {
+// Returns the result of dispatching the query through the party's move
+// vtable (or the cached battle handle at 0x3F10), with bit 0x400 in the
+// query's flags set in two pre-dispatch paths.
+void* func_80150618(cf::CAIAction* self, CAIActionQuery* in) {
     CAIActionEnumHolder holder;
     void* result = 0;
-    u8* selfB14 = (u8*)self->unkB14;
 
     func_80043D90(&holder);
 
-    u32 subObj = in->unk18;
-    if (subObj == 0 || *(u16*)((u8*)subObj + 0x3C) == 3) {
-        u8 byteD = (u8)(in->unk0C >> 24);
+    CAIQueryTarget* tgt = in->unk18;
+    if (tgt == 0 || tgt->unk3C == 3 || tgt->unk3C == 4) {
+        u8 byteD = in->unk0D;
         u8 sum = (u8)(byteD + 0xCB);
         if (sum <= 2 || byteD == 0x3B)
             in->unk10 = in->unk10 | 0x400;
-    } else if (*(u16*)((u8*)subObj + 0x3C) == 4) {
-        in->unk10 = in->unk10 | 0x400;
     } else {
         in->unk10 = in->unk10 | 0x400;
     }
 
-    if ((u8)(in->unk04 >> 16) == 0x25) {
+    if (in->unk06 == 0x25) {
         result = (void*)in->unk00;
         __dt__80043E88(&holder, -1);
         return result;
     }
 
-    // func_80150828 returns the primary handle; on success one of the
-    // three sub-cases (0x1/0x2/0x3 by in->unk18->unk5C) refines it.
+    // func_80150828 returns the primary handle; on success one of the three
+    // sub-cases (1/2/3 by target unk5C) refines it.
     result = func_80150828(self, in);
 
-    u32 ref = in->unk18;
-    if (ref != 0) {
-        u16 which = *(u16*)((u8*)ref + 0x5C);
+    CAIPartyObj* party = (CAIPartyObj*)self->unkB14;
+    CAIPartyMoveObj* move = &party->move;
+    if (in->unk18 != 0) {
+        u16 which = in->unk18->unk5C;
         if (which == 1) {
             if (result != 0) {
-                func_800B708C((BOOL)(uintptr_t)result);
                 void* obj = func_8016FE34(func_800B708C((int)(uintptr_t)result));
                 if (obj == 0) {
                     __dt__80043E88(&holder, -1);
                     return 0;
                 }
-                u8* moveBase = selfB14 + 0x3e9c;
-                u32 flags64 = *(u32*)(moveBase + 0x64);
-                if ((flags64 & 0x20000000) != 0) {
-                    if ((*(u32*)((u8*)obj + 0x3f00) & 0x40000000) != 0)
-                        goto dispatched;
+                // Mutual exclusion: party flag bit 1 pairs with obj bit 2 and
+                // vice versa; when neither pair matches, dispatch on the move
+                // object's vtable slot 0x4C.
+                u32 mf = move->moveFlags;
+                u32 of = ((CAIPartyObj*)obj)->move.moveFlags;
+                if (!((mf & 2) && (of & 4)) && !((mf & 4) && (of & 2))) {
+                    result =
+                        ((void* (*)(CAIPartyMoveObj*))move->vtable->slot[17])(move);
                 }
-                if ((flags64 & 0x40000000) != 0) {
-                    if ((*(u32*)((u8*)obj + 0x3f00) & 0x20000000) != 0)
-                        goto dispatched;
-                }
-                // vtable[0x4C] on the move base.
-                void* (*vt)(void*) = (void* (*)(void*))(*(u32*)((u8*)moveBase + 0x4C) ? 0 : 0);
-                (void)vt;
-                result = ((void* (*)(void*))(*(u32*)(*(u32*)moveBase) + 0x4C))(moveBase);
             }
         } else if (which == 2) {
-            void* v = *(void**)(selfB14 + 0x3f10);
+            void* v = (void*)party->unk3F10;
             if (result != v)
                 result = v;
         } else if (which == 3) {
             if (result != 0) {
-                func_800B708C((BOOL)(uintptr_t)result);
                 void* obj = func_8016FE34(func_800B708C((int)(uintptr_t)result));
                 if (obj == 0) {
                     __dt__80043E88(&holder, -1);
                     return 0;
                 }
-                u32 flags3f00 = *(u32*)(selfB14 + 0x3f00);
-                if ((flags3f00 & 0x20000000) != 0) {
-                    if ((*(u32*)((u8*)obj + 0x3f00) & 0x20000000) != 0)
-                        goto dispatched;
+                u32 mf = move->moveFlags;
+                u32 of = ((CAIPartyObj*)obj)->move.moveFlags;
+                if (!((mf & 2) && (of & 2)) && !((mf & 4) && (of & 4))) {
+                    result = (void*)party->unk3F10;
                 }
-                if ((flags3f00 & 0x40000000) != 0) {
-                    if ((*(u32*)((u8*)obj + 0x3f00) & 0x40000000) != 0)
-                        goto dispatched;
-                }
-                result = *(void**)(selfB14 + 0x3f10);
             }
         }
     }
 
-dispatched:
     if (result == 0)
         in->unk1C = 6;
     __dt__80043E88(&holder, -1);
     return result;
 }
+
+// Returns the dispatch result for the query (see func_80150618 above; this
+// comment block previously held an untyped draft implementation).
 struct CAIVtObj {
     virtual void* v000();
     virtual void* v001();
@@ -2026,7 +2035,39 @@ extern "C" void* func_80150828(cf::CAIAction* self, CAIActionQuery* q) {
 // CfObjEnumList fields accessed by this function.
 
 
-void func_801537F0(){}
+// Resets the action ring (count/start/trailer), then queries the party's
+// current state via three tagged probes (3 / 0x1c / 0x805); if none hits,
+// queues action 0x31 and refreshes the battle-object handle.
+void func_801537F0(cf::CAIAction* self) {
+    self->unk214 = 0;
+    self->unk8 = self->unk8 | 4;
+    self->unk210 = 0;
+    std::memset(self->trailer, 0, 0x20);
+
+    CAIPartyObj* party = (CAIPartyObj*)self->unkB14;
+
+    u32 tag;
+    tag = *(u32*)((u32 (*)(CAIVtable*))party->unk04->slot[10])(party->unk04);
+    if (func_80174C98(party, &tag, 3) == 0) {
+        tag = *(u32*)((u32 (*)(CAIVtable*))party->unk04->slot[10])(party->unk04);
+        if (func_80174C98(party, &tag, 0x1c) == 0) {
+            tag = *(u32*)((u32 (*)(CAIVtable*))party->unk04->slot[10])(party->unk04);
+            if (func_80174C98(party, &tag, 0x805) == 0) {
+                func_800BE12C(&party->move, 0x31, 0, -1, 1);
+            }
+        }
+    }
+
+    CAIPartyMoveObj* move = &party->move;
+    void* obj = func_8016FE34(func_800B708C(
+        (int)((void* (*)(CAIPartyMoveObj*))move->vtable->slot[17])(move)));
+    if (obj != (void*)party) {
+        // Only refresh when the party reports an active battle object.
+        if (((s32 (*)(CAIPartyObj*))party->vtable->slot[366])(party) != 0) {
+            ((void (*)(CAIPartyMoveObj*, u32))move->vtable->slot[18])(move, 0);
+        }
+    }
+}
 // Walks the AI config table (*lbl_eu_806641B0): finds the entry whose id
 // matches (0x70/0x65 derived from the party flags when sel == 0, else sel
 // itself) and whose arts id matches (the party's current arts id when

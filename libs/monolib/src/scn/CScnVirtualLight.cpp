@@ -170,7 +170,7 @@ extern "C" __declspec(noinline) void __dt__804923A0(CScnVirtualLightReslist* obj
 // into `a` (retail func_804929C0). The body/check/end labels mirror the
 // retail loop rotation (body below the head with an initial jump over); the
 // `cur` local keeps MWCC's cmplw operand order (rA = the call-derived value).
-void func_804929C0(int* a, u32* b, const u32* c, const u32* d) {
+extern "C" __declspec(noinline) void func_804929C0(int* a, u32* b, const u32* c, const u32* d) {
     goto check;
 body:
     func_80492A70(b);
@@ -208,7 +208,7 @@ __declspec(noinline) u32 func_80492A88(const u32* a, const u32* b) {
 }
 
 extern "C" void func_804920E0(CScnVirtualLightReslist* self);
-extern "C" void func_80492AA4(void* self) { func_804920E0((CScnVirtualLightReslist*)self); }
+extern "C" __declspec(noinline) void func_80492AA4(void* self) { func_804920E0((CScnVirtualLightReslist*)self); }
 
 extern "C" __declspec(noinline) int* func_80492AA8(int* dst, int* src){
     *dst = *src;
@@ -219,7 +219,7 @@ extern "C" __declspec(noinline) int* func_80492AA8(int* dst, int* src){
 // item (func_80492158), reset it (func_8049215C) and write the following
 // node to *out via func_80492A5C (retail func_80492AB4). The *in re-reads
 // mirror the retail aliasing reloads around the two calls.
-extern "C" void func_80492AB4(CScnVirtualLightData* out, CScnVirtualLightReslist* list,
+extern "C" __declspec(noinline) void func_80492AB4(CScnVirtualLightData* out, CScnVirtualLightReslist* list,
                               CScnVirtualLightNode** in) {
     CScnVirtualLightNode* node = *in;
     CScnVirtualLightNode* prev = node->mPrev;
@@ -231,7 +231,7 @@ extern "C" void func_80492AB4(CScnVirtualLightData* out, CScnVirtualLightReslist
     func_80492A5C(out, (u32)next);
 }
 
-extern "C" void func_80492B34(int* dst, int* src){
+extern "C" __declspec(noinline) void func_80492B34(int* dst, int* src){
     *dst = *src;
 }
 
@@ -243,7 +243,6 @@ extern "C" void func_80492B34(int* dst, int* src){
 // Ends by seeding the blend fields (+0x8C/+0x9C/+0xAC) with the AA14 vec4
 // and the +0xBC factor with AA24.
 extern "C" void func_80492B40(CScnVirtualLight* self) {
-    ml::CVec3* p_18;
     func_800407C8_tmp v_d8;
     func_800407C8_tmp v_c8;
     ml::CVec3 v_b8;
@@ -263,6 +262,7 @@ extern "C" void func_80492B40(CScnVirtualLight* self) {
     ml::CVec3* p_78;
     ml::CVec3* p_58;
     ml::CVec3* p_38;
+    ml::CVec3* p_18;
 
     func_804923F8(self, 0);
     func_80492DB8((CScnVirtualLightData*)self,
@@ -407,6 +407,7 @@ extern "C" void func_80492E08(CScnVirtualLight* self) {
     func_800407C8_tmp v_28;
     ml::CVec3 v_18;
     func_800407C8_tmp v_8;
+    ml::CVec3* p_18;
 
     func_804923F8(self, 0);
     func_80492DB8((CScnVirtualLightData*)self,
@@ -450,12 +451,13 @@ extern "C" void func_80492E08(CScnVirtualLight* self) {
                   (const func_800407C8_tmp*)&v_44, lbl_eu_8066AA18);
     func_80492DD4((CScnVirtualLightData*)self, &lbl_eu_80658648, lbl_eu_8066AA18);
     func_80492DE0((CScnVirtualLightData*)self, &lbl_eu_80658648, lbl_eu_8066AA18);
-    ml::CVec3* p_18 = func_8004B60C(&v_18, lbl_eu_8066AA34, lbl_eu_8066AA10,
-                                    lbl_eu_8066AA34);
+    p_18 = func_8004B60C(&v_18, lbl_eu_8066AA34, lbl_eu_8066AA10,
+                         lbl_eu_8066AA34);
     func_80492DEC((CScnVirtualLightData*)self,
                   func_800407C8(&v_28, lbl_eu_8066AA28, lbl_eu_8066AA2C,
                                 lbl_eu_8066AA30, lbl_eu_8066AA18),
                   (const func_800407C8_tmp*)p_18, lbl_eu_8066AA18);
+    // Fresh address expression for the tail call keeps the label web short.
     func_80492DFC((CScnVirtualLightData*)self, &lbl_eu_80658648, lbl_eu_8066AA18);
     func_800407C8_tmp* p_8 = func_800407C8(
         &v_8, lbl_eu_8066AA14, lbl_eu_8066AA14, lbl_eu_8066AA14, lbl_eu_8066AA18);
@@ -653,6 +655,7 @@ void func_804936AC(CScnVirtualLight* self, CLightEnv* env) {
     u32 v1c, v18;        // walk 2
     u32 v14, v10;        // walk 3
     u32 vc, v8;          // walk 4
+    f32 aa74;            // hoisted to function scope
 
     if (checkBitFlag(getSubField7C(self->mSub)) != 0) {
         func_804C1338(getSubField7C(self->mSub), env);
@@ -714,10 +717,6 @@ void func_804936AC(CScnVirtualLight* self, CLightEnv* env) {
         u32* p58;
         u32* p68;
         u32* p48;
-        f32 aa74;
-        f32 range;
-        f32 dist2;
-        f32 scaled;
         u32 cam = func_80493B78((CScnCameraMan*)func_80493B80(self->mSub));
         slotFields[0] = func_80493B88(env, 0);
         slotFields[1] = func_80493B88(env, 1);
@@ -750,13 +749,13 @@ void func_804936AC(CScnVirtualLight* self, CLightEnv* env) {
                                 func_80493BCC((Vec*)func_80493C00(
                                                   (void*)self->mExtraAlloc[j]),
                                               (Vec*)&v38, camPos);
-                                dist2 = func_8006DFC8(&v38);
-                                range = func_80493C18((void*)self->mExtraAlloc[j]);
+                                f32 dist2 = func_8006DFC8(&v38);
+                                f32 range = func_80493C18((void*)self->mExtraAlloc[j]);
                                 if (range * range >= dist2) {
                                     func_804C02E4(
                                         (CLight*)(*p48 + *p68 * 64),
                                         self->mExtraAlloc[j]);
-                                    scaled = aa74 * range;
+                                    f32 scaled = range * aa74;
                                     if (scaled * scaled < dist2) {
                                         func_804C0928(
                                             (CLight*)(*p48 + *p68 * 64),
@@ -854,6 +853,7 @@ extern "C" void func_80493C30(CScnVirtualLight* self, CScnEnvLgtData* data,
     func_800407C8_tmp v18;
     ml::CVec3 v8;
     u32 enabled = func_80493EC8((void*)self);
+    CLight* dst;
     func_804BFA70(data, vec, mode, enabled, f1 + func_80493EC0((void*)self));
     if (checkBitFlag(getSubField7C(self->mSub)) != 0) {
         func_804C1500(getSubField7C(self->mSub), f1, data, vec);
@@ -868,14 +868,20 @@ extern "C" void func_80493C30(CScnVirtualLight* self, CScnEnvLgtData* data,
         }
     }
     if (self->valueCC != 0) {
-        int i;
-        int count;
+        // Declaration order drives callee-saved coloring (first -> highest):
+        // retail colors dst>step>count>i>j descending.
         int step;
-        CLight* dst;
+        int count;
+        int i;
         int j;
         f32 f31v;
         void* base;
-        step = func_80493EE8((CScnVirtualLightData*)data) != 0 ? 8 : 1;
+        // if/else (not ternary): gives step a two-path merged web like retail.
+        if (func_80493EE8((CScnVirtualLightData*)data) != 0) {
+            step = 8;
+        } else {
+            step = 1;
+        }
         count = (int)func_80493EF4((void*)data);
         base = func_80493EFC((void*)data, 0);
         f31v = lbl_eu_8066AA74;
@@ -1046,16 +1052,18 @@ void func_80494188(CScnVirtualLightPool* self, CScnVirtualLightPoolSlot* slot) {
 // (retail func_80494208).
 void func_80494208(CScnVirtualLightData* self, int flag) {
     if (flag != 0) {
-        float v = lbl_eu_8066AA78 + self->field_0xBC;
+        f32 lim = lbl_eu_8066AA18;
+        f32 v = self->field_0xBC + lbl_eu_8066AA78;
         self->field_0xBC = v;
-        if (v > lbl_eu_8066AA18) {
-            self->field_0xBC = lbl_eu_8066AA18;
+        if (v > lim) {
+            self->field_0xBC = lim;
         }
     } else {
-        float v = self->field_0xBC - lbl_eu_8066AA78;
+        f32 lim = lbl_eu_8066AA24;
+        f32 v = self->field_0xBC - lbl_eu_8066AA78;
         self->field_0xBC = v;
-        if (v < lbl_eu_8066AA24) {
-            self->field_0xBC = lbl_eu_8066AA24;
+        if (v < lim) {
+            self->field_0xBC = lim;
         }
     }
     ml::CVec4 v18;
@@ -1113,7 +1121,182 @@ extern "C" void func_8049216C(CScnVirtualLightReslist* self, u32 handle, int cap
     self->mCapacity = capacity;
 }
 #pragma pop
-extern "C" __declspec(noinline) void func_804923F8(CScnVirtualLight* self, int arg) {}
+// Retail func_804923F8: scene-light reset. arg == 0 destroys every light
+// object held by the four reslists (virtual deleting-dtor dispatch at vtable
+// +0x8), clears each ring, zeroes the pool bound count and the 128-slot
+// handle array. arg != 0 instead removes the single node whose item equals
+// *arg, searching the four reslists in order and unlinking it via
+// func_80492AB4. Frame slots mirror retail (first-declared -> higher
+// offset); the destroy sequence re-calls func_80492A64 at every step like
+// retail (the call result is never cached).
+extern "C" void func_804923F8(CScnVirtualLight* self, int arg) {
+    u32 it0;     // 0x88
+    u32 it1;     // 0x84
+    u32 it2;     // 0x80
+    u32 it3;     // 0x7C
+    u32 found;   // 0x78
+    u32 e0;      // 0x74
+    u32 e1;      // 0x70
+    u32 e2;      // 0x6C
+    u32 e3;      // 0x68
+    u32 endA;    // 0x60
+    u32 itA;     // 0x64
+    u32 endA2;   // 0x5C
+    u32 outA;    // 0x58
+    u32 cpA;     // 0x54
+    u32 foundB;  // 0x50
+    u32 itB;     // 0x4C
+    u32 endB;    // 0x48
+    u32 endB2;   // 0x44
+    u32 outB;    // 0x40
+    u32 cpB;     // 0x3C
+    u32 foundC;  // 0x38
+    u32 itC;     // 0x34
+    u32 endC;    // 0x30
+    u32 outC;    // 0x28
+    u32 cpC;     // 0x24
+    u32 foundD;  // 0x20
+    u32 itD;     // 0x1C
+    u32 endD;    // 0x18
+    u32 endD2;   // 0x14
+    u32 outD;    // 0x10
+    u32 cpD;     // 0x0C
+
+    if (arg == 0) {
+        // ---- clear walk: res_0C ----
+        func_80492A50((CScnVirtualLightData*)&it0, (CScnVirtualLightValueSrc*)&self->res_0C);
+        goto check0;
+    body0:
+        if (*(u32*)func_80492A64(&it0) != 0) {
+            delete (CVirtualLightDispatch*)(*(void**)func_80492A64(&it0));
+            *(u32*)func_80492A64(&it0) = 0;
+        }
+        func_80492A70(&it0);
+    check0:
+        func_80492A80(&e0, &self->res_0C);
+        if (func_80492A88(&it0, &e0) != 0) {
+            goto body0;
+        }
+        func_80492AA4(&self->res_0C);
+        // ---- res_2C ----
+        func_80492A50((CScnVirtualLightData*)&it1, (CScnVirtualLightValueSrc*)&self->res_2C);
+        goto check1;
+    body1:
+        if (*(u32*)func_80492A64(&it1) != 0) {
+            delete (CVirtualLightDispatch*)(*(void**)func_80492A64(&it1));
+            *(u32*)func_80492A64(&it1) = 0;
+        }
+        func_80492A70(&it1);
+    check1:
+        func_80492A80(&e1, &self->res_2C);
+        if (func_80492A88(&it1, &e1) != 0) {
+            goto body1;
+        }
+        func_80492AA4(&self->res_2C);
+        // ---- res_4C ----
+        func_80492A50((CScnVirtualLightData*)&it2, (CScnVirtualLightValueSrc*)&self->res_4C);
+        goto check2;
+    body2:
+        if (*(u32*)func_80492A64(&it2) != 0) {
+            delete (CVirtualLightDispatch*)(*(void**)func_80492A64(&it2));
+            *(u32*)func_80492A64(&it2) = 0;
+        }
+        func_80492A70(&it2);
+    check2:
+        func_80492A80(&e2, &self->res_4C);
+        if (func_80492A88(&it2, &e2) != 0) {
+            goto body2;
+        }
+        func_80492AA4(&self->res_2C);
+        // ---- res_6C ----
+        func_80492A50((CScnVirtualLightData*)&it3, (CScnVirtualLightValueSrc*)&self->res_6C);
+        goto check3;
+    body3:
+        if (*(u32*)func_80492A64(&it3) != 0) {
+            delete (CVirtualLightDispatch*)(*(void**)func_80492A64(&it3));
+            *(u32*)func_80492A64(&it3) = 0;
+        }
+        func_80492A70(&it3);
+    check3:
+        func_80492A80(&e3, &self->res_6C);
+        if (func_80492A88(&it3, &e3) != 0) {
+            goto body3;
+        }
+        func_80492AA4(&self->res_6C);
+
+        self->valueCC = 0;
+        memset(self->mExtraAlloc, 0, 0x200);
+        return;
+    }
+
+    // ---- arg != 0: remove the single node holding *arg ----
+    // res_0C: find writes straight into `found`.
+    func_80492A80(&endA, &self->res_0C);
+    func_80492A50((CScnVirtualLightData*)&itA, (CScnVirtualLightValueSrc*)&self->res_0C);
+    func_804929C0((int*)&found, &itA, &endA, (const u32*)&arg);
+    func_80492A80(&endA2, &self->res_0C);
+    if (func_80492A88(&found, &endA2) != 0) {
+        if (*(u32*)func_80492A64(&found) != 0) {
+            delete (CVirtualLightDispatch*)(*(void**)func_80492A64(&found));
+            *(u32*)func_80492A64(&found) = 0;
+        }
+        func_80492AA8((int*)&cpA, (int*)&found);
+        func_80492AB4((CScnVirtualLightData*)&outA, &self->res_0C,
+                      (CScnVirtualLightNode**)&cpA);
+        return;
+    }
+
+    // res_2C: find result is staged in foundB, then copied into `found`.
+    func_80492A80(&endB, &self->res_2C);
+    func_80492A50((CScnVirtualLightData*)&itB, (CScnVirtualLightValueSrc*)&self->res_2C);
+    func_804929C0((int*)&foundB, &itB, &endB, (const u32*)&arg);
+    func_80492B34((int*)&found, (int*)&foundB);
+    func_80492A80(&endB2, &self->res_2C);
+    if (func_80492A88(&found, &endB2) != 0) {
+        if (*(u32*)func_80492A64(&found) != 0) {
+            delete (CVirtualLightDispatch*)(*(void**)func_80492A64(&found));
+            *(u32*)func_80492A64(&found) = 0;
+        }
+        func_80492AA8((int*)&cpB, (int*)&found);
+        func_80492AB4((CScnVirtualLightData*)&outB, &self->res_2C,
+                      (CScnVirtualLightNode**)&cpB);
+        return;
+    }
+
+    // res_4C
+    func_80492A80(&endC, &self->res_4C);
+    func_80492A50((CScnVirtualLightData*)&itC, (CScnVirtualLightValueSrc*)&self->res_4C);
+    func_804929C0((int*)&foundC, &itC, &endC, (const u32*)&arg);
+    func_80492B34((int*)&found, (int*)&foundC);
+    func_80492A80(&e2, &self->res_4C);
+    if (func_80492A88(&found, &e2) != 0) {
+        if (*(u32*)func_80492A64(&found) != 0) {
+            delete (CVirtualLightDispatch*)(*(void**)func_80492A64(&found));
+            *(u32*)func_80492A64(&found) = 0;
+        }
+        func_80492AA8((int*)&cpC, (int*)&found);
+        func_80492AB4((CScnVirtualLightData*)&outC, &self->res_4C,
+                      (CScnVirtualLightNode**)&cpC);
+        return;
+    }
+
+    // res_6C
+    func_80492A80(&endD, &self->res_6C);
+    func_80492A50((CScnVirtualLightData*)&itD, (CScnVirtualLightValueSrc*)&self->res_6C);
+    func_804929C0((int*)&foundD, &itD, &endD, (const u32*)&arg);
+    func_80492B34((int*)&found, (int*)&foundD);
+    func_80492A80(&endD2, &self->res_6C);
+    if (func_80492A88(&found, &endD2) != 0) {
+        if (*(u32*)func_80492A64(&found) != 0) {
+            delete (CVirtualLightDispatch*)(*(void**)func_80492A64(&found));
+            *(u32*)func_80492A64(&found) = 0;
+        }
+        func_80492AA8((int*)&cpD, (int*)&found);
+        func_80492AB4((CScnVirtualLightData*)&outD, &self->res_6C,
+                      (CScnVirtualLightNode**)&cpD);
+        return;
+    }
+}
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.rodata] 0x80524030-0x80524050 (32B): RTTI name "CScnVirtualLight" (20B)

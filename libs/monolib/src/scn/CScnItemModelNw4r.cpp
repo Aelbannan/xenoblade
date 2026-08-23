@@ -4,6 +4,7 @@
 #include <harness_catalog.h>
 
 #include <string.h>
+#include <revolution/GX.h>
 
 #include <nw4r/db/db_assert.h>
 #include <nw4r/g3d/g3d_anmclr.h>
@@ -54,7 +55,36 @@ void func_804876DC(u8* self) { func_804EB798((u8*)self + 0x17a0); }
 void func_804EB7F8(u8* self);
 void func_804876E4(u8* self) { ((void(*)(void*))func_804EB7F8)((char*)self + 0x17a0); }
 
-extern "C" void  func_80487B84(){}
+// func_80487B84: refresh per-node visibility for this model's node table.
+// The +0x7A4 bit-30 (with bit-16 clear) enables the pass, further gated on
+// bit-15; each table entry's scene-node visibility is set when `param` is
+// non-zero, the gate is armed, and the entry's flags byte has bits 0/3/2 set
+// (0x1/0x8/0x4).
+extern "C" void func_80487B84(CScnItemModelNw4r* self, u32 param) {
+    u32 enabled = 0;
+    u32 gate = 0;
+    u32 flags = self->field_0x7A4;
+    if ((flags & 2) != 0 && (flags & 0x8000) == 0) {
+        enabled = 1;
+    }
+    if (enabled != 0 && (flags & 0x10000) == 0) {
+        gate = 1;
+    }
+    if (self->member824.field_4 != 0) {
+        CScnItemModel824Entry* it = (CScnItemModel824Entry*)self->member824.field_0;
+        // End recomputed each iteration (retail reloads both fields).
+        while (it != (CScnItemModel824Entry*)self->member824.field_0 +
+                               self->member824.field_4) {
+            nw4r::g3d::ScnMdl::CopiedVisAccess access(
+                (nw4r::g3d::ScnMdl*)self->field_0x147C, it->field_0);
+            access.SetVisibilityEx(param != 0 && gate != 0 &&
+                                   (it->flags & 1) != 0 &&
+                                   (it->flags & 8) != 0 &&
+                                   (it->flags & 4) != 0);
+            it++;
+        }
+    }
+}
 
 // func_80487C78: for every material in the model, rewrite the four GX
 // tev-swap-mode tables so the R/G/B/A channels are reordered: identity
@@ -84,18 +114,42 @@ extern "C" void  func_80487C78(CScnItemModelNw4r* self, u32 enable) {
          i++) {
         nw4r::g3d::ScnMdl::CopiedMatAccess access(
             (nw4r::g3d::ScnMdl*)self->field_0x147C, i);
+        // Declared before `tev` to match retail's stack slot order.
+        GXTevColorChan chan;
         nw4r::g3d::ResTev tev =
             GetResTevEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(&access);
-        for (u32 s = 0; s < 4; s++) {
-            GXTevColorChan chan;
-            if (tev.GXGetTevSwapModeTable((GXTevSwapSel)s, &chan, &chan,
-                                          &chan, &chan)) {
-                tev.GXSetTevSwapModeTable((GXTevSwapSel)s,
-                                          (GXTevColorChan)c0,
-                                          (GXTevColorChan)c1,
-                                          (GXTevColorChan)c2,
-                                          (GXTevColorChan)c3);
-            }
+        // Retail keeps the four swap-table slots fully unrolled.
+        if (tev.GXGetTevSwapModeTable((GXTevSwapSel)0, &chan, &chan,
+                                      &chan, &chan)) {
+            tev.GXSetTevSwapModeTable((GXTevSwapSel)0,
+                                      (GXTevColorChan)c0,
+                                      (GXTevColorChan)c1,
+                                      (GXTevColorChan)c2,
+                                      (GXTevColorChan)c3);
+        }
+        if (tev.GXGetTevSwapModeTable((GXTevSwapSel)1, &chan, &chan,
+                                      &chan, &chan)) {
+            tev.GXSetTevSwapModeTable((GXTevSwapSel)1,
+                                      (GXTevColorChan)c0,
+                                      (GXTevColorChan)c1,
+                                      (GXTevColorChan)c2,
+                                      (GXTevColorChan)c3);
+        }
+        if (tev.GXGetTevSwapModeTable((GXTevSwapSel)2, &chan, &chan,
+                                      &chan, &chan)) {
+            tev.GXSetTevSwapModeTable((GXTevSwapSel)2,
+                                      (GXTevColorChan)c0,
+                                      (GXTevColorChan)c1,
+                                      (GXTevColorChan)c2,
+                                      (GXTevColorChan)c3);
+        }
+        if (tev.GXGetTevSwapModeTable((GXTevSwapSel)3, &chan, &chan,
+                                      &chan, &chan)) {
+            tev.GXSetTevSwapModeTable((GXTevSwapSel)3,
+                                      (GXTevColorChan)c0,
+                                      (GXTevColorChan)c1,
+                                      (GXTevColorChan)c2,
+                                      (GXTevColorChan)c3);
         }
     }
     func_80484914((CScnItemModel*)self, enable);
@@ -155,6 +209,47 @@ extern "C" void*  func_80487EB8(u8* self) {
     return *(void**)((u8*)self + 0x179C);
 }
 
+// Shared tail of func_80487EE0's flag-dispatch (retail inlines it three times):
+// syncs the +0x7A4 camera-hookup/busy bit trio against the +0x7A4
+// bit-27 busy state, then refreshes the hookup via func_8048F7A8 (when the
+// +0x7A4 bit-25 flag is set) or func_8048F630, arming/clearing the bits.
+static inline void Func80487EE0Tail(CScnItemModelNw4r* self) {
+    u32 flags = self->field_0x7A4;
+    u32 flags8 = self->field_0x7A8;
+    u32 comb = ((flags & 0x10000) ? 1 : 0) | ((flags8 & 0x100) ? 1 : 0) |
+               ((flags & 0x04000000) ? 1 : 0);
+    u32 busy = (flags & 0x08000000) ? 1 : 0;
+    if (busy == comb) {
+        return;
+    }
+    if (comb != 0) {
+        self->field_0x7A4 |= 0x04000000;
+    } else {
+        // Retail clears all three high bits (bits 26..24) at once.
+        self->field_0x7A4 &= ~0x07000000;
+    }
+    flags = self->field_0x7A4;
+    if (flags & 0x02000000) {
+        if (!(flags & 0x1000)) {
+            if (func_8048F7A8(self->field_04->field_0x8C,
+                              (CScnCamLayout*)self) != 0) {
+                self->field_0x7A4 &= ~0x1C00;
+            } else {
+                self->field_0x7A4 |= 0x1000;
+            }
+        }
+    } else {
+        if (!(flags & 0x1000)) {
+            if (func_8048F630(self->field_04->field_0x8C,
+                              (CScnCamLayout*)self) != 0) {
+                self->field_0x7A4 |= 0x1000;
+            } else {
+                self->field_0x7A4 &= ~0x1C00;
+            }
+        }
+    }
+}
+
 // func_80487EE0: per-frame visibility/fade update. Copies the first
 // frame-table entry (low u16) into the scene object's +0x122 slot, resets
 // the +0x16C4 frame counter and refreshes the fade: the fade value comes
@@ -165,10 +260,11 @@ extern "C" void*  func_80487EB8(u8* self) {
 // flag is then re-evaluated from the owner's node-list distance checks, and
 // the bit-4/bit-5 camera-hookup latches are advanced (func_8048F7A8 /
 // func_8048F630 gated by the +0x1000 flag).
-extern "C" void  func_80487EE0(CScnItemModelNw4r* self) {
+extern "C" void func_80487EE0(CScnItemModelNw4r* self) {
     if (self->field_0x17D0 != 0) {
+        // Retail loads the full word and stores the low half.
         ((CScnItemModelNw4rScnObj122*)self->field_0x147C)->field_0x122 =
-            (u16)self->field_0x17CC[0];
+            (u16)*self->field_0x17CC;
     }
     self->field_0x16C4 = 0;
     func_80485CE8(self);
@@ -181,11 +277,14 @@ extern "C" void  func_80487EE0(CScnItemModelNw4r* self) {
             f = lbl_eu_8066A8FC;
         }
         if (self->field_0x1484 != 0) {
-            ((CScnItemModelNw4rAnimV24*)self->field_0x1484)->v09(fade);
+            ((CScnItemModelNw4rAnimV24*)self->field_0x1484)->v07(fade);
         }
-        if (fade == lbl_eu_8066A8E0 || fade != f) {
-            if (self->field_0x16BC != lbl_eu_8066A8E0) {
-                if (f != lbl_eu_8066A8E0) {
+        // Fade-latch state machine: when the fade walks while the base is
+        // held, remember it; otherwise fold a remembered latch back in once
+        // and clear it.
+        if (lbl_eu_8066A8E0 == fade || lbl_eu_8066A8E0 != f) {
+            if (lbl_eu_8066A8E0 != self->field_0x16BC) {
+                if (lbl_eu_8066A8E0 != f) {
                     fade = self->field_0x16BC;
                 }
                 self->field_0x16BC = lbl_eu_8066A8E0;
@@ -197,14 +296,14 @@ extern "C" void  func_80487EE0(CScnItemModelNw4r* self) {
         if (f < lbl_eu_8066A900) {
             f = lbl_eu_8066A8E0;
         }
-        if (f != lbl_eu_8066A8E0 && !(self->field_0x7A8 & 0x200)) {
+        if (lbl_eu_8066A8E0 != f && !(self->field_0x7A8 & 0x200)) {
             f = lbl_eu_8066A8FC;
         }
         if (self->field_0x1488 != 0) {
-            ((CScnItemModelNw4rAnimV28*)self->field_0x1488)->v10(f);
+            ((CScnItemModelNw4rAnimV28*)self->field_0x1488)->v08(f);
         }
         if (self->field_0x148C != 0) {
-            ((CScnItemModelNw4rAnimV28*)self->field_0x148C)->v10(f);
+            ((CScnItemModelNw4rAnimV28*)self->field_0x148C)->v08(f);
         }
     }
     if (!(self->field_0x7A4 & 0x20) && self->field_854 == 0) {
@@ -222,90 +321,58 @@ extern "C" void  func_80487EE0(CScnItemModelNw4r* self) {
     }
     if (!(self->field_0x7A4 & 0x1000)) {
         if (((CScnItemModelNw4rV74*)self)->v27() == 0 &&
-            (func_804844D0(self) == 0 || func_804842B0(self) == 0)) {
-            u32 oldBit = (self->field_0x7A4 >> 15) & 1;
+            !(func_804844D0(self) != 0 && func_804842B0(self) != 0)) {
+            // Re-evaluate the +0x7A4 bit-16 hidden flag from the owner's
+            // nodelist distance checks and notify on change.
+            u32 oldBit = (self->field_0x7A4 & 0x10000) ? 1 : 0;
             if (self->field_0x7A8 & 0x80) {
-                self->field_0x7A4 &= ~0x10000;
+                self->field_0x7A4 &= ~0x1C000;
             } else {
                 void* obj = func_80496264(self->field_04, -1);
                 if (((CScnItemModelNw4rV20*)obj)
                         ->v06(&self->field_0x2DC[0]) == 0) {
                     self->field_0x7A4 |= 0x10000;
                 } else {
-                    self->field_0x7A4 &= ~0x10000;
+                    self->field_0x7A4 &= ~0x1C000;
                 }
-                if (!(self->field_0x7A4 & 0x400000) &&
-                    !(self->field_0x7A4 & 0x10000)) {
+                u32 flags = self->field_0x7A4;
+                if (!(flags & 0x400000) && !(flags & 0x10000)) {
                     CScnItemModelNw4rB4V10* b4 =
                         (CScnItemModelNw4rB4V10*)self->field_04->field_0xB4;
                     if (b4 != 0) {
                         if (b4->v02(&self->field_0x2DC[0],
-                                    self->field_0x2E8) == 0) {
-                            self->field_0x7A4 &= ~0x10000;
-                        } else {
+                                    self->field_0x2E8) != 0) {
                             self->field_0x7A4 |= 0x10000;
+                        } else {
+                            self->field_0x7A4 &= ~0x1C000;
                         }
                     }
                 }
             }
-            if (oldBit != ((self->field_0x7A4 >> 15) & 1)) {
+            if (oldBit != ((self->field_0x7A4 & 0x10000) ? 1 : 0)) {
                 ((CScnItemModel*)self)->vfuncA4(1);
             }
             self->field_0x7A8 |= 0x400;
         }
     }
-    if (self->field_0x7A4 & 0x08000000) {
-        if (self->field_0x7A4 & 0x10000) {
-            // [inferred elided retail block: node distance re-check, then:]
-            if (func_8048F7A8(self->field_04->field_0x8C,
-                              (CScnCamLayout*)self) == 0) {
-                self->field_0x7A4 |= 0x1000;
-            } else {
-                self->field_0x7A4 &= ~0x1000;
+    // Flag dispatch: the busy/hookup bit combos decide whether the flag
+    // setter runs with enable=1 or enable=0 before the shared tail.
+    u32 flags = self->field_0x7A4;
+    if (flags & 0x08000000) {
+        u32 hidden = (flags & 0x10000) ? 1 : 0;
+        u32 hook = (flags & 0x04000000) ? 1 : 0;
+        if (hidden != 0) {
+            if (hook == 0) {
+                func_80483134(self, 1);
+                Func80487EE0Tail(self);
             }
-        } else {
-            if (!(self->field_0x7A4 & 0x1000)) {
-                if (func_8048F630(self->field_04->field_0x8C,
-                                  (CScnCamLayout*)self) != 0) {
-                    self->field_0x7A4 |= 0x1000;
-                } else {
-                    self->field_0x7A4 &= ~0x1000;
-                }
-            }
+        } else if (hook != 0) {
+            func_80483134(self, 0);
+            Func80487EE0Tail(self);
         }
-    } else if (self->field_0x7A4 & 0x02000000) {
+    } else if (flags & 0x04000000) {
         func_80483134(self, 0);
-        u32 b10 = (self->field_0x7A4 >> 21) & 1;
-        u32 b6 = (self->field_0x7A4 >> 25) & 1;
-        u32 b23 = (self->field_0x7A8 >> 8) & 1;
-        u32 b5 = (self->field_0x7A4 >> 26) & 1;
-        u32 comb = (b10 | b23) | b6;
-        if ((b5 ^ comb) != 0) {
-            if (comb != 0) {
-                self->field_0x7A4 |= 0x80000000;
-            } else {
-                self->field_0x7A4 &= ~0x04000000;
-            }
-            if (self->field_0x7A4 & 0x04000000) {
-                if (self->field_0x7A4 & 0x1000) {
-                    if (func_8048F7A8(self->field_04->field_0x8C,
-                                      (CScnCamLayout*)self) == 0) {
-                        self->field_0x7A4 |= 0x1000;
-                    } else {
-                        self->field_0x7A4 &= ~0x1000;
-                    }
-                }
-            } else {
-                if (!(self->field_0x7A4 & 0x1000)) {
-                    if (func_8048F630(self->field_04->field_0x8C,
-                                      (CScnCamLayout*)self) != 0) {
-                        self->field_0x7A4 |= 0x1000;
-                    } else {
-                        self->field_0x7A4 &= ~0x1000;
-                    }
-                }
-            }
-        }
+        Func80487EE0Tail(self);
     }
 }
 
@@ -683,13 +750,13 @@ extern "C" void  func_80487818(CScnItemModelNw4r* self) {
 void func_80488B50(CScnItemModelNw4r* self, u32 param, CScnItemModelNw4r* other) {
     for (u32 i = 0; i < 4; i++) {
         CScnItemModelNw4r* m = self->slots7B4[i];
-        if (m != 0 && m != other) {
+        if (m != 0 && other != m) {
             func_804E64B0(&m->field_0x16C8, param, other);
             func_804E64B0(&other->field_0x16C8, param, m);
         }
     }
     CScnItemModelNw4r* link = (CScnItemModelNw4r*)self->field_0x7C4;
-    if (link != 0 && link != other) {
+    if (link != 0 && other != link) {
         func_804E64B0(&link->field_0x16C8, param, other);
         func_804E64B0(&other->field_0x16C8, param, link);
     }
@@ -927,10 +994,10 @@ extern "C" void  func_80489014(CScnItemModelNw4r* self, nw4r::g3d::ChrAnmResult*
                                                 &self->vec7D8);
             }
             {
-                ml::CAttrTransform* t = func_8048315C(self);
-                nw4r::math::VEC3Add((nw4r::math::VEC3*)&t->mPos,
-                                    (nw4r::math::VEC3*)&t->mPos,
-                                    &self->vec7CC);
+            ml::CAttrTransform* t = func_8048315C(self);
+            nw4r::math::VEC3Add((nw4r::math::VEC3*)&t->mPos,
+                                (nw4r::math::VEC3*)&t->mPos,
+                                &self->vec7CC);
             }
         }
         if ((self->field_0x7A4 & 0x20) == 0 && self->field_854 == 0) {
@@ -960,16 +1027,94 @@ extern "C" void  func_8048917C(CScnItemModelNw4r* self, u32 param2, u32 param3,
     if (self->field_0x17C8 != 0) {
         func_804E8290(self->field_0x17C8, self, out->field_6, param2);
     }
-    u32 counter = self->field_0x16C4;
-    u32 next = counter + 1;
-    u32 masked = (u16)next;
+    u32 next = self->field_0x16C4 + 1;
+    u32 limit = self->field_0x17D0;
     self->field_0x16C4 = (u16)next;
-    if (masked < self->field_0x17D0) {
+    if ((u16)next < limit) {
         out->field_6 = self->field_0x17CC[(u16)next];
     }
 }
 
-extern "C" void  func_80489200(){}
+// Shared helper for func_80489200: build the paired world-matrix pointer
+// table for `srcModel`'s nodes. For every node index i of this model's
+// resource, resolve the same-named node in srcModel's resource and store the
+// pair (srcModel's ScnMdl world matrix at the node's mtxID, &mtxs[mtxID])
+// into consecutive table slots, bumping *counter after each store. Retail
+// keeps both stores in one loop body with the counter re-read between them.
+// Panics mirror the retail nw4r asserts (missing node / missing named node).
+static inline void BuildShadowMtxTable(CScnItemModelNw4r* self,
+                                       CScnItemModelNw4r* srcModel,
+                                       nw4r::math::MTX34* mtxs,
+                                       nw4r::math::MTX34** table,
+                                       u16* counter) {
+    nw4r::g3d::ResMdl mdl(self->field_0x146C);
+    u32 count = mdl.GetResNodeNumEntries();
+    nw4r::g3d::ResMdl srcMdl(srcModel->field_0x146C);
+    // Source model's per-node world-matrix array (ScnMdlSimple +0xEC).
+    nw4r::math::MTX34* srcArray =
+        ((CScnItemModelNw4rScnMdlView*)srcModel->field_0x147C)
+            ->mpWorldMtxArray;
+    for (u32 i = 0; i < count; i++) {
+        nw4r::g3d::ResNode node = mdl.GetResNode(i);
+        if (node.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E194, 0x2C, lbl_eu_8056E178,
+                            &lbl_eu_80663910, &lbl_eu_80663918);
+        }
+        const char* name = NULL;
+        if (node.ptr()->name != 0) {
+            name = node.GetResName().GetName();
+        }
+        nw4r::g3d::ResNode srcNode = srcMdl.GetResNode(name);
+        if (srcNode.ptr() == NULL) {
+            nw4r::db::Panic(lbl_eu_80529678, 0x53, lbl_eu_80529658);
+        }
+        u32 mtxID = srcNode.ptr() ? srcNode.ptr()->mtxID : 0;
+        // Even slot: source model's live world matrix; odd slot: caller's
+        // output matrix at the same mtxID.
+        u16 n = *counter;
+        table[n] = &srcArray[mtxID];
+        *counter = n + 1;
+        n = *counter;
+        table[n] = &mtxs[mtxID];
+        *counter = n + 1;
+    }
+}
+
+// func_80489200: shadow/world-matrix sync. When a chain link (+0x7C4) or a
+// secondary model (+0x7C8) is attached, build its paired matrix-pointer table
+// once (counter == 0) into +0x149E/+0x1498 resp. +0x149C/+0x1494, then copy
+// each pair (PSMTXCopy from the linked model's world matrix into the caller's
+// matrix). Finally refresh the dynamics sub-object with mtxs (func_804EBBCC)
+// and propagate (func_8048AB2C).
+extern "C" void func_80489200(CScnItemModelNw4r* self, nw4r::math::MTX34* mtxs) {
+    CScnItemModelNw4r* link = (CScnItemModelNw4r*)self->field_0x7C4;
+    if (link != NULL) {
+        if (self->field_0x149E == 0) {
+            BuildShadowMtxTable(self, link, mtxs,
+                                (nw4r::math::MTX34**)self->field_0x1498,
+                                &self->field_0x149E);
+        }
+        // Copy each linked-model world matrix into the paired caller matrix.
+        for (u16 i = 0; i < self->field_0x149E; i += 2) {
+            nw4r::math::MTX34** table = (nw4r::math::MTX34**)self->field_0x1498;
+            PSMTXCopy(table[i]->m, table[i + 1]->m);
+        }
+    }
+    func_804EBBCC(self->field_0x17A0, mtxs);
+    func_8048AB2C(self, mtxs);
+    if (link == NULL && self->field_0x7C8 != 0 && self->field_0x149C == 0) {
+        CScnItemModelNw4r* other = (CScnItemModelNw4r*)self->field_0x7C8;
+        BuildShadowMtxTable(self, other, mtxs,
+                            (nw4r::math::MTX34**)self->field_0x1494,
+                            &self->field_0x149C);
+    }
+    if (self->field_0x7C4 == 0 && self->field_0x149C != 0) {
+        for (u16 i = 0; i < self->field_0x149C; i += 2) {
+            nw4r::math::MTX34** table = (nw4r::math::MTX34**)self->field_0x1494;
+            PSMTXCopy(table[i]->m, table[i + 1]->m);
+        }
+    }
+}
 
 // func_80489584: per-frame transform/bounding refresh for the Nw4r model,
 // invoked with mode == 4. When the +0x7A4 bit-30 flag is set, normalize the
@@ -1015,8 +1160,12 @@ extern "C" void  func_80489584(CScnItemModelNw4r* self, int param) {
             }
         }
     }
+    // Retail keeps a byte-stepping pointer (r25) alongside the counter (r23)
+    // across the virtual call, so both must stay live here.
+    CScnItemModelNw4rHookV0C** hook = (CScnItemModelNw4rHookV0C**)self->field_0x7F0;
     for (int i = 0; i < self->field_0x820; i++) {
-        ((CScnItemModelNw4rHookV0C*)self->field_0x7F0[i])->v02(self);
+        (*hook)->v02(self);
+        hook++;
     }
     CScnItemModelNw4r14AC* src = self->field_0x14AC;
     if (src != 0) {
@@ -1069,7 +1218,40 @@ extern "C" void  func_80489584(CScnItemModelNw4r* self, int param) {
     }
 }
 
-extern "C" void  func_80489924(){}
+// Virtual-dispatch view for func_80489924's r5 callback object: the
+// vtable-0xC slot fires as notify(obj, 6, arg6, arg7).
+struct CScnItemModelNw4rNotifyV0C {
+    virtual void v00() = 0;
+    virtual void v01(u32 kind, u32 a, u32 b) = 0;   // retail vtable 0xC
+};
+
+// func_80489924: light-env refresh hook (mode-gated). On mode 1, refresh the
+// env light from the +0x31C sub-object when the +0x7A4 bit-0 flag is set,
+// else refresh the scene light manager outright; then - when the +0x7A4
+// bit-11 latch is armed and the +0x16C2 s16 counter is still zero - bump the
+// counter and fire the r5 callback object's vtable-0xC notify (kind 6)
+// between GX color-update disable/enable.
+extern "C" void  func_80489924(CScnItemModelNw4r* self, s32 mode, void* obj,
+                   u32 arg6, u32 arg7) {
+    if (mode != 1) {
+        return;
+    }
+    if (self->field_0x7A4 & 1) {
+        func_804C1720(self->field_04->field_7C, &self->field_0x31C);
+    } else {
+        func_804C172C(self->field_04->field_7C);
+    }
+    if (!(self->field_0x7A4 & 0x800)) {
+        return;
+    }
+    s16 count = (s16)self->field_0x16C2;
+    if (count == 0) {
+        self->field_0x16C2 = count + 1;
+        GXSetColorUpdate(GX_FALSE);
+        ((CScnItemModelNw4rNotifyV0C*)obj)->v01(6, arg6, arg7);
+        GXSetColorUpdate(GX_TRUE);
+    }
+}
 
 // func_804899F4: light-env mode switch - on mode 1, init the env light from
 // the +0x31C sub-object when the +0x7A4 bit-0 flag is set, else clear it;
@@ -1095,6 +1277,7 @@ extern "C" void  func_804899F4(CScnItemModelNw4r* self, s32 mode) {
 CScnItemModelNw4r* func_80489A60(CScnItemModelNw4r* self,
                                  nw4r::g3d::ResFileData* resFileData,
                                  u32 param, u32 enable, int index, u32 flags) {
+    CScnItemModelNw4r* model;
     if (self->field_0x31C.field_0x3E4 != 0) {
         return 0;
     }
@@ -1123,7 +1306,6 @@ CScnItemModelNw4r* func_80489A60(CScnItemModelNw4r* self,
         flags |= 1;
     }
     mtl::ALLOC_HANDLE handle = func_80495FF0(self);
-    CScnItemModelNw4r* model;
     if (mtl::MemManager::getMaxAllocSize(handle) < 0x3038) {
         model = (CScnItemModelNw4r*)mtl::MemManager::allocate_ex(
             0x181C, mtl::MemManager::getHandleMEM2(), -0x20);
@@ -1162,6 +1344,7 @@ CScnItemModelNw4r* func_80489A60(CScnItemModelNw4r* self,
 CScnItemModelNw4r* func_80489C94(CScnItemModelNw4r* self,
                                  nw4r::g3d::ResFileData* resFileData,
                                  u32 param) {
+    CScnItemModelNw4r* model;
     if (self->field_0x31C.field_0x3E4 != 0) {
         return 0;
     }
@@ -1182,11 +1365,10 @@ CScnItemModelNw4r* func_80489C94(CScnItemModelNw4r* self,
         return 0;
     }
     resFile.Init();
-    int bound = resFile.Bind(resFile);
+    u32 bound = resFile.Bind(resFile);
     if (resFile.GetResMdl(0).ptr() == 0) {
         return 0;
     }
-    CScnItemModelNw4r* model;  // declared before handle (retail: model=r30, handle=r29)
     mtl::ALLOC_HANDLE handle = func_80495FF0(self);
     if (mtl::MemManager::getMaxAllocSize(handle) < 0x3038) {
         return 0;
@@ -1209,8 +1391,9 @@ CScnItemModelNw4r* func_80489C94(CScnItemModelNw4r* self,
         model->field_0x7A4 &= ~0x800000;
     }
     model->field_0x7A8 |= 0x200;
-    ((CScnItemModelNw4rVtbl*)model)->v40();
-    return model;
+    // Tail vtable call: retail returns the callee's r3 directly (the slot
+    // behaves as returning `this`).
+    return (CScnItemModelNw4r*)((CScnItemModelNw4rVtbl*)model)->v40();
 }
 
 // func_80489E80: link `other` into this model's second reference list
@@ -1254,7 +1437,27 @@ extern "C" bool  func_80489E80(CScnItemModelNw4r* self, CScnItemModelNw4r* other
     return pushed;
 }
 
-extern "C" void  func_80489FDC(){}
+// func_80489FDC: resolve `name` in the model resource and forward the
+// node's +0xC value to the owner vtable-0xC0 slot (param, nodeVal, arg6);
+// 0 when the owner's +0x3E4 busy flag is set or the node is absent. The
+// second null test is retail's redundant validity assert reusing the first
+// compare's CR flags.
+extern "C" u32  func_80489FDC(CScnItemModelNw4r* self, u32 param,
+                   const char* name, u32 arg6) {
+    if (self->field_04->field_0x3E4 != 0) {
+        return 0;
+    }
+    nw4r::g3d::ResNode node =
+        nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(name);
+    if (node.ptr() == 0) {
+        return 0;
+    }
+    if (node.ptr() == 0) {
+        nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
+    }
+    return ((CScnItemModelNw4rVtbl*)self)->v46(
+        param, node.ptr() != 0 ? *(u32*)((char*)node.ptr() + 12) : 0, arg6);
+}
 
 // func_8048A0B4: unlink `other` from this model. Returns false while the
 // owner's busy byte (+0x3E4) is set or the +0x1480 group is absent;
@@ -1670,7 +1873,41 @@ CScnItemModel824* __dt__804871B0(CScnItemModel824* self, int deleting) {
     return self;
 }
 
-extern "C" void  func_8048B30C(){}
+// func_80485AD8: reference-chain busy query (defined in CScnItemModel.cpp).
+extern "C" u32 func_80485AD8(CScnItemModelNw4r* self);
+
+// func_8048B30C: scan the +0x824 entry table for the entry whose resource
+// node (by id) has the string at node+8 matching `name`; return the entry's
+// hidden flag (flags bit 3). Reports "handled" (1) when the reference chain
+// answers the query first or no entry matches.
+extern "C" int  func_8048B30C(CScnItemModelNw4r* self, const char* name) {
+    if (func_80485AD8(self) != 0) {
+        return 1;
+    }
+    CScnItemModel824Entry* it = (CScnItemModel824Entry*)self->member824.field_0;
+    // End recomputed each iteration (retail reloads both fields).
+    while (it != (CScnItemModel824Entry*)self->member824.field_0 +
+                   self->member824.field_4) {
+        nw4r::g3d::ResNode node =
+            nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(it->field_0);
+        if (node.ptr() != 0) {
+            if (node.ptr() == 0) {
+                nw4r::db::Panic(lbl_eu_8056E194, 0x2C, lbl_eu_8056E178,
+                                &lbl_eu_80663910, &lbl_eu_80663918);
+            }
+            const char* nodeName =
+                *(u32*)((char*)node.ptr() + 8) != 0
+                    ? (const char*)node.ptr() +
+                          *(u32*)((char*)node.ptr() + 8)
+                    : 0;
+            if (strcmp(nodeName, name) == 0) {
+                return (it->flags >> 3) & 1;
+            }
+        }
+        it++;
+    }
+    return 1;
+}
 
 // func_8048B3F0: scan the +0x824 node table (count at +0x828) for an entry
 // whose resolved node name matches `name`. Always returns 1. The redundant
@@ -1757,13 +1994,16 @@ extern "C" u32  func_8048B608(CScnItemModelNw4r* self, u32 index) {
     if (func_80485C28(self, index) != 0) {
         return 1;
     }
-    nw4r::g3d::ResNode node = nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(
-        ((CScnItemModel824Entry*)self->member824.field_0)[index].field_0);
-    if (node.ptr() == 0) {
-        return 0;
+    CScnItemModel824Entry* entry =
+        &((CScnItemModel824Entry*)self->member824.field_0)[index];
+    nw4r::g3d::ResNode node =
+        nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(entry->field_0);
+    if (node.ptr() != 0) {
+        return (((CScnItemModel824Entry*)self->member824.field_0)[index].flags >>
+                3) &
+               1;
     }
-    return (((CScnItemModel824Entry*)self->member824.field_0)[index].flags >> 3) &
-           1;
+    return 0;
 }
 
 // func_8048B68C: like func_8048B728, but the node is resolved by name via
@@ -1805,12 +2045,103 @@ extern "C" nw4r::math::MTX34*  func_8048B728(CScnItemModelNw4r* self, u32 index)
     return base + node.GetMtxID();
 }
 
-void func_8048B7C0(CScnItemModelNw4r* self) {}
+// Node/shadow assert + warning strings (.data).
+extern char lbl_eu_8056E100[];
+extern char lbl_eu_8056E0E0[];
+extern char lbl_eu_8056E168[];
+extern char lbl_eu_8056E140[];
+extern char lbl_eu_80663908;     // panic vararg string (.sdata, @sda21)
+extern double lbl_eu_8051B198;   // 0x4330000080000000 signed i2f magic (DOL)
+
+// Signed s16 -> f32 without the builtin conversion's TU-local 0x43300000
+// magic-double pool (MWCC_PATTERNS 7i manual bit construction).
+static f32 B7C0_S16ToF32(s16 v) {
+    union { double d; u32 w[2]; } u;
+    u.w[1] = (u32)(u16)v ^ 0x80000000u;
+    u.w[0] = 0x43300000u;
+    return (f32)(u.d - lbl_eu_8051B198);
+}
+
+// func_8048B7C0: shadow-node world-position refresh. Copies the six floats
+// at ResMdlData+0x74 into the +0x2EC table (with null/alignment asserts),
+// then fills the +0x2DC position either from the scale-source matrix view's
+// node animation (GetResNode -> CalcChrAnmResult -> GetMtx translation) or
+// by averaging the two copied vec3s, adds the transform's mPrevPos, scans 8
+// quantized-difference candidates tracking the max squared distance, and
+// stores the distance/sqrt pair to +0x2E8 / +0x7AC.
+void func_8048B7C0(CScnItemModelNw4r* self) {
+    if (self->member824.field_4 == 0) {
+        return;
+    }
+    nw4r::g3d::ResMdlData* data = self->field_0x146C;
+    if (data == 0) {
+        nw4r::db::Panic(lbl_eu_8056E100, 0x78, lbl_eu_8056E0E0,
+                        &lbl_eu_80663900, &lbl_eu_80663908);
+    }
+    const u8* q = (const u8*)data + 0x4C;
+    if ((u32)q & 3) {
+        nw4r::db::Panic(lbl_eu_8056E168, 0x39, lbl_eu_8056E140);
+    }
+    *(nw4r::math::VEC3*)&self->field_0x2EC[0] = *(const nw4r::math::VEC3*)(q + 0x28);
+    *(nw4r::math::VEC3*)&self->field_0x2EC[3] = *(const nw4r::math::VEC3*)(q + 0x34);
+    if (self->field_0x14AC != 0) {
+        nw4r::g3d::ResMdl mdl(self->field_0x146C);
+        nw4r::g3d::ResNode node = mdl.GetResNode(self->field_0x14A0);
+        nw4r::g3d::ChrAnmResult result;
+        node.CalcChrAnmResult(&result);
+        nw4r::math::MTX34 mtx;
+        result.GetMtx(&mtx);
+        self->field_0x2DC[0] = mtx.m[0][3];
+        self->field_0x2DC[1] = mtx.m[1][3];
+        self->field_0x2DC[2] = mtx.m[2][3];
+        self->field_0x2E8 = lbl_eu_8066A8E0;
+    } else {
+        f32 c = lbl_eu_8066A904;
+        self->field_0x2DC[0] =
+            (self->field_0x2EC[3] + self->field_0x2EC[0]) * c;
+        self->field_0x2DC[1] =
+            (self->field_0x2EC[4] + self->field_0x2EC[1]) * c;
+        self->field_0x2DC[2] =
+            (self->field_0x2EC[5] + self->field_0x2EC[2]) * c;
+        self->field_0x2E8 = lbl_eu_8066A8E0;
+    }
+    ml::CAttrTransform* t = func_8048315C(self);
+    *(nw4r::math::VEC3*)&self->field_0x2DC[0] += *(nw4r::math::VEC3*)&t->mPrevPos;
+    f32 maxDist = lbl_eu_8066A8E0;
+    for (int i = 0; i < 8; i++) {
+        f32 dx = B7C0_S16ToF32(
+            (s16)(self->field_0x2DC[0] -
+                  self->field_0x2EC[((i >> 2) & 1) * 3]));
+        f32 dy = B7C0_S16ToF32(
+            (s16)(self->field_0x2DC[1] -
+                  self->field_0x2EC[((i >> 1) & 1) * 3 + 1]));
+        f32 dz = B7C0_S16ToF32(
+            (s16)(self->field_0x2DC[2] -
+                  self->field_0x2EC[(i & 1) * 3 + 2]));
+        f32 mag2 = dx * dx + dy * dy + dz * dz;
+        if (maxDist < mag2) {
+            maxDist = mag2;
+        }
+    }
+    if (maxDist == lbl_eu_8066A8E0 || maxDist > lbl_eu_8066A8E0) {
+        // (maxDist >= const): no warning
+    } else {
+        nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+    }
+    f32 len;
+    if (!(maxDist == lbl_eu_8066A8E0 || maxDist < lbl_eu_8066A8E0)) {
+        len = maxDist * nw4r::math::FrSqrt(maxDist);
+    } else {
+        len = lbl_eu_8066A8E0;
+    }
+    self->field_0x2E8 = len;
+    self->field_0x7AC = len;
+}
 
 // func_8048BA58: resolve a named node in the model resource and return its
 // id. Absent node -> -1; then a redundant validity assert (retail keeps the
 // second check, reusing the first compare's CR flags) before GetID.
-extern "C" int  func_8048BA58(CScnItemModelNw4r* self, const char* name) {
+extern "C" int  func_8048BA58(const CScnItemModelNw4r* self, const char* name) {
     nw4r::g3d::ResNode node = nw4r::g3d::ResMdl(self->field_0x146C).GetResNode(name);
     if (node.ptr() == 0) {
         return -1;
@@ -1976,11 +2307,12 @@ extern "C" void  func_8048BD04(CScnItemModelNw4r* self, u32 enable) {
 
 void* func_8048BD1C(u8* self, unsigned int size) {
     void* buffer = *(void**)((char*)self + 8);
-    unsigned int current = *(unsigned int*)((char*)buffer + 0x860);
-    if (size >= 0xC00 - current) return 0;
-    unsigned int newOffset = current + size;
-    *(unsigned int*)((char*)buffer + 0x860) = newOffset;
-    return (char*)buffer + current + 0x864;
+    volatile unsigned int* used = (volatile unsigned int*)((char*)buffer + 0x860);
+    if (size >= 0xC00 - *used) return 0;
+    unsigned int current = *used;
+    void* result = (char*)buffer + current + 0x864;
+    *used = current + size;
+    return result;
 }
 
 void func_8048BD50(void) {}
@@ -2532,8 +2864,9 @@ extern "C" void  func_8048BD8C(u8* self) { ((void(*)(void*))__dt__17CScnItemMode
 // (GetParent on other's ResMdl, then Bind it into this model's ResMdl).
 // Bind failure sets the +0x7A4 0x800000 flag; success clears it.
 extern "C" void  func_80487374(CScnItemModelNw4r* self, CScnItemModelNw4r* other) {
-    nw4r::g3d::ResFile parent = nw4r::g3d::ResMdl(other->field_0x146C).GetParent();
-    bool failed = nw4r::g3d::ResMdl(self->field_0x146C).Bind(parent) == 0;
+    bool failed = nw4r::g3d::ResMdl(self->field_0x146C)
+                      .Bind(nw4r::g3d::ResMdl(other->field_0x146C).GetParent()) ==
+                  0;
     if (failed) {
         self->field_0x7A4 |= 0x800000;
     } else {
@@ -2555,11 +2888,11 @@ void func_804873EC(CScnItemModelNw4r* self, const char* name, u32 enable) {
     if (node.ptr() == 0) {
         nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
     }
-    u32 nodeId = node.GetID();
+    s32 nodeId = node.GetID();
     if (enable != 0) {
         for (u32 i = 0; i < 2; i++) {
             if (self->shadowNodes[i].id == -1) {
-                self->shadowNodes[i].id = (s16)nodeId;
+                self->shadowNodes[i].id = nodeId;
                 self->shadowNodes[i].field_0x1E = 0;
                 self->shadowNodes[i].vecA = ml::CVec3::zero;
                 self->shadowNodes[i].vecB = ml::CVec3::zero;
@@ -2575,19 +2908,54 @@ void func_804873EC(CScnItemModelNw4r* self, const char* name, u32 enable) {
         }
     } else {
         for (u32 i = 0; i < 2; i++) {
-            if (self->shadowNodes[i].id == (s16)nodeId) {
+            if (self->shadowNodes[i].id == (s32)(u32)nodeId) {
                 self->shadowNodes[i].id = -1;
                 break;
             }
         }
-        if (self->shadowNodes[0].id != -1 || self->shadowNodes[1].id != -1) {
+        s32 anyActive = 0;
+        for (u32 i = 0; i < 2; i++) {
+            if (self->shadowNodes[i].id != -1) {
+                anyActive = 1;
+                break;
+            }
+        }
+        if (anyActive != 0) {
             self->field_0x7A4 |= 0x10000000;
         } else {
             self->field_0x7A4 &= ~0x10000000;
         }
     }
 }
-extern "C" void func_804875B8() {}
+// Retail-named float constant (.sdata2) used by func_804875B8's u16
+// conversions.
+extern "C" const float lbl_eu_8066A8F8;
+
+// func_804875B8: resolve `name` to a resource node and stamp its id into the
+// matching +0x17DC shadow-node slot (2 entries), also writing two u16 values
+// derived from the node via (u16)(lbl_eu_8066A8F8 * scaleA/B). No-op when
+// the node is absent; the second null test is retail's redundant validity
+// assert reusing the first compare's CR flags.
+extern "C" void func_804875B8(CScnItemModelNw4r* self, const char* name,
+                              f32 scaleA, f32 scaleB) {
+    nw4r::g3d::ResMdl mdl(self->field_0x146C);
+    nw4r::g3d::ResNode node = mdl.GetResNode(name);
+    if (node.ptr() == 0) {
+        return;
+    }
+    if (node.ptr() == 0) {
+        nw4r::db::Panic(lbl_eu_8056E1C8, 0x38, lbl_eu_8056E1A8);
+    }
+    s32 nodeId = node.ptr() != 0 ? *(u32*)((char*)node.ptr() + 12) : 0;
+    for (int i = 0; i < 2; i++) {
+        if (nodeId == (s16)self->shadowNodes[i].id) {
+            f32 base = lbl_eu_8066A8F8;
+            self->shadowNodes[i].field_0x18 = (u16)(base * scaleA);
+            self->shadowNodes[i].field_0x1A = (u16)(base * scaleB);
+            return;
+        }
+    }
+}
 // func_804876EC: release this model's nw4r resource, re-fetch the parent
 // file, and re-bind it. Bind failure sets the +0x7A4 0x800000 flag.
 extern "C" void  func_804876EC(CScnItemModelNw4r* self) {

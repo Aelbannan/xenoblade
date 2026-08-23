@@ -15,7 +15,10 @@ class CDeviceFileJob;
 class CException;
 class IException;
 
-class CDeviceFileCri : public CWorkThread, public UnkStruct_8044F65C {
+// novtable: the retail vtable/typeinfo for CDeviceFileCri are hand-built in
+// CDeviceFileCri.cpp (lbl_eu_8056C354/lbl_eu_806636D8); without novtable MWCC
+// emits an implicit __vt__/__RTTI__ chain in the key-function TU.
+class __declspec(novtable) CDeviceFileCri : public CWorkThread, public UnkStruct_8044F65C {
 public:
     CDeviceFileCri(const char* pName, CWorkThread* pParent, int capacity = 0x100);
     ~CDeviceFileCri();
@@ -96,6 +99,9 @@ extern "C" {
     int ADXF_GetFsizeSct(void* adxf);
     void ADXF_ReadNw(void* adxf, int sectors, void* buffer);
     void* ADXF_OpenNw(const char* filename, int arg);
+    // Used by CDeviceFileCri::wkUpdate state-1 (sector-boundary seek before
+    // the 1-sector read; retail .text 0x804534D8).
+    void ADXF_Seek(void* adxf, u32 sectors, const void* buffer);
 }
 
 extern "C" bool isOff__11CWorkSystemFv();

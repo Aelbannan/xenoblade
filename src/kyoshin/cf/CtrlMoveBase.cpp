@@ -22,8 +22,10 @@ static inline ml::CVec3* getPos(CCtrlMoveBase* self) {
 }
 
 // Normalize a vector; a zero-length vector is replaced by ml::CVec3::zero.
-static inline void normalizeOrZero(ml::CVec3* v) {
-    if (v->x == lbl_eu_806665A0 && v->y == lbl_eu_806665A0 && v->z == lbl_eu_806665A0) {
+// `zero` is the caller's pre-loaded copy of lbl_eu_806665A0 used for the
+// component checks; the length test re-reads the global.
+static inline void normalizeOrZeroZ(ml::CVec3* v, f32 zero) {
+    if (v->x == zero && v->y == zero && v->z == zero) {
         return;
     }
     if (v->x * v->x + v->y * v->y + v->z * v->z == lbl_eu_806665A0) {
@@ -31,6 +33,10 @@ static inline void normalizeOrZero(ml::CVec3* v) {
     } else {
         PSVECNormalize(*v, *v);
     }
+}
+
+static inline void normalizeOrZero(ml::CVec3* v) {
+    normalizeOrZeroZ(v, lbl_eu_806665A0);
 }
 
 // Move the horizontal velocity toward a target direction with the +0x3C
@@ -44,7 +50,26 @@ static inline void lerpVel(CCtrlMoveBase* self, ml::CVec3* dir) {
     dir->z = self->mVelocity.z;
 }
 
-void __ct__80088904(){}
+// Constructor: stores the interface vtable label at +0x48 (class is built
+// without a compiler-generated vtable), zeroes state, copies ml::CVec3::zero
+// into position/velocity, and sets the default move parameters.
+CCtrlMoveBase::CCtrlMoveBase(void* dataPtr) {
+    mSecondaryVtable = lbl_eu_80527808;
+    mpSomePtr = 0;
+    // Read each constant into a local; MWCC sinks the member float stores
+    // to the end of the block.
+    f32 param2 = lbl_eu_8066659C;
+    f32 param1 = lbl_eu_80666598;
+    mpDataPtr = dataPtr;
+    mFlagsU16_1 = 0;
+    mPosition = ml::CVec3::zero;
+    mVelocity = ml::CVec3::zero;
+    mFlagsU16_2 = 0;
+    mByte1 = 0;
+    mByte2 = 0;
+    mFloatParam1 = param1;
+    mFloatParam2 = param2;
+}
 
 // ============================================================================
 // func_80088974 - main per-frame move update (0x734 bytes)
@@ -157,58 +182,54 @@ int func_80088974(CCtrlMoveBase* self, ml::CVec3* out, const ml::CVec3* src,
 // ============================================================================
 int func_800890A8(CCtrlMoveBase* self, ml::CVec3* out, u8* outFlag,
                   const ml::CVec3* src, int flag) {
-    int ok = 1;
-    if (self->mpSomePtr == 0) {
-        UnkClass_80083298* gm = cf::CfGameManager::func_80083298();
-        if (gm != 0) {
-            cf::CCtrlMoveMgr2F2C* p = (cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2f2c);
-            if (p != 0) {
-                if (p->field_0x00 != 0) {
-                    void* inst = func_8047CE7C__17UnkClass_8047CD0CFv();
-                    self->mpSomePtr = inst;
-                    ok = (inst != 0);
-                } else {
-                    ok = 0;
-                }
-            }
+    int ok;
+    UnkClass_80083298* gm;
+    if (self->mpSomePtr == 0
+            && (gm = cf::CfGameManager::func_80083298()) != 0
+            && (char*)gm + 0x2f2c != 0) {
+        if (((cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2f2c))->field_0x00 == 0) {
+            ok = 0;
+        } else {
+            void* inst = func_8047CE7C__17UnkClass_8047CD0CFv();
+            self->mpSomePtr = inst;
+            ok = (inst != 0);
         }
+    } else {
+        ok = 1;
     }
     if (ok != 0) {
         ml::CVec3* pos = getPos(self);
-        ok = (func_8047DD4C__17UnkClass_8047D2ACFv(self->mpSomePtr, pos, src,
-                                                   lbl_eu_806665A0,
-                                                   lbl_eu_806665A0, 1) != 0);
-    }
-    if (ok != 0) {
-        *outFlag = 1;
-        ml::CVec3* pos = getPos(self);
-        *out = *src - *pos;
-        out->y = lbl_eu_806665A0;
-        if (out->x == lbl_eu_806665A0 && out->z == lbl_eu_806665A0) {
-            out->x = lbl_eu_806665A0;
+        if (func_8047DD4C__17UnkClass_8047D2ACFv(self->mpSomePtr, pos, src,
+                                                 lbl_eu_806665A0,
+                                                 lbl_eu_806665A0, 1) != 0) {
+            *outFlag = 1;
+            ml::CVec3* pos2 = getPos(self);
+            *out = *src - *pos2;
             out->y = lbl_eu_806665A0;
-            out->z = lbl_eu_806665A4;
-            self->mVelocity = *out;
-        } else {
-            normalizeOrZero(out);
-        }
-        if (flag != 0) {
-            self->mVelocity.y = lbl_eu_806665A0;
-            self->mVelocity.x = self->mFloatParam2 * (out->x - self->mVelocity.x) + self->mVelocity.x;
-            self->mVelocity.z = self->mFloatParam2 * (out->z - self->mVelocity.z) + self->mVelocity.z;
-            if (!(self->mVelocity.x == lbl_eu_806665A0 && self->mVelocity.z == lbl_eu_806665A0)) {
-                if (self->mVelocity.x * self->mVelocity.x + self->mVelocity.y * self->mVelocity.y
-                        + self->mVelocity.z * self->mVelocity.z == lbl_eu_806665A0) {
-                    self->mVelocity = ml::CVec3::zero;
-                } else {
-                    PSVECNormalize((const Vec*)&self->mVelocity, (Vec*)&self->mVelocity);
-                }
+            if (out->x == lbl_eu_806665A0 && out->z == lbl_eu_806665A0) {
+                out->x = lbl_eu_806665A0;
+                out->y = lbl_eu_806665A0;
+                out->z = lbl_eu_806665A4;
+                self->mVelocity = *out;
+            } else {
+                normalizeOrZero(out);
             }
-            *out = self->mVelocity;
-        } else {
-            self->mVelocity = *out;
+            if (flag != 0) {
+                self->mVelocity.y = lbl_eu_806665A0;
+                self->mVelocity.x = self->mFloatParam2 * (out->x - self->mVelocity.x) + self->mVelocity.x;
+                self->mVelocity.z = self->mFloatParam2 * (out->z - self->mVelocity.z) + self->mVelocity.z;
+                // When the lerped horizontal velocity is exactly zero the
+                // retail leaves *out as the normalized direction.
+                if (!(self->mVelocity.x == lbl_eu_806665A0
+                      && self->mVelocity.z == lbl_eu_806665A0)) {
+                    normalizeOrZero(&self->mVelocity);
+                    *out = self->mVelocity;
+                }
+            } else {
+                self->mVelocity = *out;
+            }
+            return 1;
         }
-        return 1;
     }
     *outFlag = 0;
     return func_80088974(self, out, src, flag, 0);
@@ -247,7 +268,17 @@ void func_80089398(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src,
     }
 }
 
-void func_800895A8(){}
+// Lazily sync velocity from the entity position (once, guarded by flag bit 0),
+// then notify through the +0x48 interface.
+void func_800895A8(CCtrlMoveBase* self) {
+    if ((self->mFlagsU16_1 & 1) == 0) {
+        self->mFlagsU16_1 |= 1;
+        self->field_0x00 = *getPos(self);
+        ((cf::CCtrlMoveBaseIface*)self->mSecondaryVtable)->unk08(self);
+    }
+}
+
+// (lazy-init logic is duplicated inline in func_80089F68 / func_8008A01C)
 
 // FULL_MATCH: no-op virtual stub (CCtrlMoveBase::func_80089628)
 void func_80089628() {}
@@ -270,11 +301,36 @@ void func_80089684(void* self) {
     *(unsigned short*)((char*)self + 0x40) &= 1;
 }
 
-void func_80089694(){}
+// Cache facing angle (atan2 of x/z scaled) and raw x into the move data block.
+// mpDataPtr is re-read per store, matching the two retail loads at +0x34.
+void func_80089694(CCtrlMoveBase* self, ml::CVec3* vec) {
+    f32 x = vec->x;
+    ((cf::CCtrlMoveData*)self->mpDataPtr)->field_0x0C =
+        nw4r::math::Atan2FIdx(x, vec->z) * lbl_eu_806665AC;
+    ((cf::CCtrlMoveData*)self->mpDataPtr)->field_0x14 = x;
+}
 
-void func_800896F4(){}
+// Move toward src: direction = normalized(src - entityPos), then lerp the
+// horizontal velocity toward it and re-export/re-normalize.
+void func_800896F4(CCtrlMoveBase* self, ml::CVec3* dst, const ml::CVec3* src) {
+    ml::CVec3* pos = getPos(self);
+    *dst = *src - *pos;
+    normalizeOrZero(dst);
+    self->mVelocity.x = self->mFloatParam2 * (dst->x - self->mVelocity.x) + self->mVelocity.x;
+    self->mVelocity.z = self->mFloatParam2 * (dst->z - self->mVelocity.z) + self->mVelocity.z;
+    *dst = self->mVelocity;
+    normalizeOrZero(dst);
+}
 
-void func_800898D4(){}
+// Lerp the horizontal velocity toward dir, copy the velocity back into dir,
+// then renormalize (same tail as func_800896F4).
+void func_800898D4(CCtrlMoveBase* self, ml::CVec3* dir) {
+    f32 zero = lbl_eu_806665A0;
+    self->mVelocity.x = self->mFloatParam2 * (dir->x - self->mVelocity.x) + self->mVelocity.x;
+    self->mVelocity.z = self->mFloatParam2 * (dir->z - self->mVelocity.z) + self->mVelocity.z;
+    *dir = self->mVelocity;
+    normalizeOrZeroZ(dir, zero);
+}
 
 struct func_80089990_child { char pad[0x10]; unsigned short flags; };
 struct func_80089990_obj { char pad[0x30]; func_80089990_child* child; };
@@ -292,7 +348,49 @@ void func_800899AC(void* obj, float val) {
     }
 }
 
-void func_800899C0(){}
+// Move request with a short cache: for up to 30 frames after a successful
+// pathing update, replay the cached direction from field_0x24 instead of
+// querying the path instance again.
+int func_800899C0(CCtrlMoveBase* self, ml::CVec3* out, void* arg, f32 val) {
+    // Lazy-init +0x30 (single "proceed" assignment site mirrors the retail
+    // flag diamond).
+    UnkClass_80083298* gm;
+    cf::CCtrlMoveMgr2F2C* p;
+    int ok;
+    if (self->mpSomePtr != 0 || (gm = cf::CfGameManager::func_80083298()) == 0
+            || (p = (cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2F2C)) == 0)
+        ok = 1;
+    else if (p->field_0x00 == 0)
+        ok = 0;
+    else {
+        void* inst = func_8047CE7C__17UnkClass_8047CD0CFv();
+        self->mpSomePtr = inst;
+        ok = (inst != 0);
+    }
+    if (ok == 0) {
+        return 0;
+    }
+
+    if ((self->mFlagsU16_1 & 0x4) == 0) {
+        u8 count = self->mByte1;
+        self->mByte1 = count + 1;
+        if (count <= 0x1e) {
+            *out = self->field_0x24;
+            return 1;
+        }
+    }
+
+    ml::CVec3* pos = getPos(self);
+    if (func_8047DC8C__17UnkClass_8047D2ACFv(self->mpSomePtr, &self->field_0x24,
+                                             pos, val, lbl_eu_806665A0,
+                                             lbl_eu_806665A0, (int)arg) != 0) {
+        *out = self->field_0x24;
+        self->mByte1 = 0;
+        self->mFlagsU16_1 |= 0x4;
+        return 1;
+    }
+    return 0;
+}
 
 // ============================================================================
 // func_80089B24 - wobbly move update: timer re-roll + angle jitter (0x364)
@@ -379,11 +477,76 @@ int func_80089B24(CCtrlMoveBase* self, ml::CVec3* out) {
     return 0;
 }
 
-void func_80089E88(){}
+// Path-follow request through the lazily created instance; passes both extra
+// arguments straight through to the pathing helper.
+int func_80089E88(CCtrlMoveBase* self, const ml::CVec3* src, int flag) {
+    UnkClass_80083298* gm;
+    cf::CCtrlMoveMgr2F2C* p;
+    int ok;
+    if (self->mpSomePtr != 0 || (gm = cf::CfGameManager::func_80083298()) == 0
+            || (p = (cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2F2C)) == 0)
+        ok = 1;
+    else if (p->field_0x00 == 0)
+        ok = 0;
+    else {
+        void* inst = func_8047CE7C__17UnkClass_8047CD0CFv();
+        self->mpSomePtr = inst;
+        ok = (inst != 0);
+    }
+    if (ok == 0) {
+        return 0;
+    }
+    ml::CVec3* pos = getPos(self);
+    return func_8047DD4C__17UnkClass_8047D2ACFv(self->mpSomePtr, pos, src,
+                                                lbl_eu_806665A0,
+                                                lbl_eu_806665A0, flag) != 0;
+}
 
-void func_80089F68(){}
+int func_80089F68(CCtrlMoveBase* self) {
+    // Lazy-init +0x30. Single "proceed" assignment site mirrors the retail
+    // flag diamond.
+    UnkClass_80083298* gm;
+    cf::CCtrlMoveMgr2F2C* p;
+    int ok;
+    if (self->mpSomePtr != 0 || (gm = cf::CfGameManager::func_80083298()) == 0
+            || (p = (cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2F2C)) == 0)
+        ok = 1;
+    else if (p->field_0x00 == 0)
+        ok = 0;
+    else {
+        void* inst = func_8047CE7C__17UnkClass_8047CD0CFv();
+        self->mpSomePtr = inst;
+        ok = (inst != 0);
+    }
+    if (ok == 0) {
+        return 0;
+    }
+    ml::CVec3* pos = getPos(self);
+    return func_8047DE14__17UnkClass_8047D2ACFv(self->mpSomePtr, pos,
+                                                 lbl_eu_806665A0, lbl_eu_806665A0);
+}
 
-void func_8008A01C(){}
+int func_8008A01C(CCtrlMoveBase* self, ml::CVec3* out) {
+    // Lazy-init +0x30 (same single-assignment pattern as func_80089F68).
+    UnkClass_80083298* gm;
+    cf::CCtrlMoveMgr2F2C* p;
+    int ok;
+    if (self->mpSomePtr != 0 || (gm = cf::CfGameManager::func_80083298()) == 0
+            || (p = (cf::CCtrlMoveMgr2F2C*)((char*)gm + 0x2F2C)) == 0)
+        ok = 1;
+    else if (p->field_0x00 == 0)
+        ok = 0;
+    else {
+        void* inst = func_8047CE7C__17UnkClass_8047CD0CFv();
+        self->mpSomePtr = inst;
+        ok = (inst != 0);
+    }
+    if (ok == 0) {
+        return 0;
+    }
+    return func_8047DE3C__17UnkClass_8047D2ACFv(self->mpSomePtr, out,
+                                                 lbl_eu_806665A0, lbl_eu_806665A0);
+}
 
 // FULL_MATCH: no-op virtual stub (CCtrlMoveBase::func_8008A0C4)
 extern "C" void func_8008A0C4() {}

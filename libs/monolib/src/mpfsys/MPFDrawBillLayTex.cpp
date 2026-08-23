@@ -95,6 +95,9 @@ MPFDrawBillLayTex* MPFDrawBillLayTex::getInstance() {
 
 } // namespace mpfsys
 
+// Computes the 4 corner positions of a billboard (plus layered copies) by
+// transforming local-space offsets through the view matrix (and per-layer
+// matrices for depth-layered billboards).
 extern "C" void func_80479F54(MPFDrawBillData* billboard, Vec* positions) {
     f32 height = billboard->halfHeight;
     if (billboard->flags & 4) {
@@ -102,6 +105,9 @@ extern "C" void func_80479F54(MPFDrawBillData* billboard, Vec* positions) {
     }
 
     if (billboard->flags & 2) {
+        // Shared by both depth paths so MWCC reuses one pair of slots.
+        Vec layerLeft;
+        Vec layerRight;
         Vec left;
         Vec right;
         left.x = -billboard->halfWidth;
@@ -116,13 +122,14 @@ extern "C" void func_80479F54(MPFDrawBillData* billboard, Vec* positions) {
         if (billboard->layerDepth != lbl_eu_8066A848) {
             MPFDrawBillLayer* layers = func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
             s32 count = lbl_eu_8066A728;
+            f32 v = lbl_eu_8066A84C;
             f32 step = billboard->layerDepth * lbl_eu_8066A730;
-            f32 v = lbl_eu_8066A850 * step + (lbl_eu_8066A84C - lbl_eu_8066A850 * billboard->layerDepth);
+            f32 scale = lbl_eu_8066A850;
+            v -= scale * billboard->layerDepth;
             f32 zero = lbl_eu_8066A848;
+            v += scale * step;
             for (s32 i = 0; i < count; i++) {
                 f32 y = height * v;
-                Vec layerLeft;
-                Vec layerRight;
                 layerRight.x = billboard->halfWidth;
                 layerLeft.x = -billboard->halfWidth;
                 layerLeft.y = y;
@@ -137,8 +144,6 @@ extern "C" void func_80479F54(MPFDrawBillData* billboard, Vec* positions) {
                 layers++;
             }
         } else {
-            Vec layerLeft;
-            Vec layerRight;
             layerRight.x = billboard->halfWidth;
             layerLeft.x = -billboard->halfWidth;
             layerLeft.y = height;
@@ -156,6 +161,8 @@ extern "C" void func_80479F54(MPFDrawBillData* billboard, Vec* positions) {
             }
         }
     } else if (billboard->layerDepth != lbl_eu_8066A848) {
+        Vec layerLeft;
+        Vec layerRight;
         Vec left;
         Vec right;
         left.x = -billboard->halfWidth;
@@ -168,13 +175,14 @@ extern "C" void func_80479F54(MPFDrawBillData* billboard, Vec* positions) {
         PSMTXMultVec(lbl_eu_80658428, &right, &positions[1]);
         func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
         s32 count = lbl_eu_8066A728;
+        f32 v = lbl_eu_8066A84C;
         f32 step = billboard->layerDepth * lbl_eu_8066A730;
-        f32 v = lbl_eu_8066A850 * step + (lbl_eu_8066A84C - lbl_eu_8066A850 * billboard->layerDepth);
+        f32 scale = lbl_eu_8066A850;
+        v -= scale * billboard->layerDepth;
         f32 zero = lbl_eu_8066A848;
+        v += scale * step;
         for (s32 i = 0; i < count; i++) {
             f32 y = height * v;
-            Vec layerLeft;
-            Vec layerRight;
             layerRight.x = billboard->halfWidth;
             layerLeft.x = -billboard->halfWidth;
             layerLeft.y = y;
@@ -336,24 +344,26 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
     func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
     func_804742BC__Q26mpfsys17UnkClass_80471EC8Fv();
 
+    Vec vertex0;
+    Vec vertex1;
+    Vec vertex2;
+    Vec vertex3;
     if (billboard->flags & 2) {
-        Vec vertex0;
-        Vec vertex1;
-        Vec vertex2;
-        Vec vertex3;
-        Vec* output = positions;
+        MPFDrawBillLayer* layers;
+        s32 count;
+        Vec* out = positions;
         if (billboard->layerDepth != lbl_eu_8066A848) {
-            MPFDrawBillLayer* layers = func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
-            s32 count = lbl_eu_8066A728;
+            layers = func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
             f32 step = billboard->layerDepth * lbl_eu_8066A730;
+            count = lbl_eu_8066A728;
             f32 v = lbl_eu_8066A850 * step + (lbl_eu_8066A84C - lbl_eu_8066A850 * billboard->layerDepth);
             f32 zero = lbl_eu_8066A848;
             for (s32 i = 0; i < count; i++) {
                 f32 y = billboard->halfHeight * v;
-                vertex0.x = -billboard->halfWidth;
-                vertex0.y = y;
-                vertex0.z = zero;
                 vertex1.x = billboard->halfWidth;
+                vertex0.y = y;
+                vertex0.x = -billboard->halfWidth;
+                vertex0.z = zero;
                 vertex1.y = y;
                 vertex1.z = zero;
                 vertex2.x = zero;
@@ -362,75 +372,42 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
                 vertex3.x = zero;
                 vertex3.y = y;
                 vertex3.z = billboard->halfWidth;
-                PSMTXMultVec(layers->matrix, &vertex0, output + 0);
-                PSMTXMultVec(layers->matrix, &vertex1, output + 1);
-                PSMTXMultVec(layers->matrix, &vertex2, output + 2);
-                PSMTXMultVec(layers->matrix, &vertex3, output + 3);
+                PSMTXMultVec(layers->matrix, &vertex0, out);
+                PSMTXMultVec(layers->matrix, &vertex1, out + 1);
+                PSMTXMultVec(layers->matrix, &vertex2, out + 2);
+                PSMTXMultVec(layers->matrix, &vertex3, out + 3);
                 v += step;
                 layers++;
-                output += 4;
+                out += 4;
             }
         } else {
-            vertex0.x = -billboard->halfWidth;
+            f32 zero = lbl_eu_8066A848;
             vertex0.y = billboard->halfHeight;
-            vertex0.z = lbl_eu_8066A848;
+            vertex0.x = -billboard->halfWidth;
+            vertex0.z = zero;
             vertex1.x = billboard->halfWidth;
             vertex1.y = billboard->halfHeight;
-            vertex1.z = lbl_eu_8066A848;
-            vertex2.x = lbl_eu_8066A848;
+            vertex1.z = zero;
+            vertex2.x = zero;
             vertex2.y = billboard->halfHeight;
             vertex2.z = -billboard->halfWidth;
-            vertex3.x = lbl_eu_8066A848;
+            vertex3.x = zero;
             vertex3.y = billboard->halfHeight;
             vertex3.z = billboard->halfWidth;
-            MPFDrawBillLayer* layers = func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
-            s32 count = lbl_eu_8066A728;
+            layers = func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
+            count = lbl_eu_8066A728;
             for (s32 i = 0; i < count; i++) {
-                PSMTXMultVec(layers->matrix, &vertex0, output + 0);
-                PSMTXMultVec(layers->matrix, &vertex1, output + 1);
-                PSMTXMultVec(layers->matrix, &vertex2, output + 2);
-                PSMTXMultVec(layers->matrix, &vertex3, output + 3);
+                PSMTXMultVec(layers->matrix, &vertex0, out);
+                PSMTXMultVec(layers->matrix, &vertex1, out + 1);
+                PSMTXMultVec(layers->matrix, &vertex2, out + 2);
+                PSMTXMultVec(layers->matrix, &vertex3, out + 3);
+                out += 4;
                 layers++;
-                output += 4;
             }
         }
-        if (billboard->flags & 4) {
-            s32 count = lbl_eu_8066A728;
-            for (s32 i = 0; i < count; i++) {
-                positions[0].y = -positions[0].y;
-                positions[1].y = -positions[1].y;
-                positions[2].y = -positions[2].y;
-                positions[3].y = -positions[3].y;
-                positions += 4;
-            }
-        }
-    } else if (billboard->layerDepth != lbl_eu_8066A848) {
-        Vec* output = positions;
-        func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
-        s32 count = lbl_eu_8066A728;
-        f32 step = billboard->layerDepth * lbl_eu_8066A730;
-        f32 v = lbl_eu_8066A850 * step + (lbl_eu_8066A84C - lbl_eu_8066A850 * billboard->layerDepth);
-        f32 zero = lbl_eu_8066A848;
-        for (s32 i = 0; i < count; i++) {
-            f32 y = billboard->halfHeight * v;
-            output[0].x = -billboard->halfWidth;
-            output[0].y = y;
-            output[0].z = zero;
-            output[1].x = billboard->halfWidth;
-            output[1].y = y;
-            output[1].z = zero;
-            output[2].x = zero;
-            output[2].y = y;
-            output[2].z = -billboard->halfWidth;
-            output[3].x = zero;
-            output[3].y = y;
-            output[3].z = billboard->halfWidth;
-            v += step;
-            output += 4;
-        }
-        if (billboard->flags & 4) {
-            s32 count = lbl_eu_8066A728;
-            for (s32 i = 0; i < count; i++) {
+        if ((billboard->flags & 4) && count > 0) {
+            s32 n = lbl_eu_8066A728;
+            for (s32 j = 0; j < n; j++) {
                 positions[0].y = -positions[0].y;
                 positions[1].y = -positions[1].y;
                 positions[2].y = -positions[2].y;
@@ -439,24 +416,63 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
             }
         }
     } else {
-        Vec* output = positions;
-        output[0].x = -billboard->halfWidth;
-        output[0].y = billboard->halfHeight;
-        output[0].z = lbl_eu_8066A848;
-        output[1].x = billboard->halfWidth;
-        output[1].y = billboard->halfHeight;
-        output[1].z = lbl_eu_8066A848;
-        output[2].x = lbl_eu_8066A848;
-        output[2].y = billboard->halfHeight;
-        output[2].z = -billboard->halfWidth;
-        output[3].x = lbl_eu_8066A848;
-        output[3].y = billboard->halfHeight;
-        output[3].z = billboard->halfWidth;
-        if (billboard->flags & 4) {
-            output[0].y = -billboard->halfHeight;
-            output[1].y = -billboard->halfHeight;
-            output[2].y = -billboard->halfHeight;
-            output[3].y = -billboard->halfHeight;
+        Vec* out = positions;
+        if (billboard->layerDepth != lbl_eu_8066A848) {
+            MPFDrawBillLayer* layers = func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(lbl_eu_80665838, billboard->layerIndex);
+            s32 count = lbl_eu_8066A728;
+            f32 step = billboard->layerDepth * lbl_eu_8066A730;
+            f32 zero = lbl_eu_8066A848;
+            f32 v = lbl_eu_8066A850 * step + (lbl_eu_8066A84C - lbl_eu_8066A850 * billboard->layerDepth);
+            for (s32 i = 0; i < count; i++) {
+                vertex0.x = -billboard->halfWidth;
+                vertex0.y = billboard->halfHeight * v;
+                vertex0.z = zero;
+                vertex1.x = billboard->halfWidth;
+                vertex1.y = billboard->halfHeight * v;
+                vertex1.z = zero;
+                vertex2.x = zero;
+                vertex2.y = billboard->halfHeight * v;
+                vertex2.z = -billboard->halfWidth;
+                vertex3.x = zero;
+                vertex3.y = billboard->halfHeight * v;
+                vertex3.z = billboard->halfWidth;
+                PSMTXMultVec(layers->matrix, &vertex0, out);
+                PSMTXMultVec(layers->matrix, &vertex1, out + 1);
+                PSMTXMultVec(layers->matrix, &vertex2, out + 2);
+                PSMTXMultVec(layers->matrix, &vertex3, out + 3);
+                v += step;
+                out += 4;
+            }
+            if ((billboard->flags & 4) && count > 0) {
+                s32 n = lbl_eu_8066A728;
+                for (s32 j = 0; j < n; j++) {
+                    positions[0].y = -positions[0].y;
+                    positions[1].y = -positions[1].y;
+                    positions[2].y = -positions[2].y;
+                    positions[3].y = -positions[3].y;
+                    positions += 4;
+                }
+            }
+        } else {
+            f32 zero = lbl_eu_8066A848;
+            positions[0].y = billboard->halfHeight;
+            positions[0].x = -billboard->halfWidth;
+            positions[0].z = zero;
+            positions[1].x = billboard->halfWidth;
+            positions[1].y = billboard->halfHeight;
+            positions[1].z = zero;
+            positions[2].y = billboard->halfHeight;
+            positions[2].x = zero;
+            positions[2].z = -billboard->halfWidth;
+            positions[3].y = billboard->halfHeight;
+            positions[3].x = zero;
+            positions[3].z = billboard->halfWidth;
+            if (billboard->flags & 4) {
+                positions[0].y = -billboard->halfHeight;
+                positions[1].y = -billboard->halfHeight;
+                positions[2].y = -billboard->halfHeight;
+                positions[3].y = -billboard->halfHeight;
+            }
         }
     }
 }

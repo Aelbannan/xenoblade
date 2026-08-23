@@ -26,6 +26,8 @@ extern const float lbl_eu_8066B408;  // 0.0f
 extern const float lbl_eu_8066B40C;  // 1.0f
 extern const float lbl_eu_8066B410;  // -1.0f
 extern const float lbl_eu_8066B414;  // 0.5f
+extern const float lbl_eu_8066B418; // gradient scale
+extern const float lbl_eu_8066B41C; // gradient scale
 extern const float lbl_eu_8066B420;  // 255.0f
 extern const double lbl_eu_8066B428; // 0x4330000000000000 (u->f magic)
 extern const double lbl_eu_8066B430; // 0x4330000080000000 (s->f magic)
@@ -147,9 +149,10 @@ struct CBindAnim {
     virtual void slot9();
     virtual void slot10();
     virtual void slot11();
-    virtual void slot12();
-    virtual void* getPos();
+    // Slot 12 (vtable+0x38) is the matrix getter the anim-source cases call.
     virtual void* getMtx();
+    virtual void* getPos();
+    virtual void slot14();
     virtual void slot15();
     virtual void slot16();
     virtual void slot17();
@@ -199,7 +202,6 @@ struct CLytBind {
 struct CDrawCtx {
     u32 mField00;
     GXTexObj* mTexObj; // 0x04
-    u8 mPad08[0x38];
 };
 
 // Optional texture-matrix source passed to the marker draw.
@@ -266,7 +268,7 @@ extern "C" void func_804EE60C(CLytBind* self) {
 // func_804EE658: rebuild the world matrix from the bound source,
 // preserving the current translation.
 extern "C" void func_804EE658(CLytBind* self, CBindSource* src) {
-    ml::CVec3 translation = self->mMtx.getTranslation();
+    ml::CVec3 translation(self->mMtx.m[0][3], self->mMtx.m[1][3], self->mMtx.m[2][3]);
 
     self->mMtx = ml::CMat34::identity;
 
@@ -400,8 +402,8 @@ extern "C" void func_804EF830(ml::CVec3* verts) {
             verts[i].set(lbl_eu_8066B408, lbl_eu_8066B408, lbl_eu_8066B408);
         } else if (i < 9) {
             float deg = s32ToF(i - 1) * lbl_eu_8066B438;
-            float rad = ml::deg2rad * deg;
-            float angle = ml::rad2deg * rad;
+            float rad = lbl_eu_8066B418 * deg;
+            float angle = lbl_eu_8066B41C * rad;
             verts[i].x = gradLookup(lbl_eu_80660B78, angle);
             verts[i].y = gradLookup(lbl_eu_80660038, angle);
             verts[i].z = lbl_eu_8066B408;
@@ -412,27 +414,39 @@ extern "C" void func_804EF830(ml::CVec3* verts) {
 }
 
 // func_804EF9B8: scale/rotate the fan vertices and offset them to pos.
-extern "C" void func_804EF9B8(ml::CVec3* verts, const ml::CVec3* pos, ml::CVec3 size, float angle) {
+// NOTE: size must be passed by reference - retail holds it as a single
+// pointer register (r29) and loads components with lfs.
+extern "C" void func_804EF9B8(ml::CVec3* verts, const ml::CVec3* pos,
+                              const ml::CVec3& size, float angle) {
     Mtx rotMtx;
     if (angle != lbl_eu_8066B408) {
         func_804DD4F8(rotMtx, angle);
     }
 
     for (s16 i = 0; i < 10; i++) {
+        // Address of verts[i] is formed before the branch (retail keeps the
+        // mulli/add on every path, even for i == 0).
+        ml::CVec3& v = verts[i];
         if (i == 0) {
-            verts[i] += *pos;
+            // Inline nw4r helper lowers to bare ps_add pairs (no temp).
+            nw4r::math::VEC3Add((nw4r::math::VEC3*)&v, (const nw4r::math::VEC3*)&v,
+                                (const nw4r::math::VEC3*)pos);
         } else if (i < 9) {
-            verts[i].x *= size.x;
-            verts[i].y *= size.y;
-            verts[i].z *= size.z;
+            v.x *= size.x;
+            v.y *= size.y;
+            v.z *= size.z;
             if (angle != lbl_eu_8066B408) {
+                // Retail copies the rotated vector through two stack temps
+                // before storing back into v.
                 ml::CVec3 rotated;
-                PSMTXMultVec(rotMtx, verts[i], rotated);
-                verts[i] = rotated;
+                PSMTXMultVec((const float (*)[4])rotMtx, (const Vec*)&v, (Vec*)&rotated);
+                ml::CVec3 shifted = rotated;
+                v = shifted;
             }
-            verts[i] += *pos;
+            nw4r::math::VEC3Add((nw4r::math::VEC3*)&v, (const nw4r::math::VEC3*)&v,
+                                (const nw4r::math::VEC3*)pos);
         } else {
-            verts[i] = verts[1];
+            v = verts[1];
         }
     }
 }
@@ -485,9 +499,18 @@ extern "C" void func_804EFD78(ml::CVec3* verts, ml::CVec3* tex, ml::CVec3* color
     float fbW = u16ToF(CDeviceVI::getRenderModeObj()->fbWidth);
     float fbH = u16ToF(CDeviceVI::getRenderModeObj()->efbHeight);
 
+    // Loop-lifetime vector temps; retail keeps every slot's address in a
+    // register for the whole loop, which drives the callee-save allocation.
+    ml::CVec3 orig;
+    ml::CVec3 d;
+    ml::CVec3 tdiff;
+    ml::CVec3 tscaled;
+    ml::CVec3 cdiff;
+    ml::CVec3 cscaled;
+
     for (s16 i = 1; i < 10; i++) {
         if (i < 9) {
-            ml::CVec3 orig = verts[i];
+            orig = verts[i];
             bool clamped = false;
             if (verts[i].x < lbl_eu_8066B408) {
                 verts[i].x = lbl_eu_8066B408;
@@ -507,19 +530,25 @@ extern "C" void func_804EFD78(ml::CVec3* verts, ml::CVec3* tex, ml::CVec3* color
                 continue;
             }
 
-            ml::CVec3 d = orig - verts[0];
-            float rx = (d.x == lbl_eu_8066B408)
-                           ? lbl_eu_8066B40C
-                           : ml::math::abs((verts[i].x - verts[0].x) / d.x);
-            float ry = (d.y == lbl_eu_8066B408)
-                           ? lbl_eu_8066B40C
-                           : ml::math::abs((verts[i].y - verts[0].y) / d.y);
+            d = orig - verts[0];
+            float rx;
+            float ry;
+            if (d.x == lbl_eu_8066B408) {
+                rx = lbl_eu_8066B40C;
+            } else {
+                rx = ml::math::abs((verts[i].x - verts[0].x) / d.x);
+            }
+            if (d.y == lbl_eu_8066B408) {
+                ry = lbl_eu_8066B40C;
+            } else {
+                ry = ml::math::abs((verts[i].y - verts[0].y) / d.y);
+            }
 
             // Drag factor for the z components (0: tex/color z stays put).
             float zf = lbl_eu_8066B408;
 
-            ml::CVec3 tdiff = tex[i] - tex[0];
-            ml::CVec3 tscaled(tdiff.x * rx, tdiff.y * ry, tdiff.z * zf);
+            tdiff = tex[i] - tex[0];
+            tscaled.set(tdiff.x * rx, tdiff.y * ry, tdiff.z * zf);
             tex[i] = tex[0] + tscaled;
             if (tex[i].x < lbl_eu_8066B408) {
                 tex[i].x = lbl_eu_8066B408;
@@ -532,8 +561,8 @@ extern "C" void func_804EFD78(ml::CVec3* verts, ml::CVec3* tex, ml::CVec3* color
                 tex[i].y = lbl_eu_8066B40C;
             }
 
-            ml::CVec3 cdiff = colors[i] - colors[0];
-            ml::CVec3 cscaled(cdiff.x * rx, cdiff.y * ry, cdiff.z * zf);
+            cdiff = colors[i] - colors[0];
+            cscaled.set(cdiff.x * rx, cdiff.y * ry, cdiff.z * zf);
             colors[i] = colors[0] + cscaled;
             if (colors[i].x < lbl_eu_8066B408) {
                 colors[i].x = lbl_eu_8066B408;
@@ -584,7 +613,8 @@ extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
         verts[9] = ml::CVec3(lbl_eu_8066B40C, lbl_eu_8066B408, lbl_eu_8066B408);
     }
 
-    func_804EF9B8(verts, pos, *size * lbl_eu_8066B414, vertRot);
+    ml::CVec3 scaledSize = *size * lbl_eu_8066B414;
+    func_804EF9B8(verts, pos, scaledSize, vertRot);
 
     if (clampInfo != NULL) {
         alpha *= func_804EFB38(verts);

@@ -12,6 +12,63 @@ struct CfResBuffer {
     int func_80061A80(unsigned char byte1, unsigned short halfword, unsigned int dataVal, unsigned int* src, int count, unsigned int headerBits);
 };
 
+// Ring-record appender; the scratch header word is an intentionally
+// uninitialized local (retail reads the raw frame slot).
+int func_80061870(CfResBuffer* buffer, unsigned char byte1, unsigned short halfword,
+                  unsigned int dataVal, unsigned int* src, int count);
+
+// Entry-table helpers shared across CfRes (defined in CfRes.cpp).
+extern "C" void CfRes_clearField4(u8* self);
+extern "C" void CfResEntry_clearField8(u8* self);
+extern "C" int CfRes_incField8(u8* self);
+extern "C" bool func_8007E908__Q22cf13CfGameManagerFv(u32 value);
+extern "C" void func_8006398C(u32 value);
+
+// Acquire a resource-table entry for a resource id, bumping refcounts.
+// extern "C" keeps the call reloc carrying the retail unmangled name.
+extern "C" int func_80063560(int id, int incRef, int incCount);
+
+// Helpers used by the func_800643F0 load dispatcher (defined across cf TUs;
+// C linkage keeps the call relocs carrying the retail unmangled names).
+extern "C" bool func_800829B8__Q22cf13CfGameManagerFv(void* self);
+extern "C" void CfRes_clearE28Mask(u32 mask);
+extern "C" void CfRes_setE28Mask(u32 mask);
+extern "C" int CfRes_getE24Bit18();
+extern "C" int CfRes_getE14();
+extern "C" int CfRes_getE30();
+extern "C" int func_8006414C(u32 packed);
+extern "C" int func_80062928(u32 packed, int mode);
+extern "C" void func_80062AD8(u32 packed, u32* out);
+extern "C" u32 func_800623DC(u32 packed);
+extern "C" char* func_80062F60();
+extern "C" u32 CfRes_isField4Zero(u8* res);
+extern "C" void CfRes_initStruct_64994(u8* res);
+extern "C" bool func_8006861C(int instField, u32 packed, u32* out10, u32* outC);
+extern "C" void* func_800A8E6C(int size, int checkOnly);
+extern "C" u8* func_800A8B98(u32 size);
+extern "C" void CfRes_orBits_649B4(u8* self, u32 bits);
+extern "C" void CfRes_orBits_649CC(u8* self, u32 bits);
+extern "C" u8* func_800685BC(int instField, u32 packed, u32* out10, u32* outC);
+extern "C" u8* func_80068564(int instField, u32 packed, u32* out10, u32* outC);
+extern "C" bool findResEntry(int instField, u32 packed, u32* out10, u32* outC);
+extern "C" u32 getHandleMEM2__Q23mtl10MemManagerFv();
+extern "C" u32 getMaxAllocSize__Q23mtl10MemManagerFUl(u32 handle);
+extern "C" void* allocate_tail__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
+extern "C" void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
+extern "C" void func_80066C74(u8* res, void* buf, u32 kind);
+extern "C" int func_800A8BD8(void* buf);
+extern "C" void func_800A8C1C(void* buf, int mode, u32 packed);
+extern "C" int func_800A9024(void* buf);
+extern "C" void func_800A92F8(void* buf, int mode, u32 packed);
+extern "C" int func_80062998(u32* outC, u32 packed, int kind);
+extern "C" void func_800649F4(void* self);
+extern "C" int CfRes_checkMask_64A08(u8* res, u32 mask);
+
+// Resource-load dispatcher: resolves a packed resource token to a resident
+// buffer, allocating through the archive cache or the memory-manager
+// fallback chain.
+int func_800643F0(void* self, u32 packed, int flag, int kind);
+
 struct CfRes_64994 {
     u32 field_00;
     u32 field_04;

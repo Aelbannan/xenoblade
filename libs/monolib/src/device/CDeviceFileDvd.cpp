@@ -66,6 +66,51 @@ public:
 extern "C" u32 lbl_eu_8056C420[46];  // defined below (dissolved monolibdata2)
 // Retail singleton pointer (sda21 .sbss).
 extern CDeviceFileDvd* lbl_eu_80665670;
+// .rodata error-message string blob (defined in port/data_defs.cpp).
+extern const char lbl_eu_80522CB8[136];
+
+// Typed view of the device file job object laid out at retail offsets.
+class CDeviceFileJob {
+public:
+    u8 field_0x00[0x48];
+    u32 field_0x48;                  // required drive/media state
+    s32 field_0x4C;                  // work id recorded on completion
+    s32 field_0x50;                  // job state (0x44 while opening)
+    u8 field_0x54[0x7C - 0x54];
+    u32 field_0x7C;                  // flag bits (bit0: cancel requested)
+    u8 field_0x80[0x1A4 - 0x80];
+    u32 field_0x1A4;                 // directory entry array base
+    u32 field_0x1A8;                 // ring head index
+    s32 field_0x1AC;                 // entry count
+    u32 field_0x1B0;                 // ring modulus
+    u8 field_0x1B4[0x1C4 - 0x1B4];
+    CFileHandle* field_0x1C4;
+    char mErrorText[0x208 - 0x1C8];  //0x1C8
+    u32 field_0x208;                 //error text length
+    u8 field_0x210;                  //dvd file opened flag
+    u8 field_0x211[0x214 - 0x211];
+    DVDFileInfo dvdInfo;             //0x214
+};
+
+// Node of the device file-job linked list rooted at the reslist sentinel.
+struct CDeviceFileJobLink {
+    CDeviceFileJobLink* next;  //0x00
+    u32 field_0x04;
+    CDeviceFileJob* job;       //0x08
+};
+
+// The file-job list sentinel pointer lives at CWorkThread+0x60 (the reslist
+// mStartNodePtr slot, shared with mChildren's list head).
+inline CDeviceFileJobLink** jobListSlot(CDeviceFileDvd* dev) {
+    return reinterpret_cast<CDeviceFileJobLink**>(reinterpret_cast<u8*>(dev) + 0x60);
+}
+
+inline CDeviceFileJob* getActiveJob(CDeviceFileDvd* dev) {
+    CDeviceFileJobLink* sentinel = *jobListSlot(dev);
+    CDeviceFileJob* job = sentinel->next->job;
+    if (job == nullptr || job->field_0x50 != 0x44) return nullptr;
+    return job;
+}
 
 CDeviceFileDvd::CDeviceFileDvd(const char* pName, CWorkThread* pParent)
     : CWorkThread(pName, pParent, 0x100) {
@@ -117,81 +162,6 @@ void CDeviceFileDvd::isRequestFile(const char* pPath) {
     }
 }
 
-// Static (retail pHandle in r3) chain walker mirroring isRequestFile: call the
-// job's cancel(handle) virtual (vtable[42]) for each job in the still-opening
-// state. The handle is passed through (r4 = r30).
-void CDeviceFileDvd::cancel(CFileHandle* pHandle) {
-    u8* node = *(u8**)(*(u32*)((u8*)lbl_eu_80665670 + 0x60));
-    while (node != (u8*)*(u32*)((u8*)lbl_eu_80665670 + 0x60)) {
-        u8* job = *(u8**)(node + 8);
-        if (job == 0) {
-            job = 0;
-        } else if (*(s32*)(job + 0x50) != 0x44) {
-            job = 0;
-        }
-        if (job != 0) {
-            reinterpret_cast<CDeviceFileJobVtbl*>(job)->cancel((void*)pHandle);
-        }
-        node = *(u8**)(node);
-    }
-}
-
-void CDeviceFileDvd::cancelCurrent() {
-    // Resolve the active job from the file-system chain, keep it only while
-    // it is in the still-opening state (s32 field_50 == 0x44), close its DVD
-    // file info at +0x214 when the close flag (+0x1D0) is set, then remove
-    // the job and mark the state word +0x1C4 with 4. The singleton is
-    // re-loaded at the end (retail lwz r3,0(r0) after the calls).
-    u8* job = *(u8**)(*(u32*)(*(u32*)((u8*)lbl_eu_80665670 + 0x60)) + 8);
-    if (job == 0) {
-        job = 0;
-    } else if (*(s32*)(job + 0x50) != 0x44) {
-        job = 0;
-    }
-    if (*(u8*)((u8*)lbl_eu_80665670 + 0x1D0) != 0) {
-        DVDClose(reinterpret_cast<DVDFileInfo*>(job + 0x214));
-    }
-    CDeviceFile::removeFileJob(reinterpret_cast<CDeviceFileJob*>(job));
-    *(u32*)((u8*)lbl_eu_80665670 + 0x1C4) = 4;
-}
-
-void CDeviceFileDvd::transState0() {}
-
-void CDeviceFileDvd::transState3() {}
-
-void CDeviceFileDvd::wkUpdate() {}
-
-bool CDeviceFileDvd::wkStandbyLogin() {
-    DVDInit();
-    return CWorkThread::wkStandbyLogin();
-}
-
-bool CDeviceFileDvd::wkStandbyLogout() {
-    // Log out only when there are no pending file jobs and the work/CLib
-    // systems are already gone.
-    if (mChildren.empty() && CWorkSystem::getInstance() == nullptr &&
-        CLib::getInstance() == nullptr) {
-        return CWorkThread::wkStandbyLogout();
-    }
-    return false;
-}
-
-int CDeviceFileDvd::wkStandbyExceptionRetry(unsigned long param) {
-    if (*(s32*)((u8*)this + 0x1C4) == 3) {
-        u8* p = *(u8**)((u8*)this + 0x60);
-        p = *(u8**)((u8*)p + 0x0);
-        p = *(u8**)((u8*)p + 0x8);
-        if (p == 0) {
-            p = 0;
-        } else if (*(s32*)((u8*)p + 0x50) != 0x44) {
-            p = 0;
-        }
-        *(u32*)(*(u32*)((u8*)p + 0x1C4) + 0x10) = 0;
-        *(u32*)((u8*)this + 0x1C4) = 4;
-    }
-    return 1;
-}
-
 // Local views of the resource/event classes used by CFileHandle. Declared
 // here (exact retail names/signatures) so the calls resolve to the retail
 // mangled symbols without pulling in their full headers.
@@ -236,14 +206,15 @@ struct CFileHandle {
     u32 field_0x04;          //0x04 (loaded buffer)
     u32 field_0x08;          //0x08 (result data ptr)
     u32 field_0x0C;          //0x0C (result size)
-    s32 field_0x10;          //0x10
-    u32 field_0x14;          //0x14 (rsrc id)
-    u8 field_0x18[0x28 - 0x18];
+    s32 field_0x10;          //0x10 (read progress)
+    u32 field_0x14;          //0x14 (alloc handle)
+    u32 field_0x18[4];       //0x18 (fallback alloc handles)
+    u8 field_0x20[0x28 - 0x20];
     IWorkEvent* field_0x28;  //0x28 (event receiver)
     u8 field_0x2C[0x30 - 0x2C];
     s32* field_0x30;         //0x30 (out: data ptr)
     s32* field_0x34;         //0x34 (out: length)
-    u8 field_0x38[0x3C - 0x38];
+    u32 field_0x38;          //0x38 (read offset)
     u32 field_0x3C;          //0x3C (file length)
     u8 field_0x40[0x58 - 0x40];
     u32 field_0x58;
@@ -260,10 +231,307 @@ struct CFileHandle {
     void init(int);
     CFileHandle* setup1(const char* pPath, u32 size, IWorkEvent* pEvent);
     CFileHandle* setup2(const char* pPath, u32 size, IWorkEvent* pEvent);
-    void destroy() const;
+    void destroy(u32 size = 0, u32 param_5 = 0, int param_6 = 0);
     void func_80451984(unsigned long);
     int func_80451CBC(int);
 };
+
+// Static (retail pHandle in r3) chain walker mirroring isRequestFile: call the
+// job's cancel(handle) virtual (vtable[42]) for each job in the still-opening
+// state. The handle is passed through (r4 = r30).
+void CDeviceFileDvd::cancel(CFileHandle* pHandle) {
+    u8* node = *(u8**)(*(u32*)((u8*)lbl_eu_80665670 + 0x60));
+    while (node != (u8*)*(u32*)((u8*)lbl_eu_80665670 + 0x60)) {
+        u8* job = *(u8**)(node + 8);
+        if (job == 0) {
+            job = 0;
+        } else if (*(s32*)(job + 0x50) != 0x44) {
+            job = 0;
+        }
+        if (job != 0) {
+            reinterpret_cast<CDeviceFileJobVtbl*>(job)->cancel((void*)pHandle);
+        }
+        node = *(u8**)(node);
+    }
+}
+
+void CDeviceFileDvd::cancelCurrent() {
+    // Resolve the active job from the file-system chain, keep it only while
+    // it is in the still-opening state (s32 field_50 == 0x44), close its DVD
+    // file info at +0x214 when the close flag (+0x1D0) is set, then remove
+    // the job and mark the state word +0x1C4 with 4. The singleton is
+    // re-loaded at the end (retail lwz r3,0(r0) after the calls).
+    u8* job = *(u8**)(*(u32*)(*(u32*)((u8*)lbl_eu_80665670 + 0x60)) + 8);
+    if (job == 0) {
+        job = 0;
+    } else if (*(s32*)(job + 0x50) != 0x44) {
+        job = 0;
+    }
+    if (*(u8*)((u8*)lbl_eu_80665670 + 0x1D0) != 0) {
+        DVDClose(reinterpret_cast<DVDFileInfo*>(job + 0x214));
+    }
+    CDeviceFile::removeFileJob(reinterpret_cast<CDeviceFileJob*>(job));
+    *(u32*)((u8*)lbl_eu_80665670 + 0x1C4) = 4;
+}
+
+bool CDeviceFileDvd::transState0() {
+    // Nothing to do while the file-job list is empty.
+    CDeviceFileJobLink* sentinel = *jobListSlot(this);
+    if (sentinel->next == sentinel) {
+        return false;
+    }
+
+    // Refuse to start while a cancel is pending or the queued directory
+    // entries already contain an entry of type 2 (invalid request).
+    CDeviceFileJob* pNodeJob = sentinel->next->job;
+    bool blocked;
+    if ((pNodeJob->field_0x7C & 0x10) != 0) {
+        blocked = true;
+    } else {
+        blocked = false;
+        for (s32 i = 0; i < pNodeJob->field_0x1AC; i++) {
+            u32 slot = (pNodeJob->field_0x1A8 + i) % pNodeJob->field_0x1B0;
+            u32 entry = ((u32*)pNodeJob->field_0x1A4)[slot];
+            if (entry == 2) {
+                blocked = true;
+                break;
+            }
+        }
+    }
+    if (blocked) return false;
+    if (pNodeJob->field_0x48 != 2 && pNodeJob->field_0x48 != 3) return false;
+    if ((pNodeJob->field_0x7C & 1) != 0) return false;
+
+    CDeviceFileJob* pJob = getActiveJob(lbl_eu_80665670);
+    pJob->field_0x210 = 1;
+    CFileHandle* pHandle = pJob->field_0x1C4;
+
+    s32 entrynum = DVDConvertPathToEntrynum(pHandle->mName);
+    bool opened = false;
+    if (entrynum >= 0) {
+        opened = DVDFastOpen(entrynum, &pJob->dvdInfo) != 0;
+    }
+    if (!opened) {
+        // Failed to locate/open: report the error on the handle and drop
+        // the job.
+        pHandle->call(CBM_3);
+        CDeviceFileJob* pCur = getActiveJob(lbl_eu_80665670);
+        if (lbl_eu_80665670->field_0x1D0 != 0) {
+            DVDClose(&pCur->dvdInfo);
+        }
+        CDeviceFile::removeFileJob(pCur);
+        lbl_eu_80665670->field_0x1C4 = 4;
+        return false;
+    }
+
+    field_0x1D0 = 1;
+    // Read at most the whole DVD file, clamped by the requested size.
+    u32 amount = pHandle->field_0x3C;
+    if (amount == 0) amount = pJob->dvdInfo.size;
+    u32 total = amount + pHandle->field_0x38;
+    if (total > pJob->dvdInfo.size) total = pJob->dvdInfo.size;
+    pHandle->destroy(total, 0x20, 0x20);
+    field_0x1C4 = 1;
+    return true;
+}
+
+bool CDeviceFileDvd::transState3() {
+    CDeviceFileJob* pJob = getActiveJob(lbl_eu_80665670);
+    s32 status = DVDGetCommandBlockStatus(&pJob->dvdInfo.block);
+
+    if (status <= 2) {
+        CFileHandle* pHandle = pJob->field_0x1C4;
+        u32 transferred = DVDGetTransferredSize(&pJob->dvdInfo.block);
+        // Advance the read progress by the transferred delta, clamped to the
+        // remaining bytes.
+        u32 delta = transferred - field_0x1CC;
+        u32 remaining = pHandle->field_0x3C - pHandle->field_0x10;
+        if (remaining < delta) delta = remaining;
+        pHandle->func_80451CBC(delta);
+        field_0x1CC = transferred;
+
+        bool done =
+            pHandle->field_0x10 != 0 && (u32)pHandle->field_0x10 == pHandle->field_0x3C;
+        if (!done && (pJob->field_0x7C & 1) == 0) {
+            return false;
+        }
+
+        DVDClose(&pJob->dvdInfo);
+        field_0x1D0 = 0;
+        if (status == 0) {
+            // Completed normally: remember the work id and finish up later.
+            field_0x1C8 = pJob->field_0x4C;
+            field_0x1C4 = 4;
+            return true;
+        }
+        // Cancelled mid-read: report the error on the handle and drop the job.
+        pHandle->field_0x10 = 0;
+        pHandle->call(CBM_3);
+        CDeviceFileJob* pCur = getActiveJob(lbl_eu_80665670);
+        if (lbl_eu_80665670->field_0x1D0 != 0) {
+            DVDClose(&pCur->dvdInfo);
+        }
+        CDeviceFile::removeFileJob(pCur);
+        lbl_eu_80665670->field_0x1C4 = 4;
+        return false;
+    }
+
+    // Drive error / disc change: close and record the matching error text.
+    DVDClose(&pJob->dvdInfo);
+    field_0x1D0 = 0;
+    const char* msg = nullptr;
+    switch (status) {
+    case -1:
+        msg = lbl_eu_80522CB8;
+        break;
+    case 4:
+    case 6:
+        msg = lbl_eu_80522CB8 + 0x17;
+        break;
+    case 7:
+        msg = lbl_eu_80522CB8 + 0x3C;
+        break;
+    case 11:
+        msg = lbl_eu_80522CB8 + 0x57;
+        break;
+    }
+    if (msg != nullptr) {
+        pJob->field_0x208 = strlen(msg);
+        strcpy(pJob->mErrorText, msg);
+    }
+
+    CFileHandle* pHandle = pJob->field_0x1C4;
+    pHandle->field_0x10 = 0;
+    if (status == -1) {
+        pHandle->call(CBM_3);
+        CDeviceFileJob* pCur = getActiveJob(lbl_eu_80665670);
+        if (lbl_eu_80665670->field_0x1D0 != 0) {
+            DVDClose(&pCur->dvdInfo);
+        }
+        CDeviceFile::removeFileJob(pCur);
+        lbl_eu_80665670->field_0x1C4 = 4;
+        return false;
+    }
+    pHandle->call(CBM_3);
+    CDeviceFileJob* pCur2 = getActiveJob(lbl_eu_80665670);
+    if (lbl_eu_80665670->field_0x1D0 != 0) {
+        DVDClose(&pCur2->dvdInfo);
+    }
+    CDeviceFile::removeFileJob(pCur2);
+    lbl_eu_80665670->field_0x1C4 = 4;
+    return false;
+}
+
+void CDeviceFileDvd::wkUpdate() {
+    switch (field_0x1C4) {
+    case 0:
+        if (!transState0()) {
+            break;
+        }
+        // fallthrough
+    case 1: {
+        // Kick off the async DVD read for the active job's handle. The read
+        // length is rounded up to a 32-byte boundary.
+        CDeviceFileJob* pJob = getActiveJob(lbl_eu_80665670);
+        CFileHandle* pHandle = pJob->field_0x1C4;
+        void* dst = (void*)(pHandle->field_0x04 + pHandle->field_0x10);
+        u32 size = pHandle->field_0x3C;
+        if ((size & 0x1F) != 0) {
+            size = (size & ~0x1F) + 0x20;
+        }
+        if (!DVDReadAsyncPrio(&pJob->dvdInfo, dst, size, pHandle->field_0x38,
+                              nullptr, 2)) {
+            DVDClose(&pJob->dvdInfo);
+            field_0x1D0 = 0;
+            pHandle->call(CBM_3);
+            CDeviceFileJob* pCur = getActiveJob(lbl_eu_80665670);
+            if (lbl_eu_80665670->field_0x1D0 != 0) {
+                DVDClose(&pCur->dvdInfo);
+            }
+            CDeviceFile::removeFileJob(pCur);
+            lbl_eu_80665670->field_0x1C4 = 4;
+            break;
+        }
+        field_0x1D4 = 0xA;
+        field_0x1CC = 0;
+        field_0x1C4 = 2;
+        // fallthrough
+    }
+    case 2: {
+        // Poll the drive; give the retry counter a few frames before timing
+        // out into state 3.
+        int ready;
+        s32 status = DVDGetDriveStatus();
+        if (status <= 2) {
+            field_0x1C4 = 3;
+            ready = 1;
+        } else {
+            field_0x1D4 = field_0x1D4 - 1;
+            if ((s32)field_0x1D4 <= 0) {
+                field_0x1C4 = 3;
+                ready = 1;
+            } else {
+                ready = 0;
+            }
+        }
+        if (!ready) {
+            break;
+        }
+        // fallthrough
+    }
+    case 3:
+        if (!transState3()) {
+            break;
+        }
+        // fallthrough
+    case 4: {
+        // Reset to idle unless the finished job still matches the active work
+        // id with no cancel flag set (keep state 4 so the result is picked
+        // up).
+        CDeviceFileJobLink* sentinel = *jobListSlot(this);
+        bool keep = false;
+        if (sentinel->next != sentinel) {
+            CDeviceFileJob* pJob = sentinel->next->job;
+            keep = (pJob->field_0x4C == field_0x1C8) && (pJob->field_0x7C & 1) == 0;
+        }
+        if (!keep) {
+            field_0x1C4 = 0;
+        }
+        break;
+    }
+    }
+}
+
+bool CDeviceFileDvd::wkStandbyLogin() {
+    DVDInit();
+    return CWorkThread::wkStandbyLogin();
+}
+
+bool CDeviceFileDvd::wkStandbyLogout() {
+    // Log out only when there are no pending file jobs and the work/CLib
+    // systems are already gone.
+    if (mChildren.empty() && CWorkSystem::getInstance() == nullptr &&
+        CLib::getInstance() == nullptr) {
+        return CWorkThread::wkStandbyLogout();
+    }
+    return false;
+}
+
+int CDeviceFileDvd::wkStandbyExceptionRetry(unsigned long param) {
+    if (*(s32*)((u8*)this + 0x1C4) == 3) {
+        u8* p = *(u8**)((u8*)this + 0x60);
+        p = *(u8**)((u8*)p + 0x0);
+        p = *(u8**)((u8*)p + 0x8);
+        if (p == 0) {
+            p = 0;
+        } else if (*(s32*)((u8*)p + 0x50) != 0x44) {
+            p = 0;
+        }
+        *(u32*)(*(u32*)((u8*)p + 0x1C4) + 0x10) = 0;
+        *(u32*)((u8*)this + 0x1C4) = 4;
+    }
+    return 1;
+}
 
 CFileHandle* CFileHandle::setup1(const char* pPath, u32 size, IWorkEvent* pEvent) {
     field_0x58 = 0;
@@ -385,7 +653,104 @@ void CFileHandle::func_80451984(unsigned long param) {
     }
 }
 
-void CFileHandle::destroy() const {}
+void CFileHandle::destroy(u32 size, u32 param_5, int param_6) {
+    switch (field_0x00) {
+    case 0:
+    case 2: {
+        // Free any previously loaded buffer first.
+        void* pCache = (void*)field_0x04;
+        if (pCache != NULL && field_0x30 == 0) {
+            if (field_0x00 == 2) {
+                // DVD-backed cache must be released before freeing.
+                if (!CRsrc::releaseCache((const void*)field_0x04) && field_0x04 != 0) {
+                    delete (void*)field_0x04;
+                    field_0x04 = 0;
+                }
+            } else {
+                delete pCache;
+                field_0x04 = 0;
+            }
+        }
+
+        // Choose an allocator handle: prefer field_0x14 when its largest
+        // block covers size+0x100; otherwise scan the four fallbacks. A
+        // fallback whose low halfword is 0xFFFF is a placeholder and is
+        // replaced by the MEM2 handle.
+        mtl::ALLOC_HANDLE handle = (mtl::ALLOC_HANDLE)field_0x14;
+        if (mtl::MemManager::getMaxAllocSize(handle) <= size + 0x100) {
+            for (int i = 0; i < 4; i++) {
+                handle = field_0x18[i];
+                bool invalid = (((u32)handle + 0x10000) & 0xFFFF) == 0xFFFF;
+                if (!invalid && mtl::MemManager::getMaxAllocSize(handle) > size + 0x100) {
+                    break;
+                }
+            }
+            if ((((u32)handle + 0x10000) & 0xFFFF) == 0xFFFF) {
+                handle = mtl::MemManager::getHandleMEM2();
+            }
+        }
+        // Round up to a param_5 boundary, then allocate from head or tail
+        // depending on flag bit 1 of field_0x58.
+        bool useTail = ((field_0x58 >> 2) & 1) != 0;
+        mtl::MemManager::setOptimalAlloc(useTail);
+        if (field_0x58 & 2) {
+            void* pBlock = mtl::MemManager::allocate_tail(handle, size, param_5);
+            field_0x3C = size;
+            field_0x04 = (u32)pBlock;
+            field_0x08 = (u32)pBlock;
+            field_0x0C =
+                (size % param_5 != 0) ? size + param_5 - size % param_5 : size;
+        } else {
+            void* pBlock = mtl::MemManager::allocate_head(handle, size, param_5);
+            field_0x3C = size;
+            field_0x04 = (u32)pBlock;
+            field_0x08 = (u32)pBlock;
+            field_0x0C =
+                (size % param_5 != 0) ? size + param_5 - size % param_5 : size;
+        }
+        if (field_0x04 == 0) {
+            field_0x58 |= 8;
+        } else {
+            field_0x58 &= ~8;
+        }
+        mtl::MemManager::setOptimalAlloc(false);
+        break;
+    }
+    case 4: {
+        // Re-allocation path without releasing anything.
+        bool useTail = ((field_0x58 >> 2) & 1) != 0;
+        mtl::MemManager::setOptimalAlloc(useTail);
+        if (field_0x58 & 2) {
+            void* pBlock = mtl::MemManager::allocate_tail(
+                (mtl::ALLOC_HANDLE)field_0x14, size, param_5);
+            field_0x3C = size;
+            field_0x04 = (u32)pBlock;
+            field_0x08 = (u32)pBlock;
+            field_0x0C =
+                (size % param_5 != 0) ? size + param_5 - size % param_5 : size;
+        } else {
+            void* pBlock = mtl::MemManager::allocate_head(
+                (mtl::ALLOC_HANDLE)field_0x14, size, param_5);
+            field_0x3C = size;
+            field_0x04 = (u32)pBlock;
+            field_0x08 = (u32)pBlock;
+            field_0x0C =
+                (size % param_5 != 0) ? size + param_5 - size % param_5 : size;
+        }
+        if (field_0x04 == 0) {
+            field_0x58 |= 8;
+        } else {
+            field_0x58 &= ~8;
+        }
+        mtl::MemManager::setOptimalAlloc(false);
+        break;
+    }
+    case 1:
+        field_0x3C = size;
+        field_0x0C = param_6;
+        break;
+    }
+}
 
 int CFileHandle::func_80451CBC(int param) {
     *(s32*)((u8*)this + 0x10) += param;

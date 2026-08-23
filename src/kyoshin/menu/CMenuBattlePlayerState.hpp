@@ -23,7 +23,9 @@ void* func_800B708C(int id);
 // Layout for handle returned by func_800B708C
 struct Func800B708C_Ret {
     u8 pad_00[0x64];
-    u32 unk64;    // +0x64: bit flags read by Move()
+    u32 unk64;    // +0x64: bit flags read by Move()/func_8010CE50
+    u8 pad_68[0x8C - 0x68];
+    u16 unk8C;    // +0x8C: low byte = party id matched against the party table
 };
 
 // Target of CMenuBattlePlayerStateSlot::unk208 (actor vf290 result): party
@@ -97,21 +99,22 @@ struct CMenuBattlePlayerStateSlot {
     f32 unk228; // +0x228: tension-like B
     f32 unk22C; // +0x22C: displayed tension A
     u32 unk230; // +0x230
-    u8 pad234[0x238 - 0x234];
+    u32 unk234; // +0x234: previous unk230 (mode snapshot)
     u32 unk238; // +0x238
-    u8 pad23C[0x240 - 0x23C];
+    u32 unk23C; // +0x23C: previous unk238
     u8 unk240; // +0x240: dirty / in-combat gate
     u8 pad241[0x244 - 0x241];
     u32 unk244; // +0x244 → this+0x2b8: per-slot anim state / active gate
     u32 unk248; // +0x248: ctor default 4
-    u8 pad24C[0x250 - 0x24C];
+    u32 unk24C; // +0x24C: quantized gauge width / anim scratch
     u32 unk250; // +0x250: ctor default 6
     u32 unk254; // +0x254: ctor default 0xb
     u32 unk258; // +0x258: slot index
     u32 unk25C; // +0x25C → this+0x2d0: per-layout draw flag bits
     u8 pad260[0x264 - 0x260];
     f32 unk264; // +0x264
-    u8 pad268[0x270 - 0x268];
+    u32 unk268; // +0x268: last matched arts-icon slot cursor
+    u32 unk26C; // +0x26C: last matched level-icon cursor
 };
 
 // IUICf/CTTask is 0x54; retail places IWorkEvent at 0x58 (extab), so pad 4.
@@ -157,5 +160,25 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" unsigned long long func_80139658(nw4r::lyt::Layout*, const char*, int);
 extern "C" u32 func_8013600C(void*, const char*, u32);
-extern "C" void __dt__22CMenuBattlePlayerStateFv(void*);
 extern "C" void cbRenderBefore__22CMenuBattlePlayerStateFv();
+
+// Float/double constant pool labels (retail .sdata2 symbols).
+extern const f32 lbl_eu_80666FCC; // gauge width scale A
+extern const f32 lbl_eu_80666FD0; // gauge width scale B
+extern const f32 lbl_eu_80666FD4; // gauge table blend factor
+extern const f32 lbl_eu_80666FD8; // gauge quantization step
+extern const f32 lbl_eu_80666FDC; // tension timer wrap limit
+extern const double lbl_eu_80666FB8; // unsigned-int -> double bias
+
+// BDAT message-table pointer: declared by cf/object/CBattleState.hpp as
+// `extern u8* lbl_eu_806640E0;`.
+// Per-level HP-gauge width table indexed by the quantized gauge value.
+extern f32 lbl_eu_804FD6E0[5];
+
+// Pane/material helpers from code_80135FDC.cpp not yet declared elsewhere.
+// func_80136D74 / func_80136190 / func_80138F78 come from code_80135FDC.hpp.
+extern "C" u16 func_80136254(const void* table, const void* key, int id);
+extern "C" void func_80136C98(void* pane, u32 value);
+extern "C" void func_8013996C(void* pane, const void* colors, int arg);
+// Unmangled retail symbol (the CUICfManager static emits the mangled name).
+extern "C" void* func_801355F4();

@@ -357,13 +357,10 @@ extern "C" void CObjectState_UnkVirtualFunc5__Q22cf12CObjectStateFv(cf::CObjectS
 
 // 0x800952D0: record the movement range (field_160/164) and duration, then
 // copy `count` 12-byte elements from src into the +0xE0 target array. Bulk
-// copies run in 8-element (96-byte) groups.
-struct NpcTargetRow {
-    u32 w[24];   // 96 bytes = 8 x 12-byte elements
-};
-
+// copies run in 8-element groups (retail unrolls each group into 24 word
+// loads/stores).
 void func_800948F8(cf::CtrlNpc* self, u32 a, u32 b, int count,
-                   const u32* src, f32 f) {
+                   const ml::CVec3* src, f32 f) {
     self->field_160 = a;
     self->field_168 = (s16)((b - a) * 60);
     self->field_164 = b;
@@ -375,33 +372,14 @@ void func_800948F8(cf::CtrlNpc* self, u32 a, u32 b, int count,
     if (count <= 0)
         return;
     int i = 0;
-    int n = count - 8;
-    if (count > 8) {
-        int ok = 0;
-        if (count < 0)
-            goto ok_test;
-        if (count > 0x7FFFFFFE)
-            goto ok_test;
-        ok = 1;
-    ok_test:
-        if (ok == 0)
-            goto tail;
-        u32* d = &self->field_E0;
-        const u32* s = src;
-        for (; i < n; i += 8) {
-            *(NpcTargetRow*)d = *(const NpcTargetRow*)s;
-            d += 24;
-            s += 24;
-        }
+    ml::CVec3* dst = reinterpret_cast<ml::CVec3*>(&self->field_E0);
+    // Full 8-element groups: retail fully unrolls the inner element copy.
+    for (; i < count - 8; i += 8, dst += 8, src += 8) {
+        for (int j = 0; j < 8; j++)
+            dst[j] = src[j];
     }
-tail:
-    u32* d2 = &self->field_E0 + i * 3;
-    const u32* s2 = src + i * 3;
-    for (; i < count; i++) {
-        *(ml::CVec3*)d2 = *(const ml::CVec3*)s2;
-        d2 += 3;
-        s2 += 3;
-    }
+    for (; i < count; i++)
+        *dst++ = *src++;
 }
 
 // 0x80095474: record the movement target words (current position from the
@@ -652,16 +630,19 @@ void func_80095224(cf::CtrlNpc* self) {
     if (diff.x * diff.x + diff.z * diff.z >= thresh) {
         // Far: aim at the target, jittered by a random amount in [-30, 30].
         f32 ang = lbl_eu_806666AC * nw4r::math::Atan2FIdx(diff.x, diff.z);
+        f32 rnd = (f32)ml::math::mtRand(-30, 30);
         f1 = ang +
-             lbl_eu_806666B8 * (lbl_eu_8066A1F8 * (f32)ml::math::mtRand(-30, 30));
+             lbl_eu_806666B8 * (lbl_eu_8066A1F8 * rnd);
     } else {
         // Close: wander. Continue the current turn while the timer runs.
         if (self->field_BC != 0) {
-            f32 rnd = (f32)ml::math::mtRand(60);
-            f1 = (lbl_eu_806666BC + self->field_28->_vD8() + rnd) *
-                 lbl_eu_8066A210;
+            // Retail evaluates the rand int-to-double conversion before the
+            // _vD8() virtual call.
+            f32 rnd = (f32)((f64)ml::math::mtRand(60));
+            f32 d8 = self->field_28->_vD8();
+            f1 = (lbl_eu_806666BC + d8 + rnd) * lbl_eu_8066A210;
         } else {
-            f1 = (f32)ml::math::mtRand(360) * lbl_eu_8066A210;
+            f1 = (f32)(f64)ml::math::mtRand(360) * lbl_eu_8066A210;
         }
         self->field_BA = 0;
     }

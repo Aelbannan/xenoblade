@@ -10,6 +10,19 @@
 
 void func_800C891C(u8* self);  // same-TU target (defined below)
 
+// Minimal cf::CBattleManager view (the full header conflicts with this TU's
+// C-ABI import declarations). Only getInstance / +0x194 / +0x1A8 are needed.
+namespace cf {
+class CBattleManager {
+public:
+    virtual ~CBattleManager();
+    static CBattleManager* getInstance();
+    u8 _pad04[0x194 - 0x04];
+    u8 unk194[0x1A8 - 0x194];        // party-gauge sub-object
+    u8 mChain[0x283D8 - 0x1A8];      // chain gauge block at +0x1A8
+};
+} // namespace cf
+
 // Player init/refresh: prepares via func_800CA948, dispatches vtable slot
 // 0xE4 and feeds its result + sub-fields into func_8015BB3C, binds the +0x28
 // holder to the battle object's +0x3E9C sub-object, and when the +0x70 token
@@ -170,7 +183,53 @@ void func_800C891C(u8* self){}
 
 void func_800C969C(){}
 
-void func_800C9A20(){}
+// Event dispatch (func_800C9A20): gate on the event id, run the arts-command
+// path for ids 0xEA/0xF0/0x10A, then chain-gauge handling and the +0x290
+// notification pipeline.
+void func_800C9A20(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt)
+{
+    if (func_80145F78(evt->field_0C)) {
+        if (evt->field_2E != 0 || (evt->field_30 & 0x40000000) != 0) {
+            func_800F3970(cf::CBattleManager::getInstance(), self->field_18, 0, 0x15, 0);
+        }
+    }
+    if (evt->field_0C == 0x10a) {
+        // slot 0x204: (id, 0, 0x61, 0, 0)
+        self->field_18->mSub.sf204(0x1a, 0, 0x61, 0, 0);
+    }
+    if (evt->field_0C == 0xea) {
+        func_800BF29C(&self->field_18->mSub, 0x66, lbl_eu_80666BC8, 0, lbl_eu_80666BF8, 0);
+    } else if (evt->field_0C == 0xf0) {
+        func_800BF29C(&self->field_18->mSub, 0x66, lbl_eu_80666BC8, 0, lbl_eu_80666BF8, 0);
+    } else if (evt->field_0C == 0x10a) {
+        func_800BF29C(&self->field_18->mSub, 0x66, lbl_eu_80666BC8, 0, lbl_eu_80666BF8, 0);
+    }
+    cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+    if (func_802799F0(&bm->mChain, self->field_18) == 0) {
+        u16 id = evt->field_0C;
+        if ((u32)(id - 0xF) <= 1 || id == 9 || id == 0xB) {
+            cf::CfObjectImplPc18* obj = self->field_18;
+            u32 state = obj->vf308();
+            if (state == 4) {
+                obj->vf304(3);
+                CfObjectImplPc2F4* t = obj->vf2F4();
+                // MWCC int->double conversion of a byte selected by t's s16 offset,
+                // scaled and halved toward zero.
+                int half = (s32)(t->field_10 * ((u8*)t)[t->field_02 + 4]) / 2;
+                obj->vf2FC(half);
+            } else if (state == 1) {
+                obj->vf304(0);
+            } else {
+                func_800F3970(cf::CBattleManager::getInstance(), obj, 0, 0x11, 0);
+            }
+        }
+        if (obj->vf290() != 0 && func_80260264(obj->vf290(), 0x63, &gauge) != 0 &&
+            func_80145C00(evt->field_0C)) {
+            func_8018C820(&cf::CBattleManager::getInstance()->unk194, gauge);
+        }
+    }
+    func_800CAB30(self, evt);
+}
 
 void func_800C9CEC(){}
 
@@ -193,7 +252,8 @@ void func_800CA084(cf::CfObjectImplPc* self, u32 param)
 void func_800CA104(cf::CfObjectImplPc* self, u32 param)
 {
     cf::CfGameManager::getInstance();
-    if (func_8006EF04(0x400000) != 0) {
+    // Retail loads lis r3, 0x400 -> the flag word passed is 0x04000000.
+    if (func_8006EF04(0x04000000) != 0) {
         return;
     }
     switch (param - 0xea) {
@@ -221,7 +281,11 @@ void func_800CA104(cf::CfObjectImplPc* self, u32 param)
     case 7:
         self->field_18->mSub.sf20C(0x16);
         break;
+    // Grouping 0x22 with case 8 raises the jump-table bounds to retail's
+    // 35-entry table without emitting an extra block (an empty case would be
+    // folded into default).
     case 8:
+    case 0x22:
         self->field_18->mSub.sf20C(0x27);
         break;
     }

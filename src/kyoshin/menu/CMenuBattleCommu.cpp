@@ -105,10 +105,10 @@ CMenuBattleCommu::~CMenuBattleCommu() {
 // ---------------------------------------------------------------------------
 void CMenuBattleCommu::Init() {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
-    UnkClass_8045F564* region = reinterpret_cast<UnkClass_8045F564*>(&mMemRegion);
-    region->createRegion(handle, 0x14000, lbl_eu_805047FC, 0);
+    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->createRegion(
+        handle, 0x14000, lbl_eu_805047FC, 0);
     // Scoped region guard - destructor releases the region when Init finishes.
-    Class_8045F858 regionGuard(region);
+    Class_8045F858 regionGuard(reinterpret_cast<UnkClass_8045F564*>(&mMemRegion));
 
     nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
     func_80136E84(reinterpret_cast<nw4r::lyt::Layout**>(&mField74), accessor,
@@ -238,16 +238,12 @@ void CMenuBattleCommu::Move() {}
 // ---------------------------------------------------------------------------
 void CMenuBattleCommu::cbRenderBefore() {
     CTaskGame::getInstance();
-    if (CTaskGame::func_800426F0() != 0) {
+    // OR-combined guard: MWCC emits the second disjunct as the unreduced
+    // `beq cont; b exit` pair (retail shape, MWCC_CASES RFCOMM OR-guard).
+    if (CTaskGame::func_800426F0() != 0 ||
+        (lbl_eu_80663E28 & 0x200000) != 0) {
         return;
     }
-    // bit 21 set (realtime event busy) -> early out. MWCC emits the guard as
-    // `beq draw; b ret` (skip over a standalone return) so keep the return as
-    // its own statement after the guard, not a merged `if(bit) return`.
-    if ((lbl_eu_80663E28 & 0x200000) == 0) {
-        goto draw;
-    }
-    return;
 draw:
     if (func_8013BE50() == 0) {
         return;
@@ -361,15 +357,16 @@ void func_801B0FB0(CMenuBattleCommu* self) {
         return;
     }
 
-    CBattleCommuBattleObj* battle = player->mSub38;
-    s32 count = battle->mCount370;
+    // Reuse the dead player web so MWCC recycles its register (r28), and
+    // initialize handled first (r0), count next (r5), state last (r4).
+    int handled = 0;
+    player = reinterpret_cast<CBattleCommuPlayer*>(player->mSub38);
+    s32 count =
+        reinterpret_cast<CBattleCommuBattleObj*>(player)->mCount370;
     if (count > 1) {
         count = 1;
     }
-    s32 state = battle->mState36C;
-
-    int handled = 0;
-    switch (state) {
+    switch (reinterpret_cast<CBattleCommuBattleObj*>(player)->mState36C) {
     case 1: {
         char buf[0x40];
         char* name = func_80136190(lbl_eu_805047FC + 0x1d4, lbl_eu_805047FC + 0x1e2,
@@ -425,7 +422,8 @@ void func_801B0FB0(CMenuBattleCommu* self) {
         break;
     }
     case 4: {
-        CBattleCommuSub374* sub = battle->mSub374;
+        CBattleCommuSub374* sub =
+            reinterpret_cast<CBattleCommuBattleObj*>(player)->mSub374;
         if (count == 1) {
             char buf[0x40];
             u8 value = (u8)sub->mId3F28;

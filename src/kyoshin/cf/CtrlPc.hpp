@@ -74,12 +74,40 @@ public:
     virtual void v42();  virtual void v43();  virtual void v44();
     virtual void v45();  virtual void v46();
     virtual void v47(f32 arg);             // 0xC4
+    // Padding out to retail slot 0x220 (used by func_80097A5C).
+    virtual void v48();  virtual void v49();  virtual void v50();
+    virtual void v51();  virtual void v52();  virtual void v53();
+    virtual void v54();  virtual void v55();  virtual void v56();
+    virtual void v57();  virtual void v58();  virtual void v59();
+    virtual void v60();  virtual void v61();  virtual void v62();
+    virtual void v63();  virtual void v64();  virtual void v65();
+    virtual void v66();  virtual void v67();  virtual void v68();
+    virtual void v69();  virtual void v70();  virtual void v71();
+    virtual void v72();  virtual void v73();  virtual void v74();
+    virtual void v75();  virtual void v76();  virtual void v77();
+    virtual void v78();  virtual void v79();  virtual void v80();
+    virtual void v81();  virtual void v82();  virtual void v83();
+    virtual void v84();  virtual void v85();  virtual void v86();
+    virtual void v87();  virtual void v88();  virtual void v89();
+    virtual void v90();  virtual void v91();  virtual void v92();
+    virtual void v93();  virtual void v94();  virtual void v95();
+    virtual void v96();  virtual void v97();  virtual void v98();
+    virtual void v99();  virtual void v100(); virtual void v101();
+    virtual void v102(); virtual void v103(); virtual void v104();
+    virtual void v105(); virtual void v106(); virtual void v107();
+    virtual void v108(); virtual void v109(); virtual void v110();
+    virtual void v111(); virtual void v112(); virtual void v113();
+    virtual void v114(); virtual void v115(); virtual void v116();
+    virtual void v117(); virtual void v118(); virtual void v119();
+    virtual void v120(); virtual void v121(); virtual void v122();
+    virtual void v123(); virtual void v124(); virtual void v125();
+    virtual void v126(); virtual void v127(); virtual void v128();
+    virtual void v129(); virtual void v130(); virtual void v131();
+    virtual void v132(); virtual void v133();
+    virtual void* v134();                  // 0x220
 };
 
 namespace cf {
-
-// novtable: retail dtors never write the vptr (no virtual calls in body);
-// suppress MWCC's implicit vptr store so the dtor bytes match retail.
 class __declspec(novtable) CtrlRemote {
 public:
     virtual ~CtrlRemote();
@@ -120,6 +148,7 @@ public:
     virtual void vf35();  // 0x94
     virtual void vf36();  // 0x98
     virtual CtrlPcSub37* vf37();  // 0x9C
+    virtual CtrlPcSub37* vf38();  // 0xA0
 
     // bit testers
     u32 testBit20();
@@ -149,7 +178,8 @@ public:
     f32 mFieldC;                 // 0x0C (target angle/position state)
     f32 mField10;                // 0x10 (computed facing angle)
     f32 mField14;                // 0x14 (aim/fx state flag value)
-    char _pad_18[0x24 - 0x18];   // 0x18-0x23
+    u32 mField18;                // 0x18 (combo step count, written by func_80098810)
+    char _pad_1C[0x24 - 0x1C];   // 0x1C-0x23
     u32 mField24;                // 0x24 (pad-state written by func_80098A04: -1/0/1)
     char _pad_28[0x2C - 0x28];   // 0x28-0x2B
     u32 mPadFlags;                // 0x2C (bit flags: bits 8-20 tested)
@@ -180,8 +210,10 @@ struct CfEnumList {
     u32 count;  // 0x620
 };
 
-// CBattleManager view for the fields this TU touches.
-struct CBattleManagerView {
+// CBattleManager view for the fields this TU touches. Named distinctly from
+// include/kyoshin/cf/CfGameManager.hpp's CBattleManagerView (different field
+// set); cast the shared getInstance result to this at the use sites.
+struct CBattleManagerViewPc {
     u8 _00[0x1A8];
     u8 mField1A8;            // 0x1A8 chain region (handed to func_8027936C)
     u8 _1A9[0x1AA - 0x1A9];
@@ -214,9 +246,8 @@ extern "C" void* __ct__800FB044(void* list, f32 radius, void* pos, int arg);
 extern "C" void __dt__80043E88(void* holder, int flags);
 extern "C" void* func_800F6E98(void* list, int index);
 // CBattleManager singleton + actor-id query helper (retail C-ABI names).
-extern "C" CBattleManagerView* getInstance__Q22cf14CBattleManagerFv();
-extern "C" int func_80174C98(void* actor, u32* val, int flags);
 // Voice/AI-action helpers + C-ABI imports used by the pad-handler funcs.
+// (func_80174C98 comes from CtrlMovePC.hpp.)
 class UnkClass_800821F8View;   // defined below (func_800821F8 result view)
 extern "C" void func_8004DACC(void* obj);
 extern "C" void func_8014AC38(void* a, void* b);
@@ -322,12 +353,43 @@ struct CtrlPlayerSub50 {         // target of vf2A4-result->mField50
     s8 mField77;                 // 0x77 (pad-handler selector byte, signed cmps)
 };
 
+// Retail func_80097A5C / func_80098194 imports.
+// func_8017FD44 result view: selector word at +0xB8.
+struct Fd44State {
+    u8 _00[0xB8];
+    u32 mFieldB8;
+};
+extern "C" Fd44State* func_8017FD44(void);
+extern "C" int func_8017FD4C(Fd44State* state);
+struct ArtsSelStateViewPc {
+    s8 byte0;   // 0x00
+    s8 byte1;   // 0x01
+    s8 byte2;   // 0x02
+};
+extern "C" ArtsSelStateViewPc* CMenuArtsSelect_getSelectState(void);
+extern "C" void func_800ACF78(void* obj, void* target, u32 child);
+extern "C" void func_800F6D50(CfEnumList* list, u32 val);
+extern "C" void* func_800F6E08(CfEnumList* list);
+// Enum list with the extra word at +0x3030 cleared by func_80098194.
+struct CfListBig : CfEnumList {
+    u8 _624[0x3030 - 0x624];
+    u32 mField3030;  // 0x3030
+};
+// C-linkage so call relocs keep the retail unmangled names (and MWCC does
+// not inline the in-TU bodies).
+extern "C" void func_80098194(cf::CtrlPc* self, char arg1, char arg2);
+extern "C" int func_80097E00(cf::CtrlPc* self);
+extern "C" void func_800983B8(cf::CtrlPc* self, char arg);
+
+namespace cf { class CAttackParam; }
+
 struct CtrlPlayerSub2A4 {        // vf2A4() result (vptr at 0)
     void* mVtbl;                 // 0x00
     u32 mField4;                 // 0x04
-    u8 _8[0x4C - 0x8];
+    u8 _8[0x48 - 0x8];
+    u32 mField48;                // 0x48 (combo step count copy)
     u32 mField4C;                // 0x4C
-    CtrlPlayerSub50* mField50;   // 0x50
+    cf::CAttackParam* mField50;  // 0x50 (selected arts/combo param)
     u8 _54[0x78 - 0x54];
     u32 mField78;                // 0x78 (flag word, bits 0x400/0x800 tested)
 };
@@ -491,7 +553,7 @@ public:
     virtual void vf154();
     virtual void vf155();
     virtual void vf156();
-    virtual void vf157();
+    virtual void* vf157();               // vtable slot 0x27C (CArtsSet holder)
     virtual void vf158();
     virtual void vf159();
     virtual void vf160();
@@ -508,6 +570,73 @@ public:
     virtual void vf171();
     virtual void vf172();
     virtual int vf173();                // vtable slot 0x2BC
+    // Padding to the slots used by func_80097A5C / func_80098194.
+    virtual void vf174(); virtual void vf175(); virtual void vf176();
+    virtual void vf177(); virtual void vf178(); virtual void vf179();
+    virtual void vf180(); virtual void vf181(); virtual void vf182();
+    virtual void vf183(); virtual void vf184(); virtual void vf185();
+    virtual void vf186(); virtual void vf187();
+    virtual void vf2F8(int arg);        // vtable slot 0x2F8
+    virtual void vf189(); virtual void vf190(); virtual void vf191();
+    virtual void vf192(); virtual void vf193(); virtual void vf194();
+    virtual void vf195(); virtual void vf196(); virtual void vf197();
+    virtual void vf198(); virtual void vf199(); virtual void vf200();
+    virtual void vf201(); virtual void vf202(); virtual void vf203();
+    virtual void vf204(); virtual void vf205(); virtual void vf206();
+    virtual void vf207(); virtual void vf208(); virtual void vf209();
+    virtual void vf210(); virtual void vf211(); virtual void vf212();
+    virtual void vf213(); virtual void vf214(); virtual void vf215();
+    virtual void vf216(); virtual void vf217(); virtual void vf218();
+    virtual void vf219(); virtual void vf220(); virtual void vf221();
+    virtual void vf222(); virtual void vf223(); virtual void vf224();
+    virtual void vf225(); virtual void vf226(); virtual void vf227();
+    virtual void vf228(); virtual void vf229(); virtual void vf230();
+    virtual void vf231(); virtual void vf232(); virtual void vf233();
+    virtual void vf234(); virtual void vf235(); virtual void vf236();
+    virtual void vf237(); virtual void vf238(); virtual void vf239();
+    virtual void vf240(); virtual void vf241(); virtual void vf242();
+    virtual void vf243(); virtual void vf244(); virtual void vf245();
+    virtual void vf246(); virtual void vf247(); virtual void vf248();
+    virtual void vf249(); virtual void vf250(); virtual void vf251();
+    virtual void vf252(); virtual void vf253(); virtual void vf254();
+    virtual void vf255(); virtual void vf256(); virtual void vf257();
+    virtual void vf258(); virtual void vf259(); virtual void vf260();
+    virtual void vf261(); virtual void vf262(); virtual void vf263();
+    virtual void vf264(); virtual void vf265(); virtual void vf266();
+    virtual void vf267(); virtual void vf268(); virtual void vf269();
+    virtual void vf270(); virtual void vf271(); virtual void vf272();
+    virtual void vf273(); virtual void vf274(); virtual void vf275();
+    virtual void vf276(); virtual void vf277(); virtual void vf278();
+    virtual void vf279(); virtual void vf280(); virtual void vf281();
+    virtual void vf282(); virtual void vf283(); virtual void vf284();
+    virtual void vf285(); virtual void vf286(); virtual void vf287();
+    virtual void vf288(); virtual void vf289(); virtual void vf290();
+    virtual void vf291(); virtual void vf292(); virtual void vf293();
+    virtual void vf294(); virtual void vf295(); virtual void vf296();
+    virtual void vf297(); virtual void vf298(); virtual void vf299();
+    virtual void vf300(); virtual void vf301(); virtual void vf302();
+    virtual void vf303(); virtual void vf304(); virtual void vf305();
+    virtual void vf306(); virtual void vf307(); virtual void vf308();
+    virtual void vf309(); virtual void vf310(); virtual void vf311();
+    virtual void vf312(); virtual void vf313(); virtual void vf314();
+    virtual void vf315(); virtual void vf316(); virtual void vf317();
+    virtual void vf318(); virtual void vf319(); virtual void vf320();
+    virtual void vf321(); virtual void vf322(); virtual void vf323();
+    virtual void vf324(); virtual void vf325(); virtual void vf326();
+    virtual void vf327(); virtual void vf328(); virtual void vf329();
+    virtual void vf330(); virtual void vf331(); virtual void vf332();
+    virtual void vf333(); virtual void vf334(); virtual void vf335();
+    virtual void vf336(); virtual void vf337(); virtual void vf338();
+    virtual void vf339(); virtual void vf340(); virtual void vf341();
+    virtual void vf342(); virtual void vf343(); virtual void vf344();
+    virtual void vf345(); virtual void vf346(); virtual void vf347();
+    virtual void vf348(); virtual void vf349(); virtual void vf350();
+    virtual void vf351(); virtual void vf352(); virtual void vf353();
+    virtual void vf354(); virtual void vf355(); virtual void vf356();
+    virtual void vf357(); virtual void vf358(); virtual void vf359();
+    virtual void vf360(); virtual void vf361(); virtual void vf362();
+    virtual void vf363(); virtual void vf364(); virtual void vf365();
+    virtual void* vf5C0();              // vtable slot 0x5C0
 
     CtrlPlayerSub4* mField4;      // 0x04 (sub-object, vf30 -> u32* word holder)
     u8 mField8;                   // 0x08 (state region handed to func_80148778)
@@ -588,9 +717,19 @@ public:
     u32 mField4;                           // 0x04 (after implicit vptr)
 };
 
-// C-linkage base/sub ctors (retail short-form names; MWCC keeps __ct__-style
-// names unmangled so call relocs match the retail symbols).
-void __ct__CtrlRemote(cf::CtrlRemote* obj, void* posObj, int arg5);
-void __ct__800D10DC(cf::CtrlPc* obj, void* posObj, void* arg5);
+// C-linkage base/sub ctors (retail short-form names; extern "C" keeps call
+// relocs matching the retail symbols).
+extern "C" void __ct__CtrlRemote(void* obj, void* posObj, int arg5);
+extern "C" void __ct__800D10DC(void* obj, void* posObj, void* arg5);
 // Pad-config writer used by the __ct__cf_CtrlPad loop (retail 0x800995A8).
-void func_80098BD0(int index, u32 value);
+extern "C" void func_80098BD0(int index, u32 value);
+// Arts/combo helpers used by func_80098810 (retail short-form names).
+struct CAttackParamVt {
+    virtual void v00();
+    virtual int getComboId();        // vtable slot 0x0C
+    virtual void applyCombo(int);    // vtable slot 0x10
+};
+extern "C" void* getArtsParamRC2(void* artsSet, int row, int col);
+extern "C" int func_801B202C(void);
+extern "C" int func_801B1D4C(int arg);
+extern "C" int func_801B1FA4(void);

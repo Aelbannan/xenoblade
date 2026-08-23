@@ -247,6 +247,23 @@ struct CfWalkMoveSubDeep {
     class CfWalkSubC4_3B4* field_C4;           // 0xC4 (alias of battle object +0x3F60)
 };
 
+// func_800EA444 result (battle-target record): ids at +0x0/+0x4.
+struct CfWalkEA444 {
+    u32 field_0;                               // 0x00
+    u32 field_4;                               // 0x04
+};
+
+// Battle-effect spawn record built on the stack by func_800C551C
+// (memset to zero over the full 0x34 bytes, then three fields written).
+struct CfWalkSpawnRec {
+    u8 _00[0xC];                               // 0x00-0x0B
+    u16 field_C;                               // 0x0C (effect id halfword)
+    u32 field_10;                              // 0x10 (source value)
+    u8 _14[0x20 - 0x14];                       // 0x14-0x1F
+    f32 field_20;                              // 0x20 (float param)
+    u8 _24[0x34 - 0x24];                       // 0x24-0x33
+};
+
 // Target of the move sub-object's field_C4 pointer: word at +0x3B4.
 struct CfWalkSubC4_3B4 {
     u8 _pad00[0x3B4];                          // 0x00-0x3B3
@@ -554,15 +571,23 @@ public:
     virtual void f148(); virtual void f149(); virtual void f150(); virtual void f151();
     virtual void f152(); virtual void f153(); virtual void f154(); virtual void f155();
     virtual void f156(); virtual void f157(); virtual void f158(); virtual void f159();
-    virtual void f160(); virtual void f161(); virtual void f162(); virtual void f163();
+    virtual void f160(); virtual void f161(); virtual u32 f162(); virtual void f163();
     virtual void f164(); virtual void f165(); virtual void f166(); virtual void f167();
     virtual void f168(); virtual void f169(); virtual void f170(); virtual void f171();
     virtual void f172();
+    virtual void f174(); virtual void f175(); virtual void f176(); virtual void f177();
+    virtual void f178(); virtual void f179(); virtual void f180(); virtual void f181();
+    virtual void f182(); virtual void f183(); virtual void f184(); virtual void f185();
+    virtual void f186(); virtual void f187(); virtual void f188(); virtual void f189();
+    virtual void f190();
+    virtual u32 f191(u32 a);                 // index 191 -> vtable 0x304
+    virtual u32 f192(u32 a);                 // index 192 -> vtable 0x308
+    virtual u32 vf80q(u32 a);                // index 30 -> vtable 0x80
+    virtual void vf2F8(u32 a);               // index 188 -> vtable 0x2f8
     virtual u32 vf2BC();                     // index 173 -> vtable 0x2BC (battle-active)
 
     u8 _pad04[0x3E9C - 0x04];                // 0x04-0x3E9B
     CfWalkMoveSub mSub;                      // 0x3E9C (embedded move sub-object)
-    u8 _pad3F14[0x3F60 - 0x3F14];            // 0x3F14-0x3F5F
     void* field_3F60;                        // 0x3F60 (battle-object pointer)
 };
 
@@ -1039,7 +1064,9 @@ int func_8026178C(u32 a, u32 b);
 void func_80109784(u32 a, u32 b, u32 c);
 void func_800E1B5C(void* mgr, void* battleObj);
 cf::CfWalkGlobal* func_800FE68C();
-CfWalkBMView* getInstance__Q22cf14CBattleManagerFv();
+// NB: declared as extern "C" CBattleManagerView* in CSysWinScenarioLog.hpp;
+// keep the same signature here to avoid an illegal-overload conflict.
+extern "C" CBattleManagerView* getInstance__Q22cf14CBattleManagerFv();
 void* func_800BF324(void* objParam);
 void func_80043D90(cf::CfWalkEnumHolder* holder);
 cf::CfWalkEnumList* func_80043F18(cf::CfWalkEnumHolder* holder);
@@ -1081,6 +1108,7 @@ int func_80085840__Q22cf13CfGameManagerFv();
 void* __dynamic_cast(void* obj, long offset, const void* srcType, const void* dstType, void* tmp);
 
 // Enum-list / selector helpers (CfObjectEnumList + selector subsystem).
+void* func_800F6EAC(cf::CfWalkEnumList* list, int index);
 void func_800F6ED0(cf::CfWalkEnumList* list, void* value);
 void* func_800F6E08(cf::CfWalkEnumList* list);
 void* func_800F6EC0(cf::CfWalkEnumList* list, u32 index);
@@ -1091,12 +1119,26 @@ int func_80148778(void* obj, u32 flag);
 void* func_8003AA34(void);
 void* getFP__FPCc(const char* path);
 u32 func_8003B1EC(void* bdat);
-char* getBdatStringColumnValue(void* bdat, const char* column, int row);
+// NB: canonical decl is u32(...) (CUIWindowManager.hpp); keep signature.
+u32 getBdatStringColumnValue(void* bdat, const char* column, int index);
 void func_8013D07C(u32 obj, const char* str, int flag);
 int func_801413DC(u32 a, int b);
 void func_802919A0(void);
 void func_8029194C(void);
 int rand(void);
+
+// Battle-manager effect/party helpers.
+void func_800F3970(void* mgr, void* obj, u32 a, u32 b, u32 c);
+void func_802A216C(void* obj);
+void func_800EA9A8(void* mgr, void* item, void* rec, u32 id, u32 flag);
+int func_80260FB0(void* obj, u32 id, u32* outA, u32* outB, f32* outC);
+int func_80260518(void* obj, u32 id, u32* outA, f32* outB);
+int func_80260264(void* obj, u32 id, u32* outA);
+void func_8013E2E0(u32 a, u32 b, u32 c, u32 d, u32 e, u32 f, u32 g, u32 h);
+u32 func_80084654__Q22cf13CfGameManagerFv(int flag);
+int func_8007FE24__Q22cf13CfGameManagerFv(u32 mask);
+void* func_800EA444(void* mgr);
+// NOTE: real decl below returns cf::CfWalkEA444* via overload-free rename.
 
 // Action/art play + system helpers.
 void* func_8049627C(void* scene, int flag);
@@ -1159,6 +1201,8 @@ extern const f32 lbl_eu_80666B88;  // sdata2 constant (0.5f)
 extern const f32 lbl_eu_80666B90;  // sdata2 constant
 extern const f64 lbl_eu_80666B98;  // sdata2 int->float magic (0x4330000080000000)
 extern const f64 lbl_eu_80666BA8;  // sdata2 int->float magic (0x4330000080000000)
+extern void* lbl_eu_80664098; // sdata pointer (bdat table handle)
+extern void* lbl_eu_806640C4; // sdata pointer (bdat table handle)
 extern char lbl_eu_804FC694[];  // .rodata string/buffer
 extern u32 lbl_eu_804FC670[3];  // .data table (player-slot effect ids)
 // RTTI typeinfo labels for the move sub-object dynamic_cast. Declared as
@@ -1168,3 +1212,10 @@ extern const void* lbl_eu_80661C10;
 extern const void* lbl_eu_80661CB0;
 extern const void* lbl_eu_806618F0;
 extern char lbl_eu_80573E18;  // .data string/buffer
+
+// Random helper (C++ linkage; mangles to retail mtRand__Q22ml4mathFi).
+namespace ml {
+namespace math {
+int mtRand(int n);
+}
+}

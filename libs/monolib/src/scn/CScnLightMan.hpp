@@ -30,7 +30,7 @@ struct CScnItemLight {
 // Parameter object for the light manager; pool handle at +0x60.
 struct CScnLightParam {
     u8 _00[0x60];                 // +0x00
-    void* mPool;                  // +0x60
+    u8* mPool;                    // +0x60
 };
 
 // Scene light manager: selects an active light item from the scene pool.

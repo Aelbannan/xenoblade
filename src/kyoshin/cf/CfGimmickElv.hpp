@@ -16,12 +16,15 @@ void func_8020938C(void* self, void* subobj, void* bdat, void* stack, int idx);
 void func_802095D8(void* self, void* subobj, void* bdat, void* stack, int idx);
 void func_80209488(void* self, void* subobj, void* bdat, void* stack, int idx);
 void func_802089BC(void* dst, void* src1, void* src2);
-void func_80208C48(void* self, void* arg);
-int func_80208C60(void* self, u16 arg);
+// func_80208C48 plays a sound id at a position (first arg comes from a u16 field)
+void func_80208C48(int id, void* pos);
+// bdat-driven SFX lookup: (id, position)
+int func_80208C60(u16 id, void* pos);
 void func_80208EE4(void* self);
-int func_8020971C(void* self);
+int func_8020971C(u16 id);
 int func_80209754(u8 flag, void* a, void* b, void* c, u32 d);
-void func_80209F5C(void* self);
+// Retail evidence: called with no visible argument setup (r3 left as-is)
+void func_80209F5C(void);
 void* func_8020A35C(void* self, int a, void* b);
 void func_8020A434(void* ptr);
 void func_8020A484(u16 id);
@@ -46,14 +49,14 @@ u16 func_80462FB8__8CTaskLODFv(u8 lod);
 void* func_804BC9EC__Fv();
 void func_804BCC30(void* ptr, u8 id);
 void func_804BCC3C(void* ptr, u8 id);
-void func_804BCC54(void* ptr, u16 id);
-void func_804BCC6C(void* ptr, u8 id);
+void* func_804BCC54(void* ptr, u16 id);
+u16 func_804BCC6C(void* ptr, u8 id);
 f32 func_80496288(void* ptr);
 UnkClass_800817BC* func_800817BC__Q22cf13CfGameManagerFv(u32 id, u32 mode);
 void func_801BFED0(int a, u16 b, int c);
 int func_801BFABC(int a);
 void func_801BFF78(int a, u16 b, int c);
-void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 f);
+u16 func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32 a, u32 b, u32 c, u32 d, f32 f);
 void func_801BFAE8(u16 id, void* pos);
 void __dl__FPv(void* ptr);
 void __ptmf_scall(void* obj, void* ptmf);
@@ -62,11 +65,15 @@ void func_8020B34C(CfGimmickElvData* self);
 
 // CfGimmickElv field layout (derived from retail ASM analysis)
 // Total size: ~0x1D8 bytes
+struct CfVec3 {
+    f32 x, y, z;
+};
+
 struct CfGimmickElvData {
     /* 0x00 */ void* vtable;
-    /* 0x04 */ u8 vec0[0xC];    // CVec3 - base position
-    /* 0x10 */ u8 vec1[0xC];    // CVec3 - base rotation
-    /* 0x1C */ u8 vec2[0xC];    // CVec3 - base scale
+    /* 0x04 */ CfVec3 vec0;    // base position
+    /* 0x10 */ CfVec3 vec1;    // base rotation
+    /* 0x1C */ CfVec3 vec2;    // base scale
     /* 0x28 */ u8 gap28[0x38];
     /* 0x60 */ u32 unk60;
     /* 0x64 */ u16 bdatRowId;
@@ -84,18 +91,18 @@ struct CfGimmickElvData {
     /* 0x80 */ u16 unk80;
     /* 0x82 */ u16 typeId;
     // --- derived class fields ---
-    /* 0x84 */ u8 elvVec0[0xC];  // A-type vec index 1
-    /* 0x90 */ u8 elvVec1[0xC];  // A-type vec index 2
-    /* 0x9C */ u8 elvVec2[0xC];  // A-type vec index 3
-    /* 0xA8 */ u8 elvVec3[0xC];  // B-type vec index 1
-    /* 0xB4 */ u8 elvVec4[0xC];  // B-type vec index 2
-    /* 0xC0 */ u8 elvVec5[0xC];  // B-type vec index 3
-    /* 0xCC */ u8 elvVec6[0xC];  // C-type vec index 1
+    /* 0x84 */ CfVec3 elvVec0;  // A-type vec index 1
+    /* 0x90 */ CfVec3 elvVec1;  // A-type vec index 2
+    /* 0x9C */ CfVec3 elvVec2;  // A-type vec index 3
+    /* 0xA8 */ CfVec3 elvVec3;  // B-type vec index 1
+    /* 0xB4 */ CfVec3 elvVec4;  // B-type vec index 2
+    /* 0xC0 */ CfVec3 elvVec5;  // B-type vec index 3
+    /* 0xCC */ CfVec3 elvVec6;  // C-type vec index 1
     /* 0xD8 */ u8 gapD8[0x3C];
-    /* 0x114 */ u8 elvVec7[0xC]; // C-type vec index 2
+    /* 0x114 */ CfVec3 elvVec7; // C-type vec index 2
     /* 0x120 */ u8 gap120[0x38];
     /* 0x158 */ u32 unk158;
-    /* 0x15C */ u8 elvVec8[0xC]; // C-type vec index 3
+    /* 0x15C */ CfVec3 elvVec8; // C-type vec index 3
     /* 0x168 */ u8 gap168[0x38];
     /* 0x1A0 */ u32 unk1A0;
     /* 0x1A4 */ u32 unk1A4;

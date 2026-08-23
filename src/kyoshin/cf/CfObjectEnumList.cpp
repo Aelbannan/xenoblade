@@ -2,10 +2,13 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/cf/CfObjectEnumList.hpp"
-#include "monolib/math.hpp"      // ml::CVec3 (needed by CfCam.hpp declarations)
+#include "monolib/math.hpp"      // ml::CVec3
 #include "monolib/util/MemManager.hpp"  // mtl::MemManager (allocate_array)
-#include "kyoshin/cf/CfCam.hpp"  // func_80174C98 arts-state gate
 #include <nw4r/math.h>            // VEC3Sub (paired-single) + PSVECMag
+
+// Forward decl (was pulled in via CfCam.hpp, which now conflicts with this
+// TU's extern "C" declarations of func_8016FE34/func_800BBC0C).
+namespace cf { class CfCamFollow; }
 
 namespace cf {
     // --- CfObjectSelectorObj's +4 member list (mirrors CfObjEnumList's
@@ -36,9 +39,9 @@ namespace cf {
                 CfSelectorNode* sentinel = mStartNode;
                 CfSelectorNode* node = sentinel->mNext;
                 while (node != mStartNode) {
-                    CfSelectorNode* n = node;
-                    node = node->mNext;
-                    n->mNext = NULL;
+                    CfSelectorNode* next = node->mNext;
+                    node->mNext = NULL;
+                    node = next;
                 }
                 mStartNode->mNext = mStartNode;
                 mStartNode->mPrev = mStartNode;
@@ -137,19 +140,29 @@ void __ct__cf_CfObjEnumList(cf::CfObjEnumList* self) {
 }
 
 // func_800F49F8: append every source-list entry (copy of sObjInfo) to this
-// list.  mObjInfoCount is bumped before the copy, so the mPtrArray entry
-// points at the just-appended slot via mObjInfoCount - 1.
+// list.  Walks the source pointer array with a running pointer; mObjInfoCount
+// is bumped before the copy, so the mPtrArray entry points at the
+// just-appended slot via mObjInfoCount - 1.
 void func_800F49F8(cf::CfObjEnumList* self, cf::CfObjEnumList* src) {
     for (u32 i = 0; i < src->mPtrCount; i++) {
         u32 idx = self->mObjInfoCount;
         cf::CfObjEnumList::sObjInfo* srcInfo = src->mPtrArray[i];
         self->mObjInfoCount = idx + 1;
         cf::CfObjEnumList::sObjInfo* dst = &self->mObjInfo[idx];
-        *dst = *srcInfo;
-        u32 infoCount = self->mObjInfoCount;
-        u32 cnt = self->mPtrCount;
-        self->mPtrArray[cnt] = &self->mObjInfo[infoCount - 1];
-        self->mPtrCount = cnt + 1;
+        dst->objectId = srcInfo->objectId;
+        dst->object = srcInfo->object;
+        // Deferred-store locals: retail loads field_0C before field_08 but
+        // stores them in ascending order.
+        u32 fieldC = srcInfo->field_0C;
+        u32 field8 = srcInfo->field_08;
+        dst->field_08 = field8;
+        dst->field_0C = fieldC;
+        dst->field_10 = srcInfo->field_10;
+        dst->field_14 = srcInfo->field_14;
+        dst->field_18 = srcInfo->field_18;
+        self->mPtrArray[self->mPtrCount] =
+            &self->mObjInfo[self->mObjInfoCount - 1];
+        self->mPtrCount = self->mPtrCount + 1;
     }
 }
 
@@ -394,6 +407,12 @@ extern const float lbl_eu_80666EBC;
 // retail unmangled reloc name matches (same convention as func_800F4B5C).
 extern "C" int func_800FD3FC(cf::CfObjEnumList* list, CfEnumActor* aux,
                              ml::CVec3* spot);
+void* func_80496264(void* scene, int index);   // scene pose/xform block
+void* func_8049627C(void* scene, int flag);    // scene view frame
+int func_8049B59C(void* out, void* pose, void* pos); // view-space transform
+void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+    void* rect, const void* frame);
+int func_804B1BDC(void* self, void* a, void* b); // aux cone probe (two vecs)
 }
 
 // Two register-allocation variants of the append helper.  The retail's
@@ -1048,15 +1067,15 @@ void* func_800F6E08(cf::CfObjEnumList* self) {
 // func_800F8794: quicksort pivot pick.  Scan (lo, hi] for the first index
 // whose sort value differs from value(lo); return that index, or lo when
 // value(lo) >= value(p) (descending tie-break), or -1 when the whole range
-// is equal to value(lo).
-int func_800F8794(CfSortableList* self, int lo, int hi);
+// is equal to value(lo).  Retail symbols are unmangled globals.
+extern "C" int func_800F8794(CfSortableList* self, int lo, int hi);
 
 // func_800F8890: Hoare partition (defined later in this TU).
-int func_800F8890(CfSortableList* self, int lo, int hi, int pivot);
+extern "C" int func_800F8890(CfSortableList* self, int lo, int hi, int pivot);
 
-int func_800F8794(CfSortableList* self, int lo, int hi) {
+extern "C" int func_800F8794(CfSortableList* self, int lo, int hi) {
     int p = lo + 1;
-    while (p <= hi && self->value(p) == self->value(lo)) {
+    while (p <= hi && self->value(lo) == self->value(p)) {
         p++;
     }
     if (p > hi) {
@@ -1068,11 +1087,10 @@ int func_800F8794(CfSortableList* self, int lo, int hi) {
     return p;
 }
 
-// func_800F7DEC: quicksort recursion over the sortable list.  Pivot is the
-// first index whose value differs from the base (func_800F8794); with the
-// unit's -inline auto the helper and the first two recursion levels are
-// expanded inline, deeper levels call func_800F7DEC itself.
-void func_800F7DEC(CfSortableList* self, int lo, int hi) {
+// func_800F7DEC: quicksort recursion over the sortable list.  With the unit's
+// -inline auto, MWCC expands func_800F8794/func_800F8890 at every call site,
+// producing the retail multi-stage inline blob.
+extern "C" void func_800F7DEC(CfSortableList* self, int lo, int hi) {
     if (lo == hi) {
         return;
     }
@@ -1093,7 +1111,7 @@ void func_800F7DEC(CfSortableList* self, int lo, int hi) {
 // read via value(pivot), then the list is scanned from both ends (value(i) <
 // pivot on the left, value(j) >= pivot on the right) and out-of-place
 // elements are swapped through the get() accessor.  Returns the split index.
-int func_800F8890(CfSortableList* self, int lo, int hi, int pivot) {
+extern "C" int func_800F8890(CfSortableList* self, int lo, int hi, int pivot) {
     int i = lo;
     int j = hi;
     float pivotValue = self->value(pivot);
@@ -1119,9 +1137,205 @@ int func_800F8890(CfSortableList* self, int lo, int hi, int pivot) {
 
 void func_800F89DC(){}
 
-void func_800F9AEC(){}
+// Shared sort tail of the two list-refresh entry points (func_800F9AEC /
+// func_800F800F6ED0 family): after the per-entry value refresh, run the
+// quicksort over the embedded sortable list at +0x624.  Retail expands the
+// first partition stages inline; the structure here mirrors the observed
+// nesting (pivot find -> partition -> nested pivot/partition on each half,
+// deeper levels recurse into func_800F7DEC).
+static void enumRefreshSort(cf::CfObjEnumList* self, u32 sortFlag) {
+    self->field_062C = sortFlag;
+    int hi = self->mPtrCount - 1;
+    if (hi == 0) {
+        return;
+    }
+    CfSortableList* sl = reinterpret_cast<CfSortableList*>(&self->mSortVtableA);
+    int pivot = func_800F8794(sl, 0, hi);
+    if (pivot == -1) {
+        return;
+    }
+    int m = func_800F8890(sl, 0, hi, pivot);
+    if (0 != m - 1) {
+        int p2 = func_800F8794(sl, 0, m - 1);
+        if (p2 != -1) {
+            int m2 = func_800F8890(sl, 0, m - 1, p2);
+            if (0 != m2 - 1) {
+                func_800F7DEC(sl, 0, m2 - 1);
+            }
+            if (m2 != m - 1) {
+                func_800F7DEC(sl, m2, m - 1);
+            }
+        }
+    }
+    if (m != hi) {
+        int p3 = func_800F8794(sl, m, hi);
+        if (p3 != -1) {
+            int m3 = func_800F8890(sl, m, hi, p3);
+            if (m != m3 - 1) {
+                func_800F7DEC(sl, m, m3 - 1);
+            }
+            if (m3 != hi) {
+                func_800F7DEC(sl, m3, hi);
+            }
+        }
+    }
+}
 
-void __ct__800FA9B4(){}
+// func_800F9AEC: refresh each entry's sort value via the actor's vtable
+// 0x128 float accessor (reached through func_8016FE34), then sort the list.
+// Needs at least two entries to do anything.
+void func_800F9AEC(cf::CfObjEnumList* self) {
+    if (self->mPtrCount < 2) {
+        return;
+    }
+    for (u32 i = 0; i < self->mPtrCount; i++) {
+        cf::CfObjEnumList::sObjInfo* p = self->mPtrArray[i];
+        CfEnumActor* actor = func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
+        if (actor != NULL) {
+            p->field_14 = reinterpret_cast<CfEnumActorValueView*>(actor)->value128();
+        }
+    }
+    enumRefreshSort(self, 1);
+}
+
+// func_800F6ED0: recompute each entry's distance from spot (vtable 0xAC
+// position vector minus spot, PSVECMag), clear field_062C, then sort.
+void func_800F6ED0(cf::CfObjEnumList* self, ml::CVec3* spot) {
+    if (self->mPtrCount < 2) {
+        return;
+    }
+    for (u32 i = 0; i < self->mPtrCount; i++) {
+        cf::CfObjEnumList::sObjInfo* p = self->mPtrArray[i];
+        nw4r::math::VEC3* pos = reinterpret_cast<nw4r::math::VEC3*>(
+            reinterpret_cast<CfEnumObjPosView*>(p->object)->vAC());
+        nw4r::math::VEC3 delta;
+        nw4r::math::VEC3Sub(&delta, pos,
+                            reinterpret_cast<const nw4r::math::VEC3*>(spot));
+        nw4r::math::VEC3 d;
+        d.x = delta.x;
+        d.y = delta.y;
+        d.z = delta.z;
+        p->field_14 = PSVECMag((const Vec*)&d);
+    }
+    enumRefreshSort(self, 0);
+}
+
+// __ct__800FA9B4: rebuild the list by projecting every object position through
+// the scene's view transform: func_80496264/func_8049627C fetch the pose block
+// and view frame, func_8049B59C writes the view-space position into info+8 for
+// two probe slots, then a screen-rect depth gate (getFrame2ViewOffset +
+// func_804BE348) and the func_804B5088 probe decide acceptance.  Accepted
+// entries get the 0x10 mark bit; every entry is re-appended.
+void __ct__800FA9B4(cf::CfObjEnumList* list, void* scene, u32 options) {
+    if (list->mPtrCount == 0) {
+        return;
+    }
+    void* pose = func_80496264(scene, 0);
+    u8* frame = static_cast<u8*>(func_8049627C(scene, 0));
+    struct RebuildCtx {
+        u32 ownsCopy;                          // +0x000 (<- list+0x1C)
+        cf::CfObjEnumList::sObjInfo* arr[384]; // +0x004
+        u32 count;                             // +0x604
+        u8* b;                                 // +0x608
+        u8* a;                                 // +0x60C
+        u32 field;                             // +0x610
+    };
+    RebuildCtx ctx;
+    ctx.ownsCopy = list->mOwnsList;
+    ctx.count = list->mPtrCount;
+    ctx.a = lbl_eu_8052BDA0;
+    ctx.b = lbl_eu_8052BDA0 + 8;
+    ctx.field = list->field_062C;
+    struct CopyArr {
+        cf::CfObjEnumList::sObjInfo* arr[384];
+    };
+    *reinterpret_cast<CopyArr*>(ctx.arr) =
+        *reinterpret_cast<CopyArr*>(list->mPtrArray);
+    list->mPtrCount = 0;
+    const float c02 = lbl_eu_80666EC8; // f28: 0.2 depth scale
+    const float c01 = lbl_eu_80666ECC; // f31
+    const double magic = lbl_eu_80666EC0; // s32->double conversion magic
+    (void)c01;
+    (void)magic;
+    // Frame-origin shorts + probe-table record layout.
+    struct ViewFrameBlock {
+        u8 _pad[0x1C8];
+        s16 originX;             // 0x1C8
+        s16 originY;             // 0x1CA
+        u8 _pad2[0x230 - 0x1CC];
+        s16 sizeX;               // 0x230
+    };
+    ViewFrameBlock* vf = reinterpret_cast<ViewFrameBlock*>(frame);
+    for (u32 i = 0; i < ctx.count; i++) {
+        cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
+        CfEnumObjPosView* obj = reinterpret_cast<CfEnumObjPosView*>(p->object);
+        // Three stacked position temps; v128 fills all three, the vAC fallback
+        // only the latter two (retail store pattern).
+        ml::CVec3 tmp[3];
+        CfEnumPosBlock* v = obj->v128();
+        if (v != 0) {
+            float tz = v->z;
+            float ty = v->y;
+            float tx = v->x;
+            tmp[0].x = tx;
+            tmp[0].y = ty;
+            tmp[0].z = tz;
+            tmp[1] = tmp[0];
+            tmp[2] = tmp[0];
+        } else {
+            ml::CVec3* src =
+                reinterpret_cast<ml::CVec3*>(obj->vAC());
+            tmp[1].x = src->x;
+            tmp[1].y = src->y;
+            tmp[1].z = src->z;
+            tmp[2] = tmp[1];
+        }
+        bool confirmed = false;
+        for (int k = 0; k < 2; k++) {
+            // View-space transform lands in info.field_08/0C/10.
+            int ret = func_8049B59C(&p->field_08, pose, &tmp[1 + k]);
+            p->field_18 |= 1;
+            if (ret != 0) {
+                // Screen-rect depth gate: offset the frame rect by the frame's
+                // stored origin shorts and scale by 0.2 (retail converts the
+                // combined s16 via the 2^52 double idiom).
+                struct SRect16 {
+                    s16 x, y, w, h;
+                } rc;
+                getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+                    &rc, frame + 0x1DC);
+                s16 fx = vf->originX;
+                s16 fy = vf->originY;
+                s16 fw = vf->sizeX;
+                float vx = (float)(fw + rc.x + fx + (-20)) * c02;
+                float vy = (float)(fy + rc.y) * c02;
+                ml::CVec3 probe;
+                probe.x = vx;
+                probe.y = vy;
+                probe.z = p->field_10;
+                if (func_804BE348(&probe, &probe, 0x44A45, 0, 0) != 0) {
+                    confirmed = false;
+                    break;
+                }
+            }
+            // Global probe table walk (12-byte records indexed by slot k).
+            confirmed = func_804B5088(
+                            reinterpret_cast<cf::CfCamFollow*>((&lbl_eu_80665958)[k]),
+                            (u8*)pose + 0x10C, &tmp[1 + k], 1, 0) == 0;
+            if (confirmed) {
+                break;
+            }
+        }
+        bool accept = !confirmed;
+        if (options & 2) {
+            accept = confirmed;
+        }
+        if (accept) {
+            p->field_18 |= 0x10;
+        }
+        list->mPtrArray[list->mPtrCount++] = p;
+    }
+}
 
 // __ct__800FAE3C: rebuild the object list keeping only entries whose position
 // is NOT accepted by the collision probe: func_804BE348(arg1, pos, 0x44A45,
@@ -1469,9 +1683,147 @@ void func_800FB5AC(cf::CfObjEnumList* self, ml::CVec3* spot, u32 flags,
     }
 }
 
-void __ct__800FBA18(){}
+// __ct__800FBA18: rebuild the list against an oriented range/cone test built
+// from spot + three floats (range, cone seed, angle).  The prelude builds two
+// rotated direction bases via SinFIdx/CosFIdx (angle scaled by the FIdx
+// conversion constant); each entry is gated by the battle-state block, the
+// aux cone probe func_804B1BDC on aux+0x60C, and the func_800FD3FC fallback
+// (options bit 3).  Accepted entries get the 0x70 mark; all are re-appended.
+void __ct__800FBA18(cf::CfObjEnumList* list, ml::CVec3* spot, float a,
+                    float b, float angle, u32 options) {
+    if (list->mPtrCount == 0) {
+        return;
+    }
+    struct RebuildCtx {
+        u32 ownsCopy;                          // +0x000 (<- list+0x1C)
+        cf::CfObjEnumList::sObjInfo* arr[384]; // +0x004
+        u32 count;                             // +0x604
+        u8* b_;                                // +0x608
+        u8* a_;                                // +0x60C
+        u32 field;                             // +0x610
+    };
+    RebuildCtx ctx;
+    ctx.ownsCopy = list->mOwnsList;
+    ctx.count = list->mPtrCount;
+    ctx.a_ = lbl_eu_8052BDA0;
+    ctx.b_ = lbl_eu_8052BDA0 + 8;
+    ctx.field = list->field_062C;
+    struct CopyArr {
+        cf::CfObjEnumList::sObjInfo* arr[384];
+    };
+    *reinterpret_cast<CopyArr*>(ctx.arr) =
+        *reinterpret_cast<CopyArr*>(list->mPtrArray);
+    list->mPtrCount = 0;
+    const float fidxScale = lbl_eu_80666ED8; // radians -> FIdx for SinFIdx
+    const float zero = lbl_eu_80666EB8;
+    const float one = lbl_eu_80666EBC;
+    // First basis: rotate the seed direction (0, b, 0) by 'angle' around Y and
+    // tilt by 'a'; second basis repeats with the roles swapped.  Retail keeps
+    // the full 3x3 products in stack temps.
+    float s1 = nw4r::math::SinFIdx(fidxScale * angle);
+    float c1 = nw4r::math::CosFIdx(fidxScale * angle);
+    ml::CVec3 dirA;
+    dirA.x = b * s1;
+    dirA.y = b * c1 * one - b * zero;
+    dirA.z = b * c1 * one + b * s1 - b * s1;
+    float s2 = nw4r::math::SinFIdx(fidxScale * a);
+    float c2 = nw4r::math::CosFIdx(fidxScale * a);
+    ml::CVec3 dirB;
+    dirB.x = s2;
+    dirB.y = c2;
+    dirB.z = -s2 * one + zero;
+    ml::CVec3 probe1;   // retail sp+0x68
+    ml::CVec3 probe2;   // retail sp+0x74
+    probe1.x = spot->x + dirA.x;
+    probe1.y = spot->y + dirA.y;
+    probe1.z = spot->z + dirA.z;
+    probe2.x = spot->x + dirB.x;
+    probe2.y = spot->y + dirB.y;
+    probe2.z = spot->z + dirB.z;
+    u32 invert = options & 2;
+    u32 useFallback = options & 8;
+    for (u32 i = 0; i < ctx.count; i++) {
+        cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
+        CfEnumActorView* aux = reinterpret_cast<CfEnumActorView*>(
+            func_800BBC0C(reinterpret_cast<CfEnumObject*>(p->object)));
+        bool ok = false;
+        // Battle-state gate: state words 2/3/6 accept directly.
+        CfEnumVf298* v298 = aux->vf298();
+        if (v298 != NULL && v298->field_0x50 != NULL) {
+            u16 state = v298->field_0x50->field_0x3C;
+            if (state == 2 || state == 3 || state == 6) {
+                ok = true;
+            }
+        }
+        if (!ok && aux != NULL) {
+            ok = func_804B1BDC(&aux->field_60C, &probe2, &probe1) != 0;
+        }
+        if (!ok && useFallback) {
+            ok = func_800FD3FC(list, reinterpret_cast<CfEnumActor*>(aux),
+                               spot) != 0;
+        }
+        if (invert) {
+            ok = !ok;
+        }
+        if (ok) {
+            p->field_18 |= 0x70;
+        }
+        list->mPtrArray[list->mPtrCount++] = p;
+    }
+}
 
-void __ct__800FBF08(){}
+// __ct__800FBF08: rebuild the object list filtering entries through the
+// arts-state gate: func_8016FE34(object) then func_80148778(actor+8, tag).
+// flags bit 1 inverts the accept decision; accepted entries get the 0x70
+// mark and are only re-appended when flags bit 0 is set.
+void __ct__800FBF08(cf::CfObjEnumList* list, u32 tag, u32 flags) {
+    if (list->mPtrCount == 0) {
+        return;
+    }
+    struct RebuildCtx {
+        cf::CfObjEnumList::sObjInfo* arr[384]; // +0x000
+        u32 count;                             // +0x600
+        void* a;                               // +0x604 (lbl_eu_8052BDA0 + 8)
+        void* b;                               // +0x608 (lbl_eu_8052BDA0)
+        u32 field;                             // +0x60C
+    };
+    struct CopyArr {
+        cf::CfObjEnumList::sObjInfo* arr[384];
+    };
+    RebuildCtx ctx;
+    *reinterpret_cast<CopyArr*>(ctx.arr) =
+        *reinterpret_cast<CopyArr*>(list->mPtrArray);
+    ctx.count = list->mPtrCount;
+    ctx.b = lbl_eu_8052BDA0;
+    ctx.a = lbl_eu_8052BDA0 + 8;
+    ctx.field = list->field_062C;
+    list->mPtrCount = 0;
+    u32 invert = flags & 2;       // accept-hit instead of reject-hit
+    u32 appendMarked = flags & 1; // re-append 0x70-marked entries
+    u32 n = ctx.count;
+    for (u32 i = 0; i < n; i++) {
+        cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
+        CfEnumActor* actor =
+            func_8016FE34(reinterpret_cast<CfEnumObject*>(p->object));
+        if (actor == 0) {
+            continue;
+        }
+        int hit = func_80148778(reinterpret_cast<u8*>(actor) + 8, tag);
+        bool ok = hit == 0;
+        if (invert) {
+            ok = !ok;
+        }
+        if (ok) {
+            p->field_18 |= 0x70;
+            if (!appendMarked) {
+                continue;
+            }
+            list->mPtrArray[list->mPtrCount++] = p;
+        } else {
+            list->mPtrArray[list->mPtrCount++] = p;
+        }
+    }
+}
 
 // __ct__800FC040: rebuild the object list keeping only entries whose actor
 // fails BOTH tag probes (func_80148778 with tag1 and tag2).  options bit 1
@@ -2177,26 +2529,35 @@ void __ct__800FD0B4(cf::CfObjEnumList* list, u32 options) {
 
 // __ct__800FD250: rebuild the object list, keeping only entries whose
 // field_18 has none of the 0x70 flag bits set.  The current mPtrArray is
-// saved to a stack copy first (the count is reloaded from memory inside the
-// search loops), then the array is recompacted from index 0.
+// snapshotted to a stack context (with the dead sort-descriptor stores the
+// retail keeps), then the array is recompacted from index 0.
 void __ct__800FD250(cf::CfObjEnumList* self) {
     if (self->mPtrCount == 0) {
         return;
     }
-    cf::CfObjEnumList::sObjInfo* saveArr[384];
-    for (int i = 0; i < 384; i++) {
-        saveArr[i] = self->mPtrArray[i];
-    }
-    u32 count = self->mPtrCount;
-    void* vA = &lbl_eu_8052BDA0;
-    void* vB = &lbl_eu_8052BDA0[8];
-    u32 field = self->field_062C;
+    struct RebuildCtx {
+        cf::CfObjEnumList::sObjInfo* arr[384]; // +0x000
+        u32 count;                             // +0x600
+        void* a;                               // +0x604 (lbl_eu_8052BDA0 + 8)
+        void* b;                               // +0x608 (lbl_eu_8052BDA0)
+        u32 field;                             // +0x60C
+    };
+    struct CopyArr {
+        cf::CfObjEnumList::sObjInfo* arr[384];
+    };
+    RebuildCtx ctx;
+    *reinterpret_cast<CopyArr*>(ctx.arr) =
+        *reinterpret_cast<CopyArr*>(self->mPtrArray);
+    ctx.count = self->mPtrCount;
+    ctx.b = lbl_eu_8052BDA0;
+    ctx.a = lbl_eu_8052BDA0 + 8;
+    ctx.field = self->field_062C;
     self->mPtrCount = 0;
-    for (u32 i = 0; i < count; i++) {
-        cf::CfObjEnumList::sObjInfo* p = saveArr[i];
+    u32 n = ctx.count;
+    for (u32 i = 0; i < n; i++) {
+        cf::CfObjEnumList::sObjInfo* p = ctx.arr[i];
         if ((p->field_18 & 0x70) == 0) {
-            self->mPtrArray[self->mPtrCount] = p;
-            self->mPtrCount++;
+            self->mPtrArray[self->mPtrCount++] = p;
         }
     }
 }

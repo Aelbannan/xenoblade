@@ -14,12 +14,32 @@ namespace nw4r { namespace lyt {
 class CProcess;
 class CScn;
 
+// Object returned by func_8049603C (frame-timing provider)
+struct Unk_8049603C {
+    u8 _00[0xC];
+    f32 field_C;
+};
+
+// "timg" texture object returned by the resource accessor; the pixel
+// dimensions are reached through a two-level chain (obj+8 -> dims).
+struct CMenuUpdateTexDims {
+    u16 mW; // 0x00
+    u16 mH; // 0x02
+};
+struct CMenuUpdateTexChain {
+    CMenuUpdateTexDims* mDims; // 0x00
+};
+struct CMenuUpdateTexObj {
+    u8 _00[8];
+    CMenuUpdateTexChain* mChain; // 0x08
+};
+
 // 16-byte parameter struct used for window entries
 struct CMenuUpdate_8014274C {
-    u32 field_0;
-    u32 field_4;
-    u32 field_8;
-    u32 field_C;
+    s32 field_0;
+    s32 field_4;
+    s32 field_8;
+    s32 field_C;
 
     void __ct__8014274C() {
         field_0 = 0;
@@ -36,6 +56,13 @@ struct CMenuUpdate_8014274C {
     }
 };
 
+// Minimal view of the pad state returned by CfGameManager::getCurrentPad()
+// (pressed-button word lives at +0x04).
+struct CMenuUpdatePadData {
+    u32 mHeldButtonFlags;    // +0x00
+    u32 mPressedButtonFlags; // +0x04
+};
+
 class IUIWindow;
 
 class CTTask_IUIWindow {
@@ -50,8 +77,6 @@ public:
     u32 _48; // ptmf func
     u32 _4C; // ptmf this
     u32 _50; // ptmf delta
-
-    CTTask_IUIWindow();
 };
 
 class IUIWindow {
@@ -67,7 +92,7 @@ public:
     u8 mField65; // 0x65
     u8 mField66; // 0x66
     u8 mField67; // 0x67, bool, default 1
-    u8 _68[0x6C - 0x68];
+    u32 _68;
 
     IUIWindow();
 };
@@ -97,8 +122,8 @@ public:
     nw4r::lyt::AnimTransform* mAnim2; // 0x8C
     nw4r::lyt::AnimTransform* mActiveAnim; // 0x90
     CMenuUpdate_8014274C mEntries[8]; // 0x94 - 0x113 (8 * 0x10 = 0x80)
-    u32 mState; // 0x114
-    u32 mSubState; // 0x118
+    s32 mState; // 0x114
+    s32 mSubState; // 0x118
     u32 mSubType; // 0x11C
     s32 mCounter; // 0x120
     u32 mMode; // 0x124, default 2
@@ -158,7 +183,7 @@ extern "C" u16 func_80136254(void*, const char*, int);
 extern "C" u16 func_8013606C(const char*, const char*, int);
 // func_80136190: declared with char* return in code_80135FDC.hpp (caller-tuned)
 extern "C" void func_80138078__FUl(u32);
-extern "C" void func_80135898();
+extern "C" bool func_80135898();
 extern "C" void func_80133A08(u32);
 extern "C" void func_801347EC(u32);
 extern "C" void func_8013D7C0(u32);
@@ -172,7 +197,7 @@ extern "C" bool func_801BCF38();
 extern "C" bool func_8029A658();
 extern "C" bool func_8029EE58();
 extern "C" bool func_8013BFA8();
-extern "C" void* func_8049603C();
+extern "C" Unk_8049603C* func_8049603C();
 extern "C" bool code80135FDC_getByte_64059();
 extern "C" int func_8013BE50();
 extern "C" void* CfRes_getE14();
@@ -198,4 +223,6 @@ extern "C" int func_80143F78(void* self);
 extern "C" void func_80144070(void* self);
 extern "C" void func_801440A8(void* self);
 extern "C" f32 func_801443E4();
+extern "C" char* func_80136190(const void*, const void*, int);
+extern "C" char* func_8013639C(const void*, const void*, int);
 extern "C" void func_80144410(void* self);

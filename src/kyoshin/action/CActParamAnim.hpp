@@ -64,13 +64,25 @@ struct CActParamAnimStateView {
     u32 field3B4;               // +0x3B4
     u32 field3B8;               // +0x3B8
     u32 field3BC;               // +0x3BC
-    u8 _pad_3C0[4];             // +0x3C0
+    f32 field3C0;               // +0x3C0
     f32 field3C4;               // +0x3C4
-    u8 _pad_3C8[0x3CC - 0x3C8]; // +0x3C8..+0x3CB
+    f32 field3C8;               // +0x3C8
     f32 field3CC;               // +0x3CC (anim direction x, func_8004E9EC)
-    u8 _pad_3D0[0x3D4 - 0x3D0]; // +0x3D0..+0x3D3
+    f32 field3D0;               // +0x3D0 (anim direction y)
     f32 field3D4;               // +0x3D4 (anim direction z, func_8004E9EC)
-    u8 _pad_3D8[0x430 - 0x3D8]; // +0x3D8..+0x42F
+    f32 field3D8;               // +0x3D8
+    f32 field3DC;               // +0x3DC
+    f32 field3E0;               // +0x3E0
+    f32 field3E4;               // +0x3E4
+    f32 field3E8;               // +0x3E8
+    f32 field3EC;               // +0x3EC
+    f32 field3F0;               // +0x3F0 (stored anim offset x)
+    f32 field3F4;               // +0x3F4
+    f32 field3F8;               // +0x3F8
+    f32 field3FC;               // +0x3FC (ground normal x)
+    f32 field400;               // +0x400
+    f32 field404;               // +0x404
+    u8 _pad_408[0x430 - 0x408]; // +0x408..+0x42F
     f32 field430;               // +0x430
     f32 field434;               // +0x434
     u8 _pad_438[0x440 - 0x438]; // +0x438..+0x43F
@@ -272,18 +284,88 @@ extern "C" int func_80485464(u8* object, u32 param);
 extern "C" u32 func_80054170(u8* data, u32* out, u32 param, u32 byte, u32 flag);
 extern "C" u32 func_80054614(u8* data, u32* out, u32 param, u32 flag, u32 zero);
 extern "C" int func_80054A24(u8* data, u32 param);
-// C-linkage callees for func_8004CF00 (retail names, keep verbatim).
-extern "C" void func_80053F7C(void* data, f32 a, f32 b);
 extern "C" void func_80055EE4(void* data);
 extern "C" void func_80054A3C(void* data);
 extern "C" void func_80055F08(void* data);
 extern "C" void func_8004C608(void* self);
 extern "C" void func_8004CC8C(void* self);
+extern "C" void func_80055AC4(void* data);
 extern "C" f32 func_80496288(void* obj);
 extern "C" void func_80484E5C(void* self, f32 value);
 extern "C" int func_804BE398(void* vec, u32 a, u32 b, u32 c, f32 d, f32 e);
 extern "C" void func_804BE4B4(void* out, int a);
 extern "C" void func_804BE4E0(void* out, int a);
+
+// Vtable-view for the +0x14 dispatch on the object returned by
+// func_8004B51C in func_80051CD4 (third user virtual after two RTTI slots).
+struct CActParamAnimObjVt14 {
+    virtual int f00();
+    virtual int f01();
+    virtual int f02();
+    virtual int f14();  // +0x14
+};
+
+// Vtable-view for the +0xE8 dispatch in func_80052934 (56 filler user
+// virtuals after two RTTI slots, then the dispatch target).
+struct CActParamAnimVtE8 {
+    virtual int f00();
+    virtual int f01();
+    virtual int f02();
+    virtual int f03();
+    virtual int f04();
+    virtual int f05();
+    virtual int f06();
+    virtual int f07();
+    virtual int f08();
+    virtual int f09();
+    virtual int f10();
+    virtual int f11();
+    virtual int f12();
+    virtual int f13();
+    virtual int f14();
+    virtual int f15();
+    virtual int f16();
+    virtual int f17();
+    virtual int f18();
+    virtual int f19();
+    virtual int f20();
+    virtual int f21();
+    virtual int f22();
+    virtual int f23();
+    virtual int f24();
+    virtual int f25();
+    virtual int f26();
+    virtual int f27();
+    virtual int f28();
+    virtual int f29();
+    virtual int f30();
+    virtual int f31();
+    virtual int f32();
+    virtual int f33();
+    virtual int f34();
+    virtual int f35();
+    virtual int f36();
+    virtual int f37();
+    virtual int f38();
+    virtual int f39();
+    virtual int f40();
+    virtual int f41();
+    virtual int f42();
+    virtual int f43();
+    virtual int f44();
+    virtual int f45();
+    virtual int f46();
+    virtual int f47();
+    virtual int f48();
+    virtual int f49();
+    virtual int f50();
+    virtual int f51();
+    virtual int f52();
+    virtual int f53();
+    virtual int f54();
+    virtual int f55();
+    virtual int dispatchE8(const ml::CVec3* v);  // +0xE8
+};
 
 // Cast-only interface for the owner object at +0x08: MWCC places the first
 // user virtual at vt+0x08 (two RTTI entries at vt+0x00/0x04), so the 4th
@@ -574,9 +656,7 @@ extern "C" void __dl__FPv(void* object);
 extern "C" void* func_8048315C(void* object);
 extern "C" void func_8004B9D4(CActParamAnim* self, u32, u32, s32, u32);
 extern "C" void func_8004BDCC(CActParamAnim* self, u32 a, u32 b, u32 c, u32 d);
-extern "C" void func_80053B24(void* a, void* b, void* c, void* d, void* e);
-extern "C" bool func_80055B88(void* data);
-extern "C" void func_80055AC4(void* data);
+extern "C" void func_8004CC8C(void* self);
 extern "C" u32 func_804BD94C(void* a, void* b, u32 c, u32 d, u32 e, u32 f,
                               f32 g, f32 h, f32 i, f32 j, f32 k);
 extern "C" {
@@ -625,6 +705,7 @@ extern const float lbl_eu_80665EC8; // (func_8004CC8C)
 extern const float lbl_eu_80665EDC; // (func_8004ECF4/FFBC speed limit scale)
 extern const float lbl_eu_80665EE0; // (func_8004CC8C: anim blend threshold)
 extern float lbl_eu_80665F3C;
+extern float lbl_eu_80665F4C;
 extern float lbl_eu_80665F50;
 extern float lbl_eu_80665F54;
 extern const float lbl_eu_80665F14; // (func_80053490 acos-angle epsilon)
@@ -634,6 +715,47 @@ extern float lbl_eu_80665F70;
 extern float lbl_eu_8066A1F8; // pi (angle wrap, func_8004BC28)
 extern float lbl_eu_8066A1FC; // two*pi (angle wrap, func_8004BC28)
 extern const float lbl_eu_8066A20C; // angle gate scale (func_80050F5C / func_800512A8) - const to match CfObjectModel.hpp's declaration (MWCC rejects const/non-const redeclaration)
+
+// Same-TU helpers called from func_80052934.
+void func_800504DC(CActParamAnim* self);
+void func_80053198(CActParamAnim* self, const ml::CVec3* v);
+
+// C-linkage imports used by func_80051CD4 / func_80052934.
+extern "C" void func_8004B344(CActParamAnim* self);
+extern "C" int func_8004CC80();
+extern "C" int func_80052540(CActParamAnim* self);
+extern "C" f32 func_8004B7B8(CActParamAnim* self);
+extern "C" f32 func_8005254C(CActParamAnim* self);
+extern "C" f32 func_8004B61C(CActParamAnim* self);
+extern "C" void* func_8004B51C(CActParamAnim* self);
+extern "C" int func_8004B3D8(u32* flags, u32 mask);
+extern "C" int func_8004B694(u32* flags, u32 mask);
+extern "C" f32 func_80052554(void* obj);
+extern "C" int func_80052568(void* data);
+extern "C" void func_8004B79C(f32* out, const f32* src);
+extern "C" void func_8004B3F0(f32* dst, const f32* src);
+extern "C" void func_8004B60C(void* out, f32 a, f32 b, f32 c);
+extern "C" void func_8004B0B4(void* q);
+extern "C" void func_8004B0B0(void* q);
+extern "C" f32 func_8004CC40(f32 a, f32 b);
+extern "C" void func_8004B5F0(void* dstObj, const f32* srcVec);
+extern "C" void* func_800527B0(void* self, const void* a, const void* b);
+void func_80052584(Quaternion* out, const Vec* a, const Vec* b);
+void func_800526C0(Quaternion* out, const Vec* axis, f32 angle);
+extern "C" Quaternion* func_8005274C(Quaternion* self, const Quaternion* param);
+extern "C" void func_80052780(void* self, void* src);
+extern "C" f32 func_80484EB0(u8* obj);
+// Global-scope C++ declaration: mangles to the retail symbol func_804BC9EC__Fv.
+int func_804BC9EC();
+extern "C" int func_804BCC10();
+
+// Extra sdata2/sdata float constants.
+extern const float lbl_eu_80665F58;
+extern const float lbl_eu_80665F60;
+extern const float lbl_eu_80665F64;
+extern const float lbl_eu_80665F68;
+extern float lbl_eu_8066A200;
+extern float lbl_eu_8066AF20;
 
 // nw4r debug strings used by the FSqrt-style assert (file/msg pair).
 extern const char lbl_eu_80526324[];

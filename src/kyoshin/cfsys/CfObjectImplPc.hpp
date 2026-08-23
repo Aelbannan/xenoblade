@@ -206,6 +206,10 @@ struct CfObjectImplPc27C {
 // +0x08, embedded sub-object at +0x3E9C, ids at +0x3F10 / +0x3F28, flags at
 // +0x3F2C, sub-object at +0x3F60, byte at +0x45B0. Vtable slots 0x27C and
 // 0x2C4 are called by this TU. Never instantiated, so no vtable is emitted.
+// Result of the battle object's vtable slot 0x2F4 (#187): s16 offset at
+// +0x02 (indexes a byte table starting at +0x04) and an f32 scale at +0x10.
+struct CfObjectImplPc2F4;
+
 class CfObjectImplPc18 {
 public:
     virtual void v08() = 0;          // index 0
@@ -384,6 +388,23 @@ public:
     virtual void v2BC() = 0;         // index 173
     virtual void v2C0() = 0;         // index 174
     virtual void vf2C4(u8* obj, f32 a, f32 b, f32 c) = 0;  // index 175 -> 0x2C4
+    virtual void w2C8() = 0;         // 176 -> 0x2C8
+    virtual void w2CC() = 0;         // 177 -> 0x2CC
+    virtual void w2D0() = 0;         // 178 -> 0x2D0
+    virtual void w2D4() = 0;         // 179 -> 0x2D4
+    virtual void w2D8() = 0;         // 180 -> 0x2D8
+    virtual void w2DC() = 0;         // 181 -> 0x2DC
+    virtual void w2E0() = 0;         // 182 -> 0x2E0
+    virtual void w2E4() = 0;         // 183 -> 0x2E4
+    virtual void w2E8() = 0;         // 184 -> 0x2E8
+    virtual void w2EC() = 0;         // 185 -> 0x2EC
+    virtual void w2F0() = 0;         // 186 -> 0x2F0
+    virtual CfObjectImplPc2F4* vf2F4() = 0;  // 187 -> 0x2F4
+    virtual void w2F8() = 0;         // 188 -> 0x2F8
+    virtual void vf2FC(s32 a) = 0;   // 189 -> 0x2FC
+    virtual void w300() = 0;         // 190 -> 0x300
+    virtual void vf304(u32 a) = 0;   // 191 -> 0x304
+    virtual u32 vf308() = 0;         // 192 -> 0x308
 
     CfObjectImplPcBattle4* field_04; // 0x04
     u8 field_08;                     // 0x08 arts container base (func_80148778 operates on &+0x8)
@@ -506,6 +527,25 @@ public:
 
 } // namespace cf
 
+// Result of the battle object's vtable slot 0x2F4 (#187): s16 offset at
+// +0x02 (indexes a byte table starting at +0x04) and an f32 scale at +0x10.
+struct CfObjectImplPc2F4 {
+    u8 _pad00[0x02];
+    s16 field_02;
+    u8 _pad04[0x10 - 0x04];
+    f32 field_10;
+};
+
+// Event record passed as arg2 to func_800C9A20 / func_800CAB30:
+// u16 event id at +0x0C, u16 gate at +0x2E, flag word at +0x30 (bit 30).
+struct CfObjectImplPcEvt {
+    u8 _pad00[0x0C];
+    u16 field_0C;
+    u8 _pad0E[0x2E - 0x0E];
+    u16 field_2E;
+    u32 field_30;
+};
+
 // ---------------------------------------------------------------------------
 // C-ABI imports (retail symbol names - keep linkage/signatures verbatim)
 // ---------------------------------------------------------------------------
@@ -533,6 +573,14 @@ int func_80174C98(u8* actor, u32* outId, u32 flags);
 void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
 void func_800CB9AC(u8* self, u32 param);
 u8* __ct__cf_CPcEffect07(u8* obj, u8* actor);
+int func_80145F78(int id);
+int func_80145C00(int val);
+void func_800F3970(void* mgr, void* obj, s32 a, s32 id, s32 b);
+bool func_802799F0(void* chain, void* obj);
+bool func_80260264(void* obj, s32 idx, s32* out);
+void func_800BF29C(void* sub, u32 a, f32 b, u32 c, f32 d, u32 e);
+void func_8018C820(void* obj, int value);
+void func_800CAB30(cf::CfObjectImplPc* self, CfObjectImplPcEvt* evt);
 }
 
 // C++-mangled imports (plain declarations let MWCC append the retail
@@ -541,9 +589,11 @@ bool func_8006EF04(int mask);                      // func_8006EF04__Fi
 cf::CfObjectImplPc18* func_800BFC68(cf::CfObjectMove* objMove);  // func_800BFC68__FPQ22cf12CfObjectMove
 // (func_800B708C__Fi is declared by kyoshin/cf/CfSoundMan.hpp)
 
-// sdata2 float constants used by func_800CA294 / func_800C86E8.
+// sdata2 constants used by func_800CA294 / func_800C86E8 / func_800C9A20.
 extern f32 lbl_eu_80666BC8;
 extern f32 lbl_eu_80666BCC;
+extern f32 lbl_eu_80666BF8;
+extern f64 lbl_eu_80666BD8;
 
 // String table (rodata) referenced by func_800CA458 (substring at +0x3B).
 extern char lbl_eu_804FC758[];

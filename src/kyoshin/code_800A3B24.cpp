@@ -568,8 +568,7 @@ int func_800A4C48(ColObjIf* self, const ml::CVec3& a, const ml::CVec3& b, ml::CV
         }
         if (zero) {
             // Coincident centers: retry from the object's reference point.
-            ml::CVec3* pos = self->_v0AC();
-            nw4r::math::VEC3Sub(d2Tmp, *pos, self->mRef);
+            nw4r::math::VEC3Sub(d2Tmp, *self->_v0AC(), self->mRef);
             d2.set(d2Tmp);
             nw4r::math::VEC3Sub(d3Tmp, d2, closest);
             d3.set(d3Tmp);
@@ -692,17 +691,21 @@ bool func_800A5488(const ml::CVec3& a, const ml::CVec3& b, ml::CVec3* out, float
     // overlap; when they do and out is non-null, out = a pushed to the far
     // side of b along the (normalised) centre-to-centre direction.
     if (out != 0) *out = a;
-    ml::CVec3 dir;         // centre-to-centre direction (a - b)
-    nw4r::math::VEC3 dTmp; // d = b - a sub temp
-    nw4r::math::VEC3 d;    // b - a
-    nw4r::math::VEC3 dirTmp;
-    nw4r::math::VEC3Sub(&dTmp, b, a);
-    d = dTmp;
-    float len2 = nw4r::math::VEC3Dot(&d, &d);
+    ml::CVec3 dir;     // centre-to-centre direction (a - b)
+    ml::CVec3 dTmp;    // d = b - a sub temp
+    ml::CVec3 d;       // b - a
+    ml::CVec3 dirTmp;
+    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&dTmp,
+                        (const nw4r::math::VEC3*)&b,
+                        (const nw4r::math::VEC3*)&a);
+    d.set(dTmp);
+    float len2 = ml::CVec3::dot(d, d);
     bool overlap = len2 <= (r2 + r1) * (r2 + r1);
     if (overlap) {
         if (out != 0) {
-            nw4r::math::VEC3Sub(&dirTmp, a, b);
+            nw4r::math::VEC3Sub((nw4r::math::VEC3*)&dirTmp,
+                                (const nw4r::math::VEC3*)&a,
+                                (const nw4r::math::VEC3*)&b);
             dir.x = dirTmp.x;
             dir.y = dirTmp.y;
             dir.z = dirTmp.z;
@@ -733,7 +736,7 @@ bool func_800A5488(const ml::CVec3& a, const ml::CVec3& b, ml::CVec3* out, float
             if (!zero) {
                 // normalizeSub() inlined: exact-zero check, then PSVECNormalize.
                 if (dir.x * dir.x + dir.y * dir.y + dir.z * dir.z == lbl_eu_806667D8) {
-                    dir.setZero();
+                    dir = ml::CVec3::zero;
                 } else {
                     PSVECNormalize(dir, dir);
                 }
@@ -751,7 +754,6 @@ int func_800A5738(ColObjIf* self, ml::CVec3* point, float radius, ml::CVec3* out
     // d = pos + (0,1,0), radius 0.25 + radius) when it is inside, writing the
     // pushed position to out. Returns whether the point was inside the sphere.
     // Full-3D variant of func_800A50AC (no XZ flattening).
-    ml::CVec3 d;
     ml::CVec3 dir;
     ml::CVec3 d2;
     ml::CVec3 d3;
@@ -762,12 +764,14 @@ int func_800A5738(ColObjIf* self, ml::CVec3* point, float radius, ml::CVec3* out
     ml::CVec3 d2Tmp;
     ml::CVec3 d3Tmp;
     ml::CVec3 tAdd;
-    d.set(*self->_v0AC());
+    ml::CVec3 d(*self->_v0AC());
     if (out != 0) *out = d;
     d.y += lbl_eu_806667E8;
+    // Retail computes the squared test radius before the subtraction.
+    float R = radius + lbl_eu_806667FC;
     nw4r::math::VEC3Sub(&dvTmp, *point, d);
     dv = dvTmp;
-    bool cond = nw4r::math::VEC3Dot(&dv, &dv) <= (radius + lbl_eu_806667FC) * (radius + lbl_eu_806667FC);
+    bool cond = nw4r::math::VEC3Dot(&dv, &dv) <= R * R;
     if (cond && out != 0) {
         nw4r::math::VEC3Sub(dirTmp, d, *point);
         dir.set(dirTmp);

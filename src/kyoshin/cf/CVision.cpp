@@ -4,6 +4,9 @@
 #include <types.h>
 #include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
 #include <new>
+// Forward decl: CfGameManager.hpp's `static cf::CfGameManager* init(...)` relies
+// on the class name being declared before its include chain is entered.
+namespace cf { class CfGameManager; }
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CVision.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
@@ -32,13 +35,30 @@ extern "C" void* __dt__801A36D0(cf::UnkClass_801A36D0* self, int deleting);
 // two headers are pre-included under a rename and CVision.cpp keeps its
 // (int id) declaration.
 #define func_8049603C visionCppCamView
+// CSuddenCommu.hpp declares getInstance__Q22cf14CBattleManagerFv as void*, which
+// now conflicts with the CBattleManagerView* declaration in the chain headers.
+// This TU never calls it, so rename it out of the way (CMenuBattleMode idiom).
+#define getInstance__Q22cf14CBattleManagerFv visionCppBmGetInstanceUnused
 #include "kyoshin/cf/CSuddenCommu.hpp"
+#undef getInstance__Q22cf14CBattleManagerFv
 #undef func_8049603C
 #define func_8016FE34 visionCppChainActorLookup
+#define getInstance__Q22cf14CBattleManagerFv visionCppBmGetInstanceUnused
+// CAIAction.hpp declares func_80174C98 as void(const void*,void*,int), which
+// conflicts with CSuddenCommu.hpp's int(void*,int*,int) form (MWCC 10197).
+// This TU uses the CSuddenCommu form; rename the other out of the way.
+#define func_80174C98 visionCppAiActionGateUnused
+// Same for its func_800BE12C void*-form vs the u8*-form used by this TU.
+#define func_800BE12C visionCppAiActionMoveUnused
 #include "kyoshin/cf/object/CAIAction.hpp"
+#undef func_800BE12C
+#undef func_80174C98
+#undef getInstance__Q22cf14CBattleManagerFv
 #undef func_8016FE34
 #define func_8016FE34 visionCppChainTimerActorLookup
+#define getInstance__Q22cf14CBattleManagerFv visionCppBmGetInstanceUnused2
 #include "kyoshin/cf/chain/CChainTimer.hpp"
+#undef getInstance__Q22cf14CBattleManagerFv
 #undef func_8016FE34
 #include "kyoshin/cf/CBattleManager.hpp"
 
@@ -297,10 +317,11 @@ extern "C" void* __ct__801A33AC(CVisionSlot* self) {
         memset(q, 0, 0x20);
         q += 0x20;
     } while (q < qEnd);
+    u32 zeroW = 0;
     self->field_3F98 = 0x10;
     self->field_3F8C = (u32)self->unk3D8C;
-    self->field_3F94 = 0;
-    self->field_3F90 = 0;
+    self->field_3F94 = zeroW;
+    self->field_3F90 = zeroW;
     memset(self->unk3FA0, 0, 0xe);
     memset(self->unk3F9C, 0, 0x20);
     // Item array: retail hoists one sdata2 zero load into a saved FPR.
@@ -309,7 +330,7 @@ extern "C" void* __ct__801A33AC(CVisionSlot* self) {
     CVisionInitBlock* ipEnd = ip + 10;
     do {
         CVisionInitBlock& it = *ip;
-        it.w_74 = 0;
+        it.w_74 = zeroW;
         for (u32* wp = &it.w_78; wp < &it.w_7C; wp++) *wp = 0;
         it.w_00 = 0;
         it.w_04 = 0;
@@ -325,12 +346,12 @@ extern "C" void* __ct__801A33AC(CVisionSlot* self) {
         it.h_70 = 0; it.h_72 = 0;
         memset(it.unk_08, 0, 0x40);
         memset(it.unk_84, 0, 0x34);
-        it.w_74 = 0;
+        it.w_74 = zeroW;
         it.w_78 = 0;
         ip++;
     } while (ip < ipEnd);
     CVisionInitBlock& b = self->block4720;
-    b.w_74 = 0;
+    b.w_74 = zeroW;
     for (u32* wp = &b.w_78; wp < &b.w_7C; wp++) *wp = 0;
     f32 zeroBlock = lbl_eu_80667CD4;
     b.w_00 = 0;
@@ -347,8 +368,8 @@ extern "C" void* __ct__801A33AC(CVisionSlot* self) {
     b.h_70 = 0; b.h_72 = 0;
     memset(&b.unk_08, 0, 0x40);
     memset(&b.unk_84, 0, 0x34);
-    b.w_74 = 0;
-    b.w_78 = 0;
+    b.w_74 = zeroW;
+    b.w_78 = zeroW;
     func_80174658(self->unk47EC);
     // Slot tail resets (retail store order: f_15E8, h_15EE, h_15EC, ...).
     f32 zeroTail = lbl_eu_80667CD4;
@@ -413,18 +434,31 @@ void func_801A380C(CVision* self) {
     }
 }
 
-// us-801a50f8: Drive the vision-slot FX update loop from the element array.
+// ---------------------------------------------------------------------------
+// us-801a50f8: Drive the vision-slot FX update loop from the ring element
+// array (retail func_801A39D8). Each queued element decays by kDecay * frame
+// time; expired entries raise the matching flag bit on the vision sub-object
+// and are removed from the ring (shifting toward whichever end is closer),
+// then the installed callback is dispatched and its fade progress advanced.
+// ---------------------------------------------------------------------------
 void func_801A39D8(CVision* self) {
-    CVisionSub* sub = (self->sub.field_00 != 0) ? &self->sub : 0;
+    CVisionSub* sub;
+    if (self->sub.field_00 == 0) {
+        sub = 0;
+    } else {
+        sub = &self->sub;
+    }
     if (sub == 0) {
-        if (*(u32*)((u8*)self + 0x23d4) != 0) {
-            *(u32*)((u8*)self + 0x23d4) = 0;
-            *(u32*)((u8*)self + 0x23d0) = 0;
+        // Null path re-addresses the tail block inline.
+        CVisionRingBase* Rn = (CVisionRingBase*)((u8*)self + 0x20000);
+        if (Rn->ring.field_68 != 0) {
+            Rn->ring.field_68 = 0;
+            Rn->ring.field_64 = 0;
         }
-        if (__ptmf_test(&self->mPtmf) != 0) {
+        if (__ptmf_test(&Rn->mPtmf) != 0) {
             self->vt_1C();
         }
-        *(u8*)((u8*)self + 0x23ac) = 0;
+        Rn->b_61A4 = 0;
         return;
     }
     getInstance__Q22cf13CfGameManagerFv();
@@ -435,36 +469,95 @@ void func_801A39D8(CVision* self) {
     if (CfRes_getE24Bit22() != 0) {
         return;
     }
-    f32 f30 = lbl_eu_80667CDC;
-    f32 f31 = lbl_eu_80667CD4;
-    for (u32 i = 0;; i++) {
-        u32 v28 = *(u32*)((u8*)self + 0x23d0);
-        u32 v30 = *(u32*)((u8*)self + 0x23d8);
-        u32 base = *(u32*)((u8*)self + 0x23cc);
-        u32 idx = (v28 + i) / v30;
-        u32 rem = (v28 + i) - idx * v30;
-        if (*(u32*)base != idx) {
-            // nop -- retail just reads the element base via the divwu index
+
+    // Retail addresses the CVision tail fields through a base pointer anchored
+    // at +0x20000 (kept live in a saved GPR across the whole function).
+    CVisionRingBase* R = (CVisionRingBase*)((u8*)self + 0x20000);
+    // Cached per-frame constants: decay step and the zero threshold.
+    f32 kDecay = lbl_eu_80667CDC;
+    f32 zero = lbl_eu_80667CD4;
+    u32 i = 0;
+    while (i < R->ring.field_68) {
+        // Ring slot for element i, offset by the write cursor field_64.
+        CVisionU32F32U32* el =
+            &((CVisionU32F32U32*)R->ring.w60)[(R->ring.field_64 + i) % R->ring.w6C];
+        el->b -= kDecay * func_80496288(lbl_eu_80663E14);
+        if (el->b > zero) {
+            i++;
+            continue;
         }
-        // ... (elided middle: per-element switch calling func_801AD504)
-        func_80496288((void*)lbl_eu_80663E14);
-        break;
+        switch (el->a) {
+        case 1: func_801AD504(1); sub->field_824 |= 0x20; break;
+        case 2: func_801AD504(2); sub->field_824 |= 0x40; break;
+        case 3: func_801AD504(4); sub->field_824 |= 0x80; break;
+        case 4: func_801AD504(8); sub->field_824 |= 0x100; break;
+        case 5: func_801AD504(0x10); sub->field_824 |= 0x200; break;
+        }
+        CVisionU32F32U32 cur = *el;
+        // Freshly read after the calls above (they may repoint the ring).
+        CVisionU32F32U32* es = (CVisionU32F32U32*)R->ring.w60;
+        int cnt = R->ring.field_68;
+        int cursor = R->ring.field_64;
+        int n = R->ring.w6C;
+        R->ring.field_68 = cnt - 1;
+        if ((int)i >= (cnt - 1) / 2) {
+            // Element sits past the midpoint: shift the tail left over it.
+            for (int j = i; j < cnt - 1; j++) {
+                es[(cursor + j) % n] = es[(cursor + j + 1) % n];
+            }
+        } else {
+            // Element before the midpoint: shift the head right over it.
+            for (int k = i - 1; k >= 0; k--) {
+                es[(cursor + k) % n] = es[(cursor + k + 1) % n];
+            }
+        }
+        (void)cur;
+        R->ring.field_64 = (cursor + 1) % n;
+        continue;
     }
-    // ... (elided rest)
-    if (*(u32*)((u8*)self + 0x23d0) == 0) {
-        for (int i = 0; i < 3; i++) {
-            void* p = func_8016FE34((int)getPlayer__Q22cf13CfGameManagerFi(i));
+
+    if (__ptmf_test(&R->mPtmf) != 0) {
+        f32 step = kDecay * func_80496288(lbl_eu_80663E14);
+        R->f_6198 = R->f_6194;
+        R->f_6194 += step;
+
+        // Dispatch the installed member callback (retail __ptmf_scall).
+        typedef void (CVision::*VisionCb)();
+        (self->*(*reinterpret_cast<const VisionCb*>(&R->mPtmf)))();
+
+        // When the callback is the fade-out entry, play a sound each time the
+        // fade timer crosses an integer boundary.
+        CVisionPtmf chk;
+        chk.mPfn = lbl_eu_80533128[0x60 / 4];
+        chk.mObj = lbl_eu_80533128[0x64 / 4];
+        chk.mDelta = lbl_eu_80533128[0x68 / 4];
+        if (__ptmf_cmpr(&R->mPtmf, &chk) == 0) {
+            if ((int)R->f_6198 != (int)R->f_6194) {
+                func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c1, 0, 0,
+                                                           lbl_eu_80667CE0);
+            }
+        }
+        if (R->f_61A0 != R->f_6194) {
+            R->f_619C += step;
+        }
+    }
+
+    CVisionSub* subEnd = (self->sub.field_00 != 0) ? &self->sub : 0;
+    if (subEnd == 0) {
+        for (int pi = 0; pi < 3; pi++) {
+            CVisionFusion* p =
+                (CVisionFusion*)func_8016FE34((int)getPlayer__Q22cf13CfGameManagerFi(pi));
             if (p != 0) {
-                *(u16*)((u8*)p + 0x3388) &= 0xfff7;
+                p->field_3388 &= ~0x8u;
             }
         }
         CVisionPtmf cb;
         cb.mPfn = __ptmf_null[0];
         cb.mObj = __ptmf_null[1];
         cb.mDelta = __ptmf_null[2];
-        self->mPtmf = cb;
-        self->field_2619C = lbl_eu_80667CD4;
-        self->field_261A0 = self->field_26194;
+        R->mPtmf = cb;
+        R->f_619C = zero;
+        R->f_61A0 = R->f_6194;
         __ptmf_test(&cb);
     }
 }
@@ -941,7 +1034,7 @@ void func_801A506C(CVision* self) {
 }
 
 void func_801A5260(CVision* self) {
-    // Materialized timer-window checks (retail evaluates both into r0).
+    // Materialized timer-window checks (retail evaluates each into r0).
     int w1;
     if (self->field_26198 - self->field_261A0 <= lbl_eu_80667D04 &&
         lbl_eu_80667D04 < self->field_26194 - self->field_261A0) {
@@ -960,14 +1053,12 @@ void func_801A5260(CVision* self) {
         w2 = 0;
     }
     if (w2) {
+        // Retail walks the triplet with an updating load (lwzu).
         CVisionPtmf cb;
-        u32* p = lbl_eu_8053317C;
-        u32 v0 = *p++;
-        u32 v1 = *p++;
-        u32 v2 = *p++;
-        cb.mPfn = v0;
-        cb.mObj = v1;
-        cb.mDelta = v2;
+        u32* src = &lbl_eu_8053317C[0];
+        cb.mPfn = *src++;
+        cb.mObj = *src++;
+        cb.mDelta = *src;
         self->mPtmf = cb;
         self->field_2619C = lbl_eu_80667CD4;
         self->field_261A0 = self->field_26194;
@@ -976,13 +1067,28 @@ void func_801A5260(CVision* self) {
 }
 
 void func_801A5360(CVision* self) {
+    // Materialized timer-window checks (retail evaluates each into r0).
+    int w1;
     if (self->field_26198 - self->field_261A0 <= lbl_eu_80667CD4 &&
-        self->field_26194 - self->field_261A0 > lbl_eu_80667CD4) {
-        func_800EA484(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x10);
-        func_800EA484(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x24);
+        lbl_eu_80667CD4 < self->field_26194 - self->field_261A0) {
+        w1 = 1;
+    } else {
+        w1 = 0;
     }
+    if (w1) {
+        func_800EA484((CBattleManager*)getInstance__Q22cf14CBattleManagerFv(),
+                      lbl_eu_80667CF0, 0x10);
+        func_800EA484((CBattleManager*)getInstance__Q22cf14CBattleManagerFv(),
+                      lbl_eu_80667CF0, 0x24);
+    }
+    int w2;
     if (self->field_26198 - self->field_261A0 <= lbl_eu_80667D10 &&
-        self->field_26194 - self->field_261A0 > lbl_eu_80667D10) {
+        lbl_eu_80667D10 < self->field_26194 - self->field_261A0) {
+        w2 = 1;
+    } else {
+        w2 = 0;
+    }
+    if (w2) {
         self->vt_1C();
     }
 }
@@ -1158,10 +1264,8 @@ void func_801A5BA8(CVision* self) {
         self->field_26194 - self->field_261A0 > lbl_eu_80667CD4 &&
         ((diff != 0 || result < 0) ||
          ((s32)((s32(*)(void*))((void**)p)[0x2BC / 4])(p) != 0))) {
-        CVisionPtmf cb;
-        cb.mPfn = lbl_eu_805331C4[0];
-        cb.mObj = lbl_eu_805331C4[1];
-        cb.mDelta = lbl_eu_805331C4[2];
+        // Retail copies the 12-byte callback triplet as a struct.
+        CVisionPtmf cb = lbl_eu_805331C4;
         self->mPtmf = cb;
         self->field_2619C = lbl_eu_80667CD4;
         self->field_261A0 = self->field_26194;
@@ -1231,10 +1335,8 @@ void func_801A5E58(CVision* self) {
         w2 = 0;
     }
     if (w2) {
-        CVisionPtmf cb;
-        cb.mPfn = lbl_eu_805331D0[0];
-        cb.mObj = lbl_eu_805331D0[1];
-        cb.mDelta = lbl_eu_805331D0[2];
+        // Retail copies the 12-byte callback triplet as a struct.
+        CVisionPtmf cb = lbl_eu_805331D0;
         self->mPtmf = cb;
         self->field_2619C = lbl_eu_80667CD4;
         self->field_261A0 = self->field_26194;
@@ -1298,10 +1400,8 @@ void func_801A60B0(CVision* self) {
         w3 = 0;
     }
     if (w3) {
-        CVisionPtmf cb;
-        cb.mPfn = lbl_eu_805331DC[0];
-        cb.mObj = lbl_eu_805331DC[1];
-        cb.mDelta = lbl_eu_805331DC[2];
+        // Retail copies the 12-byte callback triplet as a struct.
+        CVisionPtmf cb = lbl_eu_805331DC;
         self->mPtmf = cb;
         self->field_2619C = lbl_eu_80667CD4;
         self->field_261A0 = self->field_26194;
@@ -1355,7 +1455,7 @@ void func_801A6340(CVision* self) {
 void func_801A897C(CVision* self, void* slot, void* r28) {
     if (slot != 0) {
         getInstance__Q22cf13CfGameManagerFv();
-        if (func_8006EF04__Fi(0x400) != 0) {
+        if (func_8006EF04__Fi(0x4000000) != 0) {
             return;
         }
         CVisionBtlSlot* bs = (CVisionBtlSlot*)func_800EA444(CBattleManager::getInstance());
@@ -1574,7 +1674,19 @@ void func_801A6540(CVision* self) {
     if (func_8014B8BC(&fu->field_3380, &p) == 0) {
         func_801537E0(&fu->field_3380);
         func_800EA484(CBattleManager::getInstance(), lbl_eu_80667CF0, 0x13);
-        // ... (FX-callback install continues in the elided retail middle)
+        // Install the lbl_eu_805331E8 callback with the fader fields reset.
+        CVisionPtmf cb;
+        cb.mPfn = lbl_eu_805331E8[0];
+        cb.mObj = lbl_eu_805331E8[1];
+        cb.mDelta = lbl_eu_805331E8[2];
+        f32 f_6194 = self->field_26194;
+        f32 f_cd4 = lbl_eu_80667CD4;
+        self->mPtmf.mPfn = cb.mPfn;
+        self->mPtmf.mObj = cb.mObj;
+        self->mPtmf.mDelta = cb.mDelta;
+        self->field_2619C = f_cd4;
+        self->field_261A0 = f_6194;
+        __ptmf_test(&cb);
     }
 }
 
@@ -1605,12 +1717,21 @@ int func_801A6A7C(CVision* self, CVisionObj* obj) {
         return 0;
     }
     CVisionPtmf cb;
-    cb.mPfn = lbl_eu_80533200[0];
-    cb.mObj = lbl_eu_80533200[1];
-    cb.mDelta = lbl_eu_80533200[2];
-    self->mPtmf = cb;
-    self->field_2619C = lbl_eu_80667CD4;
-    self->field_261A0 = self->field_26194;
+    u32* src = &lbl_eu_80533200[0];
+    u32 dlt, t1, t2;
+    t1 = *src++;
+    t2 = *src++;
+    dlt = *src++;
+    cb.mPfn = t1;
+    cb.mObj = t2;
+    cb.mDelta = dlt;
+    f32 f_6194 = self->field_26194;
+    f32 f_cd4 = lbl_eu_80667CD4;
+    self->mPtmf.mPfn = t1;
+    self->mPtmf.mObj = t2;
+    self->mPtmf.mDelta = cb.mDelta;
+    self->field_2619C = f_cd4;
+    self->field_261A0 = f_6194;
     __ptmf_test(&cb);
     return 1;
 }
@@ -1635,7 +1756,7 @@ int func_801A6BCC(CVision* self, CVisionObj* obj, CVisionObj* r5) {
         return 0;
     }
     getInstance__Q22cf13CfGameManagerFv();
-    if (func_8006EF04__Fi(0x40000) != 0) {
+    if (func_8006EF04__Fi(0x4) != 0) {
         return 0;
     }
     getInstance__Q22cf13CfGameManagerFv();
@@ -1654,20 +1775,61 @@ int func_801A6BCC(CVision* self, CVisionObj* obj, CVisionObj* r5) {
         return 0;
     }
 
-    // Per-player timing check: flag whether vision should engage on a target.
+    // Active-callback gate: while a callback is installed it must not match the
+    // lbl_eu_80533218 terminal identity (the lbl_eu_8053320C identity is allowed).
+    if (__ptmf_test(&self->mPtmf) != 0) {
+        CVisionPtmf t1;
+        t1.mPfn = lbl_eu_8053320C[0];
+        t1.mObj = lbl_eu_8053320C[1];
+        t1.mDelta = lbl_eu_8053320C[2];
+        if (__ptmf_cmpr(&self->mPtmf, &t1) != 0) {
+            CVisionPtmf t2;
+            t2.mPfn = lbl_eu_80533218[0];
+            t2.mObj = lbl_eu_80533218[1];
+            t2.mDelta = lbl_eu_80533218[2];
+            if (__ptmf_cmpr(&self->mPtmf, &t2) == 0) {
+                return 0;
+            }
+        }
+    }
+
+    // Target fusion from `r5` (+4 id, +0x50 non-null requirement).
+    u32 r26 = *(u32*)((u8*)r5 + 0x50);
+    CVisionFusion* target = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(*(s32*)((u8*)r5 + 4)));
+    if (target == 0 || r26 == 0) {
+        return 0;
+    }
+    if (func_8016FE34((int)getPlayer__Q22cf13CfGameManagerFi(0)) == 0) {
+        return 0;
+    }
+
+    // Per-player damage check loop: pre-compute total damage per player; vision
+    // engages when the damage would exceed the player's max HP or drop its HP
+    // fraction below the lbl_eu_80667D4C threshold.
     int engage = 0;
-    CVisionFusion* target = 0;
-    for (int i = 0; i < 4; i++) {
+    CVisionFusion* fr = target;
+    for (int i = 0; i < 3; i++) {
         void* p = getPlayer__Q22cf13CfGameManagerFi(i);
         if (p == 0) {
             continue;
         }
-        CVisionFusion* fr = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(0));
-        f32 a = ((f32 (*)(void*))((void**)p)[0x128 / 4])(p);
-        if (a >= lbl_eu_80667CD4) {
+        f32 total = lbl_eu_80667CD4;
+        u32 hits = 0;
+        CBattleManager_preCalcTotalDamage(CBattleManager::getInstance(), p, &total, &hits);
+        if (hits == 0 || total <= lbl_eu_80667CD4) {
+            continue;
+        }
+        f32 hpMax = ((f32 (*)(void*))((void**)p)[0x128 / 4])(p);
+        if (total >= hpMax) {
             engage = 1;
         }
-        target = fr;
+        f32 hpDen = ((f32 (*)(void*))((void**)p)[0x12C / 4])(p);
+        f32 hpCur = ((f32 (*)(void*))((void**)p)[0x128 / 4])(p);
+        f32 frac = (hpCur - total) / hpDen;
+        if (frac <= lbl_eu_80667D4C) {
+            engage = 1;
+        }
+        (void)fr;
     }
     if (engage != 0) {
         if (((s32 (*)(void*, CVisionObj*, void*))((void**)self)[0x14 / 4])(self, obj, target) == 0) {
@@ -1796,14 +1958,31 @@ int func_801A70DC(CVision* self, void* obj, void* obj2) {
 // entry (retail func_801A74DC).
 // ---------------------------------------------------------------------------
 void func_801A74DC(CVision* self) {
+    u32* tbl = &lbl_eu_80533128[0];
     CVisionPtmf cb114;
-    cb114.mPfn = lbl_eu_80533128[0x45];
-    cb114.mObj = lbl_eu_80533128[0x46];
-    cb114.mDelta = lbl_eu_80533128[0x47];
-    if (__ptmf_cmpr(&self->mPtmf, &cb114) == 0) {
-        self->field_26194 = lbl_eu_80667CD4;
-        lbl_eu_80663DA0 &= 0x7E;
-        lbl_eu_80663E24 &= 0xFBFFFFFF;
+    cb114.mPfn = tbl[0x45];
+    cb114.mObj = tbl[0x46];
+    cb114.mDelta = tbl[0x47];
+    if (__ptmf_cmpr(&self->mPtmf, &cb114) != 0) {
+        // Not the 0x114 entry: branch on the 0x120 entry.
+        CVisionPtmf cb120;
+        cb120.mPfn = tbl[0x48];
+        cb120.mObj = tbl[0x49];
+        cb120.mDelta = tbl[0x4A];
+        if (__ptmf_cmpr(&self->mPtmf, &cb120) == 0) {
+            self->vt_20(0);
+        } else {
+            self->vt_20(1);
+        }
+        return;
+    }
+    // 0x114 entry matched: clear the vision field.
+    self->field_26194 = lbl_eu_80667CD4;
+        // Clear the two global state bytes/words (bit-range masks).
+        u8 da0 = lbl_eu_80663DA0;
+        lbl_eu_80663DA0 = da0 & 0x7E;
+        u32 e24 = lbl_eu_80663E24;
+        lbl_eu_80663E24 = e24 & 0xFBFFFFFF;
         CVisionSub* sub;
         if (self->sub.field_00 == 0) {
             sub = 0;
@@ -1813,41 +1992,30 @@ void func_801A74DC(CVision* self) {
         if (sub->field_824 & 0x20000) {
             func_8009D018(0x30e3, 1);
         }
-        // Per-player: fetch a stat, convert to float, push through the 0x154
-        // callback on the fusion state.
+        // Per-player: the fusion-state query runs twice (test then fetch);
+        // the stat is passed as a plain float (MWCC's int->float magic).
         int i = 0;
         do {
             void* p = func_8016FE34((int)getPlayer__Q22cf13CfGameManagerFi(i));
             if (p != 0) {
-                void* r = ((void* (*)(void*))((void**)p)[0x290 / 4])(p);
-                if (r != 0) {
+                if (((s32 (*)(void*))((void**)p)[0x290 / 4])(p) != 0) {
+                    void* r = ((void* (*)(void*))((void**)p)[0x290 / 4])(p);
                     s32 out;
                     if (func_80260264(r, 0x39, &out) != 0) {
-                        ((void (*)(void*, f32))((void**)r)[0x154 / 4])(r, (f32)(f64)out);
+                        ((void (*)(void*, f32))((void**)r)[0x154 / 4])(r, (f32)out);
                     }
                 }
             }
             i++;
         } while (i < 3);
         CVisionPtmf cb;
-        cb.mPfn = lbl_eu_80533128[0x4B];
-        cb.mObj = lbl_eu_80533128[0x4C];
-        cb.mDelta = lbl_eu_80533128[0x4D];
+        cb.mPfn = tbl[0x4B];
+        cb.mObj = tbl[0x4C];
+        cb.mDelta = tbl[0x4D];
         self->mPtmf = cb;
         self->field_2619C = lbl_eu_80667CD4;
         self->field_261A0 = self->field_26194;
         __ptmf_test(&cb);
-    } else {
-        CVisionPtmf cb120;
-        cb120.mPfn = lbl_eu_80533128[0x48];
-        cb120.mObj = lbl_eu_80533128[0x49];
-        cb120.mDelta = lbl_eu_80533128[0x4A];
-        if (__ptmf_cmpr(&self->mPtmf, &cb120) == 0) {
-            self->vt_20(0);
-        } else {
-            self->vt_20(1);
-        }
-    }
 }
 
 // us-801a8e38: Drive vision FX updates on the two sub-object fusions and on
@@ -2269,10 +2437,11 @@ void func_801A891C(int a, int b) {
 // owning CVision back-pointer (retail func_801A808C).
 // ---------------------------------------------------------------------------
 void func_801A808C(CVision* self, int index) {
-    if (self->effectArray[index] == 0) {
+    CVisionEffect** ea = self->effectArray;
+    if (ea[index] == 0) {
         CVisionEffect* eff =
             (CVisionEffect*)func_800451D8(lbl_eu_80503F60[index].field_00, 0);
-        self->effectArray[index] = eff;
+        ea[index] = eff;
         if (eff != 0) {
             eff->field_B0 = (u32)self;
         }

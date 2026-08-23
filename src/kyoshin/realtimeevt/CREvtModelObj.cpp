@@ -14,7 +14,7 @@
 
 // External function declarations
 extern "C" {
-    extern void __ct__CREvtModel(void* self);
+    extern void __ct__CREvtModel(void* self, void* pData, int flag);
     extern void __ct__80172668(void* self, int);
     extern void __dt__80185754(void* self);
     extern void func_801729F0(void* self, void* r4, void* r5);
@@ -28,6 +28,8 @@ extern "C" {
     extern int func_8016A3A8(void);
     extern int func_8016A3C4(void);
     extern void func_80168514(void* self);
+    extern void func_801832D4(void* self);
+    extern void func_801836CC(void* self, unsigned long value);
     extern int func_801683FC(void);
     extern int func_8016846C(void);
     extern void* func_80167F6C(int, int, int);
@@ -40,7 +42,7 @@ extern "C" {
     extern void func_804E3CCC(void*);
     extern void func_804E3D0C(void*, void*);
     extern void func_804E3CDC(void*, float, float);
-    extern void* func_804CC1F4(void*, u32, u32, int, int);
+    extern void* func_804CC1F4(void*, u32, u32, int, int, int);
     extern void func_804CC1BC(void*);
     extern void func_804CC1D8(void*);
     extern void* func_80495FF0(u32);
@@ -67,7 +69,7 @@ extern "C" {
 
 // External globals
 extern "C" {
-    extern u32 lbl_eu_80531FA0[];    // vtable base
+    // lbl_eu_80531FA0 declared as CREvtModelObjVtbl[] in CREvtModelObj.hpp
     extern u32 lbl_eu_80531F08[];    // extension list (strings)
     extern u32 lbl_eu_80531F1C[];     // ptmf constant
     extern u32 lbl_eu_80531F28[];     // ptmf constant
@@ -99,173 +101,150 @@ extern "C" {
 // ============================================================
 // __ct__CREvtModelObj (us-80182e64) - Constructor
 // ============================================================
-extern "C" void __ct__CREvtModelObj(void* self) {
-    char* s = (char*)self;
+extern "C" void __ct__CREvtModelObj(CREvtModelObj* self) {
+    // Base: CREvtModel constructor (mode 3 = model-object variant)
+    __ct__CREvtModel(self, 0, 3);
 
-    // Base: CREvtModel constructor
-    __ct__CREvtModel(self);
+    // Install vtable and interface pointers (primary vtbl, +0x44, +0xCC)
+    char* vt = (char*)lbl_eu_80531FA0;
+    self->vtable = vt;
+    self->mIWorkVtbl = vt + 0x44;
+    self->mOtherVtbl = vt + 0xCC;
 
-    // Set vtable and interfaces
-    u32* vtable = lbl_eu_80531FA0;
-    FLD(u32*, s, 0x00) = vtable;
-    FLD(u32*, s, 0x38) = (u32*)((char*)vtable + 0x44);
-    FLD(u32*, s, 0x3C) = (u32*)((char*)vtable + 0xCC);
+    // Initialize fields to zero (-1 for the two ids)
+    self->mFileHandle = 0;
+    self->mFileState = 0;
+    self->mAllocData = 0;
+    self->mField4C = 0;
+    self->mModelType = 0;
+    self->mRefOwner = 0;
+    self->mFileId = -1;
+    self->mResId5C = 0;
+    self->mResId60 = 0;
+    self->mFlag64 = 0;
+    self->mExtractData = 0;
+    self->mFileHandle2 = 0;
+    self->mAllocData2 = 0;
+    self->mField74 = -1;
+    self->mAllocData3 = 0;
+    self->mFileHandle3 = 0;
+    self->mCount80 = 0;
+    self->mState84 = 0;
 
-    // Initialize fields to 0
-    FLD(u32, s, 0x40) = 0;
-    FLD(u32, s, 0x44) = 0;
-    FLD(u32, s, 0x48) = 0;
-    FLD(u32, s, 0x4C) = 0;
-    FLD(u32, s, 0x50) = 0;
-    FLD(u32, s, 0x54) = 0;
-    FLD(u32, s, 0x58) = 0xFFFFFFFF;
-    FLD(u32, s, 0x5C) = 0;
-    FLD(u32, s, 0x60) = 0;
-    FLD(u8, s, 0x64) = 0;
-    FLD(u32, s, 0x68) = 0;
-    FLD(u32, s, 0x6C) = 0;
-    FLD(u32, s, 0x70) = 0;
-    FLD(u32, s, 0x74) = 0xFFFFFFFF;
-    FLD(u32, s, 0x78) = 0;
-    FLD(u32, s, 0x7C) = 0;
-    FLD(u32, s, 0x80) = 0;
-    FLD(u32, s, 0x84) = 0;
+    // Install the default __ptmf callback from the constant pool
+    u32* p = lbl_eu_80531F1C;
+    self->mCallback[0] = *p++;
+    self->mCallback[1] = *p++;
+    self->mCallback[2] = *p;
 
-    // Copy ptmf data from lbl_eu_80531F1C to offset 0x08
-    u32* ptmf = lbl_eu_80531F1C;
-    FLD(u32, s, 0x0C) = ptmf[1];
-    FLD(u32, s, 0x08) = ptmf[0];
-    FLD(u32, s, 0x10) = ptmf[2];
-
-    // Call some init function
     func_8016BC1C(self);
 
-    // Check parent task field
-    u32* parent = FLD(u32*, s, 0x1C);
-    u32 field30 = parent[0x30 / 4];
+    // Pick the update callback based on the parent task's mode field:
+    // -1 -> standalone mode (0x50 flags + alternate ptmf), other nonzero -> 0x30
+    ParentTask* parent = self->mParent;
+    u32 field30 = parent->mField30;
 
-    if (field30 == 0xFFFFFFFF) {
-        FLD(u32, s, 0x18) |= 0x50;
-        u32* ptmf2 = lbl_eu_80531F28;
-        FLD(u32, s, 0x0C) = ptmf2[1];
-        FLD(u32, s, 0x08) = ptmf2[0];
-        FLD(u32, s, 0x10) = ptmf2[2];
+    // Standalone mode marker: field30 == 0xFFFFFFFF (tested as +0x10000 == 0xFFFF)
+    if (field30 + 0x10000 == 0xFFFF) {
+        self->mFlags |= 0x50;
+        const u32* p2 = lbl_eu_80531F28;
+        self->mCallback[0] = *p2++;
+        self->mCallback[1] = *p2++;
+        self->mCallback[2] = *p2;
     } else if (field30 != 0) {
-        FLD(u32, s, 0x18) |= 0x30;
+        self->mFlags |= 0x30;
     }
 }
 
 // ============================================================
-// __ct__80181B74 (us-80182f7c) - Constructor with flag
+// __ct__80181B74 (us-80182f7c) - Destructor-style reset (flag = run finalizer)
 // ============================================================
-extern "C" void* __ct__80181B74(void* self, int flag) {
-    if (self == 0) {
-        return self;
-    }
+extern "C" void* __ct__80181B74(CREvtModelObj* self, int flag) {
+    if (self != 0) {
+        // Reinstall vtable and interface pointers
+        char* vt = (char*)lbl_eu_80531FA0;
+        CFileHandle* oldHandle = self->mFileHandle3;
+        self->vtable = vt;
+        self->mIWorkVtbl = vt + 0x44;
+        self->mOtherVtbl = vt + 0xCC;
 
-    char* s = (char*)self;
+        if (oldHandle != 0) {
+            func_804E3CCC(oldHandle);
+            self->mFileHandle3 = 0;
+        }
 
-    u32 oldHandle = FLD(u32, s, 0x7C);
+        if (lbl_eu_806642BC != 0) {
+            CDeviceFile::cancel((CFileHandle*)lbl_eu_806642BC);
+            lbl_eu_806642BC = 0;
+        }
 
-    u32* vtable = lbl_eu_80531FA0;
-    FLD(u32*, s, 0x00) = vtable;
-    FLD(u32*, s, 0x38) = (u32*)((char*)vtable + 0x44);
-    FLD(u32*, s, 0x3C) = (u32*)((char*)vtable + 0xCC);
+        // Virtual call through primary vtable entry 15 (offset 0x3C)
+        CREvtModelObjVtbl* vtbl = (CREvtModelObjVtbl*)self->vtable;
+        vtbl->func3C(self);
 
-    if (oldHandle != 0) {
-        func_804E3CCC((void*)oldHandle);
-        FLD(u32, s, 0x7C) = 0;
-    }
-
-    if (lbl_eu_806642BC != 0) {
-        CDeviceFile::cancel((CFileHandle*)lbl_eu_806642BC);
-        lbl_eu_806642BC = 0;
-    }
-
-    // Virtual call at vtable+0x3C (entry 15)
-    void** vtbl = *(void***)(s + 0x00);
-    void (*virtFunc)(void*) = (void (*)(void*))vtbl[0x3C / 4];
-    virtFunc(self);
-
-    if (FLD(u32, s, 0x80) != 0) {
-        if (lbl_eu_806642C0 > 0) {
-            lbl_eu_806642C0--;
-            if (lbl_eu_806642C0 == 0) {
-                if (lbl_eu_806642B8 != 0) {
-                    func_804CC1D8(&lbl_eu_8065FC18);
+        if (self->mCount80 != 0) {
+            if (lbl_eu_806642C0 > 0) {
+                // Decrement the shared-buffer refcount; release on reaching zero
+                if (--lbl_eu_806642C0 == 0) {
                     if (lbl_eu_806642B8 != 0) {
-                        mtl::MemManager::deallocate(lbl_eu_806642B8);
-                        lbl_eu_806642B8 = 0;
+                        func_804CC1D8(&lbl_eu_8065FC18);
+                        if (lbl_eu_806642B8 != 0) {
+                            mtl::MemManager::deallocate(lbl_eu_806642B8);
+                            lbl_eu_806642B8 = 0;
+                        }
                     }
                 }
             }
+            self->mCount80 = 0;
         }
-        FLD(u32, s, 0x80) = 0;
-    }
 
-    __ct__80172668(self, 0);
+        __ct__80172668(self, 0);
 
-    if (flag > 0) {
-        __dt__80185754(self);
+        if (flag > 0) {
+            __dt__80185754(self);
+        }
     }
 
     return self;
 }
 
 // ============================================================
-// func_80181C90 (us-80183098) - Event/init function
+// func_80181C90 (us-80183098) - Per-player event file setup
 // ============================================================
-extern "C" void func_80181C90(void* self, void* r4, void* r5) {
-    char* s = (char*)self;
-
-    if (FLD(u32, s, 0x7C) != 0) {
-        func_804E3CCC((void*)FLD(u32, s, 0x7C));
-        FLD(u32, s, 0x7C) = 0;
+extern "C" void func_80181C90(CREvtModelObj* self, void* r4, void* r5) {
+    if (self->mFileHandle3 != 0) {
+        func_804E3CCC(self->mFileHandle3);
+        self->mFileHandle3 = 0;
     }
 
     func_801729F0(self, r4, r5);
 
-    if (FLD(u32, s, 0x84) == 1) {
-        void* globalPtr = lbl_eu_806642B8;
-        if (globalPtr != 0 &&
-            FLD(u32, s, 0x20) != 0 &&
-            r4 != 0 &&
-            FLD(u32, s, 0x7C) == 0 &&
-            FLD(u32, s, 0x80) != 0)
-        {
-            u32 count = FLD(u32, s, 0x80);
-            void* newHandle = func_804CC1F4(
-                &lbl_eu_8065FC18,
-                lbl_eu_80663E14,
-                count - 1,
-                1,
-                0
-            );
-            FLD(u32, s, 0x7C) = (u32)newHandle;
+    if ((int)self->mState84 == 1) {
+        if (lbl_eu_806642B8 != 0 && self->mModel != 0 && r4 != 0 &&
+            self->mFileHandle3 == 0 && self->mCount80 != 0) {
+            // Open a per-player event file slot (player index = count-1)
+            CFileHandle* handle = (CFileHandle*)func_804CC1F4(
+                &lbl_eu_8065FC18, lbl_eu_80663E14, self->mCount80 - 1, 1, 0, 0);
+            self->mFileHandle3 = handle;
 
-            if (newHandle != 0) {
-                void* iface = (self != 0) ? (void*)(s + 0x3C) : 0;
-                func_804E3D0C(newHandle, iface);
+            if (handle != 0) {
+                func_804E3D0C(handle, self != 0 ? (void*)&self->mOtherVtbl : 0);
 
-                void* model = FLD(void*, s, 0x20);
+                // Pull the current position value from the model (vtable 0xA8)
+                void* model = self->mModel;
                 void** modelVtbl = *(void***)model;
-                u32 (*getVal)(void*) = (u32 (*)(void*))modelVtbl[0xA8 / 4];
-                u32 val = getVal(model);
+                u32 val = ((u32 (*)(void*))modelVtbl[0xA8 / 4])(model);
+                handle->unk14 = val;
 
-                CFileHandle* fh = FLD(CFileHandle*, s, 0x7C);
-                fh->unk14 = val;
-
-                func_804E3CDC(FLD(void*, s, 0x7C), lbl_eu_80667904, lbl_eu_80667908);
+                func_804E3CDC(handle, lbl_eu_80667904, lbl_eu_80667908);
             }
         }
     }
 
-    void* parent = FLD(void*, s, 0x1C);
-    u32 parentFlags = FLD(u32, parent, 0x58);
-    if ((parentFlags & 0x80) && FLD(u32, s, 0x20) != 0) {
-        void* gm = func_80087250__Q22cf13CfGameManagerFv();
-        if (gm != 0) {
-            func_804838DC(FLD(void*, s, 0x20), 0);
+    // Refresh the model when the parent requests player-specific handling
+    if ((self->mParent->mField58 & 0x80) != 0 && self->mModel != 0) {
+        if (func_80087250__Q22cf13CfGameManagerFv() != 0) {
+            func_804838DC(self->mModel, 0);
         }
     }
 }
@@ -273,61 +252,64 @@ extern "C" void func_80181C90(void* self, void* r4, void* r5) {
 // ============================================================
 // func_80181DDC (us-801831e4) - Stop/cleanup function
 // ============================================================
-extern "C" int func_80181DDC(void* self) {
-    char* s = (char*)self;
-
-    if (FLD(u32, s, 0x18) & 0x100) {
+extern "C" int func_80181DDC(CREvtModelObj* self) {
+    // Busy or still-referenced objects cannot be stopped
+    if (self->mFlags & 0x80) {
+        return 0;
+    } else if (self->mField4C > 0) {
         return 0;
     }
 
-    if (FLD(s32, s, 0x4C) > 0) {
-        return 0;
-    }
-
-    if (FLD(u32, s, 0x7C) != 0) {
-        func_804E3CCC((void*)FLD(u32, s, 0x7C));
-        FLD(u32, s, 0x7C) = 0;
+    if (self->mFileHandle3 != 0) {
+        func_804E3CCC(self->mFileHandle3);
+        self->mFileHandle3 = 0;
     }
 
     func_801726DC(self);
 
-    u32 fileState = FLD(u32, s, 0x44);
+    // Release loaded data according to the file load state.
+    // (The duplicated null checks mirror the retail binary.)
+    const int fileState = (int)self->mFileState;
     if (fileState == 3) {
-        if (FLD(u32, s, 0x48) != 0) {
-            mtl::MemManager::deallocate((void*)FLD(u32, s, 0x48));
-            FLD(u32, s, 0x48) = 0;
+        if (self->mAllocData != 0) {
+            if (self->mAllocData != 0) {
+                mtl::MemManager::deallocate(self->mAllocData);
+                self->mAllocData = 0;
+            }
         }
     } else if (fileState == 2) {
-        if (FLD(u32, s, 0x78) != 0) {
-            func_800A9344((void*)FLD(u32, s, 0x78), 0);
-            FLD(u32, s, 0x78) = 0;
-            FLD(u32, s, 0x48) = 0;
+        if (self->mAllocData3 != 0) {
+            func_800A9344(self->mAllocData3, 0);
+            self->mAllocData3 = 0;
+            self->mAllocData = 0;
         }
     } else {
-        FLD(u32, s, 0x48) = 0;
+        self->mAllocData = 0;
     }
 
-    if (FLD(u32, s, 0x40) != 0) {
-        CDeviceFile::cancel(FLD(CFileHandle*, s, 0x40));
-        FLD(u32, s, 0x40) = 0;
+    if (self->mFileHandle != 0) {
+        CDeviceFile::cancel(self->mFileHandle);
+        self->mFileHandle = 0;
     }
 
-    if (FLD(u32, s, 0x70) != 0) {
-        mtl::MemManager::deallocate((void*)FLD(u32, s, 0x70));
-        FLD(u32, s, 0x70) = 0;
-    }
-
-    if (FLD(u32, s, 0x6C) != 0) {
-        CDeviceFile::cancel(FLD(CFileHandle*, s, 0x6C));
-        FLD(u32, s, 0x6C) = 0;
-    }
-
-    if (FLD(u32, s, 0x54) != 0) {
-        void* parentModel = FLD(void*, s, 0x54);
-        if (FLD(u32, parentModel, 0x48) != 0) {
-            FLD(u32, parentModel, 0x4C) -= 1;
+    if (self->mAllocData2 != 0) {
+        if (self->mAllocData2 != 0) {
+            mtl::MemManager::deallocate(self->mAllocData2);
+            self->mAllocData2 = 0;
         }
-        FLD(u32, s, 0x54) = 0;
+    }
+
+    if (self->mFileHandle2 != 0) {
+        CDeviceFile::cancel(self->mFileHandle2);
+        self->mFileHandle2 = 0;
+    }
+
+    // Drop our reference on the owner's resource
+    if (self->mRefOwner != 0) {
+        if (self->mRefOwner->mFlag48 != 0) {
+            self->mRefOwner->mRefCount -= 1;
+        }
+        self->mRefOwner = 0;
     }
 
     return 1;
@@ -399,14 +381,17 @@ extern "C" void func_80181F28(void* self) {
     // Install the reset ptmf callback (loads w0,w1 via *src++ then stores
     // +0xC,+0x8; w2 late) and clear bits 0x243 while setting 0x30.
     u32 result = (FLD(u32, s, 0x18) | 0x30) & ~0x243;
-    const u32* src = lbl_eu_80531F34;
-    u32 w0 = *src++;
-    u32 w1 = *src++;
+    // Declared before src so Chaitin colors w1->r4, w0->r5, ptmf base->r6
+    u32 w1, w0, flagsResult, w2;
+    u32* src = lbl_eu_80531F34;
+    w0 = *src++;
+    w1 = *src++;
+    flagsResult = (FLD(u32, s, 0x18) | 0x30) & ~0x243;
     FLD(u32, s, 0x0C) = w1;
     FLD(u32, s, 0x08) = w0;
-    u32 w2 = *src++;
+    w2 = *src++;
     FLD(u32, s, 0x10) = w2;
-    FLD(u32, s, 0x18) = result;
+    FLD(u32, s, 0x18) = flagsResult;
 }
 
 // ============================================================
@@ -778,112 +763,97 @@ extern "C" void func_801832D4(void* self) {
     if (lbl_eu_806642B8 == 0) return;
     if (FLD(u32, s, 0x80) == 0) return;
 
+    // State 0 or 2: scan for a player joining. Any other state: scan for a
+    // player leaving. Both scans always run all 4 slots (no early exit).
     u32 state = FLD(u32, s, 0x84);
-    if (state != 0 && state != 2) return;
+    if (state != 0 && state != 2) {
+        for (int i = 0; i < 4; i++) {
+            char* entry = *(char**)(s + 0x1C) + i * 4;
+            short v = *(s16*)(entry + 0x5C);
+            if (v < 0 && labs(v) == func_8016A3A8() + 1) {
+                CFileHandle* h = FLD(CFileHandle*, s, 0x7C);
+                FLD(u32, s, 0x84) = 2;
+                if (h == 0) return;
+                short peer = *(s16*)(*(char**)(s + 0x1C) + i * 4 + 0x5E);
+                if (peer != 0) {
+                    // Keep the handle but flag the peer slot
+                    *(u8*)((char*)h + 0x59) = 1;
+                } else {
+                    func_804E3CCC(h);
+                    FLD(u32, s, 0x7C) = 0;
+                }
+                return;
+            }
+        }
+        return;
+    }
+
     if (FLD(u32, s, 0x7C) != 0) return;
 
-    void* parent = FLD(void*, s, 0x1C);
     int found = 0;
     int foundId = -1;
-    int i;
-
-    for (i = 0; i < 4; i++) {
-        s16 field5C = *(s16*)((char*)parent + 0x5C + i * 4);
-        s16 field5E = *(s16*)((char*)parent + 0x5E + i * 4);
-
-        if (field5C > 0) {
-            int maxVal = func_8016A3A8() + 1;
-            if (field5C <= maxVal) {
+    for (int i = 0; i < 4; i++) {
+        char* entry = *(char**)(s + 0x1C) + i * 4;
+        short v = *(s16*)(entry + 0x5C);
+        if (v > 0) {
+            if (v <= func_8016A3A8() + 1) {
                 found = 1;
-                foundId = (int)field5E;
-                break;
+                foundId = *(s16*)(*(char**)(s + 0x1C) + i * 4 + 0x5E);
             }
-        } else if (field5C < 0) {
-            int absVal = labs(field5C);
-            int maxVal = func_8016A3A8() + 1;
-            if (absVal <= maxVal) {
+        } else if (v < 0) {
+            if (labs(v) <= func_8016A3A8() + 1) {
                 found = 0;
-                break;
             }
         }
     }
+    if (!found) return;
 
-    if (found) {
-        FLD(u32, s, 0x84) = 1;
+    void* model = FLD(void*, s, 0x20);
+    FLD(u32, s, 0x84) = 1;
+    if (model == 0) return;
+    if (FLD(u32, s, 0x24) == 0) return;
 
-        if (FLD(u32, s, 0x20) != 0 && FLD(u32, s, 0x24) != 0) {
-            u32 count = FLD(u32, s, 0x80);
-            void* newHandle = func_804CC1F4(
-                &lbl_eu_8065FC18,
-                (u32)lbl_eu_806642B8,
-                count - 1,
-                1,
-                0
-            );
-            FLD(u32, s, 0x7C) = (u32)newHandle;
+    CFileHandle* h = (CFileHandle*)func_804CC1F4(
+        &lbl_eu_8065FC18, (u32)lbl_eu_806642B8, lbl_eu_80663E14,
+        FLD(u32, s, 0x80) - 1, 1, 0);
+    FLD(u32, s, 0x7C) = (u32)h;
+    if (h == 0) return;
 
-            if (newHandle != 0) {
-                void* iface = (self != 0) ? (void*)(s + 0x3C) : 0;
-                func_804E3D0C(newHandle, iface);
+    func_804E3D0C(h, (self != 0) ? (void*)(s + 0x3C) : 0);
 
-                float fval = (float)foundId;
-                if (fval > lbl_eu_80667908) {
-                    func_804E3CDC(FLD(void*, s, 0x7C), (float)foundId, lbl_eu_80667908);
-                }
-
-                void* model = FLD(void*, s, 0x20);
-                void** modelVtbl = *(void***)model;
-                u32 (*getVal)(void*) = (u32 (*)(void*))modelVtbl[0xA8 / 4];
-                u32 val = getVal(model);
-
-                CFileHandle* fh = FLD(CFileHandle*, s, 0x7C);
-                fh->unk14 = val;
-            }
-        }
-    } else if (state == 0) {
-        for (i = 0; i < 4; i++) {
-            s16 field5C = *(s16*)((char*)parent + 0x5C + i * 4);
-            if (field5C < 0) {
-                int absVal = labs(field5C);
-                int maxVal = func_8016A3A8() + 1;
-                if (absVal == maxVal) {
-                    FLD(u32, s, 0x84) = 2;
-                    s16 field5E = *(s16*)((char*)parent + 0x5E + i * 4);
-                    if (field5E != 0) {
-                        if (FLD(u32, s, 0x7C) != 0) {
-                            *(u8*)(FLD(u32, s, 0x7C) + 0x59) = 1;
-                        }
-                    } else {
-                        if (FLD(u32, s, 0x7C) != 0) {
-                            func_804E3CCC((void*)FLD(u32, s, 0x7C));
-                            FLD(u32, s, 0x7C) = 0;
-                        }
-                    }
-                    return;
-                }
-            }
-        }
+    // Signed-int -> float via the manual 0x4330000080000000 bit pattern so
+    // the scale subtract references the retail pool symbol lbl_eu_80667910
+    // instead of a TU-local anonymous @N pool slot (MWCC_PATTERNS 7i).
+    union { double d; u32 w[2]; } conv;
+    conv.w[1] = (u32)foundId ^ 0x80000000;
+    conv.w[0] = 0x43300000;
+    if (conv.d - lbl_eu_80667910 > lbl_eu_80667908) {
+        func_804E3CDC((void*)h, (float)(conv.d - lbl_eu_80667910),
+                      (float)lbl_eu_80667908);
     }
+
+    // Pull the current position value from the model (vtable 0xA8)
+    u32 val = ((u32 (*)(void*))(*(void***)model)[0xA8 / 4])(model);
+    h->unk14 = val;
 }
 
 // ============================================================
 // func_8018351C (us-80184938) - Event handler check
 // ============================================================
-extern "C" int func_8018351C(void* self) {
-    char* s = (char*)self;
-
-    if (FLD(s32, s, 0x74) == func_8016A3C4() + 1) {
-        void* parent = FLD(void*, s, 0x1C);
-        int result = 0;
-        if (FLD(u32, parent, 0x30) > 1) {
-            if (__ptmf_cmpr(s + 0x08, lbl_eu_80531F88) == 0 ||
-                __ptmf_cmpr(s + 0x08, lbl_eu_80531F94) == 0) {
-                result = 1;
-            }
-        }
-        return result;
+extern "C" int func_8018351C(CREvtModelObj* self) {
+    if (self->mField74 != func_8016A3C4() + 1) {
+        return 0;
     }
-    return 0;
+
+    int result;
+    // Only active while multiple players are running
+    if ((u32)self->mParent->mField30 <= 1) {
+        result = 0;
+    } else {
+        result = __ptmf_cmpr((void*)self->mCallback, lbl_eu_80531F88) == 0 ||
+                 __ptmf_cmpr((void*)self->mCallback, lbl_eu_80531F94) == 0;
+    }
+    return result;
 }
 
 // ============================================================

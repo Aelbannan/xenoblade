@@ -134,6 +134,8 @@ typedef enum { Z_CODES, Z_LENS, Z_DISTS } z_codetype;
 extern "C" int func_80462068__17UnkClass_80460C34Fv(
         z_codetype type, z_ushort* lens, z_uint codes,
         z_code** table, z_uint* bits, z_ushort* work) {
+    z_ushort count[Z_MAXBITS + 1];
+    z_ushort offs[Z_MAXBITS + 1];
     z_uint len;
     z_uint sym;
     z_uint min;
@@ -150,9 +152,9 @@ extern "C" int func_80462068__17UnkClass_80460C34Fv(
     z_uint mask;
     z_code here;
     z_code* next;
+    z_ushort* extra;
+    const z_ushort* base;
     int end;
-    z_ushort count[Z_MAXBITS + 1];
-    z_ushort offs[Z_MAXBITS + 1];
 
     for (len = 0; len <= Z_MAXBITS; len++)
         count[len] = 0;
@@ -192,21 +194,20 @@ extern "C" int func_80462068__17UnkClass_80460C34Fv(
     for (sym = 0; sym < codes; sym++)
         if (lens[sym] != 0) work[offs[lens[sym]]++] = (z_ushort)sym;
 
-    const z_ushort* extra;
-    const z_ushort* base;
     switch (type) {
     case Z_CODES:
-        base = extra = work;
+        extra = work;
+        base = (const z_ushort*)work;
         end = 19;
         break;
     case Z_LENS:
-        base = lbl_eu_80523C60 - 257;
-        extra = lbl_eu_80523CA0 - 257;
+        base = (const z_ushort*)lbl_eu_80523C60 - 257;
+        extra = (z_ushort*)lbl_eu_80523CA0 - 257;
         end = 256;
         break;
     default:
-        base = lbl_eu_80523CE0;
-        extra = lbl_eu_80523D20;
+        base = (const z_ushort*)lbl_eu_80523CE0;
+        extra = (z_ushort*)lbl_eu_80523D20;
         end = -1;
     }
 

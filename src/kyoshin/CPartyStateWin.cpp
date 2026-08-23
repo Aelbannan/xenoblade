@@ -2,6 +2,10 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include <revolution/GX.h>
+#include "monolib/util/MemManager.hpp"
+#include "monolib/core/CTaskManager.hpp"
+#include "functions.hpp"
 #include "kyoshin/CPartyStateWin.hpp"
 #include "monolib/core/CViewFrame.hpp"
 #include "monolib/core/CView.hpp"
@@ -14,14 +18,14 @@
 #include <revolution/GX.h>
 #include <nw4r/lyt/lyt_drawInfo.h>
 
-u32 func_801F9694(void) {
+extern "C" u32 func_801F9694(void) {
     return lbl_eu_80663E10;
 }
 
 
-u32 func_801F9684(u8* self) { return *(u32*)(self + 0x6C); }
+extern "C" __declspec(noinline) u32 func_801F9684(u8* self) { return *(u32*)(self + 0x6C); }
 
-u32 func_801F968C(u8* self) { return *(u32*)(self + 0x70); }
+extern "C" __declspec(noinline) u32 func_801F968C(u8* self) { return *(u32*)(self + 0x70); }
 
 
 // Memory-decommit callback: returns the alloc handle of the region the size
@@ -32,7 +36,7 @@ u32 func_801F968C(u8* self) { return *(u32*)(self + 0x70); }
 // optimize_for_size merges the r30/r31 saves into stmw (retail shape;
 // plain -O4,p emits two stw's + reversed copy order - MWCC_CASES).
 #pragma optimize_for_size on
-mtl::ALLOC_HANDLE func_801F9894(CPartyStateWinMem* self, s32 size) {
+__declspec(noinline) mtl::ALLOC_HANDLE func_801F9894(CPartyStateWinMem* self, s32 size) {
     mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
     if (size < self->field_0x0 - 0x10000) {
         handle = mtl::MemManager::getHandleMEM1();
@@ -50,7 +54,7 @@ mtl::ALLOC_HANDLE func_801F9894(CPartyStateWinMem* self, s32 size) {
 // intentionally non-const: MWCC would otherwise hoist the trailing loads
 // above the stores (const implies non-aliasing) and batch them, while the
 // retail interleaves each load with its store.
-CPartyStateWinCopy* func_801F9914(CPartyStateWinCopy* dst,
+__declspec(noinline) CPartyStateWinCopy* func_801F9914(CPartyStateWinCopy* dst,
                                    CPartyStateWinCopy* src) {
     dst->field_0x4 = src->field_0x4;
     func_801F9998(dst->block0, src->block0);
@@ -89,9 +93,10 @@ extern "C" __declspec(noinline) u8* func_801F9998(u8* dst, u8* src) {
     // MWCC_CASES wall #6). The field_0xfc8 load is hoisted into a temp
     // so its store lands after the word0 copy (retail order).
     u32 fc8 = s->field_0xfc8;
+    u32 w0 = s->word0;
     u32* wd = &d->word0;
     u32* ws = &s->word0;
-    d->word0 = s->word0;
+    d->word0 = w0;
     d->field_0xfc8 = fc8;
     for (int i = 0; i < 4; i++) {
         wd[1] = ws[1];
@@ -114,7 +119,7 @@ extern "C" __declspec(noinline) u8* func_801F9998(u8* dst, u8* src) {
 // optimize_for_size merges the r30/r31 saves into stmw (retail shape;
 // plain -O4,p emits two stw's - same fix as func_801F9894).
 #pragma optimize_for_size on
-CPartyStateWinBlob58* func_801F9A48(CPartyStateWinBlob58* self,
+__declspec(noinline) CPartyStateWinBlob58* func_801F9A48(CPartyStateWinBlob58* self,
                                      CPartyStateWinBlob58* src) {
     __ct__UnkClass_8011C974(&self->field_0x4[0], &src->field_0x4[0]);
     self->field_0x14 = src->field_0x14;
@@ -148,7 +153,10 @@ CPartyStateWinBlob58* func_801F9A48(CPartyStateWinBlob58* self,
 // MWCC keeps them as counted loops at -O4,p (the indexed .lo/.hi form
 // unrolls - MWCC_CASES wall #9); the fused word pairs are 8-byte struct
 // assignments for the 2-load/2-reverse-store shape (CInfoCfPair pattern).
-CPartyStateWinBlob10C0* func_801F9B18(CPartyStateWinBlob10C0* self,
+// optimize_for_size: retail keeps the two pair loops rolled (mtctr/bdnz)
+// and merges the saves into stmw - plain -O4,p unrolls (MWCC_CASES wall #6).
+#pragma optimize_for_size on
+__declspec(noinline) CPartyStateWinBlob10C0* func_801F9B18(CPartyStateWinBlob10C0* self,
                                        CPartyStateWinBlob10C0* src) {
     self->field_0xC = src->field_0xC;
     self->field_0x10 = src->field_0x10;
@@ -159,9 +167,14 @@ CPartyStateWinBlob10C0* func_801F9B18(CPartyStateWinBlob10C0* self,
     self->field_0x55c = src->field_0x55c;
     func_80191C88(self->copy1, src->copy1);
     func_80191C88(self->copy2, src->copy2);
-    self->pairFd8 = src->pairFd8;
+    // Retail shape: value temps (lo first, held longer), dst/src pointer
+    // setup at +hi base, stores hi-then-lo.
+    u32 vLo = src->pairFd8.lo;
+    u32 vHi = src->pairFd8.hi;
     u32* wd = &self->pairFd8.hi;
     u32* ws = &src->pairFd8.hi;
+    self->pairFd8.hi = vHi;
+    self->pairFd8.lo = vLo;
     for (int i = 0; i < 4; i++) {
         wd[1] = ws[1];
         wd[2] = ws[2];
@@ -169,7 +182,12 @@ CPartyStateWinBlob10C0* func_801F9B18(CPartyStateWinBlob10C0* self,
         ws += 2;
     }
     self->field_0x1000 = src->field_0x1000;
-    self->pair1004 = src->pair1004;
+    u32* wd2 = reinterpret_cast<u32*>(&self->field_0x1020);
+    u32* ws2 = reinterpret_cast<u32*>(&src->field_0x1020);
+    u32 pLo = src->pair1004.lo;
+    u32 pHi = src->pair1004.hi;
+    self->pair1004.hi = pHi;
+    self->pair1004.lo = pLo;
     self->field_0x100c = src->field_0x100c;
     self->field_0x1010 = src->field_0x1010;
     self->field_0x1014 = src->field_0x1014;
@@ -177,8 +195,6 @@ CPartyStateWinBlob10C0* func_801F9B18(CPartyStateWinBlob10C0* self,
     self->field_0x101c = src->field_0x101c;
     self->field_0x1020 = src->field_0x1020;
     self->field_0x1021 = src->field_0x1021;
-    u32* wd2 = reinterpret_cast<u32*>(&self->field_0x1020);
-    u32* ws2 = reinterpret_cast<u32*>(&src->field_0x1020);
     for (int i = 0; i < 13; i++) {
         wd2[1] = ws2[1];
         wd2[2] = ws2[2];
@@ -197,10 +213,158 @@ CPartyStateWinBlob10C0* func_801F9B18(CPartyStateWinBlob10C0* self,
     self->field_0x10bc = src->field_0x10bc;
     return self;
 }
+#pragma optimize_for_size off
 
-void func_801F9CB4(){}
+// optimize_for_size keeps the three 8-byte record loops rolled (retail
+// mtctr/bdnz shape); the retail _savegpr_29 prologue remains a known
+// residual under this flag (MWCC_CASES wall #6/#13).
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) void func_801F9CB4(CEquipChange* dstP,
+                                                    CEquipChange* srcP) {
+    // Full copy of the embedded CEquipChange state (retail size 0x2A58):
+    // sub-blobs go through the shared copy helpers, scalars are copied
+    // load-store interleaved (src is non-const on purpose - same scheme as
+    // func_801F9914), and the three 8-byte record runs use the rolled
+    // pointer-walk loops (optimize_for_size keeps them mtctr/bdnz).
+    CEquipChangeCopyView* self = reinterpret_cast<CEquipChangeCopyView*>(dstP);
+    CEquipChangeCopyView* src = reinterpret_cast<CEquipChangeCopyView*>(srcP);
+    __ct__UnkClass_8011C974(&self->f04[0], &src->f04[0]);
+    __ct__UnkClass_8011C974(&self->f14[0], &src->f14[0]);
+    for (int i = 0; i < 8; i++) {
+        self->f24[i] = src->f24[i];
+    }
+    self->f44 = src->f44;
+    self->f48 = src->f48;
+    self->f4c = src->f4c;
+    self->f4d = src->f4d;
+    func_8018B0FC(&self->f50[0], &src->f50[0]);
+    func_8018B0FC(&self->f68[0], &src->f68[0]);
+    func_8018B0FC(&self->f80[0], &src->f80[0]);
+    self->f98 = src->f98;
+    self->f99 = src->f99;
+    // Adjacent word pairs copy as one 2-load/2-reverse-store unit.
+    u32 vLo = src->f9a;
+    u32 vHi = src->f9e;
+    self->f9e = vHi;
+    self->f9a = vLo;
+    __ct__UnkClass_8011C974(&self->fa8[0], &src->fa8[0]);
+    __ct__UnkClass_8011C974(&self->fb8[0], &src->fb8[0]);
+    for (int i = 0; i < 27; i++) {
+        self->fc8[i] = src->fc8[i];
+    }
+    self->f134 = src->f134;
+    self->f138 = src->f138;
+    self->f13c = src->f13c;
+    self->f13d = src->f13d;
+    self->f13e = src->f13e;
+    vLo = src->f140;
+    vHi = src->f144;
+    self->f144 = vHi;
+    self->f140 = vLo;
+    vLo = src->f148;
+    vHi = src->f14c;
+    self->f14c = vHi;
+    self->f148 = vLo;
+    self->f150 = src->f150;
+    self->f152 = src->f152;
+    func_8018BE74(&self->f154[0], &src->f154[0]);
+    __ct__UnkClass_8011C974(&self->f2b4[0], &src->f2b4[0]);
+    __ct__UnkClass_8011C974(&self->f2c4[0], &src->f2c4[0]);
+    for (int i = 0; i < 7; i++) {
+        self->f2d4[i] = src->f2d4[i];
+    }
+    for (int i = 0; i < 4; i++) {
+        self->f2f0[i] = src->f2f0[i];
+    }
+    func_801FA220(&self->f2f4[0], &src->f2f4[0]);
+    func_801FA220(&self->f30c[0], &src->f30c[0]);
+    func_8018B0FC(&self->f324[0], &src->f324[0]);
+    __ct__UnkClass_8011C974(&self->f340[0], &src->f340[0]);
+    for (int i = 0; i < 5; i++) {
+        self->f350[i] = src->f350[i];
+    }
+    for (int i = 0; i < 4; i++) {
+        self->f364[i] = src->f364[i];
+    }
+    __ct__UnkClass_8011C974(&self->f36c[0], &src->f36c[0]);
+    // Tail of the +0x368 sub-record: the source base sits at +0x368 and the
+    // copied fields start at +0x14 (dst +0x37c).
+    self->f37c[0] = src->f37c[0];
+    self->f37c[1] = src->f37c[1];
+    self->f37c[2] = src->f37c[2];
+    self->f37c[3] = src->f37c[3];
+    for (int i = 0; i < 4; i++) {
+        self->f38c[i] = src->f38c[i];
+    }
+    for (int i = 0; i < 5; i++) {
+        self->f390[i] = src->f390[i];
+    }
+    self->f3a4 = src->f3a4;
+    u32* wd = reinterpret_cast<u32*>(&self->f3a4);
+    u32* ws = reinterpret_cast<u32*>(&src->f3a4);
+    for (int i = 0; i < 16; i++) {
+        wd[1] = ws[1];
+        wd[2] = ws[2];
+        wd += 2;
+        ws += 2;
+    }
+    for (int i = 0; i < 3; i++) {
+        self->f428[i] = src->f428[i];
+    }
+    func_8016742C(&self->f42c[0], &src->f42c[0]);
+    func_8016742C(&self->f468[0], &src->f468[0]);
+    for (int i = 0; i < 3; i++) {
+        self->f4a4[i] = src->f4a4[i];
+    }
+    self->f4a8 = src->f4a8;
+    self->f4aa = src->f4aa;
+    self->f4ac = src->f4ac;
+    self->f4ae = src->f4ae;
+    vLo = src->f4b0;
+    vHi = src->f4b4;
+    self->f4b4 = vHi;
+    self->f4b0 = vLo;
+    self->f4b8 = src->f4b8;
+    self->f4bc = src->f4bc;
+    func_8018BE74(&self->f4c0[0], &src->f4c0[0]);
+    self->f61c = src->f61c;
+    self->f620 = src->f620;
+    for (int i = 0; i < 11; i++) {
+        self->f622[i] = src->f622[i];
+    }
+    wd = reinterpret_cast<u32*>(&self->f622[8]);   // base 0x62a
+    ws = reinterpret_cast<u32*>(&src->f622[8]);
+    for (int i = 0; i < 0x400; i++) {
+        wd[1] = ws[1];
+        wd[2] = ws[2];
+        wd += 2;
+        ws += 2;
+    }
+    self->f262e = src->f262e;
+    for (int i = 0; i < 4; i++) {
+        self->f2630[i] = src->f2630[i];
+    }
+    wd = reinterpret_cast<u32*>(&self->f2630[0]);  // base 0x2630
+    ws = reinterpret_cast<u32*>(&src->f2630[0]);
+    for (int i = 0; i < 4; i++) {
+        wd[1] = ws[1];
+        wd[2] = ws[2];
+        wd += 2;
+        ws += 2;
+    }
+    wd = reinterpret_cast<u32*>(&self->f2650[0]);  // base 0x2650
+    ws = reinterpret_cast<u32*>(&src->f2650[0]);
+    for (int i = 0; i < 0x80; i++) {
+        wd[1] = ws[1];
+        wd[2] = ws[2];
+        wd += 2;
+        ws += 2;
+    }
+    self->f2a54 = src->f2a54;
+}
+#pragma optimize_for_size off
 
-void func_801FA220(u8* r3, const u8* r4) {
+extern "C" void func_801FA220(u8* r3, const u8* r4) {
     unsigned int* destWords = (unsigned int*)(r3 + 4);
     const unsigned int* srcWords = (const unsigned int*)(r4 + 4);
     destWords[0] = srcWords[0];
@@ -1021,10 +1185,14 @@ extern "C" __declspec(noinline) void func_801FB72C(CPartyStateWin* self) {
 // Target: us-801fd4f0 | func_801FB834
 // Shortcut-open: when the mode-appropriate button combo is pressed (classic
 // mode vs not), arm the window (state 0xF) and open the system window.
+extern "C" __declspec(noinline) void func_801FB834(CPartyStateWin* self);
+
+// (subic/subfe setnz + stmw are optimize_for_size shapes - MWCC_CASES)
+#pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_801FB834(CPartyStateWin* self) {
     const CPad* pad = cf::CfGameManager::getCurrentPad();
     u32 cond;
-    if (cf::CfGameManager::func_80086F9C(-1) != 0) {
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
         cond = (pad->mPressedButtonFlags & 0x00600000) != 0;
     } else {
         cond = (pad->mPressedButtonFlags & 0x00000030) != 0;
@@ -1034,6 +1202,7 @@ extern "C" __declspec(noinline) void func_801FB834(CPartyStateWin* self) {
         func_8022B8E4(reinterpret_cast<CSysWin*>(&self->_pad6BA8));
     }
 }
+#pragma optimize_for_size off
 
 // Target: us-801fd56c | func_801FB8B0
 // Equip display exit: once state20 clears, arm the window (state 0x11),
@@ -1046,7 +1215,107 @@ extern "C" __declspec(noinline) void func_801FB8B0(CPartyStateWin* self) {
     }
 }
 
-extern "C" __declspec(noinline) void func_801FB900(CPartyStateWin* self){}
+extern "C" __declspec(noinline) void func_801FB900(CPartyStateWin* self) {
+    // Equip-display input step (state 0x12): decode the mode-appropriate
+    // held/pressed flag set, then walk a fixed dispatch chain over the equip
+    // display. The flag decoding is duplicated per controller layout (retail
+    // shape: each branch reloads both flag words and re-decodes).
+    const CPad* pad = cf::CfGameManager::getCurrentPad();
+    int up, down, left, right, y, aCond;
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        u32 pressed = pad->mPressedButtonFlags;
+        u32 held = pad->mHeldButtonFlags;
+        aCond = (pressed & 0x00400400) != 0;
+        y = (pressed >> 9) & 1;
+        up = (held >> 25) & 1;
+        down = (held >> 28) & 1;
+        left = (held >> 1) & 1;
+        right = held & 1;
+        int c4 = (held >> 17) & 1;
+        int c5 = (held >> 18) & 1;
+        int c6 = (held >> 2) & 1;
+        int c7 = (held >> 3) & 1;
+        if (down) {
+            func_80201900(&self->mModelDispEquip);
+        } else if (left) {
+            func_80201740(&self->mModelDispEquip);
+        } else if (right) {
+            func_802017A4(&self->mModelDispEquip);
+        } else if (c4) {
+            func_802015D4(&self->mModelDispEquip);
+        } else if (c5) {
+            func_80201570(&self->mModelDispEquip);
+        } else if (c6) {
+            func_80201638(&self->mModelDispEquip);
+        } else if (c7) {
+            func_802016BC(&self->mModelDispEquip);
+        } else if (y) {
+            goto helpBlock;
+        } else if (aCond) {
+            goto armBlock;
+        }
+        func_801C41E8(reinterpret_cast<CTitleAHelp*>(&self->_pad18), 0x2f);
+        return;
+    }
+    {
+        u32 pressed = pad->mPressedButtonFlags;
+        u32 held = pad->mHeldButtonFlags;
+        aCond = (pressed & 0x00600000) != 0;
+        y = (pressed >> 9) & 1;
+        int wUp = (held >> 11) & 1;
+        int wDown = (held >> 12) & 1;
+        int c3 = (held >> 4) & 1;
+        int c2 = (held >> 5) & 1;
+        int c4b = held & 1;
+        int c5b = (held >> 1) & 1;
+        int c6b = (held >> 2) & 1;
+        int c7b = (held >> 3) & 1;
+        up = wUp;
+        down = wDown;
+        left = c2;
+        right = c3;
+        if (wUp) {
+            func_801C41E8(reinterpret_cast<CTitleAHelp*>(&self->_pad18), 0x2d);
+            if (down) {
+                func_80201900(&self->mModelDispEquip);
+            } else if (left) {
+                func_80201740(&self->mModelDispEquip);
+            } else if (right) {
+                func_802017A4(&self->mModelDispEquip);
+            } else if (c4b) {
+                func_802015D4(&self->mModelDispEquip);
+            } else if (c5b) {
+                func_80201570(&self->mModelDispEquip);
+            }
+            return;
+        }
+        if (c6b) {
+            func_802016BC(&self->mModelDispEquip);
+        } else if (c7b) {
+            func_80201638(&self->mModelDispEquip);
+        } else if (y) {
+            goto helpBlock;
+        } else if (aCond) {
+            goto armBlock;
+        }
+        func_801C41E8(reinterpret_cast<CTitleAHelp*>(&self->_pad18), 0x2c);
+        return;
+    }
+helpBlock:
+    // Refresh the title help from the idle state and play the matching cue.
+    func_801C473C(reinterpret_cast<CTitleAHelp*>(&self->_pad18),
+                  (u32)(func_801C411C(reinterpret_cast<CTitleAHelp*>(&self->_pad18)) == 0));
+    if (func_801C411C(reinterpret_cast<CTitleAHelp*>(&self->_pad18)) != 0) {
+        func_80138078(0xd);
+    } else {
+        func_80138078(0xe);
+    }
+    return;
+armBlock:
+    self->field_6BE4 = 0x13;
+    func_801FF98C(&self->mModelDispEquip);
+    func_80138078(0x2);
+}
 
 // Target: us-801fd89c | func_801FBBE0
 // Menu-open for the equip window: once state20 clears, arm the window
@@ -1174,16 +1443,128 @@ void func_801FBDC0(void* self) {
         reinterpret_cast<CPartyStateWin*>((char*)self - 0x4));
 }
 
-extern "C" void func_801F941C() {}
+// Factory for the party-state window. Builds the child work-thread view,
+// sizes the client rect from the shared window object, allocates the scene,
+// then constructs each embedded sub-object through a stack temp + copy
+// helper + temp-dtor sequence.
+extern "C" void func_801F941C(CPartyStateWin* self, u32 arg1, u32 arg2) {
+    // Locals declared in retail stack-frame order (displacements are encoded
+    // in the instructions): mem@0x08, quad@0x10, vec4 tmp@0x18, CSysWin
+    // temp@0x28, CTitleAHelp temp@0x68, gauge record@0xa0, CPartyState
+    // temp@0xc8, CEquipChange temp@0x120, CModelDispEquip temp@0x2b78,
+    // CModelDisp temp@0x3c38.
+    CPartyStateWinMem mem;
+    CPartyStateS16Quad quad;
+    func_800407C8_tmp quadTmp;
+    u32 sysWinTmp[0x10];
+    u32 titleTmp[0x18];
+    PartyGaugeRecord gauge;
+    u32 partyStateTmp[0x16];
+    u32 equipChangeTmp[0xA96];
+    u32 equipViewTmp[0x430];
+    u32 modelDispTmp[0xBFE];
+
+    CTaskGame* game = getInstance__9CTaskGameFv();
+    CWorkThread* work =
+        reinterpret_cast<CWorkThread*>(func_801F968C(reinterpret_cast<u8*>(game)));
+    CProc* proc = reinterpret_cast<CProc*>(func_801F9684(reinterpret_cast<u8*>(game)));
+    self->mWork14 =
+        reinterpret_cast<CWorkThread*>(proc->pssCreateView(lbl_eu_80507C94, work, 0));
+
+    func_801F969C(&quad, reinterpret_cast<CPartyStateWinRectSrc*>(func_801F9694()));
+    reinterpret_cast<CView*>(self->mWork14)->setRect(
+        *reinterpret_cast<ml::CRect16*>(&quad));
+
+    f32 c = lbl_eu_806681D8;
+    func_801F9730(self, reinterpret_cast<const u32*>(
+                            func_800407C8(&quadTmp, c, c, c, c)));
+    func_801F9754(reinterpret_cast<CPartyStateWinRing*>(self->mWork14), 0);
+
+    func_801F981C(&mem);
+    func_801F9864(&gauge, arg2, lbl_eu_806681D8, 0x20, 0x20, 0x10);
+    mtl::ALLOC_HANDLE handle = func_801F9894(&mem, 0x09000000);
+
+    CScn* scn = create__8CScnNw4rFv(CTaskManager::GetRootProcScn(),
+                                    &lbl_eu_80507C94[0xf], 0x09000000,
+                                    handle, &gauge);
+    self->mScene = scn;
+    func_80496118(scn, self->mWork14, 0);
+    func_800452EC(scn);
+    func_80492E08(getField5C(scn));
+    mtl::MemManager::setOptimalAlloc(true);
+
+    char* titleName =
+        func_80136190(&lbl_eu_80507C94[0x1e], &lbl_eu_80507C94[0x28], 1);
+    __ct__CTitleAHelp(reinterpret_cast<CTitleAHelp*>(titleTmp), titleName, 0x10);
+    func_801BE16C(reinterpret_cast<CTitleAHelp*>(&self->_pad18),
+                  reinterpret_cast<CTitleAHelp*>(titleTmp));
+    __dt__11CTitleAHelpFv(reinterpret_cast<CTitleAHelp*>(titleTmp), -1);
+    CTitleAHelp_load(reinterpret_cast<CTitleAHelp*>(&self->_pad18));
+
+    __ct__CModelDisp(reinterpret_cast<CModelDisp*>(modelDispTmp), (u32)scn);
+    func_801F9914(reinterpret_cast<CPartyStateWinCopy*>(&self->_pad50),
+                  reinterpret_cast<CPartyStateWinCopy*>(modelDispTmp));
+    __dt__10CModelDispFv(reinterpret_cast<CModelDisp*>(modelDispTmp), -1);
+    func_801FBFD8(reinterpret_cast<CModelDisp*>(&self->_pad50));
+
+    __ct__CPartyState(reinterpret_cast<CPartyState*>(partyStateTmp));
+    func_801F9A48(reinterpret_cast<CPartyStateWinBlob58*>(&self->_pad3038),
+                  reinterpret_cast<CPartyStateWinBlob58*>(partyStateTmp));
+    __dt__11CPartyStateFv(reinterpret_cast<CPartyState*>(partyStateTmp), -1);
+    func_801FCF5C(reinterpret_cast<CPartyState*>(&self->_pad3038));
+
+    __ct__CModelDispEquip(reinterpret_cast<CModelDispEquipView*>(equipViewTmp),
+                          (u32)scn, 0);
+    func_801F9B18(reinterpret_cast<CPartyStateWinBlob10C0*>(&self->mModelDispEquip),
+                  reinterpret_cast<CPartyStateWinBlob10C0*>(equipViewTmp));
+    __dt__15CModelDispEquipFv(
+        reinterpret_cast<CModelDispEquipView*>(equipViewTmp), -1);
+    func_801FF7B0(&self->mModelDispEquip);
+
+    __ct__CEquipChange(reinterpret_cast<CEquipChange*>(equipChangeTmp));
+    func_801F9CB4(reinterpret_cast<CEquipChange*>(&self->_pad4150),
+                  reinterpret_cast<CEquipChange*>(equipChangeTmp));
+    __dt__12CEquipChangeFv(reinterpret_cast<CEquipChange*>(equipChangeTmp), -1);
+    func_80202090(reinterpret_cast<CEquipChange*>(&self->_pad4150));
+
+    __ct__CSysWin(reinterpret_cast<CSysWin*>(sysWinTmp), 0);
+    func_8016742C(&self->_pad6BA8[0], reinterpret_cast<const u8*>(sysWinTmp));
+    __dt__7CSysWinFv(reinterpret_cast<CSysWin*>(sysWinTmp), -1);
+
+    // Retail dispatches vtable slot +0x88 on the embedded CSysWin.
+    CSysWinSlot88* vt88 =
+        *reinterpret_cast<CSysWinSlot88**>(&self->_pad6BA8[0]);
+    vt88->slot88(reinterpret_cast<CSysWin*>(&self->_pad6BA8[0]));
+
+    // The IScnRender sub-object sits at +0x04; MWCC's null-guarded add-of-4
+    // idiom (same as func_801FA254).
+    IScnRender* render = reinterpret_cast<IScnRender*>(self);
+    if (self != 0) {
+        render = reinterpret_cast<IScnRender*>(&self->mVtbl4);
+    }
+    scn->addRenderCB(render, 0xd, 0);
+}
 // Target: us-801fb358 | func_801F969C
 // Content rect for a window row: offset the embedded frame rect by the frame's
 // content origin, then copy the offset pair + the stored pair out as a 4x s16
 // quad.
-void func_801F969C(CPartyStateS16Quad* dst, CPartyStateWinRectSrc* obj) {
+// Cached frame reference lets MWCC hoist the second content load above the
+// first store (retail interleave).
+// noinline keeps the factory call site in func_801F941C a real branch.
+extern "C" __declspec(noinline) void func_801F969C(CPartyStateS16Quad* dst, CPartyStateWinRectSrc* obj) {
     ml::CRect16 local;
     getFrame2ViewOffset(local, &obj->mFrame1DC);
-    local.mSize.y = obj->mFrame1DC.mContentY + local.mPos.y;
-    local.mSize.x = obj->mFrame1DC.mContentX + local.mPos.x;
+    // Cached frame reference: lets MWCC hoist the second content load above
+    // the first store (retail interleave).
+    const CViewFrame& frame = obj->mFrame1DC;
+    // Declared in reverse pair order so MWCC emits the y-chain first with
+    // the retail load schedule (cy, py, cx, px).
+    s16 cx = frame.mContentX;
+    s16 px = local.mPos.x;
+    s16 cy = frame.mContentY;
+    s16 py = local.mPos.y;
+    local.mSize.x = cx + px;
+    local.mSize.y = cy + py;
     func_801F970C(dst, reinterpret_cast<CPartyStateS16Pair*>(&local.mSize),
                   &obj->mPair1C8);
 }
@@ -1204,7 +1585,7 @@ extern "C" __declspec(noinline) CPartyStateS16Quad* func_801F970C(CPartyStateS16
 }
 
 // Copies 4 u32 from src into the object's 0x444 region. Retail: 4x lwz + 4x stw.
-void func_801F9730(CPartyStateWin* self, const u32* src) {
+extern "C" __declspec(noinline) void func_801F9730(CPartyStateWin* self, const u32* src) {
     self->mQuad444[0] = src[0];
     self->mQuad444[1] = src[1];
     self->mQuad444[2] = src[2];
@@ -1217,13 +1598,15 @@ void func_801F9730(CPartyStateWin* self, const u32* src) {
 // stack local (retail reads its own frame at sp+0xC..0x2A; the only retail
 // caller passes just the object and the 4/5 type flag) - reproduced verbatim
 // so the stack reads land at the retail offsets.
+// Escape hatch so MWCC cannot delete the (retail-garbage) record reads:
+// reading through a volatile pointer keeps every load real and pinned in
+// ascending order before the address math (retail batch-load shape).
 extern "C" void func_801F9754(CPartyStateWinRing* self, u32 flag) {
     // Uninitialized stack record: retail reads its own frame at sp+0xC..0x2A
     // (the only retail caller passes just the object and the type flag, so
-    // these are stale stack bytes). The local's address is taken so MWCC
-    // keeps it memory-resident and emits the retail stack loads verbatim.
+    // these are stale stack bytes).
     CPartyStateWinRec rec;
-    CPartyStateWinRec* rp = &rec;
+    volatile CPartyStateWinRec* rp = &rec;
     s32 total = self->field_0x3f0 + self->field_0x3f4;
     CPartyStateWinRec* dst =
         (CPartyStateWinRec*)(self->field_0x3ec +
@@ -1232,6 +1615,15 @@ extern "C" void func_801F9754(CPartyStateWinRing* self, u32 flag) {
     if (flag != 0) {
         type = 5;
     }
+    u32 v4 = rp->field_0x4;
+    u32 v8 = rp->field_0x8;
+    u32 vc = rp->field_0xc;
+    u32 v10 = rp->field_0x10;
+    u32 v14 = rp->field_0x14;
+    u32 v18 = rp->field_0x18;
+    u32 v1c = rp->field_0x1c;
+    u16 v20 = rp->field_0x20;
+    u8 v22 = rp->field_0x22;
     dst->field_0x0 = type;
     dst->field_0x4 = rp->field_0x4;
     dst->field_0x8 = rp->field_0x8;
@@ -1239,9 +1631,10 @@ extern "C" void func_801F9754(CPartyStateWinRing* self, u32 flag) {
     dst->field_0x10 = rp->field_0x10;
     dst->field_0x14 = rp->field_0x14;
     dst->field_0x18 = rp->field_0x18;
-    dst->field_0x1c = rp->field_0x1c;
-    dst->field_0x1e = rp->field_0x1e;
-    dst->field_0x1f = 0;
+    dst->field_0x1c = v1c;
+    dst->field_0x20 = v20;
+    dst->field_0x22 = v22;
+    dst->field_0x23 = 0;
     self->field_0x3f4 += 1;
     self->field_0x3fc = self->field_0x3f4 - 1;
 }
@@ -1249,33 +1642,20 @@ extern "C" void func_801F9754(CPartyStateWinRing* self, u32 flag) {
 // Pre-fills the two memory-accounting counters of a CPartyStateWinMem with
 // the largest allocatable size of the MEM1 handle and of the scene-alloc
 // handle; returns self (retail keeps `this` in r31 and returns it).
-CPartyStateWinMem* func_801F981C(CPartyStateWinMem* self) {
+__declspec(noinline) CPartyStateWinMem* func_801F981C(CPartyStateWinMem* self) {
     self->field_0x0 = mtl::MemManager::getMaxAllocSize(mtl::MemManager::getHandleMEM1());
     self->field_0x4 = mtl::MemManager::getMaxAllocSize(func_80495FF0(lbl_eu_80663E14));
     return self;
 }
 
 // Target: us-801fb520 | func_801F9864 (0x30)
-// Records a 6-argument party-window payload into a small gauge record:
-// u32 @0, f32 @8, u16 @C, u16[10] @E, u16 @22 (the trailing u16 sits right
-// after the array). The array fill is a constant-trip countdown loop (MWCC
-// emits the mtlr/bdnz form for a constant-bound for loop). The scoped
-// optimize_for_size pragma keeps the loop ROLLED: at plain -O4,p MWCC fully
-// unrolls the 10 stores (0x3c bytes); the retail body is the 0x30 rolled
-// form. Object type is not yet recovered (no direct retail callers); the
-// record layout is recovered from the store offsets.
-struct PartyGaugeRecord {
-    u32 field_0;   // 0x00
-    u32 field_4;   // 0x04
-    f32 field_8;   // 0x08
-    u16 field_C;   // 0x0C
-    u16 gauge[10]; // 0x0E..0x22
-    u16 field_22;  // 0x22
-};
-
+// Records a 6-argument party-window payload into a PartyGaugeRecord (layout
+// in CPartyStateWin.hpp). The array fill is a constant-trip countdown loop;
+// optimize_for_size keeps it ROLLED (retail 0x30 body; plain -O4,p fully
+// unrolls the 10 stores).
 #pragma push
 #pragma optimize_for_size on
-extern "C" void func_801F9864(PartyGaugeRecord* rec, u32 a, f32 f, u16 b, u16 c,
+extern "C" __declspec(noinline) void func_801F9864(PartyGaugeRecord* rec, u32 a, f32 f, u16 b, u16 c,
                               u16 d) {
     rec->field_0 = a;
     rec->field_8 = f;

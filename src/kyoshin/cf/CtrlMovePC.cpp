@@ -36,7 +36,8 @@ void  func_8047CF20__17UnkClass_8047CD0CFv(void* unk, void* task); // UnkClass_8
 void* func_8047CE7C__17UnkClass_8047CD0CFv(void);                       // UnkClass_8047CD0C::func
 void  func_8047DE14__17UnkClass_8047D2ACFv(void* a, Vec* b, f32 c, f32 d);
 void  func_8047DD4C__17UnkClass_8047D2ACFv(void* a, Vec* b, void* c, f32 d, f32 e, int f);
-void* getInstance__Q22cf14CBattleManagerFv(void);
+// getInstance__Q22cf14CBattleManagerFv comes from CfGameManager.hpp
+// (extern "C" CBattleManagerView* form) - do not redeclare here.
 f32 SinFIdx__Q24nw4r4mathFf(f32);
 f32 CosFIdx__Q24nw4r4mathFf(f32);
 
@@ -78,7 +79,14 @@ extern const f32 lbl_eu_80667C28;
 extern const f32 lbl_eu_80667C2C;
 extern const f32 lbl_eu_80667C30;
 extern const f32 lbl_eu_80667BBC;
+extern const f32 lbl_eu_80667BC8;
+extern const f32 lbl_eu_80667BB0;
 extern const f32 lbl_eu_80667BF0;
+extern const f32 lbl_eu_80667BF4;
+extern const f32 lbl_eu_80667BF8;
+extern const f32 lbl_eu_80667BFC;
+extern const f32 lbl_eu_80667C00;
+extern const f32 lbl_eu_80667C0C;
 extern int (CCtrlMovePC::*const lbl_eu_80532CC8)();
 extern int (CCtrlMovePC::*const lbl_eu_80532CD4)();
 }
@@ -347,7 +355,288 @@ extern "C" void func_80199810(CCtrlMovePC* self, const Vec* pos) {
 extern "C" void func_8019A9C4(cf::CCtrlMovePC* self) {}
 extern "C" int func_8019B4F0(cf::CCtrlMovePC* self) { return 0; }
 extern "C" int func_8019C0D4(cf::CCtrlMovePC* self) { return 0; }
-extern "C" void func_8019C304(cf::CCtrlMovePC* self) {}
+// ============================================================================
+// func_8019C304 - approach-state update (0x9D8 bytes)
+//
+// Counts ticks in the state; on timeout transitions. Depending on the mode
+// flags it either scans the party for a member blocking the path (bail out
+// toward func_8019D9E0) or runs the walk-speed selection, obstacle probe and
+// steering (func_80089694) logic below.
+// ============================================================================
+extern "C" int func_8019C304(cf::CCtrlMovePC* self) {
+    typedef int (cf::CCtrlMovePC::*MoveFn)();
+    const MoveFn* tbl = &lbl_eu_80532B60;
+
+    s16 cnt = self->mArr124[7];              // 0x132 tick counter
+    self->mArr124[7] = (s16)(cnt + 1);
+    if (cnt > 12) {
+        self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0xcc);
+    }
+
+    u32 f4C = self->mFlags4C;
+    f32 speed = lbl_eu_80667B68;             // f31
+    if (f4C & 0x00001000u) {
+        if (!(self->mFlags50 & 1u)) {
+            if (f4C & 0x00000800u) {
+                self->mBase3C = lbl_eu_80667B74;
+                speed = lbl_eu_80667BC8;
+            } else {
+                speed = lbl_eu_80667B6C;
+            }
+            if (self->mDistFC >= lbl_eu_80667BC4) {
+                self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0xe4);
+            }
+        } else {
+            // Party-blocked scan: bail if any other member is closer than us
+            // to the goal or stands within BF8 of our current spot.
+            speed = lbl_eu_80667BF0;
+            int bail = 0;
+            if (self->mDistFC <= lbl_eu_80667BF4) {
+                bail = 1;
+            } else {
+                for (int i = 1; i < 3; i++) {
+                    cf::CfObjectMove* p = cf::CfGameManager::getPlayer(i);
+                    if (p == 0) continue;
+                    if (self->mShort122 == i) continue;
+                    ml::CVec3* pp = ((cf::CMovePosIntf*)p)->getPosition();
+                    ml::CVec3 d = *pp - self->mPos;
+                    if (!(d.x * d.x + d.y * d.y + d.z * d.z <= self->mDistFC * self->mDistFC)) break;
+                    ml::CVec3* op = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+                    ml::CVec3* pp2 = ((cf::CMovePosIntf*)p)->getPosition();
+                    ml::CVec3 d2 = *pp2 - *op;
+                    if (!(d2.x * d2.x + d2.y * d2.y + d2.z * d2.z <= lbl_eu_80667BF8)) break;
+                    bail = 1;
+                    break;
+                }
+            }
+            if (bail != 0) {
+                self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0xd8);
+                func_8019D9E0(self);
+                return 0;
+            }
+        }
+    } else if (f4C & 0x00000400u) {
+        speed = lbl_eu_80667B68;
+        f32 lim = (f4C & 0x00000200u) ? lbl_eu_80667BFC : lbl_eu_80667C00;
+        if (self->mDistFC >= lim) {
+            self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0xf0);
+        }
+    } else if (f4C & 0x00010000u) {
+        speed = lbl_eu_80667BA8 * (f32)self->mShort122;
+        if (self->mDistFC >= speed) {
+            self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0xfc);
+        }
+    } else {
+        speed = lbl_eu_80667B68;
+        if (self->mDistFC >= lbl_eu_80667B70) {
+            self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0x108);
+        }
+    }
+
+    // --- goal distance bookkeeping ---
+    ml::CVec3* pos = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+    ml::CVec3 delta = *pos - self->mVec54;
+    f32 dist2;
+    if (delta.y * delta.y > lbl_eu_80667C04 && (self->mFlags50 & 1u)) {
+        dist2 = delta.x * delta.x + delta.z * delta.z;      // horizontal only
+    } else {
+        dist2 = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
+    }
+    if (dist2 > speed * speed) {
+        // Overspeed: just face the movement direction.
+        if (self->mFlags50 & 1u) {
+            f32 ang = func_8019EF90(self);
+            speed = ang;
+            self->mVec90.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * ang);
+            self->mVec90.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * ang);
+            func_80089694(self, (const Vec*)&self->mVec90, lbl_eu_80667BC0);
+            return 0;
+        }
+        self->mArr124[4] = 0;
+        self->mFlags4C |= 1u;
+    } else {
+        // --- pick the walk speed for this tick ---
+        if (!(f4C & 0x00001000u)) {
+            if (dist2 >= (lbl_eu_80667BA8 + speed) * (lbl_eu_80667BA8 + speed)) {
+                self->mFlags4C |= 0x4u;
+                if (dist2 > lbl_eu_80667C0C) {
+                    if (dist2 == lbl_eu_80667B60) {
+                        Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+                    }
+                    f32 inv = (dist2 != lbl_eu_80667B60) ? dist2 * FrSqrt__Q24nw4r4mathFf(dist2) : lbl_eu_80667B60;
+                    speed = lbl_eu_80667B6C * (inv - lbl_eu_80667BB0) + lbl_eu_80667B68;
+                    self->mBase3C = lbl_eu_80667B74;
+                    if (speed > lbl_eu_80667C10) {
+                        speed = lbl_eu_80667C10;
+                    }
+                }
+            } else if (f4C & 0x00000004u) {
+                if (f4C & 0x00100000u) {
+                    f32 th = lbl_eu_80667B70 + speed;
+                    if (dist2 < th * th) {
+                        if (dist2 == lbl_eu_80667B60) {
+                            Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+                        }
+                        f32 inv = (dist2 != lbl_eu_80667B60) ? dist2 * FrSqrt__Q24nw4r4mathFf(dist2) : lbl_eu_80667B60;
+                        speed = lbl_eu_80667C08 * (inv / th) + lbl_eu_80667B6C;
+                    }
+                } else if (!(f4C & 0x00000002u)) {
+                    if (dist2 > (lbl_eu_80667BDC + speed) * (lbl_eu_80667BDC + speed)) {
+                        self->mFlags4C |= 0x2u;
+                    }
+                    self->mArr124[5] = 0;
+                    speed = lbl_eu_80667BC0;
+                } else {
+                    speed = lbl_eu_80667BF0;
+                    s16 t = self->mArr124[5];
+                    self->mArr124[5] = (s16)(t + 1);
+                    if ((s16)(t + 1) > 30) {
+                        self->mArr124[5] = 30;
+                        if (dist2 < (lbl_eu_80667B68 + speed) * (lbl_eu_80667B68 + speed)) {
+                            self->mFlags4C &= 0x7u;
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- ramp down when arriving / decelerate near the goal ---
+        if (self->mFlags50 & 0x80000u) {
+            if (speed != lbl_eu_80667B60) {
+                u32 g = self->mFlags4C;
+                s16 t = self->mArr124[4];
+                self->mArr124[4] = (s16)(t + 1);
+                if (g & 0x00001000u) {
+                    if ((s16)(t + 1) >= 30) {
+                        self->mArr124[4] = 30;
+                    } else {
+                        speed = lbl_eu_80667B60;
+                    }
+                } else {
+                    if ((s16)(t + 1) >= 15) {
+                        self->mArr124[4] = 30;
+                    } else {
+                        speed = lbl_eu_80667B60;
+                    }
+                }
+            } else {
+                self->mArr124[4] = 0;
+            }
+        }
+
+        if (speed != lbl_eu_80667B60) {
+            if (!(self->mFlags4C & 0x10u)) {
+                func_8019B4F0(self);
+            }
+            u32 f50 = self->mFlags50;
+            if (f50 & 0x20000u) {
+                speed = lbl_eu_80667B6C;
+            }
+            if (!(f50 & 0x400u)) {
+                // Obstacle probe ahead: steer around or mark blocked.
+                self->mFlags50 |= 0x400u;
+                cf::CfMoveData* data = (cf::CfMoveData*)self->mBaseData;
+                ml::CVec3* p1 = ((cf::CMovePosIntf*)data->field_28)->getPosition();
+                f32 pz = p1->z;
+                ml::CVec3* p2 = ((cf::CMovePosIntf*)data->field_28)->getPosition();
+                f32 tz = lbl_eu_80667BC8 * self->mVec90.z + pz;
+                ml::CVec3* p3 = ((cf::CMovePosIntf*)data->field_28)->getPosition();
+                f32 ty = lbl_eu_80667B70 + p3->y;
+                ml::CVec3* p4 = ((cf::CMovePosIntf*)data->field_28)->getPosition();
+                ml::CVec3 probe(lbl_eu_80667BC8 * self->mVec90.x + p4->x, ty, tz);
+                if (func_804BE398(&probe, 0x4a05, 0, 0, lbl_eu_80667BE4, lbl_eu_80667B60) == 0) {
+                    self->mFlags50 |= 0x800u;
+                } else if (func_804BE5A4(0x20000, 0) != 0) {
+                    self->mFlags50 |= 0x1000u;
+                }
+            }
+        }
+
+        u32 f50b = self->mFlags50;
+        if (f50b & 0x40000u) {
+            if (self->mArr124[11] < 0x32) {
+                if (!(f50b & 0x800u)) {
+                    self->mArr124[9] = 0;
+                } else {
+                    speed = lbl_eu_80667B60;
+                    s16 c = self->mArr124[8];
+                    self->mArr124[8] = (s16)(c + 1);
+                    if ((s16)(c + 1) >= 0x5a) {
+                        self->mArr124[8] = 0;
+                        if (self->mArr124[17] <= 0) {
+                            u32 g = self->mFlags4C;
+                            self->mFlags4C = (g & 0xFFFFF87Fu) | 0x8u;
+                            self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0x114);
+                            self->mArr124[7] = 0;
+                        }
+                    }
+                }
+            }
+        } else {
+            self->mArr124[8] = 0;
+        }
+
+        u32 f4Cb = self->mFlags4C;
+        if ((f4Cb & 0x1000u) && !(f4Cb & 0x10000u)
+            && !(((cf::CfObjWrap*)self->mObject)->mSub->mField4EC & 0x100u)
+            && (((cf::CfObjWrap*)self->mPlayer)->mSub->mField4EC & 0x100u)) {
+            ((cf::CfMoveData*)self->mBaseData)->mField14 = lbl_eu_80667B60;
+            return 0;
+        }
+
+        int moved = 0;
+        if (speed >= lbl_eu_80667BC8) {
+            if (self->mArr124[0] >= 0xa) {
+                if ((f4Cb & 0x2000u) || (f4Cb & 0x100u)) {
+                    self->mArr124[1] = 0;
+                } else {
+                    s16 c = self->mArr124[1];
+                    self->mArr124[1] = (s16)(c + 1);
+                    if (c >= 0xa) {
+                        self->mArr124[1] = 0;
+                        self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0x120);
+                        moved = 1;
+                    }
+                }
+            }
+        } else {
+            self->mArr124[1] = 0;
+        }
+        if (moved != 0) {
+            speed = lbl_eu_80667B60;
+        }
+
+        if (self->mArr124[0] >= 0x78) {
+            s16 c = self->mArr124[2];
+            self->mArr124[2] = (s16)(c + 1);
+            if (c >= 0x1e) {
+                self->mArr124[2] = 0;
+                self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0x12c);
+                moved = 1;
+            } else {
+                moved = 0;
+            }
+        } else {
+            moved = 0;
+        }
+        if (moved != 0) {
+            speed = lbl_eu_80667B60;
+        }
+
+        func_80089694(self, (const Vec*)&self->mVec90, speed);
+        return 0;
+    }
+
+    self->mArr124[2] = 0;
+    u32 g = self->mFlags4C;
+    g |= 0x01000000u;
+    self->mArr124[1] = 0;
+    g &= 0xE1FFFFFFu;
+    self->mArr124[3] = 0;
+    self->mFlags4C = g;
+    ((cf::CfMoveData*)self->mBaseData)->mField14 = lbl_eu_80667B60;
+    return 0;
+}
 // ============================================================================
 // func_801999C0 - top-level movement update for the controlled character (0x9BC)
 //
@@ -1254,16 +1543,14 @@ extern "C" void func_8019E710(cf::CCtrlMovePC* self) {
         u32 f = self->mFlags4C;
         if (f & 0x00001000u) {
             cf::CfObjWrap* obj = (cf::CfObjWrap*)self->mObject;
-            cf::CfObjWrap* player = (cf::CfObjWrap*)self->mPlayer;
+            cf::CfObjWrap* plr = (cf::CfObjWrap*)self->mPlayer;
             if ((f & 0x00000800u) && !(obj->mSub->mField4EC & 0x100u)
-                && (player->mSub->mField4EC & 0x100u)) {
+                && (plr->mSub->mField4EC & 0x100u)) {
                 if (self->mDistFC > lbl_eu_80667B90) {
                     self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0x18c);
                     flag = 0;
                 }
-                goto tail;
-            }
-            if (self->mDistFC > lbl_eu_80667B68) {
+            } else if (self->mDistFC > lbl_eu_80667B68) {
                 self->mStateFunc = *(const MoveFn*)((const char*)tbl + 0x198);
                 flag = 0;
             }
@@ -1321,50 +1608,54 @@ extern "C" void func_8019E710(cf::CCtrlMovePC* self) {
         }
     }
 
-tail:
-    if (flag == 0) {
-        self->mArr124[13] = 0;
-        self->mFlags4C &= ~0x4u;
-    } else if (self->mDistFC >= lbl_eu_80667B70) {
-        self->mArr124[13] = 0;
-        self->mFlags4C &= ~0x4u;
-    } else if (self->mFlags4C & 0x20000000u) {
-        ml::CVec3* pos = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
-        ml::CVec3 delta = *pos - self->mVec78;
-        ml::CVec3* dp = &delta;
-        func_800896F4(self, &self->mVec90, dp);
-
-        ml::CVec3 scaled = self->mVec90 * lbl_eu_80667BC4;
-        ml::CVec3* pos2 = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
-        delta = *pos2 + scaled;
-        delta.y += lbl_eu_80667B70;
-
-        int r27 = 0;
-        if (func_804BE398(dp, 0x4a05, 0, 0, lbl_eu_80667BE4, lbl_eu_8066AF20) != 0) {
-            if (func_804BE5A4(2, 0) == 0) {
-                r27 = 1;
-            } else if ((((cf::CfObjWrap*)self->mObject)->mSub->mField4EC & 0x100u) != 0) {
-                r27 = 1;
-            }
-        }
-        if (r27 != 0) {
-            func_80089694(self, (const Vec*)&self->mVec90, lbl_eu_80667BC0);
+    // Tail: when no transition ran, steer toward the approach direction.
+    if (flag != 0) {
+        if (self->mDistFC >= lbl_eu_80667B70) {
             self->mArr124[13] = 0;
-            self->mFlags4C &= 0xE0u;
-            flag = 0;
+            self->mFlags4C &= 0x70000000u;
+        } else if (!(self->mFlags4C & 0x20000000u)) {
+            if (self->mDistFC < lbl_eu_80667C10) {
+                self->mFlags4C |= 0x20000000u;
+                self->mArr124[13] = 0;
+            }
         } else {
-            s16 c = self->mArr124[13];
-            self->mArr124[13] = (s16)(c + 1);
-            if (c < 60) {
-                self->mFlags4C |= 0x40u;
-            } else {
-                self->mArr124[13] = 60;
+            ml::CVec3* pos = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+            ml::CVec3 delta = *pos - self->mVec78;
+            ml::CVec3* dp = &delta;
+            func_800896F4(self, &self->mVec90, dp);
+
+            ml::CVec3 scaled = self->mVec90 * lbl_eu_80667BC4;
+            ml::CVec3* pos2 = ((cf::CMovePosIntf*)((char*)self->mObject + 0x3e9c))->getPosition();
+            delta = *pos2 + scaled;
+            delta.y += lbl_eu_80667B70;
+
+            int blocked = 0;
+            if (func_804BE398(dp, 0x4a05, 0, 0, lbl_eu_80667BE4, lbl_eu_8066AF20) != 0) {
+                if (func_804BE5A4(0x20000, 0) == 0) {
+                    blocked = 1;
+                } else if ((((cf::CfObjWrap*)self->mObject)->mSub->mField4EC & 0x100u) != 0) {
+                    blocked = 1;
+                }
+            }
+            if (blocked != 0) {
+                func_80089694(self, (const Vec*)&self->mVec90, lbl_eu_80667BC0);
+                self->mArr124[13] = 0;
                 self->mFlags4C &= 0xE0u;
+                flag = 0;
+            } else {
+                s16 c = self->mArr124[13];
+                self->mArr124[13] = (s16)(c + 1);
+                if (c < 60) {
+                    self->mFlags4C |= 0x40u;
+                } else {
+                    self->mArr124[13] = 60;
+                    self->mFlags4C &= 0x70000000u;
+                }
             }
         }
-    } else if (self->mDistFC < lbl_eu_80667C10) {
-        self->mFlags4C |= 0x20000000u;
+    } else {
         self->mArr124[13] = 0;
+        self->mFlags4C &= 0x70000000u;
     }
 
     cf::CfObjWrap* obj = (cf::CfObjWrap*)self->mObject;
@@ -1389,5 +1680,5 @@ tail:
         ((cf::CfMoveData*)self->mBaseData)->mField14 = lbl_eu_80667B60;
     }
 }
-extern "C" void func_8019EF90(cf::CCtrlMovePC* self) {}
+extern "C" f32 func_8019EF90(cf::CCtrlMovePC* self) { return 0.0f; }
 extern "C" void func_8019F1E0(cf::CCtrlMovePC* self) {}

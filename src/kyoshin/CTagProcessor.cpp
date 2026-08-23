@@ -1310,7 +1310,7 @@ void* func_80127670(void* self) {
 // forces the -O4,s lowering even though the unit compiles at -O4,p.
 #pragma optimize_for_size on
 u32 func_801276C8(const u32* a, const u32* b) {
-    return *b != *a;
+    return *a != *b;
 }
 #pragma optimize_for_size off
 
@@ -1501,7 +1501,235 @@ void* __ct__CTagProcessorSE(void* self) {
 CTagProcessorSE::~CTagProcessorSE() {}
 #pragma optimize_for_size off
 
-void func_80127FB4(){}
+// SE message-pump step (CTagProcessorSE variant of func_8012615C, no name
+// list): dispatch the next tag code at buf[field_810]. Handlers push tag
+// data to the text pane via the 2-arg +0x7C SetText and advance the read
+// counters. Tag 5 is the auto-advance speed gate; tags 8/9 drive icons and
+// party-member emphasis. Frame layout: locals assigned from the top down
+// (first declared = highest address: 0x2F8 conv temp, 0xF8 outbuf,
+// 0x1C flag table, 0x10 vals, 0x8 hdr).
+__declspec(noinline) int func_80127FB4(nw4r::lyt::AnimTransform* tag,
+                                       nw4r::lyt::Pane* paneArg) {
+    CTagProcessorSE* msg = (CTagProcessorSE*)tag;
+    SeTalkPane* pane = (SeTalkPane*)paneArg;
+    u16 outbuf[0x100];      // 0xF8
+    TagFlagTable flagTbl;   // 0x1C
+    u32 vals[3];            // 0x10
+    s16 hdr[3];             // 0x08
+
+    if (msg->mBuf[msg->field_810] == 0)
+        return 3;
+    // Talk-source / party-member lookups (r31 / r23).
+    TagMemberObj* member = 0;
+    func_800B708C(msg->field_804);
+    TagTalkSrc* tsrc = (TagTalkSrc*)func_800BBC0C();
+    if (tsrc != 0)
+        member = tsrc->field_98;
+
+    outbuf[0] = 0;
+    u16 idx = msg->field_810;
+    u16 tagcode = msg->mBuf[idx];
+    switch (tagcode) {
+    case 1: {
+        // <1 hi|lo data...> raw text-range tag: copy hi+lo chars to the
+        // pane with the header preserved.
+        u16 h = msg->mBuf[idx + 3];
+        u32 count = (h >> 8) + (h & 0xff);
+        outbuf[0] = tagcode;
+        outbuf[1] = h;
+        for (u32 j = 0; j < count; j++)
+            outbuf[2 + j] = msg->mBuf[idx + 4 + j];
+        outbuf[count + 2] = 0;
+        u16 adv = count + 2;
+        msg->field_810 += adv;
+        pane->v7C(outbuf, msg->field_820);
+        msg->field_820 += adv;
+        goto finish;
+    }
+
+    case 2: {
+        // <2 d0 d1> color tag: push both operands plus a 0 tail.
+        u16 d0 = msg->mBuf[idx + 3];
+        u16 d1 = msg->mBuf[idx + 4];
+        outbuf[0] = tagcode;
+        outbuf[1] = d0;
+        outbuf[2] = d1;
+        outbuf[3] = 0;
+        msg->field_810 = idx + 3;
+        pane->v7C(outbuf, msg->field_820);
+        msg->field_820 += 3;
+        goto finish;
+    }
+
+    case 3:
+        return 4;  // selection-accepted marker
+
+    case 4: {
+        // <4 v> wait-for-click tag: v == -1 holds the page.
+        s16 v = (s16)msg->mBuf[idx + 3];
+        msg->field_810 = idx + 2;
+        msg->field_820 = 0;
+        return v == -1;
+    }
+
+    case 5: {
+        // <5 v> text-speed / skip tag: v == -1 selects the button-driven
+        // auto-advance, v == -2 skips unconditionally, otherwise v is the
+        // per-char speed threshold.
+        s16 v = (s16)msg->mBuf[idx + 3];
+        if (v == -1) {
+            // NOTE: keep field_824 reads adjacent to their compares (no
+            // float local live across the calls below) so MWCC never
+            // spills an FPR around the bl.
+            if (msg->field_824 >= lbl_eu_80667208) {
+                if (msg->field_824 < lbl_eu_80667250) {
+                    if (func_eu_8013C8F4() == 0 &&
+                        func_80189A04(0) != 0 && msg->field_804 != 0 &&
+                        member != 0)
+                        member->v58(0, 0);
+                    msg->field_824 = lbl_eu_80667234;
+                }
+                // Button-driven auto-advance: poll the active pad style.
+                TagPadView* pad =
+                    (TagPadView*)cf::CfGameManager::getCurrentPad();
+                member = (TagMemberObj*)pad;  // retail reuses r23 here
+                u32 bits;
+                if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0)
+                    bits = pad->field_04 & 0x00600000;
+                else
+                    bits = pad->field_04 & 0x00000030;
+                if (bits != 0) {
+                    msg->field_824 = lbl_eu_806671F0;
+                    msg->field_810 += 2;
+                    msg->field_820 += 2;
+                    func_8018986C(0, lbl_eu_806671F0);
+                }
+            } else {
+                msg->field_824 += lbl_eu_806671F4;
+            }
+            return 2;
+        }
+        if (v == -2) {
+            // Unconditional skip once the voice slot is free.
+            if (func_80189A04(0) != 0) {
+                msg->field_824 = lbl_eu_806671F0;
+                msg->field_810 += 2;
+                msg->field_820 += 2;
+            }
+            return 2;
+        }
+        if (msg->field_824 < (f32)(int)v) {
+            if (msg->field_824 < lbl_eu_806671F4 && msg->field_804 != 0 &&
+                member != 0)
+                member->v58(0, 0);
+            msg->field_824 += lbl_eu_806671F4;
+        } else {
+            if (msg->field_804 != 0 && member != 0)
+                member->v58(1, 0);
+            msg->field_824 = lbl_eu_806671F0;
+            msg->field_810 += 2;
+            msg->field_820 += 2;
+        }
+        return 2;
+    }
+
+    case 8: {
+        // <8 b0 b1 ...> icon tag: map the three header bytes through the
+        // 0x1B-entry flag table into icon ids (func_8004B9D4 call or
+        // pending field_828/830/838 stores), then advance 3.
+        u16 h0 = msg->mBuf[idx + 3];
+        u16 h1 = msg->mBuf[idx + 4];
+        hdr[0] = h0 >> 8;
+        hdr[1] = h0 & 0xff;
+        hdr[2] = h1 >> 8;
+        if (msg->field_804 != 0 && tsrc != 0) {
+            flagTbl = lbl_eu_804FF6E0;
+            vals[0] = 0;
+            vals[1] = 0;
+            vals[2] = 0;
+            for (u32 k = 0; k < 3; k++) {
+                s16 id = hdr[k];
+                if (id == 0xff)
+                    break;
+                u32 val = flagTbl.v[id];
+                vals[k] = val;
+                if (k == 0) {
+                    TagC4Obj* w = tsrc->field_C4;
+                    if (w->field_270 & 0x01000000) {
+                        msg->field_828 = val;
+                        msg->field_82c = 1;
+                    } else {
+                        func_8004B9D4(w, val, 0, -1, 0);
+                    }
+                } else if (k == 1) {
+                    msg->field_830 = val;
+                    msg->field_834 = 1;
+                } else {
+                    msg->field_838 = val;
+                    msg->field_83c = 1;
+                }
+            }
+        }
+        msg->field_810 = idx + 3;
+        goto finish;
+    }
+
+    case 9: {
+        // <9 v> party-member emphasis tag: v == 0 enables, v == -1 disables
+        // the member's follow highlight.
+        s16 v = (s16)msg->mBuf[idx + 3];
+        if (msg->field_804 != 0 && member != 0) {
+            if (v == 0)
+                member->v58(1, 0);
+            else if (v == -1)
+                member->v58(0, 0);
+        }
+        msg->field_810 = idx + 2;
+        goto finish;
+    }
+
+    default:
+        // Unknown code: push <code, 0> verbatim and advance both counters.
+        outbuf[0] = tagcode;
+        outbuf[1] = 0;
+        msg->field_810 = idx + 1;
+        pane->v7C(outbuf, msg->field_820);
+        msg->field_820 += 1;
+        goto finish;
+    }
+
+finish:
+    // Icon-pending tail: display a pending icon once its window is ready.
+    if (msg->field_82c != 0) {
+        if (msg->field_804 != 0 && tsrc != 0) {
+            TagC4Obj* w = tsrc->field_C4;
+            u32 flags = w->field_270;
+            // Display unless the hold bit (0x1000000) is set without the
+            // wait-release bit (0x800000).
+            if ((flags & 0x01000000) == 0 || (flags & 0x00800000) != 0) {
+                func_8004B9D4(w, msg->field_828, 0, -1, 0);
+                msg->field_82c = 0;
+            }
+        }
+    } else if (msg->field_834 != 0) {
+        if (msg->field_804 != 0 && tsrc != 0) {
+            TagC4Obj* w = tsrc->field_C4;
+            if (w->v80(0)) {
+                func_8004B9D4(w, msg->field_830, 0, -1, 0);
+                msg->field_834 = 0;
+            }
+        }
+    } else if (msg->field_83c != 0) {
+        if (msg->field_804 != 0 && tsrc != 0) {
+            TagC4Obj* w = tsrc->field_C4;
+            if (w->v80(0)) {
+                func_8004B9D4(w, msg->field_838, 0, -1, 0);
+                msg->field_83c = 0;
+            }
+        }
+    }
+    return -1;
+}
 
 void func_801286E0(){}
 
@@ -1730,8 +1958,8 @@ void* func_80128C6C(void* unused, void* ret, wchar_t* str, TagParam* dst) {
 u16* func_80128DA0(void* unused, u16* dst, wchar_t* str) {
     TagColorOut out;
     wchar_t* tokens[16];
-    TagColorNames names;
     TagColorValues values;
+    TagColorNames names;
     int count = func_801365E4((u16*)str, 0x3a, (u16**)tokens);
     values = lbl_eu_804FEFB8;
     names = lbl_eu_804FF488;
@@ -2259,8 +2487,8 @@ __declspec(noinline) void func_80129F3C(nw4r::ut::TextWriterBase<wchar_t>* tw, f
 #pragma optimize_for_size on
 u16* func_8012A1A4(void* a, u16* dst, wchar_t* str) {
     func_801366F4((u16*)str);
-    s16 v = 0xff;
     const wchar_t* tbl = lbl_eu_80661FC8;
+    s16 v = 0xff;
     if (wcscmp(str, tbl + 0x12) == 0)
         v = 0;
     else if (wcscmp(str, tbl + 0x15) == 0)
@@ -2488,13 +2716,15 @@ u16* func_8012AAA4(void* a, u16* out, wchar_t* str) {
             case '=': v += 13; break;
             case '>': v += 14; break;
             case '?': v += 15; break;
-            case 'A': v += 0; break;
-            case 'B': v += 0; break;
-            case 'C': v += 0; break;
-            case 'D': v += 0; break;
-            case 'E': v += 0; break;
-            case 'F': v += 0; break;
-            default: break;
+            // 'A'..'F' are valid hex positions but contribute nothing; kept
+            // as explicit cases so the jump table spans '1'..'F' like retail.
+            case 'A':
+            case 'B':
+            case 'C':
+            case 'D':
+            case 'E':
+            case 'F':
+                break;
             }
             v <<= 4;
         }
@@ -2728,8 +2958,8 @@ void func_8012B440(){}
 #pragma optimize_for_size on
 u16* func_8012B8C4(void* a, u16* dst, wchar_t* str) {
     func_801366F4((u16*)str);
-    s16 v = 0xff;
     const wchar_t* tbl = lbl_eu_80661FC8;
+    s16 v = 0xff;
     if (wcscmp(str, tbl + 0xbf) == 0)
         v = -1;
     else if (wcscmp(str, tbl + 0xc3) == 0)

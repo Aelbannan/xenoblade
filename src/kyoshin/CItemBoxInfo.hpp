@@ -5,6 +5,7 @@
 
 class CEventFile;
 class CFileHandle;
+class CItemImplInstances;
 
 namespace nw4r { namespace lyt { class DrawInfo; class AnimTransform; class ArcResourceAccessor; class Layout; class Pane; } }
 namespace nw4r { namespace math { struct VEC3; } }
@@ -77,6 +78,38 @@ struct CItemImplVt {
     virtual u32 _v90(void* item);    // vtable+0x90 (raw slot 36)
 };
 
+// Cast-only vtable interface for nw4r::lyt::Pane: method at vtable+0x68
+// (raw slot 26) returns the vertex-colour object consumed by
+// func_801D62F8. With -RTTI on, 2 hidden slots shift the first declared
+// virtual to +0x08; real virtual dispatch keeps the ABI r12 vtable load.
+struct CItemBoxPaneVt {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void _v24();
+    virtual void _v28();
+    virtual void _v2C();
+    virtual void _v30();
+    virtual void _v34();
+    virtual void _v38();
+    virtual void _v3C();
+    virtual void _v40();
+    virtual void _v44();
+    virtual void _v48();
+    virtual void _v4C();
+    virtual void _v50();
+    virtual void _v54();
+    virtual void _v58();
+    virtual void _v5C();
+    virtual void _v60();
+    virtual void _v64();
+    virtual void* getColorObject();  // vtable+0x68 (raw slot 26)
+};
+
 // Cast-only vtable for the object returned by func_801355F4 (item-name
 // system): the tag lookup method is at vtable+0x0C (raw slot 3). Real virtual
 // dispatch reproduces the retail `lwz r12,0(r3); lwz r12,0xc(r12); mtctr;
@@ -100,7 +133,9 @@ struct CItemBoxInfoState {
     nw4r::lyt::Layout* layout;
     nw4r::lyt::AnimTransform* animTransform1;   // 0x38 - nw4r::lyt::AnimTransform
     nw4r::lyt::AnimTransform* animTransform2;   // 0x3C - nw4r::lyt::AnimTransform
-    u8 _40[0x50];
+    u8 _40[0x30];                    // 0x40..0x70
+    nw4r::lyt::Pane* slotPanes[8];   // 0x70..0x90 - cached selection-row panes
+                                     // (filled by CItemBoxInfo2::OnFileEvent)
     u8 active;
     u8 _91[3];
     s32 state;
@@ -112,6 +147,7 @@ struct CItemBoxInfoState {
 
 struct CItemBoxInfo {
     CItemBoxInfoState state;
+    CItemBoxInfo(u8 arg2, u16 arg3);
     ~CItemBoxInfo();
     bool OnFileEvent(CEventFile*);
 
@@ -298,7 +334,15 @@ extern "C" f32 func_80139C98(u32 a, u32 b, u32 c, f32 d);
 extern "C" void func_801E40E8(CItemBoxInfo2*);
 extern "C" void func_801E43BC(CItemBoxInfo2*, u16, void*, u16, u32);
 extern "C" void func_801E27D0(u8*, void*, void*, void*);
+// cf/CfGameManager.hpp (pulled in via harness_catalog) already declares the
+// singleton no-arg form of this import at global scope; MWCC rejects a second,
+// differently-prototyped extern "C" declaration as an illegal overload. Keep
+// the item-pointer form (same unmangled symbol) in a namespace and shim the
+// call sites through it.
+namespace itemimplshim {
 extern "C" void* CItem_initItemImplInstances(void*);
+}
+#define CItem_initItemImplInstances(item) itemimplshim::CItem_initItemImplInstances(item)
 extern "C" void func_801D62F8(void*, u32, const void*);
 extern "C" void func_801D8930(CItemBoxInfo*);
 // 9-byte flag-record builder: (out, unused, data) — param2 is never read in

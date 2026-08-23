@@ -17,47 +17,102 @@ static u16 read_be16(const u8* p) {
     return ((u16)p[0] << 8) | (u16)p[1];
 }
 
+// Workspace struct for the ADX banked AU decoder (offsets from retail)
+typedef struct ADXB_AU ADXB_AU;
+struct ADXB_AU {
+    u8 field_0x00[2];
+    s16 field_0x02;
+    s32 field_0x04;
+    void* field_0x08;
+    u8 field_0x0C;
+    u8 field_0x0D;
+    u8 field_0x0E;
+    u8 field_0x0F;
+    s32 field_0x10;
+    s32 field_0x14;
+    s32 field_0x18;
+    s16 field_0x1C;
+    u8 pad_0x1E[2];
+    s32 field_0x20;
+    s16 field_0x24;
+    s16 field_0x26;
+    s32 field_0x28;
+    s32 field_0x2C;
+    s32 field_0x30;
+    s32 field_0x34;
+    u8 pad_0x38[4];
+    s32 field_0x3C;
+    s32 field_0x40;
+    s32 field_0x44;
+    void* field_0x48;
+    s32 field_0x4C;
+    s32 field_0x50;
+    s32 field_0x54;
+    s32 field_0x58;
+    u8* field_0x5C;
+    s32 field_0x60;
+    s32 field_0x64;
+    s32 field_0x68;
+    s32 field_0x6C;
+    s32 field_0x70;
+    u8 pad_0x74[4];
+    void (*field_0x78)(void*, u32*, u32*, u32*);
+    void* field_0x7C;
+    void (*field_0x80)(void*, u32, u32);
+    void* field_0x84;
+    s32 field_0x88;
+    s32 field_0x8C;
+    s32 field_0x90;
+    s32 field_0x94;
+    s16 field_0x98;
+    s16 field_0x9C;
+};
+
+extern u32 ADXPD_GetStat(void* pd);
+
 u8* AU_GetInfo(u8* data, s32 maxBytes, s32* outSampleRate, s32* outTotalSamples,
                s32* outBlockSize, s32* outChannelCount, s32* outFormat) {
-    u32 sig, hdrSize, version, samples, sampleRate, totalSamples;
-
-    sig = (u32)data[0] | ((u32)data[1] << 8) | ((u32)data[2] << 16) | ((u32)data[3] << 24);
+    // Big-endian AU (.snd) header: magic@0, dataOfst@4, encoding@0xC, dataSize@8,
+    // sampleRate@0x10, channelCount@0x14
+    u32 sig = data[0] | (data[1] << 8) | (data[2] << 16) | ((u32)data[3] << 24);
     if (sig != 0x0064732E && sig != 0x646E732E) {
         return NULL;
     }
 
-    hdrSize = read_be32(data + 4);
+    u32 hdrSize = read_be32(data + 4);
     if ((s32)hdrSize > maxBytes) {
         return NULL;
     }
 
-    samples = read_be32(data + 8);
-    version = read_be32(data + 0x0C);
+    u32 formatId = read_be32(data + 0xC);
+    u32 dataSize = read_be32(data + 8);
 
-    if (version == 1) {
+    if (formatId == 1) {
         *outFormat = 2;
         *outBlockSize = 8;
-    } else if (version == 2) {
+    } else if (formatId == 2) {
         *outFormat = 1;
         *outBlockSize = 8;
-    } else if (version == 3) {
+    } else if (formatId == 3) {
         *outFormat = 0;
         *outBlockSize = 0x10;
     } else {
         return NULL;
     }
 
-    sampleRate = read_be32(data + 0x10);
-    totalSamples = read_be32(data + 0x14);
+    s32 sampleRate = (s32)read_be32(data + 0x10);
+    s32 chanCount = (s32)read_be32(data + 0x14);
     *outSampleRate = sampleRate;
-    *outTotalSamples = totalSamples;
+    *outTotalSamples = chanCount;
 
-    if (*outFormat == 2) {
-        *outChannelCount = (s32)samples / (s32)totalSamples;
-    } else if (*outFormat == 1) {
-        *outChannelCount = (s32)samples / (s32)totalSamples;
-    } else if (*outFormat == 0) {
-        *outChannelCount = ((s32)samples / 2) / (s32)totalSamples;
+    s32 fmt = *outFormat;
+    if (fmt == 2) {
+        *outChannelCount = (s32)dataSize / chanCount;
+    } else if (fmt == 1) {
+        *outChannelCount = (s32)dataSize / chanCount;
+    } else if (fmt == 0) {
+        // 16-bit samples: bytes/2 then per-channel
+        *outChannelCount = ((s32)dataSize / 2) / chanCount;
     } else {
         *outChannelCount = 0x7FFF;
     }
@@ -76,324 +131,243 @@ fail:
     return 0;
 }
 
-s32 ADX_DecodeInfoAu(u8* data, s32 maxBytes, s16* outHeaderSize, u8* outChannelCount, u8* outBlockSize, u8* outEncoding, s32* outSampleRate, s32* outTotalSamples, s32* outFormat) {
-    s32 channelCount, sampleRate, totalSamples, blockSize;
-    s32 format;
-    u8 encoding;
+s32 ADX_DecodeInfoAu(u8* data, s32 maxBytes, s16* outHeaderSize,
+                     s8* field_C, s8* field_D, s8* field_F, s8* field_E,
+                     s32* field_14, s32* field_18, s32* field_10, s32* outFormat) {
+    s32 sampleRate = 0;
+    s32 chanCount = 0;
+    s32 blockSize = 0;
+    s32 dataSize = 0;
 
     if (maxBytes < 8) {
         *outHeaderSize = 0;
         return -1;
     }
 
-    u8* end = AU_GetInfo(data, maxBytes, &channelCount, &sampleRate, &totalSamples, &blockSize, &format);
+    // AU_GetInfo writes: sampleRate, chanCount, blockSize, dataSize and the
+    // raw encoding id through outFormat.
+    u8* end = AU_GetInfo(data, maxBytes, &sampleRate, &chanCount, &blockSize,
+                         &dataSize, outFormat);
     if (end == NULL) {
         return -1;
     }
 
     s16 consumed = (s16)(end - data);
+    *outHeaderSize = consumed;
     if (consumed <= 0) {
         return -1;
     }
 
-    *outHeaderSize = consumed;
-    *outBlockSize = blockSize;
-    *outChannelCount = channelCount;
-    *outSampleRate = sampleRate;
-    *outEncoding = -1;
-
-    // Calculate encoding bits per sample
-    s32 encBits = (s32)(s8)*outChannelCount * (s32)(s8)*outBlockSize;
-    *outEncoding = (u8)(encBits >> 3);
-
-    *outTotalSamples = totalSamples;
-    *outFormat = 1;
+    *field_14 = sampleRate;
+    *field_E = (s8)chanCount;
+    *field_D = (s8)blockSize;
+    *field_18 = dataSize;
+    *field_C = -1;
+    // bits per sample / 8: signed chars multiplied, rounded division by 8
+    *field_F = *field_E * *field_D / 8;
+    *field_10 = 1;
 
     return 0;
 }
 
-s32 ADXB_DecodeHeaderAu(void* self, u8* data, s32 maxBytes) {
-    void* sjd = self;
+s16 ADXB_DecodeHeaderAu(void* self, u8* data, s32 maxBytes) {
+    ADXB_AU* p = (ADXB_AU*)self;
     s16 headerSize;
-    u8 channelCount, blockSize, encoding;
-    s32 sampleRate, totalSamples;
-    u32 format;
-    s32 result;
+    s32 fmtLocal;
 
-    // Set version
-    *(s16*)((u8*)sjd + 2) = 1;
+    p->field_0x02 = 1;
 
-    result = ADX_DecodeInfoAu(data, maxBytes, &headerSize,
-        (u8*)((u8*)sjd + 0x0D),
-        (u8*)((u8*)sjd + 0x0C),
-        (u8*)((u8*)sjd + 0x0F),
-        (s32*)((u8*)sjd + 0x10),
-        (s32*)((u8*)sjd + 0x14),
-        (s32*)((u8*)sjd + 0x18));
+    s32 result = ADX_DecodeInfoAu(data, maxBytes, &headerSize,
+        (s8*)&p->field_0x0C, (s8*)&p->field_0x0D, (s8*)&p->field_0x0F,
+        (s8*)&p->field_0x0E,
+        &p->field_0x14, &p->field_0x18, &p->field_0x10, &fmtLocal);
 
     if (result < 0) {
         return 0;
     }
 
-    // Initialize state fields
-    channelCount = *(u8*)((u8*)sjd + 0x0E);
-    blockSize = *(u8*)((u8*)sjd + 0x0F);
-    sampleRate = *(s32*)((u8*)sjd + 0x10);
+    // Reset decoder state fields
+    p->field_0x1C = 0;
+    p->field_0x26 = 0;
+    p->field_0x24 = 0;
+    p->field_0x34 = 0;
+    p->field_0x30 = 0;
+    p->field_0x2C = 0;
+    p->field_0x28 = 0;
+    p->field_0x20 = 0;
 
-    *(s16*)((u8*)sjd + 0x1C) = 0;
-    *(s16*)((u8*)sjd + 0x26) = 0;
-    *(s16*)((u8*)sjd + 0x24) = 0;
-    *(s32*)((u8*)sjd + 0x34) = 0;
-    *(s32*)((u8*)sjd + 0x30) = 0;
-    *(s32*)((u8*)sjd + 0x2C) = 0;
-    *(s32*)((u8*)sjd + 0x28) = 0;
-    *(s32*)((u8*)sjd + 0x20) = 0;
+    s32 ch = (s8)p->field_0x0E;
+    s32 blk = (s8)p->field_0x0F;
+    s32 v10 = p->field_0x10;
+    s32 v3c = p->field_0x3C;
+    s32 v40 = p->field_0x40;
+    s32 v44 = p->field_0x44;
 
-    *(s32*)((u8*)sjd + 0x50) = (s32)(s8)channelCount;
-    *(s32*)((u8*)sjd + 0x54) = (s32)(s8)blockSize;
-    *(s32*)((u8*)sjd + 0x58) = sampleRate;
-    *(s32*)((u8*)sjd + 0x5C) = *(s32*)((u8*)sjd + 0x3C);
-    *(s32*)((u8*)sjd + 0x60) = *(s32*)((u8*)sjd + 0x40);
-    *(s32*)((u8*)sjd + 0x64) = *(s32*)((u8*)sjd + 0x44);
-    *(s32*)((u8*)sjd + 0x8C) = 0;
-    *(s32*)((u8*)sjd + 0x88) = 0;
-    *(s16*)((u8*)sjd + 0x98) = 4;
-    *(s16*)((u8*)sjd + 0x9C) = *(s16*)((u8*)sjd + 0x1C);
+    p->field_0x50 = ch;
+    p->field_0x54 = blk;
+    p->field_0x58 = v10;
+    p->field_0x5C = (u8*)v3c;
+    p->field_0x60 = v40;
+    p->field_0x64 = v44;
+    p->field_0x8C = 0;
+    p->field_0x88 = 0;
+    p->field_0x98 = 4;
+    p->field_0x9C = (s16)fmtLocal;
 
     return headerSize;
 }
 
 void ADXB_ExecOneAu16(void* self) {
-    u8* au = (u8*)self;
-    u16* pcmBuf;
-    s32 state, avail, count, i;
-    s32 numChan;
+    ADXB_AU* p = (ADXB_AU*)self;
+    u16* src = (u16*)p->field_0x48;
+    s32 i;
 
-    pcmBuf = (u16*)*(u32*)(au + 0x48);
-    state = *(s32*)(au + 0x04);
-
-    if (state == 1) {
-        if (ADXPD_GetStat(*(u32*)(au + 0x08)) != 0) {
+    if (p->field_0x04 == 1) {
+        if (ADXPD_GetStat(p->field_0x08) != 0) {
             goto done;
         }
 
-        // Call get data callback
-        ((void (*)(void*, u32*, u32*, u32*))(*(u32**)(au + 0x78))[0])(
-            *(void**)(au + 0x7C),
-            (u32*)(au + 0x68),
-            (u32*)(au + 0x6C),
-            (u32*)(au + 0x70));
+        // Pull a block of source samples via callback
+        p->field_0x78(p->field_0x7C, (u32*)&p->field_0x68, (u32*)&p->field_0x6C,
+                      (u32*)&p->field_0x70);
 
-        u32 dataOfst = *(u32*)(au + 0x68);
-        u32 dataEnd = *(u32*)(au + 0x60);
-        u32 dataLen = *(u32*)(au + 0x6C);
-
-        s32 remain = dataEnd - dataOfst;
-        if (remain > (s32)dataLen) {
-            remain = dataLen;
+        s32 remain = p->field_0x60 - p->field_0x68;
+        if (remain > p->field_0x6C) {
+            remain = p->field_0x6C;
+        }
+        if (remain > p->field_0x4C) {
+            remain = p->field_0x4C;
         }
 
-        u32 maxSmpl = *(u32*)(au + 0x4C);
-        if (remain > (s32)maxSmpl) {
-            remain = maxSmpl;
-        }
+        s8 chanCount = p->field_0x0E;
+        u16* dstL = (u16*)(p->field_0x5C + p->field_0x68 * 2);
 
-        s8 encoding = *(s8*)(au + 0x0E);
-        u16* dstL = (u16*)(*(u32*)(au + 0x5C) + dataOfst * 2);
-        u16* dstR = dstL + *(u32*)(au + 0x64);
-        u16* src = pcmBuf;
-
-        if (encoding == 2) {
-            // Stereo deinterleave with byte swap
-            s32 count8 = remain - 8;
-            if (remain > 0 && count8 > 0) {
-                for (i = 0; i < count8; i += 8) {
-                    u16 s0 = src[0]; u16 s1 = src[1];
-                    dstL[0] = (s0 >> 8) | (s0 << 8);
-                    dstR[0] = (s1 >> 8) | (s1 << 8);
-                    s0 = src[2]; s1 = src[3];
-                    dstL[1] = (s0 >> 8) | (s0 << 8);
-                    dstR[1] = (s1 >> 8) | (s1 << 8);
-                    s0 = src[4]; s1 = src[5];
-                    dstL[2] = (s0 >> 8) | (s0 << 8);
-                    dstR[2] = (s1 >> 8) | (s1 << 8);
-                    s0 = src[6]; s1 = src[7];
-                    dstL[3] = (s0 >> 8) | (s0 << 8);
-                    dstR[3] = (s1 >> 8) | (s1 << 8);
-                    src += 8;
-                    dstL += 4;
-                    dstR += 4;
-                }
-            }
-            // Remaining samples
-            for (; i < remain; i++) {
-                u16 s = *src++;
-                *dstL++ = (s >> 8) | (s << 8);
-                s = *src++;
-                *dstR++ = (s >> 8) | (s << 8);
+        if (chanCount == 2) {
+            // Stereo: deinterleave L/R and byte-swap big-endian s16 pairs
+            u16* dstR = (u16*)(p->field_0x5C + (p->field_0x68 + p->field_0x64) * 2);
+            for (i = 0; i < remain; i++) {
+                s16 l = *src++;
+                s16 r = *src++;
+                *dstL++ = (u16)((l << 8) | (l >> 8));
+                *dstR++ = (u16)((r << 8) | (r >> 8));
             }
         } else {
-            // Mono byte swap
+            // Mono: byte-swap big-endian s16 in place
             for (i = 0; i < remain; i++) {
-                u16 s = *src++;
-                *dstL++ = (s >> 8) | (s << 8);
+                s16 v = *src++;
+                *dstL++ = (u16)((v << 8) | (v >> 8));
             }
         }
 
-        *(u32*)(au + 0x90) = remain;
-        *(u32*)(au + 0x04) = 2;
-        *(u32*)(au + 0x94) = (s32)(s8)encoding * (remain * 2);
+        p->field_0x90 = remain;
+        p->field_0x04 = 2;
+        p->field_0x94 = chanCount * (remain * 2);
     }
 
 done:
-    if (*(s32*)(au + 0x04) == 2) {
-        ((void (*)(void*, u32, u32))(*(u32**)(au + 0x80))[0])(
-            *(void**)(au + 0x84),
-            *(u32*)(au + 0x94),
-            *(u32*)(au + 0x90));
-        *(s32*)(au + 0x04) = 3;
+    if (p->field_0x04 == 2) {
+        p->field_0x80(p->field_0x84, p->field_0x94, p->field_0x90);
+        p->field_0x04 = 3;
     }
 }
 
 void ADXB_ExecOneAu8(void* self) {
-    u8* au = (u8*)self;
-    u8* pcmBuf;
-    s32 state, avail, count, i;
-    s32 numChan;
+    ADXB_AU* p = (ADXB_AU*)self;
+    u8* src = (u8*)p->field_0x48;
+    s32 i;
 
-    pcmBuf = (u8*)*(u32*)(au + 0x48);
-    state = *(s32*)(au + 0x04);
-
-    if (state == 1) {
-        if (ADXPD_GetStat(*(u32*)(au + 0x08)) != 0) {
+    if (p->field_0x04 == 1) {
+        if (ADXPD_GetStat(p->field_0x08) != 0) {
             goto done;
         }
 
-        // Call get data callback
-        ((void (*)(void*, u32*, u32*, u32*))(*(u32**)(au + 0x78))[0])(
-            *(void**)(au + 0x7C),
-            (u32*)(au + 0x68),
-            (u32*)(au + 0x6C),
-            (u32*)(au + 0x70));
+        // Pull a block of source samples via callback
+        p->field_0x78(p->field_0x7C, (u32*)&p->field_0x68, (u32*)&p->field_0x6C,
+                      (u32*)&p->field_0x70);
 
-        u32 dataOfst = *(u32*)(au + 0x68);
-        u32 dataEnd = *(u32*)(au + 0x60);
-        u32 dataLen = *(u32*)(au + 0x6C);
-
-        s32 remain = dataEnd - dataOfst;
-        if (remain > (s32)dataLen) {
-            remain = dataLen;
+        s32 remain = p->field_0x60 - p->field_0x68;
+        if (remain > p->field_0x6C) {
+            remain = p->field_0x6C;
+        }
+        if (remain > p->field_0x4C) {
+            remain = p->field_0x4C;
         }
 
-        u32 maxSmpl = *(u32*)(au + 0x4C);
-        if (remain > (s32)maxSmpl) {
-            remain = maxSmpl;
-        }
+        s8 chanCount = p->field_0x0E;
+        u16* dstL = (u16*)(p->field_0x5C + p->field_0x68 * 2);
 
-        s8 encoding = *(s8*)(au + 0x0E);
-        u16* dstL = (u16*)(*(u32*)(au + 0x5C) + dataOfst * 2);
-        u16* dstR = dstL + *(u32*)(au + 0x64);
-        u8* src = pcmBuf;
-
-        if (encoding == 2) {
-            // Stereo deinterleave with 8->16 expansion
+        if (chanCount == 2) {
+            // Stereo: deinterleave and expand 8-bit to signed 16-bit
+            u16* dstR = (u16*)(p->field_0x5C + (p->field_0x68 + p->field_0x64) * 2);
             for (i = 0; i < remain; i++) {
-                u8 s = *src++;
-                *dstL++ = (u16)s << 8;
-                s = *src++;
-                *dstR++ = (u16)s << 8;
+                dstL[i] = (u16)(src[i * 2] << 8);
+                dstR[i] = (u16)(src[i * 2 + 1] << 8);
             }
         } else {
-            // Mono 8->16 expansion
+            // Mono: expand 8-bit to signed 16-bit
             for (i = 0; i < remain; i++) {
-                u8 s = *src++;
-                *dstL++ = (u16)s << 8;
+                dstL[i] = (u16)(src[i] << 8);
             }
         }
 
-        *(u32*)(au + 0x90) = remain;
-        *(u32*)(au + 0x04) = 2;
-        *(u32*)(au + 0x94) = (s32)(s8)encoding * remain;
+        p->field_0x90 = remain;
+        p->field_0x04 = 2;
+        p->field_0x94 = chanCount * remain;
     }
 
 done:
-    if (*(s32*)(au + 0x04) == 2) {
-        ((void (*)(void*, u32, u32))(*(u32**)(au + 0x80))[0])(
-            *(void**)(au + 0x84),
-            *(u32*)(au + 0x94),
-            *(u32*)(au + 0x90));
-        *(s32*)(au + 0x04) = 3;
+    if (p->field_0x04 == 2) {
+        p->field_0x80(p->field_0x84, p->field_0x94, p->field_0x90);
+        p->field_0x04 = 3;
     }
 }
 
+// Ulaw decoder: pulls a block via callback, expands 8-bit ulaw samples to
+// 16-bit PCM through the lookup table. MWCC unrolls the copy loops x8.
 void ADXB_ExecOneAuUlaw(void* self) {
-    u8* au = (u8*)self;
-    u8* pcmBuf;
-    s32 state, avail, count, i;
-    s32 numChan;
+    ADXB_AU* p = (ADXB_AU*)self;
+    u8* src = p->field_0x48;
+    s32 i;
+    s32 j;
 
-    pcmBuf = (u8*)*(u32*)(au + 0x48);
-    state = *(s32*)(au + 0x04);
-
-    if (state == 1) {
-        if (ADXPD_GetStat(*(u32*)(au + 0x08)) != 0) {
+    if (p->field_0x04 == 1) {
+        if (ADXPD_GetStat(p->field_0x08) != 0) {
             goto done;
         }
 
-        // Call get data callback
-        ((void (*)(void*, u32*, u32*, u32*))(*(u32**)(au + 0x78))[0])(
-            *(void**)(au + 0x7C),
-            (u32*)(au + 0x68),
-            (u32*)(au + 0x6C),
-            (u32*)(au + 0x70));
+        // Pull a block of source samples via callback
+        p->field_0x78(p->field_0x7C, (u32*)&p->field_0x68, (u32*)&p->field_0x6C,
+                      (u32*)&p->field_0x70);
 
-        u32 dataOfst = *(u32*)(au + 0x68);
-        u32 dataEnd = *(u32*)(au + 0x60);
-        u32 dataLen = *(u32*)(au + 0x6C);
+        s32 remain = p->field_0x60 - p->field_0x68;
+        remain = remain > p->field_0x6C ? p->field_0x6C : remain;
+        remain = remain > p->field_0x4C ? p->field_0x4C : remain;
 
-        s32 remain = dataEnd - dataOfst;
-        if (remain > (s32)dataLen) {
-            remain = dataLen;
-        }
+        u16* dstL = (u16*)(p->field_0x5C + p->field_0x68 * 2);
 
-        u32 maxSmpl = *(u32*)(au + 0x4C);
-        if (remain > (s32)maxSmpl) {
-            remain = maxSmpl;
-        }
-
-        s8 encoding = *(s8*)(au + 0x0E);
-        u16* dstL = (u16*)(*(u32*)(au + 0x5C) + dataOfst * 2);
-        u16* dstR = dstL + *(u32*)(au + 0x64);
-        u8* src = pcmBuf;
-
-        if (encoding == 2) {
-            // Stereo deinterleave with ulaw decode
+        if ((s8)p->field_0x0E == 2) {
+            // Stereo: deinterleave ulaw sample pairs through the decode table
+            u16* dstR = (u16*)(p->field_0x5C + (p->field_0x64 + p->field_0x68) * 2);
             for (i = 0; i < remain; i++) {
-                u8 s = *src++;
-                *dstL++ = lbl_eu_80565E50[s];
-                s = *src++;
-                *dstR++ = lbl_eu_80565E50[s];
+                dstL[i] = lbl_eu_80565E50[src[i * 2]];
+                dstR[i] = lbl_eu_80565E50[src[i * 2 + 1]];
             }
         } else {
             // Mono ulaw decode
-            for (i = 0; i < remain; i++) {
-                u8 s = *src++;
-                *dstL++ = lbl_eu_80565E50[s];
+            for (j = 0; j < remain; j++) {
+                dstL[j] = lbl_eu_80565E50[src[j]];
             }
         }
 
-        *(u32*)(au + 0x90) = remain;
-        *(u32*)(au + 0x04) = 2;
-        *(u32*)(au + 0x94) = (s32)(s8)encoding * remain;
+        p->field_0x90 = remain;
+        p->field_0x04 = 2;
+        p->field_0x94 = p->field_0x0E * remain;
     }
 
 done:
-    if (*(s32*)(au + 0x04) == 2) {
-        ((void (*)(void*, u32, u32))(*(u32**)(au + 0x80))[0])(
-            *(void**)(au + 0x84),
-            *(u32*)(au + 0x94),
-            *(u32*)(au + 0x90));
-        *(s32*)(au + 0x04) = 3;
+    if (p->field_0x04 == 2) {
+        p->field_0x80(p->field_0x84, p->field_0x94, p->field_0x90);
+        p->field_0x04 = 3;
     }
 }
 

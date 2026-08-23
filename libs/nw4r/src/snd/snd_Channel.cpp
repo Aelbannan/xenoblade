@@ -1,4 +1,31 @@
+// NOTE: retail exports Channel::Start(const WaveInfo&, int, u32), but
+// snd_Channel.h (outside writable scope) only declares the WaveData overload.
+// Per MWCC_PATTERNS.md "Explicit retail-name entry points", the retail-named
+// entry point is emitted as an extern "C" definition below, which needs member
+// access. Access specifiers have no codegen/mangling effect.
+#define private public
 #include <nw4r/snd.h>
+#undef private
+
+// Retail Voice::Setup takes const WaveInfo&; locked header declares WaveData.
+extern "C" void Setup__Q44nw4r3snd6detail5VoiceFRCQ44nw4r3snd6detail8WaveInfoUl(
+    nw4r::snd::detail::Voice* self, const nw4r::snd::detail::WaveInfo& rInfo,
+    u32 offset);
+
+// Retail InitParam pools its 0.0f/1.0f literals under these sdata2 labels.
+extern const f32 lbl_eu_80669F08; // 0.0f
+extern const f32 lbl_eu_80669F0C; // 1.0f
+
+// Mirror of DisposeCallback used by Channel::Stop/VoiceCallbackFunc: retail
+// invokes vtable slot 0xC with a SINGLE argument (no r5 ever set), so the
+// callee is declared here with one parameter.
+class DisposeCallbackShim {
+public:
+    virtual ~DisposeCallbackShim() {}                              // at 0x8
+    virtual void InvalidateData(const void* pStart) {}             // at 0xC
+    virtual void InvalidateWaveData(const void* pStart,
+                                    const void* pEnd) {} // at 0x10
+};
 
 #include <revolution/AX.h>
 
@@ -70,59 +97,65 @@ Channel::Channel()
 Channel::~Channel() {}
 
 void Channel::InitParam(ChannelCallback pCallback, u32 callbackArg) {
-    mNextLink = NULL;
+    field_0xF4 = 0;
 
     mCallback = pCallback;
     mCallbackData = callbackArg;
+    mNextLink = NULL;
+    field_0xEC = 0;
 
     mPauseFlag = false;
     mAutoSweep = true;
     mReleasePriorityFixFlag = false;
+    field_0x3A = false;
 
     mLength = 0;
     mKey = KEY_INIT;
     mOriginalKey = ORIGINAL_KEY_INIT;
 
-    mInitVolume = 1.0f;
-    mInitPan = 0.0f;
-    mInitSurroundPan = 0.0f;
-    mTune = 1.0f;
+    mInitVolume = lbl_eu_80669F0C;
+    mInitPan = lbl_eu_80669F08;
+    mInitSurroundPan = lbl_eu_80669F08;
+    mTune = lbl_eu_80669F0C;
 
-    mUserVolume = 1.0f;
-    mUserPitch = 0.0f;
-    mUserPitchRatio = 1.0f;
-    mUserPan = 0.0f;
-    mUserSurroundPan = 0.0f;
-    mUserLpfFreq = 0.0f;
+    mUserVolume = lbl_eu_80669F0C;
+    mUserPitch = lbl_eu_80669F08;
+    mUserPitchRatio = lbl_eu_80669F0C;
+    mUserPan = lbl_eu_80669F08;
+    mUserSurroundPan = lbl_eu_80669F08;
+    mUserLpfFreq = lbl_eu_80669F08;
 
+    mBiquadFilterType = 0;
+    mBiquadFilterValue = lbl_eu_80669F08;
     mRemoteFilter = 0;
     mOutputLineFlag = OUTPUT_LINE_MAIN;
 
-    mMainOutVolume = 1.0f;
-    mMainSend = 0.0f;
+    mMainOutVolume = lbl_eu_80669F0C;
+    mMainSend = lbl_eu_80669F08;
 
     for (int i = 0; i < AUX_BUS_NUM; i++) {
-        mFxSend[i] = 0.0f;
+        mFxSend[i] = lbl_eu_80669F08;
     }
 
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-        mRemoteOutVolume[i] = 1.0f;
-        mRemoteSend[i] = 0.0f;
-        mRemoteFxSend[i] = 0.0f;
+        mRemoteOutVolume[i] = lbl_eu_80669F0C;
+        mRemoteSend[i] = lbl_eu_80669F08;
+        mRemoteFxSend[i] = lbl_eu_80669F08;
     }
 
     mSilenceVolume.InitValue(SILENCE_VOLUME_MAX);
 
-    mSweepPitch = 0.0f;
+    mSweepPitch = lbl_eu_80669F08;
     mSweepLength = 0;
     mSweepCounter = 0;
 
-    mEnvelope.Init();
+    mEnvelope.Init(lbl_eu_80669F30);
     mLfo.GetParam().Init();
 
     mLfoTarget = LFO_TARGET_PITCH;
     mPanMode = PAN_MODE_DUAL;
     mPanCurve = PAN_CURVE_SQRT;
+    field_0xDC = 0;
 }
 
 void Channel::Update(bool periodic) {
@@ -264,6 +297,29 @@ void Channel::Update(bool periodic) {
     }
 }
 
+// Retail entry point takes `const WaveInfo&` (mangled ...8WaveInfoiUl), but
+// snd_Channel.h (outside writable scope) declares Start with WaveData.
+// Per MWCC_PATTERNS.md "Explicit retail-name entry points", emit the exact
+// retail symbol via an extern "C" definition with member ABI (this=r3).
+extern "C" void Start__Q44nw4r3snd6detail7ChannelFRCQ44nw4r3snd6detail8WaveInfoiUl(
+    Channel* self, const WaveInfo& rInfo, int length, u32 offset) {
+    self->mLength = length;
+
+    self->mLfo.Reset();
+    // Pass the retail-pooled constant explicitly so the SDA21 reloc matches
+    // (default arg resolves to the TU-local VOLUME_INIT symbol).
+    self->mEnvelope.Reset(lbl_eu_80669F30);
+    self->mSweepCounter = 0;
+
+    // Retail Voice::Setup also takes WaveInfo; the locked snd_Voice.h still
+    // declares WaveData, so call the retail-mangled entry point directly.
+    Setup__Q44nw4r3snd6detail5VoiceFRCQ44nw4r3snd6detail8WaveInfoUl(
+        self->mVoice, rInfo, offset);
+    self->mVoice->Start();
+
+    self->mActiveFlag = true;
+}
+
 void Channel::Start(const WaveData& rInfo, int length, u32 offset) {
     mLength = length;
 
@@ -305,30 +361,27 @@ void Channel::NoteOff() {
 }
 
 void Channel::Stop() {
-    if (mVoice == NULL) {
-        return;
-    }
+    if (mVoice != NULL) {
+        mVoice->Stop();
+        mVoice->Free();
 
-    mVoice->Stop();
-    mVoice->Free();
+        mVoice = NULL;
+        mPauseFlag = false;
+        mActiveFlag = false;
 
-    mVoice = NULL;
-    mPauseFlag = false;
-    mActiveFlag = false;
+        if (mCallback != NULL) {
+            mCallback(this, CALLBACK_STATUS_STOPPED, mCallbackData);
+        }
 
-    if (mCallbackData != 0) {
-        reinterpret_cast<ChannelCallback>(mCallbackData)(
-            this, CALLBACK_STATUS_STOPPED, reinterpret_cast<u32>(mVoice));
-    }
+        if (mNextLink != NULL) {
+            reinterpret_cast<DisposeCallbackShim*>(mNextLink)
+                ->InvalidateData(reinterpret_cast<const void*>(field_0xEC));
+        }
 
-    if (mNextLink != NULL) {
-        reinterpret_cast<DisposeCallback*>(mNextLink)
-            ->InvalidateData(reinterpret_cast<const void*>(field_0xEC), NULL);
-    }
-
-    if (mAllocFlag) {
-        mAllocFlag = false;
-        ChannelManager::GetInstance().Free(this);
+        if (mAllocFlag) {
+            mAllocFlag = false;
+            ChannelManager::GetInstance().Free(this);
+        }
     }
 }
 
@@ -385,6 +438,7 @@ void Channel::VoiceCallbackFunc(Voice* pDropVoice,
         pDropVoice->Free();
         break;
     }
+
     case Voice::CALLBACK_STATUS_DROP_VOICE: {
         channelStatus = CALLBACK_STATUS_DROP;
         break;
@@ -402,6 +456,12 @@ void Channel::VoiceCallbackFunc(Voice* pDropVoice,
         pChannel->mCallback(pChannel, channelStatus, pChannel->mCallbackData);
     }
 
+    if (pChannel->mNextLink != NULL) {
+        reinterpret_cast<DisposeCallbackShim*>(pChannel->mNextLink)
+            ->InvalidateData(
+                reinterpret_cast<const void*>(pChannel->field_0xEC));
+    }
+
     pChannel->mVoice = NULL;
     pChannel->mPauseFlag = false;
     pChannel->mActiveFlag = false;
@@ -414,31 +474,34 @@ Channel* Channel::AllocChannel(int channels, int voices, int priority,
                                ChannelCallback pCallback, u32 callbackArg) {
     ChannelManager& mgr = ChannelManager::GetInstance();
 
-    void* p = ((PoolImpl*)&mgr)->AllocImpl();
-    Channel* pChannel;
-    if (p != NULL) {
-        pChannel = static_cast<Channel*>(p);
-        // Manual in-place construction
-        new (&pChannel->mEnvelope) EnvGenerator();
-        pChannel->mLfo.GetParam().Init();
+    // NOTE: mirrors retail control flow, including the unconditional list
+    // insert (even when the pool alloc failed) and the redundant NULL
+    // re-checks - both are present in the retail binary.
+    Channel* pChannel =
+        static_cast<Channel*>(((PoolImpl*)&mgr)->AllocImpl());
 
-        pChannel->mLfo.mDelayCounter = 0;
-        pChannel->mLfo.mCounter = 0.0f;
-        pChannel->mPauseFlag = false;
-        pChannel->mActiveFlag = false;
-        pChannel->mAllocFlag = false;
+    if (pChannel != NULL) {
+        // Manual in-place construction of the fresh channel.
+        // Nested re-test mirrors the retail binary's dead branch.
+        if (pChannel != NULL) {
+            new (&pChannel->mEnvelope) EnvGenerator();
+            pChannel->mLfo.GetParam().Init();
 
-        // Zero the MoveValue<u8, u16> at 0xC0
-        *(u8*)((u8*)pChannel + 0xC0) = 0;
-        *(u8*)((u8*)pChannel + 0xC1) = 0;
-        *(u16*)((u8*)pChannel + 0xC2) = 0;
-        *(u16*)((u8*)pChannel + 0xC4) = 0;
+            pChannel->mLfo.mDelayCounter = 0;
+            // Retail pools the 0.0f through the sdata2 label (SDA21 reloc).
+            pChannel->mLfo.mCounter = lbl_eu_80669F08;
+            pChannel->mPauseFlag = false;
+            pChannel->mActiveFlag = false;
+            pChannel->mAllocFlag = false;
 
-        pChannel->mVoice = NULL;
+            pChannel->mSilenceVolume.InitValue(0);
 
-        // Zero the link list node at 0xF8
-        *(u32*)((u8*)pChannel + 0xF8) = 0;
-        *(u32*)((u8*)pChannel + 0xFC) = 0;
+            pChannel->mVoice = NULL;
+
+            // Clear the intrusive link node before it is handed to the list.
+            pChannel->node.mPrev = NULL;
+            pChannel->node.mNext = NULL;
+        }
     } else {
         pChannel = NULL;
     }
@@ -458,9 +521,12 @@ Channel* Channel::AllocChannel(int channels, int voices, int priority,
         channels, voices, priority, VoiceCallbackFunc, pChannel);
 
     if (pVoice == NULL) {
-        // Trigger lazy init (guard check) before cleanup
+        // Second GetInstance reference: retail inlines the lazy-init guard
+        // again on this path.
         ChannelManager::GetInstance();
-        ((nw4r::ut::detail::LinkListImpl&)mgr.mChannelList).Erase(&pChannel->node);
+
+        ((nw4r::ut::detail::LinkListImpl&)mgr.mChannelList)
+            .Erase(&pChannel->node);
         if (pChannel != NULL) {
             ((PoolImpl*)&mgr)->FreeImpl(pChannel);
         }

@@ -35,8 +35,8 @@ extern void func_8009D414(void*);
 extern u32 lbl_eu_80663E28;
 
 // External function declarations needed by OnFileEvent
-extern u8 lbl_eu_80664090[];
-extern u8 lbl_eu_806640A8[];
+// Declared as void* by kyoshin/cf/CfGameManager.hpp (via CWorkSystem.hpp)
+extern void* lbl_eu_806640A8;
 
 // Struct with three heap pointers at offsets 0, 4, 8
 struct UnkStruct_3Ptr {
@@ -59,7 +59,7 @@ extern "C" void func_8028E838(UnkStruct_3Ptr* p) {
 }
 #pragma optimize_for_size off
 
-extern "C" void func_8028E8A4(UnkStruct_3Ptr* p) {
+extern "C" __declspec(noinline) void func_8028E8A4(UnkStruct_3Ptr* p) {
     mtl::MemManager::deallocate(p->p0);
     mtl::MemManager::deallocate(p->p4);
     mtl::MemManager::deallocate(p->p8);
@@ -136,40 +136,36 @@ void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt
     nw4r::lyt::ArcResourceAccessor* accessor,
     char* name);
 
+// optimize_for_size gives the retail stmw r30 / lmw r30 save-restore pair
+#pragma push
+#pragma optimize_for_size on
 void CSLCur::func_8028EA74() {
-    nw4r::lyt::Layout* layout;
-    nw4r::lyt::ArcResourceAccessor* accessor;
-    nw4r::lyt::AnimTransform* animTrans;
-
-    // First call: create layout
+    // Create layout, then bind two anim transforms and finish via layout vtable
     func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-        (nw4r::lyt::Layout**)&mField8,
+        &mField8,
         (nw4r::lyt::ArcResourceAccessor*)mField4,
         (const char*)&lbl_eu_8050F7CC);
 
-    // Write first AnimTransform pointer to offset 0x0C
-    animTrans = 0;
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        (nw4r::lyt::Layout*)mField8,
+        mField8,
         (nw4r::lyt::AnimTransform**)&mFieldC,
         (nw4r::lyt::ArcResourceAccessor*)mField4,
         (char*)&lbl_eu_8050F7CC[0x18]);
 
-    // Write second AnimTransform pointer to offset 0x10
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        (nw4r::lyt::Layout*)mField8,
+        mField8,
         (nw4r::lyt::AnimTransform**)&mField10,
         (nw4r::lyt::ArcResourceAccessor*)mField4,
         (char*)&lbl_eu_8050F7CC[0x35]);
 
     // Virtual call at vtable offset 0x24 (slot 9) on the layout
-    layout = (nw4r::lyt::Layout*)mField8;
-    ((void (*)(void*))(((void**)layout)[0x24 / 4]))(layout);
+    ((LayoutProxy24*)mField8)->vf9();
 
     func_8028EC74((UnkPtrHolder*)this);
 }
+#pragma pop
 
-extern "C" void func_8028EAF8(UnkPtrHolder* self) {
+extern "C" __declspec(noinline) void func_8028EAF8(UnkPtrHolder* self) {
     if (self->mPtr == nullptr) return;
 
     int state = self->mField15;
@@ -207,14 +203,15 @@ void func_80137038(
     nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 // Render layout with null + active guards; tail-calls func_80137038
-extern "C" void func_8028EB70(CSLCur* self, nw4r::lyt::DrawInfo* drawInfo) {
+// noinline: retail keeps this out-of-line (called from func_8028F3D4).
+extern "C" __declspec(noinline) void func_8028EB70(CSLCur* self, nw4r::lyt::DrawInfo* drawInfo) {
     nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mField8;
     if (layout == nullptr) return;
     if (self->mField14 == 0) return;
     func_80137038(layout, drawInfo, 0, 1);
 }
 
-extern "C" void func_8028EB9C(UnkPtrHolder* self) {
+extern "C" __declspec(noinline) void func_8028EB9C(UnkPtrHolder* self) {
     void* ptr = self->mPtr;
     self->mField14 = 0;
     self->mField0C = 0;
@@ -232,7 +229,8 @@ extern "C" void func_8028EB9C(UnkPtrHolder* self) {
     }
 }
 
-void func_8028EC04(void* arg1, const void* arg2) {
+// Retail symbol is unmangled; C linkage required for correct call relocs.
+extern "C" void func_8028EC04(void* arg1, const void* arg2) {
     void* ptr1 = *(void**)((char*)arg1 + 8);
     void* ptr2 = *(void**)((char*)ptr1 + 0x10);
     const float* src = (const float*)arg2;
@@ -328,7 +326,7 @@ extern "C" void func_8028ED70(UnkED70_Struct* s) {
 
 // Dispatch to cursor animation update based on mFieldC state,
 // then call virtual slot 14 on the mField4 object
-void func_8028EDF8(CSLCur* self) {
+extern "C" __declspec(noinline) void func_8028EDF8(CSLCur* self) {
     if (self->mField4 == 0) return;
 
     switch (self->mFieldC) {
@@ -351,7 +349,7 @@ struct UnkSlot4Ptr {
     void* mPtr;     // +0x04 - pointer to an object with vtable
 };
 
-extern "C" void func_8028EE68(UnkSlot4Ptr* self) {
+extern "C" __declspec(noinline) void func_8028EE68(UnkSlot4Ptr* self) {
     UnkObj* ptr = (UnkObj*)self->mPtr;
     if (ptr == nullptr) {
         return;
@@ -530,9 +528,36 @@ void CSaveLoad::func_8028F23C() {
     lbl_eu_80662AD0 = -1;
 }
 
-void func_8028F2CC(){}
 
-void func_8028F3D4(){}
+// Draw the save/load screen layout and all sub-windows.
+// optimize_for_size gives the retail stmw r30 / lmw r30 save-restore pair.
+#pragma push
+#pragma optimize_for_size on
+extern "C" void func_8028F3D4(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo) {
+    if (self->mField120 == 0) return;
+
+    func_80137038(self->mLayout, drawInfo, 0, 1);
+    func_801F35B0(self->mScrollbar, drawInfo);
+
+    // Cursor pane is only drawn while both windows are idle
+    if (CSysWin_getUnk34(&self->mSysWin98) == 0 &&
+        CSysWin_getUnk34(&self->mSysWinD4) == 0 &&
+        self->mField11D == 0 &&
+        self->mField121 <= 5) {
+        func_8028EB70((CSLCur*)((char*)self + 0x28), drawInfo);
+    }
+
+    func_8022B7C8(&self->mSysWin98, drawInfo);
+    func_801D20B0((char*)self + 0x40, drawInfo);
+    func_8022B7C8(&self->mSysWinD4, drawInfo);
+
+    // Sub-layout pointer stored inside the second CSysWin block (+0x114)
+    nw4r::lyt::Layout* subLayout = *(nw4r::lyt::Layout**)((char*)&self->mSysWinD4 + 0x40);
+    if (subLayout != nullptr) {
+        func_80137038(subLayout, drawInfo, 0, 1);
+    }
+}
+#pragma pop
 
 
 // Cleanup/reset function for CSaveLoad
@@ -786,10 +811,46 @@ void func_8028FA54(CSaveLoad* p) {
     func_80138078(1);
 }
 
-void func_8028FB20(){}
+// Page-down / advance the save-slot cursor by one entry (wraps every 3 rows).
+extern "C" void func_8028FB20(CSaveLoad* self) {
+    if (self->mField121 != 3) return;
+    if (CSysWin_getUnk34(&self->mSysWin98) != 0) return;
+    if (CSysWin_getUnk34(&self->mSysWinD4) != 0) return;
+    if (self->mField11D != 0) return;
+
+    if ((s32)lbl_eu_80662AC8 >= 3) {
+        // Advance row cursor by 3; clamp/wrap when past the last page
+        s16 newVal = (s16)self->mField126 + 3;
+        self->mField126 = (u16)newVal;
+        if ((int)newVal > lbl_eu_80662AC8 - 3) {
+            // Wrapped past the final row: derive column and clamp to 2
+            u8 diff = (u8)(newVal - (lbl_eu_80662AC8 - 3));
+            self->mField124 = diff;
+            self->mField126 = (u16)(lbl_eu_80662AC8 - 3);
+            if ((s8)diff >= 3) {
+                self->mField124 = 2;
+            }
+        }
+    } else {
+        // Decrement last column; wrap to previous row on underflow
+        int prev = lbl_eu_80662AC8 - 1;
+        u8 prevU8 = prev;
+        self->mField124 = prev;
+        self->mField126 = 0;
+        if ((s8)prevU8 < 0) {
+            self->mField124 = 0;
+        }
+    }
+
+    func_802908A4(self);
+    func_801F3850(self->mScrollbar, self->mField126);
+    func_80138078(1);
+}
 
 // Handle window state transitions for save/load screen.
 // Checks syswin at 0x98 and 0xD4, sets up cursor strings and state.
+#pragma push
+#pragma optimize_for_size on
 void func_8028FC18(CSaveLoad* self) {
     char* s1;
     char* s2;
@@ -824,7 +885,8 @@ void func_8028FC18(CSaveLoad* self) {
 
     if (self->mField121 != 3) return;
 
-    if (func_8028E998(&self->mCur, self->mField124) == 0) goto noCursor;
+    // Function pointer cast prevents MWCC from inlining func_8028E998 (retail calls it)
+    if (((int (*)(CSLCur*, u8))func_8028E998)(&self->mCur, self->mField124) == 0) goto noCursor;
 
     if (self->mField129 != 0) {
         s1 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x43);
@@ -853,6 +915,7 @@ common:
     self->mField121 = 6;
     func_80138078(3);
 }
+#pragma pop
 
 // Handle window close event: if the first syswin is active and ready,
 // close it, reset the sub-object state, and update status fields
@@ -870,7 +933,28 @@ void func_8028FE50(CSaveLoad* p) {
 
 u8 CSaveLoad::func_8028FEC4() { return mField12A; }
 
-void func_8028FECC(){}
+// Open the delete-confirm window for the selected slot.
+#pragma optimize_for_size on
+void func_8028FECC(CSaveLoad* self) {
+    if (self->mField121 != 3) return;
+    if (CSysWin_getUnk34(&self->mSysWin98) != 0) return;
+    if (CSysWin_getUnk34(&self->mSysWinD4) != 0) return;
+    if (self->mField11D != 0) return;
+    if (((int (*)(CSLCur*, u8))func_8028E998)(&self->mCur, self->mField124) == 0) return;
+
+    char* s1 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3b);
+    char* s2 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3c);
+    char* s3 = func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x3d);
+    func_8022B9B4(&self->mSysWin98, (u32)s1, 0);
+    func_8022BF6C(&self->mSysWin98, (u32)s2, (u32)s3);
+    func_8022BFC8(&self->mSysWin98, 0);
+    func_8022B8B8(&self->mSysWin98);
+    self->mField128 = 1;
+    self->mField12C = 1;
+    self->mField121 = 6;
+    func_80138078(3);
+}
+#pragma optimize_for_size off
 
 // Check save/load state and return a status code:
 // 0 = not ready (state mismatch, window active, or sub-window active)
@@ -895,7 +979,7 @@ int func_8028FFD4(CSaveLoad* p) {
     }
 }
 
-extern "C" void func_80290094(CSaveLoad* p) {
+extern "C" __declspec(noinline) void func_80290094(CSaveLoad* p) {
     if (func_80137444(p->mAnimTransA, lbl_eu_80668B68) != 0) {
         p->mField121 = 2;
         // Use function pointer to prevent inlining
@@ -904,7 +988,7 @@ extern "C" void func_80290094(CSaveLoad* p) {
     }
 }
 
-extern "C" void func_802900E0(CSaveLoad* p) {
+extern "C" __declspec(noinline) void func_802900E0(CSaveLoad* p) {
     if (func_80137444(p->mAnimTransB, lbl_eu_80668B68) != 0) {
         p->mField121 = 3;
         p->mField3C = 1;
@@ -913,7 +997,7 @@ extern "C" void func_802900E0(CSaveLoad* p) {
     }
 }
 
-extern "C" void func_80290140(CSaveLoad* self) {
+extern "C" __declspec(noinline) void func_80290140(CSaveLoad* self) {
     if (func_80137510(self->mAnimTransB, lbl_eu_80668B68) != 0) {
         self->mField121 = 5;
         {
@@ -923,14 +1007,14 @@ extern "C" void func_80290140(CSaveLoad* self) {
     }
 }
 
-extern "C" void func_8029018C(CSaveLoad* self) {
+extern "C" __declspec(noinline) void func_8029018C(CSaveLoad* self) {
     if (func_80137510(self->mAnimTransA, lbl_eu_80668B68) != 0) {
         self->mField121 = 0;
         self->mField123 = 1;
     }
 }
 
-extern "C" void func_802901D8(CSaveLoad* self) {
+extern "C" __declspec(noinline) void func_802901D8(CSaveLoad* self) {
     if (CSysWin_isActive((void*)&self->mSysWin98) != 0) {
         self->mField121 = 3;
         func_801D216C((char*)self + 0x40, 1);
@@ -943,22 +1027,26 @@ extern "C" void func_802901D8(CSaveLoad* self) {
 
 // Handle save/load operation execution.
 // Checks window state, cursor status, and dispatches to save/load logic.
-void func_8029022C(CSaveLoad* self) {
+#pragma push
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) void func_8029022C(CSaveLoad* self) {
     if (CSysWin_isActive((void*)&self->mSysWin98) == 0) return;
     
     self->mField121 = 3;
     if ((s8)self->mField128 != 0) return;
     
     self->mField121 = 10;
+    // Shared string-table base for all three paths (retail keeps it in r31)
+    u8* strTbl = lbl_eu_8050F7CC;
+
     if (self->mField12C != 0) {
         // Delete/overwrite path
         CWorkSystem::setSaveLoadInvalidReset(true);
         func_eu_804521BC(0);
         CLibHbm::func_8045D470(true);
         
-        extern u8 lbl_eu_8050F7CC[];
-        char* r5 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x52);
-        func_80136B4C(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], r5, 0u);
+        char* r5 = (char*)func_80136190((char*)strTbl + 0xa7, (char*)strTbl + 0xb2, 0x52);
+        func_80136B4C(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)strTbl + 0x85, r5, 0u);
         
         ((CSLCur*)((u8*)self + 0x110))->func_8028EEC0();
         
@@ -967,9 +1055,8 @@ void func_8029022C(CSaveLoad* self) {
         lbl_eu_80662AD0 = 0;
     } else if (self->mField129 != 0) {
         // Load path
-        extern u8 lbl_eu_8050F7CC[];
-        char* r5 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x46);
-        func_80136B4C(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], r5, 0u);
+        char* r5 = (char*)func_80136190((char*)strTbl + 0xa7, (char*)strTbl + 0xb2, 0x46);
+        func_80136B4C(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)strTbl + 0x85, r5, 0u);
         
         ((CSLCur*)((u8*)self + 0x110))->func_8028EEC0();
         
@@ -991,9 +1078,8 @@ void func_8029022C(CSaveLoad* self) {
         func_eu_804521BC(0);
         CLibHbm::func_8045D470(true);
         
-        extern u8 lbl_eu_8050F7CC[];
-        char* r5 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x36);
-        func_80136B4C(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)&lbl_eu_8050F7CC[0x85], r5, 0u);
+        char* r5 = (char*)func_80136190((char*)strTbl + 0xa7, (char*)strTbl + 0xb2, 0x36);
+        func_80136B4C(*(nw4r::lyt::Layout**)((u8*)self + 0x114), (char*)strTbl + 0x85, r5, 0u);
         
         ((CSLCur*)((u8*)self + 0x110))->func_8028EEC0();
         
@@ -1004,8 +1090,9 @@ void func_8029022C(CSaveLoad* self) {
     
     func_80138078(0x80);
 }
+#pragma pop
 
-void func_8029040C(CSaveLoad* p) {
+extern "C" __declspec(noinline) void func_8029040C(CSaveLoad* p) {
     if (!CSysWin_isActive((void*)&p->mSysWinD4)) return;
 
     if (p->mField129 == 0) goto setError3;
@@ -1033,7 +1120,7 @@ setError3:
     p->mField121 = 3;
 }
 
-void func_8029049C(CSaveLoad* p) {
+extern "C" __declspec(noinline) void func_8029049C(CSaveLoad* p) {
     if (p->mField11E != 0) {
         p->mField121 = 3;
     }
@@ -1042,7 +1129,9 @@ void func_8029049C(CSaveLoad* p) {
 // Handle save/load window state machine.
 // Checks mField11E, mField12E, mField12C, mField129, mField12B
 // and sets up the appropriate syswin with strings.
-void func_802904B4(CSaveLoad* self) {
+#pragma push
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) void func_802904B4(CSaveLoad* self) {
     char* s1;
     char* s2;
     char* s3;
@@ -1053,7 +1142,7 @@ void func_802904B4(CSaveLoad* self) {
 
     if (self->mField12E != 0) {
         u8 val = self->mField12F;
-        if (val >= 3 && val <= 4) {
+    if (val - 3 <= 1u) {
             // 3-string path: update syswin 0x98 with strings
             s1 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x56);
             s2 = (char*)func_80136190((char*)&lbl_eu_8050F7CC[0xa7], (char*)&lbl_eu_8050F7CC[0xb2], 0x59);
@@ -1121,8 +1210,9 @@ void func_802904B4(CSaveLoad* self) {
     lbl_eu_80662ACC = (u32)(s8)self->mField124;
     func_80138078(0x28);
 }
+#pragma pop
 
-extern "C" void func_8029078C(CSaveLoad* p) {
+extern "C" __declspec(noinline) void func_8029078C(CSaveLoad* p) {
     // Function pointer to prevent MWCC from inlining func_8028E964
     int (*checkFn)(CSLCur*) = func_8028E964;
     if (checkFn(&p->mCur) != 0) {
@@ -1132,6 +1222,63 @@ extern "C" void func_8029078C(CSaveLoad* p) {
         func_80290994(p);
     }
 }
+
+// Per-frame update: dispatch on mField121 state, then refresh layout,
+// cursor, scrollbar, both syswins and the sub-cursor.
+#pragma optimize_for_size on
+void func_8028F2CC(CSaveLoad* self) {
+    if (self->mField120 == 0) return;
+
+    switch (self->mField121) {
+    case 0:
+        func_80290094(self);
+        break;
+    case 1:
+        func_802900E0(self);
+        break;
+    case 2:
+        func_80290140(self);
+        break;
+    case 3:
+        func_8029018C(self);
+        break;
+    case 4:
+        func_802901D8(self);
+        break;
+    case 5:
+        func_8029022C(self);
+        break;
+    case 6:
+        // Second window finished: drop back to the selection state
+        if (CSysWin_isActive(&self->mSysWinD4) != 0) {
+            self->mField121 = 3;
+        }
+        break;
+    case 7:
+        func_8029040C(self);
+        break;
+    case 8:
+        func_8029049C(self);
+        break;
+    case 9:
+        func_802904B4(self);
+        break;
+    case 10:
+    case 11:
+    case 12:
+        func_8029078C(self);
+        break;
+    }
+
+    ((UnkVtblObj*)self->mLayout)->vf14(0);
+    func_8028EAF8((UnkPtrHolder*)((char*)self + 0x28));
+    func_801F3540(self->mScrollbar);
+    func_8022B748(&self->mSysWin98);
+    func_801D202C((char*)self + 0x40);
+    func_8022B748(&self->mSysWinD4);
+    func_8028EDF8((CSLCur*)((char*)self + 0x110));
+}
+#pragma optimize_for_size off
 
 int func_8028E964(CSLCur* cur) {
     int result = 0;
@@ -1174,7 +1321,31 @@ void func_80290844(CSaveLoad* p) {
     p->mLayout->SetAnimationEnable(p->mAnimTransB, true);
 }
 
-void func_802908A4(){}
+// Refresh cursor/button display state for the save/load screen.
+// dont_inline: retail calls this as an out-of-line helper everywhere.
+#pragma push
+#pragma dont_inline on
+extern "C" void func_802908A4(CSaveLoad* self) {
+    if (CSysWin_getUnk34(&self->mSysWin98) != 0) {
+        // Window open: refresh the L/R button highlight on the cursor object
+        char btnBuf[0xC];
+        func_8022C1B4(btnBuf, &self->mSysWin98, self->mField128);
+        ((CCur18Obj*)((char*)self + 0x40))->vf2((int)btnBuf);
+    } else {
+        char* strBase = (char*)&lbl_eu_8050F7CC;
+        char numBuf[0x18];
+        void* paneRefs[4];
+
+        // Format the slot number text and set it on the root panes
+        sprintf(numBuf, strBase + 0xb7, (s8)self->mField124 + 1);
+        void* paneA = ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15(numBuf, 1);
+        void* paneB = ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15(
+            strBase + 0xc4, 1);
+        func_80137924(paneRefs, paneA, paneB, *(void**)((char*)self->mLayout + 0x10));
+        func_8028EC04((char*)self + 0x28, paneRefs);
+    }
+}
+#pragma pop
 
 // Render the save/load screen for all 3 slots.
 // Gets localized strings, sets up text elements, buttons, and scrollbar
@@ -1317,8 +1488,8 @@ void func_80290994(CSaveLoad* self) {
                         func_80124270((void*)paneVal, 1);
                     }
                     // Get award icon
-                    u16 iconId = *(u16*)(lbl_eu_80664090 + 0x14);
-                    u16 icon = func_80136254((const void*)(u16)(u32)lbl_eu_80664090, (const char*)&strBase[0x1f6], iconId);
+                    u16 iconId = *(u16*)((char*)lbl_eu_80664090 + 0x14);
+                    u16 icon = func_80136254((const void*)lbl_eu_80664090, (const char*)&strBase[0x1f6], iconId);
                     u16 iconResult = (u16)(u32)func_80138F78(icon);
                     
                     // Get award resource
@@ -1388,29 +1559,30 @@ void func_80290994(CSaveLoad* self) {
 // Find the best save slot by comparing fields in priority order.
 // If global value >= 0, use it directly. Otherwise iterate slots 0-2
 // and find the one with the highest field values (lexicographic comparison).
+#pragma optimize_for_size on
 extern "C" void func_802910D4(CSaveLoad* self) {
     // Cast to function pointer to prevent MWCC from inlining func_8028E998
     typedef int (*GetSlotFn)(CSLCur*, u8);
     
     s32 globalVal = (s32)lbl_eu_80662ACC;
-    if (globalVal >= 0) {
-        self->mField124 = (u8)globalVal;
-        return;
-    }
-    
+    if (globalVal < 0) goto findBest;
+    self->mField124 = (u8)globalVal;
+    return;
+
+findBest:;
     s32 best = -1;
-    int i;
+    u8 i;
     for (i = 0; i < 3; i++) {
-        u8* slot = (u8*)((GetSlotFn)func_8028E998)(&self->mCur, (u8)i);
+        u8* slot = (u8*)((GetSlotFn)func_8028E998)(&self->mCur, i);
         if (slot == nullptr) continue;
-        
+
         if (best < 0) {
             best = i;
             continue;
         }
-        
+
         u8* bestSlot = (u8*)((GetSlotFn)func_8028E998)(&self->mCur, (u8)best);
-        
+
         // Compare fields in priority order: +4, +6, +9, +8, +2, +3
         if (*(u16*)(bestSlot + 4) < *(u16*)(slot + 4)) {
             best = i;
@@ -1418,16 +1590,16 @@ extern "C" void func_802910D4(CSaveLoad* self) {
             if (*(u16*)(bestSlot + 6) < *(u16*)(slot + 6)) {
                 best = i;
             } else if (*(u16*)(bestSlot + 6) == *(u16*)(slot + 6)) {
-                if (*(bestSlot + 9) < *(slot + 9)) {
+                if (bestSlot[9] < slot[9]) {
                     best = i;
-                } else if (*(bestSlot + 9) == *(slot + 9)) {
-                    if (*(bestSlot + 8) < *(slot + 8)) {
+                } else if (bestSlot[9] == slot[9]) {
+                    if (bestSlot[8] < slot[8]) {
                         best = i;
-                    } else if (*(bestSlot + 8) == *(slot + 8)) {
-                        if (*(bestSlot + 2) < *(slot + 2)) {
+                    } else if (bestSlot[8] == slot[8]) {
+                        if (bestSlot[2] < slot[2]) {
                             best = i;
-                        } else if (*(bestSlot + 2) == *(slot + 2)) {
-                            if (*(bestSlot + 3) < *(slot + 3)) {
+                        } else if (bestSlot[2] == slot[2]) {
+                            if (bestSlot[3] < slot[3]) {
                                 best = i;
                             }
                         }
@@ -1436,11 +1608,12 @@ extern "C" void func_802910D4(CSaveLoad* self) {
             }
         }
     }
-    
-    if (best >= 0) {
+
+    if (best != -1) {
         self->mField124 = (u8)best;
     }
 }
+#pragma optimize_for_size off
 
 // Load global CSaveLoad* from lbl_eu_806649F4. Takes 4 parameters (r3-r6)
 // but only uses r5 (flag: non-zero = handle mField12C/mField129 branches + play sound)
@@ -1485,48 +1658,139 @@ void func_80291204(int, int, int r5, int r6) {
 // Checks if the event's file handle matches self->mFileHandle before proceeding
 // with layout initialization, text setup, and cursor state initialization.
 // Returns 1 on success, 0 on failure (file handle mismatch).
-extern "C" int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
+// optimize_for_size gives the retail stmw r28 / lmw r28 save-restore pair.
+#pragma push
+#pragma optimize_for_size on
+int OnFileEvent__9CSaveLoadFv(CSaveLoad* self, CEventFile* event) {
     if (self->mFileHandle != event->mFileHandle) return 0;
 
     u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
     u8* strBase = lbl_eu_8050F7CC;
 
-    // Create region for the base class at offset 4
+    // Create the resource region for the base class at offset 4
     ((UnkClass_8045F564*)((u8*)self + 4))->createRegion(handle, 0x10000, (const char*)&strBase[0x224], 0);
 
-    // Create temporary object from the base class
-    u8 temp8[0x70];
+    // Temporary archive object built from the base class
+    u8 temp8[0x30];
     __ct__14Class_8045F858FP17UnkClass_8045F564(temp8, (u8*)self + 4);
 
-    // Read file data from the file handle
-    CFileHandle* fh = self->mFileHandle;
-    void* fileData = fh->getData();
+    // Detach the payload pointer from the file handle (cleared to null)
+    FileHandleView* fh = (FileHandleView*)self->mFileHandle;
+    void* fileData = fh->mData;
+    fh->mData = nullptr;
     mtl::MemManager::func_80434A4C(false);
 
-    // Create ArcResourceAccessor and attach the file data
-    self->mArcAccessor = createArcResourceAccessor__10CLibLayoutFv();
-    Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(self->mArcAccessor, fileData, (const char*)&strBase[0x22e]);
-
-    // Create Layout
+    // Create layout and both animation transforms
     func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
         &self->mLayout, self->mArcAccessor, (const char*)&strBase[0x232]);
-
-    // Create AnimTransform A
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         self->mLayout, &self->mAnimTransA, self->mArcAccessor, (char*)&strBase[0x248]);
-
-    // Create AnimTransform B
     func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
         self->mLayout, &self->mAnimTransB, self->mArcAccessor, (char*)&strBase[0x261]);
 
-    // Font setup: get root pane, get font object, set up font pane
+    // Font setup: root pane -> font object -> apply font to pane
     void* rootPane = *(void**)((char*)self->mLayout + 0x10);
     void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->mLayout);
-    u32 fontResult = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
+    u32 fontResult = static_cast<FontHelper*>(fontObj)->v7();
     func_8013676C((nw4r::lyt::Pane*)rootPane, fontResult);
 
-    // Call func_801355D8 - if non-null, set up 6 strings
-    u32 d8result = func_801355D8();
+    // Enable anim B / disable anim A, then turn the layout's own anim off
+    func_802907E4(self);
+    ((UnkVtblObj*)self->mLayout)->vf14(0);
+
+    // L/R button labels for all three rows
+    char* str31 = (char*)func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x31);
+    char* str32 = (char*)func_80136190((char*)&strBase[0xa7], (char*)&strBase[0xb2], 0x32);
+
+    // Set up text on layout with the button labels
+    func_80136B4C(self->mLayout, (char*)&strBase[0x378], str32, 0u);
+    func_80136B4C(self->mLayout, (char*)&strBase[0x389], str31, 0u);
+    func_80136B4C(self->mLayout, (char*)&strBase[0x39a], str32, 0u);
+    func_80136B4C(self->mLayout, (char*)&strBase[0x3ab], str31, 0u);
+    func_80136B4C(self->mLayout, (char*)&strBase[0x3bc], str32, 0u);
+    func_80136B4C(self->mLayout, (char*)&strBase[0x3cd], str31, 0u);
+
+    // Hide three named panes via the root pane lookup virtual
+    void* pane = ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15((const char*)&strBase[0x3de], 1);
+    func_80124270(pane, 0);
+    pane = ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15((const char*)&strBase[0x3ea], 1);
+    func_80124270(pane, 0);
+    pane = ((RootPaneProxy*)*(void**)((char*)self->mLayout + 0x10))->vf15((const char*)&strBase[0x3f6], 1);
+    func_80124270(pane, 0);
+
+    // Build a stack CSLCur bound to the arc accessor and spill its fields into
+    // the embedded cursor object at self+0x28, then run its slot-8 virtual.
+    CSLCur curTmp;
+    __ct__CSLCur(&curTmp, (int)self->mArcAccessor);
+    CurMirror28* src28 = reinterpret_cast<CurMirror28*>(&curTmp);
+    CurMirror28* dst28 = reinterpret_cast<CurMirror28*>((u8*)self + 0x28);
+    dst28->w0 = src28->w0;
+    dst28->w4 = src28->w4;
+    dst28->w8 = src28->w8;
+    dst28->wC = src28->wC;
+    dst28->b14 = src28->b14;
+    dst28->b15 = src28->b15;
+    ((VtSlot8Call*)((u8*)self + 0x28))->vf2();
+
+    // Same pattern for the CCur18 sub-object at self+0x40
+    void* ccur18Accessor = (void*)func_801355F4();
+    u8 cur18Tmp[0x18];
+    __ct__CCur18(cur18Tmp, ccur18Accessor);
+    CurMirror40* src40 = reinterpret_cast<CurMirror40*>(cur18Tmp);
+    CurMirror40* dst40 = reinterpret_cast<CurMirror40*>((u8*)self + 0x40);
+    dst40->w4 = src40->w4;
+    dst40->w8 = src40->w8;
+    dst40->wC = src40->wC;
+    dst40->w10 = src40->w10;
+    dst40->b14 = src40->b14;
+    dst40->b15 = src40->b15;
+    __dt__6CCur18Fv(cur18Tmp, -1);
+    ((VtSlot8Call*)((u8*)self + 0x40))->vf2();
+
+    // Sub-layout cursor at self+0x110
+    func_8028ED0C(reinterpret_cast<CSLCur*>((u8*)self + 0x110), (int)self->mArcAccessor);
+
+    func_8028ED70(reinterpret_cast<UnkED70_Struct*>((u8*)self + 0x110));
+
+    // Reset the main cursor via a stack temporary, then spill it to self+0x13C.
+    // The copy uses typed members (u16/u8) so MWCC reproduces retail's
+    // halfword/byte store widths exactly.
+    CurMirror13C curReset;
+    func_8028E7C8(reinterpret_cast<CSLCur*>(&curReset));
+    CurMirror13C* dst13C = reinterpret_cast<CurMirror13C*>(&self->mCur);
+    dst13C->w0 = curReset.w0;
+    dst13C->w4 = curReset.w4;
+    dst13C->w8 = curReset.w8;
+    dst13C->hwC = curReset.hwC;
+    dst13C->bE = curReset.bE;
+    dst13C->hwF = curReset.hwF;
+    dst13C->b11 = curReset.b11;
+
+    // Allocate the three save-data buffers and register their callbacks
+    func_8028E838(reinterpret_cast<UnkStruct_3Ptr*>(&self->mCur));
+    ((void (*)(CSLCur*))func_8028E8EC)(reinterpret_cast<CSLCur*>(&self->mCur));
+
+    // Set flags
+    self->mField122 = 1;
+    self->mField120 = 1;
+    self->mFileHandle = 0;
+    ((UnkClass_8045F564*)((u8*)self + 4))->func_8045F810();
+
+    // Allocate three 0x9C00-byte buffers from MEM2 (size written as
+    // 0x10000-0x6400 to reproduce retail's lis/subi pair)
+    handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
+    self->mField130 = allocate_head__Q23mtl10MemManagerFUlUli(handle, 0x10000 - 0x6400, 0x20);
+    handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
+    self->mField134 = allocate_head__Q23mtl10MemManagerFUlUli(handle, 0x10000 - 0x6400, 0x20);
+    handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
+    self->mField138 = allocate_head__Q23mtl10MemManagerFUlUli(handle, 0x10000 - 0x6400, 0x20);
+
+    // Destroy temporary object
+    __dt__14Class_8045F858Fv(temp8, -1);
+
+    return 1;
+}
+#pragma pop
     if (d8result != 0) {
         func_801368C0(self->mLayout, (char*)&strBase[0x27f], d8result);
         func_801368C0(self->mLayout, (char*)&strBase[0x288], d8result);
@@ -2175,7 +2439,8 @@ extern "C" void func_80291B18__Q22cf7CfAwardFv(cf::CfAward*, int val) {
 
 // Count valid items/quests: iterates IDs 0-299, checks validity via
 // func_80291C60 and func_8009CF8C, returns the count of valid entries
-int func_80291BF8() {
+// Retail symbol is unmangled; declared extern "C" in CfGameManager.hpp
+extern "C" s32 func_80291BF8() {
     int count;
     int i;
     count = 0;
@@ -2259,20 +2524,20 @@ u32 func_80291EF0() {
 
 
 // sinit: static initializer for the global CfAward instance at lbl_eu_806649F8
+// Sets the manually-managed vtable pointers, runs the constructor body, and
+// registers the atexit destructor.
 extern "C" void sinit_802930E0() {
-    // Set the manually-managed vtable pointers, call the constructor, and
-    // register the atexit destructor for the global CfAward instance.
-    cf::CfAward* self = &lbl_eu_806649F8;
-    self->mSecondBase = (void*)&lbl_eu_80538858;
-    self->mVtbl = (void*)((char*)&lbl_eu_80538858 + 8);
-    func_8009D414(self);
-    __register_global_object(self, (void*)__dt__Q22cf7CfAwardFv, (void*)lbl_eu_80576CF8);
+    lbl_eu_806649F8.mSecondBase = (void*)&lbl_eu_80538858;
+    lbl_eu_806649F8.mVtbl = (char*)&lbl_eu_80538858 + 8;
+    func_8009D414(&lbl_eu_806649F8);
+    __register_global_object(&lbl_eu_806649F8, (void*)__dt__Q22cf7CfAwardFv, (void*)lbl_eu_80576CF8);
 }
 
 // Virtual dispatch through self->mPtr using proper typed virtual calls
 // Use local variables for the pointer and vtable to match retail's register allocation
 // (self saved to r31, mPtr loaded into r3 each time)
-extern "C" void func_8028EC74(UnkPtrHolder* self) {
+// noinline: retail keeps this out-of-line (called from CSLCur::func_8028EA74 etc.)
+extern "C" __declspec(noinline) void func_8028EC74(UnkPtrHolder* self) {
     self->mPtr->vf8(self->mField10);
     self->mPtr->vf7(self->mField0C);
     self->mPtr->vf11(self->mField0C, 1);

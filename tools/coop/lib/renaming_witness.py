@@ -152,6 +152,150 @@ _COMMUTATIVE_RA_RB = frozenset({
     Opcode.MULLW, Opcode.MULHW, Opcode.MULHWU,
     Opcode.SUBF, Opcode.SUBFC, Opcode.SUBFE,
 })
+
+# Symmetric-compare extension (vf9, us-8017e6b8): CR-logic opcodes whose
+# BA/BB source fields conservatively count as whole-field reads when
+# deciding whether a compare's LT/GT/UN bits are observable.
+
+
+_CR_WRITE_OPS = None
+
+
+def _writes_cr_field(ins, crf):
+    """True when ins writes (all of) CR field crf."""
+    global _CR_WRITE_OPS
+    if _CR_WRITE_OPS is None:
+        _CR_WRITE_OPS = frozenset({
+            Opcode.CMPW, Opcode.CMPLW, Opcode.CMPWI, Opcode.CMPLWI,
+            Opcode.FCMPU, Opcode.FCMPO,
+        })
+    raw = getattr(ins, "raw", None)
+    if raw is None:
+        return False
+    op = ins.opcode
+    if op in _CR_WRITE_OPS:
+        return ((raw >> 6) & 0x7) == crf
+    mcrf = getattr(Opcode, "MCRF", None)
+    if mcrf is not None and op == mcrf:
+        return ((raw >> 6) & 0x7) == crf
+    mtcrf = getattr(Opcode, "MTCRF", None)
+    if mtcrf is not None and op == mtcrf:
+        fxm = (raw >> 12) & 0xFF
+        lo = 2 * (7 - crf)
+        return ((fxm >> lo) & 0x3) == 0x3
+    return False
+
+
+def _reads_cr_non_eq(ins, crf):
+    """True when ins consumes a non-EQ bit of CR field crf."""
+    raw = getattr(ins, "raw", None)
+    if raw is None:
+        return False
+    op = ins.opcode
+    if op in (Opcode.BC, Opcode.BCLR, Opcode.BCCTR):
+        bo = (raw >> 21) & 0x1F
+        if bo & 0x10:
+            return False  # BO says branch unconditionally - no CR test
+        bi = (raw >> 16) & 0x1F  # BI lives at bits 16-20 on B-form branches
+        return ((bi >> 2) & 0x7) == crf and (bi & 0x3) != 2
+    mcrf = getattr(Opcode, "MCRF", None)
+    if mcrf is not None and op == mcrf:
+        return (((raw >> 11) & 0x7) >> 2) == crf
+    if op in _CR_LOGIC_OPCODES:
+        ba = (raw >> 11) & 0x7
+        bb = (raw >> 16) & 0x7
+        return crf in (ba >> 2, bb >> 2)
+    return False
+
+
+def _swapped_compare_order_safe(instructions, pos, crf):
+    """Kill-analysis: a non-EQ read of crf after pos blocks the swap only
+    when no intervening write to crf kills the swapped values first."""
+    first_post_write = None
+    for idx in range(pos + 1, len(instructions)):
+        if _writes_cr_field(instructions[idx], crf):
+            first_post_write = idx
+            break
+    for idx in range(pos + 1, len(instructions)):
+        if _reads_cr_non_eq(instructions[idx], crf):
+            blocked = any(
+                _writes_cr_field(instructions[k], crf)
+                for k in range(pos + 1, idx + 1)
+            )
+            if not blocked:
+                return False
+    return True
+
+
+_CR_LOGIC_OPCODES = frozenset({
+    Opcode.CRAND, Opcode.CRANDC, Opcode.CREQV, Opcode.CRNAND,
+    Opcode.CRNOR,
+    Opcode.CRORC, Opcode.CRXOR,
+})
+
+
+def _cr_field_non_eq_reads(instructions: list) -> set:
+    """Return crfD indexes whose LT/GT/UN bits are consumed by any branch.
+
+    Scans BC/BCLR/BCCTR words: BI (bits 11-15) encodes ``crfD*4 + bit`` with
+    bit 0=LT, 1=GT, 2=EQ, 3=UN.  A branch testing any bit other than EQ is a
+    non-EQ consumption.  MCRF and CR-logic ops read whole fields and are
+    treated conservatively as non-EQ reads of their source fields.
+    Used by the symmetric-compare operand-swap tolerance (see §7j-2 spec in
+    MWCC_PATTERNS.md): an FCMPU/FCMPO pair whose compared field's non-EQ bits
+    are never read may have its operands swapped without semantic change.
+    """
+    reads: set = set()
+    mcrf = getattr(Opcode, "MCRF", None)
+    for insn in instructions:
+        op = insn.opcode
+        raw = getattr(insn, "raw", None)
+        if raw is None:
+            continue
+        if op in (Opcode.BC, Opcode.BCLR, Opcode.BCCTR):
+            bi = (raw >> 11) & 0x1F
+            crf = (bi >> 2) & 0x7
+            bit = bi & 0x3
+            if bit != 2:
+                reads.add(crf)
+        elif mcrf is not None and op == mcrf:
+            src = (raw >> 11) & 0x7
+            reads.add(src)
+        elif op in _CR_LOGIC_OPCODES:
+            # Conservative: BA/BB may reference any field.
+            reads.add((raw >> 11) & 0x7)
+            reads.add((raw >> 16) & 0x7)
+    return reads
+
+
+def _cr_order_insensitive_mask(
+    instructions_a: list, instructions_b: list,
+) -> int:
+    """CR bit-mask clearing LT/GT/UN bits of order-insensitive fields.
+
+    A field is order-insensitive when it is call-clobbered (EABI volatile:
+    cr0/cr5-cr7 - exit remnants unobservable by conforming callers) and its
+    LT/GT/UN bits are never consumed by any branch or CR-logic op in either
+    function.  Divergences confined to cleared bits are unobservable and may
+    be ignored by the terminal comparison (symmetric-compare extension,
+    vf9/us-8017e6b8).  Soundness: any consumer would be caught by the
+    non-EQ-read scan; volatile fields carry no exit obligation.
+    """
+    ignore = 0
+    non_eq = (_cr_field_non_eq_reads(instructions_a)
+              | _cr_field_non_eq_reads(instructions_b))
+    for f in _volatile_cr_fields():
+        if f in non_eq:
+            continue
+        base = 28 - 4 * f  # nibble low bit position (UN)
+        # clear LT (base+3), GT (base+2), UN (base); keep EQ (base+1)
+        ignore |= (1 << (base + 3)) | (1 << (base + 2)) | (1 << base)
+    return ignore
+
+
+def _volatile_cr_fields() -> set:
+    """CR fields that are call-clobbered (EABI): exit values unobservable."""
+    return {0, 5, 6, 7}
 # Round-9 R9-1/R9-4: load opcodes that can read a spill slot ``(r1 + c)``.
 # C1/C2 in ``_live_in_spill_only`` scan these to detect slot reads; ``lmw``
 # (loads rD..r31, multi-lane) is handled separately (reject — cannot confine).
@@ -1428,6 +1572,25 @@ def check_gates(
     rho_gpr: dict[int, int] = {}
     rho_fpr: dict[int, int] = {}
 
+    # Symmetric-compare extension (vf9, us-8017e6b8): CR fields whose
+    # LT/GT/UN bits are never consumed may have their FCMPU/FCMPO operands
+    # swapped without semantic change (EQ bit is symmetric; volatile fields
+    # are call-clobbered so exit remnants are unobservable).
+    non_eq_cr = (_cr_field_non_eq_reads(original)
+                 | _cr_field_non_eq_reads(candidate))
+    import os as _os
+    _dbg = _os.environ.get('WITNESS_DEBUG')
+    if _dbg:
+        print(f"[witness-debug] non_eq_cr={sorted(non_eq_cr)}")
+    import os as _os
+    if _os.environ.get('WITNESS_DEBUG'):
+        print(f"[witness-debug] non_eq_cr={sorted(non_eq_cr)}")
+        for i, (ri, di) in enumerate(zip(original, candidate)):
+            if ri.opcode in (Opcode.FCMPU, Opcode.FCMPO):
+                crf = (ri.raw >> 6) & 0x7
+                print(f"[witness-debug] slot {i}: fcmpu crfD={crf} "
+                      f"order-insensitive={crf not in non_eq_cr}")
+
     for index, (r_insn, d_insn) in enumerate(zip(original, candidate)):
         # Gate 4: rho accumulation — single-valued and injective, consistent
         # across all mnemonics/positions. For commutative X-form ops, a
@@ -1455,7 +1618,32 @@ def check_gates(
             return trial_r, trial_f
 
         applied = _with(False)
-        if applied is None and r_insn.opcode in _COMMUTATIVE_RA_RB:
+        if (
+            r_insn.opcode in (Opcode.FCMPU, Opcode.FCMPO)
+            and d_insn.opcode == r_insn.opcode
+        ):
+            crf_d = (r_insn.raw >> 6) & 0x7
+            safe = _swapped_compare_order_safe(original, index, crf_d)
+            safe_c = _swapped_compare_order_safe(candidate, index, crf_d)
+            if _dbg and not (safe and safe_c):
+                for k in range(index + 1, min(index + 40, len(original))):
+                    w = _writes_cr_field(original[k], crf_d)
+                    r = _reads_cr_non_eq(original[k], crf_d)
+                    if w or r:
+                        print(f"[witness-debug]   +{k}: W={w} Rne={r} "
+                              f"raw={original[k].raw:08x}")
+                print(f"[witness-debug]   kill-safe(orig)={safe}")
+        _symmetric_cmp = (
+            r_insn.opcode in (Opcode.FCMPU, Opcode.FCMPO)
+            and d_insn.opcode == r_insn.opcode
+            and (((r_insn.raw >> 6) & 0x7) not in non_eq_cr
+                 or _swapped_compare_order_safe(
+                     original, index, (r_insn.raw >> 6) & 0x7,
+                 ))
+        )
+        if applied is None and (
+            r_insn.opcode in _COMMUTATIVE_RA_RB or _symmetric_cmp
+        ):
             # Commutative operand-order swap (retail `add rA,rB,rC` vs decomp
             # `add rA,rC,rB`): retry with the decomp RA (16-20) <-> RB (11-15)
             # exchanged — the computed value is identical.
@@ -2557,6 +2745,7 @@ def _terminals_agree(
     first_divergence: list[str] | None = None,
     simplify_timeout_ms: int = 0,
     budget: _SimplifyBudget | None = None,
+    cr_ignore_mask: int = 0,
 ) -> bool:
     """Structural agreement of two terminals under the renaming permutation.
 
@@ -2595,7 +2784,8 @@ def _terminals_agree(
         if not _structurally_equal_simplified(ls.ps1[i], rs.ps1[fpr_perm[i]], z3, timeout_ms=simplify_timeout_ms, budget=budget):
             return _fail(f"ps1 f{i}")
     direct_pairs = [
-        (ls.cr, rs.cr, "cr"),
+        ((ls.cr & ~cr_ignore_mask) if cr_ignore_mask else ls.cr,
+         (rs.cr & ~cr_ignore_mask) if cr_ignore_mask else rs.cr, "cr"),
         (ls.xer.ca, rs.xer.ca, "xer.ca"),
         (ls.xer.ov, rs.xer.ov, "xer.ov"),
         (ls.xer.so, rs.xer.so, "xer.so"),
@@ -2798,6 +2988,9 @@ def run_structural_witness(
     retail_initial, decomp_initial = _symbolic_initial_pair(
         ops, gpr_perm, fpr_perm,
     )
+    # Symmetric-compare extension: CR bits proven unobservable (volatile
+    # field, EQ-only consumption) are excluded from the terminal comparison.
+    cr_ignore_mask = _cr_order_insensitive_mask(original, candidate)
     try:
         retail_exits = execute_cfg(
             retail_initial, original, ops,
@@ -2891,6 +3084,7 @@ def run_structural_witness(
                 first_divergence=divergence,
                 simplify_timeout_ms=deadline.remaining_ms() if deadline else 0,
                 budget=budget,
+                cr_ignore_mask=cr_ignore_mask,
             ):
                 reason = (
                     f"terminal pair ({left.exit_kind}, {right.exit_kind}) "
@@ -3279,6 +3473,12 @@ def run_region_sliced_witness(
     ops = SymbolicOps()
     z3 = ops.z3
     budget = _SimplifyBudget(timeout_ms=_simplify_timeout(deadline))
+    # Symmetric-compare CR extension (same as the whole-function driver):
+    # CR bits proven unobservable (volatile field, EQ-only consumption) are
+    # excluded from terminal comparison. Without this binding the terminal
+    # comparison below raises NameError, surfacing as a spurious "execute"
+    # gate failure for every region-sliced certification.
+    cr_ignore_mask = _cr_order_insensitive_mask(original, candidate)
     # Full-stream validation (gates 1/2/3/6) BEFORE region slicing: the
     # global path returns at the first rho conflict, so slots after it were
     # never checked for reject-list / reloc / non-register-bit equality
@@ -3611,6 +3811,7 @@ def run_region_sliced_witness(
                     first_divergence=divergence,
                     simplify_timeout_ms=deadline.remaining_ms() if deadline else 0,
                     budget=budget,
+                    cr_ignore_mask=cr_ignore_mask,
                 ):
                     reason = (
                         f"terminal pair ({left.exit_kind}, {right.exit_kind}) "

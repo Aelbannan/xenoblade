@@ -771,9 +771,11 @@ void func_8008B580(cf::CfObjectMove* self) {
     }
 }
 
+// Trampoline: func_8008B930 forwards to the base refresh helper (retail
+// references the unmangled C-ABI name, hence the extern "C" decl).
 struct CCtrlMoveNpc;
 extern "C" void func_8008962C(CCtrlMoveNpc* self);
-extern "C" void func_8008B930(CCtrlMoveNpc* self) { func_8008962C(self); }
+void func_8008B930(CCtrlMoveNpc* self) { func_8008962C(self); }
 
 // Flag-guarded set of the +0x8000 flag bit and the +0x15C actor id; returns
 // 0 when the +0x2 bit is set (1 otherwise).
@@ -945,9 +947,9 @@ void func_8008BEEC(cf::CfObjectMove* self, void* obj, int arg2, u32 arg3) {}
 // func_8008BEEC and mirrors the +0x180 flag bits into the +0x3F60 sub-object.
 // noinline keeps func_8008A23C's call site an opaque bl (retail has one).
 __declspec(noinline) void func_8008C4F0(cf::CfObjectMove* self) {
-    cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
     cf::CFunc8008D444Obj* obj =
-        (cf::CFunc8008D444Obj*)(sub ? (u8*)sub - 0x3E9C : 0);
+        (cf::CFunc8008D444Obj*)self->field_0x34->field_0x28;
+    if (obj != 0) obj = (cf::CFunc8008D444Obj*)((u8*)obj - 0x3E9C);
     u32 flags = self->field_0x17C;
     self->field_0x3C = lbl_eu_806665F0;
     if ((flags & 0x08000000u) != 0 && (flags & 0x1000u) == 0) {
@@ -955,7 +957,7 @@ __declspec(noinline) void func_8008C4F0(cf::CfObjectMove* self) {
             func_8008D444(self, obj, 0);
         }
     }
-    flags &= 0xA3FFFFFFu;
+    flags &= 0xA3FFFFBFu;
     self->field_0x17C = flags;
     self->field_0x198 = 0;
     self->field_0x190 = 0;
@@ -982,8 +984,6 @@ __declspec(noinline) void func_8008C4F0(cf::CfObjectMove* self) {
         }
     }
 }
-
-void func_8008C660() {}
 
 // Enemy move-controller pursuit helper (retail func_8008C660, stub): takes
 // the controller, a direction vector and a scaled move distance; returns
@@ -2661,11 +2661,12 @@ void func_80092CB0(void* a, void* b, void* c) {
 void func_80092CC4(cf::CfObjectMove* self, u32* out1, f32* out2) {
     *out1 = 0;
     f32 result;
-    if (*self->field_0x34->field_0x28->_v138() == lbl_eu_806665C0) {
-    } else {
+    if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
         cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
         f32 denom = *sub->_v138();
         result = *sub->_v1D8() / denom;
+    } else {
+        result = lbl_eu_806665C0;
     }
     *out2 = result;
 }
@@ -2714,17 +2715,17 @@ void func_80092F94(void* a, void* b, void* c) {
     *(float*)c = lbl_eu_806665E4;
 }
 
-extern "C" void func_80092FA8(void* u, u32* a, float* b) {
+void func_80092FA8(void* u, u32* a, f32* b) {
     *a = 0x12C;
     *b = lbl_eu_806665E4;
 }
 
-extern "C" void func_80092FBC(void* u, u32* a, float* b) {
+void func_80092FBC(void* u, u32* a, f32* b) {
     *a = 0x258;
     *b = lbl_eu_806665E4;
 }
 
-extern "C" void func_80092FD0(void* u, u32* a, float* b) {
+void func_80092FD0(void* u, u32* a, f32* b) {
     *a = 0x384;
     *b = lbl_eu_806665E4;
 }
@@ -2738,8 +2739,7 @@ void func_80092FE4(cf::CfObjectMove* self, u32* out1, f32* out2) {
         *out2 = lbl_eu_806665E4;
     } else {
         f32 result;
-        f32 rate = *self->field_0x34->field_0x28->_v138();
-        if (lbl_eu_806665C0 != rate) {
+        if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
             cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
             f32 denom = *sub->_v138();
             result = *sub->_v1D8() / denom;
@@ -2757,11 +2757,12 @@ void func_800930C0(cf::CfObjectMove* self, u32* out1, f32* out2) {
         *out2 = lbl_eu_806665E4;
     } else {
         f32 result;
-        if (*self->field_0x34->field_0x28->_v138() == lbl_eu_806665C0) {
-        } else {
+        if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
             cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
             f32 denom = *sub->_v138();
             result = *sub->_v1D8() / denom;
+        } else {
+            result = lbl_eu_806665C0;
         }
         *out2 = result;
     }
@@ -2774,11 +2775,12 @@ void func_8009319C(cf::CfObjectMove* self, u32* out1, f32* out2) {
         *out2 = lbl_eu_806665E4;
     } else {
         f32 result;
-        if (*self->field_0x34->field_0x28->_v138() == lbl_eu_806665C0) {
-        } else {
+        if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
             cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
             f32 denom = *sub->_v138();
             result = *sub->_v1D8() / denom;
+        } else {
+            result = lbl_eu_806665C0;
         }
         *out2 = result;
     }
@@ -2791,11 +2793,12 @@ void func_80093278(cf::CfObjectMove* self, u32* out1, f32* out2) {
         *out2 = lbl_eu_806665E4;
     } else {
         f32 result;
-        if (*self->field_0x34->field_0x28->_v138() == lbl_eu_806665C0) {
-        } else {
+        if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
             cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
             f32 denom = *sub->_v138();
             result = *sub->_v1D8() / denom;
+        } else {
+            result = lbl_eu_806665C0;
         }
         *out2 = result;
     }
@@ -2809,22 +2812,24 @@ void func_80093278(cf::CfObjectMove* self, u32* out1, f32* out2) {
 void func_80093354(cf::CfObjectMove* self, u32* out1, f32* out2) {
     if (ml::math::mtRand(100) >= 0x50) {
         f32 result;
-        if (*self->field_0x34->field_0x28->_v138() == lbl_eu_806665C0) {
-        } else {
+        if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
             cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
             f32 denom = *sub->_v138();
             result = *sub->_v1D8() / denom;
+        } else {
+            result = lbl_eu_806665C0;
         }
         *out2 = result;
         *out1 = 0x3C;
         self->field_0x17C |= 0x80;
     } else {
         f32 result;
-        if (*self->field_0x34->field_0x28->_v138() == lbl_eu_806665C0) {
-        } else {
+        if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
             cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
             f32 denom = *sub->_v138();
             result = *sub->_v1D8() / denom;
+        } else {
+            result = lbl_eu_806665C0;
         }
         *out2 = result;
         *out1 = 0x12C;
@@ -2839,27 +2844,30 @@ void func_800934AC(cf::CfObjectMove* self, u32* out1, f32* out2) {
     int r = ml::math::mtRand(100);
     if (r >= 0x5A) {
         f32 result;
-        if (*self->field_0x34->field_0x28->_v138() == lbl_eu_806665C0) {
-        } else {
+        if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
             cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
             f32 denom = *sub->_v138();
             result = *sub->_v1D8() / denom;
+        } else {
+            result = lbl_eu_806665C0;
         }
         *out2 = result;
         *out1 = 0x3C;
         self->field_0x17C |= 0x80;
-    } else if (r >= 0x3C) {
-        *out2 = lbl_eu_806665E4;
-        *out1 = 0x12C;
     } else {
-        f32 result;
-        if (*self->field_0x34->field_0x28->_v138() == lbl_eu_806665C0) {
+        if (r >= 0x3C) {
+            *out2 = lbl_eu_806665E4;
         } else {
-            cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
-            f32 denom = *sub->_v138();
-            result = *sub->_v1D8() / denom;
+            f32 result;
+            if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
+                cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
+                f32 denom = *sub->_v138();
+                result = *sub->_v1D8() / denom;
+            } else {
+                result = lbl_eu_806665C0;
+            }
+            *out2 = result;
         }
-        *out2 = result;
         *out1 = 0x12C;
     }
 }

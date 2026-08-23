@@ -15,8 +15,15 @@ public:
     virtual void onDeleteHbm();
 };
 
+// Retail storage of CLibHbm::spHbmstopTplData (.sbss word owned by the
+// CLibHbm split). Referenced directly here so the inline setState below
+// compiles against the retail address without aliasing macros.
+extern "C" TPLPalette* lbl_eu_80665700;
+
 //size: 0x268
-class CLibHbm : public CWorkThread {
+// novtable: the retail vtable/RTTI objects (__vt__7CLibHbm = lbl_eu_8056D1A8,
+// lbl_eu_806637C8 / lbl_eu_8056D248) are defined manually in CLibHbm.cpp.
+class __declspec(novtable) CLibHbm : public CWorkThread {
 public:
     CLibHbm(const char* pName, CWorkThread* pParent);
     ~CLibHbm();
@@ -52,7 +59,7 @@ public:
 
     void setState(int state){
         mState = state;
-        if(spHbmstopTplData == nullptr){
+        if(lbl_eu_80665700 == nullptr){
             mState = STATE_NEG1;
         }
     }

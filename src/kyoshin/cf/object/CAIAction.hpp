@@ -99,6 +99,10 @@ public:
 
 } // namespace cf
 
+extern void func_801537F0(cf::CAIAction* self);
+extern int func_8014B120(cf::CAIAction* self, const cf::CAIActionSlot* in);
+extern u32 func_8014AC38(cf::CAIAction* self, const cf::CAIActionSlot* in);
+
 // Fv mangling, but callers leave outA in r4 and outB in r5
 extern "C" void CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv(cf::CAIAction* self,
                                                               cf::CAIActionSlot* outA,
@@ -119,8 +123,63 @@ extern void func_8014A8F8();
 extern cf::CAIActionTable* lbl_eu_806641B0;
 extern void* func_800B708C(int);        // C++ linkage -> func_800B708C__Fi
 
-struct CAIActionQuery;
-struct CAIActionEnumHolder;
+// Raw vtable view: retail code invokes fixed slots through object vtables.
+struct CAIVtable {
+    void* slot[0x170]; // up to offset 0x5C0
+};
+
+// Embedded move object at partyBase + 0x3E9C.
+struct CAIPartyMoveObj {
+    CAIVtable* vtable;        // +0x00 (slots 0x4C / 0x50 used)
+    u8 pad04[0x64 - 0x4];
+    u32 moveFlags;            // +0x64 (abs 0x3F00; bits 1/2 select lookup id)
+};
+
+// Party/battle object stored in CAIAction::unkB14 (used by func_801537F0 /
+// func_80150618).
+struct CAIPartyObj {
+    CAIVtable* vtable;        // 0x00 (slot 0x5C0 used)
+    CAIVtable* unk04;         // 0x04 sub-object (slot 0x30 used)
+    u8 pad08[0x3E9C - 0x8];
+    CAIPartyMoveObj move;     // 0x3E9C
+    u32 unk3F10;              // 0x3F10 battle handle
+};
+
+// Sub-object referenced by CAIActionQuery::unk18.
+struct CAIQueryTarget {
+    u8 pad00[0x3C];
+    u16 unk3C;                // 0x3C action-class tag (3/4 special-cased)
+    u8 pad3E[0x5C - 0x3E];
+    u16 unk5C;                // 0x5C dispatch selector (1/2/3)
+};
+
+// 0x20-byte query struct passed to func_80150828 / func_80150618.
+struct CAIActionQuery {
+    u32 unk00;                // 0x00
+    u8 unk04;                 // 0x04
+    u8 unk05;                 // 0x05 (2nd dispatch key 0..178)
+    u8 unk06;                 // 0x06 (1st dispatch key; 0x25 short-circuit)
+    u8 unk07;                 // 0x07
+    u32 unk08;                // 0x08
+    u8 unk0C;                 // 0x0C
+    u8 unk0D;                 // 0x0D (mapped via (b+0xCB)&0xFF / ==0x3B)
+    u8 unk0E;                 // 0x0E
+    u8 unk0F;                 // 0x0F
+    u16 unk10;                // 0x10 flag bits (0x400 set pre-dispatch)
+    s16 unk12;                // 0x12
+    f32 unk14;                // 0x14
+    CAIQueryTarget* unk18;    // 0x18 dispatch target
+    u32 unk1C;                // 0x1C set to 6 when result is null
+};
+
+// Stack-allocated 8-byte holder (list + handle).
+struct CAIActionEnumHolder {
+    void* list;               // 0x0
+    u32 handle;               // 0x4
+};
+
+extern "C" int func_80174C98(const void* obj, void* out, int tag);
+extern "C" void func_800BE12C(void* moveObj, int a, int b, int c, int d);
 
 extern "C" void* func_8016FE34(void*);          // -> func_8016FE34
 // NOTE (agent pi-019fef06, 2026-08-11): the two declarations below were

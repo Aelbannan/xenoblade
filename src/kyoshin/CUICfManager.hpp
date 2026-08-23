@@ -61,6 +61,9 @@ extern "C" u32 func_8009CF8C(u32 resourceId);      // resource getter (CMiniMap.
 extern "C" u32 func_800FF6BC(u8* ctx, u32 scene);  // menu factory (CMainMenu.cpp)
 extern "C" u32 func_80122450();                    // close-quest-menu gate (CMainMenu.hpp)
 extern char lbl_8066DCF8[4];     // .sbss2 font-name blob (address used as pName)
+// C-library delete operators (flat retail symbols; shared runtime helpers).
+extern "C" void* __dl__FPv(void* p);
+extern "C" void* __dla__FPv(void* p);
 // C-library vararg formatter (flat retail symbol; used by the slot sprintf
 // fills). Matches the per-TU declaration used by CMapSel.hpp etc.
 extern "C" int sprintf(char* str, const char* fmt, ...);
@@ -69,7 +72,7 @@ class CScn;
 extern "C" mtl::ALLOC_HANDLE func_80496004(CScn* scene);
 
 // This unit's own slot helpers (flat retail names; bodies live in the .cpp).
-extern "C" int func_801359AC();
+extern "C" int func_801359AC(u8* singleton);
 extern "C" int func_8013042C(u8* base, u8 index);
 extern "C" void func_801311B8(u8* base);          // slot-rebuild helper (this unit)
 extern "C" void func_80131820(u8* base);          // slot re-sort helper (this unit)
@@ -105,6 +108,19 @@ extern const f32 lbl_eu_806672D0;      // player-pose constant
 // .sdata slot-list format strings (4-byte entries, sda21 li loads).
 extern char lbl_eu_806621EC[4];
 extern char lbl_eu_806621E8[4];
+
+// Read-only queue-helper view over the lbl_eu_80664054 singleton: factory
+// ctx at +0x144, scene id at +0x11C, reslist head at +0x128, free-slot array
+// at +0x138 with count at +0x13C (used by the func_80133CA0 family).
+struct CUICfQueueMgrView {
+    u8 pad0[0x11C];
+    u32 field_11C;
+    u8 pad1[0x128 - 0x120];
+    void* field_128;             // reslist head node
+    void* field_138;             // free-slot array base (0xC stride)
+    int field_13C;               // slot capacity
+    u32 field_144;               // menu-factory ctx
+};
 
 // 0x168-stride view over mInitSlots[].unk04 (func_80135898's flag scan).
 struct CUICfSlotFlagView {

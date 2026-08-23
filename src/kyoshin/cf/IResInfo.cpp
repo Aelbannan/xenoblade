@@ -306,29 +306,26 @@ extern "C" bool func_800661A8(u8* self, int r5, int r6) {
 // ============================================================
 // func_80066290 (0xE4)
 // ============================================================
-extern "C" void func_80066290(u8* self, void* param) {
-    u8 type = *(u8*)((char*)param + 0x33);
-    s16 v34 = *(s16*)((char*)param + 0x34);
+// Entry record arrives in r4 (retail hidden first arg in r3). Type 10 caches
+// the resource base in field_0x10; type 9 publishes it to the sound manager.
+// Computing slot (= idx+2) before the virtual call lets MWCC reuse the idx
+// register (r5) for the call's 0 argument, matching retail allocation.
+extern "C" void func_80066290(int unused, ResInfoEntry* self) {
+    u8 type = self->field_0x33;
+    s16 idx = self->field_0x34;
     if (type == 10) {
-        u32* p10 = *(u32**)((char*)param + 0x10);
-        if (p10 == 0) {
-            void* obj = *(void**)((char*)param + 0x2C);
-            void* (*fn)(void*, int) = (void* (*)(void*, int))*(void**)(*(u32*)obj + 8);
-            void* r = fn(obj, 0);
-            if (r != 0) {
-                u32* fc18 = lbl_eu_8065FC18;
-                if (fc18 != 0) {
-                    *(u32**)((char*)param + 0x10) = (u32*)r;
-                    func_804CC1BC(fc18, r);
-                }
+        if (self->field_0x10 == 0) {
+            void* r = self->field_0x2C->getResourceBase(self, 0);
+            if (r != 0 && lbl_eu_8065FC18 != 0) {
+                self->field_0x10 = (u32)r;
+                func_804CC1BC(lbl_eu_8065FC18, r);
             }
         }
-    } else if (type == 9 && v34 >= 0) {
-        void* obj = *(void**)((char*)param + 0x2C);
-        void* (*fn)(void*, int) = (void* (*)(void*, int))*(void**)(*(u32*)obj + 8);
-        void* r = fn(obj, 0);
-        func_801BFA08(v34 + 2, r, 0x62800, *(u32*)((char*)param + 0x18));
-        func_801BFA88(v34 + 2, 3, 0, 0);
+    } else if (type == 9 && idx >= 0) {
+        int slot = idx + 2;
+        void* r = self->field_0x2C->getResourceBase(self, 0);
+        func_801BFA08(slot, r, self->field_0x18, 0x62800);
+        func_801BFA88(slot, 3, 0, 0);
     }
 }
 
@@ -819,7 +816,8 @@ extern "C" void func_80067FE0(u8* self) {
 extern "C" void func_80068078(u8* self) {
     ResGridEntry* target = (ResGridEntry*)(self + 0x14E0);
     ResGridEntry* base = (ResGridEntry*)(self + 0x14DC);
-    for (int i = 0x59; i < 0x81; i++) {
+    int i = 0x59;
+    while (i < 0x81) {
         void* r = base->lookup->getResourceBase(target, 0);
         if (r != 0) {
             if (func_800A8BD8(r)) {
@@ -1050,12 +1048,129 @@ extern "C" void __dt__80067670(u8* self) {
 }
 
 // ============================================================
-// func_800676F8 (0x658) - initializer (stub)
+// func_800676F8 (0x658) - initializer
 // ============================================================
-extern "C" void func_800676F8(u8* self) {
-    memset((char*)self + 4, 0, 0x1E78);
-    *(u32*)self |= 1;
-    *(float*)((char*)self + 0x1ED0) = 0.0f;
+// Full initializer: bulk-clears everything after the flag word, sets bit 0,
+// resets the fade counter, re-closes the embedded reslist ring at 0x1EB4,
+// then fills the three 0x3C-stride record tables.
+extern "C" void func_800676F8(ResInfoWork* self) {
+    memset(&self->_04, 0, 0x1E78);
+    self->flags |= 1;
+    self->counter = lbl_eu_80666200;
+
+    // Reset the embedded reslist ring: unlink every node, then close the
+    // sentinel back on itself.
+    ResInfoListNode* cur = self->mStartNodePtr->next;
+    while (cur != self->mStartNodePtr) {
+        ResInfoListNode* node = cur;
+        cur = cur->next;
+        node->next = NULL;
+    }
+    self->mStartNodePtr->next = self->mStartNodePtr;
+    self->mStartNodePtr->prev = self->mStartNodePtr;
+
+    // Scratch lookup slots baked into the record tables.
+
+    u32* slots = self->slots;
+
+    // Small type table at 0x78: sound categories 2..11, each bound to its
+    // manager slot (slot indices follow the retail assignment).
+    ResInitEntry* pre = self->preTable;
+    pre[0].field_0x30 = (ResInfoListNode*)&slots[0];
+    pre[0].field_0x36 = 2;
+    pre[0].field_0x37 = 0;
+    pre[0].field_0x34 = 2;
+    pre[1].field_0x30 = (ResInfoListNode*)&slots[1];
+    pre[1].field_0x36 = 3;
+    pre[1].field_0x37 = 0;
+    pre[1].field_0x34 = 3;
+    pre[2].field_0x30 = (ResInfoListNode*)&slots[2];
+    pre[2].field_0x36 = 4;
+    pre[2].field_0x37 = 0;
+    pre[2].field_0x34 = 4;
+    pre[3].field_0x30 = (ResInfoListNode*)&slots[3];
+    pre[3].field_0x36 = 5;
+    pre[3].field_0x37 = 0;
+    pre[3].field_0x34 = 5;
+    pre[4].field_0x30 = (ResInfoListNode*)&slots[4];
+    pre[4].field_0x36 = 6;
+    pre[4].field_0x37 = 0;
+    pre[4].field_0x34 = 6;
+    pre[5].field_0x30 = (ResInfoListNode*)&slots[11];
+    pre[5].field_0x36 = 7;
+    pre[5].field_0x37 = 0;
+    pre[5].field_0x34 = 7;
+    pre[6].field_0x30 = (ResInfoListNode*)&slots[5];
+    pre[6].field_0x36 = 8;
+    pre[6].field_0x37 = 0;
+    pre[6].field_0x34 = 8;
+    pre[7].field_0x30 = (ResInfoListNode*)&slots[10];
+    pre[7].field_0x36 = 9;
+    pre[7].field_0x37 = 0;
+    pre[7].field_0x34 = 9;
+    pre[8].field_0x30 = (ResInfoListNode*)&slots[11];
+    pre[8].field_0x36 = 10;
+    pre[8].field_0x37 = 0;
+    pre[8].field_0x34 = 10;
+    pre[9].field_0x30 = (ResInfoListNode*)&slots[12];
+    pre[9].field_0x36 = 11;
+    pre[9].field_0x37 = 0;
+    pre[9].field_0x34 = 11;
+
+    // 0x2D0 table: 77 records forming an 11-wide grid (logical ids 0xC..0x58).
+    // field_0x36/0x37 decompose the linear index n into row/col.
+    ResInitEntry* e = self->entries;
+    for (int n = 0; n < 0x4D; n++, e++) {
+        e->field_0x30 = (ResInfoListNode*)&slots[6];
+        e->field_0x36 = n / 11;
+        e->field_0x37 = n % 11;
+        e->field_0x34 = (s16)(0xC + n);
+    }
+
+    // Low grid: ids 0x59..0x60.
+    ResInitEntry* g = self->gridLow;
+    g[0].field_0x30 = (ResInfoListNode*)&slots[8];
+    g[0].field_0x36 = 0;
+    g[0].field_0x37 = 0;
+    g[0].field_0x34 = 0x59;
+    g[1].field_0x30 = (ResInfoListNode*)&slots[8];
+    g[1].field_0x36 = 0;
+    g[1].field_0x37 = 0;
+    g[1].field_0x34 = 0x5a;
+    g[2].field_0x30 = (ResInfoListNode*)&slots[8];
+    g[2].field_0x36 = 0;
+    g[2].field_0x37 = 0;
+    g[2].field_0x34 = 0x5b;
+    g[3].field_0x30 = (ResInfoListNode*)&slots[8];
+    g[3].field_0x36 = 0;
+    g[3].field_0x37 = 0;
+    g[3].field_0x34 = 0x5c;
+    g[4].field_0x30 = (ResInfoListNode*)&slots[8];
+    g[4].field_0x36 = 0;
+    g[4].field_0x37 = 0;
+    g[4].field_0x34 = 0x5d;
+    g[5].field_0x30 = (ResInfoListNode*)&slots[8];
+    g[5].field_0x36 = 0;
+    g[5].field_0x37 = 0;
+    g[5].field_0x34 = 0x5e;
+    g[6].field_0x30 = (ResInfoListNode*)&slots[8];
+    g[6].field_0x36 = 0;
+    g[6].field_0x37 = 0;
+    g[6].field_0x34 = 0x5f;
+    g[7].field_0x30 = (ResInfoListNode*)&slots[8];
+    g[7].field_0x36 = 0;
+    g[7].field_0x37 = 0;
+    g[7].field_0x34 = 0x60;
+
+    // High grid: ids 0x61..0x80, lookup slot B; columns continue at 8.
+    e = self->gridHigh;
+    int col = 8;
+    for (int n = 0x61; n < 0x81; n++, col++, e++) {
+        e->field_0x30 = (ResInfoListNode*)&slots[9];
+        e->field_0x36 = col;
+        e->field_0x37 = 0;
+        e->field_0x34 = n;
+    }
 }
 
 // ============================================================

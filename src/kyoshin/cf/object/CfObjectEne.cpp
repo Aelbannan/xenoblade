@@ -9,7 +9,14 @@
 // labels) come from the CfObjectEne.hpp / CfObjectActor.hpp chain.
 #include "monolib/util/MemManager.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
+// CfObjectActor.hpp declares func_80174B4C with the 5-arg table ABI used by
+// the CfObjectActor ctor TU; this TU's retail call sites pass only
+// (actor, flags) - r5..r7 are dead. Rename the shared declaration out of the
+// way for the include, then declare the 2-arg form used here.
+#define func_80174B4C func_80174B4C_tableargs
 #include "kyoshin/cf/object/CfObjectEne.hpp"
+#undef func_80174B4C
+extern "C" void func_80174B4C(void* actor, u32 flags);
 
 
 // Copy block: 0x00-0x78 (120 bytes), loaded from r4 then stored to self+0x17E4/0x1650
@@ -203,13 +210,16 @@ cf::CfObjectEne* __dt__Q22cf11CfObjectEneFv(cf::CfObjectEne* self, s32 deleteFla
 // 0xA8) - the cross-call address CSE is irreducible (cf. MWCC_CASES
 // HBMSYN NoteOn / GKI notes).
 int func_800ADB2C__Q22cf11CfObjectEneFv(cf::CfObjectEne* self) {
-    CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv((cf::CfObjectModel*)((u8*)self + 0x3E9C));
+    CfObject_UnkVirtualFunc2__Q22cf13CfObjectModelFv(
+        (cf::CfObjectModel*)&((cf::CfEneMoveBaseA*)self)->base);
     ((cf::CfEneSubFake*)self)->vf158(1);
+    // Mixed address forms (member vs arithmetic) stop MWCC from CSE-ing the
+    // subobject base into a callee-saved register across the calls.
     func_800BE33C((u8*)self + 0x3E9C, 1);
     func_80174B4C(self, 0x100000);
     func_80174B4C(self, 0x08000000);
     func_80174B4C(self, 0x10000000);
-    func_800BE824((u8*)self + 0x3E9C, 1);
+    func_800BE824(&((cf::CfEneMoveBaseC*)self)->base, 1);
     u8* region = (u8*)self + 0x44A8;
     func_804B0AD4(region, 0, lbl_eu_8066696C, lbl_eu_80666970);
     ((cf::CfEneReloadArea*)region)->field_0xB2 = 0xC8;
@@ -240,7 +250,8 @@ void cf::CfObjectEne::func_800ADBD4() {
         }
     }
     f32 sub = ((cf::CfEneSubVt64*)this)->m8C();
-    f32 f = func_80496288(lbl_eu_80663E14) * sub;
+    // retail multiplies as sub * sceneTime (fmuls f1,f1,f31 with f31=sub)
+    f32 f = sub * func_80496288(lbl_eu_80663E14);
     func_801765A4((u8*)this, f, 1);
     getInstance__Q22cf13CfGameManagerFv();
     if (func_8006EF04__Fi(0x1000000) != 0) {
@@ -685,52 +696,57 @@ u32 func_800AF82C(u32 unused, const char* col, u32 index) {
 void func_800AF870(cf::CfObjectEne* self) {
     if ((((cf::CfActorParamFields*)self)->field_0x3374 & 0x100000) != 0) return;
     if ((lbl_eu_80663E24 & 0xAFA40000) != 0) return;
-    u8* tgt = ((cf::CfActorField3F60*)self)->field_0x3F60;
-    if (tgt == 0) return;
-    if ((((cf::CfEneMoveTgtView*)tgt)->field_0x4EC & 0x100) == 0) return;
+    if (((cf::CfActorField3F60*)self)->field_0x3F60 == NULL) return;
+    // retail reloads the +0x3F60 target for the flag test (short-lived r4)
+    if (((((cf::CfEneMoveTgtView*)((cf::CfActorField3F60*)self)->field_0x3F60)->field_0x4EC) & 0x100) == 0) return;
     if (((cf::CfEneVt2BC*)self)->m2BC() != 0) return;
-    cf::CfEneBmView* bm = (cf::CfEneBmView*)getInstance__Q22cf14CBattleManagerFv();
-    u8 part = bm->field_0x1AA;
-    if (part >= 1 && part <= 0x18) return;
+    int ok = 0;
+    u8 part = ((cf::CfEneBmView*)getInstance__Q22cf14CBattleManagerFv())->field_0x1AA;
+    if (part >= 1 && part <= 0x18) ok = 1;
+    if (ok != 0) return;
     if (func_801BA2C8(&((cf::CfEneBmView*)getInstance__Q22cf14CBattleManagerFv())->field_0x216C) != 0) return;
     if (((cf::CfEneBmView*)getInstance__Q22cf14CBattleManagerFv())->field_0x20C8 != 0) return;
-    int channel = (int)lbl_eu_80663E44 + (int)lbl_eu_80663E42 * 100;
-    s32 key = ((cf::CfEneMoveTgtView*)tgt)->field_0x4B0;
+    // channel = table halfword at byte offset mode*100, plus the offset itself
+    u32 modeOff = (u32)lbl_eu_80663E42 * 100;
+    int channel = (int)*(u16*)((u8*)&lbl_eu_80663E44 + modeOff) + (int)modeOff;
+    s32 key = ((cf::CfEneMoveTgtView*)((cf::CfActorField3F60*)self)->field_0x3F60)->field_0x4B0;
     func_8003AA34();
-    u8* bdat = lbl_eu_806640D4;
+    u8* bdat = (u8*)lbl_eu_806640D4;
+    const char* tbl = (const char*)lbl_eu_804FC168;
     int row = (int)func_8003B41C(bdat);
     int endRow = row + (int)func_8003B1EC(bdat);
     for (; row < endRow; row++) {
-        u8 model = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x2C3], row);
+        u8 model = (u8)getBdatStringColumnValue(bdat, tbl + 0x2C3, row);
         if ((s32)model != key) continue;
-        u16 ch = (u16)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x2CA], row);
-        if ((int)ch != channel) continue;
-        u8 reward = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x2CE], row);
+        u16 ch = (u16)getBdatStringColumnValue(bdat, tbl + 0x2CA, row);
+        if ((s32)ch != channel) continue;
+        u8 reward = (u8)getBdatStringColumnValue(bdat, tbl + 0x2CE, row);
         f32 sub = ((cf::CfEneSubVt64*)self)->m8C();
         f32 t = func_80496288(lbl_eu_80663E14);
         f32 now = t * sub + ((cf::CfEneTailView*)self)->field_0x45CC;
+        // retail stores the accumulated time back BEFORE the threshold compare
         ((cf::CfEneTailView*)self)->field_0x45CC = now;
         cf::CfEneF64Conv cvR;
         cvR.w[0] = 0x43300000;
         cvR.w[1] = (u32)((s32)reward * 30) ^ 0x80000000;
         f32 thresh = (f32)(cvR.d - lbl_eu_806669A8);
         if (now < thresh) return;
-        u8 count = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FC168[0x2D7], row);
+        u8 count = (u8)getBdatStringColumnValue(bdat, tbl + 0x2D7, row);
         cf::CfEneF64Conv cvN;
-        cvN.w[1] = (u32)count;
         cvN.w[0] = 0x43300000;
+        cvN.w[1] = (u32)count;
         f32 n = (f32)(cvN.d - lbl_eu_806669A0);
-        f32 f = n * ((cf::CfActorParamVt118*)self)->m12C() * lbl_eu_806669B0;
-        if (f != 0.0f) {
-            s32 iv = (s32)f;
+        f32 prod = lbl_eu_806669B0 * (n * ((cf::CfActorParamVt118*)self)->m12C());
+        if (prod != lbl_eu_80666968) {
+            s32 iv = (s32)prod;
             cf::CfEneF64Conv cvV;
             cvV.w[0] = 0x43300000;
             cvV.w[1] = (u32)iv ^ 0x80000000;
             f32 rv = (f32)(cvV.d - lbl_eu_806669A8);
-            if (rv == 0.0f) rv = lbl_eu_80666980;
+            if (rv == lbl_eu_80666968) rv = lbl_eu_80666980;
             ((cf::CfActorParamVt118*)self)->m11C(-rv);
         }
-        ((cf::CfEneTailView*)self)->field_0x45CC = 0.0f;
+        ((cf::CfEneTailView*)self)->field_0x45CC = lbl_eu_80666968;
         return;
     }
 }
@@ -860,8 +876,17 @@ void CActorParam_UnkVirtualFunc123__Q22cf11CActorParamFv(cf::CActorParam* self,
     const cf::CfEneAttackEntry* s = &src->records[0];
     cf::CfEneAttackEntry* d = &dst->records[0];
     cf::CfEneAttackEntry* end = &dst->records[6];
-    dst->header0 = src->header0;
-    dst->header8 = src->header8;
+    // volatile keeps each access strictly in program order (retail: three
+    // separate u32 copies stored +4 / +0 / +8, never hoisted)
+    volatile cf::CfEneAttackHdrBlock* vh =
+        (volatile cf::CfEneAttackHdrBlock*)&dst->header;
+    const volatile cf::CfEneAttackSrcHdrBlock* vsh =
+        (const volatile cf::CfEneAttackSrcHdrBlock*)&src->header;
+    u32 t0 = vsh->header.h0;
+    u32 t4 = vsh->header.h4;
+    vh->header.h4 = t4;
+    vh->header.h0 = t0;
+    vh->header.h8 = vsh->header.h8;
     do {
         d->field_0x20 = strlen(s->name);
         strcpy(d->name, s->name);
@@ -924,7 +949,41 @@ void CActorParam_UnkVirtualFunc120__Q22cf11CActorParamFv(cf::CActorParam* self,
     const cf::CfEneArtsEntry* s = &src->records[0];
     cf::CfEneArtsEntry* d = &dst->records[0];
     cf::CfEneArtsEntry* end = &dst->records[24];
-    dst->header = src->header;
+    // retail expands the 0x34 header copy field-by-field, conservatively
+    // serialized (loads cannot move above earlier stores): both sides are
+    // accessed through one common view type.
+    // volatile keeps each access strictly in program order (retail never
+    // hoists the header loads above the early stores)
+    volatile cf::CfEneArtsHdrBlock* vh = (volatile cf::CfEneArtsHdrBlock*)&dst->header;
+    const volatile cf::CfEneArtsSrcHdrBlock* vsh =
+        (const volatile cf::CfEneArtsSrcHdrBlock*)&src->header;
+    vh->header.field_0 = vsh->header.field_0;
+    vh->header.field_2 = vsh->header.field_2;
+    // second-assigned temp first: matches retail's r5/r0 coloring
+    u32 tB = vsh->header.field_4;
+    u32 tA = vsh->header.field_8;
+    vh->header.field_8 = tA;
+    vh->header.field_4 = tB;
+    tB = vsh->header.field_C;
+    tA = vsh->header.field_10;
+    vh->header.field_10 = tA;
+    vh->header.field_C = tB;
+    tB = vsh->header.field_14;
+    tA = vsh->header.field_18;
+    vh->header.field_18 = tA;
+    vh->header.field_14 = tB;
+    tB = vsh->header.field_1C;
+    tA = vsh->header.field_20;
+    vh->header.field_20 = tA;
+    vh->header.field_1C = tB;
+    tB = vsh->header.field_24;
+    tA = vsh->header.field_28;
+    vh->header.field_28 = tA;
+    vh->header.field_24 = tB;
+    tB = vsh->header.field_2C;
+    tA = vsh->header.field_30;
+    vh->header.field_30 = tA;
+    vh->header.field_2C = tB;
     do {
         d->field_0x20 = strlen(s->name);
         strcpy(d->name, s->name);

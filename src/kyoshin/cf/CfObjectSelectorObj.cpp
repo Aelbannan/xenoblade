@@ -8,11 +8,13 @@
 // Imports (retail symbol names). Plain global declarations: MWCC does not
 // mangle global-scope names, so these emit the exact retail symbols.
 // ---------------------------------------------------------------------
-void __ct__cf_CfObjEnumList(u8* self);
-u8* getHandleMEM2__Q23mtl10MemManagerFv();
-u8* allocate__Q23mtl10MemManagerFUlUl(u32 size, u8* heap);
-void __dl__FPv(void* p);
-void __dla__FPv(void* p);
+// Retail emits bare (unmangled-C) symbol names for these imports; keep
+// C linkage so the relocs reference the exact retail names.
+extern "C" void __ct__cf_CfObjEnumList(u8* self);
+extern "C" u8* getHandleMEM2__Q23mtl10MemManagerFv();
+extern "C" u8* allocate__Q23mtl10MemManagerFUlUl(u32 size, u8* heap);
+extern "C" void __dl__FPv(void* p);
+extern "C" void __dla__FPv(void* p);
 
 extern u8 lbl_eu_8052585C[];   // reslist base vtable
 extern u8 lbl_eu_8052BDD8[];   // selector inner vtable
@@ -98,6 +100,7 @@ public:
     u8 _pad1D[0x20 - 0x1D];  // 0x1D-0x1F
 
     ~CfSelectorResList() {
+        if (this == NULL) return;
         this->vtable = (u32)lbl_eu_8052585C;
         CfSelListNode* cur = this->head->next;
         while (cur != this->head) {
@@ -119,11 +122,14 @@ class CfSelectorList : public CfSelectorResList {
 public:
     u8 _pad20[0x3040 - 0x20];  // 0x20-0x303F
 
-    ~CfSelectorList() {}
+    ~CfSelectorList() {
+        if (this == NULL) return;
+    }
 
     // Retail reslist::destroyList: clear + free + reset capacity.
     void destroyList() {
-        CfSelListNode* cur = this->head->next;
+        CfSelListNode* cur = this->head;
+        cur = cur->next;
         while (cur != this->head) {
             CfSelListNode* old = cur;
             cur = cur->next;
@@ -145,7 +151,9 @@ public:
     u32 vtable;              // 0x00 (lbl_eu_8052BDD8)
     CfSelectorList mList;    // 0x04
 
-    ~CfSelectorInner() {}
+    ~CfSelectorInner() {
+        if (this == NULL) return;
+    }
 };
 
 // Full selector data block (retail size 0xC188).
@@ -190,6 +198,8 @@ public:
     ~CfObjectSelectorData() {}
 };
 
+// Compile-only stub; retail exports the bare (C-linkage) symbol name.
+extern "C" void func_800FD774(cf::CfSelectorInner* list);
 void CfObjectSelectorObj::func_800FE694(float val) {
     CfSelectorLayout* self = reinterpret_cast<CfSelectorLayout*>(this);
     self->field_0x90F8 = val;
@@ -228,18 +238,59 @@ cf::CfObjectSelectorObj* func_800FE68C() {
     return (cf::CfObjectSelectorObj*)lbl_eu_80663F14;
 }
 
-void func_800FE6A4(){}
+// Common selector-request sequence: point 0xC178 at the primary inner list,
+// mark the request active (0xC180 low byte = 2), carry over the adjusted
+// handle, flag 0x9108 as pending, run the list walk, report result arrival.
+bool func_800FE6A4(cf::CfObjectSelectorObj* obj, unsigned int a, unsigned int b, unsigned int c) {
+    cf::CfObjectSelectorData* self = reinterpret_cast<cf::CfObjectSelectorData*>(obj);
+    u32 handle = self->fieldC17C;
+    self->fieldC178 = (u8*)&self->mInner1;
+    self->fieldC180 = (self->fieldC180 & 0xFFFFFF00) | 2;
+    // 0xC17C holds a rebased handle; adjust it back into the real address space.
+    if (handle != 0) {
+        handle = handle + 0x3E9C;
+    }
+    self->field90F4 = handle;
+    self->field9108 = (self->field9108 | 1) & 0xFFFFFFF3;
+    self->field90E4 = c;
+    self->field90E8 = a;
+    self->field90EC = b;
+    func_800FD774(&self->mInner1);
+    return self->field90E4 != 0;
+}
 
-void func_800FE738(){}
+// Re-issues the current filter values (0x608C/0x6094/0x6098) as a request.
+bool func_800FE738(cf::CfObjectSelectorObj* obj, unsigned int) {
+    cf::CfObjectSelectorData* self = reinterpret_cast<cf::CfObjectSelectorData*>(obj);
+    u32 sel = self->fieldC180;
+    u32 handle = self->fieldC17C;
+    self->fieldC178 = (u8*)&self->mInner1;
+    self->fieldC180 = (sel & 0xFFFFFF00) | 2;
+    u32 val6098 = self->field6098;
+    u32 val6094 = self->field6094;
+    u32 val608C = self->field608C;
+    if (handle != 0) {
+        handle = handle + 0x3E9C;
+    }
+    self->field90F4 = handle;
+    self->field9108 = (self->field9108 | 1) & 0xFFFFFFF3;
+    self->field90E4 = val6098;
+    self->field90E8 = val608C;
+    self->field90EC = val6094;
+    func_800FD774(&self->mInner1);
+    return self->field90E4 != 0;
+}
 
 u32 func_800FE7D8(cf::CfObjectSelectorObj* obj) {
     cf::CfSelectorLayout* self = reinterpret_cast<cf::CfSelectorLayout*>(obj);
     if (self->field_0x90E4 == 0) return 0;
 
     u32 flags = self->field_0xC174;
-    u32 v = self->field_0xC180;
-    self->field_0xC178 = 0;
-    self->field_0xC180 = ((v & 0xFFFFFF00) | 1) & 0xFFFFF0FF;
+    self->field_0xC178 = NULL;
+    // Retail keeps only the top byte of 0xC180, sets bit0, then clears bits
+    // 8-11 (two statements: MWCC forwards the second store into the first).
+    self->field_0xC180 = (self->field_0xC180 & 0xFFFFFF00) | 1;
+    self->field_0xC180 &= ~0xF00;
     if (flags & 1) {
         self->field_0xC174 = 0;
         self->field_0xC150 = 0;
@@ -260,14 +311,34 @@ u32 func_800FE7D8(cf::CfObjectSelectorObj* obj) {
     return result;
 }
 
-void func_800FE96C(){}
+// Stores the new third filter into 0x6098 before re-issuing the request.
+bool func_800FE96C(cf::CfObjectSelectorObj* obj, unsigned int c) {
+    cf::CfObjectSelectorData* self = reinterpret_cast<cf::CfObjectSelectorData*>(obj);
+    u32 sel = self->fieldC180;
+    u32 handle = self->fieldC17C;
+    u32 val6094 = self->field6094;
+    u32 val608C = self->field608C;
+    self->field6098 = c;
+    self->field90E8 = val608C;
+    self->field90EC = val6094;
+    self->fieldC180 = (sel & 0xFFFFFF00) | 2;
+    self->fieldC178 = (u8*)&self->mInner1;
+    if (handle != 0) {
+        handle = handle + 0x3E9C;
+    }
+    self->field90F4 = handle;
+    self->field9108 = (self->field9108 | 1) & 0xFFFFFFF3;
+    self->field90E4 = c;
+    func_800FD774(&self->mInner1);
+    return self->field90E4 != 0;
+}
 
 void sinit_800FEA14() {
     // lbl_eu_80663F10 = lbl_eu_80666F08 * (lbl_eu_8066A1F8 / lbl_eu_80666F0C);
     lbl_eu_80663F10 = lbl_eu_80666F08 * (lbl_eu_8066A1F8 / lbl_eu_80666F0C);
 }
 
-extern "C" void func_800FD774() {}
+extern "C" void func_800FD774(cf::CfSelectorInner* list) {}
 
 // ---------------------------------------------------------------------
 // Target: func_800FDE4C (retail 0x800FE934, size 0xAC).
@@ -321,23 +392,25 @@ void __ct__800FDB4C() {
         if (obj != NULL) {
             __ct__cf_CfObjEnumList((u8*)&obj->mList1);
             __ct__cf_CfObjEnumList((u8*)&obj->mList2);
-            obj->mInner1.vtable = (u32)lbl_eu_8052BDD8;
+            u32 vt = (u32)lbl_eu_8052BDD8;
+            obj->mInner1.vtable = vt;
             __ct__cf_CfObjEnumList((u8*)&obj->mInner1.mList);
-            obj->field90E4 = 0;
-            obj->field90E8 = 0;
-            obj->field90F0 = 0;
-            obj->field90F4 = 0;
+            u32 zero = 0;
+            obj->field90E4 = zero;
+            obj->field90E8 = zero;
+            obj->field90F0 = zero;
+            obj->field90F4 = zero;
             obj->field90F8 = lbl_eu_80666EF8;
-            obj->field9108 = 0;
-            obj->mInner2.vtable = (u32)lbl_eu_8052BDD8;
+            obj->field9108 = zero;
+            obj->mInner2.vtable = vt;
             __ct__cf_CfObjEnumList((u8*)&obj->mInner2.mList);
-            obj->fieldC150 = 0;
-            obj->fieldC154 = 0;
-            obj->fieldC15C = 0;
-            obj->fieldC160 = 0;
+            obj->fieldC150 = zero;
+            obj->fieldC154 = zero;
+            obj->fieldC15C = zero;
+            obj->fieldC160 = zero;
             obj->fieldC164 = lbl_eu_80666EF8;
-            obj->fieldC174 = 0;
-            obj->fieldC180 = 0;
+            obj->fieldC174 = zero;
+            obj->fieldC180 = zero;
         }
         lbl_eu_80663F14 = obj;
     }
@@ -393,9 +466,10 @@ void __dt__800FDEF8(cf::CfObjectSelectorData* obj) {
 // current activation state.
 // ---------------------------------------------------------------------
 void func_800FE860(cf::CfObjectSelectorData* obj, u32 arg4) {
-    u32 b = obj->fieldC180 & 0x100;
-    if (b != 0 && arg4 != 0) return;
-    if (b == 0 && arg4 == 0) return;
+    // Proceed only when the request direction differs from the active state.
+    u32 flag = obj->fieldC180 & 0x100;
+    if (flag == 0 && arg4 == 0) return;
+    if (flag != 0 && arg4 != 0) return;
     if (arg4 != 0) {
         obj->field9108 |= 0x40;
     } else {

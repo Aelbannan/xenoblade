@@ -7,7 +7,13 @@
 #include <nw4r/lyt/lyt_drawInfo.h>
 
 class CProcess;
-class CScn;
+// Minimal CScn view (render-callback registry; retail symbols
+// addRenderCB__4CScnFP10IScnRenderUlUl / removeRenderCB__4CScnFP10IScnRender).
+class CScn {
+public:
+    void addRenderCB(IScnRender* cb, u32 prio, u32 flags);
+    void removeRenderCB(IScnRender* cb);
+};
 class IScnRender;
 class UnkClass_8045F564;
 
@@ -53,8 +59,8 @@ public:
     u32 mIScnRenderVtbl;            // 0x58: IScnRender vtable slot
     CScn* mScene;                   // 0x5C: owning scene
     u8 mMemRegion[0x10];            // 0x60: UnkClass_8045F564 storage
-    u8 mField70;                    // 0x70
-    u8 mField71;                    // 0x71
+    u8 mField70;                    // 0x70: screen state (jump-table index)
+    s8 mField71;                    // 0x71: cursor row (wraps 0..1)
     u8 _72[0x74 - 0x72];            // 0x72..0x73
     u8 mSysWin[0x3C];               // 0x74: CSysWin storage (0x3C bytes)
     u8 mCursor[0x18];               // 0xB0: CCur18 cursor storage (0x18 bytes)
@@ -78,6 +84,35 @@ class CTaskGame {
 public:
     static CTaskGame* getInstance();
     static bool func_800426F0();
+};
+
+// Minimal cf::CfGameManager view for this TU (full header conflicts with
+// CtrlObjectParam.hpp data declarations).
+namespace cf {
+class CfGameManager {
+public:
+    static u32* getCfPadData();                 // getCfPadData__Q22cf13CfGameManagerFv
+    static int func_80086F9C(int arg);          // func_80086F9C__Q22cf13CfGameManagerFv
+    static void enablePadFlags(u32 flags, bool enable); // enablePadFlags__..FUlb
+};
+} // namespace cf
+
+// Abstract view of the embedded CCur18 vtable for the input handlers.
+// MWCC inserts an offset-to-top + RTTI prefix (2 entries), so declared
+// virtual N lands at vtable offset (N+2)*4: _v10 below is retail slot 0x10.
+class CCur18Vt10 {
+public:
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10(nw4r::math::VEC3* pos);
+};
+
+// cf pad data view used by the input handlers (fields at +0x04/+0x104).
+struct CfPadDataView {
+    u8 _00[4];
+    u32 field_04;               // direction-flag word
+    u8 _08[0x104 - 0x08];
+    u32 field_104;              // button word
 };
 
 // DrawInfo helper (retail mangled name func_80137250__FPQ34nw4r3lyt8DrawInfo).
@@ -107,6 +142,13 @@ void func_8008294C__Q22cf13CfGameManagerFv(int enable);
 extern CMenuGameClear* lbl_eu_80664C08;  // singleton instance pointer (.sbss)
 extern u32 lbl_eu_80664C10;              // game-clear state word (.sbss)
 extern u32 lbl_eu_80663E28;              // task-state flag word (bit 21 gate)
+
+// CSysWin / cursor helper imports (retail-unmangled C symbols; declared here
+// because the defining headers are not includable from this TU).
+extern "C" void* getCfPadData__Q22cf13CfGameManagerFv();
+extern "C" void func_8022B8E4(CSysWinFull* syswin);
+extern "C" void func_8022C1B4(nw4r::math::VEC3* out, void* syswin, u8 sel);
+extern "C" void func_801D216C(void* cursor, int val);
 
 extern u32 __ptmf_null[3];               // null pointer-to-member-function
 extern char lbl_eu_8052BF70[];           // CProcess vtable (temp store)

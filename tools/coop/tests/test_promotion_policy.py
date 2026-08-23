@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -39,6 +40,43 @@ from tools.ppc_equivalence.result import (
 def _open_ledger(*opcodes: str) -> ValidationLedger:
     """Construct a non-absent ledger for promotion tests."""
     return ValidationLedger(frozenset(opcodes), intentionally_loaded=True)
+
+
+def _write_fixture_ledger(directory: Path) -> Path:
+    """Write a minimal intentionally-loaded ledger with unset provenance.
+
+    The hardened promotion gate validates the live ledger's corpus hash and
+    architecture model against the engine, so tests with synthetic proof
+    hashes must not depend on the repo's real validation_ledger.yaml. A
+    ledger that sets neither ``corpus_hash`` nor ``architecture_model``
+    passes ``ValidationLedger.promotion_metadata_invalid()`` while still
+    counting as intentionally loaded (never absent).
+    """
+    path = directory / "validation_ledger.yaml"
+    path.write_text(
+        "dolphin_version: test-fixture\n"
+        "corpus_version: 1\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+class _FixtureLedger:
+    """Redirect the default validation-ledger path at a fixture (context mgr)."""
+
+    def __init__(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self._patch = mock.patch(
+            "tools.coop.lib.equivalence_policy.default_validation_ledger_path",
+            return_value=_write_fixture_ledger(Path(self._tmp.name)),
+        )
+
+    def __enter__(self) -> None:
+        self._patch.__enter__()
+
+    def __exit__(self, *exc_info: object) -> None:
+        self._patch.__exit__(*exc_info)
+        self._tmp.cleanup()
 
 
 def _unit(**kwargs) -> UnitReport:
@@ -381,6 +419,7 @@ class ClassifyForPromotionTests(unittest.TestCase):
             85.0,
             config,
             proof=proof,
+            ledger_path=_write_fixture_ledger(Path(tempfile.mkdtemp())),
         )
         self.assertTrue(decision.allowed)
 
@@ -409,22 +448,26 @@ class ClassifyStatusPolicyTests(unittest.TestCase):
 
     def test_policy_allows_equivalent_match_when_promotion_enabled(self) -> None:
         proof = _equivalent_proof()
-        status = classify_status(
-            85.0,
-            _unit(),
-            symbol="f",
-            equivalence=ProofStatus.EQUIVALENT,
-            policy=_config(
-                automatic_promotion=True,
-                allowed_engine_sha256=proof.engine_hash,
-            ),
-            proof=proof,
-        )
+        with _FixtureLedger():
+            status = classify_status(
+                85.0,
+                _unit(),
+                symbol="f",
+                equivalence=ProofStatus.EQUIVALENT,
+                policy=_config(
+                    automatic_promotion=True,
+                    allowed_engine_sha256=proof.engine_hash,
+                ),
+                proof=proof,
+            )
         self.assertEqual(status, "EQUIVALENT_MATCH")
 
     def test_meets_required_level_uses_promotion_decision(self) -> None:
         unit = _unit()
         proof = _equivalent_proof()
+        # The negative case never reaches the ledger (promotion disabled);
+        # the positive case must see a fixture ledger whose provenance does
+        # not mismatch the synthetic proof hashes.
         self.assertFalse(
             meets_required_level(
                 "EQUIVALENT_MATCH",
@@ -437,21 +480,22 @@ class ClassifyStatusPolicyTests(unittest.TestCase):
                 proof=proof,
             )
         )
-        self.assertTrue(
-            meets_required_level(
-                "EQUIVALENT_MATCH",
-                "HIGH_MATCH",
-                function_match=85.0,
-                unit=unit,
-                symbol="f",
-                equivalence=ProofStatus.EQUIVALENT,
-                policy=_config(
-                    automatic_promotion=True,
-                    allowed_engine_sha256=proof.engine_hash,
-                ),
-                proof=proof,
+        with _FixtureLedger():
+            self.assertTrue(
+                meets_required_level(
+                    "EQUIVALENT_MATCH",
+                    "HIGH_MATCH",
+                    function_match=85.0,
+                    unit=unit,
+                    symbol="f",
+                    equivalence=ProofStatus.EQUIVALENT,
+                    policy=_config(
+                        automatic_promotion=True,
+                        allowed_engine_sha256=proof.engine_hash,
+                    ),
+                    proof=proof,
+                )
             )
-        )
 
 
 class MemoryConfigHelpersTests(unittest.TestCase):

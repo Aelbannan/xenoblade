@@ -309,7 +309,7 @@ extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool value);
 extern "C" u8* func_80489A60(u8* global, u8* handle, int a, int b, int c, int d);
 extern "C" void func_800BBADC(cf::CfResReloadParent* parent, u8* handle);
 extern "C" int func_800AA33C(u8* buf, u8* packed, int prefixFlag, int suffixFlag);
-extern "C" u8* func_800584B8(u8* handle, u8* buf);
+extern "C" u8* func_800584B8(u32 global, u32 id, const char* name);
 extern "C" int CfRes_getD80Flag();
 extern "C" void CfRes_stub_63990();
 extern "C" void func_800BB618(cf::CfResReloadParent* parent, int arg);

@@ -11,6 +11,7 @@
 #include "monolib/work/CEventFile.hpp"
 #include "monolib/device/CFileHandle.hpp"
 
+#include <string.h>
 #include <nw4r/lyt.h>
 
 // Retail symbols: func_80137444 keeps the mangled C++ name, but func_80137510
@@ -36,13 +37,34 @@ __declspec(noinline) void func_8021911C(CMCCrystalBox* self);
 __declspec(noinline) void func_80218018(CMCCrystalBox* self);
 __declspec(noinline) void func_80218460(CMCCrystalBox* self);
 __declspec(noinline) void func_8021899C(CMCCrystalBox* self);
+__declspec(noinline) void func_80218A80(CMCCrystalBox* self);
 __declspec(noinline) char* func_802138B8(CMCCrystalData* d, int v);
+
+// More refresh/state helpers called out-of-line (bl) by the update callbacks
+// and aggregation paths; without these MWCC -O4,p cascades the callee bodies
+// into the callers.
+__declspec(noinline) void func_8021852C(CMCCrystalBox* self);
+__declspec(noinline) void func_80219348(CMCCrystalBox* self);
+__declspec(noinline) void func_80216614(CMCCrystalBox* self);
+__declspec(noinline) void func_80216698(CMCCrystalBox* self);
+__declspec(noinline) void func_80215408(CMCCrystalBox* self);
+__declspec(noinline) void func_80215490(CMCCrystalBox* self);
+__declspec(noinline) unsigned long func_802165CC(unsigned long* table, unsigned int idx);
+__declspec(noinline) void copyCrystalBoxParam_802165E8(CMCCrystalBoxParam* dest, const CMCCrystalBoxParam* src);
+__declspec(noinline) void func_802180B4(CMCCrystalBox* self);
+__declspec(noinline) void func_802194EC(CMCCrystalBox* self);
+__declspec(noinline) int func_80219AF0(CMCCrystalBox* self);
+__declspec(noinline) void func_80213988(CMCCrystalData* d);
+__declspec(noinline) void func_80213B1C(CMCCrystalData* d);
+__declspec(noinline) void func_80216718(CMCCrystalBox* self);
+__declspec(noinline) void func_80219994(CMCCrystalBox* self, int dir);
 
 // Crystal-box param helpers: retail calls these out-of-line (bl) from the
 // init/refresh loops; keep them non-inlined so the callers emit bl like
 // retail instead of cascading the store/copy bodies into the loops.
 __declspec(noinline) CMCCrystalBoxParam* func_80213E04(CMCCrystalBoxParam*, s16, s16);
 __declspec(noinline) void func_80213E20(CMCCrystalBoxParam*, const CMCCrystalBoxParam*);
+__declspec(noinline) void func_80213E8C(CMCCrystalBox* self);
 
 // Retail 0x80219E70: refresh the crystal box display / name.
 // optimize_for_size: retail uses the stmw r30/lmw r30 frame; plain -O4,p
@@ -129,7 +151,67 @@ __declspec(noinline) void func_80213964(int unused, void* a, void* b) {
     ((unsigned char*)b)[2] = a_hi;
 }
 
-void func_80213988(){}
+// Retail 0x802157E8: bubble-sort the crystal-state entries. For each adjacent
+// pair both entries' items are resolved (kind 9), their kind/flag values
+// queried, and any item whose "boxed" getter (vtable slot 0x80) reports
+// non-zero is treated as 0. Pairs where both values are 0 fall back to the
+// entry flag byte comparison ((flag >> 2) & 0x3F); otherwise the numeric
+// values are compared. The two func_80139358 calls have no used result but
+// retail emits them unconditionally.
+void func_80213988(CMCCrystalData* d) {
+    // Declaration order steers MWCC's saved-register assignment toward the
+    // retail map {i:r31, swapped:r30, j:r29, pa:r28, d:r27, pb:r24,
+    // o1:r23, o2:r22, b:r21}.
+    unsigned short i;
+    int swapped;
+    unsigned short j;
+    CMCCrystalDataEntry* pa;
+    CMCCrystalDataEntry* pb;
+    void* o1;
+    void* o2;
+    u32 a;
+    u32 b;
+    u32 v1;
+    u32 v2;
+    int doswap;
+    CItemImplFacade3* inst;
+
+    for (i = 0; i < d->count - 1; i++) {
+        swapped = 0;
+        for (j = 0; j < d->count - 1 - i; j++) {
+            pa = &d->entries[j];
+            pb = &d->entries[j + 1];
+            o1 = func_80157C4C(9, pa->id);
+            o2 = func_80157C4C(9, pb->id);
+            // Retail loads *o2 before *o1 before issuing the two
+            // result-unused category calls.
+            v2 = *(u32*)o2;
+            v1 = *(u32*)o1;
+            func_80139358(v1 >> 20);
+            func_80139358(v2 >> 20);
+            a = func_801C6E90(o1);
+            b = func_801C6E90(o2);
+            inst = (CItemImplFacade3*)CItem_initItemImplInstances(o1);
+            if (inst->GetBoxed(o1) != 0) {
+                a = 0;
+            }
+            inst = (CItemImplFacade3*)CItem_initItemImplInstances(o2);
+            if (inst->GetBoxed(o2) != 0) {
+                b = 0;
+            }
+            if (a == 0 && b == 0) {
+                doswap = (u8)(((u8*)o1)[7] >> 2) > (u8)(((u8*)o2)[7] >> 2);
+            } else {
+                doswap = a > b;
+            }
+            if (doswap) {
+                func_80213964((int)d, pa, pb);
+                swapped = 1;
+            }
+        }
+        if (swapped == 0) break;
+    }
+}
 
 // Retail 0x80215974: bubble-sort the crystal-state entries by their %+4
 // key using func_80157C4C until no swap occurs in a pass.
@@ -158,7 +240,72 @@ void func_80213B1C(CMCCrystalData* d) {
     }
 }
 
-void __ct__CMCCrystalBox(){}
+// Retail 0x80215A48: crystal-box constructor. Stores the class vtable
+// (lbl_eu_80535C60 lives in another unit's .data; the novtable class
+// suppresses the auto store so it is written explicitly), zeroes the
+// sub-object pointer table, constructs every embedded sub-object, then
+// clears the selection/page state and memsets the 5-byte enable table.
+// stmw r28 frame is the -O4,s shape (pragma).
+#pragma optimize_for_size on
+CMCCrystalBox* __ct__CMCCrystalBox(CMCCrystalBox* self, u8 parentType) {
+    reinterpret_cast<VtblSlot*>(self)->vtbl = &lbl_eu_80535C60;
+    __ct__17UnkClass_8045F564Fv((u8*)self + 0x4);
+    __ct__17UnkClass_8045F564Fv((u8*)self + 0x14);
+    self->subObjPtrs[0] = 0;
+    self->subObjPtrs[1] = 0;
+    self->subObjPtrs[2] = 0;
+    self->subObjPtrs[3] = 0;
+    self->subObjPtrs[4] = 0;
+    self->subObjPtrs[5] = 0;
+    self->subObjPtrs[6] = 0;
+    self->subObjPtrs[7] = 0;
+    self->subObjPtrs[8] = 0;
+    self->subObjPtrs[9] = 0;
+    self->subObjPtrs[10] = 0;
+    self->subObjPtrs[11] = 0;
+    self->subObjPtrs[12] = 0;
+    self->subObjPtrs[13] = 0;
+    self->subObjPtrs[14] = 0;
+    self->unk60 = 0;
+    self->unk64 = 0;
+    self->unk68 = 0;
+    self->unk69 = 1;
+    __ct__CCur07((u8*)self + 0x6c, 0);
+    __ct__CCur09((u8*)self + 0x84, 0);
+    __ct__CCur18((u8*)self + 0x9c, 0);
+    __ct__CCur11((u8*)self + 0xb4, 0);
+    __ct__CCur16((u8*)self + 0xcc, 0);
+    __ct__CCur18((u8*)self + 0xe4, 0);
+    __ct__CSortMenu((u8*)self + 0xfc);
+    __ct__CMCCrystalInfo((u8*)self + 0x1ec);
+    __ct__CScrollBar((u8*)self + 0x250, 0);
+    __ct__CSysWin((u8*)self + 0x290, 0);
+    self->unk2CC = 0;
+    self->unk2CD = 0;
+    self->unk2CE = 0;
+    self->unk2CF = 0;
+    self->unk2D0 = parentType;
+    self->unk2D1 = 0;
+    self->unk2D2 = 1;
+    self->unk2D3 = 0;
+    self->unk2D4 = 0;
+    self->unk2D5 = 0;
+    func_80213D74((u8*)self + 0x2d6);
+    func_80213488((u8*)self + 0x3d8);
+    func_80213E8C(reinterpret_cast<CMCCrystalBox*>((u8*)self + 0x1480));
+    self->field_14F1 = 0;
+    self->field_14F2 = 0;
+    self->unk1500 = 0;
+    self->unk1501 = 0;
+    self->unk1502 = 0;
+    self->unk1503 = 0;
+    self->unk1504 = 0;
+    self->field_1506 = 0;
+    self->field_1507 = 0;
+    memset(&self->field_14EC[0], 0, 5);
+    return self;
+}
+#pragma optimize_for_size off
 
 // Retail 0x80215C5C: set all fields of a crystal-box param (selected id,
 // quantity, spare, two flags) and return the param pointer.
@@ -185,16 +332,19 @@ void func_80213E20(CMCCrystalBoxParam *dst, const CMCCrystalBoxParam *src) {
 }
 
 // Retail 0x80215BCC: initialise the 32-slot param table at base+2 (pointer
-// walk, do-while), then re-init every slot through a stack-temp copy so each
+// walk), then re-init every slot through a stack-temp copy so each
 // entry is written by func_80213E20 (matching retail's two-loop shape).
 // noinline: retail calls this out-of-line (bl) from func_8021625C; without
 // it MWCC inlines the two-loop body into the caller.
+// stmw r29 frame (end:r31, p:r30, base:r29, i reused in r30, tmp at r1+8)
+// is the -O4,s shape.
+#pragma optimize_for_size on
 __declspec(noinline) u8* func_80213D74(u8* base) {
-    // end declared first so it lands in r31, p in r30, base in r29 (retail
-    // register order). The -O4,p prologue keeps this shape; retail's grouped
-    // stmw r29 needs #pragma optimize_for_size (out of scope here).
-    CMCCrystalBoxParam* end = (CMCCrystalBoxParam*)(base + 0x102);
+    // end declared first (r31) but initialized after p, matching retail's
+    // addi r30 / addi r31 emission order.
+    CMCCrystalBoxParam* end;
     CMCCrystalBoxParam* p = (CMCCrystalBoxParam*)(base + 2);
+    end = (CMCCrystalBoxParam*)(base + 0x102);
     do {
         func_80213E04(p, 0, 0);
         p++;
@@ -203,16 +353,19 @@ __declspec(noinline) u8* func_80213D74(u8* base) {
     base[0] = 0;
     base[1] = 0;
 
-    u8 i = 0;
+    // unsigned counter: retail compares with cmpli but keeps the u8 mask at
+    // the i*8 subscript scale (clrlslwi r0,i,24,3).
+    unsigned int i = 0;
     do {
         CMCCrystalBoxParam tmp;
-        func_80213E20(&((CMCCrystalBoxParam*)(base + 2))[i],
+        func_80213E20(&((CMCCrystalBoxParam*)(base + 2))[(u8)i],
                       func_80213E04(&tmp, 0, 0));
         i++;
     } while (i < 0x20);
 
     return base;
 }
+#pragma optimize_for_size off
 
 void* __dt__80213E4C(void* self, int flags) {
     if (self != 0 && flags > 0) {
@@ -229,7 +382,7 @@ void* __dt__80213E4C(void* self, int flags) {
 // mtctr/bdnz loop (the -O4,s shape; -O4,p unrolls). The header's +4-shifted
 // pad_00/subObjPtrs view doesn't match this region, so raw offsets are used.
 #pragma optimize_for_size on
-void func_80213E8C(CMCCrystalBox* self) {
+__declspec(noinline) void func_80213E8C(CMCCrystalBox* self) {
     ((u8*)self)[0x20] = 0;
     ((u8*)self)[0x29] = 0;
     ((u8*)self)[0x6A] = 0;
@@ -300,18 +453,9 @@ void func_80213FE4(CMCCrystalBox* self) {
     self->sortMenu.field_0x2A = tmp.field_0x2A;
     self->sortMenu.field_0x2B = tmp.field_0x2B;
     func_8011C998(self->sortMenu.mScrollBar, tmp.mScrollBar);
-    // The +0x6C s32 array (0x80 bytes) is copied via a rolled 16-iteration
-    // 8-byte loop (retail mtctr/bdnz with lwzu/stwu pair per iteration).
-    {
-        s32* d = self->sortMenu.mArray;
-        const s32* s = tmp.mArray;
-        for (int k = 0; k < 16; k++) {
-            d[0] = s[0];
-            d[1] = s[1];
-            d += 2;
-            s += 2;
-        }
-    }
+    // The +0x6C 0x80-byte block is copied by struct assignment, which MWCC
+    // lowers to the rolled 16-iteration update-form word-copy loop.
+    self->sortMenu.mArray = tmp.mArray;
     self->sortMenu.mCount = tmp.mCount;
     self->sortMenu.mPage = tmp.mPage;
     self->sortMenu.mSubPage = tmp.mSubPage;
@@ -335,38 +479,44 @@ void func_80213FE4(CMCCrystalBox* self) {
     self->crystalInfo.mState = tmp2.mState;
     self->crystalInfo.mIsActive = tmp2.mIsActive;
     self->crystalInfo.mField51 = tmp2.mField51;
-    // The four unaligned tail words are copied word-wise (retail lwz pair +
-    // reversed stw pair per 8-byte chunk).
-    *(u32*)&self->crystalInfo.field52[0] = *(u32*)&tmp2.field52[0];
-    *(u32*)&self->crystalInfo.field56[0] = *(u32*)&tmp2.field56[0];
-    *(u32*)&self->crystalInfo.field5A[0] = *(u32*)&tmp2.field5A[0];
-    *(u32*)&self->crystalInfo.field5E[0] = *(u32*)&tmp2.field5E[0];
+    // The four unaligned tail words are copied word-wise; each 8-byte chunk
+    // double-buffers both loads before the stores (retail r5/r0 pairing).
+    {
+        u32 lo52 = *(u32*)&tmp2.field52[0];
+        u32 hi52 = *(u32*)&tmp2.field56[0];
+        *(u32*)&self->crystalInfo.field56[0] = hi52;
+        *(u32*)&self->crystalInfo.field52[0] = lo52;
+        u32 lo5A = *(u32*)&tmp2.field5A[0];
+        u32 hi5A = *(u32*)&tmp2.field5E[0];
+        *(u32*)&self->crystalInfo.field5E[0] = hi5A;
+        *(u32*)&self->crystalInfo.field5A[0] = lo5A;
+    }
     __dt__14CMCCrystalInfoFv(&tmp2, -1);
 
     // Re-init the scroll bar and the system window from default temps.
     CScrollBarData sbTmp;
     __ct__CScrollBar(&sbTmp, 0);
-    func_8011C998((u8*)self + 0x250, &sbTmp);
+    func_8011C998(self->pad_250, &sbTmp);
     __dt__10CScrollBarFv(&sbTmp, -1);
 
     CSysWinData swTmp;
     __ct__CSysWin(&swTmp, 0);
-    CSysWinData* sw = reinterpret_cast<CSysWinData*>((u8*)self + 0x290);
-    __ct__UnkClass_8011C974(sw->mMemRegion, swTmp.mMemRegion);
-    sw->mFileHandle = swTmp.mFileHandle;
-    sw->mTagProcessor = swTmp.mTagProcessor;
-    sw->mArcAccessor = swTmp.mArcAccessor;
-    sw->mLayout = swTmp.mLayout;
-    sw->mAnimTrans = swTmp.mAnimTrans;
-    sw->field_28 = swTmp.field_28;
-    sw->field_2C = swTmp.field_2C;
-    sw->field_30 = swTmp.field_30;
-    sw->field_34 = swTmp.field_34;
-    sw->field_35 = swTmp.field_35;
-    sw->field_36 = swTmp.field_36;
-    sw->field_37 = swTmp.field_37;
-    sw->field_38 = swTmp.field_38;
-    sw->field_39 = swTmp.field_39;
+    // Write through the folded r31+0x290 base (no held pointer register).
+    __ct__UnkClass_8011C974(((CSysWinData*)self->sysWin)->mMemRegion, swTmp.mMemRegion);
+    ((CSysWinData*)self->sysWin)->mFileHandle = swTmp.mFileHandle;
+    ((CSysWinData*)self->sysWin)->mTagProcessor = swTmp.mTagProcessor;
+    ((CSysWinData*)self->sysWin)->mArcAccessor = swTmp.mArcAccessor;
+    ((CSysWinData*)self->sysWin)->mLayout = swTmp.mLayout;
+    ((CSysWinData*)self->sysWin)->mAnimTrans = swTmp.mAnimTrans;
+    ((CSysWinData*)self->sysWin)->field_28 = swTmp.field_28;
+    ((CSysWinData*)self->sysWin)->field_2C = swTmp.field_2C;
+    ((CSysWinData*)self->sysWin)->field_30 = swTmp.field_30;
+    ((CSysWinData*)self->sysWin)->field_34 = swTmp.field_34;
+    ((CSysWinData*)self->sysWin)->field_35 = swTmp.field_35;
+    ((CSysWinData*)self->sysWin)->field_36 = swTmp.field_36;
+    ((CSysWinData*)self->sysWin)->field_37 = swTmp.field_37;
+    ((CSysWinData*)self->sysWin)->field_38 = swTmp.field_38;
+    ((CSysWinData*)self->sysWin)->field_39 = swTmp.field_39;
     __dt__7CSysWinFv(&swTmp, -1);
 
     // Read the sub-object layout archives and drive the syswin through its
@@ -505,14 +655,18 @@ void syswinGetUnk34_802146F8(void* self) { CSysWin_getUnk34((char*)self + 0x290)
 
 // Retail 0x80216558: initialise the crystal box into state 1, mirror the
 // current item, and point the scrollbar at the selected vec.
+// _savegpr_28/_restgpr_28 out-of-line saves are the -O4,s shape (pragma).
+#pragma optimize_for_size on
 void func_80214700(CMCCrystalBox* self) {
     if (self->unk64 != 0) return;
     self->unk64 = 1;
     self->unk69 = 0;
     func_8021899C(self);
     func_8021A8F4(&self->crystalInfo);
-    CMCCrystalData* d = &self->data;
+    // idx materialized before d's address so MWCC assigns idx:r30, d:r29
+    // (retail order).
     u8 idx = self->unk2CC + self->unk2CD * 10;
+    CMCCrystalData* d = &self->data;
     func_8021A9A8(&self->crystalInfo,
                   func_802137DC(d, idx), func_8021384C(d, idx));
     func_80218B10(self);
@@ -525,6 +679,7 @@ void func_80214700(CMCCrystalBox* self) {
     func_801F367C((u8*)self + 0x250);
     func_8021900C(self);
 }
+#pragma optimize_for_size off
 
 void func_802147F4(CMCCrystalBox* self) {
     if (self->unk64 != 3) return;
@@ -583,7 +738,74 @@ void func_802149C4(CMCCrystalBox* self) {
     func_8021922C(self);
 }
 
-void func_80214A54(){}
+// Retail 0x802168AC: cursor-up update callback. While the grid counter
+// animation runs, step unk1501/unk1502 backwards through the 8x8 page; when
+// the sort sub-menu is open scroll it up one entry; otherwise step the item
+// cursor (unk2CD) down with per-window-kind wrap rules and refresh.
+void func_80214A54(CMCCrystalBox* self) {
+    if (CSysWin_getUnk34((char*)self + 0x290) != 0) return;
+    if (self->unk1500 != 0) {
+        u8 v = self->unk1501 - 1;
+        self->unk1501 = v;
+        if ((s8)v >= 0) {
+            // still inside the row block
+        } else {
+            u8 w = self->unk1502 - 1;
+            self->unk1501 = 0;
+            self->unk1502 = w;
+            if ((s8)w < 0) {
+                if ((s8)self->unk1503 >= 8) {
+                    self->unk1501 = 7;
+                    self->unk1502 = self->unk1503 - 8;
+                } else {
+                    u8 t = self->unk1503 - 1;
+                    self->unk1501 = t;
+                    self->unk1502 = 0;
+                    if ((s8)t < 0) {
+                        self->unk1501 = 0;
+                    }
+                }
+            }
+        }
+        func_80218B10(self);
+        func_8021852C(self);
+        func_801F3850((u8*)self + 0x250, (u16)(s8)self->unk1502);
+        func_80138078(1);
+    } else if (self->unk2CE != 0) {
+        // Sort sub-menu active: scroll up one entry and move the cursor.
+        func_801D3620((u8*)self + 0xfc);
+        char buf[12];
+        func_801D3454(buf, (u8*)self + 0xfc);
+        ((CCurVf10*)((u8*)self + 0x9c))->vf_08(buf);
+        func_80138078(1);
+    } else {
+        if (self->unk2D1 != 0) return;
+        if (self->data.count != 0) {
+            if (self->field_14A0 == 8) return;
+            if (func_80219AF0(self) != 0) return;
+        }
+        if (self->field_14A0 >= 2 && func_80213748(&self->data) != 0) {
+            return;
+        }
+        // Step the item cursor down, wrapping -3 back to 2.
+        s8 v = (s8)(self->unk2CD - 1);
+        self->unk2CD = (u8)v;
+        if (v < -2) {
+            self->unk2CD = 2;
+        }
+        if (self->field_14A0 >= 2) {
+            if ((s8)self->unk2CD == -1) self->unk2CD = -2;
+        } else if (self->field_14A0 == 1) {
+            if ((s8)self->unk2CD < 0) self->unk2CD = 2;
+        } else {
+            if ((s8)self->unk2CD == -2) self->unk2CD = 2;
+        }
+        func_8021852C(self);
+        func_80218460(self);
+        func_80218B10(self);
+        func_80138078(1);
+    }
+}
 
 // Retail 0x80216AD4: update-callback when the sort sub-menu is open and the
 // counter animation is running. unk1501/unk1502 are the row/column cursor of
@@ -593,6 +815,7 @@ void func_80214A54(){}
 // through its slot-0x10 virtual; otherwise step the item cursor (unk2CD),
 // resolving the new row from the crystal table, and refresh.
 void func_80214C7C(CMCCrystalBox* self) {
+    char buf[12];
     if (CSysWin_getUnk34((u8*)self + 0x290) != 0) return;
     if (self->unk1500 != 0) {
         s8 limit = (s8)self->unk1503;
@@ -623,7 +846,6 @@ void func_80214C7C(CMCCrystalBox* self) {
     } else if (self->unk2CE != 0) {
         // Sort sub-menu active: scroll down one entry and move the cursor.
         func_801D3698((u8*)self + 0xfc);
-        char buf[12];
         func_801D3454(buf, (u8*)self + 0xfc);
         ((CCurVf10*)((u8*)self + 0x9c))->vf_08(buf);
         func_80138078(1);
@@ -632,12 +854,9 @@ void func_80214C7C(CMCCrystalBox* self) {
         if (self->data.count != 0) {
             if (self->field_14A0 == 8) return;
             if (func_80219AF0(self) != 0) return;
-        }
-        // Disjunction form: the unk2CD step block is the TRUE target (retail
-        // `blt .C58; beq .C58; b return`), the return the fall-through.
-        if (self->field_14A0 < 2 || func_80213748(&self->data) == 0) {
-        } else {
-            return;
+            // Combined && drives MWCC's short-circuit branches to the shared
+            // step label (retail `blt .C58; beq .C58; b return`).
+            if (self->field_14A0 >= 2 && func_80213748(&self->data) != 0) return;
         }
         // Step the item cursor (s8 unk2CD), wrapping at 2.
         s8 v = (s8)(self->unk2CD + 1);
@@ -1066,6 +1285,7 @@ int func_80215AE8(void* self) {
 }
 
 void func_80215B18(CMCCrystalBox* self) {
+    s8 freeVal = -1;
     // Free-slot bookkeeping: unclaim the slot owned at [0x20+slotIdx] and
     // decrement the header counter. Reads after the store are cached in locals
     // so MWCC reloads them once (aliasing).
@@ -1076,13 +1296,83 @@ void func_80215B18(CMCCrystalBox* self) {
     if (table[owner] == 0) return;
 
     table[owner] = 0;
-    u8 cnt = self->unk20;
+    u8 cnt = ((u8*)self)[0x20];
     u8 t = ((u8*)self)[0x29];
     self->unk20 = cnt - 1;
-    ((s8*)self + 0x21)[t] = -1;
+    ((s8*)self)[0x21 + t] = freeVal;
     ((u8*)self)[0x29] = t - 1;
     func_80215B78(self);
 }
+
+// stmw r26 frame + rolled constant-trip loops are the -O4,s shape (pragma).
+#pragma optimize_for_size on
+// Retail 0x802179D0: aggregate the 8 item-list slots of the scratch head into
+// (id, quantity) pairs, bubble-sort them by descending quantity, then publish
+// the id list into the head itself (ids at +0x2A, count byte at +0x6A).
+void func_80215B78(CMCCrystalBox* self) {
+    MCAggPair pairs[32];
+    MCAggPair* p;
+    u8 n = 0;
+
+    // Zero-fill the transient pair table (pointer walk, matching retail).
+    p = pairs;
+    do {
+        p->id = 0;
+        p->count = 0;
+        p++;
+    } while (p < &pairs[32]);
+
+    // The head's first 8 words are the placed item pointers.
+    for (u8 i = 0; i < 8; i++) {
+        void* item = ((void**)self)[i];
+        if (item == 0) continue;
+        for (u8 j = 0; j < 4; j++) {
+            CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances(item);
+            u16 id = inst->GetName(item, j);
+            if (id == 0) continue;
+            u16 cnt = inst->GetFlag(item, j);
+            int found = 0;
+            // u8 bounds replicate retail's masked counters (n==0 still runs
+            // the (u8)(n-1) == 0xFF sort passes harmlessly).
+            for (u8 k = 0; k < n; k++) {
+                if (pairs[k].id == id) {
+                    pairs[k].count += cnt;
+                    found = 1;
+                    break;
+                }
+            }
+            if (found == 0) {
+                pairs[n].id = id;
+                pairs[n].count = cnt;
+                n++;
+            }
+        }
+    }
+
+    for (u8 i = 0; i < (u8)(n - 1); i++) {
+        for (u8 j = 0; j < (u8)((u8)(n - 1) - i); j++) {
+            if (pairs[j].count < pairs[j + 1].count) {
+                MCAggPair t = pairs[j];
+                pairs[j] = pairs[j + 1];
+                pairs[j + 1] = t;
+            }
+        }
+    }
+
+    // Publish: ids packed at +0x2A, count byte at +0x6A.
+    u8* base = (u8*)self;
+    base[0x6A] = 0;
+    if (n != 0) {
+        *(u16*)(base + 0x2A) = pairs[0].id;
+        base[0x6A] = 1;
+        for (u8 k = 1; k < n; k++) {
+            u8 flag = base[0x6A];
+            ((u16*)(base + 0x2A))[flag] = pairs[k].id;
+            base[0x6A] = flag + 1;
+        }
+    }
+}
+#pragma optimize_for_size off
 
 void func_80215D98(){}
 
@@ -1098,33 +1388,30 @@ u8 getByte_2D5_80216254(void* self) { return static_cast<CMCCrystalBox*>(self)->
 // stmw r23 frame is the -O4,s shape (pragma).
 #pragma optimize_for_size on
 u8* func_8021625C(CMCCrystalBox* self) {
-    // Stack layout (retail): temps at +0x8..+0x30, sort table at +0x38,
-    // then the head/sel pair at +0x138 (sel is the func_80213D74 table).
-    CMCCrystalBoxParam tmp3;      // +0x8  (fill-loop temp)
-    CMCCrystalBoxParam t3;        // +0x10 (bubble-sort temp)
-    CMCCrystalBoxParam t2;        // +0x18 (bubble-sort temp)
-    CMCCrystalBoxParam tmp2;      // +0x20 (add-entry temp)
-    CMCCrystalBoxParam pa;        // +0x28 (re-init temp)
-    CMCCrystalBoxParam t1;        // +0x30 (bubble-sort temp)
-    CMCCrystalBoxParam sortTable[32];  // +0x38
-    u8 head[2];                   // +0x138
-    CMCCrystalBoxParam sel[32];   // +0x13A (initialised by func_80213D74)
+    // Stack layout (retail): sel block (head+32 slots) at +0x138, sort table
+    // at +0x38, then the six temps at +0x30..+0x8.
+    struct SelTable {
+        u8 head[2];                   // +0x00
+        CMCCrystalBoxParam slots[32]; // +0x02
+    };
+    struct ParamBlock { CMCCrystalBoxParam slots[32]; };
+    SelTable selT;                    // +0x138 (initialised by func_80213D74)
+    CMCCrystalBoxParam sortTable[32]; // +0x38
+    CMCCrystalBoxParam t1;            // +0x30 (bubble-sort temp)
+    CMCCrystalBoxParam pa;            // +0x28 (re-init temp)
+    CMCCrystalBoxParam tmp2;          // +0x20 (add-entry temp)
+    CMCCrystalBoxParam t2;            // +0x18 (bubble-sort temp)
+    CMCCrystalBoxParam t3;            // +0x10 (bubble-sort temp)
+    CMCCrystalBoxParam tmp3;          // +0x8  (fill-loop temp)
 
     // Initialise the selection table (head + 32 slots) and copy the slots
     // into the +0x2D8 sub-table.
-    func_80213D74(head);
-    self->unk2D6 = head[0];
-    self->unk2D7 = head[1];
-    {
-        s32* d = reinterpret_cast<s32*>(self->subTable);
-        const s32* s = reinterpret_cast<const s32*>(sel);
-        for (int i = 0; i < 0x20; i++) {
-            d[0] = s[0];
-            d[1] = s[1];
-            d += 2;
-            s += 2;
-        }
-    }
+    func_80213D74(selT.head);
+    self->unk2D6 = selT.head[0];
+    self->unk2D7 = selT.head[1];
+    // 0x100-byte block assignment lowers to MWCC's rolled update-form
+    // word-copy loop.
+    *(ParamBlock*)self->subTable = *(ParamBlock*)selT.slots;
 
     // Clear the sort table twice: a pointer walk, then a slot re-init via a
     // stack temp so each entry is written by func_80213E20.
@@ -1275,8 +1562,8 @@ void func_80216698(CMCCrystalBox* self) {
 // from whether the crystal entry is present / selected.
 void func_80219994(CMCCrystalBox* self, int dir) {
     u8 pair[2];
-    char buf1[0x20];
-    char buf2[0x20];
+    char bufSel[0x20];   // fmt +0x86 (retail sp+0x30)
+    char bufOther[0x20]; // fmt +0x95 (retail sp+0x10)
     u8 t0 = self->field_14F2;
     pair[0] = t0;
     s8 sv = (s8)t0;
@@ -1297,8 +1584,8 @@ void func_80219994(CMCCrystalBox* self, int dir) {
     u8 i = 0;
     do {
         s32 val = (s8)pair[i] + 1;
-        sprintf(buf2, lbl_eu_8050888C + 0x86, val);
-        sprintf(buf1, lbl_eu_8050888C + 0x95, val);
+        sprintf(bufSel, lbl_eu_8050888C + 0x86, val);
+        sprintf(bufOther, lbl_eu_8050888C + 0x95, val);
         s32 idx = (s8)pair[i];
         int flagA = 0;
         int flagB = 0;
@@ -1310,13 +1597,54 @@ void func_80219994(CMCCrystalBox* self, int dir) {
             }
         }
         // Retail reloads layout and the +0x10 sub-object per call (no CSE).
-        func_80124270((*(CLytVf3C**)((u8*)self->subObjPtrs[5] + 0x10))->vf_3C(buf2, 1), flagA);
-        func_80124270((*(CLytVf3C**)((u8*)self->subObjPtrs[5] + 0x10))->vf_3C(buf1, 1), flagB);
+        func_80124270((*(CLytVf3C**)((u8*)self->subObjPtrs[5] + 0x10))->vf_3C(bufSel, 1), flagA);
+        func_80124270((*(CLytVf3C**)((u8*)self->subObjPtrs[5] + 0x10))->vf_3C(bufOther, 1), flagB);
         i++;
     } while (i < 2);
 }
 
-void func_80216718(){}
+// Retail 0x80218570: initialise the five countdown page labels. Fills the
+// page-enable table (1..5) and the page count, then formats each page
+// number into two pane-name buffers and toggles each pane's visibility
+// from whether that page is enabled / is the selected one. Ends by
+// refreshing the neighbouring-page pair (func_80219994).
+#pragma optimize_for_size on
+__declspec(noinline) void func_80216718(CMCCrystalBox* self) {
+    char bufA[0x20];
+    char bufB[0x20];
+    int val;
+    int selVis;
+    int otherVis;
+    self->field_14EC[0] = 1;
+    self->field_14EC[1] = 2;
+    self->field_14EC[2] = 3;
+    self->field_14EC[3] = 4;
+    self->field_14EC[4] = 5;
+    self->field_14F1 = 5;
+    for (u8 i = 0; i < 5; i++) {
+        val = (u8)i + 1;
+        sprintf(bufA, lbl_eu_8050888C + 0x86, val);
+        sprintf(bufB, lbl_eu_8050888C + 0x95, val);
+        selVis = 0;
+        otherVis = 0;
+        if (self->field_14EC[i] != 0) {
+            if ((int)i == (s8)self->field_14F2) {
+                selVis = 1;
+            } else {
+                otherVis = 1;
+            }
+        }
+        // Retail reloads the layout and its +0x10 sub-object per call.
+        func_80124270(
+            (*(CLytVf3C**)((u8*)self->subObjPtrs[5] + 0x10))->vf_3C(bufA, 1),
+            selVis);
+        func_80124270(
+            (*(CLytVf3C**)((u8*)self->subObjPtrs[5] + 0x10))->vf_3C(bufB, 1),
+            otherVis);
+    }
+    func_80219994(self, 0);
+}
+#pragma optimize_for_size off
 
 // Retail 0x802186A8: crystal-box update with a system-window (CSysWin at
 // +0x290) tie-in. When the sort menu is idle and the cursor is not in the
@@ -1510,7 +1838,60 @@ __declspec(noinline) void func_80216EFC(CMCCrystalBox* self) {
     self->unk64 = 3;
 }
 
-void func_80216F8C(CMCCrystalBox* self){}
+// Retail 0x80216F8C: (re)load the crystal box after its archive lands.
+// Gated on the layout being live and a flag inside the loaded resource;
+// refreshes the crystal-state row, re-inits the box-head scratch (the
+// same helper the ctor uses at +0x1480), copies the scratch into the
+// page-slot tables, and enters the visible state.
+#pragma optimize_for_size on
+void func_80216F8C(CMCCrystalBox* self) {
+    CrystalBoxScratch scr;
+    if (self->subObjPtrs[5] == 0) return;
+    if (self->subObjPtrs[4] == 0) return;
+    // BDAT crystal table must be registered (r13-relative global; MWCC
+    // recycles r0 for the load).
+    if (lbl_eu_806646D0 == 0) return;
+
+    func_80139198(1);
+    func_80216718(self);
+    func_80213570(&self->data, self->field_14EC[(s8)self->field_14F2]);
+
+    func_80213E8C(reinterpret_cast<CMCCrystalBox*>(&scr));
+
+    // Copy scratch into the page-slot tables with rolled two-word loops
+    // (retail mtctr/bdnz lwzu/stwu pairs).
+    {
+        u32* dst = (u32*)((u8*)self + 0x147c);
+        u32* src = &scr.zeros[0];
+        for (int k = 0; k < 4; k++) {
+            dst[0] = src[0];
+            dst[1] = src[1];
+            dst += 2;
+            src += 2;
+        }
+    }
+    self->field_14A0 = scr.count;
+    *(u32*)&self->pad_14A1[0] = *(u32*)&scr.fill[0];
+    *(u32*)&self->pad_14A1[4] = *(u32*)&scr.fill[4];
+    self->pad_14A1[8] = scr.flag29;
+    {
+        u32* dst = (u32*)((u8*)self + 0x14aa);
+        u32* src = (u32*)&scr.pageSrc[0];
+        for (int k = 0; k < 4; k++) {
+            dst[0] = src[0];
+            dst[1] = src[1];
+            dst += 2;
+            src += 2;
+        }
+    }
+    self->field_14EA = scr.flag6A;
+
+    func_80218018(self);
+    func_80218A80(self);
+    self->unk68 = 1;
+    self->unk60 = 1;
+}
+#pragma optimize_for_size off
 
 // Retail 0x80218EF0: resolve the message texture for one crystal slot and
 // publish it into the box. When the slot holds an item, its kind picks the
@@ -1683,7 +2064,7 @@ void func_80217434(CMCCrystalBox* self, u16 id, unsigned int* item, u8 i) {
 #pragma optimize_for_size off
 
 // Item-kind check: vtable word bits 16-19 == 9 and byte at +7 has flag 1.
-__declspec(noinline) u8 func_80217BDC(void* self) {
+__declspec(noinline) int func_80217BDC(void* self) {
     u32 word = *(u32*)self;
     return ((word >> 16) & 0xF) == 9 && (u32)(((u8*)self)[7] & 3) == 1;
 }
@@ -1770,9 +2151,10 @@ void func_802177D0(CMCCrystalBox* self, u16 id, unsigned int* item, u8 i) {
         func_80137E7C((nw4r::lyt::Layout*)self->subObjPtrs[5], buf, (char*)msg);
         const char* cap = 0;
         if (it != 0) {
+            u32 cnt = ((CItemImplFacade3*)CItem_initItemImplInstances(it))
+                          ->GetCount(it);
             cap = func_80136190(lbl_eu_8050888C + 0xf4, lbl_eu_8050888C + 0xfd,
-                                30 - ((u8)((CItemImplFacade3*)CItem_initItemImplInstances(it))
-                                         ->GetCount(it) - 1));
+                                30 - ((u8)cnt - 1));
         }
         sprintf(buf, lbl_eu_8050888C + 0x102, i1);
         func_80136B4C((nw4r::lyt::Layout*)self->subObjPtrs[5], buf, (char*)cap, 0);
@@ -1859,9 +2241,10 @@ void func_80217C0C(CMCCrystalBox* self, u16 id, unsigned int* item, u8 i) {
         func_80137E7C((nw4r::lyt::Layout*)self->subObjPtrs[5], buf, (char*)msg);
         const char* cap = 0;
         if (it != 0) {
+            u32 cnt = ((CItemImplFacade3*)CItem_initItemImplInstances(it))
+                          ->GetCount(it);
             cap = func_80136190(lbl_eu_8050888C + 0xf4, lbl_eu_8050888C + 0xfd,
-                                30 - ((u8)((CItemImplFacade3*)CItem_initItemImplInstances(it))
-                                         ->GetCount(it) - 1));
+                                30 - ((u8)cnt - 1));
         }
         sprintf(buf, lbl_eu_8050888C + 0x11e, i1);
         func_80136B4C((nw4r::lyt::Layout*)self->subObjPtrs[5], buf, (char*)cap, 0);
@@ -1984,7 +2367,8 @@ void func_8021899C(CMCCrystalBox* self) {
 
 // Retail 0x8021A8D8: walk the 8-slot selection table at +0x1480 and feed each
 // entry (id = high 16 bits of the first word) to the two placement handlers.
-void func_80218A80(CMCCrystalBox* self) {
+#pragma optimize_for_size on
+__declspec(noinline) void func_80218A80(CMCCrystalBox* self) {
     unsigned int i;
     for (i = 0; i < 8; i++) {
         unsigned int* item = (unsigned int*)func_802165CC((unsigned long*)((u8*)self + 0x1480), (unsigned char)i);
@@ -2121,6 +2505,170 @@ void copyCrystalRec5Ex_80218FF0(CMCCrystalRec5Ex* dst, CMCCrystalRec5Ex* src) {
     dst->b = b;
     dst->c = c;
 }
+
+// Retail 0x80218B10: rebuild the 8x8 crystal-grid aggregation table. Clears a
+// 32-slot transient table of {id, qty, flag} records, merges every item found
+// in the 8 page slots (name id via vtable slot 0x4C, quantity via 0x64) plus
+// the currently selected crystal (when unk2CD >= 0), bubble-sorts by quantity
+// then by flag, and pushes the first 8 entries (offset by the scroll row
+// unk1502, highlighting the cursor row unk1501) into the crystal-info pane.
+#pragma optimize_for_size on
+void func_80218B10(CMCCrystalBox* self) {
+    // Declaration order steers MWCC's saved-register assignment toward the
+    // retail map {flag:r31, count:r30, self:r29, i/base:r28, j:r27,
+    // obj/pa:r26, k/d:r25, id:r24}.
+    u32 flag;          // r31: 0 while filling page slots, 1 for the selected crystal
+    u8 count = 0;      // r30: number of merged records
+    u8 i;
+    u8 j;
+    void* obj;
+    u8 k;
+    u16 id;
+    int qty;
+    int found;
+    // Stack-slot order (ascending) mirrors retail: sort2 temps C/B/A at
+    // +0x08/+0x10/+0x40, sort1 temps C/B/A at +0x18/+0x20/+0x48, tmp at +0x38.
+    CMCCrystalRec5Ex sortTmpC2;
+    CMCCrystalRec5Ex sortTmpB2;
+    CMCCrystalRec5Ex sortTmpC1;
+    CMCCrystalRec5Ex sortTmpB1;
+    CMCCrystalRec5 tmp;
+    CMCCrystalRec5Ex sortTmpA2;
+    CMCCrystalRec5Ex sortTmpA1;
+    CMCCrystalRec5 table[32];
+
+    flag = 0;
+    // Retail emits an element-wise zero walk over the whole array first.
+    for (i = 0; i < 32; i++) {
+        table[i].m0 = 0;
+        table[i].m2 = 0;
+        table[i].m4 = 0;
+    }
+    for (i = 0; i < 32; i++) {
+        tmp.m0 = 0;
+        tmp.m2 = 0;
+        tmp.m4 = 0;
+        copyCrystalRec5_80218FD4(&table[i], &tmp);
+    }
+
+    // Merge items from all 8 page slots (self+0x1480 sub-table).
+    for (j = 0; j < 8; j++) {
+        obj = (void*)func_802165CC((unsigned long*)((u8*)self + 0x1480), j);
+        if (obj == 0 || *(void**)obj == 0) {
+            continue;
+        }
+        for (k = 0; k < 4; k++) {
+            void* inst = CItem_initItemImplInstances(obj);
+            id = ((CItemImplFacadeGrid*)inst)->GetName(obj, k);
+            if (id != 0) {
+                inst = CItem_initItemImplInstances(obj);
+                qty = ((CItemImplFacadeGrid*)inst)->GetQuantity(obj, k);
+                // Merge into an existing record with the same id, else append.
+                found = 0;
+                for (u8 m = 0; m < count; m++) {
+                    if (table[m].m0 == id) {
+                        table[m].m2 += qty;
+                        found = 1;
+                        break;
+                    }
+                }
+                if (found == 0) {
+                    tmp.m0 = id;
+                    tmp.m2 = qty;
+                    tmp.m4 = flag;
+                    copyCrystalRec5_80218FD4(&table[count], &tmp);
+                    count++;
+                }
+            }
+        }
+    }
+
+    // Merge the selected crystal (row unk2CD, column unk2CC); its records are
+    // marked with flag=1 so they sort after the plain aggregates.
+    if ((s8)self->unk2CD >= 0) {
+        CMCCrystalData* d = &self->data;
+        u8 idx = self->unk2CC + self->unk2CD * 10;
+        if (func_80213710(d, idx) == 0) {
+            obj = func_8021384C(d, idx);
+            if (obj != 0 && *(void**)obj != 0) {
+                flag = 1;
+                for (k = 0; k < 4; k++) {
+                    void* inst = CItem_initItemImplInstances(obj);
+                    id = ((CItemImplFacadeGrid*)inst)->GetName(obj, k);
+                    if (id != 0) {
+                        inst = CItem_initItemImplInstances(obj);
+                        qty = ((CItemImplFacadeGrid*)inst)->GetQuantity(obj, k);
+                        found = 0;
+                        for (u8 m = 0; m < count; m++) {
+                            if (table[m].m0 == id) {
+                                table[m].m2 += qty;
+                                table[m].m4 = 1;
+                                found = 1;
+                                break;
+                            }
+                        }
+                        if (found == 0) {
+                            tmp.m0 = id;
+                            tmp.m2 = qty;
+                            tmp.m4 = 1;
+                            copyCrystalRec5_80218FD4(&table[count], &tmp);
+                            count++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Bubble sort by quantity (descending), then by flag byte.
+    u8 limit = count - 1;
+    for (i = 0; i < limit; i++) {
+        for (j = 0; j < limit - i; j++) {
+            CMCCrystalRec5Ex* pa = (CMCCrystalRec5Ex*)&table[j];
+            CMCCrystalRec5Ex* pb = (CMCCrystalRec5Ex*)&table[j + 1];
+            if (pa->b < pb->b) {
+                copyCrystalRec5Ex_80218FF0(&sortTmpA1, pa);
+                copyCrystalRec5Ex_80218FF0(&sortTmpB1, pb);
+                copyCrystalRec5_80218FD4((CMCCrystalRec5*)pa, (CMCCrystalRec5*)&sortTmpB1);
+                copyCrystalRec5Ex_80218FF0(&sortTmpC1, &sortTmpA1);
+                copyCrystalRec5_80218FD4((CMCCrystalRec5*)pb, (CMCCrystalRec5*)&sortTmpC1);
+            }
+        }
+    }
+    for (i = 0; i < limit; i++) {
+        for (j = 0; j < limit - i; j++) {
+            CMCCrystalRec5Ex* pa = (CMCCrystalRec5Ex*)&table[j];
+            CMCCrystalRec5Ex* pb = (CMCCrystalRec5Ex*)&table[j + 1];
+            if (pa->c < pb->c) {
+                copyCrystalRec5Ex_80218FF0(&sortTmpA2, pa);
+                copyCrystalRec5Ex_80218FF0(&sortTmpB2, pb);
+                copyCrystalRec5_80218FD4((CMCCrystalRec5*)pa, (CMCCrystalRec5*)&sortTmpB2);
+                copyCrystalRec5Ex_80218FF0(&sortTmpC2, &sortTmpA2);
+                copyCrystalRec5_80218FD4((CMCCrystalRec5*)pb, (CMCCrystalRec5*)&sortTmpC2);
+            }
+        }
+    }
+
+    // Push up to 8 rows (starting at the scroll offset unk1502) into the info
+    // pane, recording the id under the cursor row unk1501.
+    func_8021ADC4((u8*)self + 0x1ec);
+    self->unk1504 = 0;
+    for (i = 0; i < 8; i++) {
+        int idx = i + (s8)self->unk1502;
+        if (idx >= (int)count) {
+            break;
+        }
+        CMCCrystalRec5* e = &table[idx];
+        if ((int)i == (int)(s8)self->unk1501) {
+            self->unk1504 = e->m0;
+        }
+        func_8021AA9C((u8*)self + 0x1ec, i, e->m0, e->m2, e->m4);
+    }
+    func_801F36BC((u8*)self + 0x250, 8, count);
+    func_801F3850((u8*)self + 0x250, (u16)(s8)self->unk1502);
+    self->unk1503 = count;
+}
+#pragma optimize_for_size off
 
 // CMCCrystalBox holds a nw4r::lyt::Layout* at +0x38 (== subObjPtrs[5]) with the
 // anim transform to play at +0x3C..+0x5F. These play back a bound animation.
@@ -2290,19 +2838,94 @@ __declspec(noinline) void func_802194EC(CMCCrystalBox* self) {
             func_80137E7C((nw4r::lyt::Layout*)self->subObjPtrs[5], lbl_eu_8050888C + 0x351, res3);
         }
         // Countdown pane: scale id into a screen coordinate, then format
-        // id/30 and id/20 into the +0x365 label.
-        int val = (int)((double)id * lbl_eu_80668484 + lbl_eu_80668480);
+        // id/30 and id/20 into the +0x365 label. The func_80136190 number is
+        // materialised before the divisions (retail call order).
+        // Manual uint->double conversion (the 0x43300000 / 2^52 trick) so the
+        // 2^52 constant stays the named import lbl_eu_80668460.
+        struct {
+            u32 hi;
+            u32 lo;
+        } cvt;
+        cvt.hi = 0x43300000;
+        cvt.lo = id;
+        double dx = *(double*)&cvt - lbl_eu_80668460;
+        u16 val = (u16)(lbl_eu_80668480 + lbl_eu_80668484 * dx);
         char buf[0x20];
-        u16 v16 = (u16)val;
-        sprintf(buf, lbl_eu_8050888C + 0x35e, (u8)(v16 / 30),
-                func_80136190(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1, 0x30),
-                (u8)(v16 / 20));
+        u8 v30 = (u8)(val / 30);
+        char* num = func_80136190(lbl_eu_8050888C + 0x1d5, lbl_eu_8050888C + 0x1e1,
+                                  0x30);
+        u8 v20 = (u8)(val / 20);
+        sprintf(buf, lbl_eu_8050888C + 0x35e, v30, num, v20);
         func_80136A1C((nw4r::lyt::Layout*)self->subObjPtrs[5], lbl_eu_8050888C + 0x365, buf, 0);
     }
 }
 #pragma optimize_for_size off
 
-__declspec(noinline) int func_80219AF0(CMCCrystalBox* self){ return 0; }
+// Retail 0x80219AF0: aggregate the placed crystal items at +0x1480 into
+// (id, quantity) pairs, bubble-sort by descending quantity, and return
+// (first pair count - 100) as a 64-bit value.
+// stmw r26 frame is the -O4,s shape (pragma).
+#pragma optimize_for_size on
+// Retail keeps this out-of-line (bl from the update callbacks); noinline
+// preserves that and protects the already-matched callers.
+__declspec(noinline) int func_80219AF0(CMCCrystalBox* self) {
+    MCAggPair pairs[32];
+    CMCCrystalBoxParam tmpInit;   // zero temp used while clearing the table
+    CMCCrystalBoxParam tmpAdd;    // append temp
+    u8 n = 0;
+    MCAggPair* p = pairs;
+
+    for (;;) {
+        p->id = 0;
+        p->count = 0;
+        p++;
+        if (p >= &pairs[32]) break;
+    }
+    for (int i = 0; i < 0x20; i++) {
+        tmpInit.m0 = 0;
+        tmpInit.m2 = 0;
+        func_80219D10((CMCCrystalBoxParam*)&pairs[i], &tmpInit);
+    }
+
+    for (u8 i = 0; i < 8; i++) {
+        void* item = (void*)func_802165CC((unsigned long*)((u8*)self + 0x1480), i);
+        if (item == 0 || *(void**)item == 0) continue;
+        for (u8 j = 0; j < 4; j++) {
+            CItemImplFacade2* inst = (CItemImplFacade2*)CItem_initItemImplInstances(item);
+            u16 id = inst->GetName(item, j);
+            if (id == 0) continue;
+            u16 cnt = inst->GetFlag(item, j);
+            int found = 0;
+            for (u8 k = 0; k < n; k++) {
+                if (pairs[k].id == id) {
+                    pairs[k].count += cnt;
+                    found = 1;
+                    break;
+                }
+            }
+            if (found == 0) {
+                tmpAdd.m0 = id;
+                tmpAdd.m2 = cnt;
+                func_80219D10((CMCCrystalBoxParam*)&pairs[n], &tmpAdd);
+                n++;
+            }
+        }
+    }
+
+    // Descending bubble sort by quantity (u8 masked bounds like retail).
+    for (u8 i = 0; i < (u8)(n - 1); i++) {
+        for (u8 j = 0; j < (u8)((u8)(n - 1) - i); j++) {
+            if (pairs[j].count < pairs[j + 1].count) {
+                MCAggPair t = pairs[j];
+                pairs[j] = pairs[j + 1];
+                pairs[j + 1] = t;
+            }
+        }
+    }
+
+    return (int)pairs[0].count - 100;
+}
+#pragma optimize_for_size off
 
 void copyShortPair_80219D10(void* dst, void* src){
     *(unsigned short*)dst = *(unsigned short*)src;

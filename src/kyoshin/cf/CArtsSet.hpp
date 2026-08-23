@@ -56,7 +56,7 @@ namespace cf {
 
         CAttackParam();
 
-        virtual void CAttackParam_UnkVirtualFunc1(){
+        void CAttackParam_UnkVirtualFunc1(){
             unk0 = 0;
             unk20 = 0;
             unk24 = 0;
@@ -98,9 +98,9 @@ namespace cf {
             std::memset(unk38, 0, sizeof(unk38));
             std::memset(unk6C, 0, sizeof(unk6C));
         }
-        virtual u8 CAttackParam_UnkVirtualFunc2();
-        virtual void CAttackParam_UnkVirtualFunc3(u8 r4);
-        virtual float CAttackParam_UnkVirtualFunc4();
+        void CAttackParam_UnkVirtualFunc2();
+        void CAttackParam_UnkVirtualFunc3(u8 r4);
+        void CAttackParam_UnkVirtualFunc4();
     };
 
     struct _sAttackSet {
@@ -122,9 +122,9 @@ namespace cf {
         UNKTYPE* unk88;
 
         CArtsParam();
-        virtual void CArtsParam_UnkVirtualFunc1();
-        virtual u8 CArtsParam_UnkVirtualFunc2();
-        virtual void CArtsParam_UnkVirtualFunc3(u8 r4);
+        void CArtsParam_UnkVirtualFunc1();
+        void CArtsParam_UnkVirtualFunc2();
+        void CArtsParam_UnkVirtualFunc3(u8 r4);
         void vtableFunc3(u8 val);
     };
 

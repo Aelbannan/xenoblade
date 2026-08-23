@@ -3,6 +3,12 @@
 #include <types.h>
 #include "monolib/core/CViewFrame.hpp"
 
+// Verbatim-mangled import: the real retail CfGameManager::func_80086F9C
+// takes the selector argument (call sites pass -1). The inline s16 overload
+// in include/kyoshin/cf/CfGameManager.hpp drops it, so callers that need the
+// argument use this declaration instead.
+extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+
 // Forward decls only. The full sub-object headers (CTitleAHelp.hpp,
 // CModelDisp.hpp, CPartyState.hpp, CEquipChange.hpp) cannot be included here:
 // e.g. CPartyState.hpp's `extern CScn* lbl_eu_80663E14;` clashes with
@@ -92,18 +98,20 @@ struct CPartyStateWinBlock {
 };
 
 // 0x24-byte ring-buffer record pushed by func_801F9754 into the view object
-// at CPartyStateWin +0x14 (type word, 7 words, u16, u8, u8).
+// at CPartyStateWin +0x14 (type word, 7 words, u16, u8, u8 - the trailing
+// fields sit at 0x20/0x22/0x23, not packed after 0x18).
 struct CPartyStateWinRec {
-    u32 field_0x0;       // 0x00
+    u32 field_0x0;       // 0x00 type tag
     u32 field_0x4;       // 0x04
     u32 field_0x8;       // 0x08
     u32 field_0xc;       // 0x0C
     u32 field_0x10;      // 0x10
     u32 field_0x14;      // 0x14
     u32 field_0x18;      // 0x18
-    u16 field_0x1c;      // 0x1C
-    u8 field_0x1e;       // 0x1E
-    u8 field_0x1f;       // 0x1F
+    u32 field_0x1c;      // 0x1C
+    u16 field_0x20;      // 0x20
+    u8 field_0x22;       // 0x22
+    u8 field_0x23;       // 0x23
 };
 
 // Ring-buffer view of the object func_801F9754 pushes records into (the
@@ -616,3 +624,169 @@ extern "C" void __ct__UnkClass_8011C974(void* dest, const void* src);
 // COption.hpp / CItemBoxGrid.hpp). Copies the +0x4..+0x15 region of a
 // 0x18-byte cursor object; func_801F9A48 passes its +0x34 sub-object.
 extern "C" void func_8018B0FC(void* dst, const void* src);
+
+// Copy helpers used by func_801F9CB4 / func_801F941C (retail unmangled names;
+// owning TU headers cannot be included here).
+extern "C" void func_8018BE74(u8* dst, const u8* src);
+extern "C" void func_801FA220(u8* dst, const u8* src);
+extern "C" void func_8016742C(u8* dst, const u8* src);
+
+// Byte-offset view of the embedded CEquipChange sub-object (retail size
+// 0x2A58) as copied by func_801F9CB4. Regions handled by copy helpers are
+// opaque byte blobs; every individually-copied scalar keeps field-style
+// naming. The three counted loops copy 8-byte records through the shared
+// wd[1]/wd[2] pointer-walk form, so their base pointers sit 4 bytes before
+// each copied run.
+struct CEquipChangeCopyView {
+    u8 f04[0x10];        // 0x004 (__ct__UnkClass_8011C974)
+    u8 f14[0x10];        // 0x014 (__ct__UnkClass_8011C974)
+    u32 f24[8];          // 0x024..0x044
+    u8 f44;              // 0x044
+    u8 _pad45[3];
+    u32 f48;             // 0x048
+    u8 f4c;              // 0x04c
+    u8 f4d;              // 0x04d
+    u8 _pad4e[2];
+    u8 f50[0x18];        // 0x050 (func_8018B0FC)
+    u8 f68[0x18];        // 0x068 (func_8018B0FC)
+    u8 f80[0x18];        // 0x080 (func_8018B0FC)
+    u8 f98;              // 0x098
+    u8 f99;              // 0x099
+    u32 f9a;             // 0x09a
+    u32 f9e;             // 0x09e
+    u8 _pada2[6];
+    u8 fa8[0x10];        // 0x0a8 (__ct__UnkClass_8011C974)
+    u8 fb8[0x10];        // 0x0b8 (__ct__UnkClass_8011C974)
+    u32 fc8[27];         // 0x0c8..0x134
+    u8 f134;             // 0x134
+    u8 _pad135[3];
+    u32 f138;            // 0x138
+    u8 f13c;             // 0x13c
+    u8 f13d;             // 0x13d
+    u8 f13e;             // 0x13e
+    u8 _pad13f;
+    u32 f140;            // 0x140
+    u32 f144;            // 0x144
+    u32 f148;            // 0x148
+    u32 f14c;            // 0x14c
+    u16 f150;            // 0x150
+    u8 f152;             // 0x152
+    u8 _pad153;
+    u8 f154[0x160];      // 0x154..0x2b4 (func_8018BE74)
+    u8 f2b4[0x10];       // 0x2b4 (__ct__UnkClass_8011C974)
+    u8 f2c4[0x10];       // 0x2c4 (__ct__UnkClass_8011C974)
+    u32 f2d4[7];         // 0x2d4..0x2f0
+    u8 f2f0[4];          // 0x2f0..0x2f4
+    u8 f2f4[0x18];       // 0x2f4 (func_801FA220)
+    u8 f30c[0x18];       // 0x30c (func_801FA220)
+    u8 f324[0x1c];       // 0x324 (func_8018B0FC)
+    u8 f340[0x10];       // 0x340 (__ct__UnkClass_8011C974)
+    u32 f350[5];         // 0x350..0x364
+    u8 f364[4];          // 0x364..0x368
+    u8 _pad368[4];
+    u8 f36c[0x10];       // 0x36c (__ct__UnkClass_8011C974)
+    u32 f37c[4];         // 0x37c..0x38c
+    u8 f38c[4];          // 0x38c..0x390
+    f32 f390[5];         // 0x390..0x3a4
+    u8 f3a4;             // 0x3a4 (loop base for pairs16)
+    u8 _pad3a5[3];
+    u8 pairs16[0x80];    // 0x3a8..0x428 (counted loop, 16 records)
+    u8 f428[3];          // 0x428..0x42b
+    u8 _pad42b;
+    u8 f42c[0x3c];       // 0x42c (func_8016742C)
+    u8 f468[0x3c];       // 0x468 (func_8016742C)
+    u8 f4a4[3];          // 0x4a4..0x4a7
+    u8 _pad4a7;
+    u16 f4a8;            // 0x4a8
+    u16 f4aa;            // 0x4aa
+    u16 f4ac;            // 0x4ac
+    u8 f4ae;             // 0x4ae
+    u8 _pad4af;
+    u32 f4b0;            // 0x4b0
+    u32 f4b4;            // 0x4b4
+    u32 f4b8;            // 0x4b8
+    u32 f4bc;            // 0x4bc
+    u8 f4c0[0x15c];      // 0x4c0..0x61c (func_8018BE74)
+    u32 f61c;            // 0x61c
+    u16 f620;            // 0x620
+    u8 f622[0xe];        // 0x622..0x630 (&f622[8] is the loop base at 0x62a)
+    u8 f62e[0x2000];     // 0x62e..0x262e (counted loop, 0x400 records)
+    u16 f262e;           // 0x262e
+    u8 f2630[4];         // 0x2630..0x2634 (loop base for f2634)
+    u8 f2634[0x20];      // 0x2634..0x2654 (counted loop, 4 records)
+    u8 f2650[4];         // 0x2650..0x2654 (loop base for f2654)
+    u8 f2654[0x400];     // 0x2654..0x2a54 (counted loop, 0x80 records)
+    u32 f2a54;           // 0x2a54
+};
+
+// vtable-slot call on the embedded CSysWin during factory construction:
+// retail loads the object's vtable, fetches slot +0x88 and calls it with the
+// CSysWin sub-object as receiver.
+struct CSysWinSlot88 {
+    u8 _pad00[0x88];
+    void (*slot88)(CSysWin*);
+};
+
+// 6-argument party-window gauge record filled by func_801F9864 and handed to
+// CScnNw4r::create by the factory.
+struct PartyGaugeRecord {
+    u32 field_0;   // 0x00
+    u32 field_4;   // 0x04
+    f32 field_8;   // 0x08
+    u16 field_C;   // 0x0C
+    u16 gauge[10]; // 0x0E..0x22
+    u16 field_22;  // 0x22
+};
+
+// Factory imports (retail unmangled names; the embedded sub-object headers
+// cannot be included here - see the forward-decl note at the top).
+extern "C" void CTitleAHelp_load(CTitleAHelp* self);
+extern "C" void func_801BE16C(CTitleAHelp* dest, CTitleAHelp* src);
+extern "C" void func_801FBFD8(CModelDisp* self);
+extern "C" void func_801FCF5C(CPartyState* self);
+extern "C" void func_801FF7B0(CModelDispEquipView* self);
+extern "C" void func_80202090(CEquipChange* self);
+extern "C" void func_80496118(CScn* scn, CWorkThread* work, u32 flag);
+extern "C" void func_801F969C(CPartyStateS16Quad* dst, CPartyStateWinRectSrc* obj);
+extern "C" void func_801F9730(CPartyStateWin* self, const u32* src);
+// Defined with C++ linkage in CTaskGameEff.cpp; declared here to match.
+void func_800452EC(CScn* scn);
+extern "C" u8* getField5C(CScn* scn);
+extern "C" void func_80492E08(u8* unk5c);
+class CProcess;
+extern "C" CScn* create__8CScnNw4rFv(CProcess* parent, char* name,
+                                     u32 arg1, u32 handle,
+                                     PartyGaugeRecord* gauge);
+
+// Task-game field readers (retail unmangled; defined in this TU).
+extern "C" u32 func_801F9684(u8* self);
+extern "C" u32 func_801F968C(u8* self);
+extern "C" u32 func_801F9694(void);
+
+// Sibling helpers defined later in this TU (retail unmangled names).
+extern "C" void func_801F9754(CPartyStateWinRing* self, u32 flag);
+extern "C" CPartyStateWinMem* func_801F981C(CPartyStateWinMem* self);
+extern "C" void func_801F9864(PartyGaugeRecord* rec, u32 a, f32 f, u16 b, u16 c,
+                              u16 d);
+extern "C" mtl::ALLOC_HANDLE func_801F9894(CPartyStateWinMem* self, s32 size);
+extern "C" CPartyStateWinCopy* func_801F9914(CPartyStateWinCopy* dst,
+                                             CPartyStateWinCopy* src);
+extern "C" CPartyStateWinBlob58* func_801F9A48(CPartyStateWinBlob58* self,
+                                               CPartyStateWinBlob58* src);
+extern "C" CPartyStateWinBlob10C0* func_801F9B18(CPartyStateWinBlob10C0* self,
+                                                 CPartyStateWinBlob10C0* src);
+extern "C" void func_801F9CB4(CEquipChange* dst, CEquipChange* src);
+extern "C" void func_801F941C(CPartyStateWin* self, u32 arg1, u32 arg2);
+
+// Equip-display pad-chain targets used by func_801FB900 (retail unmangled;
+// the CModelDispEquip header cannot be included here).
+extern "C" void func_80201740(CModelDispEquipView*);
+extern "C" void func_802017A4(CModelDispEquipView*);
+extern "C" void func_802015D4(CModelDispEquipView*);
+extern "C" void func_80201570(CModelDispEquipView*);
+extern "C" void func_80201638(CModelDispEquipView*);
+extern "C" void func_802016BC(CModelDispEquipView*);
+
+// CTitleAHelp idle check distinct from isIdle__11CTitleAHelpFv (retail
+// unmangled; int return so the caller cntlzw/srwi-normalizes it).
+extern "C" int func_801C411C(CTitleAHelp*);

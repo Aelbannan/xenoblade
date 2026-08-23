@@ -31,16 +31,25 @@ extern "C" CSimpleEveTalkWin* __ct__CSimpleEveTalkWin(CSimpleEveTalkWin* _this,
 
     _this->mVtable = (u32)lbl_eu_8052D238;
 
-    // Copy the null member-function pointer into both callback slots (same
-    // shape as the committed ~CSystemWindow/CSysWinSave ctors; retail folds
-    // the first load into an lwzu - a known lis/addi-vs-lwzu scheduling
-    // residual of this IUIWindow ctor family).
+    // Copy the null member-function pointer into both callback slots. The
+    // composite vtable is materialized once here (its +0x24/+0xac interface
+    // pointers are computed mid-copy) and installed after the scalars.
     u32* ptmf = __ptmf_null;
-    _this->ptmf0[0] = ptmf[0];
+    u32 compVt = (u32)lbl_eu_80532EE0;
+
+    // Slot 0: retail preloads word 0, then stores word 1 before word 0.
+    u32 w0 = ptmf[0];
+    u32 evtVt = compVt + 0x24;
     _this->ptmf0[1] = ptmf[1];
+    u32 scnVt = compVt + 0xac;
+    _this->ptmf0[0] = w0;
     _this->ptmf0[2] = ptmf[2];
-    _this->ptmf1[0] = ptmf[0];
-    _this->ptmf1[1] = ptmf[1];
+
+    // Slot 1: retail stores word 1 before word 0.
+    u32 v0 = ptmf[0];
+    u32 v1 = ptmf[1];
+    _this->ptmf1[1] = v1;
+    _this->ptmf1[0] = v0;
     _this->ptmf1[2] = ptmf[2];
 
     _this->mpLayout = 0;
@@ -53,9 +62,9 @@ extern "C" CSimpleEveTalkWin* __ct__CSimpleEveTalkWin(CSimpleEveTalkWin* _this,
     _this->field_67 = 1;
     _this->field_68 = 0;
 
-    _this->mVtable = (u32)lbl_eu_80532EE0;
-    _this->mWorkEvent = (u32)(lbl_eu_80532EE0 + 0x24);
-    _this->mScnRender = (u32)(lbl_eu_80532EE0 + 0xac);
+    _this->mVtable = compVt;
+    _this->mWorkEvent = evtVt;
+    _this->mScnRender = scnVt;
 
     __ct__17UnkClass_8045F564Fv(
         reinterpret_cast<UnkClass_8045F564*>(_this->mMemRegion));

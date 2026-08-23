@@ -30,6 +30,27 @@ class CBaseCur;
 #include "monolib/work/IWorkEvent.hpp"
 #include "kyoshin/CScrollBar.hpp"
 
+// IWorkEvent-compatible vtable for CKizunaTalkList (split1 .data).
+extern "C" void* lbl_eu_80537D28[];
+
+// Abstract view into the embedded CCur18 cursor vtable. MWCC prepends
+// offset-to-top + RTTI entries, so vtable offset = (index + 2) * 4;
+// index 2 -> +0x10 is the "Move" virtual taking a VEC3*.
+class CCur18View {
+public:
+    virtual void v00() = 0;      // 0x08
+    virtual void v01() = 0;      // 0x0C
+    virtual void v02(void*) = 0; // 0x10 - Move
+};
+
+/* Sets mVtbl before anything else (retail ctor stores lbl_eu_80537D28 first).
+   Same idiom as CScrollBarVtblBase: deriving directly would emit the TU-local
+   __vt__ symbol instead of the retail vtable label. */
+struct CKizunaTalkListVtblBase {
+    void* mVtbl; // 0x0 - lbl_eu_80537D28
+    CKizunaTalkListVtblBase() { mVtbl = lbl_eu_80537D28; }
+};
+
 // Talk list entry (0x14 bytes each, 256 max)
 struct TalkListEntry {
     u32 field_00;   // 0x00
@@ -48,7 +69,7 @@ struct TalkListEntryArray {
     u32 mParent;                 // 0x1404
 };
 
-class CKizunaTalkList : public IWorkEvent {
+class CKizunaTalkList : public CKizunaTalkListVtblBase {
 public:
     /* 0x04 */ u8 _pad04[0x10];     // UnkClass_8045F564 (stub)
     /* 0x14 */ u32 mEntryCount;     // number of valid entries
@@ -58,7 +79,10 @@ public:
     /* 0x24 */ nw4r::lyt::AnimTransform* mpAnim24;
     /* 0x28 */ nw4r::lyt::AnimTransform* mpAnim28;
     /* 0x2C */ u8 mCursor[0x18];     // CCur18 cursor (stub, 0x18 bytes)
-    /* 0x44 */ CScrollBar mScrollBar;
+    /* 0x44 */ u8 mScrollBar[0x40];  // CScrollBar widget; constructed/copied
+                                     // explicitly in the ctor (retail calls
+                                     // __ct__CScrollBar in the body, so the
+                                     // member is held as raw storage)
     /* 0x84 */ u8 mState84;
     /* 0x85 */ u8 mState85;         // state machine progression flag
     /* 0x86 */ u8 mUnknown86;
@@ -69,8 +93,8 @@ public:
     /* 0x8A */ s16 mUnknown8A;
     /* 0x8C */ TalkListEntryArray mEntryArray;
     CKizunaTalkList();
-    virtual ~CKizunaTalkList();
-    virtual bool OnFileEvent(CEventFile* pEventFile);
+    ~CKizunaTalkList();
+    bool OnFileEvent(CEventFile* pEventFile);
 };
 
 // ---------------------------------------------------------------------------
@@ -91,8 +115,10 @@ extern "C" void func_801F3670(void*, void*);
 extern "C" void func_801F367C(void*);
 extern "C" void func_801F369C(void*);
 extern "C" void func_801F36BC(void*, int, int);
+extern "C" void func_801F3540(void*);
 extern "C" void func_801F3850(void*, u16);
 extern "C" void func_801D20B0(void*, void*);
+extern "C" void func_801D202C(void*);
 extern "C" void func_801D216C(void*, u8);
 extern "C" void func_80138078__FUl(u32);
 extern "C" void func_801C4B60(void*, s16, s16, s16, s16);
@@ -102,6 +128,11 @@ extern "C" void __destroy_arr(void*, void* dtor, int size, int n);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__10CScrollBarFv(void*, int);
+extern "C" void func_8003AA8C__5CBdatFUl(u32);
+extern "C" void func_801390E0(CFileHandle**);
+extern "C" void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+extern "C" void func_801F35DC(void*);
+extern "C" void func_8045F778(UnkClass_8045F564* self);
 
 // Layout-build helpers used by CKizunaTalkList::OnFileEvent (mangled retail
 // symbol names so the reloc targets line up).
@@ -111,7 +142,9 @@ extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcRes
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg, nw4r::lyt::Layout* layout);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 extern "C" CBaseCur* __ct__CCur18(void* self, void* param);
-extern "C" void func_8003AA78__5CBdatFUlPv(u32 value, void* data);
+extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
+extern "C" void __ct__CScrollBar(void* self, u8 direction);
+extern "C" void func_80137924(void* out, void* paneA, void* paneB, void* paneC);extern "C" void func_8003AA78__5CBdatFUlPv(u32 value, void* data);
 extern "C" void* func_8003AA34();
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
 extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
@@ -128,7 +161,7 @@ extern "C" u8* lbl_eu_806640A8;                            // .sbss BDAT table p
 
 // data / rodata labels
 extern "C" char lbl_eu_8050E990[];            // file-name table (target 7)
-extern "C" u8* lbl_eu_80664090;            // .sbss shared BDAT character table (target 7)
+extern "C" void* lbl_eu_80664090;            // .sbss shared BDAT character table (target 7)
 extern "C" void* lbl_eu_806648B8;             // .sbss loaded file pointer (target 8); assigned from void* getFP -> kept void*
 extern "C" void* lbl_eu_806648C0;             // .sbss colour entries (target 8) - address anchor
 // lbl_eu_806648C0/C8/D0/D8 are address anchors (&lbl used directly): keep void*.

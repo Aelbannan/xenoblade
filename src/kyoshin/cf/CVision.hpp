@@ -260,6 +260,23 @@ namespace cf{
         u32 mDelta;  // 0x08
     };
 
+    // View of the CVision tail block as addressed by retail func_801A39D8:
+    // every field is reached through a base pointer anchored at CVision+0x20000
+    // (the compiler hoists `self + 0x20000` into a saved GPR).
+    class CVisionRingBase {
+    public:
+        u8 unk0[0x6194];       // 0x00 (= CVision+0x20000 .. 0x26194)
+        f32 f_6194;            // 0x6194 (= CVision::field_26194)
+        f32 f_6198;            // 0x6198
+        f32 f_619C;            // 0x619C
+        f32 f_61A0;            // 0x61A0
+        u8 b_61A4;             // 0x61A4 (= CVision::field_261A4)
+        u8 unkA5[3];
+        u8 unkA8[0x61B8 - 0x61A8];
+        CVisionPtmf mPtmf;     // 0x61B8 (= CVision::mPtmf)
+        UnkClass_801A3728 ring; // 0x61C4 (= CVision::unk261C4)
+    };
+
     // One of the 0x4818-byte members of CVision::unk20D4. The constructor
     // (retail __ct__801A33AC) runs the CBattleState / sub-object ctors and
     // the memset / word-clear loops below, then resets the tail fields.
@@ -458,13 +475,20 @@ extern "C" u32 lbl_eu_80503F80[5];
 // Flag word OR-ed with 0x8 in func_801A8244.
 extern u32 lbl_eu_80663E28;
 
+// Scene handle whose frame-time drives the vision element decay.
+namespace cf { class CScn; }
+extern CScn* lbl_eu_80663E14;
+
 // Typeinfo name for __dynamic_cast in func_801A7704's second list loop.
 extern "C" const void* lbl_eu_80661970;
 
 // Callback ptmf tables (12-byte triplets).
-extern "C" u32 lbl_eu_805331D0[3];
+// Callback triplet copied wholesale by func_801A5BA8 / func_801A5E58 /
+// func_801A60B0 (retail emits a 12-byte struct copy: lis @ha / lwzu @l).
+extern "C" cf::CVisionPtmf lbl_eu_805331D0;
 extern "C" u32 lbl_eu_805331F4[3];
 extern "C" u32 lbl_eu_8053320C[3];
+extern "C" u32 lbl_eu_80533218[3];
 extern "C" u32 lbl_eu_805331E8[3];
 extern "C" u32 lbl_eu_805331E0[3];
 extern "C" u32 lbl_eu_805331CC[3];
@@ -476,8 +500,8 @@ extern "C" cf::CVisionPtmf lbl_eu_80533170;
 extern "C" cf::CVisionPtmf lbl_eu_80533140;
 extern "C" cf::CVisionPtmf lbl_eu_8053314C;
 
-extern "C" u32 lbl_eu_805331DC[3];
-extern "C" u32 lbl_eu_805331C4[3];
+extern "C" cf::CVisionPtmf lbl_eu_805331DC;
+extern "C" cf::CVisionPtmf lbl_eu_805331C4;
 extern "C" u32 lbl_eu_80533164[3];
 extern "C" u32 lbl_eu_80533230[3];
 extern "C" u32 lbl_eu_80533134[3];
@@ -500,6 +524,8 @@ extern "C" u32 lbl_eu_80533200[3];
 extern "C" int func_eu_80053FD4(void);
 extern "C" s32 CfRes_getE24Bit22(void);
 extern "C" u32 func_801B481C(void);
+extern "C" void CBattleManager_preCalcTotalDamage(void* self, void* actor, f32* outDamage, u32* outCount);
+extern "C" f32 lbl_eu_80667D4C;
 extern "C" void* getInstance__Q22cf13CfGameManagerFv(void);
 
 // Sub-object constructors / vtable data used by the slot constructor

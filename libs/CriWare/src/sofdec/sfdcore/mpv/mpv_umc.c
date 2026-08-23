@@ -30,11 +30,22 @@ typedef struct MPVUMC_ {
     s16* field_0x4;     /* 0x4   - MC index table */
     u8* field_0x8;      /* 0x8   - MC source (ref 0) */
     u8* field_0xc;      /* 0xc   - MC source (ref 1) */
-    u8 pad0[0xb5c - 0x10];
+    u8 pad0[0xa90 - 0x10];
+    u8 onePad[0xa98 - 0xa90];   /* 0xa90 - OneReadMb sub-buffer */
+    s32 rdArg0;                 /* 0xa98 */
+    s32 rdArg1;                 /* 0xa9c */
+    u8 rowsHdr[4];              /* 0xaa0 - MakeMb rows header */
+    s32 out[11];                /* 0xaa4 - MakeMb rows: {base,stride} x5 + final base */
+    u8 pad0b[0xb5c - 0xad0];
     s32 mbw;        /* 0xb5c */
     s32 mbh;        /* 0xb60 */
     s32 field_0xb64;    /* 0xb64 - macroblock row width */
-    u8 pad1[0xc10 - 0xb68];
+    u8 pad1[0xbfc - 0xb68];
+    s16 field_0xbfc;
+    s16 field_0xbfe;
+    u8 pad1b[0xc0c - 0xc00];
+    s16 field_0xc0c;
+    s16 field_0xc0e;
     u32 rf0;        /* 0xc10 */
     u32 rf1;        /* 0xc14 */
     u32 rf2;        /* 0xc18 */
@@ -130,197 +141,252 @@ void MPVUMC_InitOutRfb(MPVUMC *ctx) {
 
 void MPVUMC_EndOfFrame() {}
 
-void fn_803AFDB0(void* ctx) {
-    u8* c = (u8*)ctx;
-    s32 mbw = *(s32*)(c + 0xCDC);
-    s32 mbh = *(s32*)(c + 0xCE0);
-    s16 h = *(s16*)(c + 0xC42);
-    s16 w = *(s16*)(c + 0xC40);
-    s32 a = *(s32*)(c + 0xC3C);
-    s32 b = *(s32*)(c + 0xC34);
-    s32 cc = *(s32*)(c + 0xC38);
-    u8* tbl = *(u8**)(c + 0x9C0);
-    s32 row0 = mbw * 16 * h + a + mbh * 16;
-    s32 row1 = b + mbw * 8 * w;
-    s32 row2 = cc + mbw * 8 * w;
-    s32 row3 = row0 + 8;
-    s32 row4 = row0 + h * 8;
-    s32 row5 = row0 + h * 8 + 8;
-    *(s32*)(c + 0xAB4) = row0;
-    *(s32*)(c + 0xAA4) = row1;
-    *(s32*)(c + 0xAAC) = row2;
-    *(s32*)(c + 0xABC) = row3;
-    *(s32*)(c + 0xAC4) = row4;
-    *(s32*)(c + 0xACC) = row5;
-    {
-        s32* p = (s32*)(c + 0xAA4);
-        s32 n = 6;
-        do {
-            s32 v = p[0];
-            s32 stride = p[1];
-            u8* dst = (u8*)v;
+/* Skipped-macroblock reconstruction: lay out the six output row bases from
+ * the current column/row position, then rebuild each 8x8 block through the
+ * quantiser table (cache-line zeroing when the destination is 32B aligned). */
+void fn_803AFDB0(MPVUMC* ctx) {
+    u8* tbl = *(u8**)((u8*)ctx + 0x9C0);
+    s16* idx = (s16*)ctx;
+    s32 col = ctx->field_0xcdc;
+    s32 row = ctx->field_0xce0;
+    s32 h = ctx->t4;
+    s32 w = ctx->t3;
+    s32 a = ctx->t2;
+    s32 b = ctx->t0;
+    s32 cc = ctx->t1;
+    s32* p = ctx->out;
+    s32 lum = col * 16 * h + a + row * 16;
+    s32 chr = row * 8 + col * 8 * w;
+    s32 n = 6;
+
+    p[0] = b + chr;
+    p[2] = cc + chr;
+    p[4] = lum;
+    p[6] = lum + 8;
+    p[8] = lum + h * 8;
+    p[10] = lum + h * 8 + 8;
+
+    do {
+        s32 dv = p[0];
+        s32 stride = p[1];
+        u8* dst = (u8*)dv;
+        p += 2;
+        if ((dv & 0x1F) == 0) {
             s32 i;
-            s16* idx = (s16*)c;
-            p += 2;
-            if ((v & 0x1F) == 0) {
-                for (i = 0; i < 8; i++) {
-                    __dcbz(dst, stride);
-                    dst[0] = tbl[idx[0]];
-                    dst[1] = tbl[idx[1]];
-                    dst[2] = tbl[idx[2]];
-                    dst[3] = tbl[idx[3]];
-                    dst[4] = tbl[idx[4]];
-                    dst[5] = tbl[idx[5]];
-                    dst[6] = tbl[idx[6]];
-                    dst[7] = tbl[idx[7]];
-                    idx += 8;
-                    dst += stride;
+            for (i = 0; i < 8; i++) {
+                s32 j;
+                __dcbz(dst, stride);
+                for (j = 0; j < 8; j++) {
+                    dst[j] = tbl[idx[j]];
                 }
-            } else {
-                for (i = 0; i < 4; i++) {
-                    dst[0] = tbl[idx[0]];
-                    dst[1] = tbl[idx[1]];
-                    dst[2] = tbl[idx[2]];
-                    dst[3] = tbl[idx[3]];
-                    dst[4] = tbl[idx[4]];
-                    dst[5] = tbl[idx[5]];
-                    dst[6] = tbl[idx[6]];
-                    dst[7] = tbl[idx[7]];
-                    dst[8] = tbl[idx[8]];
-                    dst[9] = tbl[idx[9]];
-                    dst[10] = tbl[idx[10]];
-                    dst[11] = tbl[idx[11]];
-                    dst[12] = tbl[idx[12]];
-                    dst[13] = tbl[idx[13]];
-                    dst[14] = tbl[idx[14]];
-                    dst[15] = tbl[idx[15]];
-                    idx += 16;
-                    dst += stride;
-                }
+                idx += 8;
+                dst += stride;
             }
-            n--;
-        } while (n != 0);
-    }
+        } else {
+            s32 i;
+            for (i = 0; i < 4; i++) {
+                s32 j;
+                for (j = 0; j < 16; j++) {
+                    dst[j] = tbl[idx[j]];
+                }
+                idx += 16;
+                dst += stride;
+            }
+        }
+    } while (--n != 0);
 }
 
-void fn_803AFFB4(void* ctx) {
-    u8* c = (u8*)ctx;
+/* fn_803AFFB4: forward-mode macroblock - read it, then lay out the six
+ * output row bases (luma + chroma, with 8-pixel offsets for half rows). */
+void fn_803AFFB4(MPVUMC* ctx) {
     s32 sizes[2];
-    sizes[0] = *(s32*)(c + 0xCE0) * 8 + *(s32*)(c + 0xCDC) * 8 * (s32)*(s16*)(c + 0xBFC);
-    sizes[1] = *(s32*)(c + 0xCE0) * 16 + *(s32*)(c + 0xCDC) * 16 * (s32)*(s16*)(c + 0xBFE);
-    mpvumc_OneReadMb(ctx, *(s32*)(c + 0xA98), sizes, c + 0xBF0, c + 0xC90);
+    sizes[0] = ctx->field_0xcdc * 8 * ctx->field_0xbfc + ctx->field_0xce0 * 8;
+    sizes[1] = ctx->field_0xcdc * 16 * ctx->field_0xbfe + ctx->field_0xce0 * 16;
+    mpvumc_OneReadMb(ctx, ctx->rdArg0, sizes, (u8*)ctx + 0xbf0, (u8*)ctx + 0xc90);
+
     {
-        s32 v0 = *(s32*)(c + 0xCE0) * 8 + *(s32*)(c + 0xCDC) * 8 * (s32)*(s16*)(c + 0xC40);
-        s32 v1 = *(s32*)(c + 0xCE0) * 16 + *(s32*)(c + 0xCDC) * 16 * (s32)*(s16*)(c + 0xC42);
-        *(s32*)(c + 0xAA4) = *(s32*)(c + 0xC34) + v0;
-        *(s32*)(c + 0xAAC) = *(s32*)(c + 0xC38) + v0;
-        *(s32*)(c + 0xAB4) = *(s32*)(c + 0xC3C) + v1;
-        *(s32*)(c + 0xABC) = *(s32*)(c + 0xC3C) + v1 + 8;
-        *(s32*)(c + 0xAC4) = *(s32*)(c + 0xC3C) + v1 + (s32)*(s16*)(c + 0xC42) * 8;
-        *(s32*)(c + 0xACC) = *(s32*)(c + 0xC3C) + v1 + (s32)*(s16*)(c + 0xC42) * 8 + 8;
+        s32 v0 = ctx->field_0xce0 * 8 + ctx->field_0xcdc * 8 * ctx->t3;
+        s32 v1 = ctx->field_0xce0 * 16 + ctx->field_0xcdc * 16 * ctx->t4;
+        ctx->out[0] = ctx->t0 + v0;
+        ctx->out[2] = ctx->t1 + v0;
+        ctx->out[4] = ctx->t2 + v1;
+        ctx->out[6] = ctx->out[4] + 8;
+        ctx->out[8] = ctx->t2 + v1 + ctx->t4 * 8;
+        ctx->out[10] = ctx->out[8] + 8;
     }
-    mpvumc_OneMakeMb(c + 0xA90, c + 0xAA0, *(s32*)(c + 0xCEC));
+    mpvumc_OneMakeMb((u8*)ctx + 0xa90, (u8*)ctx + 0xaa0, ctx->field_0xcec);
 }
 
-void fn_803B00B8(void* ctx) {
-    u8* c = (u8*)ctx;
+/* fn_803B00B8: backward-mode variant of fn_803AFFB4 (different MV vectors
+ * and second reference sub-buffers). */
+void fn_803B00B8(MPVUMC* ctx) {
     s32 sizes[2];
-    sizes[0] = *(s32*)(c + 0xCE0) * 8 + *(s32*)(c + 0xCDC) * 8 * (s32)*(s16*)(c + 0xC0C);
-    sizes[1] = *(s32*)(c + 0xCE0) * 16 + *(s32*)(c + 0xCDC) * 16 * (s32)*(s16*)(c + 0xC0E);
-    mpvumc_OneReadMb(ctx, *(s32*)(c + 0xA98), sizes, c + 0xC00, c + 0xCB4);
+    sizes[0] = ctx->field_0xcdc * 8 * ctx->field_0xc0c + ctx->field_0xce0 * 8;
+    sizes[1] = ctx->field_0xcdc * 16 * ctx->field_0xc0e + ctx->field_0xce0 * 16;
+    mpvumc_OneReadMb(ctx, ctx->rdArg0, sizes, (u8*)ctx + 0xc00, (u8*)ctx + 0xcb4);
+
     {
-        s32 v0 = *(s32*)(c + 0xCE0) * 8 + *(s32*)(c + 0xCDC) * 8 * (s32)*(s16*)(c + 0xC40);
-        s32 v1 = *(s32*)(c + 0xCE0) * 16 + *(s32*)(c + 0xCDC) * 16 * (s32)*(s16*)(c + 0xC42);
-        *(s32*)(c + 0xAA4) = *(s32*)(c + 0xC34) + v0;
-        *(s32*)(c + 0xAAC) = *(s32*)(c + 0xC38) + v0;
-        *(s32*)(c + 0xAB4) = *(s32*)(c + 0xC3C) + v1;
-        *(s32*)(c + 0xABC) = *(s32*)(c + 0xC3C) + v1 + 8;
-        *(s32*)(c + 0xAC4) = *(s32*)(c + 0xC3C) + v1 + (s32)*(s16*)(c + 0xC42) * 8;
-        *(s32*)(c + 0xACC) = *(s32*)(c + 0xC3C) + v1 + (s32)*(s16*)(c + 0xC42) * 8 + 8;
+        s32 v0 = ctx->field_0xce0 * 8 + ctx->field_0xcdc * 8 * ctx->t3;
+        s32 v1 = ctx->field_0xce0 * 16 + ctx->field_0xcdc * 16 * ctx->t4;
+        ctx->out[0] = ctx->t0 + v0;
+        ctx->out[2] = ctx->t1 + v0;
+        ctx->out[4] = ctx->t2 + v1;
+        ctx->out[6] = ctx->out[4] + 8;
+        ctx->out[8] = ctx->t2 + v1 + ctx->t4 * 8;
+        ctx->out[10] = ctx->out[8] + 8;
     }
-    mpvumc_OneMakeMb(c + 0xA90, c + 0xAA0, *(s32*)(c + 0xCEC));
+    mpvumc_OneMakeMb((u8*)ctx + 0xa90, (u8*)ctx + 0xaa0, ctx->field_0xcec);
 }
 
-void fn_803B01BC(void* ctx) {
-    u8* c = (u8*)ctx;
+void mpvumc_BiMakeMb(MPVUMC* ctx, s32* rows, s32 v);
+
+/* fn_803B01BC: bidirectional macroblock - read both references, then make. */
+void fn_803B01BC(MPVUMC* ctx) {
     s32 sizes[2];
-    sizes[0] = *(s32*)(c + 0xCE0) * 8 + *(s32*)(c + 0xCDC) * 8 * (s32)*(s16*)(c + 0xBFC);
-    sizes[1] = *(s32*)(c + 0xCE0) * 16 + *(s32*)(c + 0xCDC) * 16 * (s32)*(s16*)(c + 0xBFE);
-    mpvumc_OneReadMb(ctx, *(s32*)(c + 0xA98), sizes, c + 0xBF0, c + 0xC90);
-    mpvumc_OneReadMb(ctx, *(s32*)(c + 0xA98), sizes, c + 0xC00, c + 0xCB4);
+    sizes[0] = ctx->field_0xcdc * 8 * ctx->field_0xbfc + ctx->field_0xce0 * 8;
+    sizes[1] = ctx->field_0xcdc * 16 * ctx->field_0xbfe + ctx->field_0xce0 * 16;
+    mpvumc_OneReadMb(ctx, ctx->rdArg0, sizes, (u8*)ctx + 0xbf0, (u8*)ctx + 0xc90);
+    mpvumc_OneReadMb(ctx, ctx->rdArg1, sizes, (u8*)ctx + 0xc00, (u8*)ctx + 0xcb4);
+
     {
-        s32 v0 = *(s32*)(c + 0xCE0) * 8 + *(s32*)(c + 0xCDC) * 8 * (s32)*(s16*)(c + 0xC40);
-        s32 v1 = *(s32*)(c + 0xCE0) * 16 + *(s32*)(c + 0xCDC) * 16 * (s32)*(s16*)(c + 0xC42);
-        *(s32*)(c + 0xAA4) = *(s32*)(c + 0xC34) + v0;
-        *(s32*)(c + 0xAAC) = *(s32*)(c + 0xC38) + v0;
-        *(s32*)(c + 0xAB4) = *(s32*)(c + 0xC3C) + v1;
-        *(s32*)(c + 0xABC) = *(s32*)(c + 0xC3C) + v1 + 8;
-        *(s32*)(c + 0xAC4) = *(s32*)(c + 0xC3C) + v1 + (s32)*(s16*)(c + 0xC42) * 8;
-        *(s32*)(c + 0xACC) = *(s32*)(c + 0xC3C) + v1 + (s32)*(s16*)(c + 0xC42) * 8 + 8;
+        s32 v0 = ctx->field_0xce0 * 8 + ctx->field_0xcdc * 8 * ctx->t3;
+        s32 v1 = ctx->field_0xce0 * 16 + ctx->field_0xcdc * 16 * ctx->t4;
+        ctx->out[0] = ctx->t0 + v0;
+        ctx->out[2] = ctx->t1 + v0;
+        ctx->out[4] = ctx->t2 + v1;
+        ctx->out[6] = ctx->out[4] + 8;
+        ctx->out[8] = ctx->t2 + v1 + ctx->t4 * 8;
+        ctx->out[10] = ctx->out[8] + 8;
     }
-    mpvumc_OneMakeMb(c + 0xA90, c + 0xAA0, *(s32*)(c + 0xCEC));
+    mpvumc_BiMakeMb(ctx, (s32*)((u8*)ctx + 0xaa0), ctx->field_0xcec);
 }
 
+/* One-reference macroblock read: picks the MC kernels for luma/chroma from
+ * the dispatch tables (indexed by MB column and rounded MV half-pel bits),
+ * computes the three block source offsets and drives the three kernel
+ * calls (two luma blocks at +0/+64, one chroma pair at +128). */
 void mpvumc_OneReadMb(void* ctx, s32 arg, s32* sizes, u8* sub1, u8* sub2) {
+    const u32* t16 = lbl_eu_80604688;
+    const u32* t08 = lbl_eu_80604668;
     u8* c = (u8*)ctx;
     s32* out = (s32*)(c + 0xA4C);
     s32 b = *(s32*)(sub2 + 24);
     s32 v = *(s32*)(sub2 + 28);
-    s32 cc = *(s32*)(c + 0xB1C);
-    s32 x = b + (b >> 31);
-    s32 y = v + (v >> 31);
+    s32 cc = *(s32*)((u8*)ctx + 0xB1C);
+    /* round the raw vectors, then split off the interpolation-mode bits */
+    s32 bx = b + ((b >> 30) & 1);
+    s32 vx = v + ((v >> 30) & 1);
+    u32 fn1 = t16[cc * 4 + ((vx >> 2) & 1) * 2 + ((bx >> 2) & 1)];
+    u32 fn2 = t08[cc * 4 + ((vx >> 2) & 1) * 2 + ((bx >> 1) & 1)];
     s32 h1 = *(s16*)(sub1 + 12);
     s32 h2 = *(s16*)(sub1 + 14);
-    s32 fn1 = lbl_eu_80604688[cc * 4 + ((v >> 2) & 1) * 2 + ((b >> 2) & 1)];
-    s32 fn2 = lbl_eu_80604668[cc * 4 + ((y >> 2) & 1) * 2 + ((x >> 1) & 1)];
-    s32 d9 = *(s32*)sub1 + sizes[0] + ((b + (b >> 31)) >> 2) + (((v + (v >> 31)) >> 2) * h1);
-    s32 d10 = d9 + (((b + (b >> 31)) & 1) & cc) + h1;
-    s32 d11 = sizes[1] + (b >> 1) + (v >> 1) * h2;
-    out[6] = arg;
+    s32 da = sizes[0] + (bx >> 2) + (vx >> 2) * h1;
+    s32 db = sizes[1] + (b >> 1) + (v >> 1) * h2;
+    s32 fl = ((bx >> 30) & 1) & cc;
+    s32 d9;
+    s32 d10;
+    s32 d11;
+
+    /* luma blocks: bases differ only in the sub-block origin word */
+    d9 = *(s32*)sub1 + da;
+    d10 = d9 + fl + h1;
     out[8] = h1;
+    out[6] = arg;
     out[9] = d9;
     out[10] = d10;
     ((void (*)(void*, s32, s32, s32))fn2)(out, arg, d9, d10);
+
+    d9 = *(s32*)(sub1 + 4) + da;
+    d10 = d9 + fl + h1;
     out[6] = arg + 64;
-    out[9] = d9 + 64;
-    out[10] = d10 + 64;
-    ((void (*)(void*, s32, s32, s32))fn2)(out, arg + 64, d9 + 64, d10 + 64);
+    out[9] = d9;
+    out[10] = d10;
+    ((void (*)(void*, s32, s32, s32))fn2)(out, arg + 64, d9, d10);
+
+    /* chroma: table 16 kernel, half-pel edge flag from the raw LSB */
+    d11 = *(s32*)(sub1 + 8) + db;
+    d10 = d11 + h2 + ((b & 1) & cc);
     out[6] = arg + 128;
     out[8] = h2;
-    out[9] = *(s32*)(sub1 + 8) + d11;
-    out[10] = *(s32*)(sub1 + 8) + d11 + h2 + ((b & 1) & cc);
-    ((void (*)(void*, s32, s32, s32))fn1)(out, arg + 128, out[9], out[10]);
+    out[9] = d11;
+    out[10] = d10;
+    ((void (*)(void*, s32, s32, s32))fn1)(out, arg + 128, d11, d10);
 }
 
+/* Lay the six decoded blocks back over the frame: with v < 0 every pixel is
+ * remapped through the quantiser table (idx[4k+j] selects the table bias for
+ * byte j of word k), otherwise the source words are copied verbatim into
+ * stride-aligned rows. */
 void mpvumc_OneMakeMb(void* umc, u8* rows, s32 v) {
     u8* c = (u8*)umc;
     u8* src = *(u8**)(c + 8);
-    u8* tbl = *(u8**)(c + 0);
+    const u8* tbl = *(const u8**)(c + 0);
     s16* idx = *(s16**)(c + 4);
     s32* pairs = (s32*)(rows + 4);
     s32 i;
     for (i = 0; i < 6; i++) {
-        s32 d = pairs[0];
+        u8* d = (u8*)pairs[0];
         s32 stride = pairs[1];
         pairs += 2;
-        if (v != 0) {
-            s32 st = stride & ~7;
-            s32 k;
-            for (k = 0; k < 8; k++) {
-                ((u32*)d)[(k * st) / 4 + 0] = ((u32*)src)[2 * k + 0];
-                ((u32*)d)[(k * st) / 4 + 1] = ((u32*)src)[2 * k + 1];
-            }
+        if (v >= 0) {
+            /* aligned copy: 8 rows of two words, stride rounded down */
+            u32* dw = (u32*)d;
+            const u32* sw = (const u32*)src;
+            s32 st = (stride & ~7) >> 2;
+            u32 a0 = sw[0];
+            u32 a1 = sw[1];
+            u32 a2 = sw[2];
+            u32 a3 = sw[3];
+            u32 a4 = sw[4];
+            u32 a5 = sw[5];
+            u32 a6 = sw[6];
+            u32 a7 = sw[7];
+            idx += 64;
+            dw[0] = a0;
+            dw[1] = a1;
+            dw += st;
+            dw[0] = a2;
+            dw[1] = a3;
+            dw += st;
+            dw[0] = a4;
+            dw[1] = a5;
+            dw += st;
+            dw[0] = a6;
+            dw[1] = a7;
+            dw += st;
+            a0 = sw[8];
+            a1 = sw[9];
+            a2 = sw[10];
+            a3 = sw[11];
+            a4 = sw[12];
+            a5 = sw[13];
+            a6 = sw[14];
+            a7 = sw[15];
+            dw[0] = a0;
+            dw[1] = a1;
+            dw += st;
+            dw[0] = a2;
+            dw[1] = a3;
+            dw += st;
+            dw[0] = a4;
+            dw[1] = a5;
+            dw += st;
+            dw[0] = a6;
+            dw[1] = a7;
+            src += 64;
         } else {
             s32 k;
             for (k = 0; k < 8; k++) {
                 u32 w = *(u32*)src;
                 u32 w2 = *(u32*)(src + 4);
-                s32 a0 = idx[0];
-                s32 a1 = idx[2];
-                s32 a2 = idx[1];
-                s32 a3 = idx[3];
-                ((u32*)d)[0] = (u32)tbl[a2 + ((w >> 8) & 0xFF)] << 16 | (u32)tbl[a3 + (w & 0xFF)];
-                ((u32*)d)[1] = (u32)tbl[a1 + ((w2 >> 8) & 0xFF)] << 8 | (u32)tbl[a2 + ((w2 >> 8) & 0xFF)] << 16;
+                ((u32*)d)[0] = (u32)tbl[idx[0] + (w >> 24)] << 24
+                             | (u32)tbl[idx[1] + (w & 0xFF)] << 16
+                             | (u32)tbl[idx[2] + ((w >> 8) & 0xFF)] << 8
+                             | (u32)tbl[idx[3] + (w & 0xFF)];
+                ((u32*)d)[1] = (u32)tbl[idx[4] + (w2 >> 24)] << 24
+                             | (u32)tbl[idx[5] + (w2 & 0xFF)] << 16
+                             | (u32)tbl[idx[6] + ((w2 >> 8) & 0xFF)] << 8
+                             | (u32)tbl[idx[7] + (w2 & 0xFF)];
                 src += 8;
                 idx += 8;
                 d += stride;
@@ -434,31 +500,84 @@ void mpvumc_BiMakeMb(MPVUMC* ctx, s32* rows, s32 v) {
 
 void mpvumc_PpicSkipMb(s32* sizes, u8* sub1, u8* sub2);
 
-void MPVUMC_PpicSkipped(void* ctx, s32 n) {
-    u8* c = (u8*)ctx;
-    s32 r31 = *(s32*)(c + 0xCD8);
-    s32 v0 = *(s32*)(c + 0xCE0);
-    *(s32*)(c + 0xCD8) = r31 - (n - 1);
-    *(s32*)(c + 0xCE0) = v0 - (n - 1);
-    while (*(s32*)(c + 0xCE0) < 0) {
-        *(s32*)(c + 0xCDC) -= 1;
-        *(s32*)(c + 0xCE0) += *(s32*)(c + 0xB64);
-    }
-    while (*(s32*)(c + 0xCD8) < r31) {
-        s32 mbw = *(s32*)(c + 0xCDC);
-        s32 mbh = *(s32*)(c + 0xCE0);
-        s32 sizes[2];
-        sizes[0] = mbh * 8 + mbw * 8 * (s32)*(s16*)(c + 0xBFC);
-        sizes[1] = mbh * 16 + mbw * 16 * (s32)*(s16*)(c + 0xBFE);
-        mpvumc_PpicSkipMb(sizes, c + 0xBF0, c + 0xC00);
-        mbh += 1;
-        *(s32*)(c + 0xCE0) = mbh;
-        if (mbh >= *(s32*)(c + 0xB64)) {
-            mbh = 0;
-            *(s32*)(c + 0xCE0) = mbh;
-            *(s32*)(c + 0xCDC) += 1;
+/* P-picture skipped macroblock: plain copy of the reference macroblock into
+ * the output frame (no MC filtering). Luma is copied as 8 rows of 8 bytes
+ * spaced by the rounded stride, chroma as 16 rows of 16 bytes; when the
+ * destination offset is 32-byte aligned the cache lines are zeroed first,
+ * otherwise a straight copy is emitted. */
+static void mpvUmcCopyMb8(u8* dst, const u8* src, s32 st, int z) {
+    s32 st2 = st * 2;
+    int k;
+    for (k = 0; k < 4; k++) {
+        if (z) {
+            __dcbz(dst, 0);
         }
-        *(s32*)(c + 0xCD8) += 1;
+        ((u32*)dst)[0] = ((u32*)src)[0];
+        ((u32*)dst)[1] = ((u32*)src)[1];
+        if (z) {
+            __dcbz(dst + st, 0);
+        }
+        ((u32*)(dst + st))[0] = ((u32*)(src + st))[0];
+        ((u32*)(dst + st))[1] = ((u32*)(src + st))[1];
+        dst += st2;
+        src += st2;
+    }
+}
+
+static void mpvUmcCopyMb16(u8* dst, const u8* src, s32 st, int z) {
+    int k;
+    for (k = 0; k < 16; k++) {
+        if (z) {
+            __dcbz(dst, 0);
+        }
+        ((u32*)dst)[0] = ((u32*)src)[0];
+        ((u32*)dst)[1] = ((u32*)src)[1];
+        ((u32*)dst)[2] = ((u32*)src)[2];
+        ((u32*)dst)[3] = ((u32*)src)[3];
+        dst += st;
+        src += st;
+    }
+}
+
+void mpvumc_PpicSkipMb(s32* sizes, u8* sub1, u8* sub2) {
+    /* strides come from the frame descriptors, rounded via trunc division */
+    s32 q = *(s16*)(sub2 + 12);
+    s32 h = q / 8;
+    if ((sizes[0] & 0x1F) == 0) {
+        mpvUmcCopyMb8(*(u8**)sub2 + sizes[0], *(u8**)sub1 + sizes[0], h * 8, 1);
+    } else {
+        mpvUmcCopyMb8(*(u8**)sub2 + sizes[0], *(u8**)sub1 + sizes[0], h * 8, 0);
+    }
+
+    q = *(s16*)(sub2 + 14);
+    h = q / 8;
+    if ((sizes[1] & 0x1F) == 0) {
+        mpvUmcCopyMb16(*(u8**)(sub2 + 8) + sizes[1], *(u8**)(sub1 + 8) + sizes[1], h * 8, 1);
+    } else {
+        mpvUmcCopyMb16(*(u8**)(sub2 + 8) + sizes[1], *(u8**)(sub1 + 8) + sizes[1], h * 8, 0);
+    }
+}
+
+void MPVUMC_PpicSkipped(MPVUMC* ctx, s32 n) {
+    s32 nm1 = n - 1;
+    s32 end = ctx->field_0xcd8;
+    s32 zero = 0;
+    ctx->field_0xcd8 = end - nm1;
+    ctx->field_0xce0 -= nm1;
+    while (ctx->field_0xce0 < 0) {
+        ctx->field_0xcdc -= 1;
+        ctx->field_0xce0 += ctx->field_0xb64;
+    }
+    while (ctx->field_0xcd8 < end) {
+        s32 sizes[2];
+        sizes[0] = ctx->field_0xce0 * 8 + ctx->field_0xcdc * 8 * ctx->field_0xbfc;
+        sizes[1] = ctx->field_0xce0 * 16 + ctx->field_0xcdc * 16 * ctx->field_0xbfe;
+        mpvumc_PpicSkipMb(sizes, (u8*)ctx + 0xbf0, (u8*)ctx + 0xc00);
+        if (++ctx->field_0xce0 >= ctx->field_0xb64) {
+            ctx->field_0xce0 = zero;
+            ctx->field_0xcdc += 1;
+        }
+        ctx->field_0xcd8 += 1;
     }
 }
 
@@ -467,11 +586,13 @@ void MPVUMC_PpicSkipped(void* ctx, s32 n) {
 void MPVUMC_BpicSkipped(MPVUMC* ctx, s32 n) {
     s32 nm1 = n - 1;
     s32 end = ctx->field_0xcd8;
-    s32 v0 = ctx->field_0xce0;
+    s32 row = ctx->field_0xce0;
+    s32 zero = 0;
+    void (*fn)(MPVUMC*);
     ctx->field_0xcec = 0;
-    void (*fn)(MPVUMC*) = ctx->field_0xc74;
+    fn = ctx->field_0xc74;
     ctx->field_0xcd8 = end - nm1;
-    ctx->field_0xce0 = v0 - nm1;
+    ctx->field_0xce0 = row - nm1;
     while (ctx->field_0xce0 < 0) {
         ctx->field_0xcdc -= 1;
         ctx->field_0xce0 += ctx->field_0xb64;
@@ -479,9 +600,9 @@ void MPVUMC_BpicSkipped(MPVUMC* ctx, s32 n) {
     while (ctx->field_0xcd8 < end) {
         fn(ctx);
         if (++ctx->field_0xce0 >= ctx->field_0xb64) {
-            ctx->field_0xce0 = 0;
-            ctx->field_0xcdc = ctx->field_0xcdc + 1;
+            ctx->field_0xce0 = zero;
+            ctx->field_0xcdc += 1;
         }
-        ctx->field_0xcd8 = ctx->field_0xcd8 + 1;
+        ctx->field_0xcd8 += 1;
     }
 }

@@ -34,6 +34,16 @@ static inline f32 s32ToF_a808(s32 v) {
     c.w[1] = (u32)v ^ 0x80000000u;
     return (f32)(c.d - lbl_eu_8066A808);
 }
+// Caller-owned bit-cast slot: w[0] is written once by the caller, only
+// w[1] changes per conversion (matches the retail store/lfd shape).
+union S32Cast {
+    f64 d;
+    u32 w[2];
+};
+static inline f64 s32ToF64_a808(s32 v, S32Cast* c) {
+    c->w[1] = (u32)v ^ 0x80000000u;
+    return c->d - lbl_eu_8066A808;
+}
 
 // ---------------------------------------------------------------------------
 // Data layouts recovered from the retail assembly (func_804753B4 walks the
@@ -287,6 +297,7 @@ struct MPFDispEntry {
     u32 field_0xc;            // +0x0c display-list byte count
     u8 gap10[8];              // +0x10
     u8* field_0x18;           // +0x18 display-list pointer
+    u8 pad1c[4];              // +0x1c
     u8 arrayA[0xbc0];         // +0x20 position array (12-byte stride)
     u8 arrayB[0xe0];          // +0xbe0 color array (3-byte stride)
 };
@@ -373,7 +384,7 @@ struct MPFDrawListLayout {
 mpfsys::MPFDrawDisplayList* lbl_eu_80658488[0x18];
 
 // [.sbss] 0x80665888-0x80665890 (8B): getInstance init flag + pad.
-u8 lbl_eu_80665888[8];  // flag at [0], pad to the retail 8B
+s8 lbl_eu_80665888[8];  // flag at [0], pad to the retail 8B
 
 // [.rodata] 0x80523D98-0x80523DC8 (0x30 = 48B): class name strings.
 extern "C" __declspec(align(8)) const char lbl_eu_80523D98[0x20] = {
@@ -433,7 +444,8 @@ namespace mpfsys {
 
 MPFDrawDisplayList* MPFDrawDisplayList::getInstance() {
     if (lbl_eu_80665888[0] == 0) {
-        lbl_eu_80658488[0] = (MPFDrawDisplayList*)&lbl_eu_8056DBA0;
+        u32 protoAddr = (u32)&lbl_eu_8056DBA0;
+        lbl_eu_80658488[0] = (MPFDrawDisplayList*)protoAddr;
         lbl_eu_80665888[0] = 1;
     }
     return (MPFDrawDisplayList*)lbl_eu_80658488;
@@ -575,7 +587,7 @@ bool func_80475C78__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         if (ix < 0 || ix >= e->w) return false;
         if (iz < 0 || iz >= e->h) return false;
 
-        u32 cell = d->field_0x20[iz + e->offset + ix * e->h];
+        u32 cell = d->field_0x20[e->offset + ix * e->w + iz];
         if (cell == 0) return false;
         if (cell & 1) {
             const u16* p = &d->field_0x24[cell];
@@ -621,8 +633,8 @@ bool func_80476104__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         d->field_0x14->b = (u8)b;
     }
 
-    if (d->field_0x14->y < d->field_0x50->field_0x18) d->field_0x50->field_0x18 = d->field_0x14->y;
-    if (d->field_0x14->y > d->field_0x50->field_0x20) d->field_0x50->field_0x20 = d->field_0x14->y;
+    if (d->field_0x50->field_0x18 >= d->field_0x14->y) d->field_0x50->field_0x18 = d->field_0x14->y;
+    if (d->field_0x50->field_0x20 <= d->field_0x14->y) d->field_0x50->field_0x20 = d->field_0x14->y;
 
     d->field_0x50->field_0x28++;
     MPFDrawSlot* hdr = d->field_0x50;
@@ -732,8 +744,8 @@ bool func_80478BDC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         } else {
             sel = lbl_eu_8066A824;
         }
-        f32 th = sel * lbl_eu_8066A810;
-        if (d2 > th * th) {
+        sel *= lbl_eu_8066A810;
+        if (d2 > sel * sel) {
             return false;
         }
     }
@@ -1023,10 +1035,7 @@ void func_804782C4__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
         arg->field_0x18 = src + prod;
     } else {
         if (arg->field_0x2 & 2) {
-            u32 p2 = arg->field_0x0 * 0x600;
-            u32 b = s->field_0x2c;
-            u32 sum = p2 + b;
-            arg->field_0x18 = (u8*)(sum + 0x300);
+            arg->field_0x18 = (u8*)(s->field_0x2c + arg->field_0x0 * 0x600) + 0x300;
         } else {
             arg->field_0x18 = (u8*)(s->field_0x2c + arg->field_0x0 * 0x600);
         }
@@ -1055,8 +1064,8 @@ void func_804795BC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     MPFDrawNode* chain = mgr->field_0x4;
     u16 flags = cfg->field_0x8;
     u8* base = lbl_eu_80665840;
-    MPFDrawData* dataBase = (MPFDrawData*)(base + chain->field_0x0);
     MPFDispEntry* entries = cfg->field_0x10;
+    MPFDrawData* dataBase = (MPFDrawData*)(base + chain->field_0x0);
     s32 count;
     if (flags & 1) {
         count = cfg->field_0x0;
@@ -1070,15 +1079,17 @@ void func_804795BC__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     func_8047491C__Q26mpfsys17UnkClass_80471EC8Fv();
     func_80474AA0__Q26mpfsys17UnkClass_80471EC8Fv();
     func_80474F2C__Q26mpfsys17UnkClass_80471EC8Fv();
-    for (s32 i = 0; i < count; i++) {
-        MPFDispEntry* entry = &entries[i];
+    u32 off = 0;
+    for (s32 i = 0; i < count; i++, off += sizeof(MPFDispEntry)) {
+        MPFDispEntry* entry = (MPFDispEntry*)((u8*)entries + off);
         u8* posArr = entry->arrayA;
         u8* clrArr = entry->arrayB;
         if (entry->field_0x2 & 2) continue;
-        MPFDrawData* data = &dataBase[entry->field_0x0];
-        func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(data->field_0x14, data->field_0x1c);
-        func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(data->field_0x19);
-        if (data->field_0x10 & 8) {
+        // The per-item data address is recomputed at every use (matches retail).
+        func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(
+            dataBase[entry->field_0x0].field_0x14, dataBase[entry->field_0x0].field_0x1c);
+        func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(dataBase[entry->field_0x0].field_0x19);
+        if (dataBase[entry->field_0x0].field_0x10 & 8) {
             func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
         } else {
             func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
@@ -1098,8 +1109,8 @@ void func_804796F0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     MPFDrawNode* chain = mgr->field_0x4;
     u16 flags = cfg->field_0x8;
     u8* base = lbl_eu_80665840;
-    MPFDrawData* dataBase = (MPFDrawData*)(base + chain->field_0x0);
     MPFDispEntry* entries = cfg->field_0x10;
+    MPFDrawData* dataBase = (MPFDrawData*)(base + chain->field_0x0);
     s32 count;
     if (flags & 1) {
         count = cfg->field_0x0;
@@ -1114,15 +1125,17 @@ void func_804796F0__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
     func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv();
     func_80474F54__Q26mpfsys17UnkClass_80471EC8Fv();
     GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_RASA, GX_CA_TEXA, GX_CA_ZERO);
-    for (s32 i = 0; i < count; i++) {
-        MPFDispEntry* entry = &entries[i];
+    u32 off = 0;
+    for (s32 i = 0; i < count; i++, off += sizeof(MPFDispEntry)) {
+        MPFDispEntry* entry = (MPFDispEntry*)((u8*)entries + off);
         u8* posArr = entry->arrayA;
         u8* clrArr = entry->arrayB;
         if (!(entry->field_0x2 & 2)) continue;
-        MPFDrawData* data = &dataBase[entry->field_0x0];
-        func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(data->field_0x14, data->field_0x1c);
-        func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(data->field_0x19);
-        if (data->field_0x10 & 8) {
+        // The per-item data address is recomputed at every use (matches retail).
+        func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(
+            dataBase[entry->field_0x0].field_0x14, dataBase[entry->field_0x0].field_0x1c);
+        func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(dataBase[entry->field_0x0].field_0x19);
+        if (dataBase[entry->field_0x0].field_0x10 & 8) {
             func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
         } else {
             func_80474E24__Q26mpfsys17UnkClass_80471EC8Fv();
@@ -1850,9 +1863,59 @@ bool func_80476E50__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* 
 }
 
 // func_80475E64: recursively walk the cell grid region bounded by the
-// current bounds (self+0x40..+0x4C) and report whether any leaf cell is
-// occupied.  (Stub - retail 0x80479E34, same TU.)
+// current bounds (self+0x40..+0x4C).  The four corner coordinates are
+// converted from the vertex-pair gradient form (same (bnd - v1)*v0 shape the
+// walker uses) into integer grid ranges, then every grid cell in the range
+// is tested: empty cells are skipped, odd values report a hit and even
+// values recurse into the referenced sub-cell.
 bool func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(mpfsys::MPFDrawDisplayList* self, MPFDrawCell* cell) {
+    MPFDrawListLayout* d = (MPFDrawListLayout*)self;
+    S32Cast cvt;
+    cvt.w[0] = 0x43300000u;
+    if (!(cell->mask & d->field_0x38)) return false;
+
+    const MPFDrawVert* v1 = &d->field_0x1C[cell->i1];
+    const MPFDrawVert* v0 = &d->field_0x1C[cell->i0];
+    u8 h = cell->h;
+
+    // Grid X start from the min-X bound (floor with an inclusive-equal step).
+    f32 fx = (d->field_0x40 - v1->x) * v0->x;
+    s32 ix = (s32)fx;
+    if (fx - s32ToF64_a808(ix, &cvt) <= lbl_eu_8066A800) ix--;
+    if (ix > cell->w - 1) return false;
+    if (ix < 0) ix = 0;
+
+    // Grid Z start from the min-Z bound.
+    f32 fz = (d->field_0x44 - v1->y) * v0->y;
+    s32 iz0 = (s32)fz;
+    if (fz - s32ToF64_a808(iz0, &cvt) <= lbl_eu_8066A800) iz0--;
+    if (iz0 > h - 1) return false;
+    if (iz0 < 0) iz0 = 0;
+
+    // Grid X end from the max-X bound (rounded to nearest).
+    f32 gx = (d->field_0x48 - v1->x) * v0->x;
+    s32 ex = (s32)gx;
+    if (gx - s32ToF64_a808(ex, &cvt) >= lbl_eu_8066A804) ex++;
+    if (ex < 0) return false;
+    if (ex > cell->w - 1) ex = cell->w - 1;
+
+    // Grid Z end from the max-Z bound.
+    f32 gz = (d->field_0x4C - v1->y) * v0->y;
+    s32 ez = (s32)gz;
+    if (gz - s32ToF64_a808(ez, &cvt) >= lbl_eu_8066A804) ez++;
+    if (ez < 0) return false;
+    if (ez > h - 1) ez = h - 1;
+
+    s32 stride = ix * h;
+    for (; ix <= ex; ix++) {
+        for (s32 iz = iz0; iz <= ez; iz++) {
+            u32 val = d->field_0x20[cell->offset + stride + iz];
+            if (val == 0) continue;
+            if (val & 1) return true;
+            if (func_80475E64__Q26mpfsys18MPFDrawDisplayListFv(self, &d->field_0x34[val])) return true;
+        }
+        stride += h;
+    }
     return false;
 }
 

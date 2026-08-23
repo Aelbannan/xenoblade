@@ -51,17 +51,36 @@ struct CVS_THREAD_VISION_TELL_Vtbl {
 #undef CVT_PAD32
 #undef CVT_PAD64
 
+// Raw layout of the object exposing the implicit vtable pointer at 0x1C
+// (owned by the CVS_THREAD base) so the factory can override it.
+struct CVS_THREAD_VISION_TELL_raw {
+    u32* state0;                // 0x00
+    u32 state1;                 // 0x04
+    u32 state2;                 // 0x08
+    u32 unkC;                   // 0x0C
+    u32 unk10;                  // 0x10
+    u32 unk14;                  // 0x14
+    u32 unk18;                  // 0x18
+    void* vtable;               // 0x1C
+    CVoiceHandle* field_0x20;   // 0x20
+    CVoiceHandle* field_0x24;   // 0x24
+};
+
+// Runtime rethrow (NMWException.h): declared noreturn so MWCC elides the
+// __end__catch epilogue of a catch-all handler that ends with `bl __throw`.
+extern "C" __declspec(noreturn) void __throw(char* throwtype, void* location, void* dtor);
+
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
-extern "C" u32 lbl_eu_80539DB0[3];  // Init data tables for slot states (3 u32s each)
-extern "C" u32 lbl_eu_80539DBC[3];
-extern "C" u32 lbl_eu_80539DC8[3];
+extern u32 lbl_eu_80539DB0[3];  // Init data tables for slot states (3 u32s each)
+extern u32 lbl_eu_80539DBC[3];
+extern u32 lbl_eu_80539DC8[3];
 
 // Random voice ID tables (short arrays in .sdata).
 extern "C" short lbl_eu_80662D58[4];
 extern "C" short lbl_eu_80662D60[4];
 
 // Vtable for CVS_THREAD_VISION_TELL (0x1C = 28 bytes = 7 entries).
-extern "C" u32 lbl_eu_80539DD4[7];
+extern u32 lbl_eu_80539DD4[7];
 
 // C-linkage imports used by this TU's thread helpers / factory. Genuine
 // retail C/ABI symbols imported from sibling voice modules.

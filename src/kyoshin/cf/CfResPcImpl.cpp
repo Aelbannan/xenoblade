@@ -3,7 +3,10 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfResPcImpl.hpp"
-#include "kyoshin/cf/CfBdat.hpp"
+// NOTE: CfBdat.hpp is intentionally not included here - its `s32` (long)
+// getBdatStringColumnValue declaration clashes with code_801862C0.hpp's
+// `int` spelling (pulled in via harness_catalog.hpp). The two static members
+// this TU needs are declared in CfResPcImpl.hpp instead.
 #include <nw4r/math/math_types.h>
 #include <string.h>
 
@@ -197,12 +200,15 @@ void func_8018CE70(cf::CfResPcImpl* self, int arg2, int arg3) {
 // vtable slot +0x74 reports the resource live; forwards state+2 with the
 // three caller args to func_801BFF04.
 void func_8018CF08(cf::CfResPcImpl* self, int arg2, int arg3, int arg4) {
+    // ok declared first so MWCC assigns it r31 (retail keeps state in r30);
+    // the zero-init stays after the parent load to match retail ordering.
+    int ok;
     s16 state = self->field_0E;
     if (state < 0) {
         return;
     }
-    int ok = 0;
     cf::CfResPcParent* parent = self->field_00;
+    ok = 0;
     if (parent->field_68 & 0x200000) {
         if (((cf::CfResPcParentVtIf*)parent)->_v074() != 0) {
             ok = 1;
@@ -217,21 +223,24 @@ void func_8018CF08(cf::CfResPcImpl* self, int arg2, int arg3, int arg4) {
 // the parent's +0x68 flag bit 21 is set and its vtable slot +0x74 reports
 // the resource live; otherwise -1.
 int func_8018CF90(cf::CfResPcImpl* self) {
+    // Same regalloc shape as func_8018CF08 (ok in r31, state in r30); the
+    // nested-success / single-fail-exit layout makes MWCC share one
+    // `li r3,-1` tail like retail.
+    int ok;
     s16 state = self->field_0E;
-    if (state < 0) {
-        return -1;
-    }
-    int ok = 0;
-    cf::CfResPcParent* parent = self->field_00;
-    if (parent->field_68 & 0x200000) {
-        if (((cf::CfResPcParentVtIf*)parent)->_v074() != 0) {
-            ok = 1;
+    if (state >= 0) {
+        cf::CfResPcParent* parent = self->field_00;
+        ok = 0;
+        if (parent->field_68 & 0x200000) {
+            if (((cf::CfResPcParentVtIf*)parent)->_v074() != 0) {
+                ok = 1;
+            }
+        }
+        if (ok != 0) {
+            return state + 2;
         }
     }
-    if (ok == 0) {
-        return -1;
-    }
-    return state + 2;
+    return -1;
 }
 
 // func_8018D00C - PC lookup probe: when parent flag bit 1 is set and the
@@ -928,12 +937,20 @@ void func_8018E69C(cf::CfResPcImpl* self) {
 // accesses go through self->field_00 directly (retail reloads it at every
 // site; the model object at +0x98 is held in one register across the block).
 void func_8018E7E4(cf::CfResPcImpl* self) {
-    s16 state = self->field_0A;
-    u16 slot = self->field_00->field_8C;
-    cf::CfResPcLookupEntry* entry_c = func_80062CE4(state);
-    cf::CfResPcLookupEntry* entry_d = func_80062DA4(state);
-    cf::CfResPcLookupEntry* entry_e = func_80062E04(state);
-    int ok = 1;
+    // Declared to steer MWCC onto the retail register map:
+    // slot=r31, entry_c=r30, entry_d=r29, entry_e=r28, ok/state=r27.
+    u16 slot;
+    s16 state;
+    cf::CfResPcLookupEntry* entry_c;
+    cf::CfResPcLookupEntry* entry_d;
+    cf::CfResPcLookupEntry* entry_e;
+    int ok;
+    slot = self->field_00->field_8C;
+    state = self->field_0A;
+    entry_c = func_80062CE4(state);
+    entry_d = func_80062DA4(state);
+    entry_e = func_80062E04(state);
+    ok = 1;
     if (self->field_00->field_64 & 0x80000000) {
         if (self->field_00->field_6C & 0x20000) {
             if (self->field_34 != 0) {
@@ -1228,8 +1245,7 @@ int func_8018F2EC(u32 arg1, u16 arg2) {
     }
     func_80084AD4__Q22cf13CfGameManagerFv(4);
     for (int i = 1; i <= 13; i++) {
-        func_8009EC9C((u16)i);
-        func_8009F6D4();
+        func_8009F6D4(func_8009EC9C((u16)i));
     }
     return 0;
 }
@@ -1310,7 +1326,10 @@ extern "C" void func_8018F510(void* self, unsigned long cond, unsigned long arg3
 // (func_8007DA0C) with the result's two u16 ids, runs the script slot and
 // latches the game-manager event flag bit 13 (0x2000).
 int func_8018F520(cf::CfResPcHost408* self, u32 arg1, u32 arg2) {
-    CfFileEventIds* p = func_8009D5FC();
+    // Local layout view of the CfGameManager.hpp CfFileEventIdsView result
+    // (two leading u16 ids); avoids pulling that header into this TU.
+    struct LocalEventIds { u16 field_0x0; u16 field_0x2; };
+    LocalEventIds* p = (LocalEventIds*)func_8009D5FC();
     func_8009EB2C((arg2 >> 20) & 0x7f, (arg2 >> 10) & 0x3ff, self->field_408 + 0x28);
     func_8007DA0C__Q22cf13CfGameManagerFv(self->field_408, p->field_0x2, p->field_0x0);
     func_80068AEC(self->field_408 + 0x28);

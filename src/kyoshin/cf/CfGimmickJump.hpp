@@ -11,7 +11,9 @@ struct CfGimmickJumpVec3 {
 };
 
 struct CfGimmickJumpStateData {
-    u32 words[0x12];
+    u32 words[0x10];
+    f32 floatValue10; // word 0x10 - bulk-copied as float by retail
+    u32 lastWord;     // word 0x11
 };
 
 /*

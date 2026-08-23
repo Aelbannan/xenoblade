@@ -694,8 +694,8 @@ void WUDiRegisterDevice(BD_ADDR addr) {
         (memcmp(pInfo->conf.devName, pMsg + 0x27C, sizeof(LINK_KEY)) == 0 &&
          _linkedWBC)) {
         tBTA_HH_DEV_DESCR desc;
-        desc.dl_len = sizeof(descriptor);
         desc.dsc_list = (u8*)pMsg;
+        desc.dl_len = sizeof(descriptor);
 
         DEBUGPrint(pMsg + 0x998);
         BTA_HhAddDev(pInfo->devAddr, pInfo->hhAttrMask, pInfo->subclass,
@@ -1151,8 +1151,8 @@ u8 __wudSyncPrepareSearch(void) {
     WUDCB* p = &_wcb;
     WUDDevInfo* pDev;
     BOOL enabled;
-    u8 num;
     int i;
+    u8 num;
 
     enabled = OSDisableInterrupts();
     p->discoverable = 0;
@@ -1422,13 +1422,12 @@ u8 __wudSyncVirginStandard(void) {
 u8 __wudSyncStoredDevInfoToNand(void) {
     extern char lbl_805625AC[];
     extern char lbl_80562544[];
-    WUDCB* p;
     WUDDevInfoList* pIt;
     BOOL enabled;
     BOOL busy;
-    u8 count;
     u8 num;
     u8 result;
+    u8 count;
 
     busy = (SCCheckStatus() == SC_STATUS_BUSY);
     if (busy) {
@@ -1438,14 +1437,13 @@ u8 __wudSyncStoredDevInfoToNand(void) {
     memset(&_scArray.regist, 0, sizeof(_scArray.regist));
 
     enabled = OSDisableInterrupts();
-    p = &_wcb;
-    num = p->devNums;
+    num = _wcb.devNums;
     OSRestoreInterrupts(enabled);
 
     _scArray.numRegist = num;
     count = 0;
 
-    for (pIt = p->stdListHead; pIt != NULL; pIt = pIt->next) {
+    for (pIt = _wcb.stdListHead; pIt != NULL; pIt = pIt->next) {
         memcpy(&_scArray.regist[count].addr, pIt->devInfo->devAddr,
                sizeof(BD_ADDR));
         memcpy(&_scArray.regist[count].info, pIt->devInfo, sizeof(SCDevInfo));
@@ -1535,6 +1533,9 @@ u8 __wudSyncDone(void) {
     BOOL enabled;
     int i;
 
+    // Scan every device slot (std slots first, then SMP); sniff any device
+    // left in status 8 back down before finishing the sync.
+
     if (p->syncSkipChecks != 0) {
         for (i = 0; i < WUD_MAX_DEV_ENTRY; i++) {
             tBTM_PM_PWR_MD block;
@@ -1579,8 +1580,8 @@ u8 __wudSyncDone(void) {
     return WUD_STATE_SYNC_START;
 }
 void __wudSyncHandler(void) {
-    WUDCB* p = &_wcb;
     char* pMsg = _wudWiiRemoteDescriptor;
+    WUDCB* p = &_wcb;
     BOOL enabled;
 
     switch (p->syncState) {
@@ -2226,8 +2227,8 @@ u8 __wudDeleteCleanupDatabase(void) {
 }
 
 void __wudDeleteHandler(void) {
-    char* pMsg = _wudWiiRemoteDescriptor;
     WUDCB* p = &_wcb;
+    char* pMsg = _wudWiiRemoteDescriptor;
     BOOL success;
     BOOL enabled;
     u8 connectable;
@@ -2895,18 +2896,14 @@ u8 __wudGetDevInfoFromWiiFit(void) {
             int j;
 
             for (j = 0; j < 0x95E3; j++) {
-                u16 v = pData[0];
-                sum += v;
-                invSum = (u16)(invSum + ~v);
-                v = pData[1];
-                sum += v;
-                invSum = (u16)(invSum + ~v);
-                v = pData[2];
-                sum += v;
-                invSum = (u16)(invSum + ~v);
-                v = pData[3];
-                sum += v;
-                invSum = (u16)(invSum + ~v);
+                sum += pData[0];
+                invSum = (u16)(invSum + ~pData[0]);
+                sum += pData[1];
+                invSum = (u16)(invSum + ~pData[1]);
+                sum += pData[2];
+                invSum = (u16)(invSum + ~pData[2]);
+                sum += pData[3];
+                invSum = (u16)(invSum + ~pData[3]);
                 pData += 4;
             }
 
@@ -2921,30 +2918,22 @@ u8 __wudGetDevInfoFromWiiFit(void) {
                 int j;
 
                 for (j = 0; j < 8; j++) {
-                    u16 v = pData[0];
-                    sum += v;
-                    invSum = (u16)(invSum + ~v);
-                    v = pData[1];
-                    sum += v;
-                    invSum = (u16)(invSum + ~v);
-                    v = pData[2];
-                    sum += v;
-                    invSum = (u16)(invSum + ~v);
-                    v = pData[3];
-                    sum += v;
-                    invSum = (u16)(invSum + ~v);
-                    v = pData[4];
-                    sum += v;
-                    invSum = (u16)(invSum + ~v);
-                    v = pData[5];
-                    sum += v;
-                    invSum = (u16)(invSum + ~v);
-                    v = pData[6];
-                    sum += v;
-                    invSum = (u16)(invSum + ~v);
-                    v = pData[7];
-                    sum += v;
-                    invSum = (u16)(invSum + ~v);
+                    sum += pData[0];
+                    invSum = (u16)(invSum + ~pData[0]);
+                    sum += pData[1];
+                    invSum = (u16)(invSum + ~pData[1]);
+                    sum += pData[2];
+                    invSum = (u16)(invSum + ~pData[2]);
+                    sum += pData[3];
+                    invSum = (u16)(invSum + ~pData[3]);
+                    sum += pData[4];
+                    invSum = (u16)(invSum + ~pData[4]);
+                    sum += pData[5];
+                    invSum = (u16)(invSum + ~pData[5]);
+                    sum += pData[6];
+                    invSum = (u16)(invSum + ~pData[6]);
+                    sum += pData[7];
+                    invSum = (u16)(invSum + ~pData[7]);
                     pData += 8;
                 }
 
@@ -3143,8 +3132,9 @@ void WUDShutdown(BOOL onReconnect) {
 }
 void __wudShutdownHandler(void) {
     WUDCB* p = &_wcb;
+    WUDCB* pAlt = p;
 
-    switch (p->shutdownState) {
+    switch (pAlt->shutdownState) {
     case WUD_STATE_SHUTDOWN_STORE_SETTINGS: {
         BOOL result = _wudReadNand;
 
@@ -3153,17 +3143,17 @@ void __wudShutdownHandler(void) {
             result &= SCSetBtCmpDevInfoArray(&_spArray);
 
             if (result) {
-                p->shutdownState = WUD_STATE_SHUTDOWN_FLUSH_SETTINGS;
+                pAlt->shutdownState = WUD_STATE_SHUTDOWN_FLUSH_SETTINGS;
                 SCFlushAsync((SCFlushCallback)__wudShutdownFlushCallback);
             } else {
-                p->shutdownState = WUD_STATE_SHUTDOWN_DONE;
+                pAlt->shutdownState = WUD_STATE_SHUTDOWN_DONE;
             }
         }
         break;
     }
 
     case WUD_STATE_SHUTDOWN_DONE: {
-        OSCancelAlarm(&p->alarm);
+        OSCancelAlarm(&pAlt->alarm);
         BTA_DisableBluetooth();
         break;
     }
@@ -3609,8 +3599,8 @@ void __wudCleanupStackCallback(s32 result) {
 }
 void __wudSecurityEventStackCallback(tBTA_DM_SEC_EVT event,
                                      tBTA_DM_SEC* pData) {
-    WUDCB* p = &_wcb;
     char* pMsg = _wudWiiRemoteDescriptor;
+    WUDCB* p = &_wcb;
     WUDDevInfo* pInfo;
     BOOL enabled;
     u8 linkedNum;
@@ -3932,6 +3922,7 @@ static inline void WUDiDeleteAllKeysProc(char* pMsg) {
 }
 
 void __wudVendorSpecificEventStackCallback(UINT8 len, UINT8* pData) {
+    WUDSyncDeviceCallback pSyncCallback;
     char* pMsg = _wudWiiRemoteDescriptor;
     WUDClearDeviceCallback pClearCallback;
     WUDCB* p = &_wcb;
@@ -3940,7 +3931,6 @@ void __wudVendorSpecificEventStackCallback(UINT8 len, UINT8* pData) {
 
     switch (event) {
     case WUD_VSE_INITIATE_PAIRING: {
-        WUDSyncDeviceCallback pSyncCallback;
         BOOL busy;
 
         DEBUGPrint(pMsg + 0xDE8);

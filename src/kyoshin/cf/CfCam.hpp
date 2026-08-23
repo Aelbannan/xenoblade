@@ -14,14 +14,13 @@ struct CfCamFollow; // fwd decl for extern-C imports below (full layout later)
 extern "C" bool func_800755B0(void*, int);
 extern "C" bool func_8049EB60(void* obj);
 extern "C" int func_8006BFC4(int controllerId, int unk); // CfCam sibling pad check
-extern "C" unsigned int lbl_eu_80663E24;
+extern "C" u32 lbl_eu_80663E24;
 // Copies a 12-byte vector (dst, src); returns dst (retail: func_8004B3F0 leaves
 // its first arg in r3). C linkage so call relocs keep the unmangled retail
 // symbol name (MWCC mangles plain C++ global declarations).
 extern "C" void* func_8004B3F0(void*, void*);
 extern "C" int func_8006C1B0(void* arg);           // CfCam sibling (FULL_MATCH us-8006cc08)
 extern "C" void func_8006B720(int arg1, int arg2); // CfCam sibling (us-8006c178)
-extern "C" void func_80074090(void* out);          // CfCam sibling (retail 0x80074090)
 extern "C" float lbl_eu_80527230[];
 extern "C" float lbl_eu_80661BA8;
 extern "C" float lbl_eu_80663DE4;     // .sbss float (retail 0x80663DE4)
@@ -79,7 +78,7 @@ extern "C" float lbl_eu_80661B48;
 extern "C" float lbl_eu_80661B74;
 extern "C" float lbl_eu_806662B0;     // .sdata2 constant (retail 0x806662B0)
 extern "C" float lbl_eu_806662B4;     // .sdata2 constant (retail 0x806662B4)
-extern "C" float lbl_eu_8066A208;     // .sdata2 epsilon (retail 0x8066A208)
+extern "C" const float lbl_eu_8066A208;     // .sdata2 epsilon (retail 0x8066A208)
 extern "C" float lbl_eu_806662D8;     // .sdata2 angle offset (retail 0x806662D8)
 extern "C" float lbl_eu_806662E0;     // .sdata2 divisor (retail 0x806662E0)
 extern "C" float lbl_eu_806662E4;     // .sdata2 sine multiplier (retail 0x806662E4)
@@ -181,6 +180,21 @@ struct CfCamFollow {
     ~CfCamFollow(); // retail __dt__Q22cf11CfCamFollowFv (defined outside this TU)
 };
 
+// Layout view over the follow-camera state block copied wholesale by
+// func_80073DDC from the dynamic-cast source object into CfCamFollow.
+struct CfCamStateView {
+    u8 pad00[0x10];
+    ml::CVec3 field10;      // 0x10
+    u8 pad1C[0x28 - 0x1C];
+    ml::CVec3 field28;      // 0x28
+    ml::CVec3 field34;      // 0x34
+    ml::CVec3 field40;      // 0x40
+    u8 pad4C[0x58 - 0x4C];
+    ml::CVec3 field58;      // 0x58
+    u8 pad64[0x1E0 - 0x64];
+    f32 field1E0;           // 0x1E0
+};
+
 // Camera-position source / follow-target object view: real virtuals at the
 // offsets used by func_8006CA2C (0x74), func_80074230 (0xAC) and
 // func_8006CB0C (0xCC). With the -RTTI 8-byte vtable header, virtual index N
@@ -270,6 +284,95 @@ public:
     virtual void v15() = 0;
 };
 
+// Vtable view for func_8006BFDC's reset call: slot 0x0C (index 1 with -RTTI).
+class CfCamVt01 {
+public:
+    virtual void v00() = 0;           // 0x08
+    virtual void fnAt0C(int arg) = 0; // 0x0C - reset entry
+};
+
+// Vtable view over the camera-position source used by func_80074090: the
+// aim-vector body at slot 0xAC (index 41), the scale factor at slot 0xCC
+// (index 49), and the indexed vector getters at slots 0x120 / 0x128 / 0x12C
+// (indices 70 / 72 / 73). Never instantiated - MWCC emits no vtable for it.
+class CfCamSrcVt {
+public:
+    virtual void v00() = 0; // 0x08
+    virtual void v01() = 0;
+    virtual void v02() = 0;
+    virtual void v03() = 0;
+    virtual void v04() = 0;
+    virtual void v05() = 0;
+    virtual void v06() = 0;
+    virtual void v07() = 0;
+    virtual void v08() = 0;
+    virtual void v09() = 0;
+    virtual void v10() = 0;
+    virtual void v11() = 0;
+    virtual void v12() = 0;
+    virtual void v13() = 0;
+    virtual void v14() = 0;
+    virtual void v15() = 0;
+    virtual void v16() = 0;
+    virtual void v17() = 0;
+    virtual void v18() = 0;
+    virtual void v19() = 0;
+    virtual void v20() = 0;
+    virtual void v21() = 0;
+    virtual void v22() = 0;
+    virtual void v23() = 0;
+    virtual void v24() = 0;
+    virtual void v25() = 0;
+    virtual void v26() = 0;
+    virtual void v27() = 0;
+    virtual void v28() = 0;
+    virtual void v29() = 0;
+    virtual void v30() = 0;
+    virtual void v31() = 0;
+    virtual void v32() = 0;
+    virtual void v33() = 0;
+    virtual void v34() = 0;
+    virtual void v35() = 0;
+    virtual void v36() = 0;
+    virtual void v37() = 0;
+    virtual void v38() = 0;
+    virtual void v39() = 0;
+    virtual void v40() = 0;
+    virtual ml::CVec3* fn0xAC() = 0;    // 0xAC (index 41) - aim vector body
+    virtual void v42() = 0;
+    virtual void v43() = 0;
+    virtual void v44() = 0;
+    virtual void v45() = 0;
+    virtual void v46() = 0;
+    virtual void v47() = 0;
+    virtual void v48() = 0;
+    virtual float fn0xCC() = 0;         // 0xCC (index 49) - scale factor
+    virtual void v50() = 0;
+    virtual void v51() = 0;
+    virtual void v52() = 0;
+    virtual void v53() = 0;
+    virtual void v54() = 0;
+    virtual void v55() = 0;
+    virtual void v56() = 0;
+    virtual void v57() = 0;
+    virtual void v58() = 0;
+    virtual void v59() = 0;
+    virtual void v60() = 0;
+    virtual void v61() = 0;
+    virtual void v62() = 0;
+    virtual void v63() = 0;
+    virtual void v64() = 0;
+    virtual void v65() = 0;
+    virtual void v66() = 0;
+    virtual void v67() = 0;
+    virtual void v68() = 0;
+    virtual void v69() = 0;
+    virtual const float* fnAt120(int idx) = 0; // 0x120 (index 70)
+    virtual void v71() = 0;
+    virtual const float* fnAt128() = 0;        // 0x128 (index 72)
+    virtual const float* fnAt12C(int idx) = 0; // 0x12C (index 73)
+};
+
 // Minimal views for func_8006DBD4: the +0x4 sub-object's vtable slot-0x30
 // (index 10 with -RTTI) returns an object whose first word feeds the
 // func_80174C98 arts-state gate.
@@ -291,6 +394,63 @@ public:
     virtual CfStateWord* fnAt30() = 0; // index 10 -> vtable 0x30
 };
 
+// Vtable view for func_8006CC68's slot-0x38 call (index 12).
+class CfCamVt38 {
+public:
+    virtual void v00() = 0; // 0x08
+    virtual void v01() = 0;
+    virtual void v02() = 0;
+    virtual void v03() = 0;
+    virtual void v04() = 0;
+    virtual void v05() = 0;
+    virtual void v06() = 0;
+    virtual void v07() = 0;
+    virtual void v08() = 0;
+    virtual void v09() = 0;
+    virtual void v10() = 0;
+    virtual void v11() = 0;
+    virtual void fnAt38(void* arg) = 0; // 0x38 (index 12)
+};
+
+// Vtable view for func_8006B720's game-manager probe at slot 0x60 (index 22).
+class CfCamGmView {
+public:
+    virtual void v00() = 0; // 0x08
+    virtual void v01() = 0;
+    virtual void v02() = 0;
+    virtual void v03() = 0;
+    virtual void v04() = 0;
+    virtual void v05() = 0;
+    virtual void v06() = 0;
+    virtual void v07() = 0;
+    virtual void v08() = 0;
+    virtual void v09() = 0;
+    virtual void v10() = 0;
+    virtual void v11() = 0;
+    virtual void v12() = 0;
+    virtual void v13() = 0;
+    virtual void v14() = 0;
+    virtual void v15() = 0;
+    virtual void v16() = 0;
+    virtual void v17() = 0;
+    virtual void v18() = 0;
+    virtual void v19() = 0;
+    virtual void v20() = 0;
+    virtual int fnAt60() = 0; // 0x60 (index 22)
+};
+
+// Vtable view for func_8006F9EC's slot-0x18 call (index 4).
+namespace cf {
+class CfCamVt18 {
+public:
+    virtual void v00() = 0;               // 0x08
+    virtual void v01() = 0;
+    virtual void v02() = 0;
+    virtual void v03() = 0;
+    virtual void fnAt18(void* arg, float f) = 0; // 0x18 (index 4)
+};
+} // namespace cf
+
 } // namespace cf
 
 // Additional retail C-ABI imports used by CfCam call sites (same naming
@@ -305,18 +465,24 @@ f32 func_8004CC68(f32 angle);                        // retail 0x8004D300 (SinFI
 f32 func_8004CC74(f32 angle);                        // retail 0x8004D30C (CosFIdx wrapper)
 float func_80073F88(const f32* v);                   // in-TU def: (const ml::CVec3*); differing signature keeps the bl
 void func_80073E74(const ml::CVec3* a, const ml::CVec3* b, f32* out, int flag2, int flag3); // in-TU def (defined below its first use)
-void func_800733B8(void* a, void* b, void* c, void* d, float f); // in-TU stub (defined below its first use)
+void func_800733B8(ml::CVec3* out, cf::CfCamFollow* self, const ml::CVec3* dir,
+                   const f32* angles, float f); // in-TU def (defined below its first use)
 __declspec(noinline) void func_8006FFA8(cf::CfCamFollow* self, float* outA, float* outB); // in-TU def, same signature (mixed linkage keeps the unmangled bl); noinline keeps the retail bl instead of inlining the body
 void func_80071730(void* dst, void* src);            // retail 0x8007215C (16-byte copy)
 void func_80071AB0(void* self, void* a, void* b, int c, float f1, float f2); // in-TU stub (defined below its first use)
 __declspec(noinline) void func_800707C0(void* self, void* a, void* b); // in-TU stub, same signature (mixed linkage keeps the unmangled bl)
 int CfRes_getD80Flag();                              // scene flag gate (CUIErrMesWin.hpp)
-void* func_8049603C();                               // scene/camera view getter (CTaskGame.hpp shape)
+// func_8049603C: this TU calls it with no args; CfGameManager.hpp's
+// (UnkScnResult*(CScn*)) decl is renamed out of the way via #define at include.
+extern "C" void* func_8049603C();
 bool func_80074A74();                                // in-TU def (defined below its first use), same signature (mixed linkage)
 void func_80070EBC(cf::CfCamFollow* self);           // in-TU def (defined below its first use), same signature (mixed linkage)
 ml::CVec3* func_8004B79C(ml::CVec3* out, const ml::CVec3* v); // retail 0x8004BE74 (vec helper)
 int func_8006C640(cf::CfCamFollow* self, u32 mask, int flag); // CfCam sibling (retail 0x8006D098)
 int func_8007FE24__Q22cf13CfGameManagerFv(u32);          // CfGameManager state gate (retail 0x8007FE24)
+int func_8007F91C__Q22cf13CfGameManagerFv();             // CfGameManager gate (retail 0x8007F91C)
+void func_8049EFF8(void* obj, f32 f, void* a, void* b);  // retail 0x8049EFF8 (pose/scale apply)
+int func_8006D374(void* self);                           // CfCam sibling (retail 0x8006D374)
 cf::CfCamFollow* func_80071CDC();                    // CfCam sibling (retail 0x80072708)
 ml::CVec3* func_80071CE4(cf::CfCamFollow* self);     // CfCam sibling (retail 0x80072710)
 __declspec(noinline) u8* func_80071CEC(cf::CfCamFollow* self); // CfCam sibling (retail 0x80072718), in-TU body at bottom of CfCam.cpp; noinline keeps the bl at call sites
@@ -355,11 +521,33 @@ extern float lbl_eu_806662C0;                               // .sdata2 constant
 extern float lbl_eu_806662C4;                               // .sdata2 constant
 extern float lbl_eu_806662C8;                               // .sdata2 constant
 extern const float lbl_eu_80666318;                               // .sdata2 constant
-extern const f32 lbl_eu_80661B58;                               // .sdata float (retail 0x80661B58)
+float lbl_eu_80661B58;                               // .sdata float (retail 0x80661B58)
+u8 lbl_eu_80570A20[0x200];                          // .bss camera-defaults block (retail 0x80570A20)
+float lbl_eu_80661B54;                               // .sdata float (retail 0x80661B54)
+float lbl_eu_80661B5C;                               // .sdata float (retail 0x80661B5C)
+float lbl_eu_80661B64;                               // .sdata float (retail 0x80661B64)
+float lbl_eu_80661B68;                               // .sdata float (retail 0x80661B68)
+float lbl_eu_80661B6C;                               // .sdata float (retail 0x80661B6C)
+float lbl_eu_80661B70;                               // .sdata float (retail 0x80661B70)
+float lbl_eu_80661B78;                               // .sdata float (retail 0x80661B78)
+float lbl_eu_80661B80;                               // .sdata float (retail 0x80661B80)
+float lbl_eu_80661B84;                               // .sdata float (retail 0x80661B84)
+float lbl_eu_80661B88;                               // .sdata float (retail 0x80661B88)
+float lbl_eu_80661BAC;                               // .sdata float (retail 0x80661BAC)
+float lbl_eu_80663DDC;                               // .sdata float (retail 0x80663DDC)
+extern unsigned int lbl_eu_80527244[];               // .data word table (retail 0x80527244)
+extern const float lbl_eu_80666304;                  // .sdata2 constant
+extern const float lbl_eu_806662F4;                  // .sdata2 constant
+extern const float lbl_eu_806662FC;                  // .sdata2 constant
+extern const float lbl_eu_8066630C;                  // .sdata2 constant
+extern const float lbl_eu_80666310;                  // .sdata2 constant
+extern const float lbl_eu_80666314;                  // .sdata2 constant
 float lbl_eu_80661B38;                               // .sdata float (retail 0x80661B38)
-float lbl_eu_80661B7C;                               // .sdata word (retail 0x80661B7C)
+u32 lbl_eu_80661B7C;                                  // .sdata word (retail 0x80661B7C)
 float lbl_eu_80661B8C;                               // .sdata float (retail 0x80661B8C)
 float lbl_eu_80661B90;                               // .sdata float (retail 0x80661B90)
+float lbl_eu_80661B94;                               // .sdata float (retail 0x80661B94)
+float lbl_eu_80661BA0;                               // .sdata float (retail 0x80661BA0)
 float lbl_eu_80661B98;                               // .sdata float (retail 0x80661B98)
 float lbl_eu_80661B9C;                               // .sdata float (retail 0x80661B9C)
 u8 lbl_eu_80663DE1;                                  // .sdata byte (retail 0x80663DE1)
@@ -367,6 +555,21 @@ float lbl_eu_80663DD0;                               // .sbss float (retail 0x80
 float lbl_eu_80570A74[3];                            // .bss vec3 (retail 0x80570A74)
 float lbl_eu_80570A80[3];                            // .bss vec3 (retail 0x80570A80)
 extern char lbl_eu_804FB4F0[];                       // .data message string (retail 0x804FB4F0)
+void func_8006CE18(cf::CfCamFollow* self);           // CfCam sibling: zero the 0x1D4 flag word (retail 0x8006D870)
+int func_80074CD4(void* obj, u32 mask);              // CfCam sibling pad-action dispatcher (retail 0x80075568)
+void* func_8008221C__Q22cf13CfGameManagerFv();       // CfGameManager active-camera lookup (retail 0x80082BA0)
+class UnkClass_800821F8;
+UnkClass_800821F8* func_800821F8__Q22cf13CfGameManagerFv(); // state object getter (retail 0x80082B7C); must match object/CfObjectMove.hpp's declaration
+short* getBdatStringColumnValue(void* bdat, const char* col, int index); // bdat column read (returns short*)
+u32 lbl_eu_80527160[0x40];                           // .bss second camera-defaults block (retail 0x80527160)
+extern const char* lbl_eu_805271FC[];                // .data bdat-table-name entries (retail 0x805271FC)
+extern const double lbl_eu_806662A8;                 // .sdata2 double constant (retail 0x806662A8)
+extern const f32 lbl_eu_8066639C;                    // .sdata2 constant
+extern const f32 lbl_eu_8066640C;                    // .sdata2 constant
+extern const f32 lbl_eu_80666410;                    // .sdata2 constant
+extern const f32 lbl_eu_80666414;                    // .sdata2 constant
+extern const f32 lbl_eu_806663C8;                    // .sdata2 constant
+extern const f32 lbl_eu_80666354;                    // .sdata2 constant
 }
 
 class CfCamEventManager;
@@ -376,6 +579,7 @@ class CfCamEventManager;
 // func_* names + lbl_eu_* data, so call relocs keep the retail symbol).
 extern "C" {
 CfCamEventManager* func_8006E59C();       // camera-event manager getter
+void* func_8006E5A4(CfCamEventManager* mgr); // active camera-state getter
 void func_8006E5AC(void*, void*);         // CfCam sibling block copy (dst, src)
 int func_8006E5B8(void* self);            // CfCam sibling count (ignores its arg)
 void func_8006E5C0(void*, void*);         // CfCam sibling word copy (dst, src)
@@ -417,6 +621,23 @@ extern "C" int func_8006DBD4(cf::CfCamFollow* self, int flags);     // in-TU def
 extern "C" __declspec(noinline) void func_80071694(void* a, void* b); // in-TU stub, same signature (mixed linkage keeps the unmangled bl)
 }
 
+// Imports used by func_8006DD58 / func_8006D450 / func_8006F9EC /
+// func_8006FD3C (flat retail names).
+extern "C" {
+int func_8006DF9C(void* obj);
+int testResInfoFlag(unsigned int mask);
+int func_800FE68C();
+int func_8006DFA8();
+int func_800B708C__Fi(int arg);
+int CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(void* actor);
+int func_8006DFBC(void* obj);
+float func_800504BC(const f32* a, const f32* b); // vec dot product
+float func_8006D410(float x);
+extern const float lbl_eu_8066633C; // .sdata2 constant
+extern const float lbl_eu_80666360; // .sdata2 constant
+extern const float lbl_eu_8066634C; // .sdata2 constant
+}
+
 // 48-byte / 12-word camera data block copied whole by func_8006EF1C.
 struct CfCamWordBlock48 {
     u32 words[12];
@@ -435,18 +656,5 @@ public:
     void* field_0x0C;  // 0x0C ctor arg
     float getUnk4FC();
     ~CfCam();
-};
-} // namespace cf
-namespace cf {
-
-class CfObject {
-public:
-    void CfObject_UnkVirtualFunc54();
-    void CfObject_UnkVirtualFunc9();
-
-    // TODO: add fields
-    void CfObject_UnkVirtualFunc48();
-    void CfObject_UnkVirtualFunc55();
-    void CfObject_UnkVirtualFunc52();
 };
 } // namespace cf

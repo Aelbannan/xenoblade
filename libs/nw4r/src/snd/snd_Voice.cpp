@@ -196,76 +196,77 @@ void Voice::StopFinished() {
 }
 
 void Voice::Calc() {
-    VoiceLayout& v = VoiceRef(this);
-
-    if (!v.mIsStarting) {
+    // Direct member access (no VoiceLayout& local): retail keeps `this` in
+    // r31 and materializes no extra pointer pseudo, so a bound reference
+    // here costs an integer register and shifts the whole allocation.
+    if (!mIsStarting) {
         return;
     }
 
-    if (v.mSyncFlag & SYNC_AX_SRC) {
+    if (mSyncFlag & SYNC_AX_SRC) {
         // CalcAxSrc(false): per-voice pitch x voiceOutParam.pitch when the
         // pitch-modulation gate field_0xA1 is clear, then SetSrc every voice.
-        for (int i = 0; i < v.mVoiceOutCount; i++) {
-            f32 pitch = v.mPitch;
-            if (v.field_0xA1 == 0) {
-                pitch *= v.mVoiceOutParam[i][1];
+        for (int i = 0; i < mVoiceOutCount; i++) {
+            f32 pitch = mPitch;
+            if (field_0xA1 == 0) {
+                pitch *= mVoiceOutParam[i][1];
             }
-            for (int j = 0; j < v.mChannelCount; j++) {
-                if (v.mAxVoice[j][i] != NULL) {
-                    v.mAxVoice[j][i]->SetSrc(pitch, false);
+            for (int j = 0; j < mChannelCount; j++) {
+                if (mAxVoice[j][i] != NULL) {
+                    mAxVoice[j][i]->SetSrc(pitch, false);
                 }
             }
         }
-        v.mSyncFlag &= ~SYNC_AX_SRC;
+        mSyncFlag &= ~SYNC_AX_SRC;
     }
 
-    if (v.mSyncFlag & SYNC_AX_VE) {
+    if (mSyncFlag & SYNC_AX_VE) {
         CalcAxVe();
-        v.mSyncFlag &= ~SYNC_AX_VE;
+        mSyncFlag &= ~SYNC_AX_VE;
     }
 
-    if (v.mSyncFlag & SYNC_AX_MIX) {
+    if (mSyncFlag & SYNC_AX_MIX) {
         if (!CalcAxMix()) {
-            v.mSyncFlag &= ~SYNC_AX_MIX;
+            mSyncFlag &= ~SYNC_AX_MIX;
         }
     }
 
-    if (v.mSyncFlag & SYNC_AX_LPF) {
+    if (mSyncFlag & SYNC_AX_LPF) {
         // CalcAxLpf(): per-voice LPF cutoff scaled by voiceOutParam.lpf.
-        for (int i = 0; i < v.mVoiceOutCount; i++) {
+        for (int i = 0; i < mVoiceOutCount; i++) {
             u16 freq = static_cast<u16>(
-                Util::CalcLpfFreq(v.mLpfFreq + v.mVoiceOutParam[i][5]));
-            for (int j = 0; j < v.mChannelCount; j++) {
-                if (v.mAxVoice[j][i] != NULL) {
-                    v.mAxVoice[j][i]->SetLpf(freq);
+                Util::CalcLpfFreq(mLpfFreq + mVoiceOutParam[i][5]));
+            for (int j = 0; j < mChannelCount; j++) {
+                if (mAxVoice[j][i] != NULL) {
+                    mAxVoice[j][i]->SetLpf(freq);
                 }
             }
         }
-        v.mSyncFlag &= ~SYNC_AX_LPF;
+        mSyncFlag &= ~SYNC_AX_LPF;
     }
 
-    if (v.mSyncFlag & SYNC_AX_BIQUAD) {
-        for (int i = 0; i < v.mVoiceOutCount; i++) {
-            for (int j = 0; j < v.mChannelCount; j++) {
-                if (v.mAxVoice[j][i] != NULL) {
+    if (mSyncFlag & SYNC_AX_BIQUAD) {
+        for (int i = 0; i < mVoiceOutCount; i++) {
+            for (int j = 0; j < mChannelCount; j++) {
+                if (mAxVoice[j][i] != NULL) {
                     SetBiquad__Q44nw4r3snd6detail7AxVoiceFUcf(
-                        v.mAxVoice[j][i], v.mBiquadType, v.mBiquadFreq);
+                        mAxVoice[j][i], mBiquadType, mBiquadFreq);
                 }
             }
         }
-        v.mSyncFlag &= ~SYNC_AX_BIQUAD;
+        mSyncFlag &= ~SYNC_AX_BIQUAD;
     }
 
-    if (v.mSyncFlag & SYNC_AX_REMOTE) {
+    if (mSyncFlag & SYNC_AX_REMOTE) {
         // CalcAxRemoteFilter(): broadcast the remote filter flag.
-        for (int i = 0; i < v.mVoiceOutCount; i++) {
-            for (int j = 0; j < v.mChannelCount; j++) {
-                if (v.mAxVoice[j][i] != NULL) {
-                    v.mAxVoice[j][i]->SetRemoteFilter(v.mRemoteFilter);
+        for (int i = 0; i < mVoiceOutCount; i++) {
+            for (int j = 0; j < mChannelCount; j++) {
+                if (mAxVoice[j][i] != NULL) {
+                    mAxVoice[j][i]->SetRemoteFilter(mRemoteFilter);
                 }
             }
         }
-        v.mSyncFlag &= ~SYNC_AX_REMOTE;
+        mSyncFlag &= ~SYNC_AX_REMOTE;
     }
 }
 

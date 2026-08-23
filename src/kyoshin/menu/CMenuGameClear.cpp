@@ -1,11 +1,8 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuGameClear
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
-
 #include "kyoshin/menu/CMenuGameClear.hpp"
 
-#include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/IScnRender.hpp"
@@ -40,19 +37,18 @@ extern "C" CMenuGameClear* __ct__CMenuGameClear(CProcess* registParent, CScn* sc
         // Temp (CProcess) vtable first, then the null PMF triple copy, then
         // the composite vtable and the IScnRender sub-vtable at +0x58.
         obj->mVtable10 = (u32)lbl_eu_8052BF70;
+        // Load [1] into a local first so MWCC hoists it above the [0] store
+        // (retail schedule: lwz [1], lwz [0], stw [0], stw [1], lwz/stw [2]).
         u32* src = __ptmf_null;
-        u32 ptmf1 = src[1];
-        u32 ptmf0 = src[0];
-        u32 ptmf2 = src[2];
-        obj->mPtMf3C[0] = ptmf0;
-        obj->mPtMf3C[1] = ptmf1;
-        obj->mPtMf3C[2] = ptmf2;
-        ptmf1 = src[1];
-        ptmf0 = src[0];
-        ptmf2 = src[2];
-        obj->mPtMf48[0] = ptmf0;
-        obj->mPtMf48[1] = ptmf1;
-        obj->mPtMf48[2] = ptmf2;
+        u32 v;
+        v = src[1];
+        obj->mPtMf3C[0] = src[0];
+        obj->mPtMf3C[1] = v;
+        obj->mPtMf3C[2] = src[2];
+        v = src[1];
+        obj->mPtMf48[0] = src[0];
+        obj->mPtMf48[1] = v;
+        obj->mPtMf48[2] = src[2];
 
         obj->mField54 = 0;
         obj->mField55 = 0;
@@ -69,8 +65,8 @@ extern "C" CMenuGameClear* __ct__CMenuGameClear(CProcess* registParent, CScn* sc
         __ct__CCur18(&obj->mCursor, 0);
 
         // Initialize the 14 CtrlObjectParam entries (0xCC stride each).
-        cf::CtrlObjectParamInit* end = &obj->mParams[14];
         cf::CtrlObjectParamInit* p = &obj->mParams[0];
+        cf::CtrlObjectParamInit* end = &obj->mParams[14];
         do {
             func_8009D764(p);
             p++;
@@ -168,9 +164,93 @@ extern "C" unsigned long func_802B22E0() {
     return lbl_eu_80664C08 != 0;
 }
 
-void func_802B22F4(){}
+// Shared input-handler shape (func_802B22F4 selects -> state 4,
+// func_802B2488 backs out -> state 8). Reads the cf pad button word:
+// bit21/bit27 of +0x04 (port-dependent) is the confirm stroke, 0x8004 moves
+// the cursor up, bits 15/28 move it down.
+extern "C" void func_802B22F4(CMenuGameClear* self) {
+    CfPadDataView* pad = (CfPadDataView*)getCfPadData__Q22cf13CfGameManagerFv();
+    u32 buttons;
+    int dirBit;
+    int down;
+    int up;
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        buttons = pad->field_104;
+        dirBit = (pad->field_04 >> 21) & 1;
+        down = (buttons & 0x8004) != 0;
+        up = (buttons & 0x1010000) != 0;
+    } else {
+        buttons = pad->field_104;
+        dirBit = (pad->field_04 >> 4) & 1;
+        down = (buttons & 0x8004) != 0;
+        up = (buttons & 0x1010000) != 0;
+    }
 
-void func_802B2488(){}
+    if (dirBit != 0) {
+        self->mField70 = 4;
+        func_8022B8E4((CSysWinFull*)&self->mSysWin[0]);
+        func_801D216C(&self->mCursor[0], 0);
+        func_80138078(3);
+    } else if (down != 0) {
+        if (--self->mField71 < 0) {
+            self->mField71 = 1;
+        }
+        nw4r::math::VEC3 pos;
+        func_8022C1B4(&pos, &self->mSysWin[0], self->mField71);
+        reinterpret_cast<CCur18Vt10*>(&self->mCursor[0])->_v10(&pos);
+        func_80138078(1);
+    } else if (up != 0) {
+        if (++self->mField71 > 1) {
+            self->mField71 = 0;
+        }
+        nw4r::math::VEC3 pos;
+        func_8022C1B4(&pos, &self->mSysWin[0], self->mField71);
+        reinterpret_cast<CCur18Vt10*>(&self->mCursor[0])->_v10(&pos);
+        func_80138078(1);
+    }
+}
+
+extern "C" void func_802B2488(CMenuGameClear* self) {
+    CfPadDataView* pad = (CfPadDataView*)getCfPadData__Q22cf13CfGameManagerFv();
+    u32 buttons;
+    int dirBit;
+    int down;
+    int up;
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        buttons = pad->field_104;
+        dirBit = (pad->field_04 >> 21) & 1;
+        down = (buttons & 0x8004) != 0;
+        up = (buttons & 0x1010000) != 0;
+    } else {
+        buttons = pad->field_104;
+        dirBit = (pad->field_04 >> 4) & 1;
+        down = (buttons & 0x8004) != 0;
+        up = (buttons & 0x1010000) != 0;
+    }
+
+    if (dirBit != 0) {
+        self->mField70 = 8;
+        func_8022B8E4((CSysWinFull*)&self->mSysWin[0]);
+        func_801D216C(&self->mCursor[0], 0);
+        func_80138078(3);
+    } else if (down != 0) {
+        if (--self->mField71 < 0) {
+            self->mField71 = 1;
+        }
+        nw4r::math::VEC3 pos;
+        func_8022C1B4(&pos, &self->mSysWin[0], self->mField71);
+        reinterpret_cast<CCur18Vt10*>(&self->mCursor[0])->_v10(&pos);
+        func_80138078(1);
+    } else if (up != 0) {
+        if (++self->mField71 > 1) {
+            self->mField71 = 0;
+        }
+        nw4r::math::VEC3 pos;
+        func_8022C1B4(&pos, &self->mSysWin[0], self->mField71);
+        reinterpret_cast<CCur18Vt10*>(&self->mCursor[0])->_v10(&pos);
+        func_80138078(1);
+    }
+}
 
 void func_802B261C(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuGameClearFv)((char*)self - 0x58); }
 

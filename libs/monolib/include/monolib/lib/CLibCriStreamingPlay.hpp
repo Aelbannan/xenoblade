@@ -2,14 +2,16 @@
 
 #include "monolib/lib/CLibCri.hpp"
 
-// C-linkage thunk target (retail symbol name — keep verbatim)
-extern "C" void __dt__20CLibCriStreamingPlayFv(void* self);
+// C-linkage thunk target / deleting dtor (retail symbol name — keep verbatim)
+extern "C" void __dt__20CLibCriStreamingPlayFv(CLibCriStreamingPlay* self, int flag);
 
 //size: 0x540 (estimated based on CLibCri + streaming fields)
 class CLibCriStreamingPlay : public CLibCri {
 public:
     CLibCriStreamingPlay(const char* pName, CWorkThread* pParent);
-    virtual ~CLibCriStreamingPlay();
+    // (no virtual dtor declaration: the deleting dtor __dt__20CLibCriStreamingPlayFv
+    // is provided by CLibCriStreamingPlay.cpp as an extern "C" retail-symbol function;
+    // declaring it here would collide with that definition under MWCC)
 
     // CDeviceVICb virtual overrides (thunks adjust this from CDeviceVICb subobject at 0x1c4)
     virtual void viBeforeDrawDone();

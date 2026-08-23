@@ -1,12 +1,33 @@
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/code_802B8A3C.hpp"  // func_80174C98 / func_800B708C imports
 
+// LOCAL 5-arg view of func_80174B4C for this TU's constructor call site
+// (shared headers declare the common 2-arg form; the two extern "C"
+// signatures cannot coexist - MWCC error 10197).
+extern "C" void func_80174B4C(void* actor, u32 flags, const void* a, const void* b, const void* c);
+
 namespace cf {
     /* TODO: find out what base class the static cast is
     casting down to */
     CfObjectActor::CfObjectActor() :
-    CActorParam(static_cast<CObjectParam*>(this), nullptr) {
-        
+    // Retail passes (this ? this+0x3E9C : this, 0) to the base ctor.
+    CActorParam(this != 0 ? reinterpret_cast<UNKTYPE*>(reinterpret_cast<u8*>(this) + 0x3E9C)
+                          : reinterpret_cast<UNKTYPE*>(this),
+                nullptr) {
+        // Copy the four vtable pointers from the shared table group, hand the
+        // same group to the battle-side initializer, then link the AI-action
+        // subobject back to this actor and seed the tail fields.
+        u8* grp = lbl_eu_8053109C;
+        CfActorVtSlots* slots = reinterpret_cast<CfActorVtSlots*>(this);
+        slots->vtPrimary = reinterpret_cast<u32>(grp);
+        slots->vtSecondary = reinterpret_cast<u32>(grp + 0xC);
+        slots->vtAIAction = reinterpret_cast<u32>(grp + 0x36C);
+        slots->vtMove = reinterpret_cast<u32>(grp + 0x37C);
+        func_80174B4C(this, 3, grp + 0x36C, grp + 0xC, grp);
+        func_8014AA10(reinterpret_cast<u8*>(this) + 0x3380, reinterpret_cast<unsigned int>(this));
+        CfActorField45B8* tail = reinterpret_cast<CfActorField45B8*>(this);
+        tail->field_0x45B8 = 0;
+        tail->field_0x45BC = -1;
     }
 
 float CfObjectActor::CfObjectActor_UnkVirtualFunc6() {
@@ -119,17 +140,18 @@ extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(cf::CfObj
     u8* p = reinterpret_cast<cf::CfActorField45B8*>(self)->field_0x45B8;
     if (p != 0) {
         cf::CfObjectMove* src = static_cast<cf::CfObjectMove*>(func_800B708C(reinterpret_cast<int>(p)));
-        if (src != 0) {
-            u32 flags = reinterpret_cast<cf::CfMoveFlags64*>(src)->field_0x64;
-            cf::CfObjectActor* actor;
-            if (((flags & 2) != 0 || (flags & 4) != 0) && src != 0) {
-                actor = (cf::CfObjectActor*)((u8*)src - 16028);
-            } else {
-                actor = 0;
-            }
-            if (actor != 0) {
-                reinterpret_cast<cf::CfActorVt5C4If*>((u8*)actor)->fn5C4(value);
-            }
+        // Merged condition: both false paths share one zeroing block; the
+        // true arm is a static_cast downcast (emits MWCC's guarded subi).
+        cf::CfObjectActor* actor;
+        if (src != 0 &&
+            ((reinterpret_cast<cf::CfMoveFlags64*>(src)->field_0x64 & 2) != 0 ||
+             (reinterpret_cast<cf::CfMoveFlags64*>(src)->field_0x64 & 4) != 0)) {
+            actor = static_cast<cf::CfObjectActor*>(src);
+        } else {
+            actor = 0;
+        }
+        if (actor != 0) {
+            reinterpret_cast<cf::CfActorVt5C4If*>((u8*)actor)->fn5C4(value);
         }
     }
 }

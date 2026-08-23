@@ -37,6 +37,7 @@ struct CEquipChangeVtblBase {
    0x2B0: CEquipItemBox */
 class CEquipChange : public CEquipChangeVtblBase {
 public:
+    CEquipChange();
     ~CEquipChange();
     bool OnFileEvent(CEventFile*);
     u8 func_802023C0();
@@ -190,6 +191,178 @@ struct CEquipPaletteBlock {
 struct CPaneScaleView {
     u8 _pad[0x44];
     CEquipColorPair mScale;    // 0x44 - {x, y} raw words
+};
+
+// Retail-unmangled sub-object constructors called by ~CEquipChange/ctor.
+extern "C" void __ct__CCur14(void* self, nw4r::lyt::ArcResourceAccessor* arc);
+extern "C" void __ct__CCur15(void* self, nw4r::lyt::ArcResourceAccessor* arc);
+extern "C" void __ct__CSubCur(void* self, nw4r::lyt::ArcResourceAccessor* arc);
+extern "C" void __ct__CItemBoxInfo(void* self, int a, int b);
+extern "C" void __ct__CEquipItemBox(void* self);
+extern "C" void __ct__UnkClass_8011C974(void* dst, const void* src);
+extern "C" void func_8018BE74(void* dst, const void* src);
+extern "C" void func_8018B0FC(void* dst, const void* src);
+extern "C" void func_8016742C(void* dst, const void* src);
+
+// Manual vtable for the ctor store (retail lis/addi lbl_eu_80535688).
+extern char lbl_eu_80535688[];
+
+// Local copy of the CEquipChangeCopyView layout from CPartyStateWin.hpp
+// (that header is not includable here - conflicting decls).
+struct CEqChStateView {
+    u8 f04[0x10];
+    u8 f14[0x10];
+    u32 f24[8];
+    u8 f44;
+    u8 _pad45[3];
+    u32 f48;
+    u8 f4c;
+    u8 f4d;
+    u8 _pad4e[2];
+    u8 f50[0x18];
+    u8 f68[0x18];
+    u8 f80[0x18];
+    u8 f98;
+    u8 f99;
+    u32 f9a;
+    u32 f9e;
+    u8 _pada2[6];
+    u8 fa8[0x10];
+    u8 fb8[0x10];
+    u32 fc8[27];
+    u8 f134;
+    u8 _pad135[3];
+    u32 f138;
+    u8 f13c;
+    u8 f13d;
+    u8 f13e;
+    u8 _pad13f;
+    u32 f140;
+    u32 f144;
+    u32 f148;
+    u32 f14c;
+    u16 f150;
+    u8 f152;
+    u8 _pad153;
+    u8 f154[0x160];
+    u8 f2b4[0x10];
+    u8 f2c4[0x10];
+    u32 f2d4[7];
+    u8 f2f0[4];
+    u8 f2f4[0x18];
+    u8 f30c[0x18];
+    u8 f324[0x1c];
+    u8 f340[0x10];
+    u32 f350[5];
+    u8 f364[4];
+    u8 _pad368[4];
+    u8 f36c[0x10];
+    u32 f37c[4];
+    u8 f38c[4];
+    f32 f390[5];
+    u8 f3a4;
+    u8 _pad3a5[3];
+    u8 pairs16[0x80];
+    u8 f428[3];
+    u8 _pad42b;
+    u8 f42c[0x3c];
+    u8 f468[0x3c];
+    u8 f4a4[3];
+    u8 _pad4a7;
+    u16 f4a8;
+    u16 f4aa;
+    u16 f4ac;
+    u8 f4ae;
+    u8 _pad4af;
+    u32 f4b0;
+    u32 f4b4;
+    u32 f4b8;
+    u32 f4bc;
+    u8 f4c0[0x15c];
+    u32 f61c;
+    u16 f620;
+    u8 f622[0xe];
+    u8 f62e[0x2000];
+    u16 f262e;
+    u8 f2630[4];
+    u8 f2634[0x20];
+    u8 f2650[4];
+    u8 f2654[0x400];
+    u32 f2a54;
+};
+
+/* Stack copy sources for the ctor: fresh CItemBoxInfo(4,0) and CEquipItemBox
+   temporaries whose config regions are copied into the members field-by-field.
+   Offsets mirror CEquipChangeCopyView shifted by the member bases (-0 for the
+   box info temp, -0x2B0 for the equip item box temp). */
+struct CEqChBoxTemp {
+    u32 _00;               // 0x00
+    u8 f04[0x10];          // 0x04 (__ct__UnkClass_8011C974)
+    u8 f14[0x10];          // 0x14 (__ct__UnkClass_8011C974)
+    u32 f24[27];           // 0x24..0x90
+    u8 f134;               // 0x90
+    u8 _pad91[3];
+    u32 f138;              // 0x94
+    u8 f13c;               // 0x98
+    u8 f13d;               // 0x99
+    u8 f13e;               // 0x9a
+    u8 _pad13f;
+    u32 f140;              // 0x9c
+    u32 f144;              // 0xa0
+    u32 f148;              // 0xa4
+    u32 f14c;              // 0xa8
+    u16 f150;              // 0xac
+    u8 f152;               // 0xae
+    u8 _pad153;
+    u8 f154[0x160];        // 0xb0..0x210 (func_8018BE74)
+};
+
+struct CEqChEquipTemp {
+    u8 f04[0x10];          // 0x04 (__ct__UnkClass_8011C974)
+    u8 f14[0x10];          // 0x14 (__ct__UnkClass_8011C974)
+    u32 f24[7];            // 0x24..0x40
+    u8 f2f0[4];            // 0x40
+    u8 f2f4[0x18];         // 0x44 (func_801FA220)
+    u8 f30c[0x18];         // 0x5c (func_801FA220)
+    u8 f324[0x1c];         // 0x74 (func_8018B0FC)
+    u8 f340[0x10];         // 0x90 (__ct__UnkClass_8011C974)
+    u32 f350[5];           // 0xa0..0xb4
+    u8 f364[4];            // 0xb4..0xb8
+    u8 _padb8[4];
+    u8 f36c[0x10];         // 0xbc (__ct__UnkClass_8011C974)
+    u32 f37c[4];           // 0xcc..0xdc
+    u8 f38c[4];            // 0xdc..0xe0
+    f32 f390[5];           // 0xe0..0xf4
+    u8 f3a4;               // 0xf4 (counted-pair loop base)
+    u8 _pad3a5[3];
+    u8 pairs16[0x78];      // 0xf8..0x170 (16 records)
+    u8 f428[3];            // 0x178..0x17b
+    u8 _pad42b;
+    u8 f42c[0x3c];         // 0x17c (func_8016742C)
+    u8 f468[0x3c];         // 0x1b8 (func_8016742C)
+    u8 f4a4[3];            // 0x1f4..0x1f7
+    u8 _pad4a7;
+    u16 f4a8;              // 0x1f8
+    u16 f4aa;              // 0x1fa
+    u16 f4ac;              // 0x1fc
+    u8 f4ae;               // 0x1fe
+    u8 _pad4af;
+    u32 f4b0;              // 0x200
+    u32 f4b4;              // 0x204
+    u32 f4b8;              // 0x208
+    u32 f4bc;              // 0x20c
+    u8 f4c0[0x15c];        // 0x210..0x36c (func_8018BE74)
+    u32 f61c;              // 0x36c
+    u16 f620;              // 0x370
+    u8 f622[0xe];          // 0x372..0x380 (&f622[8] is the loop base at 0x37a)
+    u8 _pad380[0x1ffe];    // 0x380..0x237e
+    u16 f262e;             // 0x237e
+    u8 f2630[4];           // 0x2380 (loop base for f2634)
+    u8 f2634[0x1c];        // 0x2384..0x23a0 (4 records)
+    u8 f2650[4];           // 0x23a0 (loop base for f2654)
+    u8 f2654[0x3f8];       // 0x23a4..0x279c (0x80 records)
+    u32 f27a4;             // 0x27a4
+    u8 _padTail[0x10];     // frame pad - retail reserves 0x27b8 for this temp
 };
 
 // Color/sound palette entries initialised by sinit_802059E8 (sdata2).

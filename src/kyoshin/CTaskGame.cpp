@@ -183,27 +183,35 @@ extern "C" void func_80040AF4(CTaskGame* self) {
 extern "C" void func_80294E58(void* self, u32 index, const u32* src);
 extern const f32 lbl_eu_80665D74;
 
+// Target us-800413bc: bump the frame counter; when the window-state gate
+// (func_80042784) is clear: store fps*5 into unk78, switch the move-hook
+// ptmf to pool lbl_eu_805255C8, clear the busy byte at unkCC+0x8C, push the
+// lbl_eu_80665D74 constant through the vec4 setter into the unkCC object
+// (index 0), then set the busy byte at unkD0+0x8C and repeat for unkD0.
+// optimize_for_size: retail keeps a plain mulli for fps*5.
+#pragma optimize_for_size on
 extern "C" void func_80040DE4(CTaskGame* self) {
     self->unk100++;
     if (func_80042784(self) == 0) {
-        float fps = (float)getTargetFramerate__9CDeviceVIFv();
-        int fps5 = (int)fps * 5;      // retail keeps the mulli (dead)
-        extern u32 lbl_eu_805255C8[3];
-        u32 v0 = lbl_eu_805255C8[0];  // retail keeps the lwzu (dead)
-        self->unk78 = self->unkCC;
-        *(u32*)((u8*)self + 0x40) = lbl_eu_805255C8[1];
-        *(u32*)((u8*)self + 0x3C) = 0;
-        *(u32*)((u8*)self + 0x44) = lbl_eu_805255C8[2];
-        *(u8*)((u8*)self + 0x8C) = 0;
-        float c = fabsf(lbl_eu_80665D74);
-        func_80294E58((void*)(uintptr_t)self->unkCC, 0,
-                      (const u32*)func_800407C8((func_800407C8_tmp*)((u8*)self + 0x18), c, c, c, c));
-        *(u8*)((u8*)self + 0x8C) = 1;
-        func_800407C8_tmp tmp;
-        func_80294E58((void*)(uintptr_t)self->unkD0, 0,
-                      (const u32*)func_800407C8(&tmp, c, c, c, c));
+        self->unk78 = getTargetFramerate__9CDeviceVIFv() * 5;
+        u32 v0;
+        u32* pool = reinterpret_cast<u32*>(lbl_eu_805255C8);
+        v0 = pool[0];
+        CTaskGamePtmfWords* words = reinterpret_cast<CTaskGamePtmfWords*>(self);
+        words->field_0x40 = pool[1];
+        words->field_0x3C = v0;
+        words->field_0x44 = pool[2];
+        reinterpret_cast<CTaskGameFlag8C*>(self->unkCC)->field_0x8C = 0;
+        func_800407C8_tmp buf1;
+        func_80294E58(reinterpret_cast<void*>(self->unkCC), 0,
+                      reinterpret_cast<const u32*>(func_800407C8(&buf1, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74)));
+        reinterpret_cast<CTaskGameFlag8C*>(self->unkD0)->field_0x8C = 1;
+        func_800407C8_tmp buf2;
+        func_80294E58(reinterpret_cast<void*>(self->unkD0), 0,
+                      reinterpret_cast<const u32*>(func_800407C8(&buf2, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74, lbl_eu_80665D74)));
     }
 }
+#pragma optimize_for_size off
 // Target us-80041f80: set the move-hook ptmf from a .data pool entry. Bit
 // 0x800000 of unk68 selects pool lbl_eu_8052573C, otherwise lbl_eu_80525730;
 // no-op while bit 0x100 is set.
@@ -230,7 +238,35 @@ extern "C" void func_800419BC(CTaskGame* self) {
         words->field_0x44 = pool[2];
     }
 }
-void CTaskGame_stub_80041AFC(){}
+// Retail func_80041AFC: move-hook ptmf swap gated on unk68 bits. Bit 0x100
+// set: no-op. Otherwise with bit 0x01000000 clear: raise bit 0x2000 (retail
+// reloads unk68 fresh before the |=) and copy pool lbl_eu_80525760; with it
+// set: copy pool lbl_eu_8052576C instead.
+extern "C" void func_80041AFC(CTaskGame* self) {
+    u32 flags = self->unk68;
+    if ((flags & 0x100) != 0) {
+        return;
+    }
+    if ((flags & 0x01000000) == 0) {
+        volatile u32* f68 = &self->unk68;
+        *f68 = *f68 | 0x2000;
+        u32 v0;
+        u32* pool = reinterpret_cast<u32*>(lbl_eu_80525760);
+        v0 = pool[0];
+        CTaskGamePtmfWords* words = reinterpret_cast<CTaskGamePtmfWords*>(self);
+        words->field_0x40 = pool[1];
+        words->field_0x3C = v0;
+        words->field_0x44 = pool[2];
+    } else {
+        u32 v0;
+        u32* pool = reinterpret_cast<u32*>(lbl_eu_8052576C);
+        v0 = pool[0];
+        CTaskGamePtmfWords* words = reinterpret_cast<CTaskGamePtmfWords*>(self);
+        words->field_0x40 = pool[1];
+        words->field_0x3C = v0;
+        words->field_0x44 = pool[2];
+    }
+}
 void CTaskGame_stub_800426A4() {}
 // __declspec(noinline): retail callers (func_800424E0) call this out of
 // line; without it MWCC inlines the instance/flag test into the caller.
@@ -248,6 +284,22 @@ int CTaskGame_checkLbl80663D1C() {
 // Retail func_80042FBC: flag gate over unk7C bits. Returns 1 when either the
 // {0x80,0x40} or the {0x200,!0x100} bit-pair holds, or when bit 0x400 is set;
 // only the all-clear path falls through to 0.
+// Retail CTaskGame::func_80042720: request exit from the cf::CTaskGameCf
+// task (when live), then switch the move-hook ptmf to pool lbl_eu_8052582C.
+void CTaskGame::func_80042720() {
+    unk68 |= 8;
+    if (cf::CTaskGameCf::getInstance() != nullptr) {
+        // Retail calls getInstance twice (no value CSE across the calls).
+        cf::CTaskGameCf::getInstance()->reqExit();
+    }
+    u32 v0;
+    u32* pool = reinterpret_cast<u32*>(lbl_eu_8052582C);
+    v0 = pool[0];
+    CTaskGamePtmfWords* words = reinterpret_cast<CTaskGamePtmfWords*>(this);
+    words->field_0x40 = pool[1];
+    words->field_0x3C = v0;
+    words->field_0x44 = pool[2];
+}
 int func_80042FBC(CTaskGame* self) {
     int ret = 1;
     int r5 = 1;
@@ -378,7 +430,7 @@ void CTaskGame::setFlag_100000(int enabled, int unused, unsigned int value) {
     unkFC = value;
 }
 void CTaskGame_stub_8004350C(){}
-extern "C" void func_8004350C(CTaskGame* self, int enabled) {
+extern "C" __declspec(noinline) void func_8004350C(CTaskGame* self, int enabled) {
     unsigned int flags = self->unk68 & ~0x00000100u;
     self->unk68 = flags;
     if (enabled != 0) {
@@ -525,41 +577,33 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
         return;
     }
 
-    if (CLibHbm::func_8045DE00() != 0) {
-        goto L_80043078;
-    }
+    if (CLibHbm::func_8045DE00() == 0) {
 
     // ===== Hbm disabled: loading-screen state machine =====
     if (lbl_eu_80663D1C != 0) {
         lbl_eu_80663D1C->field_29 = (lbl_eu_806649F4 == 0);
+        // Pure if/else-if chain (no gotos): MWCC compiles each failed test
+        // as a direct branch to the next test label, matching retail.
         if (lbl_eu_80663D24 == 0) {
             if (func_802AE6B4(lbl_eu_80663D1C) != 0) {
                 lbl_eu_80663D24++;
                 func_802AE6C4(lbl_eu_80663D1C);
             }
-            goto L_80042FAC;
-        }
-        if (lbl_eu_80663D24 == 1) {
+        } else if (lbl_eu_80663D24 == 1) {
             if (func_802AE6BC(lbl_eu_80663D1C) != 0) {
                 if (func_8049603C(scene)->field_C < lbl_eu_80665D78) {
                     lbl_eu_80663D24++;
                     func_802AE758(lbl_eu_80663D1C);
                 }
             }
-            goto L_80042FAC;
-        }
-        if (lbl_eu_80663D24 == 2) {
+        } else if (lbl_eu_80663D24 == 2) {
             if (func_802AE6BC(lbl_eu_80663D1C) != 0) {
                 lbl_eu_80663D24++;
             }
-            goto L_80042FAC;
-        }
-        if (lbl_eu_80663D24 == 3) {
+        } else if (lbl_eu_80663D24 == 3) {
             func_802AE62C(lbl_eu_80663D1C);
             lbl_eu_80663D24++;
-            goto L_80042FAC;
-        }
-        if (lbl_eu_80663D24 == 4) {
+        } else if (lbl_eu_80663D24 == 4) {
             if (lbl_eu_80663D1C != 0) {
                 // Virtual deleting-dtor dispatch (vt+8, flag 1); the delete
                 // expansion supplies the redundant pointer test (two beq).
@@ -567,31 +611,28 @@ extern "C" void cbRenderBefore__9CTaskGameFv(CTaskGame* self, CScn* scene) {
             }
             lbl_eu_80663D1C = 0;
         }
-L_80042FAC:
         self->unk8C = 0;
-        goto L_80043078;
-    }
-
-    // ===== D1C == 0: frame-counter / idle-pose gate =====
-    if (func_804960A8(scene) != 0) {
-        if (lbl_eu_80663E24 & 0xafa40000) {
-            self->unk8C = 0;
-        }
-        self->unk8C++;
-        if (!(lbl_eu_80663E28 & 0x01000000) && !(lbl_eu_80663E24 & 0xafa40000)) {
-            if ((s16)self->unk8C > 0x1e) {
-                if (func_8049603C(scene)->field_4 == func_8049603C(scene)->field_0 &&
-                    func_8049603C(scene)->field_8 == func_8049603C(scene)->field_4 &&
-                    func_8049603C(scene)->field_0 == lbl_eu_80665D74) {
-                    lbl_eu_80663D28 = 1;
+    } else {
+        // ===== D1C == 0: frame-counter / idle-pose gate =====
+        if (func_804960A8(scene) != 0) {
+            if (lbl_eu_80663E24 & 0xafa40000) {
+                self->unk8C = 0;
+            }
+            self->unk8C++;
+            if (!(lbl_eu_80663E28 & 0x01000000) && !(lbl_eu_80663E24 & 0xafa40000)) {
+                if ((s16)self->unk8C > 0x1e) {
+                    if (func_8049603C(scene)->field_4 == func_8049603C(scene)->field_0 &&
+                        func_8049603C(scene)->field_8 == func_8049603C(scene)->field_4 &&
+                        func_8049603C(scene)->field_0 == lbl_eu_80665D74) {
+                        lbl_eu_80663D28 = 1;
+                    }
                 }
             }
+        } else {
+            self->unk8C = 0;
         }
-        goto L_80043078;
     }
-    self->unk8C = 0;
-
-L_80043078:
+    }
     // ===== loading-screen draw gate =====
     if (lbl_eu_80663D1C != 0 && lbl_eu_80663D24 <= 2) {
         if (CLibHbm::func_8045DE00() == 0 && cf::CfGameManager::func_800829B8() == 0) {
@@ -756,7 +797,52 @@ L_80043514:
     return;
 }
 
-void CTaskGame::Term() {}
+// Retail Term: clear the object-slot pointers, run the reset helper, stop
+// the unkE8 CRI stream, unregister the IScnRender subobject (+0x58) from the
+// scene, virtually delete the four +0x174 slots and the loading-screen
+// object, then tear down the scn/Hbm state.
+// optimize_for_size: retail saves r27-r31 with a single stmw.
+#pragma optimize_for_size on
+void CTaskGame::Term() {
+    unkCC = 0;
+    unkD0 = 0;
+    unkF0 = 0;
+    func_80043BC4();
+    if ((u32)(unkE8 + 0x10000) != 0xFFFF) {
+        func_80459A7C__7CLibCriFv(unkE8);
+        unkE8 = -1;
+        unkEC = 0;
+    }
+    // removeRenderCB receiver idiom: null-this passes this(0), else this+0x58.
+    IScnRender* render = reinterpret_cast<IScnRender*>(this);
+    if (this != nullptr) {
+        render = reinterpret_cast<IScnRender*>(reinterpret_cast<char*>(this) + 0x58);
+    }
+    removeRenderCB__4CScnFP10IScnRender(unk74, render);
+    __dt__8009D72C();
+    // Dual induction mirrors retail: slot byte counter and u32 offset.
+    u32 i = 0;
+    for (; i < 4; i++) {
+        CTaskGameSlotObj* obj = unk174[i];
+        if (obj != nullptr) {
+            // Virtual deleting-dtor dispatch (vt+8, flag 1); the delete
+            // expansion supplies the redundant pointer test (two beq).
+            delete obj;
+            unk174[i] = nullptr;
+        }
+    }
+    if (lbl_eu_80663D1C != nullptr) {
+        func_802AE62C(lbl_eu_80663D1C);
+        if (lbl_eu_80663D1C != nullptr) {
+            delete reinterpret_cast<CLoadVtView*>(lbl_eu_80663D1C);
+            lbl_eu_80663D1C = nullptr;
+        }
+    }
+    __dt__8047BFFC();
+    func_8047D028__17UnkClass_8047CD0CFv();
+    CLibHbm::func_8045D470(false);
+}
+#pragma optimize_for_size off
 // Retail func_80040A3C: set the title/loading text pair (unk86/unk88), copy
 // the caption string (or the default lbl_eu_804FA890[0x6D] when null) into
 // the unkA4 FixStr<32> (strlen+strcpy via the inline operator=), then raise
@@ -1077,22 +1163,20 @@ void func_800411A4(CTaskGame* self) {
 // the callee-saved saves only under size optimization).
 #pragma optimize_for_size on
 void func_8004125C(CTaskGame* self) {
-    // Hold the pool base in a local: retail materializes &lbl_eu_80525568 in
-    // r31 once (before the flag tests, survives the __ct__ call in the big
-    // block) and indexes it with addi from all three branches. The unk68 flag
-    // tests share one load (MWCC CSEs the three reads), while the big block's
-    // |= re-reads unk68 fresh (the pool-copy stores below kill the value CSE,
-    // retail shape).
-    u32* base = lbl_eu_80525568;
-    if ((self->unk68 & 0x100) != 0) {
+    // Pool entries are whole 12-byte move-hook ptmf elements of the region
+    // behind lbl_eu_80525568 (offsets 0xC0/0xCC/0xD8 = indices 16/17/18);
+    // base is materialized once in r31 (retail shape).
+    char* base = reinterpret_cast<char*>(lbl_eu_80525568);
+    // One load shared by the three flag tests; the big block re-reads
+    // unk68 fresh below (retail shape).
+    u32 flags = self->unk68;
+    if ((flags & 0x100) != 0) {
         return;
     }
-    if ((self->unk68 & 0x400) == 0) {
-        if ((self->unk68 & 0x8000) != 0) {
-            // Retail re-reads unk68 fresh here (the flag tests above share one
-            // load); the volatile read stops MWCC's value CSE from reusing the
-            // test register for the store (retail shape: lwz r0,0x68 before
-            // the oris/ori).
+    if ((flags & 0x400) == 0) {
+        if ((flags & 0x8000) != 0) {
+            // Volatile stops MWCC's value CSE from reusing the flag-test
+            // register for the store (retail reloads unk68 fresh here).
             volatile u32* f68 = &self->unk68;
             *f68 = *f68 | 0x12000;
             int code = 0x5F;
@@ -1104,25 +1188,13 @@ void func_8004125C(CTaskGame* self) {
             }
             __ct__802B4DF4(self, static_cast<u32>(reinterpret_cast<uintptr_t>(self->unk74)), code, 4);
             CWorkSystem::setSaveLoadInvalidReset(false);
-            u32* pool = &base[0xC0 / 4];
-            CTaskGamePtmfWords* words = reinterpret_cast<CTaskGamePtmfWords*>(self);
-            words->field_0x40 = pool[1];
-            words->field_0x3C = pool[0];
-            words->field_0x44 = pool[2];
+            self->setMoveFunc(reinterpret_cast<CTTask<CTaskGame>::MoveFunc*>(base)[16]);
             return;
         }
-        u32* pool = &base[0xCC / 4];
-        CTaskGamePtmfWords* words = reinterpret_cast<CTaskGamePtmfWords*>(self);
-        words->field_0x40 = pool[1];
-        words->field_0x3C = pool[0];
-        words->field_0x44 = pool[2];
+        self->setMoveFunc(reinterpret_cast<CTTask<CTaskGame>::MoveFunc*>(base)[17]);
         return;
     }
-    u32* pool = &base[0xD8 / 4];
-    CTaskGamePtmfWords* words = reinterpret_cast<CTaskGamePtmfWords*>(self);
-    words->field_0x40 = pool[1];
-    words->field_0x3C = pool[0];
-    words->field_0x44 = pool[2];
+    self->setMoveFunc(reinterpret_cast<CTTask<CTaskGame>::MoveFunc*>(base)[18]);
 }
 #pragma optimize_for_size off
 // Retail func_80041348: when no error-message window is active
@@ -1181,25 +1253,25 @@ void func_80041448(CTaskGame* self) {
     if ((self->unk68 & 0x100) != 0) {
         return;
     }
-    if ((self->unk68 & 0x80000) != 0) {
-        // Short move-hook swap: retail places this block out-of-line at the
-        // end (MWCC sinks the shorter branch) with a bne from the gate.
+    if ((self->unk68 & 0x80000) == 0) {
+        // Error-window creation block stays inline; retail sinks the shorter
+        // pool swap out of line at the end (bne from the gate).
+        // The aliasing view forces a fresh unk68 load (retail frees r4 - the
+        // cached flags word - for the unk74 argument) and lets the store sink
+        // below the argument setup, matching retail scheduling.
+        reinterpret_cast<CTaskGameFlags68*>(self)->flags |= 0x2000;
+        __ct__802B4DF4(self, static_cast<u32>(reinterpret_cast<uintptr_t>(self->unk74)), 0x56, 3);
+        CWorkSystem::setSaveLoadInvalidReset(false);
         u32 v0;
-        u32* pool = reinterpret_cast<u32*>(lbl_eu_8052567C);
+        u32* pool = reinterpret_cast<u32*>(lbl_eu_80525670);
         v0 = pool[0];
         CTaskGamePtmfWords* words = reinterpret_cast<CTaskGamePtmfWords*>(self);
         words->field_0x40 = pool[1];
         words->field_0x3C = v0;
         words->field_0x44 = pool[2];
     } else {
-        // unk74 is passed in r4 to the factory ctor, so MWCC frees r4 (the
-        // flags register) and reloads unk68 fresh for the |= (retail shape).
-        u32 scene = static_cast<u32>(reinterpret_cast<uintptr_t>(self->unk74));
-        self->unk68 = self->unk68 | 0x2000;
-        __ct__802B4DF4(self, scene, 0x56, 3);
-        CWorkSystem::setSaveLoadInvalidReset(false);
         u32 v0;
-        u32* pool = reinterpret_cast<u32*>(lbl_eu_80525670);
+        u32* pool = reinterpret_cast<u32*>(lbl_eu_8052567C);
         v0 = pool[0];
         CTaskGamePtmfWords* words = reinterpret_cast<CTaskGamePtmfWords*>(self);
         words->field_0x40 = pool[1];
@@ -1251,7 +1323,9 @@ void func_800415AC(CTaskGame* self) {
     }
     if ((self->unk68 & 0x100000) == 0) {
         u32 scene = static_cast<u32>(reinterpret_cast<uintptr_t>(self->unk74));
-        self->unk68 = self->unk68 | 0x2000;
+        // Retail reloads unk68 fresh before the |=.
+        volatile u32* f68 = &self->unk68;
+        *f68 = *f68 | 0x2000;
         __ct__802B4DF4(self, scene, 0x56, 3);
         CWorkSystem::setSaveLoadInvalidReset(false);
         u32 v0;
@@ -1311,7 +1385,9 @@ void func_800416FC(CTaskGame* self) {
         return;
     }
     if ((self->unk68 & 0x200) == 0) {
-        self->unk68 = self->unk68 | 0x2000;
+        // Retail reloads unk68 fresh before the |=.
+        volatile u32* f68 = &self->unk68;
+        *f68 = *f68 | 0x2000;
         if ((self->unk68 & 0x20000) != 0) {
             __ct__802B4DF4(self, static_cast<u32>(reinterpret_cast<uintptr_t>(self->unk74)), 0x54, 3);
             CWorkSystem::setSaveLoadInvalidReset(false);
@@ -1375,7 +1451,9 @@ void func_8004185C(CTaskGame* self) {
     }
     if ((self->unk68 & 0x800) == 0) {
         u32 scene = static_cast<u32>(reinterpret_cast<uintptr_t>(self->unk74));
-        self->unk68 = self->unk68 | 0x2000;
+        // Retail reloads unk68 fresh before the |=.
+        volatile u32* f68 = &self->unk68;
+        *f68 = *f68 | 0x2000;
         __ct__802B4DF4(self, scene, 0x56, 3);
         CWorkSystem::setSaveLoadInvalidReset(false);
         u32 v0;
@@ -1571,39 +1649,46 @@ void func_80041CC8(CTaskGame* self) {
 // the scene current-process query (func_80496034) returns non-null: for
 // unkF4==0 show the default loading caption via func_80040A3C, for
 // unkF4==1/2 clear the unkF0 object's +0xE9 byte; each case copies a
-// different move-hook ptmf pool (+0x234 / +0x240 / +0x24C of
-// lbl_eu_80525568, held in one base register).
+// different move-hook ptmf pool (+0x234 / +0x240 / +0x24C), held in one
+// base register.
 // optimize_for_size: retail saves r30-r31 with a single stmw (MWCC merges
 // the callee-saved saves only under size optimization).
 #pragma optimize_for_size on
 void func_80041E54(CTaskGame* self) {
+    // Scene read first so the self spill precedes the base def (retail
+    // allocation: self -> r31, pool base -> r30); the scheduler hoists the
+    // base lis/addi above the load.
+    CScnNw4r* scene = self->unk74;
     u32* base = lbl_eu_80525568;
-    if (func_80496034(self->unk74) != 0) {
+    if (func_80496034(scene) != 0) {
         if (self->unkF4 == 0) {
             self->func_80040A3C(0, 0, &lbl_eu_804FA890[0x6D], 0);
-            u32* pool = &base[0x234 / 4];
+            CTaskGamePtmfPool* pool = reinterpret_cast<CTaskGamePtmfPool*>(reinterpret_cast<char*>(base) + 0x234);
+            u32 v0 = pool->w0;
             CTaskGamePtmfWords* words = reinterpret_cast<CTaskGamePtmfWords*>(self);
-            words->field_0x40 = pool[1];
-            words->field_0x3C = pool[0];
-            words->field_0x44 = pool[2];
+            words->field_0x40 = pool->w1;
+            words->field_0x3C = v0;
+            words->field_0x44 = pool->w2;
         } else if (self->unkF4 == 1) {
             if (self->unkF0 != 0) {
                 reinterpret_cast<CTaskGameFlagE9*>(self->unkF0)->flagE9 = 0;
             }
-            u32* pool = &base[0x240 / 4];
+            CTaskGamePtmfPool* pool = reinterpret_cast<CTaskGamePtmfPool*>(reinterpret_cast<char*>(base) + 0x240);
+            u32 v0 = pool->w0;
             CTaskGamePtmfWords* words = reinterpret_cast<CTaskGamePtmfWords*>(self);
-            words->field_0x40 = pool[1];
-            words->field_0x3C = pool[0];
-            words->field_0x44 = pool[2];
+            words->field_0x40 = pool->w1;
+            words->field_0x3C = v0;
+            words->field_0x44 = pool->w2;
         } else if (self->unkF4 == 2) {
             if (self->unkF0 != 0) {
                 reinterpret_cast<CTaskGameFlagE9*>(self->unkF0)->flagE9 = 0;
             }
-            u32* pool = &base[0x24C / 4];
+            CTaskGamePtmfPool* pool = reinterpret_cast<CTaskGamePtmfPool*>(reinterpret_cast<char*>(base) + 0x24C);
+            u32 v0 = pool->w0;
             CTaskGamePtmfWords* words = reinterpret_cast<CTaskGamePtmfWords*>(self);
-            words->field_0x40 = pool[1];
-            words->field_0x3C = pool[0];
-            words->field_0x44 = pool[2];
+            words->field_0x40 = pool->w1;
+            words->field_0x3C = v0;
+            words->field_0x44 = pool->w2;
         }
     }
 }
@@ -1738,13 +1823,16 @@ void func_8004213C(CTaskGame* self) {
 // 0x10000000, run the per-mode cf::CTaskGameCf start (func_8004431C /
 // func_8004433C / startMission by unk128), and switch the move-hook ptmf to
 // pool lbl_eu_805257F0.
+// optimize_for_size: retail saves r29-r31 with a single stmw.
+#pragma optimize_for_size on
 void func_80042274(CTaskGame* self) {
     if (func_80496034(self->unk74) == 0) {
         return;
     }
     func_80043BC4();
-    self->unk68 = (self->unk68 & ~3u) | 4u;
-    if (self->unk128 == 3) {
+    // Retail: rlwinm r3,r3,0,31,29 (keep low 2 bits) | 0x4
+    self->unk68 = (self->unk68 & 3u) | 4u;
+    if ((int)self->unk128 == 3) {
         self->unk80 = self->unk86;
         self->unk82 = self->unk88;
         self->unkA0 = static_cast<u32>(strlen(self->unkA4.mString));
@@ -1785,11 +1873,11 @@ void func_80042274(CTaskGame* self) {
     CLibHbm::func_8045D5C8(false);
     create__Q22cf11CTaskGameCfFv(self, 0);
     lbl_eu_80663E28 |= 0x10000000;
-    if (self->unk128 == 1) {
+    if ((int)self->unk128 == 1) {
         cf::CTaskGameCf::getInstance()->func_8004431C();
-    } else if (self->unk128 == 2) {
+    } else if ((int)self->unk128 == 2) {
         cf::CTaskGameCf::getInstance()->func_8004433C();
-    } else if (self->unk128 == 3) {
+    } else if ((int)self->unk128 == 3) {
         cf::CTaskGameCf::getInstance()->startMission(self->unk80, self->unk82,
                                                      *reinterpret_cast<ml::FixStr<32>*>(&self->unk90), self->unk84);
     }
@@ -1801,6 +1889,7 @@ void func_80042274(CTaskGame* self) {
     words->field_0x3C = v0;
     words->field_0x44 = pool[2];
 }
+#pragma optimize_for_size off
 // Target us-80042a58: when the game instance is absent / its flag bit 0x1 is
 // set (func_800426F0) or this task's bit 0x2 is set, raise bit 0x8, request
 // cf::CTaskGameCf exit, set its unk_54 bit 0x4 when bit 0x2 is still set, and
@@ -1931,11 +2020,99 @@ u32 func_80042784(CTaskGame* self) {
     }
     return 0;
 }
-void CTaskGame_stub_80042874(){}
+// Retail func_80042874: tear down the loading screen. Resets the phase
+// counter, runs the loader shutdown helper, then deletes the object through
+// its virtual deleting-dtor slot and clears the global pointer.
+void func_80042874() {
+    if (lbl_eu_80663D1C != nullptr) {
+        lbl_eu_80663D24 = 0;
+        func_802AE62C(lbl_eu_80663D1C);
+        // Virtual deleting-dtor dispatch (vt+8, flag 1); the delete expansion
+        // supplies the redundant pointer test (two beq).
+        if (lbl_eu_80663D1C != nullptr) {
+            delete reinterpret_cast<CLoadVtView*>(lbl_eu_80663D1C);
+            lbl_eu_80663D1C = nullptr;
+        }
+    }
+}
 void CTaskGame_stub_8004302C(){}
+// Retail func_8004302C: loading-screen lifecycle switch. With the task live
+// and a scene attached (and, when flag bit 0x80 is raised, only when b != 0):
+// a != 0 lazily constructs the global CLoad (MEM2 plain / MEM1 tail-aligned)
+// then starts the load and clears the state counter; a == 0 stops and deletes
+// it.
+void func_8004302C(int a, int b) {
+    CTaskGame* game = lbl_eu_80663D18;
+    if (game == nullptr || game->unk74 == nullptr) {
+        return;
+    }
+    if ((lbl_eu_80663E28 & 0x80) != 0 && b == 0) {
+        return;
+    }
+    if (a != 0) {
+        // Create path: lazily construct the global CLoad, then start the
+        // load. Single shared call site (retail keeps one bl func_802AE508;
+        // on the already-created edge the argument register still holds the
+        // raw `a`, so pass it verbatim).
+        CLoad* target;
+        if (lbl_eu_80663D1C == nullptr) {
+            CLoad* load;
+            if (b == 0) {
+                mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+                load = static_cast<CLoad*>(mtl::MemManager::allocate(0x30, handle));
+                if (load != nullptr) {
+                    __ct__CLoad(load, 0);
+                }
+            } else {
+                mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM1();
+                load = static_cast<CLoad*>(mtl::MemManager::allocate_ex(0x30, handle, -0x20));
+                if (load != nullptr) {
+                    __ct__CLoad(load, 0);
+                }
+            }
+            lbl_eu_80663D1C = load;
+            target = load;
+        } else {
+            target = reinterpret_cast<CLoad*>(static_cast<uintptr_t>(static_cast<unsigned>(a)));
+        }
+        func_802AE508(target);
+        lbl_eu_80663D24 = 0;
+        return;
+    }
+    // Teardown path.
+    if (lbl_eu_80663D1C != nullptr) {
+        func_802AE62C(lbl_eu_80663D1C);
+        if (lbl_eu_80663D1C != nullptr) {
+            delete reinterpret_cast<CLoadVtView*>(lbl_eu_80663D1C);
+        }
+        lbl_eu_80663D1C = nullptr;
+    }
+}
 // Forward declaration only - body kept in separate TU to prevent MWCC inlining
 extern "C" void func_8004312C();
-void CTaskGame_stub_8004362C(){}
+// Retail func_8004362C: pad-confirm gate. Reads the current pad's pressed
+// button word; in co-op mode (classic controller) only the D-pad/A row bits
+// (3..10) plus the low nibble count, otherwise mask 0x1eff; returns whether
+// any extracted bit is set (MWCC subic/subfe booleanize).
+// Retail func_8004362C: pad-confirm gate. Reads the current pad's pressed
+// button word; in co-op mode (classic controller) only the D-pad/A row bits
+// (3..10) plus the low nibble, otherwise mask 0x1eff; returns whether any
+// extracted bit is set.
+// optimize_for_size: retail booleanizes with the subic/subfe setnz shape
+// (MWCC only emits it under size optimization, cf. CPartyStateWin).
+#pragma optimize_for_size on
+// __declspec(noinline): retail keeps every caller's bl out-of-line (the
+// attribute only affects call sites; the body itself is untouched).
+__declspec(noinline) int func_8004362C(CTaskGame*) {
+    CPad* pad = cf::CfGameManager::getCurrentPad();
+    if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
+        u32 pressed = pad->mPressedButtonFlags;
+        u32 v = (pressed & 0x1FE00000) | (pressed & 0xF);
+        return v != 0;
+    }
+    return (pad->mPressedButtonFlags & 0x1eff) != 0;
+}
+#pragma optimize_for_size off
 // Retail func_800436A8: (self->mMoveFunc == lbl_eu_80525850) as 0/1. The ptmf
 // pool entry is passed by value so MWCC copies it onto the stack and compares
 // via __ptmf_cmpr(&self->mMoveFunc, &local).
@@ -2230,7 +2407,7 @@ CfEnumListHolder* func_80043E08(CfEnumListHolder* self, u32 type, u32 filter) {
 // is stmw r29 - MWCC merges the 3 callee-saved saves only under
 // optimize_for_size (same pattern as the CTTask/reslist dtors in this TU).
 #pragma optimize_for_size on
-extern "C" char* func_80044070(ml::FixStr<32>* str, const char* s) {
+extern "C" __declspec(noinline) char* func_80044070(ml::FixStr<32>* str, const char* s) {
     str->operator+=(s);
     return str->mString;
 }
@@ -2288,10 +2465,16 @@ void func_8004312C(CTaskGame* self) {
         }
     }
     if (self->unk18C.unk18 != 0) {
-        if (func_8004392C(self->unk18C.unk14, self->unk18C.unk18,
+        // Sequenced loads mirror the retail order (b, a, f1, c, d, e); the
+        // volatile pins the float load at its statement position.
+        // Both loads volatile-pinned so their statement order survives
+        // scheduling (retail: a into r3, then the float into f1).
+        u32 a = *(volatile u32*)&self->unk18C.unk14;
+        const float f = *(volatile const float*)&self->unk18C.unk4;
+        if (func_8004392C(a, self->unk18C.unk18,
                           static_cast<u32>(self->unk18C.unk8),
                           self->unk18C.unkC, self->unk18C.unk10,
-                          self->unk18C.unk4) != 0) {
+                          f) != 0) {
             func_8004041C(reinterpret_cast<Fields*>(&self->unk18C), 0, lbl_eu_80665D6C, -1, 2, 0, 0, 0);
         }
     }
@@ -2307,7 +2490,7 @@ extern "C" void func_8004312C(); void Draw__9CTaskGameFv() {
     func_8004312C();
 }
 
-extern "C" void func_8004347C(CTaskGame* inst, u32 a, u32 b, u32 c) {
+extern "C" __declspec(noinline) void func_8004347C(CTaskGame* inst, u32 a, u32 b, u32 c) {
     inst->unk68 &= ~0x00000100;
     if (a != 0) {
         inst->unk68 |= 0x00080000;
@@ -2329,7 +2512,7 @@ extern "C" __declspec(noinline) void func_800434AC(CTaskGame* inst, u32 a, u32 b
 }
 // Target us-80044660: identical body to func_80044070 (second retail symbol).
 #pragma optimize_for_size on
-extern "C" char* func_800440C4(ml::FixStr<32>* str, const char* s) {
+extern "C" __declspec(noinline) char* func_800440C4(ml::FixStr<32>* str, const char* s) {
     str->operator+=(s);
     return str->mString;
 }

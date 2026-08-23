@@ -36,7 +36,8 @@ extern "C" void func_801098B0(CMenuBattleDamage* self, int actorId,
 // Unmangled retail ctor symbol; takes the owning scene (stored at +0x60).
 // Zero-fills the entries twice: first directly, then by copying a
 // zero-initialized stack local into each entry (retail order).
-void __ct__CMenuBattleDamage(CMenuBattleDamage* obj, CScn* scene) {
+extern "C" CMenuBattleDamage* __ct__CMenuBattleDamage(
+    CMenuBattleDamage* obj, CScn* scene) {
     char* vtFinal;
     char* vtWork;
     char* vtRender;
@@ -47,24 +48,22 @@ void __ct__CMenuBattleDamage(CMenuBattleDamage* obj, CScn* scene) {
 
     __ct__8CProcessFv(reinterpret_cast<CProcess*>(obj));
 
-    // Interim CProcess vtable, then final MI vtable + interface pieces.
-    // Retail: lwzu of [0], then stw [1]@+0x40 before [0]@+0x3C.
     obj->mProcessVt = reinterpret_cast<u32>(lbl_eu_8052C1C0);
     vtFinal = lbl_eu_8052C230;
-    ptmfWord0 = __ptmf_null[0];
+    ptmfWord0 = lbl_eu_80535AD0[0];
     vtWork = vtFinal + 0x24;
     vtRender = vtFinal + 0xac;
     z = 0;
-    ptmfWord1 = __ptmf_null[1];
+    ptmfWord1 = lbl_eu_80535AD0[1];
     obj->ptmfMove[1] = ptmfWord1;
     obj->ptmfMove[0] = ptmfWord0;
-    ptmfWord2 = __ptmf_null[2];
+    ptmfWord2 = lbl_eu_80535AD0[2];
     obj->ptmfMove[2] = ptmfWord2;
-    ptmfWord0 = __ptmf_null[0];
-    ptmfWord1 = __ptmf_null[1];
+    ptmfWord0 = lbl_eu_80535AD0[0];
+    ptmfWord1 = lbl_eu_80535AD0[1];
     obj->ptmfDraw[1] = ptmfWord1;
     obj->ptmfDraw[0] = ptmfWord0;
-    ptmfWord2 = __ptmf_null[2];
+    ptmfWord2 = lbl_eu_80535AD0[2];
     obj->ptmfDraw[2] = ptmfWord2;
     obj->mField_54 = (u8)z;
     obj->mField_55 = (u8)z;
@@ -74,8 +73,37 @@ void __ct__CMenuBattleDamage(CMenuBattleDamage* obj, CScn* scene) {
     obj->mScn = scene;
     __ct__17UnkClass_8045F564Fv(&obj->mMemRegion);
 
+    const f32 zeroF = lbl_eu_80666F68;
     for (u8 i = 0; i < 0x20; i++) {
         CMenuBattleDamageEntry& e = obj->mEntries[i];
+        e.mLayout0 = NULL;
+        e.field_04 = 0;
+        e.mAnim0 = NULL;
+        e.mAnim1 = NULL;
+        e.mAnim2 = NULL;
+        e.mLayout1 = NULL;
+        e.mAnim3 = NULL;
+        e.mActive = 0;
+        e.field_20 = 0;
+        e.field_24 = 0;
+        e.field_28 = zeroF;
+        e.field_2C = zeroF;
+        e.field_30 = 0;
+        e.field_31 = 0;
+        e.field_32 = 0;
+        e.field_34 = zeroF;
+    }
+    obj->mDamageType = (u8)z;
+    obj->mDamageDir = (u8)z;
+    obj->_pad776[0] = (u8)z;
+    obj->_pad776[1] = (u8)z;
+    obj->_pad776[2] = (u8)z;
+    obj->field_0x779 = (u8)z;
+
+    // Pass 2: retail assigns an explicit stack local, then copies it into
+    // each entry (MWCC keeps the dead local stores alongside the copies).
+    for (u8 i = 0; i < 0x20; i++) {
+        CMenuBattleDamageEntry e;
         e.mLayout0 = NULL;
         e.field_04 = 0;
         e.mAnim0 = NULL;
@@ -92,18 +120,9 @@ void __ct__CMenuBattleDamage(CMenuBattleDamage* obj, CScn* scene) {
         e.field_31 = 0;
         e.field_32 = 0;
         e.field_34 = lbl_eu_80666F68;
-    }
-    obj->mDamageType = (u8)z;
-    obj->mDamageDir = (u8)z;
-    obj->_pad776[0] = (u8)z;
-    obj->_pad776[1] = (u8)z;
-    obj->_pad776[2] = (u8)z;
-    obj->field_0x779 = (u8)z;
-
-    for (u8 i = 0; i < 0x20; i++) {
-        CMenuBattleDamageEntry e = {};
         obj->mEntries[i] = e;
     }
+    return obj;
 }
 
 // The retail dtor is the full implicit D1 of the real class (CProcess +
@@ -220,12 +239,12 @@ void CMenuBattleDamage::Move() {
 
     // Constant pool values cached in callee-saved FPRs (retail f29..f31,
     // f26..f28 load order).
-    const f32 zero = lbl_eu_80666F68;
-    const f32 one = lbl_eu_80666F6C;
     const f32 xoff = lbl_eu_80666F70;
-    const f32 yoff = lbl_eu_80666F74;
-    const f32 yscale = lbl_eu_80666F78;
+    const f32 one = lbl_eu_80666F6C;
+    const f32 zero = lbl_eu_80666F68;
     const f32 dirmod = lbl_eu_80666F7C;
+    const f32 yscale = lbl_eu_80666F78;
+    const f32 yoff = lbl_eu_80666F74;
 
     for (u8 i = 0; i < 0x20; i++) {
         CMenuBattleDamageEntry& e = mEntries[i];
@@ -458,14 +477,16 @@ CMenuBattleDamage* func_801096B8(CProcess* parent, CScn* scene) {
     if (lbl_eu_80663F28 != 0) {
         return 0;
     }
-    u32 mem = CWorkThreadSystem::getWorkMem();
-    CMenuBattleDamage* obj =
-        (CMenuBattleDamage*)mtl::MemManager::allocate(0x77c, mem);
+    CMenuBattleDamage* obj = (CMenuBattleDamage*)mtl::MemManager::allocate(
+        0x77c, CWorkThreadSystem::getWorkMem());
     if (obj != 0) {
-        __ct__CMenuBattleDamage(obj, scene);
+        // The retail ctor returns `this` in r3, so threading the return value
+        // back into obj keeps it live in r3 across the call (no spill).
+        obj = __ct__CMenuBattleDamage(obj, scene);
     }
     lbl_eu_80663F28 = obj;
-    reinterpret_cast<CProcess*>(obj)->Regist(parent, false);
+    Regist__8CProcessFP8CProcessb(reinterpret_cast<CProcess*>(obj), parent,
+                                  false);
     return lbl_eu_80663F28;
 }
 
@@ -570,7 +591,7 @@ void func_8010A940(CMenuBattleDamageQueue* self, u32 v0, u32 v1, u32 v2) {
     if (dst < 0x20) {
         // Retail compiles this copy loop into the unrolled 8-slot bulk +
         // 1-slot tail shape (no memcpy call).
-        for (u8 j = 0; j < dst; j++) {
+        for (int j = 0; j < dst; j++) {
             self->mSlots[j] = stack[j];
         }
         self->mSlots[dst].mVal0 = v0;

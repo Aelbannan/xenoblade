@@ -15,8 +15,22 @@
 #define func_801B481C menuBpsUiCfMgr481CUnused
 #include "kyoshin/CUICfManager.hpp"
 #undef func_801B481C
+// CChainTimer.hpp (via CBattleManager.hpp) declares func_80174B4C(void*, u32)
+// while CfObjectActor.hpp declares it with its full 5-arg ABI signature - an
+// illegal overload when both are visible. Pre-include CfObjectActor.hpp so its
+// declaration keeps the real name, then rename the CChainTimer/CVision copies
+// out of the way (this TU uses neither).
+#include "kyoshin/cf/object/CfObjectActor.hpp"
+#define func_80174B4C menuBpsChainTimer74B4CUnused
+// CfObjectImplMove.hpp declares the BM singleton as extern "C" void* while
+// CSuddenCommu.hpp / CfGameManager.hpp use CBattleManagerView* - an illegal
+// overload when both are visible in this TU (which only calls the member
+// getInstance). Rename every free-function copy out of the way.
+#define getInstance__Q22cf14CBattleManagerFv menuBpsBmGetInstanceUnused
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#undef getInstance__Q22cf14CBattleManagerFv
+#undef func_80174B4C
 // code_80135FDC.hpp declares lbl_eu_8066A208 as u32 (line 188),
 // func_8049603C with a CScn* arg (line 223), and getBdatStringColumnValue
 // as void* (line 238); CfObjectMove.hpp (via the CBattleManager.hpp include
@@ -32,8 +46,10 @@
 #undef lbl_eu_8066A208
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
 #include "monolib/work/CProcess.hpp"
 
+#include <stdio.h>
 #include "decomp.h"
 #include "functions.hpp"
 #include <nw4r/math.h>
@@ -68,6 +84,8 @@ char lbl_eu_8052C330[];
 char lbl_eu_8052C42C[];
 u32 __ptmf_null[3];
 void __ct__8CProcessFv(CProcess*);
+void __dt__8CProcessFv(void* self, int flag);
+void* __dt__22CMenuBattlePlayerStateFv(CMenuBattlePlayerState* self, int deleteFlag);
 void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 
 
@@ -115,6 +133,15 @@ template <typename Fn>
 static inline Fn vslot(void* obj, u32 offset) {
     return reinterpret_cast<Fn>((*reinterpret_cast<void***>(obj))[offset / 4]);
 }
+
+// Direct-store view of lyt::Pane::mTranslate (+0x2c) - retail inlines
+// SetTranslate here; MWCC refuses to inline the header body inside Move.
+struct MenuBpsPaneXlate {
+    u8 pad00[0x2c];
+    f32 field_0x2c;
+    f32 field_0x30;
+    f32 field_0x34;
+};
 
 // Cast-only ifaces: MWCC virtual dispatch uses r12 (retail), unlike function-pointer
 // loads that color the vptr temp as r4. Never constructed.
@@ -996,11 +1023,19 @@ after_bit21:
             nw4r::lyt::Pane* pane =
                 unk7E4->GetRootPane()->FindPaneByName(lbl_eu_804FD720 + 0x95,
                                                       true);
-            // Inline VEC3 args so MWCC matches retail lfs/fnmsubs/stfs order.
-            pane->SetTranslate(nw4r::math::VEC3(
-                lbl_eu_80666FA0,
-                lbl_eu_80666F98 - lbl_eu_80666F9C * static_cast<f32>(unk7F5),
-                lbl_eu_80666F94));
+            // Retail: fully-inlined VEC3 temp (sp+8) copied into mTranslate;
+            // hand-expanded member stores because MWCC will not inline the
+            // header ctor/SetTranslate bodies inside this function.
+            nw4r::math::VEC3 pos;
+            pos.x = lbl_eu_80666FA0;
+            pos.y =
+                lbl_eu_80666F98 - lbl_eu_80666F9C * static_cast<f32>(unk7F5);
+            pos.z = lbl_eu_80666F94;
+            MenuBpsPaneXlate* px =
+                reinterpret_cast<MenuBpsPaneXlate*>(pane);
+            px->field_0x2c = pos.x;
+            px->field_0x30 = pos.y;
+            px->field_0x34 = pos.z;
         }
 
         unk7E4->Animate(0);
@@ -1182,7 +1217,8 @@ extern "C" void func_8010CF5C(CMenuBattlePlayerState* p) {
 extern "C" void sinit_8010E9F8() { lbl_eu_80663F30[3] = 0xff; lbl_eu_80663F30[2] = 0xff; lbl_eu_80663F30[1] = 0xff; lbl_eu_80663F30[0] = 0xff; lbl_eu_80663F38[3] = 0xff; lbl_eu_80663F38[2] = 0x5c; lbl_eu_80663F38[1] = 0x92; lbl_eu_80663F38[0] = 0xb9; lbl_eu_80663F40[3] = 0xff; lbl_eu_80663F40[2] = 0x50; lbl_eu_80663F40[1] = 0x50; lbl_eu_80663F40[0] = 0x50; }
 extern "C" {
 void func_8010EA4C(void* _this) {
-    __dt__22CMenuBattlePlayerStateFv((char*)_this - 0x58);
+    __dt__22CMenuBattlePlayerStateFv(
+        reinterpret_cast<CMenuBattlePlayerState*>((char*)_this - 0x58), 1);
 }
 }
 // IScnRender cbRenderBefore this-adjusting thunk (retail: subi r3,-0x5c; b cbRenderBefore__22CMenuBattlePlayerStateFv)
@@ -1190,12 +1226,149 @@ extern "C" void func_8010EA54(void* self) {
     reinterpret_cast<CMenuBattlePlayerState*>((char*)self - 0x5c)->cbRenderBefore();
 }
 extern "C" void func_8010EA5C(void* self) {
-    __dt__22CMenuBattlePlayerStateFv((void*)((char*)self - 0x5c));
+    __dt__22CMenuBattlePlayerStateFv(
+        reinterpret_cast<CMenuBattlePlayerState*>((char*)self - 0x5c), 1);
 }
 
-void func_8010CDCC(){}
-void func_8010CE50(){}
-void func_8010D0D4(){}
+// Runtime array-destruction helper (MWCC runtime library).
+extern "C" void __destroy_arr(void* ptr, void* dtor, u32 size, u32 count);
+
+// Battle-menu imports (retail unmangled names; see CUIBattleManager.hpp for
+// func_8012FAA8 semantics - pane/material helpers shared by menu TUs).
+extern "C" void* func_8012FA78();
+extern "C" void func_8012FAA8();
+extern "C" void func_80137F88(void* pane, u32 value);
+extern "C" void func_8010A940(void* obj, u32 a, u32 b, u32 c);
+extern "C" void* __ct__CMenuBattlePlayerState(void* self, CScn* scn);
+
+#pragma optimize_for_size off
+// ---------------------------------------------------------------------------
+// Target us-8010d8a8: singleton factory. Allocates the player-state process
+// from work memory, runs its constructor, stores the global pointer, and
+// registers it as a child of `parent` (registration happens even when the
+// allocation failed, matching retail). Returns NULL when already created.
+// ---------------------------------------------------------------------------
+CMenuBattlePlayerState* func_8010CDCC(CProcess* parent, CScn* scn) {
+    if (lbl_eu_80663F48 != NULL) {
+        return NULL;
+    }
+    CMenuBattlePlayerState* obj = static_cast<CMenuBattlePlayerState*>(
+        mtl::MemManager::allocate(0x7FC, CWorkThreadSystem::getWorkMem()));
+    if (obj != NULL) {
+        // The ctor returns `this` in r3, keeping obj live in r3 across the
+        // call (no extra callee-saved spill), matching retail.
+        obj = static_cast<CMenuBattlePlayerState*>(
+            __ct__CMenuBattlePlayerState(obj, scn));
+    }
+    lbl_eu_80663F48 = obj;
+    obj->Regist(parent, false);
+    return lbl_eu_80663F48;
+}
+#pragma optimize_for_size on
+
+#pragma optimize_for_size off
+// ---------------------------------------------------------------------------
+// Target us-8010bf60: complete-object destructor (retail flag-carrying ABI).
+// Order: unk7D0, slot array (__dt__8010B444 element dtor releases each
+// individually allocated sub-layout set), unk64, CProcess base, then free.
+// ---------------------------------------------------------------------------
+extern "C" void* __dt__22CMenuBattlePlayerStateFv(
+    CMenuBattlePlayerState* self, int deleteFlag) {
+    if (self != NULL) {
+        // Retail folds this guard into addic. r3,self,0x7CC (address of the
+        // pre-unk7D0 word) rather than a fresh null test.
+        char* preWord = (char*)self + 0x7CC;
+        if (preWord != NULL) {
+            // Member dtor call emits __dt__17UnkClass_8045F564Fv with r4=-1.
+            reinterpret_cast<UnkClass_8045F564*>(preWord + 4)
+                ->~UnkClass_8045F564();
+        }
+        __destroy_arr(self->mSlots, (void*)__dt__8010B444,
+                      sizeof(CMenuBattlePlayerStateSlot), 3);
+        self->unk64.~UnkClass_8045F564();
+        // Retail emits the null test twice (single cmpwi, two beq).
+        if (self != NULL && self != NULL) {
+            __dt__8CProcessFv(self, 0);
+        }
+        if (deleteFlag > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
+}
+// ---------------------------------------------------------------------------
+// Target us-8010dbb0: per-slot animation select. Picks an entry from the
+// shared battle-UI animation table indexed by the slot number, chosen by
+// `mode`; a zero entry (or missing table) resets via func_8012FAA8.
+// ---------------------------------------------------------------------------
+struct MenuBpsModeEntry {
+    u32 unk00;
+    u32 unk04;
+    u32 unk08;
+};
+
+void func_8010D0D4(CMenuBattlePlayerState* self, CMenuBattlePlayerStateSlot* slot,
+                   u32 mode) {
+    MenuBpsModeEntry* table =
+        reinterpret_cast<MenuBpsModeEntry*>(func_8012FA78());
+    u32 sel;
+    if (table != NULL) {
+        // Retail initializes the selector only after the table gate.
+        sel = 0;
+        if (mode <= 1) {
+            sel = table[slot->unk258].unk08;
+        } else if (mode - 3 <= 1) {
+            sel = table[slot->unk258].unk04;
+        } else if (mode == 2) {
+            sel = table[slot->unk258].unk00;
+        }
+    }
+    if (sel == 0) {
+        func_8012FAA8();
+        return;
+    }
+    func_80137F88(slot->unk5C, sel);
+    func_80137F88(slot->unk60, sel);
+    func_80137F88(slot->unk64, sel);
+    func_80137F88(slot->unk68, sel);
+}
+
+// ---------------------------------------------------------------------------
+// Target us-8010d92c: routes a party-visual update for the acting actor.
+// Resolves the actor's handle, requires bit 1 of its +0x64 flags, matches the
+// id byte at handle+0x8C against the first three party-table words, and
+// forwards to the per-slot updater at (state + i*0x270 + 0xE8).
+// ---------------------------------------------------------------------------
+void func_8010CE50(int id, u32 a, u32 b, u32 c) {
+    CMenuBattlePlayerState* state = lbl_eu_80663F48;
+    if (state == NULL) {
+        return;
+    }
+    Func800B708C_Ret* handle =
+        reinterpret_cast<Func800B708C_Ret*>(func_800B708C(id));
+    if (handle == NULL) {
+        return;
+    }
+    if ((handle->unk64 & 2) == 0) {
+        return;
+    }
+    u8 idxByte = static_cast<u8>(handle->unk8C);
+
+    struct PartyData {
+        u32 w[12];
+    };
+    PartyData party = *(PartyData*)((u8*)func_8009ECB0() + 4);
+
+    for (u8 i = 0; i < 3; i++) {
+        if (idxByte == party.w[i]) {
+            void* slotView =
+                (u8*)state + static_cast<u32>(i) * 0x270 + 0xE8;
+            func_8010A940(slotView, a, b, c);
+            return;
+        }
+    }
+}
+#pragma optimize_for_size on
 
 // Battle-party-slot per-frame update: finds the first free arts slot, derives
 // an HP-gauge width ratio from a BDAT lookup, and writes it into the
@@ -1220,10 +1393,14 @@ extern "C" void func_8010CF68(CMenuBattlePlayerState* self,
         }
         u8 c = slot->unk204;
         if (c <= 8) {
+            // Single named base so MWCC shares one lis/addi(@l) across both
+            // string args (retail keeps the table in r5).
+            char* tbl = lbl_eu_804FD720;
             result = static_cast<u8>(func_8013600C(
-                         (void*)(lbl_eu_804FD720 + 0x415),
-                         (const char*)(lbl_eu_804FD720 + 0x422),
-                         static_cast<u8>(idx * 4 + idx + i + (c - 1) * 25))) *
+                         tbl + 0x415,
+                         tbl + 0x422,
+                         static_cast<u8>((idx & 0xFF) * 4 + (idx & 0xFF) + i +
+                                         (c - 1) * 25))) *
                      100;
         }
         break;
@@ -1260,11 +1437,334 @@ extern "C" void func_8010CF68(CMenuBattlePlayerState* self,
     }
 }
 // Keep names distinct from Move's extern callees or MWCC DCE's the bl sites.
-extern "C" void harness_stub_us_8010dc90(CMenuBattlePlayerState* self,
-                                         void* actor,
-                                         CMenuBattlePlayerStateSlot* slot) {}
-extern "C" void harness_stub_us_8010df8c(CMenuBattlePlayerState* self,
-                                         CMenuBattlePlayerStateSlot* slot,
-                                         u32 index) {}
+// Icon-result record filled by the actor's icon-query virtuals
+// (id at +0x0c, state at +0x30; 0x800 = empty slot).
+struct MenuBpsIconRecord {
+    u8 pad00[0xC];
+    u16 unk0C;
+    u8 pad0E[0x30 - 0x0E];
+    u32 unk30;
+};
+
+// Cast-only iface for the polymorphic member embedded at actor+0x8 (MWCC RTTI
+// places two hidden slots before the first declared virtual). The icon queries
+// fill a MenuBpsIconRecord; retail's caller passes the inner-object address as
+// the record destination (r3), index in r4.
+struct MenuBpsActorInnerIf {
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void _v04C();
+    virtual void _v050();
+    virtual void _v054();
+    virtual MenuBpsIconRecord* vf58(MenuBpsIconRecord* dest, int idx);
+    virtual MenuBpsIconRecord* vf5C(MenuBpsIconRecord* dest, int idx);
+};
+
+struct MenuBpsMoveActorView {
+    u8 pad00[8];
+    MenuBpsActorInnerIf mInner; // +0x8 (member subobject, vptr at +0x8)
+};
+
+// Actor fields accessed past the inner object.
+struct MenuBpsMoveActorFields {
+    u8 pad00[0x1530];
+    u32 unk1530; // +0x1530: level icon id (u16)
+};
+
+// Shared texture manager: binds a texture under the "timg" key (0x74696D67).
+struct MenuBpsTexMgrIf {
+    virtual void _v008();
+    virtual u32 assignTexture(u32 key, char* tex, u32 arg); // +0xC
+};
+
+// Pane flag byte view (layout-visible visible-gauge enable bit at +0xBB).
+struct MenuBpsPaneFlagsView {
+    u8 pad00[0xBB];
+    u8 flagsBB;
+};
+
+// HP/tension gauge pane fields written directly.
+struct MenuBpsGaugePaneView {
+    u8 pad00[0x4C];
+    f32 unk4C; // +0x4C: current gauge width
+    f32 unk50; // +0x50: max gauge width
+};
+
+// AnimTransform frame float stored inline (SetFrame folds to this store).
+struct MenuBpsAnimFrameView {
+    u8 pad00[0x10];
+    f32 frame;
+};
+
+// Layout field at +0x10 holding a pane pointer whose +0xBB flag is toggled.
+struct MenuBpsLytPaneRefView {
+    u8 pad00[0x10];
+    MenuBpsPaneFlagsView* paneRef;
+};
+
+// Layout method dispatched at vtable +0x24 (no args) - resets gauge anim state.
+struct MenuBpsLytVt24If {
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void vf24(); // +0x24
+};
+
+// ---------------------------------------------------------------------------
+// Target us-8010dc90: per-actor arts-icon / auto-heal icon refresh for one
+// battle-party slot. Advances a wrap-around cursor over the 32 icon slots,
+// resolves each occupied slot's icon through the BDAT label table, binds it on
+// the shared texture manager under the "timg" key, and lights the matching
+// star pane's flag byte. Runs twice: once over the actor's live icon slots
+// (unk268/unk6C pane), then over a snapshot plus the level icon at index 0x20
+// (unk26C/unk70 pane).
+// ---------------------------------------------------------------------------
+void func_8010D1B4(CMenuBattlePlayerState* self, void* actorPtr,
+                   CMenuBattlePlayerStateSlot* slot) {
+    MenuBpsMoveActorView* actor =
+        reinterpret_cast<MenuBpsMoveActorView*>(actorPtr);
+
+    // Tension timer: wraps and raises flag bit 0x800 when it exceeds FDC.
+    slot->unk264 += lbl_eu_80666F90;
+    slot->unk25C &= ~0x800u;
+    if (slot->unk264 > lbl_eu_80666FDC) {
+        slot->unk25C |= 0x800u;
+        slot->unk264 = lbl_eu_80666F94;
+    }
+
+    // Pass 1: scan the actor's live arts-icon slots from last match + 1.
+    MenuBpsIconRecord* res;
+    {
+    char* tbl = lbl_eu_804FD720;
+    nw4r::lyt::Pane* lvlStarPane = slot->unk6C;
+    reinterpret_cast<MenuBpsPaneFlagsView*>(lvlStarPane)->flagsBB &=
+        static_cast<u8>(~0x01);
+
+    u32 cursor = slot->unk268 + 1;
+    while (true) {
+        if ((cursor & 0xFF) >= 0x20) {
+            cursor = 0;
+        }
+        MenuBpsIconRecord* res = actor->mInner.vf5C(
+            reinterpret_cast<MenuBpsIconRecord*>(&actor->mInner),
+            static_cast<int>(cursor & 0xFF));
+        if (res->unk30 != 0x800 && res->unk0C != 0 && res->unk0C != 0xF &&
+            res->unk0C != 0x10 && res->unk0C != 0x12) {
+            u16 nameId = static_cast<u16>(
+                func_80136254(lbl_eu_806640E0, tbl + 0x42B, res->unk0C));
+            if (nameId != 0) {
+                char* tex = func_80138F78(nameId);
+                MenuBpsTexMgrIf* mgr =
+                    reinterpret_cast<MenuBpsTexMgrIf*>(func_801355F4());
+                u32 bound = mgr->assignTexture(0x74696D67, tex, 0);
+                if (bound != 0) {
+                    reinterpret_cast<MenuBpsPaneFlagsView*>(lvlStarPane)
+                        ->flagsBB |= 0x01;
+                    func_80137F88(lvlStarPane, bound);
+                    slot->unk268 = cursor & 0xFF;
+                    break;
+                }
+            }
+        }
+        if ((cursor & 0xFF) == slot->unk268) {
+            break;
+        }
+        cursor += 1;
+    }
+    }
+
+    reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk70)->flagsBB &=
+        static_cast<u8>(~0x01);
+
+    // Pass 2: snapshot all 32 slots (empty-state slots read as 0), append the
+    // actor's level icon as entry 0x20, then scan from last match + 1.
+    char* tbl = lbl_eu_804FD720;
+    u16 ids[33];
+    for (int j = 0; j < 32; j++) {
+        actor->mInner.vf58(
+            reinterpret_cast<MenuBpsIconRecord*>(&actor->mInner), j);
+        ids[j] = (res->unk30 == 0x800) ? static_cast<u16>(0) : res->unk0C;
+    }
+    ids[32] = static_cast<u16>(
+        reinterpret_cast<MenuBpsMoveActorFields*>(actorPtr)->unk1530);
+
+    u32 cur2 = slot->unk26C + 1;
+    while (true) {
+        if ((cur2 & 0xFF) >= 0x21) {
+            cur2 = 0;
+        }
+        u16 v = ids[cur2 & 0xFF];
+        if (v != 0) {
+            if ((cur2 & 0xFF) == 0x20) {
+                // Fixed "level up" icon id, no BDAT lookup for entry 0x20.
+                char* tex = func_80138F78(0x13D);
+                MenuBpsTexMgrIf* mgr =
+                    reinterpret_cast<MenuBpsTexMgrIf*>(func_801355F4());
+                u32 bound = mgr->assignTexture(0x74696D67, tex, 0);
+                if (bound != 0) {
+                    reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk70)
+                        ->flagsBB |= 0x01;
+                    func_80137F88(slot->unk70, bound);
+                    slot->unk26C = cur2 & 0xFF;
+                    return;
+                }
+            } else {
+                u16 nameId = static_cast<u16>(
+                    func_80136254(lbl_eu_806640E0, tbl + 0x42B, v));
+                if (nameId != 0) {
+                    char* tex = func_80138F78(nameId);
+                    MenuBpsTexMgrIf* mgr =
+                        reinterpret_cast<MenuBpsTexMgrIf*>(func_801355F4());
+                    u32 bound = mgr->assignTexture(0x74696D67, tex, 0);
+                    if (bound != 0) {
+                        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk70)
+                            ->flagsBB |= 0x01;
+                        func_80137F88(slot->unk70, bound);
+                        slot->unk26C = cur2 & 0xFF;
+                        return;
+                    }
+                }
+            }
+        }
+        if ((cur2 & 0xFF) == slot->unk26C) {
+            break;
+        }
+        cur2 += 1;
+    }
+}
+// ---------------------------------------------------------------------------
+// Target us-8010df8c: per-slot activation pass. Refreshes the level text and
+// name label, redraws HP digits / color set when flagged, updates the HP gauge
+// width (quantized through lbl_eu_804FD6E0), advances mode/prev snapshots,
+// toggles the party/tension star panes by HP state, resets the tension anims
+// and re-arms the per-slot state machine. `index` nonzero suppresses the
+// func_80138078(0x99) jingle on first activation.
+// ---------------------------------------------------------------------------
+void func_8010D4B0(CMenuBattlePlayerState* self,
+                   CMenuBattlePlayerStateSlot* slot, u32 index) {
+    u8 gate = slot->unk240;
+    slot->unk25C &= ~0x03E00000u;
+    if (gate == 0 && slot->unk80 == 0) {
+        return;
+    }
+
+    char buf[0x40];
+    slot->unk25C = 0xC7;
+    u32 prevStatus = slot->unk20C;
+    slot->unk25C = 0xC6;
+    sprintf(buf, lbl_eu_804FD720 + 0x401, prevStatus);
+    func_80136D74(reinterpret_cast<nw4r::lyt::Layout*>(slot->unk44), buf, 0);
+    func_80136D74(
+        reinterpret_cast<nw4r::lyt::Layout*>(slot->unk48),
+        func_80136190(lbl_eu_804FD720 + 0x406, lbl_eu_804FD720 + 0x410, 2),
+        0);
+
+    if (slot->unk25C & 0x2) {
+        slot->unk25C &= ~0x2u;
+        func_80136C98(slot->unk4C, slot->unk210);
+        func_80136C98(slot->unk50, slot->unk214);
+        // Color-set swap keyed on full-HP / dead / other.
+        if (slot->unk210 == slot->unk214) {
+            func_8013996C(slot->unk4C, lbl_eu_80663F38, 1);
+        } else if (slot->unk210 == 0) {
+            func_8013996C(slot->unk4C, lbl_eu_80663F40, 1);
+        } else {
+            func_8013996C(slot->unk4C, lbl_eu_80663F30, 1);
+        }
+    }
+
+    func_8010CF68(self, slot);
+
+    if (slot->unk25C & 0x4) {
+        slot->unk25C &= ~0x4u;
+        f32 ratio = slot->unk224 / slot->unk228;
+        MenuBpsGaugePaneView* pane =
+            reinterpret_cast<MenuBpsGaugePaneView*>(slot->unk58);
+        if (pane != NULL) {
+            f32 scaled = lbl_eu_80666FD0 * ratio;
+            f32 widthF = lbl_eu_80666FCC * scaled;
+            u32 w = static_cast<u32>(widthF); // fctiwz truncate
+            slot->unk24C = w;
+            f32 prevMax = pane->unk50;
+            double dw = static_cast<double>(w);
+            f32 frac = ratio - lbl_eu_80666FD8 * static_cast<f32>(dw);
+            f32 q = frac / lbl_eu_80666FD8;
+            f32 val = lbl_eu_80666FD4 * q + lbl_eu_804FD6E0[w];
+            pane->unk4C = val;
+            pane->unk50 = prevMax;
+        }
+    }
+
+    slot->unk234 = slot->unk230;
+    slot->unk23C = slot->unk238;
+    func_8010D0D4(self, slot, slot->unk230);
+
+    // Star-pane visibility follows the smoothed HP ratio.
+    MenuBpsLytPaneRefView* mainRef =
+        reinterpret_cast<MenuBpsLytPaneRefView*>(slot->unk08);
+    if (slot->unk220 == lbl_eu_80666F94) {
+        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk5C)->flagsBB |= 0x01;
+        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk60)->flagsBB |= 0x01;
+        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk64)->flagsBB &=
+            static_cast<u8>(~0x01);
+        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk68)->flagsBB &=
+            static_cast<u8>(~0x01);
+        mainRef->paneRef->flagsBB &= static_cast<u8>(~0x01);
+    } else {
+        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk5C)->flagsBB &=
+            static_cast<u8>(~0x01);
+        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk60)->flagsBB &=
+            static_cast<u8>(~0x01);
+        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk64)->flagsBB |= 0x01;
+        reinterpret_cast<MenuBpsPaneFlagsView*>(slot->unk68)->flagsBB |= 0x01;
+        mainRef->paneRef->flagsBB |= 0x01;
+    }
+
+    reinterpret_cast<MenuBpsLytVt24If*>(slot->unk28)->vf24();
+    slot->unk254 = 0xB;
+    reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk24)->frame =
+        lbl_eu_80666F94;
+    reinterpret_cast<MenuBpsPaneFlagsView*>(
+        reinterpret_cast<MenuBpsLytPaneRefView*>(slot->unk20)->paneRef)
+        ->flagsBB |= 0x01;
+    slot->unk25C &= ~0x40000000u;
+    reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk0C)->frame =
+        lbl_eu_80666F94;
+    reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk10)->frame =
+        lbl_eu_80666F94;
+    slot->unk08->SetAnimationEnable(slot->unk10, false);
+    slot->unk08->SetAnimationEnable(slot->unk14, false);
+    slot->unk08->SetAnimationEnable(slot->unk0C, true);
+    reinterpret_cast<MenuBpsAnimFrameView*>(slot->unk0C)->frame =
+        lbl_eu_80666F94;
+    slot->unk08->Animate(0);
+    slot->unk248 = 4;
+    slot->unk24C = 0;
+    slot->unk250 = 6;
+    slot->unk18->SetAnimationEnable(slot->unk1C, true);
+    slot->unk244 = 1;
+    if (index == 0) {
+        func_80138078(0x99);
+    }
+}
 extern "C" void harness_stub_us_8010e3b0(CMenuBattlePlayerState* self,
                                          CMenuBattlePlayerStateSlot* slot) {}

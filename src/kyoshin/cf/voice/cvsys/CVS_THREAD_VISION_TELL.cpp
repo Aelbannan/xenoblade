@@ -41,14 +41,14 @@ void func_802A9B0C(CVS_THREAD_VISION_TELL* self, CCharVoice* voicePtr) {
 }
 
 // ── Target 3: us-802abdf8 (__ct__802A96C0) ──────────────────────────────────
-// Factory/constructor for CVS_THREAD_VISION_TELL. Takes a source CVoiceHandle
-// and a second handle, allocates a throwaway 0x32-byte buffer and the object
-// itself (0x28 bytes), runs the base constructor and sets the derived vtable
-// and slot handles inside the try block, then copies the init-state triple.
-// Function-try-block: retail wraps the whole factory in an EH region whose
-// catch rethrows (__throw(0,0,0)), matching the CVS_THREAD_VISION_BREAK
-// factory shape.
-CVS_THREAD_VISION_TELL* __ct__802A96C0(CVoiceHandle* h1, CVoiceHandle* h2) try {
+// Factory/constructor for CVS_THREAD_VISION_TELL. Takes two voice handles,
+// allocates a throwaway 0x32-byte buffer and the object itself (0x28 bytes),
+// runs the base constructor and sets the derived vtable and slot handles
+// inside the try block, then copies the init-state triple outside it.
+// The redundant `self != NULL` guard reproduces retail's `beq` re-check of
+// CR0 guarding the EH region; the catch rethrows via __throw(0,0,0) so MWCC
+// elides the __end__catch epilogue.
+CVS_THREAD_VISION_TELL* __ct__802A96C0(CVoiceHandle* h1, CVoiceHandle* h2) {
     // Allocate handle buffer (discarded).
     if (func_802A330C(0x32, 1) == NULL) {
         return NULL;
@@ -60,22 +60,34 @@ CVS_THREAD_VISION_TELL* __ct__802A96C0(CVoiceHandle* h1, CVoiceHandle* h2) try {
         return NULL;
     }
 
-    __ct__cf_CVS_THREAD(self);
+    if (self != NULL) {
+        try {
+            __ct__cf_CVS_THREAD(self);
 
-    // Override the vtable at offset 0x1C (index 7) with the derived one.
-    ((void**)self)[7] = (void**)lbl_eu_80539DD4;
-    self->field_0x20 = h1;
-    self->field_0x24 = h2;
+            // Override the vtable at 0x1C with the derived one, then the slots.
+            ((CVS_THREAD_VISION_TELL_raw*)self)->vtable = lbl_eu_80539DD4;
+            self->field_0x20 = h1;
+            self->field_0x24 = h2;
+        } catch (...) {
+            __throw(0, 0, 0);
+        }
+    }
 
-    // Copy init data from the global table using a single base pointer.
-    const u32* base = lbl_eu_80539DB0;
-    self->unk0 = (u32*)base[0];
-    self->unk4 = base[1];
-    self->unk8 = base[2];
+    // Copy the init-state triple (outside try). Load base[1] before base[0]:
+    // retail colors the first-loaded value r0 and the second r4, storing r4
+    // to +0 and r0 to +4. The pointer-typed local keeps that coloring.
+    // Integer cast keeps the label materialized once via lis+addi (retail r5).
+    // Copy init data from the global table. Single pointer initialized
+    // directly from the symbol keeps the lis/addi base materialized once
+    // (retail r5); word 1 is read first per retail load order.
+    u32 v1;
+    u32* p0;
+    v1 = (p0 = lbl_eu_80539DB0)[1];
+    ((CVS_THREAD_VISION_TELL_raw*)self)->state0 = (u32*)p0[0];
+    ((CVS_THREAD_VISION_TELL_raw*)self)->state1 = v1;
+    ((CVS_THREAD_VISION_TELL_raw*)self)->state2 = p0[2];
 
     return self;
-} catch (...) {
-    throw;
 }
 
 // ── Target 4: us-802abed8 (func_802A97A0) ──────────────────────────────────

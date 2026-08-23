@@ -27,6 +27,14 @@ class CfObjEnumList; // enum list holder target (CfObjectEnumList.hpp)
 class CTaskGameCf; // task created by func_80042274 (create__Q22cf11CTaskGameCfFv)
 }
 
+// Object stored in the four virtual-delete slots at CTaskGame +0x174..+0x184
+// (Term deletes each non-null entry through its vtable deleting-dtor slot).
+// Declaration-only dtor: no vtable is emitted in this TU.
+class CTaskGameSlotObj {
+public:
+    virtual ~CTaskGameSlotObj();
+};
+
 // CLibCri caller-shape imports: retail CLibCri.hpp declares these as no-arg
 // members, but the retail call sites in this unit pass real arguments (the
 // unkD8 CRI handle + volume), so declare the mangled symbols with the caller's
@@ -120,6 +128,11 @@ public:
         return mMoveFunc == f;
     }
 
+    // mMoveFunc is protected in CTTask; the pool-swap helpers assign the
+    // whole 12-byte ptmf through this inline member.
+    void setMoveFunc(CTTask<CTaskGame>::MoveFunc f) { mMoveFunc = f; }
+    void setMoveFuncFrom(const CTTask<CTaskGame>::MoveFunc* src) { mMoveFunc = *src; }
+
     void func_80040A3C(u16 r4, u16 r5, const char* r6, s16 r7);
     static bool func_800426F0();
     void func_80042710();
@@ -192,7 +205,7 @@ public:
     u8 unk130;
     u8 unk131[0x170 - 0x131];
     u32 unk170;
-    u8 unk174[0x188 - 0x174];
+    CTaskGameSlotObj* unk174[5];
     u8 unk188;
     u8 unk189[0x18C - 0x189]; //padding?
     UnkClass_8004041C unk18C;
@@ -309,6 +322,14 @@ extern u32 lbl_eu_80525844[3];
 extern u32 lbl_eu_8052558C[3];
 extern u32 lbl_eu_805255B0[3];
 extern u32 lbl_eu_805255BC[3];
+extern u32 lbl_eu_805255C8[3];
+// cf::CfGameManager controller-type query (flat retail name): the call site
+// must load r3=-1 before the bl, so bind the caller's shape directly (the
+// CfGameManager.hpp inline wrapper drops the argument).
+extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern u32 lbl_eu_80525760[3];
+extern u32 lbl_eu_8052576C[3];
+extern u32 lbl_eu_8052582C[3];
 extern u32 lbl_eu_80525784[3];
 extern u32 lbl_eu_805257D8[3];
 extern u32 lbl_eu_805257E4[3];
@@ -401,6 +422,15 @@ struct CTaskGamePtmfWords {
     u32 field_0x44;
 };
 
+// Three-word ptmf pool entry view (&lbl_eu_80525568 + offset); member access
+// through this view makes MWCC materialize the entry address in a register
+// and load w1/w2 relative to it (retail addi rX,base,off / lwz 4(rX) shape).
+struct CTaskGamePtmfPool {
+    u32 w0;
+    u32 w1;
+    u32 w2;
+};
+
 // C++ runtime delete / array-delete (flat retail names; used by the reslist
 // base dtor).
 extern "C" void __dl__FPv(void*);
@@ -418,6 +448,13 @@ extern u8 lbl_eu_80663D2C;
 struct CTaskGameFlag8C {
     u8 pad[0x8C];
     u8 field_0x8C;   // +0x8C
+};
+
+// Raw view of the unk68 flag word for stores that must not CSE with earlier
+// gate reads (func_80041448 reloads unk68 fresh before raising bit 0x2000).
+struct CTaskGameFlags68 {
+    u8 pad[0x68];
+    volatile u32 flags;   // +0x68
 };
 
 // Float constant used by retail func_80040B38 as the 4th arg of the first
@@ -579,11 +616,23 @@ extern "C" void func_802AE758(CLoad* self);
 extern "C" void func_802AE62C(CLoad* self);
 extern "C" void func_802AE5F0(CLoad* self, nw4r::lyt::DrawInfo* di);
 extern "C" void func_802AE560(CLoad* self);
+extern "C" void func_802AE508(CLoad* self);
+// CLoad constructor with the stripped retail name (the C++ ctor emits a
+// mangled symbol; retail call sites use the flat one).
+extern "C" void __ct__CLoad(CLoad* self, u8 arg);
+// Scene render-callback removal + teardown helpers called by Term
+// (retail verbatim symbols).
+extern "C" void removeRenderCB__4CScnFP10IScnRender(CScn* scn, IScnRender* cb);
+extern "C" void __dt__8009D72C();
+extern "C" void __dt__8047BFFC();
+extern "C" void func_8047D028__17UnkClass_8047CD0CFv();
 extern "C" int func_802B0D10();
 extern "C" int func_800FF738();
 extern "C" bool CMenuArtsSelect_isCreated();
 // cf::CfPadTask::getWiimoteBattery() static (retail verbatim mangle).
-extern "C" u32 getWiimoteBattery__Q22cf9CfPadTaskFv();
+// Signed return: retail call sites compare with cmpwi/ble (battery > 1),
+// which MWCC only emits for a signed type.
+extern "C" int getWiimoteBattery__Q22cf9CfPadTaskFv();
 
 // nw4r DrawInfo raw-storage helpers (retail pre-mangled names; same scheme
 // as CQuestWindow.hpp).

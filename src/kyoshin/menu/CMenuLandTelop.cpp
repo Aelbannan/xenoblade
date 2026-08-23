@@ -6,6 +6,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuLandTelop.hpp"
+#include "kyoshin/code_80135FDC.hpp"
 
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/util/MemManager.hpp"
@@ -141,7 +142,160 @@ void CMenuLandTelop::Term() {
     lbl_eu_806641A0 = 0;
 }
 
-void CMenuLandTelop::Move() {}
+// Per-frame update: gate on pause/menu states, run the entry-banner timer
+// (field_DA/field_DC), drive the show/animate/hide state machine in field_90
+// and play the area-entry cue. The tail Animate() call runs for every
+// non-early-exit path (including unknown state values).
+void CMenuLandTelop::Move() {
+    CTaskGame::getInstance();
+    // Single short-circuit OR so MWCC emits: func test -> bne exit;
+    // bit test -> beq continue / b exit (cbRenderBefore shape).
+    if (CTaskGame::func_800426F0() || (lbl_eu_80663E28 & 0x00200000)) return;
+    if (func_8013BE50() == 0) return;
+    if (lbl_eu_80663E24 & 0xBFE40000u) return;
+
+    switch (field_8E) {
+    case 0: {
+        // Any blocking screen active: park the banner timer and leave.
+        if (cf::CfGameManager::func_800829B8() || func_80293C10() ||
+            func_8029A658() || func_801B481C() || func_80122450() ||
+            (func_80124B78() != 0)) {
+            field_DA = 1;
+            field_DC = lbl_eu_806673C8;
+            return;
+        }
+        if (field_DA != 0) {
+            // Banner visible: run its hold timer, then hide it again.
+            field_DC = field_DC + lbl_eu_806673CC;
+            if (lbl_eu_806673D0 < field_DC) {
+                field_DA = 0;
+                field_DC = lbl_eu_806673C8;
+            }
+            return;
+        }
+
+        switch (field_90) {
+        case 0: {
+            if (func_8010CE48() == 0) return;
+            if (field_E0 != 0) {
+                field_E0 = func_80226B94();
+                if (field_E0 != 0) return;
+            }
+
+            u16 msgId = func_8013606C(&lbl_eu_80501720[0],
+                                      &lbl_eu_80501720[0xd], field_8C);
+            u8 kind = func_8013600C(&lbl_eu_80501720[0],
+                                    &lbl_eu_80501720[0x14], field_8C);
+            if (msgId != 0) {
+                if (kind == 1) msgId = msgId * 10;
+
+                u16 col0 = func_8013606C(&lbl_eu_80501720[0],
+                                         &lbl_eu_80501720[0x1d], field_8C);
+                u16 col1 = func_8013606C(&lbl_eu_80501720[0],
+                                         &lbl_eu_80501720[0x23], field_8C);
+
+                // Loop-hoisted constants (retail parks these in f29/f30/f31
+                // for the whole landmark scan).
+                f64 bias = lbl_eu_806673F8;
+                f32 scale = lbl_eu_806673E8;
+                f32 reset = lbl_eu_806673C8;
+
+                // Per-landmark completion: scale the message id by the entry's
+                // weight (bdat column 0x8a, default 100) into a frame count,
+                // then report it per registered land.
+                for (int i = 1; i <= 8; i++) {
+                    if (i == 3 &&
+                        (u32)cf::CfGameManager::func_800822F4() >= 0x1d)
+                        continue;
+                    if (func_8008235C__Q22cf13CfGameManagerFv(i) == 0)
+                        continue;
+
+                    u32 data = (u32)func_8009EC9C((u16)i);
+                    u32 rec = data + 0x3534;
+                    u32 weight = 100;
+                    if (func_8026178C((void*)rec, 0x8a) != 0) {
+                        weight = func_8025FB10((void*)rec, 0x8a) + 100;
+                    }
+                    f64 frac = ((f64)(u32)(msgId * weight) - bias) * scale;
+                    f64 limit =
+                        (reset < frac) ? lbl_eu_806673D8 : lbl_eu_806673E0;
+                    s32 frames = (s32)(((f64)100 - bias) * scale + limit);
+                    switch (kind) {
+                    case 0:
+                        func_800A21F8((void*)data, (u16)frames, col0, col1);
+                        break;
+                    case 1:
+                        func_800A21F8((void*)data, (u16)frames, col0, col1);
+                        break;
+                    case 2:
+                        func_800A21F8((void*)data, (u16)frames, col0, col1);
+                        break;
+                    }
+                }
+            }
+
+            // Area-entry cue; volume comes from the scene BGM level.
+            switch (kind) {
+            case 0:
+                func_80043738(0, &lbl_eu_80501720[0x29],
+                              func_80495FF0(lbl_eu_80663E14), 2, 1, 0,
+                              func_801895EC());
+                break;
+            case 1:
+                func_80043738(0, &lbl_eu_80501720[0x39],
+                              func_80495FF0(lbl_eu_80663E14), 2, 1, 0x5a,
+                              func_801895EC());
+                break;
+            case 2:
+                func_80043738(0, &lbl_eu_80501720[0x49],
+                              func_80495FF0(lbl_eu_80663E14), 2, 1, 0,
+                              lbl_eu_806673EC * func_801895EC());
+                break;
+            }
+            field_90 = 3;
+            break;
+        }
+        case 3:
+            // Banner finished animating in: consume the next queued entry.
+            if (func_80137444(field_88, lbl_eu_806673CC)) {
+                if (func_801453B8(this) != 0) return;
+                field_64 = 1;
+            }
+            break;
+        }
+        break;
+    }
+    case 1: {
+        if (cf::CfGameManager::func_800829B8()) return;
+        switch (field_90) {
+        case 0:
+            if (field_98 != 0) {
+                field_98 = func_8014A2A0();
+                if (field_98 != 0 && func_8014A2B4() == 0) return;
+            }
+            func_80138078(0x8b);
+            field_90 = 1;
+            break;
+        case 1:
+            if (func_80137444(field_88, lbl_eu_806673CC)) field_90 = 2;
+            break;
+        case 2:
+            field_94 = field_94 + lbl_eu_806673CC;
+            if (lbl_eu_806673F0 <= field_94) field_90 = 3;
+            break;
+        case 3:
+            if (func_80137510(field_88, lbl_eu_806673CC)) {
+                if (func_801453B8(this) != 0) return;
+                field_64 = 1;
+            }
+            break;
+        }
+        break;
+    }
+    }
+
+    field_54->Animate();
+}
 
 void CMenuLandTelop::cbRenderBefore() {
     CTaskGame::getInstance();
@@ -170,10 +324,12 @@ void CMenuLandTelop::cbRenderBefore() {
 CMenuLandTelop* func_80144EE4(CProcess* parent, CScn* scene, u16 opt,
                               u8 param) {
     if (param == 1) {
+        CBattleListNode* p;
+        s32 count;
         CBattleListNode* head =
             ((CBattleListHead*)getInstance__Q22cf14CBattleManagerFv())->list;
-        s32 count = 0;
-        for (CBattleListNode* p = head->next; p != head; p = p->next) {
+        count = 0;
+        for (p = head->next; p != head; p = p->next) {
             count++;
         }
         if (count != 0) return 0;
@@ -258,21 +414,188 @@ int func_801453B8(CMenuLandTelop* self) {
         delete self->field_54;
         self->field_54 = 0;
     }
-    // Load the reset-frame constant into a local first so the lfs (sda21
-    // reloc) is emitted before the field stores like retail.
     f32 v = lbl_eu_806673C8;
     self->field_88 = 0;
+    UnkClass_8045F564* mem = &self->mMemRegion;
     self->field_94 = v;
-    self->mMemRegion.func_8045F778();
+    mem->func_8045F778();
     func_8014548C(self);
     return 1;
 }
 
-// Empty stub: guard so MWCC -inline auto does not fold the call in Init
-// away (MWCC_CASES sec 834: empty same-TU stubs inline to nothing).
+// Build/rebuild the land-telop layout: allocate the MEM2 scratch region,
+// load the layout + animation for the configured screen variant (field_8E),
+// wire up the message panes and font, then reset the anim frame.
 #pragma push
 #pragma auto_inline off
-void func_8014548C(CMenuLandTelop* self) {}
+void func_8014548C(CMenuLandTelop* self) {
+    self->mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x3000,
+                                  &lbl_eu_80501720[0x59], 0);
+    // Scratch-region guard: everything allocated below lives in the embedded
+    // region and is released as a block by the destructor at scope exit.
+    Class_8045F858 regionGuard(&self->mMemRegion);
+
+    self->field_98 = func_8014A2A0();
+    self->field_90 = 0;
+
+    switch (self->field_8E) {
+    case 0:
+        func_80136E84(&self->field_54, func_801355F4(),
+                      &lbl_eu_80501720[0x68]);
+        func_80136F08(self->field_54, &self->field_88, func_801355F4(),
+                      &lbl_eu_80501720[0x81]);
+
+        // Retail re-derives the root pane inline for every lookup.
+        self->field_54->GetRootPane()
+            ->FindPaneByName(&lbl_eu_80501720[0xa3], true)
+            ->SetVisible(false);
+        self->field_54->GetRootPane()
+            ->FindPaneByName(&lbl_eu_80501720[0xae], true)
+            ->SetVisible(false);
+        self->field_54->GetRootPane()
+            ->FindPaneByName(&lbl_eu_80501720[0xb9], true)
+            ->SetVisible(false);
+
+        switch (
+            func_8013600C(&lbl_eu_80501720[0], &lbl_eu_80501720[0x14],
+                          self->field_8C)) {
+        case 0:
+            self->field_54->GetRootPane()
+                ->FindPaneByName(&lbl_eu_80501720[0xa3], true)
+                ->SetVisible(true);
+            func_80136B4C(
+                self->field_54, &lbl_eu_80501720[0xd4],
+                func_80136190(&lbl_eu_80501720[0xc4], &lbl_eu_80501720[0xcf],
+                              4),
+                0);
+            func_80136B4C(
+                self->field_54, &lbl_eu_80501720[0xe4],
+                func_80136190(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                              self->field_8C),
+                0);
+            break;
+        case 1:
+            self->field_54->GetRootPane()
+                ->FindPaneByName(&lbl_eu_80501720[0xae], true)
+                ->SetVisible(true);
+            func_80136B4C(
+                self->field_54, &lbl_eu_80501720[0xef],
+                func_80136190(&lbl_eu_80501720[0xc4], &lbl_eu_80501720[0xcf],
+                              7),
+                0);
+            func_80136B4C(
+                self->field_54, &lbl_eu_80501720[0xfa],
+                func_80136190(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                              self->field_8C),
+                0);
+            break;
+        case 2:
+            self->field_54->GetRootPane()
+                ->FindPaneByName(&lbl_eu_80501720[0xb9], true)
+                ->SetVisible(true);
+            func_80136B4C(
+                self->field_54, &lbl_eu_80501720[0x105],
+                func_80136190(&lbl_eu_80501720[0xc4], &lbl_eu_80501720[0xcf],
+                              8),
+                0);
+            func_80136B4C(
+                self->field_54, &lbl_eu_80501720[0x110],
+                func_80136190(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                              self->field_8C),
+                0);
+            break;
+        }
+        break;
+    case 1: // field_8E == 1
+        func_80136E84(&self->field_54, func_801355F4(),
+                      &lbl_eu_80501720[0x11b]);
+        func_80136F08(self->field_54, &self->field_88, func_801355F4(),
+                      &lbl_eu_80501720[0x134]);
+
+        self->field_54->GetRootPane()
+            ->FindPaneByName(&lbl_eu_80501720[0x150], true)
+            ->SetVisible(false);
+        self->field_54->GetRootPane()
+            ->FindPaneByName(&lbl_eu_80501720[0x15d], true)
+            ->SetVisible(false);
+        self->field_54->GetRootPane()
+            ->FindPaneByName(&lbl_eu_80501720[0x168], true)
+            ->SetVisible(false);
+        self->field_54->GetRootPane()
+            ->FindPaneByName(&lbl_eu_80501720[0x171], true)
+            ->SetVisible(false);
+        self->field_54->GetRootPane()
+            ->FindPaneByName(&lbl_eu_80501720[0x17e], true)
+            ->SetVisible(false);
+        self->field_54->GetRootPane()
+            ->FindPaneByName(&lbl_eu_80501720[0x14], true)
+            ->SetVisible(false);
+
+        switch (
+            func_8013600C(&lbl_eu_80501720[0], &lbl_eu_80501720[0x14],
+                          self->field_8C)) {
+        case 0:
+            self->field_54->GetRootPane()
+                ->FindPaneByName(&lbl_eu_80501720[0x150], true)
+                ->SetVisible(true);
+            self->field_54->GetRootPane()
+                ->FindPaneByName(&lbl_eu_80501720[0x171], true)
+                ->SetVisible(true);
+            func_80136B4C(
+                self->field_54, &lbl_eu_80501720[0x171],
+                func_80136190(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                              self->field_8C),
+                0);
+            break;
+        case 1:
+            self->field_54->GetRootPane()
+                ->FindPaneByName(&lbl_eu_80501720[0x15d], true)
+                ->SetVisible(true);
+            self->field_54->GetRootPane()
+                ->FindPaneByName(&lbl_eu_80501720[0x171], true)
+                ->SetVisible(true);
+            self->field_54->GetRootPane()
+                ->FindPaneByName(&lbl_eu_80501720[0xdf], true)
+                ->SetVisible(true);
+            func_80136B4C(
+                self->field_54, &lbl_eu_80501720[0x171],
+                func_80136190(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                              self->field_8C),
+                0);
+            break;
+        case 2:
+            self->field_54->GetRootPane()
+                ->FindPaneByName(&lbl_eu_80501720[0x168], true)
+                ->SetVisible(true);
+            self->field_54->GetRootPane()
+                ->FindPaneByName(&lbl_eu_80501720[0x17e], true)
+                ->SetVisible(true);
+            self->field_54->GetRootPane()
+                ->FindPaneByName(&lbl_eu_80501720[0xdf], true)
+                ->SetVisible(true);
+            func_80136B4C(
+                self->field_54, &lbl_eu_80501720[0x17e],
+                func_80136190(&lbl_eu_80501720[0], &lbl_eu_80501720[0xdf],
+                              self->field_8C),
+                0);
+            break;
+        }
+        break;
+    }
+
+    // Bind the font and hand the loaded font object to the root pane.
+    func_8013676C(
+        self->field_54->GetRootPane(),
+        reinterpret_cast<CLandTelopFontObj*>(
+            func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
+                1, self->field_54))->getFontHandle());
+
+    self->field_88->SetFrame(lbl_eu_806673C8);
+    self->field_54->Animate();
+
+    // Flush the scratch region (regionGuard's destructor frees it).
+    self->mMemRegion.func_8045F810();
+}
 #pragma pop
 
 void func_80145A90(void* self) { ((void(*)(void*))__dt__14CMenuLandTelopFv)((char*)self - 0x6c); }
@@ -285,10 +608,11 @@ void func_80145AA0(void* self) { ((void(*)(void*))__dt__14CMenuLandTelopFv)((cha
 // string at lbl_eu_805018A8[9]; when it is missing or identical to the
 // fallback name at [0xE], return the fallback name.
 const char* func_80145AA8(int index) {
-    const char* col9 = &lbl_eu_805018A8[9];
-    const char* s = getBdatStringColumnValue(lbl_eu_806640E0, col9, index);
-    if (s != 0 && std::strcmp(s, &lbl_eu_805018A8[0xe]) != 0) {
+    const char* s =
+        (const char*)getBdatStringColumnValue(lbl_eu_806640E0,
+                                              lbl_eu_805018A8 + 9, index);
+    if (s != 0 && std::strcmp(s, lbl_eu_805018A8 + 0xe) != 0) {
         return s;
     }
-    return &lbl_eu_805018A8[0xe];
+    return lbl_eu_805018A8 + 0xe;
 }

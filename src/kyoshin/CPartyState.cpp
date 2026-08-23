@@ -582,7 +582,7 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
             func_801368C0(mLayout, strs + 0x10d, textVal);
             func_801368C0(mLayout, strs + 0x17b, textVal);
             func_801368C0(mLayout, strs + 0x189, textVal);
-            for (u32 i = 1; i <= 7; i++) {
+            for (u8 i = 1; i <= 7; i++) {
                 sprintf(buf68, strs + 0x196, i);
                 func_801368C0(mLayout, buf68, textVal);
                 sprintf(buf68, strs + 0x10, i);
@@ -603,7 +603,7 @@ bool CPartyState::OnFileEvent(CEventFile* pEventFile) {
         char* s3 = func_80136190(strs + 0x1ba, strs + 0x1c4, 3);
         char* s4 = func_80136190(strs + 0x1ba, strs + 0x1c4, 4);
         func_80136190(strs + 0x1ba, strs + 0x1c4, 5);
-        for (u32 i = 1; i <= 7; i++) {
+        for (u8 i = 1; i <= 7; i++) {
             sprintf(buf48, strs + 0x1a8, i);
             func_80136B4C(mLayout, buf48, s2, 0);
             sprintf(buf48, strs + 0x1c9, i);

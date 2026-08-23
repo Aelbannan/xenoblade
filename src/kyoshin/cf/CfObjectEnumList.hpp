@@ -223,15 +223,41 @@ public:
     virtual CfEnumPosBlock* v12C(int a);   // index 73 -> vtable 0x12C
 };
 
+// Actor view whose vtable slot 0x128 (index 72) returns a float sort value
+// directly (used by func_800F9AEC's distance refresh).
+class CfEnumActorValueView {
+public:
+    ENUM_VIEW_DUMMY(0);   ENUM_VIEW_DUMMY(1);   ENUM_VIEW_DUMMY(2);   ENUM_VIEW_DUMMY(3);
+    ENUM_VIEW_DUMMY(4);   ENUM_VIEW_DUMMY(5);   ENUM_VIEW_DUMMY(6);   ENUM_VIEW_DUMMY(7);
+    ENUM_VIEW_DUMMY(8);   ENUM_VIEW_DUMMY(9);   ENUM_VIEW_DUMMY(10);  ENUM_VIEW_DUMMY(11);
+    ENUM_VIEW_DUMMY(12);  ENUM_VIEW_DUMMY(13);  ENUM_VIEW_DUMMY(14);  ENUM_VIEW_DUMMY(15);
+    ENUM_VIEW_DUMMY(16);  ENUM_VIEW_DUMMY(17);  ENUM_VIEW_DUMMY(18);  ENUM_VIEW_DUMMY(19);
+    ENUM_VIEW_DUMMY(20);  ENUM_VIEW_DUMMY(21);  ENUM_VIEW_DUMMY(22);  ENUM_VIEW_DUMMY(23);
+    ENUM_VIEW_DUMMY(24);  ENUM_VIEW_DUMMY(25);  ENUM_VIEW_DUMMY(26);  ENUM_VIEW_DUMMY(27);
+    ENUM_VIEW_DUMMY(28);  ENUM_VIEW_DUMMY(29);  ENUM_VIEW_DUMMY(30);  ENUM_VIEW_DUMMY(31);
+    ENUM_VIEW_DUMMY(32);  ENUM_VIEW_DUMMY(33);  ENUM_VIEW_DUMMY(34);  ENUM_VIEW_DUMMY(35);
+    ENUM_VIEW_DUMMY(36);  ENUM_VIEW_DUMMY(37);  ENUM_VIEW_DUMMY(38);  ENUM_VIEW_DUMMY(39);
+    ENUM_VIEW_DUMMY(40);  ENUM_VIEW_DUMMY(41);  ENUM_VIEW_DUMMY(42);  ENUM_VIEW_DUMMY(43);
+    ENUM_VIEW_DUMMY(44);  ENUM_VIEW_DUMMY(45);  ENUM_VIEW_DUMMY(46);  ENUM_VIEW_DUMMY(47);
+    ENUM_VIEW_DUMMY(48);  ENUM_VIEW_DUMMY(49);  ENUM_VIEW_DUMMY(50);  ENUM_VIEW_DUMMY(51);
+    ENUM_VIEW_DUMMY(52);  ENUM_VIEW_DUMMY(53);  ENUM_VIEW_DUMMY(54);  ENUM_VIEW_DUMMY(55);
+    ENUM_VIEW_DUMMY(56);  ENUM_VIEW_DUMMY(57);  ENUM_VIEW_DUMMY(58);  ENUM_VIEW_DUMMY(59);
+    ENUM_VIEW_DUMMY(60);  ENUM_VIEW_DUMMY(61);  ENUM_VIEW_DUMMY(62);  ENUM_VIEW_DUMMY(63);
+    ENUM_VIEW_DUMMY(64);  ENUM_VIEW_DUMMY(65);  ENUM_VIEW_DUMMY(66);  ENUM_VIEW_DUMMY(67);
+    ENUM_VIEW_DUMMY(68);  ENUM_VIEW_DUMMY(69);  ENUM_VIEW_DUMMY(70);  ENUM_VIEW_DUMMY(71);
+    virtual float value128();        // index 72 -> vtable 0x128
+};
+
 #undef ENUM_VIEW_DUMMY
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void func_800F4798(void* self);
+extern "C" int func_804B5088(void* self, void* a, void* b, int filter, int isFirst); // object enum probe
+extern "C" int func_80174C98(void* actor, u32* val, int flags); // arts-state gate
 extern "C" int func_804BE348(void* a, void* b, int c, int d, int e);   // coli probe query
 // cone probe on aux+0x60C (self, spot, range, cone half-angle, angle offset)
 extern "C" int func_804B1C9C(void* self, void* spot, float a, float b, float c);
-// func_804B5088 (object enum probe) is declared in CfCam.hpp (CfCamFollow*/
-// CVec3* signature); do not redeclare here.
+// func_804B5088 (object enum probe) is declared above; do not redeclare here.
 extern "C" int func_804B1AD8(void* self, void* spot, float threshold); // distance probe on aux+0x60C block
 // sdata: global coli probe object (accessed via sda21)
 extern void* lbl_eu_80665958;
@@ -254,8 +280,12 @@ extern const float lbl_eu_80666EC8;   // 0.2f
 extern const float lbl_eu_80666ECC;   // 0.1f
 extern const float lbl_eu_80666EF0;   // -1.0f (sdata2 word)
 extern float lbl_eu_8066A1FC;          // two*pi (angle wrap; pi is declared in CfCam.hpp)
+extern "C" float lbl_eu_8066A1F8;      // .sdata2 pi
 extern const float lbl_eu_80666ED0;   // 0.024543693f (angle scale)
 extern const float lbl_eu_80666ED4;   // 0.5f (half-angle scale)
+extern const float lbl_eu_80666ED8;   // radians -> FIdx scale (SinFIdx/CosFIdx arg)
+extern const double lbl_eu_80666EE0;  // sdata2 double
+extern const double lbl_eu_80666EE8;  // sdata2 double
 
 // .bss probe-offset table written by func_800FD3FC (12 floats).
 extern float lbl_eu_80573A30[12];

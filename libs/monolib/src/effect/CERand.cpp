@@ -24,7 +24,7 @@ extern float lbl_eu_8066B250;  // 10006.0f (Simple randF divisor)
 extern float lbl_eu_8066B238;  // 0.5f
 extern float lbl_eu_8066B248;  // 1.0f
 extern float lbl_eu_8066B24C;  // -1.0f
-extern float lbl_eu_8066B230;  // 0.0f
+extern float lbl_eu_8066B230[];  // g_fSeed1Table
 
 // Local layout mirror of CERandomizerSimple (the real class keeps its fields
 // private; the extern "C" fragments below address the object through this
@@ -43,12 +43,23 @@ struct CERandomizerSimpleLay {
 extern CERandomizerSimpleLay lbl_eu_80660028;
 extern CERandomizer lbl_eu_80665A08;
 
-// Forward declarations for the function fragments (cross-references between
-// the extern "C" bodies below).
-extern "C" u32 rand__18CERandomizerSimpleFv(CERandomizerSimpleLay* self);
+// ---- s32 -> f32 via the signed magic double (0x43300000 trick) ----
+// Each caller builds the double 0x43300000_(x ^ 0x80000000) on the stack,
+// subtracts the retail magic double, and divides - all kept in fp registers
+// so the intermediate double never touches memory (retail fsubs + fdivs).
+// The x ^ 0x80000000 word is assigned first, then the 0x43300000 word, so
+// MWCC does not hoist the magic `lis` above the extern load (see MWCC_PATTERNS).
+
+// Retail loads the object vptr, indexes entry 2 (rand), and calls it through
+// ctr, the same shape the compiler emits for a virtual call.
+static inline u32 simpleRand(CERandomizerSimpleLay* self) {
+    typedef u32 (*Fn)(CERandomizerSimpleLay*);
+    Fn* vtable = (Fn*)*(void**)self;
+    return vtable[2](self);
+}
 
 // Forward declarations for the data block at the bottom (vtable/RTTI
-// cross-references from the function fragments above).
+// cross-references from the function fragments above). 
 extern "C" u32 lbl_eu_8056FE08[];
 extern "C" u32 lbl_eu_80663BB0[];
 extern "C" u32 lbl_eu_80663BB8[];
@@ -56,48 +67,25 @@ extern "C" u32 lbl_eu_80663BC0[];
 extern "C" u32 lbl_eu_8056FE20[];
 extern "C" u32 lbl_eu_8056FE48[];
 
-union F64Conv_B240 {
-    f64 d;
-    u32 w[2];
-};
-union F64Conv_B258 {
-    f64 d;
-    u32 w[2];
-};
-
-// s32 -> f32 through the shared signed magic double (retail sequence:
-// xoris + 0x43300000 stack double minus the magic).
-static inline f32 s32ToF_B240(s32 v) {
-    F64Conv_B240 c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    return (f32)(c.d - lbl_eu_8066B240);
-}
-
-static inline f32 s32ToF_B258(s32 v) {
-    F64Conv_B258 c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    return (f32)(c.d - lbl_eu_8066B258);
-}
-
 // ---- Function fragments (retail mangled names) ----
 
 extern "C" void __ct__18CERandomizerSimpleFv(CERandomizerSimpleLay* self) {
-    // vptr + seed1 = seed2 = 14992, age = 0.0f (retail inlines the init).
-    *(void**)self = (void*)&lbl_eu_8056FE08;
+    // seed1 = seed2 = 14992, age = 0.0f, vptr = CERandomizerSimple vtable.
+    // age assigned first so its load hoists to the top of the block.
+    self->age = lbl_eu_8066B230[0];
     self->seed1 = (u16)CERand::defaultSeed;
     self->seed2 = (u16)CERand::defaultSeed;
-    self->age = lbl_eu_8066B230;
+    *(void**)self = (void*)&lbl_eu_8056FE08;
 }
 
 extern "C" void create__18CERandomizerSimpleFi(CERandomizerSimpleLay* self, int seed) {
     if (seed < 0) {
-        seed = lbl_eu_80660028.seed1;
+        self->seed1 = lbl_eu_80660028.seed1;
+    } else {
+        self->seed1 = (u16)seed;
     }
-    self->seed1 = (u16)seed;
     self->seed2 = self->seed1;
-    self->age = lbl_eu_8066B230;
+    self->age = lbl_eu_8066B230[self->seed1];
 }
 
 extern "C" void execute__18CERandomizerSimpleFf(CERandomizerSimpleLay* self, float time) {
@@ -107,8 +95,8 @@ extern "C" void execute__18CERandomizerSimpleFf(CERandomizerSimpleLay* self, flo
         self->seed1 = self->seed2;
     } else {
         self->seed2 = self->seed1;
-        if (((int)self->age & 31) == 0) {
-            rand__18CERandomizerSimpleFv(self);
+        if (((int)self->age & 0xE0000000u) == 0) {
+            simpleRand(self);
         }
     }
 }
@@ -120,16 +108,15 @@ extern "C" u32 rand__18CERandomizerSimpleFv(CERandomizerSimpleLay* self) {
 }
 
 extern "C" float randF__18CERandomizerSimpleFv(CERandomizerSimpleLay* self) {
-    return s32ToF_B258((s32)rand__18CERandomizerSimpleFv(self)) / lbl_eu_8066B250;
+    return (float)simpleRand(self) / lbl_eu_8066B250;
 }
 
 extern "C" float randFHalf__18CERandomizerSimpleFv(CERandomizerSimpleLay* self) {
-    return s32ToF_B258((s32)rand__18CERandomizerSimpleFv(self)) / lbl_eu_8066B250 -
-           lbl_eu_8066B238;
+    return (float)simpleRand(self) / lbl_eu_8066B250 - lbl_eu_8066B238;
 }
 
 extern "C" float randSign__18CERandomizerSimpleFv(CERandomizerSimpleLay* self) {
-    return (rand__18CERandomizerSimpleFv(self) % 2 != 0) ? lbl_eu_8066B248 : lbl_eu_8066B24C;
+    return (simpleRand(self) % 2 != 0) ? lbl_eu_8066B248 : lbl_eu_8066B24C;
 }
 
 extern "C" u32 rand__12CERandomizerFv(CERandomizer* self) {
@@ -137,11 +124,11 @@ extern "C" u32 rand__12CERandomizerFv(CERandomizer* self) {
 }
 
 extern "C" float randF__12CERandomizerFv(CERandomizer* self) {
-    return s32ToF_B240(ml::math::mtRand()) / lbl_eu_8066B234;
+    return (float)ml::math::mtRand() / lbl_eu_8066B234;
 }
 
 extern "C" float randFHalf__12CERandomizerFv(CERandomizer* self) {
-    return s32ToF_B240(ml::math::mtRand()) / lbl_eu_8066B234 - lbl_eu_8066B238;
+    return (float)ml::math::mtRand() / lbl_eu_8066B234 - lbl_eu_8066B238;
 }
 
 extern "C" float randSign__12CERandomizerFv(CERandomizer* self) {
@@ -153,13 +140,22 @@ extern "C" void init__6CERandFv() {
 }
 
 extern "C" void execute__6CERandFf(float time) {
-    execute__18CERandomizerSimpleFf(&lbl_eu_80660028, time);
+    float prevAge = lbl_eu_80660028.age;
+    lbl_eu_80660028.age += time;
+    if ((int)prevAge == (int)lbl_eu_80660028.age) {
+        lbl_eu_80660028.seed1 = lbl_eu_80660028.seed2;
+    } else {
+        lbl_eu_80660028.seed2 = lbl_eu_80660028.seed1;
+        if (((int)lbl_eu_80660028.age & 0xE0000000u) == 0) {
+            simpleRand(&lbl_eu_80660028);
+        }
+    }
 }
 
 extern "C" void randVec__6CERandFPQ22ml5CVec3(ml::CVec3* v) {
-    v->x = randFHalf__12CERandomizerFv(&lbl_eu_80665A08);
-    v->y = randFHalf__12CERandomizerFv(&lbl_eu_80665A08);
-    v->z = randFHalf__12CERandomizerFv(&lbl_eu_80665A08);
+    v->x = (float)ml::math::mtRand() / lbl_eu_8066B234 - lbl_eu_8066B238;
+    v->y = (float)ml::math::mtRand() / lbl_eu_8066B234 - lbl_eu_8066B238;
+    v->z = (float)ml::math::mtRand() / lbl_eu_8066B234 - lbl_eu_8066B238;
 }
 
 extern "C" void randSignVec__6CERandFPQ22ml5CVec3(ml::CVec3* v) {

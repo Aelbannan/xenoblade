@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/realtimeevt/CREvtModelPc.hpp"
+#include "kyoshin/realtimeevt/CREvtModelMap.hpp"
 
 #include <cstring>
 
@@ -152,16 +153,12 @@ extern "C" void __ct__CREvtModelPc(void* self, void* parent) {
 extern "C" __declspec(noinline) void* __ct__8018385C(void* self, int flag) {
     if (self != 0) {
         char* s = (char*)self;
-        u32* vtable = lbl_eu_805321F0;
 
-        FLD(u32*, s, 0x00) = vtable;
-        FLD(u32*, s, 0x38) = (u32*)((char*)vtable + 0x44);
-
-        // Call vtable[0x3C/4] = vtable[15]
-        {
-            void (*vfunc)(void*) = (void (*)(void*))vtable[0x3C / 4];
-            vfunc(self);
-        }
+        // Install vtables, then invoke slot-15 entry straight out of the
+        // vtable data symbol so MWCC materializes the address into r12.
+        FLD(void*, s, 0x38) = (char*)lbl_eu_805321F0 + 0x44;
+        FLD(void*, s, 0x00) = lbl_eu_805321F0;
+        ((void (*)(void*))lbl_eu_805321F0[0x3C / 4])(s);
 
         __ct__80172668(self, 0);
 
@@ -252,92 +249,82 @@ extern "C" int func_80183978(void* self) {
 // func_80183A3C (us-80184e58) - Reset / reinitialize
 // ============================================================================
 void func_80183A3C(void* self) {
-    int i;
+    CREvtModelPc& pc = *(CREvtModelPc*)self;
 
-    // Parent scene counter == -1: no parent scene, install the fixed ptmf
-    // callback and mark flags bit 0x50, then bail out.
-    if (FLD(u32, FLD(void*, self, 0x1C), 0x30) == 0xFFFFFFFF) {
-        FLD(u32, self, 0x18) |= 0x50;
+    // Parent scene counter check: retail tests (u32)(mField30 + 0x10000)
+    // against 0xFFFF (the addis/cmplwi lowering of == -1).
+    if ((u32)(((CREvtModelParentIf*)pc.mParent)->mField30 + 0x10000) == 0xFFFF) {
+        pc.mFlags |= 0x50;
 
-        // Post-increment derefs of a local pointer fold the first access into
-        // `lwzu` (single base register, offsets on the rest) and force the
-        // retail load/store order w0,w1 -> +0xC,+0x8,+0x10 (cf. CTaskGameEvt
-        // btm_sco_init lwzu shape).
+        // Post-increment derefs fold the first access into `lwzu` and force
+        // the retail load/store order w0,w1 -> +0xC,+0x8,+0x10.
         const u32* src = lbl_eu_805321B0;
         u32 w0 = *src++;
         u32 w1 = *src++;
-        FLD(u32, self, 0x0C) = w1;
-        FLD(u32, self, 0x08) = w0;
-        u32 w2 = *src++;
-        FLD(u32, self, 0x10) = w2;
+        pc.mCallback[1] = w1;
+        pc.mCallback[0] = w0;
+        pc.mCallback[2] = *src;
         return;
     }
 
-    // If any slot is still loading (status == 1), or the reset flag is set,
-    // bail out early. Retail checks the last three statuses via a base of
-    // self+8 (offsets 0x88/0x8C/0x90) instead of self directly.
-    {
-        u32* b = (u32*)((char*)self + 8);
-        if (FLD(s32, self, 0x84) == 1 ||
-            FLD(s32, self, 0x88) == 1 ||
-            FLD(s32, self, 0x8C) == 1 ||
-            (s32)b[0x88 / 4] == 1 ||
-            (s32)b[0x8C / 4] == 1 ||
-            (s32)b[0x90 / 4] == 1) return;
-    }
+    // If any slot is still loading (status == 1), bail out. Statuses are
+    // compared signed; retail addresses slots 3-5 via a this+8 base.
+    // If any slot is still loading (status == 1), bail out. Statuses are
+    // compared signed; retail addresses slots 3-5 off a this+8 base.
+    if ((int)pc.mStatus[0] == 1 || (int)pc.mStatus[1] == 1 || (int)pc.mStatus[2] == 1)
+        return;
+    int* tail = (int*)pc.mCallback;   // this + 8
+    if (tail[34] == 1 || tail[35] == 1 || tail[36] == 1)
+        return;
 
-    if (FLD(u32, self, 0x18) & 0x100) return;
-    FLD(u32, self, 0x18) |= 0x100;
+    if (pc.mFlags & 0x100) return;
+    pc.mFlags |= 0x100;
 
     func_80172768(self);
 
     // Free any loaded/archived slot data. Status 3 = loaded into MEM2 via
-    // MemManager, status 2 = archived. Retail carries a duplicated null check
-    // in the status-3 path (two consecutive beq), reproduced by the nested if
-    // (same shape as the matched func_80183978).
-    {
-        char* base = (char*)self;
-        for (i = 0; i < 6; i++) {
-            int status = FLD(s32, base, 0x84);
-            if (status == 3) {
-                void* data = FLD(void*, base, 0x6C);
+    // MemManager, status 2 = archived. Retail carries a duplicated null
+    // check in the status-3 path (two consecutive beq), reproduced by the
+    // nested if (same shape as func_80183978).
+    u32 zero = 0;
+    for (int i = 0; i < 6; i++) {
+        int status = (int)pc.mStatus[i];
+        if (status == 3) {
+            void* data = pc.mData[i];
+            if (data != 0) {
                 if (data != 0) {
-                    if (data != 0) {
-                        mtl::MemManager::deallocate(data);
-                        FLD(u32, base, 0x6C) = 0;
-                    }
-                }
-            } else if (status == 2) {
-                void* data = FLD(void*, base, 0x6C);
-                if (data != 0) {
-                    func_800A9344(data, 0);
+                    mtl::MemManager::deallocate(data);
+                    pc.mData[i] = (void*)zero;
                 }
             }
-            base += 4;
+        } else if (status == 2) {
+            void* data = pc.mData[i];
+            if (data != 0) {
+                func_800A9344(data, 0);
+            }
         }
     }
 
     // Install the reset ptmf callback (loads w0,w1 via *src++ then stores
     // +0xC,+0x8; w2 late) and clear flags bits 0x40/0x01 while setting 0x30.
-    {
-        const u32* src = lbl_eu_805321BC;
-        u32 w0 = *src++;
-        u32 w1 = *src++;
-        FLD(u32, self, 0x0C) = w1;
-        FLD(u32, self, 0x08) = w0;
-        u32 w2 = *src++;
-        FLD(u32, self, 0x10) = w2;
-    }
-    FLD(u32, self, 0x18) = (FLD(u32, self, 0x18) | 0x30) & ~0x41;
+    const u32* src = lbl_eu_805321BC;
+    u32 w0 = *src++;
+    u32 w1 = *src++;
+    u32 flags = pc.mFlags | 0x30;
+    pc.mCallback[1] = w1;
+    flags &= ~0x41;
+    pc.mCallback[0] = w0;
+    pc.mCallback[2] = *src;
+    pc.mFlags = flags;
 
-    // Reinitialize all six slots.
-    for (i = 0; i < 6; i++) {
-        FLD(u32, self, 0x3C + i * 4) = 0;
-        FLD(u32, self, 0x54 + i * 4) = 0;
-        FLD(u32, self, 0x6C + i * 4) = 0;
-        FLD(u32, self, 0x84 + i * 4) = 0;
+    // Reinitialize all six slots (four arrays cleared per iteration).
+    for (int i = 0; i < 6; i++) {
+        pc.mFileHandle[i] = 0;
+        pc.mFileReq[i] = 0;
+        pc.mData[i] = 0;
+        pc.mStatus[i] = 0;
     }
-    FLD(u8, self, 0xAC) = 0;
+    pc.mLoaded = 0;
 }
 
 // ============================================================================
@@ -367,257 +354,285 @@ extern "C" void func_80183C1C(void* self) {
 // func_80183C90 (us-801850ac) - Main file loading function
 // ============================================================================
 extern "C" void func_80183C90(void* self) {
+    CREvtModelPc& pc = *(CREvtModelPc*)self;
     char* s = (char*)self;
-    u32 entryId, param1, param2, param3;
-    u32 objEntryId, objParam1, objParam2, objParam3;
+
+    // Decoded fields of the parent's packed token:
+    //   decA: top field (<<27 when rebuilding a token)
+    //   decB: character/id field (compared against 3/8, passed to getters)
+    //   decC: slot flag (== 1 tests)
+    //   decD: special id (== 9 gates the extra slot-5 load)
+    u32 decA, decB, decC, decD;
+    u32 objA, objB, objC, objD;
+    int typeOut;              // func_80062AD8 out-type (-1 sentinel)
     void* gameMgr;
     void* obj;
     void* objList;
     void* objPtr;
     void* matchChr = 0;
-    void* chr;
     int isNewFile = 0;
-    int i;
     int hasAllHandles = 0;
     int skipLoading = 0;
-    int slotParam;
+    int slotIdx0, slotIdx1, slotIdx2;
     void* parent;
-    u32 packedBase;
-    char pathBuf[0x40];
-    void* handle;
-    int fileSize;
+    u32 handle;
+    u32 fileSize;
     void* alloc;
-    int archiveResult;
-    void* workEvent;
+    int ok;
+    const char* pathName;
     CFileHandle* reqHandle;
     void* memHandle;
-    void* memHandle2;
     void* h;
     void* h2;
+    int i;
+    char nameBuf[0x20];
+    int nameLen;
+    char fix3[0x44];
+    char fix2[0x44];
+    char fix1[0x44];
 
-    // Set flags bit 6
-    FLD(u32, s, 0x18) |= 0x40;
+    pc.mFlags |= 0x40;
 
-    // Get parent's packed token
+    // Decode the parent scene's packed token.
     parent = FLD(void*, s, 0x1C);
-    u32 parentPacked = FLD(u32, parent, 0x20);
-    func_800AA318(parentPacked, &entryId, &param1, &param2, &param3);
+    func_800AA318(FLD(u32, parent, 0x20), &decA, &decB, &decC, &decD);
 
-    // Check if entry type is 3 or 8
-    if (param1 == 3 || param1 == 8) {
-        void* fileHandle = func_8016C300(self);
-        isNewFile = (int)fileHandle; // r31 = fileHandle
-        if (fileHandle != 0) {
-            // non-zero fileHandle means isNewFile is true, skip the iteration
-        } else {
+    // If the request is for character 3 or 8, check whether such a character
+    // is already being loaded by another model object.
+    if (decB == 3 || decB == 8) {
+        isNewFile = (func_8016C300(self) != 0) ? 1 : 0;
+        if (isNewFile == 0) {
             gameMgr = func_80086B04__Q22cf13CfGameManagerFv();
             objList = FLD(void*, gameMgr, 0x04);
-            obj = objList;
-
-            while (obj != 0) {
+            obj = FLD(void*, objList, 0x00);
+            while (obj != objList) {
                 objPtr = FLD(void*, obj, 0x08);
                 if (objPtr != 0) {
                     objPtr = (char*)objPtr - 0x3E9C;
                 }
-                u16 chrType = FLD(u16, objPtr, 0x3F28);
-                if ((chrType == 8 && param1 == 3) || (chrType == 3 && param1 == 8)) {
+                if ((FLD(u16, objPtr, 0x3F28) == 8 && decB == 3) ||
+                    (FLD(u16, objPtr, 0x3F28) == 3 && decB == 8)) {
                     isNewFile = 1;
-                    break;
+                    goto handles_done;
                 }
                 obj = FLD(void*, obj, 0x00);
             }
         }
     }
 
-    // Find matching character (r30 = matchChr)
-    if (param1 <= 10) {
+    // Find a live character whose request matches ours (matchChr).
+    if (decB <= 10) {
         gameMgr = func_80086B04__Q22cf13CfGameManagerFv();
         objList = FLD(void*, gameMgr, 0x04);
-        obj = objList;
-
-        while (obj != 0) {
+        obj = FLD(void*, objList, 0x00);
+        while (obj != objList) {
             objPtr = FLD(void*, obj, 0x08);
-            u32 objPacked = FLD(u32, objPtr, 0x70);
-            func_800AA318(objPacked, &objEntryId, &objParam1, &objParam2, &objParam3);
-
-            if (objParam1 == param1 && objParam2 == 1) {
+            func_800AA318(FLD(u32, objPtr, 0x70), &objA, &objB, &objC, &objD);
+            if (decB == objB && decC == 1) {
                 matchChr = FLD(void*, obj, 0x08);
                 if (matchChr != 0) {
                     matchChr = (char*)matchChr - 0x3E9C;
                 }
-                break;
+                goto handles_done;
             }
             obj = FLD(void*, obj, 0x00);
         }
     }
 
-    // Try allocating file handles from parent's resource
+handles_done:
+    // First choice: reuse handles registered on the parent resource.
+    hasAllHandles = 0;
     parent = FLD(void*, s, 0x1C);
     if (FLD(s8, parent, 0x48) != 0 && !func_8016840C()) {
-        hasAllHandles = 1;
-        for (i = 0; i < 5; i++) {
-            handle = func_80164724((char*)parent + 0x48, entryId, i + 1);
-            FLD(u32, s, 0x3C + i * 4) = (u32)handle;
-            if (handle == 0) {
-                hasAllHandles = 0;
-            }
+        for (i = 1; i <= 5; i++) {
+            handle = (u32)func_80164724((char*)parent + 0x48, decB, i);
+            FLD(u32, s, 0x38 + i * 4) = handle;
+        }
+        if (FLD(u32, s, 0x3C) != 0 && FLD(u32, s, 0x40) != 0 &&
+            FLD(u32, s, 0x44) != 0 && FLD(u32, s, 0x48) != 0 &&
+            FLD(u32, s, 0x4C) != 0) {
+            hasAllHandles = 1;
         }
     }
 
+    skipLoading = 0;
     if (!hasAllHandles) {
         if (matchChr != 0 && !func_8016840C()) {
-            // Get handles from matchChr via virtual call
-            for (i = 0; i < 5; i++) {
-                chr = (char*)matchChr + 0x3E9C;
-                void* vtable = FLD(void*, chr, 0x00);
+            // Pull handles out of the live character via its getter virtual.
+            for (i = 1; i <= 5; i++) {
+                objPtr = (char*)matchChr + 0x3E9C;
+                void* vtable = FLD(void*, objPtr, 0x00);
                 void* (*getHandle)(void*, int) = (void* (*)(void*, int))FLD(u32, vtable, 0x148);
-                handle = getHandle(chr, i + 1);
-                FLD(u32, s, 0x3C + i * 4) = (u32)handle;
+                handle = (u32)getHandle(objPtr, i);
+                FLD(u32, s, 0x38 + i * 4) = handle;
             }
-        } else if (param2 == 1 && !func_8016840C()) {
+        } else if (decC == 1 && !func_8016840C()) {
+            // Already-loading shortcut through the game manager cache.
             if (isNewFile) {
-                func_8007E038__Q22cf13CfGameManagerFv(entryId, 0);
+                func_8007E038__Q22cf13CfGameManagerFv(decB, 0);
                 skipLoading = 1;
             }
-            // Get handles from func_8007DE94 (even when skipLoading is set)
             for (i = 0; i < 5; i++) {
-                handle = func_8007DE94__Q22cf13CfGameManagerFv(entryId, i);
-                FLD(u32, s, 0x3C + i * 4) = (u32)handle;
+                handle = (u32)func_8007DE94__Q22cf13CfGameManagerFv(decB, i);
+                FLD(u32, s, 0x3C + i * 4) = handle;
             }
         } else {
-            slotParam = param2;
+            // Build the five packed tokens from scratch.
+            slotIdx0 = slotIdx1 = slotIdx2 = decC;
             if (func_8016840C()) {
-                slotParam = FLD(u32, lbl_eu_805037A8, entryId * 4);
+                slotIdx0 = FLD(u32, lbl_eu_805037A8, decB * 4);
             }
-
-            if (param1 == 8 && slotParam == 1) {
-                slotParam = 4;
+            if (decB == 8 && slotIdx0 == 1) {
+                slotIdx0 = slotIdx1 = slotIdx2 = 4;
+            } else if (func_8016840C()) {
+                // Co-op mode remaps some slot indices per character id.
+                if (decB == 1 && slotIdx0 == 2) slotIdx1 = 1;
+                if (decB == 2 && slotIdx0 == 3) slotIdx1 = 1;
+                if (decB == 5 && slotIdx0 == 2) slotIdx1 = 1;
+                if (decB == 6 && slotIdx0 == 3) slotIdx2 = 1;
             }
-
-            // Build packed tokens
-            packedBase = (param3 << 27) | (entryId << 20) | (slotParam << 10);
-            FLD(u32, s, 0x3C) = packedBase | 3;
-            FLD(u32, s, 0x40) = packedBase | 2;
-            FLD(u32, s, 0x44) = packedBase | 3;
-            FLD(u32, s, 0x48) = packedBase | 4;
-            FLD(u32, s, 0x4C) = packedBase | 5;
+            {
+                u32 base = (decA << 27) | (decB << 20);
+                FLD(u32, s, 0x3C) = base | (slotIdx1 << 10) | (slotIdx2 << 10) | 1;
+                FLD(u32, s, 0x40) = base | (slotIdx0 << 10) | 2;
+                FLD(u32, s, 0x44) = base | (slotIdx2 << 10) | 3;
+                FLD(u32, s, 0x48) = base | (slotIdx0 << 10) | 4;
+                FLD(u32, s, 0x4C) = base | (slotIdx0 << 10) | 5;
+            }
         }
     }
 
-    // If skipLoading is set, skip the file loading loop
-    if (skipLoading) {
-        goto set_ptmf;
-    }
+    if (!skipLoading) {
+        // Load the five files named by the slot tokens.
+        u32 status1 = 1, status2 = 2, status3 = 3;
+        u32 neg1 = -1;
+        char* walk = s;
+        for (i = 0; i <= 4; i++, walk += 4) {
+            handle = FLD(u32, walk, 0x3C);
+            if (handle == 0) continue;
 
-    // Load files for slots 0-4
-    for (i = 0; i <= 4; i++) {
-        handle = FLD(void*, s, 0x3C + i * 4);
-        if (handle == 0) continue;
-
-        // Build filename
-        func_800AA33C(*(ml::FixStr<64>*)(pathBuf), (u32)handle, 1, 1);
-
-        // Get file size
-        fileSize = CDeviceFile::getFileSize(pathBuf);
-
-        // Try allocating from MEM1
-        alloc = func_80167F6C((void*)fileSize, 0x20, 0);
-        if (alloc != 0) {
-            FLD(u32, s, 0x84 + i * 4) = 1;
-        } else {
-            // Try archive
-            archiveResult = func_800A8E6C(fileSize, 1);
-            if (archiveResult != 0) {
-                func_800A8E6C(fileSize, 0);
-            } else {
-                archiveResult = 0;
+            pathName = func_800AA5C0((void*)handle);
+            nameLen = strlen(pathName);
+            strcpy(nameBuf, pathName);
+            func_80062AD8((void*)handle, (u32*)&typeOut);
+            if (isNewFile) {
+                typeOut = (int)neg1;
             }
+            if (typeOut != -1) continue;
 
-            if (archiveResult != 0) {
-                FLD(u32, s, 0x84 + i * 4) = 2;
+            // Build the file path, then try MEM1 -> archive -> streamed MEM2.
+            FLD(u8, fix1, 0x00) = 0;
+            FLD(u32, fix1, 0x40) = 0;
+            func_800AA33C(*(ml::FixStr<64>*)fix1, handle, 1, 1);
+            fileSize = CDeviceFile::getFileSize(fix1);
+            alloc = func_80167F6C((void*)fileSize, 0x20, 0);
+            if (alloc != 0) {
+                FLD(u32, walk, 0x84) = status1;
+                ok = (int)alloc;
             } else {
-                workEvent = (void*)(s + 0x38);
-                reqHandle = CDeviceFile::readCommonArchiveFile(
-                    (mtl::ALLOC_HANDLE)0, pathBuf,
-                    (IWorkEvent*)workEvent, 0, 0);
-                FLD(u32, s, 0x54 + i * 4) = (u32)reqHandle;
-                if (reqHandle != 0) {
-                    FLD(u32, s, 0x84 + i * 4) = 3;
+                if (func_800A8E6C(fileSize, 1) != 0) {
+                    ok = func_800A8E6C(fileSize, 0);
+                } else {
+                    ok = 0;
+                }
+                if (ok != 0) {
+                    FLD(u32, walk, 0x84) = status2;
                 }
             }
+
+            if (ok != 0) {
+                // Archive-backed read.
+                reqHandle = (CFileHandle*)CDeviceFile::readCommonArchiveFile(
+                    (mtl::ALLOC_HANDLE)ok, fix1,
+                    (IWorkEvent*)((s != 0) ? s + 0x38 : s), 0, 0);
+                FLD(u32, walk, 0x54) = (u32)reqHandle;
+            } else {
+                // Streamed read into MEM2.
+                memHandle = (void*)mtl::MemManager::getHandleMEM2();
+                h = func_80495FF0(lbl_eu_80663E14);
+                h2 = h;
+                parent = FLD(void*, s, 0x1C);
+                if (FLD(u32, parent, 0x58) & 0x2) {
+                    h = func_80495FF0(lbl_eu_80663E14);
+                    memHandle = h;
+                    h2 = (void*)mtl::MemManager::getHandleMEM2();
+                }
+                reqHandle = (CFileHandle*)CDeviceFile::readFile(
+                    (mtl::ALLOC_HANDLE)memHandle, fix1,
+                    (IWorkEvent*)((s != 0) ? s + 0x38 : s), 0, 0);
+                FLD(u32, walk, 0x54) = (u32)reqHandle;
+                func_8044F400__11CDeviceFileFP11CFileHandleUl(reqHandle, (u32)h2);
+                parent = FLD(void*, s, 0x1C);
+                if (FLD(u32, parent, 0x58) & 0x1) {
+                    CDeviceFile::setHandleFlag1(reqHandle);
+                }
+                if (func_801683FC()) {
+                    CDeviceFile::setHandleFlag2(reqHandle);
+                }
+                FLD(u32, walk, 0x84) = status3;
+            }
         }
     }
 
-    // Handle slot 5 (special case for type 9)
-    if (param3 == 9) {
-        // Create file handle for slot 5
-        handle = (void*)func_800AA2E8(entryId, 1, 0);
-        FLD(u32, s, 0x50) = (u32)handle;
-
-        // Build filename
-        func_800AA33C(*(ml::FixStr<64>*)(pathBuf), (u32)handle, 1, 1);
-
-        // Get file size
-        fileSize = CDeviceFile::getFileSize(pathBuf);
-
-        // Try allocating
+    // Slot 5 loads only for special id 9.
+    if (decD == 9) {
+        handle = (u32)func_800AA2E8(decB, 1, 0);
+        FLD(u32, s, 0x50) = handle;
+        FLD(u8, fix3, 0x00) = 0;
+        FLD(u32, fix3, 0x40) = 0;
+        func_800AA33C(*(ml::FixStr<64>*)fix3, handle, 1, 1);
+        fileSize = CDeviceFile::getFileSize(fix3);
         alloc = func_80167F6C((void*)fileSize, 0x20, 0);
         if (alloc != 0) {
             FLD(u32, s, 0x98) = 1;
+            ok = (int)alloc;
         } else {
-            archiveResult = func_800A8E6C(fileSize, 0);
-            if (archiveResult != 0) {
+            ok = func_800A8E6C(fileSize, 0);
+            if (ok != 0) {
                 FLD(u32, s, 0x98) = 2;
             }
         }
 
-        if (alloc != 0) {
-            workEvent = (void*)(s + 0x38);
-            reqHandle = CDeviceFile::readCommonArchiveFile(
-                (mtl::ALLOC_HANDLE)0, pathBuf,
-                (IWorkEvent*)workEvent, 0, 0);
+        if (ok != 0) {
+            reqHandle = (CFileHandle*)CDeviceFile::readCommonArchiveFile(
+                (mtl::ALLOC_HANDLE)ok, fix3,
+                (IWorkEvent*)((s != 0) ? s + 0x38 : s), 0, 0);
             FLD(u32, s, 0x68) = (u32)reqHandle;
-        } else if (archiveResult != 0) {
-            // Read from file
+        } else {
             memHandle = (void*)mtl::MemManager::getHandleMEM2();
-            h = (void*)func_80495FF0(lbl_eu_80663E14);
+            h = func_80495FF0(lbl_eu_80663E14);
             h2 = h;
-
             parent = FLD(void*, s, 0x1C);
             if (FLD(u32, parent, 0x58) & 0x2) {
-                h = (void*)func_80495FF0(lbl_eu_80663E14);
+                h = func_80495FF0(lbl_eu_80663E14);
                 memHandle = h;
                 h2 = (void*)mtl::MemManager::getHandleMEM2();
             }
-
-            workEvent = (void*)(s + 0x38);
-            reqHandle = CDeviceFile::readFile(
-                (mtl::ALLOC_HANDLE)memHandle, pathBuf,
-                (IWorkEvent*)workEvent, 0, 0);
+            reqHandle = (CFileHandle*)CDeviceFile::readFile(
+                (mtl::ALLOC_HANDLE)memHandle, fix3,
+                (IWorkEvent*)((s != 0) ? s + 0x38 : s), 0, 0);
             FLD(u32, s, 0x68) = (u32)reqHandle;
-
-            func_8044F400__11CDeviceFileFP11CFileHandleUl((CFileHandle*)reqHandle, (u32)h2);
-
+            func_8044F400__11CDeviceFileFP11CFileHandleUl(reqHandle, (u32)h2);
             parent = FLD(void*, s, 0x1C);
             if (FLD(u32, parent, 0x58) & 0x1) {
                 CDeviceFile::setHandleFlag1(reqHandle);
             }
-
             if (func_801683FC()) {
                 CDeviceFile::setHandleFlag2(reqHandle);
             }
-
             FLD(u32, s, 0x98) = 3;
         }
     }
 
 set_ptmf:
-    // Set ptmf from lbl_eu_805321D4
+    // Install the post-load callback ptmf.
     {
-        u32* ptmf = lbl_eu_805321D4;
-        FLD(u32, s, 0x08) = ptmf[0];
-        FLD(u32, s, 0x0C) = ptmf[1];
-        FLD(u32, s, 0x10) = ptmf[2];
+        const u32* src = lbl_eu_805321D4;
+        u32 w0 = *src++;
+        u32 w1 = *src++;
+        pc.mCallback[1] = w1;
+        pc.mCallback[0] = w0;
+        pc.mCallback[2] = *src;
     }
 }
 
@@ -821,39 +836,18 @@ extern "C" int func_8018497C(void* self) {
 // this(r3), event(r4)
 // ============================================================================
 extern "C" int func_80184A24(void* self, CEventFile* ev) {
-    char* s = (char*)self;
+    CREvtModelPc* m = (CREvtModelPc*)self;
 
     // For each of the 6 file slots, if the completed request matches the
     // event's handle, record the loaded data (or drop the handle on error).
-    for (int i = 0; i < 4; i += 2) {
-        CFileHandle* req = FLD(CFileHandle*, s, 0x54 + i * 6);
-        if (req == ev->mFileHandle) {
+    for (int i = 0; i < 6; i++) {
+        if (m->mFileReq[i] == ev->mFileHandle) {
             if (ev->unk0 == 1) {
-                FLD(void*, s, 0x6C + i * 6) = req->getData();
+                m->mData[i] = ev->mFileHandle->getData();
             } else {
-                FLD(CFileHandle*, s, 0x3C + i * 6) = 0;
+                m->mFileHandle[i] = NULL;
             }
-            FLD(CFileHandle*, s, 0x54 + i * 6) = 0;
-        }
-
-        req = FLD(CFileHandle*, s, 0x58 + i * 6);
-        if (req == ev->mFileHandle) {
-            if (ev->unk0 == 1) {
-                FLD(void*, s, 0x70 + i * 6) = req->getData();
-            } else {
-                FLD(CFileHandle*, s, 0x40 + i * 6) = 0;
-            }
-            FLD(CFileHandle*, s, 0x58 + i * 6) = 0;
-        }
-
-        req = FLD(CFileHandle*, s, 0x5C + i * 6);
-        if (req == ev->mFileHandle) {
-            if (ev->unk0 == 1) {
-                FLD(void*, s, 0x74 + i * 6) = req->getData();
-            } else {
-                FLD(CFileHandle*, s, 0x44 + i * 6) = 0;
-            }
-            FLD(CFileHandle*, s, 0x5C + i * 6) = 0;
+            m->mFileReq[i] = NULL;
         }
     }
 

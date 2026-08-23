@@ -6,14 +6,24 @@
 #include "kyoshin/makecrystal/CModelDispMakeCrystal.hpp"
 
 
-#include "kyoshin/CMainMenu.hpp"
 #include "kyoshin/makecrystal/CMCEffStart.hpp"
 #include "kyoshin/makecrystal/CMCCylinderGauge.hpp"
 #include "kyoshin/makecrystal/CMCCrystalList.hpp"
+// code_80135FDC.hpp declares func_8049603C as CTaskGameCamView*, while
+// CfGameManager.hpp declares it as UnkScnResult* - rename one away here
+// (this TU never calls it).
+#define func_8049603C makeCrystalCode35FDC9603CUnused
+// CModelDispMakeCrystal.hpp declares CItem_initItemImplInstances(void*)
+// (retail passes the item pointer), while CfGameManager.hpp declares a
+// zero-arg overload - hide the conflicting decl for this include.
+#define CItem_initItemImplInstances makeCrystalCItemInitItemImplInstancesUnused
 #include "kyoshin/code_80135FDC.hpp"
+#undef func_8049603C
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/core/CPadManager.hpp"
+#define CItem_initItemImplInstances makeCrystalCItemInitItemImplInstancesUnused
 #include "kyoshin/cf/CfGameManager.hpp"
+#undef CItem_initItemImplInstances
 #include "kyoshin/cf/CfPadData.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/math/MTRand.hpp"
@@ -209,7 +219,7 @@ void* func_8009EC9C(u32);
 int func_8026178C(void*, int);
 u8 func_8025FB10(void*, int);
 void func_80220128(void*);
-void func_8009D018(int, int);
+// func_8009D018 comes from CfGameManager.hpp (u32,u32) - no local decl.
 void __destroy_arr(void*, void*, int, int);
 void __dt__13CMCGetItemBoxFv(void*, int);
 void __dt__6CCur18Fv(void*, int);
@@ -696,6 +706,8 @@ void* __dt__8021C540(void* obj, int flag)
     return obj;
 }
 
+// Retail frame is stmw r30 (-O4,s shape); body otherwise identical.
+#pragma optimize_for_size on
 CModelDispMakeCrystal::~CModelDispMakeCrystal()
 {
     u8* base = reinterpret_cast<u8*>(this);
@@ -721,6 +733,7 @@ CModelDispMakeCrystal::~CModelDispMakeCrystal()
     __destroy_arr(base + 0x44, (void*)__dt__8021C540, 0x5cc, 2);
     __dt__17UnkClass_8045F564Fv(base + 0x2c, -1);
 }
+#pragma optimize_for_size off
 
 void func_8021C6E4(CModelDispMakeCrystal* self)
 {
@@ -799,6 +812,8 @@ void func_8021C8B0(CModelDispMakeCrystal* self) {
 
 
 // Retail 0x8021E780: draw every makecrystal UI sub-object.
+// [stmw] r30 frame (see func_8021DC1C note).
+#pragma optimize_for_size on
 void func_8021C928(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawInfo)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -822,6 +837,7 @@ void func_8021C928(CModelDispMakeCrystal* self, nw4r::lyt::DrawInfo* drawInfo)
     func_8022B7C8(base + 0xe78, drawInfo);
     func_801D20B0(base + 0xeb4, drawInfo);
 }
+#pragma optimize_for_size off
 
 u8 CModelDispMakeCrystal::getCrystalStateA() { return reinterpret_cast<CModelDispMakeCrystalFull*>(this)->field_BE8; }
 
@@ -831,11 +847,13 @@ u8 CModelDispMakeCrystal::getCrystalStateA() { return reinterpret_cast<CModelDis
 int func_8021CA3C(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
+    // Two-entry gate: counted loop so MWCC emits the ctr form.
     u8 i = 0;
+    u32 n = 2;
     do {
         if (base[(u32)i * 0x5cc + 0x60c] == 0) return 0;
         i++;
-    } while (i < 2);
+    } while (--n);
     if (base[0xbe9] == 0) return 0;
     if (*reinterpret_cast<u32*>(base + 0x40) == 0) return 0;
     if (func_80222A50(base + 0xc18) == 0) return 0;
@@ -848,10 +866,9 @@ u8 CModelDispMakeCrystal::getCrystalStateB() { return reinterpret_cast<CModelDis
 
 u8 CModelDispMakeCrystal::getCrystalStateC() { return reinterpret_cast<CModelDispMakeCrystalFull*>(this)->field_2DD2; }
 
+#pragma optimize_for_size on
 void func_8021CB20(CModelDispMakeCrystal* self)
 {
-    u8* gl;
-    u8* entries;
     u8* base;
     if (self->field_BDC) return;
     self->field_BDC = 1;
@@ -865,7 +882,7 @@ void func_8021CB20(CModelDispMakeCrystal* self)
     }
     reinterpret_cast<CMCCylinderGauge*>(base + 0xbec)->func_802220F8();
     func_80222A60(base + 0xc18);
-    entries = *reinterpret_cast<u8**>(base + 0xe1c);
+    u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
     nw4r::math::VEC3 v;
     v.x = lbl_eu_806684C4;
     v.y = lbl_eu_806684C8;
@@ -876,45 +893,52 @@ void func_8021CB20(CModelDispMakeCrystal* self)
     func_8021FC28(reinterpret_cast<CModelDispMakeCrystal*>(base), 0);
     u8 bbc = base[0xbbc];
     func_801392B4(base[0x5f0]);
-    u8 b2 = func_801392B4(bbc);
-    gl = lbl_eu_80664718;
-    gl[3] = 0;
-    gl[0] = lbl_eu_80535D90[(b2 - 1) * 3];
-    gl[1] = lbl_eu_80535D90[(b2 - 1) * 3 + 1];
-    gl[2] = lbl_eu_80535D90[(b2 - 1) * 3 + 2];
-    gl[5] = 1;
+    // Table lookup: byte-array indexing through a named offset so MWCC
+    // keeps the scaled offset in a register (mulli) for both loads.
+    const u8* tbl = lbl_eu_80535D90->c;
+    int off = ((int)func_801392B4(bbc) - 1) * 3;
+    lbl_eu_80664718[3] = 0;
+    u8 c0 = tbl[off];
+    u8 c1 = tbl[off + 1];
+    u8 c2 = tbl[off + 2];
+    lbl_eu_80664718[0] = c0;
+    lbl_eu_80664718[1] = c1;
+    lbl_eu_80664718[2] = c2;
+    lbl_eu_80664718[5] = 1;
     func_8021FD44(reinterpret_cast<CModelDispMakeCrystal*>(base));
 }
+#pragma optimize_for_size off
 
 void func_8021CC60(CModelDispMakeCrystal* self)
 {
+    nw4r::math::VEC3 v;
     u8* base = reinterpret_cast<u8*>(self);
     f32* fbe4 = reinterpret_cast<f32*>(base + 0xbe4);
     f32* fbe0 = reinterpret_cast<f32*>(base + 0xbe0);
     f32 v4 = *fbe4 + lbl_eu_806684A0;
     *fbe4 = v4;
-    if (v4 < lbl_eu_806684CC) return;
-    f32 v0 = *fbe0 - lbl_eu_806684D0;
-    *fbe0 = v0;
-    if (v0 >= lbl_eu_806684A4) goto L_EB70;
-    *fbe0 = lbl_eu_806684A4;
-    base[0xbdc] = 2;
-    base[0xbe8] = 1;
-    for (u8 i = 0; i < 8; i++) {
-        nw4r::math::VEC3 v;
-        func_80222F64(&v, base + 0xc18, i);
-        reinterpret_cast<CMCEffUpPrm*>(base + 0xcec)->setTranslate(i, v);
-    }
-    func_80138078__FUl(0x3d);
-L_EB70:
-    void* p20 = *reinterpret_cast<void**>(base + 0x20);
-    if (p20) {
-        reinterpret_cast<CMCVt48*>(p20)->m16(*fbe0);
-    }
-    for (u8 i = 0; i < 2; i++) {
-        void* p = *reinterpret_cast<void**>(base + (u32)i * 0x5cc + 0x44);
-        if (p) {
-            reinterpret_cast<CMCVt48*>(p)->m16(*fbe0);
+    if (v4 >= lbl_eu_806684CC) {
+        f32 v0 = *fbe0 - lbl_eu_806684D0;
+        *fbe0 = v0;
+        if (v0 < lbl_eu_806684A4) {
+            *fbe0 = lbl_eu_806684A4;
+            base[0xbdc] = 2;
+            base[0xbe8] = 1;
+            for (u8 i = 0; i < 8; i++) {
+                func_80222F64(&v, base + 0xc18, i);
+                reinterpret_cast<CMCEffUpPrm*>(base + 0xcec)->setTranslate(i, v);
+            }
+            func_80138078__FUl(0x3d);
+        }
+        void* p20 = *reinterpret_cast<void**>(base + 0x20);
+        if (p20) {
+            reinterpret_cast<CMCVt48*>(p20)->m16(*fbe0);
+        }
+        for (u8 i = 0; i < 2; i++) {
+            void* p = *reinterpret_cast<void**>(base + (u32)i * 0x5cc + 0x44);
+            if (p) {
+                reinterpret_cast<CMCVt48*>(p)->m16(*fbe0);
+            }
         }
     }
 }
@@ -1016,8 +1040,8 @@ void func_8021CFC0(CModelDispMakeCrystal* self)
         if (roll < (s8)n28) {
             new3 = 0;
         } else {
-            // bin the roll by cumulative thresholds; yields 1 or 2
-            new3 = (s8)(1 + (roll >= (s8)((s8)n28 + (s8)n29)));
+            // bin the roll by cumulative thresholds; yields 2 or 3
+            new3 = (s8)(2 + (roll >= (s8)((s8)n28 + (s8)n29)));
         }
         lbl_eu_80664718[3] = (u8)new3;
         if ((u8)new3 == n31) {
@@ -1050,19 +1074,24 @@ void func_8021D168(CModelDispMakeCrystal* self)
     f32* vel = reinterpret_cast<f32*>(base + 0x2dcc);
     f32 v = *vel + lbl_eu_806684A0;
     *vel = v;
-    if (v >= lbl_eu_806684DC) {
-        u32 f44 = *reinterpret_cast<u32*>(base + 0x44);
-        *vel = lbl_eu_806684A4;
-        if (f44) {
+    if (v < lbl_eu_806684DC) return;
+    u32 f44 = *reinterpret_cast<u32*>(base + 0x44);
+    *vel = lbl_eu_806684A4;
+    // Nested reload reproduces retail's dead duplicate beq before the call.
+    if (f44) {
+        void* m = *reinterpret_cast<void**>(base + 0x44);
+        if (m != 0) {
             func_8004B9D4(base + 0x4c, 0x24, 0, -1, 0);
         }
-        base[0xbdd] = 0x4;
-        func_80220954(self, 1, func_801392B4(base[0x5f0]));
     }
+    base[0xbdd] = 0x4;
+    func_80220954(self, 1, func_801392B4(base[0x5f0]));
 }
 
 void func_8021D200(){}
 
+// -O4,s frame: retail keeps the plain divw for the %10 (no magic-multiply).
+#pragma optimize_for_size on
 void func_8021D3E4(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -1082,13 +1111,18 @@ void func_8021D3E4(CModelDispMakeCrystal* self)
         base[0x13bf] = 0;
         if (p) reinterpret_cast<u8*>(p)[0x59] = 1;
         for (u8 i = 0; i < 2; i++) {
+            // Reload the slot pointer (CSE'd with the test load) so MWCC emits
+            // retail's dead duplicate beq before the call setup.
             if (*reinterpret_cast<u32*>(base + (u32)i * 0x5cc + 0x44)) {
-                func_8004B9D4(base + (u32)i * 0x5cc + 0x4c, 0x21, 0, -1, 0);
+                void* m = *reinterpret_cast<void**>(base + (u32)i * 0x5cc + 0x44);
+                if (m != 0) {
+                    func_8004B9D4(base + (u32)i * 0x5cc + 0x4c, 0x21, 0, -1, 0);
+                }
             }
         }
     } else if (r0 >= 3) {
         // Random (1/3) chance to fail the tuning step.
-        s8 rem = (s8)(rand31__Q22ml6MTRandFv() % 10);
+        s8 rem = (s8)((s32)ml::MTRand::getInstance()->rand31() % 10);
         if (rem < 3) {
             u32 p = *reinterpret_cast<u32*>(base + 0x14);
             base[0xbdd] = 6;
@@ -1102,7 +1136,9 @@ void func_8021D3E4(CModelDispMakeCrystal* self)
         }
     }
 }
+#pragma optimize_for_size off
 
+#pragma optimize_for_size on
 void func_8021D564(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -1117,13 +1153,17 @@ void func_8021D564(CModelDispMakeCrystal* self)
     if (n >= base[0x2dc7]) {
         r30 = 1;
     } else if (n >= base[0x2dc6]) {
-        if ((s8)(rand31__Q22ml6MTRandFv() % 5) == 0) r30 = 1;
+        // Retail calls getInstance() before each rand31(); divisor math stays
+        // on signed ints so -O4,s keeps the literal divw/mullw/subf sequence.
+        if ((s8)((int)ml::MTRand::getInstance()->rand31() % 5) == 0) r30 = 1;
     }
     if (r30 == 0) {
-        u8 r56 = func_801392B4(base[0x5f0]);
-        s8 delta = (s8)(rand31__Q22ml6MTRandFv() % 11) + 0x14;
-        if (r56 == 6) delta = (s8)(delta * 2);
-        s16 nv = *reinterpret_cast<s16*>(base + 0x2dc4) - delta;
+        // Delta drawn first, then the char-state lookup (retail order).
+        s8 delta = (s8)((int)ml::MTRand::getInstance()->rand31() % 11);
+        delta += 0x14;
+        int r56 = (u8)func_801392B4(base[0x5f0]);
+        if (r56 == 6) delta = (s8)((s8)delta * 2);
+        s16 nv = *reinterpret_cast<s16*>(base + 0x2dc4) - (s8)delta;
         *reinterpret_cast<s16*>(base + 0x2dc4) = nv;
         if (nv > 0) {
             base[0xbdd] = 7;
@@ -1138,6 +1178,7 @@ void func_8021D564(CModelDispMakeCrystal* self)
     }
     func_80138078__FUl(0x3f);
 }
+#pragma optimize_for_size off
 
 // Retail 0x8021F50C: slot-trial state driver - once the random success
 // window opens, pick the slot whose stored value beats the random threshold
@@ -1231,6 +1272,7 @@ void CModelDispMakeCrystal::setCrystalPosEntry(unsigned short index, short a, sh
     entry->flag = 1;
 }
 
+#pragma optimize_for_size on
 void func_8021D9B8(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -1241,28 +1283,37 @@ void func_8021D9B8(CModelDispMakeCrystal* self)
         base[0xbdd] = 9;
         reinterpret_cast<CMCEffSuccess*>(base + 0xd5c)->startIn();
         for (u8 i = 0; i < 2; i++) {
+            // Reload the slot pointer (CSE'd with the test load) so MWCC
+            // emits retail's dead duplicate beq before the call setup.
             if (*reinterpret_cast<u32*>(base + (u32)i * 0x5cc + 0x44)) {
-                func_8004B9D4(base + (u32)i * 0x5cc + 0x4c, 0x26, 0, -1, 0);
+                if (*reinterpret_cast<void**>(base + (u32)i * 0x5cc + 0x44) != 0) {
+                    func_8004B9D4(base + (u32)i * 0x5cc + 0x4c, 0x26, 0, -1, 0);
+                }
             }
         }
         func_80138078__FUl(0x91);
-        if (r31 < 0xc8) {
-            func_80220954(self, 5, 0);
-        } else {
+        // Then-block laid out first: >= 0xc8 falls through into rank 6.
+        if (r31 >= 0xc8) {
             func_80220954(self, 6, 0);
+        } else {
+            func_80220954(self, 5, 0);
         }
     } else {
         // Failure: crystal count too low.
         base[0xbdd] = 0xa;
         reinterpret_cast<CMCC8CFn*>(base + 0xd78)->m2();
         for (u8 i = 0; i < 2; i++) {
+            // Same dead-duplicate-beq shape as the success loop above.
             if (*reinterpret_cast<u32*>(base + (u32)i * 0x5cc + 0x44)) {
-                func_8004B9D4(base + (u32)i * 0x5cc + 0x4c, 0x27, 0, -1, 0);
+                if (*reinterpret_cast<void**>(base + (u32)i * 0x5cc + 0x44) != 0) {
+                    func_8004B9D4(base + (u32)i * 0x5cc + 0x4c, 0x27, 0, -1, 0);
+                }
             }
         }
         func_80138078__FUl(0xb2);
     }
 }
+#pragma optimize_for_size off
 
 void func_8021DAF4(CModelDispMakeCrystal* self)
 {
@@ -1308,6 +1359,9 @@ void func_8021DB9C(CModelDispMakeCrystal* self)
 
 // Retail 0x8021FA74: crystal-list state driver - when the crystal effect
 // finishes, either start the change-in anim (count >= 200) or trace-out.
+// NOTE: retail saves r30/r31 as one [stmw] block; -O4,p emits separate stw
+// (MWCC_CASES S16), so force the size-optimal frame like func_8021C4F0.
+#pragma optimize_for_size on
 void func_8021DC1C(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -1336,6 +1390,7 @@ void func_8021DC1C(CModelDispMakeCrystal* self)
         }
     }
 }
+#pragma optimize_for_size off
 
 // Retail 0x8021FB64: crystal-list state driver - when the start effect
 // finishes, either run the success/special path (crystal count >= 300) or
@@ -1442,32 +1497,42 @@ void func_8021DF84(CModelDispMakeCrystal* self)
 // gauge-tune dialog. Classify the pad flags (Classic vs Wiimote/Nunchuk),
 // then route trigger presses to cursor stepping (cancel/dir/confirm/menu)
 // or to the CSysWin dialog paths.
+// Retail frame is stmw r30 (2-reg save); decomp emits separate stw saves -
+// per-function -O4,s pragma was tried and made the body diverge further
+// (MWCC_CASES §16/§13 static cap).
 void func_8021E014(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
-    u32 trigger1, trigger2, trigger3, cancel, confirm, menu, dir;
+    // Button masks are kept as raw mask words and converted to bools right
+    // after decode; trigger bits are extracted as 0/1 ints (retail extrwi).
+    u32 cancel, dir, confirm, menu;
+    int trigger1, trigger2, trigger3;
     if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-        u32 f = pad->mTurboPressButtonFlags;
-        u32 p = pad->mPad.mPressedButtonFlags;
-        cancel = (f & 0x8004) != 0;
-        dir = (f & 0x10008) != 0;
-        confirm = (f & 0x2001) != 0;
-        menu = (f & 0x4002) != 0;
-        trigger1 = (p >> 21) & 1;
-        trigger2 = (p >> 22) & 1;
-        trigger3 = (p >> 9) & 1;
+        u32 f = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(pad) + 0x104);
+        u32 p = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(pad) + 4);
+        cancel = f & 0x8004;
+        dir = (f & 0x10000000) | (f & 0x8000);
+        confirm = f & 0x2001;
+        menu = f & 0x4002;
+        trigger1 = (p >> 10) & 1;
+        trigger2 = (p >> 9) & 1;
+        trigger3 = (p >> 22) & 1;
     } else {
-        u32 f = pad->mTurboPressButtonFlags;
-        u32 p = pad->mPad.mPressedButtonFlags;
-        cancel = (f & 0x8004) != 0;
-        dir = (f & 0x10008) != 0;
-        confirm = (f & 0x2001) != 0;
-        menu = (f & 0x4002) != 0;
-        trigger1 = (p >> 4) & 1;
-        trigger2 = (p >> 5) & 1;
-        trigger3 = (p >> 9) & 1;
+        u32 f = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(pad) + 0x104);
+        u32 p = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(pad) + 4);
+        cancel = f & 0x8004;
+        dir = (f & 0x10000000) | (f & 0x8000);
+        confirm = f & 0x2001;
+        menu = f & 0x4002;
+        trigger1 = (p >> 27) & 1;
+        trigger2 = (p >> 26) & 1;
+        trigger3 = (p >> 22) & 1;
     }
+    bool bCancel = cancel != 0;
+    bool bDir = dir != 0;
+    bool bConfirm = confirm != 0;
+    bool bMenu = menu != 0;
 
     if (trigger1) {
         if (CSysWin_getUnk34(base + 0xe78) != 0) {
@@ -1487,7 +1552,7 @@ void func_8021E014(CModelDispMakeCrystal* self)
                 func_801D216C(base + 0xe20, 1);
             }
         }
-    } else if (cancel) {
+    } else if (bCancel) {
         // Cursor back: decrement the row cursor with page wrap-around.
         if (CSysWin_getUnk34(base + 0xe78) == 0) {
             u8 c1 = (u8)(base[0x2dc1] - 1);
@@ -1517,7 +1582,7 @@ void func_8021E014(CModelDispMakeCrystal* self)
             func_801F3850(base + 0xe38, (u16)(s8)base[0x2dc2]);
             func_80138078__FUl(1);
         }
-    } else if (dir) {
+    } else if (bDir) {
         // Cursor forward: increment the row cursor with page wrap-around.
         if (CSysWin_getUnk34(base + 0xe78) == 0) {
             u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
@@ -1549,7 +1614,7 @@ void func_8021E014(CModelDispMakeCrystal* self)
             func_801F3850(base + 0xe38, (u16)(s8)base[0x2dc2]);
             func_80138078__FUl(1);
         }
-    } else if (confirm) {
+    } else if (bConfirm) {
         // Page back by 8 rows.
         if (CSysWin_getUnk34(base + 0xe78) == 0) {
             u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
@@ -1574,7 +1639,7 @@ void func_8021E014(CModelDispMakeCrystal* self)
             func_801F3850(base + 0xe38, (u16)(s8)base[0x2dc2]);
             func_80138078__FUl(1);
         }
-    } else if (menu) {
+    } else if (bMenu) {
         // Page forward by 8 rows.
         if (CSysWin_getUnk34(base + 0xe78) == 0) {
             u8* entries = *reinterpret_cast<u8**>(base + 0xe1c);
@@ -1835,7 +1900,7 @@ void func_8021EB00(CModelDispMakeCrystal* self)
             reinterpret_cast<CMCVt48*>(p)->m16(*fbe0);
         }
     }
-    if (*fbe0 >= lbl_eu_806684A0) {
+    if (!(*fbe0 < lbl_eu_806684A0)) {
         if (func_80222A58(base + 0xc18)) {
             base[0xbdd] = 0x16;
             func_80222AF0(base + 0xc18);
@@ -1948,14 +2013,17 @@ void func_8021EF30(CModelDispMakeCrystal* self)
     if (!func_80297D1C(base + 0xecc)) return;
     u8 count = base[0x2dc0];
     int found = 0;
-    for (u8 i = 0; i < count; i++) {
+    u8 i = 0;
+    do {
+        // Element-pointer formation matches retail's add/addic. split.
         CMCStep* p =
             reinterpret_cast<CMCStep*>(base + (u32)i * 0x34 + 0x13c0);
         if (p && p->type == 3) {
             found = 1;
             break;
         }
-    }
+        i++;
+    } while (i < count);
     if (found) {
         base[0xbdd] = 0x1e;
         func_80297D2C(base + 0xecc, 3, base + 0x13c0, base[0x2dc0]);
@@ -1976,6 +2044,8 @@ void func_8021EFE4(CModelDispMakeCrystal* self) {
 }
 
 
+// [stmw] r30 frame (see func_8021DC1C note): -O4,s.
+#pragma optimize_for_size on
 void func_8021F058(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -1984,17 +2054,17 @@ void func_8021F058(CModelDispMakeCrystal* self)
     // Bit positions differ between Classic controller and Wiimote/Nunchuk.
     u32 trigger1, trigger2, cancel, dir;
     if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-        u32 f = pad->mTurboPressButtonFlags;
         u32 p = pad->mPad.mPressedButtonFlags;
+        u32 f = pad->mTurboPressButtonFlags;
         cancel = (f & 0x8004) != 0;
-        dir = (f & 0x10008) != 0;
+        dir = ((f & 0x10000) | (f & 0x8)) != 0;
         trigger1 = (p >> 21) & 1;
         trigger2 = (p >> 22) & 1;
     } else {
-        u32 f = pad->mTurboPressButtonFlags;
         u32 p = pad->mPad.mPressedButtonFlags;
+        u32 f = pad->mTurboPressButtonFlags;
         cancel = (f & 0x8004) != 0;
-        dir = (f & 0x10008) != 0;
+        dir = ((f & 0x10000) | (f & 0x8)) != 0;
         trigger1 = (p >> 4) & 1;
         trigger2 = (p >> 5) & 1;
     }
@@ -2018,7 +2088,7 @@ void func_8021F058(CModelDispMakeCrystal* self)
         base[0x2dd1] = v;
         if ((s8)v < 0) base[0x2dd1] = 1;
         u8 param = base[0x2dd1];
-        u8 buf[16];
+        u8 buf[12];
         func_8022C1B4(buf, base + 0xe78, param);
         reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
         func_80138078__FUl(1);
@@ -2028,12 +2098,13 @@ void func_8021F058(CModelDispMakeCrystal* self)
         base[0x2dd1] = v;
         if ((s8)v > 1) base[0x2dd1] = 0;
         u8 param = base[0x2dd1];
-        u8 buf[16];
+        u8 buf[12];
         func_8022C1B4(buf, base + 0xe78, param);
         reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
         func_80138078__FUl(1);
     }
 }
+#pragma optimize_for_size off
 
 // Retail 0x80221104: while the gauge-tune dialog is open, branch on the cursor
 // step: zero runs the confirm-side cleanup, non-zero moves the cursor forward.
@@ -2155,23 +2226,24 @@ void func_8021F534(CModelDispMakeCrystal* self) {
 }
 
 
+#pragma optimize_for_size on
 void func_8021F5A8(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
     cf::CfPadData* pad = cf::CfGameManager::getCfPadData();
     u32 trigger1, trigger2, cancel, dir;
     if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-        u32 f = pad->mTurboPressButtonFlags;
         u32 p = pad->mPad.mPressedButtonFlags;
+        u32 f = pad->mTurboPressButtonFlags;
         cancel = (f & 0x8004) != 0;
-        dir = (f & 0x10008) != 0;
+        dir = ((f & 0x10000) | (f & 0x8)) != 0;
         trigger1 = (p >> 21) & 1;
         trigger2 = (p >> 22) & 1;
     } else {
-        u32 f = pad->mTurboPressButtonFlags;
         u32 p = pad->mPad.mPressedButtonFlags;
+        u32 f = pad->mTurboPressButtonFlags;
         cancel = (f & 0x8004) != 0;
-        dir = (f & 0x10008) != 0;
+        dir = ((f & 0x10000) | (f & 0x8)) != 0;
         trigger1 = (p >> 4) & 1;
         trigger2 = (p >> 5) & 1;
     }
@@ -2192,7 +2264,7 @@ void func_8021F5A8(CModelDispMakeCrystal* self)
         base[0x2dd1] = v;
         if ((s8)v < 0) base[0x2dd1] = 1;
         u8 param = base[0x2dd1];
-        u8 buf[16];
+        u8 buf[12];
         func_8022C1B4(buf, base + 0xe78, param);
         reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
         func_80138078__FUl(1);
@@ -2201,12 +2273,13 @@ void func_8021F5A8(CModelDispMakeCrystal* self)
         base[0x2dd1] = v;
         if ((s8)v > 1) base[0x2dd1] = 0;
         u8 param = base[0x2dd1];
-        u8 buf[16];
+        u8 buf[12];
         func_8022C1B4(buf, base + 0xe78, param);
         reinterpret_cast<CMCWinFn*>(base + 0xeb4)->m2(buf);
         func_80138078__FUl(1);
     }
 }
+#pragma optimize_for_size off
 
 // Retail 0x80221654: same gauge-tune dialog branch as func_8021F214, but for
 // the crystal-success menu (confirm path 3 / cursor-forward path 0x20).
@@ -2399,7 +2472,7 @@ extern "C" void func_8021FD44(CModelDispMakeCrystal* self)
     s16 iv = (s16)(lbl_eu_806684FC * val + lbl_eu_806684F8);
     *reinterpret_cast<f32*>(base + 0x2dcc) = lbl_eu_806684A4;
     base[0x2dc8] = 0;
-    base[0x2dc4] = iv;
+    *reinterpret_cast<u16*>(base + 0x2dc4) = iv;
     base[0x2dc6] = (u8)(iv / 30);
     base[0x2dc7] = (u8)(iv / 20);
     for (u8 k = 0; k < 7; k++) {
@@ -2630,11 +2703,10 @@ void func_802203D8(void* selfp)
     // value is 3 (the row key for this item source).
     u16 idx = (u16)(func_8003B1EC(g1) - 1);
     while (idx != 0) {
-        // code_80135FDC.hpp declares getBdatStringColumnValue with a
-        // const char* third arg for another TU; here the third arg is a
-        // row index (cast keeps the direct call + reloc name).
+        // Row-index variant of the bdat column lookup (CUIWindowManager.hpp
+        // declares the int third arg; the const char* variant is another TU's).
         u32 word = (u32)getBdatStringColumnValue(
-            g1, &lbl_eu_805090FC[0x68], reinterpret_cast<const char*>(idx));
+            g1, &lbl_eu_805090FC[0x68], (int)idx);
         if (*reinterpret_cast<u16*>(&word) == 3) break;
         idx--;
     }
@@ -3368,6 +3440,7 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
     return 0;
 }
 
+#pragma optimize_for_size on
 void func_80221B90(CModelDispMakeCrystal* self, u8 r4, u8 r5)
 {
     u8* base = reinterpret_cast<u8*>(self);
@@ -3396,6 +3469,7 @@ void func_80221B90(CModelDispMakeCrystal* self, u8 r4, u8 r5)
     func_8009D018(0xbd, 0);
     func_8009D018(0xbf, 0);
 }
+#pragma optimize_for_size off
 
 void CModelDispMakeCrystal::setCrystalCursor(u32 val) { *(u32*)((u8*)this + 0xE1C) = val; }
 

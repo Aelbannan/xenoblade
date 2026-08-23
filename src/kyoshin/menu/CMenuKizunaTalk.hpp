@@ -70,6 +70,66 @@ public:
     virtual void vf04(void* arg) = 0;  // vtable + 0x10 - cursor selection update
 };
 
+// CSysWin vtable view exposing the layout-build virtual at +0x88 (slot 34).
+// Same shape as the CSysWinView classes in CSysWinSave.hpp / CCol6System.hpp,
+// renamed to avoid ODR collisions.
+class KizunaSysWinView {
+public:
+    virtual void v00() = 0;
+    virtual void v01() = 0;
+    virtual void v02() = 0;
+    virtual void v03() = 0;
+    virtual void v04() = 0;
+    virtual void v05() = 0;
+    virtual void v06() = 0;
+    virtual void v07() = 0;
+    virtual void v08() = 0;
+    virtual void v09() = 0;
+    virtual void v0A() = 0;
+    virtual void v0B() = 0;
+    virtual void v0C() = 0;
+    virtual void v0D() = 0;
+    virtual void v0E() = 0;
+    virtual void v0F() = 0;
+    virtual void v10() = 0;
+    virtual void v11() = 0;
+    virtual void v12() = 0;
+    virtual void v13() = 0;
+    virtual void v14() = 0;
+    virtual void v15() = 0;
+    virtual void v16() = 0;
+    virtual void v17() = 0;
+    virtual void v18() = 0;
+    virtual void v19() = 0;
+    virtual void v1A() = 0;
+    virtual void v1B() = 0;
+    virtual void v1C() = 0;
+    virtual void v1D() = 0;
+    virtual void v1E() = 0;
+    virtual void v1F() = 0;
+    virtual void v20() = 0;  // index 32 -> vtable +0x88
+};
+
+// Field view over a CCur18-shaped blob: four words then two lone bytes
+// (+0x14/+0x15) copied individually (retail lbz/stb pairs).
+struct KizunaCurFields {
+    u8 _00[0x4];
+    u32 f_04;
+    u32 f_08;
+    u32 f_0c;
+    u32 f_10;
+    u8 f_14;
+    u8 f_15;
+};
+
+// func_801BCF48 stack scratch laid out like the retail frame:
+// cursor @sp+0x08, case-2 CSysWin @sp+0x20, case-0 CSysWin @sp+0x5c.
+struct KizunaScratch {
+    u8 mCur[0x18];
+    u8 mWin2[0x3C];
+    u8 mWin0[0x3C];
+};
+
 /*
  * Kizuna (friendship) talk screen - singleton, created by func_801BCEBC.
  *
@@ -145,6 +205,9 @@ extern "C" u16 func_8013A7D0(u8 a, u8 b);
 extern "C" int func_8006A6D0();
 extern "C" void func_8003AA78__5CBdatFUlPv(u32 value, void* data);
 extern "C" void* func_8003AA34();
+
+// Layout animation frame-target check (CSysWin.cpp / CCol6System.hpp decl).
+int func_80137444(nw4r::lyt::AnimTransform* anim, float frame);
 
 // CItemBoxGrid.hpp declares the BDAT byte-column reader with a u8 return,
 // which makes MWCC emit an rlwinm byte mask at every call site. The retail

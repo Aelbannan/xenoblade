@@ -348,6 +348,12 @@ struct CItemInstVt54 {
     virtual u32 _v54(void* arg);  // vtable+0x54
 };
 
+// 24-byte category-filter row copied around by value in func_801C56D8
+// (MWCC lowers the struct copies to unrolled lwz/lwzu pairs).
+struct GridFilter24 {
+    u32 w[6];
+};
+
 // 10-byte grid cell: stored item id + 8 per-cell flag bytes
 struct CItemBoxGridEntry {
     s16 id;        // +0x00 item id (or -1 for an empty cell)
@@ -404,7 +410,11 @@ extern "C" void* func_80157C4C(u32, s16);
 extern "C" u32 func_801392E4(u32);
 extern "C" u32 func_801361E8(u32, const char*, u32);
 extern "C" u32 func_80139358(u32);
-extern "C" CItemImplInstances* CItem_initItemImplInstances(void*);
+// CfGameManager.hpp (included transitively) declares
+// CItem_initItemImplInstances() with an empty parameter list; MWCC rejects a
+// differing one-argument redeclaration as an illegal overload, so keep the
+// retail symbol under its zero-arg declaration and cast at the call site.
+#define CItem_initItemImplInstances(item) ((void* (*)(void*))CItem_initItemImplInstances)(item)
 extern "C" u32 func_801D3320(void*);
 extern "C" void func_80158118(void*, u32);
 extern "C" u32 func_80208360(void*);
@@ -604,7 +614,7 @@ extern "C" u32 func_8008235C__Q22cf13CfGameManagerFv(u32);
 extern "C" void func_800A18A4(void*, u8);
 extern "C" u32 func_801380A0(u16);
 extern "C" u32 func_80138138(u16);
-extern "C" void* func_801412D0(u32);
+extern "C" u32 func_801412D0(u32);
 extern "C" u32 func_80140854(void*, u32, u32);
 extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(void);
 extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
@@ -624,7 +634,13 @@ extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char
 extern "C" void func_80139198(u32);
 extern "C" u16 func_8013606C(const void*, const void*, u32);
 extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
-extern "C" void func_80139658(void*, const char*, u32);
+// Pane-colour vector returned by value from func_801397AC/func_80139658
+// (r3:r4 pair); same layout as CEquipItemBox.hpp's CEquipBoxFourShorts,
+// defined locally because CEquipItemBox.hpp is not in this TU's include closure.
+struct CEquipBoxFourShorts {
+    s16 a, b, c, d;
+};
+extern "C" CEquipBoxFourShorts func_80139658(void*, const char*, u32);  // returns 4x s16 colour by value (r3:r4 pair)
 extern "C" void CopyVec4s(void*, void*);
 extern "C" CBaseCur* __ct__CCur07(void*, void*);
 extern "C" void __ct__CSortMenu(void*);
@@ -661,11 +677,5 @@ extern "C" void code80135FDC_setVec3(float*, float, float, float);
 extern "C" void func_801D24E8(void*, void*, void*);
 extern "C" void func_8022D614(void*, void*);
 extern "C" void func_80207FC8(void*, void*);
-// Pane-colour vector returned by value from func_801397AC (r3:r4 pair);
-// same layout as CEquipItemBox.hpp's CEquipBoxFourShorts, defined locally
-// because CEquipItemBox.hpp is not in this TU's include closure.
-struct CEquipBoxFourShorts {
-    s16 a, b, c, d;
-};
 extern "C" CEquipBoxFourShorts func_801397AC(void*, u32);
 extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);

@@ -165,6 +165,16 @@ extern u32 lbl_eu_80577680[0xD0 / 4];
 extern const float lbl_eu_80513588[];
 extern const float lbl_eu_80513598[];
 
+// s32->f32 bit-pattern conversion helper (replicates MWCC's xoris/0x4330
+// sequence while naming the shared sdata2 magic double).
+union Convert64 {
+    double d;
+    struct {
+        u32 hi; // big-endian word order
+        u32 lo;
+    };
+};
+
 // Hikari item record.  +0x00..+0x14 hold two VEC3s (f32 views via cast in
 // func_802B4470; +0x00..+0x08 are also copied as u32 words by func_802B371C).
 // Four 3-float corner offsets (12 consecutive floats) passed to the GX FIFO

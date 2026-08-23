@@ -24,14 +24,22 @@ extern const f32 lbl_eu_8066A080; // 64.0f
 // runtime type-info chain against it (see ut_RuntimeTypeInfo.h).
 extern const nw4r::ut::detail::RuntimeTypeInfo lbl_eu_80665550;
 
+// StrmPlayer::StrmDataLoadTask vtable (.data; plain linker label in retail,
+// referenced by UpdateLoadingBlockIndex's inlined constructor).
+extern u8 lbl_eu_8056ACC0[]; // StrmDataLoadTask vtable (.data)
+
+u8 lbl_eu_80665518; // StrmPlayer load-buffer static-init flag (.sdata)
+
 namespace nw4r {
 namespace snd {
 namespace detail {
 
 u8 StrmPlayer::sLoadBuffer[LOAD_BUFFER_SIZE] ALIGN(32);
-OSMutex StrmPlayer::sLoadBufferMutex;
 
-bool StrmPlayer::sStaticInitFlag = false;
+// NOTE: the load-buffer mutex (lbl_eu_80653E00) and static-init flag
+// (lbl_eu_80665518) are plain linker labels in retail, not class statics;
+// see the extern declarations above.
+// bool StrmPlayer::sStaticInitFlag = false; - replaced by lbl_eu_80665518
 
 /******************************************************************************
  * Retail-layout mirror
@@ -106,6 +114,16 @@ struct StrmChannelRetail {
 
 // StrmFileReader::StrmTrackInfo - the per-track file info block written by
 // ReadStrmTrackInfo (volume/pan/channelCount/channelIndex), at track + 0x8.
+// StrmPlayer::StrmHeaderLoadTask embedded at player +0x174 (Task base is
+// 0x10 bytes; see snd_Task.h).
+struct StrmHeaderLoadTaskRetail {
+    u8 taskBase[0x10];              // Task base (vtable + links)
+    StrmPlayer* strmPlayer;         // at task + 0x10
+    ut::FileStream* fileStream;     // at task + 0x14
+    s32 startOffsetType;            // at task + 0x18
+    s32 startOffset;                // at task + 0x1C
+};                                  // sizeof 0x20
+
 struct StrmTrackFileInfoRetail {
     u8 volume;             // at 0x0 (track + 0x8)
     u8 pan;                // at 0x1 (track + 0x9)
@@ -215,11 +233,14 @@ struct StrmPlayerRetailLayout {
     bool mPreparedFlag;                    // at 0x123
     bool mTaskErrorFlag;                   // at 0x124
     bool mTaskCancelFlag;                  // at 0x125
-    u8 _pad0x126[0x12A - 0x126];           // 0x126..0x12A
+    bool mLoadingDelayFlag;                 // at 0x126
+    bool mPauseFlag;                       // at 0x127
+    bool mPauseStatus;                     // at 0x128
+    bool mLoadWaitFlag;                    // at 0x129
     bool mNoRealtimeLoadFlag;              // at 0x12A
-    u8 _pad0x12B[0x12C - 0x12B];           // 0x12B..0x12C
+    bool mSkipUpdateAdpcmLoop;             // at 0x12B
     bool mValidAdpcmLoop;                  // at 0x12C
-    u8 _pad0x12D[0x12E - 0x12D];           // 0x12D..0x12E
+    bool mPlayFinishFlag;                   // at 0x12D
     bool mLoadFinishFlag;                  // at 0x12E
     bool mBufferAllocFlag;                 // at 0x12F
     s32 mLoopCounter;                      // at 0x130
@@ -236,16 +257,22 @@ struct StrmPlayerRetailLayout {
     s32 mPlayingDataBlockIndex;            // at 0x15C
     s32 mLoopStartBlockIndex;              // at 0x160
     s32 mLastBlockIndex;                   // at 0x164
-    u8 _pad0x168[0x194 - 0x168];           // 0x168..0x194
+    s32 field_0x168;                       // at 0x168 (pending load-task count)
+    s32 mStartOffsetType;                   // at 0x16C
+    s32 mStartOffset;                       // at 0x170
+    StrmHeaderLoadTaskRetail mStrmHeaderLoadTask; // at 0x174 (0x20)
     // StrmPlayer::StrmDataLoadTaskList (private typedef) expanded here; fully
     // qualified because a namespace-scope friend decl shadows the nested type.
     nw4r::ut::LinkList<StrmPlayer::StrmDataLoadTask,
                        offsetof(StrmPlayer::StrmDataLoadTask, node)>
         mStrmDataLoadTaskList;              // at 0x194 (0xC)
     InstancePool<StrmPlayer::StrmDataLoadTask> mStrmDataLoadTaskPool; // at 0x1A0 (0x4)
-    u8 _pad0x1A4[0x824 - 0x1A4];            // 0x1A4..0x824
+    u8 mStrmDataLoadTaskArea[0x680];         // 0x1A4..0x824 (task pool area)
     StrmBufferPool* mBufferPool;            // at 0x824
-    Voice* mVoice;                          // at 0x828
+    union {
+        Voice* mVoice;                      // at 0x828 (voice while playing)
+        ut::FileStream* mFileStream;        // at 0x828 (stream while preparing)
+    };
     s32 mTrackCount;                        // at 0x82C
     s32 mChannelCount;                      // at 0x830
     s32 mVoiceOutCount;                     // at 0x834
@@ -295,6 +322,23 @@ extern "C" void SetBiquadFilter__Q44nw4r3snd6detail5VoiceFif(Voice* pVoice,
 extern "C" void SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam(
     Voice* pVoice, int index, const VoiceOutParamRetail& rParam);
 
+// Defined later in this TU (retail-mangled member emitted as a free function).
+void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6detail10StrmPlayer9StrmTrack(
+    StrmPlayer* pStrmPlayer, StrmTrackRetailLayout* pTrack);
+
+// Shared disk-status probe: downcast the stream at +0x828 to DvdFileStream by
+// walking the runtime type-info chain against lbl_eu_80665550, then report
+// whether the DVD drive is busy. Used by UpdateBuffer / Update.
+inline bool IsDvdStreamBusy(ut::FileStream* pFileStream) {
+    if (pFileStream != NULL &&
+        !TypeInfoIsDerivedFrom(pFileStream->GetRuntimeTypeInfo(),
+                               &lbl_eu_80665550)) {
+        pFileStream = NULL;
+    }
+
+    return pFileStream != NULL && DVDGetDriveStatus();
+}
+
 // Retail SetTrackVolume(unsigned long, float) is a StrmPlayer member, but the
 // stale header has no declaration for it; define the retail mangled symbol as
 // a free function (same ABI: r3 = this, r4 = track, f1 = volume). Kept OUT of
@@ -317,11 +361,12 @@ void SetTrackVolume__Q44nw4r3snd6detail10StrmPlayerFUlf(StrmPlayer* pStrmPlayer,
 }
 
 StrmPlayer::StrmPlayer()
-    : mSetupFlag(false), mActiveFlag(false), mFileStream(NULL), mVoice(NULL) {
-
-    if (!sStaticInitFlag) {
-        OSInitMutex(&sLoadBufferMutex);
-        sStaticInitFlag = true;
+    : mSetupFlag(false), mActiveFlag(false), mFileStream(NULL) {
+    // One-time init of the shared load-buffer mutex (plain linker label in
+    // retail, guarded by an .sdata flag byte).
+    if (lbl_eu_80665518 == 0) {
+        OSInitMutex(&lbl_eu_80653E00);
+        lbl_eu_80665518 = 1;
     }
 
     mStrmDataLoadTaskPool.Create(
@@ -396,6 +441,39 @@ bool StrmPlayer::Prepare(ut::FileStream* pFileStream, int voices,
     pTask->startOffsetType = mStartOffsetType;
     pTask->startOffset = mStartOffset;
     TaskManager::GetInstance().AppendTask(pTask);
+
+    return true;
+}
+
+// Retail 3-argument overload (no voices argument; mVoiceOutCount keeps its
+// previous value).
+bool StrmPlayer::Prepare(ut::FileStream* pFileStream,
+                         StartOffsetType offsetType, int offset) {
+    SoundThread::AutoLock lock;
+
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
+
+    self->mFileStream = pFileStream;
+    self->mStartOffsetType = offsetType;
+    self->mStartOffset = offset;
+
+    // Reset the task state flags and mark the player active.
+    self->mTaskErrorFlag = false;
+    self->mTaskCancelFlag = false;
+    self->mLoadingDelayFlag = false;
+    self->mActiveFlag = true;
+
+    // Registering derives the SoundThread::PlayerCallback subobject pointer
+    // from this (MWCC emits the multiple-inheritance adjust + null check).
+    SoundThread::GetInstance().RegisterPlayerCallback(this);
+
+    StrmHeaderLoadTaskRetail* pTask = &self->mStrmHeaderLoadTask;
+    pTask->strmPlayer = this;
+    pTask->fileStream = self->mFileStream;
+    pTask->startOffsetType = self->mStartOffsetType;
+    pTask->startOffset = self->mStartOffset;
+    TaskManager::GetInstance().AppendTask(reinterpret_cast<Task*>(pTask));
 
     return true;
 }
@@ -533,78 +611,153 @@ bool StrmPlayer::Start() {
 }
 
 void StrmPlayer::Stop() {
-    {
-        SoundThread::AutoLock lock;
+    // Declaration order drives MWCC's callee-saved coloring here.
+    int i;
+    u32 level;
 
-        if (mVoice != NULL) {
-            mVoice->Stop();
-        }
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
 
-        FreeChannels();
+    // Retail re-evaluates SoundThread::GetInstance() + the mutex offset at
+    // every lock/unlock site (the address is not kept in a saved register).
+    OSLockMutex(
+        &reinterpret_cast<SoundThreadRetailLayout*>(&SoundThread::GetInstance())
+             ->mMutex);
 
-        if (mActiveFlag) {
-            SoundThread::GetInstance().UnregisterPlayerCallback(this);
-        }
-    }
-
-    TaskManager::GetInstance().CancelTask(&mStrmHeaderLoadTask);
-
-    {
-        ut::AutoInterruptLock lock;
-
-        while (!mStrmDataLoadTaskList.IsEmpty()) {
-            TaskManager::GetInstance().CancelTask(
-                &mStrmDataLoadTaskList.GetBack());
+    // Stop the voice on every player-track slot (fixed bound of 8, not
+    // mTrackCount).
+    for (i = 0; i < 8; i++) {
+        if (self->mTracks[i].activeFlag && self->mTracks[i].voice != NULL) {
+            self->mTracks[i].voice->Stop();
         }
     }
 
-    if (mFileStream != NULL) {
-        mFileStream->Close();
-        mFileStream = NULL;
+    if (self->mActiveFlag) {
+        SoundThread::GetInstance().UnregisterPlayerCallback(this);
     }
 
-    mStartedFlag = false;
-    mPreparedFlag = false;
-    mActiveFlag = false;
+    OSUnlockMutex(
+        &reinterpret_cast<SoundThreadRetailLayout*>(&SoundThread::GetInstance())
+             ->mMutex);
+
+    TaskManager::GetInstance().CancelTask(
+        reinterpret_cast<Task*>(&self->mStrmHeaderLoadTask));
+
+    // Cancel every queued stream-data load task (interrupt-protected walk
+    // from the back of the pending list).
+    u32 level1 = OSDisableInterrupts();
+
+    while (!self->mStrmDataLoadTaskList.IsEmpty()) {
+        TaskManager::GetInstance().CancelTask(
+            &self->mStrmDataLoadTaskList.GetBack());
+    }
+
+    OSRestoreInterrupts(level1);
+
+    // Release every allocated channel buffer.
+    for (int i = 0; i < self->mChannelCount; i++) {
+        if (self->mChannels[i].bufferAddress != NULL) {
+            self->mBufferPool->Free(self->mChannels[i].bufferAddress);
+            self->mChannels[i].bufferAddress = NULL;
+        }
+    }
+
+    // Free every player-track voice.
+    level = OSDisableInterrupts();
+
+    StrmTrackRetailLayout* pTrack = self->mTracks;
+    for (int i = 0; i < self->mTrackCount; i++) {
+        if (pTrack->activeFlag && pTrack->voice != NULL) {
+            pTrack->voice->Free();
+            pTrack->voice = NULL;
+        }
+        pTrack++;
+    }
+
+    OSRestoreInterrupts(level);
+
+    OSLockMutex(
+        &reinterpret_cast<SoundThreadRetailLayout*>(&SoundThread::GetInstance())
+             ->mMutex);
+
+    if (self->mFileStream != NULL) {
+        self->mFileStream->Close();
+        self->mFileStream = NULL;
+    }
+
+    OSUnlockMutex(
+        &reinterpret_cast<SoundThreadRetailLayout*>(&SoundThread::GetInstance())
+             ->mMutex);
+
+    self->mStartedFlag = false;
+    self->mPreparedFlag = false;
+    self->mActiveFlag = false;
 }
 
 void StrmPlayer::Pause(bool flag) {
-    SoundThread::AutoLock lock;
+    // Retail re-evaluates SoundThread::GetInstance() + the mutex offset at
+    // every lock/unlock site.
+    OSLockMutex(
+        &reinterpret_cast<SoundThreadRetailLayout*>(&SoundThread::GetInstance())
+             ->mMutex);
 
-    mPauseFlag = flag;
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
+
+    self->mPauseFlag = flag;
 
     if (flag) {
-        mLoadWaitFlag = true;
+        self->mLoadWaitFlag = true;
     }
 
     UpdatePauseStatus();
+
+    OSUnlockMutex(
+        &reinterpret_cast<SoundThreadRetailLayout*>(&SoundThread::GetInstance())
+             ->mMutex);
 }
 
 void StrmPlayer::InitParam() {
     BasicPlayer::InitParam();
 
-    mStartedFlag = false;
-    mPreparedFlag = false;
-    mLoadFinishFlag = false;
+    // The stale header cannot express the retail layout; reset every field
+    // through the mirror struct in retail store order.
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
 
-    mPauseFlag = false;
-    mPauseStatus = false;
+    const f32 zero = lbl_eu_8066A060;
+    const f32 one = lbl_eu_8066A078;
 
-    mLoadWaitFlag = false;
-    mNoRealtimeLoadFlag = false;
+    self->mStartedFlag = false;
+    self->mPreparedFlag = false;
+    self->mLoadFinishFlag = false;
 
-    mPlayFinishFlag = false;
+    self->mPauseFlag = false;
+    self->mPauseStatus = false;
 
-    mSkipUpdateAdpcmLoop = false;
-    mValidAdpcmLoop = false;
+    self->mLoadWaitFlag = false;
+    self->mNoRealtimeLoadFlag = false;
 
-    mChannelCount = 0;
-    mLoopCounter = 0;
-    mVoiceOutCount = 1;
+    self->mPlayFinishFlag = false;
 
-    for (int i = 0; i < CHANNEL_MAX; i++) {
-        mChannels[i].bufferAddress = NULL;
-        mChannels[i].bufferSize = 0;
+    self->mSkipUpdateAdpcmLoop = false;
+    self->mValidAdpcmLoop = false;
+
+    self->mBufferAllocFlag = false;
+    self->mLoopCounter = 0;
+
+    self->mVoiceOutCount = 1;
+    self->field_0x168 = 0;
+
+    for (int i = 0; i < 8; i++) {
+        self->mTracks[i].activeFlag = false;
+        self->mTracks[i].volume = one;
+        self->mTracks[i].field_0x34 = zero;
+        self->mTracks[i].voice = NULL;
+    }
+
+    for (int i = 0; i < 16; i++) {
+        self->mChannels[i].bufferAddress = NULL;
     }
 }
 
@@ -707,12 +860,19 @@ bool StrmPlayer::LoadHeader(ut::FileStream* pFileStream,
     return true;
 }
 
+// Retail DvdFileStream layout: the stream priority lives at +0x68 and the
+// locked header has no accessor that compiles to the inline store.
+struct DvdFileStreamRetailLayout {
+    u8 _pad0x0[0x68];
+    s32 priority; // at 0x68
+};
+
 bool StrmPlayer::LoadStreamData(ut::FileStream* pFileStream, int offset,
                                 u32 size, u32 blockSize, int blockIndex,
                                 bool needUpdateAdpcmLoop) {
     // Downcast to DvdFileStream by walking the retail runtime type-info chain
-    // (lbl_eu_80665550 is the DvdFileStream type-info object; the locked
-    // header's DynamicCast would reference the C++ static member instead).
+    // (lbl_eu_80665550 is the DvdFileStream type-info object). Retail hoists
+    // the type-info address into a register before the null-check branch.
     const ut::detail::RuntimeTypeInfo* pDvdTypeInfo = &lbl_eu_80665550;
     ut::DvdFileStream* pDvdStream;
     if (pFileStream != NULL &&
@@ -724,7 +884,8 @@ bool StrmPlayer::LoadStreamData(ut::FileStream* pFileStream, int offset,
     }
 
     if (pDvdStream != NULL) {
-        pDvdStream->SetPriority(DVD_PRIO_HIGH);
+        reinterpret_cast<DvdFileStreamRetailLayout*>(pDvdStream)->priority =
+            DVD_PRIO_HIGH;
     }
 
     // Retail keeps the mutex address in a saved register (mr r3, r28 / bl
@@ -736,14 +897,18 @@ bool StrmPlayer::LoadStreamData(ut::FileStream* pFileStream, int offset,
     StrmPlayerRetailLayout* self =
         reinterpret_cast<StrmPlayerRetailLayout*>(this);
 
-    u16 adpcmPredScale[16];
     s32 streamOffset = offset + self->mStrmInfo.blockHeaderOffset;
+    // Separate working pointer into the shared load buffer (retail keeps the
+    // extern-array reference for Read and this pointer for the fan-out).
+    u8* pLoadBuf = lbl_eu_8064FE00;
+    u16 adpcmPredScale[16];
+    int block = 0;
 
     // Loads arrive in groups of up to 2 channels per stream block; each group
     // is read at streamOffset and fanned out to the channel buffers.
     for (int block = 0; block < self->mChannelCount;) {
         s32 blockCount = 2;
-        if (block + 2 > self->mChannelCount) {
+        if (block + blockCount > self->mChannelCount) {
             blockCount = self->mChannelCount - block;
         }
 
@@ -756,15 +921,13 @@ bool StrmPlayer::LoadStreamData(ut::FileStream* pFileStream, int offset,
 
         for (int ch = 0; ch < blockCount; ch++, block++) {
             if (needUpdateAdpcmLoop) {
-                adpcmPredScale[block + ch] =
-                    lbl_eu_8064FE00[blockSize * ch];
+                adpcmPredScale[block] = pLoadBuf[blockSize * ch];
             }
 
+            u8* pSrc = pLoadBuf + blockSize * ch;
             u8* pDst = reinterpret_cast<u8*>(
-                           self->mChannels[block + ch].bufferAddress) +
+                           self->mChannels[block].bufferAddress) +
                        self->mDataBlockSize * blockIndex;
-            u8* pSrc = lbl_eu_8064FE00 + blockSize * ch;
-
             std::memcpy(pDst, pSrc, blockSize);
             DCFlushRange(pDst, blockSize);
         }
@@ -780,8 +943,11 @@ bool StrmPlayer::LoadStreamData(ut::FileStream* pFileStream, int offset,
         self->mValidAdpcmLoop = true;
     }
 
-    if (!self->mPreparedFlag && --self->mPrepareCounter == 0) {
-        self->mPreparedFlag = true;
+    if (!self->mPreparedFlag) {
+        self->mPrepareCounter--;
+        if (self->mPrepareCounter == 0) {
+            self->mPreparedFlag = true;
+        }
     }
 
     OSUnlockMutex(pMutex);
@@ -842,211 +1008,286 @@ void StrmPlayer::FreeChannels() {
 }
 
 void StrmPlayer::Update() {
-    if (!mActiveFlag) {
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
+
+    if (!self->mActiveFlag) {
         return;
     }
 
-    if (mTaskErrorFlag && !mTaskCancelFlag) {
+    if (self->mTaskErrorFlag && !self->mTaskCancelFlag) {
         Stop();
         return;
     }
 
-    if (mStartedFlag && mVoice == NULL) {
-        Stop();
+    if (!self->mStartedFlag) {
         return;
     }
 
-    if (mLoadWaitFlag && mStrmDataLoadTaskList.IsEmpty()) {
-        mLoadWaitFlag = false;
-        UpdatePauseStatus();
+    // A dropped voice (track active with no voice) stops the whole player.
+    for (int i = 0; i < self->mTrackCount; i++) {
+        if (self->mTracks[i].activeFlag && self->mTracks[i].voice == NULL) {
+            Stop();
+            return;
+        }
     }
 
-    if (mLoadingDelayFlag) {
-        mLoadingDelayFlag = false;
+    if (self->mLoadWaitFlag && self->mStrmDataLoadTaskList.IsEmpty()) {
+        if (!IsDvdStreamBusy(self->mFileStream)) {
+            self->mLoadWaitFlag = false;
+            UpdatePauseStatus();
+        }
     }
 
-    if (mVoice != NULL) {
-        f32 volume = 1.0f;
-        volume *= GetVolume();
+    if (self->mLoadingDelayFlag) {
+        self->mLoadingDelayFlag = false;
+    }
 
-        f32 pitchRatio = 1.0f;
-        pitchRatio *= GetPitch();
-
-        f32 pan = 0.0f;
-        pan += GetPan();
-
-        f32 surroundPan = 0.0f;
-        surroundPan += GetSurroundPan();
-
-        f32 lpfFreq = 1.0f;
-        lpfFreq += GetLpfFreq();
-
-        int remoteFilter = 0;
-        remoteFilter += GetRemoteFilter();
-
-        f32 mainSend = 0.0f;
-        mainSend += GetMainSend();
-
-        f32 fxSend[AUX_BUS_NUM];
-        for (int i = 0; i < AUX_BUS_NUM; i++) {
-            fxSend[i] = 0.0f;
-            fxSend[i] += GetFxSend(static_cast<AuxBus>(i));
-        }
-
-        f32 remoteOutVolume[WPAD_MAX_CONTROLLERS];
-        f32 remoteSend[WPAD_MAX_CONTROLLERS];
-        f32 remoteFxSend[WPAD_MAX_CONTROLLERS];
-        for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-            remoteOutVolume[i] = GetRemoteOutVolume(i);
-
-            remoteSend[i] = 0.0f;
-            remoteSend[i] += GetRemoteSend(i);
-
-            remoteFxSend[i] = 0.0f;
-            remoteFxSend[i] += GetRemoteFxSend(i);
-        }
-
-        ut::AutoInterruptLock lock;
-
-        if (mVoice != NULL) {
-            mVoice->SetVolume(volume);
-            mVoice->SetPitch(pitchRatio);
-            mVoice->SetPan(pan);
-            mVoice->SetSurroundPan(surroundPan);
-            mVoice->SetLpfFreq(lpfFreq);
-            mVoice->SetRemoteFilter(remoteFilter);
-            mVoice->SetOutputLine(GetOutputLine());
-            mVoice->SetMainOutVolume(GetMainOutVolume());
-            mVoice->SetMainSend(mainSend);
-
-            for (int i = 0; i < AUX_BUS_NUM; i++) {
-                mVoice->SetFxSend(static_cast<AuxBus>(i), fxSend[i]);
-            }
-
-            for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-                mVoice->SetRemoteOutVolume(i, remoteOutVolume[i]);
-                mVoice->SetRemoteSend(i, remoteSend[i]);
-                mVoice->SetRemoteFxSend(i, remoteFxSend[i]);
-            }
-        }
+    for (int i = 0; i < self->mTrackCount; i++) {
+        UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6detail10StrmPlayer9StrmTrack(
+            this, &self->mTracks[i]);
     }
 }
 
 void StrmPlayer::UpdateBuffer() {
-    if (mStartedFlag && mVoice != NULL) {
-        if (AxManager::GetInstance().IsDiskError()) {
-            mLoadWaitFlag = true;
-            UpdatePauseStatus();
-        }
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
 
-        if (!mPlayFinishFlag && !mNoRealtimeLoadFlag && !mLoadWaitFlag) {
-            u32 sample = mVoice->GetCurrentPlayingSample();
-            int block = sample / mStrmInfo.blockSamples;
+    if (!self->mStartedFlag) {
+        return;
+    }
 
-            while (mPlayingBufferBlockIndex != block) {
-                if (!mLoadWaitFlag && mStrmDataLoadTaskList.GetSize() >=
-                                          mBufferBlockCountBase - 2) {
+    if (!self->mTracks[0].activeFlag) {
+        return;
+    }
 
-                    mLoadingDelayFlag = true;
-                    mLoadWaitFlag = true;
-                    UpdatePauseStatus();
-                    break;
-                }
+    Voice* pTrackVoice = self->mTracks[0].voice;
+    if (pTrackVoice == NULL) {
+        return;
+    }
 
-                UpdatePlayingBlockIndex();
-                UpdateLoadingBlockIndex();
+    // Disk-error handling: pause loading while the DVD drive reports busy.
+    if (IsDvdStreamBusy(self->mFileStream)) {
+        self->mLoadWaitFlag = true;
+        UpdatePauseStatus();
+    }
+
+    if (!self->mPlayFinishFlag && !self->mNoRealtimeLoadFlag &&
+        !self->mLoadWaitFlag) {
+        u32 block =
+            pTrackVoice->GetCurrentPlayingSample() /
+            self->mStrmInfo.blockSamples;
+
+        do {
+            if (!self->mLoadWaitFlag &&
+                !self->mStrmDataLoadTaskList.IsEmpty() &&
+                self->field_0x168 >=
+                    self->mBufferBlockCountBase - 2) {
+                self->mLoadingDelayFlag = true;
+                self->mLoadWaitFlag = true;
+                UpdatePauseStatus();
+                break;
             }
-        }
+
+            UpdatePlayingBlockIndex();
+            UpdateLoadingBlockIndex();
+        } while (self->mPlayingBufferBlockIndex != block);
     }
 }
 
 void StrmPlayer::UpdateLoopAddress(u32 startSample, u32 endSample) {
-    ut::AutoInterruptLock lock;
+    // Retail holds the interrupt level in a saved register for the whole
+    // function (mr r3, r31 / bl OSRestoreInterrupts at the single exit).
+    u32 level = OSDisableInterrupts();
 
-    for (int i = 0; i < mChannelCount; i++) {
-        mVoice->SetLoopStart(i, mChannels[i].bufferAddress, startSample);
-        mVoice->SetLoopEnd(i, mChannels[i].bufferAddress, endSample);
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
+
+    for (int i = 0; i < self->mTrackCount; i++) {
+        StrmTrackRetailLayout* pTrack = &self->mTracks[i];
+        if (!pTrack->activeFlag) {
+            continue;
+        }
+
+        Voice* pVoice = pTrack->voice;
+        if (pVoice == NULL) {
+            continue;
+        }
+
+        for (int j = 0; j < pTrack->fileInfo.channelCount; j++) {
+            // Per-channel buffer address; channels beyond the first two or
+            // with an out-of-range channel index get a NULL buffer.
+            void* pBufferAddr;
+            if (j >= 2) {
+                pBufferAddr = NULL;
+            } else {
+                int channelIndex = pTrack->fileInfo.channelIndex[j];
+                if (channelIndex >= 16) {
+                    pBufferAddr = NULL;
+                } else {
+                    pBufferAddr =
+                        self->mChannels[channelIndex].bufferAddress;
+                }
+            }
+
+            pVoice->SetLoopStart(j, pBufferAddr, startSample);
+            pVoice->SetLoopEnd(j, pBufferAddr, endSample);
+        }
+
+        pVoice->SetLoopFlag(true);
     }
 
-    mVoice->SetLoopFlag(true);
+    OSRestoreInterrupts(level);
 }
 
 void StrmPlayer::UpdatePlayingBlockIndex() {
-    mPlayingDataBlockIndex++;
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
 
-    if (mPlayingDataBlockIndex > mLastBlockIndex && mStrmInfo.loopFlag) {
-        mPlayingDataBlockIndex = mLoopStartBlockIndex;
+    self->mPlayingDataBlockIndex++;
 
-        if (mLoopCounter < INT_MAX) {
-            mLoopCounter++;
+    // Wrapped past the last data block: loop back to the loop-start block
+    // (loop counter saturates at INT_MAX) and refresh the voice loop address.
+    if (self->mPlayingDataBlockIndex > self->mLastBlockIndex &&
+        self->mStrmInfo.loopFlag) {
+        self->mPlayingDataBlockIndex = self->mLoopStartBlockIndex;
+
+        if (self->mLoopCounter < INT_MAX) {
+            self->mLoopCounter++;
         }
 
-        UpdateLoopAddress(0, mPlayingBufferBlockCount * mStrmInfo.blockSamples);
+        UpdateLoopAddress(0, self->mPlayingBufferBlockCount *
+                                 self->mStrmInfo.blockSamples);
     }
 
-    mPlayingBufferBlockIndex++;
+    self->mPlayingBufferBlockIndex++;
 
-    if (mPlayingBufferBlockIndex >= mPlayingBufferBlockCount) {
-        mPlayingBufferBlockIndex = 0;
-        mPlayingBufferBlockCount = mLoadingBufferBlockCount;
+    if (self->mPlayingBufferBlockIndex >= self->mPlayingBufferBlockCount) {
+        s32 loadingCount = self->mLoadingBufferBlockCount;
+        self->mPlayingBufferBlockIndex = 0;
+        self->mPlayingBufferBlockCount = loadingCount;
 
-        UpdateLoopAddress(0, mPlayingBufferBlockCount * mStrmInfo.blockSamples);
+        UpdateLoopAddress(0, loadingCount * self->mStrmInfo.blockSamples);
     }
 
-    if (mPlayingBufferBlockIndex == mPlayingBufferBlockCount - 1 &&
-        mVoice->GetFormat() == AxVoice::FORMAT_ADPCM) {
+    // One block before the buffer end: refresh the ADPCM loop context of
+    // every streaming ADPCM voice, then clear the pending-update flags.
+    if (self->mPlayingBufferBlockIndex == self->mPlayingBufferBlockCount - 1)
+    {
+        // One block before the buffer end: refresh the ADPCM loop context of
+        // every streaming ADPCM voice.
+        if (!self->mSkipUpdateAdpcmLoop && self->mValidAdpcmLoop) {
+            for (int i = 0; i < self->mTrackCount; i++) {
+            StrmTrackRetailLayout& rTrack = self->mTracks[i];
+            if (!rTrack.activeFlag || rTrack.voice == NULL) {
+                continue;
+            }
 
-        if (!mSkipUpdateAdpcmLoop && mValidAdpcmLoop) {
-            ut::AutoInterruptLock lock;
+            Voice* pVoice = rTrack.voice;
+            if (pVoice->GetFormat() != AxVoice::FORMAT_ADPCM) {
+                continue;
+            }
 
-            for (int i = 0; i < mChannelCount; i++) {
+            u32 level = OSDisableInterrupts();
+
+            for (int j = 0; j < rTrack.fileInfo.channelCount; j++) {
+                // Channels beyond the first two or with an out-of-range
+                // channel index resolve to NULL; retail still loads the
+                // pred-scale through the (null) pointer.
+                StrmChannelRetail* pChannel;
+                if (j >= 2) {
+                    pChannel = NULL;
+                } else {
+                    u8 channelIndex = rTrack.fileInfo.channelIndex[j];
+                    if (channelIndex >= 16) {
+                        pChannel = NULL;
+                    } else {
+                        pChannel = &self->mChannels[channelIndex];
+                    }
+                }
+
                 AdpcmLoopParam loopParam;
-                loopParam.loop_pred_scale = mAdpcmLoopPredScale[i];
+                loopParam.loop_pred_scale = pChannel->mAdpcmLoopPredScale;
                 loopParam.loop_yn1 = 0;
                 loopParam.loop_yn2 = 0;
 
-                mVoice->SetAdpcmLoop(i, &loopParam);
+                pVoice->SetAdpcmLoop(j, &loopParam);
             }
 
-            mVoice->SetVoiceType(AxVoice::VOICE_TYPE_STREAM);
+            pVoice->SetVoiceType(AxVoice::VOICE_TYPE_STREAM);
+
+            OSRestoreInterrupts(level);
+            }
         }
 
-        mValidAdpcmLoop = false;
-        mSkipUpdateAdpcmLoop = false;
+        self->mValidAdpcmLoop = false;
+        self->mSkipUpdateAdpcmLoop = false;
     }
 
-    if (mPlayingDataBlockIndex == mLastBlockIndex - 1) {
-        UpdateDataLoopAddress(mPlayingBufferBlockIndex + 1);
+    if (self->mPlayingDataBlockIndex == self->mLastBlockIndex - 1) {
+        UpdateDataLoopAddress(self->mPlayingBufferBlockIndex + 1);
     }
 }
 
 void StrmPlayer::UpdateDataLoopAddress(s32 endBlock) {
-    if (mStrmInfo.loopFlag) {
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
+
+    if (self->mStrmInfo.loopFlag) {
         s32 startBlock = endBlock + 1;
-        if (startBlock >= mPlayingBufferBlockCount) {
-            startBlock -= mPlayingBufferBlockCount;
+        if (startBlock >= self->mPlayingBufferBlockCount) {
+            startBlock -= self->mPlayingBufferBlockCount;
         }
 
-        ut::AutoInterruptLock lock;
+        u32 level = OSDisableInterrupts();
 
-        UpdateLoopAddress(startBlock * mStrmInfo.blockSamples,
-                          mStrmInfo.lastBlockSamples +
-                              (endBlock * mStrmInfo.blockSamples));
+        UpdateLoopAddress(endBlock * self->mStrmInfo.blockSamples,
+                          self->mStrmInfo.lastBlockSamples +
+                              endBlock * self->mStrmInfo.blockSamples);
 
-        if (mStrmInfo.format == WaveFile::FORMAT_ADPCM) {
-            if (mVoice->GetFormat() == AxVoice::FORMAT_ADPCM) {
-                mVoice->SetVoiceType(AxVoice::VOICE_TYPE_NORMAL);
+        if (self->mStrmInfo.format == WaveFile::FORMAT_ADPCM) {
+            StrmTrackRetailLayout* pTrack = self->mTracks;
+            for (int i = 0; i < self->mTrackCount; i++, pTrack++) {
+                if (!pTrack->activeFlag) {
+                    continue;
+                }
 
-                for (int i = 0; i < mChannelCount; i++) {
-                    mVoice->SetAdpcmLoop(i, &mChannels[i].adpcmInfo.loopParam);
+                Voice* pVoice = pTrack->voice;
+                if (pVoice == NULL) {
+                    continue;
+                }
+
+                if (pVoice->GetFormat() == AxVoice::FORMAT_ADPCM) {
+                    pVoice->SetVoiceType(AxVoice::VOICE_TYPE_NORMAL);
+
+                    for (int j = 0; j < pTrack->fileInfo.channelCount;
+                         j++) {
+                        AdpcmLoopParam* pLoopParam;
+                        if (j >= 2) {
+                            pLoopParam = NULL;
+                        } else {
+                            u8 channelIndex =
+                                pTrack->fileInfo.channelIndex[j];
+                            if (channelIndex >= 16) {
+                                pLoopParam = NULL;
+                            } else {
+                                pLoopParam =
+                                    &self->mChannels[channelIndex]
+                                         .adpcm.loopParam;
+                            }
+                        }
+
+                        pVoice->SetAdpcmLoop(j, pLoopParam);
+                    }
                 }
             }
 
-            if (endBlock == mPlayingBufferBlockCount - 1) {
-                mSkipUpdateAdpcmLoop = true;
+            if (endBlock == self->mPlayingBufferBlockCount - 1) {
+                self->mSkipUpdateAdpcmLoop = true;
             }
         }
 
+        OSRestoreInterrupts(level);
         return;
     }
 
@@ -1054,94 +1295,196 @@ void StrmPlayer::UpdateDataLoopAddress(s32 endBlock) {
 }
 
 void StrmPlayer::SetLoopEndToZeroBuffer(int endBlock) {
-    {
-        ut::AutoInterruptLock lock;
+    u32 level = OSDisableInterrupts();
 
-        for (int i = 0; i < mChannelCount; i++) {
-            mVoice->StopAtPoint(i, mChannels[i].bufferAddress,
-                                mStrmInfo.lastBlockSamples +
-                                    (endBlock * mStrmInfo.blockSamples));
+    for (int i = 0;
+         i < reinterpret_cast<StrmPlayerRetailLayout*>(this)->mTrackCount;
+         i++) {
+        StrmTrackRetailLayout* pTrack =
+            &reinterpret_cast<StrmPlayerRetailLayout*>(this)->mTracks[i];
+        if (!pTrack->activeFlag) {
+            continue;
+        }
+
+        Voice* pVoice = pTrack->voice;
+        if (pVoice == NULL) {
+            continue;
+        }
+
+        for (int j = 0; j < pTrack->fileInfo.channelCount; j++) {
+            void* pBufferAddr;
+            if (j >= 2) {
+                pBufferAddr = NULL;
+            } else {
+                int channelIndex = pTrack->fileInfo.channelIndex[j];
+                if (channelIndex >= 16) {
+                    pBufferAddr = NULL;
+                } else {
+                    pBufferAddr = reinterpret_cast<StrmPlayerRetailLayout*>(
+                        this)->mChannels[channelIndex].bufferAddress;
+                }
+            }
+
+            pVoice->StopAtPoint(
+                j, pBufferAddr,
+                reinterpret_cast<StrmPlayerRetailLayout*>(this)
+                    ->mStrmInfo.lastBlockSamples +
+                    (endBlock * reinterpret_cast<StrmPlayerRetailLayout*>(this)
+                                   ->mStrmInfo.blockSamples));
         }
     }
 
-    mPlayFinishFlag = true;
+    OSRestoreInterrupts(level);
+
+    reinterpret_cast<StrmPlayerRetailLayout*>(this)->mPlayFinishFlag = true;
 }
 
+// Layout-compatible shell for StrmDataLoadTask, used by
+// UpdateLoadingBlockIndex to hand-construct tasks: retail's inlined default
+// constructor references the linker-label vtable (lbl_eu_8056ACC0) rather
+// than the C++ vtable symbol, so the constructor is expressed explicitly.
+struct StrmDataLoadTaskRetail {
+    void* vtable;               // at 0x00
+    u32 field_0x04;             // at 0x04 (task internals zeroed by ctor)
+    u32 field_0x08;             // at 0x08
+    u32 field_0x0C;             // at 0x0C
+    StrmPlayer* strmPlayer;     // at 0x10
+    ut::FileStream* fileStream; // at 0x14
+    u32 size;                   // at 0x18
+    s32 offset;                 // at 0x1C
+    s32 blockSize;              // at 0x20
+    s32 bufferBlockIndex;       // at 0x24
+    bool needUpdateAdpcmLoop;   // at 0x28
+    ut::LinkListNode node;      // at 0x2C
+};
+
 void StrmPlayer::UpdateLoadingBlockIndex() {
-    if (mLoadFinishFlag) {
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
+
+    self->field_0x168++;
+
+    if (self->mLoadFinishFlag) {
         return;
     }
 
-    u32 blockSize =
-        mLoadingDataBlockIndex < static_cast<s32>(mStrmInfo.numBlocks - 1)
-            ? mStrmInfo.blockSize
-            : mStrmInfo.lastBlockPaddedSize;
+    // Last data block loads the padded final block size.
+    s32 blockSize;
+    if (self->mLoadingDataBlockIndex <
+        static_cast<s32>(self->mStrmInfo.numBlocks) - 1) {
+        blockSize = self->mStrmInfo.blockSize;
+    } else {
+        blockSize = self->mStrmInfo.lastBlockPaddedSize;
+    }
 
-    u32 loadSize = mStrmInfo.blockHeaderOffset +
-                   mChannelCount * ut::RoundUp(blockSize, 32);
+    u32 loadSize = self->mStrmInfo.blockHeaderOffset +
+                   blockSize * self->mChannelCount;
 
     s32 loadOffset =
-        mStrmInfo.dataOffset +
-        mLoadingDataBlockIndex * (mStrmInfo.blockHeaderOffset +
-                                  mStrmInfo.blockSize * mStrmInfo.numChannels);
+        self->mStrmInfo.dataOffset +
+        self->mLoadingDataBlockIndex *
+            (self->mStrmInfo.blockHeaderOffset +
+             self->mStrmInfo.blockSize * self->mStrmInfo.numChannels);
 
-    bool needUpdateAdpcmLoop = mLoadingBufferBlockIndex == 0 &&
-                               mStrmInfo.format == WaveFile::FORMAT_ADPCM;
+    // ADPCM streams refresh their loop context once per buffer rotation.
+    bool needUpdateAdpcmLoop =
+        self->mLoadingBufferBlockIndex == 0 &&
+        self->mStrmInfo.format == WaveFile::FORMAT_ADPCM;
 
-    StrmDataLoadTask* pTask = mStrmDataLoadTaskPool.Alloc();
-    pTask->strmPlayer = this;
-    pTask->fileStream = mFileStream;
-    pTask->size = loadSize;
-    pTask->offset = loadOffset;
-    pTask->blockSize = blockSize;
-    pTask->bufferBlockIndex = mLoadingBufferBlockIndex;
-    pTask->needUpdateAdpcmLoop = needUpdateAdpcmLoop;
+    StrmDataLoadTask* pTask = reinterpret_cast<StrmDataLoadTask*>(
+        reinterpret_cast<MemoryPool<StrmDataLoadTask>&>(
+            self->mStrmDataLoadTaskPool)
+            .Alloc());
 
-    ut::AutoInterruptLock lock;
-    mStrmDataLoadTaskList.PushBack(pTask);
+    if (pTask != NULL) {
+        // Hand-rolled default construction: retail's inlined constructor
+        // references the linker-label vtable instead of the C++ vtable.
+        StrmDataLoadTaskRetail* pInit =
+            reinterpret_cast<StrmDataLoadTaskRetail*>(pTask);
+        pInit->field_0x04 = 0;
+        pInit->vtable = &lbl_eu_8056ACC0;
+        pInit->field_0x08 = 0;
+        pInit->field_0x0C = 0;
+        pInit->strmPlayer = NULL;
+        pInit->fileStream = NULL;
+        pInit->size = 0;
+        pInit->offset = 0;
+        pInit->blockSize = 0;
+        pInit->bufferBlockIndex = -1;
+        pInit->needUpdateAdpcmLoop = false;
+        pInit->node.Init();
+    }
+
+    // Retail performs the field setup unconditionally.
+    StrmDataLoadTaskRetail* pSetup =
+        reinterpret_cast<StrmDataLoadTaskRetail*>(pTask);
+    pSetup->strmPlayer = reinterpret_cast<StrmPlayer*>(self);
+    pSetup->fileStream = self->mFileStream;
+    pSetup->size = loadSize;
+    pSetup->offset = loadOffset;
+    pSetup->blockSize = blockSize;
+    pSetup->bufferBlockIndex = self->mLoadingBufferBlockIndex;
+    pSetup->needUpdateAdpcmLoop = needUpdateAdpcmLoop;
+
+    u32 level = OSDisableInterrupts();
+
+    self->mStrmDataLoadTaskList.PushBack(pTask);
 
     TaskManager::GetInstance().AppendTask(
-        pTask, mStartedFlag ? TaskManager::PRIORITY_HIGH
-                            : TaskManager::PRIORITY_MIDDLE);
+        pTask, self->mStartedFlag ? TaskManager::PRIORITY_HIGH
+                                  : TaskManager::PRIORITY_MIDDLE);
 
-    mLoadingDataBlockIndex++;
+    self->mLoadingDataBlockIndex++;
 
-    if (mLoadingDataBlockIndex > mLastBlockIndex) {
-        if (mStrmInfo.loopFlag) {
-            mLoadingDataBlockIndex = mLoopStartBlockIndex;
-        } else {
-            mLoadFinishFlag = true;
+    if (self->mLoadingDataBlockIndex > self->mLastBlockIndex) {
+        if (!self->mStrmInfo.loopFlag) {
+            self->mLoadFinishFlag = true;
+            OSRestoreInterrupts(level);
             return;
         }
+
+        self->mLoadingDataBlockIndex = self->mLoopStartBlockIndex;
     }
 
-    mLoadingBufferBlockIndex++;
+    self->mLoadingBufferBlockIndex++;
 
-    if (mLoadingBufferBlockIndex >= mLoadingBufferBlockCount) {
-        mLoadingBufferBlockIndex = 0;
-        mLoadingBufferBlockCount = CalcLoadingBufferBlockCount();
+    if (self->mLoadingBufferBlockIndex >= self->mLoadingBufferBlockCount) {
+        self->mLoadingBufferBlockIndex = 0;
+        self->mLoadingBufferBlockCount = CalcLoadingBufferBlockCount();
     }
+
+    OSRestoreInterrupts(level);
 }
 
 void StrmPlayer::UpdatePauseStatus() {
     ut::AutoInterruptLock lock;
 
-    bool paused = false;
+    bool pauseStatus = false;
 
-    if (mPauseFlag) {
-        paused = true;
+    if (reinterpret_cast<StrmPlayerRetailLayout*>(this)->mPauseFlag) {
+        pauseStatus = true;
     }
 
-    if (mLoadWaitFlag) {
-        paused = true;
+    if (reinterpret_cast<StrmPlayerRetailLayout*>(this)->mLoadWaitFlag) {
+        pauseStatus = true;
     }
 
-    if (paused != mPauseStatus) {
-        if (mVoice != NULL) {
-            mVoice->Pause(paused);
+    if (pauseStatus !=
+        reinterpret_cast<StrmPlayerRetailLayout*>(this)->mPauseStatus) {
+        for (int i = 0;
+             i < reinterpret_cast<StrmPlayerRetailLayout*>(this)->mTrackCount;
+             i++) {
+            if (reinterpret_cast<StrmPlayerRetailLayout*>(this)
+                ->mTracks[i].activeFlag &&
+                reinterpret_cast<StrmPlayerRetailLayout*>(this)
+                    ->mTracks[i].voice != NULL) {
+                reinterpret_cast<StrmPlayerRetailLayout*>(this)
+                    ->mTracks[i].voice->Pause(pauseStatus);
+            }
         }
 
-        mPauseStatus = paused;
+        reinterpret_cast<StrmPlayerRetailLayout*>(this)->mPauseStatus =
+            pauseStatus;
     }
 }
 
@@ -1158,42 +1501,46 @@ int StrmPlayer::CalcLoadingBufferBlockCount() const {
 
 bool StrmPlayer::CalcStartOffset(s32* pBlockIndex, u32* pBlockOffset,
                                  s32* pLoopCount) {
-    if (mStrmInfo.blockSamples == 0) {
+    StrmPlayerRetailLayout* self =
+        reinterpret_cast<StrmPlayerRetailLayout*>(this);
+
+    if (self->mStrmInfo.blockSamples == 0) {
         return false;
     }
 
     int startSample;
-    if (mStartOffsetType == START_OFFSET_TYPE_SAMPLE) {
-        startSample = mStartOffset;
-    } else if (mStartOffsetType == START_OFFSET_TYPE_MILLISEC) {
-        startSample =
-            (mStartOffset * static_cast<s64>(mStrmInfo.sampleRate)) / 1000;
+    if (self->mStartOffsetType == START_OFFSET_TYPE_SAMPLE) {
+        startSample = self->mStartOffset;
+    } else if (self->mStartOffsetType == START_OFFSET_TYPE_MILLISEC) {
+        startSample = (self->mStartOffset *
+                       static_cast<s64>(self->mStrmInfo.sampleRate)) /
+                      1000;
     }
 
     *pLoopCount = 0;
 
-    if (startSample >= mStrmInfo.loopEnd) {
-        if (mStrmInfo.loopFlag) {
-            s32 loopStart = mStrmInfo.loopStart;
-            s32 loopEnd = mStrmInfo.loopEnd;
+    // Loop-end comparison is unsigned (cmplw in retail).
+    if (static_cast<u32>(startSample) >= self->mStrmInfo.loopEnd) {
+        if (self->mStrmInfo.loopFlag) {
+            s32 loopStart = self->mStrmInfo.loopStart;
+            s32 loopEnd = self->mStrmInfo.loopEnd;
             s32 loopLength = loopEnd - loopStart;
 
             s32 startOffset2 = startSample - loopEnd;
-            *pLoopCount = startOffset2 / loopLength + 1;
-
             s32 startLoop = startOffset2 / loopLength;
+            *pLoopCount = startLoop + 1;
+
             startSample = loopStart + (startOffset2 - (startLoop * loopLength));
         } else {
             return false;
         }
     }
 
-    *pBlockIndex = startSample / static_cast<s32>(mStrmInfo.blockSamples);
+    *pBlockIndex = startSample / static_cast<s32>(self->mStrmInfo.blockSamples);
 
-    if (mStrmInfo.format == WaveFile::FORMAT_ADPCM) {
-        s32 startBlock = startSample / mStrmInfo.blockSamples;
-        *pBlockOffset = startSample - (startBlock * mStrmInfo.blockSamples);
-    }
+    // Block offset remainder is computed unsigned (divwu in retail).
+    *pBlockOffset = static_cast<u32>(startSample) %
+                    static_cast<u32>(self->mStrmInfo.blockSamples);
 
     return true;
 }
@@ -1201,20 +1548,22 @@ bool StrmPlayer::CalcStartOffset(s32* pBlockIndex, u32* pBlockOffset,
 void StrmPlayer::VoiceCallbackFunc(Voice* pDropVoice,
                                    Voice::VoiceCallbackStatus status,
                                    void* pCallbackArg) {
-    StrmPlayer* pStrmPlayer = static_cast<StrmPlayer*>(pCallbackArg);
+    // The voice manager passes the owning StrmTrack (not the player) as the
+    // callback argument; dropping the voice clears track->voice (+0x4).
+    StrmTrackRetailLayout* pTrack = static_cast<StrmTrackRetailLayout*>(pCallbackArg);
     ut::AutoInterruptLock lock;
 
     switch (status) {
     case Voice::CALLBACK_STATUS_FINISH_WAVE:
     case Voice::CALLBACK_STATUS_CANCEL: {
         pDropVoice->Free();
-        pStrmPlayer->mVoice = NULL;
+        pTrack->voice = NULL;
         break;
     }
 
     case Voice::CALLBACK_STATUS_DROP_VOICE:
     case Voice::CALLBACK_STATUS_DROP_DSP: {
-        pStrmPlayer->mVoice = NULL;
+        pTrack->voice = NULL;
         break;
     }
 
@@ -1275,12 +1624,25 @@ StrmPlayer::StrmDataLoadTask::StrmDataLoadTask()
 void StrmPlayer::StrmDataLoadTask::Execute() {
     if (!strmPlayer->LoadStreamData(fileStream, offset, size, blockSize,
                                     bufferBlockIndex, needUpdateAdpcmLoop)) {
-        strmPlayer->SetTaskErrorFlag();
+        // mTaskErrorFlag is at retail offset +0x124; see layout-mirror note.
+        reinterpret_cast<StrmPlayerRetailLayout*>(strmPlayer)->mTaskErrorFlag =
+            true;
     }
 
     ut::AutoInterruptLock lock;
-    strmPlayer->mStrmDataLoadTaskList.Erase(this);
-    strmPlayer->mStrmDataLoadTaskPool.Free(this);
+
+    // List at +0x194 / pool at +0x1A0 are retail offsets; see layout-mirror
+    // note. The pool Free inlines the deleting-dtor call plus FreeImpl, and
+    // each statement re-reads strmPlayer so retail reloads the player pointer
+    // from the task after the Erase call.
+    reinterpret_cast<StrmPlayerRetailLayout*>(strmPlayer)
+        ->mStrmDataLoadTaskList.Erase(this);
+    reinterpret_cast<StrmPlayerRetailLayout*>(strmPlayer)
+        ->mStrmDataLoadTaskPool.Free(this);
+
+    // Decrement the pending load-task count at player +0x168 while the
+    // interrupt lock is still held.
+    reinterpret_cast<StrmPlayerRetailLayout*>(strmPlayer)->field_0x168--;
 }
 
 void StrmPlayer::StrmDataLoadTask::Cancel() {
@@ -1334,12 +1696,19 @@ bool AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(StrmPlayer* pStrmPlayer,
         reinterpret_cast<nw4r::snd::detail::StrmPlayerRetailLayout*>(
             pStrmPlayer);
 
-    u32 level = OSDisableInterrupts();
+    // Declaration order drives MWCC's callee-saved coloring here; retail
+    // colors i/pBase/pTrack before the interrupt level.
+    int i;
+    nw4r::snd::detail::StrmTrackRetailLayout* pBaseTrack;
+    nw4r::snd::detail::StrmTrackRetailLayout* pTrack;
+    u32 level;
 
-    nw4r::snd::detail::StrmTrackRetailLayout* pBaseTrack = self->mTracks;
-    nw4r::snd::detail::StrmTrackRetailLayout* pTrack = pBaseTrack;
+    level = OSDisableInterrupts();
 
-    for (int i = 0; i < self->mTrackCount; pTrack++, i++) {
+    pBaseTrack = self->mTracks;
+    pTrack = pBaseTrack;
+
+    for (i = 0; i < self->mTrackCount; pTrack++, i++) {
         if (pTrack->activeFlag) {
             nw4r::snd::detail::Voice* pVoice =
                 nw4r::snd::detail::VoiceManager::GetInstance().AllocVoice(
@@ -1466,6 +1835,129 @@ bool SetupPlayer__Q44nw4r3snd6detail10StrmPlayerFv(StrmPlayer* pStrmPlayer) {
     return true;
 }
 
+// Retail 4-argument StrmPlayer::Setup(StrmBufferPool*, int, u16, int) is a
+// member, but the stale header declares only the 1-argument overload; emit
+// the retail symbol as a free function (same ABI).
+// Retail 4-argument StrmPlayer::Setup(StrmBufferPool*, int, u16, int) is a
+// member, but the stale header declares only the 1-argument overload; emit
+// the retail symbol as a free function (same ABI).
+int Setup__Q44nw4r3snd6detail10StrmPlayerFPQ44nw4r3snd6detail14StrmBufferPooliUsi(
+    StrmPlayer* pStrmPlayer,
+    nw4r::snd::detail::StrmBufferPool* pBufferPool, int channels, u16 trackMask,
+    int voices) {
+    // The free-function definition sits at global scope; qualify lookups.
+    using namespace nw4r::snd::detail;
+    using nw4r::snd::detail::SoundThread;
+
+    OSLockMutex(
+        &reinterpret_cast<SoundThreadRetailLayout*>(&SoundThread::GetInstance())
+             ->mMutex);
+
+    nw4r::snd::detail::StrmPlayerRetailLayout* self =
+        reinterpret_cast<nw4r::snd::detail::StrmPlayerRetailLayout*>(
+            pStrmPlayer);
+
+    if (self->mSetupFlag) {
+        // Tear down any active playback first (virtual Stop()).
+        pStrmPlayer->Stop();
+
+        OSLockMutex(
+            &reinterpret_cast<SoundThreadRetailLayout*>(
+                 &SoundThread::GetInstance())
+                 ->mMutex);
+
+        if (!self->mSetupFlag) {
+            OSUnlockMutex(
+                &reinterpret_cast<SoundThreadRetailLayout*>(
+                     &SoundThread::GetInstance())
+                     ->mMutex);
+        } else {
+            // Release the stream-data task pool.
+            self->mBufferPool = NULL;
+            self->mStrmDataLoadTaskPool.Destroy(
+                self->mStrmDataLoadTaskArea,
+                0x680); // DATA_BLOCK_COUNT_MAX * sizeof(StrmDataLoadTask)
+            self->mSetupFlag = false;
+
+            OSUnlockMutex(
+                &reinterpret_cast<SoundThreadRetailLayout*>(
+                     &SoundThread::GetInstance())
+                     ->mMutex);
+        }
+    }
+
+    pStrmPlayer->InitParam();
+
+    self->mChannelCount = channels > 16 ? 16 : channels;
+
+    // Enable one player track per set bit in the mask.
+    u32 mask = trackMask;
+    int count = 0;
+    while (mask != 0) {
+        if (mask & 1) {
+            if (count >= 8) {
+                break;
+            }
+            self->mTracks[count].activeFlag = true;
+        }
+
+        mask >>= 1;
+        count++;
+    }
+
+    count = count > 8 ? 8 : count;
+    self->mTrackCount = count;
+
+    if (count == 0) {
+        OSUnlockMutex(
+            &reinterpret_cast<SoundThreadRetailLayout*>(
+                 &SoundThread::GetInstance())
+                 ->mMutex);
+        return 2;
+    }
+
+    self->mVoiceOutCount = voices;
+    self->mBufferPool = pBufferPool;
+
+    u32 level = OSDisableInterrupts();
+
+    bool success = true;
+    for (int i = 0; i < self->mChannelCount; i++) {
+        void* pBuffer = self->mBufferPool->Alloc();
+        if (pBuffer == NULL) {
+            for (int j = 0; j < i; j++) {
+                self->mBufferPool->Free(self->mChannels[j].bufferAddress);
+                self->mChannels[j].bufferAddress = NULL;
+            }
+
+            success = false;
+            break;
+        }
+
+        self->mChannels[i].bufferAddress = pBuffer;
+    }
+
+    if (!success) {
+        OSRestoreInterrupts(level);
+        OSUnlockMutex(
+            &reinterpret_cast<SoundThreadRetailLayout*>(
+                 &SoundThread::GetInstance())
+                 ->mMutex);
+        return 1;
+    }
+
+    self->mBufferAllocFlag = true;
+
+    OSRestoreInterrupts(level);
+
+    self->mSetupFlag = true;
+
+    OSUnlockMutex(
+        &reinterpret_cast<SoundThreadRetailLayout*>(&SoundThread::GetInstance())
+             ->mMutex);
+    return 0;
+}
+
 // Retail UpdateVoiceParams(StrmPlayer::StrmTrack*) is a StrmPlayer member, but
 // the stale header has no declaration for it; emit the retail mangled symbol
 // as a free function (r3 = this, r4 = track).
@@ -1492,9 +1984,10 @@ void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6detail10Strm
 
     conv.w[1] = pTrack->fileInfo.volume;
     conv.w[0] = 0x43300000;
-    f32 volume = lbl_eu_8066A078 * self->mVolume *
-                 ((f32)(conv.d - lbl_eu_8066A070) / lbl_eu_8066A07C) *
-                 pTrack->volume;
+    // Sequential multiplies mirror retail's evaluation order.
+    f32 volume = lbl_eu_8066A078 * self->mVolume;
+    volume *= (f32)(conv.d - lbl_eu_8066A070) / lbl_eu_8066A07C;
+    volume *= pTrack->volume;
     f32 pitch = lbl_eu_8066A078 * self->mPitch;
     f32 pan = lbl_eu_8066A060 + self->mPan;
     if (pTrack->fileInfo.pan > 1) {

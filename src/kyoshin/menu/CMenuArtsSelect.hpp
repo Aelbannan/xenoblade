@@ -46,6 +46,21 @@ struct FourShorts {
     s16 a, b, c, d;
 };
 
+// Per-mode arts name/gauge-id rodata tables (func_80107580 copies them
+// by value into locals, indexed by unk328).
+struct ArtsModeIds {
+    u16 id[8];
+};
+extern const ArtsModeIds lbl_eu_804FD138;
+extern const ArtsModeIds lbl_eu_804FD148;
+
+// Read-only view of the CfObjectMove fields func_80107580 needs (the real
+// cf::CfObjectMove is opaque in this TU's include closure).
+struct CfObjectMoveArtsView {
+    u8 _00[0x8c];
+    u16 field_8C; // 0x8C - same u16 as BattleActor::mField3F28
+};
+
 class CMenuArtsSelect {
 public:
     void Init();

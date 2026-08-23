@@ -179,9 +179,9 @@ int setTrust(VMThread* pThread) {
     int arg4 = vmArgIntGet(5, vmArgPtrGet(pThread, 4));
 
     // Clamp the new trust value into [0, 5000]; remember the original delta.
+    int saved = 0;
     int cur = func_8009CF8C(arg3 + 0x28);
     int val = cur + arg4;
-    int saved = 0;
     if (val < 0) val = 0;
     if (val > 0x1388) {
         saved = arg4;
@@ -211,27 +211,36 @@ int setTrust(VMThread* pThread) {
     if (arg2 > 2) arg2 = 2;
 
     CfSlotTable tbl = lbl_eu_804FA9F0;
+    int done = 0;
     CfEnumListHolder holder;
     func_80043D90(&holder);
 
-    // Two player slots (arg1, arg2): queue each slot's effect id into the enum
-    // list and, when it resolved, apply the state class to the dynamic-cast
-    // result. Both slots must resolve before notifying.
-    int done = 0;
-    for (int i = 0; i < 2; i++) {
-        int slot = (i == 0) ? arg1 : arg2;
-        func_800F4A98(func_80043F18(&holder), tbl.values[slot], 0);
-        if (func_80043F18(&holder)->count >= 1) {
-            if (code80135FDC_getByte_64059() == 0) {
-                CfEnumListItem* item =
-                    (CfEnumListItem*)func_800F6EC0(func_80043F18(&holder), 0);
-                void* cast = __dynamic_cast(item->field_04, 0,
-                                            (const void*)&lbl_eu_806618D8,
-                                            (const void*)&lbl_eu_806618F0, 0);
-                func_800451D8((u32)state, cast);
-            }
-            done++;
+    // Spawn the effect on the arg1 player slot.
+    func_800F4A98(func_80043F18(&holder), tbl.values[arg1], 0);
+    if (func_80043F18(&holder)->count >= 1) {
+        if (code80135FDC_getByte_64059() == 0) {
+            CfEnumListItem* item =
+                (CfEnumListItem*)func_800F6EC0(func_80043F18(&holder), 0);
+            void* cast = __dynamic_cast(item->field_04, 0,
+                                        (const void*)&lbl_eu_806618D8,
+                                        (const void*)&lbl_eu_806618F0, 0);
+            func_800451D8((u32)state, cast);
         }
+        done++;
+    }
+
+    // Same for the arg2 slot; both must succeed before notifying.
+    func_800F4A98(func_80043F18(&holder), tbl.values[arg2], 0);
+    if (func_80043F18(&holder)->count >= 1) {
+        if (code80135FDC_getByte_64059() == 0) {
+            CfEnumListItem* item =
+                (CfEnumListItem*)func_800F6EC0(func_80043F18(&holder), 0);
+            void* cast = __dynamic_cast(item->field_04, 0,
+                                        (const void*)&lbl_eu_806618D8,
+                                        (const void*)&lbl_eu_806618F0, 0);
+            func_800451D8((u32)state, cast);
+        }
+        done++;
     }
 
     if (done >= 2) {
@@ -249,11 +258,12 @@ int setItemMulti(VMThread* pThread) {
     int idx = 1;
 
     // Arg 1: optional.
-    if (vmArgOmitChk(pThread, 1)) {
+    if (vmArgOmitChk(pThread, idx)) {
         v1 = 0;
-        ++idx;
+        idx++;
     } else {
-        v1 = vmArgIntGet(++idx, vmArgPtrGet(pThread, 1));
+        VMArg* arg = vmArgPtrGet(pThread, idx++);
+        v1 = vmArgIntGet(idx, arg);
     }
 
     // Args 2-4: optional ints; the pointer fetch consumes the current index

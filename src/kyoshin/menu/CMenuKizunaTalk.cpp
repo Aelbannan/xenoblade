@@ -15,6 +15,10 @@
 extern "C" void __dt__15CMenuKizunaTalkFv(void*, int);
 extern "C" void cbRenderBefore__15CMenuKizunaTalkFv(void*);
 
+// Defined later in this TU (retail symbol is unmangled); noinline keeps
+// MWCC from inlining the body into func_801BCF48.
+extern "C" void func_801BD630(CMenuKizunaTalk* self);
+
 // ---------------------------------------------------------------------------
 // Constructor (retail symbol is the unmangled __ct__CMenuKizunaTalk, so the
 // body is written as a C-linkage free function; the factory func_801BCEBC
@@ -97,10 +101,12 @@ void CMenuKizunaTalk::Term() {
     mScene->removeRenderCB(this);
 
     if (mLayout != 0) {
-        // Layout virtual slot 2 (vtable + 0x8): release with flag 1. The
-        // inline index keeps MWCC's indirect-call null guard (retail shape).
-        u32* vtab = *(u32**)mLayout;
-        ((void (*)(nw4r::lyt::Layout*, int))(vtab[0x08 / 4]))(mLayout, 1);
+        // Layout virtual slot 2 (vtable + 0x8): release/unbind with flag 1.
+        // Retail emits the null guard twice (outer block guard + inner call
+        // guard), so the source nests two identical checks.
+        if (mLayout != 0) {
+            reinterpret_cast<CLayoutView*>(mLayout)->vf02(1);
+        }
         mLayout = 0;
     }
 
@@ -149,7 +155,65 @@ CMenuKizunaTalk* func_801BCEBC(CProcess* parent, CScn* scene, u32 charId) {
 extern "C" bool func_801BCF38() { return lbl_eu_80664420 != 0; }
 #pragma optimize_for_size off
 
-void func_801BCF48(){}
+// ---------------------------------------------------------------------------
+// Window-state kickoff (retail func_801BCF48): refresh the availability gate
+// via func_801BD630, then per window state: 0/2 rebuild the CSysWin panel from
+// a stack temp (directions 0 / 3) and dispatch the layout-build virtual at
+// vtable +0x88; state 2 also seeds the cursor from a CCur18 temp. State 1
+// requests the talk-list file through the IWorkEvent subobject (+0x6C,
+// null-this-safe).
+// ---------------------------------------------------------------------------
+#pragma optimize_for_size on
+void func_801BCF48(CMenuKizunaTalk* self) {
+    if (lbl_eu_80664424 == 0) {
+        return;
+    }
+    self->mFieldA0 = 1;
+    func_801BD630(self);
+    // Shared CSysWin scratch plus a full CCur18-sized cursor scratch.
+    KizunaScratch scratch;
+    switch (self->mFieldA4) {
+    case 0:
+        __ct__CSysWin(&scratch.mWin0[0], 0);
+        func_8016742C(&self->mSysWin[0], &scratch.mWin0[0]);
+        __dt__7CSysWinFv(&scratch.mWin0[0], -1);
+        reinterpret_cast<KizunaSysWinView*>(&self->mSysWin[0])->v20();
+        break;
+    case 1: {
+        // Null-safe IWorkEvent subobject address (retail beq/addi shape).
+        IWorkEvent* evt = reinterpret_cast<IWorkEvent*>(self);
+        if (self != 0) {
+            evt = &static_cast<IWorkEvent&>(*self);
+        }
+        self->mFile1 =
+            (CFileHandle*)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
+                (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_80505118[0x1c],
+                evt, 0, 0);
+        break;
+    }
+    case 2: {
+        __ct__CSysWin(&scratch.mWin2[0], 3);
+        func_8016742C(&self->mSysWin[0], &scratch.mWin2[0]);
+        __dt__7CSysWinFv(&scratch.mWin2[0], -1);
+        reinterpret_cast<KizunaSysWinView*>(&self->mSysWin[0])->v20();
+
+        __ct__CCur18(&scratch.mCur[0], func_801355F4());
+        KizunaCurFields* dst = reinterpret_cast<KizunaCurFields*>(&self->mCur[0]);
+        KizunaCurFields* src = reinterpret_cast<KizunaCurFields*>(&scratch.mCur[0]);
+        dst->f_04 = src->f_04;
+        dst->f_08 = src->f_08;
+        dst->f_0c = src->f_0c;
+        dst->f_10 = src->f_10;
+        // Byte-sized page fields copied individually (retail lbz/stb pairs).
+        dst->f_14 = src->f_14;
+        dst->f_15 = src->f_15;
+        __dt__6CCur18Fv(&scratch.mCur[0], -1);
+        reinterpret_cast<CCur18View*>(&self->mCur[0])->vf02();
+        break;
+    }
+    }
+}
+#pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
 // Kizuna talk window advance (retail func_801BD0B4): state machine on
@@ -193,7 +257,35 @@ void func_801BD0B4(CMenuKizunaTalk* self) {
     self->mScene->addRenderCB(self, 0xd, 0);
 }
 
-void func_801BD228(){}
+// ---------------------------------------------------------------------------
+// Kizuna talk window advance (retail func_801BD228): state machine on
+// mFieldA4. State 0/2 wait for the CSysWin panel to become active; state 1
+// waits for the layout animation to reach its target frame. State 2 also
+// feeds the panel's current page into the cursor's selection update.
+// ---------------------------------------------------------------------------
+void func_801BD228(CMenuKizunaTalk* self) {
+    switch (self->mFieldA4) {
+    case 0:
+        if (CSysWin_isActive(&self->mSysWin[0]) != 0) {
+            self->mFieldA0 = 3;
+        }
+        break;
+    case 1:
+        if (func_80137444(self->mAnim, lbl_eu_80667E68) != 0) {
+            self->mFieldA0 = 3;
+        }
+        break;
+    case 2:
+        if (CSysWin_isActive(&self->mSysWin[0]) != 0) {
+            self->mFieldA0 = 3;
+            func_801D216C(&self->mCur[0], 1);
+            u8 tmp[0x10];
+            func_8022C1B4(tmp, &self->mSysWin[0], (u8)self->mField9C);
+            reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(tmp);
+        }
+        break;
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Kizuna talk window-state advance (retail func_801BD2F8): reads the cf pad
@@ -202,21 +294,26 @@ void func_801BD228(){}
 // confirm/advance actions. The D-pad bit position differs between player 0
 // (co-op) and the others.
 // ---------------------------------------------------------------------------
+#pragma optimize_for_size on
 void func_801BD2F8(CMenuKizunaTalk* self) {
     KizunaTalkPadData* pad = getCfPadData__Q22cf13CfGameManagerFv();
-    u32 btnFlags = pad->mPressedFlags;
-    u32 dueFlags = pad->mTurboFlags;
     u32 cancel, confirm, left, right;
     if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
-        cancel = (dueFlags & 0x8004) != 0;
-        confirm = (dueFlags & 0x8008) != 0;
-        left = (btnFlags >> 21) & 1;
-        right = (btnFlags >> 22) & 1;
+        // Player 0 (co-op): D-pad bits sit at different positions.
+        u32 pressed = pad->mPressedFlags;
+        u32 turbo = pad->mTurboFlags;
+        cancel = (turbo & 0x8004) != 0;
+        // Two-bit gather (bits 0x10000|0x8) -> MWCC rlwinm/rlwimi form.
+        confirm = (turbo & 0x10008) != 0;
+        left = (pressed >> 21) & 1;
+        right = (pressed >> 22) & 1;
     } else {
-        cancel = (dueFlags & 0x8004) != 0;
-        confirm = (dueFlags & 0x8008) != 0;
-        left = (btnFlags >> 4) & 1;
-        right = (btnFlags >> 5) & 1;
+        u32 pressed = pad->mPressedFlags;
+        u32 turbo = pad->mTurboFlags;
+        cancel = (turbo & 0x8004) != 0;
+        confirm = (turbo & 0x10008) != 0;
+        left = (pressed >> 4) & 1;
+        right = (pressed >> 5) & 1;
     }
 
     switch (self->mFieldA4) {
@@ -228,8 +325,8 @@ void func_801BD2F8(CMenuKizunaTalk* self) {
             func_8022B8E4(&self->mSysWin[0]);
         } else if (right != 0) {
             self->mField60 = 2;
-            func_80138078__FUl(6);
             self->mFieldA0 = 4;
+            func_80138078__FUl(6);
             func_8022B8E4(&self->mSysWin[0]);
         }
         break;
@@ -240,8 +337,8 @@ void func_801BD2F8(CMenuKizunaTalk* self) {
             self->mFieldA0 = 4;
         } else if (right != 0) {
             self->mField60 = 2;
-            func_80138078__FUl(6);
             self->mFieldA0 = 4;
+            func_80138078__FUl(6);
         }
         break;
     case 2:
@@ -250,7 +347,7 @@ void func_801BD2F8(CMenuKizunaTalk* self) {
             self->mField9C = (s8)(self->mField9C - 1);
             if (self->mField9C < 0) self->mField9C = 1;
             func_80138078__FUl(1);
-            u8 tmp[0x18];
+            u8 tmp[0xC];
             func_8022C1B4(tmp, &self->mSysWin[0], (u8)self->mField9C);
             reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(tmp);
         } else if (confirm != 0) {
@@ -258,7 +355,7 @@ void func_801BD2F8(CMenuKizunaTalk* self) {
             self->mField9C = (s8)(self->mField9C + 1);
             if (self->mField9C > 1) self->mField9C = 0;
             func_80138078__FUl(1);
-            u8 tmp[0x18];
+            u8 tmp[0xC];
             func_8022C1B4(tmp, &self->mSysWin[0], (u8)self->mField9C);
             reinterpret_cast<CCur18View*>(&self->mCur[0])->vf04(tmp);
         } else if (left != 0) {
@@ -275,14 +372,15 @@ void func_801BD2F8(CMenuKizunaTalk* self) {
             func_801D216C(&self->mCur[0], 0);
         } else if (right != 0) {
             self->mField60 = 2;
-            func_80138078__FUl(6);
             self->mFieldA0 = 4;
+            func_80138078__FUl(6);
             func_8022B8E4(&self->mSysWin[0]);
             func_801D216C(&self->mCur[0], 0);
         }
         break;
     }
 }
+#pragma optimize_for_size off
 
 // Advance the kizuna talk window state machine (retail func_801BD594):
 // window states 0 and 2 wait for the CSysWin panel to become active, state 1
@@ -315,7 +413,9 @@ void func_801BD594(CMenuKizunaTalk* self) {
 // affinity-talk columns and decides whether the talk screen is available;
 // writes the resulting mFieldA4 gate state.
 // ---------------------------------------------------------------------------
-void func_801BD630(CMenuKizunaTalk* self) {
+// Retail symbol is the unmangled func_801BD630.
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) void func_801BD630(CMenuKizunaTalk* self) {
     u16 total = func_80136254(lbl_eu_80664424, &lbl_eu_80505118[0x49], self->mCharId);
     if ((u32)(u16)total <= func_8009CF8C((u32)0x20)) {
         u32 b1 = 0, b2 = 0, b3 = 0, b4 = 0;
@@ -348,6 +448,7 @@ void func_801BD630(CMenuKizunaTalk* self) {
         self->mFieldA4 = 0;
     }
 }
+#pragma optimize_for_size off
 
 // ---------------------------------------------------------------------------
 // Talk list file-event handler (retail func_801BD7D8): when the requested
@@ -359,9 +460,9 @@ int func_801BD7D8(CMenuKizunaTalk* self, CEventFile* evt) {
     CFileHandle* handle = evt->mFileHandle;
     if (self->mFile1 == handle) {
         void* mem2 = getHandleMEM2__Q23mtl10MemManagerFv();
-        UnkClass_8045F564* region = (UnkClass_8045F564*)&self->mMemRegion[0];
-        region->createRegion((int)(u32)mem2, 0x2000, &lbl_eu_80505118[0x6e], 0);
-        Class_8045F858 regionHandle(region);
+        ((UnkClass_8045F564*)&self->mMemRegion[0])->createRegion(
+            (int)(u32)mem2, 0x2000, &lbl_eu_80505118[0x6e], 0);
+        Class_8045F858 regionHandle((UnkClass_8045F564*)&self->mMemRegion[0]);
         void* data = self->mFile1->getData();
         func_80434A4C__Q23mtl10MemManagerFb(false);
         nw4r::lyt::ArcResourceAccessor* acc = createArcResourceAccessor__10CLibLayoutFv();
@@ -471,7 +572,7 @@ int func_801BD7D8(CMenuKizunaTalk* self, CEventFile* evt) {
         self->mAnim->SetFrame(lbl_eu_80667E6C);
         self->mLayout->Animate(0);
         self->mFile1 = 0;
-        region->func_8045F810();
+        ((UnkClass_8045F564*)&self->mMemRegion[0])->func_8045F810();
         return 1;
     }
     if (self->mFile2 == handle) {

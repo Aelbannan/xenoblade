@@ -12,6 +12,14 @@
 #include "libs/monolib/src/device/CDeviceFont.hpp"
 #include <decomp.h>
 
+#include <string.h>
+#include <wchar.h>
+
+#include <revolution/ENC.h>
+#include <revolution/GX.h>
+#include <revolution/MTX.h>
+#include <nw4r/ut/ut_TextWriterBase.h>
+
 #include "monolib/work/CWorkUtil.hpp"
 #include "monolib/core/CFontLayer.hpp"
 
@@ -93,43 +101,21 @@ extern "C" const char lbl_eu_80522DDC[36] = {
 // RTTI locators {name-ptr, base-list} + font-path string pointers.
 extern "C" const char* lbl_eu_806636F8 = (const char*)&lbl_eu_80522D68;
 extern "C" const char* lbl_eu_806636FC = (const char*)&lbl_eu_80522D7C;
-extern "C" u32 lbl_eu_8056C700[7];  // forward: .data sub-vtable referenced here
-extern "C" u32 lbl_eu_8056C728[3];  // forward: .data sub-vtable referenced here
+extern "C" u32 lbl_eu_8056C700[];  // forward (incomplete): see .data note
+extern "C" u32 lbl_eu_8056C728[];  // forward (incomplete): see .data note
 extern "C" u32 lbl_eu_80663700[2] = { (u32)&lbl_eu_80522D90, (u32)&lbl_eu_8056C700 };
 extern "C" u32 lbl_eu_80663708[2] = { (u32)&lbl_eu_80522D9C, (u32)&lbl_eu_8056C728 };
 extern "C" u32 lbl_eu_80663710[2] = { (u32)&lbl_eu_80522DB8, 0x00000000 };
 
 // === .data size=0xE0 align=8 ===
-// CDeviceFont vtable (160B): IWorkEvent dispatcher + CWorkThread overrides.
-extern "C" u32 lbl_eu_8056C660[40] = {
-    (u32)&lbl_eu_80663700, 0x00000000, (u32)&__dt__11CDeviceFontFv, (u32)&WorkEvent1__10IWorkEventFPvPCc,
-    (u32)&OnFileEvent__10IWorkEventFP10CEventFile, (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv, (u32)&OnPauseTrigger__10IWorkEventFb,
-    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv, (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
-    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv, (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
-    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv, (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
-    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv, (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
-    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv, (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
-    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv, (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
-    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv, (u32)&wkUpdate__11CDeviceFontFv, (u32)&wkRender__11CDeviceFontFv,
-    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__11CDeviceFontFv, (u32)&wkStandbyLogout__11CDeviceFontFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
-};
-// reslist<IDeviceFontInfo> vtable (28B): {RTTI, base, dtor, ...}.
-extern "C" u32 lbl_eu_8056C700[7] = {
-    (u32)&__RTTI__10IWorkEvent, 0x00000000, (u32)&__RTTI__11CWorkThread, 0x00000000,
-    (u32)&lbl_eu_806635F0, 0x00000000, 0x00000000,
-};
-// reslist<IDeviceFontInfo> sub-vtable (12B).
-extern "C" u32 lbl_eu_8056C71C[3] = {
-    (u32)&lbl_eu_80663708, 0x00000000, (u32)&__dt__reslist_IDeviceFontInfo,
-};
-// _reslist_base<IDeviceFontInfo> sub-vtable (12B).
-extern "C" u32 lbl_eu_8056C728[3] = {
-    (u32)&lbl_eu_80663710, 0x00000000, 0x00000000,
-};
-// _reslist_base<IDeviceFontInfo> tail (12B).
-extern "C" u32 lbl_eu_8056C734[3] = {
-    (u32)&lbl_eu_80663710, 0x00000000, (u32)&__dt___reslist_base_IDeviceFontInfo,
-};
+// NOTE: defined AFTER CDeviceFont::CDeviceFont below, via INCOMPLETE-type
+// forward declarations here. With complete types visible at the ctor,
+// MWCC commons the three label addresses the ctor takes (C660/C71C/C734)
+// into one .data section-base group (...data.0 + offsets); retail
+// materializes each independently.
+extern "C" u32 lbl_eu_8056C660[];
+extern "C" u32 lbl_eu_8056C71C[];
+extern "C" u32 lbl_eu_8056C734[];
 
 // === .sbss size=0x10 align=8 (zero-fill) ===
 CDeviceFont* lbl_eu_80665678 = 0;
@@ -166,6 +152,38 @@ CDeviceFont::CDeviceFont(const char* pName, CWorkThread* pParent)
     mInfoList.mCapacity = 8;
     lbl_eu_8066567C = 0;
 }
+
+// === .data definitions (moved below the ctor: see incomplete-decl note) ===
+// CDeviceFont vtable (160B): IWorkEvent dispatcher + CWorkThread overrides.
+extern "C" u32 lbl_eu_8056C660[40] = {
+    (u32)&lbl_eu_80663700, 0x00000000, (u32)&__dt__11CDeviceFontFv, (u32)&WorkEvent1__10IWorkEventFPvPCc,
+    (u32)&OnFileEvent__10IWorkEventFP10CEventFile, (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv, (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv, (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv, (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv, (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv, (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv, (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv, (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv, (u32)&wkUpdate__11CDeviceFontFv, (u32)&wkRender__11CDeviceFontFv,
+    (u32)&wkRenderAfter__11CWorkThreadFv, (u32)&wkStandbyLogin__11CDeviceFontFv, (u32)&wkStandbyLogout__11CDeviceFontFv, (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+};
+// reslist<IDeviceFontInfo> vtable (28B): {RTTI, base, dtor, ...}.
+extern "C" u32 lbl_eu_8056C700[7] = {
+    (u32)&__RTTI__10IWorkEvent, 0x00000000, (u32)&__RTTI__11CWorkThread, 0x00000000,
+    (u32)&lbl_eu_806635F0, 0x00000000, 0x00000000,
+};
+// reslist<IDeviceFontInfo> sub-vtable (12B).
+extern "C" u32 lbl_eu_8056C71C[3] = {
+    (u32)&lbl_eu_80663708, 0x00000000, (u32)&__dt__reslist_IDeviceFontInfo,
+};
+// _reslist_base<IDeviceFontInfo> sub-vtable (12B).
+extern "C" u32 lbl_eu_8056C728[3] = {
+    (u32)&lbl_eu_80663710, 0x00000000, 0x00000000,
+};
+// _reslist_base<IDeviceFontInfo> tail (12B).
+extern "C" u32 lbl_eu_8056C734[3] = {
+    (u32)&lbl_eu_80663710, 0x00000000, (u32)&__dt___reslist_base_IDeviceFontInfo,
+};
 
 // ---------------------------------------------------------------------------
 // reslist<IDeviceFontInfo> deleting destructors (retail emits these under the
@@ -275,31 +293,45 @@ u32 CDeviceFont::func_804525D4() {
 
 extern "C" {
 
+// Tail-call targets of the lookup wrappers: retail relocs to the Fv-mangled
+// names even though the calls pass trailing arguments through in r4+.
+void func_80453BB4__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1,
+                                         u32 a2, u32 a3);
+void func_80453FF0__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
+void func_804541F8__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
+void func_8045438C__16CDeviceFontLayerFv(CDeviceFontLayer* layer, u32 a1);
+
 // Find the font layer for `fontId` (0 selects the device's current font id)
 // and tail-call the layer's func_80453BB4 with the passed-through args.
+// Loop locals declared first (see func_804529D4): MWCC allocates in
+// declaration order, and retail keeps child/candidate in r7, the walk node
+// in r8 and the start sentinel in r9 (r4-r6 hold the passed-through args).
 void func_8045271C__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
+    CDeviceFontLayer* layer;
+    CDeviceFontLayer* child;
+    CDeviceFontLayer* candidate;
+    _reslist_node<CDeviceFontLayer*>* node;
+    _reslist_node<CDeviceFontLayer*>* startNode;
+
     if (lbl_eu_80665678 == 0) return;
     if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
 
-    // Re-read the singleton through a volatile view: retail reloads the
-    // pointer before the children walk (other work threads may replace the
-    // device), and the volatile deref stops MWCC from CSE-ing it into the
+    // Volatile re-read: retail reloads the singleton before the children
+    // walk; the volatile deref stops MWCC from CSE-ing it into the
     // null-check load above.
     CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
 
-    _reslist_node<CDeviceFontLayer*>* startNode = font->mChildren.mStartNodePtr;
-    _reslist_node<CDeviceFontLayer*>* node = startNode->mNext;
-    CDeviceFontLayer* layer;
+    startNode = font->mChildren.mStartNodePtr;
+    node = startNode->mNext;
     while (node != startNode) {
-        CDeviceFontLayer* child = node->mItem;
-        CDeviceFontLayer* candidate;
+        child = node->mItem;
+        // candidate starts as `child`; zero it for null children and for
+        // layers whose thread type is not a font layer.
+        candidate = child;
         if (child == 0) {
             candidate = 0;
-        } else {
-            candidate = child;
-            if (child->mType != CDeviceFontLayer::TYPE_FONT_LAYER) {
-                candidate = 0;
-            }
+        } else if (child->mType != CDeviceFontLayer::TYPE_FONT_LAYER) {
+            candidate = 0;
         }
         if (candidate != 0 && candidate->field_0x1F8 == fontId) {
             layer = candidate;
@@ -310,36 +342,37 @@ void func_8045271C__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
     layer = 0;
 found:
     if (layer == 0) return;
-    // Retail passes the incoming a1-a3 through to the layer dispatcher as
-    // trailing args (they ride along in r4-r6 at the tail jump); passing them
-    // keeps the walk off the arg registers (walk colors r7-r9 like retail).
-    extern void func_80453BB4(CDeviceFontLayer* layer, u32 a1, u32 a2, u32 a3);
-    func_80453BB4(layer, a1, a2, a3);
+    func_80453BB4__16CDeviceFontLayerFv(layer, a1, a2, a3);
 }
 
 // Same lookup as func_8045271C, dispatching to the layer's func_80453FF0.
-void func_8045283C__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
+// The single trailing argument rides along to the layer method in r4 (which
+// is why the walk colors child/candidate r5, node r6, sentinel r7).
+void func_8045283C__11CDeviceFontFv(u32 fontId, u32 a1) {
+    CDeviceFontLayer* layer;
+    CDeviceFontLayer* child;
+    CDeviceFontLayer* candidate;
+    _reslist_node<CDeviceFontLayer*>* node;
+    _reslist_node<CDeviceFontLayer*>* startNode;
+
     if (lbl_eu_80665678 == 0) return;
     if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
 
-    // Volatile re-read (same as func_8045271C): retail reloads the singleton
-    // before the children walk; the volatile deref stops the CSE into the
-    // null-check load.
+    // Volatile re-read (see func_8045271C); separate variables keep the
+    // null-check load out of the walk pointer's register.
     CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
 
-    _reslist_node<CDeviceFontLayer*>* startNode = font->mChildren.mStartNodePtr;
-    _reslist_node<CDeviceFontLayer*>* node = startNode->mNext;
-    CDeviceFontLayer* layer;
+    startNode = font->mChildren.mStartNodePtr;
+    node = startNode->mNext;
     while (node != startNode) {
-        CDeviceFontLayer* child = node->mItem;
-        CDeviceFontLayer* candidate;
+        child = node->mItem;
+        // candidate starts as `child`; zero it for null children and for
+        // layers whose thread type is not a font layer.
+        candidate = child;
         if (child == 0) {
             candidate = 0;
-        } else {
-            candidate = child;
-            if (child->mType != CDeviceFontLayer::TYPE_FONT_LAYER) {
-                candidate = 0;
-            }
+        } else if (child->mType != CDeviceFontLayer::TYPE_FONT_LAYER) {
+            candidate = 0;
         }
         if (candidate != 0 && candidate->field_0x1F8 == fontId) {
             layer = candidate;
@@ -350,67 +383,86 @@ void func_8045283C__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
     layer = 0;
 found:
     if (layer == 0) return;
-    layer->func_80453FF0();
+    func_80453FF0__16CDeviceFontLayerFv(layer, a1);
 }
 
-// Same lookup as func_8045271C, dispatching to the layer's func_804541F8.
-void func_804528C4__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
+// Same lookup as func_8045271C, dispatching to the layer's func_804541F8
+// (no trailing arguments: retail colors child/candidate r4, node r5,
+// sentinel r6).
+void func_804528C4__11CDeviceFontFv(u32 fontId) {
+    CDeviceFontLayer* layer;
+    CDeviceFontLayer* child;
+    CDeviceFontLayer* candidate;
+    _reslist_node<CDeviceFontLayer*>* node;
+    _reslist_node<CDeviceFontLayer*>* startNode;
+
     if (lbl_eu_80665678 == 0) return;
     if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
 
-    CDeviceFontLayer* layer = 0;
-    _reslist_node<CDeviceFontLayer*>* startNode =
-        lbl_eu_80665678->mChildren.mStartNodePtr;
-    _reslist_node<CDeviceFontLayer*>* node = startNode->mNext;
+    // Volatile re-read (see func_8045271C).
+    CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
+
+    startNode = font->mChildren.mStartNodePtr;
+    node = startNode->mNext;
     while (node != startNode) {
-        CDeviceFontLayer* child = node->mItem;
-        CDeviceFontLayer* candidate;
+        child = node->mItem;
+        // candidate starts as `child`; zero it for null children and for
+        // layers whose thread type is not a font layer.
+        candidate = child;
         if (child == 0) {
             candidate = 0;
-        } else {
-            candidate = child;
-            if (child->mType != CDeviceFontLayer::TYPE_FONT_LAYER) {
-                candidate = 0;
-            }
+        } else if (child->mType != CDeviceFontLayer::TYPE_FONT_LAYER) {
+            candidate = 0;
         }
         if (candidate != 0 && candidate->field_0x1F8 == fontId) {
             layer = candidate;
-            break;
+            goto found;
         }
         node = node->mNext;
     }
+    layer = 0;
+found:
     if (layer == 0) return;
     layer->func_804541F8();
 }
 
-// Same lookup as func_8045271C, dispatching to the layer's func_8045438C.
-void func_8045294C__11CDeviceFontFv(u32 fontId, u32 a1, u32 a2, u32 a3) {
+// Same lookup as func_8045271C, dispatching to the layer's func_8045438C
+// with one trailing argument passed through in r4.
+void func_8045294C__11CDeviceFontFv(u32 fontId, u32 a1) {
+    CDeviceFontLayer* layer;
+    CDeviceFontLayer* child;
+    CDeviceFontLayer* candidate;
+    _reslist_node<CDeviceFontLayer*>* node;
+    _reslist_node<CDeviceFontLayer*>* startNode;
+
     if (lbl_eu_80665678 == 0) return;
     if (fontId == 0) fontId = lbl_eu_80665678->mFontId;
 
-    CDeviceFontLayer* layer = 0;
-    _reslist_node<CDeviceFontLayer*>* startNode =
-        lbl_eu_80665678->mChildren.mStartNodePtr;
-    _reslist_node<CDeviceFontLayer*>* node = startNode->mNext;
+    // Volatile re-read (see func_8045271C).
+    CDeviceFont* font = *(CDeviceFont* volatile*)&lbl_eu_80665678;
+
+    startNode = font->mChildren.mStartNodePtr;
+    node = startNode->mNext;
     while (node != startNode) {
-        CDeviceFontLayer* child = node->mItem;
-        CDeviceFontLayer* candidate;
+        child = node->mItem;
+        // candidate starts as `child`; zero it for null children and for
+        // layers whose thread type is not a font layer.
+        candidate = child;
         if (child == 0) {
             candidate = 0;
-        } else {
-            candidate = child;
-            if (child->mType != CDeviceFontLayer::TYPE_FONT_LAYER) {
-                candidate = 0;
-            }
+        } else if (child->mType != CDeviceFontLayer::TYPE_FONT_LAYER) {
+            candidate = 0;
         }
         if (candidate != 0 && candidate->field_0x1F8 == fontId) {
             layer = candidate;
-            break;
+            goto found;
         }
         node = node->mNext;
     }
+    layer = 0;
+found:
     if (layer == 0) return;
-    layer->func_8045438C();
+    func_8045438C__16CDeviceFontLayerFv(layer, a1);
 }
 
 // ---------------------------------------------------------------------------
@@ -713,10 +765,14 @@ u32 CDeviceFont::func_80452D80() {
     CDeviceFontInfoExt* info = CDeviceFontInfoExt::create();
 
     CDeviceFont* font = lbl_eu_80665678;
+    // Locals in retail allocation order: slot index, sentinel pointer,
+    // capacity (signed: retail emits a signed cmpw).
+    // Locals in retail order: slot index, sentinel pointer, capacity
+    // (signed: retail emits a signed cmpw).
+    int i = 0;
     CDeviceFontInfoListNode* sentinel = font->mInfoList.mStartNodePtr;
-    u32 capacity = font->mInfoList.mCapacity;
-    u32 i;
-    for (i = 0; i < capacity; i++) {
+    int capacity = font->mInfoList.mCapacity;
+    for (; i < capacity; i++) {
         if (font->mInfoList.mList[i].mNext == 0) break;
     }
     CDeviceFontInfoListNode* temp = &font->mInfoList.mList[i];
@@ -734,7 +790,8 @@ u32 CDeviceFont::func_80452D80() {
     temp->mPrev = sentinel->mPrev;
     sentinel->mPrev->mNext = temp;
     sentinel->mPrev = temp;
-    font->field_0x1EC = 2;
+    // retail re-reads the singleton here (fresh sda21 reloc)
+    lbl_eu_80665678->field_0x1EC = 2;
     return 1;
 }
 
@@ -830,7 +887,241 @@ void CDeviceFont::wkUpdate() {
 
 CDeviceFontInfo::~CDeviceFontInfo() {}
 
-void CDeviceFont::wkRender() {}
+// Pointer-validation macros mirroring the nw4r db asserts inlined by retail
+// (same shapes as src/kyoshin/code_8025FB10.cpp).
+#define VALIDATE_NW4R_POINTER(pointer, file, line, message)                    \
+    {                                                                         \
+        bool validMem1 = true;                                                \
+        bool validMem2 = true;                                                \
+        bool validIo = true;                                                  \
+        bool validIo2 = true;                                                 \
+        bool validRegs = true;                                                \
+        bool validRegs2 = true;                                               \
+        u32 address = (u32)(pointer);                                         \
+        if ((address & 0xFF000000) != 0x80000000 &&                           \
+            (address & 0xFF800000) != 0x81000000) {                           \
+            validMem1 = false;                                                \
+        }                                                                     \
+        if (!validMem1 && (address & 0xF8000000) != 0x90000000) {             \
+            validMem2 = false;                                                \
+        }                                                                     \
+        if (!validMem2 && (address & 0xFF000000) != 0xC0000000) {             \
+            validIo = false;                                                  \
+        }                                                                     \
+        if (!validIo && (address & 0xFF800000) != 0xC1000000) {               \
+            validIo2 = false;                                                 \
+        }                                                                     \
+        if (!validIo2 && (address & 0xF8000000) != 0xD0000000) {              \
+            validRegs = false;                                                \
+        }                                                                     \
+        if (!validRegs && (address & 0xFFFFC000) != 0xE0000000) {             \
+            validRegs2 = false;                                               \
+        }                                                                     \
+        if (!validRegs2) {                                                    \
+            nw4r::db::Panic(file, line, message, pointer);                    \
+        }                                                                     \
+    }
+
+#define VALIDATE_NW4R_POINTER_FLAG(pointer, region, file, line, message)       \
+    {                                                                         \
+        bool valid = false;                                                   \
+        if (region == 0x80000000 ||                                           \
+            ((u32)(pointer) & 0xFF800000) == 0x81000000 ||                     \
+            ((u32)(pointer) & 0xF8000000) == 0x90000000 ||                     \
+            region == 0xC0000000 ||                                           \
+            ((u32)(pointer) & 0xFF800000) == 0xC1000000 ||                     \
+            ((u32)(pointer) & 0xF8000000) == 0xD0000000 ||                     \
+            ((u32)(pointer) & 0xFFFFC000) == 0xE0000000) {                     \
+            valid = true;                                                     \
+        }                                                                     \
+        if (!valid) {                                                         \
+            nw4r::db::Panic(file, line, message, pointer);                    \
+        }                                                                     \
+    }
+
+typedef nw4r::ut::TextWriterBase<wchar_t> WideTextWriter;
+extern "C" void* getInstance__8CDesktopFv();
+
+// ---- wkRender (0x80455D2C): draws the exception-layer text ---------------
+// While this device owns the work-root exception, fade in a centered UTF-16
+// string over a shadowed quad (4 offset black passes + alpha-scaled gray
+// center pass) using an orthographic full-screen projection.
+void CDeviceFont::wkRender() {
+    // Exception handoff: while the desktop is up and we own the work-root
+    // exception, count frames; release the exception once the counter wraps
+    // negative (retail: addic./ble after the increment).
+    if (getInstance__8CDesktopFv() != 0) {
+        if (CWorkRoot::getException() == (CException*)this) {
+            if (++lbl_eu_8066567C <= 0) {
+                CWorkRoot::setException(0);
+            }
+        }
+    }
+
+    if (lbl_eu_80665678 == 0) {
+        return;
+    }
+
+    CDeviceVI::setFlag0(false);
+
+    // Frame counter cycling at 2000 frames.
+    lbl_eu_80665684++;
+    if ((s32)lbl_eu_80665684 >= 2000) {
+        lbl_eu_80665684 = 0;
+    }
+
+    // Fade-in alpha ramp over the first 1000 counted frames. Natural
+    // int->double cast: the compiler generates the 0x43300000 magic-double
+    // sequence itself (matching retail) instead of a manual union build.
+    f32 fade = lbl_eu_8066A3D0 *
+                   static_cast<f32>(static_cast<f64>(
+                       static_cast<s32>(lbl_eu_80665684 - 1000)) /
+                                   lbl_eu_8066A3D4) +
+               lbl_eu_8066A3CC;
+    if (fade < lbl_eu_8066A3D8) {
+        fade = lbl_eu_8066A3CC - fade;
+    }
+    if (fade >= lbl_eu_8066A3DC) {
+        if (fade > lbl_eu_8066A3CC) {
+            fade = lbl_eu_8066A3CC;
+        }
+    } else {
+        fade = lbl_eu_8066A3DC;
+    }
+
+    // Convert the shared UTF-8 source into the UTF-16 render buffer.
+    u32 destLen = 0x200;
+    memset(lbl_eu_80657750, 0, 0x400);
+    // lbl_eu_80665680 is the shared UTF-8 source text pointer (retail passes
+    // it as the converter's src argument, not a gate flag).
+    if (ENCConvertStringUtf8ToUtf16((u16*)lbl_eu_80657750, &destLen,
+                                    (const u8*)lbl_eu_80665680,
+                                    (u32*)NULL) != ENC_OK) {
+        return;
+    }
+
+    WideTextWriter writer;
+    writer.SetupGX();
+
+    u32 writerRegion = (u32)&writer & 0xFF000000;
+
+    VALIDATE_NW4R_POINTER(&writer, lbl_eu_8052DC70, 139, lbl_eu_8052DC3C);
+    writer.SetDrawFlag(0x110);
+
+    VALIDATE_NW4R_POINTER(&writer, lbl_eu_8052DD84, 171, lbl_eu_8052DD50);
+    writer.SetScale(lbl_eu_8066A3C8, lbl_eu_8066A3E0);
+
+    VALIDATE_NW4R_POINTER(&writer, lbl_eu_8052DC28, 98, lbl_eu_8052DBF4);
+    writer.SetCharSpace(lbl_eu_8066A3E4);
+
+    VALIDATE_NW4R_POINTER(&writer, lbl_eu_8052DD84, 171, lbl_eu_8052DD50);
+    writer.SetCharSpace(lbl_eu_8066A3C8);
+
+    // Fetch the bound font twice like retail (null check + use).
+    nw4r::lyt::Layout* layout;  // unused second argument, uninitialized in retail
+    if (func_80452C10(0, layout)->func_80453624() == NULL) {
+        return;
+    }
+    const nw4r::ut::Font* font = static_cast<const nw4r::ut::Font*>(
+        func_80452C10(0, layout)->func_80453624());
+
+    VALIDATE_NW4R_POINTER(&writer, lbl_eu_8053785C, 65, lbl_eu_80537828);
+    VALIDATE_NW4R_POINTER(font, lbl_eu_80537818, 66, lbl_eu_805377E0);
+    writer.SetFont(*font);
+
+    GXRenderModeObj* rmo;
+    f32 scaledW;
+    f32 scaledH;
+
+    rmo = CDeviceVI::getRenderModeObj();
+    scaledW =
+        lbl_eu_8066A3F0 * static_cast<f32>(static_cast<f64>(rmo->fbWidth) -
+                                           lbl_eu_8066A3C0);
+    rmo = CDeviceVI::getRenderModeObj();
+    scaledH =
+        lbl_eu_8066A3F0 * static_cast<f32>(static_cast<f64>(rmo->efbHeight) -
+                                           lbl_eu_8066A3C0);
+
+    writer.SetupGX();
+
+    // One shared matrix buffer: identity position matrix, then overwritten
+    // with the orthographic projection.
+    Mtx44 mtx;
+    PSMTXIdentity(mtx);
+    GXLoadPosMtxImm(mtx, GX_PNMTX0);
+    GXSetCurrentMtx(GX_PNMTX0);
+
+    f32 width;
+    rmo = CDeviceVI::getRenderModeObj();
+    width =
+        static_cast<f32>(static_cast<f64>(rmo->fbWidth) - lbl_eu_8066A3C0);
+    rmo = CDeviceVI::getRenderModeObj();
+    C_MTXOrtho(mtx, lbl_eu_8066A3D8,
+               static_cast<f32>(static_cast<f64>(rmo->efbHeight) -
+                                lbl_eu_8066A3C0),
+               lbl_eu_8066A3D8, width, lbl_eu_8066A3D8, lbl_eu_8066A3F4);
+    GXSetProjection(mtx, GX_ORTHOGRAPHIC);
+
+    // Shadow pass: four black copies around the final position.
+    VALIDATE_NW4R_POINTER(&writer, lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8);
+    writer.SetTextColor(nw4r::ut::Color(0, 0, 0, 255));
+
+    const wchar_t* text = lbl_eu_80657750;
+    u32 textRegion = (u32)text & 0xFF000000;
+
+    VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_805378A0, 258,
+                               lbl_eu_8053786C);
+    writer.SetCursor(scaledW - lbl_eu_8066A3C8, scaledH - lbl_eu_8066A3C8,
+                     lbl_eu_8066A3F8);
+    VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_80537734, 256,
+                               lbl_eu_80537700);
+    VALIDATE_NW4R_POINTER(text, lbl_eu_805376EC, 257, lbl_eu_805376B8);
+    writer.Print(text, static_cast<int>(wcslen(text)));
+
+    VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_805378A0, 258,
+                               lbl_eu_8053786C);
+    writer.SetCursor(scaledW + lbl_eu_8066A3C8, scaledH - lbl_eu_8066A3C8,
+                     lbl_eu_8066A3F8);
+    VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_80537734, 256,
+                               lbl_eu_80537700);
+    VALIDATE_NW4R_POINTER_FLAG(text, textRegion, lbl_eu_805376EC, 257,
+                               lbl_eu_805376B8);
+    writer.Print(text, static_cast<int>(wcslen(text)));
+
+    VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_805378A0, 258,
+                               lbl_eu_8053786C);
+    writer.SetCursor(scaledW - lbl_eu_8066A3C8, scaledH + lbl_eu_8066A3C8,
+                     lbl_eu_8066A3F8);
+    VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_80537734, 256,
+                               lbl_eu_80537700);
+    VALIDATE_NW4R_POINTER_FLAG(text, textRegion, lbl_eu_805376EC, 257,
+                               lbl_eu_805376B8);
+    writer.Print(text, static_cast<int>(wcslen(text)));
+
+    VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_805378A0, 258,
+                               lbl_eu_8053786C);
+    writer.SetCursor(scaledW + lbl_eu_8066A3C8, scaledH + lbl_eu_8066A3C8,
+                     lbl_eu_8066A3F8);
+    VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_80537734, 256,
+                               lbl_eu_80537700);
+    VALIDATE_NW4R_POINTER_FLAG(text, textRegion, lbl_eu_805376EC, 257,
+                               lbl_eu_805376B8);
+    writer.Print(text, static_cast<int>(wcslen(text)));
+
+    // Center pass: gray level and alpha both follow the fade ramp.
+    u8 gray = static_cast<u8>(lbl_eu_8066A3FC * fade);
+    VALIDATE_NW4R_POINTER(&writer, lbl_eu_8052DCFC, 135, lbl_eu_8052DCC8);
+    writer.SetTextColor(nw4r::ut::Color(gray, gray, gray, 255));
+
+    VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_805378A0, 258,
+                               lbl_eu_8053786C);
+    writer.SetCursor(scaledW, scaledH, lbl_eu_8066A3D8);
+    VALIDATE_NW4R_POINTER_FLAG(&writer, writerRegion, lbl_eu_80537734, 256,
+                               lbl_eu_80537700);
+    VALIDATE_NW4R_POINTER_FLAG(text, textRegion, lbl_eu_805376EC, 257,
+                               lbl_eu_805376B8);
+    writer.Print(text, static_cast<int>(wcslen(text)));
+}
 
 // ---- wkStandbyLogin (0x804570FC) ----
 bool CDeviceFont::wkStandbyLogin() {
@@ -889,10 +1180,11 @@ bool CDeviceFont::wkStandbyLogout() {
     }
 
     // Log out only when the children list is empty and the work/CLib
-    // systems are already gone.
-    if (!mChildren.empty()) return false;
-    if (CWorkSystem::getInstance() != 0) return false;
-    if (CLib::getInstance() != 0) return false;
+    // systems are already gone. Goto-gate keeps ONE shared 'return false'
+    // exit (retail merges the li r3,0 tails; per-check duplication differs).
+    if (!mChildren.empty()) goto logout_fail;
+    if (CWorkSystem::getInstance() != 0) goto logout_fail;
+    if (CLib::getInstance() != 0) goto logout_fail;
 
     CDeviceFontLayer::func_80454E2C();
 
@@ -915,6 +1207,9 @@ bool CDeviceFont::wkStandbyLogout() {
     mInfoList.mStartNodePtr->mNext = mInfoList.mStartNodePtr;
     mInfoList.mStartNodePtr->mPrev = mInfoList.mStartNodePtr;
     return CWorkThread::wkStandbyLogout();
+
+logout_fail:
+    return false;
 }
 
 extern "C" void func_eu_80457318(u32 val) {

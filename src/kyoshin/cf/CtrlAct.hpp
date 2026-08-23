@@ -244,14 +244,16 @@ public:
     virtual CVoicePos* vf41();  // 0xAC get own position
 
     u32 mField4;               // 0x04 (flag word, bit 1 set by func_800D2A5C)
-    u8 _pad08[0x0C - 0x08];
+    f32 mField8;               // 0x08
     f32 mFieldC;               // 0x0C target angle
     f32 mField10;              // 0x10 computed facing
     f32 mField14;              // 0x14 aim/fx state value
     u32 mField18;              // 0x18 (attack counter written by func_800D2A5C)
-    u8 _pad1C[0x28 - 0x1C];
+    u32 mField1C;              // 0x1C (ctor sets 2)
+    u32 mField20;              // 0x20
+    u32 mField24;              // 0x24 (ctor sets -1)
     CtrlActViewSub28* mField28; // 0x28 (vtable slot 0x138 float source)
-    u8 _pad2C[0x30 - 0x2C];
+    u32 mField2C;              // 0x2C
     ml::CVec3 mPos30;          // 0x30 (start of the 0x2C-byte block cleared in the handlers)
     f32 mField3C;              // 0x3C
     f32 mField40;              // 0x40
@@ -375,7 +377,7 @@ extern "C" int func_804BE5A4(int a, int b);
 // Attack-param table lookup (CArtsSet.cpp): base + index*0x88 + 0x10.
 extern "C" void* getAtkParam(void* base, int index);
 // Enum-list actor-id query (target 5 scan loop).
-extern "C" int func_800F6E08(void* list);
+// func_800F6E08 is declared in CtrlPc.hpp (extern "C" void* form).
 // In-TU facing helper called by func_800D3D34 (retail plain C name).
 extern "C" int func_800D5F98(CtrlActView* self, CtrlActSrc* src);
 
@@ -405,6 +407,15 @@ extern "C" int func_800D6720(CtrlActView* self, int flag);
 
 // Scene object pointer fed to func_80496288 (.sbss).
 extern void* lbl_eu_80663E14;
+
+// Retail vtables stored manually by the novtable ctors (.data).
+extern const u32 lbl_eu_80527BB0[];
+extern const u32 lbl_eu_8052B080[];
+
+// Sub-object / player resolvers used by the CtrlActView ctor.
+typedef void CtrlActorObj;
+// Sub-object resolver used by the CtrlActView ctor (retail plain C name).
+extern "C" CtrlActorObj* func_800BBC0C(void* param);
 
 // sdata2 float constants (const so MWCC references the retail pool slots).
 extern const f32 lbl_eu_80666CF8;   // 0.0f
@@ -445,6 +456,8 @@ extern const f32 lbl_eu_80666DB4;
 extern const f32 lbl_eu_80666DB8;
 extern const f32 lbl_eu_80666DBC;
 extern const f32 lbl_eu_80666DC0;
+extern const f32 lbl_eu_80666DC8;
+extern const f32 lbl_eu_80666DCC;
 extern const f32 lbl_eu_80666D94;
 extern const f32 lbl_eu_80666D98;
 extern const f32 lbl_eu_80666D9C;
@@ -464,8 +477,9 @@ extern const f32 lbl_eu_8066A20C;
 extern const f32 lbl_eu_8066A204;   // 0.7853982 (pi/4)
 
 // 2-float blocks (base + f2 offset pairs for the facing-state table).
-extern const f32 lbl_eu_80663EF8[2];   // sda2 (sda21 addressing)
-extern const f32 lbl_eu_80573A20[4];   // .data (declared >8B to force lis/addi)
+// Non-const: sinit_800D79B4 writes these at static-init time.
+extern f32 lbl_eu_80663EF8[2];   // sda2 (sda21 addressing)
+extern f32 lbl_eu_80573A20[4];   // .data (declared >8B to force lis/addi)
 
 // 3-word enum-list filter table (.rodata) fed to func_800F4A98 (target 5).
 extern const u32 lbl_eu_804FC810[3];

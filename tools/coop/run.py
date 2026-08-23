@@ -1501,6 +1501,28 @@ def cmd_targets_recertify(
         remaining_budget = None if limit is None else max(0, limit - attempted)
         if remaining_budget is not None:
             wave = wave[:remaining_budget]
+
+        # §2.7.6 parity with cycle: replay each target's declared return so the
+        # re-proof matches the ABI shape the registry/certificate declares.
+        # Without this, recertify certifies under a different abi_shape than
+        # cycle and strict validation rejects the refreshed certificate
+        # ("declared_return mismatch: registry='i32' certificate=None").
+        _declared_returns: dict[str, str | None] = {}
+        try:
+            for _row in load_targets_document(config).get("targets", []):
+                if not isinstance(_row, dict):
+                    continue
+                _rid = _row.get("id")
+                _dr = None
+                _abi = (_row.get("equivalence_certificate") or {}).get("abi_shape")
+                if isinstance(_abi, dict):
+                    _dr = _abi.get("declared_return")
+                if _dr is None and isinstance(_row.get("declared_return"), str):
+                    _dr = _row["declared_return"]
+                _declared_returns[_rid] = _dr
+        except (OSError, ValueError):
+            pass
+
         for target in wave:
             assert target.unit is not None
             assert target.symbol is not None
@@ -1517,6 +1539,7 @@ def cmd_targets_recertify(
                     target.symbol,
                     linked=linked,
                     target_id=target.id,
+                    declared_return=_declared_returns.get(target.id),
                 )
             except (FileNotFoundError, ValueError, subprocess.CalledProcessError) as exc:
                 print(f"  FAIL: {exc}", file=sys.stderr)

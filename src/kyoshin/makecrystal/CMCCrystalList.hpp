@@ -18,8 +18,16 @@ class ArcResourceAccessor;
 extern "C" void* lbl_eu_80535F80[];
 
 // Anim-completion sentinel float passed to func_80137444/func_80137510
-// (retail .sdata2 constant at 0x80668544).
+// (retail .sdata2 constants at 0x80668544 / 0x80668548).
 extern const float lbl_eu_80668544;
+extern const float lbl_eu_80668548;
+
+// Layout text/pane bind helper (retail 0x80137924).
+void func_80137924(void* out, void* paneA, void* paneB, void* paneC);
+
+// Pane texture/anim bind helpers used by func_80223004.
+extern "C" void func_8013BCD4(void* pane, void* animRes);
+extern "C" void func_80137F88(void* pane, void* tex);
 
 // Crystal-list UI strings (retail .rodata at 0x805092C0, size 0x288).
 extern char lbl_eu_805092C0[];
@@ -47,8 +55,9 @@ extern "C" u32 func_801355BC();
 extern "C" void func_80136FA0(nw4r::lyt::Layout*, nw4r::lyt::AnimResource**, nw4r::lyt::ArcResourceAccessor*, char*);
 
 /* Crystal list for the makecrystal UI. Manages available crystals and their
-   display state. Inherits from IWorkEvent for file-load callbacks. */
-class CMCCrystalList : public IWorkEvent {
+   display state. Inherits from IWorkEvent for file-load callbacks.
+   novtable: the ctor stores the retail vtable label explicitly. */
+class __declspec(novtable) CMCCrystalList : public IWorkEvent {
 public:
     CMCCrystalList();
     virtual ~CMCCrystalList();

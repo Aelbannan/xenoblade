@@ -754,14 +754,15 @@ Allocates memory from the tail (or end) of the region indicated by 'handle'.
 The buffer's size and alignment can be configured.
 */
 void* MemManager::allocate_tail(ALLOC_HANDLE handle, u32 size, int align) {
-    void* buffer = nullptr;
     MemRegion* region = getRegion(handle);
+    void* buffer = nullptr;
 
     // Allocate a tail-aligned buffer; the null path is an explicit
     // li r3,0 return (retail), so keep the early-return shape.
-    // OPEN ITEM: retail keeps buffer's zero in VOLATILE r6 (scheduled
-    // early) with 3 saved regs (r29-r31); MWCC allocates it to r31 and
-    // needs a 4th saved reg (r28) for size - instruction count +4.
+    // OPEN ITEM: retail materializes buffer's null into a VOLATILE arg
+    // reg coalesced with the &buffer setup (3 saved regs); every source
+    // shape tried (decl order, late init, comma-expr inline init) makes
+    // MWCC put it in saved r31 -> 4th saved reg, +4 instrs.
     if (MemManager::getTailBuffer(region, size, align, &buffer) == nullptr) {
         return nullptr;
     }

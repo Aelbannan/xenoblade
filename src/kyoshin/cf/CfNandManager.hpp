@@ -30,6 +30,10 @@ struct CfNandEvent {
     u16 mFieldC;  // 0xC
     u8  mFieldE;  // 0xE
     u8  mFieldF;  // 0xF
+
+    // Retail ring initialization leaves mTag untouched (offset 4 is never
+    // stored by the ctor or the array-construction loop).
+    CfNandEvent() : mWord(0), mField8(0), mFieldC(0), mFieldE(0), mFieldF(0) {}
 };
 
 // Event queue embedded in CfNandManager at +0x60. Its destructor is the retail
@@ -38,7 +42,10 @@ struct CfNandEvent {
 // at slot (mHead + mTail) % mSize (see func_8023FB28 / func_8023FD4C in
 // CfNandManager.cpp). Counters are signed in retail (divw modulo).
 struct CfNandEventQueue {
-    u8 field_0x00[0x100];   // 0x00: ring data / padding
+    CfNandEvent mFirst;     // 0x00 (+0x60): slot 0, constructed inline by the
+                            // manager ctor
+    CfNandEvent mRest[15];  // 0x10 (+0x70): slots 1..15, built by the
+                            // array-construction loop
     CfNandEvent* mRingBase; // 0x100: ring base pointer
     s32 mHead;              // 0x104: head counter
     s32 mTail;              // 0x108: tail counter
@@ -52,6 +59,91 @@ struct CfNandEventQueue {
         mTail = 0;
         mHead = 0;
     }
+};
+
+// Pending-event scratch copied out of the ring by func_8023EB78 and consumed
+// by the event handler __dt__8023E63C. Note that mPayload (offset 0x178)
+// aliases the save-block pointer read by func_8023CD9C / func_8023E544.
+struct CfNandPendingEvent {
+    u32 mCb;      // 0x170: raw callback dispatched when nonzero
+    u32 mTag;     // 0x174
+    u32 mPayload; // 0x178
+    u16 mType;    // 0x17C (aliases CfNandManager::field_17C)
+    u8  mSubtype; // 0x17E (aliases field_17E)
+    u8  mFlag;    // 0x17F (aliases field_17F)
+};
+
+// Directory-entry count written by the NAND readdir request (func_804DA3E4)
+// and consumed by the name-table scan in __dt__8023E63C.
+extern s32 lbl_eu_80664778;
+// Format argument handed to ml::FixStr<32>::format by the name builders.
+extern u32 lbl_eu_806628C0;
+// Default write-back table used by the NAND flush request in func_8023EB78.
+extern u8 lbl_eu_80577358[];
+
+// Save block pointed to by CfNandManager+0x178 and validated by func_8023E544:
+// magic 'DMMY' placeholder word, version tag at +0xC (0x70001/0x70002), stored
+// CRC16 at +0x1C, 0x9C80-byte payload at +0x20.
+struct CfNandSaveBlock {
+    u32 magic;        // 0x00: 0x444D4D59 ('DMMY') = empty slot
+    u8 _pad04[8];
+    u32 field_0C;     // 0x0C: version tag
+    u8 _pad10[0xC];
+    u32 field_1C;     // 0x1C: stored CRC16
+    u8 data[0x9C80];  // 0x20: payload covered by the CRC
+};
+
+// Head of the full on-media save image validated by func_8023CD9C (offsets
+// shared by all three version tags): 12 independently CRC16'd regions, each
+// checksum word sitting immediately before its region.
+struct CfNandSaveHead {
+    u32 magic;        // 0x00
+    u8 _04[8];
+    u32 field_0C;     // 0x0C version tag
+    u8 _10[0xC];
+    u32 crc0;         // 0x1C
+    u8 r1[0x9C80];    // 0x20
+    u32 crc1;         // 0xA02C
+    u8 r2[0x22C];     // 0xA030
+    u32 crc2;         // 0xB25C
+    u8 r3[0x6C28];    // 0xB260
+    u32 crc3;         // 0x11EAC
+    u8 r4[0xC];       // 0x11EB0
+    u32 crc4;         // 0x11EDC
+    u8 r5[0x34];      // 0x11EE0
+    u32 crc5;         // 0x11F2C
+    u8 r6[0x10];      // 0x11F30
+    u32 crc6;         // 0x11F5C
+};
+
+// Version-0x70002 tail (base 0x11F60).
+struct CfNandSaveTailOSC {
+    u8 r7[0x12120];   // 0x11F60
+    u32 crc7;         // 0x2408C
+    u8 r8[0x10];      // 0x24090
+    u32 crc8;         // 0x240BC
+    u8 r9[0x10];      // 0x240C0
+    u32 crc9;         // 0x240EC
+    u8 r10[0x384];    // 0x240F0
+    u32 crc10;        // 0x2449C
+    u8 r11[0x234];    // 0x244A0
+    u32 crc11;        // 0x248AC
+    u8 r12[0x40];     // 0x248B0
+};
+
+// Version-0x70001 tail (base 0x11F60); same shape, larger region 7.
+struct CfNandSaveTailCalc {
+    u8 r7[0x157D0];   // 0x11F60
+    u32 crc7;         // 0x2774C
+    u8 r8[0x10];      // 0x27750
+    u32 crc8;         // 0x2777C
+    u8 r9[0x10];      // 0x27780
+    u32 crc9;         // 0x277AC
+    u8 r10[0x384];    // 0x277B0
+    u32 crc10;        // 0x27B5C
+    u8 r11[0x234];    // 0x27B60
+    u32 crc11;        // 0x27F6C
+    u8 r12[0x40];     // 0x27F70
 };
 
 namespace cf{
@@ -74,7 +166,11 @@ namespace cf{
         //0x058-0x05C IScnRender
         /* 0x5C */ u8* field_0x5C;          // heap buffer (freed by Term)
         /* 0x60 */ CfNandEventQueue mEventQueue; // event queue + ring metadata
-        /* 0x170 */ u8 unk170[0x10];            // event ring data / padding
+        /* 0x170 */ CfNandPendingEvent mPending;
+        /* 0x178 */ CfNandSaveBlock* mSaveBlock; // save block checked by func_8023E544
+        /* 0x17C */ u16 field_17C;
+        /* 0x17E */ u8 field_17E;
+        /* 0x17F */ u8 field_17F;
         /* 0x180 */ u32 field_180;              // status flags (bit0/bit29 read by func_8023EABC)
         /* 0x184 */ u16 field_184;
         /* 0x186 */ u16 field_186;
@@ -112,6 +208,8 @@ extern CNandQueue lbl_eu_8065FD00;
 extern "C" int CfRes_getD80Flag();
 // Global mode flag (.sbss); bit 0x200000 gates CfNandManager::Move's NAND pump.
 extern u32 lbl_eu_80663E28;
+// Global presentation/event bitfield; 0xafa40000 mask gates func_8023F3C0.
+extern u32 lbl_eu_80663E24;
 // NAND teardown in-progress flag (.sbss u16) set around func_8023D3D8 in the
 // __dt__8023E448 teardown path (also polled by CSysWinScenarioLog).
 extern u16 lbl_eu_80664772;
@@ -119,7 +217,22 @@ extern u16 lbl_eu_80664772;
 extern u8  lbl_eu_8066476D;
 extern u16 lbl_eu_80664774;
 // CfNandManager vtable (.data, 0xC4 bytes; the dtor stores it explicitly).
-extern const u32 lbl_eu_80536BBC[];
+extern u8 lbl_eu_80536BBC[];
+// CTTask<CfNandManager> base vtable (stored at +0x10 before the derived
+// vtable overwrite in the ctor).
+extern u8 lbl_eu_80536CB4[];
+// Static default move-hook ptmf (.data) copied into +0x188 by the ctor.
+extern u32 lbl_eu_80536B20[3];
+// Null pointer-to-member-function constant (defined in CUICfManager.cpp).
+extern u32 __ptmf_null[3];
+// NAND request helpers (libs/monolib/src/nand/CNand.cpp).
+extern "C" int func_804DA29C(CNandQueue* self, const char* name, u32 a2, u32 a3,
+                             void* a4, u32 a5);
+extern "C" int func_804DA34C(CNandQueue* self, const char* name, u32 a2, u32 a3);
+extern "C" int func_804DA3A0(CNandQueue* self, u32 a1);
+extern "C" int func_804DA3E4(CNandQueue* self, u8* path, u32 size, void* outCount);
+extern "C" int func_eu_804DE660(CNandQueue* self, u32 a1, u32 a2);
+
 // Party-snapshot fallback data (.bss, 3 words) for missing player slots
 // (func_8023C1F0) and the fallback float (.sbss).
 extern u32 lbl_eu_8057164C[3];
@@ -144,6 +257,81 @@ struct CfNandPartyInfo {
 struct CfNandPartySnapshot {
     CfNandPartyEntry mEntry[3]; // 0x00..0x2F
     u32 field_30;               // 0x30
+};
+
+// --- imports used by the CfNandManager TU (declared here so the .cpp stays
+// free of local extern "C" scaffolding) ---
+extern "C" u32 func_8009CF8C();                 // message-count lookup
+extern "C" u32 func_8009CF84();                 // save-region size lookup
+extern "C" u32 func_8006A80C();                 // game-progress bitfield
+extern "C" void* func_8009EC9C(u16 index);      // character-data lookup
+extern "C" void func_80084F50__Q22cf13CfGameManagerFv();
+extern char lbl_eu_8050B470[];                  // bdat column-name blob
+extern void* lbl_eu_80664090;                   // bdat table object
+extern f32 lbl_eu_806686E0;                     // fallback float constant
+
+// Inner descriptor written at +0x14 of the texture block built by
+// func_8023C68C (height/width/format of the 0xa4x0x74 capture tile).
+struct CfNandTexSub {
+    u16 height;      // +0x00: 0x74
+    u16 width;       // +0x02: 0xa4
+    u32 format;      // +0x04: 4
+    u32 offset;      // +0x08: 32-aligned payload offset
+    u32 field20;
+    u32 field24;
+    u32 field28;
+    u32 field2C;
+    f32 field30;
+    u8 field34[4];
+};
+
+// Descriptor block filled by func_8023C68C (0x38-byte header + payload).
+struct CfNandTexBlock {
+    u32 field00;     // 0x20AF30 resource tag
+    u32 field04;     // 1
+    u32 field08;     // 0xC
+    u32 field0C;     // offset of the sub-descriptor (runtime-computed)
+    u32 field10;     // 0
+    CfNandTexSub sub; // +0x14
+}; // 0x38
+
+// One 0x18-byte party record copied into save buffers.
+struct CfNandRecord {
+    u32 w[6];
+};
+
+// Source view over the large manager object func_8023C7C4 reads party data
+// from (progress words near +0xB260 and two records at +0xD1FC).
+struct CfNandSaveSource {
+    u8 _pad0[0xB260];
+    u16 fieldB260;
+    u16 fieldB262;
+    u8 _pad4[0xD1FC - 0xB264];
+    CfNandRecord mRecord[2];
+};
+
+// Save buffer laid out by func_8023C7C4 (CRC16 covers the first 0x9C80 bytes).
+struct CfNandSaveBuf {
+    s16 field00;          // 0x00: scenario counter
+    u8 field02;           // 0x02: day of month
+    u8 field03;           // 0x03: hour
+    u16 field04;          // 0x04: day of year
+    u16 field06;          // 0x06: weekday + 1
+    u8 field08;           // 0x08: month
+    u8 field09;           // 0x09: year
+    u16 field0A;          // 0x0A: progress bits 4..19
+    u16 field0C;          // 0x0C: progress bits 20..25
+    u16 field0E;          // 0x0E: source progress word
+    u8 field10;
+    u8 field11;           // 0x11: OR-merged source progress byte
+    u16 field12;
+    CfNandRecord mRecord[2]; // 0x14
+    char mName[0x20];        // 0x44: bdat string column
+    u16 field64;             // 0x64: character id
+    u8 field66;              // 0x66: slot id
+    u8 field67;              // 0x67: message count
+    u8 _pad68[0x18];
+    CfNandTexBlock tex;      // 0x80
 };
 
 // Cast-only iface for the CfObjectPc player vtable (slot mapping mirrors
@@ -211,3 +399,7 @@ struct CfNandBmView {
     u8 _pad[0x194];
     u32 field_194;
 };
+
+// 0x80-stride per-player table whose entry address is written into pushed
+// events by func_8023FEDC (.data).
+extern u8 lbl_eu_80576AC0[];

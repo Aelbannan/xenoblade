@@ -13,7 +13,7 @@ extern u32 lbl_eu_806646BC;    // global flag
 typedef void (CfGimmickElvData::*CfGimmickElvStateFunc)();
 extern CfGimmickElvStateFunc lbl_eu_80535868[];   // PTMF state table
 extern u32 lbl_eu_805765B0[];  // bit array
-extern u32 lbl_eu_805765A0[];  // vec3 constants
+extern f32 lbl_eu_805765A0[3];  // vec3 constant (player-relative check center)
 extern void* lbl_eu_80663E14;  // global pointer (via sda21)
 extern f32 lbl_eu_80668380;    // float constant (0.0f)
 extern f32 lbl_eu_80668384;    // float constant (1.0f)
@@ -65,18 +65,18 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
 
     // Initialize sub-objects (4 groups x 3 types)
     u32 stackVar = (u32)table;
-    func_8020938C(self, self->vec0, (void*)lbl_eu_805357E8, &stackVar, 0);
-    func_802095D8(self, self->vec1, (void*)lbl_eu_805357E8, &stackVar, 0);
-    func_80209488(self, self->vec2, (void*)lbl_eu_805357E8, &stackVar, 0);
-    func_8020938C(self, self->elvVec0, (void*)lbl_eu_805357E8, &stackVar, 1);
-    func_802095D8(self, self->elvVec3, (void*)lbl_eu_805357E8, &stackVar, 1);
-    func_80209488(self, self->elvVec6, (void*)lbl_eu_805357E8, &stackVar, 1);
-    func_8020938C(self, self->elvVec1, (void*)lbl_eu_805357E8, &stackVar, 2);
-    func_802095D8(self, self->elvVec4, (void*)lbl_eu_805357E8, &stackVar, 2);
-    func_80209488(self, self->elvVec7, (void*)lbl_eu_805357E8, &stackVar, 2);
-    func_8020938C(self, self->elvVec2, (void*)lbl_eu_805357E8, &stackVar, 3);
-    func_802095D8(self, self->elvVec5, (void*)lbl_eu_805357E8, &stackVar, 3);
-    func_80209488(self, self->elvVec8, (void*)lbl_eu_805357E8, &stackVar, 3);
+    func_8020938C(self, &self->vec0, (void*)lbl_eu_805357E8, &stackVar, 0);
+    func_802095D8(self, &self->vec1, (void*)lbl_eu_805357E8, &stackVar, 0);
+    func_80209488(self, &self->vec2, (void*)lbl_eu_805357E8, &stackVar, 0);
+    func_8020938C(self, &self->elvVec0, (void*)lbl_eu_805357E8, &stackVar, 1);
+    func_802095D8(self, &self->elvVec3, (void*)lbl_eu_805357E8, &stackVar, 1);
+    func_80209488(self, &self->elvVec6, (void*)lbl_eu_805357E8, &stackVar, 1);
+    func_8020938C(self, &self->elvVec1, (void*)lbl_eu_805357E8, &stackVar, 2);
+    func_802095D8(self, &self->elvVec4, (void*)lbl_eu_805357E8, &stackVar, 2);
+    func_80209488(self, &self->elvVec7, (void*)lbl_eu_805357E8, &stackVar, 2);
+    func_8020938C(self, &self->elvVec2, (void*)lbl_eu_805357E8, &stackVar, 3);
+    func_802095D8(self, &self->elvVec5, (void*)lbl_eu_805357E8, &stackVar, 3);
+    func_80209488(self, &self->elvVec8, (void*)lbl_eu_805357E8, &stackVar, 3);
 
     // Virtual call: vtable[8] (offset 0x20)
     void (*vfunc)(CfGimmickElvData*) = *(void(**)(CfGimmickElvData*))(*(u32*)self + 0x20);
@@ -229,12 +229,14 @@ extern "C" void func_8020B20C(CfGimmickElvData* self) {
 // ============================================================
 extern "C" void func_8020B264(CfGimmickElvData* self, int show) {
     if (self->lod0 != 0) {
-        self->flags &= ~0x1000E0;
+        // Clear visibility/mode bits once, then set the appropriate one
+        u32 f = self->flags & ~0x1000E0u;
+        self->flags = f;
         if (show != 0) {
-            self->flags |= 0x40;
+            self->flags = f | 0x40;
             func_80462F10__8CTaskLODFv(self->lod0);
         } else {
-            self->flags |= 0x20;
+            self->flags = f | 0x20;
             func_80462EF4__8CTaskLODFv(self->lod0, lbl_eu_80668380);
         }
         func_80463014__8CTaskLODFv(self->lod0);
@@ -245,10 +247,10 @@ extern "C" void func_8020B264(CfGimmickElvData* self, int show) {
 // func_8020B2E4 (0x68 bytes) - copy sub-objects
 // ============================================================
 extern "C" void func_8020B2E4(CfGimmickElvData* self) {
-    func_802089BC(self->vec2, self->vec0, self->vec1);
-    func_802089BC(self->elvVec6, self->elvVec0, self->elvVec3);
-    func_802089BC(self->elvVec7, self->elvVec1, self->elvVec4);
-    func_802089BC(self->elvVec8, self->elvVec2, self->elvVec5);
+    func_802089BC(&self->vec2, &self->vec0, &self->vec1);
+    func_802089BC(&self->elvVec6, &self->elvVec0, &self->elvVec3);
+    func_802089BC(&self->elvVec7, &self->elvVec1, &self->elvVec4);
+    func_802089BC(&self->elvVec8, &self->elvVec2, &self->elvVec5);
 }
 
 // ============================================================
@@ -257,23 +259,23 @@ extern "C" void func_8020B2E4(CfGimmickElvData* self) {
 extern "C" void func_8020B34C(CfGimmickElvData* self) {
     // Init unk7C if needed
     if ((self->unk66 & 1) && self->unk7C == 0) {
-        self->unk7C = (u32)func_8020A35C((void*)func_8020A608(self->unk6A, 0), 0xF, self->vec0);
+        self->unk7C = (u32)func_8020A35C((void*)func_8020A608(self->unk6A, 0), 0xF, &self->vec0);
     }
 
     // Init unk1A4 if needed
     if ((self->flag1B0 & 1) && self->unk1A4 == 0) {
-        self->unk1A4 = (u32)func_8020A35C((void*)func_8020A608(self->unk6A, 0), 0xF, self->elvVec0);
+        self->unk1A4 = (u32)func_8020A35C((void*)func_8020A608(self->unk6A, 0), 0xF, &self->elvVec0);
     }
 
     // Check flags bit 8 (0x100)
     if (self->flags & 0x100) {
         // LOD1 effect (bit 23)
         if ((self->flag1B1 & 1) && (self->flags & 0x00800000)) {
-            func_8020A6B0(&self->unk1A8, self->elvVec1, self->unk6A, lbl_eu_80668390, 1, 0);
+            func_8020A6B0(&self->unk1A8, &self->elvVec1, self->unk6A, lbl_eu_80668390, 1, 0);
         }
         // LOD2 effect (bit 24)
         if ((self->flag1B2 & 1) && (self->flags & 0x01000000)) {
-            func_8020A6B0(&self->unk1AC, self->elvVec2, self->unk6A, lbl_eu_80668390, 1, 0);
+            func_8020A6B0(&self->unk1AC, &self->elvVec2, self->unk6A, lbl_eu_80668390, 1, 0);
         }
     } else {
         func_8020A434((void*)&self->unk1A8);
@@ -288,63 +290,42 @@ extern "C" void func_8020B34C(CfGimmickElvData* self) {
 // func_8020B474 (0x150 bytes) - activation check
 // ============================================================
 extern "C" void func_8020B474(CfGimmickElvData* self) {
-    if (self->flags & 0x2000) {
-        // Already active - check completion
-        if (self->val1B4 != 0) {
-            if (func_8020971C(self) == 0) {
-                self->state = 1;
+    int allReady;
+    if ((self->flags & 0x2000) == 0) {
+        // Set the "starting" flag group
+        self->flags |= 0x1E00100;
+        if (self->flags & 0x200) {
+            if (func_8020A5DC(self) != 0) {
+                // Player not close - just clear the proximity bit
+                self->flags &= ~0x200u;
+                return;
             }
-        } else {
-            self->state = 1;
         }
-        return;
-    }
 
-    self->flags |= 0x01E00100;
+        allReady = 0;
 
-    if (self->flags & 0x200) {
-        // Check if player is near
-        if (func_8020A5DC(self) != 0) {
-            // Not near - clear flags
-            self->flags &= ~0x01E0;
+        if (self->unk66 & 1) {
+            allReady = (func_8020A87C(self, self->unk7C) != 0);
+        }
+        if (self->flag1B0 & 1) {
+            allReady |= (func_8020A87C(self, self->unk1A4) != 0);
+        }
+        if (self->flag1B1 & 1) {
+            allReady |= (func_8020A87C(self, self->unk1A8) != 0);
+        }
+        if (self->flag1B2 & 1) {
+            allReady |= (func_8020A87C(self, self->unk1AC) != 0);
+        }
+
+        if (allReady) {
+            func_8020A484(self->unk6A);
+            self->flags |= 0x200;
             return;
         }
     }
 
-    int allReady = 0;
-
-    // Check unk66 bit 0
-    if (self->unk66 & 1) {
-        allReady = (func_8020A87C(self, self->unk7C) != 0) ? 1 : 0;
-    }
-
-    // Check flag1B0 bit 0
-    if (self->flag1B0 & 1) {
-        allReady |= (func_8020A87C(self, self->unk1A4) != 0) ? 1 : 0;
-    }
-
-    // Check flag1B1 bit 0
-    if (self->flag1B1 & 1) {
-        allReady |= (func_8020A87C(self, self->unk1A8) != 0) ? 1 : 0;
-    }
-
-    // Check flag1B2 bit 0
-    if (self->flag1B2 & 1) {
-        allReady |= (func_8020A87C(self, self->unk1AC) != 0) ? 1 : 0;
-    }
-
-    if (allReady) {
-        func_8020A484(self->unk6A);
-        self->flags |= 0x200;
-        return;
-    }
-
-    // Check val1B4
-    if (self->val1B4 != 0) {
-        if (func_8020971C(self) == 0) {
-            self->state = 1;
-        }
-    } else {
+    // Common tail: start moving when no wait is configured or the wait ended
+    if (self->val1B4 == 0 || func_8020971C(self->val1B4)) {
         self->state = 1;
     }
 }
@@ -353,85 +334,88 @@ extern "C" void func_8020B474(CfGimmickElvData* self) {
 // func_8020B5C4 (0x280 bytes) - main update (movement)
 // ============================================================
 extern "C" void func_8020B5C4(CfGimmickElvData* self) {
-    self->flags |= 0x100;
+    u32 f = self->flags | 0x100;
+    self->flags = f;
 
-    if (self->flags & 2) {
-        // Direction 1 (up)
-        if (self->flags & 0x20) {
-            self->flags |= 0x00800000;
-            if (func_80209754(self->flag1B1, self->elvVec7, self->elvVec1,
-                             self->elvVec4, self->unk1A8)) {
+    if (f & 2) {
+        // Axis 1
+        if (f & 0x20) {
+            // Upward travel
+            self->flags = f | 0x800000;
+            if (func_80209754(self->flag1B1, &self->elvVec7, &self->elvVec1,
+                             &self->elvVec4, self->unk1A8)) {
                 self->state = 3;
-                self->flags &= ~0x01C00000;
+                self->flags &= ~0x1000u;
                 if (self->val1B6 != 0) {
-                    func_80208C48(self, self->elvVec1);
+                    func_80208C48(self->val1B6, &self->elvVec1);
                 }
             }
         }
     } else {
-        // Direction 0 (down)
-        self->flags |= 0x00200000;
-        if (func_80209754(self->unk66, self->vec2, self->vec0,
-                         self->vec1, self->unk7C)) {
+        // Downward travel
+        self->flags = f | 0x200000;
+        if (func_80209754(self->unk66, &self->vec2, &self->vec0,
+                         &self->vec1, self->unk7C)) {
             self->state = 2;
-            self->flags |= 0x1000;
+            self->flags &= ~0x1000u;
             if (self->val1B6 != 0) {
-                func_80208C48(self, self->vec0);
+                func_80208C48(self->val1B6, &self->vec0);
             }
 
-            // Post-move: check flag1B3
+            // Post-move: notify game manager when flag1B3 set.
+            // The Y height is loaded before the side effects and kept in a float
+            // live across both virtual calls.
             if (self->flag1B3 != 0) {
+                f32 height = self->vec1.y;
                 func_80208EE4(self);
-                void* gm = func_800817BC__Q22cf13CfGameManagerFv(self->flag1B3, 0);
-                self->unk78 = (u32)gm;
-                if (gm != NULL) {
-                    *(CfGimmickElvData**)((u8*)gm + 0xB0) = self;
-                    // Virtual call: gm->vtable[0x9C/4](gm, self->vec0)
-                    void (*vfn)(void*, void*) = *(void(**)(void*, void*))(*(u32*)gm + 0x9C);
-                    vfn(gm, self->vec0);
-                    // Virtual call: gm->vtable[0xC4/4](gm, self->vec0.y)
-                    f32 yval = *(f32*)(self->vec0 + 4);
-                    void (*vfn2)(void*, f32) = *(void(**)(void*, f32))(*(u32*)gm + 0xC4);
-                    vfn2(gm, yval);
+                self->unk78 = (u32)func_800817BC__Q22cf13CfGameManagerFv(self->flag1B3, 0);
+                if (self->unk78 != 0) {
+                    *(CfGimmickElvData**)(self->unk78 + 0xB0) = self;
+                    // Virtual call: gm vtable slot at 0x9C takes the base vec
+                    void (*vfn)(void*, void*) = *(void (**)(void*, void*))(*(u32*)self->unk78 + 0x9C);
+                    vfn((void*)self->unk78, &self->vec0);
+                    // Virtual call: gm vtable slot at 0xC4 takes the saved height
+                    void (*vfn2)(void*, f32) = *(void (**)(void*, f32))(*(u32*)self->unk78 + 0xC4);
+                    vfn2((void*)self->unk78, height);
                 }
             }
         }
     }
 
-    // Second axis
-    if (self->flags & 4) {
-        if (self->flags & 0x40) {
-            self->flags |= 0x01000000;
-            if (func_80209754(self->flag1B2, self->elvVec8, self->elvVec2,
-                             self->elvVec5, self->unk1AC)) {
+    // Second axis (independent of the first)
+    u32 g = self->flags;
+    if (g & 4) {
+        if (g & 0x40) {
+            self->flags |= 0x1000000;
+            if (func_80209754(self->flag1B2, &self->elvVec8, &self->elvVec2,
+                             &self->elvVec5, self->unk1AC)) {
                 self->state = 2;
-                self->flags &= ~0x01C00000;
+                self->flags &= ~0x1000u;
                 if (self->val1B6 != 0) {
-                    func_80208C48(self, self->elvVec2);
+                    func_80208C48(self->val1B6, &self->elvVec2);
                 }
             }
         }
     } else {
-        self->flags |= 0x00400000;
-        if (func_80209754(self->flag1B0, self->elvVec6, self->elvVec0,
-                         self->elvVec3, self->unk1A4)) {
+        self->flags |= 0x400000;
+        if (func_80209754(self->flag1B0, &self->elvVec6, &self->elvVec0,
+                         &self->elvVec3, self->unk1A4)) {
             self->state = 3;
             self->flags |= 0x1000;
             if (self->val1B6 != 0) {
-                func_80208C48(self, self->elvVec0);
+                func_80208C48(self->val1B6, &self->elvVec0);
             }
 
             if (self->flag1B3 != 0) {
+                f32 height = self->elvVec3.y;
                 func_80208EE4(self);
-                void* gm = func_800817BC__Q22cf13CfGameManagerFv(self->flag1B3, 0);
-                self->unk78 = (u32)gm;
-                if (gm != NULL) {
-                    *(CfGimmickElvData**)((u8*)gm + 0xB0) = self;
-                    void (*vfn)(void*, void*) = *(void(**)(void*, void*))(*(u32*)gm + 0x9C);
-                    vfn(gm, self->elvVec0);
-                    f32 yval = *(f32*)(self->elvVec0 + 4);
-                    void (*vfn2)(void*, f32) = *(void(**)(void*, f32))(*(u32*)gm + 0xC4);
-                    vfn2(gm, yval);
+                self->unk78 = (u32)func_800817BC__Q22cf13CfGameManagerFv(self->flag1B3, 0);
+                if (self->unk78 != 0) {
+                    *(CfGimmickElvData**)(self->unk78 + 0xB0) = self;
+                    void (*vfn)(void*, void*) = *(void (**)(void*, void*))(*(u32*)self->unk78 + 0x9C);
+                    vfn((void*)self->unk78, &self->elvVec0);
+                    void (*vfn2)(void*, f32) = *(void (**)(void*, f32))(*(u32*)self->unk78 + 0xC4);
+                    vfn2((void*)self->unk78, height);
                 }
             }
         }
@@ -528,8 +512,7 @@ extern "C" void func_8020B89C(CfGimmickElvData* self) {
         self->flags |= lodBit;
 
         if (self->val1B8 != 0) {
-            void* vec = (dir != 0) ? (void*)self->elvVec0 : (void*)self->vec0;
-            func_80208C48(self, vec);
+            func_80208C48(self->val1B8, (dir != 0) ? (void*)&self->elvVec0 : (void*)&self->vec0);
         }
     }
 
@@ -542,211 +525,212 @@ extern "C" void func_8020B89C(CfGimmickElvData* self) {
 // func_8020BA98 (0x210 bytes) - LOD fade update (both axes loop)
 // ============================================================
 extern "C" void func_8020BA98(CfGimmickElvData* self) {
-    f32 dt = func_80496288(lbl_eu_80663E14);
-    self->val1C8 += dt;
+    self->val1C8 += func_80496288(lbl_eu_80663E14);
 
-    f32 fadeTime = lbl_eu_80668394;
-    f32 zero = lbl_eu_80668380;
+    // Per-axis LOD fade driver (direction bits 0x20/0x40, latch bits 0x100/0x200)
     int allDone = 1;
+    f32 fadeTime = lbl_eu_80668394;
     int i;
+    f32 zero = lbl_eu_80668380;
 
     for (i = 0; i < 2; i++) {
         u32 dirBit = 2 << i;
-        if (!(self->flags & dirBit)) {
-            u8 lod = ((u8*)self)[0x71 + i];
-            if (lod == 0) {
-                self->flags &= ~dirBit;
-                continue;
-            }
+        u32 flg = self->flags;
+        if (flg & dirBit) {
+            continue;
+        }
 
-            allDone = 0;
-            u8 flag = (i == 0) ? self->flag1B1 : self->flag1B2;
-            u32 lodBit = 8 << i;
+        allDone = 0;
+        u8 lod = ((u8*)self)[0x71 + i];
+        if (lod == 0) {
+            self->flags &= ~dirBit;
+            continue;
+        }
 
-            if (self->flags & lodBit) {
-                if (flag & 0x10) {
-                    if (self->val1C8 >= fadeTime) {
-                        void* snd = func_804BC9EC__Fv();
-                        func_804BCC30(snd, lod);
-                        func_80462E3C__8CTaskLODFv(lod, lbl_eu_80668384);
-                        self->flags &= ~lodBit;
-                        self->flags &= ~dirBit;
-                    } else {
-                        f32 t = self->val1C8 / fadeTime;
-                        func_80462E3C__8CTaskLODFv(lod, t);
-                    }
+        u8 flag = (i != 0) ? self->flag1B2 : self->flag1B1;
+        u32 lodBit = 8 << i;
+
+        if (flg & lodBit) {
+            // Fade already running
+            if (flag & 0x10) {
+                if (self->val1C8 >= fadeTime) {
+                    void* snd = func_804BC9EC__Fv();
+                    func_804BCC30(snd, lod);
+                    func_80462E3C__8CTaskLODFv(lod, lbl_eu_80668384);
+                    self->flags = self->flags & ~lodBit & ~dirBit;
                 } else {
-                    f32 cur = func_80462F2C__8CTaskLODFv(lod);
-                    if (cur <= zero) {
-                        self->flags &= ~lodBit;
-                        self->flags &= ~dirBit;
-                        func_80462F4C__8CTaskLODFv(lod, 0);
-                    }
+                    func_80462E3C__8CTaskLODFv(lod, self->val1C8 / fadeTime);
                 }
             } else {
-                if (flag & 0x10) {
-                    func_80462D04__8CTaskLODFv(lod);
-                    func_80462E3C__8CTaskLODFv(lod, lbl_eu_80668380);
-                } else {
-                    func_80462F4C__8CTaskLODFv(lod, 1);
-                    func_80462F70__8CTaskLODFv(lod, 1);
+                f32 cur = func_80462F2C__8CTaskLODFv(lod);
+                if (cur <= zero) {
+                    self->flags = self->flags & ~lodBit & ~dirBit;
+                    func_80462F4C__8CTaskLODFv(lod, 0);
                 }
-
-                self->flags |= lodBit;
-                if (self->val1B8 != 0) {
-                    void* vec = (i != 0) ? (void*)self->elvVec0 : (void*)self->vec0;
-                    func_80208C48(self, vec);
-                }
-                self->val1C8 = zero;
             }
+        } else {
+            // Start the fade
+            if (flag & 0x10) {
+                func_80462D04__8CTaskLODFv(lod);
+                func_80462E3C__8CTaskLODFv(lod, zero);
+            } else {
+                func_80462F4C__8CTaskLODFv(lod, 1);
+                func_80462F70__8CTaskLODFv(lod, 1);
+            }
+
+            self->flags |= lodBit;
+            if (self->val1B8 != 0) {
+                func_80208C48(self->val1B8, (i != 0) ? (void*)&self->elvVec0 : (void*)&self->vec0);
+            }
+            self->val1C8 = zero;
         }
     }
 
     if (!(self->flags & 0x1000)) {
-        func_80209F5C(self);
+        func_80209F5C();
     }
 
     if (allDone) {
         self->state = 6;
         if (!(self->flags & 0x1000)) {
-            self->val1C8 = lbl_eu_80668394;
+            self->val1C8 = fadeTime;
         } else {
-            self->val1C8 = lbl_eu_80668380;
+            self->val1C8 = zero;
         }
     }
 }
 
 // ============================================================
-// func_8020BCA8 (0x5CC bytes) - main state update (complex)
-// Stub for now - will iterate with hexdiff
+// func_8020BCA8 (0x5CC bytes) - main elevator state update
+// Handles: fade-in timer, LOD travel toward target, arrival, sound
+// playback/positioning, and per-axis auto-return distance check.
 // ============================================================
 extern "C" void func_8020BCA8(CfGimmickElvData* self) {
+    int done = 1;
     u32 dirBit = 0x20 << self->direction;
     if (self->flags & dirBit) {
-        self->state = 4;
-        self->val1C8 = lbl_eu_80668380;
-        return;
+        goto finish;
     }
 
-    f32 dt = func_80496288(lbl_eu_80663E14);
-    self->val1C8 -= dt;
+    self->val1C8 -= func_80496288(lbl_eu_80663E14);
     if (self->val1C8 > lbl_eu_80668380) {
-        func_80209F5C(self);
+        func_80209F5C();
     } else {
         self->val1C8 = lbl_eu_80668380;
     }
 
-    u8 lod0 = self->lod0;
-    if (lod0 == 0) {
+    {
+    u8 lod = self->lod0;
+    if (lod == 0) {
         self->flags &= ~(0x20 << self->direction);
-        self->state = 4;
-        self->val1C8 = lbl_eu_80668380;
-        return;
+        goto finish;
     }
-
-    int arrived = 0;
+    done = 0;
 
     if (self->flags & 0x80) {
-        // Moving up
-        f32 cur = func_80462F2C__8CTaskLODFv(lod0);
-        f32 target = self->val1C0;
+        // Travel in progress: read current alpha and advance it
+        f32 cur = func_80462F2C__8CTaskLODFv(lod);
+        int arrived = 0;
 
         if (self->direction != 0) {
-            if (cur >= target) arrived = 1;
+            if (cur >= self->val1C0) arrived = 1;
             if (self->flags & 0x02000000) {
-                if (self->flags & 0x4000) {
-                    f32 spd = func_80496288(lbl_eu_80663E14);
-                    cur = lbl_eu_80668398 * cur + target;
-                } else {
-                    f32 spd = func_80496288(lbl_eu_80663E14);
-                    cur = target + cur;
-                }
+                f32 dt = func_80496288(lbl_eu_80663E14);
+                if (self->flags & 0x4000)
+                    cur = lbl_eu_80668398 * dt + cur;
+                else
+                    cur = cur + dt;
                 if (cur > self->val1C0) cur = self->val1C0;
-                func_80462EF4__8CTaskLODFv(lod0, cur);
+                func_80462EF4__8CTaskLODFv(lod, cur);
             }
         } else {
             if (cur <= lbl_eu_80668380) arrived = 1;
             if (self->flags & 0x02000000) {
-                if (self->flags & 0x4000) {
-                    f32 spd = func_80496288(lbl_eu_80663E14);
-                    cur = target - lbl_eu_80668398 * cur;
-                } else {
-                    f32 spd = func_80496288(lbl_eu_80663E14);
-                    cur = target - cur;
-                }
+                f32 dt = func_80496288(lbl_eu_80663E14);
+                if (self->flags & 0x4000)
+                    cur = cur - lbl_eu_80668398 * dt;
+                else
+                    cur = cur - dt;
                 if (cur < lbl_eu_80668380) cur = lbl_eu_80668380;
-                func_80462EF4__8CTaskLODFv(lod0, cur);
+                func_80462EF4__8CTaskLODFv(lod, cur);
             }
         }
 
         if (arrived) {
-            // Arrived at destination
             if (self->flags & 0x400) {
                 func_80462F94__8CTaskLODFv(self->lod3, self->val1D6);
             }
-
-            self->flags = (self->flags & ~0x020FC000) | (0x20 << self->direction);
-            func_80462F4C__8CTaskLODFv(lod0, 0);
-
+            // Latch arrival: clear transient bits, set this axis's direction bit
+            self->flags = (self->flags & 0xFDEFF31F) | (0x20 << self->direction);
+            func_80462F4C__8CTaskLODFv(lod, 0);
             if (self->val1BE != 0) {
-                void* vec = (self->direction != 0) ? (void*)self->elvVec0 : (void*)self->vec0;
-                func_80208C48(self, vec);
+                func_80208C48(self->val1BE,
+                              (self->direction == 0) ? (void*)&self->elvVec0 : (void*)&self->vec0);
             }
-
             if (self->unk80 != 0) {
                 func_801BFED0(1, self->unk80, 0xA);
                 self->unk80 = 0;
             }
         } else {
-            // Check sound
-            if (self->flags & 0x00100000) {
-                if (func_801BFABC(1) != 0) {
-                    self->flags &= ~0x001C0000;
-                    void* snd = func_804BC9EC__Fv();
-                    func_804BCC54(snd, self->val1D4);
-                    if (snd != NULL) {
-                        f32 pos[3];
-                        pos[0] = *(f32*)((u8*)snd + 0x0C);
-                        pos[1] = *(f32*)((u8*)snd + 0x1C);
-                        pos[2] = *(f32*)((u8*)snd + 0x2C);
-                        u16 sfxId = func_80208C60(self, self->val1BC);
-                        self->unk80 = sfxId;
-                        if (sfxId != 0) {
-                            func_801BFF78(1, sfxId, 0x10);
-                        }
-                    } else {
-                        func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(1, self->val1BC, 0, 0, lbl_eu_80668384);
-                        self->unk80 = 1;
-                        self->val1D4 = 0xFFFF;
+            // Looping sound management while travelling
+            if (self->flags & 0x00100000 && func_801BFABC(1) != 0) {
+                self->flags &= ~0x00100000;
+                void* handle = func_804BCC54(func_804BC9EC__Fv(), self->val1D4);
+                if (handle != NULL) {
+                    f32 pos[3];
+                    pos[0] = ((f32*)handle)[3];   // +0x0C
+                    pos[1] = ((f32*)handle)[7];   // +0x1C
+                    pos[2] = ((f32*)handle)[11];  // +0x2C
+                    u16 sfx = (u16)func_80208C60(self->val1BC, pos);
+                    self->unk80 = sfx;
+                    if (sfx != 0) {
+                        func_801BFF78(1, sfx, 0x10);
                     }
+                } else {
+                    self->unk80 = func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
+                        1, self->val1BC, 0, 0, lbl_eu_80668384);
+                    self->val1D4 = 0xFFFF;
                 }
             }
 
-            // Update sound position
             if (self->unk80 != 0 && self->val1D4 != 0xFFFF) {
-                void* snd = func_804BC9EC__Fv();
-                func_804BCC54(snd, self->val1D4);
-                if (snd != NULL) {
+                void* handle = func_804BCC54(func_804BC9EC__Fv(), self->val1D4);
+                if (handle != NULL) {
                     f32 pos[3];
-                    pos[0] = *(f32*)((u8*)snd + 0x0C);
-                    pos[1] = *(f32*)((u8*)snd + 0x1C);
-                    pos[2] = *(f32*)((u8*)snd + 0x2C);
+                    pos[0] = ((f32*)handle)[3];
+                    pos[1] = ((f32*)handle)[7];
+                    pos[2] = ((f32*)handle)[11];
                     func_801BFAE8(self->unk80, pos);
                 }
             }
 
-            // Check timer
+            // Periodic auto-reverse timer
             if (self->flags & 0x400) {
-                f32 spd = func_80496288(lbl_eu_80663E14);
-                self->val1CC += spd;
+                self->val1CC += func_80496288(lbl_eu_80663E14);
                 if (self->val1CC >= lbl_eu_80668394) {
                     self->val1CC = lbl_eu_80668380;
                     if (self->flags & 0x800) {
                         func_80462F94__8CTaskLODFv(self->lod3, self->val1D6);
-                        if (self->val1B6 != 0) {
-                            self->flags &= ~0x01C00000;
-                            // Distance check for auto-reverse
-                            // ... complex vec3 distance calculation
+                        u16 sndId = self->val1B6;
+                        self->flags &= ~0x800;
+                        if (sndId != 0) {
+                            // Reverse when close to either endpoint; play a sound at the closer one
+                            CfVec3 diffA, diffB;
+                            diffA.x = lbl_eu_805765A0[0] - self->vec0.x;
+                            diffA.y = lbl_eu_805765A0[1] - self->vec0.y;
+                            diffA.z = lbl_eu_805765A0[2] - self->vec0.z;
+                            diffB.x = lbl_eu_805765A0[0] - self->elvVec0.x;
+                            diffB.y = lbl_eu_805765A0[1] - self->elvVec0.y;
+                            diffB.z = lbl_eu_805765A0[2] - self->elvVec0.z;
+                            f32 lenSqA = diffA.x * diffA.x + diffA.y * diffA.y + diffA.z * diffA.z;
+                            f32 lenSqB = diffB.x * diffB.x + diffB.y * diffB.y + diffB.z * diffB.z;
+                            if (lenSqA >= lenSqB) {
+                                if (lenSqB <= lbl_eu_806683A0)
+                                    func_80208C48(sndId, &self->elvVec0);
+                            } else {
+                                if (lenSqA <= lbl_eu_806683A0)
+                                    func_80208C48(sndId, &self->vec0);
+                            }
                         }
                     } else {
                         func_80462F94__8CTaskLODFv(self->lod3, 5);
@@ -756,21 +740,19 @@ extern "C" void func_8020BCA8(CfGimmickElvData* self) {
             }
         }
     } else {
-        // Not moving - init
-        func_80462F4C__8CTaskLODFv(lod0, 1);
+        // Start travel on this axis
+        func_80462F4C__8CTaskLODFv(lod, 1);
         if (self->direction != 0) {
-            func_80462F70__8CTaskLODFv(lod0, 0);
-            f32 cur = func_80462FF4__8CTaskLODFv(lod0);
-            self->val1C0 = cur;
+            func_80462F70__8CTaskLODFv(lod, 0);
+            self->val1C0 = func_80462FF4__8CTaskLODFv(lod);
         } else {
-            func_80462F70__8CTaskLODFv(lod0, 1);
+            func_80462F70__8CTaskLODFv(lod, 1);
         }
 
         self->flags |= 0x80;
-
         if (self->val1BA != 0) {
-            void* vec = (self->direction == 0) ? (void*)self->elvVec0 : (void*)self->vec0;
-            func_80208C48(self, vec);
+            func_80208C48(self->val1BA,
+                          (self->direction == 0) ? (void*)&self->elvVec0 : (void*)&self->vec0);
         }
 
         if (self->val1BC != 0) {
@@ -778,25 +760,26 @@ extern "C" void func_8020BCA8(CfGimmickElvData* self) {
                 func_801BFED0(1, self->unk80, 0xA);
                 self->unk80 = 0;
             }
-            void* snd = func_804BC9EC__Fv();
-            func_804BCC6C(snd, lod0);
-            self->val1D4 = (u16)(u32)snd;
+            self->val1D4 = func_804BCC6C(func_804BC9EC__Fv(), lod);
             self->flags |= 0x00100000;
         }
 
         if (self->flags & 0x1000) {
             if (self->lod3 != 0) {
-                u16 v = func_80462FB8__8CTaskLODFv(self->lod3);
-                self->val1D6 = v;
+                self->val1D6 = func_80462FB8__8CTaskLODFv(self->lod3);
                 self->val1CC = lbl_eu_80668394;
                 self->flags |= 0x400;
             }
-            self->flags = (self->flags & ~0x01C00000) | 0x00200000;
+            self->flags = (self->flags & ~0x1000) | 0x00200000;
         }
     }
+    }
 
-    self->state = 4;
-    self->val1C8 = lbl_eu_80668380;
+finish:
+    if (done) {
+        self->val1C8 = lbl_eu_80668380;
+        self->state = 4;
+    }
 }
 
 // ============================================================
@@ -808,7 +791,7 @@ extern "C" void func_8020C274(CfGimmickElvData* self) {
             u32 idx = self->unk158;
             // Jump table call
             int (*fn)(void*, void*, void*) = (int(*)(void*, void*, void*))jumptable_eu_80535830[idx];
-            if (fn(self->elvVec7, lbl_eu_805765A0, self->elvVec1) != 0) {
+            if (fn(&self->elvVec7, lbl_eu_805765A0, &self->elvVec1) != 0) {
                 return;
             }
         }
@@ -816,7 +799,7 @@ extern "C" void func_8020C274(CfGimmickElvData* self) {
         if (!(self->flag1B2 & 5)) {
             u32 idx = self->unk1A0;
             int (*fn)(void*, void*, void*) = (int(*)(void*, void*, void*))jumptable_eu_80535830[idx];
-            if (fn(self->elvVec8, lbl_eu_805765A0, self->elvVec2) != 0) {
+            if (fn(&self->elvVec8, lbl_eu_805765A0, &self->elvVec2) != 0) {
                 return;
             }
         }

@@ -3,7 +3,7 @@
 
 #include <harness_catalog.h>
 
-extern u32 MWSFD_GetUsePicUsr();
+extern s32 MWSFD_GetUsePicUsr();
 
 void mwPlyGetCurFrm() {}
 
@@ -91,7 +91,7 @@ typedef struct MwlSfdFrmInf {
 extern const char lbl_eu_80519870[];
 extern s32 SFD_GetFps(void* self, s32* out);
 extern int UTY_MulDiv(int a, int b, int c);
-extern u32 mwPlyFxGetCompoMode(void* self);
+extern s32 mwPlyFxGetCompoMode(void* self);
 extern int MWSFD_GetFxType(void* self, int idx);
 extern void MWSFSVM_Error(const char* fmt, ...);
 extern s32 SUD_AnalyTypeDivField(const char* buf, s32 len);
@@ -107,8 +107,8 @@ void mwl_convFrmInfFromSFD(MwlSfdSelf* self, MwlSfdInfo* info, MwlSfdFrmInf* out
      * frmKind/r29, picKind/r30, res1/r31.  The four stack locals keep
      * slots 0x08/0x0c/0x10/0x14 in declaration order. */
     s32 fps;      /* 0x08: SFD_GetFps output */
-    s32 f08;      /* 0x0c: info->field_0x08 */
-    s32 f20;      /* 0x10: info->field_0x20 */
+    s32 f20;      /* 0x0c: info->field_0x20 */
+    s32 f08;      /* 0x10: info->field_0x08 */
     s32 res2;     /* 0x14 */
     s32 f0c;      /* r14: info->field_0x0c */
     s32 sfd;      /* r18: self->field_0x58 */
@@ -125,16 +125,17 @@ void mwl_convFrmInfFromSFD(MwlSfdSelf* self, MwlSfdInfo* info, MwlSfdFrmInf* out
     s32 picW;     /* r29 */
     s32 picH;     /* r30 */
     s32 res1;     /* r31 */
+    s32 sud0;
+    s32 sud1;
     s32 useFrm;
+    s32 useFrm2;  /* phase-2 flag: retail reuses r18 here via range split */
     s32 fps2;
     s32 mul;
     s32 v58;
-    s32 sud0;
-    s32 sud1;
     s32 fx;
 
-    f20 = info->field_0x20;
     sfd = (s32)self->field_0x58;
+    f20 = info->field_0x20;
     switch (info->field_0x1c) {
     case 1: picKind = 1; break;
     case 2: picKind = 2; break;
@@ -155,6 +156,7 @@ void mwl_convFrmInfFromSFD(MwlSfdSelf* self, MwlSfdInfo* info, MwlSfdFrmInf* out
         frmKind = 1;
         break;
     }
+
     f34 = info->field_0x34;
     frmCnt = info->field_0x18;
     f30 = info->field_0x30;
@@ -199,11 +201,11 @@ void mwl_convFrmInfFromSFD(MwlSfdSelf* self, MwlSfdInfo* info, MwlSfdFrmInf* out
     if (self->frames[frmIdx % 8].field_0x00 == 1) {
         picW = self->frames[frmIdx % 8].field_0x10;
         picH = self->frames[frmIdx % 8].field_0x14;
-        if (picW != 0 && picH != 0) {
-            useFrm = 1;
-        } else {
+        if (picW == 0 || picH == 0) {
             picW = picW0;
             picH = picH0;
+        } else {
+            useFrm = 1;
         }
     } else {
         picW = picW0;
@@ -254,22 +256,24 @@ void mwl_convFrmInfFromSFD(MwlSfdSelf* self, MwlSfdInfo* info, MwlSfdFrmInf* out
     mwsffrm_SetSudDatInf(self, info, out);
 
     v58 = info->sub.field_0x58;
-    useFrm = 0;
+    useFrm2 = 0;
     sud1 = out->field_0xa4;
     sud0 = out->field_0xa0;
+    /* Retail layout: unsigned range test, then v58==3 ladder; the two
+     * trivial cases share one tail block. */
     if ((u32)(v58 - 1) <= 1) {
-        useFrm = 2;
+        useFrm2 = 2;
     } else if (v58 == 3) {
         if (info->sub.field_0x6c == 0) {
-            useFrm = 2;
+            useFrm2 = 2;
         }
     } else {
         MWSFSVM_Error(lbl_eu_80519870 + 0x168);
     }
     if (MWSFD_GetUsePicUsr() == 1 && SUD_AnalyTypeDivField((const char*)sud0, sud1) == 1) {
-        useFrm = 2;
+        useFrm2 = 2;
     }
-    out->field_0x54 = useFrm;
+    out->field_0x54 = useFrm2;
     memcpy(out->field_0x68, &info->sub, 0x38);
 }
 

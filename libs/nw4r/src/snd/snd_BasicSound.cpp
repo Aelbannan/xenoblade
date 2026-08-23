@@ -49,10 +49,10 @@ struct SoundPlayerParamView {
 // function.
 struct BasicSoundAmbientView {
     u8 _pad0x00[0x1C];             // 0x00..0x1B
-    void* argUpdateCallback;       // 0x1C
-    void* argAllocaterCallback;    // 0x20
-    void* arg;                     // 0x24
-    u32 unk28;                     // 0x28
+    void* paramUpdateCallback;     // 0x1C
+    void* argUpdateCallback;       // 0x20
+    void* argAllocaterCallback;    // 0x24
+    void* ambientArg;              // 0x28
     u32 unk2C;                     // 0x2C
     u8 _pad0x30[0x95 - 0x30];      // 0x30..0x94
     u8 unk95;                      // 0x95
@@ -736,17 +736,22 @@ SetAmbientInfo__Q44nw4r3snd6detail10BasicSoundFRCQ54nw4r3snd6detail10BasicSound1
     if (pArg != NULL) {
         std::memcpy(pArg, info.arg, info.argSize);
 
-        // Store order matches US retail (the unk28 = info.arg store is a dead
-        // store before unk28 = pArg - retail keeps both). Only the
-        // GetVoiceOutCount call is guarded by the callback != NULL check; the
-        // stores run unconditionally (retail compares early, branches late).
-        pSound->unk28 = reinterpret_cast<u32>(info.arg);
-        pSound->argUpdateCallback = info.paramUpdateCallback;
-        pSound->argAllocaterCallback = info.argUpdateCallback;
-        pSound->arg = info.argAllocaterCallback;
-        pSound->unk2C = info.argSize;
-        pSound->unk28 = reinterpret_cast<u32>(pArg);
+        // Retail keeps a dead store of info.arg into mAmbientArg before it is
+        // overwritten by pArg.
+        // Evaluate the NULL check before the stores: the store-side reload of
+        // info.paramUpdateCallback then happens after the (possibly aliasing)
+        // member stores, matching retail.
+        // Retail keeps a dead store of info.arg into mAmbientArg before it is
+        // overwritten by pArg.
+        pSound->ambientArg = info.arg;
 
+        pSound->paramUpdateCallback = info.paramUpdateCallback;
+        pSound->argUpdateCallback = info.argUpdateCallback;
+        pSound->argAllocaterCallback = info.argAllocaterCallback;
+        pSound->unk2C = info.argSize;
+        pSound->ambientArg = pArg;
+
+        // Second textual use of info.paramUpdateCallback.
         if (info.paramUpdateCallback != NULL) {
             AmbientParamUpdateCallbackV4* pCallback =
                 static_cast<AmbientParamUpdateCallbackV4*>(

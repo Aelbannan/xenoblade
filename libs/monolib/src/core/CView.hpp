@@ -15,7 +15,7 @@ public:
     void func_8043DC20();
     void CView_UnkVirtualFunc4();
     void func_8043DF3C();
-    void func_8043E010();
+    void func_8043E46C();
     void func_8043E46C();
     void func_8043E58C();
     void func_8043E6AC();

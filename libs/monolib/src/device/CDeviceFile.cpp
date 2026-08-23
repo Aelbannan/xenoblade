@@ -7,14 +7,18 @@
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // Definitions for the retail data sections (see the full blob at the bottom
 // of the file).  The three 1/1/6-byte .sdata bytes (language override +
-// standby flag) are folded into one 8-byte array so MWCC packs the section
-// exactly like the retail (separate u8 objects would 4-align).
-extern "C" u8 lbl_eu_806636A8[8] = { 0x01, 0x01, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00 };
+// standby flag) are separate u8 objects so references emit the retail
+// per-address symbols (chars have 1-byte alignment, so packing matches).
+extern "C" u8 lbl_eu_806636A8 = 0x01;
+u8 lbl_eu_806636A9 = 0x01;   // standby-login done flag
+u8 lbl_eu_806636AA = 0xFF;   // language override (-1 = auto)
 u32 lbl_eu_80665660;   // CDeviceFile singleton pointer (.sbss)
 int lbl_eu_80665664;   // filename-substitution table entry count (.sbss)
 void* lbl_eu_80657580[16]; // filename-substitution table (.bss, 64B)
 extern u8 lbl_eu_806575C0[0x108]; // .bss 264B (defined at bottom)
+extern "C" u32 lbl_eu_8056C30C[3];
 extern "C" u32 lbl_eu_8056C324[3]; // reslist<CFileHandle> vtable (defined below)
+extern "C" u32 lbl_eu_8056C250[40]; // CDeviceFile vtable (defined below)
 extern const char lbl_eu_80522BE4[]; // device-name string table (defined below)
 
 // Minimal class views: the member/static signatures below mirror the retail
@@ -30,10 +34,26 @@ struct CWorkThreadListNode;
 // --- imports declared locally (this TU defines its own class views, so the
 // --- real monolib headers cannot be included here) ---
 
+class IWorkEvent;
+
+// Language-substitution helper (defined below in this TU).
+void func_eu_804520D0(char* pPath);
+
+// Pack-archive queries shared with CWorkSystemPack.
+extern "C" int func_804DE010(const char* pName);
+extern "C" bool func_804DDD54(const char* pName, const char* pPath, char** outPkbPath,
+                              u32* outB, u32* outC, u32* outD);
+
+// Job ctor is old-MWCC-mangled; called through its retail name.
+extern "C" void* __ct__21CDeviceFileJobReadDvdFPCcP11CWorkThread(void* self,
+                                                                 const char* pName,
+                                                                 CWorkThread* pParent);
+
 namespace mtl {
 class MemManager {
 public:
     static u8* allocate(u32 size, u32 handle);
+    static void* allocate_array(u32 size, u32 handle);
 };
 }
 
@@ -60,8 +80,8 @@ public:
 // CDeviceFileDvd/CDeviceFileCri ctors are old-MWCC-mangled (no arg suffix),
 // so they must be called through C-linkage declarations with the exact
 // retail names.
-extern "C" void __ct__CDeviceFileDvd(CWorkThread* pObj, const char* pName, CWorkThread* pParent);
-extern "C" void __ct__CDeviceFileCri(CWorkThread* pObj, const char* pName, CWorkThread* pParent);
+extern "C" void* __ct__CDeviceFileDvd(CWorkThread* pObj, const char* pName, CWorkThread* pParent);
+extern "C" void* __ct__CDeviceFileCri(CWorkThread* pObj, const char* pName, CWorkThread* pParent);
 
 // File call mode (see monolib/device/CFileHandle.hpp)
 enum CBM {
@@ -121,12 +141,18 @@ public:
     void wkSetEvent(EVT evt);
 
     //0x0..0x1C4: CWorkThread base (name/state/id/type/alloc/parent)
-    u8 field_0x0[0x48];              //0x0
+    u32* volatile vptr;              //0x0 (vtable, set by each ctor)
+    u8 field_0x4[0x48 - 0x4];        //0x4
     int mState;                      //0x48 (ThreadState)
-    u8 field_0x4C[0x5C - 0x4C];      //0x4C
+    u8 field_0x4C[0x50 - 0x4C];      //0x4C
+    u32 field_0x50;                  //0x50 (device job kind tag; valid range 0x41..0x4E)
+    u8 field_0x54[0x5C - 0x54];      //0x54
     u32 field_0x5C;                  //0x5C (children reslist vtable)
     CWorkThreadListNode* mChildList; //0x60 (children reslist mStartNodePtr)
-    u8 field_0x64[0x7C - 0x64];      //0x64..0x7C
+    u8 field_0x64[0x70 - 0x64];      //0x64
+    u32 field_0x70;                  //0x70 (device job pool; 0x0C-stride CDevJobSlot entries)
+    u32 field_0x74;                  //0x74 (device job pool entry count)
+    u8 field_0x78[0x7C - 0x78];
     u32 mThreadFlags;                //0x7C (ThreadFlags; CDeviceBase::mFlags shadows the name at 0x1C4)
     u8 field_0x80[0x1A4 - 0x80];     //0x80..0x1A4 (CMsgParam<8> vtable + entries)
     CMsgParamEntry* mMsgArray;       //0x1A4 (CMsgParam::mArrayPtr)
@@ -141,18 +167,31 @@ public:
     ~CFileHandle();
     u32 getRsrc() const;
     void func_80451984(unsigned long);
+    CFileHandle* setup1(const char* pPath, unsigned long size, IWorkEvent* pEvent);
+    CFileHandle* setup2(const char* pPath, unsigned long size, IWorkEvent* pEvent);
 
-    u32 field_0x0;      //0x0
-    u8* mData;          //0x4 (loaded file buffer)
-    u32 field_0x8;      //0x8
-    u8 field_0xC[0x14 - 0xC];
-    u32 field_0x14;     //0x14
-    u8 field_0x18[0x2C - 0x18];
-    u32 field_0x2C;     //0x2C
-    u8 field_0x30[0x3C - 0x30];
-    u32 field_0x3C;     //0x3C
-    u8 field_0x40[0x5C - 0x40];
-    u8 mName[0x20];     //0x5C (FixStr<32>)
+    u32 field_0x0;              //0x00
+    u8* mData;                  //0x04 (loaded file buffer)
+    u32 field_0x8;              //0x08
+    u32 field_0xC;              //0x0C
+    s32 field_0x10;             //0x10
+    u32 field_0x14;             //0x14 (alloc handle)
+    u32 field_0x18[4];          //0x18 (fallback alloc handles)
+    u8 field_0x28[0x2C - 0x28];
+    u32 field_0x2C;             //0x2C
+    u8 field_0x30[0x38 - 0x30];
+    u32 field_0x38;             //0x38 (read offset)
+    u32 field_0x3C;             //0x3C (file length)
+    u8 field_0x40[0x48 - 0x40];
+    u32 field_0x48;             //0x48 (current request id / priority)
+    u8 field_0x4C[0x58 - 0x4C];
+    u32 field_0x58;             //0x58 (status flags; bit0 = data pending)
+    char mName[0x100];          //0x5C
+    u32 field_0x15C;
+    char field_0x160[0x20];
+    u32 field_0x180;
+    char field_0x184[0x20];
+    u32 field_0x1A4;
 };
 
 class CDeviceFileCri {
@@ -200,14 +239,54 @@ struct CFileHandleReslistNode {
     u32 mItem;                     //0x8
 };
 
+// File-pool entry (0x60 bytes); the ctor clears the leading word of each
+// 0x0C sub-slot.
+struct CDeviceFilePoolEntry {
+    u32 head;           //0x00
+    u8 field_0x4[0xC - 0x4];
+    u32 slot0C;         //0x0C
+    u8 field_0x10[0x18 - 0x10];
+    u32 slot18;         //0x18
+    u8 field_0x1C[0x24 - 0x1C];
+    u32 slot24;         //0x24
+    u8 field_0x28[0x30 - 0x28];
+    u32 slot30;         //0x30
+    u8 field_0x34[0x3C - 0x34];
+    u32 slot3C;         //0x3C
+    u8 field_0x40[0x48 - 0x40];
+    u32 slot48;         //0x48
+    u8 field_0x4C[0x54 - 0x4C];
+    u32 slot54;         //0x54
+    u8 field_0x58[0x60 - 0x58];
+};
+
+// Waiting-job pool slot (0x0C stride) used by the DVD/CRI devices: parks a
+// child-list node detached during a preemption and records the owning job.
+struct CDevJobSlot {
+    CWorkThreadListNode* mNode;     //0x0 (relinked as mNext)
+    CWorkThreadListNode* mPrevLink; //0x4 (relinked as mPrev)
+    CDeviceFileJob* mJob;           //0x8
+};
+
+// Manager-singleton job pool slot (0x0C stride, appended to the tail of the
+// 0x1D0 ring when a read request is registered).
+struct CFileJobSlot {
+    CWorkThreadListNode* mNode;     //0x0
+    CWorkThreadListNode* mPrevLink; //0x4
+    CFileHandle* mJob;              //0x8
+};
+
 // _reslist_base<CFileHandle> layout
 struct CFileHandleReslist {
-    u32* m_vtable;                       //0x0 (points at lbl_eu_8056C324)
+    union {
+        u32* m_vtable;                     //0x0
+        u32* volatile m_vtable_raw;        //0x0 (base-construction store)
+    };
     CFileHandleReslistNode* mStartNodePtr; //0x4
-    u8 field_0x8[0x14 - 0x8];            //0x8..0x14 (embedded mStartNode)
-    CFileHandleReslistNode* mList;       //0x14
-    int mCapacity;                       //0x18
-    u8 field_0x1C;                       //0x1C (owns-list flag)
+    CFileHandleReslistNode mStartNode;     //0x8..0x14 (embedded sentinel)
+    CDeviceFilePoolEntry* mList;           //0x14
+    int mCapacity;                         //0x18
+    u8 field_0x1C;                         //0x1C (owns-list flag)
 };
 
 class CDeviceFileJob : public CWorkThread {
@@ -221,12 +300,12 @@ public:
         : CWorkThread(pName, pParent, capacity) {}
     ~CDeviceBase() {}
 
-    u32 mFlags; //0x1C4
+    u32 volatile mFlags; //0x1C4
 };
 
 class CDeviceFile : public CDeviceBase {
 public:
-    CDeviceFile(const char* name, void* parent);
+    CDeviceFile(const char* name, CWorkThread* parent);
     ~CDeviceFile();
     static void cancel(CFileHandle* pFileHandle);
     static int func_8044E770(CWorkThread* parent);
@@ -237,8 +316,10 @@ public:
     static void func_8044F400(CFileHandle* pHandle, unsigned long param);
     void getFileSize();
     int isInitialized();
-    void readCommonArchiveFile();
-    void readFile();
+    static CFileHandle* readCommonArchiveFile(unsigned long allocHandle, const char* pPath,
+                                               IWorkEvent* pEvent, int offsetUnits, int sizeUnits);
+    static CFileHandle* readFile(unsigned long allocHandle, const char* pPath,
+                                 IWorkEvent* pEvent, int offsetUnits, int sizeUnits);
     static bool removeFileJob(CDeviceFileJob* job);
     static void setHandleFlag1(CFileHandle* pFileHandle);
     static void setHandleFlag2(CFileHandle* pFileHandle);
@@ -247,7 +328,7 @@ public:
 
     //0x1C8..0x1F0: CDeviceFile tail
     CWorkThread* field_0x1C8;     //0x1C8 (standby state field)
-    CFileHandleReslist mFileList; //0x1CC (reslist<CFileHandle>)
+    CFileHandleReslist mFileList; //0x1CC (reslist<CFileHandle>; mList=pool @0x1E0)
     u8 field_0x1EC[0x1F0 - 0x1EC]; //0x1EC
 };
 
@@ -266,8 +347,36 @@ struct CEventFile {
 };
 
 
-CDeviceFile::CDeviceFile(const char* name, void* parent)
-    : CDeviceBase(name, (CWorkThread*)parent, 8) {}
+CDeviceFile::CDeviceFile(const char* pName, CWorkThread* pParent)
+    : CDeviceBase(pName, pParent, 8) {
+    mFlags = 0;                                  //0x1C4
+    vptr = (u32*)lbl_eu_8056C250;                // CDeviceFile vtable
+    field_0x1C8 = NULL;
+    mFileList.m_vtable_raw = lbl_eu_8056C324;    // _reslist_base vtable
+    mFileList.mList = NULL;                      //0x1E0
+    mFileList.mCapacity = 0;                     //0x1E4
+    mFileList.field_0x1C = 0;
+    mFileList.mStartNodePtr = &mFileList.mStartNode;
+    mFileList.mStartNode.mNext = mFileList.mStartNodePtr;
+    mFileList.mStartNode.mPrev = mFileList.mStartNodePtr;
+    mFileList.m_vtable = lbl_eu_8056C30C;        // reslist vtable (derived)
+    lbl_eu_80665660 = (u32)this;
+    lbl_eu_806636AA = 0xFF;
+    mFileList.mList = (CDeviceFilePoolEntry*)mtl::MemManager::allocate_array(
+        0xC00, CWorkThreadSystem::getWorkMem());
+    // Clear the leading word of every 0x0C sub-slot in all 32 entries.
+    for (int i = 0; i < 32; i++) {
+        mFileList.mList[i].head = 0;
+        mFileList.mList[i].slot0C = 0;
+        mFileList.mList[i].slot18 = 0;
+        mFileList.mList[i].slot24 = 0;
+        mFileList.mList[i].slot30 = 0;
+        mFileList.mList[i].slot3C = 0;
+        mFileList.mList[i].slot48 = 0;
+        mFileList.mList[i].slot54 = 0;
+    }
+    mFileList.mCapacity = 0x100;
+}
 
 // reslist<CFileHandle> deleting destructors. Retail emits these under old
 // (unmangled) template names, so they are written as C-linkage free functions.
@@ -304,7 +413,7 @@ CFileHandleReslist* __dt__reslist_CFileHandle(CFileHandleReslist* t, int deletin
             CFileHandleReslistNode* node = t->mStartNodePtr->mNext;
             while (node != t->mStartNodePtr) {
                 CFileHandleReslistNode* prev = node;
-                node = node->mNext;
+                node = prev->mNext;
                 prev->mNext = 0;
             }
             t->mStartNodePtr->mNext = t->mStartNodePtr;
@@ -349,90 +458,50 @@ CDeviceFile::~CDeviceFile() {
 
 u32 getInstance__11CDeviceFileFv(void) { return lbl_eu_80665660; }
 
-int CDeviceFile::isInitialized() {
-    CDeviceFile* inst = (CDeviceFile*)lbl_eu_80665660;
-
-    // Singleton device check: an exception flag or a queued EVT_EXCEPTION
-    // event means the device is not initialized yet.
-    bool hasException1;
-    if (inst->mThreadFlags & CWorkThread::THREAD_FLAG_EXCEPTION) {
-        hasException1 = true;
+// A device thread is ready when it has no pending EVT_EXCEPTION (flag bit or
+// queued message) and its worker state is LOGIN or RUN.
+static inline bool isDeviceFileReady(CDeviceFile* dev) {
+    bool hasException;
+    if (dev->mThreadFlags & CWorkThread::THREAD_FLAG_EXCEPTION) {
+        hasException = true;
     } else {
-        int found1 = -1;
-        for (int i1 = 0; i1 < inst->mMsgSize; i1++) {
-            if (inst->mMsgArray[(inst->mMsgFront + i1) % inst->mMsgCapacity].command ==
+        // Scan the pending-message ring for a queued EVT_EXCEPTION; an index
+        // of -1 means none was found.
+        int idx;
+        for (idx = 0; idx < dev->mMsgSize; idx++) {
+            if (dev->mMsgArray[(dev->mMsgFront + idx) % dev->mMsgCapacity].command !=
                 CWorkThread::EVT_EXCEPTION) {
-                found1 = i1;
-                break;
+                continue;
             }
+            break;
         }
-        hasException1 = found1 >= 0;
-    }
-    int ok1 = 0;
-    if (!hasException1) {
-        if (inst->mState == CWorkThread::THREAD_STATE_LOGIN ||
-            inst->mState == CWorkThread::THREAD_STATE_RUN) {
-            ok1 = 1;
+        if (idx >= dev->mMsgSize) {
+            idx = -1;
         }
+        hasException = idx >= 0;
     }
-    if (!ok1) return 0;
-
-    if (CDeviceFileDvd::getInstance() == NULL) return 0;
-    CDeviceFile* dvd = CDeviceFileDvd::getInstance();
-
-    // DVD device check.
-    bool hasException2;
-    if (dvd->mThreadFlags & CWorkThread::THREAD_FLAG_EXCEPTION) {
-        hasException2 = true;
-    } else {
-        int found2 = -1;
-        for (int i2 = 0; i2 < dvd->mMsgSize; i2++) {
-            if (dvd->mMsgArray[(dvd->mMsgFront + i2) % dvd->mMsgCapacity].command ==
-                CWorkThread::EVT_EXCEPTION) {
-                found2 = i2;
-                break;
-            }
-        }
-        hasException2 = found2 >= 0;
+    if (hasException) {
+        return false;
     }
-    int ok2 = 0;
-    if (!hasException2) {
-        if (dvd->mState == CWorkThread::THREAD_STATE_LOGIN ||
-            dvd->mState == CWorkThread::THREAD_STATE_RUN) {
-            ok2 = 1;
-        }
+    if (dev->mState == CWorkThread::THREAD_STATE_LOGIN ||
+        dev->mState == CWorkThread::THREAD_STATE_RUN) {
+        return true;
     }
-    if (!ok2) return 0;
-
-    if (CDeviceFileCri::getInstance() == NULL) return 0;
-    CDeviceFile* cri = CDeviceFileCri::getInstance();
-
-    // CRI device check (result is the return value).
-    bool hasException3;
-    if (cri->mThreadFlags & CWorkThread::THREAD_FLAG_EXCEPTION) {
-        hasException3 = true;
-    } else {
-        int found3 = -1;
-        for (int i3 = 0; i3 < cri->mMsgSize; i3++) {
-            if (cri->mMsgArray[(cri->mMsgFront + i3) % cri->mMsgCapacity].command ==
-                CWorkThread::EVT_EXCEPTION) {
-                found3 = i3;
-                break;
-            }
-        }
-        hasException3 = found3 >= 0;
-    }
-    int ok3 = 0;
-    if (!hasException3) {
-        if (cri->mState == CWorkThread::THREAD_STATE_LOGIN ||
-            cri->mState == CWorkThread::THREAD_STATE_RUN) {
-            ok3 = 1;
-        }
-    }
-    return ok3;
+    return false;
 }
 
-extern "C" u8 func_8044E768__11CDeviceFileFv() { return lbl_eu_806636A8[0]; }
+int CDeviceFile::isInitialized() {
+    // All three devices (manager, DVD, CRI) must be ready.
+    if (!isDeviceFileReady((CDeviceFile*)lbl_eu_80665660)) return 0;
+
+    if (CDeviceFileDvd::getInstance() == NULL) return 0;
+    if (!isDeviceFileReady(CDeviceFileDvd::getInstance())) return 0;
+
+    if (CDeviceFileCri::getInstance() == NULL) return 0;
+    return isDeviceFileReady(CDeviceFileCri::getInstance()) ? 1 : 0;
+}
+
+extern "C" u8 func_8044E768__11CDeviceFileFv() { return lbl_eu_806636A8; }
 
 int CDeviceFile::func_8044E770(CWorkThread* parent) {
     // spInstance (lbl_eu_80665660)->field_1C8 = parent; return true
@@ -446,21 +515,239 @@ bool CDeviceFile::func_8044E780() {
     return true;
 }
 
-void CDeviceFile::readFile() {}
+// Shared body of readFile/readCommonArchiveFile: normalizes the path,
+// resolves pack-archive indirection, allocates a CFileHandle via setup1/setup2
+// and registers it in the manager's job list, then queues a read job on the
+// active device (DVD or CRI).
+static inline CFileHandle* readCommon(unsigned long allocHandle, const char* pPath,
+                               IWorkEvent* pEvent, int offsetUnits, int sizeUnits,
+                               bool archiveMode) {
+    u32 outB;
+    u32 outC;
+    u32 outD;
+    char* pkbPath;
+    const char* slash;
+    int slashLen;
+    int idx;
+    int absolute;
+    CDeviceFile* mgr;
+    CDeviceFileJob* job;
+    char nameBuf[0x80];
+    int nameLen;
+    char pkbBuf[0x100];
+    int pkbLen;
+    char pathCopy[0x100];
+    int pathLen;
 
-void CDeviceFile::readCommonArchiveFile() {}
+    // Language-substituted copy of the full path (kept for setup1/setup2).
+    pathLen = strlen(pPath);
+    strcpy(pathCopy, pPath);
+    func_eu_804520D0(pathCopy);
 
-void CDeviceFile::getFileSize() {}
+    if (archiveMode && allocHandle == 0) {
+        return NULL;
+    }
+
+    // Name-only copy (stripped of any leading '/').
+    nameBuf[0] = '\0';
+    nameLen = 0;
+    if (pPath[0] == '/') {
+        nameLen = strlen(pPath + 1);
+        strcpy(nameBuf, pPath + 1);
+    } else {
+        nameLen = strlen(pPath);
+        strcpy(nameBuf, pPath);
+    }
+
+    pkbPath = NULL;
+
+    // If the name carries a pack-archive extension, resolve the real file
+    // through the pack system; outD/outC give sector-quantized sizes/offsets.
+    slash = lbl_eu_80522BE4 + 0x1D;
+    slashLen = strlen(slash);
+    for (idx = 0; idx < nameLen; idx++) {
+        if (strncmp(&nameBuf[idx], slash, slashLen) == 0) {
+            break;
+        }
+    }
+    if (idx >= nameLen) {
+        idx = -1;
+    }
+    if (idx != -1) {
+        if (idx < nameLen) {
+            nameBuf[idx] = '\0';
+            nameLen = idx;
+        }
+        if (func_804DE010(nameBuf)) {
+            if (func_804DDD54(nameBuf, pPath, &pkbPath, &outB, &outC, &outD)) {
+                if (sizeUnits == 0) {
+                    sizeUnits = outD << 11;
+                }
+                offsetUnits += outC << 11;
+            }
+        }
+    }
+
+    CFileHandle* handle = (CFileHandle*)mtl::MemManager::allocate(
+        0x1A8, CWorkThreadSystem::getWorkMem());
+    if (handle != NULL) {
+        handle = archiveMode ? handle->setup2(pathCopy, allocHandle, pEvent)
+                             : handle->setup1(pathCopy, allocHandle, pEvent);
+    }
+
+    if (handle != NULL) {
+        // Append to the manager singleton's job ring via a free pool slot.
+        mgr = (CDeviceFile*)lbl_eu_80665660;
+        CFileJobSlot* slots = (CFileJobSlot*)mgr->mFileList.mList;
+        CWorkThreadListNode* sentinel =
+            (CWorkThreadListNode*)mgr->mFileList.mStartNodePtr;
+        u32 freeIdx;
+        for (freeIdx = 0; freeIdx < mgr->mFileList.mCapacity; freeIdx++) {
+            if (slots[freeIdx].mNode == NULL) break;
+        }
+        if (&slots[freeIdx].mJob != NULL) {
+            slots[freeIdx].mJob = handle;
+        }
+        CWorkThreadListNode* slotNode = (CWorkThreadListNode*)&slots[freeIdx];
+        slotNode->mNext = sentinel;
+        slotNode->mPrev = sentinel->mPrev;
+        sentinel->mPrev->mNext = slotNode;
+        sentinel->mPrev = slotNode;
+    }
+
+    handle->field_0x38 = offsetUnits;
+    handle->field_0x3C = sizeUnits;
+    if (offsetUnits != 0 || sizeUnits != 0) {
+        handle->field_0x58 |= 1;
+    }
+
+    // Optional pack-base path: substitute and copy onto the handle.
+    pkbBuf[0] = '\0';
+    pkbLen = 0;
+    if (pkbPath != NULL) {
+        pkbLen = strlen(pkbPath);
+        strcpy(pkbBuf, pkbPath);
+        func_eu_804520D0(pkbBuf);
+        pkbPath = pkbBuf;
+    }
+    if (pkbPath != NULL) {
+        handle->field_0x1A4 = strlen(pkbPath);
+        strcpy(handle->field_0x184, pkbPath);
+    }
+
+    // Only relative paths reach the device queue.
+    pathLen = strlen(pathCopy);
+    if (pathLen > 6 && strstr(pathCopy, lbl_eu_80522BE4) == pathCopy) {
+        absolute = 1;
+    } else if (pathLen > 1 && pathCopy[1] == ':') {
+        absolute = 1;
+    } else if (pathLen <= 0) {
+        absolute = 0;
+    } else {
+        s8 c = (s8)pathCopy[0];
+        if (c == '/') {
+            absolute = 0;
+        } else if (c == '\\') {
+            absolute = 1;
+        } else {
+            absolute = 0;
+        }
+    }
+
+    job = NULL;
+    if (!absolute) {
+        if (lbl_eu_806636A8 == 0) {
+            CDeviceFile* dvd = CDeviceFileDvd::getInstance();
+            job = (CDeviceFileJob*)mtl::MemManager::allocate(
+                0x250, CWorkThreadSystem::getWorkMem());
+            if (job != NULL) {
+                job = (CDeviceFileJob*)__ct__21CDeviceFileJobReadDvdFPCcP11CWorkThread(
+                    job, lbl_eu_80522BE4 + 7, dvd);
+            }
+            CWorkUtil::entryWork(job, dvd, false);
+        } else {
+            CDeviceFile* cri = CDeviceFileCri::getInstance();
+            job = (CDeviceFileJob*)mtl::MemManager::allocate(
+                0x250, CWorkThreadSystem::getWorkMem());
+            if (job != NULL) {
+                job = (CDeviceFileJob*)__ct__21CDeviceFileJobReadDvdFPCcP11CWorkThread(
+                    job, lbl_eu_80522BE4 + 7, cri);
+            }
+            CWorkUtil::entryWork(job, cri, false);
+        }
+    }
+
+    job->mHandle = handle;
+    u32 prio = handle->field_0x48;
+    if (!CDeviceFileDvd::getInstance()->func_8044F1B8(handle, prio)) {
+        CDeviceFileCri::getInstance()->func_8044F1B8(handle, prio);
+    }
+    return handle;
+}
+
+CFileHandle* CDeviceFile::readFile(unsigned long allocHandle, const char* pPath,
+                                   IWorkEvent* pEvent, int offsetUnits, int sizeUnits) {
+    return readCommon(allocHandle, pPath, pEvent, offsetUnits, sizeUnits, false);
+}
+
+CFileHandle* CDeviceFile::readCommonArchiveFile(unsigned long allocHandle, const char* pPath,
+                                                 IWorkEvent* pEvent, int offsetUnits,
+                                                 int sizeUnits) {
+    return readCommon(allocHandle, pPath, pEvent, offsetUnits, sizeUnits, true);
+}
+
+// File-size dispatch: device-specific getters are old-MWCC-mangled imports
+// that take an extra (mangle-invisible) trailing arg forwarded from r4.
+extern "C" int getFileSize__14CDeviceFileDvdFPCc(const char* pPath, int param);
+extern "C" int getFileSize__14CDeviceFileCriFPCc(const char* pPath, int param);
+
+// CDeviceFile::getFileSize(const char*). Returns -1 when the path is not a
+// plain relative path (absolute prefix, drive colon, or backslash root).
+// Only relative paths reach the DVD/CRI device query.
+extern "C" int getFileSize__11CDeviceFileFPCc(const char* path, int param) {
+    int result = -1;
+    int absolute;
+    int len = strlen(path);
+    if (len > 6 && strstr(path, lbl_eu_80522BE4) == path) {
+        absolute = 1;
+    } else if (len > 1 && path[1] == ':') {
+        absolute = 1;
+    } else if (len <= 0) {
+        absolute = 0;
+    } else {
+        s8 c = (s8)path[0];
+        absolute = 0;
+        if (c == '/') {
+            absolute = 0;
+        } else if (c == '\\') {
+            absolute = 1;
+        }
+    }
+    if (!absolute) {
+        if (lbl_eu_806636A8) {
+            result = getFileSize__14CDeviceFileCriFPCc(path, param);
+        } else {
+            result = getFileSize__14CDeviceFileDvdFPCc(path, param);
+        }
+    }
+    return result;
+}
 
 bool CDeviceFile::removeFileJob(CDeviceFileJob* job) {
     bool result;
-    if (job->mHandle != NULL) {
-        CDeviceFile* inst = (CDeviceFile*)lbl_eu_80665660;
+    CFileHandle* handle = job->mHandle;
+    CDeviceFile* inst = (CDeviceFile*)lbl_eu_80665660;
+    if (handle == NULL) {
+        result = false;
+    } else {
         CFileHandleListNode* head = (CFileHandleListNode*)inst->mFileList.mStartNodePtr;
+        CFileHandleListNode* next;
         CFileHandleListNode* node = head->mNext;
+        // Unlink every list entry referencing this handle.
         while (node != head) {
-            CFileHandleListNode* next = node->mNext;
-            if (node->mItem == job->mHandle) {
+            CFileHandle* item = node->mItem;
+            next = node->mNext;
+            if (item == handle) {
                 CFileHandleListNode* prev = node->mPrev;
                 prev->mNext = next;
                 next->mPrev = prev;
@@ -468,12 +755,10 @@ bool CDeviceFile::removeFileJob(CDeviceFileJob* job) {
             }
             node = next;
         }
-        if (job->mHandle != NULL) {
-            delete job->mHandle;
+        if (handle != NULL) {
+            delete handle;
         }
         result = true;
-    } else {
-        result = false;
     }
     job->mHandle = NULL;
     job->wkSetEvent(CWorkThread::EVT_NONE);
@@ -500,40 +785,108 @@ bool CDeviceFile::func_8044F154(CFileHandle* pFileHandle, int param) {
 }
 
 bool CDeviceFile::func_8044F1B8(CFileHandle* pFileHandle, int param) {
-    // Placeholder body: the retail function is a 0x248B request-state check
-    // that walks the child list at 0x60 and inspects each item. Kept
-    // deliberately large so -inline auto leaves it out-of-line: the calls
-    // from func_8044F154 must stay direct bls.
+    // Request-state check over this device's child-job ring: find the queued
+    // job holding pFileHandle, then either bump its priority (sole child) or
+    // preempt a lower-priority sibling by parking nodes in the 0x70 job pool.
     if (this == NULL) {
         return false;
     }
-    if (pFileHandle == NULL) {
-        return false;
-    }
-    if (mChildList == NULL) {
-        return false;
-    }
-    bool found = false;
+
     CWorkThreadListNode* node = mChildList->mNext;
+    CDeviceFileJob* foundJob;
     while (node != mChildList) {
-        CWorkThread* item = node->mItem;
-        if (item == NULL) {
-            node = node->mNext;
-            continue;
+        // A list item participates only when its kind tag is in [0x41, 0x4F).
+        CDeviceFileJob* job = (CDeviceFileJob*)node->mItem;
+        if (job != NULL) {
+            if (job->field_0x50 < 0x41) {
+                job = NULL;
+            } else if (job->field_0x50 >= 0x4F) {
+                job = NULL;
+            }
+        } else {
+            job = NULL;
         }
-        if (item == (CWorkThread*)pFileHandle) {
-            found = true;
+        foundJob = job;
+        if (job->mHandle == pFileHandle) {
             break;
         }
         node = node->mNext;
     }
-    if (!found) {
+    if (node == mChildList) {
         return false;
     }
-    if (param > 0) {
+
+    // Count the children by walking the whole ring once.
+    int idx = 0;
+    CWorkThreadListNode* walk = mChildList->mNext;
+    do {
+        walk = walk->mNext;
+        idx++;
+    } while (walk != mChildList);
+
+    if (idx == 1) {
+        pFileHandle->field_0x48 = param;
         return true;
     }
-    return false;
+
+    // Detach the matched node from the child ring.
+    CWorkThreadListNode* prev = node->mPrev;
+    CWorkThreadListNode* next = node->mNext;
+    prev->mNext = next;
+    next->mPrev = prev;
+    node->mNext = NULL;
+
+    if (mChildList->mNext != mChildList) {
+        for (CWorkThreadListNode* scan = mChildList->mNext; scan != mChildList;
+             scan = scan->mNext) {
+            CDeviceFileJob* job = (CDeviceFileJob*)scan->mItem;
+            if (job != NULL) {
+                if (job->field_0x50 < 0x41) {
+                    job = NULL;
+                } else if (job->field_0x50 >= 0x4F) {
+                    job = NULL;
+                }
+            } else {
+                job = NULL;
+            }
+            CFileHandle* jobHandle = job->mHandle;
+            if (jobHandle != NULL && param < (int)jobHandle->field_0x48) {
+                // Preempt the lower-priority job: park its node in the pool.
+                pFileHandle->field_0x48 = param;
+                u32 freeIdx;
+                for (freeIdx = 0; freeIdx < field_0x74; freeIdx++) {
+                    if (((CDevJobSlot*)field_0x70)[freeIdx].mNode == NULL) break;
+                }
+                CWorkThreadListNode* slotNode =
+                    (CWorkThreadListNode*)&((CDevJobSlot*)field_0x70)[freeIdx];
+                if (&((CDevJobSlot*)field_0x70)[freeIdx].mJob != NULL) {
+                    ((CDevJobSlot*)field_0x70)[freeIdx].mJob = foundJob;
+                }
+                slotNode->mNext = scan;
+                slotNode->mPrev = scan->mPrev;
+                scan->mPrev->mNext = slotNode;
+                scan->mPrev = slotNode;
+                return true;
+            }
+        }
+    }
+
+    // No preemption target: park against the ring sentinel itself.
+    pFileHandle->field_0x48 = param;
+    u32 freeIdx2;
+    for (freeIdx2 = 0; freeIdx2 < field_0x74; freeIdx2++) {
+        if (((CDevJobSlot*)field_0x70)[freeIdx2].mNode == NULL) break;
+    }
+    CWorkThreadListNode* slotNode2 =
+        (CWorkThreadListNode*)&((CDevJobSlot*)field_0x70)[freeIdx2];
+    if (&((CDevJobSlot*)field_0x70)[freeIdx2].mJob != NULL) {
+        ((CDevJobSlot*)field_0x70)[freeIdx2].mJob = foundJob;
+    }
+    slotNode2->mNext = (CWorkThreadListNode*)mChildList;
+    slotNode2->mPrev = ((CWorkThreadListNode*)mChildList)->mPrev;
+    ((CWorkThreadListNode*)mChildList)->mPrev->mNext = slotNode2;
+    ((CWorkThreadListNode*)mChildList)->mPrev = slotNode2;
+    return true;
 }
 
 void CDeviceFile::func_8044F400(CFileHandle* pHandle, unsigned long param) {
@@ -553,18 +906,18 @@ bool CDeviceFile::wkStandbyLogin() {
         const char* dvdName = lbl_eu_80522BE4 + 0x8B;
         CWorkThread* dvd = (CWorkThread*)mtl::MemManager::allocate(0x1D8, CWorkThreadSystem::getWorkMem());
         if (dvd != NULL) {
-            __ct__CDeviceFileDvd(dvd, dvdName, this);
+            dvd = (CWorkThread*)__ct__CDeviceFileDvd(dvd, dvdName, this);
         }
         CWorkUtil::entryWork(dvd, this, false);
 
         const char* criName = lbl_eu_80522BE4 + 0x9A;
         CWorkThread* cri = (CWorkThread*)mtl::MemManager::allocate(0x1F0, CWorkThreadSystem::getWorkMem());
         if (cri != NULL) {
-            __ct__CDeviceFileCri(cri, criName, this);
+            cri = (CWorkThread*)__ct__CDeviceFileCri(cri, criName, this);
         }
         CWorkUtil::entryWork(cri, this, false);
 
-        lbl_eu_806636A8[1] = 1;
+        lbl_eu_806636A9 = 1;
         return CWorkThread::wkStandbyLogin();
     }
     return false;
@@ -601,7 +954,7 @@ void func_eu_804520D0(char* pPath) {
     const char* search;
 
     lang = CDeviceSC::getLanguage();
-    u8 langOverride = lbl_eu_806636A8[2];
+    u8 langOverride = lbl_eu_806636AA;
     if ((s8)langOverride >= 0) {
         lang = langOverride;
     }
@@ -629,26 +982,26 @@ void func_eu_804520D0(char* pPath) {
 // because this catalog TU defines a local `struct CDeviceFile` that conflicts
 // with the class in that header, so this TU cannot include it.
 extern "C" void func_eu_804521A8(s8 val) {
-    lbl_eu_806636A8[2] = val;
+    lbl_eu_806636AA = val;
 }
 
 extern "C" void func_eu_804521B0() {
-    lbl_eu_806636A8[2] = -1;
+    lbl_eu_806636AA = -1;
 }
 
 extern "C" void func_eu_804521BC(u8 val) {
-    lbl_eu_806636A8[1] = val;
+    lbl_eu_806636A9 = val;
 }
 
 extern "C" u8 func_eu_804521C4() {
-    return lbl_eu_806636A8[1];
+    return lbl_eu_806636A9;
 }
 
 CEventFile::CEventFile(CBM cbm, CFileHandle* handle) {
     field_0x0 = cbm;
     field_0x4 = handle;
     field_0x8 = handle->field_0x14;
-    field_0xC = handle->mName;
+    field_0xC = (u8*)handle->mName;
     field_0x10 = handle->field_0x8;
     field_0x14 = handle->field_0x3C;
     field_0x18 = handle->field_0x2C;

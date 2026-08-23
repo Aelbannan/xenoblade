@@ -33,9 +33,6 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
     char* vtFinal;
     char* vtWork;
     char* vtRender;
-    u32 ptmfWord0;
-    u32 ptmfWord1;
-    u32 ptmfWord2;
     u32 z;
     u32 v4;
     u32 v6;
@@ -53,24 +50,19 @@ CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
     __ct__8CProcessFv(reinterpret_cast<CProcess*>(process));
 
     // Interim CProcess vtable, then final MI vtable + interface pieces.
-    // Retail: lwzu of [0], then stw [1]@+0x40 before [0]@+0x3C (ArtsSelect order).
+    // Retail order: vtFinal, ptmf[0], vtWork, z, ptmf[1], vtRender,
+    // then cb[0], cb[2], cb[4]/cb[3], cb[5].
     process->vtable = lbl_eu_8052C1C0;
-    z = 0;
     vtFinal = lbl_eu_8052C330;
-    ptmfWord0 = __ptmf_null[0];
+    process->callbacks[0] = __ptmf_null[0];
     vtWork = vtFinal + 0x24;
+    z = 0;
+    process->callbacks[1] = __ptmf_null[1];
     vtRender = vtFinal + 0xac;
-    ptmfWord1 = __ptmf_null[1];
-    process->callbacks[1] = ptmfWord1;
-    process->callbacks[0] = ptmfWord0;
-    ptmfWord2 = __ptmf_null[2];
-    process->callbacks[2] = ptmfWord2;
-    ptmfWord0 = __ptmf_null[0];
-    ptmfWord1 = __ptmf_null[1];
-    process->callbacks[4] = ptmfWord1;
-    process->callbacks[3] = ptmfWord0;
-    ptmfWord2 = __ptmf_null[2];
-    process->callbacks[5] = ptmfWord2;
+    process->callbacks[2] = __ptmf_null[2];
+    process->callbacks[3] = __ptmf_null[0];
+    process->callbacks[4] = __ptmf_null[1];
+    process->callbacks[5] = __ptmf_null[2];
     unk54 = (u8)z;
     unk55 = (u8)z;
     process->vtable = vtFinal;

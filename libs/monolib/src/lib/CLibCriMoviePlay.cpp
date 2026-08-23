@@ -23,6 +23,13 @@ using namespace ml;
 #define sInstance lbl_eu_806656E0
 CLibCriMoviePlay* lbl_eu_806656E0 = nullptr;
 
+// Own retail-named data (defined at the bottom of this file, retail order).
+extern "C" {
+    extern u32 lbl_eu_8056CF48[48];          // __vt__16CLibCriMoviePlay (+ sub-vtable)
+    extern u32 lbl_eu_80663798[2];           // .sdata RTTI locator pair
+    extern const char lbl_eu_8052301C[0x34]; // wkUpdate status strings
+}
+
 // External globals from sdata2
 extern "C" {
     // KColor constants for TEV stages
@@ -36,8 +43,6 @@ extern "C" {
     extern float lbl_eu_8066A4F4; // 1.0f
     extern float lbl_eu_8066A4F8; // PAL frame rate / scale
     extern float lbl_eu_8066A4FC; // NTSC frame rate / scale
-    extern const char lbl_eu_8052301C[]; // wkUpdate status strings
-    extern u32 lbl_eu_8056CF48;  // vtable base
     extern u32 identity__Q22ml6CMat34; // identity matrix
 }
 
@@ -116,11 +121,13 @@ CLibCriMoviePlay::~CLibCriMoviePlay() {
 }
 
 // ============================================================================
-// setupGXState (us-8045de04)
-// CLibCriMoviePlay::func_80459DEC()
-// Sets up GX TEV pipeline for movie rendering
+// func_80459DEC (us-8045de04)
+// Sets up the GX TEV pipeline for movie rendering (YUV->RGB).
+// Retail ABI: (r3 = stage-1 tex map, r4 = stage-0/2 tex map); the caller
+// passes (GX_TEXMAP0, GX_TEXMAP1). The TEVREG1/KColor structs are filled
+// with direct word copies from the sdata2 pool.
 // ============================================================================
-void CLibCriMoviePlay::setupGXState() {
+extern "C" void func_80459DEC__16CLibCriMoviePlayFv(unsigned int texMapStage1, unsigned int texMapStage02) {
     GXSetNumTexGens(2);
 
     // Tex coord gen 0 and 1
@@ -129,8 +136,8 @@ void CLibCriMoviePlay::setupGXState() {
 
     GXSetNumTevStages(4);
 
-    // TEV Stage 0 - YUV to RGB conversion (Y * Cr)
-    GXSetTevOrder((GXTevStageID)0, (GXTexCoordID)0, (GXTexMapID)0, (GXChannelID)0xFF);
+    // TEV Stage 0 - YUV->RGB (CbCr texture)
+    GXSetTevOrder((GXTevStageID)0, (GXTexCoordID)0, (GXTexMapID)texMapStage02, (GXChannelID)0xFF);
     GXSetTevColorIn((GXTevStageID)0, (GXTevColorArg)0xF, (GXTevColorArg)8, (GXTevColorArg)0xE, (GXTevColorArg)2);
     GXSetTevColorOp((GXTevStageID)0, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)0, (GXTevRegID)0);
     GXSetTevAlphaIn((GXTevStageID)0, (GXTevAlphaArg)7, (GXTevAlphaArg)4, (GXTevAlphaArg)6, (GXTevAlphaArg)1);
@@ -139,18 +146,18 @@ void CLibCriMoviePlay::setupGXState() {
     GXSetTevKAlphaSel((GXTevStageID)0, (GXTevKAlphaSel)0x1C);
     GXSetTevSwapMode((GXTevStageID)0, (GXTevSwapSel)0, (GXTevSwapSel)1);
 
-    // TEV Stage 1 - YUV to RGB conversion (Cb component)
-    GXSetTevOrder((GXTevStageID)1, (GXTexCoordID)1, (GXTexMapID)1, (GXChannelID)0xFF);
+    // TEV Stage 1 - YUV->RGB (Y texture)
+    GXSetTevOrder((GXTevStageID)1, (GXTexCoordID)1, (GXTexMapID)texMapStage1, (GXChannelID)0xFF);
     GXSetTevColorIn((GXTevStageID)1, (GXTevColorArg)0xF, (GXTevColorArg)8, (GXTevColorArg)0xE, (GXTevColorArg)0);
     GXSetTevColorOp((GXTevStageID)1, (GXTevOp)0, (GXTevBias)0, (GXTevScale)1, (GXBool)0, (GXTevRegID)0);
     GXSetTevAlphaIn((GXTevStageID)1, (GXTevAlphaArg)7, (GXTevAlphaArg)4, (GXTevAlphaArg)6, (GXTevAlphaArg)0);
-    GXSetTevAlphaOp((GXTevStageID)1, (GXTevOp)1, (GXTevBias)0, (GXTevScale)0, (GXBool)0, (GXTevRegID)0);
+    GXSetTevAlphaOp((GXTevStageID)1, (GXTevOp)0, (GXTevBias)0, (GXTevScale)1, (GXBool)0, (GXTevRegID)0);
     GXSetTevKColorSel((GXTevStageID)1, (GXTevKColorSel)0xD);
     GXSetTevKAlphaSel((GXTevStageID)1, (GXTevKAlphaSel)0x1D);
     GXSetTevSwapMode((GXTevStageID)1, (GXTevSwapSel)0, (GXTevSwapSel)0);
 
-    // TEV Stage 2 - Color combination
-    GXSetTevOrder((GXTevStageID)2, (GXTexCoordID)0, (GXTexMapID)0, (GXChannelID)0xFF);
+    // TEV Stage 2 - color combination (CbCr texture)
+    GXSetTevOrder((GXTevStageID)2, (GXTexCoordID)0, (GXTexMapID)texMapStage02, (GXChannelID)0xFF);
     GXSetTevColorIn((GXTevStageID)2, (GXTevColorArg)0xF, (GXTevColorArg)8, (GXTevColorArg)0xE, (GXTevColorArg)0);
     GXSetTevColorOp((GXTevStageID)2, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)1, (GXTevRegID)0);
     GXSetTevAlphaIn((GXTevStageID)2, (GXTevAlphaArg)7, (GXTevAlphaArg)4, (GXTevAlphaArg)6, (GXTevAlphaArg)0);
@@ -159,7 +166,7 @@ void CLibCriMoviePlay::setupGXState() {
     GXSetTevKAlphaSel((GXTevStageID)2, (GXTevKAlphaSel)0x1E);
     GXSetTevSwapMode((GXTevStageID)2, (GXTevSwapSel)0, (GXTevSwapSel)2);
 
-    // TEV Stage 3 - Final output
+    // TEV Stage 3 - final output
     GXSetTevOrder((GXTevStageID)3, (GXTexCoordID)0xFF, (GXTexMapID)0xFF, (GXChannelID)0xFF);
     GXSetTevColorIn((GXTevStageID)3, (GXTevColorArg)0, (GXTevColorArg)1, (GXTevColorArg)0xE, (GXTevColorArg)0xF);
     GXSetTevColorOp((GXTevStageID)3, (GXTevOp)0, (GXTevBias)0, (GXTevScale)0, (GXBool)1, (GXTevRegID)0);
@@ -168,47 +175,19 @@ void CLibCriMoviePlay::setupGXState() {
     GXSetTevSwapMode((GXTevStageID)3, (GXTevSwapSel)0, (GXTevSwapSel)0);
     GXSetTevKColorSel((GXTevStageID)3, (GXTevKColorSel)0xF);
 
-    // Set TEV register colors (signed 10-bit)
-    GXColorS10 regColor;
-    regColor.r = (s16)(lbl_eu_8066A4D8 & 0xFFFF);
-    regColor.g = (s16)((lbl_eu_8066A4D8 >> 16) & 0xFFFF);
-    regColor.b = (s16)(lbl_eu_8066A4DC & 0xFFFF);
-    regColor.a = (s16)((lbl_eu_8066A4DC >> 16) & 0xFFFF);
-    GXSetTevColorS10(GX_TEVREG1, regColor);
+    // Set TEV register color + K colors (direct sdata2 pool word copies;
+    // the TEVREG1 enum value in this header tree is off by one from retail)
+    GXSetTevColorS10((GXTevRegID)1, *(const GXColorS10*)&lbl_eu_8066A4D8);
 
-    // Set KColors
-    GXColor kColor0;
-    kColor0.r = (u8)(lbl_eu_8066A4E0 & 0xFF);
-    kColor0.g = (u8)((lbl_eu_8066A4E0 >> 8) & 0xFF);
-    kColor0.b = (u8)((lbl_eu_8066A4E0 >> 16) & 0xFF);
-    kColor0.a = (u8)((lbl_eu_8066A4E0 >> 24) & 0xFF);
-    GXSetTevKColor(GX_KCOLOR0, kColor0);
-
-    GXColor kColor1;
-    kColor1.r = (u8)(lbl_eu_8066A4E4 & 0xFF);
-    kColor1.g = (u8)((lbl_eu_8066A4E4 >> 8) & 0xFF);
-    kColor1.b = (u8)((lbl_eu_8066A4E4 >> 16) & 0xFF);
-    kColor1.a = (u8)((lbl_eu_8066A4E4 >> 24) & 0xFF);
-    GXSetTevKColor(GX_KCOLOR1, kColor1);
-
-    GXColor kColor2;
-    kColor2.r = (u8)(lbl_eu_8066A4E8 & 0xFF);
-    kColor2.g = (u8)((lbl_eu_8066A4E8 >> 8) & 0xFF);
-    kColor2.b = (u8)((lbl_eu_8066A4E8 >> 16) & 0xFF);
-    kColor2.a = (u8)((lbl_eu_8066A4E8 >> 24) & 0xFF);
-    GXSetTevKColor(GX_KCOLOR2, kColor2);
-
-    GXColor kColor3;
-    kColor3.r = (u8)(lbl_eu_8066A4EC & 0xFF);
-    kColor3.g = (u8)((lbl_eu_8066A4EC >> 8) & 0xFF);
-    kColor3.b = (u8)((lbl_eu_8066A4EC >> 16) & 0xFF);
-    kColor3.a = (u8)((lbl_eu_8066A4EC >> 24) & 0xFF);
-    GXSetTevKColor(GX_KCOLOR3, kColor3);
+    GXSetTevKColor((GXTevKColorID)0, *(const GXColor*)&lbl_eu_8066A4E0);
+    GXSetTevKColor((GXTevKColorID)1, *(const GXColor*)&lbl_eu_8066A4E4);
+    GXSetTevKColor((GXTevKColorID)2, *(const GXColor*)&lbl_eu_8066A4E8);
+    GXSetTevKColor((GXTevKColorID)3, *(const GXColor*)&lbl_eu_8066A4EC);
 
     // Set swap mode tables
-    GXSetTevSwapModeTable(GX_TEV_SWAP0, (GXTevColorChan)3, (GXTevColorChan)3, (GXTevColorChan)3, (GXTevColorChan)3);
-    GXSetTevSwapModeTable(GX_TEV_SWAP1, (GXTevColorChan)3, (GXTevColorChan)0, (GXTevColorChan)0, (GXTevColorChan)0);
-    GXSetTevSwapModeTable(GX_TEV_SWAP2, (GXTevColorChan)0, (GXTevColorChan)3, (GXTevColorChan)0, (GXTevColorChan)0);
+    GXSetTevSwapModeTable(GX_TEV_SWAP0, (GXTevColorChan)0, (GXTevColorChan)1, (GXTevColorChan)2, (GXTevColorChan)3);
+    GXSetTevSwapModeTable(GX_TEV_SWAP1, (GXTevColorChan)0, (GXTevColorChan)3, (GXTevColorChan)3, (GXTevColorChan)3);
+    GXSetTevSwapModeTable(GX_TEV_SWAP2, (GXTevColorChan)0, (GXTevColorChan)0, (GXTevColorChan)3, (GXTevColorChan)0);
 
     GXSetNumChans(0);
     GXSetNumIndStages(0);
@@ -361,112 +340,11 @@ int CLibCriMoviePlay::startMovie(const char* filename, u32 allocHandle,
 // wrapper func_8045A54C__16CLibCriMoviePlayFv (see below) so MWCC keeps it
 // outlined (large body) and other functions call it directly.
 // ============================================================================
-// isMoviePlaying (us-8045e65c)
-// CLibCriMoviePlay::func_8045A644()
-// Returns true if a movie with the given ID is currently playing
 // ============================================================================
-bool CLibCriMoviePlay::isMoviePlaying(int id) {
-    if (sInstance == nullptr) return false;
-
-    MovieEntry* entries = &sInstance->mEntries[0];
-
-    // Check entry 0
-    if (entries[0].mPlyHandle != nullptr) {
-        if (entries[0].mStreamId == (u32)id ||
-            (((u32)id + 0x10000) & 0xFFFF) == 0xFFFF) {
-            return true;
-        }
-    }
-
-    // Check entries 1-3
-    MovieEntry* cur = &sInstance->mEntries[1];
-    for (int i = 1; i < 4; i++) {
-        if (cur->mPlyHandle != nullptr) {
-            if (cur->mStreamId == (u32)id ||
-                (((u32)id + 0x10000) & 0xFFFF) == 0xFFFF) {
-                return true;
-            }
-        }
-        cur++;
-    }
-
-    return false;
-}
-
-// ============================================================================
-// unsetPauseFlag (us-8045e720)
-// CLibCriMoviePlay::func_8045A708()
-// Clears the global pause flag for the entry matching the given ID
-// ============================================================================
-void CLibCriMoviePlay::unsetPauseFlag(int id) {
-    if (sInstance == nullptr) return;
-
-    MovieEntry* entries = &sInstance->mEntries[0];
-
-    for (int i = 0; i < 4; i++) {
-        MovieEntry* cur = &entries[i];
-        if (cur->mPlyHandle == nullptr) continue;
-
-        if (cur->mStreamId == (u32)id) {
-            // Found matching entry - clear its global pause
-            if (!cur->mGlobalPause) return;
-
-            cur->mGlobalPause = false;
-            bool overrideState = cur->mPauseOverride;
-
-            // Update pause state for all entries
-            MovieEntry* other = &sInstance->mEntries[0];
-            for (int j = 0; j < 4; j++) {
-                if (other->mPlyHandle != nullptr) {
-                    other->mPauseOverride = overrideState;
-                    bool shouldPause = overrideState;
-                    if (!shouldPause) {
-                        if (!other->mGlobalPause) {
-                            if (sInstance->mPauseCounter != 0) {
-                                shouldPause = true;
-                            }
-                        }
-                    }
-                    mwPlyPause(other->mPlyHandle, shouldPause ? 1 : 0);
-                }
-                other++;
-            }
-            return;
-        }
-    }
-}
-
-// ============================================================================
-// hasActiveMovie (us-8045e810)
-// CLibCriMoviePlay::func_8045A7F8()
-// Returns true if any entry has active playback matching the ID
-// ============================================================================
-bool CLibCriMoviePlay::hasActiveMovie(int id) {
-    if (sInstance == nullptr) return false;
-
-    MovieEntry* entries = &sInstance->mEntries[0];
-
-    // Check entry 0 with active flag
-    if (entries[0].mPlyHandle != nullptr) {
-        if (entries[0].mStreamId == (u32)id && entries[0].mGlobalPause) {
-            return true;
-        }
-    }
-
-    // Check entries 1-3
-    MovieEntry* cur = &sInstance->mEntries[1];
-    for (int i = 1; i < 4; i++) {
-        if (cur->mPlyHandle != nullptr) {
-            if (cur->mStreamId == (u32)id && cur->mGlobalPause) {
-                return true;
-            }
-        }
-        cur++;
-    }
-
-    return false;
-}
-
+// isMoviePlaying / unsetPauseFlag / hasActiveMovie / setPauseState
+// Implemented directly as the retail-named wrappers at the bottom of this
+// file (their retail symbols take the arguments in registers that do not
+// match a member-function ABI).
 // ============================================================================
 // renderMovie (us-8045e8e0)
 // CLibCriMoviePlay::func_8045A8C8()
@@ -491,8 +369,8 @@ bool CLibCriMoviePlay::renderMovie(int id) {
         GXLoadTexObj(&cur->mTexObjY, GX_TEXMAP0);
         GXLoadTexObj(&cur->mTexObjCbCr, GX_TEXMAP1);
 
-        // Setup GX state for movie rendering
-        setupGXState();
+        // Setup GX state for movie rendering (stage-1 map = Y, stage-0/2 = CbCr)
+        func_80459DEC__16CLibCriMoviePlayFv(GX_TEXMAP0, GX_TEXMAP1);
 
         // Configure GX cache
         func_8044A6C8__8CGXCacheFii(cacheInstance__9CDeviceGX, 0, 0);
@@ -734,47 +612,21 @@ void CLibCriMoviePlay::OnPauseTrigger(bool pause) {
 
     // Update pause state for all entries
     if (sInstance != nullptr) {
+        u32 i;
         MovieEntry* entry = &sInstance->mEntries[0];
-        for (int i = 0; i < 4; i++) {
+        for (i = 0; i < 4; i++) {
             if (entry->mPlyHandle != nullptr) {
-                bool shouldPause = false;
-                if (entry->mPauseOverride) {
-                    shouldPause = true;
-                } else if (!entry->mGlobalPause) {
-                    if (sInstance->mPauseCounter != 0) {
-                        shouldPause = true;
-                    }
+                int pa = 0;
+                if (!entry->mPauseOverride && !entry->mGlobalPause &&
+                    sInstance->mPauseCounter == 0) {
+                    // no pause requested - leave pa at 0
+                } else {
+                    pa = 1;
                 }
-                mwPlyPause(entry->mPlyHandle, shouldPause ? 1 : 0);
+                mwPlyPause(entry->mPlyHandle, pa);
             }
             entry++;
         }
-    }
-}
-
-// ============================================================================
-// setPauseState (us-8045f33c)
-// CLibCriMoviePlay::func_8045B310(bool pause)
-// Sets pause state for entries matching the given ID
-// ============================================================================
-void CLibCriMoviePlay::setPauseState(bool pause) {
-    if (sInstance == nullptr) return;
-
-    MovieEntry* entry = &sInstance->mEntries[0];
-    for (int i = 0; i < 4; i++) {
-        if (entry->mPlyHandle != nullptr) {
-            entry->mPauseOverride = pause;
-            bool shouldPause = pause;
-            if (!shouldPause) {
-                if (!entry->mGlobalPause) {
-                    if (sInstance->mPauseCounter != 0) {
-                        shouldPause = true;
-                    }
-                }
-            }
-            mwPlyPause(entry->mPlyHandle, shouldPause ? 1 : 0);
-        }
-        entry++;
     }
 }
 
@@ -942,10 +794,6 @@ extern "C" {
         new ((void*)0) CLibCriMoviePlay(name, parent);
     }
 
-    void func_80459DEC__16CLibCriMoviePlayFv(CLibCriMoviePlay* self) {
-        self->setupGXState();
-    }
-
     int func_8045A260__16CLibCriMoviePlayFv(CLibCriMoviePlay* self,
         const char* filename, u32 allocHandle, u32 allocHandle2,
         bool waitForStart, bool useAlternateBuf) {
@@ -953,28 +801,17 @@ extern "C" {
                                waitForStart, useAlternateBuf);
     }
 
+// Finds the movie entry whose player ID matches id (id == -1 matches none).
+
     void func_8045A48C__16CLibCriMoviePlayFv(int id) {
         MovieEntry* entry = nullptr;
-        if (sInstance != nullptr) {
-            if ((u32)id + 0x10000 == 0xFFFF) {
-                entry = nullptr;
-            } else {
-                MovieEntry* cur = &sInstance->mEntries[0];
-                if (cur->mPlayerId == (u32)id) {
-                    entry = cur;
-                } else {
-                    cur++;
-                    if (cur->mPlayerId == (u32)id) {
-                        entry = cur;
-                    } else {
-                        cur++;
-                        if (cur->mPlayerId == (u32)id) {
-                            entry = cur;
-                        } else {
-                            cur++;
-                            if (cur->mPlayerId == (u32)id) {
-                                entry = cur;
-                            }
+        if (sInstance != nullptr && (u32)id + 0x10000 != 0xFFFF) {
+            entry = &sInstance->mEntries[0];
+            if (entry->mPlayerId != (u32)id) {
+                if ((++entry)->mPlayerId != (u32)id) {
+                    if ((++entry)->mPlayerId != (u32)id) {
+                        if ((++entry)->mPlayerId != (u32)id) {
+                            entry = nullptr;
                         }
                     }
                 }
@@ -1026,16 +863,70 @@ extern "C" {
         MemManager::setOptimalAlloc(true);
     }
 
-    bool func_8045A644__16CLibCriMoviePlayFv(CLibCriMoviePlay* self, int id) {
-        return self->isMoviePlaying(id);
+    // Returns true if any active movie matches id (id == -1 matches any).
+    bool func_8045A644__16CLibCriMoviePlayFv(int id) {
+        if (sInstance == nullptr) return false;
+
+        for (int i = 0; i < 4; i++) {
+            const MovieEntry& entry = sInstance->mEntries[i];
+            if (entry.mPlyHandle != nullptr &&
+                (entry.mPlayerId == (u32)id || (u32)id + 0x10000 == 0xFFFF)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    void func_8045A708__16CLibCriMoviePlayFv(CLibCriMoviePlay* self, int id) {
-        self->unsetPauseFlag(id);
+    void func_8045A708__16CLibCriMoviePlayFv(int id) {
+        if (sInstance == nullptr) return;
+
+        // Clear the global pause flag on the movie matching id.
+        MovieEntry* entry = &sInstance->mEntries[0];
+        for (int i = 0; i < 4; i++) {
+            if (entry->mPlyHandle != nullptr && entry->mPlayerId == (u32)id) {
+                if (!entry->mGlobalPause) return;
+
+                entry->mGlobalPause = false;
+                bool overrideState = entry->mPauseOverride;
+
+                MovieEntry* other = &sInstance->mEntries[0];
+                for (int j = 0; j < 4; j++) {
+                    if (other->mPlyHandle != nullptr) {
+                        other->mPauseOverride = overrideState;
+                        int pa = 0;
+                        if (!overrideState) {
+                            if (!other->mGlobalPause) {
+                                if (sInstance->mPauseCounter != 0) {
+                                    pa = 1;
+                                }
+                            } else {
+                                pa = 1;
+                            }
+                        }
+                        mwPlyPause(other->mPlyHandle, pa);
+                    }
+                    other++;
+                }
+                return;
+            }
+            entry++;
+        }
     }
 
-    bool func_8045A7F8__16CLibCriMoviePlayFv(CLibCriMoviePlay* self, int id) {
-        return self->hasActiveMovie(id);
+    // Returns true if the movie matching id is globally paused.
+    bool func_8045A7F8__16CLibCriMoviePlayFv(int id) {
+        if (sInstance == nullptr) return false;
+
+        for (int i = 0; i < 4; i++) {
+            const MovieEntry& entry = sInstance->mEntries[i];
+            if (entry.mPlyHandle != nullptr && entry.mPlayerId == (u32)id &&
+                entry.mGlobalPause) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     bool func_8045A8C8__16CLibCriMoviePlayFv(CLibCriMoviePlay* self, int id) {
@@ -1058,12 +949,28 @@ extern "C" {
         // Empty
     }
 
-    void OnPauseTrigger__16CLibCriMoviePlayFb(CLibCriMoviePlay* self, bool pause) {
-        self->OnPauseTrigger(pause);
-    }
+    // Sets the pause override flag on the movie matching id.
+    void func_8045B310__16CLibCriMoviePlayFv(bool pause, u32 id) {
+        if (sInstance == nullptr) return;
 
-    void func_8045B310__16CLibCriMoviePlayFv(CLibCriMoviePlay* self, bool pause) {
-        self->setPauseState(pause);
+        MovieEntry* entry = &sInstance->mEntries[0];
+        u32 i;
+        for (i = 0; i < 4; i++) {
+            if (entry->mPlyHandle != nullptr) {
+                if (entry->mPlayerId == id || (u32)id + 0x10000 == 0xFFFF) {
+                    entry->mPauseOverride = pause;
+                    int pa = 0;
+                    if (!pause && !entry->mGlobalPause &&
+                        sInstance->mPauseCounter == 0) {
+                        // leave unpaused
+                    } else {
+                        pa = 1;
+                    }
+                    mwPlyPause(entry->mPlyHandle, pa);
+                }
+            }
+            entry++;
+        }
     }
 
     // Virtual thunks (adjust this pointer by -0x1C4)
@@ -1083,4 +990,137 @@ extern "C" {
     }
 }
 
-// dissolved monolibdata2 - lib/CLibCriMoviePlay data now provided via retail copy (additive edit)
+// ===== BISECT D2: + blob def =====
+extern "C" const char lbl_eu_80523008[0x11] = "CLibCriMoviePlay";
+
+extern "C" const char lbl_eu_8052301C[0x34] = {
+    0x92, 0xE2, 0x8E, 0x7E, 0x92, 0x86, 0x00, 0x8D,
+    0xC4, 0x90, 0xB6, 0x8F, 0x80, 0x94, 0xF5, 0x92,
+    0x86, 0x00, 0x8D, 0xC4, 0x90, 0xB6, 0x92, 0x86,
+    0x00, 0x8D, 0xC4, 0x90, 0xB6, 0x8F, 0x49, 0x97,
+    0xB9, 0x00, 0x83, 0x47, 0x83, 0x89, 0x81, 0x5B,
+    0x94, 0xAD, 0x90, 0xB6, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00,
+};
+
+// CDeviceVICb deleting-dtor vtable slot (retail .text @0x8045F414): a bare
+// tail branch to the complete destructor. The retail symbol spells
+// "@452@__dt__16CLibCriMoviePlayFv", which C++ cannot declare; UNIT_RULES
+// exact_renames renames this thunk to the retail name (CDeviceVI.cpp
+// thunk_456 pattern).
+extern "C" void __dt__16CLibCriMoviePlayFv();
+asm void thunk_452_dt(void) {
+    nofralloc
+    b __dt__16CLibCriMoviePlayFv
+}
+
+// ===== Vtable + RTTI + locator (dissolved monolibdata2) =====
+// Foreign function words (retail-named; C-linkage decls emit the mangled
+// names verbatim). __RTTI__10IWorkEvent / __RTTI__11CWorkThread are NOT
+// declared here: under -RTTI on MWCC auto-generates those typeinfo symbols
+// and an extern "C" declaration collides (10322) - those two slots stay 0
+// and get UNIT_RULES inject_relocs (CDevice.o pattern).
+extern "C" int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
+extern "C" int OnFileEvent__10IWorkEventFP10CEventFile(void*);
+extern "C" int WorkEvent3__10IWorkEventFPv(void*);
+extern "C" int WorkEvent4__10IWorkEventFv();
+extern "C" void OnPauseTrigger__16CLibCriMoviePlayFb(int);
+extern "C" int WorkEvent6__10IWorkEventFv();
+extern "C" int WorkEvent7__10IWorkEventFv();
+extern "C" int WorkEvent8__10IWorkEventFv();
+extern "C" int WorkEvent9__10IWorkEventFv();
+extern "C" int WorkEvent10__10IWorkEventFv();
+extern "C" int WorkEvent11__10IWorkEventFv();
+extern "C" int WorkEvent12__10IWorkEventFv();
+extern "C" int WorkEvent13__10IWorkEventFv();
+extern "C" int WorkEvent14__10IWorkEventFv();
+extern "C" int WorkEvent15__10IWorkEventFv();
+extern "C" int WorkEvent16__10IWorkEventFv();
+extern "C" int WorkEvent17__10IWorkEventFv();
+extern "C" int WorkEvent18__10IWorkEventFv();
+extern "C" int WorkEvent19__10IWorkEventFv();
+extern "C" int WorkEvent20__10IWorkEventFv();
+extern "C" int WorkEvent21__10IWorkEventFv();
+extern "C" int WorkEvent22__10IWorkEventFv();
+extern "C" int WorkEvent23__10IWorkEventFv();
+extern "C" int WorkEvent24__10IWorkEventFv();
+extern "C" int WorkEvent25__10IWorkEventFv();
+extern "C" int WorkEvent26__10IWorkEventFv();
+extern "C" int WorkEvent27__10IWorkEventFv();
+extern "C" int WorkEvent28__10IWorkEventFv();
+extern "C" int WorkEvent29__10IWorkEventFv();
+extern "C" int WorkEvent30__10IWorkEventFv();
+extern "C" int WorkEvent31__10IWorkEventFv();
+extern "C" void wkRender__11CWorkThreadFv();
+extern "C" void wkRenderAfter__11CWorkThreadFv();
+extern "C" bool wkStandbyLogin__16CLibCriMoviePlayFv();
+extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
+extern "C" void viBeginFrame__11CDeviceVICbFv();
+extern "C" u32 lbl_eu_80663618[];   // type_info vtable (foreign)
+
+// [.data] 0x8056CF48-0x8056D008 (0xC0): __vt__16CLibCriMoviePlay (40-slot
+// CWorkThread chain) followed by the CDeviceVICb sub-vtable (-0x1C4). Both
+// bases are __declspec(novtable), so the vtable is spelled by hand
+// (CLibG3d.cpp pattern); every word is an explicit &reloc so the object
+// reproduces the retail reloc names exactly.
+extern "C" u32 lbl_eu_8056CF48[48] = {
+    (u32)&lbl_eu_80663798, 0x00000000,
+    (u32)&__dt__16CLibCriMoviePlayFv,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
+    (u32)&OnPauseTrigger__16CLibCriMoviePlayFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
+    (u32)&wkUpdate__16CLibCriMoviePlayFv,
+    (u32)&wkRender__11CWorkThreadFv, (u32)&wkRenderAfter__11CWorkThreadFv,
+    (u32)&wkStandbyLogin__16CLibCriMoviePlayFv,
+    (u32)&wkStandbyLogout__16CLibCriMoviePlayFv,
+    (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+    // CDeviceVICb sub-vtable (this -0x1C4)
+    (u32)&lbl_eu_80663798, 0xFFFFFE3C,
+    (u32)&thunk_452_dt,
+    (u32)&func_8045B3DC__16CLibCriMoviePlayFv,
+    (u32)&func_8045B3D4__16CLibCriMoviePlayFv,
+    (u32)&viBeginFrame__11CDeviceVICbFv,
+    (u32)&func_8045AE84__16CLibCriMoviePlayFv,
+    (u32)&func_8045B1DC__16CLibCriMoviePlayFv,
+};
+
+// [.data] 0x8056D008-0x8056D028 (0x20): typeinfo / base-list block
+// ([type_info vtbl, 0x1C4], [__RTTI__10IWorkEvent, 0], [__RTTI__11CWorkThread, 0], [0, 0]).
+// The two typeinfo words reference the foreign lbl_eu_80663618 placeholder
+// (UNDEF here, so the file bytes stay 0 like retail); UNIT_RULES
+// retarget_relocs repoints them at the __RTTI__ names - declaring
+// "extern __RTTI__" directly collides with MWCC's implicit RTTI-on
+// declaration (10322).
+// Each placeholder must be a DISTINCT UNDEF symbol never referenced
+// elsewhere in the TU: MWCC shares one symtab entry per target (deduping
+// relocs), and retarget_relocs renames the whole entry - a shared name
+// would corrupt every other reference to it (e.g. the dtor's __dl__FPv
+// call). These two dummies exist only as reloc anchors.
+extern "C" u32 decomp_rtti_anchor_10IWorkEvent[];
+extern "C" u32 decomp_rtti_anchor_11CWorkThread[];
+extern "C" u32 lbl_eu_8056D008[8] = {
+    (u32)&lbl_eu_80663618, 0x000001C4,
+    (u32)&decomp_rtti_anchor_10IWorkEvent, 0x00000000,
+    (u32)&decomp_rtti_anchor_11CWorkThread, 0x00000000,
+    0x00000000, 0x00000000,
+};
+
+// [.sdata] 0x80663798-0x806637A0 (0x8): RTTI locator pair
+// { class-name string, typeinfo block } referenced by both vtable halves.
+extern "C" u32 lbl_eu_80663798[2] = {
+    (u32)(const char*)lbl_eu_80523008,
+    (u32)(const u32*)lbl_eu_8056D008,
+};

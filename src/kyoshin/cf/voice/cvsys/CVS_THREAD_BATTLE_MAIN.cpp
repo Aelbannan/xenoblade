@@ -2,6 +2,19 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp"
 #include "kyoshin/code_802B8A3C.hpp" // func_802A3D54 playback helper decl
+#include "kyoshin/cf/CfGameManager.hpp"
+#include "monolib/math/Random.hpp"
+
+// C-linkage imports from sibling modules (no compatible declaring header in
+// scope; mirrors CVS_THREAD_CHAIN.hpp).
+extern "C" {
+    int  func_802A3E88(CVS_THREAD* self);
+    int  func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+    void __ct__cf_CVS_THREAD();
+    int  func_802A77E8(CVoiceHandle* handle);
+    __declspec(noreturn) void __throw(char* throwtype, void* location,
+                                      void* dtor);
+}
 
 // ── Shared views over the voice-owner object ─────────────────────────────
 
@@ -12,6 +25,8 @@ struct BattleMainOwnerView {
     u32 field_0x3F00;                 // 0x3F00
     u8 _pad2[0x3F28 - 0x3F04];
     u16 field_0x3F28;                 // 0x3F28: id matched against the table
+    u8 _pad4[0x3F60 - 0x3F2A];
+    UnkTarget* unkTarget;             // 0x3F60: ->0x08 ->0x18 state chain
 };
 
 // One 60-byte entry of the battle-main voice-id table; the leading word is
@@ -54,10 +69,101 @@ struct CVoiceVTV {
     virtual int idle();               // slot 173 -> vtable offset 0x2BC
 };
 
-// Sibling voice-id selectors implemented elsewhere in this unit.
-extern "C" int func_802AEDB8(BattleMainOwnerView* owner);
-extern "C" int func_802AF02C(BattleMainOwnerView* owner);
-extern "C" int func_802AF13C(BattleMainOwnerView* owner);
+// Sibling voice-id selector implemented below; the one-argument view is
+// what retail func_802AF43C calls it through.
+
+int func_802AF02C(BattleMainOwnerView* owner);
+int func_802AF13C(BattleMainOwnerView* owner, int arg);
+
+// Import without a declaring header (compile-only scaffolding).
+extern "C" CVoiceHandle* func_802A7998(CVoiceHandle* handle);
+
+// Init-state triples and this subclass's vtable.
+extern u32 lbl_eu_8053AA58[3];
+extern u32 lbl_eu_8053AA64[3];
+extern u32 lbl_eu_8053AA70[3];
+extern u32 lbl_eu_8053AA7C[7];
+
+// Float thresholds and the double bias constant used by func_802AF13C.
+extern float lbl_eu_80668EA8;
+extern float lbl_eu_80668EAC;
+extern float lbl_eu_80668EB0;
+extern float lbl_eu_80668EB4;
+extern double lbl_eu_80668EB8;
+
+// Battle-main voice thread object (0x24 bytes): derives from CVS_THREAD
+// (init triple at +0x00, hand-placed vtable pointer at +0x1C) plus a flag
+// byte at +0x20 selecting the voice-id range.
+struct BmThreadVTable {
+    u8 _pad[8];
+    void (*playStart)(); // vtable+8: playback-start slot (dispatched via the
+                         // CVS_THREAD base virtual, not called directly)
+};
+
+// Raw view used only by the factory to plant the retail vtable pointer.
+struct BmThreadRaw {
+    u32 words[7];            // 0x00-0x18: init triple + base data
+    BmThreadVTable* vptr;    // 0x1C
+    u8 field_0x20;           // 0x20
+};
+
+class CVS_THREAD_BATTLE_MAIN : public CVS_THREAD {
+public:
+    u8 field_0x20;           // 0x20: flag selecting the voice-id range
+};
+
+// Phantom view over the owner object's vtable exposing the slot at byte
+// offset 0x2A4 (declared slot 166), which returns the work object whose
+// field_0x50 points at the equipment data consumed below.
+struct BmOwnerVTV {
+#define BM_VTV_N(n) virtual void s##n();
+    BM_VTV_N(0) BM_VTV_N(1) BM_VTV_N(2) BM_VTV_N(3) BM_VTV_N(4) BM_VTV_N(5) BM_VTV_N(6) BM_VTV_N(7) BM_VTV_N(8) BM_VTV_N(9)
+    BM_VTV_N(10) BM_VTV_N(11) BM_VTV_N(12) BM_VTV_N(13) BM_VTV_N(14) BM_VTV_N(15) BM_VTV_N(16) BM_VTV_N(17) BM_VTV_N(18) BM_VTV_N(19)
+    BM_VTV_N(20) BM_VTV_N(21) BM_VTV_N(22) BM_VTV_N(23) BM_VTV_N(24) BM_VTV_N(25) BM_VTV_N(26) BM_VTV_N(27) BM_VTV_N(28) BM_VTV_N(29)
+    BM_VTV_N(30) BM_VTV_N(31) BM_VTV_N(32) BM_VTV_N(33) BM_VTV_N(34) BM_VTV_N(35) BM_VTV_N(36) BM_VTV_N(37) BM_VTV_N(38) BM_VTV_N(39)
+    BM_VTV_N(40) BM_VTV_N(41) BM_VTV_N(42) BM_VTV_N(43) BM_VTV_N(44) BM_VTV_N(45) BM_VTV_N(46) BM_VTV_N(47) BM_VTV_N(48) BM_VTV_N(49)
+    BM_VTV_N(50) BM_VTV_N(51) BM_VTV_N(52) BM_VTV_N(53) BM_VTV_N(54) BM_VTV_N(55) BM_VTV_N(56) BM_VTV_N(57) BM_VTV_N(58) BM_VTV_N(59)
+    BM_VTV_N(60) BM_VTV_N(61) BM_VTV_N(62) BM_VTV_N(63) BM_VTV_N(64) BM_VTV_N(65) BM_VTV_N(66) BM_VTV_N(67) BM_VTV_N(68) BM_VTV_N(69)
+    BM_VTV_N(70) BM_VTV_N(71) BM_VTV_N(72) BM_VTV_N(73) BM_VTV_N(74) BM_VTV_N(75) BM_VTV_N(76) BM_VTV_N(77) BM_VTV_N(78) BM_VTV_N(79)
+    BM_VTV_N(80) BM_VTV_N(81) BM_VTV_N(82) BM_VTV_N(83) BM_VTV_N(84) BM_VTV_N(85) BM_VTV_N(86) BM_VTV_N(87) BM_VTV_N(88) BM_VTV_N(89)
+    BM_VTV_N(90) BM_VTV_N(91) BM_VTV_N(92) BM_VTV_N(93) BM_VTV_N(94) BM_VTV_N(95) BM_VTV_N(96) BM_VTV_N(97) BM_VTV_N(98) BM_VTV_N(99)
+    BM_VTV_N(100) BM_VTV_N(101) BM_VTV_N(102) BM_VTV_N(103) BM_VTV_N(104) BM_VTV_N(105) BM_VTV_N(106) BM_VTV_N(107) BM_VTV_N(108) BM_VTV_N(109)
+    BM_VTV_N(110) BM_VTV_N(111) BM_VTV_N(112) BM_VTV_N(113) BM_VTV_N(114) BM_VTV_N(115) BM_VTV_N(116) BM_VTV_N(117) BM_VTV_N(118) BM_VTV_N(119)
+    BM_VTV_N(120) BM_VTV_N(121) BM_VTV_N(122) BM_VTV_N(123) BM_VTV_N(124) BM_VTV_N(125) BM_VTV_N(126) BM_VTV_N(127) BM_VTV_N(128) BM_VTV_N(129)
+    BM_VTV_N(130) BM_VTV_N(131) BM_VTV_N(132) BM_VTV_N(133) BM_VTV_N(134) BM_VTV_N(135) BM_VTV_N(136) BM_VTV_N(137) BM_VTV_N(138) BM_VTV_N(139)
+    BM_VTV_N(140) BM_VTV_N(141) BM_VTV_N(142) BM_VTV_N(143) BM_VTV_N(144) BM_VTV_N(145) BM_VTV_N(146) BM_VTV_N(147) BM_VTV_N(148) BM_VTV_N(149)
+    BM_VTV_N(150) BM_VTV_N(151) BM_VTV_N(152) BM_VTV_N(153) BM_VTV_N(154) BM_VTV_N(155) BM_VTV_N(156) BM_VTV_N(157) BM_VTV_N(158) BM_VTV_N(159)
+    BM_VTV_N(160) BM_VTV_N(161) BM_VTV_N(162) BM_VTV_N(163) BM_VTV_N(164) BM_VTV_N(165) BM_VTV_N(166)
+#undef BM_VTV_N
+    virtual UnkWorkObj* getWork(); // slot 167 -> vtable offset 0x2A4
+};
+
+// Phantom view exposing the float-returning pair at slots 73/74
+// (byte offsets 0x128/0x12C) used by the ratio selector.
+struct BmOwnerFloatVTV {
+#define BMF_VTV_N(n) virtual void s##n();
+    BMF_VTV_N(0) BMF_VTV_N(1) BMF_VTV_N(2) BMF_VTV_N(3) BMF_VTV_N(4) BMF_VTV_N(5) BMF_VTV_N(6) BMF_VTV_N(7) BMF_VTV_N(8) BMF_VTV_N(9)
+    BMF_VTV_N(10) BMF_VTV_N(11) BMF_VTV_N(12) BMF_VTV_N(13) BMF_VTV_N(14) BMF_VTV_N(15) BMF_VTV_N(16) BMF_VTV_N(17) BMF_VTV_N(18) BMF_VTV_N(19)
+    BMF_VTV_N(20) BMF_VTV_N(21) BMF_VTV_N(22) BMF_VTV_N(23) BMF_VTV_N(24) BMF_VTV_N(25) BMF_VTV_N(26) BMF_VTV_N(27) BMF_VTV_N(28) BMF_VTV_N(29)
+    BMF_VTV_N(30) BMF_VTV_N(31) BMF_VTV_N(32) BMF_VTV_N(33) BMF_VTV_N(34) BMF_VTV_N(35) BMF_VTV_N(36) BMF_VTV_N(37) BMF_VTV_N(38) BMF_VTV_N(39)
+    BMF_VTV_N(40) BMF_VTV_N(41) BMF_VTV_N(42) BMF_VTV_N(43) BMF_VTV_N(44) BMF_VTV_N(45) BMF_VTV_N(46) BMF_VTV_N(47) BMF_VTV_N(48) BMF_VTV_N(49)
+    BMF_VTV_N(50) BMF_VTV_N(51) BMF_VTV_N(52) BMF_VTV_N(53) BMF_VTV_N(54) BMF_VTV_N(55) BMF_VTV_N(56) BMF_VTV_N(57) BMF_VTV_N(58) BMF_VTV_N(59)
+    BMF_VTV_N(60) BMF_VTV_N(61) BMF_VTV_N(62) BMF_VTV_N(63) BMF_VTV_N(64) BMF_VTV_N(65) BMF_VTV_N(66) BMF_VTV_N(67) BMF_VTV_N(68) BMF_VTV_N(69)
+    BMF_VTV_N(70) BMF_VTV_N(71)
+#undef BMF_VTV_N
+    virtual float get128(); // slot 72 -> 0x128
+    virtual float get12C(); // slot 73 -> 0x12C
+};
+
+// Stack-frame record built by the factory __ct__802AF5CC (retail returns
+// the frame base pointer).
+struct BmCtorFrame {
+    u32 field_0x00;
+    u8 _pad4[4];
+    u32 field_0x08;          // value captured via the handle->field_4 virtual
+    u8 _padC[0x24 - 0x0C];
+    void* field_0x24;        // self-pointer stored before construction
+};
 
 int func_802AED0C(BattleMainOwnerView* owner);
 int func_802AEF80(BattleMainOwnerView* owner);
@@ -130,6 +236,48 @@ found:
     return PickRandomVoiceId(p->valsC);
 }
 
+// ── us-802b1a9c (func_802AF02C) ─────────────────────────────────────────────
+// Scan the 60-stride list at lbl_eu_8053A4B8 for the entry matching the
+// owner's +0x3F28 sub-state, validate the 0x3F60 -> 0x08 -> 0x18 chain
+// (value must lie in [0x10,0x18]), fetch the equipment-data pool selected
+// by the work object's byte at +0x77, and draw a random halfword from the
+// leading run of positive entries (capped at 2).
+int func_802AF02C(BattleMainOwnerView* owner) {
+    VoiceIdListEntry* p = lbl_eu_8053A4B8;
+    for (;;) {
+        if ((s32)owner->field_0x3F28 == p->id)
+            break;
+        p++;
+        if (p->id != 0)
+            continue;
+        p = NULL;
+        break;
+    }
+    if (p == NULL)
+        return -1;
+
+    UnkTarget* target = owner->unkTarget;
+    if (target == NULL)
+        return -1;
+    if (target->field_0x08->field_0x18 < 0x10)
+        return -1;
+    if (target->field_0x08->field_0x18 > 0x18)
+        return -1;
+
+    // Slot 0x2A4 yields the work object; its +0x50 selects the pool byte.
+    UnkEquipData* equip = ((BmOwnerVTV*)owner)->getWork()->field_0x50;
+    if (equip == NULL)
+        return -1;
+
+    char* pool = (char*)p + equip->field_0x77 * 4;
+    s16* vals = (s16*)(pool + 0xE);
+    int i = 0;
+    while (i < 2 && vals[i] > 0)
+        i++;
+    int n = i < 1 ? 1 : i;
+    return vals[ml::math::mtRand(n)];
+}
+
 // Bit-2 gate on +0x3F00, then scan the 60-stride list at lbl_eu_8053A4B8 for
 // an entry matching the +0x3F28 id; returns whether a match was found.
 int func_802AF388(BattleMainOwnerView* self) {
@@ -163,7 +311,12 @@ int func_802AF3DC(CVoiceHandle* self) {
 }
 
 // Same shape as func_802AF3DC with a different selector and buffer size.
+// Declared above with one argument on purpose: retail calls it passing
+// only r3 (the full three-parameter definition appears further below).
 int func_802AF43C(CVoiceHandle* self) {
+    // Retail calls the three-parameter selector passing only r3; mirror that
+    // with a narrow local declaration so no r4/r5 setup is emitted.
+    extern int func_802AEDB8(BattleMainOwnerView* owner);
     if (!(self->field_0x3F00 & 4))
         return 0;
     CCharVoice* voicePtr = (CCharVoice*)self;
@@ -173,6 +326,79 @@ int func_802AF43C(CVoiceHandle* self) {
     int voiceId = func_802AEDB8((BattleMainOwnerView*)self);
     func_802A3D54(voicePtr, voiceId, 0x12C);
     return 0;
+}
+
+// ── us-802b1828 (func_802AEDB8) ─────────────────────────────────────────────
+// Full retail signature (thread state, voice handle, sub-state id).
+// Scans the 60-stride id table for the thread's +0x3F28 sub-state; on a hit,
+// draws a random voice id from the pool selected by the handle's battle
+// state. When the handle gate (flag bit 1, state 1, work state 0x10-0x17)
+// passes it probes pool +0x36 (cap 1) and only accepts a positive draw,
+// otherwise it falls through to the id-based pools (+0xA cap 1 for nonzero
+// id, +6 cap 2 for zero id).
+extern "C" int func_802AEDB8(BattleMainOwnerView* thread,
+                             BattleMainOwnerView* handle, int id) {
+    // Locate the table row whose id equals the thread's +0x3F28 sub-state.
+    // Declaration order (table, id copy, handle copy) drives MWCC's prologue
+    // scheduling; the shared `cur` keeps the row word in one register for
+    // both the terminator test and the match compare.
+    VoiceIdListEntry* e = lbl_eu_8053A4B8;
+    int cur;
+    goto check;
+top:
+    if (cur == thread->field_0x3F28)
+        goto found;
+    e++;
+check:
+    cur = e->id;
+    if (cur != 0)
+        goto top;
+    e = NULL;
+found:
+    if (e == NULL)
+        return -1;
+
+    // Gate: flag bit 1, battle state 1, work state within [0x10,0x17].
+    int gated = 0;
+    if (handle->field_0x3F00 & 2) {
+        if (func_802A77E8((CVoiceHandle*)handle) == 1) {
+            UnkTargetInner* w = handle->unkTarget->field_0x08;
+            gated = (w->field_0x18 >= 0x10 && w->field_0x18 <= 0x17);
+        }
+    }
+
+    if (gated != 0) {
+        // Walk the leading positive run of pool +0x36 (one step max).
+        char* c = (char*)e;
+        int i = 0;
+        while (i < 1 && *(s16*)(c + 0x36) > 0) {
+            c += 2;
+            i++;
+        }
+        s16 pick =
+            *(s16*)((char*)e + ml::math::mtRand(i < 1 ? 1 : i) * 2 + 0x36);
+        // Only accept a positive draw; otherwise fall through to the pools.
+        if (pick > 0)
+            return pick;
+    }
+
+    if (id != 0) {
+        char* c = (char*)e;
+        int i = 0;
+        while (i < 1 && *(s16*)(c + 0xA) > 0) {
+            c += 2;
+            i++;
+        }
+        return *(s16*)((char*)e + ml::math::mtRand(i < 1 ? 1 : i) * 2 + 0xA);
+    }
+
+    char* c = (char*)e;
+    int i = 0;
+    while (i < 2 && *(s16*)(c + 6) > 0) {
+        c += 2;
+        i++;
+    }
+    return *(s16*)((char*)e + ml::math::mtRand(i < 1 ? 1 : i) * 2 + 6);
 }
 
 int func_802AF49C(CVoiceHandle* self) {
@@ -199,7 +425,7 @@ int func_802AF4FC(CVoiceHandle* self, int param) {
     if (self != NULL) {
         voicePtr = &self->voice;
     }
-    int voiceId = func_802AF13C((BattleMainOwnerView*)self);
+    int voiceId = func_802AF13C((BattleMainOwnerView*)self, 0);
     func_802A3D54(voicePtr, voiceId, 0xB4);
     return 0;
 }
@@ -216,11 +442,140 @@ int func_802AF56C(CVoiceHandle* self) {
     return 0;
 }
 
-void __ct__802AF5CC(){}
+// ── us-802b203c (__ct__802AF5CC) ────────────────────────────────────────────
+// Factory/constructor for the battle-main voice thread. Registers against
+// the player's voice handle (embedded voice at +0x3E9C), allocates the
+// scratch handle (0x10E) plus the 0x24-byte thread, constructs it with the
+// battle-main vtable and the caller's id, then seeds the init-state triple.
+// Retail returns the stack-frame record address.
+void* __ct__802AF5CC(int arg) {
+    BmCtorFrame f;
 
-void func_802AF724(){}
+    CCharVoice* voice = (CCharVoice*)cf::CfGameManager::getPlayer(0);
+    CVoiceHandle* handle = (CVoiceHandle*)voice;
+    if (voice != NULL) {
+        handle = (CVoiceHandle*)((u8*)voice - 0x3E9C);
+    }
+    if (handle == NULL)
+        return 0;
 
-void func_802AF844(){}
+    // Capture a value through the sub-object's vtable slot 0x30.
+    f.field_0x08 = handle->unk4;
+    if (func_80174C98(handle, &f.field_0x08, 0x803) == 0)
+        return 0;
+
+    // Idle check via the handle's vtable slot at 0x2BC.
+    if (((CVoiceVTV*)handle)->idle() != 0)
+        return 0;
+
+    // Scratch allocation (discarded) then the thread object itself.
+    if (func_802A330C(0x10e, 1) == NULL)
+        return 0;
+    CVS_THREAD_BATTLE_MAIN* self =
+        (CVS_THREAD_BATTLE_MAIN*)(u32)func_802A34E4(0x24);
+    if (self == NULL)
+        return 0;
+
+    if (self != NULL) {
+        try {
+            f.field_0x24 = &f;
+            __ct__cf_CVS_THREAD();
+            ((BmThreadRaw*)self)->vptr = (BmThreadVTable*)lbl_eu_8053AA7C;
+            self->field_0x20 = (u8)arg;
+        } catch (...) {
+            __throw(0, 0, 0);
+        }
+    }
+
+    // Seed the init-state triple; load word 1 before word 0 so the register
+    // colours match retail (r0 = word 1, r4 = word 0).
+    const u32* base = lbl_eu_8053AA58;
+    u32 w1 = base[1];
+    u32 w0 = base[0];
+    self->unk0 = (u32*)w0;
+    self->unk4 = w1;
+    self->unk8 = base[2];
+
+    return &f;
+}
+
+// ── us-802b2194 (func_802AF724) ─────────────────────────────────────────────
+// Periodic battle voice refresh: restore the init-state triple, and while
+// the player's voice handle reports idle, play a random line (range picked
+// by the thread's flag byte) through the embedded voice.
+void func_802AF724(CVS_THREAD_BATTLE_MAIN* self) {
+    // Restore the base state triple via the lwzu/spread load-with-update
+    // pattern (v0 declared first so the lwzu destination colours low).
+    u32 v0;
+    const u32* src = lbl_eu_8053AA64;
+    v0 = *src++;
+    self->unk4 = *src++;
+    self->unk0 = (u32*)v0;
+    self->unk8 = *src;
+
+    CCharVoice* voice = (CCharVoice*)cf::CfGameManager::getPlayer(0);
+    CVoiceHandle* handle = (CVoiceHandle*)voice;
+    if (voice != NULL) {
+        handle = (CVoiceHandle*)((u8*)voice - 0x3E9C);
+    }
+    if (handle != NULL && ((CVoiceVTV*)handle)->idle() == 0) {
+        if (self->field_0x20 != 0) {
+            CCharVoice* v = (CCharVoice*)handle;
+            if (handle != NULL) {
+                v = &handle->voice;
+            }
+            if (func_802A3C44((CVS_THREAD*)self, v, ml::math::mtRand(2) + 0x51B) == 0)
+                ((CVS_THREAD*)self)->func_802A3B50();
+        } else {
+            CCharVoice* v = (CCharVoice*)handle;
+            if (handle != NULL) {
+                v = &handle->voice;
+            }
+            if (func_802A3C44((CVS_THREAD*)self, v, ml::math::mtRand(2) + 0x519) == 0)
+                ((CVS_THREAD*)self)->func_802A3B50();
+        }
+    }
+}
+
+// ── us-802b22b4 (func_802AF844) ─────────────────────────────────────────────
+// Same refresh shape as func_802AF724 but gated on the thread-blocked check
+// and an extra handle remap through func_802A7998 before the idle probe.
+void func_802AF844(CVS_THREAD_BATTLE_MAIN* self) {
+    if (func_802A3E88((CVS_THREAD*)self) != 0)
+        return;
+
+    u32 v0;
+    const u32* src = lbl_eu_8053AA70;
+    v0 = *src++;
+    self->unk4 = *src++;
+    self->unk0 = (u32*)v0;
+    self->unk8 = *src;
+
+    CCharVoice* voice = (CCharVoice*)cf::CfGameManager::getPlayer(0);
+    CVoiceHandle* handle = (CVoiceHandle*)voice;
+    if (voice != NULL) {
+        handle = (CVoiceHandle*)((u8*)voice - 0x3E9C);
+    }
+    // Remap the handle, requiring both the input and the result non-null.
+    CVoiceHandle* mapped = func_802A7998(handle);
+    if (handle != NULL && mapped != NULL && ((CVoiceVTV*)mapped)->idle() == 0) {
+        if (self->field_0x20 != 0) {
+            CCharVoice* v = (CCharVoice*)mapped;
+            if (mapped != NULL) {
+                v = &mapped->voice;
+            }
+            if (func_802A3C44((CVS_THREAD*)self, v, ml::math::mtRand(2) + 0x523) == 0)
+                ((CVS_THREAD*)self)->func_802A3B50();
+        } else {
+            CCharVoice* v = (CCharVoice*)mapped;
+            if (mapped != NULL) {
+                v = &mapped->voice;
+            }
+            if (func_802A3C44((CVS_THREAD*)self, v, ml::math::mtRand(2) + 0x521) == 0)
+                ((CVS_THREAD*)self)->func_802A3B50();
+        }
+    }
+}
 
 // When the CVS thread is not blocked, dispatch the vtable+8 slot (the
 // battle-main update virtual) through the +0x1C vtable pointer.
@@ -235,6 +590,47 @@ int func_802AF9C8() { return 270; }
 // Bit-1 gate on +0x3F00 plus the handle's idle-check virtual (vtable 0x2BC),
 // then reserve a scratch buffer and play the requested voice through the
 // embedded CCharVoice. Any failure returns 0 without playing.
+// ── us-802b1bac (func_802AF13C) ─────────────────────────────────────────────
+// Scan the table for the owner's sub-state like func_802AF02C, then compute
+// the ratio of the live pair of float virtuals (slots 0x12C/0x128) over an
+// argument-biased denominator, bucket it against four descending float
+// thresholds (each also required to exceed the second virtual's value), and
+// return the halfword pooled at entry+0x2E+bucket*2.
+int func_802AF13C(BattleMainOwnerView* owner, int arg) {
+    VoiceIdListEntry* p = lbl_eu_8053A4B8;
+    for (;;) {
+        if ((s32)owner->field_0x3F28 == p->id)
+            break;
+        p++;
+        if (p->id != 0)
+            continue;
+        p = NULL;
+        break;
+    }
+    if (p == NULL)
+        return -1;
+
+    float num = ((BmOwnerFloatVTV*)owner)->get12C();
+    float den2 = ((BmOwnerFloatVTV*)owner)->get128();
+    float ratio = (((double)arg - lbl_eu_80668EB8) + den2) / num;
+
+    int idx;
+    if (ratio < lbl_eu_80668EA8 && lbl_eu_80668EA8 > den2)
+        idx = 3;
+    else if (ratio < lbl_eu_80668EAC && lbl_eu_80668EAC > den2)
+        idx = 2;
+    else if (ratio < lbl_eu_80668EB0 && lbl_eu_80668EB0 > den2)
+        idx = 1;
+    else if (ratio < lbl_eu_80668EB4 && lbl_eu_80668EB4 > den2)
+        idx = 0;
+    else
+        idx = -1;
+
+    if (idx < 0 || idx >= 4)
+        return -1;
+    return *(s16*)((char*)p + idx * 2 + 0x2E);
+}
+
 int func_802AF9D0(CVoiceHandle* self, int param, int size) {
     if (!(self->field_0x3F00 & 2))
         return 0;

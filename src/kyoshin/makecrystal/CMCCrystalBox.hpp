@@ -54,6 +54,16 @@ struct CMCCrystalDataEntry {
     u8   pad3;   // +0x03
 };
 
+// Transient (crystal id, quantity) pair used by the aggregation helpers
+// func_80215B78 / func_80219AF0.
+struct MCAggPair {
+    u16 id;     // +0x00
+    u16 count;  // +0x02
+};
+
+// Two-halfword pair copy used by the aggregation helpers (this TU).
+void func_80219D10(CMCCrystalBoxParam* dst, const CMCCrystalBoxParam* src);
+
 // Mirror of the CScrollBar layout (0x40 bytes) for the copy-init in
 // func_80213FE4 (func_8011C998); the real CScrollBar.hpp cannot be included
 // here (conflicting ctor stubs). Layout identical to CSortMenu.hpp's mirror.
@@ -92,7 +102,7 @@ struct CSortMenu {
     u8 field_0x2A;           // +0x2A (state)
     u8 field_0x2B;           // +0x2B (button flag)
     u8 mScrollBar[0x40];     // +0x2C (CScrollBar, copied via func_8011C998)
-    s32 mArray[32];          // +0x6C (0x80 bytes; NOT copied by the ctor)
+    struct { s32 w[32]; } mArray; // +0x6C (0x80 bytes; NOT copied by the ctor); struct-wrapped so assignment lowers to MWCC's rolled word-copy loop
     u8 mCount;               // +0xEC
     u8 mPage;                // +0xED
     u8 mSubPage;             // +0xEE
@@ -178,6 +188,26 @@ struct CMCCrystalData {
     u8   limit;                         // +0x1003
     s8   current;                       // +0x1004
     char name[0x10C8 - 0x1005];         // +0x1005 (buffer passed to sprintf)
+};
+
+// Crystal-box constructor support: retail stores this .data vtable object
+// (owned by another unit) into the implicit vptr; the class is novtable so
+// the ctor writes it explicitly through this anchor.
+extern char lbl_eu_80535C60[];
+struct VtblSlot { void* vtbl; };
+
+// Stack scratch initialised by func_80213E8C inside func_80216F8C: the
+// helper views it as a bare box head (8 zeroed words at +0x00, count byte
+// at +0x20, -1-filled bytes at +0x21..0x28, flag bytes at +0x29/+0x6A).
+// The untouched middle bytes (+0x2A..0x49) are the page-slot copy source.
+struct CrystalBoxScratch {
+    u32 zeros[8];            // +0x00 (func_80213E8C 8-word clear)
+    u8  count;               // +0x20
+    s8  fill[8];             // +0x21..0x28 (-1 filled)
+    u8  flag29;              // +0x29
+    u8  pageSrc[0x6A - 0x2A];// +0x2A..0x69 (uninitialised copy source)
+    u8  flag6A;              // +0x6A
+    u8  tail[0x74 - 0x6B];
 };
 
 // novtable: retail's dtor emits NO class-vtable store (the retail vtable is
@@ -333,6 +363,23 @@ public:
     virtual u16 GetBoxed(void* item) = 0;     // slot 0x80
 };
 
+// Item-implementation vtable view for the 8x8 grid aggregation in
+// func_80218B10: slot 0x4C returns the item name id (u16), slot 0x64 the
+// quantity (returned unmasked as int). Never instantiated.
+class CItemImplFacadeGrid {
+public:
+    virtual void vf_00() = 0;                 // slot 0x08
+    virtual void vf_04() = 0; virtual void vf_08() = 0;
+    virtual void vf_0C() = 0; virtual void vf_10() = 0;
+    virtual void vf_14() = 0; virtual void vf_18() = 0;
+    virtual void vf_1C() = 0; virtual void vf_20() = 0;
+    virtual u16 GetName(void* item, u8 idx) = 0;   // slot 0x4C
+    virtual void vf_50() = 0; virtual void vf_54() = 0;
+    virtual void vf_58() = 0; virtual void vf_5C() = 0;
+    virtual void vf_60() = 0;                 // 0x60
+    virtual int GetQuantity(void* item, u8 idx) = 0;   // slot 0x64
+};
+
 // CSysWin vtable view: virtual at vtable slot 0x88 (user slot 32), reached
 // by func_80213FE4's tail call. 32 fillers keep the target at the right slot.
 class CSysWinVf88 {
@@ -410,6 +457,7 @@ extern "C" char lbl_eu_8050888C[];
 extern "C" unsigned long lbl_eu_80508870[];
 // BDAT table pointer loaded via sda21 at the func_8013639C call sites.
 extern unsigned long lbl_eu_806646D0;
+extern "C" __declspec(noinline) void func_80213E8C(CMCCrystalBox* self);
 extern "C" void func_80213570(void*, u8);
 extern "C" unsigned long func_802165CC(unsigned long*, unsigned int);
 extern "C" void func_80217434(CMCCrystalBox*, unsigned short, unsigned int*, unsigned char);
@@ -419,7 +467,7 @@ extern "C" void func_80217098(CMCCrystalBox*, unsigned short, unsigned int*, uns
 extern "C" void func_802177D0(CMCCrystalBox*, unsigned short, unsigned int*, unsigned char);
 // Item-kind check (defined in this TU); noinline keeps the bl in the slot
 // refresh callbacks instead of inlining the two-word test.
-extern "C" __declspec(noinline) u8 func_80217BDC(void*);
+extern "C" __declspec(noinline) int func_80217BDC(void*);
 // Message-resource / text helpers shared with the other kyoshin menu TUs.
 extern "C" char* func_80138F78(u32);
 extern "C" u16 func_80136254(const void*, const void*, int);
@@ -442,6 +490,8 @@ extern "C" void func_801F3670(void*, void*);
 extern "C" void func_801F36BC(void*, unsigned long, unsigned long);
 extern "C" void func_801F3850(void*, u16);
 extern "C" void func_801F367C(void*);
+extern "C" void func_8021ADC4(void*);   // crystal-info grid refresh (CMCCrystalInfo.cpp)
+extern "C" void func_8021AA9C(void*, unsigned char, unsigned short, unsigned short, unsigned char); // set crystal slot
 extern "C" void* CItem_initItemImplInstances(void*);
 extern "C" u16 func_8015780C(int);
 extern "C" char* func_80136190(const void*, const void*, int);
@@ -460,7 +510,7 @@ extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(nw4r::lyt::Layout*, char
 extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
 extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-extern "C" void func_8003AA34();
+extern "C" void* func_8003AA34();   // matches code_801862C0.hpp's declaration
 extern "C" void* getFP__FPCc(const char*);
 extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
 extern "C" void func_8018B0FC(void*, void*);   // cursor copy (func_801D24E8 sibling)
@@ -552,6 +602,7 @@ extern "C" __declspec(noinline) void func_80216E6C(CMCCrystalBox* self);
 extern "C" __declspec(noinline) void func_80216EB0(CMCCrystalBox* self);
 extern "C" __declspec(noinline) void func_80216EFC(CMCCrystalBox* self);
 extern "C" void func_80219994(CMCCrystalBox* self, int);
+extern "C" __declspec(noinline) void func_80216718(CMCCrystalBox* self);
 extern "C" void func_80213788(void* self);
 extern "C" void func_80216F8C(CMCCrystalBox* self);
 extern "C" void func_802137B4(void* self);
@@ -566,7 +617,7 @@ extern "C" void func_801D2670(void*, unsigned char);
 extern "C" int func_801392B4(unsigned char);
 extern "C" unsigned short func_8013A7D0(unsigned char, unsigned char);
 extern "C" void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
-extern char* lbl_eu_80664090;   // BDAT table pointer (sda21)
+extern void* lbl_eu_80664090;   // BDAT table pointer (sda21; CfGameManager.hpp type)
 extern float lbl_eu_80668480;
 extern float lbl_eu_80668484;
 extern "C" void func_802180B4(CMCCrystalBox* self);
@@ -580,12 +631,17 @@ extern "C" void func_8021899C(CMCCrystalBox* self);
 // the copy source for func_80213E20); its definition lives in this TU under
 // the name copyCrystalBoxParam_802165E8 (linked by address via symbols.txt).
 extern "C" void func_801D3698(void*);   // sort menu: scroll down
+extern "C" void func_801D3620(void*);   // sort menu: scroll up one entry
 // (func_801D3724 / func_801D377C are the page-up / page-down variants)
 extern "C" void func_801D3724(void*);
 extern "C" void func_801D377C(void*);
 extern "C" u8 code80135FDC_getByte_64077();
 extern "C" int func_80213748(void*);   // all-flags-set check (code_80213488.cpp)
 extern "C" void func_802194EC(CMCCrystalBox* self);
+// NOTE: retail's definition computes the result through a 64-bit
+// subtract-with-carry sequence (subfc/subfze) while every call site reads the
+// value as a 32-bit int in r3; a single-TU reconstruction cannot express both
+// prototypes, so the int form seen by all callers is used here.
 extern "C" int func_80219AF0(CMCCrystalBox* self);
 extern "C" void func_802156C0(CMCCrystalBox* self, int);
 extern "C" __declspec(noinline) void func_80215408(CMCCrystalBox* self);

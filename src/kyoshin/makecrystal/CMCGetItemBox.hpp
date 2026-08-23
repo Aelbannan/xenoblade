@@ -167,7 +167,7 @@ extern "C" u32 func_801D421C(void*);
 extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" char* func_80296FC0(CMCItemBoxSub*, u16);
 extern "C" char* func_80296E98(CMCItemBoxSub*, u16);
-extern "C" u32 func_80296D54(CMCItemBoxSub*, u32);
+extern "C" __declspec(noinline) u32 func_80296D54(CMCItemBoxSub*, u32);
 extern "C" void func_8022B7F4(void*);
 extern "C" void* func_801D3C74(void*, u32);
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
@@ -190,12 +190,15 @@ extern const float lbl_eu_80668BD4;
 // lbl_eu_80668BEC is the 0.25f row divisor used when converting a flat
 // cursor index to row/column (field_304 / field_305).
 extern const float lbl_eu_80668BEC;
+// lbl_eu_80668BD8 (double) is MWCC's unsigned 2^52 conversion magic.
+extern const double lbl_eu_80668BD8;
+extern const float lbl_eu_80668BF4;
 extern "C" void func_802999B0(CMCGetItemBox*);
 extern "C" void func_80299530(CMCGetItemBox*, u16, void*, u8);
 extern "C" void func_80298AC8(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
 extern "C" void func_80298FB4(CMCGetItemBox*, u32, CMCItemBoxEntry*, u8);
 extern "C" void __dl__FPv(void*);
-extern "C" CMCItemBoxEntry* func_80296DB0(CMCItemBoxSub*, u32);
+extern "C" __declspec(noinline) CMCItemBoxEntry* func_80296DB0(CMCItemBoxSub*, u32);
 
 // ---------------------------------------------------------------------------
 // OnFileEvent / func_80296FC0 imports (retail symbol names verbatim)

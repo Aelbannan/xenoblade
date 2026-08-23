@@ -60,6 +60,13 @@ extern "C" void func_801D3064(void*);
 extern "C" void func_801D3160(void*);
 extern "C" void func_801D3408(void*);
 extern "C" void func_801D202C(void*);
+extern "C" void func_801D3724(void*);                     // CSortMenu page up
+extern "C" void func_801D3620(void*);                     // CSortMenu page down
+extern "C" void func_801D377C(void*);                     // CSortMenu page down (alt)
+extern "C" void func_801D3698(void*);                     // CSortMenu page up (alt)
+extern "C" void func_801D3430(void*, void*);              // set sort-menu anchor pos
+extern "C" void func_801D3330(void*);                     // rebuild sort menu
+extern "C" void func_801D3454(nw4r::math::VEC3*, void*);  // copy cursor target
 extern "C" void func_801D216C(void*, int);
 // Device/memory helper (retail unmangled C symbol).
 extern "C" int func_800A9D90();
@@ -81,6 +88,62 @@ extern "C" void func_8003AA8C__5CBdatFUl(u32);
 // Global term/active flag cleared by func_802AD1F4 (.sbss word, sda21).
 extern u32 lbl_eu_80664BF0;
 
+// Embedded sub-object destructors used by ~CTutorialList (retail unmangled
+// symbols; same pattern as CQstLogList.hpp).
+extern "C" void __dt__9CSortMenuFv(void*, int);
+extern "C" void __dt__10CScrollBarFv(void*, int);
+extern "C" void __dt__6CCur18Fv(void*, int);
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+
+// File-load / layout-build imports with unmangled retail names (same set as
+// CKizunaTalkList.hpp; these retail symbols are not C++-mangled).
+extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
+extern "C" void createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
+extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);
+extern "C" void __dt__14Class_8045F858Fv(void* self, int dealloc);
+extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool value);
+extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
+extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor* self, void* data, const char* name);
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 arg,
+                                                                     nw4r::lyt::Layout* layout);
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" void __ct__CCur18(void* self, void* param);
+extern "C" void func_8045F810__17UnkClass_8045F564Fv(void*);
+extern "C" u32 func_8003B1EC(void* fp);
+extern "C" void func_8003AA78__5CBdatFUlPv(u32 value, void* data);
+extern "C" void* func_8003AA34();
+extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);
+// .sdata2 int->float conversion magic double (0x4330000000000000) referenced
+// by the u16 pane-size conversions in OnFileEvent.
+extern const double lbl_eu_80668DE8;
+
+// Overlay structs for OnFileEvent's 'timg' message resource (same pattern
+// as CQstLogList.hpp): the resource object holds a chain whose first field
+// points at the u16 row/column pair used to size the message panes.
+struct CTutorialCoords {
+    u16 c0;  // 0x0 column
+    u16 c2;  // 0x2 row
+};
+struct CTutorialMsgChain {
+    CTutorialCoords* pCoords;  // 0x0
+};
+struct CTutorialMsgObj {
+    u8 gap[0x8];
+    CTutorialMsgChain* chain;  // 0x8
+};
+
+// Field view of the embedded CCur18 cursor (+0x2C). OnFileEvent copies a
+// stack-constructed cursor into it without touching the +0x00 vtable.
+struct CTutorialCur18Data {
+    void* mVtbl;    // +0x00 - not copied
+    void* field_4;  // +0x04
+    void* field_8;  // +0x08
+    void* field_C;  // +0x0C
+    void* field_10; // +0x10
+    u8 field_14;    // +0x14
+    u8 field_15;    // +0x15
+};
+
 // Same-TU widget helpers. Retail strips the C++ mangling for these (bare
 // func_ names), so they are defined under C linkage and call sites bind the
 // literal retail symbols.
@@ -93,13 +156,14 @@ extern "C" void func_802ADC88(CTutorialList*);
 extern "C" void func_802ADCE8(CTutorialList*);
 extern "C" void func_802ADFA8(CTutorialList*);
 extern "C" void func_802ADE18(CTutorialList*);
+extern "C" void func_802ADEE4(CTutorialList*);
 extern "C" void func_802ACC30(u8*, u16, int);
 
 class CTutorialList {
 public:
-    CTutorialList();
+    CTutorialList(u16 count);
     virtual ~CTutorialList();
-    void OnFileEvent();
+    int OnFileEvent(CEventFile* event);
 
     u8 func_802AD300();
     u8 func_802AD984();

@@ -216,17 +216,18 @@ bool CNumSelect::OnFileEvent(CEventFile* evt) {
         nw4r::lyt::Pane* paneA =
             mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x166], true);
         if (paneA != NULL) {
+            // MWCC lowers u16->f32 via the sdata2 cast-magic double itself.
             f32 sz[2];
-            sz[0] = static_cast<f32>(static_cast<double>(timgH) - lbl_eu_80668090);
-            sz[1] = static_cast<f32>(static_cast<double>(timgW) - lbl_eu_80668090);
+            sz[0] = static_cast<f32>(timgH);
+            sz[1] = static_cast<f32>(timgW);
             func_80124288(paneA, sz);
         }
         nw4r::lyt::Pane* paneB =
             mpLayout->GetRootPane()->FindPaneByName(&lbl_eu_80506C14[0x170], true);
         if (paneB != NULL) {
             f32 sz[2];
-            sz[0] = static_cast<f32>(static_cast<double>(timgH) - lbl_eu_80668090);
-            sz[1] = static_cast<f32>(static_cast<double>(timgW) - lbl_eu_80668090);
+            sz[0] = static_cast<f32>(timgH);
+            sz[1] = static_cast<f32>(timgW);
             func_80124288(paneB, sz);
         }
     }

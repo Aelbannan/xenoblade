@@ -9,10 +9,9 @@ struct CFileHandle;  // monolib/device/CFileHandle.hpp
 
 class CKizunaRadar {
 public:
-    CKizunaRadar(void* arg);
     virtual ~CKizunaRadar();
 
-    // +0x00: implicit vptr (set by MWCC from the virtual dtor)
+    // +0x00: implicit vptr (retail __ct__CKizunaRadar stores lbl_eu_80537608)
     void* mArg;      // 0x04
     u32 mField08;    // 0x08
     u32 mField0C;    // 0x0C
@@ -23,7 +22,6 @@ public:
 
 class CKizunaCur {
 public:
-    CKizunaCur(nw4r::lyt::ArcResourceAccessor* accessor);
     ~CKizunaCur();  // non-virtual: retail stores the manual lbl_eu_805375FC vtable label at +0 (no compiler vptr)
 
     void* mVtable;                               // 0x00
@@ -37,8 +35,11 @@ public:
 
 class CKizunaLine {
 public:
-    CKizunaLine(u32 arg4, u32 arg8, u8 arg3D);
-    virtual ~CKizunaLine();
+    // retail constructs via the free __ct__CKizunaLine
+    CKizunaLine() {}
+    // non-virtual: retail stores the manual lbl_eu_805375F0 vtable label at +0
+    // (no compiler-emitted implicit vptr init)
+    ~CKizunaLine();
 
     void* mVtable;      // 0x00
     u32 field4;         // 0x04
@@ -70,7 +71,6 @@ public:
 
 class CKizunaInfo {
 public:
-    CKizunaInfo(nw4r::lyt::ArcResourceAccessor* accessor);
     ~CKizunaInfo();
 
     void* mVtable;                               // 0x00
@@ -90,11 +90,51 @@ public:
     virtual ~CKizunagram();
     void OnFileEvent();
 
-    u8 _04[0x04];                      // 0x04
+    u8 _04[0x04];                      // 0x04 (implicit vptr at 0x00)
     UnkClass_8045F564 mMemRegionA;      // 0x08
     UnkClass_8045F564 mMemRegionB;      // 0x18
-    u8 _28[0x8C-0x28];                 // 0x28
-    u8 field_8C;                       // 0x8C
+    u32 field28;                       // 0x28
+    u32 field2C;                       // 0x2C
+    u32 field30;                       // 0x30
+    u32 field34;                       // 0x34
+    u8 field38;                        // 0x38
+    u8 field39;                        // 0x39
+    u8 field3A;                        // 0x3A
+    u8 field3B;                        // 0x3B
+    u8 field3C;                        // 0x3C
+    u8 _3D[0x40 - 0x3D];
+    f32 field40;                       // 0x40
+    f32 field44;                       // 0x44
+    f32 field48;                       // 0x48
+    CKizunaInfo mInfo;                 // 0x4C
+    CKizunaLine mLine;                 // 0x68
+    CKizunaCur mCur;                   // 0xAC
+    CKizunaRadar mRadar;               // 0xC0
+    u8 fieldDC;                        // 0xDC
+    u8 fieldDD;                        // 0xDD
+    u8 fieldDE;                        // 0xDE
+};
+
+// Retail-unmangled constructor/destructor symbols (see CMenuKizunagram.hpp /
+// CPcKizunagram.cpp conventions).
+extern "C" void __ct__CKizunagram(CKizunagram* self, int arg);
+extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
+extern "C" void __ct__CKizunaInfo(CKizunaInfo* self,
+                                  nw4r::lyt::ArcResourceAccessor* accessor);
+extern "C" void __ct__CKizunaLine(CKizunaLine* self, u32 arg4, u32 arg8, u8 arg3D);
+extern "C" void __ct__CKizunaCur(CKizunaCur* self,
+                                 nw4r::lyt::ArcResourceAccessor* accessor);
+extern "C" void __ct__CKizunaRadar(CKizunaRadar* self, void* arg);
+
+// Vtables stored manually by the constructors above.
+extern "C" void* lbl_eu_80537550[];
+extern "C" void* lbl_eu_80537608[];
+
+// 3-float vector; POD struct assignment compiles to word copies.
+struct UnkKizunaVec3 {
+    f32 x;
+    f32 y;
+    f32 z;
 };
 
 // ---------------------------------------------------------------------------
@@ -137,15 +177,92 @@ struct UnkKizunaObj59344 {
 };;
 
 struct UnkKizunaRes59344 {
-    u8 _00[0x44];
+    u8 _00[0x2C];
+    UnkKizunaVec3 pos;    // 0x2C (func_80259394 reads/copies it)
+    u8 _38[0x44 - 0x38];
     u32 field44; // 0x44
     u32 field48; // 0x48
+    f32 scale[2]; // 0x4C (pane size pair copied by func_80259394)
+    u8 _54[0xB8 - 0x54];
+    u8 fieldB8; // 0xB8
 };
 
 // func_80259344 receives: +0x0C -> UnkKizunaMid59344.
 struct UnkKizunaSelf59344 {
     u8 _00[0x0C];
     UnkKizunaMid59344* field0C; // 0x0C
+};
+
+// ---------------------------------------------------------------------------
+// Targets func_80259C5C / func_80259394 support types.
+// ---------------------------------------------------------------------------
+
+// Mid object at +0x0C of the kizuna-line sub-object: retail vtable slots
+// 7 (+0x1C) and 11 (+0x2C), plus the slot-15 pane provider at +0x10.
+struct UnkKizunaMidC5C {
+    virtual void v0();
+    virtual void v1();
+    virtual void v2();
+    virtual void v3();
+    virtual void v4();
+    virtual void slot7(u32 a);           // retail slot 7 (+0x1C)
+    virtual void v6();
+    virtual void v7();
+    virtual void v8();
+    virtual void slot11(u32 a, u32 b);   // retail slot 11 (+0x2C)
+    u8 _04[0x10 - 0x04];
+    UnkKizunaObj59344* field10;          // 0x10
+};
+
+struct UnkKizunaSelf59C5C {
+    u8 _00[0x0C];
+    UnkKizunaMidC5C* field0C; // 0x0C
+    u32 field10;              // 0x10
+    u8 field14;               // 0x14
+    u8 field15;               // 0x15
+    u8 _16[0x40 - 0x16];
+    f32 field40;              // 0x40
+};
+
+struct UnkKizunaSelf59394 {
+    u8 _00[0x0C];
+    UnkKizunaMidC5C* field0C; // 0x0C
+};
+
+// func_80258F9C view: child at +0x0C (slot-14 callable), mode bytes at
+struct UnkKizunaObjSlot14;
+// 0x14/0x15/0x16, the line-state u16 at 0x26 and state byte at 0x34.
+struct UnkKizunaSelf58F9C {
+    u8 _00[0x0C];
+    UnkKizunaObjSlot14* field0C; // 0x0C
+    u8 _10[0x14 - 0x10];
+    u8 field14;                  // 0x14
+    u8 field15;                  // 0x15
+    u8 field16;                  // 0x16
+    u8 _17[0x26 - 0x17];
+    u16 field26;                 // 0x26
+    u8 _28[0x34 - 0x28];
+    u8 field34;                  // 0x34
+};
+
+// func_8025C61C view: draw gate byte at 0x38, mode byte at 0x39, the four
+// layouts drawn conditionally, the counter at 0x8E and the enable byte 0xDD.
+struct UnkKizunaSelfC61C {
+    u8 _00[0x38];
+    u8 field38;                 // 0x38
+    u8 field39;                 // 0x39
+    u8 _3A[0x54 - 0x3A];
+    nw4r::lyt::Layout* field54; // 0x54
+    u8 _58[0x74 - 0x58];
+    nw4r::lyt::Layout* field74; // 0x74
+    u8 _78[0x8E - 0x78];
+    u16 field8E;                // 0x8E
+    u8 _90[0xB4 - 0x90];
+    nw4r::lyt::Layout* fieldB4; // 0xB4
+    u8 _B8[0xC8 - 0xB8];
+    nw4r::lyt::Layout* fieldC8; // 0xC8
+    u8 _CC[0xDD - 0xCC];
+    u8 fieldDD;                 // 0xDD
 };
 
 // ---------------------------------------------------------------------------
@@ -363,8 +480,7 @@ struct UnkKizunaSelfC7FC {
     u8 _3D[0x4C-0x3D];
     UnkKizunaSelfB958 sub4C;   // 0x4C
     u8 _64[0x68-0x64];
-    UnkKizunaSelf59228 sub68;  // 0x68
-    u8 _7C[0xAC-0x7C];
+    UnkKizunaSelf59228 sub68;  // 0x68 (ends 0xAC)
     UnkKizunaSelf57D90 subAC;  // 0xAC
 };
 
@@ -485,11 +601,6 @@ struct UnkKizunaSelf57E58 {
 // 3-float vector used with the code80135FDC_setVec3 C-ABI helper. The helper
 // writes x/y/z at the passed pointer and leaves the pointer in r3, so callers
 // copy the returned struct by value (retail emits lwz/stw word copies).
-struct UnkKizunaVec3 {
-    f32 x;
-    f32 y;
-    f32 z;
-};
 
 // func_8025C874/C904/C994 self: mode byte at +0x3A, sub-objects at +0x4C /
 // +0x68 / +0xAC, and a u16 counter at +0x8E.
@@ -521,7 +632,7 @@ extern "C" void func_8025C16C(UnkKizunaSelfC21C* self);
 extern "C" void func_8025C21C(UnkKizunaSelfC21C* self);
 extern "C" void func_8025C298(UnkKizunaSelfC21C* self);
 extern "C" void func_8025C348(UnkKizunaSelfC21C* self);
-extern "C" void func_80259394(UnkKizunaSelf57D90* self, const UnkKizunaVec3* v);
+extern "C" void func_80259394(UnkKizunaSelf59394* self, const UnkKizunaVec3* v);
 extern "C" void func_8025BA38(UnkKizunaSelf57D90* self, u16 v);
 extern "C" void func_80259820(UnkKizunaSelf57D90* self);
 
@@ -537,6 +648,7 @@ extern "C" void func_80127BC4(float* dst, const float* src); // copy 2 floats
 // Position constants used by func_80257B6C (sda2 floats).
 extern const float lbl_eu_8066882C;
 extern const float lbl_eu_80668830;
+extern const float lbl_eu_8066884C;
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform* anim, float frame);
 extern "C" void func_80231848(UnkKizunaFunc31848Obj* self, const UnkKizunaPair* src);
 extern "C" void copyVEC2(void*, const void*);
@@ -631,6 +743,10 @@ struct UnkKizunaLineState {
     f32 field40;      // 0x40
 };
 
+// View of the embedded line state as consumed by func_802580CC (defined
+// after the slot-object types below).
+struct UnkKizunaLineBuild;
+
 // func_8025CF40 self: two pointers gating the rebuild, a flag byte, the
 // embedded line state at +0x68, the two slot-15 results, and the +0xDE byte.
 struct UnkKizunaSelfCF40 {
@@ -715,3 +831,156 @@ extern "C" int sprintf(char* str, const char* fmt, ...);
 // CDeviceFont font-object getter (retail symbol is the mangled C++ name).
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(
     u32 arg, nw4r::lyt::Layout* layout);
+
+// ---------------------------------------------------------------------------
+// Targets 17/18/19 (func_8025C580 / func_80259D44 / func_8025CBCC) types.
+// ---------------------------------------------------------------------------
+
+// func_8025C580 self: dispatch byte at +0x39, sub-objects at 0x4C/0x68/0xAC/0xC0.
+struct UnkKizunaSelfC580 {
+    u8 _00[0x39];
+    u8 field39;                 // 0x39
+    u8 _3A[0x4C - 0x3A];
+    UnkKizunaSelfC21C sub4C;    // 0x4C (ends 0x64)
+    u8 _64[0x68 - 0x64];
+    UnkKizunaSelf57D90 sub68;   // 0x68
+    u8 _78[0xB0 - 0x78];
+    UnkKizunaSelf57EE0 subAC;   // 0xAC (ends 0xC0)
+    UnkKizunaSelf57B6C subC0;   // 0xC0
+};
+
+// func_80259D44 self: countdown timer at +0x40, state bytes at 0x14/0x15, and
+// a slot-15-callable layout at +0x0C -> +0x10.
+struct UnkKizunaSelf59D44 {
+    u8 _00[0x0C];
+    UnkKizunaMid59344* field0C; // 0x0C
+    u8 _10[0x14 - 0x10];
+    u8 field14;                 // 0x14
+    u8 field15;                 // 0x15
+    u8 _16[0x40 - 0x16];
+    f32 field40;                // 0x40
+};
+
+// func_8025CBCC self: the +0x68 sub overlays UnkKizunaSelf59D88's first half
+// (its anim pointer is self->field78), flag byte at +0x8C.
+struct UnkKizunaSub68CBCC {
+    u8 _00[0x10];               // 0x68..0x78 (field10 == self->field78)
+};
+
+struct UnkKizunaSelfCBCC {
+    u8 _00[0x68];
+    UnkKizunaSub68CBCC sub68;            // 0x68
+    nw4r::lyt::AnimTransform* field78;   // 0x78
+    u8 _7C[0x8C - 0x7C];
+    u8 field8C;                          // 0x8C
+};
+
+// ---------------------------------------------------------------------------
+// Targets func_80259DE8 / func_8025949C support types.
+// ---------------------------------------------------------------------------
+
+// Runtime nw4r::lyt::Pane view exposing the world-space translate vector at
+// +0x2C (used when retail copies positions straight into a pane).
+struct KizunaPaneTranslateView {
+    u8 _00[0x2C];
+    UnkKizunaVec3 translate;
+};
+
+// Opaque shared-layout manager singleton held in lbl_eu_80664098.
+struct UnkKizunaMgr {
+    u8 _00[0x40];
+};
+
+// Object whose vtable slot 3 (+0x0C) fetches a TPLPalette for a texture name.
+struct UnkKizunaObj59DE8 {
+    virtual void v0();
+    virtual void v1();
+    virtual void* getTex(int a, u32 b, u32 c); // retail vtable slot 3 (+0x0C)
+};
+
+struct UnkKizunaSelf59DE8 {
+    u8 _00[0x08];
+    UnkKizunaObj59DE8* field08;  // 0x08
+    UnkKizunaMid59344* field0C;  // 0x0C
+    u8 _10[0x3D - 0x10];
+    u8 field3D;                  // 0x3D
+};
+
+// View of the embedded line state as consumed by func_802580CC: the shared
+// arc resource accessor at +0x04, a texture-source object at +0x08, the built
+// layout at +0x0C with its anim transform at +0x10, the result vector at
+// +0x18, state bytes 0x24/0x26 and the mode byte at 0x3D.
+struct UnkKizunaLineBuild {
+    u8 _00[0x04];
+    UnkKizunaObj59DE8* acc;         // 0x04 (accessor; also getTex receiver)
+    UnkKizunaObj59DE8* texSrc;      // 0x08
+    UnkKizunaObj57E58* layout;      // 0x0C
+    nw4r::lyt::AnimTransform* anim; // 0x10
+    u8 _14[0x18 - 0x14];
+    UnkKizunaVec3 result18;         // 0x18
+    u8 field24;                     // 0x24
+    u8 _25;
+    u16 field26;                    // 0x26
+    u8 _27[0x3D - 0x27];
+    u8 field3D;                     // 0x3D
+};
+
+// Tag-context list item: animated position at +0x2C, payload word at +0xBC.
+struct UnkKizunaCtxItem {
+    u8 _00[0x2C];
+    UnkKizunaVec3 pos;   // 0x2C
+    u8 _38[0xBC - 0x38];
+    u32 fieldBC;         // 0xBC
+};
+
+// func_8025949C self: child mid at +0x0C, result vector at +0x18,
+// done byte at 0x24, selected id at 0x26, sound-played byte at 0x3C.
+struct UnkKizunaSelf5949C {
+    u8 _00[0x0C];
+    UnkKizunaMidC5C* field0C;  // 0x0C
+    u8 _10[0x18 - 0x10];
+    UnkKizunaVec3 field18;     // 0x18
+    u8 field24;                // 0x24
+    u8 _25;
+    u16 field26;               // 0x26
+    u8 _28[0x3C - 0x28];
+    u8 field3C;                // 0x3C
+};
+
+// Same-TU callees (retail links these unmangled).
+extern "C" bool func_802592D8(UnkKizunaSelf592D8* self);
+void func_80258F9C(UnkKizunaSelf58F9C* self);
+// Same-TU callees used by func_80258F9C / the display-reset family.
+bool func_80259DE8(UnkKizunaSelf59DE8* self);
+extern "C" bool func_8025A11C(UnkKizunaSelf58F9C* self);
+extern "C" void func_8025AAE0(void* self);
+void func_8025AB04(UnkKizunaSelfAB* self);
+void func_8025AB84(UnkKizunaSelfAB* self);
+extern "C" void func_8025AC04(void* self);
+void func_80259C5C(UnkKizunaSelf59C5C* self);
+void func_80259D44(UnkKizunaSelf59D44* self);
+extern "C" void func_80257EE0(UnkKizunaSelf57EE0* self);
+extern "C" void func_80257B6C(UnkKizunaSelf57B6C* self);
+extern "C" void func_8025CC88(void* self);
+extern "C" void func_8025CCA8(void* self);
+extern "C" void func_8025CCF8(UnkKizunaSelfC580* self);
+extern "C" void func_8025CD10(UnkKizunaSelfC580* self);
+extern "C" void func_8025CD40(void* self);
+
+// BDAT/layout-manager helpers (unmangled retail symbols).
+extern "C" u32 func_8003B1EC(void* fp);              // BDAT row count
+extern "C" u32 func_8009CF8C(u32 idx);               // game-progress getter
+extern "C" u32 func_8009ECE0();                      // current kizuna id
+extern "C" char* func_80136254(const void* mgr, const void* name, int id);
+extern "C" int func_80136330(const void* mgr, const void* name, int id);
+extern "C" int func_80138E1C(int id);
+extern "C" void func_80137C1C(void* obj, u32 color);
+extern "C" int strcmp(const char*, const char*);
+extern "C" void func_80137CD4(void* layout, const char* tag, int color1, u32 color2);
+
+// Same-TU callee: returns the new kizuna selection id.
+u16 func_8025AA38(UnkKizunaSelf5949C* self, const UnkKizunaCtxItem* arg);
+
+// Per-frame kizuna-entry row cursor shared with func_8025A11C.
+extern u16 lbl_eu_80664858;
+extern u16 lbl_eu_8066485A;

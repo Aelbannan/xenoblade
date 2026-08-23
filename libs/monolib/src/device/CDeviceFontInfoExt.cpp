@@ -39,36 +39,19 @@ extern "C" u32 func_80453608__18CDeviceFontInfoExtFv(CDeviceFontInfoExt* self) {
 }
 
 
-// View of CDeviceFontInfoExt exposing the embedded nw4r::ut::Font base
-// subobject at offset 0x1C (the include-tree header models it opaquely).
-struct DeviceFontInfoExtFontView {
-    u8 pad[0x1C];
-    u32 mFontVtable;
-    u32 mReadFunc;
+// Byte-uniform view of CharWidths so the 3-byte copy lowers as halfword+byte.
+struct PlainWidths {
+    u8 left;
+    u8 glyphWidth;
+    u8 charWidth;
 };
 
-// Decodes the first character of pStr (double-byte when the lead byte is in
-// either Shift-JIS lead range), converts it to UTF-16 via the ENC library and
-// asks the embedded nw4r font for that codepoint's glyph, exporting metrics.
 // Local work area for the character query (MWCC lays this out as one block:
 // destLen/srcLen/widths copy/UTF-16 dest/SJIS-style src/glyph).
-// CharWidthsView lets the widths copy move as halfword+byte (retail shape)
-// while the glyphWidth byte is read back through the byte view.
-union CharWidthsView {
-    struct {
-        u8 left;
-        u8 glyphWidth;
-        u8 charWidth;
-    } b;
-    struct {
-        u16 lo;
-        u8 hi;
-    } h;
-};
 struct DeviceFontCharWork {
     u32 destLen;
     u32 srcLen;
-    CharWidthsView widths;
+    u8 widths[3];   // CharWidths copy: left/glyphWidth/charWidth
     u16 dest[2];
     char src[3];
     nw4r::ut::Glyph glyph;
@@ -78,30 +61,90 @@ extern "C" const char* func_80453468__18CDeviceFontInfoExtFv(CDeviceFontInfoExt*
                                                        u32* pCellX, u32* pCellY,
                                                        u32* pGlyphWidth) {
     DeviceFontCharWork work;
+
     reinterpret_cast<u16&>(work.src[0]) = 0;
     work.src[2] = 0;
-    work.src[0] = *pStr++;
+    work.src[0] = pStr[0];
+    ++pStr;
     work.dest[0] = 0;
     work.dest[1] = 0;
-    if ((0x81 <= (u8)work.src[0] && (u8)work.src[0] <= 0x9F) ||
-        (0xE0 <= (u8)work.src[0] && (u8)work.src[0] <= 0xEF)) {
-        work.src[1] = *pStr++;
+    // Lead byte re-read from the buffer keeps the boundary compares on the
+    // loaded value.
+    u8 lead = static_cast<u8>(work.src[0]);
+    switch ((u32)lead) {
+    case 0x81:
+    case 0x82:
+    case 0x83:
+    case 0x84:
+    case 0x85:
+    case 0x86:
+    case 0x87:
+    case 0x88:
+    case 0x89:
+    case 0x8A:
+    case 0x8B:
+    case 0x8C:
+    case 0x8D:
+    case 0x8E:
+    case 0x8F:
+    case 0x90:
+    case 0x91:
+    case 0x92:
+    case 0x93:
+    case 0x94:
+    case 0x95:
+    case 0x96:
+    case 0x97:
+    case 0x98:
+    case 0x99:
+    case 0x9A:
+    case 0x9B:
+    case 0x9C:
+    case 0x9D:
+    case 0x9E:
+    case 0x9F:
+    case 0xE0:
+    case 0xE1:
+    case 0xE2:
+    case 0xE3:
+    case 0xE4:
+    case 0xE5:
+    case 0xE6:
+    case 0xE7:
+    case 0xE8:
+    case 0xE9:
+    case 0xEA:
+    case 0xEB:
+    case 0xEC:
+    case 0xED:
+    case 0xEE:
+    case 0xEF:
+        work.src[1] = pStr[0];
+        ++pStr;
+        break;
+    default:
+        break;
     }
 
+    // Convert to UTF-16 and fetch that codepoint's glyph from the embedded font.
     work.destLen = 2;
     work.srcLen = strlen(work.src);
     ENCConvertStringUtf8ToUtf16(work.dest, &work.destLen, (const u8*)work.src, &work.srcLen);
 
-    DeviceFontInfoExtFontView* view = (DeviceFontInfoExtFontView*)self;
-    nw4r::ut::Font* font = (nw4r::ut::Font*)&view->mFontVtable;
+    nw4r::ut::Font* font = reinterpret_cast<nw4r::ut::Font*>(reinterpret_cast<u8*>(self) + 0x1C);
     font->GetGlyph(&work.glyph, work.dest[0]);
 
     *pCellX = work.glyph.cellX;
     *pCellY = work.glyph.cellY;
-    *ppTexture = reinterpret_cast<u32*>(work.glyph.pTexture);    work.widths.h.lo = reinterpret_cast<u16&>(work.glyph.widths.left);
-    u8 cw = work.glyph.widths.charWidth;
-    *pGlyphWidth = work.widths.b.glyphWidth;
-    return work.widths.h.hi = cw, pStr;}
+    *ppTexture = static_cast<u32*>(work.glyph.pTexture);
+    // 3-byte CharWidths copy: halfword first, trailing charWidth byte stored
+    // after the metric exports.
+    s8 cw = work.glyph.widths.charWidth;
+    reinterpret_cast<u16&>(work.widths[0]) = reinterpret_cast<u16&>(work.glyph.widths);
+    *pGlyphWidth = work.widths[1];
+    work.widths[2] = cw;
+    return pStr;
+}
 extern "C" void create__18CDeviceFontInfoExtFv() {}
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====

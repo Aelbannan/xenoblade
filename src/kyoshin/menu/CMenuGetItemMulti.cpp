@@ -4,7 +4,11 @@
 #include "kyoshin/menu/CMenuGetItemMulti.hpp"
 
 #include "kyoshin/code_80135FDC.hpp"
+// CfGameManager.hpp's func_8049603C decl conflicts with code_80135FDC.hpp's
+// (this TU never calls it) - hide it for the include.
+#define func_8049603C getItemMulti9603CUnused
 #include "kyoshin/cf/CfGameManager.hpp"
+#undef func_8049603C
 #include "kyoshin/cf/CfPadData.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceVI.hpp"
@@ -687,18 +691,20 @@ void CMenuGetItemMulti::Term() {
         if (code80135FDC_getByte_64080() == 0) {
             func_8008294C__Q22cf13CfGameManagerFv(0);
         }
-    }
-    if (mEntryCount != 0) {
-        lbl_eu_80663E24 &= ~0x200000u;
-        CfGameManagerTermFields* mgrView = reinterpret_cast<CfGameManagerTermFields*>(
-            cf::CfGameManager::getInstance());
-        CfGameManagerTermFields* src = reinterpret_cast<CfGameManagerTermFields*>(
-            func_800B708C(mgrView->field_80));
-        if (src != 0 && (src->field_64 & 0x100) != 0) {
-            reinterpret_cast<CfGameManagerTermFields*>(
-                cf::CfGameManager::getInstance())->field_80 = 0;
-            func_800B7320(reinterpret_cast<u32>(src));
-            src->field_68 |= 0x60;
+        // Nested: when both outer conditions fail MWCC jumps the
+        // field_1F6 test straight to the epilogue (retail beq .L_801B5980).
+        if (mEntryCount != 0) {
+            lbl_eu_80663E24 &= ~0x200000u;
+            CfGameManagerTermFields* mgrView = reinterpret_cast<CfGameManagerTermFields*>(
+                cf::CfGameManager::getInstance());
+            CfGameManagerTermFields* src = reinterpret_cast<CfGameManagerTermFields*>(
+                func_800B708C(mgrView->field_80));
+            if (src != 0 && (src->field_64 & 0x100) != 0) {
+                reinterpret_cast<CfGameManagerTermFields*>(
+                    cf::CfGameManager::getInstance())->field_80 = 0;
+                func_800B7320(reinterpret_cast<u32>(src));
+                src->field_68 |= 0x60;
+            }
         }
     }
 }
@@ -1725,7 +1731,48 @@ void func_801B70BC(CMenuGetItemMulti* self, int arg2, CMenuGetItemMultiEntry* ar
     self->mRankSlotPos[8] = posCopy;
 }
 
-__declspec(noinline) void func_801B76CC(CMenuGetItemMulti* self, int arg2) {}
+__declspec(noinline) void func_801B76CC(CMenuGetItemMulti* self, int arg2) {
+    // Show the five panes this category touches.
+    nw4r::lyt::Pane* pane = self->mLayout->GetRootPane()->FindPaneByName(
+        &lbl_eu_80504A3C[0x430], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x217], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x222], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x4ae], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+    pane = self->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_80504A3C[0x4ba], true);
+    reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags =
+        (reinterpret_cast<CMenuGetItemPaneView*>(pane)->flags & 0xfe) | 1;
+
+    // Item id -> table id, then fill the rank-name and description panes.
+    void* tbl = lbl_eu_80664104;
+    func_801392E4(arg2);
+    u32 tableId = func_80139358(arg2);
+    char* rankText = func_80136190(
+        &lbl_eu_80504A3C[0x1ac], &lbl_eu_80504A3C[0x182],
+        (u8)func_801361E8((u32)tbl, &lbl_eu_80504A3C[0x573], (u16)tableId));
+    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x4ae], rankText, 0);
+
+    // Description text: fixed string 0x1a gets a formatted entry, otherwise
+    // the plain key-item name from the font table.
+    char* text;
+    // Raw u32 kept in r0; the (u8) truncations happen at the use sites
+    // (retail mr r0/r3 + rlwinm shape).
+    u32 descId = func_801361E8((u32)tbl, &lbl_eu_80504A3C[0x578], (u16)tableId);
+    if ((u8)descId == 0x1a) {
+        text = func_80136190(&lbl_eu_80504A3C[0x1ac], &lbl_eu_80504A3C[0x182], 20);
+    } else {
+        // Third arg rides in r5 from the lookup above (retail leaves it live).
+        text = func_8013639C(lbl_eu_806640A8, &lbl_eu_80504A3C[0x182], (u8)descId);
+    }
+    func_80136B4C(self->mLayout, &lbl_eu_80504A3C[0x4ba], text, 0);
+}
 
 // Category-9 (rank item) display update: show the rank pane, render the rank
 // name, and populate the per-slot id/position/flag arrays for the four slots.
@@ -1750,11 +1797,12 @@ void func_801B7440(CMenuGetItemMulti* self, CMenuGetItemMultiEntry* arg3) {
     // it), while i indexes the impl slots -- MWCC keeps them as two counters.
     u8 paneNo = 0;
     for (u8 i = 0; i < 4; ++i) {
-        u32 raw = CItem_initItemImplInstances(arg3)->vf4C(arg3, i);
-        if ((u16)raw <= 0) {
+        // Signed id: MWCC records the truncation (clrlwi.) and emits the
+        // signed `ble` skip (retail shape); a u16 here collapses to `beq`.
+        s32 itemId = (u16)CItem_initItemImplInstances(arg3)->vf4C(arg3, i);
+        if (itemId <= 0) {
             continue;
         }
-        u16 itemId = (u16)raw;
         char paneName[32];
         sprintf(paneName, &lbl_eu_80504A3C[0x4c6], paneNo * 2 + 0x1f);
         char* itemName = func_8013639C(lbl_eu_806640D8, &lbl_eu_80504A3C[0x182], itemId);

@@ -101,7 +101,7 @@ public:
 // would push the vptr to +0x10 and break the dispatch).
 class CCol6AnimHostView {
 public:
-    virtual void v00() = 0;
+    virtual void v00(int) = 0;  // +0x08 - Term releases the host with arg 1
     virtual void v01() = 0;
     virtual void v02() = 0;
     virtual void v03() = 0;
@@ -337,6 +337,12 @@ struct UnkClass_80083298View {
     u8 field_0xF0[0x14];
 };
 
+// Minimal CTaskGame import (retail symbols getInstance__9CTaskGameFv /
+// func_800426F0__9CTaskGameFv; chained-call form per CUICfManager.cpp).
+class CTaskGame;
+extern "C" CTaskGame* getInstance__9CTaskGameFv();
+extern "C" bool func_800426F0__9CTaskGameFv(CTaskGame* self);
+
 // CMenuFade object (opaque here; func_80113E1C/func_80113E24 gate on it).
 class CCol6Fade;
 
@@ -350,7 +356,7 @@ void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 
 // C-linkage imports (retail symbols are unmangled - keep linkage verbatim)
 extern "C" {
-u8 CSysWin_isReady(void* syswin);                                    // CSysWin.cpp
+u32 CSysWin_isReady(void* syswin);                                   // CSysWin.cpp
 int CSysWin_isActive(void* syswin);                                   // CSysWin.cpp
 int CSysWin_getUnk34(void* syswin);                                   // CSysWin.cpp
 void func_8022B7C8(void* syswin, nw4r::lyt::DrawInfo* drawInfo);     // CSysWin.cpp
@@ -501,3 +507,12 @@ extern "C" u32 func_8009CF8C(u32 resourceId);
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+extern "C" void __ct__17UnkClass_8045F564Fv(void* self);
+extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(void* drawInfo);
+extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(void* drawInfo, int flags);
+extern "C" void func_801F35DC(CScrollBar* scrollbar);                    // scrollbar destroy
+extern "C" void func_801F35B0(void* scrollbar, nw4r::lyt::DrawInfo* di); // scrollbar draw
+extern "C" void func_80135998(u8 enable);                                // message-window show/hide
+extern "C" void func_8013DA60(int id, int a, int b);                     // window open request
+extern u32 lbl_eu_80663E28;  // .sbss mode bitfield (bit 0x400000 gates hint draws)
+extern "C" void __ct__17UnkClass_8045F564Fv(void* self);

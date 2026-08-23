@@ -953,20 +953,23 @@ void ScnMdl::InitBuffer() {
     u32 numMat = mdl.GetResMatNumEntries();
     u32 numNode = mdl.GetResNodeNumEntries();
 
-    if (tail.mpVisBuffer != NULL && numNode != 0) {
-        for (u32 i = 0; i < numNode; i++) {
-            ResNode node = mdl.GetResNode(i);
-            bool visible;
-            if (node.IsValid()) {
-                visible =
-                    (node.ref().flags & ResNodeData::FLAG_VISIBLE) != 0;
-            } else {
-                visible = false;
-            }
-            if (visible) {
-                tail.mpVisBuffer[i] = 1;
-            } else {
-                tail.mpVisBuffer[i] = 0;
+    if (tail.mpVisBuffer != NULL) {
+        u32 i = 0;
+        if (numNode > 0) {
+            for (; i < numNode; i++) {
+                ResNode node = mdl.GetResNode(i);
+                bool visible;
+                if (node.IsValid()) {
+                    visible =
+                        (node.ref().flags & ResNodeData::FLAG_VISIBLE) != 0;
+                } else {
+                    visible = false;
+                }
+                if (visible) {
+                    tail.mpVisBuffer[i] = 1;
+                } else {
+                    tail.mpVisBuffer[i] = 0;
+                }
             }
         }
     }
@@ -1180,8 +1183,10 @@ void ScnMdl::G3dProc(u32 task, u32 param, void* pInfo) {
             ResMdl mdl = GetResMdl();
             u32 numNode = mdl.GetResNodeNumEntries();
 
-            if (tail.mpVisBuffer != NULL && numNode != 0) {
-                for (u32 i = 0; i < numNode; i++) {
+            if (tail.mpVisBuffer != NULL) {
+                u32 i = 0;
+                if (numNode != 0) {
+                    for (; i < numNode; i++) {
                     ResNode node = mdl.GetResNode(i);
                     bool visible;
                     if (node.IsValid()) {
@@ -1195,6 +1200,7 @@ void ScnMdl::G3dProc(u32 task, u32 param, void* pInfo) {
                     } else {
                         tail.mpVisBuffer[i] = 0;
                     }
+                    }
                 }
             }
             tail.mFlagVisBuffer &= ~VISBUFFER_DIRTY;
@@ -1204,7 +1210,8 @@ void ScnMdl::G3dProc(u32 task, u32 param, void* pInfo) {
         // node flags when no buffer is present) and mark the buffer dirty.
         if (GetAnmObjVis() != NULL) {
             if (tail.mpVisBuffer != NULL) {
-                ApplyVisAnmResult(tail.mpVisBuffer, GetResMdl(),
+                ResMdl mdl = GetResMdl();
+                ApplyVisAnmResult(tail.mpVisBuffer, mdl,
                                   GetAnmObjVis());
                 tail.mFlagVisBuffer |= VISBUFFER_DIRTY;
             } else {

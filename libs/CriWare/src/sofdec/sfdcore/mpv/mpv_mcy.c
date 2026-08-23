@@ -387,26 +387,47 @@ void MPVMC16_OneRefH2_TuneC(MPC16Params *prm) {
     }
 }
 
-void MPVMC16_OneRef4p_TuneC(void* self) {
-    u8* src1 = *(u8**)((u8*)self + 0x24);
-    u8* src2 = *(u8**)((u8*)self + 0x28);
-    u8* dst = *(u8**)((u8*)self + 0x18);
-    s32 i;
-    for (i = 0; i < 0x10; i++) {
-        u32 p0 = (src1[0] + src2[0] + 1) >> 1;
-        u32 p1 = (src1[1] + src2[1] + 1) >> 1;
-        u32 p2 = (src1[2] + src2[2] + 1) >> 1;
-        u32 p3 = (src1[3] + src2[3] + 1) >> 1;
-        u32 p4 = (src1[4] + src2[4] + 1) >> 1;
-        u32 p5 = (src1[5] + src2[5] + 1) >> 1;
-        u32 p6 = (src1[6] + src2[6] + 1) >> 1;
-        u32 p7 = (src1[7] + src2[7] + 1) >> 1;
-        *(u16*)(dst + 0) = (u16)(p0 | (p1 << 8));
-        *(u16*)(dst + 2) = (u16)(p2 | (p3 << 8));
-        *(u16*)(dst + 4) = (u16)(p4 | (p5 << 8));
-        *(u16*)(dst + 6) = (u16)(p6 | (p7 << 8));
-        src1 += 2;
-        src2 += 2;
+// 4-point average: out[j] = ((a[j]+b[j]) + (a[j+1]+b[j+1]) + 2) >> 2.
+// 8x16 block of bytes written as two packed words per row; every other
+// 8 rows the destination jumps ahead by one 8-row block.
+void MPVMC16_OneRef4p_TuneC(MPC16Params *prm) {
+    u8 *s1 = prm->src1;
+    u8 *s2 = prm->src2;
+    u8 *dst = prm->dst;
+    u32 stride = prm->stride;
+    int i;
+
+    for (i = 0; i < 16; i++) {
+        __dcbt(s2, stride);
+        /* out[j] = ((a[j]+b[j]) + (a[j+1]+b[j+1]) + 2) >> 2; pair sums shared */
+        u32 c0 = s1[0] + s2[0];
+        u32 c1 = s1[1] + s2[1];
+        u32 c2 = s1[2] + s2[2];
+        u32 c3 = s1[3] + s2[3];
+        u32 c4 = s1[4] + s2[4];
+        u32 c5 = s1[5] + s2[5];
+        u32 c6 = s1[6] + s2[6];
+        u32 c7 = s1[7] + s2[7];
+        u32 c8 = s1[8] + s2[8];
+#define PK(A, B, C, D) (((A + B + 2) >> 2) | (((B + C + 2) >> 2) << 8) | (((C + D + 2) >> 2) << 16))
+        *(u32 *)&dst[0] = PK(c0, c1, c2, c3) | (((c3 + c4 + 2) >> 2) << 24);
+        *(u32 *)&dst[4] = PK(c4, c5, c6, c7) | (((c7 + c8 + 2) >> 2) << 24);
+        u32 c9 = s1[9] + s2[9];
+        u32 c10 = s1[10] + s2[10];
+        u32 c11 = s1[11] + s2[11];
+        u32 c12 = s1[12] + s2[12];
+        *(u32 *)&dst[0x40] = PK(c8, c9, c10, c11) | (((c11 + c12 + 2) >> 2) << 24);
+        u32 c13 = s1[13] + s2[13];
+        u32 c14 = s1[14] + s2[14];
+        u32 c15 = s1[15] + s2[15];
+        u32 c16 = s1[16] + s2[16];
+        *(u32 *)&dst[0x44] = PK(c12, c13, c14, c15) | (((c15 + c16 + 2) >> 2) << 24);
+#undef PK
+        s1 += stride;
+        s2 += stride;
         dst += 8;
+        if (i == 7) {
+            dst += 0x40;
+        }
     }
 }

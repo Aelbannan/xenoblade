@@ -123,10 +123,14 @@ void* func_800B708C(int id);
 // Voice/battle-list sweep helpers (retail unmangled C-ABI names).
 extern "C" void* func_800F6EAC(void* list, u32 idx);
 extern "C" void* func_8016FE34(void* r3);
+class Fd44State;
 // Retail call site passes no argument (r3 left over from the previous call);
-// other TUs declare the void* form.
-extern "C" int func_8017FD44();
+// matches the CtrlPc.hpp declaration.
+extern "C" Fd44State* func_8017FD44();
 extern "C" void* func_800451D8(u32 cls, void* param);
+
+// Actor-state gate probe (retail unmangled C-ABI name; see CfCam.hpp).
+extern "C" int func_80174C98(void* actor, u32* val, int flags);
 
 // Voice-manager sweep helpers and the sudden-commu active check. Retail
 // relocs are the unmangled C names, so these are extern "C" imports.
@@ -332,6 +336,66 @@ extern const f32 lbl_eu_8066676C;
 extern const f32 lbl_eu_8066A1F8;   // pi
 extern const f32 lbl_eu_8066A1FC;   // 2*pi
 extern const f32 lbl_eu_8066A20C;
+
+// ---------------------------------------------------------------------------
+// Imports / views used by func_8009AE80.
+// ---------------------------------------------------------------------------
+
+// func_800FE68C object view covering both the actor-id word (+0x90E4) and the
+// demo/idle state word (+0xC180) probed by func_8009AE80.
+struct CfObjAe80 {
+    u8 _00[0x90E4];
+    u32 mField90E4;                  // 0x90E4
+    u8 _90E8[0xC180 - 0x90E8];
+    u32 mFieldC180;                  // 0xC180
+};
+
+// Selector-system helpers (retail C-ABI names; CfObjectSelectorObj.cpp).
+extern "C" void func_800FE860(void* obj, u32 arg);
+extern "C" unsigned long func_800FE910(void* obj);
+extern "C" void func_800FE950(void* obj, u32 a, u32 b, u32 c);
+
+// vf37() (vtable slot 0x9C) result view for func_8009AE80: menu-state flag
+// words at 0x00 / 0x04 / 0x08 / 0x10 / 0x14.
+struct CtrlPcSub37Ae80 {
+    u32 mField0;                 // 0x00
+    u32 mField4;                 // 0x04
+    u32 mField8;                 // 0x08
+    u8 _0C[0x10 - 0x0C];
+    u32 mField10;                // 0x10
+    u32 mField14;                // 0x14
+};
+
+// CtrlPc-compatible view exposing the +0x2C state word and vf37 (slot 0x9C)
+// for func_8009AE80.
+class CtrlPcVf37State {
+public:
+    virtual ~CtrlPcVf37State();  // vtable slot 0x00 (leading dtor slot)
+    virtual void vf01();  virtual void vf02();  virtual void vf03();
+    virtual void vf04();  virtual void vf05();  virtual void vf06();
+    virtual void vf07();  virtual void vf08();  virtual void vf09();
+    virtual void vf10();  virtual void vf11();  virtual void vf12();
+    virtual void vf13();  virtual void vf14();  virtual void vf15();
+    virtual void vf16();  virtual void vf17();  virtual void vf18();
+    virtual void vf19();
+    virtual void vf20();  virtual void vf21();  virtual void vf22();
+    virtual void vf23();  virtual void vf24();  virtual void vf25();
+    virtual void vf26();  virtual void vf27();  virtual void vf28();
+    virtual void vf29();  virtual void vf30();  virtual void vf31();
+    virtual void vf32();  virtual void vf33();  virtual void vf34();
+    virtual void vf35();  virtual void vf36();
+    virtual CtrlPcSub37Ae80* vf37();  // 0x9C
+
+    u32 mField4;                     // 0x04
+    f32 mField8;                     // 0x08
+    f32 mFieldC;                     // 0x0C
+    f32 mField10;                    // 0x10
+    f32 mField14;                    // 0x14
+    char _pad_18[0x2C - 0x18];       // 0x18-0x2B
+    u32 mField2C;                    // 0x2C (aim/menu mirror word)
+    char _pad_30[0x5C - 0x30];       // 0x30-0x5B
+    CtrlPlayerObj* mField5C;         // 0x5C
+};
 
 // Second global flag word probed by func_80098EF8 (retail sda21 access).
 extern u32 lbl_eu_80663E28;

@@ -7,6 +7,12 @@
 
 struct UnkClass_8009ECB0;
 
+// Planted s32->f32 conversion magic (0x4330000080000000): naming one pooled
+// constant makes MWCC unify the literal pool so the builtin conversion's
+// anonymous @N label resolves to this retail sdata2 address
+// (MWCC_CASES: ocUnit::turn pool-unification idiom).
+const f64 lbl_eu_80665E40 = 4503601774854144.0;
+
 // ============================================================================
 // External declarations (called functions not declared in included headers)
 // ============================================================================
@@ -19,15 +25,7 @@ extern "C" {
     extern float lbl_eu_80665E34;          // 0.5f
     extern float lbl_80665E38__Q23mtl10MemManager;          // scale factor
     extern float lbl_eu_80665E3C;          // 1.0f
-    extern float lbl_eu_80665E40;          // 4503601774854144.0f (for xoris)
     extern float lbl_eu_80665E48;          // various constants
-    extern float lbl_eu_80665E4C;          // 0.0f
-    extern float lbl_eu_80665E30;          // fixed-point divisor
-    extern float lbl_eu_80665E34;          // 0.5f
-    extern float lbl_80665E38__Q23mtl10MemManager;          // scale factor
-    extern float lbl_eu_80665E3C;          // 1.0f
-    extern float lbl_eu_80665E40;          // 4503601774854144.0f
-    extern float lbl_eu_80665E48;          // misc constant
     extern float lbl_eu_80665E4C;          // 0.0f
 
     void func_8004302C(int, int);
@@ -44,21 +42,17 @@ extern "C" {
     void func_80159B40(int, int, void*);
     void func_80158118(void*, int, int);
     void func_80155A00(void*);
-    void func_80158420(int, int*, int, int*);
     void func_8016DF34(int);
     void func_8016DF4C(int);
-    void func_8018C8F4(void*, int);
     void func_80199678(void*, int);
     void func_801F4AD4(int, int);
     void func_801F4B68(int, int);
     void func_801F4BFC(int, int);
     void func_801F4C90(int, int, int);
-    int func_80291BF8();
     void func_eu_8049AB50(int, int);
     int getUnk80664658();
     int isTvFormatPal__9CDeviceVIFv();
     void* CItem_initItemImplInstances();
-    void* getInstance__Q22cf14CBattleManagerFv();
     void* getInstance__14Class_80296898Fv();
     void func_800B70FC(int, int);
     int func_800B8D5C();
@@ -68,26 +62,27 @@ extern "C" {
     void func_8009D018(int, int);
     int* func_8009EC9C(int);
     int* func_8009ECB0();
-    void func_8009E0C4(int*, int, int);
     void func_8009E0A8(int*, int);
     int func_8009E284(int*, int);
     int* func_8009D790(int*, int);
-    void func_8009DBF4(int*, int, int);
-    void func_800B6800(float, void*, int);
-    void* func_800B07E8__Fv();
+    void func_800B6800(float, void*, int);    void* func_800B07E8__Fv();
     void func_800B1AF4(void*);
     void func_8007C360__Q22cf13CfGameManagerFv(float, int, int);
     void func_8007F830__Q22cf13CfGameManagerFv(int, int);
     void func_800823A4__Q22cf13CfGameManagerFv(int, int);
     void func_80083EA4__Q22cf13CfGameManagerFv();
     bool func_80084B68__Q22cf13CfGameManagerFv();
-    void func_8008566C__Q22cf13CfGameManagerFv(float*, int, int);
+    void func_8008566C__Q22cf13CfGameManagerFv(int, float*, int);
     int func_80086B1C__Q22cf13CfGameManagerFv();
     void* func_80081CB8__Q22cf13CfGameManagerFv();
-    void func_800AB978(float, float*, float*);
+    void func_800AB978(void*, float, float, void*, void*);
+    void func_800AB7F8(void*, float, void*, void*, int, int, int, int);
+    void func_800ABD44(void*, float*, float*, float);
+    void func_800ABDE4(void*, float*, float*, float);
+    void func_800AC3F4(void*, const char*, const char*);
     void func_800AB8CC(float, float*, float*);
     void func_800ABA18(float, float*, float*);
-    void func_800AC30C(int, int, const char*);
+    void func_800AC30C(void*, int, int, const char*);
     void func_80082254__Q22cf13CfGameManagerFv();
     void func_80086DAC__Q22cf13CfGameManagerFv();
     void func_80082258__Q22cf13CfGameManagerFv();
@@ -100,16 +95,12 @@ extern "C" {
     bool func_80084BF4__Q22cf13CfGameManagerFv();
     bool func_80087250__Q22cf13CfGameManagerFv();
     void func_800B94A0(const char*);
-    void func_8009E740(void*, int);
-    int func_8009E56C(void*, int, int);
     bool func_8009E344(void*, int, int*, int*);
-    void func_80083D50__Q22cf13CfGameManagerFv(u32, u32, u32, u32, float);
-    void func_8007C374__Q22cf13CfGameManagerFv(u32, u32, float, u8);
+    void func_8007C374__Q22cf13CfGameManagerFv(u32, u32, int, float);
     void func_8009E3C0();
     int  func_801586D4(int, int);
     void func_80159C04(int, int);
     int  func_80158068(int);
-    void func_8007F1FC__Q22cf13CfGameManagerFv(void*, int);
     void func_800F4004(void*);
     void func_80462D04__8CTaskLODFv(int);
     void func_80462D5C__8CTaskLODFv(int);
@@ -215,7 +206,7 @@ int setMapJumpArea(VMThread* pThread) {
     
     void* gm = func_80081CB8__Q22cf13CfGameManagerFv();
     if (gm) {
-        func_800AB978(v15f, t4, t3);
+        func_800AB978(gm, v15f, lbl_eu_80665E34, t4, t3);
         func_800AB8CC(v15f, t1, t2);
         
         float sum[3];
@@ -228,7 +219,7 @@ int setMapJumpArea(VMThread* pThread) {
         scaled[1] = sum[1] * lbl_80665E38__Q23mtl10MemManager;
         scaled[2] = sum[2] * lbl_80665E38__Q23mtl10MemManager;
         
-        func_800AC30C(args[0], args[1], (const char*)v17);
+        func_800AC30C(gm, args[0], args[1], (const char*)v17);
         
         int neg = -v21;
         int orVal = neg | v21;
@@ -334,9 +325,9 @@ int setMapJumpAreaBox(VMThread* pThread) {
     
     void* gm = func_80081CB8__Q22cf13CfGameManagerFv();
     if (gm) {
-        func_800AB978(lbl_eu_80665E48, tB, tB);
+        func_800AB978(gm, lbl_eu_80665E48, lbl_eu_80665E34, tB, tB);
         func_800ABA18(0.0f, tA, tC);
-        func_800AC30C(args[0], args[1], (const char*)v27);
+        func_800AC30C(gm, args[0], args[1], (const char*)v27);
         
         int neg = -v26;
         int orVal = neg | v26;
@@ -349,55 +340,222 @@ int setMapJumpAreaBox(VMThread* pThread) {
 }
 
 // --- setWarpArea (us-80048238) ---
+// Builds a warp region from a base point plus two y-offset corners and a
+// mirrored corner pair, hands it to the manager, then stores the optional
+// fade timer and notifies through vtable slot 0x158.
 int setWarpArea(VMThread* pThread) {
+    int id0 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    int id1 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
+    int fx = vmArgFixedGet(4, vmArgPtrGet(pThread, 3));
+    int fy = vmArgFixedGet(5, vmArgPtrGet(pThread, 4));
+    int fz = vmArgFixedGet(6, vmArgPtrGet(pThread, 5));
+    int fw = vmArgFixedGet(7, vmArgPtrGet(pThread, 6));
+    int hTop = vmArgFixedGet(8, vmArgPtrGet(pThread, 7));
+    vmArgFixedGet(9, vmArgPtrGet(pThread, 8)); // fetched but unused
+    int bx = vmArgFixedGet(10, vmArgPtrGet(pThread, 9));
+    int by = vmArgFixedGet(11, vmArgPtrGet(pThread, 10));
+    int bz = vmArgFixedGet(12, vmArgPtrGet(pThread, 11));
+    int g0 = vmArgIntGet(13, vmArgPtrGet(pThread, 12));
+    int g1 = vmArgIntGet(14, vmArgPtrGet(pThread, 13));
+    int g2 = vmArgIntGet(15, vmArgPtrGet(pThread, 14));
+    int g3 = vmArgIntGet(16, vmArgPtrGet(pThread, 15));
+
+    int idx = 16;
+    int fade;
+    if (vmArgOmitChk(pThread, idx)) {
+        fade = 0x168;
+        idx = 17;
+    } else {
+        VMArg* arg = vmArgPtrGet(pThread, idx);
+        idx = 17;
+        fade = vmArgIntGet(idx, arg);
+    }
+
+    const char* name;
+    if (vmArgOmitChk(pThread, idx)) {
+        name = 0;
+        idx++;
+    } else {
+        VMArg* arg = vmArgPtrGet(pThread, idx);
+        idx++;
+        name = vmArgStringGet(idx, arg);
+    }
+
+    int flag;
+    if (vmArgOmitChk(pThread, idx)) {
+        flag = 0;
+        idx++;
+    } else {
+        VMArg* arg = vmArgPtrGet(pThread, idx);
+        idx++;
+        flag = vmArgIntGet(idx, arg);
+    }
+
+    int optC;
+    if (vmArgOmitChk(pThread, idx)) {
+        optC = 0;
+        idx++;
+    } else {
+        VMArg* arg = vmArgPtrGet(pThread, idx);
+        idx++;
+        optC = vmArgIntGet(idx, arg);
+    }
+
+    // Last optional: the omitted branch does not bump the rolling index.
+    int optD;
+    if (vmArgOmitChk(pThread, idx)) {
+        optD = 0;
+    } else {
+        VMArg* arg = vmArgPtrGet(pThread, idx);
+        idx++;
+        optD = vmArgIntGet(idx, arg);
+    }
+
+    // Fixed-point -> float corners. Each conversion is written as an
+    // independent expression in retail's store order (min.x, B.z, min.z,
+    // max.x, B.x, max.z, max.y, B.y, min.y, warp height last); duplicating
+    // the fx/fz/fy expressions keeps MWCC from CSE-ing the divisions.
+    // All eight 12-byte vectors are declared up front so the stack layout
+    // matches retail (scaled/center/copy chain low, corners high).
+    ml::CVec3 scaledV;
+    ml::CVec3 center;
+    ml::CVec3 centerCopy;
+    ml::CVec3 scaledCopy;
+    ml::CVec3 cornerA;
+    ml::CVec3 cornerB;
+    ml::CVec3 cornerMax;
+    ml::CVec3 cornerMin;
+
+    cornerMin.x = (float)(s32)fx / lbl_eu_80665E30;
+    cornerB.z = (float)(s32)bz / lbl_eu_80665E30;
+    cornerMin.z = (float)(s32)fz / lbl_eu_80665E30;
+    cornerMax.x = (float)(s32)fx / lbl_eu_80665E30;
+    cornerB.x = (float)(s32)bx / lbl_eu_80665E30;
+    cornerMax.z = (float)(s32)fz / lbl_eu_80665E30;
+    cornerA = cornerB;
+    cornerMax.y = (float)(s32)fy / lbl_eu_80665E30 +
+                  (float)(s32)hTop / lbl_eu_80665E30;
+    cornerB.y = (float)(s32)by / lbl_eu_80665E30;
+    cornerMin.y = (float)(s32)fy / lbl_eu_80665E30 -
+                  (float)(s32)optD / lbl_eu_80665E30;
+    float warpH = (float)(s32)fw / lbl_eu_80665E30;
+
+    cf::CfGameManager* mgr =
+        (cf::CfGameManager*)func_80081CB8__Q22cf13CfGameManagerFv();
+    if (mgr != NULL) {
+        func_800AB7F8(mgr, warpH, &cornerMin, &cornerMax, g0, g1, g2, g3);
+        func_800AB978(mgr, warpH, lbl_eu_80665E34, &cornerB, &cornerA);
+
+        // Center of the min/max pair, duplicated, scaled, duplicated again.
+        center.x = cornerMin.x + cornerMax.x;
+        center.y = cornerMin.y + cornerMax.y;
+        center.z = cornerMin.z + cornerMax.z;
+        centerCopy = center;
+        scaledV.x = centerCopy.x * lbl_80665E38__Q23mtl10MemManager;
+        scaledV.y = centerCopy.y * lbl_80665E38__Q23mtl10MemManager;
+        scaledV.z = centerCopy.z * lbl_80665E38__Q23mtl10MemManager;
+        scaledCopy = scaledV;
+
+        func_800AC30C(mgr, id0, id1, name);
+
+        // Preload notifier dispatch through CfGameManager vtable slot 0x158.
+        ((cf::CfGameManagerVt158*)mgr)->notifyPreload(flag != 0);
+
+        ((CfGameManagerWarpView*)mgr)->warpFade = (float)(s32)fade;
+    }
+
+    func_8007C360__Q22cf13CfGameManagerFv(lbl_eu_80665E3C, optC, optD);
     return 0;
 }
 
 // --- setMapPreloadArea (us-800487dc) ---
 int setMapPreloadArea(VMThread* pThread) {
+    int argA = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    int argB = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
+    int fx0 = vmArgFixedGet(4, vmArgPtrGet(pThread, 3));
+    int fy0 = vmArgFixedGet(5, vmArgPtrGet(pThread, 4));
+    int fz0 = vmArgFixedGet(6, vmArgPtrGet(pThread, 5));
+    int fx1 = vmArgFixedGet(7, vmArgPtrGet(pThread, 6));
+    int fy1 = vmArgFixedGet(8, vmArgPtrGet(pThread, 7));
+    int fz1 = vmArgFixedGet(9, vmArgPtrGet(pThread, 8));
+    int fw = vmArgFixedGet(10, vmArgPtrGet(pThread, 9));
+
+    int flag;
+    if (vmArgOmitChk(pThread, 10)) {
+        flag = 0;
+    } else {
+        flag = vmArgIntGet(11, vmArgPtrGet(pThread, 10));
+    }
+
+    // Fixed-point -> float area bounds (MWCC 0x4330/xoris conversion idiom)
+    float boxMin[3];
+    float boxMax[3];
+    boxMin[0] = (float)(s32)fx0 / lbl_eu_80665E30;
+    boxMin[1] = (float)(s32)fy0 / lbl_eu_80665E30;
+    boxMin[2] = (float)(s32)fz0 / lbl_eu_80665E30;
+    boxMax[0] = (float)(s32)fx1 / lbl_eu_80665E30;
+    boxMax[1] = (float)(s32)fy1 / lbl_eu_80665E30;
+    boxMax[2] = (float)(s32)fz1 / lbl_eu_80665E30;
+
+    void* gm = func_80081CB8__Q22cf13CfGameManagerFv();
+    if (gm != NULL) {
+        func_800ABD44(gm, boxMax, boxMin, (float)(s32)fw / lbl_eu_80665E30);
+        func_800AC30C(gm, argA, argB, 0);
+
+        // Register the preload request via the manager's virtual notifier
+        cf::CfGameManager* mgr = (cf::CfGameManager*)gm;
+        typedef void (cf::CfGameManager::*Notifier)(bool);
+        (mgr->**(Notifier*)((void**)(*(void**)mgr) + 0x158 / 4))(flag != 0);
+    }
+
     return 0;
 }
 
 // --- mapJump (us-80048a5c) ---
 int mapJump(VMThread* pThread) {
-    int r25 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
-    int r26 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
-    int r27 = vmArgFixedGet(4, vmArgPtrGet(pThread, 3));
-    int r28 = vmArgFixedGet(5, vmArgPtrGet(pThread, 4));
-    int r29 = vmArgFixedGet(6, vmArgPtrGet(pThread, 5));
-    int r30 = vmArgIntGet(7, vmArgPtrGet(pThread, 6));
+    int areaId = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    int subId = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
+    int fx = vmArgFixedGet(4, vmArgPtrGet(pThread, 3));
+    int fy = vmArgFixedGet(5, vmArgPtrGet(pThread, 4));
+    int fz = vmArgFixedGet(6, vmArgPtrGet(pThread, 5));
+    int rot = vmArgIntGet(7, vmArgPtrGet(pThread, 6));
 
-    int r31 = 8;
-    const char* r24;
-    if (vmArgOmitChk(pThread, 7) == 0) {
-        r24 = vmArgStringGet(8, vmArgPtrGet(pThread, 7));
+    int optIdx = 8;
+    const char* name;
+    if (vmArgOmitChk(pThread, 7)) {
+        name = 0;
     } else {
-        r24 = 0;
+        name = vmArgStringGet(8, vmArgPtrGet(pThread, 7));
     }
 
-    int r23;
-    if (vmArgOmitChk(pThread, r31) == 0) {
-        r23 = vmArgIntGet(r31 + 1, vmArgPtrGet(pThread, r31));
+    // Optional warp-flag then fade-frames args share the rolling index
+    int flag;
+    if (vmArgOmitChk(pThread, optIdx)) {
+        flag = 0;
     } else {
-        r23 = 0;
+        flag = vmArgIntGet(optIdx + 1, vmArgPtrGet(pThread, optIdx));
     }
-    r31++;
+    optIdx++;
 
-    if (vmArgOmitChk(pThread, r31) == 0) {
-        r31 = vmArgIntGet(r31 + 1, vmArgPtrGet(pThread, r31));
+    int frames;
+    if (vmArgOmitChk(pThread, optIdx)) {
+        frames = 0;
     } else {
-        r31 = 0;
+        frames = vmArgIntGet(optIdx + 1, vmArgPtrGet(pThread, optIdx));
+        optIdx++;
     }
 
-    float pt[3] = {
-        (float)(s32)r27 / 4096.0f,
-        (float)(s32)r28 / 4096.0f,
-        (float)(s32)r29 / 4096.0f,
-    };
+    // Fixed-point -> float position (MWCC 0x4330/xoris conversion idiom);
+    // separate assignments let each result die immediately (no FPR saves)
+    float pt[3];
+    pt[0] = (float)(s32)fx / lbl_eu_80665E30;
+    pt[1] = (float)(s32)fy / lbl_eu_80665E30;
+    pt[2] = (float)(s32)fz / lbl_eu_80665E30;
 
-    func_80083D50__Q22cf13CfGameManagerFv((u32)(r25 & 0xFFFF), (u32)(r26 & 0xFFFF),
-                                         (u32)(u8*)&pt[0], (u32)r24, (float)(s32)r30);
-    func_8007C374__Q22cf13CfGameManagerFv((u32)r23, (u32)r31, 1.0f, 1);
+    func_80083D50__Q22cf13CfGameManagerFv(areaId & 0xFFFF, subId & 0xFFFF,
+                                           (u32)&pt[0], (u32)name,
+                                           (float)(s32)rot / lbl_eu_80665E30);
+    func_8007C374__Q22cf13CfGameManagerFv(flag, frames, lbl_eu_80665E3C, 1);
     return 0;
 }
 
@@ -586,15 +744,16 @@ int isMainParty(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     int val = vmArgIntGet(2, arg);
     
-    int firstOut = -1;
-    int secondOut = 0;
+    VMArg ret;
+    int out[2];
+    out[0] = 0;
+    out[1] = -1;
     int* data = func_8009ECB0();
-    func_8009E344((void*)data, val, &secondOut, &firstOut);
+    func_8009E344((void*)data, val, &out[0], &out[1]);
     
-    int result = secondOut;
+    int result = out[0];
     int orVal = (1 - result) | (result - 1);
     
-    VMArg ret;
     *(u8*)&ret.type = ((unsigned int)orVal >> 31) + 1;
     vmRetValSet(pThread, &ret);
     return 1;
@@ -605,15 +764,16 @@ int isResvParty(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     int val = vmArgIntGet(2, arg);
     
-    int firstOut = -1;
-    int secondOut = 0;
+    VMArg ret;
+    int out[2];
+    out[0] = 0;
+    out[1] = -1;
     int* data = func_8009ECB0();
-    func_8009E344((void*)data, val, &secondOut, &firstOut);
+    func_8009E344((void*)data, val, &out[0], &out[1]);
     
-    int result = secondOut;
+    int result = out[0];
     int orVal = (2 - result) | (result - 2);
     
-    VMArg ret;
     *(u8*)&ret.type = ((unsigned int)orVal >> 31) + 1;
     vmRetValSet(pThread, &ret);
     return 1;
@@ -623,121 +783,122 @@ int isResvParty(VMThread* pThread) {
 int addParty(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     int v31 = vmArgIntGet(2, arg);
-    
-    int firstOut = 0;
-    int secondOut = -1;
-    int* data = func_8009ECB0();
-    func_8009E344((void*)data, v31, &firstOut, &secondOut);
-    
-    int count = firstOut;
-    int sub = count - 2;
-    int clz = __cntlzw(sub);
-    int isEq = (unsigned int)clz >> 5;
-    
+
+    // out slot pair probed from the party manager (count / reserved)
+    int out[2];
+    out[0] = 0;
+    out[1] = -1;
+    func_8009E344(func_8009ECB0(), v31, &out[0], &out[1]);
+
+    // count==2 (or the folded duplicate test) skips the group bookkeeping
+    u32 isEq = (u32)__cntlzw(out[0] - 2) >> 5;
     if (isEq != 1 && isEq != 2) {
         UnkClass_8009ECB0* data2 = (UnkClass_8009ECB0*)func_8009ECB0();
         int group = 0;
-        
+
         if (v31 == 9)       group = 6;
         else if (v31 == 10) group = 7;
         else if (v31 == 6)  group = 9;
         else if (v31 == 7)  group = 10;
-        else if (v31 == 12 || v31 == 13) group = 4;
-        
-        if (group) func_8009E740(data2, group);
-        
-        if (!func_8009E56C(data2, v31, 1)) {
-            func_8009E56C(data2, v31, 2);
+        else if (v31 == 12) group = 4;
+        else if (v31 == 13) group = 4;
+
+        if (group) func_8009E740((cf::CtrlObjectParamSlots*)data2, group);
+
+        if (!func_8009E56C((cf::CtrlObjectParamSlots*)data2, v31, 1)) {
+            func_8009E56C((cf::CtrlObjectParamSlots*)data2, v31, 2);
         }
     }
-    
+
     func_800823A4__Q22cf13CfGameManagerFv(v31, 1);
     return 0;
 }
 
 // --- makeParty (us-80049bf8) ---
+// Reads a leader id plus six optional party ids and a warp flag, fills an
+// 18-byte u16 party record, snapshots each player's position/scale, applies
+// the party, then restores positions/scales through the player vtable.
 int makeParty(VMThread* pThread) {
-    int v29, v28, v27, v26, v25, v24, v23, v30;
-    
-    {
-        VMArg* arg = vmArgPtrGet(pThread, 1);
-        v29 = vmArgIntGet(2, arg);
+    VMArg* arg = vmArgPtrGet(pThread, 1);
+    int id0 = vmArgIntGet(2, arg);
+
+    int id1;
+    if (vmArgOmitChk(pThread, 2)) {
+        id1 = 0;
+    } else {
+        id1 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
     }
-    
-    // Arg 2: optional
-    if (vmArgOmitChk(pThread, 2)) { v28 = 0; v30 = 3; }
-    else { v30 = 3; VMArg* arg = vmArgPtrGet(pThread, 2); v28 = vmArgIntGet(3, arg); }
-    
-    // Arg 3: optional
-    if (vmArgOmitChk(pThread, v30)) { v27 = 0; v30++; }
-    else { VMArg* arg = vmArgPtrGet(pThread, v30); v30++; v27 = vmArgIntGet(v30, arg); }
-    
-    // Arg 4: optional
-    if (vmArgOmitChk(pThread, v30)) { v26 = 0; v30++; }
-    else { VMArg* arg = vmArgPtrGet(pThread, v30); v30++; v26 = vmArgIntGet(v30, arg); }
-    
-    // Arg 5: optional
-    if (vmArgOmitChk(pThread, v30)) { v25 = 0; v30++; }
-    else { VMArg* arg = vmArgPtrGet(pThread, v30); v30++; v25 = vmArgIntGet(v30, arg); }
-    
-    // Arg 6: optional
-    if (vmArgOmitChk(pThread, v30)) { v24 = 0; v30++; }
-    else { VMArg* arg = vmArgPtrGet(pThread, v30); v30++; v24 = vmArgIntGet(v30, arg); }
-    
-    // Arg 7: optional
-    if (vmArgOmitChk(pThread, v30)) { v23 = 0; v30++; }
-    else { VMArg* arg = vmArgPtrGet(pThread, v30); v30++; v23 = vmArgIntGet(v30, arg); }
-    
-    // Arg 8: optional bool
-    int r30_bool;
-    if (vmArgOmitChk(pThread, v30)) { r30_bool = 1; }
-    else { VMArg* arg = vmArgPtrGet(pThread, v30); v30++; r30_bool = vmArgBoolGet(v30, arg); }
-    
-    // Build party data
-    u16 pdata[9];
-    memset(pdata, 0, sizeof(pdata));
-    pdata[0] = v29 & 0xFFFF;
-    pdata[1] = v28 & 0xFFFF;
-    pdata[2] = v27 & 0xFFFF;
-    pdata[3] = v26 & 0xFFFF;
-    pdata[4] = v25 & 0xFFFF;
-    pdata[5] = v24 & 0xFFFF;
-    
-    // Player positions
-    float pos[3][3];
+
+    // Rolling optional-index walk over args 3..7
+    int idx = 3;
+    int id2, id3, id4, id5, id6;
+    if (vmArgOmitChk(pThread, idx)) { id2 = 0; idx++; }
+    else { id2 = vmArgIntGet(idx + 1, vmArgPtrGet(pThread, idx)); idx++; }
+    if (vmArgOmitChk(pThread, idx)) { id3 = 0; idx++; }
+    else { id3 = vmArgIntGet(idx + 1, vmArgPtrGet(pThread, idx)); idx++; }
+    if (vmArgOmitChk(pThread, idx)) { id4 = 0; idx++; }
+    else { id4 = vmArgIntGet(idx + 1, vmArgPtrGet(pThread, idx)); idx++; }
+    if (vmArgOmitChk(pThread, idx)) { id5 = 0; idx++; }
+    else { id5 = vmArgIntGet(idx + 1, vmArgPtrGet(pThread, idx)); idx++; }
+    if (vmArgOmitChk(pThread, idx)) { id6 = 0; idx++; }
+    else { id6 = vmArgIntGet(idx + 1, vmArgPtrGet(pThread, idx)); idx++; }
+
+    // Final optional bool defaults to true when omitted
+    int warpFlag;
+    if (vmArgOmitChk(pThread, idx)) {
+        warpFlag = 1;
+        idx++;
+    } else {
+        warpFlag = vmArgBoolGet(idx + 1, vmArgPtrGet(pThread, idx));
+        idx++;
+    }
+
+    // 18-byte party record: seven u16 ids then zero tail
+    u16 party[9];
+    memset(party, 0, 0x12);
+    party[0] = id0;
+    party[1] = id1;
+    party[2] = id2;
+    party[3] = id3;
+    party[4] = id4;
+    party[5] = id5;
+    party[6] = id6;
+
+    ml::CVec3 pos[3];
     float scale[3];
+    float zeroF = lbl_eu_80665E4C;
     for (int i = 0; i < 3; i++) {
-        pos[i][0] = pos[i][1] = pos[i][2] = 0.0f;
-        scale[i] = 0.0f;
-        void* player = cf::CfGameManager::getPlayer(i);
-        if (player) {
-            void* ppos = (*(void*(*)(void*))(*(void**)player))(player);
-            pos[i][0] = *(float*)((u8*)ppos + 0);
-            pos[i][1] = *(float*)((u8*)ppos + 4);
-            pos[i][2] = *(float*)((u8*)ppos + 8);
-            scale[i] = (*(float(*)(void*))(*(void**)player))(player);
+        pos[i] = ml::CVec3::zero;
+        scale[i] = zeroF;
+        cf::unkPartyPlayerDispatch* player =
+            (cf::unkPartyPlayerDispatch*)cf::CfGameManager::getPlayer(i);
+        if (player != NULL) {
+            pos[i] = *player->getPosPtr();
+            scale[i] = player->getScale();
         }
     }
-    
-    func_8007F1FC__Q22cf13CfGameManagerFv(pdata, 1);
-    
-    if (r30_bool) {
+
+    func_8007F1FC__Q22cf13CfGameManagerFv(party, 1);
+
+    if (warpFlag != 0) {
         int* d = func_8009ECB0();
         func_80080888__Q22cf13CfGameManagerFv(d[1] & 0xFFFF, 1);
     }
-    
-    if (func_8009CF8C(0x20) == 1 && func_80087250__Q22cf13CfGameManagerFv()) {
+
+    if (cf::CfGameManager::func_800822F4() == 1 &&
+        func_80087250__Q22cf13CfGameManagerFv()) {
         func_8012FAA8();
     }
-    
+
     for (int i = 0; i < 3; i++) {
-        void* player = cf::CfGameManager::getPlayer(i);
-        if (player) {
-            (*(void(*)(void*, float*))(*(void**)player))(player, pos[i]);
-            (*(void(*)(void*, float))(*(void**)player))(player, scale[i]);
+        cf::unkPartyPlayerDispatch* player =
+            (cf::unkPartyPlayerDispatch*)cf::CfGameManager::getPlayer(i);
+        if (player != NULL) {
+            player->setPos(&pos[i]);
+            player->setScale(scale[i]);
         }
     }
-    
+
     return 0;
 }
 
@@ -771,7 +932,7 @@ int delParty(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
     int v31 = vmArgIntGet(2, arg);
     int* data = func_8009ECB0();
-    func_8009E740(data, v31);
+    func_8009E740((cf::CtrlObjectParamSlots*)data, v31);
     return 0;
 }
 
@@ -927,66 +1088,60 @@ int equipItem(VMThread* vmThread) {
 }
 
 // --- equipWeapon (us-8004a608) ---
-int equipWeapon(VMThread* vmThread) {
+int equipWeapon(VMThread* pThread) {
     int charId;
     int weaponId;
-    int slotIdx = 1;
+    int* charData;
+    int* weaponSlot;
 
-    // Get charId
     {
-        VMArg* arg = vmArgPtrGet(vmThread, slotIdx);
-        slotIdx++;
-        charId = vmArgIntGet(slotIdx, arg);
-        slotIdx++;
+        VMArg* arg = vmArgPtrGet(pThread, 1);
+        charId = vmArgIntGet(2, arg);
     }
 
-    // Get weaponId
     {
-        VMArg* arg = vmArgPtrGet(vmThread, slotIdx);
-        slotIdx++;
-        weaponId = vmArgIntGet(slotIdx, arg);
-        slotIdx++;
+        VMArg* arg = vmArgPtrGet(pThread, 2);
+        weaponId = vmArgIntGet(3, arg);
     }
 
     if (func_8009CF8C(0x3508)) {
         return 0;
     }
 
-    int* charData = func_8009EC9C(charId & 0xFFFF);
-    int* weaponSlot = func_8009D790(&charData[7], 5);
+    charData = func_8009EC9C(charId & 0xFFFF);
+    weaponSlot = func_8009D790(&charData[7], 5);
 
     if (weaponSlot != NULL) {
-        int slotType = (*weaponSlot) >> 20;
-        if (weaponId == slotType) {
+        // Already equipped with this type: nothing to do
+        if (weaponId == (int)((u32)*weaponSlot >> 20)) {
             return 0;
         }
-
-        CItem_initItemImplInstances();
-
-        int newWeaponId = weaponId & 0xFFFF;
-        int slotInfo;
-        func_80158420(newWeaponId, &slotInfo, 1, &slotInfo);
-        func_8009E0A8(charData, slotInfo);
-
+        // Item-type probe via the item implementation singleton (result unused)
+        ((CItemImplInstance*)CItem_initItemImplInstances())->getItemId(weaponSlot);
+        short slotVal;
+        int unkVal;
+        func_80158420(weaponId & 0xFFFF, &slotVal, 1, &unkVal);
+        func_8009E0A8(charData, slotVal);
         func_800B70FC(charId, 0);
         lbl_eu_80663E28 |= 0x08000000;
     } else {
-        int* cd = func_8009EC9C(charId & 0xFFFF);
-        func_8009E0C4(cd, 5, weaponId & 0xFFFF);
+        func_8009E0C4(func_8009EC9C(charId & 0xFFFF), 5, weaponId & 0xFFFF);
 
         if (charId >= 1 && charId <= 11) {
+            int syncId;
             void* invSlot = func_8015783C(2, charId, 0);
-            if (weaponId != 0) {
+            if (weaponId == 0) {
+                // Empty equip: refresh the inventory entry's item view (discarded)
+                ((CItemImplInstance*)CItem_initItemImplInstances())->getItemId(invSlot);
+            } else {
                 func_80158118(invSlot, weaponId & 0xFFFF, 1);
                 func_80155A00(invSlot);
-            } else {
-                CItem_initItemImplInstances();
             }
 
             for (int k = 0; k < 8; k++) {
-                void* slotRef = func_80157948(charId, k);
-                if (*(u8*)slotRef == 6) {
-                    func_80159B40(charId, k, &weaponId);
+                u8* slotRef = (u8*)func_80157948(charId, k);
+                if (*slotRef == 6) {
+                    func_80159B40(charId, k, &syncId);
                 }
             }
         }
@@ -996,28 +1151,35 @@ int equipWeapon(VMThread* vmThread) {
 }
 
 // --- getWeaponSlot (us-8004a7c8) ---
+// Reads the equipped weapon id of a character. Prefers the character's
+// weapon slot record (+0x1C list, index 5); if absent, falls back to the
+// inventory slot 2 entry when its item-type nibble is 2 (weapon).
 int getWeaponSlot(VMThread* vmThread) {
+    int* slotData;
     int charId;
-    int itemId = 0;
+    int itemId;
 
-    {
-        VMArg* arg = vmArgPtrGet(vmThread, 1);
-        charId = vmArgIntGet(2, arg);
-    }
-
+    VMArg* arg = vmArgPtrGet(vmThread, 1);
+    charId = vmArgIntGet(2, arg);
     int* charData = func_8009EC9C(charId & 0xFFFF);
-    int* slotData = func_8009D790(&charData[7], 5);
+    itemId = 0;
+    slotData = func_8009D790(&charData[7], 5);
 
     if (slotData != NULL) {
         CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances();
         itemId = inst->getWeaponSlot(slotData) & 0xFFFF;
-    } else if (charId >= 1 && charId <= 11) {
-        void* invSlot = func_8015783C(2, charId, 0);
-        int slotType = (*(int*)invSlot) >> 12 & 0xF;
-        if (slotType == 2) {
-            CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances();
-            itemId = inst->getWeaponSlot(invSlot) & 0xFFFF;
-        }
+    } else {
+        // Swapped-operand guards block MWCC's range-check fusion so the two
+        // signed cmpi/branch pairs stay byte-identical to retail.
+        do {
+            if (0 >= charId) break;
+            if (11 < charId) break;
+            int* invSlot = (int*)func_8015783C(2, charId, 0);
+            if (((*invSlot) >> 12 & 0xF) == 2) {
+                CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances();
+                itemId = inst->getWeaponSlot(invSlot) & 0xFFFF;
+            }
+        } while (0);
     }
 
     VMArg ret;
@@ -1028,28 +1190,33 @@ int getWeaponSlot(VMThread* vmThread) {
 }
 
 // --- setWeaponSlot (us-8004a8d8) ---
+// Writes a weapon id into the character's weapon slot (or the inventory
+// fallback for guest characters 1-11 without a slot record).
 int setWeaponSlot(VMThread* vmThread) {
+    int* slotData;
     int charId;
     int itemId;
 
-    {
-        VMArg* arg = vmArgPtrGet(vmThread, 1);
-        charId = vmArgIntGet(2, arg);
-    }
-
-    {
-        VMArg* arg = vmArgPtrGet(vmThread, 2);
-        itemId = vmArgIntGet(3, arg);
-    }
+    VMArg* arg = vmArgPtrGet(vmThread, 1);
+    charId = vmArgIntGet(2, arg);
+    arg = vmArgPtrGet(vmThread, 2);
+    itemId = vmArgIntGet(3, arg);
 
     int* charData = func_8009EC9C(charId & 0xFFFF);
-    int* slotData = func_8009D790(&charData[7], 5);
+    slotData = func_8009D790(&charData[7], 5);
 
     if (slotData != NULL) {
-        CItem_initItemImplInstances();
-    } else if (charId >= 1 && charId <= 11) {
-        void* invSlot = func_8015783C(2, charId, 0);
-        CItem_initItemImplInstances();
+        CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances();
+        inst->setWeaponSlot(slotData, itemId);
+    } else {
+        // Swapped-operand guards block MWCC's range-check fusion (see getWeaponSlot).
+        do {
+            if (0 >= charId) break;
+            if (11 < charId) break;
+            int* invSlot = (int*)func_8015783C(2, charId, 0);
+            CItemImplInstance* inst = (CItemImplInstance*)CItem_initItemImplInstances();
+            inst->setWeaponSlot(invSlot, itemId);
+        } while (0);
     }
 
     VMArg ret;
@@ -1075,51 +1242,33 @@ int waitEventRes(VMThread* vmThread) {
 }
 
 // --- setFade (us-8004aa44) ---
+// Converts four fixed-point color args (and an optional frame count) to a
+// float RGBA array; the (f32)(s32) casts emit MWCC's 0x4330/xoris/lfd/fsubs
+// idiom with the magic and the 4096.0 divisor pooled/named like retail.
 int setFade(VMThread* vmThread) {
-    int fixedR, fixedG, fixedB, fixedA;
-    int frames = 0;
-    int slotIdx = 1;
+    VMArg* arg = vmArgPtrGet(vmThread, 1);
+    int fixedR = vmArgFixedGet(2, arg);
+    arg = vmArgPtrGet(vmThread, 2);
+    int fixedG = vmArgFixedGet(3, arg);
+    arg = vmArgPtrGet(vmThread, 3);
+    int fixedB = vmArgFixedGet(4, arg);
+    arg = vmArgPtrGet(vmThread, 4);
+    int fixedA = vmArgFixedGet(5, arg);
 
-    {
-        VMArg* arg = vmArgPtrGet(vmThread, slotIdx);
-        slotIdx++;
-        fixedR = vmArgFixedGet(slotIdx, arg);
-        slotIdx++;
-    }
-    {
-        VMArg* arg = vmArgPtrGet(vmThread, slotIdx);
-        slotIdx++;
-        fixedG = vmArgFixedGet(slotIdx, arg);
-        slotIdx++;
-    }
-    {
-        VMArg* arg = vmArgPtrGet(vmThread, slotIdx);
-        slotIdx++;
-        fixedB = vmArgFixedGet(slotIdx, arg);
-        slotIdx++;
-    }
-    {
-        VMArg* arg = vmArgPtrGet(vmThread, slotIdx);
-        slotIdx++;
-        fixedA = vmArgFixedGet(slotIdx, arg);
-        slotIdx++;
-    }
-
-    if (vmArgOmitChk(vmThread, slotIdx)) {
+    int frames;
+    if (vmArgOmitChk(vmThread, 5)) {
         frames = 0;
     } else {
-        VMArg* arg = vmArgPtrGet(vmThread, slotIdx);
-        frames = vmArgIntGet(slotIdx + 1, arg);
+        frames = vmArgIntGet(6, vmArgPtrGet(vmThread, 5));
     }
 
-    float fR = (float)(s32)fixedR / 4096.0f;
-    float fG = (float)(s32)fixedG / 4096.0f;
-    float fB = (float)(s32)fixedB / 4096.0f;
-    float fA = (float)(s32)fixedA / 4096.0f;
+    float color[4];
+    color[0] = (float)(s32)fixedR / lbl_eu_80665E30;
+    color[1] = (float)(s32)fixedG / lbl_eu_80665E30;
+    color[2] = (float)(s32)fixedB / lbl_eu_80665E30;
+    color[3] = (float)(s32)fixedA / lbl_eu_80665E30;
 
-    float color[4] = {fR, fG, fB, fA};
-    func_8008566C__Q22cf13CfGameManagerFv(color, frames & 0xFFFF, 1);
-
+    func_8008566C__Q22cf13CfGameManagerFv(frames & 0xFFFF, color, 1);
     return 0;
 }
 

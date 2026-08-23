@@ -580,10 +580,11 @@ void __a1_30_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 }
 
 void __a1_31_data_type(u8 chan, u8* data, WPADStatusEx* status) {
+    u16 rptBtn = (u16)((data[2] << 8) | data[1]);
     WPADCB* cb = __rvl_p_wpadcb[chan];
     WPADCB* pCB;
 
-    status->button = (u16)((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK;
+    status->button = (u16)(rptBtn & HID_WPAD_BUTTON_MASK);
     status->dev = cb->devType;
 
     if (cb->dataFormat <= WPAD_FMT_CORE_BTN_ACC) {
@@ -816,8 +817,8 @@ void __wpadGetDevConfig(s32 chan, s32 err) {
 
 void __wpadGetExtConfig(s32 chan, s32 err) {
     WPADCB* cb = __rvl_p_wpadcb[chan];
-    const char* dbg = (const char*)__a1_input_reports_array;
     u8* buf = cb->wmReadDataPtr;
+    const char* dbg = (const char*)__a1_input_reports_array;
     s32 i;
     s32 j;
     s32 sum;
@@ -1308,8 +1309,8 @@ void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {
     const char* pDbg = (const char*)__a1_input_reports_array;
     WPADCB* cb = __rvl_p_wpadcb[chan];
     BOOL enable;
-    u32 addrHi;
     u16 dataAddr;
+    u32 addrHi;
     u16 addr;
     u8 length;
     s16 offset;
@@ -1467,22 +1468,18 @@ void __a1_32_data_type(u8 chan, u8* data, WPADStatusEx* status) {
             ((WPADFSStatus*)status)->fsStickX = data[3];
             ((WPADFSStatus*)status)->fsStickY = data[4];
 
-            {
-                WPADCB* cb2 = __rvl_p_wpadcb[chan];
-
-                ((WPADFSStatus*)status)->fsAccX =
-                    (s16)((s16)((s16)((s16)((s16)((s16)data[5]) << 2) & (s16)0xFFFC) |
-                             (s16)((s16)((s16)data[8] >> 2) & 3))) -
-                    (s16)cb2->extConfig.u.fs.accX0g;
-                ((WPADFSStatus*)status)->fsAccY =
-                    (s16)((s16)((s16)((s16)((s16)((s16)data[6]) << 2) & (s16)0xFFFC) |
-                             (s16)((s16)((s16)data[8] >> 4) & 3))) -
-                    (s16)cb2->extConfig.u.fs.accY0g;
-                ((WPADFSStatus*)status)->fsAccZ =
-                    (s16)((s16)((s16)((s16)((s16)((s16)data[7]) << 2) & (s16)0xFFFC) |
-                             (s16)((s16)data[8] >> 6))) -
-                    (s16)cb2->extConfig.u.fs.accZ0g;
-            }
+            ((WPADFSStatus*)status)->fsAccX =
+                (s16)((s16)((s16)((s16)((s16)((s16)data[5]) << 2) & (s16)0xFFFC) |
+                         (s16)((s16)((s16)data[8] >> 2) & 3))) -
+                (s16)__rvl_p_wpadcb[chan]->extConfig.u.fs.accX0g;
+            ((WPADFSStatus*)status)->fsAccY =
+                (s16)((s16)((s16)((s16)((s16)((s16)data[6]) << 2) & (s16)0xFFFC) |
+                         (s16)((s16)((s16)data[8] >> 4) & 3))) -
+                (s16)__rvl_p_wpadcb[chan]->extConfig.u.fs.accY0g;
+            ((WPADFSStatus*)status)->fsAccZ =
+                (s16)((s16)((s16)((s16)((s16)((s16)data[7]) << 2) & (s16)0xFFFC) |
+                         (s16)((s16)data[8] >> 6))) -
+                (s16)__rvl_p_wpadcb[chan]->extConfig.u.fs.accZ0g;
 
             ((WPADFSStatus*)status)->button =
                 (u16)((u16)((WPADFSStatus*)status)->button |
@@ -1548,7 +1545,7 @@ void __a1_33_data_type(u8 chan, u8* data, WPADStatusEx* status) {
     cb->wpInfo.nearempty = (data[1] >> 7) & 1;
 
     {
-        WPADCB* cb2 = __rvl_p_wpadcb[chan];
+        WPADCB* cb2 = *(WPADCB**)((u8*)__rvl_p_wpadcb + ((u32)chan << 2));
 
         status->accX = (s16)((s16)((s16)((s16)((s16)((s16)data[3]) << 2) & (s16)0xFFFC) |
                              (s16)((s16)((u16)(data[1] >> 5)) & (s16)0x0003))) -
@@ -1755,20 +1752,20 @@ void __a1_37_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 
             ((WPADFSStatus*)status)->fsAccX =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[0x12]) << 2) & (s16)0xFFFC) |
-                         (s16)((s16)((u16)(data[0x15] >> 2)) & (s16)0x0003))) -
+                         ((data[0x15] >> 2) & 0x3))) -
                 (s16)pCB->extConfig.u.fs.accX0g;
             ((WPADFSStatus*)status)->fsAccY =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[0x13]) << 2) & (s16)0xFFFC) |
-                         (s16)((s16)((u16)(data[0x15] >> 4)) & (s16)0x0003))) -
+                         ((data[0x15] >> 4) & 0x3))) -
                 (s16)pCB->extConfig.u.fs.accY0g;
             ((WPADFSStatus*)status)->fsAccZ =
                 (s16)((s16)((s16)((s16)((s16)((s16)data[0x14]) << 2) & (s16)0xFFFC) |
-                         (s16)((s16)((s8)data[0x15] >> 6) & (s16)0x0003))) -
+                         (data[0x15] >> 6))) -
                 (s16)pCB->extConfig.u.fs.accZ0g;
 
             ((WPADFSStatus*)status)->button =
-                (u16)((u16)((WPADFSStatus*)status)->button |
-                      (u16)((u16)((u16)(~(u16)data[0x15]) & (u16)0x3) << 13));
+                (u16)((WPADFSStatus*)status)->button |
+                (u16)((~data[0x15] & 0x3) << 13);
 
             if (pCB->calibrated == 0) {
                 pCB->calibrated = 1;
@@ -1812,8 +1809,8 @@ void __a1_37_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 }
 
 void __a1_3e_data_type(u8 chan, u8* data, WPADStatusEx* status) {
-    WPADCB* cb = __rvl_p_wpadcb[chan];
     WPADStatusEx* st = status;
+    WPADCB* cb = __rvl_p_wpadcb[chan];
     BOOL enable;
 
     if (_recv_3e[chan] == 0 && _recv_3f[chan] == 0) {
@@ -1857,29 +1854,29 @@ void __a1_3e_data_type(u8 chan, u8* data, WPADStatusEx* status) {
 }
 
 void __a1_3f_data_type(u8 chan, u8* data, WPADStatusEx* status) {
-    WPADCB* cb = __rvl_p_wpadcb[chan];
     WPADStatusEx* st = status;
+    WPADCB* cb = __rvl_p_wpadcb[chan];
     BOOL enable;
 
     if (_recv_3e[chan] == 0 && _recv_3f[chan] == 0) {
-        memset(status, 0, RX_BUFFER_SIZE);
+        memset(st, 0, RX_BUFFER_SIZE);
     }
 
-    status->button = (u16)((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK;
+    st->button = (u16)((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK;
 
     if (cb->dataFormat <= WPAD_FMT_CORE_BTN_ACC || cb->dataFormat == 9) {
-        status->err = WPAD_ERR_OK;
+        st->err = WPAD_ERR_OK;
     } else {
-        status->err = WPAD_ERR_INVALID;
+        st->err = WPAD_ERR_INVALID;
     }
-    status->dev = cb->devType;
+    st->dev = cb->devType;
 
     cb->wpInfo.nearempty = 0;
 
-    status->accY = (s16)((s16)((s16)((s16)((s16)((s16)data[3]) << 2) & (s16)0xFFFC) |
+    st->accY = (s16)((s16)((s16)((s16)((s16)((s16)data[3]) << 2) & (s16)0xFFFC) |
                          (s16)((s16)((u16)(data[1] >> 6)) & (s16)0x0002))) -
                    (s16)(*(WPADCB**)((u8*)__rvl_p_wpadcb + ((u32)chan << 2)))->devConfig.accY0g;
-    status->accZ = (s16)((s16)status->accZ |
+    st->accZ = (s16)((s16)st->accZ |
                    (s16)((s16)((u16)(((u16)(data[1] >> 5) & 0x3) << 2)) |
                          (s16)((u16)(((u16)(data[2] >> 5) & 0x3) << 4))));
 
@@ -1890,7 +1887,7 @@ void __a1_3f_data_type(u8 chan, u8* data, WPADStatusEx* status) {
     _recv_3f[chan] = 1;
 
     if (_recv_3e[chan] != 0 && _recv_3f[chan] != 0) {
-        status->accZ = (s16)(status->accZ - cb->devConfig.accZ0g);
+        st->accZ = (s16)(st->accZ - cb->devConfig.accZ0g);
         cb->rxBufIndex = !cb->rxBufIndex;
         _recv_3f[chan] = 0;
         _recv_3e[chan] = 0;

@@ -19,6 +19,7 @@ void func_801EDA08(CItemBoxLine* self);
 void func_801F1E64(CItemBoxLine* self, u32 itemData);
 void func_801F20F0(CItemBoxLine* self, u32 itemData);
 void func_801F2298(CItemBoxLine* self, u32 itemData);
+int func_801F2880(u32 unused, u32 key);
 
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 int sprintf(char*, const char*, ...);
@@ -250,7 +251,9 @@ u16 func_801EC3B0(const CIBLTab* self, unsigned int index) {
 }
 
 // func_801EC8B4: u8 at +0x9 (default 1)
-u8 func_801EC8B4(const CIBLTab* self, unsigned int index) {
+// noinline: retail calls this accessor out-of-line from func_801ED864/
+// func_801F0488; -ipa file would otherwise fold it into those callers.
+__declspec(noinline) u8 func_801EC8B4(const CIBLTab* self, unsigned int index) {
     if (index < self->count) {
         return self->entries[index].f9;
     }
@@ -327,7 +330,89 @@ ml::FixStr<32>* func_801EC3D0(CIBLTabFormat* self, unsigned int index) {
 // ============================================================================
 // func_801EC438
 // ============================================================================
-void func_801EC438(){}
+// ============================================================================
+// func_801EC438: build the tab entry's display name into the trailing
+// FixStr<128> buffer (+0xB8) and return it. Selector 3 composes a base name
+// from the kind-owner tables and then rewrites "$1"/"$2" placeholders in
+// place from per-kind name parts (Shift-JIS aware: lead bytes 0x81-0x9F /
+// 0xE0-0xEF advance by 2); any other selector resolves the display name
+// through the kind-owner tables directly.
+// ============================================================================
+extern "C" __declspec(noinline) char* func_801EC438(CIBLTabFull* self, u16 index) {
+    if (index >= self->count) return NULL;
+    u16 f0 = self->entries[index].f0;
+    if (f0 == 0) return NULL;
+    char* pool = lbl_eu_805071B0;
+    u8 sel = self->field92;
+    if (sel == 3) {
+        func_801392E4(f0);
+        u16 kind = func_80139358(f0);
+        u8 n = func_801361E8((u32)lbl_eu_806640EC, pool + 0x5a, f0);
+        ml::FixStr<32> partName(true);
+        partName.format(pool + 0x57, func_80136190(pool + 0x63, pool + 0x6c, n));
+        u8 sub = func_801361E8((u32)lbl_eu_806640D8, pool + 0x71, kind);
+        // NOTE: retail sets r5 (kind) for this call, but the shared 2-arg
+        // declaration is kept to avoid changing the sibling call's codegen.
+        char* base = func_8013639C((void*)lbl_eu_806640D8, pool + 0x7a);
+        self->strB8.format(pool + 0x57, base);
+        // Only some languages keep the full-width decoration around $-parts.
+        int full = 1;
+        if ((u8)getLanguage__9CDeviceSCFv() == 3 || (u8)getLanguage__9CDeviceSCFv() == 2) {
+            full = 0;
+        }
+        // Placeholder rewrite pass over a stack copy of the composed name.
+        // NOTE: the exact per-sub-case sprintf format offsets are reconstructed;
+        // the retail loop shuffles in-buffer pointers instead of concatenating.
+        char work[0x20];
+        strcpy(work, self->strB8.mString);
+        char out[0x20];
+        char tmp[0x20];
+        out[0] = '\0';
+        char* w = work;
+        while (*w != '\0') {
+            signed char c = *w;
+            if (c == '$') {
+                w++;
+                signed char d = *w++;
+                tmp[0] = '\0';
+                if (d == '1') {
+                    switch (sub) {
+                    case 1:
+                    case 2:
+                    case 4:
+                        sprintf(tmp, pool + 0x86, partName.mString);
+                        break;
+                    case 3:
+                        sprintf(tmp, full ? pool + 0x9c : pool + 0xb5, partName.mString);
+                        break;
+                    }
+                } else if (d == '2') {
+                    sprintf(tmp, pool + 0x86, partName.mString);
+                }
+                strcat(out, tmp);
+            } else {
+                // Shift-JIS lead-byte pair advance.
+                int adv = (((u8)c >= 0x81 && (u8)c <= 0x9f) || ((u8)c >= 0xe0 && (u8)c <= 0xef)) ? 2 : 1;
+                strncat(out, w, adv);
+                w += adv;
+            }
+        }
+        strcpy(self->strB8.mString, out);
+        self->strB8.mLength = strlen(out);
+    } else {
+        // Non-composed selectors: resolve the name through the kind-owner
+        // tables (a guarded alternate table pair when the selector exceeds 5).
+        u32 table = lbl_eu_8066464C;
+        if ((u8)(sel + 0xfc) > 5 && sel != 2) {
+            table = lbl_eu_80664648;
+        }
+        u16 v = func_80136254((u32)lbl_eu_806640EC, pool + 0xfe, f0);
+        // NOTE: retail sets r5 (v) for this call; see 2-arg note above.
+        char* name = func_8013639C((void*)table, pool + 0xfe);
+        self->strB8.format(pool + 0x57, name);
+    }
+    return &self->strB8.mString[0];
+}
 
 void func_801EC808(CIBLTabFull* self, u32 index, u32 count) {
     if (index >= self->count) return;
@@ -369,9 +454,11 @@ int func_801EC8D8(CIBLTabFull* self, u32 index) {
     goto ret0;
 search:
     {
-        u32 obj = lbl_eu_806640F8;
+        u32 obj;
         if ((u32)sel == 2) {
             obj = lbl_eu_806640F4;
+        } else {
+            obj = lbl_eu_806640F8;
         }
         u8 n = func_801361E8(obj, &lbl_eu_805071B0[0x106], (u16)v);
         if (n == 0) goto ret0;
@@ -396,9 +483,10 @@ void func_801EC9E0(){}
 // cursor deactivation tail.
 // ============================================================================
 void func_801ECC10(CItemBoxLine* self) {
-    func_80136E84(&self->field08, self->field04, &lbl_eu_805071B0[0x121]);
-    func_80136F08(self->field08, &self->field0C, self->field04, &lbl_eu_805071B0[0x139]);
-    func_80136F08(self->field08, &self->field10, self->field04, &lbl_eu_805071B0[0x156]);
+    char* pool = lbl_eu_805071B0;
+    func_80136E84(&self->field08, self->field04, pool + 0x121);
+    func_80136F08(self->field08, &self->field0C, self->field04, pool + 0x139);
+    func_80136F08(self->field08, &self->field10, self->field04, pool + 0x156);
     self->field08->UnbindAllAnimation();
     func_801D21CC(self);
 }
@@ -413,6 +501,8 @@ void __ct__CItemBoxLine(){}
 // embedded-member flag. MWCC supplies the this-null check, the flags>0
 // delete guard and the stmw/lmw frame from the dtor shape itself.
 // ============================================================================
+#pragma push
+#pragma optimize_for_size on
 CItemBoxLine::~CItemBoxLine() {
     __dt__7CSysWinFv(reinterpret_cast<CSysWin*>(&mSysWin), -1);
     __dt__10CScrollBarFv(reinterpret_cast<CScrollBar*>(&mScrollBar310[0]), -1);
@@ -428,6 +518,7 @@ CItemBoxLine::~CItemBoxLine() {
     __dt__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(&pad_14[0]), -1);
     __dt__17UnkClass_8045F564Fv(reinterpret_cast<UnkClass_8045F564*>(&field04), -1);
 }
+#pragma pop
 
 // ============================================================================
 // func_801ED31C: load the item-box line's four files (MEM2 handle via
@@ -435,6 +526,8 @@ CItemBoxLine::~CItemBoxLine() {
 // event, then initialise the info2 state, num-select and scroll-bar members,
 // and finally dispatch the syswin's last vtable slot (index 32) to finish.
 // ============================================================================
+#pragma push
+#pragma optimize_for_size on
 void func_801ED31C(CItemBoxLine* self) {
     self->field24 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
         (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_805071B0[0x171], self, 0, 0);
@@ -449,6 +542,7 @@ void func_801ED31C(CItemBoxLine* self) {
     func_801F34F4(&self->mScrollBar310[0]);
     reinterpret_cast<CSysWinVtblView*>(&self->mSysWin)->vf32();
 }
+#pragma pop
 
 void func_801ED3E8(CItemBoxLine* self) {
     if (self->field4C == 0) return;
@@ -488,6 +582,8 @@ void func_801ED3E8(CItemBoxLine* self) {
     func_8022B748(&self->mSysWin);
 }
 
+#pragma push
+#pragma optimize_for_size on
 void func_801ED4FC(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field4C == 0) return;
     drawItemBox2Layout__FP13CItemBoxInfo2PQ34nw4r3lyt8DrawInfo(&self->mInfo2D0[0], drawInfo);
@@ -511,6 +607,7 @@ void func_801ED4FC(CItemBoxLine* self, nw4r::lyt::DrawInfo* drawInfo) {
         func_801D20B0(&self->mCur70, drawInfo);
     }
 }
+#pragma pop
 
 // ============================================================================
 // func_801ED618: teardown of the loaded item-box line. Stop the two UI sounds,
@@ -576,6 +673,8 @@ u8 func_801ED808(CItemBoxLine* self) {
     return self->field3A0;
 }
 
+#pragma push
+#pragma optimize_for_size on
 void func_801ED864(CItemBoxLine* self) {
     if (self->field50 != 0) return;
     self->field50 = 1;
@@ -583,17 +682,21 @@ void func_801ED864(CItemBoxLine* self) {
     self->unk59 = 0;
     self->unk39E = 0;
     func_801E1498(&self->mInfo2D0[0]);
+    // Four values stay live across the calls below (self / tabs / idx / f9):
+    // retail keeps them in r28..r31 behind a _savegpr_28 prologue.
+    CIBLTab* tabs = &self->unk3A4;
     u8 idx = (u8)(self->unk38C + self->unk38E);
-    u8 v = func_801EC8B4((void*)&self->unk3A4, idx);
-    func_801E14DC(&self->mInfo2D0[0], (u16)func_801EC3B0(&self->unk3A4, idx), 0, self->field39F, v);
-    func_801E16F0(&self->mInfo2D0[0], 0, (char*)func_801EC3D0(&self->unk3A4, idx));
-    func_801F08B4((void*)self, (u16)func_801EC3B0(&self->unk3A4, idx));
+    int f9 = func_801EC8B4((void*)tabs, idx);
+    func_801E14DC(&self->mInfo2D0[0], (u16)func_801EC3B0(tabs, idx), 0, self->field39F, f9);
+    func_801E16F0(&self->mInfo2D0[0], 0, (char*)func_801EC3D0(tabs, idx));
+    func_801F08B4(self, (u16)func_801EC3B0(tabs, idx));
     float vec[3];
     func_801F3670(&self->mScrollBar310[0],
                   (const float*)code80135FDC_setVec3(vec, lbl_eu_8066811C, lbl_eu_80668120, lbl_eu_806680F8));
-    func_801F36BC(&self->mScrollBar310[0], 7, self->unk3A4.count);
+    func_801F36BC(&self->mScrollBar310[0], 7, tabs->count);
     func_801F367C(&self->mScrollBar310[0]);
 }
+#pragma pop
 
 void CItemBoxLine::func_801EDA4C(unsigned char val) {
     unsigned char n = reinterpret_cast<unsigned char*>(this)[0x63];
@@ -638,20 +741,20 @@ void func_801EDB80(CItemBoxLine* self) {
         self->field6D = self->tabCount - 1;
     }
     if (self->unk64[(s8)self->field6D] == 0) {
-        u8 count;
+        // j-init (with its own tabCount reload for the wrap) precedes the count
+        // load, matching retail scheduling; 'last' is only referenced inside
+        // the loop.
         int j = (s8)(self->field6D - 1);
-        if (j < 0) j = (s8)(self->tabCount - 1);
-        count = self->tabCount;
+        if ((s8)j < 0) j = (s8)(self->tabCount - 1);
+        u8 count = self->tabCount;
         int last = count - 1;
-        u8 i = 0;
-        while (i < count) {
+        for (u8 i = 0; i < count; i++) {
             if (self->unk64[(s8)j] != 0) {
                 self->field6D = (u8)j;
                 break;
             }
             j = j - 1;
             if ((s8)j < 0) j = (s8)last;
-            i++;
         }
     }
     self->unk38E = 0;
@@ -917,7 +1020,117 @@ void func_801EE684(CItemBoxLine* self) {
     }
 }
 
-void func_801EE788(){}
+// ============================================================================
+// func_801EE788: item-box line input/nav state machine. With the syswin
+// overlay open: commit the overlay selection once state reaches 9+. Otherwise
+// ignore while no tab is selected (-1) or the cursor hint is armed; when the
+// num-select is confirming (field390==1 + busy + state 7) rebuild the tab list
+// for the confirmed entry and settle into state 8. Otherwise resolve the
+// highlighted entry: occupied slots beep, entries with page data open the
+// syswin detail pane with kind-range-dependent text, armed pages either
+// dispatch likewise or raise the "unavailable" flag (state 3 beep).
+// ============================================================================
+#pragma push
+#pragma optimize_for_size on
+void func_801EE788(CItemBoxLine* self) {
+    char* pool = lbl_eu_805071B0;
+    if (CSysWin_getUnk34(&self->mSysWin)) {
+        if (CSysWin_isActive(&self->mSysWin)) {
+            func_8022B8E4(&self->mSysWin);
+            if (self->field50 < 9) return;
+            self->field50 = 0xb;
+            func_801F071C(self);
+        }
+        return;
+    }
+    if (self->unk38C == -1) return;
+    if (self->field3A0 != 0) return;
+    CIBLTab* tabs = &self->unk3A4;
+    u32 key = (u8)(self->unk38C + self->unk38E);
+    if (self->field390 == 1 && func_801EB020(&self->mNumSel)) {
+        // Num-select confirm: rebuild the tab list for the confirmed entry.
+        if (func_801EB028(&self->mNumSel) == 0) return;
+        if (self->field50 != 7) return;
+        func_801EC808(reinterpret_cast<CIBLTabFull*>(tabs), key, (u8)self->field392);
+        u32 v = func_801392B4(self->field39F);
+        func_801EBC00(tabs, self->tabEntries[(s8)self->field6D], self->field394, (u8)v);
+        func_801EFFC4(self);
+        func_801EFE6C(self);
+        func_801F0030(self);
+        func_801F0488(self);
+        func_801EB178(&self->mNumSel);
+        self->field50 = 8;
+        func_80138078__FUl(0x2f);
+        return;
+    }
+    if (func_801EC3B0(tabs, key) == 0) return;
+    if (func_801EC23C(tabs, key) != 0) {
+        func_80138078__FUl(5);
+        return;
+    }
+    if (func_801EC284(reinterpret_cast<CIBLTabFull*>(tabs), key) == 0) {
+        // No page data: open the syswin detail pane with kind-range text.
+        char* text = NULL;
+        u16 f0 = func_801EC3B0(tabs, key);
+        u16 kv = (u16)func_801392E4(f0);
+        func_80139358(f0);
+        if ((u32)(kv - 2) <= 7) {
+            text = func_80136190(pool + 0x63, pool + 0x6c, 0x11);
+        } else if ((u32)(kv - 0xa) <= 3) {
+            text = (func_80158068(f0) >= 1)
+                       ? func_80136190(pool + 0x1db, pool + 0x6c, 3)
+                       : func_80136190(pool + 0x63, pool + 0x6c, 0x11);
+        }
+        func_8022B90C(&self->mSysWin, 0);
+        func_8022B9B4(&self->mSysWin, (u32)text, 0);
+        func_8022BFC8(&self->mSysWin, 1);
+        func_8022B8B8(&self->mSysWin);
+        func_80138078__FUl(5);
+        return;
+    }
+    // Armed page: name-format tabs probe availability through func_801F2880,
+    // other kinds go through the character-data lookups below.
+    if (self->tabEntries[(s8)self->field6D] == 0xd) {
+        u16 f0d = func_801EC3B0(tabs, key);
+        func_801F2880((u32)self, f0d);
+    }
+    int unavailable = 0;
+    char* text = NULL;
+    u16 f0 = func_801EC3B0(tabs, key);
+    u16 kv = (u16)func_801392E4(f0);
+    func_80139358(key);
+    if ((u32)(kv - 2) <= 7) {
+        if (func_80157CD0((u8)kv) != 0) {
+            unavailable = 1;
+        } else {
+            text = func_80136190(pool + 0x63, pool + 0x6c, 0x11);
+        }
+    } else if ((u32)(kv - 0xa) <= 3) {
+        u32 t = func_80158068(kv);
+        if (t >= 1) {
+            if (t >= 0x63) {
+                text = func_80136190(pool + 0x1db, pool + 0x6c, 3);
+            } else {
+                unavailable = 1;
+            }
+        } else if (func_80157CD0((u8)kv) != 0) {
+            unavailable = 1;
+        } else {
+            text = func_80136190(pool + 0x63, pool + 0x6c, 0x11);
+        }
+    }
+    if (unavailable) {
+        self->unk39E = 1;
+        func_80138078__FUl(3);
+    } else {
+        func_8022B90C(&self->mSysWin, 0);
+        func_8022B9B4(&self->mSysWin, (u32)text, 0);
+        func_8022BFC8(&self->mSysWin, 1);
+        func_8022B8B8(&self->mSysWin);
+        func_80138078__FUl(5);
+    }
+}
+#pragma pop
 
 // ============================================================================
 // func_801F0030: refresh the seven tab-slot panes. Build the twelve RGBA
@@ -1208,6 +1421,8 @@ void func_801EF3E8(CItemBoxLine* self) {
 // func_801EF45C: refresh the active tab - select from num-select, set the name,
 // and advance to state 6. csvtab index = (0x38c + 0x38e) & 0xFF.
 // ============================================================================
+#pragma push
+#pragma optimize_for_size on
 void func_801EF45C(CItemBoxLine* self) {
     if (!CSysWin_isActive(&self->mSysWin)) return;
     self->field50 = 3;
@@ -1226,6 +1441,7 @@ void func_801EF45C(CItemBoxLine* self) {
     func_801EB0D4(&self->mNumSel);
     self->field50 = 6;
 }
+#pragma pop
 
 // ============================================================================
 // func_801EF518: refresh the tab list - re-register each tab entry with the
@@ -1410,9 +1626,62 @@ void func_801EFE6C(CItemBoxLine* self) {
     }
 }
 
+// ============================================================================
+// func_801EFB24: bind the per-slot tab texture and nameplate colour. Resolve
+// the texture name by slot kind (kinds 1..12 format a fixed pool string,
+// kind 0 uses the shared "timeg" fallback name directly), fetch the texture
+// through resource object A (falling back to B), bind it to the pane named
+// "%d"-style by index+1, and - unless the slot's occupancy byte is set -
+// push the default nameplate colour through the pane's colour-source virtual.
 // noinline: retail func_801EFE6C calls func_801EFB24 as an EXTERNAL reloc; the
-// empty body would otherwise be inlined away, dropping the call from the .o.
-extern "C" __declspec(noinline) void func_801EFB24(CItemBoxLine* self, u8 entry, u32 index){}
+// body would otherwise be inlined away, dropping the call from the .o.
+// ============================================================================
+extern "C" __declspec(noinline) void func_801EFB24(CItemBoxLine* self, u8 kind, u32 index) {
+    const u32 tag = 0x74696d67;
+    char buf[0x20];
+    u32 tex;
+    if (kind == 0) {
+        tex = self->field38->vf01(tag, &lbl_eu_805071B0[0x209], 0);
+    } else {
+        switch (kind) {
+        case 1:  sprintf(buf, &lbl_eu_805071B0[0x255]); break;
+        case 2:  sprintf(buf, &lbl_eu_805071B0[0x26a]); break;
+        case 3:  sprintf(buf, &lbl_eu_805071B0[0x27f]); break;
+        case 4:  sprintf(buf, &lbl_eu_805071B0[0x294]); break;
+        case 5:  sprintf(buf, &lbl_eu_805071B0[0x2a9]); break;
+        case 6:  sprintf(buf, &lbl_eu_805071B0[0x2be]); break;
+        case 7:  sprintf(buf, &lbl_eu_805071B0[0x2d3]); break;
+        case 8:  sprintf(buf, &lbl_eu_805071B0[0x2e8]); break;
+        case 9:  sprintf(buf, &lbl_eu_805071B0[0x2fd]); break;
+        case 10: sprintf(buf, &lbl_eu_805071B0[0x312]); break;
+        case 11: sprintf(buf, &lbl_eu_805071B0[0x327]); break;
+        case 12: sprintf(buf, &lbl_eu_805071B0[0x33c]); break;
+        }
+        tex = self->field3C->vf01(tag, buf, 0);
+            if (tex == 0) {
+                tex = self->field38->vf01(tag, &lbl_eu_805071B0[0x209], 0);
+        }
+    }
+    if (tex != 0) {
+        char nameB[0x20];
+        sprintf(nameB, &lbl_eu_805071B0[0x351], index + 1);
+        func_80137E7C(self->field40, nameB, tex);
+        if (self->unk64[index] == 0) {
+            GXColorS10 col;
+            col.b = 0x14;
+            col.g = 0x14;
+            col.r = 0x14;
+            col.a = self->field396.a;
+            nw4r::lyt::Pane* pane = self->field40->GetRootPane()->FindPaneByName(nameB, true);
+            if (pane != NULL) {
+                CIBLColorSrc* src = reinterpret_cast<CIBLNameplateView*>(pane)->vf24();
+                if (src != NULL) {
+                    __as__11_GXColorS10FRC11_GXColorS10(&src->color, &col);
+                }
+            }
+        }
+    }
+}
 
 // ============================================================================
 // func_801EFFC4: refresh the item-box line - push the current tab entry (tab
@@ -1426,9 +1695,9 @@ u32 func_801EFFC4(CItemBoxLine* self) {
     u32 sel = func_801392B4(self->field39F);
     func_801EBC00(&self->unk3A4, self->tabEntries[(s8)self->field6D],
                   self->field394, (u8)sel);
-    func_801F0030(self);
-    func_801F0488(self);
-    return getItemBox2State__FP13CItemBoxInfo2((u8*)self + 0xd0);
+    func_801F0030((void*)self);
+    func_801F0488((void*)self);
+    return getItemBox2State__FP13CItemBoxInfo2((unsigned char*)self + 0xd0);
 }
 
 // ============================================================================
@@ -1442,7 +1711,7 @@ u32 func_801EFFC4(CItemBoxLine* self) {
 void func_801F0488(CItemBoxLine* self) {
     CIBLTab* tabs = &self->unk3A4;
     u8 idx = (u8)(self->unk38C + self->unk38E);
-    char* name = func_801EC438(tabs, idx);
+    char* name = func_801EC438(reinterpret_cast<CIBLTabFull*>(tabs), idx);
     func_80136B4C(self->field40, &lbl_eu_805071B0[0x3c0], name,
                   reinterpret_cast<u32>(self->field54));
     if (getItemBox2State__FP13CItemBoxInfo2(&self->mInfo2D0[0]) != 0) {
@@ -1605,10 +1874,10 @@ void func_801F107C(CItemBoxLine* self, u32 itemData) {
     int v23;
     int v22;
     if (func_801361E8(table, &lbl_eu_805071B0[0x5c5], kind) & 4) {
-        func_8009EC9C(1);
-        u16 c1 = func_800A082C();
+        // retail reuses func_8009EC9C's r3 as the arg to func_800A082C
+        u16 c1 = func_800A082C(func_8009EC9C(1));
         v23 = (int)(lbl_eu_8066812C * (float)(a * c1));
-        u16 c2 = func_800A082C();
+        u16 c2 = func_800A082C(func_8009EC9C(1));
         v22 = (int)(lbl_eu_80668130 * (float)(b * c2));
         if ((u16)v23 >= 0x3e7) v23 = 0x3e7;
         if ((u16)v22 >= 0x3e7) v22 = 0x3e7;
@@ -1945,12 +2214,13 @@ void func_801F2434(CItemBoxLine* self, u32 itemData) {
 int func_801F2880(u32 unused, u32 key) {
     u32 table = lbl_eu_80664110;
     func_801392E4(key);
-    char* pool = lbl_eu_805071B0;
+    // No named pool local: retail CSEs the lbl_eu_805071B0 base into a
+    // temp register that is later reused for the func_8013600C result.
     u16 v = func_80139358(key);
-    u8 a = func_801361E8(table, &pool[0x616], v);
-    u8 b = func_801361E8(table, &pool[0xe], v);
-    u8 c = func_801361E8(table, &pool[0x622], v);
-    u8 d = func_8013600C(&pool[0x5e1], &pool[0x62b], c);
+    u8 a = func_801361E8(table, &lbl_eu_805071B0[0x616], v);
+    u8 b = func_801361E8(table, &lbl_eu_805071B0[0xe], v);
+    u8 c = func_801361E8(table, &lbl_eu_805071B0[0x622], v);
+    u8 d = func_8013600C(&lbl_eu_805071B0[0x5e1], &lbl_eu_805071B0[0x62b], c);
     u8* base = (u8*)func_8009EC9C(b);
     u32 f = (u8)func_800A32BC();
     u32 d2 = (u32)d << 1;

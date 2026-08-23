@@ -65,6 +65,22 @@ static int findBattleEntry(cf::CBattleState* self, u32 id) {
     return 0;
 }
 
+// Duplicate of findBattleEntry for CBattleState_UnkVirtualFunc11: a separate
+// static body lets -ipa inline it there independently without perturbing
+// UnkVirtualFunc29's codegen.
+static int isBattleIdLive(cf::CBattleState* self, u32 id, int groups) {
+    cf::CBattleStateEntryArray* v;
+    int j;
+
+    v = (cf::CBattleStateEntryArray*)self;
+    for (j = 0; j < groups * 8; j++) {
+        if (id == v->entries[j].unk0C) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void CBattleState::CBattleState_UnkVirtualFunc29() {
     CBattleStateEntry* entry;
     int i;
@@ -130,17 +146,20 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc6(cf::CBattleStateEntry* arg) 
     cf::CBattleStateEntry* p;
     int n;
     u32 one;
-    u32 bit;
     u32 id;
+    // (declaration order tuned to retail Chaitin colors:
+    //  id->r6, one->r7, entries->r5, trip->r0)
 
     // Bit `arg->unk0C` set into the this+0x15AC bitfield (word-aligned byte
-    // offset = (id >> 3) & ~3, bit position = id & 0x1F).
+    // offset = (id >> 3) & ~3, bit position = id & 0x1F). Retail schedules
+    // li r0,8 (loop trip) before the rlwinm chain.
     id = arg->unk0C;
-    one = 1;
     entries = (cf::CBattleStateEntry*)((u8*)this + 0x1388);
-    p = entries;
+    one = 1;
+    n = 8;
     *(u32*)(unk15AC + ((id >> 3) & ~3u)) |= one << (id & 0x1F);
-    for (n = 8; n != 0; n--, p++) {
+    p = entries;
+    for (; n != 0; n--, p++) {
         if (p->unk0C == arg->unk0C) {
             if (p->unk10 < arg->unk10) {
                 p->unk10 = arg->unk10;
@@ -306,27 +325,10 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc11(u32 mask) {
             if (id >= 0x12f) {
                 stillActive = 0;
             } else {
-                // Retail: scan base recomputed from `this` into volatile r4
-                // (mr r4, r29) with entry offsets folded (0x14/0x48/...) and a
-                // dead +7 trip counter -- MWCC's auto-unroll of the linear 0x68
-                // scan into a 13x8 mtctr/bdnz loop (same shape as the matched
-                // func_801490A0 / vfunc29). Indexing v->entries[g] keeps the
-                // base `this` so no separate this+8 value needs a callee-saved
-                // reg; the post-loop stillActive=0 + goto mirrors the retail
-                // `li r0,0` fall-through so the merge coalesces to one register.
-                cf::CBattleStateEntryArray* v = (cf::CBattleStateEntryArray*)this;
-                int g;
-
-                stillActive = 0;
-                for (g = 0; g < thirteen * 8; g++) {
-                    if (id == v->entries[g].unk0C) {
-                        stillActive = 1;
-                        goto scan_done;
-                    }
-                }
-                stillActive = 0;
-            scan_done:
-                ;
+                // Inlined static scan (see isBattleIdLive): reproduces the
+                // retail 13x8 mtctr/bdnz unroll with the dead +7 shadow
+                // counter, scan base `this`, offsets folded.
+                stillActive = isBattleIdLive(this, id, thirteen);
             }
 
             if (!stillActive) {
@@ -474,17 +476,22 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc26(const cf::CBattleStateSrcEn
         }
 
         memset(&entry, 0, sizeof(entry));
-        // Retail schedule: id/flags/2000/fields, then extrwi on unk0E.
-        // `unk30 |= 1` beats an explicit flags temp here (~78.8%).
-        entry.unk0C = rec->unk04;
-        entry.unk30 |= 1;
-        entry.unk08 = flag2000;
-        entry.unk10 = rec->unk08;
-        entry.unk14 = rec->unk0A;
-        entry.unk18 = rec->unk0C;
-        entry.unk1A = (s16)rec->unk06;
-        if ((((u32)recFlags->unk0E >> 15) & 1) != 0) {
-            entry.unk08 = flag4000;
+        // Retail keeps entry.unk30 live in a register: load, ori 1, store
+        // after the field fills, then a conditional direct overwrite of
+        // unk08 with 0x4000 when src bit 0x8000 is set.
+        {
+            u32 flags = entry.unk30;
+            entry.unk0C = rec->unk04;
+            flags |= 1;
+            entry.unk08 = flag2000;
+            entry.unk10 = rec->unk08;
+            entry.unk14 = rec->unk0A;
+            entry.unk18 = rec->unk0C;
+            entry.unk1A = (s16)rec->unk06;
+            entry.unk30 = flags;
+            if ((((u32)recFlags->unk0E >> 15) & 1) != 0) {
+                entry.unk08 = flag4000;
+            }
         }
 
         reinterpret_cast<BattleStateV26If*>(this)->vf1C(&entry);
@@ -517,6 +524,21 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc26(const cf::CBattleStateSrcEn
 // vt+0x2C -> id-dup scan / clear unk15AC bit -> vt+0x4C; stop early if
 // arg->unk0C == 0.
 //
+// Duplicate of findBattleEntry for CBattleState_UnkVirtualFunc8: a separate
+// static body lets -ipa inline it there independently.
+static int isBattleIdUsed(cf::CBattleState* self, u32 id) {
+    cf::CBattleStateEntryArray* v;
+    int j;
+
+    v = (cf::CBattleStateEntryArray*)self;
+    for (j = 0; j < 0x68; j++) {
+        if (id == v->entries[j].unk0C) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 // Cast-only SI iface: function-pointer vslot loads color the vptr as r5;
 // virtual dispatch emits retail lwz r12,0(this) / lwz r12,off(r12) / bctr.
 // RTTI on: omit _v000/_v004 so _v008 lands at retail 0x8 (MenuBpsActorIf).
@@ -756,13 +778,11 @@ kind_done:
 
         // Retail schedules memset args into the first pair of the
         // word-copy (lwz r6/r0, mr dest, li val/len, stw pair hi/lo).
+        // Retail schedules memset args before the word-copy pairs.
         s = (u32*)slot;
         a = s[0];
-        clearPtr = slot;
         b = s[1];
-        clearVal = 0;
         savedWords[1] = b;
-        clearLen = 0x34;
         savedWords[0] = a;
         a = s[2];
         b = s[3];
@@ -785,7 +805,7 @@ kind_done:
         savedWords[11] = b;
         savedWords[10] = a;
         savedWords[12] = s[12];
-        memset(clearPtr, clearVal, clearLen);
+        memset(slot, 0, 0x34);
 
         reinterpret_cast<BattleStateV8If*>(this)->vf2C(
             (cf::CBattleStateEntry*)savedWords);
@@ -795,68 +815,9 @@ kind_done:
         if (savedId >= 0x12f) {
             stillActive = 0;
         } else {
-            // Retail: savedId in r5, dead trip in r3 (li 0 / addi +7 /
-            // unused after bdnz), scan base in r4, ctr=thirteen.
-            // Indexing entries[g*8+j] straight from `this` keeps the base
-            // `this` (offsets 0x14+0x34*j folded into the loads, +0x1a0
-            // increment) so no separate this+8 value needs a callee-saved
-            // reg -- the p = this+8 form costs stmw r25 vs retail stmw r26.
-            trip = 0;
-            stillActive = 0;
-            for (g = thirteen; g != 0; g--) {
-                if (savedId ==
-                    ((cf::CBattleStateEntryArray*)this)
-                        ->entries[g * 8 + 0].unk0C) {
-                    stillActive = 1;
-                    goto scan_done;
-                }
-                if (savedId ==
-                    ((cf::CBattleStateEntryArray*)this)
-                        ->entries[g * 8 + 1].unk0C) {
-                    stillActive = 1;
-                    goto scan_done;
-                }
-                if (savedId ==
-                    ((cf::CBattleStateEntryArray*)this)
-                        ->entries[g * 8 + 2].unk0C) {
-                    stillActive = 1;
-                    goto scan_done;
-                }
-                if (savedId ==
-                    ((cf::CBattleStateEntryArray*)this)
-                        ->entries[g * 8 + 3].unk0C) {
-                    stillActive = 1;
-                    goto scan_done;
-                }
-                if (savedId ==
-                    ((cf::CBattleStateEntryArray*)this)
-                        ->entries[g * 8 + 4].unk0C) {
-                    stillActive = 1;
-                    goto scan_done;
-                }
-                if (savedId ==
-                    ((cf::CBattleStateEntryArray*)this)
-                        ->entries[g * 8 + 5].unk0C) {
-                    stillActive = 1;
-                    goto scan_done;
-                }
-                if (savedId ==
-                    ((cf::CBattleStateEntryArray*)this)
-                        ->entries[g * 8 + 6].unk0C) {
-                    stillActive = 1;
-                    goto scan_done;
-                }
-                if (savedId ==
-                    ((cf::CBattleStateEntryArray*)this)
-                        ->entries[g * 8 + 7].unk0C) {
-                    stillActive = 1;
-                    goto scan_done;
-                }
-                trip += 7;
-            }
-            stillActive = 0;
-        scan_done:
-            stillActive = stillActive + (trip & 0);
+            // Inlined static scan (see isBattleIdUsed): reproduces the
+            // retail 13x8 mtctr/bdnz unroll with the dead +7 shadow counter.
+            stillActive = isBattleIdUsed(this, savedId);
         }
 
         if (stillActive == 0) {
@@ -890,16 +851,17 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc10(cf::CBattleStateEntry* arg)
     int one;
     int thirteen;
     cf::CBattleStateEntry* slot;
+    u16 key;
+    u32 flagBit;
     int i;
+    u32 a04;
+    u32 a08;
+    int zero; // retail parks the kind==3 clear value in a CSR before the loop
     // Full arg spill (retail sp+0x3c..0x6c). Do not keep stackedWords[0] in a
     // separate local -- retail reloads it from the frame on the optional-eq
     // path; holding it live costs an extra CSR (stmw r21 vs retail stmw r22).
     u32 stackedWords[0x34 / 4];
     u32* aw;
-    u16 key;
-    u32 flagBit;
-    u32 a04;
-    u32 a08;
 
     if (arg->unk2E == 0) {
         return;
@@ -929,6 +891,7 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc10(cf::CBattleStateEntry* arg)
 
     one = 1;
     thirteen = 0xd;
+    zero = 0;
     slot = (cf::CBattleStateEntry*)((u8*)this + 0x8);
     i = 0;
 
@@ -939,14 +902,11 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc10(cf::CBattleStateEntry* arg)
         int stillActive;
         u32 savedWords[0x34 / 4];
         u32* s;
-        u32 a;
-        u32 b;
         void* clearPtr;
         int clearVal;
         int clearLen;
-        int trip;
-        int g;
-        cf::CBattleStateEntry* p;
+        u32 b;
+        u32 a;
 
         if (slot->unk2E != key) {
             continue;
@@ -1121,7 +1081,7 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc10(cf::CBattleStateEntry* arg)
     kind_done:
 
         if (kind == 3) {
-            *(u32*)this->unk1528 = 0;
+            *(u32*)this->unk1528 = zero;
         }
 
         // Retail schedules memset args into the first pair of the
@@ -1162,50 +1122,10 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc10(cf::CBattleStateEntry* arg)
         if (savedId >= 0x12f) {
             stillActive = 0;
         } else {
-            // Retail: found in r0, dead trip in r3 (li 0 / addi +7 /
-            // unused after bdnz), scan base in r4.
-            p = (cf::CBattleStateEntry*)((u8*)this + 0x8);
-            trip = 0;
-            stillActive = 0;
-            for (g = thirteen; g != 0; g--) {
-                if (savedId == p[0].unk0C) {
-                    stillActive = 1;
-                    goto scan_done;
-                }
-                if (savedId == p[1].unk0C) {
-                    stillActive = 1;
-                    goto scan_done;
-                }
-                if (savedId == p[2].unk0C) {
-                    stillActive = 1;
-                    goto scan_done;
-                }
-                if (savedId == p[3].unk0C) {
-                    stillActive = 1;
-                    goto scan_done;
-                }
-                if (savedId == p[4].unk0C) {
-                    stillActive = 1;
-                    goto scan_done;
-                }
-                if (savedId == p[5].unk0C) {
-                    stillActive = 1;
-                    goto scan_done;
-                }
-                if (savedId == p[6].unk0C) {
-                    stillActive = 1;
-                    goto scan_done;
-                }
-                if (savedId == p[7].unk0C) {
-                    stillActive = 1;
-                    goto scan_done;
-                }
-                p += 8;
-                trip += 7;
-            }
-            stillActive = 0;
-        scan_done:
-            stillActive |= trip & 0;
+            // Inlined static scan (see isBattleIdUsed): -ipa expands this to
+            // the retail 13x8 mtctr/bdnz unroll with the dead +7 shadow
+            // counter, scan base == this.
+            stillActive = isBattleIdUsed(this, savedId);
         }
 
         if (stillActive == 0) {
@@ -2328,6 +2248,22 @@ extern "C" void* CBattleState_UnkVirtualFunc16__Q22cf12CBattleStateFv(void* self
 // self+0x8 (stride 0x34) whose unk0C halfword equals id; ids >= 0x12f
 // return 0 immediately. Retail keeps the count as a 13x8 unrolled
 // mtctr/bdnz loop with a dead +7 trip counter.
+// Inlined count helper: the -ipa file-inline of a static helper reproduces
+// the retail 13x8 mtctr/bdnz unroll with the dead +7 shadow counter (same
+// mechanism as findBattleEntry in UnkVirtualFunc29).
+static int countBattleEntries(cf::CBattleState* self, u32 id) {
+    cf::CBattleStateEntryArray* v = (cf::CBattleStateEntryArray*)self;
+    int j;
+    int count = 0;
+
+    for (j = 0; j < 0x68; j++) {
+        if (id == v->entries[j].unk0C) {
+            count++;
+        }
+    }
+    return count;
+}
+
 int func_801490A0(cf::CBattleState* self, u32 id) {
     int count;
 
@@ -2335,17 +2271,7 @@ int func_801490A0(cf::CBattleState* self, u32 id) {
         return 0;
     }
 
-    count = 0;
-    {
-        cf::CBattleStateEntry* p = (cf::CBattleStateEntry*)((u8*)self + 0x8);
-        int i;
-
-        for (i = 0; i < 0x68; i++, p++) {
-            if (p->unk0C == id) {
-                count++;
-            }
-        }
-    }
+    count = countBattleEntries(self, id);
     return count;
 }
 

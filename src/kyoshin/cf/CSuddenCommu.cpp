@@ -198,7 +198,80 @@ __declspec(noinline) void func_801BA490(CSuddenCommu* self) {
     func_80280BF0();
 }
 
-__declspec(noinline) void func_801BA978(CSuddenCommu* self) {}
+// Sudden-commu state dispatch (called from func_801BB9DC when no 0x20/0x40
+// flag is set). Player slot field_4 selects the actor; then on the actor:
+// state 4 -> full reset + voice-action probe (0x803) and vf314 kick;
+// state 0 -> record state 0xB, probe 0x803 and chain vf308/vf304;
+// otherwise just reset. A missing player also resets.
+__declspec(noinline) void func_801BA978(CSuddenCommu* self) {
+    CSuddenCommuActor* player = (CSuddenCommuActor*)cf::CfGameManager::getPlayer(self->field_4);
+    if (player != 0) player = (CSuddenCommuActor*)((char*)player - 0x3E9C);
+    if (player != 0) {
+        s16 state = self->field_C;
+        if (state == 4) {
+            func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+            self->field_14 = 0;
+            u32 voice = self->field_10;
+            self->field_4 = -1;
+            self->field_6 = -1;
+            self->field_8 = -1;
+            self->field_A = 0;
+            self->field_C = 0;
+            self->field_E = 0;
+            func_802A35B8(voice);
+            f32 v30 = lbl_eu_80667E30;
+            volatile f32* p18 = &self->field_18;
+            self->field_10 = -1;
+            *p18 = v30;
+            self->field_24 = 0;
+            // Probe the actor's current voice action; a hit kicks vf314.
+            u32 v = *player->field_4->vf30();
+            if (func_80174C98(player, (int*)&v, 0x803) != 0) {
+                ((CSuddenCommuActorVt*)player)->vf314();
+            }
+        } else if (state == 0) {
+            self->field_14 = 0xB;
+            u32 v = *player->field_4->vf30();
+            if (func_80174C98(player, (int*)&v, 0x803) != 0) {
+                if (((CSuddenCommuActorVt*)player)->vf308() == 1) {
+                    ((CSuddenCommuActorVt*)player)->vf304(0);
+                }
+            }
+        } else {
+            func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+            self->field_14 = 0;
+            u32 voice = self->field_10;
+            self->field_4 = -1;
+            self->field_6 = -1;
+            self->field_8 = -1;
+            self->field_A = 0;
+            self->field_C = 0;
+            self->field_E = 0;
+            func_802A35B8(voice);
+            f32 v30 = lbl_eu_80667E30;
+            volatile f32* p18 = &self->field_18;
+            self->field_10 = -1;
+            *p18 = v30;
+            self->field_24 = 0;
+        }
+    } else {
+        func_800EA484((cf::CBattleManager*)getInstance__Q22cf14CBattleManagerFv(), lbl_eu_80667E38, 0x13);
+        self->field_14 = 0;
+        u32 voice = self->field_10;
+        self->field_4 = -1;
+        self->field_6 = -1;
+        self->field_8 = -1;
+        self->field_A = 0;
+        self->field_C = 0;
+        self->field_E = 0;
+        func_802A35B8(voice);
+        f32 v30 = lbl_eu_80667E30;
+        volatile f32* p18 = &self->field_18;
+        self->field_10 = -1;
+        *p18 = v30;
+        self->field_24 = 0;
+    }
+}
 
 // Sudden-commu attack trigger: gate on the attacker being player-controlled
 // (+0x3F00 bit 0x2) and the partner-state helper, then scan the three player
@@ -216,11 +289,11 @@ void func_801BAB94(CSuddenCommu* self, CSuddenCommuActor* attacker,
         if (player == 0) continue;
         if (player != attacker) continue;
         if (((CSuddenCommuActorVt*)target)->vf128() <= lbl_eu_80667E48) {
-            CSuddenCommuListNode* sentinel = (CSuddenCommuListNode*)((CSuddenCommuBmList*)getInstance__Q22cf14CBattleManagerFv())->mHead;
+            CSuddenCommuBmList* bm = (CSuddenCommuBmList*)getInstance__Q22cf14CBattleManagerFv();
+            CSuddenCommuListNode* sentinel = (CSuddenCommuListNode*)bm->mHead;
             int count = 0;
-            CSuddenCommuListNode* node = sentinel->next;
-            while (node != sentinel) {
-                node = node->next;
+            CSuddenCommuListNode* node;
+            for (node = sentinel->next; node != sentinel; node = node->next) {
                 count++;
             }
             if (count > 1) {
@@ -238,9 +311,8 @@ void func_801BAB94(CSuddenCommu* self, CSuddenCommuActor* attacker,
                     ((CSuddenCommuActorVt*)target)->vfE0() == 2) {
                     func_801BB464(self, i, 0, player, 0);
                     break;
-                } else {
-                    break;
                 }
+                break;
             }
         }
     }
@@ -391,7 +463,83 @@ commu_end:
     return;
 }
 
-__declspec(noinline) void func_801BB464(CSuddenCommu* self, int playerIdx, int mode, CSuddenCommuActor* player, int arg5) {}
+// Sudden-commu start: roll a chance check against a per-type threshold table
+// indexed by the partner actor's vf308 state (type 2 adds a 0x6a battle-stat
+// bonus), then scan the three player slots: record the initiating slot in
+// field_4, queue the others in pair_6/field_A, optionally shuffle the queue,
+// probe the partner's voice action (0x803) and either arm (field_14 = 1) or
+// park the timer at E50.
+__declspec(noinline) void func_801BB464(CSuddenCommu* self, int playerIdx, int type, CSuddenCommuActor* player, int arg5) {
+    cf::CfGameManager::getInstance();
+    if (func_8006EF04__Fi(0x04000000) != 0) return;
+    int chance = ml::math::mtRand(100) - arg5;
+    if (chance < 0) chance = 0;
+    self->field_C = type;
+    self->field_E = type;
+    u8 thresh;
+    if (type == 0) {
+        thresh = (&lbl_eu_806625E8)[((CSuddenCommuActorVt*)player)->vf308()];
+    }
+    if (type == 1) {
+        thresh = (&lbl_eu_806625F0)[((CSuddenCommuActorVt*)player)->vf308()];
+    }
+    if (type == 2) {
+        thresh = (&lbl_eu_806625F8)[((CSuddenCommuActorVt*)player)->vf308()];
+        void* obj = player->field_15E0;
+        if (obj != 0) {
+            u32 v;
+            if (func_80260264(obj, 0x6a, &v) != 0) thresh += v;
+        }
+    }
+    if (type == 3) {
+        thresh = (&lbl_eu_80662600)[((CSuddenCommuActorVt*)player)->vf308()];
+        self->field_E = 1;
+    }
+    if (chance >= thresh) return;
+    self->field_A = 0;
+    int found = 0;
+    for (int i = 0; i < 3; i++) {
+        void* spot = cf::CfGameManager::getPlayer(i);
+        CSuddenCommuActor* p = (CSuddenCommuActor*)spot;
+        if (spot != 0) p = (CSuddenCommuActor*)((char*)spot - 0x3E9C);
+        if (p == 0) continue;
+        // Any active voice/action flag (or a non-zero body-36C word) aborts
+        // the whole commu start.
+        int busy = 0;
+        u32 w1, w2, w3, w4, w5, w6;
+        if (func_80174C98(p, (int*)&(w1 = *p->field_4->vf30()), 0x1c) != 0) busy = 1;
+        else if (func_80174C98(p, (int*)&(w2 = *p->field_4->vf30()), 0x16) != 0) busy = 1;
+        else if (func_80174C98(p, (int*)&(w3 = *p->field_4->vf30()), 0x17) != 0) busy = 1;
+        else if (func_80174C98(p, (int*)&(w4 = *p->field_4->vf30()), 0x18) != 0) busy = 1;
+        else if (func_80174C98(p, (int*)&(w5 = *p->field_4->vf30()), 0x1a) != 0) busy = 1;
+        else if (func_80174C98(p, (int*)&(w6 = *p->field_4->vf30()), 0x19) != 0) busy = 1;
+        else busy = !!p->field_3ED4->field_36C;
+        if (busy != 0) return;
+        if (playerIdx == i) {
+            self->field_4 = i;
+            found = 1;
+        } else {
+            self->pair_6[self->field_A] = i;
+            self->field_A = self->field_A + 1;
+        }
+    }
+    if (self->field_A == 0) return;
+    if (found == 0) return;
+    // With exactly two queued partners the retail randomly swaps the pair.
+    if (self->field_A == 2) {
+        if (ml::math::mtRand(2) != 0) {
+            s16 t = self->field_6;
+            self->field_6 = self->field_8;
+            self->field_8 = t;
+        }
+    }
+    u32 v = *player->field_4->vf30();
+    if (func_80174C98(player, (int*)&v, 0x803) != 0) {
+        self->field_14 = 1;
+    } else {
+        self->field_18 = lbl_eu_80667E50;
+    }
+}
 
 void func_801BB818() {}
 
@@ -418,8 +566,12 @@ void func_801BB81C(CSuddenCommu* self) {
             func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x8e, 0, 0, lbl_eu_80667E38);
         }
     }
+    // Retail interleaves the field_1C store inside the field_24 read-modify-
+    // write, so the flag update is spelled out as load/modify/store with the
+    // timer store textually between the modify and the store.
+    u32 flags = self->field_24 | 0x10;
     self->field_1C = lbl_eu_80667E48;
-    self->field_24 |= 0x10;
+    self->field_24 = flags;
     func_801BC6A4(self, self->field_4, 0);
     if (self->field_C != 4)
         self->field_14 = 2;
@@ -685,36 +837,31 @@ int func_801BBCBC(CSuddenCommu* self) {
     }
 }
 
-// Mark every battle actor's voice-act flag (+0x3388) with bit 0x2 across both
-// enum lists (0x100 = in-battle, 0x20 = standby), then set the same bit on
-// self->field_24.
 void func_801BC474(CSuddenCommu* self) {
-    {
-        CSuddenCommuEnumHolder holder;
-        func_80043D90(&holder);
-        func_800F4A98(func_80043F18(&holder), 0x100, 0);
-        for (u32 i = 0; i < ((cf::CfObjEnumList*)func_80043F18(&holder))->mPtrCount; i++) {
-            cf::CfObjEnumList* list = (cf::CfObjEnumList*)func_80043F18(&holder);
-            void* p = func_800F6EAC(list, i);
-            CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
-            if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
-            actor->voiceAct.field_3388 |= 0x2;
-        }
-        __dt__80043E88(&holder, -1);
+    // Two holders declared side by side keep the retail stack slots (sp+0x10,
+    // sp+0x08) while presenting a single lexical region to the scheduler.
+    CSuddenCommuEnumHolder holderA;
+    CSuddenCommuEnumHolder holderB;
+    func_80043D90(&holderA);
+    func_800F4A98(func_80043F18(&holderA), 0x100, 0);
+    for (u32 i = 0; i < ((cf::CfObjEnumList*)func_80043F18(&holderA))->mPtrCount; i++) {
+        cf::CfObjEnumList* list = (cf::CfObjEnumList*)func_80043F18(&holderA);
+        void* p = func_800F6EAC(list, i);
+        CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
+        if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
+        actor->voiceAct.field_3388 |= 0x2;
     }
-    {
-        CSuddenCommuEnumHolder holder;
-        func_80043D90(&holder);
-        func_800F4A98(func_80043F18(&holder), 0x20, 0);
-        for (u32 i = 0; i < ((cf::CfObjEnumList*)func_80043F18(&holder))->mPtrCount; i++) {
-            cf::CfObjEnumList* list = (cf::CfObjEnumList*)func_80043F18(&holder);
-            void* p = func_800F6EAC(list, i);
-            CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
-            if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
-            actor->voiceAct.field_3388 |= 0x2;
-        }
-        __dt__80043E88(&holder, -1);
+    __dt__80043E88(&holderA, -1);
+    func_80043D90(&holderB);
+    func_800F4A98(func_80043F18(&holderB), 0x20, 0);
+    for (u32 i = 0; i < ((cf::CfObjEnumList*)func_80043F18(&holderB))->mPtrCount; i++) {
+        cf::CfObjEnumList* list = (cf::CfObjEnumList*)func_80043F18(&holderB);
+        void* p = func_800F6EAC(list, i);
+        CSuddenCommuActor* actor = (CSuddenCommuActor*)p;
+        if (p != 0) actor = (CSuddenCommuActor*)((char*)p - 0x3E9C);
+        actor->voiceAct.field_3388 |= 0x2;
     }
+    __dt__80043E88(&holderB, -1);
     self->field_24 |= 0x2;
 }
 
@@ -757,19 +904,27 @@ void func_801BC590(CSuddenCommu* self) {
 // voice is attached to; `num` selects the phase table: 0 = random companion
 // line, 1 = random entry from the field_E table, 2/3 = fixed ids, 4 =
 // character-specific (matches partner voice ids), 5 = party table.
+// Written as an if/else chain (retail emits a compare chain, not a jumptable).
 __declspec(noinline) void func_801BC6A4(CSuddenCommu* self, int playerIdx, int num) {
+    const u8* tbl = lbl_eu_805050B0;
     CSuddenCommuActor* player1 = (CSuddenCommuActor*)cf::CfGameManager::getPlayer(playerIdx);
     if (player1 != 0) player1 = (CSuddenCommuActor*)((char*)player1 - 0x3E9C);
     int result = -1;
     switch (num) {
-    case 0:
-        result = ml::math::mtRand(2) + self->field_E * 100 + 0x3E9;
-        break;
-    case 1: {
-        int rand = (self->field_C != 0) ? ml::math::mtRand(3) : ml::math::mtRand(2);
-        result = lbl_eu_80662608[rand] + self->field_E * 100;
+    case 0: {
+        int r = ml::math::mtRand(2);
+        int scaled = r + self->field_E * 100;
+        result = scaled + 0x3E9;
         break;
     }
+    case 1:
+        int rand;
+        if (self->field_C != 0)
+            rand = ml::math::mtRand(3);
+        else
+            rand = ml::math::mtRand(2);
+        result = lbl_eu_80662608[rand] + self->field_E * 100;
+        break;
     case 2:
         result = self->field_E * 100 + 0x3EE;
         break;
@@ -781,7 +936,7 @@ __declspec(noinline) void func_801BC6A4(CSuddenCommu* self, int playerIdx, int n
         if (player2 != 0) player2 = (CSuddenCommuActor*)((char*)player2 - 0x3E9C);
         u16 v2 = player2->field_3F28;
         if (v2 > 0xB) return;
-        result = ((self->field_E == 0) ? 0x214 : 0x20B) + lbl_eu_805050B0[v2 - 1];
+        result = ((self->field_E == 0) ? 0x214 : 0x20B) + tbl[v2 - 1];
         if (player1->field_3F28 == 2 && v2 == 6 &&
             cf::CfGameManager::func_800822F4() < 0x91) {
             result = 0x1FA;
@@ -791,11 +946,11 @@ __declspec(noinline) void func_801BC6A4(CSuddenCommu* self, int playerIdx, int n
     case 5: {
         u16 v1 = player1->field_3F28;
         if (v1 > 0xB) return;
-        int idx = lbl_eu_805050B0[v1 - 1] - 1;
+        int idx = tbl[v1 - 1] - 1;
         if (self->field_E != 0)
-            result = ((u16*)lbl_eu_805050B0)[0x10 + idx];
+            result = ((const u16*)tbl)[0x10 + idx];
         else
-            result = ((u16*)lbl_eu_805050B0)[6 + idx];
+            result = ((const u16*)tbl)[6 + idx];
         break;
     }
     }

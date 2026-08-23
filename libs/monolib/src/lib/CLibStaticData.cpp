@@ -1,3 +1,8 @@
+// Opt into the inline-empty ~IWorkEvent (see IWorkEvent.hpp): retail's
+// CItem dtor elides the empty base-dtor call (0xC4, not 0xD0). Must be
+// defined before any monolib header pull-in.
+#define IWORK_EVENT_INLINE_DTOR
+
 #include "monolib/lib.hpp"
 #include "monolib/work.hpp"
 #include "monolib/device.hpp"
@@ -6,10 +11,13 @@
 
 using namespace mtl;
 
-// Retail sbss singleton (dissolved monolibdata blob) - keep linker name verbatim
-CLibStaticData* lbl_eu_80665718 = nullptr;
+// Retail sbss singletons live in the dissolved monolibdata2 blob; the
+// definitions are owned by CLibLayout.cpp (lbl_eu_80665718 = spInstance,
+// lbl_eu_8066571C = sStaticArcFileListPtr). Declare them extern so this TU
+// emits no .sbss storage.
+extern CLibStaticData* lbl_eu_80665718;
 #define spInstance lbl_eu_80665718
-StaticArcFileData* CLibStaticData::sStaticArcFileListPtr;
+extern StaticArcFileData* lbl_eu_8066571C;
 #include <decomp.h>
 
 CLibStaticData::CLibStaticData(const char* pName, CWorkThread* pParent) :
@@ -29,21 +37,69 @@ CLibStaticData* CLibStaticData::getInstance(){
     return spInstance;
 }
 
+// Read-only view over the singleton's thread flag / message-queue tail fields
+struct CMsgParamEntryView {
+    u32 command; //0x0
+    u32 wid; //0x4
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+    u32 unk1C;
+    u16 unk20;
+    u8 unk22;
+    u8 unk23;
+};
+
+// (the private CMsgParam<8> members mArrayPtr/mFront/mSize/mCapacity sit at
+// 0x1A4..0x1B0 inside CWorkThread::mMsgQueue). The retail inlines
+// CMsgParam<8>::find(EVT_EXCEPTION) here, so we scan the queue directly.
+class CWorkThreadFieldsView {
+public:
+    u8 field_0x0[0x48];              //0x0
+    int mState;                      //0x48 (CWorkThread::ThreadState)
+    u8 field_0x4C[0x7C - 0x4C];      //0x4C
+    u32 mThreadFlags;                //0x7C (CWorkThread::ThreadFlags)
+    u8 field_0x80[0x1A4 - 0x80];     //0x80..0x1A4 (queue vtable + entries)
+    CMsgParamEntryView* mMsgArray;   //0x1A4 (CMsgParam::mArrayPtr)
+    u32 mMsgFront;                   //0x1A8 (CMsgParam::mFront)
+    u32 mMsgSize;                    //0x1AC (CMsgParam::mSize)
+    u32 mMsgCapacity;                //0x1B0 (CMsgParam::mCapacity)
+};
+
+// Retail folds CMsgParam<8>::find(EVT_EXCEPTION)'s ring walk straight into
+// this call site, with the this-arg bound to the instance: view-cast THIS
+// (born at entry, ahead of the loop index -> inst claims the lower volatile)
+// rather than re-loading the singleton global.
 inline bool CWorkThread::isRunning() const {
+    // Loop index declared first: first-declared claims the higher volatile,
+    // so i lands in r7 and the instance view in r6, matching retail.
+    u32 i = 0;
+    const CWorkThreadFieldsView* inst = (const CWorkThreadFieldsView*)this;
+
     bool exception;
-    if (mFlags & THREAD_FLAG_EXCEPTION) {
+    if (inst->mThreadFlags & THREAD_FLAG_EXCEPTION) {
         exception = true;
     } else {
-        exception = mMsgQueue.find(EVT_EXCEPTION) >= 0;
-    }
-    bool result = false;
-    if (!exception) {
-        bool stateOK = mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN;
-        if (stateOK) {
-            result = true;
+        // Inlined queue scan for a queued EVT_EXCEPTION event.
+        int found;
+        for (; i < inst->mMsgSize; i++) {
+            if (inst->mMsgArray[(inst->mMsgFront + i) % inst->mMsgCapacity].command == EVT_EXCEPTION) {
+                found = (int)i;
+                goto merged;
+            }
         }
+        found = -1;
+merged:
+        exception = found >= 0;
     }
-    return result;
+
+    // Running once the thread has logged in and started running.
+    if (exception) {
+        return false;
+    }
+    return inst->mState == THREAD_STATE_LOGIN || inst->mState == THREAD_STATE_RUN;
 }
 bool CLibStaticData::isInitialized(){
     extern CLibStaticData* lbl_eu_80665718;
@@ -51,7 +107,7 @@ bool CLibStaticData::isInitialized(){
 }
 
 void CLibStaticData::saveStaticFileArray(StaticArcFileData* pList){
-    sStaticArcFileListPtr = pList;
+    lbl_eu_8066571C = pList;
 }
 
 bool CLibStaticData::getStaticFileData(const char* pName, StaticDataHandle* pHandle, u32* r5){
@@ -63,8 +119,9 @@ bool CLibStaticData::getStaticFileData(const char* pName, StaticDataHandle* pHan
     CLibStaticData* instance = spInstance;
     
     //Check if the item list contains an item with a matching name
+    CItem* item;
     for(CItem** it = instance->mItems.begin(); it != instance->mItems.end(); it++){
-        CItem* item = *it;
+        item = *it;
         if(std::strcmp(item->mFileData->mName, pName) == 0){
             pHandle->data = item->mData;
 
@@ -97,10 +154,10 @@ bool CLibStaticData::wkStandbyLogin(){
             }
 
             //If the static arc file list is valid, create an entry for each file
-            if(sStaticArcFileListPtr != nullptr){
-                StaticArcFileData* staticArcFileData = sStaticArcFileListPtr;
+            if(lbl_eu_8066571C != nullptr){
+                StaticArcFileData* staticArcFileData = lbl_eu_8066571C;
                 
-                for(StaticArcFileData* it = sStaticArcFileListPtr; it->mName != nullptr; it++){
+                for(StaticArcFileData* it = lbl_eu_8066571C; it->mName != nullptr; it++){
                     CItem* item = new (CWorkThreadSystem::getWorkMem()) CItem(it);
                     mItems.push_back(item);
                 }
@@ -158,8 +215,7 @@ unk14(false) {
     }
 
     //Try loading the file through CWorkSystemPack
-    //tf is it doing with mFileData??
-    if(CWorkSystemPack::func_804DDDF4((const char*)mFileData, &mData, &mLength)){
+    if(CWorkSystemPack::func_804DDDF4(arcFileData->mPath, &mData, &mLength)){
         //If successful, call the loaded callback
         unk14 = true;
         if(mFileData->mFileLoadedCallback != nullptr){
@@ -168,7 +224,7 @@ unk14(false) {
 
     }else{
         //If it failed, read the file like normal
-        mFileHandle = CDeviceFile::readFile(handle, (const char*)mFileData, this, 0, 0);
+        mFileHandle = CDeviceFile::readFile(handle, arcFileData->mPath, this, 0, 0);
     }
 }
 

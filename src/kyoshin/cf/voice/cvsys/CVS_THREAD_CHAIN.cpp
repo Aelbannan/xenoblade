@@ -75,8 +75,7 @@ int func_802A5B04(CVoiceHandle* self, int flag) {
     return 0;
 }
 
-// ── Target 5: us-802a7f64 (__ct__802A5830) ─────────────────────────────────
-// Factory for CVS_THREAD_CHAIN. Allocates the handle buffer ((1,0) - the
+// ── Target 5: us-802a7f64 (__ct__802A5830) ─────────────────────────────────// Factory for CVS_THREAD_CHAIN. Allocates the handle buffer ((1,0) - the
 // handle is discarded), then the 0x24-byte thread object, constructs the
 // base, sets vtable/owner fields and copies init data from lbl_eu_80539A30.
 cf::CVS_THREAD_CHAIN* __ct__802A5830() {
@@ -106,16 +105,16 @@ cf::CVS_THREAD_CHAIN* __ct__802A5830() {
         }
     }
 
-    // Copy the init-state triple into the first 3 u32s (outside try). Temps
-    // are loaded before the stores; the base pointer is declared last so MWCC
-    // colors it r5. The address is forced through an integer cast so the full
-    // base (lis+addi) is materialized once before any load. (Residual: retail
-    // colors the word1 value r0 and the word0 value r4; MWCC emits the reverse
-    // for every source shape tried - allocator fixed point, cf. sibling
-    // factory drafts.)
-    ((CVS_THREAD_CHAIN_INIT*)self)->word0 = ((u32**)(u32)lbl_eu_80539A30)[0];
-    ((CVS_THREAD_CHAIN_INIT*)self)->word1 = ((u32*)(u32)lbl_eu_80539A30)[1];
-    ((CVS_THREAD_CHAIN_INIT*)self)->word2 = ((u32*)(u32)lbl_eu_80539A30)[2];
+    // Copy the init-state triple (bytes 0x00-0x08). Keeping both src and dst
+    // as named struct-pointer locals makes MWCC materialise the source address
+    // once (merged lis/addi, matching retail); the residual register rotation
+    // on {src,w0,w1} is an allocator fixed point.
+    CVS_THREAD_CHAIN_INIT* dst = (CVS_THREAD_CHAIN_INIT*)self;
+    CVS_THREAD_CHAIN_INIT* src = (CVS_THREAD_CHAIN_INIT*)lbl_eu_80539A30;
+    u32 w1 = src->word1;
+    dst->word0 = src->word0;
+    dst->word1 = w1;
+    dst->word2 = src->word2;
 
     return self;
 }

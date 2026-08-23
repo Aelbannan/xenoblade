@@ -124,7 +124,7 @@ void func_8048472C(u8* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc
 // Same shape as func_80482B3C (retail sizes identical, 0x2B8); extern "C"
 // keeps the self-recursion reloc name verbatim (reloc-site gate).
 extern "C" void func_80482DF4(CScnItemModel* self, u32 param) {
-    if (param != 0) {
+    if (param) {
         self->flags7A4 |= 0x100000;
     } else {
         self->flags7A4 &= ~0x100000;
@@ -132,8 +132,8 @@ extern "C" void func_80482DF4(CScnItemModel* self, u32 param) {
     u32 i, j, k;
     for (i = 0; i < 4; i++) {
         CScnItemModel* a = self->slots7B4[i];
-        if (a != 0) {
-            if (param != 0) {
+        if (a) {
+            if (param) {
                 a->flags7A4 |= 0x100000;
             } else {
                 a->flags7A4 &= ~0x100000;
@@ -2012,11 +2012,14 @@ int func_80485994(CScnItemModel* self, CScnItemModel* node) {
 // in the self+8 view; retail unrolls the 4-slot loop, folding the first slot
 // to direct offsets and walking the rest via a base register.
 void func_804859E8(CScnItemModel* self, CScnItemModel* node) {
-    CScnItemModelRefs* refs = (CScnItemModelRefs*)((u8*)self + 8);
+    // Constant-trip loop: MWCC fully unrolls it, hoisting the zero constant
+    // into one register and folding the last two slots onto a self+8 base.
+    // The final 0x7C8 check uses a not-equal early return (retail bnelr).
     for (int i = 0; i < 4; i++) {
-        if (refs->slots[i] == node) refs->slots[i] = 0;
+        if (self->slots7B4[i] == node) self->slots7B4[i] = 0;
     }
-    if (self->field_0x7C8 == node) self->field_0x7C8 = 0;
+    if (self->field_0x7C8 != node) return;
+    self->field_0x7C8 = 0;
 }
 
 // func_80485A48: call the 2-arg virtual (vtable 0x28) on every live model in

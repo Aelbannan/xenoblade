@@ -3,6 +3,7 @@
 
 #include <harness_catalog.h>
 #include <nw4r/g3d.h>
+#include <nw4r/g3d/res/g3d_resmat.h>
 #include <nw4r/math.h>
 #include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
 
@@ -99,7 +100,13 @@ extern bool lbl_eu_80665448;
 extern u8 lbl_eu_8066544C;
 extern u32 lbl_eu_80665450;
 extern u32 lbl_eu_80665454;
-extern u32 lbl_eu_80665460;
+// Z-comploc cache (retail small-data at 80665460): bit0 of the flag word
+// marks the cached byte valid.
+struct ZCompLocState {
+    u32 flag;   // at 0x0
+    u8 compLoc; // at 0x4
+};
+extern ZCompLocState lbl_eu_80665460;
 
 // Float constants in g3d_state.o's retail .sdata2 (IndMtxOpStd::SetNrmMapMtx).
 extern const float lbl_eu_80669BEC;  // 0.0f
@@ -192,13 +199,14 @@ void G3DState::IndMtxOpStd::SetNrmMapMtx(GXIndTexMtxID id,
             v.y = pLightVec->y;
             v.z = pLightVec->z - lbl_eu_80669BF8;
             PSVECNormalize(v, v);
-            mIndMtx[i].m[1][0] = -v.x * lbl_eu_80669BFC;
+            // Retail stores the normalized components in reverse column order.
+            mIndMtx[i].m[1][0] = -v.z * lbl_eu_80669BFC;
             mIndMtx[i].m[1][1] = -v.y * lbl_eu_80669BFC;
-            mIndMtx[i].m[1][2] = -v.z * lbl_eu_80669BFC;
+            mIndMtx[i].m[1][2] = -v.x * lbl_eu_80669BFC;
         } else {
-            mIndMtx[i].m[1][0] = lbl_eu_80669BEC;
-            mIndMtx[i].m[1][1] = lbl_eu_80669BEC;
             mIndMtx[i].m[1][2] = lbl_eu_80669BEC;
+            mIndMtx[i].m[1][1] = lbl_eu_80669BEC;
+            mIndMtx[i].m[1][0] = lbl_eu_80669BEC;
         }
 
         PSMTXConcat(mIndMtx[i], *pNrmMtx, mIndMtx[i]);
@@ -272,10 +280,11 @@ void G3DState::LoadFog(int id) {
 
     if (id < 0 || id >= 0x20) {
         GXColor color = {0, 0, 0, 0};
-        GXSetFog(GX_FOG_NONE, color, 0.0f, 0.0f, 0.0f, 0.0f);
+        GXSetFog(GX_FOG_NONE, color, lbl_eu_80669BEC, lbl_eu_80669BEC,
+                 lbl_eu_80669BEC, lbl_eu_80669BEC);
     } else {
-        Fog fog(&lbl_eu_8061AF60.fogArray[id]);
-        fog.SetGP();
+        // Chained temporary keeps the ctor result in r3 for SetGP.
+        Fog(&lbl_eu_8061AF60.fogArray[id]).SetGP();
     }
 
     lbl_eu_8061AF60.curFogID = id;
@@ -435,7 +444,7 @@ void G3DState::Invalidate(u32 flag) {
     }
 
     if (flag & INVALIDATE_MISC) {
-        lbl_eu_80665460 &= ~1;
+        lbl_eu_80665460.flag &= ~1;
     }
 
     if (flag & INVALIDATE_FOG) {
@@ -462,38 +471,46 @@ void G3DState::Invalidate(u32 flag) {
     lbl_eu_80665448 = 1;
 }
 
+// The resource pointer is cached once; each getter re-tests it exactly like
+// the inline ResGenMode accessors so MWCC keeps it in a single register.
 void G3DState::LoadResGenMode(ResGenMode mode) {
-    if (!mode.IsValid()) {
+    ResGenModeData* pRes = mode.ptr();
+    if (pRes == NULL) {
         return;
     }
 
-    if (lbl_eu_8061A520.nTexGens != mode.GXGetNumTexGens()) {
-        lbl_eu_8061A520.nTexGens = mode.GXGetNumTexGens();
+    if (lbl_eu_8061A520.nTexGens !=
+        (u8)(pRes != NULL ? pRes->nTexGens : 0)) {
+        lbl_eu_8061A520.nTexGens = (u8)(pRes != NULL ? pRes->nTexGens : 0);
         lbl_eu_8061A520.flag &= ~3;
     }
 
-    if (lbl_eu_8061A520.nChans != mode.GXGetNumChans()) {
-        lbl_eu_8061A520.nChans = mode.GXGetNumChans();
+    if (lbl_eu_8061A520.nChans != (u8)(pRes != NULL ? pRes->nChans : 0)) {
+        lbl_eu_8061A520.nChans = (u8)(pRes != NULL ? pRes->nChans : 0);
         lbl_eu_8061A520.flag &= ~3;
     }
 
-    if (lbl_eu_8061A520.nTevs != mode.GXGetNumTevStages()) {
-        lbl_eu_8061A520.nTevs = mode.GXGetNumTevStages();
+    if (lbl_eu_8061A520.nTevs != (u8)(pRes != NULL ? pRes->nTevs : 0)) {
+        lbl_eu_8061A520.nTevs = (u8)(pRes != NULL ? pRes->nTevs : 0);
         lbl_eu_8061A520.flag &= ~1;
     }
 
-    if (lbl_eu_8061A520.nInds != mode.GXGetNumIndStages()) {
-        lbl_eu_8061A520.nInds = mode.GXGetNumIndStages();
+    if (lbl_eu_8061A520.nInds != (u8)(pRes != NULL ? pRes->nInds : 0)) {
+        lbl_eu_8061A520.nInds = (u8)(pRes != NULL ? pRes->nInds : 0);
         lbl_eu_8061A520.flag &= ~1;
     }
 
-    if (lbl_eu_8061A520.cullMode != mode.GXGetCullMode()) {
-        lbl_eu_8061A520.cullMode = mode.GXGetCullMode();
+    // Evaluated accessor-first to match MWCC's scheduling of the word compare.
+    GXCullMode cull =
+        pRes != NULL ? pRes->cullMode : GX_CULL_ALL;
+    if (lbl_eu_8061A520.cullMode != cull) {
+        lbl_eu_8061A520.cullMode = pRes != NULL ? pRes->cullMode : GX_CULL_ALL;
         lbl_eu_8061A520.flag &= ~1;
     }
 
-    if (!(lbl_eu_8061A520.flag & 4)) {
-        lbl_eu_8061A520.flag = (lbl_eu_8061A520.flag & ~3) | 4;
+    G3DStateCache* pCache = &lbl_eu_8061A520;
+    if (!(pCache->flag & 4)) {
+        pCache->flag = (pCache->flag & ~3) | 4;
     }
 }
 
@@ -584,6 +601,7 @@ void G3DState::LoadResTlutObj(const ResTlutObj tlutObj) {
 } // namespace g3d
 } // namespace nw4r
 
+
 void EnvironmentMapping__Q44nw4r3g3d6detail19ScnDependentMtxFuncFPQ34nw4r4math5MTX34ScSc(){}
 
 void EnvironmentSpecularMapping__Q44nw4r3g3d6detail19ScnDependentMtxFuncFPQ34nw4r4math5MTX34ScSc(){}
@@ -640,16 +658,96 @@ void ProjectionMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef) {
 } // namespace g3d
 } // namespace nw4r
 
-void FifoSend__Q44nw4r3g3d8G3DState13IndTexMtxInfoCFv(){}
+// G3DState::IndTexMtxInfo::FifoSend: uploads each cached indirect matrix
+// whose dirty bit (flag bits 0..2) is set, using the retail matrix IDs
+// (0, 3, 6 = ITM stages with identity scale).
+void FifoSend__Q44nw4r3g3d8G3DState13IndTexMtxInfoCFv(
+    const nw4r::g3d::G3DState::IndTexMtxInfo* pThis) {
+    if (pThis->flag & 1) {
+        nw4r::g3d::fifo::GDSetIndTexMtx(0, pThis->offset_mtx[0]);
+    }
+    if (pThis->flag & 2) {
+        nw4r::g3d::fifo::GDSetIndTexMtx(3, pThis->offset_mtx[1]);
+    }
+    if (pThis->flag & 4) {
+        nw4r::g3d::fifo::GDSetIndTexMtx(6, pThis->offset_mtx[2]);
+    }
+}
 
-void LoadResMatMisc__Q34nw4r3g3d8G3DStateFQ34nw4r3g3d10ResMatMisc(){}
 
 void LoadResTexObj__Q34nw4r3g3d8G3DStateFQ34nw4r3g3d9ResTexObj(){}
 
 void LoadResTev__Q34nw4r3g3d8G3DStateFQ34nw4r3g3d6ResTev(){}
 
 
-void LoadResMatIndMtxAndScale__Q34nw4r3g3d8G3DStateFQ34nw4r3g3d20ResMatIndMtxAndScaleRQ44nw4r3g3d8G3DState8IndMtxOp(){}
+namespace nw4r {
+namespace g3d {
+
+// G3DState::LoadResMatIndMtxAndScale (two-arg form): uploads the indirect
+// matrix display list, collects the three resource indirect matrices into a
+// stack IndTexMtxInfo, lets the caller's IndMtxOp override them virtually,
+// then emits whichever matrices remain flagged.
+void G3DState::LoadResMatIndMtxAndScale(const ResMatIndMtxAndScale ind,
+                                        IndMtxOp& rOp) {
+    if (!ind.IsValid()) {
+        return;
+    }
+
+    u32 flag = lbl_eu_8061A520.flag;
+    if ((flag & 0x4) && (flag & 3) == 2) {
+        // Re-emit the genMode BP word (shared dirty genMode state).
+        volatile u8* fifo = (volatile u8*)0xCC008000;
+        const u8* cull = (const u8*)&lbl_eu_80669BE8;
+        GXCullMode cullMode = lbl_eu_8061A520.cullMode;
+
+        *fifo = 0x61;
+        *(volatile u32*)fifo = 0xFE07FC3F;
+
+        *fifo = 0x61;
+        *(volatile u32*)fifo = lbl_eu_8061A520.nTexGens |
+                               (lbl_eu_8061A520.nChans << 4) |
+                               ((lbl_eu_8061A520.nTevs - 1) << 10) |
+                               (cull[cullMode] << 14) |
+                               (lbl_eu_8061A520.nInds << 16);
+
+        lbl_eu_8061A520.flag |= 1;
+    }
+
+    bool sync = lbl_eu_80665448;
+    lbl_eu_80665448 = 0;
+    ind.CallDisplayList(lbl_eu_8061A520.nInds, sync);
+
+    IndTexMtxInfo info;
+    if (ind.GXGetIndTexMtx(static_cast<GXIndTexMtxID>(1),
+                           &info.offset_mtx[0])) {
+        info.flag |= 1;
+    }
+    if (ind.GXGetIndTexMtx(static_cast<GXIndTexMtxID>(2),
+                           &info.offset_mtx[1])) {
+        info.flag |= 2;
+    }
+    if (ind.GXGetIndTexMtx(static_cast<GXIndTexMtxID>(3),
+                           &info.offset_mtx[2])) {
+        info.flag |= 4;
+    }
+
+    rOp(&info);
+
+    // Inline equivalent of IndTexMtxInfo::FifoSend.
+    if (info.flag & 1) {
+        fifo::GDSetIndTexMtx(0, info.offset_mtx[0]);
+    }
+    if (info.flag & 2) {
+        fifo::GDSetIndTexMtx(3, info.offset_mtx[1]);
+    }
+    if (info.flag & 4) {
+        fifo::GDSetIndTexMtx(6, info.offset_mtx[2]);
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
+
 
 namespace nw4r {
 namespace g3d {
@@ -680,7 +778,8 @@ void G3DState::LoadResMatChan(const ResMatChan chan, u32 maskDiffColor,
     // Amb color 0 (XF 0x100A): the runtime color is scaled component-wise by
     // the resource's ambColor bytes (value * scale / 255, rounded). The u32 ->
     // f64 cast makes MWCC emit its shared 2^52 magic-double conversion
-    // (xoris/stw/lfd/fsubs), hoisting the 0x43300000 stores into the prologue.
+    // (xoris/stw/lfd/fsub vs the pooled magic constant, retail .sdata2
+    // lbl_eu_80669C08).
     u32 ambFlag = pData->chan[0].flag;
     GXColor scaled;
     scaled.r = (u8)(lbl_eu_80669BFC +
@@ -796,8 +895,130 @@ void G3DState::LoadResMatChan(const ResMatChan chan, u32 maskDiffColor,
 } // namespace g3d
 } // namespace nw4r
 
+// Scene-dependent texmtx dispatch table (retail .bss at 8061A760): one
+// {function,type} pair per TexMtxEffect::map_mode, plus the per-texture
+// cache (8061A730) of the function type last used for each texcoord.
+struct ScnDependentTexMtxEntry {
+    nw4r::g3d::G3DState::ScnDependentTexMtxFuncPtr func; // at 0x0
+    unsigned long type;                                  // at 0x4
+};
+extern ScnDependentTexMtxEntry lbl_eu_8061A760[nw4r::g3d::G3DState::NUM_SCNDEPENDENT_TEXMTX_FUNCTYPE];
+extern unsigned long lbl_eu_8061A730[8];
 
-void LoadResTexSrt__Q34nw4r3g3d8G3DStateFQ34nw4r3g3d9ResTexSrt(){}
+namespace nw4r {
+namespace g3d {
+namespace G3DState {
+
+// G3DState::LoadResTexSrt: rebuild and upload each texcoord matrix.
+// Per texture i: start from identity, optionally apply the scene-dependent
+// mapping function selected by effect[i].map_mode, apply the resource
+// effect matrix, fold in the animated TexSrt via CalcTexMtx, then upload
+// either the result or an identity matrix (tracking validity in the
+// lbl_eu_80665450 dirty-flag word).
+void LoadResTexSrt(const ResTexSrt srt) {
+    const ResTexSrtData* pData = srt.ptr();
+    u32 texMtxId = GX_PTTEXMTX0;
+
+    for (u32 i = 0; i < ResTexSrtData::NUM_OF_TEXTURE; i++) {
+        const ResTexSrtData* p = srt.ptr();
+        u32 shift = i * TexSrt::NUM_OF_FLAGS;
+
+        if (p != NULL && (p->flag & (1 << shift))) {
+            const TexMtxEffect* pEffect = &p->effect[i];
+            math::MTX34 mtx;
+            PSMTXIdentity(mtx);
+            bool bSet = true;
+
+            u32 funcIdx = pEffect->map_mode;
+            if (funcIdx >= NUM_SCNDEPENDENT_TEXMTX_FUNCTYPE) {
+                funcIdx = 0;
+            }
+
+            if (pEffect->map_mode != 0) {
+                (*lbl_eu_8061A760[funcIdx].func)(
+                    &mtx,
+                    pEffect->ref_camera >= NUM_CAMERA ? -1 : pEffect->ref_camera,
+                    pEffect->ref_light >= NUM_LIGHT ? -1 : pEffect->ref_light);
+                lbl_eu_8061A730[i] = lbl_eu_8061A760[funcIdx].type;
+                bSet = false;
+            } else {
+                lbl_eu_8061A730[i] = 0;
+            }
+
+            // Only rebuild when the resource requests a full transform
+            // (all four TexSrt flags set means "identity allowed").
+            bool isIdentity = false;
+            if (((p->flag >> shift) & 0xF) == 0xF &&
+                (pEffect->misc_flag & TexMtxEffect::FLAG_IDENT)) {
+                isIdentity = true;
+            }
+
+            if (!isIdentity) {
+                if (bSet) {
+                    if (!(pEffect->misc_flag & TexMtxEffect::FLAG_IDENT)) {
+                        PSMTXCopy(
+                            *reinterpret_cast<const math::MTX34*>(
+                                &pEffect->effectMtx),
+                            mtx);
+                        bSet = false;
+                    }
+                } else {
+                    PSMTXConcat(
+                        *reinterpret_cast<const math::MTX34*>(
+                            &pEffect->effectMtx),
+                        mtx, mtx);
+                }
+
+                TexSrtTypedef::TexMatrixMode mode =
+                    static_cast<TexSrtTypedef::TexMatrixMode>(
+                        (p->flag >> shift) & 0xF);
+
+                if (pEffect->map_mode == 0) {
+                    CalcTexMtx(&mtx, bSet, p->texSrt[i],
+                               static_cast<TexSrt::Flag>(p->texMtxMode), mode);
+                } else {
+                    // Environment-style matrices are built in transposed
+                    // column order; swap columns 1/2 of rows 0/2 afterwards.
+                    math::MTX34 envMtx;
+                    CalcTexMtx(&envMtx, true, p->texSrt[i],
+                               static_cast<TexSrt::Flag>(p->texMtxMode), mode);
+
+                    f32 swap1 = envMtx.m[0][1];
+                    f32 swap2 = envMtx.m[2][1];
+                    envMtx.m[0][1] = envMtx.m[0][2];
+                    envMtx.m[2][1] = envMtx.m[2][2];
+                    envMtx.m[0][2] = swap1;
+                    envMtx.m[2][2] = swap2;
+
+                    PSMTXConcat(envMtx, mtx, mtx);
+                }
+                bSet = false;
+            }
+
+            if (bSet) {
+                // Matrix unchanged: only upload a fresh identity once.
+                u32 bit = 1 << i;
+                if (!(lbl_eu_80665450 & bit)) {
+                    lbl_eu_80665450 |= bit;
+                    math::MTX34 idMtx;
+                    PSMTXIdentity(idMtx);
+                    GXLoadTexMtxImm(idMtx, texMtxId, GX_MTX_3x4);
+                }
+            } else {
+                lbl_eu_80665450 &= ~(1 << i);
+                GXLoadTexMtxImm(mtx, texMtxId, GX_MTX_3x4);
+            }
+        } else {
+            lbl_eu_8061A730[i] = 0;
+        }
+
+        texMtxId += 3;
+    }
+}
+
+} // namespace G3DState
+} // namespace g3d
+} // namespace nw4r
 
 void LoadResShpPrimitive__Q34nw4r3g3d8G3DStateFQ34nw4r3g3d6ResShpPCQ34nw4r4math5MTX34PCQ34nw4r4math5MTX34(){}
 
@@ -840,7 +1061,22 @@ void G3DState::SetAmbLightObj(const AmbLightObj& rObj, int idx) {
 } // namespace g3d
 } // namespace nw4r
 
-void LoadLightSet__Q34nw4r3g3d8G3DStateFiPUlPUlPUlPUlPQ34nw4r3g3d11AmbLightObj(){}
+
+// G3DState::LoadResMatMisc: keeps the GX z-comploc in sync with the
+// material resource through the one-entry cache at lbl_eu_80665460.
+void LoadResMatMisc__Q34nw4r3g3d8G3DStateFQ34nw4r3g3d10ResMatMisc(
+    nw4r::g3d::ResMatMisc misc) {
+    if (misc.ptr() != NULL) {
+        bool compLoc = misc.GXGetZCompLoc();
+        ZCompLocState* pCache = &lbl_eu_80665460;
+        if ((pCache->flag & 1) == 0 || pCache->compLoc != (u8)compLoc) {
+            pCache->compLoc = compLoc;
+            pCache->flag |= 1;
+            GXSetZCompLoc(compLoc);
+            lbl_eu_80665448 = true;
+        }
+    }
+}
 
 extern const unsigned char lbl_eu_8061DFA0[];
 
@@ -1038,18 +1274,28 @@ namespace nw4r {
                         }
                     }
                 }
-                void LightState::LoadLightSet(int, unsigned long*, unsigned long*, unsigned long*, unsigned long*, nw4r::g3d::AmbLightObj*) {}
-                LightState::~LightState() {
-                    extern void __dt__Q34nw4r3g3d8LightObjFv(void*, int);
+                // Empty user body: the compiler-generated member cleanup
+                // (__destroy_arr over the mLightObj array plus the flag-gated
+                // operator delete) reproduces the retail out-of-line dtor.
+                LightState::~LightState() {}
 
-                    __destroy_arr(mLightObj,
-                                  reinterpret_cast<ConstructorDestructor*>(
-                                      const_cast<void*>(reinterpret_cast<
-                                          const void*>(
-                                          &__dt__Q34nw4r3g3d8LightObjFv))),
-                                  sizeof(nw4r::g3d::LightObj), 0x80);
-                }
+            namespace {
+            // Retail emits a standalone LightState::LoadLightSet body; not a
+            // session target, kept as an out-of-line stub.
+            void LightState::LoadLightSet(int, unsigned long*,
+                                          unsigned long*, unsigned long*,
+                                          unsigned long*,
+                                          nw4r::g3d::AmbLightObj*) {
+                // Stub body; prevents zero-size inlining heuristics.
+                volatile bool touched = true;
+                (void)touched;
+            }
             } // anonymous namespace
+            } // anonymous namespace
+
+            // Alias so the global-scope retail thunk can name the
+            // anonymous-namespace LightState type.
+            typedef LightState LoadLightSetState;
 
             void SetCameraProjMtx(const Camera& rCam, int id, bool view) {
                 if (id < NUM_CAMERA && id >= 0) {
@@ -1076,3 +1322,14 @@ namespace nw4r {
 // themselves are never referenced.
 static nw4r::g3d::LightObj g_dummyLightObj;
 static nw4r::g3d::LightSetting g_dummyLightSetting(0, 0, 0, 0, 0);
+
+// G3DState::LoadLightSet: thin forwarder into the persistent LightState
+// blob at lbl_eu_8061B574.
+void LoadLightSet__Q34nw4r3g3d8G3DStateFiPUlPUlPUlPUlPQ34nw4r3g3d11AmbLightObj(
+    int id, unsigned long* pDiffColorMask, unsigned long* pDiffAlphaMask,
+    unsigned long* pSpecColorMask, unsigned long* pSpecAlphaMask,
+    nw4r::g3d::AmbLightObj* pAmbLightObj) {
+    reinterpret_cast<nw4r::g3d::G3DState::LoadLightSetState*>(lbl_eu_8061B574)
+        ->LoadLightSet(id, pDiffColorMask, pDiffAlphaMask, pSpecColorMask,
+                       pSpecAlphaMask, pAmbLightObj);
+}

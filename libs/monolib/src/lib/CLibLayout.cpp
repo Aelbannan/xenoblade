@@ -14,9 +14,63 @@
 // Dissolved monolibdata2: retail sbss is 0x10 bytes (lbl_eu_80665710 8, lbl_eu_80665718 4, lbl_eu_8066571C 4)
 CLibLayout* lbl_eu_80665710;
 u32 lbl_eu_80665710_pad; // second word of 8-byte retail slot
+
+// Own-class vtable slots referenced by the manual vtable below. The C++
+// mangled names of these members equal these identifiers, so the C-linkage
+// aliases resolve to the definitions in this TU (CLibG3d pattern).
+extern "C" void __dt__10CLibLayoutFv();
+extern "C" void wkUpdate__10CLibLayoutFv();
+extern "C" void wkStandbyLogin__10CLibLayoutFv();
+extern "C" void wkStandbyLogout__10CLibLayoutFv();
+// Inherited IWorkEvent/CWorkThread vtable slots. NOTE: data_vtables.hpp is NOT
+// included here -- its __RTTI__* externs trip MWCC 10322 (illegal name
+// overloading) in this TU (novtable class + -ipa file); the base-list stand-ins
+// below are retargeted by the §17.6 UNIT_RULES instead.
+extern "C" int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
+extern "C" int OnFileEvent__10IWorkEventFP10CEventFile(void*);
+extern "C" int WorkEvent3__10IWorkEventFPv(void*);
+extern "C" int WorkEvent4__10IWorkEventFv();
+extern "C" void OnPauseTrigger__10IWorkEventFb(int);
+extern "C" int WorkEvent6__10IWorkEventFv();
+extern "C" int WorkEvent7__10IWorkEventFv();
+extern "C" int WorkEvent8__10IWorkEventFv();
+extern "C" int WorkEvent9__10IWorkEventFv();
+extern "C" int WorkEvent10__10IWorkEventFv();
+extern "C" int WorkEvent11__10IWorkEventFv();
+extern "C" int WorkEvent12__10IWorkEventFv();
+extern "C" int WorkEvent13__10IWorkEventFv();
+extern "C" int WorkEvent14__10IWorkEventFv();
+extern "C" int WorkEvent15__10IWorkEventFv();
+extern "C" int WorkEvent16__10IWorkEventFv();
+extern "C" int WorkEvent17__10IWorkEventFv();
+extern "C" int WorkEvent18__10IWorkEventFv();
+extern "C" int WorkEvent19__10IWorkEventFv();
+extern "C" int WorkEvent20__10IWorkEventFv();
+extern "C" int WorkEvent21__10IWorkEventFv();
+extern "C" int WorkEvent22__10IWorkEventFv();
+extern "C" int WorkEvent23__10IWorkEventFv();
+extern "C" int WorkEvent24__10IWorkEventFv();
+extern "C" int WorkEvent25__10IWorkEventFv();
+extern "C" int WorkEvent26__10IWorkEventFv();
+extern "C" int WorkEvent27__10IWorkEventFv();
+extern "C" int WorkEvent28__10IWorkEventFv();
+extern "C" int WorkEvent29__10IWorkEventFv();
+extern "C" int WorkEvent30__10IWorkEventFv();
+extern "C" int WorkEvent31__10IWorkEventFv();
+extern "C" void wkRender__11CWorkThreadFv();
+extern "C" void wkRenderAfter__11CWorkThreadFv();
+extern "C" void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
+// [.data] retail vtable label (defined at the bottom of this TU).
+extern "C" u32 lbl_eu_8056D350[40];
+// [.rodata] layout-region name string (defined at the bottom of this TU,
+// right after lbl_eu_805231B0 -- retail .rodata byte order).
+extern const char lbl_eu_805231BC[0x14];
 #include <decomp.h>
 
 CLibLayout::CLibLayout(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 0) {
+    // novtable class: install the retail vtable by hand (retail stores it
+    // right after the base ctor call).
+    *(void**)this = (void*)lbl_eu_8056D350;
     mAllocHandle = -1;
     hashDivisor = 0x10;
     hashTable = reinterpret_cast<CLibLayoutHashElem**>(mHashData);
@@ -57,30 +111,47 @@ CLibLayout* CLibLayout::getInstance() {
     return lbl_eu_80665710;
 }
 
-// Inline copy of CWorkThread::isRunning() visible only in this TU (same trick
-// as CLibVM.cpp / CDeviceGX.cpp): the retail isInitialized inlines the member
-// call with the this-arg bound to the instance, which births the global load
-// before the find-loop index (inst=r6 / index=r7). CWorkRoot.cpp keeps the
-// strong out-of-line definition.
-inline bool CWorkThread::isRunning() const {
-    bool exception;
-    if (mFlags & THREAD_FLAG_EXCEPTION) {
-        exception = true;
-    } else {
-        exception = mMsgQueue.find(EVT_EXCEPTION) >= 0;
-    }
-    bool result = false;
-    if (!exception) {
-        bool stateOK = mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN;
-        if (stateOK) {
-            result = true;
-        }
-    }
-    return result;
-}
+// Mirror of the tail layout of CWorkThread's mMsgQueue member (mMsgQueue
+// internals at 0x1A4-0x1B0, per retail isInitialized: arrayPtr/front/size/
+// capacity at +0x1A4/+0x1A8/+0x1AC/+0x1B0) so the inline EVT_EXCEPTION scan
+// below reads the ring buffer directly (CLibG3d pattern).
+struct CMsgQueueData {
+    u8 pad[0x1A4];               // CWorkThread prefix + vtable + mEntries[8]
+    CMsgParamEntry* mArrayPtr;   // 0x1A4 (mMsgQueue.mArrayPtr)
+    u32 mFront;                  // 0x1A8 (mMsgQueue.mFront)
+    u32 mSize;                   // 0x1AC (mMsgQueue.mSize)
+    u32 mCapacity;               // 0x1B0 (mMsgQueue.mCapacity)
+};
+
 bool CLibLayout::isInitialized() {
-    extern CLibLayout* lbl_eu_80665710;
-    return lbl_eu_80665710->isRunning();
+    // Layout counts as "not initialized" while an exception is pending, or
+    // while an EVT_EXCEPTION message is still queued waiting to be processed.
+    CLibLayout* inst = lbl_eu_80665710;
+    bool busy;
+    if (inst->checkFlag(THREAD_FLAG_EXCEPTION)) {
+        busy = true;
+    } else {
+        // Scan the message queue for a pending EVT_EXCEPTION. Written inline
+        // (mirroring CMsgParam::find()) rather than as a member call so the
+        // scan index stays a direct local - an inlined callee's index would
+        // otherwise win the r6/r7 split and break the retail register layout
+        // (retail is a leaf function with no stack frame: inst=r6, index=r7).
+        CMsgQueueData* q = reinterpret_cast<CMsgQueueData*>(inst);
+        int i;
+        int foundIndex;
+        for (i = 0; i < q->mSize; i++) {
+            if (q->mArrayPtr[(q->mFront + i) % q->mCapacity].command == EVT_EXCEPTION) {
+                foundIndex = i;
+                goto done;
+            }
+        }
+        foundIndex = -1;  // not found
+    done:
+        busy = foundIndex >= 0;
+    }
+    return !busy
+        && (inst->mState == THREAD_STATE_LOGIN
+            || inst->mState == THREAD_STATE_RUN);
 }
 
 nw4r::lyt::Layout* CLibLayout::createLayout() {
@@ -177,19 +248,35 @@ bool CLibLayout::wkStandbyLogout() {
     return false;
 }
 
+// Volatile word view of a CLibLayout singleton: blocks CSE so retail's
+// double hashCount load and per-access reloads survive.
+#define CLIBLAYOUT_WORD(inst, i) \
+    (*static_cast<const volatile u32*>(static_cast<const volatile void*>( \
+        static_cast<const volatile u8*>(static_cast<const volatile void*>(inst)) \
+            + (i) * 4)))
+
 // Allocator callback. Resolves the buffer either from the hash table's
 // registered frame heap or from the default accelerator-allocator handle.
 // extern "C" (see header) reproduces the retail synthetic "Fv" symbol.
 void* func_8045F438__10CLibLayoutFv(MEMAllocator* allocator, u32 size) {
-    CLibLayout* hp = lbl_eu_80665710;
-    u32 handle = hp->mAllocHandle;
-    if (hp->hashCount != 0) {
-        CLibLayoutHashElem* elem =
-            hp->hashTable[(hp->hashCount + hp->hashAccum - 1) % hp->hashDivisor];
+    // Retail loads hashCount TWICE (branch test + body) and preloads
+    // mAllocHandle before the branch, merging both paths on one handle
+    // register. Word offsets: table@136(+544), accum@137(+548),
+    // handle@119(+476), count@138(+552), div@139(+556).
+    const volatile u32* w = static_cast<const volatile u32*>(
+        static_cast<const volatile void*>(lbl_eu_80665710));
+    void* buf;
+    int test = static_cast<int>(w[138]);
+    u32 handle = w[119];
+    if (test != 0) {
+        u32 slot = static_cast<u32>((static_cast<int>(w[138])
+            + static_cast<int>(w[137]) - 1) % static_cast<int>(w[139]));
+        CLibLayoutHashElem* elem = reinterpret_cast<CLibLayoutHashElem*>(
+            reinterpret_cast<const u32*>(w[136])[slot]);
         // Registering with a frame heap takes priority: allocate there and
         // query the frame heap's free size, returning the allocated buffer.
         if (elem->field_4 != NULL) {
-            void* buf = MEMAllocFromFrmHeapEx(elem->field_4, size, 4);
+            buf = MEMAllocFromFrmHeapEx(elem->field_4, size, 4);
             MEMGetAllocatableSizeForFrmHeapEx(elem->field_4, 4);
             return buf;
         }
@@ -199,21 +286,28 @@ void* func_8045F438__10CLibLayoutFv(MEMAllocator* allocator, u32 size) {
     // Align parameter lives in the allocator's heapParam1 field.
     return mtl::MemManager::allocate_head(handle, size, allocator->heapParam1);
 }
+#undef CLIBLAYOUT_WORD
 
 void func_8045F4E4__10CLibLayoutFv(MEMAllocator* allocator, void* block) {
     // Free callback for the nw4r layout allocator: blocks inside the layout
     // region (or inside a tracked instance's buffer range) go back to the
     // MemManager; anything else is ignored.
-    if (lbl_eu_80665710->mRangeStart <= (u32)block &&
-        lbl_eu_80665710->mRangeEnd > (u32)block) {
+    // Retail spells ONE anchor local assigned twice: the re-assignment at
+    // loop head forces the new value into a different register (the old copy
+    // is still live-in at the def), yielding retail's r5-anchor/r3-element
+    // split. The intervening deallocate call keeps the two loads from CSE.
+    CLibLayout* hp = lbl_eu_80665710;
+    if (hp->mRangeStart <= (u32)block &&
+        hp->mRangeEnd > (u32)block) {
         if (block != NULL) {
             mtl::MemManager::deallocate(block);
         }
         return;
     }
 
-    for (u32 i = 0; i < lbl_eu_80665710->instanceCount; i++) {
-        UnkClass_8045F564* inst = lbl_eu_80665710->instanceArray[i];
+    hp = lbl_eu_80665710;
+    for (u32 i = 0; i < hp->instanceCount; i++) {
+        UnkClass_8045F564* inst = hp->instanceArray[i];
         if (inst->unk8 <= (u32)block && inst->unkC > (u32)block) {
             if (block != NULL) {
                 mtl::MemManager::deallocate(block);
@@ -226,4 +320,60 @@ void func_8045F4E4__10CLibLayoutFv(MEMAllocator* allocator, void* block) {
 // Dissolved sbss tails
 u32 lbl_eu_80665718;
 u32 lbl_eu_8066571C;
-DECOMP_FORCEACTIVE(CLibLayout_cpp, lbl_eu_80665710, lbl_eu_80665710_pad, lbl_eu_80665718, lbl_eu_8066571C);
+// NOTE: no DECOMP_FORCEACTIVE here -- the sbss tails survive -ipa file GC
+// without a stub (verified: .sbss stays 0x10 and data diff MATCHes), and the
+// stub's .text cost would break the exactly-full 0x5E0 split budget.
+
+// ===== Dissolved monolibdata2 data owned by this TU =====
+// Forward decls (definition order follows the retail address order).
+extern "C" u32 lbl_eu_806637D8[2];           // [.sdata] RTTI locator
+extern "C" const char lbl_eu_805231B0[0xC]; // [.rodata] "CLibLayout" name
+// NOTE: the base typeinfo objects (__RTTI__10IWorkEvent / __RTTI__11CWorkThread)
+// cannot be spelled here: declaring an __RTTI__* name in a TU with a
+// novtable-predeclared class trips an MWCC -ipa file ICE ("illegal name
+// overloading"). The base list below references legal stand-in spellings;
+// the §17.6 UNIT_RULES retarget those two slots to the retail typeinfos.
+extern u32 rtti_10IWorkEvent[];
+extern u32 rtti_11CWorkThread[];
+// [.data] 0x8056D350-0x8056D3F0 (0xA0): __vt__10CLibLayout. Base class
+// CWorkThread is novtable in retail, so the vtable/RTTI are all manual.
+extern "C" u32 lbl_eu_8056D350[40] = {
+    (u32)&lbl_eu_806637D8, 0x00000000, (u32)&__dt__10CLibLayoutFv,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
+    (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
+    (u32)&wkUpdate__10CLibLayoutFv,
+    (u32)&wkRender__11CWorkThreadFv, (u32)&wkRenderAfter__11CWorkThreadFv,
+    (u32)&wkStandbyLogin__10CLibLayoutFv, (u32)&wkStandbyLogout__10CLibLayoutFv,
+    (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+};
+// [.data] 0x8056D3F0-0x8056D408 (0x18): RTTI base list [IWorkEvent,0,
+// CWorkThread,0, 0,0].
+extern "C" u32 lbl_eu_8056D3F0[6] = {
+    (u32)&rtti_10IWorkEvent, 0x00000000, (u32)&rtti_11CWorkThread,
+    0x00000000, 0x00000000, 0x00000000,
+};
+// [.sdata] 0x806637D8-0x806637E0 (0x8): __RTTI__10CLibLayout locator.
+extern "C" u32 lbl_eu_806637D8[2] = { (u32)&lbl_eu_805231B0, (u32)&lbl_eu_8056D3F0 };
+
+// [.rodata] 0x805231B0-0x805231BC (0xC): "CLibLayout" RTTI name string + pad.
+// NOTE: no __declspec(align(8)) here -- retail emits this 0xB-byte string
+// first at +0x0 followed directly by lbl_eu_805231BC at +0xC; an 8-byte
+// alignment makes MWCC re-order/re-pad .rodata (decomp grew to 0x24).
+extern "C" const char lbl_eu_805231B0[0xC] = "CLibLayout";
+// [.rodata] 0x805231BC-0x805231D0 (0x14): layout region name + thread name;
+// packs tight against lbl_eu_805231B0 (retail has no pad at +0xC).
+extern const char lbl_eu_805231BC[0x14] = "Layout Mem\0LAYOUT\0";

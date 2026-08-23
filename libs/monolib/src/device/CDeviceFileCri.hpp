@@ -2,14 +2,20 @@
 
 #include "monolib/work/CWorkThread.hpp"
 
-struct UnkStruct_8044F65C {
-    virtual ~UnkStruct_8044F65C() {}
+// novtable + non-virtual dtor: retail emits NO RTTI/vtable/dtor for this
+// base in any TU (its vptr is hand-stored from the blob), so MWCC must not
+// generate __dt__18UnkStruct_8044F65CFv / __RTTI__ here.
+struct __declspec(novtable) UnkStruct_8044F65C {
+    ~UnkStruct_8044F65C(){}
     virtual void UnkStruct_8044F65C_UnkVirtualFunc1() = 0;
     virtual void UnkStruct_8044F65C_UnkVirtualFunc2() = 0;
     virtual void UnkStruct_8044F65C_UnkVirtualFunc3() = 0;
 };
 
-class CDeviceFileCri : public CWorkThread, public UnkStruct_8044F65C {
+// novtable: the retail vtable lives in the blob range owned by this TU
+// (lbl_eu_8056C354) and is stored by hand in the ctor/dtor, so MWCC must not
+// emit an implicit __vt__14CDeviceFileCri or automatic vptr stores.
+class __declspec(novtable) CDeviceFileCri : public CWorkThread, public UnkStruct_8044F65C {
 public:
     CDeviceFileCri(const char* pName, CWorkThread* pParent, int capacity = 0x100);
     ~CDeviceFileCri();
@@ -30,7 +36,7 @@ public:
     static void func_8044F964();
     static int getFileSize(const char* pPath, int arg1);
     static void func_8044FB08(const char* pPath);
-    static bool cancel(CFileHandle* pHandle);
+    bool cancel(CFileHandle* pHandle);
     static void func_8044FC38();
     bool func_8044FCFC();
     bool func_80450058();

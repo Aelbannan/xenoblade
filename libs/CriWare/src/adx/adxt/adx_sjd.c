@@ -12,7 +12,7 @@ void ADXB_Start(void* self);
 void ADXB_Reset(void* self);
 void ADXB_ExecHndl(void* self);
 s32 ADXB_GetStat(void* self);
-s16 ADXB_GetFormat(void* self);
+s32 ADXB_GetFormat(void* self);
 u32 ADXB_GetSfreq(void* self);
 s32 ADXB_GetNumChan(void* self);
 u32 ADXB_GetBlkSmpl(void* self);
@@ -61,7 +61,7 @@ extern u8 lbl_eu_805160B8[];
 
 /* Forward declarations */
 void adxsjd_decode_prep(void* self);
-void adxsjd_get_wr(void* self, u32 reqLen, void* outA, void* outB);
+void adxsjd_get_wr(void* self, u32* outHalf, u32* outNumSmpl, u32* outTrap);
 void adxsjd_decexec_start(void* self);
 void adxsjd_decexec_end(void* self);
 void adxsjd_insert_proc(void* self);
@@ -115,7 +115,6 @@ void* ADXSJD_Create(void* stream, s32 numChan, void* sjArray) {
     adxb = ADXB_Create((void*)numChan, bufPtr, halfBuf, halfBuf + halfXtr);
     if (adxb == NULL) return NULL;
 
-    *(void**)((u8*)sjd + 0x04) = adxb;
     ADXB_EntryGetWrFunc(adxb, adxsjd_get_wr, sjd);
     *(void**)((u8*)sjd + 0x08) = stream;
     *(s8*)((u8*)sjd + 0x02) = (s8)numChan;
@@ -347,51 +346,53 @@ void adxsjd_decode_prep(void* self) {
     *(u8*)((u8*)self + 0x01) = 2;
 }
 
-void adxsjd_get_wr(void* self, u32 reqLen, void* outA, void* outB) {
-    void* adxb = *(void**)((u8*)self + 0x04);
-    int i, nch;
-    u8* wrBase = (u8*)self + 0x1C;
-    u8* sjBase = (u8*)self + 0x0C;
-    u32 diff, maxLen;
-    u32 wrBuf[2]; /* ptr, len */
+void adxsjd_get_wr(void* self, u32* outHalf, u32* outNumSmpl, u32* outTrap) {
+    u8* wr;
+    u8* p;
+    /* Channel 0 SJ kept live across the loop: reused for the buffer-pointer query */
+    void* chan0;
+    int i;
+    p = (u8*)self;
+    wr = p + 0x1C;
+    i = 0;
+    chan0 = *(void**)((u8*)self + 0x0C);
 
-    nch = ADXB_GetNumChan(adxb);
-    for (i = 0; i < nch; i++) {
-        void* chan = *(void**)(sjBase + i * 4);
-        void** vtbl = *(void***)chan;
-        void (*getBufFn)(void*, s32, s32, void*) = (void (*)(void*, s32, s32, void*))vtbl[6];
-        getBufFn(chan, 0, 0x4000, wrBase + i * 8);
+    for (; i < ADXB_GetNumChan(*(void**)((u8*)self + 0x04)); i++) {
+        void* chan = *(void**)(p + 0x0C);
+        void (*getBufFn)(void*, s32, s32, void*) =
+            (void (*)(void*, s32, s32, void*))(*(void***)chan)[6];
+        getBufFn(chan, 0, 0x4000, wr);
+        wr += 8;
+        p += 4;
     }
 
-    /* outA = wr[0].ptr distance from buf start, halved */
+    /* outHalf = distance of wr[0].ptr from the channel buffer start, halved */
     {
-        void* bufPtr = SJRBF_GetBufPtr(self);
-        diff = (u32)*(void**)(wrBase) - (u32)bufPtr;
+        s32 diff = *(u32*)((u8*)self + 0x1C) - (u32)SJRBF_GetBufPtr(chan0);
+        *(s32*)outHalf = diff / 2;
     }
-    *(u32*)outA = (diff + (diff >> 31)) / 2;
 
-    /* outB = min(wr[0].len/2, maxDecSmpl) */
+    /* outNumSmpl = min(wr[0].len / 2, maxDecSmpl) */
     {
-        u32 w0len = *(u32*)(wrBase + 4);
-        maxLen = (w0len + (w0len >> 31)) / 2;
-    }
-    if (maxLen < *(u32*)((u8*)self + 0x38)) {
-        *(u32*)outB = maxLen;
-    } else {
-        *(u32*)outB = *(u32*)((u8*)self + 0x38);
+        s32 half = *(s32*)((u8*)self + 0x20) / 2;
+        u32 maxSmpl = *(u32*)((u8*)self + 0x38);
+        if (half < (s32)maxSmpl) {
+            maxSmpl = (u32)half;
+        }
+        *(u32*)outNumSmpl = maxSmpl;
     }
 
-    /* Set trap remaining */
+    /* outTrap = remaining samples until trap, or a large sentinel */
     {
         s32 trapNum = *(s32*)((u8*)self + 0x3C);
         if (trapNum >= 0) {
-            *(u32*)((u8*)outB + 4) = (u32)(trapNum - *(s32*)((u8*)self + 0x40));
+            *(u32*)outTrap = (u32)(trapNum - *(s32*)((u8*)self + 0x40));
         } else {
-            *(u32*)((u8*)outB + 4) = 0x1FFFFFFF;
+            *(u32*)outTrap = 0x1FFFFFFF;
         }
     }
 
-    ADXB_GetPcmBuf(adxb);
+    ADXB_GetPcmBuf(*(void**)((u8*)self + 0x04));
 }
 
 void adxsjd_decexec_start(void* self) {
@@ -574,68 +575,80 @@ void adxsjd_decexec_start(void* self) {
     ADXB_Start(adxb);
 }
 
-void adxsjd_decexec_end(void* self) {
-    void* adxb = *(void**)((u8*)self + 0x04);
-    void* inSj = *(void**)((u8*)self + 0x08);
-    u32 totalSmpl = ADXB_GetTotalNumSmpl(adxb);
-    u32 decDtLen = ADXB_GetDecDtLen(adxb);
-    u32 decNumSmpl = ADXB_GetDecNumSmpl(adxb);
-    u32 sjBuf[4];
-    u32 outBuf[2];
-    int i, nch;
+/* Chunk pair returned by SJ_SplitChunk / consumed by SJ commit/unread */
+typedef struct {
+    void* ptr;
+    u32 len;
+} SjChunk;
 
-    /* Limit decoded samples */
-    if (!(ADXB_GetFormat(adxb) == 1 && *(u32*)((u8*)self + 0xB0) == 1)) {
-        u32 remaining = totalSmpl - *(u32*)((u8*)self + 0x34);
+void adxsjd_decexec_end(void* self) {
+    s32 decDtLen;
+    s32 decNumSmpl;
+    u8* wr;
+    void** chanP;
+    s32 smplBytes;
+    void* adxb;
+    s32 totalSmpl;
+    s32 i;
+    void* inSj;
+    SjChunk headChunk;   /* sp+0x10: first split result */
+    SjChunk tailChunk;   /* sp+0x08: second split result */
+
+    inSj = *(void**)((u8*)self + 0x08);
+    adxb = *(void**)((u8*)self + 0x04);
+    totalSmpl = ADXB_GetTotalNumSmpl(adxb);
+    decDtLen = ADXB_GetDecDtLen(adxb);
+    decNumSmpl = ADXB_GetDecNumSmpl(adxb);
+
+    /* Limit decoded samples unless looping PCM playback */
+    if (ADXB_GetFormat(adxb) != 1 || *(s32*)((u8*)self + 0xB0) != 1) {
+        s32 remaining = totalSmpl - *(u32*)((u8*)self + 0x34);
         if (decNumSmpl < remaining) {
-            /* keep */
-        } else {
-            decNumSmpl = remaining;
+            remaining = decNumSmpl;
         }
+        decNumSmpl = remaining;
     }
 
-    SJ_SplitChunk((u8*)self + 0x14, decDtLen, sjBuf, outBuf);
+    SJ_SplitChunk((u8*)self + 0x14, decDtLen, &headChunk, &tailChunk);
 
     {
         void** vtbl = *(void***)inSj;
         void (*commitFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[8];
-        commitFn(inSj, 0, sjBuf);
+        commitFn(inSj, 0, &headChunk);
     }
     {
         void** vtbl = *(void***)inSj;
         void (*unreadFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[7];
-        unreadFn(inSj, 1, sjBuf);
+        unreadFn(inSj, 1, &tailChunk);
     }
 
-    /* Process each channel */
-    {
-        u32 smplBytes = decNumSmpl * 2;
-        u8* wrBase = (u8*)self + 0x1C;
-        u8* sjBase = (u8*)self + 0x0C;
-        nch = ADXB_GetNumChan(adxb);
-        for (i = 0; i < nch; i++) {
-            SJ_SplitChunk(wrBase + i * 8, smplBytes, sjBuf, outBuf);
+    /* Per-channel: split decoded samples, notify callback, commit to channel SJ */
+    chanP = (void**)(u8*)self;
+    wr = (u8*)self + 0x1C;
+    smplBytes = decNumSmpl * 2;
+    for (i = 0; i < ADXB_GetNumChan(*(void**)((u8*)self + 0x04)); i++) {
+        SJ_SplitChunk(wr, smplBytes, &headChunk, &tailChunk);
 
-            /* Channel callback */
-            if (*(u32*)((u8*)self + 0x58) != 0) {
-                void (*cbFn)(void*, s32, void*, u32) =
-                    *(void (**)(void*, s32, void*, u32))((u8*)self + 0x58);
-                cbFn(*(void**)((u8*)self + 0x5C), i, (void*)sjBuf[0], sjBuf[1]);
-            }
-
-            {
-                void* chan = *(void**)(sjBase + i * 4);
-                void** vtbl = *(void***)chan;
-                void (*commitFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[8];
-                commitFn(chan, 1, sjBuf);
-            }
-            {
-                void* chan = *(void**)(sjBase + i * 4);
-                void** vtbl = *(void***)chan;
-                void (*unreadFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[7];
-                unreadFn(chan, 0, sjBuf);
-            }
+        if (*(u32*)((u8*)self + 0x58) != 0) {
+            void (*cbFn)(void*, s32, void*, u32) =
+                *(void (**)(void*, s32, void*, u32))((u8*)self + 0x58);
+            cbFn(*(void**)((u8*)self + 0x5C), i, headChunk.ptr, headChunk.len);
         }
+
+        {
+            void* chan = *(void**)((u8*)chanP + 0x0C);
+            void** vtbl = *(void***)chan;
+            void (*commitFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[8];
+            commitFn(chan, 1, &headChunk);
+        }
+        {
+            void* chan = *(void**)((u8*)chanP + 0x0C);
+            void** vtbl = *(void***)chan;
+            void (*unreadFn)(void*, s32, void*) = (void (*)(void*, s32, void*))vtbl[7];
+            unreadFn(chan, 0, &tailChunk);
+        }
+        wr += 8;
+        chanP = (void**)((u8*)chanP + 4);
     }
 
     *(u32*)((u8*)self + 0x2C) += decNumSmpl;
@@ -859,7 +872,7 @@ void ADXSJD_SetTrapCnt(void* self, u32 val) { *(u32*)((u8*)self + 0x40) = val; }
 
 void ADXSJD_SetTrapDtLen(void* self, u32 val) { *(u32*)((u8*)self + 0x44) = val; }
 
-s16 ADXSJD_GetFormat(void* self) {
+s32 ADXSJD_GetFormat(void* self) {
     return ADXB_GetFormat(*(void**)((u8*)self + 0x04));
 }
 

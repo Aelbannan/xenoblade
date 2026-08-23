@@ -621,6 +621,9 @@ public:
     virtual void v145(); virtual void v146(); virtual void v147(); virtual void v148();
     virtual void v149(); virtual void v150(); virtual void v151(); virtual void v152();
     virtual void v153(); virtual void v154(); virtual void v155(); virtual void v156();
+    // Fillers: v157 must sit at declaration index 157 to emit vtable +0x27C.
+    virtual void vFillA();
+    virtual void vFillB();
     virtual void v157();   // declared index 157 -> vtable +0x27C (func_80231320)
 };
 
@@ -726,7 +729,11 @@ public:
             SArts322BC mList174;                // 0x174-0x2A2
         };
     };
-    char _pad_2A3[0x2A6 - 0x2A3];           // 0x2A3-0x2A5
+    // NOTE: the union has 4-byte alignment (mList174 contains a pointer), so
+    // its storage spans 0x148-0x2A4 even though the arms logically end at
+    // 0x2A2 - the following pad starts at 0x2A4 to keep field_0x2A6 at
+    // absolute 0x2A6.
+    char _pad_2A4[0x2A6 - 0x2A4];           // 0x2A4-0x2A5
     u8 field_0x2A6;                         // 0x2A6
 };
 
@@ -895,7 +902,7 @@ extern "C" void func_80230160(SArtsSub8022FA58* self);
 extern "C" void func_802316F8(SArtsSub8022FA58* self);
 extern "C" void func_80124270(void* p, u32 v);
 // Scrollbar cursor refresh (defined in CScrollBar.cpp; C-linkage retail name).
-extern "C" void func_801F3850(void* p, u32 v);
+extern "C" void func_801F3850(void* p, u16 v);
 // Layout-out animation driver (same TU, C-linkage retail name).
 extern "C" void func_8023185C(SArts313E0* self);
 
@@ -923,6 +930,12 @@ extern "C" void func_80235EF0(CArtsInfo* self);
 extern "C" void func_80235F14(CArtsInfo* self);
 // CArtsInfo state-machine advance (defined in CArtsInfo.cpp; C symbol).
 extern "C" void func_80235D24(CArtsInfo* self);
+// CArtsInfo advance helpers used by func_802340C4 (CArtsInfo.cpp; C symbols).
+extern "C" u32 func_80235F3C(CArtsInfo* self);
+extern "C" void func_80235DD8(CArtsInfo* self);
+extern "C" void func_80235AE0(CArtsInfo* self);
+// Locked-entry refresh driven by func_802340C4 when the 0x168 mode is 4.
+extern "C" void func_80234844(CMenuArtsSet* self);
 // CSysWin active/advance helpers (defined in CSysWin.cpp; C symbols).
 extern "C" int CSysWin_isActive(void* self);
 extern "C" void func_8022B8E4(void* self);
@@ -940,13 +953,28 @@ extern "C" void func_80235124(CMenuArtsSet* self);
 extern "C" void func_801F3540(void* obj34);
 // Scroll-bar scroll-out request (func_80234FDC state-4 tail).
 extern "C" void func_801F369C(void* obj34);
+// Scroll-bar scroll-in with a 3-float init vector, and the tick that
+// consumes it (func_80234EB8). Declared here rather than including
+// CMenuPlayAward.hpp (same signature-clash reason as that header documents).
+extern "C" void func_801F3670(u8* scrollBar, const float* vec);
+extern "C" void func_801F367C(u8* scrollBar);
 // Scroll-bar teardown (func_80233760).
 extern "C" void func_801F35DC(void* obj34);
 extern "C" void func_8023587C(CArtsInfo* self);
 extern "C" void func_8022B748(CSysWinFull* self);
-extern "C" void func_802306F0(void* obj148);
-extern "C" void func_80231CB4(void* obj174);
+extern "C" void func_802306F0(SArts306F0* obj148);
+extern "C" void func_80231648(SArts31648* self);
+extern "C" void func_8023299C(SArts3150C* self);
+extern "C" void func_80232AD8(SArts31648* self);
+extern "C" void func_80231480(SArts31480* self);
+extern "C" void func_802315BC(SArts315BC* self);
+extern "C" void func_80231CB4(SArts306F0* obj148);
 extern "C" void func_80234EB8(CMenuArtsSet* self);
+extern "C" void func_80234928(CMenuArtsSet* self);
+// Arts-table row-check (defined in this TU): returns 1 when the row for key
+// (-1 = current cursor row) has state byte 4 with a clear +8 flag, or state
+// byte 7 with a clear +9 flag.
+extern "C" int func_80232638(SArts322BC* self, int key);
 extern "C" void func_80234FDC(CMenuArtsSet* self);
 extern "C" void func_80234F7C(CMenuArtsSet* self);
 extern "C" void func_8023506C(SArts3506C* self);
@@ -995,6 +1023,10 @@ extern const float lbl_eu_80668650;
 extern const float lbl_eu_80668654;
 // .sdata2 zero float for func_80231A48's pane-translate reset (SArtsVec2).
 extern const float lbl_eu_80668658;
+// .sdata2 floats for func_80234EB8's scroll-in vector (stack temp fed to
+// func_801F3670).
+extern const float lbl_eu_80668678;
+extern const float lbl_eu_8066867C;
 
 // Word blocks copied by the arts-table cursor drivers (func_80232B88 copies
 // the 5-word lbl_eu_8050AC4C, func_802316F8 the 9-word lbl_eu_8050ABB4) via
@@ -1010,6 +1042,21 @@ extern const SArts316F8Block lbl_eu_8050ABB4;
 // 9-word label block for the func_8023185C cursor refresh (field_0x21 twin
 // of func_802316F8's lbl_eu_8050ABB4).
 extern const SArts316F8Block lbl_eu_8050ABD8;
+
+// Per-character arts-list block copied onto the stack by func_802320C0
+// (18 bytes: nine {id,count} pairs, indexed by character; declared as
+// words+tail so MWCC emits the counted block-copy loop).
+struct SArts320C0Entry {
+    u8 id;
+    u8 count;
+};
+struct SArts320C0Block {
+    u16 w[9];   // nine {id,count} pairs; flat array so MWCC emits the
+                // counted block-copy loop (2x8 bytes + lhz tail)
+};
+extern const SArts320C0Block lbl_eu_8050ABFC;
+// Scrollbar list rebuild (func_802320C0 tail).
+extern "C" void func_801F36BC(void* scrollBar, u32 pageSize, u8 count);
 
 // String-table lookup (func_80231220) and learn-arts flag-grid query
 // (func_80231220); C-linkage retail symbols.

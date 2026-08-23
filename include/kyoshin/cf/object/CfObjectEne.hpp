@@ -308,6 +308,23 @@ struct CActorParam17ECView {
         u8 field_0x3380; // 0x3380 (subobject base)
     };
 
+    // Distinct absolute-offset views of the +0x3E9C CfObjectMove subobject
+    // base, one per plain (non-virtual) call site in func_800ADB2C so MWCC
+    // re-materializes `addi r3, r31, 0x3e9c` per call instead of CSE-ing the
+    // address into a callee-saved register (which would grow the frame).
+    struct CfEneMoveBaseA {
+        u8 _pad[0x3E9C];
+        u8 base; // 0x3E9C
+    };
+    struct CfEneMoveBaseB {
+        u8 _pad[0x3E9C];
+        u8 base; // 0x3E9C
+    };
+    struct CfEneMoveBaseC {
+        u8 _pad[0x3E9C];
+        u8 base; // 0x3E9C
+    };
+
     // Base of the +0x8 CBattleState subobject (func_80148778 arg and the
     // +0x14/+0x20 vtable dispatches in func_800ADBD4).
     struct CfEneB8View {
@@ -607,22 +624,34 @@ struct CActorParam17ECView {
         u32 field_0x88;  // 0x88 (copied by Func120)
     };
 
+    // 12-byte attack-set header copied as a POD block by Func123.
+    struct CfEneAttackHdr {
+        u32 h0; // +0x00 / 0x2740
+        u32 h4; // +0x04 / 0x2744
+        u32 h8; // +0x08 / 0x2748
+    };
+
     // Func123 destination: the 12-byte header at +0x2740 (a u64 pair + u32,
     // reproducing the retail lwz,lwz,stw,stw reversed store pair) and the
     // 6-record attack-param array at +0x2750 (matches CAttackSet layout).
     struct CfEneAttackArea {
         u8 _pad[0x2740];
-        u64 header0;                  // 0x2740 (8-byte pair copy)
-        u32 header8;                  // 0x2748
+        CfEneAttackHdr header;        // 0x2740
         u8 _pad274C[0x2750 - 0x274C]; // 0x274C (set vtable region)
         CfEneAttackEntry records[6];  // 0x2750
     };
     // Func123 source: same 12-byte header, records at +0x10.
     struct CfEneAttackData {
-        u64 header0;                  // 0x00
-        u32 header8;                  // 0x08
-        u8 _padC[0x10 - 0xC];         // 0x0C
-        CfEneAttackEntry records[6];  // 0x10
+        CfEneAttackHdr header;       // 0x00
+        u8 _padC[0x10 - 0xC];        // 0x0C
+        CfEneAttackEntry records[6]; // 0x10
+    };
+    // Volatile-view wrappers for the Func123 header copy (see cpp).
+    struct CfEneAttackHdrBlock {
+        CfEneAttackHdr header;
+    };
+    struct CfEneAttackSrcHdrBlock {
+        CfEneAttackHdr header;
     };
 
     // Func120 destination: 0x34-byte arts-set header at +0x19E8 and the
@@ -648,6 +677,15 @@ struct CActorParam17ECView {
         CfEneArtsHdr34 header;          // 0x19E8
         u8 _pad1A1C[0x1A20 - 0x1A1C];   // 0x1A1C
         CfEneArtsEntry records[24];     // 0x1A20
+    };
+    // Common access-type wrappers so the Func120 header copy reads/writes
+    // share one TBAA parent type (retail schedules them conservatively
+    // serialized, as if src and dst may alias).
+    struct CfEneArtsHdrBlock {
+        CfEneArtsHdr34 header;
+    };
+    struct CfEneArtsSrcHdrBlock {
+        CfEneArtsHdr34 header;
     };
     // Func120 source: header at +0x0, records at +0x38.
     struct CfEneArtsData {
@@ -1291,7 +1329,8 @@ extern "C" cf::CfResReloadImpl* __ct__cf_CfResReloadImpl(cf::CfResReloadImpl* se
 extern "C" unsigned long func_80061FFC();
 extern "C" void func_800BE33C(void* obj, int flag);
 extern "C" void func_800BE824(void* obj, int flag);
-extern "C" void func_80174B4C(void* actor, u32 flags);
+// func_80174B4C is declared in CfObjectActor.hpp with its full 5-arg ABI
+// signature; a second C-linkage declaration here would be an illegal overload.
 extern "C" void func_804B0AD4(void* obj, int param, float a, float b);
 extern "C" void func_801F4DDC(void* obj, void* actor);
 extern "C" void func_801F4D50(void* obj, void* actor);
@@ -1345,9 +1384,15 @@ extern const double lbl_eu_806669A0;
 extern const double lbl_eu_806669A8;
 extern const float lbl_eu_806669B0;
 
+// func_800AF870 bdat file pointer (.sdata2) and drop-channel tables (.sbss):
+// u16 mode word at 0x80663E42 and the per-mode channel halfword table whose
+// entries are addressed at byte offset mode*100 from 0x80663E44.
+extern u16 lbl_eu_80663E42;
+extern u16 lbl_eu_80663E44;
+
 // func_800AF870 bdat file pointer (.sdata2) and column-name string table
 // (.rodata entries at +0x19A / +0x2C3 / +0x2CA / +0x2CE / +0x2D7).
-extern u8* lbl_eu_806640D4;
+extern void* lbl_eu_806640D4;   // unified pointer form (was u8*)
 extern char lbl_eu_804FC168[];
 
 // func_800ADB2C func_804B0AD4 float args (.sdata2).

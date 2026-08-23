@@ -16,12 +16,57 @@ namespace nw4r { namespace math { struct VEC3; } }
 
 class CBaseCur;
 class CSubCur;
+class CEventFile;
+class CFileHandle;
 
-// CSubCur view at CMainMenu+0xA8 (CBaseCur layout, 0x16 bytes). Cast-only
-// iface for the vtable+0x10 dispatch (func_801D2144, takes a translate VEC3).
+// Minimal layout-identical view of CArtsInfo (only field_0x54 is used here).
+// Full definition in kyoshin/CArtsInfo.hpp, which cannot be included from
+// this TU (extern "C" func_8013606C signature clash with code_80135FDC.hpp).
+class CArtsInfo {
+public:
+    u8 _00[0x54];
+    u8 field_0x54;
+};
+
+// CSubCur view at CMainMenu+0xA8 (CBaseCur layout, 0x16 bytes). Byte-array
+// storage keeps sizeof == 0x16 with no tail padding (member views are taken
+// by pointer cast). Cast-only iface for the vtable dispatches.
 struct CMainMenuSubCur {
     u8 _data[0x16];
 };
+// Member view of the same 0x16-byte cursor body (used for stack-temp copies).
+struct CMainMenuSubCurView {
+    void* mVtable;
+    nw4r::lyt::ArcResourceAccessor* mArcResAcc;
+    nw4r::lyt::Layout* mpLayout;
+    nw4r::lyt::AnimTransform* mpAnimTrans0;
+    nw4r::lyt::AnimTransform* mpAnimTrans1;
+    u8 mActive;
+    u8 mVisible;
+};
+// Mirror of the font object returned by CDeviceFont::func_80452C10; vtable
+// slot 9 (offset 0x24) yields the pane bound by func_8013676C.
+struct CMainMenuFontView {
+    virtual void sf2() = 0;
+    virtual void sf3() = 0;
+    virtual void sf4() = 0;
+    virtual void sf5() = 0;
+    virtual void sf6() = 0;
+    virtual void sf7() = 0;
+    virtual void sf8() = 0;
+    virtual u32 sf9() = 0; // vtable offset 0x24
+};
+// Minimal CScn view (retail addRenderCB__4CScnFP10IScnRenderUlUl member),
+// guarded so the kyoshin headers can be included together.
+class IScnRender;
+#ifndef KYOSHIN_MINIMAL_CSCN_DECLARED
+#define KYOSHIN_MINIMAL_CSCN_DECLARED
+class CScn {
+public:
+    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
+    void removeRenderCB(IScnRender* cb);
+};
+#endif
 struct CMainMenuCurVt {
     virtual void _v008();       // VUpdate
     virtual void _v00C();       // func_801D20DC
@@ -65,7 +110,9 @@ public:
     //   +0xD0: u8 flags[13] (various flags)
     //   +0xE0: s32 state
 
-    u8 _04[0x10 - 0x04];                      // 0x04-0x0F
+    u8 _04[0x08 - 0x04];                      // 0x04
+    nw4r::lyt::Layout* field_0x08;             // 0x08 - layout holder read by func_800FEB14
+    u8 _0C[0x10 - 0x0C];                      // 0x0C
     // +0x10: CProcess vtable set by constructor
     u8 _10[0x3C - 0x10];                      // 0x10-0x3B
     // PTMF at 0x3C (IWorkEvent vtable, 3 words)
@@ -81,7 +128,7 @@ public:
     u32 mIWorkEventVtbl;                       // 0x58 - IWorkEvent vtable (raw)
     u32 field_0x5C;                            // 0x5C
     u8 _60[0x70 - 0x60];                       // 0x60-0x6F - UnkClass_8045F564 embedded
-    u8* field_0x70;                          // 0x70 - opaque param from constructor
+    CScn* field_0x70;                          // 0x70 - owning scene (from ctor param)
     CFileHandle* field_0x74;                   // 0x74 - file handle
     nw4r::lyt::ArcResourceAccessor* field_0x78; // 0x78 - arc resource accessor
     nw4r::lyt::Layout* field_0x7C;             // 0x7C - main layout
@@ -118,20 +165,22 @@ public:
 // Gameplay-input gate for the menu-frame dispatch (defined in this TU).
 extern "C" int func_80101A88();
 
-// Per-frame menu handlers (defined in this TU, C++ linkage; the symbol map
-// binds the mangled names to the retail unmangled symbols).
-void func_80101BF8(CMainMenu* self);
-void func_800FF920(CMainMenu* self);
-void func_801010B8(CMainMenu* self);
-void func_80100E14(CMainMenu* self);
-void func_801018F4(CMainMenu* self);
+// Per-frame menu handlers (defined in this TU). extern "C" so every
+// referencing reloc carries the exact retail (unmangled) symbol.
+extern "C" void func_80101BF8(CMainMenu* self);
+extern "C" void func_800FF920(CMainMenu* self);
+extern "C" void func_801010B8(CMainMenu* self);
+extern "C" void func_80100E14(CMainMenu* self);
+extern "C" void func_801018F4(CMainMenu* self);
+extern "C" void func_800FEF4C(CMainMenu* self);
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void cbRenderBefore__9CMainMenuFv();
-extern "C" void __ct__800FF300();
+extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile);
 extern "C" void __dt__8CBaseCurFv(void*, int);   // defined in kyoshin/CCur.cpp
 extern "C" void __dt__8CProcessFv(void*, int);   // CProcess base destructor
 extern "C" void* __dt__7CSubCurFv(CBaseCur*, int); // defined in kyoshin/CCur.cpp
+extern "C" CBaseCur* __ct__CSubCur(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
 extern "C" char lbl_eu_804FCEBC[];              // rodata: menu resource names
 extern "C" void Regist__8CProcessFP8CProcessb(void* _this, void* parent, bool insertTop);
 extern "C" bool func_800FF778__9CMainMenuFv();   // mangled member symbol, prevents IPA inlining
@@ -171,6 +220,25 @@ extern u32 lbl_eu_80663E28;
 // Resource/flag getter (resource id -> value; defined in CMiniMap.cpp).
 extern "C" u32 func_8009CF8C(u32 resourceId);
 
+// UnkClass_8045F564 embedded-object lifecycle (defined in split1; normally
+// declared via kyoshin/CArtsInfo.hpp, which this TU cannot include).
+class UnkClass_8045F564;
+extern "C" void __ct__17UnkClass_8045F564Fv(void* _this);
+extern "C" void __dt__17UnkClass_8045F564Fv(void* _this, int flags);
+extern "C" void func_8045F778__17UnkClass_8045F564Fv(void* _this);
+
+// Mangled-identifier call forms previously supplied by CArtsInfo.hpp.
+extern "C" int func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
+extern "C" void func_80138078__FUl(u32);
+extern "C" void func_801D216C(void* cur, u8 flag);
+extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
+
+// Cursor constructors (defined in kyoshin/CCur.cpp)
+extern "C" void __ct__8CBaseCurFv(CBaseCur*, nw4r::lyt::ArcResourceAccessor*);
+// Font binding imports (CDeviceFont / CLibLayout)
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
+
 // Menu pane-position/color helper (defined in code_80135FDC.cpp).
 extern "C" void func_801398A4(nw4r::lyt::Layout* layout, const char* paneName,
                               const void* src, u32 idx);
@@ -189,7 +257,7 @@ extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv();
 extern "C" void func_80134460();
 extern "C" void func_801341D8();
 // Pad-enable/disable and mode gates (cf::CfGameManager).
-extern "C" void func_8008294C__Q22cf13CfGameManagerFv(bool enable);
+extern "C" void func_8008294C__Q22cf13CfGameManagerFv(u8 enable); // bool in CMenuPassiveSkill.hpp
 extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
 
 // cf::CPad view: only the three flag words this unit reads.
@@ -210,6 +278,8 @@ extern "C" void func_8013D8A0();
 // Sub-menu pane-name table (14 words) and cursor->angle s16 table.
 extern u32 lbl_eu_804FCE50[];
 extern s16 lbl_eu_804FCD60[];
+// CBaseCur runtime vtable (stored over the stack temp after construction).
+extern void* lbl_eu_8052BF28[];
 
 // Player view structs for func_80101A88 (mirror CfGimmick.hpp layouts).
 // getPlayer returns the +0x3E9C embedded spot object; the player base is the

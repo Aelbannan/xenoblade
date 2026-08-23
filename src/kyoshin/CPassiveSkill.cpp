@@ -4,7 +4,12 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CPassiveSkill.hpp"
 #include "kyoshin/CSysWin.hpp"
+// func_8049603C is declared with conflicting return types by CfGameManager.hpp
+// (UnkScnResult*, via harness_catalog -> CTaskGameEff) and this header
+// (CTaskGameCamView*). This TU never calls it - rename the decl away.
+#define func_8049603C passiveSkill9603CUnused
 #include "kyoshin/code_80135FDC.hpp"
+#undef func_8049603C
 
 // Named .sdata2 conversion magic: defining it lets MWCC's constant pool reuse
 // the retail symbol for the (f32)u16 casts in func_802646E8 instead of
@@ -56,9 +61,9 @@ void func_80267CE0(UI::CPassiveSkillLine* self);
 extern "C" __declspec(noinline) void func_80267E2C(u8* self);
 void func_80267F88(UI::CPassiveSkillLine* self);
 __declspec(noinline) void func_80268250(UI::CPassiveSkillLine* self);
-void func_80268518(UI::CPassiveSkillLine* self);
+__declspec(noinline) void func_80268518(UI::CPassiveSkillLine* self);
 extern "C" __declspec(noinline) void func_80268594(u8* self);
-void func_80268C38(void* self);
+extern "C" __declspec(noinline) void func_80268C38(void* self);
 
 // State-step helpers defined later in this TU. C linkage so the call relocs
 // are the plain retail names (func_80269808 / func_80269924 / func_80269D20).
@@ -94,13 +99,13 @@ extern "C" void func_8026D210(UI::CPassiveSkillLine* self);
 // +0x28 sub-object updates (defined later in this TU; noinline keeps the
 extern "C" __declspec(noinline) void func_80268BA8(u8* self);
 void func_80269B14(UI::CPassiveSkillLine* self);
-__declspec(noinline) void func_80268F7C(UI::CPassiveSkillLine* self);
+extern "C" __declspec(noinline) void func_80268F7C(UI::CPassiveSkillLine* self);
 // +0x28 sub-object update tail (retail func_8026BB60, 0x944 bytes; stub kept
 // noinline so func_802699A4 keeps the retail `bl`). C linkage so the call
 // reloc is the plain retail name.
 extern "C" __declspec(noinline) void func_8026BB60(UI::CPassiveSkillLine* self);
-void func_8026DCF4(UI_CPassiveSkill* self);
-void func_8026DD3C(UI_CPassiveSkill* self);
+extern "C" __declspec(noinline) void func_8026DCF4(UI_CPassiveSkill* self);
+extern "C" __declspec(noinline) void func_8026DD3C(UI_CPassiveSkill* self);
 
 // this-adjusting thunk: forward to the sub-object at +0x28 (retail `UI_CPassiveSkill_thunk28_68594`).
 void UI_CPassiveSkill_thunk28_68594(u8* self) { func_80268594(self + 0x28); }
@@ -389,6 +394,7 @@ void func_80264B2C(UI::CPassiveSkillCur* self) {
 // the +0x1B and +0x38 gate flags are set, also draw the +0x24 second layout.
 // extern "C": func_80267484's call reloc must be the plain retail name;
 // noinline keeps the retail `bl func_80264BE4`.
+#pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_80264BE4(UI::CPassiveSkillInfo* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->mpLayout != 0) {
         func_80137038(self->mpLayout, drawInfo, 0, 1);
@@ -397,6 +403,7 @@ extern "C" __declspec(noinline) void func_80264BE4(UI::CPassiveSkillInfo* self, 
         func_80137038(self->field_24, drawInfo, 0, 1);
     }
 }
+#pragma optimize_for_size off
 
 // Release both cursor layouts: drop the primary layout at +0x8 through its
 // vtable delete slot, then release the second-layout holder at +0x20 via the
@@ -898,9 +905,8 @@ void func_80266724(UI::CPassiveSkillLine* self, int charId, int row, int slot) {
         sprintf(errBuf, &lbl_eu_8050DC20[0x33b], msg19, msg4, msg19, msgE);
         func_80136A1C(self->field_8, &lbl_eu_8050DC20[0x139], errBuf, 0);
     } else {
-        int row5 = row * 5;
         u32 table = (u32)lbl_eu_8066488C;
-        u8 v = (u8)(slot + row5 + (charId - 1) * 0x19 + 1);
+        u8 v = (u8)(slot + row * 5 + (charId - 1) * 0x19 + 1);
         u8 result = func_801361E8(table, &lbl_eu_8050DC20[0x344], v);
         u16 v100 = (u16)(result * 100);
         u16 cost = 0;
@@ -1014,29 +1020,19 @@ extern "C" __declspec(noinline) void* __ct__UI_CPassiveSkillLine(UI::CPassiveSki
 __declspec(noinline) UI::CPassiveSkillLine::~CPassiveSkillLine() {}
 #pragma optimize_for_size off
 
-void func_80266B78(){}
+void func_80266B78(UI::CPassiveSkillLine* self){}
 
 // Copy a UI_CPassiveSkillInfo's non-vtable state (words +0x4..+0x14, bytes
 // +0x18..+0x1B, float +0x1C) and the +0x20 sub-struct via func_80264AC8,
 // returning the destination.
-UI_CPassiveSkillInfo* func_80267268(UI_CPassiveSkillInfo* dst,
+// noinline: retail keeps the `bl` from OnFileEvent's load path.
+__declspec(noinline) UI_CPassiveSkillInfo* func_80267268(UI_CPassiveSkillInfo* dst,
                                     const UI_CPassiveSkillInfo* src) {
-    dst->arg = src->arg;
-    dst->field_8 = src->field_8;
-    dst->field_C = src->field_C;
-    dst->field_10 = src->field_10;
-    dst->field_14 = src->field_14;
-    dst->field_18 = src->field_18;
-    dst->field_19 = src->field_19;
-    dst->field_1A = src->field_1A;
-    dst->field_1B = src->field_1B;
-    dst->field_1C = src->field_1C;
-    func_80264AC8(&dst->sub, &src->sub);
+    *dst = *src;
     return dst;
 }
-
-// Copy a cursor object's state (fields +0x4..+0x16, skipping the vtable at +0x0).
-void func_802672F0(UI::CPassiveSkillCur* dst, const UI::CPassiveSkillCur* src) {
+// noinline: retail keeps the `bl` from OnFileEvent's load path.
+__declspec(noinline) void func_802672F0(UI::CPassiveSkillCur* dst, const UI::CPassiveSkillCur* src) {
     dst->mArcResAcc = src->mArcResAcc;
     dst->mpLayout = src->mpLayout;
     dst->mpAnimTrans0 = src->mpAnimTrans0;
@@ -1046,8 +1042,8 @@ void func_802672F0(UI::CPassiveSkillCur* dst, const UI::CPassiveSkillCur* src) {
     dst->field_16 = src->field_16;
 }
 
-// Copy the CBaseCur-sized portion of a cursor (fields +0x4..+0x15).
-void func_8026732C(UI::CPassiveSkillCur* dst, const UI::CPassiveSkillCur* src) {
+// noinline: retail keeps the `bl` from OnFileEvent's load path.
+__declspec(noinline) void func_8026732C(UI::CPassiveSkillCur* dst, const UI::CPassiveSkillCur* src) {
     dst->mArcResAcc = src->mArcResAcc;
     dst->mpLayout = src->mpLayout;
     dst->mpAnimTrans0 = src->mpAnimTrans0;
@@ -1077,7 +1073,7 @@ void func_80263FE8(UI::CPassiveSkillCur* self);
 // state byte (jump table over 0..0x10; state 0xD falls through), then always
 // advance the primary/secondary layouts, the embedded info cursor at +0x120
 // and the +0x3C region cursor, and finally the +0x178 CCur18.
-void func_80267360(u8* selfRaw) {
+extern "C" __declspec(noinline) void func_80267360(u8* selfRaw) {
     UI::CPassiveSkillLine* self = reinterpret_cast<UI::CPassiveSkillLine*>(selfRaw);
     if (self->field_8 == 0) {
         return;
@@ -1213,7 +1209,7 @@ __declspec(noinline) void func_802675D8(UI::CPassiveSkillLine* self) {
 // Retail symbol is the unmangled `func_802676DC`; C linkage so call sites
 // (func_8026D9F0) emit the plain reloc name instead of a C++ mangling, and
 // noinline so the 0x1C-byte body is not inlined into them (retail keeps the
-// `bl` — the callee lives in a separate retail TU).
+// `bl` -- the callee lives in a separate retail TU).
 extern "C" __declspec(noinline) u32 func_802676DC(UI_CPassiveSkill* self) {
     if (self->field_139 != 0) {
         return self->field_E9;
@@ -1617,7 +1613,7 @@ __declspec(noinline) void func_80268250(UI::CPassiveSkillLine* self) {
 // is armed (non-null and active) the caller already handled the close, so
 // return early; otherwise pick the state-5 (func_80269808) or state-0xC
 // (func_80269924) close path and play the shared UI SFX 109 on either.
-void func_80268518(UI::CPassiveSkillLine* self) {
+__declspec(noinline) void func_80268518(UI::CPassiveSkillLine* self) {
     CSysWin* syswin = self->mInfo.field_54;
     if (syswin != 0 && CSysWin_getUnk34(syswin) != 0) {
         return;
@@ -1655,26 +1651,130 @@ extern "C" __declspec(noinline) void func_80268BA8(u8* selfRaw) {
     }
 }
 
-void func_80268C38(void* self){}
+// Callee declarations (retail names; also declared in CCol6System.hpp /
+// CCollepedia.hpp / CPcKizunagram.hpp for their TUs).
+extern "C" void func_8022B9B4(void*, const char*, int);
+extern "C" void func_8022BF6C(void*, void*, void*);
+extern "C" void func_8022B8B8(void*);
+u8 func_8026D3CC(UI::CPassiveSkillLine* self, int id);
 
+// Skill-acquisition confirm handler (retail func_80268C38): with the syswin
+// present and its +0x34 query clear, requires menu state 12. Scans the grid's
+// field_EA category entries for the selected character (field_F3 via
+// func_801392B4), matches the +0xFD slot against the +0xFE category, and reads
+// the learned bit / cost word from the character's learn record (row from
+// lbl_eu_8066488C's table). On a learned entry: set state 16, push three
+// messages, open the syswin close sequence and quiet the cursor. Category 133
+// vs 132 variants select different message sets. Otherwise: clear the +0x287
+// flag, run the state-15 helper, play the sounds and run the update tail.
+// Callee declarations (retail names; also declared in CCol6System.hpp /
+// CCollepedia.hpp / CPcKizunagram.hpp for their TUs).
+extern "C" void func_8022B9B4(void*, const char*, int);
+extern "C" void func_8022BF6C(void*, void*, void*);
+extern "C" void func_8022B8B8(void*);
+u8 func_8026D3CC(UI::CPassiveSkillLine* self, int id);
+
+// Skill-acquisition confirm handler (retail func_80268C38): with the syswin
+// present and its +0x34 query clear, requires menu state 12. Scans the grid's
+// field_EA category entries for the selected character (field_F3 via
+// func_801392B4), matches the +0xFD category slot against the +0xFE entry,
+// and reads the learned bit / cost from the character's learn record row.
+// Learned entries with SP cost: set state 16, push three messages, open the
+// syswin close sequence and quiet the cursor (two message-set variants by
+// item category 0x85/0x84). Unlearned or free: play a sound, run the state-15
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) void func_80268C38(void* selfRaw) {
+    UI::CPassiveSkillLine* self = static_cast<UI::CPassiveSkillLine*>(selfRaw);
+    if (self->mInfo.field_54 != 0) {
+        if (CSysWin_getUnk34(self->mInfo.field_54) != 0) {
+            return;
+        }
+    }
+    if (self->field_E8 != 12) {
+        return;
+    }
+    u8 ch = func_801392B4(self->field_F3);
+    u8* learnBase = (u8*)func_8009EC9C(ch) + 0x3534;
+    u8 catIdx = 0;
+    for (u8 i7 = 0; i7 < self->field_F2;) {
+        if (self->field_EA[i7] == ch) {
+            i7++;
+            continue;
+        }
+        if ((u8)catIdx != (u8)(s8)self->field_FD) {
+            catIdx++;
+            if (catIdx >= 6) {
+                break;
+            }
+            continue;
+        }
+        u8 row = reinterpret_cast<const u8*>(lbl_eu_8066488C)[
+            (u8)(ch - 1) * 8 + self->field_EA[i7] - 1];
+        u8* entry = learnBase + row * 0xC4 + (((s8)self->field_FE + 1) << 5);
+        u32 cost = *reinterpret_cast<const u32*>(entry + 0x3D4);
+        u8 learnedBit = *(entry + 0x3E8) & 1;
+        if (learnedBit == 0) {
+            func_80138078(5);
+            return;
+        }
+        if (cost == 0) {
+            func_80138078(5);
+            return;
+        }
+        u16 msgId =
+            func_801361E8((u32)lbl_eu_8066488C, &lbl_eu_8050DC20[0x235], cost);
+        u8 itemCat = (u8)msgId;
+        u8 count = func_8026D3CC(self, 0);
+        char* msgA;
+        char* msgB;
+        char* msgC;
+        if (itemCat == 0x85 && count <= 1) {
+            self->field_E8 = 0x10;
+            self->field_11E = 1;
+            msgA = func_80136190(&lbl_eu_8050DC20[0x21f],
+                                 &lbl_eu_8050DC20[0x207], 0x1a);
+            msgB = func_80136190(&lbl_eu_8050DC20[0x21f],
+                                 &lbl_eu_8050DC20[0x207], 0x1c);
+            msgC = func_80136190(&lbl_eu_8050DC20[0x21f],
+                                 &lbl_eu_8050DC20[0x207], 0x1d);
+        } else if (itemCat == 0x84 && count <= 1) {
+            self->field_E8 = 0x10;
+            msgA = func_80136190(&lbl_eu_8050DC20[0x21f],
+                                 &lbl_eu_8050DC20[0x207], 0x1b);
+            msgB = func_80136190(&lbl_eu_8050DC20[0x21f],
+                                 &lbl_eu_8050DC20[0x207], 0x1c);
+            msgC = func_80136190(&lbl_eu_8050DC20[0x21f],
+                                 &lbl_eu_8050DC20[0x207], 0x1d);
+        } else {
+            self->field_11F = 0;
+            break;
+        }
+        func_8022B9B4(self->mInfo.field_54, msgA, 0);
+        func_8022BF6C(self->mInfo.field_54, msgB, msgC);
+        func_8022BFC8(static_cast<CSysWin*>(self->mInfo.field_54), 0);
+        func_8022B8B8(self->mInfo.field_54);
+        func_801D216C(&self->mCur, 0);
+        break;
+    }
+}
+#pragma optimize_for_size off
 // +0x28 sub-object update used by func_8026DAD0's fallback path: when the
 // lazily-attached CSysWin (mInfo.field_54) is armed and active, play the open
 // SFX, quiet the embedded cursor, and advance the system window. noinline:
 // retail keeps the `bl` (the body lives at 0x80268F7C).
-__declspec(noinline) void func_80268F7C(UI::CPassiveSkillLine* self) {
-    CSysWin* syswin = self->mInfo.field_54;
-    if (syswin == 0) {
+extern "C" __declspec(noinline) void func_80268F7C(UI::CPassiveSkillLine* self) {
+    if (self->mInfo.field_54 == 0) {
         return;
     }
-    if (CSysWin_getUnk34(syswin) == 0) {
+    if (CSysWin_getUnk34(self->mInfo.field_54) == 0) {
         return;
     }
-    if (CSysWin_isActive(syswin) == 0) {
+    if (CSysWin_isActive(self->mInfo.field_54) == 0) {
         return;
     }
     func_80138078(6);
     func_801D216C(&self->mCur, 0);
-    func_8022B8E4(syswin);
+    func_8022B8E4(self->mInfo.field_54);
 }
 
 void func_80268FEC(void* self){
@@ -1694,8 +1794,8 @@ void func_80268FEC(void* self){
 // stw pairs).
 #pragma optimize_for_size on
 void func_80269004(UI::CPassiveSkillLine* self) {
+    nw4r::math::VEC3 pos;
     if (func_80137444(self->field_C, lbl_eu_80668900) != 0) {
-        nw4r::math::VEC3 pos;
         self->field_E8 = 5;
         self->field_E9 = 1;
         self->field_8->Animate(0);
@@ -2649,7 +2749,143 @@ extern "C" __declspec(noinline) void func_8026BB60(UI::CPassiveSkillLine* self) 
 // matched. C linkage inherited from the file-top declaration keeps the call
 // relocs from func_802696D8/func_80267C44/func_80269370 plain; noinline keeps
 // the retail `bl`.
-__declspec(noinline) void func_8026C4A4(UI::CPassiveSkillLine* self) {}
+__declspec(noinline) void func_8026C4A4(UI::CPassiveSkillLine* self) {
+    char buf[0x50];
+    nw4r::math::VEC3 pos;
+
+    if (self->field_E8 <= 5) {
+    // States 1..5.
+    if ((s8)self->field_F6 == 0) {
+        sprintf(buf, &lbl_eu_8050DC20[0x500], (s8)self->field_F5 + 1);
+        func_802640B8(&self->mInfo.field_3C, 0);
+    } else {
+        sprintf(buf, &lbl_eu_8050DC20[0x431], (s8)self->field_F5 + 1);
+        func_802640B8(&self->mInfo.field_3C, 1);
+    }
+    nw4r::lyt::Pane* paneE =
+        self->field_8->GetRootPane()->FindPaneByName(buf, true);
+    nw4r::lyt::Pane* paneF = self->field_8->GetRootPane()->FindPaneByName(
+        &lbl_eu_8050DC20[0x4a5], true);
+    func_80137924(&pos, paneE, paneF, self->field_8->GetRootPane());
+    func_801D2150(self->mInfo.field_24->GetRootPane(), &pos);
+    if ((s8)self->field_F6 != 0) {
+        u8 chId = func_801392B4((s8)self->field_F3);
+        func_80264F7C(self, 1, chId, (u8)(chId - 1), (s8)self->field_F5,
+                      0);
+        return;
+    }
+    u8 slotId = func_801392B4((s8)self->field_F3);
+    int row5v = (s8)self->field_F5 - 1;
+        u8 v = (u8)(slotId + row5v * 5 + 1);
+    char* msg = func_8013639C(lbl_eu_80664884, &lbl_eu_8050DC20[0x207], v);
+    func_80136B4C(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x20c], msg, 0);
+    char* msg2 = func_8013639C(lbl_eu_80664884, &lbl_eu_8050DC20[0x207], v);
+    func_80136B4C(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x215], msg2, 0);
+    char* msg3 = func_80136190(&lbl_eu_8050DC20[0x21f], &lbl_eu_8050DC20[0x207], 0x15);
+    func_80136B4C(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x22b], msg3, 0);
+    func_80136B4C(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x154],
+                  &lbl_eu_8050DC20[0x182], 0);
+    u16 cost = func_801361E8((u32)lbl_eu_80664890, &lbl_eu_8050DC20[0x235], v);
+    char* msg4 = func_8013639C(lbl_eu_80664894, &lbl_eu_8050DC20[0x207], cost);
+    func_80136B4C(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x23b], msg4, 0);
+    u16 v100 = func_801361E8((u32)lbl_eu_80664894, &lbl_eu_8050DC20[0x245], cost);
+    func_8009EC9C((u8)slotId);
+    UI::CPSkillLearnRecord* rec = reinterpret_cast<UI::CPSkillLearnRecord*>(
+        (u8*)func_8009EC9C((u8)slotId) + 0x3534 + (s8)self->field_F5 * 0xC4);
+    for (u8 si = 1; si <= 5; si++) {
+        u32 word = *(u32*)&rec[si];
+        if (word != 0) {
+            char* msgS = func_8013639C(lbl_eu_80664890, &lbl_eu_8050DC20[0x207], v);
+            sprintf(buf, &lbl_eu_8050DC20[0x24e], (u8)si);
+            u16 sp = func_801361E8((u32)lbl_eu_80664890, buf, v);
+            if (sp != 0 && sp != 0xe && sp != 0x4b && sp != 0xa5 && sp != 0xc8) {
+                char* msgA = func_80136190(&lbl_eu_8050DC20[0x21f],
+                                           &lbl_eu_8050DC20[0x207], 0x12);
+                func_80136B4C(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x254],
+                              msgA, 0);
+                char* msgB = func_80136190(&lbl_eu_8050DC20[0x21f],
+                                           &lbl_eu_8050DC20[0x207], 6);
+                if (cost == 1) {
+                    sprintf(buf, &lbl_eu_8050DC20[0x25e], v100);
+                } else {
+                    sprintf(buf, &lbl_eu_8050DC20[0x261], v100);
+                }
+                func_80136A1C(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x160],
+                              buf, 0);
+            } else {
+                func_80136B4C(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x254],
+                              &lbl_eu_8050DC20[0x182], 0);
+                func_80136B4C(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x160],
+                              &lbl_eu_8050DC20[0x182], 0);
+            }
+            break;
+        }
+    }
+    func_80136B4C(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x26b],
+                  &lbl_eu_8050DC20[0x182], 0);
+    func_80136B4C(self->mInfo.mpLayout, &lbl_eu_8050DC20[0x16c],
+                  &lbl_eu_8050DC20[0x182], 0);
+    func_802665FC(self, (u8)slotId);
+    func_80266724(self, 0, (s8)self->field_F5, 0);
+        return;
+    }
+    if (self->field_E8 <= 0xC) {
+// States 6..0xC: rebuild the +0xFD/+0xFE pane pair and sweep the
+// character's field_EA category table.
+sprintf(buf, &lbl_eu_8050DC20[0x994], (s8)self->field_FD + 1,
+    (s8)self->field_FE + 1);
+func_802640B8(&self->mInfo.field_3C, 1);
+nw4r::lyt::Pane* paneC =
+self->field_8->GetRootPane()->FindPaneByName(buf, true);
+nw4r::lyt::Pane* paneD = self->field_8->GetRootPane()->FindPaneByName(
+&lbl_eu_8050DC20[0x4a5], true);
+func_80137924(&pos, paneC, paneD,
+          self->field_8->GetRootPane());
+func_801D2150(self->mInfo.field_24->GetRootPane(), &pos);
+u8 ch = func_801392B4((s8)self->field_F3);
+func_8009EC9C(ch);
+const u8* rowTab = &lbl_eu_8050DB60[(u8)(ch - 1) * 8];
+u8 found = 0;
+u8 cat = 0;
+u8 cost = 0;
+for (u8 i2 = 0; i2 < (s8)self->field_F3; i2++) {
+if (self->field_EA[i2] == ch) {
+    continue;
+}
+if ((s8)self->field_FD != i2) {
+    continue;
+}
+u8 row = rowTab[self->field_EA[i2]];
+cost = row;
+cat = (u8)(self->field_FE + 1);
+UI::CPSkillLearnRecord* rec = reinterpret_cast<UI::CPSkillLearnRecord*>(
+    (u8*)func_8009EC9C(ch) + 0x3534 + row * 0xC4);
+u8 flag = rec->byte393C;
+found = (u8)(((flag & 1) == 0) ? 0 : (u32)((~(u32)(flag & 1) >> 24) & 0xFF));
+found = (u8)(rec->byte393C & 1) == 0 ? 0 : found;
+break;
+}
+func_80264F7C(self, 3, found, ch, cat, cost);
+return;
+        return;
+    }
+// States 0xD..0xF: refresh the +0xF7/+0xF8 cell panes.
+sprintf(buf, &lbl_eu_8050DC20[0x431], (s8)self->field_F7 + 1,
+        (s8)self->field_F8 + 1);
+func_802640B8(&self->mInfo.field_3C, 1);
+nw4r::lyt::Pane* paneA =
+    self->field_8->GetRootPane()->FindPaneByName(buf, true);
+nw4r::lyt::Pane* paneB = self->field_8->GetRootPane()->FindPaneByName(
+    &lbl_eu_8050DC20[0x4a5], true);
+func_80137924(&pos, paneA, paneB,
+              self->field_8->GetRootPane());
+    func_801D2150(self->mInfo.field_24->GetRootPane(), &pos);
+func_80264F7C(self, 2, 0, func_801392B4((s8)self->field_F3),
+              (s8)self->field_F7, (s8)self->field_F8);
+        return;
+}
+#pragma optimize_for_size off
+
 
 // Skill-grid cell flag lookup: the cell byte at +0x104 for the signed
 // row/col cursor (row*5 + col). Pointer-arithmetic form keeps MWCC's
@@ -2981,7 +3217,120 @@ extern "C" void* __ct__UI_CPassiveSkill(UI::CPassiveSkill* self) {
 UI::CPassiveSkill::~CPassiveSkill() {}
 #pragma optimize_for_size off
 
-void func_8026D5A8(){}
+// Callee declarations (retail plain/mangled names; also declared in
+// CArtsInfo.hpp / CCollepedia.hpp for their TUs).
+extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
+extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
+extern "C" u32 func_800A9D90();
+extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
+extern "C" void __dt__7CSysWinFv(void*, int);
+
+// Skill-data load + learned-flag sweep (retail func_8026D5A8): load the two
+// skill data files into the +0x18/+0x1C handles, reset the embedded syswin
+// through a temp-construct/copy/destroy cycle, then for characters 0x29..0x3D
+// split each grid entry via func_8013AB0C and set the learned bit of the
+// entry's 32 per-slot records in the char-data learn table at +0x3534.
+#pragma optimize_for_size on
+extern "C" void func_8026D5A8(UI::CPassiveSkill* self) {
+    self->field_18 = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii(
+        (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_8050DC20[2525],
+        (void*)self, 0, 0);
+    self->field_1C = (u32)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
+        func_800A9D90(), &lbl_eu_8050DC20[2550], (void*)self, 0, 0);
+
+    u8 tempW[0x3C];
+    __ct__CSysWin(reinterpret_cast<CSysWin*>(tempW), 2);
+    u32* dstW = reinterpret_cast<u32*>(reinterpret_cast<u8*>(&self->mSysWin) + 4);
+    u32* srcW = reinterpret_cast<u32*>(tempW + 4);
+    dstW[0] = srcW[0];
+    dstW[1] = srcW[1];
+    dstW[2] = srcW[2];
+    dstW[3] = srcW[3];
+    self->mSysWin.mFileHandle = reinterpret_cast<CSysWin*>(tempW)->mFileHandle;
+    self->mSysWin.mTagProcessor = reinterpret_cast<CSysWin*>(tempW)->mTagProcessor;
+    self->mSysWin.mArcAccessor = reinterpret_cast<CSysWin*>(tempW)->mArcAccessor;
+    self->mSysWin.mLayout = reinterpret_cast<CSysWin*>(tempW)->mLayout;
+    self->mSysWin.mAnimTrans = reinterpret_cast<CSysWin*>(tempW)->mAnimTrans;
+    self->mSysWin.field_28 = reinterpret_cast<CSysWin*>(tempW)->field_28;
+    self->mSysWin.field_2C = reinterpret_cast<CSysWin*>(tempW)->field_2C;
+    self->mSysWin.field_30 = reinterpret_cast<CSysWin*>(tempW)->field_30;
+    self->mSysWin.field_34 = reinterpret_cast<CSysWin*>(tempW)->field_34;
+    self->mSysWin.field_35 = reinterpret_cast<CSysWin*>(tempW)->field_35;
+    self->mSysWin.field_36 = reinterpret_cast<CSysWin*>(tempW)->field_36;
+    self->mSysWin.field_37 = reinterpret_cast<CSysWin*>(tempW)->field_37;
+    self->mSysWin.field_38 = reinterpret_cast<CSysWin*>(tempW)->field_38;
+    self->mSysWin.field_39 = reinterpret_cast<CSysWin*>(tempW)->field_39;
+    __dt__7CSysWinFv(reinterpret_cast<CSysWin*>(tempW), -1);
+    reinterpret_cast<UI_CPassiveSkillSysWinView*>(&self->mSysWin)->v34();
+    for (u8 i = 1; i <= 0x15; i++) {
+        u8 ch = (u8)(i + 0x28);
+        u16 v = func_8009CF8C(ch);
+        u8 b1 = 0;
+        u8 b0 = 0;
+        func_8013AB0C(&b1, &b0, ch);
+
+        u8* recBase1 = (u8*)func_8009EC9C(b1) + 0x3534;
+        u8 cat1 = 0;
+        u8 row1 = lbl_eu_8050DB60[(b1 - 1) * 8 + b0 - 1];
+        if (v < 3000) {
+            if (v < 2000) {
+                if (v < 1000) {
+                    cat1 = 1;
+                } else {
+                    cat1 = 2;
+                }
+            } else {
+                cat1 = 3;
+            }
+        } else if (v < 10001) {
+            if (v < 5000) {
+                cat1 = 4;
+            } else {
+                cat1 = 5;
+            }
+        }
+        {
+            u8* rec1 = recBase1 + row1 * 0xC4 + 980;
+            for (u32 slot = 1; slot <= cat1; slot++) {
+                u8* entry = rec1 + ((slot << 5) & 0x1FE0);
+                if ((entry[20] & 1) == 0) {
+                    entry[20] |= 1;
+                }
+            }
+        }
+
+        u8* recBase2 = (u8*)func_8009EC9C(b0) + 0x3534;
+        u8 cat2 = 0;
+        u8 row2 = lbl_eu_8050DB60[(b0 - 1) * 8 + b1 - 1];
+        if (v < 3000) {
+            if (v < 2000) {
+                if (v < 1000) {
+                    cat2 = 1;
+                } else {
+                    cat2 = 2;
+                }
+            } else {
+                cat2 = 3;
+            }
+        } else if (v < 10001) {
+            if (v < 5000) {
+                cat2 = 4;
+            } else {
+                cat2 = 5;
+            }
+        }
+        {
+            u8* rec2 = recBase2 + row2 * 0xC4 + 980;
+            for (u32 slot = 1; slot <= cat2; slot++) {
+                u8* entry = rec2 + ((slot << 5) & 0x1FE0);
+                if ((entry[20] & 1) == 0) {
+                    entry[20] |= 1;
+                }
+            }
+        }
+    }
+}
+#pragma optimize_for_size off
 
 void func_8026D894(UI_CPassiveSkill* self) {
     // Visibility-gated update: while the menu is open (both gates set), drive
@@ -3055,7 +3404,7 @@ u8 func_8026D9F0(UI_CPassiveSkill* self) {
 }
 
 // returns 1 when the byte at +0x110 is >= 8 (retail subfc/subfze carry
-// idiom — optimize_for_size on forces the -O4,s lowering in this -O4,p unit).
+// idiom -- optimize_for_size on forces the -O4,s lowering in this -O4,p unit).
 #pragma optimize_for_size on
 u32 func_8026DA34(u8* self) {
     return (u32)self[0x110] >= 8;
@@ -3101,15 +3450,15 @@ void func_8026DAD0(UI_CPassiveSkill* self) {
 }
 
 
-void UI_CPassiveSkill::thunk28_67CE0() { ((void(*)(void*))func_80267CE0)((char*)this + 0x28); }
+extern "C" void UI_CPassiveSkill_thunk28_67CE0(u8* self) { func_80267CE0(reinterpret_cast<UI::CPassiveSkillLine*>(self + 0x28)); }
 
 void UI_CPassiveSkill_thunk28_67E2C(u8* self) { func_80267E2C(self + 0x28); }
 
-void UI_CPassiveSkill::thunk28_67F88() { ((void(*)(void*))func_80267F88)((char*)this + 0x28); }
+extern "C" void UI_CPassiveSkill_thunk28_67F88(u8* self) { func_80267F88(reinterpret_cast<UI::CPassiveSkillLine*>(self + 0x28)); }
 
 void UI_CPassiveSkill_thunk28_68250(u8* self) { func_80268250(reinterpret_cast<UI::CPassiveSkillLine*>(self + 0x28)); }
 
-void UI_CPassiveSkill::thunk28_67BA0() { func_80267BA0(reinterpret_cast<UI::CPassiveSkillLine*>(reinterpret_cast<char*>(this) + 0x28)); }
+extern "C" void UI_CPassiveSkill_thunk28_67BA0(u8* self) { func_80267BA0(reinterpret_cast<UI::CPassiveSkillLine*>(self + 0x28)); }
 
 void UI_CPassiveSkill_thunk28_67C44(u8* self) { func_80267C44(reinterpret_cast<UI::CPassiveSkillLine*>(self + 0x28)); }
 
@@ -3157,7 +3506,7 @@ s32 func_8026DB74(UI_CPassiveSkill* self) {
 
 extern "C" void UI_CPassiveSkill_setByte180(u8* self, u8 val) { *(u8*)(self + 0x180) = val; }
 
-void UI_CPassiveSkill::thunk28_68C38() { ((void(*)(void*))func_80268C38)((char*)this + 0x28); }
+extern "C" void UI_CPassiveSkill_thunk28_68C38(u8* self) { func_80268C38(reinterpret_cast<UI::CPassiveSkillLine*>(self + 0x28)); }
 
 s32 func_8026DCA0(UI_CPassiveSkill* self) {
     // Once the +0x1B8 CSysWin reports ready the menu is considered open.
@@ -3170,14 +3519,16 @@ s32 func_8026DCA0(UI_CPassiveSkill* self) {
 
 extern "C" __declspec(noinline) int UI_CPassiveSkill_thunk1b8_CSysWin_getUnk34(UI_CPassiveSkill* self) { return CSysWin_getUnk34(self->field_1B8); }
 
-void func_8026DCF4(UI_CPassiveSkill* self) {
+// noinline: retail keeps the `bl` from func_8026D894.
+extern "C" __declspec(noinline) void func_8026DCF4(UI_CPassiveSkill* self) {
     if ((s32)func_802676DC(reinterpret_cast<UI_CPassiveSkill*>(self->_pad28)) != 0) {
         self->field_25 = 2;
         self->field_27 = 1;
     }
 }
 
-void func_8026DD3C(UI_CPassiveSkill* self) {
+// noinline: retail keeps the `bl` from func_8026D894.
+extern "C" __declspec(noinline) void func_8026DD3C(UI_CPassiveSkill* self) {
     if ((s32)func_802676DC(reinterpret_cast<UI_CPassiveSkill*>(self->_pad28)) != 0) {
         self->field_25 = 0;
         self->field_27 = 1;
@@ -3192,7 +3543,8 @@ void func_8026DD3C(UI_CPassiveSkill* self) {
 // callee-saved registers (r28-r31) need the stmw/lmw frame retail uses, which
 // -O4,p only emits under optimize_for_size.
 #pragma optimize_for_size on
-void func_8026DD84(UI::CPassiveSkill* self) {
+// noinline: retail keeps the `bl` from OnFileEvent's two call sites.
+__declspec(noinline) void func_8026DD84(UI::CPassiveSkill* self) {
     if (self->field_20 == 0 || self->field_1C != 0) {
         return;
     }
@@ -3205,14 +3557,14 @@ void func_8026DD84(UI::CPassiveSkill* self) {
             u8 b0 = 0;
             func_8013AB0C(&b1, &b0, ch);
             void* data1 = func_8009EC9C(b1);
-            u8 row1 = lbl_eu_8050DB60[b1 * 8 + b0 - 9];
+            u8 row1 = lbl_eu_8050DB60[b0 + b1 * 8 - 9];
             UI::CPSkillLearnRecord* rec1 = reinterpret_cast<UI::CPSkillLearnRecord*>(
                 (u8*)data1 + row1 * 0xC4);
             if ((rec1->byte393C & 1) == 0) {
                 rec1->byte393C |= 1;
             }
             void* data2 = func_8009EC9C(b0);
-            u8 row2 = lbl_eu_8050DB60[b0 * 8 + b1 - 9];
+            u8 row2 = lbl_eu_8050DB60[b1 + b0 * 8 - 9];
             UI::CPSkillLearnRecord* rec2 = reinterpret_cast<UI::CPSkillLearnRecord*>(
                 (u8*)data2 + row2 * 0xC4);
             if ((rec2->byte393C & 1) == 0) {
@@ -3247,7 +3599,8 @@ void func_80263FE8(UI::CPassiveSkillCur* self) {
     }
     if (self->mActive == 0) {
         func_80137444(self->mpAnimTrans0, lbl_eu_80668900);
-    } else if (self->mActive == 1) {
+    }
+    if (self->mActive == 1) {
         func_80264140(self);
     }
     self->mpLayout->Animate(0);
@@ -3348,3 +3701,138 @@ extern "C" void func_8026DB34() {}
 extern "C" void func_8026DB44() {}
 extern "C" void func_8026DB54() {}
 extern "C" void func_8026DB64() {}
+
+// Callee declarations (retail plain/mangled names; also declared in
+// CEquipItemBox.hpp / CCollepedia.hpp for their TUs).
+extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
+extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
+extern "C" void __dt__14Class_8045F858Fv(void*, int);
+extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool);
+extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
+extern "C" bool Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(nw4r::lyt::ArcResourceAccessor*, void*, const char*);
+extern "C" void func_8045F810__17UnkClass_8045F564Fv(void*);
+extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
+class CEventFile;
+
+// UI::CPassiveSkill file-event handler (retail
+// OnFileEvent__13CPassiveSkillFP10CEventFile). Two accepted handles:
+// - field_18 (skill-data read): rebuild the region, wrap the loaded buffer in
+//   an arc accessor, construct a temp line from it, member-copy it into the
+//   +0x28 sub-object, run its three fixups, then learn-all init.
+// - field_1C (archive read): close the bdat reader and refresh the six
+//   per-category BDAT table pointers, then learn-all init.
+#pragma optimize_for_size on
+extern "C" int OnFileEvent__13CPassiveSkillFP10CEventFile(UI::CPassiveSkill* self,
+                                                          CEventFile* ev) {
+    u32 handle = (u32)*(void**)((u8*)ev + 4);
+    if (self->field_18 == handle) {
+        createRegion__17UnkClass_8045F564FiiPCci(
+            &self->mUnk8, (int)getHandleMEM2__Q23mtl10MemManagerFv(), 0x40000,
+            &lbl_eu_8050DC20[0xa12], 0);
+        u8 guard[8];
+        u8 lineRaw[0x190];
+        __ct__14Class_8045F858FP17UnkClass_8045F564(guard, &self->mUnk8);
+        void* fh = (void*)self->field_18;
+        void* buf = *(void**)((u8*)fh + 4);
+        *(void**)((u8*)fh + 4) = 0;
+        func_80434A4C__Q23mtl10MemManagerFb(false);
+        self->field_20 = (u32)createArcResourceAccessor__10CLibLayoutFv();
+        Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
+            (nw4r::lyt::ArcResourceAccessor*)self->field_20, buf,
+            &lbl_eu_8050DC20[0xa20]);
+
+        // Direct-init the temp via the retail accessor ctor (a default-constructed
+        // temp would emit an extra CPassiveSkillInfo ctor call).
+        __ct__UI_CPassiveSkillLine(reinterpret_cast<UI::CPassiveSkillLine*>(lineRaw),
+                                   (nw4r::lyt::ArcResourceAccessor*)self->field_20);
+        UI::CPassiveSkillLine& lineObj = *reinterpret_cast<UI::CPassiveSkillLine*>(lineRaw);
+        // Explicit member-wise copy: vptr excluded; mInfo and mCur are
+        // re-copied by the helper calls below. An implicit whole-struct assign
+        // here makes MWCC emit extra copy-helper calls (declared dtors on
+        // CPassiveSkillInfo) and bloats the body to 0x3e0.
+        self->mLine.mArg = lineObj.mArg;
+        self->mLine.field_8 = lineObj.field_8;
+        self->mLine.field_C = lineObj.field_C;
+        self->mLine.field_10 = lineObj.field_10;
+        self->mLine.field_14 = lineObj.field_14;
+        self->mLine.field_18 = lineObj.field_18;
+        self->mLine.field_1C = lineObj.field_1C;
+        UI::CPSkillGridCell* dstCell = &self->mLine.cells[0][0];
+        const UI::CPSkillGridCell* srcCell = &lineObj.cells[0][0];
+        for (u8 ci = 0; ci < 25; ci++) {
+            *dstCell++ = *srcCell++;
+        }
+        self->mLine.field_E8 = lineObj.field_E8;
+        self->mLine.field_E9 = lineObj.field_E9;
+        *reinterpret_cast<u32*>(&self->mLine.field_EA[0]) =
+            *reinterpret_cast<const u32*>(&lineObj.field_EA[0]);
+        *reinterpret_cast<u32*>(&self->mLine.field_EA[4]) =
+            *reinterpret_cast<const u32*>(&lineObj.field_EA[4]);
+        self->mLine.field_F2 = lineObj.field_F2;
+        self->mLine.field_F3 = lineObj.field_F3;
+        self->mLine.field_F4 = lineObj.field_F4;
+        self->mLine.field_F5 = lineObj.field_F5;
+        self->mLine.field_F6 = lineObj.field_F6;
+        self->mLine.field_F7 = lineObj.field_F7;
+        self->mLine.field_F8 = lineObj.field_F8;
+        self->mLine.field_F9 = lineObj.field_F9;
+        self->mLine.field_FA = lineObj.field_FA;
+        self->mLine.field_FB = lineObj.field_FB;
+        self->mLine.field_FC = lineObj.field_FC;
+        self->mLine.field_FD = lineObj.field_FD;
+        self->mLine.field_FE = lineObj.field_FE;
+        self->mLine.field_100 = lineObj.field_100;
+        *reinterpret_cast<u32*>(&self->mLine.field_104[0]) =
+            *reinterpret_cast<const u32*>(&lineObj.field_104[0]);
+        *reinterpret_cast<u32*>(&self->mLine.field_104[4]) =
+            *reinterpret_cast<const u32*>(&lineObj.field_104[4]);
+        *reinterpret_cast<u32*>(&self->mLine.field_104[8]) =
+            *reinterpret_cast<const u32*>(&lineObj.field_104[8]);
+        *reinterpret_cast<u32*>(&self->mLine.field_104[12]) =
+            *reinterpret_cast<const u32*>(&lineObj.field_104[12]);
+        *reinterpret_cast<u32*>(&self->mLine.field_104[16]) =
+            *reinterpret_cast<const u32*>(&lineObj.field_104[16]);
+        *reinterpret_cast<u32*>(&self->mLine.field_104[20]) =
+            *reinterpret_cast<const u32*>(&lineObj.field_104[20]);
+        self->mLine.field_104[24] = lineObj.field_104[24];
+        func_80267268(reinterpret_cast<UI_CPassiveSkillInfo*>(&self->mLine.mInfo),
+                      reinterpret_cast<const UI_CPassiveSkillInfo*>(&lineObj.mInfo));
+        func_802672F0(reinterpret_cast<UI::CPassiveSkillCur*>(&self->mLine.mInfo.field_3C),
+                      reinterpret_cast<const UI::CPassiveSkillCur*>(&lineObj.mInfo.field_3C));
+        self->mLine.mInfo.field_54 = lineObj.mInfo.field_54;
+        func_8026732C(reinterpret_cast<UI::CPassiveSkillCur*>(&self->mLine.mCur),
+                      reinterpret_cast<const UI::CPassiveSkillCur*>(&lineObj.mCur));
+        lineObj.~CPassiveSkillLine();
+        func_80266B78(reinterpret_cast<UI::CPassiveSkillLine*>(&self->mLine));
+        func_8026DD84(self);
+        self->field_18 = 0;
+        func_8045F810__17UnkClass_8045F564Fv(&self->mUnk8);
+        __dt__14Class_8045F858Fv(guard, -1);
+        return 1;
+    }
+
+    if (self->field_1C != handle) {
+        return 0;
+    }
+    {
+        void* fh2 = (void*)self->field_1C;
+        *(void**)((u8*)fh2 + 4) = 0;
+        func_8003AA78__5CBdatFUlPv(2, 0);
+        func_8003AA34();
+        lbl_eu_80664880 = getFP__FPCc(&lbl_eu_8050DC20[0xa24]);
+        func_8003AA34();
+        lbl_eu_80664884 = getFP__FPCc(&lbl_eu_8050DC20[0xa2f]);
+        func_8003AA34();
+        lbl_eu_80664888 = getFP__FPCc(&lbl_eu_8050DC20[0xa3a]);
+        func_8003AA34();
+        lbl_eu_8066488C = getFP__FPCc(&lbl_eu_8050DC20[0xa44]);
+        func_8003AA34();
+        lbl_eu_80664890 = getFP__FPCc(&lbl_eu_8050DC20[0xa51]);
+        func_8003AA34();
+        lbl_eu_80664894 = getFP__FPCc(&lbl_eu_8050DC20[0xa5d]);
+        self->field_1C = 0;
+        func_8026DD84(self);
+        return 1;
+    }
+}
+#pragma optimize_for_size off

@@ -180,7 +180,7 @@ s32 MPSDEC_DecHdMpeg1(void* self, u8* buf, s32 size, s32* out_size, u32* out_fla
             break;
     }
     if ((*out_flag & 0x00020000) != 0) {
-        s32 idx;
+        u32 idx;
         if (hn->sys.w2 != 0) {
             idx = 0;
         } else {
@@ -243,8 +243,8 @@ void mpsdec_DecPackHd(MPS_WORK *hn, const u8 *src, u32 *size_out) {
 
     p += 2;
 
-    /* first field: 2 bits; bitpos is a multiple of 8 here so the cross
-     * case can only be bitpos == 31, borrowing exactly one bit */
+    /* first field: 2 bits; bitpos is byte-aligned so a crossing read can
+     * only ever borrow exactly one bit */
     if (bitpos >= 30) {
         bitpos -= 30;
         if (bitpos) {
@@ -267,6 +267,7 @@ void mpsdec_DecPackHd(MPS_WORK *hn, const u8 *src, u32 *size_out) {
     MPS_GETBITS(15, f2);
     MPS_SKIPBITS(1);
     MPS_GETBITS(15, f3);
+    MPS_SKIPBITS(1);
     MPS_SKIPBITS(1);
     MPS_GETBITS(22, f4);
 

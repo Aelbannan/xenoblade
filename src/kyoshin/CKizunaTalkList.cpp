@@ -7,11 +7,68 @@
 
 // Converted to inline member function in header
 
-void __ct__CKizunaTalkList(){}
+extern "C" void* __ct__802726F4(TalkListEntryArray* self, u32 parent);
+
+CKizunaTalkList::CKizunaTalkList() {
+    // Retail order: region ctor, POD zeroing, cursor/scrollbar widget ctors,
+    // state bytes (mNeedsRebuild = 1), entry-array ctor, then a temporary
+    // CScrollbar(1) whose fields are memberwise-copied over the embedded bar.
+    __ct__17UnkClass_8045F564Fv((u8*)this + 4);
+    mEntryCount = 0;
+    mUnknown18 = 0;
+    mUnknown1C = 0;
+    mpLayout20 = NULL;
+    mpAnim24 = NULL;
+    mpAnim28 = NULL;
+    __ct__CCur18(mCursor, NULL);
+    __ct__CScrollBar(mScrollBar, 0);
+    mState84 = 0;
+    mState85 = 0;
+    mUnknown86 = 0;
+    mNeedsRebuild = 1;
+    mUnknown88 = 0;
+    mUnknown8A = 0;
+    __ct__802726F4(&mEntryArray, 0);
+
+    u8 tmpBuf[0x40];
+    __ct__CScrollBar(reinterpret_cast<CScrollBar*>(tmpBuf), 1);
+    // Member-wise copy of the temp bar's body, skipping the vtable slot.
+    reinterpret_cast<CScrollBar*>(mScrollBar)->mMemRegion =
+        reinterpret_cast<CScrollBar*>(tmpBuf)->mMemRegion;
+    reinterpret_cast<CScrollBar*>(mScrollBar)->mFileHandle =
+        reinterpret_cast<CScrollBar*>(tmpBuf)->mFileHandle;
+    reinterpret_cast<CScrollBar*>(mScrollBar)->mAccessor =
+        reinterpret_cast<CScrollBar*>(tmpBuf)->mAccessor;
+    reinterpret_cast<CScrollBar*>(mScrollBar)->mLayout =
+        reinterpret_cast<CScrollBar*>(tmpBuf)->mLayout;
+    reinterpret_cast<CScrollBar*>(mScrollBar)->mAnimTransform =
+        reinterpret_cast<CScrollBar*>(tmpBuf)->mAnimTransform;
+    reinterpret_cast<CScrollBar*>(mScrollBar)->mReady =
+        reinterpret_cast<CScrollBar*>(tmpBuf)->mReady;
+    reinterpret_cast<CScrollBar*>(mScrollBar)->mVisible =
+        reinterpret_cast<CScrollBar*>(tmpBuf)->mVisible;
+    reinterpret_cast<CScrollBar*>(mScrollBar)->mState =
+        reinterpret_cast<CScrollBar*>(tmpBuf)->mState;
+    reinterpret_cast<CScrollBar*>(mScrollBar)->mActive =
+        reinterpret_cast<CScrollBar*>(tmpBuf)->mActive;
+    reinterpret_cast<CScrollBar*>(mScrollBar)->mAnimOffset =
+        reinterpret_cast<CScrollBar*>(tmpBuf)->mAnimOffset;
+    reinterpret_cast<CScrollBar*>(mScrollBar)->mScrollPosY =
+        reinterpret_cast<CScrollBar*>(tmpBuf)->mScrollPosY;
+    reinterpret_cast<CScrollBar*>(mScrollBar)->mScrollRatio =
+        reinterpret_cast<CScrollBar*>(tmpBuf)->mScrollRatio;
+    reinterpret_cast<CScrollBar*>(mScrollBar)->mThumbHeight =
+        reinterpret_cast<CScrollBar*>(tmpBuf)->mThumbHeight;
+    reinterpret_cast<CScrollBar*>(mScrollBar)->mContentHeight =
+        reinterpret_cast<CScrollBar*>(tmpBuf)->mContentHeight;
+    reinterpret_cast<CScrollBar*>(mScrollBar)->mDirection =
+        reinterpret_cast<CScrollBar*>(tmpBuf)->mDirection;
+    __dt__10CScrollBarFv(reinterpret_cast<CScrollBar*>(tmpBuf), -1);
+}
 
 // TalkListEntry element destructor (defined below; used by the array teardown).
 struct TalkListEntry;
-TalkListEntry* __dt__80272774(TalkListEntry* entry, int flags);
+extern "C" TalkListEntry* __dt__80272774(TalkListEntry* entry, int flags);
 
 // Deleting destructor (retail __dt__15CKizunaTalkListFv): teardown the
 // 20x0x100 TalkListEntry array at +0x8C, then the embedded sub-objects
@@ -39,7 +96,7 @@ extern "C" CKizunaTalkList* __dt__15CKizunaTalkListFv(CKizunaTalkList* self, int
 // are plain PODs so there is no member teardown; only the backing memory is
 // freed when the delete flag is set (retail __dt__80272774). Returns the
 // pointer itself, as the deleting-destructor ABI requires.
-TalkListEntry* __dt__80272774(TalkListEntry* entry, int flags) {
+extern "C" TalkListEntry* __dt__80272774(TalkListEntry* entry, int flags) {
     if (entry != 0 && flags > 0)
         __dl__FPv(entry);
     return entry;
@@ -52,7 +109,7 @@ void func_8027274C(TalkListEntry* entry);
 // 256 entries in place via the element ctor func_8027274C, then initialises
 // the count to 0 and records the owning object.
 #pragma optimize_for_size on  // -O4,s keeps the retail stmw r30 frame
-void* __ct__802726F4(TalkListEntryArray* self, u32 parent) {
+extern "C" __declspec(noinline) void* __ct__802726F4(TalkListEntryArray* self, u32 parent) {
     __construct_array(self, (void*)func_8027274C, (void*)__dt__80272774, 0x14, 0x100);
     self->mCount = 0;
     self->mParent = parent;
@@ -61,14 +118,18 @@ void* __ct__802726F4(TalkListEntryArray* self, u32 parent) {
 #pragma optimize_for_size off
 
 // Destroy the TalkListEntry array (retail __dt__802727B4), freeing the
-// backing memory when the delete flag is set.
-void __dt__802727B4(TalkListEntryArray* self, int flags) {
+// backing memory when the delete flag is set. optimize_for_size merges the
+// register saves into the retail stmw/lmw frame.
+#pragma optimize_for_size on
+extern "C" TalkListEntryArray* __dt__802727B4(TalkListEntryArray* self, int flags) {
     if (self != 0) {
         __destroy_arr(self, (void*)__dt__80272774, 0x14, 0x100);
-        if (flags >= 0)
+        if (flags > 0)
             __dl__FPv(self);
     }
+    return self;
 }
+#pragma optimize_for_size off
 
 #pragma optimize_for_size on
 // Initialise the Kizuna talk list (retail func_802732F4): load the talk-list
@@ -82,7 +143,38 @@ void func_802732F4(CKizunaTalkList* self) {
 }
 #pragma optimize_for_size off
 
-void func_8027336C(){}
+// Per-frame update while visible (retail func_8027336C): advance the state
+// machine, then refresh the layout and the embedded widgets.
+__declspec(noinline) void func_80273938(CKizunaTalkList* self);
+__declspec(noinline) void func_80273984(CKizunaTalkList* self);
+__declspec(noinline) void func_802739D8(CKizunaTalkList* self);
+__declspec(noinline) void func_80273A24(CKizunaTalkList* self);
+
+#pragma optimize_for_size on
+void func_8027336C(CKizunaTalkList* self) {
+    if (self->mState84 != 0) {
+        switch (self->mState85) {
+        case 1:
+            func_80273938(self);
+            break;
+        case 2:
+            func_80273984(self);
+            break;
+        case 4:
+            func_802739D8(self);
+            break;
+        case 5:
+            func_80273A24(self);
+            break;
+        }
+
+        // Layout virtual slot 0x38/4: disable animation.
+        ((void (*)(void*, int))((void**)self->mpLayout20)[0x38 / 4])(self->mpLayout20, 0);
+        func_801D202C(&self->mCursor);
+        func_801F3540(&self->mScrollBar);
+    }
+}
+#pragma optimize_for_size off
 
 #pragma optimize_for_size on
 // Draw the talk list (retail func_8027340C): draw the layout, scroll bar and
@@ -96,7 +188,29 @@ void func_8027340C(CKizunaTalkList* self, nw4r::lyt::DrawInfo* pDrawInfo) {
 }
 #pragma optimize_for_size off
 
-void func_8027346C(){}
+#pragma optimize_for_size on
+// Teardown (retail func_8027346C): release the BDAT query state, file handles,
+// layout/accessor, cursor and scroll bar, and clear the shared-file pointer.
+void func_8027346C(CKizunaTalkList* self) {
+    func_8003AA8C__5CBdatFUl(2);
+    func_801390E0((CFileHandle**)&self->mEntryCount);
+    func_801390E0((CFileHandle**)&self->mUnknown18);
+    self->mState84 = 0;
+    if (self->mpLayout20 != NULL) {
+        // Layout virtual slot 0x08/4.
+        ((void (*)(void*, int))((void**)self->mpLayout20)[0x08 / 4])(self->mpLayout20, 1);
+        self->mpLayout20 = NULL;
+    }
+    func_80139124((nw4r::lyt::ArcResourceAccessor*)self->mUnknown1C);
+    self->mUnknown1C = 0;
+
+    // Cursor virtual slot 0x0c/4 on the embedded cursor.
+    ((void (*)(void*))((void**)*(void**)&self->mCursor[0])[0x0c / 4])(&self->mCursor[0]);
+    func_801F35DC(&self->mScrollBar);
+    func_8045F778((UnkClass_8045F564*)((u8*)self + 4));
+    lbl_eu_806648B8 = NULL;
+}
+#pragma optimize_for_size off
 
 // Populate a talk-list entry with the given fields (retail func_80272FA8).
 // noinline: retail keeps these as out-of-line calls from func_80272810.
@@ -146,6 +260,19 @@ __declspec(noinline) void func_80273004(TalkListEntry* dst,
     dst->field_13 = src->field_13;
 }
 
+// Virtual slot 3: resource lookup (this, "timg", name, 0).
+typedef u32 (*KtlResFn)(void*, const char*, const char*, u32);
+
+// Pure-virtual view of the BDAT/resource-list object whose vtable slot at
+// offset 0x0C resolves a "timg" resource by name. MWCC prepends
+// offset-to-top + RTTI entries, so vtable offset = (index + 2) * 4;
+// index 1 -> +0x0C. All-pure so MWCC emits no vtable for the view itself.
+class KtlResView {
+public:
+    virtual void v00() = 0;                                              // 0x08
+    virtual void* v01(const char* type, const char* name, u32 unk) = 0; // 0x0C
+};
+
 // Whether an icon/texture row exists for the given subtype, by asking the
 // owning layout's shared resource accessor for the "timg" resource (retail
 // func_8027305C). v==0 queries the parent accessor directly; v!=0 re-resolves
@@ -153,17 +280,21 @@ __declspec(noinline) void func_80273004(TalkListEntry* dst,
 // func_80272810 emitting a real bl (retail keeps it out-of-line).
 __declspec(noinline) u32 func_8027305C(TalkListEntryArray* self, u8 v) {
     if (v == 0) {
-        void* iconList = (void*)self->mParent;
-        u32 ok = ((u32 (*)(void*, u32, const char*, u32))(((void**)iconList)[3]))(
-            iconList, 0x74696d67, &lbl_eu_8050E990[0x46], 0);
-        return ok != 0;
+        char* strs = lbl_eu_8050E990;
+        void* found = ((KtlResView*)(void*)self->mParent)->v01(
+            (const char*)0x74696d67 /* "timg" */, strs + 0x46, 0);
+        if (found != 0)
+            return (u32)found;
+        return 0;
     }
     u16 id = func_80136254(lbl_eu_80664090, &lbl_eu_8050E990[0x5e], v);
     char* name = func_80138F78(id);
-    void* resAcc = (void*)func_801355F4();
-    u32 ok = ((u32 (*)(void*, u32, const char*, u32))(((void**)resAcc)[3]))(
-        resAcc, 0x74696d67, name, 0);
-    return ok != 0;
+    void* resAcc = func_801355F4();
+    void* found = ((KtlResView*)resAcc)->v01(
+        (const char*)0x74696d67 /* "timg" */, name, 0);
+    if (found != 0)
+        return (u32)found;
+    return 0;
 }
 
 // Build the talk-list entry table from the affinity talk data (retail
@@ -409,21 +540,19 @@ void func_80273710(CKizunaTalkList* self) {
     // Scroll down one position through the talk entries.
     u8 count = self->mEntryArray.mCount;
     if (count >= 7) {
-        u8 inc = self->mUnknown88 + 1;
-        self->mUnknown88 = (s8)inc;
-        if ((s8)inc >= 7) {
+        self->mUnknown88 = self->mUnknown88 + 1;
+        if (self->mUnknown88 >= 7) {
             self->mUnknown88 = 6;
-            s16 pos = self->mUnknown8A + 1;
-            self->mUnknown8A = pos;
-            if ((s16)pos > (s16)(count - 7)) {
+            int limit = count - 7;
+            self->mUnknown8A = self->mUnknown8A + 1;
+            if (self->mUnknown8A > limit) {
                 self->mUnknown88 = 0;
                 self->mUnknown8A = 0;
             }
         }
     } else {
-        u8 inc = self->mUnknown88 + 1;
-        self->mUnknown88 = (s8)inc;
-        if ((s8)inc >= (s8)count) {
+        self->mUnknown88 = self->mUnknown88 + 1;
+        if (self->mUnknown88 >= count) {
             self->mUnknown88 = 0;
             self->mUnknown8A = 0;
         }
@@ -460,20 +589,18 @@ void func_8027387C(CKizunaTalkList* self) {
     // Scroll down by a page of seven entries, clamping to the list end.
     u8 count = self->mEntryArray.mCount;
     if (count >= 7) {
-        s16 limit = (s16)(count - 7);
-        s16 pos = self->mUnknown8A + 7;
-        self->mUnknown8A = pos;
-        if (pos > limit) {
-            self->mUnknown88 = (s8)(pos - limit);
+        self->mUnknown8A = self->mUnknown8A + 7;
+        int limit = count - 7;
+        if (self->mUnknown8A > limit) {
+            self->mUnknown88 = self->mUnknown8A - limit;
             self->mUnknown8A = limit;
-            if ((s8)(pos - limit) >= 7)
+            if (self->mUnknown88 >= 7)
                 self->mUnknown88 = 6;
         }
     } else {
-        u8 n = count - 1;
-        self->mUnknown88 = (s8)n;
+        self->mUnknown88 = count - 1;
         self->mUnknown8A = 0;
-        if ((s8)n < 0)
+        if (self->mUnknown88 < 0)
             self->mUnknown88 = 0;
     }
     func_80273B30(self);
@@ -482,7 +609,7 @@ void func_8027387C(CKizunaTalkList* self) {
     func_80138078__FUl(1);
 }
 
-void func_80273938(CKizunaTalkList* self) {
+__declspec(noinline) void func_80273938(CKizunaTalkList* self) {
     // Advance the entry-show animation; when it completes, step the state
     // machine forward (retail func_80273938).
     if (func_80137444(self->mpAnim24, lbl_eu_806689D4) != 0) {
@@ -491,7 +618,7 @@ void func_80273938(CKizunaTalkList* self) {
     }
 }
 
-void func_80273984(CKizunaTalkList* self) {
+__declspec(noinline) void func_80273984(CKizunaTalkList* self) {
     if (func_80137444(self->mpAnim28, 2.0f) != 0) {
         self->mState85 = 3;
         func_802740E4(self);
@@ -499,14 +626,14 @@ void func_80273984(CKizunaTalkList* self) {
     }
 }
 
-void func_802739D8(CKizunaTalkList* self) {
+__declspec(noinline) void func_802739D8(CKizunaTalkList* self) {
     if (func_80137510(self->mpAnim28, lbl_eu_806689D4) != 0) {
         self->mState85 = 5;
         func_80273A70(self);
     }
 }
 
-void func_80273A24(CKizunaTalkList* self) {
+__declspec(noinline) void func_80273A24(CKizunaTalkList* self) {
     if (func_80137510(self->mpAnim24, lbl_eu_806689D4) != 0) {
         self->mState85 = 0;
         self->mNeedsRebuild = 1;
@@ -636,10 +763,61 @@ extern "C" __declspec(noinline) void func_80273B30(CKizunaTalkList* self) {
     } while (i < 7);
 }
 
-extern "C" __declspec(noinline) void func_802740E4(CKizunaTalkList* self){}
+// Rebuild/render the cursor row highlight (retail func_802740E4): resolve the
+// two layout panes named after the current row, build the cursor target
+// position from them and hand it to the cursor via its vtable slot 4.
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) void func_802740E4(CKizunaTalkList* self) {
+    nw4r::math::VEC3 pos;
+    u32 _pad;
+    char name[0x28];
+    char* lbl = lbl_eu_8050E990;
+    sprintf(name, lbl + 0xcb, (int)self->mUnknown88 + 1);
+    func_801D216C(&self->mCursor, 1);
 
-// Changes the embedded cursor.
-void func_802741B0(CKizunaTalkList* self) {}
+    // Layout object re-read for every access so nothing extra gets
+    // enregistered across the virtual calls.
+    nw4r::lyt::Pane* paneA =
+        self->mpLayout20->GetRootPane()->FindPaneByName(name, true);
+    nw4r::lyt::Pane* paneB =
+        self->mpLayout20->GetRootPane()->FindPaneByName(lbl + 0x1aa, true);
+
+    func_80137924(&pos, paneA, paneB, self->mpLayout20->GetRootPane());
+
+    ((CCur18View*)&self->mCursor[0])->v02(&pos);
+}
+#pragma optimize_for_size off
+
+// Rebuild the visible talk list (retail func_802741B0): requires both the
+// shared BDAT data and the layout accessor. Builds a fresh local table via
+// __ct__802726F4, copies it over the member array, then rebuilds/sorts.
+void func_802741B0(CKizunaTalkList* self) {
+    u32 accessor = self->mUnknown1C;
+    if (accessor == 0)
+        return;
+    if (lbl_eu_806648B8 == NULL)
+        return;
+
+    TalkListEntryArray tmp;
+    __ct__802726F4(&tmp, accessor);
+
+    TalkListEntry* src = tmp.mEntries;
+    TalkListEntry* dst = self->mEntryArray.mEntries;
+    TalkListEntry* end = self->mEntryArray.mEntries + 256;
+    while (dst < end) {
+        func_80273004(dst, src);
+        dst++;
+        src++;
+    }
+    self->mEntryArray.mCount = tmp.mCount;
+    self->mEntryArray.mParent = tmp.mParent;
+    __destroy_arr(&tmp, (void*)__dt__80272774, 0x14, 0x100);
+
+    func_80272810(&self->mEntryArray);
+    self->mUnknown86 = 1;
+    self->mState84 = 1;
+    func_80273B30(self);
+}
 
 // ---------------------------------------------------------------------------
 // Handle a file-load completion event (retail OnFileEvent__15CKizunaTalkListFP10CEventFile).

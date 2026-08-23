@@ -91,11 +91,25 @@ typedef struct KPADInternal {
 } KPADInternal;
 
 static const f32 float_8066C0B0 = 0.0f;
+static const f32 float_8066C0B4 = 0.5f;
 static const f32 float_8066C0B8 = -1.0f;
 static const f32 float_8066C0BC = 1.0f;
 static const f32 float_8066C0C0 = -0.75f;
 static const f32 float_8066C0C4 = 0.75f;
+static const f32 float_8066C0C8 = 2.0f;
+static const f32 float_8066C0D8 = 0.001953125f;
+static const f32 float_8066C0DC = 0.99902344f;
+static const f32 float_8066C0E0 = 0.74902344f;
 static const f32 float_8066C100 = 0.38386398553848267f;
+static const f32 float_8066C104 = 0.017453292f;
+static const f32 float_8066C110 = 0.01f;
+static const f32 float_8066C114 = 0.005f;
+static const f32 float_8066C118 = 0.2f;
+static const f32 float_8066C11C = -0.2f;
+static const f64 double_8066C0D0 = 4503601774854144.0;
+static const f64 double_8066C0E8 = 0.0;
+static const f64 double_8066C0F0 = -0.5;
+static const f64 double_8066C0F8 = 4503599627370496.0;
 
 f32 kp_obj_interval = 0.2f;
 f32 kp_ah_circle_radius = 0.07f;
@@ -122,21 +136,9 @@ typedef union {
 } KpFsRot;
 KpFsRot kp_fs_rot;
 
-static const f32 float_8066C0B4 = 0.5f;
-static const f32 float_8066C0C8 = 2.0f;
-static const f64 double_8066C0D0 = 4503601774854144.0;
-static const f64 double_8066C0E8 = 0.0;
-static const f64 double_8066C0F8 = 4503599627370496.0;
-static const f32 float_8066C104 = 0.017453292f;
 
-static const f32 float_8066C0D8 = 0.001953125f;
-static const f32 float_8066C0DC = 0.99902344f;
-static const f32 float_8066C0E0 = 0.74902344f;
-static const f64 double_8066C0F0 = -0.5;
-static const f32 float_8066C110 = 0.01f;
-static const f32 float_8066C114 = 0.005f;
-static const f32 float_8066C118 = 0.2f;
-static const f32 float_8066C11C = -0.2f;
+
+
 
 static const char kpad_version_str[] =
     "<< RVL_SDK - KPAD \trelease build: Jun 22 2009 18:32:13 (0x4302_145) >>";
@@ -1287,8 +1289,8 @@ void read_kpad_ext(KPADInternal* kp, KPADUnifiedWpadStatus* uwp) {
                 ex->cl.rstick = Vec2_0;
                 ex->cl.ltrigger = 0.0f;
                 ex->cl.rtrigger = 0.0f;
-                kp->btn_repeat_time = 0;
-                kp->btn_repeat_next = kp->btn_repeat_delay;
+                kp->btn_cl_repeat_time = 0;
+                kp->btn_cl_repeat_next = kp->btn_repeat_delay;
             }
             clamp_stick(&ex->cl.lstick, uwp->u.cl.clLStickX, uwp->u.cl.clLStickY, kp_cl_stick_min,
                         kp_cl_stick_max);
@@ -1314,8 +1316,8 @@ void read_kpad_ext(KPADInternal* kp, KPADUnifiedWpadStatus* uwp) {
                 ex->cl.rstick = Vec2_0;
                 ex->cl.ltrigger = 0.0f;
                 ex->cl.rtrigger = 0.0f;
-                kp->btn_repeat_time = 0;
-                kp->btn_repeat_next = kp->btn_repeat_delay;
+                kp->btn_cl_repeat_time = 0;
+                kp->btn_cl_repeat_next = kp->btn_repeat_delay;
             }
             clamp_stick(&ex->cl.lstick, uwp->u.cl.clLStickX, uwp->u.cl.clLStickY, kp_cl_stick_min,
                         kp_cl_stick_max);
@@ -1343,8 +1345,8 @@ void read_kpad_ext(KPADInternal* kp, KPADUnifiedWpadStatus* uwp) {
                 ex->cl.rstick = Vec2_0;
                 ex->cl.ltrigger = 0.0f;
                 ex->cl.rtrigger = 0.0f;
-                kp->btn_repeat_time = 0;
-                kp->btn_repeat_next = kp->btn_repeat_delay;
+                kp->btn_cl_repeat_time = 0;
+                kp->btn_cl_repeat_next = kp->btn_repeat_delay;
             }
             ex->cl.lstick.x = 0.0f;
             ex->cl.lstick.y = 0.0f;
@@ -1409,10 +1411,15 @@ void read_kpad_ext(KPADInternal* kp, KPADUnifiedWpadStatus* uwp) {
                 if (kp_wbc_tgc_weight_issued != 0) {
                     count = kp_wbc_ave_sample_count + 1;
                     kp_wbc_ave_sample_count = count;
-                    for (i = 0; i < 4; i++) {
-                        kp_wbc_ave_sample[i] = (kp_wbc_ave_sample[i] * (count - 1) + ex->wbc.sample[i]) /
-                                               count;
-                    }
+                    /* Unrolled to match MWCC's unrolled reader loop. */
+                    kp_wbc_ave_sample[0] =
+                        (kp_wbc_ave_sample[0] * (count - 1) + ex->wbc.sample[0]) / count;
+                    kp_wbc_ave_sample[1] =
+                        (kp_wbc_ave_sample[1] * (count - 1) + ex->wbc.sample[1]) / count;
+                    kp_wbc_ave_sample[2] =
+                        (kp_wbc_ave_sample[2] * (count - 1) + ex->wbc.sample[2]) / count;
+                    kp_wbc_ave_sample[3] =
+                        (kp_wbc_ave_sample[3] * (count - 1) + ex->wbc.sample[3]) / count;
                     if ((f32)kp_wbc_ave_sample_count == kp_wbc_ave_count) {
                         kp_wbc_tgc_weight_issued = 0;
                         err = WBCGetTGCWeightDummy(&kp_wbc_tgc_weight, uwp);

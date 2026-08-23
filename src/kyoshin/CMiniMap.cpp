@@ -1918,10 +1918,10 @@ void func_801165EC(CMiniMapGimmickView* self) {
     self->field_0x14 = 0;
     self->field_0x590 = 0;
     self->field_0x6A4 = 0;
-    for (u32 i = 0; i < 25; i++) {
+    for (u32 k = 0; k < 25; k++) {
         for (u32 j = 0; j < 8; j++) {
-            self->field_0x338[i * 8 + j] = 0;
-            self->field_0x400[i * 8 + j] = 0;
+            self->field_0x338[k * 8 + j] = 0;
+            self->field_0x400[k * 8 + j] = 0;
         }
     }
 }
@@ -1930,16 +1930,17 @@ void func_801165EC(CMiniMapGimmickView* self) {
 // when the row budget ran out (func_80118854 uses the result as a bool).
 u32 func_801167EC(CMiniMapGimmickView* self) {
     u32 ret = 0;
-    u32 count = self->field_0x0C;
-    u32 i = self->field_0x10;
+    s32 count = self->field_0x0C;
+    s32 i = self->field_0x10;
     if (i < count) {
-        u8* arr = (self->field_0x590 != 0) ? self->field_0x338
-                                           : self->field_0x400;
-        u32 end = i + count;
-        u8* p = arr + i;
+        // Retail selects the table and adds the cursor in one expression
+        // (single address temp), then keeps end/cursor/p in registers.
+        u8* p = ((self->field_0x590 != 0) ? self->field_0x338 : self->field_0x400)
+                + i;
+        s32 end = i + count;
         while (i < end) {
             *p = (u8)func_80138574(self->field_0x00, i + 1);
-            self->field_0x10++;
+            self->field_0x10 += 1;
             if (self->field_0x10 >= self->field_0x0C) {
                 ret = 1;
                 break;

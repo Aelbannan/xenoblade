@@ -129,7 +129,7 @@ s32 sfmpv_DecodeFrm(void* self, void* sj);
 s32 sfmpv_SetFrmPara(void* self, void* frm, void* para, void** out);
 void fn_803C9948(void* a, void* b, s32* out1, s32* out2);
 void fn_803C99C8(void* self);
-s32 sfmpv_GoDdelim(u8* self, u8* sj, s32 mask);
+s32 sfmpv_GoDdelim(u8* self, s32 mask);
 s32 sfmpv_InitInf(u8* self, u8* shc);
 void sfmpv_InitFrmObj(void* frm, const u32* src, s32 count);
 s32 sfmpv_ReprocessShc(void* self, void* shc, s32* out);
@@ -850,7 +850,7 @@ s32 sfmpv_DecodeOneUnit(void* self, s32 ch, s32 pat, s32 dlm, s32* out) {
         goto done;
     }
     if (pat != 0x80) {
-        if (sfmpv_GoDdelim(self, sj, 0xcc) > 0) {
+        if (sfmpv_GoDdelim(self, 0xcc) > 0) {
             *out = 1;
         }
     }
@@ -863,19 +863,20 @@ done:
 // ---------------------------------------------------------------------------
 s32 sfmpv_ConcatSub(u8* self) {
     u8* shc = *(u8**)(self + 0x2068);
-    u8* ttu1 = self + 0xdd4;
     s32 dlm;
     if (SFSET_GetCond(self, 6) == 0) {
-        if (*(s32*)(self + 0xe00) == 0) {
+        u8* e00 = self + 0xe00;
+        u8* ttu = self + 0xdd4;
+        if (*(s32*)e00 == 0) {
             dlm = 0;
         } else {
             u32 tc[8];
             s32 t1;
             s32 t2;
-            sfmpv_NextTc(self + 0xe04, tc);
+            sfmpv_NextTc(e00 + 4, tc);
             tc[6] = 0;
             SFTIM_Tc2Time(tc, &t1, &t2);
-            dlm = t1 - *(s32*)(ttu1 + 0x24);
+            dlm = t1 - *(s32*)(ttu + 0x24);
         }
     } else {
         u8* p = *(u8**)(self + 0x00);
@@ -912,7 +913,7 @@ s32 sfmpv_ConcatSub(u8* self) {
             fn(lbl_eu_80606E34, &lbl_eu_80568E34[1]);
         }
     }
-    SFTIM_InitTtu(ttu1, 0x7fffffff);
+    SFTIM_InitTtu(self + 0xdd4, 0x7fffffff);
     SFTIM_InitTtu(self + 0xe00, -1);
     *(s32*)(shc + 8) = 0xc0;
     return 0;
@@ -1229,16 +1230,19 @@ s64 sfmpv_ComplementPts(void* self, u32* dst, void* frm, u32* pts, s32 mode, s32
 // sfmpv_CalcRepeatField
 // ---------------------------------------------------------------------------
 void sfmpv_CalcRepeatField(void* self, void* frm, s32 mode) {
-    void* shc = *(void**)((u8*)self + 0x2068);
     s16* tbl = (s16*)((u8*)self + 0x1268);
-    s32 t0;
+    s32 t1;
+    s32 t2;
+    s32 i;
     s32 w;
     s32 h;
     s32 n;
-    s32 i;
-    s32 found;
-    s16 sv;
+    s32 sv;
+    s16* slot;
+    void* p;
+    void* shc;
     *(s32*)((u8*)self + 0xdb4) = *(s32*)((u8*)frm + 0x10);
+    shc = *(void**)((u8*)self + 0x2068);
     *(s32*)((u8*)self + 0xdb8) = *(s32*)((u8*)frm + 0x1c);
     *(s32*)((u8*)self + 0xdbc) = *(s32*)((u8*)frm + 0x20);
     *(s32*)((u8*)self + 0xdc0) = *(s32*)((u8*)frm + 0x24);
@@ -1254,9 +1258,9 @@ void sfmpv_CalcRepeatField(void* self, void* frm, s32 mode) {
         tbl[1] = -1;
         return;
     }
-    if (*(u32*)((u8*)frm + 0x18) - 1 <= 1) {
-        void* p = *(void**)((u8*)shc + 0xec);
-        if (p != 0) {
+    if ((u32)(*(s32*)((u8*)frm + 0x18) - 1) <= 1) {
+        p = *(void**)((u8*)shc + 0xec);
+        if (p != NULL) {
             w = *(s32*)((u8*)frm + 0x14);
             h = *(s32*)((u8*)p + 0x7c);
             if (w < h) {
@@ -1267,64 +1271,63 @@ void sfmpv_CalcRepeatField(void* self, void* frm, s32 mode) {
             }
         }
     }
-    t0 = *(s32*)((u8*)frm + 0x14);
-    tbl[(t0 % 64) * 2] = *(s16*)((u8*)self + 0xdd0);
+    slot = &tbl[(*(s32*)((u8*)frm + 0x14) % 64) * 2];
+    slot[0] = *(s16*)((u8*)self + 0xdd0);
     if (mode != 0) {
-        tbl[(t0 % 64) * 2 + 1] = 0;
-    } else if (t0 == 0) {
+        slot[1] = 0;
+    } else if (*(s32*)((u8*)frm + 0x14) == 0) {
         if (tbl[1] == -1) {
             tbl[1] = 0;
         }
     } else {
-        found = 0;
+        /* walk back up to 16 slots; on failure the slot is left untouched */
         for (i = 0; i < 0x10; i++) {
-            s32 k = (t0 - i - 1 + 0x3f) % 64;
-            if (tbl[k * 2] != -1) {
-                tbl[(t0 % 64) * 2 + 1] = tbl[k * 2] + tbl[k * 2 + 1];
-                found = 1;
+            s16* q = &tbl[((*(s32*)((u8*)frm + 0x14) - i + 0x3f) % 64) * 2];
+            if (q[0] != -1) {
+                slot[1] = q[0] + q[1];
                 break;
             }
         }
-        if (found == 0) {
-            tbl[(t0 % 64) * 2 + 1] = -1;
-        }
     }
-    *(s16*)((u8*)self + 0xdd2) = tbl[(t0 % 64) * 2 + 1];
+    *(s16*)((u8*)self + 0xdd2) = slot[1];
     if (*(s32*)((u8*)frm + 0x18) == 3) {
-        if (tbl[(t0 % 64) * 2] != 0) {
-            void* r = *(void**)((u8*)shc + 0xec);
-            if (r != 0) {
-                s32 t1;
-                s32 t2;
-                w = *(s32*)((u8*)r + 0x7c);
-                sv = tbl[(t0 % 64) * 2] + tbl[(t0 % 64) * 2 + 1];
+        if (slot[0] != 0) {
+            if (*(void**)((u8*)shc + 0xec) != NULL) {
+                w = *(s32*)((u8*)(*(void**)((u8*)shc + 0xec)) + 0x7c);
+                sv = slot[0] + slot[1];
                 tbl[(w % 64) * 2 + 1] = sv;
-                *(s16*)((u8*)r + 0x3a) = sv;
-                SFTIM_Tc2Time((u8*)r + 0x1c, &t1, &t2);
-                *(s32*)((u8*)r + 0x3c) = t1 - *(s32*)((u8*)self + 0xdf8);
-                *(s32*)((u8*)r + 0x40) = t2;
-                *(s32*)((u8*)r + 0x18) = 1;
-                if (*(s32*)((u8*)self + 0xe24) <= *(s32*)((u8*)r + 0x3c)) {
-                    *(s32*)((u8*)self + 0xe00) = *(s32*)((u8*)r + 0x18);
-                    *(s32*)((u8*)self + 0xe04) = *(s32*)((u8*)r + 0x1c);
-                    *(s32*)((u8*)self + 0xe08) = *(s32*)((u8*)r + 0x20);
-                    *(s32*)((u8*)self + 0xe0c) = *(s32*)((u8*)r + 0x24);
-                    *(s32*)((u8*)self + 0xe10) = *(s32*)((u8*)r + 0x28);
-                    *(s32*)((u8*)self + 0xe14) = *(s32*)((u8*)r + 0x2c);
-                    *(s32*)((u8*)self + 0xe18) = *(s32*)((u8*)r + 0x30);
-                    *(s32*)((u8*)self + 0xe1c) = *(s32*)((u8*)r + 0x34);
-                    *(s32*)((u8*)self + 0xe20) = *(s32*)((u8*)r + 0x38);
-                    *(s32*)((u8*)self + 0xe24) = *(s32*)((u8*)r + 0x3c);
-                    *(s32*)((u8*)self + 0xe28) = *(s32*)((u8*)r + 0x40);
+                /* NOTE: deliberately re-reads the prev-frame pointer around the
+                 * time conversion to match retail load placement */
+                p = *(void**)((u8*)shc + 0xec);
+                *(s16*)((u8*)p + 0x3a) = sv;
+                p = *(void**)((u8*)shc + 0xec);
+                SFTIM_Tc2Time((u8*)p + 0x1c, &t1, &t2);
+                p = *(void**)((u8*)shc + 0xec);
+                *(s32*)((u8*)p + 0x3c) = t1 - *(s32*)((u8*)self + 0xdf8);
+                *(s32*)((u8*)p + 0x40) = t2;
+                *(s32*)((u8*)p + 0x18) = 1;
+                if (*(s32*)((u8*)self + 0xe24) <= *(s32*)((u8*)p + 0x3c)) {
+                    *(s32*)((u8*)self + 0xe00) = *(s32*)((u8*)p + 0x18);
+                    *(s32*)((u8*)self + 0xe04) = *(s32*)((u8*)p + 0x1c);
+                    *(s32*)((u8*)self + 0xe08) = *(s32*)((u8*)p + 0x20);
+                    *(s32*)((u8*)self + 0xe0c) = *(s32*)((u8*)p + 0x24);
+                    *(s32*)((u8*)self + 0xe10) = *(s32*)((u8*)p + 0x28);
+                    *(s32*)((u8*)self + 0xe14) = *(s32*)((u8*)p + 0x2c);
+                    *(s32*)((u8*)self + 0xe18) = *(s32*)((u8*)p + 0x30);
+                    *(s32*)((u8*)self + 0xe1c) = *(s32*)((u8*)p + 0x34);
+                    *(s32*)((u8*)self + 0xe20) = *(s32*)((u8*)p + 0x38);
+                    *(s32*)((u8*)self + 0xe24) = *(s32*)((u8*)p + 0x3c);
+                    *(s32*)((u8*)self + 0xe28) = *(s32*)((u8*)p + 0x40);
                 }
-                *(s32*)((u8*)r + 0x48) = *(s32*)((u8*)r + 0x40);
-                n = *(s32*)((u8*)self + 0xefc) + (*(s32*)((u8*)r + 0x3c) - *(s32*)((u8*)self + 0xed4));
-                *(s32*)((u8*)r + 0x44) = n;
-                *(s32*)((u8*)r + 0x58) = *(s32*)((u8*)r + 0x3c);
-                *(s32*)((u8*)r + 0x5c) = *(s32*)((u8*)r + 0x3c) + *(s32*)((u8*)self + 0xefc);
+                p = *(void**)((u8*)shc + 0xec);
+                *(s32*)((u8*)p + 0x48) = *(s32*)((u8*)p + 0x40);
+                n = *(s32*)((u8*)self + 0xefc) + (*(s32*)((u8*)p + 0x3c) - *(s32*)((u8*)self + 0xed4));
+                *(s32*)((u8*)p + 0x44) = n;
+                *(s32*)((u8*)p + 0x58) = *(s32*)((u8*)p + 0x3c);
+                *(s32*)((u8*)p + 0x5c) = *(s32*)((u8*)p + 0x3c) + *(s32*)((u8*)self + 0xefc);
                 if (*(s32*)((u8*)self + 0x1020) < n) {
                     *(s32*)((u8*)self + 0x1020) = n;
-                    *(s32*)((u8*)self + 0x1024) = *(s32*)((u8*)r + 0x48);
+                    *(s32*)((u8*)self + 0x1024) = *(s32*)((u8*)p + 0x48);
                 }
             }
         }
@@ -1389,13 +1392,13 @@ void sfmpv_Pts2Tc(s64 a, s32 v, s32 t, s32 u, u32* out) {
     s64 m64;
     m64 = UTY_MulDivRound64(a, (s64)(v * 2), 0x55d4a80);
     m = (s32)m64;
+    *(s16*)((u8*)out + 0x1e) = (s16)(m & 1);
+    out[0] = v;
+    out[1] = t;
     d = (m >> 1) - u;
     if (d < 0) {
         d = 0;
     }
-    *(s16*)((u8*)out + 0x1e) = (s16)(m & 1);
-    out[0] = v;
-    out[1] = t;
     if (t != 0) {
         if (v0 == 0x7512) {
             t0 = lbl_eu_8051C940[0x18];
@@ -1639,13 +1642,11 @@ s32 sfmpv_ChkBufSiz(void* self, void* para) {
 // sfmpv_IsSkip
 // ---------------------------------------------------------------------------
 s32 sfmpv_IsSkip(void* self, void* bpic) {
-    void (*fn)(void*, void*);
     void* shc = *(void**)((u8*)self + 0x2068);
     void* frm = (u8*)shc + 0x14;
-    s32 ret = 0;
+    s32 ret;
     s32 type;
     s32 cond;
-    s32 v;
     u32 skip;
     if (SFSET_GetCond(self, 0x2f) == 1) {
         return 1;
@@ -1659,6 +1660,8 @@ s32 sfmpv_IsSkip(void* self, void* bpic) {
     if (*(s8*)((u8*)frm + 0x58) != 0) {
         return *(s32*)((u8*)shc + 0xf4);
     }
+    /* retail hoists the type load above the time-check block */
+    type = *(s32*)((u8*)frm + 0x18);
     {
         s32 r = 0;
         if (*(s32*)((u8*)self + 0x2678) >= 0) {
@@ -1669,6 +1672,7 @@ s32 sfmpv_IsSkip(void* self, void* bpic) {
             }
         }
         if (r != 0) {
+            void (*fn)(void*, void*);
             if (lbl_eu_80606E34 != NULL) {
                 ((u32*)&lbl_eu_80568CF0)[3] = (u32)self;
                 ((u32*)&lbl_eu_80568CF0)[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0];
@@ -1679,7 +1683,6 @@ s32 sfmpv_IsSkip(void* self, void* bpic) {
             goto out;
         }
     }
-    type = *(s32*)((u8*)frm + 0x18);
     switch (type) {
     case 1:
         cond = (*(s32*)((u8*)self + 0xa24) == 0);
@@ -1695,6 +1698,7 @@ s32 sfmpv_IsSkip(void* self, void* bpic) {
         break;
     }
     if (cond) {
+        void (*fn)(void*, void*);
         if (lbl_eu_80606E34 != NULL) {
             ((u32*)&lbl_eu_80568CF0)[3] = (u32)self;
             ((u32*)&lbl_eu_80568CF0)[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x11];
@@ -1705,6 +1709,7 @@ s32 sfmpv_IsSkip(void* self, void* bpic) {
         goto out;
     }
     if (sfmpv_IsEmptyBpic(self, type, bpic) != 0) {
+        void (*fn)(void*, void*);
         if (lbl_eu_80606E34 != NULL) {
             ((u32*)&lbl_eu_80568CF0)[3] = (u32)self;
             ((u32*)&lbl_eu_80568CF0)[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x17];
@@ -1727,6 +1732,7 @@ s32 sfmpv_IsSkip(void* self, void* bpic) {
             }
         }
         if (flg != 0) {
+            void (*fn)(void*, void*);
             if (lbl_eu_80606E34 != NULL) {
                 ((u32*)&lbl_eu_80568CF0)[3] = (u32)self;
                 ((u32*)&lbl_eu_80568CF0)[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x1f];
@@ -1737,6 +1743,7 @@ s32 sfmpv_IsSkip(void* self, void* bpic) {
             goto out;
         }
         if (sfmpv_IsLate(self, type) != 0) {
+            void (*fn)(void*, void*);
             if (lbl_eu_80606E34 != NULL) {
                 ((u32*)&lbl_eu_80568CF0)[3] = (u32)self;
                 ((u32*)&lbl_eu_80568CF0)[0x18 / 4] = (u32)&lbl_eu_8051C9E0[0x26];
@@ -1861,6 +1868,11 @@ s32 sfmpv_IsLate(void* self, s32 type) {
 // sfmpv_SkipFrm
 // ---------------------------------------------------------------------------
 s32 sfmpv_SkipFrm(void* self, void* sj) {
+    u32* src = (u32*)((u8*)self + 0xe58);
+    u32* dst = (u32*)((u8*)self + 0xe84);
+    /* retail keeps both compare operands live so the save path reuses them */
+    s32 tE7c = *(s32*)((u8*)self + 0xe7c);
+    s32 tEd4 = *(s32*)((u8*)self + 0xed4);
     void* shc = *(void**)((u8*)self + 0x2068);
     void* mpv = *(void**)shc;
     u32 a;
@@ -1868,13 +1880,11 @@ s32 sfmpv_SkipFrm(void* self, void* sj) {
     s32 r;
     s32 n;
     s32 i;
-    if (*(s32*)((u8*)self + 0xe7c) < *(s32*)((u8*)self + 0xed4)) {
-        u32* dst = (u32*)((u8*)self + 0xe84);
-        u32* src = (u32*)((u8*)self + 0xe58);
+    if (tE7c < tEd4) {
         for (i = 0; i < 9; i++) {
             dst[i] = src[i];
         }
-        dst[9] = *(s32*)((u8*)self + 0xe7c);
+        dst[9] = (u32)tE7c;
         dst[10] = src[10];
     }
     a = SJRBF_GetFlowCnt(sj, 0, 1);
@@ -2051,42 +2061,47 @@ s32 sfmpv_DecodeFrm(void* self, void* sj) {
 // sfmpv_SetFrmPara
 // ---------------------------------------------------------------------------
 s32 sfmpv_SetFrmPara(void* self, void* frm, void* para, void** out) {
-    void (*fn)(void*, void*);
     void* shc = *(void**)((u8*)self + 0x2068);
-    void* f;
-    s32 i;
     if (*(s32*)((u8*)shc + 0xf0) != 0) {
         *out = *(void**)((u8*)shc + 0xf0);
-        return 0;
-    }
-    f = SFMPVF_AllocFrm(self);
-    *out = f;
-    if (f == NULL) {
-        *(s32*)((u8*)self + 0x98c) = 1;
-        if (lbl_eu_80606E34 != NULL) {
-            lbl_eu_80568DC8[3] = (u32)self;
-            fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
-            fn(lbl_eu_80606E34, &lbl_eu_80568DC8[1]);
+    } else {
+        *out = SFMPVF_AllocFrm(self);
+        if (*out == NULL) {
+            *(s32*)((u8*)self + 0x98c) = 1;
+            /* notify error callback through its vtable slot 0x24 */
+            if (lbl_eu_80606E34 != NULL) {
+                lbl_eu_80568DC8[3] = (u32)self;
+                ((void (*)(void*, void*))(*(void**)((u8*)*(void**)lbl_eu_80606E34 + 0x24)))
+                    (lbl_eu_80606E34, &lbl_eu_80568DC8[1]);
+            }
+            return -1;
         }
-        return -1;
     }
-    *(s16*)((u8*)f + 0xc) = (s16)*(u32*)((u8*)frm + 0);
-    *(s16*)((u8*)f + 0xe) = (s16)*(u32*)((u8*)frm + 4);
-    *(s16*)((u8*)f + 0x10) = (s16)*(u32*)((u8*)frm + 8);
-    *(s16*)((u8*)f + 0x12) = (s16)*(u32*)((u8*)frm + 0xc);
-    *(u32*)((u8*)f + 0x14) = *(u32*)((u8*)frm + 0x18);
-    for (i = 0; i < 0x10; i++) {
-        *(u32*)((u8*)f + 0x68 + i * 8) = *(u32*)((u8*)frm + i * 8);
-        *(u32*)((u8*)f + 0x6c + i * 8) = *(u32*)((u8*)frm + 4 + i * 8);
+    *(s16*)((u8*)*out + 0xc) = (s16)*(u32*)((u8*)frm + 0);
+    *(s16*)((u8*)*out + 0xe) = (s16)*(u32*)((u8*)frm + 4);
+    *(s16*)((u8*)*out + 0x10) = (s16)*(u32*)((u8*)frm + 8);
+    *(s16*)((u8*)*out + 0x12) = (s16)*(u32*)((u8*)frm + 0xc);
+    *(u32*)((u8*)*out + 0x14) = *(u32*)((u8*)frm + 0x18);
+    {
+        /* 16 pairs copied with walking pointers (MWCC strength-reduced loop) */
+        u32* src = (u32*)((u8*)frm - 4);
+        u32* dst = (u32*)((u8*)*out + 0x64);
+        s32 n = 0x10;
+        while (--n >= 0) {
+            src += 8;
+            dst += 8;
+            *(dst - 1) = *(src - 1);
+            *dst = *src;
+        }
     }
-    *(u32*)((u8*)f + 0xec) = *(u32*)((u8*)shc + 0x104);
-    *(u32*)((u8*)f + 0xe8) = *(u32*)((u8*)shc + 0x100);
-    *(u32*)((u8*)f + 0xf0) = *(u32*)((u8*)frm + 0x34);
-    *(u32*)((u8*)f + 0xf4) = *(u32*)((u8*)frm + 0x30);
-    *(u32*)((u8*)f + 0xf8) = *(u32*)((u8*)frm + 0x68);
-    *(u32*)((u8*)f + 0xfc) = (*(s8*)((u8*)frm + 0x5f) - 1 == 0);
+    *(u32*)((u8*)*out + 0xec) = *(u32*)((u8*)shc + 0x104);
+    *(u32*)((u8*)*out + 0xe8) = *(u32*)((u8*)shc + 0x100);
+    *(u32*)((u8*)*out + 0xf0) = *(u32*)((u8*)frm + 0x34);
+    *(u32*)((u8*)*out + 0xf4) = *(u32*)((u8*)frm + 0x30);
+    *(u32*)((u8*)*out + 0xf8) = *(u32*)((u8*)frm + 0x68);
+    *(u32*)((u8*)*out + 0xfc) = (*(s8*)((u8*)frm + 0x5f) - 1 == 0);
     if (*(s32*)((u8*)self + 0x88) != 0 && *(s32*)((u8*)self + 0xf8) != 0 && *(s32*)((u8*)self + 0x114) == 1) {
-        *(u32*)((u8*)f + 0xfc) = 1;
+        *(u32*)((u8*)*out + 0xfc) = 1;
     }
     if (*(s32*)((u8*)self + 0x40) == 3) {
         if (*(u32*)((u8*)frm + 0x18) >= 2 && *(u32*)((u8*)frm + 0x18) <= 3) {
@@ -2256,7 +2271,7 @@ done:
 // ---------------------------------------------------------------------------
 // sfmpv_GoDdelim
 // ---------------------------------------------------------------------------
-s32 sfmpv_GoDdelim(u8* self, u8* sj, s32 mask) {
+s32 sfmpv_GoDdelim(u8* self, s32 mask) {
     s32 n;
     u32 info[7];
     s32 ch;
@@ -2571,26 +2586,17 @@ int fn_803CA368(void) { return 0x0; }
 // sfmpv_ReprocessShc
 // ---------------------------------------------------------------------------
 s32 sfmpv_ReprocessShc(void* self, void* shc, s32* out) {
-    void* p;
+    u8* p;
+    void* hd;
     void* mpv;
-    void* shc2;
-    s32 v;
+    u32 pic[2];
     u32 out2;
-    struct {
-        void* a;
-        u32 b;
-    } local;
+    s32 v;
 
     *out = 0;
     v = *(s32*)((u8*)self + 0x2670);
-    shc2 = *(void**)((u8*)self + 0x2068);
-    if (v == 0) {
-        p = NULL;
-    } else if (*(s32*)((u8*)shc2 + 0x10) > 0) {
-        p = NULL;
-    } else {
-        p = (u8*)v + 0xad0;
-    }
+    hd = *(void**)((u8*)self + 0x2068);
+    p = (v == 0) ? NULL : (*(s32*)((u8*)hd + 0x10) > 0 ? NULL : (u8*)v + 0xad0);
     if (p == NULL) {
         return 0;
     }
@@ -2598,15 +2604,20 @@ s32 sfmpv_ReprocessShc(void* self, void* shc, s32* out) {
         return 0;
     }
     mpv = *(void**)shc;
-    *(u64*)((u8*)self + 0xdd4) = *(u64*)((u8*)p + 0xc);
-    *(u64*)((u8*)self + 0xddc) = *(u64*)((u8*)p + 0x14);
-    *(u64*)((u8*)self + 0xde4) = *(u64*)((u8*)p + 0x1c);
-    *(u64*)((u8*)self + 0xdec) = *(u64*)((u8*)p + 0x24);
-    *(u64*)((u8*)self + 0xdf4) = *(u64*)((u8*)p + 0x2c);
+    pic[0] = (u32)((u8*)p + 0x38);
+    *(u32*)((u8*)self + 0xdd4) = *(u32*)((u8*)p + 0xc);
+    *(u32*)((u8*)self + 0xdd8) = *(u32*)((u8*)p + 0x10);
+    *(u32*)((u8*)self + 0xddc) = *(u32*)((u8*)p + 0x14);
+    *(u32*)((u8*)self + 0xde0) = *(u32*)((u8*)p + 0x18);
+    *(u32*)((u8*)self + 0xde4) = *(u32*)((u8*)p + 0x1c);
+    *(u32*)((u8*)self + 0xde8) = *(u32*)((u8*)p + 0x20);
+    *(u32*)((u8*)self + 0xdec) = *(u32*)((u8*)p + 0x24);
+    *(u32*)((u8*)self + 0xdf0) = *(u32*)((u8*)p + 0x28);
+    *(u32*)((u8*)self + 0xdf4) = *(u32*)((u8*)p + 0x2c);
+    *(u32*)((u8*)self + 0xdf8) = *(u32*)((u8*)p + 0x30);
     *(u32*)((u8*)self + 0xdfc) = *(u32*)((u8*)p + 0x34);
-    local.a = (u8*)p + 0x38;
-    local.b = *(u32*)((u8*)p + 0x238);
-    if (MPV_DecodePicAtr(mpv, &local, &out2) != 0) {
+    pic[1] = *(u32*)((u8*)p + 0x238);
+    if (MPV_DecodePicAtr(mpv, pic, &out2) != 0) {
         return SFLIB_SetErr(self, 0xff000f1b);
     }
     *out = 1;

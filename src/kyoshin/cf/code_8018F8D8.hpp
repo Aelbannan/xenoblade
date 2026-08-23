@@ -9,7 +9,17 @@
 #include "kyoshin/CBgTex.hpp"
 #include "kyoshin/CPartyStateWin.hpp"
 
-class CMenuPTState : public CProcess, public IScnRender {
+// Intermediate padding base so the IScnRender subobject lands at the retail
+// offset 0x58 (same scheme as CMenuFade.hpp / CMenuFadeBase). This makes the
+// non-primary base-cast in Term() emit addi r4, this, 0x58 with a null check.
+class CMenuPTStateBase : public CProcess {
+public:
+    u8 field_base_pad[0x18]; // 0x3C-0x54
+    u8 field_0x54;           // 0x54 (Move completion flag)
+    u8 field_base_pad2[3];   // 0x55-0x58
+};
+
+class CMenuPTState : public CMenuPTStateBase, public IScnRender {
 public:
     CMenuPTState();
     virtual ~CMenuPTState();
@@ -19,11 +29,12 @@ public:
     void cbRenderBefore();
 
 private:
-    // CProcess (0x0-0x3C) + IScnRender (0x3C-0x40) bases, then retail base gap.
-    u8 field_base_pad[0x1C];      // 0x40-0x5C
+    // CMenuPTStateBase (0x0-0x58) + IScnRender (0x58-0x5C) bases.
     CScn* field_0x5C;              // 0x5C
     CBgTex field_0x60;             // 0x60 (0x20 bytes)
     CPartyStateWin field_0x80;     // 0x80
+    // CPartyStateWin is 0x6BEC bytes, so this state byte lands at 0x6C6C.
+    u8 field_0x6C6C;               // 0x6C6C (Move phase state)
 };
 
 // Container used by the catalog helper functions func_8019017C / func_80190034.
@@ -67,6 +78,8 @@ struct CPlayerVtbl {
     void* padD0[(0xd4 - 0xd0) / 4];   // 0x0D0
     void (*fw_d4)(void* self, float* pos, float extra); // 0x0D4
     int (*fw_74)(void* self);         // 0xDC
+    void* padE0[(0x168 - 0xe0) / 4];  // 0x0E0 - 0x164
+    void (*fw_168)(void* self, float value); // 0x168
 };
 
 // Accessor for the player flag word at offset 0x68 (func_8018FCA8).
@@ -176,3 +189,95 @@ struct SCopy_80192268 {
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" int func_8013BE50();
 extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo(void*);
+
+// --- imports used by the Move / dispatcher functions ---------------------
+
+// Colour-unpack scale/magic pair (func_801901A4's u8->float ladder).
+extern const float lbl_eu_80667A78;
+extern const f64 lbl_eu_80667A80;
+
+// u32 word-pair / f64 view for MWCC's 0x43300000 u8->float conversion
+// (same convention as CPSkillF64Conv in CPassiveSkill.hpp).
+union PTStateF64Conv {
+    u32 w[2];
+    f64 d;
+};
+extern const float lbl_eu_80667A88;
+extern const float lbl_eu_80667A8C;
+
+// u16 pair tables read at element [1] by func_80190568's cmd-0x19 path.
+extern u16 lbl_eu_80663E48[];
+extern u16 lbl_eu_80663E4C[];
+
+// Object id looked up by func_8018FA2C through func_8007FF6C (.sdata halfword).
+extern const u16 lbl_eu_80663E40;
+
+// CPartyStateWin sub-object drivers used by CMenuPTState::Move (defined in
+// CPartyStateWin.cpp under their retail unmangled names).
+extern "C" int func_801FA524(CPartyStateWin* self);
+extern "C" void func_801FA4F4(CPartyStateWin* self);
+extern "C" int func_801FA4EC(CPartyStateWin* self);
+extern "C" void func_801FA338(CPartyStateWin* self);
+
+// CBgTex per-frame helpers - retail dispatches them under plain unmangled
+// names (free functions taking the embedded sub-object), not member calls.
+extern "C" int func_801C3E34(CBgTex* self);
+extern "C" void func_801C3D54(CBgTex* self);
+
+// System-window open query + sound helpers (Move, state 3).
+extern "C" int func_800FEDF8();
+extern "C" void func_800FF914();
+void func_80138078(u32 id); // UI sound (C++-mangled retail name)
+
+// CfGameManager pre-mangled imports (same convention as CPartyStateWin.hpp:
+// verbatim retail symbols, real argument shapes observed at call sites).
+extern "C" void func_80081D8C__Q22cf13CfGameManagerFv(u32 value);
+extern "C" cf::CfObjectMove* func_8007FF6C__Q22cf13CfGameManagerFv(u16 objectId,
+                                                                    void* obj,
+                                                                    float amount);
+extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int selector);
+extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
+extern "C" void func_8008402C__Q22cf13CfGameManagerFv(u32 objectValue, u32 flag,
+                                                        float value);
+
+// Character-data block returned by func_8009EC9C; the +0x17C sub-object gets
+// two virtual calls (slots 0xA4/0xA8) from func_8018FA2C.
+struct CCharDataSubVtbl {
+    void* pad[0xa4 / 4];
+    void (*fw_a4)(void* self, int arg); // 0xA4
+    void (*fw_a8)(void* self, int arg); // 0xA8
+};
+struct CCharDataView {
+    u8 _0[0x17c];
+    CCharDataSubVtbl* vtbl17c; // 0x17C
+};
+
+// Slot list returned by func_8009ECB0 (arr1[3] + arr2[6] packed at +4;
+// func_8018FA2C walks nine u32 slots).
+struct PartySlotList {
+    u8 _0[4];
+    u32 slots[9];
+};
+
+// Opaque receiver type for the menu-command handler table dispatched by
+// func_80190840 through member-function pointers.
+class MenuCmdHost;
+typedef int (MenuCmdHost::*MenuCmdHandler)(u16, u32*);
+
+// 0x29-entry handler table indexed by the popped command byte (lbl_eu_80532838).
+extern MenuCmdHandler lbl_eu_80532838[];
+
+// CfRes ring-buffer pump used by func_801901A4-era dispatchers (defined in
+// CfRes.cpp); this TU uses a minimal layout view of the ring object.
+struct MenuCmdRingView {
+    u8 ring[0x400];
+    u32 field_400;
+    u32 field_404;
+};
+extern "C" int func_80061C5C(MenuCmdRingView* buffer, u32* headerOut,
+                             u32* dataOut);
+
+// Party-slot character-data lookups used by func_8018FA2C.
+extern "C" void* func_8009EC9C(u16 index);
+extern "C" void func_800A30E4(void* data);
+extern "C" void func_800A1370(void* data);

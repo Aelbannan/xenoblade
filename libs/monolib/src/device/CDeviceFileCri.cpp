@@ -4,7 +4,7 @@
 #include <revolution/os/OSCache.h>
 #include <string.h>
 
-// Retail singleton pointer (sda21 .sbss) — the decomp's static sInstance member
+// Retail singleton pointer (sda21 .sbss) - the decomp's static sInstance member
 // resolves to the same address; referencing this name directly keeps the reloc
 // byte-identical to retail. Defined in the blob section below.
 extern CDeviceFileCri* lbl_eu_80665668;
@@ -12,7 +12,7 @@ extern CDeviceFileCri* lbl_eu_80665668;
 extern const char lbl_eu_80522CA0[];
 
 // Layout view of CFileHandle exposing the u32 at 0x38 (which sits inside the
-// unk18 padding in CFileHandle.hpp) and the flags word at 0x58 — used to read
+// unk18 padding in CFileHandle.hpp) and the flags word at 0x58 - used to read
 // the current sector offset / pending-flag. Layout-identical to CFileHandle's
 // first 0x5C bytes.
 struct CFileHandleLayout {
@@ -28,7 +28,7 @@ struct CFileHandleLayout {
 };
 
 // Retail destroy__11CFileHandleFv really takes (handle, size, allocParam,
-// blockSize) — the header declares it with only the handle. Declaring the
+// blockSize) - the header declares it with only the handle. Declaring the
 // full signature here (C linkage ignores the namespace for the symbol name)
 // makes the call site emit the same four argument registers as retail.
 namespace {
@@ -59,95 +59,118 @@ extern "C" void func_80450B44(void* self, u32 arg) {
     func_8044F744__14CDeviceFileCriFv((CDeviceFileCri*)((char*)self - 0x1C4));
 }
 
-extern "C" void* __dt__14CDeviceFileCriFv(void*, int);
+extern "C" void* __dl__FPv(void* self);
 
-// Deleting destructor (retail __dt__FP10IExceptionFv): free self when
-// mode > 0, return self.
-extern "C" void* __dt__FP10IExceptionFv(void* self, int mode) {
-    extern void* __dl__FPv(void*);
-    if (self != 0 && mode > 0) {
-        __dl__FPv(self);
-    }
-    return self;
-}
+// The deleting-destructor body (retail __dt__FP10IExceptionFv: free self
+// when mode > 0, return self) is NOT hand-written here: the compiler already
+// emits the identical 0x40 body as the extab DESTROYBASE dtor of the second
+// base (__dt__18UnkStruct_8044F65CFv); postprocess exact_renames renames it
+// to the retail symbol. A second hand-written copy would duplicate it and
+// blow the split budget by 0x40.
+
+namespace CDeviceFileCriBlob { extern "C" void* __dt__14CDeviceFileCriFv(); }
 
 extern "C" void func_80450B4C(void* self) {
-    ((void(*)(void*))__dt__14CDeviceFileCriFv)((char*)self - 0x1C4);
+    // Direct tail call to the complete-dtor symbol (no deleting flag), like retail.
+    ((void (*)(void*)) CDeviceFileCriBlob::__dt__14CDeviceFileCriFv)((char*)self - 0x1C4);
 }
 
 CDeviceFileCri::CDeviceFileCri(const char* pName, CWorkThread* pParent, int capacity)
-    : CWorkThread(pName, pParent, capacity) {
+    : CWorkThread(pName, pParent, 0x100) {
     *(u32**)this = (u32*)lbl_eu_8056C354;
     *(u32**)((char*)this + 0x1C4) = (u32*)((char*)lbl_eu_8056C354 + 0xA0);
-    
+
     mState = 0;
     mActiveWorkID = (WORK_ID)-1;
     unk1D0 = 0;
     mADXFHandle = nullptr;
-    mBuffer = nullptr;
     mIdleCounter = 0;
     mRetryCounter = 0;
     mExceptionPending = 0;
     mTimeoutCounter = 0;
-    
-    sInstance = this;
-    
+
+    lbl_eu_80665668 = this;
+
     mtl::ALLOC_HANDLE handle = CDevice::getDevSys2Handle();
     mBuffer = mtl::MemManager::allocate_head(handle, 0x800, 0x20);
-    
-    IException* pException = (IException*)((char*)this + 0x1C4);
-    func_804591BC__10CExceptionFP10IException((CException*)this, pException);
+
+    // Retail guards the subobject offset with a null check on `this`; the
+    // pException argument is never initialized (retail leaves stale r4).
+    IException* pExceptionArg;
+    CException* pSelf = (CException*)this;
+    if (pSelf != nullptr) {
+        pSelf = (CException*)((u8*)this + 0x1C4);
+    }
+    func_804591BC__10CExceptionFP10IException(pSelf, pExceptionArg);
 }
 
-// Free-function dtor form (retail __dt__14CDeviceFileCriFv): the member dtor
-// double-emits the vptr stores and the CWorkThread base dtor; the extern-C
-// form emits each once. The CException subobject lives at +0x1C4 (retail
-// passes this+0x1C4 to func_804591DC) and the base dtor is the 1-arg
-// __dt__11CWorkThreadFv with flag 0.
-extern "C" void __dt__11CWorkThreadFv(void* self, int flags);
-extern "C" void* __dl__FPv(void* self);
+// Member destructor: the compiler restores both vptrs up front, runs the
+// body (second-base teardown via func_804591DC, singleton clear, buffer free),
+// then the CWorkThread base dtor and the deleting-dtor `delete this` tail.
+CDeviceFileCri::~CDeviceFileCri() {
+    // novtable: restore both retail vptrs by hand (primary + second base).
+    IException* pException = (IException*)this;
+    *(u32**)this = (u32*)lbl_eu_8056C354;
+    *(u32**)((char*)this + 0x1C4) = (u32*)((char*)lbl_eu_8056C354 + 0xA0);
 
-extern "C" void* __dt__14CDeviceFileCriFv(void* self, int flags) {
-    if (self != 0) {
-        *(u32**)self = (u32*)lbl_eu_8056C354;
-        *(u32**)((char*)self + 0x1C4) = (u32*)((char*)lbl_eu_8056C354 + 0xA0);
-        IException* pException = (IException*)self;
-        if (self != 0) {
-            pException = (IException*)((u8*)self + 0x1C4);
-        }
-        func_804591DC__10CExceptionFP10IException((CException*)pException);
-        lbl_eu_80665668 = 0;
-        void* buffer = *(void**)((u8*)self + 0x1D8);
-        if (buffer != 0) {
-            mtl::MemManager::deallocate(buffer);
-            *(void**)((u8*)self + 0x1D8) = 0;
-        }
-        __dt__11CWorkThreadFv(self, 0);
-        if (flags > 0) {
-            __dl__FPv(self);
+    // Retail guards the second-base teardown with a null check on `this`.
+    if (pException != nullptr) {
+        pException = (IException*)((u8*)pException + 0x1C4);
+    }
+    func_804591DC__10CExceptionFP10IException((CException*)pException);
+    lbl_eu_80665668 = nullptr;
+    if (mBuffer != nullptr) {
+        mtl::MemManager::deallocate(mBuffer);
+        mBuffer = nullptr;
+    }
+}
+
+namespace {
+
+// Opaque replica of CWorkThread::isException()'s queue scan. Retail compiles
+// CMsgParam<8>::find() straight into its callers; here the definition lives
+// out-of-line in another TU, so walk the queue by byte offset instead
+// (CDeviceFileCri-relative: mMsgQueue@0x80 -> mArrayPtr/mFront/mSize/mCapacity).
+inline bool criIsException(CDeviceFileCri* self) {
+    if (self->checkFlag(CWorkThread::THREAD_FLAG_EXCEPTION)) return true;
+
+    // Member reads stay inside the loop (retail re-derives them per
+    // iteration); the loop counter doubles as the found index and flips to
+    // -1 only when the scan runs off the end (induction-variable fold).
+    int count = *(u32*)((char*)self + 0x1AC);
+    int found;
+    // goto-gate form (PLAN.md ÂS17.6): lets MWCC fold the exhaustion case
+    // into the loop exit exactly like the retail-inlined find().
+    for (found = 0; found < count; found++) {
+        u32 slot = (*(u32*)((char*)self + 0x1A8) + found) %
+                   *(u32*)((char*)self + 0x1B0);
+        if ((*(CMsgParamEntry**)((char*)self + 0x1A4))[slot].command ==
+            CWorkThread::EVT_EXCEPTION) {
+            break;
         }
     }
-    return self;
-}
-
-CDeviceFileJobReadDvd* CDeviceFileCri::getFirstCDeviceFileJobReadDvd() {
-    if (mChildren.empty()) return nullptr;
-    CWorkThread* child = mChildren.front();
-    if (child == nullptr || child->mType != THREAD_CDEVICEFILEJOBREADDVD) return nullptr;
-    return (CDeviceFileJobReadDvd*)child;
-}
-
-void CDeviceFileCri::closeADXFAndCleanup() {
-    CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
-    if (mADXFHandle != nullptr) {
-        ADXF_Stop(mADXFHandle);
-        ADXF_GetNumReqSct(mADXFHandle);
-        ADXF_Close(mADXFHandle);
-        mADXFHandle = nullptr;
+    if (found == count) {
+        found = -1;
     }
-    removeFileJob__11CDeviceFileFP14CDeviceFileJob(job);
-    mState = 0;
+    return found >= 0;
 }
+
+inline u32 criChildCount() {
+    // Local replica of reslist<CWorkThread*>::size() with the counter's web
+    // born after the walker's (retail colors cur=r3, count=r4).
+    _reslist_node<CWorkThread*>* curNode;
+    _reslist_node<CWorkThread*>* endNode =
+        lbl_eu_80665668->mChildren.mStartNodePtr;
+    u32 count;
+    curNode = endNode->mNext;
+    while (curNode != endNode) {
+        count++;
+        curNode = curNode->mNext;
+    }
+    return count;
+}
+
+} // namespace
 
 bool CDeviceFileCri::func_8044F744() {
     if (isOff__11CWorkSystemFv()) return true;
@@ -163,17 +186,17 @@ bool CDeviceFileCri::func_8044F744() {
         // Recoverable DVD errors: only surface the message when an exception
         // is not already pending (flag or queued EVT_EXCEPTION), then stay
         // busy.
-        if (!isException()) {
+        if (!criIsException(this)) {
             func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, (const wchar_t*)lbl_eu_806636C8, 4);
         }
         return false;
     } else if (status == 11) {
-        if (!isException()) {
+        if (!criIsException(this)) {
             func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, (const wchar_t*)lbl_eu_806636CC, 4);
         }
         return false;
     } else if (status == 4) {
-        if (!isException()) {
+        if (!criIsException(this)) {
             func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, (const wchar_t*)lbl_eu_806636C8, 4);
         }
         return false;
@@ -192,11 +215,22 @@ void CDeviceFileCri::func_8044F964() {
 }
 
 int CDeviceFileCri::getFileSize(const char* pPath, int arg1) {
-    char pathBuf[0x80];
-    char nameBuf[0x80];
+    // Frame-order note: retail allocates these locals descending from
+    // sp+0x1C8 down to sp+0x8 (fileInfo). The name buffer and its length are
+    // one aggregate so nameLen stays memory-resident (store per def, cached
+    // reads) exactly like retail. pathLen rides in the same aggregate so its
+    // otherwise-dead store survives DCE (retail keeps it too). NOTE: a plain
+    // local + address-taken store gets fully DCE'd (4.1%) — the aggregate is
+    // what defeats the optimizer.
+    char pathBuf[0x100];
+    struct NameEntry {
+        char nameBuf[0x80];
+        int nameLen;
+        int pathLen;
+    } name;
     DVDFileInfo fileInfo;
 
-    int pathLen = strlen(pPath);   // retail spills this (dead in the binary)
+    name.pathLen = strlen(pPath);
     strcpy(pathBuf, pPath);
 
     if (arg1 != 0) {
@@ -205,35 +239,36 @@ int CDeviceFileCri::getFileSize(const char* pPath, int arg1) {
 
     // Strip a leading '/' from the name; nameLen is the strlen of the SOURCE
     // (not of the copied buffer) in retail.
-    nameBuf[0] = '\0';
-    int nameLen = 0;
+    name.nameBuf[0] = '\0';
+    name.nameLen = 0;
     if (pPath[0] == '/') {
-        nameLen = strlen(pPath + 1);
-        strcpy(nameBuf, pPath + 1);
+        name.nameLen = strlen(pPath + 1);
+        strcpy(name.nameBuf, pPath + 1);
     } else {
-        nameLen = strlen(pPath);
-        strcpy(nameBuf, pPath);
+        name.nameLen = strlen(pPath);
+        strcpy(name.nameBuf, pPath);
     }
 
     // ".adx" extension marker lives at lbl_eu_80522CA0 + 6.
     const char* ext = lbl_eu_80522CA0 + 6;
+
     int extLen = strlen(ext);
 
     // Find the extension; the scan index becomes -1 when the whole name is
     // scanned without a match.
     int i = 0;
-    while (i < nameLen) {
-        if (strncmp(&nameBuf[i], ext, extLen) == 0) break;
+    while (i < name.nameLen) {
+        if (strncmp(&name.nameBuf[i], ext, extLen) == 0) break;
         i++;
     }
-    if (i >= nameLen) i = -1;
+    if (i >= name.nameLen) i = -1;
 
-    if (i != -1 && i < nameLen) {
-        nameBuf[i] = '\0';
-        nameLen = i;
+    if (i != -1 && i < name.nameLen) {
+        name.nameBuf[i] = '\0';
+        name.nameLen = i;
     }
 
-    int ret = func_804DDCD4(nameBuf, pPath);
+    int ret = func_804DDCD4(name.nameBuf, pPath);
     if (ret > -1) return ret;
 
     int entrynum = DVDConvertPathToEntrynum(pathBuf);
@@ -252,32 +287,72 @@ int CDeviceFileCri::getFileSize(const char* pPath, int arg1) {
 }
 
 void CDeviceFileCri::func_8044FB08(const char* pPath) {
-    CDeviceFileJobReadDvd* job = sInstance->getFirstCDeviceFileJobReadDvd();
-    if (job != nullptr) {
-        job->cancel(pPath);
+    // Cancel every DVD-read child job via vtable slot 0xA4
+    // (cancel(const char*)).
+    for (_reslist_node<CWorkThread*>* node = lbl_eu_80665668->mChildren.mStartNodePtr->mNext;
+         node != lbl_eu_80665668->mChildren.mStartNodePtr; node = node->mNext) {
+        CDeviceFileJobReadDvd* job = (CDeviceFileJobReadDvd*)node->mItem;
+        // else-if chain (not ||): retail branches bne into the type check
+        // with li r3,0 in both failure arms.
+        if (job == nullptr) {
+            job = nullptr;
+        } else if (job->mType != THREAD_CDEVICEFILEJOBREADDVD) {
+            job = nullptr;
+        }
+        if (job != nullptr) {
+            ((CDeviceFileJob*)job)->cancel(pPath);
+        }
     }
 }
 
 bool CDeviceFileCri::cancel(CFileHandle* pHandle) {
-    CDeviceFileJobReadDvd* job = sInstance->getFirstCDeviceFileJobReadDvd();
-    if (job != nullptr) {
-        return job->cancel(pHandle);
+    // Cancel the first matching DVD-read child whose cancel succeeds
+    // (vtable slot 0xA8); stops at the first job that reports success.
+    // Retail walks raw nodes (re-reading the singleton's list head in the
+    // condition) and branches straight to the epilogue with the raw vcall
+    // result in r3 - i.e. `break`, with the function having no return stmt.
+    // Declaration placement mirrors func_8044FB08 (100%): node inside the
+    // for-init, job inside the body - that is what puts the list-walk temps
+    // in retail's scratch colors.
+    for (_reslist_node<CWorkThread*>* node =
+             lbl_eu_80665668->mChildren.mStartNodePtr->mNext;
+         node != lbl_eu_80665668->mChildren.mStartNodePtr;
+         node = node->mNext) {
+        CDeviceFileJobReadDvd* job = (CDeviceFileJobReadDvd*)node->mItem;
+        if (job == nullptr) {
+            job = nullptr;
+        } else if (job->mType != THREAD_CDEVICEFILEJOBREADDVD) {
+            job = nullptr;
+        }
+        if (job != nullptr) {
+            if (((CDeviceFileJob*)job)->cancel((CDeviceFileJob_UnkStruct1*)pHandle)) {
+                // Retail branches straight to the epilogue with the raw vcall
+                // result still in r3 (no materialized true).
+                break;
+            }
+        }
     }
+    // Probe-verified: the explicit false return is what keeps MWCC from
+    // reserving r3 for an early result VR (missing-return pushes every temp
+    // to r4+ and adds an 'or r3,r4,r4' this-move before the vcall).
     return false;
 }
 
 void CDeviceFileCri::func_8044FC38() {
-    // Count the singleton's children; the list walk is the size() inline.
+    // Count the singleton's children via reslist::size() (inlined); retail
+    // re-reads the global only inside the ADXF teardown block.
     u32 count = lbl_eu_80665668->mChildren.size();
     if (count == 0) return;
 
-    // Grab the first CDeviceFileJobReadDvd child (mType == 0x44) directly —
-    // the retail inlines this without the empty() guard.
-    CWorkThread* child = lbl_eu_80665668->mChildren.front();
-    CDeviceFileJobReadDvd* job;
-    if (child != nullptr && child->mType == THREAD_CDEVICEFILEJOBREADDVD) {
-        job = (CDeviceFileJobReadDvd*)child;
-    } else {
+    // Grab the first CDeviceFileJobReadDvd child (mType == 0x44) directly -
+    // the retail inlines this without the empty() guard. Shape note: retail
+    // seeds job from the item unconditionally, then nulls it via two plain
+    // ifs (that's what yields the beq-over-li branch polarity).
+    CWorkThread* child = lbl_eu_80665668->mChildren.mStartNodePtr->mNext->mItem;
+    CDeviceFileJobReadDvd* job = (CDeviceFileJobReadDvd*)child;
+    if (child == nullptr) {
+        job = nullptr;
+    } else if (child->mType != THREAD_CDEVICEFILEJOBREADDVD) {
         job = nullptr;
     }
 
@@ -312,9 +387,10 @@ bool CDeviceFileCri::func_8044FCFC() {
             // Abort: cancel the handle, then inline closeADXFAndCleanup
             // against the singleton (retail re-inlines this block per site).
             call__11CFileHandleF3CBM(handle, 3);
-            u32 count = lbl_eu_80665668->mChildren.size();
+            CDeviceFileCri* self = lbl_eu_80665668;
+            u32 count = self->mChildren.size();
             if (count != 0) {
-                CWorkThread* child2 = lbl_eu_80665668->mChildren.front();
+                CWorkThread* child2 = self->mChildren.front();
                 CDeviceFileJobReadDvd* job2;
                 if (child2 == nullptr || child2->mType != THREAD_CDEVICEFILEJOBREADDVD) {
                     job2 = nullptr;
@@ -346,16 +422,17 @@ bool CDeviceFileCri::func_8044FCFC() {
 
     if (alignedSize <= 0) {
         call__11CFileHandleF3CBM(handle, 3);
-        u32 count = lbl_eu_80665668->mChildren.size();
+        CDeviceFileCri* self = lbl_eu_80665668;
+        u32 count = self->mChildren.size();
         if (count != 0) {
-            CWorkThread* child2 = lbl_eu_80665668->mChildren.front();
-            CDeviceFileJobReadDvd* job2;
-            if (child2 == nullptr || child2->mType != THREAD_CDEVICEFILEJOBREADDVD) {
+            CWorkThread* child2 = self->mChildren.front();
+            CDeviceFileJobReadDvd* job2 = (CDeviceFileJobReadDvd*)child2;
+            if (child2 == nullptr) {
                 job2 = nullptr;
-            } else {
-                job2 = (CDeviceFileJobReadDvd*)child2;
+            } else if (child2->mType != THREAD_CDEVICEFILEJOBREADDVD) {
+                job2 = nullptr;
             }
-            if (lbl_eu_80665668->mADXFHandle != nullptr) {
+            if (self->mADXFHandle != nullptr) {
                 ADXF_Stop(lbl_eu_80665668->mADXFHandle);
                 ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
                 ADXF_Close(lbl_eu_80665668->mADXFHandle);
@@ -380,16 +457,17 @@ bool CDeviceFileCri::func_8044FCFC() {
     if (layout->field_0x58 & 0x8) {
         // Allocation failed: cancel the handle and clean up the job.
         call__11CFileHandleF3CBM(handle, 3);
-        u32 count = lbl_eu_80665668->mChildren.size();
+        CDeviceFileCri* self = lbl_eu_80665668;
+        u32 count = self->mChildren.size();
         if (count != 0) {
-            CWorkThread* child2 = lbl_eu_80665668->mChildren.front();
-            CDeviceFileJobReadDvd* job2;
-            if (child2 == nullptr || child2->mType != THREAD_CDEVICEFILEJOBREADDVD) {
+            CWorkThread* child2 = self->mChildren.front();
+            CDeviceFileJobReadDvd* job2 = (CDeviceFileJobReadDvd*)child2;
+            if (child2 == nullptr) {
                 job2 = nullptr;
-            } else {
-                job2 = (CDeviceFileJobReadDvd*)child2;
+            } else if (child2->mType != THREAD_CDEVICEFILEJOBREADDVD) {
+                job2 = nullptr;
             }
-            if (lbl_eu_80665668->mADXFHandle != nullptr) {
+            if (self->mADXFHandle != nullptr) {
                 ADXF_Stop(lbl_eu_80665668->mADXFHandle);
                 ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
                 ADXF_Close(lbl_eu_80665668->mADXFHandle);
@@ -412,49 +490,62 @@ bool CDeviceFileCri::func_8044FCFC() {
 
 bool CDeviceFileCri::func_80450058() {
     CWorkThread* child = mChildren.front();
-    CDeviceFileJobReadDvd* job =
-        (child != nullptr && child->mType == THREAD_CDEVICEFILEJOBREADDVD)
-            ? (CDeviceFileJobReadDvd*)child : nullptr;
+    // Seed-then-null shape (retail): keeps job's web identical to child's.
+    CDeviceFileJobReadDvd* job = (CDeviceFileJobReadDvd*)child;
+    if (child == nullptr) {
+        job = nullptr;
+    } else if (child->mType != THREAD_CDEVICEFILEJOBREADDVD) {
+        job = nullptr;
+    }
 
     int numReq = ADXF_GetNumReqSct(mADXFHandle);
     if ((u32)(numReq - 1) <= 1) return false;
 
     if (numReq == 3) {
         CFileHandleLayout* handle = (CFileHandleLayout*)job->mHandle;
-        // Copy one 0x800-sector chunk starting at the handle's sector offset.
+        // Copy one 0x800-sector chunk into the handle's data (retail passes
+        // mData+unk10 as the memcpy DESTINATION; the flush covers it too).
         u32 offset = handle->field_0x38 & 0x7FF;
         u32 copySize = 0x800 - offset;
         if (copySize > handle->mLength) copySize = handle->mLength;
 
-        memcpy((char*)mBuffer + offset, handle->mData + handle->unk10, copySize);
+        memcpy(handle->mData + handle->unk10, (char*)mBuffer + offset, copySize);
         DCFlushRangeNoSync(handle->mData + handle->unk10, copySize);
 
         func_80451CBC__11CFileHandleFi((CFileHandle*)handle, copySize);
 
         bool complete = (handle->unk10 != 0 && handle->unk10 == handle->mLength);
         if (complete) {
+            // Per-path returns keep the true materialized in each block
+            // (retail does not merge them into a shared tail).
             ADXF_Stop(mADXFHandle);
             ADXF_Close(mADXFHandle);
             mADXFHandle = nullptr;
             mActiveWorkID = job->mWorkID;
             mIdleCounter = 0;
             mState = 8;
-        } else {
-            mState = 4;
+            return true;
         }
+        mState = 4;
         return true;
     }
 
     // Abort: cancel the read job.
     call__11CFileHandleF3CBM(job->mHandle, 3);
-    u32 count = lbl_eu_80665668->mChildren.size();
+    // Retail caches the singleton here (r6) for the count walk and child
+    // extraction; the ADXF args/state stores still re-read the global.
+    CDeviceFileCri* self = lbl_eu_80665668;
+    u32 count = self->mChildren.size();
     if (count != 0) {
-        CWorkThread* child2 = lbl_eu_80665668->mChildren.front();
-        CDeviceFileJobReadDvd* job2 =
-            (child2 != nullptr && child2->mType == THREAD_CDEVICEFILEJOBREADDVD)
-                ? (CDeviceFileJobReadDvd*)child2 : nullptr;
+        CWorkThread* child2 = self->mChildren.front();
+        CDeviceFileJobReadDvd* job2 = (CDeviceFileJobReadDvd*)child2;
+        if (child2 == nullptr) {
+            job2 = nullptr;
+        } else if (child2->mType != THREAD_CDEVICEFILEJOBREADDVD) {
+            job2 = nullptr;
+        }
 
-        if (lbl_eu_80665668->mADXFHandle != nullptr) {
+        if (self->mADXFHandle != nullptr) {
             ADXF_Stop(lbl_eu_80665668->mADXFHandle);
             ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
             ADXF_Close(lbl_eu_80665668->mADXFHandle);
@@ -469,9 +560,13 @@ bool CDeviceFileCri::func_80450058() {
 
 bool CDeviceFileCri::func_80450260() {
     CWorkThread* child = mChildren.front();
-    CDeviceFileJobReadDvd* job =
-        (child != nullptr && child->mType == THREAD_CDEVICEFILEJOBREADDVD)
-            ? (CDeviceFileJobReadDvd*)child : nullptr;
+    // Seed-then-null shape (retail): keeps job's web identical to child's.
+    CDeviceFileJobReadDvd* job = (CDeviceFileJobReadDvd*)child;
+    if (child == nullptr) {
+        job = nullptr;
+    } else if (child->mType != THREAD_CDEVICEFILEJOBREADDVD) {
+        job = nullptr;
+    }
 
     int numReq = ADXF_GetNumReqSct(mADXFHandle);
     if ((u32)(numReq - 1) <= 1) return false;
@@ -492,23 +587,29 @@ bool CDeviceFileCri::func_80450260() {
             mActiveWorkID = job->mWorkID;
             mState = 8;
             mIdleCounter = 0;
-        } else {
-            mState = 7;
+            return true;
         }
+        mState = 7;
         return true;
     }
 
     // Abort: reset the handle position and cancel the read job.
     job->mHandle->unk10 = 0;
     call__11CFileHandleF3CBM(job->mHandle, 3);
-    u32 count = lbl_eu_80665668->mChildren.size();
+    // Retail caches the singleton here (r6) for the count walk and child
+    // extraction; the ADXF args/state stores still re-read the global.
+    CDeviceFileCri* self = lbl_eu_80665668;
+    u32 count = self->mChildren.size();
     if (count != 0) {
-        CWorkThread* child2 = lbl_eu_80665668->mChildren.front();
-        CDeviceFileJobReadDvd* job2 =
-            (child2 != nullptr && child2->mType == THREAD_CDEVICEFILEJOBREADDVD)
-                ? (CDeviceFileJobReadDvd*)child2 : nullptr;
+        CWorkThread* child2 = self->mChildren.front();
+        CDeviceFileJobReadDvd* job2 = (CDeviceFileJobReadDvd*)child2;
+        if (child2 == nullptr) {
+            job2 = nullptr;
+        } else if (child2->mType != THREAD_CDEVICEFILEJOBREADDVD) {
+            job2 = nullptr;
+        }
 
-        if (lbl_eu_80665668->mADXFHandle != nullptr) {
+        if (self->mADXFHandle != nullptr) {
             ADXF_Stop(lbl_eu_80665668->mADXFHandle);
             ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
             ADXF_Close(lbl_eu_80665668->mADXFHandle);
@@ -523,19 +624,24 @@ bool CDeviceFileCri::func_80450260() {
 
 bool CDeviceFileCri::func_8045042C() {
     CWorkThread* child = mChildren.front();
-    CDeviceFileJobReadDvd* job =
-        (child != nullptr && child->mType == THREAD_CDEVICEFILEJOBREADDVD)
-            ? (CDeviceFileJobReadDvd*)child : nullptr;
+    // Seed-then-null shape (retail): keeps job's web identical to child's.
+    CDeviceFileJobReadDvd* job = (CDeviceFileJobReadDvd*)child;
+    if (child == nullptr) {
+        job = nullptr;
+    } else if (child->mType != THREAD_CDEVICEFILEJOBREADDVD) {
+        job = nullptr;
+    }
 
     int numReq = ADXF_GetNumReqSct(mADXFHandle);
     if ((u32)(numReq - 1) <= 1) return false;
 
     if (numReq == 3) {
         CFileHandle* handle = job->mHandle;
-        // Copy the remainder of the pending read into the device buffer.
+        // Copy the remainder of the pending read out of the device buffer
+        // into the handle's data (retail arg order).
         int remaining = handle->mLength - handle->unk10;
         if (remaining > 0) {
-            memcpy(mBuffer, handle->mData + handle->unk10, remaining);
+            memcpy(handle->mData + handle->unk10, mBuffer, remaining);
             DCFlushRange(handle->mData + handle->unk10, remaining);
         }
 
@@ -552,14 +658,20 @@ bool CDeviceFileCri::func_8045042C() {
 
     // numReq != 3: abort the job and clean up the singleton's ADXF state.
     call__11CFileHandleF3CBM(job->mHandle, 3);
-    u32 count = lbl_eu_80665668->mChildren.size();
+    // Retail caches the singleton here (r6) for the count walk and child
+    // extraction; the ADXF args/state stores still re-read the global.
+    CDeviceFileCri* self = lbl_eu_80665668;
+    u32 count = self->mChildren.size();
     if (count != 0) {
-        CWorkThread* child2 = lbl_eu_80665668->mChildren.front();
-        CDeviceFileJobReadDvd* job2 =
-            (child2 != nullptr && child2->mType == THREAD_CDEVICEFILEJOBREADDVD)
-                ? (CDeviceFileJobReadDvd*)child2 : nullptr;
+        CWorkThread* child2 = self->mChildren.front();
+        CDeviceFileJobReadDvd* job2 = (CDeviceFileJobReadDvd*)child2;
+        if (child2 == nullptr) {
+            job2 = nullptr;
+        } else if (child2->mType != THREAD_CDEVICEFILEJOBREADDVD) {
+            job2 = nullptr;
+        }
 
-        if (lbl_eu_80665668->mADXFHandle != nullptr) {
+        if (self->mADXFHandle != nullptr) {
             ADXF_Stop(lbl_eu_80665668->mADXFHandle);
             ADXF_GetNumReqSct(lbl_eu_80665668->mADXFHandle);
             ADXF_Close(lbl_eu_80665668->mADXFHandle);
@@ -573,6 +685,13 @@ bool CDeviceFileCri::func_8045042C() {
 }
 
 void CDeviceFileCri::wkUpdate() {
+    // NOTE: retail dispatches via jumptable_eu_8056C330 through a switch
+    // (cmplwi r0,8 bounds check; lis/addi/lwzx/mtctr/bctr; cases emitted in
+    // order 0,1,2,3,4,5,7,6,8). A literal switch here makes MWCC generate its
+    // OWN anon table (@N) appended after the blob .data instead of using the
+    // hand-defined jumptable - which breaks the data gate until every case
+    // body is byte-exact AND the anon table is renamed/placed at .data 0x0.
+    // Until then the if-chain form keeps the object data-clean.
     if (!func_8044F744()) return;
     
     u32 state = mState;
@@ -597,6 +716,11 @@ void CDeviceFileCri::wkUpdate() {
         }
         
         if (!ready) return;
+        // NOTE: retail calls job->isException() here (flag + queued EVT scan,
+        // inlined). Using criIsException(job) makes wkUpdate exceed MWCC's
+        // switch-conversion threshold -> private anon jump table (+0x28
+        // .data) -> data gate FAIL. Revisit together with the switch-form
+        // reconciliation (see attempts.jsonl us-804532dc).
         if (job->mFlags & THREAD_FLAG_EXCEPTION) return;
         
         CFileHandle* handle = job->mHandle;
@@ -619,7 +743,16 @@ void CDeviceFileCri::wkUpdate() {
         mTimeoutCounter--;
         if (mTimeoutCounter > 0) return;
         
-        CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
+        // getFirstCDeviceFileJobReadDvd() inlined (retail carries no
+        // out-of-line copy; keeping one here costs split budget).
+        CDeviceFileJobReadDvd* job = nullptr;
+        if (!mChildren.empty()) {
+            CWorkThread* firstChild = mChildren.front();
+            if (firstChild != nullptr &&
+                firstChild->mType == THREAD_CDEVICEFILEJOBREADDVD) {
+                job = (CDeviceFileJobReadDvd*)firstChild;
+            }
+        }
         CFileHandle* handle = job->mHandle;
         u32 remaining = handle->mLength - handle->unk10;
         
@@ -637,7 +770,16 @@ void CDeviceFileCri::wkUpdate() {
         mTimeoutCounter--;
         if (mTimeoutCounter > 0) return;
         
-        CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
+        // getFirstCDeviceFileJobReadDvd() inlined (retail carries no
+        // out-of-line copy; keeping one here costs split budget).
+        CDeviceFileJobReadDvd* job = nullptr;
+        if (!mChildren.empty()) {
+            CWorkThread* firstChild = mChildren.front();
+            if (firstChild != nullptr &&
+                firstChild->mType == THREAD_CDEVICEFILEJOBREADDVD) {
+                job = (CDeviceFileJobReadDvd*)firstChild;
+            }
+        }
         CFileHandle* handle = job->mHandle;
         u32 remaining = handle->mLength - handle->unk10;
         
@@ -740,13 +882,12 @@ bool CDeviceFileCri::wkStandbyExceptionRetry(u32 wid) {
     }
     
     mExceptionPending = true;
-    
-    u32 framerate = getTargetFramerate__9CDeviceVIFv();
-    u32 maxRetries = framerate * 6;
-    
+
+    u32 maxRetries = getTargetFramerate__9CDeviceVIFv() * 6;
+
     mRetryCounter++;
     if (mRetryCounter < maxRetries) {
-        func_8045925C__10CExceptionFv((CException*)this);
+        func_8045925C__10CExceptionFv((CException*)lbl_eu_806636D0[0]);
         return false;
     }
     
@@ -889,12 +1030,8 @@ u8 lbl_eu_80657750[1024];
 CDeviceFileCri* lbl_eu_80665668;
 u32 lbl_eu_8066566C;
 
+// Only the jumptable lacks a live reference (wkUpdate's retail jump-table
+// form isn't reproduced yet); every other blob symbol is anchored by real
+// code/data relocs (ctor/dtor vptr stores, vtable/typeinfo chains,
+// func_80450B14/B1C/B24) and must NOT get a stub (split budget).
 DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, jumptable_eu_8056C330);
-DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, lbl_eu_8056C354);
-DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, lbl_eu_8056C408);
-DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, lbl_eu_80522C90);
-DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, lbl_eu_80522CA0);
-DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, lbl_eu_806636C8);
-DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, lbl_eu_806636CC);
-DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, lbl_eu_806636D0);
-DECOMP_FORCEACTIVE(CDeviceFileCri_cpp, lbl_eu_806636D8);

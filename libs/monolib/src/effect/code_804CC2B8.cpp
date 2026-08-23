@@ -12,6 +12,7 @@
 #include "monolib/math/CMat44.hpp"
 #include "monolib/math/Random.hpp"
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/effect/CERand.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/effect/code_804CC2B8.hpp"
 
@@ -32,6 +33,7 @@ extern "C" void func_804D927C(Mtx mtx, const void* obj);
 extern "C" void func_804D928C(Mtx mtx, const u8* obj);
 extern f32 lbl_eu_8066A208;
 extern f32 lbl_eu_8066B12C;
+extern f32 lbl_eu_8066B138;
 
 // Node view used by the quad-render functions (func_804D01E0 / func_804D0AB4):
 // a position matrix at 0x00 and an RGBA color word at 0x30.
@@ -41,6 +43,78 @@ struct RenderNode {
     u8 b1;
     u8 b2;
     u8 b3;
+};
+
+// Draw-payload structs shared (by layout) with code_804F0258.cpp; the draw TU
+// owns the canonical definitions, these mirrors keep pointer compatibility.
+struct DrawQuad {
+    f32 x;         // 0x00
+    f32 y;         // 0x04
+    f32 z;         // 0x08
+    f32 field_0xc; // 0x0c size-like
+};
+struct TexDrawSize {
+    u8 pad_0x00[0x0c];
+    f32 field_0x0c;
+};
+// Texture-matrix source payload built on the stack by the node-walk renderers
+// (TexMtxSrc prefix plus trailing per-quad scale/color floats).
+struct TexMtxSrc {
+    void* mTex;     // 0x00 res pointer
+    s8 mIndex;      // 0x04 texgen index (field_0x25a)
+    u8 pad_0x05[3];
+    u32 field_0x08; // 0x08
+    f32 field_0x0c;
+    f32 field_0x10;
+    f32 field_0x14;
+    f32 field_0x18;
+    f32 field_0x1c;
+    f32 field_0x20;
+};
+
+// Draw entry points (defined in code_804F0258.cpp).
+void func_804F0258(void* desktop, DrawQuad* quad, ml::CVec3* dir, TexDrawSize* size,
+                   void* material, TexMtxSrc* mtxSrc);
+void func_804F2E44(void* desktop, DrawQuad* quad, s32 mode, void* material,
+                   TexMtxSrc* mtxSrc);
+void func_804F1F18(void* desktop, ml::CVec3* pos, TexDrawSize* size, f32 alpha,
+                   f32 alphaMax, void* material, TexMtxSrc* mtxSrc);
+void func_804F0F2C(void* desktop, f32 alpha, const ml::CVec3* pos, const TexDrawSize* size,
+                   const f32* color, void* material, TexMtxSrc* mtxSrc, const void* clamp);
+
+// Light/material processor blocks driven by func_804CCA64 (one call per block).
+extern "C" void func_804E1044(void* blk, void* src, void* mat, f32 v);
+extern "C" void func_804E18CC(void* blk, void* src, void* mat, f32 v);
+extern "C" void func_804E1A44(void* blk, void* src, void* mat, f32 v);
+extern "C" void func_804E1C1C(void* blk, void* src, void* mat, f32 v);
+extern "C" void func_804E2EAC(void* blk, void* src, void* mat, f32 v);
+extern "C" void func_804E2088(void* blk, void* src, void* mat, f32 v);
+extern "C" void func_804E2A5C(void* blk, void* src, void* mat, f32 v);
+extern f32 lbl_eu_8066B0F8;
+
+struct D3B14Cam;
+s32 func_804D3B14(D3B14Cam* cam, Vec* outA, Vec* outB);
+
+// Object behind EffectScene::field_0x32c whose slot-5 virtual applies the
+// accumulated direction weight (called at the end of func_804CCA64).
+struct CCA64VirtObj {
+    virtual void v0();
+    virtual void v1();
+    virtual void v2();
+    virtual void v3();
+    virtual void v4();
+    virtual void apply(f32); // vtable +0x14
+};
+
+// Integer-word views of a Vec; retail copies vectors with lwz/stw pairs.
+struct IVec3 {
+    u32 x, y, z;
+};
+// Split word/double-word view: member-wise copy emits the pipelined
+// load-x, load-y/z, store order seen in func_804CE418.
+struct VecWords {
+    u32 x;
+    u64 yz;
 };
 
 // func_804CF700 helper imports (retail C-linkage names; no shared header
@@ -69,7 +143,9 @@ struct SceneFlagBits {
     u16 b9 : 1;    // 0x0200
     u16 b8 : 1;    // 0x0100
     u16 b7 : 1;    // 0x0080
-    u16 : 7;       // bits 6..0
+    u16 : 5;       // bits 6..2
+    u16 b1 : 1;    // 0x0002
+    u16 : 1;       // bit 0
 };
 
 // u32 view of the flag word pair at 0x04/0x06; the 0x06 halfword's bits are
@@ -87,8 +163,8 @@ inline f32 s32ToF_b170(s32 v) {
         double d;
         u32 w[2];
     } c;
-    c.w[0] = 0x43300000u;
     c.w[1] = (u32)v ^ 0x80000000u;
+    c.w[0] = 0x43300000u;
     return (f32)(c.d - lbl_eu_8066B170);
 }
 
@@ -100,8 +176,8 @@ inline f32 s16ToF_b0f0(s16 v) {
         double d;
         u32 w[2];
     } c;
-    c.w[0] = 0x43300000u;
     c.w[1] = (u32)(s32)v ^ 0x80000000u;
+    c.w[0] = 0x43300000u;
     return (f32)(c.d - lbl_eu_8066B0F0);
 }
 
@@ -112,8 +188,8 @@ inline f32 u8ToF_b0e8(u32 v) {
         double d;
         u32 w[2];
     } c;
-    c.w[0] = 0x43300000u;
     c.w[1] = v;
+    c.w[0] = 0x43300000u;
     return (f32)(c.d - lbl_eu_8066B0E8);
 }
 
@@ -124,8 +200,8 @@ inline f32 s32ToF_b0f0(s32 v) {
         double d;
         u32 w[2];
     } c;
-    c.w[0] = 0x43300000u;
     c.w[1] = (u32)v ^ 0x80000000u;
+    c.w[0] = 0x43300000u;
     return (f32)(c.d - lbl_eu_8066B0F0);
 }
 
@@ -135,8 +211,8 @@ inline f32 u16ToF_b0e8(u16 v) {
         double d;
         u32 w[2];
     } c;
-    c.w[0] = 0x43300000u;
     c.w[1] = v;
+    c.w[0] = 0x43300000u;
     return (f32)(c.d - lbl_eu_8066B0E8);
 }
 
@@ -173,8 +249,12 @@ struct EffectVirtObj : EffectSubBase {
 // Retail linker name __dt__804CC2E4 (unmangled C symbol); defined as a free
 // function so the object emits the exact retail name.
 extern "C" void __attribute__((never_inline)) __dt__804CC2E4(EffectStruct* self) {
-    if (self->field_0x32c != 0) {
-        func_80495E84(*(void**)((u8*)self->field_0x08 + 0x10));
+    void* saved = self->field_0x32c;
+    if (saved != 0) {
+        // Two-arg call form keeps the checked pointer live in r4 across the
+        // compare (retail passes it through as a spare argument).
+        ((void (*)(void*, void*))func_80495E84)(
+            *(void**)((u8*)self->field_0x08 + 0x10), saved);
         self->field_0x32c = 0;
     }
     if (self->field_0x328) {
@@ -250,6 +330,10 @@ struct Node2Control {
 // 3D segment-vs-region test used by func_804CDE50 / func_804CDD78.
 extern "C" s32 func_804CDF20(void* self, Vec* a, Vec* b, Vec* c);
 
+// Per-node quad emit used by the type-0xc walker (matrix/color payload draw).
+extern "C" void func_804EEB40(void* matId, Vec* a, void* color, Vec* b, s32 flagA,
+                               s32 flagB, TexMtxSrc* src, f32 f2, f32 f3);
+
 extern "C" void func_804CD0A4(EffectStruct* self) DECOMP_DONT_INLINE;
 
 // Larger scene/effect layout used by targets 3, 8, 9, 10. Only fields touched
@@ -291,16 +375,46 @@ struct SceneSubObj {
     u32 field_0xe4;              // 0xe4
     u8 pad_0xe8[0xec - 0xe8];
     u8* field_0xec;              // 0xec
-    u8 pad_0xf0[0xf8 - 0xf0];
+    u8 pad_0xf0[0xf4 - 0xf0];
+    u32 field_0xf4;              // 0xf4 pointer (func_804CCA64 gate table)
     u32 field_0xf8;              // 0xf8
     u8 pad_0xfc[0x100 - 0xfc];
     u32 field_0x100;             // 0x100 pointer to a sample/tone table
-    u8 pad_0x104[0x108 - 0x104];
+    u32 field_0x104;             // 0x104
     u32 field_0x108;             // 0x108 pointer used by target 6
     u32 field_0x10c;             // 0x10c light-check object
     u32 field_0x110;             // 0x110 tone-table pointer checked by target 2
     void* field_0x114;           // 0x114 material-data pointer (func_804CF700)
     u32 field_0x118;             // 0x118 orientation source
+    u8 pad_0x11c[0x194 - 0x11c];
+    f32 field_0x194;             // tone copy block source (func_804CCA64)
+    u8 field_0x198;
+    u8 field_0x199;
+    u8 field_0x19a;
+    u8 field_0x19b;
+    u8 pad_0x19c[0x1a0 - 0x19c];
+    u32 field_0x1a0;
+    u32 field_0x1a4;
+    u32 field_0x1a8;
+    u32 field_0x1ac;
+    u32 field_0x1b0;
+    u32 field_0x1b4;
+    u32 field_0x1b8;
+    u32 field_0x1bc;
+    u32 field_0x1c0;
+    u8 pad_0x1c4[0x204 - 0x1c4];
+    f32 field_0x204;             // second copy block source float
+    u8 field_0x208;
+    u8 field_0x209;
+    u8 field_0x20a;
+    u8 field_0x20b;
+    u32 field_0x210;
+    u32 field_0x214;
+    u32 field_0x218;
+    u32 field_0x21c;
+    u32 field_0x220;
+    f32 field_0x224;
+    f32 field_0x228;
 };
 
 // Master effect/scene object shared across most of this TU. Field offsets are
@@ -350,21 +464,39 @@ struct EffectScene {
     f32 field_0x1d4;         // 0x1d4
     f32 field_0x1d8;         // 0x1d8
     Mtx field_0x1dc;         // 0x1dc..0x20c
-    u8 pad_0x20c[0x21c - 0x20c];
+    void* field_0x20c;       // light-processor block A
+    u8 field_0x210;
+    u8 pad_0x211[0x21c - 0x211];
     Vec field_0x21c;         // 0x21c,0x220,0x224
     u8 pad_0x228[0x234 - 0x228];
     f32 field_0x234;         // 0x234
-    u8 pad_0x238[0x258 - 0x238];
+    void* field_0x238;       // light-processor block B
+    u8 field_0x23c;
+    u8 pad_0x23d[0x24c - 0x23d];
+    void* field_0x24c;       // light-processor block C
+    u8 field_0x250;
+    u8 pad_0x251[0x258 - 0x251];
     s16 field_0x258;
     s16 field_0x25a;
-    u8 pad_0x25c[0x260 - 0x25c];
+    void* field_0x25c;       // light-processor block D
     u8 field_0x260;          // 0x260 texgen flags
     u8 pad_0x261[0x268 - 0x261];
     f32 field_0x268;         // 0x268
     f32 field_0x26c;
     f32 field_0x270;
     f32 field_0x274;
-    u8 pad_0x278[0x29c - 0x278];
+    void* field_0x278;           // 0x278 tone-copy dest / processor block
+    u8 field_0x27c;
+    u8 field_0x27d;
+    u8 field_0x27e;
+    u8 field_0x27f;
+    f32 field_0x280;
+    u32 field_0x284;
+    u32 field_0x288;
+    u32 field_0x28c;
+    u32 field_0x290;
+    u32 field_0x294;
+    u32 field_0x298;
     u32 field_0x29c;
     u32 field_0x2a0;
     u32 field_0x2a4;
@@ -381,8 +513,17 @@ struct EffectScene {
     f32 field_0x2d4;
     f32 field_0x2d8;
     u8 pad_0x2dc[0x2e8 - 0x2dc];
-    u32 field_0x2e8;             // 0x2e8 light-processor input
-    u8 pad_0x2ec[0x314 - 0x2ec];
+    u32 field_0x2e8;             // 0x2e8 tone-copy dest 2 / processor input
+    u8 field_0x2ec;
+    u8 pad_0x2ed[0x2f4 - 0x2ed];
+    u32 field_0x2f4;
+    u32 field_0x2f8;
+    u32 field_0x2fc;
+    u32 field_0x300;
+    u32 field_0x304;
+    f32 field_0x308;
+    f32 field_0x30c;
+    void* field_0x310;           // processor block E
     u8 field_0x314;              // 0x314 scale-mode flags
     u8 pad_0x315[0x31c - 0x315];
     f32 field_0x31c;             // 0x31c
@@ -436,9 +577,16 @@ extern "C" void __attribute__((never_inline)) func_804CD9EC(EffectScene* self) {
         f32 scale = (t->field_0x08 / lbl_eu_8066B100) * self->field_0x18;
         if (scale != lbl_eu_8066B0DC) {
             ml::CVec3 v;
-            v.x = scale * s16ToF_b0f0(t->field_0x00);
-            v.y = scale * s16ToF_b0f0(t->field_0x02);
-            v.z = scale * s16ToF_b0f0(t->field_0x04);
+            union { double d; u32 w[2]; } c1, c2, c3;
+            c1.w[1] = (u32)(s32)t->field_0x00 ^ 0x80000000u;
+            c1.w[0] = 0x43300000u;
+            v.x = scale * (f32)(c1.d - lbl_eu_8066B0F0);
+            c2.w[1] = (u32)(s32)t->field_0x02 ^ 0x80000000u;
+            c2.w[0] = 0x43300000u;
+            v.y = scale * (f32)(c2.d - lbl_eu_8066B0F0);
+            c3.w[1] = (u32)(s32)t->field_0x04 ^ 0x80000000u;
+            c3.w[0] = 0x43300000u;
+            v.z = scale * (f32)(c3.d - lbl_eu_8066B0F0);
             if (t->field_0x06 == 0) {
                 nw4r::math::VEC3Scale((nw4r::math::VEC3*)&v, (nw4r::math::VEC3*)&v,
                                       *(const f32*)&self->field_0x10);
@@ -610,8 +758,13 @@ extern "C" void __attribute__((never_inline)) func_804CDE50(EffectScene* self, c
     res.y = out.y;
     res.z = out.z;
     if (!func_804CDF20((void*)self, (Vec*)p2, (Vec*)p3, &res)) return;
-    self->b17 = 0;
-    self->field_0x1c = lbl_eu_8066B0DC;
+    // Volatile load/store pair pins the flag update between the constant
+    // load and the final float store (retail order: lhz, lfs, rlwinm, sth,
+    // stfs).
+    u16 flags = *(volatile u16*)&self->field_0x06;
+    f32 z = lbl_eu_8066B0DC;
+    *(volatile u16*)&self->field_0x06 = (u16)(flags & ~0x4000);
+    *(volatile f32*)&self->field_0x1c = z;
 }
 
 extern "C" s32 __attribute__((never_inline)) func_804CDF20(void* self, Vec* a, Vec* b, Vec* c) {
@@ -621,9 +774,9 @@ extern "C" s32 __attribute__((never_inline)) func_804CDF20(void* self, Vec* a, V
         f32 dz = a->z - c->z;
         return (dx * dx + dy * dy + dz * dz <= lbl_eu_8066B104);
     }
-    f32 adx = __fabs(b->x - a->x);
-    f32 ady = __fabs(b->y - a->y);
-    f32 adz = __fabs(b->z - a->z);
+    f32 adx = __fabsf(b->x - a->x);
+    f32 ady = __fabsf(b->y - a->y);
+    f32 adz = __fabsf(b->z - a->z);
     if (ady < adx) {
         if (adz < adx) {
             // X dominant
@@ -680,7 +833,7 @@ extern "C" void __attribute__((never_inline)) func_804CDD78(EffectScene* self, c
     if (fo == 0) return;
     s32 v = (fo != 0) ? *(u8*)(fo - 0xa) : 0;
     if (v == 0) return;
-    ((SceneFlags32*)&self->field_0x06)->b17 = 0;
+    ((SceneFlagBits*)&self->field_0x06)->b1 = 0;
     self->field_0x1c = lbl_eu_8066B0DC;
 }
 
@@ -707,9 +860,10 @@ extern "C" void __attribute__((never_inline)) func_804CE264(EffectScene* self, V
     func_804CE4C0(self, &stackA, type, p3);
     func_804CE79C(self, &stackB, type);
     func_804CF700(self, &self->field_0x1cc, p1);
-    self->field_0x06 =
-        (u16)((self->field_0x06 & (u16)~0x400) |
-              ((self->field_0x1d8 != lbl_eu_8066B0DC) << 10));
+    if (self->field_0x1d8 != lbl_eu_8066B0DC)
+        self->field_0x06 |= 0x400;
+    else
+        self->field_0x06 &= (u16)~0x400;
     func_804CE9A4(self, &self->field_0x19c, &self->field_0x1dc, type, p1,
                   &stackA, &stackB);
     if (self->field_0x32c) {
@@ -767,6 +921,7 @@ extern "C" void __attribute__((never_inline)) func_804CE4C0(EffectScene* self, M
         *(MtxCopy*)&out = *(MtxCopy*)&conc;
         break;
     }
+    default:
     case 4:
     case 5:
     case 6:
@@ -774,7 +929,6 @@ extern "C" void __attribute__((never_inline)) func_804CE4C0(EffectScene* self, M
     case 8:
     case 9:
     case 10:
-    default:
         break;
     }
 }
@@ -1130,15 +1284,22 @@ extern "C" void __attribute__((never_inline)) func_804CE160(EffectScene* self, c
 }
 
 extern "C" void __attribute__((never_inline)) func_804CE418(EffectScene* self, Vec* out) {
-    Vec src = self->field_0xac;
-    out->x = src.x;
-    out->y = src.y;
-    out->z = src.z;
+    // Volatile pins the word load order (x then y) and keeps z's load after
+    // the first two stores, matching retail's pipelined copy.
+    u32 vx = *(u32*)&self->field_0xac.x;
+    u32 vy = *(u32*)&self->field_0xac.y;
+    ((IVec3*)out)->y = vy;
+    ((IVec3*)out)->x = vx;
+    ((IVec3*)out)->z = *(u32*)&self->field_0xac.z;
+    Vec shifted;
     Vec res;
     PSMTXMultVec(self->field_0x130, out, &res);
-    out->x = res.x + self->field_0xb8.x;
-    out->y = res.y + self->field_0xb8.y;
-    out->z = res.z + self->field_0xb8.z;
+    shifted.x = res.x;
+    shifted.y = res.y;
+    shifted.z = res.z;
+    *(IVec3*)out = *(const IVec3*)&shifted;
+    nw4r::math::VEC3Add((nw4r::math::VEC3*)out, (const nw4r::math::VEC3*)out,
+                        (const nw4r::math::VEC3*)&self->field_0xb8);
 }
 
 // Target 7: compute the inherited/dir vector `out` for a node from self position
@@ -1147,10 +1308,9 @@ extern "C" void __attribute__((never_inline)) func_804CE79C(EffectScene* self, V
     *(u32*)&out->x = self->field_0x29c;
     *(u32*)&out->y = self->field_0x2a0;
     *(u32*)&out->z = self->field_0x2a4;
-    SceneSubObj* sub = self->field_0x0c;
-    u32 t = sub->field_0x00;
+    u32 t = ((SceneSubObj*)self->field_0x0c)->field_0x00;
     if ((t >= 9 && t <= 11) || t == 0) {
-        u16 fl = *(u16*)&sub->field_0x1c;
+        u16 fl = *(u16*)&((SceneSubObj*)self->field_0x0c)->field_0x1c;
         if (!(fl & 0x20) && (fl & 0x10)) {
             if (self->field_0x258 >= 0) {
                 U16Pair* p = func_804DF2A8(*(const void**)((u8*)self->field_0x08 + 0x0c));
@@ -1180,8 +1340,8 @@ extern "C" void __attribute__((never_inline)) func_804CE79C(EffectScene* self, V
     }
     MatFlags* mat = (MatFlags*)self->field_0x08;
     if (mat->field_0x00 & 0x10) {
-        u32* m = (u32*)sub->field_0xe4;
-        u8 b = m ? *(u8*)((u8*)m - 0xe) : 0;
+        u32* m = (u32*)((SceneSubObj*)self->field_0x0c)->field_0xe4;
+        s32 b = m ? *(u8*)((u8*)m - 0xe) : 0;
         if (b != 0xb) {
             out->x *= mat->field_0x34;
             out->y *= mat->field_0x38;
@@ -1192,9 +1352,11 @@ extern "C" void __attribute__((never_inline)) func_804CE79C(EffectScene* self, V
 
 // Target 6: us-804d4308 - reset two placer color globals, set channel 0 material
 // color from a shared GXColor constant, then reset two more globals to -1.
+// The color is read inside the call expression so its load schedules with the
+// argument setup (before the -1 cache stores).
 extern "C" void __attribute__((never_inline)) func_804D0194() {
-    GXColor color;
-    *(u32*)&color = lbl_eu_8066B124;
+    // Volatile pins the color load ahead of the r31 save/-1 stores.
+    GXColor color = *(const GXColor*)&lbl_eu_8066B124;
     lbl_eu_806659A8 = -1;
     lbl_eu_806659AC = -1;
     GXSetChanMatColor(GX_COLOR0A0, color);
@@ -1683,36 +1845,582 @@ void func_804CC3A4(EffectScene* out, const EffSrc3* node) {
 // (node, arg). Stub bodies - separate targets (us-804d5a10 / 6260 / 6804 /
 // 6cd4 / 720c / 7790).
 extern "C" void __attribute__((never_inline)) func_804D189C(EffectNode* node, void* arg){}
-extern "C" void __attribute__((never_inline)) func_804D20EC(EffectNode* node, void* arg){}
-extern "C" void __attribute__((never_inline)) func_804D2690(EffectNode* node, void* arg){}
-extern "C" void __attribute__((never_inline)) func_804D2B60(EffectNode* node, void* arg){}
-extern "C" void __attribute__((never_inline)) func_804D3098(EffectNode* node, void* arg){}
-extern "C" void __attribute__((never_inline)) func_804D361C(EffectNode* node, void* arg){}
-
-s32 func_804D3B14(EffectScene* self, ml::CVec3* vec, ml::CVec3* vec2) {
-    if (lbl_eu_8066B0DC <= vec->z) return 0;
-    Mtx m;
-    func_80496120(*(void**)((u8*)self->field_0x08 + 0x10), m, -1);
-    f32 x = vec->x, y = vec->y, z = vec->z;
-    f32 sc = lbl_eu_8066B0D8 / (-z);
-    f32 oz = m[2][0] * x + m[2][1] * y + m[2][2] * z + m[2][3];
-    vec->x = (m[1][0] * x + m[1][1] * y + m[1][2] * z + m[1][3]) * sc;
-    vec->y = (m[0][0] * x + m[0][1] * y + m[0][2] * z + m[0][3]) * sc;
-    vec->z = oz;
-    vec->x = (lbl_eu_8066B0E4 * vec->x + lbl_eu_8066B0E4) * u16ToF_b0e8(CDeviceVI::getRenderModeObj()->fbWidth);
-    vec->z = lbl_eu_8066B0DC;
-    vec->y = (lbl_eu_8066B0E4 * vec->y + lbl_eu_8066B0E4) * u16ToF_b0e8(CDeviceVI::getRenderModeObj()->efbHeight);
-    if (vec2) {
-        vec2->x = (m[1][0] * vec2->x + m[1][1] * vec2->y + m[1][2] * vec2->z + m[1][3]) * sc;
-        vec2->y = (m[0][0] * vec2->x + m[0][1] * vec2->y + m[0][2] * vec2->z + m[0][3]) * sc;
-        vec2->z = m[2][0] * vec2->x + m[2][1] * vec2->y + m[2][2] * vec2->z + m[2][3];
-        vec2->x = vec2->x * u16ToF_b0e8(CDeviceVI::getRenderModeObj()->fbWidth);
-        vec2->z = lbl_eu_8066B0DC;
-        vec2->y = vec2->y * u16ToF_b0e8(CDeviceVI::getRenderModeObj()->efbHeight);
+extern "C" void __attribute__((never_inline)) func_804D20EC(EffectNode* nodeRaw, void* res) {
+    EffectScene* self = (EffectScene*)nodeRaw;
+    union {
+        f64 d;
+        u32 w[2];
+    } cnv;
+    cnv.w[0] = 0x43300000u;
+    // Visibility gate (same shape as func_804D2B60).
+    SceneSubObj* sub = self->field_0x0c;
+    u16 fl = self->field_0x06;
+    if (sub->field_0x04 != 5) {
+        if (!(fl & 0x8000)) return;
+        if (!(fl & 0x0400)) return;
     }
-    return 1;
+    if (!(fl & 0x0800)) return;
+    if (func_804EEACC(&self->field_0xdc) == 0) return;
+
+    RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
+    *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
+    f32 scale = lbl_eu_8066B11C;
+    node->b0 = (u8)(s32)(scale * self->field_0x1cc);
+    node->b1 = (u8)(s32)(scale * self->field_0x1d0);
+    node->b2 = (u8)(s32)(scale * self->field_0x1d4);
+    node->b3 = (u8)(s32)(scale * self->field_0x1d8);
+
+    switch (sub->field_0x00) {
+    case 0:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 9:
+    case 10:
+    case 11:
+    case 12: {
+        u16 sflags = sub->field_0x1c;
+        u32 b11 = (sflags >> 11) & 1;
+        u32 c11 = (u32)(-b11 | b11) >> 31;
+        u32 b10 = (sflags >> 10) & 1;
+        u32 c10 = (u32)(-b10 | b10) >> 31;
+        if (c11 || c10) {
+            u32 b11i = (sub->field_0x1c >> 11) & 1;
+            u32 c11i = (u32)(-b11i | b11i) >> 31;
+            if (c11i) {
+                u8* p = (u8*)sub->field_0xe4;
+                u8 bv = p ? *(p - 0x10) : 0;
+                if (bv == 0x10) {
+                    u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
+                    cnv.w[1] = fbw;
+                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    node->mtx[0][3] = node->mtx[0][3] * ratio;
+                } else if (bv == 0x11) {
+                    u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
+                    cnv.w[1] = fbw;
+                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
+                    PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
+                }
+            }
+        } else {
+            Mtx stackMtx;
+            Mtx mtxA0;
+            MatFlags* mat = (MatFlags*)self->field_0x08;
+            void* m = func_80496264(mat->field_0x10, -1);
+            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
+            *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
+            *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+    // Tone-table wrap: normalize the accumulated angle pair into [0, 2*pi)
+    // with additive stepping loops, then derive the two screen-space anchor
+    // vectors fed to the quad emitter.
+    f32 ang = self->field_0x270 * self->field_0x268;
+    const f32 step = lbl_eu_8066B138;
+    const f32 limit = lbl_eu_8066B0DC;
+    const f32 twoPi = lbl_eu_8066B0DC;
+    while (ang < limit) ang += step;
+    while (limit <= ang) ang -= step;
+
+    Vec sp1c;
+    Vec sp28;
+    sp1c.x = ang;
+    sp1c.y = ang;
+    sp1c.z = ang;
+    sp28.x = self->field_0x274;
+    sp28.y = self->field_0x270;
+    sp28.z = self->field_0x26c;
+
+    // Z-gate byte from the sample table decides the depth-write flag.
+    u8* pz = (u8*)sub->field_0x104;
+    u32 zb = pz ? *(pz - 2) : 0;
+    u32 zflag = (u32)(-(u32)(zb != 0) | (zb != 0)) >> 31;
+
+    // Stack texture-matrix source payload (same layout as func_804D2B60).
+    TexMtxSrc src;
+    src.mTex = res;
+    src.mIndex = (s8)self->field_0x25a;
+    src.field_0x08 = 0;
+    f32 zero = lbl_eu_8066B0DC;
+    f32 one = lbl_eu_8066B0D8;
+    src.field_0x0c = zero;
+    src.field_0x10 = zero;
+    src.field_0x14 = zero;
+    src.field_0x18 = one;
+    src.field_0x1c = one;
+    src.field_0x20 = zero;
+    u8* pb = (u8*)sub->field_0x108;
+    if (pb != NULL) {
+        src.field_0x08 = *(pb - 7);
+        src.field_0x0c = self->field_0x270;
+        src.field_0x10 = self->field_0x274;
+        src.field_0x18 = u8ToF_b0e8(*(pb - 2));
+        src.field_0x1c = u8ToF_b0e8(*(pb - 1));
+    }
+    // Tone-set classes keep the scene-local scale; the rest inherit it.
+    u32 tb20 = (sub->field_0x1c >> 11) & 1;
+    u32 cb20 = (u32)(-tb20 | tb20) >> 31;
+    MatFlags* mat = (MatFlags*)self->field_0x08;
+    func_804EEB40(mat->field_0x10, &sp28, (void*)&self->field_0x1cc, &sp1c,
+                  (s32)cb20, (s32)zflag, &src, self->field_0x2a4,
+                  self->field_0x2d8);
+}
+// Common prologue shared by the per-type node-walk renderers (targets
+// us-804d6804/7790/6cd4/720c): visibility gate, render-node matrix/color
+// snapshot, and the per-class tone/framebuffer scaling.
+
+extern "C" void __attribute__((never_inline)) func_804D2B60(EffectNode* nodeRaw, void* res) {
+    EffectScene* self = (EffectScene*)nodeRaw;
+    union {
+        f64 d;
+        u32 w[2];
+    } cnv;
+    cnv.w[0] = 0x43300000u;
+    // Visibility gate: type-5 scenes only need the tone bit, others need
+    // master+enable too; the link check runs last.
+    if (self->field_0x0c->field_0x04 != 5) {
+        if (!(self->field_0x06 & 0x8000)) return;
+        if (!(self->field_0x06 & 0x0400)) return;
+    }
+    if (!(self->field_0x06 & 0x0800)) return;
+    if (func_804EEACC(&self->field_0xdc) == 0) return;
+
+    RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
+    *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
+    f32 scale = lbl_eu_8066B11C;
+    node->b0 = (u8)(s32)(scale * self->field_0x1cc);
+    node->b1 = (u8)(s32)(scale * self->field_0x1d0);
+    node->b2 = (u8)(s32)(scale * self->field_0x1d4);
+    node->b3 = (u8)(s32)(scale * self->field_0x1d8);
+
+    switch (self->field_0x0c->field_0x00) {
+    case 0:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 9:
+    case 10:
+    case 11:
+    case 12: {
+        u16 sflags = self->field_0x0c->field_0x1c;
+        u32 b11 = (sflags >> 11) & 1;
+        u32 c11 = (u32)(-b11 | b11) >> 31;
+        u32 b10 = (sflags >> 10) & 1;
+        u32 c10 = (u32)(-b10 | b10) >> 31;
+        if (c11 || c10) {
+            u32 b11i = (self->field_0x0c->field_0x1c >> 11) & 1;
+            u32 c11i = (u32)(-b11i | b11i) >> 31;
+            if (c11i) {
+                u8* p = (u8*)self->field_0x0c->field_0xe4;
+                u8 bv = p ? *(p - 0x10) : 0;
+                if (bv == 0x10) {
+                    u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
+                    cnv.w[1] = fbw;
+                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    node->mtx[0][3] = node->mtx[0][3] * ratio;
+                } else if (bv == 0x11) {
+                    u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
+                    cnv.w[1] = fbw;
+                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
+                    PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
+                }
+            }
+        } else {
+            Mtx stackMtx;
+            Mtx mtxA0;
+            MatFlags* mat = (MatFlags*)self->field_0x08;
+            void* m = func_80496264(mat->field_0x10, -1);
+            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
+            *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
+            *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+    // Screen position plus the alpha pair fed to the blit entry point.
+    Vec drawPos;
+    f32 alpha = self->field_0x2b0;
+    f32 alphaMax = self->field_0x2b4;
+    // Visibility gate: when the tone bit is clear, verify on-screen state via
+    // the camera helper; bail out when it reports off-screen.
+    if (!(self->field_0x0c->field_0x1c & 0x800)) {
+        if (!func_804D3B14((D3B14Cam*)self, &drawPos, NULL)) return;
+    }
+
+    TexMtxSrc src;
+    src.mTex = res;
+    src.mIndex = (s8)self->field_0x25a;
+    src.field_0x08 = 0;
+    f32 zero = lbl_eu_8066B0DC;
+    f32 one = lbl_eu_8066B0D8;
+    src.field_0x0c = zero;
+    src.field_0x10 = zero;
+    src.field_0x14 = zero;
+    src.field_0x18 = one;
+    src.field_0x1c = one;
+    src.field_0x20 = zero;
+    u8* pb = (u8*)self->field_0x0c->field_0x108;
+    if (pb != NULL) {
+        src.field_0x08 = *(pb - 7);
+        src.field_0x0c = self->field_0x270;
+        src.field_0x10 = self->field_0x274;
+        src.field_0x18 = u8ToF_b0e8(*(pb - 2));
+        src.field_0x1c = u8ToF_b0e8(*(pb - 1));
+    }
+    MatFlags* mat = (MatFlags*)self->field_0x08;
+    DrawQuad quad;
+    quad.x = self->field_0x19c[0][3];
+    quad.y = self->field_0x19c[1][3];
+    quad.z = self->field_0x19c[2][3];
+    void* material;
+    func_804F1F18(mat->field_0x10, (ml::CVec3*)&drawPos, (TexDrawSize*)&self->field_0x1cc,
+                  alpha, alphaMax, material, &src);
 }
 
+extern "C" void __attribute__((never_inline)) func_804D3098(EffectNode* nodeRaw, void* res) {
+    EffectScene* self = (EffectScene*)nodeRaw;
+    union {
+        f64 d;
+        u32 w[2];
+    } cnv;
+    cnv.w[0] = 0x43300000u;
+    // Visibility gate (same shape as func_804D2B60).
+    if (self->field_0x0c->field_0x04 != 5) {
+        if (!(self->field_0x06 & 0x8000)) return;
+        if (!(self->field_0x06 & 0x0400)) return;
+    }
+    if (!(self->field_0x06 & 0x0800)) return;
+    if (func_804EEACC(&self->field_0xdc) == 0) return;
+    // Randomizer tick: drive the attached simple randomizer while the tone
+    // table is active and its age parameter is positive.
+    if (self->field_0x334 != NULL && self->field_0x0c->field_0x110 != NULL) {
+        f32 t = self->field_0x18;
+        f32 v = self->field_0x2a4;
+        if (lbl_eu_8066B0DC < v) {
+            t = t / v;
+        }
+        ((CERandomizerSimple*)self->field_0x334)->execute(t);
+    }
+    RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
+    *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
+    f32 scale = lbl_eu_8066B11C;
+    node->b0 = (u8)(s32)(scale * self->field_0x1cc);
+    node->b1 = (u8)(s32)(scale * self->field_0x1d0);
+    node->b2 = (u8)(s32)(scale * self->field_0x1d4);
+    node->b3 = (u8)(s32)(scale * self->field_0x1d8);
+
+    switch (self->field_0x0c->field_0x00) {
+    case 0:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 9:
+    case 10:
+    case 11:
+    case 12: {
+        u16 sflags = self->field_0x0c->field_0x1c;
+        u32 b11 = (sflags >> 11) & 1;
+        u32 c11 = (u32)(-b11 | b11) >> 31;
+        u32 b10 = (sflags >> 10) & 1;
+        u32 c10 = (u32)(-b10 | b10) >> 31;
+        if (c11 || c10) {
+            u32 b11i = (self->field_0x0c->field_0x1c >> 11) & 1;
+            u32 c11i = (u32)(-b11i | b11i) >> 31;
+            if (c11i) {
+                u8* p = (u8*)self->field_0x0c->field_0xe4;
+                u8 bv = p ? *(p - 0x10) : 0;
+                if (bv == 0x10) {
+                    u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
+                    cnv.w[1] = fbw;
+                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    node->mtx[0][3] = node->mtx[0][3] * ratio;
+                } else if (bv == 0x11) {
+                    u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
+                    cnv.w[1] = fbw;
+                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
+                    PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
+                }
+            }
+        } else {
+            Mtx stackMtx;
+            Mtx mtxA0;
+            MatFlags* mat = (MatFlags*)self->field_0x08;
+            void* m = func_80496264(mat->field_0x10, -1);
+            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
+            *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
+            *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+    Vec drawPos;
+    f32 alpha = self->field_0x18;
+    if (!(self->field_0x0c->field_0x1c & 0x800)) {
+        if (!func_804D3B14((D3B14Cam*)self, &drawPos, NULL)) return;
+    }
+    s32 flag = (s32)self->field_0x2a4;
+
+    TexMtxSrc src;
+    src.mTex = res;
+    src.mIndex = (s8)self->field_0x25a;
+    src.field_0x08 = 0;
+    f32 zero = lbl_eu_8066B0DC;
+    f32 one = lbl_eu_8066B0D8;
+    src.field_0x0c = zero;
+    src.field_0x10 = zero;
+    src.field_0x14 = zero;
+    src.field_0x18 = one;
+    src.field_0x1c = one;
+    src.field_0x20 = zero;
+    u8* pb = (u8*)self->field_0x0c->field_0x108;
+    if (pb != NULL) {
+        src.field_0x08 = *(pb - 7);
+        src.field_0x0c = self->field_0x270;
+        src.field_0x10 = self->field_0x274;
+        src.field_0x18 = u8ToF_b0e8(*(pb - 2));
+        src.field_0x1c = u8ToF_b0e8(*(pb - 1));
+    }
+    MatFlags* mat = (MatFlags*)self->field_0x08;
+    DrawQuad quad;
+    quad.x = self->field_0x19c[0][3];
+    quad.y = self->field_0x19c[1][3];
+    quad.z = self->field_0x19c[2][3];
+    void* material;
+    func_804F0F2C(mat->field_0x10, alpha, (const ml::CVec3*)&drawPos,
+                  (const TexDrawSize*)&self->field_0x1cc, (const f32*)(u32)flag,
+                  material, &src, self->field_0x334);
+}
+
+extern "C" void __attribute__((never_inline)) func_804D361C(EffectNode* nodeRaw, void* res) {
+    EffectScene* self = (EffectScene*)nodeRaw;
+    union {
+        f64 d;
+        u32 w[2];
+    } cnv;
+    cnv.w[0] = 0x43300000u;
+    // Visibility gate (same shape as func_804D2B60).
+    if (self->field_0x0c->field_0x04 != 5) {
+        if (!(self->field_0x06 & 0x8000)) return;
+        if (!(self->field_0x06 & 0x0400)) return;
+    }
+    if (!(self->field_0x06 & 0x0800)) return;
+    if (func_804EEACC(&self->field_0xdc) == 0) return;
+
+    RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
+    *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
+    f32 scale = lbl_eu_8066B11C;
+    node->b0 = (u8)(s32)(scale * self->field_0x1cc);
+    node->b1 = (u8)(s32)(scale * self->field_0x1d0);
+    node->b2 = (u8)(s32)(scale * self->field_0x1d4);
+    node->b3 = (u8)(s32)(scale * self->field_0x1d8);
+
+    switch (self->field_0x0c->field_0x00) {
+    case 0:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 9:
+    case 10:
+    case 11:
+    case 12: {
+        u16 sflags = self->field_0x0c->field_0x1c;
+        u32 b11 = (sflags >> 11) & 1;
+        u32 c11 = (u32)(-b11 | b11) >> 31;
+        u32 b10 = (sflags >> 10) & 1;
+        u32 c10 = (u32)(-b10 | b10) >> 31;
+        if (c11 || c10) {
+            u32 b11i = (self->field_0x0c->field_0x1c >> 11) & 1;
+            u32 c11i = (u32)(-b11i | b11i) >> 31;
+            if (c11i) {
+                u8* p = (u8*)self->field_0x0c->field_0xe4;
+                u8 bv = p ? *(p - 0x10) : 0;
+                if (bv == 0x10) {
+                    u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
+                    cnv.w[1] = fbw;
+                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    node->mtx[0][3] = node->mtx[0][3] * ratio;
+                } else if (bv == 0x11) {
+                    u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
+                    cnv.w[1] = fbw;
+                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
+                    PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
+                }
+            }
+        } else {
+            Mtx stackMtx;
+            Mtx mtxA0;
+            MatFlags* mat = (MatFlags*)self->field_0x08;
+            void* m = func_80496264(mat->field_0x10, -1);
+            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
+            *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
+            *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+    // Second payload: while a tone table is bound, re-fetch the render node
+    // and derive the screen quad/mode from it.
+    if (self->field_0x0c->field_0x110 != NULL) {
+        RenderNode* n2 = (RenderNode*)func_804E0168(self->field_0x00);
+        if (n2 != NULL) {
+            DrawQuad q2;
+            q2.x = *(f32*)((u8*)n2 + 0xc);
+            q2.y = *(f32*)((u8*)n2 + 0x1c);
+            q2.z = *(f32*)((u8*)n2 + 0x2c);
+            s32 mode = (s32)self->field_0x29c;
+
+            TexMtxSrc src;
+            src.mTex = res;
+            src.mIndex = (s8)self->field_0x25a;
+            src.field_0x08 = 0;
+            f32 zero = lbl_eu_8066B0DC;
+            f32 one = lbl_eu_8066B0D8;
+            src.field_0x0c = zero;
+            src.field_0x10 = zero;
+            src.field_0x14 = zero;
+            src.field_0x18 = one;
+            src.field_0x1c = one;
+            src.field_0x20 = zero;
+            u8* pb = (u8*)self->field_0x0c->field_0x108;
+            if (pb != NULL) {
+                src.field_0x08 = *(pb - 7);
+                src.field_0x0c = self->field_0x270;
+                src.field_0x10 = self->field_0x274;
+                src.field_0x18 = u8ToF_b0e8(*(pb - 2));
+                src.field_0x1c = u8ToF_b0e8(*(pb - 1));
+            }
+            MatFlags* mat = (MatFlags*)self->field_0x08;
+            void* material;
+            func_804F2E44(mat->field_0x10, (DrawQuad*)&self->field_0x1cc, mode,
+                          material, &src);
+        }
+    }
+}
+
+extern "C" void __attribute__((never_inline)) func_804D2690(EffectNode* nodeRaw, void* res) {
+    EffectScene* self = (EffectScene*)nodeRaw;
+    union {
+        f64 d;
+        u32 w[2];
+    } cnv;
+    cnv.w[0] = 0x43300000u;
+    // Visibility gate (same shape as func_804D2B60).
+    if (self->field_0x0c->field_0x04 != 5) {
+        if (!(self->field_0x06 & 0x8000)) return;
+        if (!(self->field_0x06 & 0x0400)) return;
+    }
+    if (!(self->field_0x06 & 0x0800)) return;
+    if (func_804EEACC(&self->field_0xdc) == 0) return;
+
+    RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
+    *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
+    f32 scale = lbl_eu_8066B11C;
+    node->b0 = (u8)(s32)(scale * self->field_0x1cc);
+    node->b1 = (u8)(s32)(scale * self->field_0x1d0);
+    node->b2 = (u8)(s32)(scale * self->field_0x1d4);
+    node->b3 = (u8)(s32)(scale * self->field_0x1d8);
+
+    switch (self->field_0x0c->field_0x00) {
+    case 0:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 9:
+    case 10:
+    case 11:
+    case 12: {
+        u16 sflags = self->field_0x0c->field_0x1c;
+        u32 b11 = (sflags >> 11) & 1;
+        u32 c11 = (u32)(-b11 | b11) >> 31;
+        u32 b10 = (sflags >> 10) & 1;
+        u32 c10 = (u32)(-b10 | b10) >> 31;
+        if (c11 || c10) {
+            u32 b11i = (self->field_0x0c->field_0x1c >> 11) & 1;
+            u32 c11i = (u32)(-b11i | b11i) >> 31;
+            if (c11i) {
+                u8* p = (u8*)self->field_0x0c->field_0xe4;
+                u8 bv = p ? *(p - 0x10) : 0;
+                if (bv == 0x10) {
+                    u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
+                    cnv.w[1] = fbw;
+                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    node->mtx[0][3] = node->mtx[0][3] * ratio;
+                } else if (bv == 0x11) {
+                    u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
+                    cnv.w[1] = fbw;
+                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
+                    PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
+                }
+            }
+        } else {
+            Mtx stackMtx;
+            Mtx mtxA0;
+            MatFlags* mat = (MatFlags*)self->field_0x08;
+            void* m = func_80496264(mat->field_0x10, -1);
+            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
+            *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
+            *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
+    // Stack texture-matrix source payload for the gradient quad emitter.
+    TexMtxSrc src;
+    src.mTex = res;
+    src.mIndex = (s8)self->field_0x25a;
+    src.field_0x08 = 0;
+    f32 zero = lbl_eu_8066B0DC;
+    f32 one = lbl_eu_8066B0D8;
+    src.field_0x0c = zero;
+    src.field_0x10 = zero;
+    src.field_0x14 = zero;
+    src.field_0x18 = one;
+    src.field_0x1c = one;
+    src.field_0x20 = zero;
+    u8* pb = (u8*)self->field_0x0c->field_0x108;
+    if (pb != NULL) {
+        src.field_0x08 = *(pb - 7);
+        src.field_0x0c = self->field_0x270;
+        src.field_0x10 = self->field_0x274;
+        src.field_0x18 = u8ToF_b0e8(*(pb - 2));
+        src.field_0x1c = u8ToF_b0e8(*(pb - 1));
+    }
+    MatFlags* mat = (MatFlags*)self->field_0x08;
+    DrawQuad quad;
+    quad.x = self->field_0x19c[0][3];
+    quad.y = self->field_0x19c[1][3];
+    quad.z = self->field_0x19c[2][3];
+    void* material;
+    func_804F0258(mat->field_0x10, &quad, (ml::CVec3*)&self->field_0x29c,
+                  (TexDrawSize*)&self->field_0x1cc, material, &src);
+}
 // Target 6: build an 18-float matrix from a count of scale bytes and two ints.
 // (byte scale A after the B0E4 constant; B scales the computed direction terms)
 void func_804D3DB0(EffectScene* self, f32* out, s32 i5, s32 i6, s32 i7) {
@@ -1819,9 +2527,136 @@ extern "C" void func_804D5E90(EffectNode* self);
 
 // Target 7: per-node per-frame update. Only the head (visible frame-advance) is
 // reconstructed; the sprite/sub-effect emission body is elided from the brief.
+// Target 7: per-node per-frame update. Scales the frame delta into the
+// node's accumulated weight, refreshes the tone-table state, then drives the
+// five light/material processor blocks and the attached virtual applier.
 extern "C" void __attribute__((never_inline)) func_804CCA64(void* nodeptr, f32 f) {
-    EffectNode7* node = (EffectNode7*)nodeptr;
-    node->field_0x18 = f * node->field_0x14;
+    EffectScene* node = (EffectScene*)nodeptr;
+    node->field_0x18 = f * *(f32*)&node->field_0x14;
+
+    // Tone-gate refresh: when the master bit and the owner's 0x40 flag are
+    // set, clear the 0x4000 gate and reset the accumulated value.
+    u16 h = node->field_0x06;
+    if (h & 0x8000) {
+        u16* owner = (u16*)node->field_0x08;
+        if (*owner & 0x40) {
+            node->field_0x06 = h & ~0x4000;
+            *(f32*)&node->field_0x1c = lbl_eu_8066B0DC;
+        }
+    }
+
+    // Per-material random-phase reseed: the gate byte selects a bit from the
+    // signed shift count in the material object.
+    SceneSubObj* sub = node->field_0x0c;
+    u8* pf4 = (u8*)sub->field_0xf4;
+    if (pf4 != NULL) {
+        u8 sel = *(pf4 + 2);
+        if (sel != 0 && !(node->field_0x06 & 0x1000)) {
+            s32 cnt = *(s8*)((u8*)node->field_0x08 + 0x59);
+            if (cnt > 0 && (sel & (1 << (cnt - 1)))) {
+                node->field_0x06 &= ~0x4000;
+                u16 hw = *(u16*)(pf4 + 4);
+                node->field_0x06 |= 0x1000;
+                *(f32*)&node->field_0x1c = u16ToF_b0e8(hw);
+            }
+        }
+    }
+
+    if (!(node->field_0x06 & 0x4000)) {
+        *(f32*)&node->field_0x1c -= *(f32*)&node->field_0x18;
+    }
+
+    f32 val = *(f32*)&node->field_0x18;
+    s32 clamped = (*(f32*)&node->field_0x10 <= lbl_eu_8066B0D8);
+    f32 lim = CDeviceVI::isTvFormatPal() ? lbl_eu_8066B0F8 : lbl_eu_8066B0D8;
+    if (lim < val) {
+        if (clamped) {
+            clamped = 0;
+            val -= lim;
+        }
+    }
+
+    void* mat = (MatFlags*)node->field_0x08;
+    if (!clamped) {
+        // Five guarded processor blocks; each fires while its top-bit gate is
+        // set, passing its own storage block and the current weight.
+        u8 g = node->field_0x210;
+        if (((g >> 7) & 1) || ((g >> 6) & 3) != 0) {
+            func_804E1044(&node->field_0x20c, (void*)sub->field_0xf8, mat, val);
+        }
+        if (node->field_0x23c & 0x80) {
+            func_804E18CC(&node->field_0x238, (void*)sub->field_0xf8, mat, val);
+        }
+        if (node->field_0x250 & 0x80) {
+            func_804E1A44(&node->field_0x24c, (void*)sub->field_0x104, mat, val);
+        }
+        if (node->field_0x260 & 0x80) {
+            func_804E1C1C(&node->field_0x25c, (void*)sub->field_0x108, mat, val);
+        }
+        if (node->field_0x314 & 0x80) {
+            func_804E2EAC(&node->field_0x310, (void*)sub->field_0x118, mat, val);
+        }
+    }
+
+    // First tone block: either pull the processor result or snapshot the
+    // material's tone colors into node+0x278..0x2a7.
+    u8* p110 = (u8*)sub->field_0x110;
+    u8 tb = p110 ? *(p110 - 0x1c) : 0;
+    if (tb == 0) {
+        if (!clamped && (node->field_0x27c & 0x80)) {
+            func_804E2088(&node->field_0x278, (void*)sub->field_0x110, mat, val);
+        }
+    } else {
+        node->field_0x278 = NULL;
+        node->field_0x27c = sub->field_0x198;
+        node->field_0x27d = sub->field_0x199;
+        node->field_0x27e = sub->field_0x19a;
+        node->field_0x27f = sub->field_0x19b;
+        u32 w = sub->field_0x1a0;
+        u32 v = sub->field_0x1a4;
+        node->field_0x288 = v;
+        node->field_0x284 = w;
+        node->field_0x28c = sub->field_0x1a8;
+        w = sub->field_0x1ac;
+        v = sub->field_0x1b0;
+        node->field_0x294 = v;
+        node->field_0x290 = w;
+        node->field_0x298 = sub->field_0x1b4;
+        w = sub->field_0x1b8;
+        v = sub->field_0x1bc;
+        node->field_0x2a0 = v;
+        node->field_0x29c = w;
+        node->field_0x2a4 = sub->field_0x1c0;
+    }
+
+    // Second tone block (same shape, node+0x2e8..0x30f).
+    u8* p114 = (u8*)sub->field_0x114;
+    u8 tb2 = p114 ? *(p114 - 0x18) : 0;
+    if (tb2 == 0) {
+        if (!clamped && (node->field_0x2ec & 0x80)) {
+            func_804E2A5C(&node->field_0x2e8, (void*)sub->field_0x114, mat, val);
+        }
+    } else {
+        node->field_0x2e8 = 0;
+        node->field_0x2ec = sub->field_0x208;
+        u32 w = sub->field_0x210;
+        u32 v = sub->field_0x214;
+        node->field_0x2f8 = v;
+        node->field_0x2f4 = w;
+        w = sub->field_0x218;
+        v = sub->field_0x21c;
+        node->field_0x300 = v;
+        node->field_0x2fc = w;
+        node->field_0x304 = sub->field_0x220;
+        node->field_0x308 = sub->field_0x224;
+        node->field_0x30c = sub->field_0x228;
+    }
+
+    // Apply the accumulated weight through the attached object's slot-5
+    // virtual when both the 0x400 gate and the object pointer are live.
+    if ((sub->field_0x1c & 0x400) && node->field_0x32c != NULL) {
+        ((CCA64VirtObj*)node->field_0x32c)->apply(*(f32*)&node->field_0x18);
+    }
 }
 
 // Target 4: walk the node chain updating each; advance via the step.
@@ -1840,7 +2675,7 @@ void func_804D401C(EffectNode* self, f32 f) {
     f32 lim = lbl_eu_8066B140;
     while (node) {
         func_804CCA64(node, f);
-        if (f > lim) {
+        if (!(f <= lim)) {
             if (!((EffectSceneFlags*)&node->field_0x06)->b15) {
                 if (func_804D41F8((ListOwner*)self, (Vend*)node)) {
                     func_804D5E90(self);
@@ -1871,6 +2706,7 @@ void func_804D4144(EffectNode* self) {
     } else {
         node = 0;
     }
+    f32 lim = lbl_eu_8066B140;
     while (node) {
         func_804CD0A4((EffectStruct*)(void*)node);
         if (self->field_0x04 >= 0) {
@@ -2656,18 +3492,20 @@ f32* func_804D5F54(void* this_, s32 count) {
     if (!buf) return 0;
     f32 cnt = s32ToF_b170(count);
     f32 f8 = lbl_eu_8066B158;
+    f32 dt = f8 / cnt;
     f32 t = lbl_eu_8066B15C;
     f32 f7 = lbl_eu_8066B164;
     f32 f5 = lbl_eu_8066B160;
     f32 f1 = lbl_eu_8066B168;
-    f32 dt = f8 / cnt;
     s16 i = 0;
     while (t < f8) {
         f32 a2 = t * t;
         f32 a3 = a2 * t;
         f32 g = f7 * a2;
-        buf[i++] = f8 + (f5 * a3 - g);
-        buf[i++] = t + (a3 - f5 * a2);
+        f32 b1in = a3 - f5 * a2;
+        f32 b0v = f5 * a3 - g;
+        buf[i++] = f8 + b0v;
+        buf[i++] = t + b1in;
         buf[i++] = a3 - a2;
         buf[i++] = f1 * a3 + g;
         t += dt;
@@ -2680,10 +3518,12 @@ void func_804D6070(void) {}
 void func_804D6074(){}
 
 s32 func_804D6BC0(void* unused, Node2Control* c, Node2** p5, Node2** p6,
-               Node2** p7, Node2** p8, Node2** p9) {
-    // Retail reuses the loaded *p5 register within each pair of stores, but
-    // reloads *p5 for every new output slot (stores may alias the input), so
-    // keep a local per pair instead of one long-lived value.
+               Node2* volatile* p7,
+               Node2* volatile* p8, Node2** p9) {
+    // Retail reloads *p5 for every output slot (the stores may alias p5), so
+    // keep one local per slot pair; the p9 walk chains through the temp.
+    // p7/p8 take volatile pointees so each *p7/*p8 read is a real load,
+    // matching retail's reloads inside the branches.
     Node2* a = *p5;
     *p6 = a;
     *p6 = a->field_0x04;
@@ -2691,13 +3531,14 @@ s32 func_804D6BC0(void* unused, Node2Control* c, Node2** p5, Node2** p6,
     Node2* b = *p5;
     *p8 = b;
     *p8 = b->field_0x00;
-    Node2* d = *p5;
-    *p9 = d;
-    d = d->field_0x00;
-    *p9 = d;
-    d = d->field_0x00;
-    *p9 = d;
-    if ((u32)*p7 == (u32)c->field_0x04->field_0x00) {
+    Node2* e = *p5;
+    *p9 = e;
+    e = e->field_0x00;
+    *p9 = e;
+    *p9 = e->field_0x00;
+    // Volatile pointee forces the fresh *p7 load retail emits in the body
+    // (each *p7 read is a real load, no caching).
+    if (*p7 == c->field_0x04->field_0x00) {
         *p6 = *p7;
     }
     if (*p8 == c->field_0x04) {
@@ -2705,7 +3546,7 @@ s32 func_804D6BC0(void* unused, Node2Control* c, Node2** p5, Node2** p6,
         *p9 = *p7;
         return 1;
     }
-    if (*p9 == c->field_0x04) *p9 = *p8;
+    if ((u32)*p9 == (u32)c->field_0x04) *p9 = *p8;
     return 0;
 }
 
@@ -2749,6 +3590,64 @@ extern "C" void __attribute__((never_inline)) func_804CE3E8(EffectScene* self) {
     if (self->field_0x328 == 0) return;
     if (self->field_0x18 <= lbl_eu_8066B0DC) return;
     self->field_0x06 |= 0x40;
+}
+
+// Camera-side layout for func_804D3B14: a pointer at 0x08 to an object whose
+// +0x10 is the projection-matrix source.
+struct D3B14CamObj {
+    u8 pad_0x00[0x10];
+    void* field_0x10;
+};
+struct D3B14Cam {
+    u8 pad_0x00[0x08];
+    D3B14CamObj* field_0x08;
+};
+
+// Screen-space output position: x/y/z at 0x00/0x04/0x08 (also read as raw
+// words by the word-wise copy).
+struct ScreenPos {
+    Vec pos;
+};
+
+// Project a world position to screen space: transform by the camera matrix,
+// apply the perspective divide (-1/z) to x/y, then scale by the framebuffer
+// dimensions. Returns 0 when the depth is not behind the near plane.
+s32 func_804D3B14(D3B14Cam* cam, Vec* outA, Vec* outB) {
+    f32 z = outA->z;
+    if (z == lbl_eu_8066B0DC || lbl_eu_8066B0DC < z) {
+        return 0;
+    }
+    Mtx m;
+    func_80496120(cam->field_0x08->field_0x10, m, -1);
+    f32 s = lbl_eu_8066B0D8 / -z;
+
+    Vec v;
+    v.x = m[0][0] * outA->x + m[0][1] * outA->y + m[0][2] * outA->z + m[0][3];
+    v.y = m[1][0] * outA->x + m[1][1] * outA->y + m[1][2] * outA->z + m[1][3];
+    v.z = m[2][0] * outA->x + m[2][1] * outA->y + m[2][2] * outA->z + m[2][3];
+    *outA = v;
+    outA->x *= s;
+    outA->y *= s;
+
+    u16 w = CDeviceVI::getRenderModeObj()->fbWidth;
+    outA->x = (outA->x * lbl_eu_8066B0E4 + lbl_eu_8066B0E4) * w;
+    u16 h = CDeviceVI::getRenderModeObj()->efbHeight;
+    outA->y = (outA->y * lbl_eu_8066B12C + lbl_eu_8066B0E4) * h;
+
+    if (outB != 0) {
+        v.x = m[0][0] * outB->x + m[0][1] * outB->y + m[0][2] * outB->z + m[0][3];
+        v.y = m[1][0] * outB->x + m[1][1] * outB->y + m[1][2] * outB->z + m[1][3];
+        v.z = m[2][0] * outB->x + m[2][1] * outB->y + m[2][2] * outB->z + m[2][3];
+        *outB = v;
+        outB->x *= s;
+        outB->y *= s;
+
+        u16 w2 = CDeviceVI::getRenderModeObj()->fbWidth;
+        outB->x = (outB->x * lbl_eu_8066B0E4 + lbl_eu_8066B0E4) * w2;
+        u16 h2 = CDeviceVI::getRenderModeObj()->efbHeight;
+        outB->y = (outB->y * lbl_eu_8066B12C + lbl_eu_8066B0E4) * h2;
+    }
+    return 1;
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====

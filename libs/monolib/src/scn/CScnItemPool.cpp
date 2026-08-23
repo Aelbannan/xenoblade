@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for monolib/src/scn/CScnItemPool
 #include <harness_catalog.h>
 #include "monolib/util/MemManager.hpp"
+#include "monolib/data_vtables.hpp"
 
 // Local mirror of the monolib reslist template (ScheduleList.cpp precedent):
 // the shared reslist.hpp instantiates remove()/find() which need operators the
@@ -199,11 +200,14 @@ public:
     void func_8048CEDC();
     void func_8048CF58();
     void update();
+    void func_8048D014();   // this-4 thunk -> func_8048CF58 (vtable+0x98)
+    void func_8048D01C();   // this-4 thunk -> ~CScnItemPool   (vtable+0x90)
 };
 
 // Cross-unit pool-item helpers (retail C-ABI, unmangled symbols).
 extern "C" void func_80485774(CScnItem* item, u32 arg);
 extern "C" void func_804859E8(CScnItem* item, u32 arg);
+extern "C" void func_804838DC(CScnItem* item, u32 arg);
 
 // reslist<CScnItem> constructor (retail __ct__reslist_CScnItem). The base
 // ctor is inlined; MWCC emits the base-vtable store at entry and the
@@ -214,8 +218,13 @@ extern "C" void func_804859E8(CScnItem* item, u32 arg);
 // above.
 
 extern "C" __declspec(noinline) u32 func_8048C478(u8* self) { return ((CScnItemPoolState*)self)->value18; }
-extern "C" __declspec(noinline) u16 func_8048C690(u8* self) { return ((CScnItemPoolState*)self)->value08; }
-u32 func_8048C8BC(u8* self) { return ((CScnItemPoolState*)self)->value8C; }
+// volatile load: keeps the body byte-identical (lhz) while making it impure to
+// -ipa, so func_8048C750's three kind checks stay three real calls (retail
+// never merges them across the TU boundary).
+extern "C" __declspec(noinline) u16 func_8048C690(u8* self) { return *(volatile u16*)&((CScnItemPoolState*)self)->value08; }
+// noinline: retail CALLS this from func_8048C750's kind-1 branch; without it
+// MWCC auto-inlines the field load into the caller.
+extern "C" __declspec(noinline) u32 func_8048C8BC(u8* self) { return ((CScnItemPoolState*)self)->value8C; }
 extern "C" __declspec(noinline) u32 func_8048C9F4(u8* self) { return ((CScnItemPoolState*)self)->value00 + 8; }
 // func_8048C524: push an item pointer onto the reslist ring. Finds the first
 // free slot (a node whose mNext is null), stores the item through the guarded
@@ -280,8 +289,42 @@ extern "C" __declspec(noinline) void* func_8048C6F4(u8* self, s32 kind) {
     default: return 0;
     }
 }
-// func_8048C750: drains a matched item out of the pool (retail body 0x16C).
-extern "C" __declspec(noinline) void func_8048C750(CScnItemPool* self, CScnItem* item) {}
+// Scene-side receiver for func_8048C750's kind-1 branch: opaque object whose
+// second declared virtual (vtable+0x0C under -RTTI on) takes the item.
+struct CScnPoolSceneIf {
+    virtual void pad08();
+    virtual void apply(CScnItem* item);
+};
+
+// func_8048C750: releases `item` from the pool per its kind.
+//  kind 1: scene = pool->id resolved via func_8048C8BC; scene->apply(item);
+//          item->vfuncCC(); func_804838DC(item, 0); recycle onto sub-pool 0xAC
+//          via func_8048C524.
+//  kind 2: item->vfunc08(-1); clear small-slot flag at (item-mSlotsD0)/0x58.
+//  kind 4: item->vfunc08(-1); clear big-slot flag at (item-mSlotsD8)/0x3A8
+//          (signed division — retail emits the add-back correction form).
+//  other:  double-checked-null item->vfunc08(1).
+extern "C" __declspec(noinline) void func_8048C750(CScnItemPool* self, CScnItem* item) {
+    if (func_8048C690((u8*)item) == 1) {
+        CScnPoolSceneIf* scene = (CScnPoolSceneIf*)func_8048C8BC(*(u8**)((char*)self + 8));
+        scene->apply(item);
+        item->vfuncCC();
+        func_804838DC(item, 0);
+        func_8048C524((u32)((char*)self + 0xAC), (u32*)&item);
+    } else if (func_8048C690((u8*)item) == 2) {
+        item->vfunc08(-1);
+        self->mFlagsCC[((u32)item - (u32)self->mSlotsD0) / 0x58] = 0;
+    } else if (func_8048C690((u8*)item) == 4) {
+        item->vfunc08(-1);
+        self->mFlagsD4[(CScnItemBig*)item - self->mSlotsD8] = 0;
+    } else {
+        if (item != nullptr) {
+            if (item != nullptr) {
+                item->vfunc08(1);
+            }
+        }
+    }
+}
 // us-80490a08: walks the singly-linked list, advancing *list until a node
 // equals **target or its field_0x08 matches *key; returns it via *out.
 extern "C" __declspec(noinline) void func_8048C994(CScnItemPoolNode** out, CScnItemPoolNode** list,
@@ -312,7 +355,9 @@ extern "C" __declspec(noinline) void func_8048CA34(CScnItemPoolLink** out, u32 u
 // func_8048C8C4: unlinks the node holding `item` from the sub-pool selected by
 // the item's id (offset 8), then hands (self, item) to func_8048C750.
 // Returns 1 when the item was found and unlinked, 0 otherwise.
-extern "C" int func_8048C8C4(CScnItemPool* self, CScnItem* item) {
+// noinline: retail CALLS this from func_8048CB14; without it MWCC auto-inlines
+// the whole sub-pool walk (C690/C698/CA34/C750 cascade) into the caller.
+extern "C" __declspec(noinline) int func_8048C8C4(CScnItemPool* self, CScnItem* item) {
     u16 kind = func_8048C690((u8*)item);
     _reslist_base<CScnItem*>* list = (_reslist_base<CScnItem*>*)func_8048C698((u8*)self, kind);
     _reslist_node<CScnItem*>* found;     // sp+0x20
@@ -365,7 +410,7 @@ void func_8048CB14(CScnItemPool* self, u32 key) {
     while ((func_8048C5AC((int*)&sentinel, &self->mList0C),
             func_8048C9D8((u32*)&node, (u32*)&sentinel)) != 0) {
         CScnItem* item = *(CScnItem**)func_8048C9F4((u8*)&node);
-        if (item->vfuncA8() == key) {
+        if (key == item->vfuncA8()) {
             func_8048C8C4(self, *(CScnItem**)func_8048C9F4((u8*)&node));
             break;
         }
@@ -405,9 +450,12 @@ void func_8048CCC0(u8* self) {
     }
 }
 // func_8048CDA8: iterator default-construct helper (empty in retail).
-extern "C" void func_8048CDA8(_reslist_node<CScnItem*>** iter) {}
+// noinline: retail CALLS this empty function; without it MWCC folds it away.
+extern "C" __declspec(noinline) void func_8048CDA8(_reslist_node<CScnItem*>** iter) {}
 // func_8048CDAC: copy a node pointer through a stack slot.
-extern "C" void func_8048CDAC(int* dst, int* src) { *dst = *src; }
+// noinline: retail CALLS this from func_8048CD0C (twice); without it MWCC
+// auto-inlines the load/store body into the caller.
+extern "C" __declspec(noinline) void func_8048CDAC(int* dst, int* src) { *dst = *src; }
 
 // func_8048CD0C: walks the reslist at self+0xC and calls vfunc14 on each
 // item. The walk advances through a copied iterator so the item is read from
@@ -453,14 +501,18 @@ extern "C" void func_8048C0EC(CScnItemPoolNodeArray* self, u32 handle, int count
 // us-8049056c: forwards (arg1, &slot) to func_8048C524 with arg2 stored in a
 // stack slot; the slot result is discarded. The first argument is unused
 // (retail copies r4 into r3 for the call).
-void func_8048C4F8(u32 unused, u32 arg1, u32 arg2) {
+// noinline: retail CALLS this forwarder from func_8048C630; without it MWCC
+// auto-inlines the body (and its func_8048C524 tail call) into the caller.
+extern "C" __declspec(noinline) void func_8048C4F8(u32 unused, u32 arg1, u32 arg2) {
     u32 slot = arg2;
     func_8048C524(arg1, &slot);
 }
 // func_8048C60C: node count of the reslist at self (sentinel walk).
 // Declare cur BEFORE end so end's vreg is born after cur's — the
 // loop-invariant end takes the higher scratch r5 (retail lwz r5,4(r3)).
-extern "C" u32 func_8048C60C(u8* self) {
+// noinline: retail CALLS this helper from func_8048C5B8; without it MWCC
+// auto-inlines the same-TU body into the caller (19-structural residual).
+extern "C" __declspec(noinline) u32 func_8048C60C(u8* self) {
     CScnItemPoolState* pool = (CScnItemPoolState*)self;
     CScnItemPoolLink* cur;
     CScnItemPoolLink* end = pool->field_0x04;
@@ -484,7 +536,8 @@ u32 func_8048C5B8(u8* self, s32 kind) {
 // func_8048C630: registers `other`'s list into the sub-pool selected by
 // other->value08, then reports success.
 u32 func_8048C630(u8* self, u8* other) {
-    void* slot = func_8048C698(self, func_8048C690(other));
+    u16 kind = func_8048C690(other);
+    void* slot = func_8048C698(self, kind);
     func_8048C4F8((u32)self, (u32)slot, (u32)other);
     return 1;
 }
@@ -587,9 +640,131 @@ extern "C" void __dt__8048C378(CScnItemPoolListData* self) {
 }
 // func_8048CF58: 4-byte tail-call wrapper to func_8048CF5C (retail: b func_8048CF5C)
 extern "C" void func_8048CF5C(CScnItemPool* self);
-void CScnItemPool::func_8048CF58() { func_8048CF5C(this); }
+__declspec(noinline) void CScnItemPool::func_8048CF58() { func_8048CF5C(this); }
+// CDeviceVICb-subobject thunks: adjust this from the +4 secondary base back to
+// the primary and tail-call the implementation.
+extern "C" void __dt__12CScnItemPoolFv(CScnItemPool* self, int flags);
+extern "C" void __dt__11CDeviceVICbFv(void* self, int flags);
+extern "C" void __dt__10IWorkEventFv(void* self, int flags);
+void CScnItemPool::func_8048D014() {
+    ((CScnItemPool*)((char*)this - 4))->func_8048CF58();
+}
+// One-arg opaque view: retail's thunk tail-calls WITHOUT setting r4, so the
+// call site must not materialize the flags argument.
+void CScnItemPool::func_8048D01C() {
+    ((void (*)(CScnItemPool*))__dt__12CScnItemPoolFv)((CScnItemPool*)((char*)this - 4));
+}
+
+// __dt__12CScnItemPoolFv: complete-object destructor.
+extern "C" u32 lbl_eu_8056E488[];
+extern "C" __declspec(noinline) void __dt__12CScnItemPoolFv(CScnItemPool* self, int flags) {
+    if (self != nullptr) {
+        *(void**)self = (void*)&lbl_eu_8056E488;
+        *(void**)((char*)self + 4) = (char*)&lbl_eu_8056E488 + 0x88;
+        func_8048CCC0((u8*)self);
+        __dt__8048C378((CScnItemPoolListData*)((char*)self + 0x0C));
+        __dt__8048C378((CScnItemPoolListData*)((char*)self + 0x2C));
+        __dt__8048C378((CScnItemPoolListData*)((char*)self + 0x4C));
+        __dt__8048C378((CScnItemPoolListData*)((char*)self + 0x6C));
+        __dt__8048C378((CScnItemPoolListData*)((char*)self + 0x8C));
+        __dt__8048C378((CScnItemPoolListData*)((char*)self + 0xAC));
+        if (self->mFlagsCC != nullptr) {
+            mtl::MemManager::deallocate(self->mFlagsCC);
+        }
+        self->mFlagsCC = nullptr;
+        if (self->mSlotsD0 != nullptr) {
+            mtl::MemManager::deallocate(self->mSlotsD0);
+        }
+        self->mSlotsD0 = nullptr;
+        if (self->mFlagsD4 != nullptr) {
+            mtl::MemManager::deallocate(self->mFlagsD4);
+        }
+        self->mFlagsD4 = nullptr;
+        if (self->mSlotsD8 != nullptr) {
+            mtl::MemManager::deallocate(self->mSlotsD8);
+        }
+        self->mSlotsD8 = nullptr;
+        ((reslist<CScnItem*>*)((char*)self + 0xAC))->~reslist();
+        ((reslist<CScnItem*>*)((char*)self + 0x8C))->~reslist();
+        ((reslist<CScnItem*>*)((char*)self + 0x6C))->~reslist();
+        ((reslist<CScnItem*>*)((char*)self + 0x4C))->~reslist();
+        ((reslist<CScnItem*>*)((char*)self + 0x2C))->~reslist();
+        ((reslist<CScnItem*>*)((char*)self + 0x0C))->~reslist();
+        __dt__11CDeviceVICbFv((void*)((char*)self + 4), 0);
+        __dt__10IWorkEventFv((void*)self, 0);
+        if (flags < 0) {
+            delete self;
+        }
+    }
+}
 // func_8048CF5C: drains the sub-pool at 0xAC, unlinking each node and calling
 // the item's vtable slot at 0x08 with argument 1 (non-null items only).
+// ===== Dissolved monolibdata2 data owned by this TU (retail .data
+// 0x8056E488-0x8056E568, .rodata 0x80523F18-0x80523F58) =====
+// The class vtable (+CDeviceVICb sub-vtable group), the RTTI base-list block
+// and the class-name string are spelled by hand (CLibCriMoviePlay.cpp
+// pattern); every word is an explicit &reloc so the object reproduces the
+// retail reloc names exactly.
+
+// Foreign words referenced by the blocks below (defined in monolibdata2 /
+// other TUs). func_8048CF58__12CScnItemPoolFv is this TU's own member — the
+// extern "C" spelling matches its C++ mangled symbol exactly.
+extern "C" {
+extern u32 lbl_eu_80663938[];  // RTTI locator ti(CScnItemPool) (.sdata)
+extern u32 lbl_eu_80663618[];  // RTTI locator ti(reslist<CScnItem*>) (.sdata)
+extern u32 lbl_eu_80663940[];  // RTTI locator (reslist<CScnItem*> base-list head)
+extern u32 lbl_eu_80663948[];  // RTTI locator ti(_reslist_base<CScnItem*>) (.sdata)
+extern void func_8048D01C__12CScnItemPoolFv();
+extern void func_8048D014__12CScnItemPoolFv();
+extern void viBeforeDrawDone__11CDeviceVICbFv();
+extern void viBeginFrame__11CDeviceVICbFv();
+extern void func_8048CF58__12CScnItemPoolFv();
+}
+
+// [.rodata] 0x80523F18 (0xD + 3 align pad): CScnItemPool RTTI class-name
+// string, referenced by the .sdata locator lbl_eu_80663938 (monolibdata2).
+// Sized 0x10 so the retail align pad lands inside the definition.
+extern "C" const char lbl_eu_80523F18[0x10] = "CScnItemPool";
+
+// [.data] 0x8056E488-0x8056E52C (0xA4): __vt__12CScnItemPool — primary group
+// ([rtti, 0, dtor, IWorkEvent 1-31]) followed by the CDeviceVICb sub-vtable
+// group ([rtti, -4, 5 slots]).
+extern "C" u32 lbl_eu_8056E488[41] = {
+    (u32)&lbl_eu_80663938, 0x00000000,
+    (u32)&__dt__12CScnItemPoolFv,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc, (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__10IWorkEventFPv, (u32)&WorkEvent4__10IWorkEventFv,
+    (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv, (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv, (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv, (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv, (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv, (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv, (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv, (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv, (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv, (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv, (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv, (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv, (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv, (u32)&WorkEvent31__10IWorkEventFv,
+    // CDeviceVICb sub-vtable group (this -4)
+    (u32)&lbl_eu_80663938, 0xFFFFFFFC,
+    (u32)&func_8048D01C__12CScnItemPoolFv,
+    (u32)&viBeforeDrawDone__11CDeviceVICbFv,
+    (u32)&func_8048D014__12CScnItemPoolFv,
+    (u32)&viBeginFrame__11CDeviceVICbFv,
+    (u32)&func_8048CF58__12CScnItemPoolFv,
+};
+
+// [.data] 0x8056E52C-0x8056E540 (0x14): RTTI base-list block
+// ([lbl_eu_80663618, 4], [IWorkEvent, 0], [0]).
+extern "C" u32 lbl_eu_8056E52C[5] = {
+    (u32)&lbl_eu_80663618, 0x00000004,
+    (u32)&__RTTI__10IWorkEvent, 0x00000000,
+    0x00000000,
+};
+
 #pragma push
 #pragma auto_inline off
 extern "C" void func_8048CF5C(CScnItemPool* self) {

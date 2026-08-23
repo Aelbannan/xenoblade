@@ -83,6 +83,15 @@ struct CamEventVecBlock {
     f32 f_C8;   // 0xC8
 };
 
+// Typed 12-word view of the same block (three aim triplets starting AT the
+// block base). func_8007BAFC copies this whole struct to the stack before
+// the slot update call, which reproduces retail's 12-word GPR block copy.
+struct CamEventData {
+    ml::CVec3 v0;   // +0x00 (block 0x9C)
+    ml::CVec3 v1;   // +0x0C (block 0xAC)
+    ml::CVec3 v2;   // +0x18 (block 0xB8)
+};
+
 // Single element of the manager's internal shake table (0x14 bytes each,
 // element 0 base sits at manager offset 0x1F8). Only +0x04 is used for the
 // shake update; the rest of the stride is padding.
@@ -456,6 +465,12 @@ struct CfCamAdvVtbl {
 
 struct CfCamAdvObj {
     CfCamAdvVtbl* vtable;  // 0x00
+};
+
+// 9-word float block used by the func_80079E04 rotation recurrence; kept as
+// a struct so the composition steps compile to GPR block copies.
+struct CamEventMtx {
+    f32 m[9];
 };
 // 0x34-byte cam-table entry: two aim vectors at +0x04/+0x10 plus four floats
 // (+0x1C..+0x28). The 12-entry table lives at 0x805273C8 and is filled by

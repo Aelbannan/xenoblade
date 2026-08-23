@@ -230,7 +230,9 @@ public:
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" u32 lbl_eu_805090D8[]; // 3 state filter values for func_800F4A98
 extern "C" u8 lbl_eu_80664718[0x8]; // makecrystal crystal-probability state (sbss, 8 bytes)
-extern "C" u8 lbl_eu_80535D90[];
+// Color table: rows of 3 bytes, indexed by character state - 1.
+struct CMCryColorRow { u8 c[3]; };
+extern "C" const CMCryColorRow lbl_eu_80535D90[];
 // Retail hard symbols with C linkage (defined in this TU's retail .o).
 extern "C" void initCrystalSubStruct(void* self);
 extern "C" void __ct__Q22cf17CActParamAnimGameFv(void* p);
@@ -266,6 +268,7 @@ extern "C" void __ct__UnkClass_8011C974(void* dest, void* src);
 extern "C" void func_8016742C(void* dest, void* src);
 extern "C" size_t strlen(const char* s);
 extern "C" char* strcpy(char* dst, const char* src);
+extern "C" int func_80167A18();   // item-menu active gate (CMainMenu.cpp)
 
 // Constructor data imports.
 extern u8 lbl_eu_80535E70[];   // CModelDispMakeCrystal vtable (+0x88/+0xb4 sub-vtables)

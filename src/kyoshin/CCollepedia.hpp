@@ -14,6 +14,19 @@ namespace lyt {
 }
 }
 
+// 0x2800-byte entry storage block, copied member-wise in func_8025492C
+struct CLPDataBlock {
+    u8 v[0x2800];
+};
+
+// Stack temporary used to initialize the entry storage (matches retail frame layout)
+struct CLPInitTemp {
+    u8 _00;
+    s8 _01;
+    u8 pad[2];
+    CLPDataBlock data;
+};
+
 // Full `this` struct for harness decomp of CCollepedia.cpp
 // Entry within the sub-block array (stride 0xA)
 struct CCollepediaEntry {
@@ -41,6 +54,36 @@ struct LayoutContainer {
 class CCLPCur : public CBaseCur {
 public:
     CCLPCur(nw4r::lyt::ArcResourceAccessor* pAccessor);
+};
+
+// Cursor body shared by CCur07/CCur18/CCLPCur (everything after the vtable
+// pointer); OnFileEvent builds cursors on the stack and copies this region
+// into the embedded members.
+struct CLPCurBody {
+    void* field_04;
+    void* field_08;
+    void* field_0C;
+    void* field_10;
+    u8 mActive;   // +0x14
+    u8 mVisible;  // +0x15
+};
+
+// Page-info record produced by func_8025348C and stored at +0x28EC.
+struct CLPPageInfo {
+    u32 field_00;                // +0x28EC
+    nw4r::lyt::Layout* mpLayout; // +0x28F0
+    u32 field_08;                // +0x28F4
+    u8 field_0C;                 // +0x28F8
+    u8 field_0D;                 // +0x28F9
+    u8 field_0E;                 // +0x28FA
+};
+
+// Abstract view of the cursor vtable (lbl_eu_80537474 / CCur07 / CCur18):
+// slot 2 (offset 0x08) refreshes the cursor position after installation.
+struct CLPCurVt {
+    virtual void cv0() = 0;
+    virtual void cv1() = 0;
+    virtual void cv2() = 0;
 };
 
 // CCollepedia is a non-virtual class in the decomp (layout is flat, no vtable ptr).
@@ -86,13 +129,18 @@ struct CCollepedia {
     /* 0xDB */ u8 _DB; // padding
     /* 0xDC */ float field_DC[3]; // VEC3 copied from pane position (0xDC-0xE7)
     /* 0xE8 */ u8 field_E8; // sub-array starts here
-    /* 0xE9 */ u8 _E9[0x28F0 - 0xE9];
+    /* 0xE9 */ u8 _E9[0xEC - 0xE9];
+    /* 0xEC */ CLPDataBlock field_EC; // entry storage (ends at 0x28EC)
+    /* 0x28EC */ u8 field_28EC[0x28F0 - 0x28EC];
     /* 0x28F0 */ nw4r::lyt::Layout* field_28F0; // Layout* at 0x28F0 (used by func_80254B64)
     /* 0x28F4 */ u8 _28F4[0x28F9 - 0x28F4];
     /* 0x28F9 */ u8 field_28F9;
     /* 0x28FA */ u8 field_28FA;
 
+    bool OnFileEvent(CEventFile* pEventFile);
+
     ~CCollepedia();
+    CCollepedia();
 };
 
 // Abstract struct for CSysWin vtable dispatch at slot 34 (offset 0x88)
@@ -151,6 +199,9 @@ extern "C" const float lbl_eu_806687F0;
 extern "C" const float lbl_eu_806687F4;
 extern "C" const float lbl_eu_806687F8;
 extern "C" const float lbl_eu_806687FC;
+extern "C" const float lbl_eu_80668810;
+extern "C" const float lbl_eu_80668814;
+extern "C" const double lbl_eu_80668818;
 extern "C" void func_80138078__FUl(u32);
 extern "C" void* lbl_eu_80537474[];
 extern "C" void func_801D20B0(void*, void*);
@@ -163,6 +214,9 @@ extern "C" void* lbl_eu_806647D8;
 extern "C" u32 func_8009EC6C(u16);
 extern "C" u16 lbl_eu_8050C6A0[];
 extern "C" void func_801D216C(void*, u8);
+extern "C" void func_801D202C(void*); // CCur per-frame update
+extern "C" u16 func_80139358(u32);
+extern "C" void func_8022B748(void*); // CSysWin per-frame update
 extern "C" u32 lbl_eu_806640EC;
 extern "C" void __dt__7CSysWinFv(void*, int);
 extern "C" void __dt__6CCur18Fv(void*, int);
@@ -188,3 +242,47 @@ extern "C" float func_801895EC();
 extern "C" void func_80043738(u32, const char*, void*, u32, u32, u32);
 extern "C" void func_80124270(void*, u32);
 extern "C" void copyVEC3(void*, const void*);
+
+// Additional imports for the CCollepedia constructor
+extern void* lbl_eu_805373E0[]; // CCollepedia vtable (retail .data)
+extern "C" void __ct__CCur07(void* self, void* param);   // CCur07 ctor (+0x54)
+extern "C" void __ct__CCur18(void* self, void* param);   // CCur18 ctor (+0x84)
+extern "C" void __ct__CSysWin(CSysWin* self, int arg);   // CSysWin ctor
+extern "C" void func_8025348C(void* self, int arg);      // second-page init
+
+// Imports used by OnFileEvent / func_80253B3C
+extern "C" u32 func_8003B1EC(void*);                     // bdat row count
+extern "C" u32 func_801392E4(u16);                       // item kind lookup
+extern "C" u32 func_8009CF8C(u32);                       // unlock-flag lookup
+extern "C" void* lbl_eu_806640A0;                        // bdat table A
+extern "C" u32 lbl_eu_80664184;                          // default category id
+extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);  // BDAT archive release
+extern "C" void* func_8003AA34();                        // BDAT table unload
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
+    nw4r::lyt::Layout*);                                 // CDeviceFont helper
+// Shared tag string; retail symbol is the MANGLED func_801355A0__Fv, so this
+// import must keep C++ linkage (MWCC appends __Fv).
+void* func_801355A0();
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4(); // CLibLayout accessor
+extern "C" void func_8018B0FC(void* dst, void* src);     // cursor body copy
+
+// Mirror of CSysWin +0x04..end (everything after the vtable pointer), used to
+// member-wise copy a stack-constructed CSysWin into the embedded window at
+// +0x9C the way retail does in the CCollepedia constructor.
+struct CLPSysWinBody {
+    UnkClass_8045F564 mMemRegion;                  // +0x04
+    void* mFileHandle;                             // +0x14
+    void* mTagProcessor;                           // +0x18
+    nw4r::lyt::ArcResourceAccessor* mArcAccessor;  // +0x1C
+    nw4r::lyt::Layout* mLayout;                    // +0x20
+    nw4r::lyt::AnimTransform* mAnimTrans;          // +0x24
+    u8 field_28;                                   // +0x28
+    u32 field_2C;                                  // +0x2C
+    u32 field_30;                                  // +0x30
+    u8 field_34;                                   // +0x34
+    u8 field_35;
+    u8 field_36;
+    u8 field_37;
+    u8 field_38;
+    u8 field_39;
+};

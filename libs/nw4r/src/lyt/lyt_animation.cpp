@@ -3,6 +3,15 @@
 
 #include <cstring>
 
+// Retail .sdata float pool entries shared by the curve evaluators.
+// Global-scope variable declarations are not mangled by MWCC.
+extern const float lbl_eu_80669DD8; // -0.001f
+extern const float lbl_eu_80669DDC; //  0.001f
+extern const float lbl_eu_80669DE0; //  1.0f
+extern const float lbl_eu_80669DE4; //  2.0f
+extern const float lbl_eu_80669DE8; //  3.0f
+extern const float lbl_eu_80669DEC; // -2.0f
+
 /******************************************************************************
  *
  * Private structures
@@ -69,6 +78,13 @@ inline bool RIsSame(f32 a, f32 b, f32 tolerance) {
     return -tolerance < c && c < tolerance;
 }
 
+// Step-curve variant comparing against the shared retail float-pool bounds
+// (-0.001f at lbl_eu_80669DD8, +0.001f at lbl_eu_80669DDC).
+inline bool RIsSameStep(f32 a, f32 b) {
+    f32 c = a - b;
+    return lbl_eu_80669DD8 < c && c < lbl_eu_80669DDC;
+}
+
 u16 GetStepCurveValue(f32 frame, const res::StepKey* pKeys, u32 numKey) {
     if (numKey == 1 || frame <= pKeys[0].frame) {
         return pKeys[0].value;
@@ -92,7 +108,7 @@ u16 GetStepCurveValue(f32 frame, const res::StepKey* pKeys, u32 numKey) {
         }
     }
 
-    if (RIsSame(frame, pKeys[right].frame, 0.001f)) {
+    if (RIsSameStep(frame, pKeys[right].frame)) {
         return pKeys[right].value;
     }
 
@@ -125,7 +141,7 @@ f32 GetHermiteCurveValue(f32 frame, const res::HermiteKey* pKeys, u32 numKey) {
     const res::HermiteKey& rLeftKey = pKeys[left];
     const res::HermiteKey& rRightKey = pKeys[right];
 
-    if (RIsSame(frame, rRightKey.frame, 0.001f)) {
+    if (RIsSameStep(frame, rRightKey.frame)) {
         if (right < numKey - 1 && rRightKey.frame == pKeys[right + 1].frame) {
             return pKeys[right + 1].value;
         }
@@ -133,8 +149,10 @@ f32 GetHermiteCurveValue(f32 frame, const res::HermiteKey* pKeys, u32 numKey) {
         return rRightKey.value;
     }
 
+    // Hermite basis evaluated through the shared retail float pool so the
+    // generated lfs loads hit lbl_eu_80669DE0/DE4/DE8/DEC (1/2/3/-2).
     f32 t1 = frame - rLeftKey.frame;
-    f32 t2 = 1.0f / (rRightKey.frame - rLeftKey.frame);
+    f32 t2 = lbl_eu_80669DE0 / (rRightKey.frame - rLeftKey.frame);
 
     f32 v0 = rLeftKey.value;
     f32 v1 = rRightKey.value;
@@ -147,9 +165,12 @@ f32 GetHermiteCurveValue(f32 frame, const res::HermiteKey* pKeys, u32 numKey) {
     f32 t1_t1_t1_t2_t2 = t1 * t1_t1_t2_t2;
     f32 t1_t1_t1_t2_t2_t2 = t1_t1_t1_t2_t2 * t2;
 
-    return v0 * (2.0f * t1_t1_t1_t2_t2_t2 - 3.0f * t1_t1_t2_t2 + 1.0f) +
-           v1 * (-2.0f * t1_t1_t1_t2_t2_t2 + 3.0f * t1_t1_t2_t2) +
-           s0 * (t1_t1_t1_t2_t2 - 2.0f * t1_t1_t2 + t1) +
+    return v0 * (lbl_eu_80669DE4 * t1_t1_t1_t2_t2_t2 -
+                 lbl_eu_80669DE8 * t1_t1_t2_t2 + lbl_eu_80669DE0) +
+           v1 * (lbl_eu_80669DEC * t1_t1_t1_t2_t2_t2 +
+                 lbl_eu_80669DE8 * t1_t1_t2_t2) +
+           s0 *
+               (t1 + (t1_t1_t1_t2_t2 - lbl_eu_80669DE4 * t1_t1_t2)) +
            s1 * (t1_t1_t1_t2_t2 - t1_t1_t2);
 }
 
@@ -374,6 +395,10 @@ void AnimTransformBasic::Bind(Material* pMaterial, bool param) {
     const u32* const pContentOffsetTbl =
         detail::ConvertOffsToPtr<u32>(mpRes, mpRes->animContOffsetsOffset);
 
+    // Cursor into the link array; persists across matched contents so each
+    // new binding takes the next free slot.
+    AnimationLink* pLink = NULL;
+
     for (u16 i = 0; i < mpRes->animContNum; i++) {
         const res::AnimationContent& rContent =
             *detail::ConvertOffsToPtr<res::AnimationContent>(
@@ -382,8 +407,34 @@ void AnimTransformBasic::Bind(Material* pMaterial, bool param) {
         if (rContent.type == res::AnimationContent::ANIMTYPE_MATERIAL &&
             detail::EqualsMaterialName(pMaterial->GetName(), rContent.name)) {
 
-            mAnimLinkAry[i].Set(this, i, false);
-            pMaterial->AddAnimationLink(&mAnimLinkAry[i]);
+            if (pLink == NULL) {
+                pLink = mAnimLinkAry;
+            }
+
+            // Scan forward for the first unused entry.
+            const AnimationLink* pEnd = &mAnimLinkAry[mAnimLinkNum];
+
+            while (pLink < pEnd && pLink->GetAnimTransform() != NULL) {
+                ++pLink;
+            }
+
+            if (pLink >= pEnd) {
+                pLink = NULL;
+            }
+
+            AnimationLink* pNext = NULL;
+
+            if (pLink != NULL) {
+                pLink->Set(this, i, param);
+                pMaterial->AddAnimationLink(pLink);
+                pNext = pLink + 1;
+            }
+
+            pLink = pNext;
+
+            if (pLink == NULL) {
+                return;
+            }
         }
     }
 }
@@ -520,11 +571,10 @@ AnimationLink* FindAnimationLink(AnimationLinkList* pAnimList,
 void UnbindAnimationLink(AnimationLinkList* pAnimList,
                                  AnimTransform* pAnimTrans) {
 
-    NW4R_UT_LINKLIST_FOREACH (it, *pAnimList, {
-        IterType currIt = it;
-        if (pAnimTrans != NULL && pAnimTrans == it->GetAnimTransform()) {
+    NW4R_UT_LINKLIST_FOREACH_SAFE (it, *pAnimList, {
+        if (pAnimTrans == NULL || it->GetAnimTransform() == pAnimTrans) {
             pAnimList->Erase(it);
-            currIt->Reset();
+            it->Reset();
         }
     })
 }
@@ -599,10 +649,14 @@ void Set__Q34nw4r3lyt12AnimResourceFPCv(nw4r::lyt::AnimResource* _this,
 
     // "RLAN" archive signature; header version must be 0x0008..0x000A
     // (minor byte in [8, 10], major byte zero).
-    if (nw4r::lyt::detail::TestFileHeader(*pHeader, 0x524C414E)) {
-        u16 version = pHeader->version;
-        if ((version >> 8) == 0 && (version & 0xFF) >= 8 &&
-            (version & 0xFF) <= 0xA) {
+    if (!nw4r::lyt::detail::TestFileHeader(*pHeader, 0x524C414E)) {
+        return;
+    }
+
+    {
+        const u8 verMajor = (pHeader->version & 0xFF00) >> 8;
+        const u8 verMinor = static_cast<u8>(pHeader->version);
+        if (verMajor == 0 && verMinor >= 8 && verMinor <= 10) {
             valid = true;
         }
     }
@@ -616,12 +670,6 @@ void Set__Q34nw4r3lyt12AnimResourceFPCv(nw4r::lyt::AnimResource* _this,
 
         for (int i = 0; i < pDataRes->mpFileHeader->dataBlocks; i++) {
             switch (nw4r::lyt::detail::GetSignatureInt(pBlockHeader->kind)) {
-            case KIND_ANIM: { // "pai1"
-                pDataRes->mpResBlock = reinterpret_cast<
-                    const nw4r::lyt::res::AnimationBlock*>(pBlockHeader);
-                break;
-            }
-
             case KIND_TAG: { // "pat1"
                 pDataRes->mpTagBlock = reinterpret_cast<
                     const nw4r::lyt::res::AnimationTagBlock*>(pBlockHeader);
@@ -631,6 +679,12 @@ void Set__Q34nw4r3lyt12AnimResourceFPCv(nw4r::lyt::AnimResource* _this,
             case KIND_SHARE: { // "pah1"
                 pDataRes->mpShareBlock = reinterpret_cast<
                     const nw4r::lyt::res::AnimationShareBlock*>(pBlockHeader);
+                break;
+            }
+
+            case KIND_ANIM: { // "pai1"
+                pDataRes->mpResBlock = reinterpret_cast<
+                    const nw4r::lyt::res::AnimationBlock*>(pBlockHeader);
                 break;
             }
             }
@@ -648,6 +702,20 @@ void* GetAnimationShareInfoArray__Q34nw4r3lyt12AnimResourceCFv(nw4r::lyt::AnimRe
     if (!ptr) return 0;
     return (void*)((char*)ptr + *(int32_t*)((char*)ptr + 0x8));
 } 
+
+// Runtime layout mirror of AnimTransformBasic's protected tail (the link
+// array). AnimPaneTree::Bind needs direct access to the cursor/array, which
+// the public API does not expose.
+namespace {
+struct AnimTransformBasicData {
+    u8 PADDING_0x0[0xC];                     // vptr + LinkList node
+    const nw4r::lyt::res::AnimationBlock* mpRes;   // at 0xC
+    f32 mFrame;                                    // at 0x10
+    void** mpFileResAry;                           // at 0x14
+    nw4r::lyt::AnimationLink* mAnimLinkAry;        // at 0x18
+    u16 mAnimLinkNum;                              // at 0x1C
+};
+} // namespace
 
 // Note: The signature in the prompt says return void, but the ASM clearly returns a pointer in r3.
 // The mangled name ends in CFv which usually implies const member function returning void or similar,
@@ -738,6 +806,8 @@ class AnimPaneTree {
 public:
     void Init();
     void Set(Pane* pPane, const AnimResource& rResource);
+    AnimTransform* Bind(Layout* pLayout, Pane* pPane,
+                        ResourceAccessor* pAccessor) const;
 
 private:
     AnimResourceData mResource; // at 0x0 (mirror of AnimResource)
@@ -842,6 +912,86 @@ void AnimPaneTree::Set(Pane* pPane, const AnimResource& rResource) {
         }
         mCount = count;
     }
+}
+
+AnimTransform* AnimPaneTree::Bind(Layout* pLayout, Pane* pPane,
+                                  ResourceAccessor* pAccessor) const {
+    AnimTransform* pAnimTrans = pLayout->CreateAnimTransform();
+
+    pAnimTrans->SetResource(mResource.mpResBlock, pAccessor, mCount);
+
+    // The link array lives in AnimTransformBasic's protected tail.
+    AnimTransformBasicData* pData =
+        reinterpret_cast<AnimTransformBasicData*>(pAnimTrans);
+
+    // Cursor into the link array; persists across matched contents so each
+    // new binding takes the next free slot.
+    AnimationLink* pLink = NULL;
+
+    // Bind the pane content (flag byte set to true, unlike the basic binds).
+    if (mPaneIdx != 0xFFFF) {
+        const AnimationLink* pEnd =
+            &pData->mAnimLinkAry[pData->mAnimLinkNum];
+
+        if (pLink == NULL) {
+            pLink = pData->mAnimLinkAry;
+        }
+
+        // Scan forward for the first unused entry.
+        while (pLink < pEnd && pLink->GetAnimTransform() != NULL) {
+            ++pLink;
+        }
+
+        if (pLink >= pEnd) {
+            pLink = NULL;
+        }
+
+        if (pLink != NULL) {
+            pLink->Set(pAnimTrans, mPaneIdx, true);
+            pPane->AddAnimationLink(pLink);
+            ++pLink;
+        } else {
+            pLink = NULL;
+        }
+    }
+
+    u8 matNum = pPane->GetMaterialNum();
+    if (mMaterialNum < matNum) {
+        matNum = mMaterialNum;
+    }
+
+    for (u8 i = 0; i < matNum; i++) {
+        if (mPanelTbl[i] == 0xFFFF) {
+            continue;
+        }
+
+        Material* pMaterial = pPane->GetMaterial(i);
+        u16 idx = mPanelTbl[i];
+
+        const AnimationLink* pEnd = &pData->mAnimLinkAry[pData->mAnimLinkNum];
+
+        if (pLink == NULL) {
+            pLink = pData->mAnimLinkAry;
+        }
+
+        while (pLink < pEnd && pLink->GetAnimTransform() != NULL) {
+            ++pLink;
+        }
+
+        if (pLink >= pEnd) {
+            pLink = NULL;
+        }
+
+        if (pLink != NULL) {
+            pLink->Set(pAnimTrans, idx, true);
+            pMaterial->AddAnimationLink(pLink);
+            ++pLink;
+        } else {
+            pLink = NULL;
+        }
+    }
+
+    return pAnimTrans;
 }
 
 } // namespace detail

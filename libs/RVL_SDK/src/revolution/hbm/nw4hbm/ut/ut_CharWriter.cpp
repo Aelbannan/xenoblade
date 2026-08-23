@@ -2,8 +2,15 @@
 
 namespace {
 
+// Mirror of ut::Color without the non-trivial destructor: the guarded static
+// below must be initialized with a plain store and no destruction
+// registration to match the retail inlined copies.
+struct SetupColor : GXColor {
+    SetupColor(u32 color) { *reinterpret_cast<u32*>(this) = color; }
+};
+
 static void SetupGXCommon() {
-    static const nw4hbm::ut::Color fog = 0;
+    static const SetupColor fog(0);
 
     GXSetFog(GX_FOG_NONE, fog, 0.0f, 0.0f, 0.0f, 0.0f);
     GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE,
@@ -28,6 +35,11 @@ static void SetupGXCommon() {
 
 namespace nw4hbm {
 namespace ut {
+
+/* Defined inline here so MWCC inlines away all ~Color calls in this TU
+ * (retail CharWriter emits no dtor calls; the strong ~Color symbol lives
+ * in lyt_bounding.cpp). */
+inline Color::~Color() {}
 
 CharWriter::LoadingTexture CharWriter::mLoadingTexture;
 

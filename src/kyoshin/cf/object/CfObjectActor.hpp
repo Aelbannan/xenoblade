@@ -34,6 +34,16 @@ extern float lbl_eu_80667768;         // CActorParam_UnkVirtualFunc35 0x100 deca
 // CBattleManager+0x28354 by CActorParam_UnkVirtualFunc35.
 extern u32 lbl_eu_80531090[3];
 
+// Vtable-group symbol the CfObjectActor constructor copies its four vtable
+// pointers from (retail label; the implicit __vt symbol sits -32 bytes away).
+extern u8 lbl_eu_8053109C[];
+
+// Battle-side initializers called by the CfObjectActor constructor.
+// NOTE: func_80174B4C is declared here in its LOCAL 5-arg form inside
+// CfObjectActor.cpp (the shared headers carry the common 2-arg form;
+// the two extern "C" signatures cannot coexist - error 10197).
+extern "C" void func_8014AA10(void* obj, unsigned int value);
+
 // C-linkage imports (retail symbols are unmangled).
 extern "C" int func_80055F94(u8* obj, int arg);   // CActParamData short-value helper
 extern "C" void func_800BE12C(u8* obj, int a, int b, int c, int d);  // status add/remove
@@ -275,6 +285,19 @@ namespace cf {
     struct CfActorField45B8 {
         u8 _pad[0x45B8];
         u8* field_0x45B8;  // 0x45B8 (action-source handle id)
+        s32 field_0x45BC;  // 0x45BC (ctor seeds -1)
+    };
+
+    // Vtable-pointer slots written explicitly by the CfObjectActor
+    // constructor from the lbl_eu_8053109C group.
+    struct CfActorVtSlots {
+        u32 vtPrimary;                    // 0x00
+        u32 field_0x4;
+        u32 vtSecondary;                  // 0x08
+        u8 _pad0C[0x3380 - 0xC];
+        u32 vtAIAction;                   // 0x3380
+        u8 _pad3384[0x3E9C - 0x3384];
+        u32 vtMove;                       // 0x3E9C
     };
 
     // Downcast of a func_800B708C result (a CfObjectMove-subobject pointer)

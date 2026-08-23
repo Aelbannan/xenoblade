@@ -79,3 +79,12 @@ extern "C" char lbl_eu_80508424[];              // rodata: bdat column names
 extern "C" char lbl_eu_80535720[];              // data: scratch name buffer 2
 extern "C" u8 lbl_eu_8053572C[];                // data: reslist vtable
 extern "C" u8 lbl_eu_80535744[];                // data: _reslist_base vtable
+extern "C" const f32 lbl_eu_806682B0;           // rodata: 0.0f literal
+extern const f32 lbl_eu_806682C8;               // rodata: 50.0f
+extern const f32 lbl_eu_806682CC;               // rodata: 40000.0f
+extern const f32 lbl_eu_806682D0;               // rodata: 2.5f
+extern const f32 lbl_eu_806682D4;               // rodata: 6.25f
+extern const f32 lbl_eu_806682E4;               // rodata: 0.6f
+extern const f32 lbl_eu_806682E8;               // rodata: small y offset
+extern "C" const f64 lbl_eu_806682D8;           // rodata: 0.0 double literal
+extern const f64 lbl_eu_806682C0;               // rodata: 160.0 double literal

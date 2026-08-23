@@ -25,6 +25,9 @@ class CScn;
 // const void* (CCollepedia) call sites bind without conversions.
 extern "C" {
 u16 func_8013606C(const void*, const void*, u32);
+u8 func_8013600C(const void*, const void*, u32);
+s16 func_80136130(const void*, const void*, u32);
+s8 func_801360CC(const void*, const void*, u32);
 #ifndef CODE_80135FDC_CPP
 // The definitions of these in code_80135FDC.cpp use different (not-yet-)
 // matched signatures/linkage; code_80135FDC.cpp defines CODE_80135FDC_CPP
@@ -84,6 +87,52 @@ extern "C" u8 code80135FDC_getByte_64077();
 // view matrix lives at +0xCC (3x4) and the projection matrix at +0x194.
 // Struct assignment of the matrix member makes MWCC emit the retail lwz/stw
 // pair copy inline (a u32 loop would degrade to sequential loads/stores).
+// Tag processor used by func_80136A1C/func_80136D74: vtable slot 0x14
+// rewrites a UTF-16 string in place.
+class CTagProcIf36D74 {
+public:
+    virtual void _v04();
+    virtual void _v08();
+    virtual void _v10();
+    virtual const wchar_t* Proc(wchar_t* text, int param, float a, float b);  // 0x14
+};
+
+// String-setter interface called by func_80136D74: vtable slot 0x7C sets a
+// UTF-16 string entry.
+class CLytSetStrIf36D74 {
+public:
+    virtual void _v004();
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void _v04C();
+    virtual void _v050();
+    virtual void _v054();
+    virtual void _v058();
+    virtual void _v05C();
+    virtual void _v060();
+    virtual void _v064();
+    virtual void _v068();
+    virtual void _v06C();
+    virtual void _v070();
+    virtual void _v078();
+    virtual void SetString(u16* text, int index);  // 0x7C
+};
+
 struct CViewFrame37038 {
     /* 0x000 */ u8 pad00[0xCC];
     /* 0x0CC */ nw4r::math::MTX34 mtx;
@@ -101,6 +150,21 @@ struct XBMapTable3 { u32 w[34]; };   // 136 B -> 17x8 loop, no tail
 #ifndef CODE_80135FDC_CPP
 extern "C" u8 func_801392B4(u32);
 #endif
+
+// Interface whose vtable slot 0x28 is the Set(idx, value*) dispatcher called
+// by func_80137C1C (and siblings); ten placeholder virtuals put Set at 0x28.
+class CAnimTargetIf37038 {
+public:
+    virtual void v00();
+    virtual void v04();
+    virtual void v08();
+    virtual void v0C();
+    virtual void v10();
+    virtual void v14();
+    virtual void v18();
+    virtual void v1C();
+    virtual void Set(u32 idx, void* value);
+};
 
 // ---------------------------------------------------------------------------
 // C-linkage imports - moved verbatim from code_80135FDC.cpp. These are retail
@@ -207,7 +271,9 @@ extern u8 lbl_eu_80500108[];
 extern u8 lbl_eu_80500230[];
 extern u8 lbl_eu_80500480[];
 extern u8 lbl_eu_805005A8[];
-extern u8 lbl_eu_80500630[];
+// 13-entry float table copied wholesale to the stack by func_8013B380.
+struct FloatTable13 { f32 w[13]; };
+extern FloatTable13 lbl_eu_80500630;
 extern char lbl_eu_80573C30[];
 extern nw4r::math::VEC3 zero__Q22ml5CVec3;
 
@@ -219,8 +285,8 @@ extern "C" void* func_8009EC9C(u32 idx);
 extern "C" int func_8009EBE8(u32 idx);
 extern "C" void func_8009EB94(u32 idx, u32 value);
 extern "C" void func_80157824(u8, u32);
-struct CTaskGameCamView;
-extern "C" CTaskGameCamView* func_8049603C(CScn* scene);
+struct UnkScnResult;
+extern "C" UnkScnResult* func_8049603C(CScn* scene);
 extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32);
 extern "C" void func_80462D04__8CTaskLODFv(s8);
 extern "C" void func_80462D5C__8CTaskLODFv(u8);

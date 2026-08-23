@@ -845,18 +845,24 @@ extern "C" CETrailLightDtor* __dt__804D80F0(CETrailLightDtor* self, int deleting
 // ---------------------------------------------------------------------------
 // func_804D8160: drive the attached light
 // ---------------------------------------------------------------------------
-extern "C" void func_804D8160(CETrailLight* self, void* arg, s32 mode, const CETrailLightParam* p, f32 f1, f32 f2) {
-    CETrailLight* wrapper = self;
-    CLight* light = wrapper->m_light;
-    if (light == nullptr) {
+// Light color payload built on the stack for func_804C07F0
+struct LightColor {
+    f32 r, g, b, a;
+};
+
+void func_804D8160(CETrailLight* self, void* arg, s32 mode, const CETrailLightParam* p, f32 f1, f32 f2) {
+    // NOTE: self->m_light is re-read for every call (never cached in a local)
+    // so MWCC keeps it in a volatile register like retail.
+    if (self->m_light == nullptr) {
         return;
     }
 
     if (p->m_intensity <= lbl_eu_8066B198) {
-        func_804C08C8(light, 0);
+        func_804C08C8(self->m_light, 0);
         return;
     }
 
+    // Clamp the fade parameter
     if (f2 < lbl_eu_8066B19C) {
         f2 = lbl_eu_8066B19C;
     }
@@ -864,25 +870,27 @@ extern "C" void func_804D8160(CETrailLight* self, void* arg, s32 mode, const CET
         f2 = lbl_eu_8066B1A0;
     }
 
-    // retail clamps mode to [lbl_eu_8066B1A4,1.0, lbl_eu_8066B1A8,3.0]; do in int
-    s32 m = mode;
-    if (m < 1) { m = 1; }
-    if (m > 3) { m = 3; }
+    // Clamp the light index through a float round-trip (retail does the same)
+    f32 fm = (f32)mode;
+    if (fm < lbl_eu_8066B1A4) {
+        fm = lbl_eu_8066B1A4;
+    }
+    if (lbl_eu_8066B1A8 < fm) {
+        fm = lbl_eu_8066B1A8;
+    }
+    s32 m = (s32)fm;
 
-    func_804C08C8(wrapper->m_light, 1);
-    func_804C0454(wrapper->m_light, arg);
-    func_804C09E0(wrapper->m_light, m, f1, f2);
+    func_804C08C8(self->m_light, 1);
+    func_804C0454(self->m_light, arg);
+    func_804C09E0(self->m_light, m, f1, f2);
 
-    light->m_3C = lbl_eu_8066B1AC;
-
-    struct LightColor {
-        f32 r, g, b, a;
-    } out;
-    out.r = p->m_r * p->m_intensity;
-    out.g = p->m_g * p->m_intensity;
+    LightColor out;
     out.b = p->m_b * p->m_intensity;
+    self->m_light->m_3C = lbl_eu_8066B1AC;
+    out.g = p->m_g * p->m_intensity;
+    out.r = p->m_r * p->m_intensity;
     out.a = lbl_eu_8066B1A4;
-    func_804C07F0(light, &out);
+    func_804C07F0(self->m_light, &out);
 }
 
 // ---------------------------------------------------------------------------

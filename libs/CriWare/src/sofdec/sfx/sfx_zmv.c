@@ -6,6 +6,7 @@ void* memset(void* s, int c, size_t n);
 
 extern u8 lbl_eu_8061A260[];
 extern float lbl_eu_8051D218;
+extern float lbl_eu_8051D21C;
 
 void SFXZ_Init(void) {
     memset(lbl_eu_8061A260, 0, 0x26c);
@@ -123,8 +124,8 @@ int SFXZ_GetZfrmRange(void* self, s32 a, s32* out1, s32* out0) {
 }
 extern int sscanf(const char* str, const char* fmt, ...);
 extern s32 SFX_SetCcirFx(void);
-void sfxzmv_MakeOrgZ32TblByDirect(void* self, s32 f1, s32 f0, s32* dst);
-void sfxzmv_MakeOrgZ32TblByCCIR(void* self, s32 f1, s32 f0, s32* dst);
+void sfxzmv_MakeOrgZ32TblByDirect(void* self, u32 f1, u32 f0, u32* dst);
+void sfxzmv_MakeOrgZ32TblByCCIR(void* self, u32 f1, u32 f0, u32* dst);
 void sfxzmv_MakeZ16TblFromOrgZ32(void* self, u16* dst, u32* src);
 void sfxzmv_MakeZ32TblFromOrgZ32(void* self, u32* dst, u32* src);
 
@@ -138,9 +139,9 @@ void SFXZ_MakeCnvZTbl(void* self, s32 a, void* buf) {
     f1 = o1;
     memset(buf, 0, 0x400);
     if (SFX_SetCcirFx() == 1) {
-        sfxzmv_MakeOrgZ32TblByCCIR(self, f1, f0, (s32*)dst);
+        sfxzmv_MakeOrgZ32TblByCCIR(self, f1, f0, (u32*)dst);
     } else {
-        sfxzmv_MakeOrgZ32TblByDirect(self, f1, f0, (s32*)dst);
+        sfxzmv_MakeOrgZ32TblByDirect(self, f1, f0, (u32*)dst);
     }
     if (*(void**)((u8*)self + 0x44) == NULL) {
         if (*(s32*)((u8*)self + 4) == 16) {
@@ -153,106 +154,64 @@ void SFXZ_MakeCnvZTbl(void* self, s32 a, void* buf) {
             dst, buf, *(f32*)((u8*)self + 0x3C), *(f32*)((u8*)self + 0x40));
     }
 }
-void sfxzmv_MakeOrgZ32TblByDirect(void* self, s32 f1, s32 f0, s32* dst) {
-    s32 i;
-    if (f0 < 0) {
-        f0 = 0x7FFFFFFF;
-    }
-    if (f1 < 0) {
-        f1 = 0x7FFFFFFF;
-    }
-    for (i = 0; i < 9; i++) {
-        dst[i] = 0;
-    }
-    for (i = 9; i < 17; i++) {
-        dst[i] = f1;
-    }
-    if (f1 == f0) {
-        for (i = 17; i < 224; i++) {
-            dst[i] = f1;
-        }
-    } else {
-        s32 step = (s32)((u32)(f0 - f1) / 207);
-        for (i = 17; i < 224; i += 8) {
-            dst[i + 0] = f1 + (i - 17) * step;
-            dst[i + 1] = f1 + (i - 16) * step;
-            dst[i + 2] = f1 + (i - 15) * step;
-            dst[i + 3] = f1 + (i - 14) * step;
-            dst[i + 4] = f1 + (i - 13) * step;
-            dst[i + 5] = f1 + (i - 12) * step;
-            dst[i + 6] = f1 + (i - 11) * step;
-            dst[i + 7] = f1 + (i - 10) * step;
-        }
-        dst[217] = f1 + 200 * step;
-        dst[218] = f1 + 201 * step;
-        dst[219] = f1 + 202 * step;
-        dst[220] = f1 + 203 * step;
-        dst[221] = f1 + 204 * step;
-        dst[222] = f1 + 205 * step;
-        dst[223] = f1 + 206 * step;
-    }
-    for (i = 224; i < 240; i++) {
-        dst[i] = f0;
-    }
-    for (i = 240; i < 256; i++) {
-        dst[i] = 0x7FFFFFFF;
-    }
+// Fill dst[0..255] with a quantizer ramp: 9 zeros, 8 entries of f1,
+// then a linear ramp from f1 to f0 over entries 17..222 (step = range/207).
+// Clamps are unsigned compares against 0x7FFFFFFF (matches retail codegen).
+// Textual macro: retail inlines this ramp into both callers with no call.
+#define SFXZ_FILL_Z32_RAMP(dPtr) \
+    do { \
+        s32 i_; \
+        u32 step_; \
+        if (f0 >= 0x10000U) { \
+            f0 = 0x7FFFFFFFU; \
+        } \
+        if (f1 >= 0x10000U) { \
+            f1 = 0x7FFFFFFFU; \
+        } \
+        for (i_ = 0; i_ < 9; i_++) { \
+            (dPtr)[i_] = 0; \
+        } \
+        for (i_ = 9; i_ < 17; i_++) { \
+            (dPtr)[i_] = f1; \
+        } \
+        if (f1 == f0) { \
+            for (i_ = 17; i_ < 223; i_++) { \
+                (dPtr)[i_] = f1; \
+            } \
+        } else { \
+            step_ = (f0 - f1) / 207U; \
+            for (i_ = 17; i_ < 223; i_++) { \
+                (dPtr)[i_] = f1 + (u32)(i_ - 17) * step_; \
+            } \
+        } \
+        for (i_ = 224; i_ < 240; i_++) { \
+            (dPtr)[i_] = f0; \
+        } \
+        for (i_ = 240; i_ < 256; i_++) { \
+            (dPtr)[i_] = 0x7FFFFFFFU; \
+        } \
+    } while (0)
+
+void sfxzmv_MakeOrgZ32TblByDirect(void* self, u32 f1, u32 f0, u32* dst) {
+    SFXZ_FILL_Z32_RAMP(dst);
 }
-void sfxzmv_MakeOrgZ32TblByCCIR(void* self, s32 f1, s32 f0, s32* dst) {
+// Build a 256-byte CCIR (1.164 scaling) level table at dst+2048, fill the
+// same quantizer ramp at dst+256, then remap the 256 linear entries through
+// the CCIR table into dst[0..255].
+void sfxzmv_MakeOrgZ32TblByCCIR(void* self, u32 f1, u32 f0, u32* dst) {
     s32 i;
-    for (i = 0; i < 16; i++) {
-        ((u8*)dst)[2048 + i] = 0;
-    }
+    u8* tbl = (u8*)dst + 2048;
+    u32* d = dst + 256;
+
     for (i = 16; i < 236; i++) {
-        ((u8*)dst)[2048 + i] = (u8)(s32)(1.1640000343322754f * (float)(i - 16));
+        tbl[i] = (u8)(lbl_eu_8051D21C * (double)(i - 16));
     }
     for (i = 236; i < 256; i++) {
-        ((u8*)dst)[2048 + i] = 0xFF;
+        tbl[i] = 0xFF;
     }
-    {
-        s32* d = dst + 256;
-        if (f0 < 0) {
-            f0 = 0x7FFFFFFF;
-        }
-        if (f1 < 0) {
-            f1 = 0x7FFFFFFF;
-        }
-        for (i = 0; i < 9; i++) {
-            d[i] = 0;
-        }
-        for (i = 9; i < 17; i++) {
-            d[i] = f1;
-        }
-        if (f1 == f0) {
-            for (i = 17; i < 224; i++) {
-                d[i] = f1;
-            }
-        } else {
-            s32 step = (s32)((u32)(f0 - f1) / 207);
-            for (i = 17; i < 224; i += 8) {
-                d[i + 0] = f1 + (i - 17) * step;
-                d[i + 1] = f1 + (i - 16) * step;
-                d[i + 2] = f1 + (i - 15) * step;
-                d[i + 3] = f1 + (i - 14) * step;
-                d[i + 4] = f1 + (i - 13) * step;
-                d[i + 5] = f1 + (i - 12) * step;
-                d[i + 6] = f1 + (i - 11) * step;
-                d[i + 7] = f1 + (i - 10) * step;
-            }
-            d[217] = f1 + 200 * step;
-            d[218] = f1 + 201 * step;
-            d[219] = f1 + 202 * step;
-            d[220] = f1 + 203 * step;
-            d[221] = f1 + 204 * step;
-            d[222] = f1 + 205 * step;
-            d[223] = f1 + 206 * step;
-        }
-        for (i = 224; i < 240; i++) {
-            d[i] = f0;
-        }
-        for (i = 240; i < 256; i++) {
-            d[i] = 0x7FFFFFFF;
-        }
+    SFXZ_FILL_Z32_RAMP(d);
+    for (i = 0; i < 256; i++) {
+        dst[i] = d[tbl[i]];
     }
 }
 void sfxzmv_MakeZ32TblFromOrgZ32(void* self, u32* dst, u32* src) {

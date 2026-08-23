@@ -16,9 +16,19 @@ using namespace LOD;
 // ===========================================================================
 u16* LOD::UnkClass_80468434::func_80468BDC() {
     LodDrawHeader* h = (LodDrawHeader*)this;
-    // Integer-sum form keeps (idx * 0x2C) as the add's first operand
-    // (retail: add r4, r4, r3; addi r0, r4, 0x1C).
-    u16* rec = (u16*)(h->field_0x2 * 0x2c + (u32)this + 0x1c);
+    // Grouping keeps the scaled index as the add's first operand
+    // (retail: mulli r4,r4,0x2c; add r4,r4,r3; addi r0,r4,0x1C).
+    u16* rec = (u16*)((u32)this + (h->field_0x2 * 0x2c + 0x1c));
+
+    // Declaration order drives the stack-slot layout (first-declared gets
+    // the highest offset): scratch, corners, normals/translation, pos/diff.
+    nw4r::math::VEC3 scaled;
+    nw4r::math::VEC3 corner[4];
+    nw4r::math::VEC3 normalX;
+    nw4r::math::VEC3 normalY;
+    nw4r::math::VEC3 transCol;
+    nw4r::math::VEC3 pos;
+    nw4r::math::VEC3 diff;
 
     // Visibility guard chain (mirrors the cull helpers' checks).
     if ((h->field_0x1 & lbl_eu_8066A5F0) != 0) {
@@ -61,27 +71,37 @@ u16* LOD::UnkClass_80468434::func_80468BDC() {
 
     // X/Y axis direction normals + translation column of the billboard
     // matrix; both normals are normalized (or zeroed when degenerate).
-    nw4r::math::VEC3 normalX(lbl_eu_8066A648, lbl_eu_8066A64C, lbl_eu_8066A64C);
-    nw4r::math::VEC3 normalY(lbl_eu_8066A64C, lbl_eu_8066A648, lbl_eu_8066A64C);
-    nw4r::math::VEC3 transCol(mtx->_03, mtx->_13, mtx->_23);
+    // Corner slots double as scale temps: corner[0] holds the X-axis scale
+    // and corner[1] the third Y-axis scale, so only one scratch VEC3 exists.
+    normalX.x = lbl_eu_8066A648;
+    normalX.y = lbl_eu_8066A64C;
+    normalX.z = lbl_eu_8066A64C;
+    normalY.x = lbl_eu_8066A64C;
+    normalY.y = lbl_eu_8066A648;
+    normalY.z = lbl_eu_8066A64C;
+    // Right-to-left member order mirrors retail's load-descending /
+    // store-ascending 3-float copy shape.
+    f32 tcX, tcY, tcZ;
+    tcZ = mtx->_23;
+    tcY = mtx->_13;
+    tcX = mtx->_03;
+    transCol.x = tcX;
+    transCol.y = tcY;
+    transCol.z = tcZ;
     nw4r::math::VEC3TransformNormal(&normalX, mtx, &normalX);
     nw4r::math::VEC3TransformNormal(&normalY, mtx, &normalY);
 
     f32 lenSqX = normalX.x * normalX.x + normalX.y * normalX.y +
                  normalX.z * normalX.z;
     if (lenSqX == lbl_eu_8066A64C) {
-        normalX.x = ml::CVec3::zero.x;
-        normalX.y = ml::CVec3::zero.y;
-        normalX.z = ml::CVec3::zero.z;
+        normalX = *(nw4r::math::VEC3*)&ml::CVec3::zero;
     } else {
         PSVECNormalize((const Vec*)&normalX, (Vec*)&normalX);
     }
     f32 lenSqY = normalY.x * normalY.x + normalY.y * normalY.y +
                  normalY.z * normalY.z;
     if (lenSqY == lbl_eu_8066A64C) {
-        normalY.x = ml::CVec3::zero.x;
-        normalY.y = ml::CVec3::zero.y;
-        normalY.z = ml::CVec3::zero.z;
+        normalY = *(nw4r::math::VEC3*)&ml::CVec3::zero;
     } else {
         PSVECNormalize((const Vec*)&normalY, (Vec*)&normalY);
     }
@@ -89,23 +109,17 @@ u16* LOD::UnkClass_80468434::func_80468BDC() {
     // Record billboard loop (records start at this + 0x1C).
     GXBegin(GX_QUADS, GX_VTXFMT0, (u16)(count * 4));
     LodDrawRec* recs = (LodDrawRec*)((u8*)this + 0x1c);
-    nw4r::math::VEC3 pos;
-    nw4r::math::VEC3 diff;
-    nw4r::math::VEC3 scaledA;
-    nw4r::math::VEC3 scaledB;
-    nw4r::math::VEC3 scaledC;
-    nw4r::math::VEC3 corner[4];
     for (u32 i = 0; i < count; i++) {
         LodDrawRec* r = &recs[i];
 
-        nw4r::math::VEC3Scale(&scaledA, &normalX, r->field_0xC);
-        nw4r::math::VEC3Scale(&scaledB, &normalY, r->field_0x10);
-        nw4r::math::VEC3Scale(&scaledC, &normalY, r->field_0x18);
+        nw4r::math::VEC3Scale(&corner[0], &normalX, r->field_0xC);
+        nw4r::math::VEC3Scale(&scaled, &normalY, r->field_0x10);
+        nw4r::math::VEC3Scale(&corner[1], &normalY, r->field_0x18);
 
-        nw4r::math::VEC3Sub(&corner[3], &scaledB, &scaledA);
-        nw4r::math::VEC3Add(&corner[0], &scaledA, &scaledB);
-        nw4r::math::VEC3Sub(&corner[2], &scaledC, &scaledA);
-        nw4r::math::VEC3Add(&corner[1], &scaledC, &scaledA);
+        nw4r::math::VEC3Sub(&corner[3], &scaled, &corner[0]);
+        nw4r::math::VEC3Sub(&corner[2], &corner[1], &corner[0]);
+        nw4r::math::VEC3Add(&corner[1], &corner[1], &corner[0]);
+        nw4r::math::VEC3Add(&corner[0], &corner[0], &scaled);
 
         if ((r->field_0x2B & 1) != 0) {
             lbl_eu_8056D9B0[r->field_0x29](&pos, &corner[0], r, i);
@@ -119,9 +133,7 @@ u16* LOD::UnkClass_80468434::func_80468BDC() {
             nw4r::math::VEC3Sub(&diff, &transCol, &pos);
             f32 lenSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
             if (lenSq == lbl_eu_8066A64C) {
-                diff.x = ml::CVec3::zero.x;
-                diff.y = ml::CVec3::zero.y;
-                diff.z = ml::CVec3::zero.z;
+                diff = *(nw4r::math::VEC3*)&ml::CVec3::zero;
             } else {
                 PSVECNormalize((const Vec*)&diff, (Vec*)&diff);
             }
@@ -133,7 +145,7 @@ u16* LOD::UnkClass_80468434::func_80468BDC() {
             GXPosition3f32(pos.x + corner[k].x, pos.y + corner[k].y,
                            pos.z + corner[k].z);
             GXColor1u16(r->field_0x1C[k]);
-            for (u32 t = 0; t < (u32)texCount; t++) {
+            for (s32 t = 0; t < texCount; t++) {
                 GXTexCoord1x8(r->field_0x24[k]);
             }
         }
@@ -265,9 +277,9 @@ void func_8046A3B4__Q23LOD17UnkClass_80468434Fv(u32 idx, const f32* srcMtx,
 
     LodObj1* o = (LodObj1*)obj;
     LodRec1* records = (LodRec1*)(obj + o->field_0x28);
-    s32 i;
     f32* mtx;
     LodRec1* rec;
+    s32 i;
 
     // Loop 1: per-record setup; concatenate the parent matrix when the
     // record references one (parent index is 1-based).

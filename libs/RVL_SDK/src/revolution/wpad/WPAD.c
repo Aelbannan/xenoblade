@@ -1182,7 +1182,8 @@ static WPADCommand WPADiBuildReadCommand(WPADCB* p) {
 
 void __wpadConnectionCallback(WUDDevInfo* pInfo, u8 open) {
     const char* pStr = lbl_80560608;
-    UINT8 devHandle = pInfo->devHandle;
+    WUDDevInfo* pDev = pInfo;
+    UINT8 devHandle = pDev->devHandle;
     s32 chan;
 
     DEBUGPrint(pStr + 0x1D0, open ? lbl_80665D54 : lbl_80665D5C);
@@ -1190,7 +1191,7 @@ void __wpadConnectionCallback(WUDDevInfo* pInfo, u8 open) {
     if (open) {
         WPADCB* p;
 
-        chan = __wpadRetrieveChannel(pInfo);
+        chan = __wpadRetrieveChannel(pDev);
 
         if (chan < WPAD_CHAN0) {
             return;
@@ -1202,10 +1203,10 @@ void __wpadConnectionCallback(WUDDevInfo* pInfo, u8 open) {
 
         p = __rvl_p_wpadcb[chan];
 
-        if (memcmp(pInfo->conf.devName, pStr + 0x1E4, 16) == 0) {
+        if (memcmp(pDev->conf.devName, pStr + 0x1E4, 16) == 0) {
             p->devType = WPAD_DEV_CORE;
             p->dataFormat = WPAD_FMT_CORE_BTN;
-        } else if (memcmp(pInfo->conf.devName, pStr + 0x1BC, 16) == 0 &&
+        } else if (memcmp(pDev->conf.devName, pStr + 0x1BC, 16) == 0 &&
                    WUDIsLinkedWBC()) {
 
             p->devType = 3; // WBC
@@ -1767,31 +1768,28 @@ void WPADiExcludeButton(s32 chan) {
     BOOL enabled = OSDisableInterrupts();
 
     u8 rxBufIndex = p->rxBufIndex != 0 ? 0 : 1;
-    void* pRxBuffer = p->rxBufs[rxBufIndex];
 
-    WPADStatus* pStatus;
     WPADCLStatus* pStatusCL;
 
-    pStatus = (WPADStatus*)pRxBuffer;
-
-    if ((pStatus->button & (WPAD_BUTTON_LEFT | WPAD_BUTTON_RIGHT)) ==
+    if ((((WPADStatus*)p->rxBufs[rxBufIndex])->button &
+         (WPAD_BUTTON_LEFT | WPAD_BUTTON_RIGHT)) ==
         (WPAD_BUTTON_LEFT | WPAD_BUTTON_RIGHT)) {
 
-        pStatus->button = pStatus->button & ~WPAD_BUTTON_RIGHT;
+        ((WPADStatus*)p->rxBufs[rxBufIndex])->button &= ~WPAD_BUTTON_RIGHT;
     }
 
-    if ((pStatus->button & (WPAD_BUTTON_UP | WPAD_BUTTON_DOWN)) ==
+    if ((((WPADStatus*)p->rxBufs[rxBufIndex])->button &
+         (WPAD_BUTTON_UP | WPAD_BUTTON_DOWN)) ==
         (WPAD_BUTTON_UP | WPAD_BUTTON_DOWN)) {
 
-        pStatus->button = pStatus->button & ~WPAD_BUTTON_DOWN;
+        ((WPADStatus*)p->rxBufs[rxBufIndex])->button &= ~WPAD_BUTTON_DOWN;
     }
-
     if (p->dataFormat == WPAD_FMT_CLASSIC_BTN ||
         p->dataFormat == WPAD_FMT_CLASSIC_BTN_ACC ||
         p->dataFormat == WPAD_FMT_CLASSIC_BTN_ACC_DPD ||
         p->dataFormat == WPAD_FMT_BTN_ACC_DPD_EXTENDED ||
         p->dataFormat == 15) {
-        pStatusCL = (WPADCLStatus*)pRxBuffer;
+        pStatusCL = (WPADCLStatus*)p->rxBufs[rxBufIndex];
 
         if ((pStatusCL->clButton &
              (WPAD_BUTTON_CL_LEFT | WPAD_BUTTON_CL_RIGHT)) ==
@@ -1808,7 +1806,7 @@ void WPADiExcludeButton(s32 chan) {
     }
 
     if (p->dataFormat == WPAD_FMT_TR_BTN_ACC) {
-        pStatusCL = (WPADCLStatus*)pRxBuffer;
+        pStatusCL = (WPADCLStatus*)p->rxBufs[rxBufIndex];
 
         if ((pStatusCL->clButton &
              (WPAD_BUTTON_CL_LEFT | WPAD_BUTTON_CL_RIGHT)) ==
@@ -2821,8 +2819,13 @@ int WBCGetTGCWeightDummy(void) {
     return -1;
 }
 void __wpadCalcRecalibration(s32 chan, WPADStatus* pStatus) {
-    WPADCB* p = __rvl_p_wpadcb[chan];
-    u8 count = 0;
+    WPADCB** ppCb;
+    WPADCB* p;
+    u8 count;
+
+    ppCb = &__rvl_p_wpadcb[chan];
+    p = *ppCb;
+    count = 0;
 
     if (p->dataFormat - WPAD_FMT_FS_BTN <= 2) {
         if (pStatus->button ==
@@ -2848,7 +2851,7 @@ void __wpadCalcRecalibration(s32 chan, WPADStatus* pStatus) {
     p->comboHeld += count;
 
     if (p->comboHeld > 600) {
-        WPADCB* pReset = __rvl_p_wpadcb[chan];
+        WPADCB* pReset = *ppCb;
         BOOL enabled = OSDisableInterrupts();
 
         pReset->calibrated = FALSE;

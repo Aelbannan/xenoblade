@@ -24,6 +24,8 @@ extern "C" void func_8009D018(u32 owner, u32 flag);
 // Frame clock (retail C-ABI, no-arg form used by func_8019514C): returns the
 // current frame timer value (CfRes_getD80Flag is declared in CfResPcImpl.hpp).
 extern "C" f32 func_80496288();
+// Presentation-mode getter used by func_801949E0 (retail unmangled C-ABI).
+extern "C" u32 func_8016E08C();
 extern "C" void func_802918AC(int val);
 extern "C" int func_80291C60(int v);
 extern "C" void func_800A282C(void* obj, int flag);
@@ -46,9 +48,9 @@ void* func_80081A40__Q22cf13CfGameManagerFv(const char* col, u32 a, u32 b, u32 c
 // Global event/presentation flag word (.sbss); bit 0x200000 gates re-arming.
 extern u32 lbl_eu_80663E24;
 
-// Party-change refresh helpers (func_80197538): battle-manager instance
-// getter and battle-membership check (retail unmangled C-ABI imports).
-extern "C" void* getInstance__Q22cf14CBattleManagerFv();
+// Party-change refresh helpers (func_80197538): battle-membership check
+// (retail unmangled C-ABI import); the battle-manager instance getter
+// getInstance__Q22cf14CBattleManagerFv comes from cf/CfGameManager.hpp.
 extern "C" int func_800DA06C(void* bm, void* obj);
 
 // CfGameManager statics used by func_80195E5C (retail pre-mangled names).
@@ -411,22 +413,36 @@ struct CfActorIdRef {
     /* 0x00 */ u32 field_00;
 };
 
-// Sub-object vtable view used by func_80194610's +0x3E9C dispatches: fn
-// pointers at slots 0xA8 / 0xB8 / 0xD0 / 0x150 (CfPartsElemVt pattern).
-struct CfPartsChgSubVt {
-    u32 _padA8[0xA8 / 4];
-    void (*vfA8)(void* self, const ml::CVec3* v);            // 0xA8
-    u32 _padB0[(0xB8 - 0xB0) / 4];
-    void (*vfB8)(void* self, const ml::CVec3* v, f32 f);     // 0xB8
-    u32 _padC0[(0xD0 - 0xC0) / 4];
-    void (*vfD0)(void* self, f32 f);                         // 0xD0
-    u32 _padD4[(0x150 - 0xD4) / 4];
-    void (*vf150)(void* self, int a);                        // 0x150
-};
-
-// Sub-object embedded at +0x3E9C of the func_80194610 target (vtable at +0).
+// Sub-object embedded at +0x3E9C of the func_80194610 target: a real virtual
+// interface so MWCC emits the retail lwz-r12 dispatch chain (-RTTI: two leading
+// vtable slots land the first declared virtual at +8).
 struct CfPartsChgSub {
-    /* 0x00 */ CfPartsChgSubVt* vt;
+    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
+    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
+    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
+    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
+    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
+    virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
+    virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
+    virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
+    virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
+    virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
+    virtual void vfA8(const ml::CVec3* v);                    // 0xA8
+    virtual void _v0AC(); virtual void _v0B0(); virtual void _v0B4();
+    virtual void vfB8(const ml::CVec3* v, f32 f);             // 0xB8
+    virtual void _v0BC(); virtual void _v0C0(); virtual void _v0C4();
+    virtual void _v0C8(); virtual void _v0CC();
+    virtual void vfD0(f32 f);                                 // 0xD0
+    virtual void _v0D4(); virtual void _v0D8(); virtual void _v0DC(); virtual void _v0E0();
+    virtual void _v0E4(); virtual void _v0E8(); virtual void _v0EC(); virtual void _v0F0();
+    virtual void _v0F4(); virtual void _v0F8(); virtual void _v0FC(); virtual void _v100();
+    virtual void _v104(); virtual void _v108(); virtual void _v10C(); virtual void _v110();
+    virtual void _v114(); virtual void _v118(); virtual void _v11C(); virtual void _v120();
+    virtual void _v124(); virtual void _v128(); virtual void _v12C(); virtual void _v130();
+    virtual void _v134(); virtual void _v138(); virtual void _v13C(); virtual void _v140();
+    virtual void _v144(); virtual void _v148();
+    virtual void vf14C();                                     // filler to keep vf150 aligned
+    virtual void vf150(int a);                                // 0x150
 };
 
 // De-biased target view for func_80194610 (func_80081A40 returns base+0x3E9C;
@@ -454,6 +470,23 @@ struct CfPlayerVt {
 };
 struct CfPlayerPosView {
     /* 0x00 */ CfPlayerVt* vt;
+};
+
+// Virtual-call form of the same player view (vptr at +0, position getter at
+// slot 0xAC) so MWCC emits the retail lwz-r12 dispatch in func_80194610.
+struct CfPlayerVtACIf {
+    virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014();
+    virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024();
+    virtual void _v028(); virtual void _v02C(); virtual void _v030(); virtual void _v034();
+    virtual void _v038(); virtual void _v03C(); virtual void _v040(); virtual void _v044();
+    virtual void _v048(); virtual void _v04C(); virtual void _v050(); virtual void _v054();
+    virtual void _v058(); virtual void _v05C(); virtual void _v060(); virtual void _v064();
+    virtual void _v068(); virtual void _v06C(); virtual void _v070(); virtual void _v074();
+    virtual void _v078(); virtual void _v07C(); virtual void _v080(); virtual void _v084();
+    virtual void _v088(); virtual void _v08C(); virtual void _v090(); virtual void _v094();
+    virtual void _v098(); virtual void _v09C(); virtual void _v0A0(); virtual void _v0A4();
+    virtual void _v0A8();
+    virtual ml::CVec3* vfAC();   // 0xAC (position)
 };
 
 // Opaque collision output written by func_800B99BC / func_800B998C

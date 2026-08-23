@@ -122,6 +122,23 @@ extern const float lbl_eu_80666ACC;
 // current time value from the shared scene object. extern "C" keeps the
 // call-site reloc at the unmangled retail name (docs/MWCC_CASES.md §2).
 extern "C" f32 func_80496288(void* scene);
+// Minimal bdat imports (CfBdat.hpp cannot be included here: its
+// getBdatStringColumnValue declaration conflicts with harness_catalog.hpp's).
+// The static-member forms keep the retail mangled reloc names.
+namespace cf {
+class CfBdat {
+public:
+    static void* func_801422A8(u32 param1);
+    static const char* func_801424A8(u16 index);
+};
+}  // namespace cf
+// Retail sbss bdat globals used by func_800BCFA0.
+extern void* lbl_eu_806640A8;   // spFldMapListFileData
+extern u32 lbl_eu_80664184;     // cached fld-map row index
+// One-arg call form of the CActParamAnim translation helper (defined 2-arg
+// in kyoshin/action/CActParamAnim.cpp). Retail CfObject_UnkVirtualFunc19
+// calls it with only r3 set. C linkage keeps the retail unmangled name.
+extern "C" void func_8004B354(void* self);
 // Second heap handle query (retail unmangled name, same family as
 // func_80061FE8): used by CfObject_UnkVirtualFunc47's CtrlEnemy/CtrlNpc
 // allocations.
@@ -199,11 +216,12 @@ extern "C" f32 CosFIdx__Q24nw4r4mathFf(f32);
 // outside this repo's src tree) used by func_800BC9EC.
 void* func_800AD860(void* obj);
 // vtable +0x14C flag-word bit queries (defined in CfObjectModel.cpp as plain
-// global C++ functions) used by func_800BCFA0's dispatch tail.
-u32 func_800BAD98(cf::CfObject* obj);
-u32 func_800BADF8(cf::CfObject* obj);
-u32 func_800BADC8(cf::CfObject* obj);
-u32 func_800BAE28(cf::CfObject* obj);
+// global C++ functions) used by func_800BCFA0's dispatch tail. extern "C":
+// the retail symbols are the unmangled names.
+extern "C" u32 func_800BAD98(cf::CfObject* obj);
+extern "C" u32 func_800BADF8(cf::CfObject* obj);
+extern "C" u32 func_800BADC8(cf::CfObject* obj);
+extern "C" u32 func_800BAE28(cf::CfObject* obj);
 // CtrlEnemy/CtrlNpc/CtrlPc/CtrlRemote/CtrlPad retail constructors (plain
 // free functions in their own TUs; the symbol map links the unmangled names).
 // Declared here because the owning headers are not included in this TU.
@@ -885,6 +903,7 @@ namespace cf {
     // the base header declares CfObjectModel_UnkVirtualFunc14 no-arg).
     class CfObjectMoveVt1AC : public CfObjectMoveVt1A4 {
     public:
+        virtual void m1A8();
         virtual void m1AC(u32 a, u32 b);  // vtable +0x1AC
     };
     // Vtable proxy for calling the CfObjectMove slot +0x154 with an explicit

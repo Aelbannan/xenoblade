@@ -86,7 +86,9 @@ struct CEquipItemBoxItemListView {
     u16 field_00[0xC];            // 0x00..0x17 u16 item ids
     u8 field_18[0x90];            // 0x18..0xA7 12 x 0xC records (VEC3 copies)
     u8 field_A8[0x20];            // 0xA8..0xC7 per-item bytes (+0xA8 / +0xB4)
-    s16 field_C0[0x20];           // 0xC0..0xFF per-item shorts
+    s16 field_C0[0xC];            // 0xC0..0xD7 per-item shorts
+    u8 field_D8;                  // 0xD8 scratch byte (selected column)
+    u8 _padD9[0x100 - 0xD9];
 };
 
 /* Overlay for the per-page u16 item array at +0x210 with the per-index u8
@@ -418,7 +420,7 @@ public:
     virtual void vf74(CItemInstance* p); // 0x74
     virtual void vf78(CItemInstance* p); // 0x78
     virtual void vf7C(CItemInstance* p); // 0x7C
-    virtual void vf80(CItemInstance* p); // 0x80
+    virtual u32 vf80(CItemInstance* p);  // 0x80
     virtual void vf84(CItemInstance* p); // 0x84
     virtual void vf88(CItemInstance* p); // 0x88
     virtual void vf8C(CItemInstance* p); // 0x8C
@@ -526,14 +528,24 @@ extern CEquipItemBoxCatWordTable lbl_eu_8050EF50;
 
 /* 12-byte u32 table copied by func_8028CBCC and indexed by the matched
    category slot (three CfMove search types). */
-extern u32 lbl_eu_8050EFB4[3];
-
-/* 6-byte category tables (.sdata) read by func_8028CBCC's cat-3 scan. */
-struct CEquipItemBoxCat6 {
-    u8 b[6];
+struct CEquipItemBoxMoveTable {
+    u32 w[3];
 };
-extern CEquipItemBoxCat6 lbl_eu_80668B50;
-extern CEquipItemBoxCat6 lbl_eu_80668B58;
+extern CEquipItemBoxMoveTable lbl_eu_8050EFB4;
+
+/* 12-byte category-byte table (.sdata) copied to the stack by
+   func_8028CBCC's slot-clearing tail. */
+struct CEquipItemBoxCatTable12 {
+    u8 b[0xC];
+};
+extern CEquipItemBoxCatTable12 lbl_eu_80668B50;
+
+/* CfObjectMove search-result entry: the word at +0x4 must be non-zero
+   before the move object is resolved. */
+struct CEquipItemBoxMoveEntryView {
+    void* vtable;   // 0x0
+    u32 field_4;    // 0x4 validity word
+};
 
 /* Overlay for the per-page item-id table at +0x210 (u16) and the 12 page
    position VEC3 records at +0x228, reset by func_8028AA64. */
@@ -578,6 +590,8 @@ extern "C" void func_8028A1DC(CEquipItemBox* self);
 extern "C" void func_8028A07C(CEquipItemBox* self);
 extern "C" void func_8028A0C0(CEquipItemBox* self, u8 val);
 extern "C" void func_80289CC0(CEquipItemBox* self);
+extern "C" void func_80287024(CEquipItemBox* self);
+extern "C" void func_8028A160(CEquipItemBox* self);
 extern "C" void func_80285B70(CEIBCur* self);
 extern "C" void func_8022B8E4(void*);
 extern "C" void func_80289E70(CEquipItemBox*);
@@ -629,7 +643,9 @@ extern "C" f32 func_8013B380(u32 idx);
 extern "C" f32 func_80139C98(u32 a, u32 b, u32 c, f32 d);
 extern "C" nw4r::math::VEC3* code80135FDC_setVec3(float*, float, float, float);
 extern "C" void copyVEC3(void*, const void*);
-extern "C" void* CItem_initItemImplInstances(void*);
+// Declared with C++ linkage (same as CCol6System.hpp) so the two headers
+// don't create an illegal overload when a TU includes both.
+void* CItem_initItemImplInstances(void*);
 extern u32 lbl_eu_806640D8;
 extern u32 lbl_eu_806640F8;
 extern "C" int CSysWin_getUnk34(void*);
@@ -647,6 +663,24 @@ struct CItemBoxInfo;
 // Item-box state query (retail mangled getItemBoxState__FP12CItemBoxInfo;
 // u32 return avoids the u8 call-site mask; same decl as CItemBoxGrid.hpp).
 extern "C" u32 getItemBoxState__FP12CItemBoxInfo(void*);
+// Per-index value store into the embedded CItemBoxInfo at +0x210
+// (retail mangled setItemBoxIndex__FP12CItemBoxInfoUcs; C++ linkage).
+void setItemBoxIndex(CItemBoxInfo* info, unsigned char index, short value);
+
+/* Fields written by func_8028BE74 (kind-3 rebuild): the selected kind halfword
+   at +0x220, the fixed state byte 3 at +0x2c0, the vf08 byte at +0x2cc, the
+   cursor anchor position copied to +0x288, and the embedded CItemBoxInfo at
+   +0x210 that receives setItemBoxIndex(8, vf90). */
+struct CEquipItemBoxKind3View {
+    u8 pad00[0x220];
+    u16 field_220;              // 0x220 selected item kind (u16)
+    u8 pad222[0x288 - 0x222];
+    float field_288[3];         // 0x288 cursor anchor VEC3
+    u8 pad294[0x2c0 - 0x294];
+    u8 field_2c0;               // 0x2c0 fixed state byte (3)
+    u8 pad2c1[0x2cc - 0x2c1];
+    u8 field_2cc;               // 0x2cc item vf08 byte
+};
 // Item-box list refresh helpers (CItemBoxInfo TU, retail plain names).
 extern "C" void func_801D4AE0(CItemBoxInfo* info, int arg2, void* arg3);
 extern "C" u8 func_801EF034(const u8*, unsigned int);
@@ -751,6 +785,27 @@ extern "C" u32 func_8009CF8C(u32);
 // Sort-menu scroll-down / page-up helpers (CSortMenu TU, retail plain names).
 extern "C" void func_801D3698(void*);
 extern "C" void func_801D3724(void*);
+// SysWin sub-window text setters used by func_80287FE0's name-pane confirm.
+extern "C" void func_8022B90C(void*, u32);
+extern "C" void func_8022B9B4(void*, void*, u32);
+extern "C" void func_8022BFC8(void*, u32);
+extern "C" void func_8022B8B8(void*);
+// Per-slot detail-text builder (func_80287FE0's ==3 lookup path).
+extern "C" void* func_801D3C74(void*, u32);
+extern const float lbl_eu_80668B24;
+// Item-kind -> display-count probe (func_80283B60's default band).
+extern "C" u32 func_801393CC(u32);
+extern "C" u32 __cvt_fp2unsigned(double);
+
+/* 16-byte record copied off lbl_eu_8050EF68 by func_80283B60 and read back
+   as floats indexed by the item's vf08 id (retail indexes past the 4 words
+   with a masked shift, so the float view is oversized on purpose). */
+union CEquipItemBoxF32Record {
+    u32 w[4];
+    float f[4];
+};
+extern CEquipItemBoxF32Record lbl_eu_8050EF68;
+
 // Item-name string providers (CErrMes TU, current hint/error strings).
 extern "C" char* func_eu_802B148C(void);
 extern "C" char* func_eu_802B1474(void);
@@ -815,6 +870,7 @@ extern const float lbl_eu_80668B38;
 extern const float lbl_eu_80668B44;
 extern const double lbl_eu_80668B10;
 extern const double lbl_eu_80668B18;
+extern const float lbl_eu_80668B20;
 
 // Item-impl accessor (retail CItemImpl vtable-indexed helper).
 extern "C" u32 func_801392E4(u32);
@@ -826,3 +882,31 @@ extern "C" void __dt__9CSortMenuFv(void*, int);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void* __dt__80285C44(void*, int);
+
+// Constructor imports (retail C-ABI names; the member ctors live in their
+// own TUs as extern "C" free functions).
+extern "C" void __ct__17UnkClass_8045F564Fv(void*);
+extern "C" void __ct__CSortMenu(void*);
+extern "C" void __ct__CSysWin(void*, int);
+extern "C" void __ct__UnkClass_8011C974(void* dst, void* src);
+extern "C" void func_8016742C(void* dst, void* src);
+extern "C" void func_80157824(u32 id, u32 arg);
+extern "C" void func_8013B2D4();
+
+/* Partial-copy views used by the ctor: the member CSortMenu is populated
+   from a destroyed stack temp one sub-object at a time (the first 0x10 bytes
+   after the vtable go through the __ct__UnkClass_8011C974 copy ctor; the
+   rest are scalar-copied; the vtable word is never copied). */
+struct CEquipItemBoxSortMenuBlock {
+    void* vtable;               // 0x00 (never copied)
+    u8 field_04[0x10];          // 0x04 UnkClass_8011C974 sub-object
+    u32 field_14;               // 0x14
+    u32 field_18;               // 0x18
+    u32 field_1C;               // 0x1C
+    u32 field_20;               // 0x20
+    u32 field_24;               // 0x24
+    u8 field_28;                // 0x28
+    u8 field_29;                // 0x29
+    u8 field_2A;                // 0x2A
+    u8 field_2B;                // 0x2B
+};

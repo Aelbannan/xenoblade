@@ -38,8 +38,9 @@ cf::CfHikariItemManager::CfHikariItemManager() {
         // GX calls deliberately index differently (i*0x20 vs off) so MWCC does
         // NOT CSE the texobj address across GXInitTexObj - retail recomputes
         // it (add;addi) per call.
-        int off = 0;
-        for (int i = 0; i < 4; i++, off += 0x20) {
+        int off;
+        int i;
+        for (i = 0, off = 0; i < 4; i++, off += 0x20) {
             // Declaration order drives the stack slots (4-byte locals top-down):
             // img 0x20, minLod 0x1c, maxLod 0x18, fmt 0x14, tex 0x10,
             // w 0xc, h 0xa, mipmap 0x8 - retail's exact layout.
@@ -98,10 +99,10 @@ cf::CfHikariItemManager::~CfHikariItemManager() {
 // Target 3 (us-802b5304): allocate a 0x44-byte Hikari item record, initialize
 // it with func_802B3750, copy the caller's 12-byte vector into +0x00..+0x08
 // and append it to the manager's record array.  Returns the record (or NULL
-// when the array is full).
+// when the array is full).  Count compares signed (retail cmpwi).
 CfHikariItemRecord* func_802B2894(cf::CfHikariItemManager* self, const u32* src,
                                   u16 value) {
-    if (self->field_1198 >= 0x40) {
+    if ((int)self->field_1198 >= 0x40) {
         return NULL;
     }
 
@@ -456,25 +457,35 @@ void cf::CfHikariItemManager::cbRenderBefore() {
 // Target 3 (us-802b5fd8): claim the next slot in the inline 0x80-entry
 // record pool (bitfield at +0x1104, 0x20-byte entries at +0x104), bail if it
 // is already active, else perturb the spawn position by scaled random offsets
-// (z reuses the y random - retail shape) and init the entry via func_802B4358.
+// (each component gets its own random draw) and init the entry via func_802B4358.
 extern "C" void func_802B3568(cf::CfHikariItemManager* self, const f32* src,
                               u16 val, f32 scaleX, f32 scaleY) {
     u32 count = self->field_119C;
     u32* words = (u32*)&self->unk1104[0];
+    u32 word = words[count >> 5];
     u32 bit = 1u << (count & 0x1F);
-    if (words[count >> 5] & bit) {
+    if (word & bit) {
         return;
     }
-    words[count >> 5] |= bit;
+    words[count >> 5] = word | bit;
 
-    f32 r0 = (f32)ml::math::mtRand(-100, 100) * lbl_eu_80668EEC;
-    f32 r1 = (f32)ml::math::mtRand(-100, 100) * lbl_eu_80668EEC;
-    f32 r2 = (f32)ml::math::mtRand(-100, 100) * lbl_eu_80668EEC;
-
+    // Stack shapes mirror retail: the spawn position is copied to +0x14
+    // before the first mtRand, the three randoms are converted through the
+    // shared sdata2 magic double and scaled (+0x08..+0x10), then folded back
+    // onto the copy.
     f32 out[3];
-    out[0] = src[0] + r0 * scaleX;
-    out[1] = src[1] + r1 * scaleX;
-    out[2] = src[2] + r1 * scaleX;
+    f32 rnd[3];
+    out[0] = src[0];
+    out[1] = src[1];
+    out[2] = src[2];
+
+    rnd[0] = (f32)ml::math::mtRand(-100, 100) * lbl_eu_80668EEC;
+    rnd[1] = (f32)ml::math::mtRand(-100, 100) * lbl_eu_80668EEC;
+    rnd[2] = (f32)ml::math::mtRand(-100, 100) * lbl_eu_80668EEC;
+
+    out[0] += rnd[0] * scaleX;
+    out[1] += rnd[1] * scaleX;
+    out[2] += rnd[2] * scaleX;
 
     func_802B4358((CfHikariItemRecord*)&self->unk104[count * 0x20],
                   (const u32*)out, val, scaleY);
@@ -685,19 +696,21 @@ extern "C" s32 func_802B3810(CfHikariItemRecord* self, f32 delta) {
 // flag pair.  r30 mirrors the 0x80 flag (0 when set, 1 when clear) - it gates
 // the sbss counters and the 0x3/0x4<<i flag bits.
 extern "C" void func_802B3CA0(CfHikariItemRecord* self) {
+    // Hoisted base pointers mirror the retail prologue (lis/addi up front).
+    u32* g = lbl_eu_80577680;
     u16 flags = self->field_42;
-    int r30 = (flags & 0x80) ? 0 : 1;
+    int r30 = (flags & 0x40) != 0; // spawn flag gates the sbss counters
     self->field_42 = flags & 0xFFF0; // retail mask 16,27 = clear low 4 bits
 
     if (!(flags & 0x40)) {
         if (!(flags & 0x100)) {
             self->field_30 = func_802B41E4(
                 &self->field_0C,
-                (const f32*)&lbl_eu_80577680[4 + (s16)self->field_40 * 8],
+                (const f32*)&g[4 + (s16)self->field_40 * 8],
                 lbl_eu_80513588, 2);
             self->field_34 = func_802B41E4(
                 &self->field_10,
-                (const f32*)&lbl_eu_80577680[0x14 + (s16)self->field_40 * 8],
+                (const f32*)&g[0x14 + (s16)self->field_40 * 8],
                 lbl_eu_80513588, 2);
             self->field_42 |= 0x100;
         }
@@ -708,19 +721,22 @@ extern "C" void func_802B3CA0(CfHikariItemRecord* self) {
         }
     }
 
+    // Tail loop walks src/dst pointers (retail r29/r28 bump by 4).
     f32* src = &self->field_20;
+    const f32* rows = (const f32*)&g[0x24];
     for (int i = 0; i < 2; i++) {
         if (self->field_42 & (0x10 << i)) {
             self->colors[2 + i] = func_802B41E4(
                 src,
-                (const f32*)&lbl_eu_80577680[0x24 + (s16)self->field_40 * 8],
+                rows + (s16)self->field_40 * 8,
                 lbl_eu_80513598, 2);
             if (r30 != 0) {
-                self->field_42 |= (0x4 << i);
+                self->field_42 = (u16)(self->field_42 | (0x4 << i));
                 lbl_eu_80664C20++;
             }
         }
-        src++;
+        src += 1;
+        rows += 4;
     }
 }
 
@@ -732,40 +748,33 @@ extern "C" void func_802B3E04(CfHikariItemRecord* self, const CfHikariQuadCorner
         return;
     }
 
-    f32 x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3;
-    x0 = self->field_00f + corners->v[0][0];
-    y0 = self->field_04f + corners->v[0][1];
-    z0 = self->field_08f + corners->v[0][2];
-    WGPIPE.f = x0;
-    WGPIPE.f = y0;
-    WGPIPE.f = z0;
+    // Direct per-vertex expressions: MWCC floats the corner loads early and
+    // keeps each sum in a scratch FPR, matching the retail lfs/fadds/stfs run.
+    // Vertex layout: xyz, color word, then the (s,t) uv byte pair.
+    WGPIPE.f = self->field_00f + corners->v[0][0];
+    WGPIPE.f = self->field_04f + corners->v[0][1];
+    WGPIPE.f = self->field_08f + corners->v[0][2];
     WGPIPE.ui = self->field_30;
     WGPIPE.uc = 1;
     WGPIPE.uc = 0;
-    x1 = self->field_00f + corners->v[1][0];
-    y1 = self->field_04f + corners->v[1][1];
-    z1 = self->field_08f + corners->v[1][2];
-    WGPIPE.f = x1;
-    WGPIPE.f = y1;
-    WGPIPE.f = z1;
+
+    WGPIPE.f = self->field_00f + corners->v[1][0];
+    WGPIPE.f = self->field_04f + corners->v[1][1];
+    WGPIPE.f = self->field_08f + corners->v[1][2];
     WGPIPE.ui = self->field_30;
     WGPIPE.uc = 1;
     WGPIPE.uc = 1;
-    x2 = self->field_00f + corners->v[2][0];
-    y2 = self->field_04f + corners->v[2][1];
-    z2 = self->field_08f + corners->v[2][2];
-    WGPIPE.f = x2;
-    WGPIPE.f = y2;
-    WGPIPE.f = z2;
+
+    WGPIPE.f = self->field_00f + corners->v[2][0];
+    WGPIPE.f = self->field_04f + corners->v[2][1];
+    WGPIPE.f = self->field_08f + corners->v[2][2];
     WGPIPE.ui = self->field_30;
     WGPIPE.uc = 0;
     WGPIPE.uc = 1;
-    x3 = self->field_00f + corners->v[3][0];
-    y3 = self->field_04f + corners->v[3][1];
-    z3 = self->field_08f + corners->v[3][2];
-    WGPIPE.f = x3;
-    WGPIPE.f = y3;
-    WGPIPE.f = z3;
+
+    WGPIPE.f = self->field_00f + corners->v[3][0];
+    WGPIPE.f = self->field_04f + corners->v[3][1];
+    WGPIPE.f = self->field_08f + corners->v[3][2];
     WGPIPE.ui = self->field_30;
     WGPIPE.uc = 0;
     WGPIPE.uc = 0;
@@ -778,37 +787,39 @@ extern "C" void func_802B3F20(CfHikariItemRecord* self, const CfHikariQuadCorner
         return;
     }
 
-    f32 x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3;
-    x0 = self->field_00f + corners->v[0][0];
-    y0 = self->field_04f + corners->v[0][1];
-    z0 = self->field_08f + corners->v[0][2];
+    f32 x0 = self->field_00f + corners->v[0][0];
+    f32 y0 = self->field_04f + corners->v[0][1];
+    f32 z0 = self->field_08f + corners->v[0][2];
     WGPIPE.f = x0;
     WGPIPE.f = y0;
     WGPIPE.f = z0;
     WGPIPE.ui = self->field_34;
     WGPIPE.uc = 1;
     WGPIPE.uc = 0;
-    x1 = self->field_00f + corners->v[1][0];
-    y1 = self->field_04f + corners->v[1][1];
-    z1 = self->field_08f + corners->v[1][2];
+
+    f32 x1 = self->field_00f + corners->v[1][0];
+    f32 y1 = self->field_04f + corners->v[1][1];
+    f32 z1 = self->field_08f + corners->v[1][2];
     WGPIPE.f = x1;
     WGPIPE.f = y1;
     WGPIPE.f = z1;
     WGPIPE.ui = self->field_34;
     WGPIPE.uc = 1;
     WGPIPE.uc = 1;
-    x2 = self->field_00f + corners->v[2][0];
-    y2 = self->field_04f + corners->v[2][1];
-    z2 = self->field_08f + corners->v[2][2];
+
+    f32 x2 = self->field_00f + corners->v[2][0];
+    f32 y2 = self->field_04f + corners->v[2][1];
+    f32 z2 = self->field_08f + corners->v[2][2];
     WGPIPE.f = x2;
     WGPIPE.f = y2;
     WGPIPE.f = z2;
     WGPIPE.ui = self->field_34;
     WGPIPE.uc = 0;
     WGPIPE.uc = 1;
-    x3 = self->field_00f + corners->v[3][0];
-    y3 = self->field_04f + corners->v[3][1];
-    z3 = self->field_08f + corners->v[3][2];
+
+    f32 x3 = self->field_00f + corners->v[3][0];
+    f32 y3 = self->field_04f + corners->v[3][1];
+    f32 z3 = self->field_08f + corners->v[3][2];
     WGPIPE.f = x3;
     WGPIPE.f = y3;
     WGPIPE.f = z3;
@@ -827,10 +838,14 @@ extern "C" void func_802B403C(CfHikariItemRecord* self,
 // linearly blended.  The packed result is B | (G<<8) | (R<<16) | (A<<24).
 // The threshold scan uses a walking pointer (retail mr/addi on the table base)
 // while the weight lookup re-indexes from the base (lfsx) - keep both forms.
-extern "C" u32 func_802B41E4(f32* self, const f32* rows, const f32* table, int count) {
+// noinline: retail always calls this (never inlines it into the quad
+// emitters); leaving it inlineable perturbs the callers' register allocation.
+extern "C" __declspec(noinline) u32 func_802B41E4(f32* self, const f32* rows, const f32* table, int count) {
     f32 out[4];
+    // End-pointer threshold check (retail add/lfs -4(r7)).
+    const f32* end = table + count;
 
-    if (self[0] >= table[count - 1]) {
+    if (self[0] >= end[-1]) {
         self[0] = lbl_eu_80668EF8;
         out[0] = rows[0];
         out[1] = rows[1];
@@ -838,7 +853,7 @@ extern "C" u32 func_802B41E4(f32* self, const f32* rows, const f32* table, int c
         out[3] = rows[3];
     } else {
         const f32* t = table;
-        f32 prev = 0.0f;
+        f32 prev = lbl_eu_80668EF8; // zero constant loaded via lfs like retail
         for (int i = 0; i < count; i++) {
             if (self[0] <= *t) {
                 f32 inv = lbl_eu_80668F54 - (self[0] - prev) * table[i + count];
@@ -865,7 +880,9 @@ extern "C" u32 func_802B41E4(f32* self, const f32* rows, const f32* table, int c
 // for the +0x10 axis) with a zeroed +0x18 accumulator.  Field 0x14 is written
 // before 0x18 so MWCC schedules the last mtRand call ahead of the zero store
 // (retail order: call, conversion, 0x18 store, 0x14 store).
-extern "C" void func_802B4358(CfHikariItemRecord* self, const u32* src, u16 val, f32 scale) {
+// noinline: retail calls this (bl from func_802B3568 / func_802B3810); leaving
+// it inlineable makes MWCC absorb it into the spawn caller.
+extern "C" __declspec(noinline) void func_802B4358(CfHikariItemRecord* self, const u32* src, u16 val, f32 scale) {
     self->field_1C_h[0] = 0;
     self->field_1C_h[1] = val;
     self->field_00 = src[0];
@@ -983,83 +1000,78 @@ extern "C" void func_802B44C8(CfHikariItemRecord* self, const CfHikariQuadCorner
 
 // Target 4 (us-802b7150): static-init the .bss gradient table.  Four
 // 16-float rows at +0x10/+0x50/+0x90/+0xd0 of lbl_eu_80577680 (func_802B3CA0
-// reads the first three rows indexed by field_40).  The sdata2 constants are
-// referenced by name so MWCC loads each once (lfs) and CSEs them into FPRs.
-// Note: retail materialises the four row bases as addi (r6/r5/r4/r3) with
-// the first store of each row folded to the block-base displacement; every
-// hand-written store form folds the row bases into the base register instead
-// (4 addi's short), so this is a fixed-codegen residual.
+// reads the first three rows indexed by field_40).  Access goes through a
+// 16-float-stride row pointer so MWCC materialises one addi row base per row
+// (retail r6/r5/r4/r3) instead of folding everything into block-relative
+// displacements.
 void sinit_802B46E0() {
-    f32* row0 = (f32*)&lbl_eu_80577680[0x10 / 4]; // +0x10
-    f32* row1 = (f32*)&lbl_eu_80577680[0x50 / 4]; // +0x50
-    f32* row2 = (f32*)&lbl_eu_80577680[0x90 / 4]; // +0x90
-    f32* row3 = (f32*)&lbl_eu_80577680[0xd0 / 4]; // +0xd0
+    f32 (*rows)[16] = (f32 (*)[16])&lbl_eu_80577680[0x10 / 4];
 
-    row0[0] = lbl_eu_80668F70;
-    row0[1] = lbl_eu_80668F74;
-    row0[2] = lbl_eu_80668F78;
-    row0[3] = lbl_eu_80668F7C;
-    row0[4] = lbl_eu_80668F70;
-    row0[5] = lbl_eu_80668F80;
-    row0[6] = lbl_eu_80668F84;
-    row0[7] = lbl_eu_80668F7C;
-    row0[8] = lbl_eu_80668F88;
-    row0[9] = lbl_eu_80668F8C;
-    row0[10] = lbl_eu_80668F70;
-    row0[11] = lbl_eu_80668F90;
-    row0[12] = lbl_eu_80668F94;
-    row0[13] = lbl_eu_80668F98;
-    row0[14] = lbl_eu_80668F70;
-    row0[15] = lbl_eu_80668F90;
+    rows[0][0] = lbl_eu_80668F70;
+    rows[0][1] = lbl_eu_80668F74;
+    rows[0][2] = lbl_eu_80668F78;
+    rows[0][3] = lbl_eu_80668F7C;
+    rows[0][4] = lbl_eu_80668F70;
+    rows[0][5] = lbl_eu_80668F80;
+    rows[0][6] = lbl_eu_80668F84;
+    rows[0][7] = lbl_eu_80668F7C;
+    rows[0][8] = lbl_eu_80668F88;
+    rows[0][9] = lbl_eu_80668F8C;
+    rows[0][10] = lbl_eu_80668F70;
+    rows[0][11] = lbl_eu_80668F90;
+    rows[0][12] = lbl_eu_80668F94;
+    rows[0][13] = lbl_eu_80668F98;
+    rows[0][14] = lbl_eu_80668F70;
+    rows[0][15] = lbl_eu_80668F90;
 
-    row1[0] = lbl_eu_80668F70;
-    row1[1] = lbl_eu_80668F9C;
-    row1[2] = lbl_eu_80668F98;
-    row1[3] = lbl_eu_80668F70;
-    row1[4] = lbl_eu_80668F70;
-    row1[5] = lbl_eu_80668FA0;
-    row1[6] = lbl_eu_80668FA4;
-    row1[7] = lbl_eu_80668F70;
-    row1[8] = lbl_eu_80668FA8;
-    row1[9] = lbl_eu_80668F70;
-    row1[10] = lbl_eu_80668F70;
-    row1[11] = lbl_eu_80668F70;
-    row1[12] = lbl_eu_80668F98;
-    row1[13] = lbl_eu_80668F70;
-    row1[14] = lbl_eu_80668F70;
-    row1[15] = lbl_eu_80668F70;
+    rows[1][0] = lbl_eu_80668F70;
+    rows[1][1] = lbl_eu_80668F9C;
+    rows[1][2] = lbl_eu_80668F98;
+    rows[1][3] = lbl_eu_80668F70;
+    rows[1][4] = lbl_eu_80668F70;
+    rows[1][5] = lbl_eu_80668FA0;
+    rows[1][6] = lbl_eu_80668FA4;
+    rows[1][7] = lbl_eu_80668F70;
+    rows[1][8] = lbl_eu_80668FA8;
+    rows[1][9] = lbl_eu_80668F70;
+    rows[1][10] = lbl_eu_80668F70;
+    rows[1][11] = lbl_eu_80668F70;
+    rows[1][12] = lbl_eu_80668F98;
+    rows[1][13] = lbl_eu_80668F70;
+    rows[1][14] = lbl_eu_80668F70;
+    rows[1][15] = lbl_eu_80668F70;
 
-    row2[0] = lbl_eu_80668F70;
-    row2[1] = lbl_eu_80668F74;
-    row2[2] = lbl_eu_80668F78;
-    row2[3] = lbl_eu_80668EF8;
-    row2[4] = lbl_eu_80668F70;
-    row2[5] = lbl_eu_80668F74;
-    row2[6] = lbl_eu_80668F78;
-    row2[7] = lbl_eu_80668FAC;
-    row2[8] = lbl_eu_80668F88;
-    row2[9] = lbl_eu_80668F8C;
-    row2[10] = lbl_eu_80668F70;
-    row2[11] = lbl_eu_80668EF8;
-    row2[12] = lbl_eu_80668F88;
-    row2[13] = lbl_eu_80668F8C;
-    row2[14] = lbl_eu_80668F70;
-    row2[15] = lbl_eu_80668FAC;
+    rows[2][0] = lbl_eu_80668F70;
+    rows[2][1] = lbl_eu_80668F74;
+    rows[2][2] = lbl_eu_80668F78;
+    rows[2][3] = lbl_eu_80668EF8;
+    rows[2][4] = lbl_eu_80668F70;
+    rows[2][5] = lbl_eu_80668F74;
+    rows[2][6] = lbl_eu_80668F78;
+    rows[2][7] = lbl_eu_80668FAC;
+    rows[2][8] = lbl_eu_80668F88;
+    rows[2][9] = lbl_eu_80668F8C;
+    rows[2][10] = lbl_eu_80668F70;
+    rows[2][11] = lbl_eu_80668EF8;
+    rows[2][12] = lbl_eu_80668F88;
+    rows[2][13] = lbl_eu_80668F8C;
+    rows[2][14] = lbl_eu_80668F70;
+    rows[2][15] = lbl_eu_80668FAC;
 
-    row3[0] = lbl_eu_80668F70;
-    row3[1] = lbl_eu_80668FB0;
-    row3[2] = lbl_eu_80668F90;
-    row3[3] = lbl_eu_80668EF8;
-    row3[4] = lbl_eu_80668F70;
-    row3[5] = lbl_eu_80668FA0;
-    row3[6] = lbl_eu_80668FA4;
-    row3[7] = lbl_eu_80668F70;
-    row3[8] = lbl_eu_80668F88;
-    row3[9] = lbl_eu_80668FB4;
-    row3[10] = lbl_eu_80668F70;
-    row3[11] = lbl_eu_80668EF8;
-    row3[12] = lbl_eu_80668F98;
-    row3[13] = lbl_eu_80668FAC;
-    row3[14] = lbl_eu_80668F70;
-    row3[15] = lbl_eu_80668F70;
+    rows[3][0] = lbl_eu_80668F70;
+    rows[3][1] = lbl_eu_80668FB0;
+    rows[3][2] = lbl_eu_80668F90;
+    rows[3][3] = lbl_eu_80668EF8;
+    rows[3][4] = lbl_eu_80668F70;
+    rows[3][5] = lbl_eu_80668FA0;
+    rows[3][6] = lbl_eu_80668FA4;
+    rows[3][7] = lbl_eu_80668F70;
+    rows[3][8] = lbl_eu_80668F88;
+    rows[3][9] = lbl_eu_80668FB4;
+    rows[3][10] = lbl_eu_80668F70;
+    rows[3][11] = lbl_eu_80668EF8;
+    rows[3][12] = lbl_eu_80668F98;
+    rows[3][13] = lbl_eu_80668FAC;
+    rows[3][14] = lbl_eu_80668F70;
+    rows[3][15] = lbl_eu_80668F70;
 }

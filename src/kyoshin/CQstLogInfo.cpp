@@ -423,8 +423,7 @@ extern "C" __declspec(noinline) void func_80229CF0(CQstLogInfo* self,
                           &lbl_eu_8050A0B4[0xda], true), 1);
         func_80124270(self->mUnk20->GetRootPane()->FindPaneByName(
                           &lbl_eu_8050A0B4[0xe7], true), 1);
-        u32 vv = (s32)v >= 0xFC ? v - 1 : v;
-        u32 odd = vv & 1;
+        u32 odd = ((s32)v >= 0xFC ? v - 1 : v) & 1;
         void* r28 = func_801412D0(key);
         u32 notOdd = !odd;
         if (func_80140854(r28, notOdd, 0) != 0) {

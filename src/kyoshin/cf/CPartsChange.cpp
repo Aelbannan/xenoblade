@@ -7,7 +7,6 @@
 #include "monolib/util/CPathUtil.hpp"
 #include "kyoshin/code_802B8A3C.hpp"
 #include "kyoshin/cf/CfResPcImpl.hpp"
-#include "kyoshin/CUIWindowManager.hpp"
 #include <nw4r/math/math_triangular.h>
 #include "monolib/math/Random.hpp"
 
@@ -172,8 +171,9 @@ void func_801931D0(CfPartsElem4C* self) {
                                        lbl_eu_80664184);
     u8 b = *(const u8*)&val;
     if (b == 0) b = 1;
+    f32 scale = lbl_eu_80667ABC * (f32)(u32)b;
     self->field_14 = lbl_eu_80667AC0;
-    self->field_10 = lbl_eu_80667AB8 * (lbl_eu_80667ABC * (f32)(u32)b);
+    self->field_10 = lbl_eu_80667AB8 * scale;
     memset(&self->field_42[0], 0, 9);
 }
 
@@ -252,25 +252,25 @@ void* __dt__reslist_cf_CfPartyInfo(CfPartyListBase* self, int mode) {
     CfPartyListNode* prev;
     // Doubled null check mirrors retail: MWCC keeps the dead second beq
     // (same shape as the matched IResInfo / CfMapMineManager reslist dtors).
-    if (self != NULL) {
-        if (self != NULL) {
+    if (self != 0) {
+        if (self != 0) {
             self->vtable = lbl_eu_80532AE4;
             cur = self->mStartNodePtr->mNext;
             while (cur != self->mStartNodePtr) {
                 prev = cur;
                 cur = cur->mNext;
-                prev->mNext = NULL;
+                prev->mNext = 0;
             }
             self->mStartNodePtr->mNext = self->mStartNodePtr;
             self->mStartNodePtr->mPrev = self->mStartNodePtr;
-            if (self->mOwnsList == 0 && self->mList != NULL) {
+            if (self->mOwnsList == 0 && self->mList != 0) {
                 delete[] self->mList;
-                self->mList = NULL;
+                self->mList = 0;
             }
         }
-    }
-    if (mode > 0) {
-        delete self;
+        if (mode > 0) {
+            delete self;
+        }
     }
     return self;
 }
@@ -366,9 +366,9 @@ void func_80193710(CfPartsChgObj* self) {
     if (arr == 0) return;
     if (!(self->field_3F00 & 0x4)) return;
     if (self->field_45C0 == 0) return;
-    int h = self->field_456C >> 4;
+    int h = self->field_456C; // load hoisted above the vtable call (retail)
     self->vt->_v0A8(1);
-    u16 id = (u16)h;
+    u16 id = (u16)(h >> 4);
     CfPartsElem4C* result;
     if (id != 0) {
         const CfPartsElem4C* p = arr->mElems;
@@ -431,17 +431,22 @@ extern "C" void func_80193810(CfPartsManager* self) {
     }
     self->mElems.mCount = 0;
     self->field_A804 = 0;
+    // prev declared before cur: MWCC allocates these loop locals in reverse
+    // declaration order here (prev -> r5, cur -> r4, matching retail).
+    CfPartyListNode* prev;
     CfPartyListNode* cur = self->mPartyList.mStartNodePtr->mNext;
     while (cur != self->mPartyList.mStartNodePtr) {
-        CfPartyListNode* prev = cur;
+        prev = cur;
         cur = cur->mNext;
         prev->mNext = 0;
     }
     self->mPartyList.mStartNodePtr->mNext = self->mPartyList.mStartNodePtr;
     self->mPartyList.mStartNodePtr->mPrev = self->mPartyList.mStartNodePtr;
     memset(self->mTable, 0, 0xa40);
-    self->field_B272 = 5;
+    // Adjacent u16 stores: MWCC reverses the source order here, so write
+    // B270 before B272 to land retail's B272-then-B270 store sequence.
     self->field_B270 = 1;
+    self->field_B272 = 5;
     self->field_B274 = 0;
     lbl_eu_80664314 = 0;
 }
@@ -579,18 +584,19 @@ u16 CfActorAccessors::func_80193CC8() { return mField9E; }
 // The id==0 path jumps straight to the shared epilogue in retail, so the scan
 // is nested in `if (id != 0)` rather than an early return.
 u32 func_80193CD0(CfPartsListA80C* self, CfPartsIdView* other) {
+    CfPartsNode* cur;
     u32 result = 0;
     u16 id = other->field_45C0;
     if (id != 0) {
-        CfPartsNode* head = self->head;
-        CfPartsNode* cur = head->next;
-        while (cur != head) {
-            if (cur->data->field_94 == id) {
-                result = (u32)func_800B708C(cur->data->field_00);
-                if (result != 0) result -= 0x3E9C;
+        // head/data are loop-invariant member reads; writing them through
+        // self/cur lets MWCC hoist them into the dead arg registers (r3/r4).
+        for (cur = self->head->next; cur != self->head; cur = cur->next) {
+            if (id == cur->data->field_94) {
+                u32 p = (u32)func_800B708C(cur->data->field_00);
+                if (p != 0) p -= 0x3E9C;
+                result = p;
                 break;
             }
-            cur = cur->next;
         }
     }
     return result;
@@ -841,14 +847,14 @@ CfPartsChgObj3F04* func_80194610(CfPartsManager* mgr, u32 arg2, u32 arg3,
         u32 v2 = getBdatStringColumnValue(bdat, lbl_eu_80503C48 + 0x54, arg3);
         r28 = *(const u16*)&v2;
     }
-    CfPlayerPosView* player = (CfPlayerPosView*)getPlayer__Q22cf13CfGameManagerFi(0);
-    int ok = func_800B99BC(player->vt->vfAC(player), &local14, 1, (src->field_1E >> 6) & 1,
+    CfPlayerVtACIf* player = (CfPlayerVtACIf*)getPlayer__Q22cf13CfGameManagerFi(0);
+    int ok = func_800B99BC(player->vfAC(), &local14, 1, (src->field_1E >> 6) & 1,
                            &local18, &local8, lbl_eu_80667B08 + mgr->field_B268);
     if (src->field_20 & 0x10) {
         ok = 1;
     } else if (src->field_20 & 0x40) {
         f32 thresh = lbl_eu_80667B0C * lbl_eu_80663ED0;
-        ml::CVec3* p2 = player->vt->vfAC(player);
+        ml::CVec3* p2 = player->vfAC();
         ok = ml::math::abs(p2->y - local14.y) < thresh;
     }
     if (!ok) return 0;
@@ -857,11 +863,11 @@ CfPartsChgObj3F04* func_80194610(CfPartsManager* mgr, u32 arg2, u32 arg3,
     if (obj != 0) obj = (CfPartsChgObj3F04*)((u8*)obj - 0x3E9C);
     if (obj != 0) {
         if (bval != 0) {
-            obj->mSub.vt->vfB8(&obj->mSub, &local14, lbl_eu_80667B10);
+            obj->mSub.vfB8(&local14, lbl_eu_80667B10);
         } else {
             obj->field_3F00 |= 0x00080000;
-            obj->mSub.vt->vf150(&obj->mSub, 1);
-            obj->mSub.vt->vfA8(&obj->mSub, &local14);
+            obj->mSub.vf150(1);
+            obj->mSub.vfA8(&local14);
         }
         if (flag == 0) {
             if ((src->field_24 & 0x10) != 0 && (src->field_1E & 0x10) == 0) {
@@ -885,7 +891,7 @@ CfPartsChgObj3F04* func_80194610(CfPartsManager* mgr, u32 arg2, u32 arg3,
         if (flag == 0) {
             obj->field_3F04 |= 0x00040000;
         }
-        obj->mSub.vt->vfD0(&obj->mSub, (f32)(s32)r28);
+        obj->mSub.vfD0((f32)(s32)r28);
         obj->field_456C = (u16)(((u16)arg3 << 4) + arg4);
         u32 v3 = getBdatStringColumnValue(bdat, lbl_eu_80503C48 + 0x64, arg3);
         obj->field_45C2 = *(const u16*)&v3;
@@ -893,7 +899,30 @@ CfPartsChgObj3F04* func_80194610(CfPartsManager* mgr, u32 arg2, u32 arg3,
     return obj;
 }
 
-int func_801949E0(u32 a, u8 b) { return 0; }
+// Stage/flag gate used by func_80194D5C: stage 0 always passes. Otherwise
+// the presentation mode from func_8016E08C must match the flag-selected
+// expectation (bit 0x40 -> mode 0, bit 0x10 -> mode 1, bit 0x20 -> mode 2),
+// and then the low flag nibble must contain the bit matching the stage
+// (stage n -> bit 1 << (n-1)); an empty nibble passes unconditionally.
+extern "C" int func_801949E0(u32 flags, u8 stage) {
+    if (stage == 0) return 1;
+    u32 mode = func_8016E08C();
+    int ok = 0;
+    if (flags & 0x40) {
+        if ((u16)mode == 0) ok = 1;
+    } else if (flags & 0x10) {
+        if ((u16)mode == 1) ok = 1;
+    } else if (flags & 0x20) {
+        if ((u16)mode == 2) ok = 1;
+    }
+    if (ok == 0) return 0;
+    if ((flags & 0xF) == 0) return 1;
+    if ((flags & 1) && stage == 1) return 1;
+    if ((flags & 2) && stage == 2) return 1;
+    if ((flags & 4) && stage == 3) return 1;
+    if ((flags & 8) && stage == 4) return 1;
+    return 0;
+}
 
 // Party-drop scan: walk the actor list (func_800B6BC8) and for each element
 // whose +0x6D0 id (shifted right 4) is nonzero, verify the party-count
@@ -1091,13 +1120,15 @@ void func_8019514C(CfPartsManager* self) {
         if ((e->field_1E & 0x4) == 0 && e->field_10 > lbl_eu_80667AD4 &&
             (e->field_1E & 0x800) == 0) {
             e->field_10 -= step;
-            if (e->field_10 <= lbl_eu_80667AD4) {
+            // Retail keeps memset outside the clamp-if: it runs whenever the
+            // decay block was entered, not only on the clamp path.
+            if (!(e->field_10 > lbl_eu_80667AD4)) {
                 e->field_10 = lbl_eu_80667AD4;
                 if ((e->field_1E & 0x200) && (e->field_1E & 0x80)) {
                     e->field_1E |= 0x20;
                 }
-                memset(&e->field_30[0], 0, 9);
             }
+            memset(&e->field_30[0], 0, 9);
         }
     }
 }
@@ -1672,8 +1703,8 @@ CfPartsElem4C* func_801974CC(CfPartsElemArray* self, CfPartsFlagView* other) {
         if (h != 0) {
             u16 id = (u16)h;
             const CfPartsElem4C* p = self->mElems;
-            for (u32 i = 0; i < self->mCount; i++, p++) {
-                if (p->field_1C == id) return &self->mElems[i];
+            for (u32 i = 0; i < self->mCount; p++, i++) {
+                if (id == p->field_1C) return &self->mElems[i];
             }
         }
         return 0;
@@ -1705,13 +1736,13 @@ extern "C" void func_80197538(unsigned long manager, int arg) {
     CfPartsChgObjFull* obj;         // r31
     int active;                     // r30
     int busy;                       // r29
+    CfPartsElem4C* elem;            // second part (reuses obj's r31 once dead)
     const CfPartsListEntry* p;      // r28 (mEntries walk)
     void* bm;                       // r27
     CfElemA4Full* tbl;              // r26
     int j;                          // r25
     CfPartsChgObjFull* actor;       // r24
     CfPartsManager* mgr;            // r23
-    CfPartsElem4C* elem;            // second part (reuses obj's r31 once dead)
     actor = (CfPartsChgObjFull*)arg;
     mgr = (CfPartsManager*)manager;
     if (!(actor->field_3F00 & 4)) return;
@@ -1722,11 +1753,11 @@ extern "C" void func_80197538(unsigned long manager, int arg) {
     if (actor->field_3F00 & 0x04000000) {
         bm = getInstance__Q22cf14CBattleManagerFv();
         if (active == 0) {
-            tbl = 0;
             u16 id = actor->field_45C0;
+            tbl = 0;
             if (id != 0) {
                 for (u32 i = 0; i < 16; i++) {
-                    if (mgr->mTable[i].field_94 == id) {
+                    if (id == mgr->mTable[i].field_94) {
                         tbl = (CfElemA4Full*)&mgr->mTable[i];
                         break;
                     }
@@ -2225,8 +2256,8 @@ void func_80198524(CfPartsSlots* slots) {
     } else {
         slots->field_98 = 0;
     }
-    void* bdat = lbl_eu_806640CC;
     const char* col = lbl_eu_80503C48 + 0x40;
+    void* bdat = lbl_eu_806640CC;
     for (int j = 0; j < 16; j++) {
         u32 p = (u32)func_800B708C(slots->mEntries[j].field_00);
         if (p != 0) p -= 0x3E9C;
@@ -2420,7 +2451,28 @@ void func_80198AE0(CfPartsMoveSrc* src, CfPartsTri* dst) {
     func_801987A4((CfPartsTri*)src, dst);
 }
 
-void func_80198C24(){}
+// Rotate helper (parity-split turn offset, retail func_80198C24): copy the
+// triple, then mag = (f32)(s32)((field_14 - 1) >> 1) * field_1C + field_1C.
+// Odd field_14 adds mag*sin/cos(scale*(field_18 + pi/2)) onto x/z; even
+// subtracts it; then tail into the party-info processor.
+extern "C" void func_80198C24(CfPartsMoveSrc* src, CfPartsTri* dst) {
+    u32 w0 = src->field_00;
+    u32 w1 = src->field_04;
+    dst->field_04 = w1;
+    dst->field_00 = w0;
+    dst->field_08 = src->field_08;
+    f32 t = (f32)((src->field_14 - 1) >> 1);
+    f32 mag = t * src->field_1C + src->field_1C;
+    f32 angle = src->field_18 + lbl_eu_8066A200;
+    if (src->field_14 & 1) {
+        *(f32*)&dst->field_00 += mag * nw4r::math::SinFIdx(lbl_eu_80667B50 * angle);
+        *(f32*)&dst->field_08 += mag * nw4r::math::CosFIdx(lbl_eu_80667B50 * angle);
+    } else {
+        *(f32*)&dst->field_00 -= mag * nw4r::math::SinFIdx(lbl_eu_80667B50 * angle);
+        *(f32*)&dst->field_08 -= mag * nw4r::math::CosFIdx(lbl_eu_80667B50 * angle);
+    }
+    func_801987A4((CfPartsTri*)src, dst);
+}
 
 // Copy the 12-byte triple, then rotate the destination x/z by the source's
 // turn index: angle = FIdx-scale * field_18, magnitude = (s32)field_14 *
@@ -2435,7 +2487,8 @@ extern "C" void func_80198D44(CfPartsMoveSrc* src, CfPartsTri* dst) {
     dst->field_00 = w0;
     dst->field_08 = src->field_08;
     f32 angle = lbl_eu_80667B50 * src->field_18;
-    f32 mag = (f32)(s32)src->field_14 * src->field_1C;
+    f32 fv = (f32)(s32)src->field_14;
+    f32 mag = fv * src->field_1C;
     *(f32*)&dst->field_00 -= mag * nw4r::math::SinFIdx(angle);
     *(f32*)&dst->field_08 -= mag * nw4r::math::CosFIdx(lbl_eu_80667B50 * src->field_18);
     func_801987A4((CfPartsTri*)src, dst);
@@ -2550,21 +2603,24 @@ void func_8019922C(CfPartsMoveSrc* src, CfPartsTri* dst) {
     dst->field_04 = w1;
     dst->field_00 = w0;
     dst->field_08 = src->field_08;
+    f32 mag;
     f32 ang = src->field_18;
-    f32 mag = src->field_1C;
+    mag = src->field_1C;
     if ((src->field_14 - 1) % 3 == 0) {
         ang -= lbl_eu_8066A204;
     } else if ((src->field_14 - 1) % 3 == 1) {
         ang += lbl_eu_8066A204;
     } else {
-        f32 d = mag * mag + mag * mag;
-        if (!(d >= lbl_eu_80667B28)) {
+        // d is re-evaluated inline at each use (retail recomputes mag*mag+mag*mag
+        // before the warning check, the clamp test, and inside the FrSqrt arm).
+        if (!(mag * mag + mag * mag >= lbl_eu_80667B28)) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
-        mag = d <= lbl_eu_80667B28 ? lbl_eu_80667B28
-                                   : d * nw4r::math::FrSqrt(d);
+        mag = mag * mag + mag * mag <= lbl_eu_80667B28
+                  ? lbl_eu_80667B28
+                  : (mag * mag + mag * mag) * nw4r::math::FrSqrt(mag * mag + mag * mag);
     }
-    mag = (f32)(u32)((src->field_14 - 1) / 3) * mag + mag;
+    mag = (f32)((src->field_14 - 1) / 3) * mag + mag;
     *(f32*)&dst->field_00 -= mag * nw4r::math::SinFIdx(lbl_eu_80667B50 * ang);
     *(f32*)&dst->field_08 -= mag * nw4r::math::CosFIdx(lbl_eu_80667B50 * ang);
     func_801987A4((CfPartsTri*)src, dst);

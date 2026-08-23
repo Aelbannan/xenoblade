@@ -184,9 +184,13 @@ extern u32 lbl_eu_80663E28;
 
 // Pane size/position step factor used by func_801B5630's pane adjustments
 // (.sdata2). Sibling lbl_eu_80667E18 is the int->double conversion magic
-// (0x4330000080000000) that MWCC emits for the (f32)(s32) casts there.
+// (0x43300000_80000000) that MWCC emits for the (f32)(s32) casts there.
+// C linkage required: a plain C++ `extern const f64` gets internalized into
+// an anonymous literal pool by MWCC (reloc name @12630).
+// Plain (non-const) extern: a `const f64` reference gets internalized by
+// MWCC into an anonymous literal pool (@12670), breaking the reloc name.
 extern f32 lbl_eu_80667E14;
-extern const f64 lbl_eu_80667E18;
+extern f64 lbl_eu_80667E18;
 
 // Anim frame target used by Move's open/close states (func_80137444 /
 // func_80137510 argument), plus the rank-window size/position constants
@@ -206,6 +210,11 @@ extern const f64 lbl_eu_80667E08;
 // handlers (func_801B6184 / func_801B69F4) and func_801B7A58.
 extern u32 lbl_eu_806640F4;
 extern u32 lbl_eu_806640F8;
+
+// Item-table pointer + fallback name-table font pointer used by
+// func_801B76CC's description/rank text lookups (.sbss).
+extern void* lbl_eu_80664104;
+extern void* lbl_eu_806640A8;
 
 // Minimal CTaskGame decl (same shape as CSystemWindow.hpp) - only the
 // statics cbRenderBefore consumes.
@@ -275,7 +284,6 @@ extern "C" u32 func_80133E58(u8 self, u8 arg1, u8 arg2);
 // Rank-window geometry helpers (CItemBoxInfo.cpp family).
 extern "C" f32 func_8013B380(u32 idx);
 extern "C" void func_80139C98(u16 a, u16 b, int c, f32 d);
-extern "C" u16 func_800A082C(u32 a);
 extern "C" void func_80137F88(void* pane, void* tex); // pane texture setter
 extern "C" void func_800B7320(u32 obj);             // action-source teardown (Term, after the lbl_eu_80663E24 clear)
 extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane* a,

@@ -48,7 +48,7 @@ extern u32 lbl_eu_80539A3C[7];
 // the factory copies wholesale from lbl_eu_80539A30. Same layout as the first
 // three CVS_THREAD words; only used to avoid anonymous-field access here.
 struct CVS_THREAD_CHAIN_INIT {
-    u32* word0;  // 0x00
+    u32 word0;  // 0x00
     u32 word1;   // 0x04
     u32 word2;   // 0x08
 };

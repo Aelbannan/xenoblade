@@ -2,16 +2,16 @@
 
 #include <types.h>
 #include "libs/monolib/src/scn/CScnLightMan.hpp"
+#include "libs/monolib/src/scn/CScnEnvLgtCtrl.hpp"
 
-extern "C" {
-    extern u32 lbl_eu_8056E568[];   // CScnLightMan vtable
-    extern CScnItemLight* func_80482398(CScnLightParam* self, int val, CScnLightMan* owner);
-    extern CScnLightList* func_8048C698(void* self, int kind);
-    extern void func_804954AC(void* self, int val);
-    extern void func_804959E8(void* self, int val);
-    // Retail references this helper under its unmangled C name.
-    extern void func_804BF944(void* self);
-}
+extern u32 lbl_eu_8056E568[];   // CScnLightMan vtable
+// Flat retail helpers (C linkage keeps the exact retail symbol names).
+extern "C" CScnItemLight* func_80482398(u8* param, int val);
+extern "C" CScnLightList* func_8048C698(u8* pool, int kind);  // scene-pool list accessor
+extern "C" void func_804954AC(u8* self, int val);
+extern "C" void func_804959E8(u8* self, int val);
+// Retail references this helper under its unmangled C name.
+extern "C" void func_804BF944(u8* self);
 
 // Selects the active light: if the current pool light is armed, deactivate
 // its param block (func_804959E8) and clear the arm flag.
@@ -24,14 +24,17 @@ extern "C" void func_8048D160(CScnLightMan* self) {
     }
 }
 
+// Flat retail symbol (no class-size mangling), so it cannot be a regular
+// mangled member ctor; returns self.
 extern "C" CScnLightMan* __ct__CScnLightMan(CScnLightMan* self, CScnLightParam* param) {
     CScnItemLight* item;
 
     *(void**)self = (void*)lbl_eu_8056E568;
-    self->mLight = func_80482398(param, 0, self);
     self->mParam = param;
+    item = func_80482398((u8*)param, 0);
+    self->mLight = item;
 
-    // Walk the scene pool's light-item list; keep the first item whose id is
+    // Walk the scene pool's light-item list; keep the last item whose id is
     // zero as the active light (the one that gets armed by func_804954AC).
     CScnLightList* list = func_8048C698(self->mParam->mPool, 3);
     CScnLightNode* node = list->sentinel->next;
@@ -50,9 +53,9 @@ CScnLightMan::~CScnLightMan() {}
 
 // Arms the selected light item: runs the helper on arg2, then sets the arm
 // flag (+0x121c) of the item pointer held at +0x8 of arg1.
-extern "C" void func_8048D124(void* arg1, void* arg2) {
+extern "C" void func_8048D124(u8* arg1, u8* arg2) {
     func_804BF944(arg2);
-    char* ptr = *(char**)((char*)arg1 + 8);
+    char* ptr = *(char**)(arg1 + 8);
     ptr[0x121c] = 1;
 }
 
@@ -73,8 +76,8 @@ struct VTarget {
     virtual void v10() = 0;
 };
 
-extern "C" void func_8048D1B0(void* self) {
-    VTarget* obj = (VTarget*)*(void**)((u8*)self + 8);
+extern "C" void func_8048D1B0(u8* self) {
+    VTarget* obj = (VTarget*)*(void**)(self + 8);
     obj->v3();
 }
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====

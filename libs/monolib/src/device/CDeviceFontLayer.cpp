@@ -17,6 +17,8 @@
 #include <revolution/GX.h>
 #include "monolib/core/CDrawGX.hpp"
 #include "monolib/math.hpp"
+#include "monolib/util/MemManager.hpp"
+#include <new>
 #include <decomp.h>
 
 // ---------------------------------------------------------------------------
@@ -80,8 +82,9 @@ extern "C" {
     extern void wkStandbyLogin__11CWorkThreadFv();
     extern void wkStandbyLogout__16CDeviceFontLayerFv();
     extern void wkStandbyExceptionRetry__11CWorkThreadFUl();
-    extern void __dt__reslist_const_CDeviceFontLayer_LAYER_QUE();
-    extern void __dt___reslist_base_const_CDeviceFontLayer_LAYER_QUE();
+    extern f32 lbl_eu_8066A408;
+    extern f32 lbl_eu_8066A40C;
+    extern f32 lbl_eu_8066A410;
 }
 
 
@@ -112,7 +115,19 @@ struct CDeviceFontLayerCmdNode {
     struct CDeviceFontLayerCmdData* mData; // 0x8
 };
 
-// Draw-command payload.
+// Queued draw-command record carved from the shared scratch buffer.
+struct LAYER_QUE {
+    u16 mCmd;   // 0x00
+    u16 mSize;  // 0x02
+    union {
+        u32 mArg[4]; // 0x04
+        f32 mF[4];   // 0x04
+        ml::CCol4 mCol;
+        struct { u16 mPad4; u16 mPad6; s16 mX; s16 mY; }; // 0x04
+    };
+};
+
+// Draw-command payload (replay view of a queued record).
 struct CDeviceFontLayerCmdData {
     u16 mCmd;  // 0x0
     u16 mPad2; // 0x2
@@ -140,6 +155,14 @@ struct CDrawGXColorLayout {
 // ---------------------------------------------------------------------------
 // Font layer object.
 // ---------------------------------------------------------------------------
+// Shared lazy reservation of the command-slot array (0x180 nodes x 0xC bytes
+// + item padding); the node array is zeroed in blocks of 8 (retail unroll
+// shape).
+#define FONT_LAYER_RESERVE_SLOTS(self) \
+    do { \
+        if ((self)->mQueList.mCapacity == 0) \
+            (self)->mQueList.reserve((self)->mAllocHandle); \
+    } while (0)
 // reslist node (next@0, prev@4) as embedded in the work-thread base.
 struct CWorkThreadNode {
     CWorkThreadNode* mNext; // 0x0
@@ -163,38 +186,124 @@ struct CWorkThreadChildren {
     }
 };
 
-class __declspec(novtable) CDeviceFontLayer {
+// Minimal CWorkThread base view (CDeviceFont.hpp pattern): the ctor/dtor
+// resolve directly to the retail __ct__11CWorkThreadFPCcP11CWorkThreadi /
+// __dt__11CWorkThreadFv symbols.
+class CWorkThread {
 public:
-    // 0x0-0x1c8: base (vtable / work-thread state)
-    u8 _base[0x5C];                    // 0x0 (vtable + name + state)
-    CWorkThreadChildren mChildren;     // 0x5C
-    u8 _baseTail[0x1C8 - 0x5C - 0x20]; // 0x7C (rest of work-thread state)
-    CDeviceFontLayerCmdNode* mCmdList;  // 0x1c8 (list head: next@0, prev@4)
-    u8 pad_1CC[0x1D8 - 0x1CC];
-    void* mCmdArray; // 0x1d8 (allocated command array)
-    u32 mCmdCount;   // 0x1dc
-    u8 pad_1E0[4];   // 0x1e0
+    CWorkThread(const char* pName, CWorkThread* pParent, int capacity);
+    ~CWorkThread();
+};
+
+// reslist<const LAYER_QUE*> node mirror (reslist.hpp _reslist_node).
+struct LayerQueNode {
+    LayerQueNode* mNext; // 0x0
+    LayerQueNode* mPrev; // 0x4
+    const LAYER_QUE* mItem; // 0x8
+};
+
+// Queued draw-command record appended into the shared scratch buffer.
+// (LAYER_QUE defined above)
+
+// reslist<const LAYER_QUE*> container mirror (reslist.hpp layout, 0x20 bytes)
+// as embedded at +0x1C4 of the layer.
+struct LayerQueList {
+    u32 mVtbl;                   // 0x00
+    LayerQueNode* mStartNodePtr; // 0x04
+    LayerQueNode mStartNode;     // 0x08 (embedded sentinel)
+    LayerQueNode* mList;         // 0x14 (node slot array)
+    int mCapacity;               // 0x18
+    bool field_0x1C;             // 0x1C (externally-owned flag)
+
+    void clearList() {
+        LayerQueNode* node = mStartNodePtr->mNext;
+        while (node != mStartNodePtr) {
+            LayerQueNode* prev = node;
+            node = node->mNext;
+            prev->mNext = NULL;
+        }
+        mStartNodePtr->mNext = mStartNodePtr;
+        mStartNodePtr->mPrev = mStartNodePtr;
+    }
+
+    int findFirstEmptySlotIndex() {
+        int i = 0;
+        while (i < mCapacity) {
+            if (mList[i].mNext == NULL)
+                break;
+            i++;
+        }
+        return i;
+    }
+
+    void push_back(const LAYER_QUE* item) {
+        LayerQueNode* startNode = mStartNodePtr;
+        int i = findFirstEmptySlotIndex();
+        LayerQueNode* temp = &mList[i];
+        const LAYER_QUE** ptr = &temp->mItem;
+        if (ptr != NULL) {
+            try {
+                *ptr = item;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->mNext = startNode;
+        temp->mPrev = startNode->mPrev;
+        startNode->mPrev->mNext = temp;
+        startNode->mPrev = temp;
+    }
+
+    // Lazily allocate + zero the slot array (zeroed in blocks of 8, the
+    // retail unroll shape).
+    void reserve(u32 handle) {
+        mList = (LayerQueNode*)mtl::MemManager::allocate_array(0x1200, handle);
+        for (int i = 0; i < 0x180;) {
+            mList[i + 0].mNext = NULL;
+            mList[i + 1].mNext = NULL;
+            mList[i + 2].mNext = NULL;
+            mList[i + 3].mNext = NULL;
+            mList[i + 4].mNext = NULL;
+            mList[i + 5].mNext = NULL;
+            mList[i + 6].mNext = NULL;
+            mList[i + 7].mNext = NULL;
+            i += 8;
+        }
+        mCapacity = 0x180;
+    }
+};
+
+class __declspec(novtable) CDeviceFontLayer : public CWorkThread {
+public:
+    CDeviceFontLayer(const char* pName, CWorkThread* pParent, int unk);
+    ~CDeviceFontLayer();
+
+    // 0x0-0x5C: work-thread base (retail vtable stored manually in the ctor)
+    u8 _base[0x50];                // 0x00 (vtable + name + state)
+    u32 mType;                     // 0x50 (CWorkThread::ThreadType)
+    u32 mAllocHandle;              // 0x54
+    CWorkThread* mParent;          // 0x58
+    CWorkThreadChildren mChildren; // 0x5C
+    u8 _baseTail[0x1C4 - 0x7C];   // 0x7C (flags/msgqueue/base tail)
+    LayerQueList mQueList;         // 0x1C4 (command queue)
     CDeviceFontLayerCmdNode* mCurNode; // 0x1e4
     u8 mDirty;                         // 0x1e8
     u8 pad_1E9[3];
     f32 mScaleX; // 0x1ec
     f32 mScaleY; // 0x1f0
     u32 mFontId; // 0x1f4
-    u8 pad_1F8[4]; // 0x1f8
+    u32 field_0x1F8; // 0x1f8
     u8 mFlag1FC;   // 0x1fc
     u8 pad_1FD[3];
     ml::CCol4 mColor;   // 0x200
     ml::CCol4 mBgColor; // 0x210
-    CDrawGX mDrawGX;    // 0x220
+    // Raw storage for the embedded CDrawGX at 0x220: constructed/destructed
+    // explicitly so the ctor keeps the retail initialization order.
+    u8 mDrawGXBuf[sizeof(CDrawGX)];
+    CDrawGX* drawGX() { return (CDrawGX*)mDrawGXBuf; }
     u8 mFlag2F0;        // 0x2F0 (read by wkUpdate)
 
-    // Stub declarations retained for the catalog TU (matched separately).
-    void func_80453BB4();
     u32 func_80453F78();
-    void func_80453FF0();
-    void func_804541F8();
-    void func_8045438C();
-    void func_80454508();
     void func_80454DE4();
     void func_80454E2C();
     void func_80454E6C();
@@ -225,11 +334,122 @@ extern "C" void wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(void* self, int ev
 // thread may be released (no pending children / events).
 extern "C" bool wkStandbyLogout__11CWorkThreadFv(void* self);
 
-void __ct__CDeviceFontLayer(){}
+// ---------------------------------------------------------------------------
+// reslist<const LAYER_QUE*> deleting destructors (retail flat template
+// mangling; plain __-prefixed globals over the mirror layout, per the
+// CUIBattleManager recipe).
+// ---------------------------------------------------------------------------
+extern "C" void* __dt___reslist_base_const_CDeviceFontLayer_LAYER_QUE(LayerQueList* self,
+                                                                  int mode) {
+    if (self != NULL) {
+        self->mVtbl = (u32)lbl_eu_8056C89C;
+        LayerQueNode* node = self->mStartNodePtr->mNext;
+        while (node != self->mStartNodePtr) {
+            LayerQueNode* prev = node;
+            node = node->mNext;
+            prev->mNext = NULL;
+        }
+        self->mStartNodePtr->mNext = self->mStartNodePtr;
+        self->mStartNodePtr->mPrev = self->mStartNodePtr;
+        if (self->field_0x1C == false) {
+            if (self->mList != NULL) {
+                delete[] self->mList;
+                self->mList = NULL;
+            }
+        }
+        if (mode > 0) {
+            delete self;
+        }
+    }
+    return self;
+}
 
-void __dt___reslist_base_const_CDeviceFontLayer_LAYER_QUE(){}
+extern "C" void* __dt__reslist_const_CDeviceFontLayer_LAYER_QUE(LayerQueList* self,
+                                                     int mode) {
+    // Doubled null check mirrors retail (MWCC keeps the dead second beq);
+    // the deleting-mode delete sits outside the inner check.
+    if (self != NULL) {
+        if (self != NULL) {
+            LayerQueList* list = self;
+            list->mVtbl = (u32)lbl_eu_8056C89C;
+            LayerQueNode* cleared = NULL;
+            LayerQueNode* node = list->mStartNodePtr->mNext;
+            while (node != list->mStartNodePtr) {
+                LayerQueNode* prev = node;
+                node = node->mNext;
+                prev->mNext = cleared;
+            }
+            list->mStartNodePtr->mNext = list->mStartNodePtr;
+            list->mStartNodePtr->mPrev = list->mStartNodePtr;
+            if (list->field_0x1C == false) {
+                if (list->mList != NULL) {
+                    delete[] list->mList;
+                    list->mList = NULL;
+                }
+            }
+        }
+        if (mode > 0) {
+            delete self;
+        }
+    }
+    return self;
+}
 
-void __dt__reslist_const_CDeviceFontLayer_LAYER_QUE(){}
+// ---- CDeviceFontLayer constructor (0x80457908) ----
+CDeviceFontLayer::CDeviceFontLayer(const char* pName, CWorkThread* pParent,
+                                   int unk)
+    : CWorkThread(pName, pParent, 0) {
+    // Inlined reslist<const LAYER_QUE*> construction: clear slots, store base
+    // vtable + empty ring, then overwrite with the derived vtable.
+    mQueList.mList = NULL;
+    *(u32**)this = lbl_eu_8056C7D0; // manual retail vtable (non-virtual TU view)
+    mQueList.mVtbl = (u32)lbl_eu_8056C89C;
+    mQueList.mCapacity = 0;
+    mQueList.field_0x1C = false;
+    mQueList.mStartNodePtr = &mQueList.mStartNode;
+    mQueList.mStartNodePtr->mNext = mQueList.mStartNodePtr;
+    mQueList.mStartNodePtr->mPrev = mQueList.mStartNodePtr;
+    mQueList.mVtbl = (u32)lbl_eu_8056C884;
+    mScaleX = lbl_eu_8066A408;
+    mScaleY = lbl_eu_8066A408;
+    mFontId = 0;
+    field_0x1F8 = 0;
+    mFlag1FC = 1;
+    // Constructed here (not in the init list) to keep the retail order.
+    new (drawGX()) CDrawGX();
+    mFlag2F0 = 0;
+    mType = 0x3F; // CWorkThread::TYPE_FONT_LAYER
+    mScaleX = lbl_eu_8066A408;
+    mScaleY = lbl_eu_8066A408;
+    mColor.set(lbl_eu_8066A40C, lbl_eu_8066A40C, lbl_eu_8066A40C,
+               lbl_eu_8066A40C);
+    mBgColor.set(lbl_eu_8066A410, lbl_eu_8066A410, lbl_eu_8066A410,
+                 lbl_eu_8066A410);
+    mQueList.clearList();
+    mDirty = 0;
+    drawGX()->setFlag(0x10, true);
+}
+
+// ---- CDeviceFontLayer destructor (0x80457BA4) ----
+CDeviceFontLayer::~CDeviceFontLayer() {
+    drawGX()->~CDrawGX();
+    // Inlined reslist<const LAYER_QUE*> teardown: doubled null check mirrors
+    // retail. The CWorkThread base dtor call and deleting-flag delete are
+    // emitted implicitly after this body.
+    LayerQueList* list = &mQueList;
+    if (list != NULL) {
+        if (list != NULL) {
+            list->mVtbl = (u32)lbl_eu_8056C89C;
+            list->clearList();
+            if (list->field_0x1C == false) {
+                if (list->mList != NULL) {
+                    delete[] list->mList;
+                    list->mList = NULL;
+                }
+            }
+        }
+    }
+}
 
 // ---------------------------------------------------------------------------
 // func_80453D78 (0x80457E48) - measure the widest line of a string.
@@ -296,7 +516,35 @@ extern "C" u32 func_80453D78__16CDeviceFontLayerFv(const char* str,
     return maxWidth;
 }
 
-void CDeviceFontLayer::func_80453BB4() {}
+// Queue a text-draw command (cmd 0) with an inline string payload.
+u32 func_80453BB4__16CDeviceFontLayerFv(CDeviceFontLayer* self, s16 x, s16 y,
+                                        const char* str) {
+    FONT_LAYER_RESERVE_SLOTS(self);
+
+    // Reserve the fixed header first.
+    u32 cursor = lbl_eu_80665694 + 8;
+    lbl_eu_80665694 = cursor;
+    LAYER_QUE* cmd = (LAYER_QUE*)((u8*)lbl_eu_80665690 + cursor - 8);
+    cmd->mCmd = 0;
+    cmd->mX = x;
+    cmd->mY = y;
+
+    // Then the inline string (with terminator); the end cursor is aligned
+    // up to 4 and the total record size stored into the header.
+    int len = strlen(str) + 1;
+    lbl_eu_80665694 += len;
+    memcpy((u8*)lbl_eu_80665690 + lbl_eu_80665694 - len, str, len);
+    u32 aligned = lbl_eu_80665694;
+    u32 rem = aligned & 3;
+    if (rem != 0) {
+        aligned = aligned + 4 - rem;
+        lbl_eu_80665694 = aligned;
+    }
+    cmd->mSize = (u16)((u8*)lbl_eu_80665690 + aligned - (u8*)cmd);
+    cmd->mSize = (u16)((u8*)lbl_eu_80665690 + lbl_eu_80665694 - (u8*)cmd);
+    self->mQueList.push_back(cmd);
+    return 0;
+}
 
 // Look up the font-info record for this layer's font id; when found, query
 // its text length (u16), scale it by mScaleY and return the integer height.
@@ -312,13 +560,93 @@ u32 CDeviceFontLayer::func_80453F78() {
     return (u32)(mScaleY * (f32)v);
 }
 
-void CDeviceFontLayer::func_80453FF0() {}
+// Queue a background-color change unless the color already matches.
+void func_80453FF0__16CDeviceFontLayerFv(CDeviceFontLayer* self,
+                                         const ml::CCol4* col) {
+    bool same = self->mBgColor.r == col->r && self->mBgColor.g == col->g &&
+                self->mBgColor.b == col->b && self->mBgColor.a == col->a;
+    if (same)
+        return;
 
-void CDeviceFontLayer::func_804541F8() {}
+    FONT_LAYER_RESERVE_SLOTS(self);
 
-void CDeviceFontLayer::func_8045438C() {}
+    u8* base = (u8*)lbl_eu_80665690;
+    u32 cursor = lbl_eu_80665694 + 0x14;
+    lbl_eu_80665694 = cursor;
+    LAYER_QUE* cmd = (LAYER_QUE*)(base + cursor - 0x14);
+    cmd->mCmd = 1;
+    cmd->mSize = 0x14;
+    cmd->mCol = *col;
+    self->mQueList.push_back(cmd);
 
-void CDeviceFontLayer::func_80454508() {}
+    self->mBgColor = *col;
+}
+
+// Queue a text-scale change; the layer's own scale is updated immediately.
+void func_804541F8__16CDeviceFontLayerFv(CDeviceFontLayer* self, f32 scaleX,
+                                         f32 scaleY) {
+    FONT_LAYER_RESERVE_SLOTS(self);
+
+    u8* base = (u8*)lbl_eu_80665690;
+    u32 cursor = lbl_eu_80665694 + 0xc;
+    lbl_eu_80665694 = cursor;
+    LAYER_QUE* cmd = (LAYER_QUE*)(base + cursor - 0xc);
+    cmd->mCmd = 3;
+    cmd->mSize = 0xc;
+    cmd->mF[0] = scaleX;
+    cmd->mF[1] = scaleY;
+    self->mQueList.push_back(cmd);
+
+    self->mScaleX = scaleX;
+    self->mScaleY = scaleY;
+}
+
+// Queue a font-id change; the layer's own font id is updated immediately.
+void func_8045438C__16CDeviceFontLayerFv(CDeviceFontLayer* self, u32 arg) {
+    FONT_LAYER_RESERVE_SLOTS(self);
+
+    u8* base = (u8*)lbl_eu_80665690;
+    u32 cursor = lbl_eu_80665694 + 8;
+    lbl_eu_80665694 = cursor;
+    LAYER_QUE* cmd = (LAYER_QUE*)(base + cursor - 8);
+    cmd->mCmd = 5;
+    cmd->mSize = 8;
+    cmd->mArg[0] = arg;
+    self->mQueList.push_back(cmd);
+
+    self->mFontId = arg;
+}
+
+// ---------------------------------------------------------------------------
+// func_80454508 (0x80458604) - queue a draw command.
+//
+// Lazily reserves the 0x180-node slot array (8-byte command records in the
+// shared scratch buffer), then appends an {cmd=6, size=8, arg} record to the
+// scratch cursor and links a queue node pointing at it (push_back).
+// ---------------------------------------------------------------------------
+extern "C" void func_80454508__16CDeviceFontLayerFv(CDeviceFontLayer* self,
+                                                    u32 arg) {
+    if (self->mQueList.mCapacity == 0) {
+        // reserve(handle, 0x180): 0x180 nodes x 0xC bytes + item padding.
+        self->mQueList.mList = (LayerQueNode*)mtl::MemManager::allocate_array(
+            0x1200, self->mAllocHandle);
+        for (int i = 0; i < 0x180; i++) {
+            self->mQueList.mList[i].mNext = NULL;
+        }
+        self->mQueList.mCapacity = 0x180;
+    }
+
+    // Append the command record at the scratch-buffer write cursor.
+    u8* base = (u8*)lbl_eu_80665690;
+    u32 cursor = lbl_eu_80665694 + 8;
+    lbl_eu_80665694 = cursor;
+    LAYER_QUE* cmd = (LAYER_QUE*)(base + cursor - 8);
+    cmd->mCmd = 6;
+    cmd->mSize = 8;
+    cmd->mArg[0] = arg;
+
+    self->mQueList.push_back(cmd);
+}
 
 
 
@@ -344,7 +672,7 @@ extern "C" void func_804546C8__16CDeviceFontLayerFP7CDrawGX(
 
     if (col != 0) {
         draw->setCol(*col);
-        if (col->a != 1.0f) {
+        if (lbl_eu_8066A40C != col->a) {
             // Semi-transparent text: draw a background rect sized by the
             // measured text width and the scaled line height.
             u32 w = func_80453D78__16CDeviceFontLayerFv(str, fontId, scaleX);
@@ -368,7 +696,8 @@ extern "C" void func_804546C8__16CDeviceFontLayerFP7CDrawGX(
     ml::CCol4 lineCol[2];
     lineCol[0] = drawCol;
     if (flag != 0) {
-        lineCol[0].set(1.0f, 1.0f, 1.0f, drawCol.a);
+        lineCol[0].set(lbl_eu_8066A40C, lbl_eu_8066A40C, lbl_eu_8066A40C,
+                       drawCol.a);
         lineCol[1] = drawCol;
     }
 
@@ -440,37 +769,37 @@ extern "C" void func_804546C8__16CDeviceFontLayerFP7CDrawGX(
 // ---------------------------------------------------------------------------
 extern "C" void func_80454B70__16CDeviceFontLayerFv(CDeviceFontLayer* self,
                                                     u32 flag) {
-    if (self->mCmdCount == 0) {
+    if (self->mQueList.mCapacity == 0) {
         return;
     }
 
-    self->mDrawGX.func_80456570(0);
-    self->mDrawGX.func_8045657C(0);
+    self->drawGX()->func_80456570(0);
+    self->drawGX()->func_8045657C(0);
 
-    CDeviceFontLayerCmdNode* node = self->mCmdList->mNext;
+    CDeviceFontLayerCmdNode* node =
+        (CDeviceFontLayerCmdNode*)self->mQueList.mStartNodePtr->mNext;
     if (self->mDirty) {
         node = self->mCurNode->mNext;
         self->mCurNode = node;
     }
-    while (node != self->mCmdList) {
-        u16 cmd = node->mData->mCmd;
-        switch (cmd) {
+    while (node != (CDeviceFontLayerCmdNode*)self->mQueList.mStartNodePtr) {
+        switch (node->mData->mCmd) {
         case 3:
             self->mScaleX = *(f32*)&node->mData->mArg0;
             self->mScaleY = *(f32*)&node->mData->mArg1;
             break;
         case 4:
-            self->mDrawGX.setGXCacheId(node->mData->mArg0);
+            self->drawGX()->setGXCacheId(node->mData->mArg0);
             break;
         case 1:
-            self->mDrawGX.setCol(*(ml::CCol4*)&node->mData->mArg0);
+            self->drawGX()->setCol(*(ml::CCol4*)&node->mData->mArg0);
             break;
         case 2:
             self->mColor = *(ml::CCol4*)&node->mData->mArg0;
             break;
         case 0:
             func_804546C8__16CDeviceFontLayerFP7CDrawGX(
-                &self->mDrawGX, self->mFontId,
+                self->drawGX(), self->mFontId,
                 (const char*)&node->mData->mArg1,
                 (s16)node->mData->mArg0,
                 (s16)(node->mData->mArg0 >> 16), self->mScaleX,
@@ -489,24 +818,27 @@ extern "C" void func_80454B70__16CDeviceFontLayerFv(CDeviceFontLayer* self,
 
     self->mDirty = 1;
     if (flag != 0) {
-        self->mColor.set(1.0f, 1.0f, 1.0f, 1.0f);
-        self->mBgColor.set(0.0f, 0.0f, 0.0f, 0.0f);
+        // Color reset pulls 1.0f/0.0f from the shared float globals.
+        self->mColor.set(lbl_eu_8066A40C, lbl_eu_8066A40C, lbl_eu_8066A40C,
+                         lbl_eu_8066A40C);
+        self->mBgColor.set(lbl_eu_8066A410, lbl_eu_8066A410, lbl_eu_8066A410,
+                           lbl_eu_8066A410);
         // Unlink every queued node and reset the list head to empty.
-        CDeviceFontLayerCmdNode* n = self->mCmdList->mNext;
-        while (n != self->mCmdList) {
-            CDeviceFontLayerCmdNode* next = n->mNext;
+        LayerQueNode* n = self->mQueList.mStartNodePtr->mNext;
+        while (n != self->mQueList.mStartNodePtr) {
+            LayerQueNode* next = n->mNext;
             n->mNext = NULL;
             n = next;
         }
-        self->mCmdList->mNext = self->mCmdList;
-        self->mCmdList->mPad4 = (u32)self->mCmdList;
-        self->mDrawGX.clear();
-        self->mDrawGX.setFlag(0x10, true);
+        self->mQueList.mStartNodePtr->mNext = self->mQueList.mStartNodePtr;
+        self->mQueList.mStartNodePtr->mPrev = self->mQueList.mStartNodePtr;
+        self->drawGX()->clear();
         self->mDirty = 0;
+        self->drawGX()->setFlag(0x10, true);
     }
 
-    self->mDrawGX.func_80456570(1);
-    self->mDrawGX.func_8045657C(1);
+    self->drawGX()->func_80456570(1);
+    self->drawGX()->func_8045657C(1);
 }
 
 void CDeviceFontLayer::wkUpdate() {

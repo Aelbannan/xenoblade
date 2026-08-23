@@ -97,7 +97,7 @@ void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
 void func_80139124(nw4r::lyt::ArcResourceAccessor* accessor);
 // BDAT/string helpers with unmangled retail symbols: extern "C" keeps the
 // emitted call relocs matching retail (func_8003AA34 / getFP__FPCc).
-extern "C" void func_8003AA34();
+extern "C" void* func_8003AA34();   // matches code_801862C0.hpp's declaration
 extern "C" void* getFP__FPCc(const char* name);
 extern "C" int func_8013BE88();
 extern "C" int func_801AC124();
@@ -240,8 +240,8 @@ struct CMiniMapGimmickView {
     const char* field_0x00;            // 0x00 - bdat table pointer
     u32 field_0x04;                    // 0x04
     f32 field_0x08;                    // 0x08
-    u32 field_0x0C;                    // 0x0C
-    u32 field_0x10;                    // 0x10
+    s32 field_0x0C;                    // 0x0C - row budget (signed)
+    s32 field_0x10;                    // 0x10 - fill cursor (signed)
     u32 field_0x14;                    // 0x14
     u8 field_0x18[0x338 - 0x18];       // 0x18..0x338
     u8 field_0x338[25 * 8];             // 0x338..0x400

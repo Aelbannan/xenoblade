@@ -123,16 +123,20 @@ extern s32 SFD_GetTime(void* self, s32* out1, s32* out2);
 extern void MWSFLIB_SetErrCode(s32 code);
 
 void mwPlyGetTime(MWSFDPLY* self, s32* out1, s32* out2) {
+    /* Signature check: NULL handle reads as invalid state 0.
+     * Initializer-form ternary is load-bearing: only shape reproducing
+     * retail's merged compare (bne/li/b/lwz/cmpi). */
+    void* sfd;
+    s32 state = (self != NULL) ? self->field_0x00 : 0;
     *out1 = 0;
     *out2 = 1;
-    /* signature check: NULL handle reads as invalid state 0 */
-    if (((self == NULL) ? 0 : self->field_0x00) != 1) {
+    if (state != 1) {
         MWSFSVM_Error(lbl_eu_8051B7B0 + 0x40D);
         return;
     }
-    if (self->field_0x58 != NULL) {
-        s32 ret = SFD_GetTime(self->field_0x58, out1, out2);
-        if (ret != 0) {
+    sfd = self->field_0x58;
+    if (sfd != NULL) {
+        if (SFD_GetTime(sfd, out1, out2) != 0) {
             MWSFLIB_SetErrCode(-309);
             MWSFSVM_Error(lbl_eu_8051B7B0 + 0x437);
         }

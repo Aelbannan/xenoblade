@@ -87,6 +87,8 @@ struct CfMoveData {
     u32 mField04;             // 0x04
     u8 pad_08[0xC];
     f32 mField14;             // 0x14
+    u8 pad_18[0x10];          // 0x18..0x27
+    void* field_28;           // 0x28 embedded move-object (vtable 0xAC = getPosition)
 };
 
 // Wrapper for the object referenced by mObject/mPlayer: the move-state
@@ -224,7 +226,7 @@ int  func_804BE5A4(int a, int b);
 
 // Additional engine helpers (retail C names).
 void* func_8009ECB0();
-u32  func_80174C98(void* actor, u32* outVal, u32 flags);
+extern "C" int  func_80174C98(void* actor, u32* outVal, u32 flags);   // unified: int return (ABI-identical to u32)
 cf::CfGlobalSettings* getUnk80664658();
 int  func_801F4ED8(void* a, void* b);
 void func_800D59FC(void* a);
@@ -324,7 +326,7 @@ int  func_801999C0(cf::CCtrlMovePC* self);
 void func_8019A9C4(cf::CCtrlMovePC* self);
 int  func_8019B4F0(cf::CCtrlMovePC* self);
 int  func_8019C0D4(cf::CCtrlMovePC* self);
-void func_8019C304(cf::CCtrlMovePC* self);
+int  func_8019C304(cf::CCtrlMovePC* self);
 int  func_8019CCDC(cf::CCtrlMovePC* self);
 int  func_8019CDA0(cf::CCtrlMovePC* self);
 void func_8019D9E0(cf::CCtrlMovePC* self);
@@ -333,6 +335,6 @@ void func_8019E710(cf::CCtrlMovePC* self);
 int  func_8019EDAC(cf::CCtrlMovePC* self);
 int  func_8019EE08(cf::CCtrlMovePC* self);
 int  func_8019EEB8(cf::CCtrlMovePC* self);
-void func_8019EF90(cf::CCtrlMovePC* self);
+f32 func_8019EF90(cf::CCtrlMovePC* self);
 void func_8019F1E0(cf::CCtrlMovePC* self);
 }

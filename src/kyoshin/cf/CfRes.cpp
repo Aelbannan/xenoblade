@@ -13,7 +13,42 @@ extern "C" char* getEntryPtrGrid(char* self, int a, int b);
 extern "C" void* func_80495FF0(void* scene);
 extern "C" mtl::ALLOC_HANDLE func_80496004(void* src);
 extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
-void func_80061870(){}
+// Two-word ring record built on the caller's frame by func_80061870; both
+// members stay memory-resident in retail (header at 0x8(sp), data at 0xC(sp)).
+
+// Append a header/data record to the ring buffer. The header word's previous
+// contents are unspecified (retail reads the raw frame slot); clear both
+// nibble fields, then overlay the key byte, payload halfword and count
+// nibble. The ring index is field_400 + field_404 (word index mod 0x40); each
+// stored word advances field_404 by one. Returns 0 when the record would
+// overflow the 0x100-word budget.
+int func_80061870(CfResBuffer* buffer, unsigned char byte1, unsigned short halfword,
+                  unsigned int dataVal, unsigned int* src, int count) {
+    if (buffer->field_404 + count + 2 >= 0x100) {
+        return 0;
+    }
+
+    u32* words = (u32*)buffer->buffer;
+    u32 rec[2]; // header/data pair kept memory-resident (retail slots 0x8/0xC)
+
+    rec[0] &= 0xFFFFF0FFu;                     // clear nibble at bits 8-11
+    rec[0] |= (u32)byte1 << 24;                // key byte
+    rec[0] = (rec[0] & 0xFFFF0000u) | (u32)halfword; // payload halfword
+    rec[0] &= 0xFFFFEFFFu;                     // clear flag bit 12
+    rec[0] |= (((u32)count << 20) | ((u32)count >> 12)) & 0xF00u; // count nibble -> bits 8-11
+    rec[1] = dataVal;
+
+    words[(buffer->field_400 + buffer->field_404) & 0x3F] = rec[0];
+    buffer->field_404 = buffer->field_404 + 1;
+    words[(buffer->field_400 + buffer->field_404) & 0x3F] = rec[1];
+    buffer->field_404 = buffer->field_404 + 1;
+
+    for (int i = 0; i < count; i++) {
+        words[(buffer->field_400 + buffer->field_404) & 0x3F] = src[i];
+        buffer->field_404 = buffer->field_404 + 1;
+    }
+    return 1;
+}
 
 int CfResBuffer::func_80061A80(unsigned char byte1, unsigned short halfword, unsigned int dataVal, unsigned int* src, int count, unsigned int headerBits) {
     unsigned int usedSize = field_404;
@@ -296,7 +331,42 @@ int func_800621A0(CfResNameRec* rec) {
     return 0;
 }
 
-void func_800621F4(){}
+// func_800621F4: resolve the extension class of a resource record path.
+// The record lives at self + index*0x18 + 8; its +8 word is a relative path
+// offset from self, +0xC and +0x10 are output words. The resolved path is
+// matched against the shared extension table (lbl_eu_804FB214) and the
+// matched class id is stored to *outType. Returns the resolved path pointer
+// (null when self is missing or carries the manager key).
+char* func_800621F4(char* self, int index, u32* outType, u32* outFieldC, u32* outField10) {
+    char* result = 0;
+    *outType = 0;
+    *outFieldC = 0;
+    *outField10 = 0;
+    if (self != 0) {
+        const char* key = lbl_eu_80661A24;
+        if (strcmp(key, self) != 0) {
+            u32* rec = 0;
+            if (self != 0 && strcmp(key, self) != 0) {
+                rec = (u32*)(self + index * 0x18 + 8);
+            }
+            result = self + (int)rec[2];
+            *outFieldC = rec[3];
+            *outField10 = rec[4];
+            // Extension table walk: offsets 0x00/0x04/0x08/0x0B/0x0B(dup)/0x0F/
+            // 0x12/0x16 map to class ids 1/2/3/4/4/6/5/7.
+            const char* ext = lbl_eu_804FB214;
+            if (strncmp(result, ext + 0x00, 3) == 0) { *outType = 1; return result; }
+            if (strncmp(result, ext + 0x04, 3) == 0) { *outType = 2; return result; }
+            if (strncmp(result, ext + 0x08, 2) == 0) { *outType = 3; return result; }
+            if (strncmp(result, ext + 0x0B, 3) == 0) { *outType = 4; return result; }
+            if (strncmp(result, ext + 0x0B, 3) == 0) { *outType = 4; return result; }
+            if (strncmp(result, ext + 0x0F, 2) == 0) { *outType = 6; return result; }
+            if (strncmp(result, ext + 0x12, 3) == 0) { *outType = 5; return result; }
+            if (strncmp(result, ext + 0x16, 3) == 0) { *outType = 7; }
+        }
+    }
+    return result;
+}
 
 extern "C" void CfRes_delegateOp2(void* a, void* b, void* c) {
     extern void func_8009CE14(void*, void*, unsigned long, void*);
@@ -875,7 +945,7 @@ extern "C" __declspec(noinline) u32 CfResEntry_getHandle(u8* self) { return *(u3
 
 // func_8006328C: return the entry-table index (0-6) whose handle matches,
 // or -1 when the manager is missing, the handle is null, or nothing matched.
-int func_8006328C(int handle) {
+extern "C" __declspec(noinline) int func_8006328C(int handle) {
     int inst = CfRes_getInstance();
     if (inst != 0 && handle != 0) {
         for (u32 i = 0; i < 7; i++) {
@@ -958,9 +1028,125 @@ void func_8006349C() {
     }
 }
 
-void func_80063560(){}
+// func_80063560: resolve a resource id to one of the 7 resource-table slots.
+// If the handle lookup fails, special-case ids 3/8 re-check after a game-mode
+// query; otherwise fall back to preferred slots per id, then to a linear
+// free-slot scan (field_04 == 0). Bumps refcounts when requested.
+extern "C" int func_80063560(int id, int incRef, int incCount) {
+    if (id == 0) {
+        return -1;
+    }
+    int inst = CfRes_getInstance();
+    int idx = -1;
+    if (inst == 0) {
+        return idx;
+    }
+    idx = func_8006328C(id);
+    if (idx < 0) {
+        if (id == 3) {
+            if (func_8007E908__Q22cf13CfGameManagerFv(8)) {
+                return -1;
+            }
+            idx = func_8006328C(8);
+            if (idx >= 0) {
+                CfRes_clearField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx));
+                CfResEntry_clearField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx));
+                CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx), (u32)id);
+                func_8006398C(0);
+            }
+        } else if (id == 8) {
+            if (func_8007E908__Q22cf13CfGameManagerFv(3)) {
+                return -1;
+            }
+            idx = func_8006328C(3);
+            if (idx >= 0) {
+                CfRes_clearField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx));
+                CfResEntry_clearField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx));
+                CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx), (u32)id);
+                func_8006398C(0);
+            }
+        }
+    }
+    if (idx >= 0) {
+        if (incRef != 0) {
+            CfResEntry_incRefCount((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx));
+        }
+        if (incCount != 0) {
+            CfRes_incField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)idx));
+        }
+        return idx;
+    }
 
-extern "C" void CfRes_clearField4(u8* self) { *(u32*)((u8*)self + 4) = 0; }
+    // Preferred-slot fallback: id 1 prefers slot 2, others id-1; id 8 retries
+    // on slot 2; ids 9-13 have per-id preferred slots; then a linear scan.
+    if (id <= 8) {
+        int slot = id - 1;
+        if (slot == 0) {
+            slot = 2;
+        }
+        if ((int)CfResEntry_getField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)slot)) == 0) {
+            CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)slot), (u32)id);
+            if (incRef != 0) {
+                CfResEntry_incRefCount((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)slot));
+            }
+            if (incCount != 0) {
+                CfRes_incField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)slot));
+            }
+            return slot;
+        }
+    } else {
+        int slot;
+        if (id == 9) {
+            slot = 5;
+        } else if (id == 10) {
+            slot = 6;
+        } else if (id == 11) {
+            slot = 5;
+        } else if (id == 12 || id == 13) {
+            slot = 3;
+        } else {
+            slot = 6;
+        }
+        if ((int)CfResEntry_getField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)slot)) == 0) {
+            CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)slot), (u32)id);
+            if (incRef != 0) {
+                CfResEntry_incRefCount((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)slot));
+            }
+            if (incCount != 0) {
+                CfRes_incField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)slot));
+            }
+            return slot;
+        }
+    }
+    if (id == 8) {
+        int slot = 2;
+        if ((int)CfResEntry_getField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)slot)) == 0) {
+            CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)slot), (u32)id);
+            if (incRef != 0) {
+                CfResEntry_incRefCount((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)slot));
+            }
+            if (incCount != 0) {
+                CfRes_incField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)slot));
+            }
+            return slot;
+        }
+    }
+    for (int slot = 0; slot < 7; slot++) {
+        if ((int)CfResEntry_getField4((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)slot)) == 0) {
+            CfResEntry_setHandle((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)slot), (u32)id);
+            if (incRef != 0) {
+                CfResEntry_incRefCount((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)slot));
+            }
+            if (incCount != 0) {
+                CfRes_incField8((u8*)CfRes_getResEntry((u8*)(inst + 0x1efc), (u32)slot));
+            }
+            return slot;
+        }
+    }
+    return idx;
+}
+
+extern "C" __declspec(noinline) void CfRes_clearField4(u8* self) { *(u32*)((u8*)self + 4) = 0; }
 
 // func_800638B4: decrement the refcount of the manager's table entry for a
 // non-negative index (entry table lives at manager + 0x1ed8).
@@ -990,7 +1176,9 @@ void func_80063900(int handle) {
 
 #pragma push
 #pragma auto_inline off
-int func_8006398C() { return CfRes_getInstance(); }
+// func_8006398C: retail signature takes a value (called with 0 by the
+// acquire path); body owned by its own matching target.
+extern "C" __declspec(noinline) void func_8006398C(u32 value) { (void)value; }
 #pragma pop
 
 extern "C" void CfRes_stub_63990() {}
@@ -1156,7 +1344,7 @@ found_ext:
     return 0;
 }
 
-extern "C" int CfRes_streq(const char* s1, const char* s2) {
+extern "C" __declspec(noinline) int CfRes_streq(const char* s1, const char* s2) {
     return strcmp(s1, s2) == 0 ? 1 : 0;
 }
 
@@ -1228,18 +1416,25 @@ int __declspec(noinline) func_80063F1C(u8* a, u8* b, u32 c, u8* d, int e) {
 // number of scanned slots, `offset` is the first table index and `stride`
 // advances the index each step.
 ResInfoEntry* func_80063FA8(ResInfoEntry* base, int value, int start, int end, int stride, int offset) {
-    int count;
-    int idx = 0;
-    while (value != 0 && (count = end - start) > 0) {
-        u32 tableIdx = (u32)(offset + idx);
-        ResInfoEntry* entry = (tableIdx <= 0x81) ? (ResInfoEntry*)((u8*)base + tableIdx * 0x3c + 8) : 0;
-        if (entry->field_0x04 == value) {
-            return entry;
+    ResInfoEntry* result = 0;
+    if (value != 0) {
+        int cur = 0;
+        // Loop counter declared in the for-statement so MWCC maps it to r0
+        // and emits the retail mtctr/bdnz counted-loop form.
+        for (int count = end - start; count > 0; --count) {
+            u32 tableIdx = (u32)(offset + cur);
+            // bool (not int): MWCC materializes 0/1 then re-tests it for the
+            // pointer select, matching the retail li r0,0/li r0,1 pair.
+            bool valid = tableIdx <= 0x81;
+            int entryOff = valid ? tableIdx * 0x3c + 8 : 0;
+            ResInfoEntry* entry = (ResInfoEntry*)((u8*)base + entryOff);
+            if (entry->field_0x04 == value) {
+                return entry;
+            }
+            cur += stride;
         }
-        idx += stride;
-        count--;
     }
-    return 0;
+    return result;
 }
 
 // func_80064014 (0x800647E0): file-event completion handler. Walks the
@@ -1406,7 +1601,185 @@ extern "C" int CfRes_vcall07(void* self) {
 
 extern "C" bool CfRes_stubFalse_643E8() { return false; }
 
-void func_800643F0(){}
+// func_800643F0: resource-load dispatcher. `packed` is the packed resource
+// token; a jumptable keyed on its bits-27-31 field selects a pre-check
+// (already-loaded probe, archive lookup, or token repack). Then the entry is
+// located/cleaned up, a buffer is allocated (archive cache first, then the
+// MEM2/MEM1/scene memory-manager fallback chain) and handed to the loader.
+int func_800643F0(void* self, u32 packed, int flag, int kind) {
+    int result = 0;
+    if (packed == 0) {
+        return result;
+    }
+    if (func_800829B8__Q22cf13CfGameManagerFv(self)) {
+        return result;
+    }
+    CfRes_clearE28Mask(0x40);
+    int instField = CfRes_getInstanceField();
+    u32 bits = CfRes_extractBits27_5(&packed);
+    func_80062524(&packed);
+    u32 low10 = CfRes_getAddrLow10(&packed);
+    // `check` is the r26 work-flag (initial query, later the archive size
+    // check); `queued` is the r29 jumptable flag.
+    int check = func_8006414C(packed);
+    int queued = 0;
+    u32 e24 = CfRes_getE24Bit18();
+
+    // Jumptable_eu_80526748 over `bits` (0x16 max); most entries are shared.
+    switch (bits) {
+    case 0:
+        // Probe whether an equivalent resource id is already resident.
+        if (low10 != 9) {
+            result = func_80063560(func_8006251C(&packed), 1, flag);
+        }
+        if (low10 == 9 || result < 0) {
+            queued = 1;
+            break;
+        }
+        result = flag == 0 ? (func_80062928(packed, 5) != 0) : (func_80062928(packed, 4) != 0);
+        break;
+    case 1: {
+        // Pending async read: done when it already completed.
+        u32 pending = 0;
+        func_80062AD8(packed, &pending);
+        if (pending != (u32)-1) {
+            return 1;
+        }
+        queued = 1;
+        break;
+    }
+    case 2:
+        queued = 1;
+        break;
+    case 3:
+        packed = CfRes_packShift27(packed, 4);
+        queued = 1;
+        break;
+    case 4:
+        if (check == 0) {
+            packed = CfRes_packShift27(packed, 3);
+            queued = 1;
+        }
+        break;
+    case 5:
+        if (flag != 0) {
+            queued = 1;
+        }
+        break;
+    default:
+        break;
+    }
+
+    u32 out10 = 0;
+    u32 outC = 0;
+    if (flag != 0 && findResEntry(instField, packed, &out10, &outC)) {
+        return 1;
+    }
+
+    u8* res = NULL;
+    // Cleanup + entry resolution phase (skipped when no work was queued).
+    if (queued != 0 || check != 0) {
+        u32 size = func_800623DC(packed);
+        if (flag != 0) {
+            res = (u8*)func_80062F60();
+            CfRes_delegateCleanup(res);
+            if (!CfRes_isField4Zero(res)) {
+                CfRes_initStruct_64994(res);
+            }
+            if (func_8006861C(instField, packed, &out10, &outC) == 0) {
+                // Archive-backed size check; kinds 3/4/0x16 carry an extra
+                // 0x3800 header allowance.
+                u32 checkSize = bits == 4 || bits == 3 || bits == 0x16 ? size + 0x3800 : size;
+                u32 roundedChk = (checkSize + 0x7ff) & ~0x7ffu;
+                check = func_800A8E6C(-(int)roundedChk, 1) == NULL;
+            }
+        } else {
+            res = NULL;
+        }
+
+        // Fetch or create the resource record.
+        res = flag != 0 ? func_800685BC(instField, packed, &out10, &outC)
+                        : func_80068564(instField, packed, &out10, &outC);
+        if (res == NULL) {
+            if (flag == 0) {
+                CfRes_setE28Mask(0x40);
+            }
+            return result;
+        }
+        if (CfRes_vcall02(res, NULL) != NULL) {
+            // Already resident.
+            if (flag != 0) {
+                *(u32*)(res + 0x24) = CfRes_getE30();
+            } else if (/* retail also checks func_800649F4(res) == 4 */
+                       !CfRes_checkMask_64A08(res, 0x800)) {
+                CfRes_vcall14(res);
+            }
+            return 1;
+        }
+        if ((int)size <= 0) {
+            return result;
+        }
+
+        // Allocation: archive cache first, then the memory-manager chain.
+        void* buf = NULL;
+        if (flag != 0) {
+            if (bits == 4 || bits == 3 || bits == 0x16) {
+                size += 0x3800;
+            }
+            u32 rounded = (size + 0x7ff) & ~0x7ffu;
+            if (check != 0) {
+                    buf = func_800A8B98(rounded);
+                if (buf == NULL) {
+                    CfRes_orBits_649B4((u8*)(uintptr_t)instField, 2);
+                    if (e24 == 0) {
+                        return 0;
+                    }
+                    for (int h = 0; h < 3; h++) {
+                        // 0 = MEM2, 1 = MEM1, 2 = the current scene heap.
+                        u32 handle = h == 0   ? (u32)(uintptr_t)getHandleMEM2__Q23mtl10MemManagerFv()
+                                     : h == 1 ? (u32)(uintptr_t)getHandleMEM1__Q23mtl10MemManagerFv()
+                                              : (u32)(uintptr_t)func_80495FF0((void*)(uintptr_t)CfRes_getE14());
+                        if (rounded <= getMaxAllocSize__Q23mtl10MemManagerFUl(handle)) {
+                            buf = h == 0 ? allocate_tail__Q23mtl10MemManagerFUlUli(handle, rounded, 0x20)
+                                         : allocate_head__Q23mtl10MemManagerFUlUli(handle, rounded, 0x20);
+                            if (buf != NULL) {
+                                CfRes_orBits_649CC(res, 0x1000);
+                                break;
+                            }
+                        }
+                    }
+                    if (buf == NULL) {
+                        return 0;
+                    }
+                }
+                CfRes_orBits_649CC(res, e24 != 0 ? 0x400 : 0x200);
+                *(u32*)(res + 0x24) = CfRes_getE30();
+                kind = 4;
+            } else {
+                buf = func_800A8E6C(-(int)rounded, 0);
+            }
+        } else {
+            // Non-flag path rounds the request up to 0xBD000 granules.
+            u32 rounded = ((size + 0xBD000 - 1) / 0xBD000) * 0xBD000;
+            buf = func_800A8E6C(-(int)rounded, 0);
+            kind = 4;
+        }
+
+        if (buf == NULL) {
+            CfRes_orBits_649B4((u8*)(uintptr_t)instField, 2);
+            return result;
+        }
+        func_80066C74(res, buf, kind);
+        if (func_800A8BD8(buf) != 0) {
+            func_800A8C1C(buf, 0, packed);
+        } else if (func_800A9024(buf) != 0) {
+            func_800A92F8(buf, 0, packed);
+        }
+        result = func_80062998(&outC, packed, kind) != 0;
+        return result;
+    }
+    return result;
+}
 
 extern "C" void CfRes_clearE28Mask(unsigned long mask) {
     extern unsigned long lbl_eu_80663E28;
@@ -1977,7 +2350,7 @@ int CfRes_65818::decRefCount() {
     return field_04;
 }
 
-extern "C" int CfRes_incField8(u8* self) {
+extern "C" __declspec(noinline) int CfRes_incField8(u8* self) {
     return ++*(int*)((char*)self + 8);
 }
 
@@ -2129,19 +2502,28 @@ int func_80065D00() { return func_800A813C(); }
 int func_80065D04() { return func_800A7EFC(); }
 int func_80065D08() { return func_800A7EFC(); }
 
-// Bit-4/bit-3/bit-6 mask gates on the +0 flags, then the +4 pointer check;
-// returns 1 only when all pass.
+// Bit-4/bit-3/bit-6 mask gates on the +0 flags, then the +4 word must be
+// non-zero and the +0x28 word zero; `result` is hoisted into r3 ahead of each
+// conditional return (retail emits li r3,0 before the compares).
 extern "C" int func_80065D0C(void* a1, void* self) {
-    u32 flags = *(u32*)((u8*)self + 0);
+    u32 flags = *(u32*)((u8*)self);
     if (flags & 0x10)
         return 0;
     if (flags & 0x8)
         return 0;
     if (flags & 0x40)
         return 0;
+    // Declared here so the li r3,0 lands between the lwz and the compare
+    // (retail hoists it ahead of cmpwi and uses beqlr).
+    int result = 0;
     if (*(u32*)((u8*)self + 4) == 0)
-        return 0;
-    return 1;
+        return result;
+    if (*(u32*)((u8*)self + 0x28) != 0)
+        return result;
+    // Store through the variable so MWCC cannot fold the tail into a
+    // branchless boolean expression (retail ends li r3,1; blr).
+    result = 1;
+    return result;
 }
 
 // C++ virtual call forces MWCC to use r12 for vtable dispatch

@@ -45,10 +45,11 @@ struct ScnResDataEx {
 };
 
 
-// Additional extern function declarations
-void func_804BC9B4(int* dest, int baseOffset, int* src);
-void func_804B74F0(ScnResData* res, u8* data);
-void func_804B7540(ScnResData* res, u8* data, u16 param);
+// Additional extern function declarations (retail symbols are plain C
+// names - no C++ mangling suffix on the retail reloc targets).
+extern "C" void func_804BC9B4(int* dest, int baseOffset, int* src);
+extern "C" void func_804B74F0(ScnResData* res, u8* data);
+extern "C" void func_804B7540(ScnResData* res, u8* data, u16 param);
 u32* func_804B5A70(void);
 
 // Vertex: 12 bytes (3 floats: x, y, z)
@@ -100,7 +101,9 @@ struct SceneCullElem {
 };
 
 // Float constants from SDA2
-// extern const f32 lbl_eu_8066AF10; // 1/3
+// extern const f32 lbl_eu_8066AF10;
+extern const f32 lbl_eu_80663AD0;  // 50.0f (pass-A cull margin)
+extern const f32 lbl_eu_80663AD4;  // 20.0f (pass-B/C cull margin) // 1/3
 // extern const f32 lbl_eu_8066AF14; // 0.0f
 // extern const f32 lbl_eu_8066AF18; // 255.0f
 
@@ -112,12 +115,30 @@ void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern const char lbl_eu_80526324[];
 extern const char lbl_eu_80526300[];
 
-extern "C" u32 lbl_eu_80665968[2];
+extern u32 lbl_eu_80665968[2];
 extern u8 lbl_eu_8065F418[0x10];
+
+// Shared float pools referenced by the render path (retail loads them via
+// lfs @sda21; local literals would grow .sdata2 past its 0-byte slice):
+// lbl_eu_8066AF10 = 1/3, lbl_eu_8066AF14 = 0.0f, lbl_eu_8066AF18 = 255.0f.
+extern const f32 lbl_eu_8066AF10;
+extern const f32 lbl_eu_80663AD0;  // 50.0f (pass-A cull margin)
+extern const f32 lbl_eu_80663AD4;  // 20.0f (pass-B/C cull margin)
+extern const f32 lbl_eu_8066AF14;
+extern const f32 lbl_eu_8066AF18;
+
+// Dissolved monolibdata2 .data tail owned by this TU (0x8056F940-0x8056F9B2).
+extern "C" u32 lbl_eu_80663AE0[2];
+extern "C" u32 lbl_eu_80663AF8[2];
+extern "C" u32 lbl_eu_80663B00[2];
+extern "C" void __dt__6CLightFv(void* self, int flag);
+extern "C" void __dt__reslist_IScnEnvCtl(void* self, int flag);
+extern "C" void __dt___reslist_base_IScnEnvCtl(void* self, int flag);
+
 int func_804BC9EC__Fv(u8* self) { return (int)(intptr_t)&lbl_eu_80665968; }
 
-int func_804BC9F4(u32* outStruct, u32 data) {
-    *outStruct = 0;
+int func_804BC9F4(void* outStruct, u32 data) {
+    *(u32*)outStruct = 0;
     func_804B7804(&lbl_eu_8065F32C);
 
     u8* base = (u8*)data;
@@ -138,58 +159,63 @@ int func_804BC9F4(u32* outStruct, u32 data) {
             u16 entryCount = *(u16*)(base + 6);
             u8* entryList = base + 8;
 
-            for (u16 i = 0; i < entryCount; i++) {
-                // Dispatch table over chunk types 0x00-0x13 (entries are 8 bytes)
-                u8* entry = entryList + i * 8;
-                u16 type = *(u16*)entry;
-                switch (type) {
-                case 0: {
-                    u8* dataPtr = base + *(u32*)(entry + 4);
+            // Two induction variables (entry index + byte offset), matching
+            // retail's addi/addi loop-bottom advance. Entry pointers are
+            // re-derived inside each case body (retail emits one add per
+            // body rather than hoisting a shared entry pointer).
+            int i;
+            u32 off;
+            for (i = 0, off = 0; i < entryCount; i++, off += 8) {
+                // Dispatch over chunk types 0x00-0x13 (retail jumptable is a
+                // dense 20-entry table with holes falling to the loop bottom).
+                switch (*(u16*)(entryList + off)) {
+                case 1: {
+                    u8* dataPtr = base + *(u32*)(entryList + off + 4);
                     res->field_0x2C = dataPtr + 0x20;
                     res->field_0x30 = dataPtr + 0x20;
-                    res->field_0x6C = *(u16*)(entry + 2);
+                    res->field_0x6C = *(u16*)(entryList + off + 2);
                     res->field_0x34 = dataPtr;
                     break;
                 }
-                case 1:
-                    res->field_0x18 = base + *(u32*)(entry + 4);
-                    break;
-                case 2:
-                    res->field_0x20 = base + *(u32*)(entry + 4);
-                    break;
-                case 3:
-                    res->field_0x1C = base + *(u32*)(entry + 4);
-                    break;
-                case 4:
-                    res->field_0x28 = base + *(u32*)(entry + 4);
-                    break;
                 case 5:
-                    res->field_0x24 = base + *(u32*)(entry + 4);
+                    res->field_0x18 = base + *(u32*)(entryList + off + 4);
                     break;
                 case 6:
-                    res->field_0x38 = base + *(u32*)(entry + 4);
+                    res->field_0x20 = base + *(u32*)(entryList + off + 4);
                     break;
                 case 7:
-                    res->field_0x3C = base + *(u32*)(entry + 4);
-                    res->field_0x70 = *(u16*)(entry + 2);
+                    res->field_0x1C = base + *(u32*)(entryList + off + 4);
                     break;
                 case 8:
-                    res->field_0x40 = base + *(u32*)(entry + 4);
+                    res->field_0x28 = base + *(u32*)(entryList + off + 4);
                     break;
-                case 9:
-                    res->field_0x48 = base + *(u32*)(entry + 4);
+                case 0x10:
+                    res->field_0x24 = base + *(u32*)(entryList + off + 4);
                     break;
-                case 10:
-                    func_804BC9B4((int*)&lbl_eu_8065F32C, (int)base, (int*)(base + *(u32*)(entry + 4)));
+                case 2:
+                    res->field_0x38 = base + *(u32*)(entryList + off + 4);
                     break;
-                case 11:
-                    func_804B74F0(&lbl_eu_8065F32C, base + *(u32*)(entry + 4));
+                case 0xB:
+                    res->field_0x3C = base + *(u32*)(entryList + off + 4);
+                    res->field_0x70 = *(u16*)(entryList + off + 2);
                     break;
-                case 12:
-                    res->field_0x4C = base + *(u32*)(entry + 4);
+                case 0xC:
+                    res->field_0x40 = base + *(u32*)(entryList + off + 4);
                     break;
-                case 13:
-                    func_804B7540(&lbl_eu_8065F32C, base + *(u32*)(entry + 4), *(u16*)(entry + 2));
+                case 0xD:
+                    res->field_0x48 = base + *(u32*)(entryList + off + 4);
+                    break;
+                case 0xA:
+                    func_804BC9B4((int*)&lbl_eu_8065F32C, (int)base, (int*)(base + *(u32*)(entryList + off + 4)));
+                    break;
+                case 0x11:
+                    func_804B74F0(&lbl_eu_8065F32C, base + *(u32*)(entryList + off + 4));
+                    break;
+                case 0x12:
+                    res->field_0x4C = base + *(u32*)(entryList + off + 4);
+                    break;
+                case 0x13:
+                    func_804B7540(&lbl_eu_8065F32C, base + *(u32*)(entryList + off + 4), *(u16*)(entryList + off + 2));
                     break;
                 }
             }
@@ -225,82 +251,86 @@ void func_804BCC6C() {
     func_804B80CC(&lbl_eu_8065F32C);
 }
 
+// Retail saves/restores GPRs via _savegpr_14/_restgpr_14 helpers here while
+// func_804BC9F4 uses inline stmw/lmw - reproduce with a per-function pragma.
+#pragma use_lmw_stmw off
 void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
+    // Retail structure (fully decoded from build/us/asm reference; see
+    // attempts.jsonl "func_804BCC78 ANALYZED"):
+    //  - viewData (r4): view matrix, 12 f32 (cam pos at [3],[7],[11])
+    //  - renderParams (r5): Mtx44 projection, 16 f32
     ScnResDataEx* res = (ScnResDataEx*)&lbl_eu_8065F32C;
     u8* base = res->field_0x14;
     if (base == NULL) {
         return;
     }
 
-    f32* rp = (f32*)renderParams;
-    f32* vf = (f32*)viewData;
-
-    u16 entryCount = *(u16*)(base + 6);
-    u8* entries = base + 8;
-
+    u32* projSrc = (u32*)renderParams;
+    u32* viewSrc = (u32*)viewData;
+    Mtx44 proj;
     Mtx mv;
-    mv[0][0] = vf[0];  mv[0][1] = vf[1];  mv[0][2] = vf[2];  mv[0][3] = vf[3];
-    mv[1][0] = vf[4];  mv[1][1] = vf[5];  mv[1][2] = vf[6];  mv[1][3] = vf[7];
-    mv[2][0] = vf[8];  mv[2][1] = vf[9];  mv[2][2] = vf[10]; mv[2][3] = vf[11];
-
-    Mtx44 projMtx;
-    projMtx[0][0] = rp[0];  projMtx[0][1] = rp[1];  projMtx[0][2] = rp[2];  projMtx[0][3] = rp[3];
-    projMtx[1][0] = rp[4];  projMtx[1][1] = rp[5];  projMtx[1][2] = rp[6];  projMtx[1][3] = rp[7];
-    projMtx[2][0] = rp[8];  projMtx[2][1] = rp[9];  projMtx[2][2] = rp[10]; projMtx[2][3] = rp[11];
-    projMtx[3][0] = rp[12]; projMtx[3][1] = rp[13]; projMtx[3][2] = rp[14]; projMtx[3][3] = rp[15];
+    for (int i = 0; i < 16; i++) {
+        ((u32*)proj)[i] = projSrc[i];
+    }
+    for (int i = 0; i < 12; i++) {
+        ((u32*)mv)[i] = viewSrc[i];
+    }
+    f32* vf = (f32*)viewData;
+    f32 camX = vf[3];
+    f32 camY = vf[7];
+    f32 camZ = vf[11];
 
     PSMTXInverse(mv, mv);
-    GXSetProjection(projMtx, GX_ORTHOGRAPHIC);
+    GXSetProjection(proj, GX_PERSPECTIVE);
     GXLoadPosMtxImm(mv, GX_PNMTX0);
 
     GXSetNumTexGens(0);
     GXSetNumTevStages(1);
-    GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+    GXSetZMode(GX_TRUE, GX_LESS, GX_TRUE);
     GXSetNumChans(1);
-    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT0, GX_DF_NONE, GX_AF_SPOT);
     GXSetCullMode(GX_CULL_NONE);
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
-    GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA);
-    GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
-    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_RASC);
-    GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_KONST);
+    GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_FALSE, GX_TEVPREV);
+    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ONE, GX_CC_RASC, GX_CC_ZERO);
+    GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_FALSE, GX_TEVPREV);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGB, GX_RGB8, 0);
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
     GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
-    GXSetAlphaCompare(GX_ALWAYS, 0xFF, GX_AOP_AND, GX_ALWAYS, 0xFF);
+    GXSetAlphaCompare(GX_ALWAYS, 0xFF, GX_AOP_AND, GX_GREATER, 0xFF);
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
 
-    f32 camX = vf[3];
-    f32 camY = vf[7];
-    f32 camZ = vf[11];
-
+    u16 entryCount = *(u16*)(base + 6);
+    ScnResEntry* entries = (ScnResEntry*)(base + 8);
     SceneVertex* vertBase = (SceneVertex*)res->field_0x18;
 
-    // First pass: find type 0x10 and 0x08 entry data
+    // Scan: type 0x10 -> color palette, type 8 -> per-triangle flag words.
     u8* colorData = NULL;
-    u32* flagData = NULL;
+    u32* flagTable = NULL;
     for (int i = 0; i < entryCount; i++) {
-        ScnResEntry* e = &((ScnResEntry*)entries)[i];
+        ScnResEntry* e = &entries[i];
         if (e->type == 0x10) {
             colorData = base + e->offset;
-        } else if (e->type == 0x08) {
-            flagData = (u32*)(base + e->offset);
+        } else if (e->type == 8) {
+            flagTable = (u32*)(base + e->offset);
         }
     }
 
-    f32 oneThird = 1.0f / 3.0f;
-    f32 zero = 0.0f;
+    f32 oneThird = lbl_eu_8066AF10;
+    f32 zero = lbl_eu_8066AF14;
+    f32 scale255 = lbl_eu_8066AF18;
 
-    // Second pass: render type 1 entries  
+    // Pass A: type-1 entries - triangle soup with flag-word visibility and a
+    // (radius + 50) camera-distance cull.
     for (int i = 0; i < entryCount; i++) {
-        ScnResEntry* e = &((ScnResEntry*)entries)[i];
+        ScnResEntry* e = &entries[i];
         if (e->type != 1) continue;
 
-        u8* data = base + e->offset;
-        u16 triCount = *(u16*)(data + 2);
-        SceneTriElem* tris = (SceneTriElem*)((u8*)data + 0x20);
+        u16 triCount = e->field_0x2;
+        SceneTriElem* tris = (SceneTriElem*)(base + e->offset + 0x20);
 
         for (int j = 0; j < triCount; j++) {
             SceneTriElem* tri = &tris[j];
@@ -323,107 +353,202 @@ void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
             t2 = dx2 * dx2 + dy2 * dy2 + dz2 * dz2;
             if (t2 > radiusSq) radiusSq = t2;
 
-            if (radiusSq != zero) {
-                if (radiusSq < zero) {
-                    Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
-                }
-                f32 radius = (radiusSq < zero) ? zero : FrSqrt__Q24nw4r4mathFf(radiusSq) * radiusSq;
+            if (!(radiusSq > zero || radiusSq == zero)) {
+                Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+            }
+            f32 radius;
+            if (radiusSq == zero || radiusSq < zero) {
+                radius = zero;
+            } else {
+                radius = radiusSq * FrSqrt__Q24nw4r4mathFf(radiusSq);
+            }
 
-                f32 dcamX = camX - cx, dcamY = camY - cy, dcamZ = camZ - cz;
-                f32 dist2 = dcamX * dcamX + dcamY * dcamY + dcamZ * dcamZ;
+            f32 dcamX = camX - cx, dcamY = camY - cy, dcamZ = camZ - cz;
+            f32 dist2 = dcamX * dcamX + dcamY * dcamY + dcamZ * dcamZ;
+            f32 thresh = radius + lbl_eu_80663AD0;  // 50.0f pool constant
+            thresh = thresh * thresh;
 
-                u32 flg = tri->flags;
-                if (dist2 > radius * radius && !(flg & 0x20000)) {
-                    continue;
-                }
+            u32 flags = flagTable[tri->flags];
+            if (dist2 > thresh && !(flags & 0x4000)) {
+                continue;
             }
 
             GXBegin(GX_TRIANGLES, GX_VTXFMT0, 3);
             for (int k = 0; k < 3; k++) {
-                const SceneVertex* v = (k == 0) ? va : ((k == 1) ? vb : vc);
+                SceneVertex* v = (k == 0) ? va : ((k == 1) ? vb : vc);
                 GXPosition3f32(v->x, v->y, v->z);
-
-                u32 flg = tri->flags;
-                if (flg & 0x20000) {
+                if (flags & 0x4000) {
                     GXColor3u8(0xFF, 0, 0);
-                } else if (flg & 0x400000) {
+                } else if (flags & 0x200) {
                     GXColor3u8(0, 0xFF, 0);
-                } else if (flg & 0x40000) {
+                } else if (flags & 0x2000) {
                     GXColor3u8(0, 0, 0xFF);
                 } else if (colorData != NULL) {
                     f32* colors = (f32*)(colorData + tri->colorIdx * 0xC);
-                    GXColor3u8((u8)(colors[0] * 255.0f), (u8)(colors[1] * 255.0f), (u8)(colors[2] * 255.0f));
+                    GXColor3u8((u8)(colors[0] * scale255), (u8)(colors[1] * scale255), (u8)(colors[2] * scale255));
                 }
             }
         }
     }
 
-    // Third pass: render type 0x0B entries
-    u8* visData = NULL;
+    // Scan B: type 2 -> geometry entries, type 0x0B -> u16 selector list,
+    // type 0x0C -> 0x80-byte cull records.
+    u8* geomBase = NULL;
+    u16* visList = NULL;
     u16 visCount = 0;
-    u8* visGeomBase = NULL;
+    u8* cullBase = NULL;
     for (int i = 0; i < entryCount; i++) {
-        ScnResEntry* e = &((ScnResEntry*)entries)[i];
+        ScnResEntry* e = &entries[i];
         if (e->type == 2) {
-            visGeomBase = base + e->offset;
+            geomBase = base + e->offset;
         } else if (e->type == 0x0B) {
-            visData = base + e->offset;
             visCount = e->field_0x2;
+            visList = (u16*)(base + e->offset);
+        } else if (e->type == 0x0C) {
+            cullBase = base + e->offset;
         }
     }
 
-    // Fourth pass: render type 0x13 entries
+    // Pass B: per selected cull record - visibility-bit test, expanding
+    // (20 + |record vector|) camera-distance cull, per-record matrix concat,
+    // then triangle draw with flag-word colors.
+    for (int i = 0; i < visCount; i++) {
+        u8* rec = cullBase + visList[i] * 0x80;
+        u16 visHdr = *(u16*)(rec + 2);
+        u32* visBits = func_804B5A70();
+        if (visBits[(visHdr >> 3) & 0x1FFC] & (1 << (visHdr & 0x1F))) {
+            continue;
+        }
+
+        f32 rx = *(f32*)(rec + 0x64);
+        f32 ry = *(f32*)(rec + 0x68);
+        f32 rz = *(f32*)(rec + 0x6C);
+        f32 mx = *(f32*)(rec + 0x70);
+        f32 my = *(f32*)(rec + 0x74);
+        f32 mz = *(f32*)(rec + 0x78);
+        Vec magIn;
+        magIn.x = rx;
+        magIn.y = ry;
+        magIn.z = rz;
+        f32 mag = PSVECMag(&magIn);
+        f32 dx = camX - *(f32*)(rec + 0x10);
+        f32 dy = camY - *(f32*)(rec + 0x20);
+        f32 dz = camZ - *(f32*)(rec + 0x30);
+        f32 dist2 = dx * dx + dy * dy + dz * dz;
+        f32 thresh = lbl_eu_80663AD4 + mag;
+        thresh = thresh * thresh;
+        if (dist2 > thresh) {
+            continue;
+        }
+
+        Mtx recMtx;
+        for (int r = 0; r < 3; r++) {
+            for (int c = 0; c < 4; c++) {
+                recMtx[r][c] = *(f32*)(rec + 4 + (r * 4 + c) * 4);
+            }
+        }
+        Mtx concatMtx;
+        PSMTXConcat(mv, recMtx, concatMtx);
+        GXLoadPosMtxImm(concatMtx, GX_PNMTX0);
+
+        u16 geomIdx = *(u16*)rec;
+        u8* geomEntry = geomBase + geomIdx * 0xC;
+        u16 triCount = *(u16*)(geomEntry + 2);
+        u8* geomTris = base + *(u32*)(geomEntry + 8);
+
+        GXBegin(GX_TRIANGLES, GX_VTXFMT0, triCount * 3);
+        for (int j = 0; j < triCount; j++) {
+            SceneTriElem* tri = (SceneTriElem*)(geomTris + j * 0x14);
+            for (int k = 0; k < 3; k++) {
+                SceneVertex* v = &vertBase[(k == 0) ? tri->indexA : ((k == 1) ? tri->indexB : tri->indexC)];
+                GXPosition3f32(v->x, v->y, v->z);
+                u32 flags = flagTable[tri->flags];
+                if (flags & 0x4000) {
+                    GXColor3u8(0xFF, 0, 0);
+                } else if (flags & 0x200) {
+                    GXColor3u8(0, 0xFF, 0);
+                } else if (flags & 0x2000) {
+                    GXColor3u8(0, 0, 0xFF);
+                } else if (colorData != NULL) {
+                    f32* colors = (f32*)(colorData + tri->colorIdx * 0xC);
+                    GXColor3u8((u8)(colors[0] * scale255), (u8)(colors[1] * scale255), (u8)(colors[2] * scale255));
+                }
+            }
+        }
+    }
+
+    // Pass C: type-0x13 entries - 0x3C-byte sub-entries paired with 0xE0-byte
+    // transform records from res->field_0x60; same visibility-bit test and
+    // (20 + mag) cull; colors always from the palette.
     for (int i = 0; i < entryCount; i++) {
-        ScnResEntry* e = &((ScnResEntry*)entries)[i];
+        ScnResEntry* e = &entries[i];
         if (e->type != 0x13) continue;
 
-        u16 cullCount = e->field_0x2;
-        u8* cullBase = base + e->offset;
-        u8* cullRef = (u8*)res->field_0x60;
+        u16 subCount = e->field_0x2;
+        u8* sub = base + e->offset;
+        u8* rec = (u8*)res->field_0x60;
 
-        for (int j = 0; j < cullCount; j++) {
-            SceneCullElem* ce = (SceneCullElem*)(cullBase + j * 0x3C);
+        for (int j = 0; j < subCount; j++) {
+            u16 visHdr = *(u16*)(sub + 2);
+            u32* visBits = func_804B5A70();
+            if (visBits[(visHdr >> 3) & 0x1FFC] & (1 << (visHdr & 0x1F))) {
+                sub += 0x3C;
+                rec += 0xE0;
+                continue;
+            }
 
-            u32 visIdx = ce->visIdx;
-            u32* bits = (u32*)func_804B5A70();
-            if (bits[visIdx >> 5] & (1 << (visIdx & 0x1F))) continue;
-
-            f32* cf = (f32*)(cullRef + j * 0xE0);
-            f32 sx = cf[5];  /* 0x14/4 */
-            f32 sy = cf[9];  /* 0x24/4 */
-            f32 sz = cf[13]; /* 0x34/4 */
-            f32 dx = camX - sx, dy = camY - sy, dz = camZ - sz;
+            f32 px = *(f32*)(rec + 0x14);
+            f32 py = *(f32*)(rec + 0x24);
+            f32 pz = *(f32*)(rec + 0x34);
+            Vec magIn;
+            magIn.x = *(f32*)(rec + 0xC8);
+            magIn.y = *(f32*)(rec + 0xD0);
+            magIn.z = *(f32*)(rec + 0xDC);
+            f32 mag = PSVECMag(&magIn);
+            f32 dx = camX - px, dy = camY - py, dz = camZ - pz;
             f32 dist2 = dx * dx + dy * dy + dz * dz;
+            f32 thresh = lbl_eu_80663AD4 + mag;
+            thresh = thresh * thresh;
+            if (dist2 > thresh) {
+                sub += 0x3C;
+                rec += 0xE0;
+                continue;
+            }
 
-            Mtx localMtx;
-            localMtx[0][0] = cf[2];  localMtx[0][1] = cf[3];  localMtx[0][2] = cf[4];  localMtx[0][3] = cf[5];
-            localMtx[1][0] = cf[6];  localMtx[1][1] = cf[7];  localMtx[1][2] = cf[8];  localMtx[1][3] = cf[9];
-            localMtx[2][0] = cf[10]; localMtx[2][1] = cf[11]; localMtx[2][2] = cf[12]; localMtx[2][3] = cf[13];
-
+            Mtx recMtx;
+            for (int r = 0; r < 3; r++) {
+                for (int c = 0; c < 4; c++) {
+                    recMtx[r][c] = *(f32*)(rec + 8 + (r * 4 + c) * 4);
+                }
+            }
             Mtx concatMtx;
-            PSMTXConcat(mv, localMtx, concatMtx);
+            PSMTXConcat(mv, recMtx, concatMtx);
             GXLoadPosMtxImm(concatMtx, GX_PNMTX0);
 
-            u16 geomIdx = ce->index;
-            u8* geomEntry = visGeomBase + geomIdx * 0xC;
+            u16 geomIdx = *(u16*)sub;
+            u8* geomEntry = geomBase + geomIdx * 0xC;
             u16 triCount = *(u16*)(geomEntry + 2);
             u8* geomTris = base + *(u32*)(geomEntry + 8);
 
             GXBegin(GX_TRIANGLES, GX_VTXFMT0, triCount * 3);
-            for (int t = 0; t < triCount; t++) {
-                SceneTriElem* tri = (SceneTriElem*)(geomTris + t * 0x14);
+            for (int j = 0; j < triCount; j++) {
+                SceneTriElem* tri = (SceneTriElem*)(geomTris + j * 0x14);
                 for (int k = 0; k < 3; k++) {
                     SceneVertex* v = &vertBase[(k == 0) ? tri->indexA : ((k == 1) ? tri->indexB : tri->indexC)];
                     GXPosition3f32(v->x, v->y, v->z);
                     if (colorData != NULL) {
                         f32* colors = (f32*)(colorData + tri->colorIdx * 0xC);
-                        GXColor3u8((u8)(colors[0] * 255.0f), (u8)(colors[1] * 255.0f), (u8)(colors[2] * 255.0f));
+                        GXColor3u8((u8)(colors[0] * scale255), (u8)(colors[1] * scale255), (u8)(colors[2] * scale255));
                     }
                 }
             }
+            sub += 0x3C;
+            rec += 0xE0;
         }
     }
 }
+
+#pragma use_lmw_stmw on
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_804BD8A0() {
@@ -436,17 +561,53 @@ void sinit_804BD8A0() {
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// [.bss] 0x8065F32C-0x8065F418 (236B): the scene-resource data block and its
-// two tail objects (retail spans 0xC4 / 0xC / 0x1C).
+// [.bss] 0x8065F32C-0x8065F418 (0xEC): the scene-resource data block and its
+// two tail objects (retail spans 0xC4 / 0xC / 0x1C; section align 4).
 ScnResData lbl_eu_8065F32C;
-__declspec(align(8)) u8 lbl_eu_8065F3F0[0xC];
+// Retail lbl_eu_8065F32C spans 0xC4; ScnResData models only the fields the
+// code touches (0x7C). Pad the block tail so the following tail objects keep
+// their retail offsets (+0xC4 / +0xD0). Two fillers: MWCC 8-aligns bss
+// arrays whose size is a multiple of 8, which would shift the tail objects.
+static u8 lbl_eu_8065F3A8_bss_pad_a[0x24];
+static u8 lbl_eu_8065F3ACC_bss_pad_b[0x24];
+u8 lbl_eu_8065F3F0[0xC];
 u8 lbl_eu_8065F3FC[0x1C];
+DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_8065F3A8_bss_pad_a);
+DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_8065F3ACC_bss_pad_b);
 DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_8065F3F0);
 DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_8065F3FC);
 
-// [.sbss] 0x80665968-0x8066597C (20B).
+// [.sbss] 0x80665968-0x8066597C (0x14, align 8).
+__declspec(align(8)) u32 lbl_eu_80665968[2];
 extern "C" { u32 lbl_eu_80665970; u32 lbl_eu_80665974; u32 lbl_eu_80665978; }
 DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_80665970);
 DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_80665974);
 DECOMP_FORCEACTIVE(code_804BC9EC_cpp, lbl_eu_80665978);
+
+// [.data] 0x8056F940-0x8056F9B2: dissolved monolibdata2 tail objects.
+f32 lbl_eu_8056F940[4] = { 0.6f, 0.2f, 0.3f, 0.1f };
+void* lbl_eu_8056F950[4] = {
+    (void*)lbl_eu_80663AE0,
+    NULL,
+    (void*)&__dt__6CLightFv,
+    NULL,
+};
+void* lbl_eu_8056F960[3] = {
+    (void*)lbl_eu_80663AF8,
+    NULL,
+    (void*)&__dt__reslist_IScnEnvCtl,
+};
+void* lbl_eu_8056F96C[3] = {
+    (void*)lbl_eu_80663B00,
+    NULL,
+    NULL,
+};
+void* lbl_eu_8056F978[4] = {
+    (void*)lbl_eu_80663B00,
+    NULL,
+    (void*)&__dt___reslist_base_IScnEnvCtl,
+    NULL,
+};
+char lbl_eu_8056F988[0x20] = "NW4R:Failed assertion IsValid()";
+char lbl_eu_8056F9A8[0xA] = "g3d_fog.h";
 // data: retail sections verified via run.py data diff (no bypass)

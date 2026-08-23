@@ -16,6 +16,27 @@ extern "C" void* func_80488938(void* owner, u32 size);
 extern "C" void* func_80488954(void* owner, u32 size);
 extern "C" u32 func_80496018(u32 handle);
 
+// Node user-data scanner (retail unmangled symbol; declared with C linkage in
+// CScnItemModelNw4r.hpp, which is not self-contained - mirrored here).
+extern "C" void func_804E5990(void* self, void* node, void* mtx);
+
+// Virtual-dispatch view of the owner object for the vtable+0x18 getter
+// (CScnItemModelNw4r::v04, func_80489C94) used by the node user-data scan.
+class __declspec(novtable) MdlMatOwnerVt {
+public:
+    virtual ~MdlMatOwnerVt();
+    // Two destructor slots (0x0/0x4) + fillers; getter lands at vtable +0x18.
+    virtual void v01() = 0;
+    virtual void v02() = 0;
+    virtual void v03() = 0;
+    virtual void v04() = 0;
+    virtual u32 v05() = 0;   // vtable +0x18
+};
+
+// Local .sdata "ref" strings (defined at the bottom of this TU).
+extern "C" u32 lbl_sd_04;
+extern "C" u32 lbl_sd_05;
+
 // Assertion strings emitted by the inlined nw4r ResUserData/ResDict accessors
 // (declared here at global scope; C++ does not mangle global variable names,
 // so these emit the raw lbl_* symbols).
@@ -39,13 +60,78 @@ extern const char lbl_eu_8056E3D0[];
 extern const char lbl_eu_8056E398[];
 extern const char lbl_eu_8056E068[];
 extern const char lbl_eu_8056E04C[];
-extern const char lbl_eu_806638E8[];
+extern const char lbl_eu_806638E8[7];   // .sdata Panic arg
 extern const char lbl_eu_80663928[];
-extern const char lbl_eu_80663C44[];
 extern const char lbl_eu_80663C48[];
 extern const char lbl_eu_80663C4C[];
 extern const char lbl_eu_80663C50[];
 extern const char lbl_eu_80663C54[];
+
+// lbl_eu_80663C34 (.sdata) holds the char* of the node user-data key.
+extern const char* lbl_eu_80663C34;
+
+// g3d_resmat_ac.h assertion strings (inlined accessor asserts).
+extern const char lbl_eu_80570100[];
+extern const char lbl_eu_805700E4[];
+extern const char lbl_eu_80570138[];
+extern const char lbl_eu_80570110[];
+extern const char lbl_eu_80570170[];
+extern const char lbl_eu_80570148[];
+extern const char lbl_eu_805701A0[];
+extern const char lbl_eu_80570180[];
+
+// The .sdata "ref" message strings are defined locally below as lbl_sd_04..09
+// (retail labels 80663C40..80663C54); reference them through the local
+// definitions so MWCC emits SDA-relative addressing.
+#define lbl_eu_80663C40 ((const char*)&lbl_sd_04)
+#define lbl_eu_80663C44 ((const char*)&lbl_sd_05)
+
+// .sdata2 float constant used to scale colours (255.0f).
+extern f32 lbl_eu_8066B304;
+
+// CScnItemModelNw4r helper (retail unmangled symbol).
+extern "C" void func_80488C20(void* owner, void* arg, s32 subIdx);
+
+// ===========================================================================
+// Local layout views / context structs for the helpers below.
+// ===========================================================================
+
+// Context object (CScnItemModelNw4r) fields consumed by the CMdlMaterial
+// helpers: model resource pointer and scene model at fixed offsets.
+struct MdlMatContext {
+    /* 0x0000 */ u8 pad_0x00[0x146C];
+    /* 0x146C */ nw4r::g3d::ResMdlData* mdlData;
+    /* 0x147C */ nw4r::g3d::ScnMdl* scnMdl;
+};
+
+// Owner block embedding a CMdlMaterial at a fixed offset.
+struct MdlMaterialOwner {
+    /* 0x0000 */ u8 pad_0x00[0x16C8];
+    /* 0x16C8 */ CMdlMaterial material;
+};
+
+// Ambient-colour applier state shared by the apply helpers.
+struct MdlMatApplier {
+    /* 0x00 */ u8 pad_0x00[4];
+    /* 0x04 */ MdlMatContext* ctx;
+    /* 0x08 */ GXColor* colors;     // Null disables application
+};
+
+// Mirror of CMdlMaterial with signedness matching the retail codegen of the
+// helpers below (unsigned group value, byte flag table, signed entry count).
+struct CMdlMatView {
+    /* 0x00 */ void* vtable;
+    /* 0x04 */ void* field_0x04;
+    /* 0x08 */ void* buffer;
+    /* 0x0C */ u32 field_0x0C;
+    /* 0x10 */ u8 flag_0x10;
+    /* 0x11 */ u8 pad_0x11[3];
+    /* 0x14 */ u32 field_0x14;      // Initialized to -1
+    /* 0x18 */ u16 field_0x18[8];   // Accumulated material values
+    /* 0x28 */ u8 field_0x28[8];    // Per-material flag bytes
+    /* 0x30 */ u32 field_0x30;
+    /* 0x34 */ s32 field_0x34;      // Write index for field_0x18 array
+};
 
 // ===========================================================================
 // nw4r g3d ResUserData reconstruction (g3d_resuser_ac.h accessor semantics)
@@ -257,15 +343,288 @@ void CMdlMaterial::func_804E54B8(void* arg) {
     }
 }
 
-void func_804E5E38(){}
+// func_804E5990 - scan a scene-node's user-data block. An item named via the
+// lbl_eu_80663C34 pointer whose name is 8 chars ending in a digit sets the
+// group id (digit value); items named via lbl_eu_80663C30 append their S32
+// values as bytes to the flag table.
+void func_804E5990(void* selfPtr, void* nodePtr, void* /*mtx*/) {
+    CMdlMatView* self = reinterpret_cast<CMdlMatView*>(selfPtr);
 
-void func_804E5FD4(){}
+    // Pass the node handle straight through (no stack temporary).
+    void* ud = reinterpret_cast<nw4r::g3d::ResNode*>(nodePtr)->GetResUserData();
 
-void func_804E6158(){}
+    if (ud == NULL) {
+        return;
+    }
 
-void func_804E6358(){}
+    ResUserDataDic* dic =
+        reinterpret_cast<ResUserDataDic*>(reinterpret_cast<u8*>(ud) + 4);
 
-void func_804E64B0(){}
+    for (u32 i = 0; i < ResUserDataNumData(ud, dic); i++) {
+        ResUserDataItem* item = ResUserDataItemAt(ud, dic, static_cast<s32>(i));
+
+        if (reinterpret_cast<u32>(item) & 3) {
+            nw4r::db::Panic(lbl_eu_80530D54, 0x26, lbl_eu_80530D2C);
+        }
+        if (item == NULL) {
+            nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
+                            lbl_eu_80530D68, lbl_eu_80663C50);
+        }
+
+        const char* name = (item->nameOffset != 0)
+            ? reinterpret_cast<const char*>(
+                  reinterpret_cast<const u8*>(item) + item->nameOffset)
+            : NULL;
+
+        if (strcmp(name, lbl_eu_80663C34) == 0) {
+            // Group id: last char of the owner's vtable+0x18 string, when the
+            // string is 8 chars and ends in a digit. Retail re-issues the
+            // virtual call for each use.
+            const char* s1 = reinterpret_cast<const char*>(
+                reinterpret_cast<MdlMatOwnerVt*>(self->field_0x04)->v05());
+            if (strlen(s1) == 8) {
+                const char* s2 = reinterpret_cast<const char*>(
+                    reinterpret_cast<MdlMatOwnerVt*>(self->field_0x04)->v05());
+                char c = s2[7];
+                if (c >= '0') {
+                    if (c <= '9') {
+                        const char* s3 = reinterpret_cast<const char*>(
+                            reinterpret_cast<MdlMatOwnerVt*>(self->field_0x04)
+                                ->v05());
+                        self->field_0x14 = s3[7] - '0';
+                    }
+                }
+            }
+        } else {
+            // Second compare re-resolves the name pointer.
+            const char* name2 = (item->nameOffset != 0)
+                ? reinterpret_cast<const char*>(
+                      reinterpret_cast<const u8*>(item) + item->nameOffset)
+                : NULL;
+            if (strcmp(name2, lbl_eu_80663C30) != 0) {
+                continue;
+            }
+
+            // Append every S32 value of the item to the byte flag table.
+            for (u32 j = 0; j < item->field_0x08; j++) {
+                if (item == NULL) {
+                    nw4r::db::Panic(lbl_eu_80530DC4, 0x26, lbl_eu_80530DA8,
+                                    lbl_eu_80530D68, lbl_eu_80663C50);
+                }
+                if (item->valueType != 0) {
+                    nw4r::db::Panic(lbl_eu_80530E1C, 0x36, lbl_eu_80530DD8);
+                }
+                if (item == NULL) {
+                    nw4r::db::Panic(lbl_eu_80530D94, 0x26, lbl_eu_80530D78,
+                                    lbl_eu_80530D68, lbl_eu_80663C4C);
+                }
+
+                u8* data = (item->dataOffset != 0)
+                    ? reinterpret_cast<u8*>(item) + item->dataOffset
+                    : NULL;
+
+                self->field_0x28[self->field_0x30] =
+                    static_cast<u8>(*reinterpret_cast<const u32*>(data));
+                self->field_0x30++;
+            }
+        }
+    }
+}
+
+// func_804E5E38: for each entry in the material value table whose group id
+// (value / 10) matches the requested value, copy that material's cull mode
+// from the model resource into the scene model.
+void func_804E5E38(CMdlMaterial* selfPtr, u32 val, bool useMatCull) {
+    CMdlMatView* self = reinterpret_cast<CMdlMatView*>(selfPtr);
+    MdlMatContext* ctx = reinterpret_cast<MdlMatContext*>(self->field_0x04);
+
+    for (s32 i = 0; i < self->field_0x34; i++) {
+        s32 entry = self->field_0x18[i];
+
+        // Entries encode <group>*10 + sub-index; select by sub-index.
+        if ((u32)(entry % 10) != val) {
+            continue;
+        }
+
+        nw4r::g3d::ResMat mat =
+            nw4r::g3d::ResMdl(ctx->mdlData).GetResMat((int)(entry / 10));
+        nw4r::g3d::ResMatData* matData = mat.ptr();
+
+        nw4r::g3d::ScnMdl::CopiedMatAccess access(ctx->scnMdl, matData->id);
+        nw4r::g3d::ResGenMode genMode = access.GetResGenMode(false);
+
+        GXCullMode cull = GX_CULL_ALL;
+        if (useMatCull) {
+            // Inlined null assert before reading the copied GenMode data.
+            if (genMode.ptr() == NULL) {
+                nw4r::db::Panic(lbl_eu_805701A0, 0xdf, lbl_eu_80570180,
+                                lbl_eu_806638E8, lbl_eu_80663C40);
+            }
+            cull = genMode.GXGetCullMode();
+        }
+
+        if (matData == NULL) {
+            nw4r::db::Panic(lbl_eu_8056E068, 0x26d, lbl_eu_8056E04C,
+                            lbl_eu_806638E8, lbl_eu_80663C40);
+        }
+
+        // Redundant re-check: compiler folds the branch but keeps the
+        // assertion-string address setup alive in the prologue.
+        if (matData == NULL) {
+            nw4r::db::Panic(lbl_eu_80570100, 0x26d, lbl_eu_805700E4,
+                            lbl_eu_806638E8, lbl_eu_80663C40);
+        }
+
+        // Inlined NW4R_G3D_ASSERT_ALIGNMENT on the GenMode data.
+        if (reinterpret_cast<u32>(genMode.ptr()) & 3) {
+            nw4r::db::Panic(lbl_eu_80570170, 0xaf, lbl_eu_80570148,
+                            lbl_eu_806638E8, lbl_eu_80663C40);
+        }
+
+        genMode.GXSetCullMode(cull);
+    }
+}
+
+// func_804E5FD4: apply a colour (built from an RGB float triple scaled by
+// 255.0f) as ambient colour on all four channels of every material.
+bool func_804E5FD4(MdlMatApplier* ap, const f32* rgb) {
+    if (ap->colors == NULL) {
+        return false;
+    }
+
+    GXColor color;
+    color.a = 0xFF;
+    color.r = (u8)(lbl_eu_8066B304 * rgb[0]);
+    color.g = (u8)(lbl_eu_8066B304 * rgb[1]);
+    color.b = (u8)(lbl_eu_8066B304 * rgb[2]);
+
+    for (u32 i = 0;
+         i < nw4r::g3d::ResMdl(ap->ctx->mdlData).GetResMatNumEntries(); i++) {
+        nw4r::g3d::ResMat mat =
+            nw4r::g3d::ResMdl(ap->ctx->mdlData).GetResMat(i);
+
+        if (!mat.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E068, 0x26d, lbl_eu_8056E04C,
+                            lbl_eu_806638E8, lbl_eu_80663C44);
+        }
+
+        nw4r::g3d::ScnMdl::CopiedMatAccess access(ap->ctx->scnMdl,
+                                                  mat.ref().id);
+        nw4r::g3d::ResMatChan chan = access.GetResMatChan(false);
+
+        chan.GXSetChanAmbColor((GXChannelID)0, color);
+        chan.GXSetChanAmbColor((GXChannelID)2, color);
+        chan.GXSetChanAmbColor((GXChannelID)1, color);
+        chan.GXSetChanAmbColor((GXChannelID)3, color);
+    }
+
+    return true;
+}
+
+// func_804E6158: like func_804E5FD4, but restricted to materials whose light
+// set index matches the requested one (all materials when lightSet == -1).
+// Returns whether any material was updated.
+bool func_804E6158(MdlMatApplier* ap, const f32* rgb, s32 lightSet) {
+    bool applied = false;
+
+    if (ap->colors == NULL) {
+        return false;
+    }
+
+    GXColor color;
+    color.a = 0xFF;
+    color.r = (u8)(lbl_eu_8066B304 * rgb[0]);
+    color.g = (u8)(lbl_eu_8066B304 * rgb[1]);
+    color.b = (u8)(lbl_eu_8066B304 * rgb[2]);
+
+    for (u32 i = 0;
+         i < nw4r::g3d::ResMdl(ap->ctx->mdlData).GetResMatNumEntries(); i++) {
+        nw4r::g3d::ResMat mat =
+            nw4r::g3d::ResMdl(ap->ctx->mdlData).GetResMat(i);
+
+        if (lightSet != -1) {
+            // Inlined ResMatMisc accessor asserts from g3d_resmat_ac.h.
+            if (mat.ptr() == NULL) {
+                nw4r::db::Panic(lbl_eu_80570100, 0x26d, lbl_eu_805700E4,
+                                lbl_eu_806638E8, lbl_eu_80663C40);
+            }
+            nw4r::g3d::ResMatMisc misc(&mat.ref().misc);
+            if (reinterpret_cast<u32>(misc.ptr()) & 3) {
+                nw4r::db::Panic(lbl_eu_80570138, 0xf3, lbl_eu_80570110,
+                                lbl_eu_806638E8, lbl_eu_80663C40);
+            }
+
+            if (misc.GetLightSetIdx() != lightSet) {
+                continue;
+            }
+        }
+
+        if (!mat.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E068, 0x26d, lbl_eu_8056E04C,
+                            lbl_eu_806638E8, lbl_eu_80663C44);
+        }
+
+        nw4r::g3d::ScnMdl::CopiedMatAccess access(ap->ctx->scnMdl,
+                                                  mat.ref().id);
+        nw4r::g3d::ResMatChan chan = access.GetResMatChan(false);
+
+        chan.GXSetChanAmbColor((GXChannelID)0, color);
+        chan.GXSetChanAmbColor((GXChannelID)2, color);
+        chan.GXSetChanAmbColor((GXChannelID)1, color);
+        chan.GXSetChanAmbColor((GXChannelID)3, color);
+
+        applied = true;
+    }
+
+    return applied;
+}
+
+// func_804E6358: apply per-channel ambient colours taken sequentially from
+// the applier's colour array to every material of the model.
+bool func_804E6358(MdlMatApplier* ap) {
+    if (ap->colors == NULL) {
+        return false;
+    }
+
+    GXColor* colors = ap->colors;
+
+    for (u32 i = 0;
+         i < nw4r::g3d::ResMdl(ap->ctx->mdlData).GetResMatNumEntries(); i++) {
+        nw4r::g3d::ResMat mat =
+            nw4r::g3d::ResMdl(ap->ctx->mdlData).GetResMat(i);
+
+        if (!mat.IsValid()) {
+            nw4r::db::Panic(lbl_eu_8056E068, 0x26d, lbl_eu_8056E04C,
+                            lbl_eu_806638E8, lbl_eu_80663C44);
+        }
+
+        nw4r::g3d::ScnMdl::CopiedMatAccess access(ap->ctx->scnMdl,
+                                                  mat.ref().id);
+        nw4r::g3d::ResMatChan chan = access.GetResMatChan(false);
+
+        chan.GXSetChanAmbColor((GXChannelID)0, *colors++);
+        chan.GXSetChanAmbColor((GXChannelID)2, *colors++);
+        chan.GXSetChanAmbColor((GXChannelID)1, *colors++);
+        chan.GXSetChanAmbColor((GXChannelID)3, *colors++);
+    }
+
+    return true;
+}
+
+// func_804E64B0: for each flag byte whose group id (byte / 10) equals the
+// owner material's accumulated value, invoke the chain-notify helper with
+// the byte's sub-index (byte % 10).
+void func_804E64B0(CMdlMaterial* selfPtr, void* arg, MdlMaterialOwner* owner) {
+    CMdlMatView* self = reinterpret_cast<CMdlMatView*>(selfPtr);
+    for (u32 i = 0; i < self->field_0x30; i++) {
+        s32 b = self->field_0x28[i];
+        s32 subIdx = b % 10;
+
+        if ((u32)(b / 10) == owner->material.field_0x14) {
+            func_80488C20(owner, arg, subIdx);
+        }
+    }
+}
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
 // [.data] 0x805700D8-0x805701B0 (0xD8): vtable (3 words) + 8 embedded
 // nw4r assertion strings ("%s::%s: Object not valid." etc., retail bytes).

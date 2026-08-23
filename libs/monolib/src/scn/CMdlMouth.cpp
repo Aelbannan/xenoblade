@@ -12,6 +12,12 @@
 #include <monolib/core/code_804E36DC.hpp>
 #include "libs/monolib/src/scn/CMdlMouth.hpp"
 
+// Retail fragments (see the data block at the bottom): the class ctor/dtor
+// are defined as extern "C" functions so MWCC emits no auto vtable/RTTI.
+extern "C" void __dl__FPv(void*);
+extern "C" void* __dt__9CMdlMouthFv(CMdlMouth* self, int flag);
+extern "C" u32 lbl_eu_805701B0[];
+
 // Minimal typed view of the owner model (a CScnItemModelNw4r) fields used
 // here. 0x146C is the model resource data, 0x147C the g3d scene object.
 struct CScnItemModelNw4rOwner;  // full definition in CScnItemModelNw4r.hpp
@@ -65,7 +71,13 @@ extern "C" int func_804E68A0(CMdlMouth* self, u32 arg2, nw4r::g3d::ChrAnmResult*
     return 1;
 }
 
-CMdlMouth::~CMdlMouth() {}
+// Retail dtor fragment (deleting-dtor form: flag > 0 frees the object).
+extern "C" void* __dt__9CMdlMouthFv(CMdlMouth* self, int flag) {
+    if (self != 0 && flag > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
 extern "C" void func_804E6A28(CMdlMouth* self) {
     // Per-frame mouth update: bail when no material is bound (id < 0) or the
@@ -209,16 +221,43 @@ extern "C" void func_804E679C(CMdlMouth* self, int arg2, int arg3) {
     }
 }
 
-CMdlMouth::CMdlMouth() {
-    field_0x04 = 0;
-    field_0x08 = 0;
-    field_0x0C = -1;
-    f32 v = lbl_eu_8066B310;
-    field_0x10 = v;
-    field_0x14 = v;
-    field_0x18 = v;
-    field_0x1C = v;
-    field_0x24 = -1;
-    field_0x28 = 0;
-    value2C = lbl_eu_8066B314;
-}// data: retail sections verified via run.py data diff (no bypass)
+// Retail ctor fragment: stores the vtable pointer, then mirrors the retail
+// field-init order (field_0x20 is left uninitialized, as in retail).
+extern "C" void __ct__CMdlMouth(CMdlMouth* self) {
+    *(void**)self = (void*)&lbl_eu_805701B0;
+    self->field_0x04 = 0;
+    self->field_0x08 = 0;
+    self->field_0x0C = -1;
+    f32 z = lbl_eu_8066B310;
+    self->field_0x10 = z;
+    self->field_0x14 = z;
+    self->field_0x18 = z;
+    self->field_0x1C = z;
+    self->field_0x24 = -1;
+    self->field_0x28 = 0;
+    self->value2C = lbl_eu_8066B314;
+}
+
+// ===== Dissolved data owned by this TU =====
+// [.rodata] 0x805247B4-0x805247D0 (28B): SRT offset table {0, 0.25f, 0.5f}
+// indexed by the mouth-open stage, then the RTTI class-name string.
+extern const f32 lbl_eu_805247B4[3] = { 0.0f, 0.25f, 0.5f };
+extern const char lbl_eu_805247C0[0x10] = "CMdlMouth";
+// [.sdata] 0x80663C58-0x80663C74 (28B): name pointers, RTTI locator
+// {name, 0}, two "ref" Panic args, and a pointer into the shared pool.
+extern const char lbl_eu_8066B308[];
+extern const char lbl_eu_805247A8[];
+extern const char lbl_eu_8066B340[];
+const char* lbl_eu_80663C58 = lbl_eu_8066B308;
+const char* lbl_eu_80663C5C = lbl_eu_805247A8;
+extern "C" const void* lbl_eu_80663C60[2] = { (const void*)lbl_eu_805247C0, 0 };
+extern "C" __declspec(section ".sdata") const char lbl_eu_80663C68[4] = { 0x72,0x65,0x66,0x00 };
+extern "C" __declspec(section ".sdata") const char lbl_eu_80663C6C[4] = { 0x72,0x65,0x66,0x00 };
+const char* lbl_eu_80663C70 = lbl_eu_8066B340;
+// [.data] 0x805701B0-0x805701C0 (16B): CMdlMouth vtable {RTTI locator
+// lbl_eu_80663C60, 0, dtor, 0}.
+extern "C" u32 lbl_eu_805701B0[4] = {
+    (u32)&lbl_eu_80663C60, 0x00000000,
+    (u32)&__dt__9CMdlMouthFv, 0x00000000,
+};
+DECOMP_FORCEACTIVE(CMdlMouth_cpp, lbl_eu_80663C70);

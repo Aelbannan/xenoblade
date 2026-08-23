@@ -14,7 +14,9 @@
  */
 
 #include "kyoshin/cf/CfGimmick.hpp"
-#include "kyoshin/cf/CtrlMovePC.hpp"  // CCtrlMovePC (embedded at CfGimmickMoveSub +0x8C)
+// NOTE: CtrlMovePC.hpp deliberately NOT included here -- its extern "C"
+// getUnk80664658() declaration conflicts with CfGimmick.hpp's. Only
+// cf::CCtrlMovePC / func_80199678 were needed, declared below.
 #include "types.h"
 
 // Per-area table entry at +0x84 (2 entries x 0x10 bytes). Each entry holds
@@ -98,9 +100,12 @@ public:
     /* 0x84 */ CfGimmickObjectArea field_84[2];  // 2 x 0x10-byte gimmick-area tables
     /* 0xA4 */ CfGimmickObjectStep field_A4[2];  // 2 x 0x10 per-step entries
     /* 0xC4 */ u16 field_C4;
-    /* 0xC6 */ u8 gap_C6[0xF4 - 0xC6];
+    /* 0xC6 */ u8 gap_C6[0xC9 - 0xC6];
+    /* 0xC9 */ u8 field_C9;           // mode bits 5..7 gate the busy-flag raise (func_801F7F24)
+    /* 0xCA */ u8 gap_CA[0xF4 - 0xCA];
     /* 0xF4 */ u8 field_F4[0x30];      // collider B 3x4 matrix dest (func_802089BC)
-    /* 0x124 */ u8 gap_124[0x13C - 0x124];
+    /* 0x124 */ u8 gap_124[0x138 - 0x124];
+    /* 0x138 */ u32 field_138;         // jumptable_eu_80535830 dispatch index (func_801F7F24)
     /* 0x13C */ u16 field_13C;
     /* 0x13E */ u16 field_13E;
     /* 0x140 */ u16 field_140;
@@ -215,7 +220,7 @@ int func_8020A87C(void* self, u32 arg);
 void func_8020A484(u16 id);
 int func_8020971C(void* obj);
 int func_802096EC(void* obj);
-int func_8006A33C();
+u32 func_8006A33C();
 int func_802098EC(u32 mask, cf::CfGimmick* gimmick, const CfGimmickVec3* point,
                   const f32* ang, void* partyId);
 void func_80159C04(unsigned int a, int b);
@@ -243,7 +248,9 @@ void func_8007B0C8(int idx);
 void func_8020A0F8();
 CfGimmickObjectMgr* func_800817BC__Q22cf13CfGameManagerFv(u32 id, u32 mode);
 void* getPlayer__Q22cf13CfGameManagerFi(int index);
+void func_80199678(void* ctrl, int flag);  // CCtrlMovePC helper (CtrlMoveBase)
 void func_800BE12C(u8* obj, int a, int b, int c, int d);
+void func_80080F44__Q22cf13CfGameManagerFv(void* obj);
 }
 
 // ---------------------------------------------------------------------------
@@ -278,10 +285,12 @@ struct CfGimmickObjectMoveIf {
 };
 
 // Sub-object returned by CfGimmickObjectMoveIf slot 0x110; a CCtrlMovePC is
-// embedded at +0x8C (address passed to func_80199678).
+// embedded at +0x8C (address passed to func_80199678). Cast-only view, so the
+// controller is kept as an opaque byte block (full class lives in
+// CtrlMovePC.hpp, which this header cannot include).
 struct CfGimmickMoveSub {
     u8 gap_8C[0x8C];
-    cf::CCtrlMovePC ctrl;   // +0x8C
+    u8 ctrl[0x114];   // +0x8C: embedded cf::CCtrlMovePC
 };
 
 // Base of a CfObjectMove player (func_800B6BC8 nodes point at base+0x3E9C);
@@ -290,6 +299,15 @@ struct CfGimmickPlayerBase {
     void** vtable;           // +0x00
     u8 gap_456C[0x456C - 0x04];
     u16 field_456C;          // +0x456C
+};
+
+// Base of a CfObjectMove player scanned by func_801F7F24's id-collection
+// loop; +0x3F04/+0x3F08 are flag words raised before func_80080F44 fires.
+struct CfGimmickPlayerFlags {
+    void** vtable;                     // +0x00
+    u8 gap_3F04[0x3F04 - 0x04];
+    u32 field_3F04;                    // +0x3F04
+    u32 field_3F08;                    // +0x3F08
 };
 
 // Circular object list returned by func_800B6BC8 (mirror of

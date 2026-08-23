@@ -141,6 +141,9 @@ extern "C" void func_80228C04(CQstLogList* self);
 // Quest-log sort toggle. With the sort menu active, closing the menu (current
 // direction descending) resets the direction and rebuilds; otherwise the
 // sort-menu cursor is positioned under the list and the direction is enabled.
+// pragma optimize_for_size: retail saves r28-r31 via stmw/lmw.
+#pragma push
+#pragma optimize_for_size on
 void func_80228164(CQstLogList* self) {
     if (func_801D3328(&self->mSortMenuData) == 0) {
         return;
@@ -153,10 +156,12 @@ void func_80228164(CQstLogList* self) {
         func_80228B10(self);
         func_80138078(6);
     } else {
+        // Four live values here (self/root/pool base/pane1) drive the
+        // retail r28-r31 allocation.
+        nw4r::math::VEC3 pos;
         nw4r::lyt::Pane* root = self->mpLayout->GetRootPane();
         nw4r::lyt::Pane* pane1 = root->FindPaneByName(&lbl_eu_80509AB4[0x33], true);
         nw4r::lyt::Pane* pane2 = root->FindPaneByName(&lbl_eu_80509AB4[0x2a], true);
-        nw4r::math::VEC3 pos;
         func_80137924(&pos, pane2, pane1, root);
         func_801D3430(&self->mSortMenuData, &pos);
         func_80228C04(self);
@@ -167,10 +172,12 @@ void func_80228164(CQstLogList* self) {
         func_80138078(2);
     }
 }
+#pragma pop
 
 // Sort-menu confirm/select: rebuilds the quest list (func_80228C98) and
 // re-sorts (func_80228B10) when the sort menu reports an active button.
-void func_80228280(CQstLogList* self, int flag) {
+// noinline: retail keeps this an out-of-line call from func_802282F8.
+extern "C" __declspec(noinline) void func_80228280(CQstLogList* self, int flag) {
     if (func_801D3328(&self->mSortMenuData) != 0) {
         func_801D216C(&self->mCur18[0], 1);
         func_801D3408(&self->mSortMenuData);
@@ -183,12 +190,10 @@ void func_80228280(CQstLogList* self, int flag) {
     }
 }
 
-void func_802282F8(){}
-
 // retail: lwz r0,lbl_eu_80664730@sda21; clrlwi r3,r0,16 = (u16)global
 extern "C" u32 func_80228394() { extern u32 lbl_eu_80664730; return lbl_eu_80664730 & 0xFFFF; }
 
-void func_802283A0(CQstLogList* self) {
+extern "C" __declspec(noinline) void func_802283A0(CQstLogList* self) {
     f32 frame = lbl_eu_80668584;
     nw4r::lyt::AnimTransform* anim = self->mpAnim0;
     if (func_80137444(anim, frame) != 0) {
@@ -197,7 +202,7 @@ void func_802283A0(CQstLogList* self) {
     }
 }
 
-void func_802283EC(CQstLogList* self) {
+extern "C" __declspec(noinline) void func_802283EC(CQstLogList* self) {
     f32 frame = lbl_eu_80668584;
     nw4r::lyt::AnimTransform* anim = self->mpAnim1;
     if (func_80137444(anim, frame) != 0) {
@@ -208,14 +213,14 @@ void func_802283EC(CQstLogList* self) {
     }
 }
 
-void func_8022844C(CQstLogList* self) {
+extern "C" __declspec(noinline) void func_8022844C(CQstLogList* self) {
     if (func_80137510(self->mpAnim1, lbl_eu_80668584) != 0) {
         self->field_0x174 = 5;
         func_802284E4(self);
     }
 }
 
-void func_80228498(CQstLogList* self) {
+extern "C" __declspec(noinline) void func_80228498(CQstLogList* self) {
     if (func_80137510(self->mpAnim0, lbl_eu_80668584) != 0) {
         self->field_0x174 = 0;
         self->mSortEnabled = 1;
@@ -307,25 +312,37 @@ iconDone:
 
 // Resets the ten quest-row panes: formats each pane name, clears its text
 // and hides empty panes.
+// pragma optimize_for_size: retail saves r29-r31 via stmw/lmw; plain -O4,p
+// emits reversed individual stw's (MWCC_CASES CPartyState/CTagProcessor).
+#pragma push
+#pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_802289F8(CQstLogList* self) {
     char buf[0x20];
-    for (u8 i = 1; i <= 10; i++) {
-        sprintf(buf, &lbl_eu_80509AB4[0x48], i);
+    // No explicit pool-base local: MWCC CSEs the lbl_eu_80509AB4 base into
+    // r31 itself (lis hoisted above the LR store, addi sunk to first use),
+    // alongside self (r29) and counter (r30) -> retail stmw frame.
+    // Counter is u32 with explicit u8 casts at the vararg call sites
+    // (retail truncates only there).
+    u32 i = 1;
+    do {
+        sprintf(buf, &lbl_eu_80509AB4[0x48], (u8)i);
         func_80136B4C(self->mpLayout, buf, &lbl_eu_80509AB4[0x106], 0);
-        sprintf(buf, &lbl_eu_80509AB4[0x7b], i);
+        sprintf(buf, &lbl_eu_80509AB4[0x7b], (u8)i);
         func_80136B4C(self->mpLayout, buf, &lbl_eu_80509AB4[0x106], 0);
-        sprintf(buf, &lbl_eu_80509AB4[0x87], i);
-        nw4r::lyt::Pane* pane = self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
-        if (pane != 0) {
+        sprintf(buf, &lbl_eu_80509AB4[0x87], (u8)i);
+        nw4r::lyt::Pane* pane =
+            self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
+        if (pane != NULL) {
             func_80124270(pane, 0);
         }
-        sprintf(buf, &lbl_eu_80509AB4[0xba], i);
+        sprintf(buf, &lbl_eu_80509AB4[0xba], (u8)i);
         pane = self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
-        if (pane != 0) {
+        if (pane != NULL) {
             func_80124270(pane, 0);
         }
-    }
+    } while (++i <= 10);
 }
+#pragma pop
 
 // Scroll-bar/page refresh helper (retail name unmangled - extern "C" keeps
 // the bl relocs from the scroll/page handlers bound to the retail symbol).
@@ -367,20 +384,23 @@ extern "C" __declspec(noinline) void func_802285A4(CQstLogList* self) {
 // Rebuild the quest list display: with the sort menu open, copy its selection
 // state into the cursor; otherwise format the quest icon pane name, position
 // the icon against the proportion pane and move the cursor to it.
+// Locals are declared buf/pos/tmp so the stack slots land at the retail
+// offsets (buf 0x20, pos 0x14, tmp 0x08) keeping r29/r30/r31 live (stmw).
 extern "C" __declspec(noinline) void func_80228B10(CQstLogList* self) {
     char buf[0x20];
     nw4r::math::VEC3 pos;
+    nw4r::math::VEC3 tmp;
     if (self->mSortDescending != 0) {
-        nw4r::math::VEC3 tmp;
         func_801D3454(&tmp,
                       reinterpret_cast<CSortMenu*>(&self->mSortMenuData));
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(&tmp);
     } else {
-        sprintf(buf, &lbl_eu_80509AB4[0xBA], self->field_0x17D + 1);
+        char* const s = lbl_eu_80509AB4;
+        sprintf(buf, &s[0xBA], self->field_0x17D + 1);
         nw4r::lyt::Pane* pane1 =
             self->mpLayout->GetRootPane()->FindPaneByName(buf, true);
         nw4r::lyt::Pane* pane2 = self->mpLayout->GetRootPane()
-                                      ->FindPaneByName(&lbl_eu_80509AB4[0x33], true);
+                                      ->FindPaneByName(&s[0x33], true);
         func_80137924(&pos, pane1, pane2, self->mpLayout->GetRootPane());
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(&pos);
     }
@@ -424,8 +444,6 @@ void func_80227A60(CQstLogList* self) {
     func_801D3064(&self->mSortMenuData);
     self->field_0x178 = 0;
 }
-
-extern "C" void func_80227AC4() {}
 
 // File-load completion callback: builds the quest-log layout from the
 // freshly-loaded arc, primes the shared quest-text table with the four fixed
@@ -642,8 +660,86 @@ void func_80227B6C(CQstLogList* self, nw4r::lyt::DrawInfo* drawInfo) {
     }
 }
 
-extern "C" void func_80227BD8() {}
-extern "C" void func_80227CDC() {}
+// Unload the quest-log screen: close the arc file handle, delete the layout,
+// release the resource accessor and tear down cursor/scroll bar/sort menu.
+extern "C" void func_80227BD8(CQstLogList* self) {
+    func_801390E0(&self->mFileHandle);
+    self->field_0x170 = 0;
+    if (self->mpLayout != 0) {
+        delete self->mpLayout;
+        self->mpLayout = 0;
+    }
+    func_80139124(self->mArcResAcc);
+    reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf03();
+    func_801F35DC(&self->mScrollBar);
+    func_801D3258(&self->mSortMenuData);
+    func_8045F778__17UnkClass_8045F564Fv(&self->mUnk04[0]);
+}
+
+// Sort-menu open-in animation start (one-shot on mode 0): switch animations,
+// prime the scroll bar geometry and request scroll-in.
+extern "C" void func_80227CDC(CQstLogList* self) {
+    if (self->field_0x174 == 0) {
+        self->field_0x174 = 1;
+        self->mSortEnabled = 0;
+        func_802284E4(self);
+        func_80228B10(self);
+        f32 pos[3];
+        pos[0] = lbl_eu_80668578;
+        pos[1] = lbl_eu_8066857C;
+        pos[2] = lbl_eu_80668580;
+        func_801F3670(&self->mScrollBar, pos);
+        func_801F36BC(&self->mScrollBar, 10, (u16)lbl_eu_8066472C);
+        func_801F3850(&self->mScrollBar, (u16)self->field_0x17E);
+        func_801F367C(&self->mScrollBar);
+    }
+}
+
+// Sort-menu confirm: adopt the selected page/entry indices into the list,
+// reset the row cursor and rebuild; otherwise clear sorting once entries exist.
+extern "C" void func_802282F8(CQstLogList* self) {
+    if (self->mSortDescending != 0) {
+        if (func_801D3328(&self->mSortMenuData) == 0) {
+            return;
+        }
+        self->field_0x17B = func_801D3808(&self->mSortMenuData);
+        self->field_0x17C = func_801D3810(&self->mSortMenuData);
+        self->field_0x17D = 0;
+        self->field_0x17E = 0;
+        func_80228280(self, 1);
+        func_802285A4(self);
+    } else {
+        if (lbl_eu_8066472C > 0) {
+            self->mSortEnabled = 0;
+        }
+    }
+    func_80138078(3);
+}
+
+// Per-frame update while the quest-log list is loaded: run the active open/
+// close animation step, then advance layout, cursor, scroll bar and sort menu.
+extern "C" void func_80227AC4(CQstLogList* self) {
+    if (self->field_0x170 != 0) {
+        switch (self->field_0x174) {
+        case 1:
+            func_802283A0(self);
+            break;
+        case 2:
+            func_802283EC(self);
+            break;
+        case 4:
+            func_8022844C(self);
+            break;
+        case 5:
+            func_80228498(self);
+            break;
+        }
+        self->mpLayout->Animate(0);
+        func_801D202C(&self->mCur18[0]);
+        func_801F3540(&self->mScrollBar);
+        func_801D3160(&self->mSortMenuData);
+    }
+}
 
 // Sort-menu exit callback: when the sort menu is closing (mode 3) switch to
 // mode 4, disable sorting and request scroll-bar out.

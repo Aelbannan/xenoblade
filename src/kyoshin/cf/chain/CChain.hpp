@@ -93,6 +93,20 @@ namespace cf {
         virtual void v023(int key) = 0; // slot 25 / +0x64
     };
 
+    // Manual-vtable interface for func_80279DC0: slots +0x18 / +0x1c on the
+    // chain actor's manual vtable at +0x70 take (int key). Same pad-first /
+    // -RTTI layout trick as CChainActorVtIf64; never instantiated.
+    class CChainActorVtIfDC0 {
+    public:
+        u8 pad70[0x70];
+        virtual void v000() = 0;
+        virtual void v001() = 0;
+        virtual void v002() = 0;
+        virtual void v003() = 0;
+        virtual void v004(int key) = 0; // slot 6 / +0x18
+        virtual void v005(int key) = 0; // slot 7 / +0x1c
+    };
+
     // Manual-vtable interface for func_80279778: the actor's manual vtable
     // at +0x70, slot 0x28 (declared virtual #8). The slot returns an int
     // that becomes the function's result on the fall-through path.
@@ -559,6 +573,84 @@ namespace cf {
         s8 field_0xD;              // 0xD
     };
 
+    // Gauge sub-object returned by func_8027750C's slot-0x298 dispatch: the
+    // +9 state byte selects the two-round (0x4a/0x4b) or one-round (0x40)
+    // gauge update, floats live at +0x58/+0x5c/+0x60 and the +0x74 bit 24
+    // disables the integer truncation.
+    class CChainGaugeSub {
+    public:
+        u8 _pad0[0x9];
+        u8 field_9;              //0x9
+        u8 _padA[0x58 - 0xA];
+        f32 field_58;            //0x58
+        f32 field_5C;            //0x5C
+        f32 field_60;            //0x60
+        u8 _pad64[0x74 - 0x64];
+        u32 field_74;            //0x74
+    };
+
+    // Count byte probed by func_8027750C at +0x44 of the object reached
+    // through the arts-holder's +0x50 pointer.
+    struct CChainGaugeCnt44 {
+        u8 pad[0x44];
+        u8 field_0x44;           //0x44
+    };
+
+    // Battle-object base-vtable interface for func_8027750C: slots 0x290
+    // (delta gate), 0x298 (gauge sub-object), 0x2A4 (arts category holder,
+    // called twice) and 0x2A8. Declared virtual #k lands at byte offset
+    // (k+2)*4. Never instantiated, so no vtable emits.
+    class CChainBattleObj750 {
+    public:
+        virtual void v000() = 0; virtual void v001() = 0; virtual void v002() = 0; virtual void v003() = 0;
+        virtual void v004() = 0; virtual void v005() = 0; virtual void v006() = 0; virtual void v007() = 0;
+        virtual void v008() = 0; virtual void v009() = 0; virtual void v010() = 0; virtual void v011() = 0;
+        virtual void v012() = 0; virtual void v013() = 0; virtual void v014() = 0; virtual void v015() = 0;
+        virtual void v016() = 0; virtual void v017() = 0; virtual void v018() = 0; virtual void v019() = 0;
+        virtual void v020() = 0; virtual void v021() = 0; virtual void v022() = 0; virtual void v023() = 0;
+        virtual void v024() = 0; virtual void v025() = 0; virtual void v026() = 0; virtual void v027() = 0;
+        virtual void v028() = 0; virtual void v029() = 0; virtual void v030() = 0; virtual void v031() = 0;
+        virtual void v032() = 0; virtual void v033() = 0; virtual void v034() = 0; virtual void v035() = 0;
+        virtual void v036() = 0; virtual void v037() = 0; virtual void v038() = 0; virtual void v039() = 0;
+        virtual void v040() = 0; virtual void v041() = 0; virtual void v042() = 0; virtual void v043() = 0;
+        virtual void v044() = 0; virtual void v045() = 0; virtual void v046() = 0; virtual void v047() = 0;
+        virtual void v048() = 0; virtual void v049() = 0; virtual void v050() = 0; virtual void v051() = 0;
+        virtual void v052() = 0; virtual void v053() = 0; virtual void v054() = 0; virtual void v055() = 0;
+        virtual void v056() = 0; virtual void v057() = 0; virtual void v058() = 0; virtual void v059() = 0;
+        virtual void v060() = 0; virtual void v061() = 0; virtual void v062() = 0; virtual void v063() = 0;
+        virtual void v064() = 0; virtual void v065() = 0; virtual void v066() = 0; virtual void v067() = 0;
+        virtual void v068() = 0; virtual void v069() = 0; virtual void v070() = 0; virtual void v071() = 0;
+        virtual void v072() = 0; virtual void v073() = 0; virtual void v074() = 0; virtual void v075() = 0;
+        virtual void v076() = 0; virtual void v077() = 0; virtual void v078() = 0; virtual void v079() = 0;
+        virtual void v080() = 0; virtual void v081() = 0; virtual void v082() = 0; virtual void v083() = 0;
+        virtual void v084() = 0; virtual void v085() = 0; virtual void v086() = 0; virtual void v087() = 0;
+        virtual void v088() = 0; virtual void v089() = 0; virtual void v090() = 0; virtual void v091() = 0;
+        virtual void v092() = 0; virtual void v093() = 0; virtual void v094() = 0; virtual void v095() = 0;
+        virtual void v096() = 0; virtual void v097() = 0; virtual void v098() = 0; virtual void v099() = 0;
+        virtual void v100() = 0; virtual void v101() = 0; virtual void v102() = 0; virtual void v103() = 0;
+        virtual void v104() = 0; virtual void v105() = 0; virtual void v106() = 0; virtual void v107() = 0;
+        virtual void v108() = 0; virtual void v109() = 0; virtual void v110() = 0; virtual void v111() = 0;
+        virtual void v112() = 0; virtual void v113() = 0; virtual void v114() = 0; virtual void v115() = 0;
+        virtual void v116() = 0; virtual void v117() = 0; virtual void v118() = 0; virtual void v119() = 0;
+        virtual void v120() = 0; virtual void v121() = 0; virtual void v122() = 0; virtual void v123() = 0;
+        virtual void v124() = 0; virtual void v125() = 0; virtual void v126() = 0; virtual void v127() = 0;
+        virtual void v128() = 0; virtual void v129() = 0; virtual void v130() = 0; virtual void v131() = 0;
+        virtual void v132() = 0; virtual void v133() = 0; virtual void v134() = 0; virtual void v135() = 0;
+        virtual void v136() = 0; virtual void v137() = 0; virtual void v138() = 0; virtual void v139() = 0;
+        virtual void v140() = 0; virtual void v141() = 0; virtual void v142() = 0; virtual void v143() = 0;
+        virtual void v144() = 0; virtual void v145() = 0; virtual void v146() = 0; virtual void v147() = 0;
+        virtual void v148() = 0; virtual void v149() = 0; virtual void v150() = 0; virtual void v151() = 0;
+        virtual void v152() = 0; virtual void v153() = 0; virtual void v154() = 0; virtual void v155() = 0;
+        virtual void v156() = 0; virtual void v157() = 0; virtual void v158() = 0; virtual void v159() = 0;
+        virtual void v160() = 0; virtual void v161() = 0;
+        virtual int v162() = 0;                              // index 162 -> 0x290 (delta gate)
+        virtual void v163() = 0;
+        virtual CChainGaugeSub* v164() = 0;                  // index 164 -> 0x298 (gauge sub-object)
+        virtual void v165() = 0; virtual void v166() = 0;
+        virtual CChainCombo_ArtsCategoryHolder* v167() = 0;  // index 167 -> 0x2A4
+        virtual int v168() = 0;                              // index 168 -> 0x2A8
+    };
+
     // Layout mirror of CChain used by func_80279694: the member list viewed
     // as a CChainList member so member-array accesses fold the 0x1DC8 offset
     // into the load (a C-style cast of &self->mChainMember would materialize
@@ -688,6 +780,11 @@ struct CChainGimmickList {
     CChainGimmickListNode* head; //0x04
 };
 
+// Gauge-delta literals consumed by func_8027750C (.sdata float / doubles).
+extern float lbl_eu_80668A30;
+extern double lbl_eu_80668A20;
+extern double lbl_eu_80668A28;
+
 // CfGameManager mode-flag word (.sbss; sda21 access).
 extern u32 lbl_eu_80663E28;
 
@@ -743,6 +840,8 @@ extern "C" {
     void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor);
     // Same-TU helper (defined in CChain.cpp after its first caller).
     void func_80277B38(cf::CChain* self);
+    // Same-TU chain-voice reset (defined in CChain.cpp); used by the ctor.
+    void func_8027711C(void* self);
     // Chain-menu / err-mes helpers (CMenuBattleChain.cpp / CUIErrMesWin.cpp).
     void func_802AB410(CBattleChainMenuState* self);
     void func_802B48B8(CErrMesEntry* self);
@@ -764,6 +863,8 @@ extern "C" {
     void func_8027BB4C(cf::CChainActorList* self, cf::CChainList* list);
     int  func_8027BE84(cf::CChainActorList* self);
     int  func_8027CAE0(cf::CChainList* self, int target, int check);
+    int  func_8027CA0C(cf::CChainList* self, int key);
+    void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor);
     int  func_8027C154(cf::CChainChance* self, cf::CChainBattleObj* target, cf::CChainBattleObj* source);
     int  func_8027C33C(cf::CChainAction* self, u8* out);
     void func_8027CBE8(cf::CChainCounter* self);

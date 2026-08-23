@@ -435,13 +435,24 @@ public:
     virtual u16* v14(u16* p, const wchar_t* value, TagParam* param);
 };
 
-/* 216-byte flag/icon table copied to the stack by func_8012615C's icon-tag
- * handler (retail .rodata:0x804FF608, 0x1B x 8 bytes; MWCC emits the
- * mtctr/bdnz copy loop for this size, same as func_80128DA0's tables). */
+/* Text-pane view for func_80127FB4 (SE message pump): only the 2-arg
+ * SetText at +0x7C is called (next slot after FreeStringBuffer). */
+struct SeTalkPane : public CTalkTextBoxVtbl {
+    virtual void v7C(const u16* text, u16 flag);  // +0x7C SetText (2-arg)
+};
+
+/* Icon-flag tables copied to the stack by the icon-tag handlers
+ * (retail .rodata:0x804FF608 / 0x804FF6E0, 0x1B x 8 bytes each; MWCC
+ * emits the mtctr/bdnz copy loop for these sizes). */
 struct TagFlagTable {
     u32 v[54];  // +0x00
 };
 extern const TagFlagTable lbl_eu_804FF608;
+extern const TagFlagTable lbl_eu_804FF6E0;
+
+// sdata2 float constants used by func_80127FB4's tag-5 auto-speed gate
+// (retail .sdata2:0x80667250).
+extern const f32 lbl_eu_80667250;
 
 /* Text-pane view for func_8012615C's message pane (`a`) and its context
  * node list (a->field_0C): the vtable slots called are the context-pane
@@ -558,7 +569,8 @@ struct TagMemberObj {
 
 /* Talk-window/icon object (func_8012615C's r29->field_C4): the +0x80
  * virtual is a busy/accept query; the object is passed to func_8004B9D4
- * for icon display. */
+ * for icon display. field_270 is the event-flag word polled by
+ * func_80127FB4's icon handler and pending-icon tail. */
 struct TagC4Obj {
     virtual void v08();
     virtual void v0C();
@@ -591,6 +603,8 @@ struct TagC4Obj {
     virtual void v78();
     virtual void v7C();
     virtual int v80(int a);  // +0x80
+    u8  pad_04[0x26C];       // +0x04
+    u32 field_270;           // +0x270 event-flag word
 };
 
 /* Talk-source object (func_800BBC0C result): the member object at +0x98
@@ -750,6 +764,13 @@ int func_801276F4(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                   nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
 int func_8012615C(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* a,
                   nw4r::lyt::Pane* b, nw4r::lyt::Pane* c);
+// SE message pump (CTagProcessorSE variant of func_8012615C, no name list).
+int func_80127FB4(nw4r::lyt::AnimTransform* tag, nw4r::lyt::Pane* pane);
+// Voice/sound helpers used by func_80127FB4's auto-advance gate.
+s32 func_80189A04(s32 index);                                // sound-slot busy check
+void func_8018986C(int handle, f32 fadeTime);                 // stop voice
+// Plugin UI mode query (pluginUi.cpp).
+int func_eu_8013C8F4();
 int func_80128740(void* tagProc, nw4r::lyt::Pane* pane);
 // Retail r5 is a string (wcscpy source), not a flag. The CSimpleEveTalkWin.hpp
 // copy still declares the older int-flag shape; the two headers are never

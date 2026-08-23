@@ -346,7 +346,6 @@ void* func_800451D8(u32 cls, void* param);
 u32 func_800A32BC();
 int func_8026178C(void* data, u32 flag);
 u32 func_8025FB10(void* data, u32 flag);
-void func_800A21F8(void* data, u16 value, int a, int b);
 char* func_801571FC();
 void func_80157184(s32 value);
 
@@ -358,7 +357,6 @@ extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
 
 // BDAT archive attach helpers (func_8012278C common-archive branch).
 void func_8003AA78__5CBdatFUlPv(u32, void*);
-extern "C" void func_8003AA34(void*);
 
 // Quest-content helpers (func_801231C4). The *_E4/58/2C functions return raw
 // u32 values that the caller masks explicitly with & 0xFFFF (retail keeps the

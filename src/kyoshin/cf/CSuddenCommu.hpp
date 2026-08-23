@@ -15,14 +15,13 @@ namespace cf{
         //0x0: vtable
         //0x0-4: IObjectInfo?
         /* 0x04 */ s16 field_4;
-        /* 0x06 */ s16 field_6;
-        /* 0x08 */ s16 field_8;
+        /* 0x06 */ union { struct { s16 field_6; s16 field_8; }; s16 pair_6[2]; };
         /* 0x0A */ s16 field_A;
         /* 0x0C */ s16 field_C;
         /* 0x0E */ s16 field_E;
         /* 0x10 */ u32 field_10; // voice id probed via func_802A3748
         /* 0x14 */ u32 field_14;
-        /* 0x18 */ float field_18;
+        /* 0x18 */ volatile float field_18;
         /* 0x1C */ float field_1C;
         /* 0x20 */ u32 field_20;
         /* 0x24 */ volatile u32 field_24;
@@ -245,6 +244,7 @@ struct CSuddenCommuBmGauge {
 // CChainBattleObjTail*, CfObjectMove.hpp / CTaskGame.hpp take CScn*).
 class CChainBattleObjTail;
 class CScn;
+class CBattleManagerView;
 
 // C-linkage callees defined in CSuddenCommu.cpp (retail symbols are unmangled
 // global func_* names - the declarations below give the definitions C linkage
@@ -275,6 +275,8 @@ extern "C" {
     // symbol verbatim - CSysWinScenarioLog idiom). CBattleManager.hpp is not
     // included by CSuddenCommu.cpp (conflicting func_80149154 decl in
     // CfObjectActor.hpp), so the singleton is reached through this decl.
+    // Return type unified with CAIAction.hpp's extern "C" void* form
+    // (the two cannot coexist - MWCC error 10505); callers cast as needed.
     void* getInstance__Q22cf14CBattleManagerFv();
     // Voice/help imports used by the sudden-commu triggers (unmangled retail
     // names - C linkage keeps the call relocs verbatim).
@@ -287,7 +289,7 @@ extern "C" {
 // Retail sdata2 float constants (values live in the retail binary). Non-const:
 // MWCC must reload them after calls, so loop uses stay at the use site (retail
 // shape) instead of being hoisted into a saved FPR.
-extern float lbl_eu_80667E30;
+extern volatile float lbl_eu_80667E30;
 extern float lbl_eu_80667E34;   // voice-count scale (held in a saved FPR across the sweep)
 extern float lbl_eu_80667E38;
 extern f64 lbl_eu_80667E40;    // .sdata2 double: 0x4330000080000000 u32->f32 magic
@@ -349,10 +351,12 @@ struct CSuddenCommuCamView {
 };
 
 // Voice-id / voice-act tables (@sda21 in func_801BC6A4 / func_801BB464).
+// Declared as leading-element scalars so MWCC emits the retail `li rX,
+// lbl@sda21 / lbzx` indexed form instead of lis/addi HA/LO addressing.
 extern int lbl_eu_806625E4;
-extern u8 lbl_eu_806625E8[];
-extern u8 lbl_eu_806625F0[];
-extern u8 lbl_eu_806625F8[];
-extern u8 lbl_eu_80662600[];
+extern u8 lbl_eu_806625E8;
+extern u8 lbl_eu_806625F0;
+extern u8 lbl_eu_806625F8;
+extern u8 lbl_eu_80662600;
 extern u16 lbl_eu_80662608[1];
 extern const u8 lbl_eu_805050B0[];

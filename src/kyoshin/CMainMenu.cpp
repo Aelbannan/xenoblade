@@ -4,7 +4,6 @@
 #include <types.h>
 #include "kyoshin/CMainMenu.hpp"
 #include "kyoshin/IUICf.hpp"
-#include "kyoshin/CArtsInfo.hpp"
 #include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 #include "kyoshin/menu/CMenuPassiveSkill.hpp"
@@ -13,6 +12,8 @@
 #include "monolib/work/CTTask.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
+#include "monolib/work/CEventFile.hpp"
+#include "monolib/lib/UnkClass_8045F564.hpp"
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/math/math_types.h>
@@ -96,7 +97,7 @@ extern "C" void func_800FEF20(CMainMenu* self) {
     self->field_0x44 = p[2];
 }
 
-void func_800FEF4C(CMainMenu* self) {
+extern "C" void func_800FEF4C(CMainMenu* self) {
     // Main-menu frame update: gate on the system window, refresh the menu
     // availability flags, then dispatch on the current state.
     if (func_8013BE50() == 0) {
@@ -224,13 +225,109 @@ void func_800FEF4C(CMainMenu* self) {
     func_801D202C(&self->subCur);
 }
 
-// Guard the not-yet-recovered constructor stub so MWCC's auto-inliner does not
-// inline the empty body into the OnFileEvent tail-call thunk (reloc must stay
-// an external b __ct__800FF300, per MWCC_CASES empty-stub pattern).
-#pragma push
-#pragma auto_inline off
-extern "C" void __ct__800FF300(){}
-#pragma pop
+// File-event handler (retail symbol __ct__800FF300): fires when the menu
+// layout arc finished loading. Same shape as COption::OnFileEvent: open a
+// scratch heap region (RAII Class_8045F858 guard), detach the file handle,
+// attach it to a fresh ArcResourceAccessor, build the layout + four
+// animations, bind the device font, reset text panes and animation state,
+// then build both cursors on the stack and copy them into their slots.
+extern "C" bool __ct__800FF300(CMainMenu* self, CEventFile* pEventFile) {
+    if (self->field_0x74 == pEventFile->mFileHandle) {
+        // Long-lived rodata base: retail caches lbl_eu_804FCEBC in a
+        // callee-saved register and offsets every resource name from it.
+        char* base = lbl_eu_804FCEBC;
+        reinterpret_cast<UnkClass_8045F564*>(&self->_60[0])->createRegion(
+            mtl::MemManager::getHandleMEM2(), 0xCC00, &base[0x8a], 0);
+        Class_8045F858 memHost(reinterpret_cast<UnkClass_8045F564*>(&self->_60[0]));
+
+        // Take ownership of the loaded file data (getData clears the handle's
+        // data pointer) and release the loader's lock.
+        void* fileData = self->field_0x74->getData();
+        mtl::MemManager::func_80434A4C(false);
+
+    self->field_0x78 = createArcResourceAccessor__10CLibLayoutFv();
+            self->field_0x78->Attach(fileData, &base[0x94]);
+            func_80136E84(&self->field_0x7C, self->field_0x78, &base[0x98]);
+            func_80136F08(self->field_0x7C, &self->field_0x80, self->field_0x78,
+                          &base[0xaf]);
+            func_80136F08(self->field_0x7C, &self->field_0x84, self->field_0x78,
+                          &base[0xc9]);
+            func_80136F08(self->field_0x7C, &self->field_0x88, self->field_0x78,
+                          &base[0xe4]);
+            func_80136F08(self->field_0x7C, &self->field_0x8C, self->field_0x78,
+                          &base[0x102]);
+
+            // Bind the device font: ask the font object for its pane (vtable+0x24)
+            // and push it onto the layout root.
+            nw4r::lyt::Pane* rootPane = *(nw4r::lyt::Pane**)((u8*)self->field_0x7C + 0x10);
+            func_8013676C(
+                rootPane,
+                reinterpret_cast<CMainMenuFontView*>(
+                    func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->field_0x7C))
+                    ->sf9());
+
+            func_80136B4C(self->field_0x7C, &base[0x71], &base[0x89], 0);
+            func_80136B4C(self->field_0x7C, &base[0x7c], &base[0x89], 0);
+
+            // Park all animations except the intro (anim0), which stays enabled.
+            self->field_0x7C->SetAnimationEnable(self->field_0x84, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x88, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x8C, false);
+            self->field_0x7C->SetAnimationEnable(self->field_0x80, true);
+            self->field_0x80->SetFrame(lbl_eu_80666F1C);
+            self->field_0x7C->Animate(0);
+
+            // Build the base cursor on the stack and copy its members into +0x90
+            // (implicit copy-assign skips the vptr), then run its init virtual.
+            {
+                u8 temp[0x18];
+                __ct__8CBaseCurFv((CBaseCur*)temp, self->field_0x78);
+                ((CBaseCur*)temp)->mVtable = (void*)lbl_eu_8052BF28;
+                ((CBaseCur*)&self->_90[0])->mArcResAcc = ((CBaseCur*)temp)->mArcResAcc;
+                ((CBaseCur*)&self->_90[0])->mpLayout = ((CBaseCur*)temp)->mpLayout;
+                ((CBaseCur*)&self->_90[0])->mpAnimTrans0 = ((CBaseCur*)temp)->mpAnimTrans0;
+                ((CBaseCur*)&self->_90[0])->mpAnimTrans1 = ((CBaseCur*)temp)->mpAnimTrans1;
+                ((CBaseCur*)&self->_90[0])->mActive = ((CBaseCur*)temp)->mActive;
+                ((CBaseCur*)&self->_90[0])->mVisible = ((CBaseCur*)temp)->mVisible;
+                __dt__8CBaseCurFv(temp, 0);
+                ((CMainMenuCurVt*)&self->_90[0])->_v008();
+            }
+            // Build the sub cursor on the stack and copy its members into +0xA8.
+            {
+                u8 temp[0x18];
+                __ct__CSubCur((CBaseCur*)temp, self->field_0x78);
+                ((CMainMenuSubCurView*)&self->subCur)->mArcResAcc =
+                    ((CMainMenuSubCurView*)temp)->mArcResAcc;
+                ((CMainMenuSubCurView*)&self->subCur)->mpLayout =
+                    ((CMainMenuSubCurView*)temp)->mpLayout;
+                ((CMainMenuSubCurView*)&self->subCur)->mpAnimTrans0 =
+                    ((CMainMenuSubCurView*)temp)->mpAnimTrans0;
+                ((CMainMenuSubCurView*)&self->subCur)->mpAnimTrans1 =
+                    ((CMainMenuSubCurView*)temp)->mpAnimTrans1;
+                ((CMainMenuSubCurView*)&self->subCur)->mActive =
+                    ((CMainMenuSubCurView*)temp)->mActive;
+                ((CMainMenuSubCurView*)&self->subCur)->mVisible =
+                    ((CMainMenuSubCurView*)temp)->mVisible;
+                __dt__7CSubCurFv((CBaseCur*)temp, -1);
+                ((CMainMenuCurVt*)&self->subCur)->_v008();
+            }
+
+            func_80101BF8(self);
+
+            // Register the render callback slot (+0x5C) with the owning scene; the
+            // null-check branch is the standard cross-cast idiom.
+            IScnRender* render = reinterpret_cast<IScnRender*>(self);
+            if (self != NULL) {
+                render = reinterpret_cast<IScnRender*>((char*)self + 0x5C);
+            }
+            self->field_0x70->addRenderCB(render, 0xa, 0);
+
+            self->field_0x74 = NULL;
+            reinterpret_cast<UnkClass_8045F564*>(&self->_60[0])->func_8045F810();
+            return true;
+    }
+    return false;
+}
 
 // rodata block containing resource names:
 // offset 0x00: brlyt name (e.g. "mf00_menu.brlyt")
@@ -253,7 +350,8 @@ void CMainMenu::cbRenderBefore() {}
 // Finds the "Param" pane in the layout's root pane and sets its translate
 // to the given position (3 floats: x, y, z).
 void CMainMenu::func_800FEB14(float* pos) {
-    nw4r::lyt::Pane* pane = field_0x7C->GetRootPane()->FindPaneByName(lbl_eu_804FCEBC + 0x53, true);
+    nw4r::lyt::Pane* pane =
+        field_0x08->GetRootPane()->FindPaneByName(lbl_eu_804FCEBC + 0x53, true);
     if (pane != NULL) {
         pane->SetSRTElement(0, pos[0]);
         pane->SetSRTElement(1, pos[1]);
@@ -341,9 +439,9 @@ extern "C" void func_800FF914(CArtsInfo* self) {
     self->field_0x54 = 1;
 }
 
-void func_800FF920(CMainMenu* self){}
+extern "C" void func_800FF920(CMainMenu* self){}
 
-void func_80100E14(CMainMenu* self) {
+extern "C" void func_80100E14(CMainMenu* self) {
     // Per-frame menu advance: update the sub-cursor pane names/positions from
     // the current (state, sub-state) pair, then park the state at 6 (idle).
     if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->field_0x88, lbl_eu_80666F18) == 0) {
@@ -408,7 +506,7 @@ void func_80100E14(CMainMenu* self) {
     self->field_0xE0 = 6;
 }
 
-void func_801010B8(CMainMenu* self) {
+extern "C" void func_801010B8(CMainMenu* self) {
     // Cursor-select sub-menu input: gate on the global input lock, then
     // handle sub-cursor movement / confirmation / cancel.
 
@@ -611,7 +709,7 @@ tail:
     }
 }
 
-void func_801018F4(CMainMenu* self) {
+extern "C" void func_801018F4(CMainMenu* self) {
     // Per-frame menu-state dispatch: while no other screen is open, run the
     // handler for the current (state, sub-state) pair, then park the state
     // at 6 (idle) for the next frame.
@@ -656,7 +754,7 @@ void func_801018F4(CMainMenu* self) {
     self->field_0xE0 = 6;
 }
 
-int func_80101A88() {
+extern "C" int func_80101A88() {
     // Gameplay-input gate: returns 1 while input should be blocked (dead
     // player, active battle list, closing menus, or presentation flags).
     CMainMenuPlayerSpot* spot = getPlayer__Q22cf13CfGameManagerFi(0);
@@ -713,7 +811,7 @@ end:
     return func_80135898();
 }
 
-void func_80101BF8(CMainMenu* self) {
+extern "C" void func_80101BF8(CMainMenu* self) {
     // Menu availability refresh: recompute cursor flags, sub-menu flags and
     // pane positions/colors from the current game state.
     self->field_0xC8[0] = 0;
@@ -767,9 +865,9 @@ void func_80101BF8(CMainMenu* self) {
             // Odd free-roam gate computed from the player-state resource
             // (retail bit-twiddling reproduced verbatim).
             u32 x = func_8009CF8C(0x20);
-            u32 c = 0x18E;
-            u32 a = x | ~c;
-            u32 b = (x - c) >> 1;
+            u32 d = x - 0x18E;
+            u32 a = x | ~0x18E;
+            u32 b = d >> 1;
             cond = (a - b) >> 31;
         }
     }
@@ -802,21 +900,15 @@ void func_80101BF8(CMainMenu* self) {
 
     // Sub-menu items 0..13: fixed pane names copied into a stack table;
     // availability flag bytes live at 0xCF+i (field_0xC8[7+i]).
-    const char* names[14];
-    names[0] = (const char*)lbl_eu_804FCE50[0];
-    names[1] = (const char*)lbl_eu_804FCE50[1];
-    names[2] = (const char*)lbl_eu_804FCE50[2];
-    names[3] = (const char*)lbl_eu_804FCE50[3];
-    names[4] = (const char*)lbl_eu_804FCE50[4];
-    names[5] = (const char*)lbl_eu_804FCE50[5];
-    names[6] = (const char*)lbl_eu_804FCE50[6];
-    names[7] = (const char*)lbl_eu_804FCE50[7];
-    names[8] = (const char*)lbl_eu_804FCE50[8];
-    names[9] = (const char*)lbl_eu_804FCE50[9];
-    names[10] = (const char*)lbl_eu_804FCE50[10];
-    names[11] = (const char*)lbl_eu_804FCE50[11];
-    names[12] = (const char*)lbl_eu_804FCE50[12];
-    names[13] = (const char*)lbl_eu_804FCE50[13];
+    const char* names[14] = {
+        (const char*)lbl_eu_804FCE50[0],  (const char*)lbl_eu_804FCE50[1],
+        (const char*)lbl_eu_804FCE50[2],  (const char*)lbl_eu_804FCE50[3],
+        (const char*)lbl_eu_804FCE50[4],  (const char*)lbl_eu_804FCE50[5],
+        (const char*)lbl_eu_804FCE50[6],  (const char*)lbl_eu_804FCE50[7],
+        (const char*)lbl_eu_804FCE50[8],  (const char*)lbl_eu_804FCE50[9],
+        (const char*)lbl_eu_804FCE50[10], (const char*)lbl_eu_804FCE50[11],
+        (const char*)lbl_eu_804FCE50[12], (const char*)lbl_eu_804FCE50[13],
+    };
     for (u32 i = 0; i < 14; i++) {
         if (self->field_0xC8[(u8)i + 7] != 0) {
             s16 pos[4];

@@ -148,7 +148,7 @@ public:
     u8 field_0x29;                        // 0x29
     u8 field_0x2A;                        // 0x2A
     u8 field_0x2B;                        // 0x2B
-    u32 field_0x2C;                       // 0x2C state/flag word
+    s32 field_0x2C;                       // 0x2C state/flag word
     u8 mState;                            // 0x30
     u8 mAnimFrame;                        // 0x31
 };
@@ -283,10 +283,15 @@ extern const f32 lbl_eu_80666FA0; // -178.0f
 extern char lbl_eu_804FD720[];
 
 // Unmangled retail ctor symbol (retail `__ct__CMenuBattleDamage`, takes the
-// owning scene which is stored at +0x60). Defined as a plain global function
-// so MWCC emits the exact linker name; MWCC emits `__`-prefixed global names
-// verbatim.
-void __ct__CMenuBattleDamage(CMenuBattleDamage* obj, CScn* scene);
+// owning scene which is stored at +0x60). Defined as an extern "C" function
+// so MWCC emits the exact linker name; returns `this` like the retail ctor.
+extern "C" CMenuBattleDamage* __ct__CMenuBattleDamage(CMenuBattleDamage* obj,
+                                                      CScn* scene);
+
+// CProcess::Regist (C-ABI import).
+extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self,
+                                              CProcess* parent,
+                                              bool insertTop);
 
 // C-ABI imports (retail pre-mangled names; these identifiers must keep C
 // linkage so MWCC emits the literal reloc names).
@@ -340,7 +345,7 @@ void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
 extern char lbl_eu_804FD524[];
 extern char lbl_eu_8052C1C0[];
 extern char lbl_eu_8052C230[];
-extern u32 __ptmf_null[3];
+extern u32 lbl_eu_80535AD0[3]; // retail name of the null PMF triple
 extern u32 lbl_eu_80664160;
 extern u32 lbl_eu_806640E0;
 extern u32 lbl_eu_80663E28;

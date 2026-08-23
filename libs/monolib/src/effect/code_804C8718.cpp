@@ -466,13 +466,8 @@ void func_804CB560(EffectRoot* self) {
     func_804D42B8(self->renderArg, self->field_0x08->field_0x0c);
 }
 
-// func_804CB5FC: resolve the draw depth of an effect object. When the 0x800
-// flag is set, the signed byte at 0x23 is returned directly. Otherwise the
-// world position (0x128) is transformed by the object's matrix (0x64, skipped
-// when it equals the identity matrix within epsilon) and then by the bound
-// view matrix, and (priority * depth scale + transformed z) is truncated to
-// int. The per-element identity flags are declared in reverse so MWCC keeps
-// them in the retail registers (r29..r0).
+// Per-element identity flags declared in reverse so MWCC keeps them in the
+// retail registers (r29..r0).
 void* func_804CB5FC(EffObj* obj) {
     if ((obj->field_0x1c >> 11) & 1) {
         return (void*)(s32)obj->field_0x23;

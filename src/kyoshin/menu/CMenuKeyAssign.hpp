@@ -163,8 +163,9 @@ struct CMenuKeyAssignPlayer {
 };
 
 // Move's battle-manager view: +0x28/+0x8 list heads, the +0x1A8 sub-object
-// (phase byte at +2) and the +0x20C8 s16.
-struct CBattleManagerView {
+// (phase byte at +2) and the +0x20C8 s16. Named locally - the shared
+// CfGameManager.hpp already declares a CBattleManagerView for another TU.
+struct CMenuKeyAssignBattleMgr {
     u8 _00[0x8];
     void* mList08;                     // +0x08
     u8 _0C[0x28 - 0x0C];
@@ -205,9 +206,6 @@ void func_8013676C(void*, u32);
 // Scratch-region ctor (retail emits the direct C-ABI call with a plain addi;
 // a C++ placement new would add a null-check branch the retail does not have).
 void __ct__17UnkClass_8045F564Fv(u8* self);
-// Battle-manager singleton import used by Move's gate checks (retail
-// unmangled; not declared by any included header).
-void* getInstance__Q22cf14CBattleManagerFv();
 // Move's gate helpers (retail unmangled; declared in their own TUs but not by
 // any included header).
 int func_801042C8();

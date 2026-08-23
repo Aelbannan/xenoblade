@@ -1707,15 +1707,32 @@ bool func_80079DBC(CfCamEventManager* manager) {
     return false;
 }
 
+// One step of the fixed 3x3 float recurrence used by the func_80079E04
+// rotation body. The base block is [c,-s,1 / s,c,1 / 1,1,0.5]; each step
+// folds the next sin/cos pair into the running block (row 2 is constant).
+// Written inline twice below exactly as retail duplicates it.
+#define CAMEVENT_ROT_STEP(dst, src, sn, cs)                              \
+    do {                                                                 \
+        (dst).m[8] = (src).m[2] + sn * (src).m[5] + cs * (src).m[8];     \
+        (dst).m[7] = (src).m[1] + sn * (src).m[4] + cs * (src).m[7];     \
+        (dst).m[6] = (src).m[0] + sn * (src).m[1] + cs * (src).m[6];     \
+        (dst).m[2] = (src).m[8] + (src).m[2] + (src).m[5];               \
+        (dst).m[1] = (src).m[7] + (src).m[1] + (src).m[4];               \
+        (dst).m[0] = (src).m[6] + (src).m[0] + (src).m[1];               \
+        (dst).m[4] = (src).m[1] + cs * (src).m[4] - sn * (src).m[7];     \
+        (dst).m[3] = (src).m[0] + cs * (src).m[1] - sn * (src).m[6];     \
+        (dst).m[5] = (src).m[2] + cs * (src).m[5] - sn * (src).m[8];     \
+    } while (0)
+
 // Per-frame cam-event update (state machine). Resolves the game manager via
 // dynamic_cast and checks its busy flag and the frame-speed value before
-// dispatching on the cam-state word (0x3E). The main path (flag 0x1DE set)
-// advances the three shake tables, then feeds the manager's aim/base vectors
-// through the dynamic-cast object's vector setters; states 8/0xA compose a
-// pair of rotations (sin/cos of the table-base axis) around the source
-// vector. Returns the busy/flag word (r29).
+// dispatching on the cam-state word (0x3E). States 8/0xA compose a pair of
+// fixed 3x3 recurrences from sin/cos of the table-base axis and push the
+// resulting offset vectors into the dynamic object's setters; state 9 just
+// renormalizes the unit-0 base anchor. Returns whether either shake table
+// finished (or the delegate's result when busy).
 int func_80079E04(CfCamEventManager* self) {
-    void* gm = func_800821F8__Q22cf13CfGameManagerFv();
+    UnkClass_800821F8* gm = func_800821F8__Q22cf13CfGameManagerFv();
     CfDynMgr* dyn = (CfDynMgr*)__dynamic_cast(gm, 0, (const void*)&lbl_eu_80661B00,
                                               (const void*)&lbl_eu_80661B30, 0);
     if (dyn == 0) return 0;
@@ -1723,43 +1740,59 @@ int func_80079E04(CfCamEventManager* self) {
 
     CfRes_getD80Flag();
     f32 val = func_80496288();
-    if (val <= 0.0f) return 0;
+    if (val <= lbl_eu_8066641C) return 0;
 
-    int result = 0;
-    if (self->tab0.flag_active != 0) {
-        // r31 = the unit-1 active flag (0x4CE); survives to the tail call.
-        int flag = (self->shake[1].field_0x162 != 0);
-
-        // Busy early-out: hand the whole advance to func_8007AA4C.
-        int busy = 0;
+    if (self->tab0.flag_active == 0) {
+        // Flag 0x1DE clear: busy range still hands off to func_8007AA4C;
+        // otherwise the one-shot flag 0x46 is released via the game manager.
         if (lbl_eu_80663DF0 != 0) {
             s16 g = lbl_eu_80663DF0->field_0x3E;
-            if (g >= 0x10 && g <= 0x2b) busy = 1;
+            if (g >= 0x10 && g <= 0x2b) {
+                if (self->field_0x48 & 1) {
+                    func_8007AA4C(self);
+                }
+                return 0;
+            }
         }
-        if (busy) return func_8007AA4C(self);
+        if (self->field_0x46 != 0) {
+            func_80081E90__Q22cf13CfGameManagerFv(0, 0, self->field_0x44);
+            self->field_0x46 = 0;
+        }
+        return 0;
+    }
 
-        // Advance the three shake tables.
-        func_80074F4C((CfCamShakeState*)&self->tab0, 0);
-        func_80074F4C((CfCamShakeState*)&self->shake[0], 0);
-        func_80074F4C((CfCamShakeState*)&self->shake[1], 0);
+    // Unit-1 active flag (0x4CE); survives to the tail scalar push.
+    int flag = (self->shake[1].field_0x162 != 0);
 
-        // Busy word: either the manager's own flag or unit 0's finish flag.
-        result = (self->shake[0].field_0x164 != 0) || (self->tab0.flag_finish != 0);
+    // Busy early-out: hand the whole advance to func_8007AA4C.
+    if (lbl_eu_80663DF0 != 0) {
+        s16 g = lbl_eu_80663DF0->field_0x3E;
+        if (g >= 0x10 && g <= 0x2b) return func_8007AA4C(self);
+    }
 
-        CfCamAdvObj* adv = (CfCamAdvObj*)dyn;
-        s16 state = self->field_0x3E;
-        if (state == 9) {
-            // Normalize the unit-0 base anchor, then push it (and the table-0
-            // base anchor) into the dynamic object's vector setters.
-            ml::CVec3 v;
-            v.x = self->shake[0].u.tab.baseX;
-            v.y = self->shake[0].u.tab.baseY;
-            v.z = self->shake[0].u.tab.baseZ;
-            func_800A3F8C(&v);
-            adv->vtable->fn_0x14(adv, &self->tab0.baseX);
-            adv->vtable->fn_0x4C(adv, &v);
-        } else if (state == 8) {
-            if (self->field_0x47 != 0) {
+    // Advance the three shake tables.
+    CfCamEventShakeUnit* u0 = &self->shake[0];
+    func_80074F4C((CfCamShakeState*)&self->tab0, 0);
+    func_80074F4C((CfCamShakeState*)u0, 0);
+    func_80074F4C((CfCamShakeState*)&self->shake[1], 0);
+
+    // Busy word: either unit 0's finish flag or the table-0 finish flag.
+    int result = (u0->field_0x164 != 0) || (self->tab0.flag_finish != 0);
+
+    CfCamAdvObj* adv = (CfCamAdvObj*)dyn;
+    s16 state = self->field_0x3E;
+    if (state == 9) {
+        // Normalize the unit-0 base anchor, then push it (and the table-0
+        // base anchor) into the dynamic object's vector setters.
+        ml::CVec3 v;
+        v.x = u0->u.tab.baseX;
+        v.y = u0->u.tab.baseY;
+        v.z = u0->u.tab.baseZ;
+        func_800A3F8C(&v);
+        adv->vtable->fn_0x14(adv, &self->tab0.baseX);
+        adv->vtable->fn_0x4C(adv, &v);
+    } else if (state == 8 || state == 0xA) {
+        if (state == 8 && self->field_0x47 != 0) {
                 // One-shot: table-0 base into slot 2, unit-0 base into slot 1.
                 ml::CVec3 a, b;
                 a.x = self->tab0.baseX;
@@ -1770,164 +1803,129 @@ int func_80079E04(CfCamEventManager* self) {
                 b.z = self->shake[0].u.tab.baseZ;
                 adv->vtable->fn_0x14(adv, &b);
                 adv->vtable->fn_0x64(adv, &a);
-            } else {
-                // Rotate the table-0 base anchor by the two-axis rotation
-                // composed from the unit-0 base (the retail fuses the 3x3
-                // products into FPR chains; this is the equivalent C form).
-                ml::CVec3 V;
-                V.x = self->tab0.baseX;
-                V.y = self->tab0.baseY;
-                V.z = self->tab0.baseZ;
-                f32 mz = (f32)__fabs((f64)self->shake[0].u.tab.baseZ);
-                f32 ax = self->shake[0].u.tab.baseX;
-                f32 ay = self->shake[0].u.tab.baseY;
-                f32 one = lbl_eu_8066641C;
-                f32 s1 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * one);
-                f32 c1 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * one);
-                f32 s2 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
-                f32 c2 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
-                // Base matrix (unit/0.5 fills as in the retail).
-                f32 m00 = c1, m01 = -s1, m02 = one, m11 = c1, m12 = one,
-                    m21 = one, m22 = lbl_eu_80666428;
-                // M = R(s2,c2) * base, expanded component-wise.
-                f32 M00 = c2 * s2 * m12 + m00 + s2 * s1;
-                f32 M01 = c2 * m21 + m01 + s2 * m11;
-                f32 M02 = c2 * m22 + m02 + s2 * m12;
-                f32 M10 = s2 * m12 + lbl_eu_80666428 * m00 + s1;
-                f32 M11 = m21 + lbl_eu_80666428 * m01 + m11;
-                f32 M12 = m22 + lbl_eu_80666428 * m02 + m12;
-                f32 M20 = -s2 * s2 * m12 + m00 + c2 * s1;
-                f32 M21 = -s2 * m21 + m01 + c2 * m11;
-                f32 M22 = -s2 * m22 + m02 + c2 * m12;
-
-                // Second composition around the Y axis, then scale the
-                // result by the base magnitude to get the offset vector m.
-                f32 s3 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ay);
-                f32 c3 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ay);
-                f32 t00 = c3 * s3 * M12 + M00 + s3 * M10;
-                f32 t01 = c3 * M21 + M01 + s3 * M11;
-                f32 t02 = c3 * M22 + M02 + s3 * M12;
-                f32 t10 = s3 * M12 + lbl_eu_80666428 * M00 + M10;
-                f32 t11 = M21 + lbl_eu_80666428 * M01 + M11;
-                f32 t12 = M22 + lbl_eu_80666428 * M02 + M12;
-                f32 t20 = -s3 * s3 * M12 + M00 + c3 * M10;
-                f32 t21 = -s3 * M21 + M01 + c3 * M11;
-                f32 t22 = -s3 * M22 + M02 + c3 * M12;
-
-                ml::CVec3 m;
-                m.x = mz * t00 + t20;
-                m.y = mz * t01 + t21;
-                m.z = mz * t02 + t22;
-
-                ml::CVec3 out1, out2;
-                out1.x = V.x - m.x;
-                out1.y = V.y + m.y;
-                out1.z = V.z - m.z;
-                out2 = V;
-                if (self->field_0x34 != 0) {
-                    CinemCamSrc* src = (CinemCamSrc*)(void*)self->field_0x34;
-                    ml::CVec3* rv = &src->vtable->fn_0xAC(src)->v;
-                    out1.x += rv->x;
-                    out1.y += rv->y;
-                    out1.z += rv->z;
-                    out2.x += rv->x;
-                    out2.y += rv->y;
-                    out2.z += rv->z;
-                    adv->vtable->fn_0x68(adv, (void*)self->field_0x34, &out1, 0);
-                    adv->vtable->fn_0x6C(adv, (void*)self->field_0x34, &out2, 0);
-                } else {
-                    adv->vtable->fn_0x14(adv, &out1);
-                    adv->vtable->fn_0x64(adv, &out2);
-                }
-            }
-        } else if (state == 0xA) {
-            // Same rotation composition as state 8's clear path.
-            ml::CVec3 V;
-            V.x = self->tab0.baseX;
-            V.y = self->tab0.baseY;
-            V.z = self->tab0.baseZ;
-            f32 mz = (f32)__fabs((f64)self->shake[0].u.tab.baseZ);
-            f32 ax = self->shake[0].u.tab.baseX;
-            f32 ay = self->shake[0].u.tab.baseY;
-            f32 one = lbl_eu_8066641C;
-            f32 s1 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * one);
-            f32 c1 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * one);
+        } else {
+            // Rotate the table-0 base anchor by the fixed two-step float
+            // recurrence built from sin/cos of (1, unit-0 baseX, unit-0 baseY);
+            // the offset magnitude is |unit-0 baseZ|. Constants are re-read
+            // from sdata at each use so MWCC keeps products in FPRs.
+            f32 Vx = self->tab0.baseX;
+            f32 Vy = self->tab0.baseY;
+            f32 Vz = self->tab0.baseZ;
+            f32 ax = u0->u.tab.baseX;
+            f32 ay = u0->u.tab.baseY;
+            f32 mag = (f32)__fabs((f64)u0->u.tab.baseZ);
+            f32 s1 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * lbl_eu_8066641C);
+            f32 c1 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * lbl_eu_8066641C);
             f32 s2 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
             f32 c2 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
-            f32 m00 = c1, m01 = -s1, m02 = one, m11 = c1, m12 = one,
-                m21 = one, m22 = lbl_eu_80666428;
-            f32 M00 = c2 * s2 * m12 + m00 + s2 * s1;
-            f32 M01 = c2 * m21 + m01 + s2 * m11;
-            f32 M02 = c2 * m22 + m02 + s2 * m12;
-            f32 M10 = s2 * m12 + lbl_eu_80666428 * m00 + s1;
-            f32 M11 = m21 + lbl_eu_80666428 * m01 + m11;
-            f32 M12 = m22 + lbl_eu_80666428 * m02 + m12;
-            f32 M20 = -s2 * s2 * m12 + m00 + c2 * s1;
-            f32 M21 = -s2 * m21 + m01 + c2 * m11;
-            f32 M22 = -s2 * m22 + m02 + c2 * m12;
-
+            CamEventMtx a;
+            a.m[0] = c1; a.m[1] = -s1; a.m[2] = lbl_eu_8066641C;
+            a.m[3] = s1; a.m[4] = c1; a.m[5] = lbl_eu_8066641C;
+            a.m[6] = lbl_eu_8066641C; a.m[7] = lbl_eu_8066641C; a.m[8] = lbl_eu_80666428;
+            CamEventMtx n;
+            CAMEVENT_ROT_STEP(n, a, s2, c2);
+            a = n;
             f32 s3 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ay);
             f32 c3 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ay);
-            f32 t00 = c3 * s3 * M12 + M00 + s3 * M10;
-            f32 t01 = c3 * M21 + M01 + s3 * M11;
-            f32 t02 = c3 * M22 + M02 + s3 * M12;
-            f32 t10 = s3 * M12 + lbl_eu_80666428 * M00 + M10;
-            f32 t11 = M21 + lbl_eu_80666428 * M01 + M11;
-            f32 t12 = M22 + lbl_eu_80666428 * M02 + M12;
-            f32 t20 = -s3 * s3 * M12 + M00 + c3 * M10;
-            f32 t21 = -s3 * M21 + M01 + c3 * M11;
-            f32 t22 = -s3 * M22 + M02 + c3 * M12;
-
-            ml::CVec3 m;
-            m.x = mz * t00 + t20;
-            m.y = mz * t01 + t21;
-            m.z = mz * t02 + t22;
-
-            ml::CVec3 out1, out2;
-            out1.x = V.x - m.x;
-            out1.y = V.y + m.y;
-            out1.z = V.z - m.z;
-            out2 = V;
+            CamEventMtx b;
+            b.m[0] = c3; b.m[1] = -s3; b.m[2] = lbl_eu_8066641C;
+            b.m[3] = s3; b.m[4] = c3; b.m[5] = lbl_eu_8066641C;
+            b.m[6] = lbl_eu_8066641C; b.m[7] = lbl_eu_8066641C; b.m[8] = lbl_eu_80666428;
+            CamEventMtx n2;
+            CAMEVENT_ROT_STEP(n2, b, s3, c3);
+            f32 mx = lbl_eu_8066641C * n2.m[1] + lbl_eu_8066641C * n2.m[0]
+                - mag * n2.m[2];
+            f32 my = lbl_eu_8066641C * n2.m[4] + lbl_eu_8066641C * n2.m[3]
+                - mag * n2.m[5];
+            f32 mz = lbl_eu_8066641C * n2.m[7] + lbl_eu_8066641C * n2.m[6]
+                - mag * n2.m[8];
+            f32 o1x = Vx - mx;
+            f32 o1y = Vy + my;
+            f32 o1z = Vz - mz;
             if (self->field_0x34 != 0) {
                 CinemCamSrc* src = (CinemCamSrc*)(void*)self->field_0x34;
                 ml::CVec3* rv = &src->vtable->fn_0xAC(src)->v;
-                out1.x += rv->x;
-                out1.y += rv->y;
-                out1.z += rv->z;
-                out2.x += rv->x;
-                out2.y += rv->y;
-                out2.z += rv->z;
-                adv->vtable->fn_0x68(adv, (void*)self->field_0x34, &out1, 0);
-                adv->vtable->fn_0x6C(adv, (void*)self->field_0x34, &out2, 0);
-            } else {
-                adv->vtable->fn_0x14(adv, &out1);
-                adv->vtable->fn_0x64(adv, &out2);
+                o1x += rv->x;
+                o1y += rv->y;
+                o1z += rv->z;
+                Vx += rv->x;
+                Vy += rv->y;
+                Vz += rv->z;
             }
+            ml::CVec3 out1;
+            out1.x = o1x;
+            out1.y = o1y;
+            out1.z = o1z;
+            ml::CVec3 out2;
+            out2.x = Vx;
+            out2.y = Vy;
+            out2.z = Vz;
+            adv->vtable->fn_0x14(adv, &out1);
+            adv->vtable->fn_0x64(adv, &out2);
         }
+    }
+    if (state == 0xA) {
+        // Same recurrence as state 8's clear path (retail duplicates it).
+        f32 Vx = self->tab0.baseX;
+        f32 Vy = self->tab0.baseY;
+        f32 Vz = self->tab0.baseZ;
+        f32 ax = u0->u.tab.baseX;
+        f32 ay = u0->u.tab.baseY;
+        f32 mag = (f32)__fabs((f64)u0->u.tab.baseZ);
+        f32 s1 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * lbl_eu_8066641C);
+        f32 c1 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * lbl_eu_8066641C);
+        f32 s2 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
+        f32 c2 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ax);
+        CamEventMtx a;
+        a.m[0] = c1; a.m[1] = -s1; a.m[2] = lbl_eu_8066641C;
+        a.m[3] = s1; a.m[4] = c1; a.m[5] = lbl_eu_8066641C;
+        a.m[6] = lbl_eu_8066641C; a.m[7] = lbl_eu_8066641C; a.m[8] = lbl_eu_80666428;
+        CamEventMtx n;
+        CAMEVENT_ROT_STEP(n, a, s2, c2);
+        a = n;
+        f32 s3 = SinFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ay);
+        f32 c3 = CosFIdx__Q24nw4r4mathFf(lbl_eu_80666430 * ay);
+        CamEventMtx b;
+        b.m[0] = c3; b.m[1] = -s3; b.m[2] = lbl_eu_8066641C;
+        b.m[3] = s3; b.m[4] = c3; b.m[5] = lbl_eu_8066641C;
+        b.m[6] = lbl_eu_8066641C; b.m[7] = lbl_eu_8066641C; b.m[8] = lbl_eu_80666428;
+        CamEventMtx n2;
+        CAMEVENT_ROT_STEP(n2, b, s3, c3);
+        f32 mx = lbl_eu_8066641C * n2.m[1] + lbl_eu_8066641C * n2.m[0]
+            - mag * n2.m[2];
+        f32 my = lbl_eu_8066641C * n2.m[4] + lbl_eu_8066641C * n2.m[3]
+            - mag * n2.m[5];
+        f32 mz = lbl_eu_8066641C * n2.m[7] + lbl_eu_8066641C * n2.m[6]
+            - mag * n2.m[8];
+        f32 o1x = Vx - mx;
+        f32 o1y = Vy + my;
+        f32 o1z = Vz - mz;
+        if (self->field_0x34 != 0) {
+            CinemCamSrc* src = (CinemCamSrc*)(void*)self->field_0x34;
+            ml::CVec3* rv = &src->vtable->fn_0xAC(src)->v;
+            o1x += rv->x;
+            o1y += rv->y;
+            o1z += rv->z;
+            Vx += rv->x;
+            Vy += rv->y;
+            Vz += rv->z;
+        }
+        ml::CVec3 out1;
+        out1.x = o1x;
+        out1.y = o1y;
+        out1.z = o1z;
+        ml::CVec3 out2;
+        out2.x = Vx;
+        out2.y = Vy;
+        out2.z = Vz;
+        adv->vtable->fn_0x14(adv, &out1);
+        adv->vtable->fn_0x64(adv, &out2);
+    }
 
-        // One-shot active flag: push the unit-1 base magnitude into the
-        // dynamic object's scalar setter.
-        if (flag) {
-            adv->vtable->fn_0x3C(adv, self->shake[1].u.tab.baseX);
-        }
-    } else {
-        // Flag 0x1DE clear: busy range still hands off to func_8007AA4C;
-        // otherwise the one-shot flag 0x46 is cleared via the game manager.
-        int busy = 0;
-        if (lbl_eu_80663DF0 != 0) {
-            s16 g = lbl_eu_80663DF0->field_0x3E;
-            if (g >= 0x10 && g <= 0x2b) busy = 1;
-        }
-        if (busy) {
-            if (self->field_0x48 & 1) {
-                func_8007AA4C(self);
-            }
-        } else {
-            if (self->field_0x46 != 0) {
-                func_80081E90__Q22cf13CfGameManagerFv(0, 0, self->field_0x44);
-                self->field_0x46 = 0;
-            }
-        }
+    // One-shot active flag: push the unit-1 base value into the dynamic
+    // object's scalar setter.
+    if (flag) {
+        adv->vtable->fn_0x3C(adv, self->shake[1].u.tab.baseX);
     }
     return result;
 }
@@ -2026,57 +2024,64 @@ void func_8007BAFC(CfCamEventManager* self) {
         }
     }
 
-    int state = self->field_0x3C;
-    CfCamEventSlotView* slot = (CfCamEventSlotView*)self->slots[state];
+    CfCamEventSlotView* slot = (CfCamEventSlotView*)self->slots[self->field_0x3C];
     if (slot == 0) return;
 
-    u32 flag = 0;
+    u8 flag = 0;
     if (lbl_eu_80663DF0 != 0) flag = lbl_eu_80663DF0->field_0x46;
 
     int r30 = func_80079E04(self);
-    if (r30 != 0 && state == 2 && flag == 0) {
-        CamEventVecBlock* blk = (CamEventVecBlock*)slot->field_0x0C;
-        slot->vtable->fn_0x20(slot);
+    if (r30 != 0) {
+        if (self->field_0x3C == 2 && flag == 0) {
+            // Snapshot the slot's camera-vector block before the update call;
+            // the squared lengths below are recomputed from the snapshot.
+            CamEventData data = *(CamEventData*)slot->field_0x0C;
+            slot->vtable->fn_0x20(slot);
 
-        // Squared lengths of the two camera triplets (retail: PS dots).
-        f32 f31 = blk->f_9C * blk->f_9C + blk->f_A0 * blk->f_A0 +
-                  blk->f_A4 * blk->f_A4;
-        f32 f30 = blk->f_AC * blk->f_AC + blk->f_B0 * blk->f_B0 +
-                  blk->f_B4 * blk->f_B4;
+            ml::CVec3 a = data.v0;
+            ml::CVec3 b = data.v1;
 
-        // Clamp f31 to [lbl_eu_80666468, 1.0], then validate the range.
-        if (f31 < lbl_eu_80666468) {
-            f31 = lbl_eu_80666468;
-        } else if (f31 > lbl_eu_80666428) {
-            f31 = lbl_eu_80666428;
-        }
-        int ok = 0;
-        if (f31 <= lbl_eu_80666428 && f31 >= lbl_eu_80666468) ok = 1;
-        if (ok == 0) {
-            Warning__Q24nw4r2dbFPCciPCce(lbl_eu_805262F0, 0xef, lbl_eu_805262C8);
-        }
+            // Squared lengths of the two camera triplets.
+            f32 f31 = a.x * a.x + a.y * a.y + a.z * a.z;
+            f32 f30 = b.x * b.x + b.y * b.y + b.z * b.z;
 
-        f32 a1 = acosf(f31);
-        if (a1 <= lbl_eu_8066646C * lbl_eu_8066A210) {
-            // Clamp f30 to [lbl_eu_80666468, 1.0], then validate the range.
-            if (f30 < lbl_eu_80666468) {
-                f30 = lbl_eu_80666468;
-            } else if (f30 > lbl_eu_80666428) {
-                f30 = lbl_eu_80666428;
+            // Clamp f31 to [lbl_eu_80666468, lbl_eu_80666428], then validate
+            // the range (nw4r warning on violation).
+            if (f31 < lbl_eu_80666468) {
+                f31 = lbl_eu_80666468;
+            } else if (f31 > lbl_eu_80666428) {
+                f31 = lbl_eu_80666428;
             }
-            int ok2 = 0;
-            if (f30 <= lbl_eu_80666428 && f30 >= lbl_eu_80666468) ok2 = 1;
-            if (ok2 == 0) {
+            int ok = 0;
+            if (f31 <= lbl_eu_80666428 && f31 >= lbl_eu_80666468) ok = 1;
+            if (ok == 0) {
                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_805262F0, 0xef, lbl_eu_805262C8);
             }
 
-            f32 a2 = acosf(f30);
-            if (a2 <= lbl_eu_8066646C * lbl_eu_8066A210) {
-                r30 = 0;
+            // Retail only re-validates the second triplet when the first
+            // angle EXCEEDS the threshold; r30 clears only when both angles
+            // are above it.
+            f32 a1 = acos(f31);
+            if (a1 > lbl_eu_8066646C * lbl_eu_8066A210) {
+                if (f30 < lbl_eu_80666468) {
+                    f30 = lbl_eu_80666468;
+                } else if (f30 > lbl_eu_80666428) {
+                    f30 = lbl_eu_80666428;
+                }
+                int ok2 = 0;
+                if (f30 <= lbl_eu_80666428 && f30 >= lbl_eu_80666468) ok2 = 1;
+                if (ok2 == 0) {
+                    Warning__Q24nw4r2dbFPCciPCce(lbl_eu_805262F0, 0xef, lbl_eu_805262C8);
+                }
+
+                f32 a2 = acos(f30);
+                if (a2 <= lbl_eu_8066646C * lbl_eu_8066A210) {
+                    r30 = 0;
+                }
             }
+        } else {
+            slot->vtable->fn_0x20(slot);
         }
-    } else {
-        slot->vtable->fn_0x20(slot);
     }
 
     if (r30 != 0) {
@@ -2086,7 +2091,10 @@ void func_8007BAFC(CfCamEventManager* self) {
 
     if (self->field_0x38 != 0) {
         func_80240AAC(self->field_0x38);
-        func_80240B10(self->field_0x38, slot->field_0x0C);
+        // Retail reloads the slot pointer and its vector block here.
+        CfCamEventSlotView* tail =
+            (CfCamEventSlotView*)self->slots[self->field_0x3C];
+        func_80240B10(self->field_0x38, tail->field_0x0C);
     }
 }
 

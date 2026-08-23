@@ -1,8 +1,10 @@
-#include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfGimmickJump.hpp"
-
 #include "kyoshin/cf/object/CfObjectActor.hpp"
-#include "kyoshin/cf/CfGameManager.hpp"
+#include <nw4r/math.h>
+
+// Warning string literals used by the jump pull-vector sanity check.
+extern const char lbl_eu_80526324[];
+extern const char lbl_eu_80526300[];
 
 namespace cf {
 
@@ -11,13 +13,12 @@ extern void* lbl_eu_80535A18[];
 extern char lbl_eu_8050873C[];
 extern char lbl_eu_805357E8[];
 extern void* lbl_eu_80663E14;
-extern u32 lbl_eu_80663E24;
+extern int lbl_eu_80663E24;
 extern void* lbl_eu_80664138;
 extern const f32 lbl_eu_80668400;
 extern const f32 lbl_eu_80668404;
 extern const f32 lbl_eu_80668408;
-extern const f32 lbl_eu_8066840C;
-extern const f64 lbl_eu_80668410;
+extern const f32 lbl_eu_8066840C;extern const f64 lbl_eu_80668410;
 extern const f64 lbl_eu_80668418;
 extern const f32 lbl_eu_80668420;
 extern const f32 lbl_eu_80668424;
@@ -43,7 +44,7 @@ extern void func_8020F540(CfGimmickJump* self);
 extern void func_8020A484(u16 resourceId);
 extern int func_8020A5DC(void* self);
 extern int func_8020A87C(void* self, void* effect);
-extern int func_8020971C(void* self);
+extern int func_8020971C(u16 duration);
 extern int func_80209754(u8 flags, void* first, void* second, void* third,
                          void* effect);
 extern void func_80209F5C();
@@ -51,7 +52,7 @@ extern void* func_8003AA34();
 extern int getBdatStringColumnValue(void* bdat, const char* column, u16 row);
 extern f32 func_80496288(void* scene);
 extern void* func_800817BC__Q22cf13CfGameManagerFv(u16 id, int mode);
-extern u16 func_801BFAE4(u16 handle);
+extern int func_801BFAE4(u16 handle);
 extern void func_801BFAE8(u16 handle, void* position);
 extern void func_801BFED0(int kind, u16 handle, int mode);
 extern u16 func_80208C60(u16 effectId, void* position, f32 distance);
@@ -182,6 +183,11 @@ struct JumpActorData {
     void* target;
 };
 
+struct JumpPlayerFieldC4 {
+    u8 padding[0xC4];
+    void* field_C4;
+};
+
 struct JumpTargetData {
     u8 padding0[0x0C];
     u32 flags0C;
@@ -197,20 +203,21 @@ static inline void* jumpActorFromPlayer(void* player) {
 }
 
 static inline const CfGimmickJumpVec3* jumpPlayerPosition(int index) {
-    void* player = cf::CfGameManager::getPlayer(index);
+    void* player = getPlayer__Q22cf13CfGameManagerFi(index);
     if (player == 0) {
         return 0;
     }
     return reinterpret_cast<JumpMoveIf*>(player)->getPosition();
 }
 
-static inline f32 jumpPlayerAngle(void* player) {
-    CfObjectActor* actor = reinterpret_cast<CfObjectActor*>(jumpActorFromPlayer(player));
-    return actor->CfObjectActor_UnkVirtualFunc6();
+static inline f32 jumpPlayerAngle(void* actor) {
+    CfObjectActor* obj = reinterpret_cast<CfObjectActor*>(actor);
+    return obj->CfObjectActor_UnkVirtualFunc6();
 }
 
 static inline f32 normalizeJumpAngle(f32 angle) {
-    while (angle > lbl_eu_8066A1F8) {
+    // Operand order matters: retail compares (PI, angle).
+    while (lbl_eu_8066A1F8 <= angle) {
         angle -= lbl_eu_8066A1FC;
     }
     while (angle < -lbl_eu_8066A1F8) {
@@ -305,16 +312,19 @@ CfGimmickJump::~CfGimmickJump() {
 extern "C" void func_8020F38C(CfGimmickJump* self) {
     self->savedState = self->initialState;
     func_802089BC(&self->initialState, &self->position, &self->rotation);
-    self->savedState.words[0x0D] = self->initialState.words[0x0D];
-    self->savedState.words[0x0D] = *(u32*)&self->height;
+    *(f32*)&self->savedState.words[0x0D] = self->height;
+    func_802089BC(&self->savedState, &self->position, &self->rotation);
     func_802089BC(&self->transformedPosition, &self->position, &self->rotation);
 }
 
 extern "C" void func_8020F484(CfGimmickJump* self) {
-    if ((lbl_eu_80663E24 & 0x20) == 0) {
+    if ((lbl_eu_80663E24 & 0x4000000) == 0) {
         self->timer += func_80496288(lbl_eu_80663E14);
-        void* entry = (u8*)lbl_eu_805359E8 + self->motionState * 0xC;
-        ((void (*)(CfGimmickJump*))*(void**)entry)(self);
+        // State handler dispatch: retail stores 12-byte member-function
+        // pointers (__ptmf_scall) indexed by motionState.
+        JumpStateFn* stateTable = reinterpret_cast<JumpStateFn*>((void*)lbl_eu_805359E8);
+        JumpStateFn& stateFn = stateTable[self->motionState];
+        (reinterpret_cast<JumpDispatchTarget*>(self)->*stateFn)();
         func_8020F540(self);
     }
 
@@ -334,64 +344,81 @@ extern "C" void func_8020F540(CfGimmickJump* self) {
         return;
     }
 
-    const f32 zero = lbl_eu_80668404;
-    const f32 one = lbl_eu_8066840C;
+    // Loop-invariant constants; declaration order mirrors the retail pool
+    // loads (MWCC keeps each in its own non-volatile FPR).
+    const f32 twoPi = lbl_eu_8066A1FC;
+    const f32 pi = lbl_eu_8066A1F8;
+    const f32 speedScale = lbl_eu_80668424;
+    const f32 turnLimit = lbl_eu_80668428;
+    const f32 turnLimitNeg = lbl_eu_8066842C;
+    const f32 nearDistSq = lbl_eu_8066840C;
+
     for (int index = 0; index < 3; ++index) {
         u32 bit = 0x80u << index;
         if ((self->flags & bit) == 0) {
             continue;
         }
 
-        int started = 1;
         if (index == 0) {
             func_80209F5C();
         }
 
-        void* player = cf::CfGameManager::getPlayer(index);
+        void* player = getPlayer__Q22cf13CfGameManagerFi(index);
         void* actor = jumpActorFromPlayer(player);
+        // Every failure path below still clears the request bit.
         if (actor == 0) {
+            self->flags &= ~bit;
             continue;
         }
         JumpTargetData* target = reinterpret_cast<JumpTargetData*>(
             reinterpret_cast<JumpActorData*>(actor)->target);
         if (target == 0 || (target->flags0C & 2) != 0 ||
             (target->flags4EC & 2) != 0) {
+            self->flags &= ~bit;
             continue;
         }
 
+        // Mark the move target as jump-claimed.
         target->flags4EC = (target->flags4EC & ~0xA0000u) | 0x40000u;
-        f32 delta = lbl_eu_80668424 * self->playerDeltaX[index];
-        f32 deltaZ = lbl_eu_80668424 * self->playerDeltaZ[index];
+        f32 step = speedScale * func_80496288(lbl_eu_80663E14);
+        f32 delta = step * self->playerDeltaX[index];
+        f32 deltaZ = step * self->playerDeltaZ[index];
+
+        // Retail re-queries the position getter once per component (no CSE
+        // across the virtual call), z first.
         JumpMoveIf* move = reinterpret_cast<JumpMoveIf*>(player);
-        const CfGimmickJumpVec3* position = move->getPosition();
         CfGimmickJumpVec3 result;
-        result.x = position->x + delta;
-        result.y = position->y;
-        result.z = position->z + deltaZ;
+        result.z = deltaZ + move->getPosition()->z;
+        result.y = move->getPosition()->y;
+        result.x = delta + move->getPosition()->x;
 
         f32 dx = result.x - self->targetX;
         f32 dz = result.z - self->targetZ;
-        if (dx * dx + dz * dz < one) {
+        if (dx * dx + dz * dz < nearDistSq) {
+            self->flags &= ~bit;
             continue;
         }
 
         move->setPosition(result);
-        f32 angle = jumpPlayerAngle(player);
+        f32 angle = jumpPlayerAngle(actor);
         if (self->targetAngle == angle) {
+            self->flags &= ~bit;
             continue;
         }
 
-        f32 difference = normalizeJumpAngle(self->targetAngle - angle);
-        if (difference > lbl_eu_80668428) {
-            difference = normalizeJumpAngle(angle + lbl_eu_80668428);
-        } else if (difference < lbl_eu_8066842C) {
-            difference = normalizeJumpAngle(angle - lbl_eu_80668428);
+        // Turn toward the target angle; the clamped result itself is unused
+        // (the direction update happens inside the virtual calls above).
+        f32 difference = normalizeJumpAngle(self->targetAngle - jumpPlayerAngle(actor));
+        if (difference > turnLimit) {
+            difference = normalizeJumpAngle(turnLimit + jumpPlayerAngle(actor));
+        } else if (difference < turnLimitNeg) {
+            difference = normalizeJumpAngle(jumpPlayerAngle(actor) - turnLimit);
         } else {
             difference = normalizeJumpAngle(self->targetAngle);
         }
         (void)difference;
-        move->updateDirection();
-        (void)started;
+
+        self->flags &= ~bit;
     }
 }
 
@@ -399,11 +426,10 @@ extern "C" void func_8020F8C4(CfGimmickJump* self) {
     self->timer = lbl_eu_80668404;
     if ((self->flags66 & 1) != 0) {
         if ((self->flags & 0x800) != 0) {
-            if (func_8020A5DC(self) == 0) {
-                self->flags &= ~0x800u;
-            } else {
+            if (func_8020A5DC(self) != 0) {
                 return;
             }
+            self->flags &= ~0x800u;
         } else if (func_8020A87C(self, self->effect) != 0) {
             func_8020A484(self->resourceId);
             self->flags |= 0x800;
@@ -412,14 +438,14 @@ extern "C" void func_8020F8C4(CfGimmickJump* self) {
     }
 
     self->flags |= 0x400;
-    if (self->duration == 0 || func_8020971C(self) != 0) {
+    if (self->duration == 0 || func_8020971C(self->duration) != 0) {
         self->motionState = 1;
         self->timer = lbl_eu_80668404;
     }
 }
 
 extern "C" void func_8020F984(CfGimmickJump* self) {
-    void* player = cf::CfGameManager::getPlayer(0);
+    void* player = getPlayer__Q22cf13CfGameManagerFi(0);
     if (player == 0) {
         return;
     }
@@ -501,16 +527,30 @@ extern "C" void func_8020F984(CfGimmickJump* self) {
     self->flags &= ~1u;
 }
 
+// Retail converts the frame count via the shared .sdata2 2^52 magic
+// (lbl_eu_80668410 = 0x4330000000000000). Defined here (nobody else defines
+// it) so MWCC's builtin conversion pools against this label. Decimal
+// literal: an integer literal like 0x4330000000000000ll gets value-converted.
+extern const double lbl_eu_80668410 = 4503599627370496.0;
+
+static f32 jumpFrameThreshold(CfGimmickJump* self) {
+    return (f32)(self->jumpFrames * 30 + self->waitFrames);
+}
+
 extern "C" void func_8020FC14(CfGimmickJump* self) {
+    CfGimmickJumpVec3 position;
     if (self->soundHandle != 0) {
         if (func_801BFAE4(self->soundHandle) != 0) {
-            CfGimmickJumpVec3 position = self->position;
-            const CfGimmickJumpVec3* playerPos = jumpPlayerPosition(0);
-            if (playerPos != 0) {
-                position.y = playerPos->y;
+            position.x = self->position.x;
+            position.y = self->position.y;
+            position.z = self->position.z;
+            void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+            if (player != 0) {
+                position.y =
+                    reinterpret_cast<JumpMoveIf*>(player)->getPosition()->y;
             }
-            if (position.y > self->position.y + self->height) {
-                position.y = self->position.y + self->height;
+            if (position.y > self->height + self->position.y) {
+                position.y = self->height + self->position.y;
             } else if (position.y < self->position.y) {
                 position.y = self->position.y;
             }
@@ -520,8 +560,7 @@ extern "C" void func_8020FC14(CfGimmickJump* self) {
         }
     }
 
-    if (self->timer >= (f32)self->jumpFrames * lbl_eu_80668420 +
-                      (f32)self->waitFrames) {
+    if (self->timer >= jumpFrameThreshold(self)) {
         self->motionState = 3;
         self->timer = lbl_eu_80668404;
         self->verticalOffset = lbl_eu_80668404;
@@ -533,9 +572,10 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
     if (self->soundHandle != 0) {
         if (func_801BFAE4(self->soundHandle) != 0) {
             CfGimmickJumpVec3 position = self->position;
-            const CfGimmickJumpVec3* playerPos = jumpPlayerPosition(0);
-            if (playerPos != 0) {
-                position.y = playerPos->y;
+            void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+            if (player != 0) {
+                position.y =
+                    reinterpret_cast<JumpMoveIf*>(player)->getPosition()->y;
             }
             if (position.y > self->position.y + self->height) {
                 position.y = self->position.y + self->height;
@@ -548,37 +588,50 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
         }
     }
 
-    f32 elapsed = func_80496288(lbl_eu_80663E14) * self->frameScale;
+    f32 elapsed = self->frameScale * func_80496288(lbl_eu_80663E14);
     if (self->timer <= self->frameScale) {
         self->verticalOffset += elapsed;
         if (self->verticalOffset > self->height) {
             self->verticalOffset = self->height;
         }
 
+        // Lift players standing on the dispatch area once they are below the
+        // rising platform surface.
         for (int index = 0; index < 3; ++index) {
             u32 stateBit = 2u << index;
-            if ((self->flags & stateBit) != 0) {
-                u32 moveBit = 0x10u << index;
-                if ((self->flags & moveBit) == 0) {
-                    void* player = cf::CfGameManager::getPlayer(index);
-                    void* actor = jumpActorFromPlayer(player);
-                    if (actor != 0) {
-                        JumpTargetData* target = reinterpret_cast<JumpTargetData*>(
-                            reinterpret_cast<JumpActorData*>(actor)->target);
-                        if (target != 0) {
-                            JumpMoveIf* move = reinterpret_cast<JumpMoveIf*>(player);
-                            const CfGimmickJumpVec3* playerPos = move->getPosition();
-                            CfGimmickJumpVec3 position;
-                            position.x = playerPos->x;
-                            position.y = self->verticalOffset;
-                            position.z = playerPos->z;
-                            move->setPosition(position);
-                            func_8004B840(target, lbl_eu_80668404);
-                            self->flags |= moveBit;
-                            self->playerHeight[index] = playerPos->y;
-                        }
-                    }
-                }
+            if ((self->flags & stateBit) == 0) {
+                continue;
+            }
+            u32 moveBit = 0x10u << index;
+            if ((self->flags & moveBit) != 0) {
+                continue;
+            }
+            void* player = getPlayer__Q22cf13CfGameManagerFi(index);
+            void* actor = jumpActorFromPlayer(player);
+            if (actor == 0) {
+                continue;
+            }
+            JumpTargetData* target = reinterpret_cast<JumpTargetData*>(
+                reinterpret_cast<JumpActorData*>(actor)->target);
+            if (target == 0) {
+                continue;
+            }
+
+            JumpMoveIf* move = reinterpret_cast<JumpMoveIf*>(player);
+            typedef int (*JumpDispatchFunction)(const CfGimmickJumpVec3*,
+                                                const CfGimmickJumpVec3*,
+                                                const CfGimmickJumpVec3*);
+            const CfGimmickJumpVec3* playerPos = move->getPosition();
+            JumpDispatchFunction dispatch = reinterpret_cast<JumpDispatchFunction>(
+                jumptable_eu_80535830[self->savedState.words[8]]);
+            if (dispatch(&self->transformedPosition, playerPos,
+                         &self->position) == 0) {
+                continue;
+            }
+            playerPos = move->getPosition();
+            if (playerPos->y <= self->verticalOffset + self->position.y) {
+                self->flags |= moveBit;
+                self->playerHeight[index] = move->getPosition()->y;
             }
         }
     } else if (self->linkedObject == 0) {
@@ -586,6 +639,79 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
     }
 
     self->timer += elapsed;
+
+    const f32 zero = lbl_eu_80668404;
+    const f32 one = lbl_eu_8066840C;
+    for (int index = 0; index < 3; ++index) {
+        u32 stateBit = 2u << index;
+        u32 moveBit = 0x10u << index;
+        if ((self->flags & stateBit) == 0 || (self->flags & moveBit) != 0) {
+            continue;
+        }
+
+        finished = false;
+        void* player = getPlayer__Q22cf13CfGameManagerFi(index);
+        void* actor = jumpActorFromPlayer(player);
+        if (actor == 0) {
+            continue;
+        }
+
+        self->playerHeight[index] += elapsed;
+        JumpTargetData* target = reinterpret_cast<JumpTargetData*>(
+            reinterpret_cast<JumpActorData*>(actor)->target);
+        if (target == 0) {
+            continue;
+        }
+
+        // Carry the player with the platform; the getter is re-queried per
+        // component (no CSE across the virtual call).
+        JumpMoveIf* move = reinterpret_cast<JumpMoveIf*>(player);
+        CfGimmickJumpVec3 position;
+        position.z = move->getPosition()->z;
+        f32 carried = self->playerHeight[index];
+        position.x = move->getPosition()->x;
+        position.y = carried;
+        move->setPosition(position);
+        func_8004B840(target, zero);
+        target->flags4EC |= 0x4000000;
+        if (index == 0) {
+            func_80209F5C();
+        }
+
+        if (self->playerHeight[index] <= self->height + self->position.y) {
+            self->flags |= moveBit;
+            target->flags4EC &= ~0x20u;
+            if ((self->flags & 0x1000) != 0) {
+                // Recompute the pull vector toward the jump target.
+                self->flags |= 0x80u << index;
+                const CfGimmickJumpVec3* p = move->getPosition();
+                self->playerDeltaX[index] = self->targetX - p->x;
+                p = move->getPosition();
+                self->playerDeltaZ[index] = self->targetZ - p->z;
+                f32 dx = self->playerDeltaX[index];
+                f32 dz = self->playerDeltaZ[index];
+                f32 distSq = dx * dx + dz * dz;
+                if (distSq < zero) {
+                    nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+                }
+                f32 dist = zero;
+                if (distSq > zero) {
+                    dist = distSq * nw4r::math::FrSqrt(distSq);
+                }
+                if (dist != zero) {
+                    f32 inv = one / dist;
+                    self->playerDeltaX[index] = dx * inv;
+                    self->playerDeltaZ[index] = dz * inv;
+                } else {
+                    self->playerDeltaX[index] = zero;
+                    self->playerDeltaZ[index] = zero;
+                }
+            }
+        } else {
+            target->flags4EC |= 0x4000000;
+        }
+    }
+
     if (finished) {
         self->motionState = 1;
         self->timer = lbl_eu_80668404;
@@ -597,18 +723,19 @@ extern "C" void func_8020FD2C(CfGimmickJump* self) {
             u32 stateBit = 2u << index;
             u32 moveBit = 0x10u << index;
             if ((self->flags & stateBit) != 0 && (self->flags & moveBit) == 0) {
-                void* player = cf::CfGameManager::getPlayer(index);
-                void* actor = jumpActorFromPlayer(player);
-                if (actor != 0) {
-                    JumpTargetData* target = reinterpret_cast<JumpTargetData*>(
-                        reinterpret_cast<JumpActorData*>(actor)->target);
-                    if (target != 0) {
-                        target->flags4EC &= ~0x20000u;
+                void* player = getPlayer__Q22cf13CfGameManagerFi(index);
+                if (player != 0) {
+                    JumpPlayerFieldC4* entry =
+                        reinterpret_cast<JumpPlayerFieldC4*>(player);
+                    if (entry->field_C4 != 0) {
+                        reinterpret_cast<JumpTargetData*>(entry->field_C4)
+                            ->flags4EC &= ~0x20u;
                     }
                 }
             }
         }
-        self->flags &= ~0x7F000000u;
+        // Keep only the low flag bits plus the top bit.
+        self->flags &= ~0x7E000000u;
     }
 }
 

@@ -434,6 +434,7 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
     self->field_64 = 1;
     if (self->field_0xC8 == 0) return;
     if (self->field_0xDC != 0) {
+        f64 two52 = lbl_eu_80667160;
         for (int i = 1; i <= 8; i++) {
             void* obj = func_8009EC9C((u16)i);
             if (func_8008235C__Q22cf13CfGameManagerFv(i) != 0 ||
@@ -443,7 +444,16 @@ __attribute__((noinline)) void func_80122EF8(QuestWinObj* self) {
                 if (func_8026178C(p, 0x89) != 0) {
                     v = func_8025FB10(p, 0x89) + 0x64;
                 }
-                f64 val = (f64)(self->field_0xDC * v) * lbl_eu_8066714C;
+                // int->double via the 0x4330 magic-high-word idiom: bits
+                // (0x43300000|n) as f64 equal n+2^52; retail preloads the 2^52
+                // correction constant (lbl_eu_80667160, f29) before the loop.
+                union {
+                    u32 w[2];
+                    f64 d;
+                } cvt;
+                cvt.w[0] = 0x43300000;
+                cvt.w[1] = (u32)(self->field_0xDC * v);
+                f64 val = (cvt.d - two52) * lbl_eu_8066714C;
                 s32 result =
                     (s32)(val + ((val > lbl_eu_8066713C) ? lbl_eu_80667150
                                                           : lbl_eu_80667158));

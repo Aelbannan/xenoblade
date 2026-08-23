@@ -2,6 +2,12 @@
 // Cleaned-up C++ for CCol6CheckBat; other stubs pending decomp.
 
 #include "kyoshin/CCol6CheckBat.hpp"
+// Forward-declare cf::CfGameManager before the include chain pulls in
+// CfGameManager.hpp (its UnkClass_8007DAE0::init declaration references the
+// type before the namespace block that declares it).
+namespace cf {
+class CfGameManager;
+}
 #include "kyoshin/CCol6System.hpp"
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/device/CDeviceFile.hpp"
@@ -65,7 +71,7 @@ void func_8015D0B8() {
 // dtor's outer null-check covers the delete, and the nested double null-check
 // is the documented D2-inlined-into-D1 MWCC artifact (same as
 // ~CSimpleEveTalkWin / ~CSystemWindow) guarding the CProcess base dtor.
-// NOTE: default -O4,p (NOT optimize_for_size) — this retail keeps the
+// NOTE: default -O4,p (NOT optimize_for_size) - this retail keeps the
 // separate stw r31/stw r30 saves instead of the stmw pair.
 extern "C" CCol6CheckBat* __dt__13CCol6CheckBatFv(CCol6CheckBat* self, int flags) {
     if (self != 0) {
@@ -89,8 +95,33 @@ void CCol6CheckBat::Term() {
     *(CCol6CheckBat**)&lbl_eu_80664230 = nullptr;
 }
 
-// CCol6CheckBat::Move() - update tick (stub pending decomp).
-void CCol6CheckBat::Move() {}
+// CCol6CheckBat::Move() - once the game is running, shows the two check-bat
+// messages (indices 0x7f/0x80 of the shared string pool) and opens the queued
+// window (lbl_eu_8066235C + 0x100) when a window id is queued; either way the
+// bat ends up flagged done at +0x64.
+void CCol6CheckBat::Move() {
+    if (func_8013BE50() == 0) {
+        return;
+    }
+
+    if (lbl_eu_8066235C >= 0) {
+        func_80135998(1);
+        char* msg = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[9], 0x7f);
+        func_8013D55C(msg, 0, 0);
+        msg = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[9], 0x80);
+        func_8013D55C(msg, 0, 0);
+
+        func_8013DA60(lbl_eu_8066235C + 0x100, 0, 0);
+        lbl_eu_8066235C = -1;
+        func_80135998(0);
+
+        // Retail keeps a copy of this store in BOTH arms (the b-over-else
+        // emits the extra branch); do not hoist it out of the if/else.
+        mFlag64 = 1;
+    } else {
+        mFlag64 = 1;
+    }
+}
 
 // Byte-range shim over the CProcess header + owned fields so the factory can
 // write the vtable (+0x10), the __ptmf_null callback slots (+0x3C..0x53) and
@@ -114,7 +145,7 @@ struct CCol6CheckBatCtorShim {
     u8 flag70;           // 0x70
 };
 
-// CCol6CheckBat ctor — self-allocating factory (retail symbol
+// CCol6CheckBat ctor - self-allocating factory (retail symbol
 // __ct__CCol6CheckBat). Returns NULL if the singleton already exists;
 // otherwise allocates 0x74 bytes from work memory, constructs the CProcess
 // base, fills the callback/field block, stores itself as the singleton and
@@ -194,7 +225,40 @@ int func_8015D310() {
     return 0;
 }
 
-void func_8015D3A0(){}
+// func_8015D3A0 - reserve the first free item-box slot whose owned-count
+// threshold is met: for each of 5 slots, if the shared counter (id 0x7fc)
+// covers the slot's threshold byte and the slot count (id 0x804+i) is zero,
+// queue the window index and increment both counters by one/threshold delta.
+void func_8015D3A0() {
+    // Retail stack layout: t2 (7548/754C) at +0x10 (r31), t1 (7550/7554) at
+    // +0x08 (r30); declaring t2 first gives it the higher address.
+    union {
+        struct {
+            u32 w;
+            u8 b;
+        };
+        u8 bytes[5];
+    } t2, t1;
+    t2.w = lbl_eu_80667548;
+    t2.b = lbl_eu_8066754C;
+    t1.w = lbl_eu_80667550;
+    t1.b = lbl_eu_80667554;
+
+    // Retail keeps the running count as a 16-bit variable (re-extended via
+    // extsh on every read).
+    s16 total = func_8009CF8C(0x7fc);
+    for (s32 i = 0; i < 5; i++) {
+        u8 need = t2.bytes[i];
+        if (total >= need && func_8009CF8C(i + 0x804) == 0) {
+            lbl_eu_8066235C = i;
+            func_8009D018(i + 0x804, 1);
+            // Retail sign-extends the t1 byte before adding to the running
+            // total, then re-sign-extends the halfword argument.
+            total += (s8)t1.bytes[i];
+            func_8009D018(0x7fc, total);
+        }
+    }
+}
 
 // Byte-range shim over the CProcess header + owned fields (0x00..0x70) so the
 // ctor can write the vtable slot, the __ptmf_null callback slots and the
@@ -219,14 +283,17 @@ struct CCol6HintCtorShim {
     u32 field70;         // 0x70 - lbl_eu_8053011C + 0xac
 };
 
-// CCol6Hint ctor — free-function form (retail symbol __ct__CCol6Hint): the
+// CCol6Hint ctor - free-function form (retail symbol __ct__CCol6Hint): the
 // CProcess base is constructed on the raw object, the vtable slot is written
 // manually (temp lbl_eu_8052D238, then the composite vtable lbl_eu_8053011C
 // whose sub-tables back the +0x6C/+0x70 interface pointers), the __ptmf_null
 // callback slots are copied, and the embedded subobjects (UnkClass_8045F564
 // region, CCur18 cursor, CScrollBar) are placement-built before the 0x80-byte
 // scratch block is cleared.
-CCol6Hint* __ct__CCol6Hint(CCol6Hint* self, CProcess* parent) {
+// CCol6Hint ctor - extern "C" free-function form (retail emits the bare
+// symbol __ct__CCol6Hint; a C++-linkage definition would mangle on the
+// factory's call site).
+extern "C" CCol6Hint* __ct__CCol6Hint(CCol6Hint* self, CProcess* parent) {
     CCol6HintCtorShim* shim = reinterpret_cast<CCol6HintCtorShim*>(self);
     __ct__8CProcessFv((CProcess*)self);
     shim->vtable = (void*)lbl_eu_8052D238;
@@ -286,11 +353,11 @@ CCol6Hint* __ct__CCol6Hint(CCol6Hint* self, CProcess* parent) {
     return self;
 }
 
-// CCol6Hint dtor (extern "C" free-function form, default -O4,p — retail keeps
+// CCol6Hint dtor (extern "C" free-function form, default -O4,p - retail keeps
 // separate stw r31/stw r30 saves): sub-object dtors in +0x13C (CScrollBar),
 // +0x124 (CCur18), +0x74 (UnkClass_8045F564) order with flags -1, then the
 // CProcess base dtor behind the double-null guard (retail re-checks r30 and
-// emits two beq's — the D2-inlined-into-D1 artifact), then flags-based delete.
+// emits two beq's - the D2-inlined-into-D1 artifact), then flags-based delete.
 extern "C" void* __dt__9CCol6HintFv(CCol6Hint* self, int flags) {
     if (self != 0) {
         __dt__10CScrollBarFv(&self->mScrollBar, -1);
@@ -349,7 +416,34 @@ void CCol6Hint::Init() {
     func_801F34F4(&mScrollBar);
 }
 
-void CCol6Hint::Term() {}
+void CCol6Hint::Term() {
+    func_801390E0(&mField88);
+
+    // The `if (this)` is the MWCC idiom that splits mr r4 / beq / addi +0x70
+    // for the IScnRender subobject passed to removeRenderCB.
+    IScnRender* render = reinterpret_cast<IScnRender*>(this);
+    if (this != 0) {
+        render = reinterpret_cast<IScnRender*>(&mField70);
+    }
+    reinterpret_cast<CScn*>(mParentPtr)->removeRenderCB(render);
+
+    mFlag98 = 0;
+    func_801F35DC(&mScrollBar);
+    reinterpret_cast<CCol6CursorView*>(&mCur18)->vf3();
+
+    // D2-inlined double null-check artifact around the anim-host release:
+    // retail re-tests mField54 before the +0x08 virtual call.
+    if (mAnimHost != 0) {
+        if (mAnimHost != 0) {
+            mAnimHost->v00(1);
+        }
+        mAnimHost = 0;
+    }
+
+    func_80139124(reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(mField8C));
+    reinterpret_cast<UnkClass_8045F564*>(&mMemRegion)->func_8045F778();
+    lbl_eu_80664234 = 0;
+}
 
 // CCol6Hint::Move() - hint-bubble state machine (states 0-5) driving the
 // layout anim host (mField54), the scroll bar and the cursor:
@@ -452,35 +546,118 @@ void CCol6Hint::Move() {
 // layout (func_8015DD4C), flag it ready and register the render callback with
 // the parent scene (the +0x84 slot holds the stored parent pointer).
 extern "C" int func_8015DB08(CCol6Hint* self, CEventFile* event) {
-    if (self->mField88 != event->mFileHandle) return 0;
+    // Retail branches to a late failure label (bne) rather than skipping the
+    // body with a forward beq.
+    if (self->mField88 != event->mFileHandle) goto fail;
 
-    reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)->createRegion(
-        mtl::MemManager::getHandleMEM2(), 0x20000, &lbl_eu_80502050[0x38], 0);
-    Class_8045F858 host(reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion));
+    // Host's scope ends before the failure label so the fail path skips the
+    // Class_8045F858 destructor (retail has no dtor call on that path).
+    {
+        // Retail holds three values in callee-saved regs across the body
+        // (self r29, detached buffer r30, string-pool base r31); name them
+        // as locals. The pool base is materialized after getHandleMEM2.
+        u8* data;
 
-    CFileHandle* handle = self->mField88;
-    u8* data = handle->mData;
-    handle->mData = 0;
-    mtl::MemManager::func_80434A4C(false);
+        mtl::ALLOC_HANDLE mem = mtl::MemManager::getHandleMEM2();
+        char* pool = lbl_eu_80502050;
+        reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)
+            ->createRegion(mem, 0x20000, &pool[0x38], 0);
+        Class_8045F858 host(
+            reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion));
 
-    self->mField8C = (u32)(uintptr_t)CLibLayout::createArcResourceAccessor();
-    func_8015DD4C(self);
-    self->mFlag98 = 1;
+        CFileHandle* handle = self->mField88;
+        data = handle->mData;
+        handle->mData = 0;
+        mtl::MemManager::func_80434A4C(false);
 
-    IScnRender* render = reinterpret_cast<IScnRender*>(self);
-    if (self != 0) {
-        render = reinterpret_cast<IScnRender*>(&self->mField70);
+        self->mField8C =
+            (u32)(uintptr_t)CLibLayout::createArcResourceAccessor();
+        reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(self->mField8C)
+            ->Attach(data, &pool[0x42]);
+        func_8015DD4C(self);
+        self->mFlag98 = 1;
+
+        IScnRender* render = reinterpret_cast<IScnRender*>(self);
+        if (self != 0) {
+            render = reinterpret_cast<IScnRender*>(&self->mField70);
+        }
+        reinterpret_cast<CScn*>(self->mParentPtr)->addRenderCB(render, 0xd, 0);
+
+        self->mField88 = 0;
+        reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)
+            ->func_8045F810();
     }
-    reinterpret_cast<CScn*>(self->mParentPtr)->addRenderCB(render, 0xd, 0);
-
-    self->mField88 = 0;
-    reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)->func_8045F810();
     return 1;
+fail:
+    return 0;
 }
 
-void CCol6Hint::cbRenderBefore() {}
+// CCol6Hint::cbRenderBefore() - draw the hint layout, scroll bar and cursor
+// through a stack DrawInfo. The gate chain mirrors retail: task-game ready /
+// mode bit 0x400000 / game running / arc loaded / bar visible; the goto-body
+// form emits the bne-end + beq-body/b-end pair (CSysWinSelect precedent).
+void CCol6Hint::cbRenderBefore() {
+    // First two gates use the if-&&-goto-body / goto-end chain (bne end +
+    // beq body/b end); the running/loaded checks are early returns; the
+    // visibility check positively wraps the draw block.
+    if (func_800426F0__9CTaskGameFv(getInstance__9CTaskGameFv()) == 0 &&
+        (lbl_eu_80663E28 & 0x200000) == 0) {
+        goto body;
+    }
+    goto end;
+end:
+    return;
+body:
+    // Splitting running/loaded checks from the visibility check keeps the
+    // visibility branch as bne-draw / b-over-return (a flat ||-chain would
+    // collapse it to a single beq like the other gates).
+    if (func_8013BE50() != 0 && mFlag98 != 0) {
+        if (CScrollBar_isVisible(&mScrollBar) != 0) {
+            goto draw;
+        }
+    }
+    return;
+draw:
+    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
 
-void func_8015DCD0(){}
+    // Raw-storage DrawInfo built/destroyed via the C-ABI ct/dt calls (a C++
+    // local would virtual-dispatch its scope-exit destructor). The pointer is
+    // re-formed at each use so MWCC keeps it in r1-relative addis instead of
+    // a callee-saved register.
+    u8 drawInfo[0x60];
+    __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    func_80137038(reinterpret_cast<nw4r::lyt::Layout*>(mAnimHost),
+                  reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), 0, 1);
+    func_801F35B0(&mScrollBar, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    func_801D20B0(&mCur18, reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), -1);
+}
+
+// IUIWindow return type for the window factories below (declared extern "C"
+// in CUIWindowManager.hpp).
+class IUIWindow;
+
+// func_8015DCD0 - hint-window factory: allocate 0x17c bytes of work memory,
+// construct the CCol6Hint into it and register it under pParent. The store
+// to the singleton global and Regist run even when allocation failed (obj
+// stays NULL); returns the (possibly NULL) singleton.
+extern "C" IUIWindow* func_8015DCD0(CProcess* pParent, CScn* pScene) {
+    if (lbl_eu_80664234 != 0) {
+        return 0;
+    }
+
+    CCol6Hint* obj = reinterpret_cast<CCol6Hint*>(
+        mtl::MemManager::allocate(0x17c, CWorkThreadSystem::getWorkMem()));
+    if (obj != 0) {
+        // Reassign the (self-returning) ctor result so MWCC keeps obj in r3
+        // across the call instead of spilling it to a callee-saved register.
+        obj = __ct__CCol6Hint(obj, reinterpret_cast<CProcess*>(pScene));
+    }
+    lbl_eu_80664234 = (int)(uintptr_t)obj;
+    reinterpret_cast<CProcess*>((uintptr_t)lbl_eu_80664234)->Regist(pParent, false);
+    return reinterpret_cast<IUIWindow*>((uintptr_t)lbl_eu_80664234);
+}
 
 // func_8015DD4C - builds the CCol6Hint layout: attaches the arc, loads the two
 // anim transforms, binds the device font into the root pane, rebuilds the
@@ -865,14 +1042,16 @@ struct CCol6SystemCtorShim {
     u32 field70;         // 0x70 - lbl_eu_8053001C + 0xac
 };
 
-// CCol6System ctor — free-function form (retail symbol __ct__CCol6System): the
+// CCol6System ctor - free-function form (retail symbol __ct__CCol6System): the
 // CProcess base is constructed on the raw object, the vtable slot is written
 // manually (temp lbl_eu_8052D238, then the composite vtable lbl_eu_8053001C
 // whose sub-tables back the +0x6C/+0x70 interface pointers), the __ptmf_null
 // callback slots are copied, and the embedded subobjects (UnkClass_8045F564
 // region, two CCur18 cursors, two CSysWin windows) are placement-built before
 // the camera/vector block is initialized from the lbl_eu_80667564 float.
-CCol6System* __ct__CCol6System(CCol6System* self, CProcess* parent) {
+// CCol6System ctor - extern "C" free-function form (retail bare symbol,
+// same reason as __ct__CCol6Hint).
+extern "C" CCol6System* __ct__CCol6System(CCol6System* self, CProcess* parent) {
     CCol6SystemCtorShim* shim = reinterpret_cast<CCol6SystemCtorShim*>(self);
     __ct__8CProcessFv((CProcess*)self);
     shim->vtable = (void*)lbl_eu_8052D238;
@@ -1651,55 +1830,88 @@ void CCol6System::Move() {
 // scratch region + host, detach the arc buffer into a fresh accessor, build
 // the layout (func_80160370), flag it ready and register the render callback.
 extern "C" int func_80160118(CCol6System* self, CEventFile* event) {
-    if (self->mFileHandle != event->mFileHandle) return 0;
+    // Same shape as func_8015DB08: late failure label (no dtor on that
+    // path), host scoped to the success block, pool base materialized after
+    // getHandleMEM2.
+    if (self->mFileHandle != event->mFileHandle) goto fail;
 
-    reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)->createRegion(
-        mtl::MemManager::getHandleMEM2(), 0x20000, &lbl_eu_80502050[0xd0], 0);
-    Class_8045F858 host(reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion));
+    {
+        u8* data;
 
-    CFileHandle* handle = self->mFileHandle;
-    u8* data = handle->mData;
-    handle->mData = 0;
-    mtl::MemManager::func_80434A4C(false);
+        mtl::ALLOC_HANDLE mem = mtl::MemManager::getHandleMEM2();
+        char* pool = lbl_eu_80502050;
+        reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)
+            ->createRegion(mem, 0x20000, &pool[0xd0], 0);
+        Class_8045F858 host(
+            reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion));
 
-    self->mArcAccessor = CLibLayout::createArcResourceAccessor();
-    self->mArcAccessor->Attach(data, &lbl_eu_80502050[0x42]);
-    func_80160370(self);
-    self->mFlagA0 = 1;
+        CFileHandle* handle = self->mFileHandle;
+        data = handle->mData;
+        handle->mData = 0;
+        mtl::MemManager::func_80434A4C(false);
 
-    IScnRender* render = reinterpret_cast<IScnRender*>(self);
-    if (self != 0) {
-        render = reinterpret_cast<IScnRender*>(&self->mScnRender);
-    }
-    self->mScn->addRenderCB(render, 0xd, 0);
+        self->mArcAccessor = CLibLayout::createArcResourceAccessor();
+        self->mArcAccessor->Attach(data, &pool[0x42]);
+        func_80160370(self);
+        self->mFlagA0 = 1;
 
-    self->mFileHandle = 0;
-    reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)->func_8045F810();
-    return 1;
-}
-
-// cbRenderBefore - draw both embedded windows through a stack DrawInfo. The
-// last gate is written as `if (ready != 0) { ... }` so MWCC emits the retail
-// bne/b pair (skip-body then skip-to-end) instead of an early-return beq.
-void CCol6System::cbRenderBefore() {
-    if (func_8013BE50() == 0) return;
-    if (mFlagA0 == 0) return;
-    if (CSysWin_isReady(&mSysWin1) == 0) return;
-    if (CSysWin_isReady(&mSysWin2) != 0) {
-        GXSetZMode((GXBool)0, GX_NEVER, (GXBool)0);
-        nw4r::lyt::DrawInfo drawInfo;
-        func_80137250(&drawInfo);
-        if (mFlagA1 == 0) {
-            func_80137038(mpLayout, &drawInfo, 0, 1);
-            func_801D20B0(&mCur1, &drawInfo);
-            func_8022B7C8(&mSysWin1, &drawInfo);
-            func_801D20B0(&mCur2, &drawInfo);
+        IScnRender* render = reinterpret_cast<IScnRender*>(self);
+        if (self != 0) {
+            render = reinterpret_cast<IScnRender*>(&self->mScnRender);
         }
-        func_8022B7C8(&mSysWin2, &drawInfo);
+        self->mScn->addRenderCB(render, 0xd, 0);
+
+        self->mFileHandle = 0;
+        reinterpret_cast<UnkClass_8045F564*>(&self->mMemRegion)
+            ->func_8045F810();
     }
+    return 1;
+fail:
+    return 0;
 }
 
-void func_801602F4(){}
+// cbRenderBefore - draw both embedded windows through a stack DrawInfo.
+// Gates 1-3 are single beq-to-exit branches; gate 4 must stay as the
+// two-instruction bne-body / b-exit pair, so use the goto-body/goto-end
+// split (CCol6Hint::cbRenderBefore precedent).
+void CCol6System::cbRenderBefore() {
+    if (func_8013BE50() == 0) goto end;
+    if (mFlagA0 == 0) goto end;
+    if (CSysWin_isReady(&mSysWin1) == 0) goto end;
+    if (CSysWin_isReady(&mSysWin2) != 0) goto draw;
+    goto end;
+end:
+    return;
+draw:
+    GXSetZMode((GXBool)0, GX_NEVER, (GXBool)0);
+    nw4r::lyt::DrawInfo drawInfo;
+    func_80137250(&drawInfo);
+    if (mFlagA1 == 0) {
+        func_80137038(mpLayout, &drawInfo, 0, 1);
+        func_801D20B0(&mCur1, &drawInfo);
+        func_8022B7C8(&mSysWin1, &drawInfo);
+        func_801D20B0(&mCur2, &drawInfo);
+    }
+    func_8022B7C8(&mSysWin2, &drawInfo);
+}
+
+// func_801602F4 - item-box system-window factory (same shape as
+// func_8015DCD0, but constructs a 0x240-byte CCol6System and uses its own
+// singleton global lbl_eu_80664238).
+extern "C" IUIWindow* func_801602F4(CProcess* pParent, CScn* pScene) {
+    if (lbl_eu_80664238 != 0) {
+        return 0;
+    }
+
+    CCol6System* obj = reinterpret_cast<CCol6System*>(
+        mtl::MemManager::allocate(0x240, CWorkThreadSystem::getWorkMem()));
+    if (obj != 0) {
+        obj = __ct__CCol6System(obj, reinterpret_cast<CProcess*>(pScene));
+    }
+    lbl_eu_80664238 = (int)(uintptr_t)obj;
+    reinterpret_cast<CProcess*>((uintptr_t)lbl_eu_80664238)->Regist(pParent, false);
+    return reinterpret_cast<IUIWindow*>((uintptr_t)lbl_eu_80664238);
+}
 
 // func_80160370 - builds the second CCol6System layout: attaches the arc
 // ("out" + four anims), binds the device font, labels the 21 count panes when
@@ -2017,14 +2229,19 @@ extern "C" void func_80160A6C(CCol6System* self, s32 playerIdx) {
 // populated table row, format per-slot sub-ids, resolve the item instances and
 // reconcile counts, calling the instance-sync virtual or the delta adjuster
 // when the counted stack differs from the table value. The first parameter
-// (r3) is unused by the retail body — the slot index arrives in r4.
+// (r3) is unused by the retail body - the slot index arrives in r4.
 void func_80160EE4(u32 unused, s32 arg) {
     if (arg >= 4) return;
     s32 f = (s32)func_8009CF8C((u32)(arg + 0x7fe));
     if (f >= 5) return;
-    s32 n = f + arg * 5 + 1;
+    // Retail accumulates arg*4 into a temp (compound +=), then forms
+    // n = f + temp + 1 so the adds land in n's callee-saved home register.
+    s32 tmp = arg * 4;
+    tmp += arg;
+    s32 n = f + tmp + 1;
     u16 id = (u16)func_8013606C(
-        &lbl_eu_80502050[0x2cc], &lbl_eu_80502050[0x2dd], (u32)n);
+        &lbl_eu_80502050[0x2cc], &lbl_eu_80502050[0x2dd],
+        (u32)n);
     func_80157184((s32)func_801571FC() - (s32)id * 100);
 
     char buf1[0x20];
@@ -2744,9 +2961,10 @@ void func_80162C40(CCol6System* self) {
     }
 
     self->mFieldA4 = 0x1c;
+    // Single expression so MWCC keeps p*5 in a scratch register and folds
+    // the count add into the named temp (retail add r28, r0, r3 shape).
     u32 f = func_8009CF8C((u32)((s8)self->mPadA5[0] + 0x7fe));
-    s32 n = (s8)self->mPadA5[0] * 5;
-    n += (s32)f;
+    u32 n = (u32)((s8)self->mPadA5[0] * 5) + f;
     u8 a = (u8)func_8013600C(
         &lbl_eu_80502050[0x334], &lbl_eu_80502050[0x33f], (u32)n);
     u8 b = (u8)func_8013600C(
@@ -2755,7 +2973,8 @@ void func_80162C40(CCol6System* self) {
     char* str0 = func_80136190(
         lbl_eu_80502050, &lbl_eu_80502050[0x9], (s8)self->mPadA5[0] + 0x4e);
     char* str1 = func_80136190(
-        lbl_eu_80502050, &lbl_eu_80502050[0x9], (s8)self->mPadA5[0] * 5 + (s32)f + 0x53);
+        lbl_eu_80502050, &lbl_eu_80502050[0x9],
+        (u32)((s8)self->mPadA5[0] * 5) + f + 0x53);
     char* str2 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x78);
     char* str3 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x79);
 
@@ -3102,7 +3321,7 @@ void func_801638C0(CCol6System* self) {
         return;
     }
 
-    s32 ge = (s32)func_8009CF8C((u32)((s8)self->mPadA5[0] + 0x7fe)) >= 5;
+    bool ge = (s32)func_8009CF8C((u32)((s8)self->mPadA5[0] + 0x7fe)) >= 5;
     if (ge != 0) {
         // Banner: "player N joined" (char 0x72+N is the player name).
         self->mFieldA4 = 0x23;
@@ -3174,10 +3393,12 @@ void func_801638C0(CCol6System* self) {
         }
         self->mFieldA4 = 0x15;
         func_80135464(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
-        return;
+    } else {
+        // Retail keeps a copy of this store/fade in BOTH arms (the b-over-else
+        // emits the extra branch); do not hoist it out of the if/else.
+        self->mFieldA4 = 0x15;
+        func_80135464(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
     }
-    self->mFieldA4 = 0x15;
-    func_80135464(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
 }
 
 // func_80163AF4 - window-2 player-count ladder: when the task is idle and the
@@ -3259,10 +3480,12 @@ void func_80163AF4(CCol6System* self) {
         }
         self->mFieldA4 = 0x15;
         func_80135464(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
-        return;
+    } else {
+        // Retail keeps a copy of this store/fade in BOTH arms (the b-over-else
+        // emits the extra branch); do not hoist it out of the if/else.
+        self->mFieldA4 = 0x15;
+        func_80135464(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
     }
-    self->mFieldA4 = 0x15;
-    func_80135464(0, 0, lbl_eu_80667578, lbl_eu_80667578, lbl_eu_80667578);
 }
 
 // CCol6Invite::~CCol6Invite()
@@ -3290,8 +3513,16 @@ void CCol6Invite::Init() {
     char* str0 = func_8013639C((const void*)lbl_eu_80664098,
                                &lbl_eu_80502050[0x9], mArg2);
 
-    func_8009D018(0x7fc, (u8)((u8)func_8009CF8C(0x7fc) + mArg3));
-    func_8009D018(0x7fd, (u8)((u8)func_8009CF8C(0x7fd) + mArg4));
+    // Compound assignment keeps the running value in one register: mask,
+    // add the byte flag in place, then mask for the store.
+    u32 val = func_8009CF8C(0x7fc);
+    val &= 0xFF;
+    val += mArg3;
+    func_8009D018(0x7fc, (u8)val);
+    val = func_8009CF8C(0x7fd);
+    val &= 0xFF;
+    val += mArg4;
+    func_8009D018(0x7fd, (u8)val);
 
     char* str1 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x7e);
     char* str2 = func_80136190(lbl_eu_80502050, &lbl_eu_80502050[0x9], 0x78);
@@ -3312,62 +3543,56 @@ void CCol6Invite::Move() {
         return;
     }
 
-    // 5-byte threshold table: u32 word + trailing byte (big-endian byte
-    // order, read left-to-right).
+    // 5-byte threshold tables (u32 word + trailing byte), read left-to-right
+    // as five bytes each.
     union {
         struct {
             u32 w;
             u8 b;
         };
         u8 bytes[5];
-    } data;
-    data.w = lbl_eu_80667540;
-    data.b = lbl_eu_80667544;
+    } t1, t3, t2;
+    t1.w = lbl_eu_80667540;
+    t1.b = lbl_eu_80667544;
 
-    u8 result = (u8)func_8009CF8C(0x7fc);
+    int found;
+    u32 i;
+    u32 cnt = (u8)func_8009CF8C(0x7fc);
 
-    u8 found = 0;
-    for (u32 i = 0; i < 5; i++) {
-        u8 idx = (u8)i;
-        if (result >= data.bytes[idx] && func_8009CF8C(idx + 0x804) == 0) {
+    // First scan: unsigned loop counter, byte-indexed table access. The
+    // found flag is assigned only at the two exit paths (retail shape).
+    for (i = 0; i < 5; i++) {
+        if (cnt >= t1.bytes[(u8)i] && func_8009CF8C((u8)i + 0x804) == 0) {
             found = 1;
-            break;
+            goto scanned;
         }
     }
+    found = 0;
+scanned:
 
     if (found != 0) {
-        // Per-slot tables: pairs of (u32 word, trailing byte) read
-        // left-to-right as five bytes each.
-        union {
-            struct {
-                u32 w;
-                u8 b;
-            };
-            u8 bytes[5];
-        } data2;
-        union {
-            struct {
-                u32 w;
-                u8 b;
-            };
-            u8 bytes[5];
-        } data3;
-        data2.w = lbl_eu_80667548;
-        data2.b = lbl_eu_8066754C;
-        data3.w = lbl_eu_80667550;
-        data3.b = lbl_eu_80667554;
+        t2.w = lbl_eu_80667548;
+        t2.b = lbl_eu_8066754C;
+        t3.w = lbl_eu_80667550;
+        t3.b = lbl_eu_80667554;
 
-        s16 val = (s16)func_8009CF8C(0x7fc);
-        for (u32 i = 0; i < 5; i++) {
-            if (val >= data2.bytes[i] && func_8009CF8C(i + 0x804) == 0) {
-                lbl_eu_8066235C = (s32)i;
-                func_8009D018(i + 0x804, 1);
-                val = (s16)(val + (s8)data3.bytes[i]);
-                func_8009D018(0x7fc, val);
+        // Second scan: signed loop counter walking incrementing pointers,
+        // running total kept as s16 (re-extended on every read).
+        s16 total = func_8009CF8C(0x7fc);
+        u8* p2 = t2.bytes;
+        u8* p3 = t3.bytes;
+        for (s32 j = 0; j < 5; j++) {
+            if (total >= *p2 && func_8009CF8C(j + 0x804) == 0) {
+                lbl_eu_8066235C = j;
+                func_8009D018(j + 0x804, 1);
+                total += (s8)*p3;
+                func_8009D018(0x7fc, total);
             }
+            p2++;
+            p3++;
         }
         mFlag64 = 1;
-        return;
+    } else {
+        mFlag64 = 1;
     }
-    mFlag64 = 1;
 }

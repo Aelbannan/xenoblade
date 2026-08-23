@@ -7,12 +7,37 @@
 #include "monolib/work/CEventFile.hpp"
 
 class CREvtModel;
+struct ParentTask;
+struct EvtRefOwner;
+
+// Primary vtable layout for CREvtModelObj (retail lbl_eu_80531FA0).
+// Entry 15 (0x3C) is dispatched virtually by the reset path.
+struct CREvtModelObjVtbl {
+    void* entries[15];              // 0x00-0x38
+    void (*func3C)(void* self);     // 0x3C
+};
+extern CREvtModelObjVtbl lbl_eu_80531FA0[];
+
+// Owner of a loaded-resource reference counted at 0x48/0x4C.
+struct EvtRefOwner {
+    u8 _pad00[0x48];
+    u32 mFlag48;   // 0x48
+    u32 mRefCount; // 0x4C
+};
 
 // CREvtModelObj class layout (manual field layout)
 // Inherits: CREvtModel (at 0x00), IWorkEvent (at 0x38), UnknownInterface (at 0x3C)
 struct CREvtModelObj {
     // 0x00: CREvtModel base
-    u8 _pad00[0x38];
+    void* vtable;          // 0x00
+    u32 mType;             // 0x04
+    u32 mCallback[3];      // 0x08: __ptmf triplet
+    u32 mField14;          // 0x14
+    u32 mFlags;            // 0x18
+    ParentTask* mParent;   // 0x1C
+    void* mModel;          // 0x20
+    void* mData24;         // 0x24
+    u8 _pad28[0x38 - 0x28];
     // 0x38: IWorkEvent vtable ptr - kept void*
     void* mIWorkVtbl;
     // 0x3C: other interface vtable ptr - kept void*
@@ -27,8 +52,8 @@ struct CREvtModelObj {
     u32 mField4C;
     // 0x50: u32 - model type (1=arc, 2=chr, 3=?)
     u32 mModelType;
-    // 0x54: CREvtModel* - parent model reference
-    CREvtModel* mParentModel;
+    // 0x54: owner holding a refcount on our resource
+    EvtRefOwner* mRefOwner;
     // 0x58: s32 - file id (-1 = none)
     s32 mFileId;
     // 0x5C: u32 - resource id
@@ -60,6 +85,7 @@ struct CREvtModelObj {
 struct ParentTask {
     u8 _pad00[0x28];
     u32 mField28; // 0x28
+    u8 _pad2C[0x30 - 0x2C];
     u32 mField30; // 0x30
     u8 _pad34[0x48 - 0x34];
     u8* mField48; // 0x48
@@ -84,9 +110,3 @@ struct Ptmf {
 // 0x00: BOOL unk0
 // 0x04: CFileHandle* mFileHandle
 // 0x14: u32 field_14
-
-// ---------------------------------------------------------------------------
-// C-linkage imports
-// ---------------------------------------------------------------------------
-extern "C" void func_801832D4(void* self);
-extern "C" void func_801836CC(void* self, unsigned long value);

@@ -52,7 +52,7 @@ extern "C" bool IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv();
 namespace cf {
     class CfSoundMan {
     public:
-        static void func_801BFC38(u32 r3, u32 r4, u32 r5, u32 r6, float f1);
+        static u32 func_801BFC38(u32 idx, u32 a, u32 b, u32 c, float volume);
     };
 
     // Sound-slot record: 0x268-byte entries in the manager's record array
@@ -281,3 +281,62 @@ extern "C" void __dt__Q34nw4r3snd18MemorySoundArchiveFv(nw4r::snd::MemorySoundAr
 // which the retail binary does not have (whole TU compiled without it).
 extern "C" void __ct__Q34nw4r3snd18MemorySoundArchiveFv(nw4r::snd::MemorySoundArchive* self);
 extern "C" void __ct__Q34nw4r3snd18SoundArchivePlayerFv(nw4r::snd::SoundArchivePlayer* self);
+
+// Position triple view over CfSoundSlot::field_0x08 (three f32 words copied
+// word-wise by the sound-slot starters and read as floats by the per-slot
+// update).
+struct CfSoundPos3 {
+    f32 x;
+    f32 y;
+    f32 z;
+};
+
+// Camera-position object behind func_800821F8()->field_0xC (only the three
+// position floats the per-slot update reads are declared).
+struct CfSndCamObj {
+    u8 field_0x00[0x10C];
+    f32 field_0x10C; // +0x10C camera x
+    f32 field_0x110; // +0x110 camera y
+    f32 field_0x114; // +0x114 camera z
+};
+
+// Scene camera-view word returned by func_8049603C (float at +0xC is the
+// remaining display-time fraction used for volume scaling).
+struct CfSndCamView {
+    u8 field_0x00[0xC];
+    f32 field_0x0C;
+};
+
+// Opaque pose block returned by func_80496264(scene, -1); passed straight
+// through to func_8049B834.
+struct CfSndPoseBlock {
+    u8 data[0x20];
+};
+
+// Minimal view of the func_800821F8 result (only field_0xC is read).
+struct UnkClass_800821F8Snd {
+    u8 field_0x00[0xC];
+    CfSndCamObj* field_0xC;
+};
+extern "C" UnkClass_800821F8Snd* func_800821F8__Q22cf13CfGameManagerFv();
+
+// Sound-start gate helpers used by cf::CfSoundMan::func_801BFC38 (defined in
+// other TUs).
+extern "C" u32 func_80252538();
+extern "C" int CfRes_getD80Flag();
+extern "C" CfSndCamView* func_8049603C(int scene);
+extern "C" CfSndPoseBlock* func_80496264(int scene, int index);
+// Computes a distance-based pan/volume pair from the actor position against
+// the pose block; maxDist comes in as the float argument.
+extern "C" void func_8049B834(f32* outPan, f32* outVol, CfSndPoseBlock* pose,
+                              CfSoundPos3* pos, f32 maxDist);
+
+// nw4r math/db helpers and assert strings (retail symbols).
+extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
+extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+extern const char lbl_eu_80526324[];
+extern const char lbl_eu_80526300[];
+
+// Volume-scaling constants (retail .sdata2).
+extern const f32 lbl_eu_80667E88;
+extern const f32 lbl_eu_80667EA4;

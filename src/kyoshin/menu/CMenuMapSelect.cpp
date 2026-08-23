@@ -40,6 +40,8 @@ extern const f32 lbl_eu_8066872C; // timer increment per frame
 extern const f32 lbl_eu_80668730; // timer cap
 
 // Callee helpers (retail-unmangled names).
+// Callee helpers (retail-unmangled names).
+extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(s16 arg);
 int func_800FEDF8();
 void func_800FF914();
 int func_80244510(CFade* self);
@@ -82,6 +84,9 @@ void func_8024F7CC(CFloorMap* self);
 void func_801C41E8(CTitleAHelp* self, u8 arg);
 }
 
+// CTitleAHelp help-bar text reset (retail-unmangled name).
+extern "C" void func_801C414C(CTitleAHelp* self);
+
 // C++-linkage helper (retail emits the mangled form func_80138078__FUl).
 void func_80138078(unsigned long op);
 
@@ -94,7 +99,7 @@ struct CMenuMapSelectCtorShim {
     u8 _00[0x10];
     void* vtable;              // 0x10 -- overwritten by this ctor
     u8 _14[0x28];              // 0x14-0x3B -- rest of CProcess
-    PtmfNull callbackGroups[2]; // 0x3C-0x53 -- null PMF slot pairs
+    u32 callbacks[6];          // 0x3C-0x53 -- null PMF slot words
     u8 field54;                // 0x54
     u8 field55;                // 0x55
 };
@@ -124,8 +129,19 @@ extern "C" CMenuMapSelect* __ct__CMenuMapSelect(CProcess* parent, CProcess* pare
         __ct__8CProcessFv(proc);
         shim->vtable = lbl_eu_8052BF70;
 
-        shim->callbackGroups[0] = __ptmf_null;
-        shim->callbackGroups[1] = __ptmf_null;
+        // Word-exact copy of the two null-PMF slot groups (0x3C..0x53).
+        u32* ptmf = &__ptmf_null.fn;
+        u32 w1 = ptmf[1];
+        u32 w0 = ptmf[0];
+        shim->callbacks[0] = w0;
+        shim->callbacks[1] = w1;
+        shim->callbacks[2] = ptmf[2];
+
+        w1 = ptmf[1];
+        w0 = ptmf[0];
+        shim->callbacks[3] = w0;
+        shim->callbacks[4] = w1;
+        shim->callbacks[5] = ptmf[2];
 
         shim->field54 = 0;
         shim->field55 = 0;
@@ -169,34 +185,48 @@ extern "C" u32 func_80242354() {
 // ---------------------------------------------------------------------------
 void CMenuMapSelect::func_80242368() {
     CfPadDataView* padData = (CfPadDataView*)cf::CfGameManager::getCfPadData();
-    int classic = cf::CfGameManager::func_80086F9C(-1);
 
-    u32 turboFlags = padData->mTurboPressButtonFlags;
-    u32 pressedFlags = padData->mPadPressedFlags;
-
-    // Controller-dependent trigger bits (cancel/help/confirm edge triggers):
+    // Trigger bits and masked-button booleans are extracted identically for
+    // both layouts except for the three pressed-flag bit positions:
     // Classic controller uses bits 21-23, Wiimote/Nunchuk bits 4/5/10.
     u32 triggerBit1, triggerBit2, triggerBit3;
+    u32 cancel, confirm, stickDir, menu;
+    u32 turboFlags, pressedFlags, cancelVal, confirmVal, menuVal, stickVal;
+    int classic = func_80086F9C__Q22cf13CfGameManagerFv(-1);
     if (classic != 0) {
+        turboFlags = padData->mTurboPressButtonFlags;
+        pressedFlags = padData->mPadPressedFlags;
+
+        u32 cancelVal = turboFlags & 0x8004;
+        u32 confirmVal = turboFlags & 0x2001;
+        u32 menuVal = turboFlags & 0x4002;
+        u32 stickVal = (turboFlags & 0x10000) | (turboFlags & 0x8);
+
         triggerBit1 = (pressedFlags >> 21) & 1;
+        // (x | -x) >> 31 normalizes any non-zero mask to 1.
+        cancel = (cancelVal | -(s32)cancelVal) >> 31;
+        confirm = (confirmVal | -(s32)confirmVal) >> 31;
+        menu = (menuVal | -(s32)menuVal) >> 31;
+        stickDir = (stickVal | -(s32)stickVal) >> 31;
         triggerBit2 = (pressedFlags >> 22) & 1;
         triggerBit3 = (pressedFlags >> 23) & 1;
     } else {
+        turboFlags = padData->mTurboPressButtonFlags;
+        pressedFlags = padData->mPadPressedFlags;
+
+        u32 cancelVal = turboFlags & 0x8004;
+        u32 confirmVal = turboFlags & 0x2001;
+        u32 menuVal = turboFlags & 0x4002;
+        u32 stickVal = (turboFlags & 0x10000) | (turboFlags & 0x8);
+
         triggerBit1 = (pressedFlags >> 4) & 1;
+        cancel = (cancelVal | -(s32)cancelVal) >> 31;
+        confirm = (confirmVal | -(s32)confirmVal) >> 31;
+        menu = (menuVal | -(s32)menuVal) >> 31;
+        stickDir = (stickVal | -(s32)stickVal) >> 31;
         triggerBit2 = (pressedFlags >> 5) & 1;
         triggerBit3 = (pressedFlags >> 10) & 1;
     }
-
-    // (x | -x) >> 31 normalizes any non-zero mask to 1.
-    u32 cancelVal = turboFlags & 0x8004;
-    u32 dirVal = turboFlags & 0x2001;
-    u32 confirmVal = turboFlags & 0x4002;
-    u32 menuVal = ((turboFlags >> 16) & 1) | ((turboFlags >> 3) & 1);
-
-    u32 cancel = (u32)(-(s32)cancelVal | cancelVal) >> 31;
-    u32 dir = (u32)(-(s32)dirVal | dirVal) >> 31;
-    u32 confirm = (u32)(-(s32)confirmVal | confirmVal) >> 31;
-    u32 menu = (u32)(-(s32)menuVal | menuVal) >> 31;
 
     if (triggerBit1 != 0) {
         // Cancel/back: fade out and leave the world map.
@@ -205,12 +235,12 @@ void CMenuMapSelect::func_80242368() {
         func_80138078(3);
     } else if (triggerBit2 != 0) {
         // Show help overlay.
-        this->mTitleAHelp.func_801C414C();
+        func_801C414C(&this->mTitleAHelp);
         func_8024371C(&this->mMapSel);
         this->mState = 3;
     } else if (cancel != 0) {
         func_80243768(&this->mMapSel);
-    } else if (dir != 0) {
+    } else if (stickDir != 0) {
         func_80243838(&this->mMapSel);
     } else if (confirm != 0) {
         func_8024391C(&this->mMapSel);

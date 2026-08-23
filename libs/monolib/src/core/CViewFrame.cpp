@@ -118,28 +118,27 @@ bool CViewFrame::render() {
     // Scope early expand locals so they cannot bleed into the post-bl own/r3 schedule.
     {
         CView* owner = mOwner;
+        bool expand = false;
         CView* view = owner->mFrame.mOwner;
-        u32 flags = view->unk27C;
         ml::CRect16* r = (ml::CRect16*)&rect;
-        // Direct volatile stores keep the 0x230/232/1c8/1ca read order; the
-        // expand VR is created between the py and sx reads so the reverse-color
-        // order lands expand at r4 (retail sx=r3 expand=r4 py=r5 px=r6).
+        // Direct volatile stores keep the 0x230/232/1c8/1ca read order.
         r->mPos.x = view->mFrame.mContentX;
         r->mPos.y = view->mFrame.mContentY;
-        int expand = 0;
         r->mSize.x = view->mRectData.mViewSize.x;
         r->mSize.y = view->mRectData.mViewSize.y;
 
-        if ((flags & 1) != 0) {
+        // Retail re-reads the flag word into a scratch register at each test
+        // instead of keeping a named local alive.
+        if ((view->unk27C & 1) != 0) {
             u32 mode = view->unk278;
             if ((mode & 1) == 0 && (mode & 2) == 0) {
-                expand = 1;
+                expand = true;
             }
         }
 
         if (expand != 0) {
             view = *(CView* volatile*)&owner->mFrame.mOwner;
-            expand = 0;
+            expand = false;
 
             {
                 s16 border = owner->mFrame.mBorder;
@@ -149,7 +148,7 @@ bool CViewFrame::render() {
             if ((view->unk27C & 2) != 0) {
                 u32 mode = view->unk278;
                 if ((mode & 1) == 0 && (mode & 2) == 0) {
-                    expand = 1;
+                    expand = true;
                 }
             }
 
@@ -1237,7 +1236,7 @@ extern "C" int func_80441310__10CViewFrameFP11CWorkThread(CViewFrame* self, CWor
 extern "C" void __ct__CViewFrame(CViewFrame* self) {
     // Preload the sdata2 float constants so MWCC hoists the lfs loads to the
     // top (retail loads f5..f0 in first-use order); declaration order drives
-    // the register assignment — the retail claims HIGH first (fZero lands in
+    // the register assignment - the retail claims HIGH first (fZero lands in
     // f5), so the declarations are REVERSED vs the use order.
     float f06 = lbl_eu_8066A2FC; // 0.6
     float f04 = lbl_eu_8066A2F8; // 0.4

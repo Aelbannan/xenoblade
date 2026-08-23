@@ -3,6 +3,13 @@
 
 #include <cstring>
 
+// AxVoice::IsNeedNextUpdate is not declared in snd_AxVoice.h (header is
+// read-only this session); the retail symbol is referenced verbatim so
+// SetMix emits the `bl` with the correct reloc.
+extern "C" bool IsNeedNextUpdate__Q44nw4r3snd6detail7AxVoiceCFRCQ54nw4r3snd6detail7AxVoice8MixParam(
+    const nw4r::snd::detail::AxVoice* pThis,
+    const nw4r::snd::detail::AxVoice::MixParam& rParam);
+
 namespace nw4r {
 namespace snd {
 namespace detail {
@@ -40,21 +47,26 @@ bool AxVoice::IsPlayFinished() const {
 
     u32 addr = samples;
 
+    // NOTE: the header's legacy Format placeholders are unused here; retail
+    // switches on the raw SampleFormat codes (1 = PCM16, 2 = PCM8, 3 = ADPCM).
     switch (mFormat) {
-    case FORMAT_ADPCM: {
+    case SAMPLE_FORMAT_DSP_ADPCM: {
         addr += 0x200;
         break;
     }
 
-    case FORMAT_PCM8: {
+    case SAMPLE_FORMAT_PCM_S8: {
         addr += 0x100;
         break;
     }
 
-    case FORMAT_PCM16: {
+    case SAMPLE_FORMAT_PCM_S16: {
         addr += 0x80;
         break;
     }
+
+    default:
+        return false;
     }
 
     if (samples <= dspAddr && dspAddr < addr) {
@@ -170,7 +182,7 @@ u32 AxVoice::GetDspAddressBySample(const void* pBase, u32 samples, Format fmt) {
     u32 addr = 0;
 
     switch (fmt) {
-    case FORMAT_ADPCM: {
+    case SAMPLE_FORMAT_DSP_ADPCM: {
         // clang-format off
         addr = (samples / AX_ADPCM_SAMPLES_PER_FRAME * AX_ADPCM_NIBBLES_PER_FRAME) +
                (samples % AX_ADPCM_SAMPLES_PER_FRAME) +
@@ -180,12 +192,12 @@ u32 AxVoice::GetDspAddressBySample(const void* pBase, u32 samples, Format fmt) {
         break;
     }
 
-    case FORMAT_PCM8: {
+    case SAMPLE_FORMAT_PCM_S8: {
         addr = reinterpret_cast<u32>(pBase) + samples;
 
         break;
     }
-    case FORMAT_PCM16: {
+    case SAMPLE_FORMAT_PCM_S16: {
         addr = reinterpret_cast<u32>(pBase) / sizeof(u16) + samples;
         break;
     }
@@ -202,7 +214,7 @@ u32 AxVoice::GetSampleByDspAddress(const void* pBase, u32 addr, Format fmt) {
     u32 samples = 0;
 
     switch (fmt) {
-    case FORMAT_ADPCM: {
+    case SAMPLE_FORMAT_DSP_ADPCM: {
         samples = addr - reinterpret_cast<u32>(pBase) * sizeof(u16);
         // clang-format off
         samples = (samples % AX_ADPCM_NIBBLES_PER_FRAME) +
@@ -212,12 +224,12 @@ u32 AxVoice::GetSampleByDspAddress(const void* pBase, u32 addr, Format fmt) {
         break;
     }
 
-    case FORMAT_PCM8: {
+    case SAMPLE_FORMAT_PCM_S8: {
         samples = addr - reinterpret_cast<u32>(pBase);
         break;
     }
 
-    case FORMAT_PCM16: {
+    case SAMPLE_FORMAT_PCM_S16: {
         samples = addr - reinterpret_cast<u32>(pBase) / sizeof(u16);
         break;
     }
@@ -231,7 +243,7 @@ u32 AxVoice::GetSampleByByte(u32 addr, Format fmt) {
     u32 frac;
 
     switch (fmt) {
-    case FORMAT_ADPCM: {
+    case SAMPLE_FORMAT_DSP_ADPCM: {
         samples = addr / AX_ADPCM_FRAME_SIZE * AX_ADPCM_SAMPLES_PER_FRAME;
         frac = addr % AX_ADPCM_FRAME_SIZE;
         if (frac != 0) {
@@ -240,12 +252,12 @@ u32 AxVoice::GetSampleByByte(u32 addr, Format fmt) {
         break;
     }
 
-    case FORMAT_PCM8: {
+    case SAMPLE_FORMAT_PCM_S8: {
         samples = addr;
         break;
     }
 
-    case FORMAT_PCM16: {
+    case SAMPLE_FORMAT_PCM_S16: {
         samples = addr / sizeof(u16);
         break;
     }
@@ -396,7 +408,7 @@ void AxVoice::SetAdpcm(const AdpcmParam* pParam) {
     }
 
     switch (mFormat) {
-    case FORMAT_ADPCM: {
+    case SAMPLE_FORMAT_DSP_ADPCM: {
         std::memcpy(adpcm.a, pParam->coef, sizeof(adpcm.a));
         adpcm.gain = pParam->gain;
         adpcm.pred_scale = pParam->pred_scale;
@@ -405,7 +417,7 @@ void AxVoice::SetAdpcm(const AdpcmParam* pParam) {
         break;
     }
 
-    case FORMAT_PCM16: {
+    case SAMPLE_FORMAT_PCM_S16: {
         std::memset(adpcm.a, 0, sizeof(adpcm.a));
         adpcm.gain = 0x800;
         adpcm.pred_scale = 0;
@@ -414,7 +426,7 @@ void AxVoice::SetAdpcm(const AdpcmParam* pParam) {
         break;
     }
 
-    case FORMAT_PCM8: {
+    case SAMPLE_FORMAT_PCM_S8: {
         std::memset(adpcm.a, 0, sizeof(adpcm.a));
         adpcm.gain = 0x100;
         adpcm.pred_scale = 0;
@@ -435,7 +447,9 @@ void AxVoice::SetAdpcmLoop(const AdpcmLoopParam* pParam) {
         return;
     }
 
-    if (mFormat == FORMAT_ADPCM) {
+    // Retail compares the raw field against 3 (SAMPLE_FORMAT_DSP_ADPCM);
+    // the header's legacy Format enum values are placeholders.
+    if (mFormat == SAMPLE_FORMAT_DSP_ADPCM) {
         loop.loop_pred_scale = pParam->loop_pred_scale;
         loop.loop_yn1 = pParam->loop_yn1;
         loop.loop_yn2 = pParam->loop_yn2;
@@ -456,93 +470,81 @@ bool AxVoice::SetMix(const MixParam& rParam) {
     }
 
     if (mFirstMixUpdateFlag || !IsRun()) {
-        mMixPrev = rParam;
+        // Retail copies field-by-field (12x lhz/sth), not as a struct assign.
+        mMixPrev.vL = rParam.vL;
+        mMixPrev.vR = rParam.vR;
+        mMixPrev.vS = rParam.vS;
+        mMixPrev.vAuxAL = rParam.vAuxAL;
+        mMixPrev.vAuxAR = rParam.vAuxAR;
+        mMixPrev.vAuxAS = rParam.vAuxAS;
+        mMixPrev.vAuxBL = rParam.vAuxBL;
+        mMixPrev.vAuxBR = rParam.vAuxBR;
+        mMixPrev.vAuxBS = rParam.vAuxBS;
+        mMixPrev.vAuxCL = rParam.vAuxCL;
+        mMixPrev.vAuxCR = rParam.vAuxCR;
+        mMixPrev.vAuxCS = rParam.vAuxCS;
         mFirstMixUpdateFlag = false;
     }
 
-    bool needUpdate = false;
-
-    if (mMixPrev.vL != rParam.vL) {
-        needUpdate = true;
-    }
-
-    if (mMixPrev.vR != rParam.vR) {
-        needUpdate = true;
-    }
-
-    if (mMixPrev.vS != rParam.vS) {
-        needUpdate = true;
-    }
-
-    if (mMixPrev.vAuxAL != rParam.vAuxAL) {
-        needUpdate = true;
-    }
-
-    if (mMixPrev.vAuxAR != rParam.vAuxAR) {
-        needUpdate = true;
-    }
-
-    if (mMixPrev.vAuxAS != rParam.vAuxAS) {
-        needUpdate = true;
-    }
-
-    if (mMixPrev.vAuxBL != rParam.vAuxBL) {
-        needUpdate = true;
-    }
-
-    if (mMixPrev.vAuxBR != rParam.vAuxBR) {
-        needUpdate = true;
-    }
-
-    if (mMixPrev.vAuxBS != rParam.vAuxBS) {
-        needUpdate = true;
-    }
-
-    if (mMixPrev.vAuxCL != rParam.vAuxCL) {
-        needUpdate = true;
-    }
-
-    if (mMixPrev.vAuxCR != rParam.vAuxCR) {
-        needUpdate = true;
-    }
-
-    if (mMixPrev.vAuxCS != rParam.vAuxCS) {
-        needUpdate = true;
-    }
+    // Retail keeps the "any field changed" test out-of-line in a const
+    // member helper; declared below with its retail entry point.
+    bool needUpdate = ::IsNeedNextUpdate__Q44nw4r3snd6detail7AxVoiceCFRCQ54nw4r3snd6detail7AxVoice8MixParam(
+        this, rParam);
 
     AXPBMIX mix;
 
+    // Interleaved per-channel: retail batches the value fills first and
+    // defers every delta computation until after them.
     mix.vL = mMixPrev.vL;
     mix.vR = mMixPrev.vR;
     mix.vS = mMixPrev.vS;
-
     mix.vAuxAL = mMixPrev.vAuxAL;
     mix.vAuxAR = mMixPrev.vAuxAR;
     mix.vAuxAS = mMixPrev.vAuxAS;
-
     mix.vAuxBL = mMixPrev.vAuxBL;
     mix.vAuxBR = mMixPrev.vAuxBR;
     mix.vAuxBS = mMixPrev.vAuxBS;
-
     mix.vAuxCL = mMixPrev.vAuxCL;
     mix.vAuxCR = mMixPrev.vAuxCR;
     mix.vAuxCS = mMixPrev.vAuxCS;
 
-    int vDeltaL = CalcAxvpbDelta(mMixPrev.vL, rParam.vL);
-    int vDeltaR = CalcAxvpbDelta(mMixPrev.vR, rParam.vR);
-    int vDeltaS = CalcAxvpbDelta(mMixPrev.vS, rParam.vS);
-
-    int vDeltaAuxAL = CalcAxvpbDelta(mMixPrev.vAuxAL, rParam.vAuxAL);
-    int vDeltaAuxAR = CalcAxvpbDelta(mMixPrev.vAuxAR, rParam.vAuxAR);
-    int vDeltaAuxAS = CalcAxvpbDelta(mMixPrev.vAuxAS, rParam.vAuxAS);
-
-    int vDeltaAuxBL = CalcAxvpbDelta(mMixPrev.vAuxBL, rParam.vAuxBL);
-    int vDeltaAuxBR = CalcAxvpbDelta(mMixPrev.vAuxBR, rParam.vAuxBR);
-    int vDeltaAuxBS = CalcAxvpbDelta(mMixPrev.vAuxBS, rParam.vAuxBS);
-
-    int vDeltaAuxCL = CalcAxvpbDelta(mMixPrev.vAuxCL, rParam.vAuxCL);
-    int vDeltaAuxCR = CalcAxvpbDelta(mMixPrev.vAuxCR, rParam.vAuxCR);
-    int vDeltaAuxCS = CalcAxvpbDelta(mMixPrev.vAuxCS, rParam.vAuxCS);
+    // Retail guards each delta with an explicit equality fast-path.
+    int vDeltaL = (mMixPrev.vL == rParam.vL)
+                      ? 0
+                      : CalcAxvpbDelta(mMixPrev.vL, rParam.vL);
+    int vDeltaR = (mMixPrev.vR == rParam.vR)
+                      ? 0
+                      : CalcAxvpbDelta(mMixPrev.vR, rParam.vR);
+    int vDeltaS = (mMixPrev.vS == rParam.vS)
+                      ? 0
+                      : CalcAxvpbDelta(mMixPrev.vS, rParam.vS);
+    int vDeltaAuxAL = (mMixPrev.vAuxAL == rParam.vAuxAL)
+                          ? 0
+                          : CalcAxvpbDelta(mMixPrev.vAuxAL, rParam.vAuxAL);
+    int vDeltaAuxAR = (mMixPrev.vAuxAR == rParam.vAuxAR)
+                          ? 0
+                          : CalcAxvpbDelta(mMixPrev.vAuxAR, rParam.vAuxAR);
+    int vDeltaAuxAS = (mMixPrev.vAuxAS == rParam.vAuxAS)
+                          ? 0
+                          : CalcAxvpbDelta(mMixPrev.vAuxAS, rParam.vAuxAS);
+    int vDeltaAuxBL = (mMixPrev.vAuxBL == rParam.vAuxBL)
+                          ? 0
+                          : CalcAxvpbDelta(mMixPrev.vAuxBL, rParam.vAuxBL);
+    int vDeltaAuxBR = (mMixPrev.vAuxBR == rParam.vAuxBR)
+                          ? 0
+                          : CalcAxvpbDelta(mMixPrev.vAuxBR, rParam.vAuxBR);
+    int vDeltaAuxBS = (mMixPrev.vAuxBS == rParam.vAuxBS)
+                          ? 0
+                          : CalcAxvpbDelta(mMixPrev.vAuxBS, rParam.vAuxBS);
+    int vDeltaAuxCL = (mMixPrev.vAuxCL == rParam.vAuxCL)
+                          ? 0
+                          : CalcAxvpbDelta(mMixPrev.vAuxCL, rParam.vAuxCL);
+    int vDeltaAuxCR = (mMixPrev.vAuxCR == rParam.vAuxCR)
+                          ? 0
+                          : CalcAxvpbDelta(mMixPrev.vAuxCR, rParam.vAuxCR);
+    int vDeltaAuxCS = (mMixPrev.vAuxCS == rParam.vAuxCS)
+                          ? 0
+                          : CalcAxvpbDelta(mMixPrev.vAuxCS, rParam.vAuxCS);
 
     mix.vDeltaL = vDeltaL;
     mix.vDeltaR = vDeltaR;
@@ -774,8 +776,12 @@ void AxVoice::CalcOffsetAdpcmParam(u16* pPredScale, u16* pYN1, u16* pYN2,
     adpcm.yn1 = rParam.yn1;
     adpcm.yn2 = rParam.yn2;
 
-    u32 addr = GetDspAddressBySample(pData, 0, FORMAT_ADPCM);
-    u32 end = GetDspAddressBySample(pData, offset, FORMAT_ADPCM);
+    // Pass the raw AX sample-format code (3 = DSP ADPCM); the header's Format
+    // placeholders don't match the retail encoding.
+    u32 addr = GetDspAddressBySample(pData, 0,
+                                     static_cast<Format>(SAMPLE_FORMAT_DSP_ADPCM));
+    u32 end = GetDspAddressBySample(pData, offset,
+                                    static_cast<Format>(SAMPLE_FORMAT_DSP_ADPCM));
 
     while (addr < end) {
         if (addr % AX_ADPCM_NIBBLES_PER_FRAME == 0) {
@@ -827,10 +833,6 @@ void AxVoiceParamBlock::Sync() {
         mVpb->pb.ve.currentDelta = deltaOut;
     }
 
-    if (mVpb->pb.ve.currentDelta == 0 && mPrevVeSetting.currentDelta == 0) {
-        mVpb->pb.ve.currentVolume = mVolume;
-    }
-
     int nextVolume = mPrevVeSetting.currentVolume +
                      (mVpb->pb.ve.currentDelta * AX_SAMPLES_PER_FRAME);
 
@@ -840,6 +842,10 @@ void AxVoiceParamBlock::Sync() {
     } else if (nextVolume > 32767) {
         mVpb->pb.ve.currentDelta =
             (32767 - mPrevVeSetting.currentVolume) / AX_SAMPLES_PER_FRAME;
+    }
+
+    if (mVpb->pb.ve.currentDelta == 0 && mPrevVeSetting.currentDelta == 0) {
+        mVpb->pb.ve.currentVolume = mVolume;
     }
 
     mSync &= ~AX_PBSYNC_VE_DELTA;
@@ -1355,5 +1361,4 @@ void AxVoiceParamBlock::UpdateDelta() {
 } // namespace snd
 } // namespace nw4r
 
-void IsNeedNextUpdate__Q44nw4r3snd6detail7AxVoiceCFRCQ54nw4r3snd6detail7AxVoice8MixParam(){}
 void SetBiquad__Q44nw4r3snd6detail7AxVoiceFUcf(){}

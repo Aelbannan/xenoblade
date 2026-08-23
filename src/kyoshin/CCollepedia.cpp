@@ -5,6 +5,7 @@
 #include "kyoshin/CCollepedia.hpp"
 #include "nw4r/lyt.h"
 #include "kyoshin/code_80135FDC.hpp"
+#include "monolib/util/MemManager.hpp"
 
 // C-linkage imports (functions + data from other TUs) live in CCollepedia.hpp
 // (see the "C-linkage imports" section at the end of that header).
@@ -27,15 +28,25 @@ extern "C" void func_80255210(CCollepedia*);
 extern "C" __declspec(noinline) void func_80253A14(CCollepedia*);
 extern "C" __declspec(noinline) void func_80253A60(CCollepedia*);
 extern "C" void func_802533F4(CCollepedia*);
+extern "C" u16 func_80254204(u8*, u32, u32);
 extern "C" u8 func_8025440C(u8*, u32, u32);
 extern "C" void func_802545C0(u8*);
+extern "C" void func_802557E0(CCollepedia*);
+extern "C" void func_80255894(CCollepedia*);
+extern "C" void func_8025592C(CCollepedia*);
+extern "C" void func_80255984(CCollepedia*);
+extern "C" void func_802559DC(CCollepedia*);
+extern "C" void func_80255AB4(CCollepedia*);
+extern "C" void func_80255B60(CCollepedia*);
+extern "C" void func_80255C28(CCollepedia*);
 
 
 // C-linkage declarations for functions from code_80135FDC.cpp to avoid reloc name drift
 // (provided by code_80135FDC.hpp in the current tree)
 
 // CCLPCur constructor - sets vtable, stores accessor, zeros everything
-extern "C" void __ct__CCLPCur(CCLPCur* self, nw4r::lyt::ArcResourceAccessor* pAccessor) {
+// noinline: retail callers invoke this out-of-line.
+extern "C" __declspec(noinline) void __ct__CCLPCur(CCLPCur* self, nw4r::lyt::ArcResourceAccessor* pAccessor) {
     self->mVtable = lbl_eu_80537474;
     self->mArcResAcc = pAccessor;
     self->mpLayout = nullptr;
@@ -87,7 +98,7 @@ void func_80253204(CCollepedia* this_) {
     func_802533F4(this_);
 }
 
-extern "C" void func_802532FC(CBaseCur* this_) {
+extern "C" __declspec(noinline) void func_802532FC(CBaseCur* this_) {
     if (this_->mpLayout == nullptr) return;
     if (this_->mVisible == 0) {
         func_80137444(this_->mpAnimTrans0, lbl_eu_80668800);
@@ -97,7 +108,7 @@ extern "C" void func_802532FC(CBaseCur* this_) {
 
 // Target 5: us-80257984
 // Check if animation at field_3C is done, then disable/enable animations and set state
-extern "C" void func_80255748(CCollepedia* this_) {
+extern "C" __declspec(noinline) void func_80255748(CCollepedia* this_) {
     if (func_80137444(this_->field_3C, lbl_eu_80668800) != 0) {
         this_->field_38->SetAnimationEnable(this_->field_44, false);
         this_->field_38->SetAnimationEnable(this_->field_3C, false);
@@ -152,7 +163,7 @@ extern "C" void* __dt__802534B0(void* self, int dealloc_flag) {
 void func_802534F0(){}
 
 // Target 4: Delete the layout at field_4 if present, then clear the pointer
-extern "C" void func_80253794(CCollepedia* this_) {
+extern "C" __declspec(noinline) void func_80253794(CCollepedia* this_) {
     if (this_->field_4 != nullptr) {
         delete this_->field_4;
         this_->field_4 = nullptr;
@@ -160,7 +171,7 @@ extern "C" void func_80253794(CCollepedia* this_) {
 }
 
 // Target 2: If layout is loaded, handle state machine and animate
-extern "C" void func_802537EC(CCollepedia* this_) {
+extern "C" __declspec(noinline) void func_802537EC(CCollepedia* this_) {
     if (this_->field_4 == nullptr) {
         return;
     }
@@ -176,8 +187,8 @@ extern "C" void func_802537EC(CCollepedia* this_) {
     this_->field_4->Animate(0);
 }
 
-// Target 1: Initialize state and call scheduler if field_c is 0
-extern "C" void func_8025385C(CCollepedia* this_) {
+// noinline: retail callers call this out-of-line.
+extern "C" __declspec(noinline) void func_8025385C(CCollepedia* this_) {
     u8* stateBytes = reinterpret_cast<u8*>(&this_->field_c_ptr);
     if (stateBytes[0] != 0) return;
     stateBytes[0] = 1;
@@ -187,21 +198,23 @@ extern "C" void func_8025385C(CCollepedia* this_) {
 }
 
 // Target 3: Return byte at +0xD from a sub-array entry (indexed by arg)
-extern "C" u32 func_8025415C(u8* obj, u32 index) {
+// noinline: retail callers invoke this out-of-line.
+extern "C" __declspec(noinline) u32 func_8025415C(u8* obj, u32 index) {
     if (index >= 6) return 0;
     s8 idx = (s8)obj[1];
     return obj[idx * 0x140 + index * 0x34 + 0xD];
 }
 
 // Target 4: Return byte at +0xC from a sub-array entry (indexed by arg)
-extern "C" u8 func_8025418C(u8* obj, u32 index) {
+extern "C" __declspec(noinline) u8 func_8025418C(u8* obj, u32 index) {
     if (index >= 6) return 0;
     s8 idx = (s8)obj[1];
     return obj[idx * 0x140 + index * 0x34 + 0xC];
 }
 
 // Target 3: If field_c is 2, set it to 3, clear field_d, and schedule event 0xE
-extern "C" void func_80253888(CCollepedia* this_) {
+// noinline: retail callers call this out-of-line.
+extern "C" __declspec(noinline) void func_80253888(CCollepedia* this_) {
     u8* stateBytes = reinterpret_cast<u8*>(&this_->field_c_ptr);
     if (stateBytes[0] != 2) return;
     stateBytes[0] = 3;
@@ -210,10 +223,14 @@ extern "C" void func_80253888(CCollepedia* this_) {
 }
 
 // Target 1: Set two named panes (0x82, 0x92) on the layout at field_4
+#pragma push
+#pragma optimize_for_size on
+#pragma dont_inline on
 extern "C" void func_802538B0(CCollepedia* this_, unsigned char arg) {
     func_80136910(this_->field_4, &lbl_eu_8050C6E8[0x82], (unsigned char)1);
     func_80136910(this_->field_4, &lbl_eu_8050C6E8[0x92], arg);
 }
+#pragma pop
 
 #pragma push
 #pragma optimize_for_size on
@@ -267,7 +284,8 @@ extern "C" __declspec(noinline) void func_80253A60(CCollepedia* this_) {
 }
 
 // Target 1: Init the sub-array header (count=0, index=-1) and zero the entry storage
-extern "C" s8* func_80253AB0(s8* this_) {
+// noinline: retail callers invoke this out-of-line.
+extern "C" __declspec(noinline) s8* func_80253AB0(s8* this_) {
     this_[0] = 0;
     this_[1] = -1;
     memset(this_ + 4, 0, 0x2800);
@@ -282,9 +300,129 @@ extern "C" void* __dt__80253AFC(void* self, int dealloc_flag) {
     return result;
 }
 
-void func_80253B3C(u8* self_){}
+// Target 1: us-80255d78
+// Build the collepedia page list:
+//  1. collect the ids of every "collectible" item (kind 0xa), capped at 0x12c,
+//  2. append one page (stride 0x140) per BDAT category (2..0x19) that has at
+//     least one unlocked, uncompleted entry,
+//  3. bubble-sort pages by their category sort key,
+//  4. select the default category page and append a sentinel page (0x1a),
+//  5. distribute every collected item into the pages' 6x5 grids, starting a
+//     new row whenever the item sub-category changes.
+extern "C" __declspec(noinline) void func_80253B3C(u8* self_) {
+    extern void func_8025449C(u8* self, u32 a, u32 b, u32 c, u16 itemId);
+
+    u16 n = 0;
+    u16 numIds = (u16)func_8003B1EC((void*)lbl_eu_806640EC);
+    u16 ids[0x12c];
+    for (u16 id = 1; id <= numIds; id++) {
+        if ((u8)func_801392E4(id) == 0xa) {
+            ids[n] = id;
+            n++;
+            if (n >= 0x12c) break;
+        }
+    }
+
+    // One page per category with at least one active, uncompleted entry.
+    void* tblA = lbl_eu_806640A0;
+    void* tblB = lbl_eu_806640A8;
+    u32 numA = func_8003B1EC(tblA);
+    char* const s = lbl_eu_8050C6E8;
+    for (u8 cat = 2; cat <= 0x19; cat++) {
+        switch (cat) {
+        case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9:
+        case 0xa: case 0xb: case 0xc: case 0xd: case 0xe: case 0xf: case 0x10:
+        case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16:
+        case 0x17: case 0x18: case 0x19:
+            break;
+        }
+        for (u16 j = 1; j <= (u16)numA; j++) {
+            if ((u8)func_801361E8((u32)tblA, &lbl_eu_8050C6E8[0x16b], j) == cat &&
+                func_801361E8((u32)tblA, &lbl_eu_8050C6E8[0x171], j) == 0 &&
+                func_8009CF8C(j + 0x20c8) != 0) {
+                u8 cnt = self_[0];
+                self_[cnt * 0x140 + 4] = cat;
+                self_[0] = cnt + 1;
+                break;
+            }
+        }
+    }
+
+    // Bubble-sort pages by their BDAT sort key (adjacent-page swap).
+    u8 pageCount = self_[0];
+    for (u8 i = 0; i < pageCount; i++) {
+        u8 swapped = 0;
+        for (u8 j = 0; j < pageCount - 1 - i; j++) {
+            u8* pg = self_ + j * 0x140;
+            u8 keyCur = pg[4];
+            u8 keyNext = pg[0x144];
+            if ((u8)func_801361E8((u32)tblB, &s[0x17a], keyCur) >
+                (u8)func_801361E8((u32)tblB, &s[0x17a], keyNext)) {
+                pg[4] = keyNext;
+                pg[0x144] = keyCur;
+                swapped = 1;
+            }
+        }
+        if (swapped == 0) break;
+    }
+
+    // Select the page matching the default category.
+    u32 defCat = lbl_eu_80664184;
+    for (u8 k = 0; k < self_[0]; k++) {
+        if ((u32)self_[k * 0x140 + 4] == defCat) {
+            self_[1] = k;
+            break;
+        }
+    }
+
+    // Append the sentinel page (category 0x1a); if no default page was found,
+    // select the last real page instead.
+    u8 cnt = self_[0];
+    u8 newCnt = cnt + 1;
+    self_[cnt * 0x140 + 4] = 0x1a;
+    u8 sel = self_[1];
+    self_[0] = newCnt;
+    if ((s8)sel == -1) {
+        self_[1] = newCnt - 1;
+    }
+
+    // Distribute every collected item across the pages' grids. A row break is
+    // inserted when the item's sub-category (+0x180 column) differs from the
+    // previous row's; same-sub-category items stack in the current row.
+    for (u8 g = 0; g < self_[0]; g++) {
+        u8* grp = self_ + g * 0x140;
+        u8 cat = grp[4];
+        u8 row = 0;
+        u8 col = 0;
+        for (u16 c = 0; c < n; c++) {
+            u16 itemId = ids[c];
+            u16 kind = func_80139358(itemId);
+            if ((u8)func_801361E8((u32)lbl_eu_80664104, &lbl_eu_8050C6E8[0x16b], kind) != cat) {
+                continue;
+            }
+            u8 sub = (u8)func_801361E8((u32)lbl_eu_80664104, &lbl_eu_8050C6E8[0x180], kind);
+            if (row == 0) {
+                grp[0 * 0x34 + 0xC] = sub;
+                func_8025449C(self_, g, row, 0, itemId);
+                row = 1;
+                col = 1;
+            } else if (sub != grp[row * 0x34 - 0x28]) {
+                grp[row * 0x34 + 0xC] = sub;
+                func_8025449C(self_, g, row, 0, itemId);
+                row++;
+                col = 1;
+            } else {
+                func_8025449C(self_, g, row - 1, col++, itemId);
+            }
+        }
+        grp[5] = row;
+    }
+
+    func_802545C0(self_);
+}
 
 // noinline: retail callers tail-branch to this symbol.
+// noinline: retail callers invoke this out-of-line.
 extern "C" __declspec(noinline) bool func_80253EE8(u8* this_, u32 arg1, u32 arg2) {
     if (arg1 >= 6) return false;
     if (arg2 >= 5) return false;
@@ -294,34 +432,33 @@ extern "C" __declspec(noinline) bool func_80253EE8(u8* this_, u32 arg1, u32 arg2
 }
 
 // Target 4: us-80256178
-// Handle item selection in the collepedia grid
-void func_80253F3C(u8* self, u32 arg2, u32 arg3) {
+// Handle item selection in the collepedia grid.
+// Entry address folds as ((self + idx*0x140) + row*0x34 + col*0xA) to match
+// retail dataflow; func_801587E8's result feeds both branch arms.
+extern "C" __declspec(noinline) void func_80253F3C(u8* self, u32 arg2, u32 arg3) {
     if (arg2 >= 6) return;
     if (arg3 >= 5) return;
 
     s8 idx = (s8)self[1];
     u32 rowOff = arg2 * 0x34;
     u32 colOff = arg3 * 0xA;
-    u8* base = self + idx * 0x140;
-    u8* entry = base + rowOff + colOff;
 
-    // Check if item is unlocked
-    func_8009EC18(*(u16*)(entry + 0x10), 1);
+    func_8009EC18(*(u16*)(self + idx * 0x140 + rowOff + colOff + 0x10), 1);
 
-    // Set entry byte at +0x16 to 3
-    entry[0x16] = 3;
+    self[idx * 0x140 + rowOff + colOff + 0x16] = 3;
 
-    u8 count = (u8)func_8025440C(self, arg2, arg3);
-    u8 countMinus1 = count - 1;
+    u8 count = func_8025440C(self, arg2, arg3);
+    int remaining = (int)count - 1;
 
-    u16 val = *(u16*)(entry + 0xE);
-    func_801587E8(val);
+    u16 itemId = *(u16*)(self + idx * 0x140 + rowOff + colOff + 0xE);
+    u32 res = func_801587E8(itemId);
 
-    if (countMinus1 > 0) {
-        func_80158118(self, val, countMinus1);
+    if (remaining > 0) {
+        func_80158118((void*)res, itemId, remaining);
     } else {
+        // Grant the item via its impl instance (virtual method at slot 0x10)
         void* itemInst = CItem_initItemImplInstances();
-        ((void (*)(void*, u16))(*(void***)itemInst)[0x10 / 4])(itemInst, val);
+        ((void (*)(void*, u32))(*(void***)itemInst)[4])(itemInst, res);
     }
 
     func_802545C0(self);
@@ -346,7 +483,7 @@ void CCollepedia_decrementWrap(unsigned char* obj) {
     func_8025406C(obj);
 }
 
-extern "C" char* func_80254094(u8* self) {
+extern "C" __declspec(noinline) char* func_80254094(u8* self) {
     s8 idx = (s8)self[1];
     u8* base = self + idx * 0x140;
     u8 val = base[4];
@@ -364,7 +501,7 @@ unsigned char CCollepedia_getFieldAtIdx(u8* thisPtr) {
 }
 
 // Target 2: Return a formatted string for the entry at `index` if its byte at +0xC is set
-extern "C" char* func_802540F4(u8* self, u32 index) {
+extern "C" __declspec(noinline) char* func_802540F4(u8* self, u32 index) {
     if (index >= 6) return 0;
     s8 idx = (s8)self[1];
     u8 val = self[idx * 0x140 + index * 0x34 + 0xC];
@@ -381,7 +518,7 @@ unsigned char CCollepedia_getFieldOffset(const unsigned char* ptr) {
 
 // Target 3: Return byte at +0x16 from a sub-sub-array entry (indexed by arg2, arg3)
 // Computes arg2*0x34 first to match retail register order
-extern "C" u8 func_802541BC(u8* self, u32 arg2, u32 arg3) {
+extern "C" __declspec(noinline) u8 func_802541BC(u8* self, u32 arg2, u32 arg3) {
     if (arg2 >= 6) return 0;
     if (arg3 >= 5) return 0;
     s8 idx = (s8)self[1];
@@ -399,7 +536,7 @@ u16 CCollepedia_getField12(u8* p1, u32 arg2, u32 arg3) {
     return reinterpret_cast<CCollepediaEntry*>(ptr)[1].field_08;
 }
 
-extern "C" u32 func_8025424C(u8* this_, u32 arg2, u32 arg3) {
+extern "C" __declspec(noinline) u32 func_8025424C(u8* this_, u32 arg2, u32 arg3) {
     if (arg2 >= 6) return 0;
     if (arg3 >= 5) return 0;
     s8 idx = (s8)this_[1];
@@ -412,7 +549,7 @@ extern "C" u32 func_8025424C(u8* this_, u32 arg2, u32 arg3) {
 }
 
 // Target 1: Load a float from offset 8 of the current sub-array entry
-extern "C" float func_802542B8(u8* this_) {
+extern "C" __declspec(noinline) float func_802542B8(u8* this_) {
     s8 idx = (s8)this_[1];
     return *(float*)(this_ + idx * 0x140 + 8);
 }
@@ -420,12 +557,11 @@ extern "C" float func_802542B8(u8* this_) {
 // Target 2: us-8025650c
 // Look up an entry in the sub-array, check +0x10 u16 and +0x16 byte.
 // If byte != 1, resolve string via func_8013639C.
-extern "C" char* func_802542D0(u8* self, u32 arg1, u32 arg2) {
+extern "C" __declspec(noinline) char* func_802542D0(u8* self, u32 arg1, u32 arg2) {
     if (arg1 >= 6) return nullptr;
     if (arg2 >= 5) return nullptr;
-    s8 idx = (s8)self[1];
-    u8* base = self + idx * 0x140;
-    u8* entry = base + arg1 * 0x34 + arg2 * 0xA;
+    // Fold the whole entry address into one expression to match retail dataflow
+    u8* entry = self + (s8)self[1] * 0x140 + arg1 * 0x34 + arg2 * 0xA;
     u16 val = *(u16*)(entry + 0x10);
     if (val == 0) return nullptr;
     u8 b = entry[0x16];
@@ -457,7 +593,7 @@ extern "C" char* func_80254350(u8* self, u32 arg2, u32 arg3) {
 // Target 3: Read u16 at offset 0xE within the indexed sub-array entry
 // If non-zero, resolve via func_80158068 and return as u8
 // The sub-array is indexed by: (s8)self[1] * 0x140 + arg2 * 0x34 + arg3 * 0xA + 0xE
-extern "C" u8 func_8025440C(u8* self, u32 arg2, u32 arg3) {
+extern "C" __declspec(noinline) u8 func_8025440C(u8* self, u32 arg2, u32 arg3) {
     if (arg2 >= 6) return 0;
     if (arg3 >= 5) return 0;
     s8 idx = (s8)self[1];
@@ -471,15 +607,98 @@ extern "C" u8 func_8025440C(u8* self, u32 arg2, u32 arg3) {
 }
 
 // Target 2: Load a byte from offset 6 of the current sub-array entry
-extern "C" u32 func_80254484(u8* this_) {
+extern "C" __declspec(noinline) u32 func_80254484(u8* this_) {
     s8 idx = (s8)this_[1];
     u8* base = this_ + idx * 0x140;
     return base[6];
 }
 
-void func_8025449C(){}
+// Target 3: us-802566d8
+// Fill one grid entry (stride 0xA at self + a*0x140 + b*0x34 + c*0xA):
+// item id, category lookups, and an unlock-state byte.
+extern "C" void func_8025449C(u8* self, u32 a, u32 b, u32 c, u16 itemId) {
+    // Keep the three stride offsets live like retail (address is rebuilt per store)
+    u32 offA = a * 0x140;
+    u32 offB = b * 0x34;
+    u32 offC = c * 0xA;
 
-void func_802545C0(){}
+    *(u16*)(self + offA + offB + offC + 0xE) = itemId;
+
+    u16 v = func_80139358((u32)itemId);
+
+    *(u16*)(self + offA + offB + offC + 0x10) = v;
+
+    *(u16*)(self + offA + offB + offC + 0x12) =
+        func_80136254((const void*)lbl_eu_806640EC, &lbl_eu_8050C6E8[0x197], itemId);
+    *(u16*)(self + offA + offB + offC + 0x14) =
+        func_80136254((const void*)lbl_eu_806640EC, &lbl_eu_8050C6E8[0x18f], itemId);
+
+    if (v == 0) {
+        *(u8*)(self + offA + offB + offC + 0x16) = 0;
+    } else if (func_8009EC6C(v) != 0) {
+        *(u8*)(self + offA + offB + offC + 0x16) = 3; // already owned
+    } else if (func_801587E8(itemId) != 0) {
+        *(u8*)(self + offA + offB + offC + 0x16) = 2;
+    } else {
+        *(u8*)(self + offA + offB + offC + 0x16) = 1;
+    }
+}
+
+// Target 1: us-802567fc
+// Recompute collection progress for every category page.
+// A row counts as "complete" when the leading non-empty slots of its 5
+// columns all have unlock-state 3 (collected); a page is complete when all
+// its rows are complete. The per-page progress float at +8 is either 1.0
+// (complete page) or collected-count / seen-count.
+extern "C" __declspec(noinline) void func_802545C0(u8* self) {
+    u8 i;
+    int r;
+    int c;
+
+    for (i = 0; i < self[0]; i++) {
+        u8* group = self + i * 0x140;
+        u8 rowCount = group[5];
+        u8 groupDone = 1;
+        for (r = 0; r < rowCount; r++) {
+            u8* row = group + r * 0x34;
+            u8 rowDone = 1;
+            for (c = 0; c < 5; c++) {
+                u8 state = row[c * 0xA + 0x16];
+                if (state != 3) {
+                    if (state != 0) rowDone = 0;
+                    break;
+                }
+            }
+            row[0xD] = rowDone;
+            if (rowDone == 0) groupDone = 0;
+        }
+        group[6] = groupDone;
+    }
+
+    // Ratio of collected (state 3) columns over columns reached before hitting
+    // an empty slot, seeded with the constant below.
+    float one = lbl_eu_80668800;
+    for (i = 0; i < self[0]; i++) {
+        u8* group = self + i * 0x140;
+        if (group[6] != 0) {
+            *(float*)(group + 8) = one;
+        } else {
+            float denom = lbl_eu_806687F8;
+            float num = denom;
+            u8 cnt = group[5];
+            for (r = 0; r < cnt; r++) {
+                u8* row = group + r * 0x34;
+                for (c = 0; c < 5; c++) {
+                    u8 state = row[c * 0xA + 0x16];
+                    if (state == 0) break;
+                    if (state == 3) num += one;
+                    denom += one;
+                }
+            }
+            *(float*)(group + 8) = num / denom;
+        }
+    }
+}
 
 // Target 3: us-80256ae4
 // Destructor for CCollepedia.
@@ -500,41 +719,154 @@ extern "C" void* __dt__11CCollepediaFv(CCollepedia* self, int flag) {
 }
 #pragma optimize_for_size off
 
-void __ct__CCollepedia(){}
+// Target 2: us-8025695c - CCollepedia constructor.
+// Stores vtable, constructs both memory regions, cursors and the embedded
+// CSysWin at +0x9C, initializes the entry storage, then re-initializes the
+// window from a stack temporary (copying everything after the vtable ptr).
+#pragma push
+#pragma optimize_for_size on
+CCollepedia::CCollepedia() {
+    field_0 = (int)lbl_eu_805373E0;
+    __ct__17UnkClass_8045F564Fv((UnkClass_8045F564*)((u8*)this + 0x04));
+    __ct__17UnkClass_8045F564Fv((UnkClass_8045F564*)((u8*)this + 0x14));
+
+    field_24 = nullptr;
+    field_28 = nullptr;
+    field_2C = nullptr;
+    field_30 = nullptr;
+    field_34 = nullptr;
+    field_38 = nullptr;
+    field_3C = nullptr;
+    field_40 = nullptr;
+    field_44 = nullptr;
+    field_48 = 0;
+    field_49 = 0;
+    field_4C = 0;
+    field_50 = 0;
+    field_51 = 1;
+
+    __ct__CCur07((u8*)this + 0x54, nullptr);
+    __ct__CCLPCur((CCLPCur*)((u8*)this + 0x6C), nullptr);
+    __ct__CCur18((u8*)this + 0x84, nullptr);
+    __ct__CSysWin((CSysWin*)((u8*)this + 0x9C), 0);
+
+    field_D8 = 0;
+    field_D9 = 0;
+    field_DA = 0;
+    func_80253AB0((s8*)&field_E8);
+    func_8025348C(&field_28EC, 0);
+
+    // Stack temporary window, re-initialized then copied over the embedded
+    // window body (everything after the vtable pointer).
+    u8 wt[0x3C];
+    __ct__CSysWin((CSysWin*)wt, 0);
+    *(CLPSysWinBody*)((u8*)this + 0xA0) = *(CLPSysWinBody*)&wt[4];
+    __dt__7CSysWinFv(wt, -1);
+
+    lbl_eu_806647D8 = nullptr;
+    lbl_eu_806647DC = nullptr;
+}
+#pragma pop
 
 // Target 1: us-80256b68
-// Initialize CCollepedia: load 3 files, init CSysWin, init sub-array header
+#pragma push
+#pragma optimize_for_size on
+// Initialize CCollepedia: load 3 files, init CSysWin, init sub-array storage.
+// The entry storage is built in a stack temp and copied member-wise to match
+// retail codegen (byte stores for the header, bulk struct copy for the data).
 void func_8025492C(CCollepedia* this_) {
-    void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
     this_->field_24 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)handle, &lbl_eu_8050C6E8[0x19c], (void*)this_, 0, 0);
+        (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_8050C6E8[0x19c], this_, 0, 0);
 
-    handle = getHandleMEM2__Q23mtl10MemManagerFv();
     this_->field_28 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        (u32)handle, &lbl_eu_8050C6E8[0x1b3], (void*)this_, 0, 0);
+        (u32)getHandleMEM2__Q23mtl10MemManagerFv(), &lbl_eu_8050C6E8[0x1b3], this_, 0, 0);
 
-    u32 handle2 = func_800A9D90();
     this_->field_2C = readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(
-        handle2, &lbl_eu_8050C6E8[0x1cc], (void*)this_, 0, 0);
+        func_800A9D90(), &lbl_eu_8050C6E8[0x1cc], this_, 0, 0);
 
     // Virtual call on CSysWin at this+0x9C, vtable slot 34 (offset 0x88)
-    // Use a local pointer to match retail register allocation
-    CSysWin* syswin = (CSysWin*)(&this_->field_9C);
-    ((CSysWinProxy*)syswin)->v32();
+    ((CSysWinProxy*)(void*)&this_->field_9C)->v32();
 
-    // Init sub-array using temp buffer + memcpy to match retail codegen
-    u8 tmp[0x2802];
-    tmp[0] = 0;
-    tmp[1] = (u8)-1;
-    memset(tmp + 4, 0, 0x2800);
-    this_->field_E8 = tmp[0];
-    this_->_E9[0] = tmp[1];
-    memcpy(&this_->_E9[3], tmp + 4, 0x2800);
+    CLPInitTemp tmp;
+    tmp._00 = 0;
+    tmp._01 = -1;
+    memset(tmp.data.v, 0, 0x2800);
+    this_->field_E8 = tmp._00;
+    this_->_E9[0] = tmp._01;
+    this_->field_EC = tmp.data;
 
     func_80253B3C(&this_->field_E8);
 }
+#pragma pop
 
-void func_80254A20(){}
+// Target 4: us-80256c5c
+// Per-frame state machine dispatch on field_49, then update all sub-objects.
+extern "C" void func_80254A20(CCollepedia* this_) {
+    if (this_->field_48 == 0) return;
+    if (this_->field_49 == 0) return;
+
+    switch (this_->field_49) {
+    case 1:
+        func_80255748(this_);
+        break;
+    case 2:
+        func_802557E0(this_);
+        break;
+    case 3:
+        // Keep polling the intro anim transform until it finishes
+        func_80137444(this_->field_44, lbl_eu_80668800);
+        break;
+    case 4:
+        func_80255894(this_);
+        break;
+    case 5:
+        func_8025592C(this_);
+        break;
+    case 6:
+        func_80255984(this_);
+        break;
+    case 7:
+        func_802559DC(this_);
+        break;
+    case 8:
+        if (CSysWin_isActive(&this_->field_9C)) {
+            this_->field_49 = 0xA;
+        }
+        break;
+    case 9:
+        func_80255AB4(this_);
+        break;
+    case 10:
+        func_80255B60(this_);
+        break;
+    case 11:
+        if (CSysWin_isActive(&this_->field_9C)) {
+            this_->field_49 = 0xE;
+        }
+        break;
+    case 12:
+        func_80255C28(this_);
+        break;
+    case 13:
+        if (!func_801B481C()) {
+            this_->field_49 = 3;
+        }
+        break;
+    case 14:
+    case 15:
+    case 16:
+        goto afterSwitch;
+    }
+afterSwitch:
+
+    this_->field_38->Animate(0);
+    func_801D202C(&this_->field_54);
+    func_802532FC(reinterpret_cast<CBaseCur*>(&this_->field_54[0x18])); // +0x6c
+    func_8022B748(&this_->field_9C);
+    // Retail calls the second page's state machine with the +0x28EC sub-object
+    func_802537EC(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
+    func_801D202C(&this_->field_54[0x30]); // +0x84
+}
 
 #pragma push
 #pragma optimize_for_size on
@@ -562,16 +894,18 @@ extern "C" void func_80254B64(CCollepedia* this_, nw4r::lyt::DrawInfo* drawInfo)
 // Cleanup CCollepedia: free files, layouts, sub-objects
 void func_80254C04(CCollepedia* this_) {
     func_8003AA8C__5CBdatFUl(2);
-    func_801390E0__FPP11CFileHandle((CFileHandle**)&this_->field_24);
-    func_801390E0__FPP11CFileHandle((CFileHandle**)&this_->field_28);
-    func_801390E0__FPP11CFileHandle((CFileHandle**)&this_->field_2C);
+    func_801390E0__FPP11CFileHandle(&this_->field_24);
+    func_801390E0__FPP11CFileHandle(&this_->field_28);
+    func_801390E0__FPP11CFileHandle(&this_->field_2C);
 
     this_->field_48 = 0;
-    func_80253794((CCollepedia*)(&this_->_E9[0x2803]));
+    func_80253794(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
 
-    // Free layout at field_38 if present
+    // Free layout at field_38 if present (virtual deleting-dtor call, slot 8)
     if (this_->field_38 != nullptr) {
-        delete this_->field_38;
+        if (this_->field_38 != nullptr) {
+            ((void (*)(void*, int))(*(void***)this_->field_38)[2])(this_->field_38, 1);
+        }
         this_->field_38 = nullptr;
     }
 
@@ -579,29 +913,29 @@ void func_80254C04(CCollepedia* this_) {
     func_80139124(this_->field_30);
     func_80139124(this_->field_34);
 
-    // Free field_4c (pointer with virtual dtor)
+    // Free field_4c (pointer with virtual dtor at vtable slot 8)
     if (this_->field_4C != 0) {
-        void* ptr = (void*)this_->field_4C;
-        if (ptr != nullptr) {
-            ((void (*)(void*, int))(*(void***)ptr)[0x8 / 4])(ptr, 1);
+        if (this_->field_4C != 0) {
+            void* ptr = (void*)this_->field_4C;
+            ((void (*)(void*, int))(*(void***)ptr)[2])(ptr, 1);
         }
         this_->field_4C = 0;
     }
 
     // Free memory regions
-    func_8045F778__17UnkClass_8045F564Fv((void*)&this_->field_4);
-    func_8045F778__17UnkClass_8045F564Fv((void*)&this_->_14[0]);
+    func_8045F778__17UnkClass_8045F564Fv(&this_->field_4);
+    func_8045F778__17UnkClass_8045F564Fv(&this_->_14[0]);
 
-    // Free sub-object at field_54 (virtual dtor at vtable+0xC)
-    void* obj54 = (void*)&this_->field_54;
-    ((void (*)(void*, int))(*(void***)obj54)[0xC / 4])(obj54, 1);
+    // Sub-object at field_54: virtual complete-dtor call (slot 0xC, no flag arg)
+    void* obj54 = &this_->field_54;
+    ((void (*)(void*))(*(void***)obj54)[3])(obj54);
 
     func_8025338C((CBaseCur*)((u8*)this_ + 0x6C));
     func_8022B7F4(&this_->field_9C);
 
-    // Free sub-object at field_84 (virtual dtor at vtable+0xC)
-    void* obj84 = (void*)&this_->field_54[0x30];
-    ((void (*)(void*, int))(*(void***)obj84)[0xC / 4])(obj84, 1);
+    // Sub-object at field_84: virtual complete-dtor call (slot 0xC)
+    void* obj84 = &this_->field_54[0x30];
+    ((void (*)(void*))(*(void***)obj84)[3])(obj84);
 }
 
 extern "C" u8 func_80254D0C(CCollepedia* self) {
@@ -776,12 +1110,10 @@ extern "C" void func_8025516C(CCollepedia* this_) {
     if (CSysWin_getUnk34(&this_->field_9C)) return;
 
     func_80254040(&this_->field_E8);
-    u32 count = func_80254144(&this_->field_E8);
+    u32 count = func_80254144(&this_->field_E8) & 0xFF;
 
     // Force field_D9 sign-extend before comparing with masked count
-    int fd9 = (s8)this_->field_D9;
-    int cmask = (int)(count & 0xFF);
-    if (fd9 >= cmask) {
+    if ((s8)this_->field_D9 >= (s32)count) {
         this_->field_D9 = (u8)(func_80254144(&this_->field_E8) - 1);
         func_80256314(this_);
     }
@@ -803,9 +1135,8 @@ extern "C" void func_80255210(CCollepedia* this_) {
     if (CSysWin_getUnk34(&this_->field_9C)) return;
 
     func_8025406C(&this_->field_E8);
-    u32 count = func_80254144(&this_->field_E8);
-
-    if ((s8)this_->field_D9 >= (s32)(count & 0xFF)) {
+    int count = (int)func_80254144(&this_->field_E8) & 0xFF;
+    if ((s8)this_->field_D9 >= count) {
         this_->field_D9 = (u8)(func_80254144(&this_->field_E8) - 1);
         func_80256314(this_);
     }
@@ -817,25 +1148,28 @@ extern "C" void func_80255210(CCollepedia* this_) {
 #pragma pop
 
 // Target 3: us-802574f0
-// Handle CCollepedia navigation: check state and dispatch actions
+// Handle CCollepedia navigation: check state and dispatch actions.
+// The early-return states use a switch (retail emits an unsigned cmplwi chain),
+// while the later state checks are signed compares on the promoted value.
 void func_802552B4(CCollepedia* this_) {
-    // Early return for states that skip the CSysWin check
-    if (this_->field_49 == 9) return;
-    if (this_->field_49 == 0xB) return;
-    if (this_->field_49 == 0xC) return;
-    if (this_->field_49 == 0xD) return;
-    if (this_->field_49 == 0xF) return;
-    if (this_->field_49 == 0x10) return;
+    switch (this_->field_49) {
+    case 9:
+    case 0xB:
+    case 0xC:
+    case 0xD:
+    case 0xF:
+    case 0x10:
+        return;
+    }
 
     if (CSysWin_getUnk34(&this_->field_9C) != 0) {
-        if (CSysWin_isActive(&this_->field_9C) != 0) {
-            if (this_->field_49 == 0xA) {
-                this_->field_49 = 0xB;
-            } else if (this_->field_49 == 0xE) {
-                this_->field_49 = 0xF;
-            }
-            func_8022B8E4(&this_->field_9C);
+        if (CSysWin_isActive(&this_->field_9C) == 0) return;
+        if (this_->field_49 == 0xA) {
+            this_->field_49 = 0xB;
+        } else if (this_->field_49 == 0xE) {
+            this_->field_49 = 0xF;
         }
+        func_8022B8E4(&this_->field_9C);
         return;
     }
 
@@ -843,14 +1177,97 @@ void func_802552B4(CCollepedia* this_) {
     if (this_->field_28FA == 0) return;
     if (this_->field_28F9 == 0) return;
 
-    func_80253888((CCollepedia*)(&this_->_E9[0x2803]));
+    func_80253888(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
     func_801D216C(&this_->field_54[0x30], 0);
     this_->field_49 = 8;
     this_->field_51 = 0;
     func_80138078__FUl(6);
 }
 
-void func_802553AC(){}
+// Target 4: us-802575e8
+// Per-frame advance for the collepedia selection flow.
+void func_802553AC(CCollepedia* this_) {
+    switch (this_->field_49) {
+    case 9:
+    case 0xB:
+    case 0xC:
+    case 0xD:
+    case 0xF:
+    case 0x10:
+        return;
+    }
+
+    if (CSysWin_getUnk34(&this_->field_9C)) {
+        if (!CSysWin_isActive(&this_->field_9C)) return;
+        if (this_->field_49 == 0xA) {
+            this_->field_49 = 0xB;
+        } else if (this_->field_49 == 0xE) {
+            this_->field_49 = 0xF;
+        }
+        func_8022B8E4(&this_->field_9C);
+        return;
+    }
+
+    if (this_->field_28FA != 0) {
+        if (this_->field_28F9 == 0) return;
+
+        if ((s8)this_->field_DA == 0) {
+            // Grid page: grant the selected item, refresh both display pages,
+            // then play a category-keyed fanfare.
+            func_80253F3C(&this_->field_E8, this_->field_D9, this_->field_D8);
+            func_80255F98(this_);
+            func_8025629C(this_);
+
+            u8 cat = func_8025418C(&this_->field_E8, this_->field_D9);
+            if (cat <= 8) {
+                switch (cat) {
+                case 0: func_80138078__FUl(0x4B); break;
+                case 1: func_80138078__FUl(0x4C); break;
+                case 2: func_80138078__FUl(0x4D); break;
+                case 3: func_80138078__FUl(0x4E); break;
+                case 4: func_80138078__FUl(0x4F); break;
+                case 5: func_80138078__FUl(0x50); break;
+                case 6: func_80138078__FUl(0x51); break;
+                case 7: func_80138078__FUl(0x52); break;
+                }
+            }
+            func_8013B428__FUl(0x84);
+        } else {
+            // Detail page confirm: schedule sound 6 instead.
+            func_80138078__FUl(6);
+        }
+
+        func_80253888(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
+        func_801D216C(&this_->field_54[0x30], 0);
+        this_->field_49 = 8;
+        this_->field_51 = 0;
+        return;
+    }
+
+    // List page: open the detail view for the selected entry.
+    if (func_80253EE8(&this_->field_E8, this_->field_D9, this_->field_D8) == 0) return;
+
+    char* desc = func_802542D0(&this_->field_E8, this_->field_D9, this_->field_D8);
+    func_80136B4C(this_->field_28F0, &lbl_eu_8050C6E8[0x12b], desc, 0);
+
+    func_802538B0(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]),
+        func_8025440C(&this_->field_E8, this_->field_D9, this_->field_D8));
+
+    char* name1 = func_80138F78(func_8025424C(&this_->field_E8, this_->field_D9, this_->field_D8));
+    void* tex1 = this_->field_30->GetResource(0x74696D67, name1, NULL);
+
+    char* name2 = func_80138F78(func_80254204(&this_->field_E8, this_->field_D9, this_->field_D8));
+    void* tex2 = this_->field_34->GetResource(0x74696D67, name2, NULL);
+
+    func_80253904(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]), (char*)tex1, (char*)tex2);
+    func_8025385C(reinterpret_cast<CCollepedia*>(&this_->field_28EC[0]));
+
+    this_->field_DA = 0;
+    func_801D216C(&this_->field_54, 0);
+    this_->field_49 = 6;
+    this_->field_51 = 0;
+    func_80138078__FUl(3);
+}
 
 void func_80255688(CCollepediaFull* self) {
     func_80253EE8((u8*)self + 0xE8, self->field_D9, self->field_D8);
@@ -879,6 +1296,7 @@ extern "C" u32 func_802556DC(CCollepedia* this_) {
 
 // Target 2: us-80257a1c
 // Check if animation at field_40 is done; if so, set state, init sub-object, switch animations
+__declspec(noinline)
 void func_802557E0(CCollepedia* this_) {
     if (func_80137444(this_->field_40, lbl_eu_80668800) != 0) {
         this_->field_49 = 3;
@@ -895,7 +1313,7 @@ void func_802557E0(CCollepedia* this_) {
 
 // Target 1: us-80257ad0
 // Check if animation at field_40 is still playing; if so, disable field_40 and field_44, enable field_3C, set state to 5
-void func_80255894(CCollepedia* this_) {
+__declspec(noinline) void func_80255894(CCollepedia* this_) {
     if (func_80137510(this_->field_40, lbl_eu_80668800) != 0) {
         this_->field_38->SetAnimationEnable(this_->field_40, false);
         this_->field_38->SetAnimationEnable(this_->field_44, false);
@@ -905,7 +1323,7 @@ void func_80255894(CCollepedia* this_) {
 }
 
 // Target 5: Check if animation at field_3C is done, then set state and init sub-object
-extern "C" void func_8025592C(CCollepedia* this_) {
+extern "C" __declspec(noinline) void func_8025592C(CCollepedia* this_) {
     if (func_80137510(this_->field_3C, lbl_eu_80668800) != 0) {
         this_->field_51 = 1;
         this_->field_49 = 0;
@@ -913,7 +1331,7 @@ extern "C" void func_8025592C(CCollepedia* this_) {
     }
 }
 
-extern "C" void func_80255984(CCollepedia* this_) {
+extern "C" __declspec(noinline) void func_80255984(CCollepedia* this_) {
     if (this_->field_28F9 == 0) return;
     this_->field_49 = 7;
     this_->field_51 = 1;
@@ -926,7 +1344,7 @@ extern "C" void func_80255984(CCollepedia* this_) {
 #pragma dont_inline on
 // Target 4: us-80257c18
 // Open the collepedia detail view: set state, enable sub-object, update display, load file
-void func_802559DC(CCollepedia* this_) {
+__declspec(noinline) void func_802559DC(CCollepedia* this_) {
     if (this_->field_28F9 == 0) return;
 
     this_->field_49 = 3;
@@ -937,17 +1355,16 @@ void func_802559DC(CCollepedia* this_) {
 
     if (func_8025415C(&this_->field_E8, this_->field_D9) == 0) return;
 
-    const char* strTab = lbl_eu_8050C6E8;
     this_->field_49 = 9;
 
-    char* str = (char*)func_80136190(&strTab[0xA2], &strTab[0xAE], 0x12);
+    char* str = (char*)func_80136190(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0x12);
     func_8022B9B4(&this_->field_9C, str, 0);
     func_8022BFC8((CSysWin*)&this_->field_9C, 1);
     func_8022B8B8(&this_->field_9C);
 
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
     func_801895EC();
-    func_80043738(0, &strTab[0x1E9], handle, 2, 1, 0);
+    func_80043738(0, &lbl_eu_8050C6E8[0x1E9], handle, 2, 1, 0);
 }
 #pragma pop
 
@@ -956,19 +1373,19 @@ void func_802559DC(CCollepedia* this_) {
 #pragma dont_inline on
 // Target 5: us-80257cf0
 // If CSysWin is active, set state, look up table entry, format string, call func_8013E2E0
-extern "C" void func_80255AB4(CCollepedia* this_) {
+extern "C" __declspec(noinline) void func_80255AB4(CCollepedia* this_) {
     if (!CSysWin_isActive(&this_->field_9C)) return;
 
     this_->field_49 = 12;
 
     u32 idx = func_802540DC(&this_->field_E8);
     // Table is u16 array at lbl_eu_8050C6A0; index u8 then *2 for lhzx byte offset
-    u16 tableVal = lbl_eu_8050C6A0[idx & 0xFF];
+    u32 tableVal = lbl_eu_8050C6A0[idx & 0xFF];
 
-    // Compute (tableVal + 1) masked to u16, then add signed field_D9
-    // Retail order: tableVal+1 -> mask -> + field_D9 (no second mask)
-    u32 result = func_80136254(lbl_eu_806647DC, &lbl_eu_8050C6E8[0x1f9],
-        (u16)(tableVal + 1 + (s8)this_->field_D9));
+    // Retail order: (tableVal+1) masked to u16 first, then + sign-extended field_D9 (no second mask)
+    s32 d9 = (s8)this_->field_D9;
+    u32 sum = (u32)(u16)(tableVal + 1) + d9;
+    u32 result = func_80136254(lbl_eu_806647DC, &lbl_eu_8050C6E8[0x1f9], sum);
 
     u32 zero = 0;
     func_8013E2E0((u16)result, 0, 0, 0, 0, 0, 0, 0, zero);
@@ -980,17 +1397,16 @@ extern "C" void func_80255AB4(CCollepedia* this_) {
 #pragma dont_inline on
 // Target 1: us-80257d9c
 // Initialize collepedia display: check condition, set up CSysWin with text, play sounds, load file
-void func_80255B60(CCollepedia* this_) {
+__declspec(noinline) void func_80255B60(CCollepedia* this_) {
     if (func_801B481C()) return;
 
     this_->field_49 = 3;
 
     if (func_80254484(&this_->field_E8) == 0) return;
 
-    const char* strTab = lbl_eu_8050C6E8;
     this_->field_49 = 0xD;
 
-    char* str = (char*)func_80136190(&strTab[0xA2], &strTab[0xAE], 0x13);
+    char* str = (char*)func_80136190(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0x13);
     func_8022B9B4(&this_->field_9C, str, 0);
     func_8022BFC8((CSysWin*)&this_->field_9C, 1);
     func_8022B8B8(&this_->field_9C);
@@ -1000,46 +1416,75 @@ void func_80255B60(CCollepedia* this_) {
 
     void* handle = getHandleMEM2__Q23mtl10MemManagerFv();
     func_801895EC();
-    func_80043738(0, &strTab[0x200], handle, 2, 1, 0);
+    func_80043738(0, &lbl_eu_8050C6E8[0x200], handle, 2, 1, 0);
 }
 #pragma pop
 
 // Target 2: us-80257e64
 // If CSysWin is active, do a table lookup and format a sound/effect call
-void func_80255C28(CCollepedia* this_) {
+__declspec(noinline) void func_80255C28(CCollepedia* this_) {
     if (!CSysWin_isActive(&this_->field_9C)) return;
-    
+
     this_->field_49 = 0x10;
-    
-    u32 idx = func_802540DC(&this_->field_E8);
-    u32 idxTrunc = (idx & 0xFF);
-    u16 tableVal = lbl_eu_8050C6A0[idxTrunc];
-    
-    char* str = &lbl_eu_8050C6E8[0x1f9];
-    u32 result = func_80136254(lbl_eu_806647DC, str, tableVal);
+
+    // Table lookup folded into the call so the index comes straight from func_802540DC
+    u32 result = func_80136254(lbl_eu_806647DC, &lbl_eu_8050C6E8[0x1f9],
+        lbl_eu_8050C6A0[func_802540DC(&this_->field_E8) & 0xFF]);
     func_8013E2E0((u16)result, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
 // Target 1: us-80257efc
-// Check layout and pointer chain, then update display if valid
-// Reads a pointer from field_34, checks its first word, then checks offset +4 of that word
+// Check layout/resource pointers and the two SDA string-pool pointers, then update display
 void func_80255CC0(CCollepedia* this_) {
-    if (this_->field_38 == nullptr) return;
-    if (this_->field_34 == nullptr) return;
-    u32 ptr = *(u32*)this_->field_34;
-    if (ptr == 0) return;
-    if (*(u32*)(ptr + 4) != 0) {
-        func_8025641C();
-        func_80255F98(this_);
-        func_8025629C(this_);
-        this_->field_50 = 1;
-        this_->field_48 = 1;
+    if (this_->field_38 == nullptr || this_->field_34 == nullptr ||
+        lbl_eu_806647D8 == nullptr || lbl_eu_806647DC == nullptr) {
+        return;
+    }
+    func_8025641C();
+    func_80255F98(this_);
+    func_8025629C(this_);
+    this_->field_50 = 1;
+    this_->field_48 = 1;
+}
+
+// Target 5: us-80257f78
+// Load the texture resource for the detail pane selected by `mode` and show it.
+extern "C" __declspec(noinline) void func_80255D3C(CCollepedia* this_, const char* name, u32 mode) {
+    void* res = NULL;
+    if (mode == 0) {
+        res = this_->field_30->GetResource(0x74696D67, &lbl_eu_8050C6E8[0x210], NULL);
+    } else if (mode == 1) {
+        res = this_->field_30->GetResource(0x74696D67, &lbl_eu_8050C6E8[0x228], NULL);
+    } else if (mode == 2) {
+        res = this_->field_30->GetResource(0x74696D67, &lbl_eu_8050C6E8[0x240], NULL);
+    } else if (mode == 3) {
+        res = this_->field_30->GetResource(0x74696D67, &lbl_eu_8050C6E8[0x240], NULL);
+    }
+
+    if (res != NULL) {
+        char buf[0x28];
+        sprintf(buf, &lbl_eu_8050C6E8[0x256], name + 1);
+        func_80137E7C(this_->field_38, buf, res);
     }
 }
 
-void func_80255D3C(){}
+// Target 1: us-802580cc
+// Like func_80255D3C but mode 3 resolves the resource name from an item id.
+extern "C" __declspec(noinline) void func_80255E90(CCollepedia* this_, const char* name, u32 mode, u32 id) {
+    const char* res;
+    if (mode == 3 && id != 0) {
+        res = func_80138F78(id);
+    } else {
+        res = &lbl_eu_8050C6E8[0x264];
+    }
 
-void func_80255E90(){}
+    void* tex = this_->field_30->GetResource(0x74696D67, res, NULL);
+    if (tex != NULL) {
+        char buf[0x28];
+        sprintf(buf, &lbl_eu_8050C6E8[0x277], name + 1);
+        func_80137E7C(this_->field_38, buf, tex);
+    }
+}
 
 #pragma push
 #pragma optimize_for_size on
@@ -1047,8 +1492,8 @@ void func_80255E90(){}
 // Iterate sub-array entries, set pane visibility for each, copy position for current entry, update display
 void func_8025641C(CCollepedia* this_) {
     u8 count = this_->field_E8;
+    char buf[0x24];
     for (u8 i = 1; i <= 0x16; i++) {
-        char buf[0x28];
         sprintf(buf, &lbl_eu_8050C6E8[0x2F7], i);
 
         nw4r::lyt::Pane* pane = this_->field_38->GetRootPane()->FindPaneByName(buf, true);
@@ -1066,12 +1511,72 @@ void func_8025641C(CCollepedia* this_) {
 #pragma pop
 
 // Stubs for functions called by targets
-extern "C" u8 __attribute__((noinline)) func_802540DC(u8* self) {
+extern "C" __declspec(noinline) u8 func_802540DC(u8* self) {
     s8 idx = (s8)self[1];
     return *(u8*)(self + idx * 0x140 + 4);
 }
-extern "C" u32 func_80254144(u8*){ return 0; }
-extern "C" __declspec(noinline) void func_80255F98(CCollepedia* this_){}
+extern "C" __declspec(noinline) u32 func_80254144(u8*){ return 0; }
+// Target 5: us-802581d4
+// Refresh the detail page: show/hide panes, move the cursor, description
+// text, collected-count label, per-entry rows and texture slots.
+extern "C" __declspec(noinline) void func_80255F98(CCollepedia* this_) {
+    u8 idx = (u8)((s8)this_->_E9[0] + 1);
+    func_80136910(this_->field_38, &lbl_eu_8050C6E8[0x284], idx);
+
+    // Move the cursor pane right by one slot width from the saved position.
+    nw4r::lyt::Pane* cursorPane =
+        this_->field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050C6E8[0x28d], true);
+    int off = (int)idx - 1;
+    nw4r::math::VEC3 pos = *(nw4r::math::VEC3*)&this_->field_DC[0];
+    pos.x = lbl_eu_80668810 * (float)off + pos.x;
+    copyVEC3((float*)((u8*)cursorPane + 0x2C), &pos);
+
+    char* desc = func_80254094(&this_->field_E8);
+    func_80136B4C(this_->field_38, &lbl_eu_8050C6E8[0x29b], desc, 0);
+
+    // "collected / total" label: scale the completion ratio to slot count.
+    float scaled = func_802542B8(&this_->field_E8) * lbl_eu_80668814;
+    int slot = (int)scaled; // fctiwz truncation
+    char* label = func_80136190(&lbl_eu_8050C6E8[0xA2], &lbl_eu_8050C6E8[0xAE], 0xB);
+    char buf[0x18];
+    sprintf(buf, &lbl_eu_8050C6E8[0x2a3], slot, label);
+    func_80136A1C(this_->field_38, &lbl_eu_8050C6E8[0x2a8], buf, 0);
+
+    u32 count32 = func_80254144(&this_->field_E8);
+    u8 count = (u8)count32;
+    for (u8 i = 0; i < count; i++) {
+        sprintf(buf, &lbl_eu_8050C6E8[0x2b0], i + 1);
+        func_80136B4C(this_->field_38, buf, func_802540F4(&this_->field_E8, i), 0);
+
+        sprintf(buf, &lbl_eu_8050C6E8[0x2bb], i + 1);
+        nw4r::lyt::Pane* namePane =
+            this_->field_38->GetRootPane()->FindPaneByName(buf, true);
+        func_80124270(namePane, i < count);
+
+        sprintf(buf, &lbl_eu_8050C6E8[0x2c8], i + 1);
+        nw4r::lyt::Pane* numPane =
+            this_->field_38->GetRootPane()->FindPaneByName(buf, true);
+        func_80124270(numPane, func_8025415C(&this_->field_E8, i));
+    }
+
+    // Fill the 6x5 grid: texture slots and item icons per visible entry.
+    for (u8 row = 0; row < count; row++) {
+        for (u8 col = 0; col < 5; col++) {
+            u32 mode = col + row * 5;
+            const char* texName = (const char*)func_802541BC(&this_->field_E8, row, col);
+            func_80255D3C(this_, texName, mode);
+            u32 id = func_80254204(&this_->field_E8, row, col);
+            const char* iconName = (const char*)func_802541BC(&this_->field_E8, row, col);
+            func_80255E90(this_, iconName, mode, id);
+        }
+    }
+
+    // Final pane visibility follows the page's completion flag.
+    u32 done = func_80254484(&this_->field_E8);
+    nw4r::lyt::Pane* markPane = this_->field_38->GetRootPane()->FindPaneByName(
+        &lbl_eu_8050C6E8[0x2d6], true);
+    func_80124270(markPane, done);
+}
 // Target 4: Set two pane names on the layout using the current sub-array entry
 #pragma push
 #pragma optimize_for_size on
@@ -1083,4 +1588,181 @@ extern "C" __declspec(noinline) void func_8025629C(CCollepedia* this_) {
     func_80136B4C(this_->field_38, &lbl_eu_8050C6E8[0x2eb], str2, this_->field_4C);
 }
 #pragma pop
-void func_80256314(){}
+// Target 2: us-80258550
+// Refresh the collepedia display: detail view routes through the shared
+// formatter, list view formats the current entry name and moves the cursor.
+extern "C" void func_80256314(CCollepedia* this_) {
+    if (this_->field_28FA != 0) {
+        char buf[0x18];
+        func_80253970(reinterpret_cast<CCollepedia*>(buf),
+            reinterpret_cast<LayoutContainer*>(&this_->field_EC), this_->field_DA);
+
+        void* cur84 = &this_->field_54[0x30]; // +0x84 cursor
+        ((void (*)(void*))(*(void***)cur84)[4])(cur84);
+    } else {
+        char buf[0x10];
+        sprintf(buf, &lbl_eu_8050C6E8[0x256],
+            (s8)this_->field_D9 * 5 + (s8)this_->field_D8 + 1);
+
+        nw4r::lyt::Pane* pane1 = this_->field_38->GetRootPane()->FindPaneByName(buf, true);
+        nw4r::lyt::Pane* pane2 =
+            this_->field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050C6E8[0x15c], true);
+
+        nw4r::math::VEC3 pos;
+        func_80137924(&pos, pane1, pane2, this_->field_38->GetRootPane());
+
+        void* cur54 = &this_->field_54; // +0x54 cursor
+        ((void (*)(void*, void*))(*(void***)cur54)[4])(cur54, &pos);
+    }
+}
+
+// Target 2: us-80258748
+// File-load completion callback for the three collepedia archives:
+//  - field_24: main menu arc -> builds the full layout, fonts, animations,
+//    cursors (+0x54/+0x6C/+0x84) and the second-page info record (+0x28EC).
+//  - field_28: detail-page arc -> resource accessor only.
+//  - field_2C: common BDAT archive -> releases the tables into the two
+//    global message-file pointers.
+bool CCollepedia::OnFileEvent(CEventFile* pEventFile) {
+    if (field_24 == pEventFile->mFileHandle) {
+        UnkClass_8045F564* memRegion =
+            reinterpret_cast<UnkClass_8045F564*>(reinterpret_cast<u8*>(this) + 0x04);
+        int mem2 = (int)getHandleMEM2__Q23mtl10MemManagerFv();
+        memRegion->createRegion(mem2, 0x8000,
+                                &lbl_eu_8050C6E8[0x30f], 0);
+
+        Class_8045F858 regionGuard(memRegion);
+
+        // Detach the arc payload from the handle and attach it to the layout
+        // resource accessor.
+        void* fileData = reinterpret_cast<CFileHandle*>(field_24)->getData();
+        mtl::MemManager::func_80434A4C(false);
+
+        void* tagMem = allocate__Q23mtl10MemManagerFUlUl(
+            getAllocHandle__10CLibLayoutFv(), 0x858);
+        if (tagMem != NULL) {
+            tagMem = __ct__CTagProcessor(tagMem);
+        }
+        field_4C = (u32)tagMem;
+
+        field_30 = createArcResourceAccessor__10CLibLayoutFv();
+        field_30->Attach(fileData, &lbl_eu_8050C6E8[0x31b]);
+
+        func_80136E84(&field_38, field_30, &lbl_eu_8050C6E8[0x31f]);
+        func_80136F08(field_38, &field_3C, field_30, &lbl_eu_8050C6E8[0x335]);
+        func_80136F08(field_38, &field_40, field_30, &lbl_eu_8050C6E8[0x34e]);
+        func_80136F08(field_38, &field_44, field_30, &lbl_eu_8050C6E8[0x36c]);
+
+        // Bind the device font into every text pane via the root pane.
+        void* fontObj = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, field_38);
+        u32 fontHandle = ((u32 (*)(void*))(((void**)fontObj)[0x24 / 4]))(fontObj);
+        func_8013676C(field_38->GetRootPane(), fontHandle);
+
+        char* tagStr = (char*)func_801355A0();
+        func_801368C0(field_38, &lbl_eu_8050C6E8[0x284], (u32)tagStr);
+        func_801368C0(field_38, &lbl_eu_8050C6E8[0x306], (u32)tagStr);
+        func_801368C0(field_38, &lbl_eu_8050C6E8[0x2a8], (u32)tagStr);
+
+        field_38->SetAnimationEnable(field_40, false);
+        field_38->SetAnimationEnable(field_44, false);
+        field_38->SetAnimationEnable(field_3C, true);
+        field_38->Animate(0);
+
+        char* titleText =
+            func_80136190(&lbl_eu_8050C6E8[0xa2], &lbl_eu_8050C6E8[0xae], 0xa);
+        func_80136B4C(field_38, &lbl_eu_8050C6E8[0x38a], titleText, 0);
+
+        // Install our tag processor on the detail text-box pane.
+        nw4r::lyt::Pane* textBox =
+            field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050C6E8[0x2eb], true);
+        if (textBox != NULL) {
+            static_cast<nw4r::lyt::TextBox*>(textBox)->SetTagProcessor(
+                reinterpret_cast<nw4r::ut::WideTagProcessor*>(tagMem));
+        }
+
+        // Stack-build the +0x6C cursor, copy its body (everything after the
+        // vtable pointer), refresh its position, then mark it active.
+        u8 tmpCur[0x18];
+        __ct__CCLPCur(reinterpret_cast<CCLPCur*>(tmpCur), field_30);
+        CLPCurBody* curDst = reinterpret_cast<CLPCurBody*>(&field_54[0x18]);
+        CLPCurBody* curSrc = reinterpret_cast<CLPCurBody*>(&tmpCur[4]);
+        curDst->field_04 = curSrc->field_04;
+        curDst->field_08 = curSrc->field_08;
+        curDst->field_0C = curSrc->field_0C;
+        curDst->field_10 = curSrc->field_10;
+        curDst->mActive = curSrc->mActive;
+        curDst->mVisible = curSrc->mVisible;
+        reinterpret_cast<CLPCurVt*>(curDst)->cv2();
+        curDst->mActive = 1;
+
+        // Second-page info record built from a stack temporary.
+        CLPPageInfo pageInfo;
+        func_8025348C(&pageInfo, (int)field_30);
+        CLPPageInfo* pageDst = reinterpret_cast<CLPPageInfo*>(&field_28EC[0]);
+        pageDst->field_00 = pageInfo.field_00;
+        pageDst->mpLayout = pageInfo.mpLayout;
+        pageDst->field_08 = pageInfo.field_08;
+        pageDst->field_0C = pageInfo.field_0C;
+        pageDst->field_0D = pageInfo.field_0D;
+        pageDst->field_0E = pageInfo.field_0E;
+
+        func_802534F0();
+
+        // +0x84 cursor (CCur18): stack-build, copy, refresh.
+        u8 tmpCur18[0x18];
+        __ct__CCur18(tmpCur18, func_801355F4());
+        func_8018B0FC(reinterpret_cast<u8*>(this) + 0x84, tmpCur18);
+        __dt__6CCur18Fv(tmpCur18, -1);
+        reinterpret_cast<CLPCurVt*>(reinterpret_cast<u8*>(this) + 0x84)->cv2();
+
+        // +0x54 cursor (CCur07): same pattern.
+        u8 tmpCur07[0x18];
+        __ct__CCur07(tmpCur07, field_30);
+        func_8018B0FC(reinterpret_cast<u8*>(this) + 0x54, tmpCur07);
+        __dt__6CCur07Fv(tmpCur07, -1);
+        reinterpret_cast<CLPCurVt*>(reinterpret_cast<u8*>(this) + 0x54)->cv2();
+
+        func_80255CC0(this);
+        field_24 = nullptr;
+        memRegion->func_8045F810();
+        return true;
+    }
+
+    if (field_28 == pEventFile->mFileHandle) {
+        UnkClass_8045F564* memRegion =
+            reinterpret_cast<UnkClass_8045F564*>(reinterpret_cast<u8*>(this) + 0x14);
+        int mem2 = (int)getHandleMEM2__Q23mtl10MemManagerFv();
+        memRegion->createRegion(mem2, 0x100,
+                                &lbl_eu_8050C6E8[0x395], 0);
+
+        Class_8045F858 regionGuard(memRegion);
+
+        void* fileData = reinterpret_cast<CFileHandle*>(field_28)->getData();
+        mtl::MemManager::func_80434A4C(false);
+
+        field_34 = createArcResourceAccessor__10CLibLayoutFv();
+        field_34->Attach(fileData, &lbl_eu_8050C6E8[0x31b]);
+
+        func_80255CC0(this);
+        field_28 = nullptr;
+        memRegion->func_8045F810();
+        return true;
+    }
+
+    if (field_2C == pEventFile->mFileHandle) {
+        void* data = reinterpret_cast<CFileHandle*>(field_2C)->getData();
+        func_8003AA78__5CBdatFUlPv(2, data);
+
+        // Resolve the two message files used by the item/quest name lookups.
+        func_8003AA34();
+        lbl_eu_806647D8 = getFP__FPCc(&lbl_eu_8050C6E8[0x3a4]);
+        func_8003AA34();
+        lbl_eu_806647DC = (char*)getFP__FPCc(&lbl_eu_8050C6E8[0x3b3]);
+
+        func_80255CC0(this);
+        field_2C = nullptr;
+        return true;
+    }
+
+    return false;
+}

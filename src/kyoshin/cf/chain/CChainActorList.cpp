@@ -4,7 +4,14 @@
 #include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/cf/chain/CChainCombo.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
+// CAIAction.hpp (via CfObjectActor.hpp) declares getInstance__Q22cf14C-
+// BattleManagerFv as extern "C" void*; CfGameManager.hpp redeclares it with
+// return type CBattleManagerView*, which MWCC rejects (10505). This TU never
+// calls it - rename it out of the way for this include (CBattleManager.cpp
+// idiom).
+#define getInstance__Q22cf14CBattleManagerFv chainActorListBmGetUnused
 #include "kyoshin/cf/CfGameManager.hpp"
+#undef getInstance__Q22cf14CBattleManagerFv
 #include "monolib/core/CPadManager.hpp"
 #include <new>
 #include <cstring>
@@ -13,6 +20,9 @@
 // section of kyoshin/cf/chain/CChainActorList.hpp (real imports).
 
 bool func_8027C1A8();
+// Search helper for func_8027B770: written with return-inside-loop so MWCC
+// inlines it with the retail two-branch shape (bne-next / b-merge).
+static cf::CChainActor* searchActorByKey(cf::CChainActorList* self, u32 key);
 // Call-site overload (s32) so func_8027CBE8 emits a real bl instead of
 // inlining the u32 definition below (retail keeps the call; the definition's
 // u32 overload is what matches retail func_8027BFE0's bytes).
@@ -267,13 +277,54 @@ namespace cf {
 
     CChainActorList::CChainActorList(){
         mChainActorList.reserve(CWorkThreadSystem::getWorkMem(), 59);
-        mChainActorList.clearList();
+        // Detach every node (inlined clearList shape); the null rides in a
+        // live variable so it stays in r4 across the loop like retail.
+        _reslist_node<cf::CChainActor*>* nul = 0;
+        _reslist_node<cf::CChainActor*>* cur =
+            mChainActorList.mStartNodePtr->mNext;
+        while (cur != mChainActorList.mStartNodePtr) {
+            _reslist_node<cf::CChainActor*>* node = cur;
+            cur = node->mNext;
+            node->mNext = nul;
+        }
+        mChainActorList.mStartNodePtr->mNext = mChainActorList.mStartNodePtr;
+        mChainActorList.mStartNodePtr->mPrev = mChainActorList.mStartNodePtr;
         func_802811FC(this);
         unk1DA8[0] = 0;
     }
 
     CChainActorList::~CChainActorList(){
-        
+        // Pass 1: destroy every actor through its manual vtable slot 17
+        // (same body as func_8027B164, inlined by retail).
+        _reslist_node<cf::CChainActor*>* node =
+            mChainActorList.mStartNodePtr->mNext;
+        while (node != mChainActorList.mStartNodePtr) {
+            cf::CChainActor* actor = node->mItem;
+            ((CChainActorVtIf*)actor)->v003();
+            node = node->mNext;
+        }
+        // Pass 2: unlink every node, marking its slot free (mNext = 0).
+        _reslist_node<cf::CChainActor*>* head = mChainActorList.mStartNodePtr;
+        node = head->mNext;
+        while (node != head) {
+            _reslist_node<cf::CChainActor*>* cur = node;
+            node = cur->mNext;
+            _reslist_node<cf::CChainActor*>* prev = cur->mPrev;
+            prev->mNext = node;
+            node->mPrev = prev;
+            cur->mNext = 0;
+        }
+        func_802811FC(this);
+        unk1DA8[0] = 0;
+        // Free pass: detach the (now empty) list, then release the node
+        // array. The automatic ~reslist/~_reslist_base chain afterwards
+        // clears and deletes again (retail keeps both copies).
+        mChainActorList.clearList();
+        if (mChainActorList.unk1C == false && mChainActorList.mList != nullptr) {
+            delete[] mChainActorList.mList;
+            mChainActorList.mList = nullptr;
+        }
+        mChainActorList.mCapacity = 0;
     }
 }
 
@@ -430,27 +481,14 @@ void func_8027B2CC(cf::CChainActorList* self){
     }
 }
 cf::CChainActor* func_8027B770(cf::CChainActorList* self, u32 key){
-    _reslist_node<cf::CChainActor*>* head = self->mChainActorList.mStartNodePtr;
-    _reslist_node<cf::CChainActor*>* node = head->mNext;
-    cf::CChainActor* result = 0;
-    // Search for an actor whose unk0 matches the key. The candidate is
-    // assigned every iteration so retail's actor value lives in r3 (the
-    // return register) with no copy, and the zero init sinks to loop exit.
-    while (node != head) {
-        result = node->mItem;
-        if (key == result->unk0) {
-            break;
-        } else {
-            node = node->mNext;
+    // Inlined search: testing the call result directly keeps the value in
+    // the return register r3 at the merge, matching retail.
+    if (searchActorByKey(self, key) == 0) {
+        cf::CChainActor* newActor = func_8028120C(self);
+        func_8027B8C8(self, newActor);
+        if (self->unk1DA8[0]) {
+            ((CChainActorVtIf*)newActor)->v005(1);
         }
-    }
-    if (result != 0) return result;
-    // None found: create a new actor, insert it, and activate it when flagged.
-    // (No return on this path - retail leaves r3 as the last call's result.)
-    cf::CChainActor* newActor = func_8028120C(self);
-    func_8027B8C8(self, newActor);
-    if (self->unk1DA8[0]) {
-        ((CChainActorVtIf*)newActor)->v005(1);
     }
 }
 // Removes the first actor whose unk0 matches @p key: destroys it via
@@ -462,7 +500,9 @@ int func_8027B814(cf::CChainActorList* self, u32 key) {
         cf::CChainActor* actor = node->mItem;
         if (key == actor->unk0) {
             ((CChainActorVtIf*)actor)->v003();
-            self->mChainActorList.remove(actor);
+            // Pass the node's own item slot: the inlined remove re-reads
+            // node->mItem each iteration (retail keeps the node in r31).
+            self->mChainActorList.remove(node->mItem);
             return 1;
         }
         node = node->mNext;
@@ -547,9 +587,38 @@ void func_8027BA0C(cf::CChainActorList* self, cf::CChainList* other,
 // `bne next; b merge` pair, reproducing retail's two-branch search (an
 // inline break/while loop folds the branches to `beq merge`; see
 // MWCC_CASES §5523). Inlined at the single call site in func_8027BB4C.
-static cf::CChainActor* findActorInReslist(u32 key, cf::CChainActorList* self) {
+static cf::CChainActor* findActorInReslist(u32 key, cf::CChainActorList* self) {    _reslist_node<cf::CChainActor*>* node =
+        self->mChainActorList.mStartNodePtr->mNext;
     _reslist_node<cf::CChainActor*>* head = self->mChainActorList.mStartNodePtr;
-    _reslist_node<cf::CChainActor*>* node = head->mNext;
+    cf::CChainActor* x;
+    while (node != head) {
+        x = node->mItem;
+        if (key == x->unk0) return x;
+        node = node->mNext;
+    }
+    return 0;
+}
+
+// Search helper for func_8027B770 (inlined there; self-first params keep the
+// incoming r3/r4 argument registers live across the inline boundary).
+static cf::CChainActor* searchActorByKey(cf::CChainActorList* self, u32 key) {
+    // No head local: the sentinel stays an unnamed temp (colored after the
+    // reserved r3 return value / r4 key param), matching retail's r5/r6.
+    _reslist_node<cf::CChainActor*>* node =
+        self->mChainActorList.mStartNodePtr->mNext;
+    while (node != self->mChainActorList.mStartNodePtr) {
+        if (key == node->mItem->unk0) return node->mItem;
+        node = node->mNext;
+    }
+    return 0;
+}
+// BB4C-private variant: no head local, so the sentinel is an unnamed temp
+// colored into r6 while the walker takes r7 (retail shape).
+static cf::CChainActor* findActorForBB4C(u32 key, cf::CChainActorList* self) {
+    _reslist_node<cf::CChainActor*>* node =
+        self->mChainActorList.mStartNodePtr->mNext;
+    _reslist_node<cf::CChainActor*>* head =
+        self->mChainActorList.mStartNodePtr;
     cf::CChainActor* x;
     while (node != head) {
         x = node->mItem;
@@ -565,7 +634,7 @@ void func_8027BB4C(cf::CChainActorList* self, cf::CChainList* list){
     cf::CChainList* l = list;
     for (int i = 0; i < (int)l->mCount; i++) {
         cf::CChainActor* actor = (i < (int)list->mCount) ? list->mActors[i] : 0;
-        cf::CChainActor* found = findActorInReslist(actor->unk0, self);
+        cf::CChainActor* found = findActorForBB4C(actor->unk0, self);
         if (found == 0) func_8027B8C8(self, actor);
     }
     func_8027C45C(list);
@@ -678,8 +747,9 @@ void func_8027C0B0(cf::CChainChanceS* self) {
     if (count < 1) {
         flag = 0;
     } else {
-        self->mChainCount = count - 1;
-        flag = ((s16)(count - 1) <= 0);
+        s16 newCount = count - 1;
+        self->mChainCount = newCount;
+        flag = (newCount <= 0);
     }
     if (flag != 0) {
         func_80133F48(3, lbl_eu_8050EDE0[(s16)self->mField0A]);
@@ -759,9 +829,10 @@ extern "C" __declspec(noinline) void func_8027C45C(cf::CChainList* self) {
 // Removes from @p self every actor whose referenced object is dead
 // (func_800B8920), calling vtable[5] and shifting the array down.
 void func_8027C49C(cf::CChainList* self){
+    cf::CChainActor** p;
     int i = 0;
     while (i < (int)self->mCount) {
-        cf::CChainActor** p = &self->mActors[i];
+        p = &self->mActors[i];
         u32 base = (*p)->unk0;
         if (base != 0) base += 0x3e9c;
         if (func_800B8920((void*)base) == 0) {
@@ -820,7 +891,10 @@ static void linkSlot(cf::CChainList* self, int target, int index){
 // @p index is -1: the -1 path nests three slot loops (retail's dead i/j/k == -1
 // guards fall through, and the != -1 single-slot blocks come after), with the
 // innermost re-entering this function per slot.
-void func_8027C6B4(cf::CChainList* self, int target, int index){
+// extern "C" definition (same idiom as func_8027B8C8/func_8027C45C): retail's
+// symbol is the bare name func_8027C6B4, and the recursive innermost-loop call
+// must emit `bl func_8027C6B4` (unmangled) to match retail's reloc.
+extern "C" void func_8027C6B4(cf::CChainList* self, int target, int index){
     int i, j, k, m;
     if (index == -1) {
         for (i = 0; i < self->mCount; i++) {
@@ -883,6 +957,7 @@ int func_8027CAE0(cf::CChainList* self, int target, int check){
     cf::CChainActor** p;
     CChainTargetObj* obj;
     if (check == 0) {
+        obj = 0;
         p = self->mActors;
         for (int i = 0; i < (int)self->mCount; i++) {
             obj = (CChainTargetObj*)(*p)->unk0;
@@ -892,6 +967,7 @@ int func_8027CAE0(cf::CChainList* self, int target, int check){
         }
         return 0;
     }
+    obj = 0;
     p = self->mActors;
     for (int i = 0; i < (int)self->mCount; i++) {
         obj = (CChainTargetObj*)(*p)->unk0;

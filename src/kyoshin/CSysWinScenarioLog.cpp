@@ -10,8 +10,11 @@
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/object/CfObject.hpp"
 #include "kyoshin/CTaskGame.hpp"
+#include "monolib/device/CDeviceFile.hpp"
+#include "monolib/work/IWorkEvent.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 
+#include <revolution/gx/GXPixel.h>
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_arcResourceAccessor.h>
 
@@ -26,8 +29,8 @@ static inline bool isSceneActive() {
 // helper) so MWCC lays the bump out like retail's branch-over-branch.
 static inline u32 scenarioBump(u32 id) {
     u32 v = func_80082694__Q22cf13CfGameManagerFv(id);
-    u32 n = v;
     u16 pauseFlag = lbl_eu_80664772;
+    u32 n = v;
     if (pauseFlag != 0) {
         return n;
     }
@@ -216,20 +219,11 @@ struct CScenarioFlagObj {
 
 void func_80280804(CScenarioFlagObj* self) {
     if ((self->field_0x3F00 & 0x2) != 0) {
-        u32 cur = func_80082694__Q22cf13CfGameManagerFv(0xB);
-        if (isSceneActive()) {
-            u32 bumped = cur + 1;
-            if (bumped >= 0xFFFF) {
-                bumped = 0xFFFF;
-            }
-            func_8008269C__Q22cf13CfGameManagerFv(0xB, bumped);
-            cur = bumped;
-        }
+        // Bump sequence counter 0xB while active, then close it past 100.
+        // Bump sequence counter 0xB while active, then close it past 100.
+        u32 cur = scenarioBump(0xB);
         if (cur >= 0x64) {
-            bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
-            if (!booting && isSceneActive()) {
-                func_800826F0__Q22cf13CfGameManagerFv(0xB);
-            }
+            scenarioClose(0xB);
         }
     }
 }
@@ -238,7 +232,7 @@ void func_80280804(CScenarioFlagObj* self) {
 // Remaining unmatched func_8027* stubs in this unit (non-target).
 // ---------------------------------------------------------------------------
 void func_8027EE70(void* self) { ((void(*)(void*))__dt__18CSysWinScenarioLogFv)((char*)self - 0x6c); }
-void func_8027EE78(void* self) { ((void(*)(void*))cbRenderBefore__18CSysWinScenarioLogFv)((char*)self - 0x70); }
+void func_8027EE78(void* self) { ((CSysWinScenarioLog*)((char*)self - 0x70))->cbRenderBefore(); }
 void func_8027EE80(void* self) { ((void(*)(void*))__dt__18CSysWinScenarioLogFv)((char*)self - 0x70); }
 
 void func_8027EF50() {
@@ -287,6 +281,34 @@ void func_8027EF50() {
     lbl_eu_80664910 = 0;
     lbl_eu_80664912 = 0;
 }
+// ---------------------------------------------------------------------------
+// ---- Target: CSysWinScenarioLog::cbRenderBefore (us-80280dc0) -------------
+// Draw the scenario-log layout behind the scene while the game is live: same
+// gate chain as Move() but testing bit 10 of the pause word, then Z-off and
+// a layout draw with a stack DrawInfo (raw buffer, direct ctor/dtor calls).
+// ---------------------------------------------------------------------------
+void CSysWinScenarioLog::cbRenderBefore() {
+    // Same gate chain as Move() (pause word bit 21 here): skip the draw while
+    // a modal task-game state is live, the scenario bit is set, an event is
+    // pending, a camera event runs, or the layout isn't loaded.
+    if (CTaskGame::getInstance()->func_800426F0() == false) {
+        if (lbl_eu_80663E28 & 0x200000) {
+            // scenario/pause bit set: skip the whole draw
+        } else if (func_8013BE50() != 0 &&
+                   func_8029A658() == 0 &&
+                   mpLayout != 0) {
+            GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+            u8 drawInfo[0x60];
+            __ct__Q34nw4r3lyt8DrawInfoFv(drawInfo);
+            func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo));
+            func_80137038(mpLayout, reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo),
+                          0, 1);
+            __dt__Q34nw4r3lyt8DrawInfoFv(
+                reinterpret_cast<nw4r::lyt::DrawInfo*>(drawInfo), -1);
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // ---- Target 6: CSysWinScenarioLog::Move (us-80280c54) ---------------------
 // Advance the scenario-log window's opening/closing state machine.
@@ -419,21 +441,22 @@ void func_8027F148() {
     CSysWinActorList* list = func_800B6BA4();
     CSysWinActorListNode* node = list->sentinel->next;
     while (node != list->sentinel) {
+        // First usable-gate call takes the base pointer as a pure argument
+        // expression (retail keeps it in the caller-temp r3, not a
+        // callee-saved); only the arts-state half below materializes it.
+        if (((CSysWinDevView*)(node->object != 0 ? node->object - 0x3E9C
+                                                 : node->object))
+                ->mAt2BC() == 0) {
+            result = 0;
+            goto done;
+        }
         u8* base = node->object;
         if (base != 0) {
             base -= 0x3E9C;
         }
-        if (((CSysWinDevView*)base)->mAt2BC() == 0) {
-            result = 0;
-            goto done;
-        }
-        u8* base2 = node->object;
-        if (base2 != 0) {
-            base2 -= 0x3E9C;
-        }
-        u32 x = ((CSysWinSubObjView*)((CSysWinOwnerSubView*)base2)->field_0x4)
+        u32 x = ((CSysWinSubObjView*)((CSysWinOwnerSubView*)base)->field_0x4)
                     ->mAt30()->field_0;
-        if (func_80174C98(base2, &x, 0x1d) != 0) {
+        if (func_80174C98(base, &x, 0x1d) != 0) {
             result = 0;
             goto done;
         }
@@ -780,7 +803,23 @@ extern "C" void func_8027FC80(CSysWinDevice* arg0, void* arg1) {
         }
     }
 }
-void func_802804F8(){}
+// ---------------------------------------------------------------------------
+// ---- Target: func_802804F8 (us-8028297c) ----------------------------------
+// Device-side one-shot latch: when the device's owner has scenario flag bit 2
+// live, store the device's usable result (vtable 0x2bc) into the one-shot
+// byte lbl_eu_80664918.
+// ---------------------------------------------------------------------------
+void func_802804F8(CSysWinDevice* self) {
+    int flag = 0;
+    if (((CSysWinDevView*)self)->mAt9C() != 0 &&
+        ((((CSysWinDevView*)self)->mAt9C())->field_0x3F00 & 4)) {
+        flag = 1;
+    }
+    if (flag != 0) {
+        lbl_eu_80664918 = (u8)((CSysWinDevView*)self)->mAt2BC();
+    }
+}
+
 // ---------------------------------------------------------------------------
 // ---- Target 1: func_80280588 (us-80282a0c) --------------------------------
 // Device-side scenario-log gate: when the device's owner is set and its flag
@@ -794,13 +833,23 @@ void func_80280588(CSysWinDevice* self) {
         ((((CSysWinDevView*)self)->mAt9C())->field_0x3F00 & 0x4)) {
         flag = true;
     }
-    if (flag && lbl_eu_80664918 == 0) {
-        if (((CSysWinDevView*)self)->mAt2BC() == 0) {
-        } else {
-            func_8027FC80(self, 0);
-            lbl_eu_80664918 = 1;
-        }
+    // Branch-over-branch (MWCC_CASES uusb_ppc pattern): exit label BEFORE
+    // body label plus explicit returns keeps retail's `bne walk; b done`.
+    if (flag == false) {
+        goto gate_done;
     }
+    if (lbl_eu_80664918 != 0) {
+        goto gate_done;
+    }
+    if (((CSysWinDevView*)self)->mAt2BC() != 0) {
+        goto walk;
+    }
+    goto gate_done;
+gate_done:
+    return;
+walk:
+    func_8027FC80(self, 0);
+    lbl_eu_80664918 = 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -886,27 +935,33 @@ void func_802808AC(s32 self) {
     if (self < 4) {
         return;
     }
-    u32 cur = func_80082694__Q22cf13CfGameManagerFv(0x2C);
-    if (isSceneActive()) {
-        cur = cur + 1;
-        if (cur >= 0xFFFF) {
-            cur = 0xFFFF;
-        }
-        func_8008269C__Q22cf13CfGameManagerFv(0x2C, cur);
+    u32 seq = func_80082694__Q22cf13CfGameManagerFv(0x2C);
+    // Explicit gotos reproduce retail's `beq bump; b after` pair.
+    if (lbl_eu_80664772 == 0) {
+        goto bump;
     }
-    if (cur >= 1) {
+    goto after;
+bump:
+    seq = seq + 1;
+    if (seq >= 0xFFFF) {
+        seq = 0xFFFF;
+    }
+    func_8008269C__Q22cf13CfGameManagerFv(0x2C, seq);
+after:
+    ;
+    if (seq >= 0x1) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
             func_800826F0__Q22cf13CfGameManagerFv(0x2C);
         }
     }
-    if (cur >= 0x32) {
+    if (seq >= 0x32) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
             func_800826F0__Q22cf13CfGameManagerFv(0x2D);
         }
     }
-    if (cur >= 0xC8) {
+    if (seq >= 0xC8) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
             func_800826F0__Q22cf13CfGameManagerFv(0x2E);
@@ -922,13 +977,18 @@ void func_802808AC(s32 self) {
 // ---------------------------------------------------------------------------
 void func_802809C8() {
     u32 seq = func_80082694__Q22cf13CfGameManagerFv(0x23);
-    if (lbl_eu_80664772 == 0) {
+    // Single-case switch reproduces retail's `beq bump; b after` pair.
+    switch (lbl_eu_80664772) {
+    case 0:
         seq = seq + 1;
         if (seq >= 0xFFFF) {
             seq = 0xFFFF;
         }
         func_8008269C__Q22cf13CfGameManagerFv(0x23, seq);
+        break;
     }
+after:
+    ;
     if (seq >= 0xA) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
@@ -950,27 +1010,27 @@ void func_802809C8() {
 }
 
 void func_80280ADC() {
-    u32 cur = func_80082694__Q22cf13CfGameManagerFv(0x29);
-    if (isSceneActive()) {
-        cur = cur + 1;
-        if (cur >= 0xFFFF) {
-            cur = 0xFFFF;
-        }
-        func_8008269C__Q22cf13CfGameManagerFv(0x29, cur);
-    }
-    if (cur >= 1) {
+    u32 seq = func_80082694__Q22cf13CfGameManagerFv(0x29);
+    // Void-arm ternary (bump as false-arm): MWCC keeps the two-branch pair
+    // (`beq bump; b gates`) without spilling a second register.
+    lbl_eu_80664772 != 0 ? (void)0
+                         : (void)(seq = seq + 1 < 0x10000 ? seq + 1 : 0xFFFF,
+                                  func_8008269C__Q22cf13CfGameManagerFv(0x29, seq));
+gates:
+    ;
+    if (seq >= 0x1) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
             func_800826F0__Q22cf13CfGameManagerFv(0x29);
         }
     }
-    if (cur >= 0x64) {
+    if (seq >= 0x64) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
             func_800826F0__Q22cf13CfGameManagerFv(0x2A);
         }
     }
-    if (cur >= 0x3E8) {
+    if (seq >= 0x3E8) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
             func_800826F0__Q22cf13CfGameManagerFv(0x2B);
@@ -979,27 +1039,32 @@ void func_80280ADC() {
 }
 
 void func_80280BF0() {
-    u32 cur = func_80082694__Q22cf13CfGameManagerFv(0x5A);
-    if (isSceneActive()) {
-        cur = cur + 1;
-        if (cur >= 0xFFFF) {
-            cur = 0xFFFF;
+    u32 seq = func_80082694__Q22cf13CfGameManagerFv(0x5A);
+    u32 n;
+    // If/else with both arms assigning: retail hoists the common value then
+    // emits `beq bump; b after` around the two arms.
+    if (lbl_eu_80664772 == 0) {
+        n = seq + 1;
+        if (n >= 0xFFFF) {
+            n = 0xFFFF;
         }
-        func_8008269C__Q22cf13CfGameManagerFv(0x5A, cur);
+        func_8008269C__Q22cf13CfGameManagerFv(0x5A, n);
+    } else {
+        n = seq;
     }
-    if (cur >= 1) {
+    if (n >= 0x1) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
             func_800826F0__Q22cf13CfGameManagerFv(0x5A);
         }
     }
-    if (cur >= 0x12C) {
+    if (seq >= 0x12C) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
             func_800826F0__Q22cf13CfGameManagerFv(0x5B);
         }
     }
-    if (cur >= 0x7D0) {
+    if (n >= 0x7D0) {
         bool booting = func_800822F4__Q22cf13CfGameManagerFv() <= 3;
         if (!booting && isSceneActive()) {
             func_800826F0__Q22cf13CfGameManagerFv(0x5C);
@@ -1045,13 +1110,25 @@ void func_80280D04(s32 self) {
 // are >= 10 and emit a summary gate at 5 / 10 / 16.
 // ---------------------------------------------------------------------------
 void func_80280DBC(u8* self) {
-    int count = 0;
-    for (int o = 0; o < 2; o++) {
-        u8* p1 = self;
-        for (int m = 0; m < 2; m++) {
-            u8* p2 = p1;
-            for (int i = 0; i < 8; i++) {
-                u8 val = p2[0];
+    // Declaration order drives MWCC callee-saved coloring (first -> r31);
+    // this order reproduces retail's register assignment.
+    u8 val;
+    // Alias keeps the parameter in the declaration stream so MWCC colors it
+    // r30 like retail (params otherwise color last).
+    u8* p = self;
+    u8* p1;
+    u8* p2;
+    int count;
+    int o;
+    int m;
+    int i;
+    count = 0;
+    for (o = 0; o < 2; o++) {
+        p1 = p;
+        for (m = 0; m < 2; m++) {
+            p2 = p1;
+            for (i = 0; i < 8; i++) {
+                val = p2[0];
                 if (val >= 2) {
                     func_8027EEF4(0x48);
                 }
@@ -1068,7 +1145,7 @@ void func_80280DBC(u8* self) {
             }
             p1 += 0x10;
         }
-        self += 0x49;
+        p += 0x49;
     }
     if (count >= 5) {
         func_8027EEF4(0x4B);
@@ -1282,19 +1359,22 @@ extern "C" void func_802811FC(u8* self){
 // set.
 // ---------------------------------------------------------------------------
 void* func_8028120C(CSysWinSlotTable* self, CScenarioLogOwner* arg0) {
-    if (arg0->field_0x3F00 & 0x2) {
+    u32 flags = arg0->field_0x3F00;
+    if (flags & 0x2) {
+        int idx = 0;
         while (self->mEntriesA[self->mIdxA].mUsed != 0) {
             if (++self->mIdxA >= 3) {
-                self->mIdxA = 0;
+                self->mIdxA = idx;
             }
         }
         csysWinSlotCall3(&self->mEntriesA[self->mIdxA]);
         return &self->mEntriesA[self->mIdxA];
     }
-    if (arg0->field_0x3F00 & 0x4) {
+    if (flags & 0x4) {
+        int idx = 0;
         while (self->mEntriesB[self->mIdxB].mUsed != 0) {
             if (++self->mIdxB >= 0x38) {
-                self->mIdxB = 0;
+                self->mIdxB = idx;
             }
         }
         csysWinSlotCall3(&self->mEntriesB[self->mIdxB]);
@@ -1379,7 +1459,26 @@ extern "C" int func_8027EC80(CSysWinScenarioLog* self, CFileHandle* fh) {
     return 0;
 }
 
-extern "C" void Init__18CSysWinScenarioLogFv() {}
+// ---------------------------------------------------------------------------
+// ---- Target: CSysWinScenarioLog::Init (us-80280aac) -----------------------
+// Register this window's IScnRender sub-object (+0x70) with the owning scene,
+// then kick off both file loads against the IWorkEvent sub-object (+0x6C):
+// the layout archive from MEM2 and the BDAT common archive (+0x18 into the
+// string pool).
+// ---------------------------------------------------------------------------
+void CSysWinScenarioLog::Init() {
+    IScnRender* render = reinterpret_cast<IScnRender*>(this); // null-this -> null cb
+    if (this) render = reinterpret_cast<IScnRender*>(&mScnRender);
+    mScene->addRenderCB(render, 0xD, 0);
+
+    IWorkEvent* ev = reinterpret_cast<IWorkEvent*>(this); // default keeps null-this
+    if (this) ev = reinterpret_cast<IWorkEvent*>(&mWorkEvent);
+
+    mFileHandle74 = CDeviceFile::readFile(
+        mtl::MemManager::getHandleMEM2(), lbl_eu_8050EE24, ev, 0, 0);
+    mFileHandle78 = CDeviceFile::readCommonArchiveFile(
+        func_800A9D90(), &lbl_eu_8050EE24[0x18], ev, 0, 0);
+}
 
 // ---------------------------------------------------------------------------
 // ---- Target 3: CSysWinScenarioLog::Term (us-80280b60) ---------------------

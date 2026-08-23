@@ -250,6 +250,47 @@ extern "C" void func_80264060(UI::CPassiveSkillCur* self);
 extern "C" void func_80264344(UI_PassiveSkillLayoutRef* self);
 extern "C" void func_80264C58(UI::CPassiveSkillCur* self);
 
+// Abstract view into the embedded CSysWin's vtable for func_8026D5A8: retail
+// dispatches vtable +0x88 (index 34, no args) after the temp-window copy.
+// All-pure so no vtable is emitted (same scheme as COptionSysWinView).
+class UI_CPassiveSkillSysWinView {
+public:
+    // v00/v01 omitted: retail slots 0/1 are the RTTI pair MWCC prepends for
+    // this view, so class-index 0 is the third retail slot.
+    virtual void v02() = 0;
+    virtual void v03() = 0;
+    virtual void v04() = 0;
+    virtual void v05() = 0;
+    virtual void v06() = 0;
+    virtual void v07() = 0;
+    virtual void v08() = 0;
+    virtual void v09() = 0;
+    virtual void v10() = 0;
+    virtual void v11() = 0;
+    virtual void v12() = 0;
+    virtual void v13() = 0;
+    virtual void v14() = 0;
+    virtual void v15() = 0;
+    virtual void v16() = 0;
+    virtual void v17() = 0;
+    virtual void v18() = 0;
+    virtual void v19() = 0;
+    virtual void v20() = 0;
+    virtual void v21() = 0;
+    virtual void v22() = 0;
+    virtual void v23() = 0;
+    virtual void v24() = 0;
+    virtual void v25() = 0;
+    virtual void v26() = 0;
+    virtual void v27() = 0;
+    virtual void v28() = 0;
+    virtual void v29() = 0;
+    virtual void v30() = 0;
+    virtual void v31() = 0;
+    virtual void v32() = 0;
+    virtual void v33() = 0;
+    virtual void v34() = 0; // class-index 32 -> retail vtable +0x88 (MWCC adds the RTTI pair)
+};
 struct UI_PassiveSkillInit;
 // Skill-info animation helpers dispatched by func_8026439C (retail symbols
 // unmangled).

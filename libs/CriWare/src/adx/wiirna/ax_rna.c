@@ -54,6 +54,13 @@ typedef struct {
 
 // External globals
 extern u32 lbl_eu_805F2C00;
+
+// One RNA slot in the global table (stride 0xE4); voices live at offset 8.
+typedef struct {
+    u8 pad0[8];
+    void* voices[2];
+    u8 pad[0xE4 - 0x10];
+} AXRNASLOT;
 extern volatile u32 lbl_eu_8051914C;
 extern u8 lbl_eu_805F2C08[];
 extern u32 lbl_eu_805F2C04;
@@ -95,13 +102,24 @@ void axrna_voice_drop(void* voice);
 void AXRNA_Destroy(void* self);
 void AXRNA_SetTransSw(void* self, s32 sw);
 void AXRNA_SetPlaySw(void* self, s32 sw);
+/* Channel-slot layout used by the streaming feed (offsets within an RNA
+ * object). Field accesses go through the struct pointer so the compiler
+ * must reload each object pointer after opaque calls, as in retail. */
+typedef struct AxRnaFeed {
+    u8 pad0[0x10];
+    void* mem[6];       /* 0x10 per-channel buffer bases */
+    void* in_ring[2];   /* 0x28 shared input ring */
+    void* rings[38];    /* 0x30 playback rings */
+    void* out_sj[1];    /* 0xC8 output SJ objects */
+} AxRnaFeed;
+
 void AXRNA_SetSfreq(void* self, s32 sfreq);
 void AXRNA_SetMain(void* self, u32 index, s32 val);
 void criware_8039A8E0(void* self, u32 flags);
 void axrna_update_play(void* self);
 void axrna_start_trans(void* self);
 void axrna_start_flash(void* self);
-void criware_80399F4C(void* self);
+void criware_80399F4C(AxRnaFeed* _this);
 
 void AXRNA_Init(void) {
     (void)lbl_eu_8051914C;
@@ -124,29 +142,34 @@ void AXRNA_Finish(void) {
 }
 
 void axrna_voice_drop(void* voice) {
+    u32* row;
+    u32* w;
     s32 i, j;
+    row = (u32*)lbl_eu_805F2C08;
     for (i = 0; i < 0x10; i++) {
+        w = row;
         for (j = 0; j < 2; j++) {
-            if (voice == *(void**)((u8*)&lbl_eu_805F2C08 + i * 0xE4 + j * 4 + 8)) {
-                MIXReleaseChannel(*(void**)((u8*)&lbl_eu_805F2C08 + i * 0xE4 + j * 4 + 8));
-                *(u32*)((u8*)&lbl_eu_805F2C08 + i * 0xE4 + j * 4 + 8) = 0;
+            if (voice == (void*)w[2]) {
+                AXRNASLOT* slot = (AXRNASLOT*)lbl_eu_805F2C08;
+                MIXReleaseChannel(slot[i].voices[j]);
+                slot[i].voices[j] = NULL;
                 return;
             }
+            w++;
         }
+        row += 0xE4 / 4;
     }
 }
 
-void* AXRNA_Create(void* obj_arr, u32 maxnch, u8* buf) {
+void* AXRNA_Create(void* obj_arr, s32 maxnch, u8* buf) {
     void* slot;
+    void* sj;
+    void* vpb;
     u32 i;
     u32 j;
     u32 n;
-    u32 idx;
-    u32* p;
-    u32* dst;
-    u32* src;
-    void* sj;
-    void* vpb;
+    u8* ch;
+    u8* bufp;
 
     if (maxnch <= 0) {
         RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0));
@@ -156,42 +179,49 @@ void* AXRNA_Create(void* obj_arr, u32 maxnch, u8* buf) {
         RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x28));
         return NULL;
     }
-    p = (u32*)obj_arr;
-    for (i = 0; i < maxnch; i++) {
-        if (p[i] == 0) {
-            RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x4e));
-            return NULL;
+    {
+        u32* walk = (u32*)obj_arr;
+        u32 k;
+        for (k = 0; k < (u32)maxnch; k++) {
+            if (*walk == 0) {
+                RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x4e));
+                return NULL;
+            }
+            walk++;
         }
     }
 
-    idx = 0;
     {
-        u8* p = lbl_eu_805F2C08;
+        u8* q = lbl_eu_805F2C08;
+        u32 cnt = 0;
         for (n = 0; n < 2; n++) {
             for (j = 0; j < 8; j++) {
-                if ((s8)p[0] != 0) {
-                    idx++;
+                if ((s8)q[0] != 0) {
+                    q += 0xE4;
+                    cnt++;
                 } else {
                     goto found_slot;
                 }
-                p += 0xE4;
             }
         }
+    found_slot:
+        if (cnt == 0x10) {
+            RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x76));
+            return NULL;
+        }
+        slot = &lbl_eu_805F2C08[cnt * 0xE4];
     }
-found_slot:
-    if (idx == 0x10) {
-        RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x76));
-        return NULL;
-    }
-
-    slot = &lbl_eu_805F2C08[idx * 0xE4];
     ((u8*)slot)[3] = (u8)maxnch;
     ((u8*)slot)[2] = (u8)maxnch;
 
-    dst = (u32*)((u8*)slot + 0x28);
-    src = (u32*)obj_arr;
-    for (i = 0; i < (s8)((u8*)slot)[2]; i++) {
-        *dst++ = *src++;
+    {
+        u32* d = (u32*)slot;
+        u32* s = (u32*)obj_arr;
+        u32 k;
+        for (k = 0; k < (u32)(s8)((u8*)slot)[2]; k++) {
+            d[0xa] = *s++;
+            d++;
+        }
     }
 
     *(s32*)((u8*)slot + 0x7c) = 0;
@@ -201,48 +231,51 @@ found_slot:
     *(s32*)((u8*)slot + 0x94) = -0x3c0;
     *(s32*)((u8*)slot + 0x98) = 0;
 
-    {
-        u8* ch = (u8*)slot;
-        u8* bufp = buf;
-        for (i = 0; i < (s8)((u8*)slot)[2]; i++) {
-            *(u32*)(ch + 0x10) = (u32)bufp;
-            *(u32*)((u8*)slot + 0x18) = 0x1000;
-            sj = SJRBF_Create(bufp, 0x2000, 0);
-            *(u32*)(ch + 0x30) = (u32)sj;
-            if (sj == NULL) {
-                RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x97));
-                AXRNA_Destroy(slot);
-                return NULL;
-            }
-            vpb = AXAcquireVoice(0x1f, (void*)axrna_voice_drop, 0);
-            *(u32*)(ch + 8) = (u32)vpb;
-            if (vpb == NULL) {
-                RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0xb2));
-                AXRNA_Destroy(slot);
-                return NULL;
-            }
-            GCRNA_LockCs();
-            {
-                void* v = *(void**)(ch + 8);
-                if (v != 0) {
-                    MIXInitChannel(v, 3,
-                                   *(s32*)((u8*)slot + 0x7c), *(s32*)((u8*)slot + 0x8c),
-                                   *(s32*)((u8*)slot + 0x90), *(s32*)((u8*)slot + 0x94),
-                                   0x40, *(s32*)((u8*)slot + 0x88), *(s32*)((u8*)slot + 0x98));
-                }
-            }
-            GCRNA_UnlockCs();
-            bufp += 0x2000;
-            ch += 4;
+    ch = (u8*)slot;
+    bufp = buf;
+    for (i = 0; i < (s8)((u8*)slot)[2]; i++) {
+        *(u32*)(ch + 0x10) = (u32)bufp;
+        *(u32*)((u8*)slot + 0x18) = 0x1000;
+        sj = SJRBF_Create(*(void**)(ch + 0x10), 0x2000, 0);
+        *(u32*)(ch + 0x30) = (u32)sj;
+        if (sj == NULL) {
+            RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x97));
+            AXRNA_Destroy(slot);
+            return NULL;
         }
+        vpb = AXAcquireVoice(0x1f, (void*)axrna_voice_drop, 0);
+        *(u32*)(ch + 8) = (u32)vpb;
+        if (vpb == NULL) {
+            RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0xb2));
+            AXRNA_Destroy(slot);
+            return NULL;
+        }
+        GCRNA_LockCs();
+        {
+            void* v = *(void**)(ch + 8);
+            if (v != 0) {
+                MIXInitChannel(v, 3,
+                               *(s32*)((u8*)slot + 0x7c), *(s32*)((u8*)slot + 0x8c),
+                               *(s32*)((u8*)slot + 0x90), *(s32*)((u8*)slot + 0x94),
+                               0x40, *(s32*)((u8*)slot + 0x88), *(s32*)((u8*)slot + 0x98));
+            }
+        }
+        GCRNA_UnlockCs();
+        bufp += 0x2000;
+        ch += 4;
     }
 
-    if (slot != NULL) {
-        *(u16*)((u8*)slot + 0x9c) = (u16)lbl_eu_805F2C04;
-    }
-    if (slot != NULL) {
-        *(u32*)((u8*)slot + 0xa0) = lbl_eu_80566050;
-        *(u16*)((u8*)slot + 0x9e) = 1;
+    {
+        u32 tbl;
+        tbl = lbl_eu_805F2C04;
+        if (slot != NULL) {
+            *(u16*)((u8*)slot + 0x9c) = (u16)tbl;
+        }
+        tbl = lbl_eu_80566050;
+        if (slot != NULL) {
+            *(u32*)((u8*)slot + 0xa0) = tbl;
+            *(u16*)((u8*)slot + 0x9e) = 1;
+        }
     }
     *(u16*)((u8*)slot + 0x9e) = 0;
     AXRNA_SetSfreq(slot, 0xBB80);
@@ -289,8 +322,11 @@ found_slot:
         }
     }
     *(s32*)((u8*)slot + 0xb4) = 0;
-    for (i = 0; i < 4; i++) {
-        AXRNA_SetMain(slot, i, 0);
+    {
+        s32 k;
+        for (k = 0; k < 4; k++) {
+            AXRNA_SetMain(slot, k, 0);
+        }
     }
     criware_8039A8E0(slot, 0x10);
     ((u8*)slot)[1] = 0;
@@ -485,16 +521,20 @@ int AXRNA_GetNumRoom(AXRNA *rna) {
 #pragma auto_inline off
 void axrna_update_play(void* self) {
     s32 i;
-    s32 cur;
+    s32 delta;
     s32 a4;
-    s32 r28;
     void* voice;
+    s32 cur;
 
     cur = *(s32*)((u8*)self + 4);
     voice = *(void**)((u8*)self + ((s8)((u8*)self)[3] - 1) * 4 + 8);
     if (voice == NULL)
         return;
-    a4 = (s32)(*(u32*)((u8*)voice + 0xa2) - ((*(u32*)((u8*)self + ((s8)((u8*)self)[3] - 1) * 4 + 0x10) + 0x80000000u) >> 1));
+    {
+        u32 mem = *(u32*)((u8*)self + ((s8)((u8*)self)[3] - 1) * 4 + 0x10);
+        /* retail: (mem + 0x80000000) >> 1 -- addis/srwi pair */
+        a4 = (s32)(*(u32*)((u8*)voice + 0xa2) - ((mem + 0x80000000u) >> 1));
+    }
     *(s32*)((u8*)self + 0xa4) = a4;
     if (a4 < 0 || a4 > *(s32*)((u8*)self + 0x18)) {
         for (;;) {
@@ -502,37 +542,41 @@ void axrna_update_play(void* self) {
     }
     if (cur == -1) {
         if (a4 == 0) {
-            r28 = 0;
+            delta = 0;
         } else {
             cur = 0;
             *(s32*)((u8*)self + 4) = 0;
         }
     }
     if (cur != -1) {
-        r28 = 0x1000 - cur + a4;
+        /* wrap-around delta: 0x1000 - (cur - a4), or plain a4 - cur when ahead */
+        delta = 0x1000 - (cur - a4);
         if (a4 > cur) {
-            r28 = a4 - cur;
+            delta = a4 - cur;
         }
     }
-    r28 = (r28 / 0x800) * 0x800;
-    if (r28 > 0) {
+    delta = (delta / 0x800) * 0x800;
+    if (delta > 0) {
         SJ_CHUNK out;
+        void* selfcp = self;
+        s32 bytes = delta * 2;
         for (i = 0; i < (s8)((u8*)self)[3]; i++) {
             /* NB: keep the un-hoisted object load; hoisting it here shifts
              * register allocation on this function (baseline diff profile). */
-            ((void(*)(void*, s32, s32, void*))((*(void***)*(void**)((u8*)self + i * 4 + 0x30))[6]))(
-                *(void**)((u8*)self + i * 4 + 0x30), 1, r28 * 2, &out);
-            ((void(*)(void*, s32, void*))((*(void***)*(void**)((u8*)self + i * 4 + 0x30))[8]))(
-                *(void**)((u8*)self + i * 4 + 0x30), 0, &out);
+            ((void(*)(void*, s32, s32, void*))((*(void***)*(void**)((u8*)selfcp + i * 4 + 0x30))[6]))(
+                *(void**)((u8*)selfcp + i * 4 + 0x30), 1, bytes, &out);
+            ((void(*)(void*, s32, void*))((*(void***)*(void**)((u8*)selfcp + i * 4 + 0x30))[8]))(
+                *(void**)((u8*)selfcp + i * 4 + 0x30), 0, &out);
         }
         {
-            s32 v = *(s32*)((u8*)self + 4) + r28;
-            if (v >= 0x1000)
-                v -= 0x1000;
+            s32 v = *(s32*)((u8*)self + 4) + delta;
             *(s32*)((u8*)self + 4) = v;
+            if (v >= 0x1000) {
+                *(s32*)((u8*)self + 4) = v - 0x1000;
+            }
         }
     }
-    *(s32*)((u8*)self + 0xa8) += r28;
+    *(s32*)((u8*)self + 0xa8) += delta;
 }
 
 void axrna_start_trans(void* self) {
@@ -601,117 +645,112 @@ void axrna_start_trans(void* self) {
     }
 }
 
-void criware_80399F4C(void* self) {
-    s32 i;
-    s32 nch;
+/* Streaming feed: resamples input-ring data into the output rings, then
+ * mirrors one chunk per channel from the output rings back into the
+ * playback rings. Compare widths follow retail (unsigned avail/size tests,
+ * signed half/min tests). */
+void criware_80399F4C(AxRnaFeed* _this) {
     s32 src_len;
     s32 dst_len;
     s32 c4;
     s32 m;
+    s32 i;
+    AxRnaFeed* chp;
+    void* sj;
+    void* obj;
+    void* ring;
     SJ_CHUNK chunk1;
     SJ_CHUNK chunk2;
     SJ_CHUNK out;
-    SJ_CHUNK out2;
-    SJ_CHUNK out3;
+    SJ_CHUNK split1;
+    SJ_CHUNK split2;
 
-    src_len = *(s32*)((u8*)self + 0xbc);
-    dst_len = (src_len * *(s32*)((u8*)self + 0xc0)) / 100;
+    src_len = *(s32*)((u8*)_this + 0xbc);
+    dst_len = (src_len * *(s32*)((u8*)_this + 0xc0)) / 100;
     dst_len &= ~3;
-    nch = (s8)((u8*)self)[3];
-    if (nch > 1) {
-        RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x450));
+    if ((s8)_this->pad0[3] > 1) {
+        RNAERR_CallErrFunc((const char*)lbl_eu_80519150 + 0x450);
         return;
     }
-    for (i = 0; i < nch; i++) {
-        void* sj = *(void**)((u8*)self + i * 4 + 0xc8);
-        if ((s32)SJ_VT(sj)->getAvail(sj, 0) < dst_len * 2) {
-            goto skip;
+
+    chp = _this;
+    for (i = 0; i < (s8)_this->pad0[3]; i++) {
+        sj = chp->out_sj[0];
+        if ((u32)SJ_VT(sj)->getAvail(sj, 0) < (u32)(dst_len * 2)) {
+            goto tail;
         }
-        {
-            void* obj = *(void**)((u8*)self + 0x28);
-            if ((s32)SJ_VT(obj)->getAvail(obj, 1) < src_len * 2) {
-                c4 = *(s32*)((u8*)self + 0xc4);
-                if (c4 <= 2)
-                    goto skip;
+        obj = _this->in_ring[0];
+        if ((u32)SJ_VT(obj)->getAvail(obj, 1) < (u32)(src_len * 2)) {
+            c4 = *(s32*)&_this->pad0[0xc4];
+            if (c4 <= 2) {
+                goto skip_inc;
             }
         }
         SJ_VT(sj)->getChunk(sj, 0, dst_len * 2, &chunk1);
-        if (chunk1.size < dst_len * 2) {
-            RNAERR_CallErrFunc((const char*)(lbl_eu_80519150 + 0x488));
+        if ((u32)chunk1.size < (u32)(dst_len * 2)) {
+            RNAERR_CallErrFunc((const char*)lbl_eu_80519150 + 0x488);
             SJ_VT(sj)->ungetChunk(sj, 0, &chunk1);
             return;
         }
-        {
-            void* obj = *(void**)((u8*)self + i * 4 + 0x28);
-            SJ_VT(obj)->getChunk(obj, 1, src_len * 2, &chunk2);
-            memcpy((void*)lbl_eu_805F3A4C, chunk2.ptr, chunk2.size);
+        /* pull src_len samples out of the shared input ring */
+        obj = chp->in_ring[0];
+        SJ_VT(obj)->getChunk(obj, 1, src_len * 2, &chunk2);
+        memcpy((void*)lbl_eu_805F3A4C, chunk2.ptr, chunk2.size);
+        SJ_VT(obj)->putChunk(obj, 0, &chunk2);
+        m = (s32)((u32)chunk2.size >> 1);
+        if (m < src_len) {
+            SJ_VT(obj)->getChunk(obj, 1, (src_len - m) * 2, &chunk2);
+            memcpy((void*)((char*)lbl_eu_805F3A4C + m * 2), chunk2.ptr,
+                   chunk2.size);
             SJ_VT(obj)->putChunk(obj, 0, &chunk2);
-            if ((chunk2.size >> 1) < src_len) {
-                s32 half = chunk2.size >> 1;
-                SJ_VT(obj)->getChunk(obj, 1, (src_len - half) * 2, &chunk2);
-                memcpy((void*)((u8*)lbl_eu_805F3A4C + half * 2), chunk2.ptr, chunk2.size);
-                SJ_VT(obj)->putChunk(obj, 0, &chunk2);
-                half += chunk2.size >> 1;
-                if (half < src_len) {
-                    memset((void*)((u8*)lbl_eu_805F3A4C + half * 2), 0, (src_len - half) * 2);
-                }
+            m += (s32)((u32)chunk2.size >> 1);
+            if (m < src_len) {
+                memset((void*)((char*)lbl_eu_805F3A4C + m * 2), 0,
+                       (src_len - m) * 2);
             }
         }
-        criware_8039B4E0((s16*)(void*)lbl_eu_805F3A4C, src_len, (s16*)chunk1.ptr, dst_len);
+        criware_8039B4E0((s16*)lbl_eu_805F3A4C, src_len, (s16*)chunk1.ptr,
+                         dst_len);
         SJ_VT(sj)->putChunk(sj, 1, &chunk1);
-        *(s32*)((u8*)self + 0xc4) = 0;
-        goto done;
-    skip:
-        c4 = *(s32*)((u8*)self + 0xc4);
-        *(s32*)((u8*)self + 0xc4) = c4 + 1;
-    done:
-        {
-            void* ring = *(void**)((u8*)self + i * 4 + 0x30);
-            SJ_VT(ring)->getChunk(ring, 0, 0x2000, &out);
-        }
-        {
-            void* sj2 = *(void**)((u8*)self + i * 4 + 0xc8);
-            SJ_VT(sj2)->getChunk(sj2, 1, out.size, &chunk1);
-        }
-        m = (out.size < chunk1.size) ? out.size : chunk1.size;
+        *(s32*)((u8*)_this + 0xc4) = 0;
+        goto tail;
+    skip_inc:
+        *(s32*)((u8*)_this + 0xc4) = c4 + 1;
+    tail:
+        ring = chp->rings[0];
+        SJ_VT(ring)->getChunk(ring, 0, 0x2000, &out);
+        sj = chp->out_sj[0];
+        SJ_VT(sj)->getChunk(sj, 1, out.size, &chunk1);
+        m = (chunk1.size < out.size) ? chunk1.size : out.size;
         m = (m / 0x20) * 0x20;
-        SJ_SplitChunk(&out, m, &out, &out2);
-        {
-            void* ring = *(void**)((u8*)self + i * 4 + 0x30);
-            SJ_VT(ring)->ungetChunk(ring, 0, &out2);
-        }
-        SJ_SplitChunk(&chunk1, m, &chunk1, &out3);
-        {
-            void* sj2 = *(void**)((u8*)self + i * 4 + 0xc8);
-            SJ_VT(sj2)->ungetChunk(sj2, 1, &out3);
-        }
+        SJ_SplitChunk(&out, m, &out, &split1);
+        SJ_VT(ring)->ungetChunk(ring, 0, &split1);
+        SJ_SplitChunk(&chunk1, m, &chunk1, &split2);
+        SJ_VT(sj)->ungetChunk(sj, 1, &split2);
         memcpy(out.ptr, chunk1.ptr, m);
         DCFlushRange(out.ptr, m);
-        {
-            void* sj2 = *(void**)((u8*)self + i * 4 + 0xc8);
-            SJ_VT(sj2)->putChunk(sj2, 0, &chunk1);
+        SJ_VT(sj)->putChunk(sj, 0, &chunk1);
+        SJ_VT(ring)->putChunk(ring, 1, &out);
+        *(s32*)((u8*)_this + 0x60) = (u32)m >> 1;
+        if (i == (s8)((u8*)_this)[3] - 1) {
+            *(s32*)((u8*)_this + 0x64) += (u32)m >> 1;
         }
-        {
-            void* ring = *(void**)((u8*)self + i * 4 + 0x30);
-            SJ_VT(ring)->putChunk(ring, 1, &out);
-        }
-        *(s32*)((u8*)self + 0x60) = m >> 1;
-        if (i == (s8)((u8*)self)[3] - 1) {
-            *(s32*)((u8*)self + 0x64) += m >> 1;
-        }
-        if (*(s32*)((u8*)self + 0x64) > 0xBB80) {
+        if (*(s32*)((u8*)_this + 0x64) > 0xBB80) {
             lbl_eu_805F3A48++;
         }
+        chp = (AxRnaFeed*)((char*)chp + 4);
     }
 }
 
 void axrna_start_flash(void* self) {
     s32 i;
+    u8* p48 = (u8*)self + 0x48;
+    u8* cs;
+    u8* ch;
     SJ_CHUNK out;
     SJ_CHUNK split;
-    u8* ch = (u8*)self;
-    u8* cs = (u8*)self;
-    u8* p48 = (u8*)self + 0x48;
+    ch = (u8*)self;
+    cs = (u8*)self;
 
     for (i = 0; i < (s8)((u8*)self)[3]; i++) {
         s32 size;
@@ -732,7 +771,7 @@ void axrna_start_flash(void* self) {
             return;
         *(s32*)(cs + 0x48) = (u32)out.ptr;
         *(s32*)(cs + 0x4c) = out.size;
-        *(s32*)((u8*)self + 0x70) = size >> 1;
+        *(s32*)((u8*)self + 0x70) = (u32)((u32)size >> 1);
         *(s32*)(ch + 0x68) = 1;
         memset(out.ptr, 0, size);
         DCFlushRange(out.ptr, size);
@@ -779,7 +818,7 @@ void AXRNA_ExecServer(void) {
         }
         if (st == 1) {
             if (*(s32*)(rna + 0xB4) == 1)
-                criware_80399F4C(rna);
+                criware_80399F4C((AxRnaFeed*)rna);
             else
                 axrna_start_trans(rna);
         } else {
@@ -861,15 +900,19 @@ void AXRNA_SetOutVol(void* self, s32 vol) {
 void AXRNA_SetOutPan(void* self, s32 index, s32 pan) {
     s32 p;
     s32 v;
+    u32 off;
     if (self == NULL)
         return;
     if (index >= (s8)((u8*)self)[2])
         return;
     p = (pan >= 0xf) ? 0xf : pan;
     v = (p <= -0xf) ? -0xf : p;
-    if (*(s32*)((u8*)self + index * 4 + 0x80) == v)
-        return;
-    *(s32*)((u8*)self + index * 4 + 0x80) = v;
+    {
+        s32* pf = (s32*)((u8*)self + index * 4);
+        if (pf[0x20] == v)
+            return;
+        pf[0x20] = v;
+    }
     GCRNA_LockCs();
     {
         void* e = *(void**)((u8*)self + index * 4 + 8);

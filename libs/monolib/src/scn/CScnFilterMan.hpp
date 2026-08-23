@@ -12,6 +12,10 @@ extern "C" s32 func_8004B3D8(u32* self, u32 flags);
 extern "C" void* func_804932B4(void* self, void* param);
 
 // Minimal layout views for the CScnFilter reslist helpers in this TU
+
+class CScn;
+
+// Minimal layout views for the CScnFilter reslist helpers in this TU
 // (mirror the _reslist_node / _reslist_base offsets from
 // monolib/util/reslist.hpp; only the fields these helpers touch are declared).
 struct CScnFilterListNode {
@@ -91,6 +95,8 @@ public:
     void update();
     void cbRenderBefore();
 
-    u8 field_0x00[0x04];          // 0x04 mScene ptr (vtable implicit at 0x00)
-    CScnFilterReslist field_0x08; // 0x08 reslist<CScnFilter*> member
+    CScn* mScene;                        // 0x04 scene back-pointer
+    CScnFilterReslist field_08;          // 0x08 reslist<CScnFilter*> member
+    CScnFilterIteratorReslist field_28;  // 0x28 iterator reslist member
+    u32 field_48;                        // 0x48 flags word (set by update())
 };

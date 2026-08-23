@@ -479,8 +479,8 @@ void func_800FB270(cf::CtrlEnemyEnumList* list, void* obj, f32 a, f32 b,
                    f32 c, int d);
 int func_80148778(void* obj, int id);
 void* func_80149154(void* obj, int id);
-int func_80174C98(void* obj, u32* out, u32 flags);
-void func_80174B4C(void* obj, u32 flags);
+extern "C" int func_80174C98(void* obj, u32* out, u32 flags);
+extern "C" void func_80174B4C(void* obj, u32 flags);   // C linkage: matches CVision.hpp/CChainTimer.hpp forms (error 10197 otherwise)
 void func_800D9CA0(void* mgr, void* target);
 void func_800BE12C(void* obj, int a, int b, int c, int d);
 void func_8008B580(void* sub);

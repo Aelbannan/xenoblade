@@ -89,7 +89,7 @@ public:
 
 struct UnkObj3E9C {
     u8 field_0x0[0x3E9C];
-    UnkContainerIntf3E9C* container;   // 0x3E9C: vptr slot
+    UnkContainerIntf3E9C container;   // 0x3E9C: embedded vptr'd subobject
 };
 
 // Data-area blocks at 0x80570CE0 (offsets +0x978 and +0xA18) cleared by
@@ -339,7 +339,7 @@ public:
     void func_80081A24();
     void func_80081A40();
     void func_80081CB0();
-    void func_80081CB8();
+    static void* func_80081CB8();
     void func_80081CBC();
     void func_80081D2C();
     void func_80081D8C();
@@ -396,7 +396,7 @@ public:
     void func_80083284();
     void func_80083290();
     void func_800832BC();
-    void func_80083304();
+    static void func_80083304();
     void func_80083328();
     u32 func_80083458();
     u32 func_80083460();
@@ -499,6 +499,13 @@ public:
     void func_80087448();
     }; //size = 0xB8
 } // namespace cf
+
+// Boot-time initializer holding the CfGameManager singleton construction
+// (retail symbol init__17UnkClass_8007DAE0FP8CScnNw4rP5CViewUs).
+class UnkClass_8007DAE0 {
+public:
+    static cf::CfGameManager* init(CScnNw4r* scene, CView* view, u16 arg);
+};
 
 // ---------------------------------------------------------------------------
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
@@ -647,6 +654,41 @@ extern "C" void func_800A7D9C();
 extern "C" void Remove__8CProcessFv(CProcess* process);
 extern "C" void func_8003AA8C__5CBdatFUl(u32 value);
 
+// --- UnkClass_8007DAE0::init / func_8008566C imports (retail C-linkage names)
+extern "C" void __ct__8009D604();
+extern "C" void __dt__801570F0();
+extern "C" void func_800D9190__Q22cf14CBattleManagerFv();
+extern "C" void __ct__Q22cf12CHelpManagerFv();
+extern "C" void func_802A14B8();
+extern "C" CProcess* GetRootProcRealTime__12CTaskManagerFv();
+extern "C" CProcess* GetRootProcGame__12CTaskManagerFv();
+extern "C" CProcess* create__Q22cf9CfPadTaskFP8CProcess(CProcess* parent,
+                                                          void* scene);
+extern "C" CProcess* __ct__Q22cf5CfResFv(CProcess* parent, void* scene);
+extern "C" CProcess* __ct__800697E8(CProcess* parent, void* scene);
+extern "C" void func_800A7CDC();
+extern "C" void func_8019FB40();
+extern "C" void func_800B92B4();
+extern "C" void func_80068A80();
+typedef void (*UnkGameManagerCallback)();
+extern "C" void func_800C1E40();
+extern "C" void func_800C1E9C(UnkGameManagerCallback callback, s32 value);
+extern "C" void func_800627FC(u32 value, u32 mode);
+extern "C" void func_80062860(u32 value, u32 mode);
+extern "C" void func_80068A20(s32 value);
+extern "C" bool func_8007DECC__Q22cf13CfGameManagerFv(s32 value, s32* current,
+                                                        u32 size);
+// Scene state query result: three words plus a float threshold at +0xC.
+struct UnkScnResult {
+    u32 field_0x0;
+    u32 field_0x4;
+    u32 field_0x8;
+    float field_0xC;
+};
+extern "C" UnkScnResult* func_8049603C(CScn* scene);
+extern "C" void func_8049602C(CScn* scene, u32 mode, const float* vec);
+extern const float lbl_eu_80666568;
+
 // --- func_80084F50 imports ---
 extern "C" void func_80135FDC();
 extern "C" void func_802062BC();
@@ -712,3 +754,42 @@ extern "C" void func_8007E9CC__Q22cf13CfGameManagerFv(u16 value, u32 mode);
 extern const double lbl_eu_80666518;
 extern const double lbl_eu_80666520;
 extern u32 lbl_eu_805276F0[];
+
+// --- imports for func_80084654 / func_80085978 / func_8007E9CC / func_8008413C ---
+namespace ml { class CVec3; }
+// Mangled global C++ function (retail func_800AD860__FPv) - NOT extern "C";
+// CfObjectMove.hpp declares the same prototype.
+void* func_800AD860(void* object);
+extern "C" void func_8009D018(u32 first, u32 second);
+extern "C" u32 func_801412D0(u32 first);
+extern "C" void func_8013F244();
+extern "C" void func_8015B11C();
+extern "C" void* func_802A2424();
+extern "C" s32 func_8011C2E8();
+extern "C" s32 func_8011C2FC();
+extern "C" void func_800B1C78(s32 value);
+extern "C" void CfRes_callFunc_67F10(s32 value);
+extern "C" bool func_80061D2C(UnkClass_80085334* object, u32 mode);
+extern "C" cf::CfGameManager* func_8015783C(u32 mappedIndex, u16 dataId, u32 slot);
+extern "C" void* func_8015730C(u32 kind, u32 slot, u32 mode);
+extern "C" s8* func_80157948(u16 dataId, u32 slot);
+extern "C" u32 func_80157FDC(u32 value);
+class CItemImplInstances;
+extern "C" CItemImplInstances* CItem_initItemImplInstances();
+extern "C" void func_8009DB28(void* data, u32 index);
+extern "C" void func_8009D790_full(void* data, u32 index);
+extern "C" void func_80141D48(void* dst, void* src, u8 value);
+extern "C" void func_8027F148();
+extern "C" void func_80068C7C();
+extern "C" void func_80068D14();
+extern "C" void func_80068DAC();
+extern "C" void func_800B93AC();
+extern "C" void func_800F3C08(void* battle, u32 value);
+extern "C" void* func_8004B7C0(void* out, const ml::CVec3* src);
+extern "C" void func_80199678();
+// zero vector constant exported by the ml unit. Declared by
+// CfGameManagerUnityHelpers.hpp (ResetVectorWords view) in this TU; a global
+// extern here would clash with that declaration's type.
+// Event-done halfword counters read by func_8008413C.
+extern u16 lbl_eu_80663E42;
+extern u16 lbl_eu_80663E44;

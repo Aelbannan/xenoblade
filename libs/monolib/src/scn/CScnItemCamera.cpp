@@ -36,18 +36,7 @@ extern const f64 lbl_eu_8066AC30;     // signed int->float magic (2^52 + 2^31)
 
 // Named-magic conversion helpers (retail references the shared pool labels
 // instead of pooling local .sdata2 entries; this TU emits no .sdata2).
-static inline f32 u16ToF_ac08(u16 v) {
-    union { u32 w[2]; double d; } c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = v;
-    return (f32)(c.d - lbl_eu_8066AC08);
-}
-static inline f32 s16ToF_ac30(s16 v) {
-    union { u32 w[2]; double d; } c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    return (f32)(c.d - lbl_eu_8066AC30);
-}
+// (u16/s16 conversions now use plain builtin casts - see the ctor.)
 extern const char lbl_eu_80524258[];  // FixStr<32> format string (func_8049F9A8)
 extern const char lbl_eu_80526324[];  // nw4r db Warning file name
 // nw4r db Warning message (lbl_eu_80526300)
@@ -261,8 +250,9 @@ struct CScnItemSceneVtbl {
 void func_8049EB60(CScnItemCamera* self) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
-    f32 t = (f32)tan(lbl_eu_8066AC10 * cam->mFovY * lbl_eu_8066A210 *
-                     lbl_eu_8066AC18 * lbl_eu_8066AC14);
+    f32 rad = lbl_eu_8066AC10 * cam->mFovY;
+    f32 scaled = rad * lbl_eu_8066A210;
+    f32 t = (f32)tan(lbl_eu_8066AC14 * (lbl_eu_8066AC18 * scaled));
 
     f32 inv = lbl_eu_8066AC1C / t;
     cam->mUnk1E4 = inv;
@@ -272,7 +262,8 @@ void func_8049EB60(CScnItemCamera* self) {
 
     self->mDepthMid = -near;
     self->mDepthFarNear = near * cam->mAspectRatio;
-    self->mDepthFar = -near * cam->mAspectRatio;
+    // Retail rounds -near through double (frsp) before the Far multiply.
+    self->mDepthFar = (f32)(-(f64)near) * cam->mAspectRatio;
 }
 
 // ============================================================
@@ -298,8 +289,7 @@ void func_8049F168(CScnItemCamera* self, ml::CVec3* v) {
     cam->mPosY = *(u32*)&newPos.y;
     cam->mPosZ = *(u32*)&newPos.z;
 
-    CScnItemCameraVtbl* vtbl = *(CScnItemCameraVtbl**)self;
-    vtbl->slot9(self);
+    ((CScnItemCameraRefreshIf*)self)->refresh();
 }
 
 // ============================================================
@@ -308,19 +298,19 @@ void func_8049F168(CScnItemCamera* self, ml::CVec3* v) {
 // floats arranged as three CVec3s (0x00, 0x0C, 0x18).
 // ============================================================
 void sinit_8049FC60() {
-    f32* v0 = lbl_eu_80658658;
-    f32* v1 = v0 + 3;
-    f32* v2 = v0 + 6;
+    // Row starts addressed off lbl_eu_80658658 (+0/+12/+24), row elements
+    // 1-2 off lbl_eu_80658664 - mirrors retail's mixed base/pointer stores.
+    lbl_eu_80658658[0] = lbl_eu_8066ABF0;
+    lbl_eu_80658658[1] = lbl_eu_8066AC00;
+    lbl_eu_80658658[2] = lbl_eu_8066AC38;
 
-    v0[0] = lbl_eu_8066ABF0;
-    v0[1] = lbl_eu_8066AC00;
-    v0[2] = lbl_eu_8066AC38;
-    v1[0] = lbl_eu_8066ABF0;
-    v1[1] = lbl_eu_8066ABF0;
-    v1[2] = lbl_eu_8066ABF0;
-    v2[0] = lbl_eu_8066ABF0;
-    v2[1] = lbl_eu_8066ABF0;
-    v2[2] = lbl_eu_8066AC1C;
+    lbl_eu_80658658[3] = lbl_eu_8066ABF0;
+    lbl_eu_80658664[1] = lbl_eu_8066ABF0;
+    lbl_eu_80658664[2] = lbl_eu_8066ABF0;
+
+    lbl_eu_80658658[6] = lbl_eu_8066ABF0;
+    lbl_eu_80658664[4] = lbl_eu_8066ABF0;
+    lbl_eu_80658664[5] = lbl_eu_8066AC1C;
 }
 
 // ============================================================
@@ -335,6 +325,9 @@ void sinit_8049FC60() {
 void func_8049F6D4(CScnItemCamera* self, const ml::CVec3* v) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
+    // Declared in retail stack-slot order (first -> highest offset):
+    // lenVec@0x14, diff@0x08.
+    ml::CVec3 lenVec;
     ml::CVec3 diff;
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&diff,
                         (const nw4r::math::VEC3*)&self->mCamParam0,
@@ -344,11 +337,14 @@ void func_8049F6D4(CScnItemCamera* self, const ml::CVec3* v) {
     cam->mPosY = *(const u32*)&v->y;
     cam->mPosZ = *(const u32*)&v->z;
 
-    ml::CVec3 lenVec = diff;
+    // Member-wise float copy: struct-assign lowers to word copies, retail
+    // uses lfs/stfs.
+    lenVec.x = diff.x;
+    lenVec.y = diff.y;
+    lenVec.z = diff.z;
     self->mUnk1F4 = PSVECMag((const Vec*)&lenVec);
 
-    CScnItemCameraVtbl* vtbl = *(CScnItemCameraVtbl**)self;
-    vtbl->slot9(self);
+    ((CScnItemCameraRefreshIf*)self)->refresh();
 }
 
 // ============================================================
@@ -360,8 +356,8 @@ void func_8049F774(CScnItemCamera* self, const ml::CMat34* mtx) {
     self->mTransform.mMtx1 = *mtx;
     self->mTransform.mFlags |= ml::CAttrTransform::FLAG_0;
 
-    CScnItemCameraVtbl* vtbl = *(CScnItemCameraVtbl**)self;
-    vtbl->slot9(self);
+    // Interface-cast virtual dispatch (same shape as the ctor/F8E4 calls).
+    ((CScnItemCameraRefreshIf*)self)->refresh();
 }
 
 // ============================================================
@@ -371,26 +367,37 @@ void func_8049F774(CScnItemCamera* self, const ml::CMat34* mtx) {
 // vector (0x138) as raw bits.
 // ============================================================
 void func_8049F824(CScnItemCamera* self, f32 f1) {
-    CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
+    ((CScnItemCameraLayout*)self)->mUnk1F4 = f1;
 
-    self->mUnk1F4 = f1;
-
+    // Declared in retail stack-slot order (first -> highest offset):
+    // normal@0x38, tmp@0x2C, v@0x20, out@0x14, sum@0x08. tmp's dummy init
+    // is dead (reassigned before any read); the final copy is member-wise
+    // so MWCC cannot copy-propagate tmp away.
     ml::CVec3 normal(lbl_eu_8066ABF0, lbl_eu_8066ABF0, -f1);
+    ml::CVec3 tmp;
+    ml::CVec3 v;
     ml::CVec3 out;
+    ml::CVec3 sum;
     nw4r::math::VEC3TransformNormal(
         (nw4r::math::VEC3*)&out,
         (const nw4r::math::MTX34*)&self->mTransform.mLocalMatInv,
         (const nw4r::math::VEC3*)&normal);
 
-    ml::CVec3 v = out;
-    ml::CVec3 sum;
+    // Member-wise float copies: struct/plain assigns lower to word copies.
+    v.x = out.x;
+    v.y = out.y;
+    v.z = out.z;
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&sum,
                         (const nw4r::math::VEC3*)&v,
                         (const nw4r::math::VEC3*)&self->mTransform.mPos);
 
-    cam->mCamParam0 = *(u32*)&sum.x;
-    cam->mCamParam1 = *(u32*)&sum.y;
-    cam->mCamParam2 = *(u32*)&sum.z;
+    tmp.x = sum.x;
+    tmp.y = sum.y;
+    tmp.z = sum.z;
+
+    ((CScnItemCameraLayout*)self)->mCamParam0 = *(u32*)&tmp.x;
+    ((CScnItemCameraLayout*)self)->mCamParam1 = *(u32*)&tmp.y;
+    ((CScnItemCameraLayout*)self)->mCamParam2 = *(u32*)&tmp.z;
 }
 
 // ============================================================
@@ -399,28 +406,43 @@ void func_8049F824(CScnItemCamera* self, f32 f1) {
 // (fovY/near/far into 0x194), then register the camera on the
 // parent's scene object (vtable slot 4).
 // ============================================================
+// Real-virtual-dispatch interface reaching vtable slot 4 (offset 0x10)
+// of the parent scene object; a manual function-pointer call would color
+// the camera argument differently than retail.
+struct CScnItemSceneRegIf {
+    virtual void v0();
+    virtual void v1();
+    virtual void registerCamera(CScnItemCamera* cam);
+};
+
 extern "C" void func_8049F8E4(CScnItemCamera* self) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
     CGXCacheViewportRect* vp =
         func_8044BE10__8CGXCacheFv(CDeviceGX::getCacheInstance());
-    s16 width = vp->width;
-    s16 height = vp->height;
+    // Read before the aspect math: keeps f1-f3 reserved for these call
+    // arguments while the conversion temporaries color into f4+.
+    f32 farZ = cam->mFarZ;
+    f32 nearZ = cam->mNearZ;
+    f32 fovY = cam->mFovY;
 
-    self->mViewportX = 0;
-    self->mViewportY = 0;
-    self->mViewportWidth = (u16)width;
-    self->mViewportHeight = (u16)height;
-    self->mAspectRatio =
-        lbl_eu_8066AC04 * (s16ToF_ac30(width) / s16ToF_ac30(height));
+    s16 width;
+    s16 height;
+    height = vp->height;
+    width = vp->width;
+
+    cam->mViewportX = 0;
+    cam->mViewportY = 0;
+    cam->mViewportWidth = (u16)width;
+    cam->mViewportHeight = (u16)height;
+
+    cam->mAspectRatio = ((f32)width / (f32)height) * lbl_eu_8066AC04;
 
     func_8044BB20__8CGXCacheFv(CDeviceGX::getCacheInstance(), cam->mProj,
-                               self->mFovY, self->mNearZ, self->mFarZ);
+                               fovY, nearZ, farZ);
 
     CScnItemParentLayout* parent = (CScnItemParentLayout*)cam->mParent;
-    void* scene = parent->field_0x8C;
-    CScnItemSceneVtbl* vtbl = *(CScnItemSceneVtbl**)scene;
-    vtbl->slot4(scene, self);
+    ((CScnItemSceneRegIf*)parent->field_0x8C)->registerCamera(self);
 }
 
 // ============================================================
@@ -433,8 +455,8 @@ void func_8049EFF8(CScnItemCamera* self, const ml::CVec3* v,
                    const ml::CVec3* v2, f32 f1) {
     CScnItemCameraLayout* cam = (CScnItemCameraLayout*)self;
 
-    ml::CVec3 diff = *(const ml::CVec3*)&self->mCamParam0 - *v;
-
+    // Retail overwrites the camera parameters with v2 BEFORE deriving the
+    // direction vector: diff = (new mCamParam) - v.
     cam->mCamParam0 = *(const u32*)&v2->x;
     cam->mCamParam1 = *(const u32*)&v2->y;
     cam->mCamParam2 = *(const u32*)&v2->z;
@@ -443,15 +465,25 @@ void func_8049EFF8(CScnItemCamera* self, const ml::CVec3* v,
     cam->mPosZ = *(const u32*)&v->z;
     self->mTransform.mRot.z = f1;
 
-    self->mUnk1F4 = PSVECMag((const Vec*)&diff);
+    ml::CVec3 sub;
+    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&sub,
+                        (const nw4r::math::VEC3*)&self->mCamParam0,
+                        (const nw4r::math::VEC3*)v);
+
+    // Retail keeps two intermediate copies of the difference vector
+    // (type-conversion temporaries) before the magnitude call.
+    ml::CVec3 diff = sub;
+    ml::CVec3 dir = diff;
+
+    self->mUnk1F4 = PSVECMag((const Vec*)&dir);
 
     // Yaw around Y from the x/z components (atan2(y=dx, x=-dz)).
     self->mTransform.mRot.y =
-        -(lbl_eu_8066AC14 * nw4r::math::Atan2FIdx(diff.x, -diff.z));
+        -(lbl_eu_8066AC14 * nw4r::math::Atan2FIdx(dir.x, -dir.z));
 
     // Pitch from the y component against the horizontal length. The
     // horizontal length is only well-defined when dx^2+dz^2 > 0.
-    f32 len2d = diff.x * diff.x + diff.z * diff.z;
+    f32 len2d = dir.x * dir.x + dir.z * dir.z;
     if (len2d < lbl_eu_8066ABF0) {
         nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
     }
@@ -459,10 +491,9 @@ void func_8049EFF8(CScnItemCamera* self, const ml::CVec3* v,
                     ? lbl_eu_8066ABF0
                     : len2d * nw4r::math::FrSqrt(len2d);
     self->mTransform.mRot.x =
-        lbl_eu_8066AC14 * nw4r::math::Atan2FIdx(diff.y, lenXZ);
+        lbl_eu_8066AC14 * nw4r::math::Atan2FIdx(dir.y, lenXZ);
 
-    CScnItemCameraVtbl* vtbl = *(CScnItemCameraVtbl**)self;
-    vtbl->slot9(self);
+    ((CScnItemCameraRefreshIf*)self)->refresh();
 }
 
 CScnItemCamera* __ct__CScnItemCamera(CScnItemCamera* obj, CScnItemCamera* parent,
@@ -498,8 +529,11 @@ CScnItemCamera* __ct__CScnItemCamera(CScnItemCamera* obj, CScnItemCamera* parent
                       (ConstructorDestructor)&func_8049EA98,
                       (ConstructorDestructor)&__dt__8049EA9C, 0x10, 6);
 
-    f32 width = u16ToF_ac08(CDeviceVI::getRenderModeObj()->fbWidth);
-    f32 height = u16ToF_ac08(CDeviceVI::getRenderModeObj()->efbHeight);
+    // Plain builtin casts: MWCC's u16->f32 conversion emits the retail
+    // stw/stw/lfd/lfd/fsubs 2^52 idiom directly (manual union helpers add an
+    // extra rounding insn - see MWCC_CASES CActorParam UnkVirtualFunc11).
+    f32 width = (f32)CDeviceVI::getRenderModeObj()->fbWidth;
+    f32 height = (f32)CDeviceVI::getRenderModeObj()->efbHeight;
     cam->mAspectRatio = lbl_eu_8066AC04 * (height / width);
 
     obj->mTransform.clear();
@@ -664,27 +698,61 @@ void func_8049F204(CScnItemCamera* self, const ml::CVec3* delta) {
     nw4r::math::VEC3Add((nw4r::math::VEC3*)&rot,
                         (const nw4r::math::VEC3*)&self->mTransform.mRot,
                         (const nw4r::math::VEC3*)delta);
-    self->mTransform.mRot.x = rot.x;
-    self->mTransform.mRot.y = rot.y;
-    self->mTransform.mRot.z = rot.z;
+    // Retail routes the sum through a second buffer with word bit-copies
+    // into mRot (sp+68..76 intermediate).
+    nw4r::math::VEC3 newRot = rot;
+    self->mTransform.mRot.x = *(u32*)&newRot.x;
+    self->mTransform.mRot.y = *(u32*)&newRot.y;
+    self->mTransform.mRot.z = *(u32*)&newRot.z;
 
-    // Rotation matrices about Z and X (angle scale = lbl_eu_8066AC18).
+    // Pair A: Z trig, matrix materialized immediately (retail sp+224..252:
+    // {cz,-sz,1 | sz,cz,1 | 1,1,-1} - note the literal 1.0s and AC1C corner).
     f32 sinZ = nw4r::math::SinFIdx(lbl_eu_8066AC18 * self->mTransform.mRot.z);
     f32 cosZ = nw4r::math::CosFIdx(lbl_eu_8066AC18 * self->mTransform.mRot.z);
+
+    f32 mz00 = cosZ;
+    f32 mz01 = -sinZ;
+    f32 mz02 = lbl_eu_8066ABF0;
+    f32 mz10 = sinZ;
+    f32 mz11 = cosZ;
+    f32 mz12 = lbl_eu_8066ABF0;
+    f32 mz20 = lbl_eu_8066ABF0;
+    f32 mz21 = lbl_eu_8066ABF0;
+    f32 mz22 = lbl_eu_8066AC1C;
+
+    // Pair B: X trig.
     f32 sinX = nw4r::math::SinFIdx(lbl_eu_8066AC18 * self->mTransform.mRot.x);
     f32 cosX = nw4r::math::CosFIdx(lbl_eu_8066AC18 * self->mTransform.mRot.x);
 
-    // Combined Z-then-X rotation matrix.
-    f32 m[3][3] = {
-        { cosZ, -sinZ * cosX, sinZ * sinX },
-        { sinZ, cosZ * cosX, -cosZ * sinX },
-        { 0, sinX, cosX },
-    };
+    // Compose Z*X as explicit expressions (retail keeps 9 values live).
+    f32 m100 = mz00 * lbl_eu_8066ABF0;
+    f32 m101 = mz01 * cosX + mz02 * sinX;
+    f32 m102 = mz01 * -sinX + mz02 * cosX;
+    f32 m110 = mz10 * lbl_eu_8066ABF0;
+    f32 m111 = mz11 * cosX + mz12 * sinX;
+    f32 m112 = mz11 * -sinX + mz12 * cosX;
+    f32 m120 = mz20 * lbl_eu_8066ABF0;
+    f32 m121 = mz21 * cosX + mz22 * sinX;
+    f32 m122 = mz21 * -sinX + mz22 * cosX;
+
+    // Pair C: Y trig, final composition Z*X*Y.
+    f32 sinY = nw4r::math::SinFIdx(lbl_eu_8066AC18 * self->mTransform.mRot.y);
+    f32 cosY = nw4r::math::CosFIdx(lbl_eu_8066AC18 * self->mTransform.mRot.y);
+
+    f32 m000 = m100 * cosY + m101 * -sinY;
+    f32 m001 = m100 * sinY + m101 * cosY;
+    f32 m002 = m102;
+    f32 m010 = m110 * cosY + m111 * -sinY;
+    f32 m011 = m110 * sinY + m111 * cosY;
+    f32 m012 = m112;
+    f32 m020 = m120 * cosY + m121 * -sinY;
+    f32 m021 = m120 * sinY + m121 * cosY;
+    f32 m022 = m122;
 
     // Rotate the base aim offset by the matrix scaled by the distance.
     f32 dist = cam->mUnk1F4;
-    nw4r::math::VEC3 dir(-(m[0][2] * dist), -(m[1][2] * dist),
-                        -(m[2][2] * dist));
+    nw4r::math::VEC3 dir(-(m000 * dist), -(m010 * dist),
+                         -(m020 * dist));
 
     nw4r::math::VEC3 aim;
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&aim,

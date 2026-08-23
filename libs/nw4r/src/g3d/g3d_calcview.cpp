@@ -46,8 +46,74 @@ void Calc_BILLBOARD_PERSP_Y(math::MTX34*, const math::MTX34*, bool, const math::
  * Returns the 2D result (z = 0); used by the non-perspective billboards.
  *
  ******************************************************************************/
+// Isolated Gekko paired-single backend (PLAN.md §17.6): retail compiled
+// GetModelLocalAxisY2/Y3 as paired-single kernels (same adjugate prologue as
+// the g3d_transform_ps.inl family), so the Wii/MWCC matching build uses the
+// SDK kernel bodies verbatim; other builds take the scalar fallback below.
+#if defined(__MWERKS__) && !defined(NONMATCHING)
+
+// clang-format off
+asm void GetModelLocalAxisY2(register math::VEC3* pOut,
+                             register const math::MTX34* pMtx,
+                             register const math::MTX34* pParentMtx) {
+    nofralloc
+    psq_l      f0, 0x0(pParentMtx), 1, 0
+    psq_l      f1, 0x4(pParentMtx), 0, 0
+    psq_l      f2, 0x10(pParentMtx), 1, 0
+    ps_merge10 f6, f1, f0
+    psq_l      f3, 0x14(pParentMtx), 0, 0
+    psq_l      f4, 0x20(pParentMtx), 1, 0
+    ps_merge10 f7, f3, f2
+    psq_l      f5, 0x24(pParentMtx), 0, 0
+    ps_mul     f11, f3, f6
+    ps_mul     f13, f5, f7
+    ps_merge10 f8, f5, f4
+    ps_msub    f11, f1, f7, f11
+    ps_mul     f12, f1, f8
+    ps_msub    f13, f3, f8, f13
+    lis        r12, lbl_eu_80669C38@ha
+    psq_l      f3, 0x18(pMtx), 1, 0
+    ps_msub    f12, f5, f6, f12
+    addi       r12, r12, lbl_eu_80669C38@l
+    ps_mul     f7, f0, f13
+    ps_mul     f9, f0, f5
+    psq_l      f6, 0x0(r12), 1, 0
+    ps_madd    f7, f2, f12, f7
+    ps_sub     f13, f13, f13
+    psq_l      f2, 0x8(pMtx), 1, 0
+    ps_madd    f7, f4, f11, f7
+    ps_msub    f9, f1, f4, f9
+    psq_l      f1, 0x10(pMtx), 0, 0
+    ps_abs     f8, f7
+    psq_st     f13, 0x8(pOut), 1, 0
+    ps_cmpo0   cr0, f8, f6
+    bge        axisy2_invertible
+    psq_st     f13, 0x0(pOut), 0, 0
+    blr
+
+axisy2_invertible:
+    fres       f8, f7
+    psq_l      f0, 0x0(pMtx), 0, 0
+    ps_add     f11, f8, f8
+    ps_mul     f10, f7, f8
+    ps_merge00 f4, f0, f1
+    ps_nmsub   f8, f8, f10, f11
+    ps_merge11 f5, f0, f1
+    ps_merge00 f6, f2, f3
+    ps_muls0   f12, f12, f8
+    ps_muls0   f9, f9, f8
+    ps_muls0   f0, f4, f12
+    ps_madds1  f0, f5, f12, f0
+    ps_madds0  f0, f6, f9, f0
+    psq_st     f0, 0x0(pOut), 0, 0
+    blr
+}
+// clang-format on
+
+#else
+
 void GetModelLocalAxisY2(math::VEC3* pOut, const math::MTX34* pMtx,
-                          const math::MTX34* pParentMtx) {
+                         const math::MTX34* pParentMtx) {
     // Parent matrix columns: right (col 0), up (col 1), fwd (col 2).
     f32 r0 = pParentMtx->_00, r1 = pParentMtx->_10, r2 = pParentMtx->_20;
     f32 u0 = pParentMtx->_01, u1 = pParentMtx->_11, u2 = pParentMtx->_21;
@@ -86,6 +152,8 @@ void GetModelLocalAxisY2(math::VEC3* pOut, const math::MTX34* pMtx,
     pOut->y = (pMtx->_10 * ix1 + pMtx->_11 * iy1 + pMtx->_12 * iz1) * invDet;
 }
 
+#endif // __MWERKS__ && !NONMATCHING
+
 /******************************************************************************
  *
  * GetModelLocalAxisY3
@@ -94,8 +162,78 @@ void GetModelLocalAxisY2(math::VEC3* pOut, const math::MTX34* pMtx,
  * (3D output); used by the perspective billboard variants.
  *
  ******************************************************************************/
+
+// Isolated PS backend, same arrangement as GetModelLocalAxisY2 above.
+#if defined(__MWERKS__) && !defined(NONMATCHING)
+
+// clang-format off
+asm void GetModelLocalAxisY3(register math::VEC3* pOut,
+                             register const math::MTX34* pMtx,
+                             register const math::MTX34* pParentMtx) {
+    nofralloc
+    psq_l      f0, 0x0(pParentMtx), 1, 0
+    psq_l      f1, 0x4(pParentMtx), 0, 0
+    psq_l      f2, 0x10(pParentMtx), 1, 0
+    ps_merge10 f6, f1, f0
+    psq_l      f3, 0x14(pParentMtx), 0, 0
+    psq_l      f4, 0x20(pParentMtx), 1, 0
+    ps_merge10 f7, f3, f2
+    psq_l      f5, 0x24(pParentMtx), 0, 0
+    ps_mul     f11, f3, f6
+    ps_mul     f13, f5, f7
+    ps_merge10 f8, f5, f4
+    ps_msub    f11, f1, f7, f11
+    ps_mul     f12, f1, f8
+    ps_msub    f13, f3, f8, f13
+    lis        r12, lbl_eu_80669C38@ha
+    psq_l      f3, 0x18(pMtx), 1, 0
+    ps_msub    f12, f5, f6, f12
+    addi       r12, r12, lbl_eu_80669C38@l
+    ps_mul     f7, f0, f13
+    ps_mul     f9, f0, f5
+    psq_l      f6, 0x0(r12), 1, 0
+    ps_madd    f7, f2, f12, f7
+    ps_sub     f13, f13, f13
+    psq_l      f2, 0x8(pMtx), 1, 0
+    ps_madd    f7, f4, f11, f7
+    ps_msub    f9, f1, f4, f9
+    psq_l      f1, 0x10(pMtx), 0, 0
+    ps_abs     f8, f7
+    psq_st     f13, 0x8(pOut), 1, 0
+    ps_cmpo0   cr0, f8, f6
+    bge        axisy3_invertible
+    psq_st     f13, 0x0(pOut), 0, 0
+    blr
+
+axisy3_invertible:
+    fres       f8, f7
+    psq_l      f0, 0x0(pMtx), 0, 0
+    ps_add     f11, f8, f8
+    ps_mul     f10, f7, f8
+    ps_merge00 f4, f0, f1
+    ps_nmsub   f8, f8, f10, f11
+    ps_merge11 f5, f0, f1
+    ps_merge00 f6, f2, f3
+    ps_muls0   f12, f12, f8
+    psq_l      f1, 0x20(pMtx), 0, 0
+    ps_muls0   f9, f9, f8
+    psq_l      f2, 0x28(pMtx), 1, 0
+    ps_muls0   f0, f4, f12
+    ps_mul     f1, f1, f9
+    ps_madds1  f0, f5, f12, f0
+    ps_sum0    f1, f1, f1, f1
+    ps_madds0  f0, f6, f9, f0
+    fmadds     f1, f2, f9, f1
+    psq_st     f0, 0x0(pOut), 0, 0
+    psq_st     f1, 0x8(pOut), 1, 0
+    blr
+}
+// clang-format on
+
+#else
+
 void GetModelLocalAxisY3(math::VEC3* pOut, const math::MTX34* pMtx,
-                          const math::MTX34* pParentMtx) {
+                         const math::MTX34* pParentMtx) {
     // Parent matrix columns: right (col 0), up (col 1), fwd (col 2).
     f32 r0 = pParentMtx->_00, r1 = pParentMtx->_10, r2 = pParentMtx->_20;
     f32 u0 = pParentMtx->_01, u1 = pParentMtx->_11, u2 = pParentMtx->_21;
@@ -133,6 +271,8 @@ void GetModelLocalAxisY3(math::VEC3* pOut, const math::MTX34* pMtx,
     pOut->y = (pMtx->_10 * ix1 + pMtx->_11 * iy1 + pMtx->_12 * iz1) * invDet;
     pOut->z = (pMtx->_20 * ix1 + pMtx->_21 * iy1 + pMtx->_22 * iz1) * invDet;
 }
+
+#endif // __MWERKS__ && !NONMATCHING
 
 /******************************************************************************
  *
@@ -987,13 +1127,11 @@ void CalcView_LC(math::MTX34* pViewPosArray, math::MTX33* pViewNrmArray,
     }
 }
 
-/******************************************************************************
- *
- * CalcView_LC_DMA_ModelMtx
- *
- * Same as CalcView_LC but uses DMA to load model matrices.
- *
- ******************************************************************************/
+// The billboard kernel dispatch table lives in the retail data pool
+// (lbl_eu_8051D6A0); referencing it by its retail name keeps the table
+// relocations identical to retail.
+extern "C" const CalcBillboardFunc lbl_eu_8051D6A0[8];
+
 void CalcView_LC_DMA_ModelMtx(math::MTX34* pViewPosArray,
                               math::MTX33* pViewNrmArray,
                               const math::MTX34* pModelMtxArray,
@@ -1004,36 +1142,30 @@ void CalcView_LC_DMA_ModelMtx(math::MTX34* pViewPosArray,
         return;
     }
 
-    // Locked-cache region ring: 8 slots, each advancing 2 positions per
-    // 0x28-matrix chunk.  Ring order: [dma, pos, nrm, tex, pre, pos2, nrm2,
-    // tex2]; every outer iteration rotates the ring by swapping the opposite
-    // pairs (i, i+4).  "pre" is the DMA prefetch target for the next chunk.
+    // Locked-cache region ring: 8 slots rotating by pairwise swaps
+    // (region, region+2nd-half) each 0x28-matrix iteration.  "pre" is the
+    // DMA prefetch target for the next chunk.
     u32 posSize = (numMtx * sizeof(math::MTX34) + 0x1F) & ~0x1F;
 
-    // Locked-cache region ring: 8 slots, each advancing 2 positions per
-    // 0x28-matrix chunk.  Ring order: [dma, pos, nrm, tex, pre, pos2, nrm2,
-    // tex2]; every outer iteration rotates the ring by swapping the opposite
-    // pairs (i, i+4).  "pre" is the DMA prefetch target for the next chunk.
     u32 lcDma = 0xE0000000;
     u32 lcNrm = 0xE0001000;
-    u32 lcPos = 0xE0000800;
     u32 lcTex = 0xE0001800;
     u32 lcPre = 0xE0002000;
     u32 lcPos2 = 0xE0002800;
     u32 lcNrm2 = 0xE0003000;
     u32 lcTex2 = 0xE0003800;
+    u32 lcPos = 0xE0000800;
 
     DCInvalidateRange(pViewPosArray, posSize);
 
-    // LC queue length to wait for; tracks which output buffer was last
-    // written so the DMA doesn't race the previous store.
+    // Number of LC buffers to drain before overwriting a region.
     u32 lcState = 1;
-    if (pViewNrmArray) {
+    if (pViewNrmArray != NULL) {
         lcState = 2;
         u32 nrmSize = (numMtx * sizeof(math::MTX33) + 0x1F) & ~0x1F;
         DCInvalidateRange(pViewNrmArray, nrmSize);
 
-        if (pViewTexMtxArray) {
+        if (pViewTexMtxArray != NULL) {
             lcState = 3;
             DCInvalidateRange(pViewTexMtxArray, posSize);
         }
@@ -1047,8 +1179,8 @@ void CalcView_LC_DMA_ModelMtx(math::MTX34* pViewPosArray,
     // Refresh the (stale) main-memory model matrices from the locked cache,
     // where the previous pipeline stage DMA'd them.
     nw4r::ut::LC::LoadBlocks(
-        const_cast<void*>(reinterpret_cast<const void*>(pModelMtxArray)),
         reinterpret_cast<void*>(0xE0000000),
+        const_cast<void*>(reinterpret_cast<const void*>(pModelMtxArray)),
         (numMtx > 0x28) ? 0x3C : (posSize / 32));
 
     if (numMtx > 0x14) {
@@ -1094,10 +1226,11 @@ void CalcView_LC_DMA_ModelMtx(math::MTX34* pViewPosArray,
                                    32);
 
             nw4r::ut::LC::LoadBlocks(
+                reinterpret_cast<void*>(lcPre),
                 const_cast<void*>(reinterpret_cast<const void*>(
                     reinterpret_cast<const u8*>(pModelMtxArray) +
                     dmaByteOffset + 0x780)),
-                reinterpret_cast<void*>(lcPre), preBlocks);
+                preBlocks);
         }
 
         // viewPos = viewMtx * modelMtx, both operands in the locked cache.
@@ -1116,7 +1249,7 @@ void CalcView_LC_DMA_ModelMtx(math::MTX34* pViewPosArray,
             u32 billboardIdx = attrib & 0xFF;
 
             if (billboardIdx != 0) {
-                gCalcBillboardFuncTable[billboardIdx](
+                lbl_eu_8051D6A0[billboardIdx](
                     reinterpret_cast<math::MTX34*>(lcPos) + i, pModelMtxArray,
                     (attrib >> 2) & 1, pViewMtx, mdl, processed + i);
 
@@ -1248,7 +1381,7 @@ void CalcView_LC_DMA_ModelMtx(math::MTX34* pViewPosArray,
         dmaByteOffset += 0x780;
         workByteOffset += 0x780;
         pViewPosArray += 0x28;
-        pViewNrm += 0x1E;
+        pViewNrm += 0x28;
         pViewTex += 0x28;
     }
 }

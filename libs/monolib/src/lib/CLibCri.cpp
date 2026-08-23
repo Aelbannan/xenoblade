@@ -51,6 +51,57 @@ extern "C" bool wkStandbyLogin__11CWorkThreadFv(void* self);
 extern "C" bool wkStandbyLogout__11CWorkThreadFv(void* self);
 extern "C" void __dl__FPv(void* p);
 
+// Foreign vtable-slot symbols (retail flat names). The __RTTI__* typeinfo
+// symbols cannot be spelled in this TU (-RTTI on reserves them once the
+// IWorkEvent/CWorkThread class definitions are visible -> MWCC 10322), so the
+// two ScnGroup RTTI slots use stand-in names renamed onto the retail symbols
+// by UNIT_RULES exact_renames (same recipe as CLibLayout.o / CWorkRoot.o).
+extern "C" {
+    void viAfterDrawDone__11CDeviceVICbFv();
+    void viBeginFrame__11CDeviceVICbFv();
+    u32 lbl_eu_80663618[];   // nw4r g3d ScnGroup RTTI chain anchor (foreign .sdata)
+    char lbl_eu_8066A4D0[];  // "CLibCri" RTTI name string (CGXCache shared .sdata2 pool)
+    extern void* rtti_10IWorkEvent;  // stand-in for __RTTI__10IWorkEvent
+    extern void* rtti_11CWorkThread; // stand-in for __RTTI__11CWorkThread
+    // IWorkEvent virtual handlers (weak defaults live in kyoshin/CGame.cpp).
+    int WorkEvent1__10IWorkEventFPvPCc(void*, const char*);
+    int OnFileEvent__10IWorkEventFP10CEventFile(void*);
+    int WorkEvent3__10IWorkEventFPv(void*);
+    int WorkEvent4__10IWorkEventFv();
+    void OnPauseTrigger__10IWorkEventFb(int);
+    int WorkEvent6__10IWorkEventFv();
+    int WorkEvent7__10IWorkEventFv();
+    int WorkEvent8__10IWorkEventFv();
+    int WorkEvent9__10IWorkEventFv();
+    int WorkEvent10__10IWorkEventFv();
+    int WorkEvent11__10IWorkEventFv();
+    int WorkEvent12__10IWorkEventFv();
+    int WorkEvent13__10IWorkEventFv();
+    int WorkEvent14__10IWorkEventFv();
+    int WorkEvent15__10IWorkEventFv();
+    int WorkEvent16__10IWorkEventFv();
+    int WorkEvent17__10IWorkEventFv();
+    int WorkEvent18__10IWorkEventFv();
+    int WorkEvent19__10IWorkEventFv();
+    int WorkEvent20__10IWorkEventFv();
+    int WorkEvent21__10IWorkEventFv();
+    int WorkEvent22__10IWorkEventFv();
+    int WorkEvent23__10IWorkEventFv();
+    int WorkEvent24__10IWorkEventFv();
+    int WorkEvent25__10IWorkEventFv();
+    int WorkEvent26__10IWorkEventFv();
+    int WorkEvent27__10IWorkEventFv();
+    int WorkEvent28__10IWorkEventFv();
+    int WorkEvent29__10IWorkEventFv();
+    int WorkEvent30__10IWorkEventFv();
+    int WorkEvent31__10IWorkEventFv();
+    // CWorkThread work-method vtable slots.
+    void wkRender__11CWorkThreadFv();
+    void wkRenderAfter__11CWorkThreadFv();
+    void wkStandbyExceptionRetry__11CWorkThreadFUl(unsigned int);
+}
+extern "C" u32 __vt__Q34nw4r3g3d8ScnGroup[8]; // nw4r ScnGroup vtable (defined below)
+
 // Empty error callback (free function)
 extern "C" void func_80459C70() {}
 
@@ -107,6 +158,11 @@ extern "C" void __ct__7CLibCriFPCcP11CWorkThread(CLibCri* self, const char* pNam
 // ============================================================================
 // CLibCri destructor (extern "C" free-function form, see ctor note).
 // ============================================================================
+// ============================================================================
+// auto_inline off: -ipa file would otherwise inline this dtor body into the
+// @452@/@456@ dtor thunks below (retail keeps them as 2-insn tail calls).
+// ============================================================================
+#pragma auto_inline off
 extern "C" void __dt__7CLibCriFv(CLibCri* self, int flag) {
     if (self != nullptr) {
         CErrorWii::removeCallback(static_cast<IErrorWii*>(self));
@@ -116,6 +172,7 @@ extern "C" void __dt__7CLibCriFv(CLibCri* self, int flag) {
         }
     }
 }
+#pragma auto_inline on
 
 // ============================================================================
 // File playback dispatch function
@@ -178,10 +235,15 @@ extern "C" void func_80459AB0__7CLibCriFv(int a, int b) {
 // Empty virtual override (extern "C" free-function form: no auto vtable).
 extern "C" void wkUpdate__7CLibCriFv(CLibCri* self) { (void)self; }
 
-// CRI main execution
-void CLibCri::func_80459AD8() {
+// CRI main execution (free-function form: the retail vtable references the
+// flat symbol func_80459AD8__7CLibCriFv directly). auto_inline off keeps
+// @452@viBeginFrame's call opaque instead of folding the thunk away.
+#pragma auto_inline off
+extern "C" void func_80459AD8__7CLibCriFv(CLibCri* self) {
+    (void)self;
     ADXM_ExecMain();
 }
+#pragma auto_inline on
 
 // Returns singleton instance
 CLibCri* CLibCri::getInstance() {
@@ -260,10 +322,32 @@ return_false:
 // ============================================================================
 
 // ============================================================================
-// CDeviceVICb virtual override
+// CDeviceVICb virtual override (free-function form, see func_80459AD8 note).
 // ============================================================================
-void CLibCri::func_80459C74() {
+#pragma auto_inline off
+extern "C" void func_80459C74__7CLibCriFv(CLibCri* self) {
+    (void)self;
     func_8045BBA0__20CLibCriStreamingPlayFv();
+}
+#pragma auto_inline on
+
+// ============================================================================
+// This-adjusting MI thunks (retail keeps four 2-insn thunks at the tail of
+// .text: addi r3,r3,-delta ; b <real body>). The @N@-prefixed retail symbols
+// cannot be spelled in C++, so they are defined under placeholder names and
+// renamed onto the retail names by UNIT_RULES exact_renames (§17.6).
+// ============================================================================
+extern "C" void thunk452_viBeginFrame(CLibCri* self) {
+    func_80459AD8__7CLibCriFv((CLibCri*)((char*)self - 0x1C4));
+}
+extern "C" void thunk452_dt(CLibCri* self, int flag) {
+    __dt__7CLibCriFv((CLibCri*)((char*)self - 0x1C4), flag);
+}
+extern "C" void thunk456_errorWiiCB(CLibCri* self) {
+    func_80459C74__7CLibCriFv((CLibCri*)((char*)self - 0x1C8));
+}
+extern "C" void thunk456_dt(CLibCri* self, int flag) {
+    __dt__7CLibCriFv((CLibCri*)((char*)self - 0x1C8), flag);
 }
 
 // ============================================================================
@@ -272,28 +356,83 @@ void CLibCri::func_80459C74() {
 // ============================================================================
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// The retail split object carries these sections as RAW words (the DOL's
-// reloc table has no entries for this unit's data), so every pointer is a
-// plain constant - no relocs - and the thunk/@-prefixed names (which C++
-// cannot spell) are reproduced as raw addresses.
+// The retail split object carries these sections as relocated words, so every
+// pointer slot is initialized with &retail-symbol to emit the exact retail
+// reloc; only the two vtable offset-to-top deltas and zero pads are plain
+// constants. The thunk/@-prefixed names (which C++ cannot spell) resolve via
+// UNIT_RULES exact_renames on the postprocessed copy.
+//
+// [.sdata] 0x80663790-0x80663798 (8B): RTTI locator { name (foreign sdata2
+// lbl_eu_8066A4D0 "CLibCri"), base sub-vtable __vt__Q34nw4r3g3d8ScnGroup }.
+extern "C" u32 lbl_eu_80663790[2] = {
+    (u32)lbl_eu_8066A4D0,
+    (u32)__vt__Q34nw4r3g3d8ScnGroup,
+};
 //
 // [.data] 0x8056CE58-0x8056CF48 (240B): CLibCri primary vtable (208B: 40-slot
 // CWorkThread chain + CDeviceVICb sub-vtable + IErrorWii sub-vtable) followed
 // by the nw4r ScnGroup RTTI chain (32B).
 extern "C" u32 lbl_eu_8056CE58[52] = {
-    0x80663790, 0x00000000, 0x8045D8EC, 0x8003A1D4, 0x8003A1CC, 0x8003A1C4,
-    0x8003A1BC, 0x8003A1B8, 0x8003A1B0, 0x8003A1A8, 0x8003A1A0, 0x8003A198,
-    0x8003A190, 0x8003A188, 0x8003A180, 0x8003A178, 0x8003A170, 0x8003A168,
-    0x8003A160, 0x8003A158, 0x8003A150, 0x8003A148, 0x8003A140, 0x8003A138,
-    0x8003A130, 0x8003A128, 0x8003A120, 0x8003A118, 0x8003A110, 0x8003A108,
-    0x8003A100, 0x8003A0F8, 0x8003A0F0, 0x8003A0EC, 0x8045DAE4, 0x8003A1E8,
-    0x8003A1E4, 0x8045DAF4, 0x8045DC08, 0x8003A1DC,
-    0x80663790, 0xFFFFFE3C, 0x8045DC98, 0x8045DC90, 0x801677E8, 0x8044B4B0,
-    0x80663790, 0xFFFFFE38, 0x8045DCA8, 0x8045DCA0, 0x8045DAE8, 0x8045DC8C,
+    (u32)&lbl_eu_80663790,
+    0x00000000,
+    (u32)&__dt__7CLibCriFv,
+    (u32)&WorkEvent1__10IWorkEventFPvPCc,
+    (u32)&OnFileEvent__10IWorkEventFP10CEventFile,
+    (u32)&WorkEvent3__10IWorkEventFPv,
+    (u32)&WorkEvent4__10IWorkEventFv,
+    (u32)&OnPauseTrigger__10IWorkEventFb,
+    (u32)&WorkEvent6__10IWorkEventFv,
+    (u32)&WorkEvent7__10IWorkEventFv,
+    (u32)&WorkEvent8__10IWorkEventFv,
+    (u32)&WorkEvent9__10IWorkEventFv,
+    (u32)&WorkEvent10__10IWorkEventFv,
+    (u32)&WorkEvent11__10IWorkEventFv,
+    (u32)&WorkEvent12__10IWorkEventFv,
+    (u32)&WorkEvent13__10IWorkEventFv,
+    (u32)&WorkEvent14__10IWorkEventFv,
+    (u32)&WorkEvent15__10IWorkEventFv,
+    (u32)&WorkEvent16__10IWorkEventFv,
+    (u32)&WorkEvent17__10IWorkEventFv,
+    (u32)&WorkEvent18__10IWorkEventFv,
+    (u32)&WorkEvent19__10IWorkEventFv,
+    (u32)&WorkEvent20__10IWorkEventFv,
+    (u32)&WorkEvent21__10IWorkEventFv,
+    (u32)&WorkEvent22__10IWorkEventFv,
+    (u32)&WorkEvent23__10IWorkEventFv,
+    (u32)&WorkEvent24__10IWorkEventFv,
+    (u32)&WorkEvent25__10IWorkEventFv,
+    (u32)&WorkEvent26__10IWorkEventFv,
+    (u32)&WorkEvent27__10IWorkEventFv,
+    (u32)&WorkEvent28__10IWorkEventFv,
+    (u32)&WorkEvent29__10IWorkEventFv,
+    (u32)&WorkEvent30__10IWorkEventFv,
+    (u32)&WorkEvent31__10IWorkEventFv,
+    (u32)&wkUpdate__7CLibCriFv,
+    (u32)&wkRender__11CWorkThreadFv,
+    (u32)&wkRenderAfter__11CWorkThreadFv,
+    (u32)&wkStandbyLogin__7CLibCriFv,
+    (u32)&wkStandbyLogout__7CLibCriFv,
+    (u32)&wkStandbyExceptionRetry__11CWorkThreadFUl,
+    // CDeviceVICb sub-vtable (this-adjust -0x1C4)
+    (u32)&lbl_eu_80663790,
+    0xFFFFFE3C,
+    (u32)&thunk452_dt,
+    (u32)&thunk452_viBeginFrame,
+    (u32)&viAfterDrawDone__11CDeviceVICbFv,
+    (u32)&viBeginFrame__11CDeviceVICbFv,
+    // IErrorWii sub-vtable (this-adjust -0x1C8)
+    (u32)&lbl_eu_80663790,
+    0xFFFFFE38,
+    (u32)&thunk456_dt,
+    (u32)&thunk456_errorWiiCB,
+    (u32)&func_80459AD8__7CLibCriFv,
+    (u32)&func_80459C74__7CLibCriFv,
 };
 extern "C" u32 __vt__Q34nw4r3g3d8ScnGroup[8] = {
-    0x80663618, 0x000001C4, 0x806618A8, 0x00000000,
-    0x806618A0, 0x00000000, 0x00000000, 0x00000000,
+    (u32)&lbl_eu_80663618, 0x000001C4,
+    (u32)&rtti_10IWorkEvent, 0x00000000,
+    (u32)&rtti_11CWorkThread, 0x00000000,
+    0x00000000, 0x00000000,
 };
 
 // [.rodata] 0x80522FD8-0x80523008 (48B): ".ahx" / "CLibCriMoviePlay" /
@@ -304,12 +443,6 @@ extern "C" const char lbl_eu_80522FD8[48] = {
     0x43,0x4C,0x69,0x62,0x43,0x72,0x69,0x4D,0x6F,0x76,0x69,0x65,0x50,0x6C,0x61,0x79,0x00,
     0x43,0x4C,0x69,0x62,0x43,0x72,0x69,0x53,0x74,0x72,0x65,0x61,0x6D,0x69,0x6E,0x67,0x50,0x6C,0x61,0x79,0x00,
     0x00,0x00,0x00,0x00,0x00,
-};
-
-// [.sdata] 0x80663790-0x80663798 (8B): RTTI locator { name (foreign sdata2
-// lbl_eu_8066A4D0 "CLibCri"), base sub-vtable lbl_eu_8056CF28 }.
-extern "C" u32 lbl_eu_80663790[2] = {
-    0x8066A4D0, 0x8056CF28,
 };
 
 // dissolved monolibdata2 - lib/CLibCri data now provided via retail copy (additive edit)

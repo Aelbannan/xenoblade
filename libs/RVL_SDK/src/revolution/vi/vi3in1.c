@@ -254,18 +254,18 @@ void __VISetClosedCaption(void) {
 }
 
 // Retail has the copy inlined at every call site with its own stack buffer;
-// MWCC inlines the static helper and unrolls the fixed-trip copy loop
-// (pointer-increment form reproduces the retail lbz/stb schedule).
+// MWCC inlines the static helper and unrolls the fixed-trip copy loop.
+// Array indexing (not pointer-increment) keeps pt materialized once per site
+// (addi rX, base, off) with small constant load offsets, as in retail.
 #pragma inline_max_size(10000)
 #pragma inline_max_total_size(10000)
 static __inline void __VISetMacrovisionTable(u8* pt) {
     u8 buf[0x1B];
-    u8* d = buf;
     s32 i;
 
-    *d++ = 0x40;
+    buf[0] = 0x40;
     for (i = 0; i < 0x1A; i++) {
-        *d++ = *pt++;
+        buf[i + 1] = pt[i];
     }
     __VISendI2CData(0xE0, buf, 0x1B);
     WaitMicroTime(2);
@@ -449,9 +449,6 @@ void __VISetRGBModeImm(void) {
 }
 
 void __VISetRevolutionModeSimple(void) {
-    s32 region;
-    u32 tvFormat;
-    u32 dtvStatus;
     u8 bufA[2];
     u8 bufB[2];
     u8 bufC[2];
@@ -464,22 +461,23 @@ void __VISetRevolutionModeSimple(void) {
     u8 bufJ[0x1B];
     u8 bufK[2];
     u8 bufL[2];
+    s32 region;
+    u32 dtvStatus;
 
     region = 1;
 
     bufA[0] = 0x6A;
-    bufA[1] = (u8)region;
+    bufA[1] = region;
     __VISendI2CData(0xE0, bufA, 2);
     WaitMicroTime(2);
 
     bufB[0] = 0x65;
-    bufB[1] = (u8)region;
+    bufB[1] = region;
     __VISendI2CData(0xE0, bufB, 2);
     WaitMicroTime(2);
 
     dtvStatus = VIGetDTVStatus();
-    tvFormat = *(volatile u32*)0x800000CC;
-    switch (tvFormat) {
+    switch (*(volatile u32*)0x800000CC) {
     case 1:
     case 5:
         region = 2;
@@ -499,7 +497,7 @@ void __VISetRevolutionModeSimple(void) {
     }
 
     bufC[0] = 1;
-    bufC[1] = (u8)dtvStatus << 5 | (u8)region;
+    bufC[1] = (u8)dtvStatus << 5 | region;
     __VISendI2CData(0xE0, bufC, 2);
     WaitMicroTime(2);
 
@@ -529,8 +527,11 @@ void __VISetRevolutionModeSimple(void) {
     WaitMicroTime(2);
 
     if (__gp1 != 0 || __gp2 != 0 || __gp3 != 0 || __gp4 != 0) {
-        u32 flag = Vdac_Flag_Changed | 0x2;
+        // Interleaved update keeps Vdac_Flag_Changed live across the zero stores,
+        // matching the retail lwz/li/stb/ori/stw schedule.
+        u32 flag = Vdac_Flag_Changed;
         __gp1 = 0;
+        flag |= 0x2;
         __gp2 = 0;
         __gp3 = 0;
         __gp4 = 0;
@@ -546,8 +547,9 @@ void __VISetRevolutionModeSimple(void) {
     WaitMicroTime(2);
 
     if (__cc1 != 0 || __cc2 != 0 || __cc3 != 0 || __cc4 != 0) {
-        u32 flag = Vdac_Flag_Changed | 0x4;
+        u32 flag = Vdac_Flag_Changed;
         __cc1 = 0;
+        flag |= 0x4;
         __cc2 = 0;
         __cc3 = 0;
         __cc4 = 0;

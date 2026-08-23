@@ -135,6 +135,8 @@ done:
     curr->mNext = nullptr;
 }
 
+// Retail unrolls three descendant generations of this walk inline and leaves
+// the fourth to the recursive call; the recursion below is the high-level form.
 void CWorkThread::wkSetEvent(EVT evt){
     if(evt == EVT_NONE){
         mFlags |= THREAD_FLAG_NO_EVENT;
@@ -142,14 +144,23 @@ void CWorkThread::wkSetEvent(EVT evt){
         mMsgQueue.enqueue(evt);
     }
 
-    wkSetEventChild(evt);
-}
-
-void CWorkThread::wkSetEventChild(EVT evt){
-    // Retail uses a 4-level unrolled descendant walk; recursive wkSetEvent
-    // is the high-level equivalent and keeps the TU within split size.
     for(reslist<CWorkThread*>::iterator it = mChildren.begin(); it != mChildren.end(); ++it){
         (*it)->wkSetEvent(evt);
+    }
+}
+
+// Same walk minus self-processing; retail inlines several wkSetEvent copies
+// here, leaving a leaf bl wkSetEvent.
+void CWorkThread::wkSetEventChild(EVT evt){
+    for(reslist<CWorkThread*>::iterator it = mChildren.begin(); it != mChildren.end(); ++it){
+        CWorkThread* pChild = *it;
+        if(evt == EVT_NONE){
+            pChild->mFlags |= THREAD_FLAG_NO_EVENT;
+        }else{
+            pChild->mMsgQueue.enqueue(evt);
+        }
+
+        pChild->wkSetEvent(evt);
     }
 }
 

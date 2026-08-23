@@ -41,6 +41,165 @@ extern "C" void* __dt__12CEquipChangeFv(CEquipChange* self, int flags) {
 }
 #pragma optimize_for_size off
 
+// Target us-8020377c: constructor. Seeds the manual vtable, constructs the
+// two UnkClass_8045F564 mem regions, zeroes the scalar head, builds the three
+// cursors, then copy-constructs the CItemBoxInfo / CEquipItemBox members from
+// fresh stack temporaries (CItemBoxInfo(4,0) and default CEquipItemBox) whose
+// config regions are copied field-by-field through the same helpers as
+// func_801F9CB4 (UnkClass_8011C974 mem regions, scalars load-store
+// interleaved, counted 8-byte pair loops). Retail keeps the individual
+// r30/r31 saves (plain -O4,p prologue).
+#pragma optimize_for_size on
+CEquipChange::CEquipChange() {
+    mVtbl = reinterpret_cast<void*>(lbl_eu_80535688);
+    __ct__17UnkClass_8045F564Fv(&_pad04[0]);
+    __ct__17UnkClass_8045F564Fv(&_pad14[0]);
+    field_24 = 0;
+    field_28 = 0;
+    field_2C = 0;
+    field_30 = 0;
+    field_34 = 0;
+    field_38 = 0;
+    field_3C = 0;
+    field_40 = 0;
+    field_44 = 0;
+    field_48 = 0;
+    field_4C = 0;
+    field_4D = 1;
+    __ct__CCur14((u8*)this + 0x50, (nw4r::lyt::ArcResourceAccessor*)0);
+    __ct__CCur15((u8*)this + 0x68, (nw4r::lyt::ArcResourceAccessor*)0);
+    __ct__CSubCur((u8*)this + 0x80, (nw4r::lyt::ArcResourceAccessor*)0);
+    field_98 = 0;
+    field_99 = 0;
+    __ct__CItemBoxInfo(reinterpret_cast<CItemBoxInfo*>(&_padA4[0]), 0, 0);
+    __ct__CEquipItemBox(&mEquipItemBox);
+
+    CEqChStateView* v = reinterpret_cast<CEqChStateView*>(this);
+
+    CEqChBoxTemp boxTmp;
+
+    // --- copy config out of a fresh CItemBoxInfo(4,0) temp ---
+    __ct__CItemBoxInfo(reinterpret_cast<CItemBoxInfo*>(&boxTmp), 4, 0);
+    __ct__UnkClass_8011C974(&v->fa8[0], &boxTmp.f04[0]);
+    __ct__UnkClass_8011C974(&v->fb8[0], &boxTmp.f14[0]);
+    for (int i = 0; i < 27; i++) {
+        v->fc8[i] = boxTmp.f24[i];
+    }
+    v->f134 = boxTmp.f134;
+    v->f138 = boxTmp.f138;
+    v->f13c = boxTmp.f13c;
+    v->f13d = boxTmp.f13d;
+    v->f13e = boxTmp.f13e;
+    u32 vLo = boxTmp.f140;
+    u32 vHi = boxTmp.f144;
+    v->f144 = vHi;
+    v->f140 = vLo;
+    vLo = boxTmp.f148;
+    vHi = boxTmp.f14c;
+    v->f14c = vHi;
+    v->f148 = vLo;
+    v->f150 = boxTmp.f150;
+    v->f152 = boxTmp.f152;
+    func_8018BE74(&v->f154[0], &boxTmp.f154[0]);
+    __dt__12CItemBoxInfoFv(reinterpret_cast<CItemBoxInfo*>(&boxTmp), -1);
+
+    // --- copy config out of a fresh default CEquipItemBox temp ---
+    CEqChEquipTemp eqTmp;
+    __ct__CEquipItemBox(&eqTmp);
+    __ct__UnkClass_8011C974(&v->f2b4[0], &eqTmp.f04[0]);
+    __ct__UnkClass_8011C974(&v->f2c4[0], &eqTmp.f14[0]);
+    for (int i = 0; i < 7; i++) {
+        v->f2d4[i] = eqTmp.f24[i];
+    }
+    for (int i = 0; i < 4; i++) {
+        v->f2f0[i] = eqTmp.f2f0[i];
+    }
+    func_801FA220(&v->f2f4[0], &eqTmp.f2f4[0]);
+    func_801FA220(&v->f30c[0], &eqTmp.f30c[0]);
+    func_8018B0FC(&v->f324[0], &eqTmp.f324[0]);
+    __ct__UnkClass_8011C974(&v->f340[0], &eqTmp.f340[0]);
+    for (int i = 0; i < 5; i++) {
+        v->f350[i] = eqTmp.f350[i];
+    }
+    for (int i = 0; i < 4; i++) {
+        v->f364[i] = eqTmp.f364[i];
+    }
+    __ct__UnkClass_8011C974(&v->f36c[0], &eqTmp.f36c[0]);
+    v->f37c[0] = eqTmp.f37c[0];
+    v->f37c[1] = eqTmp.f37c[1];
+    v->f37c[2] = eqTmp.f37c[2];
+    v->f37c[3] = eqTmp.f37c[3];
+    for (int i = 0; i < 4; i++) {
+        v->f38c[i] = eqTmp.f38c[i];
+    }
+    for (int i = 0; i < 5; i++) {
+        v->f390[i] = eqTmp.f390[i];
+    }
+    v->f3a4 = eqTmp.f3a4;
+    u32* wd = reinterpret_cast<u32*>(&v->f3a4);
+    u32* ws = reinterpret_cast<u32*>(&eqTmp.f3a4);
+    for (int i = 0; i < 16; i++) {
+        wd[1] = ws[1];
+        wd[2] = ws[2];
+        wd += 2;
+        ws += 2;
+    }
+    for (int i = 0; i < 3; i++) {
+        v->f428[i] = eqTmp.f428[i];
+    }
+    func_8016742C(&v->f42c[0], &eqTmp.f42c[0]);
+    func_8016742C(&v->f468[0], &eqTmp.f468[0]);
+    for (int i = 0; i < 3; i++) {
+        v->f4a4[i] = eqTmp.f4a4[i];
+    }
+    v->f4a8 = eqTmp.f4a8;
+    v->f4aa = eqTmp.f4aa;
+    v->f4ac = eqTmp.f4ac;
+    v->f4ae = eqTmp.f4ae;
+    vLo = eqTmp.f4b0;
+    vHi = eqTmp.f4b4;
+    v->f4b4 = vHi;
+    v->f4b0 = vLo;
+    v->f4b8 = eqTmp.f4b8;
+    v->f4bc = eqTmp.f4bc;
+    func_8018BE74(&v->f4c0[0], &eqTmp.f4c0[0]);
+    v->f61c = eqTmp.f61c;
+    v->f620 = eqTmp.f620;
+    for (int i = 0; i < 11; i++) {
+        v->f622[i] = eqTmp.f622[i];
+    }
+    wd = reinterpret_cast<u32*>(&v->f622[8]);   // base 0x62a
+    ws = reinterpret_cast<u32*>(&eqTmp.f622[8]);
+    for (int i = 0; i < 0x400; i++) {
+        wd[1] = ws[1];
+        wd[2] = ws[2];
+        wd += 2;
+        ws += 2;
+    }
+    v->f262e = eqTmp.f262e;
+    for (int i = 0; i < 4; i++) {
+        v->f2630[i] = eqTmp.f2630[i];
+    }
+    wd = reinterpret_cast<u32*>(&v->f2630[0]);  // base 0x2630
+    ws = reinterpret_cast<u32*>(&eqTmp.f2630[0]);
+    for (int i = 0; i < 4; i++) {
+        wd[1] = ws[1];
+        wd[2] = ws[2];
+        wd += 2;
+        ws += 2;
+    }
+    wd = reinterpret_cast<u32*>(&v->f2650[0]);  // base 0x2650
+    ws = reinterpret_cast<u32*>(&eqTmp.f2650[0]);
+    for (int i = 0; i < 0x80; i++) {
+        wd[1] = ws[1];
+        wd[2] = ws[2];
+        wd += 2;
+        ws += 2;
+    }
+    v->f2a54 = eqTmp.f27a4;
+}
+#pragma optimize_for_size off
+
 // Target us-80203d88: load both bind files (two string records at
 // lbl_eu_80508168) into file handles 0x24/0x28, then init the item-box info
 // layout (0xA4) and the equip item box (0x2B0).
@@ -1082,10 +1241,14 @@ extern "C" void func_802021E4(CEquipChange* self, nw4r::lyt::DrawInfo* drawInfo)
 void func_8020228C(CEquipChange* self) {
     func_801390E0__FPP11CFileHandle(&self->field_24);
     func_801390E0__FPP11CFileHandle(&self->field_28);
+    // Retail hoists the field_34 load above the field_44 store and reuses the
+    // loaded pointer across the guarded destroy call - keeping it in a local
+    // pins it to a volatile reg instead of forcing a second callee-saved.
+    void* layout = (void*)self->field_34;
     self->field_44 = 0;
-    if (self->field_34 != 0) {
-        if (self->field_34 != 0)
-            ((CLayoutVtbl11*)(u32)self->field_34)->v0(1);
+    if (layout != 0) {
+        if (layout != 0)
+            ((CLayoutVtbl11*)layout)->v0(1);
         self->field_34 = 0;
     }
     lbl_eu_80664698 = 0;

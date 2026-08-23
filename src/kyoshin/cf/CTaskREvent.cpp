@@ -258,17 +258,23 @@ __declspec(noinline) void func_8016462C(int index) {
     // 5*1 / 4*1 and step by 5 / 4 per row.
     for (int row = 1; row < 8; row++) {
         for (int col = 0; col <= 4; col++) {
-            u32 v = func_8007DE94__Q22cf13CfGameManagerFv(row, col);
-            func_8009D5FC()->mByteRows[index * 0x28 + row * 5 + col] = (u8)((v >> 10) & 0xFF);
+            // Retail order: call func_8007DE94, narrow to a byte while it
+            // lives in a callee-saved reg, then fetch the blob for the store.
+            u8 b = (u8)((func_8007DE94__Q22cf13CfGameManagerFv(row, col) >> 10) & 0xFF);
+            CEventCharBlob* blob = evtCharBlob();
+            blob->mByteRows[index * 0x28 + row * 5 + col] = b;
         }
-        func_8009D5FC()->mWordRows[index][row] =
-            func_8007DE94__Q22cf13CfGameManagerFv(row, 5);
+        u32 w = func_8007DE94__Q22cf13CfGameManagerFv(row, 5);
+        CEventCharBlob* blobW = evtCharBlob();
+        blobW->mWordRows[index][row] = w;
     }
     u16 hi = 0xC;
     u16 lo = 0;
     func_80086D98__Q22cf13CfGameManagerFv(&hi, &lo);
-    func_8009D5FC()->mHalfSlots[index] = (u16)((hi << 8) | lo);
-    func_8009D5FC()->mByteFlags[index] = (u8)func_8016DF2C();
+    u16 combined = (u16)((hi << 8) | lo);
+    evtCharBlob()->mHalfSlots[index] = combined;
+    u8 flag = (u8)func_8016DF2C();
+    evtCharBlob()->mByteFlags[index] = flag;
 }
 
 // Walks the 32-entry event-id table; for each entry strictly above `lower`
@@ -287,16 +293,15 @@ void func_801644D8(cf::CTaskREvent* self, int type, int upper, int lower) {
 // Initializes the 32-slot event data table: each slot's u16 id is set to
 // 0xC00, its u8 flag cleared, its two 0x10-byte word sub-slots zeroed, and
 // its two 0x14-byte byte sub-slots filled with 1.
-// NOTE: retail keeps the inner (trip-2) loop as mtctr/bdnz; under this
-// unit's -O4,p MWCC fully unrolls constant-trip loops instead (wall #6,
-// needs an -O4,s unit-flag split).
+// NOTE: the inner walk is written as pointer-inequality loops so MWCC keeps
+// the retail mtctr/bdnz counted-loop shape instead of unrolling.
 void func_8016455C(CEventDataTable* self) {
     for (int i = 0; i < 0x20; i++) {
         self->mIds920[i] = 0xC00;
         self->mFlags900[i] = 0;
         CEventDataTable::WordSlot* w = &self->mWords[i][0];
         CEventDataTable::ByteSlot* b = &self->mBytes[i][0];
-        for (int j = 0; j < 2; j++) {
+        while (b != &self->mBytes[i + 1][0]) {
             w->data[0] = 0;
             w->data[1] = 0;
             w->data[2] = 0;
@@ -336,6 +341,13 @@ struct CTaskREventNameBuf {
     volatile int len;
 };
 
+// Non-volatile twin of CTaskREventNameBuf for func_80164A50's path buffer:
+// retail CSEs the strlen result into a register copy (no forced reloads).
+struct CTaskREventPathBuf {
+    char buf[0x20];
+    int len;
+};
+
 // Walks the 32-entry event-name table; for each entry builds the
 // "lbl_eu_80503008" + suffix string and compares it with `key`. On a match
 // reads the [idx][type][slot] byte from the character blob (0x388A base,
@@ -344,21 +356,20 @@ struct CTaskREventNameBuf {
 // Called from CREvtModelPc.cpp with (name, entryId, slot).
 u32 func_80164724(const char* key, int type, u32 slot) {
     CTaskREventNameBuf sb;
-    const char* base = lbl_eu_80503008;
-    const char* const* tbl = lbl_eu_80530710;
     int idx = -1;
+    const char* base = lbl_eu_80503008;
     for (u32 i = 0; i < 0x20; i++) {
         sb.len = strlen(base);
         strcpy(sb.buf, base);
-        int len2 = strlen(tbl[i]);
-        strcat(sb.buf, tbl[i]);
+        int len2 = strlen(lbl_eu_80530710[i]);
+        strcat(sb.buf, lbl_eu_80530710[i]);
         sb.len += len2;
         if (strcmp(sb.buf, key) == 0) {
             idx = (int)i;
             break;
         }
     }
-    CEventCharBlob* blob = func_8009D5FC();
+    CEventCharBlob* blob = evtCharBlob();
     u8 v = blob->field_0x00[0x388A + idx * 0x28 + type * 5 + slot];
     if (v == 0) v = 1;
     if (v > 0x63) v = 1;
@@ -374,13 +385,12 @@ u32 func_80164724(const char* key, int type, u32 slot) {
 int func_80164838(const char* key, int slot) {
     CTaskREventNameBuf sb;
     const char* base = lbl_eu_80503008;
-    const char* const* tbl = lbl_eu_80530710;
     int idx = -1;
     for (u32 i = 0; i < 0x20; i++) {
         sb.len = strlen(base);
         strcpy(sb.buf, base);
-        int len2 = strlen(tbl[i]);
-        strcat(sb.buf, tbl[i]);
+        int len2 = strlen(lbl_eu_80530710[i]);
+        strcat(sb.buf, lbl_eu_80530710[i]);
         sb.len += len2;
         if (strcmp(sb.buf, key) == 0) {
             idx = (int)i;
@@ -388,7 +398,7 @@ int func_80164838(const char* key, int slot) {
         }
     }
     if (idx < 0) return 0;
-    return (int)func_8009D5FC()->mWordRows[idx][slot];
+    return (int)evtCharBlob()->mWordRows[idx][slot];
 }
 
 u32 func_80164910() {
@@ -418,10 +428,13 @@ int func_80164954() {
     }
     if (flag != 0) return 0;
     mgr->field_0x1D4 = 0;
-    u8* p = lbl_eu_80530430;
-    for (u32 i = 0; i < 0x26; i++, p++) {
+    u8 v;
+    u32 i;
+    u8* p;
+    p = lbl_eu_80530430;
+    for (i = 0; i < 0x26; i++, p++) {
         if (i & 1) {
-            u8 v = *p;
+            v = *p;
             u32 r = (u32)ml::math::mtRand(0x26);
             if ((r & 1) == 0) {
                 r += 1;
@@ -471,10 +484,10 @@ int func_80164A50(const char* path, int arg1, int arg2) {
     CTaskREventNameBuf pathBuf;
     pathBuf.len = strlen(file);
     strcpy(pathBuf.buf, file);
-    // Trim the (up to 4-character) file extension off the name. The temp
-    // keeps the trimmed length in a register for the terminator store (the
-    // volatile member would otherwise force a reload).
-    int trim = pathBuf.len < 4 ? pathBuf.len : 4;
+    // Retail shape: r5 = 4; if (len < 4) r5 = len (volatile forces the
+    // separate reload of len in the terminator-store tail).
+    int trim = 4;
+    if (pathBuf.len < 4) trim = pathBuf.len;
     if (trim > 0) {
         int nl = pathBuf.len - trim;
         pathBuf.len = nl;
@@ -726,9 +739,16 @@ void cf::CTaskREvent::Draw() {
 // then runs the dimming/auto-sleep countdowns and refreshes the camera
 // object's position when the game manager is idle.
 __declspec(noinline) void func_80165DF4(cf::CTaskREvent* self, int arg) {
+    // Each guard re-reads the flag globals: retail emits a fresh lwz per
+    // source-level read (no CSE across the && sequence points).
     int busy = (lbl_eu_80663E24 & 0x02440000) != 0;
-    if ((lbl_eu_80663E28 & 0x1000) == 0) busy = 0;
-    if ((lbl_eu_80663E28 & 0x01000000) != 0) busy = func_8004368C__9CTaskGameFv();
+    if ((lbl_eu_80663E28 & 0x00001000) != 0) {
+        if ((lbl_eu_80663E28 & 0x01000000) != 0) {
+            busy = func_8004368C__9CTaskGameFv();
+        }
+    } else {
+        busy = 0;
+    }
     if (busy != 0) {
         if ((lbl_eu_80663E24 & 0x00040000) != 0 &&
             Class_80296898::getInstance()->mConfigData[0x20] == 0) {
@@ -887,17 +907,14 @@ void cf::CTaskREvent::cbRenderBefore() {
     CView* view = getCurrentView__5CViewFv();
     CEventMgr* mgr = lbl_eu_80664240;
     u32 result;
-    // Nested if/else materializes the CRI-player result into r3 with a
-    // per-branch `li r3,0` (retail shape); a flat `&&`/else chain merges the
-    // zero-blocks and shrinks the function.
-    if (mgr != 0) {
-        if ((u32)mgr->mCri != 0xFFFFFFFF) {
-            result = func_80459AC4__7CLibCriFv(mgr->mCri);
-        } else {
-            result = 0;
-        }
-    } else {
+    // if/else-if chain laid out zero-first: each failed guard falls through
+    // to its own li r3,0 block (retail shape).
+    if (mgr == 0) {
         result = 0;
+    } else if ((u32)mgr->mCri == 0xFFFFFFFF) {
+        result = 0;
+    } else {
+        result = func_80459AC4__7CLibCriFv(mgr->mCri);
     }
     if (result != 0) return;
     ml::CRect rect;
@@ -915,19 +932,22 @@ void func_801662E8(cf::CTaskREvent* self) {
     if (func_80043D68() == 0) return;
     if (self->field_0xB0 == 0) return;
     if (cf::CfGameManager::func_800829B8() != 0) return;
-    if (lbl_eu_80663E28 & 0x01000000) return;
-    int v = func_80043B54();
-    if (CDeviceVI::isTvFormatPal()) v += 2;
-    if (func_8016A3A8() < v) {
-        if (func_eu_8016DA48(self->field_0xB0) != 0) {
-            int d = v - func_8016A3A8();
-            if (d > 0x3c) d = 0x3c;
-            CGame::setTaskManagerUpdateCount((u32)d);
-            self->field_0x6C |= 0x100;
-            return;
+    // Retail wraps the remainder in the negated bit test (beq L; b end; L:)
+    // rather than an early return.
+    if ((lbl_eu_80663E28 & 0x01000000) == 0) {
+        int v = func_80043B54();
+        if (CDeviceVI::isTvFormatPal()) v += 2;
+        if (func_8016A3A8() < v) {
+            if (func_eu_8016DA48(self->field_0xB0) != 0) {
+                int d = v - func_8016A3A8();
+                if (d > 0x3c) d = 0x3c;
+                CGame::setTaskManagerUpdateCount((u32)d);
+                self->field_0x6C |= 0x100;
+                return;
+            }
         }
+        self->field_0x6C &= ~0x100;
     }
-    self->field_0x6C &= ~0x100;
 }
 
 // Async file-event handler (IWorkEvent callback via the OnFileEvent thunk):
@@ -972,8 +992,13 @@ int func_801663A8(cf::CTaskREvent* self, CTaskREventFileEvent* ev) {
                         lbl_eu_80663E24 &= ~0x02000000;
                         f32 f = lbl_eu_80667628;
                         f32 v[3] = { f, f, f };
+                        // Shared-header shape: (u32,u32,u32,u32,float).
+                        // Retail zero-narrows both ids to 16 bits
+                        // (clrlwi rX, rY, 16) before the call.
                         func_80083D50__Q22cf13CfGameManagerFv(
-                            (u16)out1, (u16)out2, v, &lbl_eu_80503008[0xe]);
+                            (u32)(u16)out1, (u32)(u16)out2,
+                            reinterpret_cast<u32>(v),
+                            reinterpret_cast<u32>(&lbl_eu_80503008[0xe]), f);
                         lbl_eu_80663E28 &= ~0x00100000;
                         self->field_0x1D0 = 3;
                     }

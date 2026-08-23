@@ -27,6 +27,16 @@ typedef struct SvmSvrEntry {
     const char* name;
 } SvmSvrEntry;
 
+typedef struct SvmExecArea {
+    u32 flags[8];              /* 0x3A8 */
+    u32 counts[8];             /* 0x3C8 */
+} SvmExecArea;
+
+typedef struct SvmCbArea {
+    SvmCbPair lock;            /* 0x010 */
+    SvmCbPair unlock;          /* 0x018 */
+} SvmCbArea;
+
 typedef struct SvmCtrl {
     volatile u32 init_count;   /* 0x000 */
     volatile u32 lock_count;   /* 0x004 */
@@ -38,8 +48,7 @@ typedef struct SvmCtrl {
     SvmErrCb err_cb;           /* 0x120 */
     SvmSvrEntry svr_tbl[8][6]; /* 0x128 */
     SvmCbPair bdr_tbl[8];      /* 0x368 */
-    u32 exec_flags[8];         /* 0x3A8 */
-    u32 exec_counts[8];        /* 0x3C8 */
+    SvmExecArea exec;          /* 0x3A8 */
     u64 field_0x3E8;           /* 0x3E8 */
     u64 field_0x3F0;           /* 0x3F0 */
     void* testandset_fn;       /* 0x3F8 */
@@ -58,23 +67,7 @@ void SVM_CallErr(const char* fmt, ...);
 
 /* Report an error message through the error callback; NULL means no message.
    (Retail inlines this into svm_SetCbSvr / svm_SetCbSvrId / SVM_DelCbSvr;
-   the error callback is reached through the ctrl struct there.) */
-#define SVM_ERR_CB_MSG(m)                                                     \
-    do {                                                                      \
-        SvmCtrl* _e = &lbl_eu_805F26F0;                                       \
-        if ((m) == NULL) {                                                    \
-            void (*_fn)(void*, const void*) = _e->err_cb.func;                \
-            void* _obj = _e->err_cb.object;                                   \
-            _fn(_obj, NULL);                                                  \
-        } else {                                                              \
-            CRICRW_Strncpy(_e->err_msg, (void*)0x100, (m), 0xFF);             \
-            if (_e->err_cb.func != NULL) {                                    \
-                void (*_fn)(void*, const void*) = _e->err_cb.func;            \
-                void* _obj = _e->err_cb.object;                               \
-                _fn(_obj, _e->err_msg);                                       \
-            }                                                                 \
-        }                                                                     \
-    } while (0)
+   see those functions for the inline form.) */
 
 /* Lock the server manager (retail inlines this body into every caller). */
 #define SVM_LOCK()                                                            \
@@ -110,19 +103,30 @@ void SVM_CallErr(const char* fmt, ...);
     } while (0)
 
 void SVM_Lock(void) {
-    SvmCtrl* _c = &lbl_eu_805F26F0;
-    if (_c->lock_cb.func != NULL) {
-        void (*_fn)(void*) = _c->lock_cb.func;
-        void* _obj = _c->lock_cb.object;
-        _fn(_obj);
-        if (_c->lock_count == 0)
-            _c->lock_flag = 1;
-        _c->lock_count++;
+    SvmCtrl* ctrl = &lbl_eu_805F26F0;
+    if (ctrl->lock_cb.func != NULL) {
+        SvmCbPair* cb = &ctrl->lock_cb;
+        cb->func(cb->object);
+        if (ctrl->lock_count == 0)
+            ctrl->lock_flag = 1;
+        ctrl->lock_count++;
     }
 }
 
 void SVM_Unlock(void) {
-    SVM_UNLOCK();
+    SvmCtrl* ctrl = &lbl_eu_805F26F0;
+    if (ctrl->unlock_cb.func != NULL) {
+        ctrl->lock_count--;
+        if (ctrl->lock_count == 0) {
+            if (ctrl->lock_flag != 1)
+                SVM_CallErr(lbl_eu_80518F50, ctrl->lock_flag, 1);
+            ctrl->lock_flag = 0;
+        }
+        {
+            SvmCbPair* cb = &ctrl->unlock_cb;
+            cb->func(cb->object);
+        }
+    }
 }
 
 void SVM_CallErr(const char* fmt, ...) {
@@ -167,11 +171,22 @@ s32 SVM_SetCbSvrWithString(u32 svrId, void* fn, void* ctx, const char* name) {
     return ret;
 }
 
+/* Inlined error-report body; retail duplicates this into every caller. */
+static inline void svm_ReportErr(SvmErrCb* ecb, char* errmsg, const char* msg) {
+    if (msg == NULL) {
+        ecb->func(ecb->object, NULL);
+    } else {
+        CRICRW_Strncpy(errmsg, (void*)0x100, msg, 0xFF);
+        if (ecb->func != NULL)
+            ecb->func(ecb->object, errmsg);
+    }
+}
+
 s32 svm_SetCbSvr(u32 svrId, void* fn, void* ctx, const char* name) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     s32 i;
     if (svrId > 7) {
-        SVM_ERR_CB_MSG(&lbl_eu_80518F50[0x47]);
+        svm_ReportErr(&ctrl->err_cb, ctrl->err_msg, &lbl_eu_80518F50[0x47]);
         return -1;
     }
     for (i = 0; i < 6; i++) {
@@ -185,17 +200,32 @@ s32 svm_SetCbSvr(u32 svrId, void* fn, void* ctx, const char* name) {
     }
     if (i != 6)
         return i;
-    SVM_ERR_CB_MSG(&lbl_eu_80518F50[0x75]);
+    svm_ReportErr(&ctrl->err_cb, ctrl->err_msg, &lbl_eu_80518F50[0x75]);
     return -1;
 }
 
 void SVM_DelCbSvr(u32 svrId, u32 idx) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
+    SvmErrCb* ecb = &ctrl->err_cb;
     SVM_LOCK();
     if (idx > 5) {
-        SVM_ERR_CB_MSG(&lbl_eu_80518F50[0xA3]);
+        const char* msg = &lbl_eu_80518F50[0xA3];
+        if (msg == NULL) {
+            ecb->func(ecb->object, NULL);
+        } else {
+            CRICRW_Strncpy(ctrl->err_msg, (void*)0x100, msg, 0xFF);
+            if (ecb->func != NULL)
+                ecb->func(ecb->object, ctrl->err_msg);
+        }
     } else if (svrId > 7) {
-        SVM_ERR_CB_MSG(&lbl_eu_80518F50[0xC3]);
+        const char* msg = &lbl_eu_80518F50[0xC3];
+        if (msg == NULL) {
+            ecb->func(ecb->object, NULL);
+        } else {
+            CRICRW_Strncpy(ctrl->err_msg, (void*)0x100, msg, 0xFF);
+            if (ecb->func != NULL)
+                ecb->func(ecb->object, ctrl->err_msg);
+        }
     } else {
         SvmSvrEntry* entry = &ctrl->svr_tbl[svrId][idx];
         entry->func = NULL;
@@ -213,18 +243,41 @@ void SVM_SetCbSvrIdWithString(u32 svrId, u32 idx, void* fn, void* ctx, const cha
 
 void svm_SetCbSvrId(u32 svrId, u32 idx, void* fn, void* ctx, const char* name) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
+    SvmErrCb* ecb = &ctrl->err_cb;
     if (idx > 5) {
-        SVM_ERR_CB_MSG(&lbl_eu_80518F50[0xE9]);
+        const char* msg = &lbl_eu_80518F50[0xE9];
+        if (msg == NULL) {
+            ecb->func(ecb->object, NULL);
+        } else {
+            CRICRW_Strncpy(ctrl->err_msg, (void*)0x100, msg, 0xFF);
+            if (ecb->func != NULL)
+                ecb->func(ecb->object, ctrl->err_msg);
+        }
         return;
     }
     if (svrId > 7) {
-        SVM_ERR_CB_MSG(&lbl_eu_80518F50[0x10B]);
+        const char* msg = &lbl_eu_80518F50[0x10B];
+        if (msg == NULL) {
+            ecb->func(ecb->object, NULL);
+        } else {
+            CRICRW_Strncpy(ctrl->err_msg, (void*)0x100, msg, 0xFF);
+            if (ecb->func != NULL)
+                ecb->func(ecb->object, ctrl->err_msg);
+        }
         return;
     }
     {
         SvmSvrEntry* entry = &ctrl->svr_tbl[svrId][idx];
-        if (entry->func != NULL)
-            SVM_ERR_CB_MSG(&lbl_eu_80518F50[0x131]);
+        if (entry->func != NULL) {
+            const char* msg = &lbl_eu_80518F50[0x131];
+            if (msg == NULL) {
+                ecb->func(ecb->object, NULL);
+            } else {
+                CRICRW_Strncpy(ctrl->err_msg, (void*)0x100, msg, 0xFF);
+                if (ecb->func != NULL)
+                    ecb->func(ecb->object, ctrl->err_msg);
+            }
+        }
         entry->func = (u32 (*)(void*))fn;
         entry->object = ctx;
         if (name != NULL)
@@ -272,162 +325,71 @@ void SVM_SetCbUnlock(void* cb, void* ctx) {
     p->object = ctx;
 }
 
-u32 SVM_ExecSvrVint(void) {
+/* Shared server-runner body; retail inlines this into each SVM_ExecSvr*
+   wrapper with the server index folded in at the call sites. */
+static inline u32 svm_ExecSvr(s32 id) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     u32 result = 0;
+    SvmSvrEntry* tbl = ctrl->svr_tbl[0];
     s32 i;
-    SvmSvrEntry* p = ctrl->svr_tbl[0];
+    u32 one = 1;
+    SvmSvrEntry* p = &tbl[6 * id];
+    u32 zero = 0;
     for (i = 0; i < 6; i++, p++) {
         u32 (*fn)(void*) = p->func;
         void* obj = p->object;
         if (fn != NULL) {
-            ctrl->exec_flags[0] = 1;
+            ctrl->exec.flags[id] = one;
             result |= fn(obj);
-            ctrl->exec_flags[0] = 0;
+            ctrl->exec.flags[id] = zero;
         }
     }
-    ctrl->exec_counts[0] += 1;
+    ctrl->exec.counts[id] += 1;
     return result;
+}
+
+u32 SVM_ExecSvrVint(void) {
+    return svm_ExecSvr(0);
 }
 
 u32 SVM_ExecSvrUsrVsync(void) {
-    SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    u32 result = 0;
-    s32 i;
-    SvmSvrEntry* p = ctrl->svr_tbl[0] + 6;
-    for (i = 0; i < 6; i++, p++) {
-        u32 (*fn)(void*) = p->func;
-        void* obj = p->object;
-        if (fn != NULL) {
-            ctrl->exec_flags[1] = 1;
-            result |= fn(obj);
-            ctrl->exec_flags[1] = 0;
-        }
-    }
-    ctrl->exec_counts[1] += 1;
-    return result;
+    return svm_ExecSvr(1);
 }
 
 u32 SVM_ExecSvrVsync(void) {
-    SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    u32 result = 0;
-    s32 i;
-    SvmSvrEntry* base = ctrl->svr_tbl[0];
-    SvmSvrEntry* p = base + 12;
-    u32* cnt = ctrl->exec_counts;
-    for (i = 0; i < 6; i++, p++) {
-        u32 (*fn)(void*) = p->func;
-        void* obj = p->object;
-        if (fn != NULL) {
-            ctrl->exec_flags[2] = 1;
-            result |= fn(obj);
-            ctrl->exec_flags[2] = 0;
-        }
-    }
-    cnt[2] += 1;
-    return result;
+    return svm_ExecSvr(2);
 }
 
 u32 SVM_ExecSvrUhigh(void) {
-    SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    u32 result = 0;
-    s32 i;
-    SvmSvrEntry* p = ctrl->svr_tbl[0] + 18;
-    for (i = 0; i < 6; i++, p++) {
-        u32 (*fn)(void*) = p->func;
-        void* obj = p->object;
-        if (fn != NULL) {
-            ctrl->exec_flags[3] = 1;
-            result |= fn(obj);
-            ctrl->exec_flags[3] = 0;
-        }
-    }
-    ctrl->exec_counts[3] += 1;
-    return result;
+    return svm_ExecSvr(3);
 }
 
 u32 SVM_ExecSvrFs(void) {
-    SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    u32 result = 0;
-    s32 i;
-    SvmSvrEntry* p = ctrl->svr_tbl[0] + 24;
-    for (i = 0; i < 6; i++, p++) {
-        u32 (*fn)(void*) = p->func;
-        void* obj = p->object;
-        if (fn != NULL) {
-            ctrl->exec_flags[4] = 1;
-            result |= fn(obj);
-            ctrl->exec_flags[4] = 0;
-        }
-    }
-    ctrl->exec_counts[4] += 1;
-    return result;
+    return svm_ExecSvr(4);
 }
 
 u32 SVM_ExecSvrMain(void) {
-    SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    u32 result = 0;
-    s32 i;
-    SvmSvrEntry* p = ctrl->svr_tbl[0] + 30;
-    for (i = 0; i < 6; i++, p++) {
-        u32 (*fn)(void*) = p->func;
-        void* obj = p->object;
-        if (fn != NULL) {
-            ctrl->exec_flags[5] = 1;
-            result |= fn(obj);
-            ctrl->exec_flags[5] = 0;
-        }
-    }
-    ctrl->exec_counts[5] += 1;
-    return result;
+    return svm_ExecSvr(5);
 }
 
 u32 SVM_ExecSvrMwIdle(void) {
-    SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    u32 result = 0;
-    s32 i;
-    SvmSvrEntry* p = ctrl->svr_tbl[0] + 36;
-    for (i = 0; i < 6; i++, p++) {
-        u32 (*fn)(void*) = p->func;
-        void* obj = p->object;
-        if (fn != NULL) {
-            ctrl->exec_flags[6] = 1;
-            result |= fn(obj);
-            ctrl->exec_flags[6] = 0;
-        }
-    }
-    ctrl->exec_counts[6] += 1;
-    return result;
+    return svm_ExecSvr(6);
 }
 
 u32 SVM_ExecSvrUsrIdle(void) {
-    SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    u32 result = 0;
-    s32 i;
-    SvmSvrEntry* p = ctrl->svr_tbl[0] + 42;
-    for (i = 0; i < 6; i++, p++) {
-        u32 (*fn)(void*) = p->func;
-        void* obj = p->object;
-        if (fn != NULL) {
-            ctrl->exec_flags[7] = 1;
-            result |= fn(obj);
-            ctrl->exec_flags[7] = 0;
-        }
-    }
-    ctrl->exec_counts[7] += 1;
-    return result;
+    return svm_ExecSvr(7);
 }
 
 void SVM_Init(void) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     if (ctrl->init_count == 0) {
-        memset(&ctrl->exec_flags[0], 0, 0x20);
+        memset(&ctrl->exec.flags[0], 0, 0x20);
         memset(&ctrl->lock_cb, 0, 8);
         memset(&ctrl->unlock_cb, 0, 8);
         memset(&ctrl->field_0x3E8, 0, 8);
         memset(&ctrl->field_0x3F0, 0, 8);
         {
-            u32* cnt = ctrl->exec_counts;
+            u32* cnt = ctrl->exec.counts;
             cnt[0] = 0;
             cnt[1] = 0;
             cnt[2] = 0;
@@ -441,21 +403,24 @@ void SVM_Init(void) {
 }
 
 void SVM_Finish(void) {
-    SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    ctrl->init_count = ctrl->init_count - 1;
+    register SvmCtrl* ctrl = &lbl_eu_805F26F0;
+    ctrl->init_count--;
     if (ctrl->init_count != 0)
         return;
-    memset(&ctrl->exec_flags[0], 0, 0x20);
+    memset(ctrl->exec.flags, 0, 0x20);
     memset(&ctrl->lock_cb, 0, 8);
     memset(&ctrl->unlock_cb, 0, 8);
     memset(&ctrl->field_0x3E8, 0, 8);
     memset(&ctrl->field_0x3F0, 0, 8);
-    ctrl->exec_counts[0] = 0;
-    ctrl->exec_counts[1] = 0;
-    ctrl->exec_counts[2] = 0;
-    ctrl->exec_counts[3] = 0;
-    ctrl->exec_counts[4] = 0;
-    ctrl->exec_counts[5] = 0;
+    {
+        u32* cnt = ctrl->exec.counts;
+        cnt[0] = 0;
+        cnt[1] = 0;
+        cnt[2] = 0;
+        cnt[3] = 0;
+        cnt[4] = 0;
+        cnt[5] = 0;
+    }
     ctrl->testandset_fn = NULL;
     memset(&ctrl->err_cb, 0, 8);
 }

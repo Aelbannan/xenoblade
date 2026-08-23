@@ -4,38 +4,54 @@
 
 #include <revolution/BASE.h>
 
-#include <algorithm>
 
 // MWCC's <algorithm> doesn't declare std::sort. The retail nw4r build
 // instantiated the MSL implementation in this TU (sort<...> and the
 // __sort132 median-of-3 helper), so define the templates here to get the
 // same instantiated symbols (sort<PQ54...MdlZ, ...> and __sort132<...>).
+// Retail stores the rotating pivot counter in an sdata global defined in
+// this TU (retail linker name lbl_eu_8066347C).
+int lbl_eu_8066347C = 0;
+
 namespace std {
 
-// Median-of-3 over the pivot candidates *_F, *_P, *_L (retail __sort132
-// body: the pivot slot *_P ends up holding the median).
+template <typename T>
+inline void swap(T& a, T& b) {
+    T tmp = a;
+    a = b;
+    b = tmp;
+}
+
+// Median-of-3 over the pivot candidates *_F, *_P, *_L: the pivot slot *_P
+// ends up holding the median.
 template <typename _Pr, typename _RI>
 void __sort132(_RI _F, _RI _L, _RI _P, _Pr _C) {
-    bool cPF = _C(*_P, *_F);
-    bool cLP = _C(*_L, *_P);
+    int i1 = _C(*_P, *_F);
+    bool n1 = !i1;
+    int i2 = _C(*_L, *_P);
+    bool n2 = !i2;
 
-    if (cPF && cLP) {
+    if (n1 && n2) {
+        // both comparisons returned false: ordering already fine
+    } else if (!n1 && !n2) {
         swap(*_F, *_L);
-    } else if (cPF || cLP) {
+    } else {
+        // exactly one comparison held: reorder around the third candidate
         if (_C(*_L, *_F)) {
             swap(*_F, *_L);
         }
-        if (cPF) {
-            swap(*_F, *_P);
-        } else {
+        if (n1) {
             swap(*_L, *_P);
+        } else {
+            swap(*_F, *_P);
         }
     }
 }
 
+// MWCC's <algorithm> doesn't declare std::sort; the retail nw4r build
+// instantiated the MSL implementation in this TU.
 template <typename _RI, typename _Pr>
 void sort(_RI _F, _RI _L, _Pr _P) {
-    static int shuffle = 0;
 
     for (;;) {
         int count = _L - _F;
@@ -44,16 +60,21 @@ void sort(_RI _F, _RI _L, _Pr _P) {
         }
 
         if (count <= 20) {
-            // Selection sort for small ranges.
-            for (_RI i = _F; i != _L - 1; ++i) {
-                _RI min = i;
-                for (_RI j = i + 1; j != _L; ++j) {
-                    if (_P(*j, *min)) {
-                        min = j;
+            if (_F != _L) {
+                // Selection sort: for each position, find the smallest
+                // remaining element and swap it into place.
+                for (_RI i = _F; i != _L - 1; ++i) {
+                    _RI min = i;
+                    if (i != _L) {
+                        for (_RI j = i + 1; j != _L; ++j) {
+                            if (_P(*j, *min)) {
+                                min = j;
+                            }
+                        }
                     }
-                }
-                if (min != i) {
-                    swap(*min, *i);
+                    if (min != i) {
+                        swap(*min, *i);
+                    }
                 }
             }
             return;
@@ -64,44 +85,57 @@ void sort(_RI _F, _RI _L, _Pr _P) {
         // rotating counter avoids repeated sorts of similar data hitting
         // the same pivot).
         {
-            int c = shuffle;
-            int c1 = c + 1;
+            int c = lbl_eu_8066347C;
             _RI p1 = _F + (count / 4 + c % 5);
+            int c1 = c + 1;
             if (c1 >= 5) {
                 c1 = -4;
             }
-            shuffle = c1 + 1;
+            int s = c1 + 1;
+            lbl_eu_8066347C = s;
             _RI p2 = _F + (count * 3 / 4 + c1 % 5);
-            if (shuffle >= 5) {
-                shuffle = -4;
+            if (s >= 5) {
+                // Only reachable when c == 4 (s == 5), so this stores -4.
+                lbl_eu_8066347C = s - 9;
             }
 
-            // The reference-comparator instantiation is the one retail emits.
-            __sort132<_Pr&, _RI>(p1, p2, _L - 1, _P);
-
-            // Partition [_F, _L) around the pivot kept at _L - 1.
+            // Force the reference comparator instantiation (as retail does).
             _RI pivot = _L - 1;
+            __sort132<_Pr&, _RI>(p1, p2, pivot, _P);
+
+            // Partition [_F, _L) around the pivot kept at _L - 1: advance i
+            // past elements below the pivot and j down past elements above it.
             _RI i = _F;
-            _RI j = _L - 1;
+            _RI j = pivot;
             while (_P(*i, *pivot)) {
                 ++i;
             }
             do {
                 --j;
                 if (i == j) {
-                    break;
+                    goto partition_end;
                 }
             } while (!_P(*j, *pivot));
-            while (i < j) {
+            if (i < j) {
+                // Rotated loop: the first swap is peeled before the scan loop
+                // (matches retail layout).
                 swap(*i, *j);
                 ++i;
-                while (_P(*i, *pivot)) {
+                for (;;) {
+                    while (_P(*i, *pivot)) {
+                        ++i;
+                    }
+                    do {
+                        --j;
+                    } while (!_P(*j, *pivot));
+                    if (i >= j) {
+                        break;
+                    }
+                    swap(*i, *j);
                     ++i;
                 }
-                do {
-                    --j;
-                } while (!_P(*j, *pivot));
             }
+        partition_end:;
 
             if (i == _F) {
                 // The pivot is the smallest element: move it to the front and
@@ -162,6 +196,8 @@ template void __sort132<
     bool (*&)(const nw4r::g3d::detail::workmem::MdlZ&,
               const nw4r::g3d::detail::workmem::MdlZ&));
 } // namespace std
+
+#undef pRepl
 
 // Float constants shared by the loop body. Retail loads these once before the
 // loop and keeps them in f29-f31 (lbl_eu_80669C48 = 0.0f, 80669C4C = -2.0f,
@@ -406,11 +442,14 @@ struct DrawResMdlReplacementLayout {
     ResVtxClrData** vtxClrTable;                 // at 0x3C
 };
 
+// Retail accesses the replacement through its true layout (leading u32
+// flag) directly via the parameter; use a macro so MWCC allocates no extra
+// register for a cast copy.
+#define pRepl \
+    reinterpret_cast<const DrawResMdlReplacementLayout*>(pReplacement)
+
 void SetupDraw1Mat1ShpSwap(Draw1Mat1ShpSwap* pSwap,
                            DrawResMdlReplacement* pReplacement, u32 id) {
-
-    const DrawResMdlReplacementLayout* pRepl =
-        reinterpret_cast<const DrawResMdlReplacementLayout*>(pReplacement);
 
     if (pRepl->texObjDataArray != NULL) {
         pSwap->texObj = ResTexObj(&pRepl->texObjDataArray[id]);
@@ -545,16 +584,11 @@ void DrawResMdlLoop(const ResMdl mdl, const u8* pByteCode,
 
 #define pDrawCmd reinterpret_cast<const ResByteCodeData::DrawParams*>(pByteCode)
 
-    u8 c;
-
     ResMat mat;
-    ResMat prevMat;
+    ResMat prevMat(NULL);
 
     ResShp shp;
     ResNode node;
-
-    const DrawResMdlReplacementLayout* pRepl =
-        reinterpret_cast<const DrawResMdlReplacementLayout*>(pReplacement);
 
     Draw1Mat1ShpSwap swap;
     // Retail zeroes the whole swap struct up front (the header ctor only
@@ -587,7 +621,7 @@ void DrawResMdlLoop(const ResMdl mdl, const u8* pByteCode,
 
     u32 matReuseCtrl = ctrl | 0x10;
 
-    for (; (c = *pByteCode) != ResByteCodeData::END;
+    for (; *pByteCode != ResByteCodeData::END;
          pByteCode += sizeof(ResByteCodeData::DrawParams)) {
 
         node = mdl.GetResNode(pDrawCmd->nodeIdHi << 8 | pDrawCmd->nodeIdLo);
@@ -704,12 +738,8 @@ void DrawResMdlLoop(const ResMdl mdl, const detail::workmem::MdlZ* pMdlZArray,
 
         SetupDraw1Mat1ShpSwap(&swap, pReplacement, mat.GetID());
 
-        u32 drawCtrl = ctrl;
-        if (mat == prevMat) {
-            drawCtrl = matReuseCtrl;
-        }
-
-        Draw1Mat1ShpDirectly(mat, shp, NULL, NULL, drawCtrl, &swap,
+        Draw1Mat1ShpDirectly(mat, shp, NULL, NULL,
+                             mat == prevMat ? matReuseCtrl : ctrl, &swap,
                              detail::GetIndMtxOp(mat, node, shp));
 
         prevMat = mat;
@@ -731,9 +761,6 @@ detail::workmem::MdlZ* SetUpMdlZ(u32* pNumMdlZ, const ResMdl mdl,
 
     u32 viewMtxNum = mdl.GetResMdlInfo().GetNumViewMtx();
     detail::workmem::MdlZ* pMdlZArray = detail::workmem::GetMdlZTemporary();
-
-    const DrawResMdlReplacementLayout* pRepl =
-        reinterpret_cast<const DrawResMdlReplacementLayout*>(pReplacement);
 
     for (; (c = *pByteCode) != ResByteCodeData::END;
          pByteCode += sizeof(ResByteCodeData::DrawParams)) {

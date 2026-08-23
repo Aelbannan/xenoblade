@@ -39,37 +39,64 @@ typedef struct HnObj {
     HnObjVtable* vtable;
 } HnObj;
 
-/* MWSFDPLY movie-player handle. Partial layout covering the fields touched by
- * the creator helpers in this TU. */
+/* User create-parameter block copied into the player at offset 4 (the copy is
+ * what MWCC splits into 8-byte chunks). */
+typedef struct PlyCfg {
+    u8 data[0x4C];
+} PlyCfg;
+
+/* MWSFDPLY movie-player handle (one slot per 0x690 bytes). Partial layout
+ * covering the fields touched by the creator helpers in this TU. */
 typedef struct MWSFDPLY {
-    u32 enable;             /* 0x00 */
-    u32 status;             /* 0x04 */
-    s32 width;              /* 0x08 */
-    s32 height;             /* 0x0c */
-    u32 frameCount;         /* 0x10 */
-    u32 field_0x14;         /* 0x14 */
-    s32 field_0x18;         /* 0x18 */
-    u32 field_0x1c;         /* 0x1c */
-    u32 field_0x20;         /* 0x20 */
-    u32 field_0x24;         /* 0x24 */
-    s32 poolCount;          /* 0x28 */
-    s32 poolSize;           /* 0x2c */
-    void** pool;            /* 0x30 */
-    u8 pad_0x34[0x24];      /* 0x34..0x57 */
-    void* sfd;              /* 0x58 */
-    void* stm;              /* 0x5c */
-    u8 pad_0x60[0x4];       /* 0x60..0x63 */
-    void* lsc;              /* 0x64 */
-    u8 pad_0x68[0x60];      /* 0x68..0xc7 */
-    void* sfx;              /* 0xc8 */
-    void* compoWork;        /* 0xcc */
-    u32 compoWorkSize;      /* 0xd0 */
-    u8 pad_0xd4[0x3E8];     /* 0xd4..0x4bb */
+    u32 enable;             /* 0x000 */
+    PlyCfg cfg;             /* 0x004 */
+    s32 width;              /* 0x008 */
+    s32 height;             /* 0x00c */
+    u32 frameCount;         /* 0x010 */
+    u32 field_0x14;         /* 0x014 */
+    s32 field_0x18;         /* 0x018 */
+    u32 field_0x1c;         /* 0x01c */
+    u32 field_0x20;         /* 0x020 */
+    u32 field_0x24;         /* 0x024 */
+    s32 poolCount;          /* 0x028 */
+    s32 poolSize;           /* 0x02c */
+    void** pool;            /* 0x030 */
+    u8 pad_0x34[0x20];      /* 0x034..0x053 */
+    u32 field_0x54;         /* 0x054 */
+    void* sfd;              /* 0x058 */
+    void* stm;              /* 0x05c */
+    u32 field_0x60;         /* 0x060 */
+    void* lsc;              /* 0x064 */
+    u32 field_0x68;         /* 0x068 */
+    u32 field_0x6c;         /* 0x06c */
+    u32 field_0x70;         /* 0x070 */
+    u32 field_0x74;         /* 0x074 */
+    u32 field_0x78;         /* 0x078 */
+    u8 pad_0x7c[0x08];      /* 0x07c..0x083 */
+    u32 field_0x84;         /* 0x084 */
+    u32 field_0x88;         /* 0x088 */
+    u32 field_0x8c;         /* 0x08c */
+    u8 field_0x90[0x04];    /* 0x090..0x093 */
+    u32 field_0x94;         /* 0x094 */
+    u8 pad_0x98[0x0c];      /* 0x098..0x0a3 */
+    u32 field_0xa4;         /* 0x0a4 */
+    u8 pad_0xa8[0x20];      /* 0x0a8..0x0c7 */
+    void* sfx;              /* 0x0c8 */
+    void* compoWork;        /* 0x0cc */
+    u32 compoWorkSize;      /* 0x0d0 */
+    u8 pad_0xd4[0x3d0];     /* 0x0d4..0x04a3 */
+    u32 field_0x4a4;        /* 0x4a4 */
+    u32 field_0x4a8;        /* 0x4a8 */
+    u32 field_0x4ac;        /* 0x4ac */
+    u8 pad_0x4b0[0x0c];     /* 0x4b0..0x4bb */
     void* picUsrTgt;        /* 0x4bc */
-    u8 pad_0x4c0[0x4];      /* 0x4c0..0x4c3 */
+    void* field_0x4c0;      /* 0x4c0 */
     void* field_0x4c4;      /* 0x4c4 */
     u32 field_0x4c8;        /* 0x4c8 */
-    u8 pad_0x4cc[0x34];     /* 0x4cc..0x4ff */
+    u8 pad_0x4cc[0x1c];     /* 0x4cc..0x4e7 */
+    void* field_0x4e8;      /* 0x4e8 */
+    u32 field_0x4ec;        /* 0x4ec */
+    u8 pad_0x4f0[0x10];     /* 0x4f0..0x4ff */
     u32 sj;                 /* 0x500 */
     HnObj* rbf;             /* 0x504 */
     u32 field_0x508;        /* 0x508 */
@@ -80,9 +107,35 @@ typedef struct MWSFDPLY {
     u32 field_0x51c;        /* 0x51c */
     u32 field_0x520;        /* 0x520 */
     HnObj* uni;             /* 0x524 */
-    u8 pad_0x528[0xB0];     /* 0x528..0x5d7 */
+    u32 field_0x528;        /* 0x528 */
+    u32 field_0x52c;        /* 0x52c */
+    u8 pad_0x530[0x10];     /* 0x530..0x53f */
+    u32 field_0x540;        /* 0x540 */
+    u32 field_0x544;        /* 0x544 */
+    u32 field_0x548;        /* 0x548 */
+    u32 field_0x54c;        /* 0x54c */
+    u8 pad_0x550[0x08];     /* 0x550..0x557 */
+    u32 field_0x558;        /* 0x558 */
+    u32 zeros[31];          /* 0x55c..0x5d4 */
     u8 field_0x5d8[0x5C];   /* 0x5d8..0x633 (SstHn sub-objects) */
     u32* field_0x634;       /* 0x634 */
+    u32 field_0x638;        /* 0x638 */
+    u32 field_0x63c;        /* 0x63c */
+    u32 field_0x640;        /* 0x640 */
+    u32 field_0x644;        /* 0x644 */
+    u8 pad_0x648[0x04];     /* 0x648..0x64b */
+    u32 field_0x64c;        /* 0x64c */
+    u8 pad_0x650[0x10];     /* 0x650..0x65f */
+    u32 field_0x660;        /* 0x660 */
+    u32 field_0x664;        /* 0x664 */
+    u32 field_0x668;        /* 0x668 */
+    u32 field_0x66c;        /* 0x66c */
+    u32 field_0x670;        /* 0x670 */
+    u32 field_0x674;        /* 0x674 */
+    u32 field_0x678;        /* 0x678 */
+    u32 field_0x67c;        /* 0x67c */
+    u32 field_0x680;        /* 0x680 */
+    u8 pad_0x684[0x0c];     /* 0x684..0x68f */
 } MWSFDPLY;
 
 /* SFD creation parameter block shared by the frame-buffer allocators. */
@@ -96,7 +149,66 @@ typedef struct MWSFCRE_Para {
     s32 outer;              /* 0x28 (outer frame pool mode) */
     s32 poolSize;           /* 0x2c */
     void* pool;             /* 0x30 */
+    u32 field_0x34;         /* 0x34 */
+    u8 pad_0x38[0x08];      /* 0x38..0x3f */
+    void* field_0x40;       /* 0x40 */
 } MWSFCRE_Para;
+
+/* Per-slot scratch block living at lbl_eu_805FF2E0: stream-buffer sizes
+ * computed by mwsfcre_CalcWorkStmBuf plus the frame-buffer sizes. */
+typedef struct SfdWork {
+    u32 field_0x00;         /* 0x00 */
+    u32 field_0x04;         /* 0x04 */
+    u32 outA;               /* 0x08 */
+    u32 outB;               /* 0x0c */
+    u32 outC;               /* 0x10 */
+    u32 outD;               /* 0x14 */
+    u32 outE;               /* 0x18 */
+    u32 outF;               /* 0x1c */
+    u32 size0;              /* 0x20 */
+    u32 size1;              /* 0x24 */
+} SfdWork;
+
+/* Geometry info consumed by SFD_SetMpvParaTbl. */
+typedef struct MpvInfo {
+    u32 yStride;            /* 0x00 */
+    u32 chromaHeight;       /* 0x04 */
+    u32 width;              /* 0x08 */
+    u32 height;             /* 0x0c */
+    u32 field_0x10;         /* 0x10 */
+    u32 width2;             /* 0x14 */
+    u32 height2;            /* 0x18 */
+    u32 frameCount;         /* 0x1c */
+    u32 field_0x20;         /* 0x20 */
+} MpvInfo;
+
+/* ADX decoder configuration (two entries patched per stream). */
+typedef struct AdxtCfg {
+    u8 pad_0x00[0x08];      /* 0x00..0x07 */
+    u32 field_0x08;         /* 0x08 */
+    u8 pad_0x0c[0x0c];      /* 0x0c..0x17 */
+    u32 field_0x18;         /* 0x18 */
+} AdxtCfg;
+
+/* SFD_Create parameter block (condition table + buffer descriptions). */
+typedef struct SfdCreateCfg {
+    u32 field_0x00;         /* 0x00 */
+    void* stmBuf;           /* 0x04 */
+    u32 field_0x08;         /* 0x08 */
+    u32 field_0x0c;         /* 0x0c */
+    u32 field_0x10;         /* 0x10 */
+    u8 pad_0x14[0x14];      /* 0x14..0x27 */
+    u32 field_0x28;         /* 0x28 */
+    u32 field_0x2c;         /* 0x2c */
+    u32 field_0x30;         /* 0x30 */
+    u32 field_0x34;         /* 0x34 */
+    u32 width;              /* 0x38 */
+    u32 height;             /* 0x3c */
+    u32 modeIdx;            /* 0x40 */
+    u32 field_0x44;         /* 0x44 */
+    u32 field_0x48;         /* 0x48 */
+    u32 field_0x4c;         /* 0x4c */
+} SfdCreateCfg;
 
 /* SFD_SetMpvParaTbl argument block sub-table: 10 default condition/value
  * pairs copied from the mode-specific template in .data. */
@@ -140,9 +252,12 @@ extern TraceRec lbl_eu_805661AC;
 extern TraceRec lbl_eu_80566280;
 extern const char lbl_eu_8051A3CC[];
 
+extern SfdWork lbl_eu_805FF2E0;
 extern u32 lbl_eu_805FF2E4;
 extern u32 lbl_eu_805FF2E8;
 extern u32 lbl_eu_805660D0;
+extern MpvInfo lbl_eu_80567258;
+extern AdxtCfg lbl_eu_8056727C;
 extern const SfdCondTbl lbl_eu_80567168;
 extern const SfdCondTbl lbl_eu_805671B8;
 extern const SfdCondTbl lbl_eu_80567208;
@@ -178,18 +293,45 @@ extern void MWSST_Destroy(void* sst);
 extern int sprintf(char* buf, const char* fmt, ...);
 extern void* memset(void* dst, int val, size_t n);
 
+extern void SFD_SetAdxtPara(AdxtCfg* cfg);
+extern void* SFD_Create(SfdCreateCfg* cfg, s32 arg);
+extern s32 SFD_GetSofdecHeader(void* sfd, s32 arg, u32* out);
+extern void* SJRBF_Create(u32 a, u32 b, u32 c);
+extern void* SJUNI_Create(s32 a, u32 b, u32 c);
+extern void* MWSTM_Create(HnObj* rbf);
+extern void* LSC_Create(HnObj* rbf);
+extern void LSC_SetStmHndl(void* lsc, void* stm);
+extern void MWSFPLY_SetFlowLimit(MWSFDPLY* self);
+extern void* MWSFSFX_Create(void* work, u32 size, s32 w, s32 h);
+extern void MWSFSFX_SetCompoMode(MWSFDPLY* self, u32 mode);
+extern void* MWSFTAG_CreateAinfSj(MWSFDPLY* self);
+extern s32 MWSFTAG_SetAinfSj(MWSFDPLY* self);
+extern void MWSFTAG_InitTagInf(MWSFDPLY* self);
+extern void MWSFFRM_InitSfhInfTable(MWSFDPLY* self);
+extern void MWSFFRM_SetShfCbFn(MWSFDPLY* self);
+extern void MWSFSVR_SetHnMwplySvrFlg(MWSFDPLY* self, s32 flg);
+extern void MWSFSVR_SetHnSfdSvrFlg(MWSFDPLY* self, s32 flg);
+extern void criware_803A3B98(MWSFDPLY* self);
+
 void* mwPlyCreateSofdec(MWSFDPLY* self);
 void mwply_Destroy(MWSFDPLY* self);
+void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para);
+void MWSFCRE_SetCondSfd(MWSFDPLY* ply, MWSFDPLY* user, u32 a, u32 b);
+void mwsfcre_CalcWorkStmBuf(void* stm, u32* outA, u32* outB, u32* outC,
+    u32* outD, u32* outE, u32* outF);
 
 /* ---- Target implementations ---- */
 
 s32 mwsfcre_IsOuterFrmPoolUsed(MWSFDPLY* self) {
-    s32 poolCount = self->poolCount;
-    s32 poolSize = self->poolSize;
-    void** pool = self->pool;
-    s32 w = self->width;
-    s32 h = self->height;
     s32 ok = 1;
+    void** pool;
+    s32 poolCount = self->poolCount;
+    s32 w;
+    s32 poolSize = self->poolSize;
+    s32 h;
+    pool = self->pool;
+    w = self->width;
+    h = self->height;
     if (poolCount > 0 || poolSize > 0 || pool != NULL) {
         s32 w16 = (w + 15) / 16;
         s32 h16 = (h + 15) / 16;
@@ -232,8 +374,8 @@ void MWSFCRE_SetSupplySj(MWSFDPLY* self) {
             arg.e = 0;
             arg.f = 0;
         } else if (sj == (u32)self->rbf) {
-            arg.a = 0;
             arg.b = sj;
+            arg.a = 0;
             arg.c = self->field_0x508;
             arg.d = self->field_0x50c;
             arg.e = self->field_0x510;
@@ -274,18 +416,26 @@ s32 mwsfcre_MallocRfb(void* pool, MWSFCRE_Para* para, void** out) {
     s32 frameSize = ((chroma >> 1) * (((luma >> 1) + 0x1f) / 32 * 32)) * 2 +
                     H * (((W + 0x1f) / 32) * 32) + 0x20;
     if (outer != 0) {
-        if (outer < 2 || para->poolSize < frameSize) {
-            out[0] = NULL;
-            out[1] = NULL;
-            rc = -1;
-        } else {
-            out[0] = (void*)((u32*)para->pool)[0];
-            out[1] = (void*)((u32*)para->pool)[1];
-        }
+        if (outer < 2)
+            goto fail;
+        if (para->poolSize < frameSize)
+            goto fail;
+        else
+            goto good;
+
+    fail:
+        out[0] = NULL;
+        out[1] = NULL;
+        rc = -1;
+        goto join;
+    good:
+        out[0] = (void*)((u32*)para->pool)[0];
+        out[1] = (void*)((u32*)para->pool)[1];
     } else {
         out[0] = criware_803A3AE4(pool, frameSize);
         out[1] = criware_803A3AE4(pool, frameSize);
     }
+join:
     if (out[0] == NULL || out[1] == NULL) {
         rc = -1;
     }
@@ -293,12 +443,13 @@ s32 mwsfcre_MallocRfb(void* pool, MWSFCRE_Para* para, void** out) {
 }
 
 s32 mwsfcre_MallocTab(void* pool, MWSFCRE_Para* para, void** out) {
-    s32 rc = 0;
-    s32 mode = para->mode;
     s32 frames = para->frameCount;
+    s32 rc = 0;
+    s32 i;
+    s32 frameSize;
     s32 w = para->width;
     s32 h = para->height;
-    if ((u32)mode > 3) {
+    if ((u32)para->mode > 3) {
         MWSFSVM_Error(lbl_eu_8051A3CC);
     }
     s32 w16 = (w + 15) / 16;
@@ -307,25 +458,25 @@ s32 mwsfcre_MallocTab(void* pool, MWSFCRE_Para* para, void** out) {
     s32 H = h16 * 16;
     s32 luma = ((w16 >> 27) & 1) + W;
     s32 chroma = ((h16 >> 27) & 1) + H;
-    s32 frameSize = ((chroma >> 1) * (((luma >> 1) + 0x1f) / 32 * 32)) * 2 +
-                    H * (((W + 0x1f) / 32) * 32) + 0x20;
+    frameSize = H * (((W + 0x1f) / 32) * 32) +
+                ((chroma >> 1) * (((luma >> 1) + 0x1f) / 32 * 32)) * 2 + 0x20;
     if (para->outer != 0) {
         if (para->outer < frames + 2 || para->poolSize < frameSize) {
             rc = -1;
         } else {
-            for (s32 i = 0; i < frames; i++) {
-                out[i] = (void*)((u32*)para->pool)[i + 2];
-                if (out[i] == NULL) {
+            for (i = 0; i < frames; i++) {
+                void* p = ((void**)para->pool)[i + 2];
+                out[i] = p;
+                if (p)
+                    ;
+                else
                     rc = -1;
-                }
             }
         }
     } else {
-        for (s32 i = 0; i < frames; i++) {
-            out[i] = criware_803A3AE4(pool, frameSize);
-            if (out[i] == NULL) {
+        for (i = 0; i < frames; i++) {
+            if ((out[i] = criware_803A3AE4(pool, frameSize)) == NULL)
                 rc = -1;
-            }
         }
     }
     return rc;
@@ -374,7 +525,8 @@ s32 MWSFCRE_ResetSfdHn(MWSFDPLY* self) {
 void* criware_8039FF34(MWSFDPLY* self) {
     if (lbl_eu_805FF3A0 != NULL) {
         char buf[0x200];
-        sprintf(buf, lbl_eu_8051A3CC + 0x383, self->enable, self->status,
+        const char* fmt = &lbl_eu_8051A3CC[0x383];
+        sprintf(buf, fmt, self->enable, *(u32*)self->cfg.data,
                 self->width, self->height, self->frameCount, self->field_0x14,
                 self->field_0x18, self->field_0x1c, self->field_0x20,
                 self->field_0x24, self->poolCount, self->poolSize, self->pool);
@@ -573,13 +725,424 @@ case0xb:
     return;
 }
 
-void mwsfcre_CreateSfd() {}
+/* Creates the SFD decoder handle for one player slot: allocates every work
+ * buffer from the player heap and fills the SFD_Create parameter block.
+ * Returns NULL (after releasing the heap) on any allocation/config failure. */
+void* mwsfcre_CreateSfd(MWSFDPLY* ply, MWSFCRE_Para* para) {
+    SfdWork* w = &lbl_eu_805FF2E0;
+    SfdCreateCfg cfg;
+    void* rbfOut[2];
+    void* tabOut[16];
+    u32 frames = para->frameCount;
+    s32 width = para->width;
+    s32 height = para->height;
+    s32 spec;
+    s32 rbfRc;
+    s32 tabRc;
+    void *ex0, *ex1;
+    void *stmBuf, *adxtBuf, *buf800, *buf4000, *buf100, *buf4e0, *buf100b, *buf120;
+    void* sfd;
 
-void MWSFCRE_SetCondSfd() {}
+    /* Stream-buffer sizing; results land in the shared scratch block. */
+    mwsfcre_CalcWorkStmBuf(para, &w->outA, &w->outB,
+        &w->outC, &w->outD, &w->outE, &w->outF);
+
+    if (mwsfcre_IsOuterFrmPoolUsed((MWSFDPLY*)para) == 1) {
+        s32 w16 = (width + 15) >> 4;
+        s32 h16 = (height + 15) >> 4;
+        s32 W = w16 << 4;
+        s32 H = h16 << 4;
+        s32 luma = ((w16 >> 4) & 1) + W;
+        s32 chroma = ((h16 >> 4) & 1) + H;
+        s32 frameSize = ((chroma >> 1) * (((luma >> 1) + 0x1f) >> 5 << 5)) * 2 +
+                        H * ((W + 0x1f) >> 5 << 5) + 0x20;
+        if ((u32)para->mode > 3) {
+            MWSFSVM_Error(lbl_eu_8051A3CC);
+        }
+        w->size0 = frameSize * 2;
+        w->size1 = frameSize * frames;
+    } else {
+        w->size0 = 0;
+        w->size1 = 0;
+    }
+
+    stmBuf = criware_803A3AE4(ply,
+        w->outB + w->outC + w->outD + 0x20);
+    adxtBuf = criware_803A3AE4(ply, w->outA + 0x40);
+    rbfRc = mwsfcre_MallocRfb(ply, para, rbfOut);
+    tabRc = mwsfcre_MallocTab(ply, para, tabOut);
+
+    /* Modes 2/3/6/7/8/10 use the outer frame pool instead of the two extra
+     * work buffers. */
+    spec = 1;
+    if ((u32)(para->mode - 6) <= 2 || (u32)(para->mode - 2) <= 1 || para->mode == 10) {
+        spec = 0;
+    }
+    if (spec) {
+        ex0 = criware_803A3AE4(ply, w->outE);
+        ex1 = criware_803A3AE4(ply, w->outF);
+    } else {
+        ex0 = NULL;
+        ex1 = NULL;
+    }
+
+    buf800 = criware_803A3AE4(ply, 0x800);
+    buf4000 = criware_803A3AE4(ply, 0x4000);
+    buf100 = criware_803A3AE4(ply, 0x100);
+    buf4e0 = criware_803A3AE4(ply, 0x4e0);
+    buf100b = criware_803A3AE4(ply, 0x100);
+    ply->field_0x52c = 0x120;
+    buf120 = criware_803A3AE4(ply, 0x120);
+    ply->field_0x528 = (u32)buf120;
+
+    if (stmBuf == NULL || adxtBuf == NULL || rbfRc != 0 || tabRc != 0 ||
+        buf4000 == NULL || buf100 == NULL || buf800 == NULL ||
+        buf100b == NULL || buf120 == NULL || buf4e0 == NULL) {
+        MWSFSVM_Error(lbl_eu_8051A3CC + 0x1b2);
+        criware_803A3A48(ply);
+        return NULL;
+    }
+    if (spec && (ex0 == NULL || ex1 == NULL)) {
+        MWSFSVM_Error(lbl_eu_8051A3CC + 0x1cb);
+        criware_803A3A48(ply);
+        return NULL;
+    }
+
+    /* Publish the geometry the MPV decoder works from. */
+    w->field_0x04 = ((u32)adxtBuf + 0x3f) & ~0x3fu;
+    lbl_eu_80567258.height = para->height;
+    lbl_eu_80567258.width = para->width;
+    lbl_eu_80567258.field_0x10 = 0;
+    lbl_eu_80567258.yStride = (para->width / 2 + 0x1f) >> 5 << 5;
+    lbl_eu_80567258.chromaHeight = para->height / 2;
+    lbl_eu_80567258.width2 = para->width;
+    lbl_eu_80567258.height2 = para->height;
+    lbl_eu_80567258.frameCount = frames;
+    lbl_eu_80567258.field_0x20 = 0;
+    lbl_eu_8056727C.field_0x08 = (u32)ex0;
+    lbl_eu_8056727C.field_0x18 = (u32)ex1;
+    criware_eu_803A29E0(para->mode, (u32)para->field_0x40,
+        (SfdCondTbl*)&cfg, ply);
+
+    cfg.field_0x2c = lbl_eu_805660D0;
+    if (w->outB != 0) {
+        w->outB -= 2 * (w->outB % lbl_eu_805660D0);
+    }
+
+    switch (para->mode) {
+    case 0:
+    case 3:
+        cfg.modeIdx = 3;
+        break;
+    case 1:
+        cfg.modeIdx = 1;
+        break;
+    case 2:
+        cfg.modeIdx = 2;
+        break;
+    default:
+        MWSFSVM_Error(lbl_eu_8051A3CC);
+        cfg.modeIdx = 3;
+        break;
+    }
+
+    cfg.stmBuf = stmBuf;
+    cfg.field_0x08 = w->outB;
+    cfg.field_0x0c = w->outC;
+    cfg.field_0x10 = w->outD;
+    cfg.field_0x28 = w->outA;
+    cfg.field_0x30 = frames;
+    cfg.field_0x34 = para->field_0x34;
+    cfg.width = para->width;
+    cfg.height = para->height;
+    cfg.field_0x44 = (u32)buf4000;
+    cfg.field_0x48 = 0x4000;
+    cfg.field_0x4c = 0;
+
+    SFD_SetMpvParaTbl((u32*)&lbl_eu_80567258, (u32*)rbfOut, (u32*)tabOut);
+    if (para->mode == 1 || para->mode == 9) {
+        SFD_SetAdxtPara(&lbl_eu_8056727C);
+    }
+
+    sfd = SFD_Create(&cfg, 0);
+    if (sfd == NULL) {
+        MWSFLIB_SetErrCode(-0x131);
+        MWSFSVM_Error(lbl_eu_8051A3CC + 0x1e4);
+        criware_803A3A48(ply);
+        return NULL;
+    }
+    if (criware_803C0D94(sfd, MWSFLIB_SfdErrFunc, (u32)ply)) {
+        MWSFLIB_SetErrCode(-0x12f);
+        MWSFSVM_Error(lbl_eu_8051A3CC + 0x20f);
+        criware_803A3A48(ply);
+        return NULL;
+    }
+
+    *(u32*)buf100 = 1;
+    ply->field_0x634 = (u32*)buf100;
+    if (buf100 == NULL) {
+        MWSFSVM_Error(lbl_eu_8051A3CC + 0x237);
+        criware_803A3A48(ply);
+        return NULL;
+    }
+
+    ply->field_0x4e8 = buf120;
+    ply->field_0x4ec = 0x100;
+    ply->field_0x4a4 = (u32)buf800;
+    ply->field_0x4a8 = 0x800;
+    ply->field_0x4ac = 0x40;
+    ply->picUsrTgt = &ply->field_0x4a4;
+    ply->field_0x638 = 0;
+    ply->field_0x678 = 0;
+    ply->field_0x67c = 0;
+    ply->field_0x680 = 0;
+    return sfd;
+}
+
+void MWSFCRE_SetCondSfd(MWSFDPLY* ply, MWSFDPLY* user, u32 a, u32 b) {}
 
 #pragma push
 #pragma auto_inline off
-void* mwPlyCreateSofdec(MWSFDPLY* self) { return NULL; }
+/* Creates a full movie player in a free library slot: allocates the slot,
+ * copies the user parameters in, then brings up the SFD core, ring buffers,
+ * stream/sound handlers and tag/SFX layers. */
+void* mwPlyCreateSofdec(MWSFDPLY* self) {
+    u8* lib;
+    MWSFDPLY* slots;
+    MWSFDPLY* ply;
+    void* sfd;
+    void* stm;
+    s32 slot;
+    u32 outs[6];
+    u32 hdr;
+    s32 i;
+
+    if (self == NULL) {
+        MWSFSVM_Error(lbl_eu_8051A3CC + 0x3c0);
+        return NULL;
+    }
+    {
+        s32 ok = 1;
+        if (self->field_0x24 != 0 && self->field_0x24 != 3) {
+            MWSFSVM_Error(lbl_eu_8051A3CC + 0x3eb);
+            ok = 0;
+        }
+        if (self->frameCount > 0xe) {
+            MWSFSVM_Error(lbl_eu_8051A3CC + 0x40e);
+            ok = 0;
+        }
+        if (ok != 1) {
+            return NULL;
+        }
+    }
+
+    lib = (u8*)MWSFLIB_GetLibWorkPtr();
+    slots = (MWSFDPLY*)(lib + 0x70);
+    slot = 0;
+    if (slots[0].enable == 1) {
+        slot = 1;
+        while (slot < 8 && slots[slot].enable == 1) {
+            slot++;
+        }
+    }
+    if (slot == 8) {
+        MWSFLIB_SetErrCode(-0xb);
+        MWSFSVM_Error(lbl_eu_8051A3CC + 0x438);
+        return NULL;
+    }
+
+    lib = (u8*)MWSFLIB_GetLibWorkPtr();
+    if (self->field_0x18 == 0) {
+        s32 ok = 0;
+        if (*(u32*)(lib + 0x28) == 0) {
+            ok = -1;
+        }
+        if (*(u32*)(lib + 0x2c) == 0) {
+            ok = -1;
+        }
+        if (ok == -1) {
+            MWSFSVM_Error(lbl_eu_8051A3CC + 0x488);
+            return NULL;
+        }
+    }
+
+    ply = &slots[slot];
+    memset(ply, 0, 0x690);
+    ply->field_0x540 = self->field_0x18;
+    ply->field_0x544 = self->field_0x1c;
+    ply->field_0x548 = self->field_0x18;
+    ply->field_0x54c = 0;
+    criware_803A3B98(ply);
+    ply->field_0x558 = 0;
+    for (i = 0; i < 31; i++) {
+        ply->zeros[i] = 0;
+    }
+    ply->cfg = self->cfg;
+    if (mwsfcre_IsOuterFrmPoolUsed(self) == 1) {
+        ply->poolCount = ply->poolCount - 2;
+    }
+
+    sfd = mwsfcre_CreateSfd(ply, (MWSFCRE_Para*)&ply->cfg.data[4]);
+    ply->sfd = sfd;
+    if (sfd == NULL) {
+        MWSFSVM_Error(lbl_eu_8051A3CC + 0x4c1);
+        fn_803A537C(ply);
+        if (lbl_eu_805FF3A0 != NULL) {
+            lbl_eu_80566280.self = (u32)ply;
+            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x04);
+        }
+        mwply_Destroy(ply);
+        if (lbl_eu_805FF3A0 != NULL) {
+            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x6c);
+        }
+        (*(u32*)(lib + 0x34f4))--;
+        return NULL;
+    }
+
+    mwsfcre_AttachPicUsrBuf(ply);
+    mwsfcre_CalcWorkStmBuf(self, &outs[0], &outs[1], &outs[2], &outs[3],
+        &outs[4], &outs[5]);
+    MWSFCRE_SetCondSfd(ply, self, *(u32*)(lib + 0x8), *(u32*)(lib + 0xc));
+
+    ply->rbf = SJRBF_Create(ply->field_0x508, ply->field_0x50c, ply->field_0x510);
+    if (ply->rbf == NULL) {
+        MWSFSVM_Error(lbl_eu_8051A3CC + 0x4e4);
+        fn_803A537C(ply);
+        if (lbl_eu_805FF3A0 != NULL) {
+            lbl_eu_80566280.self = (u32)ply;
+            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x04);
+        }
+        mwply_Destroy(ply);
+        if (lbl_eu_805FF3A0 != NULL) {
+            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x6c);
+        }
+        (*(u32*)(lib + 0x34f4))--;
+        return NULL;
+    }
+
+    ply->uni = SJUNI_Create(1, ply->field_0x528, ply->field_0x52c);
+    if (ply->uni == NULL) {
+        MWSFSVM_Error(lbl_eu_8051A3CC + 0x506);
+        fn_803A537C(ply);
+        if (lbl_eu_805FF3A0 != NULL) {
+            lbl_eu_80566280.self = (u32)ply;
+            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x04);
+        }
+        mwply_Destroy(ply);
+        if (lbl_eu_805FF3A0 != NULL) {
+            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x6c);
+        }
+        (*(u32*)(lib + 0x34f4))--;
+        return NULL;
+    }
+
+    ply->field_0x74 = outs[0];
+    ply->field_0x54 = 1;
+    ply->field_0x84 = 0;
+    ply->field_0x68 = self->field_0x20;
+    ply->field_0x6c = self->field_0x20;
+    if (SFD_GetSofdecHeader(sfd, 3, &hdr)) {
+        ply->field_0x60 = 0;
+    } else {
+        ply->field_0x60 = hdr;
+    }
+    ply->field_0x88 = 1;
+    ply->field_0x8c = 1;
+    ply->field_0x90[0] = 0;
+    ply->field_0x90[1] = 0;
+    ply->field_0x90[2] = 0;
+    ply->field_0x90[3] = 0;
+    ply->field_0x78 = 0;
+    MWSFSVR_SetHnMwplySvrFlg(ply, 1);
+    MWSFSVR_SetHnSfdSvrFlg(ply, 0);
+    ply->field_0x70 = 1;
+    ply->field_0xa4 = 0;
+
+    stm = MWSTM_Create(ply->rbf);
+    ply->stm = stm;
+    if (stm == NULL) {
+        fn_803A537C(ply);
+        if (lbl_eu_805FF3A0 != NULL) {
+            lbl_eu_80566280.self = (u32)ply;
+            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x04);
+        }
+        mwply_Destroy(ply);
+        if (lbl_eu_805FF3A0 != NULL) {
+            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x6c);
+        }
+        (*(u32*)(lib + 0x34f4))--;
+        return NULL;
+    }
+
+    MWSFPLY_SetFlowLimit(ply);
+    ply->lsc = LSC_Create(ply->rbf);
+    ply->field_0x94 = 0;
+    LSC_SetStmHndl(ply->lsc, ply->stm);
+    if (mwsfcre_MallocCompoWork(ply) == -1) {
+        fn_803A537C(ply);
+        if (lbl_eu_805FF3A0 != NULL) {
+            lbl_eu_80566280.self = (u32)ply;
+            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x04);
+        }
+        mwply_Destroy(ply);
+        if (lbl_eu_805FF3A0 != NULL) {
+            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x6c);
+        }
+        (*(u32*)(lib + 0x34f4))--;
+        return NULL;
+    }
+
+    ply->sfx = MWSFSFX_Create(ply->compoWork, ply->compoWorkSize,
+        self->width, self->height);
+    if (ply->sfx == NULL) {
+        MWSFSVM_Error(lbl_eu_8051A3CC + 0x52f);
+        fn_803A537C(ply);
+        if (lbl_eu_805FF3A0 != NULL) {
+            lbl_eu_80566280.self = (u32)ply;
+            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x04);
+        }
+        mwply_Destroy(ply);
+        if (lbl_eu_805FF3A0 != NULL) {
+            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x6c);
+        }
+        (*(u32*)(lib + 0x34f4))--;
+        return NULL;
+    }
+    MWSFSFX_SetCompoMode(ply, ply->poolCount);
+
+    ply->field_0x4c0 = MWSFTAG_CreateAinfSj(ply);
+    if (MWSFTAG_SetAinfSj(ply)) {
+        MWSFSVM_Error(lbl_eu_8051A3CC + 0x54a);
+        fn_803A537C(ply);
+        if (lbl_eu_805FF3A0 != NULL) {
+            lbl_eu_80566280.self = (u32)ply;
+            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x04);
+        }
+        mwply_Destroy(ply);
+        if (lbl_eu_805FF3A0 != NULL) {
+            lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, &lbl_eu_80566280.field_0x6c);
+        }
+        (*(u32*)(lib + 0x34f4))--;
+        return NULL;
+    }
+
+    MWSFTAG_InitTagInf(ply);
+    MWSFFRM_InitSfhInfTable(ply);
+    MWSFFRM_SetShfCbFn(ply);
+    ply->enable = 1;
+    ply->field_0x64c = 0;
+    ply->field_0x63c = 0;
+    ply->field_0x640 = 0;
+    ply->field_0x644 = 0;
+    ply->field_0x664 = 0;
+    ply->field_0x660 = -1;
+    ply->field_0x668 = 0;
+    ply->field_0x66c = 0;
+    ply->field_0x670 = 0;
+    ply->field_0x674 = 0;
+    (*(u32*)(lib + 0x34f4))++;
+    return ply;
+}
 #pragma pop
 
 uint32_t criware_803A0BA8(void* r3_this, uint32_t r4) {

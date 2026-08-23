@@ -90,15 +90,29 @@ struct CHelpTableEntry {
     void** mItems; // 0x4
 };
 
+// Static help-table entry view (lbl_eu_80576D08): CHelp-shaped object whose
+// interface-table pointer sits at +0x8; dispatched as a virtual call through
+// this polymorphic view so retail's r12 call sequence is emitted.
+class CHelpTblView : public CHelpVtblPrefix {
+public:
+    virtual void f08(); // vtable 0x08
+    virtual void f0C(); // vtable 0x0C - slot func_80295BF4 drives
+    virtual void f10(); // vtable 0x10
+};
+
+// Never-instantiated derivative; its existence keeps MWCC from
+// devirtualizing the CHelpTblView calls below (retail stays indirect).
+struct CHelpTblViewDerived : CHelpTblView {};
+
 // Static help-dispatch table (lbl_eu_80576D08) embedding the CHelp objects
 // func_80295BF4 drives when mField10 is 3 / 5.
 struct CHelpManagerTbl {
     u8 pad_00[0x20];
-    CHelpDispatchIface mHelp1; // 0x20 (mField10 == 3)
+    cf::CHelpTblView mHelp1; // 0x20 (mField10 == 3)
     u8 pad_2C[0x24];
-    CHelpDispatchIface mHelp2; // 0x50 (mField10 == 5)
+    cf::CHelpTblView mHelp2; // 0x50 (mField10 == 5)
     u8 pad_5C[0x4];
-    CHelpDispatchIface mHelp3; // 0x60 (mField10 == 5)
+    cf::CHelpTblView mHelp3; // 0x60 (mField10 == 5)
 };
 
 // Battle-object argument for func_80295CC8 (flags word at +0x3F08).

@@ -25,9 +25,9 @@ extern u32 lbl_eu_8051C2B8[];
 
 extern int UTY_MemcpyDword(u32 *dst, const u32 *src, u32 n);
 
-int MPVVLC_IsVlcSizErr(void) { return 0x0; }
+u32 *mpvvlc_SetVlcRunLevel(u32 *tbl);
 
-void MPVVLC_Init() {}
+int MPVVLC_IsVlcSizErr(void) { return 0x0; }
 
 /* P-picture macroblock type VLC table (32 entries) */
 void mpvvlc_InitMbTypePpic(void) {
@@ -150,19 +150,88 @@ u16 *mpvvlc_InitCbpSub2(u16 *tbl) {
     s16 *q = (s16 *)(tbl + 0x50);
     int i;
 
-    for (i = 0; i < 4; i++) *p++ = -0x5df9;
-    for (i = 0; i < 4; i++) *p++ = -0x6df9;
-    for (i = 0; i < 4; i++) *p++ = -0x75f9;
-    for (i = 0; i < 4; i++) *p++ = -0x79f9;
-    for (i = 0; i < 4; i++) *p++ = 0x6107;
-    for (i = 0; i < 4; i++) *p++ = 0x5107;
-    for (i = 0; i < 4; i++) *p++ = 0x4907;
-    for (i = 0; i < 4; i++) *p++ = 0x4507;
-    for (i = 0; i < 8; i++) *p++ = -0x00fa;
-    for (i = 0; i < 8; i++) *p++ = -0x3cfa;
-    for (i = 0; i < 8; i++) *p++ = 0x2406;
-    for (i = 0; i < 8; i++) *p++ = 0x1806;
-    for (i = 0; i < 16; i++) *p++ = -0x41fb;
+    /* Block A fully explicit: one basic block, letting the scheduler hoist
+       the constants like retail (r9=-0xfa first, nv regs for the -0x5df9..0x6107 set) */
+    p[0] = -0x5df9;
+    p[1] = -0x5df9;
+    p[2] = -0x5df9;
+    p[3] = -0x5df9;
+    p[4] = -0x6df9;
+    p[5] = -0x6df9;
+    p[6] = -0x6df9;
+    p[7] = -0x6df9;
+    p[8] = -0x75f9;
+    p[9] = -0x75f9;
+    p[10] = -0x75f9;
+    p[11] = -0x75f9;
+    p[12] = -0x79f9;
+    p[13] = -0x79f9;
+    p[14] = -0x79f9;
+    p[15] = -0x79f9;
+    p[16] = 0x6107;
+    p[17] = 0x6107;
+    p[18] = 0x6107;
+    p[19] = 0x6107;
+    p[20] = 0x5107;
+    p[21] = 0x5107;
+    p[22] = 0x5107;
+    p[23] = 0x5107;
+    p[24] = 0x4907;
+    p[25] = 0x4907;
+    p[26] = 0x4907;
+    p[27] = 0x4907;
+    p[28] = 0x4507;
+    p[29] = 0x4507;
+    p[30] = 0x4507;
+    p[31] = 0x4507;
+    p[32] = -0xfa;
+    p[33] = -0xfa;
+    p[34] = -0xfa;
+    p[35] = -0xfa;
+    p[36] = -0xfa;
+    p[37] = -0xfa;
+    p[38] = -0xfa;
+    p[39] = -0xfa;
+    p[40] = -0x3cfa;
+    p[41] = -0x3cfa;
+    p[42] = -0x3cfa;
+    p[43] = -0x3cfa;
+    p[44] = -0x3cfa;
+    p[45] = -0x3cfa;
+    p[46] = -0x3cfa;
+    p[47] = -0x3cfa;
+    p[48] = 0x2406;
+    p[49] = 0x2406;
+    p[50] = 0x2406;
+    p[51] = 0x2406;
+    p[52] = 0x2406;
+    p[53] = 0x2406;
+    p[54] = 0x2406;
+    p[55] = 0x2406;
+    p[56] = 0x1806;
+    p[57] = 0x1806;
+    p[58] = 0x1806;
+    p[59] = 0x1806;
+    p[60] = 0x1806;
+    p[61] = 0x1806;
+    p[62] = 0x1806;
+    p[63] = 0x1806;
+    p[64] = -0x41fb;
+    p[65] = -0x41fb;
+    p[66] = -0x41fb;
+    p[67] = -0x41fb;
+    p[68] = -0x41fb;
+    p[69] = -0x41fb;
+    p[70] = -0x41fb;
+    p[71] = -0x41fb;
+    p[72] = -0x41fb;
+    p[73] = -0x41fb;
+    p[74] = -0x41fb;
+    p[75] = -0x41fb;
+    p[76] = -0x41fb;
+    p[77] = -0x41fb;
+    p[78] = -0x41fb;
+    p[79] = -0x41fb;
 
     for (i = 0; i < 16; i++) *q++ = -0x7dfb;
     for (i = 0; i < 16; i++) *q++ = 0x7d05;
@@ -179,6 +248,7 @@ u16 *mpvvlc_InitCbpSub2(u16 *tbl) {
     for (i = 0; i < 32; i++) *q++ = 0x1004;
     for (i = 0; i < 32; i++) *q++ = 0x0804;
     for (i = 0; i < 32; i++) *q++ = 0x0404;
+    /* Two blocks of 32 so the compiled loop keeps a 32-store body */
     for (i = 0; i < 64; i++)
         *q++ = 0x3c03;
 
@@ -312,7 +382,7 @@ void mpvvlc_InitIntRunLevel(void) {
 /* I-picture macroblock address increment VLC tables */
 void mpvvlc_InitMbaiIpic(void) {
     s16 *p = (s16 *)lbl_eu_80603728;
-    s16 *q = (s16 *)lbl_eu_80603928;
+    s16 *q;
     int v, i, j;
 
     for (i = 0; i < 16; i++)
@@ -398,6 +468,8 @@ void mpvvlc_InitMbaiIpic(void) {
         v -= 0x10;
     }
 
+    /* Second table address is materialized only here (matches retail) */
+    q = (s16 *)lbl_eu_80603928;
     for (i = 0; i < 4; i++)
         *q++ = 0x0240;
     *q++ = 0x70 | 0x4407;
@@ -522,35 +594,54 @@ void mpvvlc_InitMbaiPpic(void) {
 /* B-picture macroblock address increment VLC tables */
 void mpvvlc_InitMbaiBpic(void) {
     s16 *p = (s16 *)lbl_eu_80603AE8;
-    s16 *q = (s16 *)lbl_eu_80603BE8;
+    s16 *q;
     int v, i, j;
 
-    for (i = 0; i < 8; i++)
-        *p++ = 0x0240;
-    *p++ = 0x023b;
-    for (i = 0; i < 6; i++)
-        *p++ = 0x0240;
-    *p++ = 0x022b;
-    for (i = 0; i < 8; i++)
-        *p++ = 0x0240;
+    /* Head: fillers of 0x240 split by the 9th (0x23b) and 16th (0x22b) codes */
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x23b;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x22b;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x240;
+    *p++ = 0x240;
 
+    /* 12 macroblock-address-increment escape entries, descending by 0x10 */
     v = 0x210;
     for (i = 0; i < 12; i++) {
         *p++ = v | 0x000b;
         v -= 0x10;
     }
-    *p++ = 0x015a;
-    *p++ = 0x015a;
-    *p++ = 0x014a;
-    *p++ = 0x014a;
-    *p++ = 0x013a;
-    *p++ = 0x013a;
-    *p++ = 0x012a;
-    *p++ = 0x012a;
-    *p++ = 0x011a;
-    *p++ = 0x011a;
-    *p++ = 0x010a;
-    *p++ = 0x010a;
+
+    *p++ = 0x15a;
+    *p++ = 0x15a;
+    *p++ = 0x14a;
+    *p++ = 0x14a;
+    *p++ = 0x13a;
+    *p++ = 0x13a;
+    *p++ = 0x12a;
+    *p++ = 0x12a;
+    *p++ = 0x11a;
+    *p++ = 0x11a;
+    *p++ = 0x10a;
+    *p++ = 0x10a;
 
     v = 0xf0;
     for (i = 0; i < 2; i++)
@@ -591,6 +682,8 @@ void mpvvlc_InitMbaiBpic(void) {
     for (i = 0; i < 4; i++)
         *p++ = -0x4777;
 
+    /* Second table address is materialized only here (matches retail) */
+    q = (s16 *)lbl_eu_80603BE8;
     *q++ = 0x0240;
     *q++ = 0x0240;
     *q++ = 0x0075;
@@ -622,24 +715,18 @@ void mpvvlc_InitMbaiBpic(void) {
 }
 
 /* Set a motion vector code pair: (n | base) and ((u8)(-n) | base) */
-static void set_mvcode(s16 *p, int n, int base) {
-    *p++ = n | base;
-    *p++ = (u8)(-n) | base;
-}
 
 /* Motion vector code tables */
 void mpvvlc_InitMotion(void) {
     s16 *p = (s16 *)lbl_eu_80603510;
-    s16 *q = (s16 *)lbl_eu_80603618;
+    s16 *q;
     int n, i;
 
     for (i = 0; i < 24; i++)
         *p++ = 0x7f;
-    n = 0x10;
-    while (n >= 0x0b) {
-        set_mvcode(p, n, 0x0b00);
-        p += 2;
-        n--;
+    for (n = 0x10; n >= 0x0b; n--) {
+        *p++ = n | 0x0b00;
+        *p++ = (u8)(-n) | 0x0b00;
     }
     for (n = 0x0a; n >= 0x08; n--) {
         *p++ = n | 0x0a00;
@@ -662,6 +749,8 @@ void mpvvlc_InitMotion(void) {
     for (i = 0; i < 8; i++)
         *p++ = (u8)(-0x02) | 0x0400;
 
+    /* Second table address is materialized only here (matches retail) */
+    q = (s16 *)lbl_eu_80603618;
     *q++ = 0x7f;
     *q++ = 0x7f;
     *q++ = 0x03 | 0x0500;
@@ -680,8 +769,8 @@ void mpvvlc_InitMotion(void) {
 
 /* Set VLC table default pointers in the MPV context */
 void mpvvlc_SetDflPtr(void) {
-    u32 *g = (u32 *)lbl_eu_80602FF8;
     u32 *d = lbl_eu_8051C2B8;
+    u32 *g = (u32 *)lbl_eu_80602FF8;
 
     g[0x58c] = (u32)(g + 0x1cc);
     g[0x58d] = (u32)(g + 0x24c);
@@ -698,13 +787,50 @@ void mpvvlc_SetDflPtr(void) {
     g[0x122] = (u32)(g + 0x124);
     g[0x593] = (u32)(g + 0x30c);
     g[0x594] = (u32)(g + 0x40c);
-    g[0x595] = (u32)(d + 0x000);
+    g[0x595] = (u32)lbl_eu_8051C2B8;
     g[0x596] = (u32)(d + 0x008);
     g[0x597] = (u32)(d + 0x010);
     g[0x598] = (u32)(d + 0x018);
     g[0x599] = (u32)(d + 0x020);
     g[0x59a] = (u32)(d + 0x028);
     g[0x59b] = (u32)(g + 0x50c);
+}
+
+/* Master VLC table initialization; optionally installs per-context run/level
+   copies starting 0x16c dwords into the supplied work area. */
+void MPVVLC_Init(u32 *work) {
+    u32 *g = (u32 *)lbl_eu_80602FF8;
+    u32 *base;
+
+    mpvvlc_InitMbaiIpic();
+    mpvvlc_InitMbaiPpic();
+    mpvvlc_InitMbaiBpic();
+    mpvvlc_InitMbTypePpic();
+    mpvvlc_InitMbTypeBpic();
+    mpvvlc_InitMotion();
+    mpvvlc_InitCbpSub2(mpvvlc_InitCbpSub1((u16 *)lbl_eu_80602FF8));
+    mpvvlc_InitDcSizY();
+    mpvvlc_InitDcSizC();
+    mpvvlc2_InitDcSizY();
+    mpvvlc2_InitDcSizC();
+    mpvvlc_InitIntRunLevel();
+    mpvvlc_SetDflPtr();
+
+    if (work != NULL) {
+        base = mpvvlc_SetVlcRunLevel(work + 0x16c);
+        g[0x100] = (u32)(base - 0x20);
+        UTY_MemcpyDword(base - 0x20, &g[0x102], 0x20);
+        g[0x122] = (u32)(base - 0x40);
+        UTY_MemcpyDword(base - 0x40, &g[0x124], 0x20);
+        g[0x144] = (u32)(base - 0x80);
+        UTY_MemcpyDword(base - 0x80, &g[0x146], 0x40);
+        g[0x186] = (u32)(base - 0x90);
+        UTY_MemcpyDword(base - 0x90, &g[0x188], 0x10);
+        g[0x198] = (u32)(base - 0xa0);
+        UTY_MemcpyDword(base - 0xa0, &g[0x19a], 0x10);
+        g[0x1aa] = (u32)(base - 0xc0);
+        UTY_MemcpyDword(base - 0xc0, &g[0x1ac], 0x20);
+    }
 }
 
 /* Install run/level VLC tables (copied from the default table image) */

@@ -2,9 +2,14 @@
 
 #include <types.h>
 #include "kyoshin/CBaseCur.hpp"
-#include "kyoshin/CSysWin.hpp"
-#include "kyoshin/CNumSelect.hpp"
-#include "kyoshin/CScrollBar.hpp"
+// NOTE: kyoshin/CSysWin.hpp, kyoshin/CNumSelect.hpp and kyoshin/CScrollBar.hpp
+// are deliberately NOT included here: CSysWin/CScrollBar declare
+// extern "C" func_80124270(void*, u32) while CNumSelect.hpp declares
+// extern "C" func_80124270(nw4r::lyt::Pane*, u32); including any two of them
+// together is an illegal function overloading in MWCC. This TU only needs the
+// full-layout structs (duplicated below) and the class names.
+#include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/device/CFileHandle.hpp"
 #include <monolib/util.hpp>
 #include <nw4r/lyt.h>
 
@@ -13,6 +18,40 @@
 // typed form). Only the pointer is used here (dtor dispatch).
 struct CItemBoxInfo2;
 class CEventFile;   // full layout in monolib/work/CEventFile.hpp (cpp includes it)
+class CSysWin;      // full layout in kyoshin/CSysWin.hpp (not included, see above)
+class CNumSelect;   // full layout in kyoshin/CNumSelect.hpp (not included, see above)
+struct CScrollBar;  // full layout in kyoshin/CScrollBar.hpp (not included, see above)
+class CFileHandle;
+
+extern "C" void func_80124270(void* pane, u32 a); // set pane visible flag (C-ABI)
+extern "C" void __dt__17UnkClass_8045F564Fv(UnkClass_8045F564*, int); // typed dtor (CSysWin.hpp form)
+// Retail code80135FDC_setVec3 leaves its first arg (a pointer) in r3.
+extern "C" nw4r::math::VEC3* code80135FDC_setVec3(float* out, float x, float y, float z);
+extern "C" void func_80137924(nw4r::math::VEC3* out, nw4r::lyt::Pane*, nw4r::lyt::Pane*, nw4r::lyt::Pane*);
+extern "C" void func_8022B90C(void* syswin, int kind);   // syswin pane switch (CSysWin.cpp)
+extern "C" void func_8022BFC8(void* syswin, int kind);   // window-kind advance (CSysWin.cpp)
+
+/* 8-byte r3:r4 copy unit (mirrored from CEquipItemBox.hpp; see include note). */
+struct CEquipBoxFourShorts {
+    s16 a, b, c, d;
+};
+
+/* Full object layouts mirrored from the excluded headers (see include note). */
+struct CSysWinFull {
+    u8 _00[0x28];
+    u8 field_28;
+    u8 _29[0x34 - 0x29];
+    u8 field_34;
+    u8 _35;
+    u8 field_36;
+};
+
+struct CNumSelectFull {
+    u8 _00[0x2C];
+    u8 field_2C;
+    u8 field_2D;
+    u8 field_2E;
+};
 
 /* 12-byte item-box tab entry: halves/words/bytes as stored per slot. */
 struct CIBLTabEntry {
@@ -312,7 +351,7 @@ extern "C" void __dt__6CCur18Fv(CBaseCur*, int);
 
 // --- external retail helpers (C-linkage or literal mangled symbols) ---
 // OnFileEvent helpers (external retail symbols, plain C-ABI names).
-extern "C" void func_8003AA34();                            // bdat manager reset (no args)
+extern "C" void* func_8003AA34();                           // bdat manager reset (no args)
 extern "C" mtl::ALLOC_HANDLE getAllocHandle__10CLibLayoutFv(void);
 extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
 extern "C" void* __ct__CTagProcessor(void*);               // tag-processor ctor (self)
@@ -327,7 +366,7 @@ extern "C" void func_8018B0FC(void*, void*);               // copy stack cursor 
 // func_801D2E4C (subcur pane visibility) - 2-arg form used by OnFileEvent;
 // func_801EECE0 still calls it through a 1-arg cast to keep the 8-byte tail.
 extern "C" void func_801D2E4C(void*, u32);
-extern "C" CEquipBoxFourShorts func_801397AC(void*, u32);           // pane colour getter (r3:r4 pair)
+extern "C" FourShorts func_801397AC(void*, u32);                   // pane colour getter (r3:r4 pair)
 extern "C" u32 getItemBox2State__FP13CItemBoxInfo2(void*);
 extern "C" u32 func_801EB020(void*);          // num-select busy flag (+0x2C)
 extern "C" u32 func_801EB018(void*);          // num-select busy flag (+0x2D)
@@ -387,7 +426,6 @@ extern "C" void func_801EF378(void*);
 extern "C" void func_801EF3E8(void*);
 extern "C" void func_801EF45C(void*);
 extern "C" u8 func_801361E8(u32, const char*, unsigned int);
-extern "C" void func_80124270(void*, u32);
 extern "C" void* lbl_eu_80664104;
 extern "C" void* lbl_eu_806640A8;
 extern "C" void* lbl_eu_806640EC;
@@ -435,13 +473,15 @@ extern const double lbl_eu_80668108;
 extern const double lbl_eu_80668100;
 
 // func_801F107C: character-data / item helpers (C-ABI).
-extern "C" u16 func_800A082C();
+extern "C" u32 func_800A082C(void*);
 extern "C" float func_8013B380(unsigned int);
 extern "C" void func_80139C98(u16, u16, u32, float);
 
 // func_801EBC00: tab-format / item-name helpers + rodata tables.
 extern const char lbl_eu_80506D90[];        // rodata name/format tables
-extern u32 lbl_eu_80664098;                 // kind-owner table (sda21)
+// func_801EC438: language selector (CDeviceS static getter, C-ABI).
+extern "C" u8 getLanguage__9CDeviceSCFv();
+extern u32 lbl_eu_80664098;
 extern u32 lbl_eu_80664184;                 // name-index byte (sda21)
 extern "C" u16 func_8013606C(const void*, const void*, u16);
 
@@ -513,10 +553,10 @@ extern "C" void func_801CB9D8(CIBLVec3*, const u16*, u32);
 extern "C" void copyVEC3(void*, const void*);
 extern "C" u16 ArrayGet12(const u16*, u8);
 extern "C" u8 func_801EF034(const u8*, unsigned int);   // same-TU body kept external
-extern "C" char* func_801EC438(CIBLTab*, u16);        // tab-format setter (external call shape)
+extern "C" char* func_801EC438(CIBLTabFull*, u16);    // tab-format setter (external call shape)
 
 // code_80135FDC string/table helpers (retail unmangled C-ABI names).
-extern "C" u16 func_80136254(const void*, const void*, int);
+extern "C" u16 func_80136254(u32 table, const void* name, int id);
 extern "C" char* func_80138F78(u32);
 extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
 

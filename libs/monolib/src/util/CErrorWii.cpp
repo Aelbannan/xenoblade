@@ -8,7 +8,12 @@
 //Shared " in \"%s\" on line %d.\n" format string (defined in CMdlDynamics.cpp)
 extern const char lbl_eu_80524870[];
 
-IErrorWii::~IErrorWii(){}
+// NOTE: IErrorWii::~IErrorWii() is NOT defined in this TU - the retail linker
+// placed the empty dtor body in the CDeviceVI.o split (build/us/asm/monolib/src/
+// device/CDeviceVI.s); defining it here adds a 0x40 orphan over the 0x504 slice.
+// Our stripped statics resolve via the linked retail-asm ScheduleList.o
+// (.sbss lbl_eu_80665A60/64/65/66); when ScheduleList.cpp promotes to Matching,
+// it must keep those labels defined (its cpp already declares lbl_eu_80665A60).
 
 CErrorWii* CErrorWii::spInstance;
 bool CErrorWii::sPowerCallbackCalled;
@@ -33,8 +38,8 @@ void CErrorWii::addCallback(IErrorWii* pError){
 }
 
 //This feels like it should be an inline from fixed_vector (probably erase), but it uses spInstance multiple times...
-// NOTE: retail is compiled -func_align 4; this unit's -func_align 16 forces MWCC to pad the two
-// loop heads to 8-byte boundaries (ori r0,r0,0), which is the only residual vs retail.
+// NOTE: retail is compiled -func_align 4 (unit .text packs to exactly the sum of
+// function sizes); -func_align 16 inserted ori r0,r0,0 loop-head pads here.
 void CErrorWii::removeCallback(IErrorWii* pError){
     int index = 0;
 
@@ -99,6 +104,9 @@ void CErrorWii::destroy(){
 }
 
 //This function should have the variable arguments parameter
+// optimize_for_size: retail saves/restores r28-r31 with stmw/lmw and keeps the
+// 32-entry GPR copy loop rolled (1 word/iter); -O4,p unrolls it 8x instead.
+#pragma optimize_for_size on
 void CErrorWii::errorHandler(u8 error, OSContext* ctx, u32 dsisr, u32 dar){
     OSDumpContext(ctx);
 
@@ -123,6 +131,7 @@ void CErrorWii::errorHandler(u8 error, OSContext* ctx, u32 dsisr, u32 dar){
     //Set the function to return to after handling exceptions
     ctx->srr0 = (u32)postExceptionCallback;
 }
+#pragma optimize_for_size reset
 
 void CErrorWii::postExceptionCallback(){
     CWorkSystem::callExitFunc();

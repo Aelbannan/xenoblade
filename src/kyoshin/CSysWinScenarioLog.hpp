@@ -7,11 +7,13 @@
 
 class CFileHandle;
 class CScn;
+class CBattleManagerView;
 
 namespace nw4r { namespace lyt {
     class Layout;
     class AnimTransform;
     class ArcResourceAccessor;
+    class DrawInfo;
     class Pane;
 }}
 
@@ -709,7 +711,7 @@ extern "C" u32  func_80082694__Q22cf13CfGameManagerFv(u32 id);   // get sequence
 extern "C" void func_8008269C__Q22cf13CfGameManagerFv(u32 id, u32 value); // set sequence value
 extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32 value);
 extern "C" u32  func_800822F4__Q22cf13CfGameManagerFv(); // unsigned cf sequence counter
-extern "C" void* getInstance__Q22cf14CBattleManagerFv();
+extern "C" CBattleManagerView* getInstance__Q22cf14CBattleManagerFv();
 extern "C" int   func_800DA06C(void* bm, void* obj); // battle-list membership check
 extern "C" void* func_8016FE34(void* source);
 extern "C" u16  lbl_eu_80664772;          // pause / non-enemy-scene flag
@@ -732,7 +734,6 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 extern "C" void __dt__8CProcessFv(void*, int);
 extern "C" void __ct__8CProcessFv(CProcess* self);
-extern "C" void* __dl__FPv(void*);
 extern "C" void* __ct__CSysWinScenarioLog(void* _this, void* param); // returns this
 
 // Term / ctor imports (retail C-ABI names; the CfGameManager helper is Fv-mangled
@@ -798,7 +799,7 @@ extern "C" s32  func_8029A658();
 extern "C" u32  func_80137444__FPQ34nw4r3lyt13AnimTransformf(nw4r::lyt::AnimTransform*, float);
 extern "C" u32  func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" void func_80138078__FUl(u32);
-extern "C" bool func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+extern "C" int  func_80086F9C__Q22cf13CfGameManagerFv(int arg);
 extern "C" u32  lbl_eu_80663E28;
 extern "C" f32  lbl_eu_80668AD0;
 extern "C" void func_8027EA6C(CSysWinScenarioLog* self);
@@ -809,4 +810,10 @@ extern "C" void func_8027EA6C(CSysWinScenarioLog* self);
 extern "C" u32 __declspec(noinline) func_8027EE88(u32 self, u32 arg);
 extern "C" void __declspec(noinline) func_8027EEF4(u32 self);
 
-extern "C" void cbRenderBefore__18CSysWinScenarioLogFv(void* self);
+// cbRenderBefore imports (retail emits direct bl to these symbols).
+extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(u8* self);
+extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
+void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+void func_80137038(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
+                   int arg2, int arg3);
+extern "C" u32 func_800A9D90();

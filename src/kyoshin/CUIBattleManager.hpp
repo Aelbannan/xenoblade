@@ -8,6 +8,22 @@
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
 extern "C" void* func_8016FE34(void* r3);
 
+// Accessor teardown helper (code_80135FDC.cpp); retail symbol is the
+// Itanium-mangled name, so declare unmangled.
+void func_80139124(nw4r::lyt::ArcResourceAccessor* accessor);
+
+// C-linkage imports used by the battle-manager constructor.
+extern "C" mtl::ALLOC_HANDLE func_80496004(void* ptr);
+extern "C" void CMenuArtsSelect_clearArtsRef();
+// Layout/BDAT helpers used by the file-event handler.
+extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
+extern "C" u16 func_80136254(const void* table, const void* key, int id);
+extern "C" char* func_80138F78(u32 id);
+
+class CProcess;
+class CUIBattleManager;
+struct CUIBattleFileEvt;
+
 // Minimal battle-UI child type (IUIWindow-like) for Move's mark/remove walk.
 class CUIBattleChild {
 private:
@@ -21,6 +37,13 @@ public:
     u8 unk54; // 0x54 - pending-remove request
     u8 unk55; // 0x55 - pending update-mark
 };
+
+// Battle-UI helpers. Retail binds these by their plain (unmangled) names.
+extern "C" void func_8012E630(CUIBattleManager* self);
+extern "C" CUIBattleChild* func_8012F5F8();
+extern "C" CUIBattleChild* func_8012F750(u32 arg);
+extern "C" void func_8012FAA8();
+extern "C" void func_8012F87C(u32 arg);
 
 // Minimal IUIBattle interface tag. Retail instantiates reslist<IUIBattle>
 // (dtors __dt___reslist_base_IUIBattle / __dt__reslist_IUIBattle) whose nodes
@@ -93,6 +116,13 @@ private:
     // Retail file-cancel / busy-flag free functions over the private handles.
     friend void func_8012E630(CUIBattleManager* self);
     friend int func_8012E6DC();
+    // Teardown / create-bind / release helpers over the private fields.
+    friend void __dt__8012E534(CUIBattleManager* self);
+    friend int func_8012F2C0(CUIBattleManager* self, CUIBattleFileEvt* evt);
+    friend CUIBattleChild* func_8012F5F8();
+    friend CUIBattleChild* func_8012F750(u32 arg);
+    friend void func_8012FAA8();
+    friend void func_8012F87C(u32 arg);
     CUIBattleManager();
     virtual ~CUIBattleManager();
     void OnFileEvent();

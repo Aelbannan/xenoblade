@@ -74,13 +74,6 @@ const char* AnmObjChrNode::GetTypeName() const {
 
 extern "C" const nw4r::g3d::G3dObj::ResNameDataT<sizeof("AnmObjChrBlend")> lbl_eu_8051D5E4 = {sizeof("AnmObjChrBlend"), "AnmObjChrBlend"};
 
-bool AnmObjChrBlend::IsDerivedFrom(G3dObj::TypeObj other) const {
-    if (TypeObj(lbl_eu_8051D5E4) == other) {
-        return true;
-    }
-    return AnmObjChrNode::IsDerivedFrom(other);
-}
-
 const G3dObj::TypeObj AnmObjChrBlend::GetTypeObj() const {
     return TypeObj(lbl_eu_8051D5E4);
 }
@@ -142,9 +135,7 @@ namespace nw4r {
 namespace g3d {
 
 AnmObjChrNode::~AnmObjChrNode() {
-    if (this != NULL) {
-        DetachAll();
-    }
+    DetachAll();
 }
 
 } // namespace g3d
@@ -154,6 +145,29 @@ AnmObjChrNode::~AnmObjChrNode() {
 
 namespace nw4r {
 namespace g3d {
+
+// Branch order mirrors retail: ATTACH stores the parent; CHILD_DETACHED
+// detaches the matching child; DETACH_PARENT clears the parent.
+void AnmObjChrNode::G3dProc(u32 task, u32 param, void* pInfo) {
+    switch ((int)task) {
+    case G3DPROC_CHILD_DETACHED:
+        for (int i = 0; i < mChildrenArraySize; i++) {
+            if (mpChildrenArray[i] == pInfo) {
+                Detach(i);
+                return;
+            }
+        }
+        return;
+    case G3DPROC_DETACH_PARENT:
+        SetParent(NULL);
+        break;
+    case G3DPROC_ATTACH_PARENT:
+        SetParent(static_cast<G3dObj*>(pInfo));
+        break;
+    default:
+        break;
+    }
+}
 
 AnmObjChrRes* AnmObjChrNode::Attach(int idx, AnmObjChrRes* pRes) {
     AnmObjChrRes* pOld = Detach(idx);
@@ -278,15 +292,117 @@ void AnmObjChrNode::UpdateFrame() {
 } // namespace g3d
 } // namespace nw4r
 
-void Bind__Q34nw4r3g3d13AnmObjChrNodeFQ34nw4r3g3d6ResMdl(){}
+// Propagate Bind down every attached child; we are bound if any child is.
+// The byte-offset induction variables mirror retail's strength reduction.
+namespace nw4r {
+namespace g3d {
 
-void Bind__Q34nw4r3g3d13AnmObjChrNodeFQ34nw4r3g3d6ResMdlUlQ44nw4r3g3d9AnmObjChr10BindOption(){}
+bool AnmObjChrNode::Bind(const ResMdl mdl) {
+    bool bound = false;
 
-void Release__Q34nw4r3g3d13AnmObjChrNodeFv(){}
+    for (int i = 0; i < mChildrenArraySize; i++) {
+        AnmObjChrRes* pRes = mpChildrenArray[i];
 
-void Release__Q34nw4r3g3d13AnmObjChrNodeFQ34nw4r3g3d6ResMdlUlQ44nw4r3g3d9AnmObjChr10BindOption(){}
+        if (pRes != NULL) {
+            bool result = pRes->Bind(mdl);
+            bound = bound || result;
 
-void G3dProc__Q34nw4r3g3d13AnmObjChrNodeFUlUlPv(){}
+            // Merge the child's defined bindings into our table.
+            for (u32 j = 0; j < (u32)mNumBinding; j++) {
+                if (pRes->TestDefined(j)) {
+                    mpBinding[j] = 0;
+                }
+            }
+        }
+    }
+
+    SetAnmFlag(FLAG_ANM_BOUND, true);
+    return bound;
+}
+
+// Two-target variant: identical propagation, forwarding mdl/target/option.
+bool AnmObjChrNode::Bind(const ResMdl mdl, u32 target, BindOption option) {
+    bool bound = false;
+
+    for (int i = 0; i < mChildrenArraySize; i++) {
+        AnmObjChrRes* pRes = mpChildrenArray[i];
+
+        if (pRes != NULL) {
+            bool result = pRes->Bind(mdl, target, option);
+            bound = bound || result;
+
+            for (u32 j = 0; j < (u32)mNumBinding; j++) {
+                if (pRes->TestDefined(j)) {
+                    mpBinding[j] = 0;
+                }
+            }
+        }
+    }
+
+    SetAnmFlag(FLAG_ANM_BOUND, true);
+    return bound;
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+namespace nw4r {
+namespace g3d {
+
+void AnmObjChrNode::Release() {
+    // Release every bound child, clear all bindings to UNDEFINED, drop the
+    // bound flag.
+    for (int i = 0; i < mChildrenArraySize; i++) {
+        if (mpChildrenArray[i] != NULL) {
+            mpChildrenArray[i]->Release();
+        }
+    }
+
+    for (int i = 0; i < mNumBinding; i++) {
+        mpBinding[i] = BINDING_UNDEFINED;
+    }
+
+    SetAnmFlag(FLAG_ANM_BOUND, false);
+}
+
+} // namespace g3d
+} // namespace nw4r
+
+// Release every child, mark everything UNDEFINED, then re-mark entries
+// whose children still define their own bindings.
+namespace nw4r {
+namespace g3d {
+
+void AnmObjChrNode::Release(const ResMdl mdl, u32 target, BindOption option) {
+    for (int i = 0; i < mChildrenArraySize; i++) {
+        AnmObjChrRes* pRes = mpChildrenArray[i];
+
+        if (pRes != NULL) {
+            pRes->Release(mdl, target, option);
+        }
+    }
+
+    for (int j = 0, ofs = 0; j < mNumBinding; j++, ofs += (int)sizeof(u16)) {
+        *(u16*)(reinterpret_cast<u8*>(mpBinding) + ofs) = BINDING_UNDEFINED;
+    }
+
+    SetAnmFlag(FLAG_ANM_BOUND, false);
+
+    for (int i = 0; i < mChildrenArraySize; i++) {
+        AnmObjChrRes* pRes = mpChildrenArray[i];
+
+        if (pRes != NULL) {
+            for (u32 j = 0; j < (u32)mNumBinding; j++) {
+                if (pRes->TestDefined(j)) {
+                    mpBinding[j] = 0;
+                }
+            }
+        }
+    }
+}
+
+} // namespace g3d
+} // namespace nw4r
 
 void Construct__Q34nw4r3g3d14AnmObjChrBlendFP12MEMAllocatorPUlQ34nw4r3g3d6ResMdli(){}
 
@@ -294,24 +410,34 @@ void GetResult__Q34nw4r3g3d14AnmObjChrBlendFPQ34nw4r3g3d12ChrAnmResultUl(){}
 
 void Construct__Q34nw4r3g3d12AnmObjChrResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmChrQ34nw4r3g3d6ResMdlb(){}
 
+// Aliases FrameCtrl::smBaseUpdateRate (sdata2).
+extern const f32 lbl_eu_80663460;
+
 namespace nw4r {
 namespace g3d {
 
-// G3dProc: 0x10002 stores the info pointer, 0x10004 clears it, task 8
-// tail-dispatches the base vtable slot 0x24.
+// Stand-in for FrameCtrl::UpdateFrm() kept as a real function so MWCC's
+// early CSE cannot merge the mUpdateRate reloads across the call boundary;
+// smBaseUpdateRate resolves to the shared sdata2 slot lbl_eu_80663460.
+void AnmObjChrResUpdateFrm(FrameCtrl* fc) {
+    fc->SetFrm(fc->GetRate() * lbl_eu_80663460 + fc->GetFrm());
+}
+
+// G3dProc: ATTACH stores the parent, UPDATEFRAME tail-dispatches the
+// vtable slot, DETACH_PARENT clears the parent.
 void AnmObjChrRes::G3dProc(u32 task, u32 param, void* pInfo) {
-    if (task == 0x10002) {
-        *(u32*)((u8*)this + 4) = (u32)pInfo;
-        return;
-    }
-    if (task > 0x10002) {
-        if (task == 0x10004)
-            *(u32*)((u8*)this + 4) = 0;
-        return;
-    }
-    if (task == 8) {
-        ((void (*)(void*, u32, u32, void*))(*(void**)((u8*)*(void**)((u8*)this) + 36)))(this, task, param, pInfo);
-        return;
+    switch ((int)task) {
+    case G3DPROC_UPDATEFRAME:
+        UpdateFrame();
+        break;
+    case G3DPROC_DETACH_PARENT:
+        SetParent(NULL);
+        break;
+    case G3DPROC_ATTACH_PARENT:
+        SetParent(static_cast<G3dObj*>(pInfo));
+        break;
+    default:
+        break;
     }
 }
 
@@ -320,8 +446,10 @@ void AnmObjChrRes::SetFrame(f32 frame) {
 
     if (mpResultCache != NULL) {
         f32 f = GetFrm();
-        for (u32 i = 0; i < (u32)mNumBinding; i++) {
-            u16 binding = mpBinding[i];
+        // Explicit byte-offset IV keeps MWCC from deriving its own temp,
+        // which would steal the first callee-saved register.
+        for (u32 i = 0, ofs = 0; i < (u32)mNumBinding; ofs += (u32)sizeof(u16), i++) {
+            u16 binding = *(const u16*)(reinterpret_cast<const u8*>(mpBinding) + ofs);
             if (!(binding & BINDING_UNDEFINED)) {
                 u32 id = binding & BINDING_ID_MASK;
                 mRes.GetAnmResult(&mpResultCache[id], id, f);
@@ -341,17 +469,18 @@ namespace g3d {
 void AnmObjChrRes::SetUpdateRate(f32 rate) {
     SetRate(rate);
 
-    if (rate == 1.0f) {
+    // Only refresh the cache when the rate returns to exactly 1.0f.
+    if (lbl_eu_80669B88 == rate) {
         if (mpResultCache != NULL) {
             f32 f = GetFrm();
-            u32 i = 0;
-            while (i < (u32)mNumBinding) {
-                u16 binding = mpBinding[i];
+            // Explicit byte-offset IV keeps MWCC from deriving its own temp,
+            // which would steal the first callee-saved register.
+            for (u32 i = 0, ofs = 0; i < (u32)mNumBinding; ofs += (u32)sizeof(u16), i++) {
+                u16 binding = *(const u16*)(reinterpret_cast<const u8*>(mpBinding) + ofs);
                 if (!(binding & BINDING_UNDEFINED)) {
                     u32 id = binding & BINDING_ID_MASK;
                     mRes.GetAnmResult(&mpResultCache[id], id, f);
                 }
-                i++;
             }
         }
     }
@@ -368,13 +497,20 @@ namespace nw4r {
 namespace g3d {
 
 void AnmObjChrRes::UpdateFrame() {
-    if (GetRate() != 1.0f) {
-        UpdateFrm();
+    // Local snapshot keeps the second GetRate() below from being CSE'd
+    // into the comparison load, matching retail's two reloads.
+    f32 rate = GetRate();
+    if (lbl_eu_80669B88 != rate) {
+        // Inline expansion of FrameCtrl::UpdateFrm/SetFrm; smBaseUpdateRate
+        // resolves to the shared sdata2 slot lbl_eu_80663460.
+        SetFrm(GetFrm() + GetRate() * lbl_eu_80663460);
 
         if (mpResultCache != NULL) {
             f32 f = GetFrm();
-            for (u32 i = 0; i < (u32)mNumBinding; i++) {
-                u16 binding = mpBinding[i];
+            // Explicit byte-offset IV keeps MWCC from deriving its own temp,
+            // which would steal the first callee-saved register.
+            for (u32 i = 0, ofs = 0; i < (u32)mNumBinding; ofs += (u32)sizeof(u16), i++) {
+                u16 binding = *(const u16*)(reinterpret_cast<const u8*>(mpBinding) + ofs);
                 if (!(binding & BINDING_UNDEFINED)) {
                     u32 id = binding & BINDING_ID_MASK;
                     mRes.GetAnmResult(&mpResultCache[id], id, f);
@@ -393,19 +529,25 @@ namespace nw4r {
 namespace g3d {
 
 bool AnmObjChrRes::Bind(ResMdl mdl) {
-    u16 numNode = mRes.ref().info.numNode;
     bool bound = false;
+    u32 numNode = mRes.ref().info.numNode;
 
-    for (u16 i = 0; i < numNode; i++) {
-        ResDic dic = ResDic(mRes.ofs_to_ptr<ResDicData>(mRes.ref().toChrDataDic));
+    // Map chr-anm node i to the model node sharing its name; the model
+    // node's id becomes our binding entry.
+    for (u32 i = 0; i < numNode; i++) {
+        const ResAnmChrData& r = mRes.ref();
+
+        const ResDic dic = ResDic(mRes.ofs_to_ptr<ResDicData>(r.toChrDataDic));
         const ResAnmChrNodeData* pData =
-            reinterpret_cast<const ResAnmChrNodeData*>(dic[i]);
-        const char* pName =
-            reinterpret_cast<const char*>(pData) + pData->name;
+            static_cast<const ResAnmChrNodeData*>(dic[i]);
 
-        ResNode node = mdl.GetResNode(ResName(
-            reinterpret_cast<const ResNameData*>(
-                reinterpret_cast<const char*>(pName) - 4)));
+        if (pData == NULL) {
+            continue;
+        }
+
+        ResName name(NW4R_G3D_OFS_TO_RESNAME(pData, pData->name));
+
+        ResNode node = mdl.GetResNode(name);
 
         if (node.IsValid()) {
             mpBinding[node.ref().id] = i;
@@ -451,7 +593,6 @@ const ChrAnmResult* AnmObjChrRes::GetResult(ChrAnmResult* pResult,
 
 
 
-void G3dProc__Q34nw4r3g3d12AnmObjChrResFUlUlPv(){}
 
 void IsDerivedFrom__Q34nw4r3g3d12AnmObjChrResCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
@@ -464,7 +605,6 @@ void* GetTypeObj__Q34nw4r3g3d12AnmObjChrResCFv(void) { return (void*)lbl_eu_8051
 
 void __dt__Q34nw4r3g3d12AnmObjChrResFv(){}
 
-void IsDerivedFrom__Q34nw4r3g3d14AnmObjChrBlendCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
 void IsDerivedFrom__Q34nw4r3g3d13AnmObjChrNodeCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
@@ -473,7 +613,6 @@ void GetTypeName__Q34nw4r3g3d14AnmObjChrBlendCFv(){}
 extern const char lbl_eu_8051D5E4[];
 void* GetTypeObj__Q34nw4r3g3d14AnmObjChrBlendCFv(void) { return (void*)lbl_eu_8051D5E4; }
 
-void __dt__Q34nw4r3g3d14AnmObjChrBlendFv(){}
 
 void GetTypeName__Q34nw4r3g3d13AnmObjChrNodeCFv(){}
 
@@ -482,4 +621,26 @@ extern "C" void* GetTypeObj__Q34nw4r3g3d13AnmObjChrNodeCFv(void) { return (void*
 
 void GetTypeName__Q34nw4r3g3d9AnmObjChrCFv(){}
 
-extern "C" void* GetTypeObj__Q34nw4r3g3d9AnmObjChrCFv(void) { return (void*)lbl_eu_8051D5C0; }
+void* GetTypeObj__Q34nw4r3g3d9AnmObjChrCFv(void) { return (void*)lbl_eu_8051D5C0; }
+
+namespace nw4r {
+namespace g3d {
+
+// Retail inlines the full base chain into this function; calling the base
+// member reproduces the staggered register allocation of the inline expansion.
+bool AnmObjChrBlend::IsDerivedFrom(G3dObj::TypeObj other) const {
+    if (other == TypeObj(lbl_eu_8051D5E4)) {
+        return true;
+    }
+    return AnmObjChrNode::IsDerivedFrom(other);
+}
+
+// AnmObjChrBlend dtor: retail inlines the AnmObjChrNode base-dtor chain
+// (vtable store, DetachAll, G3dObj base dtor) into the out-of-line copy of
+// the header's inline empty dtor. No legal out-of-line redefinition exists
+// while the header declares the body inline, so the mangled stub below
+// keeps the symbol linkable.
+void __dt__Q34nw4r3g3d14AnmObjChrBlendFv(void) {}
+
+} // namespace g3d
+} // namespace nw4r

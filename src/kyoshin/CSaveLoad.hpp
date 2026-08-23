@@ -136,6 +136,40 @@ public:
     virtual void vf2(int) = 0;
 };
 
+// Abstract proxy for nw4r::lyt::Layout virtual dispatch at vtable offset 0x24
+// (2 MWCC implicit entries at 0x00/0x04, then user virtuals).
+class LayoutProxy24 {
+public:
+    virtual void vf2() = 0;   // 0x08
+    virtual void vf3() = 0;   // 0x0C
+    virtual void vf4() = 0;   // 0x10
+    virtual void vf5() = 0;   // 0x14
+    virtual void vf6() = 0;   // 0x18
+    virtual void vf7() = 0;   // 0x1C
+    virtual void vf8() = 0;   // 0x20
+    virtual void vf9() = 0;   // 0x24
+};
+
+// Abstract proxy for the layout root pane object; target virtual at vtable
+// offset 0x3C looks up a pane by name and returns it.
+class RootPaneProxy {
+public:
+    virtual void vf2(int) = 0;                      // 0x08
+    virtual void vf3(int) = 0;
+    virtual void vf4(int) = 0;
+    virtual void vf5(int) = 0;
+    virtual void vf6(int) = 0;
+    virtual void vf7(int) = 0;
+    virtual void vf8(int) = 0;
+    virtual void vf9(int) = 0;
+    virtual void vf10(int) = 0;
+    virtual void vf11(int) = 0;
+    virtual void vf12(int) = 0;
+    virtual void vf13(int) = 0;
+    virtual void vf14(int) = 0;                     // 0x38
+    virtual void* vf15(const char* name, int flag) = 0; // 0x3C
+};
+
 // Abstract class for CCur18 cursor object (0x18 bytes, embedded sub-object).
 // vtable layout: 2 MWCC implicit entries (RTTI/dtor) then user virtuals.
 // Slot 3 (offset 0x0C) is the second user virtual, used by func_8028F4AC.
@@ -172,6 +206,51 @@ public:
     virtual void vf12() = 0;
     virtual void vf13() = 0;
     virtual void vf14(int) = 0;     // slot 14 (0x38)
+};
+
+// Argless virtual call at vtable offset 0x08 (used on embedded cursor objects)
+class VtSlot8Call {
+public:
+    virtual void v0() = 0;
+    virtual void vf2() = 0;   // vtable 0x08
+};
+
+// Field-view mirrors used to reproduce retail's typed field-copy widths
+// when spilling stack-constructed cursors into the CSaveLoad sub-objects.
+struct CurMirror28 {
+    void* w0;                       // +0x00
+    void* w4;                       // +0x04
+    void* w8;                       // +0x08
+    void* wC;                       // +0x0C
+    u8 _pad10[4];                   // +0x10
+    u8 b14;                         // +0x14
+    u8 b15;                         // +0x15
+};
+
+struct CurMirror40 {
+    u8 _pad00[4];                   // +0x00
+    void* w4;                       // +0x04
+    void* w8;                       // +0x08
+    void* wC;                       // +0x0C
+    void* w10;                      // +0x10
+    u8 b14;                         // +0x14
+    u8 b15;                         // +0x15
+};
+
+struct CurMirror13C {
+    void* w0;                       // +0x00
+    void* w4;                       // +0x04
+    void* w8;                       // +0x08
+    u16 hwC;                        // +0x0C
+    u8 bE;                          // +0x0E
+    u16 hwF;                        // +0x0F
+    u8 b11;                         // +0x11
+};
+
+// Read-only view of the file handle payload pointer at +0x04
+struct FileHandleView {
+    u8 _pad00[4];
+    void* mData;                    // +0x04
 };
 
 // Opaque object whose vtable (after 2 RTTI pad slots) has virtuals at
@@ -238,6 +317,16 @@ extern "C" void func_801F3850(void*, u16);
 extern "C" u32 func_8009CF8C(u32);
 extern "C" void* allocate_head__Q23mtl10MemManagerFUlUli(u32 handle, u32 size, int align);
 extern "C" int CSysWin_getUnk34(void*);
+extern "C" void func_801F3540(void*);   // CScrollBar per-frame update
+extern "C" void func_8022B748(void*);   // CSysWin per-frame update
+extern "C" void func_801D202C(void*);   // CCur per-frame update
+extern "C" void func_801F35B0(void*, void*);
+extern "C" void func_8022B7C8(void*, void*);
+extern "C" void func_801D20B0(void*, void*);
+extern "C" void func_8022C1B4(void*, void*, u8);
+extern "C" void func_80137924(void*, void*, void*, void*);
+extern "C" void func_8028F3D4(CSaveLoad* self, nw4r::lyt::DrawInfo* drawInfo);
+extern "C" void func_8028FB20(CSaveLoad* self);
 extern "C" void func_8022B8E4(void*);
 extern "C" void __ct__CCur18(void* self, void* param);
 extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void* self, void* base);

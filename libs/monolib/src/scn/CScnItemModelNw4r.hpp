@@ -25,6 +25,7 @@ struct ResMdlData;
 // only the call-site types are needed here).
 class CScnRootNw4r;
 struct CScnCamLayout;
+class CScn;
 class CScnItemModelNw4r;
 
 // Opaque sub-object at CScnItemModelNw4r+0x16C8 (the CMdlMaterial instance,
@@ -162,9 +163,7 @@ struct CScnItemModelNw4rAnimV24 {
     virtual void v04() = 0;
     virtual void v05() = 0;
     virtual void v06() = 0;
-    virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void v09(f32 f) = 0;   // vtable 0x24
+    virtual void v07(f32 f) = 0;   // vtable 0x24
 };
 
 struct CScnItemModelNw4rAnimV28 {
@@ -176,9 +175,7 @@ struct CScnItemModelNw4rAnimV28 {
     virtual void v05() = 0;
     virtual void v06() = 0;
     virtual void v07() = 0;
-    virtual void v08() = 0;
-    virtual void v09(f32 f) = 0;   // vtable 0x24
-    virtual void v10(f32 f) = 0;   // vtable 0x28
+    virtual void v08(f32 f) = 0;   // vtable 0x28
 };
 
 // Opaque view of the g3d scene object's +0x122 u16 slot (frame-table entry
@@ -313,11 +310,13 @@ struct CScnItemModelNw4rVtbl {
     virtual void v37() = 0;
     virtual void v38() = 0;
     virtual void v39() = 0;
-    virtual void v40() = 0;  // vtable 0xA8 (func_80489C94)
+    virtual void* v40() = 0;  // vtable 0xA8 (func_80489C94 tail call; retail re-uses its r3 result as the return value)
     virtual void v41() = 0;
     virtual void v42() = 0;
     virtual void v43() = 0;
     virtual void v44() = 0;  // vtable 0xB8 (func_80487818)
+    virtual void v45() = 0;
+    virtual u32 v46(u32 param, u32 nodeVal, u32 arg6) = 0;  // vtable 0xC0 (func_80489FDC tail)
 };
 
 // Virtual-dispatch view for the +0x7F0 hook-table entries (vtable-0xC slot
@@ -388,7 +387,7 @@ public:
     /* 0x7B0 */ u8 _pad_0x7B0[0x4];                  // to 0x7B4
     /* 0x7B4 */ CScnItemModelNw4r* slots7B4[4];      // reference list (same slot as CScnItemModel::slots7B4)
     /* 0x7C4 */ CScnItemModel* field_0x7C4;          // chain link (same slot as CScnItemModel::field_0x7C4)
-    /* 0x7C8 */ u8 _pad_0x7C8[0x4];                  // to 0x7CC
+    /* 0x7C8 */ void* field_0x7C8;                   // secondary attached model (func_80489200)
     /* 0x7CC */ nw4r::math::VEC3 vec7CC;             // translate VEC3 - func_80489014
     /* 0x7D8 */ nw4r::math::VEC3 vec7D8;             // second translate VEC3 (func_80489014)
     /* 0x7E4 */ u8 _pad_0x7E4[0xC];                  // to 0x7F0
@@ -525,6 +524,11 @@ extern "C" void func_804EB7F8(u8* self);
 extern "C" void func_80496D74(void* self);
 extern "C" void func_804830AC(CScnItemModel* self);
 extern "C" void func_804EB8A0(u8* self);
+// CMdlDynamics world-matrix sync (defined in CMdlDynamics.cpp), called by
+// func_80489200 after the shadow-matrix copy pass.
+extern "C" void func_804EBBCC(void* self, nw4r::math::MTX34* mtxs);
+// Shadow-matrix propagation tail of func_80489200 (defined later in this TU).
+void func_8048AB2C(CScnItemModelNw4r* self, nw4r::math::MTX34* worldMtxBase);
 extern "C" void* func_8048ECD8(void* self);
 extern "C" void* RemoveAnmScn__Q34nw4r3g3d7ScnRootFv(void* self);
 extern "C" void* __dt__804E5DE0(void* self);

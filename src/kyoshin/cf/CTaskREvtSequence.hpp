@@ -411,8 +411,42 @@ struct UnkState_80664268 {
     u8 gap115[0x01];                 // 0x115
     u16 field_0x116;                 // 0x116 (halfword read by func_8016841C)
     u16 field_0x118;                 // 0x118
+    u8 gap11C[0x20];                 // 0x11C-0x13B
+    u8 field_0x13C[8];               // 0x13C: per-state-index byte counters
+                                     // (indexed by field_0xF8-range indices,
+                                     // bumped by func_8016BDA8)
 };
 extern UnkState_80664268* lbl_eu_80664268;
+
+// Minimal layout view of the realtime-event model object passed to
+// func_8016BDA8 (type word 0x14, flag word 0x18, data pointer 0x1C).
+struct EvtBdabModel {
+    u8 gap00[0x14];   // 0x00
+    u32 field_0x14;   // 0x14: event type word (+6 vs +1 counter bump)
+    u32 field_0x18;   // 0x18: flag word (bit 8 selects the packed-slot path)
+    void* field_0x1C; // 0x1C: id/slot table (EvtBdabPtr1C)
+};
+
+// Readiness probe called by func_8016BDA8 (retail resolves it as the flat
+// symbol func_801729D0).
+extern "C" int func_801729D0(EvtBdabModel* self);
+
+// View of the buffer at UnkState_80664268::field_0xC4 exposing the slot
+// table base word at +0x80 (func_8016BDA8 compares slot ids against it).
+struct EvtSeqC4View80 {
+    u8 gap00[0x80];   // 0x00
+    u32 field_0x80;   // 0x80
+};
+
+// Object at CREvtModel::mPtr1C (func_8016BDA8): id word at +0x30, eight
+// halfword event slots at +0x38, flag word at +0x58.
+struct EvtBdabPtr1C {
+    u8 gap00[0x30];      // 0x00
+    u32 field_0x30;      // 0x30: claimed id word
+    u16 field_0x38[8];   // 0x38: halfword slots (low byte = packed id)
+    u16 gap48[0x08];     // 0x48-0x57
+    u32 field_0x58;      // 0x58: flag word (bit 9 read by func_8016BDA8)
+};
 
 // Layout view of CTaskREvtSequence exposing the IWorkEvent secondary base at
 // +0x54 (CTTask head 0x00-0x54, then IWorkEvent). func_801686B0 uses it to

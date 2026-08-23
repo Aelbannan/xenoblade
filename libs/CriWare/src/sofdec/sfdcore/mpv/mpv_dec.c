@@ -94,13 +94,16 @@ extern void SJ_SplitChunk(const MpvSjChunk* src, int size, MpvSjChunk* dst1, Mpv
 s32 mpvdec_MotionSub(MpvDec* self, s32* mv, s32* out1, s32* out2);
 
 s32 MPVDEC_CheckVersion(const char* version, unsigned int size, s32 v) {
+    // Sequential early-out ifs match the retail dispatch:
+    //   beq cont / li r3,-1 / b end / cont: ...
+    // Known wall: switch form gives the exact retail dispatch
+    // (beq body / li -1 / b end twice) but lowers the size compare to
+    // signed cmpi under GC/3.0a5.2 (retail cmplwi). Every if/else/ternary
+    // variant emits unsigned cmpli but CSE-merges the two `li r3,-1`
+    // blocks into one (116B vs 120B). No shape found emits both together.
     if (strcmp(lbl_eu_8051C088, version) != 0)
         return -1;
-    // Best state (96.7%): the SWITCH form matches the retail layout but
-    // lowers to signed cmpwi under GC/3.0a5.2 (retail cmpli). if/else forms
-    // emit the unsigned cmpli but lose the retail `beq body; li -1; b done`
-    // dispatch (0x78 -> 0x74, 11 structural). No shape emits both together.
-    switch (size) {
+    switch ((unsigned long)size) {
     default:
         return -1;
     case 0xDAC:
@@ -483,13 +486,13 @@ s32 mpvdec_MotionSub(MpvDec* self, s32* mv, s32* out1, s32* out2) {
     u32 hi = self->hi;
     u32 lo = self->lo;
     u8* ptr = self->ptr;
-    u32 mvscale = (u32)mv[2];
-    s32 ret = 0;
-    s16 v16;
-    s16* tbl;
     /* 9-bit motion code. */
     u32 code = hi >> 21;
     s32 f_code = mv[1];
+    s32 ret = 0;
+    u32 mvscale = (u32)mv[2];
+    s16 v16;
+    s16* tbl;
     if (bc > 0x15)
         code |= lo >> (0x35 - bc);
 
@@ -540,9 +543,12 @@ s32 mpvdec_MotionSub(MpvDec* self, s32* mv, s32* out1, s32* out2) {
                     hi <<= f_code;
                 }
                 {
-                    s32 t = mv[3] - 1 - residual;
+                    /* sign-adjusted motion residual */
                     s32 shifted = v << f_code;
-                    vr = (shifted <= 0) ? shifted + t : shifted - t;
+                    s32 t = mv[3] - 1 - residual;
+                    vr = shifted + t;
+                    if (shifted > 0)
+                        vr = shifted - t;
                 }
             } else {
                 vr = v;

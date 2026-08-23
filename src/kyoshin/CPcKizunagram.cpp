@@ -292,7 +292,7 @@ extern "C" __declspec(noinline) void func_8025DCFC(CPcKizunagram* self) {
                 nw4r::lyt::Pane* p = self->mLayout->GetRootPane()->FindPaneByName(str, true);
                 if (p != 0) func_80124270(p, r21);
                 if (r21 != 0) {
-                    void* tex = self->mArcRes->GetResource(0x74696d67, lbl_eu_8050D868 + 0xb5, 0);
+                    u32 tex = (u32)self->mArcRes->GetResource(0x74696d67, lbl_eu_8050D868 + 0xb5, 0);
                     if (tex != 0) func_80137F88(p, tex);
                 }
                 char* str2 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
@@ -363,7 +363,7 @@ void func_8025E0D8(CPcKizunagram* self) {
         } else {
             s1 = (val >= 0x2711) ? 0 : (val >= 0x1388) ? lbl_eu_8050D868 + 0x138 : lbl_eu_8050D868 + 0x123;
         }
-        void* tex1 = self->mArcRes->GetResource(0x74696d67, s1, 0);
+        u32 tex1 = (u32)self->mArcRes->GetResource(0x74696d67, s1, 0);
         if (tex1 != 0) func_80137F88(pane, tex1);
 
         char* str2 = (char*)func_80136190(lbl_eu_8050D868 + 0xa0, lbl_eu_8050D868 + 0xca, id);
@@ -375,7 +375,7 @@ void func_8025E0D8(CPcKizunagram* self) {
         } else {
             s2 = (val >= 0x3e8) ? lbl_eu_8050D868 + 0x165 : lbl_eu_8050D868 + 0x14d;
         }
-        void* tex2 = self->mArcRes->GetResource(0x74696d67, s2, 0);
+        u32 tex2 = (u32)self->mArcRes->GetResource(0x74696d67, s2, 0);
         if (tex2 != 0) {
             nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
             func_80137F88(pane2, tex2);
@@ -451,15 +451,15 @@ extern "C" void func_8025E3A4(CPcKizunagram* self, u32 arg) {
 }
 
 // Target a text pane by name, then move the cursor so it sits over the row
-// matching the current character index.
-extern "C" void __declspec(noinline) func_8025E4A4(CPcKizunagram* self) {
-    const char* base = lbl_eu_8050D868;
-    char* path = (char*)func_80136190(base + 0x7f, base + 0x90, (s8)self->mField28 + 1);
+void __declspec(noinline) func_8025E4A4(CPcKizunagram* self) {
+    char* path =
+        (char*)func_80136190(lbl_eu_8050D868 + 0x7f, lbl_eu_8050D868 + 0x90, (s8)self->mField28 + 1);
     nw4r::lyt::Pane* pane1 = self->mLayout->GetRootPane()->FindPaneByName(path, true);
-    nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName(base + 0x1c5, true);
+    nw4r::lyt::Pane* pane2 =
+        self->mLayout->GetRootPane()->FindPaneByName(lbl_eu_8050D868 + 0x1c5, true);
     CPcKizunaVec3 pos;
-    func_80137924(&pos, (void*)pane1, (void*)pane2, (void*)self->mLayout->GetRootPane());
     CPcKizunaVec3 tmp;
+    func_80137924(&pos, pane1, pane2, self->mLayout->GetRootPane());
     tmp.x = pos.x;
     tmp.y = pos.y;
     tmp.z = pos.z;
@@ -511,7 +511,7 @@ extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
         } else {
             s1 = (val >= 0x2711) ? 0 : (val >= 0x1388) ? lbl_eu_8050D868 + 0x138 : lbl_eu_8050D868 + 0x123;
         }
-        void* tex1 = self->mArcRes->GetResource(0x74696d67, s1, 0);
+        u32 tex1 = (u32)self->mArcRes->GetResource(0x74696d67, s1, 0);
         if (tex1 != 0) func_80137F88(pane, tex1);
 
         // Second panel: build its resource name from a value-dependent format.
@@ -534,7 +534,7 @@ extern "C" void func_8025E5E4(CPcKizunagram* self, u32 value) {
             else
                 sprintf(buf2, lbl_eu_8050D868 + 0x23c, value);
         }
-        void* tex2 = self->mArcRes->GetResource(0x74696d67, buf2, 0);
+        u32 tex2 = (u32)self->mArcRes->GetResource(0x74696d67, buf2, 0);
         if (tex2 != 0) {
             nw4r::lyt::Pane* pane2 = self->mLayout->GetRootPane()->FindPaneByName(str2, true);
             func_80137F88(pane2, tex2);
@@ -587,37 +587,37 @@ extern "C" int func_8025E9E4(CPcKizunagram* self, const void* table, int id) {
 // the window ready for use.
 int CPcKizunagram::OnFileEvent(CEventFile* event) {
     if (mFileHandle == event->mFileHandle) {
+        CPcKizunagram* self = this;
         u8 regionBuf[8];
-        u32 mem2 = mtl::MemManager::getHandleMEM2();
         char* const s = lbl_eu_8050D868;
-        mMemRegion.createRegion(mem2, 0x12000, &s[0x26b], 0);
-        __ct__14Class_8045F858FP17UnkClass_8045F564((Class_8045F858*)regionBuf, &mMemRegion);
+        self->mMemRegion.createRegion(mtl::MemManager::getHandleMEM2(), 0x12000, &s[0x26b], 0);
+        __ct__14Class_8045F858FP17UnkClass_8045F564((Class_8045F858*)regionBuf, &self->mMemRegion);
 
-        void* fileData = mFileHandle->getData();
+        void* fileData = self->mFileHandle->getData();
         mtl::MemManager::func_80434A4C(false);
-        mArcRes = createArcResourceAccessor__10CLibLayoutFv();
-        mArcRes->Attach(fileData, &s[0x279]);
+        self->mArcRes = createArcResourceAccessor__10CLibLayoutFv();
+        self->mArcRes->Attach(fileData, &s[0x279]);
         func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(
-            &mLayout, mArcRes, &s[0x27d]);
+            &self->mLayout, self->mArcRes, &s[0x27d]);
         func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-            mLayout, &mAnimTransform, mArcRes, &s[0x293]);
+            self->mLayout, &self->mAnimTransform, self->mArcRes, &s[0x293]);
 
         // Bind the font handle into the layout's root pane.
-        nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
+        nw4r::lyt::Pane* rootPane = self->mLayout->GetRootPane();
         CDeviceFontVtblView* font =
-            (CDeviceFontVtblView*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, mLayout);
+            (CDeviceFontVtblView*)func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, self->mLayout);
         u32 fontResult = font->vf7();
         func_8013676C(rootPane, fontResult);
         func_801355BC();
 
-        mLayout->SetAnimationEnable(mAnimTransform, true);
-        mLayout->Animate(0);
+        self->mLayout->SetAnimationEnable(self->mAnimTransform, true);
+        self->mLayout->Animate(0);
 
         // Build the cursor on the stack, copy its body into the member
         // region (skipping the +0x00 vtable pointer), then initialise it.
         u8 tmpCur[0x18];
-        __ct__CPcKizunaCur((CPcKizunaCur*)tmpCur, mArcRes);
-        CPcKizunaCur* curDst = (CPcKizunaCur*)mKizunaCur;
+        __ct__CPcKizunaCur((CPcKizunaCur*)tmpCur, self->mArcRes);
+        CPcKizunaCur* curDst = (CPcKizunaCur*)self->mKizunaCur;
         CPcKizunaCur* curSrc = (CPcKizunaCur*)tmpCur;
         curDst->mAccessor = curSrc->mAccessor;
         curDst->mpLayout = curSrc->mpLayout;
@@ -628,11 +628,11 @@ int CPcKizunagram::OnFileEvent(CEventFile* event) {
         curDst->mField16 = curSrc->mField16;
         func_8025D4E4(curDst);
 
-        mIsHidden = 1;
-        mStateByte1 = 1;
-        func_8025DCFC(this);
-        mFileHandle = 0;
-        mMemRegion.func_8045F810();
+        self->mIsHidden = 1;
+        self->mStateByte1 = 1;
+        func_8025DCFC(self);
+        self->mFileHandle = 0;
+        self->mMemRegion.func_8045F810();
         __dt__14Class_8045F858Fv((Class_8045F858*)regionBuf, -1);
         return 1;
     }
@@ -655,6 +655,9 @@ extern "C" void func_8025EC0C(CPcKizunaCompact* dst, const CPcKizunagramBig* src
         d->bytes[0xC] = s->byteC0;
         d->bytes[0] = (u8)e->word;
         d->bytes[1] = e->byte14;
+        // Advance the entry cursor right after its last use (retail keeps this
+        // induction register separate from the slot cursor).
+        e = (const CPcKizunaSlotEntry*)((const u8*)e + 0xC4);
         d->bytes[2] = (u8)s->sub[0].word;
         d->bytes[3] = s->sub[0].byte14;
         d->bytes[4] = (u8)s->sub[1].word;
@@ -667,7 +670,6 @@ extern "C" void func_8025EC0C(CPcKizunaCompact* dst, const CPcKizunagramBig* src
         d->bytes[11] = s->sub[4].byte14;
         s++;
         d++;
-        e = (const CPcKizunaSlotEntry*)((const u8*)e + 0xC4);
     }
 }
 
@@ -678,24 +680,34 @@ extern "C" void func_8025ECE4(CPcKizunaCompact* src, CPcKizunagramBig* dst) {
     dst->field_0x884 = src->field_0x90;
     memcpy(dst->data888, src->data94, 0x14);
     memset(dst->data870, 0, 0x14);
-    const u8* b;
-    int k;
-    for (int i = 0; i < 0xb; i++) {
-        const CPcKizunaCompactSlot* cs = &src->slots[i];
-        CPcKizunaSlot* s = &dst->slots[i];
+    // Pointer-walk form mirrors retail: outer cursors advance by 0xD/0xC4,
+    // the sub cursor by 0x20 and the compact byte cursor by 2 per sub-entry.
+    CPcKizunaCompactSlot* cs = &src->slots[0];
+    CPcKizunaSlot* s = &dst->slots[0];
+    int i = 0;
+    while (i < 0xb) {
         s->byteC0 = cs->bytes[0xC];
         memset(&s->data00, 0, 0x20);
         s->data00.word = cs->bytes[0];
+        u8* b = cs->bytes;
+        // Two lagging cursors 0x20 apart (retail keeps both): cur is the
+        // store base (+0x20/+0x34 displacements), sub feeds memset.
+        CPcKizunaSlotEntry* cur = &s->data00;
+        CPcKizunaSlotEntry* sub = cur + 1;
         s->data00.byte14 = cs->bytes[1];
-        // Inner-loop byte cursor: retail copies the compact slot base into a
-        // register that advances by 2 per sub-entry (b[2]/b[3] with b += 2).
-        b = cs->bytes;
-        for (k = 0; k < 5; k++) {
-            memset(&s->sub[k], 0, 0x20);
-            s->sub[k].word = b[2];
-            s->sub[k].byte14 = b[3];
+        int k = 0;
+        while (k < 5) {
+            memset(sub, 0, 0x20);
+            cur[1].word = b[2];
+            cur[1].byte14 = b[3];
+            k++;
+            cur++;
+            sub++;
             b += 2;
         }
+        i++;
+        s++;
+        cs++;
     }
 }
 
@@ -960,30 +972,42 @@ extern "C" void func_8025F2E8(CPcKizunaChart* self, int a, int b, int value) {
     CPcKizunaSlotEntry* prv = entry->pField1C;
     if (nxt != 0) nxt->pField1C = prv;
     if (prv != 0) prv->pField18 = nxt;
-    u8 saved = entry->byte14 & 1;
-    memset(entry, 0, 0x20);
-    entry->byte14 = saved;
 
-    int found = 0;
-    if (id < 0x9e) {
-        for (int i = 0; i < 11; i++) {
-            CPcKizunaSlot* sp = &self->searchSlots[i];
-            if (id == sp->data00.field04) { found = 1; break; }
-            if (id == sp->sub[0].field04) { found = 1; break; }
-            if (id == sp->sub[1].field04) { found = 1; break; }
-            if (id == sp->sub[2].field04) { found = 1; break; }
-            if (id == sp->sub[3].field04) { found = 1; break; }
-            if (id == sp->sub[4].field04) { found = 1; break; }
-        }
+    // Retail rematerializes the position from the raw indices after the
+    // unlink consumes its first base register.
+    CPcKizunaSlotEntry* pos = (CPcKizunaSlotEntry*)((u8*)&self->searchSlots[a] + b * 0x20);
+    u8 saved = pos->byte14 & 1;
+    memset(pos, 0, 0x20);
+
+    int found;
+    if ((u32)id >= 0x9e) {
+        found = 0;
+    } else {
+        // Single-cursor walk over all 11 slots (stride 0xC4); the sub-entry
+        // checks share a lagging cursor 0x40 past the slot base.
+        const CPcKizunaSlot* sp = &self->searchSlots[0];
+        int n = 0xb;
+        do {
+            const CPcKizunaSlotEntry* e = &sp->sub[1];
+            if (sp->data00.field04 == id) { found = 1; goto searchDone; }
+            if (sp->sub[0].field04 == id) { found = 1; goto searchDone; }
+            if (e->field04 == id) { found = 1; goto searchDone; }
+            if (e[1].field04 == id) { found = 1; goto searchDone; }
+            if (e[2].field04 == id) { found = 1; goto searchDone; }
+            if (e[3].field04 == id) { found = 1; goto searchDone; }
+            sp++;
+        } while (--n != 0);
+        found = 0;
     }
+searchDone:
     if (!found) {
         u32* pWord = (u32*)(self->data870 + ((id >> 3) & ~7));
         *pWord &= ~(1u << (id & 0x1f));
     }
 
     u32 tbl = lbl_eu_80664158;
-    entry->word = value;
     char* const cols = lbl_eu_8050DB18;
+    entry->word = value;
     u32 v1 = getBdatStringColumnValue((void*)tbl, cols + 0x6, value);
     entry->field04 = (u8)v1;
     u32 v2 = getBdatStringColumnValue((void*)tbl, cols + 0xc, value);
@@ -993,7 +1017,7 @@ extern "C" void func_8025F2E8(CPcKizunaChart* self, int a, int b, int value) {
     u32 v4 = getBdatStringColumnValue((void*)tbl, cols + 0x16, value);
     entry->field10 = (float)(u8)v4;
     u32 v5 = getBdatStringColumnValue((void*)tbl, cols + 0x1b, value);
-    entry->byte14 |= (u8)v5;
+    pos->byte14 |= (u8)v5;
     func_8025F114((CPcKizunagramBig*)self, entry);
 }
 
@@ -1005,22 +1029,34 @@ extern "C" void func_8025F528(CPcKizunaChart* self, int a, int b, int value) {
     CPcKizunaSlotEntry* prv = entry->pField1C;
     if (nxt != 0) nxt->pField1C = prv;
     if (prv != 0) prv->pField18 = nxt;
-    u8 saved = entry->byte14 & 1;
-    memset(entry, 0, 0x20);
-    entry->byte14 = saved;
 
-    int found = 0;
-    if (id < 0x9e) {
-        for (int i = 0; i < 11; i++) {
-            CPcKizunaSlot* sp = &self->searchSlots[i];
-            if (id == sp->data00.field04) { found = 1; break; }
-            if (id == sp->sub[0].field04) { found = 1; break; }
-            if (id == sp->sub[1].field04) { found = 1; break; }
-            if (id == sp->sub[2].field04) { found = 1; break; }
-            if (id == sp->sub[3].field04) { found = 1; break; }
-            if (id == sp->sub[4].field04) { found = 1; break; }
-        }
+    // Retail rematerializes the position from the raw indices after the
+    // unlink consumes its first base register.
+    CPcKizunaSlotEntry* pos = (CPcKizunaSlotEntry*)((u8*)&self->searchSlots[a] + b * 0x20);
+    u8 saved = pos->byte14 & 1;
+    memset(pos, 0, 0x20);
+
+    int found;
+    if ((u32)id >= 0x9e) {
+        found = 0;
+    } else {
+        // Single-cursor walk over all 11 slots (stride 0xC4); the sub-entry
+        // checks share a lagging cursor 0x40 past the slot base.
+        const CPcKizunaSlot* sp = &self->searchSlots[0];
+        int n = 0xb;
+        do {
+            const CPcKizunaSlotEntry* e = &sp->sub[1];
+            if (sp->data00.field04 == id) { found = 1; goto searchDone; }
+            if (sp->sub[0].field04 == id) { found = 1; goto searchDone; }
+            if (e->field04 == id) { found = 1; goto searchDone; }
+            if (e[1].field04 == id) { found = 1; goto searchDone; }
+            if (e[2].field04 == id) { found = 1; goto searchDone; }
+            if (e[3].field04 == id) { found = 1; goto searchDone; }
+            sp++;
+        } while (--n != 0);
+        found = 0;
     }
+searchDone:
     if (!found) {
         u32* pWord = (u32*)(self->data870 + ((id >> 3) & ~7));
         *pWord &= ~(1u << (id & 0x1f));
@@ -1038,53 +1074,77 @@ extern "C" void func_8025F528(CPcKizunaChart* self, int a, int b, int value) {
     u32 v4 = getBdatStringColumnValue((void*)tbl, cols + 0x16, value);
     entry->field10 = (float)(u8)v4;
     u32 v5 = getBdatStringColumnValue((void*)tbl, cols + 0x1b, value);
-    entry->byte14 |= (u8)v5;
+    pos->byte14 |= (u8)v5;
     func_8025F114((CPcKizunagramBig*)self, entry);
 }
 
 // func_8025F768: same (re)load as func_8025F2E8, but on the per-character
-// working copy (workSlots at +0x3D4) instead of the total chart.
+// working copy, which sits 0x3D4 bytes past the matching total-chart position
+// (union view). Retail holds the slot/sub offsets as scalars and re-derives
+// the position pointer at each access, so every statement recomputes it.
+#define KIZ_WORK_POS(chart, o, s) ((CPcKizunaWorkEntryPos*)((u8*)(chart) + (o) + (s)))
+
 extern "C" void func_8025F768(CPcKizunaChart* self, int a, int b, int value) {
-    CPcKizunaSlotEntry* entry = &self->workSlots[a].data00 + b;
-    CPcKizunaSlotEntry* nxt = entry->pField18;
-    u16 id = entry->field04;
-    CPcKizunaSlotEntry* prv = entry->pField1C;
+    u32 off = a * 0xC4;
+    u32 sub = b << 5;
+
+    // Unlink the working-copy entry from its id's doubly-linked list.
+    CPcKizunaWorkEntryPos* wp = (CPcKizunaWorkEntryPos*)((u8*)self + off + sub);
+    CPcKizunaSlotEntry* nxt = wp->entry.pField18;
+    u16 id = wp->entry.field04;
+    CPcKizunaSlotEntry* prv = wp->entry.pField1C;
     if (nxt != 0) nxt->pField1C = prv;
     if (prv != 0) prv->pField18 = nxt;
-    u8 saved = entry->byte14 & 1;
-    memset(entry, 0, 0x20);
-    entry->byte14 = saved;
 
-    int found = 0;
-    if (id < 0x9e) {
-        for (int i = 0; i < 11; i++) {
-            CPcKizunaSlot* sp = &self->searchSlots[i];
-            if (id == sp->data00.field04) { found = 1; break; }
-            if (id == sp->sub[0].field04) { found = 1; break; }
-            if (id == sp->sub[1].field04) { found = 1; break; }
-            if (id == sp->sub[2].field04) { found = 1; break; }
-            if (id == sp->sub[3].field04) { found = 1; break; }
-            if (id == sp->sub[4].field04) { found = 1; break; }
-        }
+    // Zero the entry, keeping only bit 0 of byte14.
+    CPcKizunaWorkEntryPos* wq = (CPcKizunaWorkEntryPos*)((u8*)self + sub + off);
+    u8 saved = wq->entry.byte14 & 1;
+    memset(&wq->entry, 0, 0x20);
+    wq->entry.byte14 = saved;
+
+    // Drop the persistence bitmap bit when the id no longer appears anywhere.
+    int found;
+    if ((u32)id >= 0x9e) {
+        found = 0;
+    } else {
+        // Constant trip count drives the retail mtctr/bdnz loop; the sub-entry
+        // checks share a lagging cursor 0x40 past the slot base.
+        const CPcKizunaSlot* sp = &self->searchSlots[0];
+        int n = 0xb;
+        do {
+            const CPcKizunaSlotEntry* e = &sp->sub[1];
+            if (id == sp->data00.field04) { found = 1; goto searchDone; }
+            if (id == sp->sub[0].field04) { found = 1; goto searchDone; }
+            if (id == e->field04) { found = 1; goto searchDone; }
+            if (id == e[1].field04) { found = 1; goto searchDone; }
+            if (id == e[2].field04) { found = 1; goto searchDone; }
+            if (id == e[3].field04) { found = 1; goto searchDone; }
+            sp++;
+        } while (--n != 0);
+        found = 0;
     }
+searchDone:
     if (!found) {
         u32* pWord = (u32*)(self->data870 + ((id >> 3) & ~7));
         *pWord &= ~(1u << (id & 0x1f));
     }
 
+    // Repopulate the runtime columns from the BDAT table.
     u32 tbl = lbl_eu_80664158;
+    CPcKizunaSlotEntry* entry =
+        (CPcKizunaSlotEntry*)((u8*)self + off + sub + 0x3D4);
     entry->word = value;
     char* const cols = lbl_eu_8050DB18;
     u32 v1 = getBdatStringColumnValue((void*)tbl, cols + 0x6, value);
-    entry->field04 = (u8)v1;
+    wp->entry.field04 = (u8)v1;
     u32 v2 = getBdatStringColumnValue((void*)tbl, cols + 0xc, value);
-    entry->field08 = (u8)v2;
+    ((CPcKizunaSlotEntry*)((u8*)self + sub + off + 0x3D4))->field08 = (u8)v2;
     u32 v3 = getBdatStringColumnValue((void*)tbl, cols + 0x11, value);
-    entry->field0C = (u8)v3;
+    ((CPcKizunaSlotEntry*)((u8*)self + sub + off + 0x3D4))->field0C = (u8)v3;
     u32 v4 = getBdatStringColumnValue((void*)tbl, cols + 0x16, value);
-    entry->field10 = (float)(u8)v4;
+    ((CPcKizunaSlotEntry*)((u8*)self + sub + off + 0x3D4))->field10 = (float)(u8)v4;
     u32 v5 = getBdatStringColumnValue((void*)tbl, cols + 0x1b, value);
-    entry->byte14 |= (u8)v5;
+    wq->entry.byte14 |= (u8)v5;
     func_8025F114((CPcKizunagramBig*)self, entry);
 }
 

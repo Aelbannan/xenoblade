@@ -1,7 +1,6 @@
 // Auto-scaffolded catalog TU for kyoshin/CArtsInfo
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CArtsInfo.hpp"
 #include <nw4r/lyt.h>
 #include <stdlib.h>
@@ -11,8 +10,9 @@
 // String table base (rodata, accessed via sda21 relocation)
 extern char lbl_eu_8050B00C[];
 
-// Vtable symbol for CArtsInfo
-extern void* lbl_eu_80536A88;
+// Vtable symbol for CArtsInfo (array form: name decays to its address so the
+// ctor stores it directly like retail)
+extern void* lbl_eu_80536A88[];
 
 // Jump table for state machine dispatch (func_8023587C)
 extern void* jumptable_eu_805369A0[];
@@ -62,6 +62,20 @@ void func_80236334(CArtsInfo*);
 void func_80236408(CArtsInfo*);
 void func_80236454(CArtsInfo*);
 
+// Manual signed-int -> double conversion (docs/MWCC_PATTERNS.md 7i): build
+// the 0x4330000080000000 bit pattern and subtract the shared sdata2 magic so
+// the lfd references lbl_eu_80668698 instead of a TU-local pool label.
+static double ConvS32ToF64(s32 x) {
+    union {
+        double d;
+        u32 w[2];
+    } u;
+    // xoris word first, then 0x43300000, or MWCC hoists the lis out of order.
+    u.w[1] = (u32)x ^ 0x80000000;
+    u.w[0] = 0x43300000;
+    return u.d - lbl_eu_80668698;
+}
+
 // Virtual method call helpers (offset 0x38 = Animate-like, offset 0x2C = BindAnim-like)
 static inline void callVirt_38_0(nw4r::lyt::Layout* layout) {
     typedef void (*VirtFn)(nw4r::lyt::Layout*, u32);
@@ -109,18 +123,21 @@ u8 CArtsInfo::getField49() { return field_0x49; }
 
 // __ct__CArtsInfo - constructor
 // .text:0x0, size 0xAC
-CArtsInfo::CArtsInfo() {
+// __ct__CArtsInfo - constructor. Retail is a C-linkage global taking `this`
+// (MWCC leaves __-prefixed globals unmangled); written free-function so the
+// UnkClass_8045F564 member is not auto-constructed twice.
+CArtsInfo* __ct__CArtsInfo(CArtsInfo* self) {
     // Set vtable pointer
-    *(void**)this = &lbl_eu_80536A88;
+    *(void**)self = lbl_eu_80536A88;
 
     // Construct embedded UnkClass_8045F564 member
-    __ct__17UnkClass_8045F564Fv(&mMemRegion);
+    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
 
     // Initialize all fields to zero/default
-    field_0x14 = 0;
-    field_0x18 = 0;
-    field_0x1C = 0;
-    mpLayout1 = nullptr;
+    self->field_0x14 = 0;
+    self->field_0x18 = 0;
+    self->field_0x1C = 0;
+    self->mpLayout1 = nullptr;
     mpAnimTrans1 = nullptr;
     mpAnimTrans2 = nullptr;
     mpAnimTrans3 = nullptr;
@@ -141,7 +158,8 @@ CArtsInfo::CArtsInfo() {
     field_0x5A = 0;
 
     // Construct embedded CCur18 cursor
-    __ct__CCur18(mCursor, nullptr);
+    __ct__CCur18(self->mCursor, 0);
+    return self;
 }
 
 // __dt__9CArtsInfoFv - destructor
@@ -229,7 +247,7 @@ void func_80235958(CArtsInfo* self, void* drawInfo) {
 
 // func_802359CC - cleanup
 // .text:0x2C4, size 0xC4
-void func_802359CC(CArtsInfo* self) {
+__declspec(noinline) void func_802359CC(CArtsInfo* self) {
     func_8003AA8C__5CBdatFUl(2);
 
     func_801390E0__FPP11CFileHandle(&self->field_0x14);
@@ -237,23 +255,27 @@ void func_802359CC(CArtsInfo* self) {
 
     self->field_0x40 = 0;
 
-    // Delete layout 1 if non-null
+    // Doubled-beq shape: outer guard, inner guard around the deleting-dtor
+    // virtual (+0x08, flag=1), unconditional-clear inside the outer guard.
     if (self->mpLayout1 != nullptr) {
-        callVirtDelete_08(self->mpLayout1);
+        if (self->mpLayout1 != nullptr) {
+            ((CArtsInfoLytView*)self->mpLayout1)->Destroy(1);
+        }
         self->mpLayout1 = nullptr;
     }
 
-    // Delete layout 2 if non-null
     if (self->mpLayout2 != nullptr) {
-        callVirtDelete_08(self->mpLayout2);
+        if (self->mpLayout2 != nullptr) {
+            ((CArtsInfoLytView*)self->mpLayout2)->Destroy(1);
+        }
         self->mpLayout2 = nullptr;
     }
 
-    // Cleanup arc resource accessor
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(&self->field_0x1C);
+    // Cleanup arc resource accessor (field holds the pointer by value)
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor((void*)self->field_0x1C);
 
-    // Call virtual cleanup on cursor
-    callVirt_0C(self->mCursor);
+    // Call virtual cleanup on cursor (+0x0C)
+    ((CArtsInfoCurView*)self->mCursor)->vf03();
 
     // Cleanup memory region
     func_8045F778__17UnkClass_8045F564Fv(&self->mMemRegion);
@@ -285,6 +307,10 @@ void func_80235AC0(CArtsInfo* self) {
 
 // func_80235AE0 - large state machine (state==3 -> 6, layout animation setup)
 // .text:0x3D8, size 0x244
+// optimize_for_size gives the retail _savegpr_28/_restgpr_28 prologue; real
+// member calls give the retail r12 vtable dispatches (vtable+0x2C =
+// SetAnimationEnable, vtable+0x38 = Animate).
+#pragma optimize_for_size on
 void func_80235AE0(CArtsInfo* self) {
     if (self->field_0x44 != 3) return;
 
@@ -292,50 +318,55 @@ void func_80235AE0(CArtsInfo* self) {
     self->field_0x49 = 0;
 
     // Bind animations to layout 1
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans2, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans4, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans3, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans1, 1);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans2, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans4, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans3, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans1, true);
 
-    // Set anim transform frame
+    // Reset anim transform frame (retail stores 0.0f straight to +0x10)
     *(float*)((u8*)self->mpAnimTrans4 + 0x10) = lbl_eu_80668680;
 
-    callVirt_38_0(self->mpLayout1);
+    self->mpLayout1->Animate(0);
 
     // Bind animations to layout 1 again
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans2, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans4, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans1, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans3, 1);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans2, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans4, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans1, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans3, true);
 
-    // Set anim transform frame
+    // Reset anim transform frame
     *(float*)((u8*)self->mpAnimTrans3 + 0x10) = lbl_eu_80668680;
 
-    callVirt_38_0(self->mpLayout1);
+    self->mpLayout1->Animate(0);
 
     // Bind animations to layout 2
-    callVirt_2C_50(self->mpLayout2, self->mpAnimTrans6, 0);
-    callVirt_2C_50(self->mpLayout2, self->mpAnimTrans5, 1);
+    self->mpLayout2->SetAnimationEnable(self->mpAnimTrans6, false);
+    self->mpLayout2->SetAnimationEnable(self->mpAnimTrans5, true);
 
-    // Set anim transform frame
+    // Reset anim transform frame
     *(float*)((u8*)self->mpAnimTrans5 + 0x10) = lbl_eu_80668680;
 
-    callVirt_38_0(self->mpLayout2);
+    self->mpLayout2->Animate(0);
 
     // Reset cursor state
     self->field_0x5A = 0;
 
-    // Update layout elements with arts data
-    u32 artsData = (u32)func_8009EC9C(self->field_0x54);
-    char* str1 = (char*)func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3D, 0x18);
+    // Update layout elements with arts data: fetch the character data, then
+    // read the display value through the stats sub-object's vtable+0x200
+    // virtual (user virtual #126).
+    CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
+    char* base = lbl_eu_8050B00C;
+    char* str1 = func_80136190(base + 0x32, base + 0x3D, 0x18);
+    int dispVal = ((CArtsStatsDisp*)&obj->stats)->vf126();
 
-    char buf[64];
-    sprintf(buf, lbl_eu_8050B00C + 0x42, *(u32*)((u8*)artsData + 0x17C), str1);
+    char buf[32];
+    sprintf(buf, base + 0x42, dispVal, str1);
 
-    func_80136A1C(self->mpLayout1, lbl_eu_8050B00C + 0x47, buf, 0);
+    func_80136A1C(self->mpLayout1, base + 0x47, buf, 0);
 
     func_80138078__FUl(0x6D);
 }
+#pragma optimize_for_size off
 
 // func_80235D24 - state machine (state==9 -> 0xA)
 // .text:0x61C, size 0xB4
@@ -348,14 +379,15 @@ void func_80235D24(CArtsInfo* self) {
     // Set cursor visibility
     func_801D216C(self->mCursor, 0);
 
-    // Bind animations to layout 2
-    callVirt_2C_50(self->mpLayout2, self->mpAnimTrans6, 0);
-    callVirt_2C_50(self->mpLayout2, self->mpAnimTrans5, 1);
+    // Real member calls so MWCC emits the retail r12 vtable dispatch
+    // (vtable[0x2C] = SetAnimationEnable, vtable[0x38] = Animate).
+    self->mpLayout2->SetAnimationEnable(self->mpAnimTrans6, false);
+    self->mpLayout2->SetAnimationEnable(self->mpAnimTrans5, true);
 
     // Set anim transform frame
     *(float*)((u8*)self->mpAnimTrans5 + 0x10) = lbl_eu_80668680;
 
-    callVirt_38_0(self->mpLayout2);
+    self->mpLayout2->Animate(0);
 
     func_80138078__FUl(6);
 }
@@ -447,10 +479,11 @@ void func_80235F6C(CArtsInfo* self) {
     float f = lbl_eu_80668684;
     if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(self->mpAnimTrans1, f) == 0) return;
 
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans3, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans4, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans1, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans2, 1);
+    // Real member calls so MWCC emits the retail r12 vtable dispatch.
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans3, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans4, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans1, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans2, true);
 
     self->field_0x44 = 2;
 }
@@ -494,10 +527,10 @@ void func_8023616C(CArtsInfo* self) {
 
     self->field_0x44 = 7;
 
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans2, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans3, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans1, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans4, 1);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans2, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans3, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans1, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans4, true);
 }
 
 // func_80236220 - animation state 5
@@ -507,10 +540,10 @@ void func_80236220(CArtsInfo* self) {
 
     self->field_0x44 = 8;
 
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans2, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans3, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans1, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans4, 1);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans2, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans3, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans1, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans4, true);
 }
 
 // func_802362D4 - animation state 6
@@ -559,10 +592,10 @@ void func_80236454(CArtsInfo* self) {
 
     self->field_0x44 = 0xB;
 
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans2, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans1, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans4, 0);
-    callVirt_2C_50(self->mpLayout1, self->mpAnimTrans3, 1);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans2, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans1, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans4, false);
+    self->mpLayout1->SetAnimationEnable(self->mpAnimTrans3, true);
 }
 
 // func_80236508 - large layout setup (bind all pane animations)
@@ -670,7 +703,7 @@ extern "C" __declspec(noinline) void func_802369C0(CArtsInfo* self) {
         func_80136A1C(self->mpLayout2, lbl_eu_8050B00C + 0x50, buf, 0);
     }
 
-    char* s = func_8013639C(self->field_0x4C, lbl_eu_8050B00C + 0x198, self->field_0x55);
+    char* s = func_8013639C((const void*)self->field_0x4C, lbl_eu_8050B00C + 0x198, self->field_0x55);
     func_80136B4C(self->mpLayout1, lbl_eu_8050B00C + 0x59, s, 0);
     if (self->field_0x56 < 0xA) {
         func_80136B4C(self->mpLayout2, lbl_eu_8050B00C + 0x59, s, 0);
@@ -682,9 +715,9 @@ extern "C" __declspec(noinline) void func_802369C0(CArtsInfo* self) {
     char* p1 = 0;
     char* p2 = 0;
     char* p3 = 0;
-    if (f1 != 0) p1 = func_8013639C(self->field_0x50, lbl_eu_8050B00C + 0x1ab, f1);
-    if (f2 != 0) p2 = func_8013639C(self->field_0x50, lbl_eu_8050B00C + 0x1ab, f2);
-    if (f3 != 0) p3 = func_8013639C(self->field_0x50, lbl_eu_8050B00C + 0x1ab, f3);
+    if (f1 != 0) p1 = func_8013639C((const void*)self->field_0x50, lbl_eu_8050B00C + 0x1ab, f1);
+    if (f2 != 0) p2 = func_8013639C((const void*)self->field_0x50, lbl_eu_8050B00C + 0x1ab, f2);
+    if (f3 != 0) p3 = func_8013639C((const void*)self->field_0x50, lbl_eu_8050B00C + 0x1ab, f3);
     func_80136B4C(self->mpLayout1, lbl_eu_8050B00C + 0x64, p1, 0);
     if (self->field_0x56 < 0xA) {
         func_80136B4C(self->mpLayout2, lbl_eu_8050B00C + 0x64, p1, 0);
@@ -1033,7 +1066,7 @@ extern "C" __declspec(noinline) void func_8023B368(CArtsInfo*, u32, int);
 
 extern "C" __declspec(noinline) void func_802375A8(CArtsInfo* self, u8 arg2, u8 arg3) {
     char buf[32]; // sprintf at +0x8
-    char* s = func_8013639C(self->field_0x50, lbl_eu_8050B00C + 0x1ab, arg2);
+    char* s = func_8013639C((const void*)self->field_0x50, lbl_eu_8050B00C + 0x1ab, arg2);
     sprintf(buf, lbl_eu_8050B00C + 0x218, arg3 + 2);
     func_80136B4C(self->mpLayout1, buf, s, 0);
     if (self->field_0x56 < 0xA) {
@@ -1190,7 +1223,11 @@ void func_80237D58(CArtsInfo* self, u32 arg2, int arg3) {
 // The displayed value is base + second*(level-1), post-processed and pushed
 // onto both layouts; on level-up the level grid is recomputed for layout 2
 // and the colour-pair helper runs when the two values differ.
-void func_80237E24(CArtsInfo* self, u32 arg2, int arg3) {
+// Entry param-save-order wall (see func_8023916C).
+void func_80237E24(CArtsInfo* self_, u32 arg2_, int arg3_) {
+    u32 arg2 = arg2_;
+    CArtsInfo* self = self_;
+    int arg3 = arg3_;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
@@ -1253,9 +1290,9 @@ void func_80238038(CArtsInfo* self, u32 arg2, int arg3, u8 arg4) {
     int m2 = func_80237394(self);
     if (m1 > m2) m1 = m2;
     int s = m1 + stat;
-    int v1 = func_801C6158(lbl_eu_80668694 * (float)(g1 * s));
+    int v1 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g1 * s)));
     int t = m2 + stat;
-    int v2 = func_801C6158(lbl_eu_80668694 * (float)(g2 * t));
+    int v2 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g2 * t)));
     char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
     sprintf(buf1, lbl_eu_8050B00C + 0x282, v1, str, v2);
     level = arg3 + 2;
@@ -1264,8 +1301,8 @@ void func_80238038(CArtsInfo* self, u32 arg2, int arg3, u8 arg4) {
     if (self->field_0x56 < 0xA) {
         int g1n = func_80237100(self, self->field_0x56 + 1, arg4);
         int g2n = func_8023719C(self, self->field_0x56 + 1, arg4);
-        int v1n = func_801C6158(lbl_eu_80668694 * (float)(g1n * s));
-        int v2n = func_801C6158(lbl_eu_80668694 * (float)(g2n * t));
+        int v1n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g1n * s)));
+        int v2n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g2n * t)));
         char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
         sprintf(buf1, lbl_eu_8050B00C + 0x282, v1n, str2, v2n);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
@@ -1292,9 +1329,9 @@ void func_80238298(CArtsInfo* self, u32 arg2, int arg3) {
     int m2 = func_80237394(self);
     if (m1 > m2) m1 = m2;
     int s = m1 + stat;
-    int v1 = func_801C6158(lbl_eu_80668694 * (float)(g1 * s));
+    int v1 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g1 * s)));
     int t = m2 + stat;
-    int v2 = func_801C6158(lbl_eu_80668694 * (float)(g2 * t));
+    int v2 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g2 * t)));
     char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
     sprintf(buf1, lbl_eu_8050B00C + 0x282, v1, str, v2);
     level = arg3 + 2;
@@ -1303,8 +1340,8 @@ void func_80238298(CArtsInfo* self, u32 arg2, int arg3) {
     if (self->field_0x56 < 0xA) {
         int g1n = func_80237100(self, self->field_0x56 + 1, 0);
         int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
-        int v1n = func_801C6158(lbl_eu_80668694 * (float)(g1n * s));
-        int v2n = func_801C6158(lbl_eu_80668694 * (float)(g2n * t));
+        int v1n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g1n * s)));
+        int v2n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g2n * t)));
         char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
         sprintf(buf1, lbl_eu_8050B00C + 0x282, v1n, str2, v2n);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
@@ -1333,18 +1370,18 @@ void func_802384F4(CArtsInfo* self, u32 arg2, int arg3) {
     int m2 = func_80237394(self);
     if (m1 > m2) m1 = m2;
     int s = m1 + stat;
-    int v1 = func_801C6158(lbl_eu_80668694 * (float)(g1 * s));
+    int v1 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g1 * s)));
     int t = m2 + stat;
-    int v2 = func_801C6158(lbl_eu_80668694 * (float)(g2 * t));
+    int v2 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g2 * t)));
     u8 v3 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     func_8013606C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x26d, self->field_0x55);
     func_8013606C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x290, self->field_0x55);
-    v1 = func_801C6158(lbl_eu_80668694 * (float)(v1 * v3));
+    v1 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1 * v3)));
     int a = func_80236E6C(self, 0x49);
-    int value1 = v1 + func_801C6158(lbl_eu_80668694 * (float)(v1 * a));
-    v2 = func_801C6158(lbl_eu_80668694 * (float)(v2 * v3));
+    int value1 = v1 + func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1 * a)));
+    v2 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2 * v3)));
     a = func_80236E6C(self, 0x49);
-    int value2 = v2 + func_801C6158(lbl_eu_80668694 * (float)(v2 * a));
+    int value2 = v2 + func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2 * a)));
     char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
     sprintf(buf1, lbl_eu_8050B00C + 0x282, value1, str, value2);
     level = arg3 + 2;
@@ -1353,14 +1390,14 @@ void func_802384F4(CArtsInfo* self, u32 arg2, int arg3) {
     if (self->field_0x56 < 0xA) {
         int g1n = func_80237100(self, self->field_0x56 + 1, 0);
         int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
-        int v1n = func_801C6158(lbl_eu_80668694 * (float)(g1n * s));
-        int v2n = func_801C6158(lbl_eu_80668694 * (float)(g2n * t));
-        v1n = func_801C6158(lbl_eu_80668694 * (float)(v1n * v3));
+        int v1n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g1n * s)));
+        int v2n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g2n * t)));
+        v1n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1n * v3)));
         a = func_80236E6C(self, 0x49);
-        int value1n = v1n + func_801C6158(lbl_eu_80668694 * (float)(v1n * a));
-        v2n = func_801C6158(lbl_eu_80668694 * (float)(v2n * v3));
+        int value1n = v1n + func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1n * a)));
+        v2n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2n * v3)));
         a = func_80236E6C(self, 0x49);
-        int value2n = v2n + func_801C6158(lbl_eu_80668694 * (float)(v2n * a));
+        int value2n = v2n + func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2n * a)));
         char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
         sprintf(buf1, lbl_eu_8050B00C + 0x282, value1n, str2, value2n);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
@@ -1391,9 +1428,9 @@ void func_80238904(CArtsInfo* self, u32 arg2, int arg3) {
     int m2 = func_80237394(self);
     if (m1 > m2) m1 = m2;
     int s = m1 + stat;
-    int v1 = func_801C6158(lbl_eu_80668694 * (float)(g1 * s));
+    int v1 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g1 * s)));
     int t = m2 + stat;
-    int v2 = func_801C6158(lbl_eu_80668694 * (float)(g2 * t));
+    int v2 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g2 * t)));
     int base = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     switch (self->field_0x55) {
     case 0x68:
@@ -1408,29 +1445,29 @@ void func_80238904(CArtsInfo* self, u32 arg2, int arg3) {
     default:
         break;
     }
-    v1 = func_801C6158(lbl_eu_80668694 * (float)(v1 * base));
-    v2 = func_801C6158(lbl_eu_80668694 * (float)(v2 * base));
+    v1 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1 * base)));
+    v2 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2 * base)));
     u16 k = func_8013606C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x297, self->field_0x55);
     if (k == 0x66) {
         int a = func_80236E6C(self, 0x49);
-        v1 += func_801C6158(lbl_eu_80668694 * (float)(v1 * a));
+        v1 += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1 * a)));
         a = func_80236E6C(self, 0x49);
-        v2 += func_801C6158(lbl_eu_80668694 * (float)(v2 * a));
+        v2 += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2 * a)));
     } else if (k == 0x67) {
         int a = func_80236E6C(self, 0x9);
-        v1 += func_801C6158(lbl_eu_80668694 * (float)(v1 * a));
+        v1 += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1 * a)));
         a = func_80236E6C(self, 0x9);
-        v2 += func_801C6158(lbl_eu_80668694 * (float)(v2 * a));
+        v2 += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2 * a)));
     } else if (k == 0x68) {
         int a = func_80236E6C(self, 0x3a);
-        v1 += func_801C6158(lbl_eu_80668694 * (float)(v1 * a));
+        v1 += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1 * a)));
         a = func_80236E6C(self, 0x3a);
-        v2 += func_801C6158(lbl_eu_80668694 * (float)(v2 * a));
+        v2 += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2 * a)));
     } else if (k == 0x69) {
         int a = func_80236E6C(self, 0x5c);
-        v1 += func_801C6158(lbl_eu_80668694 * (float)(v1 * a));
+        v1 += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1 * a)));
         a = func_80236E6C(self, 0x5c);
-        v2 += func_801C6158(lbl_eu_80668694 * (float)(v2 * a));
+        v2 += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2 * a)));
     }
     char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
     sprintf(buf1, lbl_eu_8050B00C + 0x282, v1, str, v2);
@@ -1440,31 +1477,31 @@ void func_80238904(CArtsInfo* self, u32 arg2, int arg3) {
     if (self->field_0x56 < 0xA) {
         int g1n = func_80237100(self, self->field_0x56 + 1, 0);
         int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
-        int v1n = func_801C6158(lbl_eu_80668694 * (float)(g1n * s));
-        int v2n = func_801C6158(lbl_eu_80668694 * (float)(g2n * t));
-        v1n = func_801C6158(lbl_eu_80668694 * (float)(v1n * base));
-        v2n = func_801C6158(lbl_eu_80668694 * (float)(v2n * base));
+        int v1n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g1n * s)));
+        int v2n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(g2n * t)));
+        v1n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1n * base)));
+        v2n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2n * base)));
         u16 k2 = func_8013606C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x297, self->field_0x55);
         if (k2 == 0x66) {
             int a = func_80236E6C(self, 0x49);
-            v1n += func_801C6158(lbl_eu_80668694 * (float)(v1n * a));
+            v1n += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1n * a)));
             a = func_80236E6C(self, 0x49);
-            v2n += func_801C6158(lbl_eu_80668694 * (float)(v2n * a));
+            v2n += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2n * a)));
         } else if (k2 == 0x67) {
             int a = func_80236E6C(self, 0x9);
-            v1n += func_801C6158(lbl_eu_80668694 * (float)(v1n * a));
+            v1n += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1n * a)));
             a = func_80236E6C(self, 0x9);
-            v2n += func_801C6158(lbl_eu_80668694 * (float)(v2n * a));
+            v2n += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2n * a)));
         } else if (k2 == 0x68) {
             int a = func_80236E6C(self, 0x3a);
-            v1n += func_801C6158(lbl_eu_80668694 * (float)(v1n * a));
+            v1n += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1n * a)));
             a = func_80236E6C(self, 0x3a);
-            v2n += func_801C6158(lbl_eu_80668694 * (float)(v2n * a));
+            v2n += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2n * a)));
         } else if (k2 == 0x69) {
             int a = func_80236E6C(self, 0x5c);
-            v1n += func_801C6158(lbl_eu_80668694 * (float)(v1n * a));
+            v1n += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v1n * a)));
             a = func_80236E6C(self, 0x5c);
-            v2n += func_801C6158(lbl_eu_80668694 * (float)(v2n * a));
+            v2n += func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(v2n * a)));
         }
         char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
         sprintf(buf1, lbl_eu_8050B00C + 0x282, v1n, str2, v2n);
@@ -1507,7 +1544,13 @@ void func_80239030(CArtsInfo* self, u32 arg2, int arg3) {
 // func_80136190(0x32, 0x3d, 0x52) string into buf1. On level-up (< 0xA) the
 // level+1 offsets are recomputed and formatted on layout 2 and the
 // colour-pair helper always runs.
-void func_8023916C(CArtsInfo* self, u32 arg2, int arg3) {
+// Entry param-save-order wall: retail copies arg2 (r4) before self (r3);
+// MWCC invariantly emits the param-1 (r3) copy first (same ABI-boundary
+// artifact as CMenuShopSell func_8018B130). Shadows kept for documentation.
+void func_8023916C(CArtsInfo* self_, u32 arg2_, int arg3_) {
+    u32 arg2 = arg2_;
+    CArtsInfo* self = self_;
+    int arg3 = arg3_;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     // level assigned late (after sprintf1) so the addi lands after the first
@@ -1588,9 +1631,9 @@ void func_8023959C(CArtsInfo* self, u32 arg2, int arg3) {
     int stat = func_80236E28(self);
     int g1 = func_80237100(self, self->field_0x56, 0);
     int g2 = func_8023719C(self, self->field_0x56, 0);
-    int x1 = func_801C6158(lbl_eu_80668694 * (float)(stat * 100));
-    int x2 = func_801C6158(lbl_eu_80668694 * (float)(x1 * g1));
-    int x3 = func_801C6158(lbl_eu_80668694 * (float)(x1 * g2));
+    int x1 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(stat * 100)));
+    int x2 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(x1 * g1)));
+    int x3 = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(x1 * g2)));
     char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
     sprintf(buf1, lbl_eu_8050B00C + 0x282, x2, str, x3);
     level = arg3 + 2;
@@ -1599,8 +1642,8 @@ void func_8023959C(CArtsInfo* self, u32 arg2, int arg3) {
     if (self->field_0x56 < 0xA) {
         int g1n = func_80237100(self, self->field_0x56 + 1, 0);
         int g2n = func_8023719C(self, self->field_0x56 + 1, 0);
-        int x2n = func_801C6158(lbl_eu_80668694 * (float)(x1 * g1n));
-        int x3n = func_801C6158(lbl_eu_80668694 * (float)(x1 * g2n));
+        int x2n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(x1 * g1n)));
+        int x3n = func_801C6158((float)(lbl_eu_80668694 * ConvS32ToF64(x1 * g2n)));
         char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
         sprintf(buf1, lbl_eu_8050B00C + 0x282, x2n, str2, x3n);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
@@ -1696,7 +1739,11 @@ void func_80239AA0(CArtsInfo* self, u32 arg2, int arg3) {
 // func_80239BDC - arts info text update. Same shape as func_80239030 but the
 // grid offset is scaled by 10 (mulli 0xa) before formatting: the value is the
 // arts AP cost rather than a raw grid index.
-void func_80239BDC(CArtsInfo* self, u32 arg2, int arg3) {
+void func_80239BDC(CArtsInfo* self_, u32 arg2_, int arg3_) {
+    // Shadow params in retail's save order (arg2 before self before arg3).
+    u32 arg2 = arg2_;
+    CArtsInfo* self = self_;
+    int arg3 = arg3_;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
@@ -1722,15 +1769,25 @@ void func_80239BDC(CArtsInfo* self, u32 arg2, int arg3) {
 // the value scale*v2*(level-1) is added and formatted into buf1. On level-up
 // (< 0xA) the level grid is recomputed for layout 2; the colour-pair helper
 // runs when the two values differ.
-void func_80239D20(CArtsInfo* self, u32 arg2, int arg3) {
+// Entry param-save-order wall (see func_8023916C).
+// fb declared (uninitialized) before fa: MWCC colours equal-lifetime FPRs
+// in reverse declaration order, and retail keeps fb in f31 / fa in f30.
+void func_80239D20(CArtsInfo* self_, u32 arg2_, int arg3_) {
+    u32 arg2 = arg2_;
+    CArtsInfo* self = self_;
+    int arg3 = arg3_;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
     char* s2 = func_8023754C(self, arg2);
+    // fb declared (uninitialized) before fa: MWCC colours equal-lifetime FPRs
+    // in reverse declaration order, and retail keeps fb in f31 / fa in f30.
+    // The conversion statements keep the retail evaluation order.
+    float fb;
     u8 v1 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     float fa = (float)v1;
     u8 v2 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
-    float fb = (float)v2;
+    fb = (float)v2;
     if (fa != lbl_eu_80668680) {
         fa = fa * lbl_eu_806686A4;
     }
@@ -1757,7 +1814,11 @@ void func_80239D20(CArtsInfo* self, u32 arg2, int arg3) {
 // and pushes it onto layout 1. On level-up (< 0xA) the level grid is
 // recomputed (level instead of level-1, s32 magic) for layout 2; the
 // colour-pair helper runs when the two values differ.
-void func_8023AB8C(CArtsInfo* self, u32 arg2, int arg3) {
+// Entry param-save-order wall (see func_8023916C).
+void func_8023AB8C(CArtsInfo* self_, u32 arg2_, int arg3_) {
+    u32 arg2 = arg2_;
+    CArtsInfo* self = self_;
+    int arg3 = arg3_;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
@@ -1790,9 +1851,8 @@ void func_8023AB8C(CArtsInfo* self, u32 arg2, int arg3) {
 void func_80239EFC(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
-    u32 a2 = arg2;
-    char* s1 = func_802374F0(self, a2);
-    char* s2 = func_8023754C(self, a2);
+    char* s1 = func_802374F0(self, arg2);
+    char* s2 = func_8023754C(self, arg2);
     u8 r = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
@@ -1833,9 +1893,8 @@ void func_80239FC4(CArtsInfo* self, u32 arg2, int arg3) {
 void func_8023A148(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
-    u32 a2 = arg2;
-    char* s1 = func_802374F0(self, a2);
-    char* s2 = func_8023754C(self, a2);
+    char* s1 = func_802374F0(self, arg2);
+    char* s2 = func_8023754C(self, arg2);
     s16 r = func_80136130(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2b3, self->field_0x55);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
@@ -1851,9 +1910,8 @@ void func_8023A148(CArtsInfo* self, u32 arg2, int arg3) {
 void func_8023A210(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
-    u32 a2 = arg2;
-    char* s1 = func_802374F0(self, a2);
-    char* s2 = func_8023754C(self, a2);
+    char* s1 = func_802374F0(self, arg2);
+    char* s2 = func_8023754C(self, arg2);
     s16 r = func_80136130(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2b3, self->field_0x55);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
@@ -1867,9 +1925,9 @@ void func_8023A210(CArtsInfo* self, u32 arg2, int arg3) {
 // doubled stat id (func_80236DF0) into buf1, the level string into buf2,
 // then pushes both onto the layouts (layout 2 only when field_0x56 < 0xA).
 void func_8023A2D8(CArtsInfo* self, u32 arg2, int arg3) {
+    u32 a2 = arg2;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
-    u32 a2 = arg2;
     char* s1 = func_802374F0(self, a2);
     char* s2 = func_8023754C(self, a2);
     int id = func_80236DF0(self);
@@ -1887,9 +1945,8 @@ void func_8023A2D8(CArtsInfo* self, u32 arg2, int arg3) {
 void func_8023A398(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
-    u32 a2 = arg2;
-    char* s1 = func_802374F0(self, a2);
-    char* s2 = func_8023754C(self, a2);
+    char* s1 = func_802374F0(self, arg2);
+    char* s2 = func_8023754C(self, arg2);
     u8 r = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, r, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
@@ -1945,7 +2002,18 @@ void func_8023A55C(CArtsInfo* self, u32 arg2, int arg3) {
 // constant and the second skill string into buf1, post-processes it
 // (func_eu_80136F90) and hands it to func_eu_8023D490 before the usual
 // level-string + dual-layout push (layout 2 only when field_0x56 < 0xA).
-void func_8023A60C(CArtsInfo* self, u32 arg2, int arg3) {
+// func_8023A60C - arts info text update. Formats the skill name, a double
+// constant and the second skill string into buf1, post-processes it
+// (func_eu_80136F90) and hands it to func_eu_8023D490 before the usual
+// level-string + dual-layout push (layout 2 only when field_0x56 < 0xA).
+// Residual 2-instruction reg swap is the retail entry param-save order:
+// retail copies r4 before r3; MWCC invariantly emits the param-1 (r3) copy
+// first (same ABI-boundary artifact as CMenuShopSell func_8018B130).
+void func_8023A60C(CArtsInfo* self_, u32 arg2_, int arg3_) {
+    // Shadow params in retail's save order (arg2 copy before self copy).
+    u32 arg2 = arg2_;
+    CArtsInfo* self = self_;
+    int arg3 = arg3_;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
@@ -1959,6 +2027,7 @@ void func_8023A60C(CArtsInfo* self, u32 arg2, int arg3) {
         func_80136A1C(self->mpLayout2, buf2, buf1, 0);
     }
 }
+#pragma optimize_for_size off
 
 // func_8023A6BC - same shape as func_8023A55C with level constant 0x19.
 #pragma optimize_for_size on
@@ -2125,9 +2194,8 @@ void func_8023AE24(CArtsInfo* self, u32 arg2, int arg3) {
 void func_8023AF60(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
-    CArtsInfo* s = self;
-    char* s1 = func_802374F0(s, arg2);
-    char* s2 = func_8023754C(s, arg2);
+    char* s1 = func_802374F0(self, arg2);
+    char* s2 = func_8023754C(self, arg2);
     func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
     u32 level = self->field_0x56;
@@ -2167,7 +2235,11 @@ void func_8023B074(CArtsInfo* self, u32 arg2, int arg3) {
 // formatted string comes from func_80136190(0x32, 0x3d, 0x52) instead. Same
 // grid-offset (v1 + v2*(level-1)) and level-up branch as func_80239030, with
 // the format at 0x282 and the level constant 5.
-void func_8023B12C(CArtsInfo* self, u32 arg2, int arg3) {
+void func_8023B12C(CArtsInfo* self_, u32 arg2_, int arg3_) {
+    // Shadow params in retail's save order (arg2 before self before arg3).
+    u32 arg2 = arg2_;
+    CArtsInfo* self = self_;
+    int arg3 = arg3_;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     func_802374F0(self, arg2);
@@ -2290,7 +2362,7 @@ void CArtsInfo::initialize() {
     }
 }
 
-void CArtsInfo::OnFileEvent() {}
+int CArtsInfo::OnFileEvent(CEventFile* event) { return 0; }
 
 
 

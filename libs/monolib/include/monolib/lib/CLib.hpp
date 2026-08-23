@@ -4,7 +4,11 @@
 #include "monolib/work/CWorkThread.hpp"
 #include "monolib/work/CWorkSystem.hpp"
 
-class CLib : public CWorkThread {
+// novtable: the retail vtable (lbl_eu_8056CDA0) + RTTI live in this TU's
+// split range (monolibdata2 dissolve) and are defined explicitly in CLib.cpp;
+// __declspec(novtable) stops MWCC from also emitting a duplicate __vt__4CLib
+// + RTTI blocks. The ctor assigns lbl_eu_8056CDA0 explicitly (CToken recipe).
+class __declspec(novtable) CLib : public CWorkThread {
 public:
     CLib(const char* pName, CWorkThread* pParent);
     ~CLib();

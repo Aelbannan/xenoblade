@@ -11,6 +11,8 @@
 
 #include "kyoshin/CSysWin.hpp"
 #include "kyoshin/code_80135FDC.hpp"
+#include "kyoshin/code_80296898.hpp"
+#include "kyoshin/CPassiveSkill.hpp"
 #include "monolib/util/MemManager.hpp"
 
 namespace {
@@ -94,6 +96,14 @@ extern const f32 lbl_eu_806688D8;
 extern const f32 lbl_eu_806688DC;
 extern const f32 lbl_eu_806688E0;
 extern const f32 lbl_eu_806688B8;
+// Shared sdata2 constant: the int->double conversion magic (2^52 + 2^51)
+// that retail's idiom subtracts.
+extern f32 lbl_eu_806688C0;
+
+// Planted copy of the shared int->double conversion magic (2^52 + 2^51);
+// defining it lets MWCC's constant pool reuse the retail symbol for the
+// implicit-conversion lfd relocs instead of a TU-local @N label.
+static const f64 lbl_eu_806688C8 = 4503601774854144.0;
 }
 
 #define VALIDATE_NW4R_POINTER_COMPACT(pointer, file, line, message)            \
@@ -244,6 +254,48 @@ struct CUnkItem8025FB10 {
     CUnkItem8025FB10* mNext;        // +0x1C
 };
 
+// Entry (0x60) of the func_eu_80263A24 copy object; six self-relative
+// pointers get rebased after the bulk copy. Rows are 0xC4 (two entries +
+// pad).
+struct CUnkCopyEntry8025FB10 {
+    u8 pad_00[0x18];
+    u32 mPtr18;
+    u32 mPtr1C;
+    u8 pad_20[0x38 - 0x20];
+    u32 mPtr38;
+    u32 mPtr3C;
+    u8 pad_40[0x58 - 0x40];
+    u32 mPtr58;
+    u32 mPtr5C;
+};
+
+struct CUnkCopyRow8025FB10 {
+    CUnkCopyEntry8025FB10 mEntries[2]; // 0xC0
+    u32 mPad;                          // 0xC4
+};
+
+struct CUnkCopyBulk8025FB10 {
+    CUnkCopyRow8025FB10 mRows[11]; // 0x864
+    u8 mPad864[0x8];               // ..0x86C
+};
+
+struct CUnkCopyObj8025FB10 {
+    CUnkCopyBulk8025FB10 mBulk;
+    u32 mField86C;
+    u32 mField870;
+    u32 mField874;
+    u32 mField878;
+    u32 mField87C;
+    u32 mField880;
+    u32 mField884;
+    u32 mField888;
+    u32 mField88C;
+    u32 mField890;
+    u32 mField894;
+    u32 mField898;
+    u32 mField89C;
+};
+
 struct CUnkGroup8025FB10 {
     CUnkItem8025FB10 mItems[6];     // 0xC0
     u32 mPad;                       // 0xC4
@@ -289,67 +341,60 @@ s32 func_8025FB10(CUnkObj8025FB10* obj, int index) {
     if (index >= 0x9E) {
         rec = NULL;
     } else {
-        for (int i = 0; i < 66; i++) {
-            rec = &obj->mGroups[i / 6].mItems[i % 6];
-            if (index != rec->mId) {
-                rec = NULL;
-                continue;
-            }
-            break;
-        }
-        rec = NULL;
+        rec = findRecByIndex(obj, index);
     }
     if (rec == NULL) {
         return 0;
     }
 
-    // Deepest node of the +0x18 child chain.  Retail unrolls 16 levels, then
-    // delegates the remainder to func_8025FD60.  Even-level checks jump to
-    // bottom result blocks (mr to r3); odd-level results flow straight in.
-    CUnkItem8025FB10* n1 = rec->mChild;
-    if (n1 == 0) goto L1;
-    CUnkItem8025FB10* n2 = n1->mChild;
-    if (n2 == 0) goto L2;
+    // Deepest node of the +0x18 child chain.  Retail unrolls 16 levels,
+    // alternating the cursor between `result` and a scratch pointer; each
+    // even level keeps its own copy block at the bottom.
     CUnkItem8025FB10* result;
-    CUnkItem8025FB10* n3 = n2->mChild;
-    if (n3 == 0) { result = n2; goto SUM; }
-    CUnkItem8025FB10* n4 = n3->mChild;
-    if (n4 == 0) goto L4;
-    CUnkItem8025FB10* n5 = n4->mChild;
-    if (n5 == 0) { result = n4; goto SUM; }
-    CUnkItem8025FB10* n6 = n5->mChild;
-    if (n6 == 0) goto L6;
-    CUnkItem8025FB10* n7 = n6->mChild;
-    if (n7 == 0) { result = n6; goto SUM; }
-    CUnkItem8025FB10* n8 = n7->mChild;
-    if (n8 == 0) goto L8;
-    CUnkItem8025FB10* n9 = n8->mChild;
-    if (n9 == 0) { result = n8; goto SUM; }
-    CUnkItem8025FB10* n10 = n9->mChild;
-    if (n10 == 0) goto L10;
-    CUnkItem8025FB10* n11 = n10->mChild;
-    if (n11 == 0) { result = n10; goto SUM; }
-    CUnkItem8025FB10* n12 = n11->mChild;
-    if (n12 == 0) goto L12;
-    CUnkItem8025FB10* n13 = n12->mChild;
-    if (n13 == 0) { result = n12; goto SUM; }
-    CUnkItem8025FB10* n14 = n13->mChild;
-    if (n14 == 0) goto L14;
-    CUnkItem8025FB10* n15 = n14->mChild;
-    if (n15 == 0) { result = n14; goto SUM; }
-    CUnkItem8025FB10* n16 = n15->mChild;
-    if (n16 == 0) goto L16;
-    result = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)n16);
+    CUnkItem8025FB10* t = rec->mChild;
+    if (t == 0) goto KR;
+    result = t->mChild;
+    if (result == 0) goto K2;
+    t = result->mChild;
+    if (t == 0) goto SUM;
+    result = t->mChild;
+    if (result == 0) goto K4;
+    t = result->mChild;
+    if (t == 0) goto SUM;
+    result = t->mChild;
+    if (result == 0) goto K6;
+    t = result->mChild;
+    if (t == 0) goto SUM;
+    result = t->mChild;
+    if (result == 0) goto K8;
+    t = result->mChild;
+    if (t == 0) goto SUM;
+    result = t->mChild;
+    if (result == 0) goto K10;
+    t = result->mChild;
+    if (t == 0) goto SUM;
+    result = t->mChild;
+    if (result == 0) goto K12;
+    t = result->mChild;
+    if (t == 0) goto SUM;
+    result = t->mChild;
+    if (result == 0) goto K14;
+    t = result->mChild;
+    if (t == 0) goto SUM;
+    result = t->mChild;
+    if (result == 0) goto K16;
+    result = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)result);
     goto SUM;
-L16: result = n15; goto SUM;
-L14: result = n13; goto SUM;
-L12: result = n11; goto SUM;
-L10: result = n9; goto SUM;
-L8: result = n7; goto SUM;
-L6: result = n5; goto SUM;
-L4: result = n3; goto SUM;
-L2: result = n1; goto SUM;
-L1: result = rec; goto SUM;
+K16: result = t; goto SUM;
+K14: result = t; goto SUM;
+K12: result = t; goto SUM;
+K10: result = t; goto SUM;
+K8: result = t; goto SUM;
+K6: result = t; goto SUM;
+K4: result = t; goto SUM;
+K2: result = t;
+    goto SUM;
+KR: result = rec;
 SUM:
     // child.
     s32 total = 0;
@@ -399,67 +444,60 @@ s32 func_8025FDB8(CUnkObj8025FB10* obj, int index) {
     if (index >= 0x9E) {
         rec = NULL;
     } else {
-        int i = 0;
-        while (i < 66) {
-            rec = &obj->mGroups[i / 6].mItems[i % 6];
-            if (index != rec->mId) {
-                rec = NULL;
-                i++;
-                continue;
-            }
-            break;
-        }
+        rec = findRecByIndex(obj, index);
     }
     if (rec == NULL) {
         return 0;
     }
 
-    // Deepest node of the +0x18 child chain (16 unrolled levels, then
-    // func_8025FD60); result blocks at the bottom like retail.
+    // Deepest node of the +0x18 child chain.  Retail unrolls 16 levels,
+    // alternating the cursor between `result` and a scratch pointer; each
+    // even level keeps its own copy block at the bottom.
     CUnkItem8025FB10* result;
-    CUnkItem8025FB10* n1 = rec->mChild;
-    if (n1 == 0) goto S1;
-    CUnkItem8025FB10* n2 = n1->mChild;
-    if (n2 == 0) goto S2;
-    CUnkItem8025FB10* n3 = n2->mChild;
-    if (n3 == 0) { result = n2; goto SMAX; }
-    CUnkItem8025FB10* n4 = n3->mChild;
-    if (n4 == 0) goto S4;
-    CUnkItem8025FB10* n5 = n4->mChild;
-    if (n5 == 0) { result = n4; goto SMAX; }
-    CUnkItem8025FB10* n6 = n5->mChild;
-    if (n6 == 0) goto S6;
-    CUnkItem8025FB10* n7 = n6->mChild;
-    if (n7 == 0) { result = n6; goto SMAX; }
-    CUnkItem8025FB10* n8 = n7->mChild;
-    if (n8 == 0) goto S8;
-    CUnkItem8025FB10* n9 = n8->mChild;
-    if (n9 == 0) { result = n8; goto SMAX; }
-    CUnkItem8025FB10* n10 = n9->mChild;
-    if (n10 == 0) goto S10;
-    CUnkItem8025FB10* n11 = n10->mChild;
-    if (n11 == 0) { result = n10; goto SMAX; }
-    CUnkItem8025FB10* n12 = n11->mChild;
-    if (n12 == 0) goto S12;
-    CUnkItem8025FB10* n13 = n12->mChild;
-    if (n13 == 0) { result = n12; goto SMAX; }
-    CUnkItem8025FB10* n14 = n13->mChild;
-    if (n14 == 0) goto S14;
-    CUnkItem8025FB10* n15 = n14->mChild;
-    if (n15 == 0) { result = n14; goto SMAX; }
-    CUnkItem8025FB10* n16 = n15->mChild;
-    if (n16 == 0) goto S16;
-    result = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)n16);
+    CUnkItem8025FB10* t = rec->mChild;
+    if (t == 0) goto SR;
+    result = t->mChild;
+    if (result == 0) goto S2;
+    t = result->mChild;
+    if (t == 0) goto SMAX;
+    result = t->mChild;
+    if (result == 0) goto S4;
+    t = result->mChild;
+    if (t == 0) goto SMAX;
+    result = t->mChild;
+    if (result == 0) goto S6;
+    t = result->mChild;
+    if (t == 0) goto SMAX;
+    result = t->mChild;
+    if (result == 0) goto S8;
+    t = result->mChild;
+    if (t == 0) goto SMAX;
+    result = t->mChild;
+    if (result == 0) goto S10;
+    t = result->mChild;
+    if (t == 0) goto SMAX;
+    result = t->mChild;
+    if (result == 0) goto S12;
+    t = result->mChild;
+    if (t == 0) goto SMAX;
+    result = t->mChild;
+    if (result == 0) goto S14;
+    t = result->mChild;
+    if (t == 0) goto SMAX;
+    result = t->mChild;
+    if (result == 0) goto S16;
+    result = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)result);
     goto SMAX;
-S16: result = n15; goto SMAX;
-S14: result = n13; goto SMAX;
-S12: result = n11; goto SMAX;
-S10: result = n9; goto SMAX;
-S8: result = n7; goto SMAX;
-S6: result = n5; goto SMAX;
-S4: result = n3; goto SMAX;
-S2: result = n1; goto SMAX;
-S1: result = rec; goto SMAX;
+S16: result = t; goto SMAX;
+S14: result = t; goto SMAX;
+S12: result = t; goto SMAX;
+S10: result = t; goto SMAX;
+S8: result = t; goto SMAX;
+S6: result = t; goto SMAX;
+S4: result = t; goto SMAX;
+S2: result = t;
+    goto SMAX;
+SR: result = rec;
 SMAX:
     // Max of the +0x1C sibling chain's +0x0C halfwords from the deepest
     // child.
@@ -486,67 +524,60 @@ f32 func_80260010(CUnkObj8025FB10* obj, int index) {
     if (index >= 0x9E) {
         rec = NULL;
     } else {
-        int i = 0;
-        while (i < 66) {
-            rec = &obj->mGroups[i / 6].mItems[i % 6];
-            if (index != rec->mId) {
-                rec = NULL;
-                i++;
-                continue;
-            }
-            break;
-        }
+        rec = findRecByIndex(obj, index);
     }
     if (rec == NULL) {
         return lbl_eu_806688B8;
     }
 
-    // Deepest node of the +0x18 child chain (16 unrolled levels, then
-    // func_8025FD60); result blocks at the bottom like retail.
+    // Deepest node of the +0x18 child chain.  Retail unrolls 16 levels,
+    // alternating the cursor between `result` and a scratch pointer; each
+    // even level keeps its own copy block at the bottom.
     CUnkItem8025FB10* result;
-    CUnkItem8025FB10* n1 = rec->mChild;
-    if (n1 == 0) goto M1;
-    CUnkItem8025FB10* n2 = n1->mChild;
-    if (n2 == 0) goto M2;
-    CUnkItem8025FB10* n3 = n2->mChild;
-    if (n3 == 0) { result = n2; goto MMAX; }
-    CUnkItem8025FB10* n4 = n3->mChild;
-    if (n4 == 0) goto M4;
-    CUnkItem8025FB10* n5 = n4->mChild;
-    if (n5 == 0) { result = n4; goto MMAX; }
-    CUnkItem8025FB10* n6 = n5->mChild;
-    if (n6 == 0) goto M6;
-    CUnkItem8025FB10* n7 = n6->mChild;
-    if (n7 == 0) { result = n6; goto MMAX; }
-    CUnkItem8025FB10* n8 = n7->mChild;
-    if (n8 == 0) goto M8;
-    CUnkItem8025FB10* n9 = n8->mChild;
-    if (n9 == 0) { result = n8; goto MMAX; }
-    CUnkItem8025FB10* n10 = n9->mChild;
-    if (n10 == 0) goto M10;
-    CUnkItem8025FB10* n11 = n10->mChild;
-    if (n11 == 0) { result = n10; goto MMAX; }
-    CUnkItem8025FB10* n12 = n11->mChild;
-    if (n12 == 0) goto M12;
-    CUnkItem8025FB10* n13 = n12->mChild;
-    if (n13 == 0) { result = n12; goto MMAX; }
-    CUnkItem8025FB10* n14 = n13->mChild;
-    if (n14 == 0) goto M14;
-    CUnkItem8025FB10* n15 = n14->mChild;
-    if (n15 == 0) { result = n14; goto MMAX; }
-    CUnkItem8025FB10* n16 = n15->mChild;
-    if (n16 == 0) goto M16;
-    result = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)n16);
+    CUnkItem8025FB10* t = rec->mChild;
+    if (t == 0) goto MR;
+    result = t->mChild;
+    if (result == 0) goto M2;
+    t = result->mChild;
+    if (t == 0) goto MMAX;
+    result = t->mChild;
+    if (result == 0) goto M4;
+    t = result->mChild;
+    if (t == 0) goto MMAX;
+    result = t->mChild;
+    if (result == 0) goto M6;
+    t = result->mChild;
+    if (t == 0) goto MMAX;
+    result = t->mChild;
+    if (result == 0) goto M8;
+    t = result->mChild;
+    if (t == 0) goto MMAX;
+    result = t->mChild;
+    if (result == 0) goto M10;
+    t = result->mChild;
+    if (t == 0) goto MMAX;
+    result = t->mChild;
+    if (result == 0) goto M12;
+    t = result->mChild;
+    if (t == 0) goto MMAX;
+    result = t->mChild;
+    if (result == 0) goto M14;
+    t = result->mChild;
+    if (t == 0) goto MMAX;
+    result = t->mChild;
+    if (result == 0) goto M16;
+    result = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)result);
     goto MMAX;
-M16: result = n15; goto MMAX;
-M14: result = n13; goto MMAX;
-M12: result = n11; goto MMAX;
-M10: result = n9; goto MMAX;
-M8: result = n7; goto MMAX;
-M6: result = n5; goto MMAX;
-M4: result = n3; goto MMAX;
-M2: result = n1; goto MMAX;
-M1: result = rec; goto MMAX;
+M16: result = t; goto MMAX;
+M14: result = t; goto MMAX;
+M12: result = t; goto MMAX;
+M10: result = t; goto MMAX;
+M8: result = t; goto MMAX;
+M6: result = t; goto MMAX;
+M4: result = t; goto MMAX;
+M2: result = t;
+    goto MMAX;
+MR: result = rec;
 MMAX:
     // Max of the +0x1C sibling chain's +0x10 floats from the deepest child.
     f32 best = lbl_eu_806688B8;
@@ -569,71 +600,68 @@ bool func_80260264(CUnkObj8025FB10* obj, int index, s32* outSum) {
         if (index >= 0x9E) {
             rec = NULL;
         } else {
-            int i = 0;
-            while (i < 66) {
-                rec = &obj->mGroups[i / 6].mItems[i % 6];
-                if (index != rec->mId) {
-                    rec = NULL;
-                    i++;
-                    continue;
-                }
-                break;
-            }
+            rec = findRecByIndex(obj, index);
         }
         if (rec != NULL) {
-            // Deepest node of the +0x18 child chain (16 unrolled levels,
-            // then func_8025FD60); result blocks at the bottom.
+            // Deepest node of the +0x18 child chain.  Retail unrolls 10
+            // pointer pairs; odd-level nulls copy at the bottom, even-level
+            // nulls fall straight through, and deep walks delegate to
+            // func_8025FD60 with the odd-level cursor.
             CUnkItem8025FB10* result;
-            CUnkItem8025FB10* n1 = rec->mChild;
-            if (n1 == 0) goto P1;
-            CUnkItem8025FB10* n2 = n1->mChild;
-            if (n2 == 0) goto P2;
-            CUnkItem8025FB10* n3 = n2->mChild;
-            if (n3 == 0) goto P3;
-            CUnkItem8025FB10* n4 = n3->mChild;
-            if (n4 == 0) goto P4;
-            CUnkItem8025FB10* n5 = n4->mChild;
-            if (n5 == 0) goto P5;
-            CUnkItem8025FB10* n6 = n5->mChild;
-            if (n6 == 0) goto P6;
-            CUnkItem8025FB10* n7 = n6->mChild;
-            if (n7 == 0) goto P7;
-            CUnkItem8025FB10* n8 = n7->mChild;
-            if (n8 == 0) goto P8;
-            CUnkItem8025FB10* n9 = n8->mChild;
-            if (n9 == 0) goto P9;
-            CUnkItem8025FB10* n10 = n9->mChild;
-            if (n10 == 0) goto P10;
-            CUnkItem8025FB10* n11 = n10->mChild;
-            if (n11 == 0) goto P11;
-            CUnkItem8025FB10* n12 = n11->mChild;
-            if (n12 == 0) goto P12;
-            CUnkItem8025FB10* n13 = n12->mChild;
-            if (n13 == 0) goto P13;
-            CUnkItem8025FB10* n14 = n13->mChild;
-            if (n14 == 0) goto P14;
-            CUnkItem8025FB10* n15 = n14->mChild;
-            if (n15 == 0) goto P15;
-            CUnkItem8025FB10* n16 = n15->mChild;
-            if (n16 == 0) goto P16;
-            result = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)n16);
+            CUnkItem8025FB10* a = rec->mChild;
+            if (a == 0) goto PR;
+            CUnkItem8025FB10* b = a->mChild;
+            if (b == 0) goto PSUM;
+            a = b->mChild;
+            if (a == 0) goto P3;
+            b = a->mChild;
+            if (b == 0) goto PSUM;
+            a = b->mChild;
+            if (a == 0) goto P5;
+            b = a->mChild;
+            if (b == 0) goto PSUM;
+            a = b->mChild;
+            if (a == 0) goto P7;
+            b = a->mChild;
+            if (b == 0) goto PSUM;
+            a = b->mChild;
+            if (a == 0) goto P9;
+            b = a->mChild;
+            if (b == 0) goto PSUM;
+            a = b->mChild;
+            if (a == 0) goto P11;
+            b = a->mChild;
+            if (b == 0) goto PSUM;
+            a = b->mChild;
+            if (a == 0) goto P13;
+            b = a->mChild;
+            if (b == 0) goto PSUM;
+            a = b->mChild;
+            if (a == 0) goto P15;
+            b = a->mChild;
+            if (b == 0) goto PSUM;
+            a = b->mChild;
+            if (a == 0) goto P17;
+            b = a->mChild;
+            if (b == 0) goto PSUM;
+            a = b->mChild;
+            if (a == 0) goto P19;
+            b = a->mChild;
+            if (b == 0) goto PSUM;
+            result =
+                (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)a);
             goto PSUM;
-        P16: result = n15; goto PSUM;
-        P15: result = n14; goto PSUM;
-        P14: result = n13; goto PSUM;
-        P13: result = n12; goto PSUM;
-        P12: result = n11; goto PSUM;
-        P11: result = n10; goto PSUM;
-        P10: result = n9; goto PSUM;
-        P9: result = n8; goto PSUM;
-        P8: result = n7; goto PSUM;
-        P7: result = n6; goto PSUM;
-        P6: result = n5; goto PSUM;
-        P5: result = n4; goto PSUM;
-        P4: result = n3; goto PSUM;
-        P3: result = n2; goto PSUM;
-        P2: result = n1; goto PSUM;
-        P1: result = rec; goto PSUM;
+        P19: result = b; goto PSUM;
+        P17: result = b; goto PSUM;
+        P15: result = b; goto PSUM;
+        P13: result = b; goto PSUM;
+        P11: result = b; goto PSUM;
+        P9: result = b; goto PSUM;
+        P7: result = b; goto PSUM;
+        P5: result = b; goto PSUM;
+        P3: result = b;
+            goto PSUM;
+        PR: result = rec;
         PSUM:
             // Sum of the +0x1C sibling chain's +0x08 values from the
             // deepest child.
@@ -866,71 +894,57 @@ bool func_80260A6C(CUnkObj8025FB10* obj, int index, s32* outSum, s32* outMax) {
         if (index >= 0x9E) {
             rec = NULL;
         } else {
-            int i = 0;
-            while (i < 66) {
-                rec = &obj->mGroups[i / 6].mItems[i % 6];
-                if (index != rec->mId) {
-                    rec = NULL;
-                    i++;
-                    continue;
-                }
-                break;
-            }
+            rec = findRecByIndex(obj, index);
         }
         if (rec != NULL) {
-            // Deepest node of the +0x18 child chain (16 unrolled levels,
-            // then func_8025FD60); result blocks at the bottom.
+            // Deepest node of the +0x18 child chain.  Retail unrolls 8
+            // pointer pairs; odd-level nulls copy at the bottom, even-level
+            // nulls fall straight through.
             CUnkItem8025FB10* result;
-            CUnkItem8025FB10* n1 = rec->mChild;
-            if (n1 == 0) goto A1;
-            CUnkItem8025FB10* n2 = n1->mChild;
-            if (n2 == 0) goto A2;
-            CUnkItem8025FB10* n3 = n2->mChild;
-            if (n3 == 0) goto A3;
-            CUnkItem8025FB10* n4 = n3->mChild;
-            if (n4 == 0) goto A4;
-            CUnkItem8025FB10* n5 = n4->mChild;
-            if (n5 == 0) goto A5;
-            CUnkItem8025FB10* n6 = n5->mChild;
-            if (n6 == 0) goto A6;
-            CUnkItem8025FB10* n7 = n6->mChild;
-            if (n7 == 0) goto A7;
-            CUnkItem8025FB10* n8 = n7->mChild;
-            if (n8 == 0) goto A8;
-            CUnkItem8025FB10* n9 = n8->mChild;
-            if (n9 == 0) goto A9;
-            CUnkItem8025FB10* n10 = n9->mChild;
-            if (n10 == 0) goto A10;
-            CUnkItem8025FB10* n11 = n10->mChild;
-            if (n11 == 0) goto A11;
-            CUnkItem8025FB10* n12 = n11->mChild;
-            if (n12 == 0) goto A12;
-            CUnkItem8025FB10* n13 = n12->mChild;
-            if (n13 == 0) goto A13;
-            CUnkItem8025FB10* n14 = n13->mChild;
-            if (n14 == 0) goto A14;
-            CUnkItem8025FB10* n15 = n14->mChild;
-            if (n15 == 0) goto A15;
-            CUnkItem8025FB10* n16 = n15->mChild;
-            if (n16 == 0) goto A16;
-            result = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)n16);
+            CUnkItem8025FB10* a = rec->mChild;
+            if (a == 0) goto AR;
+            CUnkItem8025FB10* b = a->mChild;
+            if (b == 0) goto ASUM;
+            a = b->mChild;
+            if (a == 0) goto A3;
+            b = a->mChild;
+            if (b == 0) goto ASUM;
+            a = b->mChild;
+            if (a == 0) goto A5;
+            b = a->mChild;
+            if (b == 0) goto ASUM;
+            a = b->mChild;
+            if (a == 0) goto A7;
+            b = a->mChild;
+            if (b == 0) goto ASUM;
+            a = b->mChild;
+            if (a == 0) goto A9;
+            b = a->mChild;
+            if (b == 0) goto ASUM;
+            a = b->mChild;
+            if (a == 0) goto A11;
+            b = a->mChild;
+            if (b == 0) goto ASUM;
+            a = b->mChild;
+            if (a == 0) goto A13;
+            b = a->mChild;
+            if (b == 0) goto ASUM;
+            a = b->mChild;
+            if (a == 0) goto A15;
+            b = a->mChild;
+            if (b == 0) goto ASUM;
+            result =
+                (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)a);
             goto ASUM;
-        A16: result = n15; goto ASUM;
-        A15: result = n14; goto ASUM;
-        A14: result = n13; goto ASUM;
-        A13: result = n12; goto ASUM;
-        A12: result = n11; goto ASUM;
-        A11: result = n10; goto ASUM;
-        A10: result = n9; goto ASUM;
-        A9: result = n8; goto ASUM;
-        A8: result = n7; goto ASUM;
-        A7: result = n6; goto ASUM;
-        A6: result = n5; goto ASUM;
-        A5: result = n4; goto ASUM;
-        A4: result = n3; goto ASUM;
-        A3: result = n2; goto ASUM;
-        A2: result = n1; goto ASUM;
-        A1: result = rec; goto ASUM;
+        A15: result = b; goto ASUM;
+        A13: result = b; goto ASUM;
+        A11: result = b; goto ASUM;
+        A9: result = b; goto ASUM;
+        A7: result = b; goto ASUM;
+        A5: result = b; goto ASUM;
+        A3: result = b;
+            goto ASUM;
+        AR: result = rec;
         ASUM:
             // Sum of the +0x1C sibling chain's +0x08 values from the
             // deepest child.
@@ -954,70 +968,71 @@ bool func_80260A6C(CUnkObj8025FB10* obj, int index, s32* outSum, s32* outMax) {
         if (index >= 0x9E) {
             rec = NULL;
         } else {
-            int i = 0;
-            while (i < 66) {
-                rec = &obj->mGroups[i / 6].mItems[i % 6];
-                if (index != rec->mId) {
-                    rec = NULL;
-                    i++;
-                    continue;
-                }
-                break;
-            }
+            rec = findRecByIndex(obj, index);
         }
         if (rec != NULL) {
-            // Deepest node of the +0x18 child chain; same shape as above.
+            // Deepest node of the +0x18 child chain; 10 pointer pairs, same
+            // shape as the sum pass above.
             CUnkItem8025FB10* result;
-            CUnkItem8025FB10* n1 = rec->mChild;
-            if (n1 == 0) goto B1;
-            CUnkItem8025FB10* n2 = n1->mChild;
-            if (n2 == 0) goto B2;
-            CUnkItem8025FB10* n3 = n2->mChild;
-            if (n3 == 0) goto B3;
-            CUnkItem8025FB10* n4 = n3->mChild;
-            if (n4 == 0) goto B4;
-            CUnkItem8025FB10* n5 = n4->mChild;
-            if (n5 == 0) goto B5;
-            CUnkItem8025FB10* n6 = n5->mChild;
-            if (n6 == 0) goto B6;
-            CUnkItem8025FB10* n7 = n6->mChild;
-            if (n7 == 0) goto B7;
-            CUnkItem8025FB10* n8 = n7->mChild;
-            if (n8 == 0) goto B8;
-            CUnkItem8025FB10* n9 = n8->mChild;
-            if (n9 == 0) goto B9;
-            CUnkItem8025FB10* n10 = n9->mChild;
-            if (n10 == 0) goto B10;
-            CUnkItem8025FB10* n11 = n10->mChild;
-            if (n11 == 0) goto B11;
-            CUnkItem8025FB10* n12 = n11->mChild;
-            if (n12 == 0) goto B12;
-            CUnkItem8025FB10* n13 = n12->mChild;
-            if (n13 == 0) goto B13;
-            CUnkItem8025FB10* n14 = n13->mChild;
-            if (n14 == 0) goto B14;
-            CUnkItem8025FB10* n15 = n14->mChild;
-            if (n15 == 0) goto B15;
-            CUnkItem8025FB10* n16 = n15->mChild;
-            if (n16 == 0) goto B16;
-            result = (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)n16);
+            CUnkItem8025FB10* a = rec->mChild;
+            if (a == 0) goto BR;
+            CUnkItem8025FB10* b = a->mChild;
+            if (b == 0) goto BMAX;
+            a = b->mChild;
+            if (a == 0) goto B3;
+            b = a->mChild;
+            if (b == 0) goto BMAX;
+            a = b->mChild;
+            if (a == 0) goto B5;
+            b = a->mChild;
+            if (b == 0) goto BMAX;
+            a = b->mChild;
+            if (a == 0) goto B7;
+            b = a->mChild;
+            if (b == 0) goto BMAX;
+            a = b->mChild;
+            if (a == 0) goto B9;
+            b = a->mChild;
+            if (b == 0) goto BMAX;
+            a = b->mChild;
+            if (a == 0) goto B11;
+            b = a->mChild;
+            if (b == 0) goto BMAX;
+            a = b->mChild;
+            if (a == 0) goto B13;
+            b = a->mChild;
+            if (b == 0) goto BMAX;
+            a = b->mChild;
+            if (a == 0) goto B15;
+            b = a->mChild;
+            if (b == 0) goto BMAX;
+            a = b->mChild;
+            if (a == 0) goto B17;
+            b = a->mChild;
+            if (b == 0) goto BMAX;
+            a = b->mChild;
+            if (a == 0) goto B19;
+            b = a->mChild;
+            if (b == 0) goto BMAX;
+            a = b->mChild;
+            if (a == 0) goto B21;
+            b = a->mChild;
+            if (b == 0) goto BMAX;
+            result =
+                (CUnkItem8025FB10*)func_8025FD60((CUnkList8025FB10*)a);
             goto BMAX;
-        B16: result = n15; goto BMAX;
-        B15: result = n14; goto BMAX;
-        B14: result = n13; goto BMAX;
-        B13: result = n12; goto BMAX;
-        B12: result = n11; goto BMAX;
-        B11: result = n10; goto BMAX;
-        B10: result = n9; goto BMAX;
-        B9: result = n8; goto BMAX;
-        B8: result = n7; goto BMAX;
-        B7: result = n6; goto BMAX;
-        B6: result = n5; goto BMAX;
-        B5: result = n4; goto BMAX;
-        B4: result = n3; goto BMAX;
-        B3: result = n2; goto BMAX;
-        B2: result = n1; goto BMAX;
-        B1: result = rec; goto BMAX;
+        B21: result = b; goto BMAX;
+        B19: result = b; goto BMAX;
+        B17: result = b; goto BMAX;
+        B15: result = b; goto BMAX;
+        B13: result = b; goto BMAX;
+        B11: result = b; goto BMAX;
+        B9: result = b; goto BMAX;
+        B7: result = b; goto BMAX;
+        B5: result = b; goto BMAX;
+        B3: result = b;
+            goto BMAX;
+        BR: result = rec;
         BMAX:
             // Max of the +0x1C sibling chain's +0x0C halfwords.
             max = 0;
@@ -1352,7 +1367,24 @@ u8 func_8026178C(CUnk8025FB10* obj, u32 index) {
     return (obj->mBitmap[index >> 5] & (1 << (index & 0x1F))) != 0;
 }
 
-void func_802617B8(){}
+// Target: us-80263904 - gated counter add: when the script flag at slot
+// 0x3356 is set, add value to mValues888[index], clamped to [0, 999999].
+void func_802617B8(CUnk8025FB10* obj, int index, int value) {
+    // Materializing the negation reproduces retail's cntlzw/srwi idiom.
+    s32 gated = !func_8009CF8C(0x3356);
+    if (gated) {
+        return;
+    }
+    {
+        s32* pValue = &obj->mValues888[index];
+        *pValue += value;
+        if (*pValue < 0) {
+            *pValue = 0;
+        } else if (*pValue > 0xF423F) {
+            *pValue = 0xF423F;
+        }
+    }
+}
 
 // Target: us-80263990 - set mValues888[index] to value, clamped to [0, 999999].
 void func_80261844(CUnk8025FB10* obj, int index, int value) {
@@ -1383,7 +1415,36 @@ void func_802618AC(u8* obj, int value) {
     else if (value > 0x3e7) *field = 0x3e7;
 }
 
-void func_eu_80263A24(){}
+// Target: us-80263a24 - deep-copy the coop object from src to dst, rebasing
+// the internal self-relative pointers by the instance delta.
+void func_eu_80263A24(CUnkCopyObj8025FB10* dst, CUnkCopyObj8025FB10* src) {
+    dst->mBulk = src->mBulk;
+    s32 delta = (u8*)dst - (u8*)src;
+    dst->mField86C = src->mField86C;
+    dst->mField870 = src->mField870;
+    dst->mField874 = src->mField874;
+    dst->mField878 = src->mField878;
+    dst->mField87C = src->mField87C;
+    dst->mField880 = src->mField880;
+    dst->mField884 = src->mField884;
+    dst->mField888 = src->mField888;
+    dst->mField88C = src->mField88C;
+    dst->mField890 = src->mField890;
+    dst->mField894 = src->mField894;
+    dst->mField898 = src->mField898;
+    dst->mField89C = src->mField89C;
+    for (int r = 0; r < 11; r++) {
+        CUnkCopyEntry8025FB10* e = dst->mBulk.mRows[r].mEntries;
+        for (int i = 0; i < 2; i++, e++) {
+            if (e->mPtr18 != 0) e->mPtr18 += delta;
+            if (e->mPtr1C != 0) e->mPtr1C += delta;
+            if (e->mPtr38 != 0) e->mPtr38 += delta;
+            if (e->mPtr3C != 0) e->mPtr3C += delta;
+            if (e->mPtr58 != 0) e->mPtr58 += delta;
+            if (e->mPtr5C != 0) e->mPtr5C += delta;
+        }
+    }
+}
 
 // Target: us-80263b68 - init the shared text globals and allocate the tag
 // processor + text buffer on the lib-layout alloc handle. The ctor is called
@@ -1420,13 +1481,123 @@ void func_80261944(int arg) {
     lbl_eu_80664874 = 0;
 }
 
-void func_80261960(){}
+// Target: us-80263bf0 - scan the packed message table for the entry covering
+// idx and stage its string into the text buffer. Entries are [hi id][lo id]
+// followed by a nul-terminated string; the B8 18 marker terminates the table.
+namespace {
 
-void func_80261A80(){}
+// UTF-16 string staging helper from code_80135FDC.cpp (C linkage there).
+extern "C" void func_80136400(const char* src, u16* dst, u32 destLen);
 
-void __dt__80261B1C(){}
+// Field view of the game tag-processor object stored at lbl_eu_8066486C;
+// slot +0x14 renders a UTF-16 string buffer at a float position.
+class TagProcMsgView {
+public:
+    virtual ~TagProcMsgView();
+    virtual void vfunc08();
+    virtual void vfunc0C();
+    virtual void vfunc10();
+    virtual s32 drawMessage(u16* msgBuf, f32 x, f32 y, u32 flag); // +0x14
+};
 
-void func_80261B98(const wchar_t* text, f32 x, f32 y) {
+} // namespace
+
+void func_80261960(int idx) {
+    if (lbl_eu_80664864 == 0) {
+        return;
+    }
+    int prev = lbl_eu_80662980;
+    if (idx < prev) {
+        // Restart the cursor when moving backwards.
+        lbl_eu_80664868 = lbl_eu_80664864;
+        lbl_eu_80662980 = -1;
+        lbl_eu_80664874 = 0;
+    }
+    if (prev == idx) {
+        return;
+    }
+
+    u8* p = (u8*)lbl_eu_80664868;
+    u8* found = NULL;
+    while (true) {
+        u8 idHi = p[0];
+        if (idHi == 0xB8 && p[1] == 0x18) {
+            break;
+        }
+        s32 id = (idHi << 8) + p[1];
+        if (id > idx) {
+            break;
+        }
+        found = p + 2;
+        p = found;
+        while (*p++) {}
+        lbl_eu_80664868 = (int)p;
+    }
+
+    lbl_eu_80662980 = idx;
+
+    if (found == NULL) {
+        return;
+    }
+    if (*found == 0) {
+        lbl_eu_80664874 = 0;
+        return;
+    }
+    func_80136400((const char*)found, (u16*)lbl_eu_80664870, 0x200);
+    lbl_eu_80664874 = ((TagProcMsgView*)lbl_eu_8066486C)
+                          ->drawMessage((u16*)lbl_eu_80664870,
+                                        lbl_eu_806688C0, lbl_eu_806688C0, 0);
+}
+
+// Target: us-80263d14 - draw the shared message centered horizontally,
+// above the bottom of the frame buffer (PAL-safe height offset).
+extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y);
+
+void func_80261A80() {
+    if (Class_80296898::getInstance()->mConfigData[0x22] == 0) {
+        return;
+    }
+    if (lbl_eu_80664864 == 0) {
+        return;
+    }
+    if (lbl_eu_80664874 == 0) {
+        return;
+    }
+    // Half frame width (arithmetic shift), PAL-safe bottom margin.
+    s32 halfWidth = CDeviceVI::getRenderModeObj()->fbWidth >> 1;
+    s32 bottomOffset = CDeviceVI::isTvFormatPal() ? 0x44 : 0x38;
+    s32 efbHeight = CDeviceVI::getRenderModeObj()->efbHeight;
+    func_80261B98((const wchar_t*)lbl_eu_80664874,
+                  halfWidth,
+                  efbHeight - bottomOffset);
+}
+
+// Target: us-80263dcc - static shutdown for the shared text state: free the
+// tag processor and text buffer, then clear all globals.
+void __dt__80261B1C() {
+    lbl_eu_80664864 = 0;
+    lbl_eu_80664868 = 0;
+    lbl_eu_80662980 = -1;
+    lbl_eu_80664874 = 0;
+    lbl_eu_80664860 = NULL;
+
+    // Explicit guard plus delete's own null check reproduces retail's
+    // doubled branch on this block.
+    if (lbl_eu_8066486C != NULL) {
+        delete lbl_eu_8066486C;
+        lbl_eu_8066486C = NULL;
+    }
+
+    // delete[] of a POD array emits no null check of its own, so the guard
+    // must be explicit.
+    if (lbl_eu_80664870 != NULL) {
+        delete[] lbl_eu_80664870;
+        lbl_eu_80664870 = NULL;
+    }
+}
+
+// C-linkage so caller relocs reference the literal retail symbol name.
+extern "C" void func_80261B98(const wchar_t* text, f32 x, f32 y) {
     Mtx44 identity;
     Mtx44 projection;
 

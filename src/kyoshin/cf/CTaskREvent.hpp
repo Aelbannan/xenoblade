@@ -132,6 +132,13 @@ struct CEventCharBlob {
     u16 mHalfSlots[32];       // +0x41B0
 };
 
+// The shared CfGameManager.hpp types func_8009D5FC's return as the
+// 0xC-byte CfFileEventIdsView; this TU walks the full blob through this
+// offset view, so funnel every access through one cast helper.
+inline CEventCharBlob* evtCharBlob() {
+    return reinterpret_cast<CEventCharBlob*>(func_8009D5FC());
+}
+
 // View over the vtable-pointer slots the dtor resets before destruction.
 // 0x10 is the CTTask primary vtable slot (compiler-managed), 0x54-0x60 the
 // four secondary subobject vtables; the retail dtor writes all five from the
@@ -245,9 +252,6 @@ extern "C" {
     CView* getCurrentView__5CViewFv();
     void func_8043EA88__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect, CView* view);
     void func_80459ACC__7CLibCriFv(CLibCri* self, ml::CRect& rect);
-    // Character/party blob base accessor (retail global; declared here with
-    // the caller's struct return since no shared header models the blob).
-    CEventCharBlob* func_8009D5FC();
     // CfGameManager helpers: retail symbols are Fv but the call sites pass
     // real arguments / read the return (declared here with the caller shape,
     // same scheme as func_80459AA8__7CLibCriFv above).
@@ -288,7 +292,6 @@ extern "C" {
     // Imports for func_801663A8
     void func_8016C450(u32 a, u32 b, u32 c);
     void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
-    void func_80083D50__Q22cf13CfGameManagerFv(u16 a, u16 b, f32* v, const char* name);
     // Imports for func_80165DF4
     s32 func_8004368C__9CTaskGameFv();
     Class_80296898* getInstance__14Class_80296898Fv();

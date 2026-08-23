@@ -26,20 +26,13 @@ namespace cf {
     // Minimum size: 0x4C
     class CCtrlMoveBase {
     public:
-        CCtrlMoveBase();
-        virtual ~CCtrlMoveBase();
-
-        // Empty virtual stub - no-op override for interface slot.
-        virtual void func_80089628();
-
-        // Empty virtual stub - no-op override for interface slot.
-        virtual void func_8008A0C4();
+        CCtrlMoveBase(void* dataPtr);
 
         // 0x04..0x0B unknown base fields
-        u8 field_0x04[0x8];      // 0x04
+        ml::CVec3 field_0x00;    // 0x00 (not initialized by ctor)
         ml::CVec3 mPosition;     // 0x0C
         ml::CVec3 mVelocity;     // 0x18
-        u8 field_0x24[0xC];      // 0x24
+        ml::CVec3 field_0x24;    // 0x24 (cached move direction)
         void* mpSomePtr;         // 0x30 (per-object instance, NULL-init)
         void* mpDataPtr;         // 0x34 (ctor param: move data block)
         f32 mFloatParam1;        // 0x38
@@ -103,8 +96,22 @@ namespace cf {
     };
 
     struct CCtrlMoveData {
-        u8 field_0x00[0x28];               // 0x00..0x27
+        u8 field_0x00[0xC];                // 0x00..0x0B
+        f32 field_0x0C;                    // facing angle (rad)
+        u8 field_0x10[4];                  // 0x10..0x13
+        f32 field_0x14;                    // cached x component
+        u8 field_0x18[0x10];               // 0x18..0x27
         CCtrlMovePosObj* mPosObj;          // 0x28
+    };
+
+    // Interface dispatched through the secondary vtable pointer at
+    // CCtrlMoveBase+0x48 (retail label lbl_eu_80527808). Only slot 0x08 is
+    // ever called; modeled as raw function pointers so MWCC emits the direct
+    // lwz/lwz/mtctr/bctrl sequence.
+    struct CCtrlMoveBaseIface {
+        void (*vf00)();
+        void (*vf04)();
+        void (*unk08)(CCtrlMoveBase* self);
     };
 
     // Sub-object at CfGameManager's instance slot +0x2F2C: its first word
@@ -128,6 +135,14 @@ extern "C" int func_804BE398(void* vec, int a, int b, int c, f32 d, f32 e);
 extern "C" void func_804BE4B4(void* out, int a);
 extern "C" void func_804BE4E0(void* out, int a);
 
+extern "C" void* lbl_eu_80527808[];
+extern "C" int func_8047DC8C__17UnkClass_8047D2ACFv(void* a, void* b, void* c,
+                                                     f32 d, f32 e, f32 f, int g);
+extern "C" int func_8047DE3C__17UnkClass_8047D2ACFv(void* a, void* b,
+                                                     f32 c, f32 d);
+extern "C" int func_8047DE14__17UnkClass_8047D2ACFv(void* a, void* b,
+                                                     f32 c, f32 d);
+
 // Float constants in .sdata2 (values recovered from the retail binary).
 extern f32 lbl_eu_80666598;
 extern f32 lbl_eu_8066659C;
@@ -139,5 +154,5 @@ extern f32 lbl_eu_806665B0;
 extern f32 lbl_eu_806665B4;
 extern f32 lbl_eu_806665B8;
 extern f32 lbl_eu_806665BC;
-extern f32 lbl_eu_8066A210;
+extern const f32 lbl_eu_8066A210;   // degrees-to-radians (declared const in other TUs)
 extern f32 lbl_eu_8066AF20;

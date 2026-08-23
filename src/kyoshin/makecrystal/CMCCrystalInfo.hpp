@@ -7,6 +7,10 @@
 // vtable at lbl_eu_80535CF8
 extern "C" void* lbl_eu_80535CF8[];
 
+// Opaque item-object handle. `void*` is banned by TU lint; a typedef of
+// void keeps MWCC's mangled form (`Pv`) and emitted bytes identical.
+typedef void CMCCItemHandle;
+
 // 4 packed shorts returned in r3:r4 by func_801397AC.
 struct FourShorts { s16 a, b, c, d; };
 
@@ -20,24 +24,18 @@ struct CMCCItemData {
     u8 field07;  // 0x07
 };
 
-// Body copied to the caller by func_8021B188: everything after count.
-// Sized 0x24 so the struct assignment emits MWCC's 4x8-byte lwzu/stwu
-// counted copy loop (needs optimize_for_size to keep the bdnz form).
-struct CrystalBody {
-    char* str;          // 0x00 description string
-    char* names[4];     // 0x04 item name pointers (valid up to count)
-    u32 pad14;          // 0x14
-    u8 flags[4];        // 0x18 per-item flags
-    u8 field20;         // 0x1c
-    u8 field21;         // 0x1d running count of stored entries
-    u8 pad1e[6];        // (size 0x24)
-};
-
-// Local fill buffer in func_8021B188.
+// Crystal result buffer written by func_8021B188 and consumed by
+// func_8021B2E0. Sized 0x24; the caller copies it wholesale.
 struct CrystalItemBuf {
-    u8 count;           // 0x00 number of matching crystal items
-    u8 pad00[3];        // 0x01
-    CrystalBody body;   // 0x04
+    u8 count;          // 0x00 number of matching crystal items
+    u8 pad00[3];       // 0x01
+    char* str;         // 0x04 description string
+    char* names[4];    // 0x08 item name pointers (valid up to count)
+    u32 pad18;         // 0x18
+    u8 flags[4];       // 0x1c per-item flags
+    u8 field20;        // 0x20
+    u8 field21;        // 0x21 running count of stored entries
+    u8 pad22[2];       // 0x22 (size 0x24)
 };
 
 // Fake polymorphic facade over the object returned by
@@ -129,6 +127,8 @@ extern "C" void func_8021B52C(CMCCrystalInfo* self);
 extern "C" void func_8021B5B4(CMCCrystalInfo* self);
 extern "C" void func_8021B63C(CMCCrystalInfo* self);
 extern "C" void func_8021B6C4(CMCCrystalInfo* self);
+extern "C" void func_8021B42C(CMCCrystalInfo* self);
+extern "C" void func_8021B2E0(CMCCrystalInfo* self, u16 arg2, CMCCItemHandle* item);
 extern char lbl_eu_80508DF8[];
 extern const float lbl_eu_80668498;   // 1.0f animation advance constant (.sdata2)
 

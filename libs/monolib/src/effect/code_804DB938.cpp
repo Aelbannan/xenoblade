@@ -32,16 +32,17 @@ extern f32 lbl_eu_8066B260; // 57.29578f (180/pi)
 extern f32 lbl_eu_8066B270; // 1.0f
 extern f32 lbl_eu_8066B274; // 0.0f
 extern f32 lbl_eu_8066B278; // pi/180
+extern f64 lbl_eu_8066B280; // 0x4330000080000000 (2^52+2^31), pool copy used
+                            // by the table initializer's int->float path
 extern f32 lbl_eu_8066A208; // 1e-6f
 
 // 0x4330000080000000 (2^52 + 2^31): MWCC's signed int -> float conversion
-// magic. Kept as a named sdata2 constant so the conversion emits an sda21
-// reference to the retail pool slot instead of a local pool entry.
-static const f64 lbl_eu_8066B268 = 4503601774854144.0;
+// magic. Retail keeps it in .sdata2 at lbl_eu_8066B268 (same bytes as
+// lbl_eu_8066A388); declared extern so loads emit the sda21 reloc.
+extern f64 lbl_eu_8066B268;
 
-// Table based sincos: convert radians to degrees, wrap into [0, 360) and
-// interpolate between the two nearest integer-degree table entries.
-static inline void CESinCos(f32 rad, f32& cosV, f32& sinV) {
+// Table based sincos + rotation build.
+static void CERotTrig(Mtx m, f32 rad, char axis) {
     f32 deg = lbl_eu_8066B260 * rad;
     int n = (int)deg;
     f32 frac = deg - (f32)n;
@@ -51,16 +52,8 @@ static inline void CESinCos(f32 rad, f32& cosV, f32& sinV) {
     }
     const CESinCosEntry* cosE = &lbl_eu_80660B78[idx];
     const CESinCosEntry* sinE = &lbl_eu_80660038[idx];
-    cosV = frac * cosE->delta + cosE->value;
-    sinV = frac * sinE->delta + sinE->value;
-}
-
-// Build a rotation matrix about a cardinal axis ('x' / 'y' / 'z') from an
-// angle in radians using the lookup tables.
-static inline void CERotTrig(Mtx m, f32 rad, char axis) {
-    f32 c, s;
-    CESinCos(rad, c, s);
-    PSMTXRotTrig(m, s, c, axis);
+    PSMTXRotTrig(m, frac * sinE->delta + sinE->value,
+                 frac * cosE->delta + cosE->value, axis);
 }
 
 // ---------------------------------------------------------------------------

@@ -86,6 +86,33 @@ struct ResInfoStorage {
     u8 mOwnsList;                   // 0x1ECC - 0 => slot array is owned
 };
 
+// 0x3C-byte record initialized by func_800676F8 (the tables at 0x2D0,
+// 0x14DC and 0x16BC share this shape).
+struct ResInitEntry {
+    u8 _00[0x30];
+    ResInfoListNode* field_0x30; // reslist sentinel node or scratch lookup slot
+    s16 field_0x34;              // logical index
+    u8 field_0x36;               // column (n % 11 for the 0x2D0 grid)
+    u8 field_0x37;               // row (n / 11 for the 0x2D0 grid)
+    u8 _38[4];
+};
+
+// Object layout driven by func_800676F8.
+struct ResInfoWork {
+    u32 flags;                    // 0x00
+    u8 _04[0x74];
+    ResInitEntry preTable[10];    // 0x78 - sound categories 2..11
+    ResInitEntry entries[0x4D];   // 0x2D0 - logical indices 0xC..0x58
+    ResInitEntry gridLow[8];      // 0x14DC - ids 0x59..0x60
+    ResInitEntry gridHigh[0x20];  // 0x16BC - ids 0x61..0x80
+    u8 _1E3C[0x40];
+    u32 slots[14];                // 0x1E7C - scratch lookup slots
+    ResInfoListNode* mStartNodePtr; // 0x1EB4
+    ResInfoListNode mStartNode;     // 0x1EB8
+    u8 _1EC4[0xC];
+    float counter;                // 0x1ED0
+};
+
 // reslist<unsigned short> / _reslist_base<unsigned short> layout mirror
 // (monolib util/reslist.hpp). The retail dtor symbols use the old flat
 // template mangling, so the deleting destructors are plain global functions

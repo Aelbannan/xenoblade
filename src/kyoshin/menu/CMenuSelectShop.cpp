@@ -58,23 +58,23 @@ extern "C" CMenuSelectShop* func_8018A58C(CProcess* parent, void* a2,
 // ---------------------------------------------------------------------------
 #pragma push
 #pragma optimize_for_size on
+
 extern "C" __declspec(noinline) CMenuSelectShop* __ct__CMenuSelectShop(CMenuSelectShop* self,
                                                   void* scene, void* a3) {
     __ct__8CProcessFv(self);
 
+    // Interface sub-table stores referenced here so the composite vtable
+    // address is materialized before the __ptmf_null base.
     self->mVtab = (u32)lbl_eu_8052D238;
-    // Composite vtable referenced before the ptmf block so MWCC hoists its
-    // lis into the second slot (retail lis order: D238, 32550, ptmf); comp
-    // stays in one register with the +0x24/+0xac offsets applied at each
-    // use site.
-    u32 comp = (u32)lbl_eu_80532550;
-    // Direct global indexing - MWCC folds the first access into an lwzu that
-    // forms the full address in one register (no cached base pointer).
-    self->mPtmfFunc0 = __ptmf_null[0];
+    self->mOcc6C = (u32)lbl_eu_80532550 + 0x24;
+    self->mOcc70 = (u32)lbl_eu_80532550 + 0xAC;
+
+    // Retail stores the second slot of each null-ptmf pair first.
     self->mPtmfThis0 = __ptmf_null[1];
+    self->mPtmfFunc0 = __ptmf_null[0];
     self->mPtmfDelta0 = __ptmf_null[2];
-    self->mPtmfFunc1 = __ptmf_null[0];
     self->mPtmfThis1 = __ptmf_null[1];
+    self->mPtmfFunc1 = __ptmf_null[0];
     self->mPtmfDelta1 = __ptmf_null[2];
     self->mLayout = 0;
     self->mField58 = 0;
@@ -86,9 +86,8 @@ extern "C" __declspec(noinline) CMenuSelectShop* __ct__CMenuSelectShop(CMenuSele
     self->mField67 = 1;
     self->mField68 = 0;
 
-    self->mVtab = comp;
-    self->mOcc6C = comp + 0x24;
-    self->mOcc70 = comp + 0xac;
+    // Derived-class overrides: composite vtable + interface sub-tables.
+    self->mVtab = (u32)lbl_eu_80532550;
     self->mScene = (CScn*)scene;
 
     __ct__17UnkClass_8045F564Fv(&self->mMemRegion);

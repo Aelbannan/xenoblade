@@ -296,5 +296,5 @@ struct S8Bytes {
         s8  b[8];   // byte access for the order lookups (retail lbzx sign-extends)
     };
 };
-extern u32 lbl_eu_80668888;
-extern u32 lbl_eu_8066888C;
+extern const u32 lbl_eu_80668888;
+extern const u32 lbl_eu_8066888C;

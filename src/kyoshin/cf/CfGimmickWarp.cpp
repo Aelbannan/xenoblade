@@ -15,6 +15,13 @@ struct WarpVec3 {
     f32 z;
 };
 
+struct WarpVec4 {
+    f32 x;
+    f32 y;
+    f32 z;
+    f32 w;
+};
+
 /* The game stores a twelve-byte MWCC pointer-to-member-function table. */
 typedef void (WarpData::*WarpStateProc)();
 typedef int (*WarpJumpProc)(WarpVec3*, const WarpVec3*, WarpVec3*);
@@ -41,7 +48,9 @@ struct WarpColumns {
 };
 
 struct WarpObject {
-    u8 pad00[0xB0];
+    u8 pad00[0x8c];
+    u8 field_8c[0x90 - 0x8c]; /* sub-record passed to func_80199810 */
+    u8 pad90[0xB0 - 0x90];
     WarpData* owner;
 };
 
@@ -174,8 +183,8 @@ struct WarpPlayerHeadIf {
 struct WarpPlayerTailIf {
     virtual void v00();
     virtual void v04();
-    virtual void v08();
-    virtual void v0c(u32);
+    virtual void v08(u32);
+    virtual int v0c(u32);
     virtual void v10();
     virtual void v14();
     virtual void v18();
@@ -317,12 +326,10 @@ extern f32 lbl_eu_806683E4;
 extern f32 lbl_eu_806683E8;
 extern f64 lbl_eu_806683F0;
 extern f64 lbl_eu_806683F8;
-extern f32 lbl_eu_8066A210;
+extern const f32 lbl_eu_8066A210;
 extern f32 lbl_eu_8066AF20;
 
 void __ct__cf_CfGimmick(WarpData*);
-void* func_8003AA34();
-u32 getBdatStringColumnValue(void*, const char*, u16);
 void func_8020938C(WarpData*, WarpVec3*, void*, u32*, int);
 void func_802095D8(WarpData*, WarpVec3*, void*, u32*, int);
 void func_80209488(WarpData*, WarpVec3*, void*, u32*, int);
@@ -334,8 +341,8 @@ int func_8020A5DC(WarpData*);
 int func_8020A87C(WarpData*, WarpObject*);
 void func_8020A484(u16);
 u32 func_80082354__Q22cf13CfGameManagerFv();
-int func_8020971C(WarpData*);
-int func_80209754(u8, WarpVec3*, WarpVec3*, WarpVec3*, WarpObject*);
+int func_8020971C(int);
+int func_80209754(int, WarpVec3*, WarpVec3*, WarpVec3*, WarpObject*);
 void func_80209F5C();
 void func_80209FB8();
 void func_80209FE4();
@@ -347,10 +354,13 @@ void func_8006CC4C();
 u32 func_80174C98(WarpPlayer*, u32*, u32);
 void func_800ACC14(WarpObject*, int);
 f32 func_80496288(void*);
-void func_8008566C__Q22cf13CfGameManagerFv(int, WarpVec3*, int);
+int func_804BE398(WarpVec3*, u32, u32, u32, f32, f32);
+void func_804BE4B4(WarpVec3*, int);
+u16 func_80208C48(u16, const WarpVec3*);
+void func_8008566C__Q22cf13CfGameManagerFv(int, WarpVec4*, int);
 void func_80198710(WarpVec3*, const WarpVec3*, f32, int, int, f32, f32);
 int func_8019876C(WarpVec3*, WarpVec3*);
-void func_80199810(WarpObject*, const WarpVec3*);
+void func_80199810(u8*, const WarpVec3*);
 WarpObject* func_800821F8__Q22cf13CfGameManagerFv();
 void __dt__Q22cf9CfGimmickFv(WarpData*, int);
 void __dl__FPv(void*);
@@ -387,6 +397,14 @@ static void clearWarpObjects(WarpData* self) {
 static void updateWarp(WarpData* self) {
     (self->*lbl_eu_80535938[self->state])();
 }
+
+/* Overlay of the CBattleManager fields read by the warp request gating. */
+struct BattleMgrWarpState {
+    u8 pad00[0x1aa];
+    u8 phase;                        /* 0x1aa */
+    u8 pad1ab[0x20c8 - 0x1ab];
+    s16 chainValue;                  /* 0x20c8 */
+};
 
 static void preparePlayers(WarpData* self) {
     self->flags &= ~1u;
@@ -540,9 +558,12 @@ extern "C" void func_8020D824(WarpData* self) {
         return;
     }
 
-    u32 flags = self->flags;
-    u32 objectReady = (flags >> 8) & 1;
-    self->flags = flags & ~0x100u;
+    /* retail issues two flag-word loads here (lwz r4/r5 + extrwi); the
+       volatile reference keeps MWCC from merging them into one load */
+    volatile u32& flagsRef = self->flags;
+    u32 flags = flagsRef;
+    bool objectReady = (flagsRef >> 8) & 1;
+    flagsRef = flags & ~0x100u;
     if ((flags & 0x20) != 0) {
         if (func_8020A5DC(self) != 0) {
             return;
@@ -551,7 +572,7 @@ extern "C" void func_8020D824(WarpData* self) {
     } else {
         int allReady = 0;
         if ((self->configFlags & 1) != 0) {
-            allReady = func_8020A87C(self, self->object7cState) != 0;
+            allReady = (allReady | func_8020A87C(self, self->object7cState)) != 0;
         }
         if ((self->flagE6 & 1) != 0) {
             allReady = (allReady | func_8020A87C(self, self->object108)) != 0;
@@ -566,14 +587,15 @@ extern "C" void func_8020D824(WarpData* self) {
     self->flags |= 0x10;
     if (self->maxValue != 0) {
         u32 current = cf::CfGameManager::func_800822F4();
-        if (current < self->minValue || current > self->maxValue) {
+        if (self->minValue > current || current > self->maxValue) {
             return;
         }
     }
     if (self->unkEE != 0 && func_80082354__Q22cf13CfGameManagerFv() < self->unkF0) {
         return;
     }
-    if (self->unkE4 != 0 && func_8020971C(self) == 0) {
+    /* NOTE: retail passes r3 = the lhz-loaded unkE4 value here (no mr self) */
+    if (self->unkE4 != 0 && func_8020971C(self->unkE4) == 0) {
         return;
     }
     if (objectReady != 0) {
@@ -585,62 +607,187 @@ extern "C" void func_8020D824(WarpData* self) {
 
 extern "C" void func_8020D998(WarpData* self) {
     self->flags |= 0x10;
-    if ((self->flags & 0x200) == 0) {
-        return;
-    }
-
-    if (self->phase != 0) {
-        if (jumptable_eu_80535830[self->dispatchIndex](&self->destination3,
-                                                        &lbl_eu_805765A0,
-                                                        &self->destination) == 0) {
-            return;
-        }
-    } else if (jumptable_eu_80535830[self->stateIndex](&self->scale,
-                                                        &lbl_eu_805765A0,
-                                                        &self->position) == 0) {
-        return;
-    }
-
-    self->phase = 0;
-    if ((self->configFlags & 1) == 0) {
-        return;
-    }
-
-    func_80209F5C();
-    func_80209FB8();
-    WarpPlayer* player = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(0));
-    if (player != 0) {
-        WarpPlayerSubIf* sub = reinterpret_cast<WarpPlayerSubIf*>(player->subObject);
-        u32 value = *sub->v30();
-        if (func_80174C98(player, &value, 0x803) != 0) {
-            WarpPlayerTailIf* tail = reinterpret_cast<WarpPlayerTailIf*>(playerTail(player));
-            if (tail->v0c(0x200), true) {
-                self->state = 4;
-                self->timer = lbl_eu_806683C8;
-                return;
+    if ((self->flags & 0x40) != 0 &&
+        func_80209754(self->configFlags, &self->scale, &self->position,
+                      &self->rotation, self->object7cState) != 0) {
+        self->phase = 0;
+        if ((self->configFlags & 1) != 0) {
+            func_80209F5C();
+            func_80209FB8();
+            WarpPlayer* player = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(0));
+            if (player != 0) {
+                WarpPlayerSubIf* sub = reinterpret_cast<WarpPlayerSubIf*>(player->subObject);
+                u32 value = *sub->v30();
+                if (func_80174C98(player, &value, 0x803) != 0) {
+                    WarpPlayerTailIf* tail = reinterpret_cast<WarpPlayerTailIf*>(playerTail(player));
+                    if (!tail->v0c(0x200)) {
+                        tail->v08(0x200);
+                    }
+                    self->state = 4;
+                    self->timer = lbl_eu_806683C8;
+                    return;
+                }
             }
+
+            /* Teleport requested: tear down the previous warp objects and
+               re-create one per active player. */
+            self->state = 5;
+            if (self->flagE7 != 0) {
+                if (self->object7c != 0) {
+                    func_800ACC14(self->object7c, 1);
+                    self->object7c->owner = 0;
+                    self->object7c = 0;
+                }
+                if (self->object100 != 0) {
+                    func_800ACC14(self->object100, 1);
+                    self->object100->owner = 0;
+                    self->object100 = 0;
+                }
+                if (self->object104 != 0) {
+                    func_800ACC14(self->object104, 1);
+                    self->object104->owner = 0;
+                    self->object104 = 0;
+                }
+                if (self->soundHandle != 0) {
+                    func_801BFED0(1, self->soundHandle, 0xa);
+                    self->soundHandle = 0;
+                }
+                self->flags &= ~1u;
+
+                WarpObject* first = func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                self->object7c = first;
+                if (first != 0) {
+                    func_800ACF78(first, cf::CfGameManager::getPlayer(0), 0);
+                }
+                WarpObject* second = func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                self->object100 = second;
+                if (second != 0) {
+                    func_800ACF78(second, cf::CfGameManager::getPlayer(1), 0);
+                }
+                WarpObject* third = func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                self->object104 = third;
+                if (third != 0) {
+                    func_800ACF78(third, cf::CfGameManager::getPlayer(2), 0);
+                }
+
+                if (self->object7c != 0) {
+                    self->object7c->owner = self;
+                }
+                if (self->object100 != 0) {
+                    self->object100->owner = self;
+                }
+                if (self->object104 != 0) {
+                    self->object104->owner = self;
+                }
+                if (self->unkE8 != 0) {
+                    self->soundHandle = func_80208C48(self->unkE8, &lbl_eu_805765A0);
+                }
+                self->flags |= 1;
+            }
+            func_8020A124(self, lbl_eu_806683D0);
+        } else {
+            self->state = 2;
+            self->timer = lbl_eu_806683D4;
+        }
+    } else if ((self->flags & 0x80) != 0 &&
+               func_80209754(self->flagE6, &self->destination3, &self->destination,
+                             &self->destination2, self->object108) != 0) {
+        self->phase = 1;
+        if ((self->flagE6 & 1) != 0) {
+            func_80209F5C();
+            func_80209FB8();
+            WarpPlayer* player = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(0));
+            if (player != 0) {
+                WarpPlayerSubIf* sub = reinterpret_cast<WarpPlayerSubIf*>(player->subObject);
+                u32 value = *sub->v30();
+                if (func_80174C98(player, &value, 0x803) != 0) {
+                    WarpPlayerTailIf* tail = reinterpret_cast<WarpPlayerTailIf*>(playerTail(player));
+                    if (!tail->v0c(0x200)) {
+                        tail->v08(0x200);
+                    }
+                    self->state = 4;
+                    self->timer = lbl_eu_806683C8;
+                    return;
+                }
+            }
+
+            u8 flagE7 = self->flagE7;
+            self->state = 5;
+            if (self->flagE7 != 0) {
+                if (self->object7c != 0) {
+                    func_800ACC14(self->object7c, 1);
+                    self->object7c->owner = 0;
+                    self->object7c = 0;
+                }
+                if (self->object100 != 0) {
+                    func_800ACC14(self->object100, 1);
+                    self->object100->owner = 0;
+                    self->object100 = 0;
+                }
+                if (self->object104 != 0) {
+                    func_800ACC14(self->object104, 1);
+                    self->object104->owner = 0;
+                    self->object104 = 0;
+                }
+                if (self->soundHandle != 0) {
+                    func_801BFED0(1, self->soundHandle, 0xa);
+                    self->soundHandle = 0;
+                }
+                self->flags &= ~1u;
+
+                WarpObject* first = func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                self->object7c = first;
+                if (first != 0) {
+                    func_800ACF78(first, cf::CfGameManager::getPlayer(0), 0);
+                }
+                WarpObject* second = func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                self->object100 = second;
+                if (second != 0) {
+                    func_800ACF78(second, cf::CfGameManager::getPlayer(1), 0);
+                }
+                WarpObject* third = func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+                self->object104 = third;
+                if (third != 0) {
+                    func_800ACF78(third, cf::CfGameManager::getPlayer(2), 0);
+                }
+
+                if (self->object7c != 0) {
+                    self->object7c->owner = self;
+                }
+                if (self->object100 != 0) {
+                    self->object100->owner = self;
+                }
+                if (self->object104 != 0) {
+                    self->object104->owner = self;
+                }
+                if (self->unkE8 != 0) {
+                    self->soundHandle = func_80208C48(self->unkE8, &lbl_eu_805765A0);
+                }
+                self->flags |= 1;
+            }
+            func_8020A124(self, lbl_eu_806683D0);
+        } else {
+            self->state = 2;
+            self->timer = lbl_eu_806683D4;
         }
     }
-
-    self->state = 5;
 }
 
 extern "C" void func_8020DF04(WarpData* self) {
     /* A warp request is valid only during the battle-manager window. */
-    extern void* getInstance__Q22cf14CBattleManagerFv();
-    void* battle = getInstance__Q22cf14CBattleManagerFv();
-    u8 phase = *(u8*)((u8*)battle + 0x1aa);
-    bool valid = phase >= 1 && phase <= 0x18;
-    if (!valid) {
-        s16 fallback = *(s16*)((u8*)battle + 0x20c8);
-        valid = fallback != 0;
+    bool valid;
+    u8 phase = ((BattleMgrWarpState*)getInstance__Q22cf14CBattleManagerFv())->phase;
+    if (phase >= 1 && phase <= 0x18) {
+        valid = true;
+    } else {
+        valid = ((BattleMgrWarpState*)getInstance__Q22cf14CBattleManagerFv())->chainValue != 0;
     }
     if (valid) {
         self->timer = lbl_eu_806683D4;
         return;
     }
 
-    bool ready = false;
+    bool ready;
     if (self->phase != 0) {
         ready = jumptable_eu_80535830[self->dispatchIndex](&self->destination3,
                                                             &lbl_eu_805765A0,
@@ -654,21 +801,86 @@ extern "C" void func_8020DF04(WarpData* self) {
         self->state = 1;
         return;
     }
+
     func_80209FE4();
     self->timer -= func_80496288(lbl_eu_80663E14);
     if (self->timer > lbl_eu_806683C8) {
         return;
     }
+
     func_80209F5C();
     func_80209FB8();
-    if (self->flagE7 == 0) {
-        self->state = 2;
-        self->timer = lbl_eu_806683D4;
-        return;
+    WarpPlayer* player = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(0));
+    if (player != 0) {
+        WarpPlayerSubIf* sub = reinterpret_cast<WarpPlayerSubIf*>(player->subObject);
+        u32 value = *sub->v30();
+        if (func_80174C98(player, &value, 0x803) != 0) {
+            WarpPlayerTailIf* tail = reinterpret_cast<WarpPlayerTailIf*>(playerTail(player));
+            if (!tail->v0c(0x200)) {
+                tail->v08(0x200);
+            }
+            self->state = 4;
+            self->timer = lbl_eu_806683C8;
+            return;
+        }
     }
-    preparePlayers(self);
-    self->timer = lbl_eu_806683D0;
-    func_8020A124(self, self->timer);
+
+    /* Teleport requested: tear down the previous warp objects and
+       re-create one per active player. */
+    self->state = 5;
+    if (self->flagE7 != 0) {
+        if (self->object7c != 0) {
+            func_800ACC14(self->object7c, 1);
+            self->object7c->owner = 0;
+            self->object7c = 0;
+        }
+        if (self->object100 != 0) {
+            func_800ACC14(self->object100, 1);
+            self->object100->owner = 0;
+            self->object100 = 0;
+        }
+        if (self->object104 != 0) {
+            func_800ACC14(self->object104, 1);
+            self->object104->owner = 0;
+            self->object104 = 0;
+        }
+        if (self->soundHandle != 0) {
+            func_801BFED0(1, self->soundHandle, 0xa);
+            self->soundHandle = 0;
+        }
+        self->flags &= ~1u;
+
+        WarpObject* first = func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+        self->object7c = first;
+        if (first != 0) {
+            func_800ACF78(first, cf::CfGameManager::getPlayer(0), 0);
+        }
+        WarpObject* second = func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+        self->object100 = second;
+        if (second != 0) {
+            func_800ACF78(second, cf::CfGameManager::getPlayer(1), 0);
+        }
+        WarpObject* third = func_800817BC__Q22cf13CfGameManagerFv(self->flagE7, 0);
+        self->object104 = third;
+        if (third != 0) {
+            func_800ACF78(third, cf::CfGameManager::getPlayer(2), 0);
+        }
+
+        if (self->object7c != 0) {
+            self->object7c->owner = self;
+        }
+        if (self->object100 != 0) {
+            self->object100->owner = self;
+        }
+        if (self->object104 != 0) {
+            self->object104->owner = self;
+        }
+        if (self->unkE8 != 0) {
+            self->soundHandle = func_80208C48(self->unkE8, &lbl_eu_805765A0);
+        }
+        self->flags |= 1;
+    }
+    func_8020A124(self, lbl_eu_806683D0);
 }
 
 extern "C" void func_8020E27C(WarpData* self) {
@@ -698,9 +910,10 @@ extern "C" void func_8020E27C(WarpData* self) {
         func_801BFED0(1, self->soundHandle, 0xa);
         self->soundHandle = 0;
     }
-    self->flags &= ~1u;
-    preparePlayers(self);
+    /* retail stores state before rewriting the flag word */
+    u32 flags = self->flags;
     self->state = 1;
+    self->flags = flags & ~1u;
 }
 
 extern "C" void func_8020E3F0(WarpData* self) {
@@ -754,68 +967,82 @@ extern "C" void func_8020E6C0(WarpData* self) {
 extern "C" void func_8020E704(WarpData* self) {
     func_80209F5C();
     func_80209FB8();
-    if ((self->flags & 2) == 0) {
-        self->timer = lbl_eu_806683E4;
-        self->flags |= 2;
-        WarpVec3 area;
-        area.x = lbl_eu_806683C8;
-        area.y = lbl_eu_806683C8;
-        area.z = lbl_eu_806683C8;
-        func_8008566C__Q22cf13CfGameManagerFv(0x14, &area, 1);
-        return;
-    }
+    if ((self->flags & 2) != 0) {
+        self->timer -= func_80496288(lbl_eu_80663E14);
+        if (self->timer > lbl_eu_806683C8) {
+            return;
+        }
+        self->flags &= ~2u;
+        func_8006CC4C();
 
-    self->timer -= func_80496288(lbl_eu_80663E14);
-    if (self->timer > lbl_eu_806683C8) {
-        return;
-    }
-    self->flags &= ~2u;
-    func_8006CC4C();
-    WarpPlayer* first = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(0));
-    f32 distance;
-    if (self->phase != 0) {
-        distance = (f32)self->unkEA * lbl_eu_8066A210;
-    } else {
-        distance = (f32)self->unkEC * lbl_eu_8066A210;
-    }
-    if (first != 0) {
+        WarpPlayer* first = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(0));
         WarpVec3 centre;
-        centre.x = self->position.x + self->destination.x;
-        centre.y = self->position.y + self->destination.y;
-        centre.z = self->position.z + self->destination.z;
-        if (reinterpret_cast<WarpPlayerHeadIf*>(first)->va8(&centre), true) {
+        f32 distance;
+        if (first != 0) {
+            centre = self->position;
+            distance = (f32)self->unkEA * lbl_eu_8066A210;
+        } else {
+            centre = self->destination;
+            distance = (f32)self->unkEC * lbl_eu_8066A210;
+        }
+
+        /* Effect placement: nudge a copy of the centre point and query the
+           effect manager before repositioning player 0. */
+        WarpVec3 adjusted;
+        adjusted.x = lbl_eu_806683C8;
+        adjusted.y = lbl_eu_806683DC;
+        adjusted.z = lbl_eu_806683C8;
+        WarpVec3 sum;
+        sum.x = centre.x + adjusted.x;
+        sum.y = centre.y + adjusted.y;
+        sum.z = centre.z + adjusted.z;
+        WarpVec3 effectPos = sum;
+        if (func_804BE398(&effectPos, 0, 0, 0, lbl_eu_806683E0, lbl_eu_8066AF20)) {
+            func_804BE4B4(&centre, 0);
+        }
+
+        if (first != 0) {
+            reinterpret_cast<WarpPlayerHeadIf*>(first)->va8(&centre);
             reinterpret_cast<WarpPlayerHeadIf*>(first)->vc8(distance);
         }
-    }
 
-    for (int i = 1; i < 3; ++i) {
-        WarpPlayer* player = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(i));
-        if (player != 0) {
-            WarpVec3 centre;
-            centre.x = self->position.x;
-            centre.y = self->position.y;
-            centre.z = self->position.z;
-            func_80198710(&centre, &centre, distance, 6, i,
+        for (int i = 1; i < 3; ++i) {
+            WarpPlayer* player = playerFromTail((WarpPlayerTail*)cf::CfGameManager::getPlayer(i));
+            if (player == 0) {
+                continue;
+            }
+            WarpVec3 base = centre;
+            WarpVec3 out68;
+            func_80198710(&out68, &base, distance, 6, i,
                           lbl_eu_806683DC, lbl_eu_806683C8);
-            WarpVec3 result;
-            if (func_8019876C(&centre, &result) != 0) {
-                reinterpret_cast<WarpPlayerHeadIf*>(player)->va8(&result);
+            WarpVec3 out4c;
+            if (func_8019876C(&out68, &out4c) != 0) {
+                reinterpret_cast<WarpPlayerHeadIf*>(player)->va8(&out4c);
                 reinterpret_cast<WarpPlayerHeadIf*>(player)->vc8(distance);
-                WarpPlayerTailIf* tail = reinterpret_cast<WarpPlayerTailIf*>(playerTail(player));
-                WarpObject* object = tail->v110();
+                WarpObject* object = reinterpret_cast<WarpPlayerTailIf*>(playerTail(player))->v110();
                 if (object != 0) {
-                    func_80199810(object, &centre);
+                    func_80199810(object->field_8c, &centre);
                 }
             }
         }
-    }
 
-    WarpObject* manager = func_800821F8__Q22cf13CfGameManagerFv();
-    if (manager != 0) {
-        reinterpret_cast<WarpPlayerTailIf*>(manager)->v0c(0);
+        WarpPlayerTailIf* manager = reinterpret_cast<WarpPlayerTailIf*>(func_800821F8__Q22cf13CfGameManagerFv());
+        if (manager != 0) {
+            manager->v0c(0);
+        }
+        self->state = 7;
+        self->timer = lbl_eu_806683D0;
+    } else {
+        /* First entry: arm the warp timer and trigger the area transition. */
+        self->timer = lbl_eu_806683E4;
+        self->flags |= 2;
+        WarpVec4 area;
+        area.x = lbl_eu_806683C8;
+        area.y = lbl_eu_806683C8;
+        area.z = lbl_eu_806683C8;
+        area.w = lbl_eu_806683E8;
+        func_8008566C__Q22cf13CfGameManagerFv(0x14, &area, 1);
     }
-    self->state = 7;
-    self->timer = lbl_eu_806683D0;
 }
 
 extern "C" void func_8020EA2C(WarpData* self) {

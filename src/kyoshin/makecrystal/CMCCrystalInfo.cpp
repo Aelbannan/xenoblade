@@ -22,14 +22,10 @@ extern "C" void func_8021B0A4(CMCCrystalInfo*);
 extern "C" void func_8021B0F0(CMCCrystalInfo*);
 extern "C" void func_8021B13C(CMCCrystalInfo*);
 
-// Same-TU exports referenced before their definitions; C linkage keeps the
-// call relocs bound to the unmangled retail symbol names.
-extern "C" void func_8021B42C(CMCCrystalInfo*);
-extern "C" void func_8021B2E0(CMCCrystalInfo*, u16, void*);
-extern "C" void func_8021B188(CrystalBody* out, CMCCrystalInfo*, u32, void*);
-
 // Small-data symbol (plain C++ extern; lives in another TU).
 extern u32 lbl_eu_806640D8;
+
+void func_8021B188(CrystalItemBuf* out, CMCCrystalInfo*, u32, CMCCItemHandle*);
 
 // The retail ctor is emitted under the unmangled symbol `__ct__CMCCrystalInfo`
 // (not a mangled member name), so it is written as a C-linkage function that
@@ -224,11 +220,12 @@ void func_8021A9A8(CMCCrystalInfo* self, u32 arg4, CMCCItemData* item)
 void func_8021AA9C(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u32 arg7)
 {
     char buf[0x20];
+    u32 msgId = arg5;   // materialized first: retail spills it (r25) before idxBase
     u32 idx;
     char* msgName;
 
     // Crystal name for slot idx, then colour it (colour pair depends on arg7).
-    msgName = func_8013639C((void*)lbl_eu_806640D8, &lbl_eu_80508DF8[0x36], arg5);
+    msgName = func_8013639C((char*)lbl_eu_806640D8, &lbl_eu_80508DF8[0x36], msgId);
     idx = idxBase + 1;
     sprintf(buf, &lbl_eu_80508DF8[0x3b], idx);
     func_80136B4C((nw4r::lyt::Layout*)self->mLayout, buf, msgName, 0);
@@ -253,7 +250,7 @@ void func_8021AA9C(CMCCrystalInfo* self, u32 idxBase, u32 arg5, u8 arg6, u32 arg
 
     // Pick the crystal picture to show for this slot based on the item code.
     void* res = 0;
-    u8 code = func_801361E8((u32)lbl_eu_806640D8, &lbl_eu_80508DF8[0x78], arg5);
+    u8 code = func_801361E8((u32)lbl_eu_806640D8, &lbl_eu_80508DF8[0x78], msgId);
     switch (code) {
     case 0:
         res = ((nw4r::lyt::ArcResourceAccessor*)self->mField30)
@@ -396,56 +393,63 @@ __declspec(noinline) void func_8021B13C(CMCCrystalInfo* self)
 // separate functions (bl), so inlining would balloon the caller sizes.
 #pragma push
 #pragma optimize_for_size on
-__declspec(noinline) void func_8021B188(CrystalBody* out, CMCCrystalInfo* self, u32 data, void* item)
+__declspec(noinline) void func_8021B188(CrystalItemBuf* out, CMCCrystalInfo* self, u32 data, CMCCItemHandle* item)
 {
     CrystalItemBuf buf;
-    void* item2;
-    if (item == 0) {
-        item2 = 0;
-    } else {
+    CMCCItemHandle* item2;
+    if (item != 0) {
         item2 = item;
+    } else {
+        item2 = 0;
     }
     func_801392E4(data);
     func_80139358(data);
     CItemImplInstancesFacade* inst = (CItemImplInstancesFacade*)CItem_initItemImplInstances(item2);
     u8 count = inst->GetCount(item2);
     buf.count = count;
-    buf.body.str = (char*)func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36],
-                                        0x1e - (count - 1));
-    buf.body.field21 = 0;
+    buf.str = (char*)func_80136190(&lbl_eu_80508DF8[0x6f], &lbl_eu_80508DF8[0x36],
+                                   0x1e - (count - 1));
+    buf.field21 = 0;
     for (u32 i = 0; i < 4; i++) {
         CItemImplInstancesFacade* inst2 = (CItemImplInstancesFacade*)CItem_initItemImplInstances(item2);
         u16 n = inst2->GetName(item2, (u8)i);
         if (n > 0) {
-            buf.body.names[buf.body.field21] = func_8013639C((void*)lbl_eu_806640D8,
-                                                             &lbl_eu_80508DF8[0x36], n);
+            buf.names[buf.field21] = func_8013639C((char*)lbl_eu_806640D8,
+                                                   &lbl_eu_80508DF8[0x36], n);
             CItemImplInstancesFacade* inst3 = (CItemImplInstancesFacade*)CItem_initItemImplInstances(item2);
-            buf.body.flags[buf.body.field21] = inst3->GetFlag(item2, (u8)i);
-            buf.body.field21++;
+            buf.flags[buf.field21] = inst3->GetFlag(item2, (u8)i);
+            buf.field21++;
         }
     }
-    // Word-pair copy of the body; kept as a counted loop by optimize_for_size
-    // (matches the retail lwzu/stwu bdnz shape).
+    // Word-pair block copy of the buffer; optimize_for_size keeps it as the
+    // retail counted lwzu/stwu loop.
     u32* dst = (u32*)((char*)out - 4);
-    u32* src = (u32*)((char*)&buf.body - 4);
+    u32* src = (u32*)((char*)&buf - 4);
     for (int j = 4; j != 0; j--) {
-        u32 a = *++src;
-        u32 b = *++src;
-        *++dst = a;
-        *++dst = b;
+        *++dst = *++src;
+        *++dst = *++src;
     }
     *++dst = *++src;
 }
-#pragma pop
 
-__declspec(noinline) void func_8021B2E0(CMCCrystalInfo* self, u16 arg2, void* item)
+// Fill the crystal slot texts from the item's crystal entries.
+__declspec(noinline) void func_8021B2E0(CMCCrystalInfo* self, u16 arg2, CMCCItemHandle* item)
 {
     char buf[0x20];
     func_8021B42C(self);
     CrystalItemBuf bufB;
-    func_8021B188(&bufB.body, self, arg2, item);
-    // Copy the body to a fixed frame slot, then render each stored entry.
-    CrystalBody slots = bufB.body;
+    func_8021B188(&bufB, self, arg2, item);
+    // Word-pair block copy of the filled buffer into a fixed frame slot;
+    // under optimize_for_size (scope extended from func_8021B188 above) MWCC
+    // keeps this as the retail counted lwzu/stwu loop.
+    CrystalItemBuf slots;
+    u32* dst = (u32*)((char*)&slots - 4);
+    u32* src = (u32*)((char*)&bufB - 4);
+    for (int j = 4; j != 0; j--) {
+        *++dst = *++src;
+        *++dst = *++src;
+    }
+    *++dst = *++src;
     func_80136B4C((nw4r::lyt::Layout*)self->mLayout, &lbl_eu_80508DF8[0x15a],
                   slots.str, 0);
     u8 count = slots.field21;
@@ -460,6 +464,7 @@ __declspec(noinline) void func_8021B2E0(CMCCrystalInfo* self, u16 arg2, void* it
     }
 }
 
+// Clears every crystal-slot text entry (used before refilling the display).
 #pragma push
 #pragma optimize_for_size on
 __declspec(noinline) void func_8021B42C(CMCCrystalInfo* self)

@@ -19,6 +19,13 @@
 extern "C" void __dt__14CMenuKeyAssignFv(void*, int);
 extern "C" void cbRenderBefore__14CMenuKeyAssignFv(void*);
 
+// Typed view of the null member-function-pointer triple (see ctor).
+struct PtmfNullTriple {
+    u32 fn;
+    u32 adjust;
+    u32 delta;
+};
+
 // Key-assign free helpers (defined in this TU). Retail emits these under the
 // unmangled names, so the declarations/definitions keep C linkage.
 extern "C" void func_80115BD8(CMenuKeyAssign* self);
@@ -141,8 +148,7 @@ void CMenuKeyAssign::Move() {
     if (func_80086F9C__Q22cf13CfGameManagerFv(-1) != 0) {
         // ---- in battle ----
         int battleMode = 0;
-        void* bm = getInstance__Q22cf14CBattleManagerFv();
-        s16* sub20c8 = (s16*)((u8*)bm + 0x20c8);
+        void* bm = getInstance__Q22cf14CBattleManagerFv();        s16* sub20c8 = (s16*)((u8*)bm + 0x20c8);
         if (sub20c8 != 0 && *sub20c8 != 0) {
             battleMode = 1;
         }
@@ -179,7 +185,8 @@ void CMenuKeyAssign::Move() {
                         int b2 = func_801B0F8C();
                         if (battleMode == 0 && b2 == 0 &&
                             func_8017FD44((void*)b2) == 0) {
-                            CBattleManagerView* bmv = (CBattleManagerView*)bm;
+                            CMenuKeyAssignBattleMgr* bmv =
+                                (CMenuKeyAssignBattleMgr*)bm;
                             u32 cnt = 0;
                             CListLink* node =
                                 ((CListLink*)bmv->mList28)->next;
@@ -258,7 +265,7 @@ void CMenuKeyAssign::Move() {
         if (player != 0) {
             void* battle = player->mSub38;
             if (((int (*)(void*, u32))((void**)battle)[0x40 / 4])(battle, 0x40000) != 0) {
-                CBattleManagerView* bmv = (CBattleManagerView*)bm;
+                CMenuKeyAssignBattleMgr* bmv = (CMenuKeyAssignBattleMgr*)bm;
                 u32 cnt = 0;
                 CListLink* node = ((CListLink*)bmv->mList08)->next;
                 while (node != (CListLink*)bmv->mList08) {
@@ -380,7 +387,8 @@ void CMenuKeyAssign::Move() {
                 if (arts != 0) {
                     u32 id = *arts->mSub04->getActorId();
                     if (func_80174C98(arts, &id, 0x803) != 0) {
-                        CBattleManagerView* bmv = (CBattleManagerView*)bm;
+                        CMenuKeyAssignBattleMgr* bmv =
+                            (CMenuKeyAssignBattleMgr*)bm;
                         u32 cnt = 0;
                         CListLink* node =
                             ((CListLink*)bmv->mList28)->next;
@@ -467,7 +475,7 @@ void CMenuKeyAssign::Move() {
     if (player != 0) {
         void* battle = player->mSub38;
         if (((int (*)(void*, u32))((void**)battle)[0x40 / 4])(battle, 0x40000) != 0) {
-            CBattleManagerView* bmv = (CBattleManagerView*)bm;
+            CMenuKeyAssignBattleMgr* bmv = (CMenuKeyAssignBattleMgr*)bm;
             u32 cnt = 0;
             CListLink* node = ((CListLink*)bmv->mList08)->next;
             while (node != (CListLink*)bmv->mList08) {
@@ -593,22 +601,28 @@ extern "C" CMenuKeyAssign* __ct__CMenuKeyAssign(CProcess* parent, CScn* scene) {
 
         // vtable fixups: temp (CProcess) vtable first, then the composite
         // vtable and the IWorkEvent (+0x24) / IScnRender (+0xac) sub-vtables.
-        // The null-PMF triple is copied through one base pointer (retail
-        // load order [1],[0],[2] per group from a single base register).
+        // The null-PMF triple is copied through one base register (retail
+        // keeps r8 across both groups; store order 0x3c..0x50 sequential).
         obj->mProcessVt = (u32)lbl_eu_8052BF70;
-        const u32* src = __ptmf_null;
-        u32 w1 = src[1];
-        u32 w0 = src[0];
-        obj->ptmfMove[0] = w0;
-        obj->ptmfMove[1] = w1;
-        u32 w2 = src[2];
-        obj->ptmfMove[2] = w2;
-        w1 = src[1];
-        w0 = src[0];
-        obj->ptmfDraw[0] = w0;
-        obj->ptmfDraw[1] = w1;
-        w2 = src[2];
-        obj->ptmfDraw[2] = w2;
+        // Differently-typed view so the ptmfMove/ptmfDraw stores cannot alias
+        // the source triple - MWCC keeps ONE base register instead of
+        // rematerializing the __ptmf_null address per access.
+        const PtmfNullTriple* src = (const PtmfNullTriple*)__ptmf_null;
+        // One uniform 6-word walk over both callback groups - each triple
+        // allocates the same way, matching retail's repeated load pattern.
+        u32* dst = obj->ptmfMove;
+        u32 w1 = src->adjust;
+        u32 w0 = src->fn;
+        dst[0] = w0;
+        dst[1] = w1;
+        u32 w2 = src->delta;
+        dst[2] = w2;
+        w1 = src->adjust;
+        w0 = src->fn;
+        dst[3] = w0;
+        dst[4] = w1;
+        w2 = src->delta;
+        dst[5] = w2;
         obj->mField_54 = 0;
         obj->mField_55 = 0;
 
@@ -897,7 +911,7 @@ extern "C" void func_801154D0(CMenuKeyAssign* self, int a, int b, int c, int d, 
 // dimensions (u16 -> f32 via the 0x43300000 magic double), then assigns the
 // button labels through func_80115DB0.
 extern "C" void func_801159DC(CMenuKeyAssign* self) {
-    if (self->mField_78 == 3) {
+    if ((s32)self->mField_78 == 3) {
         return;
     }
     self->mField_78 = 3;
@@ -909,8 +923,12 @@ extern "C" void func_801159DC(CMenuKeyAssign* self) {
         name = &base[0x32];
     }
 
-    u8 i;
-    for (i = 0; i < 4; i++) {
+    // The 0x43300000 magic double lives in f31 across the whole loop.
+    f64 magic = lbl_eu_80667080;
+    F64Conv cw, ch;
+    cw.w[0] = 0x43300000;
+    ch.w[0] = 0x43300000;
+    for (u8 i = 0; i < 4; i++) {
         u8 mapped = i;
         if (i == 2) {
             mapped = 4;
@@ -919,28 +937,23 @@ extern "C" void func_801159DC(CMenuKeyAssign* self) {
         }
         u8 idx = i + 3;
         u16 r = func_8013606C(&base[0x3b], name, idx);
-        ml::FixStr<32> str(false);
+        ml::FixStr<32> str(true);
         str.format(&base[0x5f], func_80136190(&base[0x49], &base[0x56], r));
-        void* acc = func_801355F4();
-        TexView* tex =
-            (TexView*)((void* (*)(void*, u32, void*, u32))((void**)acc)[0xc / 4])(
-                acc, 0x74696d67, str.mString, 0);
+        nw4r::lyt::ArcResourceAccessor* acc = func_801355F4();
+        TexView* tex = (TexView*)acc->GetResource(0x74696d67, str.mString, NULL);
         if (tex != 0) {
             str.format(&base[0x66], mapped + 1);
             nw4r::lyt::Pane* pane =
                 self->mLayout->GetRootPane()->FindPaneByName(str.mString, true);
             func_80137F88(pane, tex);
-            u16 w = tex->mHeader->mDims[1];
-            u16 h = tex->mHeader->mDims[0];
             // u16 -> f32 via MWCC's 0x43300000 magic double pair.
-            F64Conv cw, ch;
-            cw.w[0] = 0x43300000;
-            ch.w[0] = 0x43300000;
-            cw.w[1] = (u32)w;
-            ch.w[1] = (u32)h;
+            cw.w[1] = (u32)tex->mHeader->mDims[1];
+            ch.w[1] = (u32)tex->mHeader->mDims[0];
+            f32 sx = (f32)(cw.d - magic);
+            f32 sy = (f32)(ch.d - magic);
             PaneSizeFlagView* pv = (PaneSizeFlagView*)pane;
-            pv->sizeX = (f32)(cw.d - lbl_eu_80667080);
-            pv->sizeY = (f32)(ch.d - lbl_eu_80667080);
+            pv->sizeX = sx;
+            pv->sizeY = sy;
             pv->flags = (pv->flags & 0xFE) | 1;
         }
         if (mapped == 4) {

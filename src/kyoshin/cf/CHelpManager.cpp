@@ -109,24 +109,23 @@ void func_80295BAC() {
 void func_80295BF4(cf::CHelpManager* self) {
     // Base hoisted into a callee-saved register (retail holds it in r31).
     cf::CHelpManagerTbl* tbl = &lbl_eu_80576D08;
+    // Manual interface-table dispatch: slot 3 of the table stored at +0x8,
+    // emitted as the CHelpVtblView f0C virtual call.
     if (self->mField10 == 3) {
         // bool local: MWCC's -O4,p idiom for the != 0 check (neg/or/srwi).
         bool isActive = func_8009CF8C((u32)tbl->mHelp1.mOwner) != 0;
         if (!isActive) {
-            cf::CHelpDispatchIface* help = &tbl->mHelp1;
-            help->Slot3();
+            tbl->mHelp1.f0C();
         }
     }
     if (self->mField10 == 5) {
         bool isActive = func_8009CF8C((u32)tbl->mHelp2.mOwner) != 0;
         if (!isActive) {
-            cf::CHelpDispatchIface* help = &tbl->mHelp2;
-            help->Slot3();
+            tbl->mHelp2.f0C();
         }
         bool isActive2 = func_8009CF8C((u32)tbl->mHelp3.mOwner) != 0;
         if (!isActive2) {
-            cf::CHelpDispatchIface* help = &tbl->mHelp3;
-            help->Slot3();
+            tbl->mHelp3.f0C();
         }
     }
 }
@@ -141,14 +140,13 @@ void func_80295CC8(cf::CHelpManager* self, cf::CHelpBattleObjArg* obj) {
 }
 
 int func_80295D30(cf::CHelpManager* self) {
-    if (self->mField17 == 0) {
+    // Two separate early-return guards, matching retail's branch-per-guard
+    // shape (volatile read keeps MWCC from if-converting the guards).
+    if (self->mField17 == 0)
         return 0;
-    }
-    if (func_80085840__Q22cf13CfGameManagerFv() == 0) {
+    if (func_80085840__Q22cf13CfGameManagerFv() == 0)
         return 0;
-    }
-    u32 flag = lbl_eu_80663E24;
-    return (int)(((flag >> 22) & 1) ^ 1);
+    return (int)((((*(volatile u32*)&lbl_eu_80663E24) >> 22) & 1) ^ 1);
 }
 
 int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
@@ -231,45 +229,37 @@ void sinit_80295DB0() {
 
     // obj0 @ 0x00: base ctor, vtable override, extra word at +0xC.
     __ct__Q22cf5CHelpFv(&t->mObj00, (void*)0x3341, 0x2);
-    cf::CHelpWordC* o00 = &t->mObj00;
-    o00->mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B7C0;
-    o00->mFieldC = 1;
+    t->mObj00.mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B7C0;
+    t->mObj00.mFieldC = 1;
 
     // obj1 @ 0x10: ctor then dispatch through vtable slot 2.
     __ct__Q22cf5CHelpFv(&t->mObj10, (void*)0x3342, 0x3);
-    cf::CHelp* o10 = &t->mObj10;
-    o10->mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B378;
-    ((cf::CHelpDispatchIface*)o10)->Slot2();
+    t->mObj10.mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B378;
+    ((cf::CHelpDispatchIface*)&t->mObj10)->Slot2();
 
     // obj2 @ 0x20: extra float at +0xC.
     __ct__Q22cf5CHelpFv(&t->mObj20, (void*)0x3343, 0x4);
-    cf::CHelpFloatC* o20 = &t->mObj20;
-    o20->mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B770;
-    o20->mFieldC = lbl_eu_80668BC8;
+    t->mObj20.mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B770;
+    t->mObj20.mFieldC = lbl_eu_80668BC8;
 
     // obj3 @ 0x30: dispatch type (same vtable as obj1).
     __ct__Q22cf5CHelpFv(&t->mObj30, (void*)0x3344, 0x5);
-    cf::CHelp* o30 = &t->mObj30;
-    o30->mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B378;
-    ((cf::CHelpDispatchIface*)o30)->Slot2();
+    t->mObj30.mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B378;
+    ((cf::CHelpDispatchIface*)&t->mObj30)->Slot2();
 
     __ct__Q22cf5CHelpFv(&t->mObj40, (void*)0x3345, 0x6);
-    cf::CHelp* o40 = &t->mObj40;
-    o40->mVtbl = (cf::CHelpVtbl*)lbl_eu_805390E8;
+    t->mObj40.mVtbl = (cf::CHelpVtbl*)lbl_eu_805390E8;
 
     __ct__Q22cf5CHelpFv(&t->mObj50, (void*)0x3346, 0x7);
-    cf::CHelp* o50 = &t->mObj50;
-    o50->mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B3C0;
+    t->mObj50.mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B3C0;
 
     __ct__Q22cf5CHelpFv(&t->mObj60, (void*)0x3347, 0x8);
-    cf::CHelpFloatC* o60 = &t->mObj60;
-    o60->mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B770;
-    o60->mFieldC = lbl_eu_80668BC8;
+    t->mObj60.mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B770;
+    t->mObj60.mFieldC = lbl_eu_80668BC8;
 
     __ct__Q22cf5CHelpFv(&t->mObj70, (void*)0x3348, 0x9);
-    cf::CHelpWordC* o70 = &t->mObj70;
-    o70->mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B4F0;
-    o70->mFieldC = 0;
+    t->mObj70.mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B4F0;
+    t->mObj70.mFieldC = 0;
 
     __ct__Q22cf5CHelpFv(&t->mObj84, (void*)0x3349, 0xA);
     t->mObj84.mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B518;
@@ -524,7 +514,6 @@ void sinit_80295DB0() {
     __ct__Q22cf5CHelpFv(&t->mObj508, (void*)0x3397, 0x58);
     t->mObj508.mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B588;
     t->mObj508.mFieldC = 0;
-    t->mObj508.mField10 = 0;
 
     __ct__Q22cf5CHelpFv(&t->mObj51C, (void*)0x338B, 0x4C);
     t->mObj51C.mVtbl = (cf::CHelpVtbl*)lbl_eu_8053B588;

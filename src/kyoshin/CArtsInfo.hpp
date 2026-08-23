@@ -2,9 +2,13 @@
 
 #include <types.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "monolib/device/CFileHandle.hpp"
+
+class CEventFile;
 
 namespace nw4r {
 namespace lyt {
+    class Pane;
     class Layout;
     class AnimTransform;
     class ArcResourceAccessor;
@@ -17,8 +21,9 @@ namespace math {
 class CArtsInfo {
 public:
     CArtsInfo();
-    virtual ~CArtsInfo();
-    void OnFileEvent();
+    // vtable pointer at 0x00 (implicit)
+    /* 0x04 */ UnkClass_8045F564 mMemRegion;
+    int OnFileEvent(CEventFile* event);
     u8 getField48();
     u8 getField49();
     void setField54(u8 val);
@@ -28,6 +33,9 @@ public:
     u32 getField5A();
     int isField44GE6();
     void initialize();
+
+    CArtsInfo();
+    ~CArtsInfo();
 
     // vtable pointer at 0x00 (implicit)
     /* 0x04 */ UnkClass_8045F564 mMemRegion;
@@ -60,6 +68,76 @@ public:
     /* 0x5C */ u8 mCursor[0x18]; // CCur18 embedded cursor
 };
 
+// Async file event handed to IWorkEvent callbacks by CDeviceFile (global
+// ::CEventFile, full layout in monolib/work/CEventFile.hpp).
+struct CEventFile {
+    s32 field_00;          // 0x00 event type
+    CFileHandle* field_04; // 0x04 file handle
+};
+
+// Font-object mirror: vtable slot 9 (offset 0x24) yields the value bound
+// into the layout root pane via func_8013676C.
+class CArtsFontView {
+public:
+    virtual void v00() = 0;
+    virtual void v01() = 0;
+    virtual void v02() = 0;
+    virtual void v03() = 0;
+    virtual void v04() = 0;
+    virtual void v05() = 0;
+    virtual void v06() = 0;
+    virtual void v07() = 0;
+    virtual u32 sf9() = 0; // vtable +0x24
+};
+
+// Overlay structs for the 'timg' message resource consumed by OnFileEvent:
+// the resource object holds a chain whose first field points at the u16
+// row/column pair used to size the message panes.
+struct CArtsCoords {
+    u16 col; // 0x0
+    u16 row; // 0x2
+};
+struct CArtsMsgChain {
+    CArtsCoords* pCoords; // 0x0
+};
+struct CArtsMsgObj {
+    u8 gap[0x8];
+    CArtsMsgChain* chain; // 0x8
+};
+
+// Pane overlays used by OnFileEvent: message-pane size floats (+0x4C/+0x50)
+// and an anchor-pane position triple (+0x2C..+0x36) read/written through a
+// u32/float punning union (retail moves the values GPR->FPR via the stack).
+union CArtsFpu {
+    u32 u;
+    float f;
+};
+struct CArtsPaneSize {
+    u8 gap[0x4C];
+    CArtsFpu width;  // +0x4C
+    CArtsFpu height; // +0x50
+};
+struct CArtsPanePos {
+    CArtsFpu x; // +0x2C
+    CArtsFpu y; // +0x30
+    CArtsFpu z; // +0x34
+};
+
+// 4x s16 colour records shared through the small-data area (sinit'd by
+// sinit_8023BC8C).
+struct CArtsQuadColor {
+    s16 c0;
+    s16 c2;
+    s16 c4;
+    s16 c6;
+};
+
+// 8-byte pane colour pair returned in r3/r4 by func_801397AC.
+struct CArtsColorPair {
+    u32 lo;
+    u32 hi;
+};
+
 // Abstract view into the embedded CCur18 cursor vtable used by this unit
 // (func_80236CF4). MWCC prefixes the vtable with offset-to-top + RTTI
 // (2 entries), so user virtual index 2 sits at vtable +0x10 - the
@@ -70,6 +148,13 @@ public:
     virtual void vf02() = 0;                    // index 0 -> +0x08
     virtual void vf03() = 0;                    // index 1 -> +0x0C
     virtual void vf04(const nw4r::math::VEC3*) = 0; // index 2 -> +0x10 - Move
+};
+
+// Abstract view for the deleting-dtor virtual of nw4r::lyt::Layout as called
+// by this unit (vtable +0x08 with the delete flag in r4).
+class CArtsInfoLytView {
+public:
+    virtual void Destroy(int flags) = 0;        // index 0 -> +0x08
 };
 
 // Stats sub-object embedded at +0x17C of the func_8009EC9C character data
@@ -219,6 +304,139 @@ public:
     virtual CArtsStatBlock* getStatBlock() = 0;  // vtable +0x224
 };
 
+// Dispatch-only view of the same stats sub-object but hitting vtable +0x200
+// (user virtual #126, used by func_80235AE0).
+class CArtsStatsDisp {
+public:
+    virtual void v00() = 0;
+    virtual void v01() = 0;
+    virtual void v02() = 0;
+    virtual void v03() = 0;
+    virtual void v04() = 0;
+    virtual void v05() = 0;
+    virtual void v06() = 0;
+    virtual void v07() = 0;
+    virtual void v08() = 0;
+    virtual void v09() = 0;
+    virtual void v10() = 0;
+    virtual void v11() = 0;
+    virtual void v12() = 0;
+    virtual void v13() = 0;
+    virtual void v14() = 0;
+    virtual void v15() = 0;
+    virtual void v16() = 0;
+    virtual void v17() = 0;
+    virtual void v18() = 0;
+    virtual void v19() = 0;
+    virtual void v20() = 0;
+    virtual void v21() = 0;
+    virtual void v22() = 0;
+    virtual void v23() = 0;
+    virtual void v24() = 0;
+    virtual void v25() = 0;
+    virtual void v26() = 0;
+    virtual void v27() = 0;
+    virtual void v28() = 0;
+    virtual void v29() = 0;
+    virtual void v30() = 0;
+    virtual void v31() = 0;
+    virtual void v32() = 0;
+    virtual void v33() = 0;
+    virtual void v34() = 0;
+    virtual void v35() = 0;
+    virtual void v36() = 0;
+    virtual void v37() = 0;
+    virtual void v38() = 0;
+    virtual void v39() = 0;
+    virtual void v40() = 0;
+    virtual void v41() = 0;
+    virtual void v42() = 0;
+    virtual void v43() = 0;
+    virtual void v44() = 0;
+    virtual void v45() = 0;
+    virtual void v46() = 0;
+    virtual void v47() = 0;
+    virtual void v48() = 0;
+    virtual void v49() = 0;
+    virtual void v50() = 0;
+    virtual void v51() = 0;
+    virtual void v52() = 0;
+    virtual void v53() = 0;
+    virtual void v54() = 0;
+    virtual void v55() = 0;
+    virtual void v56() = 0;
+    virtual void v57() = 0;
+    virtual void v58() = 0;
+    virtual void v59() = 0;
+    virtual void v60() = 0;
+    virtual void v61() = 0;
+    virtual void v62() = 0;
+    virtual void v63() = 0;
+    virtual void v64() = 0;
+    virtual void v65() = 0;
+    virtual void v66() = 0;
+    virtual void v67() = 0;
+    virtual void v68() = 0;
+    virtual void v69() = 0;
+    virtual void v70() = 0;
+    virtual void v71() = 0;
+    virtual void v72() = 0;
+    virtual void v73() = 0;
+    virtual void v74() = 0;
+    virtual void v75() = 0;
+    virtual void v76() = 0;
+    virtual void v77() = 0;
+    virtual void v78() = 0;
+    virtual void v79() = 0;
+    virtual void v80() = 0;
+    virtual void v81() = 0;
+    virtual void v82() = 0;
+    virtual void v83() = 0;
+    virtual void v84() = 0;
+    virtual void v85() = 0;
+    virtual void v86() = 0;
+    virtual void v87() = 0;
+    virtual void v88() = 0;
+    virtual void v89() = 0;
+    virtual void v90() = 0;
+    virtual void v91() = 0;
+    virtual void v92() = 0;
+    virtual void v93() = 0;
+    virtual void v94() = 0;
+    virtual void v95() = 0;
+    virtual void v96() = 0;
+    virtual void v97() = 0;
+    virtual void v98() = 0;
+    virtual void v99() = 0;
+    virtual void v100() = 0;
+    virtual void v101() = 0;
+    virtual void v102() = 0;
+    virtual void v103() = 0;
+    virtual void v104() = 0;
+    virtual void v105() = 0;
+    virtual void v106() = 0;
+    virtual void v107() = 0;
+    virtual void v108() = 0;
+    virtual void v109() = 0;
+    virtual void v110() = 0;
+    virtual void v111() = 0;
+    virtual void v112() = 0;
+    virtual void v113() = 0;
+    virtual void v114() = 0;
+    virtual void v115() = 0;
+    virtual void v116() = 0;
+    virtual void v117() = 0;
+    virtual void v118() = 0;
+    virtual void v119() = 0;
+    virtual void v120() = 0;
+    virtual void v121() = 0;
+    virtual void v122() = 0;
+    virtual void v123() = 0;
+    virtual void v124() = 0;
+    virtual void v125() = 0;
+    virtual int vf126() = 0;               // vtable +0x200
+};
+
 // Non-polymorphic layout view of the embedded stats sub-object (the real
 // object is CArtsStatsV; the member slot is accessed via this struct's
 // mVtbl field, then cast for the virtual dispatch).
@@ -358,7 +576,9 @@ extern "C" void func_80139A18(void*, void*, void*, void*);
 extern "C" void func_80137924(void*, void*, void*, void*);
 extern "C" void* func_8009EC9C(u32);
 extern "C" u32 func_800A32BC(void*); // character-data category
-extern "C" u32 func_800A082C(CArtsCharData*);
+// Shared retail declaration (same signature as CItemBoxGrid.hpp - MWCC
+// rejects differing extern "C" redeclarations as illegal overloading).
+extern "C" u32 func_800A082C(void*);
 extern "C" u16 func_80139358(u32);
 extern "C" u16 func_80136254(const void*, const void*, int);
 extern "C" CArtsInfoListEntry* func_80157C4C(u32);
@@ -433,3 +653,29 @@ extern u16 lbl_eu_8066868C;
 // Arts bdat file pointer used by func_80236E6C's final row lookup
 // (func_80136254, value passed as the first argument).
 extern u32 lbl_eu_806640D8;
+
+// --- CArtsInfo::OnFileEvent imports (retail C-linkage names) ---
+extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv(); // already above? keep single decl
+extern "C" void func_80434A4C__Q23mtl10MemManagerFb(bool);
+extern "C" nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor__10CLibLayoutFv();
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
+extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
+extern "C" char* func_801355BC(void);
+extern "C" void func_801368C0(nw4r::lyt::Layout*, char*, u32);
+extern "C" void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+extern "C" void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);
+extern "C" char* func_80138F78(u32);
+extern "C" nw4r::lyt::ArcResourceAccessor* func_801355F4();
+extern "C" void func_80137E7C(nw4r::lyt::Layout*, const char*, u32);
+extern "C" void func_80124270(void*, u32);
+extern "C" void func_8003AA78__5CBdatFUlPv(u32, void*);
+extern "C" void* func_8003AA34();
+extern "C" void* getFP__FPCc(const char* name);
+extern "C" void func_8023B430(CArtsInfo* self);
+extern "C" CArtsColorPair func_801397AC(void* pane, int idx);
+extern "C" void CopyVec4s(CArtsQuadColor* dst, const CArtsColorPair* src);
+
+// Float constant in the small data area (sda21-accessed via lfs): the anchor
+// pane x-translate written by OnFileEvent.
+extern float lbl_eu_806686D0;

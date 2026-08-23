@@ -21,18 +21,11 @@ extern const f32 lbl_eu_8066A670;    // 0.6f
 extern const f32 lbl_eu_8066A674;    // 10.0f
 extern const double lbl_eu_8066A678; // 2^52 + 2^31 (int->float conversion trick)
 
-// s32 -> f32 through the shared signed magic double (lbl_eu_8066A678 =
-// 0x4330000080000000) via the union trick, so this TU emits no local
-// .sdata2 pool (retail code_8046A530.o .sdata2 is empty).
-union F64Conv_678 {
-    f64 d;
-    u32 w[2];
-};
+// s32 -> f32 via a plain cast: MWCC lowers int-to-float through the shared
+// signed magic double (lbl_eu_8066A678 = 0x4330000080000000) natively, which
+// matches retail codegen exactly (retail .sdata2 pool is empty).
 static inline f32 s32ToF_678(s32 v) {
-    F64Conv_678 c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    return (f32)(c.d - lbl_eu_8066A678);
+    return v;
 }
 extern const f32 lbl_eu_8066A680;    // func_8046AADC default x/z
 extern const f32 lbl_eu_8066A684;    // 1000.0f (rand() % 1000 divisor)
@@ -53,6 +46,7 @@ extern const f32 lbl_eu_8066A6BC;    // -1.0f
 // .sdata constants (defined below in the data block).
 extern f32 lbl_eu_80663818;    // 0.005f
 extern f32 lbl_eu_8066381C;    // 0.005f
+extern f32 lbl_eu_80663820[2]; // 0.005f (func_8046C580 velocity constant)
 
 // Warning() file / format rodata strings (nw4r db assert).
 extern const char lbl_eu_80526324[];
@@ -86,6 +80,15 @@ struct LODElement_8046A530 {
     ml::CVec3 v[7];     // 0x00..0x48
     Mtx mtxA;           // 0x54  orientation matrix A
     Mtx mtxB;           // 0x84  orientation matrix B
+};
+
+// Trivially-copyable 3-float mirror with an init-list constructor: lets the
+// batch-loop constant vectors be constructed DIRECTLY into the element
+// (single-level store, like retail) instead of through the ml::CVec3
+// ctor->set->op= chain that Wii/1.1 stages via a stack temporary.
+struct Vec3Direct_8046A530 {
+    f32 x, y, z;
+    Vec3Direct_8046A530(f32 xx, f32 yy, f32 zz) : x(xx), y(yy), z(zz) {}
 };
 
 // Helper: access the LODMemMan embedded at offset 0xa44.
@@ -154,7 +157,7 @@ void* __dt__8046A584(LOD::UnkClass_8046A530* obj, int dealloc) {
 // ---------------------------------------------------------------------------
 // Retail func_8046A5C4 is Fv-mangled but this caller passes the range start
 // pointer in r4 (which the callee ignores); declare it with the exact name.
-void func_8046A5C4__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* p1);
+extern "C" void func_8046A5C4__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* p1);
 
 LOD::UnkClass_8046A530* LOD::UnkClass_8046A530::func_8046A530() {
     u8* p1 = reinterpret_cast<u8*>(this) + 0x1d4;
@@ -170,6 +173,7 @@ LOD::UnkClass_8046A530* LOD::UnkClass_8046A530::func_8046A530() {
     return this;
 }
 
+
 // ---------------------------------------------------------------------------
 // func_8046A5C4: full LOD object init.  Zeroes the two 0x90-byte front
 // sub-objects, then for each of the 24 animation elements: identity
@@ -177,7 +181,7 @@ LOD::UnkClass_8046A530* LOD::UnkClass_8046A530::func_8046A530() {
 // by the per-batch y positions (0,1,2 / 2,1,0 / 0,1,2) and the tail field
 // defaults.
 // ---------------------------------------------------------------------------
-void func_8046A5C4__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* p1) {
+extern "C" void func_8046A5C4__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* p1) {
     LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(self);
     LODElement_8046A530* elems =
         reinterpret_cast<LODElement_8046A530*>(reinterpret_cast<u8*>(self) + 0x120);
@@ -207,9 +211,9 @@ void func_8046A5C4__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8
         PSMTXIdentity(e->mtxB);
         f32 a = lbl_eu_8066A660 * s32ToF_678(rand() % 100) - lbl_eu_8066A664;
         f32 b = lbl_eu_8066A660 * s32ToF_678(rand() % 100) - lbl_eu_8066A664;
-        e->v[6] = ml::CVec3(b, lbl_eu_8066A658, a);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[6]) = Vec3Direct_8046A530(b, lbl_eu_8066A658, a);
         if (e->v[6].x == lbl_eu_8066A658 && e->v[6].y == lbl_eu_8066A658 && e->v[6].z == lbl_eu_8066A658) {
-            e->v[6] = ml::CVec3(lbl_eu_8066A658, lbl_eu_8066A658, lbl_eu_8066A65C);
+            *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[6]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A658, lbl_eu_8066A65C);
         } else {
             f32 len2 = e->v[6].y * e->v[6].y + e->v[6].x * e->v[6].x + e->v[6].z * e->v[6].z;
             if (len2 == lbl_eu_8066A658) {
@@ -222,27 +226,27 @@ void func_8046A5C4__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8
 
     for (int i = 0; i < 8; i++) {
         LODElement_8046A530* e = &elems[i];
-        e->v[0] = ml::CVec3(lbl_eu_8066A658, lbl_eu_8066A658, lbl_eu_8066A658);
-        e->v[1] = ml::CVec3(lbl_eu_8066A658, lbl_eu_8066A65C, lbl_eu_8066A658);
-        e->v[2] = ml::CVec3(lbl_eu_8066A658, lbl_eu_8066A6B8, lbl_eu_8066A658);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[0]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A658, lbl_eu_8066A658);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[1]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A65C, lbl_eu_8066A658);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[2]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A6B8, lbl_eu_8066A658);
         e->v[3] = ml::CVec3::zero;
         e->v[4] = ml::CVec3::zero;
         e->v[5] = ml::CVec3::zero;
     }
     for (int i = 0; i < 8; i++) {
         LODElement_8046A530* e = &elems[8 + i];
-        e->v[0] = ml::CVec3(lbl_eu_8066A658, lbl_eu_8066A6B8, lbl_eu_8066A658);
-        e->v[1] = ml::CVec3(lbl_eu_8066A658, lbl_eu_8066A65C, lbl_eu_8066A658);
-        e->v[2] = ml::CVec3(lbl_eu_8066A658, lbl_eu_8066A658, lbl_eu_8066A658);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[0]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A6B8, lbl_eu_8066A658);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[1]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A65C, lbl_eu_8066A658);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[2]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A658, lbl_eu_8066A658);
         e->v[3] = ml::CVec3::zero;
         e->v[4] = ml::CVec3::zero;
         e->v[5] = ml::CVec3::zero;
     }
     for (int i = 0; i < 8; i++) {
         LODElement_8046A530* e = &elems[16 + i];
-        e->v[0] = ml::CVec3(lbl_eu_8066A658, lbl_eu_8066A658, lbl_eu_8066A658);
-        e->v[1] = ml::CVec3(lbl_eu_8066A658, lbl_eu_8066A65C, lbl_eu_8066A658);
-        e->v[2] = ml::CVec3(lbl_eu_8066A658, lbl_eu_8066A6B8, lbl_eu_8066A658);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[0]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A658, lbl_eu_8066A658);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[1]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A65C, lbl_eu_8066A658);
+        *reinterpret_cast<Vec3Direct_8046A530*>(&e->v[2]) = Vec3Direct_8046A530(lbl_eu_8066A658, lbl_eu_8066A6B8, lbl_eu_8066A658);
         e->v[3] = ml::CVec3::zero;
         e->v[4] = ml::CVec3::zero;
         e->v[5] = ml::CVec3::zero;
@@ -311,14 +315,14 @@ void func_8046AADC__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, in
 // extra arguments to; declare them with the exact names so the call relocs
 // match.
 // ---------------------------------------------------------------------------
-void func_8046AD2C__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem);
-void func_8046B0AC__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c);
-void func_8046BAE0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c);
-void func_8046C580__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c);
+extern "C" void func_8046AD2C__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem);
+extern "C" void func_8046B0AC__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c);
+extern "C" void func_8046BAE0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c);
+extern "C" void func_8046C580__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c);
 
 #pragma push
 #pragma auto_inline off
-void func_8046AB54__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, int flags, f32 scale) {
+extern "C" void func_8046AB54__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, int flags, f32 scale) {
     LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(self);
     f32 step = l->field_0x120C * scale;
     l->field_0x1210 = step;
@@ -337,8 +341,11 @@ void func_8046AB54__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, in
         }
     }
     if (flags & 0x10) {
+        // i declared first (Rule A): retail colors the counter r28 and the
+        // running element pointer r29 in this loop.
+        int i;
         u8* p = reinterpret_cast<u8*>(self) + 0x120;
-        for (int i = 0; i < 8; i++, p += 0xb4) {
+        for (i = 0; i < 8; i++, p += 0xb4) {
             func_8046B0AC__Q23LOD17UnkClass_8046A530Fv(self, p, lbl_eu_8066A68C);
         }
     }
@@ -358,12 +365,12 @@ void func_8046AB54__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, in
 #pragma pop
 
 // ---------------------------------------------------------------------------
-// func_8046AD2C: random-walk update for the 0x24-byte sub-elements.  Four
+// func_8046AD2C:
 // rand() draws steer the walk direction v[2], then v[0] is damped and v[1]
 // is pushed along v[0], with a repulsion term when v[1] gets too far from
 // the element origin.
 // ---------------------------------------------------------------------------
-void func_8046AD2C__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem) {
+extern "C" void func_8046AD2C__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem) {
     LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(self);
     LODElement_8046A530* e = reinterpret_cast<LODElement_8046A530*>(elem);
 
@@ -429,7 +436,7 @@ void func_8046AD2C__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8
 // v[0..6] chain, then rebuilds the two orientation matrices from the
 // v[2]-v[0] / v[1]-v[0] axes against the global Y axis.
 // ---------------------------------------------------------------------------
-void func_8046B0AC__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c) {
+extern "C" void func_8046B0AC__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c) {
     LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(self);
     LODElement_8046A530* e = reinterpret_cast<LODElement_8046A530*>(elem);
 
@@ -496,17 +503,16 @@ void func_8046B0AC__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8
         }
     }
 
-    // v[5] is dragged along by the direction, and the velocity vector vel is
-    // randomized per-component before being applied to v[4].
-    ml::CVec3 vel;
-    nw4r::math::VEC3Scale(vel, dir, lbl_eu_8066A698 * f31);
-    nw4r::math::VEC3Add(e->v[5], e->v[5], vel);
-    vel.x *= lbl_eu_80663818 * s32ToF_678((rand() % 100) + 100);
-    vel.y *= lbl_eu_80663818 * s32ToF_678((rand() % 100) + 100);
-    vel.z *= lbl_eu_80663818 * s32ToF_678((rand() % 100) + 100);
+    // Reuse the top temp for the random velocity like retail (saves a stack
+    // slot - retail allocates 9 vector temps, not 10).
+    nw4r::math::VEC3Scale(tmp, dir, lbl_eu_8066A698 * f31);
+    nw4r::math::VEC3Add(e->v[5], e->v[5], tmp);
+    tmp.x *= lbl_eu_80663818 * s32ToF_678((rand() % 100) + 100);
+    tmp.y *= lbl_eu_80663818 * s32ToF_678((rand() % 100) + 100);
+    tmp.z *= lbl_eu_80663818 * s32ToF_678((rand() % 100) + 100);
 
     // Integrate vel into v[4]/v[5] and damp both, clamping to +/- 0.3.
-    nw4r::math::VEC3Add(e->v[4], e->v[4], vel);
+    nw4r::math::VEC3Add(e->v[4], e->v[4], tmp);
     nw4r::math::VEC3Scale(e->v[4], e->v[4], lbl_eu_8066A65C - lbl_eu_8066A6A0 * f31);
     if (e->v[4].x > lbl_eu_8066A668) e->v[4].x = lbl_eu_8066A668;
     if (e->v[4].y > lbl_eu_8066A668) e->v[4].y = lbl_eu_8066A668;
@@ -606,7 +612,7 @@ void func_8046B0AC__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8
 // orientation matrices built against a local (0, -1, 0) vector instead of
 // the global Y axis.
 // ---------------------------------------------------------------------------
-void func_8046BAE0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c) {
+extern "C" void func_8046BAE0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c) {
     LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(self);
     LODElement_8046A530* e = reinterpret_cast<LODElement_8046A530*>(elem);
 
@@ -669,14 +675,15 @@ void func_8046BAE0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8
         }
     }
 
-    ml::CVec3 vel;
-    nw4r::math::VEC3Scale(vel, dir, lbl_eu_8066A698 * f31);
-    nw4r::math::VEC3Add(e->v[5], e->v[5], vel);
-    vel.x *= lbl_eu_8066381C * s32ToF_678((rand() % 100) + 100);
-    vel.y *= lbl_eu_8066381C * s32ToF_678((rand() % 100) + 100);
-    vel.z *= lbl_eu_8066381C * s32ToF_678((rand() % 100) + 100);
+    // Reuse the top temp for the random velocity like retail (saves a stack
+    // slot - retail allocates 9 vector temps, not 10).
+    nw4r::math::VEC3Scale(tmp, dir, lbl_eu_8066A698 * f31);
+    nw4r::math::VEC3Add(e->v[5], e->v[5], tmp);
+    tmp.x *= lbl_eu_8066381C * s32ToF_678((rand() % 100) + 100);
+    tmp.y *= lbl_eu_8066381C * s32ToF_678((rand() % 100) + 100);
+    tmp.z *= lbl_eu_8066381C * s32ToF_678((rand() % 100) + 100);
 
-    nw4r::math::VEC3Add(e->v[4], e->v[4], vel);
+    nw4r::math::VEC3Add(e->v[4], e->v[4], tmp);
     nw4r::math::VEC3Scale(e->v[4], e->v[4], lbl_eu_8066A65C - lbl_eu_8066A6A0 * f31);
     if (e->v[4].x > lbl_eu_8066A668) e->v[4].x = lbl_eu_8066A668;
     if (e->v[4].y > lbl_eu_8066A668) e->v[4].y = lbl_eu_8066A668;
@@ -734,14 +741,15 @@ void func_8046BAE0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8
     }
     PSMTXQuat(e->mtxA, &quat);
 
-    ml::CVec3 tmpB = e->v[1] - e->v[0];
-    f32 lenB = tmpB.y * tmpB.y + tmpB.x * tmpB.x + tmpB.z * tmpB.z;
+    // Both orientation rebuilds reuse one axis temp like retail.
+    nw4r::math::VEC3Sub(axis, e->v[1], e->v[0]);
+    f32 lenB = axis.y * axis.y + axis.x * axis.x + axis.z * axis.z;
     if (lenB == lbl_eu_8066A658) {
-        tmpB = ml::CVec3::zero;
+        axis = ml::CVec3::zero;
     } else {
-        PSVECNormalize(tmpB, tmpB);
+        PSVECNormalize(axis, axis);
     }
-    f32 dotB = nw4r::math::VEC3Dot(up, tmpB);
+    f32 dotB = nw4r::math::VEC3Dot(up, axis);
     if (dotB < lbl_eu_8066A6B4) {
         quat.x = lbl_eu_8066A658;
         quat.y = lbl_eu_8066A65C;
@@ -749,7 +757,7 @@ void func_8046BAE0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8
         quat.w = lbl_eu_8066A658;
     } else {
         ml::CVec3 cross;
-        PSVECCrossProduct(up, tmpB, cross);
+        PSVECCrossProduct(up, axis, cross);
         if (lbl_eu_8066A6B8 * (lbl_eu_8066A65C + dotB) < lbl_eu_8066A658) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }
@@ -774,7 +782,7 @@ void func_8046BAE0__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8
 // Byte-identical skeleton to func_8046B0AC, but the orientation matrices are
 // built against the global X axis instead of the Y axis.
 // ---------------------------------------------------------------------------
-void func_8046C580__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c) {
+extern "C" void func_8046C580__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8* elem, f32 c) {
     LODLayout_8046A530* l = reinterpret_cast<LODLayout_8046A530*>(self);
     LODElement_8046A530* e = reinterpret_cast<LODElement_8046A530*>(elem);
 
@@ -835,14 +843,15 @@ void func_8046C580__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8
         }
     }
 
-    ml::CVec3 vel;
-    nw4r::math::VEC3Scale(vel, dir, lbl_eu_8066A698 * f31);
-    nw4r::math::VEC3Add(e->v[5], e->v[5], vel);
-    vel.x *= lbl_eu_80663818 * s32ToF_678((rand() % 100) + 100);
-    vel.y *= lbl_eu_80663818 * s32ToF_678((rand() % 100) + 100);
-    vel.z *= lbl_eu_80663818 * s32ToF_678((rand() % 100) + 100);
+    // Reuse the top temp for the random velocity like retail (saves a stack
+    // slot - retail allocates 9 vector temps, not 10).
+    nw4r::math::VEC3Scale(tmp, dir, lbl_eu_8066A698 * f31);
+    nw4r::math::VEC3Add(e->v[5], e->v[5], tmp);
+    tmp.x *= lbl_eu_80663820[0] * s32ToF_678((rand() % 100) + 100);
+    tmp.y *= lbl_eu_80663820[0] * s32ToF_678((rand() % 100) + 100);
+    tmp.z *= lbl_eu_80663820[0] * s32ToF_678((rand() % 100) + 100);
 
-    nw4r::math::VEC3Add(e->v[4], e->v[4], vel);
+    nw4r::math::VEC3Add(e->v[4], e->v[4], tmp);
     nw4r::math::VEC3Scale(e->v[4], e->v[4], lbl_eu_8066A65C - lbl_eu_8066A6A0 * f31);
     if (e->v[4].x > lbl_eu_8066A668) e->v[4].x = lbl_eu_8066A668;
     if (e->v[4].y > lbl_eu_8066A668) e->v[4].y = lbl_eu_8066A668;
@@ -898,14 +907,15 @@ void func_8046C580__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8
     }
     PSMTXQuat(e->mtxA, &quat);
 
-    ml::CVec3 tmpB = e->v[1] - e->v[0];
-    f32 lenB = tmpB.y * tmpB.y + tmpB.x * tmpB.x + tmpB.z * tmpB.z;
+    // Both orientation rebuilds reuse one axis temp like retail.
+    nw4r::math::VEC3Sub(axis, e->v[1], e->v[0]);
+    f32 lenB = axis.y * axis.y + axis.x * axis.x + axis.z * axis.z;
     if (lenB == lbl_eu_8066A658) {
-        tmpB = ml::CVec3::zero;
+        axis = ml::CVec3::zero;
     } else {
-        PSVECNormalize(tmpB, tmpB);
+        PSVECNormalize(axis, axis);
     }
-    f32 dotB = nw4r::math::VEC3Dot(tmpB, ml::CVec3::unitX);
+    f32 dotB = nw4r::math::VEC3Dot(axis, ml::CVec3::unitX);
     if (dotB < lbl_eu_8066A6B4) {
         quat.x = lbl_eu_8066A658;
         quat.y = lbl_eu_8066A65C;
@@ -913,7 +923,7 @@ void func_8046C580__Q23LOD17UnkClass_8046A530Fv(LOD::UnkClass_8046A530* self, u8
         quat.w = lbl_eu_8066A658;
     } else {
         ml::CVec3 cross;
-        PSVECCrossProduct(ml::CVec3::unitX, tmpB, cross);
+        PSVECCrossProduct(ml::CVec3::unitX, axis, cross);
         if (lbl_eu_8066A6B8 * (lbl_eu_8066A65C + dotB) < lbl_eu_8066A658) {
             nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
         }

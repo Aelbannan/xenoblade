@@ -7,6 +7,16 @@ namespace cf {
 class CfGameManager;
 class CfObjectMove;
 
+// Minimal CfBdat view for this TU (see the include note in CfResPcImpl.cpp:
+// the full header's s32/int clash with code_801862C0.hpp blocks compilation
+// here). Same member signatures as cf/CfBdat.hpp.
+class CfBdat {
+public:
+    static u32 func_801422A8(u32 param1);
+    static const char* func_801424A8(u16 index);
+    static void resetMapBdatFileDataPointers();
+};
+
 // Resource object behind the lookup entry's +0x2C slot (the "child" passed
 // to func_80065CA4 by func_8018D0C4).
 struct CfResPcEntryObj {
@@ -416,14 +426,11 @@ struct CfResPcHostGM {
     /* 0x408 */ CfGameManager* field_408;
 };
 
-// Result of func_8009D5FC (file-event table query): the two u16 ids read by
-// func_8018F520 (lhz +2, then lhz +0).
-struct CfFileEventIds {
-    u16 field_0x0;
-    u16 field_0x2;
-};
-
 } // namespace cf
+
+// Result of func_8009D5FC lives in kyoshin/cf/CfGameManager.hpp
+// (CfFileEventIdsView); declared there - forward view here only.
+struct CfFileEventIdsView;
 
 // Minimal nw4r sound-object interface used by func_8018CD9C (sound slot +0x00
 // dereferenced to call SetPlayerPriority). Declared here at global scope
@@ -598,15 +605,19 @@ extern cf::CfResPcVtIf lbl_eu_80532774;
 // stores (MWCC_CASES: `extern const float` scheduling fix).
 extern const float lbl_eu_80667A40;
 
+// C-ABI import previously pulled in via cf/CfBdat.hpp (not included here;
+// see the note in CfResPcImpl.cpp).
+extern "C" int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
+
 // C-ABI imports (defined in CfRes.cpp / IResInfo.cpp / CfScript.cpp /
 // CtrlObjectParam.cpp / code_8018F8D8.cpp / CfGameManagerUnityHelpers.hpp).
 // extern "C" keeps the call-site relocs at the plain retail names (same
 // convention as CfResReloadImpl.hpp / the existing func_80069ACC below).
 extern "C" void func_80065CA4(cf::CfResPcEntryObj* child, cf::CfResPcLookupEntry* parent);
 extern "C" void func_80066714(cf::CfResPcLookupEntry* entry, bool cleanup);
-extern "C" cf::CfFileEventIds* func_8009D5FC();
+extern "C" ::CfFileEventIdsView* func_8009D5FC();
 extern "C" void func_8009EB2C(int a, int b, u8* c);
-extern "C" void func_8009F6D4();
+extern "C" void func_8009F6D4(void* object);
 extern "C" cf::CfResPcCharData* func_8009EC9C(u32 idx);
 extern "C" void func_80068AEC(u8* name);
 extern "C" void func_8008413C__Q22cf13CfGameManagerFv(u16 a, u32 b);

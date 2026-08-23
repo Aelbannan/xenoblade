@@ -22,6 +22,10 @@ extern const nw4r::math::FRUSTUM* lbl_eu_80665468;
 //     the offset so repeated sorts of similar data don't hit the same pivot),
 //   - after partitioning, the smaller side is recursed into and the larger
 //     side is looped on, keeping the recursion depth bounded.
+// Pivot rotation counter shared by the ScnObj sort instantiations in this TU
+// (retail linker name lbl_eu_8066348C).
+int lbl_eu_8066348C = 0;
+
 namespace std {
 
 template <typename T>
@@ -31,24 +35,33 @@ inline void swap(T& a, T& b) {
     b = tmp;
 }
 
-// Order the three candidate pivot elements so the median lands at _P (the
-// pivot slot at the end of the range).
+// Order the three candidate pivot elements over *_F, *_L, *_P.
 template <typename _Pr, typename _RI>
 void __sort132(_RI _F, _RI _L, _RI _P, _Pr _C) {
-    if (_C(*_L, *_F)) {
+    int i1 = _C(*_P, *_F);
+    bool n1 = !i1;
+    int i2 = _C(*_L, *_P);
+    bool n2 = !i2;
+
+    if (n1 && n2) {
+        // both comparisons returned false: ordering already fine
+    } else if (!n1 && !n2) {
         swap(*_F, *_L);
-    }
-    if (_C(*_P, *_F)) {
-        swap(*_F, *_P);
-    }
-    if (_C(*_P, *_L)) {
-        swap(*_L, *_P);
+    } else {
+        // exactly one comparison held: reorder around the third candidate
+        if (_C(*_L, *_F)) {
+            swap(*_F, *_L);
+        }
+        if (n1) {
+            swap(*_L, *_P);
+        } else {
+            swap(*_F, *_P);
+        }
     }
 }
 
 template <typename _RI, typename _Pr>
 void sort(_RI _F, _RI _L, _Pr _P) {
-    static int shuffle = 0;
 
     for (;;) {
         int count = _L - _F;
@@ -79,44 +92,56 @@ void sort(_RI _F, _RI _L, _Pr _P) {
 
         // count > 20: quicksort path
         {
-            int c = shuffle;
-            int c1 = c + 1;
+            int c = lbl_eu_8066348C;
             _RI p1 = _F + (count / 4 + c % 5);
+            int c1 = c + 1;
             if (c1 >= 5) {
                 c1 = -4;
             }
-            shuffle = c1 + 1;
-            _RI p2 = _F + (count * 3 / 4 + c1 % 5);
-            if (shuffle >= 5) {
-                shuffle = -4;
+            int s = c1 + 1;
+            lbl_eu_8066348C = s;
+            _RI p2 = _F + (((count << 2) - count) / 4 + c1 % 5);
+            if (s >= 5) {
+                // Only reachable when c == 4 (s == 5), so this stores -4.
+                lbl_eu_8066348C = s - 9;
             }
             // Force the reference comparator instantiation (as retail does).
-            __sort132<_Pr&, _RI>(p1, p2, _L - 1, _P);
+            _RI pivot = _L - 1;
+            __sort132<_Pr&, _RI>(p1, p2, pivot, _P);
 
             // Partition [_F, _L) around the pivot kept at _L - 1: advance i
             // past elements below the pivot and j down past elements above it.
-            _RI pivot = _L - 1;
             _RI i = _F;
-            _RI j = _L - 1;
+            _RI j = pivot;
             while (_P(*i, *pivot)) {
                 ++i;
             }
             do {
                 --j;
                 if (i == j) {
-                    break;
+                    goto partition_end;
                 }
             } while (!_P(*j, *pivot));
-            while (i < j) {
+            if (i < j) {
+                // Rotated loop: the first swap is peeled before the scan loop
+                // (matches retail layout).
                 swap(*i, *j);
                 ++i;
-                while (_P(*i, *pivot)) {
+                for (;;) {
+                    while (_P(*i, *pivot)) {
+                        ++i;
+                    }
+                    do {
+                        --j;
+                    } while (!_P(*j, *pivot));
+                    if (i >= j) {
+                        break;
+                    }
+                    swap(*i, *j);
                     ++i;
                 }
-                do {
-                    --j;
-                } while (!_P(*j, *pivot));
             }
+        partition_end:;
 
             if (i == _F) {
                 // The pivot is the smallest element: move it to the front and
@@ -164,6 +189,16 @@ void sort(_RI _F, _RI _L, _Pr _P) {
     }
 }
 
+} // namespace std
+
+// Explicitly instantiate the median-of-3 helper so it is emitted as its own
+// symbol (retail __sort132<...>); MWCC otherwise auto-inlines it into sort.
+namespace std {
+template void __sort132<bool (*&)(const nw4r::g3d::ScnObj*,
+                                  const nw4r::g3d::ScnObj*),
+                        nw4r::g3d::ScnObj**>(
+    nw4r::g3d::ScnObj**, nw4r::g3d::ScnObj**, nw4r::g3d::ScnObj**,
+    bool (*&)(const nw4r::g3d::ScnObj*, const nw4r::g3d::ScnObj*));
 } // namespace std
 
 namespace nw4r {
@@ -371,30 +406,26 @@ void CalcWorld__Q34nw4r3g3d7ScnRootFv(ScnRoot* self) {
 
 namespace {
 
-inline void CalcViewImpl(ScnRoot& self) {
-    nw4r::math::MTX34 mtx;
-    Camera camera(&self.mCamera[self.mCurrentCameraID]);
-
-    Camera tmp(camera);
-    tmp.GetCameraMtx(&mtx);
-
-    self.G3dProc(nw4r::g3d::G3dObj::G3DPROC_CALC_VIEW, 0, &mtx);
-}
-
 } // namespace
 
 void ScnRoot::CalcView() {
     GXInvalidateVtxCache();
-    CalcViewImpl(*this);
+
+    nw4r::math::MTX34 mtx;
+    Camera camera = GetCurrentCamera();
+
+    camera.GetCameraMtx(&mtx);
+
+    G3dProc(nw4r::g3d::G3dObj::G3DPROC_CALC_VIEW, 0, &mtx);
 }
 
 void ScnRoot::GatherDrawScnObj() {
     mpCollection->Clear();
 
-    Camera camera(&mCamera[mCurrentCameraID]);
+    Camera camera = GetCurrentCamera();
 
     math::MTX34 mtx;
-    Camera(camera).GetCameraMtx(&mtx);
+    camera.GetCameraMtx(&mtx);
 
     // Set up the culling frustum from the current camera's projection.
     math::FRUSTUM fr;
@@ -441,14 +472,14 @@ ScnRoot::ScnRoot(MEMAllocator* pAllocator, IScnObjGather* pGather,
                  u32 numLightSet, LightObj* pLightObjBuf,
                  AmbLightObj* pAmbObjBuf, LightSetData* pLightSetBuf)
     : ScnGroup(pAllocator, ppChildrenBuf, maxChildren),
+      mpCollection(pGather),
+      mDrawMode(RESMDL_DRAWMODE_SORT_XLU_Z),
+      mScnRootFlags(0),
+      mCurrentCameraID(0),
+      // Declared after the camera/fog arrays, so it initializes after them.
       mLightSetting(pLightObjBuf, pAmbObjBuf, numLight, pLightSetBuf,
-                    numLightSet) {
-    mpCollection = pGather;
-    mDrawMode = RESMDL_DRAWMODE_SORT_XLU_Z;
-    mScnRootFlags = 0;
-    mCurrentCameraID = 0;
-    mpAnmScn = NULL;
-
+                    numLightSet),
+      mpAnmScn(NULL) {
     for (u32 i = 0; i < G3DState::NUM_CAMERA; i++) {
         Camera camera(&mCamera[i]);
         camera.Init();
@@ -530,16 +561,20 @@ void ScnObjGather::Sort(LessThanFunc pOpaFunc, LessThanFunc pXluFunc) {
 }
 
 void ScnObjGather::DrawOpa(ResMdlDrawMode* pForceMode) {
-    for (u32 i = 0; i != mNumScnObjOpa; i++) {
-        mpArrayOpa[i]->G3dProc(nw4r::g3d::G3dObj::G3DPROC_DRAW_OPA, 0,
-                               pForceMode);
+    // Counter incremented before the virtual call, matching retail scheduling.
+    u32 i = 0;
+    while (i != mNumScnObjOpa) {
+        ScnObj* pObj = mpArrayOpa[i++];
+        pObj->G3dProc(nw4r::g3d::G3dObj::G3DPROC_DRAW_OPA, 0, pForceMode);
     }
 }
 
 void ScnObjGather::DrawXlu(ResMdlDrawMode* pForceMode) {
-    for (u32 i = 0; i != mNumScnObjXlu; i++) {
-        mpArrayXlu[i]->G3dProc(nw4r::g3d::G3dObj::G3DPROC_DRAW_XLU, 0,
-                               pForceMode);
+    // Counter incremented before the virtual call, matching retail scheduling.
+    u32 i = 0;
+    while (i != mNumScnObjXlu) {
+        ScnObj* pObj = mpArrayXlu[i++];
+        pObj->G3dProc(nw4r::g3d::G3dObj::G3DPROC_DRAW_XLU, 0, pForceMode);
     }
 }
 

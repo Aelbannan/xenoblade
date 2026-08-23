@@ -84,20 +84,18 @@ public:
     virtual void viBeginFrame();
 
     // Movie player methods
-    void setupGXState();                              // func_80459DEC
+    // (func_80459DEC / func_8045A260 / func_8045A8C8 are retail-named free
+    // functions defined in CLibCriMoviePlay.cpp; their retail ABIs pass the
+    // object/text-map selectors in registers that do not match member mangling.)
     static MovieEntry* func_8045A1B0();               // func_8045A1B0
     int startMovie(const char* filename, u32 allocHandle,
                    u32 allocHandle2, bool waitForStart,
                    bool useAlternateBuf);              // func_8045A260
-    bool isMoviePlaying(int id);                       // func_8045A644
-    void unsetPauseFlag(int id);                       // func_8045A708
-    bool hasActiveMovie(int id);                       // func_8045A7F8
     bool renderMovie(int id);                          // func_8045A8C8
     void updateMovies();                               // func_8045AE84
     void func_8045B1DC() {}                            // func_8045B1DC (empty)
     int func_8045B1E0();                               // func_8045B1E0
     void OnPauseTrigger(bool pause);                   // OnPauseTrigger
-    void setPauseState(bool pause);                    // func_8045B310
 
     static CLibCriMoviePlay* getInstance() { return lbl_eu_806656E0; }
 

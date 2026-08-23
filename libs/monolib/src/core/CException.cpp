@@ -37,6 +37,17 @@ static CMsgParamEntry* msgLast(CWorkThread* thread) {
     return &queue->array[(queue->front + queue->field6) % queue->capacity];
 }
 
+// Message ring header embedded in CWorkThread at +0x84 (the func_80457ED4
+// helper indexes array/front/capacity at +0x120/+0x124/+0x12C from here).
+struct CWorkThreadMsgQueue {
+    u8 pad[0x120];            // +0x84..0x1A4
+    CMsgParamEntry* array;    // +0x1A4
+    u32 front;                // +0x1A8
+    u32 size;                 // +0x1AC
+    u32 capacity;             // +0x1B0
+    u32 lastIndex;            // +0x1B4
+};
+
 extern "C" {
     // C++ delete helper for the extern "C" deleting dtor.
     void* __dl__FPv(void* p);
@@ -116,7 +127,7 @@ extern "C" {
     bool isOff__11CWorkSystemFv();
     void setAppException__8CDesktopFi(int state);
     CLibCri* getInstance__7CLibCriFv();
-    void wkStandbyLogout__5CProcFv(CProc* self);
+    bool wkStandbyLogout__5CProcFv(CProc* self);
     bool wkStandbyLogin__5CProcFv(CProc* self);
     CException* getException__9CWorkRootFv();
     void func_8044A578__8CGXCacheFv(CGXCache* cache, const ml::CCol4* color, int flag);
@@ -135,6 +146,7 @@ extern "C" {
 extern const f32 lbl_eu_8066A480;  // 0.0f
 extern const f32 lbl_eu_8066A484;  // 0.8f
 extern const f32 lbl_eu_8066A488;  // 1.0f
+extern const f32 lbl_eu_8066A4C0;  // exception fade step
 
 // Constructor - extern "C" to match retail symbol name
 extern "C" CException* __ct__CException(CException* self, const char* pName, CWorkThread* pParent) {
@@ -179,7 +191,8 @@ extern "C" bool func_80457C8C__10CExceptionFv(CException* self) {
 }
 
 // Static factory function
-CException* CException::func_80457CA4(CWorkThread* pThread, const wchar_t* message, u32 value) {
+CException* CException::func_80457CA4(CWorkThread* pThread, const wchar_t* message,
+                                      u32 value) {
     CException* exception;
     if (func_8045DE00__7CLibHbmFv()) {
         return nullptr;
@@ -194,29 +207,27 @@ CException* CException::func_80457CA4(CWorkThread* pThread, const wchar_t* messa
         wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(exception, CWorkThread::EVT_NONE);
     }
 
-    CDesktop* desktop = getException__8CDesktopFv();
-    if (desktop != nullptr) {
+    CException* result;
+    if (getException__8CDesktopFv() != nullptr) {
         CView* view = getView__8CDesktopFv();
         CWorkThread* parent = getException__8CDesktopFv();
         mtl::ALLOC_HANDLE handle = getWorkMem__17CWorkThreadSystemFv();
-        CException* result = (CException*)allocate__Q23mtl10MemManagerFUlUl(0x218, handle);
+        result = (CException*)allocate__Q23mtl10MemManagerFUlUl(0x218, handle);
         if (result != nullptr) {
             __ct__CException(result, lbl_eu_80522F7C, parent);
         }
-        exception = result;
-        entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(exception, parent, false);
-        exception->unk1E4 = view->mWorkID;
-        exception = exception->func_80457EB0();
+        entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(result, parent, false);
+        result->unk1E4 = view->mWorkID;
+        exception = result->func_80457EB0();
     } else {
         CWorkThread* parent = (CWorkThread*)CDeviceException_getInstance();
         mtl::ALLOC_HANDLE handle = getWorkMem__17CWorkThreadSystemFv();
-        CException* result = (CException*)allocate__Q23mtl10MemManagerFUlUl(0x218, handle);
+        result = (CException*)allocate__Q23mtl10MemManagerFUlUl(0x218, handle);
         if (result != nullptr) {
             __ct__CException(result, lbl_eu_80522F7C, parent);
         }
-        exception = result;
-        entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(exception, parent, false);
-        exception = exception->func_80457EB0();
+        entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(result, parent, false);
+        exception = result->func_80457EB0();
         setException__9CWorkRootFP10CException(exception);
     }
 
@@ -228,27 +239,27 @@ CException* CException::func_80457CA4(CWorkThread* pThread, const wchar_t* messa
     exception->mExceptionCode = pThread->mWorkID;
     exception->mMessage = message;
 
-    CExceptionMsgParamView* queue = msgParam(pThread);
-    CMsgParamEntry* source = msgLast(pThread);
-    CMsgParamEntry* entry = (CMsgParamEntry*)func_80457ED4__10CExceptionFv(queue->entries, queue->field6);
-    entry->command = CWorkThread::EVT_EXCEPTION;
-    entry->wid = source->wid;
-    entry->unk8 = source->unk8;
-    entry->unkC = source->unkC;
-    entry->unk10 = source->unk10;
-    entry->unk14 = source->unk14;
-    entry->unk18 = source->unk18;
-    entry->unk1C = source->unk1C;
-    entry->unk20 = source->unk20;
-    entry->unk22 = source->unk22;
-    entry->unk23 = 0;
-    queue->field6++;
-    pThread->unk1BC = queue->field6 - 1;
+    // Push an EVT_EXCEPTION copy of the newest queue entry onto the thread's
+    // message ring, then tag the new tail and link it to the exception.
+    CWorkThreadMsgQueue* queue =
+        reinterpret_cast<CWorkThreadMsgQueue*>((u8*)pThread + 0x84);
+    u32 sum = queue->front + queue->size;
+    u32 idx = sum % queue->capacity;
+    CMsgParamEntry* slot =
+        reinterpret_cast<CMsgParamEntry*>((u8*)queue->array + idx * 0x24);
+    CMsgParamEntry msg;
+    *slot = msg;
+    slot->command = CWorkThread::EVT_EXCEPTION;
+    slot->unk23 = 0;
+    queue->size += 1;
+    queue->lastIndex = queue->size - 1;
 
-    entry = (CMsgParamEntry*)func_80457ED4__10CExceptionFv(queue->entries, pThread->unk1BC);
-    entry->unk23 = 3;
-    entry = (CMsgParamEntry*)func_80457ED4__10CExceptionFv(queue->entries, queue->field6 - 1);
-    entry->wid = exception->mWorkID;
+    CMsgParamEntry* tail1 = (CMsgParamEntry*)func_80457ED4__10CExceptionFv(
+        (CMsgParamEntry*)queue, queue->lastIndex);
+    tail1->unk23 = 3;
+    CMsgParamEntry* tail2 = (CMsgParamEntry*)func_80457ED4__10CExceptionFv(
+        (CMsgParamEntry*)queue, queue->lastIndex);
+    tail2->wid = exception->mWorkID;
     return exception;
 }
 
@@ -297,8 +308,8 @@ void CException::wkRender() {
     if (view != nullptr) {
         view = (CView*)((u8*)view + 0x1C4);
     }
-    u16 width = 0;
-    u16 height = 0;
+    int width = 0;
+    int height = 0;
     GXRenderModeObj* mode = CDeviceVI::getRenderModeObj();
     width = mode->fbWidth;
     mode = CDeviceVI::getRenderModeObj();
@@ -342,61 +353,62 @@ extern "C" void func_80458084__10CExceptionFv(const void* message) {
 
 // Set the nw4r TextWriter font pointer.
 extern "C" void func_eu_8045C964__10CExceptionFv(u8* writer, void* font) {
-    u32 writerAddress = (u32)writer;
-    bool writerMem1 = true;
-    bool writerMem2 = true;
-    bool writerIo = true;
-    bool writerIo2 = true;
-    bool writerRegs = true;
+    // Validate the writer pointer against the Wii memory map (MEM1, MEM2,
+    // hardware IO registers); panic if it falls outside every known range.
     bool writerRegs2 = true;
+    bool writerRegs = true;
+    bool writerIo2 = true;
+    bool writerIo = true;
+    bool writerMem2 = true;
+    bool writerMem1 = true;
+    u32 writerTop = (u32)writer & 0xFF000000;
 
-    if ((writerAddress & 0xFF000000) != 0x80000000 &&
-        (writerAddress & 0xFF800000) != 0x81000000) {
+    if (writerTop != 0x80000000 || ((u32)writer & 0xFF800000) != 0x81000000) {
         writerMem1 = false;
     }
-    if (!writerMem1 && (writerAddress & 0xF8000000) != 0x90000000) {
+    if (!writerMem1 && ((u32)writer & 0xF8000000) != 0x90000000) {
         writerMem2 = false;
     }
-    if (!writerMem2 && (writerAddress & 0xFF000000) != 0xC0000000) {
+    if (!writerMem2 && writerTop != 0xC0000000) {
         writerIo = false;
     }
-    if (!writerIo && (writerAddress & 0xFF800000) != 0xC1000000) {
+    if (!writerIo && ((u32)writer & 0xFF800000) != 0xC1000000) {
         writerIo2 = false;
     }
-    if (!writerIo2 && (writerAddress & 0xF8000000) != 0xD0000000) {
+    if (!writerIo2 && ((u32)writer & 0xF8000000) != 0xD0000000) {
         writerRegs = false;
     }
-    if (!writerRegs && (writerAddress & 0xFFFFC000) != 0xE0000000) {
+    if (!writerRegs && ((u32)writer & 0xFFFFC000) != 0xE0000000) {
         writerRegs2 = false;
     }
     if (!writerRegs2) {
         Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8053785C, 0x41, lbl_eu_80537828, writer);
     }
 
-    u32 fontAddress = (u32)font;
-    bool fontMem1 = true;
-    bool fontMem2 = true;
-    bool fontIo = true;
-    bool fontIo2 = true;
-    bool fontRegs = true;
+    // Same range validation for the font pointer.
     bool fontRegs2 = true;
-    if ((fontAddress & 0xFF000000) != 0x80000000 &&
-        (fontAddress & 0xFF800000) != 0x81000000) {
+    bool fontRegs = true;
+    bool fontIo2 = true;
+    bool fontIo = true;
+    bool fontMem2 = true;
+    bool fontMem1 = true;
+    u32 fontTop = (u32)font & 0xFF000000;
+    if (fontTop != 0x80000000 || ((u32)font & 0xFF800000) != 0x81000000) {
         fontMem1 = false;
     }
-    if (!fontMem1 && (fontAddress & 0xF8000000) != 0x90000000) {
+    if (!fontMem1 && ((u32)font & 0xF8000000) != 0x90000000) {
         fontMem2 = false;
     }
-    if (!fontMem2 && (fontAddress & 0xFF000000) != 0xC0000000) {
+    if (!fontMem2 && fontTop != 0xC0000000) {
         fontIo = false;
     }
-    if (!fontIo && (fontAddress & 0xFF800000) != 0xC1000000) {
+    if (!fontIo && ((u32)font & 0xFF800000) != 0xC1000000) {
         fontIo2 = false;
     }
-    if (!fontIo2 && (fontAddress & 0xF8000000) != 0xD0000000) {
+    if (!fontIo2 && ((u32)font & 0xF8000000) != 0xD0000000) {
         fontRegs = false;
     }
-    if (!fontRegs && (fontAddress & 0xFFFFC000) != 0xE0000000) {
+    if (!fontRegs && ((u32)font & 0xFFFFC000) != 0xE0000000) {
         fontRegs2 = false;
     }
     if (!fontRegs2) {
@@ -451,66 +463,63 @@ extern "C" void func_80458B78__10CExceptionFv(u8* writer, f32 x, f32 y, f32 z) {
 
 // Print a wide string through a TextWriter.
 extern "C" void func_80458CBC__10CExceptionFv(u8* writer, const wchar_t* text) {
-    u32 writerAddress = (u32)writer;
-    bool writerMem1 = true;
-    bool writerMem2 = true;
-    bool writerIo = true;
-    bool writerIo2 = true;
-    bool writerRegs = true;
     bool writerRegs2 = true;
-    if ((writerAddress & 0xFF000000) != 0x80000000 &&
-        (writerAddress & 0xFF800000) != 0x81000000) {
+    bool writerRegs = true;
+    bool writerIo2 = true;
+    bool writerIo = true;
+    bool writerMem2 = true;
+    bool writerMem1 = true;
+    u32 writerTop = (u32)writer & 0xFF000000;
+    if (writerTop != 0x80000000 && ((u32)writer & 0xFF800000) != 0x81000000) {
         writerMem1 = false;
     }
-    if (!writerMem1 && (writerAddress & 0xF8000000) != 0x90000000) {
+    if (!writerMem1 && ((u32)writer & 0xF8000000) != 0x90000000) {
         writerMem2 = false;
     }
-    if (!writerMem2 && (writerAddress & 0xFF000000) != 0xC0000000) {
+    if (!writerMem2 && writerTop != 0xC0000000) {
         writerIo = false;
     }
-    if (!writerIo && (writerAddress & 0xFF800000) != 0xC1000000) {
+    if (!writerIo && ((u32)writer & 0xFF800000) != 0xC1000000) {
         writerIo2 = false;
     }
-    if (!writerIo2 && (writerAddress & 0xF8000000) != 0xD0000000) {
+    if (!writerIo2 && ((u32)writer & 0xF8000000) != 0xD0000000) {
         writerRegs = false;
     }
-    if (!writerRegs && (writerAddress & 0xFFFFC000) != 0xE0000000) {
+    if (!writerRegs && ((u32)writer & 0xFFFFC000) != 0xE0000000) {
         writerRegs2 = false;
     }
     if (!writerRegs2) {
         Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80537734, 0x100, lbl_eu_80537700, writer);
     }
-
-    u32 textAddress = (u32)text;
-    bool textMem1 = true;
-    bool textMem2 = true;
-    bool textIo = true;
-    bool textIo2 = true;
-    bool textRegs = true;
     bool textRegs2 = true;
-    if ((textAddress & 0xFF000000) != 0x80000000 &&
-        (textAddress & 0xFF800000) != 0x81000000) {
+    bool textRegs = true;
+    bool textIo2 = true;
+    bool textIo = true;
+    bool textMem2 = true;
+    bool textMem1 = true;
+    u32 textTop = (u32)text & 0xFF000000;
+    if (textTop != 0x80000000 && ((u32)text & 0xFF800000) != 0x81000000) {
         textMem1 = false;
     }
-    if (!textMem1 && (textAddress & 0xF8000000) != 0x90000000) {
+    if (!textMem1 && ((u32)text & 0xF8000000) != 0x90000000) {
         textMem2 = false;
     }
-    if (!textMem2 && (textAddress & 0xFF000000) != 0xC0000000) {
+    if (!textMem2 && textTop != 0xC0000000) {
         textIo = false;
     }
-    if (!textIo && (textAddress & 0xFF800000) != 0xC1000000) {
+    if (!textIo && ((u32)text & 0xFF800000) != 0xC1000000) {
         textIo2 = false;
     }
-    if (!textIo2 && (textAddress & 0xF8000000) != 0xD0000000) {
+    if (!textIo2 && ((u32)text & 0xF8000000) != 0xD0000000) {
         textRegs = false;
     }
-    if (!textRegs && (textAddress & 0xFFFFC000) != 0xE0000000) {
+    if (!textRegs && ((u32)text & 0xFFFFC000) != 0xE0000000) {
         textRegs2 = false;
     }
     if (!textRegs2) {
         Panic__Q24nw4r2dbFPCciPCce(lbl_eu_805376EC, 0x101, lbl_eu_805376B8, text);
     }
-    Print__Q34nw4r2ut17TextWriterBaseFPCwi(writer, text, (int)wcslen(text));
+    ((nw4r::ut::TextWriterBase<wchar_t>*)writer)->Print(text, (int)wcslen(text));
 }
 
 // Login setup
@@ -518,65 +527,83 @@ bool CException::wkStandbyLogin() {
     if (getView__8CDesktopFv() != nullptr) {
         CView* view = pssCreateView__5CProcFPCcP11CWorkThreadi(this, mName.c_str(),
                                                                getView__8CDesktopFv(), 0);
-        ml::CCol4 color;
-        func_800407C8(&color, lbl_eu_8066A480, lbl_eu_8066A480, lbl_eu_8066A480, lbl_eu_8066A488);
-        *(ml::CCol4*)((u8*)view + 0x444) = color;
+        // func_800407C8 fills a color plus a template message entry (the
+        // retail callee writes 0x34 bytes); the entry bytes seed the ring push.
+        struct {
+            ml::CCol4 color;
+            CMsgParamEntry entry;
+        } local;
+        func_800407C8(reinterpret_cast<ml::CCol4*>(&local), lbl_eu_8066A480,
+                      lbl_eu_8066A480, lbl_eu_8066A480, lbl_eu_8066A488);
+        view->unk444 = *(ml::CVec4*)&local.color;
 
-        CMsgParam<10>& messages =
-            *reinterpret_cast<CMsgParam<10>*>(&view->mContextMsgVtable);
-        messages.enqueue(CWorkThread::EVT_4);
+        // Enqueue an EVT_4 message into the view's context ring.
+        u32 sum = view->unk3F0 + view->mContextRingWriteIndex;
+        u32 idx = sum % view->mContextRingCapacity;
+        CMsgParamEntry* slot = reinterpret_cast<CMsgParamEntry*>(
+            view->mContextRingBase + idx * 0x24);
+        *slot = local.entry;
+        slot->command = CWorkThread::EVT_4;
+        slot->unk23 = 0;
+        view->mContextRingWriteIndex += 1;
+        view->unk3FC = view->mContextRingWriteIndex - 1;
+
         GXRenderModeObj* mode = getRenderModeObj__9CDeviceVIFv();
-        ml::CRect16 rect(0, 0, mode->fbWidth, mode->efbHeight);
+        s16 height = mode->efbHeight;
+        mode = getRenderModeObj__9CDeviceVIFv();
+        ml::CRect16 rect(0, 0, mode->fbWidth, height);
         setRect__5CViewFRCQ22ml7CRect16(view, &rect);
         view->unk460 = 2;
     }
 
-    mAlphaStep = lbl_eu_8066A480;
-    mAlpha = lbl_eu_8066A480;
+    mAlphaStep = lbl_eu_8066A4C0;
+    mAlpha = lbl_eu_8066A4C0;
     mAnimState = 0;
     lbl_eu_806656C8 = unk208;
     setAppException__8CDesktopFi(1);
-    CLibCri* cri = getInstance__7CLibCriFv();
-    if (cri != nullptr) {
-        wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(cri, CWorkThread::EVT_APPEXCEPTION_ON);
+    if (getInstance__7CLibCriFv() != nullptr) {
+        wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(getInstance__7CLibCriFv(),
+                                                      CWorkThread::EVT_APPEXCEPTION_ON);
     }
-    return CProc::wkStandbyLogin();
+    return wkStandbyLogin__5CProcFv(this);
 }
 
 // Logout teardown
 bool CException::wkStandbyLogout() {
-    CDoubleListNode* sentinel = *(CDoubleListNode**)((u8*)this + 0x60);
-    if (sentinel->mNext == sentinel) {
-        extern const f32 lbl_eu_8066A480;
-        f32 alpha = mAlpha;
-        if (lbl_eu_8066A480 != alpha &&
-            (isOff__11CWorkSystemFv() == false &&
-             func_8045D478__7CLibHbmFv() == nullptr && mFlag210 == 0)) {
-            return false;
+    // Child-list header pointer at 0x60; empty when its back-link points at itself.
+    // Proceed only when fully faded out or one of the override conditions holds.
+    CDoubleListNode* header = *(CDoubleListNode**)((u8*)this + 0x60);
+    if (header->GetPrev() == header &&
+        (lbl_eu_8066A480 == mAlpha || isOff__11CWorkSystemFv() ||
+         func_8045D478__7CLibHbmFv() != nullptr || mFlag210 != 0)) {
+        setAppException__8CDesktopFi(0);
+        if (getInstance__7CLibCriFv() != nullptr) {
+            wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(getInstance__7CLibCriFv(),
+                                                          CWorkThread::EVT_APPEXCEPTION_OFF);
         }
-    } else {
-        return false;
+        if (getException__9CWorkRootFv() == this) {
+            setException__9CWorkRootFP10CException(nullptr);
+        }
+        return wkStandbyLogout__5CProcFv(this);
     }
-
-    setAppException__8CDesktopFi(0);
-    CLibCri* cri = getInstance__7CLibCriFv();
-    if (cri != nullptr) {
-        wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(cri, CWorkThread::EVT_APPEXCEPTION_OFF);
-    }
-    if (getException__9CWorkRootFv() == this) {
-        setException__9CWorkRootFP10CException(nullptr);
-    }
-    return CProc::wkStandbyLogout();
+    return false;
 }
 
 // Infinite render loop
+// Hand-built CException vtable layout: slot at offset 0xC is the render entry.
+// Declared as a polymorphic shim so MWCC emits a true r12 virtual-call sequence.
+class CVirtualException {
+public:
+    virtual void slot0();
+    virtual void render();
+};
+
 extern "C" void func_80459118__10CExceptionFv(const char* message) {
-    CException** entries = lbl_eu_80657B50;
-    u32 count = lbl_eu_806656C4;
-    u32 index = 0;
-    while (index < count) {
-        CException* exception = entries[index];
-        ((void (*)(CException*))(*(u32*)exception + 0xC))(exception);
+    int index = 0;
+    while (index < (int)lbl_eu_806656C4) {
+        CException* exception = lbl_eu_80657B50[index];
+        // Virtual call through hand-built vtable.
+        ((CVirtualException*)exception)->render();
         index++;
     }
     if (message == nullptr || message[0] == 0 || CDeviceVI::getInstance() == nullptr) {
@@ -600,15 +627,15 @@ void CException::func_804591BC(IException* pException) {
 
 // Remove from global array
 extern "C" void func_804591DC__10CExceptionFP10IException(CException* self) {
-    u32 count = lbl_eu_806656C4;
-    CException** exceptions = lbl_eu_80657B50;
-    for (u32 index = 0; index < count; ++index) {
-        if (exceptions[index] == self) {
-            u32 last = count - 1;
-            for (u32 shift = index; shift < last; ++shift) {
-                exceptions[shift] = exceptions[shift + 1];
+    int count = lbl_eu_806656C4;
+    for (int index = 0; index < count; ++index) {
+        if (lbl_eu_80657B50[index] == self) {
+            int last = count - 1;
+            // Shift the tail entries down one slot.
+            for (int shift = index; shift < last; ++shift) {
+                lbl_eu_80657B50[shift] = lbl_eu_80657B50[shift + 1];
             }
-            lbl_eu_806656C4 = last;
+            lbl_eu_806656C4 = lbl_eu_806656C4 - 1;
             return;
         }
     }

@@ -1402,25 +1402,29 @@ static u32 getCurrentField(void) {
 }
 
 u32 VIGetNextField(void) {
-    u32 field;
+    u32 hcount;
+    u32 vcount;
+    u32 prev;
     u32 halfLine;
     u32 nh;
-    u32 hlw;
+    u32 field;
     BOOL enabled;
 
     enabled = OSDisableInterrupts();
-    field = VI_HW_REGS[VI_DPV] & 0x7FF;
+
+    // Poll until two consecutive DPV reads agree.
+    hcount = VI_HW_REGS[VI_DPV] & 0x7FF;
     do {
-        halfLine = VI_HW_REGS[VI_DPH] & 0x7FF;
-    } while (field == (VI_HW_REGS[VI_DPV] & 0x7FF));
-    field = VI_HW_REGS[VI_DPV] & 0x7FF;
-    hlw = CurrTiming->hlw;
+        vcount = VI_HW_REGS[VI_DPH] & 0x7FF;
+        prev = hcount;
+        hcount = VI_HW_REGS[VI_DPV] & 0x7FF;
+    } while (prev != hcount);
+
+    nh = CurrTiming->nhlines;
+    halfLine = ((hcount - 1) << 1) + ((vcount - 1) / CurrTiming->hlw);
+
+    halfLine = ((prev - 1) << 1) + ((vcount - 1) / CurrTiming->hlw);
     nh = (u32)CurrTiming->nhlines;
-    {
-        u32 hl = (field - 1) << 1;
-        u32 div = (halfLine - 1) / hlw;
-        halfLine = hl + div;
-    }
     field = ((nh << __cntlzw(nh ^ halfLine)) >> 31);
     OSRestoreInterrupts(enabled);
 

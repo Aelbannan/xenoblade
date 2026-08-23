@@ -10,6 +10,9 @@ namespace nw4r {
 namespace lyt {
 class Layout;
 class DrawInfo;
+class ArcResourceAccessor;
+class AnimTransform;
+class Pane;
 }
 }
 class CScn;
@@ -59,7 +62,7 @@ struct CMenuLandTelop {
     u32 mScnRender;                      // 0x70 IScnRender dispatch vtable ptr
     CScn* mScene;                        // 0x74 owning scene
     UnkClass_8045F564 mMemRegion;        // 0x78 embedded scratch region (0x10)
-    u32 field_88;                        // 0x88
+    nw4r::lyt::AnimTransform* field_88;  // 0x88 layout anim transform
     u16 field_8C;                        // 0x8C
     u8  field_8E;                        // 0x8E
     u8  _8F;                             // 0x8F
@@ -145,10 +148,8 @@ CMenuLandTelop* __dt__14CMenuLandTelopFv(CMenuLandTelop* _this, int flags);
 void cbRenderBefore__14CMenuLandTelopFv(void* _this);
 int func_80226B94();
 int func_8013BE50();
-const char* getBdatStringColumnValue(void* bdat, const char* column, int index);
-// cf::CBattleManager::getInstance() - retail symbol is the pre-mangled name;
-// declared extern "C" so MWCC emits it verbatim (CSysWinScenarioLog idiom).
-void* getInstance__Q22cf14CBattleManagerFv();
+// getBdatStringColumnValue / getInstance__Q22cf14CBattleManagerFv come from
+// their canonical headers via the include chain (u32 / CBattleManagerView*).
 int func_80144FC8();
 int func_80144FF0();
 void func_80145018();
@@ -171,6 +172,58 @@ void func_80137038(nw4r::lyt::Layout* layout, nw4r::lyt::DrawInfo* drawInfo,
 extern "C" void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo);
 extern "C" void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* drawInfo,
                                               int flags);
+
+// View of the object returned by CDeviceFont::func_80452C10: vtable+0x24
+// returns the font handle handed to func_8013676C (root-pane font binding).
+class CLandTelopFontObj {
+public:
+    virtual ~CLandTelopFontObj(); // 0x00 (3 dtor slots)
+    virtual void vfunc_0x0C();
+    virtual void vfunc_0x10();
+    virtual void vfunc_0x14();
+    virtual void vfunc_0x18();
+    virtual void vfunc_0x1C();
+    virtual void vfunc_0x20();
+    virtual u32 getFontHandle();  // 0x24
+};
+
+// Land-telop string/layout-name table plus the anim timing constants used by
+// Move / func_8014548C.
+extern char lbl_eu_80501720[];
+extern f32 lbl_eu_806673CC;       // banner/frame step delta
+extern f32 lbl_eu_806673D0;       // banner timer limit
+extern f64 lbl_eu_806673D8;       // progress clamp (high)
+extern f64 lbl_eu_806673E0;       // progress clamp (low)
+extern f32 lbl_eu_806673E8;       // progress scale
+extern f32 lbl_eu_806673EC;       // cue volume scale
+extern f32 lbl_eu_806673F0;       // fade timer limit
+extern f64 lbl_eu_806673F8;       // u32->double conversion bias
+
+// C-linkage imports whose retail symbols are unmangled or pre-mangled
+// identifiers (declaring them C++ would emit a mangled reloc).
+extern "C" {
+nw4r::lyt::ArcResourceAccessor* func_801355F4();
+u8 func_8013600C(const void*, const void*, u32);
+void* func_8010CE48();                    // system menu open gate
+unsigned char func_8014A2A0();
+unsigned char func_8014A2B4();
+f32 func_801895EC();                      // scene BGM volume
+u32 func_80495FF0(CScn* scene);           // scene audio handle
+void func_80043738(u32, const char*, u32, u32, u32, u32, f32);
+u32 func_8008235C__Q22cf13CfGameManagerFv(u32);
+void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32,
+                                                         nw4r::lyt::Layout*);
+int func_8026178C(void* data, u32 flag);
+u32 func_8025FB10(void* data, u32 flag);
+u32 func_80293C10();                      // party-change notice gate
+s32 func_8029A658();                      // party-change notice gate
+u32 func_801B481C();                      // block-condition gate
+u32 func_80122450();                      // quest-menu gate
+unsigned int func_80124B78();             // system-menu gate
+}
+
+// C++-linkage import (retail symbol is the mangled func_80138078__FUl).
+void func_80138078(u32 cue);
 
 // Global data imports (sbss/rodata; MWCC does not mangle global-scope data).
 extern CLandTelopGlobal* lbl_eu_806641A0;

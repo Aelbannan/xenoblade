@@ -23,6 +23,7 @@ class CfGameManager {
 public:
     static CfObjectMove* getPlayer(int playerIndex);
     static bool func_8007F91C();
+    u8 pad[0xB0];               // 0x00..0xAF
     UnkClass_800821F8* unkB0;   // 0xB0 - cleared by func_80208EE4
     void func_80080F44();
 };
@@ -214,6 +215,7 @@ void func_80208E98() {
 
 // retail: stw r3, lbl_eu_806646B8; blr - store arg to global
 extern unsigned long lbl_eu_806646B8;
+extern const f64 lbl_eu_80668368;
 extern "C" void func_80208EDC(u32 value) { lbl_eu_806646B8 = value; }
 
 void func_80208EE4(cf::CfGimmick* self) {
@@ -266,15 +268,17 @@ void func_8020915C(CfGimmick* self, CfGimmick* out, void* unused, void** holder)
 }
 
 void func_80209288(CfGimmick* self, f32* out, void* bdat, void** table) {
-    s16 v = (s16)getBdatStringColumnValue(
+    // Address-taking forces the call result to spill; the s16 deref reload
+    // emits retail's stw + lha memory truncation idiom.
+    s32 rawA = getBdatStringColumnValue(
         *table, *(char**)(lbl_eu_805357E8 + 0x1C) + 2, self->field_64);
-    out[0] = v * lbl_eu_8066A210;
-    v = (s16)getBdatStringColumnValue(
+    out[0] = lbl_eu_8066A210 * (f32)*(const s16*)&rawA;
+    s32 rawB = getBdatStringColumnValue(
         *table, *(char**)(lbl_eu_805357E8 + 0x20) + 2, self->field_64);
-    out[1] = v * lbl_eu_8066A210;
-    v = (s16)getBdatStringColumnValue(
+    out[1] = lbl_eu_8066A210 * (f32)*(const s16*)&rawB;
+    s32 rawC = getBdatStringColumnValue(
         *table, *(char**)(lbl_eu_805357E8 + 0x24) + 2, self->field_64);
-    out[2] = v * lbl_eu_8066A210;
+    out[2] = lbl_eu_8066A210 * (f32)*(const s16*)&rawC;
 }
 
 void func_8020938C(CfGimmick* self, f32* out, void* unused, void** holder, int v) {
@@ -353,12 +357,29 @@ int func_80209754(u32 mask, CfGimmick* gimmick, const CfGimmickVec3* point,
 
 rotation:
     if (mask & 0x4) {
-        // Retail loads the angle/fixed-angle operand FIRST (right operand of
-        // the scale product), so write X * K with the variable on the left.
-        f32 sa = nw4r::math::SinFIdx(ang[1] * lbl_eu_80668354);
-        f32 ca = nw4r::math::CosFIdx(ang[1] * lbl_eu_80668354);
-        f32 sb = nw4r::math::SinFIdx(lbl_eu_806646B0 * lbl_eu_80668354);
-        f32 cb = nw4r::math::CosFIdx(lbl_eu_806646B0 * lbl_eu_80668354);
+        // Scoped angle temporaries force retail's load schedule: the raw
+        // angle is fetched by its own statement first, then the fixed scale
+        // inside each product (lfs var; lfs K; fmuls fD, f0(K), fX(var)).
+        f32 sa;
+        f32 ca;
+        f32 sb;
+        f32 cb;
+        {
+            f32 a = ang[1];
+            sa = nw4r::math::SinFIdx(lbl_eu_80668354 * a);
+        }
+        {
+            f32 a = ang[1];
+            ca = nw4r::math::CosFIdx(lbl_eu_80668354 * a);
+        }
+        {
+            f32 b = lbl_eu_806646B0;
+            sb = nw4r::math::SinFIdx(lbl_eu_80668354 * b);
+        }
+        {
+            f32 b = lbl_eu_806646B0;
+            cb = nw4r::math::CosFIdx(lbl_eu_80668354 * b);
+        }
         if (sa * sb + ca * cb <= lbl_eu_80668350)
             return 0;
         if (sa * (lbl_eu_805765A0.x - point->x) +
@@ -394,7 +415,7 @@ static bool checkGimmickPlayer(CfGimmick* gimmick, const CfGimmickVec3* point, i
     if (pmv == 0)
         return false;
     CfPlayerBase* base = (CfPlayerBase*)((char*)pmv - 0x3E9C);
-    float hp = ((float (*)(void*))base->vtable[0x128 >> 2])(base);
+    float hp = base->getHP();
     if (hp <= 0.0f)
         return false;
     void* sub = base->subField3F60;
@@ -579,9 +600,12 @@ int func_8020A294(u32 playerId) {
         CfPlayerBase* base = (CfPlayerBase*)node->object;
         if (base != 0)
             base = (CfPlayerBase*)((char*)base - 0x3E9C);
+        float hp;
         if ((int)((CfPlayerIdView*)base)->id456C >> 4 == playerId) {
-            float hp = ((float (*)(CfPlayerBase*))base->vtable[0x128 >> 2])(base);
-            if (hp > zero)
+            float hp = base->getHP();
+            // Retail materializes the le-test through cror/mfcr/extrwi.
+            int lowHP = hp <= zero;
+            if (!lowHP)
                 result = 0;
         }
         node = node->next;
@@ -639,28 +663,29 @@ void func_8020A434(CfGimmickReg* self) {
 unsigned int func_8020A5DC();
 
 int func_8020A484(int index) {
+    // One reused `name` local: retail colors the bdat/column-string web and
+    // the cap/default-name web into r31/r30 respectively.
     void* bdat;
-    const char* nameA;
     s32 cap;
     s32 cnt;
+    const char* name;
     if (index != 0) {
         bdat = lbl_eu_80664148;
         if (bdat != 0) {
             func_8003AA34();
-            // Two statements: retail calls B41C first and keeps its result in a
-            // callee-saved register across the B1EC call (add r0, r30, r3).
-            cap = func_8003B41C(bdat);
-            cnt = func_8003B1EC(bdat);
-            s32 bound = cap + cnt;
-            if (bound > index) {
+            // Named cap/cnt like the matched func_8020A608: B41C's result
+            // stays callee-saved across the B1EC call.
+            s32 cap = func_8003B41C(bdat);
+            s32 cnt = func_8003B1EC(bdat);
+            if (cap + cnt > index) {
                 u8* col = *(u8**)(lbl_eu_805357E8 + 0x44);
                 col[4] = 0x33;
-                nameA = (const char*)getBdatStringColumnValue(
+                name = (const char*)getBdatStringColumnValue(
                     bdat, *(char**)(lbl_eu_805357E8 + 0x44), index);
                 // Retail inlines the func_8020A5DC boolean (neg/or/srwi) here.
                 if (func_8013C54C() != 0) {
                     if (func_8020A5DC() == 0) {
-                        sprintf(lbl_eu_805765D8, lbl_eu_80508634 + 0x2A, nameA);
+                        sprintf(lbl_eu_805765D8, lbl_eu_80508634 + 0x2A, name);
                         func_8013D55C(lbl_eu_805765D8, 0, 0);
                         return 1;
                     }
@@ -669,7 +694,7 @@ int func_8020A484(int index) {
             }
         }
     }
-    const char* name = (const char*)lbl_eu_80662788;
+    name = (const char*)lbl_eu_80662788;
     if (func_8013C54C() != 0 && func_8020A5DC() == 0) {
         sprintf(lbl_eu_805765D8, lbl_eu_80508634 + 0x2A, name);
         func_8013D55C(lbl_eu_805765D8, 0, 0);
@@ -816,16 +841,19 @@ int func_8020A8B4(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVe
 // space it must lie inside the horizontal radius (field_30) and vertical
 // band [field_38, field_34].
 int func_8020A928(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
+    // SDK VEC3Sub + VEC3LenSq kernels reproduce the retail paired-single
+    // distance block.
+    nw4r::math::VEC3 diff;
+    VEC3Sub(&diff, (const nw4r::math::VEC3*)point, (const nw4r::math::VEC3*)center);
+    if (VEC3LenSq(&diff) > self->field_40)
+        return 0;
+
     Vec tmp;
-    f32 dx = center->x - point->x;
-    f32 dy = center->y - point->y;
-    f32 dz = center->z - point->z;
-    if (dx * dx + dy * dy + dz * dz <= self->field_40) {
-        PSMTXMultVec((const f32 (*)[4])self, (const Vec*)point, (Vec*)&tmp);
-        if (tmp.x * tmp.x + tmp.z * tmp.z <= self->field_30 * self->field_30) {
-            if (self->field_34 >= tmp.y && self->field_38 <= tmp.y)
-                return 1;
-        }
+    PSMTXMultVec((const f32 (*)[4])self, (const Vec*)point, (Vec*)&tmp);
+    // Right addend first keeps retail's z-load-first schedule.
+    if (tmp.x * tmp.x + tmp.z * tmp.z <= self->field_30 * self->field_30) {
+        if (self->field_34 >= tmp.y && self->field_38 <= tmp.y)
+            return 1;
     }
     return 0;
 }
@@ -849,11 +877,10 @@ int func_8020A9F4(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVe
 // inlined paired-single kernels reproduce retail's psq_l/ps_sub/ps_mul/
 // ps_madd/ps_sum0 sequence.
 int func_8020AA8C(CfGimmick* self, const CfGimmickVec3* point, const CfGimmickVec3* center) {
-    f32 range = self->field_40;
+    // SDK VEC3Sub + VEC3LenSq kernels, same idiom as func_8020A928.
     nw4r::math::VEC3 diff;
-    VEC3Sub(&diff, (const nw4r::math::VEC3*)center, (const nw4r::math::VEC3*)point);
-    f32 distSq = VEC3LenSq(&diff);
-    if (distSq > range)
+    VEC3Sub(&diff, (const nw4r::math::VEC3*)point, (const nw4r::math::VEC3*)center);
+    if (VEC3LenSq(&diff) > self->field_40)
         return 0;
 
     Vec tmp;

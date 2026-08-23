@@ -167,7 +167,7 @@ public:
     // 0x0-0x1C8: CWorkThread + CDeviceBase base
     CDeviceFontInfoReslist mInfoList;      // 0x1C8 (font-info list)
     u32 mFontId;                           // 0x1E8 (current font layer/id)
-    u32 field_0x1EC;                       // 0x1EC
+    s32 field_0x1EC;                       // 0x1EC (signed: retail switch emits cmpi, not cmpli)
 };
 
 // Minimal view of a child font-layer work thread (CDeviceFontLayer). This TU
@@ -186,6 +186,9 @@ public:
     u8 field_0x1FC[0x2F0 - 0x1FC]; // 0x1FC
     u8 mFlag2F0;                  // 0x2F0 (set by func_80452690)
 
+    // The retail symbol-map entries carry decompiler-guessed Fv suffixes even
+    // though the bodies consume arguments; the wrappers in CDeviceFont.cpp
+    // reference them under the literal retail names.
     void func_80453BB4();
     void func_80453FF0();
     void func_804541F8();
@@ -219,6 +222,63 @@ extern const char lbl_eu_80522DDC[];
 
 // Retail font-device config/state word (sdata2).
 extern u32 lbl_eu_8066567C;
+
+// Minimal CDeviceVI view (the full header would drag in CDeviceBase and
+// clash with this TU's minimal CWorkThread views).
+#include <revolution/GX.h>
+class CDeviceVI {
+public:
+    static void setFlag0(bool state);
+    static GXRenderModeObj* getRenderModeObj();
+};
+
+// nw4r assertion hook used by the wkRender pointer-validation macros.
+namespace nw4r {
+namespace db {
+void Panic(const char* file, int line, const char* message, ...);
+} // namespace db
+} // namespace nw4r
+
+// sdata2 constants used by wkRender (fade ramp + projection/cursor math).
+extern f64 lbl_eu_8066A3B8;
+extern f64 lbl_eu_8066A3C0;
+extern const f32 lbl_eu_8066A3C8;
+extern const f32 lbl_eu_8066A3CC;
+extern const f32 lbl_eu_8066A3D0;
+extern const f32 lbl_eu_8066A3D4;
+extern const f32 lbl_eu_8066A3D8;
+extern const f32 lbl_eu_8066A3DC;
+extern const f32 lbl_eu_8066A3E0;
+extern const f32 lbl_eu_8066A3E4;
+extern const f32 lbl_eu_8066A3E8;
+extern const f32 lbl_eu_8066A3EC;
+extern const f32 lbl_eu_8066A3F0;
+extern const f32 lbl_eu_8066A3F4;
+extern const f32 lbl_eu_8066A3F8;
+extern const f32 lbl_eu_8066A3FC;
+
+// UTF-16 render buffer (wchar_t[0x200]) filled by wkRender.
+extern wchar_t lbl_eu_80657750[512];
+
+// rodata file/message strings passed to nw4r::db::Panic by wkRender.
+extern char lbl_eu_8052DC70[];
+extern char lbl_eu_8052DC3C[];
+extern char lbl_eu_8052DD84[];
+extern char lbl_eu_8052DD50[];
+extern char lbl_eu_8052DC28[];
+extern char lbl_eu_8052DBF4[];
+extern char lbl_eu_8053785C[];
+extern char lbl_eu_80537828[];
+extern char lbl_eu_80537818[];
+extern char lbl_eu_805377E0[];
+extern char lbl_eu_8052DCFC[];
+extern char lbl_eu_8052DCC8[];
+extern char lbl_eu_805378A0[];
+extern char lbl_eu_8053786C[];
+extern char lbl_eu_80537734[];
+extern char lbl_eu_80537700[];
+extern char lbl_eu_805376EC[];
+extern char lbl_eu_805376B8[];
 
 // Unmangled C-linkage imports used by wkUpdate (retail emits these names
 // literally, so they cannot be expressed as C++ members): the font-loader

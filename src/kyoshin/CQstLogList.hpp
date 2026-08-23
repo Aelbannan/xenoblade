@@ -122,7 +122,7 @@ struct CQstLogList {
     CQstLogListSortMenuData mSortMenuData;  // 0x80..0x16F CSortMenu (mirror storage)
     u8 field_0x170;                  // 0x170 - layout loaded flag
     u8 pad_0171[0x174 - 0x171];      // 0x171..0x173
-    u32 field_0x174;                 // 0x174 - mode (0/2/5 set by anim checks)
+    s32 field_0x174;                 // 0x174 - mode (0/2/5 set by anim checks)
     u8 field_0x178;                  // 0x178
     u8 mSortEnabled;                 // 0x179 - enables sorting/filtering (init=1)
     u8 mSortDescending;              // 0x17A - sort direction, 0=asc, 1=desc (init=0)
@@ -153,7 +153,7 @@ extern "C" CQstLogListEntry* func_80227994(CQstLogListEntry* pDst, const CQstLog
 class CCur18View {
 public:
     virtual void vf02() = 0;                        // index 0 -> +0x08
-    virtual void vf03(const u8*) = 0;               // index 1 -> +0x0C
+    virtual void vf03() = 0;                        // index 1 -> +0x0C (retail passes no arg - r4 carries stale flag 1)
     virtual void vf04(const nw4r::math::VEC3*) = 0; // index 2 -> +0x10 - Move
 };
 
@@ -170,6 +170,11 @@ extern "C" u8 func_801D32DC(CSortMenu* _this);
 extern "C" void func_801D216C(void*, u8);
 extern "C" void func_801D3430(CQstLogListSortMenuData*, const nw4r::math::VEC3*);
 extern "C" void func_801D3330(CQstLogListSortMenuData*);
+extern "C" void func_801D202C(void*);                 // CCur18 per-frame update
+extern "C" void func_801D3160(void*);                 // CSortMenu per-frame update
+extern "C" void func_801D3258(void*);                 // CSortMenu destroy
+extern "C" u8 func_801D3808(void*);                   // sort-menu selected page
+extern "C" u8 func_801D3810(void*);                   // sort-menu selected entry
 
 // Imports with retail names spelled verbatim (C linkage; MWCC would mangle
 // plain declarations - the bl reloc must bind to the unmangled retail name).
@@ -177,7 +182,7 @@ extern "C" void func_801D3064(void*);
 extern "C" void func_801D31F8(void*, void*);
 extern "C" void func_801D20B0(void*, void*);
 extern "C" void func_801D3408(void*);
-extern "C" u8 func_801D3328(void*);
+extern "C" int func_801D3328(void*);
 extern "C" void __dt__9CSortMenuFv(void*, int);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __destroy_arr(void*, void*, int, int);
@@ -238,3 +243,7 @@ extern "C" u32 lbl_eu_80536288[];  // CQstLogList vtable (.data; array -> lis/ad
 // const routes into readonly sdata2 - MWCC hoists the lfs above the frame
 // stores (MWCC_CASES:8787); plain extern float schedules it late.
 extern const float lbl_eu_80668584;  // anim frame target (sda21)
+// Scroll-bar init position constants (sda21 floats).
+extern const float lbl_eu_80668578;
+extern const float lbl_eu_8066857C;
+extern const float lbl_eu_80668580;

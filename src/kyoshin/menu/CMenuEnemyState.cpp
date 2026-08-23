@@ -186,7 +186,7 @@ extern const f32 lbl_eu_80666FEC;
 extern const f32 lbl_eu_80667004;
 }
 
-CMenuEnemyState::CMenuEnemyState(void* scn) : unk54(0), unk55(0){
+CMenuEnemyState::CMenuEnemyState(void* scn) {
     // NV decl order targets retail homes: r31=this, r30=zero, r29=scn.
     u32 zero;
     CMenuEnemyCtorProcess* process;
@@ -196,8 +196,8 @@ CMenuEnemyState::CMenuEnemyState(void* scn) : unk54(0), unk55(0){
     u32 ptmfWord0;
     u32 ptmfWord2;
     MenuEnemyPanel* panel;
-    MenuEnemyPanel* panelEnd;
     f32 panelMarker;
+    u8 one;
     u8 tmp[0x48];
     u32 copy;
 
@@ -229,9 +229,12 @@ CMenuEnemyState::CMenuEnemyState(void* scn) : unk54(0), unk55(0){
     __ct__17UnkClass_8045F564Fv(unk64);
 
     unk74 = NULL;
+    // Retail hoists the loop bound (&panels[24]) into a temp and keeps the
+    // unk29 constant in a register for the whole loop (r3); defining `one`
+    // before the panel pointer pins that color order.
+    one = 1;
     panel = panels;
     panelMarker = lbl_eu_80666FEC;
-    panelEnd = &panels[24];
     unk78 = NULL;
     field7C = zero;
     field80 = zero;
@@ -264,7 +267,7 @@ CMenuEnemyState::CMenuEnemyState(void* scn) : unk54(0), unk55(0){
         panel->unk22 = 0;
         panel->unk24 = zero;
         panel->panelType = 0;
-        panel->unk29 = 1;
+        panel->unk29 = one;
         panel->obj1 = reinterpret_cast<void*>(zero);
         panel->obj2 = reinterpret_cast<void*>(zero);
         panel->obj3 = reinterpret_cast<void*>(zero);
@@ -274,7 +277,7 @@ CMenuEnemyState::CMenuEnemyState(void* scn) : unk54(0), unk55(0){
         panel->unk44 = zero;
         panel->unk48 = zero;
         panel++;
-    } while (panel < panelEnd);
+    } while (panel < &panels[24]);
 
     zero = 0;
     field7C4 = 0;
@@ -619,19 +622,18 @@ after_bit21:
             // pass-before-order + block-scoped limit → order=r9, j=r12, swapped=r11
             // (retail). Peak 99.172%: pass/limit/pair still color r8/r10/r30 vs
             // retail r10/r5/r8; XOR operand/dest Chaitin follows from that.
-            u8 pass = 0;
+            // Decl order pins colors: order=r9, pass=r10, limit=r5, left=CTR;
+            // pair rematerializes into the freed r8 each step.
             u32* order = indices;
-            s32 limit;
+            u8 pass = 0;
             u32 left;
             for (left = 0x17; left != 0; left--) {
                 u8 swapped = 0;
-                u8 pass8 = pass;
-                limit = 0x17 - pass8;
                 u8 j = 0;
                 goto sort_test;
             sort_body: {
-                    u32* pair = &indices[j];
                     u32 idxA = order[j];
+                    u32* pair = &indices[j];
                     u32 idxB = pair[1];
                     f32 depthB = panels[idxB].animMarker;
                     f32 depthA = panels[idxA].animMarker;
@@ -647,7 +649,7 @@ after_bit21:
                     j++;
                 }
             sort_test:
-                if ((s32)j < limit) {
+                if ((s32)j < 0x17 - (s32)pass) {
                     goto sort_body;
                 }
                 if (swapped == 0) {
@@ -1128,7 +1130,7 @@ void func_8010EB44(CPcSelectCursor* self) {
 
 // func_8010ED58 (us-8010f834): cursor state 2 -> 4; swaps the active anim.
 void func_8010ED58(CPcSelectCursor* self) {
-    if (self->field44 == 2) {
+    if ((s32)self->field44 == 2) {
         self->field44 = 4;
         self->byte40 = 0;
         self->layout1C->SetAnimationEnable(self->anim20, false);
@@ -1159,22 +1161,27 @@ void func_80111B08(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c) {
 
     MenuEnemyPanel* panel = reinterpret_cast<MenuEnemyPanel*>(panelData);
 
-    // A single pane pointer is reused for all three lookups (retail keeps one
-    // temp Size home pair at 0x8/0xc; distinct p1/p2/p3 locals make MWCC walk
-    // the temp home down the frame).
+    // One named Size temp (copy-inited from the first pane's size - no
+    // zero-init stores) shared by all three sites; retail keeps a single
+    // 0x8/0xc spill pair.
     nw4r::lyt::Pane* p;
-
     p = panel->layout1->GetRootPane()->FindPaneByName(
         &lbl_eu_804FDBF8[0xd3], true);
-    MenuEnemySetPaneWidth(p, self->field7C8 * t);
+    nw4r::lyt::Size sz = p->GetSize();
+    sz.width = self->field7C8 * t;
+    p->SetSize(sz);
 
     p = panel->layout1->GetRootPane()->FindPaneByName(
         &lbl_eu_804FDBF8[0xdd], true);
-    MenuEnemySetPaneWidth(p, self->field7CC * t);
+    sz.height = p->GetSize().height;
+    sz.width = self->field7CC * t;
+    p->SetSize(sz);
 
     p = panel->layout1->GetRootPane()->FindPaneByName(
         &lbl_eu_804FDBF8[0x11d], true);
-    MenuEnemySetPaneWidth(p, self->field7D0 * t);
+    sz.height = p->GetSize().height;
+    sz.width = self->field7D0 * t;
+    p->SetSize(sz);
 
     panel->layout1->Animate(0);
 }
@@ -1937,7 +1944,13 @@ extern "C" void func_801115E8(CMenuEnemyState* self, u8* panelData) {
     if (panel->unk1D != 0) {
         reinterpret_cast<ObjBBFlag*>(panel->obj1)->flagBB |= 1;
     }
-    func_80111C50(self, panelData, (panel->unk1C != 0) ? 1 : 2);
+    // Retail: li r5,2 default, overwritten with 1 - must stay a branchy
+    // if/else (the ?: form compiles branchless via neg/srawi).
+    int which = 2;
+    if (panel->unk1C != 0) {
+        which = 1;
+    }
+    func_80111C50(self, panelData, which);
 
     u32 lastId = static_cast<Fe68CView*>(func_800FE68C())->lastId90E4;
     if (lastId != panel->actorId) return;

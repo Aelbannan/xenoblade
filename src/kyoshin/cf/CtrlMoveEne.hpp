@@ -1570,7 +1570,7 @@ extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column,
 // refresh (retail C-ABI names; func_8004C5EC is declared in CtrlNpc.hpp).
 extern "C" void func_8004B7C0(void* self, const ml::CVec3* vec);
 extern "C" f32 func_80496288(void* self);
-extern "C" void func_80174B4C(void* self, int arg);
+extern "C" void func_80174B4C(void* obj, u32 flags);   // unified with CVision.hpp/CtrlAct.hpp forms (ABI-identical)
 extern "C" void func_80193710(void* self);
 // func_8008FE8C call site: direction-commit helper (CtrlMoveBase.cpp) and the
 // C runtime rand() used for the turn jitter.

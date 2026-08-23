@@ -102,21 +102,13 @@ namespace lyt {
  * ArcResourceAccessor
  *
  ******************************************************************************/
-// OPEN ITEM us-8032ebc0 (plateau, ACTIVE): structural=0, 9 pure reg-swaps,
-// size PASS (84B/84B). Residual is a fixed Chaitin coloring rotation on the
-// 3-value interference triangle {vtable ptr, &mNode(this+0x28), const 0}:
-// decomp colors vt=r5/ptr=r0/zero=r4, retail vt=r4/ptr=r5/zero=r0.
-// Ruled out (this session + prior): init-list order (MWCC canonicalizes to
-// declaration order - byte-identical output), body-vs-list placement of
-// mArcBuf(NULL) (store order perturbs, rotation fixed), explicit mFontList()
-// vs implicit default ctor, mArcBuf() value-init, reinterpret_cast<void*>(0)
-// form, dropped explicit base call - all produce the identical rotation.
-// Per docs/register_mapping.md the coloring follows virtual-register birth
-// order built from PRE-scheduling IR; the remaining levers are the member
-// declaration order in lyt_arcResourceAccessor.h and the statement order of
-// ut_LinkList.h Initialize_ (both read-only here; offsets feed 5 matched
-// fns). Scheduler-driven regalloc soft-cap, not source-steerable in this
-// scope; cf. walls #11.
+// NOTE (us-8032ebc0, known residual): this ctor shows 9 pure reg-swaps vs
+// retail: a fixed Chaitin coloring rotation on {vtable ptr, &mFontList.mNode,
+// NULL} during mFontList construction. All source-shape levers were ruled out
+// (init-list order, placement/value-form of mArcBuf, base-call form - all
+// byte-identical); the remaining levers (member decl order in the header,
+// ut_LinkList.h Initialize_ statement order) would change field offsets or
+// perturb every LinkList TU. Scheduler-driven regalloc soft-cap; cf. walls #11.
 ArcResourceAccessor::ArcResourceAccessor()
     : ResourceAccessor(), mArcBuf(NULL), mFontList() {}
 

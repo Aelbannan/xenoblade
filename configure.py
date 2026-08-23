@@ -1975,7 +1975,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/work/CWorkSystemPack.cpp"),
             Object(NonMatching, "monolib/src/core/CPackItem.cpp", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "monolib/src/core/CArcItem.cpp", extra_cflags=["-func_align 16"]),
-            Object(NonMatching, "monolib/src/core/code_804DEDA8.cpp", mw_version="GC/3.0a5.2"),  # retail unit is GC-compiled: func_804DFB88 duplicate-blt guard only reproduces under GC/3.0a5.2 (Wii/1.1 merges the two handle<0 tests); verified 5 previously-matched fns stay byte-identical under GC
+            Object(NonMatching, "monolib/src/core/code_804DEDA8.cpp", mw_version="GC/3.0a5.2"),  # retail unit is GC-compiled: func_804DFB88 duplicate-blt guard only reproduces under GC/3.0a5.2 (Wii/1.1 merges the two handle<0 tests). NOTE: -ipa off tested for func_804DF4BC path-B reload - no effect (pointer-walk is strength reduction, not aliasing) and reverted
             Object(NonMatching, "monolib/src/core/CSchedule.cpp"),
             Object(NonMatching, "monolib/src/core/code_804E36DC.cpp"),
             Object(NonMatching, "monolib/src/core/ScheduleList.cpp"),

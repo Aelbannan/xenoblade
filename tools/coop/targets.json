@@ -495355,7 +495355,7 @@
       "unit": "monolib/src/lib/CLibLayout",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8034c400",
@@ -495369,8 +495369,16 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibLayout.cpp",
       "source_present": true,
-      "instruction_match": 94.721,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 97.674,
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "ox-alpha",
+        "claimed_at": "2026-08-23T19:44:51.022801+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/lib/CLibLayout.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804634b4",
@@ -495383,7 +495391,7 @@
       "size": "0x80",
       "unit": "monolib/src/lib/CLibLayout",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -495397,7 +495405,15 @@
       "source": "libs/monolib/src/lib/CLibLayout.cpp",
       "source_present": true,
       "instruction_match": 98.75,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "ox-alpha",
+        "claimed_at": "2026-08-23T19:44:56.357707+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/lib/CLibLayout.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80463534",

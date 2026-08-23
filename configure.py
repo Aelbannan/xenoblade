@@ -1578,7 +1578,7 @@ config.libs = [
             Object(NonMatching, "CriWare/src/sofdec/sfx/sfx_zmv.c", mw_version = "Wii/1.1"),  # retail sfx_zmv is Wii/1.1-built: SFXZ_SetTagInf/SFXZ_Destroy/sfxzmv_SetTagGrp byte-identical only under Wii/1.1 (GC/3.0a5.2 reorders the constant store after the first param store); SFXZ_Init stays byte-identical on both
             Object(NonMatching, "CriWare/src/sofdec/sfx/sfx_sud.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfx/sfx_cnv_to_Y84C44.c"),
-            Object(NonMatching, "CriWare/src/sofdec/sud/sud_lib.c"),
+            Object(Matching, "CriWare/src/sofdec/sud/sud_lib.c", mw_version = "Wii/1.1"),
         ],
     ),
     nw4rLib(

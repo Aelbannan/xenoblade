@@ -9,7 +9,7 @@
 
 // Init-once guard counter and the string-table pointer it initialises.
 extern s32 lbl_eu_8061A4D0;
-extern void* lbl_eu_8061A4D4;
+extern const char* lbl_eu_8061A4D4;
 extern const char lbl_eu_8051D448[];
 extern const char lbl_eu_8051D47C[];
 
@@ -20,7 +20,8 @@ extern const char lbl_eu_8051D47C[];
 void SUD_Init(void) {
     if (lbl_eu_8061A4D0 >= 1)
         return;
-    lbl_eu_8061A4D4 = (void*)lbl_eu_8051D448;
+    const char* defaultTable = lbl_eu_8051D448;
+    lbl_eu_8061A4D4 = defaultTable;
     lbl_eu_8061A4D0 += 1;
 }
 
@@ -45,29 +46,32 @@ s32 SUD_AnalyTypeCcs(const char* buf, s32 len) {
 }
 
 /**
- * Scans `id` bytes of `data` for an entry matching the table signature
- * (marker byte at tbl+0x1f plus the 8-byte key at tbl). On a hit, stores the
- * match offset in *out1 and 35 in *out2 unless the offset lies in the top
- * half of the address space (in which case *out2 is 0).
+ * Scans the first `id` bytes of `data` for an entry matching the SUD table
+ * signature: the marker byte at table+0x1f followed by the 8-byte key at
+ * table. On a hit, stores the match offset in *outOffset and 35 in *outSize,
+ * unless the offset lies in the top quarter of the address space (cntlzw bit
+ * 4 clear), in which case *outSize is 0.
  */
-void SUD_SearchSudDat(char* data, s32 id, s32* out1, s32* out2) {
-    const char* tbl;
+void SUD_SearchSudDat(char* data, s32 id, s32* outOffset, s32* outSize) {
+    const char* table;
     s32 i;
 
-    *out1 = 0;
-    *out2 = 0;
-    if (data == NULL || id < 1)
+    *outOffset = 0;
+    *outSize = 0;
+    // Guard + bare block keeps MWCC's branch-over-branch lowering
+    // (`bgt loop_init; b end` instead of a single `ble end`).
+    if (!(data != NULL && id > 0))
         return;
-
-    tbl = lbl_eu_8051D47C;
-    i = 0;
-    do {
-        if (memcmp(data, tbl + 0x1f, 1) == 0 && memcmp(data, tbl, 8) == 0) {
-            *out1 = (s32)data;
-            // cntlzw bit 4 is set iff the top byte of the pointer is zero.
-            *out2 = ((__cntlzw((u32)data) >> 5) & 1) ? 0 : 35;
+    {
+        table = lbl_eu_8051D47C;
+        i = 0;
+        while (i < id) {
+            if (memcmp(data, table + 0x1f, 1) == 0 && memcmp(data, table, 8) == 0) {
+                *outOffset = (s32)data;
+                *outSize = ((__cntlzw((u32)data) >> 5) & 1) ? 0 : 35;
+            }
+            ++data;
+            ++i;
         }
-        data++;
-        i++;
-    } while (i < id);
+    }
 }

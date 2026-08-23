@@ -10,10 +10,12 @@
 // ---------------------------------------------------------------------------
 
 // OC constructor: returns the shared OcMsg list header as a VM object value.
-int func_8003A53C(VMThread* pThread, void* r4, s16 r5) {
+int func_8003A53C(VMThread* pThread, void*, s16 argType) {
     VMArg args;
     args.type = 9;
-    args.unk2 = r5;
+    // VMArg's u16 at offset 0x2 carries the caller's package index.
+    u16& pkgIdx = *reinterpret_cast<u16*>(reinterpret_cast<char*>(&args) + 2);
+    pkgIdx = static_cast<u16>(argType);
     args.value.pointerVal = func_8003A4E0();
     vmRetValSet(pThread, &args);
     return 1;
@@ -61,44 +63,28 @@ s32 func_8003A668(void*, OcMsgRingHdr* list) {
 // Typeof-style probes on the counter at target+0x10
 // ---------------------------------------------------------------------------
 
-// Open item: bit-trick type computation (x = count^0xA; 1 + ((x>>1)-(x&0xA))>>31).
-// Retail keeps x in r5 (count in r0); MWCC always reuses r0 for x (4-7 pure
-// reg_swap depending on shape). Witness rejects the r0<->r5 permutation
-// (register reuse in subf: dest == operand under rho). Refined 2026: the
-// reversed inline source `(x & 0x0a) - (x >> 1)` reproduces retail's EXACT
-// allocation and instruction stream (xori r5 / andi r0 / srawi r5) but the
-// subf comes out `subf r0,r5,r0` (=r0-r5, NEGATED value) instead of retail's
-// `subf r0,r0,r5` (=r5-r0) — a 1-instruction semantic trap. MWCC's subf
-// encoding is source-driven: `a - b` -> `subf r0, b_reg, a_reg`. Retail =
-// fI-shape ALLOCATION + forward source; the allocation is coupled to the
-// subtraction operand order, so no correct-semantic forward shape yields
-// x->r5 (probed: ~50 shapes, Wii/1.1 + GC/3.0a5.2 + GC/3.0a3.4, -O4,s,
-// -ipa off, -func_align 16). Session 2 refutations: `h + (-(x&0xA))` is
-// front-end canonicalized back to h-t (identical 4 swaps); `(x>>1) < (x&0xA)`
-// compiles branchy at +12 bytes; keeping count live via h=(count>>1)^5 forces
-// xori r5 but adds an extra xori (+4 OVER) and subf still encodes r0,r5,r0. Semantics: type = 1 + bit31((x>>1)-(x&0xA));
-// "2 - bit31(reversed)" rescue breaks at v=0 (count 10/11).
-// Session addendum (pi-batch-match): keeping count live past the xor DOES move
-// x into r5 (h = (count>>1)^5 variant) but then h needs its own xori (+4 bytes,
-// OVER budget) and subf still encodes r0,r5,r0. MWCC always schedules andi.
-// first when both trees share x; with independent trees it preserves source
-// order. Confirms coupling: unreachable under forward semantics.
-// Open item (wall class 11): type = 1 + bit31((x>>1) - (x&0xA)), x = count^0xA.
-// Retail keeps count in r0 and moves x to r5 (xori r5,r0), mask back into r0,
-// shift into r5. MWCC's subf encoding is source-driven (a-b -> subf dst,b,a)
-// and its allocation is coupled to the subtraction operand order: every
-// correct-semantic forward shape yields x->r0 and subf r0,r5,r0 (4 pure reg
-// swaps). Refuted across ~50 shapes / Wii 1.1 + GC 3.0a5.2/3.0a3.4, including:
-// named temps m/h, compound xor-assign, independent CSE trees, reversed
-// source (negates semantics), live-count variants (+4 bytes OVER). This body
-// is the banked best draft (structural=0, mismatch=4).
+// Open item (EQUIVALENT_MATCH via register-renaming witness, 2 residual reg
+// swaps): computes type = 1 + bit31((x>>1) - (x&0xA)) with x = count ^ 0xA.
+// Retail allocates count->r0 and x->r5 (subf r0,r0,r5); MWCC's subf encoding
+// is source-driven (a-b -> subf dst,b,a) and its register allocation is
+// coupled to the subtraction operand order, so every correct-semantic forward
+// shape tried (~50 across Wii 1.1 + GC 3.0a5.2/3.0a3.4) recolors x back to
+// r0 (4 pure reg swaps). Refuted shapes include: named temps m/h, compound
+// xor-assign, independent CSE trees, reversed source `(x & 0x0a) - (x >> 1)`
+// (reproduces retail's instruction stream but negates the subtraction - a
+// 1-instruction semantic trap), live-count variants keeping count alive past
+// the xor (moves x to r5 but adds an extra xori: +4 bytes over budget),
+// mask = ~count & 0xA (+4 over), and the comparison form (branchy, +12 bytes).
+// This body is the banked best draft.
 int func_8003A68C(VMThread* pThread, void* target) {
+    VMArg args;
     int count = *(int*)((char*)target + 0x10);
     int x = count ^ 0x0a;
-    VMArg args;
-    // Subtract into the t-slot: subf dest = t's register (retail writes r0).
-    int t = x & 0x0a;
-    t = (x >> 1) - t;
+    // Shift-initializing temp + compound subtract is the best-known shape:
+    // it reproduces retail's xori/andi/srawi stream; only the subf destination
+    // and final shift source remain swapped (r5 vs retail r0).
+    int t = x >> 1;
+    t -= x & 0x0a;
     *(u8*)&args.type = 1 + ((u32)t >> 31);
     vmRetValSet(pThread, &args);
     return 1;
@@ -164,10 +150,12 @@ s32 func_8003A764(s32 ret, OcMsgRingHdr* list) {
 // ---------------------------------------------------------------------------
 
 // OC constructor: returns the shared OcLog list header as a VM object value.
-int func_8003A7B4(VMThread* pThread, void* r4, s16 r5) {
+int func_8003A7B4(VMThread* pThread, void*, s16 argType) {
     VMArg args;
     args.type = 9;
-    args.unk2 = r5;
+    // VMArg's u16 at offset 0x2 carries the caller's package index.
+    u16& pkgIdx = *reinterpret_cast<u16*>(reinterpret_cast<char*>(&args) + 2);
+    pkgIdx = static_cast<u16>(argType);
     args.value.pointerVal = func_8003A4EC();
     vmRetValSet(pThread, &args);
     return 1;

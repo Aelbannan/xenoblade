@@ -317220,7 +317220,7 @@
       "size": "0xB4",
       "unit": "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -317237,15 +317237,7 @@
       "source": "libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link.c",
       "instruction_match": 95.222,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true,
-      "claim": {
-        "owner": "pi-harness-34232",
-        "claimed_at": "2026-08-23T18:13:33.046508+00:00",
-        "allowed_paths": [
-          "libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link.c"
-        ],
-        "note": ""
-      }
+      "source_present": true
     },
     {
       "id": "us-802fb73c",
@@ -415309,7 +415301,7 @@
       "abi_helper_calls": [],
       "source": "libs/CriWare/src/sofdec/sfdcore/uty/uty_tmr.c",
       "source_present": true,
-      "instruction_match": 91.891,
+      "instruction_match": 90.717,
       "equivalence_status": "inconclusive_smt_disabled"
     },
     {
@@ -501027,7 +501019,7 @@
       "size": "0x514",
       "unit": "monolib/src/lod/code_8046A530",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
@@ -501046,7 +501038,15 @@
       "source": "libs/monolib/src/lod/code_8046A530.cpp",
       "source_present": true,
       "instruction_match": 48.114,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "ox-alpha",
+        "claimed_at": "2026-08-23T18:24:43.683632+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/lod/code_8046A530.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8046eaa8",
@@ -506724,16 +506724,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/UnkClass_8047CD0C.cpp",
       "source_present": false,
-      "instruction_match": 99.75,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "pi-harness-34232",
-        "claimed_at": "2026-08-23T17:56:52.276297+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/scn/UnkClass_8047CD0C.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 99.773,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80480d8c",

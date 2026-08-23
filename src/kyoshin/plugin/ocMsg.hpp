@@ -10,13 +10,11 @@ extern "C" {
 // ---------------------------------------------------------------------------
 // ocMsg plugin: script-facing "OcMsg" / "OcLog" object-code handlers.
 //
-// These are VM opcode callbacks registered with the script VM through the
-// OCData tables below (see ocMsgRegist). Retail keeps them as plain C-linkage
-// symbols, hence the extern "C" block.
+// These are VM opcode callbacks registered with the script VM through OCData
+// tables (see ocMsgRegist). Retail emits them as plain unmangled C-linkage
+// symbols (they are addressed by name from data tables), so the declarations
+// below use C linkage.
 // ---------------------------------------------------------------------------
-
-/* VM library function not yet exposed by yvm2.h. */
-BOOL vmOCRegist(OCData* pOC);
 
 /* Ring-buffer header shared by the message lists. The data slots follow the
  * header: `capacity`-many entries of 8 or 12 bytes starting at offset 0x14,

@@ -1569,7 +1569,7 @@ config.libs = [
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/uty/memsetd.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/uty/muldiv.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfdcore/uty/muldivr.c"),
-            Object(NonMatching, "CriWare/src/sofdec/sfdcore/uty/uty_tmr.c", mw_version = "Wii/1.1"),  # retail: Wii/1.1 — materializes the p2 base (addi r3,r31,8) before both pair stores in UTY_InitTmr; GC/3.0a5.2 folds to 12(r31) displacement stores (MWCC_CASES "UTY_InitTmr p2 base")
+            Object(Matching, "CriWare/src/sofdec/sfdcore/uty/uty_tmr.c", mw_version = "Wii/1.1"),  # retail: Wii/1.1 — materializes the p2 base (addi r3,r31,8) before both pair stores in UTY_InitTmr; GC/3.0a5.2 folds to 12(r31) displacement stores (MWCC_CASES "UTY_InitTmr p2 base")
             Object(Matching, "CriWare/src/sofdec/sfx/sfx_set.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfx/sfx_cnv.c"),
             Object(NonMatching, "CriWare/src/sofdec/sfx/sfx_inf.c"),

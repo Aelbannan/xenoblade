@@ -38414,7 +38414,15 @@
       "source": "src/kyoshin/cf/CfTaskMain.cpp",
       "instruction_match": 0.0,
       "source_present": true,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-34232",
+        "claimed_at": "2026-08-23T21:37:32.436220+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/CfTaskMain.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8006a2c8",
@@ -273686,8 +273694,8 @@
       "size": "0xC8",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a5a40",
@@ -273702,16 +273710,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "pi-harness-34232",
-        "claimed_at": "2026-08-23T21:28:19.246008+00:00",
-        "allowed_paths": [
-          "src/kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-802a802c",
@@ -337057,7 +337057,15 @@
       ],
       "instruction_match": 100.0,
       "equivalence_status": "equivalent",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "ox-alpha-hbm-dissolve",
+        "claimed_at": "2026-08-23T21:55:12.869808+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/hbm/HBMRemoteSpk.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-803241f0",
@@ -489467,7 +489475,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80459a98",
@@ -489492,7 +489501,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-80459aa4",
@@ -501149,8 +501159,16 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lod/code_8046A530.cpp",
       "source_present": true,
-      "instruction_match": 91.678,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 92.102,
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "ox-alpha",
+        "claimed_at": "2026-08-23T21:59:25.205303+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/lod/code_8046A530.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8046ecfc",
@@ -501163,7 +501181,7 @@
       "size": "0x380",
       "unit": "monolib/src/lod/code_8046A530",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -501179,7 +501197,15 @@
       "source": "libs/monolib/src/lod/code_8046A530.cpp",
       "source_present": true,
       "instruction_match": 94.339,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "ox-alpha",
+        "claimed_at": "2026-08-23T22:06:01.560166+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/lod/code_8046A530.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8046f07c",

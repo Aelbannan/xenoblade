@@ -161,16 +161,19 @@ void func_8016CCE0(CfResObjImpl* self) {
     }
 }
 
-extern "C" int func_8016CD54(u8* self) { return 0; }
+// Weak-style stubs (retail keeps these symbols unmangled; func_8016CD64 is
+// empty). Defined here only - no other TU references them.
 
-extern "C" int func_8016CD5C(u8* self) { return 0; }
+int func_8016CD54(CfResObjImpl* self) { return 0; }
 
-extern "C" void func_8016CD64(void) {}
+int func_8016CD5C(CfResObjImpl* self) { return 0; }
 
-extern "C" void func_8016CD68(u8* self, int index, int value) {
+void func_8016CD64(void) {}
+
+// Indexed write of the 2-word work area at +0x14 (index must be < 2).
+void func_8016CD68(CfResObjImpl* self, int index, int value) {
     if (index < 2) {
-        int* arr = (int*)((char*)self + 0x14);
-        arr[index] = value;
+        self->field_14[index] = value;
     }
 }
 

@@ -336,12 +336,10 @@ void l2c_link_sec_comp(BD_ADDR p_bd_addr, UINT16 handle, UINT8 status)
     tL2C_CCB *p_next_ccb;
     UINT8 event;
 
-    (void)handle;
     ci.status = status;
     memcpy(ci.bd_addr, p_bd_addr, BD_ADDR_LEN);
 
-    p_lcb = l2cu_find_lcb_by_bd_addr(p_bd_addr);
-    if (p_lcb == NULL)
+    if ((p_lcb = l2cu_find_lcb_by_bd_addr(p_bd_addr)) == NULL)
     {
         L2CAP_TRACE_WARNING0("L2CAP got sec_comp for unknown BD_ADDR");
         return;

@@ -46924,7 +46924,7 @@
       "unit": "kyoshin/cf/CfGameManager",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACCEPTED",
-      "status": "EQUIVALENT_MATCH",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "source": "src/kyoshin/cf/CfGameManager.cpp",
       "called_functions": [],
@@ -46936,8 +46936,6 @@
       "claim": null,
       "instruction_match": 98.81,
       "equivalence_status": "equivalent",
-      "equivalence_confidence": "C",
-      "equivalence_policy": "auto-promotion-v2",
       "source_present": true
     },
     {
@@ -257867,7 +257865,7 @@
       "size": "0x54",
       "unit": "kyoshin/CEquipItemBox",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -257881,7 +257879,15 @@
       "source": "src/kyoshin/CEquipItemBox.cpp",
       "source_present": true,
       "instruction_match": 94.762,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "agent-cequipitembox",
+        "claimed_at": "2026-08-23T21:14:23.609266+00:00",
+        "allowed_paths": [
+          "src/kyoshin/CEquipItemBox.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8028af98",
@@ -273680,7 +273686,7 @@
       "size": "0xC8",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
@@ -273697,7 +273703,15 @@
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-34232",
+        "claimed_at": "2026-08-23T21:28:19.246008+00:00",
+        "allowed_paths": [
+          "src/kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802a802c",
@@ -275679,8 +275693,8 @@
       "size": "0xC8",
       "unit": "kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802a5a40",
@@ -275695,7 +275709,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
+      "instruction_match": 100.0,
       "equivalence_status": "inconclusive_smt_disabled"
     },
     {
@@ -337774,7 +337788,15 @@
       "source": "libs/RVL_SDK/src/revolution/hbm/HBMCommon.cpp",
       "instruction_match": 100.0,
       "equivalence_status": "equivalent",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "ox-alpha-hbm-dissolve",
+        "claimed_at": "2026-08-23T20:56:15.118802+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/hbm/HBMCommon.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-803253e0",
@@ -480263,7 +480285,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8044a568",
@@ -480290,7 +480313,7 @@
       "callgraph_source": "build/us/asm/monolib/src/device/CDeviceSC.s",
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py",
-      "instruction_match": 99.8,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent",
       "source_present": true
     },
@@ -480317,7 +480340,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8044a5d4",
@@ -480342,7 +480366,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8044a5ec",
@@ -480367,7 +480392,8 @@
       "abi_helper_calls": [],
       "notes": "non-placeholder body present; marked via mark_implemented_bodies.py; decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
       "instruction_match": 100.0,
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8044a600",
@@ -480392,7 +480418,7 @@
       "callgraph_status": "complete",
       "callgraph_source": "build/us/asm/monolib/src/device/CDeviceSC.s",
       "abi_helper_calls": [],
-      "instruction_match": 0.0,
+      "instruction_match": 100.0,
       "source_present": true,
       "claim": {
         "owner": "matcher1",
@@ -480490,7 +480516,8 @@
       "abi_helper_calls": [],
       "instruction_match": 100.0,
       "notes": "decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8044a764",
@@ -480518,7 +480545,8 @@
       "abi_helper_calls": [],
       "instruction_match": 100.0,
       "notes": "decomp object byte-identical to retail; marked via mark_implemented_bodies.py --byte-identical",
-      "source_present": true
+      "source_present": true,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8044a7b8",
@@ -493189,8 +493217,8 @@
       "size": "0x3D4",
       "unit": "monolib/src/lib/CLibCriStreamingPlay",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-802c50d4",
@@ -493221,8 +493249,8 @@
       ],
       "source": "libs/monolib/src/lib/CLibCriStreamingPlay.cpp",
       "source_present": false,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "instruction_match": 81.702,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8045f9ac",
@@ -493235,8 +493263,8 @@
       "size": "0x140",
       "unit": "monolib/src/lib/CLibCriStreamingPlay",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -493245,9 +493273,9 @@
       "callgraph_source": "build/us/asm/monolib/src/lib/CLibCriStreamingPlay.s",
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibCriStreamingPlay.cpp",
-      "instruction_match": 100.0,
+      "instruction_match": 97.875,
       "source_present": false,
-      "equivalence_status": "inconclusive_unsupported"
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8045faec",
@@ -493260,8 +493288,8 @@
       "size": "0xF0",
       "unit": "monolib/src/lib/CLibCriStreamingPlay",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80385a7c",
@@ -493275,8 +493303,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibCriStreamingPlay.cpp",
       "source_present": false,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "instruction_match": 77.983,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8045fbdc",
@@ -493318,8 +493346,8 @@
       "size": "0x1FC",
       "unit": "monolib/src/lib/CLibCriStreamingPlay",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80386aac",
@@ -493333,8 +493361,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibCriStreamingPlay.cpp",
       "source_present": false,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "instruction_match": 68.024,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8045fe84",
@@ -493347,8 +493375,8 @@
       "size": "0x84",
       "unit": "monolib/src/lib/CLibCriStreamingPlay",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -493358,8 +493386,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibCriStreamingPlay.cpp",
       "source_present": false,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "instruction_match": 34.03,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-8045ff08",
@@ -493501,8 +493529,8 @@
       "size": "0x84",
       "unit": "monolib/src/lib/CLibCriStreamingPlay",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -493512,8 +493540,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibCriStreamingPlay.cpp",
       "source_present": false,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "instruction_match": 77.879,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80460744",
@@ -493526,8 +493554,8 @@
       "size": "0x1B0",
       "unit": "monolib/src/lib/CLibCriStreamingPlay",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80386aac",
@@ -493540,8 +493568,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibCriStreamingPlay.cpp",
       "source_present": false,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "instruction_match": 79.111,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-804608f4",
@@ -493554,8 +493582,8 @@
       "size": "0x19C",
       "unit": "monolib/src/lib/CLibCriStreamingPlay",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80386aac",
@@ -493568,8 +493596,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibCriStreamingPlay.cpp",
       "source_present": false,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "instruction_match": 82.214,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80460a90",
@@ -493582,8 +493610,8 @@
       "size": "0x2B0",
       "unit": "monolib/src/lib/CLibCriStreamingPlay",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80386aac",
@@ -493596,8 +493624,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibCriStreamingPlay.cpp",
       "source_present": false,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "instruction_match": 87.023,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80460d40",
@@ -493610,8 +493638,8 @@
       "size": "0x234",
       "unit": "monolib/src/lib/CLibCriStreamingPlay",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8038687c",
@@ -493626,8 +493654,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibCriStreamingPlay.cpp",
       "source_present": false,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "instruction_match": 92.823,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80460f74",
@@ -493669,8 +493697,8 @@
       "size": "0x60",
       "unit": "monolib/src/lib/CLibCriStreamingPlay",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [],
       "unresolved_called_functions": [],
@@ -493680,8 +493708,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibCriStreamingPlay.cpp",
       "source_present": false,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "instruction_match": 71.792,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80461080",
@@ -493694,8 +493722,8 @@
       "size": "0x104",
       "unit": "monolib/src/lib/CLibCriStreamingPlay",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACCEPTED",
-      "status": "FULL_MATCH",
+      "workflow_status": "ACTIVE",
+      "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804461f0"
@@ -493707,8 +493735,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/lib/CLibCriStreamingPlay.cpp",
       "source_present": false,
-      "instruction_match": 100.0,
-      "equivalence_status": "inconclusive_unsupported"
+      "instruction_match": 67.677,
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80461184",
@@ -495370,15 +495398,7 @@
       "source": "libs/monolib/src/lib/CLibLayout.cpp",
       "source_present": true,
       "instruction_match": 97.674,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "ox-alpha",
-        "claimed_at": "2026-08-23T19:44:51.022801+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/lib/CLibLayout.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-804634b4",
@@ -495391,7 +495411,7 @@
       "size": "0x80",
       "unit": "monolib/src/lib/CLibLayout",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -495405,15 +495425,7 @@
       "source": "libs/monolib/src/lib/CLibLayout.cpp",
       "source_present": true,
       "instruction_match": 98.75,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "ox-alpha",
-        "claimed_at": "2026-08-23T19:44:56.357707+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/lib/CLibLayout.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80463534",
@@ -501216,7 +501228,7 @@
       "size": "0xAA0",
       "unit": "monolib/src/lod/code_8046A530",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -501239,15 +501251,7 @@
       "source": "libs/monolib/src/lod/code_8046A530.cpp",
       "source_present": true,
       "instruction_match": 78.621,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "ox-alpha",
-        "claimed_at": "2026-08-23T19:36:20.752176+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/lod/code_8046A530.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-80470550",
@@ -511015,8 +511019,8 @@
       "size": "0x108",
       "unit": "monolib/src/scn/CScnItemModelNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "STRUCTURAL",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803db97c",
@@ -511029,8 +511033,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnItemModelNw4r.cpp",
       "source_present": true,
-      "instruction_match": 1.515,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8048b704",
@@ -511246,8 +511250,8 @@
       "size": "0xF4",
       "unit": "monolib/src/scn/CScnItemModelNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803fbd18",
@@ -511260,8 +511264,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnItemModelNw4r.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8048bcbc",
@@ -512094,8 +512098,8 @@
       "size": "0x84",
       "unit": "monolib/src/scn/CScnItemModelNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-804ec72c"
@@ -512107,8 +512111,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnItemModelNw4r.cpp",
       "source_present": true,
-      "instruction_match": 99.394,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8048d244",
@@ -512192,8 +512196,8 @@
       "size": "0xD0",
       "unit": "monolib/src/scn/CScnItemModelNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "STRUCTURAL",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803207a0",
@@ -512207,8 +512211,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnItemModelNw4r.cpp",
       "source_present": true,
-      "instruction_match": 1.923,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8048da38",
@@ -512355,8 +512359,8 @@
       "size": "0xD8",
       "unit": "monolib/src/scn/CScnItemModelNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "STRUCTURAL",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803db97c",
@@ -512369,8 +512373,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnItemModelNw4r.cpp",
       "source_present": true,
-      "instruction_match": 1.852,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8048e128",
@@ -512722,8 +512726,8 @@
       "size": "0x84",
       "unit": "monolib/src/scn/CScnItemModelNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803dba10",
@@ -512736,8 +512740,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnItemModelNw4r.cpp",
       "source_present": true,
-      "instruction_match": 75.091,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8048f700",
@@ -512839,8 +512843,8 @@
       "size": "0x7C",
       "unit": "monolib/src/scn/CScnItemModelNw4r",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "HIGH_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-803db97c",
@@ -512853,8 +512857,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnItemModelNw4r.cpp",
       "source_present": true,
-      "instruction_match": 93.548,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-8048fb48",
@@ -526108,8 +526112,8 @@
       "size": "0x124",
       "unit": "monolib/src/scn/CScnFilterMan",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
-      "status": "CODE_MATCH",
+      "workflow_status": "ACCEPTED",
+      "status": "FULL_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8004bd6c",
@@ -526136,16 +526140,8 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnFilterMan.cpp",
       "source_present": true,
-      "instruction_match": 98.479,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "ox-alpha-scn-filter",
-        "claimed_at": "2026-08-23T17:28:48.915563+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/scn/CScnFilterMan.cpp"
-        ],
-        "note": ""
-      }
+      "instruction_match": 100.0,
+      "equivalence_status": "equivalent"
     },
     {
       "id": "us-804a1a30",
@@ -532244,7 +532240,7 @@
       "size": "0x61C",
       "unit": "monolib/src/coli/code_804A6C60",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "STRUCTURAL",
       "origin": "symbols.txt",
       "called_functions": [
@@ -532264,7 +532260,15 @@
       "source": "libs/monolib/src/coli/code_804A6C60.cpp",
       "source_present": true,
       "instruction_match": 65.003,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "agent-coli-804a6c60",
+        "claimed_at": "2026-08-23T21:07:02.684776+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/coli/code_804A6C60.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-804b2b00",

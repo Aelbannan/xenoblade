@@ -20,7 +20,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | deref-through-cast arithmetic | 2788 |
 | inline asm / `register` | 116 |
 | rN-named params | 577 |
-| goto | 3137 |
+| goto | 3136 |
 | DECOMP_ASM_INSN asm shims (fakematch candidate) | 11 |
 | #pragma schedule once/twice (fakematch candidate) | 5 |
 | assignment inside cast / init-list (fakematch candidate) | 1 |
@@ -109,7 +109,7 @@ The three `*shim`/`side-effect` rows are **fakematch-candidate** families: sourc
 | libs/monolib/src/lib/CLibHbm.cpp | 39 | 0 | 6 | 3 | 0 | 0 | 0 | 6 | 3 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibHbmControl.cpp | 38 | 0 | 12 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibLayout.cpp | 38 | 1 | 4 | 4 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
-| libs/monolib/src/lib/CLibStaticData.cpp | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
+| libs/monolib/src/lib/CLibStaticData.cpp | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/CLibVM.cpp | 37 | 1 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/UnkClass_8045F564.cpp | 0 | 0 | 0 | 1 | 6 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
 | libs/monolib/src/lib/UnkClass_80460308.cpp | 2 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 2 | 0 | 0 | 0 |
@@ -1232,7 +1232,6 @@ TUs with any of the three fakematch-candidate families above. Each row is a cand
  },
  "libs/monolib/src/lib/CLibStaticData.cpp": {
   "asm_insn_shim": 0,
-  "goto_count": 1,
   "init_side_effect": 0,
   "rn_params": 1,
   "schedule_pragma": 0,

@@ -453768,7 +453768,7 @@
       "size": "0xB8",
       "unit": "nw4r/src/snd/snd_SeqFile",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "source": "libs/nw4r/src/snd/snd_SeqFile.cpp",
@@ -453786,7 +453786,15 @@
       ],
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "pi-harness-34232",
+        "claimed_at": "2026-08-23T18:42:33.059426+00:00",
+        "allowed_paths": [
+          "libs/nw4r/src/snd/snd_SeqFile.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-8041ba6c",

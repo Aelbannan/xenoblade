@@ -1,8 +1,8 @@
 // CriWare ADX: ADXF subsystem init/finalize (libs/CriWare/src/adx/adxf/adx_fini.c)
 //
 // Matches retail ADXF_Init / ADXF_Finish. The work struct is the retail BSS
-// object lbl_eu_805DFDA8; using the retail linker name keeps the SMT
-// equivalence reloc symbols aligned with the retail object.
+// object lbl_eu_805DFDA8; using the retail linker name keeps the equivalence
+// reloc symbols aligned with the retail object.
 
 #include <harness_catalog.h>
 #include <string.h>
@@ -54,6 +54,13 @@ void ADXF_Init(void) {
 
 void ADXF_Finish(void) {
     // Decrement the init refcount; on the last release, reset all ADXF state.
+    // NOTE: retail forms the work base with a single lis/addi pair in r31 after
+    // the prologue stores; MWCC always hoists the address computation into an
+    // arg register first (lis rX before the stw spills) and keeps a second copy
+    // for the refcount access. This hoist is a catalogued static cap
+    // (docs/MWCC_CASES.md "adx_fini - unattainable lis-hoist schedule"):
+    // pointer const-ness, scoping, direct member access and register hints
+    // were all ruled out.
     struct ADXF_Work* work = &lbl_eu_805DFDA8;
     if (--work->refcount == 0) {
         ADXF_CloseAll();

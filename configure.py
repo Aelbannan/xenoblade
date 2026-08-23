@@ -1425,7 +1425,7 @@ config.libs = [
     criwareLib(
         "libadxwii",
         [
-            Object(NonMatching, "CriWare/src/adx/adxf/adx_fini.c", extra_cflags=["-O4,s"]),
+            Object(Matching, "CriWare/src/adx/adxf/adx_fini.c", extra_cflags=["-O4,s"]),
             Object(NonMatching, "CriWare/src/adx/adxf/adx_fs.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/adxf/adx_fcch.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/adxt/adx_fsvr.c"),

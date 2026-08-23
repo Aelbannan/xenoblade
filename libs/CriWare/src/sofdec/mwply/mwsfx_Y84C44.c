@@ -10,37 +10,38 @@ typedef struct MWSFDHn {
 /* Movie-player handle: the Y84C44 frame size fields read by this converter. */
 typedef struct MWPly {
     u8 _00[0x0C];
-    u32 width;       /* 0x0C */
+    u32 width;        /* 0x0C */
     u32 bytesPerLine; /* 0x10 */
 } MWPly;
 
+/* SFX conversion API implemented in sofdec/sfx/*.c and sofdec/mwply/mwsfdsfx.c. */
 extern int MWSFD_CnvFrmInfToSfx(MWSFDHn *ctx, MWPly *ply, SFXStmInf *inf);
 extern void SFX_SetBytePerPixelOutBuf(SFXConvertState *self, u32 val);
 extern void SFX_Make2PlaneCftDstBuf(SFXConvertState *self, SFXStmInf *stmInf,
-                                    void *buf0,
-                                    void *buf1, int xOfs, int yOfs,
-                                    SFXDstBufInf *dstArray, u32 width,
-                                    u32 bytesPerLine);
+                                    u8 *buf0, u8 *buf1,
+                                    SFXDstBufInf *dstArray, int xOfs, int yOfs,
+                                    u32 width, u32 bytesPerLine);
 extern int SFX_CnvFrmY84C44ByCbFunc(SFXConvertState *ctx, SFXStmInf *inf,
                                     SFXDstBufInf *dst);
 
-
 /*
  * Convert an Y84C44 movie frame to SFX output.
- * Builds the SFX stream info from the movie player state, configures a
- * single-byte-per-pixel output buffer as two planes, then runs the
- * callback-driven conversion over the plane descriptors.
+ *
+ * Builds the SFX stream info from the movie-player state (MWSFD_CnvFrmInfToSfx),
+ * selects a one-byte-per-pixel output format, then describes a two-plane
+ * destination buffer covering the full frame at offset (0, 0). The actual
+ * pixel conversion runs through the callback-driven converter, which walks
+ * the plane descriptors filled in by SFX_Make2PlaneCftDstBuf.
  */
-int mwPlyFxCnvFrmY84C44(MWSFDHn *unk, MWPly *ply, void *frame, void *pict) {
-    SFXConvertState *sfx = unk->sfx;
-    u32 bytesPerLine = ply->bytesPerLine;
-    u8 inf_buf[0x98];
-    u8 dst_buf[0x68];
-    MWSFD_CnvFrmInfToSfx(unk, ply, (SFXStmInf *)inf_buf);
+int mwPlyFxCnvFrmY84C44(MWSFDHn *handle, MWPly *ply, u8 *frame, u8 *pict) {
+    SFXConvertState *sfx = handle->sfx;
+    SFXStmInf inf;
+    SFXDstBufInf dst;
+    MWSFD_CnvFrmInfToSfx(handle, ply, &inf);
     SFX_SetBytePerPixelOutBuf(sfx, 1);
-    u32 width = ply->width;
-    SFX_Make2PlaneCftDstBuf(sfx, (SFXStmInf *)inf_buf, frame, pict, 0, 0,
-                            (SFXDstBufInf *)dst_buf, width, bytesPerLine);
-    return SFX_CnvFrmY84C44ByCbFunc(sfx, (SFXStmInf *)inf_buf,
-                                    (SFXDstBufInf *)dst_buf);
+    /* bytesPerLine feeds the stack-passed 9th argument slot */
+    SFX_Make2PlaneCftDstBuf(sfx, &inf, frame, pict,
+                            &dst, 0, 0, ply->width,
+                            ply->bytesPerLine);
+    return SFX_CnvFrmY84C44ByCbFunc(sfx, &inf, &dst);
 }

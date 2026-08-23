@@ -317220,7 +317220,7 @@
       "size": "0xB4",
       "unit": "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -317237,7 +317237,15 @@
       "source": "libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link.c",
       "instruction_match": 95.222,
       "equivalence_status": "inconclusive_smt_disabled",
-      "source_present": true
+      "source_present": true,
+      "claim": {
+        "owner": "pi-harness-34232",
+        "claimed_at": "2026-08-23T18:13:33.046508+00:00",
+        "allowed_paths": [
+          "libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link.c"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-802fb73c",

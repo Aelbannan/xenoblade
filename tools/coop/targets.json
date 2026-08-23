@@ -202033,7 +202033,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/code_80213488.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent"
     },
     {
@@ -202058,8 +202058,8 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/code_80213488.cpp",
       "claim": null,
-      "instruction_match": 0.0,
-      "equivalence_status": "equivalent",
+      "instruction_match": 100.0,
+      "equivalence_status": "inconclusive_smt_disabled",
       "source_present": true
     },
     {
@@ -202086,7 +202086,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/code_80213488.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent"
     },
     {
@@ -202122,7 +202122,7 @@
       ],
       "source": "src/kyoshin/makecrystal/code_80213488.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent"
     },
     {
@@ -202175,7 +202175,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/code_80213488.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent"
     },
     {
@@ -202200,7 +202200,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/code_80213488.cpp",
       "claim": null,
-      "instruction_match": 0.0,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent",
       "source_present": true
     },
@@ -202226,7 +202226,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/code_80213488.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent"
     },
     {
@@ -202281,7 +202281,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/code_80213488.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent"
     },
     {
@@ -202308,7 +202308,7 @@
       "abi_helper_calls": [],
       "source": "src/kyoshin/makecrystal/code_80213488.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
+      "instruction_match": 100.0,
       "equivalence_status": "equivalent"
     },
     {
@@ -501200,7 +501200,7 @@
       "size": "0xAA0",
       "unit": "monolib/src/lod/code_8046A530",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "ACTIVE",
+      "workflow_status": "CLAIMED",
       "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
@@ -501223,7 +501223,15 @@
       "source": "libs/monolib/src/lod/code_8046A530.cpp",
       "source_present": true,
       "instruction_match": 78.621,
-      "equivalence_status": "inconclusive_smt_disabled"
+      "equivalence_status": "inconclusive_smt_disabled",
+      "claim": {
+        "owner": "ox-alpha",
+        "claimed_at": "2026-08-23T19:36:20.752176+00:00",
+        "allowed_paths": [
+          "libs/monolib/src/lod/code_8046A530.cpp"
+        ],
+        "note": ""
+      }
     },
     {
       "id": "us-80470550",
@@ -514464,7 +514472,7 @@
       "unit": "monolib/src/scn/CScnLightMan",
       "required_level": "EQUIVALENT_MATCH",
       "workflow_status": "ACTIVE",
-      "status": "COMPILES",
+      "status": "HIGH_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-80486368",
@@ -514478,7 +514486,7 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnLightMan.cpp",
       "source_present": true,
-      "instruction_match": 0.0,
+      "instruction_match": 92.354,
       "equivalence_status": "inconclusive_smt_disabled"
     },
     {
@@ -526084,8 +526092,8 @@
       "size": "0x124",
       "unit": "monolib/src/scn/CScnFilterMan",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
-      "status": "STRUCTURAL",
+      "workflow_status": "ACTIVE",
+      "status": "CODE_MATCH",
       "origin": "symbols.txt",
       "called_functions": [
         "us-8004bd6c",
@@ -526112,7 +526120,7 @@
       "abi_helper_calls": [],
       "source": "libs/monolib/src/scn/CScnFilterMan.cpp",
       "source_present": true,
-      "instruction_match": 1.37,
+      "instruction_match": 98.479,
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "ox-alpha-scn-filter",
@@ -534078,7 +534086,7 @@
       "size": "0x1A8",
       "unit": "monolib/src/coli/code_804B2FF0",
       "required_level": "EQUIVALENT_MATCH",
-      "workflow_status": "CLAIMED",
+      "workflow_status": "ACTIVE",
       "status": "COMPILES",
       "origin": "symbols.txt",
       "called_functions": [
@@ -534094,15 +534102,7 @@
       "source": "libs/monolib/src/coli/code_804B2FF0.cpp",
       "source_present": true,
       "instruction_match": 0.0,
-      "equivalence_status": "inconclusive_smt_disabled",
-      "claim": {
-        "owner": "ox-alpha",
-        "claimed_at": "2026-08-23T18:57:53.180973+00:00",
-        "allowed_paths": [
-          "libs/monolib/src/coli/code_804B2FF0.cpp"
-        ],
-        "note": ""
-      }
+      "equivalence_status": "inconclusive_smt_disabled"
     },
     {
       "id": "us-804b7c74",
@@ -544189,7 +544189,7 @@
       "equivalence_status": "inconclusive_smt_disabled",
       "claim": {
         "owner": "agent-effect-804cc2b8",
-        "claimed_at": "2026-08-23T16:46:10.444725+00:00",
+        "claimed_at": "2026-08-23T19:07:36.337681+00:00",
         "allowed_paths": [
           "libs/monolib/src/effect/code_804CC2B8.cpp"
         ],

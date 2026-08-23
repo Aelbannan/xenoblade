@@ -2,7 +2,6 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-
 #include <math.h>
 
 // ---------------------------------------------------------------------------
@@ -24,6 +23,12 @@ struct MakeCrystalTable {
     u8  current;                     // +0x1004 current row cursor
 };
 
+// --- imports ---
+// Item-table helpers (retail unmangled symbols): declared with the proper
+// C-linkage signatures in the shared kyoshin menu header.
+#include "kyoshin/CItemBoxGrid.hpp"   // func_80157C4C, func_80157C20, func_8015780C
+// CItem_initItemImplInstances comes from CfGameManager.hpp (harness chain).
+
 // Item-instance vtable shim (crystal-id getter lives at vtable offset 8). The
 // object comes from CItem_initItemImplInstances(); only the getter is
 // dispatched. The first declared virtual lands at memory slot 2 because MWCC
@@ -33,12 +38,6 @@ struct CrystalItemImpl {
     virtual void vf04() = 0;
     virtual void vf08() = 0;
 };
-
-// --- imports (retail unmangled C symbols) ---
-extern "C" void* func_80157C4C(u32 cat, s16 id);
-extern "C" u32   func_80157C20(u8 cat);
-extern "C" u32   func_8015780C(int index);
-extern "C" void* CItem_initItemImplInstances(void* arg);
 
 // sdata2 constants used by func_80213570's ceil(count / scale) computation.
 extern f32 lbl_eu_80668458; // 30.0f scale
@@ -53,24 +52,24 @@ extern f32 lbl_eu_8066845C;
 // sibling unit (CMCCrystalBox.cpp) helpers
 extern "C" void func_80213988(MakeCrystalTable* d);
 extern "C" void func_80213B1C(MakeCrystalTable* d);
-// Copy a 4-byte {s16, u8} crystal entry (id + flag). Retail calls it
-// out-of-line (bl) from the second reset loop; noinline keeps MWCC from
-// folding the body into the callers.
-__declspec(noinline) void func_8021351C(MakeCrystalEntry* dst,
-                                        const MakeCrystalEntry* src);
 
-// Retail 0x80213488: initialise the whole table. Directly resets all 1024
-// entries, sets the header, then re-writes every entry through the shared
-// entry-copy helper.
-void func_80213488(MakeCrystalTable* d) {
-    // Plain per-entry constant stores (sth/stb pair), pointer walk.
-    // Volatile end pointer keeps the optimizer from proving the trip
-    // count and unrolling this into a wide replicated-store block.
-    MakeCrystalEntry* volatile end = d->entries + 0x400;
-    for (MakeCrystalEntry* p = d->entries; p < end; ++p) {
-        p->id = -1;
-        p->flag = 0;
-    }
+// 4-byte {s16, u8} crystal-entry copy helper (defined below the callers so
+// MWCC treats it out-of-line, matching retail's bl).
+static __declspec(noinline) void copyCrystalEntry(MakeCrystalEntry* dst,
+                                                  const MakeCrystalEntry* src);
+
+// Returns the table pointer (retail mr r3,r28 on the way out).
+MakeCrystalTable* func_80213488(MakeCrystalTable* d) {
+    // Rolled do-while pointer walk (sth/stb per entry); bound kept inline in
+    // the condition.
+    MakeCrystalEntry* p = d->entries;
+    s16 clearId = -1;
+    u8 clearFlag = 0;
+    do {
+        p->id = clearId;
+        p->flag = clearFlag;
+        ++p;
+    } while (p < d->entries + 0x400);
     d->count = 0;
     d->byte_1002 = 9;
     d->limit = 0;
@@ -79,12 +78,16 @@ void func_80213488(MakeCrystalTable* d) {
         MakeCrystalEntry tmp;
         tmp.id = -1;
         tmp.flag = 0;
-        func_8021351C(&d->entries[i], &tmp);
+        copyCrystalEntry(&d->entries[i], &tmp);
     }
+    return d;
 }
 
-__declspec(noinline) void func_8021351C(MakeCrystalEntry* dst,
-                                        const MakeCrystalEntry* src) {
+// Copy a 4-byte {s16, u8} crystal entry (id + flag). Retail calls it
+// out-of-line (bl) from the second reset loop; noinline keeps MWCC from
+// folding the body into the callers.
+static __declspec(noinline) void copyCrystalEntry(MakeCrystalEntry* dst,
+                                                  const MakeCrystalEntry* src) {
     // Retail copies only the two meaningful bytes (lha/sth id + lbz/stb flag);
     // a struct assignment would also copy pad3 and change the emitted code.
     dst->id = src->id;
@@ -108,15 +111,16 @@ void func_80213570(MakeCrystalTable* d, u8 target) {
         MakeCrystalEntry tmp;
         tmp.id = -1;
         tmp.flag = 0;
-        func_8021351C(&d->entries[i], &tmp);
+        copyCrystalEntry(&d->entries[i], &tmp);
     }
     int total = (int)func_80157C20(d->byte_1002);
     u16 i = 0;
     while ((u16)i < total) {
         void* obj = func_80157C4C(d->byte_1002, (s16)i);
         if (obj != 0 && *(void**)obj != 0) {
-            void* inst = CItem_initItemImplInstances(obj);
-            u32 rid = ((CrystalItemImpl*)inst)->getCrystalItemId(obj);
+            CrystalItemImpl* inst =
+                (CrystalItemImpl*)(CItem_initItemImplInstances)();
+            u32 rid = inst->getCrystalItemId(obj);
             if (target == (u16)rid) {
                 u16 n = d->count;
                 d->count = n + 1;
@@ -158,20 +162,14 @@ u8 func_80213710(MakeCrystalTable* d, u8 idx) {
 }
 
 // Retail 0x80213748: return 1 iff every entry's flag is non-zero.
-int func_80213748(void* this_ptr) {
-    struct Layout {
-        struct Element {
-            char pad[2];
-            unsigned char flag;
-            char pad2;
-        };
-        Element array[1024];
-        unsigned short count;
-    };
-    Layout* self = (Layout*)this_ptr;
-    unsigned short count = self->count;
-    for (unsigned short i = 0; i < count; ++i) {
-        if (self->array[i].flag == 0) {
+// NOTE: retail exports an unmangled `func_80213748`; the mangled definition
+// here is mapped back to the retail name by the symbol-recovery tooling
+// (same mechanism as copyCrystalEntry -> func_8021351C).
+int func_80213748_allFlagsSet(MakeCrystalTable* d) {
+    // Retail caches count before the loop (read once into a register).
+    u16 count = d->count;
+    for (u16 i = 0; i < count; ++i) {
+        if (d->entries[i].flag == 0) {
             return 0;
         }
     }

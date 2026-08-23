@@ -1,4 +1,8 @@
-// Auto-scaffolded catalog TU for CriWare/src/sofdec/sfx/sfx_alp
+/* Auto-scaffolded catalog TU for CriWare/src/sofdec/sfx/sfx_alp.
+ *
+ * SFX alpha (transparency) state pool: one global block (lbl_eu_8061A138)
+ * holding a used-count, a slot-count and 8 fixed SFXAlphaState slots.
+ * Built as Wii/1.1 - see the configure.py note on SFXA_Create's schedule. */
 #include <harness_catalog.h>
 #include "libs/CriWare/src/sofdec/sfx/sfx_types.h"
 
@@ -16,21 +20,22 @@ typedef struct SFXAlphaGlobals {
     SFXAlphaState states[8];
 } SFXAlphaGlobals;
 
-SFXAlphaState* SFXA_Create(void) {
-    SFXAlphaState* state = ((SFXAlphaGlobals*)lbl_eu_8061A138)->states;
-    s32 count = ((SFXAlphaGlobals*)lbl_eu_8061A138)->slotCount;
-
-    /* Find a free (unused) slot; NULL if the pool is exhausted. */
-    while (count > 0) {
-        if (state->_00 != 0) {
-            state++;
-            count--;
-        } else {
-            goto found;
-        }
+/* Inlined free-slot scan; returning from inside the loop keeps MWCC's
+ * branch-over-branch layout (bne continue / b found) in the inlined body. */
+static inline SFXAlphaState* SFXAFindFreeSlot(SFXAlphaGlobals* globals) {
+    SFXAlphaState* state = globals->states;
+    s32 count = globals->slotCount;
+    for (; count > 0; count--) {
+        if (state->_00 == 0)
+            return state;
+        state++;
     }
-    state = NULL;
-found:
+    return NULL;
+}
+
+SFXAlphaState* SFXA_Create(void) {
+    SFXAlphaState* state =
+        SFXAFindFreeSlot((SFXAlphaGlobals*)lbl_eu_8061A138);
     if (state == NULL)
         return state;
     state->arg0 = 0;
@@ -41,13 +46,14 @@ found:
     state->byte15 = 0x7f;
     state->byte16 = 0xff;
     ((SFXAlphaGlobals*)lbl_eu_8061A138)->usedCount++;
+    state->_00 = 1;
     return state;
 }
 void SFXA_Destroy(void* self) {
-    extern u8 lbl_eu_8061A138[];
-    if (self == NULL) return;
-    *(u32*)((u8*)self) = 0;
-    *(s32*)lbl_eu_8061A138 -= 1;
+    if (self == NULL)
+        return;
+    ((SFXAlphaState*)self)->_00 = 0;
+    ((SFXAlphaGlobals*)lbl_eu_8061A138)->usedCount--;
 }
 void SFXA_MakeAlpLumiTbl(void* self, u32 a, u32 b, u32 c) {
     SFXAlphaState* state = (SFXAlphaState*)self;

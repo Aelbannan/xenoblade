@@ -17,8 +17,10 @@ extern "C" {
     u8*           func_802A34E4(int size);
     CVS_THREAD*   __ct__cf_CVS_THREAD(CVS_THREAD* object);
 
-    // Runtime rethrow (NMWException.h): declared noreturn so MWCC elides the
-    // __end__catch epilogue of a catch-all handler that ends with `bl __throw`
+    // Runtime rethrow (NMWException runtime, C ABI): declared noreturn so MWCC
+    // elides the __end__catch epilogue of a catch-all handler that ends with
+    // `bl __throw`. NMWException.h itself cannot be included here: its
+    // __ppc_eabi_linker.h chain redeclares _stack_addr against OS.h.
     __declspec(noreturn) void __throw(char* throwtype, u32 location, u32 dtor);
 }
 

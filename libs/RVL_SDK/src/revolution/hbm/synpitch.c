@@ -14,7 +14,9 @@ extern "C" {
 #endif
 
 extern unsigned long __cvt_fp2unsigned(double);
-extern f32 lbl_80518B78; /* float-pool constant 1.0f */
+extern f32 lbl_80518B78;   /* float-pool constant 1.0f */
+extern f32 lbl_80518B7C;   /* float-pool constant 32000.0f */
+extern f32 lbl_80518B88;   /* float-pool constant 65536.0f */
 
 /* ---- lookup tables (contiguous in .data) ---- */
 
@@ -139,7 +141,7 @@ f32 __HBMSYNGetRelativePitch(HBMSYNVOICE* voice)
 
 void __HBMSYNSetupPitch(HBMSYNVOICE* voice)
 {
-    voice->pitch = (f32)voice->waveInfo->sampleRate / 32000.0f;
+    voice->pitch = (f32)voice->waveInfo->sampleRate / lbl_80518B7C;
 
     voice->pitchFull = (voice->baseNote - voice->preset->note) * 100;
     voice->pitchFull += voice->preset->fineTune;
@@ -151,7 +153,7 @@ void __HBMSYNSetupPitch(HBMSYNVOICE* voice)
 void __HBMSYNSetupSrc(HBMSYNVOICE* voice)
 {
     f32 mul = voice->pitch * __HBMSYNGetRelativePitch(voice);
-    u32 sr  = __cvt_fp2unsigned(65536.0f * mul);
+    u32 sr  = __cvt_fp2unsigned(lbl_80518B88 * mul);
 
     voice->pb->pb.srcSelect = AX_SRC_TYPE_LINEAR;
 
@@ -175,7 +177,7 @@ void __HBMSYNSetupSrc(HBMSYNVOICE* voice)
 void __HBMSYNUpdateSrc(HBMSYNVOICE* voice)
 {
     f32 mul = voice->pitch * __HBMSYNGetRelativePitch(voice);
-    u32 sr  = __cvt_fp2unsigned(65536.0f * mul);
+    u32 sr  = __cvt_fp2unsigned(lbl_80518B88 * mul);
 
     *((u32*)&voice->pb->pb.src.ratioHi) = sr;
 

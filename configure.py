@@ -1248,7 +1248,7 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/hbm/synctrl.c"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/synenv.c"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/synmix.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/synpitch.c"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/synpitch.c"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/synsample.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/synvoice.c"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/seq.c", link_transform={

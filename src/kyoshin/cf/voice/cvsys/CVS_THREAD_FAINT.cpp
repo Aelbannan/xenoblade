@@ -19,24 +19,25 @@ void func_802A6D2C(CVS_THREAD_FAINT* self) {
 void func_802A6D74(CVS_THREAD_FAINT* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
-    // Slot 0x20: load handle, bias if non-null, compare with voicePtr
-    CVoiceHandle* handle = self->field_0x20;
+    // Slot 1 (0x20): load handle, bias to its embedded CCharVoice if non-null,
+    // and clear the slot when it references the removed voice.
+    CVoiceHandle* handle = self->slot1;
     CCharVoice* biased = (CCharVoice*)handle;
     if (handle != NULL) {
         biased = &handle->voice;
     }
     if (biased == voicePtr) {
-        self->field_0x20 = NULL;
+        self->slot1 = NULL;
     }
 
-    // Slot 0x24: same pattern
-    handle = self->field_0x24;
+    // Slot 2 (0x24): same pattern.
+    handle = self->slot2;
     biased = (CCharVoice*)handle;
     if (handle != NULL) {
         biased = &handle->voice;
     }
     if (biased == voicePtr) {
-        self->field_0x24 = NULL;
+        self->slot2 = NULL;
     }
 }
 
@@ -72,13 +73,13 @@ void func_802A6BB0(CVS_THREAD_FAINT* self) {
     self->unk0 = (u32*)v0;
     self->unk8 = *src;
 
-    CVoiceHandle* handle20 = self->field_0x20;
+    CVoiceHandle* handle20 = self->slot1;
     if (handle20 != NULL) {
         // Call vtable method at offset 0x2BC (is-active check) via the
         // phantom vtable view so MWCC emits the r12-chained virtual call.
         if (((CVoiceChainVTV*)handle20)->isActive() == 0) {
-            // Voice is not active -- try to play a random voice
-            handle20 = self->field_0x20;
+            // Voice is not active -- try to play a random faint voice.
+            handle20 = self->slot1;
             CCharVoice* voicePtr = (CCharVoice*)handle20;
             if (handle20 != NULL) {
                 voicePtr = &handle20->voice;
@@ -107,7 +108,7 @@ void func_802A6C6C(CVS_THREAD_FAINT* self) {
     self->unk0 = (u32*)v0;
     self->unk8 = *src;
 
-    CVoiceHandle* handle24 = self->field_0x24;
+    CVoiceHandle* handle24 = self->slot2;
     if (handle24 != NULL) {
         // Call vtable method at offset 0x2BC (is-active check) via the
         // phantom vtable view so MWCC emits the r12-chained virtual call.
@@ -116,7 +117,7 @@ void func_802A6C6C(CVS_THREAD_FAINT* self) {
             // Retail computes the random voice ID first, then reloads the
             // slot handle so it is NOT live across the mtRand call.
             int voiceId = ml::math::mtRand(2) != 0 ? 0x70B : 0x712;
-            handle24 = self->field_0x24;
+            handle24 = self->slot2;
             CCharVoice* voicePtr = (CCharVoice*)handle24;
             if (handle24 != NULL) {
                 voicePtr = &handle24->voice;
@@ -157,8 +158,8 @@ CVS_THREAD_FAINT* __ct__802A6AA8(CVoiceHandle* owner1, CVoiceHandle* owner2) {
             // layout view (same store as retail's `stw r5,0x1c(r3)`).
             __ct__cf_CVS_THREAD();
             ((CVS_THREAD_FAINT_raw*)self)->vtable = (const CVS_THREAD_FAINT_VTable*)lbl_eu_80539B7C;
-            self->field_0x20 = owner1;
-            self->field_0x24 = owner2;
+            self->slot1 = owner1;
+            self->slot2 = owner2;
         } catch (...) {
             __throw(0, 0, 0);
         }

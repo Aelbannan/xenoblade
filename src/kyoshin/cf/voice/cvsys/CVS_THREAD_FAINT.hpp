@@ -10,8 +10,9 @@ public:
     // Size of the thread-local buffer in bytes.
     static const int BUFFER_SIZE = 0xF0;
 
-    CVoiceHandle* field_0x20;  // 0x20: voice handle pointer (slot 1)
-    CVoiceHandle* field_0x24;  // 0x24: voice handle pointer (slot 2)
+    // Voice handle slots, mirroring the DOWN/BATTLE_END variants.
+    CVoiceHandle* slot1;  // 0x20: owner-1 voice handle
+    CVoiceHandle* slot2;  // 0x24: owner-2 voice handle
 
     int blank1() override;
 };
@@ -36,6 +37,6 @@ struct CVS_THREAD_FAINT_raw {
     u32 field_0x14;             // 0x14
     u32 field_0x18;             // 0x18
     const CVS_THREAD_FAINT_VTable* vtable;  // 0x1C
-    CVoiceHandle* field_0x20;   // 0x20
-    CVoiceHandle* field_0x24;   // 0x24
+    CVoiceHandle* slot1;        // 0x20
+    CVoiceHandle* slot2;        // 0x24
 };

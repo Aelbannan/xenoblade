@@ -423,7 +423,11 @@ config.libs = [
             # CGame.cpp code matches (100% functions) but data is 87.5% for US
             # due to section padding differences, so it is NonMatching for US.
             Object(NonMatching, "kyoshin/CGame.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
-            Object(NonMatching, "kyoshin/main.cpp"),
+            # TU-final: 9/9 FULL_MATCH, split 0x16C exact (0 spare). The asm bl
+            # to CDesktop::entryTable is a PLAN.md §17.6 DECOMP_ASM_INSN opword
+            # escape (retail li+bl pair); .data base anchoring via sGameMainIcon
+            # keeps MWCC's stmw r30/r31 frame identical to retail.
+            Object(Matching, "kyoshin/main.cpp"),
             Object(Matching, "kyoshin/plugin/pluginDeb.cpp"),
             Object(Matching, "kyoshin/plugin/pluginWait.cpp"),
             Object(NonMatching, "kyoshin/plugin/ocBuiltin.cpp"),
@@ -1905,7 +1909,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/lib/CLibVM.cpp"),
             Object(Matching, "monolib/src/lib/UnkClass_80460308.cpp"),
             Object(NonMatching, "monolib/src/lib/UnkClass_80460C34.cpp"),
-            Object(NonMatching, "monolib/src/lod/CTaskLOD.cpp"),
+            Object(Matching, "monolib/src/lod/CTaskLOD.cpp"),
             Object(NonMatching, "monolib/src/lod/CLODCacheManagerS.cpp"),
             Object(NonMatching, "monolib/src/lod/UnkClass_8046368C.cpp"),
             Object(NonMatching, "monolib/src/lod/code_804645CC.cpp"),

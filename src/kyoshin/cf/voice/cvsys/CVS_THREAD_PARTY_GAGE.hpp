@@ -23,6 +23,22 @@ public:
     u32 thresholdLevel;
 };
 
+// Raw layout exposing the implicit vtable pointer at 0x1C so the factory can
+// override it with the PARTY_GAGE vtable.
+struct CVS_THREAD_PARTY_GAGE_raw {
+    u32* state0;                // 0x00: init-state word 1
+    u32 state1;                 // 0x04: init-state word 2
+    u32 state2;                 // 0x08: init-state word 3
+    u32 field_0x0C;             // 0x0C
+    u32 field_0x10;             // 0x10
+    u32 field_0x14;             // 0x14
+    u32 field_0x18;             // 0x18
+    u32* vtable;                // 0x1C
+    CVoiceHandle* partyMember;  // 0x20
+    CVoiceHandle* gaugeData;    // 0x24
+    u32 thresholdLevel;         // 0x28
+};
+
 // Normalized retail symbol names imported from sibling voice modules
 // (unmangled C-ABI symbol names, declared like in every other cvsys header).
 extern "C" {
@@ -39,7 +55,7 @@ extern "C" {
     int           func_802A7850(int iter);
     int           func_802A7B90(CVoiceHandle* handle1, CVoiceHandle* handle2);
     int           func_802A7CC4(CVoiceHandle* handle1, CVoiceHandle* handle2);
-    void          __ct__cf_CVS_THREAD();
+    void          __ct__cf_CVS_THREAD(CVS_THREAD* object);
     // Runtime rethrow (NMWException.h): declared noreturn so MWCC elides the
     // __end__catch epilogue of a catch-all handler that ends with `bl __throw`
     // (retail catch-all handlers end at the rethrow).

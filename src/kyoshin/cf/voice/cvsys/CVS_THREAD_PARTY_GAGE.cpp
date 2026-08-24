@@ -168,6 +168,8 @@ fire:
 
 // Buffer-size getter recorded in the PARTY_GAGE vtable (the CVS_THREAD::blank2
 // slot): this thread type uses a 0x8C (140) byte voice buffer.
+// Retail exports this under the flat map name func_802A8620 (not a mangled
+// member), so it stays a C-linkage free function.
 int func_802A8620() {
     return CVS_THREAD_PARTY_GAGE::BUFFER_SIZE;
 }
@@ -198,6 +200,7 @@ CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
 
     CVS_THREAD_PARTY_GAGE* self = (CVS_THREAD_PARTY_GAGE*)func_802A34E4(0x2c);
     if (self == NULL) return NULL;
+    CVS_THREAD_PARTY_GAGE_raw* raw = (CVS_THREAD_PARTY_GAGE_raw*)self;
 
     // Retail emits a redundant re-check (beq past the construct block) here.
     // The try only wraps the base-constructor call + field stores; the catch
@@ -205,9 +208,9 @@ CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
     // li r5,0; bl __throw`).
     if (self != NULL) {
         try {
-            __ct__cf_CVS_THREAD();
+            __ct__cf_CVS_THREAD(self);
             // Set the subclass vtable at offset 0x1C (right after base fields).
-            ((void**)self)[7] = (void*)lbl_eu_80539C6C;
+            raw->vtable = lbl_eu_80539C6C;
             self->partyMember = member;
             self->gaugeData = gauge;
             self->thresholdLevel = (u32)level;
@@ -219,8 +222,8 @@ CVS_THREAD_PARTY_GAGE* __ct__CVS_THREAD_PARTY_GAGE(int owner1, int owner2) {
     // Copy init data from the global table.
     const u32* base = (const u32*)(u32)lbl_eu_80539C48;
     u32 v1 = base[1], v0 = base[0];
-    self->unk0 = (u32*)v0;
-    self->unk4 = v1;
-    self->unk8 = base[2];
+    raw->state0 = (u32*)v0;
+    raw->state1 = v1;
+    raw->state2 = base[2];
     return self;
 }

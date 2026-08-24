@@ -1987,7 +1987,7 @@ config.libs = [
             Object(Matching, "monolib/src/nand/CNReqtaskReaddir.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "monolib/src/nand/CNReqtaskRemove.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(Matching, "monolib/src/nand/CNReqtaskCheck.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
-            Object(NonMatching, "monolib/src/effect/CERand.cpp"),
+            Object(Matching, "monolib/src/effect/CERand.cpp"),
             Object(NonMatching, "monolib/src/effect/code_804DB938.cpp"),
             Object(NonMatching, "monolib/src/work/CWorkSystemPack.cpp"),
             Object(NonMatching, "monolib/src/core/CPackItem.cpp", extra_cflags=["-func_align 16"]),

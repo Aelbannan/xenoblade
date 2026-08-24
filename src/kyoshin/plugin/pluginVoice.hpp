@@ -25,5 +25,9 @@ struct VoiceActorList {
     VoiceActorListNode* sentinel;  // 0x04
 };
 
+// Voice/actor-manager list accessor (retail mangled name func_800B6BA4__Fv -
+// plain C++ linkage reproduces the Fv suffix).
+VoiceActorList* func_800B6BA4();
+
 int voice_play(_sVMThread* pThread);
 void pluginVoiceRegist();

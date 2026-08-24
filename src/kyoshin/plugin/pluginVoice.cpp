@@ -14,9 +14,6 @@
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 #include "monolib/util.hpp"
 
-// Voice/actor-manager list accessor; retail returns the raw node-list view.
-extern VoiceActorList* func_800B6BA4();
-
 // Retail data labels referenced by voice_play.
 extern const char lbl_eu_80513988[];
 extern PluginFuncData lbl_eu_8053B880[];

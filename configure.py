@@ -1485,7 +1485,7 @@ config.libs = [
             Object(Matching, "CriWare/src/adx/wiirna/rna_err.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/wiirna/ax_rna.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/adxt/srcwii/adx_mwii.c", mw_version = "Wii/1.1"),
-            Object(NonMatching, "CriWare/src/adx/adxt/srcwii/adx_suwii.c", mw_version = "Wii/1.1"),
+            Object(Matching, "CriWare/src/adx/adxt/srcwii/adx_suwii.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/adxt/srcwii/adx_rnawii.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/std/cri_crw_std.c", mw_version = "Wii/1.1"),
         ],
@@ -1932,7 +1932,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/scn/CScnItemModel.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnItemModelNw4r.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnItemPool.cpp"),
-            Object(NonMatching, "monolib/src/scn/CScnLightMan.cpp"),
+            Object(Matching, "monolib/src/scn/CScnLightMan.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnMaruShadowNw4r.cpp"),  # NOT GC/3.0a5.2 (tested 2026: EA48/EA74 regress 100->90, ctor unchanged 75); ctor open item = source-shape scheduling
             Object(NonMatching, "monolib/src/scn/CScnMem.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnRoot.cpp"),

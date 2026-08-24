@@ -69,7 +69,6 @@ int MPV_GetBitRate(void* handle, u32* out) {
 /* Get VBV buffer size (and derived average/max bitrates) */
 int MPV_GetVbvBufSiz(void *handle, u32 *out_size, u32 *out_avg, u32 *out_max) {
     MpfGetHd *h = (MpfGetHd *)handle;
-    s32 t;
     if (MPVLIB_CheckHn(h)) {
         return MPVERR_SetCode(NULL, 0xFF03020F);
     }
@@ -77,28 +76,27 @@ int MPV_GetVbvBufSiz(void *handle, u32 *out_size, u32 *out_avg, u32 *out_max) {
     *out_size = h->vbvBufSiz << 11;
     *out_avg = h->frameRate;
 
-    // 0x30000 + 0xFFFF sentinel marks "unspecified" max bitrate
-    t = h->bitRate;
-    if ((u32)(t - 0x30000) == 0xFFFF) {
+    // 0x3FFFF sentinel marks "unspecified" max bitrate
+    if ((h->bitRate - 0x30000) == 0xFFFF) {
         *out_max = (u32)-1;
     } else {
         // max = frameRate*bitRate scaled via magic-multiply division,
         // rounded toward zero
-        t = h->frameRate * t;
-        t = (s32)__mulhw((s32)0x91A2B3C5, t) + t;
-        t = t >> 10;
-        *out_max = (u32)t + ((u32)t >> 31);
+        s32 prod = h->frameRate * h->bitRate;
+        s32 hi = __mulhw((s32)0x91A2B3C5, prod);
+        s32 x = ((s32)hi + (s32)prod) >> 10;
+        *out_max = (s32)x + ((u32)x >> 31);
     }
     return 0;
 }
 
 /* Get link flags */
 int MPV_GetLinkFlg(void *handle, u32 *out_prev, u32 *out_next) {
-    u8* h = (u8*)handle;
+    MpfGetHd *h = (MpfGetHd *)handle;
     if (MPVLIB_CheckHn(h)) {
         return MPVERR_SetCode(NULL, 0xFF03020E);
     }
-    *out_prev = *(u32 *)(h + 0xC54);
-    *out_next = *(u32 *)(h + 0xC58);
+    *out_prev = h->linkFlg[0];
+    *out_next = h->linkFlg[1];
     return 0;
 }

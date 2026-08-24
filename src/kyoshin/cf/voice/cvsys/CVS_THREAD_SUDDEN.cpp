@@ -2,7 +2,6 @@
 // Four functions: busy-check clear, voice removal, voice play, and constructor.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_SUDDEN.hpp"
-#include "kyoshin/harness_catalog.hpp"
 
 // ── Target 1: us-802ab400 (func_802A8CCC) ──────────────────────────────────
 // If no active voice, clear the handle slot.
@@ -20,11 +19,11 @@ void func_802A8D08(CVS_THREAD_SUDDEN* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
     CVoiceHandle* handle = self->voiceHandle;
-    CCharVoice* biased = (CCharVoice*)handle;
+    CCharVoice* embedded = (CCharVoice*)handle;
     if (handle != NULL) {
-        biased = &handle->voice;
+        embedded = &handle->voice;
     }
-    if (biased == voicePtr) {
+    if (embedded == voicePtr) {
         self->voiceHandle = NULL;
     }
 }

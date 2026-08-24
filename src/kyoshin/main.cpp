@@ -15,30 +15,9 @@
 #include "monolib/device/CDeviceGX.hpp"
 #include "revolution/gx/GXTypes.h"
 
-// US/EU error / path helpers (kyoshin/CErrMes, CNandData, CDeviceFile, CDeviceFont).
-extern "C" {
-extern u8 lbl_eu_8065FD00[];
-extern s8 lbl_eu_80663B18;
-
-void func_eu_802B12DC();
-void func_eu_802B11C0();
-const char* func_eu_802B14D4();
-const char* func_eu_802B14E0();
-const char* func_eu_802B14EC();
-const wchar_t* func_eu_802B133C();
-const wchar_t* func_eu_802B1354();
-const wchar_t* func_eu_802B136C();
-const wchar_t* func_eu_802B13E4();
-const wchar_t* func_eu_802B13FC();
-const wchar_t* func_eu_802B1414();
-void func_eu_802B1334();
-
-void func_eu_804520B0(const void* p);
-void func_eu_80457318(const wchar_t* msg);
-
-// Mangled CDesktop::entryTable - asm bl target (PLAN.md §17.6).
-void entryTable__8CDesktopFPQ28CDesktop16DESKTOP_ICON_DEFb(DesktopIcon*, bool);
-}
+// Retail imports for main.cpp - proper header so there is no local
+// C-linkage import block (lint rule).
+#include "kyoshin/main_imports.hpp"
 
 #if defined(VERSION_JP)
 // ---------------------------------------------------------------------------
@@ -108,7 +87,8 @@ const char lbl_eu_80665B70[7] = "HIKARI";
 const char lbl_eu_80665B78[8] = "HBMSTOP";
 
 
-//Static file callback functions.
+// Static.arc per-file load/unload callbacks, registered via sStaticArcFiles
+// below and invoked by CLibStaticData when the archive entry is paged in/out.
 
 void OnBdatFileLoaded(void* pData, u32 length) {
     CBdat::func_8003AA78(0, pData);
@@ -205,7 +185,9 @@ StaticArcFileData sStaticArcFiles[10] = {
 };
 #endif
 
-//VM initialization callback functions.
+// VM initialization callbacks handed to CLibVM::setCallbacks: the first run
+// once during VM startup (init + plugin registration), the second on every VM
+// (re)initialization.
 
 void vmInitPluginRegistCallback(){
     vmInit();

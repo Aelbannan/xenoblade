@@ -1,205 +1,125 @@
 // Translation unit: monolib/src/effect/CERand
-// CERandomizer / CERandomizerSimple random generators + CERand statics.
 //
-// Implemented as extern "C" fragments + hand-written vtables/RTTI so this TU
-// emits exactly the retail data (vtables + RTTI name strings + locators) and
-// no compiler-generated __vt__/__RTTI__/vtable .data of its own. The two
-// randomizer objects live in foreign .bss/.sbss ranges in the retail DOL
-// (unlabeled globals at lbl_eu_80660028 / lbl_eu_80665A08), so they are
-// referenced by address instead of being defined here (retail CERand.o has
-// an empty .bss/.sbss).
+// Real member-function definitions for the effect-system randomizers. The
+// class declarations (with inline virtual bodies) live in
+// monolib/effect/CERand.hpp; MWCC emits the out-of-line virtual copies and
+// the vtables/RTTI in this TU because the constructors store the vptr here.
 //
-// All float/double constants are referenced by their retail sdata2 names so
-// no local .sdata2 pool is emitted (retail CERand.o .sdata2 is empty).
+// The two randomizer objects live in foreign .bss/.sbss ranges in the retail
+// DOL (dissolved into the CNReqtaskSave.o / CNReqtaskCheck.o blob slices at
+// lbl_eu_80660028 / lbl_eu_80665A08), so they are accessed through those
+// labels instead of being defined here (retail CERand.o owns no storage).
 
 #include "monolib/effect/CERand.hpp"
 
 using namespace ml;
 
-// ---- Named sdata2 constants (retail pool) ----
-extern double lbl_eu_8066B240; // 0x4330000080000000 (s32->f32 magic, CERandomizer)
-extern double lbl_eu_8066B258; // 0x4330000080000000 (s32->f32 magic, Simple)
-extern float lbl_eu_8066B234;  // 2147483648.0f (2^31, randF divisor)
+// ---- Shared monolibdata2 sdata2 pool entries ----
+extern double lbl_eu_8066B240; // signed s32->f64 magic (0x43300000_80000000), CERandomizer
+extern double lbl_eu_8066B258; // signed s32->f64 magic (0x43300000_80000000), CERandomizerSimple
+extern float lbl_eu_8066B234;  // 2147483648.0f (randF divisor)
 extern float lbl_eu_8066B250;  // 10006.0f (Simple randF divisor)
 extern float lbl_eu_8066B238;  // 0.5f
 extern float lbl_eu_8066B248;  // 1.0f
 extern float lbl_eu_8066B24C;  // -1.0f
 extern float lbl_eu_8066B230;  // 0.0f
 
-// Local layout mirror of CERandomizerSimple (the real class keeps its fields
-// private; the extern "C" fragments below address the object through this
-// view, which matches the retail layout exactly: vptr 0x0, seed1 0x4, seed2
-// 0x6, age 0x8).
-struct CERandomizerSimpleLay {
-    void* vptr;  // 0x00
-    u16 seed1;   // 0x04
-    u16 seed2;   // 0x06
-    float age;   // 0x08
-};
+// ---- Dissolved storage of the global randomizer instances ----
+extern u8 lbl_eu_80660028[16]; // ceRandomizerSimple (.bss, CNReqtaskSave.o slice)
+extern u32 lbl_eu_80665A08[2]; // ceRandomizer (.sbss, CNReqtaskCheck.o slice)
 
-// Retail storage of the randomizer globals (foreign .bss/.sbss ranges). The
-// Simple object is viewed through the layout mirror above (its fields are
-// private in the real class).
-extern CERandomizerSimpleLay lbl_eu_80660028;
-extern CERandomizer lbl_eu_80665A08;
+// Vtables (retail .data of this TU).
+extern u32 lbl_eu_8056FE08[]; // CERandomizerSimple
+extern u32 lbl_eu_8056FE30[]; // CERandomizer
 
-// Forward declarations for the function fragments (cross-references between
-// the extern "C" bodies below).
-extern "C" u32 rand__18CERandomizerSimpleFv(CERandomizerSimpleLay* self);
-
-// Forward declarations for the data block at the bottom (vtable/RTTI
-// cross-references from the function fragments above).
-extern "C" u32 lbl_eu_8056FE08[];
-extern "C" u32 lbl_eu_80663BB0[];
-extern "C" u32 lbl_eu_80663BB8[];
-extern "C" u32 lbl_eu_80663BC0[];
-extern "C" u32 lbl_eu_8056FE20[];
-extern "C" u32 lbl_eu_8056FE48[];
-
-union F64Conv_B240 {
-    f64 d;
-    u32 w[2];
-};
-union F64Conv_B258 {
-    f64 d;
-    u32 w[2];
-};
-
-// s32 -> f32 through the shared signed magic double (retail sequence:
-// xoris + 0x43300000 stack double minus the magic).
-static inline f32 s32ToF_B240(s32 v) {
-    F64Conv_B240 c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    return (f32)(c.d - lbl_eu_8066B240);
+// Accessors for the two global randomizer instances, whose storage lives in
+// foreign blob slices.
+static CERandomizer* ceRandomizerRef() {
+    return reinterpret_cast<CERandomizer*>(&lbl_eu_80665A08);
 }
 
-static inline f32 s32ToF_B258(s32 v) {
-    F64Conv_B258 c;
-    c.w[0] = 0x43300000u;
-    c.w[1] = (u32)v ^ 0x80000000u;
-    return (f32)(c.d - lbl_eu_8066B258);
+static CERandomizerSimple* ceRandomizerSimpleRef() {
+    return reinterpret_cast<CERandomizerSimple*>(&lbl_eu_80660028);
 }
 
-// ---- Function fragments (retail mangled names) ----
+// ---- CERandomizerSimple ----
 
-extern "C" void __ct__18CERandomizerSimpleFv(CERandomizerSimpleLay* self) {
-    // vptr + seed1 = seed2 = 14992, age = 0.0f (retail inlines the init).
-    *(void**)self = (void*)&lbl_eu_8056FE08;
-    self->seed1 = (u16)CERand::defaultSeed;
-    self->seed2 = (u16)CERand::defaultSeed;
-    self->age = lbl_eu_8066B230;
+CERandomizerSimple::CERandomizerSimple() {
+    create(CERand::defaultSeed);
 }
 
-extern "C" void create__18CERandomizerSimpleFi(CERandomizerSimpleLay* self, int seed) {
+void CERandomizerSimple::create(int seed) {
     if (seed < 0) {
-        seed = lbl_eu_80660028.seed1;
+        seed1 = ceRandomizerSimpleRef()->seed1;
+    } else {
+        seed1 = (u16)seed;
     }
-    self->seed1 = (u16)seed;
-    self->seed2 = self->seed1;
-    self->age = lbl_eu_8066B230;
+    seed2 = seed1;
+    age = lbl_eu_8066B230;
 }
 
-extern "C" void execute__18CERandomizerSimpleFf(CERandomizerSimpleLay* self, float time) {
-    float prevAge = self->age;
-    self->age += time;
-    if ((int)prevAge == (int)self->age) {
-        self->seed1 = self->seed2;
+void CERandomizerSimple::execute(float time) {
+    float prevAge = age;
+    age += time;
+    if ((int)prevAge == (int)age) {
+        seed1 = seed2;
     } else {
-        self->seed2 = self->seed1;
-        if (((int)self->age & 31) == 0) {
-            rand__18CERandomizerSimpleFv(self);
+        seed2 = seed1;
+        if (((int)age & 31) == 0) {
+            rand();
         }
     }
 }
 
-extern "C" u32 rand__18CERandomizerSimpleFv(CERandomizerSimpleLay* self) {
-    u32 temp = (u32)self->seed1 * 673 + 945;
-    self->seed1 = (u16)((temp / 10) % 100003);
-    return temp % 10007;
+// Never called; constructing the instance makes MWCC emit this TU's
+// CERandomizer vtable and the out-of-line copies of its inline virtuals
+// (retail keeps them here next to the Simple ones).
+void KeepCERandomizerEmission() {
+    CERandomizer dummy;
 }
 
-extern "C" float randF__18CERandomizerSimpleFv(CERandomizerSimpleLay* self) {
-    return s32ToF_B258((s32)rand__18CERandomizerSimpleFv(self)) / lbl_eu_8066B250;
+// ---- Hand-written static initializer ----
+
+// Static initializer for the two global randomizer instances. Their storage
+// is dissolved into foreign blob slices (see top-of-file note), so MWCC will
+// not generate an auto-sinit; the retail __sinit_\CERand_cpp body is
+// reproduced here and retargeted to the retail symbol by
+// postprocess_reloc_names.py.
+void CERandSinit() {
+    ceRandomizerSimpleRef()->create(CERand::defaultSeed);
+    *(void**)ceRandomizerSimpleRef() = (void*)&lbl_eu_8056FE08;
+    *(void**)ceRandomizerRef() = (void*)&lbl_eu_8056FE30;
 }
 
-extern "C" float randFHalf__18CERandomizerSimpleFv(CERandomizerSimpleLay* self) {
-    return s32ToF_B258((s32)rand__18CERandomizerSimpleFv(self)) / lbl_eu_8066B250 -
-           lbl_eu_8066B238;
+// ---- CERand statics ----
+
+void CERand::init() {
+    ceRandomizerSimpleRef()->create(CERand::defaultSeed);
 }
 
-extern "C" float randSign__18CERandomizerSimpleFv(CERandomizerSimpleLay* self) {
-    return (rand__18CERandomizerSimpleFv(self) % 2 != 0) ? lbl_eu_8066B248 : lbl_eu_8066B24C;
+void CERand::execute(float time) {
+    ceRandomizerSimpleRef()->execute(time);
 }
 
-extern "C" u32 rand__12CERandomizerFv(CERandomizer* self) {
-    return ml::math::mtRand();
+// randFHalf/randSign of CERandomizer are inlined into the vector helpers by
+// retail; the same expressions against the shared pool constants are spelled
+// out here.
+void CERand::randVec(ml::CVec3* v) {
+    union {
+        f64 d;
+        u32 w[2];
+    } c;
+    c.w[0] = 0x43300000u;
+    c.w[1] = ml::math::mtRand() ^ 0x80000000u;
+    v->x = (f32)(c.d - lbl_eu_8066B240) / lbl_eu_8066B234 - lbl_eu_8066B238;
+    c.w[1] = ml::math::mtRand() ^ 0x80000000u;
+    v->y = (f32)(c.d - lbl_eu_8066B240) / lbl_eu_8066B234 - lbl_eu_8066B238;
+    c.w[1] = ml::math::mtRand() ^ 0x80000000u;
+    v->z = (f32)(c.d - lbl_eu_8066B240) / lbl_eu_8066B234 - lbl_eu_8066B238;
 }
 
-extern "C" float randF__12CERandomizerFv(CERandomizer* self) {
-    return s32ToF_B240(ml::math::mtRand()) / lbl_eu_8066B234;
+void CERand::randSignVec(ml::CVec3* v) {
+    v->x *= (ml::math::mtRand() % 2 != 0) ? lbl_eu_8066B248 : lbl_eu_8066B24C;
+    v->y *= (ml::math::mtRand() % 2 != 0) ? lbl_eu_8066B248 : lbl_eu_8066B24C;
+    v->z *= (ml::math::mtRand() % 2 != 0) ? lbl_eu_8066B248 : lbl_eu_8066B24C;
 }
-
-extern "C" float randFHalf__12CERandomizerFv(CERandomizer* self) {
-    return s32ToF_B240(ml::math::mtRand()) / lbl_eu_8066B234 - lbl_eu_8066B238;
-}
-
-extern "C" float randSign__12CERandomizerFv(CERandomizer* self) {
-    return (ml::math::mtRand() % 2 != 0) ? lbl_eu_8066B248 : lbl_eu_8066B24C;
-}
-
-extern "C" void init__6CERandFv() {
-    create__18CERandomizerSimpleFi(&lbl_eu_80660028, CERand::defaultSeed);
-}
-
-extern "C" void execute__6CERandFf(float time) {
-    execute__18CERandomizerSimpleFf(&lbl_eu_80660028, time);
-}
-
-extern "C" void randVec__6CERandFPQ22ml5CVec3(ml::CVec3* v) {
-    v->x = randFHalf__12CERandomizerFv(&lbl_eu_80665A08);
-    v->y = randFHalf__12CERandomizerFv(&lbl_eu_80665A08);
-    v->z = randFHalf__12CERandomizerFv(&lbl_eu_80665A08);
-}
-
-extern "C" void randSignVec__6CERandFPQ22ml5CVec3(ml::CVec3* v) {
-    v->x *= randSign__12CERandomizerFv(&lbl_eu_80665A08);
-    v->y *= randSign__12CERandomizerFv(&lbl_eu_80665A08);
-    v->z *= randSign__12CERandomizerFv(&lbl_eu_80665A08);
-}
-
-// ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====
-// [.rodata] 0x80524658-0x80524688 (48B): RTTI name strings.
-extern "C" __declspec(align(8)) const char lbl_eu_80524658[20] = {
-    0x43,0x45,0x52,0x61,0x6E,0x64,0x6F,0x6D,0x69,0x7A,0x65,0x72,0x53,0x69,0x6D,0x70,
-    0x6C,0x65,0x00,0x00,
-};
-extern "C" __declspec(align(4)) const char lbl_eu_8052466C[12] = {
-    0x49,0x52,0x61,0x6E,0x64,0x6F,0x6D,0x69,0x7A,0x65,0x72,0x00,
-};
-extern "C" __declspec(align(4)) const char lbl_eu_80524678[16] = {
-    0x43,0x45,0x52,0x61,0x6E,0x64,0x6F,0x6D,0x69,0x7A,0x65,0x72,0x00,0x00,0x00,0x00,
-};
-DECOMP_FORCEACTIVE(CERand_cpp, lbl_eu_80524658);
-
-// [.data] 0x8056FE08-0x8056FE58 (80B): vtables + RTTI base-lists.
-extern "C" u32 lbl_eu_8056FE08[6] = {
-    (u32)&lbl_eu_80663BB0, 0x00000000,
-    (u32)&rand__18CERandomizerSimpleFv, (u32)&randF__18CERandomizerSimpleFv,
-    (u32)&randFHalf__18CERandomizerSimpleFv, (u32)&randSign__18CERandomizerSimpleFv,
-};
-extern "C" u32 lbl_eu_8056FE20[4] = { (u32)&lbl_eu_80663BB8, 0x00000000, 0x00000000, 0x00000000 };
-extern "C" u32 lbl_eu_8056FE30[6] = {
-    (u32)&lbl_eu_80663BC0, 0x00000000,
-    (u32)&rand__12CERandomizerFv, (u32)&randF__12CERandomizerFv,
-    (u32)&randFHalf__12CERandomizerFv, (u32)&randSign__12CERandomizerFv,
-};
-extern "C" u32 lbl_eu_8056FE48[4] = { (u32)&lbl_eu_80663BB8, 0x00000000, 0x00000000, 0x00000000 };
-DECOMP_FORCEACTIVE(CERand_cpp, lbl_eu_8056FE08);
-DECOMP_FORCEACTIVE(CERand_cpp, lbl_eu_8056FE30);
-
-// [.sdata] 0x80663BB0-0x80663BC8 (24B): RTTI locators.
-extern "C" u32 lbl_eu_80663BB0[2] = { (u32)&lbl_eu_80524658, (u32)&lbl_eu_8056FE20 };
-extern "C" u32 lbl_eu_80663BB8[2] = { (u32)&lbl_eu_8052466C, 0x00000000 };
-extern "C" u32 lbl_eu_80663BC0[2] = { (u32)&lbl_eu_80524678, (u32)&lbl_eu_8056FE48 };
-DECOMP_FORCEACTIVE(CERand_cpp, lbl_eu_80663BB0);

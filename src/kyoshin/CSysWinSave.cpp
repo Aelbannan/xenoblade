@@ -351,21 +351,13 @@ extern "C" CSysWinSave* __ct__802944D8(CProcess* registerParent, CScn* scene) {
         shim->vtable = (void*)lbl_eu_8052D238;
 
         // Copy the null member-function pointer into both callback slots.
-        // Declaring the [0] temp first makes MWCC allocate it to r3/r8 and
-        // hoist the [1] load above, matching the retail load/store order.
-        u32* ptmf = (u32*)(uintptr_t)__ptmf_null;
-        u32 ptmfWord0 = ptmf[0];
-        u32 ptmfWord1 = ptmf[1];
-        obj->ptmf0[0] = ptmfWord0;
-        obj->ptmf0[1] = ptmfWord1;
-        u32 ptmfWord2 = ptmf[2];
-        obj->ptmf0[2] = ptmfWord2;
-        ptmfWord0 = ptmf[0];
-        ptmfWord1 = ptmf[1];
-        obj->ptmf1[0] = ptmfWord0;
-        obj->ptmf1[1] = ptmfWord1;
-        ptmfWord2 = ptmf[2];
-        obj->ptmf1[2] = ptmfWord2;
+        // Declaring the slot[1] temp first makes MWCC color it r0/r8 and
+        // slot[0] r3/r9, matching the retail load/store order.
+        // Copy the null member-function pointer into both callback slots
+        // (12-byte PTMF struct assignment, one per callback slot).
+        struct PTMF12 { u32 w[3]; };
+        *(PTMF12*)&obj->ptmf0[0] = *(PTMF12*)(uintptr_t)__ptmf_null;
+        *(PTMF12*)&obj->ptmf1[0] = *(PTMF12*)(uintptr_t)__ptmf_null;
 
         obj->field_54 = 0;
         obj->field_58 = 0;

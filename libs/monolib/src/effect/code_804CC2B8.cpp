@@ -13,6 +13,8 @@
 #include "monolib/math/Random.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 #include "monolib/effect/CERand.hpp"
+#include <new>
+#include "monolib/effect/CETrail.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/effect/code_804CC2B8.hpp"
 
@@ -23,6 +25,8 @@ extern f64 lbl_eu_8066B170;
 // func_804D01E0 / func_804D0AB4 render pair (retail C-linkage names).
 extern f32 lbl_eu_8066B11C;
 extern f32 lbl_eu_8066B128;
+extern f32 lbl_eu_8066B130;
+extern f32 lbl_eu_8066B134;
 extern "C" u32 func_804EEACC(void* link);
 extern "C" void* func_804E0168(s32 arg);
 extern "C" void func_804DF164(void* res, s32 index, s32 cacheIndex, s32 wrap);
@@ -34,6 +38,9 @@ extern "C" void func_804D928C(Mtx mtx, const u8* obj);
 extern f32 lbl_eu_8066A208;
 extern f32 lbl_eu_8066B12C;
 extern f32 lbl_eu_8066B138;
+extern f32 lbl_eu_8066B120;
+extern const char lbl_eu_80526324[];
+extern const char lbl_eu_80526300[];
 
 // Node view used by the quad-render functions (func_804D01E0 / func_804D0AB4):
 // a position matrix at 0x00 and an RGBA color word at 0x30.
@@ -135,11 +142,11 @@ struct EffectSceneFlags {
     u16 : 15;
 };
 struct SceneFlagBits {
-    u16 : 1;       // bit 15
+    u16 b15 : 1;   // bit 15
     u16 b14 : 1;   // 0x4000
     u16 : 2;       // bits 13, 12
     u16 b11 : 1;   // 0x0800
-    u16 : 1;       // bit 10
+    u16 b10 : 1;   // 0x0400
     u16 b9 : 1;    // 0x0200
     u16 b8 : 1;    // 0x0100
     u16 b7 : 1;    // 0x0080
@@ -373,12 +380,13 @@ struct SceneSubObj {
     ToneRange* field_0xdc;       // 0xdc tone-range table
     u8 pad_0xe0[0xe4 - 0xe0];
     u32 field_0xe4;              // 0xe4
-    u8 pad_0xe8[0xec - 0xe8];
+    u32 field_0xe8;              // 0xe8
+    u8 pad_0xec[0xec - 0xec];
     u8* field_0xec;              // 0xec
     u8 pad_0xf0[0xf4 - 0xf0];
     u32 field_0xf4;              // 0xf4 pointer (func_804CCA64 gate table)
     u32 field_0xf8;              // 0xf8
-    u8 pad_0xfc[0x100 - 0xfc];
+    u32 field_0xfc;              // 0xfc
     u32 field_0x100;             // 0x100 pointer to a sample/tone table
     u32 field_0x104;             // 0x104
     u32 field_0x108;             // 0x108 pointer used by target 6
@@ -500,7 +508,8 @@ struct EffectScene {
     u32 field_0x29c;
     u32 field_0x2a0;
     u32 field_0x2a4;
-    u8 pad_0x2a8[0x2b0 - 0x2a8];
+    void* field_0x2a8;           // 0x2a8 anim block (func_804E214C target)
+    u8 pad_0x2ac[0x2b0 - 0x2ac];
     f32 field_0x2b0;
     f32 field_0x2b4;
     f32 field_0x2b8;
@@ -610,44 +619,64 @@ extern "C" void __attribute__((never_inline)) func_804CD9EC(EffectScene* self) {
 
 // Target 9: pull a sub-object's aligned direction, scale it and fold into b8.
 extern "C" void __attribute__((never_inline)) func_804CDB2C(EffectScene* self, Vec* p1) {
+    EffectNode* node;
+    Vec diff;
+    ml::CVec3 staged;
+    ml::CVec3 nrm;
+    Vec res;
+    ml::CVec3 dir;
+    ml::CVec3 scaled;
     SceneSubObj* sub = self->field_0x0c;
     u32 cls = sub->field_0x00;
     if ((u32)(cls - 9) <= 2) return;
     u8* pf = (u8*)sub->field_0xf8;
     if (!pf) return;
-    s32 r = pf ? *(u8*)(pf - 0xf) : 0;
+    s32 r = pf ? *(volatile u8*)(pf - 0xf) : 0;
     if (self->field_0x18 <= lbl_eu_8066B0DC) r = 0;
     if (*(const f32*)&self->field_0x10 <= lbl_eu_8066B0D8) r = 3;
     func_804EE60C(&self->field_0xdc);
-    if (r) {
-        EffectNode* node = func_804E0114((s16)self->field_0x04);
+    if ((r & 0xFF) != 0) {
+        node = func_804E0114((s16)self->field_0x04);
         if (r & 2) func_804EE658(&self->field_0xdc, node);
         if (r & 1) func_804EE8FC(&self->field_0xdc, node);
     }
     f32 f31 = self->field_0x234 * self->field_0x18;
     if (f31 == lbl_eu_8066B0DC) return;
-    Vec res;
     PSMTXMultVec(self->field_0xdc.field_0x18, &self->field_0x21c, &res);
-    bool eq = (res.x == p1->x && res.y == p1->y && res.z == p1->z);
-    if (eq) return;
-    Vec d;
-    d.x = res.x - p1->x;
-    d.y = res.y - p1->y;
-    d.z = res.z - p1->z;
-    f32 d2 = d.x * d.x + d.y * d.y + d.z * d.z;
-    if (d2 == lbl_eu_8066B0DC) {
-        d.x = lbl_eu_8066B0DC;
-        d.y = lbl_eu_8066B0DC;
-        d.z = lbl_eu_8066B0DC;
-    } else {
-        PSVECNormalize(&d, &d);
+    diff.x = res.x;
+    diff.y = res.y;
+    diff.z = res.z;
+    s32 same = 0;
+    if (res.x == p1->x) {
+        if (res.y == p1->y) {
+            if (res.z == p1->z) {
+                same = 1;
+            }
+        }
     }
-    d.x *= f31;
-    d.y *= f31;
-    d.z *= f31;
-    self->field_0xb8.x += d.x;
-    self->field_0xb8.y += d.y;
-    self->field_0xb8.z += d.z;
+    if (same) return;
+    // Direct PS subtract (retail has no operator- temp here).
+    nw4r::math::VEC3Sub((nw4r::math::VEC3*)&dir,
+                        (const nw4r::math::VEC3*)&diff,
+                        (const nw4r::math::VEC3*)p1);
+    nrm = dir;
+    f32 d2 = dir.y * dir.y + dir.x * dir.x + dir.z * dir.z;
+    if (d2 == lbl_eu_8066B0DC) {
+        nrm = ml::CVec3::zero;
+    } else {
+        PSVECNormalize((Vec*)&nrm, (Vec*)&nrm);
+    }
+    scaled.x = nrm.x * f31;
+    scaled.y = nrm.y * f31;
+    scaled.z = nrm.z * f31;
+    // Retail stages the scaled vector through a scratch row before the
+    // paired-single accumulate.
+    staged.x = scaled.x;
+    staged.y = scaled.y;
+    staged.z = scaled.z;
+    nw4r::math::VEC3Add((nw4r::math::VEC3*)&self->field_0xb8,
+                        (const nw4r::math::VEC3*)&self->field_0xb8,
+                        (const nw4r::math::VEC3*)&staged);
 }
 
 // Source object for target 10: a Vec at 0, a Vec at 0xc, a Vec at 0x18 and two
@@ -707,11 +736,14 @@ void __attribute__((never_inline)) func_804CDB2C(EffectScene* self, Vec* p1);
 void __attribute__((never_inline)) func_804CDD78(EffectScene* self, const Vec* p2, const Vec* p3);
 void __attribute__((never_inline)) func_804CDE50(EffectScene* self, const Vec* p2, const Vec* p3);
 
-void __attribute__((never_inline)) func_804CE160(EffectScene* self, const Vec* a, const Vec* b);
+void __attribute__((never_inline)) func_804CE160(EffectScene* self, const ml::CVec3* a, const ml::CVec3* b);
 void __attribute__((never_inline)) func_804CE140(EffectScene* self);
 void __attribute__((never_inline)) func_804CE264(EffectScene* self, Vec* p1, Vec* p3);
 void __attribute__((never_inline)) func_804CE388(EffectScene* self, Vec* p);
 void __attribute__((never_inline)) func_804CE3E8(EffectScene* self);
+void __attribute__((never_inline)) func_804CFBC8(EffectScene* self, class CFBC8Target* obj,
+                                                 const ml::CMat34* a, Vec* d, const f32* c,
+                                                 bool flag);
 }
 
 // Target 3: process a frame of the firework/placer scene if the b11 flag is set.
@@ -735,7 +767,7 @@ void func_804CCF84(EffectScene* self) {
     if (!((SceneFlagBits*)&self->field_0x06)->b14) {
         func_804CE140(self);
     }
-    func_804CE160(self, &stackB, &stackA);
+    func_804CE160(self, (const ml::CVec3*)&stackB, (const ml::CVec3*)&stackA);
     func_804CE264(self, &stackA, &self->field_0x190);
     if (type == 0xd) func_804CE388(self, &stackA);
     if (type == 0x8) func_804CE3E8(self);
@@ -767,57 +799,45 @@ extern "C" void __attribute__((never_inline)) func_804CDE50(EffectScene* self, c
     *(volatile f32*)&self->field_0x1c = z;
 }
 
+// Segment-vs-point containment: when a == b the segment degenerates to the
+// point a and the test is a radius check (squared distance vs threshold).
+// Otherwise pick the dominant axis of |b - a| and range-test c along it.
 extern "C" s32 __attribute__((never_inline)) func_804CDF20(void* self, Vec* a, Vec* b, Vec* c) {
+    s32 same = 0;
     if (a->x == b->x && a->y == b->y && a->z == b->z) {
-        f32 dx = a->x - c->x;
-        f32 dy = a->y - c->y;
-        f32 dz = a->z - c->z;
-        return (dx * dx + dy * dy + dz * dz <= lbl_eu_8066B104);
+        same = 1;
     }
-    f32 adx = __fabsf(b->x - a->x);
-    f32 ady = __fabsf(b->y - a->y);
-    f32 adz = __fabsf(b->z - a->z);
+    if (same) {
+        // PS-vector subtract plus an element-wise copy keeps retail's paired
+        // single diff block and the member copy before the squared-distance sum.
+        ml::CVec3 diff = *(const ml::CVec3*)a - *(const ml::CVec3*)c;
+        ml::CVec3 t;
+        t.x = diff.x;
+        t.y = diff.y;
+        t.z = diff.z;
+        return t.x * t.x + t.y * t.y + t.z * t.z <= lbl_eu_8066B104;
+    }
+    // fsubs/fabs/frsp shape comes from the double-width builtin here.
+    f32 adx = (f32)__fabs(b->x - a->x);
+    f32 ady = (f32)__fabs(b->y - a->y);
+    f32 adz = (f32)__fabs(b->z - a->z);
     if (ady < adx) {
         if (adz < adx) {
             // X dominant
-            if (a->x <= c->x) {
-                if (c->x <= b->x) return 1;
-            }
-            if (b->x <= c->x) {
-                if (c->x <= a->x) return 1;
-            }
-            return 0;
-        } else {
-            // Z dominant
-            if (a->z <= c->z) {
-                if (c->z <= b->z) return 1;
-            }
-            if (b->z <= c->z) {
-                if (c->z <= a->z) return 1;
-            }
+            if (a->x <= c->x && c->x <= b->x) return 1;
+            if (b->x <= c->x && c->x <= a->x) return 1;
             return 0;
         }
-    } else {
-        if (adz < ady) {
-            // Y dominant
-            if (a->y <= c->y) {
-                if (c->y <= b->y) return 1;
-            }
-            if (b->y <= c->y) {
-                if (c->y <= a->y) return 1;
-            }
-            return 0;
-        } else {
-            // Z dominant
-            if (a->z <= c->z) {
-                if (c->z <= b->z) return 1;
-            }
-            if (b->z <= c->z) {
-                if (c->z <= a->z) return 1;
-            }
-            return 0;
-        }
+    } else if (adz < ady) {
+        // Y dominant
+        if (a->y <= c->y && c->y <= b->y) return 1;
+        if (b->y <= c->y && c->y <= a->y) return 1;
+        return 0;
     }
+    // Z dominant
+    if (a->z <= c->z && c->z <= b->z) return 1;
+    if (b->z <= c->z && c->z <= a->z) return 1;
+    return 0;
 }
 
 extern "C" void __attribute__((never_inline)) func_804CDD78(EffectScene* self, const Vec* p2, const Vec* p3) {
@@ -833,8 +853,12 @@ extern "C" void __attribute__((never_inline)) func_804CDD78(EffectScene* self, c
     if (fo == 0) return;
     s32 v = (fo != 0) ? *(u8*)(fo - 0xa) : 0;
     if (v == 0) return;
-    ((SceneFlagBits*)&self->field_0x06)->b1 = 0;
-    self->field_0x1c = lbl_eu_8066B0DC;
+    // Volatile load/store pair pins the constant float load ahead of the flag
+    // update (retail order: lhz, lfs, rlwinm, sth, stfs); clears 0x4000.
+    u16 flags = *(volatile u16*)&self->field_0x06;
+    f32 z = lbl_eu_8066B0DC;
+    *(volatile u16*)&self->field_0x06 = (u16)(flags & ~0x4000);
+    *(volatile f32*)&self->field_0x1c = z;
 }
 
 // Forward decls used by func_804CE264 and func_804CCF84.
@@ -845,7 +869,9 @@ void __attribute__((never_inline)) func_804CE4C0(EffectScene* self, Mtx* a, u32 
 void __attribute__((never_inline)) func_804CE9A4(EffectScene* self, Mtx* a, Mtx* b, u32 type, Vec* p1,
                    Mtx* spA, Vec* spB);
 void __attribute__((never_inline)) func_804CF700(EffectScene* self, f32* a, Vec* p1);
-void __attribute__((never_inline)) func_804CFBC8(EffectScene* self, u32 b, u32* a, Vec* spB, u32* c, bool flag);
+void __attribute__((never_inline)) func_804CFBC8(EffectScene* self, class CFBC8Target* obj,
+                                                 const ml::CMat34* a, Vec* spB, const f32* c,
+                                                 bool flag);
 void __attribute__((never_inline)) func_804CE79C(EffectScene* self, Vec* out, u32 type);
 }
 
@@ -867,8 +893,9 @@ extern "C" void __attribute__((never_inline)) func_804CE264(EffectScene* self, V
     func_804CE9A4(self, &self->field_0x19c, &self->field_0x1dc, type, p1,
                   &stackA, &stackB);
     if (self->field_0x32c) {
-        func_804CFBC8(self, (u32)self->field_0x32c, (u32*)&self->field_0x19c,
-                      &stackB, (u32*)&self->field_0x1cc,
+        func_804CFBC8(self, (CFBC8Target*)self->field_0x32c,
+                      (const ml::CMat34*)&self->field_0x19c, &stackB,
+                      (const f32*)&self->field_0x1cc,
                       func_804CE380((const SceneSubObj*)self->field_0x08) != 0);
     }
 }
@@ -1100,53 +1127,45 @@ extern "C" void __attribute__((never_inline)) func_804CE9A4(EffectScene* self, M
     (*b)[1][3] = (*a)[1][3];
     (*b)[2][3] = (*a)[2][3];
 }
-extern "C" void __attribute__((never_inline)) func_804CF700(EffectScene* self, f32* a, Vec* p1) {
+extern "C" void __attribute__((never_inline)) func_804CF700(EffectScene* self, f32* out, Vec* p1) {
     // Light-color update: gate on the object's 0x4000 flag, otherwise zero the
     // 4-float output. Base color comes from obj+0x40; an optional per-frame
     // factor (func_804BE398/538 chain) scales it, func_804E2B54 blends the
     // final color, and a distance falloff weights the alpha channel.
     CF700Obj* obj = (CF700Obj*)self->field_0x08;
-    f32* out = a;
-    // Shared 0x4330 magic slot for all byte/range conversions: retail stores
-    // the magic once in the prologue and reuses the slot for every conversion
-    // (per-call union helpers would allocate a fresh slot each time).
-    union {
-        f64 d;
-        u32 w[2];
-    } cnv;
-    cnv.w[0] = 0x43300000u;
-    if (!((obj->field_0x00 >> 14) & 1)) {
-        // Single 0.0f load, four stores (retail reuses one B0DC register).
-        f32 z = lbl_eu_8066B0DC;
-        out[0] = z;
-        out[1] = z;
-        out[2] = z;
-        out[3] = z;
+    // Retail materializes the gate bit as -bit|bit >> 31 before branching.
+    u32 gbit = (obj->field_0x00 >> 13) & 1;
+    u32 gate = (u32)(-(s32)gbit | gbit) >> 31;
+    if (!gate) {
+        out[0] = lbl_eu_8066B0DC;
+        out[1] = lbl_eu_8066B0DC;
+        out[2] = lbl_eu_8066B0DC;
+        out[3] = lbl_eu_8066B0DC;
         return;
     }
-    f32 base[4];
-    base[0] = obj->field_0x40;
-    base[1] = obj->field_0x44;
-    base[2] = obj->field_0x48;
-    base[3] = obj->field_0x4c;
+    // Retail copies the base color as raw words (two 8-byte chunks), so keep
+    // a punned u64 view alongside the float channels.
+    union {
+        f32 c[4];
+        u64 w[2];
+    } base;
+    base.w[0] = *(const u64*)&obj->field_0x40;
+    base.w[1] = *(const u64*)&obj->field_0x48;
     SceneSubObj* sub = self->field_0x0c;
     u8* p114 = (u8*)sub->field_0x114;
-    if (p114) {
-        u8 b = p114 ? *(u8*)(p114 - 0x1b) : 0;
-        if (b) {
-            s32 ok;
-            Vec v24;
-            if (sub->field_0x110 == 0) {
-                ok = 0;
-            } else {
-                u8* p110 = (u8*)sub->field_0x110;
+    if (p114 != 0) {
+        u8 en = p114 ? *(u8*)(p114 - 0x1b) : 0;
+        if (en != 0) {
+            u8* p110 = (u8*)sub->field_0x110;
+            if (p110 != 0) {
                 f32 f0 = p110 ? *(f32*)(p110 - 0x18) : lbl_eu_8066B0D8;
-                if (func_804BE398(p1, 0x4801, 0, 0, -f0, lbl_eu_8066B0DC) == 0) {
-                    ok = 0;
-                } else {
+                if (func_804BE398(p1, 0x4801, 0, 0, -f0, lbl_eu_8066B0DC) != 0) {
+                    ml::CVec3 v24;
                     if (func_804BE538(&v24) != 0) {
-                        if (p114) {
-                            f32 f3 = p114 ? *(f32*)(p114 - 4) : lbl_eu_8066B114;
+                        // Optional material tint re-read from field_0x114.
+                        u8* pm = (u8*)((EffectScene*)self)->field_0x0c->field_0x114;
+                        if (pm != 0) {
+                            f32 f3 = pm ? *(f32*)(pm - 4) : lbl_eu_8066B114;
                             v24.x *= f3;
                             v24.y *= f3;
                             v24.z *= f3;
@@ -1160,90 +1179,168 @@ extern "C" void __attribute__((never_inline)) func_804CF700(EffectScene* self, f
                         if (v24.x < lbl_eu_8066B0DC) v24.x = lbl_eu_8066B0DC;
                         if (v24.y < lbl_eu_8066B0DC) v24.y = lbl_eu_8066B0DC;
                         if (v24.z < lbl_eu_8066B0DC) v24.z = lbl_eu_8066B0DC;
-                        ok = 1;
-                    } else {
-                        ok = 0;
+                        base.c[0] *= v24.x;
+                        base.c[1] *= v24.y;
+                        base.c[2] *= v24.z;
                     }
                 }
             }
-            if (ok) {
-                base[0] *= v24.x;
-                base[1] *= v24.y;
-                base[2] *= v24.z;
-            }
         }
     }
-    u32 rgba = ((u32*)func_804E2B54(&self->field_0x2e8, base))[0];
-    // Retail converts the RGBA bytes alpha-first (reverse of the channel
-    // order) from the stored word, referencing the shared 2^52 double pool
-    // entry (the manual helper, not a cast, pins the named constant).
-    const u8* cb = (const u8*)&rgba;
-    // Alpha-first byte conversion through the shared magic slot.
-    cnv.w[1] = (u32)cb[3];
-    base[3] = (f32)(cnv.d - lbl_eu_8066B0E8);
-    cnv.w[1] = (u32)cb[2];
-    base[2] = (f32)(cnv.d - lbl_eu_8066B0E8);
-    cnv.w[1] = (u32)cb[1];
-    base[1] = (f32)(cnv.d - lbl_eu_8066B0E8);
-    cnv.w[1] = (u32)cb[0];
-    base[0] = (f32)(cnv.d - lbl_eu_8066B0E8);
-    s32 alpha = (s32)base[3];
-    // Distance-based alpha falloff: two segments (rising then falling) defined
-    // by the tone-range u16s; skipped when the sub flags/class say so.
-    if ((sub->field_0x1c >> 11) & 1) {
-        // no falloff
-    } else {
-        if (sub->field_0xdc == 0) {
-            // no falloff
+    u32 col = *(u32*)func_804E2B54(&self->field_0x2e8, base.c);
+    // Two hoisted 0x4330 magic slots mirror retail's prologue stores at sp+0x40
+    // and sp+0x48; every int/byte -> float conversion below reuses one of the
+    // two slots (alternating), which is what pins the named B0E8/B0F0 doubles.
+    union {
+        f64 d;
+        u32 w[2];
+    } c1, c2;
+    c1.w[0] = 0x43300000u;
+    c2.w[0] = 0x43300000u;
+    const u8* cb = (const u8*)&col;
+    c1.w[1] = cb[3];
+    base.c[3] = (f32)(c1.d - lbl_eu_8066B0E8);
+    c2.w[1] = cb[2];
+    base.c[2] = (f32)(c2.d - lbl_eu_8066B0E8);
+    c1.w[1] = cb[1];
+    base.c[1] = (f32)(c1.d - lbl_eu_8066B0E8);
+    c2.w[1] = cb[0];
+    base.c[0] = (f32)(c2.d - lbl_eu_8066B0E8);
+    s32 alpha = (s32)base.c[3];
+    // Distance-based alpha falloff: two segments (rising then falling)
+    // defined by the tone-range u16s; skipped when sub bit 0x0800 is set,
+    // the table is missing or the class is 4.
+    if (!((sub->field_0x1c & 0x0800)) && sub->field_0xdc != 0 && sub->field_0x00 != 4) {
+        void* rsrc = func_80496264(obj->field_0x10, -1);
+        ml::CVec3 diff = *(const ml::CVec3*)p1 - *(const ml::CVec3*)((u8*)rsrc + 0x10c);
+        f32 mag = PSVECMag(diff);
+        ToneRange* tr = sub->field_0xdc;
+        // Slot usage per conversion mirrors retail's alternating scratch words.
+        c1.w[1] = (u32)((s32)tr->field_0x00 - (s32)tr->field_0x02) ^ 0x80000000u;
+        f32 range1 = (f32)(c1.d - lbl_eu_8066B0F0);
+        c2.w[1] = tr->field_0x00;
+        f32 lim0 = (f32)(c2.d - lbl_eu_8066B0E8);
+        if (range1 > lbl_eu_8066B0DC && mag <= lim0) {
+            c1.w[1] = tr->field_0x02;
+            f32 t = (mag - (f32)(c1.d - lbl_eu_8066B0E8)) / range1;
+            if (t <= lbl_eu_8066B0DC) t = lbl_eu_8066B0DC;
+            c2.w[1] = (u32)(alpha & 0xff);
+            alpha = (s32)((f32)(c2.d - lbl_eu_8066B0E8) * t);
         } else {
-            if (sub->field_0x00 == 4) {
-                // no falloff
-            } else {
-                void* rsrc = func_80496264(obj->field_0x10, -1);
-                // CVec3 operator- (nw4r VEC3Sub PS inline) reproduces retail's
-                // psq_l/ps_sub diff; the temporary copy feeds PSVECMag.
-                ml::CVec3 diff = *(const ml::CVec3*)p1 -
-                                 *(const ml::CVec3*)((u8*)rsrc + 0x10c);
-                f32 mag = PSVECMag(diff);
-                ToneRange* tr = sub->field_0xdc;
-                s32 w0 = (s32)tr->field_0x00;
-                s32 w1 = (s32)tr->field_0x02;
-                s32 w2 = (s32)tr->field_0x04;
-                s32 w3 = (s32)tr->field_0x06;
-                cnv.w[1] = (u32)(w0 - w1) ^ 0x80000000u;
-                f32 range1 = (f32)(cnv.d - lbl_eu_8066B0F0);
-                if (range1 > lbl_eu_8066B0DC &&
-                    (cnv.w[1] = (u32)w0, mag <= (f32)(cnv.d - lbl_eu_8066B0E8))) {
-                    cnv.w[1] = (u32)w1;
-                    f32 t = (mag - (f32)(cnv.d - lbl_eu_8066B0E8)) / range1;
-                    if (t <= lbl_eu_8066B0DC) t = lbl_eu_8066B0DC;
-                    cnv.w[1] = (u32)(alpha & 0xff);
-                    alpha = (s32)((f32)(cnv.d - lbl_eu_8066B0E8) * t);
-                } else {
-                    cnv.w[1] = (u32)(w3 - w2) ^ 0x80000000u;
-                    f32 range2 = (f32)(cnv.d - lbl_eu_8066B0F0);
-                    if (range2 > lbl_eu_8066B0DC &&
-                        (cnv.w[1] = (u32)w2, (f32)(cnv.d - lbl_eu_8066B0E8) <= mag)) {
-                        cnv.w[1] = (u32)w2;
-                        f32 t = (mag - (f32)(cnv.d - lbl_eu_8066B0E8)) / range2;
-                        f32 s = lbl_eu_8066B0D8 - t;
-                        if (s <= lbl_eu_8066B0DC) s = lbl_eu_8066B0DC;
-                        cnv.w[1] = (u32)(alpha & 0xff);
-                        alpha = (s32)((f32)(cnv.d - lbl_eu_8066B0E8) * s);
-                    }
-                }
+            c1.w[1] = (u32)((s32)tr->field_0x04 - (s32)tr->field_0x06) ^ 0x80000000u;
+            f32 range2 = (f32)(c1.d - lbl_eu_8066B0F0);
+            c2.w[1] = tr->field_0x04;
+            f32 lim2 = (f32)(c2.d - lbl_eu_8066B0E8);
+            if (range2 > lbl_eu_8066B0DC && lim2 <= mag) {
+                f32 t = (mag - lim2) / range2;
+                f32 s = lbl_eu_8066B0D8 - t;
+                if (s <= lbl_eu_8066B0DC) s = lbl_eu_8066B0DC;
+                c2.w[1] = (u32)(alpha & 0xff);
+                alpha = (s32)((f32)(c2.d - lbl_eu_8066B0E8) * s);
             }
         }
     }
-    cnv.w[1] = (u32)(alpha & 0xff);
-    base[3] = (f32)(cnv.d - lbl_eu_8066B0E8);
-    out[0] = base[0] / lbl_eu_8066B11C;
-    out[1] = base[1] / lbl_eu_8066B11C;
-    out[2] = base[2] / lbl_eu_8066B11C;
-    out[3] = base[3] / lbl_eu_8066B11C;
+    c1.w[1] = (u32)(alpha & 0xff);
+    base.c[3] = (f32)(c1.d - lbl_eu_8066B0E8);
+    out[0] = base.c[0] / lbl_eu_8066B11C;
+    out[1] = base.c[1] / lbl_eu_8066B11C;
+    out[2] = base.c[2] / lbl_eu_8066B11C;
+    out[3] = base.c[3] / lbl_eu_8066B11C;
 }
-extern "C" void __attribute__((never_inline)) func_804CFBC8(EffectScene* self, u32 b, u32* a, Vec* spB, u32* c,
-                   bool flag){}
+// Polymorphic render target driven by func_804CFBC8. Vtable slots recovered
+// from the retail indirect calls (offsets 0x18/0x1c/0x20/0x24/0x28/0x5c).
+class CFBC8Target {
+public:
+    virtual void unk00();
+    virtual void unk04();
+    virtual void unk08();
+    virtual void unk0C();
+    virtual void unk10();
+    virtual void unk14();
+    virtual void setFlag(bool flag);      // +0x18
+    virtual void unk1C(u32 arg);          // +0x1c
+    virtual void setAlpha(f32 alpha);     // +0x20
+    virtual Vec* getPosSlot();            // +0x24 returns the vec slot to fill
+    virtual void applyDir(Vec* dir);      // +0x28
+    virtual void unk2C();
+    virtual void unk30();
+    virtual void unk34();
+    virtual void unk38();
+    virtual void unk3C();
+    virtual void unk40();
+    virtual void unk44();
+    virtual void unk48();
+    virtual void unk4C();
+    virtual void unk50();
+    virtual void unk54();
+    virtual void unk58();
+    virtual void finish();                // +0x5c
+};
+
+// Applies the scene matrix `a` to the target: pushes color/alpha/flag state,
+// decomposes the matrix (translation + normalized columns + euler rotation)
+// and feeds each piece to the target through its virtual interface.
+void func_804CFBC8(EffectScene* self, CFBC8Target* obj, const ml::CMat34* a, Vec* d,
+                   const f32* c, bool flag) {
+    const f32 zero = lbl_eu_8066B0DC;
+    const f32 one = lbl_eu_8066B0D8;
+    obj->setFlag(c[3] != zero);
+    obj->setAlpha(one - c[3]);
+    obj->unk1C(flag);
+
+    Vec trans;
+    trans.x = a->m[0][3];
+    trans.y = a->m[1][3];
+    trans.z = a->m[2][3];
+    *obj->getPosSlot() = trans;
+
+    ml::CMat34 m = *a;
+    // Only normalize when every element except m[0][0] matches the identity
+    // matrix within eps.
+    bool isUnit = ((f32)__fabs(m.m[0][1] - ml::CMat34::identity.m[0][1]) <= lbl_eu_8066A208 &&
+                   (f32)__fabs(m.m[0][2] - ml::CMat34::identity.m[0][2]) <= lbl_eu_8066A208 &&
+                   (f32)__fabs(m.m[0][3] - ml::CMat34::identity.m[0][3]) <= lbl_eu_8066A208 &&
+                   (f32)__fabs(m.m[1][0] - ml::CMat34::identity.m[1][0]) <= lbl_eu_8066A208 &&
+                   (f32)__fabs(m.m[1][1] - ml::CMat34::identity.m[1][1]) <= lbl_eu_8066A208 &&
+                   (f32)__fabs(m.m[1][2] - ml::CMat34::identity.m[1][2]) <= lbl_eu_8066A208 &&
+                   (f32)__fabs(m.m[1][3] - ml::CMat34::identity.m[1][3]) <= lbl_eu_8066A208 &&
+                   (f32)__fabs(m.m[2][0] - ml::CMat34::identity.m[2][0]) <= lbl_eu_8066A208 &&
+                   (f32)__fabs(m.m[2][1] - ml::CMat34::identity.m[2][1]) <= lbl_eu_8066A208 &&
+                   (f32)__fabs(m.m[2][2] - ml::CMat34::identity.m[2][2]) <= lbl_eu_8066A208 &&
+                   (f32)__fabs(m.m[2][3] - ml::CMat34::identity.m[2][3]) <= lbl_eu_8066A208);
+    if (isUnit) {
+        // Normalize each column (guarding degenerate/negative squared lengths).
+        for (s32 i = 0; i < 3; i++) {
+            Vec col;
+            col.x = m.m[0][i];
+            col.y = m.m[1][i];
+            col.z = m.m[2][i];
+            f32 sumsq = col.y * col.y + col.x * col.x + col.z * col.z;
+            if (sumsq == zero) continue;
+            if (sumsq < zero) {
+                nw4r::db::Warning(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+            }
+            f32 len = (sumsq > zero) ? sumsq * nw4r::math::FrSqrt(sumsq) : zero;
+            f32 inv = one / len;
+            col.x *= inv;
+            col.y *= inv;
+            col.z *= inv;
+            m.m[0][i] = col.x;
+            m.m[1][i] = col.y;
+            m.m[2][i] = col.z;
+        }
+    }
+    // Wrap the Z translation component back into range when it escapes
+    // [-B120, one]: truncate to integer and rescale by (1 - eps).
+    if (m.m[2][3] > one || m.m[2][3] < lbl_eu_8066B120) {
+        m.m[2][3] = (one - lbl_eu_8066A208) * (f32)(s32)m.m[2][3];
+    }
+    ml::CVec3 rot;
+    m.getRotXYZ(rot);
+    *obj->getPosSlot() = *(Vec*)&rot;
+    obj->applyDir(d);
+    obj->finish();
+}
 
 // The retail calls these as real functions; -inline auto would otherwise fold
 // the stub bodies into the callers (the retail never inlines them).
@@ -1265,12 +1362,12 @@ extern "C" void __attribute__((never_inline)) func_804CE388(EffectScene* self, V
     }
 }
 
-extern "C" void __attribute__((never_inline)) func_804CE160(EffectScene* self, const Vec* a, const Vec* b) {
+// us-804d22d4
+extern "C" void __attribute__((never_inline)) func_804CE160(EffectScene* self, const ml::CVec3* a, const ml::CVec3* b) {
     // Direction b - a. If every component already lies inside [c1, c2] the
     // stored direction is left untouched; otherwise it is renormalized (or
     // zeroed when it has no length) and written to field_0x190.
-    ml::CVec3 out = *reinterpret_cast<const ml::CVec3*>(b) -
-                    *reinterpret_cast<const ml::CVec3*>(a);
+    ml::CVec3 out = *b - *a;
     if (out.x < lbl_eu_8066B108 || lbl_eu_8066B10C < out.x ||
         out.y < lbl_eu_8066B108 || lbl_eu_8066B10C < out.y ||
         out.z < lbl_eu_8066B108 || lbl_eu_8066B10C < out.z) {
@@ -1303,43 +1400,78 @@ extern "C" void __attribute__((never_inline)) func_804CE418(EffectScene* self, V
 }
 
 // Target 7: compute the inherited/dir vector `out` for a node from self position
-// and scale by per-sub-node u16 factors based on its type.
+// and scale by per-sub-node u16 factors based on its type. The two magic-double
+// slots below mirror retail's prologue-hoisted 0x43300000 hi words (one per
+// conversion site).
+// Signed-int -> float through a caller-owned 0x4330 magic slot; keeping the
+// subtrahend in a caller local makes every inlined expansion reload the slot
+// (retail alternates two slots and shares one register-held constant).
+typedef union {
+    f64 d;
+    u32 w[2];
+} FConv;
+static inline f32 fconvS32(FConv& c, u32 w, f64 sub) {
+    c.w[1] = w;
+    return (f32)(c.d - sub);
+}
+
+// MSB-first bitfield view of a u16 flag word for func_804CE79C:
+// b10 (0x0400) must be set and b9 (0x0200) clear.
+struct SubObjFlags {
+    u16 : 4;       // bits 15..12
+    u16 b10 : 1;   // 0x0400
+    u16 b9 : 1;    // 0x0200
+    u16 : 10;
+};
+
 extern "C" void __attribute__((never_inline)) func_804CE79C(EffectScene* self, Vec* out, u32 type) {
-    *(u32*)&out->x = self->field_0x29c;
-    *(u32*)&out->y = self->field_0x2a0;
-    *(u32*)&out->z = self->field_0x2a4;
-    u32 t = ((SceneSubObj*)self->field_0x0c)->field_0x00;
-    if ((t >= 9 && t <= 11) || t == 0) {
-        u16 fl = *(u16*)&((SceneSubObj*)self->field_0x0c)->field_0x1c;
-        if (!(fl & 0x20) && (fl & 0x10)) {
+    // Retail copies the punned float words y-before-x.
+    u32 xw = self->field_0x29c;
+    ((IVec3*)out)->y = self->field_0x2a0;
+    ((IVec3*)out)->x = xw;
+    ((IVec3*)out)->z = self->field_0x2a4;
+    switch ((s32)((SceneSubObj*)self->field_0x0c)->field_0x00) {
+    case 0:
+    case 9:
+    case 10:
+    case 11: {
+        SceneSubObj* sub = self->field_0x0c;
+        SubObjFlags* fl = (SubObjFlags*)&sub->field_0x1c;
+        if (!fl->b9 && fl->b10) {
             if (self->field_0x258 >= 0) {
                 U16Pair* p = func_804DF2A8(*(const void**)((u8*)self->field_0x08 + 0x0c));
-                f32 sx = s16ToF_b0f0((s16)p->a);
-                f32 sy = s16ToF_b0f0((s16)p->b);
-                out->x *= sx;
-                out->y *= sy;
+                s32 ib = p->b;
+                s32 ia = p->a;
+                out->x = out->x * (f32)ib;
+                out->y = out->y * (f32)ia;
             } else if (self->field_0x25a >= 0) {
                 U16Pair* p = func_804DF2A8(*(const void**)((u8*)self->field_0x08 + 0x0c));
-                f32 sx = s16ToF_b0f0((s16)p->a);
-                f32 sy = s16ToF_b0f0((s16)p->b);
-                out->x *= sx;
-                out->y *= sy;
+                s32 ib = p->b;
+                s32 ia = p->a;
+                out->x = out->x * (f32)ib;
+                out->y = out->y * (f32)ia;
             }
             out->z = lbl_eu_8066B0DC;
         }
-    } else if (t == 8) {
-        out->x = lbl_eu_8066B0D8;
-        out->y = lbl_eu_8066B0D8;
-        out->z = lbl_eu_8066B0D8;
+        break;
+    }
+    case 8: {
+        // One constant load, three stores (retail CSEs the lfs).
+        f32 v = lbl_eu_8066B0D8;
+        out->x = v;
+        out->y = v;
+        out->z = v;
+        break;
+    }
     }
     if ((u32)(type - 3) <= 2 || (u32)(type - 9) <= 1) {
+        // Swap y/z; retail stores the y slot first.
         f32 fy = out->y;
-        f32 fz = out->z;
+        out->y = out->z;
         out->z = fy;
-        out->y = fz;
     }
     MatFlags* mat = (MatFlags*)self->field_0x08;
-    if (mat->field_0x00 & 0x10) {
+    if (((SubObjFlags*)&mat->field_0x00)->b10) {
         u32* m = (u32*)((SceneSubObj*)self->field_0x0c)->field_0xe4;
         s32 b = m ? *(u8*)((u8*)m - 0xe) : 0;
         if (b != 0xb) {
@@ -1799,45 +1931,163 @@ struct EffInitView {
     ml::CCol4 field_0x1cc;
     Mtx field_0x1dc;
 };
-// Source node: +0/+0x4 u32s, +0x8 s16, +0xa u8 flag selector.
+// Source node: +0/+0x4 u32s, +0x8 s16, +0xa u8 flag selector. The +4 word is
+// aliased as both an integer and a sub-object pointer; the distinct access
+// types keep MWCC from merging the two reads.
 struct EffSrc3 {
     u32 field_0x00;
-    u32 field_0x04;
+    union {
+        u32 field_0x04;
+        SceneSubObj* sub;
+    };
     s16 field_0x08;
     u8 field_0x0a;
 };
 
-// Target 3: initialise an effect scene from a source node. Packs a flag nibble
-// into field_0x06, zeroes the body, seeds matrices/color, then applies a random
-// scale (clamped to 1.0f) to field_0x14 and clears a flag bit if negative.
-void func_804CC3A4(EffectScene* out, const EffSrc3* node) {
-    out->field_0x04 = (u16)node->field_0x08;
-    out->field_0x06 = 0xC000u;
-    u32 r = (u32)ml::math::mtRand();
-    out->field_0x06 |= (u16)((r >> 17) & 1) << 24;  // bit packed (masked by u16 store, kept for shape)
-    out->field_0x08 = node->field_0x00;
-    out->field_0x0c = (SceneSubObj*)node->field_0x04;
-    out->field_0x10 = lbl_eu_8066B0D8;
+// Anim-item initializers and lookup helpers (defined in code_804DEDA8.cpp).
+struct CSchedAnimItem;
+extern "C" void func_804E0E48(CSchedAnimItem* item, u8* base, f32* ref);
+extern "C" void func_804E17A4(CSchedAnimItem* item, u8* base);
+extern "C" void func_804E196C(CSchedAnimItem* item, u8* base);
+extern "C" void func_804E1AA8(CSchedAnimItem* item, u8* base);
+extern "C" void func_804E1D50(CSchedAnimItem* item, u8* base);
+extern "C" void func_804E214C(CSchedAnimItem* item, u8* base, bool sel);
+extern "C" void func_804E26D8(CSchedAnimItem* item, u8* base);
+extern "C" void func_804E2D8C(CSchedAnimItem* item, u8* base);
+// Resource lookup query (code_804DEDA8.cpp).
+extern "C" s32 func_804DF2C4(void* lookup, void* a, s32 index);
+// CETrail constructor (CETrail.cpp; retail linker name).
+extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s32 segCount, void* linkArg,
+                                u32 dataA, u32 dataB, bool flag158, u32 id15C);
+// Light attachment init (CETrail.cpp).
+extern "C" CETrailLight* func_804D807C(CETrailLight* self, void* parent);
+
+// Target 3: initialise an effect scene from a source node entry. Seeds the
+// flag word (two fixed bits, one bit from the source entry, one random bit),
+// zeroes the body, fills the identity matrices / white color, builds the eight
+// animation blocks from the sub-object resource pointers, then runs the
+// per-class allocation paths (trail / light / randomizer) and the tone-scale
+// randomization tail.
+
+void func_804CC3A4(EffectScene* out, const EffSrc3* src) {
+    SceneSubObj* sub = (SceneSubObj*)src->field_0x04;
+    u16 flags = (u16)(0xC000 | ((src->field_0x0a << 13) & 0x2000));
+    u32 type = sub->field_0x00;
+    out->field_0x04 = (u16)src->field_0x08;
+    out->field_0x06 = flags;
+    // random bit 0 lands in flag bit 7
+    out->field_0x06 = (u16)(out->field_0x06 | ((ml::math::mtRand() & 1) << 7));
+    out->field_0x08 = src->field_0x00;
+    out->field_0x0c = sub;
+    *(f32*)&out->field_0x10 = lbl_eu_8066B0D8;
     *(f32*)&out->field_0x14 = lbl_eu_8066B0D8;
     out->field_0x18 = lbl_eu_8066B0DC;
     out->field_0x1c = lbl_eu_8066B0DC;
     memset((u8*)out + 0x20, 0, 0x80);
-    EffInitView& iv = *reinterpret_cast<EffInitView*>((u8*)out + 0x190);
-    iv.field_0x190 = ml::CVec3(lbl_eu_8066B0D8, lbl_eu_8066B0D8, lbl_eu_8066B0DC);
-    ml::CMat34 ik;
-    ik = ml::CMat34::identity;
-    iv.field_0x19c[0][0] = ik.m[0][0]; iv.field_0x19c[0][1] = ik.m[0][1]; iv.field_0x19c[0][2] = ik.m[0][2]; iv.field_0x19c[0][3] = ik.m[0][3];
-    iv.field_0x19c[1][0] = ik.m[1][0]; iv.field_0x19c[1][1] = ik.m[1][1]; iv.field_0x19c[1][2] = ik.m[1][2]; iv.field_0x19c[1][3] = ik.m[1][3];
-    iv.field_0x19c[2][0] = ik.m[2][0]; iv.field_0x19c[2][1] = ik.m[2][1]; iv.field_0x19c[2][2] = ik.m[2][2]; iv.field_0x19c[2][3] = ik.m[2][3];
-    iv.field_0x1cc = ml::CCol4::white;
-    iv.field_0x1dc[0][0] = ik.m[0][0]; iv.field_0x1dc[0][1] = ik.m[0][1]; iv.field_0x1dc[0][2] = ik.m[0][2]; iv.field_0x1dc[0][3] = ik.m[0][3];
-    iv.field_0x1dc[1][0] = ik.m[1][0]; iv.field_0x1dc[1][1] = ik.m[1][1]; iv.field_0x1dc[1][2] = ik.m[1][2]; iv.field_0x1dc[1][3] = ik.m[1][3];
-    iv.field_0x1dc[2][0] = ik.m[2][0]; iv.field_0x1dc[2][1] = ik.m[2][1]; iv.field_0x1dc[2][2] = ik.m[2][2]; iv.field_0x1dc[2][3] = ik.m[2][3];
-    ml::math::mtRand();  // re-seed consumed value; see brief tail
-    f32 src = *(f32*)((u8*)(*(void**)((u8*)out->field_0x0c + 0xf4)) + 0x8);
-    f32 v = (u8ToF_b0e8(ml::math::mtRand()) / lbl_eu_8066B0E0 - lbl_eu_8066B0E4) * src + lbl_eu_8066B0D8;
-    if (v <= lbl_eu_8066B0DC) v = lbl_eu_8066B0D8;
-    *(f32*)&out->field_0x14 = v;
+
+    EffInitView* iv = (EffInitView*)((u8*)out + 0x190);
+    *(ml::CMat34*)iv->field_0x19c = ml::CMat34::identity;
+    iv->field_0x1cc = ml::CCol4::white;
+    iv->field_0x190 = ml::CVec3(lbl_eu_8066B0DC, lbl_eu_8066B0DC, lbl_eu_8066B0D8);
+    *(ml::CMat34*)iv->field_0x1dc = ml::CMat34::identity;
+
+    // Eight anim blocks built from the sub-object's resource pointers; retail
+    // caches the sub pointer only for the first call and reloads it afterwards.
+    SceneSubObj* subA = (SceneSubObj*)out->field_0x0c;
+    func_804E0E48((CSchedAnimItem*)&out->field_0x20c, (u8*)subA->field_0xf8,
+                  (f32*)type);
+    func_804E17A4((CSchedAnimItem*)&out->field_0x238,
+                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0xfc);
+    func_804E196C((CSchedAnimItem*)&out->field_0x24c,
+                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x104);
+    func_804E1AA8((CSchedAnimItem*)&out->field_0x25c,
+                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x108);
+    func_804E1D50((CSchedAnimItem*)&out->field_0x278,
+                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x110);
+    func_804E26D8((CSchedAnimItem*)&out->field_0x2e8,
+                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x114);
+    func_804E214C((CSchedAnimItem*)&out->field_0x2a8,
+                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x10c,
+                  ((((SceneSubObj*)out->field_0x0c)->field_0x1c >> 11) & 1) != 0);
+    func_804E2D8C((CSchedAnimItem*)&out->field_0x310,
+                  (u8*)((SceneSubObj*)out->field_0x0c)->field_0x118);
+
+    MemManGlob* mg = (MemManGlob*)lbl_eu_8065FC18;
+    mtl::ALLOC_HANDLE h = (mtl::ALLOC_HANDLE)mg->field_0x04;
+
+    if (type == 0xe) {
+        // class 0xe never fades: clear flag bit 14
+        out->field_0x06 &= (u16)~0x4000;
+    }
+    if ((((SceneSubObj*)out->field_0x0c)->field_0x1c >> 10) & 1) {
+        MatFlags* obj = (MatFlags*)out->field_0x08;
+        out->field_0x32c =
+            (void*)func_804DF2C4(obj->field_0x0c, obj->field_0x10,
+                                 (s32)out->field_0x258);
+    }
+
+    if (type == 8) {
+        // Trail allocation: only when the scheduler heap can hold both the
+        // arena guard (0x8000) and the trail block itself.
+        if (mtl::MemManager::getMaxAllocSize(h) > 0x8000) {
+            void* trail = 0;
+            if (mtl::MemManager::getMaxAllocSize(h) >= 0x188) {
+                trail = mtl::MemManager::allocate(0x188, h);
+                if (trail != 0) {
+                    SceneSubObj* sb = (SceneSubObj*)out->field_0x0c;
+                    trail = __dt__804D6C60(
+                        (CETrail*)trail,
+                        (u32)(s32)*(f32*)&out->field_0x2a0,
+                        (s32)*(f32*)&out->field_0x2a4,
+                        (void*)out->field_0x08, sb->field_0xe4, sb->field_0xe8,
+                        ((out->field_0x06 >> 13) & 1) != 0, 0);
+                }
+            }
+            out->field_0x328 = trail;
+        }
+    }
+    if (type == 0xd) {
+        CETrailLight* light = 0;
+        if (mtl::MemManager::getMaxAllocSize(h) >= 8) {
+            light = (CETrailLight*)mtl::MemManager::allocate(8, h);
+            if (light != 0) {
+                light = func_804D807C(light, ((MatFlags*)out->field_0x08)->field_0x10);
+            }
+        }
+        out->field_0x330 = light;
+    }
+    if (type == 4) {
+        CERandomizerSimple* rnd = 0;
+        if (mtl::MemManager::getMaxAllocSize(h) >= 0xc) {
+            rnd = (CERandomizerSimple*)mtl::MemManager::allocate(0xc, h);
+            if (rnd != 0) {
+                new (rnd) CERandomizerSimple();
+            }
+        }
+        out->field_0x334 = rnd;
+        rnd->create(-1);
+    }
+
+    // Tone-scale tail driven by the sub-object's tone table.
+    SceneSubObj* subT = (SceneSubObj*)out->field_0x0c;
+    u8* tbl = (u8*)subT->field_0xf4;
+    if (tbl != 0) {
+        f32 v1c = u16ToF_b0e8(*(u16*)tbl);
+        *(f32*)&out->field_0x1c = v1c;
+        if (lbl_eu_8066B0DC < v1c) {
+            out->field_0x06 &= (u16)~0x4000;
+        }
+        SceneSubObj* subU = (SceneSubObj*)out->field_0x0c;
+        u8* tb = (u8*)subU->field_0xf4;
+        s32 r = (s32)ml::math::mtRand();
+        f32 v = (s32ToF_b0f0(r) / lbl_eu_8066B0E0 - lbl_eu_8066B0E4) *
+                    *(f32*)(tb + 8) + lbl_eu_8066B0D8;
+        *(f32*)&out->field_0x14 = v;
+        // retail clamps the computed scale when it is not strictly positive
+        if (v <= lbl_eu_8066B0DC) {
+            *(f32*)&out->field_0x14 = lbl_eu_8066B0D8;
+        }
+    }
 }
 
 // Per-type node-walk advance helpers (retail C-linkage names). Each advances
@@ -1850,16 +2100,16 @@ extern "C" void __attribute__((never_inline)) func_804D20EC(EffectNode* nodeRaw,
     union {
         f64 d;
         u32 w[2];
-    } cnv;
-    cnv.w[0] = 0x43300000u;
+    } cnvA, cnvB;
+    cnvA.w[0] = 0x43300000u;
+    cnvB.w[0] = 0x43300000u;
     // Visibility gate (same shape as func_804D2B60).
-    SceneSubObj* sub = self->field_0x0c;
-    u16 fl = self->field_0x06;
-    if (sub->field_0x04 != 5) {
-        if (!(fl & 0x8000)) return;
-        if (!(fl & 0x0400)) return;
+    if (*(s32*)&((SceneSubObj*)self->field_0x0c)->field_0x04 != 5) {
+        SceneFlagBits* flg = (SceneFlagBits*)&self->field_0x06;
+        if (!flg->b15) return;
+        if (!flg->b10) return;
     }
-    if (!(fl & 0x0800)) return;
+    if (!((SceneFlagBits*)&self->field_0x06)->b11) return;
     if (func_804EEACC(&self->field_0xdc) == 0) return;
 
     RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
@@ -1870,7 +2120,7 @@ extern "C" void __attribute__((never_inline)) func_804D20EC(EffectNode* nodeRaw,
     node->b2 = (u8)(s32)(scale * self->field_0x1d4);
     node->b3 = (u8)(s32)(scale * self->field_0x1d8);
 
-    switch (sub->field_0x00) {
+    switch (*(s32*)&((SceneSubObj*)self->field_0x0c)->field_0x00) {
     case 0:
     case 4:
     case 5:
@@ -1880,26 +2130,21 @@ extern "C" void __attribute__((never_inline)) func_804D20EC(EffectNode* nodeRaw,
     case 10:
     case 11:
     case 12: {
-        u16 sflags = sub->field_0x1c;
-        u32 b11 = (sflags >> 11) & 1;
-        u32 c11 = (u32)(-b11 | b11) >> 31;
-        u32 b10 = (sflags >> 10) & 1;
-        u32 c10 = (u32)(-b10 | b10) >> 31;
-        if (c11 || c10) {
-            u32 b11i = (sub->field_0x1c >> 11) & 1;
-            u32 c11i = (u32)(-b11i | b11i) >> 31;
-            if (c11i) {
-                u8* p = (u8*)sub->field_0xe4;
+        bool toneBit = ((((SceneSubObj*)self->field_0x0c)->field_0x1c >> 11) & 1) != 0;
+        bool fadeBit = ((((SceneSubObj*)self->field_0x0c)->field_0x1c >> 10) & 1) != 0;
+        if (toneBit || fadeBit) {
+            if ((((SceneSubObj*)self->field_0x0c)->field_0x1c >> 11) & 1) {
+                u8* p = (u8*)((SceneSubObj*)self->field_0x0c)->field_0xe4;
                 u8 bv = p ? *(p - 0x10) : 0;
                 if (bv == 0x10) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    cnvA.w[1] = fbw;
+                    f32 ratio = (f32)(cnvA.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    cnvB.w[1] = fbw;
+                    f32 ratio = (f32)(cnvB.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
                     Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
                     PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
                 }
@@ -1919,29 +2164,42 @@ extern "C" void __attribute__((never_inline)) func_804D20EC(EffectNode* nodeRaw,
         break;
     }
 
-    // Tone-table wrap: normalize the accumulated angle pair into [0, 2*pi)
-    // with additive stepping loops, then derive the two screen-space anchor
-    // vectors fed to the quad emitter.
-    f32 ang = self->field_0x270 * self->field_0x268;
+    // Re-fetch the render node built above and derive the two screen-space
+    // anchor vectors: one from the node's translation column, one from the
+    // scene's stored float triple (punned through u32).
+    node = (RenderNode*)func_804E0168(self->field_0x00);
+    Vec drawPos;
+    drawPos.x = node->mtx[0][3];
+    drawPos.y = node->mtx[1][3];
+    drawPos.z = node->mtx[2][3];
+    Vec angBase;
+    *(u32*)&angBase.x = self->field_0x29c;
+    *(u32*)&angBase.y = self->field_0x2a0;
+    *(u32*)&angBase.z = self->field_0x2a4;
+
+    // When the scene-local scale bit is clear, verify the quad is on-screen
+    // via the camera helper; bail out when it reports off-screen.
+    if (!(((((SceneSubObj*)self->field_0x0c)->field_0x1c >> 11) & 1))) {
+        if (!func_804D3B14((D3B14Cam*)self, &drawPos, &angBase)) return;
+    }
+
+    // Angle wrap: seed with a per-flag constant times the scene float, then
+    // normalize into [limit, limit+step) with additive stepping loops.
+    f32 ang;
+    if (((SceneFlagBits*)&self->field_0x06)->b7) {
+        ang = lbl_eu_8066B130 * *(f32*)&self->field_0x10;
+    } else {
+        ang = lbl_eu_8066B134 * *(f32*)&self->field_0x10;
+    }
     const f32 step = lbl_eu_8066B138;
     const f32 limit = lbl_eu_8066B0DC;
-    const f32 twoPi = lbl_eu_8066B0DC;
     while (ang < limit) ang += step;
     while (limit <= ang) ang -= step;
 
-    Vec sp1c;
-    Vec sp28;
-    sp1c.x = ang;
-    sp1c.y = ang;
-    sp1c.z = ang;
-    sp28.x = self->field_0x274;
-    sp28.y = self->field_0x270;
-    sp28.z = self->field_0x26c;
-
     // Z-gate byte from the sample table decides the depth-write flag.
-    u8* pz = (u8*)sub->field_0x104;
+    u8* pz = (u8*)((SceneSubObj*)self->field_0x0c)->field_0x104;
     u32 zb = pz ? *(pz - 2) : 0;
-    u32 zflag = (u32)(-(u32)(zb != 0) | (zb != 0)) >> 31;
+    bool zflag = zb != 0;
 
     // Stack texture-matrix source payload (same layout as func_804D2B60).
     TexMtxSrc src;
@@ -1956,7 +2214,7 @@ extern "C" void __attribute__((never_inline)) func_804D20EC(EffectNode* nodeRaw,
     src.field_0x18 = one;
     src.field_0x1c = one;
     src.field_0x20 = zero;
-    u8* pb = (u8*)sub->field_0x108;
+    u8* pb = (u8*)((SceneSubObj*)self->field_0x0c)->field_0x108;
     if (pb != NULL) {
         src.field_0x08 = *(pb - 7);
         src.field_0x0c = self->field_0x270;
@@ -1964,12 +2222,11 @@ extern "C" void __attribute__((never_inline)) func_804D20EC(EffectNode* nodeRaw,
         src.field_0x18 = u8ToF_b0e8(*(pb - 2));
         src.field_0x1c = u8ToF_b0e8(*(pb - 1));
     }
-    // Tone-set classes keep the scene-local scale; the rest inherit it.
-    u32 tb20 = (sub->field_0x1c >> 11) & 1;
-    u32 cb20 = (u32)(-tb20 | tb20) >> 31;
+    // Scenes without the local-scale bit inherit the parent transform.
+    bool inheritScale = ((((SceneSubObj*)self->field_0x0c)->field_0x1c >> 11) & 1) != 0;
     MatFlags* mat = (MatFlags*)self->field_0x08;
-    func_804EEB40(mat->field_0x10, &sp28, (void*)&self->field_0x1cc, &sp1c,
-                  (s32)cb20, (s32)zflag, &src, self->field_0x2a4,
+    func_804EEB40(mat->field_0x10, &drawPos, (void*)&self->field_0x1cc,
+                  &angBase, !inheritScale, zflag ? 1 : 0, &src, self->field_0x2a4,
                   self->field_0x2d8);
 }
 // Common prologue shared by the per-type node-walk renderers (targets
@@ -2091,18 +2348,25 @@ extern "C" void __attribute__((never_inline)) func_804D2B60(EffectNode* nodeRaw,
 
 extern "C" void __attribute__((never_inline)) func_804D3098(EffectNode* nodeRaw, void* res) {
     EffectScene* self = (EffectScene*)nodeRaw;
+    // Two 0x4330 magic-double int->float conversion slots initialized up front
+    // (retail prologue scratch words); they are shared between the widescreen
+    // aspect fixes and the trailing texture-source byte conversions.
     union {
         f64 d;
         u32 w[2];
-    } cnv;
-    cnv.w[0] = 0x43300000u;
-    // Visibility gate (same shape as func_804D2B60).
-    if (self->field_0x0c->field_0x04 != 5) {
-        if (!(self->field_0x06 & 0x8000)) return;
-        if (!(self->field_0x06 & 0x0400)) return;
+    } cnvA, cnvB;
+    cnvA.w[0] = 0x43300000u;
+    cnvB.w[0] = 0x43300000u;
+    // Visibility gate: type-5 scenes only need the tone bit (bit 10); other
+    // types need bits 14 and 9 as well before the link check decides.
+    s32 ok = 0;
+    if ((s32)self->field_0x0c->field_0x04 == 5 ||
+        (((self->field_0x06 >> 14) & 1) && ((self->field_0x06 >> 9) & 1))) {
+        if ((self->field_0x06 >> 10) & 1) {
+            ok = func_804EEACC(&self->field_0xdc) != 0;
+        }
     }
-    if (!(self->field_0x06 & 0x0800)) return;
-    if (func_804EEACC(&self->field_0xdc) == 0) return;
+    if (!ok) return;
     // Randomizer tick: drive the attached simple randomizer while the tone
     // table is active and its age parameter is positive.
     if (self->field_0x334 != NULL && self->field_0x0c->field_0x110 != NULL) {
@@ -2113,7 +2377,7 @@ extern "C" void __attribute__((never_inline)) func_804D3098(EffectNode* nodeRaw,
         }
         ((CERandomizerSimple*)self->field_0x334)->execute(t);
     }
-    RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
+    RenderNode* node = (RenderNode*)func_804E0168((s16)self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
     f32 scale = lbl_eu_8066B11C;
     node->b0 = (u8)(s32)(scale * self->field_0x1cc);
@@ -2132,27 +2396,27 @@ extern "C" void __attribute__((never_inline)) func_804D3098(EffectNode* nodeRaw,
     case 11:
     case 12: {
         u16 sflags = self->field_0x0c->field_0x1c;
-        u32 b11 = (sflags >> 11) & 1;
-        u32 c11 = (u32)(-b11 | b11) >> 31;
         u32 b10 = (sflags >> 10) & 1;
         u32 c10 = (u32)(-b10 | b10) >> 31;
-        if (c11 || c10) {
-            u32 b11i = (self->field_0x0c->field_0x1c >> 11) & 1;
-            u32 c11i = (u32)(-b11i | b11i) >> 31;
-            if (c11i) {
+        u32 b09 = (sflags >> 9) & 1;
+        u32 c09 = (u32)(-b09 | b09) >> 31;
+        if (c10 || c09) {
+            u32 b10i = (self->field_0x0c->field_0x1c >> 10) & 1;
+            u32 c10i = (u32)(-b10i | b10i) >> 31;
+            if (c10i) {
                 u8* p = (u8*)self->field_0x0c->field_0xe4;
                 u8 bv = p ? *(p - 0x10) : 0;
                 if (bv == 0x10) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    cnvA.w[1] = fbw;
+                    f32 ratio = (f32)((cnvA.d - lbl_eu_8066B0E8) / lbl_eu_8066B128);
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
-                    Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
-                    PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
+                    cnvB.w[1] = fbw;
+                    f32 ratio = (f32)((cnvB.d - lbl_eu_8066B0E8) / lbl_eu_8066B128);
+                    PSMTXScaleApply(node->mtx, node->mtx, ratio,
+                                    lbl_eu_8066B0D8, lbl_eu_8066B0D8);
                 }
             }
         } else {
@@ -2162,6 +2426,7 @@ extern "C" void __attribute__((never_inline)) func_804D3098(EffectNode* nodeRaw,
             void* m = func_80496264(mat->field_0x10, -1);
             PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
             *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
+            // Second dead-looking stack copy that retail keeps.
             *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
         }
         break;
@@ -2170,42 +2435,60 @@ extern "C" void __attribute__((never_inline)) func_804D3098(EffectNode* nodeRaw,
         break;
     }
 
-    Vec drawPos;
-    f32 alpha = self->field_0x18;
-    if (!(self->field_0x0c->field_0x1c & 0x800)) {
-        if (!func_804D3B14((D3B14Cam*)self, &drawPos, NULL)) return;
-    }
-    s32 flag = (s32)self->field_0x2a4;
+    // Tone-table payload: while a tone table is bound, re-fetch the render
+    // node, derive the screen position/mode from it, and emit the quad.
+    if (self->field_0x0c->field_0x110 != NULL) {
+        RenderNode* node2 = (RenderNode*)func_804E0168((s16)self->field_0x00);
+        f32 alpha = self->field_0x29c;
+        Vec drawPos;
+        drawPos.x = node2->mtx[0][3];
+        drawPos.y = node2->mtx[1][3];
+        drawPos.z = node2->mtx[2][3];
+        s32 mode = (s32)self->field_0x2a0;
+        // When the tone bit is clear, verify on-screen state via the camera.
+        if (!((self->field_0x0c->field_0x1c >> 10) & 1)) {
+            if (!func_804D3B14((D3B14Cam*)self, &drawPos, NULL)) return;
+        }
+        // Selector byte behind field_0x104 booleanized without a branch.
+        u8* mp = (u8*)self->field_0x0c->field_0x104;
+        u32 matFlag = 0;
+        if (mp != NULL) {
+            u32 bit = *(mp - 2);
+            matFlag = (u32)(-bit | bit) >> 31;
+        }
 
-    TexMtxSrc src;
-    src.mTex = res;
-    src.mIndex = (s8)self->field_0x25a;
-    src.field_0x08 = 0;
-    f32 zero = lbl_eu_8066B0DC;
-    f32 one = lbl_eu_8066B0D8;
-    src.field_0x0c = zero;
-    src.field_0x10 = zero;
-    src.field_0x14 = zero;
-    src.field_0x18 = one;
-    src.field_0x1c = one;
-    src.field_0x20 = zero;
-    u8* pb = (u8*)self->field_0x0c->field_0x108;
-    if (pb != NULL) {
-        src.field_0x08 = *(pb - 7);
-        src.field_0x0c = self->field_0x270;
-        src.field_0x10 = self->field_0x274;
-        src.field_0x18 = u8ToF_b0e8(*(pb - 2));
-        src.field_0x1c = u8ToF_b0e8(*(pb - 1));
+        TexMtxSrc src;
+        src.mTex = res;
+        src.mIndex = (s8)self->field_0x25a;
+        src.field_0x08 = 0;
+        f32 zero = lbl_eu_8066B0DC;
+        f32 one = lbl_eu_8066B0D8;
+        src.field_0x0c = zero;
+        src.field_0x10 = zero;
+        src.field_0x14 = zero;
+        src.field_0x18 = one;
+        src.field_0x1c = one;
+        src.field_0x20 = zero;
+        u8* pb = (u8*)self->field_0x0c->field_0x108;
+        if (pb != NULL) {
+            src.field_0x08 = *(pb - 7);
+            src.field_0x0c = self->field_0x270;
+            src.field_0x10 = self->field_0x274;
+            src.field_0x14 = zero;
+        }
+        // Byte conversions reuse the prologue magic-double slots; a missing
+        // payload defaults each byte to 1.
+        cnvA.w[1] = pb ? *(pb - 1) : 1;
+        cnvB.w[1] = pb ? *(pb - 2) : 1;
+        src.field_0x1c = (f32)(cnvA.d - lbl_eu_8066B0E8);
+        src.field_0x18 = (f32)(cnvB.d - lbl_eu_8066B0E8);
+
+        MatFlags* mat = (MatFlags*)self->field_0x08;
+        void* material;
+        func_804F0F2C(mat->field_0x10, alpha, (const ml::CVec3*)&drawPos,
+                      (const TexDrawSize*)&self->field_0x1cc, (const f32*)(u32)mode,
+                      (void*)(u32)matFlag, &src, self->field_0x334);
     }
-    MatFlags* mat = (MatFlags*)self->field_0x08;
-    DrawQuad quad;
-    quad.x = self->field_0x19c[0][3];
-    quad.y = self->field_0x19c[1][3];
-    quad.z = self->field_0x19c[2][3];
-    void* material;
-    func_804F0F2C(mat->field_0x10, alpha, (const ml::CVec3*)&drawPos,
-                  (const TexDrawSize*)&self->field_0x1cc, (const f32*)(u32)flag,
-                  material, &src, self->field_0x334);
 }
 
 extern "C" void __attribute__((never_inline)) func_804D361C(EffectNode* nodeRaw, void* res) {
@@ -2321,26 +2604,33 @@ extern "C" void __attribute__((never_inline)) func_804D361C(EffectNode* nodeRaw,
 
 extern "C" void __attribute__((never_inline)) func_804D2690(EffectNode* nodeRaw, void* res) {
     EffectScene* self = (EffectScene*)nodeRaw;
+    // Two 0x4330 integer-to-float conversion slots, initialized up front like
+    // retail's prologue stores (slots 0xe0/0xe8).
     union {
         f64 d;
         u32 w[2];
-    } cnv;
-    cnv.w[0] = 0x43300000u;
-    // Visibility gate (same shape as func_804D2B60).
-    if (self->field_0x0c->field_0x04 != 5) {
-        if (!(self->field_0x06 & 0x8000)) return;
-        if (!(self->field_0x06 & 0x0400)) return;
-    }
-    if (!(self->field_0x06 & 0x0800)) return;
-    if (func_804EEACC(&self->field_0xdc) == 0) return;
+    } convA, convB;
+    convA.w[0] = 0x43300000u;
+    convB.w[0] = 0x43300000u;
 
-    RenderNode* node = (RenderNode*)func_804E0168(self->field_0x00);
+    // Visibility gate: type-5 scenes only need flag bit 10; other types need
+    // bits 15 and 9 as well before the link check decides.
+    int ok = 0;
+    if ((s32)self->field_0x0c->field_0x04 == 5 ||
+        (((self->field_0x06 >> 15) & 1) && ((self->field_0x06 >> 10) & 1))) {
+        if ((self->field_0x06 >> 11) & 1) {
+            ok = func_804EEACC(&self->field_0xdc) != 0;
+        }
+    }
+    if (!ok) return;
+
+    RenderNode* node = (RenderNode*)func_804E0168((s16)self->field_0x00);
     *(MtxCopy*)&node->mtx = *(MtxCopy*)&self->field_0x19c;
     f32 scale = lbl_eu_8066B11C;
-    node->b0 = (u8)(s32)(scale * self->field_0x1cc);
-    node->b1 = (u8)(s32)(scale * self->field_0x1d0);
-    node->b2 = (u8)(s32)(scale * self->field_0x1d4);
-    node->b3 = (u8)(s32)(scale * self->field_0x1d8);
+    node->b0 = (u8)(scale * self->field_0x1cc);
+    node->b1 = (u8)(scale * self->field_0x1d0);
+    node->b2 = (u8)(scale * self->field_0x1d4);
+    node->b3 = (u8)(scale * self->field_0x1d8);
 
     switch (self->field_0x0c->field_0x00) {
     case 0:
@@ -2352,44 +2642,55 @@ extern "C" void __attribute__((never_inline)) func_804D2690(EffectNode* nodeRaw,
     case 10:
     case 11:
     case 12: {
-        u16 sflags = self->field_0x0c->field_0x1c;
-        u32 b11 = (sflags >> 11) & 1;
-        u32 c11 = (u32)(-b11 | b11) >> 31;
-        u32 b10 = (sflags >> 10) & 1;
-        u32 c10 = (u32)(-b10 | b10) >> 31;
-        if (c11 || c10) {
-            u32 b11i = (self->field_0x0c->field_0x1c >> 11) & 1;
-            u32 c11i = (u32)(-b11i | b11i) >> 31;
-            if (c11i) {
+        if ((((self->field_0x0c->field_0x1c >> 11) & 1) != 0) ||
+            (((self->field_0x0c->field_0x1c >> 10) & 1) != 0)) {
+            if (((self->field_0x0c->field_0x1c >> 11) & 1) != 0) {
                 u8* p = (u8*)self->field_0x0c->field_0xe4;
                 u8 bv = p ? *(p - 0x10) : 0;
                 if (bv == 0x10) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    convA.w[1] = fbw;
+                    f32 ratio = (f32)(convA.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
                     node->mtx[0][3] = node->mtx[0][3] * ratio;
                 } else if (bv == 0x11) {
                     u16 fbw = CDeviceVI::getRenderModeObj()->fbWidth;
-                    cnv.w[1] = fbw;
-                    f32 ratio = (f32)(cnv.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
-                    Vec svec = {ratio, lbl_eu_8066B0D8, lbl_eu_8066B0D8};
-                    PSMTXScaleApply(node->mtx, node->mtx, svec.x, svec.y, svec.z);
+                    convB.w[1] = fbw;
+                    f32 ratio = (f32)(convB.d - lbl_eu_8066B0E8) / lbl_eu_8066B128;
+                    PSMTXScaleApply(node->mtx, node->mtx, ratio, lbl_eu_8066B0D8,
+                                    lbl_eu_8066B0D8);
                 }
             }
         } else {
-            Mtx stackMtx;
-            Mtx mtxA0;
+            // Concat with the material transform; the second copy mirrors the
+            // dead-looking duplicate store retail keeps on the stack.
+            Mtx out1;
+            Mtx out2;
             MatFlags* mat = (MatFlags*)self->field_0x08;
             void* m = func_80496264(mat->field_0x10, -1);
-            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, stackMtx);
-            *(MtxCopy*)&node->mtx = *(MtxCopy*)&stackMtx;
-            *(MtxCopy*)&mtxA0 = *(MtxCopy*)&stackMtx;
+            PSMTXConcat((const float(*)[4])((u8*)m + 0xcc), node->mtx, out1);
+            *(MtxCopy*)&node->mtx = *(MtxCopy*)&out1;
+            // Retail keeps a second (dead-looking) copy of the result on the
+            // stack; volatile defeats MWCC's dead-store elimination.
+            {
+                volatile MtxCopy* vdst = (volatile MtxCopy*)&out2;
+                const MtxCopy* vsrc = (const MtxCopy*)&out1;
+                vdst->w0 = vsrc->w0;
+                vdst->w1 = vsrc->w1;
+                vdst->w2 = vsrc->w2;
+                vdst->w3 = vsrc->w3;
+                vdst->w4 = vsrc->w4;
+                vdst->w5 = vsrc->w5;
+            }
         }
         break;
     }
     default:
         break;
     }
+
+    // Selector byte behind field_0x104 becomes the draw call's material arg.
+    u8* mp = (u8*)self->field_0x0c->field_0x104;
+    s32 material = mp ? (*(mp - 2) != 0) : 0;
 
     // Stack texture-matrix source payload for the gradient quad emitter.
     TexMtxSrc src;
@@ -2409,55 +2710,69 @@ extern "C" void __attribute__((never_inline)) func_804D2690(EffectNode* nodeRaw,
         src.field_0x08 = *(pb - 7);
         src.field_0x0c = self->field_0x270;
         src.field_0x10 = self->field_0x274;
-        src.field_0x18 = u8ToF_b0e8(*(pb - 2));
-        src.field_0x1c = u8ToF_b0e8(*(pb - 1));
+        src.field_0x14 = zero;
+        convA.w[1] = *(pb - 1);
+        src.field_0x18 = (f32)(convA.d - lbl_eu_8066B0E8);
+        convB.w[1] = *(pb - 2);
+        src.field_0x1c = (f32)(convB.d - lbl_eu_8066B0E8);
+        src.field_0x20 = zero;
     }
-    MatFlags* mat = (MatFlags*)self->field_0x08;
     DrawQuad quad;
     quad.x = self->field_0x19c[0][3];
     quad.y = self->field_0x19c[1][3];
     quad.z = self->field_0x19c[2][3];
-    void* material;
+    MatFlags* mat = (MatFlags*)self->field_0x08;
     func_804F0258(mat->field_0x10, &quad, (ml::CVec3*)&self->field_0x29c,
-                  (TexDrawSize*)&self->field_0x1cc, material, &src);
+                  (TexDrawSize*)&self->field_0x1cc, (void*)material, &src);
 }
-// Target 6: build an 18-float matrix from a count of scale bytes and two ints.
-// (byte scale A after the B0E4 constant; B scales the computed direction terms)
+// Target 6: build an 18-float matrix from two scale bytes (selected by i7)
+// and two ints. A scales the B0E4 constant terms; B weights the direction
+// terms built from i5 and the reciprocal of i6. Both 0x4330 conversion slots
+// are initialized up front (retail stores the magic twice in the prologue).
 void func_804D3DB0(EffectScene* self, f32* out, s32 i5, s32 i6, s32 i7) {
-    SceneSubObj* sub = self->field_0x0c;
-    u8* p = (u8*)sub->field_0x108;
+    FConv cB, cA;
     f32 A = lbl_eu_8066B0D8;
     f32 B = lbl_eu_8066B0D8;
-    if (p) {
+    SceneSubObj* sub = self->field_0x0c;
+    cA.w[0] = 0x43300000u;
+    u8* p = (u8*)sub->field_0x108;
+    cB.w[0] = 0x43300000u;
+    if (p != NULL) {
         if (i7 == 0) {
-            A = u8ToF_b0e8(p ? *(p - 4) : 1);
-            B = u8ToF_b0e8(p ? *(p - 3) : 1);
+            cA.w[1] = (u32)(p ? p[-4] : 1);
+            A = (f32)(cA.d - lbl_eu_8066B0E8);
+            cB.w[1] = (u32)(p ? p[-3] : 1);
+            B = (f32)(cB.d - lbl_eu_8066B0E8);
         } else {
-            A = u8ToF_b0e8(p ? *(p - 2) : 1);
-            B = u8ToF_b0e8(p ? *(p - 1) : 1);
+            cA.w[1] = (u32)(p ? p[-2] : 1);
+            A = (f32)(cA.d - lbl_eu_8066B0E8);
+            cB.w[1] = (u32)(p ? p[-1] : 1);
+            B = (f32)(cB.d - lbl_eu_8066B0E8);
         }
     }
-    f32 inv = lbl_eu_8066B0D8 / s32ToF_b0f0(i6);
-    f32 e5 = s32ToF_b0f0(i5);
-    f32 K = lbl_eu_8066B0E4;
-    out[0] = lbl_eu_8066B0DC;
-    out[1] = B * e5 * inv;
-    out[2] = lbl_eu_8066B0DC;
-    out[3] = K * A;
-    out[4] = B;
-    out[5] = lbl_eu_8066B0DC;
+    f64 convSub = lbl_eu_8066B0F0;
+    f32 fi6 = fconvS32(cA, (u32)i6 ^ 0x80000000u, convSub);
+    f32 inv = lbl_eu_8066B0D8 / fi6;
+    f32 zero = lbl_eu_8066B0DC;
+    out[0] = zero;
+    out[1] = B * (fconvS32(cB, (u32)i5 ^ 0x80000000u, convSub) * inv);
+    out[2] = zero;
+    f32 ka = lbl_eu_8066B0E4 * A;
+    out[3] = ka;
+    out[4] = B * (fconvS32(cA, (u32)i5 ^ 0x80000000u, convSub) * inv);
+    out[5] = zero;
     out[6] = A;
-    out[7] = B;
-    out[8] = lbl_eu_8066B0DC;
-    out[9] = lbl_eu_8066B0DC;
-    out[10] = B * (lbl_eu_8066B0D8 + inv);
-    out[11] = lbl_eu_8066B0DC;
-    out[12] = K * A;
-    out[13] = B * (lbl_eu_8066B0D8 + inv);
-    out[14] = lbl_eu_8066B0DC;
+    out[7] = B * (fconvS32(cB, (u32)i5 ^ 0x80000000u, convSub) * inv);
+    out[8] = zero;
+    out[9] = zero;
+    out[10] = B * (fconvS32(cA, (u32)i5 ^ 0x80000000u, convSub) * inv + inv);
+    out[11] = zero;
+    out[12] = ka;
+    out[13] = B * (fconvS32(cB, (u32)i5 ^ 0x80000000u, convSub) * inv + inv);
+    out[14] = zero;
     out[15] = A;
-    out[16] = B * (lbl_eu_8066B0D8 + inv);
-    out[17] = lbl_eu_8066B0DC;
+    out[16] = B * (fconvS32(cA, (u32)i5 ^ 0x80000000u, convSub) * inv + inv);
+    out[17] = zero;
 }
 
 // Target 5 initializer layout: 0x18 is written as a raw int here, though other
@@ -3477,7 +3792,7 @@ extern "C" void __attribute__((never_inline)) func_804D5E90(EffectNode* self) {
 }
 
 // Target 2: allocate a (count*4 mock) float table and fill it with a 4-term
-// cubic basis across t in [-?] stepping by f8/count.
+// cubic basis across t in [start,end) stepping by end/count.
 f32* func_804D5F54(void* this_, s32 count) {
     MemManGlob* mg = (MemManGlob*)lbl_eu_8065FC18;
     u32 max = mtl::MemManager::getMaxAllocSize((mtl::ALLOC_HANDLE)mg->field_0x04);
@@ -3490,24 +3805,22 @@ f32* func_804D5F54(void* this_, s32 count) {
         buf = 0;
     }
     if (!buf) return 0;
-    f32 cnt = s32ToF_b170(count);
+    // Retail divides end by the raw int count: MWCC's int->float conversion
+    // (magic 2^52 pool entry) feeds the single-precision divide directly.
+    s16 i = 0;
     f32 f8 = lbl_eu_8066B158;
-    f32 dt = f8 / cnt;
     f32 t = lbl_eu_8066B15C;
     f32 f7 = lbl_eu_8066B164;
     f32 f5 = lbl_eu_8066B160;
     f32 f1 = lbl_eu_8066B168;
-    s16 i = 0;
+    f32 dt = f8 / count;
     while (t < f8) {
         f32 a2 = t * t;
         f32 a3 = a2 * t;
-        f32 g = f7 * a2;
-        f32 b1in = a3 - f5 * a2;
-        f32 b0v = f5 * a3 - g;
-        buf[i++] = f8 + b0v;
-        buf[i++] = t + b1in;
+        buf[i++] = f8 + (f5 * a3 - f7 * a2);
+        buf[i++] = t + (a3 - f5 * a2);
         buf[i++] = a3 - a2;
-        buf[i++] = f1 * a3 + g;
+        buf[i++] = f1 * a3 + f7 * a2;
         t += dt;
     }
     return buf;
@@ -3610,44 +3923,50 @@ struct ScreenPos {
 };
 
 // Project a world position to screen space: transform by the camera matrix,
-// apply the perspective divide (-1/z) to x/y, then scale by the framebuffer
-// dimensions. Returns 0 when the depth is not behind the near plane.
+// apply the perspective divide (1/-z) to x/y, then scale by the framebuffer
+// dimensions. Returns 0 when the depth is negative. Note the asymmetric
+// mapping: outA gets the centered (*half + half) viewport map while outB is
+// only scaled by the raw framebuffer size.
 s32 func_804D3B14(D3B14Cam* cam, Vec* outA, Vec* outB) {
     f32 z = outA->z;
-    if (z == lbl_eu_8066B0DC || lbl_eu_8066B0DC < z) {
-        return 0;
+    // fcmpo(constant, z) + cror merge -> constant-first <= form.
+    if (lbl_eu_8066B0DC <= z) {
+        Mtx m;
+        f32 s = lbl_eu_8066B0D8 / -z;
+        func_80496120(cam->field_0x08->field_0x10, m, -1);
+
+        Vec v;
+        v.y = outA->x * m[1][0] + outA->y * m[1][1] + outA->z * m[1][2] + m[1][3];
+        v.x = outA->x * m[0][0] + outA->y * m[0][1] + outA->z * m[0][2] + m[0][3];
+        v.z = outA->x * m[2][0] + outA->y * m[2][1] + outA->z * m[2][2] + m[2][3];
+        *outA = v;
+        outA->x *= s;
+        outA->y *= s;
+
+        u16 w = CDeviceVI::getRenderModeObj()->fbWidth;
+        outA->x = (outA->x * lbl_eu_8066B0E4 + lbl_eu_8066B0E4) * (f32)w;
+        u16 h = CDeviceVI::getRenderModeObj()->efbHeight;
+        outA->z = lbl_eu_8066B0DC;
+        outA->y = (outA->y * lbl_eu_8066B12C + lbl_eu_8066B0E4) * (f32)h;
+
+        if (outB != 0) {
+            Vec v2;
+            v2.y = outB->x * m[1][0] + outB->y * m[1][1] + outB->z * m[1][2] + m[1][3];
+            v2.x = outB->x * m[0][0] + outB->y * m[0][1] + outB->z * m[0][2] + m[0][3];
+            v2.z = outB->x * m[2][0] + outB->y * m[2][1] + outB->z * m[2][2] + m[2][3];
+            *outB = v2;
+            outB->x *= s;
+            outB->y *= s;
+
+            u16 w2 = CDeviceVI::getRenderModeObj()->fbWidth;
+            outB->x = outB->x * (f32)w2;
+            u16 h2 = CDeviceVI::getRenderModeObj()->efbHeight;
+            outB->z = lbl_eu_8066B0DC;
+            outB->y = outB->y * (f32)h2;
+        }
+        return 1;
     }
-    Mtx m;
-    func_80496120(cam->field_0x08->field_0x10, m, -1);
-    f32 s = lbl_eu_8066B0D8 / -z;
-
-    Vec v;
-    v.x = m[0][0] * outA->x + m[0][1] * outA->y + m[0][2] * outA->z + m[0][3];
-    v.y = m[1][0] * outA->x + m[1][1] * outA->y + m[1][2] * outA->z + m[1][3];
-    v.z = m[2][0] * outA->x + m[2][1] * outA->y + m[2][2] * outA->z + m[2][3];
-    *outA = v;
-    outA->x *= s;
-    outA->y *= s;
-
-    u16 w = CDeviceVI::getRenderModeObj()->fbWidth;
-    outA->x = (outA->x * lbl_eu_8066B0E4 + lbl_eu_8066B0E4) * w;
-    u16 h = CDeviceVI::getRenderModeObj()->efbHeight;
-    outA->y = (outA->y * lbl_eu_8066B12C + lbl_eu_8066B0E4) * h;
-
-    if (outB != 0) {
-        v.x = m[0][0] * outB->x + m[0][1] * outB->y + m[0][2] * outB->z + m[0][3];
-        v.y = m[1][0] * outB->x + m[1][1] * outB->y + m[1][2] * outB->z + m[1][3];
-        v.z = m[2][0] * outB->x + m[2][1] * outB->y + m[2][2] * outB->z + m[2][3];
-        *outB = v;
-        outB->x *= s;
-        outB->y *= s;
-
-        u16 w2 = CDeviceVI::getRenderModeObj()->fbWidth;
-        outB->x = (outB->x * lbl_eu_8066B0E4 + lbl_eu_8066B0E4) * w2;
-        u16 h2 = CDeviceVI::getRenderModeObj()->efbHeight;
-        outB->y = (outB->y * lbl_eu_8066B12C + lbl_eu_8066B0E4) * h2;
-    }
-    return 1;
+    return 0;
 }
 
 // ===== Dissolved monolibdata2 (blob surgery) data owned by this TU =====

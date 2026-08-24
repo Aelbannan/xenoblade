@@ -510,7 +510,9 @@ extern "C" u32 lbl_eu_80533224[3];
 extern "C" f32 lbl_eu_80667CD8;
 extern "C" void* __RTTI__Q22cf13CfObjectActor;
 extern "C" void func_8009D018(u32 a, u32 b);
-extern "C" void* func_801412D0(u32 a);
+// Return type must match CfGameManager.hpp's declaration (u32), or MWCC
+// rejects the redeclaration when both headers are included in one TU.
+extern "C" u32 func_801412D0(u32 a);
 extern "C" void func_8013F244(void);
 extern "C" void func_8016FF14(void* obj, void* dst);
 extern "C" void func_801C01A8(u32 a, u32 b, f32 c);

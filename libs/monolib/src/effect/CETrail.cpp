@@ -389,12 +389,12 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
 // difference in the Vec3 copies that the witness refuses (non-register
 // bits) -- open item.
 extern "C" void func_804D70A0(CETrailNode* node) {
-    f32 age = lbl_eu_8066B15C;
+    ml::CVec3 second;
     ml::CVec3 zero = ml::CVec3::zero;
-    ml::CVec3 second = zero;
-    node->m_item.m_posA = zero;
-    node->m_item.m_posB = second;
-    node->m_item.m_age = age;
+    second = zero;
+    node->m_item.m_posA = second;
+    node->m_item.m_posB = zero;
+    node->m_item.m_age = lbl_eu_8066B15C;
 }
 
 // ---------------------------------------------------------------------------

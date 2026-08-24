@@ -953,11 +953,10 @@ extern "C" __declspec(noinline) void func_80284C30(CEquipItemGrid* grid, u32 mod
 #pragma dont_inline on
 extern "C" __declspec(noinline) void func_80284DCC(CEquipItemGrid* grid) {
     const char* base = lbl_eu_8050EFDC;
-    CEquipItemData* a;
     for (u16 i = 0; i < grid->count - 1; i++) {
         int swapped = 0;
         for (u16 j = 0; j < grid->count - 1 - i; j++) {
-            a = &grid->data[j];
+            CEquipItemData* a = &grid->data[j];
             CEquipItemData* b = &grid->data[j + 1];
             CItemInstance* objA = (CItemInstance*)func_80157C4C(grid->cat, a->unk0);
             CItemInstance* objB = (CItemInstance*)func_80157C4C(grid->cat, b->unk0);
@@ -1178,28 +1177,26 @@ extern "C" __declspec(noinline) void func_802855C8(CEquipItemGrid* grid) {
 // container, MWCC's fsubs magic-trick conversion).
 #pragma push
 #pragma optimize_for_size on
+// Scaled item-progress reader: look up the item's stored count and the row's
+// flag word; when bit 4 is set, rescale the count by the drop-rate table and
+// clamp the result at 999. All FP math is single precision: the (f32) casts
+// make MWCC emit its own 0x4330/lfd/fsubs s32->f32 magic (pool constants
+// lbl_eu_80668B18/B10 are compiler-generated, not source references).
 extern "C" double func_80285708(CEquipItemBox* self, CItemInstance* item) {
     u32 word = item->word;
     u32 g = lbl_eu_806640F4;
     u16 kind = func_80139358(word >> 20);
-    u16 v1 = func_80136254((const void*)g, &lbl_eu_8050EFDC[0x8b], kind);
+    // Int-typed variable + (u16) masks at USE sites only (retail defers
+    // narrowing; with func_80136254 declared int there is no store mask).
+    int result = func_80136254((const void*)g, &lbl_eu_8050EFDC[0x8b], kind);
     u32 v2 = func_801361E8(g, &lbl_eu_8050EFDC[0x92], kind);
-    u16 result = v1;
     if (v2 & 4) {
         void* obj = func_8009EC9C(1);
         u16 n = (u16)func_800A082C(obj);
-        int m = (int)((u32)v1 * (u32)n);
-        CEquipItemBoxF64Conv c;
-        c.w[0] = 0x43300000;
-        c.w[1] = (u32)m ^ 0x80000000;
-        result = (int)(lbl_eu_80668B2C * (c.d - lbl_eu_80668B18));
+        result = (int)(lbl_eu_80668B2C * (f32)(int)((u32)(u16)result * (u32)n));
         if ((u16)result >= 0x3E7) result = 0x3E7;
     }
-    // Declared after the branch so its slot lands at 0x10(sp) like retail.
-    CEquipItemBoxF64Conv c2;
-    c2.w[1] = (u32)result;
-    c2.w[0] = 0x43300000;
-    return c2.d - lbl_eu_80668B10;
+    return (f32)(u16)result;
 }
 #pragma pop
 
@@ -1332,7 +1329,7 @@ extern "C" void func_80285A90(CEIBCur* self, nw4r::lyt::DrawInfo* drawInfo) {
 // delete layout (not ~Layout()): the retail passes the deleting flag 1 to the
 // virtual dtor; the delete's own null-check is the retail's dead second beq
 // (beq skip-all from the guard, beq mpLayout-zero block from the delete).
-extern "C" void func_80285ABC(CEIBCur* self) {
+extern "C" __declspec(noinline) void func_80285ABC(CEIBCur* self) {
     nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mpLayout;
     self->mActive = 0;
     self->mpAnimTrans0 = 0;
@@ -1624,7 +1621,7 @@ extern "C" void func_80286454(CEquipItemBox* self) {
     func_8045F778__17UnkClass_8045F564Fv(&self->_pad04[0x10]);
     func_80285ABC((CEIBCur*)((u8*)self + 0x44));
     func_80285ABC((CEIBCur*)((u8*)self + 0x5c));
-    ((CEquipItemBoxSysWinView*)&self->ccur18[0])->v03();
+    ((CEquipItemBoxSysWinView*)&self->ccur18[0])->v01();
     func_801D3258(self->_padSortMenu);
     func_8022B7F4(&self->_padSysWin1[0]);
     func_8022B7F4(&self->_padSysWin2[0]);
@@ -1704,7 +1701,57 @@ void CEquipItemBox::func_80286740() {
 }
 #pragma pop
 
-extern "C" void func_802867E0(){}
+extern "C" void func_802867E0(CEquipItemBox* self) {
+    if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) return;
+
+    if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) {
+        // Syswin1 active: decrement page, wrap, rebuild cursor
+        if (CSysWin_isActive(&self->_padSysWin1[0]) == 0) return;
+        u8 val = self->unk_374 - 1;
+        self->unk_374 = val;
+        if ((s8)(u8)val < 0) self->unk_374 = 1;
+        func_80289CC0(self);
+        func_80138078__FUl(1);
+        return;
+    }
+
+    // Syswin1 not active: check sort menu
+    if (func_801D3320(&self->_padSortMenu[0]) != 0) {
+        // Sort menu busy: close it and move cursor
+        if (func_801D3328(&self->_padSortMenu[0]) == 0) return;
+        func_801D3620(&self->_padSortMenu[0]);
+        char tmp[0xC];
+        func_801D3454(tmp, &self->_padSortMenu[0]);
+        ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(tmp);
+    } else {
+        // Sort menu idle: scan backward for non-empty page or decrement item slot
+        if ((s8)self->unk_1f5 == -1) {
+            // Scan backward for next non-empty page
+            if (self->unk_375 != 0) {
+                const u16* arr = (const u16*)(self->unk_20c + 0xb0);
+                s8 pg = (s8)(self->unk_377 - 1);
+                while (pg != (s8)self->unk_377) {
+                    if (pg < 0) pg = 3;
+                    if (ArrayGet12(arr, (u8)((s8)self->unk_376 * 4 + pg)) != 0) break;
+                    pg--;
+                }
+                self->unk_376 = (u8)((s8)self->unk_376 * 4 + pg);
+                nw4r::math::VEC3 tmp;
+                func_801CB9D8(&tmp, arr, (u32)((u8)pg));
+                ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp);
+            }
+            return;
+        }
+        // Decrement unk_1f5 with wrap
+        u8 val = self->unk_1f5 - 1;
+        self->unk_1f5 = val;
+        if ((s8)(u8)val < -1) val = self->unk_372 - 1;
+        self->unk_1f5 = val;
+        func_80289CC0(self);
+        func_80289AA4(self);
+    }
+    func_80138078__FUl(1);
+}
 
 // Down/confirm handler: page the syswin sub-window forward, finish the sort
 // menu scroll, advance the name-pane column selection, or move the row
@@ -2010,54 +2057,6 @@ extern "C" void func_80287250(CEquipItemBox* self, int param) {
 
 extern "C" void func_802873D8(){}
 
-// Advance page-2 system-window state while it is visible and active.
-void CEquipItemBox::func_80287D58() {
-    if (unk_375 != 0 && CSysWin_getUnk34(_padSysWin2) != 0
-        && CSysWin_isActive(_padSysWin2) != 0) {
-        func_8022B8E4(_padSysWin2);
-    }
-}
-
-// Rebuild the sort-menu page list: stash the input value/count, pick the
-// current page byte (cursor page when flag is set, else the value's bits 4-7),
-// reset the page list, then repopulate it (page 3 alone, otherwise pages
-// 2 + 4..8) and restore the page cursor for the 4..8 band.
-#pragma push
-#pragma optimize_for_size on
-#pragma dont_inline on
-extern "C" void func_80287DB4(CEquipItemBox* self, u32 v, u32 w, int flag) {
-    self->unk_1fc = (u16)v;
-    self->field_27A4 = w;
-    u32 raw;
-    if (flag != 0) {
-        raw = self->unk_36c[(s8)self->unk_373];
-    } else {
-        raw = (v >> 4) & 0xF;
-    }
-    u8 x = (u8)raw;
-    func_8028A07C(self);
-    if (x == 3) {
-        func_8028A0C0(self, 3);
-    } else {
-        func_8028A0C0(self, 2);
-        func_8028A0C0(self, 4);
-        func_8028A0C0(self, 5);
-        func_8028A0C0(self, 6);
-        func_8028A0C0(self, 7);
-        func_8028A0C0(self, 8);
-        switch (x) {
-        case 4: self->unk_373 = 1; break;
-        case 5: self->unk_373 = 2; break;
-        case 6: self->unk_373 = 3; break;
-        case 7: self->unk_373 = 4; break;
-        case 8: self->unk_373 = 5; break;
-        }
-    }
-    func_8028A1DC(self);
-    func_80289500(self, 1);
-}
-#pragma pop
-
 u8 CEquipItemBox::func_80287EE8() {
     u8 val = unk_1fe;
     unk_1fe = 0;
@@ -2104,75 +2103,130 @@ extern "C" __declspec(noinline) void func_80287FE0(CEquipItemBox* self) {
     nw4r::lyt::Pane* pane =
         self->field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x182], true);
     if (pane == 0) return;
-    if (func_801C4648(pane) == 0) {
+    // Retail dispatches the VISIBLE-pane cases immediately and defers the
+    // invisible-pane handler to a tail block after them.
+    if (func_801C4648(pane) != 0) {
+        if (self->unk_375 != 0) {
+            // Name pane up: close the sub-window or commit its selection.
+            if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) {
+                if (CSysWin_isActive(&self->_padSysWin2[0]) != 0) {
+                    func_8022B8E4(&self->_padSysWin2[0]);
+                }
+                return;
+            }
+            CEquipItemBoxItemListView* list =
+                (CEquipItemBoxItemListView*)(self->unk_20c + 0xb0);
+            u8 idx = (u8)(self->unk_377 + self->unk_376 * 4);
+            u16 v = ArrayGet12(&list->field_00[0], idx);
+            if (v == 0) return;
+            void* text;
+            if (func_801EF034((const u8*)list, idx) == 3) {
+                text = func_801D3C74(list, idx);
+            } else {
+                text = func_8013639C((const void*)lbl_eu_806649E0,
+                                     &lbl_eu_8050EFDC[0x1a2], v);
+            }
+            func_8022B90C(&self->_padSysWin2[0], 0);
+            func_8022B9B4(&self->_padSysWin2[0], text, 0);
+            func_8022BFC8(&self->_padSysWin2[0], 1);
+            func_8022B8B8(&self->_padSysWin2[0]);
+            self->unk_58 = 0;
+            return;
+        }
+        // List-selection refresh: pick the first non-empty column (column 8
+        // wins whenever it holds any item), scale the row into a page/column
+        // pair via the 0x4330 magic, move the cursor, mark state.
         if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) return;
-        func_80124270(pane, 1);
+        CEquipItemBoxItemListView* list =
+            (CEquipItemBoxItemListView*)(self->unk_20c + 0xb0);
+        int found = 0;
+        for (u8 i = 0; i < 0xc; i++) {
+            if (list->field_00[i] != 0) {
+                list->field_D8 = i;
+                if (list->field_00[8] != 0) {
+                    list->field_D8 = 8;
+                }
+                found = 1;
+                break;
+            }
+        }
+        if (found == 0) {
+            func_80138078__FUl(5);
+            return;
+        }
+        u8 sel = list->field_D8;
+        CEquipItemBoxF64Conv c;
+        c.w[0] = 0x43300000;
+        c.w[1] = (u32)sel;
+        s32 pos = (s32)(lbl_eu_80668B24 * (c.d - lbl_eu_80668B10));
+        self->unk_58 = 0;
+        self->unk_375 = 1;
+        self->unk_376 = (u8)pos;
+        self->unk_377 = (u8)(sel - (s8)pos * 4);
+        func_801D216C(&self->ccur18[0], 1);
+        nw4r::math::VEC3 tmp;
+        func_801CB9D8(&tmp, &list->field_00[0], sel);
+        ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp);
+        self->unk_378 = 1;
         func_80138078__FUl(2);
         return;
     }
-    if (self->unk_375 != 0) {
-        // Name pane up: close the sub-window or commit its selection.
-        if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) {
-            if (CSysWin_isActive(&self->_padSysWin2[0]) != 0) {
-                func_8022B8E4(&self->_padSysWin2[0]);
-            }
-            return;
-        }
-        CEquipItemBoxItemListView* list = (CEquipItemBoxItemListView*)(self->unk_20c + 0xb0);
-        u8 idx = (u8)(self->unk_377 + self->unk_376 * 4);
-        u16 v = ArrayGet12(&list->field_00[0], idx);
-        if (v == 0) return;
-        void* text;
-        if (func_801EF034((const u8*)list, idx) == 3) {
-            text = func_801D3C74(list, idx);
-        } else {
-            text = func_8013639C((const void*)lbl_eu_806649E0, &lbl_eu_8050EFDC[0x1a2], v);
-        }
-        func_8022B90C(&self->_padSysWin2[0], 0);
-        func_8022B9B4(&self->_padSysWin2[0], text, 0);
-        func_8022BFC8(&self->_padSysWin2[0], 1);
-        func_8022B8B8(&self->_padSysWin2[0]);
-        self->unk_58 = 0;
-        return;
-    }
+    // Invisible pane: show it (unless syswin2 is busy), then sound state 2.
     if (CSysWin_getUnk34(&self->_padSysWin2[0]) != 0) return;
-    CEquipItemBoxItemListView* list = (CEquipItemBoxItemListView*)(self->unk_20c + 0xb0);
-    // First non-empty column; column 8 wins whenever it holds any item.
-    int found = 0;
-    for (u8 i = 0; i < 0xc; i++) {
-        if (list->field_00[i] != 0) {
-            list->field_D8 = i;
-            if (list->field_00[8] != 0) {
-                list->field_D8 = 8;
-            }
-            found = 1;
-            break;
-        }
-    }
-    if (found == 0) {
-        func_80138078__FUl(5);
-        return;
-    }
-    u8 sel = list->field_D8;
-    CEquipItemBoxF64Conv c;
-    c.w[0] = 0x43300000;
-    c.w[1] = (u32)sel;
-    // Scale the selected row index into a page/column pair.
-    s32 pos = (s32)(lbl_eu_80668B24 * (c.d - lbl_eu_80668B10));
-    self->unk_58 = 0;
-    self->unk_375 = 1;
-    self->unk_376 = (u8)pos;
-    self->unk_377 = (u8)(sel - (s8)pos * 4);
-    func_801D216C(&self->ccur18[0], 1);
-    nw4r::math::VEC3 tmp;
-    func_801CB9D8(&tmp, &list->field_00[0], sel);
-    ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(&tmp);
-    self->unk_378 = 1;
+    func_80124270(pane, 1);
     func_80138078__FUl(2);
 }
 #pragma pop
 
-extern "C" void func_802882A4(){}
+// Arm-check for the "register/equip item" action: clear the armed flag
+// (unk_37c), then run the gate chain - sort menu closed, current cell has an
+// item with a kind and a category, category < 9, not the page-2 same-category
+// case. When all pass, build the per-page slot table from the item view's
+// six slot-id shorts, look up the selected page's entry, resolve its item,
+// check its name-table kind is not 1 and that sound 0x3508 is not playing;
+// only then set unk_37c = 1. Returns 1 = action blocked, 0 = ok/armed.
+#pragma push
+#pragma optimize_for_size on
+#pragma auto_inline off
+extern "C" __declspec(noinline) int func_802882A4(CEquipItemBox* self) {
+    self->unk_37c = 0;
+    if (func_801D3320(&self->_padSortMenu[0]) != 0) return 1;
+    CEquipItemGrid* grid = (CEquipItemGrid*)&self->_pad37D[1];
+    u8 idx = (u8)(self->unk_1f4 + self->unk_1f5 * 5);
+    if (func_80283208(grid, idx) == 0) return 0;
+    if (func_80282EC4(grid, idx) == 0) return 0;
+    u8 cat = (u8)((self->unk_1fc >> 8) & 0xff);
+    u8 catB = (u8)func_801392B4(cat);
+    CEquipItemBoxItemView* cfg = (CEquipItemBoxItemView*)func_8009EC9C(catB);
+    if (catB >= 9) return 0;
+    u8 page = self->unk_36c[(s8)self->unk_373];
+    if (page == 2 && (u8)func_802832D8(grid, idx) == catB) return 0;
+
+    // Per-page slot table: zeroed words at [0],[4],[8],[12], slot ids patched
+    // in from the item view (retail interleaves word-clears and half stores).
+    s16 table[14] = {0};
+    table[2] = cfg->field_26;
+    table[4] = cfg->field_1c;
+    table[5] = cfg->field_1e;
+    table[6] = cfg->field_20;
+    table[7] = cfg->field_22;
+    table[8] = cfg->field_24;
+    // The selected page's entry; -1 means "no item" (item stays null).
+    s16 elem = table[page];
+    void* item = 0;
+    if (elem != -1) {
+        item = func_80157C4C(grid->cat, elem);
+    }
+    if (item == 0) return 1;
+    u32 w = *(u32*)item;
+    if (w == 0) return 1;
+    u8 v = (u8)func_801361E8(lbl_eu_806640EC, &lbl_eu_8050EFDC[0x20], w >> 20);
+    if (v == 1) return 1;
+    if (func_8009CF8C(0x3508) != 0) return 1;
+    self->unk_37c = 1;
+    return 0;
+}
+#pragma pop
 
 // Test the equip-grid cursor row: return 1 when the selected cell holds the
 // expected item category (kind >= 3) at the current page, else 0.
@@ -2282,24 +2336,36 @@ extern "C" __declspec(noinline) int func_8028876C(CEquipItemBox* self) {
         return 0x25;
     } else {
         u32 cat = self->unk_36c[(s8)self->unk_373];
+        // Adjacent (diff-1) constant pairs go through a named local: a direct
+        // "if (c) return K; return K+1;" gets lowered to branchless
+        // addic/subfe select which retail does not do.
+        int ret;
         if (cat == 3) {
-            if (vis) return 0x1d;
-            return 0x1c;
+            ret = 0x1c;
+            if (vis) ret = 0x1d;
+            return ret;
         }
         if (cat == 2) {
             if (vis) {
-                if (manyParty) return 0x20;
-                return 0x21;
+                ret = 0x21;
+                if (manyParty) ret = 0x20;
+                return ret;
             }
-            if (manyParty) return 0x1f;
-            return 0x1e;
+            // Retail bytes: many->0x1e, !many->0x1f (the old source had
+            // this pair reversed).
+            ret = 0x1f;
+            if (manyParty) ret = 0x1e;
+            return ret;
         }
         if (vis) {
-            if (manyParty) return 0x1a;
-            return 0x1b;
+            ret = 0x1b;
+            if (manyParty) ret = 0x1a;
+        } else {
+            // Retail bytes: many->0x18, !many->0x19.
+            ret = 0x19;
+            if (manyParty) ret = 0x18;
         }
-        if (manyParty) return 0x19;
-        return 0x18;
+        return ret;
     }
 }
 
@@ -2308,12 +2374,13 @@ extern "C" __declspec(noinline) int func_8028876C(CEquipItemBox* self) {
 // Returns 1 when the lookup byte of the grid cell selected by (unk_1f5) equals
 // func_801392B4's category byte; an unk_1f5 of -1 always returns 0.
 extern "C" int func_80288948(CEquipItemBox* self) {
-    if ((s8)self->unk_1f5 == -1) return 0;
+    u8 sel = self->unk_1f5;
+    if ((s8)sel == -1) return 0;
     u32 b;
     u32 a;
-    u8 idx = (u8)(self->unk_1f4 + (u8)self->unk_1f5 * 5);
+    int idx = sel * 5 + self->unk_1f4;
     u8 cat = (u8)((self->unk_1fc >> 8) & 0xff);
-    a = func_802832D8((CEquipItemGrid*)((u8*)self + 0x37E), idx);
+    a = func_802832D8((CEquipItemGrid*)((u8*)self + 0x37E), (u8)idx);
     b = func_801392B4(cat);
     return a == b;
 }
@@ -2350,13 +2417,15 @@ void CEquipItemBox::func_80288A6C() {
     }
 }
 
-// If both pointer fields 0x34 and 0x38 are non-null, clear the sort menu and
-// set unk_42. noinline: retail callers (OnFileEvent) emit a `bl` to the
-// unmangled retail name.
+// If both pointer fields 0x34 and 0x38 are non-null, clear the sort menu
+// (passing self) and set unk_42. noinline: retail callers (OnFileEvent)
+// emit a `bl` to the unmangled retail name.
 extern "C" __declspec(noinline) void func_80288AC0(CEquipItemBox* self) {
-    if (self->field_38 != 0 && self->field_34 != 0) {
-        func_80139198(0);
-        self->unk_42 = 1;
+    if (self->field_38 != 0) {
+        if (self->field_34 != 0) {
+            func_80139198(self);
+            self->unk_42 = 1;
+        }
     }
 }
 
@@ -2522,7 +2591,7 @@ extern "C" __declspec(noinline) void func_80288E14(CEquipItemBox* self, u16 kind
     }
     if (res == 0) {
         if (kind != 0) {
-            char* name = func_80138F78(func_80136254((const void*)lbl_eu_806640EC, &lbl_eu_8050EFDC[0x207], kind));
+            char* name = func_80138F78((u16)func_80136254((const void*)lbl_eu_806640EC, &lbl_eu_8050EFDC[0x207], kind));
             res = self->field_34->GetResource(
                 nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, name, 0);
             if (res == 0) {
@@ -2671,17 +2740,15 @@ void CEquipItemBox::func_80289754() {
         nw4r::lyt::Pane* cur =
             field_38->GetRootPane()->FindPaneByName(&lbl_eu_8050EFDC[0x2a4], true);
         // Move the cursor pane: start from the base position at +0x200 and
-        // shift x by scale * (row + 10 - pages) (int->float via 0x4330 magic).
-        c2.w[1] = (u32)(u8)(10 - pages);
-        c1.w[0] = 0x43300000;
+        // shift x by scale * (row + 10 - pages). The (f32) casts make MWCC
+        // emit its own s32->f32 magic (pool consts B18/B10 are compiler-
+        // generated; do NOT hand-roll the 0x4330 union here).
         vec[0] = ((CEquipItemBoxPagePosView*)this)->pos[0];
         vec[1] = ((CEquipItemBoxPagePosView*)this)->pos[1];
         vec[2] = ((CEquipItemBoxPagePosView*)this)->pos[2];
-        c1.w[1] = (u32)((u8)((u8)grid->idx + 1) - 1) ^ 0x80000000;
-        c2.w[0] = 0x43300000;
-        float fi = (float)(c1.d - lbl_eu_80668B18);
-        float fp = (float)(c2.d - lbl_eu_80668B10);
-        ((float*)vec)[0] += lbl_eu_80668B44 * (fi + fp);
+        float fp = (f32)(u32)(u8)(10 - pages);
+        float fi = (f32)(int)((u8)((u8)grid->idx + 1) - 1);
+        ((float*)vec)[0] += lbl_eu_80668B44 * fi + lbl_eu_80668B44 * fp;
         copyVEC3(&((CEquipItemBoxPaneView*)cur)->mTranslate[0], (const float*)vec);
     } else {
         nw4r::lyt::Pane* pane =
@@ -2771,14 +2838,18 @@ __declspec(noinline) void CEquipItemBox::func_80289AA4() {
 // branch in retail (no shared helper), so keep both copies textual.
 extern "C" __declspec(noinline) void func_80289CC0(CEquipItemBox* self) {
     u8 winName[0x18];
-    nw4r::math::VEC3 pos;
-    if (CSysWin_getUnk34(&self->_padSysWin1[0]) == 0) {
+    // Retail allocates SEPARATE stack copies per branch (pageName sp+80,
+    // itemName sp+48, and two distinct 'pos' slots) because none of them
+    // live across the branch join. Keep declarations branch-local.
+    // Polarity per retail: menu OPEN (!= 0) takes the win-name path.
+    if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) {
         func_8022C1B4(winName, &self->_padSysWin1[0], self->unk_374);
         ((CEquipItemBoxCur18View*)&self->ccur18[0])->vf04(winName);
     } else {
         s8 sel = self->unk_1f5;
         if (sel == -1) {
             char pageName[0x28];
+            nw4r::math::VEC3 pos;
             sprintf(pageName, &lbl_eu_8050EFDC[0x2C8], (s8)self->unk_373 + 1);
             nw4r::lyt::Pane* pane =
                 ((CEquipItemBoxLayoutSubVtbl13*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
@@ -2791,6 +2862,7 @@ extern "C" __declspec(noinline) void func_80289CC0(CEquipItemBox* self) {
                      &pos);
         } else {
             char itemName[0x20];
+            nw4r::math::VEC3 pos;
             sprintf(itemName, &lbl_eu_8050EFDC[0x20C], (s8)self->unk_1f4 + sel * 5 + 1);
             nw4r::lyt::Pane* pane =
                 ((CEquipItemBoxLayoutSubVtbl13*)((CEquipItemBoxLayoutView*)self->field_38)->field_10)
@@ -3152,8 +3224,10 @@ extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b) {
     // Declaration order follows retail's saved-register allocation
     // (self=r19, a=r20, b=r21, rateB=r22, rateA=r23, g=r24, base=r25,
     // kind2=r26, name72=r27, name7a=r28, name61=r29, hi=r30, name69=r31).
-    u16 rateB;
-    u16 rateA;
+    // Int-typed (retail defers narrow-masking to use sites; rates are
+    // small table ids so no value ever exceeds u16 range).
+    int rateB;
+    int rateA;
     u32 g;
     char* base;
     u16 kind2;
@@ -3197,28 +3271,18 @@ extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b) {
     name72 = func_801361E8(g, base + 0x72, kind2);
     name7a = func_801361E8(g, base + 0x7a, kind2);
     name61 = func_801361E8(g, base + 0x61, kind2);
-    // 0x4330 int->float magic word; the conversion temps use three separate
-    // stack slots (retail's 0x48/0x58/0x60 areas) and the magic is kept in a
-    // register (r30) across all three conversions.
-    hi = 0x43300000;
-    CEquipItemBoxF64Conv cv1;
-    cv1.w[1] = (u32)(u8)func_801361E8(g, base + 0x612, kind2);
-    cv1.w[0] = hi;
-    float f = (float)(cv1.d - lbl_eu_80668B10) / lbl_eu_80668B48;
+    // The three int->float conversions use MWCC's own s32->f32 magic
+    // ((f32) casts emit lis-0x4330/xoris/lfd/fsubs inline, sharing one
+    // constant copy in r30 like retail); do NOT hand-roll unions here.
+    float f = (f32)(u32)(u8)func_801361E8(g, base + 0x612, kind2) / lbl_eu_80668B48;
     name69 = func_801361E8(g, base + 0x69, kind2);
     u32 flag92 = func_801361E8(g, base + 0x92, kind2);
     if (flag92 & 4) {
         void* obj = func_8009EC9C(1);
-        CEquipItemBoxF64Conv cv2;
-        cv2.w[0] = hi;
-        cv2.w[1] = ((u32)rateA * (u32)func_800A082C(obj)) ^ 0x80000000;
-        rateA = (u16)(int)(lbl_eu_80668B4C * (cv2.d - lbl_eu_80668B18));
-        CEquipItemBoxF64Conv cv3;
-        cv3.w[0] = hi;
-        cv3.w[1] = ((u32)rateB * (u32)func_800A082C(obj)) ^ 0x80000000;
-        rateB = (u16)(int)(lbl_eu_80668B2C * (cv3.d - lbl_eu_80668B18));
-        if ((u32)rateA >= 0x3e7) rateA = 0x3e7;
-        if ((u32)rateB >= 0x3e7) rateB = 0x3e7;
+        rateA = (int)(lbl_eu_80668B4C * (f32)(int)((u32)(u16)rateA * (u32)func_800A082C(obj)));
+        rateB = (int)(lbl_eu_80668B2C * (f32)(int)((u32)(u16)rateB * (u32)func_800A082C(obj)));
+        if ((u32)(u16)rateA >= 0x3e7) rateA = 0x3e7;
+        if ((u32)(u16)rateB >= 0x3e7) rateB = 0x3e7;
     }
     for (u8 i = 1; i <= 10; i++) {
         sprintf(nb, base + 0x7, i);
@@ -3307,7 +3371,9 @@ extern "C" void func_8028B7CC(CEquipItemBox* self, int kind, int item) {
     func_80136910(self->field_38, base + 0x546, (u8)nameA);
     func_80136910(self->field_38, base + 0x552, (u8)nameB);
     func_80136910(self->field_38, base + 0x55e, (u8)nameC);
-    u32 v = func_801361E8(g, base + 0x17, func_80139358(kind));
+    // Retail reloads lbl_eu_806640F8 here: the three func_80136910 calls
+    // above are opaque, so the global must not be cached across them.
+    u32 v = func_801361E8(lbl_eu_806640F8, base + 0x17, func_80139358(kind));
     u8 b = (u8)v;
     char* str;
     if ((u32)(b - 4) <= 9) {
@@ -3957,6 +4023,7 @@ extern "C" void sinit_8028DAB0() {
 // page count and dispatching func_8028345C.
 #pragma push
 #pragma auto_inline off
+#pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_80282610(CEquipItemGrid* grid, u8 v, u8 b, u8 hi) {
     grid->count = 0;
     for (u16 i = 0; i < 0x400; i++) {
@@ -3974,61 +4041,61 @@ extern "C" __declspec(noinline) void func_80282610(CEquipItemGrid* grid, u8 v, u
         grid->count = count + 1;
         grid->data[count].unk0 = (s16)n;
         CEquipItemData* cell = &grid->data[count];
-        CEquipItemBoxCatWordTable cats;
-        if (v != 3) goto general;
-        // Category 3: find which equipment slot (if any) owns this item id.
-        cats = catsTemp;
-        for (u8 k = 0; k < 6; k++) {
-            u8 cat = (u8)cats.w[k];
-            u16 cnt2 = (u16)func_80157C20(cat);
-            u32 kplus3 = (u32)(k + 3);
-            for (u16 m = 0; m < cnt2; m++) {
-                CItemInstance* obj2 = (CItemInstance*)func_80157C4C(cat, (s16)m);
-                if (obj2 == 0 || obj2->word == 0) continue;
-                CEquipItemBoxItemImplView* impl2 = (CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj2);
-                u16 num = (u16)impl2->vf30(obj2);
-                for (u16 p = 0; p < num; p++) {
-                    s16 slot = impl2->vf40(obj2, (u8)p);
-                    if (slot == -1) continue;
-                    if (slot != cell->unk0) continue;
-                    cell->unk3 = 2;
-                    u16 m2 = m;
-                    for (u8 q = 0; q < (u8)code80135FDC_getByte_64077(); q++) {
-                        u8 catB = (u8)func_801392B4(q);
-                        CItemInstance* obj3 = (CItemInstance*)func_8009EC9C(catB);
-                        s16 slot2 = 0;
-                        switch (cat) {
-                        case 2: slot2 = ((CEquipItemBoxItemView*)obj3)->field_26; break;
-                        case 4: slot2 = ((CEquipItemBoxItemView*)obj3)->field_1c; break;
-                        case 5: slot2 = ((CEquipItemBoxItemView*)obj3)->field_1e; break;
-                        case 6: slot2 = ((CEquipItemBoxItemView*)obj3)->field_20; break;
-                        case 7: slot2 = ((CEquipItemBoxItemView*)obj3)->field_22; break;
-                        case 8: slot2 = ((CEquipItemBoxItemView*)obj3)->field_24; break;
+    if (v == 3) {
+            // Category 3: find which equipment slot (if any) owns this item id.
+            CEquipItemBoxCatWordTable cats = catsTemp;
+            for (u8 k = 0; k < 6; k++) {
+                u8 cat = (u8)cats.w[k];
+                u16 cnt2 = (u16)func_80157C20(cat);
+                u32 kplus3 = (u32)(k + 3);
+                for (u16 m = 0; m < cnt2; m++) {
+                    CItemInstance* obj2 = (CItemInstance*)func_80157C4C(cat, (s16)m);
+                    if (obj2 == 0 || obj2->word == 0) continue;
+                    CEquipItemBoxItemImplView* impl2 = (CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj2);
+                    u16 num = (u16)impl2->vf30(obj2);
+                    for (u16 p = 0; p < num; p++) {
+                        s16 slot = impl2->vf40(obj2, (u8)p);
+                        if (slot == -1) continue;
+                        if (slot != cell->unk0) continue;
+                        cell->unk3 = 2;
+                        u16 m2 = m;
+                        for (u8 q = 0; q < (u8)code80135FDC_getByte_64077(); q++) {
+                            u8 catB = (u8)func_801392B4(q);
+                            CItemInstance* obj3 = (CItemInstance*)func_8009EC9C(catB);
+                            s16 slot2 = 0;
+                            switch (cat) {
+                            case 2: slot2 = ((CEquipItemBoxItemView*)obj3)->field_26; break;
+                            case 4: slot2 = ((CEquipItemBoxItemView*)obj3)->field_1c; break;
+                            case 5: slot2 = ((CEquipItemBoxItemView*)obj3)->field_1e; break;
+                            case 6: slot2 = ((CEquipItemBoxItemView*)obj3)->field_20; break;
+                            case 7: slot2 = ((CEquipItemBoxItemView*)obj3)->field_22; break;
+                            case 8: slot2 = ((CEquipItemBoxItemView*)obj3)->field_24; break;
+                            }
+                            if (slot2 == (s16)m2) {
+                                cell->unk2 = catB;
+                                cell->unk3 = 1;
+                                if (k == 0) cell->unk4 = (u8)(p + 1);
+                                else cell->unk4 = (u8)kplus3;
+                                break;
+                            }
                         }
-                        if (slot2 == (s16)m2) {
-                            cell->unk2 = catB;
-                            cell->unk3 = 1;
-                            if (k == 0) cell->unk4 = (u8)(p + 1);
-                            else cell->unk4 = (u8)kplus3;
-                            break;
-                        }
+                        break;
                     }
-                    break;
+                    if (cell->unk3 != 0) break;
                 }
                 if (cell->unk3 != 0) break;
             }
-            if (cell->unk3 != 0) break;
-        }
-        cell->unk6 = 1;
-        // Name check: name-byte 1/2 clears the cell when the window kind
-        // disagrees with the vf54 name.
-        u32 name1 = func_801361E8(lbl_eu_806640D8, (char*)base, (u16)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf54(obj));
-        if ((u8)name1 == 1) {
-            if (hi != 2) cell->unk6 = 0;
-        } else if ((u8)name1 == 2) {
-            if (hi == 2) cell->unk6 = 0;
-        }
-        goto tail;
+            cell->unk6 = 1;
+            // Name check: name-byte 1/2 clears the cell when the window kind
+            // disagrees with the vf54 name.
+            u32 name1 = func_801361E8(lbl_eu_806640D8, (char*)base, (u16)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf54(obj));
+            if ((u8)name1 == 1) {
+                if (hi != 2) cell->unk6 = 0;
+            } else if ((u8)name1 == 2) {
+                if (hi == 2) cell->unk6 = 0;
+            }
+            goto tail;
+    }
 general:
         if ((u32)v < 2 || (u32)v > 8) goto tail;
         if (b != 0) {
@@ -4127,18 +4194,19 @@ tail:
     func_8028345C(grid);
 }
 #pragma pop
-// Page count for the current category: min(10, ceil(count / pagesize));
-// (f32)(int) casts produce retail's 0x4330/xoris/lfd/fsubs magic idiom.
+// Page count for the current category: min(10, ceil(count / pagesize)).
+// The (f32)(int) casts produce retail's 0x4330/xoris/lfd/fsubs s32->f32
+// magic idiom; the named temp 'frac' is required to get retail's register
+// allocation (constant into f0, conversion chain into f1).
 extern "C" __declspec(noinline) u8 func_80282D60(CEquipItemGrid* grid) {
     f32 pages = (f32)(int)func_80157C20(grid->cat);
     if (pages >= lbl_eu_80668B20) {
         return 10;
     }
     f32 q = pages / lbl_eu_80668B00;
-    s32 n = (s32)q;
+    int n = (int)q;
     f32 frac = q - (f32)n;
-    f32 frac = q - (f32)n;
-    if (frac != lbl_eu_80668B04) {
+    if (lbl_eu_80668B04 != frac) {
         n = n + 1;
     }
     return (u8)n;

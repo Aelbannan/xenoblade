@@ -1,5 +1,7 @@
-// Catalog TU for monolib/src/lod/CTaskLOD
-// Replace stubs with high-level C/C++ during decomp.
+// monolib/src/lod/CTaskLOD -- COMPLETE (Matching TU).
+// 38/38 functions FULL byte-match; data gate MATCH; split budget exact.
+// Retail data (vtables/RTTI/strings/singleton) is defined at the bottom of
+// this file. See docs/MWCC_CASES.md "CTaskLOD" for the matching notes.
 
 #include <types.h>
 #include "monolib/work/CTTask.hpp"
@@ -180,6 +182,9 @@ void CTaskLOD::func_80462BE4() {
     }
 }
 
+// The uninitialized `float d` out-arg is deliberate: retail discards the
+// delegate's float return the same way, and MWCC warning 10185 on this line
+// is expected -- do not "fix" it (any change here breaks the byte match).
 void CTaskLOD::func_80462BFC() {
     if (lbl_eu_80665730[0]) {
         float d; lbl_eu_80665730[0]->mpActiveLOD->func_8046F010(d);
@@ -552,7 +557,7 @@ CTTask<CTaskLOD>::~CTTask() {}
 // The CTTask<CTaskLOD> template members referenced by lbl_eu_8056D678 /
 // lbl_eu_8056D6C0 cannot be spelled in source (their mangled names contain
 // '<'), so those slots carry a stand-in Tail__8CProcessFv reloc that the
-// §17.6 UNIT_RULES retarget at the local .text definitions
+// Section 17.6 UNIT_RULES retarget at the local .text definitions
 // (retarget_relocs_local).
 
 // Defined by this TU's member/destructor definitions under these exact

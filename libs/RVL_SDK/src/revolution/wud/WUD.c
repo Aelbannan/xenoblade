@@ -2137,8 +2137,9 @@ void __wudDeleteFlushCallback(SCStatus status) {
 #pragma push
 #pragma dont_inline on
 u8 __wudDeleteDisconnectAll(void) {
-    int i;
     WUDDevInfo* pDev;
+    int i;
+    int j;
     WUDCB* p = &_wcb;
 
     for (i = 0, pDev = p->stdDevs; i < WUD_MAX_DEV_ENTRY_FOR_STD;
@@ -2148,8 +2149,8 @@ u8 __wudDeleteDisconnectAll(void) {
         }
     }
 
-    for (i = 0, pDev = p->smpDevs; i < WUD_MAX_DEV_ENTRY_FOR_SMP;
-         i++, pDev++) {
+    for (j = 0, pDev = p->smpDevs; j < WUD_MAX_DEV_ENTRY_FOR_SMP;
+         j++, pDev++) {
         if (pDev->status > 1) {
             btm_remove_acl(pDev->devAddr);
         }
@@ -3131,10 +3132,9 @@ void WUDShutdown(BOOL onReconnect) {
     OSRestoreInterrupts(enabled);
 }
 void __wudShutdownHandler(void) {
-    WUDCB* p = &_wcb;
-    WUDCB* pAlt = p;
+    extern WUDCB __rvl_wudcb;
 
-    switch (pAlt->shutdownState) {
+    switch (_wcb.shutdownState) {
     case WUD_STATE_SHUTDOWN_STORE_SETTINGS: {
         BOOL result = _wudReadNand;
 
@@ -3143,17 +3143,17 @@ void __wudShutdownHandler(void) {
             result &= SCSetBtCmpDevInfoArray(&_spArray);
 
             if (result) {
-                pAlt->shutdownState = WUD_STATE_SHUTDOWN_FLUSH_SETTINGS;
+                _wcb.shutdownState = WUD_STATE_SHUTDOWN_FLUSH_SETTINGS;
                 SCFlushAsync((SCFlushCallback)__wudShutdownFlushCallback);
             } else {
-                pAlt->shutdownState = WUD_STATE_SHUTDOWN_DONE;
+                _wcb.shutdownState = WUD_STATE_SHUTDOWN_DONE;
             }
         }
         break;
     }
 
     case WUD_STATE_SHUTDOWN_DONE: {
-        OSCancelAlarm(&pAlt->alarm);
+        OSCancelAlarm(&_wcb.alarm);
         BTA_DisableBluetooth();
         break;
     }

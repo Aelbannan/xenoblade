@@ -68,7 +68,6 @@ public:
     static void* func_8003AA78(u32, void*);
     static void func_8003AA8C(u32 val);
     static void* getFP(const char* pName) { return ::getFP(pName); }
-    static const char* getBdatStringColumnValue(void* pData, const char* pColumnName, int index);
     static u32 func_8003B1EC(void* pData);
     static u32 func_8003B41C(void* pData);
 };

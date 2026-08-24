@@ -248,6 +248,45 @@ struct CFloorMapWidgets {
     CFloorMapWidget18 widgets[4]; // 0x30D4, 0x30EC, 0x3104, 0x311C
 };
 
+// View of the embedded sys-win subobjects (offsets 0xB8/0xF4): their shared
+// vtable slot at offset 0x88 (index 34) is invoked by the map-load routine.
+class CFloorMapWinVf88 {
+public:
+    virtual void vf00();
+    virtual void vf04();
+    virtual void vf08();
+    virtual void vf0C();
+    virtual void vf10();
+    virtual void vf14();
+    virtual void vf18();
+    virtual void vf1C();
+    virtual void vf20();
+    virtual void vf24();
+    virtual void vf28();
+    virtual void vf2C();
+    virtual void vf30();
+    virtual void vf34();
+    virtual void vf38();
+    virtual void vf3C();
+    virtual void vf40();
+    virtual void vf44();
+    virtual void vf48();
+    virtual void vf4C();
+    virtual void vf50();
+    virtual void vf54();
+    virtual void vf58();
+    virtual void vf5C();
+    virtual void vf60();
+    virtual void vf64();
+    virtual void vf68();
+    virtual void vf6C();
+    virtual void vf70();
+    virtual void vf74();
+    virtual void vf78();
+    virtual void vf7C();
+    virtual void vf88();   // vtable offset 0x88
+};
+
 // Ctor view of the cursor object: layout/accessor head plus the widgets.
 struct CFloorMapCtorView {
     nw4r::lyt::Layout* layout;                // +0x00
@@ -291,7 +330,7 @@ extern "C" void func_80246330(void*);
 extern "C" u32 func_8024FB78(void*);
 extern "C" void func_8024830C(void*, void*);
 extern "C" void func_80247490(void*, u8, u32, f32);
-extern "C" void func_8024808C(void*, void*, u8);
+void func_8024808C(CFloorMapFull* self, u32 idx);
 extern "C" void func_8024B6F8(CFloorMapRowList*, void*, u32, u32, u32);
 extern "C" u32 getAllocHandle__10CLibLayoutFv();
 
@@ -333,6 +372,44 @@ struct CFloorMapFloorEntry {
 struct CFloorMapFloorEntryView {
     u8 _00[0x30C];
     u8 count; // +0x30C
+};
+
+// Two consecutive 0x30C floor-entry blocks, copied as one 0x618-byte chunk
+// from the staging image into the resident cursor.
+struct CFloorMapEntryBlocks {
+    u8 data[0x618];
+};
+
+// 5-byte cursor-state run (flag/floor/page/row/entry0-count) copied byte-wise;
+// its last byte aliases the first byte of the entry-blocks chunk.
+struct CFloorMapHeadFlags {
+    u8 b[5];
+};
+
+// One 0x1C-byte widget-init record staged by __ct__80244F50: a default name
+// pointer followed by the live widget body (four words + two flag bytes).
+struct CFloorMapRecSlot {
+    void* name;               // +0x00
+    struct {
+        u32 words[4];         // +0x04
+        u8 flagA;             // +0x14
+        u8 flagB;             // +0x15
+    } body;
+    u8 _pad[2];               // +0x16
+};
+
+// Full 0x3138-byte staging image built by __ct__80244F50 on the stack and
+// copied member-wise into the resident cursor at CFloorMap+0x1FC.
+struct CFloorMapStage {
+    void* mData;              // +0x000
+    u32 accessor;             // +0x004
+    u8 headFlags[4];          // +0x008 (flag / floor / page / row)
+    CFloorMapEntryBlocks blocks; // +0x00C
+    u8 _624[0x30D0 - 0x624];
+    u8 floorCount;               // +0x30D0
+    u8 _30D1[0x30D4 - 0x30D1];
+    CFloorMapRecSlot slots[4];   // +0x30D4
+    u32 scrollBarPtr;            // +0x3134
 };
 
 // Floor-map cursor sub-object (lives at CFloorMap+0x1FC): current floor/page/
@@ -528,6 +605,22 @@ struct CFloorMapRowList {
 
 // Per-frame widget updates (retail-unmangled C-linkage names; declared in
 // COption.hpp / CItemBoxGrid.hpp / CMapSel.hpp under the same extern "C").
+extern "C" void func_8003AA8C__5CBdatFUl(u32);     // CBdat::func(u32) - release shared BDAT handle
+extern "C" void waitForDrawDone__9CDeviceVIFv();   // CDeviceVIF::waitForDrawDone
+extern "C" void func_801F35DC(void* scrollBar);    // CScrollBar teardown
+extern "C" void func_8022B7F4(void* sysWin);       // CSysWin teardown
+// C++-mangled imports from code_80135FDC.cpp (unmangled identifiers mangle to
+// the retail symbols, same scheme as CItemBoxInfo.hpp).
+void func_801390E0(CFileHandle**);
+void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+
+// Cast-only view of nw4r::lyt::Layout for the deleting-destructor dispatch at
+// vtable slot 2 (+0x08 after the RTTI prefix); arg 1 in r4 (see
+// CItemBoxLayoutDtorVt).
+struct CFloorMapLayoutDtorVt {
+    virtual void destroy(int flags);  // slot 2 => +0x08
+};
+
 extern "C" void func_801F3540(void* scrollBar);   // CScrollBar per-frame update
 extern "C" void func_801D202C(void* cursor);      // CCur18 per-frame update
 extern "C" void func_8022B748(void* sysWin);      // CSysWin per-frame update
@@ -571,6 +664,7 @@ public:
     virtual void v090(); virtual void v094(); virtual void v098(); virtual void v09C();
     virtual void v0A0();
     virtual CFloorMapVec3* GetPos();         // vtable+0xAC
+    virtual float fn0xCC();                  // vtable+0xCC - map zoom factor
 };
 
 // Marker object view used by the func_8024A748 list walks (fields read:
@@ -589,12 +683,26 @@ public:
     virtual void v090(); virtual void v094(); virtual void v098(); virtual void v09C();
     virtual void v0A0(); virtual void v0A4();
     virtual CFloorMapVec3* GetPos();         // vtable+0xAC
+    virtual void v0B0(); virtual void v0B4(); virtual void v0B8(); virtual void v0BC();
+    virtual void v0C0(); virtual void v0C4(); virtual void v0C8(); virtual void v0CC();
+    virtual void v0D0(); virtual void v0D4(); virtual void v0D8(); virtual void v0DC();
+    virtual void v0E0(); virtual void v0E4(); virtual void v0E8(); virtual void v0EC();
+    virtual void v0F0(); virtual void v0F4(); virtual void v0F8(); virtual void v0FC();
+    virtual void v100(); virtual void v104(); virtual void v108(); virtual void v10C();
+    virtual void v110(); virtual void v114(); virtual void v118(); virtual void v11C();
+    virtual void v120(); virtual void v124(); virtual void v128(); virtual void v12C();
+    virtual void v130(); virtual void v134(); virtual void v138(); virtual void v13C();
+    virtual void v140(); virtual void v144(); virtual void v148(); virtual void v14C();
+    virtual void v150(); virtual void v154(); virtual void v158();
+    virtual void* fn0x160();                 // vtable+0x160 - marker pane lookup
     u8 _0C[0x64 - 0x0C];                     // 0x0C-0x63
     u32 m64;                                 // 0x64 - flags
     u8 _68[0x74 - 0x68];
     u32 m74;                                 // 0x74 - name string
     u8 _78[0x8C - 0x78];
     u16 m8C;                                 // 0x8C - id
+    u8 _8E[0x91 - 0x8E];
+    u8 m91;                                  // 0x91 - marker kind (6 = landmark)
 };
 
 // 0x4C-byte landmark entry walked by func_8024A748 case 2 (func_80193804
@@ -615,7 +723,7 @@ extern "C" void* func_800B6CF8(int);
 extern "C" void* func_800B6C58();
 extern "C" void* func_800B6BEC();
 extern "C" void* func_80193804();
-extern "C" void func_80141DC4(float*, int);
+extern "C" void func_80141DC4(float*, int = 0);
 
 // C-linkage UI helper imports. func_80136E84/func_80136F08 keep their retail
 // mangled names through MWCC's natural C++ mangling; the flat-named helpers
@@ -632,7 +740,9 @@ extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
 extern "C" void func_801375A0(nw4r::math::VEC3*, nw4r::lyt::Pane*);
 extern "C" void func_801F3850(void*, u16);
-void func_80246200(void*);
+// C linkage so the same-TU definition emits the retail symbol
+// func_80246200 instead of the mangled C++ name at every call site.
+extern "C" void func_80246200(void*);
 extern "C" void func_80137B44(nw4r::lyt::Layout*, const char*, u32);
 extern "C" void* func_80137E7C(void*, const char*, void*);
 extern "C" u32 func_8009CF8C(u32);

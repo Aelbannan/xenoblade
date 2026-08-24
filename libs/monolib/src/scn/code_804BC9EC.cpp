@@ -276,9 +276,9 @@ void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
         ((u32*)mv)[i] = viewSrc[i];
     }
     f32* vf = (f32*)viewData;
-    f32 camX = vf[3];
-    f32 camY = vf[7];
-    f32 camZ = vf[11];
+#define CAMX vf[3]
+#define CAMY vf[7]
+#define CAMZ vf[11]
 
     PSMTXInverse(mv, mv);
     GXSetProjection(proj, GX_PERSPECTIVE);
@@ -319,10 +319,6 @@ void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
         }
     }
 
-    f32 oneThird = lbl_eu_8066AF10;
-    f32 zero = lbl_eu_8066AF14;
-    f32 scale255 = lbl_eu_8066AF18;
-
     // Pass A: type-1 entries - triangle soup with flag-word visibility and a
     // (radius + 50) camera-distance cull.
     for (int i = 0; i < entryCount; i++) {
@@ -338,32 +334,37 @@ void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
             SceneVertex* vb = &vertBase[tri->indexB];
             SceneVertex* vc = &vertBase[tri->indexC];
 
-            f32 cx = (va->x + vb->x + vc->x) * oneThird;
-            f32 cy = (va->y + vb->y + vc->y) * oneThird;
-            f32 cz = (va->z + vb->z + vc->z) * oneThird;
+            f32 vax = va->x, vay = va->y, vaz = va->z;
+            f32 vbx = vb->x, vby = vb->y, vbz = vb->z;
+            f32 vcx = vc->x, vcy = vc->y, vcz = vc->z;
 
-            f32 dx0 = cx - va->x, dy0 = cy - va->y, dz0 = cz - va->z;
+            Vec cen;
+            cen.x = (vax + vbx + vcx) * lbl_eu_8066AF10;
+            cen.y = (vay + vby + vcy) * lbl_eu_8066AF10;
+            cen.z = (vaz + vbz + vcz) * lbl_eu_8066AF10;
+
+            f32 dx0 = cen.x - vax, dy0 = cen.y - vay, dz0 = cen.z - vaz;
             f32 radiusSq = dx0 * dx0 + dy0 * dy0 + dz0 * dz0;
 
-            f32 dx1 = cx - vb->x, dy1 = cy - vb->y, dz1 = cz - vb->z;
+            f32 dx1 = cen.x - vbx, dy1 = cen.y - vby, dz1 = cen.z - vbz;
             f32 t2 = dx1 * dx1 + dy1 * dy1 + dz1 * dz1;
             if (t2 > radiusSq) radiusSq = t2;
 
-            f32 dx2 = cx - vc->x, dy2 = cy - vc->y, dz2 = cz - vc->z;
+            f32 dx2 = cen.x - vcx, dy2 = cen.y - vcy, dz2 = cen.z - vcz;
             t2 = dx2 * dx2 + dy2 * dy2 + dz2 * dz2;
             if (t2 > radiusSq) radiusSq = t2;
 
-            if (!(radiusSq > zero || radiusSq == zero)) {
+            if (!(radiusSq > lbl_eu_8066AF14 || radiusSq == lbl_eu_8066AF14)) {
                 Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
             }
             f32 radius;
-            if (radiusSq == zero || radiusSq < zero) {
-                radius = zero;
+            if (radiusSq == lbl_eu_8066AF14 || radiusSq < lbl_eu_8066AF14) {
+                radius = lbl_eu_8066AF14;
             } else {
                 radius = radiusSq * FrSqrt__Q24nw4r4mathFf(radiusSq);
             }
 
-            f32 dcamX = camX - cx, dcamY = camY - cy, dcamZ = camZ - cz;
+            f32 dcamX = CAMX - cen.x, dcamY = CAMY - cen.y, dcamZ = CAMZ - cen.z;
             f32 dist2 = dcamX * dcamX + dcamY * dcamY + dcamZ * dcamZ;
             f32 thresh = radius + lbl_eu_80663AD0;  // 50.0f pool constant
             thresh = thresh * thresh;
@@ -376,7 +377,8 @@ void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
             GXBegin(GX_TRIANGLES, GX_VTXFMT0, 3);
             for (int k = 0; k < 3; k++) {
                 SceneVertex* v = (k == 0) ? va : ((k == 1) ? vb : vc);
-                GXPosition3f32(v->x, v->y, v->z);
+                f32* vf = &v->x;
+                GXPosition3f32(vf[0], vf[1], vf[2]);
                 if (flags & 0x4000) {
                     GXColor3u8(0xFF, 0, 0);
                 } else if (flags & 0x200) {
@@ -385,7 +387,7 @@ void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
                     GXColor3u8(0, 0, 0xFF);
                 } else if (colorData != NULL) {
                     f32* colors = (f32*)(colorData + tri->colorIdx * 0xC);
-                    GXColor3u8((u8)(colors[0] * scale255), (u8)(colors[1] * scale255), (u8)(colors[2] * scale255));
+                    GXColor3u8((u8)(colors[0] * lbl_eu_8066AF18), (u8)(colors[1] * lbl_eu_8066AF18), (u8)(colors[2] * lbl_eu_8066AF18));
                 }
             }
         }
@@ -420,21 +422,15 @@ void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
             continue;
         }
 
-        f32 rx = *(f32*)(rec + 0x64);
-        f32 ry = *(f32*)(rec + 0x68);
-        f32 rz = *(f32*)(rec + 0x6C);
-        f32 mx = *(f32*)(rec + 0x70);
-        f32 my = *(f32*)(rec + 0x74);
-        f32 mz = *(f32*)(rec + 0x78);
-        Vec magIn;
-        magIn.x = rx;
-        magIn.y = ry;
-        magIn.z = rz;
-        f32 mag = PSVECMag(&magIn);
-        f32 dx = camX - *(f32*)(rec + 0x10);
-        f32 dy = camY - *(f32*)(rec + 0x20);
-        f32 dz = camZ - *(f32*)(rec + 0x30);
+        f32 dx = CAMX - *(f32*)(rec + 0x10);
+        f32 dy = CAMY - *(f32*)(rec + 0x20);
+        f32 dz = CAMZ - *(f32*)(rec + 0x30);
         f32 dist2 = dx * dx + dy * dy + dz * dz;
+        Vec magIn;
+        magIn.x = *(f32*)(rec + 0x64);
+        magIn.y = *(f32*)(rec + 0x68);
+        magIn.z = *(f32*)(rec + 0x6C);
+        f32 mag = PSVECMag(&magIn);
         f32 thresh = lbl_eu_80663AD4 + mag;
         thresh = thresh * thresh;
         if (dist2 > thresh) {
@@ -461,7 +457,8 @@ void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
             SceneTriElem* tri = (SceneTriElem*)(geomTris + j * 0x14);
             for (int k = 0; k < 3; k++) {
                 SceneVertex* v = &vertBase[(k == 0) ? tri->indexA : ((k == 1) ? tri->indexB : tri->indexC)];
-                GXPosition3f32(v->x, v->y, v->z);
+                f32* vf = &v->x;
+                GXPosition3f32(vf[0], vf[1], vf[2]);
                 u32 flags = flagTable[tri->flags];
                 if (flags & 0x4000) {
                     GXColor3u8(0xFF, 0, 0);
@@ -471,7 +468,7 @@ void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
                     GXColor3u8(0, 0, 0xFF);
                 } else if (colorData != NULL) {
                     f32* colors = (f32*)(colorData + tri->colorIdx * 0xC);
-                    GXColor3u8((u8)(colors[0] * scale255), (u8)(colors[1] * scale255), (u8)(colors[2] * scale255));
+                    GXColor3u8((u8)(colors[0] * lbl_eu_8066AF18), (u8)(colors[1] * lbl_eu_8066AF18), (u8)(colors[2] * lbl_eu_8066AF18));
                 }
             }
         }
@@ -497,16 +494,15 @@ void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
                 continue;
             }
 
-            f32 px = *(f32*)(rec + 0x14);
-            f32 py = *(f32*)(rec + 0x24);
-            f32 pz = *(f32*)(rec + 0x34);
+            f32 dx = CAMX - *(f32*)(rec + 0x14);
+            f32 dy = CAMY - *(f32*)(rec + 0x24);
+            f32 dz = CAMZ - *(f32*)(rec + 0x34);
+            f32 dist2 = dx * dx + dy * dy + dz * dz;
             Vec magIn;
             magIn.x = *(f32*)(rec + 0xC8);
             magIn.y = *(f32*)(rec + 0xD0);
             magIn.z = *(f32*)(rec + 0xDC);
             f32 mag = PSVECMag(&magIn);
-            f32 dx = camX - px, dy = camY - py, dz = camZ - pz;
-            f32 dist2 = dx * dx + dy * dy + dz * dz;
             f32 thresh = lbl_eu_80663AD4 + mag;
             thresh = thresh * thresh;
             if (dist2 > thresh) {
@@ -538,7 +534,7 @@ void func_804BCC78(Mtx modelMtx, u8* viewData, u8* renderParams) {
                     GXPosition3f32(v->x, v->y, v->z);
                     if (colorData != NULL) {
                         f32* colors = (f32*)(colorData + tri->colorIdx * 0xC);
-                        GXColor3u8((u8)(colors[0] * scale255), (u8)(colors[1] * scale255), (u8)(colors[2] * scale255));
+                        GXColor3u8((u8)(colors[0] * lbl_eu_8066AF18), (u8)(colors[1] * lbl_eu_8066AF18), (u8)(colors[2] * lbl_eu_8066AF18));
                     }
                 }
             }

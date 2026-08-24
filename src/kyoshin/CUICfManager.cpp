@@ -113,8 +113,8 @@ void __dt__12CUICfManagerFv(void*); void func_80135FD4__12CUICfManagerFv(void* s
 }
 
 void CUICfManager::Init() {
-    CUICfManager* self = this;
     CUICfInitProcess* process;
+    CUICfManager* self = this;
     char* vtFinal;
     u32 ptmfWord1;
     u32 ptmfWord0;
@@ -130,32 +130,31 @@ void CUICfManager::Init() {
     u32 clearCount;
     u8 i;
 
-    mFileHandle = CDeviceFile::readFile(unk118, lbl_eu_806621A8, self->cfWorkEvent(), 0, 0);
-    CDeviceFile::func_8044F154(self->mFileHandle, 3);
+    mFileHandle = CDeviceFile::readFile(unk118, lbl_eu_806621A8, cfWorkEvent(), 0, 0);
+    CDeviceFile::func_8044F154(mFileHandle, 3);
 
     process = static_cast<CUICfInitProcess*>(
         mtl::MemManager::allocate(0x54, CWorkThreadSystem::getWorkMem()));
     if (process != NULL) {
         __ct__8CProcessFv(reinterpret_cast<CProcess*>(process));
-        // One address materialization, reused for both PTMF triples (retail shape).
-        u32* nulls = __ptmf_null;
+        // Single address materialization reused for both PTMF triples.
         process->vtable = lbl_eu_8052E404;
-        ptmfWord1 = nulls[1];
+        ptmfWord1 = __ptmf_null[1];
         vtFinal = lbl_eu_8052E3BC;
-        ptmfWord0 = nulls[0];
+        ptmfWord0 = __ptmf_null[0];
         process->callbacks[0] = ptmfWord0;
         process->callbacks[1] = ptmfWord1;
-        ptmfWord2 = nulls[2];
+        ptmfWord2 = __ptmf_null[2];
         process->callbacks[2] = ptmfWord2;
-        ptmfWord1 = nulls[1];
-        ptmfWord0 = nulls[0];
+        ptmfWord1 = __ptmf_null[1];
+        ptmfWord0 = __ptmf_null[0];
         process->callbacks[3] = ptmfWord0;
         process->callbacks[4] = ptmfWord1;
         ptmfWord2 = __ptmf_null[2];
         process->callbacks[5] = ptmfWord2;
         process->vtable = vtFinal;
     }
-    self->unk144 = reinterpret_cast<CUICfUnk144*>(process);
+    unk144 = reinterpret_cast<CUICfUnk144*>(process);
     reinterpret_cast<CProcess*>(process)->Regist(lbl_eu_80664054, false);
 
     // Retail: r27=&tail end, r26/r25/r24 = blocks, r22 = 0x34 stride.
@@ -165,7 +164,7 @@ void CUICfManager::Init() {
     initBlock3Ptr = &tmpl.blocks[2];
     blockStride = sizeof(CUICfInitBlock);
     for (i = 0; i < 8; ++i) {
-        CUICfInitSlot& slot = self->mInitSlots[i];
+        CUICfInitSlot& slot = mInitSlots[i];
         u16* tailHalves;
         u8* tailBytes;
 
@@ -270,12 +269,14 @@ u32 func_802514D4(CUICfUnk144*, u32);
 // conflicting flat decls into this TU.
 u32 func_8029EDE4(u32, u32);
 u32 func_8018B324(u32, u32);
+u32 func_8018C104(u32, u32, u32);
 void* __ct__CMenuPTState(u32, u32);
-u32 func_8021240C(u32, u32);
+u32 func_8021240C(CUICfUnk144*, u32);
 void* __ct__CMenuArtsSet(u32, u32);
 // Factories for the remaining queue helpers (func_80134460 family); same
 // caller-shape as the defining TUs' flat decls.
 u32 __ct__CMenuMapSelect(CUICfUnk144*, u32);
+u32 func_8025728C(CUICfUnk144*, u32, u32);
 u32 func_80252C60(CUICfUnk144*, u32);
 u32 func_802638D0(CUICfUnk144*, u32);
 u32 func_80270308(CUICfUnk144*, u32);
@@ -463,11 +464,13 @@ range_312c_31f3: {
         goto end;
     }
 
-    // Retail: addi r3,id,-0x312c / li r0,0xc8 / clrlwi. / clrlwi into codePersist (r30).
+    // Retail: subi r3,id,-0x312c / li r0,0xc8 / clrlwi. r3 / clrlwi r0 -> home r30.
     // Soft-cap: MWCC colors diff/code as r0/r3 (and codePersist r27) vs retail r3/r0 (r30).
+    // Decl-position experiments: mid-block decl shifts codePersist to r25; u16/u32
+    // types break the clrlwi 24 call-site masks. r30 stays unreachable so far.
     {
         u32 diff = id - 0x312c;
-        u32 code = 0xc8;
+        u32 code = 200;
         if ((u8)diff != 0) {
             code = (u8)diff;
         }
@@ -637,6 +640,7 @@ void* func_801109D8(void*, u32, void*); // create menu; r5=0 or enum object*
 void* func_8011E4C4(void*, u32);
 void* __ct__CMenuBattleMode(void*, u32);
 void* __ct__CMenuLvUp(void*, u32);
+void* __ct__CMenuGameClear(void*, u32); // game-clear screen factory (CMenuGameClear.cpp)
 
 // Opaque 8-byte holder around a CfObjEnumList* (func_80043D90 / __dt__80043E88).
 struct CUICfEnumListHolder {
@@ -696,6 +700,7 @@ void CUICfManager::Move() {
     _reslist_node<CUICfMenuItem*>* prev;
     _reslist_node<CUICfMenuItem*>* next;
     CUICfMenuItem* item;
+    int enumIdx;
     int pendingCount;
     int needWait;
     int limit;
@@ -1020,11 +1025,11 @@ after_flags:
     posB[1] = *reinterpret_cast<f32*>((u8*)pose + 0x13c);
     posB[2] = *reinterpret_cast<f32*>((u8*)pose + 0x140);
 
-    i = 0;
+    enumIdx = 0;
     goto enum_check;
 enum_body:
     list = func_80043F18(&holder);
-    slot = func_800F6EC0(list, i);
+    slot = func_800F6EC0(list, enumIdx);
     partyHandle = *(void**)((u8*)slot + 4);
     if (partyHandle == NULL) {
         goto enum_next;
@@ -1039,7 +1044,7 @@ enum_body:
         goto enum_next;
     }
     list = func_80043F18(&holder);
-    slot = func_800F6EC0(list, i);
+    slot = func_800F6EC0(list, enumIdx);
     partyHandle = *(void**)((u8*)slot + 4);
     {
         void** vt = *reinterpret_cast<void***>(partyHandle);
@@ -1052,13 +1057,13 @@ enum_body:
         goto enum_next;
     }
     list = func_80043F18(&holder);
-    createdArg = func_800F6E98(list, i);
+    createdArg = func_800F6E98(list, enumIdx);
     func_801109D8(unk144, unk11C, createdArg);
 enum_next:
-    i++;
+    enumIdx++;
 enum_check:
     list = func_80043F18(&holder);
-    if ((u32)i < *(u32*)((u8*)list + 0x620)) {
+    if ((u32)enumIdx < *(u32*)((u8*)list + 0x620)) {
         goto enum_body;
     }
     __dt__80043E88(&holder, -1);
@@ -1486,13 +1491,17 @@ extern "C" int func_80130244(u8* base) {
         flag = 1;
     } else if (func_80122450() != 0) {
         flag = 1;
-    } else if (func_80124B78() != 0) {
+    } else {
+        // Branchless booleanize of the last gate (neg/or/srwi in retail).
+        u32 v = func_80124B78();
+        flag = (-v | v) >> 31;
+    }
+    if (flag != 0) {
         flag = 1;
     } else {
-        flag = 0;
-    }
-    if (flag == 0) {
-        for (int i = 0; i < 8; i++) {
+        // u8 counter: MWCC fully unrolls this scan keeping li/mulli/lbzx
+        // per site (an int counter folds to direct-offset lbz instead).
+        for (u8 i = 0; i < 8; i++) {
             if (base[i * 0x168] != 7) {
                 flag = 1;
                 break;
@@ -1500,23 +1509,23 @@ extern "C" int func_80130244(u8* base) {
             flag = 0;
         }
     }
-    if (flag == 0) {
-        return 0;
-    }
-    // Clear the first free (state 7) slot; MWCC keeps this countable loop in
-    // mtctr/bdnz form.
-    int changed = 0;
-    for (int j = 0; j < 8; j++) {
-        if (base[j * 0x168] == 7) {
-            base[j * 0x168] = 0;
-            changed = 1;
-            break;
+    if (flag != 0) {
+        // Clear the first free (state 7) slot; u8 counter keeps this
+        // countable loop in mtctr/bdnz form with the mulli index inside.
+        int changed = 0;
+        for (u8 j = 0; j < 8; j++) {
+            if (base[j * 0x168] == 7) {
+                base[j * 0x168] = 0;
+                changed = 1;
+                break;
+            }
         }
+        if (changed != 0 && base[0xb40] == 0) {
+            func_801311B8(base);
+        }
+        return 1;
     }
-    if (changed != 0 && base[0xb40] == 0) {
-        func_801311B8(base);
-    }
-    return 1;
+    return 0;
 }
 // func_8013042C (us-80130f00): slot claim. Same busy-gate + all-free scan
 // skeleton as func_80130960; the claim body sets flag 1 and the index byte
@@ -1642,9 +1651,8 @@ int func_80130720(u8* base, CUICfSrcCopyView* src) {
 int func_80130960(u8* base, u16 a1, u16 a2, u16 a3, u16 a4, u16 a5) {
     // Gate chain: if/else-if form materializes the flag per branch (retail
     // emits li r0,1; b common per gate); a plain || chain would branch to a
-    // shared flag-set instead (12B-spaced gates vs retail's 20B). The gate
-    // result and the slot-scan busy flag are separate webs (retail colors the
-    // gate value r0; one merged flag web would color both r3).
+    // shared flag-set instead (12B-spaced gates vs retail's 20B).
+    int flag;
     int gateBusy;
     if (func_80293C10() != 0) {
         gateBusy = 1;
@@ -1655,16 +1663,18 @@ int func_80130960(u8* base, u16 a1, u16 a2, u16 a3, u16 a4, u16 a5) {
     } else if (func_80122450() != 0) {
         gateBusy = 1;
     } else {
-        gateBusy = func_80124B78() != 0;
+        // Branchless booleanize of the last gate (retail: neg/or/srwi).
+        u32 v = func_80124B78();
+        gateBusy = (-v | v) >> 31;
     }
-    int flag;
     if (gateBusy != 0) {
         flag = 1;
     } else {
-        // u8 counter: MWCC fully unrolls the 8-iteration scan keeping the
-        // li/mulli index shape (retail); int would keep a tight loop instead.
+        // u8 counter: MWCC fully unrolls the 8-entry scan keeping the
+        // li/mulli/lbzx shape (retail); int would fold to lbz displacements.
+        // u32 cast: retail compares the flag with unsigned cmplwi.
         for (u8 i = 0; i < 8; i++) {
-            if (base[i * 0x168] != 7) {
+            if ((u32)base[i * 0x168] != 7) {
                 flag = 1;
                 break;
             }
@@ -1676,7 +1686,7 @@ int func_80130960(u8* base, u16 a1, u16 a2, u16 a3, u16 a4, u16 a5) {
         u8 j;
         int changed = 0;
         for (j = 0; j < 8; j++) {
-            if (base[j * 0x168] == 7) {
+            if ((u32)base[j * 0x168] == 7) {
                 CUICfSlotIdWriteView* slot =
                     reinterpret_cast<CUICfSlotIdWriteView*>(base + j * 0x168);
                 slot->field_0x00 = 2;
@@ -1799,22 +1809,21 @@ int func_80130D80(u8* base, u16 arg1) {
 // func_80130D80; both sprintf calls share the pool-base format address (kept
 // in a saved register across the calls).
 int func_80130F98(u8* base, u16 a1, u16 a2) {
-    int gateBusy;
-    if (func_80293C10() != 0) {
-        gateBusy = 1;
-    } else if (func_8029A658() != 0) {
-        gateBusy = 1;
-    } else if (func_801B481C() != 0) {
-        gateBusy = 1;
-    } else if (func_80122450() != 0) {
-        gateBusy = 1;
-    } else {
-        gateBusy = func_80124B78() != 0;
-    }
+    // Busy gates as a nested if/else chain: each site shares one merge block
+    // (retail keeps the result in r0).
     int flag;
-    if (gateBusy != 0) {
+    if (func_80293C10() != 0) {
+        flag = 1;
+    } else if (func_8029A658() != 0) {
+        flag = 1;
+    } else if (func_801B481C() != 0) {
+        flag = 1;
+    } else if (func_80122450() != 0) {
         flag = 1;
     } else {
+        flag = func_80124B78() != 0;
+    }
+    if (flag == 0) {
         for (u8 i = 0; i < 8; i++) {
             if (base[i * 0x168] != 7) {
                 flag = 1;
@@ -1825,8 +1834,8 @@ int func_80130F98(u8* base, u16 a1, u16 a2) {
     if (flag == 0) {
         return 0;
     }
-    int changed = 0;
     u8 j;
+    int changed = 0;
     for (j = 0; j < 8; j++) {
         if (base[j * 0x168] == 7) {
             CUICfSlotStrView* slot =
@@ -1853,9 +1862,7 @@ int func_80130F98(u8* base, u16 a1, u16 a2) {
 // no swap; the pass length shrinks by one each time (retail subfic limit).
 // ---------------------------------------------------------------------------
 extern "C" void func_801311B8(u8* base) {
-    CUICfSwapSlot bufA;
-    CUICfSwapSlot bufB;
-    CUICfSwapSlot tpl;
+    CUICfSwapSlot slots[3]; // [0]=writeback A, [1]=buffer B, [2]=template
     u8 start = 0;
     u8 didSwap;
     u8 i;
@@ -1869,11 +1876,11 @@ extern "C" void func_801311B8(u8* base) {
                 didSwap = 1;
 
                 // SWAP A: template <- slot i (3 blocks + tail, sprintf the ids).
-                tpl.block1.unk04 = 0;
-                tpl.block1.unk00 = 0;
+                slots[2].block1.unk04 = 0;
+                slots[2].block1.unk00 = 0;
                 {
-                    CUICfInitBlock* clear = &tpl.block2;
-                    CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&tpl.wordD4);
+                    CUICfInitBlock* clear = &slots[2].block2;
+                    CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&slots[2].wordD4);
                     if (clear < clearEnd) {
                         u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
                         do {
@@ -1883,30 +1890,30 @@ extern "C" void func_801311B8(u8* base) {
                         } while (--n != 0);
                     }
                 }
-                tpl.wordD4 = 0;
-                tpl.field_0 = slotI->field_0;
-                tpl.field_1 = slotI->field_1;
-                func_8015704C(&tpl.block1, &slotI->block1);
-                func_8015704C(&tpl.block2, &slotI->block2);
-                func_8015704C(&tpl.block3, &slotI->block3);
-                func_8015704C(&tpl.block4, &slotI->block4);
-                tpl.wordD4 = slotI->wordD4;
-                tpl.ids[0] = slotI->ids[0];
-                tpl.ids[1] = slotI->ids[1];
-                tpl.ids[2] = slotI->ids[2];
-                tpl.ids[3] = slotI->ids[3];
-                tpl.ids[4] = slotI->ids[4];
-                tpl.ids[5] = slotI->ids[5];
-                tpl.byteE4 = slotI->byteE4;
-                sprintf(tpl.strE6.b, lbl_eu_806621EC, slotI->strE6.b);
-                sprintf(tpl.str126.b, lbl_eu_806621E8, slotI->str126.b);
+                slots[2].wordD4 = 0;
+                slots[2].field_0 = slotI->field_0;
+                slots[2].field_1 = slotI->field_1;
+                func_8015704C(&slots[2].block1, &slotI->block1);
+                func_8015704C(&slots[2].block2, &slotI->block2);
+                func_8015704C(&slots[2].block3, &slotI->block3);
+                func_8015704C(&slots[2].block4, &slotI->block4);
+                slots[2].wordD4 = slotI->wordD4;
+                slots[2].ids[0] = slotI->ids[0];
+                slots[2].ids[1] = slotI->ids[1];
+                slots[2].ids[2] = slotI->ids[2];
+                slots[2].ids[3] = slotI->ids[3];
+                slots[2].ids[4] = slotI->ids[4];
+                slots[2].ids[5] = slotI->ids[5];
+                slots[2].byteE4 = slotI->byteE4;
+                sprintf(slots[2].strE6.b, lbl_eu_806621EC, slotI->strE6.b);
+                sprintf(slots[2].str126.b, lbl_eu_806621E8, slotI->str126.b);
 
                 // SWAP B: buffer B <- slot j (full copy, sprintf the ids).
-                bufB.block1.unk04 = 0;
-                bufB.block1.unk00 = 0;
+                slots[1].block1.unk04 = 0;
+                slots[1].block1.unk00 = 0;
                 {
-                    CUICfInitBlock* clear = &bufB.block2;
-                    CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&bufB.wordD4);
+                    CUICfInitBlock* clear = &slots[1].block2;
+                    CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&slots[1].wordD4);
                     if (clear < clearEnd) {
                         u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
                         do {
@@ -1916,48 +1923,48 @@ extern "C" void func_801311B8(u8* base) {
                         } while (--n != 0);
                     }
                 }
-                bufB.wordD4 = 0;
-                bufB.field_0 = slotJ->field_0;
-                bufB.field_1 = slotJ->field_1;
-                func_8015704C(&bufB.block1, &slotJ->block1);
-                func_8015704C(&bufB.block2, &slotJ->block2);
-                func_8015704C(&bufB.block3, &slotJ->block3);
-                func_8015704C(&bufB.block4, &slotJ->block4);
-                bufB.wordD4 = slotJ->wordD4;
-                bufB.ids[0] = slotJ->ids[0];
-                bufB.ids[1] = slotJ->ids[1];
-                bufB.ids[2] = slotJ->ids[2];
-                bufB.ids[3] = slotJ->ids[3];
-                bufB.ids[4] = slotJ->ids[4];
-                bufB.ids[5] = slotJ->ids[5];
-                bufB.byteE4 = slotJ->byteE4;
-                sprintf(bufB.strE6.b, lbl_eu_806621EC, slotJ->strE6.b);
-                sprintf(bufB.str126.b, lbl_eu_806621E8, slotJ->str126.b);
+                slots[1].wordD4 = 0;
+                slots[1].field_0 = slotJ->field_0;
+                slots[1].field_1 = slotJ->field_1;
+                func_8015704C(&slots[1].block1, &slotJ->block1);
+                func_8015704C(&slots[1].block2, &slotJ->block2);
+                func_8015704C(&slots[1].block3, &slotJ->block3);
+                func_8015704C(&slots[1].block4, &slotJ->block4);
+                slots[1].wordD4 = slotJ->wordD4;
+                slots[1].ids[0] = slotJ->ids[0];
+                slots[1].ids[1] = slotJ->ids[1];
+                slots[1].ids[2] = slotJ->ids[2];
+                slots[1].ids[3] = slotJ->ids[3];
+                slots[1].ids[4] = slotJ->ids[4];
+                slots[1].ids[5] = slotJ->ids[5];
+                slots[1].byteE4 = slotJ->byteE4;
+                sprintf(slots[1].strE6.b, lbl_eu_806621EC, slotJ->strE6.b);
+                sprintf(slots[1].str126.b, lbl_eu_806621E8, slotJ->str126.b);
 
                 // write-back A: slot i <- buffer B (raw copy, no sprintf).
-                slotI->field_0 = bufB.field_0;
-                slotI->field_1 = bufB.field_1;
-                func_8015704C(&slotI->block1, &bufB.block1);
-                func_8015704C(&slotI->block2, &bufB.block2);
-                func_8015704C(&slotI->block3, &bufB.block3);
-                func_8015704C(&slotI->block4, &bufB.block4);
-                slotI->wordD4 = bufB.wordD4;
-                slotI->ids[0] = bufB.ids[0];
-                slotI->ids[1] = bufB.ids[1];
-                slotI->ids[2] = bufB.ids[2];
-                slotI->ids[3] = bufB.ids[3];
-                slotI->ids[4] = bufB.ids[4];
-                slotI->ids[5] = bufB.ids[5];
-                slotI->byteE4 = bufB.byteE4;
-                slotI->strE6 = bufB.strE6;
-                slotI->str126 = bufB.str126;
+                slotI->field_0 = slots[1].field_0;
+                slotI->field_1 = slots[1].field_1;
+                func_8015704C(&slotI->block1, &slots[1].block1);
+                func_8015704C(&slotI->block2, &slots[1].block2);
+                func_8015704C(&slotI->block3, &slots[1].block3);
+                func_8015704C(&slotI->block4, &slots[1].block4);
+                slotI->wordD4 = slots[1].wordD4;
+                slotI->ids[0] = slots[1].ids[0];
+                slotI->ids[1] = slots[1].ids[1];
+                slotI->ids[2] = slots[1].ids[2];
+                slotI->ids[3] = slots[1].ids[3];
+                slotI->ids[4] = slots[1].ids[4];
+                slotI->ids[5] = slots[1].ids[5];
+                slotI->byteE4 = slots[1].byteE4;
+                slotI->strE6 = slots[1].strE6;
+                slotI->str126 = slots[1].str126;
 
                 // SWAP C: buffer A <- template (block copies, sprintf the ids).
-                bufA.block1.unk04 = 0;
-                bufA.block1.unk00 = 0;
+                slots[0].block1.unk04 = 0;
+                slots[0].block1.unk00 = 0;
                 {
-                    CUICfInitBlock* clear = &bufA.block2;
-                    CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&bufA.wordD4);
+                    CUICfInitBlock* clear = &slots[0].block2;
+                    CUICfInitBlock* clearEnd = reinterpret_cast<CUICfInitBlock*>(&slots[0].wordD4);
                     if (clear < clearEnd) {
                         u32 n = ((u8*)clearEnd - (u8*)clear + 0x33) / 0x34;
                         do {
@@ -1967,41 +1974,41 @@ extern "C" void func_801311B8(u8* base) {
                         } while (--n != 0);
                     }
                 }
-                bufA.wordD4 = 0;
-                bufA.field_0 = tpl.field_0;
-                bufA.field_1 = tpl.field_1;
-                func_8015704C(&bufA.block1, &tpl.block1);
-                func_8015704C(&bufA.block2, &tpl.block2);
-                func_8015704C(&bufA.block3, &tpl.block3);
-                func_8015704C(&bufA.block4, &tpl.block4);
-                bufA.wordD4 = tpl.wordD4;
-                bufA.ids[0] = tpl.ids[0];
-                bufA.ids[1] = tpl.ids[1];
-                bufA.ids[2] = tpl.ids[2];
-                bufA.ids[3] = tpl.ids[3];
-                bufA.ids[4] = tpl.ids[4];
-                bufA.ids[5] = tpl.ids[5];
-                bufA.byteE4 = tpl.byteE4;
-                sprintf(bufA.strE6.b, lbl_eu_806621EC, tpl.strE6.b);
-                sprintf(bufA.str126.b, lbl_eu_806621E8, tpl.str126.b);
+                slots[0].wordD4 = 0;
+                slots[0].field_0 = slots[2].field_0;
+                slots[0].field_1 = slots[2].field_1;
+                func_8015704C(&slots[0].block1, &slots[2].block1);
+                func_8015704C(&slots[0].block2, &slots[2].block2);
+                func_8015704C(&slots[0].block3, &slots[2].block3);
+                func_8015704C(&slots[0].block4, &slots[2].block4);
+                slots[0].wordD4 = slots[2].wordD4;
+                slots[0].ids[0] = slots[2].ids[0];
+                slots[0].ids[1] = slots[2].ids[1];
+                slots[0].ids[2] = slots[2].ids[2];
+                slots[0].ids[3] = slots[2].ids[3];
+                slots[0].ids[4] = slots[2].ids[4];
+                slots[0].ids[5] = slots[2].ids[5];
+                slots[0].byteE4 = slots[2].byteE4;
+                sprintf(slots[0].strE6.b, lbl_eu_806621EC, slots[2].strE6.b);
+                sprintf(slots[0].str126.b, lbl_eu_806621E8, slots[2].str126.b);
 
                 // write-back C: slot j <- buffer A (raw copy, no sprintf).
-                slotJ->field_0 = bufA.field_0;
-                slotJ->field_1 = bufA.field_1;
-                func_8015704C(&slotJ->block1, &bufA.block1);
-                func_8015704C(&slotJ->block2, &bufA.block2);
-                func_8015704C(&slotJ->block3, &bufA.block3);
-                func_8015704C(&slotJ->block4, &bufA.block4);
-                slotJ->wordD4 = bufA.wordD4;
-                slotJ->ids[0] = bufA.ids[0];
-                slotJ->ids[1] = bufA.ids[1];
-                slotJ->ids[2] = bufA.ids[2];
-                slotJ->ids[3] = bufA.ids[3];
-                slotJ->ids[4] = bufA.ids[4];
-                slotJ->ids[5] = bufA.ids[5];
-                slotJ->byteE4 = bufA.byteE4;
-                slotJ->strE6 = bufA.strE6;
-                slotJ->str126 = bufA.str126;
+                slotJ->field_0 = slots[0].field_0;
+                slotJ->field_1 = slots[0].field_1;
+                func_8015704C(&slotJ->block1, &slots[0].block1);
+                func_8015704C(&slotJ->block2, &slots[0].block2);
+                func_8015704C(&slotJ->block3, &slots[0].block3);
+                func_8015704C(&slotJ->block4, &slots[0].block4);
+                slotJ->wordD4 = slots[0].wordD4;
+                slotJ->ids[0] = slots[0].ids[0];
+                slotJ->ids[1] = slots[0].ids[1];
+                slotJ->ids[2] = slots[0].ids[2];
+                slotJ->ids[3] = slots[0].ids[3];
+                slotJ->ids[4] = slots[0].ids[4];
+                slotJ->ids[5] = slots[0].ids[5];
+                slotJ->byteE4 = slots[0].byteE4;
+                slotJ->strE6 = slots[0].strE6;
+                slotJ->str126 = slots[0].str126;
             }
         }
         if (didSwap == 0) {
@@ -2783,8 +2790,64 @@ queue_found:                                                                   \
     startNode->mPrev = temp;                                                   \
     return savedRet;
 
-// us-80134774: create + queue the CMenuSkipTimer-style menu.
-u32 func_80133CA0() { CF_QUEUE_MENU(func_8029EDE4) }
+// us-80134774: create + queue the CMenuSkipTimer-style menu. Same create+queue
+// body as func_80133770 above; only the factory differs (no gates in retail).
+// Flat-prototype decl makes the definition below emit the retail symbol.
+extern "C" u32 func_80133CA0();
+u32 func_80133CA0() {
+    CUICfQueueMgrView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    _reslist_node<void*>* startNode;
+
+    inst = (CUICfQueueMgrView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = (u32)func_8029EDE4(inst->field_144, inst->field_11C);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfQueueMgrView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = (_reslist_node<void*>*)inst->field_128;
+    capacity = inst->field_13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        _reslist_node<void*>* temp =
+            (_reslist_node<void*>*)((u8*)inst->field_138 + i * 0xc);
+        void** ptr = &temp->mItem;
+        if (ptr != 0) {
+            try {
+                *ptr = (void*)savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->mNext = startNode;
+        temp->mPrev = startNode->mPrev;
+        startNode->mPrev->mNext = temp;
+        startNode->mPrev = temp;
+    }
+    return savedRet;
+}
 // us-8013492c: create the pause-style menu via CMenuPause's factory and queue
 // it. The 3rd factory arg is the u8-narrowed first param, the 2nd is the
 // caller's scene id or the manager's own unk11C when 0.
@@ -2843,13 +2906,241 @@ slot_found:
     return savedRet;
 }
 void func_80133F48(){}
-void func_80134024(){}
+// us-80134024: create + queue the CMenuShopBuy-style menu. Takes one param
+// passed straight through as the factory's 3rd arg (kept live in r5 across
+// the singleton loads). Same shape as func_80134100 otherwise.
+u32 func_80134024(u32 param) {
+    CUICfQueueMgrView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfQueueMgrView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = func_8018C104(inst->field_144, inst->field_11C, param);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    // Reload after the factory call so MWCC re-reads the singleton.
+    inst = (CUICfQueueMgrView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = (CUICfListNode*)inst->field_128;
+    capacity = inst->field_13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        // Expand setItem: null-check &item, store with the try/catch frame home.
+        CUICfListNode* temp = (CUICfListNode*)((u8*)inst->field_138 + i * 0xc);
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = (u32)savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
 // us-80134bd4: create + queue the CMenuShopSell-style menu.
-u32 func_80134100() { CF_QUEUE_MENU(func_8018B324) }
-// us-80134cac: create + queue the CMenuPTState-style menu.
-u32 func_801341D8() { CF_QUEUE_MENU(__ct__CMenuPTState) }
-// us-80134d84: create + queue the CMenuMakeCrystal-style menu.
-u32 func_801342B0() { CF_QUEUE_MENU(func_8021240C) }
+// Null-check the singleton, run the CMenuShopSell factory on (unk144, unk11C),
+// bail on 0, then reslist push_back onto the free-slot list (first slot whose
+// +0 word is clear, 0xC stride). Goto loop keeps MWCC's register split;
+// capacity-before-startNode decls color capacity=r7 / startNode=r8; the
+// expanded setItem try/catch emits the fp idiom and the 0x24(sp) frame home.
+u32 func_80134100() {
+    CUICfQueueMgrView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfQueueMgrView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = func_8018B324(inst->field_144, inst->field_11C);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    // Reload after the factory call so MWCC re-reads the singleton (retail
+    // emits a second sda21 reloc here).
+    inst = (CUICfQueueMgrView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = (CUICfListNode*)inst->field_128;
+    capacity = inst->field_13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        // Expand setItem: null-check &item, store with the try/catch frame home.
+        CUICfListNode* temp = (CUICfListNode*)((u8*)inst->field_138 + i * 0xc);
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = (u32)savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
+// us-80134cac: create + queue the CMenuPTState-style menu. Same create+queue
+// body as func_80134100 above; only the factory (__ct__CMenuPTState) differs.
+u32 func_801341D8() {
+    CUICfQueueMgrView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfQueueMgrView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = (u32)__ct__CMenuPTState(inst->field_144, inst->field_11C);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    // Reload after the factory call so MWCC re-reads the singleton (retail
+    // emits a second sda21 reloc here).
+    inst = (CUICfQueueMgrView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = (CUICfListNode*)inst->field_128;
+    capacity = inst->field_13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        // Expand setItem: null-check &item, store with the try/catch frame home.
+        CUICfListNode* temp = (CUICfListNode*)((u8*)inst->field_138 + i * 0xc);
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = (u32)savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
+// us-80134d84: create + queue the CMenuMakeCrystal-style menu. Explicit body
+// (same shape as func_80134460 below); only the factory call differs.
+u32 func_801342B0() {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+    CUICfListNode* temp;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = func_8021240C(inst->field_0x144, inst->field_0x11C);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = (CUICfListNode*)inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        // Expand setItem so temp lands in r4 before the savedRet reload.
+        CUICfListNode* temp2 = (CUICfListNode*)((u8*)inst->field_0x138 + i * 0xc);
+        u32* ptr = &temp2->item;
+        if (ptr != 0) {
+            try {
+                *ptr = (u32)savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp2->next = startNode;
+        temp2->prev = startNode->prev;
+        startNode->prev->next = temp2;
+        startNode->prev = temp2;
+    }
+    return savedRet;
+}
 // us-80134e5c: create + queue the CMenuArtsSet-style menu.
 u32 func_80134388() { CF_QUEUE_MENU(__ct__CMenuArtsSet) }
 // us-80134f34: create + queue the CMenuMapSelect-style menu.
@@ -3085,7 +3376,63 @@ slot_found:                                                                    \
     }                                                                          \
     return savedRet;
 u32 func_80134714() { CF_QUEUE_EXPLICIT(func_80252C60) }
-void func_801347EC(){}
+// us-801352c0: create + queue the CMenuKizunagram-style menu. Same body as
+// func_80134460 above; only the factory differs (this helper's own argument
+// becomes the factory's third parameter, materialized in the prologue).
+u32 func_801347EC(u32 arg) {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = func_8025728C(inst->field_0x144, inst->field_0x11C, arg);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = (CUICfListNode*)inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        // Expand setItem so temp lands in r4 before the savedRet reload.
+        CUICfListNode* temp2 = (CUICfListNode*)((u8*)inst->field_0x138 + i * 0xc);
+        u32* ptr = &temp2->item;
+        if (ptr != 0) {
+            try {
+                *ptr = (u32)savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp2->next = startNode;
+        temp2->prev = startNode->prev;
+        startNode->prev->next = temp2;
+        startNode->prev = temp2;
+    }
+    return savedRet;
+}
 // us-8013539c: create + queue the CMenuPassiveSkill-style menu.
 u32 func_801348C8() { CF_QUEUE_EXPLICIT(func_802638D0) }
 // us-80135474: create + queue the CMenuPlayAward-style menu.
@@ -3274,7 +3621,63 @@ slot_found:
     }
     return savedRet;
 }
-void func_8013500C(){}
+// func_8013500C: create the game-clear menu and queue it. Same skeleton as
+// the func_80133A08 family but with no script argument; the factory is the
+// CMenuGameClear singleton ctor.
+u32 func_8013500C() {
+    CUICfManagerCreateView* inst;
+    volatile u32 savedRet;
+    int i;
+    int byteOff;
+    int capacity;
+    CUICfListNode* startNode;
+
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    if (inst == NULL) {
+        return 0;
+    }
+    {
+        u32 tempRet = (u32)__ct__CMenuGameClear(inst->field_0x144, inst->field_0x11C);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return 0;
+        }
+    }
+    inst = (CUICfManagerCreateView*)lbl_eu_80664054;
+    i = 0;
+    byteOff = 0;
+    startNode = inst->field_0x128;
+    capacity = inst->field_0x13C;
+    goto slot_check;
+slot_body:
+    if (*(u32*)((u8*)inst->field_0x138 + byteOff) == 0) {
+        goto slot_found;
+    }
+    byteOff += 0xc;
+    i++;
+slot_check:
+    if (i < capacity) {
+        goto slot_body;
+    }
+slot_found:
+    {
+        CUICfListNode* temp = &inst->field_0x138[i];
+        u32* ptr = &temp->item;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+        temp->next = startNode;
+        temp->prev = startNode->prev;
+        startNode->prev->next = temp;
+        startNode->prev = temp;
+    }
+    return savedRet;
+}
+
 // func_801350E4: create the GC-item menu and queue it (id narrowed to u8).
 u32 func_801350E4(u32 arg) {
     CUICfManagerCreateView* inst;
@@ -3826,4 +4229,35 @@ extern "C" void* __dt___reslist_base_IUICf(CfResListBase* self, s32 flags) {
         }
     }
     return self;
+}
+
+// ---------------------------------------------------------------------------
+// reslist<UICf> deleting destructor (us-80132d10) over the CUICfEventQueue
+// layout: install the base vtable, clear the queue (nodes are pool-allocated,
+// not freed), array-delete the grown node buffer when the owns-flag is clear,
+// then delete-this behind the flags guard.
+// ---------------------------------------------------------------------------
+void* __dt__reslist_IUICf(CUICfEventQueue* q, s32 flags) {
+    // Doubled null check mirrors retail: MWCC keeps the dead second beq.
+    if (q != NULL) {
+        if (q != NULL) {
+            q->vtable = (u8*)lbl_eu_8052E3B0;
+            CUICfListNode* cur = q->head->next;
+            while (cur != q->head) {
+                CUICfListNode* prev = cur;
+                cur = cur->next;
+                prev->next = NULL;
+            }
+            q->head->next = q->head;
+            q->head->prev = q->head;
+            if (q->ownsList == 0 && q->nodes != NULL) {
+                delete[] q->nodes;
+                q->nodes = NULL;
+            }
+        }
+        if (flags > 0) {
+            delete q;
+        }
+    }
+    return q;
 }

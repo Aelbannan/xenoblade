@@ -415,13 +415,16 @@ s32 lbl_eu_80665A28[2];  // retail object is 8 bytes; only word 0 is written
 // Allocate/initialize the schedule-resource table: round the byte size up
 // to 32, record base/count, then zero-initialize each 0x18-byte entry.
 void* func_804DF344(u32 size, u32 count) {
+    u32 off;
+    s32 i;
     u32 aligned = ((size + 0x1f) & ~0x1f);
-    void* end = (u8*)aligned + count * 0x18;
+    u32 total = count * 0x18;
+    void* end = (u8*)aligned + total;
     lbl_eu_80665A24 = count;
     lbl_eu_80665A20 = (CResEntry*)aligned;
     lbl_eu_80665A28[0] = 0;
-    u32 off = 0;
-    for (s32 i = 0; i < (s32)count; i++) {
+    off = 0;
+    for (i = 0; i < (s32)count; i++) {
         func_804DEDA8((u8*)lbl_eu_80665A20 + off);
         off += 0x18;
     }
@@ -446,50 +449,162 @@ extern "C" void func_804DEDA8(void* r3) {
 // "destroyed" result. extern "C" keeps the symbol/reloc name matching
 // retail (__dt__804DEDCC); definition sits below func_804DF3D0 so MWCC's
 // same-TU IPA cannot inline it into the free-slot scan.
-extern "C" DECOMP_DONT_INLINE int __dt__804DEDCC(CResEntry* entry);
+// Resource-chain manager (retail symbol __dt__804DEDCC): allocates the
+// entry's node/index arrays from the resource descriptor's count bytes,
+// walks the chunked resource chain at entry+0x20 building free lists,
+// then conditionally tears down. Returns 0 only on full teardown.
+extern "C" DECOMP_DONT_INLINE int __dt__804DEDCC(CResEntry* entry, void* res,
+                                                  u32 flagBit);
 
 // Find the schedule-resource entry whose key matches `key`; if no live
 // entry matches and the pool still has capacity, claim the first free
 // (key == 0) entry instead. Returns 1 when an entry was claimed/found.
 s32 func_804DF3D0(u32 key) {
-    s32 count = lbl_eu_80665A24;
-    s32 found = 0;
-    for (s32 i = 0; i < count; i++) {
-        if (lbl_eu_80665A20[i].mKey != 0 && lbl_eu_80665A20[i].mKey == key) {
-            found = 1;
-            break;
-        }
+    CResEntry* p = lbl_eu_80665A20;
+    s32 n = lbl_eu_80665A24;
+    u8 found = 0;
+    if (n > 0) {
+        CResEntry* q = p;
+        s32 c = n;
+        do {
+            if (q->mKey != 0 && key == q->mKey) {
+                found = 1;
+                break;
+            }
+            q++;
+        } while (--c);
     }
-    if (found) {
+    if (found != 0) {
         return 1;
     }
-    if (count <= lbl_eu_80665A28[0]) {
+    if (n <= lbl_eu_80665A28[0]) {
         return 0;
     }
-    // Retail keeps a (dead) MEM1-active flag read here; the volatile access
-    // preserves the load.
-    s32 memActive = (*(volatile CSchedMemGlob*)&lbl_eu_8065FC18).mFlags;
-    memActive = (memActive >> 12) & 1;
-    (void)memActive;
-    for (s32 i = 0; i < count; i++) {
-        if (lbl_eu_80665A20[i].mKey == 0) {
-            if (__dt__804DEDCC(&lbl_eu_80665A20[i]) != 0) {
-                lbl_eu_80665A28[0]++;
-                return 1;
+    // bool-normalize the MEM1-active flag via the neg/or/srwi idiom
+    s32 flagBit = (lbl_eu_8065FC18.mFlags >> 12) & 1;
+    flagBit = (u32)(-flagBit | flagBit) >> 31;
+    if (n > 0) {
+        CResEntry* q = p;
+        s32 c = n;
+        do {
+            if (q->mKey == 0) {
+                if (__dt__804DEDCC(q, (void*)key, (u32)flagBit) != 0) {
+                    lbl_eu_80665A28[0]++;
+                    return 1;
+                }
+                return 0;
             }
-            return 0;
-        }
+            q++;
+        } while (--c);
     }
     return 0;
 }
 
+extern "C" void __dla__FPv(void*);
 #pragma push
 #pragma auto_inline off
-extern "C" int __dt__804DEDCC(CResEntry* entry) {
-    // Free the entry's lookup table and mark it reusable.
-    memset(entry->mEntries, 0, 0x18);
-    entry->mKey = 0;
-    return lbl_eu_80665A24 > 0;
+// Working view of the entry header used while walking the chain.
+struct DedccHdr {
+    u8 b0;    // +0x00
+    u8 b1;    // +0x01 (bit7 = flagBit)
+    u8 b2;    // +0x02 node-array count
+    u8 b3;    // +0x03 index-array count
+    u32 w4;   // +0x04 resource ptr
+    void* p8; // +0x08 node array
+    void* pc; // +0x0C index array
+    void* p10; // +0x10
+};
+extern "C" int __dt__804DEDCC(CResEntry* entry, void* res, u32 flagBit) {
+    DedccHdr* e = (DedccHdr*)entry;
+    if (res == NULL) {
+        return 0;
+    }
+    if (*(u8*)((u8*)res + 6) != 0) {
+        u32 max = mtl::MemManager::getMaxAllocSize(
+            *(u32*)((u8*)&lbl_eu_8065FC18 + 4));
+        u32 size = *(u8*)((u8*)res + 6) << 3;
+        void* arr;
+        if (size > max) {
+            arr = NULL;
+        } else {
+            arr = mtl::MemManager::allocate_array(size,
+                                                  *(u32*)((u8*)&lbl_eu_8065FC18 + 4));
+        }
+        e->p8 = arr;
+    }
+    if (*(u8*)((u8*)res + 7) != 0) {
+        u32 max = mtl::MemManager::getMaxAllocSize(
+            *(u32*)((u8*)&lbl_eu_8065FC18 + 4));
+        u32 size = *(u8*)((u8*)res + 7) << 2;
+        void* arr;
+        if (size > max) {
+            arr = NULL;
+        } else {
+            arr = mtl::MemManager::allocate_array(size,
+                                                  *(u32*)((u8*)&lbl_eu_8065FC18 + 4));
+        }
+        e->pc = arr;
+    }
+    u8* chunk = (u8*)e + 0x20;
+    for (;;) {
+        u16 type = *(u16*)(chunk + 4);
+        if (type == 0) {
+            break;
+        }
+        if (type == 3) {
+            if (e->p8 != NULL) {
+                u32 idx = e->b2;
+                *(void**)((u8*)e->p8 + idx * 8) = chunk + 8;
+                *(void**)((u8*)e->p8 + idx * 8 + 4) = chunk + 0x20;
+                e->b2++;
+            }
+            chunk += *(u32*)chunk;
+        } else if (type >= 5) {
+            continue;
+        } else if (type == 1) {
+            e->p10 = chunk + 0x20;
+            chunk += *(u32*)chunk;
+        } else {
+            if (e->pc != NULL) {
+                u32 idx = e->b3;
+                *(void**)((u8*)e->pc + idx * 4) = chunk + 0x20;
+                e->b3++;
+            }
+            u8* next = chunk + *(u32*)chunk;
+            if (*(u16*)(next + 4) == 5) {
+                chunk = next;
+            }
+            chunk += *(u32*)chunk;
+        }
+    }
+    u8 done = (e->b2 != 0);
+    e->w4 = (u32)res;
+    e->b0 = 0;
+    e->b1 |= (u8)((flagBit << 7) & 0x80);
+    if (!done && e->p10 == NULL && e->b3 == 0) {
+        if (e->p8 != NULL) {
+            __dla__FPv(e->p8);
+            e->p8 = NULL;
+        }
+        if (e->pc != NULL) {
+            __dla__FPv(e->pc);
+            e->pc = NULL;
+        }
+        u32 memActive =
+            (*(volatile CSchedMemGlob*)&lbl_eu_8065FC18).mFlags;
+        memActive = (memActive >> 10) & 1;
+        if (memActive != 0) {
+            if (e->w4 != 0) {
+                mtl::MemManager::deallocate((void*)e->w4);
+            }
+        }
+        e->w4 = 0;
+        e->b0 = 0;
+        e->b2 = 0;
+        e->b3 = 0;
+        return 0;
+    }
+    return 1;
 }
 #pragma pop
 

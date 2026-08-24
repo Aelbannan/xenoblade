@@ -896,28 +896,23 @@ CDeviceFontInfo::~CDeviceFontInfo() {}
         bool validIo = true;                                                  \
         bool validIo2 = true;                                                 \
         bool validRegs = true;                                                \
-        bool validRegs2 = true;                                               \
         u32 address = (u32)(pointer);                                         \
-        if ((address & 0xFF000000) != 0x80000000 &&                           \
-            (address & 0xFF800000) != 0x81000000) {                           \
+        if ((address & 0xFF000000) != 0x80000000) {                           \
             validMem1 = false;                                                \
         }                                                                     \
-        if (!validMem1 && (address & 0xF8000000) != 0x90000000) {             \
+        if (!validMem1 && (address & 0xFF800000) != 0x81000000) {              \
             validMem2 = false;                                                \
         }                                                                     \
-        if (!validMem2 && (address & 0xFF000000) != 0xC0000000) {             \
+        if (!validMem2 && (address & 0xF8000000) != 0x90000000) {              \
             validIo = false;                                                  \
         }                                                                     \
-        if (!validIo && (address & 0xFF800000) != 0xC1000000) {               \
+        if (!validIo && (address & 0xFF000000) != 0xC0000000) {                \
             validIo2 = false;                                                 \
         }                                                                     \
-        if (!validIo2 && (address & 0xF8000000) != 0xD0000000) {              \
+        if (!validIo2 && (address & 0xFF800000) != 0xC1000000) {               \
             validRegs = false;                                                \
         }                                                                     \
-        if (!validRegs && (address & 0xFFFFC000) != 0xE0000000) {             \
-            validRegs2 = false;                                               \
-        }                                                                     \
-        if (!validRegs2) {                                                    \
+        if (!validRegs) {                                                     \
             nw4r::db::Panic(file, line, message, pointer);                    \
         }                                                                     \
     }
@@ -929,9 +924,7 @@ CDeviceFontInfo::~CDeviceFontInfo() {}
             ((u32)(pointer) & 0xFF800000) == 0x81000000 ||                     \
             ((u32)(pointer) & 0xF8000000) == 0x90000000 ||                     \
             region == 0xC0000000 ||                                           \
-            ((u32)(pointer) & 0xFF800000) == 0xC1000000 ||                     \
-            ((u32)(pointer) & 0xF8000000) == 0xD0000000 ||                     \
-            ((u32)(pointer) & 0xFFFFC000) == 0xE0000000) {                     \
+            ((u32)(pointer) & 0xFF800000) == 0xC1000000) {                     \
             valid = true;                                                     \
         }                                                                     \
         if (!valid) {                                                         \
@@ -952,7 +945,7 @@ void CDeviceFont::wkRender() {
     // negative (retail: addic./ble after the increment).
     if (getInstance__8CDesktopFv() != 0) {
         if (CWorkRoot::getException() == (CException*)this) {
-            if (++lbl_eu_8066567C <= 0) {
+            if ((s32)++lbl_eu_8066567C < 1) {
                 CWorkRoot::setException(0);
             }
         }

@@ -705,54 +705,60 @@ void func_8049F204(CScnItemCamera* self, const ml::CVec3* delta) {
     self->mTransform.mRot.y = *(u32*)&newRot.y;
     self->mTransform.mRot.z = *(u32*)&newRot.z;
 
-    // Pair A: Z trig, matrix materialized immediately (retail sp+224..252:
-    // {cz,-sz,1 | sz,cz,1 | 1,1,-1} - note the literal 1.0s and AC1C corner).
+    // All six trig values computed first (retail keeps them live across
+    // the last CosFIdx call -> 9 callee-saved FPRs).
     f32 sinZ = nw4r::math::SinFIdx(lbl_eu_8066AC18 * self->mTransform.mRot.z);
     f32 cosZ = nw4r::math::CosFIdx(lbl_eu_8066AC18 * self->mTransform.mRot.z);
-
-    f32 mz00 = cosZ;
-    f32 mz01 = -sinZ;
-    f32 mz02 = lbl_eu_8066ABF0;
-    f32 mz10 = sinZ;
-    f32 mz11 = cosZ;
-    f32 mz12 = lbl_eu_8066ABF0;
-    f32 mz20 = lbl_eu_8066ABF0;
-    f32 mz21 = lbl_eu_8066ABF0;
-    f32 mz22 = lbl_eu_8066AC1C;
-
-    // Pair B: X trig.
     f32 sinX = nw4r::math::SinFIdx(lbl_eu_8066AC18 * self->mTransform.mRot.x);
     f32 cosX = nw4r::math::CosFIdx(lbl_eu_8066AC18 * self->mTransform.mRot.x);
-
-    // Compose Z*X as explicit expressions (retail keeps 9 values live).
-    f32 m100 = mz00 * lbl_eu_8066ABF0;
-    f32 m101 = mz01 * cosX + mz02 * sinX;
-    f32 m102 = mz01 * -sinX + mz02 * cosX;
-    f32 m110 = mz10 * lbl_eu_8066ABF0;
-    f32 m111 = mz11 * cosX + mz12 * sinX;
-    f32 m112 = mz11 * -sinX + mz12 * cosX;
-    f32 m120 = mz20 * lbl_eu_8066ABF0;
-    f32 m121 = mz21 * cosX + mz22 * sinX;
-    f32 m122 = mz21 * -sinX + mz22 * cosX;
-
-    // Pair C: Y trig, final composition Z*X*Y.
     f32 sinY = nw4r::math::SinFIdx(lbl_eu_8066AC18 * self->mTransform.mRot.y);
     f32 cosY = nw4r::math::CosFIdx(lbl_eu_8066AC18 * self->mTransform.mRot.y);
 
-    f32 m000 = m100 * cosY + m101 * -sinY;
-    f32 m001 = m100 * sinY + m101 * cosY;
-    f32 m002 = m102;
-    f32 m010 = m110 * cosY + m111 * -sinY;
-    f32 m011 = m110 * sinY + m111 * cosY;
-    f32 m012 = m112;
-    f32 m020 = m120 * cosY + m121 * -sinY;
-    f32 m021 = m120 * sinY + m121 * cosY;
-    f32 m022 = m122;
+    // M_A @retail sp+224..252: {cz,-sz,1 | sz,cz,1 | 1,1,AC1C}.
+    f32 mz[3][3] = {
+        { cosZ, -sinZ, lbl_eu_8066ABF0 },
+        { sinZ, cosZ, lbl_eu_8066ABF0 },
+        { lbl_eu_8066ABF0, lbl_eu_8066ABF0, lbl_eu_8066AC1C },
+    };
+
+    // Row-major X rotation matrix.
+    f32 mx[3][3] = {
+        { lbl_eu_8066ABF0, lbl_eu_8066ABF0, lbl_eu_8066ABF0 },
+        { lbl_eu_8066ABF0, cosX, -sinX },
+        { lbl_eu_8066ABF0, sinX, cosX },
+    };
+
+    // Compose: Z then X (full 3x3 multiplies).
+    f32 m1[3][3];
+    for (int r = 0; r < 3; ++r) {
+        for (int c = 0; c < 3; ++c) {
+            m1[r][c] = mz[r][0] * mx[0][c] + mz[r][1] * mx[1][c] +
+                       mz[r][2] * mx[2][c];
+        }
+    }
+
+    // Y rotation matrix (trig computed above).
+    f32 my[3][3] = {
+        { cosY, lbl_eu_8066ABF0, sinY },
+        { lbl_eu_8066ABF0, lbl_eu_8066AC1C, lbl_eu_8066ABF0 },
+        { -sinY, lbl_eu_8066ABF0, cosY },
+    };
+
+    nw4r::math::MTX34 m;
+    m._00 = m1[0][0] * my[0][0] + m1[0][1] * my[1][0] + m1[0][2] * my[2][0];
+    m._01 = m1[0][0] * my[0][1] + m1[0][1] * my[1][1] + m1[0][2] * my[2][1];
+    m._02 = m1[0][0] * my[0][2] + m1[0][1] * my[1][2] + m1[0][2] * my[2][2];
+    m._10 = m1[1][0] * my[0][0] + m1[1][1] * my[1][0] + m1[1][2] * my[2][0];
+    m._11 = m1[1][0] * my[0][1] + m1[1][1] * my[1][1] + m1[1][2] * my[2][1];
+    m._12 = m1[1][0] * my[0][2] + m1[1][1] * my[1][2] + m1[1][2] * my[2][2];
+    m._20 = m1[2][0] * my[0][0] + m1[2][1] * my[1][0] + m1[2][2] * my[2][0];
+    m._21 = m1[2][0] * my[0][1] + m1[2][1] * my[1][1] + m1[2][2] * my[2][1];
+    m._22 = m1[2][0] * my[0][2] + m1[2][1] * my[1][2] + m1[2][2] * my[2][2];
 
     // Rotate the base aim offset by the matrix scaled by the distance.
     f32 dist = cam->mUnk1F4;
-    nw4r::math::VEC3 dir(-(m000 * dist), -(m010 * dist),
-                         -(m020 * dist));
+    nw4r::math::VEC3 dir(-(m._02 * dist), -(m._12 * dist),
+                         -(m._22 * dist));
 
     nw4r::math::VEC3 aim;
     nw4r::math::VEC3Sub((nw4r::math::VEC3*)&aim,

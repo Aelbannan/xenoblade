@@ -30,6 +30,20 @@ public:
     // TODO: add fields
 };
 
+// 7-float price scale row copied out of the lbl_eu_8050560C pool by the
+// price functions; retail lowers the copy as an inline struct assignment.
+struct CItemPriceScaleRow {
+    float v[7];
+};
+
+// Cast-only view of the object returned by the vt+0x2C equipped-state
+// fetch: bit 0 of the +0x04 halfword marks the slot as equipped.
+struct CItemBoxSlotState {
+    u16 field_00;
+    u16 field_02;
+    u16 state;
+};
+
 // Cast-only class with a virtual destructor at vtable+0x08 (the first
 // declared virtual after the 2 RTTI header entries). Used for delete-style
 // release calls with mode 1 on the +0x44/+0x5C sub-objects: retail's
@@ -125,7 +139,7 @@ struct CItemBoxLayoutVt38 {
     virtual void _v2C();
     virtual void _v30();
     virtual void _v34();
-    virtual void _v38(void* arg, int n);  // vtable+0x38
+    virtual void _v38(int n);  // vtable+0x38
 };
 
 // Cast-only vtable interface for the +0xA0/+0xD0 sub-objects: with -RTTI on,
@@ -358,6 +372,15 @@ struct GridFilter24 {
 struct CItemBoxGridEntry {
     s16 id;        // +0x00 item id (or -1 for an empty cell)
     u8 flags[8];   // +0x02 per-cell flag bytes
+};
+
+// Sort view over a fetched item object: the first word feeds the generic
+// comparison key (word >> 20 through func_80139358), the flag byte at +0x07
+// feeds the mode-9 tie-break (bits 24..29).
+struct CItemSortView {
+    u32 word00;
+    u8 _04[3];
+    u8 flags7;
 };
 
 // Full object layout for CItemBoxGrid (used by C-linkage accessors)
@@ -679,3 +702,50 @@ extern "C" void func_8022D614(void*, void*);
 extern "C" void func_80207FC8(void*, void*);
 extern "C" CEquipBoxFourShorts func_801397AC(void*, u32);
 extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);
+
+// ---- func_801D0E88 imports/helpers ----
+extern "C" void func_800A1370(void*);
+extern "C" void __dt__80043E88(void*, int);
+
+// Stack-scene enum-list holder used by func_801D0E88's camera block: the
+// 12-byte name table at +0x10 is written before the func_80043D90 ctor call.
+struct CItemBoxGridEnumHolder {
+    void* field_00;
+    u32 field_04;
+    u32 names[3];
+};
+// Enum list returned by func_80043F18: element count at +0x620.
+struct CItemBoxGridEnumList {
+    u8 _pad00[0x620];
+    u32 field_620;
+};
+// Slot from func_800F6EC0: move object pointer at +0x04.
+struct CItemBoxGridEnumSlot {
+    u32 field_00;
+    void* field_04;
+};
+// Move object whose +0x3f28 halfword holds the player index.
+struct CItemBoxGridMoveObj {
+    u8 _pad00[0x3f28];
+    u16 field_3f28;
+};
+// Cast-only vtable interface for the CItemImplInstances object: method at
+// vtable+0x44 (raw slot 17) clears the given equipped slot.
+struct CItemInstVt44Clear {
+    virtual void _v08();
+    virtual void _v0C();
+    virtual void _v10();
+    virtual void _v14();
+    virtual void _v18();
+    virtual void _v1C();
+    virtual void _v20();
+    virtual void _v24();
+    virtual void _v28();
+    virtual void _v2C();
+    virtual void _v30();
+    virtual void _v34();
+    virtual void _v38();
+    virtual void _v3C();
+    virtual void _v40();
+    virtual void _v44(void* item, u8 slot, s16 val);  // vtable+0x44
+};

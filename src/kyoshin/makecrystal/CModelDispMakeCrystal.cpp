@@ -413,22 +413,23 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
         *(u16*)(p + 4) = 0;
     } while ((p += 0x34) < base + 0x2dc0);
 
-    // --- cursor-state fields ---
-    base[0x2dc0] = 0;
-    base[0x2dc1] = 0;
-    base[0x2dc2] = 0;
-    base[0x2dc3] = 0;
-    *reinterpret_cast<u16*>(base + 0x2dc4) = 0;
-    base[0x2dc6] = 0;
-    base[0x2dc7] = 0;
-    base[0x2dc8] = 0;
+    // --- cursor-state fields (second zero constant: retail r30) ---
+    u32 zero2 = 0;
+    base[0x2dc0] = zero2;
+    base[0x2dc1] = zero2;
+    base[0x2dc2] = zero2;
+    base[0x2dc3] = zero2;
+    *reinterpret_cast<u16*>(base + 0x2dc4) = zero2;
+    base[0x2dc6] = zero2;
+    base[0x2dc7] = zero2;
+    base[0x2dc8] = zero2;
     *reinterpret_cast<f32*>(base + 0x2dcc) = lbl_eu_806684A4;
-    base[0x2dd0] = 0;
-    base[0x2dd1] = 0;
-    base[0x2dd2] = 0;
-    base[0x2dd3] = 0;
-    base[0x2dd4] = 0;
-    base[0x2dd5] = 0;
+    base[0x2dd0] = zero2;
+    base[0x2dd1] = zero2;
+    base[0x2dd2] = zero2;
+    base[0x2dd3] = zero2;
+    base[0x2dd4] = zero2;
+    base[0x2dd5] = zero2;
 
     // --- crystal-position groups (two VEC3 pairs) ---
     func_8004B60C(&group1[0], lbl_eu_806684A8, lbl_eu_806684AC, lbl_eu_806684B0);
@@ -443,29 +444,37 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
     func_8004B60C(&group2[1], lbl_eu_806684A4, g2y, lbl_eu_806684A4);
 
     // --- per-slot init (2 slots, stride 0x5cc at +0x44) ---
+    // Retail colors: gp1=r23, gp2=r24, one=r25, eight=r26, sb=r28,
+    // slot=r29, zero2=r30, minus1=r31, j=r22. Declaration/creation order
+    // tuned to steer MWCC's coloring toward that assignment.
+    s8 initState = -1;
+    u32 nVals = 8;
+    CMCryVec3* gp2 = group2;
+    u8 builtFlag = 1;
+    CMCryVec3* gp1 = group1;
     for (u8 slot = 0; slot < 2; slot++) {
         u8* s = base + (u32)(u8)slot * 0x5cc;
         u8* sb = s + 0x44;   // CMCrystalDispSub base (retail r28)
-        *reinterpret_cast<u32*>(s + 0x44) = 0;
-        *reinterpret_cast<u32*>(s + 0x48) = 0;
-        for (u8 i = 0; i < 8; i++) {
-            *reinterpret_cast<u32*>(sb + 0x544 + ((u32)(u8)i << 2)) = 0;
+        *reinterpret_cast<u32*>(s + 0x44) = zero2;
+        *reinterpret_cast<u32*>(s + 0x48) = zero2;
+        for (u32 i = 0; i < nVals; i++) {
+            *reinterpret_cast<u32*>(sb + 0x544 + ((u32)(u8)i << 2)) = zero2;
         }
-        for (u8 i = 0; i < 6; i++) {
+        for (u8 j = 0; j < 6; j++) {
             initCrystalSubStruct(sub);
-            u8* d = sb + 0x564 + (u32)(u8)i * 0xc;
+            u8* d = sb + 0x564 + (u32)(u8)j * 0xc;
             *reinterpret_cast<u32*>(d + 0) = *reinterpret_cast<u32*>(sub + 0);
             *reinterpret_cast<u32*>(d + 4) = *reinterpret_cast<u32*>(sub + 4);
             d[8] = sub[8];
         }
-        *reinterpret_cast<s8*>(sb + 0x5ac) = -1;
-        *reinterpret_cast<u32*>(sb + 0x5b0) = *reinterpret_cast<u32*>(&group1[slot].x);
-        *reinterpret_cast<u32*>(sb + 0x5b4) = *reinterpret_cast<u32*>(&group1[slot].y);
-        *reinterpret_cast<u32*>(sb + 0x5b8) = *reinterpret_cast<u32*>(&group1[slot].z);
-        *reinterpret_cast<u32*>(sb + 0x5bc) = *reinterpret_cast<u32*>(&group2[slot].x);
-        *reinterpret_cast<u32*>(sb + 0x5c0) = *reinterpret_cast<u32*>(&group2[slot].y);
-        *reinterpret_cast<u32*>(sb + 0x5c4) = *reinterpret_cast<u32*>(&group2[slot].z);
-        sb[0x5c8] = 1;
+        *reinterpret_cast<s8*>(sb + 0x5ac) = initState;
+        *reinterpret_cast<u32*>(sb + 0x5b0) = *reinterpret_cast<u32*>(&gp1[slot].x);
+        *reinterpret_cast<u32*>(sb + 0x5b4) = *reinterpret_cast<u32*>(&gp1[slot].y);
+        *reinterpret_cast<u32*>(sb + 0x5b8) = *reinterpret_cast<u32*>(&gp1[slot].z);
+        *reinterpret_cast<u32*>(sb + 0x5bc) = *reinterpret_cast<u32*>(&gp2[slot].x);
+        *reinterpret_cast<u32*>(sb + 0x5c0) = *reinterpret_cast<u32*>(&gp2[slot].y);
+        *reinterpret_cast<u32*>(sb + 0x5c4) = *reinterpret_cast<u32*>(&gp2[slot].z);
+        sb[0x5c8] = builtFlag;
     }
 
     // --- re-init the embedded crystal list from a default temp ---
@@ -484,8 +493,13 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
     *reinterpret_cast<void**>(base + 0xc60) = *reinterpret_cast<void**>(listTmp + 0x48);
     base[0xc64] = listTmp[0x4c];
     base[0xc65] = listTmp[0x4d];
-    *reinterpret_cast<u32*>(base + 0xc66) = *reinterpret_cast<u32*>(listTmp + 0x4e);
-    *reinterpret_cast<u32*>(base + 0xc6a) = *reinterpret_cast<u32*>(listTmp + 0x52);
+    // Load both words, store high word first (retail schedule).
+    {
+        u32 lo = *reinterpret_cast<u32*>(listTmp + 0x4e);
+        u32 hi = *reinterpret_cast<u32*>(listTmp + 0x52);
+        *reinterpret_cast<u32*>(base + 0xc6a) = hi;
+        *reinterpret_cast<u32*>(base + 0xc66) = lo;
+    }
     base[0xc6e] = listTmp[0x56];
     base[0xc6f] = listTmp[0x57];
     __dt__14CMCCrystalListFv(listTmp, -1);
@@ -573,10 +587,16 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
     base[0x1058] = boxTmp[0x18c];
     base[0x1059] = boxTmp[0x18d];
     base[0x105a] = boxTmp[0x18e];
-    *reinterpret_cast<u32*>(base + 0x105c) = *reinterpret_cast<u32*>(boxTmp + 0x190);
-    *reinterpret_cast<u32*>(base + 0x1060) = *reinterpret_cast<u32*>(boxTmp + 0x194);
-    *reinterpret_cast<u32*>(base + 0x1064) = *reinterpret_cast<u32*>(boxTmp + 0x198);
-    *reinterpret_cast<u32*>(base + 0x1068) = *reinterpret_cast<u32*>(boxTmp + 0x19c);
+    {
+        u32 lo = *reinterpret_cast<u32*>(boxTmp + 0x190);
+        u32 hi = *reinterpret_cast<u32*>(boxTmp + 0x194);
+        *reinterpret_cast<u32*>(base + 0x1060) = hi;
+        *reinterpret_cast<u32*>(base + 0x105c) = lo;
+        u32 lo2 = *reinterpret_cast<u32*>(boxTmp + 0x198);
+        u32 hi2 = *reinterpret_cast<u32*>(boxTmp + 0x19c);
+        *reinterpret_cast<u32*>(base + 0x1068) = hi2;
+        *reinterpret_cast<u32*>(base + 0x1064) = lo2;
+    }
     *reinterpret_cast<u16*>(base + 0x106c) = *reinterpret_cast<u16*>(boxTmp + 0x1a0);
     base[0x106e] = boxTmp[0x1a2];
     // cursor table/flags/marker copy - pair-copy loops with -1-biased word
@@ -606,13 +626,19 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
             *(d += 2) = b;
         } while (--n);
     }
-    // flags part 1: 6 u32s (24B, memberwise words)
-    *reinterpret_cast<u32*>(base + 0x1118) = *reinterpret_cast<u32*>(boxTmp + 0x24c);
-    *reinterpret_cast<u32*>(base + 0x111c) = *reinterpret_cast<u32*>(boxTmp + 0x250);
-    *reinterpret_cast<u32*>(base + 0x1120) = *reinterpret_cast<u32*>(boxTmp + 0x254);
-    *reinterpret_cast<u32*>(base + 0x1124) = *reinterpret_cast<u32*>(boxTmp + 0x258);
-    *reinterpret_cast<u32*>(base + 0x1128) = *reinterpret_cast<u32*>(boxTmp + 0x25c);
-    *reinterpret_cast<u32*>(base + 0x112c) = *reinterpret_cast<u32*>(boxTmp + 0x260);
+    // flags part 1: 6 u32s (24B); retail interleaves the loads/stores.
+    {
+        u32 w0 = *reinterpret_cast<u32*>(boxTmp + 0x24c);
+        u32 w1 = *reinterpret_cast<u32*>(boxTmp + 0x250);
+        *reinterpret_cast<u32*>(base + 0x111c) = w1;
+        *reinterpret_cast<u32*>(base + 0x1118) = w0;
+        *reinterpret_cast<u32*>(base + 0x1120) = *reinterpret_cast<u32*>(boxTmp + 0x254);
+        u32 w3 = *reinterpret_cast<u32*>(boxTmp + 0x258);
+        u32 w4 = *reinterpret_cast<u32*>(boxTmp + 0x25c);
+        *reinterpret_cast<u32*>(base + 0x1128) = w4;
+        *reinterpret_cast<u32*>(base + 0x1124) = w3;
+        *reinterpret_cast<u32*>(base + 0x112c) = *reinterpret_cast<u32*>(boxTmp + 0x260);
+    }
     // flags part 2: 0x18 u8s (24B = 3 pairs)
     {
         u32 n = 3;
@@ -631,6 +657,31 @@ void __ct__CModelDispMakeCrystal(CModelDispMakeCrystal* self, CScn* scene)
         u32 n = 0x10;
         u32* s = reinterpret_cast<u32*>(boxTmp + 0x27d) - 1;
         u32* d = reinterpret_cast<u32*>(base + 0x1149) - 1;
+        do {
+            u32 a = *(s + 1);
+            u32 b = *(s += 2);
+            *(d + 1) = a;
+            *(d += 2) = b;
+        } while (--n);
+    }
+    // Selection-flag bytes + word pair (reversed store order), then the
+    // trailing 256-byte table (retail n=0x20 counted pair loop).
+    base[0x11cc] = boxTmp[0x300];
+    base[0x11cd] = boxTmp[0x301];
+    base[0x11ce] = boxTmp[0x302];
+    base[0x11cf] = boxTmp[0x303];
+    base[0x11d0] = boxTmp[0x304];
+    base[0x11d1] = boxTmp[0x305];
+    {
+        u32 lo = *reinterpret_cast<u32*>(boxTmp + 0x308);
+        u32 hi = *reinterpret_cast<u32*>(boxTmp + 0x30c);
+        *reinterpret_cast<u32*>(base + 0x11d8) = hi;
+        *reinterpret_cast<u32*>(base + 0x11d4) = lo;
+    }
+    {
+        u32 n = 0x20;
+        u32* s = reinterpret_cast<u32*>(boxTmp + 0x310) - 1;
+        u32* d = reinterpret_cast<u32*>(base + 0x11dc) - 1;
         do {
             u32 a = *(s + 1);
             u32 b = *(s += 2);
@@ -972,19 +1023,27 @@ void func_8021CD8C(CModelDispMakeCrystal* self)
     func_8021FEDC(self);
 }
 
+// -O4,s frame: retail saves r30/r31 with stmw/lmw.
+#pragma optimize_for_size on
 void func_8021CE4C(CModelDispMakeCrystal* self)
 {
     u8* base = reinterpret_cast<u8*>(self);
-    for (u8 i = 0; i < 2; i++) {
-        u32 off = (u32)i * 0x5cc;
+    for (u32 i = 0; i < 2; i++) {
+        u32 off = (u8)i * 0x5cc;
         if (*reinterpret_cast<u32*>(base + off + 0x44)) {
-            func_8004B9D4(base + off + 0x4c, 0x22, 0, -1, 0);
+            // Reload the slot pointer (CSE'd with the test load) so MWCC
+            // emits retail's dead duplicate beq before the call setup.
+            void* m = *reinterpret_cast<void**>(base + off + 0x44);
+            if (m != 0) {
+                func_8004B9D4(base + off + 0x4c, 0x22, 0, -1, 0);
+            }
         }
     }
     reinterpret_cast<CMCC8CFn*>(base + 0xc8c)->m2();
     base[0xbdd] = 0x1;
     func_80220954(self, 0, func_801392B4(base[0xbbc]));
 }
+#pragma optimize_for_size off
 
 void func_8021CEF0(CModelDispMakeCrystal* self)
 {
@@ -2013,17 +2072,16 @@ void func_8021EF30(CModelDispMakeCrystal* self)
     if (!func_80297D1C(base + 0xecc)) return;
     u8 count = base[0x2dc0];
     int found = 0;
-    u8 i = 0;
-    do {
-        // Element-pointer formation matches retail's add/addic. split.
-        CMCStep* p =
-            reinterpret_cast<CMCStep*>(base + (u32)i * 0x34 + 0x13c0);
+    // While-form loop: retail jumps to the condition before the first body
+    // iteration; element-pointer formation matches retail's add/addic. split.
+    for (u8 i = 0; i < count; i++) {
+        u32 off = reinterpret_cast<u32>(base) + (u32)i * 0x34;
+        CMCStep* p = reinterpret_cast<CMCStep*>(off + 0x13c0);
         if (p && p->type == 3) {
             found = 1;
             break;
         }
-        i++;
-    } while (i < count);
+    }
     if (found) {
         base[0xbdd] = 0x1e;
         func_80297D2C(base + 0xecc, 3, base + 0x13c0, base[0x2dc0]);
@@ -2403,7 +2461,9 @@ void func_8021FB14(CModelDispMakeCrystal* self)
     }
 }
 
-void func_8021FB68(CModelDispMakeCrystal* self, u8* obj)
+// Retail symbol is the bare C-linkage name (defined below), so intra-TU
+// calls emit the unmangled reloc.
+extern "C" void func_8021FB68(CModelDispMakeCrystal* self, u8* obj)
 {
     CDeviceVI::waitForDrawDone();
     if (*reinterpret_cast<u32*>(obj) == 0) return;
@@ -2711,6 +2771,9 @@ void func_802203D8(void* selfp)
         idx--;
     }
     if (count >= 0xc8) ch = (u8)(ch + 1);
+    CMCItemData item;
+    item.field_00 = 0;
+    *reinterpret_cast<u16*>(&item.field_04) = 0;
     u8 tier;
     if (ch < 1) {
         tier = 1;
@@ -2719,39 +2782,50 @@ void func_802203D8(void* selfp)
     } else {
         tier = ch;
     }
-    CMCItemData item;
-    item.field_00 = 0;
-    *reinterpret_cast<u16*>(&item.field_04) = 0;
     func_80159F6C(&item, idx, n, tier);
     reinterpret_cast<CMCItemImplVt*>(CItem_initItemImplInstances(&item))->m58(&item, n);
     void* g2 = lbl_eu_806640D8;
     u32 first = 0;
     u32 second = 0;
+    // Per-arm string-table base: one address materialization shared by both
+    // column lookups (retail keeps the base in r28 across the pair).
     switch (tier) {
-    case 1:
-        first = func_801361E8(reinterpret_cast<u32>(g2), &lbl_eu_805090FC[0x71], n);
-        second = func_801361E8(reinterpret_cast<u32>(g2), &lbl_eu_805090FC[0x79], n);
+    case 1: {
+        const char* t = &lbl_eu_805090FC[0];
+        first = func_801361E8(reinterpret_cast<u32>(g2), t + 0x71, n);
+        second = func_801361E8(reinterpret_cast<u32>(g2), t + 0x79, n);
         break;
-    case 2:
-        first = func_801361E8(reinterpret_cast<u32>(g2), &lbl_eu_805090FC[0x81], n);
-        second = func_801361E8(reinterpret_cast<u32>(g2), &lbl_eu_805090FC[0x89], n);
+    }
+    case 2: {
+        const char* t = &lbl_eu_805090FC[0];
+        first = func_801361E8(reinterpret_cast<u32>(g2), t + 0x81, n);
+        second = func_801361E8(reinterpret_cast<u32>(g2), t + 0x89, n);
         break;
-    case 3:
-        first = func_801361E8(reinterpret_cast<u32>(g2), &lbl_eu_805090FC[0x91], n);
-        second = func_801361E8(reinterpret_cast<u32>(g2), &lbl_eu_805090FC[0x99], n);
+    }
+    case 3: {
+        const char* t = &lbl_eu_805090FC[0];
+        first = func_801361E8(reinterpret_cast<u32>(g2), t + 0x91, n);
+        second = func_801361E8(reinterpret_cast<u32>(g2), t + 0x99, n);
         break;
-    case 4:
-        first = func_801361E8(reinterpret_cast<u32>(g2), &lbl_eu_805090FC[0xa1], n);
-        second = func_801361E8(reinterpret_cast<u32>(g2), &lbl_eu_805090FC[0xa9], n);
+    }
+    case 4: {
+        const char* t = &lbl_eu_805090FC[0];
+        first = func_801361E8(reinterpret_cast<u32>(g2), t + 0xa1, n);
+        second = func_801361E8(reinterpret_cast<u32>(g2), t + 0xa9, n);
         break;
-    case 5:
-        first = func_801361E8(reinterpret_cast<u32>(g2), &lbl_eu_805090FC[0xb1], n);
-        second = func_801361E8(reinterpret_cast<u32>(g2), &lbl_eu_805090FC[0xb9], n);
+    }
+    case 5: {
+        const char* t = &lbl_eu_805090FC[0];
+        first = func_801361E8(reinterpret_cast<u32>(g2), t + 0xb1, n);
+        second = func_801361E8(reinterpret_cast<u32>(g2), t + 0xb9, n);
         break;
-    case 6:
-        first = func_801361E8(reinterpret_cast<u32>(g2), &lbl_eu_805090FC[0xc1], n);
-        second = func_801361E8(reinterpret_cast<u32>(g2), &lbl_eu_805090FC[0xc9], n);
+    }
+    case 6: {
+        const char* t = &lbl_eu_805090FC[0];
+        first = func_801361E8(reinterpret_cast<u32>(g2), t + 0xc1, n);
+        second = func_801361E8(reinterpret_cast<u32>(g2), t + 0xc9, n);
         break;
+    }
     }
     u8 result;
     u8 copyCount = 1;
@@ -3021,20 +3095,26 @@ void func_80220C34(CModelDispMakeCrystal* self)
     }
 }
 
+// Filter-value triple at lbl_eu_805090D8; accessed through a struct pointer
+// so MWCC materializes the address with a single lis + lwzu pair (retail).
+struct CMCryFilters {
+    u32 v0, v1, v2;
+};
+
 void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
 {
-    CMCCrySelfFields* objs = reinterpret_cast<CMCCrySelfFields*>(self);
-    // The 3 state-specific enum filter types (keyed by sub->field_5ac state).
-    u32 src[3];
-    src[0] = reinterpret_cast<u32*>(lbl_eu_805090D8)[0];
-    src[1] = reinterpret_cast<u32*>(lbl_eu_805090D8)[1];
-    src[2] = reinterpret_cast<u32*>(lbl_eu_805090D8)[2];
+    // Copy the 3 state-specific enum filter types first (retail statement order).
+    const CMCryFilters* filt = reinterpret_cast<const CMCryFilters*>(lbl_eu_805090D8);
+    u32 filters[3];
+    filters[0] = filt->v0;
+    filters[1] = filt->v1;
+    filters[2] = filt->v2;
 
     CMCryListHolder holder;
     func_80043D90(&holder);
 
     // Select the crystal list for the current char state and check it's loaded.
-    func_800F4A98(func_80043F18(&holder), src[(s8)sub->field_5ac], 0);
+    func_800F4A98(func_80043F18(&holder), filters[(s8)sub->field_5ac], 0);
     if (*reinterpret_cast<u32*>(reinterpret_cast<u8*>(func_80043F18(&holder)) + 0x620) == 0) {
         func_8021FB68(self, reinterpret_cast<u8*>(sub));
         __dt__80043E88(&holder, -1);
@@ -3042,8 +3122,8 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
     }
 
     // Grab the first crystal object from the enum list.
-    void* slot = func_800F6EC0(func_80043F18(&holder), 0);
-    void* cfMove = *reinterpret_cast<void**>(reinterpret_cast<u8*>(slot) + 4);
+    void* cfMove = *reinterpret_cast<void**>(
+        reinterpret_cast<u8*>(func_800F6EC0(func_80043F18(&holder), 0)) + 4);
     if (cfMove == nullptr) {
         func_8021FB68(self, reinterpret_cast<u8*>(sub));
         __dt__80043E88(&holder, -1);
@@ -3053,10 +3133,10 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
     CMCCryChgActor* actor =
         reinterpret_cast<CMCCryChgActor*>(func_800BFC68__FPQ22cf12CfObjectMove(cfMove));
     int ready = actor != nullptr ? 1 : 0;
-    int m = 0;
+    u32 crystalCount = 0;
     if (actor != nullptr) {
-        m = actor->field_3f2c;
-        if (m == 0) ready = 0;
+        crystalCount = actor->field_3f2c;
+        if (crystalCount == 0) ready = 0;
         if (reinterpret_cast<CMCryMoveVt*>(&actor->move)->m74() == 0) ready = 0;
         if (sub->field_5a4 == 0) {
             if (sub->field_5a0 == 0) {
@@ -3065,55 +3145,61 @@ void func_80220E14(CModelDispMakeCrystal* self, CMCrystalDispSub* sub)
                 sprintf(buf, &lbl_eu_805090FC[0xd1],
                         actor->field_3f28 == 3 ? 8 : (int)actor->field_3f28,
                         0, 10);
-                u32 h = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
                 sub->field_5a0 =
                     reinterpret_cast<u32>(readFile__11CDeviceFileFUlPCcP10IWorkEventii(
-                        h, buf, self, 0, 0));
+                        getHandleMEM2__Q23mtl10MemManagerFv(), buf,
+                        reinterpret_cast<void*>(self), 0, 0));
             }
             ready = 0;
         }
     }
 
+    CMCCrySelfFields* objs = reinterpret_cast<CMCCrySelfFields*>(self);
     if (sub->field_00 == nullptr && ready != 0) {
-        CMCryMoveVt* mv = reinterpret_cast<CMCryMoveVt*>(&actor->move);
         // Build the crystal display model for this slot.
-        sub->field_00 = func_80495E8C(objs->field_0c, m, -1, 1);
-        sub->mCrystalVals[1] = (static_cast<u32>(mv->m82(1)) >> 12) & 0x3ff;
+        sub->field_00 = func_80495E8C(objs->field_0c, crystalCount, -1, 1);
+        sub->mCrystalVals[1] =
+            (static_cast<u32>(reinterpret_cast<CMCryMoveVt*>(&actor->move)->m82(1)) >> 12) &
+            0x3ff;
         s16 be = func_800BE954(&actor->move);
-        CMCCryParamSlot* param =
+        CMCCryParamSlot* params =
             reinterpret_cast<CMCCryParamSlot*>(func_80062C28(be, 0));
-        for (int idx = 2; idx <= 5; idx++) {
-            if (mv->m82(idx) != 0) {
-                void* obj = param[idx].field_2c;
-                func_804831C4(sub->field_00, reinterpret_cast<CMCCryParamObjVt*>(obj)->m02());
-                sub->mCrystalVals[idx] = (static_cast<u32>(mv->m82(idx)) >> 12) & 0x3ff;
+        // Crystal attachment points 2..5; do-while keeps the retail loop shape.
+        u8 idx = 2;
+        do {
+            if (reinterpret_cast<CMCryMoveVt*>(&actor->move)->m82(idx) != 0) {
+                void* obj = params[idx].field_2c->m02();
+                func_804831C4(sub->field_00, obj);
+                sub->mCrystalVals[idx] =
+                    (static_cast<u32>(reinterpret_cast<CMCryMoveVt*>(&actor->move)->m82(idx)) >>
+                     12) &
+                    0x3ff;
             }
-        }
-        m = sub->field_5a4;
-        sub->field_04 = func_800584B8(objs->field_0c, m, &lbl_eu_805090FC[0xef]);
+        } while (++idx <= 5);
+        u32 handle = sub->field_5a4;
+        sub->field_04 = func_800584B8(objs->field_0c, handle, &lbl_eu_805090FC[0xef]);
         sub->mAnim.m36();
-        func_8004B624(&sub->mAnim, sub->field_00, sub->field_04, m);
+        func_8004B624(&sub->mAnim, sub->field_00, sub->field_04, handle);
         sub->field_14 |= 0x160;
         func_80200388(&sub->mAnim,
-                      self ? reinterpret_cast<void*>(reinterpret_cast<u8*>(self) + 4) : self);
-        u32* group0 = reinterpret_cast<u32*>(func_8048315C(sub->field_00));
-        group0[0] = sub->field_5b0;
-        group0[1] = sub->field_5b4;
-        group0[2] = sub->field_5b8;
-        u32* group1 = reinterpret_cast<u32*>(func_8048315C(sub->field_00));
-        group1[3] = sub->field_5bc;
-        group1[4] = sub->field_5c0;
-        group1[5] = sub->field_5c4;
+                      self ? reinterpret_cast<void*>(reinterpret_cast<u8*>(self) + 4)
+                           : reinterpret_cast<void*>(self));
+        u32* posA = reinterpret_cast<u32*>(func_8048315C(sub->field_00));
+        posA[0] = sub->field_5b0;
+        posA[1] = sub->field_5b4;
+        posA[2] = sub->field_5b8;
+        u32* posB = reinterpret_cast<u32*>(func_8048315C(sub->field_00));
+        posB[3] = sub->field_5bc;
+        posB[4] = sub->field_5c0;
+        posB[5] = sub->field_5c4;
         reinterpret_cast<CMCModelVt*>(sub->field_00)->m12(objs->field_be0);
         reinterpret_cast<CMCModelVt*>(sub->field_00)->m27(3, 0);
         if (sub->field_00 != nullptr) {
             func_8004B9D4(&sub->mAnim, 0x21, 0, -1, 0);
         }
         sub->field_5c8 = 1;
-    } else {
-        if (sub->field_00 != nullptr && ready == 0) {
-            func_8021FB68(self, reinterpret_cast<u8*>(sub));
-        }
+    } else if (sub->field_00 != nullptr && ready == 0) {
+        func_8021FB68(self, reinterpret_cast<u8*>(sub));
     }
 
     __dt__80043E88(&holder, -1);
@@ -3238,10 +3324,9 @@ struct CMCCur18Vt {
 int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
 {
     u8* base = reinterpret_cast<u8*>(this);
-    void* handle = ev->mFileHandle;
     // Case 1: crystal-list file completed - move the record link to +0x28.
     void* f24 = *reinterpret_cast<void**>(base + 0x24);
-    if (f24 == handle) {
+    if (f24 == ev->mFileHandle) {
         void* nxt = *reinterpret_cast<void**>(reinterpret_cast<u8*>(f24) + 4);
         *reinterpret_cast<void**>(reinterpret_cast<u8*>(f24) + 4) = 0;
         *reinterpret_cast<void**>(base + 0x28) = nxt;
@@ -3250,52 +3335,60 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
     }
     // Case 2: item-source file completed - release the layout-state object.
     void* f18 = *reinterpret_cast<void**>(base + 0x18);
-    if (f18 == handle) {
+    if (f18 == ev->mFileHandle) {
         void* nxt = *reinterpret_cast<void**>(reinterpret_cast<u8*>(f18) + 4);
+        // Single named pointer introduced early: MWCC splits the @ha/@l
+        // pair around the pending stores and folds the null test into
+        // the @l addic.
+        void* arc = &lbl_eu_8065FC18[0];
         *reinterpret_cast<void**>(reinterpret_cast<u8*>(f18) + 4) = 0;
         *reinterpret_cast<void**>(base + 0x1c) = nxt;
-        void* arc = &lbl_eu_8065FC18[0];
         if (arc != nullptr) func_804CC1BC(arc);
         *reinterpret_cast<void**>(base + 0x18) = 0;
         return 1;
     }
     // Case 3: the layout archive completed - build every sub-object.
     void* f3c = *reinterpret_cast<void**>(base + 0x3c);
-    if (f3c == handle) {
+    if (f3c == ev->mFileHandle) {
+        // Stack scratch, declaration order matches the retail frame
+        // (cls858@0x8 .. effUpPrm@0x1b0).
         u8 cls858[8];
-        u8 cylGauge[0x28];
-        u8 crySupport[0x1c];
-        u8 effStart[0x18];
-        u8 effUpRed[0x18];
-        u8 effUpBlue[0x18];
-        u8 effUpGreen[0x18];
-        u8 effUpPrm[0x70];
-        u8 effSuccess[0x20];
-        u8 effFailure[0x18];
-        u8 effCrystal[0x3c];
-        u8 effUpRank[0x18];
-        u8 effDivide[0x18];
-        u8 effCylinder[0x20];
-        u8 cur1[0x18];
         u8 cur2[0x18];
+        u8 cur1[0x18];
+        u8 effCylinder[0x20];
+        u8 effDivide[0x18];
+        u8 effUpRank[0x18];
+        u8 effFailure[0x18];
+        u8 effSuccess[0x20];
+        u8 effUpGreen[0x18];
+        u8 effUpBlue[0x18];
+        u8 effUpRed[0x18];
+        u8 effStart[0x18];
+        u8 crySupport[0x1c];
+        u8 effCrystal[0x3c];
+        u8 cylGauge[0x30];
+        u8 effUpPrm[0x70];
         // Create the layout region and archive accessor.
         createRegion__17UnkClass_8045F564FiiPCci(
-            base + 0x2c, getHandleMEM2__Q23mtl10MemManagerFv(), 0x2f000,
+            base + 0x2c, getHandleMEM2__Q23mtl10MemManagerFv(), 0x2ff000,
             &lbl_eu_805090FC[0xf3], 0);
         __ct__14Class_8045F858FP17UnkClass_8045F564(cls858, base + 0x2c);
-        u8* f3cRec = reinterpret_cast<u8*>(f3c);
-        void* fileData = *reinterpret_cast<void**>(f3cRec + 4);
-        *reinterpret_cast<void**>(f3cRec + 4) = 0;
+        void* fileData =
+            *reinterpret_cast<void**>(reinterpret_cast<u8*>(f3c) + 4);
+        *reinterpret_cast<void**>(reinterpret_cast<u8*>(f3c) + 4) = 0;
         func_80434A4C__Q23mtl10MemManagerFb(false);
-        nw4r::lyt::ArcResourceAccessor* acc =
+        func_80434A4C__Q23mtl10MemManagerFb(false);
+        *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40) =
             reinterpret_cast<nw4r::lyt::ArcResourceAccessor*>(
                 createArcResourceAccessor__10CLibLayoutFv());
-        *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40) = acc;
         Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(
-            acc, fileData, &lbl_eu_805090FC[0x109]);
-        // Cylinder gauge: build on the stack, copy, destroy.
+            *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40),
+            fileData, &lbl_eu_805090FC[0x109]);
+        // Cylinder gauge: build on the stack, copy, destroy. The accessor
+        // is re-loaded from this+0x40 before every ctor (retail shape).
         __ct__16CMCCylinderGaugeFPQ34nw4r3lyt19ArcResourceAccessor(
-            cylGauge, acc);
+            cylGauge,
+            *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         *(u32*)(base + 0xbf0) = *(u32*)(cylGauge + 4);
         *(u32*)(base + 0xbf4) = *(u32*)(cylGauge + 8);
         *(u32*)(base + 0xbf8) = *(u32*)(cylGauge + 0xc);
@@ -3310,7 +3403,9 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         __dt__16CMCCylinderGaugeFv(cylGauge, -1);
         func_80221EF4__16CMCCylinderGaugeFv(base + 0xbec);
         // Crystal support: same build/copy/destroy pattern.
-        __ct__CMCCrystalSupport(crySupport, acc);
+        __ct__CMCCrystalSupport(
+            crySupport,
+            *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         *(u32*)(base + 0xc74) = *(u32*)(crySupport + 4);
         *(u32*)(base + 0xc78) = *(u32*)(crySupport + 8);
         *(u32*)(base + 0xc7c) = *(u32*)(crySupport + 0xc);
@@ -3321,37 +3416,56 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         __dt__17CMCCrystalSupportFv(crySupport, -1);
         func_8022E8F8(base + 0xc70);
         // Effect objects: build on stack, install via func_80211CB8, destroy.
-        __ct__CMCEffStart(effStart, acc);
+        __ct__CMCEffStart(
+            effStart,
+            *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         func_80211CB8(base + 0xc8c, effStart);
         __dt__11CMCEffStartFv(effStart, -1);
         reinterpret_cast<CMCEffInitVt*>(base + 0xc8c)->m1();
-        __ct__CMCEffUpRed(effUpRed, acc);
+        __ct__CMCEffUpRed(
+            effUpRed,
+            *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         func_80211CB8(base + 0xca4, effUpRed);
         __dt__11CMCEffUpRedFv(effUpRed, -1);
         reinterpret_cast<CMCEffInitVt*>(base + 0xca4)->m1();
-        __ct__CMCEffUpBlue(effUpBlue, acc);
+        __ct__CMCEffUpBlue(
+            effUpBlue,
+            *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         func_80211CB8(base + 0xcbc, effUpBlue);
         __dt__12CMCEffUpBlueFv(effUpBlue, -1);
         reinterpret_cast<CMCEffInitVt*>(base + 0xcbc)->m1();
-        __ct__CMCEffUpGreen(effUpGreen, acc);
+        __ct__CMCEffUpGreen(
+            effUpGreen,
+            *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         func_80211CB8(base + 0xcd4, effUpGreen);
         __dt__13CMCEffUpGreenFv(effUpGreen, -1);
         reinterpret_cast<CMCEffInitVt*>(base + 0xcd4)->m1();
-        // UpPrm: larger copy with an 8-byte-per-iteration loop.
-        __ct__CMCEffUpPrm(effUpPrm, acc);
+        // UpPrm: larger copy with an 8-byte-per-iteration counted loop
+        // (same lwz/lwzu + stw/stwu pair idiom as the item-box tables).
+        __ct__CMCEffUpPrm(
+            effUpPrm,
+            *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         base[0xcf0] = effUpPrm[4];
-        u8* ps = effUpPrm + 8;
-        u8* pd = base + 0xcf4;
-        for (u32 k = 0; k < 0xc; k++) {
-            *(u32*)(pd + 4) = *(u32*)(ps + 4);
-            *(u32*)pd = *(u32*)ps;
-            ps += 8;
-            pd += 8;
+        *(u32*)(base + 0xcf4) = *(u32*)(effUpPrm + 8);
+        {
+            u32 n = 0xc;
+            u32* s = reinterpret_cast<u32*>(effUpPrm + 0xc);
+            u32* d = reinterpret_cast<u32*>(base + 0xcf8);
+            u32* ss = s - 1;
+            u32* dd = d - 1;
+            do {
+                u32 a = *(ss + 1);
+                u32 b = *(ss += 2);
+                *(dd + 1) = a;
+                *(dd += 2) = b;
+            } while (--n);
         }
         base[0xd58] = effUpPrm[0x6c];
         __dt__11CMCEffUpPrmFv(effUpPrm, -1);
         init__11CMCEffUpPrmFv(base + 0xcec);
-        __ct__CMCEffSuccess(effSuccess, acc);
+        __ct__CMCEffSuccess(
+            effSuccess,
+            *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         base[0xd60] = effSuccess[4];
         base[0xd61] = effSuccess[5];
         *(u32*)(base + 0xd64) = *(u32*)(effSuccess + 8);
@@ -3361,11 +3475,15 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         base[0xd74] = effSuccess[0x18];
         __dt__13CMCEffSuccessFv(effSuccess, -1);
         reinterpret_cast<CMCEffInitVt*>(base + 0xd5c)->m1();
-        __ct__CMCEffFailure(effFailure, acc);
+        __ct__CMCEffFailure(
+            effFailure,
+            *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         func_80211CB8(base + 0xd78, effFailure);
         __dt__13CMCEffFailureFv(effFailure, -1);
         reinterpret_cast<CMCEffInitVt*>(base + 0xd78)->m1();
-        __ct__CMCEffCrystal(effCrystal, acc);
+        __ct__CMCEffCrystal(
+            effCrystal,
+            *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         base[0xd94] = effCrystal[4];
         base[0xd95] = effCrystal[5];
         *(u32*)(base + 0xd98) = *(u32*)(effCrystal + 8);
@@ -3384,15 +3502,21 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         base[0xdc8] = effCrystal[0x38];
         __dt__13CMCEffCrystalFv(effCrystal, -1);
         reinterpret_cast<CMCEffInitVt*>(base + 0xd90)->m1();
-        __ct__CMCEffUpRank(effUpRank, acc);
+        __ct__CMCEffUpRank(
+            effUpRank,
+            *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         func_80211CB8(base + 0xdcc, effUpRank);
         __dt__12CMCEffUpRankFv(effUpRank, -1);
         reinterpret_cast<CMCEffInitVt*>(base + 0xdcc)->m1();
-        __ct__CMCEffDivide(effDivide, acc);
+        __ct__CMCEffDivide(
+            effDivide,
+            *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         func_80211CB8(base + 0xde4, effDivide);
         __dt__12CMCEffDivideFv(effDivide, -1);
         reinterpret_cast<CMCEffInitVt*>(base + 0xde4)->m1();
-        __ct__CMCEffCylinder(effCylinder, acc);
+        __ct__CMCEffCylinder(
+            effCylinder,
+            *reinterpret_cast<nw4r::lyt::ArcResourceAccessor**>(base + 0x40));
         base[0xe00] = effCylinder[4];
         base[0xe01] = effCylinder[5];
         *(u32*)(base + 0xe04) = *(u32*)(effCylinder + 8);
@@ -3418,14 +3542,16 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
         return 1;
     }
     // Case 4: a per-slot crystal model file completed - clear the slot's
-    // record and link the next handle.
+    // record and link the next handle. The event handle is re-read inside
+    // the inner loop (retail keeps the reload live across iterations).
     u8 s = 0;
     do {
         u8* slotBase = base + (u32)s * 0x5cc + 0x44;
+        u32 n = 6;
         u8 j = 0;
         do {
             u8* e = slotBase + (u32)j * 0xc;
-            if (*(u32*)(e + 0x564) == reinterpret_cast<u32>(handle)) {
+            if (*(u32*)(e + 0x564) == reinterpret_cast<u32>(ev->mFileHandle)) {
                 void* rec = reinterpret_cast<void*>(*(u32*)(e + 0x564));
                 void* nxt = *reinterpret_cast<void**>(reinterpret_cast<u8*>(rec) + 4);
                 *reinterpret_cast<void**>(reinterpret_cast<u8*>(rec) + 4) = 0;
@@ -3434,7 +3560,7 @@ int CModelDispMakeCrystal::OnFileEvent(CEventFile* ev)
                 return 1;
             }
             j++;
-        } while (j < 6);
+        } while (--n);
         s++;
     } while (s < 2);
     return 0;

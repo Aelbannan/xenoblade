@@ -1200,8 +1200,8 @@ extern "C" int func_8003E4D0(VMThread* pThread, int handle) {
 extern "C" int func_8003E528(VMThread* pThread, int handle) {
     // Declaration order controls MWCC's r30/r31 naming here: the OC handle
     // must land in r30 and the object pointer in r31 to match retail.
-    u32 ocHandle;
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(func_801862C0(), handle);
+    u32 ocHandle;
     ocHandle = obj->CObjectParam_UnkVirtualFunc5();
     if (!ocHandle) {
         if (obj == (cf::CfObject*)cf::CfGameManager::getPlayer(0)) {
@@ -1556,11 +1556,10 @@ extern "C" int setRot(VMThread* pThread, int handle) {
     void* ctx = func_801862C0();
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     // Fixed-point degrees -> radians via MWCC's direct 2^52 conversion.
-    // Constant written left of the division to match retail reg allocation.
     Vec3f vec;
-    vec.x = lbl_eu_8066A210 * ((float)(s32)rotX / lbl_eu_80665C30);
-    vec.y = lbl_eu_8066A210 * ((float)(s32)rotY / lbl_eu_80665C30);
-    vec.z = lbl_eu_8066A210 * ((float)(s32)rotZ / lbl_eu_80665C30);
+    vec.x = ((float)(s32)rotX / lbl_eu_80665C30) * lbl_eu_8066A210;
+    vec.y = ((float)(s32)rotY / lbl_eu_80665C30) * lbl_eu_8066A210;
+    vec.z = ((float)(s32)rotZ / lbl_eu_80665C30) * lbl_eu_8066A210;
     obj->CfObject_UnkVirtualFunc27(&vec);
     return 0;
 }

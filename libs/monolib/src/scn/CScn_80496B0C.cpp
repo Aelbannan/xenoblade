@@ -173,7 +173,7 @@ struct CScnChild80496B0C {
     CScnNode80496B0C* field_0x84[3];      // +0x84 (node-binding slots)
     s16 field_0x90;                       // +0x90
     s16 field_0x92;                       // +0x92
-    u16 field_0x94;                       // +0x94
+    s16 field_0x94;                       // +0x94
     s16 field_0x96;                       // +0x96
     nw4r::g3d::AnmObjChrBlend* field_0x98; // +0x98
     ml::CVec3 field_0x9C;                 // +0x9C
@@ -379,7 +379,7 @@ void func_80497AA8(CScn80496B0C* self) {
     CScnChild80496B0C* child2 = self->field_0xC;
     CScnModel80496B0C* model = self->field_0x4;
 
-    if (model->field_0x7A4 & 0x40000) {
+    if (model->field_0x7A4 & 0x2000) {
         // Quantized mode: round the scaled frame to an integer and feed the
         // same quantized frame to every bound animation object.
         s32 frames =
@@ -681,10 +681,10 @@ u16 func_80498288(CScnChild80496B0C* self, s32* pFrame, VTarget* pAnmObj,
                         lbl_eu_8056E9A8, lbl_eu_806639E4);
     }
     rec->field_0x1C = (f32)(s16)((VTarget*)data)->field_0x20;
-    if (flag == 0) {
-        rec->field_0x2 &= ~1;
-    } else {
+    if (flag != 0) {
         rec->field_0x2 |= 1;
+    } else {
+        rec->field_0x2 &= ~1;
     }
     rec->field_0x24 = lbl_eu_8066AAC0;
 

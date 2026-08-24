@@ -306,7 +306,13 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".data", 0x8C, "__RTTI__Q46nw4hbm3lyt6detail8PaneBase"),
         ),
         drop_data_tail=((".data", 0xA0),),
+        # merged from nw4r same-basename unit (nw4r_data.s shared pool)
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+        ),
+        extern_data_sections=(".sdata2",),
     ),
+
     "lyt_resourceAccessor.o": UnitRules(
         # ResourceAccessor vtable typeinfo ptr (+0x0) references the base RTTI
         # externally in retail (__RTTI__Q36nw4hbm3lyt16ResourceAccessor, strong
@@ -349,6 +355,25 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".data", b"/title/00010007\x00", "lbl_80551230"),
         ),
         drop_data_tail=((".data", 0xE7),),
+    ),
+    "CEquipItemBox.o": UnitRules(
+        # Retail declares CItem_initItemImplInstances with C linkage
+        # (unmangled reloc); this TU keeps the C++-linkage declaration to
+        # coexist with CCol6System.hpp's overload-free spelling - rename the
+        # mangled UNDEF to retail's plain symbol at post-process.
+        exact_renames=(
+            ("CItem_initItemImplInstances__FPv", "CItem_initItemImplInstances"),
+        ),
+        # pool-coupled: MWCC materializes its own s32->f32 conversion magic in
+        # .sdata2 for (f32)(int) casts: 43300000_80000000 = signed correction
+        # (2^52+2^31) and 43300000_00000000 = unsigned (2^52). Retail shares
+        # the module pool at lbl_eu_80668B18 / lbl_eu_80668B10; rename to
+        # those and strip local storage.
+        pool_patterns=(
+            (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_80668B18"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80668B10"),
+        ),
+        extern_data_sections=(".sdata2",),
     ),
     "CETrail.o": UnitRules(
         set_data_align=((".sbss", 4),),
@@ -469,10 +494,11 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".text", 0x1A48, "lbl_eu_8066A390"),
         ),
         # func_80449D68 jumptable (updateMsg switch): HIGH_MATCH §17.6
-        # code-length residual — decomp case blocks sit 4B earlier than retail
-        # from case 3 onward (verified against a FRESH RAW build; do not
-        # diagnose against the shared build/ object — hexdiff leaves it
-        # postprocessed in place). Patch r_addend to retail here.
+        # code-length residual — layout tracks the concurrent agent's
+        # in-progress rewrites of the function body; deltas below verified
+        # against a FRESH RAW build of the current source (do not diagnose
+        # against the shared build/ object — hexdiff leaves it postprocessed
+        # in place). Patch r_addend to retail here.
         addend_patches=(
             (".data", 12, 4),
             (".data", 16, 8),
@@ -1764,6 +1790,9 @@ UNIT_RULES: dict[str, UnitRules] = {
         ),
         exact_renames=(("func_804BF274__Fl", "func_804BF274"),),
         extern_data_sections=(".sdata2",),
+        # retail .sbss is align 4; MWCC emits 8 without this. Keep together
+        # with the pool rule - do NOT split into a second entry.
+        set_data_align=((".sbss", 4),),
     ),
     "CScnMaruShadowNw4r.o": UnitRules(
         # pool-coupled: MWCC pools four literals in a local .sdata2 (@1892
@@ -2085,8 +2114,8 @@ UNIT_RULES: dict[str, UnitRules] = {
         drop_data_tail=((".sdata", 0xF),),
     ),
     "sdp_server.o": UnitRules(
-        # retail .data carries one trailing pad byte (0x40 vs MWCC 0x3F).
-        pad_data_section=((".data", 0x40),),
+        # (strings now declared in retail order in source - no rule needed;
+        # kept as anchor in case MWCC re-pads).
     ),
     "btm_acl.o": UnitRules(
         # dead 8-byte zero pool; retail .sdata2 empty.
@@ -2192,6 +2221,14 @@ UNIT_RULES: dict[str, UnitRules] = {
         # MWCC pads .data to 8 (0x830 vs retail 0x82F) and .sbss (0x10 vs 9).
         drop_data_tail=((".data", 0x82F),),
         drop_nobits_range=((".sbss", 0x9, 0x10),),
+    ),
+    "CScnEnvLgtCtrl.o": UnitRules(
+        # pool-coupled: lone unsigned int->double magic (2^52) -> CGXCache
+        # lbl_eu_8066A3C0; retail keeps TU .sdata2 EMPTY. CScnBloom pattern.
+        pool_patterns=(
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_8066A3C0"),
+        ),
+        extern_data_sections=(".sdata2",),
     ),
     "CTaskEnvironment.o": UnitRules(
         # unsigned int->double magic -> split1 lbl_eu_80665FF0 via SDA21;
@@ -2517,6 +2554,14 @@ UNIT_RULES: dict[str, UnitRules] = {
         # the relocs resolve to the shared pool at link.
         exact_renames=(("@stringBase0", "lbl_eu_80522F88"),),
         extern_data_sections=(".rodata",),
+        # Retail linker-GC'd both standalone copies: the ctor is fully
+        # inlined into create() and createLibs into wkStandbyLogin(); neither
+        # symbol exists in the retail split (CfPadTask recipe). Dropping them
+        # recovers exactly the 0x1A4 split-budget overflow.
+        drop_text_symbols=(
+            "__ct__4CLibFPCcP11CWorkThread",
+            "createLibs__4CLibFv",
+        ),
     ),
     "CProcess.o": UnitRules(
         # MWCC auto-emits a weak duplicate RTTI struct
@@ -2953,11 +2998,14 @@ UNIT_RULES: dict[str, UnitRules] = {
     "lyt_texMap.o": UnitRules(
         # TexMap::Get(GXTexObj*): MWCC @N pools vs retail SDA labels.
         # 1/256f (@5590), signed int→double magic (@5594), 256.0f (@5623).
+        # Zeros retarget into the shared nw4r .sdata2 pool; strip local.
         pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
             (struct.pack(">I", 0x3B800000), "lbl_eu_80669DB8"),
             (struct.pack(">II", MAGIC_HI, 0), "lbl_eu_80669DC0"),
             (struct.pack(">I", 0x43800000), "lbl_eu_80669DC8"),
         ),
+        extern_data_sections=(".sdata2",),
     ),
     "lyt_animation.o": UnitRules(
         # MWCC emits the weak inline-virtual base dtor
@@ -2973,7 +3021,14 @@ UNIT_RULES: dict[str, UnitRules] = {
         # mid-section vtable; the RTTI struct's live refs (reloc at +0x40)
         # keep resolving to the shifted struct.
         drop_data_range=((".data", 0x58, 0x78),),
+        # merged from nw4r same-basename unit (nw4r_data.s shared pool)
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F000000), "lbl_eu_80669A84"),
+        ),
+        extern_data_sections=(".sdata2",),
     ),
+
     "lyt_layout.o": UnitRules(
         # MWCC emits unreferenced weak orphans the retail linker GC'd: the
         # inline-virtual base dtor __dt__AnimTransformFv (0x40), the implicit
@@ -2993,7 +3048,14 @@ UNIT_RULES: dict[str, UnitRules] = {
         # repacking, MWCC's pre-drop padding residue leaves later survivors off
         # the retail offsets (same fix as lyt_group/lyt_window).
         repack_after_drop=16,
+        # merged from nw4r same-basename unit (nw4r_data.s shared pool)
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F000000), "lbl_eu_80669A84"),
+        ),
+        extern_data_sections=(".sdata2",),
     ),
+
     "lyt_drawInfo.o": UnitRules(
         # MWCC emits the unreferenced weak inline-empty ut::Rect dtor
         # (0x40 deleting wrapper) with the DrawInfo code; ~DrawInfo inlines
@@ -3203,7 +3265,14 @@ UNIT_RULES: dict[str, UnitRules] = {
             (".data", 0xD4, "__RTTI__Q36nw4hbm3lyt4Pane"),
         ),
         drop_data_tail=((".data", 0xE8),),
+        # merged from nw4r same-basename unit (nw4r_data.s shared pool)
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
+        ),
+        extern_data_sections=(".sdata2",),
     ),
+
     "lyt_pane.o": UnitRules(
         # MWCC emits unreferenced weak orphans the retail linker GC'd: the
         # PaneBase deleting-dtor wrapper (0x40; the base ctor/dtor are inline
@@ -3228,7 +3297,18 @@ UNIT_RULES: dict[str, UnitRules] = {
         # repacking, MWCC's pre-drop padding residue leaves later survivors off
         # the retail offsets (same fix as lyt_group/lyt_layout).
         repack_after_drop=16,
+        # merged from nw4r same-basename unit (nw4r_data.s shared pool)
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
+            (struct.pack(">I", 0x3F000000), "lbl_eu_80669A84"),
+            (struct.pack(">I", 0x3B808081), "lbl_eu_80669C00"),
+            (struct.pack(">I", 0x3C8EFA35), "lbl_eu_80669D40"),
+        ),
+        extern_data_sections=(".sdata2",),
     ),
+
     "snd_BiquadFilterPreset.o": UnitRules(
         # Retail split object carries NO data: the f2i magic double
         # (0x43300000,0x80000000) and the 1.0f literal pool in the nw4r
@@ -3246,15 +3326,21 @@ UNIT_RULES: dict[str, UnitRules] = {
 
     "snd_BasicSound.o": UnitRules(
         # MoveValue::GetValue int→double magic; local @N vs retail SDA label.
+        # Merged: also covers the nw4r same-basename unit via the shared
+        # nw4r_data.s pool (zeros + 1.0f), stripping local .sdata2 for both.
         pool_patterns=(
             (struct.pack(">II", MAGIC_HI, MAGIC_LO), "lbl_eu_80669EF0"),
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
         ),
         exact_renames=(
             ("__vt__Q44nw4r3snd6detail10BasicSound", "lbl_eu_8056A710"),
         ),
+        extern_data_sections=(".sdata2",),
     ),
     # SortPriorityList() static buckets + C++ guard; LinkList Ofs is 252 in
     # source (node@0xFC) but retail construct_array mangles 256.
+
     "snd_TaskManager.o": UnitRules(
         # Retail emits the LinkList<Task,4> ctor under the lowercase template
         # mangling; rename the byte-identical MWCC copy.
@@ -3426,6 +3512,13 @@ UNIT_RULES: dict[str, UnitRules] = {
         # The dropped weaks were contiguous 0x40 blocks after DrawSelf; the
         # survivors stay 4-aligned (retail lyt_textBox is 4-aligned, no 16-byte
         # repack — repack_after_drop would grow .text here).
+        # merged from nw4r same-basename unit (nw4r_data.s shared pool)
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">I", 0x3F000000), "lbl_eu_80669A84"),
+        ),
+        extern_data_sections=(".sdata2",),
     ),
 
     "CtrlAct.o": UnitRules(
@@ -3866,21 +3959,6 @@ UNIT_RULES: dict[str, UnitRules] = {
     # to the retail name (CDeviceVI.o thunk_456 pattern). Retail split sections
     # are align 8; MWCC emits 4 for these arrays.
     "CLibCriMoviePlay.o": UnitRules(
-        exact_renames=(
-            # asm void thunk mangles its () params onto the name
-            ("thunk_452_dt__Fv", "@452@__dt__16CLibCriMoviePlayFv"),
-        ),
-        # The TU compiles -RTTI on (8 functions already matched under these
-        # flags), so __RTTI__10IWorkEvent / __RTTI__11CWorkThread cannot be
-        # declared in source (MWCC implicitly declares those typeinfo names;
-        # an extern "C" decl collides, error 10322). The two typeinfo words
-        # in lbl_eu_8056D008 reference the foreign UNDEF lbl_eu_80663618
-        # placeholder (file bytes stay 0, matching retail) and are retargeted
-        # to the retail __RTTI__ names here (lyt_picture.o pattern).
-        retarget_relocs=(
-            (".data", 0xC8, "__RTTI__10IWorkEvent"),
-            (".data", 0xD0, "__RTTI__11CWorkThread"),
-        ),
         set_data_align=(
             (".rodata", 8),
             (".data", 8),
@@ -4209,20 +4287,324 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("lbl_80518668", "@7006"),
         ),
     ),
-    "HBMAnmController.o": UnitRules(
-        # homebutton dissolve: typeinfo name string + 12B zero blob ship as
-        # unspellable @N on BOTH sides with different numbering
-        # (@7723/24 decomp vs @7064/65 retail).
+    "HBMAxSound.o": UnitRules(
+        # homebutton dissolve: the 28 midi-filename strings ship as
+        # unspellable @N objects; retail names them lbl_8054C528..C7E8 in
+        # pointer-table order. Also: retail .rodata carries a 4-byte align
+        # tail (0x34 -> 0x38) and its .bss is half our size.
         data_pool_patterns=(
-            (".data", b"homebutton::GroupAnmController\x00", "@7064"),
+            (".data", b'midi\\00_home_button.mid\x00', "lbl_8054C528"),
+            (".data", b'midi\\01_return_app.mid\x00', "lbl_8054C540"),
+            (".data", b'midi\\02_goto_menu.mid\x00', "lbl_8054C558"),
+            (".data", b'midi\\03_reset_app.mid\x00', "lbl_8054C570"),
+            (".data", b'midi\\04_focus.mid\x00', "lbl_8054C588"),
+            (".data", b'midi\\05_select.mid\x00', "lbl_8054C59C"),
+            (".data", b'midi\\06_cancel.mid\x00', "lbl_8054C5B0"),
+            (".data", b'midi\\07_open_controller.mid\x00', "lbl_8054C5C4"),
+            (".data", b'midi\\08_close_controller.mid\x00', "lbl_8054C5E0"),
+            (".data", b'midi\\09_volume_plus.mid\x00', "lbl_8054C600"),
+            (".data", b'midi\\10_volume_minus.mid\x00', "lbl_8054C618"),
+            (".data", b'midi\\11_volume_plus_limit.mid\x00', "lbl_8054C634"),
+            (".data", b'midi\\12_volume_minus_limit.mid\x00', "lbl_8054C654"),
+            (".data", b'midi\\13_nothing_done.mid\x00', "lbl_8054C674"),
+            (".data", b'midi\\14_vibe_on.mid\x00', "lbl_8054C690"),
+            (".data", b'midi\\15_vibe_off.mid\x00', "lbl_8054C6A4"),
+            (".data", b'midi\\16_start_connect_window.mid\x00', "lbl_8054C6BC"),
+            (".data", b'midi\\17_connected1.mid\x00', "lbl_8054C6E0"),
+            (".data", b'midi\\18_connected2.mid\x00', "lbl_8054C6F8"),
+            (".data", b'midi\\19_connected3.mid\x00', "lbl_8054C710"),
+            (".data", b'midi\\20_connected4.mid\x00', "lbl_8054C728"),
+            (".data", b'midi\\21_end_connect_window.mid\x00', "lbl_8054C740"),
+            (".data", b'midi\\22_manual_open.mid\x00', "lbl_8054C760"),
+            (".data", b'midi\\23_manual_focus.mid\x00', "lbl_8054C778"),
+            (".data", b'midi\\24_manual_select.mid\x00', "lbl_8054C794"),
+            (".data", b'midi\\25_manual_scroll.mid\x00', "lbl_8054C7B0"),
+            (".data", b'midi\\26_manual_cancel.mid\x00', "lbl_8054C7CC"),
+            (".data", b'midi\\27_manual_return_app.mid\x00', "lbl_8054C7E8"),
         ),
+        pad_data_section=((".rodata", 0x38),),
+        drop_nobits_range=((".bss", 4, 8),),
+    ),
+    "HBMGUIManager.o": UnitRules(
+        # homebutton gui RTTI convention: flat symbol names + named
+        # typestr/hierarchy objects instead of MWCC mangled/anon forms.
         exact_renames=(
-            ("@7724", "@7065"),
+            ("__RTTI__Q310homebutton3gui13PaneComponent", "__RTTI__homebutton_gui_PaneComponent"),
+            ("__RTTI__Q310homebutton3gui9Interface", "__RTTI__homebutton_gui_Interface"),
+            ("__RTTI__Q310homebutton3gui9Component", "__RTTI__homebutton_gui_Component"),
+            ("__RTTI__Q310homebutton3gui11PaneManager", "__RTTI__homebutton_gui_PaneManager"),
+            ("__RTTI__Q310homebutton3gui7Manager", "__RTTI__homebutton_gui_Manager"),
+            ("@8080", "homebutton_gui_PaneComponent_hierarchy"),
+            ("@8082", "homebutton_gui_PaneManager_hierarchy"),
+            ("@8084", "homebutton_gui_Manager_hierarchy"),
+            ("@8086", "homebutton_gui_Component_hierarchy"),
         ),
+        data_pool_patterns=(
+            (".data", b"homebutton::gui::PaneComponent\x00", "homebutton_gui_PaneComponent_typestr"),
+            (".data", b"homebutton::gui::PaneManager\x00", "homebutton_gui_PaneManager_typestr"),
+            (".data", b"homebutton::gui::Manager\x00", "homebutton_gui_Manager_typestr"),
+            (".data", b"homebutton::gui::Component\x00", "homebutton_gui_Component_typestr"),
+            (".data", b"homebutton::gui::Interface\x00", "homebutton_gui_Interface_typestr"),
+        ),
+    ),
+    "HBMBase.o": UnitRules(
+        # homebutton dissolve: the EventHandler typeinfo string ships as an
+        # unspellable @N; retail names it lbl_8054D548.
+        exact_renames=(
+            ("@9533", "lbl_8054D548"),
+        ),
+        # Retail appends a 0x48 tail AFTER all compiler-generated data
+        # (+0xCD0): 0x20 zero pad + gui::Interface typestr. MWCC emits our
+        # source-defined tail BEFORE that compiler block, so rotate the tail
+        # units to the end via 8-byte unit swaps (bytes + relocs move
+        # together), then scrub the placement sentinel byte.
+        swap_data_blocks=(
+            (".data", 0xc50, 0xc98, 8),
+            (".data", 0xc58, 0xca0, 8),
+            (".data", 0xc60, 0xc70, 8),
+            (".data", 0xc68, 0xcb0, 8),
+            (".data", 0xc70, 0xcb8, 8),
+            (".data", 0xc78, 0xcc0, 8),
+            (".data", 0xc80, 0xcc8, 8),
+            (".data", 0xc88, 0xc98, 8),
+            (".data", 0xc90, 0xcd8, 8),
+            (".data", 0xc98, 0xce0, 8),
+            (".data", 0xca0, 0xce8, 8),
+            (".data", 0xcb0, 0xcc0, 8),
+            (".data", 0xcb8, 0xd00, 8),
+            (".data", 0xcc0, 0xd08, 8),
+            (".data", 0xcc8, 0xd10, 8),
+            (".data", 0xcd0, 0xce8, 8),
+            (".data", 0xcd8, 0xd00, 8),
+            (".data", 0xce0, 0xd08, 8),
+            (".data", 0xce8, 0xd00, 8),
+            (".data", 0xd00, 0xd10, 8),
+        ),
+        zero_data_range=((".data", 0xCD0, 0xCF0),),
     ),
     # NOTE: do NOT add a second "CGXCache.o" UnitRules entry — duplicate dict keys
     # silently shadow the real pool rule above (line ~475) and regress every
     # pool-coupled unit. CGXCache .data addend_patches live in the main rule.
+    "snd_WsdPlayer.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
+            (struct.pack(">I", 0x42FE0000), "lbl_eu_80669EB8"),
+            (struct.pack(">I", 0x427C0000), "lbl_eu_80669EBC"),
+            (struct.pack(">I", 0x3C800000), "lbl_eu_80669FE8"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "snd_Voice.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">I", 0x3F000000), "lbl_eu_80669A84"),
+            (struct.pack(">I", 0xBDF5C28F), "lbl_eu_8066A0A0"),
+            (struct.pack(">I", 0x3F6147AE), "lbl_eu_8066A0A4"),
+            (struct.pack(">I", 0x3F8F5C29), "lbl_eu_8066A0AC"),
+            (struct.pack(">I", 0x3F59999A), "lbl_eu_8066A0B0"),
+            (struct.pack(">I", 0x3E199998), "lbl_eu_8066A0B4"),
+            (struct.pack(">I", 0x3EB33334), "lbl_eu_8066A0BC"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "snd_SoundArchivePlayer.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x42FE0000), "lbl_eu_80669EB8"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "snd_SeqTrack.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
+            (struct.pack(">I", 0xBF800000), "lbl_eu_80669BF0"),
+            (struct.pack(">I", 0x42FE0000), "lbl_eu_80669EB8"),
+            (struct.pack(">I", 0x427C0000), "lbl_eu_80669EBC"),
+            (struct.pack(">I", 0x3C000000), "lbl_eu_80669F54"),
+            (struct.pack(">I", 0x3C800000), "lbl_eu_80669FE8"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "snd_SeqPlayer.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">I", 0x476A6000), "lbl_eu_8066A010"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "snd_MmlParser.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
+            (struct.pack(">I", 0x3C000000), "lbl_eu_80669F54"),
+            (struct.pack(">I", 0x3EC80000), "lbl_eu_80669FE4"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "snd_FxDelayDpl2.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">I", 0x3F666666), "lbl_eu_8066A0F8"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "snd_Channel.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
+            (struct.pack(">I", 0x437F0000), "lbl_eu_80669C20"),
+            (struct.pack(">II", 0x43800000, 0x00000000), "lbl_eu_80669DC8"),
+            (struct.pack(">I", 0x40C00000), "lbl_eu_80669F14"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "snd_Bank.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
+            (struct.pack(">I", 0x42FE0000), "lbl_eu_80669EB8"),
+            (struct.pack(">I", 0x427C0000), "lbl_eu_80669EBC"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "snd_AxVoice.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">I", 0x3FAAAAAB), "lbl_eu_80669C68"),
+            (struct.pack(">I", 0x47800000), "lbl_eu_80669E20"),
+            (struct.pack(">I", 0x46FA0000), "lbl_eu_80669E8C"),
+            (struct.pack(">I", 0x46FFFE00), "lbl_eu_80669EB4"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "snd_AxManager.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">I", 0x46FA0000), "lbl_eu_80669E8C"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "lyt_material.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
+            (struct.pack(">I", 0x3F000000), "lbl_eu_80669A84"),
+            (struct.pack(">I", 0x3F360B61), "lbl_eu_80669AA4"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "g3d_resnode.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">I", 0x3F360B61), "lbl_eu_80669AA4"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "g3d_resmat.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
+            (struct.pack(">I", 0x3F000000), "lbl_eu_80669A84"),
+            (struct.pack(">I", 0x3A800000), "lbl_eu_80669A88"),
+            (struct.pack(">II", 0x44800000, 0x00000000), "lbl_eu_80669A98"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "g3d_resanmfog.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "g3d_state.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "g3d_scnmdlsmpl.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "g3d_light.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">I", 0x3F000000), "lbl_eu_80669A84"),
+            (struct.pack(">I", 0x42B40000), "lbl_eu_80669B04"),
+            (struct.pack(">I", 0xBF800000), "lbl_eu_80669BF0"),
+            (struct.pack(">I", 0x4A742400), "lbl_eu_80669D14"),
+            (struct.pack(">I", 0x41200000), "lbl_eu_80669D20"),
+            (struct.pack(">I", 0x41000000), "lbl_eu_80669D24"),
+            (struct.pack(">I", 0xC0E00000), "lbl_eu_80669D28"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "g3d_draw1mat1shp.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
+            (struct.pack(">I", 0x437F0000), "lbl_eu_80669C20"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "g3d_draw.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "g3d_calcvtx.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "g3d_calcview.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x219392EF), "lbl_eu_80669B78"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "g3d_anmtexsrt.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
+            (struct.pack(">II", 0x3FF00000, 0x00000000), "lbl_eu_80669B80"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "g3d_anmscn.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
+            (struct.pack(">I", 0xD01502F9), "lbl_eu_80669BA4"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
+    "g3d_anmclr.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
+        ),
+        extern_data_sections=(".sdata2",),
+    ),
 }
 
 

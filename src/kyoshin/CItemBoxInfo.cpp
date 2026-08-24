@@ -24,7 +24,7 @@ int sprintf(char*, const char*, ...);
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void func_80127BD8(void*, float*);
 char* func_80136190(char*, char*, u32);
-char* func_8013639C(void*, char*);
+extern "C" char* func_8013639C(void*, char*);
 u8 func_801392B4(u32);
 u32 func_801392C0();
 u32 func_8013600C(void*, const char*, u32);
@@ -585,23 +585,32 @@ void __declspec(noinline) func_801D5564(void* out, void* unused, void* data, voi
 // output-word stores. dont_inline keeps IPA from folding this body into
 // func_801D8058/func_801E3730, which lets them keep both stack arrays.
 void func_801D59C0(u32* out, void* unused, void* arg2) {
+    CItemBoxLabelRec r;
     void* tbl = lbl_eu_80664104;
     func_801392E4((u32)arg2);
-    u32 cat = func_80139358((u32)arg2);
+    // cat stays a raw u16 in a register; each call site re-applies the
+    // u16->u32 argument conversion (retail clrlwi per site, no shared temp).
+    u16 cat = func_80139358((u32)arg2);
+    // base is anchored at the first lookup so its definition schedules after
+    // the cat move (retail order: or r30,r3 then lis/addi).
+    r.a = (u8)func_801361E8((u32)tbl, (char*)&lbl_eu_805063BC + 0x214, cat);
     char* base = (char*)&lbl_eu_805063BC;
-    u32 v0 = func_801361E8((u32)tbl, base + 0x214, (u16)cat);
-    char* v1 = func_80136190(base + 0x219, base + 0x139, (u8)v0);
-    u32 v2 = func_801361E8((u32)tbl, base + 0x225, (u16)cat);
-    char* v3;
-    if ((u8)v2 == 0x1A) {
-        v3 = func_80136190(base + 0x219, base + 0x139, 0x14);
+    r.b = func_80136190(base + 0x219, base + 0x139, r.a);
+    // Residual: retail narrows this result into r5, we pick r0 - a
+    // scheduler-driven compare-temp allocation choice insensitive to every
+    // source shape tried (named local, raw+cast, assign-in-cond, & 0xFF).
+    r.c = (u8)func_801361E8((u32)tbl, base + 0x225, cat);
+    if (r.c == 0x1A) {
+        r.d = func_80136190(base + 0x219, base + 0x139, 0x14);
     } else {
-        v3 = func_8013639C(lbl_eu_806640A8, base + 0x139);
+        r.d = func_8013639C(lbl_eu_806640A8, base + 0x139);
     }
-    out[0] = v0;
-    out[1] = (u32)v1;
-    out[2] = v2;
-    out[3] = (u32)v3;
+    // Word-wise copy: retail expands the record copy as four lwz/stw pairs.
+    u32* src = (u32*)&r;
+    out[0] = src[0];
+    out[1] = src[1];
+    out[2] = src[2];
+    out[3] = src[3];
 }
 #pragma pop
 
@@ -634,32 +643,45 @@ void func_801D5AA0(CItemBoxInfo* out, void* unused, void* data) {
     ((u8*)out)[8] = flag2;
 }
 void func_801D5C38(void* out, void* unused, void* data, void* arg3) {
-    void* p = arg3 != 0 ? arg3 : 0;
+    void* p;
+    if (arg3 != NULL)
+        p = arg3;
+    else
+        p = NULL;
     func_801392E4((u32)data);
     func_80139358((u32)data);
-    CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(p);
-    u32 r = inst->_v08(p);
     CItemBoxSlotRecord1 rec;
-    rec.count = (u8)r;
-    char* base = (char*)&lbl_eu_805063BC;
-    rec.str = (u32)func_80136190(&base[0x130], &base[0x139], 0x1e - ((u8)r - 1));
+    // Chained call + virtual dispatch: no named intermediate keeps the result
+    // web dead after each use, matching retail's direct r3 consumption.
+    u32 v08 = ((CItemImplVt*)CItem_initItemImplInstances(p))->_v08(p);
+    rec.count = (u8)v08;
+    char* base = lbl_eu_805063BC;
+    rec.str = (u32)func_80136190(&base[0x130], &base[0x139], 0x1e - ((u8)v08 - 1));
     rec.counter = 0;
     for (u32 i = 0; i < 4; i++) {
-        CItemImplVt* inst2 = (CItemImplVt*)CItem_initItemImplInstances(p);
-        u16 n = inst2->_v4C(p, (u8)i);
-        if (n > 0) {
+        u32 n = ((CItemImplVt*)CItem_initItemImplInstances(p))->_v4C(p, (u8)i);
+        // Signed >0 test: folds into the record-form clrlwi as retail's ble.
+        if ((s32)n > 0) {
             // Retail passes the pair count n as a third arg to func_8013639C.
             rec.text[rec.counter] =
-                (u32)((char*(*)(void*, const char*, u16))&func_8013639C)(lbl_eu_806640D8, &base[0x139], n);
-            CItemImplVt* inst3 = (CItemImplVt*)CItem_initItemImplInstances(p);
-            rec.vals[rec.counter] = inst3->_v64(p, (u8)i);
+                (u32)((char*(*)(void*, char*, u32))&func_8013639C)(lbl_eu_806640D8, &base[0x139], n);
+            rec.vals[rec.counter] = ((CItemImplVt*)CItem_initItemImplInstances(p))->_v64(p, (u8)i);
             rec.counts[rec.counter] = n;
             rec.counter++;
         }
     }
-    // 0x2C-byte copy: MWCC inlines constant-size memcpy as the retail mtctr
-    // 8-byte-pair loop (5 pairs + 4-byte tail).
-    memcpy(out, &rec, 0x2C);
+    // 0x2C-byte copy: retail mtctr 8-byte-pair loop (li r0,5 + 4-byte tail).
+    {
+        u32* s = (u32*)&rec - 1;
+        u32* d = (u32*)out - 1;
+        for (u32 k = 0; k < 5; k++) {
+            d[1] = s[1];
+            d[2] = s[2];
+            s += 2;
+            d += 2;
+        }
+        d[1] = s[1];
+    }
 }
 void func_801D5DA4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     func_801D8318(info);
@@ -1229,6 +1251,7 @@ void func_801D8318(CItemBoxInfo* info) {
 #pragma dont_inline on
 extern "C" void func_801D85D8(CItemBoxInfo* info) {
     char* base = (char*)&lbl_eu_805063BC;
+    u32 i;
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x267, base + 0x2aa, 0);
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x273, base + 0x2aa, 0);
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x29e, base + 0x2aa, 0);
@@ -1320,10 +1343,10 @@ void func_801D8930(CItemBoxInfo* info) {
         // and +0xAA; retail stages the four arrays at sp+0x08..0x17 and the
         // u32 varargs copy at sp+0x18..0x27.
         s16 zero = 0;
-        s16 c1lo[2] = {zero, zero};
-        s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
-        s16 c0lo[2] = {zero, zero};
         s16 c0hi[2] = {zero, *(s16*)((u8*)info + 0xA2)};
+        s16 c0lo[2] = {zero, zero};
+        s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
+        s16 c1lo[2] = {zero, zero};
         u32 args[4];
         args[0] = *(u32*)c0lo;
         args[1] = *(u32*)c0hi;
@@ -3162,25 +3185,22 @@ void setItemBoxEntry(CItemBoxInfoEntry* self, u16 a, u32 b, u8 c) {
 }
 
 s32 func_801DF4E0(void* a, void* b, s32 arg2, void* d) {
-    // Single-expression sum: MWCC evaluates call args right-to-left, so the
-    // retail bl order (func_801DFD60 first) falls out of this textual order.
-    s32 prod = arg2 * (s32)(func_801DF610(a, b, 0x52, d) + func_801DFD60(a, b, 0x2d) + 0x64);
-    // Retail int->float via the 0x4330 double trick: build (2^52 | low) with
-    // the sign bit flipped for signedness, subtract 2^52 (lbl_eu_80668028).
-    union { double d; u32 w[2]; } u;
-    u.w[0] = 0x43300000;
-    u.w[1] = (u32)prod ^ 0x80000000;
-    return (s32)((f32)(u.d - lbl_eu_80668028) * lbl_eu_80668040);
+    // MWCC emits the 0x4330/xoris int->float trick natively for the plain
+    // (f32) cast on Broadway (no fcfid); keep it as a simple cast.
+    // Same shape as func_801DF578: statement-ordered calls, builtin
+    // s32->f32 cast emits MWCC's 0x4330/xoris double-trick.
+    u32 t1 = func_801DFD60(a, b, 0x2d);
+    u32 t2 = func_801DF610(a, b, 0x52, d);
+    return (s32)(lbl_eu_80668040 * (f32)(arg2 * (s32)(t2 + t1 + 0x64)));
 }
 
 s32 func_801DF578(void* a, void* b, s32 arg2, void* d) {
-    // Single-expression sum: MWCC evaluates call args right-to-left, so the
-    // retail bl order (func_801DFD60 first) falls out of this textual order.
+    // Statement-ordered calls keep the retail bl order; single-expression sum
+    // keeps the values in registers like retail. The builtin s32->f32 cast
+    // emits MWCC's 0x4330/xoris double-trick.
     u32 t1 = func_801DFD60(a, b, 0x2d);
     u32 t2 = func_801DF610(a, b, 0x53, d);
-    s32 sum = (s32)(t2 + t1 + 0x64);
-    // Retail uses the builtin int->float cast (single-rounded fsubs idiom).
-    return (s32)(lbl_eu_80668040 * (float)(arg2 * sum));
+    return (s32)(lbl_eu_80668040 * (float)(arg2 * (s32)(t2 + t1 + 0x64)));
 }
 // Retail func_801DF610: sum the equipped-effect values for one stat category.
 // Six slots are scanned via the lookup table (s16 ids at +0x26/+0x1C..0x24
@@ -4189,23 +4209,32 @@ void func_801E20FC(void* out, void* unused, void* data, void* arg3) {
 // Twin of func_801D59C0 (see comment there). dont_inline keeps IPA from
 // folding this body into func_801E3730.
 void func_801E2558(u32* out, void* info, void* arg2) {
+    CItemBoxLabelRec r;
     void* tbl = lbl_eu_80664104;
     func_801392E4((u32)arg2);
-    u32 cat = func_80139358((u32)arg2);
+    // cat stays a raw u16 in a register; each call site re-applies the
+    // u16->u32 argument conversion (retail clrlwi per site, no shared temp).
+    u16 cat = func_80139358((u32)arg2);
+    // base is anchored at the first lookup so its definition schedules after
+    // the cat move (retail order: or r30,r3 then lis/addi).
+    r.a = (u8)func_801361E8((u32)tbl, (char*)&lbl_eu_805063BC + 0x214, cat);
     char* base = (char*)&lbl_eu_805063BC;
-    u32 v0 = func_801361E8((u32)tbl, base + 0x214, (u16)cat);
-    char* v1 = func_80136190(base + 0x219, base + 0x139, (u8)v0);
-    u32 v2 = func_801361E8((u32)tbl, base + 0x225, (u16)cat);
-    char* v3;
-    if ((u8)v2 == 0x1A) {
-        v3 = func_80136190(base + 0x219, base + 0x139, 0x14);
+    r.b = func_80136190(base + 0x219, base + 0x139, r.a);
+    // Residual: retail narrows this result into r5, we pick r0 - a
+    // scheduler-driven compare-temp allocation choice insensitive to every
+    // source shape tried (named local, raw+cast, assign-in-cond, & 0xFF).
+    r.c = (u8)func_801361E8((u32)tbl, base + 0x225, cat);
+    if (r.c == 0x1A) {
+        r.d = func_80136190(base + 0x219, base + 0x139, 0x14);
     } else {
-        v3 = func_8013639C(lbl_eu_806640A8, base + 0x139);
+        r.d = func_8013639C(lbl_eu_806640A8, base + 0x139);
     }
-    out[0] = v0;
-    out[1] = (u32)v1;
-    out[2] = v2;
-    out[3] = (u32)v3;
+    // Word-wise copy: retail expands the record copy as four lwz/stw pairs.
+    u32* src = (u32*)&r;
+    out[0] = src[0];
+    out[1] = src[1];
+    out[2] = src[2];
+    out[3] = src[3];
 }
 #pragma pop
 
@@ -4216,33 +4245,39 @@ void func_801E2558(u32* out, void* info, void* arg2) {
 #pragma push
 #pragma optimize_for_size on
 void func_801E2638(CItemBoxInfo2* info, u16 arg2, void* data) {
+    // Table handle is anchored before the first call so its sdata2 load
+    // schedules above the func_801392E4 call (retail lwz r26 first).
     void* global = lbl_eu_80664110;
-    u16 v1 = func_801392E4((u32)data);
-    u16 v2 = func_80139358((u32)data);
     u8 arr[8];
-    arr[0] = (u8)func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x22b], v2);
-    u32 count = func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x237], v2);
+    u8 flag2;
+    func_801392E4((u32)data);
+    u16 cat = func_80139358((u32)data);
+    // base is anchored after the cat move (retail: mr r27,r3 then lis/addi).
+    char* base = (char*)&lbl_eu_805063BC;
+    arr[0] = (u8)func_801361E8((u32)global, base + 0x22b, cat);
+    u32 count = func_801361E8((u32)global, base + 0x237, cat);
     u8 count8 = (u8)count;
     for (u8 i = 0; i < code80135FDC_getByte_64077(); i++) {
         u8 a = (u8)func_801392B4(i);
         // plain bool store: MWCC lowers == to subf/cntlzw/srwi here
         arr[i + 1] = a == count8;
     }
-    u32 key = func_801361E8((u32)global, (char*)&lbl_eu_805063BC[0x23f], v2);
-    u32 val = func_8013600C((char*)&lbl_eu_805063BC[0x248], (char*)&lbl_eu_805063BC[0x250], (u8)key);
+    u32 key = func_801361E8((u32)global, base + 0x23f, cat);
+    u32 val = func_8013600C(base + 0x248, base + 0x250, (u8)key);
     void* lookup = func_8009EC9C((u8)count);
-    u8 cat = (u8)func_800A32BC();
-    u8* entry = (u8*)lookup + cat * 0x49 + (u8)val * 2;
-    u8 flag2 = 0;
-    u8* flag2p = &flag2;
+    u8 category = (u8)func_800A32BC();
+    // Per-category item row: stride 0x49, pairs of bytes per entry.
+    u8* entry = (u8*)lookup + category * 0x49 + (u8)val * 2;
+    flag2 = 0;
     switch (arr[0]) {
-        case 1: if (entry[0xE8] != 0) *flag2p = 1; break;
-        case 2: if ((entry[0xE9] >> 0) & 1) *flag2p = 1; break;
-        case 3: if ((entry[0xE9] >> 1) & 1) *flag2p = 1; break;
+        case 1: if (entry[0xE8] != 0) flag2 = 1; break;
+        case 2: if ((entry[0xE9] >> 0) & 1) flag2 = 1; break;
+        case 3: if ((entry[0xE9] >> 1) & 1) flag2 = 1; break;
     }
+    // Word-wise copy of the 8-byte slot table plus the trailing flag byte.
     *(u32*)((u8*)info + 0) = *(u32*)arr;
     *(u32*)((u8*)info + 4) = *(u32*)(arr + 4);
-    ((u8*)info)[8] = *flag2p;
+    ((u8*)info)[8] = flag2;
 }
 #pragma pop
 // Retail func_801E27D0 fills a 0x24-byte slot record (count byte, string ptr,
@@ -4531,30 +4566,43 @@ void func_801E3730(CItemBoxInfo2* info, u32 arg2) {
 }
 #pragma pop
 // Retail func_801E37C4: run the two layout preps, build a 0x24-byte slot
-// record via func_801E27D0, copy it to a local, then label every slot: a
-// count-driven loop of 4-byte pane names + per-item text/val colour labels
-// (FixStr<32> buffer sits between the record and the copy in the frame).
+// record via func_801E27D0, struct-copy it to a local (retail mtctr 8-byte
+// pair loop), then label every slot: a count-driven loop of pane-name
+// sprintf + per-item text/value colour labels (inlined FixStr<32> ctor).
+#pragma push
+#pragma optimize_for_size on
+#pragma auto_inline off
+// Word-array view: assigning the union copies the whole object as one block
+// (reproduces the retail mtctr lwzu/stwu pair loop) instead of expanding
+// field-by-field.
+union CItemBoxSlotRecAny {
+    CItemBoxSlotRecord rec;
+    u32 w[9];
+};
 void func_801E37C4(CItemBoxInfo2* info, void* arg1, void* arg2) {
+    // Frame-slot order matters: cur > text > out > paneName (descending).
+    CItemBoxSlotRecAny cur;
+    ml::FixStr<32> text(false);
+    CItemBoxSlotRecAny out;
     char paneName[0x20];
-    u8 out[0x24];
     func_801E40E8(info);
     func_801E3B9C(info);
-    func_801E27D0(out, info, arg1, arg2);
-    u8 dst[0x24];
-    memcpy(dst, out, 0x24);
-    nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34);
-    char* base = (char*)&lbl_eu_805063BC;
-    func_80136B4C(layout, &base[0x4a7], *(const char**)(dst + 4), 0);
-    u8 count = dst[0x21];
+    func_801E27D0((u8*)&out.rec, info, arg1, arg2);
+    cur = out;
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x4a7], (char*)cur.rec.str, 0);
+    u8 count = cur.rec.tail[1];
     for (u8 i = 0; i < count; i++) {
-        sprintf(paneName, &base[0x4b3], (u8)i * 2 + 0x1f);
-        func_80136B4C(layout, paneName, *(const char**)(dst + 8 + (u8)i * 4), 0);
-        ml::FixStr<32> text;
-        sprintf(paneName, &base[0x4c0], (u8)i + 0x1f);
-        text.format(&base[0x13e], dst[0x1c + i], func_80136190(&base[0x130], &base[0x139], 0x21));
-        func_80136B4C(layout, paneName, text.c_str(), 0);
+        sprintf(paneName, &lbl_eu_805063BC[0x4b3], (u8)i * 2 + 0x1f);
+        func_80136B4C((nw4r::lyt::Layout*)info->state.layout, paneName, (char*)cur.rec.text[i], 0);
+        text.clear();
+        sprintf(paneName, &lbl_eu_805063BC[0x4c0], (u8)i + 0x1f);
+        text.format(&lbl_eu_805063BC[0x13e], cur.rec.vals[i],
+                    func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 0x21));
+        func_80136B4C((nw4r::lyt::Layout*)info->state.layout, paneName, text.c_str(), 0);
     }
 }
+#pragma auto_inline reset
+#pragma pop
 void func_801E3918(CItemBoxInfo2* info) {
     // i declared first: retail claims r31 for the loop counter before any
     // other saved local (register_mapping.md Rule A).
@@ -4678,37 +4726,46 @@ void func_801E3DE4(CItemBoxInfo2* info) {
     }
 }
 #pragma pop
+#pragma push
+#pragma optimize_for_size on
+#pragma dont_inline on
 void func_801E3EB8(CItemBoxInfo2* info) {
-    char* base = (char*)&lbl_eu_805063BC;
-    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x44f, base + 0x2aa, 0);
+    // Retail uses the stmw/lmw frame (optimize_for_size prologue merge).
+    // dont_inline keeps IPA from restructuring this leaf renderer.
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, &lbl_eu_805063BC[0x44f], &lbl_eu_805063BC[0x2aa], 0);
     char buf[0x20];
-    for (u32 i = 0; i < (u8)code80135FDC_getByte_64077(); i++) {
-        u32 idx = (u8)i + 1;
-        sprintf(buf, base + 0x303, idx);
+    u32 i;
+    u32 idx;
+    s16 zero = 0;
+    for (i = 0; i < (u8)code80135FDC_getByte_64077(); i++) {
+        idx = (u8)i + 1;
+        sprintf(buf, &lbl_eu_805063BC[0x303], idx);
         func_80137B44((nw4r::lyt::Layout*)info->state.layout, buf, 0x777777ff);
         u32 args[4];
-        // zero via a variable: MWCC materializes it in a register (r30-like)
-        // and cannot fold the {zero, zero} s16-pair arrays to a constant,
+        // zero via a variable: MWCC materializes it in a register and cannot
+        // fold the {zero, zero} s16-pair arrays to a constant,
         // keeping the retail stack build of the four u32 colour args.
-        s16 zero = 0;
         s16 c0hi[2] = {zero, *(s16*)((u8*)info + 0xA2)};
         s16 c0lo[2] = {zero, zero};
         s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
         s16 c1lo[2] = {zero, zero};
-        args[1] = *(u32*)c0hi;
         args[0] = *(u32*)c0lo;
-        args[3] = *(u32*)c1hi;
+        args[1] = *(u32*)c0hi;
         args[2] = *(u32*)c1lo;
-        sprintf(buf, base + 0x161, idx, args[0], args[1], args[2], args[3]);
+        args[3] = *(u32*)c1hi;
+        sprintf(buf, &lbl_eu_805063BC[0x161], idx, args[0], args[1], args[2], args[3]);
         nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
-            void* obj = ((void*(*)(void*))(*(void***)pane)[26])(pane);
+            // Real virtual dispatch through CItemBoxPaneVt keeps the ABI r12
+            // vtable load (a manual (*(void***)pane)[26] cast colors r5).
+            void* obj = ((CItemBoxPaneVt*)pane)->getColorObject();
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8(obj, (u8)j, (u8*)args + (u8)j * 8);
             }
         }
     }
 }
+#pragma pop
 // Retail uses the stmw/lmw frame (MWCC optimize_for_size prologue merge);
 // the first call's arg4 zero and the string base are hoisted into the prologue.
 #pragma push
@@ -4745,8 +4802,11 @@ void func_801E4090(CItemBoxInfo2* info) {
 #pragma pop
 // Retail func_801E40E8 uses the stmw/lmw frame (MWCC optimize_for_size
 // prologue merge): info in r29, loop counter in r30, string-pool base in r31.
+// dont_inline keeps IPA from folding this body into its callers
+// (func_801E37C4 etc.) - retail always calls it.
 #pragma push
 #pragma optimize_for_size on
+#pragma dont_inline on
 void func_801E40E8(CItemBoxInfo2* info) {
     char buf[0x20];
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
@@ -4762,50 +4822,59 @@ void func_801E40E8(CItemBoxInfo2* info) {
     }
 }
 #pragma pop
+#pragma pop
 
 // Retail func_801E4194: ItemBox2 variant of func_801D8C0C (same body, same
 // stmw r22 frame). Loops 7 slots; below the active count it resolves the item
-// name via func_801355F4/vtable[3] and colors the pane; otherwise a plain
-// label pane.
+// name via func_801355F4/vtable+0x0C and colors the pane; otherwise a plain
+// label pane. The two alpha-only vertex colours are packed into a 4-word block
+// shared by sprintf and the per-vertex func_801D62F8 loop.
 #pragma push
 #pragma optimize_for_size on
 #pragma dont_inline on
 extern "C" void func_801E4194(CItemBoxInfo2* info) {
-    u8 count = (u8)code80135FDC_getByte_64077();
-    char* base = (char*)&lbl_eu_805063BC;
+    u32 i;
     char bufElse[0x20];
     char buf[0x20];
-    u32 args[4];
-    for (u32 i = 0; i < 7; i++) {
+    u8 count = code80135FDC_getByte_64077();
+    u32 idx;
+    s16 zero = 0;
+    for (i = 0; i < 7; i++) {
         if ((u8)i >= count) {
-            sprintf(bufElse, base + 0x161, (u8)i + 1);
+            sprintf(bufElse, (char*)&lbl_eu_805063BC[0x161], (u8)i + 1);
             nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(bufElse, true);
             func_80124270(pane, 0);
-            continue;
-        }
-        u8 slot = (u8)func_801392B4((u8)i);
-        u16 nameId = (u16)func_80136254(lbl_eu_80664090, base + 0x4ce, slot);
-        u32 itemName = (u32)func_80138F78(nameId);
-        void* obj = func_801355F4();
-        u32 result = ((u32(*)(void*, u32, u32, u32))(*(void***)obj)[3])(obj, 0x74696D67u, itemName, 0);
-        if (result == 0) continue;
-        sprintf(buf, base + 0x303, (u8)i + 1);
-        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
-        func_80137F88(pane, result);
-        func_80137C1C(pane, 0x777777FFu);
-        s16 c0hi[2] = {0, *(s16*)((u8*)info + 0xA2)};
-        s16 c0lo[2] = {0, 0};
-        s16 c1hi[2] = {0, *(s16*)((u8*)info + 0xAA)};
-        s16 c1lo[2] = {0, 0};
-        args[1] = *(u32*)c0hi;
-        args[0] = *(u32*)c0lo;
-        args[3] = *(u32*)c1hi;
-        args[2] = *(u32*)c1lo;
-        sprintf(buf, base + 0x161, (u8)i + 1, args[0], args[1], args[2], args[3]);
-        nw4r::lyt::Pane* pane2 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
-        void* vertexObj = pane2->GetMaterial();
-        for (u32 j = 0; j < 2; j++) {
-            func_801D62F8(vertexObj, (u8)j, (u8*)args + (u8)j * 8);
+        } else {
+            u8 slot = (u8)func_801392B4((u8)i);
+            u32 tag = 0x74696D67u;
+            u32 nameId = (u16)func_80136254(lbl_eu_80664090, (char*)&lbl_eu_805063BC[0x4ce], slot);
+            u32 itemId = (u32)func_80138F78(nameId);
+            // Item-name lookup through the shared name system (vtable+0x0C).
+            u32 found = ((CItemNameLookupVt*)func_801355F4())->findName(tag, itemId, 0);
+            if (found != 0) {
+                idx = (u32)((u8)i + 1);
+                sprintf(buf, (char*)&lbl_eu_805063BC[0x303], idx);
+                nw4r::lyt::Pane* pane2 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+                func_80137F88(pane2, found);
+                func_80137C1C(pane2, 0x777777ffu);
+                // Selection colours: two 8-byte pairs built from the s16s at +0xA2
+                // and +0xAA.
+                s16 c0hi[2] = {zero, *(s16*)((u8*)info + 0xA2)};
+                s16 c0lo[2] = {zero, zero};
+                s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
+                s16 c1lo[2] = {zero, zero};
+                u32 args[4];
+                args[0] = *(u32*)c0lo;
+                args[1] = *(u32*)c0hi;
+                args[2] = *(u32*)c1lo;
+                args[3] = *(u32*)c1hi;
+                sprintf(buf, (char*)&lbl_eu_805063BC[0x161], idx, args[0], args[1], args[2], args[3]);
+                nw4r::lyt::Pane* pane3 = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+                void* vertexObj = pane3->GetMaterial();
+                for (u32 j = 0; j < 2; j++) {
+                    func_801D62F8(vertexObj, (u8)j, (u8*)args + (u8)j * 8);
+                }
+            }
         }
     }
 }
@@ -6088,26 +6157,21 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
 #pragma push
 #pragma auto_inline off
 s32 func_801E9190(void* a, void* b, s32 arg2, void* d) {
-    // Single-expression sum; retail int->float via the 0x4330 double trick
-    // (sign-flipped low word minus 2^52 = lbl_eu_80668028).
+    // Single-expression sum; builtin s32->f32 cast emits MWCC's
+    // 0x4330/xoris double-trick (pool cookie @19305 maps to lbl_eu_80668028
+    // via retail_reloc_map.json).
     s32 prod = arg2 * (s32)(func_801E9310(a, b, 0x52, d) + func_801E92B8(a, b) + 0x64);
-    union { double d; u32 w[2]; } u;
-    u.w[0] = 0x43300000;
-    u.w[1] = (u32)prod ^ 0x80000000;
-    return (s32)((f32)(u.d - lbl_eu_80668028) * lbl_eu_80668040);
+    return (s32)(lbl_eu_80668040 * (f32)prod);
 }
 #pragma pop
 
 #pragma push
 #pragma auto_inline off
 s32 func_801E9224(void* a, void* b, s32 arg2, void* d) {
-    // Single-expression sum; retail int->float via the 0x4330 double trick
-    // (sign-flipped low word minus 2^52 = lbl_eu_80668028).
-    s32 prod = arg2 * (s32)(func_801E9310(a, b, 0x53, d) + func_801E92B8(a, b) + 0x64);
-    union { double d; u32 w[2]; } u;
-    u.w[0] = 0x43300000;
-    u.w[1] = (u32)prod ^ 0x80000000;
-    return (s32)((f32)(u.d - lbl_eu_80668028) * lbl_eu_80668040);
+    // Single-expression sum; builtin
+    // 0x4330/xoris double-trick.
+    s32 prod = (s32)(func_801E9310(a, b, 0x53, d) + func_801E92B8(a, b) + 0x64) * arg2;
+    return (s32)(lbl_eu_80668040 * (f32)prod);
 }
 #pragma pop
 #pragma push
@@ -6257,7 +6321,7 @@ u32 func_801E9774(void* global, u16 arg2, void* arg3) {
 bool func_801E98E4(void* a, u16 b, void* c) {
     void* lookup = func_8009EC9C(b);
     u32 v1 = func_801393CC(c);
-    u32 v2 = func_80139358((u32)c);
+    u16 v2 = func_80139358((u32)c);
     u8 v3 = (u8)func_801392E4((u32)c);
     CItemBoxSlotBytes bytes;
     s16 ids[6];
@@ -6283,10 +6347,10 @@ bool func_801E98E4(void* a, u16 b, void* c) {
             if (c != NULL && slot == v3) {
                 // candidate matches the equipped slot: verify every indexed
                 // item name still resolves, else the comparison is invalid.
-                u8 count = (u8)func_801361E8(v1, base + 0x432, (u16)v2);
+                u8 count = (u8)func_801361E8(v1, base + 0x432, v2);
                 for (u8 j = 0; j < count; j++) {
                     sprintf(buf, base + 0x43b, (u8)j + 1);
-                    if ((func_80136254((void*)v1, buf, (u16)v2) & 0xFFFF) != 0) return 0;
+                    if ((func_80136254((void*)v1, buf, v2) & 0xFFFF) != 0) return 0;
                 }
             } else if (item != NULL && *(u32*)item != 0) {
                 CItemImplVt* inst = (CItemImplVt*)CItem_initItemImplInstances(item);
@@ -6306,10 +6370,10 @@ bool func_801E98E4(void* a, u16 b, void* c) {
             }
         } else {
             if (c != NULL && bytes.bytes[i] == v3) {
-                u8 count = (u8)func_801361E8(v1, base + 0x432, (u16)v2);
+                u8 count = (u8)func_801361E8(v1, base + 0x432, v2);
                 for (u8 j = 0; j < count; j++) {
                     sprintf(buf, base + 0x43b, (u8)j + 1);
-                    if ((func_80136254((void*)v1, buf, (u16)v2) & 0xFFFF) != 0) return 0;
+                    if ((func_80136254((void*)v1, buf, v2) & 0xFFFF) != 0) return 0;
                 }
             }
         }

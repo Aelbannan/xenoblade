@@ -89,15 +89,23 @@ extern TraceRec lbl_eu_80566AC8;
 extern char lbl_eu_805FF1E0[256];
 
 /* Format a message into the shared scratch buffer and report it:
- * enter-trace -> SVM error hook -> exit-trace. */
+ * enter-trace -> SVM error hook -> exit-trace.
+ * NB: residual 2 reg-swaps (va_info stw 0x68/0x6c order) are compiler-version
+ * intrinsic: retail CriWare is Wii/1.1-built; this TU still builds under the
+ * criwareLib GC/3.0a5.2 default which swaps the two va_list field stores.
+ * OPEN-ITEM packet: status BLOCKED-at-99.8% (structural 0, 2 reg-swaps, relocs
+ * clean, size PASS). Ruled out: va_start before memset (frame +0x10/r29),
+ * vsprintf prototype visibility, char* vs const char* fmt, va_end, fmt local
+ * copy. Next experiments: (1) mw_version="Wii/1.1" on the configure.py Object
+ * + unit-wide regression scan; (2) alternate stdarg builtin if one exists;
+ * (3) re-test after any MWCC toolchain change. See MWCC_CASES svm.c entry
+ * fact 0 for the version-intrinsic store-order evidence. */
 void MWSFSVM_Error(const char* fmt, ...) {
     va_list ap;
 
     memset(lbl_eu_805FF1E0, 0, 256);
     va_start(ap, fmt);
-
     vsprintf(lbl_eu_805FF1E0, fmt, ap);
-
     if (lbl_eu_805FF3A0 != NULL) {
         lbl_eu_80566AC8.field_0x0c = (u32)lbl_eu_805FF1E0;
         lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0,

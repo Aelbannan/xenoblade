@@ -4,8 +4,56 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuArtsSet.hpp"
+#include "kyoshin/CBgTex.hpp"
+#include "kyoshin/CTitleAHelp.hpp"
+#include "monolib/util/MemManager.hpp"        // mtl::MemManager::allocate
+#include "monolib/work/CProcess.hpp"          // CProcess::Regist
+#include "monolib/work/CWorkThreadSystem.hpp" // CWorkThreadSystem::getWorkMem
 #include <cstddef>
 #include <nw4r/lyt.h>
+
+// Singleton-factory ctor imports (retail-unmangled names).
+void __ct__8CProcessFv(CProcess* self); // CProcess base constructor
+// extern "C": US retail strips the parameter mangling on these ctor symbols.
+extern "C" void __ct__CBgTex(CBgTex* self, u8 arg);
+extern "C" void __ct__CTitleAHelp(CTitleAHelp* self, char* name, u8 arg);
+extern "C" CArtsList* __ct__CArtsList(CArtsList* self); // defined later in this TU
+extern char lbl_eu_8052BF70[];          // temp (CProcess) vtable
+extern char lbl_eu_80536808[];          // composite CMenuArtsSet vtable
+extern u32 __ptmf_null[3];              // null pointer-to-member-function
+extern u32 lbl_eu_80664740;             // singleton instance slot
+extern const float lbl_eu_80668638;     // initial 0x364 float (.sdata2)
+
+// Struct view of the null pointer-to-member-function constant. Reading
+// through named members keeps MWCC from emitting duplicate @l references.
+struct PtmfNullWordsArts {
+    u32 w0;
+    u32 w1;
+    u32 w2;
+};
+
+// Byte-range view of the allocated menu object for the singleton-factory
+// ctor: CProcess base (vtable at +0x10), the two null-PMF callback slots
+// (+0x3C-0x53) and their ready bytes, the composite vtable plus its +0x24
+// interface pointer, the embedded CBgTex (+0x60) / CTitleAHelp (+0x80) /
+// CArtsList (+0xB8) widgets, and the trailing scalars.
+struct CMenuArtsSetCtorShim {
+    u8 _00[0x10];
+    u32 vtable;            // 0x10
+    u8 _14[0x28];          // 0x14-0x3B - rest of CProcess
+    u32 callbacks[6];      // 0x3C-0x53 - __ptmf_null callback slots
+    u8 field54;            // 0x54
+    u8 field55;            // 0x55
+    u8 _56[2];
+    u32 field58;           // 0x58 - vtable + 0x24 interface ptr
+    u32 field5C;           // 0x5C - owning scene
+    CBgTex mBgTex;         // 0x60-0x7F
+    CTitleAHelp mTitleAHelp; // 0x80-0xB7
+    CArtsList mList;       // 0xB8-0x35F
+    u8 field360;           // 0x360
+    u8 _361[3];
+    float field364;        // 0x364
+};
 
 // C++-linkage draw helper (mangles to the retail symbol).
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
@@ -13,7 +61,58 @@ void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 // Arts archive path string (accessed via sda21 small-data relocation).
 extern char lbl_eu_8050AC70[];
 
-void __ct__CMenuArtsSet(){}
+// CMenuArtsSet ctor - self-allocating singleton factory (retail symbol
+// __ct__CMenuArtsSet). Returns NULL when the instance already exists;
+// otherwise allocates 0x368 bytes from work memory, constructs the CProcess
+// base, fills the callback/vtable block, constructs the three embedded
+// widgets, stores itself as the singleton and registers with the parent
+// process. The singleton store + Regist run even when allocation failed.
+CMenuArtsSet* __ct__CMenuArtsSet(CProcess* parent, CScn* scene) {
+    if (lbl_eu_80664740 != 0) {
+        return 0;
+    }
+
+    CMenuArtsSetCtorShim* obj =
+        (CMenuArtsSetCtorShim*)mtl::MemManager::allocate(
+            0x368, CWorkThreadSystem::getWorkMem());
+
+    if (obj != 0) {
+        __ct__8CProcessFv((CProcess*)obj);
+        obj->vtable = (u32)lbl_eu_8052BF70;
+
+        // Copy the null member-function pointer into both callback slots.
+        // Retail loads __ptmf_null[1],[0],[2] per block and stores per slot.
+        const u32* ptmf = __ptmf_null;
+        u32 ptmfWord1 = ptmf[1];
+        u32 ptmfWord0 = ptmf[0];
+        obj->callbacks[0] = ptmfWord0;
+        obj->callbacks[1] = ptmfWord1;
+        u32 ptmfWord2 = ptmf[2];
+        obj->callbacks[2] = ptmfWord2;
+        ptmfWord1 = ptmf[1];
+        ptmfWord0 = ptmf[0];        obj->callbacks[3] = ptmfWord0;
+        obj->callbacks[4] = ptmfWord1;
+        ptmfWord2 = ptmf[2];
+        obj->callbacks[5] = ptmfWord2;
+
+        obj->field54 = 0;
+        obj->field55 = 0;
+        obj->vtable = (u32)lbl_eu_80536808;
+        obj->field58 = (u32)(lbl_eu_80536808 + 0x24);
+        obj->field5C = (u32)scene;
+
+        // Embedded widgets in construction order.
+        __ct__CBgTex(&obj->mBgTex, 0);
+        __ct__CTitleAHelp(&obj->mTitleAHelp, 0, 0);
+        __ct__CArtsList(&obj->mList);
+        obj->field360 = 0;
+        obj->field364 = lbl_eu_80668638;
+    }
+
+    lbl_eu_80664740 = (u32)(uintptr_t)obj;
+    ((CProcess*)obj)->Regist(parent, false);
+    return (CMenuArtsSet*)(uintptr_t)lbl_eu_80664740;
+}
 
 extern "C" unsigned long func_8022F530() {
     extern unsigned long lbl_eu_80664740;
@@ -307,12 +406,16 @@ void func_802306F0(SArts306F0* self) {
     }
 }
 
+// optimize_for_size: retail's two-register prologue uses stmw/lmw (-O4,s).
+#pragma push
+#pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_802307A4(SArtsDrawBox* self, nw4r::lyt::DrawInfo* info) {
     if (self->field_0x22 != 0 && self->field_0x28 != 0) {
         func_80137038(self->mLayout08, info, 0, 1);
         func_80137038(self->mLayout14, info, 0, 1);
     }
 }
+#pragma pop
 
 // C-linkage + noinline: func_80234FDC calls this and retail keeps a real
 // bl (not an inline).
@@ -383,27 +486,25 @@ extern "C" __declspec(noinline) u8 func_80231014(SArtsSub8022FA58* self) { retur
 // reports the entry set - return the high byte of the 16-bit value at the
 // flagged offset.
 extern "C" __declspec(noinline) u8 func_80231220(SArtsSub8022FA58* self) {
-    SArtsSubDElem* elems;
-    SArtsManagerRoot* root;
-    u8 arts;
-    u8 result;
-    root = (SArtsManagerRoot*)func_8009EC9C(self->field_0x26);
+    SArtsManagerRoot* root = (SArtsManagerRoot*)func_8009EC9C(self->field_0x26);
     root->mObj17C.v157();
-    elems = &root->mElemsE8[0];
-    arts = (u8)func_800A32BC(root);
-    result = 0;
+    SArtsSubDElem* elems = &root->mElemsE8[0];
+    u8 arts = (u8)func_800A32BC(root);
+    u8 result = 0;
     u8 idx = self->field_0x20;
     if ((s32)idx != 4) {
         if ((u32)idx >= 4) {
             idx -= 1;
         }
-        int b = (lbl_eu_806628A8[0] != 0) || (self->field_0x26 != 1);
-        u8 off = (b == 0) * 8;
-        u8 v = elems[arts].data[idx + off];
+        // Constant [0]: MWCC fuses the sda21 displacement, leaving clamped
+        // idx as the dead d-form base register.
+        int flag = (lbl_eu_806628A8[0] != 0) || (self->field_0x26 != 1);
+        int off = (flag == 0) * 8;
+        u8 v = elems[arts].data[off + idx];
         char* base = lbl_eu_8050AC70;
         u32 r = func_8013600C(base + 0x1C8, base + 0x1FE, v);
         if (func_801F9268((u8*)elems, arts, (u8)r) != 0) {
-            u16 w = *(const u16*)&((u8*)&elems[arts])[(u8)r << 1];
+            u16 w = *(const u16*)((u8*)&elems[arts] + ((u8)r << 1));
             result = *(const u8*)&w;
         }
     }
@@ -423,10 +524,14 @@ extern "C" __declspec(noinline) u32 func_80231320(SArtsSub8022FA58* self) {
     root->mObj17C.v157();
     SArtsSubDElem* base = &root->mElemsE8[0];
     u8 arts = (u8)func_800A32BC(root);
-    int b = (lbl_eu_806628A8[0] != 0) || (self->field_0x26 != 1);
-    int off = (b != 0) * 8;
+    u8 b = 0;
+    if (lbl_eu_806628A8[0] != 0 || self->field_0x26 != 1) {
+        b = 1;
+    }
+    b = (b == 0);
     SArtsSubDElem* e = &base[arts];
-    for (int i = 0; i < 8; i++) {
+    int off = b * 8;
+    for (u8 i = 0; i < 8; i++) {
         if (e->data[off + i] != 0) return 0;
     }
     return 1;
@@ -690,12 +795,17 @@ void func_80231CB4(SArts306F0* self) {
     }
 }
 
+// Draw both layouts when the box is enabled (0x22) and the arts table is
+// visible (0x12E). optimize_for_size matches retail's stmw/lmw save pair.
+#pragma push
+#pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_80231D68(SArtsDrawBox* self, nw4r::lyt::DrawInfo* info) {
     if (self->field_0x22 != 0 && self->field_0x12E != 0) {
         func_80137038(self->mLayout08, info, 0, 1);
         func_80137038(self->mLayout14, info, 0, 1);
     }
 }
+#pragma pop
 
 // Cursor-driver refresh helpers (defined below in this TU; C-linkage retail
 // names). Declared here because func_80231DD0 / func_80232000 call them.
@@ -707,31 +817,35 @@ extern "C" void func_80232C78(SArts327B0* self);
 // jump to the previous 5-row page (0x20 = 4, 0x21 = count-5) or, for counts
 // below 5, park the cursor with a saturating 0x20 = count-1. Then refresh the
 // scrollbar and both cursor drivers.
+// optimize_for_size forces the -O4,s addic/subfe setnz lowering for the
+// saturating decrement; unreachable from any source shape at -O4,p.
+#pragma push
+#pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_80231DD0(SArts322BC* self) {
-    u8 a = self->field_0x20 - 1;
-    self->field_0x20 = a;
-    if ((s8)a < 0) {
+    // Assignment-in-condition: MWCC keeps the stored value in-register and
+    // re-truncates it to u8 for the sign test (clrlwi/extsb idiom).
+    if ((s8)(u8)(self->field_0x20 = self->field_0x20 - 1) < 0) {
         self->field_0x20 = 0;
-        int b = self->field_0x21 - 1;
-        self->field_0x21 = b;
-        if ((s8)(u8)b < 0) {
+        if ((s8)(u8)(self->field_0x21 = self->field_0x21 - 1) < 0) {
             u8 c = self->field_0x12C;
             if (c > 5) {
                 self->field_0x20 = 4;
                 self->field_0x21 = c - 5;
             } else {
                 self->field_0x21 = 0;
-                // Saturating decrement: MWCC's addic/subi/subfe/andc idiom.
-                self->field_0x20 = c > 0 ? c - 1 : 0;
+                // Saturating decrement; size-opt lowers to addic/subfe/andc.
+                self->field_0x21 = 0;
+                // Saturating decrement; size-opt lowers to the addic/subfe mask.
+                self->field_0x20 = c == 0 ? 0 : c - 1;
             }
         }
     }
-    u16 val = (u16)(s8)self->field_0x21;
-    u8* sb = self->field_0x28;
-    func_801F3850(sb, val);
+    // Args evaluated right-to-left: cursor byte first, scrollbar second.
+    func_801F3850(self->field_0x28, self->field_0x21);
     func_80232B88((SArts327B0*)self);
     func_80232C78((SArts327B0*)self);
 }
+#pragma pop
 
 extern "C" __declspec(noinline) void func_80231E8C(SArts322BC* self) {
     u8 count = self->field_0x12C;
@@ -742,9 +856,11 @@ extern "C" __declspec(noinline) void func_80231E8C(SArts322BC* self) {
         self->field_0x20 = a;
         if ((s8)a >= 5) {
             self->field_0x20 = 4;
-            u8 b = self->field_0x21 + 1;
-            self->field_0x21 = b;
-            if ((s8)b > (s32)(count - 5)) {
+            u8 b = self->field_0x21;
+            // Double use of b: MWCC CSEs to one increment while keeping the
+            // old value in its own register (retail r4 old / r5 sum).
+            self->field_0x21 = b + 1;
+            if ((s8)(u8)(b + 1) > (s32)(count - 5)) {
                 self->field_0x20 = 0;
                 self->field_0x21 = 0;
             }
@@ -757,10 +873,11 @@ extern "C" __declspec(noinline) void func_80231E8C(SArts322BC* self) {
             self->field_0x21 = 0;
         }
     }
-    // Named in retail evaluation order: cursor byte first, scrollbar second.
-    u16 val = (u16)(s8)self->field_0x21;
+    // Named in retail evaluation order: cursor byte first (lands in the
+    // arg-2 register), scrollbar pointer second.
+    u16 c = self->field_0x21;
     u8* sb = self->field_0x28;
-    func_801F3850(sb, val);
+    func_801F3850(sb, c);
     func_80232B88((SArts327B0*)self);
     func_80232C78((SArts327B0*)self);
 }
@@ -951,32 +1068,24 @@ void func_802324C4(){}
 // row[8], or 7 with a clear flag at row[9].
 int func_80232638(SArts322BC* self, int key) {
     if (key == -1) {
-        s32 off = ((int)self->field_0x21 + (int)self->field_0x20) << 4;
-        u8 t = self->mTable[off + 2];
-        if (t == 4) {
-            if (self->mTable[off + 8] != 0) return 0;
-            return 1;
+        u8* row = &self->mTable[((int)self->field_0x21 + (int)self->field_0x20) << 4];
+        if (row[2] == 4) {
+            if (row[8] == 0) return 1;
+        } else if (row[2] == 7) {
+            if (row[9] == 0) return 1;
         }
-        if (t == 7) {
-            if (self->mTable[off + 9] != 0) return 0;
-            return 1;
-        }
-        return 0;
-    }
-    u8 count = self->field_0x12C;
-    for (u8 i = 0; i < count; i++) {
-        s32 off = i << 4;
-        if ((int)self->mTable[off] == key) {
-            u8 t = self->mTable[off + 2];
-            if (t == 4) {
-                if (self->mTable[off + 8] != 0) return 0;
-                return 1;
+    } else {
+        u8 count = self->field_0x12C;
+        for (u8 i = 0; i < count; i++) {
+            u8* row = &self->mTable[i << 4];
+            if (key == (int)row[0]) {
+                if (row[2] == 4) {
+                    if (row[8] == 0) return 1;
+                } else if (row[2] == 7) {
+                    if (row[9] == 0) return 1;
+                }
+                break;
             }
-            if (t == 7) {
-                if (self->mTable[off + 9] != 0) return 0;
-                return 1;
-            }
-            return 0;
         }
     }
     return 0;
@@ -993,6 +1102,10 @@ extern "C" __declspec(noinline) int func_8023270C(SArts3270C* self) {
 extern "C" void func_80232B88(SArts327B0* self);
 extern "C" void func_80232C78(SArts327B0* self);
 
+// optimize_for_size (-O4,s): retail uses the subic/subfe carry idiom for the
+// saturating decrement instead of -O4,p's neg/or/srawi bool tail.
+#pragma push
+#pragma optimize_for_size on
 extern "C" __declspec(noinline) int func_80232734(SArts322BC* self) {
     u8 count = self->field_0x12C;
     if (count > 5) {
@@ -1003,13 +1116,14 @@ extern "C" __declspec(noinline) int func_80232734(SArts322BC* self) {
         return r;
     }
     // Saturating decrement of the page cursor (count-1 clamped at 0).
-    s32 last = count != 0 ? count - 1 : 0;
     s32 r = 0;
-    if ((s8)self->field_0x20 == last && (s8)self->field_0x21 == 0) {
+    u8 last = count == 0 ? 0 : count - 1;
+    if ((s8)self->field_0x20 == last && !(s8)self->field_0x21) {
         r = 1;
     }
     return r;
 }
+#pragma pop
 
 extern "C" __declspec(noinline) void func_802327B0(SArts327B0* self) {
     extern void func_801F3850(void*, u32);
@@ -1138,7 +1252,7 @@ extern "C" __declspec(noinline) void func_80232C78(SArts327B0* self) { func_8012
 // optimize_for_size: retail's 3-reg prologue uses the _savegpr_29 form
 // (-O4,s signature; plain -O4,p emits individual stw).
 #pragma optimize_for_size on
-CArtsList* __ct__CArtsList(CArtsList* self) {
+extern "C" __declspec(noinline) CArtsList* __ct__CArtsList(CArtsList* self) {
     u8 tempInfo[0x74];
     u8 tempSb[0x40];
     u8 tempW[0x3C];
@@ -1607,10 +1721,10 @@ void func_80233F78(CMenuArtsSet* self) {
         return;
     }
     if (self->field_0x2A1 != 0) {
-        func_80232888((SArts32888*)((u8*)&self->mSubObj148 + 0x2C));
+        func_80232888((SArts32888*)&self->mList174);
         if (self->field_0x196 != 0) {
             self->field_0x196 = 0;
-            func_80232B88((SArts327B0*)((u8*)&self->mSubObj148 + 0x2C));
+            func_80232B88((SArts327B0*)&self->mList174);
         }
         func_80138078__FUl(6);
         return;
@@ -1624,15 +1738,14 @@ void func_80233F78(CMenuArtsSet* self) {
         return;
     }
     if (self->field_0x2A6 != 0) {
-        if (self->mSubObj148.field_0x23 != 0) {   // absolute 0x16B armed flag
-            func_80230D18((SArts30D18*)&self->mSubObj148);
-            self->field_0x196 = 1;
-            func_80232B88((SArts327B0*)((u8*)&self->mSubObj148 + 0x2C));
-            self->field_0x2A6 = 0;
-            func_80235124(self);
-        } else {
+        if (self->mSubObj148.field_0x23 == 0) {   // absolute 0x16B armed flag
             return;   // 0x16B clear: no sound, exit
         }
+        func_80230D18((SArts30D18*)&self->mSubObj148);
+            self->field_0x196 = 1;
+            func_80232B88((SArts327B0*)&self->mList174);
+            self->field_0x2A6 = 0;
+            func_80235124(self);
     }
     func_80138078__FUl(6);
 }
@@ -1866,12 +1979,13 @@ void func_80234928(CMenuArtsSet* self) {
     if (func_80235F50(&self->mSubObj74) != 0) return;
     SArts34D14* ext = (SArts34D14*)self;
     if (ext->field_0x16A == 0) return;                 // abs 0x16A
-    if (ext->field_0x168 == 4) return;                 // abs 0x168
+    if ((s8)ext->field_0x168 == 4) return;             // abs 0x168 (signed cmp)
     if (((SArts34C84*)self)->field_0x2A1 != 0) return;
     if (((SArts34C84*)self)->field_0x16F != 0) return;
     u8 v = func_8023040C((SArtsSub8022FA58*)&self->mSubObj124, self->mSubObj124.field_0x14);
-    // Indexed byte-table probe: lbl_eu_806628A8[v] (retail lbz @sda21(r0)).
-    if (v == 1 && lbl_eu_806628A8[v] == 0) return;
+    // Byte-table probe: retail fuses tbl[0] into lbz @sda21(r0), r0 being the
+    // dead index register left over from the (v == 1) test.
+    if (v == 1 && lbl_eu_806628A8[0] == 0) return;
     if (func_80231014(&self->mSubObj148) != 0) {
         func_80138078__FUl(0x77);
     } else {
@@ -1988,9 +2102,15 @@ int func_80234CA0(SArts34D14* self) {
 }
 
 int func_80234D14(SArts34D14* self) {
+    // Retail loads lbl_eu_806628A8[0] (fused lbz @sda21(r0); the r0 there is
+    // the dead index register, not the subscript - PPC d-forms cannot encode
+    // SDA base + variable index). Equivalent since r==1 and tbl[1..7]==0.
+    int ret = 0;
     u8 r = func_8023040C(&self->mSubObj124, self->mSubObj124.field_0x14);
-    if (r == 1 && lbl_eu_806628A8[r] == 0) return 1;
-    return 0;
+    if (r == 1 && lbl_eu_806628A8[0] == 0) {
+        ret = 1;
+    }
+    return ret;
 }
 
 // Arts-menu action-id query: returns the sound/action id for the current

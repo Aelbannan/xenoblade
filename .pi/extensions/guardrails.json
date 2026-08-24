@@ -1,0 +1,11 @@
+{
+  "$schema": "https://unpkg.com/@aliou/pi-guardrails@0.17.0/schema.json",
+  "permissionGate": {
+    "autoDenyPatterns": [
+      {
+        "pattern": "git"
+      }
+    ]
+  },
+  "version": "0.17.0"
+}

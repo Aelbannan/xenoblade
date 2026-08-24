@@ -2228,6 +2228,40 @@ extern "C" s32 func_8043CAFC__5CViewFv(CView* self) {
 // us-8043DF3C: single-step parent walk (CVIEW_WALK_NEXT shape, no loop).
 static CView* CView_toView(CWorkThread* thread);
 
+// us-8043E46C: walker that accumulates each ancestor's content origin + view
+// offset straight into rect (no tail-offset application, no size stores).
+extern "C" void func_8043E46C__5CViewFRQ22ml5CRectP5CView(ml::CRect& rect,
+                                                          CView* other) {
+    CWorkThread* parentSnap;
+    CView* cur;
+    ml::CPnt16 walkBuf[1];
+    s16 startX = other->mFrame.mContentX;
+    s16 startY = other->mFrame.mContentY;
+    rect.mPos.x = startX;
+    rect.mPos.y = startY;
+    parentSnap = other->mParent;
+
+    if (getInstance__9CViewRootFv() == parentSnap) {
+        cur = nullptr;
+    } else {
+        cur = CView_toView(other->mParent);
+    }
+    while (cur != nullptr) {
+        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+            (ml::CRect16*)&walkBuf[0], &cur->mFrame);
+        s16 dy = cur->mFrame.mContentY + walkBuf[0].y;
+        s16 dx = cur->mFrame.mContentX + walkBuf[0].x;
+        rect.mPos.x = rect.mPos.x + dx;
+        rect.mPos.y = rect.mPos.y + dy;
+        parentSnap = cur->mParent;
+        if (getInstance__9CViewRootFv() == parentSnap) {
+            cur = nullptr;
+        } else {
+            cur = CView_toView(cur->mParent);
+        }
+    }
+}
+
 // CLib/CViewRoot init guards (static members; literal retail symbol names).
 extern "C" bool isInitialized__4CLibFv();
 extern "C" bool isInitialized__9CViewRootFv();

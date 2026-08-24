@@ -134,6 +134,13 @@ extern tSDP_CB sdp_cb;
 #define SDP_INVALID_PDU_SIZE 4
 #define SDP_INVALID_CONT_STATE 5
 
+/* Trace strings declared explicitly in retail .data pool order
+ * ("unknown PDU" first, then "no buf for search rsp") and referenced by
+ * the trace call sites below; MWCC otherwise pools the literals in a
+ * different order. */
+__declspec(align(4)) char SDP_str_unknown_pdu[] = "SDP - server got unknown PDU: 0x%x";
+__declspec(align(4)) char SDP_str_no_buf[] = "SDP - no buf for search rsp";
+
 #define BT_TRACE_LEVEL_ERROR 1
 #define BT_TRACE_LEVEL_WARNING 2
 
@@ -224,7 +231,7 @@ void sdp_server_handle_client_req(tCONN_CB *p_ccb, BT_HDR *p_msg)
 
     default:
         sdpu_build_n_send_error(p_ccb, trans_num, SDP_INVALID_REQ_SYNTAX, 0);
-        SDP_TRACE_WARNING1("SDP - server got unknown PDU: 0x%x", pdu_id);
+        SDP_TRACE_WARNING1(SDP_str_unknown_pdu, pdu_id);
         break;
     }
 }
@@ -307,7 +314,7 @@ static void process_service_search(tCONN_CB *p_ccb, UINT16 trans_num,
 
     p_buf = (BT_HDR *)GKI_getpoolbuf(2);
     if (p_buf == NULL) {
-        SDP_TRACE_ERROR0("SDP - no buf for search rsp");
+        SDP_TRACE_ERROR0(SDP_str_no_buf);
         return;
     }
 
@@ -454,7 +461,7 @@ static void process_service_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
 
     p_buf = (BT_HDR *)GKI_getpoolbuf(2);
     if (p_buf == NULL) {
-        SDP_TRACE_ERROR0("SDP - no buf for search rsp");
+        SDP_TRACE_ERROR0(SDP_str_no_buf);
         return;
     }
 
@@ -621,7 +628,7 @@ static void process_service_search_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
 
     p_buf = (BT_HDR *)GKI_getpoolbuf(2);
     if (p_buf == NULL) {
-        SDP_TRACE_ERROR0("SDP - no buf for search rsp");
+        SDP_TRACE_ERROR0(SDP_str_no_buf);
         return;
     }
 

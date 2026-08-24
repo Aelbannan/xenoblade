@@ -237,36 +237,38 @@ CLibCriStreamingPlay::CLibCriStreamingPlay(const char* pName, CWorkThread* pPare
 extern "C" void __dt__11CWorkThreadFv(void* self, int flag);
 extern "C" void __dl__FPv(void* p);
 
-extern "C" void __dt__20CLibCriStreamingPlayFv(CLibCriStreamingPlay* self, int flag) {
+extern "C" CLibCriStreamingPlay* __dt__20CLibCriStreamingPlayFv(CLibCriStreamingPlay* self, int flag) {
     u8* base = (u8*)self;
-    u8* exc = base;
+    u8* exc;
 
-    if (self == nullptr) return;
+    if (self != nullptr) {
+        // novtable: restore retail vtables (primary + CDeviceVICb secondary)
+        *(void**)base = (void*)&lbl_eu_8056D028;
+        *(void**)(base + 0x1C4) = (void*)((u8*)&lbl_eu_8056D028 + 0xA0);
 
-    // novtable: restore retail vtables (primary + CDeviceVICb secondary)
-    *(void**)base = (void*)&lbl_eu_8056D028;
-    *(void**)(base + 0x1C4) = (void*)((u8*)&lbl_eu_8056D028 + 0xA0);
+        // Clean up exception handler (retail guards the subobject on this)
+        exc = base;
+        if (base != nullptr) {
+            exc = base + 0x1C4;
+        }
+        func_804591DC__10CExceptionFP10IException((CException*)exc);
 
-    // Clean up exception handler (retail guards the subobject on this)
-    if (base != nullptr) {
-        exc = base + 0x1C4;
+        // Free audio buffer
+        if (lbl_eu_806656EC) {
+            mtl::MemManager::deallocate(lbl_eu_806656EC);
+            lbl_eu_806656EC = nullptr;
+        }
+
+        // Clear instance
+        lbl_eu_806656E8 = nullptr;
+
+        // Base destructor, then free when invoked as deleting dtor
+        __dt__11CWorkThreadFv(self, 0);
+        if (flag > 0) {
+            __dl__FPv(self);
+        }
     }
-    func_804591DC__10CExceptionFP10IException((CException*)exc);
-
-    // Free audio buffer
-    if (lbl_eu_806656EC) {
-        mtl::MemManager::deallocate(lbl_eu_806656EC);
-        lbl_eu_806656EC = nullptr;
-    }
-
-    // Clear instance
-    lbl_eu_806656E8 = nullptr;
-
-    // Base destructor, then free when invoked as deleting dtor
-    __dt__11CWorkThreadFv(self, 0);
-    if (flag > 0) {
-        __dl__FPv(self);
-    }
+    return self;
 }
 
 // func_8045B5AC - Start streaming playback.

@@ -1,0 +1,2002 @@
+[
+  {
+    "id": "82e3e17a-a767-43e5-8840-f22c55fc3552",
+    "shortId": "82e3e17",
+    "name": "Monolib dissolve KEEPER loop: 1) Run .venv/bin/python3 tools",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 minutes ago"
+  },
+  {
+    "id": "6bcb818c-d3f6-4d89-9721-5f7b416efd73",
+    "shortId": "6bcb818",
+    "name": "decomp: monolib/core/CTaskManager",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "42 minutes ago"
+  },
+  {
+    "id": "70fafde7-6c1d-494b-80ca-05d8c4faa0b8",
+    "shortId": "70fafde",
+    "name": "decomp: monolib/scn/CScnItemPool",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "1 hours ago"
+  },
+  {
+    "id": "d8260dfe-23a5-4d7e-83d0-a26eca472608",
+    "shortId": "d8260df",
+    "name": "decomp: monolib/scn/code_804BC9EC",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "2 hours ago"
+  },
+  {
+    "id": "99e92a32-56c7-4152-b864-6ba1a9924f12",
+    "shortId": "99e92a3",
+    "name": "decomp: monolib/lib/CLibLayout",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "2 hours ago"
+  },
+  {
+    "id": "1a245b0f-51d5-41b2-bd85-49af15e8a1ad",
+    "shortId": "1a245b0",
+    "name": "decomp: monolib/lib/CLibCri",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "f16744af-62d3-4615-9a6f-f16645f52c4c",
+    "shortId": "f16744a",
+    "name": "decomp: monolib/effect/CETrail",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "ce1b0ab9-a526-4b9e-a09d-93873316ff03",
+    "shortId": "ce1b0ab",
+    "name": "decomp: monolib/work/CWorkSystemCache",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "f40633e5-102a-4be2-909f-d94e9dcf5d3c",
+    "shortId": "f40633e",
+    "name": "decomp: monolib/vm/yvm2",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "6dde8fdb-996f-487e-8d28-1bc73b7b5f64",
+    "shortId": "6dde8fd",
+    "name": "decomp: monolib/util/CErrorWii",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "a5adaef0-da91-49ee-b1da-84a02349a343",
+    "shortId": "a5adaef",
+    "name": "decomp: monolib/scn/CScnItemCamera",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "b323707c-5949-4573-8a13-305eba0cdcf6",
+    "shortId": "b323707",
+    "name": "decomp: monolib/lib/CLibCriMoviePlay",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "5824bd81-d794-438a-8cf0-0a3ed3c54fb2",
+    "shortId": "5824bd8",
+    "name": "decomp: monolib/scn/code_804BD8E8",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "baf8d1b8-910f-4555-9095-620083871079",
+    "shortId": "baf8d1b",
+    "name": "decomp: monolib/scn/code_804BC9EC",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "03b28ad3-a782-4646-8b68-74eb270b9105",
+    "shortId": "03b28ad",
+    "name": "decomp: monolib/scn/UnkClass_8047E110",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "b53634e2-db65-4626-a317-c93f2046d370",
+    "shortId": "b53634e",
+    "name": "decomp: monolib/scn/CVirtualLightObj",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "a7bbf628-8559-4e21-bc97-df37ecafcc7a",
+    "shortId": "a7bbf62",
+    "name": "decomp: monolib/scn/CScn_80496B0C",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "f71f4c14-980e-4d80-91ff-4175855ce0af",
+    "shortId": "f71f4c1",
+    "name": "decomp: monolib/scn/CScnMaruShadowNw4r",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "4181cef5-5bc3-4046-87cf-025103a6aef9",
+    "shortId": "4181cef",
+    "name": "decomp: monolib/scn/CScnItemPool",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "3aaf888a-72bb-4b4c-87a9-8bd655fef964",
+    "shortId": "3aaf888",
+    "name": "decomp: monolib/scn/CScnItemModelNw4r",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "496dd1c6-cb97-4290-bc64-0d0c51051d9a",
+    "shortId": "496dd1c",
+    "name": "decomp: monolib/scn/CScnFilter",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "ba6cd988-3d49-416d-8117-fb14f37d7b68",
+    "shortId": "ba6cd98",
+    "name": "decomp: monolib/scn/CScnBloom",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "3928dfdd-02a8-4c3e-b329-a1a8d86aff50",
+    "shortId": "3928dfd",
+    "name": "decomp: monolib/scn/CMdlMouth",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "804a6bee-7476-4d72-a2da-f985fac14f2f",
+    "shortId": "804a6be",
+    "name": "decomp: monolib/scn/CMdlDynamics",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "cbfdcab8-4f5e-4b53-83ec-d86d82bfd404",
+    "shortId": "cbfdcab",
+    "name": "decomp: monolib/scn/CMdlAnmUV",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "960368ec-9986-4713-898f-fa24357e4f96",
+    "shortId": "960368e",
+    "name": "decomp: monolib/mpfsys/UnkClass_80471EC8",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "97ab03af-addf-452a-8b72-9fabb5cf1f38",
+    "shortId": "97ab03a",
+    "name": "decomp: monolib/lod/code_8046A530",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "2c8b73b6-9be6-4f3e-b8c3-e585429b3a2b",
+    "shortId": "2c8b73b",
+    "name": "decomp: monolib/lod/LODMemMan",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "85b61236-cd78-4ad3-9700-11770fabcdeb",
+    "shortId": "85b6123",
+    "name": "decomp: monolib/lod/CTaskLOD",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "71c1cb47-8354-4703-88ec-6d94375814c4",
+    "shortId": "71c1cb4",
+    "name": "decomp: monolib/lib/CLibStaticData",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "e3d1d90c-d154-4038-822b-3ab07bc9a4ae",
+    "shortId": "e3d1d90",
+    "name": "decomp: monolib/lib/CLibLayout",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "693a69f7-9343-4b3a-b29b-cd8b67fc2712",
+    "shortId": "693a69f",
+    "name": "decomp: monolib/lib/CLibHbm",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "ad5c1416-856f-4642-8d36-87a685eebb3f",
+    "shortId": "ad5c141",
+    "name": "decomp: monolib/lib/CLibCriStreamingPlay",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "a3d781e5-17a0-42fe-a686-55bd425a9389",
+    "shortId": "a3d781e",
+    "name": "decomp: monolib/device/CGXCache",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "3e3cae18-0c8c-4ecf-9cf5-365b7527b1ce",
+    "shortId": "3e3cae1",
+    "name": "decomp: monolib/device/CDeviceGX",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "75932453-302e-4274-819a-fb4c34790cca",
+    "shortId": "7593245",
+    "name": "decomp: monolib/device/CDeviceFileCri",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "7a54d326-1211-45f9-a68f-7d6c10155c2f",
+    "shortId": "7a54d32",
+    "name": "decomp: monolib/core/code_804F0258",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "cf8c707f-b86a-47bf-ba4b-3b509bb9530f",
+    "shortId": "cf8c707",
+    "name": "decomp: monolib/core/code_804DEDA8",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "1a5c5c0a-ccc2-4985-a2c8-562f29da8f11",
+    "shortId": "1a5c5c0",
+    "name": "decomp: monolib/core/CView",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "dd769308-be9c-420c-ba39-e6bd3ee89427",
+    "shortId": "dd76930",
+    "name": "decomp: monolib/core/CPackItem",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "8485998d-074c-4628-8578-49dc4f3e5bf0",
+    "shortId": "8485998",
+    "name": "decomp: monolib/coli/code_804B59C8",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "e7b56bb9-1006-4429-ae86-088695b2f129",
+    "shortId": "e7b56bb",
+    "name": "decomp: monolib/coli/code_804B2FF0",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "7393a4a2-81ce-4ee1-8278-afbaa210d820",
+    "shortId": "7393a4a",
+    "name": "decomp: monolib/src/lib/CLib",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "22d00d4a-3bb3-49f6-a102-d05820e68f44",
+    "shortId": "22d00d4",
+    "name": "bench qwen-3.8-27B-UD_IQ3_XXS-MTP / code_80213488",
+    "provider": "pi/local/qwen-3.8-27B-UD_IQ3_XXS-MTP",
+    "thinking": "xhigh",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-UD_IQ3_XXS-MTP",
+    "created": "3 hours ago"
+  },
+  {
+    "id": "2630126d-3904-42a3-8c78-953337a0fed9",
+    "shortId": "2630126",
+    "name": "decomp: monolib/src/device/CDeviceFont",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "4 hours ago"
+  },
+  {
+    "id": "b7961d5e-c338-4c60-a90a-ad49587bcaf7",
+    "shortId": "b7961d5",
+    "name": "decomp: monolib/src/device/CGXCache func_80449D68",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "4 hours ago"
+  },
+  {
+    "id": "32a8a890-7abd-419c-ab78-5e662be0d24d",
+    "shortId": "32a8a89",
+    "name": "decomp: monolib/src/device/CDeviceFileCri",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "4 hours ago"
+  },
+  {
+    "id": "88debc1d-6abf-4665-8a01-e0f9ded6603b",
+    "shortId": "88debc1",
+    "name": "decomp: monolib/src/core/CView",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "4 hours ago"
+  },
+  {
+    "id": "c15cbae9-b9c8-4a8d-991a-098b91ece62c",
+    "shortId": "c15cbae",
+    "name": "decomp: kyoshin/CPassiveSkill",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "22 hours ago"
+  },
+  {
+    "id": "003ec364-527d-44d9-a7ac-d9b5547a1169",
+    "shortId": "003ec36",
+    "name": "decomp: monolib/src/effect/code_804CC2B8",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "22 hours ago"
+  },
+  {
+    "id": "b043e0af-e6d5-4320-a9a4-f44e93676319",
+    "shortId": "b043e0a",
+    "name": "decomp: kyoshin/cf/CfGameManager",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "22 hours ago"
+  },
+  {
+    "id": "750accfa-6794-44fe-bca7-e4dc2561ba6c",
+    "shortId": "750accf",
+    "name": "decomp: kyoshin/CEquipItemBox",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "22 hours ago"
+  },
+  {
+    "id": "f0ab2f69-cb75-438b-b559-45bede0e2777",
+    "shortId": "f0ab2f6",
+    "name": "decomp: monolib/src/coli/code_804A6C60",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "22 hours ago"
+  },
+  {
+    "id": "2b8c39da-0f3c-42fd-81ef-05536b6047fe",
+    "shortId": "2b8c39d",
+    "name": "decomp: kyoshin/CItemBoxInfo",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "running",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "22 hours ago"
+  },
+  {
+    "id": "2f60402b-733a-4f99-8291-a903714a70c9",
+    "shortId": "2f60402",
+    "name": "bench qwen-3.8-27B-UD_IQ3_XXS-MTP / code_80213488",
+    "provider": "pi/local/qwen-3.8-27B-UD_IQ3_XXS-MTP",
+    "thinking": "xhigh",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-UD_IQ3_XXS-MTP",
+    "created": "4 hours ago"
+  },
+  {
+    "id": "58f4900c-22f0-4774-a4bd-9e6e46908eef",
+    "shortId": "58f4900",
+    "name": "bench qwen-3.8-27B-UD_IQ3_XXS-MTP / code_80213488",
+    "provider": "pi/local/qwen-3.8-27B-UD_IQ3_XXS-MTP",
+    "thinking": "xhigh",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-UD_IQ3_XXS-MTP",
+    "created": "5 hours ago"
+  },
+  {
+    "id": "2f4fc87a-7c98-4caf-8179-7f3be9284b8c",
+    "shortId": "2f4fc87",
+    "name": "Adversarially review this project",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "idle",
+    "cwd": "~/BinaaAlManhajiDashboard",
+    "created": "7 hours ago"
+  },
+  {
+    "id": "906f7872-1245-4864-ad67-08281e78a350",
+    "shortId": "906f787",
+    "name": "decomp: kyoshin/cf/object/CActorParam",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "22 hours ago"
+  },
+  {
+    "id": "a5eb0602-670a-4141-8c42-42190c6aa7f9",
+    "shortId": "a5eb060",
+    "name": "decomp: kyoshin/CFloorMap",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "22 hours ago"
+  },
+  {
+    "id": "d0105860-be30-4d69-8c06-817754784929",
+    "shortId": "d010586",
+    "name": "decomp: kyoshin/CItemBoxGrid",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "22 hours ago"
+  },
+  {
+    "id": "0961e69e-0a09-4660-87f2-2dc3366bfca4",
+    "shortId": "0961e69",
+    "name": "single deep dive: CDesktop",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "1 days ago"
+  },
+  {
+    "id": "a7930e80-ec49-4a8b-8bd3-dd74ab5c68f3",
+    "shortId": "a7930e8",
+    "name": "Can you get me the top 10 unmatched TUs",
+    "provider": "pi/opencode-go/mimo-v2.5",
+    "thinking": "medium",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "1 days ago"
+  },
+  {
+    "id": "3fae4b7e-390a-44ff-a901-bed8668a6566",
+    "shortId": "3fae4b7",
+    "name": "What's left to get cf/CBattleManager.cpp fully matched?",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "1 days ago"
+  },
+  {
+    "id": "a06c2ed1-6650-456a-b1da-bd09d7af0cfa",
+    "shortId": "a06c2ed",
+    "name": "We have been working on splitting the data TUs. Can you revi",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 days ago"
+  },
+  {
+    "id": "ef1a18cd-5d3d-4930-9767-efc955cff5a5",
+    "shortId": "ef1a18c",
+    "name": "Can you find me 3 TUs that I can use to benchmark local mode",
+    "provider": "pi/opencode-go/mimo-v2.5",
+    "thinking": "high",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "4 days ago"
+  },
+  {
+    "id": "6ba8d383-2848-4471-b1e6-259dbc35a2ab",
+    "shortId": "6ba8d38",
+    "name": "[FreshReview] Phase 3 — reviewer B (DeepSeek-V4-Flash)",
+    "provider": "pi/nube/DeepSeek-V4-Flash",
+    "thinking": "high",
+    "status": "idle",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "a7c97d30-79b6-4cf8-a03f-f09bca9e072a",
+    "shortId": "a7c97d3",
+    "name": "[FreshReview] Phase 3 — verifier (deepseek-v4-pro)",
+    "provider": "pi/openrouter/deepseek/deepseek-v4-pro-0813",
+    "thinking": "high",
+    "status": "idle",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "159fb07f-1f40-44bb-b7c6-a9fc81989f03",
+    "shortId": "159fb07",
+    "name": "[Advisor] Adversarial review: IlmConnect rewrite plan (GLM-5.2)",
+    "provider": "pi/nube/GLM-5.2",
+    "thinking": "high",
+    "status": "idle",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "8 days ago"
+  },
+  {
+    "id": "f13509f5-abea-43a6-9fa7-60e33830c090",
+    "shortId": "f13509f",
+    "name": "xb-hard-01",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "d84b3de7-5520-497d-9fbb-e06394d57bd2",
+    "shortId": "d84b3de",
+    "name": "xb-hard-03",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "9c94c07b-cd86-48a4-8c17-e948e4966338",
+    "shortId": "9c94c07",
+    "name": "xb-hard-02",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "d031bb5e-10fb-461e-bad8-d20c29073034",
+    "shortId": "d031bb5",
+    "name": "xb-data-10",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "99fb46ee-6331-44af-bbfb-da48a75264d6",
+    "shortId": "99fb46e",
+    "name": "xb-data-11",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "d5da5169-d6b1-4b2a-9609-ac779bd2a5a5",
+    "shortId": "d5da516",
+    "name": "xb-data-01",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "5d9b9e9e-c880-4ba9-b32f-bf64ee731c6b",
+    "shortId": "5d9b9e9",
+    "name": "xb-data-03",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "bdf45f76-ad4e-4aff-bec7-2ec31261324f",
+    "shortId": "bdf45f7",
+    "name": "xb-data-05",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "5e789500-3a6f-4182-88a2-10901145b746",
+    "shortId": "5e78950",
+    "name": "xb-data-08",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "64b17b2a-3bdf-4908-8cf3-9a150b2676b9",
+    "shortId": "64b17b2",
+    "name": "xb-data-02",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "8a3dfe86-78dd-4f96-918d-0ee8d6bdff66",
+    "shortId": "8a3dfe8",
+    "name": "xb-data-09",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "5a9ffbdf-77a8-4dc6-b1c1-4a51bcb8fd0e",
+    "shortId": "5a9ffbd",
+    "name": "xb-data-07",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "c0e9ffc0-5de5-4601-9f3a-86b5d8f5f9cb",
+    "shortId": "c0e9ffc",
+    "name": "xb-data-04",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "16e31856-b66e-4720-a3f4-a0d4f304e30d",
+    "shortId": "16e3185",
+    "name": "xb-data-06",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "af410c56-e9c4-42c9-bcf8-c6c66f371568",
+    "shortId": "af410c5",
+    "name": "pi SDK adapter (deepseek)",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "f0bab0bb-ed31-4589-a0ab-34c2cdffc54c",
+    "shortId": "f0bab0b",
+    "name": "Linter CLI usability (deepseek)",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "f40c3e21-b114-492f-9045-86f261e4f219",
+    "shortId": "f40c3e2",
+    "name": "Agent tools impl (deepseek)",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "fb334a25-99af-42bf-8fec-ea9e15bf4775",
+    "shortId": "fb334a2",
+    "name": "review: hexdiff-direct certify safety (glm-5.2)",
+    "provider": "pi/openrouter/z-ai/glm-5.2",
+    "thinking": "high",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "13 days ago"
+  },
+  {
+    "id": "2158f091-7ef8-4f5c-998c-34a47a93c973",
+    "shortId": "2158f09",
+    "name": "Can you prep a run for pi-harness with the following (10 par",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "low",
+    "status": "idle",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "15 days ago"
+  },
+  {
+    "id": "149a79d6-58ca-450f-aa70-26075abdbb07",
+    "shortId": "149a79d",
+    "name": "bench qwen-3.8-27B-UD_IQ3_XXS / code_80213488",
+    "provider": "pi/local/qwen-3.8-27B-UD_IQ3_XXS",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-UD_IQ3_XXS",
+    "created": "7 hours ago"
+  },
+  {
+    "id": "01ac08a5-efe9-4a8c-9c63-e2540750e184",
+    "shortId": "01ac08a",
+    "name": "Investigator: edit/stale anchor analysis",
+    "provider": "pi/opencode-go/mimo-v2.5",
+    "thinking": "max",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "7 hours ago"
+  },
+  {
+    "id": "a2491277-3f30-4dff-bab6-e95f316dfefd",
+    "shortId": "a249127",
+    "name": "bench qwen-3.8-27B-Cold_Fusion-Q3 / code_80213488",
+    "provider": "pi/local/qwen-3.8-27B-Cold_Fusion-Q3",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-Cold_Fusion-Q3",
+    "created": "10 hours ago"
+  },
+  {
+    "id": "8f6f9408-5d17-447d-8413-e82495cfc15a",
+    "shortId": "8f6f940",
+    "name": "bench qwen-3.8-27B-Cold_Fusion-Q3 / code_80213488",
+    "provider": "pi/local/qwen-3.8-27B-Cold_Fusion-Q3",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-Cold_Fusion-Q3",
+    "created": "12 hours ago"
+  },
+  {
+    "id": "1e921d46-c3d6-42af-88ad-c40ade744f6e",
+    "shortId": "1e921d4",
+    "name": "bench qwen-3.8-27B-APEX_Nano-MTP / code_80213488",
+    "provider": "pi/local/qwen-3.8-27B-APEX_Nano-MTP",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-APEX_Nano-MTP",
+    "created": "13 hours ago"
+  },
+  {
+    "id": "452f39e3-3c2e-481a-b2cc-da8c7cf2074f",
+    "shortId": "452f39e",
+    "name": "bench qwen-3.8-27B-APEX_Nano / code_80213488",
+    "provider": "pi/local/qwen-3.8-27B-APEX_Nano",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-APEX_Nano",
+    "created": "15 hours ago"
+  },
+  {
+    "id": "cda3ef40-e4b8-45b5-8b4b-23b54e1ab292",
+    "shortId": "cda3ef4",
+    "name": "bench qwen-3.8-27B-BD_Q3-MTP / code_80213488",
+    "provider": "pi/local/qwen-3.8-27B-BD_Q3-MTP",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-BD_Q3-MTP",
+    "created": "16 hours ago"
+  },
+  {
+    "id": "52ee8969-ded3-4177-9b44-c2449bd12f7d",
+    "shortId": "52ee896",
+    "name": "bench qwen-3.8-27B-Ridge_Q3 / code_80213488",
+    "provider": "pi/local/qwen-3.8-27B-Ridge_Q3",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-Ridge_Q3",
+    "created": "18 hours ago"
+  },
+  {
+    "id": "4120c0fb-cfd8-4913-b29d-325972d361c3",
+    "shortId": "4120c0f",
+    "name": "bench qwen-3.8-27B-BD_Q3 / code_80213488",
+    "provider": "pi/local/qwen-3.8-27B-BD_Q3",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-BD_Q3",
+    "created": "19 hours ago"
+  },
+  {
+    "id": "3c073269-974d-4cf3-b440-2d7a075f0370",
+    "shortId": "3c07326",
+    "name": "bench qwen-3.8-27B-BD_Q3 / code_80213488",
+    "provider": "pi/local/qwen-3.8-27B-BD_Q3",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-BD_Q3",
+    "created": "20 hours ago"
+  },
+  {
+    "id": "07346e3f-76b9-4be7-a4ab-15426ada2990",
+    "shortId": "07346e3",
+    "name": "Can you review the home page? It's at localhost:4321",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "closed",
+    "cwd": "~/DU-Solutions-Webpage",
+    "created": "22 hours ago"
+  },
+  {
+    "id": "090efc35-f6f8-449e-a4e2-d28da851ebec",
+    "shortId": "090efc3",
+    "name": "bench qwen-3.8-27B-UD-Q3 / code_80213488",
+    "provider": "pi/local/qwen-3.8-27B-UD-Q3",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-UD-Q3",
+    "created": "1 days ago"
+  },
+  {
+    "id": "af455fc0-9729-47d7-8190-37dc4b0aca64",
+    "shortId": "af455fc",
+    "name": "bench qwen-3.8-27B-MIX-Q3 / code_80213488",
+    "provider": "pi/local/qwen-3.8-27B-MIX-Q3",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-MIX-Q3",
+    "created": "1 days ago"
+  },
+  {
+    "id": "57167ff8-d249-4781-a5e5-14aaf7f38fa2",
+    "shortId": "57167ff",
+    "name": "bench ornith-1.5-35b / code_80213488",
+    "provider": "pi/local/ornith-1.5-35b",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-ornith-1.5-35b",
+    "created": "1 days ago"
+  },
+  {
+    "id": "e7d7f01a-a0dd-45bf-b69b-ed6b05efe3ef",
+    "shortId": "e7d7f01",
+    "name": "bench qwen-3.8-27B-MIX-Q3 / code_80213488",
+    "provider": "pi/local/qwen-3.8-27B-MIX-Q3",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-MIX-Q3",
+    "created": "1 days ago"
+  },
+  {
+    "id": "c7e58547-6257-49bc-be6e-47a0e5246935",
+    "shortId": "c7e5854",
+    "name": "bench qwen-3.8-27B-MIX-Q4 / code_80213488",
+    "provider": "pi/local/qwen-3.8-27B-MIX-Q4",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-MIX-Q4",
+    "created": "1 days ago"
+  },
+  {
+    "id": "d7b40078-5bd4-4629-a43a-06ca43f8d792",
+    "shortId": "d7b4007",
+    "name": "single deep dive: CDeviceFontLayer",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "1 days ago"
+  },
+  {
+    "id": "07debc01-89ca-4c48-9944-bb243a48a9a1",
+    "shortId": "07debc0",
+    "name": "single deep dive: CDeviceGX",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "1 days ago"
+  },
+  {
+    "id": "61ad0440-4bf4-4ddd-8504-d06e7f1fa1f4",
+    "shortId": "61ad044",
+    "name": "single deep dive: CDeviceVI",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "1 days ago"
+  },
+  {
+    "id": "2b47e873-86eb-4684-9483-47ab887040fd",
+    "shortId": "2b47e87",
+    "name": "bench ornith-1.5-35b / code_80213488",
+    "provider": "pi/local/ornith-1.5-35b",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-ornith-1.5-35b",
+    "created": "1 days ago"
+  },
+  {
+    "id": "07be61a1-9147-4e83-8b62-df6ab43f53d0",
+    "shortId": "07be61a",
+    "name": "single deep dive: CDevice",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "1 days ago"
+  },
+  {
+    "id": "9f6a758b-1457-4ee9-9571-c6bb852ba1e4",
+    "shortId": "9f6a758",
+    "name": "bench kat-coder-2.5 / code_80213488",
+    "provider": "pi/local/kat-coder-2.5",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-kat-coder-2.5",
+    "created": "1 days ago"
+  },
+  {
+    "id": "5f7d52d3-1de8-498b-9de1-c3e17526a849",
+    "shortId": "5f7d52d",
+    "name": "Advisor: CBgTex second opinion",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "1 days ago"
+  },
+  {
+    "id": "6042853b-44a6-4716-94ed-fb8804109647",
+    "shortId": "6042853",
+    "name": "bench qwen-3.8-27B-UD-Q3 / CBgTex",
+    "provider": "pi/local/qwen-3.8-27B-UD-Q3",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-UD-Q3",
+    "created": "1 days ago"
+  },
+  {
+    "id": "bc808479-f3a2-4788-9e8f-c39986b19d1c",
+    "shortId": "bc80847",
+    "name": "bench qwen-3.8-27B-MIX-Q4 / CBgTex",
+    "provider": "pi/local/qwen-3.8-27B-MIX-Q4",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-MIX-Q4",
+    "created": "1 days ago"
+  },
+  {
+    "id": "33089081-5c0c-4fa7-aa1a-db4ea4eaa431",
+    "shortId": "3308908",
+    "name": "bench ornith-1.5-35b / CBgTex",
+    "provider": "pi/local/ornith-1.5-35b",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-ornith-1.5-35b",
+    "created": "1 days ago"
+  },
+  {
+    "id": "efa08c9b-b132-4ca7-be90-960487336063",
+    "shortId": "efa08c9",
+    "name": "bench ornith-1.5-35b / CBgTex",
+    "provider": "pi/local/ornith-1.5-35b",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-ornith-1.5-35b",
+    "created": "1 days ago"
+  },
+  {
+    "id": "4b0ddde6-4fbf-4127-b627-e1be3fa79d05",
+    "shortId": "4b0ddde",
+    "name": "requeue slice3",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "1 days ago"
+  },
+  {
+    "id": "e6d2ad90-caa3-43c5-bb73-4bd79c25e14a",
+    "shortId": "e6d2ad9",
+    "name": "requeue slice2",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "1 days ago"
+  },
+  {
+    "id": "fc47767d-160f-42b5-a701-807c664fb571",
+    "shortId": "fc47767",
+    "name": "requeue slice1",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "1 days ago"
+  },
+  {
+    "id": "069aec24-1660-41a0-9d46-caec6746f668",
+    "shortId": "069aec2",
+    "name": "requeue slice0",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "1 days ago"
+  },
+  {
+    "id": "2fed051e-7cdc-4a42-b183-e5de6d5933c0",
+    "shortId": "2fed051",
+    "name": "bench qwen-3.8-27B-MIX-Q4 / CBgTex",
+    "provider": "pi/local/qwen-3.8-27B-MIX-Q4",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-MIX-Q4",
+    "created": "1 days ago"
+  },
+  {
+    "id": "dd9b6a4d-685e-4a79-98e3-0bbc3591d243",
+    "shortId": "dd9b6a4",
+    "name": "func_80449D68 iter4",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "1 days ago"
+  },
+  {
+    "id": "cb432232-4896-4b9d-ba1a-356163ef8061",
+    "shortId": "cb43223",
+    "name": "bench qwen-3.8-27B-UD-Q3 / CBgTex",
+    "provider": "pi/local/qwen-3.8-27B-UD-Q3",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-UD-Q3",
+    "created": "1 days ago"
+  },
+  {
+    "id": "da8da5fe-1d21-4b02-b1bd-8def4726799a",
+    "shortId": "da8da5f",
+    "name": "Help me build a 'dashboard' for Binaa Al Manhaji.",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/BinaaAlManhajiDashboard",
+    "created": "1 days ago"
+  },
+  {
+    "id": "c57abf57-e674-400d-9f1f-8db1d58c53f8",
+    "shortId": "c57abf5",
+    "name": "Run the server",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/DU-Solutions-Webpage",
+    "created": "2 days ago"
+  },
+  {
+    "id": "bd980fd4-9e5f-46d2-aa40-9d9718c697b3",
+    "shortId": "bd980fd",
+    "name": "bench qwen-3.8-27B-MIX-Q3 / CBgTex",
+    "provider": "pi/local/qwen-3.8-27B-MIX-Q3",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-MIX-Q3",
+    "created": "2 days ago"
+  },
+  {
+    "id": "4a082c27-c847-4906-89d3-fc2a70a2ceb4",
+    "shortId": "4a082c2",
+    "name": "anti-cheat wave5 slice3 [muse-spark]",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "2 days ago"
+  },
+  {
+    "id": "d902d435-80fd-4bcb-9fa8-00914d23fd7f",
+    "shortId": "d902d43",
+    "name": "anti-cheat wave5 slice2 [muse-spark]",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "2 days ago"
+  },
+  {
+    "id": "8c36972b-4446-4496-8ef7-7cab88a562fe",
+    "shortId": "8c36972",
+    "name": "anti-cheat wave5 slice1 [muse-spark]",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "2 days ago"
+  },
+  {
+    "id": "789d0407-c318-4d56-9a6b-2e08a527f34b",
+    "shortId": "789d040",
+    "name": "anti-cheat wave5 slice0 [muse-spark]",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "2 days ago"
+  },
+  {
+    "id": "2364a289-25ba-4c04-81ba-d64317dd9755",
+    "shortId": "2364a28",
+    "name": "bench qwen-3.8-27B-MIX-Q3 / CBgTex",
+    "provider": "pi/local/qwen-3.8-27B-MIX-Q3",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-MIX-Q3",
+    "created": "2 days ago"
+  },
+  {
+    "id": "849f4499-dc5b-42bc-b229-9eba57c7209e",
+    "shortId": "849f449",
+    "name": "bench qwen-3.8-27B-MIX-Q4 / CBgTex",
+    "provider": "pi/local/qwen-3.8-27B-MIX-Q4",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-MIX-Q4",
+    "created": "2 days ago"
+  },
+  {
+    "id": "bd7a85e5-f820-4fb8-9c43-b7a2954b40f4",
+    "shortId": "bd7a85e",
+    "name": "bench qwen-3.8-27B-MIX-Q4 / CBgTex",
+    "provider": "pi/local/qwen-3.8-27B-MIX-Q4",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-MIX-Q4",
+    "created": "2 days ago"
+  },
+  {
+    "id": "2948aa63-bf8a-4844-bd78-6c6661bd9d0e",
+    "shortId": "2948aa6",
+    "name": "bench kat-coder-2.5 / CBgTex",
+    "provider": "pi/local/kat-coder-2.5",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-kat-coder-2.5",
+    "created": "2 days ago"
+  },
+  {
+    "id": "60b10630-f819-4807-bb93-f5b49c8b5c6d",
+    "shortId": "60b1063",
+    "name": "bench qwen-3.8-27B-MIX-Q4 / CBattery",
+    "provider": "pi/local/qwen-3.8-27B-MIX-Q4",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-MIX-Q4",
+    "created": "2 days ago"
+  },
+  {
+    "id": "4e8a5b8f-792a-4c28-a079-3d3a24901697",
+    "shortId": "4e8a5b8",
+    "name": "Hey. I just got laid off and I'm trying to find clients for",
+    "provider": "pi/omlx/Ling-3.0-tiny-oQ6e",
+    "thinking": "max",
+    "status": "closed",
+    "cwd": "~/Ahmed/Jobs",
+    "created": "2 days ago"
+  },
+  {
+    "id": "2b23f25c-45bc-4110-a476-34829cdc1029",
+    "shortId": "2b23f25",
+    "name": "bench qwen-3.8-27B-UD-Q3 / CBattery",
+    "provider": "pi/local/qwen-3.8-27B-UD-Q3",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-UD-Q3",
+    "created": "2 days ago"
+  },
+  {
+    "id": "1f96ce52-160e-4d46-a0a0-dd23b414102d",
+    "shortId": "1f96ce5",
+    "name": "bench qwen-3.8-27B-MIX-Q3 / CBattery",
+    "provider": "pi/local/qwen-3.8-27B-MIX-Q3",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-MIX-Q3",
+    "created": "2 days ago"
+  },
+  {
+    "id": "7086e428-1914-4e3d-a0de-282b72ba335e",
+    "shortId": "7086e42",
+    "name": "bench qwen-3.8-27B-MIX-Q4 / CBattery",
+    "provider": "pi/local/qwen-3.8-27B-MIX-Q4",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-MIX-Q4",
+    "created": "2 days ago"
+  },
+  {
+    "id": "03328fef-5296-4ac9-b0b9-fac0b0ca2caf",
+    "shortId": "03328fe",
+    "name": "bench qwen-3.8-27B-MIX-Q4 / CBattery",
+    "provider": "pi/local/qwen-3.8-27B-MIX-Q4",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-qwen-3.8-27B-MIX-Q4",
+    "created": "2 days ago"
+  },
+  {
+    "id": "052586c3-ad4e-4ff5-bbff-0dac095cfc11",
+    "shortId": "052586c",
+    "name": "func_80449D68 code match (CGXCache .data)",
+    "provider": "pi/opencode-go/muse-spark-1.2-contributor",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "2 days ago"
+  },
+  {
+    "id": "895249a0-b37f-46b8-8a3c-ac4e3373b664",
+    "shortId": "895249a",
+    "name": "bench kat-coder-2.5 / CBattery",
+    "provider": "pi/local/kat-coder-2.5",
+    "thinking": "xhigh",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-kat-coder-2.5",
+    "created": "2 days ago"
+  },
+  {
+    "id": "28f83818-c9c4-440d-a9ae-59bca9ee473d",
+    "shortId": "28f8381",
+    "name": "bench kat-coder-2.5 / CBattery",
+    "provider": "pi/local/kat-coder-2.5",
+    "thinking": "medium",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-kat-coder-2.5",
+    "created": "2 days ago"
+  },
+  {
+    "id": "774950df-7954-47bc-bda3-abedbe9f275d",
+    "shortId": "774950d",
+    "name": "pool-coupled units clear (Part 2)",
+    "provider": "pi/nube/DeepSeek-V4-Flash",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "2 days ago"
+  },
+  {
+    "id": "d2556bff-52fa-42b1-b832-ec32ebf5460b",
+    "shortId": "d2556bf",
+    "name": "func_80449D68 code match (CGXCache .data)",
+    "provider": "pi/nube/DeepSeek-V4-Flash",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "2 days ago"
+  },
+  {
+    "id": "59b0c7ea-0b98-40a2-b3f4-6818fabe89c5",
+    "shortId": "59b0c7e",
+    "name": "pool-coupled units clear (Part 2)",
+    "provider": "pi/nube/DeepSeek-V4-Flash",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "2 days ago"
+  },
+  {
+    "id": "5796f7b0-5d89-4844-8444-16fe27643cd3",
+    "shortId": "5796f7b",
+    "name": "func_80449D68 code match (CGXCache .data)",
+    "provider": "pi/nube/DeepSeek-V4-Flash",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "2 days ago"
+  },
+  {
+    "id": "c4ab2a00-ee4d-41b7-8573-c87e960fca3e",
+    "shortId": "c4ab2a0",
+    "name": "pool-coupled units clear (Part 2)",
+    "provider": "pi/nube/DeepSeek-V4-Flash",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 days ago"
+  },
+  {
+    "id": "f0035b79-613e-4a89-8da9-67973d8769d8",
+    "shortId": "f0035b7",
+    "name": "func_80449D68 code match (CGXCache .data)",
+    "provider": "pi/nube/DeepSeek-V4-Flash",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 days ago"
+  },
+  {
+    "id": "2d6edd25-6cc9-400c-9518-2e07e66a89dc",
+    "shortId": "2d6edd2",
+    "name": "CGXCache pool defs (monolibdata2)",
+    "provider": "pi/nube/DeepSeek-V4-Flash",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 days ago"
+  },
+  {
+    "id": "462a20da-a9bd-4842-b886-cfa62cef690f",
+    "shortId": "462a20d",
+    "name": "Can you turn this into readable markdown?",
+    "provider": "pi/nube/DeepSeek-V4-Flash",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 days ago"
+  },
+  {
+    "id": "956f5d3a-dc59-45e0-8332-93be5323d5a0",
+    "shortId": "956f5d3",
+    "name": "What are the biggest TUs?",
+    "provider": "pi/nube/DeepSeek-V4-Flash",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "3 days ago"
+  },
+  {
+    "id": "bfc068d9-bdd6-4e73-9f50-ebce5f0acaee",
+    "shortId": "bfc068d",
+    "name": "bench kat-coder-2.5 / CBattery",
+    "provider": "pi/local/kat-coder-2.5",
+    "thinking": "medium",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-kat-coder-2.5",
+    "created": "3 days ago"
+  },
+  {
+    "id": "f070ef15-0046-46d2-b0f2-28f373aa4284",
+    "shortId": "f070ef1",
+    "name": "bench kat-coder-2.5 / math_triangular",
+    "provider": "pi/local/kat-coder-2.5",
+    "thinking": "medium",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-kat-coder-2.5",
+    "created": "3 days ago"
+  },
+  {
+    "id": "d597fb6d-d211-417d-aa9b-5bd7b47c5754",
+    "shortId": "d597fb6",
+    "name": "bench kat-coder-2.5 / CStopwatchUtil",
+    "provider": "pi/local/kat-coder-2.5",
+    "thinking": "medium",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-kat-coder-2.5",
+    "created": "3 days ago"
+  },
+  {
+    "id": "d0e3565a-09f2-4be5-bfb1-6da0d7e20e41",
+    "shortId": "d0e3565",
+    "name": "bench kat-coder-2.5 / CStopwatchUtil",
+    "provider": "pi/local/kat-coder-2.5",
+    "thinking": "medium",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-kat-coder-2.5",
+    "created": "3 days ago"
+  },
+  {
+    "id": "c1d7f173-b531-4b57-ab5d-251c34adf031",
+    "shortId": "c1d7f17",
+    "name": "bench kat-coder-2.5 / CStopwatchUtil",
+    "provider": "pi/local/kat-coder-2.5",
+    "thinking": "medium",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade-bench-kat-coder-2.5",
+    "created": "3 days ago"
+  },
+  {
+    "id": "3b88c8e9-038d-48f2-b7a2-be42e83ee272",
+    "shortId": "3b88c8e",
+    "name": "Can you help me clean up the skills and project documentatio",
+    "provider": "pi/nube/DeepSeek-V4-Flash",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "5 days ago"
+  },
+  {
+    "id": "5dc9d157-df10-4020-823d-775be2ee9e71",
+    "shortId": "5dc9d15",
+    "name": "Can you explain to me how you would decompile func_800DCB54",
+    "provider": "omp/omlx/Qwen3.5-9B-MLX-8bit",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "6 days ago"
+  },
+  {
+    "id": "4f817213-4806-4221-b4fa-d8d78e7b66ef",
+    "shortId": "4f81721",
+    "name": "[Loop R11B] Full review — deepseek-v4-pro (11th fresh)",
+    "provider": "pi/openrouter/deepseek/deepseek-v4-pro-0813",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "3d3e8027-75e1-4e17-9387-6cf33fda41c8",
+    "shortId": "3d3e802",
+    "name": "[Loop R11A] Full review — GLM-5.2 (12th fresh)",
+    "provider": "pi/nube/GLM-5.2",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "40393aed-3899-4d3d-a1ba-0687a978edaa",
+    "shortId": "40393ae",
+    "name": "[Loop R10A2] Full review — GLM-5.2 (11th fresh, retry)",
+    "provider": "pi/nube/GLM-5.2",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "2f9eb4b9-175b-4da3-a042-9debc132418c",
+    "shortId": "2f9eb4b",
+    "name": "[Loop R10B] Full review — deepseek-v4-pro (10th fresh)",
+    "provider": "pi/openrouter/deepseek/deepseek-v4-pro-0813",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "5e3e6a60-23e0-45fd-9556-232e8276483e",
+    "shortId": "5e3e6a6",
+    "name": "[Loop R10A] Full review — GLM-5.2 (11th fresh)",
+    "provider": "pi/nube/GLM-5.2",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "aea1828a-d84e-42ff-9ddd-7c93e8300690",
+    "shortId": "aea1828",
+    "name": "[Loop R9B] Full review — deepseek-v4-pro (9th fresh)",
+    "provider": "pi/openrouter/deepseek/deepseek-v4-pro-0813",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "35bca2c5-0f14-47c3-b4e4-b0d54f318942",
+    "shortId": "35bca2c",
+    "name": "[Loop R9A] Full review — GLM-5.2 (10th fresh)",
+    "provider": "pi/nube/GLM-5.2",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "fdeab047-9247-4b7e-ac0c-5f037ae7eee2",
+    "shortId": "fdeab04",
+    "name": "[Loop R8A2] Full review — deepseek-v4-pro (8th fresh)",
+    "provider": "pi/openrouter/deepseek/deepseek-v4-pro-0813",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "8081b5c2-ae99-481f-ab11-ad70dd0d3054",
+    "shortId": "8081b5c",
+    "name": "[Loop R8A2] Full review — GLM-5.2 (9th fresh)",
+    "provider": "pi/nube/GLM-5.2",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "0416560a-afd1-4d76-884b-dfd0127893ab",
+    "shortId": "0416560",
+    "name": "[Loop R8B] Full review — deepseek-v4-pro (8th fresh)",
+    "provider": "pi/openrouter/deepseek/deepseek-v4-pro-0813",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "7a7fecd3-f658-48ca-b6b5-ab433dc83fa0",
+    "shortId": "7a7fecd",
+    "name": "[Loop R8A] Full review — GLM-5.2 (8th fresh)",
+    "provider": "pi/nube/GLM-5.2",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "0bf6a7c4-1d8e-436e-9afd-56b2a9808a7d",
+    "shortId": "0bf6a7c",
+    "name": "[Loop R7B] Full review — deepseek-v4-pro (7th fresh)",
+    "provider": "pi/openrouter/deepseek/deepseek-v4-pro-0813",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "e34c62e7-ec81-4548-81ec-fad9a7d79367",
+    "shortId": "e34c62e",
+    "name": "[Loop R7A] Full review — GLM-5.2 (7th fresh)",
+    "provider": "pi/nube/GLM-5.2",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "da1406f8-f649-4d7e-934b-c8125ecddf17",
+    "shortId": "da1406f",
+    "name": "[Loop R6B] Full review — deepseek-v4-pro (6th fresh)",
+    "provider": "pi/openrouter/deepseek/deepseek-v4-pro-0813",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "fdb4cf49-b061-4506-baaa-f6e230757129",
+    "shortId": "fdb4cf4",
+    "name": "[Loop R6A] Full review — GLM-5.2 (6th fresh)",
+    "provider": "pi/nube/GLM-5.2",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "e8c7380f-6f3f-4cff-bbd8-3f6885156f2e",
+    "shortId": "e8c7380",
+    "name": "[Loop R5B] Full review — deepseek-v4-pro (5th fresh)",
+    "provider": "pi/openrouter/deepseek/deepseek-v4-pro-0813",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "c5b1fec5-04c4-48b8-a3c6-07775e2b8925",
+    "shortId": "c5b1fec",
+    "name": "[Loop R5A] Full review — GLM-5.2 (5th fresh)",
+    "provider": "pi/nube/GLM-5.2",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "81a8248e-85cc-4195-89e0-b9bc8985b00c",
+    "shortId": "81a8248",
+    "name": "[Loop R4B] Full review — deepseek-v4-pro (4th fresh)",
+    "provider": "pi/openrouter/deepseek/deepseek-v4-pro-0813",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "244c926c-43ac-47c1-ad54-e5c94098bb6c",
+    "shortId": "244c926",
+    "name": "[Loop R4A] Full review — GLM-5.2 (4th fresh)",
+    "provider": "pi/nube/GLM-5.2",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "e55a75de-5cc1-4130-a920-136f46fdae89",
+    "shortId": "e55a75d",
+    "name": "[Loop R3B] Full review — deepseek-v4-pro (3rd fresh)",
+    "provider": "pi/openrouter/deepseek/deepseek-v4-pro-0813",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "ebcb69ef-f47e-46d4-842c-c28d4df6ba71",
+    "shortId": "ebcb69e",
+    "name": "[Loop R3A] Full review — GLM-5.2 (3rd fresh)",
+    "provider": "pi/nube/GLM-5.2",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "e1331804-8cae-4907-aab5-d2814a1ca939",
+    "shortId": "e133180",
+    "name": "[Loop R2B] Full review — deepseek-v4-pro (2nd fresh)",
+    "provider": "pi/openrouter/deepseek/deepseek-v4-pro-0813",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "37b05bcc-d44f-4686-90ef-94603b10face",
+    "shortId": "37b05bc",
+    "name": "[Loop R2A] Full review — GLM-5.2 (2nd fresh)",
+    "provider": "pi/nube/GLM-5.2",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "2f837347-8724-40e6-8cb3-a02e526413fd",
+    "shortId": "2f83734",
+    "name": "[Loop R2B] Full review — LongCat-2.0",
+    "provider": "pi/longcat/LongCat-2.0",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "03592979-f0f1-41d3-b4fb-2c77cc0a86bb",
+    "shortId": "0359297",
+    "name": "[Loop R2A] Full review — DeepSeek-V4-Flash",
+    "provider": "pi/nube/DeepSeek-V4-Flash",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "3df49997-7eb6-481c-9301-f10ae53a6d4d",
+    "shortId": "3df4999",
+    "name": "[Loop R1B] Full review — GLM-5.2 fresh",
+    "provider": "pi/nube/GLM-5.2",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "dbf17a4d-0aca-4bec-a06f-8aa1e37bae7f",
+    "shortId": "dbf17a4",
+    "name": "[Loop R1B] Full review — DeepSeek-V4-Flash",
+    "provider": "pi/nube/DeepSeek-V4-Flash",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "4d49b17a-eaaa-4b02-bd9f-313366954619",
+    "shortId": "4d49b17",
+    "name": "[Loop R1A] Full review — deepseek-v4-pro",
+    "provider": "pi/openrouter/deepseek/deepseek-v4-pro-0813",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "668b5364-4d3f-4cec-905f-089d0ba6859b",
+    "shortId": "668b536",
+    "name": "[FreshReview] Phase 3 — reviewer (LongCat-2.0)",
+    "provider": "pi/longcat/LongCat-2.0",
+    "thinking": "high",
+    "status": "error",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "7 days ago"
+  },
+  {
+    "id": "1a0d01e6-8a22-41dd-a999-7361f5262ed5",
+    "shortId": "1a0d01e",
+    "name": "[Advisor] Adversarial review: IlmConnect rewrite plan (Cursor auto)",
+    "provider": "cursor/default[]",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "8 days ago"
+  },
+  {
+    "id": "81eb03a6-8bcd-41f0-9a38-1b0815ee74cb",
+    "shortId": "81eb03a",
+    "name": "I want to rewrite this program.",
+    "provider": "pi/openrouter/stealth/ox-alpha",
+    "thinking": "max",
+    "status": "closed",
+    "cwd": "~/Ahmed/IlmConnect",
+    "created": "8 days ago"
+  },
+  {
+    "id": "bcac5357-3779-4acd-9f75-225331c74aea",
+    "shortId": "bcac535",
+    "name": "How much TUs have fully matched targets but not fully matche",
+    "provider": "omp/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "1f7c3cca-417e-4793-af13-058533a6688a",
+    "shortId": "1f7c3cc",
+    "name": "Decompi live-run monitor (loop)",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "8 days ago"
+  },
+  {
+    "id": "03b92888-f10d-48a4-94de-623d6ebdc225",
+    "shortId": "03b9288",
+    "name": "Find me an email for this listing:",
+    "provider": "omp/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/Jobs",
+    "created": "9 days ago"
+  },
+  {
+    "id": "7bce1ad5-557f-4e8c-a4a3-43799c09de05",
+    "shortId": "7bce1ad",
+    "name": "Can you find me an email for this listing?",
+    "provider": "omp/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/Jobs",
+    "created": "9 days ago"
+  },
+  {
+    "id": "5f92eb28-48e7-4819-9bc5-ef8a80328bf3",
+    "shortId": "5f92eb2",
+    "name": "Can you help me write a wellfound message for this listing?",
+    "provider": "omp/opencode-go/mimo-v2.5-pro",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/Jobs",
+    "created": "9 days ago"
+  },
+  {
+    "id": "f37f4046-ad49-41b8-b0ec-c42e5ed11da3",
+    "shortId": "f37f404",
+    "name": "Do you think we could benefit from a cleanup of all the agen",
+    "provider": "omp/openrouter/deepseek/deepseek-v4-pro-0813",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "10 days ago"
+  },
+  {
+    "id": "cb3da1f5-39cc-42cd-a208-55d40a938dad",
+    "shortId": "cb3da1f",
+    "name": "Can you help me create a video 'filtering' system that will",
+    "provider": "omp/opencode-go/deepseek-v4-flash",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/VideoHalalifier",
+    "created": "10 days ago"
+  },
+  {
+    "id": "21b0251c-082d-4088-a5a1-5977183a7fad",
+    "shortId": "21b0251",
+    "name": "How did you find the names of the struct fields?",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "10 days ago"
+  },
+  {
+    "id": "f7174aeb-4a62-408b-8cc1-2c965decb0c4",
+    "shortId": "f7174ae",
+    "name": "I want you to help me rewrite pi-harness from the ground up.",
+    "provider": "pi/openrouter/deepseek/deepseek-v4-pro-0813",
+    "thinking": "high",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "10 days ago"
+  },
+  {
+    "id": "42f3c22a-5ec1-4f5e-9c1e-90bec6fc50d6",
+    "shortId": "42f3c22",
+    "name": "Can you start agents using paseo to match the functions in t",
+    "provider": "pi/opencode-go/ox-alpha-free",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "11 days ago"
+  },
+  {
+    "id": "f1954da5-7d8a-46e3-9936-de40727fb428",
+    "shortId": "f1954da",
+    "name": "Can you investigate the cpp/hpp files and tell me what code",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "12 days ago"
+  },
+  {
+    "id": "acf5a0a8-66e1-4fc3-aeab-67964a76a220",
+    "shortId": "acf5a0a",
+    "name": "Can you get me a list of the biggest unmatched functions?",
+    "provider": "pi/opencode-go/deepseek-v4-flash",
+    "thinking": "low",
+    "status": "closed",
+    "cwd": "~/Ahmed/xenoblade",
+    "created": "12 days ago"
+  }
+]

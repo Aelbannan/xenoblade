@@ -479,73 +479,79 @@ const char* func_801562DC(u32 unused, CItemRec* rec) {
 // records at field_08 from the +0x4A/+0x51 columns ('1'.. suffixed name
 // column).
 void func_80156350(u32 unused, CItemExt* self) {
-    u32 word = self->field_00;
+    u32 w1 = self->field_00;
     self->mEntries[0] = -1;
     self->mEntries[1] = -1;
     self->mEntries[2] = -1;
     self->mEntries[3] = -1;
     self->mCount = 0;
-    if ((self->field_00 >> 20) != 0) {
-        u32 kind = (self->field_00 >> 16) & 0xF;
+    if ((w1 >> 20) != 0) {
         void* h = 0;
+        u32 kind = (w1 >> 16) & 0xF;
+        s32 flag = 0;
         if (kind == 2) {
             h = lbl_eu_806640F4;
         } else {
-            // Materialized boolean: nested ifs keep the retail's two
-            // cmplwi (MWCC folds `x >= 4 && x <= 8` into subi+cmplwi).
-            u32 b = 0;
+            // Materialized boolean keeps the retail's two separate cmplwi
+            // compares.
             if (kind >= 4) {
                 if (kind <= 8) {
-                    b = 1;
+                    flag = 1;
                 }
             }
-            if (b) {
-                h = lbl_eu_806640F8;
-            }
+        }
+        if (flag != 0) {
+            h = lbl_eu_806640F8;
         }
         if (h != 0) {
             union {
                 u32 v;
                 u8 b[4];
             } t;
+            // Fresh field_00 read here: retail reloads the word from memory
+            // before extracting the row id for this call.
             t.v = getBdatStringColumnValue(h, lbl_eu_80501C58 + 0x5a,
                                            (self->field_00 >> 5) & 0x7FF);
             self->mCount = t.b[0];
         }
     }
     if ((self->field_00 >> 20) != 0) {
+        // No cached column pointer: retail re-loads the global on every
+        // use (strlen, per-iteration mutation, and the lookup call).
         s32 idx = strlen(lbl_eu_80662298) - 1;
-        u32 kind = (self->field_00 >> 16) & 0xF;
-        u32 row = (self->field_00 >> 5) & 0x7FF;
+        u32 w2 = self->field_00;
+        u32 kind = (w2 >> 16) & 0xF;
+        u32 row = (w2 >> 5) & 0x7FF;
         void* handle = 0;
         s32 bound = 0;
+        s32 flag = 0;
         if (kind == 2) {
             handle = lbl_eu_806640F4;
             bound = 3;
         } else {
-            u32 b = 0;
             if (kind >= 4) {
                 if (kind <= 8) {
-                    b = 1;
+                    flag = 1;
                 }
             }
-            if (b) {
-                handle = lbl_eu_806640F8;
-                bound = 1;
-            }
+        }
+        if (flag != 0) {
+            handle = lbl_eu_806640F8;
+            bound = 1;
         }
         if (bound != 0) {
+            CItemRec* rec = (CItemRec*)self->field_08;
             for (s32 i = 0; i < bound; i++) {
-                char* col = lbl_eu_80662298;
-                col[idx] = (char)(0x31 + i);
+                lbl_eu_80662298[idx] = (char)(0x31 + i);
                 union {
                     u32 v;
                     u16 h[2];
                 } t;
-                t.v = getBdatStringColumnValue(handle, col, row);
-                if (t.h[0] != 0) {
-                    // Retail re-checks the same value (second beq on the
-                    // same CR) before the name-column lookup.
+                t.v = getBdatStringColumnValue(handle, lbl_eu_80662298, row);
+                u16 v = t.h[0];
+                if (v != 0) {
+                    // Retail re-tests the row value before the name-column
+                    // lookup.
                     u16 v2 = 0;
                     if (t.h[0] != 0) {
                         union {
@@ -564,9 +570,9 @@ void func_80156350(u32 unused, CItemExt* self) {
                     t4.v = getBdatStringColumnValue(lbl_eu_806640EC,
                                                     lbl_eu_80501C58 + 0x51,
                                                     t.h[0]);
-                    func_801558B4((CItemRec*)&self->field_08[i * 8],
-                                  t.h[0], v2, 1, t4.b[0]);
+                    func_801558B4(rec, v, v2, 1, t4.b[0]);
                 }
+                rec++;
             }
         }
     }
@@ -695,10 +701,16 @@ void func_80156934(u32 unused, CItemData* self) {
         u32 v;
         u8 b[4];
     } t6;
+    // Declared in retail register-color order (r30..r26).
+    s32 i;
+    u32 n;
+    void* handle;
+    u32 row;
+    u8 min;
     u32 word = self->field_00;
-    void* handle = lbl_eu_80664100;
-    u32 row = (word >> 5) & 0x7FF;
-    u32 n = CItem_initItemImplInstances(self)->vf78(self);
+    handle = lbl_eu_80664100;
+    row = (word >> 5) & 0x7FF;
+    n = CItem_initItemImplInstances(self)->vf78(self);
     *(u16*)&self->field_08[8] = 0;
     t1.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x9b, row);
     CItem_initItemImplInstances(self)->vf0C(self, t1.b[0]);
@@ -717,33 +729,31 @@ void func_80156934(u32 unused, CItemData* self) {
     t5.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0xb0, row);
     halfs[1] = (u16)t5.b[0];
     t6.v = getBdatStringColumnValue(lbl_eu_806640CC, lbl_eu_80501C58 + 0xb7, (u16)n);
-    u32 b0 = t6.b[0];
     // Branchless boolean scaled by 2, computed before the rand call
     // (retail: neg/or/srawi then rlwinm extracting bit 30 -> 0 or 2).
-    s32 nb = -(s32)b0;
-    u32 idx = (u32)((nb | (s32)b0) >> 31) & 2;
-    if (ml::math::mtRand(100) < 25) idx++;
-    u8 min = lbl_eu_80662290[2 * idx];
-    u8 max = lbl_eu_80662290[2 * idx + 1];
-    for (s32 i = 0; i < 4; i++) {
-        if (halfs[i] == 0 || i >= 2) {
-            CItem_initItemImplInstances(self)->vf50(self, i, 0);
-            CItem_initItemImplInstances(self)->vf68(self, i, 0);
-        } else {
-            u16 rnd;
-            // Statement-if keeps retail's cmplw/min-max arg copy shape
-            // (a ternary reorders the mtRand call against the vf50 setup).
-            if (min < max) {
-                rnd = (u16)ml::math::mtRand(min, max);
-            } else {
-                rnd = max;
-            }
+    // One variable chains count -> roll index -> max.
+    n = (u32)(((-(s32)t6.b[0] | (s32)t6.b[0]) >> 31) & 2);
+    if (ml::math::mtRand(100) < 25) n++;
+    min = lbl_eu_80662290[2 * n];
+    n = lbl_eu_80662290[2 * n + 1];
+    for (i = 0; i < 4; i++) {
+        // && form: retail lowers this as beq/bge both branching forward to
+        // the zero path (an || form flips the branch layout).
+        if (halfs[i] != 0 && i < 2) {
+            // Ternary keeps retail's branchy cmplw/bl/mr/mr/b/mr select;
+            // the explicit __rlwinm puts the single u16 truncation on the
+            // join path (per-arm casts emit it twice).
+            u32 rnd = (min < n) ? (u32)ml::math::mtRand(min, n) : n;
+            rnd = __rlwinm(rnd, 0, 16, 31);
             CItem_initItemImplInstances(self)->vf50(self, i, halfs[i]);
             if (i == 1) {
                 CItem_initItemImplInstances(self)->vf68(self, i, (rnd >> 1) & 0x7FFF);
             } else {
                 CItem_initItemImplInstances(self)->vf68(self, i, rnd);
             }
+        } else {
+            CItem_initItemImplInstances(self)->vf50(self, i, 0);
+            CItem_initItemImplInstances(self)->vf68(self, i, 0);
         }
     }
 }
@@ -920,7 +930,14 @@ done:
     }
 }
 
-void func_80156FF8(){}
+// Copy an item record to dst, sized by the category recorded in the source
+// word's bits 16-19 (func_80156F54 maps the category to the record stride).
+void* func_80156FF8(void* dst, const void* src) {
+    u32 w = *(const u32*)src;
+    int size = func_80156F54((u16)((w >> 16) & 0xF));
+    memcpy(dst, src, size);
+    return dst;
+}
 
 // Copy an item record to dst, sized by the category recorded in the source
 // word's bits 16-19 (func_80156F54 maps the category to the record stride).
@@ -968,13 +985,18 @@ void func_80157184(u32 value) {
 }
 
 // Add value to the shared item-count word, saturating at 999999999.
+// 64-bit arithmetic keeps the retail addc/addze + two-stage compare
+// (high-word subfe chain, then low-word cmplw).
 void func_801571A8(u32 value) {
     CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
     u32* w = &blk->mCountE8;
     unsigned long long sum = (unsigned long long)*w + value;
     if (sum > 999999999ULL)
         sum = 999999999ULL;
-    *w = (u32)sum;
+    // Second clamp mirrors the inlined store helper's own 32-bit guard
+    // (retail re-compares before storing).
+    u32 v = (u32)sum;
+    *w = v > 999999999 ? 999999999 : v;
 }
 
 extern "C" void* func_801571FC(void) { return *(void**)((u8*)lbl_eu_806641B8 + 0x10000 + 0x20e8); }
@@ -1006,90 +1028,98 @@ void func_8015720C(u32 v, u32 set) {
 // the flag's state (set path: the bit was clear; clear path: it was set),
 // 0 for an out-of-range kind or an invalid flag id.
 u32 func_8015730C(u32 v, u32 set, u32 kind) {
-    u32 result = 0;
+    u32 result;
     u32 bit;
     // Two goto guards: retail emits two cmplwi branches to a shared exit
-    // (nested/&& forms fold to subi+cmplwi, gotos do not).
+    // (nested/&& forms fold to subi+cmplwi, gotos do not). Initializing
+    // `result` between the checks blocks the fold.
     if (v < 1) goto done;
-    bit = 1u << v;
+    result = 0;
     if (v > 0xb) goto done;
-    // Per-arm struct-field access: retail reloads the block pointer
-    // inside each arm (lwz sym@sda21 + addis 0x10000).
+    // Retail computes the shift AFTER testing `set` (cmpwi r4,0 sits before
+    // li r4,1/slw), reusing the set argument register for the constant.
+    bit = 1u << v;
     if (set != 0) {
-            if (kind == 2) {
-                u32* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mCount0C;
-                if ((*w & bit) == 0) result = 1;
-                *w |= bit;
-                return result;
-            }
-            if (kind == 4) {
-                u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag14;
-                if ((*w & bit) == 0) result = 1;
-                *w = (u16)(*w | bit);
-                return result;
-            }
-            if (kind == 5) {
-                u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag16;
-                if ((*w & bit) == 0) result = 1;
-                *w = (u16)(*w | bit);
-                return result;
-            }
-            if (kind == 6) {
-                u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag18;
-                if ((*w & bit) == 0) result = 1;
-                *w = (u16)(*w | bit);
-                return result;
-            }
-            if (kind == 7) {
-                u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag1A;
-                if ((*w & bit) == 0) result = 1;
-                *w = (u16)(*w | bit);
-                return result;
-            }
-            if (kind == 8) {
-                u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag1C;
-                if ((*w & bit) == 0) result = 1;
-                *w = (u16)(*w | bit);
-                return result;
-            }
-        } else {
-            if (kind == 2) {
-                u32* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mCount0C;
-                if ((*w & bit) != 0) result = 1;
-                *w &= ~bit;
-                return result;
-            }
-            if (kind == 4) {
-                u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag14;
-                if ((*w & bit) != 0) result = 1;
-                *w = (u16)(*w & ~bit);
-                return result;
-            }
-            if (kind == 5) {
-                u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag16;
-                if ((*w & bit) != 0) result = 1;
-                *w = (u16)(*w & ~bit);
-                return result;
-            }
-            if (kind == 6) {
-                u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag18;
-                if ((*w & bit) != 0) result = 1;
-                *w = (u16)(*w & ~bit);
-                return result;
-            }
-            if (kind == 7) {
-                u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag1A;
-                if ((*w & bit) != 0) result = 1;
-                *w = (u16)(*w & ~bit);
-                return result;
-            }
-            if (kind == 8) {
-                u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag1C;
-                if ((*w & bit) != 0) result = 1;
-                *w = (u16)(*w & ~bit);
-                return result;
-            }
+        // Halfword arms: the test uses the full-width bit, but the merge
+        // truncates it to 16 bits first (retail clrlwi r3,r3,16 before or).
+        if (kind == 2) {
+            u32* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mCount0C;
+            if ((*w & bit) == 0) result = 1;
+            *w = *w | bit;
+            goto done;
         }
+        // Halfword arms: the test uses the full-width bit, but the merge
+        // truncates it to 16 bits first (retail clrlwi r3,r3,16 before or).
+        if (kind == 4) {
+            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
+            if ((blk->mFlag14 & bit) == 0) result = 1;
+            blk->mFlag14 = blk->mFlag14 | (u16)bit;
+            goto done;
+        }
+        if (kind == 5) {
+            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
+            if ((blk->mFlag16 & bit) == 0) result = 1;
+            blk->mFlag16 = blk->mFlag16 | (u16)bit;
+            goto done;
+        }
+        if (kind == 6) {
+            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
+            if ((blk->mFlag18 & bit) == 0) result = 1;
+            blk->mFlag18 = blk->mFlag18 | (u16)bit;
+            goto done;
+        }
+        if (kind == 7) {
+            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
+            if ((blk->mFlag1A & bit) == 0) result = 1;
+            blk->mFlag1A = blk->mFlag1A | (u16)bit;
+            goto done;
+        }
+        if (kind == 8) {
+            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
+            if ((blk->mFlag1C & bit) == 0) result = 1;
+            blk->mFlag1C = blk->mFlag1C | (u16)bit;
+            goto done;
+        }
+    } else {
+        if (kind == 2) {
+            u32* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mCount0C;
+            if ((*w & bit) != 0) result = 1;
+            *w = *w & ~bit;
+            goto done;
+        }
+        // Clear-path halfword arms: ~bit via nor then masked to 16 bits
+        // (retail nor r3,r3,r3 + clrlwi r3,r3,16).
+        if (kind == 4) {
+            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
+            if ((blk->mFlag14 & bit) != 0) result = 1;
+            blk->mFlag14 = blk->mFlag14 & (u16)~bit;
+            goto done;
+        }
+        if (kind == 5) {
+            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
+            if ((blk->mFlag16 & bit) != 0) result = 1;
+            blk->mFlag16 = blk->mFlag16 & (u16)~bit;
+            goto done;
+        }
+        if (kind == 6) {
+            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
+            if ((blk->mFlag18 & bit) != 0) result = 1;
+            blk->mFlag18 = blk->mFlag18 & (u16)~bit;
+            goto done;
+        }
+        if (kind == 7) {
+            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
+            if ((blk->mFlag1A & bit) != 0) result = 1;
+            blk->mFlag1A = blk->mFlag1A & (u16)~bit;
+            goto done;
+        }
+        if (kind == 8) {
+            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
+            if ((blk->mFlag1C & bit) != 0) result = 1;
+            blk->mFlag1C = blk->mFlag1C & (u16)~bit;
+            goto done;
+        }
+    }
 done:
     return result;
 }
@@ -1202,99 +1232,112 @@ void func_801579A4() {
     ((CItemBlockCounters*)lbl_eu_806641B8)->mCount08 = 0;
 }
 
+// Lower-bound-checked probe of the block+0x12108 slot bits; combined with
+// the caller's i <= 11 condition this yields retail's two guarded compares.
+static inline u32 slotFlag08(u32 v) {
+    // Nested ifs keep the two bound compares uncombined.
+    if (v >= 1) {
+        if (v <= 0xb) {
+            return flagTest(((CItemBlockCounters*)lbl_eu_806641B8)->mCount08 & (1 << v));
+        }
+    }
+    return 0;
+}
+
 extern "C" void* func_801579C4(u32 arg, s32* out1, s32* out2) {
     void* result = 0;
-    u32* ptr;
-    u32 v;
 
     func_8009CF8C(0x80c);
 
     *out1 = 0;
 
-    for (u32 i = 1; i <= 11; i++) {
-        if (!!(((u32*)lbl_eu_806641B8)[0x4842] & (1 << i))) {
+    // Slot-usage bits live at block+0x2108; each set bit adds 10 records.
+    // flagTest keeps retail's branchless (m|-m)>>31 boolean idiom.
+    for (int i = 1; i <= 11; i++) {
+        if (slotFlag08(i)) {
             *out1 += 10;
         }
     }
 
-    ptr = (u32*)lbl_eu_806641B8;
-    v = ptr[0x4844];
-    if (v < 30) {
-        v = 30;
-    }
-    ptr[0x4844] = v;
+    // Clamp the shared counter (block+0x2110) down to 30.
+    char* cntBase = lbl_eu_806641B8 + 0x10000;
+    u32 cnt = *(u32*)(cntBase + 0x2110);
+    *(u32*)(cntBase + 0x2110) = cnt > 30 ? 30 : cnt;
 
-    if (arg > 13) {
-        *out1 = 0;
-        *out2 = 0;
-        return 0;
-    }
+    // block stays live across the dispatch: cases address relative to
+    // either the raw item-block pointer or block+0x10000.
+    char* ptr = lbl_eu_806641B8;
+    u32 add = *(u32*)(ptr + 0x12110) + 60;
+    char* block = (char*)((u32)ptr + 0x10000);
 
+    // Case order matches retail's body layout; cases 0/1 share the default
+    // body (the arg > 13 bound check is generated by switch lowering).
     switch (arg) {
-        case 0:
-        case 1:
-            *out2 = 0;
-            *out1 = 0;
-            return 0;
         case 2:
             *out2 = 52;
-            result = (char*)ptr + 0xA58C;
-            *out1 += v + 60;
-            break;
-        case 3:
-            *out2 = 16;
-            *out1 = 300;
-            result = (char*)ptr + 0xE778;
+            result = block - 0x5A74;
+            *out1 += add;
             break;
         case 4:
             *out2 = 52;
             result = ptr;
-            *out1 += v + 60;
+            *out1 += add;
             break;
         case 5:
             *out2 = 52;
-            result = (char*)ptr + 0x211C;
-            *out1 += v + 60;
+            result = ptr + 0x211C;
+            *out1 += add;
             break;
         case 6:
             *out2 = 52;
-            result = (char*)ptr + 0x4238;
-            *out1 += v + 60;
+            result = ptr + 0x4238;
+            *out1 += add;
             break;
         case 7:
             *out2 = 52;
-            result = (char*)ptr + 0x6354;
-            *out1 += v + 60;
+            result = ptr + 0x6354;
+            *out1 += add;
             break;
         case 8:
             *out2 = 52;
-            result = (char*)ptr + 0x8470;
-            *out1 += v + 60;
-            break;
-        case 9:
-            *out2 = 28;
-            *out1 = 300;
-            result = (char*)ptr + 0xE778;
-            break;
-        case 10:
-            *out2 = 8;
-            *out1 = 300;
-            result = (char*)ptr + 0x101B8;
+            result = block - 0x7B90;
+            *out1 += add;
             break;
         case 11:
             *out2 = 8;
-            result = (char*)ptr + 0x10B18;
-            *out1 += v + 60;
+            result = block + 0xB18;
+            *out1 += add;
+            break;
+        case 9:
+            *out2 = 28;
+            result = block - 0x3958;
+            *out1 = 300;
+            break;
+        case 3:
+            *out2 = 16;
+            result = block - 0x1888;
+            *out1 = 300;
+            break;
+        case 10:
+            *out2 = 8;
+            result = block + 0x1B8;
+            *out1 = 300;
             break;
         case 12:
             *out2 = 8;
+            result = block + 0x1478;
             *out1 = 200;
-            result = (char*)ptr + 0x11478;
             break;
         case 13:
             *out2 = 8;
+            result = block - 0x5C8;
             *out1 = 240;
-            result = (char*)ptr + 0xFA38;
+            break;
+        case 0:
+        case 1:
+        default:
+            *out2 = 0;
+            *out1 = 0;
             break;
     }
 
@@ -1777,6 +1820,7 @@ extern "C" u32 func_801589A0(CItemFamilyRec* a, CItemFamilyRec* b) {
 // rank into the u16 at record+4. Returns one past the highest rank (1 when
 // the list is empty, 2 when a single record was found).
 extern "C" s32 __dt__801589BC(u16 arg) {
+    s32 i;
     CItemFamilyRec* list;   // r31
     s32 result = 1;         // r30
     CItemFamilyBuf* buf;    // r29
@@ -1785,11 +1829,10 @@ extern "C" s32 __dt__801589BC(u16 arg) {
     if (list == 0) return 1;
     buf = (CItemFamilyBuf*)mtl::MemManager::allocate(0x644, mtl::MemManager::getHandleMEM2());
     buf->mCount = 0;
-    for (s32 i = 0; i < count; i++) {
+    for (i = 0; i < count; i++) {
         CItemFamilyRec* rec = (CItemFamilyRec*)((char*)list + stride * i);
         if (rec->mpFamily != 0) {
-            buf->mRecs[buf->mCount] = rec;
-            buf->mCount++;
+            buf->mRecs[buf->mCount++] = rec;
         }
     }
     s32 n = buf->mCount;
@@ -2092,8 +2135,14 @@ void func_80159348(CItemPartySlots* self) {
     // Base pointer for the three parallel arrays: retail materialises
     // self+0x10 (== &self->mSlots[0][2]) and walks it by 8 halfwords per
     // character, addressing mArr1/2/3 at displacements 0x9c/0x16c/0x23c.
+    CItemData* rec;
     s16* p = &self->mSlots[0][2];
     s16* slots = &self->mSlots[0][0];
+    // Declaration order fixes the retail register allocation order
+    // (cursors are colored before the loop counters).
+    s16* sc;
+    u8* cdc;
+    s16* pc;
     for (s32 id = 1; id <= 13; id++) {
         u8* cd = (u8*)func_8009EC9C((u16)id);
         // Clear the three parallel per-character u16 tables (8 entries each).
@@ -2103,16 +2152,15 @@ void func_80159348(CItemPartySlots* self) {
             p[0x11E + k] = -1;   // mArr3[id-1][k]
         }
         // Per-character working copies of the two cursors.
-        s16* sc = slots;
-        s16* pc = p;
-        for (s32 s = 0; s <= 5; s++) {
-            u8* cdc = cd;
+        sc = slots;
+        cdc = cd;
+        pc = p;
+        for (s32 s = 0; s <= 5; s++, cdc += 2) {
             *sc = -1;
-            if (((const s16*)cdc)[0xe + s] > -1) {
-                CItemData* rec =
-                    (CItemData*)func_8009D790((s16*)&cdc[0x1c], (u32)s);
+            if (*(const s16*)(cdc + 0x1c) > -1) {
+                rec = (CItemData*)func_8009D790((s16*)(cd + 0x1c), (u32)s);
                 if (rec->field_00 == 0) {
-                    func_8009DBF4(cdc, (u32)s, (void*)-1);
+                    func_8009DBF4(cd, (u32)s, (void*)-1);
                 } else {
                     u16 count =
                         (u16)CItem_initItemImplInstances(rec)->vf30(rec);
@@ -2131,14 +2179,15 @@ void func_80159348(CItemPartySlots* self) {
                 }
                 CItem_initItemImplInstances(rec)->vf48(rec);
             }
-            u16 t = *(u16*)&cdc[(u16)s * 2 + 2];
-            *sc = (s16)func_8009E0B4(cdc, (u32)s, &cdc[(u16)s * 2]);
-            func_8009DBF4(cdc, (u32)s, (void*)-1);
-            func_8009E0C4(cdc, (u16)s, t);
+            u16 t = *(u16*)&cd[(u16)s * 2 + 2];
+            *sc = (s16)func_8009E0B4(cd, (u32)s,
+                                     (void*)((unsigned long)cd + (unsigned long)((u16)s * 2)));
+            func_8009DBF4(cd, (u32)s, (void*)-1);
+            func_8009E0C4(cd, (u16)s, t);
             sc++;
         }
-        slots += 6;
         p += 8;
+        slots += 6;
     }
 }
 
@@ -2657,7 +2706,11 @@ s32 func_8015A054(CItemFour* self, u32 a, u32 unused, void* c, u32 d, u32 e) {
             u32 n = self->mCount;
             self->mCount = n + 1;
             CItemExt* dst = &self->mItems[n];
-            u32 size2 = (u32)func_80156F54((u16)((local.field_00 >> 16) & 0xF));
+            // Volatile re-read: the mCount store may alias the address-taken
+            // scratch record, so retail reloads field_00 here instead of
+            // folding the stored register value.
+            u32 size2 = (u32)func_80156F54(
+                (u16)((*(volatile u32*)&local.field_00 >> 16) & 0xF));
             memcpy(dst, &local, size2);
             return 1;
         }
@@ -2685,13 +2738,8 @@ extern "C" s32 func_8015A238(CItemFour* self, u32 a, u32 unused, void* c, u32 d)
     memset(&local, 0, 0x34);
     s32 idx = lbl_eu_80664208;
     for (s32 i = 0; i < 4; i++) {
-        char* col1 = lbl_eu_806622B0;
-        char* col2 = lbl_eu_806622B4;
-        char* col3 = lbl_eu_806622B8;
         int ch = 0x31 + i;
-        col1[idx] = (char)ch;
-        col2[idx] = (char)ch;
-        col3[idx] = (char)ch;
+        char* col1 = lbl_eu_806622B0;
         union {
             u32 v;
             u16 h[2];
@@ -2704,10 +2752,15 @@ extern "C" s32 func_8015A238(CItemFour* self, u32 a, u32 unused, void* c, u32 d)
             u32 v;
             u8 b[4];
         } r3v;
+        // Only the first column pointer is held in a register (shared by
+        // its store and lookup); the other two are re-read per use.
+        lbl_eu_806622B4[idx] = (char)ch;
+        lbl_eu_806622B8[idx] = (char)ch;
+        col1[idx] = (char)ch;
         r1v.v = getBdatStringColumnValue(c, col1, a);
-        r2v.v = getBdatStringColumnValue(c, col2, a);
+        r2v.v = getBdatStringColumnValue(c, lbl_eu_806622B4, a);
         int v2b = r2v.b[0] * 100;
-        r3v.v = getBdatStringColumnValue(c, col3, a);
+        r3v.v = getBdatStringColumnValue(c, lbl_eu_806622B8, a);
         // Retail reads the amount byte before rolling.
         int v3b = r3v.b[0];
         int r = ml::math::mtRand(10000);
@@ -2984,9 +3037,7 @@ extern "C" void func_8015A930(CItemFour* self, u32 row, s32 maxCount,
 // (func_8015A51C / func_8015A238 / func_8015A054 / func_8015A7FC), and
 // dedupe the last two records when they share the same family id.
 extern "C" void __declspec(noinline) func_8015AAB4(CItemFour* self, u32 item, u32 count, u32 row) {
-    const char* base = lbl_eu_80501C58;
     void* handle = lbl_eu_80664150;
-    u16 probs[4];
     union {
         u32 v;
         u8 b[4];
@@ -3003,26 +3054,38 @@ extern "C" void __declspec(noinline) func_8015AAB4(CItemFour* self, u32 item, u3
         u32 v;
         u8 b[4];
     } t4;
-    t1.v = getBdatStringColumnValue(handle, base + 0xf9, item);
+    u16 probs[4];
+    // Retail keeps each full result on the stack and converts it right
+    // before the next lookup. The column base is written inline so MWCC
+    // materializes it as a late CSE temp.
+    t1.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0xf9, item);
     probs[0] = (u16)t1.b[0];
-    t2.v = getBdatStringColumnValue(handle, base + 0x103, item);
+    t2.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x103, item);
     probs[1] = (u16)t2.b[0];
-    t3.v = getBdatStringColumnValue(handle, base + 0x10b, item);
+    t3.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x10b, item);
     probs[2] = (u16)t3.b[0];
-    t4.v = getBdatStringColumnValue(handle, base + 0x117, item);
+    t4.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x117, item);
     probs[3] = (u16)t4.b[0];
     s32 added = 0;
     while (added < (s32)count) {
-        s32 pick = 0;
+        s32 pick;
         s32 tries = 0;
-        do {
-            pick = 0;
-            while (pick < 4) {
-                if (ml::math::mtRand(100) < probs[pick]) goto roll;
+        const u16* p;
+    retry:
+        p = &probs[0];
+        pick = 0;
+        // Failure path (roll >= prob) advances to the next column; a
+        // successful roll exits to the dispatch below.
+        while (pick < 4) {
+            if ((s32)ml::math::mtRand(100) >= *p) {
                 pick++;
+                p++;
+                continue;
             }
-            tries++;
-        } while (tries < 100);
+            goto roll;
+        }
+        tries++;
+        if (tries < 100) goto retry;
         pick = 0;
     roll:
         if (pick == 0) {
@@ -3035,12 +3098,14 @@ extern "C" void __declspec(noinline) func_8015AAB4(CItemFour* self, u32 item, u3
             added += func_8015A7FC(self, item, count, handle, 1);
         }
         if ((s32)count > 1 && added > 1) {
-            s32 last = (s32)self->mCount - 1;
+            s32 last = (s32)*(volatile u32*)&self->mCount - 1;
             if (last >= 1 &&
                 (self->mItems[last].field_00 >> 20) ==
                     (self->mItems[last - 1].field_00 >> 20)) {
                 added--;
-                self->mCount = self->mCount - 1;
+                // Retail reloads mCount here rather than folding the value
+                // loaded for the family compare.
+                self->mCount = *(volatile u32*)&self->mCount - 1;
             }
         }
     }
@@ -3135,43 +3200,32 @@ extern "C" void func_8015AE9C(CItemFour* self) {
     }
 }
 
+// Byte-read helper for item-box BDAT columns (inlined at each call site;
+// retail keeps the union spill + high-byte reload pattern per site).
+static u32 ItemColByte(void* handle, const char* col, u32 row) {
+    union {
+        u32 v;
+        u8 b[4];
+    } t;
+    t.v = getBdatStringColumnValue(handle, col, row);
+    return t.b[0];
+}
+
 // Open the item box for an area event: read four BDAT string columns (the
 // item ids and a mode byte), reset the shared four-record block, then
 // dispatch on the event kind (1: roll up to 2 items; 2: roll 1 + one more;
 // 3: roll 1 + one more + a third item).
 extern "C" void func_8015AFA4(s32 kind, u32 row) {
     void* handle = lbl_eu_806640CC;
-    u32 item1;
-    u32 item2;
-    u32 item3;
-    u32 v8;
-    union {
-        u32 v;
-        u8 b[4];
-    } t1;     // 0x14
-    union {
-        u32 v;
-        u8 b[4];
-    } t2;     // 0x10
-    union {
-        u32 v;
-        u8 b[4];
-    } t3;     // 0x0C
-    union {
-        u32 v;
-        u8 b[4];
-    } t4;     // 0x08
-    t1.v = getBdatStringColumnValue(handle, lbl_eu_80501C58, row);
-    item1 = t1.b[0];
-    t2.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x9, row);
-    item2 = t2.b[0];
-    t3.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0x12, row);
-    item3 = t3.b[0];
-    t4.v = getBdatStringColumnValue(handle, lbl_eu_80501C58 + 0xb7, row);
-    v8 = t4.b[0];
+    u32 item1 = ItemColByte(handle, lbl_eu_80501C58, row);
+    u32 item2 = ItemColByte(handle, lbl_eu_80501C58 + 0x9, row);
+    u32 item3 = ItemColByte(handle, lbl_eu_80501C58 + 0x12, row);
+    u32 mode = ItemColByte(handle, lbl_eu_80501C58 + 0xb7, row);
     CItemFour* block = &lbl_eu_80573E18;
     block->mCount = 0;
-    u32 flag = (v8 == 2);
+    // Retail computes the (mode == 2) boolean once (subi/cntlzw/srwi) and
+    // reuses it in both the kind==2 and kind==3 branches.
+    u32 flag = (mode == 2);
     if (kind == 1) {
         func_8015A930(block, item1, 2, 0, 0, 0);
     } else if (kind == 2) {

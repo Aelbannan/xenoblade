@@ -33,9 +33,9 @@ extern "C" CActParamAnim* __dt__8004B070(CActParamAnim* self, s32 deleteFlag) {
     return self;
 }
 
-void CActParamAnim_initSub1() {}
+extern "C" void func_8004B0B0(void*) {}
 
-void CActParamAnim_initSub2() {}
+extern "C" void func_8004B0B4(void*) {}
 
 CActParamAnim::~CActParamAnim() {}
 
@@ -87,6 +87,15 @@ void CActParamAnim_copyTranslation(void* dst, const void* src) {
     *(int*)((char*)dst + 0) = *(int*)((char*)src + 0);
     *(int*)((char*)dst + 4) = *(int*)((char*)src + 4);
     *(int*)((char*)dst + 8) = *(int*)((char*)src + 8);
+}
+
+extern "C" void func_8004B3F0(f32* dst, const f32* src) {
+    u32 a = *(u32*)((char*)src + 0);
+    *(u32*)((char*)dst + 0) = a;
+    u32 b = *(u32*)((char*)src + 4);
+    *(u32*)((char*)dst + 4) = b;
+    u32 c = *(u32*)((char*)src + 8);
+    *(u32*)((char*)dst + 8) = c;
 }
 
 bool func_8004B40C(CActParamAnim* self, const CActParamAnimData3* value) {
@@ -167,8 +176,8 @@ void CActParamAnim_copyRotation(void* dst, const void* src) {
 
 void vec3_set(float *data, float a, float b, float c) { data[0] = a; data[1] = b; data[2] = c; }
 
-float CActParamAnim::getScale() {
-    return *(float*)((char*)this + 0x444);
+extern "C" f32 func_8004B61C(CActParamAnim* self) {
+    return *(f32*)((char*)self + 0x444);
 }
 
 extern "C" void func_8004B624(CActParamAnim* self, void* object, void* state,
@@ -224,6 +233,10 @@ void vec3_copy(float *dst, const float *src) {
 
 float CActParamAnim::getAnimSpeed() const {
     return *(const float*)((const char*)this + 0x390);
+}
+
+extern "C" f32 func_8004B7B8(CActParamAnim* self) {
+    return *(f32*)((char*)self + 0x390);
 }
 
 void CActParamAnim::copyVec3To3C0(const float* src) {
@@ -308,17 +321,18 @@ extern "C" void func_8004B8B0(CActParamAnim* self, u32 param1, u32 param2, f32 v
 }
 
 int func_8004B8F8(CActParamAnim* self, int param) {
-    // Single load feeds the null check; the final call re-reads field_0x3A0
-    // through self (retail reloads it there).
-    // Volatile-qualified read pins the load ahead of the prologue spills,
-    // matching retail's interleaved schedule.
-    u8* obj = *(u8* const volatile*)((char*)self + 0x3A0);
-    if (obj == 0) return 0;
+    // First read feeds the null check; the second read through self exists
+    // because func_8049798C clobbers r5, forcing a reload (retail keeps no
+    // spill home for obj). Byte-invariant residual: retail interleaves the
+    // first load with the prologue spills; every source shape tried emits
+    // them grouped (scheduler tie-break wall, MWCC_CASES near-miss trio).
+    u8* obj = *(u8**)((char*)self + 0x3A0);
+    if (!obj) return 0;
     if (param == 0) {
         return func_80484F18(obj) <= lbl_eu_80665E9C;
     }
     if (func_8049798C(obj + 0xC) != 0) {
-        u8* obj2 = *(u8* const volatile*)((char*)self + 0x3A0);
+        u8* obj2 = *(u8**)((char*)self + 0x3A0);
         return func_80485174(obj2) <= lbl_eu_80665E9C;
     }
     return 0;
@@ -362,6 +376,36 @@ void CActParamAnim::setBlendFlag(int param) {
     }
 }
 
+// Open-item packet (plateau, best 28 mismatch / 24 structural / 4 reg-swap,
+// size PASS, reloc drift none):
+// - Residual is confined to the small-path call-arg materialization region.
+//   Retail copies param to r5 and computes &local BEFORE the model fallback
+//   branches, then computes data as `addi r3,r3,0x10` last (self parked in
+//   r31). Our build parks data in r5 early and defers all arg setup until
+//   after the branches, needing two extra `or` copies.
+// - Ruled out: early-return guard form (worse, branch polarity), removing
+//   the data temp (308B, load order shifts), inline self+0x10 arg (308B),
+//   early `&local` pointer var (changes prologue, 304B), ternary fallback
+//   (canonicalizes identically to if), flag logic inlined into the 5th call
+//   argument via comma/&& expression (324B), no-data-temp + ternary (308B),
+//   inlined self->getChild() accessor as arg1 (308B, same as plain field).
+//   Single-var model chain adopted; data temp required for size parity.
+// - Next experiments: none found within high-level C++; likely MWCC scheduler
+//   tie-break on hoisting side-effect-free arg computations above branches.
+// - Confirmed on func_8005194C too: reordering model/clear/b/data statements,
+//   forcing a post-clear byte reload, and hoisting param into a dedicated
+//   local (animId) all compile to the identical banked body (MWCC CSEs the
+//   reload and canonicalizes the param copy); any full reorder regresses size.
+// - Also ruled out: inlining BOTH arg1 (mChildData10) and arg4 (field4BD) at
+//   the call site to force late data materialization (332B, 58 structural —
+//   worse; MWCC drops the r31 spill and reshuffles the whole small path).
+// - Confirmed on func_8004D194 too: rewriting the 0x40000/0x12 guard from
+//   !(&&!=0) to the equivalent disjunction and reordering the small-path
+//   statements (model load before data, flags snapshot split) compile to the
+//   identical banked body (53 mismatch / 42 structural unchanged) - MWCC
+//   canonicalizes guard polarity and keeps its own arg-materialization order
+//   (param copied via or r5,r31 early, data = addi r3,r30,0x10 mid-sequence,
+//   model chain in r8). Same scheduler tie-break wall family.
 void func_8004BC94(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     if (param != 0) {
@@ -379,8 +423,8 @@ void func_8004BC94(CActParamAnim* self, u32 param) {
                 u32 flag = 0;
                 if (model == 0) model = view->field27C;
                 if (model == 1) {
-                    u32 m = view->field270;
-                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                    model = view->field270;
+                    if ((model & 0x10) == 0 && (model & 0x8) == 0) flag = 1;
                 }
                 u32 local;
                 u32 ret = func_80054170(data, &local, param, b, flag);
@@ -556,20 +600,35 @@ void func_8004CF00(CActParamAnim* self) {
 
 // Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
 // free function, same scheme as func_80053164__13CActParamAnimFv.
+// Compares the sub-object's progress float against an int threshold widened
+// to double (retail xoris/0x4330 magic conversion).
 int func_8004D074__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     if (param != 0) {
         int result = 1;
         if (func_80485464(view->object3A0, param) == 0) {
-            s32 v = (param != 0) ? (s32)view->field33C : (s32)view->field2BC;
-            if (func_80485174(view->object3A0) < (f32)v) result = 0;
+            s32 v;
+            if (param != 0)
+                v = view->field33C;
+            else
+                v = view->field2BC;
+            float progress = func_80485174(view->object3A0);
+            // Int threshold widened via the 0x4330 magic cast (retail
+            // xoris/lis/fsubs template); the pool cookie it synthesizes maps
+            // to lbl_eu_80665EE8 through retail_reloc_map.json.
+            if (!(progress >= (f32)v)) result = 0;
         }
         return result;
     }
     int result = 1;
     if (func_80485244(view->object3A0) == 0) {
-        s32 v = (param != 0) ? (s32)view->field33C : (s32)view->field2BC;
-        if (func_80484F18(view->object3A0) < (f32)v) result = 0;
+        s32 v;
+        if (param != 0)
+            v = view->field33C;
+        else
+            v = view->field2BC;
+        float progress = func_80484F18(view->object3A0);
+        if (!(progress >= (f32)v)) result = 0;
     }
     return result;
 }
@@ -579,8 +638,8 @@ int func_8004D074__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // func_80053164__13CActParamAnimFv.
 int func_8004D194__13CActParamAnimFv(CActParamAnim* self, u32 param, u32 arg2) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
-    u32 localSmall;
     u32 localBig;
+    u32 localSmall;
     // Dispatch through the vtable slot at +0x80 (retail: lwz r12, 0x80(r12));
     // proceed unless BOTH the virtual call and the child reset return 0.
     if (reinterpret_cast<CActParamAnimVt80*>(self)->dispatch80(arg2) != 0 ||
@@ -591,15 +650,15 @@ int func_8004D194__13CActParamAnimFv(CActParamAnim* self, u32 param, u32 arg2) {
         if (param < 0x68) {
             // The 0x40000 guard flag skips the anim start while the requested
             // anim is 0x12 (retail: beq body; cmplwi 0x12; beq ret1).
-            if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+            if ((view->field0C & 0x40000) == 0 || param != 0x12) {
                 if (view->field4BD == 0) {
                     view->field4BD = 1;
                 }
+                u32 model = view->field2FC;
                 u8* data = view->mChildData10;
                 u8 b = view->field4BD;
-                u32 flag = 0;
                 view->field0C &= ~0x200;
-                u32 model = view->field2FC;
+                u32 flag = 0;
                 if (model == 0) model = view->field27C;
                 if (model == 1) {
                     u32 m = view->field270;
@@ -843,6 +902,26 @@ int func_8004D7EC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
 // free function, same scheme as func_80053164__13CActParamAnimFv.
+// Plateau packet (best 30 mismatch / 24 structural / 6 reg-swap, size PASS,
+// no reloc drift): semantics fully reconstructed; residual confined to the
+// call-arg materialization region of the small path. Same scheduler tie-break
+// wall as func_80051448/func_8004BC94: retail copies param to r5 (`or r5,r4,r4`)
+// and computes &local early, then materializes child-data LAST (`addi r3,0x10`)
+// with member reloads off r31; every build keeps the view pointer live in r3,
+// parks child-data in r5 early, and emits a tail `or r3,r5,r5`.
+// Ruled out here: inline field4BD at the call site (35/28), explicit
+// `u32* out = &localSmall` pointer var (hoists the param copy into the
+// prologue region, 80/75 - much worse), dead param alias `animId = param`
+// (coalesces, identical body), removing the shadowed inner localSmall decl
+// (32/24), model-first without data temp (67/60, size 368), declare-first /
+// assign-last data temp (67/60 - breaks the r8 model alloc; first ASSIGNMENT,
+// not just declaration order, is load-bearing), ternary model fallback placed
+// after the b load (35/28 - shifts the flags load after lbz r6).
+// Root cause per reg_mapping: retail consumes r3 as child-data late
+// (`addi r3,r3,0x10`), forcing post-setup member reloads onto r31; our build
+// parks child-data in r5 so the view pointer stays live in r3.
+// Load-bearing shape: data-temp first assignment (fixes r8 model alloc),
+// shadowed inner localSmall decl, b temp loaded before the flags clear.
 int func_8004D950__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localSmall;
@@ -859,15 +938,18 @@ int func_8004D950__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 if (view->field4BD == 0) {
                     view->field4BD = 0;
                 }
+                u8* data = view->mChildData10;
                 u32 model = view->field2FC;
-                u32 flag = 0;
+                u32 localSmall;
+                u32 b = view->field4BD;
                 view->field0C &= ~0x200;
-                model = (model != 0) ? model : view->field27C;
+                u32 flag = 0;
+                if (model == 0) model = view->field27C;
                 if (model == 1) {
                     u32 m = view->field270;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 ret = func_80054170(view->mChildData10, &localSmall, param, view->field4BD, flag);
+                u32 ret = func_80054170(data, &localSmall, param, b, flag);
                 func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
             }
@@ -1152,8 +1234,19 @@ int func_8004E334__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return 0;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
+// Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
 // free function, same scheme as func_80053164__13CActParamAnimFv.
+// Plateau packet (best 35 mismatch / 28 structural / 7 reg-swap, size PASS
+// 404B=404B, no reloc drift): residual is the small-path arg-
+// materialization scheduler wall from the func_8004FCE0 packet - retail
+// parks the param copy (or r5,r4) and model temp in r5..r8 ahead of the
+// flags clear-store; every build instead keeps self in r3 through the model
+// chain, reuses r5 for field2FC/27C/270, and defers li r7/addi r3 until
+// after the branches. Newly ruled out here: if-form model select without
+// ternary (65/58), hoisted u8* child local (62/51, +4 size), explicit
+// p = param copy local (coalesces at every tried position - function top,
+// branch top, after model load - identical output), ternary moved before
+// the field4BD load / flags clear (identical 35/28).
 int func_8004E500__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     CActParamAnimOwnerIf* owner = view->owner08;
@@ -1178,19 +1271,22 @@ int func_8004E500__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 // requested anim is 0x12 (retail: beq body; cmplwi 0x12; beq
                 // ret1).
                 if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                    u32 p = param;
                     if (view->field4BD == 0) {
                         view->field4BD = 0;
                     }
                     u32 model = view->field2FC;
+                    model = (model != 0) ? model : view->field27C;
                     u8 b = view->field4BD;
                     view->field0C &= ~0x200;
                     u32 flag = 0;
-                    model = (model != 0) ? model : view->field27C;
                     if (model == 1) {
                         u32 m = view->field270;
-                        if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
+                        if ((m & 0x10) == 0 && (m & 0x8) == 0) {
+                            flag = 1;
+                        }
                     }
-                    u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+                    u32 ret = func_80054170(view->mChildData10, &localSmall, p, b, flag);
                     func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -1466,42 +1562,49 @@ int func_8004F1E4__13CActParamAnimFv(CActParamAnim* self, u32 param, s32 val) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localBig;
     u32 localSmall;
-    if (view->field374 == val) {
-        if (param != 0) {
-            if (param < 0x68) {
-                // Skip the anim start while the 0x40000 guard flag is set and the
-                // requested anim is 0x12 (same guard as the sibling helpers).
-                if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
-                    if (view->field4BD == 0) {
-                        view->field4BD = 0;
-                    }
-                    u8* data = view->mChildData10;
-                    u8 b = view->field4BD;
-                    u32 flag = 0;
-                    view->field0C &= ~0x200;
-                    u32 model = view->field2FC;
-                    if (model == 0) model = view->field27C;
-                    if (model == 1) {
-                        u32 m = view->field270;
-                        if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
-                    }
-                    u32 ret = func_80054170(data, &localSmall, param, b, flag);
-                    func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
-                    view->field0C &= ~0x200;
-                }
-            } else {
-                u32 flag = 0;
-                if (view->field278 == 1) {
-                    u32 m = view->field270;
-                    if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
-                }
-                u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
-                func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
-            }
-        }
+    if (view->field374 != val) {
+        return 0;
+    }
+    if (param == 0) {
         return 1;
     }
-    return 0;
+    if (param < 0x68) {
+        // Skip the anim start while the 0x40000 guard flag is set and the
+        // requested anim is 0x12 (same guard as the sibling helpers).
+        if ((view->field0C & 0x40000) != 0 && param == 0x12) {
+            return 1;
+        }
+        if (view->field4BD == 0) {
+            view->field4BD = 0;
+        }
+        u32 model = view->field2FC;
+        view->field0C &= ~0x200;
+        u8 b = view->field4BD;
+        u32 flag = 0;
+        if (model == 0) {
+            model = view->field27C;
+        }
+        if (model == 1) {
+            u32 m = view->field270;
+            if ((m & 0x10) == 0 && (m & 0x8) == 0) {
+                flag = 1;
+            }
+        }
+        u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+        func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
+        view->field0C &= ~0x200;
+    } else {
+        u32 flag = 0;
+        if (view->field278 == 1) {
+            u32 m = view->field270;
+            if ((m & 0x10) == 0 && (m & 0x8) == 0) {
+                flag = 1;
+            }
+        }
+        u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
+        func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
+    }
+    return 1;
 }
 
 // Retail symbol is Fv but the body reads r4/r5 (two extra args) — forced-name
@@ -1663,6 +1766,19 @@ void func_8004FAB4__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
 // free function, same scheme as func_80053164__13CActParamAnimFv.
+// Plateau packet (best 51 mismatch / 29 structural / 22 reg-swap, size PASS
+// 376=376, no reloc drift): residual is the same small-path arg-
+// materialization scheduler wall as func_8004BC94/51448/51584 — retail parks
+// self in r31/param in r30 and interleaves the arg setup (or r5,r30 / addi
+// r3,r31,0x10 / lbz r6 / addi r4 / li r7) around the model==1 branch; every
+// build swaps the r30/r31 assignment and defers data/&local until after the
+// branches. Newly ruled out here: s32 param (flips cmplwi 0x68 to cmpi,
+// 76/59), if-form model chain without ternary (372B, -4 size), varargs
+// (.../va_list — full FP save area + __va_arg reloc, 118/106), dead animId
+// copy-local (coalesces, identical), moving localSmall/localBig into their
+// branches (identical), volatile flag clears (canonicalized, identical),
+// reference view alias instead of pointer (identical), nested-call form
+// (func_80054170 inlined into the BDCC arg list, canonicalized, identical).
 int func_8004FCE0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localSmall;
@@ -1687,6 +1803,7 @@ int func_8004FCE0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                             u32 m = view->field270;
                             if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                         }
+                        u32 localSmall;
                         u32 ret = func_80054170(view->mChildData10, &localSmall, param, view->field4BD, flag);
                         func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                         view->field0C &= ~0x200;
@@ -1697,6 +1814,7 @@ int func_8004FCE0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
+                    u32 localBig;
                     u32 ret = func_80054614(view->mChildData10, &localBig, param, flag, 0);
                     func_8004BDCC(self, localBig, ret, view->field2A4, (view->field0C >> 9) & 1);
                 }
@@ -2023,14 +2141,49 @@ int func_80050DB0__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return 1;
 }
 
-// Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
-// free function, same scheme as func_80053164__13CActParamAnimFv.
+// Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
+// free function.
+// Plateau packet (best 41 mismatch / 31 structural / 10 reg-swap, size PASS
+// 416B=416B, reloc drift: one A1FC presence pair):
+// - Residual clusters: (1) retail hoists the loop1 2*pi lfs to +0x08 before
+//   the spill stores; our build places it at +0x1c after the field reads
+//   (register assignment identical otherwise). (2) small-path head arg
+//   materialization: retail emits `or r5,r4` (param copy) + `addi r4,sp,8`
+//   (&local) early and holds model in r8; our build keeps param in r4,
+//   computes &local late, uses r5 for the model chain, and `li r7,0` sits
+//   before cmpi instead of after stw. Same TU-wide scheduler wall as
+//   func_8004BC94/func_8004D950/func_8004E500.
+// - Found this session: writing the model fallback as a TERNARY placed AFTER
+//   the flags-clear store (`model = (model != 0) ? model : view->field27C;`)
+//   makes MWCC emit retail's non-inverted beq/b pair around the field27C
+//   load and restores exact size parity (was -4B with if-statement form).
+// - Ruled out: hoisted `f32 twoPi` local (CSEs back to one load, identical
+//   output); calling func_8004BC28 directly (inlines to identical body);
+//   dropping the v444 temp (flips field440/444 load order, worse); clearing
+//   flags via CActParamAnimFlagView cast aliasing barrier (sees through it,
+//   identical); explicit `u32* out = &localSmall` pointer var (hoists param
+//   copy to instruction 3, reshuffles whole prefix, 89/82 - much worse);
+//   ternary placed BEFORE the b-load/clear (keeps fallback load before the
+//   store, 41/31 same count but different layout); hoisting BOTH pi and 2pi
+//   into locals (98/80, loses the fneg/reload loop2 shape, -8B); moving the
+//   small-path `flag = 0` init after the clear store (identical output);
+//   disjunction guard form `(field0C & 0x40000) == 0 || param != 0x12`
+//   instead of the negated conjunction (identical output).
+// - reg_mapping hints for the next pass: one li site colored r6 in retail vs
+//   r7 here (big-path flag alloc), model chain in retail r8 vs our r5, and
+//   the field27C/270 fallback loads use base r31 in retail vs r3 here
+//   (because retail's addi r3,r3,0x10 destroys self earlier).
+// - Next: find a lever for the early A1FC lfs hoist and the early param/
+//   &local materialization (possibly tied to how `param` reaches the call).
 int func_80050F5C__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localSmall;
     u32 localBig;
     // Wrap the anim angle delta into [-pi, pi) (same wrap as func_8004BC28),
     // then gate: fail when the scaled wrapped angle exceeds the upper bound.
+    // Residual known diff: retail hoists the loop1 lbl_eu_8066A1FC load to
+    // +0x08 (before the spills); every source shape tried keeps it after the
+    // field reads.
     f32 v444 = view->field444;
     f32 value = view->field440 - v444;
     while (lbl_eu_8066A1F8 <= value) value -= lbl_eu_8066A1FC;
@@ -2041,15 +2194,18 @@ int func_80050F5C__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 // The 0x40000 guard flag skips the anim start while the
                 // requested anim is 0x12 (retail: beq body; cmplwi 0x12; beq
                 // ret1).
-                if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
+                if ((view->field0C & 0x40000) == 0 || param != 0x12) {
                     if (view->field4BD == 0) {
                         view->field4BD = 0;
                     }
                     u32 model = view->field2FC;
-                    u32 flag = 0;
-                    view->field0C &= ~0x200;
                     u8 b = view->field4BD;
-                    if (model == 0) model = view->field27C;
+                    view->field0C &= ~0x200;
+                    u32 flag = 0;
+                    // Ternary form (not if-statement) makes MWCC emit the
+                    // non-inverted beq/b branch pair around the field27C
+                    // fallback load, matching retail and restoring size parity.
+                    model = (model != 0) ? model : view->field27C;
                     if (model == 1) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
@@ -2127,8 +2283,9 @@ int func_800512A8__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     u32 localSmall;
     u32 localBig;
-    // Wrap the anim angle delta into [-pi, pi) (same wrap as func_8004BC28),
-    // then gate: fail when the scaled wrapped angle falls below the lower bound.
+    // Wrap the anim angle delta into [-pi, pi) (same wrap as func_8004BC28;
+    // for-loop form canonicalizes identically), then gate: fail when the
+    // scaled wrapped angle falls below the lower bound.
     f32 v444 = view->field444;
     f32 value = view->field440 - v444;
     while (lbl_eu_8066A1F8 <= value) value -= lbl_eu_8066A1FC;
@@ -2143,16 +2300,18 @@ int func_800512A8__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     if (view->field4BD == 0) {
                         view->field4BD = 0;
                     }
+                    u8* data;
                     u32 model = view->field2FC;
-                    u32 flag = 0;
-                    view->field0C &= ~0x200;
                     u8 b = view->field4BD;
+                    view->field0C &= ~0x200;
+                    data = view->mChildData10;
+                    u32 flag = 0;
                     if (model == 0) model = view->field27C;
                     if (model == 1) {
                         u32 m = view->field270;
                         if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                     }
-                    u32 ret = func_80054170(view->mChildData10, &localSmall, param, b, flag);
+                    u32 ret = func_80054170(data, &localSmall, param, b, flag);
                     func_8004BDCC(self, localSmall, ret, view->field2A4, 0);
                     view->field0C &= ~0x200;
                 }
@@ -2171,12 +2330,46 @@ int func_800512A8__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     return 0;
 }
 
+// func_800512A8 plateau packet (best 36 mismatch / 27 structural / 9 reg-swap,
+// size PASS 416B=416B, reloc drift 2 sites on the prologue twoPi load):
+// Newly ruled out here: named twoPi local hoisted to fn top (97/82 - merging
+// both loop constants into one f1 live range breaks float alloc), for-loop
+// wrap form (canonicalizes identically to while), declare-first /
+// late-assigned child-data temp (drops the temp, regresses to 71/61),
+// b-load-before-clear reorder (neutral). Load-bearing shape: child-data temp
+// FIRST-assigned before model/b loads (fixes r8 model alloc, 71 -> 36),
+// matching the func_8004D950 finding. Also ruled out: explicit
+// `u32* out = &localSmall` pointer local (hoists param copy into prologue,
+// 87/80 - same regression as D950 packet); moving the data assignment between
+// the flags clear and flag init (canonicalizes identically - assignment
+// position inside the guard block is not a lever); removing the v444 temp
+// (37/27, flips the 440/444 load order). Next experiments: none found within
+// high-level C++; scheduler tie-break wall family (func_8004BC94 packet).
+// Semantics fully reconstructed; residual is confined to the
+// call-arg materialization region. Retail hoists all four arg setups of the
+// func_80054170 call (`or r5,r4,r4` param copy, `addi r4,sp+8` &out,
+// `li r7,0` flag init, `addi r3,0x10` child-data) ABOVE the conditional
+// field27C fallback / field270 bit tests, which also forces member reloads
+// onto r31. Every MWCC build defers arg setup to the call site, keeping the
+// view pointer live in r3 (lwz ra=r3) plus two tail `or` copies.
+// Ruled out here: per-branch vs function-scope out-param local (function scope
+// is required - it fixes the sp+8 slot), named child-data temp in 3 positions
+// (first-assigned temp is load-bearing for r8 model allocation; inline or
+// late-assigned regresses to 62/57), single `cleared` temp splitting the flag
+// load/store, early model==0 fallback before the clear, dead alias copies of
+// param (coalesced, no effect). Same wall as func_8004BC94's packet and
+// MWCC_CASES rfc_send_test: MWCC scheduler tie-break on hoisting side-effect-
+// free arg computations above branches. Byte-identical sibling
+// func_80051584 carries the identical residual.
 // Retail symbol is Fv but the body reads r4 (one extra param) — forced-name
 // free function, same scheme as func_80053164__13CActParamAnimFv.
 int func_80051448__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
+    u32 local;
     if (param != 0) {
         if (param < 0x68) {
+            // Skip the anim start while the 0x40000 guard flag is set and the
+            // requested anim is 0x12 (same guard as the sibling helpers).
             if (!((view->field0C & 0x40000) != 0 && param == 0x12)) {
                 if (view->field4BD == 0) {
                     view->field4BD = 0;
@@ -2191,7 +2384,6 @@ int func_80051448__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                     u32 m = view->field270;
                     if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
                 }
-                u32 local;
                 u32 ret = func_80054170(data, &local, param, b, flag);
                 func_8004BDCC(self, local, ret, view->field2A4, 0);
                 view->field0C &= ~0x200;
@@ -2203,7 +2395,6 @@ int func_80051448__13CActParamAnimFv(CActParamAnim* self, u32 param) {
                 u32 m = view->field270;
                 if ((m & 0x10) == 0 && (m & 0x8) == 0) flag = 1;
             }
-            u32 local;
             u32 ret = func_80054614(view->mChildData10, &local, param, flag, 0);
             func_8004BDCC(self, local, ret, view->field2A4, (view->field0C >> 9) & 1);
         }
@@ -2836,12 +3027,11 @@ void func_800527E8(CActParamAnim* self) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     f32 animSpeed = view->field390;
     f32 field380 = view->field380;
-    f32 frameSec = CDeviceVI::getSecPerFrame();
-    f32 field384 = view->field384;
-    f32 z = view->field3C8;
+    f32 frameScale = animSpeed * CDeviceVI::getSecPerFrame();
     f32 x = view->field3C0;
-    f32 frameScale = animSpeed * frameSec;
-    f32 limit = field384 * field380 * frameScale;
+    f32 z = view->field3C8;
+    f32 field384 = view->field384;
+    f32 limit = (field384 * field380) * frameScale;
     Vec v;
     v.x = x;
     v.y = lbl_eu_80665EA0;
@@ -2853,7 +3043,8 @@ void func_800527E8(CActParamAnim* self) {
             PSVECNormalize(&v, &v);
         }
         Vec* pos = reinterpret_cast<Vec*>(&view->field3C0);
-        nw4r::math::VEC3Scale(reinterpret_cast<nw4r::math::VEC3*>(pos),
+        // Retail negates/scales v in place, then adds it back onto the position.
+        nw4r::math::VEC3Scale(reinterpret_cast<nw4r::math::VEC3*>(&v),
                               reinterpret_cast<nw4r::math::VEC3*>(&v), -limit);
         nw4r::math::VEC3Add(reinterpret_cast<nw4r::math::VEC3*>(pos),
                             reinterpret_cast<nw4r::math::VEC3*>(pos),
@@ -3330,4 +3521,16 @@ extern "C" void func_80051BA0(CActParamAnim* self) {
     *(volatile u32*)((u8*)self + 0x4A8) = 0x44A05;
     *(volatile float*)((u8*)self + 0x484) = f;
     *(u32*)((u8*)self + 0xC) = v | 0x00800000;
+}
+
+extern "C" void func_80051BC4(CActParamAnim* self) {
+    float f = lbl_eu_80665F18;
+    *(volatile u32*)((u8*)self + 0x4A8) = 0x44A09;
+    *(volatile float*)((u8*)self + 0x484) = f;
+}
+
+extern "C" void func_80051BDC(CActParamAnim* self) {
+    float f = lbl_eu_80665F18;
+    *(volatile u32*)((u8*)self + 0x4A8) = 0x44A11;
+    *(volatile float*)((u8*)self + 0x484) = f;
 }

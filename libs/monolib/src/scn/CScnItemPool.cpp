@@ -53,13 +53,18 @@ template <typename T>
 class reslist : public _reslist_base<T> {
 public:
     reslist();
-    virtual ~reslist() {}
+    virtual ~reslist();
 };
 
 // Out-of-class (non-inline) so the explicit instantiation below emits the
 // standalone ctor body instead of folding it into call sites.
 template <typename T>
 reslist<T>::reslist() : _reslist_base<T>() {}
+
+// Out-of-line + noinline: __dt__12CScnItemPoolFv CALLS this member dtor;
+// without noinline -ipa flattens it (and its base teardown) into the caller.
+template <typename T>
+__declspec(noinline) reslist<T>::~reslist() {}
 
 // Item object stored in the pool's slot arrays and referenced by the reslist
 // sub-pools. The retail class carries a large vtable (>= 0xD0 bytes); only
@@ -444,7 +449,9 @@ extern "C" void func_8048CC40(CScnItemPool* self, u32 arg) {
     }
 }
 // func_8048CCC0: initializes the six sub-pools (kind 0..5).
-void func_8048CCC0(u8* self) {
+// noinline: retail CALLS this from __dt__12CScnItemPoolFv; without it -ipa
+// flattens its drain loop into the dtor.
+extern "C" __declspec(noinline) void func_8048CCC0(u8* self) {
     for (int i = 0; i < 6; i++) {
         func_8048CA5C(self, (u16)i);
     }
@@ -622,7 +629,9 @@ void CScnItemPool::update() {
 // nodes, frees the mList node array (unless externally owned), and resets the
 // capacity. The retail symbol is address-named, so this is written as an
 // extern "C" free function (repo convention for __dt__8048xxxx symbols).
-extern "C" void __dt__8048C378(CScnItemPoolListData* self) {
+// noinline: retail CALLS this from __dt__12CScnItemPoolFv (x6); without it
+// -ipa flattens six copies of the teardown into the dtor.
+extern "C" __declspec(noinline) void __dt__8048C378(CScnItemPoolListData* self) {
     CScnItemPoolLink* node = self->field_0x04->field_0x00;
     CScnItemPoolLink* sentinel;
     while (node != (sentinel = self->field_0x04)) {
@@ -643,7 +652,7 @@ extern "C" void func_8048CF5C(CScnItemPool* self);
 __declspec(noinline) void CScnItemPool::func_8048CF58() { func_8048CF5C(this); }
 // CDeviceVICb-subobject thunks: adjust this from the +4 secondary base back to
 // the primary and tail-call the implementation.
-extern "C" void __dt__12CScnItemPoolFv(CScnItemPool* self, int flags);
+extern "C" CScnItemPool* __dt__12CScnItemPoolFv(CScnItemPool* self, int flags);
 extern "C" void __dt__11CDeviceVICbFv(void* self, int flags);
 extern "C" void __dt__10IWorkEventFv(void* self, int flags);
 void CScnItemPool::func_8048D014() {
@@ -657,45 +666,49 @@ void CScnItemPool::func_8048D01C() {
 
 // __dt__12CScnItemPoolFv: complete-object destructor.
 extern "C" u32 lbl_eu_8056E488[];
-extern "C" __declspec(noinline) void __dt__12CScnItemPoolFv(CScnItemPool* self, int flags) {
+extern "C" __declspec(noinline) CScnItemPool* __dt__12CScnItemPoolFv(CScnItemPool* self, int flags) {
     if (self != nullptr) {
-        *(void**)self = (void*)&lbl_eu_8056E488;
-        *(void**)((char*)self + 4) = (char*)&lbl_eu_8056E488 + 0x88;
+        u32 vt = (u32)&lbl_eu_8056E488;
+        u32* words = (u32*)self;
+        words[0] = vt;
+        words[1] = vt + 0x88;
         func_8048CCC0((u8*)self);
-        __dt__8048C378((CScnItemPoolListData*)((char*)self + 0x0C));
-        __dt__8048C378((CScnItemPoolListData*)((char*)self + 0x2C));
-        __dt__8048C378((CScnItemPoolListData*)((char*)self + 0x4C));
-        __dt__8048C378((CScnItemPoolListData*)((char*)self + 0x6C));
-        __dt__8048C378((CScnItemPoolListData*)((char*)self + 0x8C));
-        __dt__8048C378((CScnItemPoolListData*)((char*)self + 0xAC));
+        func_8048CF5C(self);
+        __dt__8048C378((CScnItemPoolListData*)self->mList0C);
+        __dt__8048C378((CScnItemPoolListData*)self->mList2C);
+        __dt__8048C378((CScnItemPoolListData*)self->mList4C);
+        __dt__8048C378((CScnItemPoolListData*)self->mList6C);
+        __dt__8048C378((CScnItemPoolListData*)self->mList8C);
+        __dt__8048C378((CScnItemPoolListData*)self->mListAC);
         if (self->mFlagsCC != nullptr) {
             mtl::MemManager::deallocate(self->mFlagsCC);
+            self->mFlagsCC = nullptr;
         }
-        self->mFlagsCC = nullptr;
         if (self->mSlotsD0 != nullptr) {
             mtl::MemManager::deallocate(self->mSlotsD0);
+            self->mSlotsD0 = nullptr;
         }
-        self->mSlotsD0 = nullptr;
         if (self->mFlagsD4 != nullptr) {
             mtl::MemManager::deallocate(self->mFlagsD4);
+            self->mFlagsD4 = nullptr;
         }
-        self->mFlagsD4 = nullptr;
         if (self->mSlotsD8 != nullptr) {
             mtl::MemManager::deallocate(self->mSlotsD8);
+            self->mSlotsD8 = nullptr;
         }
-        self->mSlotsD8 = nullptr;
-        ((reslist<CScnItem*>*)((char*)self + 0xAC))->~reslist();
-        ((reslist<CScnItem*>*)((char*)self + 0x8C))->~reslist();
-        ((reslist<CScnItem*>*)((char*)self + 0x6C))->~reslist();
-        ((reslist<CScnItem*>*)((char*)self + 0x4C))->~reslist();
-        ((reslist<CScnItem*>*)((char*)self + 0x2C))->~reslist();
-        ((reslist<CScnItem*>*)((char*)self + 0x0C))->~reslist();
+        ((reslist<CScnItem*>*)((char*)self + 0xAC))->reslist<CScnItem*>::~reslist();
+        ((reslist<CScnItem*>*)((char*)self + 0x8C))->reslist<CScnItem*>::~reslist();
+        ((reslist<CScnItem*>*)((char*)self + 0x6C))->reslist<CScnItem*>::~reslist();
+        ((reslist<CScnItem*>*)((char*)self + 0x4C))->reslist<CScnItem*>::~reslist();
+        ((reslist<CScnItem*>*)((char*)self + 0x2C))->reslist<CScnItem*>::~reslist();
+        ((reslist<CScnItem*>*)((char*)self + 0x0C))->reslist<CScnItem*>::~reslist();
         __dt__11CDeviceVICbFv((void*)((char*)self + 4), 0);
         __dt__10IWorkEventFv((void*)self, 0);
-        if (flags < 0) {
+        if (flags > 0) {
             delete self;
         }
     }
+    return self;
 }
 // func_8048CF5C: drains the sub-pool at 0xAC, unlinking each node and calling
 // the item's vtable slot at 0x08 with argument 1 (non-null items only).

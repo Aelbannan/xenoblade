@@ -117,8 +117,10 @@ struct CUICfQueueMgrView {
     u32 field_11C;
     u8 pad1[0x128 - 0x120];
     void* field_128;             // reslist head node
+    u8 pad2[0x138 - 0x12C];
     void* field_138;             // free-slot array base (0xC stride)
     int field_13C;               // slot capacity
+    u8 pad3[0x144 - 0x140];
     u32 field_144;               // menu-factory ctx
 };
 

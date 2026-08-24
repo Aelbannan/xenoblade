@@ -50,17 +50,19 @@ extern "C" int func_80237394(CArtsInfo*);
 // definition (later in this TU) inherits the linkage; its body is unchanged.
 extern "C" __declspec(noinline) int func_80236DB8(CArtsInfo*);
 
-// Forward declarations for animation state handlers
-void func_80235F6C(CArtsInfo*);
-void func_80236020(CArtsInfo*);
-void func_8023606C(CArtsInfo*);
-void func_80236120(CArtsInfo*);
-void func_8023616C(CArtsInfo*);
-void func_80236220(CArtsInfo*);
-void func_802362D4(CArtsInfo*);
-void func_80236334(CArtsInfo*);
-void func_80236408(CArtsInfo*);
-void func_80236454(CArtsInfo*);
+// Forward declarations for animation state handlers. noinline: the dispatcher
+// func_8023587C must emit bl's to them through the retail jump table;
+// inlining would erase the dispatch entirely.
+__declspec(noinline) void func_80235F6C(CArtsInfo*);
+__declspec(noinline) void func_80236020(CArtsInfo*);
+__declspec(noinline) void func_8023606C(CArtsInfo*);
+__declspec(noinline) void func_80236120(CArtsInfo*);
+__declspec(noinline) void func_8023616C(CArtsInfo*);
+__declspec(noinline) void func_80236220(CArtsInfo*);
+__declspec(noinline) void func_802362D4(CArtsInfo*);
+__declspec(noinline) void func_80236334(CArtsInfo*);
+__declspec(noinline) void func_80236408(CArtsInfo*);
+__declspec(noinline) void func_80236454(CArtsInfo*);
 
 // Manual signed-int -> double conversion (docs/MWCC_PATTERNS.md 7i): build
 // the 0x4330000080000000 bit pattern and subtract the shared sdata2 magic so
@@ -74,6 +76,18 @@ static double ConvS32ToF64(s32 x) {
     u.w[1] = (u32)x ^ 0x80000000;
     u.w[0] = 0x43300000;
     return u.d - lbl_eu_80668698;
+}
+
+// u8 -> double via the same trick but unsigned: no sign fixup, so the
+// subtract uses the plain 0x4330000000000000 magic lbl_eu_806686A8.
+static double ConvU8ToF64(u8 x) {
+    union {
+        double d;
+        u32 w[2];
+    } u;
+    u.w[0] = 0x43300000;
+    u.w[1] = x;
+    return u.d - lbl_eu_806686A8;
 }
 
 // Virtual method call helpers (offset 0x38 = Animate-like, offset 0x2C = BindAnim-like)
@@ -138,24 +152,24 @@ CArtsInfo* __ct__CArtsInfo(CArtsInfo* self) {
     self->field_0x18 = 0;
     self->field_0x1C = 0;
     self->mpLayout1 = nullptr;
-    mpAnimTrans1 = nullptr;
-    mpAnimTrans2 = nullptr;
-    mpAnimTrans3 = nullptr;
-    mpAnimTrans4 = nullptr;
-    mpLayout2 = nullptr;
-    mpAnimTrans5 = nullptr;
-    mpAnimTrans6 = nullptr;
-    field_0x40 = 0;
-    field_0x44 = 0;
-    field_0x48 = 0;
-    field_0x49 = 1;
-    field_0x4C = 0;
-    field_0x50 = 0;
-    field_0x54 = 0;
-    field_0x55 = 0;
-    field_0x56 = 0;
-    field_0x58 = 0;
-    field_0x5A = 0;
+    self->mpAnimTrans1 = nullptr;
+    self->mpAnimTrans2 = nullptr;
+    self->mpAnimTrans3 = nullptr;
+    self->mpAnimTrans4 = nullptr;
+    self->mpLayout2 = nullptr;
+    self->mpAnimTrans5 = nullptr;
+    self->mpAnimTrans6 = nullptr;
+    self->field_0x40 = 0;
+    self->field_0x44 = 0;
+    self->field_0x48 = 0;
+    self->field_0x49 = 1;
+    self->field_0x4C = 0;
+    self->field_0x50 = 0;
+    self->field_0x54 = 0;
+    self->field_0x55 = 0;
+    self->field_0x56 = 0;
+    self->field_0x58 = 0;
+    self->field_0x5A = 0;
 
     // Construct embedded CCur18 cursor
     __ct__CCur18(self->mCursor, 0);
@@ -203,8 +217,9 @@ void func_80235814(CArtsInfo* self) {
 void func_8023587C(CArtsInfo* self) {
     if (self->field_0x40 == 0) return;
 
-    int state = self->field_0x44;
-    if (state >= 0 && state <= 0xC) {
+    // Retail guards the dispatch with a single unsigned cmplwi against 0xC.
+    u32 state = self->field_0x44;
+    if (state <= 0xC) {
         // Dispatch based on state via jump table
         switch (state) {
         case 0: func_80235F6C(self); break;
@@ -217,7 +232,11 @@ void func_8023587C(CArtsInfo* self) {
         case 7: func_80236334(self); break;
         case 8: func_80236408(self); break;
         case 9: func_80236454(self); break;
-        // cases 0xA-0xC fall through to default
+        // Cases 0xA-0xC are explicit empty cases so MWCC emits the full
+        // 13-entry jump table under the single unsigned <= 0xC guard.
+        case 0xA:
+        case 0xB:
+        case 0xC:
         default: break;
         }
     }
@@ -934,7 +953,8 @@ extern "C" __declspec(noinline) int func_8023719C(CArtsInfo* self, u8 arg2, u8 a
 // layout (all guards jump forward to it).
 int func_80237238(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
-    if (obj->field_0x26 == -1) goto fail;
+    int weapon = obj->field_0x26;
+    if (weapon == -1) goto fail;
     CArtsInfoListEntry* e = func_80157C4C(2);
     if (e == 0) goto fail;
     u32 v0 = e->field_0x0;
@@ -943,13 +963,16 @@ int func_80237238(CArtsInfo* self) {
     int hp = (int)func_80136254((const void*)lbl_eu_806640F4, lbl_eu_8050B00C + 0x1f8, id);
     u8 b = (u8)func_801361E8(lbl_eu_806640F4, lbl_eu_8050B00C + 0x200, id);
     if ((b & 4) != 0) {
-        u16 base = (u16)func_800A082C(obj);
-        hp = (int)(lbl_eu_80668690 * (float)(int)((hp & 0xffff) * base));
+        int base = func_800A082C(obj);
+        // Both operands are masked to u16 before the multiply; the scaled
+        // product goes through the shared s32->f64 magic and is clamped to
+        // 999 with an unsigned compare.
+        hp = (int)(lbl_eu_80668690 * ConvS32ToF64((hp & 0xffff) * (base & 0xffff)));
         if ((hp & 0xffffu) >= 0x3e7u) hp = 0x3e7;  // unsigned cmpli, clamp 999
     }
     // Both lookups inline: MWCC evaluates + right-to-left, so func_802370A8
     // (rightmost) runs first and its result survives in r31 like retail.
-    return (int)(lbl_eu_80668694 * (float)(int)((hp & 0xffff) * ((int)func_80236E6C(self, 0x52) + (int)func_802370A8(self) + 100))) & 0xffff;
+    return (int)(lbl_eu_80668694 * ConvS32ToF64((hp & 0xffff) * ((int)func_80236E6C(self, 0x52) + (int)func_802370A8(self) + 100))) & 0xffff;
 fail:
     return 0;
 }
@@ -959,8 +982,7 @@ fail:
 // scale factor is lbl_eu_806686A0.
 int func_80237394(CArtsInfo* self) {
     CArtsCharData* obj = (CArtsCharData*)func_8009EC9C(self->field_0x54);
-    s16 weapon = obj->field_0x26;
-    if (weapon == -1) goto fail;
+    if (obj->field_0x26 == -1) goto fail;
     CArtsInfoListEntry* e = func_80157C4C(2);
     if (e == 0) goto fail;
     u32 v0 = e->field_0x0;
@@ -969,13 +991,14 @@ int func_80237394(CArtsInfo* self) {
     int hp = (int)func_80136254((const void*)lbl_eu_806640F4, lbl_eu_8050B00C + 0x205, id);
     u8 b = (u8)func_801361E8(lbl_eu_806640F4, lbl_eu_8050B00C + 0x200, id);
     if ((b & 4) != 0) {
+        // u16 local: retail masks the scale at definition (clrlwi in r3).
         u16 base = (u16)func_800A082C(obj);
-        hp = (int)(lbl_eu_806686A0 * (float)(int)((hp & 0xffff) * base));
+        hp = (int)(lbl_eu_806686A0 * (float)((hp & 0xffff) * base));
         if ((hp & 0xffffu) >= 0x3e7u) hp = 0x3e7;  // unsigned cmpli, clamp 999
     }
     // Both lookups inline: MWCC evaluates + right-to-left, so func_802370A8
     // (rightmost) runs first and its result survives in r31 like retail.
-    return (int)(lbl_eu_80668694 * (float)(int)((hp & 0xffff) * ((int)func_80236E6C(self, 0x53) + (int)func_802370A8(self) + 100))) & 0xffff;
+    return (int)(lbl_eu_80668694 * (float)((hp & 0xffff) * ((int)func_80236E6C(self, 0x53) + (int)func_802370A8(self) + 100))) & 0xffff;
 fail:
     return 0;
 }
@@ -1200,12 +1223,18 @@ void func_80237B88(CArtsInfo* self, u32 arg2, int arg3) {
 // func_80237D58 - arts info text update. Same shape as func_8023A148 but the
 // lookup is func_801360CC (s8 result): the value is abs()'d and narrowed back
 // to s8 (retail: extsb after the abs call) for the sprintf vararg.
+// Entry param shadows: declaring arg2's shadow first asks MWCC to copy r4
+// before r3 in the entry block (retail order).
+// u32 const on arg2: prologue-scheduling lever (KB: const params altered
+// entry-store order in matched siblings); retail copies r4 before r3.
+// Residual 2-instr reg swap: entry param-copy emission order (retail births
+// r4->r29 before r3->r27). Documented MWCC claim-order invariant - not
+// source-controllable (see func_8023916C / func_8023AADC notes).
 void func_80237D58(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
-    u32 a2 = arg2;
-    char* s1 = func_802374F0(self, a2);
-    char* s2 = func_8023754C(self, a2);
+    char* s1 = func_802374F0(self, arg2);
+    char* s2 = func_8023754C(self, arg2);
     s8 r = func_801360CC(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x263, self->field_0x55);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, (s8)abs(r), s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
@@ -1674,14 +1703,16 @@ void func_802397F4(CArtsInfo* self, u32 arg2, int arg3) {
     grid2 = func_8023719C(self, self->field_0x56, 0);
     char* str = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
     sprintf(buf1, lbl_eu_8050B00C + 0x282, grid1, str, grid2);
+    // Eager intermediate forces the addi next to sprintf1 like retail
+    // (addi r30, r30, 2).
     level = arg3 + 2;
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
-        u32 g1n = func_80237100(self, self->field_0x56 + 1, 0);
-        u32 g2n = func_8023719C(self, self->field_0x56 + 1, 0);
+        grid2 = func_80237100(self, self->field_0x56 + 1, 0);
+        grid1 = func_8023719C(self, self->field_0x56 + 1, 0);
         char* str2 = func_80136190(lbl_eu_8050B00C + 0x32, lbl_eu_8050B00C + 0x3d, 0x52);
-        sprintf(buf1, lbl_eu_8050B00C + 0x282, g1n, str2, g2n);
+        sprintf(buf1, lbl_eu_8050B00C + 0x282, grid2, str2, grid1);
         sprintf(buf2, lbl_eu_8050B00C + 0x23b, level);
         func_80136A1C(self->mpLayout2, buf2, buf1, 0);
         func_80139A18(self->mpLayout2, buf2, &lbl_eu_80664758, &lbl_eu_80664760);
@@ -1739,11 +1770,7 @@ void func_80239AA0(CArtsInfo* self, u32 arg2, int arg3) {
 // func_80239BDC - arts info text update. Same shape as func_80239030 but the
 // grid offset is scaled by 10 (mulli 0xa) before formatting: the value is the
 // arts AP cost rather than a raw grid index.
-void func_80239BDC(CArtsInfo* self_, u32 arg2_, int arg3_) {
-    // Shadow params in retail's save order (arg2 before self before arg3).
-    u32 arg2 = arg2_;
-    CArtsInfo* self = self_;
-    int arg3 = arg3_;
+void func_80239BDC(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
@@ -1873,12 +1900,15 @@ void func_80239FC4(CArtsInfo* self, u32 arg2, int arg3) {
     char* s1 = func_802374F0(self, arg2);
     char* s2 = func_8023754C(self, arg2);
     u8 r = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2ab, self->field_0x55);
-    u32 cur = (u32)(lbl_eu_806686BC * (float)self->field_0x56 + (float)r);
+    // Percentage = scale * level + base. The current level is a u8 operand
+    // (unsigned 0x43300000 promotion) while level+1 is int arithmetic (signed
+    // promotion with the xoris fixup), matching retail codegen exactly.
+    u32 cur = (u32)(lbl_eu_806686BC * ConvU8ToF64(self->field_0x56) + ConvU8ToF64(r));
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, cur, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
-        u32 nxt = (u32)(lbl_eu_806686BC * (float)(self->field_0x56 + 1) + (float)r);
+        u32 nxt = (u32)(lbl_eu_806686BC * ConvS32ToF64(self->field_0x56 + 1) + ConvU8ToF64(r));
         sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
         func_80136A1C(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {
@@ -1984,12 +2014,18 @@ void func_8023A460(CArtsInfo* self, u32 arg2, int arg3) {
 // names + level) and pushes them onto both layouts (layout 2 only when
 // field_0x56 < 0xA).
 #pragma optimize_for_size on
-void func_8023A55C(CArtsInfo* self, u32 arg2, int arg3) {
+#pragma optimize_for_size on
+// Shadowed locals keep the retail register mapping (arg2->r31, self->r28);
+// the residual 2-instruction reg swap is the entry param-save order
+// (retail copies r4->r31 before r3->r28; see func_8023916C).
+void func_8023A55C(CArtsInfo* self_, u32 arg2_, int arg3_) {
+    u32 arg2 = arg2_;
+    int arg3 = arg3_;
+    CArtsInfo* self = self_;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
-    u32 a2 = arg2;
-    char* s1 = func_802374F0(self, a2);
-    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 5, func_8023754C(self, a2));
+    char* s1 = func_802374F0(self, arg2);
+    sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, 5, func_8023754C(self, arg2));
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
@@ -2113,8 +2149,13 @@ void func_8023A97C(CArtsInfo* self, u32 arg2, int arg3) {
 }
 
 // func_8023AA2C - same shape as func_8023A76C with level constant 50.
+// Entry param-save-order wall (see func_8023916C): retail saves arg2 (r31)
+// before self (r28); MWCC invariantly emits the param-1 copy first.
 #pragma optimize_for_size on
-void func_8023AA2C(CArtsInfo* self, u32 arg2, int arg3) {
+void func_8023AA2C(CArtsInfo* self_, u32 arg2_, int arg3_) {
+    u32 arg2 = arg2_;
+    CArtsInfo* self = self_;
+    int arg3 = arg3_;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
@@ -2129,6 +2170,10 @@ void func_8023AA2C(CArtsInfo* self, u32 arg2, int arg3) {
 #pragma optimize_for_size off
 
 // func_8023AADC - same shape as func_8023A76C with level constant 2.
+// Residual: retail spills arg2->r31 BEFORE self->r28; MWCC (size-mode, which
+// is required for the retail stmw r28 frame) always copies r3 first. This is
+// the documented param-save claim-order invariant (MWCC_CASES "VM-op/
+// saved-param claim order", OPEN) - not source-controllable.
 #pragma optimize_for_size on
 void func_8023AADC(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
@@ -2142,7 +2187,6 @@ void func_8023AADC(CArtsInfo* self, u32 arg2, int arg3) {
         func_80136A1C(self->mpLayout2, buf2, buf1, 0);
     }
 }
-#pragma optimize_for_size off
 
 // func_8023AD5C - arts info text update. Same shape as func_80239EFC with
 // the u8-keyed lookup func_8013600C at 0x2ab.
@@ -2164,6 +2208,13 @@ void func_8023AD5C(CArtsInfo* self, u32 arg2, int arg3) {
 // func_8023AE24 - arts info text update. Byte-identical body to
 // func_80239030 / func_80239AA0 (same lookups, same grid-offset formatting,
 // same level-up branch), kept as a separate retail symbol.
+// Entry param-save-order artifact (unit-wide, ~40 dispatch handlers): retail
+// copies arg2 (r4->r25) BEFORE self (r3->r31) at entry; our build invariantly
+// emits the param-1 copy first. Shadow-locals, early local copy of arg2, and
+// buf declaration reordering were all tried - none change the copy order
+// (copy-locals coalesce; decl reorder swaps frame offsets; optimize_for_size
+// is neutral here - unlike CTagProcessor func_801289B4). Same 2-op
+// reg_swap present in func_80239030/39AA0/916C/9EFC/A55C.
 void func_8023AE24(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
@@ -2215,7 +2266,11 @@ void func_8023AF60(CArtsInfo* self, u32 arg2, int arg3) {
 // func_8023B074 - arts info text update. Same shape as func_8023A60C but the
 // vararg double constant is loaded from a float (lfs) pool slot
 // (lbl_eu_806686A0).
-void func_8023B074(CArtsInfo* self, u32 arg2, int arg3) {
+void func_8023B074(CArtsInfo* self_, u32 arg2_, int arg3_) {
+    // Shadow params in retail's save order (arg2 before self before arg3).
+    u32 arg2 = arg2_;
+    CArtsInfo* self = self_;
+    int arg3 = arg3_;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
@@ -2238,12 +2293,12 @@ void func_8023B074(CArtsInfo* self, u32 arg2, int arg3) {
 void func_8023B12C(CArtsInfo* self_, u32 arg2_, int arg3_) {
     // Shadow params in retail's save order (arg2 before self before arg3).
     u32 arg2 = arg2_;
+    func_802374F0(self_, arg2);
     CArtsInfo* self = self_;
+    func_8023754C(self, arg2);
     int arg3 = arg3_;
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
-    func_802374F0(self, arg2);
-    func_8023754C(self, arg2);
     u8 v1 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x289, self->field_0x55);
     u8 v2 = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x29f, self->field_0x55);
     u32 cur = v1 + v2 * (self->field_0x56 - 1);

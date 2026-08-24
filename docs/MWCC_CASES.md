@@ -7951,6 +7951,14 @@ pool and MWCC schedules its load earlier (immutability lets it hoist past
 the frame stores). One-line change → both functions byte-identical
 FULL_MATCH (us-8022f13c, us-8022f0f0). Check the const-ness of sdata2
 externs before chasing scheduler shapes for lfs-position diffs.
+   **Boundary condition (negative result, 2026-08, CETrail func_804D8160):**
+   the const-hoist only helps when the blocker is *prologue frame stores*.
+   When the residual is a mid-function `lfs` sitting adjacent to its store
+   while retail hoists it above independent FP loads/muls (operand pair kept
+   with its use), adding `const` to the extern changes nothing — MWCC will not
+   split the load from the store across ready FP ops. Tried on
+   monolib/src/effect/CETrail.cpp (lbl_eu_8066B1AC, +0x10c vs +0x120): no
+   delta in bytes or counts. See attempts.jsonl for the full ruled-out set.
 
 ## monolib/work/CWorkSystemCache — unit-size unblock: novtable + null-guard + optimize_for_size
 
@@ -9500,11 +9508,11 @@ Mark CDeviceFontLoader as a BLOCKER for the data gate.
 - Follow-up (extab base-dtor name): retail's DESTROYBASE dtor slot for the second base at 0x1C4 names `__dt__FP10IExceptionFv` (defined ONLY in this TU, US .text:0x804522FC); MWCC emits the byte-IDENTICAL 0x40 body as `__dt__18UnkStruct_8044F65CFv` (inline-empty base dtor forced out-of-line by the extab reference). Fix: delete the hand-written `extern "C" __dt__FP10IExceptionFv` copy and add UNIT_RULES `exact_renames=(("__dt__18UnkStruct_8044F65CFv", "__dt__FP10IExceptionFv"),)` — one body instead of two (split −0x40) and every extab/extabindex reloc resolves to the retail symbol.
 - Follow-up 2 (FORCEACTIVE trim → split PASS): of the 9 DECOMP_FORCEACTIVE stubs (~0x84 .text), only `jumptable_eu_8056C330` lacks a live in-object reference; every other blob symbol is anchored by real relocs (ctor/dtor vptr stores → lbl_eu_8056C354 → lbl_eu_806636D8 → C90/408 chain; func_80450B14/B1C/B24/wkStandbyExceptionRetry → lbl_eu_806636C8/CC/D0). Trimming the 8 redundant stubs took .text 0x1620 → 0x15AC ≤ 0x1608 budget (PASS, 0x5C spare) with zero function regressions and data gate still MATCH. When wkUpdate is rewritten into retail's jump-table form it will reference the jumptable naturally — drop the last FORCEACTIVE then.
 To close: find a phrasing with retail's coloring AND no tail materialization — probed and ruled out: `bool ok;` hoisted with `if (ok) return ok;` inside + no tail return (still r4 + `or`). Likely accept near-miss at 85% or revisit with the exact retail statement.
-Next: steer local placement to reproduce retail's exact frame (declaration-order experiments on pathBuf/NameEntry/fileInfo), or accept near-miss. Ruled out: plain `int pathLen` local + `*(u32*)&pathLen = strlen(...)` address-taken store — MWCC sees through it and DCE's the store anyway (drops back to 4.1%); the escaping AGGREGATE is the only surviving form found.
+Next: steer local placement to reproduce retail's exact frame (declaration-order experiments on pathBuf/NameEntry/fileInfo), or accept near-miss. Ruled out: plain `int pathLen` local + `*(u32*)&pathLen = strlen(...)` address-taken store — MWCC sees through it and DCE's the store anyway (drops back to 4.1%); the escaping AGGREGATE is the only surviving form found. Also ruled out: `volatile int pathLen;` declared first (store survives, but MWCC places it at frame BOTTOM sp+8 shifting everything +4 → 54.6%, worse than aggregate's 56.7%).
 - Open item (`func_8044FC38__14CDeviceFileCriFv`, 87.8%, sizes equal, 0 structural / 6 pure reg-swap): the swap is `{count ↔ list-cursor}` inside the inlined `reslist::size()` walk (retail count=r4/cursor=r3; ours r3/r4). Ruled out: `reslist&` reference named before `count` (no change), manual node-walk replacing `size()` (drops to 10.2% with different scheduling — do NOT use). The colors are decided inside MWCC's inlined-size() expansion; next angles: inspect reslist::size()'s out-of-line definition shape, or try `-O4,s` for this function.
 - Follow-up 3 (ctor name → instant 100%): retail exports the ctor under the friendly map name `__ct__CDeviceFileCri` (.text 0x80452260, 0x9C — the same name CDeviceFile.cpp imports), while the TU emitted `__ct__14CDeviceFileCriFPCcP11CWorkThreadi`; hexdiff compared against a bogus tiny symbol and reported 0%. Adding `exact_renames=("__ct__14CDeviceFileCriFPCcP11CWorkThreadi", "__ct__CDeviceFileCri")` flipped it to 100%/0x9c with ZERO source change. Lesson: a "0.0% match" on an otherwise-plausible body can be pure symbol-name mismatch — check the retail `.o` symtab for friendly (map-derived) names before touching the body.
 - Note for func_8044F744's inline exception scan (retail .text 0x804523E4): each of the three status blocks expands isException() as (a) `rlwinm. r0,flags(0x7C),27,27` flag test → li r0,1 shortcut, else (b) ring scan in **countdown form**: `r0=mSize(0x1AC); li r6,0; mtctr r0; cmplwi r0,0; ble .Lskip; …beq .Lfound; addi r6,r6,1; bdnz` then `.Lskip: li r6,-1; .Lfound:` — i.e. index r6 doubles as found-slot, -1 fold happens AFTER the ble guard (not inside a cmp r6,r7 epilogue), and the bound lives in CTR. Found-test is `srwi r0,r6,31; xori r0,r0,1` (r6>=0). A `for(found=0;found<count;found++)` phrasing yields the cmp-form instead — try a phrasing that lets MWCC keep the bound in CTR (e.g. countdown `while (n--)`-style or hoisting the bound so its liveness ends at the loop).
-- wkUpdate reverse-engineering (retail .text 0x804532DC, for whoever finishes it): (1) retail is **NOT independent switch cases** — it's the if-chain with LIVE-STATE CHAINING: every transition is `mState = state = N;` so execution cascades through successive handlers within one call (state-0 falls straight into the state-1 handler after opening; state-1 chains into the 50058 call, etc.). The jumptable dispatches ONCE to each `if (state == N)` test site — entry[N] points at the N-th chain test, not at a self-contained case. (2) A literal C++ `switch(mState)` makes MWCC generate its OWN anon jump table (@N) appended AFTER the blob .data objects → breaks the .data gate until all case bodies are byte-exact AND the table placement/rename is solved; the if-chain form keeps the object data-clean (verified both ways). (3) Semantic gaps vs current source: state-1 is missing a whole `ADXF_Seek(mADXFHandle, unk10>>11, 0)` step before the 1-sector read (`if ((unk10>>11)!=0) ADXF_Seek(...); if (unk10 & 0x7FF) { ADXF_ReadNw(adxf,1,mBuffer); mState=3; } else mState=4;`) — ADXF_Seek is now declared in include/monolib/device/CDeviceFileCri.hpp. State bodies' assignments differ from the current source in several places (retail state-2 = timeout→getFirstJob→remaining>0x800→ReadNw(sectors,mData+front+unk10)/mState=5|7); re-derive each body from retail asm rather than trusting the old if-chain.
+- wkUpdate reverse-engineering (retail .text 0x804532DC, for whoever finishes it): (1) retail is **NOT independent switch cases** — it's the if-chain with LIVE-STATE CHAINING: every transition is `mState = state = N;` so execution cascades through successive handlers within one call (state-0 falls straight into the state-1 handler after opening; state-1 chains into the 50058 call, etc.). The jumptable dispatches ONCE to each `if (state == N)` test site — entry[N] points at the N-th chain test, not at a self-contained case. (2) A literal C++ `switch(mState)` makes MWCC generate its OWN anon jump table (@N) appended AFTER the blob .data objects → breaks the .data gate until all case bodies are byte-exact AND the table placement/rename is solved; the if-chain form keeps the object data-clean (verified both ways). (3) Semantic gaps vs current source: state-1 is missing a whole `ADXF_Seek(mADXFHandle, unk10>>11, 0)` step before the 1-sector read (`if ((unk10>>11)!=0) ADXF_Seek(...); if (unk10 & 0x7FF) { ADXF_ReadNw(adxf,1,mBuffer); mState=3; } else mState=4;`) — ADXF_Seek is now declared in include/monolib/device/CDeviceFileCri.hpp. State bodies' assignments differ from the current source in several places (retail state-2 = timeout→getFirstJob→remaining>0x800→ReadNw(sectors,mData+front+unk10)/mState=5|7); re-derive each body from retail asm rather than trusting the old if-chain. (4) **STATE 6/7 BODIES ARE SWAPPED vs our source**: retail jumptable entry[6](+832)→`bl func_8045042C`, entry[7](+740)→the `ADXF_ReadNw(adxf,1,mBuffer); mState=6` block; our source has state6=read-block/state7=func_8045042C. Since the blob jumptable (byte-exact) encodes retail's mapping but our compiled if-chain doesn't reference it, this divergence is currently invisible — but it is a RUNTIME behavior difference. Fixing it changes mod streaming behavior → needs owner sign-off + BEHAVIOR_VERIFIED per PLAN.md before applying.
 
 ## CView data gate — switch jumptable outside the unit split + manual/weak RTTI locator interleave (Wii/1.1, mwcc_43_151, DATA_MATCH)
 - Symptom:   `data diff` FAIL: `.data 0x13C != 0x120` with a run of `updateMsg__5CViewFv` addend relocs at .data +0xEC, and `.sdata` reloc drift (extra reloc @0x0C to @9895, retail's lbl_eu_8056B6E4 base reloc @0x14 missing). Old UNIT_RULES (3x .sdata swaps written for an older emission) corrupted an almost-correct layout.
@@ -10107,3 +10115,93 @@ stub's LINE NUMBER (`FORCEACTIVECDeviceGX_cpp74__Fv`) — never exact-match them
 in `drop_text_symbols`; any edit above the macro silently renames the stub and
 disarms the drop. Prefer removing the macro outright once every anchor is
 referenced by real code/data.
+
+## UPDATE — isInitialized inlined-find family: COMBINED recipe (colors × tail) — solve together, not separately
+- Status:   CLibStaticData 71.4%/CODE_MATCH (0 structural, exact size fit); CDeviceGX 71.4%
+            independently (same split of residuals). The wall has TWO independent halves and
+            different agents each solved a different half:
+- HALF 1 (colors, index-first): declare the loop index BEFORE the instance view/pointer.
+            Without it: inst=r7/i=r6 (12 swaps). With it: inst=r6/i=r7 = retail.
+- HALF 2 (tail, CDeviceGX shape): nested result/stateOK form INSIDE the !exception scope:
+                bool result = false;
+                if (!exception) {
+                    bool stateOK = true;
+                    int state = ...;
+                    if (state != LOGIN && state != RUN) stateOK = false;
+                    if (stateOK) result = true;
+                }
+                return result;
+            This reproduces retail's `li r3,0/bnelr` + `li r0,1/cmpi-beq x2/li r0,0/beqlr/li r3,1`
+            exactly (0 structural). Flattened guards, bool-intermediates at top level, int-ok,
+            negated-condition, and goto-gate tails ALL fold or jump differently (11 negatives).
+- CAVEAT:   combining both halves in CLibStaticData reached 71.4% + size-exact but the witness
+            still hit 'deadline | cfg-exploration' -> CODE_MATCH (98.5% insn). The walk CFG may
+            need witness-infra headroom, OR the true retail source differed some other way.
+- Applies to: CDeviceGX / CDeviceSC / CDeviceClock / CDeviceFile / CLibHbm / CLibStaticData
+            isInitialized (+ any TU whose retail inlines this find-shaped scan).
+
+## us-8049028c `__dt__12CScnItemPoolFv` (CScnItemPool.cpp) — 10% → FULL_MATCH in three source-shape fixes
+- Symptom:   hexdiff 10% (65 structural): decomp frame 32B/3 saved regs vs retail 16B/2, whole
+            body shifted +8; dealloc blocks interleaved (`li r0,0/stw` sunk past the branch join,
+            next block's load hoisted above the store); `addi r31,r3,4` hoisted to function top.
+- Cause:    (1) null-stores written OUTSIDE the `if (p)` gave the scheduler a store that is not
+            control-dependent on the branch → it sank below the join and reordered later loads.
+            (2) `(char*)self + 4` appeared both as the secondary-vptr STORE address and as the late
+            `__dt__11CDeviceVICbFv` arg — MWCC CSE'd the two Add(self,4) nodes and kept the value in
+            r31 across the function (+1 callee-saved save/restore, bigger frame, reg colors shifted).
+- Fix:      (1) move each `p = nullptr` INSIDE its `if (p != nullptr) { deallocate(p); p = nullptr; }`
+            block (retail's conditional shape). (2) spell the vptr stores through an indexed view —
+            `u32* words = (u32*)self; words[0] = vt; words[1] = vt + 0x88;` — which emits the same
+            displacement stores but no shareable Add(self,4) node. Plus the known dtor recipe:
+            free-function form, outer `if (self != 0)`, `if (flags > 0) delete self;`, trailing
+            `return self;` (see us-80254030 record).
+- Result:   FULL_MATCH (100.0%, 0x160/0x160, semantic-certified 0dbfa57e).
+- Applies to/affect: any dtor freeing N members with null-stores, and any TU where a subobject
+            address is used as both an early store address and a late base-dtor argument.
+
+## STALE-ACCEPTANCE HAZARD: data-dissolve rewrites can silently regress previously-certified functions (CERand, 2026-08)
+
+- Symptom:   registry shows all targets ACCEPTED/FULL_MATCH, but a fresh hexdiff --all shows 5/16 matched with heavy regressions (several 0-3%) and .text OVER by 0x130.
+- Cause:     CERand.cpp was rewritten from normal class methods to extern "C" fragments + hand-built vtable/RTTI data to fix the data gate. The rewrite changed register allocation and inlining for 11 of 16 functions; the 2026-08-15 "TU-final mass re-certification" covered the PRE-rewrite source. Data now MATCHES byte-for-byte but code certs are stale.
+- Fix:       (open) restore method-style definitions while keeping the dissolved hand-written data block — the vtable initializers reference the same mangled names MWCC emits for real methods, so both can coexist if the classes are kept novtable/no-auto-vtable. Then re-run cycle on every function in the TU after ANY data-dissolve source rewrite.
+- Result:    OPEN — claims released for anyone to resume. Lesson: ALWAYS hexdiff --all the whole TU (not just data diff) after data-surgery edits; ACCEPTED statuses do not self-invalidate when the source changes underneath them.
+- Confidence: repo_proven
+- Applies to/a.k.a.: every TU that received a monolibdata/blob dissolve after its functions were certified; audit candidates = any unit whose data gate went green later than its last cycle log.
+
+## ✅ SOLVED — isInitialized inlined-find family: 100.0% FULL_MATCH (CLibStaticData, Wii/1.1 -O4,p -ipa file)
+- Symptom:   started 0% (out-of-line bl to find); evolved through 12 shapes; intermediate walls:
+             color-swap (inst/i r6/r7) + tail guard/block layout.
+- Cause:     three stacked requirements, each necessary:
+    (1) WALK: the find scan must be written DIRECTLY in the function body (helper statics
+        don't inline under -inline auto at this size -> local copy + bl + callee-saved spill).
+    (2) TAIL: nested result/stateOK-default-true form (CDeviceGX shape):
+            bool result = false;
+            if (!exception) { bool stateOK = true; int state = ...;
+                if (state != A && state != B) stateOK = false;
+                if (stateOK) result = true; }
+            return result;
+        Flattened guards / bool-intermediates / int-ok / negated forms ALL fold or jump differently.
+    (3) DECLARATION ORDER inside the !exception scope: `bool stateOK = true;` BEFORE
+        `int state = ...` — births stateOK first so it claims r0 and state claims r4.
+        Plus view-cast of the SINGLETON GLOBAL (not this) for inst, and goto-gate walk with
+        -1 sunk to the exhaustion path.
+- Result:   100.0%, size exact 0xa8/0xa8, FULL_MATCH semantic-certified (efc45097...).
+            Unit total: 12/12 FULL_MATCH, split exact fit 0x7B0/0x7B0, data MATCH.
+- Confidence: repo_proven
+- Applies to: CDeviceGX / CDeviceSC / CDeviceClock / CDeviceFile / CLibHbm isInitialized copies
+            (identical retail inline); also removed dead __Fv scaffold stubs that were silently
+            consuming the last 8 bytes of split budget.
+
+## monolib/scn/code_804BD8E8 func_804BF274 — retained lfs→frsp pairs + stfsux store-with-update match NO available compiler (BLOCKED, external tooling limit)
+- Symptom:   retail shows two "redundant" `frsp f3,f1`/`frsp f5,f2` (XO 12) narrowing the lfs'd entry fields before the loop `fmuls/fmadds`, plus `stfsux f1,r3,r8` (op31/695) forming the history-slot pointer as a store side effect. Decomp (Wii/1.1 -O4,p) folds both conversions and emits two disp stores `stfs 1176(r3)/1184(r3)`. Best verdict 75 structural + 5 reg_swap, size 0x134 vs retail 0x140.
+- Cause:     every available compiler eliminates the provably-redundant lfs→frsp except pre-1.3 GC (probe sweep across .scratch: Wii/1.0–1.7 and GC/1.3–3.0a5.2 all emit frsp=0; GC/1.0/1.1/1.1p1/1.2.5 emit frsp=2). But GC/1.2.5 compiled over the REAL TU diverges everywhere else (no tail-calls: 0x20 stubs vs retail 0x4; BF274 hits exactly 0x140 bytes but only 11% word-match; BD94C/BE62C/BEEF8 sizes way off). No source shape forces retention either: named round-trip intermediates (MWCC_CASES us-800b0f70 idiom), BE50C-style pointer arithmetic, singles substitution — all fold or diverge. Wii/1.1 flags `-schedule off`, `-peephole off`(reject), `-O4`, `-inline off`, `-ipa off`, `-fp_contract off`, `-O4,s`, `-O3`: all frsp=0.
+- Fix:       none available in-repo. Would require a compiler binary between Wii/1.1 and GC/1.x families (or an internal build) whose peephole keeps redundant narrow-after-load conversions while scheduling like Wii/1.1. Pre-1.3 GC adoption is additionally blocked by `-enc SJIS`/`-ipa file` being unknown options there (no per-object flag removal in project.py).
+- Result:    BLOCKED — concrete external/tooling limit (SKILL.md acceptance policy); data gate of the unit is FULL MATCH (raw object), split-size PASS (0x14C0/0x1CB4).
+- Applies to/a.k.a.: any monolib scn/coli function with double-narrowed field math feeding single multiplies; probe harness pattern in `.scratch` (deleted; re-create per attempts.jsonl 2026-08-24 records).
+
+## func_8003B4B0 / ocBdat — commutative mullw operand order + TU-wide s32/int overload break
+- Symptom:   hexdiff shows single `mullw r0,r31,r0` vs retail `mullw r0,r0,r31`; separately, unrelated TUs fail with "(10197) illegal function overloading" pointing at an extern "C" definition.
+- Cause:     (1) manual modulo `x -= (x/n)*n` makes MWCC commute the multiply; retail was compiled from `x %= n`. (2) `s32` is `signed long`, so declaring `f(..., int index)` in a shared header while the defining TU uses `f(..., s32 index)` is an illegal overload of the same C-linkage symbol.
+- Fix:       (1) write `rem %= bucketCount;`. (2) keep shared extern "C" declarations type-verbatim (`s32`, not `int`); never promote `getBdatStringColumnValue` into class scope (NOTE in ocBdat.hpp).
+- Result:    FULL_MATCH (us-8003af48, semantic-certified); ocBdat TU builds again.
+- Confidence: repo_proven

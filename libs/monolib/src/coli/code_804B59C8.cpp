@@ -538,14 +538,15 @@ extern "C" void func_804B5B38(CColiSrc* a, CColiMover* b) {
     lbl_eu_8065F1C8.field_0xC8.x = __OSs16tof32(&tri[0]);
     lbl_eu_8065F1C8.field_0xC8.y = __OSs16tof32(&tri[1]);
     lbl_eu_8065F1C8.field_0xC8.z = __OSs16tof32(&tri[2]);
-    // dot(normal, ray direction); MWCC lowers this to the paired-single
+    // dot(normal, offset); MWCC lowers this to the paired-single
     // mul/madd/sum0 chain seen in retail.
-    const nw4r::math::VEC3* pa = (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0xC8;
-    const nw4r::math::VEC3* pb = (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0x00;
-    f32 dot = nw4r::math::VEC3Dot(pa, pb);
-    f32 diff = dot - b->field_0x00;
+    f32 diff = nw4r::math::VEC3Dot((const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0xC8,
+                                   (const nw4r::math::VEC3*)&lbl_eu_8065F1C8.field_0x00)
+             - b->field_0x00;
     lbl_eu_8065F1C8.field_0xD4 = diff;
-    f32 absDiff = __fabs(diff); // narrowing forces the retail fabs/frsp pair
+    // Negated strict-less form (with fabs narrowing through an f32 local)
+    // is what makes MWCC emit the direct bgelr without a cror merge.
+    f32 absDiff = __fabs(diff);
     if (!(absDiff < lbl_eu_8065F1C8.field_0x120)) return;
     lbl_eu_8065F1C8.field_0xE0 = b;
     func_804B71CC(a, b);

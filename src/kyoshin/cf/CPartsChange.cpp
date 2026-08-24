@@ -26,6 +26,7 @@ using cf::CPartsChange;
 // MWCC_CASES §1d/§1n, which classify the i2f magic pool as un-nameable
 // in high-level C; the manual union form breaks the retail's early-magic
 // schedule). The definition is kept for the retail-named .sdata2 slot.
+
 f64 lbl_eu_80667B58 = 4503601774854144.0;
 
 // u32 -> f32 conversion: builds the 0x43300000-prefixed bit pattern in
@@ -74,6 +75,17 @@ cf::CPartsChange::~CPartsChange() {}
 // index" via itoa/format, then scan vf24 entries for a strstr match on the
 // formatted name; store the matching index (or -1) into mData[i] and mark
 // mField2C. Then run the final pass func_80192F94.
+// Scan the vf24 entries for the formatted name; inlined by MWCC so the
+// retail branch-over-branch (beq/b) layout is reproduced (btm_bda_to_acl
+// pattern, MWCC_CASES line 840).
+static inline int findNameEntry(CPartsChange* self, u32 count, const char* name) {
+    for (int j = 0; (u32)j < count; j++) {
+        if (strstr(self->mField08->vf24(j), name) != 0)
+            return j;
+    }
+    return -1;
+}
+
 void func_80192E80(CPartsChange* self, u8 r4, PartsChangeIf* obj) {
     if (obj == 0) return;
     self->mField08 = obj;
@@ -84,16 +96,17 @@ void func_80192E80(CPartsChange* self, u8 r4, PartsChangeIf* obj) {
             result = -1;
         } else {
             u32 count = self->mField08->vf20();
-            ml::FixStr<16> buf;
+            // FixStr(false)'s ctor emits no stores, so the visible ctor
+            // store pairs land in retail order: str's pair first, then
+            // num's pair right before the itoa call.
+            ml::FixStr<16> num(false);
             ml::FixStr<16> buf2;
-            ml::CPathUtil::itoa(buf, (int)i, 2);
-            buf2.format(lbl_eu_80503BFC, lbl_eu_806624E8, buf.c_str());
-            result = 0;
-            while ((u32)result < count) {
-                if (strstr(self->mField08->vf24(result), buf2.c_str()) != 0) break;
-                result++;
-            }
-            if ((u32)result >= count) result = -1;
+            num.clear();
+            ml::CPathUtil::itoa(num, (int)i, 2);
+            buf2.format(lbl_eu_80503BFC, lbl_eu_806624E8, num.c_str());
+            // Exhausted scans return -1 from the inlined helper; a hit
+            // returns straight to the shared tail check.
+            result = findNameEntry(self, count, buf2.c_str());
         }
         if (result >= 0) {
             self->mData[i] = (u8)result;
@@ -163,15 +176,17 @@ void func_801930A0(CPartsChange* self, u32 idx, u32 flag) {
 
 // Initialize an element from the BDAT table: clear the busy bit, derive a
 // scale from a column value (its first byte, forced to 1 when zero), and
-// clear the +0x42 sub-block. The u8->f32 cast uses the builtin 2^52 trick;
-// lbl_eu_80667AC8 is defined above so the pool reloc matches retail.
+// clear the +0x42 sub-block. The u8->f32 cast uses the builtin stack
+// conversion; its 2^52 magic pools to a TU-local @N entry (retail names it
+// lbl_eu_80667AC8 - name-only reloc drift, MWCC_CASES 7i class; the manual
+// union form that names it adds an fsub+frsp and breaks byte-identity).
 void func_801931D0(CfPartsElem4C* self) {
     self->field_1E &= ~4u;
     u32 val = getBdatStringColumnValue(lbl_eu_806640A8, lbl_eu_80503C48,
                                        lbl_eu_80664184);
-    u8 b = *(const u8*)&val;
+    u32 b = *(const u8*)&val;
     if (b == 0) b = 1;
-    f32 scale = lbl_eu_80667ABC * (f32)(u32)b;
+    f32 scale = lbl_eu_80667ABC * (f32)b;
     self->field_14 = lbl_eu_80667AC0;
     self->field_10 = lbl_eu_80667AB8 * scale;
     memset(&self->field_42[0], 0, 9);
@@ -407,6 +422,7 @@ extern "C" void func_8019380C(u32 self) { func_80193810((CfPartsManager*)self); 
 extern "C" void func_80193810(CfPartsManager* self) {
     u32 p;
     CfPartsCollectList pl;
+    CfPartyListNode* cur;
     pl.count = 0;
     CfPartyListNode* node = self->mPartyList.mStartNodePtr->mNext;
     while (node != self->mPartyList.mStartNodePtr) {
@@ -431,20 +447,17 @@ extern "C" void func_80193810(CfPartsManager* self) {
     }
     self->mElems.mCount = 0;
     self->field_A804 = 0;
-    // prev declared before cur: MWCC allocates these loop locals in reverse
-    // declaration order here (prev -> r5, cur -> r4, matching retail).
-    CfPartyListNode* prev;
-    CfPartyListNode* cur = self->mPartyList.mStartNodePtr->mNext;
-    while (cur != self->mPartyList.mStartNodePtr) {
-        prev = cur;
+    cur = self->mPartyList.mStartNodePtr->mNext;
+    for (; self->mPartyList.mStartNodePtr != cur;) {
+        CfPartyListNode* prev = cur;
         cur = cur->mNext;
         prev->mNext = 0;
     }
     self->mPartyList.mStartNodePtr->mNext = self->mPartyList.mStartNodePtr;
     self->mPartyList.mStartNodePtr->mPrev = self->mPartyList.mStartNodePtr;
     memset(self->mTable, 0, 0xa40);
-    // Adjacent u16 stores: MWCC reverses the source order here, so write
-    // B270 before B272 to land retail's B272-then-B270 store sequence.
+    // MWCC reverses adjacent u16 stores, so source order B270-then-B272
+    // lands retail's B272-then-B270 store sequence.
     self->field_B270 = 1;
     self->field_B272 = 5;
     self->field_B274 = 0;
@@ -511,54 +524,55 @@ u32 CfActorAccessors::func_80193B04() { return mField94; }
 // (0x80 memset + the func_80193C74 field sequence, then the +0x94 word
 // re-written from the manager's +0xB270 counter and the +0xA0 flag set),
 // wrap the counter past zero to 1, then claim the first free 0xc-byte node
-// and link it just before the list head (the setItem-style guarded item
-// store forces retail's mr r31,r1 frame anchor + addic. null check). The
-// state stores are written through the array index so MWCC keeps the
-// i*0xA4 scale in a saved register across the memset (retail r27). Returns
-// the initialized element, or null when all 16 are busy.
+// and link it at the tail of the party list. Every state store is spelled
+// through self->mTable[i] so MWCC rematerializes the address from `self`
+// and keeps only the i*0xA4 scale in a saved register (retail r27); the
+// element pointer doubles as the result (retail r30, pre-initialized 0).
+// Returns the initialized element, or null when all 16 are busy.
 CfElemA4Full* func_80193B0C(CfPartsManager* self, u16 arg2) {
-    CfElemA4Full* result = 0;
+    CfElemFlagWalk* walk = (CfElemFlagWalk*)self;
+    CfElemA4* result = 0;
     for (int i = 0; i < 16; i++) {
-        CfElemA4Full* elem = &((CfElemA4Full*)self->mTable)[i];
-        if ((elem->field_A0 & 1) == 0) {
-            memset(elem, 0, 0x80);
-            ((CfElemA4Full*)self->mTable)[i].field_A2 = 0;
-            ((CfElemA4Full*)self->mTable)[i].field_A0 = 0;
-            ((CfElemA4Full*)self->mTable)[i].field_90 = lbl_eu_80667AD4;
-            ((CfElemA4Full*)self->mTable)[i].field_94 = 0;
-            ((CfElemA4Full*)self->mTable)[i].field_98 = 0;
-            ((CfElemA4Full*)self->mTable)[i].field_9A = 0;
-            ((CfElemA4Full*)self->mTable)[i].field_94 = self->field_B270;
-            ((CfElemA4Full*)self->mTable)[i].field_A0 = 1;
-            ((CfElemA4Full*)self->mTable)[i].field_9E = arg2;
+        if ((walk->field_A8C8 & 1) == 0) {
+            result = &self->mTable[i];
+            memset(result, 0, 0x80);
+            self->mTable[i].field_A2 = 0;
+            self->mTable[i].field_A0 = 0;
+            self->mTable[i].field_90 = lbl_eu_80667AD4;
+            self->mTable[i].field_94 = 0;
+            self->mTable[i].field_98 = 0;
+            self->mTable[i].field_9A = 0;
+            self->mTable[i].field_94 = self->field_B270;
+            self->mTable[i].field_A0 = 1;
+            self->mTable[i].field_9E = arg2;
             u16 v = self->field_B270 + 1;
             self->field_B270 = v;
             if (v == 0) self->field_B270 = v + 1;
+            int slot = 0;
             CfPartyListNode* head = self->mPartyList.mStartNodePtr;
             int cap = self->mPartyList.mCapacity;
-            int slot = 0;
             while (slot < cap) {
                 if (self->mPartyList.mList[slot].mNext == 0) break;
                 slot++;
             }
             CfPartyListNode* node = &self->mPartyList.mList[slot];
-            u32* ptr = &node->field_08;
-            if (ptr != nullptr) {
-                try {
-                    *ptr = (u32)elem;
-                } catch (...) {
-                    throw;
+            try {
+                u32* itemPtr = &node->field_08;
+                if (itemPtr != 0) {
+                    *itemPtr = (u32)result;
                 }
+                node->mNext = head;
+                node->mPrev = head->mPrev;
+                head->mPrev->mNext = node;
+                head->mPrev = node;
+            } catch (...) {
+                throw;
             }
-            node->mNext = head;
-            node->mPrev = head->mPrev;
-            head->mPrev->mNext = node;
-            head->mPrev = node;
-            result = elem;
             break;
         }
+        walk = (CfElemFlagWalk*)((char*)walk + sizeof(CfElemA4));
     }
-    return result;
+    return (CfElemA4Full*)result;
 }
 
 // Zero the first 0x80 bytes, then write the tail fields in retail store order
@@ -723,6 +737,20 @@ void func_80193D48(CfPartsManager* mgr) {
     }
 }
 
+// Gimmick/actor object in the func_800B6BC8 list (func_80194264): vtable at
+// +0 with position getter at 0xAC and the f32 query at 0xE0.
+typedef void* (*CfElemVfACFn)(void* self);
+typedef f32 (*CfElemVfE0Fn)(void* self);
+struct CfPartsElemVt {
+    u32 _padAC[0xAC / 4];
+    CfElemVfACFn vfAC;    // 0xAC (position)
+    u32 _padB0[(0xE0 - 0xB0) / 4];
+    CfElemVfE0Fn vfE0;    // 0xE0 (float)
+};
+struct CfPartsElemObj {
+    CfPartsElemVt* vt;    // 0x00
+};
+
 // Average position of the gimmick objects (func_800B6BC8 list) whose
 // sphere-vs-sphere push-apart against `in` (func_800A5488 with the radius
 // args f / vfE0) reports a hit; the accumulated tmp position is added into
@@ -731,28 +759,29 @@ void func_80193D48(CfPartsManager* mgr) {
 // the return value is (count > 0).
 int func_80194264(f32 f, ml::CVec3* out, const ml::CVec3* in) {
     *out = ml::CVec3::zero;
-    CfActorList* list = (CfActorList*)func_800B6BC8();
-    CfActorListNode* head = list->mHead;
-    CfActorListNode* node = head->mNext;
     int count = 0;
-    while (node != head) {
+    F64Conv conv;
+    ml::CVec3 push;
+    CfActorList* list = (CfActorList*)func_800B6BC8();
+    CfActorListNode* node = list->mHead->mNext;
+    // The sentinel is re-read from the list each pass (the virtual calls
+    // clobber memory, so MWCC cannot cache it).
+    while (node != list->mHead) {
         CfPartsElemObj* elem = (CfPartsElemObj*)node->mElem;
         node = node->mNext;
-        f32 a = elem->vt->vfE0(elem);
-        ml::CVec3* p = (ml::CVec3*)elem->vt->vfAC(elem);
-        ml::CVec3 tmp;
-        if (func_800A5488(*in, *p, &tmp, f, a)) {
-            out->x += tmp.x;
-            out->y += tmp.y;
-            out->z += tmp.z;
+        f32 radius = elem->vt->vfE0(elem);
+        ml::CVec3* pos = (ml::CVec3*)elem->vt->vfAC(elem);
+        if (func_800A5488(*in, *pos, &push, f, radius)) {
+            nw4r::math::VEC3Add(*out, *out, push);
             count++;
         }
     }
     if (count > 0) {
-        f32 inv = lbl_eu_80667AD0 / (f32)(u32)count;
-        out->x *= inv;
-        out->y *= inv;
-        out->z *= inv;
+        // Named-magic u32->f32 conversion (lbl_eu_80667AF0 pool plant).
+        conv.w[1] = count ^ 0x80000000;
+        conv.w[0] = 0x43300000;
+        nw4r::math::VEC3Scale(*out, *out,
+                              lbl_eu_80667AD0 / (f32)(conv.d - lbl_eu_80667AF0));
     } else {
         *out = *in;
     }
@@ -1117,16 +1146,21 @@ void func_8019514C(CfPartsManager* self) {
             e->field_14 -= step;
             if (e->field_14 < lbl_eu_80667AD4) e->field_14 = lbl_eu_80667AD4;
         }
-        if ((e->field_1E & 0x4) == 0 && e->field_10 > lbl_eu_80667AD4 &&
-            (e->field_1E & 0x800) == 0) {
-            e->field_10 -= step;
-            // Retail keeps memset outside the clamp-if: it runs whenever the
-            // decay block was entered, not only on the clamp path.
-            if (!(e->field_10 > lbl_eu_80667AD4)) {
-                e->field_10 = lbl_eu_80667AD4;
-                if ((e->field_1E & 0x200) && (e->field_1E & 0x80)) {
-                    e->field_1E |= 0x20;
-                }
+        if ((e->field_1E & 0x4) != 0) continue;
+        if (!(e->field_10 > lbl_eu_80667AD4)) continue;
+        // Volatile reference forces a fresh halfword load here (the retail
+        // code re-reads the flag word instead of reusing the value from the
+        // first bit test).
+        volatile u16& curFlags = e->field_1E;
+        if ((curFlags & 0x800) != 0) continue;
+        // Decay the +0x10 speed; once it reaches the fallback: clamp it,
+        // set the re-arm flag when both gate bits are present, and clear
+        // the +0x30 sub-block.
+        e->field_10 -= step;
+        if (!(e->field_10 > lbl_eu_80667AD4)) {
+            e->field_10 = lbl_eu_80667AD4;
+            if ((e->field_1E & 0x200) != 0 && (e->field_1E & 0x80) != 0) {
+                e->field_1E |= 0x20;
             }
             memset(&e->field_30[0], 0, 9);
         }
@@ -2562,6 +2596,7 @@ extern "C" void func_80198FC4(CfPartsMoveSrc* src, CfPartsTri* dst) {
 }
 
 // Rotate helper with an odd-turn add pass: copy the triple, then for odd
+// Rotate helper with an odd-turn add pass: copy the triple, then for odd
 // turn indices accumulate field_1C * sin/cos(scale * (field_18 + pi/2)) into
 // the x/z accumulators, then always subtract
 // mag = (f32)(s32)(field_14 >> 1) * field_1C times sin/cos(scale * field_18),
@@ -2569,13 +2604,13 @@ extern "C" void func_80198FC4(CfPartsMoveSrc* src, CfPartsTri* dst) {
 // party-info processor. The cos argument repeats the product so MWCC
 // recomputes it after the sin call (retail reloads the constant).
 extern "C" void func_801990F0(CfPartsMoveSrc* src, CfPartsTri* dst) {
+    f32 sz = lbl_eu_80667B28;
+    f32 sx = sz;
     u32 w0 = src->field_00;
     u32 w1 = src->field_04;
     dst->field_04 = w1;
     dst->field_00 = w0;
     dst->field_08 = src->field_08;
-    f32 sz = lbl_eu_80667B28;  // declared first -> f31 (cos accumulator)
-    f32 sx = sz;               // second -> f30 (sin accumulator, retail fmr)
     if (src->field_14 & 1) {
         f32 angle = src->field_18 + lbl_eu_8066A200;
         sx = sx + src->field_1C * nw4r::math::SinFIdx(lbl_eu_80667B50 * angle);

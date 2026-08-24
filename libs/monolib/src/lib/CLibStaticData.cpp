@@ -72,11 +72,11 @@ public:
 // this call site, with the this-arg bound to the instance: view-cast THIS
 // (born at entry, ahead of the loop index -> inst claims the lower volatile)
 // rather than re-loading the singleton global.
-inline bool CWorkThread::isRunning() const {
-    // Loop index declared first: first-declared claims the higher volatile,
-    // so i lands in r7 and the instance view in r6, matching retail.
-    u32 i = 0;
-    const CWorkThreadFieldsView* inst = (const CWorkThreadFieldsView*)this;
+// Retail folds CMsgParam<8>::find(EVT_EXCEPTION)'s ring walk straight into
+// isInitialized's body (the member isRunning call is inlined with this bound
+// to the singleton). Written directly - no wrapper, no helper call.
+bool CLibStaticData::isInitialized(){
+    const CWorkThreadFieldsView* inst = (const CWorkThreadFieldsView*)lbl_eu_80665718;
 
     bool exception;
     if (inst->mThreadFlags & THREAD_FLAG_EXCEPTION) {
@@ -84,6 +84,7 @@ inline bool CWorkThread::isRunning() const {
     } else {
         // Inlined queue scan for a queued EVT_EXCEPTION event.
         int found;
+        u32 i = 0;
         for (; i < inst->mMsgSize; i++) {
             if (inst->mMsgArray[(inst->mMsgFront + i) % inst->mMsgCapacity].command == EVT_EXCEPTION) {
                 found = (int)i;
@@ -96,14 +97,18 @@ merged:
     }
 
     // Running once the thread has logged in and started running.
-    if (exception) {
-        return false;
+    bool result = false;
+    if (!exception) {
+        bool stateOK = true;
+        int state = inst->mState;
+        if (state != THREAD_STATE_LOGIN && state != THREAD_STATE_RUN) {
+            stateOK = false;
+        }
+        if (stateOK) {
+            result = true;
+        }
     }
-    return inst->mState == THREAD_STATE_LOGIN || inst->mState == THREAD_STATE_RUN;
-}
-bool CLibStaticData::isInitialized(){
-    extern CLibStaticData* lbl_eu_80665718;
-    return lbl_eu_80665718->isRunning();
+    return result;
 }
 
 void CLibStaticData::saveStaticFileArray(StaticArcFileData* pList){
@@ -264,6 +269,3 @@ bool CLibStaticData::CItem::OnFileEvent(CEventFile* pEventFile){
 
     return false;
 }
-
-void __ct__Q214CLibStaticData5CItemFP17StaticArcFileData(){}
-void __dt__Q214CLibStaticData5CItemFv(){}

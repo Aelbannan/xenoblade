@@ -97,7 +97,7 @@ void* func_80081A40__Q22cf13CfGameManagerFv(const char* name, u16 index, int fla
 void* func_80081358__Q22cf13CfGameManagerFv(const char* name, u16 index, int flag1, int flag2);
 void* func_8003AA34(void);
 const char* getFP__FPCc(const char* name);
-u32 getBdatStringColumnValue(void* table, const char* column, int index);
+extern "C" u32 getBdatStringColumnValue(void* table, const char* column, int index);
 unsigned int func_8013EC58();
 void* func_80082D90__Q22cf13CfGameManagerFv();
 bool func_80082FE4__Q22cf13CfGameManagerFv(int arg);

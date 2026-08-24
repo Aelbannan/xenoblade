@@ -296,18 +296,22 @@ void func_8045F4E4__10CLibLayoutFv(MEMAllocator* allocator, void* block) {
     // loop head forces the new value into a different register (the old copy
     // is still live-in at the def), yielding retail's r5-anchor/r3-element
     // split. The intervening deallocate call keeps the two loads from CSE.
-    CLibLayout* hp = lbl_eu_80665710;
-    if (hp->mRangeStart <= (u32)block &&
-        hp->mRangeEnd > (u32)block) {
+    if (lbl_eu_80665710->mRangeStart <= (u32)block &&
+        lbl_eu_80665710->mRangeEnd > (u32)block) {
         if (block != NULL) {
             mtl::MemManager::deallocate(block);
         }
         return;
     }
 
-    hp = lbl_eu_80665710;
-    for (u32 i = 0; i < hp->instanceCount; i++) {
-        UnkClass_8045F564* inst = hp->instanceArray[i];
+    // NOTE: keep the global reads inline (no local caching / no opaque-cursor
+    // rewrite -- both let -ipa CSE away the loop-head reload, shrinking .text
+    // below the retail 0x80). Retail emits exactly two lbl_eu_80665710 loads
+    // (range check + loop head) and walks a fused base-increment induction
+    // (singleton-copy += 4 per iteration); the residual vs retail is purely
+    // the {singleton-copy, element} register colors (r5,r3 vs r3,r5).
+    for (u32 i = 0; i < lbl_eu_80665710->instanceCount; i++) {
+        UnkClass_8045F564* inst = lbl_eu_80665710->instanceArray[i];
         if (inst->unk8 <= (u32)block && inst->unkC > (u32)block) {
             if (block != NULL) {
                 mtl::MemManager::deallocate(block);

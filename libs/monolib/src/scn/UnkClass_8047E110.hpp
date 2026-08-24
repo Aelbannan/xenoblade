@@ -87,10 +87,11 @@ struct ScnWpQ {
     s16 q1; // +A
 };
 
-// stride-10 per-node record used by func_8047EFBC.
+// stride-10 per-node record used by func_8047EFBC / func_80480F48.
+// (+4/+6) select the record by node id; (+0/+2) hold each endpoint's paired id.
 struct ScnRec10 {
-    u8 pad[4];
-    u16 coord[2];
+    u16 node[2];   // paired ids for the two endpoints (+0/+2)
+    u16 coord[2];  // endpoint ids (+4/+6)
     u8 grp[2];
 };
 
@@ -213,3 +214,4 @@ extern "C" const f32 lbl_eu_8066A894;
 extern "C" const f32 lbl_eu_8066A8A8;
 extern "C" const f32 lbl_eu_8066A8AC;
 extern "C" const f32 lbl_eu_8066A8B8;
+extern "C" u32 lbl_eu_8056DC80[4]; // ptmf reference block copied into the 0x9C slot

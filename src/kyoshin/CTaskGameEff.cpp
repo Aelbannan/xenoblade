@@ -121,18 +121,17 @@ void CTaskGameEff::Init() {
     func_804CBA00(lbl_eu_8065FC18, (void*)mMemAlloc, size2);
     func_804CBAA8(lbl_eu_8065FC18, mScene, 1);
 
-    // Register render callbacks. Retail re-reads the singleton this-pointer and
-    // null-guards all but the 0x54 callback.
-    IScnRender* cb0x54 = &field_0x54;
-    IScnRender* cb58 = reinterpret_cast<IScnRender*>(this);
-    if (this) cb58 = &field_0x58;
-    func_80495FC8(mScene, cb58, 8);
+    // Register render callbacks. Retail re-evaluates the null-guard at each
+    // call site via the two-statement guard idiom.
+    IScnRender* cb = reinterpret_cast<IScnRender*>(this);
+    if (this) cb = &field_0x54;
+    func_80495FC8(mScene, cb, 8);
 
-    IScnRender* cb70 = reinterpret_cast<IScnRender*>(this);
-    if (this) cb70 = &field_0x70;
-    mScene->addRenderCB(cb70, 1, 0);
+    cb = reinterpret_cast<IScnRender*>(this);
+    if (this) cb = &field_0x58;
+    mScene->addRenderCB(cb, 1, 0);
 
-    mScene->addRenderCB(cb0x54, 0xe, 0);
+    mScene->addRenderCB(&field_0x70, 0xe, 0);
 
     mtl::ALLOC_HANDLE mem2 = mtl::MemManager::getHandleMEM2();
     mSceneList.mList = (_reslist_node<CScn>*)mtl::MemManager::allocate_array(0x30, mem2);

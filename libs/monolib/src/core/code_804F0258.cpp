@@ -244,20 +244,23 @@ extern "C" s32 func_804F10A0(s32 texMap, f32 alpha, void* drawCtx,
     CDrawCtxLocal* draw = static_cast<CDrawCtxLocal*>(drawCtx);
     f32 fbH = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B498);
 
-    // Scale the four size floats and pack to bytes.
-    f32 sc0 = lbl_eu_8066B48C * size->field_0x0c;
-    f32 sc1 = lbl_eu_8066B48C * pos->x;
-    f32 sc2 = lbl_eu_8066B48C * pos->y;
-    f32 sc3 = lbl_eu_8066B48C * pos->z;
+    // Retail +0xec..+0xf4: second rmode fetch feeds both the fbWidth read and
+    // the scale block; all four size floats scaled by B484 as a group.
+    GXRenderModeObj* rmode2 = getRenderModeObj__9CDeviceVIFv();
+    const f32* szf = reinterpret_cast<const f32*>(size);
+    f32 sc0 = lbl_eu_8066B484 * szf[0];
+    f32 sc1 = lbl_eu_8066B484 * szf[1];
+    f32 sc2 = lbl_eu_8066B484 * szf[2];
+    f32 sc3 = lbl_eu_8066B484 * szf[3];
     u8 b0 = (u8)(s32)sc0;
     u8 b1 = (u8)(s32)sc1;
     u8 b2 = (u8)(s32)sc2;
     u8 b3 = (u8)(s32)sc3;
+    f32 fbW = convU16ToF(rmode2->fbWidth, lbl_eu_8066B498);
 
-    f32 fbW = convU16ToF(getRenderModeObj__9CDeviceVIFv()->fbWidth, lbl_eu_8066B498);
     f32 fbH2 = convU16ToF(getRenderModeObj__9CDeviceVIFv()->efbHeight, lbl_eu_8066B498);
 
-    func_804F4628(1, fbW, fbH);
+    func_804F4628(1, fbW, fbH2);
 
     Mtx mtxId;
     PSMTXIdentity(mtxId);

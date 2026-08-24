@@ -1305,19 +1305,13 @@ extern "C" const ResourceIndexTable lbl_eu_804FB7B0;
 #pragma dont_inline on
 extern "C" s32 func_80082418__Q22cf13CfGameManagerFv(s32 first, s32 second) {
     ResourceIndexTable table = lbl_eu_804FB7B0;
-    if (1 > first) {
+    if (1 > first || 8 < first) {
         return -1;
     }
-    if (8 < first) {
+    if (1 > second || 8 < second) {
         return -1;
     }
-    if (1 > second) {
-        return -1;
-    }
-    if (8 < second) {
-        return -1;
-    }
-    return table.values[first - 1][second - 1];
+    return *(s8*)((char*)table.values + (first - 1) * 8 + (second - 1));
 }
 #pragma dont_inline reset
 extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second);
@@ -1765,17 +1759,16 @@ extern "C" Unk80338Object* __ct__80080254(Unk80338Object* self) {
 #pragma dont_inline on
 extern "C" Unk80338Object* __ct__80080338(Unk80338Object* self) {
     Unk80338Object* result = self;
-    Unk80338Object* base = result;
     u32 zero = 0;
-    base->field_0x4 = zero;
-    base->field_0x8 = zero;
-    base->vtable_0x0 = lbl_eu_8052AC98;
-    base->vtable_0xC = &lbl_eu_8052AC98[0xB4];
-    base->vtable_0x10 = &lbl_eu_8052AC98[0xC4];
-    base->field_0x14 = zero;
-    base->field_0x18 = zero;
-    base->field_0x1C = zero;
-    __ct__CCharVoice(&base->voice_0x28);
+    self->field_0x4 = zero;
+    self->field_0x8 = zero;
+    self->vtable_0x0 = lbl_eu_8052AC98;
+    self->vtable_0xC = &lbl_eu_8052AC98[0xB4];
+    self->vtable_0x10 = &lbl_eu_8052AC98[0xC4];
+    self->field_0x14 = zero;
+    self->field_0x18 = zero;
+    self->field_0x1C = zero;
+    __ct__CCharVoice(&self->voice_0x28);
     result->vtable_0x0 = lbl_eu_8052A7E8;
     result->vtable_0xC = &lbl_eu_8052A7E8[0xB4];
     result->vtable_0x10 = &lbl_eu_8052A7E8[0xC4];
@@ -2762,12 +2755,13 @@ extern "C" void func_8007CBEC__Q22cf13CfGameManagerFv() {
         return;
     }
 
-    u32 resourceFlags = lbl_eu_80663E28;
-    if ((resourceFlags & 0x02000000) == 0 &&
-        (resourceFlags & 0x00040000) != 0) {
+    u32 resourceFlagsA = lbl_eu_80663E28;
+    u32 resourceFlagsB = lbl_eu_80663E28;
+    if ((resourceFlagsA & 0x02000000) == 0 &&
+        (resourceFlagsB & 0x00040000) != 0) {
         return;
     }
-    if ((resourceFlags & 0x00100000) != 0) {
+    if ((resourceFlagsB & 0x00100000) != 0) {
         return;
     }
     if ((lbl_eu_80663E24 & 0x02040000) == 0) {

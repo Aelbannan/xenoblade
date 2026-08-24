@@ -15,31 +15,47 @@ namespace cf {
 class CfObjectPc;
 }
 
-// us-800c03d4  - constructor: base CfObjectMove ctor, retail vtable restore
+// us-800c03d4  - forced-name constructor (retail symbol is the unmangled
+// free function __ct__cf_CfObjectObj, not a mangled member ctor): run the base
+// CfObjectMove ctor via its literal mangled name, restore the retail vtable
 // (novtable scheme), zero the helper field, then guard the CfResObjImpl
 // resource allocation behind a __dynamic_cast check (the cast succeeds only
 // when the object already carries the resource impl, in which case the
 // 0x1C-byte allocation is skipped).
-cf::CfObjectObj::CfObjectObj() {
-    *(void**)this = (void*)lbl_eu_80529B4C;
-    field_71C = 0;
-    if (__dynamic_cast(this, 0, &lbl_eu_80661D18, &lbl_eu_80661D20, 0) == 0) {
+cf::CfObjectObj* __ct__cf_CfObjectObj(cf::CfObjectObj* self) {
+    __ct__Q22cf12CfObjectMoveFv(self);
+    *(void**)self = (void*)lbl_eu_80529B4C;
+    self->field_71C = 0;
+    if (__dynamic_cast(self, 0, &lbl_eu_80661D18, &lbl_eu_80661D20, 0) == 0) {
         // The ctor returns the object in r3, so assigning it back keeps `res`
         // in volatile r3 for the mSubObjB0 store (no callee-saved slot).
         void* res = mtl::MemManager::allocate(0x1c, func_80061FFC());
         if (res != 0) {
-            res = (void*)__ct__cf_CfResObjImpl(res, this);
+            res = (void*)__ct__cf_CfResObjImpl(res, self);
         }
-        this->mSubObjB0 = res;
+        self->mSubObjB0 = res;
     }
+    return self;
 }
 
-// us-800c045c  - deleting destructor: restore the retail vtable, run the slot
-// +0x68 virtual cleanup; MWCC auto-generates the base CfObjectMove dtor call
-// (flag 0) and the null-check + delete-flag wrapper (CfObjectNpc pattern).
-cf::CfObjectObj::~CfObjectObj() {
-    *(void**)this = (void*)lbl_eu_80529B4C;
-    this->CfObject_UnkVirtualFunc6();
+// us-800c045c  - deleting destructor (retail forced-name __dt__800BFA14):
+// null-check, restore the retail vtable, run the slot +0x68 virtual cleanup,
+// run the base CfObjectMove dtor with flag 0, then free the object when the
+// delete flag is positive and return self. Written as a free function with
+// the literal retail name (CTaskGameEff __dt__80044BB0 / CTagProcessor
+// __dt__8012596C pattern): MWCC emits the name verbatim as a real .text
+// FUNC symbol, which the acceptance certifier requires (an ABS alias on a
+// member dtor is invisible to its symbol scan).
+void* __dt__800BFA14(cf::CfObjectObj* self, int deleteFlag) {
+    if (self != 0) {
+        *(void**)self = (void*)lbl_eu_80529B4C;
+        self->CfObject_UnkVirtualFunc6();
+        __dt__Q22cf12CfObjectMoveFv(self, 0);
+        if (deleteFlag > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
 }
 
 // us-800c04d0  - simple bool/int return after a virtual init call.

@@ -2271,7 +2271,7 @@ void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv(cf::CActorParam* self, 
     }
     if (func_80145C00(arg->field_0xC) != 0) {
         if (func_80148778(&static_cast<cf::CBattleState&>(*self), 0x90) != 0) {
-            void* r = func_80149330(reinterpret_cast<cf::CBattleState*>(self), 0x34,
+            void* r = func_80149330(&static_cast<cf::CBattleState&>(*self), 0x34,
                 *(u32*)((u8*)reinterpret_cast<CActorParamVt*>(self)->vf9C() + 0x3F10), 0x90, 0);
             if (r != NULL) {
                 self->CBattleState_UnkVirtualFunc8((cf::CBattleStateEntry*)r);

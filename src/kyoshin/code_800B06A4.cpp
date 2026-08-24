@@ -155,24 +155,16 @@ extern "C" void func_800B1518(void* self){void(*dtor)() = __dt__800B151C; dtor()
 // resets the sentinel links, frees the pool array when the list owns it
 // (flag at 0x1C clear), and clears the entry count.
 void __dt__800B151C(FactoryPoolList* self) {
-    CfReslistNode* zero = (CfReslistNode*)0;
-    CfReslistNode* sentinel;
-    CfReslistNode* cur;
-    CfReslistNode* p;
-    sentinel = self->mStartNodePtr;
-    cur = (CfReslistNode*)sentinel->mNext;
-    // Unlink every chained node (each node's next is nulled as it is
-    // walked); the sentinel pointer is re-read each iteration because the
-    // node store may alias it.
-    goto check;
-loop:
-    p = cur;
-    cur = (CfReslistNode*)cur->mNext;
-    p->mNext = zero;
-check:
-    sentinel = self->mStartNodePtr;
-    if (sentinel != cur) goto loop;
-    sentinel->mNext = sentinel;
+    CfReslistNode* cur = self->mStartNodePtr->mNext;
+    // Unlinks every chained node (each node's next is nulled as it is
+    // walked). The sentinel pointer is re-read from self each iteration
+    // (retail reloads 0x4(r3)) because the node store may alias it.
+    while (cur != self->mStartNodePtr) {
+        CfReslistNode* dead = cur;
+        cur = dead->mNext;
+        dead->mNext = 0;
+    }
+    self->mStartNodePtr->mNext = self->mStartNodePtr;
     self->mStartNodePtr->mPrev = self->mStartNodePtr;
     if (self->field_0x1C == 0) {
         if (self->mList != 0) {
@@ -194,17 +186,16 @@ void init_182C(){}
 #pragma pop
 // Target 2: us-800b2198 - second reslist<cf::IFactoryEvent*> destructor,
 // identical body to __dt__800B151C over a different list instance.
-extern "C" void __dt__800B18CC(FactoryPoolList* self) {
-    CfReslistNode* cur;
-    CfReslistNode* sentinel;
-    sentinel = self->mStartNodePtr;
-    cur = sentinel->mNext;
+// Declaration order (dead before cur, both outer-scope) gives retail's
+// coloring: cur=r4, dead=r5, sentinel reloaded from self each iteration.
+void __dt__800B18CC(FactoryPoolList* self) {
+    CfReslistNode* cur = self->mStartNodePtr->mNext;
     while (cur != self->mStartNodePtr) {
         CfReslistNode* dead = cur;
         cur = dead->mNext;
         dead->mNext = 0;
     }
-    sentinel = self->mStartNodePtr;
+    CfReslistNode* sentinel = self->mStartNodePtr;
     sentinel->mNext = sentinel;
     sentinel = self->mStartNodePtr;
     sentinel->mPrev = sentinel;
@@ -307,21 +298,21 @@ void func_800B75EC() {
         return;
     }
     // Scalar locals reproduce retail's stack layout: prevDst=sp+0x8,
-    // outDst=sp+0xC, iter=sp+0x10.
+    // outDst=sp+0xC, iter=sp+0x10. MWCC allocates scalars in reverse
+    // declaration order.
+    u32 iter;
     u32 outDst;
     u32 prevDst;
-    u32 iter[3];
-    func_800B1A8C(iter, &ctx->field_0xC48);
-    // Retail calls func_800B1A9C twice (once per test); unsigned compare.
-    // Retail calls func_800B1A9C twice (once per test).
-    if (*(u32*)func_800B1A9C(iter) != 0) {
-        if (func_800B708C__Fi(*(s32*)func_800B1A9C(iter)) != 0) {
-            // Retail forwards the lookup result in r3 without rematerializing
-            // it - call through a no-arg pointer type to suppress the move.
-            ((void (*)())func_800B9404)();
+    func_800B1A8C(&iter, &ctx->field_0xC48);
+    // Retail calls func_800B1A9C once per test.
+    if (*(u32*)func_800B1A9C(&iter) != 0) {
+        // Retail forwards the lookup result in r3 straight into func_800B9404.
+        void* hit = func_800B708C__Fi(*(s32*)func_800B1A9C(&iter));
+        if (hit != 0) {
+            func_800B9404(hit);
         }
     }
-    func_800B73E8(&outDst, &ctx->field_0xC48, func_800B1AC0(&prevDst, iter));
+    func_800B73E8(&outDst, &ctx->field_0xC48, func_800B1AC0(&prevDst, &iter));
 }
 #pragma pop
 
@@ -630,25 +621,34 @@ void fwd_2DB0_body(){}
 extern "C" void func_800B2DB0(FactoryPoolList* self, void* payloadSrc) {
     int idx = 0;
     int off = 0;
+    int count;
     CfReslistNode* sentinel = self->mStartNodePtr; // r9: loaded before the loop
-    int count = self->mCapacity;
+    count = self->mCapacity;
     while (idx < count) {
-        if (*(void**)((u8*)self->mList + off) != 0) {
+        // Empty slot claimed by this insert: its link word is still null.
+        if (*(void**)((u8*)self->mList + off) == 0) {
             break;
         }
         off += 0xC;
         idx++;
     }
-    FactoryPoolEntry* entry = (FactoryPoolEntry*)((u8*)self->mList + idx * 0xC);
-    // Retail guards the computed payload address (addic./beq), so the
-    // null check must be on &entry->data, not on entry.
-    if (&entry->data != 0) {
-        entry->data = *(void**)payloadSrc;
+    // Base is re-read after the search (retail reloads mList a third time).
+    void* poolBase = self->mList;
+    FactoryPoolEntry* entry = (FactoryPoolEntry*)((u8*)poolBase + idx * 0xC);
+    void** slot = &entry->data;
+    if (slot != 0) {
+        // reslist setItem wraps its store in try/catch; under C++ exceptions
+        // the inlined guard makes MWCC emit the unwinder sp-save (stw r1).
+        try {
+            *slot = *(void**)payloadSrc;
+        } catch (...) {
+            throw;
+        }
     }
     entry->next = sentinel;
-    CfReslistNode* last = sentinel->mPrev;
-    entry->prev = last;
-    last->mNext = (CfReslistNode*)entry;
+    // Retail reloads sentinel->prev instead of CSE-ing it.
+    entry->prev = sentinel->mPrev;
+    ((CfReslistNode*)sentinel->mPrev)->mNext = (CfReslistNode*)entry;
     sentinel->mPrev = (CfReslistNode*)entry;
 }
 // Target 2: us-800b3704 - func_800B2E38
@@ -775,20 +775,30 @@ extern "C" void func_800B39C8(FactoryPoolList* self, void* payloadSrc) {
     int count = self->mCapacity;                     // r8
     CfReslistNode* head = (CfReslistNode*)sentinel->mNext; // r9
     while (idx < count) {
-        if (*(void**)((u8*)self->mList + off) != 0) {
+        // Empty slot claimed by this insert: its link word is still null.
+        if (*(void**)((u8*)self->mList + off) == 0) {
             break;
         }
         off += 0xC;
         idx++;
     }
-    FactoryPoolEntry* entry = (FactoryPoolEntry*)((u8*)self->mList + idx * 0xC);
-    if (&entry->data != 0) {
-        entry->data = *(void**)payloadSrc;
+    // Base is re-read after the search (retail reloads mList a third time).
+    void* poolBase = self->mList;
+    FactoryPoolEntry* entry = (FactoryPoolEntry*)((u8*)poolBase + idx * 0xC);
+    void** slot = &entry->data;
+    if (slot != 0) {
+        // reslist setItem wraps its store in try/catch; under C++ exceptions
+        // the inlined guard makes MWCC emit the unwinder sp-save (stw r1).
+        try {
+            *slot = *(void**)payloadSrc;
+        } catch (...) {
+            throw;
+        }
     }
     entry->next = head;
-    CfReslistNode* last = head->mPrev;
-    entry->prev = last;
-    last->mNext = (CfReslistNode*)entry;
+    // Retail reloads head->prev instead of CSE-ing it.
+    entry->prev = head->mPrev;
+    ((CfReslistNode*)head->mPrev)->mNext = (CfReslistNode*)entry;
     head->mPrev = (CfReslistNode*)entry;
 }
 void copy_int_ptr_alt2(int* dst, int* src){*dst = *src;}
@@ -956,20 +966,31 @@ extern const float lbl_eu_806669D8;
 // this to be in the battle list, and the sub-record's bit 18 before firing
 // the slot-0x46 float callback.
 extern "C" s32 func_800B4CA0(Func4CA0Obj* self) {
+    // Battle-state gate: returns 0 when the slot-0xAF callback reports set or
+    // the +0x3F08 bit-4 flag is on; otherwise requires the battle manager,
+    // membership via func_800DA06C, and the sub-record's bit 18 before firing
+    // the slot-0x46 float callback and returning 1.
+    s32 flag;
     void* mgr = getInstance__Q22cf14CBattleManagerFv();
-    if (self->unkAF() != 0 || (self->field_3F08 & 0x10) != 0) {
-        return 1;
+    flag = 0;
+    if (self->unkAF() != 0 || (self->field_3F08 & 0x08000000) != 0) {
+        flag = 1;
     }
-    if ((self->field_3F00 & 0x10) == 0 && mgr != 0 &&
-        func_800DA06C(mgr, self) != 0) {
-        Func4CA0Sub* sub = (Func4CA0Sub*)self->field_3F60;
-        int bit = 0;
-        if (sub != 0) {
-            bit = (sub->field_4EC >> 18) & 1;
-        }
-        if (bit != 0) {
-            self->unk46(lbl_eu_806669D8);
-            return 1;
+    if (flag == 0) {
+        if ((self->field_3F00 & 0x08000000) == 0) {
+            if (mgr != 0) {
+                if (func_800DA06C(mgr, self) != 0) {
+                    Func4CA0Sub* sub = (Func4CA0Sub*)self->field_3F60;
+                    s32 bit = 0;
+                    if (sub != 0) {
+                        bit = (sub->field_4EC >> 18) & 1;
+                    }
+                    if (bit != 0) {
+                        self->unk46(lbl_eu_806669D8);
+                        return 1;
+                    }
+                }
+            }
         }
     }
     return 0;
@@ -1079,6 +1100,39 @@ extern "C" reslist<cf::CfObject*>* func_800B6CC4() {
     func_800B4400(obj);
     return &obj->field_0xC28;
 }
+
+// Target: us-800b76f0 - func_800B6DD0
+// Locate `obj` in the object list (walk via func_800B4554 between two fresh
+// iterators), then double-check it against two more iterator snapshots
+// (func_800B182C advances the found node) before extracting the matched
+// entry. A valid entry is re-bound through a recursive call.
+extern "C" void* func_800B6DD0(void* reslist, void* obj) {
+    if (obj == 0) {
+        return 0;
+    }
+    F8C0IteratorNode itA;      // retail sp+0x14
+    F8C0IteratorNode itB;      // retail sp+0x18
+    void* found;               // retail sp+0x1c
+    func_8007F8F4__Q22cf13CfGameManagerFv(&itA, (F8C0ListSource*)reslist);
+    func_8007F8C0__Q22cf13CfGameManagerFv(&itB, (F8C0ListSource*)reslist);
+    func_800B4554(&found, (void**)&itB, (void**)&itA, &obj);
+    F8C0IteratorNode itC;      // retail sp+0x10
+    void* result;
+    func_8007F8F4__Q22cf13CfGameManagerFv(&itC, (F8C0ListSource*)reslist);
+    result = 0;
+    if (func_8007F900__Q22cf13CfGameManagerFv((const u32*)&found, (const u32*)&itC)) {
+        F8C0IteratorNode itD;  // retail sp+0xC
+        func_8007F8F4__Q22cf13CfGameManagerFv(&itD, (F8C0ListSource*)reslist);
+        func_800B182C(&found);
+        if (func_8007F900__Q22cf13CfGameManagerFv((const u32*)&found, (const u32*)&itD)) {
+            result = *func_8007F8D0__Q22cf13CfGameManagerFv(&found);
+        }
+    }
+    if (result != 0 && func_800B64AC(result)) {
+        return func_800B6DD0(reslist, result);
+    }
+    return result;
+}
 extern "C" void* func_800B6CF8(void* arg) {
     UnkClass_805764CC* obj = func_800B07E8();
     func_800B44A0(obj, arg);
@@ -1147,24 +1201,34 @@ void* sub_resetReslist_BE8(void* self){return func_800B6D3C(&UnkClass_805764CC::
 void* sub_resetReslist_BC8(void* self){return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xBC8);}
 void* sub_resetReslist_C08(void* self){return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xC08);}
 void* sub_resetReslist_BA8(void* self){return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xBA8);}
+// auto_inline off: retail keeps these list-step helpers as real calls (bl)
+// from func_800B8B94/func_800B8C78; without this the -ipa pass folds them in.
+#pragma push
+#pragma auto_inline off
 cf::CfObject* func_800B77E4(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = func_800B07E8();
     cf::CfObject* next = (cf::CfObject*)func_800B6DD0(&ctx->field_0xB28, obj);
     // Retail returns the next entry in r3 (kept from func_800B6DD0).
     return next;
 }
+#pragma pop
 
 void func_800B7854(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = func_800B07E8();
     func_800B6DD0(&ctx->field_0xB68, obj);
 }
 
+#pragma push
+#pragma auto_inline off
+// extern "C": retail exports this helper under the unmangled name (reloc fix).
+extern "C" cf::CfObject* func_800B781C(cf::CfObject* obj);
 cf::CfObject* func_800B781C(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = func_800B07E8();
     cf::CfObject* next = (cf::CfObject*)func_800B6DD0(&ctx->field_0xB48, obj);
     // Retail returns the next entry in r3 (kept from func_800B6DD0).
     return next;
 }
+#pragma pop
 
 #pragma push
 #pragma auto_inline off
@@ -1538,7 +1602,8 @@ void* func_800B8C78(s32 id) {
     }
     B8B94Obj* obj = (B8B94Obj*)func_800B76CC();
     while (obj != 0) {
-        if (obj->field_8C == id) {
+        // Operand order (id first) matches retail's cmpw r26, r0.
+        if (id == obj->field_8C) {
             return func_8016FE34(obj);
         }
         if (!lbl_eu_80663EE8) {
@@ -1619,7 +1684,30 @@ extern "C" void* __ct__800B970C(void* self) {
 
     return self;
 }
-void init_97A0(){}
+// Target: us-800ba0bc - func_800B97A0
+// Reads the packed resource token at record+0x4, extracts its type field
+// (bits 27..5) and translates it into a func_800B20B4 spawn mask, then
+// spawns into the manager singleton, forwarding the record as payload.
+extern "C" u32 func_800B2D28(u8* self);
+#pragma push
+#pragma auto_inline off
+void* func_800B97A0(void* self, u32 arg) {
+    u32 idx = CfRes_extractBits27_5((void*)(uintptr_t)func_800B2D28((u8*)self));
+    u32 mask = 0;
+    switch (idx) {
+    case 2:  mask = 0x2; break;
+    case 3:  mask = 0x8; break;
+    case 4:  mask = 0x4; break;
+    case 5:  mask = 0x80; break;
+    case 12: mask = 0x100020; break;
+    case 14: mask = 0x400020; break;
+    case 15:
+    case 16:
+    case 17: mask = 0x800020; break;
+    }
+    return func_800B20B4(func_800B07E8(), mask, (const B20B4Payload*)self, arg);
+}
+#pragma pop
 // CfGameManager imports used by func_800B985C (retail mangled names).
 extern "C" void func_80081258__Q22cf13CfGameManagerFv(void* self);
 extern "C" void func_80081264__Q22cf13CfGameManagerFv(void* self, void* value);
@@ -1716,16 +1804,67 @@ UnkClass_805764CC::UnkClass_805764CC() {
     func_800B0A90(&lbl_eu_80663EE0);
 }
 
-_reslist_base<cf::TboxInfo>::~_reslist_base(){}
+// Target us-800b145c - _reslist_base<cf::TboxInfo>::~_reslist_base()
+// Same teardown shape as the derived ~reslist (retail compiles the body into
+// both dtors independently): reinstall the base vtable, unlink every chained
+// node (nulling each node's next as walked), re-link the sentinel to itself,
+// free the pool array when the ownership flag (0x34) is clear, and clear the
+// pool pointer (0x2c, stored biased by 0x10). The deleting-dtor tail comes
+// from MWCC's member-destructor codegen.
+template <>
+_reslist_base<cf::TboxInfo>::~_reslist_base() {
+    // (the caller-side this==0 guard is MWCC-generated)
+    extern void* lbl_eu_805290DC[];
+    TboxInfoReslistLayout& obj = *(TboxInfoReslistLayout*)this;
+    // Reinstall the base vtable (nothing overwrites +0 afterwards).
+    obj.mVtable = (void*)lbl_eu_805290DC;
+    CfReslistNode* node = obj.mStartNodePtr->mNext;
+    // The sentinel pointer is re-read each iteration (the node store may
+    // alias it).
+    while (node != obj.mStartNodePtr) {
+        CfReslistNode* cur = node;
+        node = node->mNext;
+        cur->mNext = NULL;
+    }
+    obj.mStartNodePtr->mNext = obj.mStartNodePtr;
+    obj.mStartNodePtr->mPrev = obj.mStartNodePtr;
+    if (obj.field_0x34 == 0) {
+        char* pool = (char*)obj.field_0x2c;
+        // Retail emits two identical null tests around the free.
+        if (pool != 0) {
+            if (pool != 0) {
+                __dla__FPv(pool - 0x10);
+            }
+            obj.field_0x2c = 0;
+        }
+    }
+}
 
 // Target us-800b1780: ~UnkClass_805764CC()
-// Body is empty on purpose: MWCC auto-generates the retail teardown order -
-// members in reverse declaration order (field_0xC80 IFactoryEvent list,
-// field_0xC48 TboxInfo list, then the nine CfObject* lists C28..B28, the
-// AD8 wrapper at +0x20 via AD8Wrapper's inline dtor calling __dt__800B0AF4),
-// then the reslist<cf::CfObject*> base at +0, then the deleting-dtor tail
-// (delete this when the caller's flags argument > 0).
-UnkClass_805764CC::~UnkClass_805764CC() {}
+// Teardown is fully explicit: retail destroys field_0x20 via a direct call to
+// the flat __dt__800B0AF4 symbol (a wrapper member-dtor would emit its own
+// mangled symbol and IPA zeroes the dead flags argument), so the flat call
+// must live in this body - which forces the reslist members to be destroyed
+// explicitly ahead of it, in retail order (C80 IFactoryEvent pool, C48
+// TboxInfo list, nine CfObject* lists C28..B28). The reslist<cf::CfObject*>
+// base at +0 is destroyed implicitly after the body, and MWCC appends the
+// delete-this tail when the caller's flags argument > 0.
+UnkClass_805764CC::~UnkClass_805764CC() {
+    field_0xC80.~reslist();
+    field_0xC48.~reslist();
+    field_0xC28.~reslist();
+    field_0xC08.~reslist();
+    field_0xBE8.~reslist();
+    field_0xBC8.~reslist();
+    field_0xBA8.~reslist();
+    field_0xB88.~reslist();
+    field_0xB68.~reslist();
+    field_0xB48.~reslist();
+    field_0xB28.~reslist();
+    __dt__800B0AF4(&field_0x20, -1);
+}
+
+
 
 // Target 2: us-800b6178 - func_800B587C
 // Selection sort over a [start,end) array of 8-byte SortEntry pairs using an
@@ -1761,19 +1900,24 @@ void func_800B587C(SortEntry* start, SortEntry* end, SortEntryCompare compare) {
 // container base (the raw node pointer sits at +0x3E9C inside the container).
 void func_800B70FC(u32 arg1, u32 arg2) {
     func_800B71C4();
+    // node declared first so its vreg is born earliest (retail colors it
+    // r31); source follows and lands in r30.
+    u32 node;
     const F8C0ListSource* source = (const F8C0ListSource*)func_800B6BA4__Fv();
+    // Stack slots (MWCC reverse-decl allocation): outerIter=sp+0x10,
+    // dest=sp+0xC, innerIter=sp+0x8.
     F8C0IteratorNode outerIter;
-    F8C0IteratorNode innerIter;
     u32 dest;
+    F8C0IteratorNode innerIter;
     func_8007F8C0__Q22cf13CfGameManagerFv(&outerIter, source);
-    for (;;) {
-        // Advance the outer cursor; leave when the two iterators agree.
-        func_8007F8F4__Q22cf13CfGameManagerFv(&innerIter, source);
-        if (!func_8007F900__Q22cf13CfGameManagerFv((const u32*)&outerIter, (const u32*)&innerIter)) {
-            break;
-        }
+    // Rotated while: MWCC jumps to the condition first (retail's leading
+    // `b` over the body); the condition advances the inner iterator via
+    // the comma expression, then compares the two cursors.
+    while (func_8007F900__Q22cf13CfGameManagerFv(
+               (const u32*)&outerIter,
+               (func_8007F8F4__Q22cf13CfGameManagerFv(&innerIter, source), (const u32*)&innerIter))) {
         void** nodeSlot = func_8007F8D0__Q22cf13CfGameManagerFv(&outerIter);
-        u32 node = (u32)*nodeSlot;
+        node = (u32)*nodeSlot;
         if (node != 0) {
             node -= 0x3E9C;
         }
@@ -1788,61 +1932,90 @@ void func_800B70FC(u32 arg1, u32 arg2) {
 // Target 4: us-800b7b34 - func_800B7214
 // Allocates the first free pool slot of the TboxInfo reslist (link word == 0),
 // copies the payload record in, then links the slot at the head of the list.
-void func_800B7214(TboxInfoReslistPoolView* list, const TboxPayload* src) {
-    CfReslistNode* sentinel = list->mStartNodePtr;
-    s32 count = list->mSlotCount;
-    TboxPoolSlot* it = list->mSlots;
+void func_800B7214(TboxInfoReslistPoolView* list, TboxPayload* src) {
     s32 index = 0;
-    while (index < count && it->mLink0 != 0) {
-        it++;
+    u32 off = 0;
+    s32 count;
+    CfReslistNode* sentinel = list->mStartNodePtr; // r9: loaded before the loop
+    count = list->mSlotCount;                      // r8: loaded once
+    while (index < count) {
+        // Empty slot claimed by this insert: its link word is still null.
+        // Pool base re-read every iteration (retail reloads +0x2c in the loop).
+        if (*(CfReslistNode**)((u8*)list->mSlots + off) == 0) {
+            break;
+        }
+        off += 0x24;
         index++;
     }
-    TboxPoolSlot* slot = &list->mSlots[index];
-    if (&slot->mInfo != 0) {
-        slot->mInfo = *src;
+    // Base is re-read after the search (retail reloads +0x2c a second time).
+    TboxPoolSlot* slot = (TboxPoolSlot*)((u8*)list->mSlots + index * 0x24);
+    TboxPayload* dst = &slot->mInfo;
+    if (dst != 0) {
+        dst->field_00 = src->field_00;
+        dst->field_04 = src->field_04;
+        dst->field_08 = src->field_08;
+        dst->field_0C = src->field_0C;
+        dst->field_10 = src->field_10;
+        dst->field_14 = src->field_14;
+        dst->field_18 = src->field_18;
+        dst->field_1A = src->field_1A;
+        dst->field_1B = src->field_1B;
     }
-    // Link at the front: slot <-> sentinel chain update (retail order).
-    slot->mLink0 = sentinel;
-    slot->mLink1 = sentinel->mPrev;
-    ((CfReslistNode*)slot->mLink1)->mNext = (CfReslistNode*)slot;
-    sentinel->mPrev = (CfReslistNode*)slot;
+    // Link at the front: slot <-> sentinel chain update. Wrapping the link
+    // back-write in try/catch pins the unwinder sp-save (stw r1) at the
+    // skip-label - the closest reproducible position to retail's, which
+    // schedules it one slot earlier (inside the final byte store's stall).
+    try {
+        slot->mLink0 = sentinel;
+        // Retail reloads sentinel->prev instead of CSE-ing it.
+        slot->mLink1 = sentinel->mPrev;
+        ((CfReslistNode*)sentinel->mPrev)->mNext = (CfReslistNode*)slot;
+        sentinel->mPrev = (CfReslistNode*)slot;
+    } catch (...) {
+        throw;
+    }
 }
 
 // Target 1: us-800b1518 - reslist<cf::TboxInfo>::~reslist()
 // Reinstalls the base vtable (lbl_eu_805290DC), unlinks every chained node
 // (nulling each node's next as walked), resets the sentinel links, frees the
 // pool array when the ownership flag (0x34) is clear, and clears the pool
-// pointer (0x2c). The MWCC-generated deleting-dtor tail (delete-this when the
-// caller's flag argument > 0) comes for free from the member destructor.
+// pointer (0x2c). Retail compiles this body independently of the base dtor.
+// auto_inline off keeps ~UnkClass_805764CC's explicit member call out-of-line
+// (the visible body would otherwise be folded into the caller).
+#pragma push
+#pragma auto_inline off
 reslist<cf::TboxInfo>::~reslist() {
     if (this != 0) {
     extern void* lbl_eu_805290DC[];
-    TboxInfoReslistLayout* obj = (TboxInfoReslistLayout*)this;
-    *(volatile u32*)&obj->mVtable = (u32)lbl_eu_805290DC;
-    CfReslistNode* dead;
-    CfReslistNode* cur = obj->mStartNodePtr->mNext;
-    // The sentinel pointer is re-read each iteration (the node store may
-    // alias it).
-    while (cur != obj->mStartNodePtr) {
-        dead = cur;
-        cur = dead->mNext;
-        dead->mNext = 0;
+    TboxInfoReslistLayout& obj = *(TboxInfoReslistLayout*)this;
+    obj.mVtable = (void*)lbl_eu_805290DC;
+    CfReslistNode* node = obj.mStartNodePtr->mNext;
+    // The sentinel pointer is re-read from the object each iteration
+    // (the node stores may alias it), so it is not cached in a local.
+    // Comparison written sentinel-first to mirror retail's cmpl operand
+    // order under MWCC's register assignment.
+    while (obj.mStartNodePtr != node) {
+        CfReslistNode* cur = node;
+        node = node->mNext;
+        cur->mNext = NULL;
     }
-    obj->mStartNodePtr->mNext = obj->mStartNodePtr;
-    obj->mStartNodePtr->mPrev = obj->mStartNodePtr;
-    if (obj->field_0x34 == 0) {
-        char* pool = (char*)obj->field_0x2c;
+    obj.mStartNodePtr->mNext = obj.mStartNodePtr;
+    obj.mStartNodePtr->mPrev = obj.mStartNodePtr;
+    if (obj.field_0x34 == 0) {
+        char* pool = (char*)obj.field_0x2c;
         // Pool base is stored biased by 0x10 (header before array); retail
         // emits two identical null tests around the free.
         if (pool != 0) {
             if (pool != 0) {
                 __dla__FPv(pool - 0x10);
             }
-            obj->field_0x2c = 0;
+            obj.field_0x2c = 0;
         }
     }
     }
 }
+#pragma pop
 // Target 3: us-800b1614 - _reslist_base<cf::IFactoryEvent*>::~_reslist_base()
 // Reinstalls the base vtable, unlinks every node (next=0), re-links the
 // sentinel to itself, then frees the owned pool buffer (mList) unless the
@@ -1854,7 +2027,7 @@ _reslist_base<cf::IFactoryEvent*>::~_reslist_base() {
     extern void* lbl_eu_805290B8[];
     CfReslistLayout* obj = (CfReslistLayout*)this;
     *(void* volatile*)&obj->mVtable = (void*)lbl_eu_805290B8;
-    CfReslistNode* zero = (CfReslistNode*)0;
+    CfReslistNode* zero = NULL;
     CfReslistNode* sentinel;
     CfReslistNode* cur;
     CfReslistNode* p;
@@ -1877,7 +2050,41 @@ check:
         }
     }
 }
-reslist<cf::IFactoryEvent*>::~reslist(){}
+// reslist<cf::IFactoryEvent*>::~reslist() - retail compiles the derived
+// specialization as its own full teardown copy (not a tail-call to the base
+// dtor), identical in shape to ~_reslist_base<cf::IFactoryEvent*>.
+// auto_inline off keeps ~UnkClass_805764CC's explicit member call out-of-line.
+#pragma push
+#pragma auto_inline off
+template <>
+reslist<cf::IFactoryEvent*>::~reslist() {
+    extern void* lbl_eu_805290B8[];
+    CfReslistLayout* obj = (CfReslistLayout*)this;
+    *(void* volatile*)&obj->mVtable = (void*)lbl_eu_805290B8;
+    CfReslistNode* zero = NULL;
+    CfReslistNode* sentinel;
+    CfReslistNode* cur;
+    CfReslistNode* p;
+    sentinel = obj->mStartNodePtr;
+    cur = (CfReslistNode*)sentinel->mNext;
+    goto check;
+loop:
+    p = cur;
+    cur = (CfReslistNode*)cur->mNext;
+    p->mNext = zero;
+check:
+    sentinel = obj->mStartNodePtr;
+    if (cur != sentinel) goto loop;
+    obj->mStartNodePtr->mNext = obj->mStartNodePtr;
+    obj->mStartNodePtr->mPrev = obj->mStartNodePtr;
+    if (!obj->field_0x1C) {
+        if (obj->mList != 0) {
+            __dla__FPv(obj->mList);
+            obj->mList = 0;
+        }
+    }
+}
+#pragma pop
 
 // Target 3: us-800ba2a8 - func_800B998C
 void* func_800B998C(void* self, void* a1, void* a2, void* a3, void* a4, void* a5) {
@@ -1938,9 +2145,13 @@ u32 func_800B14FC(int* a, int* b) {
     return va != vb;
 }
 // Target 1: us-800b35f4 - accessor returning field at +0x4
-u32 func_800B2D28(u8* self) {
+// auto_inline off: retail calls this out-of-line (e.g. from func_800B97A0).
+#pragma push
+#pragma auto_inline off
+extern "C" u32 func_800B2D28(u8* self) {
     return *(u32*)(self + 0x4);
 }
+#pragma pop
 // Target 5: us-800b3aa0 - extract bit 7 of field at +0x64
 // auto_inline off: retail calls this out-of-line from func_800B4120.
 // extern "C": retail exports the unmangled name.
@@ -1966,7 +2177,7 @@ u32 func_800B3D40(u8* self) {
 extern "C" s32 func_800B4A24(CEvtTypeArg* arg) {
     s32 result = 0;
     if (arg != 0) {
-        if (arg->unk80() != 0 && (arg->flags & 4) != 0) {
+        if (arg->unk7E() != 0 && (arg->flags & 4) != 0) {  // vtable +0x200
             // Recover the enclosing object (arg sits at +0x3E9C within it);
             // retail keeps a redundant null guard on the fixup.
             UnkClass_805764CC* container = (UnkClass_805764CC*)arg;

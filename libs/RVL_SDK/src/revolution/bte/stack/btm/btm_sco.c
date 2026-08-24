@@ -335,7 +335,7 @@ char btm_sco_pool_rel[] = "BTM_ReadEScoLinkParms -> sco_inx 0x%04x";
 void btm_sco_connected(UINT8 hci_status, BD_ADDR bda, UINT16 hci_handle,
                        tBTM_ESCO_DATA *p_esco_data)
 {
-    tSCO_CONN *p = &SCO_CB->sco_db[0];
+    tSCO_CONN *p = SCO_CB->sco_db;
     UINT16 xx;
     UINT16 state;
     BOOLEAN is_conn_cback = FALSE;
@@ -393,18 +393,17 @@ void btm_sco_connected(UINT8 hci_status, BD_ADDR bda, UINT16 hci_handle,
 
 void btm_remove_sco_links(BD_ADDR bda)
 {
-    /* Iterate over 3 SCO links; if rem_bd_known flag (+0xd) is set
-       and BD_ADDR at +0x28 matches, remove the SCO link */
-    unsigned char* sco_cb = (unsigned char*)&btm_cb + 0x1854;
+    /* Remove every known-address SCO link towards bda */
+    tSCO_CONN *p = SCO_CB->sco_db;
     UINT16 i;
 
     i = 0;
     while (i < 3) {
-        if (sco_cb[0xd] != 0 && memcmp(sco_cb + 0x28, bda, 6) == 0) {
+        if (p->rem_bd_known != 0 && memcmp(p->bd_addr, bda, 6) == 0) {
             BTM_RemoveSco((UINT16)i);
         }
         i++;
-        sco_cb += 0x34;
+        p++;
     }
 }
 
@@ -435,31 +434,23 @@ void btm_sco_removed(UINT16 hci_handle, UINT8 reason)
 
 void btm_sco_acl_removed(BD_ADDR bda)
 {
-    /* Iterate over 3 SCO links; if link is active and matches bda (or bda is NULL),
-       clear the link state and call the esco callback */
-    unsigned char* sco_cb = (unsigned char*)&btm_cb + 0x1854;
+    /* Clear any active SCO link towards bda (all links when bda is NULL)
+       and notify its disconnect callback */
+    tSCO_CONN *p = SCO_CB->sco_db;
     UINT32 i;
 
     i = 0;
     do {
-        if (*(UINT16*)(sco_cb + 0x8) != 0) {
-            if (bda == NULL) {
-                goto remove_sco;
+        if (p->state != 0) {
+            if (bda == NULL ||
+                (memcmp(p->bd_addr, bda, 6) == 0 && p->rem_bd_known != 0)) {
+                p->state = 0;
+                p->p_esco_cback = NULL;
+                (*p->p_disc_cb)((UINT16)i);
             }
-            if (memcmp(sco_cb + 0x28, bda, 6) != 0) {
-                goto next;
-            }
-            if (sco_cb[0xd] == 0) {
-                goto next;
-            }
-remove_sco:
-            *(UINT16*)(sco_cb + 0x8) = 0;
-            *(UINT32*)(sco_cb + 0x10) = 0;
-            (*(void(**)(UINT16))(sco_cb + 0x4))((UINT16)i);
         }
-next:
         i++;
-        sco_cb += 0x34;
+        p++;
     } while (i < 3);
 }
 
@@ -554,11 +545,11 @@ void btm_esco_proc_conn_chg(UINT8 status, UINT16 handle, UINT8 tx_interval,
                             UINT16 tx_pkt_len)
 {
     /* Retail layout uses 3 SCO DB entries regardless of BTM_MAX_SCO_LINKS */
-    tSCO_CONN *p = (tSCO_CONN *)((UINT8 *)&btm_cb + 0x1854);
+    tSCO_CONN *p = SCO_CB->sco_db;
     tBTM_CHG_ESCO_EVT_DATA data;
     UINT16 xx;
 
-    if (*((UINT8 *)&btm_cb + 0x27c0) >= BT_TRACE_LEVEL_EVENT) {
+    if (SCO_CB->trace_level >= BT_TRACE_LEVEL_EVENT) {
         LogMsg_2(TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK |
                  TRACE_TYPE_EVENT,
                  "btm_esco_proc_conn_chg -> handle 0x%04x, status 0x%02x",
@@ -587,18 +578,14 @@ void btm_esco_proc_conn_chg(UINT8 status, UINT16 handle, UINT8 tx_interval,
 
 BOOLEAN btm_is_sco_active(UINT16 handle)
 {
-    /* Check each of the 3 SCO links: if hci_handle matches and
-       state == SCO_ST_CONNECTED (4), the link is active */
-    unsigned char* cb = (unsigned char*)&btm_cb;
+    /* The link is active if any entry is CONNECTED with this HCI handle */
+    tSCO_CONN *p = SCO_CB->sco_db;
+    UINT16 xx;
 
-    if (*(UINT16*)(cb + 0x185e) == handle && *(UINT16*)(cb + 0x185c) == 4) {
-        return TRUE;
-    }
-    if (*(UINT16*)(cb + 0x1892) == handle && *(UINT16*)(cb + 0x1890) == 4) {
-        return TRUE;
-    }
-    if (*(UINT16*)(cb + 0x18c6) == handle && *(UINT16*)(cb + 0x18c4) == 4) {
-        return TRUE;
+    for (xx = 0; xx < 3; xx++, p++) {
+        if (handle == p->hci_handle && p->state == SCO_ST_CONNECTED) {
+            return TRUE;
+        }
     }
     return FALSE;
 }
@@ -631,20 +618,20 @@ UINT8 btm_num_sco_links_active(void)
 
 BOOLEAN btm_is_sco_active_by_bdaddr(BD_ADDR remote_bda)
 {
-    /* Iterate over 3 SCO links; if BD_ADDR matches and state == SCO_ST_CONNECTED (4), return TRUE */
-    UINT16 i;
-    unsigned char* sco_cb;
+    /* The link is active if any CONNECTED entry has this remote address */
+    UINT16 xx;
+    tSCO_CONN *p;
 
-    sco_cb = (unsigned char*)&btm_cb + 0x1854;
-    i = 0;
-    while (i < 3) {
-        if (memcmp(sco_cb + 0x28, remote_bda, 6) == 0) {
-            if (*(UINT16*)(sco_cb + 0x8) == 4) {
+    p = SCO_CB->sco_db;
+    xx = 0;
+    while (xx < 3) {
+        if (memcmp(p->bd_addr, remote_bda, 6) == 0) {
+            if (p->state == SCO_ST_CONNECTED) {
                 return TRUE;
             }
         }
-        i++;
-        sco_cb += 0x34;
+        xx++;
+        p++;
     }
     return FALSE;
 }

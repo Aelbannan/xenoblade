@@ -5,7 +5,7 @@
 
 // RTTI descriptor pair for the CLib typeinfo object (defined in the CGXCache
 // .sdata2 pool, lbl_eu_8066A4C8).
-extern "C" u32 lbl_eu_8066A4C8[2];
+extern u32 lbl_eu_8066A4C8[2];
 
 // CLib vtable, defined explicitly at the bottom of this TU (novtable class).
 struct IWorkEventVtbl;
@@ -19,7 +19,7 @@ extern void* lbl_eu_8056CE40[6];
 // Retail sbss singleton - DEFINED in core/CException.cpp (.sbss, 8B slot at
 // 0x806656D0); this TU only references it, so declare it extern (retail
 // CLib.o carries no .sbss).
-extern "C" CLib* lbl_eu_806656D0;
+extern CLib* lbl_eu_806656D0;
 #define spInstance lbl_eu_806656D0
 #include <decomp.h>
 
@@ -39,6 +39,31 @@ CLib* CLib::getInstance(){
     return spInstance;
 }
 
+// Mirrors CMsgParam<8>::find's ring walk (the template definition in the
+// shared header carries __declspec(noinline) for CWorkRoot.cpp's out-of-line
+// shape, which suppresses the retail-inlined scan here). -inline auto folds
+// this single-call static into the TU-local isRunning() so isInitialized
+// reproduces the retail walk shape (inst=r6 / index=r7, no bl).
+// Layout from the queue base: vptr@0x0, mEntries[8]@0x4 (8 x 36B),
+// mArrayPtr@0x124, mFront@0x128, mSize@0x12C, mCapacity@0x130.
+struct ClibMsgQueueView {
+    void* vptr;                 // 0x00
+    u8 entries[0x120];          // 0x04..0x123
+    CMsgParamEntry* mArrayPtr;  // 0x124
+    u32 mFront;                 // 0x128
+    u32 mSize;                  // 0x12C
+    u32 mCapacity;              // 0x130
+};
+
+static int ClibFindException(const ClibMsgQueueView* q, u32 msg) {
+    for (int i = 0; i < q->mSize; i++) {
+        if (q->mArrayPtr[(q->mFront + i) % q->mCapacity].command == msg) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 // Inline copy of CWorkThread::isRunning() visible only in this TU (same trick
 // as CLibVM.cpp / CDeviceGX.cpp): the retail isInitialized inlines the member
 // call with the this-arg bound to the instance, which births the global load
@@ -49,7 +74,7 @@ inline bool CWorkThread::isRunning() const {
     if (mFlags & THREAD_FLAG_EXCEPTION) {
         exception = true;
     } else {
-        exception = mMsgQueue.find(EVT_EXCEPTION) >= 0;
+        exception = ClibFindException((const ClibMsgQueueView*)&mMsgQueue, EVT_EXCEPTION) >= 0;
     }
 
     bool result = false;

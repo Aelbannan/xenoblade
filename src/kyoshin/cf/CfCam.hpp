@@ -2,9 +2,12 @@
 
 #include <types.h>
 #include <monolib/math/CVec3.hpp>
+#include <monolib/math/CMat33.hpp>
+#include <monolib/math/CQuat.hpp>
 
 namespace cf {
 struct CfCamFollow; // fwd decl for extern-C imports below (full layout later)
+class CfObject;     // active camera-state object (func_8006E5A4 return)
 } // namespace cf
 
 // ---------------------------------------------------------------------------
@@ -13,6 +16,7 @@ struct CfCamFollow; // fwd decl for extern-C imports below (full layout later)
 
 extern "C" bool func_800755B0(void*, int);
 extern "C" bool func_8049EB60(void* obj);
+extern "C" u32 func_8006BFBC();                          // CfCam sibling gate
 extern "C" int func_8006BFC4(int controllerId, int unk); // CfCam sibling pad check
 extern "C" u32 lbl_eu_80663E24;
 // Copies a 12-byte vector (dst, src); returns dst (retail: func_8004B3F0 leaves
@@ -81,7 +85,7 @@ extern "C" float lbl_eu_806662B4;     // .sdata2 constant (retail 0x806662B4)
 extern "C" const float lbl_eu_8066A208;     // .sdata2 epsilon (retail 0x8066A208)
 extern "C" float lbl_eu_806662D8;     // .sdata2 angle offset (retail 0x806662D8)
 extern "C" float lbl_eu_806662E0;     // .sdata2 divisor (retail 0x806662E0)
-extern "C" float lbl_eu_806662E4;     // .sdata2 sine multiplier (retail 0x806662E4)
+extern "C" float const lbl_eu_806662E4;     // .sdata2 sine multiplier (retail 0x806662E4)
 extern "C" double lbl_eu_806662E8;    // .sdata2 fmod wrap divisor, double (retail 0x806662E8)
 extern "C" float lbl_eu_8066A200;     // .sdata2 pi/2 (retail 0x8066A200)
 extern "C" u8 lbl_eu_80663DE0;        // .sdata byte gate (retail 0x80663DE0)
@@ -91,7 +95,7 @@ extern "C" void func_8006B948();                              // CfCam sibling (
 extern "C" void func_8006BEC0(void* self);                    // CfCam sibling no-op (retail 0x8006BEC0)
 extern "C" void func_8006C740(ml::CVec3* out, cf::CfCamFollow* self); // CfCam sibling (retail 0x8006CA1C); same signature as the in-TU def so call sites keep the unmangled bl
 extern "C" void func_80073C7C(void* a, void* b, void* c, void* d, float f); // CfCam sibling (retail 0x80073C7C)
-extern "C" void func_800742FC(float* mtx, float scale);       // CfCam sibling (retail 0x800742FC)
+extern "C" float* func_800742FC(float* mtx, float scale);       // CfCam sibling (retail 0x800742FC)
 extern "C" void func_800743A4(float* mtx, const float* v);    // CfCam sibling (retail 0x800743A4)
 // extern-C-only views of in-TU C++ definitions (differing signature keeps the bl):
 extern "C" void func_8006D6A8(void* dst, void* mtx, void* src); // in-TU def: (Vec*, const Mtx, const Vec*)
@@ -103,6 +107,11 @@ extern "C" void nopFunc(void*);                     // retail 0x80059C74 (no-op 
 // callees and siblings:
 extern "C" float func_8006BAF0(void* self); // CfCam sibling (retail 0x8006C548); body sits under the C++-mangled name in CfCam.cpp so callers keep the bl
 extern "C" float func_8006D3D0(const void* v); // CfCam sibling (retail 0x8006DE28); yaw from x/z; body under the C++-mangled name so callers keep the bl
+// Call-through-overload views of in-TU bodies (differing signatures keep the
+// bl instead of letting MWCC inline the local definition):
+extern "C" float func_8006D380(const void* v); // spherical azimuth wrapper (retail 0x8006DD78)
+extern "C" void func_8006CB0C(void* out, void* self, void* dir, void* sel);
+extern "C" float func_8006D41C(double x);      // acos wrapper view (retail 0x8006D41C); body is the float overload
 extern "C" float func_8006BB00(const void* v); // CfCam sibling (retail 0x8006C558): `b PSVECMag` tail call
 extern "C" void func_8004CB80(f32* out, const f32* a, const f32* b); // vec3 subtract out = a - b (retail 0x8004CB80)
 extern "C" float func_800A3EF4(float x);   // FSqrt-style sqrt with nw4r assert (retail 0x800A3EF4)
@@ -119,13 +128,29 @@ extern char lbl_eu_805262C8[];              // nw4r assert message string (retai
 
 namespace cf {
 
-// Minimal layout for cf::CfCamFollow ctor (__ct__cf_CfCamFollow).
-// Base cf::CfCam occupies +0x00..+0x10; follow extends through ~0x25A.
-struct CfCamFollow {
-    void* vtable; // 0x00
-    u32 unk04;    // 0x04
-    u32 unk08;    // 0x08
-    void* unk0C;  // 0x0C base ctor arg
+// NOTE: everything type-y lives in THIS single namespace block. MWCC 10140
+// breaks qualified lookups (cf::X -> "undefined identifier") when types are
+// declared across multiple re-openings of namespace cf, so later blocks were
+// merged here on purpose.
+struct CfCamFollow; // fwd decl for extern-C imports below (full layout later)
+class CfObject;     // active camera-state object (func_8006E5A4 return)
+// Base camera object (+0x00..+0x10). The vtable slot is a plain field stored
+// manually (retail lbl_eu_805272E8) so the ctor bytes match retail exactly.
+// Defined before CfCamFollow so the follow camera can really derive from it
+// (the derived dtor must emit the retail `bl __dt__Q22cf5CfCamFv`).
+class CfCam {
+public:
+    void* vtable;      // 0x00 (retail lbl_eu_805272E8, stored manually)
+    u32 field_0x04;    // 0x04
+    u32 field_0x08;    // 0x08
+    void* field_0x0C;  // 0x0C ctor arg
+    float getUnk4FC();
+    ~CfCam();
+};
+
+// Derived follow camera; base CfCam occupies +0x00..+0x10, follow extends
+// through ~0x25A.
+struct CfCamFollow : CfCam {
     u8 unk10[0x1C - 0x10];
     u8 unk1C[0x64 - 0x1C]; // 0x1C..0x64
     u32 field_0x64;        // 0x64 raw flag word
@@ -134,7 +159,9 @@ struct CfCamFollow {
     u8 unk130[0x160 - 0x130];
     void* unk160; // 0x160 ctor arg2
     void* unk164; // 0x164 ctor arg1
-    u8 unk168[0x1D4 - 0x168];
+    u8 unk168[0x180 - 0x168];
+    f32 field_0x180;          // 0x180 snapshot source for unk1F8
+    u8 unk184[0x1D4 - 0x184];
     u32 unk1D4; // 0x1D4
     u16 unk1D8; // 0x1D8
     u8 unk1DA[0x1DC - 0x1DA];
@@ -170,7 +197,7 @@ struct CfCamFollow {
     u16 unk250;
     u16 unk252;
     u16 unk254;
-    u16 unk256;
+    s16 unk256;
     u16 unk258;
     u8 unk25A[0x4EC - 0x25A]; // padding
     u32 field_0x4EC;          // 0x4EC raw flag word
@@ -436,11 +463,23 @@ public:
     virtual void v18() = 0;
     virtual void v19() = 0;
     virtual void v20() = 0;
-    virtual int fnAt60() = 0; // 0x60 (index 22)
+    virtual void v21() = 0;
+    virtual void* fnAt60() = 0; // 0x60 (index 22); returns an object whose +0x8C u16 is read
+};
+
+// Row-id halfword view of the active camera object (read at +0x8C).
+struct CfCamRowView {
+    u8 field_0x00[0x8C];
+    u16 rowId; // +0x8C
+};
+
+// Flags-word view of UnkClass_800821F8 (bit 0x20000000 set at +0x4).
+struct UnkClass800821F8FlagView {
+    u8 field_0x00[4];
+    u32 flags; // +0x04
 };
 
 // Vtable view for func_8006F9EC's slot-0x18 call (index 4).
-namespace cf {
 class CfCamVt18 {
 public:
     virtual void v00() = 0;               // 0x08
@@ -449,7 +488,6 @@ public:
     virtual void v03() = 0;
     virtual void fnAt18(void* arg, float f) = 0; // 0x18 (index 4)
 };
-} // namespace cf
 
 } // namespace cf
 
@@ -469,7 +507,7 @@ void func_800733B8(ml::CVec3* out, cf::CfCamFollow* self, const ml::CVec3* dir,
                    const f32* angles, float f); // in-TU def (defined below its first use)
 __declspec(noinline) void func_8006FFA8(cf::CfCamFollow* self, float* outA, float* outB); // in-TU def, same signature (mixed linkage keeps the unmangled bl); noinline keeps the retail bl instead of inlining the body
 void func_80071730(void* dst, void* src);            // retail 0x8007215C (16-byte copy)
-void func_80071AB0(void* self, void* a, void* b, int c, float f1, float f2); // in-TU stub (defined below its first use)
+void func_80071AB0(cf::CfCamFollow* self, void* a, void* b, int c, float f1, float f2); // in-TU stub (defined below its first use)
 __declspec(noinline) void func_800707C0(void* self, void* a, void* b); // in-TU stub, same signature (mixed linkage keeps the unmangled bl)
 int CfRes_getD80Flag();                              // scene flag gate (CUIErrMesWin.hpp)
 // func_8049603C: this TU calls it with no args; CfGameManager.hpp's
@@ -500,8 +538,8 @@ extern "C" __declspec(noinline) void func_8006C6E8(nw4r::math::VEC3* out,
 // In-TU definition (CfCam.cpp) whose nw4r VEC3LenSq body MWCC would inline;
 // noinline keeps the retail `bl func_8006DFC8` at call sites.
 extern "C" __declspec(noinline) f32 func_8006DFC8(const nw4r::math::VEC3* vector);
-extern const float lbl_eu_80663DD4;                             // .sbss float (const hoists the load, retail pos 3)
-extern const float lbl_eu_80663DD8;                             // .sbss float
+float lbl_eu_80663DD4;                               // .sbss float (retail 0x80663DD4)
+float lbl_eu_80663DD8;                               // .sbss float
 extern const float lbl_eu_80666330;                             // .sdata2 constant
 float lbl_eu_806662D4;                               // .sdata2 constant
 float lbl_eu_80666370;                               // .sdata2 constant
@@ -522,7 +560,13 @@ extern float lbl_eu_806662C4;                               // .sdata2 constant
 extern float lbl_eu_806662C8;                               // .sdata2 constant
 extern const float lbl_eu_80666318;                               // .sdata2 constant
 float lbl_eu_80661B58;                               // .sdata float (retail 0x80661B58)
-u8 lbl_eu_80570A20[0x200];                          // .bss camera-defaults block (retail 0x80570A20)
+// .bss camera-defaults block (retail 0x80570A20): nine vec3 slots followed by
+// trailing state words zeroed by the sinit.
+struct CamDefaultsBlock {
+    ml::CVec3 dir[9]; // 0x00..0x6c
+    u8 rest[0x194];   // 0x6c..0x200
+};
+CamDefaultsBlock lbl_eu_80570A20;
 float lbl_eu_80661B54;                               // .sdata float (retail 0x80661B54)
 float lbl_eu_80661B5C;                               // .sdata float (retail 0x80661B5C)
 float lbl_eu_80661B64;                               // .sdata float (retail 0x80661B64)
@@ -557,11 +601,56 @@ float lbl_eu_80570A80[3];                            // .bss vec3 (retail 0x8057
 extern char lbl_eu_804FB4F0[];                       // .data message string (retail 0x804FB4F0)
 void func_8006CE18(cf::CfCamFollow* self);           // CfCam sibling: zero the 0x1D4 flag word (retail 0x8006D870)
 int func_80074CD4(void* obj, u32 mask);              // CfCam sibling pad-action dispatcher (retail 0x80075568)
+// Main-vtable view for func_80074AA4: with -RTTI the declared virtual #26
+// lands at vtable byte offset 0x70, and its returned pointer is what retail
+// forwards to func_80074CD4. Never instantiated, so no vtable emits.
+class CfObjActView {
+public:
+    virtual void* v000() = 0;
+    virtual void* v001() = 0;
+    virtual void* v002() = 0;
+    virtual void* v003() = 0;
+    virtual void* v004() = 0;
+    virtual void* v005() = 0;
+    virtual void* v006() = 0;
+    virtual void* v007() = 0;
+    virtual void* v008() = 0;
+    virtual void* v009() = 0;
+    virtual void* v010() = 0;
+    virtual void* v011() = 0;
+    virtual void* v012() = 0;
+    virtual void* v013() = 0;
+    virtual void* v014() = 0;
+    virtual void* v015() = 0;
+    virtual void* v016() = 0;
+    virtual void* v017() = 0;
+    virtual void* v018() = 0;
+    virtual void* v019() = 0;
+    virtual void* v020() = 0;
+    virtual void* v021() = 0;
+    virtual void* v022() = 0;
+    virtual void* v023() = 0;
+    virtual void* v024() = 0;
+    virtual void* v025() = 0;
+    virtual void* v026() = 0; // slot 26 / +0x70
+};
 void* func_8008221C__Q22cf13CfGameManagerFv();       // CfGameManager active-camera lookup (retail 0x80082BA0)
 class UnkClass_800821F8;
 UnkClass_800821F8* func_800821F8__Q22cf13CfGameManagerFv(); // state object getter (retail 0x80082B7C); must match object/CfObjectMove.hpp's declaration
 short* getBdatStringColumnValue(void* bdat, const char* col, int index); // bdat column read (returns short*)
-u32 lbl_eu_80527160[0x40];                           // .bss second camera-defaults block (retail 0x80527160)
+// .bss second camera-defaults block (retail 0x80527160): three stride-0x34
+// records plus trailing space, keeping the original 0x100 footprint.
+// Per-camera-id default entry in the 0x80527160 table (stride 0x34).
+struct CamDefEntry {
+    u32 field_0x00;
+    ml::CVec3 unk04;
+    ml::CVec3 unk10;
+};
+struct CamDefTable {
+    CamDefEntry entries[3]; // 0x00..0xcc
+    u8 tail[0x34];          // 0xcc..0x100
+};
+CamDefTable lbl_eu_80527160;
 extern const char* lbl_eu_805271FC[];                // .data bdat-table-name entries (retail 0x805271FC)
 extern const double lbl_eu_806662A8;                 // .sdata2 double constant (retail 0x806662A8)
 extern const f32 lbl_eu_8066639C;                    // .sdata2 constant
@@ -579,7 +668,7 @@ class CfCamEventManager;
 // func_* names + lbl_eu_* data, so call relocs keep the retail symbol).
 extern "C" {
 CfCamEventManager* func_8006E59C();       // camera-event manager getter
-void* func_8006E5A4(CfCamEventManager* mgr); // active camera-state getter
+cf::CfObject* func_8006E5A4(CfCamEventManager* mgr); // active camera-state getter
 void func_8006E5AC(void*, void*);         // CfCam sibling block copy (dst, src)
 int func_8006E5B8(void* self);            // CfCam sibling count (ignores its arg)
 void func_8006E5C0(void*, void*);         // CfCam sibling word copy (dst, src)
@@ -618,13 +707,14 @@ u8 lbl_eu_80570A8C[];                     // .bss fallback camera-state buffer
 extern "C" void func_80071398(void* out, void* a, void* b, float t); // in-TU def: (Quaternion*, const Quaternion*, const Quaternion*, float)
 extern "C" void* func_80071364(void* q);                            // in-TU def: (Quaternion*)
 extern "C" int func_8006DBD4(cf::CfCamFollow* self, int flags);     // in-TU def (defined below its first use)
-extern "C" __declspec(noinline) void func_80071694(void* a, void* b); // in-TU stub, same signature (mixed linkage keeps the unmangled bl)
+extern "C" __declspec(noinline) void func_80071694(ml::CMat33* out, const ml::CQuat* q); // in-TU def: quat -> 3x3 rotation matrix (mixed linkage keeps the unmangled bl)
 }
 
 // Imports used by func_8006DD58 / func_8006D450 / func_8006F9EC /
 // func_8006FD3C (flat retail names).
 extern "C" {
-int func_8006DF9C(void* obj);
+__declspec(noinline) int func_8006DF9C(void* obj);
+__declspec(noinline) int func_8006DCA0(void* obj); // in-TU def (follow-cam arts gate)
 int testResInfoFlag(unsigned int mask);
 int func_800FE68C();
 int func_8006DFA8();
@@ -644,17 +734,3 @@ struct CfCamWordBlock48 {
 };
 
 extern "C" cf::CfCamFollow* __ct__cf_CfCamFollow(cf::CfCamFollow* self, void* arg1, void* arg2);
-namespace cf {
-
-// Base camera object (+0x00..+0x10). The vtable slot is a plain field stored
-// manually (retail lbl_eu_805272E8) so the ctor bytes match retail exactly.
-class CfCam {
-public:
-    void* vtable;      // 0x00 (retail lbl_eu_805272E8, stored manually)
-    u32 field_0x04;    // 0x04
-    u32 field_0x08;    // 0x08
-    void* field_0x0C;  // 0x0C ctor arg
-    float getUnk4FC();
-    ~CfCam();
-};
-} // namespace cf

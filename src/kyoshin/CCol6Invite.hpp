@@ -37,7 +37,7 @@ public:
     /* 0x74 */ u8 mField74;       // init 0
 };
 
-// Singleton instance pointer (lbl_eu_8066423C in retail).
+// Singleton instance slot (lbl_eu_8066423C in retail).
 extern "C" CCol6Invite* lbl_eu_8066423C;
 
 // Named-member view of the null pointer-to-member-function constant. Reading

@@ -85,7 +85,7 @@ struct CEquipItemData {
 struct CEquipItemBoxItemListView {
     u16 field_00[0xC];            // 0x00..0x17 u16 item ids
     u8 field_18[0x90];            // 0x18..0xA7 12 x 0xC records (VEC3 copies)
-    u8 field_A8[0x20];            // 0xA8..0xC7 per-item bytes (+0xA8 / +0xB4)
+    u8 field_A8[0x18];            // 0xA8..0xBF per-item bytes (+0xA8 / +0xB4)
     s16 field_C0[0xC];            // 0xC0..0xD7 per-item shorts
     u8 field_D8;                  // 0xD8 scratch byte (selected column)
     u8 _padD9[0x100 - 0xD9];
@@ -628,7 +628,7 @@ extern "C" void func_8045F778__17UnkClass_8045F564Fv(void*);
 extern "C" void func_801D3258(void*);
 extern "C" void func_8022B7F4(void*);
 extern "C" u16 func_80139358(u32);
-extern "C" u16 func_80136254(const void*, const void*, int);
+extern "C" int func_80136254(const void*, const void*, int);
 // Texture-name lookup (retail C-ABI; u16 arg, returns the resource name).
 extern "C" char* func_80138F78(u32);
 // Item-object validity/type check used by func_80288E14's texture pick.
@@ -714,6 +714,7 @@ extern "C" void* func_80282F34(CEquipItemGrid* grid, u16 idx);
 extern "C" char* func_80283350(CEquipItemGrid* grid, u32 param);
 extern "C" void func_8028A9CC(CEquipItemBox* self, int a, int b);
 extern "C" void func_801D3330(void*);
+extern "C" void func_801D3620(void*);
 extern "C" void func_801D3408(void*);
 extern "C" void func_801D3430(void*, const nw4r::math::VEC3*);
 extern "C" void func_801D3454(void*, void*);
@@ -782,6 +783,14 @@ extern "C" u32 func_80282EC4(CEquipItemGrid* grid, u16 idx);
 extern u32 lbl_eu_806640EC;
 // Resource/flag helper: 0 when the named resource id is absent (CQuestLog).
 extern "C" u32 func_8009CF8C(u32);
+// Sort-menu commit helpers + name-table pointer globals (func_802873D8).
+extern "C" void func_801D37F4(void*);
+extern "C" u8 func_801D3808(void*);
+extern "C" u8 func_801D3810(void*);
+extern "C" void func_8013B428(u32);
+extern u32 lbl_eu_80668B3C;
+extern u16 lbl_eu_80668B40;
+extern u8 lbl_eu_8050EF84;
 // Sort-menu scroll-down / page-up helpers (CSortMenu TU, retail plain names).
 extern "C" void func_801D3698(void*);
 extern "C" void func_801D3724(void*);

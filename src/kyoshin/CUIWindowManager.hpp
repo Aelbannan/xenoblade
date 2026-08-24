@@ -33,7 +33,7 @@ struct CFlagBuffer {
     u8  field_0x0A[2];           //0x0A-0x0B
     u8  field_0x0C[0x4C - 0x0C]; //0x0C-0x4B
     u32 field_0x4C;              //0x4C
-    u8  field_0x50[0x52 - 0x50]; //0x50-0x51
+    u16 field_0x50;              //0x50 - category id matched against arg2/arg4
     u16 field_0x52;              //0x52 - quest id
     u16 field_0x54;              //0x54
     u16 field_0x56;              //0x56
@@ -142,8 +142,10 @@ CTalkWindow* func_8012CC78(CProcess* parent, u32 arg1, u32 arg2,
                             const u8* msgSrc, u32 arg3, u32 arg4, u32 arg5);
 
 // bdat column read (owning TU: code_8003B148 family): returns the column
-// value at the given row index.
-u32 getBdatStringColumnValue(void* bdat, const char* col, int index);
+// value at the given row index. extern "C": must match the canonical
+// declaration in CfBdat.hpp/code_80135FDC.hpp (a C++-mangled overload of the
+// same name is an illegal-overload error when both headers are visible).
+extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, int index);
 
 // CMenuUpdate window factory (owning TU: kyoshin/menu/CMenuUpdate).
 IUIWindow* func_80142B4C(CProcess* self, CScn* pScene, int r5, int r6, int r7,
@@ -175,6 +177,10 @@ u32 func_80158068(u16 value);
 // flag-memory slot for page id `idx`.
 void func_8009D018(int idx, int val);
 
+// Consumable-count absorb helper (owning TU: kyoshin/cf/CItem; retail
+// unmangled symbol).
+void func_80159C04(unsigned int family, int count);
+
 // CProcess::Regist (C-ABI import).
 void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent,
                                    bool insertTop);
@@ -185,6 +191,31 @@ void __dla__FPv(void* p);
 
 // reslist_base vtable (retail data, other split).
 extern const u8 lbl_eu_8052E61C[1];
+
+// Presentation/event bitfield (.sbss, other splits) - talk-event bit gates
+// the 0x608 window path of func_8013CBB4.
+extern u32 lbl_eu_80663E24;
+
+// Actor id -> actor object lookup (plain decl so the call reloc binds to the
+// C++-mangled retail symbol func_800B708C__Fi).
+void* func_800B708C(int id);
+
+// C-ABI imports used by func_8013CBB4.
+extern "C" {
+void* getPlayer__Q22cf13CfGameManagerFi(int index);
+void func_8009ECD0(u32 id);
+u8 func_8013600C(const char* tbl, const char* key, u32 idx);
+void func_8013B88C(u8 v);
+}
+
+// func_800B708C result view used by the 0x608 window path: +0x64 flags word
+// (bit 28 = show-talk-target) and +0x8C id handed to func_8009ECD0.
+struct CActorFlagsView {
+    u8 _00[0x64];
+    u32 mFlags64;              //+0x64
+    u8 _68[0x8C - 0x68];
+    u16 mId8C;                 //+0x8C
+};
 
 // Global data used by func_801412D0 (retail BSS/rodata in other splits).
 extern u8 lbl_eu_80573C50[0xC8];     // flag buffer (0xC8 bytes, byte flags)
@@ -212,6 +243,18 @@ extern char lbl_eu_80500A50[];  // bdat column-name blob (getBdatStringColumnVal
 extern u8* lbl_eu_80664098;
 // rodata flag table (other split), byte-offset indexed by func_80140854.
 extern u8 lbl_804FC260[];
+
+// Per-entry time thresholds (rodata lbl_804FC240): two slots per entry,
+// selected by the query slot id. Values gate per-entry updates in
+// func_8013F6C4 and double as blocked flag-memory states.
+struct CQuestTimeEntry {
+    u32 v[2];
+};
+extern CQuestTimeEntry lbl_804FC240[4];
+
+// bdat item/enum table handle (.sbss, other split); source of the column
+// reads func_8013F6C4 issues after absorbing an entry.
+extern void* lbl_eu_806640EC;
 
 class CUIWindowManager : public CTTask<CUIWindowManager>, public cf::IFlagEvent{
 public:

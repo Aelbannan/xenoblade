@@ -162,6 +162,9 @@ extern "C" Unk80EE4Data* func_80081694__Q22cf13CfGameManagerFv(u32 modelId, u32 
 // CfGimmick header). NOTE: do NOT declare func_8003AA34 here - member TUs
 // declare it with conflicting signatures (void() vs void(void*)) and an
 // extern-"C" overload here breaks every TU that includes both chains.
+// Third param MUST be spelled `int` (not s32): under MWCC s32 is `signed
+// long`, a distinct type from int, which makes this an illegal extern "C"
+// overload against the canonical decl in code_80135FDC.hpp.
 extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, int index);
 
 // Matches the CfGimmick.hpp declaration verbatim so TUs including both see

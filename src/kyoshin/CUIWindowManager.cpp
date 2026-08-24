@@ -277,12 +277,113 @@ extern "C" unsigned short func_8013EC58()
 extern "C" void func_8013EC60() {
     lbl_eu_8066408C = 0;
 }
-void func_8013EC6C(){}
+// Bulk window-list control (retail func_8013EC6C). With arg1 set, marks every
+// window on both queues with the flag selected by arg2 (0x66 when set, 0x65
+// when clear). With arg1 clear, tears both queues down: each primary-queue
+// window is remove-flagged (SetRemove) and unlinked, then each
+// secondary-queue window is marked (0x66 + SetRemove) and unlinked. The
+// unlink passes collect nodes into a stack array first; MWCC auto-unrolls
+// the removal loop by 8.
+// STATUS: body shape matches retail modulo 2 spilled callee-saved regs
+// (decomp 1108B vs retail 1084B) - same MWCC 8x-unroll unlink Chaitin
+// coloring artifact documented for CUIWindowManager::Move (soft-cap).
+void func_8013EC6C(bool arg1, bool arg2) {
+    // NOTE: do not cache the singleton in a local - retail re-reads the
+    // global in every loop condition/init (only the null-check load is CSE'd
+    // into the first head fetch), and a cached local forces callee-saved
+    // register spills that retail does not have.
+    if (lbl_eu_80664088 == NULL) {
+        return;
+    }
+
+    if (arg1) {
+        if (arg2) {
+            for (WindowNode* n =
+                     lbl_eu_80664088->mWindowList1.mStartNodePtr->mNext;
+                 n != lbl_eu_80664088->mWindowList1.mStartNodePtr;
+                 n = n->mNext) {
+                n->mItem->field_0x66 = true;
+            }
+            for (WindowNode* n =
+                     lbl_eu_80664088->mWindowList2.mStartNodePtr->mNext;
+                 n != lbl_eu_80664088->mWindowList2.mStartNodePtr;
+                 n = n->mNext) {
+                n->mItem->field_0x66 = true;
+            }
+        } else {
+            for (WindowNode* n =
+                     lbl_eu_80664088->mWindowList1.mStartNodePtr->mNext;
+                 n != lbl_eu_80664088->mWindowList1.mStartNodePtr;
+                 n = n->mNext) {
+                n->mItem->field_0x65 = true;
+            }
+            for (WindowNode* n =
+                     lbl_eu_80664088->mWindowList2.mStartNodePtr->mNext;
+                 n != lbl_eu_80664088->mWindowList2.mStartNodePtr;
+                 n = n->mNext) {
+                n->mItem->field_0x65 = true;
+            }
+        }
+    } else {
+        WindowNode* pending[18];
+        int count;
+
+        count = 0;
+
+        for (WindowNode* n =
+                 lbl_eu_80664088->mWindowList1.mStartNodePtr->mNext;
+             n != lbl_eu_80664088->mWindowList1.mStartNodePtr;
+             n = n->mNext) {
+            IUIWindow* window = n->mItem;
+            window->SetRemove();
+            pending[count++] = n;
+        }
+        if (count > 0) {
+            WindowNode** pp = pending;
+            for (int i = 0; i < count; i++, ++pp) {
+                WindowNode* node = *pp;
+                WindowNode* prev = node->mPrev;
+                WindowNode* next = node->mNext;
+                prev->mNext = next;
+                next->mPrev = prev;
+                node->mNext = NULL;
+            }
+        }
+
+        count = 0;
+        for (WindowNode* n =
+                 lbl_eu_80664088->mWindowList2.mStartNodePtr->mNext;
+             n != lbl_eu_80664088->mWindowList2.mStartNodePtr;
+             n = n->mNext) {
+            n->mItem->field_0x66 = true;
+            n->mItem->SetRemove();
+            pending[count++] = n;
+        }
+        if (count > 0) {
+            WindowNode** pp = pending;
+            for (int j = 0; j < count; j++, ++pp) {
+                WindowNode* node = *pp;
+                WindowNode* prev = node->mPrev;
+                WindowNode* next = node->mNext;
+                prev->mNext = next;
+                next->mPrev = prev;
+                node->mNext = NULL;
+            }
+        }
+    }
+}
 extern "C" void Draw__Q216CUIWindowManager5CTestFv(void* self) {}
 extern "C" void Init__Q216CUIWindowManager5CTestFv(void* self) {}
+// Window-dispatch entry (retail keeps a flat unmangled free-function
+// symbol, so C linkage is required for the call relocs to bind). The first
+// arg is ignored by the retail body.
+extern "C" void func_8013CBB4(u32 arg0, int id = 0, int arg2 = 0, int arg3 = 0);
+
 extern "C" void* func_8013F234(void* self) {
-    extern void* func_8013CBB4(void*);
-    return func_8013CBB4((char*)self - 0x54);
+    // Retail tail-jumps into func_8013CBB4 and forwards whatever it leaves in
+    // r3; route through a matching prototype so no extra r3 setup is emitted.
+    typedef void* (*ThunkFn)(u32);
+    return ((ThunkFn)&func_8013CBB4)((u32)((char*)self - 0x54));
 }
 void __dt__16CUIWindowManagerFv(CUIWindowManager*);
 extern "C" void func_8013F23C(CUIWindowManager* p) {
@@ -333,7 +434,273 @@ extern "C" void* __dt__CTTask_CUIWindowManager(void* self, s32 flags) {
     }
     return self;
 }
-void func_8013CBB4(){}
+// Window-creation dispatcher keyed on the request id. Each accepted range
+// creates a CMenuUpdate window via func_80142B4C / func_80144EE4 and queues
+// it on the primary window list; the quest path (0x221..0x607) additionally
+// gates on flag-memory resources, the talk-event bit and the player's
+// current target.
+extern "C" void func_8013CBB4(u32 arg0, int id, int arg2, int arg3) {
+    // One dedicated memory-resident window-result slot per case (retail
+    // keeps four stack locals at +0x8/+0xc/+0x10/+0x14 and reloads them in
+    // the queue phase).
+    volatile u32 questWin;
+    volatile u32 plainWin;
+    volatile u32 talkWin;
+    volatile u32 slotWin;
+
+    // Tested once up front and again inside the 0x20c9 case; MWCC keeps a
+    // single compare in cr1 and re-branches at both sites.
+    if (arg2 == arg3) {
+        return;
+    }
+
+    switch (id) {
+    case 0x221 ... 0x607: {
+        // Quest window: gated on two flag-memory resources, the manager
+        // singleton, and the quest-entry text lookup not returning 2.
+        if (arg2 == 0 || arg2 == 0xc8 || arg2 == 0xfe || arg2 == 0xff) {
+            return;
+        }
+        if (func_8009CF8C(0x334b) == 0) {
+            return;
+        }
+        if (func_8009CF8C(0x337f) == 0) {
+            return;
+        }
+        // Null-check the singleton, but do not keep it live across the
+        // flag-memory calls below (retail re-reads the global each phase).
+        if (lbl_eu_80664088 == NULL) {
+            return;
+        }
+        if (func_801361E8(
+                (u32)lbl_eu_80573D18[func_80138138(id - 0x220)],
+                lbl_eu_8050097C, id - 0x220) == 2) {
+            return;
+        }
+        u32 winRet = (u32)func_80142B4C((CProcess*)lbl_eu_80664088->unk9C,
+                                        lbl_eu_80664088->unk58, 1, 0, 0, 0);
+        questWin = winRet;
+        if (winRet == 0) {
+            return;
+        }
+        CUIWindowManager* instQ = lbl_eu_80664088;
+        {
+            // Inlined mWindowList1.push_back (matches retail's duplicated
+            // empty-slot scan + setItem + link sequence).
+            int i = 0;
+            int byteOff = 0;
+            WindowNode* temp;
+            int capacity;
+            WindowNode* startNode;
+            startNode = instQ->mWindowList1.mStartNodePtr;
+            capacity = instQ->mWindowList1.mCapacity;
+            goto quest_check;
+        quest_body:
+            if (*(u32*)((u8*)instQ->mWindowList1.mList + byteOff) == 0) {
+                goto quest_found;
+            }
+            byteOff += 0xc;
+            i++;
+        quest_check:
+            if (i < capacity) {
+                goto quest_body;
+            }
+        quest_found:
+            temp = (WindowNode*)((u8*)instQ->mWindowList1.mList + i * 0xc);
+            {
+                IUIWindow** ptr = &temp->mItem;
+                if (ptr != NULL) {
+                    try {
+                        *ptr = (IUIWindow*)questWin;
+                    } catch (...) {
+                        throw;
+                    }
+                }
+            }
+            temp->mNext = startNode;
+            temp->mPrev = startNode->mPrev;
+            startNode->mPrev->mNext = temp;
+            startNode->mPrev = temp;
+        }
+        break;
+    }
+    case 0xa21 ... 0xb4b: {
+        // Plain update window.
+        CUIWindowManager* inst = lbl_eu_80664088;
+        if (inst == NULL) {
+            return;
+        }
+        u32 winRet = (u32)func_80142B4C((CProcess*)inst->unk9C,
+                                        inst->unk58, 2, 0, 0, 0);
+        plainWin = winRet;
+        if (winRet == 0) {
+            return;
+        }
+        inst = lbl_eu_80664088;
+        {
+            int i = 0;
+            int byteOff = 0;
+            WindowNode* temp;
+            int capacity;
+            WindowNode* startNode;
+            startNode = inst->mWindowList1.mStartNodePtr;
+            capacity = inst->mWindowList1.mCapacity;
+            goto plain_check;
+        plain_body:
+            if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+                goto plain_found;
+            }
+            byteOff += 0xc;
+            i++;
+        plain_check:
+            if (i < capacity) {
+                goto plain_body;
+            }
+        plain_found:
+            temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+            {
+                IUIWindow** ptr = &temp->mItem;
+                if (ptr != NULL) {
+                    try {
+                        *ptr = (IUIWindow*)plainWin;
+                    } catch (...) {
+                        throw;
+                    }
+                }
+            }
+            temp->mNext = startNode;
+            temp->mPrev = startNode->mPrev;
+            startNode->mPrev->mNext = temp;
+            startNode->mPrev = temp;
+        }
+        break;
+    }
+    case 0x609 ... 0x797: {
+        // Talk-target update window: only while a talk event is active
+        // and the player has a live, flagged talk target.
+        if ((lbl_eu_80663E24 & 0x00800000u) != 0) {
+            void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+            if (player != NULL) {
+                int sel = ((int (*)(void*))((void**)player)[0x4C / 4])(
+                    player);
+                if (sel != 0) {
+                    CActorFlagsView* actor =
+                        (CActorFlagsView*)func_800B708C(sel);
+                    if (actor != NULL && (actor->mFlags64 & 0x8u) != 0) {
+                        func_8009ECD0(actor->mId8C);
+                    }
+                }
+            }
+        }
+        CUIWindowManager* inst = lbl_eu_80664088;
+        if (inst == NULL) {
+            return;
+        }
+        u32 winRet = (u32)func_80142B4C((CProcess*)inst->unk9C,
+                                        inst->unk58, 2, 0, 0, 0);
+        talkWin = winRet;
+        if (winRet == 0) {
+            return;
+        }
+        {
+            int i = 0;
+            int byteOff = 0;
+            WindowNode* temp;
+            int capacity;
+            WindowNode* startNode;
+            startNode = inst->mWindowList1.mStartNodePtr;
+            capacity = inst->mWindowList1.mCapacity;
+            goto talk_check;
+        talk_body:
+            if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+                goto talk_found;
+            }
+            byteOff += 0xc;
+            i++;
+        talk_check:
+            if (i < capacity) {
+                goto talk_body;
+            }
+        talk_found:
+            temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+            {
+                IUIWindow** ptr = &temp->mItem;
+                if (ptr != NULL) {
+                    try {
+                        *ptr = (IUIWindow*)talkWin;
+                    } catch (...) {
+                        throw;
+                    }
+                }
+            }
+            temp->mNext = startNode;
+            temp->mPrev = startNode->mPrev;
+            startNode->mPrev->mNext = temp;
+            startNode->mPrev = temp;
+        }
+        break;
+    }
+    case 0x20c9 ... 0x24af: {
+        if (arg2 == arg3) {
+            return;
+        }
+        if (arg2 != 1) {
+            return;
+        }
+        // Per-slot window: id encodes base 0x20c8 + slot index. The trailing
+        // lookup runs even when the singleton/window is absent.
+        CUIWindowManager* inst = lbl_eu_80664088;
+        if (inst != NULL) {
+            u32 winRet = (u32)func_80144EE4((CProcess*)inst->unk9C,
+                                            inst->unk58,
+                                            (u16)(id - 0x20c8), 0);
+            slotWin = winRet;
+            if (winRet != 0) {
+                inst = lbl_eu_80664088;
+                int i = 0;
+                int byteOff = 0;
+                WindowNode* temp;
+                int capacity;
+                WindowNode* startNode;
+                startNode = inst->mWindowList1.mStartNodePtr;
+                capacity = inst->mWindowList1.mCapacity;
+                goto slot_check;
+            slot_body:
+                if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+                    goto slot_found;
+                }
+                byteOff += 0xc;
+                i++;
+            slot_check:
+                if (i < capacity) {
+                    goto slot_body;
+                }
+            slot_found:
+                temp = (WindowNode*)((u8*)inst->mWindowList1.mList +
+                                     i * 0xc);
+                {
+                    IUIWindow** ptr = &temp->mItem;
+                    if (ptr != NULL) {
+                        try {
+                            *ptr = (IUIWindow*)slotWin;
+                        } catch (...) {
+                            throw;
+                        }
+                    }
+                }
+                temp->mNext = startNode;
+                temp->mPrev = startNode->mPrev;
+                startNode->mPrev->mNext = temp;
+                startNode->mPrev = temp;
+            }
+        }
+        u8 v = func_8013600C(&lbl_eu_8050097C[0xa],
+                             &lbl_eu_8050097C[0x17], id - 0x20c8);
+        func_8013B88C(v);
+        break;
+    }
+    }
+}
 // Retail keeps a flat unmangled ctor symbol (__ct__CUIWindowManager); route
 // the creator's call through this shim so the call reloc binds to the literal
 // retail name. The recursive null path is unreachable from the creator (the
@@ -423,12 +790,11 @@ extern "C" IUIWindow* func_8013D07C(u32 id, const u8* msgSrc, u32 a3) {
 
     bool found = false;
     {
-        // Retail unlinks the first match only: test-at-bottom walk through
-        // the reloaded singleton (chained loads keep the sentinel in the
-        // same register), then mark removal and splice the node out.
-        inst = lbl_eu_80664088;
-        WindowNode* sentinel = inst->mWindowList2.mStartNodePtr;
-        WindowNode* n = sentinel->mNext;
+        // Retail unlinks the first match only, walking test-at-bottom through
+        // the reloaded singleton. n is defined before sentinel on purpose:
+        // that def order makes MWCC put the sentinel in r3 (retail alloc).
+        WindowNode* n = lbl_eu_80664088->mWindowList2.mStartNodePtr->mNext;
+        WindowNode* sentinel = lbl_eu_80664088->mWindowList2.mStartNodePtr;
         goto check;
     body:
         if (n->mItem->field_0x68 == id) {
@@ -1098,24 +1464,22 @@ queue_found:
     return (IUIWindow*)savedRet;
 }
 void func_8013E030(){}
-// Retail window creator: create the shop-select window and queue it. A
-// quest-menu open guard can veto the creation.
+// Retail window creator: create the shop-select window and queue it on the
+// primary list (expanded inlined reslist::push_back). A quest-menu open guard
+// can veto the creation.
 extern "C" IUIWindow* func_8013E104(u32 id) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
-    if (inst == NULL) {
+    if (lbl_eu_80664088 == NULL) {
         return NULL;
     }
     if (func_80226B94()) {
         return NULL;
     }
-    {
-        u32 tempRet = (u32)func_8018A58C((CProcess*)inst->unk9C, inst->unk58,
-                                         id);
-        savedRet = tempRet;
-        if (tempRet == 0) {
-            return NULL;
-        }
+    CUIWindowManager* inst = lbl_eu_80664088;
+    u32 tempRet = (u32)func_8018A58C((CProcess*)inst->unk9C, inst->unk58, id);
+    savedRet = tempRet;
+    if (tempRet == 0) {
+        return NULL;
     }
     inst = lbl_eu_80664088;
     int i = 0;
@@ -1127,11 +1491,12 @@ extern "C" IUIWindow* func_8013E104(u32 id) {
     capacity = inst->mWindowList1.mCapacity;
     goto queue_check;
 queue_body:
-    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+    if (*(void**)((u8*)inst->mWindowList1.mList + byteOff) != NULL) {
+        byteOff += 0xc;
+        i++;
+    } else {
         goto queue_found;
     }
-    byteOff += 0xc;
-    i++;
 queue_check:
     if (i < capacity) {
         goto queue_body;
@@ -1139,8 +1504,8 @@ queue_check:
 queue_found:
     temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
     {
-        // Expanded setItem: reading the volatile savedRet inside the guard
-        // keeps the reload after the addic./beq, as in retail.
+        // Expanded node::setItem: the volatile read inside the guard keeps
+        // the window reload after the addic./beq, as in retail.
         u32* ptr = (u32*)&temp->mItem;
         if (ptr != 0) {
             try {
@@ -1154,7 +1519,7 @@ queue_found:
     temp->mPrev = startNode->mPrev;
     startNode->mPrev->mNext = temp;
     startNode->mPrev = temp;
-    return (IUIWindow*)savedRet;
+    return (IUIWindow*)(void*)savedRet;
 }
 // Retail window creator: create the item-exchange window and queue it on the
 // primary window list.
@@ -1297,19 +1662,58 @@ queue_found:
 // Retail window creator: create the kizuna-talk window and queue it on the
 // primary window list.
 extern "C" IUIWindow* func_8013E52C(u32 charId) {
+    volatile u32 savedRet;
     CUIWindowManager* inst = lbl_eu_80664088;
     if (inst == NULL) {
         return NULL;
     }
-
-    IUIWindow* window =
-        func_801BCEBC((CProcess*)inst->unk9C, inst->unk58, charId);
-    if (window == NULL) {
-        return NULL;
+    {
+        u32 tempRet =
+            (u32)func_801BCEBC((CProcess*)lbl_eu_80664088->unk9C,
+                               lbl_eu_80664088->unk58, charId);
+        savedRet = tempRet;
+        if (tempRet == 0) {
+            return NULL;
+        }
     }
-
-    lbl_eu_80664088->mWindowList1.push_back(window);
-    return window;
+    inst = lbl_eu_80664088;
+    int i = 0;
+    int byteOff = 0;
+    WindowNode* temp;
+    int capacity;
+    WindowNode* startNode;
+    startNode = inst->mWindowList1.mStartNodePtr;
+    capacity = inst->mWindowList1.mCapacity;
+    goto queue_check;
+queue_body:
+    if (*(u32*)((u8*)inst->mWindowList1.mList + byteOff) == 0) {
+        goto queue_found;
+    }
+    byteOff += 0xc;
+    i++;
+queue_check:
+    if (i < capacity) {
+        goto queue_body;
+    }
+queue_found:
+    temp = (WindowNode*)((u8*)inst->mWindowList1.mList + i * 0xc);
+    {
+        // Expanded setItem: reading the volatile savedRet inside the guard
+        // keeps the reload after the addic./beq, as in retail.
+        u32* ptr = (u32*)&temp->mItem;
+        if (ptr != 0) {
+            try {
+                *ptr = savedRet;
+            } catch (...) {
+                throw;
+            }
+        }
+    }
+    temp->mNext = startNode;
+    temp->mPrev = startNode->mPrev;
+    startNode->mPrev->mNext = temp;
+    startNode->mPrev = temp;
+    return (IUIWindow*)savedRet;
 }
 
 // Retail window creator: create the quest-log menu window and queue it.
@@ -1484,22 +1888,23 @@ queue_found:
 // When flag is clear, an entry guard can still veto the creation.
 extern "C" IUIWindow* func_8013E8E0(u32 flag) {
     volatile u32 savedRet;
-    CUIWindowManager* inst = lbl_eu_80664088;
-    if (inst == NULL) {
+    // No local caching of the singleton here: retail reloads the global
+    // around each call instead of keeping it in a saved register.
+    if (lbl_eu_80664088 == NULL) {
         return NULL;
     }
     if (flag == 0 && func_80135610()) {
         return NULL;
     }
     {
-        u32 tempRet =
-            (u32)func_80293B9C((CProcess*)inst->unk9C, inst->unk58);
+        u32 tempRet = (u32)func_80293B9C(
+            (CProcess*)lbl_eu_80664088->unk9C, lbl_eu_80664088->unk58);
         savedRet = tempRet;
         if (tempRet == 0) {
             return NULL;
         }
     }
-    inst = lbl_eu_80664088;
+    CUIWindowManager* inst = lbl_eu_80664088;
     int i = 0;
     int byteOff = 0;
     WindowNode* temp;
@@ -1765,13 +2170,22 @@ int func_8013F3F0(CFlagBuffer* flagBuf) {
         }
     }
 
+    // Column reads land in memory slots (retail spills them to the frame);
+    // written as words, re-read as halfwords.
+    union ColSlot {
+        u32 w;
+        u16 h;
+    };
+    ColSlot colA;
+    ColSlot colB;
+
     int v60 = flagBuf->field_0x60;
     if (v60 != 0) {
-        u16 v = (u16)getBdatStringColumnValue(lbl_eu_80664098,
-                                              lbl_eu_80500A50, v60);
+        colA.w = getBdatStringColumnValue(lbl_eu_80664098, lbl_eu_80500A50,
+                                          v60);
         id = -1;
-        if (v < 0x12C) {
-            id = v + 0xA20;
+        if ((int)(u16)colA.h < 0x12C) {
+            id = colA.h + 0xA20;
         }
         if (id == -1) {
             return 0;
@@ -1783,11 +2197,11 @@ int func_8013F3F0(CFlagBuffer* flagBuf) {
 
     int v62 = flagBuf->field_0x62;
     if (v62 != 0) {
-        u16 v = (u16)getBdatStringColumnValue(lbl_eu_80664098,
-                                              lbl_eu_80500A50, v62);
+        colB.w = getBdatStringColumnValue(lbl_eu_80664098, lbl_eu_80500A50,
+                                          v62);
         id = -1;
-        if (v < 0x12C) {
-            id = v + 0xA20;
+        if ((int)(u16)colB.h < 0x12C) {
+            id = colB.h + 0xA20;
         }
         if (id == -1) {
             return 0;
@@ -1814,7 +2228,343 @@ int func_8013F3F0(CFlagBuffer* flagBuf) {
 
     return 1;
 }
-void func_8013F6C4(){}
+// Item-availability updater (retail func_8013F6C4): picks which of the two
+// per-item rows this invocation owns by probing the shared flag buffer, then
+// walks that row's four entries applying per-type updates to the signed byte
+// table (field_0xC4): type 1 counts up toward the row cap, types 3/5 set the
+// deferred state, type 2/6 absorb via func_80158068/func_80159C04, type 4
+// plain count. Afterwards unblocks the 0xFC/0xFD flag-memory states.
+// Returns 1 when the buffer's flag-memory word changed.
+int func_8013F6C4(CFlagBuffer* self, u32 arg1, u32 arg2, u32 arg3, u32 arg4) {
+    int sel;
+    if ((self->field_0x00 & 1) != 0) {
+        return 0;
+    }
+    u32 saved04 = self->field_0x04;
+    // Pick the owned slot: when both shared-buffer rows are populated, ask
+    // them; otherwise trust their population bytes alone.
+    CFlagBuffer* glob = (CFlagBuffer*)lbl_eu_80573C50;
+    // Retail re-tests the active bit here (shared cr0 with the first test);
+    // the guarded default is unreachable but present in retail.
+    if ((self->field_0x00 & 1) != 0) {
+        sel = -1;
+    } else if (glob->field_0x6E[0].field_0x00 != 0) {
+        if (glob->field_0x6E[1].field_0x00 != 0) {
+            if (func_80140854((CItemQuery*)glob, 0, 0) != 0) {
+                sel = 0;
+            } else if (func_80140854((CItemQuery*)glob, 1, 0) != 0) {
+                sel = 1;
+            } else {
+                sel = -1;
+            }
+        } else {
+            sel = 0;
+        }
+    } else {
+        sel = -1;
+        if (glob->field_0x6E[1].field_0x00 != 0) {
+            sel = 1;
+        }
+    }
+
+    // Row cursor starts at the selected slot (may be -1); the byte-table
+    // offset and the time-threshold column follow the same slot. `times`
+    // stays anchored at the initial slot across the outer loop.
+    CItemQueryRow* row = &self->field_0x6E[sel];
+    u32* times = &lbl_804FC240[0].v[sel];
+    int cellOff = sel * 4;
+
+    for (int slot = sel; slot < 2; ++slot) {
+        u8* cells = self->field_0xC4 + cellOff;
+        // Only the selected slot (or the -1/-1 no-op pair) is processed.
+        if ((sel == -1 && slot == -1) || (sel == 0 && slot == 0) ||
+            (sel == 1 && slot == 1)) {
+            if (row->field_0x00 == 0) {
+                goto advance;
+            }
+            u8 maskAll = 0;   // bits for entries visited
+            u8 maskHit = 0;   // bits where the availability probe passes
+            int changed = 0;
+            int j = 0;
+            for (; j < 4; ++j) {
+                u16 type = row->field_0x02[j];
+                if (type == 0) {
+                    continue;
+                }
+                s8 cur = (s8)cells[j];
+                u16 val = row->field_0x0A[j];
+                if (cur != 0 && arg1 != 0 && arg2 != 0) {
+                    if (arg1 == 1) {
+                        if (type == arg1 && val == arg2 &&
+                            row->field_0x12[j] > cur) {
+                            int ok = 1;
+                            if (row->field_0x01 != 0 && j > 0 &&
+                                times[j - 1] > self->field_0x04) {
+                                ok = 0;
+                            }
+                            if (ok) {
+                                cells[j] = cells[j] + 1;
+                                s8 nv = (s8)cells[j];
+                                if (row->field_0x12[j] <= nv) {
+                                    changed = 1;
+                                }
+                                if (self->field_0x08 == 0 ||
+                                    self->field_0x08 == 3) {
+                                    func_8013E608(self->field_0x52,
+                                                  (u32)(u16)arg2,
+                                                  (u32)(u8)nv, 0);
+                                }
+                            }
+                        }
+                        goto next;
+                    }
+                    if (arg1 == 3 || arg1 == 5) {
+                        if (type != arg1 || val != arg2 || cur >= 1) {
+                            goto next;
+                        }
+                        int ok = 1;
+                        u8 lim = row->field_0x12[j];
+                        if (lim != 0 && arg3 != lim) {
+                            ok = 0;
+                        }
+                        // First entry of the matching category is reset to
+                        // -1 (deferred clear) instead of being set.
+                        if (ok != 0 && self->field_0x50 == arg2 && j == 0 &&
+                            (s8)cells[j] != 0 && row->field_0x01 != 0) {
+                            cells[j] = -1;
+                            ok = 0;
+                        }
+                        if (ok != 0) {
+                            if (row->field_0x01 != 0 && j > 0 &&
+                                times[j - 1] > self->field_0x04) {
+                                ok = 0;
+                            }
+                            if (self->field_0x6C[0] == 0) {
+                                ok = 0;
+                            }
+                            if (ok) {
+                                cells[j] = 1;
+                                changed = 1;
+                            }
+                        }
+                        goto next;
+                    }
+                    if (arg1 == 2) {
+                        if (type != arg1 || val != arg2 || cur >= 1) {
+                            goto next;
+                        }
+                        int ok = 1;
+                        if (row->field_0x01 != 0 && j > 0 &&
+                            times[j - 1] > self->field_0x04) {
+                            ok = 0;
+                        }
+                        if (ok) {
+                            int stored = 0;
+                            if (func_80158068((u16)arg2) >=
+                                row->field_0x12[j]) {
+                                cells[j] = 1;
+                                stored = 1;
+                                changed = 1;
+                            }
+                            if (self->field_0x08 != 2) {
+                                func_8013E704(self->field_0x52,
+                                              (u32)(u16)arg2,
+                                              (u32)(u8)func_80158068(val),
+                                              row->field_0x12[j]);
+                            }
+                            if (stored) {
+                                u32 col = getBdatStringColumnValue(
+                                    lbl_eu_806640EC, &lbl_eu_80500A50[9],
+                                    (u32)(u16)arg2);
+                                if ((u32)((u16)col - 0xA) <= 1) {
+                                    func_80159C04((u32)(u16)arg2,
+                                                  row->field_0x12[j]);
+                                }
+                            }
+                        }
+                        goto next;
+                    }
+                    if (arg1 == 6) {
+                        if (type != arg1 || val != arg2 || cur >= 1) {
+                            goto next;
+                        }
+                        if (row->field_0x01 == 0 ||
+                            !(j > 0 && times[j - 1] > self->field_0x04)) {
+                            cells[j] = cells[j] + 1;
+                            func_8013DB6C(1, self->field_0x52, 0, 0);
+                        }
+                        goto next;
+                    }
+                    if (arg1 == 4) {
+                        if (type != 4 || val != arg2 || cur >= 1) {
+                            goto next;
+                        }
+                        cells[j] = cells[j] + 1;
+                        changed = 1;
+                        goto next;
+                    }
+                    goto next;
+                } else {
+                    // Entry not yet taken: only the type-2 path applies.
+                    if (arg1 == 2 && type == 2) {
+                        if (row->field_0x01 != 0) {
+                            // Chained rows must have the previous entry
+                            // available and inside its time window; the
+                            // first entry just needs a started timer.
+                            if (j != 0 || self->field_0x04 >= 1) {
+                                if (j == 0 ||
+                                    (func_80140854((CItemQuery*)self,
+                                                   (u32)slot,
+                                                   (u32)(j - 1)) != 0 &&
+                                     times[j - 1] <= self->field_0x04)) {
+                                    if (func_80140854((CItemQuery*)self,
+                                                      (u32)slot,
+                                                      (u32)j) != 0) {
+                                        if ((s8)cells[j] == 0) {
+                                            cells[j] = 1;
+                                            changed = 1;
+                                            if (self->field_0x08 != 2) {
+                                                func_8013E704(
+                                                    self->field_0x52, val,
+                                                    (u32)(u8)func_80158068(
+                                                        val),
+                                                    row->field_0x12[j]);
+                                            }
+                                            u32 col = getBdatStringColumnValue(
+                                                lbl_eu_806640EC,
+                                                &lbl_eu_80500A50[9], val);
+                                            if ((u32)((u16)col - 0xA) <= 1) {
+                                                func_80159C04(
+                                                    val,
+                                                    row->field_0x12[j]);
+                                            }
+                                        }
+                                    } else {
+                                        // Dead retail guard: both outcomes
+                                        // fall through to the next entry.
+                                        if (row->field_0x02[j - 1] == 3 &&
+                                            row->field_0x0A[j - 1] !=
+                                                arg4) {
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            if (self->field_0x50 == arg4) {
+                                if (func_80140854((CItemQuery*)self,
+                                                  (u32)slot, (u32)j) != 0) {
+                                    if ((s8)cells[j] == 0) {
+                                        cells[j] = 1;
+                                        changed = 1;
+                                        if (self->field_0x08 != 2) {
+                                            func_8013E704(
+                                                self->field_0x52, val,
+                                                (u32)(u8)func_80158068(val),
+                                                row->field_0x12[j]);
+                                        }
+                                        u32 col = getBdatStringColumnValue(
+                                            lbl_eu_806640EC,
+                                            &lbl_eu_80500A50[9], val);
+                                        if ((u32)((u16)col - 0xA) <= 1) {
+                                            func_80159C04(
+                                                val, row->field_0x12[j]);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            next:;
+                maskAll = (u8)(maskAll | ((u32)1 << j));
+                if (func_80140854((CItemQuery*)self, (u32)slot, (u32)j) != 0) {
+                    maskHit = (u8)(maskHit | ((u32)1 << j));
+                }
+            }
+            // When every visited entry passed its availability probe,
+            // raise the buffer's time stamp past each cleared threshold.
+            if (row->field_0x01 != 0) {
+                changed = 0;
+                // Variable shift index: retail materializes each mask bit
+                // as li + slw against a shift-count local.
+                int bitIdx = 0;
+                if ((maskAll & (1 << bitIdx)) && (maskHit & (1 << bitIdx))) {
+                    if (self->field_0x04 < times[0]) {
+                        self->field_0x04 = times[0];
+                    }
+                }
+                bitIdx = 1;
+                if ((maskAll & (1 << bitIdx)) && (maskHit & (1 << bitIdx))) {
+                    if (self->field_0x04 < times[1]) {
+                        self->field_0x04 = times[1];
+                    }
+                }
+                bitIdx = 2;
+                if ((maskAll & (1 << bitIdx)) && (maskHit & (1 << bitIdx))) {
+                    if (self->field_0x04 < times[2]) {
+                        self->field_0x04 = times[2];
+                    }
+                }
+                bitIdx = 3;
+                if ((maskAll & (1 << bitIdx)) && (maskHit & (1 << bitIdx))) {
+                    if (self->field_0x04 < times[3]) {
+                        self->field_0x04 = times[3];
+                    }
+                }
+            }
+            if ((u32)maskAll != maskHit) {
+                // Some entry is still pending: refresh quest windows when
+                // something was absorbed, and report any timestamp change.
+                if (changed != 0) {
+                    func_8013DB6C(1, self->field_0x52, 0, 0);
+                }
+                if (self->field_0x04 != saved04) {
+                    return 1;
+                }
+            } else {
+                // Everything available: check the last populated entry's
+                // type; types 3/5 keep the completion pending.
+                int ok = 1;
+                for (int k = 3; k >= 0; --k) {
+                    if (row->field_0x02[k] != 0) {
+                        if (row->field_0x01 != 0) {
+                            u16 t = row->field_0x02[k];
+                            if (t == 3 || t == 5) {
+                                ok = 0;
+                            }
+                        }
+                        break;
+                    }
+                }
+                if (ok != 0) {
+                    self->field_0x04 = (slot == 0) ? 0xFC : 0xFD;
+                }
+                // Commit the deferred 0xFC/0xFD states into flag memory.
+                if (glob->field_0x6C[0] != 0 && ok != 0) {
+                    int id = -1;
+                    if (self->field_0x52 < 0x3E8) {
+                        id = self->field_0x52 + 0x220;
+                    }
+                    if (id != -1) {
+                        if (self->field_0x04 == 0xFC) {
+                            func_8009D018(id, 0xFE);
+                            self->field_0x04 = 0xFE;
+                        } else if (self->field_0x04 == 0xFD) {
+                            func_8009D018(id, 0xFF);
+                            self->field_0x04 = 0xFF;
+                        }
+                    }
+                    return 1;
+                }
+                return (ok != 0) ? 1 : 0;
+            }
+        }
+    advance:;
+        cellOff += 4;
+        row += 1;
+    }
+    return 0;
+}
 extern "C" void func_8013FFF8(void* flagBuf, void* entry, u32 value){}
 // Item-availability query (retail func_80140854): returns 1 when the item
 // can be used/shown, 0 otherwise. Reads the per-row entry type at
@@ -1823,70 +2573,96 @@ extern "C" void func_8013FFF8(void* flagBuf, void* entry, u32 value){}
 // accepts when the flag-memory read is 0xFE or 0xFF; the default case does a
 // signed range test of the byte-table value against the row byte.
 int func_80140854(CItemQuery* self, u32 arg1, u32 arg2) {
-    if ((self->field_0x00 & 1) == 0) {
-        if ((u32)(self->field_0x04 - 0xFC) > 3) {
-            CItemQueryRow* row = &self->field_0x6E[arg1];
-            u16 rowType = row->field_0x02[arg2];
-            if (rowType == 2) {
-                if ((s8)self->field_0xC4[arg1 * 4 + arg2] >= 1) {
-                    return 1;
-                }
-                if ((int)func_80158068(row->field_0x0A[arg2]) >=
-                    (int)row->field_0x12[arg2]) {
-                    return 1;
-                }
-                if (row->field_0x01 == 0) {
-                    return 0;
-                }
-                if (*(u32*)&lbl_804FC260[arg1 * 4 + arg2 * 8] >
-                    self->field_0x04) {
-                    return 0;
-                }
-                u32 idx = (__cntlzw(arg1) >> 3) & 0x07FFFFFF;
-                u32* t = (u32*)&lbl_804FC260[idx];
-                if (self->field_0x04 == t[0] || self->field_0x04 == t[2] ||
-                    self->field_0x04 == t[4] || self->field_0x04 == t[6]) {
-                    return 0;
-                }
-                return 1;
-            }
-            if (rowType == 3 || rowType == 0x104 || rowType == 0x105) {
-                if ((s8)self->field_0xC4[arg1 * 4 + arg2] >= 1) {
-                    return 1;
-                }
-                if (row->field_0x01 == 0) {
-                    return 0;
-                }
-                if (*(u32*)&lbl_804FC260[arg1 * 4 + arg2 * 8] >
-                    self->field_0x04) {
-                    return 0;
-                }
-                u32 idx = (__cntlzw(arg1) >> 3) & 0x07FFFFFF;
-                u32* t = (u32*)&lbl_804FC260[idx];
-                if (self->field_0x04 == t[0] || self->field_0x04 == t[2] ||
-                    self->field_0x04 == t[4] || self->field_0x04 == t[6]) {
-                    return 0;
-                }
-                return 1;
-            }
-            if (rowType == 4) {
-                int id = -1;
-                if (row->field_0x0A[arg2] < 0x3E8) {
-                    id = row->field_0x0A[arg2] + 0x220;
-                }
-                if (id == -1) {
-                    return 0;
-                }
-                int res = (int)func_8009CF8C((u32)id);
-                return (res == 0xFE || res == 0xFF) ? 1 : 0;
-            }
-            s8 v = (s8)self->field_0xC4[arg1 * 4 + arg2];
-            return v >= (int)row->field_0x12[arg2];
-        } else {
+    if (self->field_0x00 & 1) {
+        return 0;
+    }
+    // No explicit local: MWCC CSEs the field_0x04 load until the
+    // func_80158068 call forces a reload in the type-2 tail.
+    // No explicit item-id local: MWCC CSEs the field_0x04 load until the
+    // func_80158068 call forces a reload in the type-2 tail.
+    if ((u32)(self->field_0x04 - 0xFC) <= 3) {
+        return 1;
+    }
+    CItemQueryRow* row = &self->field_0x6E[arg1];
+    // Dispatch on the per-row entry type; cases 3/0x104/0x105 share a body.
+    u16 rowType = row->field_0x02[arg2];
+    if (rowType == 2) {
+        if ((s8)self->field_0xC4[arg1 * 4 + arg2] >= 1) {
             return 1;
         }
+        if ((int)func_80158068(row->field_0x0A[arg2]) >=
+            (int)row->field_0x12[arg2]) {
+            return 1;
+        }
+        if (row->field_0x01 == 0) {
+            return 0;
+        }
+        if (*(u32*)&lbl_804FC260[arg1 * 4 + arg2 * 8] >
+            self->field_0x04) {
+            return 0;
+        }
+        // Table selected by cntlzw(arg1)'s rotate-mask (arg1==0 -> +4,
+        // arg1!=0 -> +0 bytes); four-entry scan of that table.
+        u32 cz = __cntlzw(arg1);
+        u32* t = (u32*)((u8*)lbl_804FC260 +
+                        (((cz << 29) | (cz >> 3)) & 0x1FFFFFFC));
+        if (self->field_0x04 == t[0]) {
+            return 0;
+        }
+        if (self->field_0x04 == t[2]) {
+            return 0;
+        }
+        if (self->field_0x04 == t[4]) {
+            return 0;
+        }
+        if (self->field_0x04 == t[6]) {
+            return 0;
+        }
+        return 1;
     }
-    return 0;
+    if (rowType == 3 || rowType == 0x104 || rowType == 0x105) {
+        if ((s8)self->field_0xC4[arg1 * 4 + arg2] >= 1) {
+            return 1;
+        }
+        if (row->field_0x01 == 0) {
+            return 0;
+        }
+        if (*(u32*)&lbl_804FC260[arg1 * 4 + arg2 * 8] >
+            self->field_0x04) {
+            return 0;
+        }
+        u32 cz3 = __cntlzw(arg1);
+        u32* t3 = (u32*)((u8*)lbl_804FC260 +
+                         (((cz3 << 29) | (cz3 >> 3)) & 0x1FFFFFFC));
+        if (self->field_0x04 == t3[0]) {
+            return 0;
+        }
+        if (self->field_0x04 == t3[2]) {
+            return 0;
+        }
+        if (self->field_0x04 == t3[4]) {
+            return 0;
+        }
+        if (self->field_0x04 == t3[6]) {
+            return 0;
+        }
+        return 1;
+    }
+    if (rowType == 4) {
+        // Flag-memory id: values >= 0x3E8 mean "no query" (kept as -1).
+        int flagId = -1;
+        if (row->field_0x0A[arg2] < 0x3E8) {
+            flagId = row->field_0x0A[arg2] + 0x220;
+        }
+        if (flagId == -1) {
+            return 0;
+        }
+        // Accept unless the flag-memory byte is 0xFE or 0xFF.
+        u32 res = func_8009CF8C((u32)flagId);
+        return res != 0xFE && res != 0xFF;
+    }
+    return (s8)self->field_0xC4[arg1 * 4 + arg2] >=
+           (int)row->field_0x12[arg2];
 }
 // Flag-buffer build (bdat-column variant): zero the 0xC8-byte flag buffer,
 // mark it active, refresh the per-table entry pointers, then scan every

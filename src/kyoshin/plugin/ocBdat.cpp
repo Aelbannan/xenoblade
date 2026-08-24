@@ -148,7 +148,7 @@ extern "C" void* func_8003B4B0(void* bdat, const char* col){
         pos++;
     }
     rem = static_cast<u32>(hash);
-    rem -= (rem / bucketCount) * bucketCount;
+    rem %= bucketCount;
     bucketOff = *reinterpret_cast<u16*>(hashBase + rem * 2);
     if (bucketOff == 0) {
         return 0;

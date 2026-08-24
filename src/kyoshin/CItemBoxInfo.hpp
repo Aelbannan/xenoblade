@@ -117,8 +117,6 @@ struct CItemBoxPaneVt {
 // register instead of the ABI r12.
 struct CItemNameLookupVt {
     virtual void _v00();
-    virtual void _v04();
-    virtual void _v08();
     virtual u32 findName(u32 tag, u32 itemId, u32 unk);  // vtable+0x0C
 };
 
@@ -282,6 +280,18 @@ struct CItemBoxSlotFlagRecord {
 };
 
 // C-linkage imports (retail symbol names - keep linkage/signatures verbatim)
+// Out-record built by func_801D59C0 / func_801E2558: {u8, ptr, u8, ptr}.
+// The mixed-width field stores (stb/stw) plus one whole-struct copy reproduce
+// the retail four-word block copy into the caller's u32 out-buffer.
+struct CItemBoxLabelRec {
+    u8 a;
+    u8 pad0[3];
+    char* b;
+    u8 c;
+    u8 pad1[3];
+    char* d;
+};
+
 extern "C" char lbl_eu_805063BC[];
 extern "C" char lbl_eu_80506380[];extern "C" void func_80136B4C(nw4r::lyt::Layout*, const char*, const char*, u32);
 extern "C" int func_8026178C(void*, u32);extern "C" u32 func_8025FB10(void*, u32);
@@ -440,7 +450,7 @@ struct CItemBoxSlotRecord1 {
     u8 vals[4];    // 0x1C
     u8 _20;        // 0x20
     u8 counter;    // 0x21 (build counter)
-    u16 counts[2]; // 0x22
-    u8 _26[6];     // 0x26 - pad to 0x2C
+    u16 counts[4]; // 0x22 (indexed up to counter-1)
+    u8 _26[2];     // 0x2A - pad to 0x2C
 };
 

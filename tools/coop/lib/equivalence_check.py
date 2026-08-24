@@ -3528,6 +3528,10 @@ def certify_unit_symbol(
             proof,
             certified_context=context,
         )
+        # Parity with _try_renaming_witness: without this, derive_capability_requirements
+        # demands assumed-ordinary-ram but no attestation is attached -> strict
+        # validator rejects its own certificate (missing=assumed-ordinary-ram).
+        _attach_assumed_ordinary_ram_attestation(proof)
         detail = ""
         for code in assurance_errors:
             note = f"capability-assurance-generation-failed:{code}"

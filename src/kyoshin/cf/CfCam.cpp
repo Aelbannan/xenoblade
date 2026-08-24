@@ -1,27 +1,36 @@
 #include "kyoshin/cf/CfCam.hpp"
+#include "kyoshin/cf/object/CfObject.hpp"
 #include <nw4r/math.h>
 #include <math.h>
+#include <string.h>
 #include <monolib/math.hpp>
 #include "kyoshin/cf/CfCam_ps.inl"
 // CfGameManager.hpp's extern "C" func_8049603C(CScn*) conflicts with this
 // TU's no-arg caller shape - rename it out of the way (CMenuGetItemMulti.cpp
 // pattern).
 #define func_8049603C cfCamGameManager9603CUnused
-// Redundant fwd decl: MWCC 10140 rejects CfGameManager.hpp's qualified
-// cf::CfObjectMove uses despite its own bare fwd decl, so pre-declare here.
+// MWCC 10140 rejects CfGameManager.hpp's qualified cf::CfObjectMove uses
+// inside class CfGameManager even though the fwd decl sits in the same
+// namespace. Rename the type for the duration of the include so the lookup
+// hits a name this TU pre-declares; pointer params/members keep their layout,
+// and the only affected mangled symbol (member func_8007C6B4) is never called
+// here.
+#define CfObjectMove cfCamGameManagerObjMoveFwd
 namespace cf {
-class CfObjectMove;
+class cfCamGameManagerObjMoveFwd;
 }
 #include "kyoshin/cf/CfGameManager.hpp"
+#undef CfObjectMove
 #undef func_8049603C
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/device/CDeviceRemotePad.hpp"
 #include <revolution/mtx/quat.h>
 #include <revolution/mtx/mtxvec.h>
 // Runtime RTTI helper + typeinfo pair for func_80073DDC's dynamic_cast
-// (fixed-size 8-byte typeinfo decls keep them sdata-eligible -> li @sda21).
-void* __dynamic_cast(void* obj, long offset, const void* src_type,
-                     const void* dst_type, void* src2dst);
+// (extern "C" keeps the retail unmangled __dynamic_cast reloc; fixed-size
+// 8-byte typeinfo decls keep them sdata-eligible -> li @sda21).
+extern "C" void* __dynamic_cast(void* obj, long offset, const void* src_type,
+                                const void* dst_type, void* src2dst);
 extern char lbl_eu_80661B28[8];
 extern char lbl_eu_80661B30[8];
 // C++-linkage global; MWCC mangles it to func_8006EF04__Fi (the retail name).
@@ -29,12 +38,20 @@ int func_8006EF04(int gate);
 // Cross-TU imports (flat retail names).
 extern "C" int func_804BE398(void* vec, u32 a, u32 b, u32 c);
 extern "C" int func_8006BA80(void* pos);
+// C++ free function; MWCC mangles it to the retail getFP__FPCc.
+void* getFP(const char* name);
 // In-TU definitions further down this file.
 int func_80071D50(ml::CVec3* out, u32 probeArg, float f);
 int func_8006E18C(cf::CfCamFollow* self, float val);
 void func_8006BFDC(cf::CfCamFollow* self);
-void func_80074090(ml::CVec3* out, cf::CfCamSrcVt* src, ml::CVec3* pos, int sel);
+// extern "C": retail symbol is flat func_80074090 (CfCamEvent.hpp declares
+// it with C linkage; keep this TU's decl/def consistent so call relocs and
+// the definition use the unmangled name).
+extern "C" void func_80074090(ml::CVec3* out, cf::CfCamSrcVt* src, ml::CVec3* pos, int sel);
 void func_80074010(nw4r::math::VEC3* a, nw4r::math::VEC3* b, nw4r::math::VEC3* c, float f);
+// In-TU definitions further down this file.
+__declspec(noinline) void func_80074488(ml::CVec3* out, ml::CVec3* lookat, const ml::CVec3* dir, f32 speed);
+extern "C" __declspec(noinline) void func_80074534(void* arg, const ml::CVec3* dir);
 
 // cf::CfCam base ctor, C linkage so the retail symbol name is emitted verbatim.
 // noinline keeps the `bl __ct__cf_CfCam` in the follow ctor (body is in-TU).
@@ -140,7 +157,8 @@ extern "C" bool cfCam_getTrue() { return true; }
 // func_8006BA80: zero-vector test - true when every component magnitude is
 // within the shared 0x8066A208 epsilon. Two-stage boolean structure mirrors
 // retail (|x|,|y| checked first, then |z| behind a temp flag).
-int func_8006BA80(const ml::CVec3* v) {
+// noinline keeps the retail `bl func_8006BA80` inside func_80074090.
+__declspec(noinline) int func_8006BA80(const ml::CVec3* v) {
     int result = 0;
     int temp = 0;
     if (ml::math::abs(v->x) <= lbl_eu_8066A208 && ml::math::abs(v->y) <= lbl_eu_8066A208) {
@@ -166,13 +184,13 @@ extern "C" float cfCam_vecMag(const float* v) {
 extern "C" void cfCam_setOrClearUnk04Bits(cf::CfCamFollow* r3, int r4, int r5) {
     cf::CfCamFollow* self = static_cast<cf::CfCamFollow*>(r3);
     if (r5) {
-        self->unk04 |= r4;
+        self->field_0x04 |= r4;
     } else {
-        self->unk04 &= ~r4;
+        self->field_0x04 &= ~r4;
     }
 }
 void cf::CfCamFollow::clearUnk04Bits(unsigned int mask) {
-    unk04 &= ~mask;
+    field_0x04 &= ~mask;
 }
 // cf::CfCam base ctor: stores the retail vtable manually, zeroes +0x04 and
 // saves the caller argument at +0x0C (matches CfCamFollow's flat-layout view).
@@ -185,7 +203,19 @@ extern "C" __declspec(noinline) void* __ct__cf_CfCam(void* self, void* arg) {
 }
 // cf::CfCam dtor: empty body - MWCC still emits the null-check + delete-flag
 // machinery (cmpwi r3,0 / cmpwi r4,0; ble / bl __dl__FPv).
-cf::CfCam::~CfCam() {}
+// noinline keeps the dtor a real symbol so CfCamFollow's dtor emits the
+// retail `bl __dt__Q22cf5CfCamFv` instead of inlining the empty body.
+__declspec(noinline) cf::CfCam::~CfCam() {}
+// cf::CfCamFollow dtor: restores the follow-camera vtable, saves the last
+// follow distance into the shared vec3 when a pad is still attached, clears
+// the global active-camera pointer; base dtor + delete machinery follows.
+cf::CfCamFollow::~CfCamFollow() {
+    vtable = lbl_eu_80527260;
+    if (func_8006BFBC() == 1 && func_8006BFC4(reinterpret_cast<int>(this), 0x4000) != 0) {
+        lbl_eu_80570A38[0] = unk1F8;
+    }
+    lbl_eu_80663DEC = 0;
+}
 // cf::CfCamEvent dtor: empty body - MWCC emits the null-check, the base
 // CfCamFollow dtor call (flag 0) and the delete-flag machinery.
 // NOTE: retail __dt__Q22cf10CfCamEventFv cannot be defined here - CfCamEvent.hpp
@@ -197,13 +227,13 @@ extern "C" __declspec(noinline) void func_8006BEC4(void* self) {
     *static_cast<ml::CVec3*>(self) = ml::CVec3::zero;
 }
 extern "C" __declspec(noinline) void func_8006BEE4(cf::CfCamFollow* p) {
-    p->unk04 = 0;
+    p->field_0x04 = 0;
 }
-extern "C" void cfCam_setUnk08(cf::CfCamFollow* self, int val) { self->unk08 = val; }
+extern "C" void cfCam_setUnk08(cf::CfCamFollow* self, int val) { self->field_0x08 = val; }
 extern "C" __declspec(noinline) void func_8006BEF8(void* self) {}
 __declspec(noinline) void func_8006BEFC(void* self) { *(u32*)self = 0; }
-extern "C" u32 cfCam_getUnk08(cf::CfCamFollow* self) { return self->unk08; }
-extern "C" bool cfCam_testUnk04Bits(const cf::CfCamFollow* self, unsigned int mask) { return (self->unk04 & mask) != 0; }
+extern "C" u32 cfCam_getUnk08(cf::CfCamFollow* self) { return self->field_0x08; }
+extern "C" bool cfCam_testUnk04Bits(const cf::CfCamFollow* self, unsigned int mask) { return (self->field_0x04 & mask) != 0; }
 extern "C" int cfCam_getBit1_0x64(void* p) {
     return (*(int*)((char*)p + 0x64) >> 1) & 1;
 }
@@ -268,9 +298,9 @@ extern "C" void cfCam_zeroUnk1D4(cf::CfCamFollow* arg0) {
     arg0->unk1D4 = 0;
 }
 extern "C" u32 cfCam_getSignBitUnk04(cf::CfCamFollow* p) {
-    return p->unk04 >> 31;
+    return p->field_0x04 >> 31;
 }
-extern "C" u32 cfCam_getUnk04(cf::CfCamFollow* self) { return self->unk04; }
+extern "C" u32 cfCam_getUnk04(cf::CfCamFollow* self) { return self->field_0x04; }
 extern "C" float cfCam_getField1E0(cf::CfCamFollow* self) { return self->unk1E0; }
 extern "C" float cfCam_scaleByConst(float f) {
     extern float lbl_eu_8066A20C;
@@ -353,7 +383,42 @@ extern "C" bool func_8006F9D4() {
     unsigned int x = flag & 0xAFA40000u;
     return ((((unsigned int)-(int)x | x) >> 31) & 1) != 0;
 }
-__declspec(noinline) void func_80071694(void* a, void* b){}
+// func_80071694: quaternion -> 3x3 rotation matrix.
+extern "C" __declspec(noinline) void func_80071694(ml::CMat33* out, const ml::CQuat* q) {
+    float one = lbl_eu_806662D0;
+    float w = q->w;
+    float y = q->y;
+    float z = q->z;
+    float x = q->x;
+    float twoX = x + x;
+    float twoY = y + y;
+    float twoZ = z + z;
+
+    float YY = y * twoY;
+    float ZZ = z * twoZ;
+    float XX = x * twoX;
+    float XY = x * twoY;
+    float ZW = w * twoZ;
+
+    out->m[0][0] = one - (YY + ZZ);
+
+    float XZ = x * twoZ;
+    float YW = w * twoY;
+
+    out->m[1][1] = one - (XX + ZZ);
+    out->m[2][2] = one - (XX + YY);
+
+    out->m[0][1] = XY - ZW;
+    out->m[1][0] = XY + ZW;
+    out->m[0][2] = XZ - YW;
+    out->m[2][0] = XZ + YW;
+
+    float YZ = y * twoZ;
+    float XW = w * twoX;
+
+    out->m[1][2] = YZ - XW;
+    out->m[2][1] = YZ + XW;
+}
 extern "C" void cfCam_copy4Words(void *r3, const void *r4) {
     const unsigned int *src = (const unsigned int *)r4;
     unsigned int *dst = (unsigned int *)r3;
@@ -365,7 +430,7 @@ extern "C" void cfCam_copy4Words(void *r3, const void *r4) {
 extern "C" int cfCam_getBit12_Unk04(void* ptr) {
     return (*(unsigned int*)((char*)ptr + 4) >> 12) & 1;
 }
-extern "C" void cfCam_clearUnk04Bits_EDFF(cf::CfCamFollow* self) { self->unk04 &= 0xFFFFEDFFu; }
+extern "C" void cfCam_clearUnk04Bits_EDFF(cf::CfCamFollow* self) { self->field_0x04 &= 0xFFFFEDFFu; }
 
 extern "C" bool cfCam_setUnk1E0AndValidate(void* obj, float val) {
     *(float*)((char*)obj + 0x1e0) = val;
@@ -402,7 +467,8 @@ extern "C" void cfCam_resetUnk10(u8* p, void* src) {
 // func_8007420C: copy the translation column of a 3x4 matrix (row-major) into a vec3.
 // Declare x/y/z first (FPR coloring x->f0, y->f1, z->f2), assign in reverse
 // (loads descend), store forward (stores ascend) - MWCC_CASES §10158 shape.
-extern "C" void func_8007420C(float* dst, const float* src) {
+// noinline keeps the retail `bl func_8007420C` inside func_80074090.
+extern "C" __declspec(noinline) void func_8007420C(float* dst, const float* src) {
     float x, y, z;
     z = src[11];
     y = src[7];
@@ -454,7 +520,7 @@ void func_800743C0(nw4r::math::MTX34* m) {
 extern "C" bool cfCam_testBits(const unsigned* value, unsigned mask) { return (*value & mask) != 0; }
 extern "C" int cfCam_getZero(void* self) { return 0x0; }
 extern "C" void* cfCam_getNestedPtr118(cf::CfCamFollow* p) {
-    return static_cast<char*>(p->unk0C) + 0x118;
+    return static_cast<char*>(p->field_0x0C) + 0x118;
 }
 extern "C" float cfCam_getFloat1E0(cf::CfCamFollow* self) { return self->unk1E0; }
 extern "C" void cfCam_copyVec3U32(u32* self, const u32* src)
@@ -463,7 +529,113 @@ extern "C" void cfCam_copyVec3U32(u32* self, const u32* src)
     self[11] = src[1];
     self[12] = src[2];
 }
-void sinit_80074D7C(){}
+// sinit_80074D7C: static-initializer for the camera default tables. Fills
+// nine direction/default vec3 slots at 0x80570A20 (several derived from the
+// .sdata2 tuning constants: a degree-to-radian product family and one ratio),
+// zeroes the trailing state words, and seeds the per-camera-id defaults
+// (stride-0x34 CamDefEntry records) at 0x80527160. The local vec3 scratch
+// slots are copied into the default table entry-by-entry, mirroring retail's
+// dead stack temporaries.
+void sinit_80074D7C() {
+    f32 one = lbl_eu_806662DC;
+    f32 cD0 = lbl_eu_806662D0;
+    f32 den = lbl_eu_80661B38;
+    f32 ratio = cD0 / den;
+
+    volatile ml::CVec3 t[6];
+
+    f32 b60 = lbl_eu_80661B60;
+    f32 c39C = lbl_eu_8066639C;
+    f32 radScale = lbl_eu_8066A210;
+    f32 prod40C = lbl_eu_8066640C * radScale;
+    f32 prodBC = lbl_eu_806662BC * radScale;
+    f32 prod410 = lbl_eu_80666410 * radScale;
+    f32 prodB4C = lbl_eu_80661B4C * radScale;
+    f32 prod414 = lbl_eu_80666414 * radScale;
+
+    lbl_eu_80570A20.dir[0].x = one;
+    lbl_eu_80570A20.dir[0].y = c39C;
+    lbl_eu_80570A20.dir[0].z = one;
+    lbl_eu_80663DC8 = prod40C;
+    lbl_eu_80663DCC = prodBC;
+    lbl_eu_80663DD0 = ratio;
+    lbl_eu_80663DD4 = prod410;
+    lbl_eu_80663DD8 = prod414;
+    lbl_eu_80570A20.dir[1].x = one;
+    lbl_eu_80570A20.dir[1].y = c39C;
+    lbl_eu_80570A20.dir[1].z = one;
+    lbl_eu_80663DE4 = b60;
+    lbl_eu_80570A20.dir[2].x = prodB4C;
+    lbl_eu_80570A20.dir[2].y = one;
+    lbl_eu_80570A20.dir[2].z = one;
+    lbl_eu_80663DE8 = b60;
+    lbl_eu_80570A20.dir[3].x = prodB4C;
+    lbl_eu_80570A20.dir[3].y = one;
+    lbl_eu_80570A20.dir[3].z = one;
+    lbl_eu_80570A20.dir[4].x = one;
+    lbl_eu_80570A20.dir[4].y = one;
+    lbl_eu_80570A20.dir[4].z = one;
+    lbl_eu_80570A20.dir[5].x = one;
+    lbl_eu_80570A20.dir[5].y = cD0;
+    lbl_eu_80570A20.dir[5].z = one;
+    lbl_eu_80570A20.dir[6].x = one;
+    lbl_eu_80570A20.dir[6].y = one;
+    lbl_eu_80570A20.dir[6].z = one;
+    lbl_eu_80570A20.dir[7].x = one;
+    lbl_eu_80570A20.dir[7].y = one;
+    lbl_eu_80570A20.dir[7].z = one;
+
+    lbl_eu_80570A20.dir[8].x = one;
+    lbl_eu_80570A20.dir[8].y = one;
+    lbl_eu_80570A20.dir[8].z = one;
+    u32* tail = reinterpret_cast<u32*>(&lbl_eu_80570A20.rest[0x114]);
+    tail[0] = 0;
+    tail[1] = 0;
+    *reinterpret_cast<u16*>(tail + 2) = 0;
+
+    f32 c29C = lbl_eu_8066629C;
+    f32 c36C = lbl_eu_8066636C;
+    f32 c3C8 = lbl_eu_806663C8;
+    f32 c2A0 = lbl_eu_806662A0;
+    f32 c304 = lbl_eu_80666304;
+
+    t[5].x = prodB4C;
+    t[5].y = prodB4C;
+    t[5].z = one;
+    lbl_eu_80527160.entries[0].unk04.x = prodB4C;
+    lbl_eu_80527160.entries[0].unk04.y = prodB4C;
+    lbl_eu_80527160.entries[0].unk04.z = one;
+    t[4].x = c36C;
+    t[4].y = c36C;
+    t[4].z = one;
+    lbl_eu_80527160.entries[0].unk10.x = c36C;
+    lbl_eu_80527160.entries[0].unk10.y = c36C;
+    lbl_eu_80527160.entries[0].unk10.z = one;
+    t[3].x = c3C8;
+    t[3].y = c2A0;
+    t[3].z = one;
+    lbl_eu_80527160.entries[1].unk04.x = c3C8;
+    lbl_eu_80527160.entries[1].unk04.y = c2A0;
+    lbl_eu_80527160.entries[1].unk04.z = one;
+    t[2].x = one;
+    t[2].y = cD0;
+    t[2].z = one;
+    lbl_eu_80527160.entries[1].unk10.x = one;
+    lbl_eu_80527160.entries[1].unk10.y = cD0;
+    lbl_eu_80527160.entries[1].unk10.z = one;
+    t[1].x = c29C;
+    t[1].y = c36C;
+    t[1].z = one;
+    lbl_eu_80527160.entries[2].unk04.x = c29C;
+    lbl_eu_80527160.entries[2].unk04.y = c36C;
+    lbl_eu_80527160.entries[2].unk04.z = one;
+    t[0].x = one;
+    t[0].y = c304;
+    t[0].z = one;
+    lbl_eu_80527160.entries[2].unk10.x = one;
+    lbl_eu_80527160.entries[2].unk10.y = c304;
+    lbl_eu_80527160.entries[2].unk10.z = one;
+}
 
 struct Class_80296898 {
     static void* getInstance();
@@ -471,6 +643,79 @@ struct Class_80296898 {
 
 // func_8006B8E4: refresh the shared camera tables from the Class_80296898
 // instance's selection bytes. inst[3] picks the 0x80527208 table entry (copied
+// func_8006B720: camera-default reload for camera id arg1. Builds two bdat
+// column names from the message string table, resolves the active game-manager
+// camera row (vtable slot 0x60 gate supplies the row override at +0x8C), reads
+// both cells and scales them into lbl_eu_80570A2C[1] / lbl_eu_80661B4C. When
+// arg2 is set, flags word +0x4 of the state object gets bit 0x20000000.
+extern "C" void func_8006B720(int arg1, int arg2) {
+    lbl_eu_80661BA4 = arg1;
+    int col = 1;
+    // Two separate getter calls (retail emits both; no CSE).
+    if (func_8008221C__Q22cf13CfGameManagerFv() != 0) {
+        void* ret =
+            reinterpret_cast<cf::CfCamGmView*>(func_8008221C__Q22cf13CfGameManagerFv())
+                ->fnAt60();
+        if (ret != 0) {
+            col = reinterpret_cast<cf::CfCamRowView*>(ret)->rowId;
+        }
+    }
+
+    void* fp = getFP(lbl_eu_804FB4F0);
+    const char* base = lbl_eu_804FB4F0;
+    struct NameBuf {
+        char str[0x20];
+        int len;
+    };
+    // Declared in retail stack-slot order: cellB, cellA, nameB, nameA,
+    // convA, convB (execution order below still matches retail's).
+    short* cellB;
+    short* cellA;
+    NameBuf nameB;
+    NameBuf nameA;
+    volatile union {
+        double d;
+        u32 w[2];
+    } convA;
+    volatile union {
+        double d;
+        u32 w[2];
+    } convB;
+    const char* srcA = base + 0xC;
+    nameA.len = strlen(srcA);
+    strcpy(nameA.str, srcA);
+    const char* srcB = base + 0xF;
+    nameB.len = strlen(srcB);
+    strcpy(nameB.str, srcB);
+    const char* entry = lbl_eu_805271FC[arg1];
+    int entryLen = strlen(entry);
+    strcat(nameA.str, entry);
+    nameA.len += entryLen;
+    entry = lbl_eu_805271FC[arg1]; // retail reloads the table entry here
+    entryLen = strlen(entry);
+    strcat(nameB.str, entry);
+    nameB.len += entryLen;
+
+    // s16 -> f32 via the 0x43300000 double trick; subtracting the named retail
+    // blob keeps the lfd reloc on lbl_eu_806662A8 instead of a TU-local pool.
+    cellA = getBdatStringColumnValue(fp, nameA.str, col);
+    convA.w[1] = (u32)(s32)*cellA ^ 0x80000000u;
+    convA.w[0] = 0x43300000;
+    f32 scaledA = lbl_eu_8066629C * (f32)(convA.d - lbl_eu_806662A8);
+    cellB = getBdatStringColumnValue(fp, nameB.str, col);
+    lbl_eu_80570A2C[1] = scaledA;
+    convB.w[1] = (u32)(s32)*cellB ^ 0x80000000u;
+    convB.w[0] = 0x43300000;
+    lbl_eu_80661B4C = lbl_eu_806662A0 * (f32)(convB.d - lbl_eu_806662A8);
+
+    if (arg2 != 0) {
+        UnkClass_800821F8* state = func_800821F8__Q22cf13CfGameManagerFv();
+        if (state != 0) {
+            reinterpret_cast<cf::UnkClass800821F8FlagView*>(state)->flags |= 0x20000000;
+        }
+    }
+}
+
 // into the .sdata float 0x80661B3C); inst[2] picks the 0x8052721C table entry
 // and the +0x40/+0x44/+0x48/+0x74 .sdata floats. The two .sdata2 constants
 // stay in FPRs (f1/f0).
@@ -525,6 +770,7 @@ void func_8006B980(int arg1, int arg2) {
 // 0.1 is wrapped back into [0, 2pi) with fmod (arg selects whether the wrap
 // runs at all).
 float func_8006BB20(void* arg, float angle) {
+    // Offset the FIdx angle, then fold it into [0,1] as a sine-table phase
     f32 x = angle - lbl_eu_806662D8;
     f32 s = lbl_eu_806662DC; // 0.0f - sin-input accumulator (retail f2)
     f32 v = lbl_eu_806662D0; // 1.0f - return value / clamp cap (retail f31)
@@ -554,7 +800,7 @@ float func_8006BB20(void* arg, float angle) {
 // selection tables (func_8006B980) and resets the object through vtable slot
 // 0xC.
 void func_8006BFDC(cf::CfCamFollow* self) {
-    func_8004B3F0(lbl_eu_80570A2C, lbl_eu_80570A20);
+    func_8004B3F0(lbl_eu_80570A2C, &lbl_eu_80570A20);
     f32 cF8 = lbl_eu_806662F8;
     f32 c304 = lbl_eu_80666304;
     f32 cBC = lbl_eu_806662BC;
@@ -741,7 +987,15 @@ void func_8006CC0C() {
     lbl_eu_80570A38[0] = s;
 }
 void func_8006CC68(){}
-void func_8006CE24(void* self, void* arg, int a, int b, int c, int d, int e){}
+// noinline keeps the retail `bl func_8006CE24` call sites (body not yet
+// reconstructed; an empty inline-able body would be elided by MWCC).
+// Definition sits under the mangled name so callers use the flat extern-C
+// view and keep the unmangled retail reloc.
+__declspec(noinline) void
+func_8006CE24__FPvPviiiii(void* self, void* arg, int a, int b, int c,
+                          int d, int e){}
+extern "C" __declspec(noinline) void
+func_8006CE24(void* self, void* arg, int a, int b, int c, int d, int e);
 // func_8006D380: spherical azimuth - atan2(y, sqrt(x^2+z^2)) scaled by the
 // same fixed FIdx factor as func_8006D3D0. MWCC computes the fmadds addend
 // (z*z) first, so the sum is written x*x + z*z to get the retail load order
@@ -761,7 +1015,9 @@ float func_8006D3D0(const ml::CVec3* v) {
     return nw4r::math::Atan2FIdx(x, z) * lbl_eu_8066632C;
 }
 // func_8006D41C: acos wrapper; retail converts the double result back to f32.
-extern "C" float func_8006D41C(float x) {
+// Defined with a float param; callers go through the body-less double overload
+// below so MWCC keeps the retail bl instead of inlining.
+float func_8006D41C(float x) {
     return (float)acos(x);
 }
 // func_8006D450: follow-camera state recompute from a new eye/target pair.
@@ -769,25 +1025,30 @@ extern "C" float func_8006D41C(float x) {
 // and the follow-cam source), stores the yaw/pitch/magnitude fields, then
 // derives the angular speed (unk204) and resets the 0x800 flag.
 void func_8006D450(cf::CfCamFollow* self, void* argA, void* argB, void* argC,
-                   int modeA, unsigned int modeB, float dist) {
+                   int modeA, int modeB, float dist) {
     if (func_8006D374(self) == 0) {
         return;
     }
+    // Declared so MWCC's reverse-order stack slot assignment yields the
+    // retail layout l8 < l14 < l20 < l2c < l38 < l44.
     ml::CVec3 l44;
     ml::CVec3 l38;
-    ml::CVec3 l14;
-    ml::CVec3 l8;
     ml::CVec3 l2c;
     ml::CVec3 l20;
-    func_8004CB80(&l44.x, argA, argB);
+    ml::CVec3 l14;
+    ml::CVec3 l8;
+    func_8004CB80(&l44.x, reinterpret_cast<const f32*>(argA),
+                  reinterpret_cast<const f32*>(argB));
     lbl_eu_80570A38[0] = *reinterpret_cast<const f32*>(self->unk168 + 0x18);
-    func_8006C740(&l38.x, self);
+    func_8006C740(&l38, self);
     const f32* mid;
     if (argC != 0) {
-        func_8006CB0C(&l14.x, self, &l38.x, 0);
+        // All-void* args force the body-less extern-C overload -> retail bl
+        func_8006CB0C(static_cast<void*>(&l14.x), static_cast<void*>(self),
+                      static_cast<void*>(&l38.x), static_cast<void*>(0));
         mid = &l14.x;
     } else {
-        func_800733B8(&l8, self, &l38.x,
+        func_800733B8(&l8, self, &l38,
                       reinterpret_cast<const f32*>(self->unk168 + 0x18),
                       self->unk244);
         mid = &l8.x;
@@ -799,15 +1060,14 @@ void func_8006D450(cf::CfCamFollow* self, void* argA, void* argB, void* argC,
         func_8004B3F0(&l44, &l20);
         func_8004B3F0(self->unk168 + 0x30, &l38);
     }
-    f32 yaw1 = func_8006D380(&l44);
-    f32 pitch1 = func_8006D3D0(static_cast<const void*>(&l44));
-    f32 yaw2 = func_8006D380(&l20);
-    f32 pitch2 = func_8006D3D0(static_cast<const void*>(&l20));
-    *reinterpret_cast<f32*>(self->unk168 + 0x00) = yaw1;
-    *reinterpret_cast<f32*>(self->unk168 + 0x04) = pitch1;
+    // Store each result immediately: retail keeps no float live across these
+    // calls except dist (f31), so batching temporaries would force extra
+    // callee-saved fpr saves.
+    *reinterpret_cast<f32*>(self->unk168 + 0x00) = func_8006D380(static_cast<const void*>(&l44));
+    *reinterpret_cast<f32*>(self->unk168 + 0x04) = func_8006D3D0(static_cast<const void*>(&l44));
     *reinterpret_cast<f32*>(self->unk168 + 0x08) = lbl_eu_806662DC;
-    *reinterpret_cast<f32*>(self->unk168 + 0x0C) = yaw2;
-    *reinterpret_cast<f32*>(self->unk168 + 0x10) = pitch2;
+    *reinterpret_cast<f32*>(self->unk168 + 0x0C) = func_8006D380(static_cast<const void*>(&l20));
+    *reinterpret_cast<f32*>(self->unk168 + 0x10) = func_8006D3D0(static_cast<const void*>(&l20));
     *reinterpret_cast<f32*>(self->unk168 + 0x14) = lbl_eu_806662DC;
     self->unk208 = func_8006BB00(static_cast<const void*>(&l44));
     self->unk20C = func_8006BB00(static_cast<const void*>(&l20));
@@ -815,7 +1075,7 @@ void func_8006D450(cf::CfCamFollow* self, void* argA, void* argB, void* argC,
     func_800A3C48(&l44);
     func_800A3C48(&l20);
     f32 dot = func_800504BC(&l44.x, &l20.x);
-    f32 t = func_8006D41C((lbl_eu_806662D0 + dot) * lbl_eu_80666304);
+    f32 t = func_8006D41C(static_cast<double>((lbl_eu_806662D0 + dot) * lbl_eu_80666304));
     t = func_8006D410(t);
     if (t != t) {
         t = lbl_eu_806662DC; // NaN guard
@@ -827,12 +1087,15 @@ void func_8006D450(cf::CfCamFollow* self, void* argA, void* argB, void* argC,
     }
     f32 denom = blend;
     if (modeB != 0) {
-        denom = static_cast<float>(modeB); // unsigned int -> float conversion
+        denom = static_cast<f32>(modeB); // s32->f32 idiom emits retail xoris path
+    }
+    if (modeA == 0) {
+        denom = lbl_eu_806662D0;
     }
     self->unk204 = lbl_eu_806662D0 / denom;
     if (modeA == 0) {
         self->unk204 = lbl_eu_806662D0;
-    } else if (t < lbl_eu_8066A208) {
+    } else if (t <= lbl_eu_8066A208) {
         self->unk204 = lbl_eu_80666304;
     }
     self->unk200 = lbl_eu_806662DC;
@@ -970,13 +1233,13 @@ void func_8006D8D0(cf::CfCamFollow* self, void* arg) {
 // feed it to the func_80174C98 arts-state gate. noinline keeps the retail
 // `bl func_8006DBD4` at call sites.
 extern "C" __declspec(noinline) int func_8006DBD4(cf::CfCamFollow* self, int flags) {
-    u32 val = reinterpret_cast<cf::CfSubObjView*>(self->unk04)->fnAt30()->field_0;
+    u32 val = reinterpret_cast<cf::CfSubObjView*>(self->field_0x04)->fnAt30()->field_0;
     return func_80174C98(self, &val, flags);
 }
 // func_8006DCA0: follow-target arts-state gate. Resolves the actor state via
 // func_8016FE34, requires the CfGameManager gate, and returns true only when
 // NONE of the 3/4/1 state flags and ALL... i.e. the 8 flag probe reports clear.
-int func_8006DCA0(void* obj) {
+extern "C" __declspec(noinline) int func_8006DCA0(void* obj) {
     cf::CfCamFollow* a = static_cast<cf::CfCamFollow*>(func_8016FE34(obj));
     if (a == 0) {
         return 0;
@@ -1002,51 +1265,57 @@ int func_8006DCA0(void* obj) {
 // applies the 0x40-flag magnitude decay/clear and clears the 0x1000 flag.
 void func_8006DD58(cf::CfCamFollow* self) {
     u8* base = 0;
-    void* target = self->unk164;
-    if (target != 0) {
-        if (func_8006C1B0(target) || func_8006DF9C(target)) {
-            base = static_cast<u8*>(target) - 0x3E9C;
+    // Retail re-reads the +0x164 handle from memory at each probe.
+    if (self->unk164 != 0) {
+        if (func_8006C1B0(self->unk164) || func_8006DF9C(self->unk164)) {
+            // field re-read after the probes; gate keeps the raw pointer
+            base = static_cast<u8*>(self->unk164);
+            if (base != 0) {
+                base -= 0x3E9C;
+            }
         }
     }
-    func_8006C640(self, 0x2000, 0);
+    func_8006C640(self, 0x20000000, 0);
     const u8* inst = reinterpret_cast<const u8*>(Class_80296898::getInstance());
     if (inst[7] != 0) {
-        // game-manager probe via vtable slot 0x60; result unused in retail
-        reinterpret_cast<cf::CfCamGmView*>(self)->fnAt60();
-        if (func_8006DCA0(self) != 0 && base != 0 &&
+        // game-manager probe via vtable slot 0x60; its result is the
+        // follow-target handle fed to the arts-state gate
+        if (func_8006DCA0(reinterpret_cast<cf::CfCamGmView*>(self)->fnAt60()) != 0 &&
+            base != 0 &&
             testResInfoFlag(0x80000) == 0 &&
-            func_8006BFC4(reinterpret_cast<int>(self), 2) == 0 &&
+            func_8006BFC4(reinterpret_cast<int>(self), 0x20000) == 0 &&
             func_800FE68C() != 0) {
             func_800FE68C();
             int sel = func_800B708C__Fi(func_8006DFA8());
-            // zero-constructed temp vec3 (ctor + CVec3::zero copy)
+            // angle lands in tmp2c.y (retail stores it at tmp+4)
             ml::CVec3 tmp2c;
-            func_8004B0B0(&tmp2c);
-            func_8006BEC4(&tmp2c);
-            void* actor = func_8016FE34(reinterpret_cast<void*>(sel));
-            if (actor != 0) {
+            if (sel != 0) {
                 int flag = 1;
-                f32 ang;
-                switch (CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(actor)) {
-                case 3:
-                    ang = lbl_eu_806662E0;
-                    flag = 0;
-                    break;
-                case 4:
-                case 5:
-                    ang = lbl_eu_806662D8;
-                    break;
-                case 6:
-                    ang = lbl_eu_806662D0;
-                    break;
-                default:
-                    flag = 0;
-                    break;
+                func_8004B0B0(&tmp2c);
+                func_8006BEC4(&tmp2c);
+                void* actor = func_8016FE34(reinterpret_cast<void*>(sel));
+                if (actor != 0) {
+                    switch (CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(actor)) {
+                    case 3:
+                        tmp2c.y = lbl_eu_806662E0;
+                        flag = 0;
+                        break;
+                    case 4:
+                    case 5:
+                        tmp2c.y = lbl_eu_806662D8;
+                        break;
+                    case 6:
+                        tmp2c.y = lbl_eu_806662D0;
+                        break;
+                    default:
+                        flag = 0;
+                        break;
+                    }
+                    if (func_8006DFBC(static_cast<u8*>(actor) + 0x3E9C)) {
+                        tmp2c.y += lbl_eu_80666304;
+                    }
+                    func_8006C640(self, 0x2000, flag);
                 }
-                if (func_8006DFBC(static_cast<u8*>(actor) + 0x3E9C)) {
-                    ang += lbl_eu_80666304;
-                }
-                func_8006C640(self, 0x2000, flag);
             }
             f32 sp8[3];
             f32 sp14[3];
@@ -1061,7 +1330,7 @@ void func_8006DD58(cf::CfCamFollow* self) {
             func_8004B3F0(self->unk168 + 0x60, sp20);
         }
     }
-    if (func_8006BFC4(reinterpret_cast<int>(self), 0x40) == 0) {
+    if (func_8006BFC4(reinterpret_cast<int>(self), 0x400000) == 0) {
         func_8006BB04(reinterpret_cast<nw4r::math::VEC3*>(self->unk168 + 0x60),
                       lbl_eu_80666318);
         f32 lenSq = func_8006DFC8(
@@ -1069,7 +1338,7 @@ void func_8006DD58(cf::CfCamFollow* self) {
         if (lenSq < lbl_eu_8066633C) {
             func_8006BEC4(self->unk168 + 0x60);
         }
-        func_8006C640(self, 0x1000, 0);
+        func_8006C640(self, 0x10000000, 0);
     }
 }
 // func_8006DFE0: follow-camera heading/distance update. Two direction vectors
@@ -1133,22 +1402,19 @@ int func_8006E18C(cf::CfCamFollow* self, float val) {
                 func_8006BC1C(self, 0x8000);
             }
             if (self->unk256 == 0) {
-                self->unk1F8 = *reinterpret_cast<const f32*>(
-                    reinterpret_cast<const u8*>(self) + 0x180);
+                self->unk1F8 = self->field_0x180;
                 self->unk1FC = self->unk23C;
             }
             self->unk256 = 8;
         }
-        if (func_8006BFC4(reinterpret_cast<int>(self), 0x400000) != 0) {
-            if (func_8006C6B4(reinterpret_cast<int>(self), 0x20000000) == 0) {
-                func_8006BC1C(self, 0x400000);
-            }
-        } else {
+        if (func_8006BFC4(reinterpret_cast<int>(self), 0x400000) == 0) {
             if (func_8006C6B4(reinterpret_cast<int>(self), 0x20000000) != 0) {
                 func_8006BBF4(self, 0x400000, 1);
                 self->unk1F0 = val;
                 self->unk256 = 8;
             }
+        } else if (func_8006C6B4(reinterpret_cast<int>(self), 0x20000000) == 0) {
+            func_8006BC1C(self, 0x400000);
         }
     }
     return inst[7] != 0 ? 1 : 0;
@@ -1264,7 +1530,7 @@ void func_8006E5D8(cf::CfCamFollow* self) {
     func_8004B3F0(dst->unk168 + 72, src + 0x15C);
     func_8004B3F0(dst->unk168 + 84, src + 0x168);
     func_8004B3F0(dst->unk168 + 96, src + 0x174);
-    func_8006E5AC(&dst->unk04, src + 0x180);
+    func_8006E5AC(&dst->field_0x04, src + 0x180);
     func_8006E5C0(&dst->unk1D4, src + 0x184);
     func_8006E5CC(&dst->unk1D8, src + 0x188);
     dst->unk1DC = *(const f32*)(src + 0x18C);
@@ -1409,8 +1675,10 @@ int func_8006F5C8(cf::CfCamFollow* self, void* arg, float* out1, float* out2) {
 // flag: claim 0x20, clear 0x40, chain-copy the position vec3 slots from
 // srcPos through +0x58/+0x64/+0x4C/+0x40 into arg, then feed the source's
 // scale and the shared vec3 into the slot-0x18 virtual. The 0x2000 path
-// clears the follow state; the 0x3020 path re-runs the pad-action selection.
+// clears the follow state; the 0x30000020 path re-runs the pad-action selection.
 void func_8006F9EC(cf::CfCamFollow* self, void* arg, void* srcPos) {
+    int bit1000;
+    int bit2000;
     if (func_8006BFC4(reinterpret_cast<int>(self), 0x40) != 0 &&
         self->unk164 != 0) {
         func_8006BBF4(self, 0x20, 1);
@@ -1432,14 +1700,18 @@ void func_8006F9EC(cf::CfCamFollow* self, void* arg, void* srcPos) {
         self->unk252 = 0;
     }
     if (func_8006BFC4(reinterpret_cast<int>(self), 0x20) != 0 &&
-        func_8006BFC4(reinterpret_cast<int>(self), 0x4000) == 0 &&
+        func_8006BFC4(reinterpret_cast<int>(self), 0x404000) == 0 &&
         (s16)self->unk256 > 0) {
         func_8006BC1C(self, 0x20);
     }
-    if (func_8006BFC4(reinterpret_cast<int>(self), 0x3020) != 0) {
-        int bit1000 = func_8006BFC4(reinterpret_cast<int>(self), 0x1000);
-        int bit2000 = func_8006BFC4(reinterpret_cast<int>(self), 0x2000);
-        func_8006BC1C(self, 0x3020);
+    // 0x30000020 = follow-reset mask. Held in a local so MWCC hoists the
+    // 0x30000000 high half into a register across both probes (retail
+    // lis/addi pair) instead of rematerializing per use.
+    int resetMask = 0x30000020;
+    if (func_8006BFC4(reinterpret_cast<int>(self), resetMask) != 0) {
+        bit1000 = func_8006BFC4(reinterpret_cast<int>(self), 0x10000000);
+        bit2000 = func_8006BFC4(reinterpret_cast<int>(self), 0x20000000);
+        func_8006BC1C(self, resetMask);
         self->unk248 = lbl_eu_806662DC;
         if (func_8006EEF8(self) == 0 &&
             func_8006BFC4(reinterpret_cast<int>(self), 0x800) == 0) {
@@ -1607,7 +1879,23 @@ void func_80070518(cf::CfCamFollow* self, int flag) {
         }
     }
 }
-void func_800705D8(){}
+// func_800705D8: builds a scaled offset from (src - dst) and accumulates it
+// back into dst via the PS add kernel; when flag is set, src[1] is copied
+// straight into dst[1] afterwards.
+void func_800705D8(f32* dst, const f32* src, int flag, f32 scale) {
+    f32 tmp20[3];
+    f32 tmp14[3];
+    f32 tmp8[3];
+    func_8004CB80(tmp14, src, dst);
+    func_8004B75C(tmp20, tmp14, scale);
+    func_8006C6E8(reinterpret_cast<nw4r::math::VEC3*>(tmp8),
+                  reinterpret_cast<const nw4r::math::VEC3*>(tmp20),
+                  reinterpret_cast<const nw4r::math::VEC3*>(dst));
+    func_8004B3F0(dst, tmp8);
+    if (flag != 0) {
+        dst[1] = src[1];
+    }
+}
 // func_80070674: distance-gated aim adjustment. Computes arg3 - arg2; when its
 // squared length is inside (c70, c74] a collision probe (func_804BE348, mask
 // 0x4a03) runs, and on a hit arg3 is replaced: func_80070784 seeds two temp
@@ -1714,7 +2002,7 @@ void func_80070FB8(cf::CfCamFollow* self) {
                   reinterpret_cast<Quaternion*>(&stackC8),
                   reinterpret_cast<Quaternion*>(&stackB8), t);
     func_80071364(reinterpret_cast<Quaternion*>(&stackA8));
-    func_80071694(&stackD8, &stackA8);
+    func_80071694(reinterpret_cast<ml::CMat33*>(&stackD8), &stackA8);
 
     ml::CVec3 stack9C;
     ml::CVec3 stack90;
@@ -1932,7 +2220,7 @@ void func_80071754(cf::CfCamFollow* self, ml::CVec3* arg2) {
                       reinterpret_cast<Quaternion*>(&stack60),
                       reinterpret_cast<Quaternion*>(&stack50), t);
         func_80071364(reinterpret_cast<Quaternion*>(&stack40));
-        func_80071694(&stack70, &stack40);
+        func_80071694(reinterpret_cast<ml::CMat33*>(&stack70), &stack40);
         func_8004B0B0(&stack30);
         func_800598A8(&stack24, &stack70,
                       func_8004B60C(&stack18, lbl_eu_806662DC, lbl_eu_806662DC, -f30));
@@ -1953,26 +2241,24 @@ void func_80071754(cf::CfCamFollow* self, ml::CVec3* arg2) {
         reinterpret_cast<cf::CfCamPosSource*>(self)->v13(v);
     }
 }
-// In-TU definition (bottom of file); forward decl so the call site links.
-extern "C" bool func_80071B6C(cf::CfCamFollow* self, float val);
+// In-TU definition (bottom of file); noinline keeps the retail bl from
+// func_80071AB0.
+extern "C" __declspec(noinline) bool func_80071B6C(cf::CfCamFollow* self, float val);
 // func_80071AB0: camera-relative position update. Copies src into the +0x1C
 // vec3, accumulates the +0x1DC follow distance into its y (offset 0x20),
 // mirrors the +0x180/+0x184 floats into the shared lbl_eu_80570A38 vec3, then
 // - when the sibling gate func_8006D374 passes - applies f2 through
 // func_8049EFF8 on the follow target handle (+0x164) and stores f1 into the
 // target's +0x1E0 via func_80071B6C.
-void func_80071AB0(void* selfPtr, void* src, void* arg, int c, float f1,
+void func_80071AB0(cf::CfCamFollow* self, void* src, void* arg, int c, float f1,
                    float f2) {
-    cf::CfCamFollow* self = static_cast<cf::CfCamFollow*>(selfPtr);
     func_8004B3F0(self->unk1C, src);
-    f32 h = *(f32*)(self->unk1C + 4);
-    h = h + self->unk1DC;
-    *(f32*)(self->unk1C + 4) = h;
-    lbl_eu_80570A38[0] = self->unk168[0x18];
-    lbl_eu_80570A38[1] = self->unk168[0x1C];
+    *(f32*)(self->unk1C + 4) += self->unk1DC;
+    lbl_eu_80570A38[0] = *(f32*)(self->unk168 + 0x18);
+    lbl_eu_80570A38[1] = *(f32*)(self->unk168 + 0x1C);
     if (func_8006D374(self) != 0) {
-        func_8049EFF8(self->unk164, f2, self->unk1C, arg);
-        func_80071B6C(static_cast<cf::CfCamFollow*>(self->unk164), f1);
+        func_8049EFF8(self->unk160, f2, self->unk1C, arg);
+        func_80071B6C(static_cast<cf::CfCamFollow*>(self->unk160), f1);
     }
 }
 // func_80071B7C: camera-position update. Probes arg1 against arg2
@@ -2071,16 +2357,69 @@ extern "C" int func_80071F14(cf::CfCamFollow* self) {
     }
     return result;
 }
-void func_80071F74(){}
+// func_80071F74: scale-and-clamp of *out driven by a*c. Small steps just
+// apply the lbl_eu_806662F8 gain; larger steps pick a division ratio from
+// distance bands, then blend *out toward that ratio while keeping its sign
+// relative to b and clamping magnitude to |b|.
+// b arrives as a double (retail passes it in f2 after promoting); frsp at the
+// multiply confirms the widened parameter.
+void func_80071F74(f32* out, double a, f32 b, f32 c) {
+    f32 t;
+    f32 ratio;
+    if (c > lbl_eu_80666308) {
+        c = lbl_eu_80666308;
+    }
+    t = a * c;
+    if (func_8006BAF0(&t) <= lbl_eu_806662A0) {
+        *out = lbl_eu_806662F8 * t;
+    } else {
+        f32 g = lbl_eu_806662F8;
+        f32 mag = func_8006BAF0(&t);
+        int overCap = mag >= lbl_eu_806662C8;
+        if (overCap) {
+            g = lbl_eu_80666354;
+            ratio = t / lbl_eu_80666390;
+        } else if (mag >= lbl_eu_80666330) {
+            g = lbl_eu_80666304;
+            ratio = t / lbl_eu_806662BC;
+        } else if (mag >= lbl_eu_80666334) {
+            g = lbl_eu_80666304;
+            ratio = t / lbl_eu_806662C0;
+        } else {
+            ratio = t / lbl_eu_80666300;
+        }
+        f32 magRatio = func_8006BAF0(&ratio);
+        f32 magOut = func_8006BAF0(out);
+        if (b * *out < lbl_eu_806662DC) {
+            ratio = t / lbl_eu_806662C0;
+            magRatio = func_8006BAF0(&ratio);
+            *out = -*out;
+            if (g < lbl_eu_80666304) {
+                g = lbl_eu_80666304;
+            }
+        }
+        if (magOut < lbl_eu_8066629C) {
+            *out = ratio;
+        } else if (magRatio > magOut) {
+            *out = ratio + g * (ratio - *out);
+        }
+    }
+    if (b * *out < lbl_eu_806662DC) {
+        *out = -*out;
+    }
+    if (func_8006BAF0(out) > func_8006BAF0(&b)) {
+        *out = b;
+    }
+}
 void func_80072194(){}
 // func_800733B8: follow-camera offset vector builder. With the 0x200 script
-// gate clear, out just copies the +0x34 position. Otherwise dir is blended
+// gate set (nonzero), out just copies the +0x34 position. Otherwise dir is blended
 // toward self+0x28 by a yaw-scaled normalized XZ direction, lifted by the
 // pitch sine term clamped by the sign-gated constants.
 __declspec(noinline) void func_800733B8(ml::CVec3* out, cf::CfCamFollow* self,
                                         const ml::CVec3* dir, const f32* angles,
                                         float f) {
-    if (func_8006EF04(0x200) == 0) {
+    if (func_8006EF04(0x200) != 0) {
         func_8004B79C(out, reinterpret_cast<const ml::CVec3*>(self->unk1C + 24));
         return;
     }
@@ -2117,7 +2456,7 @@ __declspec(noinline) void func_800733B8(ml::CVec3* out, cf::CfCamFollow* self,
 // lbl_eu_80527244 table into fnAt120; sel == 0 probes pos (func_8006BA80) and
 // falls back to fnAt128(). The chosen vector feeds the scaled camera basis
 // transform (func_80074010) using the slot-0xCC scale factor.
-void func_80074090(ml::CVec3* out, cf::CfCamSrcVt* src, ml::CVec3* pos, int sel) {
+extern "C" void func_80074090(ml::CVec3* out, cf::CfCamSrcVt* src, ml::CVec3* pos, int sel) {
     if (src == 0) {
         func_8004B79C(out, pos);
         return;
@@ -2135,7 +2474,7 @@ void func_80074090(ml::CVec3* out, cf::CfCamSrcVt* src, ml::CVec3* pos, int sel)
         func_8007420C(&v.x, src->fnAt120(lbl_eu_80527244[-sel]));
         func_8004B3F0(&cur, &v);
     } else {
-        if (func_8006BA80(pos) != 0) {
+        if (func_8006BA80(reinterpret_cast<void*>(pos)) != 0) {
             const float* p = src->fnAt128();
             if (p != 0) {
                 ml::CVec3 v;
@@ -2199,10 +2538,10 @@ void func_80073D8C(cf::CfCamFollow* self, int cond) {
 // follow camera. The final copy reuses the +0x40 vector as the source for
 // self's +0x10 slot.
 void func_80073DDC(cf::CfCamFollow* self, cf::CfCamPosSource* src) {
-    CfCamStateView* state = reinterpret_cast<CfCamStateView*>(
+    cf::CfCamStateView* state = reinterpret_cast<cf::CfCamStateView*>(
         __dynamic_cast(src, 0, &lbl_eu_80661B28, &lbl_eu_80661B30, 0));
     if (state != NULL) {
-        CfCamStateView* dst = reinterpret_cast<CfCamStateView*>(self);
+        cf::CfCamStateView* dst = reinterpret_cast<cf::CfCamStateView*>(self);
         func_8004B3F0(&dst->field34, &state->field34);
         func_8004B3F0(&dst->field28, &state->field28);
         func_8004B3F0(&dst->field58, &state->field58);
@@ -2282,13 +2621,37 @@ float func_80073F88(const ml::CVec3* v) {
 // func_80074010: build a follow-parameter vec3 - init a stack temp, scale it
 // by the float arg via func_80059610, derive the follow offset with
 // func_800598A8, then hand the result to func_8006C6E8 (PS kernel in the .inl).
-void func_80074010(nw4r::math::VEC3* a, nw4r::math::VEC3* b, nw4r::math::VEC3* c, float f) {
+// noinline keeps the retail `bl func_80074010` inside func_80074090.
+__declspec(noinline) void func_80074010(nw4r::math::VEC3* a, nw4r::math::VEC3* b, nw4r::math::VEC3* c, float f) {
     nw4r::math::VEC3 tmp2;
     nw4r::math::MTX33 tmp1; // larger stack slot - retail reserves extra frame space here
     nopFunc(&tmp1);
     func_80059610(&tmp1, f);
     func_800598A8(&tmp2, &tmp1, c);
     func_8006C6E8(a, b, &tmp2);
+}
+// func_800742FC: build a Y-rotation 3x4 matrix scaled by the angle argument.
+// The lbl_eu_806662E4 factor converts the angle to the fixed-point index
+// expected by the nw4r SinFIdx/CosFIdx kernels; translation column stays zero.
+// Returns mtx like the other nw4r-style matrix builders.
+float* func_800742FC(float* mtx, float scale) {
+    // Constant columns first: lets MWCC issue the SDA loads with the prologue
+    // cluster and sink the stores after the trig calls like retail.
+    float sinV = nw4r::math::SinFIdx(lbl_eu_806662E4 * scale);
+    float cosV = nw4r::math::CosFIdx(lbl_eu_806662E4 * scale);
+    mtx[0] = cosV;
+    mtx[1] = lbl_eu_806662DC;
+    mtx[2] = sinV;
+    mtx[3] = lbl_eu_806662DC;
+    mtx[4] = lbl_eu_806662DC;
+    mtx[5] = lbl_eu_806662D0;
+    mtx[6] = lbl_eu_806662DC;
+    mtx[7] = lbl_eu_806662DC;
+    mtx[8] = -sinV;
+    mtx[9] = lbl_eu_806662DC;
+    mtx[10] = cosV;
+    mtx[11] = lbl_eu_806662DC;
+    return mtx;
 }
 // func_80074230: transform two aim vectors by the inverse camera matrix of a
 // camera-position source. Builds an MTX34 on the stack, scales it by the
@@ -2312,9 +2675,53 @@ void func_80074230(cf::CfCamPosSource* src, ml::CVec3* dst1, ml::CVec3* dst2) {
     func_8006D6A8(&tmp2, mtx.mtx, dst2);
     func_8004B3F0(dst2, &tmp2);
 }
-void func_80074488(){}
-void func_80074534(){}
-void func_80074900(){}
+// func_80074488: compute the base camera position for a direction camera.
+// Builds a direction frame from `dir` (func_80074534), clamps the speed
+// parameter against the .sdata threshold (floor: lbl_eu_80661B60), packs a
+// (0, 0, speed) offset via func_8004B60C, transforms it into world space
+// (func_800598A8) and adds it to the lookat point (func_8006C6E8).
+__declspec(noinline) void func_80074488(ml::CVec3* out, ml::CVec3* lookat, const ml::CVec3* dir, f32 speed) {
+    ml::CMat33 dirFrame;
+    ml::CVec3 scaled;
+    ml::CVec3 offset;
+
+    nopFunc(&dirFrame);
+    func_80074534(&dirFrame, dir);
+
+    // Clamp speed to its configured minimum.
+    if (speed < lbl_eu_80661B64) {
+        speed = lbl_eu_80661B60;
+    }
+
+    void* packed = func_8004B60C(&offset, lbl_eu_806662DC, lbl_eu_806662DC, speed);
+    func_800598A8(&scaled, &dirFrame, packed);
+    func_8006C6E8(reinterpret_cast<nw4r::math::VEC3*>(out),
+                  reinterpret_cast<const nw4r::math::VEC3*>(lookat),
+                  reinterpret_cast<const nw4r::math::VEC3*>(&scaled));
+}
+// noinline keeps the retail `bl func_80074534` inside func_80074488.
+// noinline keeps the retail `bl func_80074534` inside func_80074488; C linkage
+// emits the flat retail symbol name.
+extern "C" __declspec(noinline) void func_80074534(void* arg, const ml::CVec3* dir){}
+// func_80074900: like func_80074488, but subtracts the transformed offset
+// from `pos` (out = pos - R*offset) instead of adding it to a lookat point.
+void func_80074900(ml::CVec3* out, ml::CVec3* pos, const ml::CVec3* dir, f32 speed) {
+    ml::CMat33 dirFrame;
+    ml::CVec3 scaled;
+    ml::CVec3 offset;
+
+    nopFunc(&dirFrame);
+    func_80074534(&dirFrame, dir);
+
+    // Clamp speed to its configured minimum.
+    if (speed < lbl_eu_80661B64) {
+        speed = lbl_eu_80661B60;
+    }
+
+    void* packed = func_8004B60C(&offset, lbl_eu_806662DC, lbl_eu_806662DC, speed);
+    func_800598A8(&scaled, &dirFrame, packed);
+    func_8004CB80(&out->x, &pos->x, &scaled.x);
+}
 // func_800749AC: direction vector from `from` to `to` (tmp = to - from); the
 // tmp length is returned, and the caller's vec gets a pitch/yaw pair via the
 // sin-wrapper func_8004CC40 (out[1] negated).
@@ -2339,7 +2746,46 @@ CPad* func_80074A3C(int controllerId) {
 __declspec(noinline) bool func_80074A74() {
     return cf::CfGameManager::getCurrentPad()->mPadType == PAD_TYPE_CLASSIC;
 }
-void func_80074AA4(){}
+// func_80074AA4: run camera action `id` (0..5) on the active camera-state
+// object. First probes the 0x8000000 remote-pad availability bit: when set,
+// each action dispatches func_80074CD4 with a <<16-shifted action mask;
+// otherwise the plain 1<<id mask. Every action also fires the object's
+// vtable+0x70 update; the slot's returned object is forwarded to
+// func_80074CD4. Unknown ids yield 0.
+int func_80074AA4(cf::CfObject* self, int id) {
+    if (func_8006BFC4(reinterpret_cast<int>(self), 0x8000000) != 0) {
+        switch (id) {
+        case 0:
+            return func_80074CD4(reinterpret_cast<CfObjActView*>(self)->v026(), 0x20000);
+        case 1:
+            return func_80074CD4(reinterpret_cast<CfObjActView*>(self)->v026(), 0x40000);
+        case 2:
+            return func_80074CD4(reinterpret_cast<CfObjActView*>(self)->v026(), 0x80000);
+        case 3:
+            return func_80074CD4(reinterpret_cast<CfObjActView*>(self)->v026(), 0x100000);
+        case 4:
+            return func_80074CD4(reinterpret_cast<CfObjActView*>(self)->v026(), 0x10);
+        case 5:
+            return func_80074CD4(reinterpret_cast<CfObjActView*>(self)->v026(), 0x20);
+        }
+    } else {
+        switch (id) {
+        case 0:
+            return func_80074CD4(reinterpret_cast<CfObjActView*>(self)->v026(), 0x1);
+        case 1:
+            return func_80074CD4(reinterpret_cast<CfObjActView*>(self)->v026(), 0x2);
+        case 2:
+            return func_80074CD4(reinterpret_cast<CfObjActView*>(self)->v026(), 0x4);
+        case 3:
+            return func_80074CD4(reinterpret_cast<CfObjActView*>(self)->v026(), 0x8);
+        case 4:
+            return func_80074CD4(reinterpret_cast<CfObjActView*>(self)->v026(), 0x10);
+        case 5:
+            return func_80074CD4(reinterpret_cast<CfObjActView*>(self)->v026(), 0x20);
+        }
+    }
+    return 0;
+}
 // func_80074CEC: allocate a 0x25c-byte CfCamFollow block on the mtl heap and
 // construct it with (self, arg2).
 extern "C" void func_80074CEC(void* self, void* arg2) {
@@ -2356,7 +2802,7 @@ extern "C" int CfObject_UnkVirtualFunc52__Q22cf8CfObjectFv() { return 0; }
 extern "C" u32 CfObject_UnkVirtualFunc54__Q22cf8CfObjectFv(void* self) { return 0; }
 extern "C" u32 CfObject_UnkVirtualFunc9__Q22cf8CfObjectFv(void* self) { return 1; }
 // cf::CActorParam base virtual (retail: lwz r3,0x15e4(r3); blr)
-extern "C" u32 CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(void* self) { return *(u32*)((char*)self + 0x15e4); }
+extern "C" int CActorParam_UnkVirtualFunc22__Q22cf11CActorParamFv(void* self) { return *(u32*)((char*)self + 0x15e4); }
 
 extern "C" bool func_8006B6C0() { return true; }
 extern "C" __declspec(noinline) void func_8006BF08(u16* p) { *p = 0; }
@@ -2376,12 +2822,13 @@ extern "C" void func_8006C1BC(cf::CfCamFollow* self, f32 value) {
 unsigned int func_8006CA20(const cf::CfCamFollow* self) {
     return (self->field_0x4EC >> 1) & 1;
 }
-// Bit 2 of the 0x64 flag word.
-extern "C" unsigned int func_8006DF9C(const cf::CfCamFollow* self) {
+// Bit 2 of the 0x64 flag word. (void* ABI to match CfCam.hpp's decl.)
+extern "C" __declspec(noinline) int func_8006DF9C(void* obj) {
+    const cf::CfCamFollow* self = static_cast<const cf::CfCamFollow*>(obj);
     return (self->field_0x64 >> 2) & 1;
 }
 extern "C" int func_8006E5B8(void* self) { return 0x10; }
-extern "C" bool func_80071B6C(cf::CfCamFollow* self, float val) {
+__declspec(noinline) bool func_80071B6C(cf::CfCamFollow* self, float val) {
     self->unk1E0 = val;
     return func_8049EB60(self);
 }

@@ -1292,11 +1292,13 @@ async function runOneTu(
         return;
       }
     }
-    const entries = readLedger(repoRoot, config.ledgerPath).filter((e) => e.tu === unit);
+    const entries = readLedger(repoRoot, config.ledgerPath).filter(
+      (e) => e.tu === unit || (e as any).detail?.tu === unit,
+    );
     const wasWorked = entries.some(
       (e) => e.event === "batch-accept" || e.event === "tu-started",
     ) || witnessTargets.length > witnessFallback.length; // witness certified >=1
-    if ((wasWorked || dryRun) && loadUnitTargets(repoRoot, config.region, unit).length > 0) {
+    if (loadUnitTargets(repoRoot, config.region, unit).length > 0) {
       await queueTuFinal(repoRoot, unit, config, modelRuntime, dryRun, sanitized);
       return;
     }

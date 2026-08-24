@@ -527,6 +527,7 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
     GXRenderModeObj* rmo;
     s16* vp = (s16*)data;
     u32* vu = (u32*)data;
+    f32 scale;
     s16 out[4];
     s32 x0, y0, w0, h0;
 
@@ -546,13 +547,16 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
         // scale is loaded after it into a volatile FPR (retail shape).
         void* pz = func_8044CEF8__8CGXCacheFv(&self->unk4, 3);
         u32 z = *(u32*)pz;
-        setCopyClearScaled(lbl_eu_8066A37C, *(const ml::CCol4*)data, z);
+        scale = lbl_eu_8066A37C;
+        setCopyClearScaled(scale, *(const ml::CCol4*)data, z);
         break;
     }
     case 3: {
         // Copy-clear: color from ring command 2, z depth from the data word.
         const ml::CCol4* pcol = (const ml::CCol4*)func_8044CEF8__8CGXCacheFv(&self->unk4, 2);
-        setCopyClearScaled(lbl_eu_8066A37C, *pcol, vu[0]);
+        u32 z = vu[0];
+        scale = lbl_eu_8066A37C;
+        setCopyClearScaled(scale, *pcol, z);
         break;
     }
     case 4:
@@ -664,8 +668,9 @@ extern "C" void func_80449D68__8CGXCacheFv(CGXCache* self, u32 sel, void* data) 
         s32 sumX = x0 + w0;
         s32 wmx = (s16)sumX;
         if (w > wmx) wmx = w;
+        u16 ux0 = (u16)x0;
         s32 wmn = x0;
-        if (self->rect4A0[1] < (s16)(u16)x0) wmn = 0;
+        if (self->rect4A0[1] < (s16)ux0) wmn = 0;
         s32 r1 = (s16)wmx - (s16)wmn;
         s32 a1 = w + w0;
         s32 cond1 = (a1 < r1);

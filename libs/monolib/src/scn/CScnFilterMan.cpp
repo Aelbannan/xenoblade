@@ -39,11 +39,14 @@ extern "C" __declspec(noinline) void func_8049D710(CScnFilter** item, u32 val);
 // then install the derived vtable. The flattened retail name cannot be
 // produced by a template instantiation under Wii/1.1 (symbolic mangling),
 // so it is spelled out (MWCC_CASES "flattened constructor" pattern).
-CScnFilterReslist* __ct__reslist_CScnFilter(CScnFilterReslist* obj) {
+#pragma push
+#pragma auto_inline off
+extern "C" CScnFilterReslist* __ct__reslist_CScnFilter(CScnFilterReslist* obj) {
     __ct___reslist_base_CScnFilter(obj);
     obj->mVtable = lbl_eu_8056EBAC;
     return obj;
 }
+#pragma pop
 
 // flattened base ctor for the iterator reslist (retail __ct__8049CC10):
 // zero the vptr slot, run the no-op member init helper at +8, then set up
@@ -52,10 +55,11 @@ extern "C" CScnFilterMan* func_8049CC70(CScnFilterMan* self);
 extern "C" __declspec(noinline) void* __ct__8049CC10(CScnFilterReslist* obj) {
     obj->mVtable = (u32*)lbl_eu_8056EBA0;
     func_8049CC70((CScnFilterMan*)((char*)obj + 8));
-    obj->mList = NULL;
     obj->mCapacity = 0;
     obj->field_0x1C = false;
-    CScnFilterListNode* pNode = obj->mStartNodePtr = &obj->mStartNode;
+    obj->mList = NULL;
+    CScnFilterListNode* pNode = &obj->mStartNode;
+    obj->mStartNodePtr = pNode;
     pNode->mNext = pNode;
     pNode->mPrev = pNode;
     return obj;
@@ -64,11 +68,14 @@ extern "C" __declspec(noinline) void* __ct__8049CC10(CScnFilterReslist* obj) {
 // Unknown-class ctor (retail __ct__8049CBD4): init via __ct__8049CC10, then
 // install the derived vtable. The object has a reslist-shaped layout
 // (vtable@0, sentinel@8, mList@0x14, mCapacity@0x18, flag@0x1C).
-CScnFilterReslist* __ct__8049CBD4(CScnFilterReslist* obj) {
+#pragma push
+#pragma auto_inline off
+extern "C" CScnFilterReslist* __ct__8049CBD4(CScnFilterReslist* obj) {
     __ct__8049CC10(obj);
     obj->mVtable = lbl_eu_8056EB88;
     return obj;
 }
+#pragma pop
 
 // _reslist_base<CScnFilter*> ctor (retail __ct___reslist_base_CScnFilter):
 // zeroes the storage fields and links the sentinel node onto itself. The
@@ -123,7 +130,10 @@ extern "C" __declspec(noinline) void* __dt___reslist_base_CScnFilter(CScnFilterR
 // bl at every call site stays emitted (MWCC -inline auto would fold it).
 extern "C" __declspec(noinline) void func_8049CB6C(CScnFilter** item) {}
 
-extern "C" void func_8049C9F8(void* self) { *(u32*)self = 0; }
+#pragma push
+#pragma auto_inline off
+extern "C" __declspec(noinline) void func_8049C9F8(void* self) { *(u32*)self = 0; }
+#pragma pop
 
 
 // reset a node's mNext after removal (no-op-ish free marker). noinline keeps
@@ -210,20 +220,28 @@ extern "C" __declspec(noinline) CScnFilterListIter* __dt__reslist__reslist_itera
     return self;
 }
 
-extern "C" void func_8049CE18();
-extern "C" void func_8049CE14(void) { func_8049CE18(); }
-
+extern "C" void func_8049CE18(void* list, void* val, int prio);
 #pragma push
 #pragma auto_inline off
-extern "C" void func_8049CE18(){}
+extern "C" void func_8049CE14(void* list, void* val, int prio) { func_8049CE18(list, val, prio); }
 #pragma pop
 
-extern "C" void func_8049CF48();
-extern "C" void func_8049CF44(void) { func_8049CF48(); }
+#pragma push
+#pragma auto_inline off
+extern "C" void func_8049CE18(void* list, void* val, int prio){
+}
+#pragma pop
+
+extern "C" void func_8049CF48(void* list, void* val, int prio);
+#pragma push
+#pragma auto_inline off
+extern "C" void func_8049CF44(void* list, void* val, int prio) { func_8049CF48(list, val, prio); }
+#pragma pop
 
 #pragma push
 #pragma auto_inline off
-extern "C" void func_8049CF48(){}
+extern "C" void func_8049CF48(void* list, void* val, int prio){
+}
 #pragma pop
 
 // ~CScnFilterMan: deregister from the scene render-callback list, flush
@@ -238,6 +256,28 @@ extern "C" void __dt__10IScnRenderFv(void* self, int flag);
 extern "C" u32 lbl_eu_8056EB78[4];
 extern "C" void func_8049D12C(void* self);
 extern "C" void func_8049D188(CScnFilterIteratorReslist* self);
+
+// flattened init function (retail __ct__CScnFilterMan): base IScnRender
+// init, vptr install, both reslists constructed, flags cleared, seed lists,
+// register with the scene render-callback chain.
+extern "C" void __ct__IScnRender(void* self);
+extern "C" void func_800B0A90(void* self);
+extern "C" void* func_80496018(CScn* scene);
+extern "C" u32 lbl_eu_8056EB78[4];
+
+extern "C" CScnFilterMan* __ct__CScnFilterMan(CScnFilterMan* self, CScn* scene) {
+    __ct__IScnRender(self);
+    self->mScene = scene;
+    *(void**)self = (void*)lbl_eu_8056EB78;
+    __ct__reslist_CScnFilter(&self->field_08);
+    __ct__8049CBD4((CScnFilterReslist*)&self->field_28);
+    func_8049C9F8(&self->field_48);
+    func_800B0A90(&self->field_48);
+    func_8049CE14(&self->field_08, func_80496018(scene), 4);
+    func_8049CF44(&self->field_28, func_80496018(scene), 4);
+    scene->addRenderCB((IScnRender*)self, 3, 0);
+    return self;
+}
 
 CScnFilterMan::~CScnFilterMan() {
     *(void**)this = (void*)lbl_eu_8056EB78;

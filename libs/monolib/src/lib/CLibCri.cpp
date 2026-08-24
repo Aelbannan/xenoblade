@@ -50,6 +50,10 @@ extern "C" void __ct__11CWorkThreadFPCcP11CWorkThreadi(void* self, const char* n
 extern "C" bool wkStandbyLogin__11CWorkThreadFv(void* self);
 extern "C" bool wkStandbyLogout__11CWorkThreadFv(void* self);
 extern "C" void __dl__FPv(void* p);
+extern "C" void __dt__11CDeviceVICbFv(void* self, int flag);
+extern "C" void __ct__11CDeviceVICbFv(void* self);
+extern "C" void __dt__11CWorkThreadFv(void* self, int flag);
+extern "C" u32 lbl_eu_8056CE58[52]; // CLibCri primary vtable (defined below)
 
 // Foreign vtable-slot symbols (retail flat names). The __RTTI__* typeinfo
 // symbols cannot be spelled in this TU (-RTTI on reserves them once the
@@ -150,8 +154,13 @@ void CLibCri::func_80459830() {
 // ============================================================================
 extern "C" void __ct__7CLibCriFPCcP11CWorkThread(CLibCri* self, const char* pName, CWorkThread* pParent) {
     __ct__11CWorkThreadFPCcP11CWorkThreadi(self, pName, pParent, 2);
+    __ct__11CDeviceVICbFv((char*)self + 0x1C4);
+    // full-object construction: restore the primary + both MI sub-vptrs
+    *(void**)self = &lbl_eu_8056CE58;
+    *(void**)((char*)self + 0x1C4) = (char*)&lbl_eu_8056CE58 + 0xA0;
+    self->mType = CWorkThread::THREAD_CLIBCRI;
+    *(void**)((char*)self + 0x1C8) = (char*)&lbl_eu_8056CE58 + 0xB8;
     lbl_eu_806656D8 = self;
-    self->mType = CWorkThread::THREAD_CLIBCRI; // 0xF
     CErrorWii::addCallback(static_cast<IErrorWii*>(self));
 }
 
@@ -163,14 +172,26 @@ extern "C" void __ct__7CLibCriFPCcP11CWorkThread(CLibCri* self, const char* pNam
 // @452@/@456@ dtor thunks below (retail keeps them as 2-insn tail calls).
 // ============================================================================
 #pragma auto_inline off
-extern "C" void __dt__7CLibCriFv(CLibCri* self, int flag) {
+extern "C" void* __dt__7CLibCriFv(CLibCri* self, int flag) {
+    char* base = (char*)self;
+    IErrorWii* errCb = static_cast<IErrorWii*>(self);
     if (self != nullptr) {
-        CErrorWii::removeCallback(static_cast<IErrorWii*>(self));
+        // full-object destruction: restore the primary + both MI sub-vptrs
+        *(void**)base = &lbl_eu_8056CE58;
+        *(void**)(base + 0x1C4) = (char*)&lbl_eu_8056CE58 + 0xA0;
+        *(void**)(base + 0x1C8) = (char*)&lbl_eu_8056CE58 + 0xB8;
+        if (self != nullptr) {
+            errCb = (IErrorWii*)(base + 0x1C8);
+        }
+        CErrorWii::removeCallback(errCb);
         lbl_eu_806656D8 = nullptr;
+        __dt__11CDeviceVICbFv(base + 0x1C4, 0);
+        __dt__11CWorkThreadFv(self, 0);
         if (flag > 0) {
             __dl__FPv(self);
         }
     }
+    return self;
 }
 #pragma auto_inline on
 

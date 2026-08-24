@@ -45,6 +45,15 @@ struct CVS_THREAD_DOWN_Vtbl {
 #undef CVT_PAD32
 #undef CVT_PAD64
 
+// Named view over the CVS_THREAD init-state triple (bytes 0x00-0x08), which
+// the factory copies wholesale from lbl_eu_80539A68. Same layout as the first
+// three CVS_THREAD words; only used to avoid anonymous-field access here.
+struct CVS_THREAD_DOWN_INIT {
+    u32 word0;  // 0x00
+    u32 word1;  // 0x04
+    u32 word2;  // 0x08
+};
+
 // Raw layout of the CVS_THREAD_DOWN object exposing the implicit vtable
 // pointer at 0x1C (owned by the CVS_THREAD base) so the factory can
 // override it with the DOWN vtable, plus the two voice slots.

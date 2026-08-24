@@ -249,8 +249,10 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
 
     // Ignore the two reserved "no-op" script names.
     if (name != nullptr) {
-        if (std::strcmp(name, &lbl_eu_804FB3A4[0xA]) == 0 ||
-            std::strcmp(name, &lbl_eu_804FB3A4[0x14]) == 0) {
+        if (std::strcmp(name, &lbl_eu_804FB3A4[0xA]) == 0) {
+            return false;
+        }
+        if (std::strcmp(name, &lbl_eu_804FB3A4[0x14]) == 0) {
             return false;
         }
     }
@@ -258,23 +260,19 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
     pathBuffer.mLength = std::strlen(name);
     std::strcpy(pathBuffer.mString, name);
 
-    // Search backward for the extension separator (lbl_eu_80661AD0).  Retail
-    // initialises extPos inside the if/else (not before the length test), so
-    // the li -1 lands in the branches.
+    // Search backward for the extension separator (lbl_eu_80661AD0).
     int extPos;
-    if (pathBuffer.mLength > 0) {
+    if (pathBuffer.mLength != 0) {
         u32 sepLen = std::strlen(lbl_eu_80661AD0);
-        char* searchPos = pathBuffer.mString + pathBuffer.mLength - 1;
-        char* searchEnd = pathBuffer.mString - 1;
+        char* searchPos = &pathBuffer.mString[pathBuffer.mLength - 1];
+        char* searchEnd = &pathBuffer.mString[-1];
+        extPos = -1;
         while (searchPos != searchEnd) {
             if (std::strncmp(searchPos, lbl_eu_80661AD0, sepLen) == 0) {
-                extPos = (int)(searchPos - pathBuffer.mString);
+                extPos = searchPos - pathBuffer.mString;
                 break;
             }
             searchPos--;
-        }
-        if (searchPos == searchEnd) {
-            extPos = -1;
         }
     } else {
         extPos = -1;
@@ -284,7 +282,7 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
     if ((u32)(extPos + 1) > 1u) {
         tempBuffer[0] = '\0';
         tempLen = 0;
-        if (pathBuffer.mLength > 0) {
+        if (pathBuffer.mLength != 0) {
             if (extPos == -1) {
                 extPos = pathBuffer.mLength;
             }
@@ -317,9 +315,12 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
 
     // If the same script is already loaded, leave it alone.
     if (extBuffer.mLength > 0) {
-        if (std::strcmp(extBuffer.mString, script->mName) == 0 &&
-            !(script->mFlags & 0x2) && (script->mFlags & 0x1)) {
-            return true;
+        if (std::strcmp(extBuffer.mString, script->mName) == 0) {
+            if (!(script->mFlags & 0x2)) {
+                if (script->mFlags & 0x1) {
+                    return true;
+                }
+            }
         }
     }
 
@@ -337,15 +338,13 @@ extern "C" bool func_80068ECC(CfScript* script, const char* name) {
     script->mWaitCount = 0;
     script->mName[0] = '\0';
     script->mNameLen = 0;
-    u32 flags = script->mFlags;
-    flags &= ~0x3B;
-    flags &= ~0x09;
-    script->mFlags = flags;
+    // Single load, two mask ANDs, one store (retail: and/and/stw).
+    script->mFlags = script->mFlags & ~0x3B & ~0x09;
 
     void* handle = CfRes_readCommonArchive(script->mVmContext, pathBuffer.mString, script);
     script->mFileHandle = handle;
-    // Bool computed before the branch so it survives the name-store calls in a
-    // saved register (retail: neg/or/srwi. r27, then `beq` on the same bits).
+    // Bool survives the name-store calls in a saved register (retail:
+    // neg/or/srwi. r27, then `beq` on the same bits).
     bool loaded = handle != nullptr;
     if (loaded) {
         script->mNameLen = std::strlen(extBuffer.mString);

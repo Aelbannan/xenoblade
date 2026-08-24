@@ -374,31 +374,33 @@ struct MpfsysInitLayout {
 
 void mpfsys::UnkClass_80471EC8::func_804724DC() {
     MpfsysLayerRec* rec = (MpfsysLayerRec*)this;
-    // Trivial view of the shared zero vector so copies stay inline.
-    MpfsysVec3 zeroVec = *(MpfsysVec3*)&ml::CVec3::zero;
+    // Anchor-row Y heights as ints: retail converts these at runtime
+    // (li/xoris/magic-double path), never folding them to float literals.
+    int anchor = 0;
+    const u32* zw = (const u32*)&ml::CVec3::zero;
     for (int i = 0; i < 0x40; i++) {
-        // Three fixed-axis vectors with one randomised component each.
+        // Three fixed-axis anchor rows (0/a), (0/a+1), (0/a+2).
         rec->f00.x = lbl_eu_8066A744;
-        rec->f00.y = lbl_eu_8066A748 * (f32)(rand() % 100) - lbl_eu_8066A74C;
+        rec->f00.y = (f32)anchor;
         rec->f00.z = lbl_eu_8066A744;
         rec->f0C.x = lbl_eu_8066A744;
-        rec->f0C.y = (f32)1;
+        rec->f0C.y = (f32)(anchor + 1);
         rec->f0C.z = lbl_eu_8066A744;
         rec->f18.x = lbl_eu_8066A744;
-        rec->f18.y = (f32)2;
+        rec->f18.y = (f32)(anchor + 2);
         rec->f18.z = lbl_eu_8066A744;
-        rec->f24.w[0] = zeroVec.w[0];
-        rec->f24.w[1] = zeroVec.w[1];
-        rec->f24.w[2] = zeroVec.w[2];
-        rec->f30.w[0] = zeroVec.w[0];
-        rec->f30.w[1] = zeroVec.w[1];
-        rec->f30.w[2] = zeroVec.w[2];
-        rec->f3C.w[0] = zeroVec.w[0];
-        rec->f3C.w[1] = zeroVec.w[1];
-        rec->f3C.w[2] = zeroVec.w[2];
+        rec->f24.w[0] = zw[0];
+        rec->f24.w[1] = zw[1];
+        rec->f24.w[2] = zw[2];
+        rec->f30.w[0] = zw[0];
+        rec->f30.w[1] = zw[1];
+        rec->f30.w[2] = zw[2];
+        rec->f3C.w[0] = zw[0];
+        rec->f3C.w[1] = zw[1];
+        rec->f3C.w[2] = zw[2];
         PSMTXIdentity(rec->mtxA);
         PSMTXIdentity(rec->mtxB);
-        // Direction vector: two more random draws scaled into [-c, c].
+        // Direction vector: two random draws scaled into [-c, c].
         f32 dz = lbl_eu_8066A748 * (f32)(rand() % 100) - lbl_eu_8066A74C;
         rec->dir.x = lbl_eu_8066A748 * (f32)(rand() % 100) - lbl_eu_8066A74C;
         rec->dir.y = lbl_eu_8066A744;
@@ -411,12 +413,12 @@ void mpfsys::UnkClass_80471EC8::func_804724DC() {
             goto next;
         }
         {
-            f32 lenSq = dz * dz + (rec->dir.x * rec->dir.x +
-                                   rec->dir.y * rec->dir.y);
+            f32 lenSq = rec->dir.z * rec->dir.z +
+                        (rec->dir.x * rec->dir.x + rec->dir.y * rec->dir.y);
             if (lenSq == lbl_eu_8066A744) {
-                rec->dir.w[0] = zeroVec.w[0];
-                rec->dir.w[1] = zeroVec.w[1];
-                rec->dir.w[2] = zeroVec.w[2];
+                rec->dir.w[0] = zw[0];
+                rec->dir.w[1] = zw[1];
+                rec->dir.w[2] = zw[2];
             } else {
                 PSVECNormalize((Vec*)&rec->dir, (Vec*)&rec->dir);
             }
@@ -426,9 +428,10 @@ void mpfsys::UnkClass_80471EC8::func_804724DC() {
     }
 
     // Reset the shared layer-state tail: weight table, LOD constants and the
-    // colour-mode fields, then clear the first 0x20 bytes of the table.
+    // colour-mode fields. The memset below clears w[0..7], so only the
+    // surviving weights are stored.
     MpfsysInitLayout* st = (MpfsysInitLayout*)this;
-    for (int i = 0; i < 36; i++) {
+    for (int i = 8; i < 36; i++) {
         st->w[i] = lbl_eu_8066A754;
     }
     st->lod0[0] = lbl_eu_8066A758;
@@ -631,9 +634,7 @@ void func_804728E8__Q26mpfsys17UnkClass_80471EC8Fv(
         f32 lsq = rec->dir.z * rec->dir.z +
                   (rec->dir.x * rec->dir.x + rec->dir.y * rec->dir.y);
         if (lsq == lbl_eu_8066A744) {
-            rec->dir.w[0] = zeroVec.w[0];
-            rec->dir.w[1] = zeroVec.w[1];
-            rec->dir.w[2] = zeroVec.w[2];
+            rec->dir = *(MpfsysVec3*)&ml::CVec3::zero;
         } else {
             PSVECNormalize((Vec*)&rec->dir, (Vec*)&rec->dir);
         }

@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/action/CActParamData.hpp"
+#include "libs/monolib/src/scn/CScnItemAnim.hpp"
 #include "monolib/util/FixStr.hpp"
 #include <string.h>
 
@@ -723,7 +724,9 @@ void func_80053B24(CActParamData* self, void* entry, void* obj, void* nodeA,
     if (nodeA != 0 && nodeB != 0) {
         self->mNode0C = nodeA;
         self->mNode08 = reinterpret_cast<u8*>(nodeB) + 0x20;
-        func_800555EC(self, nodeA, nodeB);
+        func_800555EC(reinterpret_cast<CActParamLinkTable*>(self),
+                      reinterpret_cast<CScnItemAnim*>(nodeA),
+                      static_cast<ActParamStackNode*>(nodeB));
         u32 cnt = self->mCount210;
         self->mKeys1D0[cnt] = nodeA;
         self->mNodes1F0[cnt] = nodeB;
@@ -742,15 +745,21 @@ void func_80054980(ActParamWalkHost* host) {
         return;
     }
     CActParamWalkRec* rec = advanceWalkRec(host->mRec278);
-    while (rec->mType2 > 1) {
-        if (rec->mType2 != 9) {
-            rec = advanceWalkRec(rec);
-            continue;
+    // Retail shares one type-dispatch block between the loop back-edge and
+    // the initial entry; express that shape directly.
+    goto check;
+body:
+    if (rec->mSel08 == 0 && host->mIf24 != 0) {
+        host->mIf24->vf0C(host->mField04, rec->mByte0A, rec->mByte0B);
+    }
+next:
+    rec = advanceWalkRec(rec);
+check:
+    if (rec->mType2 > 1) {
+        if (rec->mType2 == 9) {
+            goto body;
         }
-        if (rec->mSel08 == 0 && host->mIf24 != 0) {
-            host->mIf24->vf0C(host->mField04, rec->mByte0A, rec->mByte0B);
-        }
-        rec = advanceWalkRec(rec);
+        goto next;
     }
 }
 // Walk the record chain with handler id 9, then run the ctx gate callbacks.
@@ -893,14 +902,60 @@ void func_80055700(CActParamLinkTable* table, int flag, CActParamRecStream* stre
     func_80055960(table, reinterpret_cast<ActParamStrRec*>(recBase),
                   reinterpret_cast<ActParamStrRec*>(recBase));
 }
+// Register a stream node's record chain into the table slots. Each type-0
+// record resolves its name tag against the anim resource, then claims its
+// slot unless a type-2 record follows it. After the type-1 terminator, a
+// first-time registration re-runs the payload swap over the fresh chain.
+int func_800555EC(CActParamLinkTable* table, CScnItemAnim* anim, ActParamStackNode* node) {
+    if (node->mMode10 != 3) {
+        return 0;
+    }
+    ActParamRegRec* recBase = reinterpret_cast<ActParamRegRec*>(&node->mBytes20);
+    ActParamRegRec* rec = recBase;
+    node->mWord14++;
+    for (;;) {
+        u16 type = rec->mType2;
+        if (type == 0) {
+            if ((s8)rec->mByte14 != 0) {
+                rec->mField10 = func_8049E648(anim, reinterpret_cast<const char*>(&rec->mByte14));
+            }
+            u32 sel = rec->mSel8;
+            if (sel != 0) {
+                u32* slot = &table->mSlots[sel];
+                ActParamRegRec* next =
+                    reinterpret_cast<ActParamRegRec*>(reinterpret_cast<u8*>(rec) + rec->mOffset0);
+                if (*slot == 0) {
+                    *slot = reinterpret_cast<u32>(rec);
+                } else if (next->mType2 != 2) {
+                    *slot = reinterpret_cast<u32>(rec);
+                }
+            }
+        } else if (type == 1) {
+            break;
+        }
+        rec = reinterpret_cast<ActParamRegRec*>(reinterpret_cast<u8*>(rec) + rec->mOffset0);
+    }
+    if (node->mWord14 == 1) {
+        node->mPtr08 = 0;
+        node->mPtr0C = 0;
+        func_800557E8(reinterpret_cast<ActParamStack*>(table),
+                      reinterpret_cast<ActParamStrRec*>(recBase),
+                      reinterpret_cast<ActParamStrRec*>(recBase));
+    }
+    if (node->mSelf18 == 0) {
+        node->mSelf18 = node;
+    }
+    return 0;
+}
+
 // Push a node pair onto the stack slots, then splice b into the list after
 // the last node whose payload differs from b's.
 void func_80055AC4(ActParamStack* self, ActParamStackNode* a, ActParamStackNode* b) {
-    func_800555EC(self, a, b);
+    func_800555EC(reinterpret_cast<CActParamLinkTable*>(self), reinterpret_cast<CScnItemAnim*>(a), b);
     self->mSlots1D0[self->mCount210] = a;
-    u32 idx2 = self->mCount210;
-    self->mSlots1F0[idx2] = b;
-    self->mCount210 = idx2 + 1;
+    // Post-increment inside the subscript: one load feeds both the address
+    // and the deferred count store-back.
+    self->mSlots1F0[self->mCount210++] = b;
     if (b->mWord14 <= 1) {
         // Walk toward b: only the payload swaps are skipped once we reach it;
         // the append-at-tail step runs regardless.
@@ -1108,6 +1163,55 @@ int func_80055EBC(CActParamData* self) {
     return result;
 }
 
+// Sub-object selector getter: pick block A (sel==0) or B, read its linked
+// ref (+0x48) and current threshold float (+0x54), and gate the returned
+// short on signed comparisons of the ref shorts against that threshold.
+struct ActParamSelBlk {
+    u8 _pad00[0x48];
+    CActParamDataRef* mRef48;              // 0x48
+    u8 _pad4C[0x54 - 0x4C];
+    float mLimit54;                        // 0x54
+};
+int func_80055F94(CActParamData* self, int sel);
+int func_80055F94(CActParamData* self, int sel) {
+    ActParamSelBlk* blk;
+    if (sel != 0) {
+        blk = reinterpret_cast<ActParamSelBlk*>(self->getResetBlock2E0());
+    } else {
+        blk = reinterpret_cast<ActParamSelBlk*>(&self->mA260);
+    }
+    const CActParamDataRef* ref = blk->mRef48;
+    if (ref == NULL) {
+        return 0;
+    }
+    s16 v = ref->mShort08;
+    if (v == 0) {
+        return ref->mShort0C;
+    }
+    // Builtin s16 casts: MWCC emits the lis/xoris/stw/stw/lfd/fsubs magic
+    // idiom per check (byte-identical to retail; see MWCC_CASES 7i). The
+    // 2^52 magic constant pools to a TU-local cookie that the repo reloc
+    // map canonicalizes to lbl_eu_80665F98.
+    if ((float)v > blk->mLimit54) {
+        return 0;
+    }
+    if (!((float)v <= blk->mLimit54)) {
+        goto zero;
+    }
+    s16 w = ref->mShort0A;
+    if (w != 0) {
+        if (!((float)w > blk->mLimit54)) {
+            goto zero;
+        }
+    } else {
+        goto lb0;
+    }
+lb0:
+    return ref->mShort0C;
+zero:
+    return 0;
+}
+
 // Tail-call the vt+0xC0 lookup with a 16-bit-truncated index, guarded by the
 // global table's entry count at +0x60.
 int func_80056760(ActParamCallIf* self, void* unused, u32 index) {
@@ -1142,7 +1246,12 @@ int func_80056C34(u32 flags, void* unused, CActParamSet4C* dst, const CActParamB
     dst->field_0x4C = src->mByte08;
     return 0;
 }
-extern "C" void func_80056CC8() {}
+// Bit-2-gated word store into dst+0x48; always returns 0.
+int func_80056CC8(u32 flags, void* unused, CActParamBlock* dst, u32 val) {
+    if ((flags & 4) == 0) return 0;
+    dst->mField48 = val;
+    return 0;
+}
 // Tail-call virtual slot 0xBC with a 16-bit-truncated index, guarded by the
 // global table's entry count.
 int func_80056730(ActParamCallIf* self, void* unused, u32 index) {
@@ -1158,8 +1267,62 @@ int func_80057470(u32 flags, void* unused, CActParamSet7C* dst, const CActParamD
     dst->field_0x7C = src->mShort08;
     return 0;
 }
-extern "C" void func_80056EC8() {}
-extern "C" void func_80057084() {}
+// ============================================================
+// us-80057530: func_80056EC8
+// Bit-3-gated threshold check (func_80056A98 variant): the range test here
+// CLEARS the fire flag; a fired callback invokes the cb object's vt+0x18
+// with the data object and the source record.
+// ============================================================
+int func_80056EC8(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamSrc5* src) {
+    if ((flags & 8) == 0) {
+        return 0;
+    }
+    float t = static_cast<float>(src->mShort08);
+    if (t == lbl_eu_80665F80) {
+        static_cast<ActParamObj5*>(host->mObj04)->notify14();
+    }
+    int fire;
+    if (vals->mFloat50 <= lbl_eu_80665F80 && vals->mFloat54 >= lbl_eu_80665F78) {
+        // Range already satisfied: never fire.
+        fire = 0;
+        goto invoke;
+    }
+    fire = 1;
+    {
+        int hit;
+        if (t <= vals->mFloat54 && t > vals->mFloat50 &&
+            static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
+            hit = 1;
+        } else {
+            hit = 0;
+        }
+        if (hit == 0) {
+            // Edge case: t exactly on both bounds while the entry threshold
+            // is crossed and the fire count is still zero.
+            if (t == vals->mFloat54 && t == vals->mFloat50 &&
+                static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80 &&
+                vals->mField58 < 1) {
+                hit = 1;
+            } else {
+                hit = 0;
+            }
+            if (hit == 0) {
+                fire = 0;
+            }
+        }
+    }
+invoke:
+    if (fire == 0) {
+        if (src->mShort08 == 0) {
+            return 0;
+        }
+    } else {
+        if (host->mCb24 != 0) {
+            reinterpret_cast<ActParamCb18*>(host->mCb24)->invoke18(host->mObj04, src);
+        }
+    }
+    return 0;
+}extern "C" void func_80057084() {}
 
 // Bit-2-gated: store the selector from src+0x08 into dst+0x1C, then walk the
 // node chain table->mNodes[sel] until a type-1 terminator; a type-0 node's
@@ -1209,19 +1372,22 @@ void func_8005577C(CActParamLinkTable* table, CActParamRecStream* stream) {
 // Bit-2-gated: append src's byte to the list if the list is empty and the
 // value is not already present. Always returns 0.
 int func_80057828(u32 flags, CActParamByteList* list, u8* unused, const CActParamByteSrc08* src) {
+    // Declared first so it claims src's dead argument register (r6) at the
+    // tail, matching retail's allocation.
+    int cnt;
     if ((flags & 4) == 0) return 0;
-    int count = list->mCount2C;
-    if (count >= 1) {
+    if (list->mCount2C >= 1) {
         return 0;
     }
-    u8 value = src->mByte08;
-    for (int i = 0; i < count; i++) {
+    u32 value = src->mByte08;
+    for (int i = 0; i < list->mCount2C; i++) {
         if (value == list->mEntries[i]) {
             return 0;
         }
     }
-    list->mEntries[list->mCount2C] = value;
-    list->mCount2C = list->mCount2C + 1;
+    cnt = static_cast<volatile CActParamByteList*>(list)->mCount2C;
+    list->mEntries[cnt] = value;
+    list->mCount2C = cnt + 1;
     return 0;
 }
 int func_80057244(u32 flags, CActParamSet20* dst, void* unused, const CActParamWordSrc08* src) {
@@ -1258,54 +1424,38 @@ convert:
 // Range test against the packed halfword pair at c+0x28/0x2A, then
 // dispatch through a function table indexed by (lo halfword - 0x2A).
 // ============================================================
+    // Fall-through chain mirroring retail: lo==0 path first, then hi==0, then
+    // both-bounds; every pass path converges on the table dispatch.
 int func_80057BA0(u32 flags, ActParamT19ArgA* a, ActParamT19ArgB* b, ActParamT19ArgC* c) {
     if ((flags & 2) == 0) {
         return 0;
     }
     u16 x = c->mShort28;
-    u16 y;
-    if (x != 0) {
-        goto reloadY;
-    }
-    y = c->mShort2A;
-    if (y == 0) {
-        goto dispatch;
-    }
-    // Only an upper bound: pass when t < y.
-    if (b->mFloat54 < (float)y) {
-        goto dispatch;
-    }
-reloadY:
-    y = c->mShort2A;
-    if (y != 0) {
-        goto bounds;
-    }
-    // Only a lower bound: pass when t >= x.
+    u32 packed;
     if (x == 0) {
-        goto bounds;
-    }
-    if (b->mFloat54 >= (float)x) {
-        goto dispatch;
-    }
-bounds:
-    if (x == 0) {
+        if (c->mShort2A == 0) {
+            goto dispatch;
+        }
+        // Only an upper bound: pass when t < y.
+        if (b->mFloat54 < c->mShort2A) {
+            goto dispatch;
+        }
         return 0;
     }
-    if (y == 0) {
+    if (c->mShort2A == 0) {
+        // Only a lower bound: pass when t >= x.
+        if (b->mFloat54 >= x) {
+            goto dispatch;
+        }
         return 0;
     }
-    if (b->mFloat54 >= (float)x) {
-        return 0;
-    }
-    if (b->mFloat54 >= (float)y) {
+    if (!(b->mFloat54 < x) || !(b->mFloat54 < c->mShort2A)) {
         return 0;
     }
 dispatch:
-    u32 packed = c->mField08;
-    return lbl_eu_805705F0[(u16)packed - 0x2A](a->mField10, (u16)packed, packed >> 16,
-                                               c->mField24)
-               ? 1
-               : 0;
+    packed = c->mField08;
+    return lbl_eu_805705F0[(u16)packed - 0x2A](a->mField10, (u16)packed, packed >> 16) ? 1
+                                                                                      : 0;
 }
 
 // ============================================================
@@ -1531,50 +1681,54 @@ int func_80056D00(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     if ((flags & 8) == 0) {
         return 0;
     }
+    int fire;
+    // Head: convert + float-compare before the call like retail; the value
+    // dies at the compare so no nonvolatile spill is needed.
     if (actSrc5Time(src) == lbl_eu_80665F80) {
         static_cast<ActParamObj5*>(host->mObj04)->notify14();
     }
-    // fire defaults to 1; only the range/edge tests below can clear it.
-    int fire = 1;
-    if (vals->mFloat50 <= lbl_eu_80665F80) {
-        if (vals->mFloat54 >= lbl_eu_80665F78) {
-            fire = 0;
-            goto invoke;
-        }
-    }
-    if (actSrc5Time(src) > vals->mFloat54) {
-        int g2 = 0;
-        if (actSrc5Time(src) > vals->mFloat50) {
-            if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
-                g2 = 1;
-            }
-        }
-        if (g2 != 0) {
-            goto invoke;
-        }
-    }
-    {
-        int g3 = 0;
-        if (actSrc5Time(src) == vals->mFloat54) {
-            int r6 = 0;
-            if (actSrc5Time(src) == vals->mFloat50) {
+    // Volatile view blocks CSE with the head conversion, so this copy is
+    // recomputed after the call and stays in a volatile FP register.
+    float t = static_cast<float>(src->mShort08v);
+    if (vals->mFloat50 <= lbl_eu_80665F80 && vals->mFloat54 >= lbl_eu_80665F78) {
+        // Range already satisfied: never fire.
+        fire = 0;
+    } else {
+        fire = 1;
+        int g2;
+        if (t > vals->mFloat54) {
+            g2 = 1;
+        } else {
+            int r5 = 0;
+            if (t > vals->mFloat50) {
                 if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
-                    r6 = 1;
+                    r5 = 1;
                 }
             }
-            if (r6 != 0) {
-                g3 = 1;
-            }
+            g2 = r5;
         }
-        if (g3 != 0) {
-            if (vals->mField58 >= 1) {
+        if (g2 == 0) {
+            int g3 = 0;
+            if (t == vals->mFloat54) {
+                int r6 = 0;
+                if (t == vals->mFloat50) {
+                    if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
+                        r6 = 1;
+                    }
+                }
+                if (r6 != 0) {
+                    g3 = 1;
+                }
+            }
+            if (g3 != 0) {
+                if (vals->mField58 >= 1) {
+                    fire = 0;
+                }
+            } else {
                 fire = 0;
             }
-        } else {
-            fire = 0;
         }
     }
-invoke:
     if (fire != 0) {
         if (host->mCb24 != 0) {
             reinterpret_cast<ActParamCb14*>(host->mCb24)->invoke14(host->mObj04, src);
@@ -1587,50 +1741,47 @@ int func_80057280(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     if ((flags & 8) == 0) {
         return 0;
     }
+    // Head check converts independently; the working copy below is computed
+    // after the call so its lifetime never spans the bctrl (a local that
+    // spans the call makes MWCC spill it to a nonvolatile FPR, unlike retail).
     if (actSrc5Time(src) == lbl_eu_80665F80) {
         static_cast<ActParamObj5*>(host->mObj04)->notify14();
     }
+    float t = static_cast<float>(src->mShort08);
     // fire defaults to 1; only the range/edge tests below can clear it.
     int fire = 1;
-    if (vals->mFloat50 <= lbl_eu_80665F80) {
-        if (vals->mFloat54 >= lbl_eu_80665F78) {
-            fire = 0;
-            goto invoke;
-        }
-    }
-    if (actSrc5Time(src) > vals->mFloat54) {
-        int g2 = 0;
-        if (actSrc5Time(src) > vals->mFloat50) {
-            if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
-                g2 = 1;
-            }
-        }
-        if (g2 != 0) {
-            goto invoke;
-        }
-    }
-    {
-        int g3 = 0;
-        if (actSrc5Time(src) == vals->mFloat54) {
-            int r6 = 0;
-            if (actSrc5Time(src) == vals->mFloat50) {
-                if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
-                    r6 = 1;
+    if (vals->mFloat50 <= lbl_eu_80665F80 && vals->mFloat54 >= lbl_eu_80665F78) {
+        // Already inside the passive range: never fire.
+        fire = 0;
+    } else {
+        int hit = 0;
+        if (t <= vals->mFloat54) {
+            if (t > vals->mFloat50) {
+                if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 >
+                    lbl_eu_80665F80) {
+                    hit = 1;
                 }
             }
-            if (r6 != 0) {
-                g3 = 1;
-            }
         }
-        if (g3 != 0) {
-            if (vals->mField58 >= 1) {
+        if (hit == 0) {
+            hit = 0;
+            if (t == vals->mFloat54) {
+                if (t == vals->mFloat50) {
+                    if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 >
+                        lbl_eu_80665F80) {
+                        hit = 1;
+                    }
+                }
+            }
+            if (hit != 0) {
+                if (vals->mField58 >= 1) {
+                    fire = 0;
+                }
+            } else {
                 fire = 0;
             }
-        } else {
-            fire = 0;
         }
     }
-invoke:
     if (fire != 0) {
         if (host->mCb24 != 0) {
             reinterpret_cast<ActParamCb1C*>(host->mCb24)->invoke1C(host->mObj04, src);
@@ -1643,46 +1794,71 @@ int func_800568E8(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     if ((flags & 8) == 0) {
         return 0;
     }
-    if (actSrc5Time(src) == lbl_eu_80665F80) {
-        static_cast<ActParamObj5*>(host->mObj04)->notify14();
+    // The halfword time is widened once to double via the 0x4330
+    // magic-high-word idiom; subtracting the NAMED 2^52 constant makes MWCC
+    // reference retail's lbl_eu_80665F90 sdata2 pool entry.
+    union {
+        u32 w[2];
+        double d;
+    } cvt;
+    // Halfword first, magic word second: retail's store order on the frame.
+    cvt.w[1] = src->mShort08;
+    cvt.w[0] = 0x43300000;
+    double t = cvt.d - lbl_eu_80665F90;
+    if (lbl_eu_80665F80 == t) {
+        // notify14 returns the time as a double, so t stays live in f1
+        // across the call (retail reuses the ABI return register).
+        t = static_cast<ActParamObj5*>(host->mObj04)->notify14();
     }
-    // fire defaults to 1; only the range/edge tests below can clear it.
-    int fire = 1;
+    int fire;
+    int flag;
+    int both;
+    int edge;
     if (vals->mFloat50 <= lbl_eu_80665F80) {
         if (vals->mFloat54 >= lbl_eu_80665F78) {
+            // Range already satisfied: never fire.
             fire = 0;
             goto invoke;
         }
     }
-    if (actSrc5Time(src) > vals->mFloat54) {
-        int g2 = 0;
-        if (actSrc5Time(src) > vals->mFloat50) {
+    fire = 1;
+    edge = 0;
+    // Negated spelling: only this form lowers a mixed double/float compare
+    // with retail's fcmpo + cror eq,lt,eq merge.
+    if (!(t <= vals->mFloat54)) {
+        flag = 0;
+        if (t > vals->mFloat50) {
             if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
-                g2 = 1;
+                flag = 1;
             }
         }
-        if (g2 != 0) {
-            goto invoke;
+        if (flag != 0) {
+            edge = 1;
         }
     }
+    if (edge != 0) {
+        goto invoke;
+    }
     {
-        int g3 = 0;
-        if (actSrc5Time(src) == vals->mFloat54) {
-            int r6 = 0;
-            if (actSrc5Time(src) == vals->mFloat50) {
+        edge = 0;
+        flag = 0;
+        if (t == vals->mFloat54) {
+            both = 0;
+            if (t == vals->mFloat50) {
                 if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
-                    r6 = 1;
+                    both = 1;
                 }
             }
-            if (r6 != 0) {
-                g3 = 1;
+            if (both != 0) {
+                edge = 1;
             }
         }
-        if (g3 != 0) {
-            if (vals->mField58 >= 1) {
-                fire = 0;
+        if (edge != 0) {
+            if (vals->mField58 < 1) {
+                flag = 1;
             }
-        } else {
+        }
+        if (flag == 0) {
             fire = 0;
         }
     }
@@ -1691,7 +1867,7 @@ invoke:
         if (host->mCb24 != 0) {
             // The two payload bytes ride along with the object pointer.
             reinterpret_cast<ActParamCb0C*>(host->mCb24)->invoke0C(host->mObj04, src->mByte0A,
-                                                              src->mByte0B);
+                                                                   src->mByte0B);
         }
     }
     return 0;
@@ -1702,48 +1878,70 @@ int func_80057670(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
         return 0;
     }
     if (vals->mField14 == 0) {
-        return 0;
+        // Shared zero-return lives at the very end so MWCC branches forward
+        // to it (retail beq-to-END shape) instead of duplicating a local
+        // return block here.
+        goto zeroret;
     }
-    if (actSrc5Time(src) == lbl_eu_80665F80) {
-        static_cast<ActParamObj5*>(host->mObj04)->notify14();
+    // Halfword widened to single-precision float via the standard
+    // 0x4330-magic uint->float idiom.
+    float t = static_cast<float>(src->mShort08);
+    if (lbl_eu_80665F80 == t) {
+        // notify14 returns the time as a float in f1, keeping t live across
+        // the call (retail reuses the ABI return register).
+        t = static_cast<ActParamObj5f*>(host->mObj04)->notify14();
     }
-    // fire defaults to 1; only the range/edge tests below can clear it.
-    int fire = 1;
+    int fire;
     if (vals->mFloat50 <= lbl_eu_80665F80) {
         if (vals->mFloat54 >= lbl_eu_80665F78) {
+            // Already inside the passive range: never fire.
             fire = 0;
             goto invoke;
         }
     }
-    if (actSrc5Time(src) > vals->mFloat54) {
-        int g2 = 0;
-        if (actSrc5Time(src) > vals->mFloat50) {
-            if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
-                g2 = 1;
+    fire = 1;
+    {
+        int edge = 0;
+        int tmp;
+        if (t <= vals->mFloat54) {
+            // Inside the window: a dip below 50 with threshold crossed
+            // fires immediately.
+            tmp = 0;
+            if (t > vals->mFloat50) {
+                if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 >
+                    lbl_eu_80665F80) {
+                    tmp = 1;
+                }
             }
         }
-        if (g2 != 0) {
+        if (tmp != 0) {
+            edge = 1;
+        }
+        if (edge != 0) {
             goto invoke;
         }
     }
     {
-        int g3 = 0;
-        if (actSrc5Time(src) == vals->mFloat54) {
-            int r6 = 0;
-            if (actSrc5Time(src) == vals->mFloat50) {
-                if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
-                    r6 = 1;
+        int keep = 0;
+        int edge = 0;
+        int hit = 0;
+        if (t == vals->mFloat54) {
+            if (t == vals->mFloat50) {
+                if (static_cast<ActParamData388*>(host->mObj04)->mFloat388 >
+                    lbl_eu_80665F80) {
+                    hit = 1;
                 }
             }
-            if (r6 != 0) {
-                g3 = 1;
+            if (hit != 0) {
+                edge = 1;
             }
         }
-        if (g3 != 0) {
-            if (vals->mField58 >= 1) {
-                fire = 0;
+        if (edge != 0) {
+            if (vals->mField58 < 1) {
+                keep = 1;
             }
-        } else {
+        }
+        if (keep == 0) {
             fire = 0;
         }
     }
@@ -1753,6 +1951,7 @@ invoke:
             reinterpret_cast<ActParamCb20*>(host->mCb24)->invoke20(host->mObj04, src);
         }
     }
+zeroret:
     return 0;
 }
 
@@ -1766,7 +1965,7 @@ static inline ActParamT1Rec* nextT1Rec(ActParamT1Rec* rec) {
     return reinterpret_cast<ActParamT1Rec*>(reinterpret_cast<u8*>(rec) + rec->mOffset0);
 }
 
-void func_800547D4(ActParamT1Host* host, ActParamT1Dst* dst, ActParamT1Src* src) {
+void* func_800547D4(ActParamT1Host* host, ActParamT1Dst* dst, ActParamT1Src* src) {
     if (src->mPtr08 != 0) {
         dst->mField0C = reinterpret_cast<u32>(src->mPtr08);
     }
@@ -1775,14 +1974,15 @@ void func_800547D4(ActParamT1Host* host, ActParamT1Dst* dst, ActParamT1Src* src)
     if (prev != 0) {
         dst->mField04 = prev->mField0C;
     }
-    ActParamT1Src* old = dst->mPtr14;
     u8 byte30 = dst->mByte30;
     u32 old38 = dst->mField38;
     float f28 = dst->mFloat28;
+    const ActParamTbl1Fn* tbl = lbl_eu_80570788;
     float f40 = dst->mFloat40;
     u32 field0C = src->mField0C;
-    dst->mPtr18 = old;
+    dst->mPtr18 = dst->mPtr14;
     dst->mPtr14 = src;
+    dst->mField1C = 0;
     dst->mFloat24 = lbl_eu_80665F78;
     dst->mField20 = 0;
     dst->mField4C = 9999;
@@ -1812,7 +2012,7 @@ void func_800547D4(ActParamT1Host* host, ActParamT1Dst* dst, ActParamT1Src* src)
     // dispatched through the handler table indexed by its type word.
     ActParamT1Rec* rec = nextT1Rec(reinterpret_cast<ActParamT1Rec*>(dst->mPtr14));
     while (rec->mType2 > 1) {
-        lbl_eu_80570788[rec->mType2](4, host, dst, rec);
+        tbl[rec->mType2](4, host, dst, rec);
         rec = nextT1Rec(rec);
     }
 
@@ -1821,10 +2021,11 @@ void func_800547D4(ActParamT1Host* host, ActParamT1Dst* dst, ActParamT1Src* src)
     u32 count = host->mCount210;
     for (u32 i = 0; i < count; i++) {
         ActParamT1Node* p = host->mSlots1F0[i];
+        u32 size = p->mSize04;
         if (reinterpret_cast<u32>(p) >= reinterpret_cast<u32>(src)) {
             continue;
         }
-        if (reinterpret_cast<u32>(p) + p->mSize04 <= reinterpret_cast<u32>(src)) {
+        if (reinterpret_cast<u32>(p) + size <= reinterpret_cast<u32>(src)) {
             continue;
         }
         found = reinterpret_cast<u32>(host->mSlots1D0[i]);
@@ -1832,4 +2033,5 @@ void func_800547D4(ActParamT1Host* host, ActParamT1Dst* dst, ActParamT1Src* src)
     }
     dst->mField34 = found;
     host->mByte216 = 0;
+    return host->mObj10;
 }

@@ -368,20 +368,6 @@ struct CfSpawnObj {
     /* 0x73C */ u32 field_73C;
 };
 
-// Gimmick/actor object in the func_800B6BC8 list (func_80194264): vtable at
-// +0 with position getter at 0xAC and the f32 query at 0xE0.
-typedef void* (*CfElemVfACFn)(void* self);
-typedef f32 (*CfElemVfE0Fn)(void* self);
-struct CfPartsElemVt {
-    u32 _padAC[0xAC / 4];
-    CfElemVfACFn vfAC;    // 0xAC (position)
-    u32 _padB0[(0xE0 - 0xB0) / 4];
-    CfElemVfE0Fn vfE0;    // 0xE0 (float)
-};
-struct CfPartsElemObj {
-    CfPartsElemVt* vt;    // 0x00
-};
-
 // View over the +0x3E9C-debiased actor base written by func_80198524: flags
 // at +0x3F00 (bit 0x04000000 cleared/set) and the BDAT id at +0x3F28.
 struct CfActorPartsView {
@@ -540,11 +526,15 @@ struct CfPartsElemArray {
 // The +0x9E u16 is the flag read through func_80193CC8 by func_80197AA0.
 struct CfElemA4 {
     /* 0x00 */ u32 field_00;
-    u8 pad_04[0x90];
+    u8 pad_04[0x8C];
+    /* 0x90 */ f32 field_90;
     /* 0x94 */ u32 field_94;
-    u8 pad_98[6];
+    /* 0x98 */ u16 field_98;
+    /* 0x9A */ u16 field_9A;
+    u8 pad_9C[2];
     /* 0x9E */ u16 field_9E;
-    u8 pad_A0[0xA4 - 0xA0];
+    /* 0xA0 */ u16 field_A0;
+    /* 0xA2 */ u16 field_A2;
 };
 
 // Full 0xA4-byte table element as initialized by func_80193B0C: 16 8-byte
@@ -612,6 +602,14 @@ struct CfPartState90 {
     /* 0xA2 */ u16 field_A2;
 };
 
+// Walking view for func_80193B0C's free-slot scan: the loop advances a
+// pointer through the manager 0xA4 per iteration and reads the in-use flag
+// at +0xA8C8 (= mTable[i].field_A0).
+struct CfElemFlagWalk {
+    u8 pad_00[0xA8C8];
+    /* 0xA8C8 */ u16 field_A8C8;
+};
+
 // Float constant written by func_80193C74 to +0x90 (.sdata2, r2-sda21).
 // `const` so MWCC treats the load as a constant and hoists it (cf.
 // MWCC_CASES.md `extern const float` hoist note).
@@ -649,10 +647,9 @@ extern const f32 lbl_eu_80667AB8;
 extern const f32 lbl_eu_80667ABC;
 extern const f32 lbl_eu_80667AC0;
 // 2^52 (0x4330000000000000) u32->double conversion magic (.sdata2, lfd).
-// Declared non-const so MWCC loads the named slot instead of folding the
-// value into a TU-local pool entry (func_80193D48's retail lfd references
-// the retail-named blob).
-extern double lbl_eu_80667AC8;
+// Declared here only; the definition lives in another TU so reads stay
+// external references carrying the retail-named sda21 reloc.
+extern const double lbl_eu_80667AC8;
 
 // Polymorphic receiver for the party-info state pmf table (lbl_eu_80532AF0).
 // Abstract so MWCC emits no vtable; the virtuals force 12-byte

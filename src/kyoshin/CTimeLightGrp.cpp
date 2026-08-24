@@ -33,7 +33,7 @@ struct CTimeLightGrp_BaseLayout {
 };
 
 // ================== __ct__CTimeLightGrp ==================
-extern "C" void __ct__CTimeLightGrp(CTimeLightGrp_BaseLayout* self, void* parent) {
+extern "C" CTimeLightGrp_BaseLayout* __ct__CTimeLightGrp(CTimeLightGrp_BaseLayout* self, void* parent) {
     CTimeLightGrp_BaseLayout* p = self;
     _reslist_base<CVirtualLightObjPtr>* base =
         (_reslist_base<CVirtualLightObjPtr>*)((u8*)self + 8);
@@ -74,6 +74,7 @@ extern "C" void __ct__CTimeLightGrp(CTimeLightGrp_BaseLayout* self, void* parent
         base->mList[i].mNext = nullptr;
     }
     base->mCapacity = 32;
+    return self;
 }
 
 // ================== __dt__8005A03C ==================

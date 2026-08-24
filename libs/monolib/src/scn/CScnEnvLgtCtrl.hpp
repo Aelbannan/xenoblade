@@ -1,6 +1,7 @@
 #pragma once
 
 #include <types.h>
+#include <revolution/gx/GXTypes.h>  // GXColor (lbl_eu_8066AFE0 fog color word)
 #include "monolib/scn/CLight.hpp"
 #include "libs/monolib/src/scn/CScnLightMan.hpp"  // CScnLightMan (func_804C172C light-manager slot)
 
@@ -45,7 +46,12 @@ struct CScnEnvLgtCtrlLgtVec4 {
 
 struct CScnEnvLgtCtrlLgtSlot {
     CScnEnvLgtCtrlLgtVec3 field_0x00;   // +0x00
-    CScnEnvLgtCtrlLgtVec3 field_0x0C;   // +0x0C (same source triple as field_0x00, func_804C5E9C)
+    // +0x0C (same source triple as field_0x00, func_804C5E9C): word view for
+    // the bulk copies, float view for func_804C31C8's scaled reads.
+    union {
+        CScnEnvLgtCtrlLgtVec3 w;
+        CScnEnvLgtCtrlLgtVec3f f;
+    } field_0x0C;
     CScnEnvLgtCtrlLgtVec3 field_0x18;   // +0x18
     f32 field_0x24;                     // +0x24 (float param, func_804C5E9C)
     u16 field_0x28;                     // +0x28 control flags
@@ -348,8 +354,12 @@ struct CScnEnvLgtCtrlLgtHeader {
     u16 field_0x16;    // +0x16
     u32 field_0x18[2]; // +0x18
     u32 field_0x20[2]; // +0x20
-    u32 field_0x28[2]; // +0x28
-    u32 field_0x2C[2]; // +0x2C
+    // Interleaved 8-byte pairs (retail loop walks these with stride 8:
+    // stores land at +0x28/+0x2C for entry 0 and +0x30/+0x34 for entry 1).
+    struct {
+        u32 off28;   // +0x00
+        u32 off2C;   // +0x04
+    } field_0x28[2];
     f32 field_0x38[5][8];  // +0x38 five 8-float rows
 };
 
@@ -570,7 +580,7 @@ public:
         } alt5;
         struct {
             u8 pad_0xA8[0x70];              // +0x38..+0xA8
-            u32 field_0xA8;                 // +0xA8 curve-blend bound (func_804C31C8)
+            s32 field_0xA8;                 // +0xA8 curve-blend bound (func_804C31C8)
         } alt7;
     };
     union {
@@ -1145,8 +1155,9 @@ extern const u32 lbl_eu_805244D0[4];
 
 // .sdata2 fog constants for func_804C172C: the 4-byte color word at AFE0
 // (stored byte-wise into FogData::color) and the startz/endz/nearz/farz
-// float pair at AFE4/AFE8.
-extern u32 lbl_eu_8066AFE0;
+// float pair at AFE4/AFE8. The color is typed GXColor so the source can copy
+// it as a struct (single word load, member-wise byte stores) like retail.
+extern GXColor lbl_eu_8066AFE0;
 extern float lbl_eu_8066AFE4;
 extern float lbl_eu_8066AFE8;
 
@@ -1158,14 +1169,16 @@ extern "C" void func_80498DC0(u8* self, u32 enable);
 // targets). extern "C" keeps the flat retail name on the call-site reloc
 // (typed-param globals would get C++-mangled); noinline keeps the stub calls
 // out-of-line (the stub bodies would otherwise be inlined, collapsing the
-// retail `bl`). `row` selects the source row (0x20-stride from +0x38); the
-// type-scan callers pass it in r5.
+// retail `bl`). `row` selects the source row (0x20-stride from +0x38). The
+// type-scan callers do not pass it (retail emits a 2-arg call, leaving r5
+// undefined), so there is deliberately no default argument - callers pass a
+// value already resident in the row-argument register instead.
 extern "C" __declspec(noinline) int func_804C6D64(u8* entry,
                                                     CScnEnvLgtCtrlLgtTarget* arg,
-                                                    int row = 0);
+                                                    int row);
 extern "C" __declspec(noinline) int func_804C6F78(u8* entry,
                                                     CScnEnvLgtCtrlLgtTarget* arg,
-                                                    int row = 0);
+                                                    int row);
 
 // 8-byte gradient entry: time bound + color, sampled by func_804C7880.
 struct CScnEnvLgtCtrlGradEntry {

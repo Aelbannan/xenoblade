@@ -35,6 +35,7 @@
 extern "C" void func_804BF940(CScnEnvLgtData* self);
 extern "C" void func_804BF8A8(CScnEnvLgtData* self);
 #include "monolib/util/MemManager.hpp"    // mtl::MemManager (allocate / deallocate)
+#include "monolib/util/reslist.hpp"       // reslist<T> (embedded light-item list)
 
 // shared float constant in .sdata2 (referenced via @sda21 by this TU)
 extern float lbl_eu_8066B010;
@@ -165,8 +166,10 @@ void func_804C172C(CScnEnvLgtCtrl* self) {
         self->flags = (self->flags | 0x20) & ~0x10;
     }
     if (self->flags & 0x400) {
-        union { u32 u; GXColor c; } cv;
-        cv.u = lbl_eu_8066AFE0;
+        // GXColor struct copy from the shared pool word; MWCC keeps the
+        // loaded word live across the calls and member-copies the bytes
+        // into FogData::color through a stack spill.
+        GXColor col = lbl_eu_8066AFE0;
         nw4r::g3d::Fog fog =
             ((nw4r::g3d::ScnRoot*)func_8048ECD8(self->field_0x04_ptr))
                 ->GetFog(0x1e);
@@ -180,7 +183,7 @@ void func_804C172C(CScnEnvLgtCtrl* self) {
             nw4r::db::Panic(lbl_eu_8056EC60, 0x63, lbl_eu_8056EC40);
         }
         if (fog.ptr() != NULL) {
-            fog.ptr()->color = cv.c;
+            fog.ptr()->color = col;
         }
         if (fog.ptr() == NULL) {
             nw4r::db::Panic(lbl_eu_8056EC30, 0x4b, lbl_eu_8056EC10);
@@ -272,6 +275,19 @@ void func_804C1AFC(CScnEnvLgtCtrl* self, float f) {
     }
 }
 
+// distance-style walk over the light-item ring; taking the iterators by
+// value reproduces retail's four frame-spilled cursor slots.
+static inline int LgtRingDistance(
+    reslist<CScnEnvLgtCtrlListItem*>::iterator last,
+    reslist<CScnEnvLgtCtrlListItem*>::iterator first) {
+    int n = 0;
+    while (first != last) {
+        ++first;
+        n++;
+    }
+    return n;
+}
+
 // func_804C1BA0 (us-804c5cfc): create a new env-light controller through the
 // 'STGL' factory (func_804C6A70) on the scene owner's handle and attach it
 // to the +0x1C node array (0xc-stride ring nodes linked into the +0x0C
@@ -282,54 +298,30 @@ void func_804C1AFC(CScnEnvLgtCtrl* self, float f) {
 // the ring holds exactly one item, push the teardown dispatch v37(1)
 // (vtable 0x9C) on it. Returns the created controller.
 void* func_804C1BA0(CScnEnvLgtCtrl* self, const u32* data, void* arg) {
-    CScnEnvLgtCtrl* obj = func_804C6A70(
+    // The +0x08 work area hosts an embedded reslist<...>: start-node pointer
+    // at +0x0C, sentinel node at +0x10, 0xc-stride node pool at +0x1C and
+    // capacity at +0x20. push_back/size inline to the retail shape (the
+    // setItem try/catch supplies the EH frame pointer and stw-r1 anchors).
+    reslist<CScnEnvLgtCtrlListItem*>* list =
+        (reslist<CScnEnvLgtCtrlListItem*>*)&self->field_0x08;
+    CScnEnvLgtCtrlListItem* obj = (CScnEnvLgtCtrlListItem*)func_804C6A70(
         func_80496018((CScnItemModelNw4rOwner*)self->field_0x04_ptr), data, arg);
-    if (obj != 0) {
-        CScnEnvLgtCtrlListNode* sentinel = self->field_0x0C;
-        CScnEnvLgtCtrlListNode* base = self->field_0x1C_nodes;
-        int count = 0;
-        int off = 0;
-        while (count < self->field_0x20_count &&
-               *(CScnEnvLgtCtrlListNode**)((u8*)base + off) != 0) {
-            off += 0xc;
-            count++;
-        }
-        CScnEnvLgtCtrlListNode* node =
-            (CScnEnvLgtCtrlListNode*)((u8*)base + count * 0xc);
-        if (node != 0) {
-            node->mItem = (CScnEnvLgtCtrlListItem*)obj;
-        }
-        node->mNext = sentinel;
-        node->mPrev = sentinel->mPrev;
-        sentinel->mPrev->mNext = node;
-        sentinel->mPrev = node;
+    if (obj != NULL) {
+        list->push_back(obj);
         self->flags |= 2;
-        CScnEnvLgtCtrlListItem* item = (CScnEnvLgtCtrlListItem*)obj;
-        if (item->v30()) {
-            CScnEnvLgtCtrlListNode* n = sentinel->mNext;
-            while (n != sentinel) {
+        if (obj->v30()) {
+            for (CScnEnvLgtCtrlListNode* n = self->field_0x0C->mNext;
+                 n != self->field_0x0C; n = n->mNext) {
                 if (n->mItem->v29() == 0) {
                     n->mItem->v25(1);
                 }
-                n = n->mNext;
             }
         }
-    }
-    func_804C26F0(self);
-    CScnEnvLgtCtrlListNode* n;
-    int c;
-    CScnEnvLgtCtrlListNode* sentinel = self->field_0x0C;
-    n = sentinel->mNext;
-    c = 0;
-    while (n != sentinel) {
-        n = n->mNext;
-        c++;
-    }
-    if (c == 1) {
-        n = sentinel->mNext;
-        while (n != sentinel) {
+    }    func_804C26F0(self);
+    if (LgtRingDistance(list->end(), list->begin()) == 1) {
+        for (CScnEnvLgtCtrlListNode* n = self->field_0x0C->mNext;
+             n != self->field_0x0C; n = n->mNext) {
             n->mItem->v37(1);
-            n = n->mNext;
         }
     }
     return obj;
@@ -1002,19 +994,19 @@ extern "C" void func_804C31C8(CScnEnvLgtCtrl* self, const CScnEnvLgtCtrlLgtVec3*
     // Shared int->double temps (retail writes the 0x43300000 words once,
     // hoisted above the slot-null check, and reuses the pair).
     union { u32 w[2]; double d; } tDen, tNum;
-    tDen.w[0] = 0x43300000u;
     tNum.w[0] = 0x43300000u;
+    tDen.w[0] = 0x43300000u;
     CScnEnvLgtCtrlLgtSlot* slot = self->field_0x24;
     if (slot == 0) return;
     for (int i = 0; i < 4; i++) {
         u16 flags = slot->field_0x28;
         if (flags & 1) {
             if (flags & 4) {
-                int changed = 0;
                 int v0 = (int)slot->field_0x2A * 60;
-                f32 f = lbl_eu_8066B014;
                 int v1 = (int)slot->field_0x2C * 60;
                 int v2 = (int)slot->field_0x2E * 60;
+                int changed = 0;
+                f32 f = lbl_eu_8066B014;
                 if (v0 > v1) {
                     // The bound is re-read inside each branch (retail
                     // keeps it off the pre-branch path).
@@ -1042,27 +1034,28 @@ extern "C" void func_804C31C8(CScnEnvLgtCtrl* self, const CScnEnvLgtCtrlLgtVec3*
                 } else {
                     int bound = self->alt7.field_0xA8;
                     if (v0 <= bound && v1 >= bound) {
-                        if (v2 != 0 && v0 + v2 > bound) {
-                            tDen.w[1] = (u32)v2 ^ 0x80000000u;
-                            tNum.w[1] = (u32)(v0 + v2 - bound) ^ 0x80000000u;
-                            f = lbl_eu_8066B014 -
-                                (f32)(tNum.d - lbl_eu_8066B018) /
+                        if (v2 != 0) {
+                            if (v0 + v2 > bound) {
+                                tDen.w[1] = (u32)v2 ^ 0x80000000u;
+                                tNum.w[1] = (u32)(v0 + v2 - bound) ^ 0x80000000u;
+                                f = lbl_eu_8066B014 -
+                                    (f32)(tNum.d - lbl_eu_8066B018) /
+                                        (f32)(tDen.d - lbl_eu_8066B018);
+                            } else if (v1 - v2 < bound) {
+                                tDen.w[1] = (u32)v2 ^ 0x80000000u;
+                                tNum.w[1] = (u32)(v1 - bound) ^ 0x80000000u;
+                                f = (f32)(tNum.d - lbl_eu_8066B018) /
                                     (f32)(tDen.d - lbl_eu_8066B018);
-                        } else if (v2 != 0 && v1 - v2 < bound) {
-                            tDen.w[1] = (u32)v2 ^ 0x80000000u;
-                            tNum.w[1] = (u32)(v1 - bound) ^ 0x80000000u;
-                            f = (f32)(tNum.d - lbl_eu_8066B018) /
-                                (f32)(tDen.d - lbl_eu_8066B018);
+                            }
                         }
                         changed = 1;
                     }
                 }
                 if (changed) {
                     slot->field_0x28 |= 8;
-                    f32* v3 = (f32*)&slot->field_0x0C;
-                    slot->field_0x00.x = f32tou32b(v3[0] * f);
-                    slot->field_0x00.y = f32tou32b(v3[1] * f);
-                    slot->field_0x00.z = f32tou32b(v3[2] * f);
+                    slot->field_0x00.x = f32tou32b(slot->field_0x0C.f.x * f);
+                    slot->field_0x00.y = f32tou32b(slot->field_0x0C.f.y * f);
+                    slot->field_0x00.z = f32tou32b(slot->field_0x0C.f.z * f);
                 } else {
                     slot->field_0x28 &= 0xFFF7;
                 }
@@ -1172,16 +1165,18 @@ extern "C" void func_804C3404(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLightEnvView* 
     self->field_0xD4 = data[1];
     self->field_0xD8 = data[2];
     u8* p = (u8*)env;
-    u32 i = 0;
-    u32* slot = 0;   // slot address, live across the func_804C64A8 call
-    u32 off = 0;
-    do {
-        slot = (u32*)(p + off + 0x1160);
-        self->field_0xE4 = *slot;
-        *slot = func_804C64A8(self, *(CLight**)(p + off + 0x1140), i, 0);
-        off += 4;
-        i++;
-    } while (i < 4);
+    u32 off;
+    u8* row;
+    u32 i;
+    for (i = 0, off = 0; i < 4; i++, off += 4) {
+        // Per-iteration row base: the +0x1140/+0x1160 displacements stay
+        // folded into the loads like retail.
+        row = p + off;
+        u32 res;
+        self->field_0xE4 = *(u32*)(row + 0x1160);
+        res = func_804C64A8(self, *(CLight**)(row + 0x1140), i, 0);
+        *(u32*)(row + 0x1160) = res;
+    }
 }
 
 extern "C" void func_804C33F0(void* self, CLightEnv* env) {
@@ -1468,54 +1463,73 @@ extern "C" int func_804C3F58(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtVec4* out,
 
 
 extern "C" __declspec(noinline) void func_804C406C(CScnEnvLgtCtrl* self, float f) {
-    CScnEnvLgtCtrlCtorCtl* ctl = (CScnEnvLgtCtrlCtorCtl*)self->field_0x30;
-    if (ctl != 0) {
-        u8* base = self->field_0x2C;
+    // Shared loop cursor/counter: MWCC keeps these in two nonvolatile regs
+    // across all four sub-array walks.
+    u32 i;
+    u8* p;
+    if (self->field_0x30 != NULL) {
         // Four control sub-arrays (strides 0x30/0x3C/0x50/0x64); each entry
-        // with bit 0x4000 set at +0x04 receives the refresh dispatch.
-        u32 i;
-        u8* p;
-        for (i = 0, p = base + ctl->mBaseA; i < ctl->mCountA; i++, p += 0x30) {
+        // with bit 16 set at +0x04 receives the refresh dispatch. The count
+        // is re-read from self+0x30 every iteration (the dispatch call may
+        // alias the control blob).
+        for (i = 0,
+            p = self->field_0x2C +
+                ((CScnEnvLgtCtrlCtorCtl*)self->field_0x30)->mBaseA;
+             i < ((CScnEnvLgtCtrlCtorCtl*)self->field_0x30)->mCountA;
+             i++, p += 0x30) {
             if (*(u32*)(p + 4) & 0x10000) {
                 func_804C43A4(self, (CScnEnvLgtCtrlFadeEntry*)p);
             }
         }
-        for (i = 0, p = base + ctl->mBaseB; i < ctl->mCountB; i++, p += 0x3c) {
+        for (i = 0,
+            p = self->field_0x2C +
+                ((CScnEnvLgtCtrlCtorCtl*)self->field_0x30)->mBaseB;
+             i < ((CScnEnvLgtCtrlCtorCtl*)self->field_0x30)->mCountB;
+             i++, p += 0x3c) {
             if (*(u32*)(p + 4) & 0x10000) {
                 func_804C43A4(self, (CScnEnvLgtCtrlFadeEntry*)p);
             }
         }
-        for (i = 0, p = base + ctl->mBaseC; i < ctl->mCountC; i++, p += 0x50) {
+        for (i = 0,
+            p = self->field_0x2C +
+                ((CScnEnvLgtCtrlCtorCtl*)self->field_0x30)->mBaseC;
+             i < ((CScnEnvLgtCtrlCtorCtl*)self->field_0x30)->mCountC;
+             i++, p += 0x50) {
             if (*(u32*)(p + 4) & 0x10000) {
                 func_804C43A4(self, (CScnEnvLgtCtrlFadeEntry*)p);
             }
         }
-        for (i = 0, p = base + ctl->mBaseD; i < ctl->mCountD; i++, p += 0x64) {
+        for (i = 0,
+            p = self->field_0x2C +
+                ((CScnEnvLgtCtrlCtorCtl*)self->field_0x30)->mBaseD;
+             i < ((CScnEnvLgtCtrlCtorCtl*)self->field_0x30)->mCountD;
+             i++, p += 0x64) {
             if (*(u32*)(p + 4) & 0x10000) {
                 func_804C43A4(self, (CScnEnvLgtCtrlFadeEntry*)p);
             }
         }
     }
-    CScnEnvLgtCtrlFogGate* gate = self->alt2.field_0x40;
-    if (gate != 0) {
-        // Fog-gate entry array: unconditional dispatch per entry.
-        u8* p = self->field_0x2C + gate->mOffset;
-        for (u32 i = 0; i < gate->mCount; i++, p += 0x3c) {
-            func_804C4954(self, p);
+    if (self->alt2.field_0x40 != NULL) {
+        // Fog-gate entry array: unconditional dispatch per entry. The entry
+        // count is cached before the loop (retail holds it in r29).
+        u8* gateP = self->field_0x2C + self->alt2.field_0x40->mOffset;
+        u32 n = self->alt2.field_0x40->mCount;
+        for (i = 0; i < n; i++, gateP += 0x3c) {
+            func_804C4954(self, gateP);
         }
     }
-    CScnEnvLgtCtrlLgtCtl* cnt = self->alt2.field_0x48;
-    if (cnt != 0) {
-        // Entry refresh over the 0xd8-stride array at +0x14; the slot index
-        // comes from +0xBE (+1) only when flag bit 0x10000000 is set.
+    if (self->alt2.field_0x48 != NULL) {
+        // Entry refresh over the 0xd8-stride array at +0x14; walked by byte
+        // offset against a freshly loaded +0x14 base each call. The slot
+        // index comes from +0xBE (+1) only when flag bit 0x10000000 is set.
         int idx = 0;
         if (self->field_0x04 & 0x10000000) {
             idx = (int)self->lgt2.field_0xBE + 1;
         }
-        u8* p = (u8*)self->field_0x14_ptr;
-        for (u32 i = 0; i < cnt->mCount; i++, p += 0xd8) {
-            func_804C7190(p, self->alt7.field_0xA8, idx,
-                          self->lgt2.field_0xC0);
+        u32 off = 0;
+        for (i = 0; i < self->alt2.field_0x48->mCount; i++, off += 0xd8) {
+            func_804C7190((u8*)self->field_0x14_ptr + off,
+                          self->alt7.field_0xA8, idx, self->lgt2.field_0xC0);
         }
     }
     // Advance the fog blend accumulator and clamp it to the shared ceiling.
@@ -1558,14 +1572,17 @@ void func_804C42A8(CScnEnvLgtCtrl* self, float f) {
     CScnEnvLgtCtrlWorkBlob blob;
     func_804C7774(&blob, (u32)self->field_0x2C, (u32)self->alt2.field_0x4C,
                   self->field_0xC8, (u32)self->field_0x0C);
+    // The null checks double as argument setup (retail loads field_0x30 /
+    // field_0x20 into r4/r5 while testing them, then calls).
     if (self->field_0x30 != 0 && self->field_0x20 != 0) {
         func_804C7910(&blob, (CScnEnvLgtCtrlCtorCtl*)self->field_0x30,
-                      (u8*)self->field_0x24);
+                      (u8*)self->field_0x20);
     }
     CScnEnvLgtCtrlLgtCtl* ctl = self->alt2.field_0x48;
     if (ctl != 0 && (ctl->field_0x00 & 0x10)) {
-        u32 off = 0;
-        for (u32 i = 0; i < self->alt2.field_0x48->mCount;
+        u32 off;
+        u32 i;
+        for (i = 0, off = 0; i < self->alt2.field_0x48->mCount;
              off += 0xd8, i++) {
             func_804C8054(&blob, (u8*)self->field_0x14_ptr + off);
         }
@@ -1866,12 +1883,16 @@ void* __dt___reslist_base_IScnEnvCtl(CScnEnvLgtCtrlIScnResBase* self, int deleti
 // the base destructor body is inlined (retail has no bl to the base dtor),
 // keeping its own null check - the nested identical tests reproduce the
 // retail double `beq` before the base body (same shape as ~CScnEnvLgtCtrl).
+// reslist<IScenEnvCtl> deleting destructor (retail __dt__reslist_IScnEnvCtl):
+// the base destructor body is inlined (retail has no bl to the base dtor);
+// the nested identical tests reproduce the retail double `beq` off the one
+// `cmpwi r3, 0` (outer guard + inlined base-dtor guard).
 void* __dt__reslist_IScnEnvCtl(CScnEnvLgtCtrlIScnResBase* self, int deleting) {
     if (self != 0) {
         if (self != 0) {
             self->mVtable = (void*)lbl_eu_8056F978;
             CScnEnvLgtCtrlIScnResNode* node = self->mStartNodePtr->mNext;
-            while (node != self->mStartNodePtr) {
+            while (self->mStartNodePtr != node) {
                 CScnEnvLgtCtrlIScnResNode* cur = node;
                 node = node->mNext;
                 cur->mNext = 0;
@@ -2022,8 +2043,8 @@ extern "C" void func_804C5210(CScnEnvLgtCtrlLgtView* view, CScnEnvLgtData* data)
     if (data->mFlags & 1) {
         if (view->flags & 0x400) {
             data->mAmbColorBase[0] = view->field_0x64[0];
-            data->mAmbColorBase[1] = view->field_0x68;
-            data->mAmbColorBase[2] = view->field_0x6C;
+            data->mAmbColorBase[1] = view->field_0x64[1];
+            data->mAmbColorBase[2] = view->field_0x64[2];
         }
     } else if (view->flags & 0x200) {
         data->mAmbColorBase[0] = view->field_0x54[0];
@@ -2223,14 +2244,16 @@ extern "C" void func_804C5628(CScnEnvLgtCtrl* self, nw4r::g3d::ScnRoot* root,
 // arg +0x08 bit 1 on the result; return 1 on a hit, 0 otherwise. The loop
 // keeps the byte-offset (off) and index (i) double induction so MWCC emits
 // the add-for-the-type-check / mulli-for-the-call pair like retail.
-extern "C" int func_804C58D8(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtTarget* arg) {
+extern "C" int func_804C58D8(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtTarget* arg,
+                              int row) {
     CScnEnvLgtCtrlLgtCtl* ctl = self->alt2.field_0x48;
     if (ctl != 0 && (self->field_0x04 & 1)) {
         u32 count = ctl->mCount;
-        for (u32 i = 0, off = 0; i < count; i++, off += 0xd8) {
-            u8* base = (u8*)self->field_0x14_ptr;
-            if (*(u16*)(base + off + 2) == 1) {
-                if (func_804C6D64(base + i * 0xd8, arg)) {
+        for (u32 off = 0, i = 0; i < count; off += 0xd8, i++) {
+            if (*(u16*)((u8*)self->field_0x14_ptr + off + 2) == 1) {
+                // Forward the caller's row value (retail leaves r5 undefined
+                // at this call - both sides treat it as don't-care).
+                if (func_804C6D64((u8*)self->field_0x14_ptr + i * 0xd8, arg, row)) {
                     arg->field_0x08 |= 2;
                 } else {
                     arg->field_0x08 &= ~2u;
@@ -2245,14 +2268,15 @@ extern "C" int func_804C58D8(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtTarget* arg)
 // func_804C5990 (us-804c9aec): twin of func_804C58D8 with +0x04 bit 1 as
 // the guard, u16 type word 2 as the selector, func_804C6F78 as the dispatch
 // and arg +0x64 bit 0 toggled on the result.
-extern "C" int func_804C5990(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtTarget* arg) {
+extern "C" int func_804C5990(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtTarget* arg,
+                              int row) {
     CScnEnvLgtCtrlLgtCtl* ctl = self->alt2.field_0x48;
     if (ctl != 0 && (self->field_0x04 & 2)) {
         u32 count = ctl->mCount;
-        for (u32 i = 0, off = 0; i < count; i++, off += 0xd8) {
-            u8* base = (u8*)self->field_0x14_ptr;
-            if (*(u16*)(base + off + 2) == 2) {
-                if (func_804C6F78(base + i * 0xd8, arg)) {
+        for (u32 off = 0, i = 0; i < count; off += 0xd8, i++) {
+            if (*(u16*)((u8*)self->field_0x14_ptr + off + 2) == 2) {
+                // See func_804C58D8: forward the caller's row value.
+                if (func_804C6F78((u8*)self->field_0x14_ptr + i * 0xd8, arg, row)) {
                     arg->field_0x64b |= 1;
                 } else {
                     arg->field_0x64b &= ~1;
@@ -2267,14 +2291,15 @@ extern "C" int func_804C5990(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtTarget* arg)
 // func_804C5A48 (us-804c9ba4): twin of func_804C58D8 with +0x04 bit 2 as
 // the guard, u16 type word 3 as the selector, func_804C6F78 as the dispatch
 // and arg +0x50 bit 1 toggled on the result.
-extern "C" int func_804C5A48(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtTarget* arg) {
+extern "C" int func_804C5A48(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtTarget* arg,
+                              int row) {
     CScnEnvLgtCtrlLgtCtl* ctl = self->alt2.field_0x48;
     if (ctl != 0 && (self->field_0x04 & 4)) {
         u32 count = ctl->mCount;
-        for (u32 i = 0, off = 0; i < count; i++, off += 0xd8) {
-            u8* base = (u8*)self->field_0x14_ptr;
-            if (*(u16*)(base + off + 2) == 3) {
-                if (func_804C6F78(base + i * 0xd8, arg)) {
+        for (u32 off = 0, i = 0; i < count; off += 0xd8, i++) {
+            if (*(u16*)((u8*)self->field_0x14_ptr + off + 2) == 3) {
+                // See func_804C58D8: forward the caller's row value.
+                if (func_804C6F78((u8*)self->field_0x14_ptr + i * 0xd8, arg, row)) {
                     arg->field_0x50 |= 2;
                 } else {
                     arg->field_0x50 &= ~2u;
@@ -2448,11 +2473,22 @@ extern "C" void func_804C5E9C(CScnEnvLgtCtrl* self, int r4, int r5,
     CScnEnvLgtCtrlLgtSlot* slot = &self->field_0x24[r5];
     slot->field_0x00 = *r6;
     slot = &self->field_0x24[r5];
-    slot->field_0x0C = *r6;
+    slot->field_0x0C.w = *r6;
     slot = &self->field_0x24[r5];
-    slot->field_0x18.x = f32tou32(v);
-    slot->field_0x18.y = f32tou32b(v);
-    slot->field_0x18.z = f32tou32b(v);
+    // Each bit-cast uses its own float local so MWCC gives it a dedicated
+    // stack temp (retail: x->sp+0x8, y->sp+0xc, z->sp+0x10).
+    f32 tz = v;
+    f32 ty = v;
+    f32 tx = v;
+    // Aggregate float triple: natural layout pins the roundtrip temps to
+    // sp+0x8/0xc/0x10 like retail. Reference helper avoids per-call copies.
+    CScnEnvLgtCtrlLgtSum t;
+    t.x = v;
+    t.y = v;
+    t.z = v;
+    slot->field_0x18.x = *(u32*)&t.x;
+    slot->field_0x18.y = *(u32*)&t.y;
+    slot->field_0x18.z = *(u32*)&t.z;
     slot = &self->field_0x24[r5];
     slot->field_0x24 = f1;
     slot = &self->field_0x24[r5];
@@ -2651,12 +2687,12 @@ extern "C" void func_804C6BA8(CScnEnvLgtCtrlLgtHeader* dst,
             dst->field_0x20[i] = base + src->field_0x0C[i];
             if (src->field_0x00 & 0x8) {
                 dst->field_0x14 |= 0x10;
-                dst->field_0x28[i] = off;
+                dst->field_0x28[i].off28 = off;
                 off += dst->field_0x12 * (dst->field_0x18[i] + 1) * 4;
             }
             if (src->field_0x00 & 0x10) {
                 dst->field_0x14 |= 0x20;
-                dst->field_0x2C[i] = off;
+                dst->field_0x28[i].off2C = off;
                 off += dst->field_0x12 * (dst->field_0x18[i] + 1) * 4;
             }
         }
@@ -3108,15 +3144,16 @@ extern "C" __declspec(noinline) void func_804C7B54(void* blob, void* dst,
 extern "C" __declspec(noinline) void func_804C8054(CScnEnvLgtCtrlWorkBlob* blob, u8* entry) {
     CScnEnvLgtCtrlLgtTypeEntry* e = (CScnEnvLgtCtrlLgtTypeEntry*)entry;
     if (e->field_0x14 & 0x8) {
-        u16 idx = e->field_0x16;
-        e->field_0x14 &= ~0x8000;
-        CScnEnvLgtCtrlWorkTable* tbl =
-            (CScnEnvLgtCtrlWorkTable*)((u8*)blob->field_0x08 + idx * 0xC);
+        // Fresh read-modify-write: retail reloads +0x14 and clears bit 0
+        // (rlwinm 16,30), keeping it independent from the gate test above.
+        e->field_0x14 = e->field_0x14 & ~1;
+        CScnEnvLgtCtrlWorkTable* tbl = (CScnEnvLgtCtrlWorkTable*)(
+            (u8*)blob->field_0x08 + e->field_0x16 * 0xC);
         u32 off = tbl->offset;
-        int count = tbl->count;
+        u16 count = tbl->count;
         CScnEnvLgtCtrlLgtTypeItem* item =
             (CScnEnvLgtCtrlLgtTypeItem*)(blob->field_0x00 + off);
-        for (u32 i = 0; i < (u32)count; i++) {
+        for (u16 i = 0; i < count; i++) {
             (blob->*lbl_eu_8065FBD0[item->field_0x0C])(item);
             (blob->*lbl_eu_8065FAF8[item->field_0x08])(entry);
             item++;
@@ -3335,12 +3372,11 @@ void func_804C1094(CScnEnvLgtCtrl* self, int init) {
             // Reload everything from self (retail keeps only r31 alive).
             func_8049D1EC(((CScnEnvLgtOwnerLgt*)self->field_0x04_ptr)->field_0x70,
                           self->field_0x28_blend);
-            // if/else keeps the ternary branch ahead of the mgr-ptr loads.
-            CScnEnvLgtBlend* filter;
-            if (self->field_0x2C_bloom != 0) {
-                filter = (CScnEnvLgtBlend*)((u8*)self->field_0x2C_bloom + 0x48);
-            } else {
-                filter = 0;
+            // Conditional rebase of a local (no explicit else) keeps
+            // retail's `beq` over the addi - no materialized null store.
+            CScnEnvLgtBlend* filter = (CScnEnvLgtBlend*)self->field_0x2C_bloom;
+            if (filter != 0) {
+                filter = (CScnEnvLgtBlend*)((u8*)filter + 0x48);
             }
             func_8049D1EC(
                 ((CScnEnvLgtOwnerLgt*)self->field_0x04_ptr)->field_0x70,
@@ -3357,11 +3393,10 @@ void func_804C1094(CScnEnvLgtCtrl* self, int init) {
             func_8049D3D8(
                 ((CScnEnvLgtOwnerLgt*)self->field_0x04_ptr)->field_0x70,
                 self->field_0x28_blend);
-            CScnEnvLgtBlend* filter;
-            if (self->field_0x2C_bloom != 0) {
-                filter = (CScnEnvLgtBlend*)((u8*)self->field_0x2C_bloom + 0x48);
-            } else {
-                filter = 0;
+            // Same conditional-rebase form as the init pass.
+            CScnEnvLgtBlend* filter = (CScnEnvLgtBlend*)self->field_0x2C_bloom;
+            if (filter != 0) {
+                filter = (CScnEnvLgtBlend*)((u8*)filter + 0x48);
             }
             func_8049D3D8(
                 ((CScnEnvLgtOwnerLgt*)self->field_0x04_ptr)->field_0x70,
@@ -3405,14 +3440,19 @@ void func_804C1270(void* self, int flag) {
 // returns whether the ring was non-empty.
 u32 func_804C12A4(CScnEnvLgtCtrl* self) {
     u32 ret = 0;
-    // Condition re-reads self->field_0x0C every test (retail reloads the
-    // sentinel per iteration instead of caching it), keeping ret live in r3.
-    CScnEnvLgtCtrlListNode* node = self->field_0x0C->mNext;
-    while (node != self->field_0x0C) {
-        func_80496288((CScnItemModelNw4rOwner*)self->field_0x04_ptr);
-        node->mItem->v1();
+    CScnEnvLgtCtrlListNode* sentinel = self->field_0x0C;
+    CScnEnvLgtCtrlListNode* node = sentinel->mNext;
+    // Guard + do-while with a single post-loop `ret = 1`: keeping the flag
+    // definition after both calls lets MWCC color ret into r3 (matching
+    // retail); an in-loop `ret = 1` gets hoisted into a callee-saved reg
+    // instead, rotating the whole allocation away from retail.
+    if (node != sentinel) {
+        do {
+            func_80496288((CScnItemModelNw4rOwner*)self->field_0x04_ptr);
+            node->mItem->v1();
+            node = node->mNext;
+        } while (node != self->field_0x0C);
         ret = 1;
-        node = node->mNext;
     }
     if (ret != 0) {
         self->flags |= 0x100;

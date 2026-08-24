@@ -731,9 +731,11 @@ void func_80137250(nw4r::lyt::DrawInfo* drawInfo) {
 
     // Toggle the locationAdjust flag bit and reload the location-adjust
     // scale from the tuned sdata2 constants (wide aspect only).
-    nw4r::math::VEC2 scale = { lbl_eu_806672E4, lbl_eu_806672E8 };
+    nw4r::math::VEC2 scale;
+    scale.x = lbl_eu_806672E4;
+    scale.y = lbl_eu_806672E8;
     drawInfo->SetLocationAdjustScale(scale);
-    drawInfo->SetLocationAdjust(drawInfo->IsLocationAdjust() == false);
+    drawInfo->SetLocationAdjust(!drawInfo->IsLocationAdjust());
 }
 
 int func_801372B4(int value) {
@@ -943,53 +945,62 @@ extern "C" void func_8013775C(nw4r::math::VEC3* output, nw4r::lyt::Pane* node) {
     output->x = z;
     output->y = z;
     output->z = z;
-    if (node != NULL) {
-        if (node->GetParent() != NULL) {
-            output->x = node->GetTranslate().x;
-    output->y = node->GetTranslate().y;
-    output->z = node->GetTranslate().z;
+    if (node != NULL && node->GetParent() != NULL) {
+        output->x = node->GetTranslate().x;
+        output->y = node->GetTranslate().y;
+        output->z = node->GetTranslate().z;
 
-    // Stack-slot order matches retail: recurse @0x8, tmp2 @0x14,
-    // temp @0x20, accum @0x2C (declared in that order).
-    nw4r::math::VEC3 recurse;
-    nw4r::math::VEC3 tmp2;
-    nw4r::math::VEC3 temp;
-    nw4r::math::VEC3 accum;
+        // Stack-slot order matches retail: rec2 @0x8, recurse @0x14,
+        // temp @0x20, accum @0x2C (declared in that order).
+        nw4r::math::VEC3 rec2;
+        nw4r::math::VEC3 recurse;
+        nw4r::math::VEC3 temp;
+        nw4r::math::VEC3 accum;
 
-    nw4r::lyt::Pane* parent = node->GetParent();
-    accum.x = z;
-    accum.y = z;
-    accum.z = z;
+        nw4r::lyt::Pane* parent = node->GetParent();
+        accum.x = z;
+        accum.y = z;
+        accum.z = z;
 
-    nw4r::lyt::Pane* grandparent = parent->GetParent();
-    if (grandparent != NULL) {
-        accum.x = parent->GetTranslate().x;
-        accum.y = parent->GetTranslate().y;
-        accum.z = parent->GetTranslate().z;
+        if (parent != NULL) {
+            nw4r::lyt::Pane* grandparent = parent->GetParent();
+            // Retail re-tests the same pointers redundantly; each re-test
+            // reuses the cached register/cr0 instead of reloading.
+            if (grandparent != NULL) {
+                accum.x = parent->GetTranslate().x;
+                accum.y = parent->GetTranslate().y;
+                accum.z = parent->GetTranslate().z;
 
-        temp.x = z;
-        temp.y = z;
-        temp.z = z;
+                temp.x = z;
+                temp.y = z;
+                temp.z = z;
 
-        nw4r::lyt::Pane* ggp = grandparent->GetParent();
-        temp.x = grandparent->GetTranslate().x;
-        temp.y = grandparent->GetTranslate().y;
-        temp.z = grandparent->GetTranslate().z;
+                if (grandparent != NULL) {
+                    nw4r::lyt::Pane* ggpp = grandparent->GetParent();
+                    if (ggpp != NULL) {
+                        temp.x = grandparent->GetTranslate().x;
+                        temp.y = grandparent->GetTranslate().y;
+                        temp.z = grandparent->GetTranslate().z;
 
-        code80135FDC_setVec3((float*)&tmp2, z, z, z);
-        if (ggp != NULL) {
-            if (ggp->GetParent() != NULL) {
-                copyVEC3(&tmp2, &ggp->GetTranslate());
-                func_8013775C(&recurse, ggp->GetParent());
-                func_80137738(&tmp2, &recurse);
+                        code80135FDC_setVec3((float*)&recurse, z, z, z);
+                        if (ggpp != NULL) {
+                            if (ggpp->GetParent() != NULL) {
+                                copyVEC3(&recurse, &ggpp->GetTranslate());
+                                func_8013775C(&rec2, ggpp->GetParent());
+                                func_80137738(&recurse, &rec2);
+                            }
+                        }
+                        nw4r::math::VEC3Add(&temp, &temp, &recurse);
+                    }
+                }
+                nw4r::math::VEC3Add(&accum, &accum, &temp);
             }
         }
-        nw4r::math::VEC3Add(&temp, &temp, &tmp2);
-        nw4r::math::VEC3Add(&accum, &accum, &temp);
+        nw4r::math::VEC3Add(output, output, &accum);
+    } else {
+        goto done;
     }
-    nw4r::math::VEC3Add(output, output, &accum);
-        }
-    }
+done:;
 }
 
 extern "C" void func_80137924(nw4r::math::VEC3* output, nw4r::lyt::Pane* node,
@@ -1186,12 +1197,22 @@ extern "C" u32 func_80138138(u32 val) {
 }
 
 extern "C" u32 func_80138234(const char* name, u32 id) {
+    u32 flag = 0;
     if (func_8009CF8C(id + 0x220) != 0) return 0;
 
     // One reusable column pointer: retail rematerializes the table base per
     // block and cycles a single register for the column offset.
-    const char* col = &lbl_eu_80500664[0x2A];
+    // Eight BDAT cells; declared up front so frame slots match retail.
     u16 v1;
+    u16 v2;
+    u8 v3;
+    u16 v4;
+    u16 v5;
+    u16 v6;
+    u16 v7;
+    u8 v8;
+
+    const char* col = &lbl_eu_80500664[0x2A];
     if (name == NULL) {
         v1 = 0;
     } else {
@@ -1200,7 +1221,6 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
         v1 = *(u16*)&result;
     }
     col = &lbl_eu_80500664[0x30];
-    u16 v2;
     if (name == NULL) {
         v2 = 0;
     } else {
@@ -1209,7 +1229,6 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
         v2 = *(u16*)&result;
     }
     col = &lbl_eu_80500664[0x3C];
-    u8 v3;
     if (name == NULL) {
         v3 = 0;
     } else {
@@ -1218,7 +1237,6 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
         v3 = *(u8*)&result;
     }
     col = &lbl_eu_80500664[0x47];
-    u16 v4;
     if (name == NULL) {
         v4 = 0;
     } else {
@@ -1227,7 +1245,6 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
         v4 = *(u16*)&result;
     }
     col = &lbl_eu_80500664[0x52];
-    u16 v5;
     if (name == NULL) {
         v5 = 0;
     } else {
@@ -1236,7 +1253,6 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
         v5 = *(u16*)&result;
     }
     col = &lbl_eu_80500664[0x5D];
-    u16 v6;
     if (name == NULL) {
         v6 = 0;
     } else {
@@ -1245,7 +1261,6 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
         v6 = *(u16*)&result;
     }
     col = &lbl_eu_80500664[0x68];
-    u16 v7;
     if (name == NULL) {
         v7 = 0;
     } else {
@@ -1254,7 +1269,6 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
         v7 = *(u16*)&result;
     }
     col = &lbl_eu_80500664[0x73];
-    u8 v8;
     if (name == NULL) {
         v8 = 0;
     } else {
@@ -1271,7 +1285,7 @@ extern "C" u32 func_80138234(const char* name, u32 id) {
     if (v2 != 0 && (u8)func_8009CF8C(v2 + 0x220) < 0xFE) return 0;
     if ((u16)func_8009CF8C(v3 + 0x21) < v4) return 0;
 
-    u32 flag = 0;
+    flag = 0;
     if (v5 != 0) {
         void* result = getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x7E], (const char*)v5);
         u16 val = *(u16*)&result;
@@ -2489,6 +2503,9 @@ extern "C" int func_8013AC3C(u8 max, u8 count, u32 off) {
 }
 
 extern "C" void func_8013ACFC() {
+    // retail materializes the table base once (r22) and derives every
+    // sub-table (+0x418/+0x378/+0x2F0) and column name from it
+    u8* tbl = lbl_eu_80500108;
     if (func_8009CF8C(0x20) <= 4) return;
     if ((lbl_eu_80663E24 & 0x100) == 0) return;
     void* cam = (void*)func_8049603C((CScn*)lbl_eu_80663E14);
@@ -2500,11 +2517,11 @@ extern "C" void func_8013ACFC() {
     u8 flag = (u8)lbl_eu_80664184;
     if (flag == 0) return;
 
-    u32 bdat = lbl_eu_806640A8;
+    void* bdat = (void*)lbl_eu_806640A8;
     u16 row = 0;
-    if (bdat != 0) {
-        func_8003AA34(&lbl_eu_80500664[0x22B]);
-        void* r = getBdatStringColumnValue((void*)bdat, &lbl_eu_80500664[0x22B],
+    if (bdat != NULL) {
+        func_8003AA34((const char*)(tbl + 0x22B));
+        void* r = getBdatStringColumnValue(bdat, (const char*)(tbl + 0x22B),
                                            (const char*)(u32)flag);
         row = *(u16*)&r;
     }
@@ -2512,16 +2529,17 @@ extern "C" void func_8013ACFC() {
     u16 prev = row - 1;
 
     u8 col2 = 0;
-    if (bdat != 0) {
-        func_8003AA34(&lbl_eu_80500664[0x23A]);
-        void* r = getBdatStringColumnValue((void*)bdat, &lbl_eu_80500664[0x23A],
+    if (bdat != NULL) {
+        func_8003AA34((const char*)(tbl + 0x23A));
+        void* r = getBdatStringColumnValue(bdat, (const char*)(tbl + 0x23A),
                                            (const char*)(u32)flag);
         col2 = *(u8*)&r;
     }
-    f32 scale = (f32)col2 * lbl_eu_80667340;
+    f64 dcol2 = (f64)col2;
+    f32 scale = (f32)dcol2 * lbl_eu_80667340;
 
     // struct assignment: retail's copy is an inline mtctr/lwzu/stwu loop
-    XBMapTable1 t1 = *(const XBMapTable1*)&lbl_eu_80500108[0x418];
+    XBMapTable1 t1 = *(const XBMapTable1*)&tbl[0x418];
 
     CPlayerIf* pif = (CPlayerIf*)player;
     nw4r::math::VEC3* pos = pif->_v0AC();
@@ -2535,35 +2553,40 @@ extern "C" void func_8013ACFC() {
     void* fp = getFP__FPCc((const char*)name);
     u8 n = (u8)func_8003B1EC((void*)fp);
 
-    u16 idx = 0;
+    const char* colName = (const char*)(tbl + 0x247);
+    u8 idx = 0;
     for (u8 i = 1; i <= n; i++) {
         s16 v = 0;
-        if (fp != 0) {
+        if (fp != NULL) {
             func_8003AA34((const char*)fp);
-            void* r = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x247],
+            void* r = getBdatStringColumnValue(fp, colName,
                                                (const char*)(u32)i);
             v = *(s16*)&r;
         }
-        if ((f32)v > sy) {
+        f64 dv = (f64)v;
+        if ((f32)dv > sy) {
             idx = i;
             break;
         }
     }
 
-    u32 x = (u32)prev;
-    u32 rem = x % 24;
-    u32 q = x / 24;
-    f32 R = (f32)(lbl_eu_80667358 * (lbl_eu_80667348 * sqrt(lbl_eu_80667350)));
+    u16 rem = prev % 24;
+    u16 q = prev / 24;
+    // kept in a local so MWCC holds it in an fpr across the whole loop
+    f32 cell = lbl_eu_80667348;
+    f32 R = (f32)(lbl_eu_80667358 * (cell * sqrt(lbl_eu_80667350)));
     f32 R2 = R * R;
     u32 baseOff = (idx - 1) * 0x240;
 
+    const u8* t2src = &tbl[0x378];
+    const u8* t3src = &tbl[0x2F0];
     for (u16 i2 = 0; i2 < 0x240; i2++) {
-        u32 r5 = i2 % 24;
-        u32 q2 = i2 / 24;
-        f32 dx = (f32)(s32)(r5 - rem) * lbl_eu_80667348 - sx;
-        f32 dz = (f32)(s32)(q2 - q) * lbl_eu_80667348 - sz;
+        u16 r5 = i2 % 24;
+        u16 q2 = i2 / 24;
+        f32 dx = (f32)(s32)(r5 - rem) * cell - sx;
+        f32 dz = (f32)(s32)(q2 - q) * cell - sz;
         if (dx * dx + dz * dz <= R2) {
-            XBMapTable2 t2 = *(const XBMapTable2*)&lbl_eu_80500108[0x378];
+            XBMapTable2 t2 = *(const XBMapTable2*)t2src;
             func_8003AA34((const char*)t2.w[28]);
             u32 sum = 0;
             for (u8 j = 2; j < flag; j++) {
@@ -2576,7 +2599,7 @@ extern "C" void func_8013ACFC() {
             sum += baseOff;
             u32 addr = sum + i2 + 1;
             if (func_8009EBE8(addr) == 0) {
-                XBMapTable3 t3 = *(const XBMapTable3*)&lbl_eu_80500108[0x2F0];
+                XBMapTable3 t3 = *(const XBMapTable3*)t3src;
                 func_8003AA34((const char*)t3.w[32]);
                 u32 sum2 = 0;
                 for (u8 j = 2; j < flag; j++) {

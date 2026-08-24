@@ -335,7 +335,62 @@ extern "C" void func_8048DB58(u8* self, const void* other) {
 }
 
 // us-80491be4: func_8048DB70 (0x1A8 bytes)
-void func_8048DB70(){}
+// Collision-callback vertex streamer (registered via func_804BE3E0): the
+// collision query pass invokes this with scene-head extent words, a vertex
+// entry count and a centre offset. It opens a GX triangle batch and streams
+// `count` vertices - pairs from 24-byte-stride entries, then a remainder
+// loop at 12 bytes - projecting each through lbl_eu_80658638 bounds and
+// lbl_eu_806658E0 depth scale into the GX FIFO (paired-single extent check
+// in the prologue lowers to psq_l/ps_cmpo0).
+void func_8048DB70(void* entries, const float* head, u32 count, float offs) {
+    // Centre-offset copies: retail spills these to stack homes.
+    f32 t[4];
+    t[0] = offs; t[1] = offs; t[2] = offs; t[3] = offs;
+
+    // Extent guard: exit when the centre offset leaves the head bounds.
+    if (offs > head[0] || offs > head[2]) {
+        return;
+    }
+
+    GXBegin(GX_TRIANGLEFAN, GX_VTXFMT0, (u16)count);
+
+    u8* walk = (u8*)entries;
+    const float* bnd = lbl_eu_80658638;
+    f32 ds = lbl_eu_806658E0;
+    f32 eps = lbl_eu_8066A9BC;
+    f32 half = lbl_eu_8066A9C0;
+
+    u32 pairs = count >> 1;
+    for (u32 i = 0; i < pairs; i++) {
+        f32 v0x = *(f32*)(walk + 0);
+        f32 v0y = *(f32*)(walk + 4);
+        f32 v0z = *(f32*)(walk + 8);
+        f32 v1x = *(f32*)(walk + 12);
+        f32 v1y = *(f32*)(walk + 16);
+        f32 v1z = *(f32*)(walk + 20);
+        walk += 24;
+
+        // Vertex 0.
+        f32 p0x = t[0] + v0x;
+        f32 p0y = eps + v0y;
+        f32 p0z = t[2] + v0z;
+        GXPosition3f32(p0x, p0y, p0z);
+        GXTexCoord2f32(ds * (v0x - bnd[0]) + half, ds * (v0z - bnd[2]) + half);
+        // Vertex 1.
+        f32 p1x = t[0] + v1x;
+        f32 p1y = eps + v1y;
+        f32 p1z = t[2] + v1z;
+        GXPosition3f32(p1x, p1y, p1z);
+        GXTexCoord2f32(ds * (v1x - bnd[0]) + half, ds * (v1z - bnd[2]) + half);
+    }
+    if ((count & 1) != 0) {
+        f32 vx = *(f32*)(walk + 0);
+        f32 vy = *(f32*)(walk + 4);
+        f32 vz = *(f32*)(walk + 8);
+        GXPosition3f32(t[0] + vx, eps + vy, t[2] + vz);
+        GXTexCoord2f32(ds * (vx - bnd[0]) + half, ds * (vz - bnd[2]) + half);
+    }
+}
 
 // us-80491d8c: func_8048DD18 (0x5E0 bytes)
 // Draws one maru-shadow quad: either the projected shadow-map path or the

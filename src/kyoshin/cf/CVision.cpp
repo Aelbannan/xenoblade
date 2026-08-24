@@ -7,7 +7,13 @@
 // Forward decl: CfGameManager.hpp's `static cf::CfGameManager* init(...)` relies
 // on the class name being declared before its include chain is entered.
 namespace cf { class CfGameManager; }
+// code_801862C0.hpp (via harness_catalog.hpp) currently declares
+// getBdatStringColumnValue with an s32 parameter while CBattleState.hpp uses
+// int; MWCC treats them as distinct types (10197). This TU never calls the
+// catalog copy, so rename it out of the way (CGame.cpp idiom).
+#define getBdatStringColumnValue visionCppCatalogBdatColUnused
 #include "kyoshin/harness_catalog.hpp"
+#undef getBdatStringColumnValue
 #include "kyoshin/cf/CVision.hpp"
 #include "kyoshin/cf/CArtsSet.hpp"
 #include "kyoshin/cf/object/CBattleState.hpp"
@@ -126,7 +132,7 @@ extern "C" void func_801AF934(u32 a);            // CMenuVision.cpp defines an e
 // Object handed to func_801A5E58 by func_800F477C (reads byte at 0x42).
 struct CVisionRefObj {
     u8 unk0[0x42];  // 0x00
-    u8 b_42;         // 0x42
+    s8 b_42;         // 0x42 (signed: retail compares with cmpi)
     u8 unk43[0x78 - 0x43];
     u32 w_78;        // 0x78
 };
@@ -159,6 +165,48 @@ public:
     virtual void v18();
     virtual void v1C();
     virtual void v20(u32 r4);   // 0x20
+    // Filler slots keep the named entry at its retail vtable offset
+    // (declared index N -> vtable offset (N+2)*4).
+    virtual void f024(); virtual void f028(); virtual void f02C(); virtual void f030();
+    virtual void f034(); virtual void f038(); virtual void f03C(); virtual void f040();
+    virtual void f044(); virtual void f048(); virtual void f04C(); virtual void f050();
+    virtual void f054(); virtual void f058(); virtual void f05C(); virtual void f060();
+    virtual void f064(); virtual void f068(); virtual void f06C(); virtual void f070();
+    virtual void f074(); virtual void f078(); virtual void f07C(); virtual void f080();
+    virtual void f084(); virtual void f088(); virtual void f08C(); virtual void f090();
+    virtual void f094(); virtual void f098(); virtual void f09C(); virtual void f0A0();
+    virtual void f0A4(); virtual void f0A8(); virtual void f0AC(); virtual void f0B0();
+    virtual void f0B4(); virtual void f0B8(); virtual void f0BC(); virtual void f0C0();
+    virtual void f0C4(); virtual void f0C8(); virtual void f0CC(); virtual void f0D0();
+    virtual void f0D4(); virtual void f0D8(); virtual void f0DC(); virtual void f0E0();
+    virtual void f0E4(); virtual void f0E8(); virtual void f0EC(); virtual void f0F0();
+    virtual void f0F4(); virtual void f0F8(); virtual void f0FC(); virtual void f100();
+    virtual void f104(); virtual void f108(); virtual void f10C(); virtual void f110();
+    virtual void f114(); virtual void f118(); virtual void f11C(); virtual void f120();
+    virtual void f124(); virtual void f128(); virtual void f12C(); virtual void f130();
+    virtual void f134(); virtual void f138(); virtual void f13C(); virtual void f140();
+    virtual void f144(); virtual void f148(); virtual void f14C(); virtual void f150();
+    virtual void f154(); virtual void f158(); virtual void f15C(); virtual void f160();
+    virtual void f164(); virtual void f168(); virtual void f16C(); virtual void f170();
+    virtual void f174(); virtual void f178(); virtual void f17C(); virtual void f180();
+    virtual void f184(); virtual void f188(); virtual void f18C(); virtual void f190();
+    virtual void f194(); virtual void f198(); virtual void f19C(); virtual void f1A0();
+    virtual void f1A4(); virtual void f1A8(); virtual void f1AC(); virtual void f1B0();
+    virtual void f1B4(); virtual void f1B8(); virtual void f1BC(); virtual void f1C0();
+    virtual void f1C4(); virtual void f1C8(); virtual void f1CC(); virtual void f1D0();
+    virtual void f1D4(); virtual void f1D8(); virtual void f1DC(); virtual void f1E0();
+    virtual void f1E4(); virtual void f1E8(); virtual void f1EC(); virtual void f1F0();
+    virtual void f1F4(); virtual void f1F8(); virtual void f1FC(); virtual void f200();
+    virtual void f204(); virtual void f208(); virtual void f20C(); virtual void f210();
+    virtual void f214(); virtual void f218(); virtual void f21C(); virtual void f220();
+    virtual void f224(); virtual void f228(); virtual void f22C(); virtual void f230();
+    virtual void f234(); virtual void f238(); virtual void f23C(); virtual void f240();
+    virtual void f244(); virtual void f248(); virtual void f24C(); virtual void f250();
+    virtual void f254(); virtual void f258(); virtual void f25C(); virtual void f260();
+    virtual void f264(); virtual void f268(); virtual void f26C(); virtual void f270();
+    virtual void f274(); virtual void f278(); virtual void f27C(); virtual void f280();
+    virtual void f284(); virtual void f288(); virtual void f28C();
+    virtual void* vf290();      // 0x290
 };
 
 struct CVisionFusion {
@@ -392,45 +440,107 @@ extern "C" void* __ct__801A33AC(CVisionSlot* self) {
 
 // ---------------------------------------------------------------------------
 // us-801a4f2c: Initialise all vision slots / effects (retail func_801A380C).
+// Retail keeps self+0x20000 hoisted into a saved GPR for the tail fields and
+// resets the eight vision slots via a 2-iteration loop whose body covers four
+// slots each (trio + mid-field group per slot, in ctor store order).
 // ---------------------------------------------------------------------------
 void func_801A380C(CVision* self) {
-    self->field_26194 = lbl_eu_80667CD4;
-    self->field_26198 = lbl_eu_80667CD4;
-    self->field_2619C = lbl_eu_80667CD4;
-    self->field_261A0 = lbl_eu_80667CD4;
-    self->field_261A4 = 0;
+    f32 zero = lbl_eu_80667CD4;
+    CVisionRingBase* R = (CVisionRingBase*)((u8*)self + 0x20000);
+    R->f_6194 = zero;
+    R->f_6198 = zero;
+    R->f_619C = zero;
+    R->f_61A0 = zero;
+    R->b_61A4 = 0;
+
+    // Install the null ptmf callback: copied through a stack local first.
     CVisionPtmf cb;
-    u32* p = __ptmf_null;
-    u32 v0 = *p++;
-    u32 v1 = *p++;
-    u32 v2 = *p++;
-    cb.mPfn = v0;
-    cb.mObj = v1;
-    cb.mDelta = v2;
-    self->mPtmf = cb;
-    self->field_2619C = lbl_eu_80667CD4;
-    self->field_261A0 = lbl_eu_80667CD4;
+    u32* np = __ptmf_null;
+    R->mPtmf.mPfn = cb.mPfn = *np++;
+    cb.mObj = *np++;
+    cb.mDelta = *np;
+    R->mPtmf.mObj = cb.mObj;
+    R->mPtmf.mDelta = cb.mDelta;
+    R->f_619C = zero;
+    R->f_61A0 = zero;
     __ptmf_test(&cb);
+
     self->vt_34();
+
+    // Reset the four CVisionSub battle slots (0x834 stride).
+    CVisionSub* pSub = &self->sub;
     for (int i = 0; i < 4; i++) {
-        func_800F449C(&self->sub + i);
+        func_800F449C(pSub);
+        pSub++;
     }
-    for (int i = 0; i < 8; i++) {
-        CVisionSlot& s = self->unk20D4[i];
-        s.f_15E8 = lbl_eu_80667CD4;
-        s.h_15EE = 0;
-        s.h_15EC = 0;
-        s.w_2CC4 = 0;
-        s.w_2CC0 = 0;
-        s.f_3D6C = lbl_eu_80667CD4;
-        s.w_3FBC = 0;
-        s.f_3FC0 = lbl_eu_80667CD4;
-        s.w_4800 = 0;
-        s.f_4808 = lbl_eu_80667CD4;
-        s.w_4810 = 0;
-        s.w_4804 = 0;
-        s.f_480C = lbl_eu_80667CD4;
-        s.w_4814 = 0;
+
+    // Reset the eight vision slots: two iterations x four slots.
+    f32 zSlot = lbl_eu_80667CD4;
+    CVisionSlot* s = self->unk20D4;
+    for (int k = 0; k < 2; k++) {
+        // Four slots per iteration, written out so MWCC emits the same
+        // straight-line store run (moving base pointer) as retail.
+        CVisionSlot* c = s;
+        c->f_15E8 = zSlot;
+        c->h_15EE = 0;
+        c->h_15EC = 0;
+        c->w_2CC4 = 0;
+        c->w_2CC0 = 0;
+        c->f_3D6C = zSlot;
+        c->w_3FBC = 0;
+        c->f_3FC0 = zSlot;
+        c->w_4800 = 0;
+        c->f_4808 = zSlot;
+        c->w_4810 = 0;
+        c->w_4804 = 0;
+        c->f_480C = zSlot;
+        c->w_4814 = 0;
+        c++;
+        c->f_15E8 = zSlot;
+        c->h_15EE = 0;
+        c->h_15EC = 0;
+        c->w_2CC4 = 0;
+        c->w_2CC0 = 0;
+        c->f_3D6C = zSlot;
+        c->w_3FBC = 0;
+        c->f_3FC0 = zSlot;
+        c->w_4800 = 0;
+        c->f_4808 = zSlot;
+        c->w_4810 = 0;
+        c->w_4804 = 0;
+        c->f_480C = zSlot;
+        c->w_4814 = 0;
+        c++;
+        c->f_15E8 = zSlot;
+        c->h_15EE = 0;
+        c->h_15EC = 0;
+        c->w_2CC4 = 0;
+        c->w_2CC0 = 0;
+        c->f_3D6C = zSlot;
+        c->w_3FBC = 0;
+        c->f_3FC0 = zSlot;
+        c->w_4800 = 0;
+        c->f_4808 = zSlot;
+        c->w_4810 = 0;
+        c->w_4804 = 0;
+        c->f_480C = zSlot;
+        c->w_4814 = 0;
+        c++;
+        c->f_15E8 = zSlot;
+        c->h_15EE = 0;
+        c->h_15EC = 0;
+        c->w_2CC4 = 0;
+        c->w_2CC0 = 0;
+        c->f_3D6C = zSlot;
+        c->w_3FBC = 0;
+        c->f_3FC0 = zSlot;
+        c->w_4800 = 0;
+        c->f_4808 = zSlot;
+        c->w_4810 = 0;
+        c->w_4804 = 0;
+        c->f_480C = zSlot;
+        c->w_4814 = 0;
+        s = c + 1;
     }
 }
 
@@ -725,26 +835,26 @@ void func_801A4578(CVision* self) {
             w2 = 0;
         }
         if (w2) {
-            u32* src = &lbl_eu_8053314C.mPfn;
-            u32 dlt, obj, pfn;
-            pfn = *src++;
-            obj = *src++;
-            dlt = *src++;
-            CVisionPtmf cb;
-            cb.mPfn = pfn;
-            cb.mObj = obj;
-            cb.mDelta = dlt;
-            f32 f_6194 = self->field_26194;
-            f32 f_cd4 = lbl_eu_80667CD4;
-            self->mPtmf.mPfn = pfn;
-            self->mPtmf.mObj = obj;
-            self->mPtmf.mDelta = cb.mDelta;
-            self->field_2619C = f_cd4;
-            self->field_261A0 = f_6194;
-            __ptmf_test(&cb);
-        }
-        if (((void* (*)(void*))((void**)p1)[0x2BC / 4])(p1) != 0 ||
-            ((void* (*)(void*))((void**)p2)[0x2BC / 4])(p2) != 0) {
+        u32* src = &lbl_eu_8053314C.mPfn;
+        u32 dlt, obj, pfn;
+        pfn = *src++;
+        obj = *src++;
+        dlt = *src++;
+        CVisionPtmf cb;
+        cb.mPfn = pfn;
+        cb.mObj = obj;
+        cb.mDelta = dlt;
+        f32 f_6194 = self->field_26194;
+        f32 f_cd4 = lbl_eu_80667CD4;
+        self->mPtmf.mPfn = pfn;
+        self->mPtmf.mObj = obj;
+        self->mPtmf.mDelta = cb.mDelta;
+        self->field_2619C = f_cd4;
+        self->field_261A0 = f_6194;
+        __ptmf_test(&cb);
+    }
+        if (((void* (*)(void*))(*(void***)p1)[0x2BC / 4])(p1) != 0 ||
+            ((void* (*)(void*))(*(void***)p2)[0x2BC / 4])(p2) != 0) {
             self->vt_1C();
         }
     }
@@ -1279,6 +1389,9 @@ void func_801A5BA8(CVision* self) {
 // func_801A5E58).
 // ---------------------------------------------------------------------------
 void func_801A5E58(CVision* self) {
+    // Declaration order drives MWCC's callee-saved GPR coloring (p, i, sub).
+    CVisionFusionSub* p;
+    int i;
     CVisionSub* sub;
     if (self->sub.field_00 == 0) {
         sub = 0;
@@ -1295,33 +1408,39 @@ void func_801A5E58(CVision* self) {
     }
     if (w1) {
         f32 scl = lbl_eu_80667D38;
-        if (func_800F477C(sub) != 0 && func_800F477C(sub)->b_42 == 1) {
-            scl = lbl_eu_80667D3C;
+        if (func_800F477C(sub) != 0) {
+            if (func_800F477C(sub)->b_42 == 1) {
+                scl = lbl_eu_80667D3C;
+            }
         }
-        // Accumulate a per-player float offset, then derive the final scale
-        // from the sub object's id / the battle-manager flags, and write it out.
-        int i = 0;
-        do {
-            void* p = func_8016FE34((int)getPlayer__Q22cf13CfGameManagerFi(i));
+        // Per-player offset accumulation. The signed int result goes through
+        // the 0x4330/xoris double trick against the NAMED .sdata2 magic
+        // lbl_eu_80667D28 (hoisted into a saved FPR), then folds into the
+        // running scale.
+        for (i = 0; i < 3; i++) {
+            p = (CVisionFusionSub*)func_8016FE34((int)getPlayer__Q22cf13CfGameManagerFi(i));
             if (p != 0) {
-                void* r = ((void* (*)(void*))((void**)p)[0x290 / 4])(p);
-                if (r != 0) {
+                if (p->vf290() != 0) {
                     s32 out;
-                    if (func_80260264(r, 0x6c, &out) != 0) {
-                        scl += (f32)(f64)out;
+                    if (func_80260264(p->vf290(), 0x6c, &out) != 0) {
+                        union {
+                            u32 w[2];
+                            double d;
+                        } conv;
+                        conv.w[0] = 0x43300000u;
+                        conv.w[1] = (u32)out ^ 0x80000000u;
+                        scl += (f32)(conv.d - lbl_eu_80667D28);
                     }
                 }
             }
-            i++;
-        } while (i < 3);
+        }
         if (sub->field_824 & 0x20000) {
             scl = sub->field_0C->field_2C;
         }
-        CBattleManager* bm = CBattleManager::getInstance();
-        if (((void* (*)(void*, u32))((void**)bm)[0x28 / 4])(bm, 0x400)) {
+        if (((BMVtIf828*)CBattleManager::getInstance())->v008(0x400) != 0) {
             scl = lbl_eu_80667D00;
         }
-        if (((void* (*)(void*, u32))((void**)bm)[0x28 / 4])(bm, 0x800)) {
+        if (((BMVtIf828*)CBattleManager::getInstance())->v008(0x800) != 0) {
             scl = lbl_eu_80667D40;
         }
         sub->field_830 = scl;
@@ -1717,11 +1836,10 @@ int func_801A6A7C(CVision* self, CVisionObj* obj) {
         return 0;
     }
     CVisionPtmf cb;
-    u32* src = &lbl_eu_80533200[0];
-    u32 dlt, t1, t2;
-    t1 = *src++;
-    t2 = *src++;
-    dlt = *src++;
+    u32* src = lbl_eu_80533200;
+    u32 t1 = *src++;
+    u32 t2 = *src++;
+    u32 dlt = *src++;
     cb.mPfn = t1;
     cb.mObj = t2;
     cb.mDelta = dlt;
@@ -2437,14 +2555,20 @@ void func_801A891C(int a, int b) {
 // owning CVision back-pointer (retail func_801A808C).
 // ---------------------------------------------------------------------------
 void func_801A808C(CVision* self, int index) {
-    CVisionEffect** ea = self->effectArray;
-    if (ea[index] == 0) {
-        CVisionEffect* eff =
-            (CVisionEffect*)func_800451D8(lbl_eu_80503F60[index].field_00, 0);
-        ea[index] = eff;
-        if (eff != 0) {
-            eff->field_B0 = (u32)self;
-        }
+    // Scaled index materialized before the object base is referenced: MWCC
+    // colors/creates the value nodes in statement order, which reproduces the
+    // retail rlwinm-before-addis schedule.
+    u32 addr = (u32)index * 4;
+    CVisionEffect** slot =
+        (CVisionEffect**)(addr + (u32)self->effectArray);
+    if (*slot != 0) {
+        return;
+    }
+    CVisionEffect* eff =
+        (CVisionEffect*)func_800451D8(lbl_eu_80503F60[index].field_00, 0);
+    *slot = eff;
+    if (eff != 0) {
+        eff->field_B0 = (u32)self;
     }
 }
 

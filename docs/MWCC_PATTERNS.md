@@ -2824,6 +2824,14 @@ be the intended fix rather than externing the data.
 - Confidence: repo_proven
 - Applies to/a.k.a.: any float compare used as a branch condition; same family as the != 0 -O4,p/-O4,s lowering note. Try the De-Morgan/negated form first whenever a float branch shows cror on the compare result. SCOPE NOTE (CScnItemCamera/EFF8 negative result): the merge only appears when the compare runs on the plain value - if retail's branch follows a fneg of the compared value, the cror comes from elsewhere and negated-lt/ge rewrites are codegen-neutral
 
+## Diff-1 return pairs: `if (c) return K; return K+1;` lowers to branchless addic/subfe — route through a named local (func_8028876C fix, Wii/1.1 -O4,p)
+- Symptom:   state-code dispatchers returning adjacent constants (`if (vis) return 0x1d; return 0x1c;`) emitted branchless `addic r0,c,-1 / subfe / addi r3,r3,K` selects where retail has explicit `cmpi / li FALSE / beq / li TRUE / b`
+- Cause:     MWCC's integer-select formation fires only when the two result constants differ by exactly 1 (carry trick yields 0/1 offset); diff>=2 pairs keep branches
+- Fix:       route the pair through a named local: `int ret = K; if (c) ret = K+1; return ret;` — breaks the select pattern and reproduces retail's li/beq/li block
+- Result:    func_8028876C 59.7% → 100% FULL MATCH; also exposed two pairs where the inherited source had the manyParty semantics REVERSED vs retail bytes (cat2-nonvis many→0x1e, final-nonvis many→0x18) — byte-matching caught a real behavior bug
+- Confidence: repo_proven (CEquipItemBox func_8028876C)
+- Applies to/a.k.a.: any dispatcher returning small adjacent codes gated on booleans; grep source for `return 0x` pairs differing by 1 inside one block
+
 ## Magic-constant conversion helper: union store order sets the scratch colors (s16ToF_b0f0, Wii/1.1 -O4,p)
 - Symptom:   inline `(union){double,u32[2]}` helpers (0x43300000/exponent-trick s16-to-f32) emitted the magic-constant temp and the sign-xor temp with swapped scratch colors vs retail (lis r7/xoris r6 instead of lis r6/xoris r7)
 - Cause:     the helper wrote `c.w[0] = magic; c.w[1] = value;` — birth order of the two temps inside the inline expansion drives volatile coloring; the retail statement order is reversed
@@ -2831,6 +2839,14 @@ be the intended fix rather than externing the data.
 - Result:    28.9% and counting; residual is local stack-slot layout (union temps vs destination struct mirrored)
 - Confidence: repo_proven
 - Applies to/a.k.a.: all 0x43300000/2^52 conversion helpers (s16ToF/u16ToF/u8ToF/s32ToF families); check each helper's store order against retail's stw sequence before blaming declaration order at the call site
+
+## s32→f32 conversion: drop the union helper entirely — `(f32)(int)x` makes MWCC emit its own magic + pool constants (func_80285708 fix, Wii/1.1 -O4,p)
+- Symptom:   hand-rolled `CEquipItemBoxF64Conv c; c.w[0]=0x43300000; c.w[1]=(u32)m^0x80000000;` + explicit subtraction of the retail pool constants (`c.d - lbl_eu_80668B18`) emitted DOUBLE-precision ops (`fsub`/`fmul`, FC-opcode) where retail has SINGLE (`fsubs`/`fmuls`, EC-opcode); 19 mismatches in the FP web alone
+- Cause:     the retail source never touched those constants — `lbl_eu_80668B18` (43300000_80000000 = 2^52+2^31) and `lbl_eu_80668B10` (43300000_00000000 = 2^52) are MWCC's OWN implicit s32→f32/s32→f64 correction constants. The lfd-pool + fsubs sequence IS the compiler's inline expansion of a plain float cast
+- Fix:       delete the union and the constant references; write the cast directly — `(f32)(int)((u32)v1 * (u32)n)` for signed (emits xoris+B18 path), `(f32)(u32)x` for unsigned (plain store+B10 path). Return-site conversions likewise: `return (f32)(u16)result;`
+- Result:    func_80285708 67.2% → 94.8% (0 structural, 3 role-clean reg-swaps); reloc drift cleared TU-wide by postprocess pool_patterns renaming @N→lbl_eu_80668B18/B10 + extern_data_sections
+- Confidence: repo_proven (CEquipItemBox func_80285708)
+- Applies to/a.k.a.: every site that builds 0x43300000 unions then subtracts lbl_eu_80668B10/B18/B1B0-style constants — that whole dance is re-implementing `(f32)(int)` / `(f32)(u32)`; grep for `- lbl_eu_80668B10`/`- lbl_eu_80668B18` to find candidates
 
 ## Dead pooled .sdata2 constant: pool_patterns cannot fire without a live reloc — use drop_data_tail (CScnItemCamera fix, Wii/1.1 -O4,p)
 - Symptom:   `data diff` shows `.sdata2` retail 0x0 vs decomp 0x8 containing the int->double magic pair 43300000_80000000; no relocation in the .o references it
@@ -3030,3 +3046,52 @@ Defining an empty override `void CTaskLOD::Draw() {}` whose vtable slot targets 
 - Result:    isInitialized reached FULL_MATCH (co-owner finished from this base); func_8045F438 went 30.2%→69.8% with 0 structural diffs and exact size (parked near-miss only on ABI-boundary witness rule)
 - Confidence: repo_proven (shape reproduction verified byte-level by hexdiff in two functions)
 - Applies to/a.k.a.: any singleton/global with multi-read patterns (msgQueue scans, hash lookups, alloc callbacks); complements ref:8303d15428 (EH sp-save frame coupling) — same anti-CSE need, different mechanism
+
+## VALIDATE-style range-check macros: decode retail's flag COUNT from the expansion before writing the macro (CDeviceFont, Wii/1.1 -O4,p)
+- Symptom:   TU .text exceeds split budget by hundreds of bytes with no single large cause; hexdiff shows the pointer-validation macro expansions preset N+2 flag registers where retail presets N, and each macro instance carries 1-2 extra compare/branch pairs.
+- Cause:     the hand-written boolean expression had MORE range clauses than retail's inlined assert: we merged two adjacent ranges (0x80/0x81) into one flag and appended extra tails (top5==0xD0, (addr&0xFFFFC000)==0xE0000000) that retail's version does not check.
+- Fix:       disassemble ONE retail macro instance and count the pre-set flag registers (`li rX,1` chain) — that count IS the number of range conditions. Rewrite the source macro to exactly that many separate flags (retail kept 0x80 and 0x81 as SEPARATE flags). ~430B recovered TU-wide across 14+ instances.
+- Result:    SPLIT GATE PASS (decomp .text 0x23A0 -> 0x2218 vs budget 0x2370); wkRender structural count down.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any panic/assert-style macro inlined many times; also a general lesson — when split budget overflows without an obvious cause, count `li rX,1` runs inside repeated inline-macro expansions.
+
+## `==` operand order steers cmpl register colors on (loaded value, param) pairs (btm_is_sco_active, Wii/1.1 GC/3.0a5.2)
+- Symptom:   hexdiff shows 0 structural, N reg_swaps consisting ONLY of `cmpl cr0,0,rA,rB` vs `cmpl cr0,0,rB,rA`, where one operand is a memory load and the other is the function parameter
+- Cause:     source wrote `*(T*)(expr) == param`; MWCC colors the load into the first cmpl operand and the param into the second — retail's expression had the parameter on the LEFT
+- Fix:       flip the equality to `param == *(T*)(expr)` (plain high-level C); no declaration reordering needed when one side is an anonymous load
+- Result:    btm_is_sco_active 89.3%+3 reg_swap -> 100% byte-identical; cycle upgraded EQUIVALENT_MATCH(witness) -> FULL_MATCH
+- Confidence: repo_proven
+- Applies to/a.k.a.: scan re-gate candidates for reg_swap-only verdicts whose swapped pairs are cmpl with a load on one side; try operand flip FIRST (one-line change) before declaration-order steering. Complements docs/register_mapping.md declaration-order contract — operand order acts on anonymous temporaries that declaration order cannot reach.
+
+## RTTI stand-in names resolve to native __RTTI__* relocs under -RTTI on — no retarget rules needed (CLibLayout fix, Wii/1.1 -O4,p -ipa file)
+- Symptom:   hand-built vtables/RTTI base lists need base-class typeinfo relocs, but spelling `__RTTI__X` in source trips the deferred 10322 ICE (see CDesktop pattern above); stand-in names look like they would need UNIT_RULES retarget_relocs.
+- Cause:     under `-RTTI on` the compiler already knows the typeinfo symbols for every in-scope class; a legal stand-in extern (`extern u32 rtti_10IWorkEvent[];`) used as `(u32)&rtti_10IWorkEvent` gets unified with the real typeinfo symbol during emission.
+- Fix:       declare stand-ins (`extern u32 rtti_X[];`), reference them in manual tables, and SKIP the retarget_relocs rule entirely — the raw object emits retail-named relocs. Verify with `run.py data diff` ("raw object already data-matched").
+- Result:    CLibLayout data MATCH raw; no §17.6 postprocess needed.
+- Confidence: repo_proven
+- Applies to/a.k.a.: monolibdata dissolves of TUs owning class data; complements the CDesktop/CProcRoot 10322 stand-in pattern.
+
+## DECOMP_FORCEACTIVE is unnecessary for zero-init .sbss/.bss tail globals under -ipa file (CLibLayout fix, Wii/1.1 -O4,p -ipa file)
+- Symptom:   dissolved-TU recipes reflexively add DECOMP_FORCEACTIVE for unreferenced sbss/bss tail symbols; each entry costs real .text (vararg emitter function grows per symbol) and can break an exactly-full split budget.
+- Cause:     assumption that `-ipa file` GCs unreferenced zero-init definitions. It does not, at least for scalar/array POD tails in small-data sections.
+- Fix:       delete the FORCEACTIVE stub, rebuild via hexdiff, re-check the owning TU's data gate (.sbss/.bss size must stay at retail). Only re-add for symbols proven to vanish.
+- Result:    CLibLayout .sbss stayed 0x10 with the stub deleted; split budget went OVER(0x18) → exact PASS.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any dissolve TU flirting with its split budget; check before trimming elsewhere.
+
+### Comments must be pure ASCII under `-enc SJIS` (sjiswrap gate)
+The build preprocesses every source through `tools/sjiswrap.exe`; non-ASCII comment characters trip it:
+- Sequences invalid as Shift-JIS (e.g. UTF-8 em-dash `—`, curly quotes) produce a hard
+  `sjiswrap: File ... contains Shift JIS encoding errors` build error.
+- Worse, *some* non-ASCII bytes decode as valid-but-wrong Shift-JIS pairs silently (e.g. `§`
+  = UTF-8 `C2 A7` parses as a lead+trail pair), so the build passes with a mojibake comment — no error,
+  no warning. Grep for `[^\\x00-\\x7F]` before committing; write comments in ASCII only.
+  (Found when documenting CTaskLOD's intentional uninitialized-out-arg idiom.)
+
+## Inverted branch polarity (`bc 12,x` vs `bc 4,x`) — negate the source condition
+- Symptom:   hexdiff shows exactly one mismatch: retail `bc 12,0` branching OVER the if-body vs decomp `bc 4,0` branching over the same body; everything else identical.
+- Cause:     retail was compiled from `if (!(a < b)) body` / equivalent negated form, so MWCC emits a branch-if-true that jumps past the body; writing `if (a < b) body` yields branch-if-false.
+- Fix:       wrap the condition in `!(...)` instead of rewriting it as `>=` — a rewritten comparison (e.g. `(s8)a >= (u8)b`) changes operand/cast shape and breaks expression order + reloc placement. Negation preserves operand order byte-for-byte.
+- Result:    FULL_MATCH on func_801CC4E8 + func_801CC3F4 (kyoshin/CItemBoxGrid), 100%, semantic-certified.
+- Confidence: repo_proven
+- Applies to/a.k.a.: any single-instruction bc-polarity residual; combine with ternary-vs-two-statement local init shape for scratch-color fixes in the same function tail.

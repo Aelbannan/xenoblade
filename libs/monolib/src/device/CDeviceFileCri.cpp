@@ -139,35 +139,23 @@ inline bool criIsException(CDeviceFileCri* self) {
     // -1 only when the scan runs off the end (induction-variable fold).
     int count = *(u32*)((char*)self + 0x1AC);
     int found;
-    // goto-gate form (PLAN.md ÂS17.6): lets MWCC fold the exhaustion case
-    // into the loop exit exactly like the retail-inlined find().
-    for (found = 0; found < count; found++) {
+    // Countdown form: retail keeps the bound in CTR (mtctr/bdnz) and folds
+    // exhaustion to -1 AFTER the guard — reproduced by a separate countdown
+    // variable instead of reusing the found index as the loop counter.
+    u32 remaining = count;
+    for (found = 0; remaining != 0; remaining--) {
         u32 slot = (*(u32*)((char*)self + 0x1A8) + found) %
                    *(u32*)((char*)self + 0x1B0);
         if ((*(CMsgParamEntry**)((char*)self + 0x1A4))[slot].command ==
             CWorkThread::EVT_EXCEPTION) {
             break;
         }
+        found++;
     }
-    if (found == count) {
+    if (remaining == 0) {
         found = -1;
     }
     return found >= 0;
-}
-
-inline u32 criChildCount() {
-    // Local replica of reslist<CWorkThread*>::size() with the counter's web
-    // born after the walker's (retail colors cur=r3, count=r4).
-    _reslist_node<CWorkThread*>* curNode;
-    _reslist_node<CWorkThread*>* endNode =
-        lbl_eu_80665668->mChildren.mStartNodePtr;
-    u32 count;
-    curNode = endNode->mNext;
-    while (curNode != endNode) {
-        count++;
-        curNode = curNode->mNext;
-    }
-    return count;
 }
 
 } // namespace
@@ -220,8 +208,9 @@ int CDeviceFileCri::getFileSize(const char* pPath, int arg1) {
     // one aggregate so nameLen stays memory-resident (store per def, cached
     // reads) exactly like retail. pathLen rides in the same aggregate so its
     // otherwise-dead store survives DCE (retail keeps it too). NOTE: a plain
-    // local + address-taken store gets fully DCE'd (4.1%) — the aggregate is
-    // what defeats the optimizer.
+    // local (DCE'd, 4.1%), address-taken store (DCE'd, 4.1%), and a volatile
+    // first-declared local (lands at frame BOTTOM, 54.6%) were all tested —
+    // the escaping aggregate is the best-known form.
     char pathBuf[0x100];
     struct NameEntry {
         char nameBuf[0x80];

@@ -168,7 +168,7 @@ struct DB4FC_MoveBlock {
     u32 field_74;               // +0x74
     u32 field_78;               // +0x78
     u8 pad_7C[0xB4 - 0x7C];
-    u32 field_B4;               // +0xB4
+    s32 field_B4;              // +0xB4 (signed: retail emits signed cmpw)
 };
 
 // Object layout used by func_800DBA2C for r31 (*(arg2+0x50))
@@ -214,6 +214,56 @@ struct DB4FC_ArtsObj {
     void* field_84;             // +0x84 (sub-table, slot 0xC dispatch)
 };
 
+// Move sub-object interface (embedded at battle actors +0x3E9C): the status
+// probe used by func_800F3E8C lives at compiled vtable slot 0x4C (declared
+// index 17 under -RTTI). Never instantiated here, so no vtable is emitted.
+class BMSubVtIf4C {
+public:
+    virtual void bmSub00();  // 0 -> +0x00
+    virtual void bmSub01();
+    virtual void bmSub02();
+    virtual void bmSub03();
+    virtual void bmSub04();
+    virtual void bmSub05();
+    virtual void bmSub06();
+    virtual void bmSub07();
+    virtual void bmSub08();
+    virtual void bmSub09();
+    virtual void bmSub0A();
+    virtual void bmSub0B();
+    virtual void bmSub0C();
+    virtual void bmSub0D();
+    virtual void bmSub0E();
+    virtual void bmSub0F();
+    virtual void bmSub10();  // 16 -> +0x48
+    virtual s32 probeId();   // 17 -> +0x4C (owner actor/type id)
+};
+
+// Actor object scanned by func_800F3E8C: type id at +0x15F0 and the embedded
+// move sub-object at +0x3E9C.
+struct BattleScanActorView {
+    u8 pad_00[0x15F0];
+    u32 field_15F0;                    // +0x15F0 type id
+    u8 pad_15F4[0x3E9C - 0x15F4];
+    BMSubVtIf4C field_3E9C;            // embedded move sub-object
+};
+
+// Sentinel-pointer view (offset-typed alias of CBattleManager used to keep
+// func_800F3E8C pass 2's sentinel load independent of pass 1's).
+struct BMSentinelView {
+    u8 pad00[0x48];
+    _reslist_node<cf::CfObjectActor*>* sentinel;  // +0x48
+};
+
+// func_8016FE34 result view for func_800F3E8C: flags at +0x3F00 (bit 2 =
+// targetable) and type id at +0x15F0.
+struct BattleScanStateView {
+    u8 pad_00[0x15F0];
+    u32 field_15F0;                    // +0x15F0 type id
+    u8 pad_15F4[0x3F00 - 0x15F4];
+    u32 field_3F00;                    // +0x3F00 flags
+};
+
 // Absolute-offset view of an actor's embedded move sub-object (the C++ base
 // layout in CfObjectActor.hpp is 8 bytes off retail, so raw views pin the
 // offset; cf. CfActorField3F00 in CfObjectActor.hpp).
@@ -231,6 +281,19 @@ struct BattleSrcObjAccessor {
     u16 field_40;               // +0x40
     u8 pad_42[0x78 - 0x42];
     u32 field_78;               // +0x78
+};
+
+// func_800D81A8 source-param view: linked arts/status object pointer at +0x50.
+struct D81A8_SourceView {
+    u8 pad_00[0x50];
+    BattleSrcObjAccessor* link;   // +0x50
+};
+
+// Battle-status list base at actor +0x08 (member-address form keeps MWCC from
+// CSE-ing the three probes in func_800D81A8 into a shared temp register).
+struct D81A8_StatusListView {
+    u8 pad_00[0x08];
+    u8 statusList;   // +0x08
 };
 
 // Status/arts-data entry returned by func_80149154 (func_800D81A8 reads the
@@ -321,6 +384,21 @@ extern "C" void func_80277B34(cf::CChain* chain);
 extern "C" void func_800DB4FC(void* self, void* obj, void* enemy, void* move);
 extern "C" void func_800DB7F8(void* self, void* obj, void* enemy, void* move);
 extern "C" void func_800DBA2C(void* self, void* obj, void* enemy, void* move);
+extern "C" int func_802799F0(void* chain, void* obj);
+
+// C++-mangled retail import (func_800B708C__Fi): actor id -> action source.
+void* func_800B708C(int id);
+
+// Object scanned by func_800D7D24: key word at +0x4, flags at +0x78 and the
+// 0x20-stride entry block pointer at +0xB8.
+struct D7D24_Obj {
+    u8 pad_00[0x04];
+    u32 field_4;            // +0x04
+    u8 pad_08[0x78 - 0x08];
+    u32 field_78;           // +0x78 flags
+    u8 pad_7C[0xB8 - 0x7C];
+    u32* field_B8;          // +0xB8 entry block
+};
 
 // Fake single-inheritance interface for the battle manager's vtable slot
 // 0x28 (func_800885F0, called with a u32 mask by func_800F3C6C). Under the
@@ -413,11 +491,144 @@ struct BMVtIfF3970 : BMVtIfF3970Base {
     virtual void vf304(s32 arg) = 0;   // #191 -> 0x304
 };
 
+// Manual-vtable interface for battle actors dispatched by func_800D81A8:
+// slots 0x130 (#74), 0x290 (#158) and 0x5C0 (#366) under the kyoshin -RTTI
+// layout ((k+2)*4). Real C++ dispatch makes MWCC emit the canonical
+// lwz r12 / mtctr / bctrl sequence instead of pointer-cast helper calls.
+// Never instantiated.
+struct BMVtIfD81A8 {
+    virtual void v000() = 0; virtual void v001() = 0; virtual void v002() = 0;
+    virtual void v003() = 0; virtual void v004() = 0; virtual void v005() = 0;
+    virtual void v006() = 0; virtual void v007() = 0; virtual void v008() = 0;
+    virtual void v009() = 0; virtual void v010() = 0; virtual void v011() = 0;
+    virtual void v012() = 0; virtual void v013() = 0; virtual void v014() = 0;
+    virtual void v015() = 0; virtual void v016() = 0; virtual void v017() = 0;
+    virtual void v018() = 0; virtual void v019() = 0; virtual void v020() = 0;
+    virtual void v021() = 0; virtual void v022() = 0; virtual void v023() = 0;
+    virtual void v024() = 0; virtual void v025() = 0; virtual void v026() = 0;
+    virtual void v027() = 0; virtual void v028() = 0; virtual void v029() = 0;
+    virtual void v030() = 0; virtual void v031() = 0; virtual void v032() = 0;
+    virtual void v033() = 0; virtual void v034() = 0; virtual void v035() = 0;
+    virtual void v036() = 0; virtual void v037() = 0; virtual void v038() = 0;
+    virtual void v039() = 0; virtual void v040() = 0; virtual void v041() = 0;
+    virtual void v042() = 0; virtual void v043() = 0; virtual void v044() = 0;
+    virtual void v045() = 0; virtual void v046() = 0; virtual void v047() = 0;
+    virtual void v048() = 0; virtual void v049() = 0; virtual void v050() = 0;
+    virtual void v051() = 0; virtual void v052() = 0; virtual void v053() = 0;
+    virtual void v054() = 0; virtual void v055() = 0; virtual void v056() = 0;
+    virtual void v057() = 0; virtual void v058() = 0; virtual void v059() = 0;
+    virtual void v060() = 0; virtual void v061() = 0; virtual void v062() = 0;
+    virtual void v063() = 0; virtual void v064() = 0; virtual void v065() = 0;
+    virtual void v066() = 0; virtual void v067() = 0; virtual void v068() = 0;
+    virtual void v069() = 0; virtual void v070() = 0; virtual void v071() = 0;
+    virtual void v072() = 0; virtual void v073() = 0;  // pads #0..#73
+    virtual f32 vf130() = 0;           // #74 -> 0x130
+    virtual void v075() = 0; virtual void v076() = 0; virtual void v077() = 0;
+    virtual void v078() = 0; virtual void v079() = 0; virtual void v080() = 0;
+    virtual void v081() = 0; virtual void v082() = 0; virtual void v083() = 0;
+    virtual void v084() = 0; virtual void v085() = 0; virtual void v086() = 0;
+    virtual void v087() = 0; virtual void v088() = 0; virtual void v089() = 0;
+    virtual void v090() = 0; virtual void v091() = 0; virtual void v092() = 0;
+    virtual void v093() = 0; virtual void v094() = 0; virtual void v095() = 0;
+    virtual void v096() = 0; virtual void v097() = 0; virtual void v098() = 0;
+    virtual void v099() = 0; virtual void v100() = 0; virtual void v101() = 0;
+    virtual void v102() = 0; virtual void v103() = 0; virtual void v104() = 0;
+    virtual void v105() = 0; virtual void v106() = 0; virtual void v107() = 0;
+    virtual void v108() = 0; virtual void v109() = 0; virtual void v110() = 0;
+    virtual void v111() = 0; virtual void v112() = 0; virtual void v113() = 0;
+    virtual void v114() = 0; virtual void v115() = 0; virtual void v116() = 0;
+    virtual void v117() = 0; virtual void v118() = 0; virtual void v119() = 0;
+    virtual void v120() = 0; virtual void v121() = 0; virtual void v122() = 0;
+    virtual void v123() = 0; virtual void v124() = 0; virtual void v125() = 0;
+    virtual void v126() = 0; virtual void v127() = 0; virtual void v128() = 0;
+    virtual void v129() = 0; virtual void v130() = 0; virtual void v131() = 0;
+    virtual void v132() = 0; virtual void v133() = 0; virtual void v134() = 0;
+    virtual void v135() = 0; virtual void v136() = 0; virtual void v137() = 0;
+    virtual void v138() = 0; virtual void v139() = 0; virtual void v140() = 0;
+    virtual void v141() = 0; virtual void v142() = 0; virtual void v143() = 0;
+    virtual void v144() = 0; virtual void v145() = 0; virtual void v146() = 0;
+    virtual void v147() = 0; virtual void v148() = 0; virtual void v149() = 0;
+    virtual void v150() = 0; virtual void v151() = 0; virtual void v152() = 0;
+    virtual void v153() = 0; virtual void v154() = 0; virtual void v155() = 0;
+    virtual void v156() = 0; virtual void v157() = 0;  // pads #75..#157
+    virtual void* vf290() = 0;         // #158 -> 0x290
+    virtual void v159() = 0; virtual void v160() = 0; virtual void v161() = 0;
+    virtual void v162() = 0; virtual void v163() = 0; virtual void v164() = 0;
+    virtual void v165() = 0; virtual void v166() = 0; virtual void v167() = 0;
+    virtual void v168() = 0; virtual void v169() = 0; virtual void v170() = 0;
+    virtual void v171() = 0; virtual void v172() = 0; virtual void v173() = 0;
+    virtual void v174() = 0; virtual void v175() = 0; virtual void v176() = 0;
+    virtual void v177() = 0; virtual void v178() = 0; virtual void v179() = 0;
+    virtual void v180() = 0; virtual void v181() = 0; virtual void v182() = 0;
+    virtual void v183() = 0; virtual void v184() = 0; virtual void v185() = 0;
+    virtual void v186() = 0; virtual void v187() = 0; virtual void v188() = 0;
+    virtual void v189() = 0; virtual void v190() = 0; virtual void v191() = 0;
+    virtual void v192() = 0; virtual void v193() = 0; virtual void v194() = 0;
+    virtual void v195() = 0; virtual void v196() = 0; virtual void v197() = 0;
+    virtual void v198() = 0; virtual void v199() = 0; virtual void v200() = 0;
+    virtual void v201() = 0; virtual void v202() = 0; virtual void v203() = 0;
+    virtual void v204() = 0; virtual void v205() = 0; virtual void v206() = 0;
+    virtual void v207() = 0; virtual void v208() = 0; virtual void v209() = 0;
+    virtual void v210() = 0; virtual void v211() = 0; virtual void v212() = 0;
+    virtual void v213() = 0; virtual void v214() = 0; virtual void v215() = 0;
+    virtual void v216() = 0; virtual void v217() = 0; virtual void v218() = 0;
+    virtual void v219() = 0; virtual void v220() = 0; virtual void v221() = 0;
+    virtual void v222() = 0; virtual void v223() = 0; virtual void v224() = 0;
+    virtual void v225() = 0; virtual void v226() = 0; virtual void v227() = 0;
+    virtual void v228() = 0; virtual void v229() = 0; virtual void v230() = 0;
+    virtual void v231() = 0; virtual void v232() = 0; virtual void v233() = 0;
+    virtual void v234() = 0; virtual void v235() = 0; virtual void v236() = 0;
+    virtual void v237() = 0; virtual void v238() = 0; virtual void v239() = 0;
+    virtual void v240() = 0; virtual void v241() = 0; virtual void v242() = 0;
+    virtual void v243() = 0; virtual void v244() = 0; virtual void v245() = 0;
+    virtual void v246() = 0; virtual void v247() = 0; virtual void v248() = 0;
+    virtual void v249() = 0; virtual void v250() = 0; virtual void v251() = 0;
+    virtual void v252() = 0; virtual void v253() = 0; virtual void v254() = 0;
+    virtual void v255() = 0; virtual void v256() = 0; virtual void v257() = 0;
+    virtual void v258() = 0; virtual void v259() = 0; virtual void v260() = 0;
+    virtual void v261() = 0; virtual void v262() = 0; virtual void v263() = 0;
+    virtual void v264() = 0; virtual void v265() = 0; virtual void v266() = 0;
+    virtual void v267() = 0; virtual void v268() = 0; virtual void v269() = 0;
+    virtual void v270() = 0; virtual void v271() = 0; virtual void v272() = 0;
+    virtual void v273() = 0; virtual void v274() = 0; virtual void v275() = 0;
+    virtual void v276() = 0; virtual void v277() = 0; virtual void v278() = 0;
+    virtual void v279() = 0; virtual void v280() = 0; virtual void v281() = 0;
+    virtual void v282() = 0; virtual void v283() = 0; virtual void v284() = 0;
+    virtual void v285() = 0; virtual void v286() = 0; virtual void v287() = 0;
+    virtual void v288() = 0; virtual void v289() = 0; virtual void v290() = 0;
+    virtual void v291() = 0; virtual void v292() = 0; virtual void v293() = 0;
+    virtual void v294() = 0; virtual void v295() = 0; virtual void v296() = 0;
+    virtual void v297() = 0; virtual void v298() = 0; virtual void v299() = 0;
+    virtual void v300() = 0; virtual void v301() = 0; virtual void v302() = 0;
+    virtual void v303() = 0; virtual void v304() = 0; virtual void v305() = 0;
+    virtual void v306() = 0; virtual void v307() = 0; virtual void v308() = 0;
+    virtual void v309() = 0; virtual void v310() = 0; virtual void v311() = 0;
+    virtual void v312() = 0; virtual void v313() = 0; virtual void v314() = 0;
+    virtual void v315() = 0; virtual void v316() = 0; virtual void v317() = 0;
+    virtual void v318() = 0; virtual void v319() = 0; virtual void v320() = 0;
+    virtual void v321() = 0; virtual void v322() = 0; virtual void v323() = 0;
+    virtual void v324() = 0; virtual void v325() = 0; virtual void v326() = 0;
+    virtual void v327() = 0; virtual void v328() = 0; virtual void v329() = 0;
+    virtual void v330() = 0; virtual void v331() = 0; virtual void v332() = 0;
+    virtual void v333() = 0; virtual void v334() = 0; virtual void v335() = 0;
+    virtual void v336() = 0; virtual void v337() = 0; virtual void v338() = 0;
+    virtual void v339() = 0; virtual void v340() = 0; virtual void v341() = 0;
+    virtual void v342() = 0; virtual void v343() = 0; virtual void v344() = 0;
+    virtual void v345() = 0; virtual void v346() = 0; virtual void v347() = 0;
+    virtual void v348() = 0; virtual void v349() = 0; virtual void v350() = 0;
+    virtual void v351() = 0; virtual void v352() = 0; virtual void v353() = 0;
+    virtual void v354() = 0; virtual void v355() = 0; virtual void v356() = 0;
+    virtual void v357() = 0; virtual void v358() = 0; virtual void v359() = 0;
+    virtual void v360() = 0; virtual void v361() = 0; virtual void v362() = 0;
+    virtual void v363() = 0; virtual void v364() = 0; virtual void v365() = 0;  // pads #159..#365
+    virtual void* vf5C0(void* arg) = 0;   // #366 -> 0x5C0
+};
+
 // Manual-vtable interface for the embedded sub-object at actor+0x3E9C
-// (func_800DB7F8): the vptr is read from +0x3E9C and its slot 0x140 (#78)
-// is called with this = the actor. Never instantiated.
+// (func_800DB7F8): the caller casts (actor + 0x3E9C) to this type and the
+// vptr is read from offset 0; slot 0x140 (#78) is called with this =
+// actor + 0x3E9C. Never instantiated.
 struct BMSubVtIf140 {
-    u8 pad3E9C[0x3E9C];
     virtual void v000() = 0; virtual void v001() = 0; virtual void v002() = 0;
     virtual void v003() = 0; virtual void v004() = 0; virtual void v005() = 0;
     virtual void v006() = 0; virtual void v007() = 0; virtual void v008() = 0;
@@ -515,8 +726,9 @@ struct BMVtIf2A8 {
     virtual void v156() = 0; virtual void v157() = 0; virtual void v158() = 0;
     virtual void v159() = 0; virtual void v160() = 0; virtual void v161() = 0;
     virtual void v162() = 0; virtual void v163() = 0; virtual void v164() = 0;
-    virtual void v165() = 0;  // pads #0..#165
-    virtual s32 vf2A8();        // #166 -> 0x2A8
+    virtual void v165() = 0;
+    virtual void v166() = 0; virtual void v167() = 0;  // pads #0..#167
+    virtual s32 vf2A8();        // #168 -> 0x2A8
 };
 
 // Vtable interface for a battle event's slot 0xC (#1), called with

@@ -613,16 +613,18 @@ extern const f32 lbl_eu_80668930[];
 // +0x28 sub-object update (retail func_80269B68, 0x410 bytes). C linkage so the
 // call reloc from func_8026DA4C matches retail's plain `func_802676F8` name
 // (MWCC would otherwise mangle the C++ reference to func_802676F8__FPUc).
-extern "C" void func_802676F8(u8* self);
+extern "C" void func_802676F8(UI::CPassiveSkillLine* self);
 
 // Pane-position helper (defined in code_80135FDC.cpp; retail symbol
 // unmangled): writes the ancestor-translate sum for a pane into output.
 // Used by func_8026D080 to position the skill-grid cell panes.
 extern "C" void func_8013775C(nw4r::math::VEC3* output, nw4r::lyt::Pane* node);
 
-// .sdata2 int->double magic constant (0x4330000000000000) and the frame
-// scale divisor/multiplier used by func_8026D210's alpha ladder.
+// .sdata2 int->double magic constants (0x4330000000000000 unsigned and
+// 0x4330000080000000 signed-conversion variants) used by the s32/u32->f64
+// conversions in func_80269D20 and the alpha ladder in func_8026D210.
 extern const f64 lbl_eu_80668910;
+extern const f64 lbl_eu_80668928;
 extern const f32 lbl_eu_8066893C;
 extern const f32 lbl_eu_80668940;
 

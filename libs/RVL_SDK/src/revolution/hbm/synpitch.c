@@ -122,9 +122,7 @@ f32 __HBMSYNGetRelativePitch(HBMSYNVOICE* voice)
         r     *= __HBMSYNSemitonesTableUp[sem];
         r     *= __HBMSYNCentsTable[v % 100];
         return r;
-    }
-
-    if (v < 0) {
+    } else if (v < 0) {
         s32 sem = v / 100;
         s32 cent = v % 100;
         if (cent != 0) {

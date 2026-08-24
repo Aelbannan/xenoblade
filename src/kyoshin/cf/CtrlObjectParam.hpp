@@ -746,7 +746,17 @@ namespace cf {
     // embedded CActorParam (retail lwzu r12,0x17c / slot 0x20C sequence).
     struct CtrlObjectParamEntry11A4 {
         u8  pad_00[0x1C];
-        s16 shortArr[6];           // +0x1C..0x27 (shortArr[5] at +0x26)
+        // Two views of +0x1C..0x27: the equip-slot array and the arts item
+        // slot at +0x26. func_800A11A4 reads the word twice through different
+        // members, which is what forces MWCC to emit two lha loads (retail
+        // shape) instead of CSE-ing them into one.
+        union {
+            s16 shortArr[6];       // +0x1C..0x27 (shortArr[5] at +0x26)
+            struct {
+                u8 pad_1C[0x0A];
+                s16 field_26;      // +0x26 (arts item id)
+            };
+        };
         u8  pad_28[0xD4 - 0x28];
         s16 field_D4;              // +0xD4
         s16 field_D6;              // +0xD6

@@ -1,7 +1,6 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CtrlObjectParam
 // Replace stubs with high-level C/C++ during decomp.
 
-#include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CtrlObjectParam.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"        // cf::CfGameManager static accessors
 #include "kyoshin/cf/object/CActorParam.hpp"
@@ -175,21 +174,21 @@ cf::CtrlObjectParamSubEntry* cf::CtrlObjectParamData::getSubStruct(unsigned long
 // Equip-slot arts/status refresh: resolve the item instance for the slot
 // (category = index+4, or 2 for index 5) and derive the arts id from the
 // item's first word; without an item, fall back to the self u16 table. Then
-// fill the 0x20-byte block at arr + index*0x40 + 0xC from the item bdat
+// fill the 0x20-byte block at arr + index*0x20 + 0xC from the item bdat
 // columns (+0x00..+0x61 for index 5, +0x48..+0x6F otherwise), or zero it.
 extern "C" __declspec(noinline) void func_8009D7F4(s16* arr, u32 index, void* selfV) {
-    u16* self = reinterpret_cast<u16*>(selfV);
     cf::CtrlObjectParamArtsBlock* blk = reinterpret_cast<cf::CtrlObjectParamArtsBlock*>(
-        reinterpret_cast<u8*>(arr) + (index << 6) + 0xC);
-    void* item = 0;
+        reinterpret_cast<u8*>(arr) + (index << 5) + 0xC);
+    u16* self = reinterpret_cast<u16*>(selfV);
+    void* item = NULL;
     if (arr[index] > -1) {
         u32 cat = index > 4 ? 2 : index + 4;
         item = func_80157C4C(cat, arr[index]);
     }
     u32 artsId = 0;
-    if (item != 0) {
+    if (item != NULL) {
         artsId = (reinterpret_cast<cf::CtrlObjectParamItemWord*>(item)->word0 >> 5) & 0x7FF;
-    } else if (self[0] >= 9) {
+    } else if (self[0] >= 9 && item == NULL) {
         if (index == 5) {
             artsId = self[(u16)index + 1];
         } else {
@@ -199,29 +198,65 @@ extern "C" __declspec(noinline) void func_8009D7F4(s16* arr, u32 index, void* se
     if (artsId != 0) {
         if (index == 5) {
             void* bdat = reinterpret_cast<void*>(lbl_eu_806640F4);
-            union { u32 w[2]; f64 d; } conv;
-            conv.w[0] = 0x43300000;   // u32->f64 conversion magic (lis r29, 0x4330)
-            blk->field_1E = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FBCB0[0x00], artsId);
-            conv.w[1] = (u16)getBdatStringColumnValue(bdat, &lbl_eu_804FBCB0[0x05], artsId);
-            blk->field_00 = lbl_eu_80666770 * (f32)(conv.d - lbl_eu_80666778);
-            conv.w[1] = (u16)getBdatStringColumnValue(bdat, &lbl_eu_804FBCB0[0x14], artsId);
-            blk->field_04 = lbl_eu_80666770 * (f32)(conv.d - lbl_eu_80666778);
-            blk->field_0C = (s16)getBdatStringColumnValue(bdat, &lbl_eu_804FBCB0[0x22], artsId);
-            blk->field_0E = (s16)getBdatStringColumnValue(bdat, &lbl_eu_804FBCB0[0x2A], artsId);
-            blk->field_10 = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FBCB0[0x31], artsId);
-            conv.w[1] = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FBCB0[0x39], artsId);
-            blk->field_08 = lbl_eu_80666774 * (f32)(conv.d - lbl_eu_80666778);
-            blk->field_14 = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FBCB0[0x3F], artsId);
-            blk->field_16 = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FBCB0[0x48], artsId);
-            blk->field_18 = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FBCB0[0x50], artsId);
-            blk->field_1C = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FBCB0[0x58], artsId);
-            blk->field_1D = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FBCB0[0x61], artsId);
+            char* col = lbl_eu_804FBCB0;
+            // Every column result passes through one reusable word and is
+            // narrowed on read (retail stw-home + typed reload shape).
+            // Numeric columns convert through the 0x4330-exponent double
+            // hack minus the shared 2^52 constant.
+            // Working set kept in one local struct so every column result
+            // lives in its own memory home; member order matches the
+            // retail frame layout (columns descending, conversion temps
+            // above them).
+            struct {
+                u32 c61, c58, c50, c48, c3F, c39, c31, c2A;
+                u32 c22, c14, c05, c00;
+                union { u32 w[2]; f64 d; } cvt08;
+                union { u32 w[2]; f64 d; } cvt04;
+                union { u32 w[2]; f64 d; } cvt00;
+            } work;
+            work.c00 = getBdatStringColumnValue(bdat, col + 0x00, artsId);
+            blk->field_1E = (u8)work.c00;
+            work.c05 = getBdatStringColumnValue(bdat, col + 0x05, artsId);
+            work.cvt00.w[0] = (u16)work.c05;
+            work.cvt00.w[1] = 0x43300000;
+            blk->field_00 = lbl_eu_80666770 * (work.cvt00.d - lbl_eu_80666778);
+            work.c14 = getBdatStringColumnValue(bdat, col + 0x14, artsId);
+            work.cvt04.w[0] = (u16)work.c14;
+            work.cvt04.w[1] = 0x43300000;
+            blk->field_04 = lbl_eu_80666770 * (work.cvt04.d - lbl_eu_80666778);
+            work.c22 = getBdatStringColumnValue(bdat, col + 0x22, artsId);
+            blk->field_0C = (s16)work.c22;
+            work.c2A = getBdatStringColumnValue(bdat, col + 0x2A, artsId);
+            blk->field_0E = (s16)work.c2A;
+            work.c31 = getBdatStringColumnValue(bdat, col + 0x31, artsId);
+            blk->field_10 = (u8)work.c31;
+            work.c39 = getBdatStringColumnValue(bdat, col + 0x39, artsId);
+            work.cvt08.w[0] = (u8)work.c39;
+            work.cvt08.w[1] = 0x43300000;
+            blk->field_08 = lbl_eu_80666774 * (work.cvt08.d - lbl_eu_80666778);
+            work.c3F = getBdatStringColumnValue(bdat, col + 0x3F, artsId);
+            blk->field_14 = (u8)work.c3F;
+            work.c48 = getBdatStringColumnValue(bdat, col + 0x48, artsId);
+            blk->field_16 = (u8)work.c48;
+            work.c50 = getBdatStringColumnValue(bdat, col + 0x50, artsId);
+            blk->field_18 = (u8)work.c50;
+            work.c58 = getBdatStringColumnValue(bdat, col + 0x58, artsId);
+            blk->field_1C = (u8)work.c58;
+            work.c61 = getBdatStringColumnValue(bdat, col + 0x61, artsId);
+            blk->field_1D = (u8)work.c61;
         } else {
             void* bdat = reinterpret_cast<void*>(lbl_eu_806640F8);
-            blk->field_16 = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FBCB0[0x48], artsId);
-            blk->field_18 = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FBCB0[0x50], artsId);
-            blk->field_1A = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FBCB0[0x66], artsId);
-            blk->field_12 = (u8)getBdatStringColumnValue(bdat, &lbl_eu_804FBCB0[0x6F], artsId);
+            char* col = lbl_eu_804FBCB0;
+            u32 colV;
+            struct { u32 c48, c50, c66, c6F; } work;
+            work.c48 = getBdatStringColumnValue(bdat, col + 0x48, artsId);
+            blk->field_16 = (u8)work.c48;
+            work.c50 = getBdatStringColumnValue(bdat, col + 0x50, artsId);
+            blk->field_18 = (u8)work.c50;
+            work.c66 = getBdatStringColumnValue(bdat, col + 0x66, artsId);
+            blk->field_1A = (u8)work.c66;
+            work.c6F = getBdatStringColumnValue(bdat, col + 0x6F, artsId);
+            blk->field_12 = (u8)work.c6F;
         }
     } else {
         memset(blk, 0, 0x20);
@@ -266,22 +301,26 @@ extern "C" void func_8009DBF4(void* selfV, unsigned long index, void* valueV) {
         self->field_0E[index] = 0;
         self->field_00[index + 1] = 0;
     } else {
-        void* item = 0;
+        void* item = NULL;
         if (self->shortArr[index] > -1) {
             item = func_80157C4C(index > 4 ? 2 : index + 4, self->shortArr[index]);
         }
-        if (item != 0) {
-            u32 word = reinterpret_cast<cf::CtrlObjectParamItemWord*>(item)->word0;
-            self->field_0E[index] = (u16)((word >> 16) & 0x7FF);
-            self->field_00[index + 1] = (u16)(word >> 20);
+        if (item != NULL) {
+            // Three separate derefs (retail reloads word0 for each extract).
+            self->field_0E[index] =
+                (u16)((reinterpret_cast<cf::CtrlObjectParamItemWord*>(item)->word0 >> 16) & 0x7FF);
+            self->field_00[index + 1] =
+                (u16)(reinterpret_cast<cf::CtrlObjectParamItemWord*>(item)->word0 >> 20);
         }
         if (index == 5 && self->field_00[0] == 1) {
-            u32 word = reinterpret_cast<cf::CtrlObjectParamItemWord*>(item)->word0;
-            void* bdat = reinterpret_cast<void*>(lbl_eu_806640F4);
+            u32 newSlot = reinterpret_cast<cf::CtrlObjectParamItemWord*>(item)->word0 >> 20;
             const char* strBase = lbl_eu_804FBCB0;
+            void* bdat = reinterpret_cast<void*>(lbl_eu_806640F4);
             u32 col1 = getBdatStringColumnValue(bdat, &strBase[0x58], oldSlot);
-            u32 col2 = getBdatStringColumnValue(bdat, &strBase[0x58], (u32)(word >> 20));
+            u32 col2 = getBdatStringColumnValue(bdat, &strBase[0x58], newSlot);
             if ((u8)col1 != (u8)col2) {
+                // Copy the eight (u16, u8) stat pairs between the two
+                // 0x49-stride arts rows selected by the column bytes.
                 cf::CtrlObjectParamArtsRowCopy* src =
                     reinterpret_cast<cf::CtrlObjectParamArtsRowCopy*>(
                         reinterpret_cast<u8*>(self) + (u32)(u8)col1 * 0x49);
@@ -309,13 +348,14 @@ extern "C" void func_8009DBF4(void* selfV, unsigned long index, void* valueV) {
     }
     func_8009D7F4(&self->shortArr[0], index, self);
     if (index == 5 && (s32)valueV != -1) {
-        void* item2 = 0;
+        // Arts-row refresh: re-resolve the item for the fixed slot 5.
+        void* item2 = NULL;
         if (self->shortArr[5] > -1) {
-            item2 = func_80157C4C(2, self->shortArr[5]);
+            item2 = func_80157C4C(index > 4 ? 2 : index + 4, self->shortArr[5]);
         }
-        if (item2 != 0) {
-            u16 w0 = (u16)(reinterpret_cast<cf::CtrlObjectParamWordView*>(
-                self->mParam.CActorParam_UnkVirtualFunc94())->word0);
+        if (item2 != NULL) {
+            // Slot 0x20C returns the level multiplier directly (its u16 form).
+            u16 mult = (u16)(u32)self->mParam.CActorParam_UnkVirtualFunc94();
             if ((self->field_E6 & 4) != 0) {
                 const char* strBase = lbl_eu_804FBCB0;
                 union { u32 w[2]; f64 d; } c1;
@@ -323,12 +363,12 @@ extern "C" void func_8009DBF4(void* selfV, unsigned long index, void* valueV) {
                 u16 v1 = reinterpret_cast<cf::CtrlObjectParamVt028If*>(
                     CItem_initItemImplInstances(item2))->_v028(item2, &strBase[0x22]);
                 c1.w[0] = 0x43300000;
-                c1.w[1] = (u32)(w0 * v1) ^ 0x80000000;
+                c1.w[1] = (u32)(mult * v1) ^ 0x80000000;
                 self->field_D4 = (s16)(lbl_eu_80666780 * (f32)(c1.d - lbl_eu_80666788));
                 u16 v2 = reinterpret_cast<cf::CtrlObjectParamVt028If*>(
                     CItem_initItemImplInstances(item2))->_v028(item2, &strBase[0x2A]);
                 c2.w[0] = 0x43300000;
-                c2.w[1] = (u32)(w0 * v2) ^ 0x80000000;
+                c2.w[1] = (u32)(mult * v2) ^ 0x80000000;
                 self->field_D6 = (s16)(lbl_eu_80666784 * (f32)(c2.d - lbl_eu_80666788));
                 if (self->field_D4 > 0x3e7) self->field_D4 = 0x3e7;
                 if (self->field_D6 > 0x3e7) self->field_D6 = 0x3e7;
@@ -410,11 +450,14 @@ void func_8009E0C4(cf::CtrlObjectParamU16RowTable* table, u16 index, u16 value) 
 extern "C" u32 func_8009E120(cf::CtrlObjectParamRowView* p, u32 value) {
     // Arts/row lookup: read the u16 table at +0x02 at index (u16)value; a
     // 0xFFFF table entry means "empty" and is folded to 0 before dispatch.
-    // The explicit re-truncation after the fold reproduces the retail
-    // clrlwi at the func_80142074 call site (cf. MWCC_CASES wpad noise-filter).
-    int v = (u16)p->field_02[(u16)value];
+    // NOTE (us-8009eaf8): every other instruction is byte-identical to
+    // retail; the single residual is retail's clrlwi r4,r5,16 before the
+    // func_80142074 tail-call versus our register move. Retail masks a
+    // provably-16-bit phi {lhz result, li 0}; ruled out: u16/u32/int/s16
+    // locals, explicit narrowing casts, ternary statement/initializer,
+    // store-back truncation, s16 routing (adds early extsh / lha load).
+    u16 v = p->field_02[(u16)value];
     if (v == 0xFFFF) v = 0;
-    v = (u16)v;
     if (v != 0)
         return func_80142074(p->field_00, v, 0);
     return func_80141E90(p->field_00, (s16)v, (u16)(value + 1), 0);
@@ -1026,14 +1069,15 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc116(float val) {
 }
 
 extern "C" void func_8009F6D4(void* selfV) {
-    cf::CtrlObjectParamEntry9F6D4* self = reinterpret_cast<cf::CtrlObjectParamEntry9F6D4*>(selfV);
     // Character-row activation: run the 0xAC/0xB0/0xB8 init chain on the
     // actor (or the embedded CActorParam when no actor exists), refresh the
     // param via the 0x28C label hook, then pass the halved (level * byte)
     // value into vtable slot 0x2FC. Note the first func_80175A50 call passes
     // (&mParam, value) while the tail passes (value, &mParam) - retail order.
     void* actor2;
-    void* actor = func_800B8B94(self->field_00);
+    void* actor;
+    cf::CtrlObjectParamEntry9F6D4* self = reinterpret_cast<cf::CtrlObjectParamEntry9F6D4*>(selfV);
+    actor = func_800B8B94(self->field_00);
     if (actor != 0) {
         reinterpret_cast<cf::CtrlObjectParamVt0A4If*>(actor)->_v0AC(0);
         reinterpret_cast<cf::CtrlObjectParamVt0A4If*>(actor)->_v0B0();
@@ -1054,17 +1098,15 @@ extern "C" void func_8009F6D4(void* selfV) {
     reinterpret_cast<cf::CtrlObjectParamVt0A4If*>(&self->mParam)->_v0304(2);
     cf::CtrlObjectParamF2F4View* rec = reinterpret_cast<cf::CtrlObjectParamF2F4View*>(
         reinterpret_cast<cf::CtrlObjectParamVt0A4If*>(&self->mParam)->_v02F4());
-    union { u32 w[2]; double d; } c;
-    c.w[0] = 0x43300000;
     const u8* p = reinterpret_cast<const u8*>(rec) + rec->field_02;
-    u8 b = p[4];
-    c.w[1] = b;
-    s32 x = (s32)(rec->field_10 * (f32)(c.d - lbl_eu_80666778));
+    // (f32)(u32): MWCC inline-expands to its own 0x43300000/2^52 .sdata2 pool
+    // constant + single-precision fsub/fmul sequence (matches retail bytes).
+    s32 x = (s32)(rec->field_10 * (f32)(u32)p[4]);
     reinterpret_cast<cf::CtrlObjectParamVt0A4If*>(&self->mParam)->_v02FC(x / 2);
     if (actor != 0) {
-        void* actor3 = func_800B8B94(self->field_00);
-        if (actor3 != 0) {
-            u8* value = reinterpret_cast<cf::CtrlObjectParamVt0A4If*>(actor3)->_v028C();
+        void* a3 = func_800B8B94(self->field_00);
+        if (a3 != 0) {
+            u8* value = reinterpret_cast<cf::CtrlObjectParamVt0A4If*>(a3)->_v028C();
             func_80175A50(value, reinterpret_cast<u8*>(&self->mParam));
         }
     }
@@ -1334,98 +1376,134 @@ void* cf::CActorParam::CActorParam_UnkVirtualFunc100() {
 // 4-column stat table, ramping each stat field toward the target level with
 // the f32 interpolation (2^52 u32->f64 conversions, shared by the two union
 // slots), and finally copy the record to the slot-0x224 result object.
-extern "C" void __declspec(noinline) func_800A0E64(u8* selfV, u16 value) {
+extern "C" void __declspec(noinline) func_800A0E64(u8* selfV, u16 valueArg) {
+    cf::CtrlObjectParamStats* param;
+    u32 value = valueArg;
     cf::CtrlObjectParamArtsOwner0E64* self =
         reinterpret_cast<cf::CtrlObjectParamArtsOwner0E64*>(selfV);
-    // Two pre-magic-initialized u32->f64 conversion slots (retail stores
-    // 0x43300000 into both stack slots once, before the slot-0x20C call).
-    union { u32 w[2]; f64 d; } convDiff;     // holds diff / delta
-    union { u32 w[2]; f64 d; } convCurVal;   // reused for current then value
-    convCurVal.w[0] = 0x43300000;
-    convDiff.w[0] = 0x43300000;
-    cf::CtrlObjectParamStats* param = reinterpret_cast<cf::CtrlObjectParamStats*>(
+    const char* const* pCol;
+    void* statBdat;
+    int i;
+    param = reinterpret_cast<cf::CtrlObjectParamStats*>(
         reinterpret_cast<cf::CtrlObjectParamVt0A4If*>(&self->mParam)->_v20C());
     if (param->field_00 == value) return;
     if (value > 99) return;
-    // Loop-invariant handles/constants: declared before the loop so they are
-    // live across getBdatStringColumnValue/__cvt_fp2unsigned calls and land
-    // in callee-saved registers (r27/f28-f31, matching retail).
-    const char* const* pCol = reinterpret_cast<const char* const*>(lbl_eu_805280D8);
-    void* statBdat = lbl_eu_80664090;
-    f64 convK = lbl_eu_80666778;
-    // Declared in retail FPR-load order.
-    f32 cScale = lbl_eu_806667BC;
-    f32 cBase = lbl_eu_806667B8;
+    // Loop-invariant handles/constants stay live across
+    // getBdatStringColumnValue/__cvt_fp2unsigned calls. The u32->f32
+    // conversions below are lowered by MWCC to inline 0x43300000-magic
+    // sequences biased by the hoisted 2^52 constant (f31); the float result is
+    // converted back with __cvt_fp2unsigned.
+    pCol = reinterpret_cast<const char* const*>(lbl_eu_805280D8);
+    statBdat = lbl_eu_80664090;
+    i = 0;
     f32 cDiv = lbl_eu_806667C0;
-    u32 i = 0;
+    f32 cBase = lbl_eu_806667B8;
+    f32 cScale = lbl_eu_806667BC;
     do {
-        u16 colByte = getBdatStringColumnValue(statBdat, pCol[i], self->field_00);
+        // Retail stores the raw column word to a stack slot and reloads the
+        // low half as u16 (stw + lhz round-trip).
+        volatile union { u32 w; u16 h[2]; } colRaw;
+        colRaw.w = getBdatStringColumnValue(statBdat, pCol[i], self->field_00);
+        u32 colByte = colRaw.h[0];
         u32 current = 0;
-        switch (i) {
-        case 0: current = (u32)param->field_10; break;
-        case 1: current = param->field_1C; break;
-        case 2: current = param->field_1E; break;
-        case 3: current = param->field_20; break;
-        }
-        convCurVal.w[1] = current;
-        f32 fCur = (f32)(convCurVal.d - convK);
+        if (i == 0) current = (u32)param->field_10;
+        else if (i == 1) current = param->field_1C;
+        else if (i == 2) current = param->field_1E;
+        else if (i == 3) current = param->field_20;
+        f32 fCur = current;
         u32 diff = colByte - current;
-        convDiff.w[1] = diff;
-        convCurVal.w[1] = value;
-        f32 fVal = (f32)(convCurVal.d - convK);
-        f32 fDiff = (f32)(convDiff.d - convK);
-        u32 newVal = (u32)(fCur + ((cBase + ((cScale * fDiff) / (cScale - fVal))) / cDiv));
+        f32 fDiff = diff;
+        f32 fVal = value;
+        u32 newVal = (u32)(fCur + ((cBase + cScale * fDiff / (cScale - fVal)) / cDiv));
         u32 delta = newVal - current;
-        switch (i) {
-        case 0:
-            convDiff.w[1] = delta;
-            param->field_10 += (f32)(convDiff.d - convK);
-            break;
-        case 1: param->field_1C = param->field_1C + (s16)delta; break;
-        case 2: param->field_1E = param->field_1E + (s16)delta; break;
-        case 3: param->field_20 = param->field_20 + (s16)delta; break;
-        }
+        if (i == 0) param->field_10 += delta;
+        else if (i == 1) param->field_1C += (s16)delta;
+        else if (i == 2) param->field_1E += (s16)delta;
+        else if (i == 3) param->field_20 += (s16)delta;
         ++i;
-    } while (i < 4);
+    } while ((u32)i < 4);
     param->field_00 = value;
     cf::CtrlObjectParamStats* other = reinterpret_cast<cf::CtrlObjectParamStats*>(
         reinterpret_cast<cf::CtrlObjectParamVt0A4If*>(&self->mParam)->_v224());
-    *other = *param;
+    // Field-by-field copy (retail does not struct-assign).
+    other->field_00 = param->field_00;
+    other->field_04 = param->field_04;
+    other->field_08 = param->field_08;
+    other->field_0C = param->field_0C;
+    other->field_10 = param->field_10;
+    other->field_14 = param->field_14;
+    other->field_18 = param->field_18;
+    other->field_1C = param->field_1C;
+    other->field_1E = param->field_1E;
+    other->field_20 = param->field_20;
+    other->field_24 = param->field_24;
+    other->field_28 = param->field_28;
+    other->field_2C = param->field_2C;
+    other->field_2E = param->field_2E;
+    other->field_30 = param->field_30;
+    other->field_32 = param->field_32;
+    other->field_34 = param->field_34;
+    other->field_36 = param->field_36;
+    other->field_38 = param->field_38;
+    other->field_3A = param->field_3A;
+    other->field_3C = param->field_3C;
+    other->field_40 = param->field_40;
+    other->field_44 = param->field_44;
+    other->field_48 = param->field_48;
+    other->field_4C = param->field_4C;
+    other->field_50 = param->field_50;
+    other->field_54 = param->field_54;
+    other->field_55 = param->field_55;
+    other->field_56 = param->field_56;
+    other->field_57 = param->field_57;
+    other->field_58 = param->field_58;
+    other->field_5C = param->field_5C;
+    // Paired word copies: load both, then store both (retail schedule).
+    u32 t64 = param->field_64;
+    u32 t60 = param->field_60;
+    other->field_60 = t60;
+    other->field_64 = t64;
+    u32 t6C = param->field_6C;
+    u32 t68 = param->field_68;
+    other->field_68 = t68;
+    other->field_6C = t6C;
+    other->field_70 = param->field_70;
+    other->field_74 = param->field_74;
 }
 
 void func_800A11A4(cf::CtrlObjectParamEntry11A4* self, int amount) {
     // Level-up helper: raise the actor param's arts/status word by `amount`
     // (one step per loop, capped at 99), then refresh the D4/D6 display
     // fields from the item impl's label tables when the E6 bit-2 flag is set.
-    int amt = amount;
     union { u32 w[2]; double d; } c1;
     union { u32 w[2]; double d; } c2;
-    cf::CtrlObjectParamWordView* v94 = reinterpret_cast<cf::CtrlObjectParamWordView*>(
+    cf::CtrlObjectParamWordView* view = reinterpret_cast<cf::CtrlObjectParamWordView*>(
         self->mParam.CActorParam_UnkVirtualFunc94());
-    u16 target = (u16)(v94->word0 + amt);
-    while (amt != 0 && (u32)v94->word0 < target && (u32)v94->word0 < 0x63) {
-        func_800A0E64(reinterpret_cast<u8*>(self), (u16)(v94->word0 + 1));
+    u16 target = (u16)(view->word0 + amount);
+    while (amount != 0 && view->word0 < target && view->word0 < 0x63) {
+        // one level per iteration; func_800A0E64 updates view->word0
+        func_800A0E64(reinterpret_cast<u8*>(self), (u16)(view->word0 + 1));
     }
     void* item = 0;
     if (self->shortArr[5] > -1) {
-        item = func_80157C4C(2, self->shortArr[5]);
+        item = func_80157C4C(2, *const_cast<volatile s16*>(&self->field_26));
     }
     if (item != 0) {
-        cf::CtrlObjectParamWordView* v94b = reinterpret_cast<cf::CtrlObjectParamWordView*>(
+        cf::CtrlObjectParamWordView* view2 = reinterpret_cast<cf::CtrlObjectParamWordView*>(
             self->mParam.CActorParam_UnkVirtualFunc94());
-        u16 w0 = (u16)v94b->word0;
+        u32 w0 = (u16)view2->word0;
         if ((self->field_E6 & 4) != 0) {
-            const char* s1 = &lbl_eu_804FBCB0[0x22];
             cf::CtrlObjectParamVt028If* impl1 = reinterpret_cast<cf::CtrlObjectParamVt028If*>(
                 CItem_initItemImplInstances(item));
-            u16 v1 = impl1->_v028(item, s1);
+            u32 v1raw = impl1->_v028(item, &lbl_eu_804FBCB0[0x22]);
+            u16 v1 = *(const u16*)&v1raw;   // memory round-trip (retail stw 0x8(sp)/lhz)
             c1.w[0] = 0x43300000;
             c1.w[1] = (u32)(w0 * v1) ^ 0x80000000;
             self->field_D4 = (s16)(lbl_eu_80666780 * (f32)(c1.d - lbl_eu_80666788));
-            const char* s2 = &lbl_eu_804FBCB0[0x2a];
             cf::CtrlObjectParamVt028If* impl2 = reinterpret_cast<cf::CtrlObjectParamVt028If*>(
                 CItem_initItemImplInstances(item));
-            u16 v2 = impl2->_v028(item, s2);
+            u32 v2raw = impl2->_v028(item, &lbl_eu_804FBCB0[0x2A]);
+            u16 v2 = *(const u16*)&v2raw;   // memory round-trip (retail stw 0xc(sp)/lhz)
             c2.w[0] = 0x43300000;
             c2.w[1] = (u32)(w0 * v2) ^ 0x80000000;
             self->field_D6 = (s16)(lbl_eu_80666784 * (f32)(c2.d - lbl_eu_80666788));
@@ -1786,18 +1864,29 @@ extern "C" __declspec(noinline) void func_800A21F8(void* selfV, u32 value, u32 a
 // level gaps, overwrite them from the arts bdat level columns. Finally
 // scale by the slot-membership/flag-derived percentages and derive *v3
 // (rank * average level / 10) unless arg7 disables it.
-void func_800A1E3C(cf::CtrlObjectParamTypeView* self, int* v1, int* v2, int* v3,
-                   int arg5, int arg6, int arg7) {
-    int result = self->mParam.CActorParam_UnkVirtualFunc29();
+// Frame-slot notes: retail locals are conv-scratch(+0x28), a/b(+0x24/+0x20),
+// rank/lvl(+0x1C/+0x18), v1v/v2v(+0x14/+0x10), tmpIndex/tmpType(+0xC/+0x8).
+extern "C" void func_800A1E3C(cf::CtrlObjectParamTypeView* self, int* v1, int* v2, int* v3,
+                              int arg5, int arg6, int arg7) {
+    int a;
+    int b;
+    int rank;
+    int lvl;
+    u32 v1v;
+    u32 v2v;
+    int tmpIndex;
+    int tmpType;
+    int diff;
+    u32 result = self->mParam.CActorParam_UnkVirtualFunc29();
     void* actor = func_800B8B94(self->field_00);
     if (actor != 0) {
         reinterpret_cast<cf::CtrlObjectParamVt0A4If*>(actor)->_v108();
     }
-    int a = 0;
-    int b = 0;
-    func_800A1B08(self->field_00, &a, &b, result, arg5, arg6);
+    a = 0;
+    b = 0;
+    func_800A1B08(self->field_00, &a, &b, (int)result, arg5, arg6);
     if (arg5 > 0) {
-        int diff = arg5 - result;
+        diff = arg5 - (int)result;
         if (diff > 2 && diff < 6) {
             *v1 = *v1 * 125 / 100;
             *v2 = *v2 * 125 / 100;
@@ -1813,19 +1902,19 @@ void func_800A1E3C(cf::CtrlObjectParamTypeView* self, int* v1, int* v2, int* v3,
         }
         if (diff > 0x15) {
             result += 20;
-            if ((unsigned)result > 0x63) result = 0x63;
+            if (result > 0x63) result = 0x63;
             void* bdat = reinterpret_cast<void*>(lbl_eu_806640DC);
             const char* strBase = lbl_eu_804FBCB0;
-            u32 v1v = getBdatStringColumnValue(bdat, &strBase[0x256], result);
+            v1v = getBdatStringColumnValue(bdat, &strBase[0x256], result);
             *v1 = (u16)v1v;
-            u32 v2v = getBdatStringColumnValue(bdat, &strBase[0x25D], result);
+            v2v = getBdatStringColumnValue(bdat, &strBase[0x25D], result);
             *v2 = (u16)v2v;
         }
     }
     *v1 = *v1 * a / 100;
     *v2 = *v2 * b / 100;
-    int tmpType = 0;
-    int tmpIndex = 0;
+    tmpIndex = 0;
+    tmpType = 0;
     func_8009E344(reinterpret_cast<const unsigned int*>(lbl_eu_80663E88 + 0x1F98),
                   self->field_00, &tmpType, &tmpIndex);
     int levelA = (tmpType == 1) ? 100 : 90;
@@ -1835,10 +1924,11 @@ void func_800A1E3C(cf::CtrlObjectParamTypeView* self, int* v1, int* v2, int* v3,
     if (func_8026178C(lookup, 0x8E)) levelB = 100;
     *v1 = *v1 * levelA / 100;
     *v2 = *v2 * levelB / 100;
-    int rank = 10;
-    int lvl = 0;
+    rank = 10;
+    lvl = 0;
     if (arg7 == 0) {
         func_800A1CA0(reinterpret_cast<u8*>(self->field_00), &lvl, &rank, arg5, arg6);
+        // u32->f64 via the 0x43300000 magic-double trick (retail shape).
         union { u32 w[2]; f64 d; } conv;
         conv.w[0] = 0x43300000;
         conv.w[1] = (u32)(rank * lvl) ^ 0x80000000;
@@ -1976,33 +2066,45 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc90(u32 addend) {
 // caller's out-pointer block; arg9 clears the two secondary outputs.
 extern "C" void func_800A26A4(cf::CtrlObjectParamTypeView* self, int arg4, int arg5,
                               int arg6, int arg7, int arg8, int arg9) {
-    int v1 = arg4;
-    int v2 = arg5;
-    int v3;
-    u16 type = self->field_00;
-    if (type >= 9) return;
-    cf::CtrlObjectParamSlotTable* tbl =
-        reinterpret_cast<cf::CtrlObjectParamSlotTable*>(lbl_eu_80663E88);
-    int found = 0;
-    for (int i = 0; i < 9; ++i) {
-        if (type == tbl->slots[i]) {
+    // Rank/level output block, handed to func_800A1E3C by address.
+    int v[3];
+    v[0] = arg4;
+    v[1] = arg5;
+    if (self->field_00 < 9) {
+        // Unrolled party-membership probe over work+0x1F9C (9 row-id slots);
+        // value-merge form so the found flag lives in a register.
+        cf::CtrlObjectParamSlotTable* tbl =
+            reinterpret_cast<cf::CtrlObjectParamSlotTable*>(lbl_eu_80663E88);
+        // Party-membership probe over work+0x1F9C (retail unrolls this loop);
+        // no initializer so the found flag stays an uninit register like retail.
+        int found;
+        if (self->field_00 == tbl->slots[0]) {
             found = 1;
-            break;
+        } else {
+            for (int i = 1; i < 9; ++i) {
+                if (self->field_00 == tbl->slots[i]) {
+                    found = 1;
+                    goto probed;
+                }
+            }
+            found = 0;
         }
+    probed:
+        if (found == 0) {
+            if (func_8008235C__Q22cf13CfGameManagerFv(self->field_00) == 0) return;
+        }
+        if (self->field_00 == 3) {
+            // Unsigned compare (retail cmpli cr0,0,r3,0x1D).
+            if ((u32)cf::CfGameManager::func_800822F4() >= 0x1D) return;
+        }
+        func_800B8B94(self->field_00);
+        func_800A1E3C(self, &v[0], &v[1], &v[2], arg6, arg7, arg8);
+        if (arg9 != 0) {
+            v[1] = 0;
+            v[2] = 0;
+        }
+        func_800A21F8(self, v[0], v[1], v[2]);
     }
-    if (!found) {
-        if (func_8008235C__Q22cf13CfGameManagerFv(type) == 0) return;
-    }
-    if (self->field_00 == 3) {
-        if (cf::CfGameManager::func_800822F4() >= 0x1D) return;
-    }
-    func_800B8B94(self->field_00);
-    func_800A1E3C(self, &v1, &v2, &v3, arg6, arg7, arg8);
-    if (arg9 != 0) {
-        v2 = 0;
-        v3 = 0;
-    }
-    func_800A21F8(self, v1, v2, v3);
 }
 
 void func_800A282C(){}
@@ -2519,64 +2621,87 @@ extern "C" void* func_800A36A4(cf::CtrlObjectParamArtsList* list, u32 value) {
 // caller's target pointer, validate the list through a second walk (unknown
 // tags trigger the func_800A3A6C row-scan abort), then re-tag the node
 // 0x1111 and fold its adjacent 0x1111 neighbours' counts into it.
-extern "C" void func_800A37CC(cf::CtrlObjectParamArtsList* list, u8* target) {
-    if (target == 0) return;
+// Walk the arts list looking for the 0xAAAA row whose data area (+0x20) is
+// target; retail inlines this walker, materializing the result at each exit.
+// Walk the arts list looking for the 0xAAAA row whose data area (+0x20) is
+// target; retail inlines this walker, materializing the result at each exit.
+static bool findArtsNode(cf::CtrlObjectParamArtsList* list,
+                         cf::CtrlObjectParamArtsListEntry* target) {
+    // Same walker idiom as func_800A39E8: switch over the row tag.
     int found = 0;
     cf::CtrlObjectParamArtsListEntry* e = list->head;
     while (e != 0) {
-        int type = e->field_00;
-        if (type == 0x1111) {
-            // arts row: keep walking
-        } else if (type == 0xAAAA) {
-            u8* data = (u8*)e + 0x20;
-            if (data == target) {
+        u16 type = e->field_00;
+        u8* dataArea = (u8*)&e->data[4];
+        switch (type) {
+        case 0x1111:
+            goto advance;
+        case 0xAAAA:
+            if (dataArea == reinterpret_cast<u8*>(target)) {
                 found = 1;
-                break;
+                goto done;
             }
-        } else {
+            goto advance;
+        default:
             found = 0;
-            break;
+            goto done;
         }
+    advance:
         e = e->next;
     }
-    if (!found) return;
+    found = 0;
+done:
+    return found != 0;
+}
+
+extern "C" void func_800A37CC(cf::CtrlObjectParamArtsList* list,
+                              cf::CtrlObjectParamArtsListEntry* target) {
+    if (target == 0) return;
+    if (!findArtsNode(list, target)) return;
     // Validation walk: advance through good rows; a bad tag after any good
     // row runs the arts-list abort handler, then stop.
     cf::CtrlObjectParamArtsListEntry* prev = 0;
-    cf::CtrlObjectParamArtsListEntry* e2 = list->head;
-    while (e2 != 0) {
-        int type = e2->field_00;
-        if (type == 0x1111 || type == 0xAAAA) {
-            prev = e2;
-            e2 = e2->next;
-        } else {
+    cf::CtrlObjectParamArtsListEntry* head = list->head;
+    while (head != 0) {
+        int type = head->field_00;
+        if (type != 0x1111 && type != 0xAAAA) {
+            // Bad tag after any good row: run the arts-list abort handler.
             if (prev != 0) func_800A3A6C(list);
             break;
         }
+        prev = head;
+        head = head->next;
     }
-    // The found node is the entry whose data area is the target pointer.
-    cf::CtrlObjectParamArtsListEntry* node =
-        reinterpret_cast<cf::CtrlObjectParamArtsListEntry*>(target - 0x20);
-    u32 tag = node->field_00;
+    // The found node is the entry whose data area is the target pointer;
+    // retarget in place so MWCC fuses the subtract with the tag load.
+    target = reinterpret_cast<cf::CtrlObjectParamArtsListEntry*>(
+        reinterpret_cast<u8*>(target) - 0x20);
+    u32 tag = target->field_00;
     if (tag == 0x1111) return;
     if (tag != 0xAAAA) return;
-    node->field_00 = 0x1111;
-    memset(node->data, 0, 0xC);
-    cf::CtrlObjectParamArtsListEntry* nxt = node->next;
+    target->field_00 = 0x1111;
+    memset(reinterpret_cast<u8*>(target) + 0x10, 0, 0xC);
+    // Fold the following 0x1111 row into this node.
+    cf::CtrlObjectParamArtsListEntry* nxt = target->next;
     if (nxt != 0 && (u32)nxt->field_00 == 0x1111) {
-        node->field_04 = nxt->field_04 + node->field_04 + 1;
-        node->next = nxt->next;
-        if (node->next != 0) {
-            node->next->prev = reinterpret_cast<u32>(node);
+        u32 other = nxt->field_04;
+        target->field_04 += other + 1;
+        cf::CtrlObjectParamArtsListEntry* nn = nxt->next;
+        target->next = nn;
+        if (nn != 0) {
+            nn->prev = reinterpret_cast<u32>(target);
         }
     }
+    // Fold this node into the preceding 0x1111 row.
     cf::CtrlObjectParamArtsListEntry* prv =
-        reinterpret_cast<cf::CtrlObjectParamArtsListEntry*>(node->prev);
+        reinterpret_cast<cf::CtrlObjectParamArtsListEntry*>(target->prev);
     if (prv != 0 && (u32)prv->field_00 == 0x1111) {
-        prv->field_04 = node->field_04 + prv->field_04 + 1;
-        prv->next = node->next;
-        if (prv->next != 0) {
-            prv->next->prev = reinterpret_cast<u32>(prv);
+        u32 pother = target->field_04;
+        prv->field_04 += pother + 1;
+        cf::CtrlObjectParamArtsListEntry* pn = target->next;
+        prv->next = pn;
+        if (pn != 0) {
+            pn->prev = reinterpret_cast<u32>(prv);
         }
     }
 }
@@ -2631,8 +2756,8 @@ extern "C" int func_800A39E8(cf::CtrlObjectParamArtsList* list, u8* target,
     int found = 0;
     cf::CtrlObjectParamArtsListEntry* e = list->head;
     while (e != 0) {
-        u16 type = e->field_00;
         u8* dataArea = (u8*)&e->data[4];
+        u16 type = e->field_00;
         switch (type) {
         case 0x1111:
             goto advance;

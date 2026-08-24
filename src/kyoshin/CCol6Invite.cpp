@@ -51,14 +51,14 @@ CCol6Invite* CCol6Invite::Create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
     if (lbl_eu_8066423C != 0) {
         return 0;
     }
-
-    CCol6InviteCtorShim* obj =
-        (CCol6InviteCtorShim*)mtl::MemManager::allocate(
+    CCol6Invite* obj =
+        (CCol6Invite*)(CCol6InviteCtorShim*)mtl::MemManager::allocate(
             0x78, CWorkThreadSystem::getWorkMem());
 
     if (obj != 0) {
+        CCol6InviteCtorShim* p = (CCol6InviteCtorShim*)obj;
         __ct__8CProcessFv((CProcess*)obj);
-        obj->vtable = (void*)lbl_eu_8052D238;
+        p->vtable = (void*)lbl_eu_8052D238;
 
         // Copy the null member-function pointer into both callback slots.
         // Retail loads [1],[0],[2] then stores per slot; the named-member
@@ -67,36 +67,36 @@ CCol6Invite* CCol6Invite::Create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
         const PtmfNullWords* ptmf = reinterpret_cast<const PtmfNullWords*>(__ptmf_null);
         ptmfWord1 = ptmf->w1;
         ptmfWord0 = ptmf->w0;
-        obj->callbacks[0] = ptmfWord0;
-        obj->callbacks[1] = ptmfWord1;
+        p->callbacks[0] = ptmfWord0;
+        p->callbacks[1] = ptmfWord1;
         ptmfWord2 = ptmf->w2;
-        obj->callbacks[2] = ptmfWord2;
+        p->callbacks[2] = ptmfWord2;
         ptmfWord1 = ptmf->w1;
         ptmfWord0 = ptmf->w0;
-        obj->callbacks[3] = ptmfWord0;
-        obj->callbacks[4] = ptmfWord1;
+        p->callbacks[3] = ptmfWord0;
+        p->callbacks[4] = ptmfWord1;
         ptmfWord2 = ptmf->w2;
-        obj->callbacks[5] = ptmfWord2;
+        p->callbacks[5] = ptmfWord2;
 
-        obj->field54 = 0;
-        obj->field58 = 0;
-        obj->field5C = 0;
-        obj->index = -1;
-        obj->flag64 = 0;
-        obj->flag65 = 0;
-        obj->flag66 = 0;
-        obj->active = 1;
-        obj->field68 = 0;
+        p->field54 = 0;
+        p->field58 = 0;
+        p->field5C = 0;
+        p->index = -1;
+        p->flag64 = 0;
+        p->flag65 = 0;
+        p->flag66 = 0;
+        p->active = 1;
+        p->field68 = 0;
 
-        obj->vtable = (void*)lbl_eu_8052FF3C;
-        obj->field6C = (u32)(lbl_eu_8052FF3C + 0x24);
-        obj->arg2 = arg2;
-        obj->arg3 = arg3;
-        obj->arg4 = arg4;
-        obj->field74 = 0;
+        p->vtable = (void*)lbl_eu_8052FF3C;
+        p->field6C = (u32)(lbl_eu_8052FF3C + 0x24);
+        p->arg2 = arg2;
+        p->arg3 = arg3;
+        p->arg4 = arg4;
+        p->field74 = 0;
     }
 
-    lbl_eu_8066423C = (CCol6Invite*)obj;
+    lbl_eu_8066423C = obj;
     ((CProcess*)obj)->Regist(parent, false);
     return lbl_eu_8066423C;
 }

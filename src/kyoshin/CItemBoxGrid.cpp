@@ -23,7 +23,6 @@ s32 func_801C7C7C(void* self, u32 id, void* item);
 u32 func_801C6938(void* self, u32 idx);
 u32 func_801C62AC(CItemBoxGridFull* self, u16 idx);
 void* func_801C631C(CItemBoxGridFull* self, u16 idx);
-s32 func_801C6388(CItemBoxGridFull* self, u16 idx);
 long func_801C6158(double f);
 u8 func_801C6528(CItemBoxGridFull* self, u16 idx);
 u8 func_801C65A0(CItemBoxGridFull* self, u16 idx);
@@ -32,7 +31,8 @@ u8 func_801C6708(CItemBoxGridFull* self, u16 idx);
 u8 func_801C673C(CItemBoxGridFull* self, u16 idx);
 extern "C" __declspec(noinline) u8 func_801C6840(CItemBoxGridFull* self);
 extern "C" __declspec(noinline) u8 func_801C67F8(CItemBoxGridFull* self);
-u32 func_801C5FC0(CItemBoxGridFull* self, u16 idx);
+extern "C" u32 func_801C5FC0(CItemBoxGridFull* self, u16 idx);  // retail symbols are unmangled
+extern "C" s32 func_801C6388(CItemBoxGridFull* self, u16 idx);
 u32 func_801C618C(void* self, u32 id, void* item, int r6);
 void func_801C6EC0(CItemBoxGridFull* self, u16 idx);
 int LookupIndexedByte(char* obj);
@@ -68,11 +68,13 @@ void func_8045F778__17UnkClass_8045F564Fv(void*);
 void func_8022B7F4(void*);
 void func_801CECD0(CItemBoxGridFull* self, u32 kind, void* item, u16 idx, u32 bt);
 void func_801CF240(CItemBoxGridFull* self, u32 kind, void* item, u16 idx);
-void func_801CF71C(void* self, int r4, void* r5, int r6);
+void func_801CF71C(void* self, s8 kind, void* item, u16 idx);
 void func_801CF900(void* self, u32 r4, void* r5, void* r6, u32 r7);
 void func_801CFCBC(void* self, u32 val, u32 idx);
 u32 func_801C5E5C(void* self);
 char* func_801C6A44(void* self, u16 idx);
+// .sdata2 conversion magics referenced by func_801C9F88 (retail pool
+// constants; F48 = signed-int magic 0x4330000080000000, F40 = plain 2^52).
 extern const double lbl_eu_80667F40;
 extern const double lbl_eu_80667F48;
 extern const float lbl_eu_80667F80;
@@ -131,7 +133,8 @@ extern const char lbl_eu_80534818[];
 extern const char lbl_eu_80573D18[];
 extern const char lbl_eu_8050566C[];
 extern u32 lbl_eu_80664514;
-extern u32 lbl_eu_806640F4;
+// Complete-type array keeps the symbol SDA-eligible.
+extern u8 lbl_eu_806640F4[0x2800];
 // Forward declarations for later-defined functions
 void func_801CC3F4(void*);
 void func_801CC4E8(void*);
@@ -525,7 +528,7 @@ s16 func_801C5F48(CItemBoxGridFull* self, u16 idx) {
 // range or the referenced item object is invalid. Otherwise the item's base
 // price (func_801C7958) scaled by kind type (0xB unchanged, 0xD half, else
 // tenth), then multiplied by 100 + the party's skill-0x93 bonus and rounded.
-__declspec(noinline) u32 func_801C5FC0(CItemBoxGridFull* self, u16 idx) {
+extern "C" __declspec(noinline) u32 func_801C5FC0(CItemBoxGridFull* self, u16 idx) {
     s8 base = (s8)self->field_2804;
     u32 offset = (u16)(base * 0x1e + idx);
     if (offset >= (u32)self->field_2800) return 0;
@@ -631,72 +634,67 @@ __declspec(noinline) void* func_801C631C(CItemBoxGridFull* self, u16 idx) {
     return 0;
 }
 
-// Check item entry validity based on category.
-__declspec(noinline) s32 func_801C6388(CItemBoxGridFull* self, u16 idx) {
-    u8* p = (u8*)self;
-    s8 base = (s8)p[0x2804];
+// Check item entry validity based on category. Categories 4-8 and 2 share
+// the equipment-slot scan (slot count via vt+0x30, free-slot probe via
+// vt+0x40, equipped-state fetch via vt+0x2C); category 3 collapses the cell's
+// state byte to a boolean. optimize_for_size merges the r29-r31 saves into
+// retail's stmw prologue; all failure paths share one return-0 block at end.
+#pragma push
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) s32 func_801C6388(CItemBoxGridFull* self, u16 idx) {
+    s8 base = (s8)self->field_2804;
     u16 offset = (u16)(base * 0x1e + idx);
-    if (offset >= *(u16*)(p + 0x2800)) return 0;
-    s16 val = *(s16*)(p + offset * 0xa);
-    void* obj = func_80157C4C(p[0x2802], val);
-    if (!obj || !*(u32*)obj) return 0;
-    u8 cat = p[0x2802];
-    if ((u32)(cat - 4) <= 4) {
-        // category 4-8
-        void* inst = CItem_initItemImplInstances(obj);
-        void** vtbl = *(void***)inst;
-        u8 result = (u8)((u32(*)(void*, void*))vtbl[12])(inst, obj);
-        if (!result) {
-            u8 v2 = ((u8*)p + offset * 0xa)[2];
-            return (s8)((v2 - 1) | 1);
-        }
-        u32 j;
-        for (j = 0; j < result; j++) {
-            void* inst2 = CItem_initItemImplInstances(obj);
-            void** vtbl2 = *(void***)inst2;
-            s16 r = (s16)((s32(*)(void*, void*, u32))vtbl2[16])(inst2, obj, j);
-            if (r == -1) {
-                void* inst3 = CItem_initItemImplInstances(obj);
-                void** vtbl3 = *(void***)inst3;
-                void* res3 = ((void*(*)(void*, void*, u32))vtbl3[11])(inst3, obj, j);
-                if (res3 && (*(u16*)((u8*)res3 + 4) & 1)) return -3;
+    if (offset >= self->field_2800) goto fail;
+
+    CItemBoxGridEntry* entry = &self->entries[offset];
+    void* obj = func_80157C4C(self->field_2802, entry->id);
+    if (!obj || !*(u32*)obj) goto fail;
+
+    // Category dispatch: the equipment scan is shared by cats 2 and 4-8;
+    // cats 9 and default share the plain-fail value.
+    switch (self->field_2802) {
+    case 2:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+        // Equipment categories: count slots; if none are visible report the
+        // cell state flag, otherwise scan for empty-but-equipped slots.
+        {
+            u8 n = (u8)((CItemInstVt30*)CItem_initItemImplInstances(obj))->_v30(obj);
+            if (n != 0) {
+                // Scan slots for ones that are free (-1) but whose equipped
+                // state object reports the equipped flag.
+                for (u8 j = 0; j < n; j++) {
+                    if ((s16)((CItemInstVt40*)CItem_initItemImplInstances(obj))->_v40(obj, j) == -1) {
+                        void* res =
+                            ((CItemInstVt2C*)CItem_initItemImplInstances(obj))->_v2C(obj, j);
+                        if (res && (((CItemBoxSlotState*)res)->state & 1)) return -3;
+                    }
+                }
+                return -2;
             }
+            // marked cell: -1, otherwise 0.
+            return (s8)(entry->flags[0] ? -1 : 0);
         }
-        return -2;
-    } else if ((u32)(cat - 10) <= 3) {
-        // category 10-13
-        u8 v6 = ((u8*)obj)[6];
-        return (s8)v6;
-    } else if (cat == 2) {
-        // same as cat 4-8
-        void* inst = CItem_initItemImplInstances(obj);
-        void** vtbl = *(void***)inst;
-        u8 result = (u8)((u32(*)(void*, void*))vtbl[12])(inst, obj);
-        if (!result) {
-            u8 v2 = ((u8*)p + offset * 0xa)[2];
-            return (s8)((v2 - 1) | 1);
-        }
-        u32 j;
-        for (j = 0; j < result; j++) {
-            void* inst2 = CItem_initItemImplInstances(obj);
-            void** vtbl2 = *(void***)inst2;
-            s16 r = (s16)((s32(*)(void*, void*, u32))vtbl2[16])(inst2, obj, j);
-            if (r == -1) {
-                void* inst3 = CItem_initItemImplInstances(obj);
-                void** vtbl3 = *(void***)inst3;
-                void* res3 = ((void*(*)(void*, void*, u32))vtbl3[11])(inst3, obj, j);
-                if (res3 && (*(u16*)((u8*)res3 + 4) & 1)) return -3;
-            }
-        }
-        return -2;
-    } else if (cat == 3) {
-        u8 v2 = ((u8*)p + offset * 0xa)[2];
-        return (s8)((v2 - 1) | 1);
-    } else if (cat == 9) {
+    case 3:
+        // marked cell: -1, otherwise 0.
+        return (s8)(entry->flags[0] ? -1 : 0);
+    case 9:
         return 0;
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+        return (s8)((u8*)obj)[6];
+    default:
+        goto fail;
     }
+fail:
     return 0;
 }
+#pragma pop
 
 // Lookup entry, check category; return flag byte 2 (equip kind) or 0.
 __declspec(noinline) u8 func_801C6528(CItemBoxGridFull* self, u16 idx) {
@@ -1363,7 +1361,10 @@ void func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
 }
 #pragma optimize_for_size off
 
-// Clear inactive entries and sort remaining.
+// Clear inactive entries (flag byte 8 set) and compact the grid: bubble
+// passes swap every still-empty (-1 id) cell toward the front. Afterwards,
+// when the entry count changed, recompute the row count (entries per row /
+// rounded up) and reset the page index.
 void func_801C7730(CItemBoxGridFull* self) {
     u8* p = (u8*)self;
     u16 count = self->field_2800;
@@ -1371,33 +1372,44 @@ void func_801C7730(CItemBoxGridFull* self) {
     for (i = 0; i < count; i++) {
         u8* e = p + i * 10;
         if (e[8]) {
-            SetEntry9Bytes((unsigned char*)e, (unsigned short)0xFFFF, (unsigned char)0, (unsigned char)0, (unsigned char)0, (unsigned char)0, (unsigned char)0, (unsigned char)0, (unsigned char)0);
+            // Retail reuses the ctor's return as the move src (nested call).
+            func_801C562C(e, SetEntry9Bytes(e, -1, 0, 0, 0, 0, 0, 0, 0));
             self->field_2800--;
         }
     }
-    // Bubble sort remaining
-    u16 pass;
-    for (pass = 0; pass < 0x3FF; pass++) {
-        u16 stay = 0x3FF - pass;
-        u16 j;
+    u16 pass = 0;
+    do {
+        u32 stay = 0x3FF - pass;
         u32 swapped = 0;
+        u16 j;
         for (j = 0; j < stay; j++) {
             u8* e1 = p + j * 10;
             u8* e2 = p + (j + 1) * 10;
             s16 v1 = *(s16*)e1;
             s16 v2 = *(s16*)e2;
-            u32 a = v1 + 1;
-            u32 b = v2 + 1;
-            if (a <= b) continue;
-            char tmp[27];
-            CopyEntry9Bytes(tmp, (const char*)e1);
-            CopyEntry9Bytes(tmp + 9, (const char*)e2);
-            func_801C562C(e1, tmp + 9);
-            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
-            func_801C562C(e2, tmp);
+            // Only an empty (-1) cell followed by a non-empty one swaps.
+            if ((v1 + 1 == 0) >= (v2 + 1 == 0)) continue;
+            char t1[9];
+            char t2[9];
+            char t3[9];
+            CopyEntry9Bytes(t1, (const char*)e1);
+            func_801C562C(e1, CopyEntry9Bytes(t2, (const char*)e2));
+            func_801C562C(e2, CopyEntry9Bytes(t3, (const char*)t1));
             swapped = 1;
         }
-        if (!swapped) break;
+        if (swapped == 0) break;
+        pass++;
+    } while (pass < 0x3FF);
+    if (count != self->field_2800) {
+        // Row count = entries/row rounded up; page index resets.
+        u32 cnt = self->field_2800;
+        float fdiv = (float)cnt / lbl_eu_80667F30;
+        int rows = (int)fdiv;
+        float frac = fdiv - (float)rows;
+        if (lbl_eu_80667F34 != frac) rows++;
+        if (!(u8)rows) rows = 1;
+        self->field_2803 = (u8)rows;
+        self->field_2804 = 0;
     }
 }
 
@@ -1419,11 +1431,11 @@ __declspec(noinline) char* CopyEntry9Bytes(char* dst, const char* src) {
 
 // Base price of an item, scaled by its kind type:
 // - type 3: price row keyed by the +0x54 slot value, scaled by the
-//   lbl_eu_8050560C table row indexed by the +0x08 slot value.
+//   lbl_eu_8050560C row indexed by the +0x08 slot value.
 // - type 9: per-slot price rows are accumulated over up to 4 slots (each
-//   scaled by the table row), then the sum is scaled by 0x67F38 and the
-//   branch applies an extra x10 on top of the function's common x10 return.
-// - types 2..8: price row scaled by 0x67F78 + 0x67F7C * slot count.
+//   scaled by a fresh copy of the table row), then the sum is scaled by
+//   0x67F38; the common tail applies an extra x10.
+// - types 2..8: price row scaled by 0x67F78 + 0x67F7C per slot count.
 // - anything else: plain price row lookup.
 __declspec(noinline) u32 func_801C7958(void* self, void* item) {
     u32 word = *(u32*)item;
@@ -1432,29 +1444,28 @@ __declspec(noinline) u32 func_801C7958(void* self, void* item) {
     u32 shortKind = func_80139358(kind);
     u32 result = 0;
 
-    if (type == 3) {        u32 v54 = (u32)((CItemInstVt54*)CItem_initItemImplInstances(item))->_v54(item);
-        u16 v08 = (u16)((CItemInstVt08*)CItem_initItemImplInstances(item))->_v08(item);
-        u16 lookup = func_80136254((void*)lbl_eu_806640D8, &lbl_eu_8050566C[0x1fa], (u16)v54);
-        u32 scale[7];
-        u32 i;
-        for (i = 0; i < 7; i++) scale[i] = ((const u32*)lbl_eu_8050560C)[i];
-        result = (u32)((float)lookup * ((float*)scale)[v08 & 0x3F]);
+    if (type == 3) {
+        u32 key = (u32)((CItemInstVt54*)CItem_initItemImplInstances(item))->_v54(item);
+        u16 slot = (u16)((CItemInstVt08*)CItem_initItemImplInstances(item))->_v08(item);
+        u16 lookup = func_80136254((void*)lbl_eu_806640D8, &lbl_eu_8050566C[0x1fa], (u16)key);
+        CItemPriceScaleRow row;
+        row = *(const CItemPriceScaleRow*)&lbl_eu_8050560C;
+        result = (u32)((float)lookup * row.v[slot & 0x3F]);
     } else if (type == 9) {
-        u16 v08 = (u16)((CItemInstVt08*)CItem_initItemImplInstances(item))->_v08(item);
-        u32 scale[7];
+        u16 slot = (u16)((CItemInstVt08*)CItem_initItemImplInstances(item))->_v08(item);
+        CItemPriceScaleRow rowA;
+        rowA = *(const CItemPriceScaleRow*)&lbl_eu_8050560C;
         u32 i;
-        for (i = 0; i < 7; i++) scale[i] = ((const u32*)lbl_eu_8050560C)[i];
-        u32 slot;
-        for (slot = 0; slot < 4; slot++) {
-            u16 v = (u16)((CItemInstVt4C*)CItem_initItemImplInstances(item))->_v4C(item, (u8)slot);
-            if (!v) continue;
+        for (i = 0; i < 4; i++) {
+            u16 v = (u16)((CItemInstVt4C*)CItem_initItemImplInstances(item))->_v4C(item, (u8)i);
+            if (v == 0) continue;
             u16 lookup = func_80136254((void*)lbl_eu_806640D8, &lbl_eu_8050566C[0x1fa], v);
-            u32 scale2[7];
-            for (i = 0; i < 7; i++) scale2[i] = scale[i];
-            result = (u32)(lbl_eu_80667F74 * ((float)lookup * ((float*)scale2)[v08 & 0x3F]) + (float)result);
+            // Retail re-copies the row inside the loop before each scale.
+            CItemPriceScaleRow rowB;
+            rowB = rowA;
+            result = (u32)(lbl_eu_80667F74 * ((float)lookup * rowB.v[slot & 0x3F]) + (double)result);
         }
         result = (u32)((float)result * lbl_eu_80667F38);
-        result *= 10;
     } else if (type >= 2 && type <= 8) {
         func_801393CC(kind);
         u16 lookup = func_80136254((void*)lbl_eu_806640D8, &lbl_eu_8050566C[0x1fa], (u16)shortKind);
@@ -1522,38 +1533,76 @@ __declspec(noinline) s32 func_801C7C7C(void* self, u32 id, void* item) {
 }
 #pragma optimize_for_size off
 
-// Sort entries with item instance comparison.
+// Bubble-sort grid entries ascending under the selected comparison mode.
+// A pass that performs no swap ends the sort early (i only advances on swap).
 void func_801C7EF0(CItemBoxGridFull* self, u32 mode) {
-    u32 n = self->field_2800;
     u32 i;
-    for (i = 0; i < n - 1; i++) {
-        u32 limit = n - 1 - i;
-        u32 j;
+    for (i = 0; (u16)i < self->field_2800 - 1; i++) {
         int swapped = 0;
-        for (j = 0; j < limit; j++) {
-            u8* e1 = (u8*)self + j * 10;
-            u8* e2 = (u8*)self + (j + 1) * 10;
-            s16 v1 = *(s16*)e1;
-            s16 v2 = *(s16*)e2;
-            void* obj1 = func_80157C4C(self->field_2802, v1);
-            void* obj2 = func_80157C4C(self->field_2802, v2);
-            if (!obj1 || !obj2) continue;
-            // Compare based on mode
-            u32 cmp = 0;
+        u16 j;
+        for (j = 0; (u16)j < self->field_2800 - 1 - (u16)i; j++) {
+            void* obj1 = func_80157C4C(self->field_2802, self->entries[j].id);
+            void* obj2 = func_80157C4C(self->field_2802, self->entries[j + 1].id);
+            CItemBoxGridEntry* e1 = &self->entries[j];
+            CItemBoxGridEntry* e2 = &self->entries[j + 1];
             if (mode == 3) {
-                cmp = CItem_initItemImplInstances(self) > CItem_initItemImplInstances(self);
+                // Compare (u16) inst->_v54(item) keys; obj2's chain runs first.
+                u16 key2 = (u16)((CItemInstVt54*)CItem_initItemImplInstances(obj2))->_v54(obj2);
+                u16 key1 = (u16)((CItemInstVt54*)CItem_initItemImplInstances(obj1))->_v54(obj1);
+                if (key1 > key2) {
+                    char tmp1[9];
+                    char tmp2[9];
+                    char tmp3[9];
+                    CopyEntry9Bytes(tmp1, (const char*)e1);
+                    func_801C562C(e1, CopyEntry9Bytes(tmp2, (const char*)e2));
+                    func_801C562C(e2, CopyEntry9Bytes(tmp3, (const char*)tmp1));
+                    swapped = 1;
+                }
+            } else if (mode == 9) {
+                int a = func_801C6E90(obj1);
+                int b = func_801C6E90(obj2);
+                // A non-zero _v80 result zeroes that side's key.
+                if (((CItemInstVt80*)CItem_initItemImplInstances(obj1))->_v80(obj1) != 0) a = 0;
+                if (((CItemInstVt80*)CItem_initItemImplInstances(obj2))->_v80(obj2) != 0) b = 0;
+                if (a != 0 || b != 0) {
+                    if (a > b) {
+                        char tmp1[9];
+                        char tmp2[9];
+                        char tmp3[9];
+                        CopyEntry9Bytes(tmp1, (const char*)e1);
+                        func_801C562C(e1, CopyEntry9Bytes(tmp2, (const char*)e2));
+                        func_801C562C(e2, CopyEntry9Bytes(tmp3, (const char*)tmp1));
+                        swapped = 1;
+                    }
+                } else {
+                    // Both keys zeroed: tie-break on flag-byte-7 bits 2..7.
+                    CItemSortView* v1 = (CItemSortView*)obj1;
+                    CItemSortView* v2 = (CItemSortView*)obj2;
+                    if ((v1->flags7 >> 2 & 0x3f) > (v2->flags7 >> 2 & 0x3f)) {
+                        char tmp1[9];
+                        char tmp2[9];
+                        char tmp3[9];
+                        CopyEntry9Bytes(tmp1, (const char*)e1);
+                        func_801C562C(e1, CopyEntry9Bytes(tmp2, (const char*)e2));
+                        func_801C562C(e2, CopyEntry9Bytes(tmp3, (const char*)tmp1));
+                        swapped = 1;
+                    }
+                }
             } else {
-                u16 w1 = *(u16*)((u8*)obj1 + 4);
-                u16 w2 = *(u16*)((u8*)obj2 + 4);
-                cmp = w1 > w2;
+                CItemSortView* v1 = (CItemSortView*)obj1;
+                CItemSortView* v2 = (CItemSortView*)obj2;
+                u32 key1 = (u16)func_80139358(v1->word00 >> 20);
+                u32 key2 = (u16)func_80139358(v2->word00 >> 20);
+                if (key1 > key2) {
+                    char tmp1[9];
+                    char tmp2[9];
+                    char tmp3[9];
+                    CopyEntry9Bytes(tmp1, (const char*)e1);
+                    func_801C562C(e1, CopyEntry9Bytes(tmp2, (const char*)e2));
+                    func_801C562C(e2, CopyEntry9Bytes(tmp3, (const char*)tmp1));
+                    swapped = 1;
+                }
             }
-            if (!cmp) continue;
-            // Swap using CopyEntry9Bytes / func_801C562C
-            char tmp[9];
-            CopyEntry9Bytes(tmp, (const char*)e1);
-            CopyEntry9Bytes((char*)e1, (const char*)e2);
-            func_801C562C(e2, tmp);
-            swapped = 1;
         }
         if (!swapped) break;
     }
@@ -2006,11 +2055,11 @@ void func_801C9390(CItemBoxGridFull* self) {
             void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
             void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
             u32 w1 = *(u32*)obj1;
-            u32 t1 = lbl_eu_806640F4;
+            u32 t1 = (u32)(size_t)lbl_eu_806640F4;
             u32 k1 = func_80139358(w1 >> 20);
             u32 c1 = func_801361E8(t1, (const char*)&lbl_eu_8050566C[0x227], k1 & 0xFFFF);
             u32 w2 = *(u32*)obj2;
-            u32 t2 = lbl_eu_806640F4;
+            u32 t2 = (u32)(size_t)lbl_eu_806640F4;
             u32 k2 = func_80139358(w2 >> 20);
             u32 c2 = func_801361E8(t2, (const char*)&lbl_eu_8050566C[0x227], k2 & 0xFFFF);
             if ((c1 & 0xFF) >= (c2 & 0xFF)) continue;
@@ -2037,15 +2086,17 @@ void func_801C94E0(CItemBoxGridFull* self) {
             u8* e2 = (u8*)self + (j + 1) * 10;
             void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
             void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
+            // Owner-table row is selected by the raw item word used as a
+            // byte offset into the table data.
             u32 w1 = *(u32*)obj1;
-            u32 t1 = lbl_eu_806640F4;
-            u32 k1 = func_80139358(w1 >> 20);
-            u32 c1 = func_801361E8(t1, (const char*)&lbl_eu_8050566C[0x22f], k1 & 0xFFFF);
+            u32 c1 = func_801361E8(*(u32*)(lbl_eu_806640F4 + w1),
+                                   (const char*)&lbl_eu_8050566C[0x22f],
+                                   (u16)func_80139358(w1 >> 20));
             u32 w2 = *(u32*)obj2;
-            u32 t2 = lbl_eu_806640F4;
-            u32 k2 = func_80139358(w2 >> 20);
-            u32 c2 = func_801361E8(t2, (const char*)&lbl_eu_8050566C[0x22f], k2 & 0xFFFF);
-            if ((c1 & 0xFF) >= (c2 & 0xFF)) continue;
+            u32 c2 = func_801361E8(*(u32*)(lbl_eu_806640F4 + w2),
+                                   (const char*)&lbl_eu_8050566C[0x22f],
+                                   (u16)func_80139358(w2 >> 20));
+            if ((u8)c1 >= (u8)c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
             func_801C562C(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
             func_801C562C(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
@@ -2116,30 +2167,42 @@ void func_801C9780(CItemBoxGridFull* self) {
     }
 }
 
-// Bubble sort entries by float comparison. The `target` argument is not
-// used by the sort itself (retail passes 1/2/3 from func_801C6EC0).
+// Partition-style bubble pass: move every entry whose kind-name lookup key
+// (kind mapped through func_80139358 then looked up in table lbl_eu_806640F8
+// with the string at lbl_eu_8050566C+0x248) equals `target` toward the front.
+// Swap fires when the earlier entry mismatches and the later one matches
+// (retail compares the two "== target" booleans); the whole sort aborts as
+// soon as one full sweep makes no swap.
 void func_801C98D0(CItemBoxGridFull* self, u32 target) {
-    u32 n = self->field_2800;
+    // Hoisted string-pool base: retail keeps this pointer live in a
+    // callee-saved register for the whole function.
+    const char* strBase = lbl_eu_8050566C;
     u32 i;
-    for (i = 0; i < n - 1; i++) {
-        u32 limit = n - 1 - i;
+    for (i = 0; (u16)i < self->field_2800 - 1; i++) {
+        u32 swapped = 0;
         u32 j;
-        int swapped = 0;
-        char tmp[27];
-        for (j = 0; j < limit; j++) {
-            u8* e1 = (u8*)self + j * 10;
-            u8* e2 = (u8*)self + (j + 1) * 10;
+        char tmp[36];
+        for (j = 0; (u16)j < self->field_2800 - 1 - (s32)(u16)i; j++) {
+            u8* e1 = (u8*)self + (u16)j * 10;
+            u8* e2 = (u8*)self + ((u16)j + 1) * 10;
             void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
             void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
-            float v1 = func_801C9F88(self, obj1);
-            float v2 = func_801C9F88(self, obj2);
-            if (v1 >= v2) continue;
-            CopyEntry9Bytes(tmp, (const char*)e1);
-            CopyEntry9Bytes(tmp + 9, (const char*)e2);
-            func_801C562C(e1, tmp + 9);
-            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
-            func_801C562C(e2, tmp);
-            swapped = 1;
+            // Both kind keys are looked up before either byte is truncated:
+            // retail keeps the first lookup result live across the second call.
+            u32 k1 = func_80139358(*(u32*)obj1 >> 20);
+            u32 k2 = func_80139358(*(u32*)obj2 >> 20);
+            u32 c1 = func_801361E8(lbl_eu_806640F8, strBase + 0x248, k1 & 0xFFFF);
+            u32 c2 = func_801361E8(lbl_eu_806640F8, strBase + 0x248, k2 & 0xFFFF);
+            // Swap only when entry j+1 matches the target and entry j doesn't:
+            // this drives all target-matching entries to the front.
+            u32 m2 = ((u8)c2 == target);
+            u32 m1 = ((u8)c1 == target);
+            if (m1 < m2) {
+                CopyEntry9Bytes(tmp, (const char*)e1);
+                func_801C562C(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
+                func_801C562C(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
+                swapped = 1;
+            }
         }
         if (!swapped) break;
     }
@@ -2202,28 +2265,38 @@ void func_801C9B8C(CItemBoxGridFull* self) {
     }
 }
 
-// Bubble sort entries by float comparison.
+// Kind-name lookup key for one grid item: message-table (lbl_eu_80664110)
+// query with the string key at lbl_eu_8050566C+0x115 on the kind short id
+// extracted from the object's vtable bits.
+static u32 ItemBoxKindKey(void* obj) {
+    u32 w = *(u32*)obj;
+    u32 tbl = lbl_eu_80664110;
+    return func_801361E8(tbl, (const char*)&lbl_eu_8050566C[0x115], (u16)func_80139358(w >> 20));
+}
+
+// Bubble-sort grid entries in DESCENDING order of the kind's message-table
+// lookup key (string at lbl_eu_8050566C+0x115): adjacent pair (j, j+1) is
+// swapped when entry j's key byte exceeds entry j+1's. Same lookup chain and
+// 3-slot temp shuffle as func_801C9E1C.
 void func_801C9CCC(CItemBoxGridFull* self) {
-    u32 n = self->field_2800;
     u32 i;
-    for (i = 0; i < n - 1; i++) {
-        u32 limit = n - 1 - i;
-        u32 j;
+    for (i = 0; (u16)i < self->field_2800 - 1; i++) {
         int swapped = 0;
-        char tmp[27];
-        for (j = 0; j < limit; j++) {
-            u8* e1 = (u8*)self + j * 10;
-            u8* e2 = (u8*)self + (j + 1) * 10;
-            void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
+        u32 j;
+        char tmp[36];
+        for (j = 0; (u16)j < self->field_2800 - 1 - (u16)i; j++) {
+            u8* e1 = (u8*)self + (u16)j * 10;
+            u8* e2 = (u8*)self + ((u16)j + 1) * 10;
+            // id expressions written out so MWCC CSEs the (u16)j * 10 mulli
+            // into one register shared by the add/lhax pair, as in retail.
+            void* obj1 = func_80157C4C(self->field_2802, *(s16*)((u8*)self + (u16)j * 10));
             void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
-            float v1 = func_801C9F88(self, obj1);
-            float v2 = func_801C9F88(self, obj2);
-            if (v1 >= v2) continue;
+            u32 c1 = ItemBoxKindKey(obj1);
+            u32 c2 = ItemBoxKindKey(obj2);
+            if ((u8)c1 <= (u8)c2) continue;
             CopyEntry9Bytes(tmp, (const char*)e1);
-            CopyEntry9Bytes(tmp + 9, (const char*)e2);
-            func_801C562C(e1, tmp + 9);
-            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
-            func_801C562C(e2, tmp);
+            func_801C562C(e1, CopyEntry9Bytes(tmp + 12, (const char*)e2));
+            func_801C562C(e2, CopyEntry9Bytes(tmp + 24, (const char*)tmp));
             swapped = 1;
         }
         if (!swapped) break;
@@ -2274,23 +2347,21 @@ void func_801C9E1C(CItemBoxGridFull* self, u32 target) {
 #pragma optimize_for_size on
 float func_801C9F88(void* self, void* entry) {
     u32 word = *(u32*)entry;
-    u32 tbl = lbl_eu_806640F4;
+    u32 tbl = (u32)(size_t)lbl_eu_806640F4;
     u32 kind = func_80139358(word >> 20);
     u32 idx = func_80136254((void*)tbl, (const char*)&lbl_eu_8050566C[0x25a], (u16)kind);
     // Bit 2 of the kind flag entry gates a party-bonus multiplier.
     if ((func_801361E8(tbl, (const char*)&lbl_eu_8050566C[0x261], (u16)kind) & 4)) {
         void* charData = func_8009EC9C(1);
-        // u32->double via the shared 2^52 magic so the lfd reloc names
-        // lbl_eu_80667F48 instead of a TU-local pool constant.
+        // Reading the product back through a signed union member blocks
+        // MWCC's non-negative range fold, so the conversion uses the signed
+        // xoris magic (lbl_eu_80667F48).
         union {
-            double d;
-            u32 w[2];
-        } conv;
-        u32 prod = (idx & 0xFFFF) * (u32)(u16)func_800A082C(charData);
-        conv.w[0] = 0x43300000;
-        conv.w[1] = prod ^ 0x80000000;
-        float scaled = (float)(conv.d - lbl_eu_80667F48);
-        idx = (u32)(u16)(s32)(scaled * lbl_eu_80667F80);
+            u32 u;
+            int i;
+        } prod;
+        prod.u = (idx & 0xFFFF) * (u16)func_800A082C(charData);
+        idx = (u32)(u16)(s32)((float)prod.i * lbl_eu_80667F80);
     }
     if ((u32)(u16)idx > 999) idx = 999;
     // Truncated result converted back through the 2^52 magic (lbl_eu_80667F40).
@@ -2316,7 +2387,7 @@ __declspec(noinline) u32 func_801CA070(void* self, void* item) {
 #pragma optimize_for_size on
 __declspec(noinline) u32 func_801CA110(void* self, void* entry) {
     u32 val = *(u32*)entry;
-    u32 obj = lbl_eu_806640F4;
+    u32 obj = (u32)(size_t)lbl_eu_806640F4;
     u32 kind = func_80139358(val >> 20);
     u32 i;
     for (i = 1; i <= 10; i++) {
@@ -2626,33 +2697,41 @@ extern "C" void* __dt__12CItemBoxGridFv(void* self, int mode) {
 }
 #pragma optimize_for_size off
 
+// Load the item-box resource files. When MEM1 can hold the biggest archive,
+// the first file is read into MEM1 instead of MEM2. The string-table base is
+// cached in a local (retail keeps it in r31 across every call).
+// optimize_for_size: retail uses stmw r29/lmw r29 block saves.
+#pragma push
+#pragma optimize_for_size on
 void func_801CAA6C(void* self, int r4) {
     u8* p = (u8*)self;
+    const char* strs;
     void* allocHandle = getHandleMEM2__Q23mtl10MemManagerFv();
 
     if (func_80212480()) {
-        void* mem1 = getHandleMEM1__Q23mtl10MemManagerFv();
-        u32 maxSize = getMaxAllocSize__Q23mtl10MemManagerFUl((u32)mem1);
-        if (maxSize >= 0x38000) {
-            allocHandle = mem1;
+        if (getMaxAllocSize__Q23mtl10MemManagerFUl((u32)getHandleMEM1__Q23mtl10MemManagerFv()) >= 0x38000) {
+            allocHandle = (void*)getHandleMEM1__Q23mtl10MemManagerFv();
         }
     }
 
-    p[0x28] = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, &lbl_eu_8050566C[0x266], self, 0, 0);
+    // Retail caches the string-table base here (r31), after the MEM1 choice.
+    strs = lbl_eu_8050566C;
+
+    *(u32*)(p + 0x28) = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, strs + 0x266, self, 0, 0);
 
     allocHandle = getHandleMEM2__Q23mtl10MemManagerFv();
-    p[0x2c] = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, &lbl_eu_8050566C[0x27e], self, 0, 0);
+    *(u32*)(p + 0x2c) = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, strs + 0x27e, self, 0, 0);
 
     if (p[0x543]) {
         allocHandle = (void*)func_800A9D90();
-        p[0x30] = (u32)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, &lbl_eu_8050566C[0x297], self, 0, 0);
+        *(u32*)(p + 0x30) = (u32)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, strs + 0x297, self, 0, 0);
 
         allocHandle = getHandleMEM2__Q23mtl10MemManagerFv();
-        p[0x34] = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, &lbl_eu_8050566C[0x2b4], self, 0, 0);
+        *(u32*)(p + 0x34) = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, strs + 0x2b4, self, 0, 0);
     } else {
-        lbl_eu_80664508 = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2d0]);
-        lbl_eu_8066450C = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2df]);
-        lbl_eu_80664510 = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2ee]);
+        lbl_eu_80664508 = (u32)getFP__FPCc(strs + 0x2d0);
+        lbl_eu_8066450C = (u32)getFP__FPCc(strs + 0x2df);
+        lbl_eu_80664510 = (u32)getFP__FPCc(strs + 0x2ee);
     }
 
     func_801D3064(p + 0xe8);
@@ -2666,15 +2745,21 @@ void func_801CAA6C(void* self, int r4) {
     ((CItemInstVt90*)(p + 0x4ac))->_v88();
     ((CItemInstVt90*)(p + 0x4e8))->_v88();
 }
+#pragma pop
 
+// Per-frame state machine update for the item-box grid: gate on the ready
+// byte at +0x54 and the state word at +0x58, dispatch through MWCC's
+// computed-jump switch, then run the common per-frame update tail.
 void func_801CABC8(void* self, int r4) {
     u8* p = (u8*)self;
     if (!p[0x54]) return;
     u32 state = *(u32*)(p + 0x58);
     if (!state) return;
 
-    if (state <= 0x1a) {
-        switch (state) {
+    // Bare switch: MWCC emits the single cmplwi 0x1a/bgt range check plus
+    // the computed-jump table (gaps fall to the common tail) — an explicit
+    // `if (state <= 0x1a)` wrapper would add a second range branch.
+    switch (state) {
         case 1:
             func_801CE108(self);
             break;
@@ -2740,14 +2825,12 @@ void func_801CABC8(void* self, int r4) {
         case 26:
             func_801CEBF0(self);
             break;
-        }
     }
 
-    {
-        void* layout = *(void**)(p + 0x44);
-        void** lvtbl = *(void***)layout;
-        ((void(*)(void*, int))lvtbl[0xE])(layout, 0);
-    }
+    // Virtual dispatch through the +0x44 layout object (vtable+0x38 slot);
+    // method takes only the flag - this comes in r3, arg in r4.
+    CItemBoxLayoutVt38* layout = *(CItemBoxLayoutVt38**)(p + 0x44);
+    layout->_v38(0);
 
     func_801D202C(p + 0x70);
     func_801D202C(p + 0x88);
@@ -2964,7 +3047,7 @@ void CItemBoxGrid::PushToList(unsigned char val) {
 }
 
 // Increment list counter with wrap.
-void func_801CB4E4(void* self) {
+__declspec(noinline) void func_801CB4E4(void* self) {
     u8* p = (u8*)self;
     if (func_801D3320(p + 0xe8)) return;
     if (p[0x528]) return;
@@ -2979,7 +3062,7 @@ void func_801CB4E4(void* self) {
 }
 
 // Decrement a list counter with wrap.
-void func_801CB56C(void* self) {
+__declspec(noinline) void func_801CB56C(void* self) {
     u8* p = (u8*)self;
     if (func_801D3320(p + 0xe8)) return;
     if (p[0x528]) return;
@@ -3256,8 +3339,12 @@ sound_and_return2:
 // their live ranges span the calls and MWCC colors them to the saved regs.
 #pragma optimize_for_size on
 void func_801CBDE8(void* self) {
+    // sub-array pointer and grid index stay live across calls -> MWCC colors
+    // them into the stmw-saved r29/r30; buf/tmp mirror retail's stack slots.
+    u32 entry;
     u8* sub;
-    u16 entry;
+    u32 buf[3];
+    u32 tmp[4];
     u8* p = (u8*)self;
     if (p[0x542]) return;
     if (CSysWin_getUnk34(p + 0x4ac)) return;
@@ -3275,45 +3362,43 @@ void func_801CBDE8(void* self) {
         if (!func_801EB028(p + 0x3e4)) return;
         sub = p + 0x54c;
         entry = (u8)(p[0x524] + p[0x525] * 10);
-        u32 kind = func_801C62AC((CItemBoxGridFull*)sub, entry);
-        func_801392E4(kind & 0xFFFF);
-        s32 chk = (s8)func_801C6388((CItemBoxGridFull*)sub, entry);
-        if (chk > 0) {
+        func_801392E4(func_801C62AC((void*)sub, entry) & 0xFFFF);
+        s32 chk = func_801C6388((CItemBoxGridFull*)sub, entry);
+        if ((s8)chk > 0) {
             // stack-count step of 10, clamped to a minimum of 1
-            s8 cnt = (s8)p[0x529] - 10;
+            u8 cur = p[0x529];
+            int cnt = cur - 10;
             p[0x529] = (u8)cnt;
-            if (cnt < 1) p[0x529] = 1;
+            if ((s8)(u8)cnt < 1) p[0x529] = 1;
         }
-        func_801EB04C((void*)(p + 0x3e4), (u32)p[0x529]);
+        func_801EB04C(p + 0x3e4, p[0x529]);
         u32 v = func_801C5FC0((CItemBoxGridFull*)sub, entry);
-        func_801EB064((void*)(p + 0x3e4), (s8)p[0x529] * v);
+        s32 total = (s8)p[0x529] * v;
+        func_801EB064(p + 0x3e4, total);
         func_80138078__FUl(1);
         return;
     }
     if (func_801D3320(p + 0xe8)) {
         if (!func_801D3328(p + 0xe8)) return;
         func_801D3724(p + 0xe8);
-        u32 tmp[4];
         func_801D3454(tmp, p + 0xe8);
-        void** vtbl = *(void***)(p + 0xa0);
-        ((void(*)(void*, u32*))vtbl[4])(p + 0xa0, tmp);
+        ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(tmp);
         func_80138078__FUl(1);
         return;
     }
     if (p[0x544]) {
-        u8 cur = p[0x545];
         s8 idx;
         sub = p + 0x288;
         // scan backwards for a non-empty tab slot, wrapping at 2
-        for (idx = (s8)cur - 1; idx != (s8)cur; idx--) {
+        for (idx = p[0x545] - 1; idx != p[0x545]; idx--) {
             if (idx < 0) idx = 2;
-            u16 val = ArrayGet12((const u16*)sub, (u8)(p[0x546] + (u8)idx * 4));
-            if (val) { p[0x545] = (u8)idx; break; }
+            if (ArrayGet12((const u16*)sub, (u8)(p[0x546] + idx * 4))) {
+                p[0x545] = (u8)idx;
+                break;
+            }
         }
-        u32 buf[3];
-        func_801CB9D8(buf, sub, (u8)(p[0x546] + (u8)p[0x545] * 4));
-        void** vtbl = *(void***)(p + 0xa0);
-        ((void(*)(void*, u32*))vtbl[4])(p + 0xa0, buf);
+        func_801CB9D8(buf, sub, (u8)(p[0x546] + (s8)p[0x545] * 4));
+        ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(buf);
         func_80138078__FUl(1);
         return;
     }
@@ -3329,7 +3414,8 @@ void func_801CBDE8(void* self) {
         func_801CC4E8(self);
         func_801D0950(self);
     } else {
-        p[0x524]--;
+        s8 col = (s8)p[0x524] - 1;
+        p[0x524] = (u8)col;
         if ((s8)p[0x524] < 0) p[0x524] = 9;
         func_801D0950(self);
         func_801D0328(self);
@@ -3341,8 +3427,12 @@ void func_801CBDE8(void* self) {
 // Up navigation. Same shape as func_801CBDE8 (see notes there).
 #pragma optimize_for_size on
 void func_801CC0EC(void* self) {
+    // sub-array pointer and grid index stay live across calls -> MWCC colors
+    // them into the stmw-saved r29/r30; buf/tmp mirror retail's stack slots.
     u8* sub;
-    u16 entry;
+    u32 entry;
+    u32 buf[3];
+    u32 tmp[3];
     u8* p = (u8*)self;
     if (p[0x542]) return;
     if (CSysWin_getUnk34(p + 0x4ac)) return;
@@ -3356,29 +3446,28 @@ void func_801CC0EC(void* self) {
         return;
     }
     if (p[0x528]) {
-        if (p[0x527] != 1) return;
+        if (p[0x527] != 1u) return;
         if (!func_801EB028(p + 0x3e4)) return;
-        sub = p + 0x54c;
         entry = (u8)(p[0x524] + p[0x525] * 10);
-        u32 kind = func_801C62AC((CItemBoxGridFull*)sub, entry);
-        func_801392E4(kind & 0xFFFF);
+        sub = p + 0x54c;
+        func_801392E4(func_801C62AC((void*)sub, entry) & 0xFFFF);
         s32 chk = (s8)func_801C6388((CItemBoxGridFull*)sub, entry);
         if (chk > 0) {
             // stack-count step of 10, clamped to the item's max stack
-            s8 cnt = (s8)p[0x529] + 10;
+            u8 cur = p[0x529];
+            int cnt = cur + 10;
             p[0x529] = (u8)cnt;
-            if (cnt > chk) p[0x529] = (u8)chk;
+            if ((s8)(u8)cnt > chk) p[0x529] = (u8)chk;
         }
-        func_801EB04C((void*)(p + 0x3e4), (u32)p[0x529]);
-        u32 v = func_801C5FC0((CItemBoxGridFull*)sub, entry);
-        func_801EB064((void*)(p + 0x3e4), (s8)p[0x529] * v);
+        func_801EB04C(p + 0x3e4, p[0x529]);
+        s32 total = (s8)p[0x529] * func_801C5FC0((CItemBoxGridFull*)sub, entry);
+        func_801EB064(p + 0x3e4, total);
         func_80138078__FUl(1);
         return;
     }
     if (func_801D3320(p + 0xe8)) {
         if (!func_801D3328(p + 0xe8)) return;
         func_801D377C(p + 0xe8);
-        u32 tmp[4];
         func_801D3454(tmp, p + 0xe8);
         void** vtbl = *(void***)(p + 0xa0);
         ((void(*)(void*, u32*))vtbl[4])(p + 0xa0, tmp);
@@ -3386,16 +3475,15 @@ void func_801CC0EC(void* self) {
         return;
     }
     if (p[0x544]) {
-        u8 cur = p[0x545];
         s8 idx;
         sub = p + 0x288;
-        // scan forwards for a non-empty tab slot, wrapping at 3
-        for (idx = (s8)cur + 1; idx != (s8)cur; idx++) {
+        // scan forwards for a non-empty tab slot, wrapping at 3; retail
+        // reloads p[0x545] for the wrap bound every iteration
+        for (idx = (s8)p[0x545] + 1; idx != (s8)p[0x545]; idx++) {
             if (idx >= 3) idx = 0;
             u16 val = ArrayGet12((const u16*)sub, (u8)(p[0x546] + (u8)idx * 4));
             if (val) { p[0x545] = (u8)idx; break; }
         }
-        u32 buf[3];
         func_801CB9D8(buf, sub, (u8)(p[0x546] + (u8)p[0x545] * 4));
         void** vtbl = *(void***)(p + 0xa0);
         ((void(*)(void*, u32*))vtbl[4])(p + 0xa0, buf);
@@ -3427,7 +3515,7 @@ void func_801CC0EC(void* self) {
 // optimize_for_size: retail uses stmw r30/lmw r30; sub (r31) is declared
 // before p (r30) so MWCC colors it to the higher saved register.
 #pragma optimize_for_size on
-void func_801CC3F4(void* self) {
+__declspec(noinline) void func_801CC3F4(void* self) {
     u8* sub;
     u8* p = (u8*)self;
     if (func_801D3320(p + 0xe8)) return;
@@ -3440,20 +3528,20 @@ void func_801CC3F4(void* self) {
     func_801C5EF4((CItemBoxGridFull*)sub);
     // Retail calls LookupIndexedByte twice: once for the compare, once for
     // the store (subi from the fresh call result).
-    if ((s8)p[0x525] < (u8)LookupIndexedByte((char*)sub))
+    // retail branches over the store when a < b (bc 12,0), so negate
+    if (!((s8)p[0x525] < (u8)LookupIndexedByte((char*)sub)))
         p[0x525] = (u8)(LookupIndexedByte((char*)sub) - 1);
     func_801CFFEC(self);
     func_801D0328(self);
     u8 rows = sub[0x2803];
-    u8 f = 1;
-    if (rows != 0) f = rows;
+    u8 f = rows == 0 ? 1 : rows;
     if (f != 1) func_80138078__FUl(0xa);
 }
 #pragma optimize_for_size off
 
 // Grid state update (decrement variant).
 #pragma optimize_for_size on
-void func_801CC4E8(void* self) {
+__declspec(noinline) void func_801CC4E8(void* self) {
     u8* sub;
     u8* p = (u8*)self;
     if (func_801D3320(p + 0xe8)) return;
@@ -3464,7 +3552,8 @@ void func_801CC4E8(void* self) {
     if (func_8022DB6C(p + 0x468)) return;
     sub = p + 0x54c;
     func_801C5F20((CItemBoxGridFull*)sub);
-    if ((s8)p[0x525] < (u8)LookupIndexedByte((char*)sub))
+    // retail branches over the store when a < b (bc 12,0), so negate
+    if (!((s8)p[0x525] < (u8)LookupIndexedByte((char*)sub)))
         p[0x525] = (u8)(LookupIndexedByte((char*)sub) - 1);
     func_801CFFEC(self);
     func_801D0328(self);
@@ -3479,6 +3568,10 @@ void func_801CC4E8(void* self) {
 #pragma optimize_for_size on
 void func_801CC5DC(void* self) {
     u8* p = (u8*)self;
+    // one shared stack buffer: the merge result lands in words [3] and is
+    // consumed before func_801D3454 overwrites the whole array (retail
+    // reuses the same frame slots).
+    u32 buf[5];
     if (!p[0x542] && !p[0x528] && !CSysWin_getUnk34(p + 0x4ac) &&
         !CSysWin_getUnk34(p + 0x4e8) && !func_80208358(p + 0x418) &&
         !func_8022DB6C(p + 0x468) && !p[0x544]) {
@@ -3490,21 +3583,22 @@ void func_801CC5DC(void* self) {
             func_80138078__FUl(6);
             return;
         }
-        if (*(u32*)(p + 0x58) != 3) return;
+        // state word is compared signed (retail cmpwi)
+        if (*(s32*)(p + 0x58) != 3) return;
         if (!func_801D3328(p + 0xe8)) return;
+        // fetch the layout pane and resolve two tag strings through its
+        // vtable+0x3C accessor, then merge them back into the window text.
         void* obj = *(void**)(p + 0x44);
-        void* subObj = *(void**)((u8*)obj + 0x10);
-        void** vtbl = *(void***)subObj;
-        void* a = ((void* (*)(void*, const char*, int))vtbl[0x3c / 4])(subObj, &lbl_eu_8050566C[0x301], 1);
-        void* b = ((void* (*)(void*, const char*, int))vtbl[0x3c / 4])(subObj, &lbl_eu_8050566C[0x2f8], 1);
-        u32 result;
-        func_80137924(&result, b, a, subObj);
-        func_801D3430(p + 0xe8, &result);
+        const char* strs = lbl_eu_8050566C;
+        void* pane = *(void**)((char*)obj + 0x10);
+        // MWCC evaluates args right-to-left, so listing the 0x301 fetch as
+        // the third argument makes it execute first, matching retail.
+        func_80137924(&buf[3], ((CItemPaneObjVt*)pane)->_v3C((char*)strs + 0x2f8, 1),
+                      ((CItemPaneObjVt*)pane)->_v3C((char*)strs + 0x301, 1), pane);
+        func_801D3430(p + 0xe8, &buf[3]);
         func_801D353C(p + 0xe8, (u8)(p[0x547] + p[0x548]));
-        u32 tmp[4];
-        func_801D3454(tmp, p + 0xe8);
-        vtbl = *(void***)(p + 0xa0);
-        ((void (*)(void*, u32*))vtbl[4])(p + 0xa0, tmp);
+        func_801D3454(buf, p + 0xe8);
+        ((CItemBoxObjA0Vt*)(p + 0xa0))->_v10(buf);
         func_801D216C(p + 0xa0, 1);
         func_801D216C(p + 0x70, 0);
         func_801D216C(p + 0xb8, 0);
@@ -3515,25 +3609,31 @@ void func_801CC5DC(void* self) {
 }
 #pragma optimize_for_size off
 
+// optimize_for_size: retail keeps the stmw r30 / lmw r30 block save.
+#pragma optimize_for_size on
+// Mirrors retail's label structure: guard failures branch to the bare exit,
+// handled arms fall into the single shared r4-check tail (keeps MWCC from
+// duplicating the tail per return path).
+#pragma optimize_for_size on
 void func_801CC7B0(void* self, int r4) {
     u8* p = (u8*)self;
     if (CSysWin_getUnk34(p + 0x4ac)) {
-        if (!CSysWin_isActive(p + 0x4ac)) return;
+        if (!CSysWin_isActive(p + 0x4ac)) goto exit;
         func_8022B8E4(p + 0x4ac);
         func_801D216C(p + 0xa0, 0);
         p[0x540] = 1;
         *(u32*)(p + 0x58) = 0x17;
-        return;
+        goto exit;
     }
     if (CSysWin_getUnk34(p + 0x4e8)) {
-        if (!CSysWin_isActive(p + 0x4e8)) return;
+        if (!CSysWin_isActive(p + 0x4e8)) goto exit;
         func_8022B8E4(p + 0x4e8);
         func_801D216C(p + 0x70, 0);
         *(u32*)(p + 0x58) = 0x14;
-        return;
+        goto exit;
     }
     if (func_80208358(p + 0x418)) {
-        if (!func_80208360(p + 0x418)) return;
+        if (!func_80208360(p + 0x418)) goto exit;
         func_801D0950(self);
         func_801D216C(p + 0x70, 1);
         func_801D216C(p + 0xa0, 0);
@@ -3541,11 +3641,12 @@ void func_801CC7B0(void* self, int r4) {
         func_802083A4(p + 0x418);
         *(u32*)(p + 0x58) = 8;
         p[0x528] = 0;
+        // retail inlines the r4-check tail here (copy 1 of 3)
         if (!r4) func_80138078__FUl(6);
-        return;
+        goto exit;
     }
     if (func_8022DB6C(p + 0x468)) {
-        if (!func_8022DB74(p + 0x468)) return;
+        if (!func_8022DB74(p + 0x468)) goto exit;
         if (func_8022E490(p + 0x468)) {
             func_8022DD68(p + 0x468);
             *(u32*)(p + 0x58) = 0x11;
@@ -3556,8 +3657,7 @@ void func_801CC7B0(void* self, int r4) {
             func_8022E3AC(p + 0x468);
             u32 buf[4];
             func_8022E498(buf, p + 0x468);
-            void** vtbl = *(void***)(p + 0xd0);
-            ((void(*)(void*, u32*))vtbl[4])(p + 0xd0, buf);
+            ((CItemBoxObjA0Vt*)(p + 0xd0))->_v10(buf);
         } else {
             func_8022DD68(p + 0x468);
             *(u32*)(p + 0x58) = 0x11;
@@ -3565,46 +3665,47 @@ void func_801CC7B0(void* self, int r4) {
             func_801D216C(p + 0x70, 1);
             func_801D216C(p + 0xd0, 0);
         }
+        // tail copy 2
         if (!r4) func_80138078__FUl(6);
-        return;
+        goto exit;
     }
     if (p[0x528]) {
         if (p[0x527] == 1) {
-            if (!func_801EB028(p + 0x3e4)) return;
-            if (*(u32*)(p + 0x58) != 0x19) return;
+            if (!func_801EB028(p + 0x3e4)) goto exit;
+            if (*(s32*)(p + 0x58) != 0x19) goto exit;
             func_801EB178(p + 0x3e4);
             *(u32*)(p + 0x58) = 0x1a;
         } else if (p[0x527] == 2) {
-            if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
+            if (!((CExchangeWin*)(p + 0x440))->getField27()) goto exit;
             func_8022D0D0(p + 0x440);
             *(u32*)(p + 0x58) = 0x0e;
             func_801D216C(p + 0x70, 1);
             func_801D216C(p + 0xa0, 0);
             func_801D0950(self);
         }
-        if (!r4) func_80138078__FUl(6);
-        return;
+        goto check_tail;
     }
     if (p[0x544]) {
         p[0x544] = 0;
         func_801D216C(p + 0x70, 1);
         func_801D216C(p + 0xa0, 0);
-        if (!r4) func_80138078__FUl(6);
-        return;
+        goto check_tail;
     }
     if (func_801D3320(p + 0xe8)) {
-        if (!func_801D3328(p + 0xe8)) return;
+        if (!func_801D3328(p + 0xe8)) goto exit;
         func_801D0950(self);
         func_801D216C(p + 0xa0, 0);
         func_801D3408(p + 0xe8);
-    } else {
-        if (p[0x527] == 4) {
-            p[0x525] = (u8)-2;
-            func_801D0950(self);
-        }
+    } else if (p[0x527] == 4) {
+        ((s8*)p)[0x525] = -2;
+        func_801D0950(self);
     }
+check_tail:
+    // tail copy 3 (shared by the p[0x528]/p[0x544]/final arms)
     if (!r4) func_80138078__FUl(6);
+exit:;
 }
+#pragma optimize_for_size off
 
 
 
@@ -4201,7 +4302,7 @@ u32 func_801CDFB4(void* self) {
 }
 
 // Animate grid panels (alt variant).
-void func_801CE108(void* self) {
+__declspec(noinline) void func_801CE108(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
     if (!func_80137444__FPQ34nw4r3lyt13AnimTransformf((void*)*(u32*)(p + 0x48), lbl_eu_80667F78)) return;
     ((CItemInstVt2CInt*)(void*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x50), 0);
@@ -4210,7 +4311,7 @@ void func_801CE108(void* self) {
     *(u32*)(p + 0x58) = 2;
 }
 
-extern "C" void func_801CE1A0(void* self) {
+extern "C" __declspec(noinline) void func_801CE1A0(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
     if (func_80137444__FPQ34nw4r3lyt13AnimTransformf((void*)*(u32*)(p + 0x4c), lbl_eu_80667F78)) {
         *(u32*)(p + 0x58) = 3;
@@ -4240,7 +4341,7 @@ extern "C" void func_801CE1A0(void* self) {
 namespace nw4r { namespace lyt { class AnimTransform; } }
 void func_80137444(nw4r::lyt::AnimTransform*, float);
 
-void CheckState4_Animate(char* self) {
+__declspec(noinline) void CheckState4_Animate(char* self) { // noinline: dispatch table calls keep `bl`
     if (*(unsigned char*)((char*)self + 0x527) != 4) {
         return;
     }
@@ -4249,7 +4350,7 @@ void CheckState4_Animate(char* self) {
 
 
 // Animate grid panels.
-void func_801CE2F8(void* self) {
+__declspec(noinline) void func_801CE2F8(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
     if (!func_80137510((nw4r::lyt::AnimTransform*)*(u32*)(p + 0x4c), lbl_eu_80667F78)) return;
     ((CItemPaneAnimVt*)*(u32*)(p + 0x44))->_v2C((void*)*(u32*)(p + 0x4c), 0);
@@ -4258,7 +4359,7 @@ void func_801CE2F8(void* self) {
     *(u32*)(p + 0x58) = 5;
 }
 
-void func_801CE390(void* self) {
+__declspec(noinline) void func_801CE390(void* self) { // noinline: dispatch table calls keep `bl`
     float f = lbl_eu_80667F78;
     u8* p = (u8*)self;
     u32 obj = *(u32*)(p + 0x48);
@@ -4269,7 +4370,7 @@ void func_801CE390(void* self) {
     }
 }
 #pragma optimize_for_size on
-extern "C" void func_801CE3E8(void* self) {
+extern "C" __declspec(noinline) void func_801CE3E8(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
     if (func_801EB028((void*)(p + 0x3e4))) {
         *(u32*)(p + 0x58) = 3;
@@ -4292,7 +4393,7 @@ extern "C" void func_801CE3E8(void* self) {
 }
 #pragma optimize_for_size off
 // Handle sub-object activation.
-void func_801CE4B4(void* self) {
+__declspec(noinline) void func_801CE4B4(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
     if (!func_80208360(p + 0x418)) return;
     *(u32*)(p + 0x58) = 7;
@@ -4303,7 +4404,7 @@ void func_801CE4B4(void* self) {
 }
 
 
-void func_801CE524(void* self) {
+__declspec(noinline) void func_801CE524(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
     if (!func_80208360(p + 0x418)) return;
     *(u32*)(p + 0x58) = 3;
@@ -4434,7 +4535,7 @@ void func_801CE524(void* self) {
 }
 
 // Handle sub-object activation with copy.
-void func_801CE974(void* self) {
+__declspec(noinline) void func_801CE974(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
     if (!((CExchangeWin*)(p + 0x440))->getField27()) return;
     *(u32*)(p + 0x58) = 0xd;
@@ -4446,7 +4547,7 @@ void func_801CE974(void* self) {
 }
 
 // Check if sub-obj is active; set state to 3 and clear flag.
-void func_801CE9E8(void* self) {
+__declspec(noinline) void func_801CE9E8(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
     if (((CExchangeWin*)(p + 0x440))->getField27()) {
         *(u32*)(p + 0x58) = 3;
@@ -4455,7 +4556,7 @@ void func_801CE9E8(void* self) {
 }
 
 // Handle sub-object activation (variant).
-void func_801CEA30(void* self) {
+__declspec(noinline) void func_801CEA30(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
     if (!func_8022DB74(p + 0x468)) return;
     *(u32*)(p + 0x58) = 0x10;
@@ -4466,7 +4567,7 @@ void func_801CEA30(void* self) {
 }
 
 // Check if sub-obj is active; set state to 3 and clear flag.
-void func_801CEAA0(void* self) {
+__declspec(noinline) void func_801CEAA0(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
     if (func_8022DB74(p + 0x468)) {
         *(u32*)(p + 0x58) = 3;
@@ -4475,7 +4576,7 @@ void func_801CEAA0(void* self) {
 }
 
 // Check system window; if active, set state and call helpers.
-void func_801CEAE8(void* self) {
+__declspec(noinline) void func_801CEAE8(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
     if (CSysWin_isActive(p + 0x4ac)) {
         *(u32*)(p + 0x58) = 0x16;
@@ -4508,7 +4609,7 @@ void func_801CEB3C(void* self) {
 }
 
 // Handle system window activation.
-void func_801CEBF0(void* self) {
+__declspec(noinline) void func_801CEBF0(void* self) { // noinline: dispatch table calls keep `bl`
     u8* p = (u8*)self;
     if (!CSysWin_isActive(p + 0x4e8)) return;
     *(u32*)(p + 0x58) = 3;
@@ -4767,46 +4868,92 @@ done_item:
     }
 }
 
-void func_801CF71C(void* self, int r4, void* r5, int r6) {
-    // Asm shows 4 params: (self, int r4, void* r5, int r6)
-    // Called with r6=idx from func_801CFFEC
-    // Body omitted for now.
-}
+// Set the item-box cell caption: format the cell number (idx+1) into one
+// buffer and the state message into another, then pass both to the layout.
+// The message depends on the item's kind nibble and the signed category byte:
+// - kind nibble 3/9 (stackable count items): slot-count text resolved via
+//   func_80136190 between tags 0x14f/0x158 (30 minus the slot count).
+// - category > 0: sprintf with the raw category value.
+// - category == 0 / unlisted negatives: plain default string.
+// - category -2/-3: language-specific strings returned by
+//   func_eu_802B148C/func_eu_802B1474 are used AS the format string, and the
+//   matching pane-colour tag pair goes through func_80139A18.
+// optimize_for_size: retail keeps a stmw r29 block save.
+#pragma push
+#pragma optimize_for_size on
+void func_801CF71C(void* self, s8 kind, void* item, u16 idx) {
+    void* it = (item != 0) ? item : 0;
+    u8* p = (u8*)self;
+    char nameBuf[0x20];
+    char msgBuf[0x20];
+    sprintf(nameBuf, (const char*)&lbl_eu_8050566C[0x3a3], idx + 1);
 
+    // Kind nibble of the item's descriptor word; 0 when there is no item.
+    u32 sel;
+    if (it != 0) {
+        sel = (*(u32*)it >> 16) & 0xF;
+    } else {
+        sel = 0;
+    }
+
+    if ((u8)sel == 3 || (u8)sel == 9) {
+        void* inst = CItem_initItemImplInstances(it);
+        u32 cnt = (u32)((CItemInstVt08*)inst)->_v08(it);
+        char* msg = func_80136190((void*)&lbl_eu_8050566C[0x14f], (void*)&lbl_eu_8050566C[0x158],
+                                  (u32)(0x1e - ((cnt & 0xFF) - 1)));
+        sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x14c], msg);
+        func_80139A18(*(void**)(p + 0x44), nameBuf, (void*)&lbl_eu_806644D8, (void*)&lbl_eu_806644E0);
+    } else if (kind > 0) {
+        sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x162], kind);
+        func_80139A18(*(void**)(p + 0x44), nameBuf, (void*)&lbl_eu_806644D8, (void*)&lbl_eu_806644E0);
+    } else if (kind == 0) {
+        sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x3af]);
+    } else if (kind == -2) {
+        sprintf(msgBuf, func_eu_802B148C());
+        func_80139A18(*(void**)(p + 0x44), nameBuf, (void*)&lbl_eu_806644E8, (void*)&lbl_eu_806644F0);
+    } else if (kind == -3) {
+        sprintf(msgBuf, func_eu_802B1474());
+        func_80139A18(*(void**)(p + 0x44), nameBuf, (void*)&lbl_eu_806644F8, (void*)&lbl_eu_80664500);
+    } else {
+        sprintf(msgBuf, (const char*)&lbl_eu_8050566C[0x3af]);
+    }
+    func_80136A1C((nw4r::lyt::Layout*)*(void**)(p + 0x44), nameBuf, msgBuf, 0);
+}
+#pragma pop
+
+// Show the cell-count label on the item box: format "x N" into a stack
+// buffer, resolve the image pane through the +0x3C accessor's default label
+// (overridden by the category-specific label when kind is 1 or 2, and by the
+// flag-driven overlay labels), then hand the buffer to the layout via
+// func_80137E7C.
 void func_801CF900(void* self, u32 r4, void* r5, void* r6, u32 r7) {
     u8* p = (u8*)self;
     char buf[0x20];
     sprintf(buf, (const char*)&lbl_eu_8050566C[0x3b0], r7 + 1);
 
-    void* accessor = *(void**)(p + 0x3c);
-    void** vtbl = *(void***)accessor;
-    u32 tag = 0x74696D67; /* "img" */
-    void* pane = ((void*(*)(void*, u32, const char*, int))vtbl[3])(accessor, tag, (const char*)&lbl_eu_8050566C[0x33a], 0);
-
+    void* acc;
+    void* pane;
+    acc = *(void**)(p + 0x3c);
+    pane = ((CItemBoxAccVt0C*)acc)->_v0C(0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
     if (r4 == 1) {
-        accessor = *(void**)(p + 0x3c);
-        vtbl = *(void***)accessor;
-        pane = ((void*(*)(void*, u32, const char*, int))vtbl[3])(accessor, tag, &lbl_eu_8050566C[0x3bb], 0);
+        acc = *(void**)(p + 0x3c);
+        pane = ((CItemBoxAccVt0C*)acc)->_v0C(0x74696d67, (char*)&lbl_eu_8050566C[0x3bb], 0);
     } else if (r4 == 2) {
-        accessor = *(void**)(p + 0x3c);
-        vtbl = *(void***)accessor;
-        pane = ((void*(*)(void*, u32, const char*, int))vtbl[3])(accessor, tag, &lbl_eu_8050566C[0x3cf], 0);
+        acc = *(void**)(p + 0x3c);
+        pane = ((CItemBoxAccVt0C*)acc)->_v0C(0x74696d67, (char*)&lbl_eu_8050566C[0x3cf], 0);
     }
-
     if (r6) {
-        accessor = *(void**)(p + 0x3c);
-        vtbl = *(void***)accessor;
-        pane = ((void*(*)(void*, u32, const char*, int))vtbl[3])(accessor, tag, &lbl_eu_8050566C[0x3e3], 0);
+        acc = *(void**)(p + 0x3c);
+        pane = ((CItemBoxAccVt0C*)acc)->_v0C(0x74696d67, (char*)&lbl_eu_8050566C[0x3e3], 0);
     }
-
     if (r5) {
-        accessor = *(void**)(p + 0x3c);
-        vtbl = *(void***)accessor;
-        pane = ((void*(*)(void*, u32, const char*, int))vtbl[3])(accessor, tag, &lbl_eu_8050566C[0x3f7], 0);
+        acc = *(void**)(p + 0x3c);
+        pane = ((CItemBoxAccVt0C*)acc)->_v0C(0x74696d67, (char*)&lbl_eu_8050566C[0x3f7], 0);
     }
 
     if (pane) {
-        func_80137E7C(*(void**)(p + 0x44), (void*)buf, 0);
+        // pane rides in r5 straight into the call (retail never reloads r5)
+        func_80137E7C(*(void**)(p + 0x44), (void*)buf, (void*)pane);
     }
 }
 
@@ -4815,26 +4962,30 @@ void func_801CF900(void* self, u32 r4, void* r5, void* r6, u32 r7) {
 // accessor (falling back to +0x3C's default label), then write the
 // "<label> <idx+1>" string into the layout. optimize_for_size gives the
 // retail stmw r28 prologue (4 saved regs).
+// Case layout per retail jump table jumptable_eu_80534694: slots 0/1 share
+// the exit (cases 0 and 1 skip the label lookup buffer), slots 2..13 map to
+// the twelve label formats 0x40b..0x4f2.
 #pragma optimize_for_size on
 void func_801CFA58(void* self, int r4, int r5) {
     u8* p = (u8*)self;
     char buf[32];
+    char tmp[32];
     int result;
     if (r4 != 0) {
         switch (r4) {
-        case 1: sprintf(buf, (const char*)&lbl_eu_8050566C[0x40b]); break;
-        case 2: sprintf(buf, (const char*)&lbl_eu_8050566C[0x420]); break;
-        case 3: sprintf(buf, (const char*)&lbl_eu_8050566C[0x435]); break;
-        case 4: sprintf(buf, (const char*)&lbl_eu_8050566C[0x44a]); break;
-        case 5: sprintf(buf, (const char*)&lbl_eu_8050566C[0x45f]); break;
-        case 6: sprintf(buf, (const char*)&lbl_eu_8050566C[0x474]); break;
-        case 7: sprintf(buf, (const char*)&lbl_eu_8050566C[0x489]); break;
-        case 8: sprintf(buf, (const char*)&lbl_eu_8050566C[0x49e]); break;
-        case 9: sprintf(buf, (const char*)&lbl_eu_8050566C[0x4b3]); break;
-        case 10: sprintf(buf, (const char*)&lbl_eu_8050566C[0x4c8]); break;
-        case 11: sprintf(buf, (const char*)&lbl_eu_8050566C[0x4dd]); break;
-        case 12: sprintf(buf, (const char*)&lbl_eu_8050566C[0x4f2]); break;
-        case 13: sprintf(buf, (const char*)&lbl_eu_8050566C[0x507]); break;
+        case 1: break;
+        case 2: sprintf(buf, (const char*)&lbl_eu_8050566C[0x40b]); break;
+        case 3: sprintf(buf, (const char*)&lbl_eu_8050566C[0x420]); break;
+        case 4: sprintf(buf, (const char*)&lbl_eu_8050566C[0x435]); break;
+        case 5: sprintf(buf, (const char*)&lbl_eu_8050566C[0x44a]); break;
+        case 6: sprintf(buf, (const char*)&lbl_eu_8050566C[0x45f]); break;
+        case 7: sprintf(buf, (const char*)&lbl_eu_8050566C[0x474]); break;
+        case 8: sprintf(buf, (const char*)&lbl_eu_8050566C[0x489]); break;
+        case 9: sprintf(buf, (const char*)&lbl_eu_8050566C[0x49e]); break;
+        case 10: sprintf(buf, (const char*)&lbl_eu_8050566C[0x4b3]); break;
+        case 11: sprintf(buf, (const char*)&lbl_eu_8050566C[0x4c8]); break;
+        case 12: sprintf(buf, (const char*)&lbl_eu_8050566C[0x4dd]); break;
+        case 13: sprintf(buf, (const char*)&lbl_eu_8050566C[0x4f2]); break;
         }
         result = (int)((CItemBoxAccVt0C*)*(void**)(p + 0x40))->_v0C(0x74696d67, buf, 0);
         if (!result) {
@@ -4844,7 +4995,6 @@ void func_801CFA58(void* self, int r4, int r5) {
         result = (int)((CItemBoxAccVt0C*)*(void**)(p + 0x3c))->_v0C(0x74696d67, (char*)&lbl_eu_8050566C[0x33a], 0);
     }
     if (result) {
-        char tmp[32];
         sprintf(tmp, (const char*)&lbl_eu_8050566C[0x507], r5 + 1);
         func_80137E7C(*(void**)(p + 0x44), tmp, (void*)result);
     }
@@ -4942,200 +5092,194 @@ void func_801CFF28(void* self) {
 }
 #pragma pop
 
+// Rebuilds the item-box grid UI: shows/hides the row panes for the current
+// row count/page, then pushes all 30 entries' state back into the widgets.
+// Keep `rows` full-width: retail converts (10 - rows) through the u8 truncate
+// and holds the raw return in a callee-saved register across both loops.
 void func_801CFFEC(void* self) {
+    // Declaration order nudges MWCC's callee-saved allocation toward retail
+    // (rows gets the highest register, sub/self the middle ones).
+    u32 rows;
+    CItemBoxGridFull* sub;
     u8* p = (u8*)self;
-    const char* strbase = lbl_eu_8050566C;
-    CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
-    u32 rows = func_801C5E5C(sub);
-    u32 r = rows & 0xFF;
-    if (r > 1) {
-        u32* layout = *(u32**)(p + 0x44);
-        u32* pane = *(u32**)(layout + 0x10);
-        void** vtbl = *(void***)pane;
-        void* ret = ((void*(*)(void*, const char*, int))vtbl[0x3c/4])(pane, strbase + 0x547, 1);
+    sub = (CItemBoxGridFull*)(p + 0x54c);
+    rows = func_801C5E5C(sub);
+    if ((u8)rows > 1) {
+        void* pane = *(void**)(*(u32**)(p + 0x44) + 4);
+        void* ret = ((CItemPaneObjVt*)pane)->_v3C((char*)&lbl_eu_8050566C[0x547], 1);
         func_80124270(ret, 1);
-        int i;
+        u32 visRows = rows & 0xFF;
+        u8 i;
         for (i = 0; i < 10; i++) {
-            char buf[64];
-            sprintf(buf, strbase + 0x54e, i + 1);
-            u32* pane2 = *(u32**)(layout + 0x10);
-            void** vtbl2 = *(void***)pane2;
-            void* ret2 = ((void*(*)(void*, char*, int))vtbl2[0x3c/4])(pane2, buf, 1);
-            u32 hidden = (r - (u32)(u8)i) >> 31;
-            func_80124270(ret2, hidden);
+            char buf[32];
+            sprintf(buf, (char*)&lbl_eu_8050566C[0x54e], i + 1);
+            void* pane2 = *(void**)(*(u32**)(p + 0x44) + 4);
+            void* ret2 = ((CItemPaneObjVt*)pane2)->_v3C(buf, 1);
+            // visible while i < visRows (borrow trick)
+            func_80124270(ret2, ((u32)i - visRows) >> 31);
         }
-        u32* layout2 = *(u32**)(p + 0x44);
-        func_80136910(reinterpret_cast<nw4r::lyt::Layout*>(layout2), const_cast<char*>(strbase + 0x55d), (u8)(sub->field_2804 + 1));
-        u32* pane3 = *(u32**)(layout2 + 0x10);
-        void** vtbl3 = *(void***)pane3;
-        void* ret3 = ((void*(*)(void*, const char*, int))vtbl3[0x3c/4])(pane3, strbase + 0x566, 1);
+        u8 pageDisp = (u8)(sub->field_2804 + 1);
+        func_80136910(*(nw4r::lyt::Layout**)(p + 0x44), (char*)&lbl_eu_8050566C[0x55d], pageDisp);
+        void* pane3 = *(void**)(*(u32**)(p + 0x44) + 4);
+        void* ret3 = ((CItemPaneObjVt*)pane3)->_v3C((char*)&lbl_eu_8050566C[0x566], 1);
         float v[3];
         v[0] = *(float*)(p + 0x534);
         v[1] = *(float*)(p + 0x538);
         v[2] = *(float*)(p + 0x53c);
         float step = lbl_eu_80667F84;
-        float fRow = (float)(r - 1);
-        float fIdx = (float)(u8)(sub->field_2804);
-        float fNum = (float)(10 - r);
-        float offset = step * (fIdx + fNum);
+        // Hand-built 0x43300000 conversions (signed page term via xoris,
+        // unsigned row deficit direct) so the only pool refs are retail's
+        // named magics F48/F40 - compiler cast magics would land in an
+        // anonymous pool and fail the reloc gate.
+        union {
+            u32 w[2];
+            double d;
+        } convRows, convPage;
+        convRows.w[0] = 0x43300000;
+        convPage.w[0] = 0x43300000;
+        convRows.w[1] = (u32)(u8)(10 - rows);
+        convPage.w[1] = (u32)(pageDisp - 1) ^ 0x80000000;
+        float tPage = (float)(convPage.d - lbl_eu_80667F48);
+        float tRows = (float)(convRows.d - lbl_eu_80667F40);
+        float offset = step * tPage + step * tRows;
         v[0] += offset;
-        v[1] += offset;
-        v[2] += offset;
-        copyVEC3((float*)((u8*)ret3 + 0x2c), v);
+        copyVEC3((u8*)ret3 + 0x2c, v);
     } else {
-        u32* layout = *(u32**)(p + 0x44);
-        u32* pane = *(u32**)(layout + 0x10);
-        void** vtbl = *(void***)pane;
-        void* ret = ((void*(*)(void*, const char*, int))vtbl[0x3c/4])(pane, strbase + 0x547, 1);
+        void* pane = *(void**)(*(u32**)(p + 0x44) + 4);
+        void* ret = ((CItemPaneObjVt*)pane)->_v3C((char*)&lbl_eu_8050566C[0x547], 1);
         func_80124270(ret, 0);
     }
-    int i;
+    u8 i;
     for (i = 0; i < 3; i++) {
-        char buf[64];
-        sprintf(buf, strbase + 0x574, i + 1);
-        u32* layout = *(u32**)(p + 0x44);
-        u32* pane = *(u32**)(layout + 0x10);
-        void** vtbl = *(void***)pane;
-        void* ret = ((void*(*)(void*, char*, int))vtbl[0x3c/4])(pane, buf, 1);
+        char buf[32];
+        sprintf(buf, (char*)&lbl_eu_8050566C[0x574], i + 1);
+        void* pane = *(void**)(*(u32**)(p + 0x44) + 4);
+        void* ret = ((CItemPaneObjVt*)pane)->_v3C(buf, 1);
         if (ret) {
-            u8 max = LookupIndexedByte((char*)sub);
-            u32 hidden = ((u32)(u8)i - (u32)max) >> 31;
-            func_80124270(ret, hidden);
+            u8 max = (u8)LookupIndexedByte((char*)sub);
+            func_80124270(ret, ((u32)i - (u32)max) >> 31);
         }
     }
-    u32 idx;
+    u8 idx;
     for (idx = 0; idx < 0x1e; idx++) {
-        u32 kind = func_801C62AC(sub, (u16)idx);
-        void* obj = func_801C631C(sub, (u16)idx);
-        u8 bt = func_801C6708(sub, (u16)idx);
-        func_801CECD0((CItemBoxGridFull*)self, kind & 0xFFFF, obj, (u16)idx, (u32)bt);
-        func_801CF240((CItemBoxGridFull*)self, kind & 0xFFFF, obj, (u16)idx);
-        s32 chk = func_801C6388(sub, (u16)idx);
+        u32 kind = func_801C62AC(sub, idx);
+        void* obj = func_801C631C(sub, idx);
+        u32 bt = func_801C6708(sub, idx);
+        func_801CECD0((CItemBoxGridFull*)self, kind & 0xFFFF, obj, idx, bt);
+        func_801CF240((CItemBoxGridFull*)self, kind & 0xFFFF, obj, idx);
+        s32 chk = func_801C6388(sub, idx);
         func_801CF71C(self, (s8)chk, obj, idx);
-        u8 b5 = func_801C6618(sub, (u16)idx);
-        u8 b4 = func_801C65A0(sub, (u16)idx);
-        u8 b2 = func_801C6528(sub, (u16)idx);
-        func_801CF900(self, (u32)b2, (void*)(u32)b4, (void*)(u32)b5, (u32)idx);
-        u8 b7 = func_801C673C(sub, (u16)idx);
-        func_801CFCBC(self, b7, (u16)idx);
+        u32 b5 = func_801C6618(sub, idx);
+        u32 b4 = func_801C65A0(sub, idx);
+        u32 b2 = func_801C6528(sub, idx);
+        func_801CF900(self, b2 & 0xFF, (void*)b4, (void*)b5, idx);
+        u32 b7 = func_801C673C(sub, idx);
+        func_801CFCBC(self, b7, idx);
     }
 }
 
-void func_801D0328(void* self) {
+// Refreshes the grid UI text for the selected cell. Retail computes the
+// selected index unconditionally from the raw bytes, then special-cases the
+// "no selection" rows (-1/-2).
+__declspec(noinline) void func_801D0328(void* self) {
     u8* p = (u8*)self;
     CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
     s8 row = (s8)p[0x525];
-    u8 col = p[0x524];
-    u16 entry = (u16)(u8)(col + (u8)row * 10);
-    s8 idx = (s8)entry;
+    s8 idx = (s8)(p[0x524] + p[0x525] * 10);
     if (row == -1) {
-        u32 val = func_801D1220(self);
-        u32* layout = *(u32**)(p + 0x44);
-        func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_8050566C[0x581], (char*)val, 0);
-        func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_8050566C[0x58a], (char*)&lbl_eu_8050566C[0x3af], 0);
+        char* val = (char*)func_801D1220(self);
+        func_80136B4C((nw4r::lyt::Layout*)*(u32**)(p + 0x44), (char*)&lbl_eu_8050566C[0x581], val, 0);
+        func_80136B4C((nw4r::lyt::Layout*)*(u32**)(p + 0x44), (char*)&lbl_eu_8050566C[0x58a], (char*)&lbl_eu_8050566C[0x3af], 0);
     } else if (row == -2) {
-        u32* layout = *(u32**)(p + 0x44);
-        func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_8050566C[0x581], (char*)&lbl_eu_8050566C[0x3af], 0);
-        func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_8050566C[0x58a], (char*)&lbl_eu_8050566C[0x3af], 0);
+        func_80136B4C((nw4r::lyt::Layout*)*(u32**)(p + 0x44), (char*)&lbl_eu_8050566C[0x581], (char*)&lbl_eu_8050566C[0x3af], 0);
+        func_80136B4C((nw4r::lyt::Layout*)*(u32**)(p + 0x44), (char*)&lbl_eu_8050566C[0x58a], (char*)&lbl_eu_8050566C[0x3af], 0);
     } else {
-        u32 val = func_801C6938(sub, (u16)idx);
-        u32* layout = *(u32**)(p + 0x44);
-        func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_8050566C[0x581], (char*)val, 0);
-        char* str = func_801C6A44(sub, (u16)idx);
-        func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_8050566C[0x58a], (char*)str, *(u32*)(p + 0x5c));
+        char* name = (char*)func_801C6938(sub, (u16)(u8)idx);
+        func_80136B4C((nw4r::lyt::Layout*)*(u32**)(p + 0x44), (char*)&lbl_eu_8050566C[0x581], name, 0);
+        char* str = func_801C6A44(sub, (u16)(u8)idx);
+        func_80136B4C((nw4r::lyt::Layout*)*(u32**)(p + 0x44), (char*)&lbl_eu_8050566C[0x58a], str, *(u32*)(p + 0x5c));
     }
     u32 qty;
     if (p[0x527] == 2) {
-        void* obj = func_801C631C(sub, (u16)idx);
-        u32 kind = func_801C62AC(sub, (u16)idx);
-        s32 chk = func_801C6388(sub, (u16)idx);
-        if ((s8)p[0x525] < 0) qty = 0;
-        else qty = func_801C618C(sub, kind & 0xFFFF, obj, *(u16*)(p + 0x52a));
+        void* obj = func_801C631C(sub, (u16)(u8)idx);
+        u32 kind = func_801C62AC(sub, (u16)(u8)idx);
+        func_801C6388(sub, (u16)(u8)idx);  // result unused in retail
+        if ((s8)p[0x525] > -1)
+            qty = func_801C618C(sub, kind & 0xFFFF, (void*)obj, *(u16*)(p + 0x52a));
+        else
+            qty = 0;
     } else {
-        if ((s8)p[0x525] < 0) qty = 0;
-        else qty = func_801C5FC0(sub, (u16)idx);
+        if ((s8)p[0x525] > -1)
+            qty = func_801C5FC0(sub, (u16)(u8)idx);
+        else
+            qty = 0;
     }
-    char buf[64];
-    sprintf(buf, (const char*)&lbl_eu_8050566C[0x596], qty, (char*)func_80136190((void*)&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 3));
-    u32* layout = *(u32**)(p + 0x44);
-    func_80136A1C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_8050566C[0x59b], buf, 0);
+    char buf[0x30];
+    sprintf(buf, (const char*)&lbl_eu_8050566C[0x596], qty, (char*)func_80136190(&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 3));
+    func_80136A1C((nw4r::lyt::Layout*)*(u32**)(p + 0x44), (char*)&lbl_eu_8050566C[0x59b], buf, 0);
     if (getItemBoxState__FP12CItemBoxInfo(p + 0x1d8)) {
-        void* obj2;
         u32 kind2;
-        if ((s8)p[0x525] < 0) { obj2 = 0; kind2 = 0; }
-        else {
-            obj2 = func_801C631C(sub, (u16)idx);
-            kind2 = func_801C62AC(sub, (u16)idx);
+        if ((s8)p[0x525] > -1) {
+            void* obj2 = func_801C631C(sub, (u16)(u8)idx);
+            kind2 = func_801C62AC(sub, (u16)(u8)idx) & 0xFFFF;
+            func_801D47D4((void*)(p + 0x1d8), kind2, (u32)obj2, 1);
+        } else {
+            func_801D47D4((void*)(p + 0x1d8), 0, 0, 1);
         }
-        func_801D47D4((void*)(p + 0x1d8), kind2 & 0xFFFF, (u32)obj2, 1);
         u32 val2;
-        if ((s8)p[0x525] < 0) val2 = 0;
-        else val2 = func_801C6938(sub, (u16)idx);
+        if ((s8)p[0x525] > -1)
+            val2 = func_801C6938(sub, (u16)(u8)idx);
+        else
+            val2 = 0;
         func_801D4AE0(p + 0x1d8, 1, (void*)val2);
-        func_801D4BDC(p + 0x1d8, func_801C67F8(sub), func_801C6840(sub));
+        // Right-to-left evaluation: retail calls C6840 first.
+        func_801D4BDC(p + 0x1d8, func_801C67F8(sub) & 0xFF, func_801C6840(sub) & 0xFF);
     }
 }
 
+// Tab-page mover: rewrites the "N/total" tab labels for the new page
+// (wrapping around the page count at +0x6e) and refreshes the 12 overlay
+// panes with the colour pair matching the current category.
 extern "C" void func_801D05D4(void* self, int val) {
     u8* p = (u8*)self;
-    u8 buf[3];
+    u8 buf[2];
     u8 b = p[0x6f];
-    s8 oldIdx;
-    s8 newIdx;
+    s32 n;
     buf[0] = b;
-    oldIdx = (s8)b;
-    newIdx = oldIdx - 1;
-    if (val != 0) newIdx = oldIdx + 1;
-    buf[1] = (u8)newIdx;
-    if (newIdx < 0) {
+    n = (s8)b - 1;
+    if (val != 0) n = (s8)b + 1;
+    buf[1] = (u8)n;
+    if ((s8)(u8)n < 0) {
         buf[1] = p[0x6e] - 1;
-    } else if ((u8)newIdx >= (u8)p[0x6e]) {
-        buf[1] = 0;
+    } else {
+        if ((s8)(u8)n >= p[0x6e]) buf[1] = 0;
     }
     {
         const char* strbase = lbl_eu_8050566C;
         u8 i;
         for (i = 0; i < 2; i++) {
-            s8 idx = (s8)buf[i];
+            u8 idx = buf[i];
             char pane1[32];
             char pane2[32];
-            int tabNum = idx + 1;
+            int tabNum = (s8)idx + 1;
+            int isCurTab = 0;
+            int isOtherTab = 0;
             sprintf(pane1, strbase + 0x520, tabNum);
             sprintf(pane2, strbase + 0x52f, tabNum);
-            {
-                u8 cat = p[idx + 0x62];
-                int isCurTab = 0;
-                int isOtherTab = 0;
-                if (cat != 0) {
-                    if (idx == (s8)p[0x6f]) {
-                        isCurTab = 1;
-                        isOtherTab = 0;
-                    } else {
-                        isCurTab = 0;
-                        isOtherTab = 1;
-                    }
-                    {
-                        u32 layout = *(u32*)(p + 0x44);
-                        void* pane = *(void**)(layout + 0x10);
-                        void** vtbl = *(void***)pane;
-                        void* textObj = ((void*(*)(void*, char*, int))vtbl[0x3C / 4])(pane, pane1, 1);
-                        func_80124270(textObj, isCurTab);
-                    }
-                    {
-                        u32 layout = *(u32*)(p + 0x44);
-                        void* pane = *(void**)(layout + 0x10);
-                        void** vtbl = *(void***)pane;
-                        void* textObj = ((void*(*)(void*, char*, int))vtbl[0x3C / 4])(pane, pane2, 1);
-                        func_80124270(textObj, isOtherTab);
-                    }
+            if (p[0x62 + (s8)idx] != 0) {
+                if ((s8)idx == (s8)p[0x6f]) {
+                    isCurTab = 1;
+                } else {
+                    isOtherTab = 1;
                 }
+                func_80124270(((CItemPaneObjVt*)*(void**)(*(u32*)(p + 0x44) + 0x10))->_v3C(pane1, 1), isCurTab);
+                func_80124270(((CItemPaneObjVt*)*(void**)(*(u32*)(p + 0x44) + 0x10))->_v3C(pane2, 1), isOtherTab);
             }
         }
     }
     {
         u8 cat = p[(s8)p[0x6f] + 0x62];
         u32 diff = cat - 4;
-        u32 layout = *(u32*)(p + 0x44);
         if (diff <= 4 || cat == 2 || cat == 0xB) {
             func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5aa], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
             func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5b6], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
@@ -5219,116 +5363,131 @@ extern "C" __declspec(noinline) void func_801D0950(void* self) {
 
 extern "C" __declspec(noinline) void func_801D0BD8(void* self) { }
 
-void func_801D0E88(void* self, int r4, int r5) {
-    u8* p = (u8*)self;
-    u32 buf32 = *(const u32*)(const void*)&lbl_eu_80667F88;
-    u16 buf16 = *(const u16*)(const void*)&lbl_eu_80667F8C;
+// Unequip helper: scans the 8 party member slots for a member holding item
+// `id`. Category 3 searches every item of the 6 sub-categories (the scan list
+// is re-copied from an 8-byte sdata2 seed each pass) and clears the owning
+// slot via the item's vtable+0x44 method; equipment categories (2, 4-8)
+// compare the member's slot field and clear it with the dedicated setter.
+// A match (or any non-equipment category) then runs one camera/enum-list
+// pass that finds the on-screen move object for that player and detaches it;
+// category 3 without a match just continues to the next pass.
+#pragma push
+#pragma optimize_for_size on  // stmw r20..r31 block-save prologue
+void func_801D0E88(void* self, int kind, int id) {
     u8 cats[6];
-    *(u32*)cats = buf32;
-    *(u16*)(cats + 4) = buf16;
-    int found = 0;
-    int pass;
+    // Aggregate seed: MWCC stores both halves to the stack in the prologue
+    // and the category-3 arm re-copies them into the scan list every pass.
+    struct GridCatsSeed {
+        u32 w;
+        u16 h;
+    } seed = {*(const u32*)(const void*)&lbl_eu_80667F88,
+              *(const u16*)(const void*)&lbl_eu_80667F8C};
+    int found;  // only assigned in the category-3 arm; stale elsewhere
+    u8 pass;
     for (pass = 1; pass <= 8; pass++) {
-        void* obj = (void*)func_8009EC9C((u8)pass);
-        if (r4 == 3) {
+        void* obj = (void*)func_8009EC9C(pass);
+        if (kind == 3) {
             found = 0;
-            int i, j;
+            *(u32*)cats = seed.w;
+            *(u16*)(cats + 4) = seed.h;
+            u8 i;
             for (i = 0; i < 6; i++) {
                 u8 cat = cats[i];
                 u16 count = func_80157C20(cat);
-                for (j = 0; j < (int)count; j++) {
-                    void* item = func_80157C4C(cat, (s16)j);
+                u16 j;
+                for (j = 0; j < count; j++) {
+                    void* item = func_80157C4C(cat, j);
                     if (!item) continue;
                     if (!*(u32*)item) continue;
                     void* inst = CItem_initItemImplInstances(item);
-                    void** vtbl = *(void***)inst;
-                    u8 num = (u8)((u32(*)(void*, void*))vtbl[0x30/4])(inst, item);
-                    int k;
-                    for (k = 0; k < (int)num; k++) {
-                        inst = CItem_initItemImplInstances(item);
-                        vtbl = *(void***)inst;
-                        s16 sv = (s16)((s32(*)(void*, void*, u32))vtbl[0x40/4])(inst, item, (u8)k);
+                    u8 num = (u8)((CItemInstVt30*)inst)->_v30(item);
+                    u8 k;
+                    for (k = 0; k < num; k++) {
+                        int sv = (s16)((CItemInstVt40*)CItem_initItemImplInstances(item))->_v40(
+                            item, k);
                         if (sv == -1) continue;
-                        if (sv == r5) {
-                            inst = CItem_initItemImplInstances(item);
-                            vtbl = *(void***)inst;
-                            ((void(*)(void*, void*, u32, s32))vtbl[0x44/4])(inst, item, (u8)k, -1);
-                            found = 1;
-                            goto func_801D0E88_break;
-                        }
+                        if (sv != id) continue;
+                        ((CItemInstVt44Clear*)CItem_initItemImplInstances(item))->_v44(
+                            item, k, -1);
+                        found = 1;
+                        break;
                     }
+                    if (found) break;
                 }
-                if (found) goto func_801D0E88_break;
+                if (found) break;
             }
-        } else if (r4 == 2) {
-            s16 v = *(s16*)((u8*)obj + 0x26);
-            if (v != -1 && v == (s16)r5) {
+            if (!found) continue;
+        } else {
+            // Equipment slots: only a member actually wearing `id` proceeds.
+            switch (kind) {
+            case 2: {
+                int v = *(s16*)((u8*)obj + 0x26);
+                if (v == -1 || v != id) continue;
                 func_8009E0A8(obj, -1);
-                found = 1;
+                break;
             }
-        } else if (r4 == 4) {
-            s16 v = *(s16*)((u8*)obj + 0x1c);
-            if (v != -1 && v == (s16)r5) {
+            case 4: {
+                int v = *(s16*)((u8*)obj + 0x1c);
+                if (v == -1 || v != id) continue;
                 func_8009E024(obj, -1);
-                found = 1;
+                break;
             }
-        } else if (r4 == 5) {
-            s16 v = *(s16*)((u8*)obj + 0x1e);
-            if (v != -1 && v == (s16)r5) {
+            case 5: {
+                int v = *(s16*)((u8*)obj + 0x1e);
+                if (v == -1 || v != id) continue;
                 func_8009E030(obj, -1);
-                found = 1;
+                break;
             }
-        } else if (r4 == 6) {
-            s16 v = *(s16*)((u8*)obj + 0x20);
-            if (v != -1 && v == (s16)r5) {
+            case 6: {
+                int v = *(s16*)((u8*)obj + 0x20);
+                if (v == -1 || v != id) continue;
                 func_8009E03C(obj, -1);
-                found = 1;
+                break;
             }
-        } else if (r4 == 7) {
-            s16 v = *(s16*)((u8*)obj + 0x22);
-            if (v != -1 && v == (s16)r5) {
+            case 7: {
+                int v = *(s16*)((u8*)obj + 0x22);
+                if (v == -1 || v != id) continue;
                 func_8009E048(obj, -1);
-                found = 1;
+                break;
             }
-        } else if (r4 == 8) {
-            s16 v = *(s16*)((u8*)obj + 0x24);
-            if (v != -1 && v == (s16)r5) {
+            case 8: {
+                int v = *(s16*)((u8*)obj + 0x24);
+                if (v == -1 || v != id) continue;
                 func_8009E054(obj, -1);
-                found = 1;
+                break;
+            }
             }
         }
-        if (!found) {
-            u32 src[3];
-            src[0] = *(u32*)(lbl_eu_80505628);
-            src[1] = *(u32*)(lbl_eu_80505628 + 4);
-            src[2] = *(u32*)(lbl_eu_80505628 + 8);
-            u8 camCtx[0x630];
-            func_80043D90(camCtx);
-            int i;
-            for (i = 0; i < 3; i++) {
-                void* cam = (void*)func_80043F18(camCtx);
-                func_800F4A98(cam, src[i], 0);
-                cam = (void*)func_80043F18(camCtx);
-                if (*(u32*)((u8*)cam + 0x620) >= 1) {
-                    cam = (void*)func_80043F18(camCtx);
-                    u32* move = (u32*)func_800F6EC0(cam, 0);
-                    if (move && move[1]) {
-                        void* mv = func_800BFC68__FPQ22cf12CfObjectMove((void*)move[1]);
-                        u16 h = *(u16*)((u8*)mv + 0x3f28);
-                        if ((u32)(u8)pass == (u32)h) {
-                            func_800BFDE0(mv, 0);
-                            found = 1;
-                            break;
-                        }
+        // Camera pass: filter the scene enum list by this player and detach
+        // its move object when the player index matches.
+        func_800A1370((void*)found);
+        CItemBoxGridEnumHolder holder;
+        const u32* src = (const u32*)lbl_eu_80505628;
+        holder.names[0] = *src++;
+        holder.names[1] = *src++;
+        holder.names[2] = *src++;
+        func_80043D90(&holder);
+        u8 i;
+        for (i = 0; i < 3; i++) {
+            func_800F4A98(func_80043F18(&holder), holder.names[i], 0);
+            CItemBoxGridEnumList* list = (CItemBoxGridEnumList*)func_80043F18(&holder);
+            if (list->field_620 >= 1) {
+                list = (CItemBoxGridEnumList*)func_80043F18(&holder);
+                CItemBoxGridEnumSlot* slot =
+                    (CItemBoxGridEnumSlot*)func_800F6EC0(list, 0);
+                if (slot->field_04) {
+                    CItemBoxGridMoveObj* mv = (CItemBoxGridMoveObj*)
+                        func_800BFC68__FPQ22cf12CfObjectMove(slot->field_04);
+                    if ((u8)pass == mv->field_3f28) {
+                        func_800BFDE0(mv, 0);
+                        break;
                     }
                 }
             }
-            func_80043E88(camCtx, -1);
         }
-        if (found) break;
+        __dt__80043E88(&holder, -1);
+        return;
     }
-func_801D0E88_break:
-    ;
 }
 
 // Cast-only vtable interface for the object returned by

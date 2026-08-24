@@ -21,8 +21,9 @@ namespace math {
 class CArtsInfo {
 public:
     CArtsInfo();
-    // vtable pointer at 0x00 (implicit)
-    /* 0x04 */ UnkClass_8045F564 mMemRegion;
+    // Virtual in retail; keeps the implicit vtable pointer slot at 0x00 so
+    // member offsets match (the free-function ctor emits no extra vtable store).
+    virtual ~CArtsInfo();
     int OnFileEvent(CEventFile* event);
     u8 getField48();
     u8 getField49();
@@ -33,9 +34,6 @@ public:
     u32 getField5A();
     int isField44GE6();
     void initialize();
-
-    CArtsInfo();
-    ~CArtsInfo();
 
     // vtable pointer at 0x00 (implicit)
     /* 0x04 */ UnkClass_8045F564 mMemRegion;
@@ -580,7 +578,9 @@ extern "C" u32 func_800A32BC(void*); // character-data category
 // rejects differing extern "C" redeclarations as illegal overloading).
 extern "C" u32 func_800A082C(void*);
 extern "C" u16 func_80139358(u32);
-extern "C" u16 func_80136254(const void*, const void*, int);
+// Full-width return: retail callers keep the raw result in a register and
+// narrow explicitly ((u16) casts); a u16 decl forces an early clrlwi.
+extern "C" u32 func_80136254(const void*, const void*, int);
 extern "C" CArtsInfoListEntry* func_80157C4C(u32);
 extern "C" void func_801D202C(void*);
 extern "C" void func_801D20B0(void*, void*);

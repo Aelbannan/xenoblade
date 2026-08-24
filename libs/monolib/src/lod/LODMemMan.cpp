@@ -1181,34 +1181,37 @@ extern "C" bool func_8046D898__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg,
 #pragma scheduling off
 void LOD::LODMemMan::func_8046DA04() {
     LODMemManLayout* l = (LODMemManLayout*)this;
-    f32 v0;             // declared first -> colors f0 (retail lfs f1=1.0 first, lfs f0=scale second)
-    f32 v1;             // -> f1
-    s16 nine = 9;       // hoisted materialization for the +0xB8 store (retail li r0,9 in the prologue)
-    v1 = lbl_eu_8066A6C0;   // 1.0f constant (0xC0/0xC4/0xC8 stores) - assigned first so it loads first
-    v0 = lbl_eu_8066A6D8;   // scale divisor (0x7C/0x1CDC/0x84 stores)
-    l->field_0x4 = 0;
-    l->field_0xC = 0;
-    l->mCount_18 = 0;
-    l->field_0x5C = 0;
-    l->field_0xA8 = 0;
-    l->field_0xAC = 0;
-    l->field_0xB4 = 0;
-    l->field_0x6C = 0;
+    // Scheduling is off here: the statement order below mirrors the retail
+    // instruction order exactly (float pool loads interleaved with the
+    // zero/nine materializations, then the clears in field order).
+    f32 v0, v1;
+    int z, nine;
+    v1 = lbl_eu_8066A6C0;
+    z = 0;
+    v0 = lbl_eu_8066A6D8;
+    nine = 9;
+    l->field_0x4 = (LODElem20*)z;
+    l->field_0xC = (u8*)z;
+    l->mCount_18 = z;
+    l->field_0x5C = (u8*)z;
+    l->field_0xA8 = (nw4r::g3d::G3dObj*)z;
+    l->field_0xAC = (nw4r::g3d::G3dObj*)z;
+    l->field_0xB4 = (u8*)z;
+    l->field_0x6C = z;
     l->field_0xB8 = nine;
-    l->field_0xBA = 0;
-    l->field_0xBC = 0;
+    l->field_0xBA = z;
+    l->field_0xBC = z;
     *(f32*)&l->field_0xC8[0].field_0x0 = v1;
     l->field_0xC4 = v1;
     l->field_0xC0 = v1;
-    l->field_0xBE = 0;
+    l->field_0xBE = z;
     l->field_0x7C = v0;
     l->field_0x1CDC = v0;
-    l->field_0xA4 = 0;
+    l->field_0xA4 = z;
     l->field_0x84 = v0;
 }
 #pragma scheduling on
 #pragma pop
-
 // ---------------------------------------------------------------------------
 // func_8046DA64: clear the view/shared-buffer pointers, then reset the +0xCC
 // sub-manager (both g3d passes) and the +0xA44 sub-manager, and clear flag
@@ -3442,10 +3445,16 @@ void LOD::LODMemMan::func_804719FC() {
 // time name string: store strlen(lbl_eu_80523D90) into +0x74 and copy the
 // string into +0x34 (retail hoists the string address into r31 up front).
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// func_80471A70: clear flag bit 2 of the +0x20 word, then re-seed the reset-
+// time name string: store strlen(lbl_eu_80523D90) into +0x74 and copy the
+// string into +0x34 (retail hoists the string address into r31 up front).
+// ---------------------------------------------------------------------------
 void LOD::LODMemMan::func_80471A70() {
-    const char* name = lbl_eu_80523D90;
     LODMemManLayout* l = (LODMemManLayout*)this;
-    ((LODMemManLayout*)this)->field_0x20 &= ~4u;
+    const char* src = (const char*)&lbl_eu_80523D90;
+    const char* name = src;
+    l->field_0x20 &= ~4u;
     l->field_0x74 = strlen(name);
     strcpy(l->mStr_34, name);
 }

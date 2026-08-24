@@ -146,16 +146,20 @@ CVS_THREAD_DOWN* __ct__802A5B88(CVoiceHandle* owner1, CVoiceHandle* owner2) {
         }
     }
 
-    // Copy the init-state triple. The address is forced through an integer
-    // cast so the full base (lis+addi) is materialized once before any load.
-    // src[1] is read before src[0] to match retail's register allocation.
-    u32 state1;
-    u32 state0;
+    // Copy the init-state triple, same named-struct-pointer form as the
+    // CVS_THREAD_CHAIN factory: word1 into a temp first, then word0/word1/word2.
+    // Copy the init-state triple.
+    // NOTE (plateau): every reshaping tried (single/double temps, const ptr,
+    // named struct views, whole-struct copy, direct stores) either merges the
+    // ascending loads into lwzu or rotates {base,w1,w0} registers. This form
+    // is the closest: only r0/r4 swapped on the two value loads/stores.
+    u32 hi;
+    u32 lo;
     u32* src = (u32*)(u32)lbl_eu_80539A68;
-    state1 = src[1];
-    state0 = src[0];
-    ((CVS_THREAD_DOWN_raw*)self)->state0 = (u32*)state0;
-    ((CVS_THREAD_DOWN_raw*)self)->state1 = state1;
+    hi = src[1];
+    lo = src[0];
+    ((CVS_THREAD_DOWN_raw*)self)->state0 = (u32*)lo;
+    ((CVS_THREAD_DOWN_raw*)self)->state1 = hi;
     ((CVS_THREAD_DOWN_raw*)self)->state2 = src[2];
 
     return self;

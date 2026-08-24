@@ -25,6 +25,15 @@ typedef UINT8 DEV_CLASS[DEV_CLASS_LEN]; /* Device class */
 #define HCI_LINK_TYPE_SCO  0x00
 #define HCI_LINK_TYPE_ACL  0x01
 
+/* Trace strings declared explicitly in retail .data pool order
+ * (Ctlr H/w error, Event mismatch, Cmd timeout, BTU HCI command timeout)
+ * with align-4 objects; MWCC otherwise pools the literals in a different
+ * rotated order. */
+__declspec(align(4)) char BTU_str_hw_error[] = "Ctlr H/w error event";
+__declspec(align(4)) char BTU_str_event_mismatch[] = "Event mismatch opcode=%X cmd opcode=%X";
+__declspec(align(4)) char BTU_str_cmd_timeout[] = "Cmd timeout; no cmd in queue";
+__declspec(align(4)) char BTU_str_hci_timeout[] = "BTU HCI command timeout - cmd opcode = 0x%02x";
+
 /* HCI command opcodes / BTU timer types referenced by the handlers
    (hcidefs.h / btu.h). Kept as local mirrors because the public headers
    carry a different btu_cb layout than the retail image. */
@@ -365,7 +374,7 @@ void btu_hcif_process_event(BT_HDR *p_msg)
         break;
 
     case HCI_HARDWARE_ERROR_EVT:
-        LogMsg_0(0x70000, "Ctlr H/w error event");
+        LogMsg_0(0x70000, BTU_str_hw_error);
         if (BTM_IsDeviceUp())
             BTM_DeviceReset(0);
         break;
@@ -862,7 +871,7 @@ void btu_hcif_command_status_evt(UINT8 *p, UINT16 evt_len)
             if (queued_opcode != opcode)
             {
                 p_data = NULL;
-                LogMsg_2(0x70001, "Event mismatch opcode=%X cmd opcode=%X",
+                LogMsg_2(0x70001, BTU_str_event_mismatch,
                          opcode, queued_opcode);
             }
         }
@@ -898,7 +907,7 @@ void btu_hcif_cmd_timeout(void)
     p_cmd = (BT_HDR *)GKI_dequeue(&btu_cb.cmd_cmpl_q);
     if (p_cmd == NULL)
     {
-        LogMsg_0(0x70001, "Cmd timeout; no cmd in queue");
+        LogMsg_0(0x70001, BTU_str_cmd_timeout);
         return;
     }
 
@@ -908,7 +917,7 @@ void btu_hcif_cmd_timeout(void)
     p = (UINT8 *)(p_cmd + 1) + p_cmd->offset;
 
     opcode = (UINT16)(p[0] + (p[1] << 8));
-    LogMsg_1(0x70001, "BTU HCI command timeout - cmd opcode = 0x%02x", opcode);
+    LogMsg_1(0x70001, BTU_str_hci_timeout, opcode);
 
     switch (opcode)
     {

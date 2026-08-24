@@ -287,6 +287,20 @@ struct CItemBlockCounters {
     /* 0x1211C */ u16 mFlag1C;
 };
 
+// Window over the per-slot region at item-block + 0x10000: the family-flag
+// words live at small positive offsets from that base (retail computes the
+// base once per arm via addis 0x1 and accesses the flags d-form off it).
+struct CItemBlockFlags {
+    u8 field_0000[0x210C];
+    /* 0x210C */ u32 mCount0C;
+    /* 0x2110 */ u32 mCount10;
+    /* 0x2114 */ u16 mFlag14;
+    /* 0x2116 */ u16 mFlag16;
+    /* 0x2118 */ u16 mFlag18;
+    /* 0x211A */ u16 mFlag1A;
+    /* 0x211C */ u16 mFlag1C;
+};
+
 // Item parameter block: u16 category/id word at 0x0C, u16 flags at 0x10,
 // u16 halfword at 0x18.
 struct CItemParam {

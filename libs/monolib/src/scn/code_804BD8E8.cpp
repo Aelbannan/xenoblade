@@ -750,7 +750,7 @@ s32 func_804BEEF8(s32 idx) {
 s32 func_804BF274(s32 index) {
     ScnWork* w = (ScnWork*)lbl_eu_8065F428;
     const f32 thrMin = lbl_eu_8066AF60;
-    ScnEntryF* e = &w->entries[index];
+    ScnEntryF* e = (ScnEntryF*)(lbl_eu_8065F428 + index * 0x24);
     f32 y = e->field_0x10;
     if (y >= thrMin) {
         if (y >= lbl_eu_8066AF6C) {
@@ -773,7 +773,6 @@ s32 func_804BF274(s32 index) {
         const Rec12* it = w->recs;
         for (s32 i = n; i > 0; --i) {
             f32 v = (f32)xd * it->x + (f32)zd * it->z;
-            ++it;
             if (cnt != 0) {
                 if (v < limLo) {
                     return 1;
@@ -781,6 +780,7 @@ s32 func_804BF274(s32 index) {
             } else if (geUpper && v < limHi) {
                 return 1;
             }
+            ++it;
         }
         lbl_eu_80665974++;
     }

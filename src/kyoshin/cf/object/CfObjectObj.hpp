@@ -14,8 +14,9 @@ namespace cf {
         //0x0: vtable 1
         //0x0-71C: CfObjectMove (mField718 is the base's last field)
 
-        CfObjectObj();
-        virtual ~CfObjectObj();
+        // Retail constructs this class only through the forced-name free
+        // function __ct__cf_CfObjectObj (defined in the .cpp); there is no
+        // mangled member ctor symbol in retail.
 
         void func_800BFAAC();
         int func_800BFA88();
@@ -81,6 +82,14 @@ namespace cf {
 // CfObjectObj retail vtable (data TU; the ctor/dtor store it explicitly, same
 // scheme as CfObjectMove.hpp's lbl_eu_80529690).
 extern u8 lbl_eu_80529B4C[];
+
+// Base-class constructor import (defined in CfObjectMove.cpp as the real
+// member ctor): called directly by the forced-name __ct__cf_CfObjectObj.
+extern "C" void __ct__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self);
+
+// Base-class destructor chain import (defined in CfObjectMove.cpp): called
+// with flag 0 from the __dt__800BFA14 deleting destructor below.
+extern "C" void __dt__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self, int flag);
 
 // RTTI typeinfo pair for the ctor's __dynamic_cast guard: the 0x1C-byte
 // CfResObjImpl resource object is allocated only when the cast fails. Passed

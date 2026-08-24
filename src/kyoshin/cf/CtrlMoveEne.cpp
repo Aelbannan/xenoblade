@@ -1,6 +1,8 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CtrlMoveEne
 // Replace stubs with high-level C/C++ during decomp.
 
+#include <stddef.h>
+
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CtrlMoveEne.hpp"
@@ -9,7 +11,6 @@
 
 // In-TU forward declarations (definitions below).
 void func_8008D444(cf::CfObjectMove* self, cf::CFunc8008D444Obj* obj, int flag);
-void func_8008BEEC(cf::CfObjectMove* self, void* obj, int arg2, u32 arg3);
 
 // Enemy move-controller constructor (retail __ct__8008A104): runs the base
 // ctor, installs the +0x48 vtable and the null move hook, zeroes the flags /
@@ -695,9 +696,10 @@ void* CActorParam_UnkVirtualFunc132__Q22cf11CActorParamFv(void* self) { return (
 void func_8008B580(cf::CfObjectMove* self) {
     cf::CfObjectMoveView9* v = (cf::CfObjectMoveView9*)self;
     func_800895A8(self);
-    self->field_0x17C &= 0x7F613E7Fu;
-    if ((self->field_0x17C & 0x1000u) != 0) return;
-    if ((self->field_0x17C & 0x08000000u) == 0) {
+    u32 flags = self->field_0x17C & 0x7F613E7Fu;
+    self->field_0x17C = flags;
+    if ((flags & 0x1000u) != 0) return;
+    if ((flags & 0x08000000u) == 0) {
         // Face the +0xCC heading: velocity = {sin, 0, cos} of the scaled index.
         f32 cz = CosFIdx__Q24nw4r4mathFf(
             lbl_eu_806665CC * self->field_0x34->field_0x28->_vCC());
@@ -706,69 +708,74 @@ void func_8008B580(cf::CfObjectMove* self) {
         v->mVelocity.y = lbl_eu_806665C0;
         v->mVelocity.z = cz;
     }
-    s16 t = (s16)(self->field_0x198 + 1);
-    self->field_0x198 = t;
-    self->field_0x17C |= 0x08000000u;
-    if (t > 300) {
+    s16 t = self->field_0x198;
+    u32 f17c = self->field_0x17C | 0x08000000u;
+    self->field_0x198 = t + 1;
+    self->field_0x17C = f17c;
+    if (self->field_0x198 > 300) {
         self->field_0x198 = 300;
     }
-    cf::CNpcMoveSubView* sub2 = self->field_0x34->field_0x28;
+    cf::CfObj3F60View* f60;
     cf::CFunc8008B580Obj* obj =
-        (cf::CFunc8008B580Obj*)(sub2 ? (u8*)sub2 - 0x3E9C : 0);
-    cf::CfObj3F60View* f60 = obj->field_3F60;
+        (cf::CFunc8008B580Obj*)self->field_0x34->field_0x28;
+    if (obj != 0) {
+        obj = (cf::CFunc8008B580Obj*)((u8*)obj - 0x3E9C);
+    }
+    f60 = obj->field_3F60;
     if (obj->_v2BC() != 0 && obj->_v128() <= lbl_eu_806665C0) {
         if (f60 != 0 && (self->field_0x180 & 0x8u) != 0) {
-            self->field_0x17C &= ~0x8000u;
+            self->field_0x17C &= ~0x10000u;
             func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
             ((cf::CFunc8008B580Sub150*)&obj->mSub2)->_v150(0);
             return;
         }
     }
-    if (f60 != 0) {
-        func_8008BEEC(self, obj, 1, 0);
-        if ((self->field_0x180 & 0x1C000000u) != 0) {
-            if ((self->field_0x180 & 0x8u) != 0) {
-                self->field_0x17C &= ~0x8000u;
-                u32 w1 = obj->field_04->_v30()->field_0;
-                if (func_80174C98(obj, &w1, 0x1C) != 0) {
+    if (f60 == 0) return;
+    func_8008BEEC(self, obj, 1, 0);
+    if ((self->field_0x180 & 0x38u) != 0) {
+        if ((self->field_0x180 & 0x8u) != 0) {
+            // Death/forced-stop states: clear the +0x10000 move flag, then
+            // check the bdat action columns 0x1C / 0x805 / 0x18 (each with a
+            // fresh state word); on a hit kill the enemy via the flag object
+            // and the sub-object's +0x150 slot.
+            self->field_0x17C &= ~0x10000u;
+            u32 w1 = obj->field_04->_v30()->field_0;
+            if (func_80174C98(obj, &w1, 0x1C) != 0) {
+                func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
+                ((cf::CFunc8008B580Sub150*)&obj->mSub2)->_v150(0);
+            } else {
+                u32 w2 = obj->field_04->_v30()->field_0;
+                int hit = func_80174C98(obj, &w2, 0x805);
+                if (hit == 0) {
+                    u32 w3 = obj->field_04->_v30()->field_0;
+                    hit = func_80174C98(obj, &w3, 0x18);
+                }
+                if (hit != 0) {
                     func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
                     ((cf::CFunc8008B580Sub150*)&obj->mSub2)->_v150(0);
-                } else {
-                    u32 w2 = obj->field_04->_v30()->field_0;
-                    u32 w3;
-                    int ok = func_80174C98(obj, &w2, 0x805) != 0;
-                    if (!ok) {
-                        w3 = obj->field_04->_v30()->field_0;
-                        ok = func_80174C98(obj, &w3, 0x18) != 0;
-                    }
-                    if (ok) {
-                        func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
-                        ((cf::CFunc8008B580Sub150*)&obj->mSub2)->_v150(0);
-                    }
                 }
             }
-            if ((self->field_0x180 & 0x10u) != 0) {
-                f60->field_C |= 0x2000;
-            } else if ((self->field_0x180 & 0x20u) != 0) {
-                f60->field_C |= 0x4000;
-            }
         }
-        if ((f60->field_4EC & 0x80u) != 0) {
-            if ((f60->field_4EC & 0x40000u) != 0) {
-                f32 hp = obj->_v128();
-                obj->_v11C(-hp);
-            }
-        } else if ((f60->field_4EC & 0x100000u) != 0) {
-            self->field_0x17C |= 0x40000000u;
-            self->field_0x178 = lbl_eu_806665C0;
-            if (((cf::CFunc8008B580F60*)f60)->field_532 >= 100) {
-                f32 hp = obj->_v128();
-                obj->_v11C(-hp);
-            }
+        // Mirror the +0x10 / +0x20 flags into the battle sub-object.
+        if ((self->field_0x180 & 0x10u) != 0) {
+            f60->field_C |= 0x2000;
+        } else if ((self->field_0x180 & 0x20u) != 0) {
+            f60->field_C |= 0x4000;
         }
-        obj->field_4550 &= ~0xC00000u;
-        self->field_0x3C = lbl_eu_806665F0;
     }
+    u32 f4ec = f60->field_4EC;
+    if ((f4ec & 0x80u) != 0 && (f4ec & 0x40000u) != 0) {
+        // Poison-style drain: subtract the full HP.
+        obj->_v11C(-obj->_v128());
+    } else if ((f4ec & 0x100000u) != 0) {
+        self->field_0x178 = lbl_eu_806665C0;
+        self->field_0x17C |= 0x40000000u;
+        if (((cf::CFunc8008B580F60*)f60)->field_532 >= 100) {
+            obj->_v11C(-obj->_v128());
+        }
+    }
+    obj->field_4550 &= ~0x200u;
+    self->field_0x3C = lbl_eu_806665F0;
 }
 
 // Trampoline: func_8008B930 forwards to the base refresh helper (retail
@@ -937,35 +944,40 @@ __declspec(noinline) int func_8008B9C0(cf::CfObjectMove* self,
     return 0;
 }
 
-void func_8008BEEC(cf::CfObjectMove* self, void* obj, int arg2, u32 arg3) {}
+// noinline keeps the retail bl opaque at every call site in this TU.
+// noinline keeps the retail bl opaque at every call site in this TU.
+extern "C" __declspec(noinline) void func_8008BEEC(
+    cf::CfObjectMove* self, void* obj, int arg2, u32 arg3) {
+}
 
 // Enemy movement-controller per-frame update (retail func_8008C4F0): recovers
 // the battle object from the move data's +0x28 sub-object, stores the +0x3C
 // target constant, dispatches func_8008D444 while the +0x198 timer is at/over
 // 90 with the +0x08000000 flag set and the +0x1000 / +0x2 bits clear, clears
-// the +0x40000000/+0x10000000 flag bits, forwards the +0x1000 bit to
-// func_8008BEEC and mirrors the +0x180 flag bits into the +0x3F60 sub-object.
+// the +0x40000000/+0x10000000/+0x08000000/+0x04000000/+0x400 flag bits,
+// forwards the +0x1000 bit to func_8008BEEC and mirrors the +0x180 flag bits
+// into the +0x3F60 sub-object.
 // noinline keeps func_8008A23C's call site an opaque bl (retail has one).
 __declspec(noinline) void func_8008C4F0(cf::CfObjectMove* self) {
     cf::CFunc8008D444Obj* obj =
         (cf::CFunc8008D444Obj*)self->field_0x34->field_0x28;
     if (obj != 0) obj = (cf::CFunc8008D444Obj*)((u8*)obj - 0x3E9C);
-    u32 flags = self->field_0x17C;
     self->field_0x3C = lbl_eu_806665F0;
-    if ((flags & 0x08000000u) != 0 && (flags & 0x1000u) == 0) {
-        if (self->field_0x198 >= 90 && (self->field_0x180 & 2u) == 0) {
-            func_8008D444(self, obj, 0);
-        }
+    if ((self->field_0x17C & 0x08000000u) != 0 &&
+        (self->field_0x17C & 0x1000u) == 0 &&
+        self->field_0x198 >= 90 && (self->field_0x180 & 0x2u) == 0) {
+        func_8008D444(self, obj, 0);
     }
-    flags &= 0xA3FFFFBFu;
-    self->field_0x17C = flags;
+    // Reload after the opaque call: retail re-reads +0x17C from memory.
+    u32 newFlags = self->field_0x17C & ~0x5C000000u & ~0x400u;
+    self->field_0x17C = newFlags;
     self->field_0x198 = 0;
     self->field_0x190 = 0;
-    cf::CfObj3F60View* f60 = obj->field_3F60;
-    if (f60 != 0) {
-        func_8008BEEC(self, obj, 0, (flags >> 12) & 1);
-        if ((self->field_0x180 & 0x1C000000u) != 0) {
-            if ((self->field_0x180 & 0x10000000u) != 0) {
+    if (obj->field_3F60 != 0) {
+        cf::CfObj3F60View* f60 = obj->field_3F60;
+        func_8008BEEC(self, obj, 0, (newFlags >> 12) & 1u);
+        if ((self->field_0x180 & 0x38u) != 0) {
+            if ((self->field_0x180 & 0x8u) != 0) {
                 if ((self->field_0x17C & 0x10000u) == 0) {
                     func_8004B8B0(f60, 1, 1, self->field_0x160);
                     func_800899AC(self, lbl_eu_806665E0);
@@ -973,13 +985,13 @@ __declspec(noinline) void func_8008C4F0(cf::CfObjectMove* self) {
                     func_8004B8B0(f60, 0, 1, lbl_eu_806665C0);
                 }
             }
-            if ((self->field_0x180 & 0x08000000u) != 0) {
+            if ((self->field_0x180 & 0x10u) != 0) {
                 f60->field_C |= 0x2000;
-            } else if ((self->field_0x180 & 0x04000000u) != 0) {
+            } else if ((self->field_0x180 & 0x20u) != 0) {
                 f60->field_C |= 0x4000;
             }
         }
-        if ((self->field_0x180 & 0x02000000u) != 0) {
+        if ((self->field_0x180 & 0x40u) != 0) {
             f60->field_4EC |= 4;
         }
     }
@@ -1436,18 +1448,22 @@ void func_8008E06C(cf::CfObjectMove* self) {
 // the +0x78 move-list entries, then installs the +0x148 hook or dispatches the
 // state record and commits the entry count / scaled timer.
 void func_8008E2D4(cf::CfObjectMove* self) {
+    const CfMoveHookPtmfsE2D4* hooks =
+        (const CfMoveHookPtmfsE2D4*)&lbl_eu_80527830;
     cf::CfObjectMoveInitView* view = (cf::CfObjectMoveInitView*)self;
-    cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
-    cf::CFunc8008D444Obj* obj =
-        (cf::CFunc8008D444Obj*)(sub ? (u8*)sub - 0x3E9C : 0);
+    cf::CNpcMoveSubView* subView = self->field_0x34->field_0x28;
+    cf::CFunc8008D444Obj* obj = (cf::CFunc8008D444Obj*)subView;
+    if (subView != 0) {
+        obj = (cf::CFunc8008D444Obj*)((u8*)subView - 0x3E9C);
+    }
     func_80089684(self);
-    self->mMoveHook =
-        ((const CfMoveHookPtmfsE2D4*)&lbl_eu_80527830)->hook13C;
+    self->mMoveHook = hooks->hook13C;
+    const char* table = lbl_eu_804FB9E8;
     union {
         u32 w;
         u16 h;
     } match;
-    match.w = func_800AF7E4(obj, lbl_eu_804FB9E8 + 0x13);
+    match.w = func_800AF7E4(obj, table + 0x13);
     u16 matchId = match.h;
     view->field_0x58 = 0;
     view->field_0x5A = 0;
@@ -1458,7 +1474,7 @@ void func_8008E2D4(cf::CfObjectMove* self) {
         u32 w;
         u8 b;
     } row;
-    row.w = func_800AF7E4(obj, lbl_eu_804FB9E8);
+    row.w = func_800AF7E4(obj, table);
     u8 state = row.b;
     if (state >= 0xF) {
         state = 0;
@@ -1466,6 +1482,8 @@ void func_8008E2D4(cf::CfObjectMove* self) {
     view->field_0x5C = state;
     view->field_0x60 = 0;
     view->field_0x72 = 0;
+    // Movement-rate divisor: *_v1D8() / *_v138() when the denominator probe
+    // is nonzero (both slots re-probed fresh, matching the retail reloads).
     f32 rate = lbl_eu_806665C0;
     if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
         cf::CNpcMoveSubView* sub2 = self->field_0x34->field_0x28;
@@ -1475,18 +1493,19 @@ void func_8008E2D4(cf::CfObjectMove* self) {
     view->field_0x60 = (s32)rate;
     int count = func_80086B44__Q22cf13CfGameManagerFv();
     int idx = 0;
+    cf::CfMoveSubEntry* entry = view->field_0x78;
     for (int i = 0; i < count; i++) {
         union {
             u32 w;
             u16 h;
         } c13;
-        c13.w = func_800AF82C(obj, lbl_eu_804FB9E8 + 0x13, i);
+        c13.w = func_800AF82C(obj, table + 0x13, i);
         if (c13.h == matchId && idx < 8) {
             union {
                 u32 w;
                 u16 h;
             } c1b;
-            c1b.w = func_800AF82C(obj, lbl_eu_804FB9E8 + 0x1b, i);
+            c1b.w = func_800AF82C(obj, table + 0x1b, i);
             u16 flags = c1b.h;
             if ((flags & 0x200u) != 0) {
                 // Flag row: direct target fields instead of a move-list entry.
@@ -1494,19 +1513,19 @@ void func_8008E2D4(cf::CfObjectMove* self) {
                     u32 w;
                     s16 h;
                 } c22;
-                c22.w = func_800AF82C(obj, lbl_eu_804FB9E8 + 0x22, i);
+                c22.w = func_800AF82C(obj, table + 0x22, i);
                 view->field_0x4C = (f32)c22.h;
                 union {
                     u32 w;
                     s16 h;
                 } c27;
-                c27.w = func_800AF82C(obj, lbl_eu_804FB9E8 + 0x27, i);
+                c27.w = func_800AF82C(obj, table + 0x27, i);
                 view->field_0x50 = (f32)c27.h;
                 union {
                     u32 w;
                     s16 h;
                 } c2c;
-                c2c.w = func_800AF82C(obj, lbl_eu_804FB9E8 + 0x2c, i);
+                c2c.w = func_800AF82C(obj, table + 0x2c, i);
                 view->field_0x54 = (f32)c2c.h;
                 view->field_0x17C |= 0x2;
                 view->field_0x70 |= 0x8;
@@ -1518,51 +1537,55 @@ void func_8008E2D4(cf::CfObjectMove* self) {
                 }
             } else {
                 // Move-list row: fill the next +0x78 entry (0x14 bytes).
-                cf::CfMoveSubEntry* entry = &view->field_0x78[idx];
                 entry->field_0xC = flags;
                 union {
                     u32 w;
                     s16 h;
                 } c22;
-                c22.w = func_800AF82C(obj, lbl_eu_804FB9E8 + 0x22, i);
+                c22.w = func_800AF82C(obj, table + 0x22, i);
                 entry->field_0x0 = (f32)c22.h;
                 union {
                     u32 w;
                     s16 h;
                 } c27;
-                c27.w = func_800AF82C(obj, lbl_eu_804FB9E8 + 0x27, i);
+                c27.w = func_800AF82C(obj, table + 0x27, i);
                 entry->field_0x4 = (f32)c27.h;
                 union {
                     u32 w;
                     s16 h;
                 } c2c;
-                c2c.w = func_800AF82C(obj, lbl_eu_804FB9E8 + 0x2c, i);
+                c2c.w = func_800AF82C(obj, table + 0x2c, i);
                 entry->field_0x8 = (f32)c2c.h;
+                // Column +0x31 is a byte gate: any nonzero value marks the
+                // entry's flags halfword with bit 0x8000.
                 union {
                     u32 w;
-                    s16 h;
+                    u8 b;
                 } c31;
-                c31.w = func_800AF82C(obj, lbl_eu_804FB9E8 + 0x31, i);
-                entry->field_0x10 = (f32)c31.h;
+                c31.w = func_800AF82C(obj, table + 0x31, i);
+                if (c31.b != 0) {
+                    entry->field_0xC |= 0x8000;
+                }
                 union {
                     u32 w;
                     u8 b;
                 } c3b;
-                c3b.w = func_800AF82C(obj, lbl_eu_804FB9E8 + 0x3b, i);
+                c3b.w = func_800AF82C(obj, table + 0x3b, i);
                 entry->field_0xE = c3b.b;
                 union {
                     u32 w;
                     u8 b;
                 } c45;
-                c45.w = func_800AF82C(obj, lbl_eu_804FB9E8 + 0x45, i);
+                c45.w = func_800AF82C(obj, table + 0x45, i);
                 entry->field_0xF = c45.b;
                 union {
                     u32 w;
                     u8 b;
                 } c4e;
-                c4e.w = func_800AF82C(obj, lbl_eu_804FB9E8 + 0x4e, i);
+                c4e.w = func_800AF82C(obj, table + 0x4e, i);
                 entry->field_0x10 = (f32)c4e.b;
                 idx++;
+                entry++;
             }
         }
     }
@@ -1573,14 +1596,13 @@ void func_8008E2D4(cf::CfObjectMove* self) {
         // No matching row: fall back to the +0x148 hook and the +0xCC heading.
         view->field_0x6C = lbl_eu_806665C0;
         func_80089684(self);
-        self->mMoveHook =
-            ((const CfMoveHookPtmfsE2D4*)&lbl_eu_80527830)->hook148;
+        self->mMoveHook = hooks->hook148;
         view->field_0x4C = self->field_0x34->field_0x28->_vCC();
         self->field_0x180 |= 0x800;
     } else {
         // Dispatch the state record and commit the entry count / scaled timer.
-        (self->*((const CfMoveDispatchPtmf*)&lbl_eu_80527830)
-                    [view->field_0x5C])(&view->field_0x60, &view->field_0x6C);
+        (self->*((const CfMoveDispatchPtmf*)hooks)[view->field_0x5C])(
+            &view->field_0x60, &view->field_0x6C);
         view->field_0x58 = (u16)idx;
         view->field_0x18C = 1;
         view->field_0x60 = view->field_0x78[0].field_0xE * 30;
@@ -1599,23 +1621,29 @@ void func_8008E2D4(cf::CfObjectMove* self) {
 // values from the bdat columns and commits the position to mVec144.
 void func_8008E760(cf::CfObjectMove* self) {
     // Hook-table base (retail keeps it in a callee-saved register across the
-    // whole function; member access emits the addi + base-load ptmf copy).
-    const CfMoveHookPtmfsE760& hooks =
-        *(const CfMoveHookPtmfsE760*)&lbl_eu_80527830;
+    // whole function).
+    const CfMoveHookPtmfsE760* hooks =
+        (const CfMoveHookPtmfsE760*)&lbl_eu_80527830;
     cf::CFunc8008E760View* view = (cf::CFunc8008E760View*)self;
     cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
-    cf::CFunc8008E760Obj* obj =
-        (cf::CFunc8008E760Obj*)(sub ? (u8*)sub - 0x3E9C : 0);
-    int r28;
+    // Retail branches around the subtraction only (no null-materialising
+    // select): obj stays null when the move-sub pointer is null.
+    cf::CFunc8008E760Obj* obj = (cf::CFunc8008E760Obj*)sub;
+    if (obj != 0) {
+        obj = (cf::CFunc8008E760Obj*)((u8*)obj - 0x3E9C);
+    }
+    int active;
     if ((obj->field_3F00 & 0x04000000u) != 0) {
-        r28 = 1;
+        active = 1;
     } else {
-        r28 = (func_800B8AFC(obj) == 0) ? 1 : 0;
+        active = (func_800B8AFC(obj) == 0);
     }
     view->field_0x17C = 0;
     view->field_0x18C = 0;
     if ((obj->field_3374 & 0x800u) != 0) {
-        view->field_0x17C = 0x40;
+        // MWCC forwards the just-stored zero into this read-modify-write
+        // (retail: ori r0, <zero reg>, 0x40).
+        view->field_0x17C |= 0x40;
     }
     union {
         u32 w;
@@ -1625,11 +1653,11 @@ void func_8008E760(cf::CfObjectMove* self) {
     if (row53.b == 0) {
         self->field_0x180 |= 1;
     }
-    if (r28 != 0) {
+    if (active != 0) {
         // Battle state active: pick the hook / init path from the flags.
         if ((view->field_0x17C & 0x40u) != 0) {
             func_80089684(self);
-            self->mMoveHook = hooks.hook154;
+            self->mMoveHook = hooks->hook154;
             self->field_0x4C = self->field_0x34->field_0x28->_vCC();
             self->field_0x180 = (self->field_0x180 | 0x800) & ~0x80000u;
         } else {
@@ -1645,7 +1673,7 @@ void func_8008E760(cf::CfObjectMove* self) {
                 func_8008E2D4(self);
             } else {
                 func_80089684(self);
-                self->mMoveHook = hooks.hook160;
+                self->mMoveHook = hooks->hook160;
                 self->field_0x4C = self->field_0x34->field_0x28->_vCC();
                 self->field_0x180 |= 0x800;
             }
@@ -1653,7 +1681,7 @@ void func_8008E760(cf::CfObjectMove* self) {
     } else {
         // Inactive: seed the counters and run the party-position probe.
         func_80089684(self);
-        self->mMoveHook = hooks.hook16C;
+        self->mMoveHook = hooks->hook16C;
         view->field_0x58 = 0;
         view->field_0x5A = (u16)(ml::math::mtRand() & 0xF);
         view->field_0x5C = (u32)(ml::math::mtRand() & 0xFFFF);
@@ -1797,52 +1825,59 @@ void func_8008EF04(cf::CfObjectMove* self) {
     // dismiss the +0xC4 target icon and refresh the move sub's +0x150 slot.
     if (v->field_0x18E != 0 && (self->field_0x180 & 0x8u) != 0 &&
         (self->field_0x17C & 0x10000u) == 0) {
-        cf::CFunc8008EF04Sub* sub =
-            (cf::CFunc8008EF04Sub*)self->field_0x34->field_0x28;
-        if (sub->field_C4 != 0) {
-            func_8004B8B0(sub->field_C4, 0, 1, lbl_eu_806665C0);
-            sub->_v150(1);
+        void* c4 =
+            ((cf::CFunc8008EF04Sub*)self->field_0x34->field_0x28)->field_C4;
+        if (c4 != 0) {
+            func_8004B8B0(c4, 0, 1, lbl_eu_806665C0);
+            ((cf::CFunc8008EF04Sub*)self->field_0x34->field_0x28)->_v150(1);
         }
     }
-    // Clear the +1 state flag when the target is gone / the +0x98 talk state
-    // has its +0x8000 bit; a live +0x98 state makes the sub's +0xC4 slot take
-    // over instead (returns nonzero -> skip the heading logic below).
-    int done = 0;
+    // Clear the +1 state flag when the target is gone / the +0x10000 talk
+    // state bit is set in the +0x98 object; a live talk state makes the sub's
+    // +0xC4 slot take over instead (returns nonzero -> skip heading logic).
+    int done;
     if ((self->field_0x17C & 1u) != 0) {
         cf::CFunc8008EF04Sub* sub =
             (cf::CFunc8008EF04Sub*)self->field_0x34->field_0x28;
         cf::CFunc8008EF04Sub98* p98 = (cf::CFunc8008EF04Sub98*)sub->field_98;
-        if (p98 != 0 && (p98->field_7A4 & 0x8000u) != 0) {
+        if (p98 != 0 && (p98->field_7A4 & 0x10000u) != 0) {
             if (sub->field_C4 != 0) {
                 func_8004B9D4(sub->field_C4, 1, 0, -1, 0);
             }
-            self->field_0x17C &= ~1u;
         } else if (sub->field_C4 != 0 && sub->_v0C(4) != 0) {
             ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
                 lbl_eu_806665C0;
             done = 1;
-        } else {
-            self->field_0x17C &= ~1u;
+            goto check;
         }
+        self->field_0x17C &= ~1u;
+        done = 0;
+    } else {
+        done = 0;
     }
+check:
     if (done == 0) {
         // Heading logic: compare the sub's heading with the +0x4C target
         // heading through the cos of their difference.
-        f32 h = self->field_0x34->field_0x28->_vCC();
-        f32 cosA = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * h);
+        f32 cosA = CosFIdx__Q24nw4r4mathFf(
+            lbl_eu_806665CC *
+                self->field_0x34->field_0x28->_vCC());
         f32 cosB = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * self->field_0x4C);
-        f32 h2 = self->field_0x34->field_0x28->_vCC();
-        f32 sinA = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * h2);
+        f32 sinA = SinFIdx__Q24nw4r4mathFf(
+            lbl_eu_806665CC *
+                self->field_0x34->field_0x28->_vCC());
         f32 sinB = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * self->field_0x4C);
-        if (sinA * sinB + cosA * cosB <= lbl_eu_806665DC) {
+        if (cosB * cosA + sinB * sinA <= lbl_eu_806665DC) {
             // Facing the target: turn toward +0x4C and engage the +0x98 state
             // unless its +0x8000 bit is set.
+            cf::CNpcBaseDataView* data = self->field_0x34;
+            f32 h4c = self->field_0x4C;
             cf::CFunc8008EF04Sub* sub =
-                (cf::CFunc8008EF04Sub*)self->field_0x34->field_0x28;
-            sub->_vC4(self->field_0x4C);
+                (cf::CFunc8008EF04Sub*)data->field_0x28;
+            sub->_vC4(h4c);
             cf::CFunc8008EF04Sub98* p98 = (cf::CFunc8008EF04Sub98*)sub->field_98;
             if (sub->field_C4 != 0 && p98 != 0 &&
-                (p98->field_7A4 & 0x8000u) == 0) {
+                (p98->field_7A4 & 0x10000u) == 0) {
                 func_800BE12C(sub, 3, 0, -1, 1);
                 sub->_v10(4);
                 self->field_0x17C |= 1;
@@ -1902,38 +1937,48 @@ int cf::CfObjectMove::CfObject_UnkVirtualFunc18() {
     return 1;
 }
 
+// Enemy flee/wander controller (retail func_8008F9EC): with the +0x20 flag
+// clear the enemy wanders (refreshing the +0x58 rate divisor and picking a
+// random heading via func_8008B9C0); with it set it flees the +0x4C-marked
+// target until the +0x54 timer expires or it stays pinned near mVec138 for
+// 60 frames, then clears the flee/wander flag bits.
 void func_8008F9EC(cf::CfObjectMove* self) {
     cf::CfObjectMoveView9* v = (cf::CfObjectMoveView9*)self;
     cf::CFunc8008F9ECSub* sub =
         (cf::CFunc8008F9ECSub*)self->field_0x34->field_0x28;
-    if (sub->field_C4 == 0) return;
-    if (sub->_v98() == 0) return;
+    if (sub->field_C4 != 0) {
+    if (sub->_v98() != 0) {
     if ((self->field_0x17C & 0x20u) == 0) {
-        // Not fleeing: refresh the movement-rate divisor, then either pick a
+        // Wander: refresh the movement-rate divisor, then either pick a
         // random direction (when the +0x5C-scaled probe succeeds) or idle.
         if (self->field_0x50 != 0) {
             v->field_0x58 = lbl_eu_806665E4;
         } else {
-            f32 rate = lbl_eu_806665C0;
+            f32 rate;
             if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
-                cf::CNpcMoveSubView* sub2 = self->field_0x34->field_0x28;
-                f32 denom = *sub2->_v138();
-                rate = *sub2->_v1D8() / denom;
+                cf::CNpcMoveSubView* s =
+                    (cf::CNpcMoveSubView*)self->field_0x34->field_0x28;
+                f32 denom = *s->_v138();
+                rate = *s->_v1D8() / denom;
             }
             v->field_0x58 = rate;
         }
         ml::CVec3 out;
         if (func_8008B9C0(self, &out, self, v->field_0x5C,
                           lbl_eu_806665C0, 0) != 0) {
-            f32 r = (f32)ml::math::mtRand(10);
-            v->field_0x60 =
-                v->field_0x5C * (lbl_eu_80666668 * r + lbl_eu_80666610);
+            // Random heading change, scaled by the wander radius.
+            v->field_0x60 = v->field_0x5C *
+                (lbl_eu_80666668 * (f32)ml::math::mtRand(10) +
+                 lbl_eu_80666610);
+            // Cosine is evaluated first into a temp (live across the sine
+            // call), then the direction vector is filled in x, y, z order.
+            f32 cz = CosFIdx__Q24nw4r4mathFf(
+                lbl_eu_806665CC * sub->_vCC());
             ml::CVec3 dir;
-            dir.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC *
-                                            self->field_0x34->field_0x28->_vCC());
+            dir.x = SinFIdx__Q24nw4r4mathFf(
+                lbl_eu_806665CC * sub->_vCC());
             dir.y = lbl_eu_806665C0;
-            dir.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC *
-                                            self->field_0x34->field_0x28->_vCC());
+            dir.z = cz;
             func_80089694(self, &dir, v->field_0x58);
         } else {
             ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
@@ -1941,48 +1986,86 @@ void func_8008F9EC(cf::CfObjectMove* self) {
         }
         self->field_0x184 = 0;
         self->field_0x54 = 0;
-        ((cf::CfObjectMove4CView*)self)->field_4C &= ~3;
+        ((cf::CfObjectMove4CView*)self)->field_4C &= ~3u;
         return;
     }
-    // Flee path: head away from the +0x4C target while it is close, else
-    // latch its position into mVec138.
+
+    // Flee path.
     ml::CVec3 dir(lbl_eu_806665C0, lbl_eu_806665C0, lbl_eu_806665C0);
-    int want = 1;
+    int cont = 1;
     if (((cf::CfObjectMove4CView*)self)->field_4C & 1u) {
-        ml::CVec3* pos = ((cf::CFunc8008F9ECSub*)self->field_0x34->field_0x28)
-                              ->_vAC();
-        f32 dx = pos->x - v->mPosition.x;
-        f32 dz = pos->z - v->mPosition.z;
-        f32 ang =
-            lbl_eu_80666638 * Atan2FIdx__Q24nw4r4mathFff(dx, dz);
+        // Run from the marked target: heading opposite the target direction,
+        // half-turn offset depending on the +0x4C bit 1 parity.
+        f32 dx = ((cf::CFunc8008F9ECSub*)self->field_0x34->field_0x28)
+                     ->_vAC()->x - v->mPosition.x;
+        f32 dz = ((cf::CFunc8008F9ECSub*)self->field_0x34->field_0x28)
+                     ->_vAC()->z - v->mPosition.z;
+        f32 ang = lbl_eu_80666638 * Atan2FIdx__Q24nw4r4mathFff(dx, dz);
         if (((cf::CfObjectMove4CView*)self)->field_4C & 2u) {
             ang += lbl_eu_8066A204;
+        } else {
+            ang -= lbl_eu_8066A204;
         }
-        dir.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ang);
-        dir.y = lbl_eu_806665C0;
-        dir.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ang);
+        ml::CVec3 tgt;
+        tgt.x = v->field_0x60 *
+                    SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ang) +
+                v->mPosition.x;
+        tgt.z = v->field_0x60 *
+                    CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ang) +
+                v->mPosition.z;
+        tgt.y = v->mPosition.y;
+        func_800896F4(self, &dir, &tgt);
+        if ((s32)--self->field_0x54 <= 0) cont = 0;
+    } else {
+        func_800896F4(self, &dir, &v->mPosition);
+        // Already next to the target: latch the flee state and a fresh
+        // randomized timer (parity seeds the half-turn offset bit).
+        f32 dx = v->mPosition.x -
+                 ((cf::CFunc8008F9ECSub*)self->field_0x34->field_0x28)
+                     ->_vAC()->x;
+        f32 dz = v->mPosition.z -
+                 ((cf::CFunc8008F9ECSub*)self->field_0x34->field_0x28)
+                     ->_vAC()->z;
+        if (dx * dx + dz * dz <= v->field_0x60 * v->field_0x60) {
+            ((cf::CfObjectMove4CView*)self)->field_4C |= 1u;
+            self->field_0x54 = ml::math::mtRand(0x12c) + 0x1c2;
+            if ((self->field_0x54 & 1u) != 0) {
+                ((cf::CfObjectMove4CView*)self)->field_4C |= 2u;
+            }
+        }
     }
     func_80089694(self, &dir, v->field_0x58);
-    if (want != 0) {
-        ml::CVec3* pos = ((cf::CFunc8008F9ECSub*)self->field_0x34->field_0x28)
-                              ->_vAC();
+    if (cont != 0) {
+        // Pinned-proximity gate: count consecutive frames spent near mVec138.
+        ml::CVec3* pos = ((cf::CFunc8008F9ECSub*)
+                              self->field_0x34->field_0x28)->_vAC();
         ml::CVec3 diff;
         nw4r::math::VEC3Sub(diff, self->mVec138, *pos);
-        if (diff.x * diff.x + diff.z * diff.z <= lbl_eu_806665E4) {
+        int stop = 0;
+        if (diff.x * diff.x + diff.y * diff.y + diff.z * diff.z <=
+            lbl_eu_806665E4) {
             self->field_0x184 = self->field_0x184 + 1;
             if (self->field_0x184 > 60) {
                 self->field_0x184 = 60;
-                want = 0;
+                stop = 1;
             }
         } else {
-            self->mVec138 = *pos;
+            // Word copy of the target position into mVec138.
+            *(u32*)&self->mVec138.x = *(u32*)&pos->x;
+            *(u32*)&self->mVec138.y = *(u32*)&pos->y;
+            *(u32*)&self->mVec138.z = *(u32*)&pos->z;
             self->field_0x184 = 0;
         }
-        if (want != 0) return;
+        if (stop == 0) return;
     }
-    self->field_0x17C &= ~0x60020u;
+    // Flee over: clear the wander/flee flag bits.
     self->field_0x186 = 0;
     self->field_0x184 = 0;
+    self->field_0x17C &= 0xFFF9FFDF;
+    } else {
+        return;
+    }
+    }
 }
 
 // Enemy move-controller per-frame update (retail func_8008FE8C): the +0x8000
@@ -1995,6 +2078,9 @@ void func_8008F9EC(cf::CfObjectMove* self) {
 // with the +0x190 / +0x19C / dispatch hooks.
 void func_8008FE8C(cf::CfObjectMove* self) {
     cf::CFunc8008FE8CView* view = (cf::CFunc8008FE8CView*)self;
+    // Kept live across the branchy region (retail parks it in a callee-saved
+    // register); every assignment reads the same movement-data slot.
+    cf::CFunc8008FE8CSub* sub;
     int flag;
     if ((view->field_0x17C & 0x8000u) != 0) {
         self->mMoveHook = lbl_eu_80527830.hook184;
@@ -2041,8 +2127,7 @@ void func_8008FE8C(cf::CfObjectMove* self) {
         } else {
             ml::CVec3 dir(lbl_eu_806665C0, lbl_eu_806665C0,
                           lbl_eu_806665C0);
-            cf::CFunc8008FE8CSub* sub =
-                (cf::CFunc8008FE8CSub*)self->field_0x34->field_0x28;
+            sub = (cf::CFunc8008FE8CSub*)self->field_0x34->field_0x28;
             if ((view->field_0x70 & 0x40u) != 0) {
                 // Face the sub: commit the normalized direction.
                 ml::CVec3 d = view->mPosition - *sub->vtable->fn_0xAC(sub);
@@ -2116,8 +2201,7 @@ void func_8008FE8C(cf::CfObjectMove* self) {
                 lbl_eu_806665C0;
             return;
         }
-        cf::CFunc8008FE8CSub* sub =
-            (cf::CFunc8008FE8CSub*)self->field_0x34->field_0x28;
+        sub = (cf::CFunc8008FE8CSub*)self->field_0x34->field_0x28;
         f32 ang = Atan2FIdx__Q24nw4r4mathFff(dir.x, dir.z);
         sub->vtable->fn_0xC4(sub, lbl_eu_80666638 * ang);
         if (sub->field_C4 != 0 && sub->field_98 != 0 &&
@@ -2139,8 +2223,7 @@ void func_8008FE8C(cf::CfObjectMove* self) {
     // Talk-state takeover / +0x74 heading gate / pursuit distance.
     int r0 = 0;
     if ((view->field_0x17C & 1u) != 0) {
-        cf::CFunc8008FE8CSub* sub =
-            (cf::CFunc8008FE8CSub*)self->field_0x34->field_0x28;
+        sub = (cf::CFunc8008FE8CSub*)self->field_0x34->field_0x28;
         void* p98 = sub->field_98;
         if (p98 != 0 &&
             (((cf::CFunc8008EF04Sub98*)p98)->field_7A4 & 0x10000u) != 0) {
@@ -2169,8 +2252,7 @@ void func_8008FE8C(cf::CfObjectMove* self) {
             view->field_0x70 &= ~0x80u;
         }
     }
-    cf::CFunc8008FE8CSub* sub =
-        (cf::CFunc8008FE8CSub*)self->field_0x34->field_0x28;
+    sub = (cf::CFunc8008FE8CSub*)self->field_0x34->field_0x28;
     ml::CVec3* p = sub->vtable->fn_0xAC(sub);
     f32 dx = p->x - view->mPosition.x;
     f32 dz = p->z - view->mPosition.z;
@@ -2355,6 +2437,7 @@ void func_80090DB4(cf::CfObjectMove* self) {
     cf::CFunc80090DB4View* view = (cf::CFunc80090DB4View*)self;
     int flag;
     if ((view->field_0x17C & 0x8000u) != 0) {
+        // Re-entry: reinstall the +0x1A8 hook and reset the move-list state.
         self->mMoveHook = hooks.hook1A8;
         view->field_0x72 = 0;
         view->field_0x60 = 0;
@@ -2374,29 +2457,31 @@ void func_80090DB4(cf::CfObjectMove* self) {
     }
     if (flag != 0) return;
 
+    // Active row of the +0x78 move list drives the update.
     cf::CfMoveSubEntry* entry =
         &view->field_0x78[(s16)view->field_0x5A];
     if (view->field_0x72 == 0) {
         // Gate clear: install the +0x1B4 hook, dispatch the state record and
         // step the +0x5A row timer.
         self->mMoveHook = hooks.hook1B4;
-        view->field_0x70 &= 0xFFFB;
+        u32 ev = view->field_0x70 & 0xFFFBu;
+        view->field_0x70 = (u16)ev;
         if ((entry->field_0xC & 4u) != 0) {
-            view->field_0x70 |= 1;
+            view->field_0x70 = (u16)(ev | 1);
         }
         (self->*((const CfMoveDispatchPtmf*)&lbl_eu_80527830)
              [view->field_0x5C])(&view->field_0x60, &view->field_0x6C);
         view->field_0x60 = entry->field_0xE * 30;
         if ((view->field_0x70 & 1u) != 0) {
             s16 t = (s16)(view->field_0x5A - 1);
-            view->field_0x5A = (s16)t;
+            view->field_0x5A = t;
             if (t < 0) {
                 view->field_0x5A = 1;
                 view->field_0x70 &= 0xFFFE;
             }
         } else {
             s16 t = (s16)(view->field_0x5A + 1);
-            view->field_0x5A = (s16)t;
+            view->field_0x5A = t;
             if (t >= view->field_0x58) {
                 view->field_0x5A = 0;
             }
@@ -2409,7 +2494,8 @@ void func_80090DB4(cf::CfObjectMove* self) {
         return;
     }
 
-    // Gate set: step it and run the approach / pursuit logic.
+    // Gate set: step it and run the approach / pursuit logic. Retail keeps
+    // the move sub-object in a callee-saved register across the branches.
     view->field_0x72 = view->field_0x72 - 1;
     u32 flags = view->field_0x17C;
     cf::CFunc80090DB4Sub* sub =
@@ -2418,17 +2504,19 @@ void func_80090DB4(cf::CfObjectMove* self) {
         // Approach a candidate point around the entry (func_8008B9C0).
         u32 t = view->field_0x60;
         view->field_0x60 = t - 1;
-        if (t > 0) return;
+        if ((int)t > 0) return;
         view->field_0x60 = 0;
-        ml::CVec3 dir44;
-        if (func_8008B9C0(self, &dir44, (cf::CfObjectMove*)entry,
+        ml::CVec3 out;
+        if (func_8008B9C0(self, &out, (cf::CfObjectMove*)entry,
                           entry->field_0x10, lbl_eu_806665C0, 0) != 0) {
             if ((self->field_0x180 & 0x8u) == 0 &&
                 func_80089E88(self, &view->mPosition, 1) == 0) {
+                // Probe rejected: retry after a short delay.
                 view->field_0x60 = 12;
                 view->field_0x17C |= 0x100000;
             } else {
-                // Commit the direction to the sub heading and the velocity.
+                // Commit: turn the sub toward the adopted point and mirror
+                // the normalized direction into the velocity.
                 cf::CFunc80090DB4Sub* sub2 =
                     (cf::CFunc80090DB4Sub*)self->field_0x34->field_0x28;
                 ml::CVec3 dir = view->mPosition - *sub2->vtable->fn_0xAC(sub2);
@@ -2441,8 +2529,7 @@ void func_80090DB4(cf::CfObjectMove* self) {
                         PSVECNormalize(dir, dir);
                     }
                 }
-                f32 ang =
-                    Atan2FIdx__Q24nw4r4mathFff(dir.x, dir.z);
+                f32 ang = Atan2FIdx__Q24nw4r4mathFff(dir.x, dir.z);
                 sub2->vtable->fn_0xC4(sub2, lbl_eu_80666638 * ang);
                 if (sub2->field_C4 != 0 && sub2->field_98 != 0 &&
                     (((cf::CFunc8008EF04Sub98*)sub2->field_98)->field_7A4 &
@@ -2465,15 +2552,15 @@ void func_80090DB4(cf::CfObjectMove* self) {
     if ((flags & 0x100000u) != 0) {
         // Pursuit: head toward the controller position while the +0x60 timer
         // runs, then re-approach.
-        ml::CVec3 dir38;
-        func_80088974(self, &dir38, &view->mPosition, 0, 0);
+        ml::CVec3 dir;
+        func_80088974(self, &dir, &view->mPosition, 0, 0);
         u32 t = view->field_0x60;
         view->field_0x60 = t - 1;
         if (t == 0) {
             view->field_0x60 = 0;
             cf::CFunc80090DB4Sub* sub2 =
                 (cf::CFunc80090DB4Sub*)self->field_0x34->field_0x28;
-            f32 ang = Atan2FIdx__Q24nw4r4mathFff(dir38.x, dir38.z);
+            f32 ang = Atan2FIdx__Q24nw4r4mathFff(dir.x, dir.z);
             sub2->vtable->fn_0xC4(sub2, lbl_eu_80666638 * ang);
             if (sub2->field_C4 != 0 && sub2->field_98 != 0 &&
                 (((cf::CFunc8008EF04Sub98*)sub2->field_98)->field_7A4 &
@@ -2482,9 +2569,9 @@ void func_80090DB4(cf::CfObjectMove* self) {
                 sub2->vtable->fn_0x10(sub2, 4);
                 view->field_0x17C |= 1;
             }
-            *(u32*)&view->mVelocity.x = *(u32*)&dir38.x;
-            *(u32*)&view->mVelocity.y = *(u32*)&dir38.y;
-            *(u32*)&view->mVelocity.z = *(u32*)&dir38.z;
+            *(u32*)&view->mVelocity.x = *(u32*)&dir.x;
+            *(u32*)&view->mVelocity.y = *(u32*)&dir.y;
+            *(u32*)&view->mVelocity.z = *(u32*)&dir.z;
             view->field_0x17C &= ~0x100000u;
         }
         ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
@@ -2492,10 +2579,11 @@ void func_80090DB4(cf::CfObjectMove* self) {
         return;
     }
 
-    int r0 = 0;
+    int done = 0;
     if ((flags & 1u) != 0) {
-        // Talk-state takeover: dismiss the +0xC4 icon or hand control to the
-        // +0x98 state, else clear the +1 flag.
+        // Talk-state takeover: dismiss the +0xC4 icon while the busy state
+        // holds the +0x10000 bit, hand control to the icon query, else drop
+        // the +1 flag.
         void* p98 = sub->field_98;
         if (p98 != 0 &&
             (((cf::CFunc8008EF04Sub98*)p98)->field_7A4 & 0x10000u) != 0) {
@@ -2507,22 +2595,28 @@ void func_80090DB4(cf::CfObjectMove* self) {
                 sub->vtable->fn_0x0C(sub, 4) != 0) {
                 ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
                     lbl_eu_806665C0;
-                r0 = 1;
+                done = 1;
             }
         }
-        if (r0 == 0) {
+        if (done == 0) {
             view->field_0x17C &= ~1u;
         }
     }
-    if (r0 != 0) return;
+    if (done != 0) return;
 
-    // Close pursuit: keep the sub within reach of the controller.
-    ml::CVec3* p = sub->vtable->fn_0xAC(sub);
-    f32 dx = p->x - view->mPosition.x;
-    f32 dz = p->z - view->mPosition.z;
+    // Close pursuit: keep the sub within reach of the controller. Retail
+    // re-queries the position between the two axis loads (dx lives across
+    // the second virtual call).
+    ml::CVec3* pa = sub->vtable->fn_0xAC(sub);
+    f32 dx = view->mPosition.x - pa->x;
+    ml::CVec3* pb = sub->vtable->fn_0xAC(sub);
+    f32 dz = view->mPosition.z - pb->z;
     if (dx * dx + dz * dz > lbl_eu_806665E4) {
-        view->field_0x186 = view->field_0x186 + 1;
-        if (view->field_0x186 < 0x258) {
+        // Out of reach: count the escape frames, then pursue via
+        // func_8008C660 / the mVec138 waypoint latch.
+        u16 esc = view->field_0x186;
+        view->field_0x186 = esc + 1;
+        if (esc < 0x258) {
             ml::CVec3 z(lbl_eu_806665C0, lbl_eu_806665C0,
                         lbl_eu_806665C0);
             if (func_8008C660(self, &z,
@@ -2533,21 +2627,22 @@ void func_80090DB4(cf::CfObjectMove* self) {
             f32 mdx = *(f32*)&view->mVec138W.x - p2->x;
             f32 mdz = *(f32*)&view->mVec138W.z - p2->z;
             if (mdx * mdx + mdz * mdz <= lbl_eu_806665E4) {
-                view->field_0x184 = view->field_0x184 + 1;
-                if (view->field_0x184 > 0x3C) {
+                // Reached the waypoint: count the idle frames, then give up.
+                u16 idle = view->field_0x184 + 1;
+                view->field_0x184 = idle;
+                if ((u32)idle > 0x3C) {
                     view->field_0x184 = 0x3C;
-                    r0 = 1;
-                } else {
-                    r0 = 0;
+                    done = 1;
                 }
             } else {
-                view->mVec138W.x = *(u32*)&p2->x;
-                view->mVec138W.y = *(u32*)&p2->y;
-                view->mVec138W.z = *(u32*)&p2->z;
+                // Waypoint moved: relatch it from a fresh position query.
+                ml::CVec3* p3 = sub->vtable->fn_0xAC(sub);
+                view->mVec138W.x = *(u32*)&p3->x;
+                view->mVec138W.y = *(u32*)&p3->y;
+                view->mVec138W.z = *(u32*)&p3->z;
                 view->field_0x184 = 0;
-                r0 = 0;
             }
-            if (r0 == 0) {
+            if (done == 0) {
                 func_80089694(self, &z, view->field_0x6C);
                 return;
             }
@@ -2557,8 +2652,8 @@ void func_80090DB4(cf::CfObjectMove* self) {
     (self->*((const CfMoveDispatchPtmf*)&lbl_eu_80527830)
          [view->field_0x5C])(&view->field_0x60, &view->field_0x6C);
     view->field_0x184 = 0;
-    view->field_0x186 = 0;
     view->field_0x60 = entry->field_0xE * 30;
+    view->field_0x186 = 0;
     view->field_0x17C &= 0xFFE9FFDF;
     ((cf::CFunc8009DataView*)self->field_0x34)->field_0x14 =
         lbl_eu_806665C0;
@@ -2570,6 +2665,7 @@ void func_80090DB4(cf::CfObjectMove* self) {
 // two-tick gate before scanning the gimmick list for nearby targets to mark.
 void func_8009156C(cf::CfObjectMove* self) {
     cf::CfObjectMoveView9* v = (cf::CfObjectMoveView9*)self;
+    cf::CFunc8008F9ECSub* sub;
     if ((v->field_0x17C & 0x8000u) != 0) {
         f32 dx = v->mPosition.x -
                  ((cf::CFunc8008F9ECSub*)self->field_0x34->field_0x28)
@@ -2600,16 +2696,16 @@ void func_8009156C(cf::CfObjectMove* self) {
         if (v->field_0x72 >= 2) {
             // Scan the gimmick list: mark any target whose XZ distance to the
             // move sub is at most the threshold.
-            cf::CFunc8008F9ECSub* sub =
-                (cf::CFunc8008F9ECSub*)self->field_0x34->field_0x28;
+            sub = (cf::CFunc8008F9ECSub*)self->field_0x34->field_0x28;
             cf::CFunc8009156CList* list = func_800B6BC8();
+            f32 th = lbl_eu_80666678;
             for (cf::CFunc8009156CNode* node = list->head->next;
                  node != list->head; node = node->next) {
                 cf::CFunc8009156CGimmick* gimmick = node->object;
                 ml::CVec3* gp = gimmick->_vAC();
                 ml::CVec3 diff;
                 nw4r::math::VEC3Sub(diff, *sub->_vAC(), *gp);
-                if (diff.x * diff.x + diff.z * diff.z <= lbl_eu_80666678) {
+                if (diff.x * diff.x + diff.z * diff.z <= th) {
                     cf::CFunc8009156CTarget* t =
                         (cf::CFunc8009156CTarget*)gimmick->_v110();
                     if (t != 0) {
@@ -2646,7 +2742,264 @@ void func_8009156C(cf::CfObjectMove* self) {
         lbl_eu_806665C0;
 }
 
-void func_80091864(){}
+// Enemy movement state machine (retail func_80091864). Validates the enemy
+// battle object (+0x3F60 flag object), resolves the player battle object,
+// then either wanders toward a random nearby candidate or chases the player:
+// seeds a random heading from field_0x5C, scans the actor list for candidates
+// whose predicted position is within the summed proximity radius, and feeds
+// the resulting direction into the party-info builder / movement commit.
+// NOTE: the middle stretch of the retail routine was not available when this
+// reconstruction was written; the tail state handling below is inferred from
+// the surrounding branches.
+void func_80091864(cf::CfObjectMove* selfRaw) {
+    cf::CFunc80091864View* self = (cf::CFunc80091864View*)selfRaw;
+    cf::CNpcBaseDataView* data = self->field_0x34;
+    cf::CFunc8009DataView* data14 = (cf::CFunc8009DataView*)data;
+    cf::CFunc8008EF04Sub* movesub = (cf::CFunc8008EF04Sub*)data->field_0x28;
+
+    // Enemy battle object: the move-data +0x28 sub-object sits at +0x3E9C of
+    // the containing battle object; recover the base pointer.
+    cf::CFunc80091864Actor* ene =
+        (cf::CFunc80091864Actor*)((u8*)data->field_0x28 -
+                                  offsetof(cf::CFunc80091864Actor, mSub));
+
+    if (ene->field_3F60 == 0) {
+        data14->field_0x14 = lbl_eu_806665C0;
+        return;
+    }
+
+    cf::CFunc8008E760B89* b89 =
+        (cf::CFunc8008E760B89*)func_800B89CC(ene->field_45C0);
+    if (b89 == 0) {
+        data14->field_0x14 = lbl_eu_806665C0;
+        return;
+    }
+
+    cf::CFunc80091864Actor* player =
+        (cf::CFunc80091864Actor*)func_80198310();
+    if (player == 0) {
+        if ((self->field_0x180 & 0x8) != 0) {
+            self->field_0x160 = self->field_0x4;
+        }
+        data14->field_0x14 = lbl_eu_806665C0;
+        return;
+    }
+
+    // Latch the base position into mVec144 while the +0x400000 state bit is
+    // up (retail copies the three words). The bit sits above the halfword
+    // load's range, so the branch is effectively dead in retail too.
+    if ((self->field_0x58 & 0x4000) != 0) {
+        self->mVec144W = self->mPos0W;
+    }
+
+    // +0x17C bit 0 pending: re-check the move-sub target gate. When the
+    // +0x98 object carries its flag, poke the icon helper instead; otherwise
+    // query the move-sub's +0x0C slot - success ends the frame early without
+    // clearing the pending bit.
+    int blocked = 0;
+    if ((self->field_0x17C & 1) != 0) {
+        cf::CFunc8008EF04Sub98* s98 =
+            (cf::CFunc8008EF04Sub98*)movesub->field_98;
+        if (s98 != 0 && (s98->field_7A4 & 0x8000) != 0) {
+            if (movesub->field_C4 != 0) {
+                func_8004B9D4(movesub, 1, 0, -1, 0);
+            }
+        } else if (movesub->field_C4 != 0 && movesub->_v0C(4) != 0) {
+            data14->field_0x14 = lbl_eu_806665C0;
+            blocked = 1;
+        }
+        if (blocked == 0) {
+            self->field_0x17C &= ~1u;
+        }
+    }
+    if (blocked != 0) return;
+
+    if (player->field_3F60 == 0) {
+        data14->field_0x14 = lbl_eu_806665C0;
+        return;
+    }
+
+    // Target activity: bit 3 of the player target's +0x200 flags word.
+    int tgtActive = 0;
+    {
+        cf::CFunc80091864Target* t = (cf::CFunc80091864Target*)(
+            player->mSub.vtable->fn_0x110(&player->mSub));
+        if (t != 0) tgtActive = (int)((t->field_200 >> 3) & 1);
+    }
+
+    u16 hw58 = self->field_0x58;
+    f32 radius = b89->field_8C;
+    u32 seed = self->field_0x5C;
+
+    if ((hw58 & 1) != 0) {
+        // Step the entry gate; past 15 entries drop back out of the state.
+        u16 gate = (u16)(self->field_0x5A + 1);
+        self->field_0x5A = gate;
+        if (gate > 0xF) {
+            self->field_0x58 = (u16)(hw58 & ~1u);
+            self->field_0x5A = 0;
+            hw58 &= (u16)~1u;
+        }
+        if ((self->field_0x180 & 0x8) != 0) {
+            if ((player->field_3374 & 0x100) != 0) {
+                self->field_0x160 =
+                    player->mSub.vtable->fn_0xAC(&player->mSub)->y;
+            } else {
+                self->field_0x160 =
+                    lbl_eu_806665D0 +
+                    player->mSub.vtable->fn_0xAC(&player->mSub)->y;
+            }
+            hw58 = self->field_0x58;
+            seed = self->field_0x5C;
+            radius = b89->field_8C;
+        }
+    }
+
+    u16 esc = ene->field_45C4;
+    if (esc == 0) esc = 1;
+
+    if ((hw58 & 2) != 0) {
+        // Wander countdown: when the timer lapses, reroll the seed and drop
+        // the wander bit.
+        s16 t = (s16)(self->field_0x6C - 1);
+        self->field_0x6C = t;
+        if (t < 0) {
+            self->field_0x5C = (u32)(ml::math::mtRand() & 0xFFFF);
+            self->field_0x58 = (u16)(hw58 & ~2u);
+        }
+    } else {
+        // Pick a fresh random heading from the seed: seed mod 360 scaled to
+        // radians plus the current player heading; walk distance scales
+        // seed mod 100 by the proximity factor and adds both radii.
+        s32 sv = (s32)seed;
+        s32 rem360 = sv - sv / 360 * 360;
+        s32 rem100 = sv - sv / 100 * 100;
+        f32 ang = (f32)((f64)rem360 - lbl_eu_80666620) * lbl_eu_8066A210;
+        f32 head = player->vtable->fn_0x5B4(player) + ang;
+        f32 dist = lbl_eu_80666658 * (f32)((f64)rem100 - lbl_eu_80666620) *
+                       radius +
+                   ene->field_44D8 + player->field_44D8;
+
+        ml::CVec3* pv = player->mSub.vtable->fn_0xAC(&player->mSub);
+        f32 px = pv->x + dist * SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * head);
+        f32 pz = pv->z + dist * CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * head);
+
+        // Scan the actor list backwards for a candidate whose predicted
+        // position lands inside ene->field_44D8 + cand->field_44D8.
+        int found = 0;
+        for (s32 idx = (s32)ene->field_45C6 - 1; idx >= 0; idx--) {
+            cf::CFunc80091864Actor* cand =
+                (cf::CFunc80091864Actor*)func_801984F0(b89, idx);
+            if (cand == 0) continue;
+            cf::CFunc80091864Target* t = (cf::CFunc80091864Target*)(
+                cand->mSub.vtable->fn_0x110(&cand->mSub));
+            if (t == 0) continue;
+            s32 iv = (s32)t->field_E0;
+            s32 irem360 = iv - iv / 360 * 360;
+            s32 irem100 = iv - iv / 100 * 100;
+            f32 ihead = lbl_eu_806665CC * head +
+                        (f32)((f64)irem360 - lbl_eu_80666620) *
+                            lbl_eu_8066A210;
+            f32 idist =
+                lbl_eu_80666658 * (f32)((f64)irem100 - lbl_eu_80666620) *
+                    radius +
+                cand->field_44D8 + player->field_44D8;
+            ml::CVec3* cp = cand->mSub.vtable->fn_0xAC(&cand->mSub);
+            f32 cx = cp->x + idist * SinFIdx__Q24nw4r4mathFf(ihead);
+            f32 cz = cp->z + idist * CosFIdx__Q24nw4r4mathFf(ihead);
+            f32 dx = px - cx;
+            f32 dz = pz - cz;
+            f32 th = lbl_eu_8066667C * (ene->field_44D8 + cand->field_44D8);
+            if (dx * dx + dz * dz <= th) {
+                found = 1;
+                break;
+            }
+        }
+        if (found != 0) {
+            self->field_0x5C = (u32)(ml::math::mtRand() & 0xFFFF);
+        } else {
+            // Nothing close: enter the wander countdown.
+            self->field_0x6C = 0x258;
+            self->field_0x58 = (u16)(hw58 | 2);
+        }
+    }
+
+    // Common tail: rebuild the party info block around the player's current
+    // position / heading, then refresh the height latch under the flag bits.
+    ml::CVec3 pos = *player->mSub.vtable->fn_0xAC(&player->mSub);
+    f32 head2 = player->vtable->fn_0x5B4(player);
+    cf::CFunc8008E760PartyInfo pi;
+    func_80198710(&pi, &pos, head2, (int)esc, (int)seed, radius,
+                  ene->field_44D8 + player->field_44D8);
+    if ((self->field_0x180 & 1) != 0) {
+        pi.field_2D = 0;
+    }
+    if ((self->field_0x180 & 0x8) != 0) {
+        pi.field_2D = 0;
+        if ((player->field_3374 & 0x100) != 0) {
+            self->field_0x160 =
+                player->mSub.vtable->fn_0xAC(&player->mSub)->y;
+        } else {
+            self->field_0x160 =
+                lbl_eu_806665D0 +
+                player->mSub.vtable->fn_0xAC(&player->mSub)->y;
+        }
+    }
+
+    // Tail state machine: chase bookkeeping against the enemy's own sub
+    // position, then either record it, count the lost frames or turn to face
+    // the player and mark the move-sub target.
+    ml::CVec3* ep = ene->mSub.vtable->fn_0xAC(&ene->mSub);
+    f32 dxp = (f32)self->mPos0W.x - ep->x;
+    f32 dzp = (f32)self->mPos0W.z - ep->z;
+    if (dxp * dxp + dzp * dzp > lbl_eu_8066667C) {
+        // Drifting away: step the lost counter, latch at 60 frames and raise
+        // the give-up bits.
+        s16 lost = (s16)(self->field_0x70 + 1);
+        self->field_0x70 = lost;
+        if (lost >= 0x3C) {
+            self->field_0x70 = 0x3C;
+            self->field_0x58 = (u16)(self->field_0x58 | 0x60);
+        }
+        return;
+    }
+    self->field_0x70 = 0;
+    self->field_4C = *(u32*)&ep->x;
+    self->field_50 = *(u32*)&ep->y;
+    self->field_54 = *(u32*)&ep->z;
+
+    if ((self->field_0x58 & 0x8) != 0) {
+        data14->field_0x14 = lbl_eu_806665C0;
+        return;
+    }
+
+    // Face the player: heading-alignment check between the two objects; when
+    // aligned, poke the move-sub target through its event helpers.
+    self->mVel18W.x = *(u32*)&lbl_eu_806665C0;
+    f32 eh = ene->vtable->fn_0x5B4(ene);
+    f32 ph = player->vtable->fn_0x5B4(player);
+    f32 align = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * eh) *
+                    CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph) +
+                SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * eh) *
+                    SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph);
+    if (align < lbl_eu_80666694) {
+        data14->field_0x14 = lbl_eu_806665C0;
+        return;
+    }
+    if (movesub->field_C4 != 0 && movesub->field_98 != 0 &&
+        (((cf::CFunc8008EF04Sub98*)movesub->field_98)->field_7A4 & 0x8000) ==
+            0) {
+        func_800BE12C(data->field_0x28, 3, 0, -1, 1);
+        movesub->_v10(4);
+        self->field_0x17C |= 1;
+    }
+    f32 pvz = SinFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph);
+    f32 pcos = CosFIdx__Q24nw4r4mathFf(lbl_eu_806665CC * ph);
+    self->mVel18W.z = *(u32*)&pvz;
+    self->mVel18W.y = *(u32*)&lbl_eu_806665C0;
+    self->mVel18W.x = *(u32*)&pcos;
+    data14->field_0x14 = lbl_eu_806665C0;
+}
 
 void* CfObjectMove_UnkVirtualFunc5__Q22cf12CfObjectMoveFv(void* self) { return (void*)((u8*)self + 0x6e8); }
 
@@ -2812,7 +3165,9 @@ void func_80093278(cf::CfObjectMove* self, u32* out1, f32* out2) {
 void func_80093354(cf::CfObjectMove* self, u32* out1, f32* out2) {
     if (ml::math::mtRand(100) >= 0x50) {
         f32 result;
-        if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
+        f32 div = *self->field_0x34->field_0x28->_v138();
+        f32 zero = lbl_eu_806665C0;
+        if (div != zero) {
             cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
             f32 denom = *sub->_v138();
             result = *sub->_v1D8() / denom;
@@ -2824,7 +3179,9 @@ void func_80093354(cf::CfObjectMove* self, u32* out1, f32* out2) {
         self->field_0x17C |= 0x80;
     } else {
         f32 result;
-        if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
+        f32 div = *self->field_0x34->field_0x28->_v138();
+        f32 zero = lbl_eu_806665C0;
+        if (div != zero) {
             cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
             f32 denom = *sub->_v138();
             result = *sub->_v1D8() / denom;
@@ -2844,7 +3201,9 @@ void func_800934AC(cf::CfObjectMove* self, u32* out1, f32* out2) {
     int r = ml::math::mtRand(100);
     if (r >= 0x5A) {
         f32 result;
-        if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
+        f32 div = *self->field_0x34->field_0x28->_v138();
+        f32 zero = lbl_eu_806665C0;
+        if (div != zero) {
             cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
             f32 denom = *sub->_v138();
             result = *sub->_v1D8() / denom;
@@ -2859,7 +3218,9 @@ void func_800934AC(cf::CfObjectMove* self, u32* out1, f32* out2) {
             *out2 = lbl_eu_806665E4;
         } else {
             f32 result;
-            if (*self->field_0x34->field_0x28->_v138() != lbl_eu_806665C0) {
+            f32 div = *self->field_0x34->field_0x28->_v138();
+            f32 zero = lbl_eu_806665C0;
+            if (div != zero) {
                 cf::CNpcMoveSubView* sub = self->field_0x34->field_0x28;
                 f32 denom = *sub->_v138();
                 result = *sub->_v1D8() / denom;

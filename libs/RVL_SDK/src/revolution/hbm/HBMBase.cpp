@@ -3259,3 +3259,16 @@ namespace lyt {
 
 } // namespace lyt
 } // namespace nw4hbm
+
+/******************************************************************************
+ * Retail .data tail (+0xCD0): 0x20 zero pad followed by the gui::Interface
+ * typeinfo name string (27 chars + NUL, zero-filled to 0x28). Defined here so
+ * the bytes land at the end of this TU's .data exactly like retail.
+ ******************************************************************************/
+// Sentinel byte 0x01 keeps this out of .bss (MWCC folds all-zero init);
+// UNIT_RULES zero_data_range scrubs it back to zeros.
+extern "C" __declspec(section ".data") char lbl_8054D578_pad[0x20] = {
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1
+};
+char lbl_8054D598_typestr[0x28] = "homebutton::gui::Interface";

@@ -187,9 +187,9 @@ public:
     virtual void unk7B();
     virtual void unk7C();
     virtual void unk7D();
-    virtual void unk7E();
+    virtual s32 unk7E();   // func_800B4A24 dispatches here (vtable +0x200)
     virtual void unk7F();
-    virtual s32 unk80();   // vtable +0x200, returns a status int
+    virtual s32 unk80();
 };
 
 struct CEvtTypeArg : public CEvtTypeVt {
@@ -381,12 +381,192 @@ public:
     virtual s32 unkAF();             // vtable +0x2BC
 };
 
-// Object layout walked by func_800B4CA0.
-class Func4CA0Obj : public IDispB4CA0 {
+// Object layout walked by func_800B4CA0. Standalone class (v2).
+// Slots 0x00-0xAF mirror the shared dispatch table: slot 0x46 at +0x118 takes
+// a float; slot 0xAF at +0x2BC returns a status int.
+class Func4CA0Obj {
 public:
+    /* Slot map: retail tests slot 0x46 (+0x118, float arg) and slot 0xAF
+     * (+0x2BC). MWCC emits each entry two slots higher than declared for
+     * this class shape, so two leading stubs are omitted to compensate. */
+    virtual void unk02();
+    virtual void unk03();
+    virtual void unk04();
+    virtual void unk05();
+    virtual void unk06();
+    virtual void unk07();
+    virtual void unk08();
+    virtual void unk09();
+    virtual void unk0A();
+    virtual void unk0B();
+    virtual void unk0C();
+    virtual void unk0D();
+    virtual void unk0E();
+    virtual void unk0F();
+    virtual void unk10();
+    virtual void unk11();
+    virtual void unk12();
+    virtual void unk13();
+    virtual void unk14();
+    virtual void unk15();
+    virtual void unk16();
+    virtual void unk17();
+    virtual void unk18();
+    virtual void unk19();
+    virtual void unk1A();
+    virtual void unk1B();
+    virtual void unk1C();
+    virtual void unk1D();
+    virtual void unk1E();
+    virtual void unk1F();
+    virtual void unk20();
+    virtual void unk21();
+    virtual void unk22();
+    virtual void unk23();
+    virtual void unk24();
+    virtual void unk25();
+    virtual void unk26();
+    virtual void unk27();
+    virtual void unk28();
+    virtual void unk29();
+    virtual void unk2A();
+    virtual void unk2B();
+    virtual void unk2C();
+    virtual void unk2D();
+    virtual void unk2E();
+    virtual void unk2F();
+    virtual void unk30();
+    virtual void unk31();
+    virtual void unk32();
+    virtual void unk33();
+    virtual void unk34();
+    virtual void unk35();
+    virtual void unk36();
+    virtual void unk37();
+    virtual void unk38();
+    virtual void unk39();
+    virtual void unk3A();
+    virtual void unk3B();
+    virtual void unk3C();
+    virtual void unk3D();
+    virtual void unk3E();
+    virtual void unk3F();
+    virtual void unk40();
+    virtual void unk41();
+    virtual void unk42();
+    virtual void unk43();
+    virtual void unk44();
+    virtual void unk45();
+    virtual void unk46(float val);   // vtable +0x118
+    virtual void unk47();
+    virtual void unk48();
+    virtual void unk49();
+    virtual void unk4A();
+    virtual void unk4B();
+    virtual void unk4C();
+    virtual void unk4D();
+    virtual void unk4E();
+    virtual void unk4F();
+    virtual void unk50();
+    virtual void unk51();
+    virtual void unk52();
+    virtual void unk53();
+    virtual void unk54();
+    virtual void unk55();
+    virtual void unk56();
+    virtual void unk57();
+    virtual void unk58();
+    virtual void unk59();
+    virtual void unk5A();
+    virtual void unk5B();
+    virtual void unk5C();
+    virtual void unk5D();
+    virtual void unk5E();
+    virtual void unk5F();
+    virtual void unk60();
+    virtual void unk61();
+    virtual void unk62();
+    virtual void unk63();
+    virtual void unk64();
+    virtual void unk65();
+    virtual void unk66();
+    virtual void unk67();
+    virtual void unk68();
+    virtual void unk69();
+    virtual void unk6A();
+    virtual void unk6B();
+    virtual void unk6C();
+    virtual void unk6D();
+    virtual void unk6E();
+    virtual void unk6F();
+    virtual void unk70();
+    virtual void unk71();
+    virtual void unk72();
+    virtual void unk73();
+    virtual void unk74();
+    virtual void unk75();
+    virtual void unk76();
+    virtual void unk77();
+    virtual void unk78();
+    virtual void unk79();
+    virtual void unk7A();
+    virtual void unk7B();
+    virtual void unk7C();
+    virtual void unk7D();
+    virtual void unk7E();
+    virtual void unk7F();
+    virtual void unk80();
+    virtual void unk81();
+    virtual void unk82();
+    virtual void unk83();
+    virtual void unk84();
+    virtual void unk85();
+    virtual void unk86();
+    virtual void unk87();
+    virtual void unk88();
+    virtual void unk89();
+    virtual void unk8A();
+    virtual void unk8B();
+    virtual void unk8C();
+    virtual void unk8D();
+    virtual void unk8E();
+    virtual void unk8F();
+    virtual void unk90();
+    virtual void unk91();
+    virtual void unk92();
+    virtual void unk93();
+    virtual void unk94();
+    virtual void unk95();
+    virtual void unk96();
+    virtual void unk97();
+    virtual void unk98();
+    virtual void unk99();
+    virtual void unk9A();
+    virtual void unk9B();
+    virtual void unk9C();
+    virtual void unk9D();
+    virtual void unk9E();
+    virtual void unk9F();
+    virtual void unkA0();
+    virtual void unkA1();
+    virtual void unkA2();
+    virtual void unkA3();
+    virtual void unkA4();
+    virtual void unkA5();
+    virtual void unkA6();
+    virtual void unkA7();
+    virtual void unkA8();
+    virtual void unkA9();
+    virtual void unkAA();
+    virtual void unkAB();
+    virtual void unkAC();
+    virtual void unkAD();
+    virtual void unkAE();
+    virtual s32 unkAF();             // vtable +0x2BC
     u8 _pad04[0x3F00 - 0x4];
-    u32 field_3F00;                  // +0x3F00 (bit 4 tested)
-    u32 field_3F08;                  // +0x3F08 (bit 4 tested)
+    u32 field_3F00;                  // +0x3F00 (bit 27 tested)
+    u8 _pad08[0x3F08 - 0x3F04];
+    u32 field_3F08;                  // +0x3F08 (bit 27 tested)
     u8 _pad0C[0x3F60 - 0x3F0C];
     void* field_3F60;                // +0x3F60 -> sub-record
 };
@@ -457,17 +637,40 @@ public:
     // total 0x20
 };
 
-// Specialization for cf::TboxInfo - adds fields at 0x10-0x37 (total 0x38)
+// Specialization for cf::TboxInfo - adds fields at 0x10-0x37 (total 0x38).
+// NOT derived from _reslist_base: deriving makes MWCC emit a call to the base
+// dtor instead of the standalone body retail uses.
 template <>
-class reslist<cf::TboxInfo> : public _reslist_base<cf::TboxInfo> {
+class reslist<cf::TboxInfo> {
 public:
     ~reslist();
-    u8 _pad_10[0x1c];   // 0x10-0x2b
+    void* mVtbl;            // 0x00
+    CfReslistNode* mStartNodePtr; // 0x04
+    CfReslistNode mStartNode;     // 0x08 (0xc bytes)
+    u8 _pad_14[0x2c - 0x14];   // 0x14-0x2b
     u32 field_0x2c;     // 0x2c
     u32 field_0x30;     // 0x30
     u8 field_0x34;      // 0x34
     u8 _pad_35[3];      // 0x35-0x37
     // total 0x38
+};
+
+// Specialization for cf::IFactoryEvent* - standalone (NOT derived from
+// _reslist_base, mirroring the cf::TboxInfo trick): deriving makes the
+// derived dtor emit a trailing ~_reslist_base call + delete tail, which
+// retail's __dt__30reslist<PQ22cf13IFactoryEvent>Fv copy does not have.
+template <>
+class reslist<cf::IFactoryEvent*> {
+public:
+    ~reslist();
+    void* mVtbl;                  // 0x00
+    CfReslistNode* mStartNodePtr; // 0x04
+    CfReslistNode mStartNode;     // 0x08 (0xc bytes)
+    u32 field_0x14;               // 0x14 pool array base
+    u32 field_0x18;               // 0x18 entry count
+    u8 field_0x1c;                // 0x1c owns-pool-array flag
+    u8 _pad_1d[3];                // 0x1d-0x1f
+    // total 0x20
 };
 // Field accessor view over a CfObject payload walked by the reslist search
 // helpers (func_800B4278 / func_800B42E8).
@@ -607,7 +810,9 @@ public:
 };
 class AD8Wrapper : public UnkClass_800B0AD8 {
 public:
-    ~AD8Wrapper() { __dt__800B0AF4(this, -1); }
+    ~AD8Wrapper();  // defined out-of-line in code_800B06A4.cpp after
+                    // ~UnkClass_805764CC (auto_inline off): forwards to the
+                    // flat __dt__800B0AF4 teardown
 };
 class UnkClass_805764CC : public reslist<cf::CfObject*> {
 public:
@@ -637,6 +842,7 @@ public:
     void* getNull();
     void* getPtr_1A8();
     void* getPtr_720();
+    /* 0x20 - AD8 teardown wrapper; its dtor forwards to flat __dt__800B0AF4 */
     AD8Wrapper field_0x20;
     // Retail element type is cf::CfObject* (PQ22cf8CfObject); the pointer
     // specialization keeps the flat dtor symbol importable.
@@ -692,6 +898,7 @@ extern "C" void** func_8007F8D0__Q22cf13CfGameManagerFv(F8C0IteratorNode* iterat
 extern "C" void func_8007F8DC__Q22cf13CfGameManagerFv(F8C0IteratorNode* destination, F8C0IteratorNode* source, u32 unused);
 extern "C" void func_8007F8F4__Q22cf13CfGameManagerFv(F8C0IteratorNode* destination, const F8C0ListSource* source);
 extern "C" bool func_8007F900__Q22cf13CfGameManagerFv(const u32* first, const u32* second);
+extern "C" void func_800B182C(void* node);
 extern "C" u16 func_8007F8B8__Q22cf13CfGameManagerFv(void* object);
 
 // Imports used by func_800B70FC / func_800B7214 (retail symbol names).
@@ -1095,6 +1302,18 @@ extern "C" void func_800B1C24(int arg, void* ptr);
 extern "C" void* func_800B39C0(void* arg);
 extern "C" void func_800BC3B0(void* obj, float val);
 extern "C" void* func_800B708C__Fi(int arg);
+// Enum-list holder helpers (cf::CfObjEnumList) used by func_800B98C8.
+extern "C" void func_80043D90(void* holder);
+extern "C" void* func_80043F18(void* holder);
+extern "C" void __dt__80043E88(void* holder, int flag);
+extern "C" void func_800F4A98(void* list, u32 type, u32 filter);
+extern "C" void* func_800F6E98(void* list, int index);
+extern "C" int func_800B9984(void* list);
+extern "C" void* __dynamic_cast(void* obj, long offset, const void* srcType,
+                                const void* dstType, void* src2dst);
+// RTTI typeinfo pair for the actor dynamic_cast.
+extern const void* lbl_eu_806618E8;
+extern const void* lbl_eu_806618F0;
 extern "C" void* func_80193CD0(void* a, void* b);
 extern "C" unsigned long func_80061FFC();
 extern "C" void __dl__FPv(void*);
@@ -1109,6 +1328,8 @@ extern "C" unsigned long func_800B0FEC(void* self);
 extern "C" void func_800B0FF4(void* self, unsigned long handle, unsigned long count);
 extern "C" void* func_800B20B4(UnkClass_805764CC* self, u32 arg1,
                                 const B20B4Payload* arg2, u32 arg3);
+// CfRes.cpp import (retail exports the unmangled name).
+extern "C" u32 CfRes_extractBits27_5(void* self);
 extern "C" void func_800B084C(UnkClass_805764CC* self, unsigned long count);
 extern "C" void func_801742D4(void* obj);
 extern "C" void func_80173C6C(void* obj, void* arg);

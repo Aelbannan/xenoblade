@@ -7,8 +7,8 @@ namespace {
 NW4R_G3D_RESFILE_NAME_DEF(LightSet, "LightSet(NW4R)");
 NW4R_G3D_RESFILE_NAME_DEF(AmbLights, "AmbLights(NW4R)");
 NW4R_G3D_RESFILE_NAME_DEF(Lights, "Lights(NW4R)");
-NW4R_G3D_RESFILE_NAME_DEF(Fog, "Fog(NW4R)");
-NW4R_G3D_RESFILE_NAME_DEF(Camera, "Camera(NW4R)");
+NW4R_G3D_RESFILE_NAME_DEF(Fog, "Fogs(NW4R)");
+NW4R_G3D_RESFILE_NAME_DEF(Camera, "Cameras(NW4R)");
 
 ResLightSet GetResLightSetImpl(const ResAnmScn& scn, int idx) {
     void* pDicData = ResDic(scn.ofs_to_obj<ResDic>(

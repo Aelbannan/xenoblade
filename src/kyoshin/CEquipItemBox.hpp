@@ -784,12 +784,13 @@ extern u32 lbl_eu_806640EC;
 // Resource/flag helper: 0 when the named resource id is absent (CQuestLog).
 extern "C" u32 func_8009CF8C(u32);
 // Sort-menu commit helpers + name-table pointer globals (func_802873D8).
-extern "C" void func_801D37F4(void*);
+extern "C" int func_801D37F4(void*);
 extern "C" u8 func_801D3808(void*);
 extern "C" u8 func_801D3810(void*);
 extern "C" void func_8013B428(u32);
 extern u32 lbl_eu_80668B3C;
 extern u16 lbl_eu_80668B40;
+// 12-byte texture/description table at 0x8050EF84 (3 consecutive words).
 extern u8 lbl_eu_8050EF84;
 // Sort-menu scroll-down / page-up helpers (CSortMenu TU, retail plain names).
 extern "C" void func_801D3698(void*);
@@ -797,6 +798,7 @@ extern "C" void func_801D3724(void*);
 // SysWin sub-window text setters used by func_80287FE0's name-pane confirm.
 extern "C" void func_8022B90C(void*, u32);
 extern "C" void func_8022B9B4(void*, void*, u32);
+extern "C" void func_8022BF6C(void*, void*, void*);
 extern "C" void func_8022BFC8(void*, u32);
 extern "C" void func_8022B8B8(void*);
 // Per-slot detail-text builder (func_80287FE0's ==3 lookup path).

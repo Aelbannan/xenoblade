@@ -1122,7 +1122,7 @@ u32 func_8003B1EC(void* bdat);
 // NB: canonical decl is u32(...) (CUIWindowManager.hpp); keep signature.
 // extern "C": must match the canonical extern "C" declarations (a C++-mangled
 // overload of the same name is an illegal-overload error when both are visible).
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, int index);
+extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, s32 index);
 void func_8013D07C(u32 obj, const char* str, int flag);
 int func_801413DC(u32 a, int b);
 void func_802919A0(void);

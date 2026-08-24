@@ -1189,11 +1189,59 @@ void func_801D8058(CItemBoxInfo* info, u32 arg2) {
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x49b, (char*)vals.v[3], 0);
 }
 #pragma pop
+// Retail func_801D80EC: item-box slot-list renderer. Rebuilds the per-slot
+// record (func_801D5C38), stamps the header pane with the formatted item
+// string, then per filled pair sets the row-name pane text and (unless mode
+// 0x9A==4) measures the row position and caches value/count/pos per slot.
+#pragma push
+#pragma optimize_for_size on
 void func_801D80EC(CItemBoxInfo* info, u16 arg2, void* arg3) {
-    void* layout = info->state.layout;
-    char* base = (char*)&lbl_eu_805063BC;
-    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x44f, base + 0x2aa, 0);
+    char buf[0x20];
+    void func_801D8B60(CItemBoxInfo*);
+    func_801D8B60(info);
+    func_801D85D8(info);
+    CItemBoxSlotRecord1 rec;
+    func_801D5C38(&rec, info, (void*)(u32)arg2, arg3);
+    // 0x2C-byte copy: retail mtctr 8-byte-pair loop (li r0,5 + 4-byte tail).
+    CItemBoxSlotRecord1 recCopy;
+    {
+        u32* s = (u32*)&rec - 1;
+        u32* d = (u32*)&recCopy - 1;
+        for (u32 k = 0; k < 5; k++) {
+            d[1] = s[1];
+            d[2] = s[2];
+            s += 2;
+            d += 2;
+        }
+        d[1] = s[1];
+    }
+    char* base = lbl_eu_805063BC;
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x4a7, (char*)recCopy.str, 0);
+    u8 count = recCopy.counter;
+    for (u8 i = 0; (u8)i < (u8)count; i++) {
+        sprintf(buf, base + 0x4b3, (u32)((u8)i * 2) + 0x1f);
+        func_80136B4C((nw4r::lyt::Layout*)info->state.layout, buf, (char*)recCopy.text[(u8)i], 0);
+        if (((u8*)info)[0x9A] != 4) {
+            nw4r::lyt::Pane* pane =
+                ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
+            nw4r::lyt::Pane* pane2 =
+                ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(base + 0x16e, true);
+            nw4r::math::VEC3 pos;
+            func_80137924(&pos, pane, pane2, (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10));
+            nw4r::math::VEC3 tmp = pos;
+            u16 pairCount = *(u16*)((u8*)&recCopy + 0x22 + (u8)i * 2);
+            if ((u8)i < 12) *(s16*)((u8*)info + 0xB0 + (u8)i * 2) = pairCount;
+            if ((u8)i < 12) ((u8*)info)[0x158 + (u8)i] = 9;
+            if ((u8)i < 12) copyVEC3((u8*)info + 0xC8 + (u8)i * 12, &tmp);
+        }
+        ml::FixStr<32> text(true);
+        sprintf(buf, base + 0x4c0, (u32)(u8)i + 0x1f);
+        char* label = func_80136190(base + 0x130, base + 0x139, 0x21);
+        text.format(base + 0x13e, recCopy.vals[(u8)i], label);
+        func_80136B4C((nw4r::lyt::Layout*)info->state.layout, buf, text.c_str(), 0);
+    }
 }
+#pragma pop
 void func_801D8318(CItemBoxInfo* info) {
     char* base = (char*)&lbl_eu_805063BC;
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, base + 0x25b, base + 0x2aa, 0);
@@ -4396,8 +4444,11 @@ void func_801E2928(CItemBoxInfo2* info, u16 arg1, void* arg2, u16 arg3) {
 // prologue merge) and keeps the mtctr copy loop for the 0x1C-byte record
 // copy, so it is wrapped in optimize_for_size like the other stmw-frame
 // functions in this unit.
+// dont_inline: retail keeps this out-of-line; MWCC would otherwise inline it
+// into func_801E14DC (forward declaration makes the body visible).
 #pragma push
 #pragma optimize_for_size on
+#pragma dont_inline on
 void func_801E2C5C(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
     func_801E3B9C(info);
     // Declaration order follows the retail frame layout (high -> low): record,
@@ -4572,6 +4623,7 @@ void func_801E3730(CItemBoxInfo2* info, u32 arg2) {
 #pragma push
 #pragma optimize_for_size on
 #pragma auto_inline off
+#pragma dont_inline on
 // Word-array view: assigning the union copies the whole object as one block
 // (reproduces the retail mtctr lwzu/stwu pair loop) instead of expanding
 // field-by-field.
@@ -4822,7 +4874,6 @@ void func_801E40E8(CItemBoxInfo2* info) {
     }
 }
 #pragma pop
-#pragma pop
 
 // Retail func_801E4194: ItemBox2 variant of func_801D8C0C (same body, same
 // stmw r22 frame). Loops 7 slots; below the active count it resolves the item
@@ -4838,7 +4889,6 @@ extern "C" void func_801E4194(CItemBoxInfo2* info) {
     char buf[0x20];
     u8 count = code80135FDC_getByte_64077();
     u32 idx;
-    s16 zero = 0;
     for (i = 0; i < 7; i++) {
         if ((u8)i >= count) {
             sprintf(bufElse, (char*)&lbl_eu_805063BC[0x161], (u8)i + 1);
@@ -4859,6 +4909,7 @@ extern "C" void func_801E4194(CItemBoxInfo2* info) {
                 func_80137C1C(pane2, 0x777777ffu);
                 // Selection colours: two 8-byte pairs built from the s16s at +0xA2
                 // and +0xAA.
+                s16 zero = 0;
                 s16 c0hi[2] = {zero, *(s16*)((u8*)info + 0xA2)};
                 s16 c0lo[2] = {zero, zero};
                 s16 c1hi[2] = {zero, *(s16*)((u8*)info + 0xAA)};
@@ -6158,8 +6209,8 @@ extern "C" void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg
 #pragma auto_inline off
 s32 func_801E9190(void* a, void* b, s32 arg2, void* d) {
     // Single-expression sum; builtin s32->f32 cast emits MWCC's
-    // 0x4330/xoris double-trick (pool cookie @19305 maps to lbl_eu_80668028
-    // via retail_reloc_map.json).
+    // 0x4330/xoris double-trick.
+    // NOTE: param-save copy pair order residual (see attempts.jsonl).
     s32 prod = arg2 * (s32)(func_801E9310(a, b, 0x52, d) + func_801E92B8(a, b) + 0x64);
     return (s32)(lbl_eu_80668040 * (f32)prod);
 }

@@ -741,24 +741,43 @@ int func_8004D2F8__13CActParamAnimFv(CActParamAnim* self, u32 param) {
 // Retail symbol is Fv but the body reads r4 (one extra param) - forced-name
 // free function. Gate: proceed only when the anim IS finished (owner non-null,
 // speed non-zero, and scaled remaining time below lbl_eu_80665ECC).
+// Open-item packet (best 85 mismatch / 75 structural / 10 reg-swap, decomp
+// 432B vs retail 420B, no name/type reloc drift - only presence drift from
+// the shifted call sites):
+// - Residual 1 (gate): retail emits fcmpo cr0,f0,f1 (const as frA) for the
+//   `field394 == lbl_eu_80665EA0` test with the mem load still scheduled
+//   first (lfs f1,0x394(r3)); every source form tried emits fcmpo cr0,f1,f0.
+//   Tried: natural/reversed operand order x positive/negative branch
+//   structure (if/else both polarities), nested ternary chain,
+//   short-circuit || assigned to a bool (that one changed size/hoisting and
+//   was worse), data-temp hoist in the small path (+16B, worse).
+// - Residual 2 (body): the same arg-materialization scheduler wall as
+//   func_8004BC94/D194/D950/E500 - retail copies param to r5 early,
+//   materializes child-data last (`addi r3,r3,0x10`) with member reloads off
+//   r31; our build keeps the view pointer in r3 and parks child-data in r5.
+// - Next experiments: none found within high-level C++; likely the shared
+//   MWCC float-compare canonicalization + scheduler tie-break walls.
 int func_8004D4AC__13CActParamAnimFv(CActParamAnim* self, u32 param) {
     CActParamAnimStateView* view = reinterpret_cast<CActParamAnimStateView*>(self);
     CActParamAnimOwnerIf* owner = view->owner08;
     u32 localSmall;
     u32 localBig;
 
+    // "Anim finished" gate: pass when owner is null, speed is zero, or the
+    // scaled remaining time is below the threshold.
     int ok;
-    if (owner != 0) {
-        if (lbl_eu_80665EA0 == view->field394) {
+    if (owner == 0) {
+        ok = 1;
+    } else {
+        if (view->field394 == lbl_eu_80665EA0) {
             ok = 1;
         } else {
             ok = (owner->field14 * view->field430) < lbl_eu_80665ECC;
         }
-    } else {
-        ok = 1;
     }
     if (!ok) return 0;
-    if ((owner->field04 & 0x2) != 0) return 0;
+    // Retail reloads the owner pointer here (second lwz from +0x8).
+    if ((view->owner08->field04 & 0x2) != 0) return 0;
 
     if (param == 0) return 1;
     if (param < 0x68) {

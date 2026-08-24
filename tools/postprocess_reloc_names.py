@@ -3164,6 +3164,25 @@ UNIT_RULES: dict[str, UnitRules] = {
         # nw4r data objects; strip whatever MWCC emits here.
         extern_data_sections=(".data", ".rodata", ".sdata", ".sdata2", ".bss", ".sbss"),
     ),
+    "ut_ArchiveFontBase.o": UnitRules(
+        # Retail vtable is the shared nw4r_data blob object lbl_eu_8056AFF0;
+        # the ctor stores that label explicitly (novtable pattern, see
+        # ut_ArchiveFontBase.cpp) so NOTHING references the TU-local __vt__
+        # copy MWCC still emits for the out-of-line dtor. Strip it.
+        extern_data_sections=(".data",),
+    ),
+    "ut_PackedFont.o": UnitRules(
+        # StreamingConstruct's switch jumptable ships from nw4r_data.s as the
+        # shared blob object jumptable_eu_8056B050 (retail asm: lis/addi at
+        # 8043078C/804307A0). Retarget the HA/LO pair onto it and strip the
+        # TU-local .data copy (the ctor vtable store already targets
+        # lbl_eu_8056B084 directly).
+        retarget_relocs=(
+            (".text", 0x3A6, "jumptable_eu_8056B050"),
+            (".text", 0x3BA, "jumptable_eu_8056B050"),
+        ),
+        extern_data_sections=(".data",),
+    ),
     "snd_MmlSeqTrack.o": UnitRules(
         # Vtable lives in nw4r_data.s; retail references it as lbl_eu_8056AAC0.
         exact_renames=(("__vt__Q44nw4r3snd6detail11MmlSeqTrack", "lbl_eu_8056AAC0"),),
@@ -3915,6 +3934,54 @@ UNIT_RULES: dict[str, UnitRules] = {
         extern_data_sections=(".rodata", ".sdata2"),
     ),
 
+    # g3d_restev: retail split is .text-only; all three constant tables live
+    # in nw4r_data.s: GXGetTevOrder's RAS->GXChannelID table (lbl_eu_8051D4A0,
+    # 8 x GXChannelID), CallDisplayList's per-stage DL sizes (lbl_eu_8051D4C0,
+    # 16 words) and GXSetTevOrder's channel->RAS table (lbl_eu_805690C0).
+    # The source tables carry the retail values, so rename the local symbols
+    # to the retail labels and strip .rodata/.sdata2; the .text relocs then
+    # resolve to the retail data object at link.
+    "g3d_restev.o": UnitRules(
+        exact_renames=(
+            ("r2c$9715", "lbl_eu_8051D4A0"),   # GXGetTevOrder r2c
+            ("dlsize$9750", "lbl_eu_8051D4C0"),  # CallDisplayList dlsize
+            ("r2c$9823", "lbl_eu_805690C0"),   # GXSetTevOrder r2c
+        ),
+        extern_data_sections=(".rodata", ".sdata2"),
+    ),
+
+    # g3d_resanmscn: retail split is .text-only; the five ResName pascal-string
+    # lookup keys ("LightSet(NW4R)"/"AmbLights(NW4R)"/"Lights(NW4R)"/
+    # "Fogs(NW4R)"/"Cameras(NW4R)") live in nw4r_data.s
+    # (lbl_eu_805690E0..lbl_eu_80569160). Source strings match retail; rename
+    # the file-static ResNameData symbols to the retail labels and strip .data
+    # so the .text relocs resolve to the retail data object at link.
+    "g3d_resanmscn.o": UnitRules(
+        exact_renames=(
+            (
+                "ResNameData_LightSet__Q34nw4r3g3d27@unnamed@g3d_resanmscn_cpp@",
+                "lbl_eu_805690E0",
+            ),
+            (
+                "ResNameData_AmbLights__Q34nw4r3g3d27@unnamed@g3d_resanmscn_cpp@",
+                "lbl_eu_80569100",
+            ),
+            (
+                "ResNameData_Lights__Q34nw4r3g3d27@unnamed@g3d_resanmscn_cpp@",
+                "lbl_eu_80569120",
+            ),
+            (
+                "ResNameData_Fog__Q34nw4r3g3d27@unnamed@g3d_resanmscn_cpp@",
+                "lbl_eu_80569140",
+            ),
+            (
+                "ResNameData_Camera__Q34nw4r3g3d27@unnamed@g3d_resanmscn_cpp@",
+                "lbl_eu_80569160",
+            ),
+        ),
+        extern_data_sections=(".data",),
+    ),
+
     # CStopwatchUtil: the retail split is .text-only; the entry table is
     # declared extern in source (lbl_eu_80657238, monolibdata1.s) and the
     # f32 literals / u32->f32 magic double pool into the TU's .sdata2 but are
@@ -3959,6 +4026,21 @@ UNIT_RULES: dict[str, UnitRules] = {
     # to the retail name (CDeviceVI.o thunk_456 pattern). Retail split sections
     # are align 8; MWCC emits 4 for these arrays.
     "CLibCriMoviePlay.o": UnitRules(
+        exact_renames=(
+            # asm void thunk mangles its () params onto the name
+            ("thunk_452_dt__Fv", "@452@__dt__16CLibCriMoviePlayFv"),
+        ),
+        # The TU compiles -RTTI on (8 functions already matched under these
+        # flags), so __RTTI__10IWorkEvent / __RTTI__11CWorkThread cannot be
+        # declared in source (MWCC implicitly declares those typeinfo names;
+        # an extern "C" decl collides, error 10322). The two typeinfo words
+        # in lbl_eu_8056D008 reference the foreign UNDEF lbl_eu_80663618
+        # placeholder (file bytes stay 0, matching retail) and are retargeted
+        # to the retail __RTTI__ names here (lyt_picture.o pattern).
+        retarget_relocs=(
+            (".data", 0xC8, "__RTTI__10IWorkEvent"),
+            (".data", 0xD0, "__RTTI__11CWorkThread"),
+        ),
         set_data_align=(
             (".rodata", 8),
             (".data", 8),
@@ -4386,48 +4468,84 @@ UNIT_RULES: dict[str, UnitRules] = {
     # silently shadow the real pool rule above (line ~475) and regress every
     # pool-coupled unit. CGXCache .data addend_patches live in the main rule.
     "snd_WsdPlayer.o": UnitRules(
+        # Retail split carries NO data: WsdPlayer vtable ships from
+        # nw4r_data.s @lbl_eu_8056ADA8 (referenced by __ct/__dt); the float
+        # pools live at the labels this unit's split asm actually references.
         pool_patterns=(
-            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
-            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
-            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
-            (struct.pack(">I", 0x42FE0000), "lbl_eu_80669EB8"),
-            (struct.pack(">I", 0x427C0000), "lbl_eu_80669EBC"),
-            (struct.pack(">I", 0x3C800000), "lbl_eu_80669FE8"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_8066A108"),
+            (struct.pack(">I", 0x00000000), "lbl_eu_8066A10C"),
+            (struct.pack(">I", 0x427C0000), "lbl_eu_8066A110"),
+            (struct.pack(">I", 0x3C800000), "lbl_eu_8066A114"),
+            (struct.pack(">I", 0x42FE0000), "lbl_eu_8066A118"),
+            (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_8066A120"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_8066A128"),
         ),
-        extern_data_sections=(".sdata2",),
+        exact_renames=(("__vt__Q44nw4r3snd6detail9WsdPlayer", "lbl_eu_8056ADA8"),),
+        extern_data_sections=(".sdata2", ".data"),
     ),
     "snd_Voice.o": UnitRules(
+        # Retail split carries NO data: Voice vtable @lbl_eu_8056AD4C and the
+        # CalcMixParam switch jump table @jumptable_eu_8056AD28 ship from
+        # nw4r_data.s; float pools at the labels this unit's split asm refs.
         pool_patterns=(
-            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
-            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
-            (struct.pack(">I", 0x3F000000), "lbl_eu_80669A84"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_8066A098"),
+            (struct.pack(">I", 0x00000000), "lbl_eu_8066A09C"),
             (struct.pack(">I", 0xBDF5C28F), "lbl_eu_8066A0A0"),
             (struct.pack(">I", 0x3F6147AE), "lbl_eu_8066A0A4"),
             (struct.pack(">I", 0x3F8F5C29), "lbl_eu_8066A0AC"),
             (struct.pack(">I", 0x3F59999A), "lbl_eu_8066A0B0"),
             (struct.pack(">I", 0x3E199998), "lbl_eu_8066A0B4"),
+            (struct.pack(">I", 0x40000000), "lbl_eu_8066A0B8"),
             (struct.pack(">I", 0x3EB33334), "lbl_eu_8066A0BC"),
         ),
-        extern_data_sections=(".sdata2",),
+        exact_renames=(
+            ("__vt__Q44nw4r3snd6detail5Voice", "lbl_eu_8056AD4C"),
+            # CalcMixParam switch table (MWCC @N numbering drifts; only .data
+            # pool symbol in the TU).
+            ("@12170", "jumptable_eu_8056AD28"),
+        ),
+        extern_data_sections=(".sdata2", ".data"),
     ),
     "snd_SoundArchivePlayer.o": UnitRules(
-        pool_patterns=(
-            (struct.pack(">I", 0x42FE0000), "lbl_eu_80669EB8"),
+        # Retail split carries NO data: the five vtables referenced by this
+        # TU's code (SoundArchivePlayer @lbl_eu_8056ABE0, SeqNoteOnCallback
+        # @lbl_eu_8056AC20, and MmlParser @lbl_eu_8056AAB0 whose CommandProc
+        # lives in this slice) ship from nw4r_data.s; the other MWCC-emitted
+        # vtables (base interfaces) are unreferenced here and die with the
+        # stripped .data.
+        exact_renames=(
+            ("__vt__Q34nw4r3snd18SoundArchivePlayer", "lbl_eu_8056ABE0"),
+            ("__vt__Q44nw4r3snd18SoundArchivePlayer17SeqNoteOnCallback", "lbl_eu_8056AC20"),
+            ("__vt__Q44nw4r3snd6detail9MmlParser", "lbl_eu_8056AAB0"),
         ),
-        extern_data_sections=(".sdata2",),
+        pool_patterns=(
+            (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_8066A050"),
+            (struct.pack(">I", 0x42FE0000), "lbl_eu_8066A048"),
+        ),
+        extern_data_sections=(".sdata2", ".data"),
     ),
     "snd_SeqTrack.o": UnitRules(
+        # Retail split carries NO data: SeqTrack vtable @lbl_eu_8056ABB0 and
+        # the ChannelCallback dispatch struct @lbl_eu_8051FF68 ship from
+        # nw4r_data.s; float pools at the labels this unit's split asm refs.
         pool_patterns=(
-            (struct.pack(">I", 0x00000000), "lbl_eu_80669A68"),
-            (struct.pack(">I", 0x3F800000), "lbl_eu_80669A6C"),
-            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_80669A78"),
-            (struct.pack(">I", 0xBF800000), "lbl_eu_80669BF0"),
-            (struct.pack(">I", 0x42FE0000), "lbl_eu_80669EB8"),
-            (struct.pack(">I", 0x427C0000), "lbl_eu_80669EBC"),
-            (struct.pack(">I", 0x3C000000), "lbl_eu_80669F54"),
-            (struct.pack(">I", 0x3C800000), "lbl_eu_80669FE8"),
+            (struct.pack(">I", 0x3F800000), "lbl_eu_8066A018"),
+            (struct.pack(">I", 0x42FE0000), "lbl_eu_8066A020"),
+            (struct.pack(">I", 0x3C000000), "lbl_eu_8066A024"),
+            (struct.pack(">I", 0x00000000), "lbl_eu_8066A01C"),
+            (struct.pack(">I", 0x427C0000), "lbl_eu_8066A028"),
+            (struct.pack(">I", 0xBF800000), "lbl_eu_8066A02C"),
+            (struct.pack(">I", 0x40000000), "lbl_eu_8066A030"),
+            (struct.pack(">II", 0x43300000, 0x00000000), "lbl_eu_8066A038"),
+            (struct.pack(">II", 0x43300000, 0x80000000), "lbl_eu_8066A040"),
         ),
-        extern_data_sections=(".sdata2",),
+        exact_renames=(("__vt__Q44nw4r3snd6detail8SeqTrack", "lbl_eu_8056ABB0"),),
+        data_pool_patterns=(
+            # ChannelCallback dispatch struct: sole .rodata pool symbol,
+            # content is all-zero file bytes (pointers are relocs).
+            (".rodata", struct.pack(">II", 0, 0), "lbl_eu_8051FF68"),
+        ),
+        extern_data_sections=(".sdata2", ".data", ".rodata"),
     ),
     "snd_SeqPlayer.o": UnitRules(
         pool_patterns=(
@@ -6110,7 +6228,14 @@ def retarget_reloc_to_symbol(path: Path, section: str, offset: int, new_name: st
     str_hoff = e_shoff + str_idx * e_shentsize
     str_off = struct.unpack_from(">I", data, str_hoff + 16)[0]
     str_size = struct.unpack_from(">I", data, str_hoff + 20)[0]
+    # Pad the append to a 4-byte multiple: later sections (.rela* etc.) are
+    # shifted by the raw append length, and an odd-length name would leave
+    # them misaligned (objdiff/the object crate rejects unaligned .rela).
+    # Strtab consumers only need NUL-terminated names; trailing NULs are
+    # harmless padding.
     name_bytes = new_name.encode("utf-8") + b"\0"
+    pad = (-len(name_bytes)) % 4
+    name_bytes += b"\0" * pad
     old_end = str_off + str_size
     data = data[:old_end] + name_bytes + data[old_end:]
     e_shoff = struct.unpack_from(">I", data, 32)[0]

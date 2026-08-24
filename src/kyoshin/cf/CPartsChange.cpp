@@ -737,18 +737,26 @@ void func_80193D48(CfPartsManager* mgr) {
     }
 }
 
-// Gimmick/actor object in the func_800B6BC8 list (func_80194264): vtable at
-// +0 with position getter at 0xAC and the f32 query at 0xE0.
-typedef void* (*CfElemVfACFn)(void* self);
-typedef f32 (*CfElemVfE0Fn)(void* self);
-struct CfPartsElemVt {
-    u32 _padAC[0xAC / 4];
-    CfElemVfACFn vfAC;    // 0xAC (position)
-    u32 _padB0[(0xE0 - 0xB0) / 4];
-    CfElemVfE0Fn vfE0;    // 0xE0 (float)
-};
+// Gimmick/actor object in the func_800B6BC8 list (func_80194264): a real
+// virtual class so MWCC emits the retail r12 vtable dispatch (cf::CfWalkObjAC
+// pattern). Position getter at 0xAC, f32 query at 0xE0.
 struct CfPartsElemObj {
-    CfPartsElemVt* vt;    // 0x00
+    virtual void _v008() = 0; virtual void _v00C() = 0; virtual void _v010() = 0; virtual void _v014() = 0;
+    virtual void _v018() = 0; virtual void _v01C() = 0; virtual void _v020() = 0; virtual void _v024() = 0;
+    virtual void _v028() = 0; virtual void _v02C() = 0; virtual void _v030() = 0; virtual void _v034() = 0;
+    virtual void _v038() = 0; virtual void _v03C() = 0; virtual void _v040() = 0; virtual void _v044() = 0;
+    virtual void _v048() = 0; virtual void _v04C() = 0; virtual void _v050() = 0; virtual void _v054() = 0;
+    virtual void _v058() = 0; virtual void _v05C() = 0; virtual void _v060() = 0; virtual void _v064() = 0;
+    virtual void _v068() = 0; virtual void _v06C() = 0; virtual void _v070() = 0; virtual void _v074() = 0;
+    virtual void _v078() = 0; virtual void _v07C() = 0; virtual void _v080() = 0; virtual void _v084() = 0;
+    virtual void _v088() = 0; virtual void _v08C() = 0; virtual void _v090() = 0; virtual void _v094() = 0;
+    virtual void _v098() = 0; virtual void _v09C() = 0; virtual void _v0A0() = 0; virtual void _v0A4() = 0;
+    virtual void _v0A8() = 0;
+    virtual void* vfAC() = 0;                // 0xAC (position)
+    virtual void _v0B0() = 0; virtual void _v0B4() = 0; virtual void _v0B8() = 0; virtual void _v0BC() = 0;
+    virtual void _v0C0() = 0; virtual void _v0C4() = 0; virtual void _v0C8() = 0; virtual void _v0CC() = 0;
+    virtual void _v0D0() = 0; virtual void _v0D4() = 0; virtual void _v0D8() = 0; virtual void _v0DC() = 0;
+    virtual f32 vfE0() = 0;                  // 0xE0 (float)
 };
 
 // Average position of the gimmick objects (func_800B6BC8 list) whose
@@ -769,15 +777,17 @@ int func_80194264(f32 f, ml::CVec3* out, const ml::CVec3* in) {
     while (node != list->mHead) {
         CfPartsElemObj* elem = (CfPartsElemObj*)node->mElem;
         node = node->mNext;
-        f32 radius = elem->vt->vfE0(elem);
-        ml::CVec3* pos = (ml::CVec3*)elem->vt->vfAC(elem);
+        f32 radius = elem->vfE0();
+        ml::CVec3* pos = (ml::CVec3*)elem->vfAC();
         if (func_800A5488(*in, *pos, &push, f, radius)) {
             nw4r::math::VEC3Add(*out, *out, push);
             count++;
         }
     }
     if (count > 0) {
-        // Named-magic u32->f32 conversion (lbl_eu_80667AF0 pool plant).
+        // Named-magic u32->f32 conversion: assembling the 0x43300000-biased
+        // double and subtracting the named sdata2 magic keeps the reloc on
+        // lbl_eu_80667AF0 (CSelShopWin convention).
         conv.w[1] = count ^ 0x80000000;
         conv.w[0] = 0x43300000;
         nw4r::math::VEC3Scale(*out, *out,

@@ -1463,18 +1463,21 @@ extern "C" int func_804C3F58(CScnEnvLgtCtrl* self, CScnEnvLgtCtrlLgtVec4* out,
 
 
 extern "C" __declspec(noinline) void func_804C406C(CScnEnvLgtCtrl* self, float f) {
-    // Shared loop cursor/counter: MWCC keeps these in two nonvolatile regs
-    // across all four sub-array walks.
-    u32 i;
+    // Three shared loop locals: p = entry cursor / byte offset, i = index /
+    // cached count / slot index, j = the two unconditional counters. i/j are
+    // signed so the gate walk compares with `cmp` (the count compares widen
+    // to unsigned because the counts are u32 fields).
     u8* p;
-    if (self->field_0x30 != NULL) {
+    int i;
+    int j;
+    if (self->field_0x30_chk != NULL) {
         // Four control sub-arrays (strides 0x30/0x3C/0x50/0x64); each entry
         // with bit 16 set at +0x04 receives the refresh dispatch. The count
         // is re-read from self+0x30 every iteration (the dispatch call may
         // alias the control blob).
-        for (i = 0,
-            p = self->field_0x2C +
-                ((CScnEnvLgtCtrlCtorCtl*)self->field_0x30)->mBaseA;
+        for (p = self->field_0x2C +
+                ((CScnEnvLgtCtrlCtorCtl*)self->field_0x30)->mBaseA,
+            i = 0;
              i < ((CScnEnvLgtCtrlCtorCtl*)self->field_0x30)->mCountA;
              i++, p += 0x30) {
             if (*(u32*)(p + 4) & 0x10000) {
@@ -1510,32 +1513,37 @@ extern "C" __declspec(noinline) void func_804C406C(CScnEnvLgtCtrl* self, float f
         }
     }
     if (self->alt2.field_0x40 != NULL) {
-        // Fog-gate entry array: unconditional dispatch per entry. The entry
-        // count is cached before the loop (retail holds it in r29).
-        u8* gateP = self->field_0x2C + self->alt2.field_0x40->mOffset;
-        u32 n = self->alt2.field_0x40->mCount;
-        for (i = 0; i < n; i++, gateP += 0x3c) {
-            func_804C4954(self, gateP);
+        // Fog-gate entry array: unconditional dispatch per entry; the count
+        // is cached in i before the loop.
+        j = 0;
+        p = self->field_0x2C + self->alt2.field_0x40->mOffset;
+        i = self->alt2.field_0x40->mCount;
+        for (; j < i; j++, p += 0x3c) {
+            func_804C4954(self, p);
         }
     }
     if (self->alt2.field_0x48 != NULL) {
         // Entry refresh over the 0xd8-stride array at +0x14; walked by byte
-        // offset against a freshly loaded +0x14 base each call. The slot
-        // index comes from +0xBE (+1) only when flag bit 0x10000000 is set.
-        int idx = 0;
-        if (self->field_0x04 & 0x10000000) {
-            idx = (int)self->lgt2.field_0xBE + 1;
+        // offset (kept in p) against a freshly loaded +0x14 base each call.
+        // The slot index comes from +0xBE (+1), kept in i, only when flag
+        // bit 0x8 is set.
+        i = 0;
+        if (self->field_0x04 & 0x8) {
+            i = self->lgt2.field_0xBE + 1;
         }
-        u32 off = 0;
-        for (i = 0; i < self->alt2.field_0x48->mCount; i++, off += 0xd8) {
-            func_804C7190((u8*)self->field_0x14_ptr + off,
-                          self->alt7.field_0xA8, idx, self->lgt2.field_0xC0);
+        j = 0;
+        p = (u8*)0;
+        for (; j < self->alt2.field_0x48->mCount; j++, p += 0xd8) {
+            func_804C7190((u8*)self->field_0x14_ptr + (u32)p,
+                          self->alt7.field_0xA8, i,
+                          self->lgt2.field_0xC0);
         }
     }
     // Advance the fog blend accumulator and clamp it to the shared ceiling.
-    f32 v = f * self->lgt2.field_0xC4 + self->lgt2.field_0xC0;
+    // Addend-first operand order puts the C0 load in f1 like retail.
+    f32 v = self->lgt2.field_0xC0 + f * self->lgt2.field_0xC4;
     self->lgt2.field_0xC0 = v;
-    if (v > lbl_eu_8066B014) {
+    if (lbl_eu_8066B014 < v) {
         self->lgt2.field_0xC0 = lbl_eu_8066B014;
     }
     self->field_0x04 |= 0x40;

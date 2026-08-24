@@ -1542,7 +1542,7 @@ class BdatFilePointer;
 extern "C" void* func_8003AA34();
 extern "C" void* getFP__FPCc(const char* name);
 extern "C" u32 getBdatStringColumnValue(void* file,
-                                                  const char* column, int index);
+                                                  const char* column, s32 index);
 extern "C" u32 func_8003B1EC(void* file);
 extern "C" u32 func_8003B41C(void* file);
 #pragma dont_inline on

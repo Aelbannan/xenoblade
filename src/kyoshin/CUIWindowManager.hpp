@@ -145,7 +145,7 @@ CTalkWindow* func_8012CC78(CProcess* parent, u32 arg1, u32 arg2,
 // value at the given row index. extern "C": must match the canonical
 // declaration in CfBdat.hpp/code_80135FDC.hpp (a C++-mangled overload of the
 // same name is an illegal-overload error when both headers are visible).
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, int index);
+extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
 
 // CMenuUpdate window factory (owning TU: kyoshin/menu/CMenuUpdate).
 IUIWindow* func_80142B4C(CProcess* self, CScn* pScene, int r5, int r6, int r7,

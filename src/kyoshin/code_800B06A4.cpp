@@ -333,7 +333,7 @@ check:
     if (cur != sentinel) goto loop;
     *(u32*)sentinel = sentinel;
 }
-#pragma inline
+// (no #pragma inline here: func_800B1954 must call this, not inline it)
 
 // Target: us-800b23c0 - func_800B1AF4: run the list/state init via
 // func_800B72DC, then clear the 0x100 mask bit via func_800B4278.
@@ -868,6 +868,9 @@ extern "C" DECOMP_DONT_INLINE void func_800B4368(UnkClass_805764CC* self, const 
 // List-walk search: start at *headPtr and skip nodes until the cursor equals
 // *valA or its +8 link equals *valB, advancing *headPtr past each skipped
 // node; store the found node to *out (retail func_800B4554).
+// auto_inline off: retail keeps this as a real call from func_800B6DD0.
+#pragma push
+#pragma auto_inline off
 extern "C" void func_800B4554(void** out, void** headPtr, void** valA, void** valB) {
     void* node;
     while ((node = *headPtr) != *valA && *(void**)((u8*)node + 8) != *valB) {
@@ -875,6 +878,7 @@ extern "C" void func_800B4554(void** out, void** headPtr, void** valA, void** va
     }
     *out = node;
 }
+#pragma pop
 
 // Null-guarded triple dispatch: fetch a handle, reset, then pass the reset
 // result + handle to the forwarder (retail: handle in r4).
@@ -1110,22 +1114,24 @@ extern "C" void* func_800B6DD0(void* reslist, void* obj) {
     if (obj == 0) {
         return 0;
     }
-    F8C0IteratorNode itA;      // retail sp+0x14
-    F8C0IteratorNode itB;      // retail sp+0x18
     void* found;               // retail sp+0x1c
+    F8C0IteratorNode itB;      // retail sp+0x18
+    F8C0IteratorNode itA;      // retail sp+0x14
+    F8C0IteratorNode itC;      // retail sp+0x10
+    F8C0IteratorNode itD;      // retail sp+0xC
     func_8007F8F4__Q22cf13CfGameManagerFv(&itA, (F8C0ListSource*)reslist);
     func_8007F8C0__Q22cf13CfGameManagerFv(&itB, (F8C0ListSource*)reslist);
     func_800B4554(&found, (void**)&itB, (void**)&itA, &obj);
-    F8C0IteratorNode itC;      // retail sp+0x10
     void* result;
-    func_8007F8F4__Q22cf13CfGameManagerFv(&itC, (F8C0ListSource*)reslist);
     result = 0;
+    func_8007F8F4__Q22cf13CfGameManagerFv(&itC, (F8C0ListSource*)reslist);
     if (func_8007F900__Q22cf13CfGameManagerFv((const u32*)&found, (const u32*)&itC)) {
-        F8C0IteratorNode itD;  // retail sp+0xC
         func_8007F8F4__Q22cf13CfGameManagerFv(&itD, (F8C0ListSource*)reslist);
-        func_800B182C(&found);
-        if (func_8007F900__Q22cf13CfGameManagerFv((const u32*)&found, (const u32*)&itD)) {
-            result = *func_8007F8D0__Q22cf13CfGameManagerFv(&found);
+        // func_800B182C hands back the node pointer; keeping it in a variable
+        // lets MWCC pass it to func_8007F900 in r3 without recomputing &found.
+        void* advanced = func_800B182C(&found);
+        if (func_8007F900__Q22cf13CfGameManagerFv((const u32*)advanced, (const u32*)&itD)) {
+            result = *func_8007F8D0__Q22cf13CfGameManagerFv((F8C0IteratorNode*)&found);
         }
     }
     if (result != 0 && func_800B64AC(result)) {
@@ -1359,38 +1365,49 @@ extern "C" void func_800B0B40(void* a);
 extern "C" void func_800B4278(void* object, u32 mask);
 extern float lbl_eu_80663EDC;
 extern u32 lbl_eu_80663EE4;
+#pragma push
+#pragma auto_inline off
+#pragma dont_inline on
+// us-800b2220: clear every event-mask bit, drain all reslists, reset HUD
+// state, then walk the C48 reslist nulling each entry.
 extern "C" void func_800B1954(UnkClass_805764CC* self) {
-    func_800B4278(self, 0xFFFFFDFF); // retail: lis 1, subi 0x201 = 0x0000FDFF; li-form here aligns rest better (OPEN ITEM)
-    func_800B4278(self, 0xFFFFFFFF);
-    func_800B1A5C((void*)((u8*)self + 0xc28));
-    func_800B1A5C((void*)((u8*)self + 0xc08));
-    func_800B1A5C((void*)((u8*)self + 0xbc8));
-    func_800B1A5C((void*)((u8*)self + 0xbe8));
-    func_800B1A5C((void*)((u8*)self + 0xb88));
-    func_800B1A5C((void*)((u8*)self + 0xb68));
-    func_800B1A5C((void*)((u8*)self + 0xb48));
-    func_800B1A5C((void*)((u8*)self + 0xb28));
-    func_800B1A5C((void*)((u8*)self + 0xba8));
+    // Retail builds 0xFDFF as lis 1 / subi 0x201: write it as the subtraction.
+    func_800B4278(self, 0x10000 - 0x201);
+    func_800B4278(self, -1);
+    func_800B1A5C(&self->field_0xC28);
+    func_800B1A5C(&self->field_0xC08);
+    func_800B1A5C(&self->field_0xBC8);
+    func_800B1A5C(&self->field_0xBE8);
+    func_800B1A5C(&self->field_0xB88);
+    func_800B1A5C(&self->field_0xB68);
+    func_800B1A5C(&self->field_0xB48);
+    func_800B1A5C(&self->field_0xB28);
+    func_800B1A5C(&self->field_0xBA8);
     func_800B1A5C(self);
-    func_800B0B40((void*)((u8*)self + 0x20));
+    func_800B0B40(&self->field_0x20);
     self->field_0xD0E = 0;
     self->field_0xD10 = 0;
+    lbl_eu_80663EDC = lbl_eu_806669D8;
     self->field_0xD04 = 0;
-    lbl_eu_80663EDC = 0.0f;
     lbl_eu_80663EE4 = 0;
-    u32 sbA[4], sbB[4], sbC[4];
-    func_800B1A8C(sbA, (void*)((u8*)self + 0xc48));
-    for (;;) {
-        func_800B1ACC(sbB, (void*)((u8*)self + 0xc48));
-        if (func_800B1AD8(sbA, sbB) != 0) {
-            void* item = func_800B1A9C(sbA);
-            *(u32*)item = 0;
-            func_800B1AA8(sbC, sbA, 0);
-        } else {
-            break;
-        }
+    // Scalar iterator slots (retail sp+0x10 / sp+0x8 / sp+0xC); MWCC colors
+    // scalars in reverse declaration order.
+    u32 sbA;
+    u32 sbC;
+    u32 sbB;
+    func_800B1A8C(&sbA, &self->field_0xC48);
+    // check-first loop shape: retail tests iterator-end before the body.
+    goto check;
+loop:
+    *(u32*)func_800B1A9C(&sbA) = 0;
+    func_800B1AA8(&sbC, &sbA, 0);
+check:
+    func_800B1ACC(&sbB, &self->field_0xC48);
+    if (func_800B1AD8(&sbA, &sbB) != 0) {
+        goto loop;
     }
 }
+#pragma pop
 // Target: us-800b6fb8 - func_800B66BC (guard-chain + event queue dispatch)
 extern "C" void func_800B655C(UnkClass_805764CC* self, const F8C0ListSource* list);
 extern "C" void* func_800B67EC();

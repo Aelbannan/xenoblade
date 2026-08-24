@@ -813,6 +813,23 @@ struct CFloorMapPaneFlag {
     u8 mFlag; // +0xBB
 };
 
+// Translate-x/y view of an nw4r::lyt::Pane (mTranslate at +0x2C is protected;
+// retail rewrites only x/y of the marker picture, leaving z untouched).
+struct CFloorMapPaneTransXY {
+    u8 _00[0x2C];
+    f32 transX; // +0x2C
+    f32 transY; // +0x30
+};
+
+// Rotate view of an nw4r::lyt::Pane (mRotate at +0x38; retail stores the
+// current-position marker's zoom scale into rotate.z).
+struct CFloorMapPaneRotate {
+    u8 _00[0x38];
+    f32 rotX; // +0x38
+    f32 rotY; // +0x3C
+    f32 rotZ; // +0x40
+};
+
 // C-ABI helpers used by func_80245950 (defined in code_80135FDC.cpp).
 extern "C" int func_8013AC3C(u8 max, u8 count, u32 off);
 extern "C" void func_80139A18(void*, void*, void*, void*);

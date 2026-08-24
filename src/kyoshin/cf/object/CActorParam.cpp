@@ -99,7 +99,7 @@ namespace cf {
         *(u32*)((u32)unk3298.unk8 + 8) = 0;
         unk3358 = 0;
         unk335A = 2;
-        
+
         float idk = 2.0f * (ml::pi/3.0f);
 
         unk3364 = 0;
@@ -306,7 +306,7 @@ void* cf::CActorParam::CActorParam_UnkVirtualFunc149() {
         if (p->unk14 != 0) {
             float sum = p->unk4 + (p->unk10 + p->unk0);
             double d;
-            if (sum > lbl_eu_806677E4) {
+            if (lbl_eu_806677E4 < sum) {
                 d = (double)sum + lbl_eu_80667848;
             } else {
                 d = (double)sum + lbl_eu_80667850;
@@ -321,7 +321,7 @@ void* cf::CActorParam::CActorParam_UnkVirtualFunc149() {
         if (e2->unk14 != 0) {
             float sum2 = e2->unk4 + (e2->unk10 + e2->unk0);
             double d2;
-            if (sum2 > lbl_eu_806677E4) {
+            if (lbl_eu_806677E4 < sum2) {
                 d2 = (double)sum2 + lbl_eu_80667848;
             } else {
                 d2 = (double)sum2 + lbl_eu_80667850;
@@ -353,7 +353,7 @@ void* cf::CActorParam::CActorParam_UnkVirtualFunc150() {
         if (p->unk14 != 0) {
             float sum = p->unk4 + (p->unk10 + p->unk0);
             double d;
-            if (sum > lbl_eu_806677E4) {
+            if (lbl_eu_806677E4 < sum) {
                 d = (double)sum + lbl_eu_80667848;
             } else {
                 d = (double)sum + lbl_eu_80667850;
@@ -368,7 +368,7 @@ void* cf::CActorParam::CActorParam_UnkVirtualFunc150() {
         if (e2->unk14 != 0) {
             float sum2 = e2->unk4 + (e2->unk10 + e2->unk0);
             double d2;
-            if (sum2 > lbl_eu_806677E4) {
+            if (lbl_eu_806677E4 < sum2) {
                 d2 = (double)sum2 + lbl_eu_80667848;
             } else {
                 d2 = (double)sum2 + lbl_eu_80667850;

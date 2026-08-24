@@ -356,8 +356,8 @@ extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const cha
     BdatHeader* hdr = static_cast<BdatHeader*>(bdat);
     char* base = reinterpret_cast<char*>(hdr);
     col1Arg = col1;
-    rowArg = row;
     col2Arg = col2;
+    rowArg = row;
     rowBase = hdr->rowBase;
     maxRow = hdr->maxRow;
     rowIdx = rowArg - rowBase;
@@ -380,13 +380,10 @@ extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const cha
     }
     u16 col2Rel = static_cast<BdatColEntry*>(col2Entry)->colHdrRel;
     flagHdr = reinterpret_cast<BdatColHdrFlag*>(base + col2Rel);
-    if (flagHdr->type != 3) {
-        return 0;
-    }
     u16 colEntryDiff =
         static_cast<u16>(reinterpret_cast<uintptr_t>(col1Entry) -
                          reinterpret_cast<uintptr_t>(hdr));
-    if (colEntryDiff != flagHdr->colEntryRel) {
+    if (flagHdr->type != 3 || colEntryDiff != flagHdr->colEntryRel) {
         return 0;
     }
     val = 0;
@@ -532,6 +529,7 @@ extern "C" int getVal(VMThread* t, void* bdat){
     u32 dataSlot;
     u32 type;
     VMArg result;
+    u32 value;
 
     thread = t;
     bdatTbl = bdat;
@@ -539,7 +537,8 @@ extern "C" int getVal(VMThread* t, void* bdat){
     idx = vmArgIntGet(3, vmArgPtrGet(thread, 2));
     dataSlot = getBdatStringColumnValue(bdatTbl, col, idx);
     type = func_8003B204(bdatTbl, col);
-    func_8003B800(&result, &dataSlot, type);
+    value = dataSlot;
+    func_8003B800(&result, &value, type);
     vmRetValSet(thread, &result);
     return 1;
 }
@@ -549,12 +548,13 @@ extern "C" int getVal(VMThread* t, void* bdat){
 extern "C" int getArrayVal(VMThread* t, void* bdat){
     VMThread* thread;
     void* bdatTbl;
-    const char* col;
     s32 row;
+    const char* col;
     s32 index;
     u32 dataSlot;
     u32 type;
     VMArg result;
+    u32 value;
 
     thread = t;
     bdatTbl = bdat;
@@ -563,7 +563,8 @@ extern "C" int getArrayVal(VMThread* t, void* bdat){
     index = vmArgIntGet(4, vmArgPtrGet(thread, 3));
     dataSlot = func_8003AD98(bdatTbl, col, row, index);
     type = func_8003B204(bdatTbl, col);
-    func_8003B800(&result, &dataSlot, type);
+    value = dataSlot;
+    func_8003B800(&result, &value, type);
     vmRetValSet(thread, &result);
     return 1;
 }

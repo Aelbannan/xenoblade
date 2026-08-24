@@ -898,7 +898,7 @@ extern "C" void** func_8007F8D0__Q22cf13CfGameManagerFv(F8C0IteratorNode* iterat
 extern "C" void func_8007F8DC__Q22cf13CfGameManagerFv(F8C0IteratorNode* destination, F8C0IteratorNode* source, u32 unused);
 extern "C" void func_8007F8F4__Q22cf13CfGameManagerFv(F8C0IteratorNode* destination, const F8C0ListSource* source);
 extern "C" bool func_8007F900__Q22cf13CfGameManagerFv(const u32* first, const u32* second);
-extern "C" void func_800B182C(void* node);
+extern "C" void* func_800B182C(void* node);
 extern "C" u16 func_8007F8B8__Q22cf13CfGameManagerFv(void* object);
 
 // Imports used by func_800B70FC / func_800B7214 (retail symbol names).

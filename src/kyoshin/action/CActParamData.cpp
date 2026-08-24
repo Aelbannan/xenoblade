@@ -549,7 +549,67 @@ int func_80054438(CActParamData* self, void* data, int sel, u32 gate) {
     }
     return 0;
 }
-void func_80054614() {}
+extern "C" void func_80054D3C(void* self, void* member);
+extern "C" u32 func_80054614(u8* dataB, u32* out, u32 paramW, u32 initFlag, u32 gate) {
+    CActParamData* data = reinterpret_cast<CActParamData*>(dataB);
+    void* rec = reinterpret_cast<void*>(paramW);
+    u8* B = dataB;
+    if (*(u8*)(B + 0x216) == 0) {
+        *(u8*)(B + 0x216) = (u8)initFlag;
+    }
+    int active = *(u8*)(B + 0x216);
+    active |= (*(u32*)(B + 0x260) & 0x8000) >> 15;
+    active = (active != 0);
+    *(u8*)(B + 0x216) = (u8)active;
+    if (paramW == 0 || *(void**)(B + 8) == 0) {
+        *out = -1;
+        return 0;
+    }
+    if (*(u16*)((char*)rec + 2) == 0) {
+        *out = -1;
+        return 0;
+    }
+    int flag28 = 0;
+    if (((reinterpret_cast<u32*>(rec))[3] & 0x400) != 0 && gate == 0 && active != 0) {
+        flag28 = 1;
+    }
+    if (func_80054438(data, rec, flag28, 1) != 0) {
+        if (flag28 != 0) {
+            *(f32*)(B + 0x330) = lbl_eu_80665F80;
+            *(f32*)(B + 0x334) = lbl_eu_80665F80;
+            *(u32*)(B + 0x338) = 0;
+        } else {
+            *(f32*)(B + 0x2B0) = lbl_eu_80665F80;
+            *(f32*)(B + 0x2B4) = lbl_eu_80665F80;
+            *(u32*)(B + 0x2B8) = 0;
+        }
+        *out = -1;
+        return 0;
+    }
+    if (flag28 != 0) {
+        func_80054D3C(data, B + 0x2E0);
+    }
+    int ret = (int)(intptr_t)func_800547D4(
+        reinterpret_cast<ActParamT1Host*>(data),
+        reinterpret_cast<ActParamT1Dst*>(B + 0x2E0),
+        reinterpret_cast<ActParamT1Src*>(rec));
+    *out = (u32)ret;
+    if (ret >= 0) {
+        *(u8*)(B + 0x214) = 1;
+        return 1;
+    }
+    func_80054D3C(data, B + 0x260);
+    if ((((reinterpret_cast<u32*>(rec))[3] & 0x800) == 0)) {
+        func_80054D3C(data, B + 0x2E0);
+    }
+    ret = (int)(intptr_t)func_800547D4(
+        reinterpret_cast<ActParamT1Host*>(data),
+        reinterpret_cast<ActParamT1Dst*>(B + 0x260),
+        reinterpret_cast<ActParamT1Src*>(rec));
+    *out = (u32)ret;
+    *(u8*)(B + 0x214) = 0;
+    return 0;
+}
 
 // Per-frame update of both sub-object float blocks: shift current into the
 // shadow slot, accumulate the entry's threshold float, then recompute the
@@ -1277,38 +1337,51 @@ int func_80056EC8(u32 flags, ActParamHost5* host, ActParamVals5* vals, ActParamS
     if ((flags & 8) == 0) {
         return 0;
     }
-    float t = static_cast<float>(src->mShort08);
-    if (t == lbl_eu_80665F80) {
-        static_cast<ActParamObj5*>(host->mObj04)->notify14();
-    }
     int fire;
-    if (vals->mFloat50 <= lbl_eu_80665F80 && vals->mFloat54 >= lbl_eu_80665F78) {
-        // Range already satisfied: never fire.
-        fire = 0;
-        goto invoke;
+    float t = static_cast<float>(src->mShort08);
+    if (lbl_eu_80665F80 == t) {
+        // Retail keeps t live in f1 across this call: the callback RETURNS
+        // the replacement time value.
+        t = static_cast<ActParamObj5f*>(host->mObj04)->notify14();
+    }
+    if (vals->mFloat50 <= lbl_eu_80665F80) {
+        if (vals->mFloat54 >= lbl_eu_80665F78) {
+            // Range already satisfied: never fire.
+            fire = 0;
+            goto invoke;
+        }
     }
     fire = 1;
     {
-        int hit;
-        if (t <= vals->mFloat54 && t > vals->mFloat50 &&
-            static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80) {
-            hit = 1;
-        } else {
-            hit = 0;
+        int pass = 0;
+        if (t <= vals->mFloat54) {
+            int ok = (t > vals->mFloat50) &&
+                     (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80);
+            if (ok != 0) {
+                pass = 1;
+            }
         }
-        if (hit == 0) {
-            // Edge case: t exactly on both bounds while the entry threshold
-            // is crossed and the fire count is still zero.
-            if (t == vals->mFloat54 && t == vals->mFloat50 &&
-                static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80 &&
-                vals->mField58 < 1) {
-                hit = 1;
-            } else {
-                hit = 0;
+        if (pass != 0) {
+            goto invoke;
+        }
+        // Edge case: t exactly on both bounds while the entry threshold
+        // is crossed and the fire count is still zero.
+        pass = 0;
+        int edge = 0;
+        if (t == vals->mFloat54) {
+            int hit = (t == vals->mFloat50) &&
+                      (static_cast<ActParamData388*>(host->mObj04)->mFloat388 > lbl_eu_80665F80);
+            if (hit != 0) {
+                pass = 1;
             }
-            if (hit == 0) {
-                fire = 0;
+        }
+        if (pass != 0) {
+            if (vals->mField58 < 1) {
+                edge = 1;
             }
+        }
+        if (edge == 0) {
+            fire = 0;
         }
     }
 invoke:
@@ -1316,13 +1389,16 @@ invoke:
         if (src->mShort08 == 0) {
             return 0;
         }
+        return 0;
     } else {
         if (host->mCb24 != 0) {
             reinterpret_cast<ActParamCb18*>(host->mCb24)->invoke18(host->mObj04, src);
         }
     }
     return 0;
-}extern "C" void func_80057084() {}
+}
+
+extern "C" void func_80057084() {}
 
 // Bit-2-gated: store the selector from src+0x08 into dst+0x1C, then walk the
 // node chain table->mNodes[sel] until a type-1 terminator; a type-0 node's

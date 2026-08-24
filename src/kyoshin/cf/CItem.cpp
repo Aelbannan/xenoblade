@@ -1028,14 +1028,12 @@ void func_8015720C(u32 v, u32 set) {
 // the flag's state (set path: the bit was clear; clear path: it was set),
 // 0 for an out-of-range kind or an invalid flag id.
 u32 func_8015730C(u32 v, u32 set, u32 kind) {
-    u32 result;
+    u32 result = 0;
     u32 bit;
-    // Two goto guards: retail emits two cmplwi branches to a shared exit
-    // (nested/&& forms fold to subi+cmplwi, gotos do not). Initializing
-    // `result` between the checks blocks the fold.
+    // Mixed-form guards: keeps two separate cmplwi branches to the shared
+    // exit without folding into subi+cmpli.
     if (v < 1) goto done;
-    result = 0;
-    if (v > 0xb) goto done;
+    if (0xb < v) goto done;
     // Retail computes the shift AFTER testing `set` (cmpwi r4,0 sits before
     // li r4,1/slw), reusing the set argument register for the constant.
     bit = 1u << v;
@@ -1048,36 +1046,36 @@ u32 func_8015730C(u32 v, u32 set, u32 kind) {
             *w = *w | bit;
             goto done;
         }
-        // Halfword arms: the test uses the full-width bit, but the merge
-        // truncates it to 16 bits first (retail clrlwi r3,r3,16 before or).
+        // Volatile: retail re-reads the halfword after the test branch (no
+        // read-modify-write folding through the pointer).
         if (kind == 4) {
-            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
-            if ((blk->mFlag14 & bit) == 0) result = 1;
-            blk->mFlag14 = blk->mFlag14 | (u16)bit;
+            volatile u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag14;
+            if ((*w & bit) == 0) result = 1;
+            *w = *w | (u16)bit;
             goto done;
         }
         if (kind == 5) {
-            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
-            if ((blk->mFlag16 & bit) == 0) result = 1;
-            blk->mFlag16 = blk->mFlag16 | (u16)bit;
+            volatile u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag16;
+            if ((*w & bit) == 0) result = 1;
+            *w = *w | (u16)bit;
             goto done;
         }
         if (kind == 6) {
-            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
-            if ((blk->mFlag18 & bit) == 0) result = 1;
-            blk->mFlag18 = blk->mFlag18 | (u16)bit;
+            volatile u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag18;
+            if ((*w & bit) == 0) result = 1;
+            *w = *w | (u16)bit;
             goto done;
         }
         if (kind == 7) {
-            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
-            if ((blk->mFlag1A & bit) == 0) result = 1;
-            blk->mFlag1A = blk->mFlag1A | (u16)bit;
+            volatile u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag1A;
+            if ((*w & bit) == 0) result = 1;
+            *w = *w | (u16)bit;
             goto done;
         }
         if (kind == 8) {
-            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
-            if ((blk->mFlag1C & bit) == 0) result = 1;
-            blk->mFlag1C = blk->mFlag1C | (u16)bit;
+            volatile u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag1C;
+            if ((*w & bit) == 0) result = 1;
+            *w = *w | (u16)bit;
             goto done;
         }
     } else {
@@ -1088,35 +1086,36 @@ u32 func_8015730C(u32 v, u32 set, u32 kind) {
             goto done;
         }
         // Clear-path halfword arms: ~bit via nor then masked to 16 bits
-        // (retail nor r3,r3,r3 + clrlwi r3,r3,16).
+        // (retail nor r3,r3,r3 + clrlwi r3,r3,16). Volatile keeps the
+        // post-branch reload.
         if (kind == 4) {
-            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
-            if ((blk->mFlag14 & bit) != 0) result = 1;
-            blk->mFlag14 = blk->mFlag14 & (u16)~bit;
+            volatile u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag14;
+            if ((*w & bit) != 0) result = 1;
+            *w = *w & (u16)~bit;
             goto done;
         }
         if (kind == 5) {
-            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
-            if ((blk->mFlag16 & bit) != 0) result = 1;
-            blk->mFlag16 = blk->mFlag16 & (u16)~bit;
+            volatile u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag16;
+            if ((*w & bit) != 0) result = 1;
+            *w = *w & (u16)~bit;
             goto done;
         }
         if (kind == 6) {
-            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
-            if ((blk->mFlag18 & bit) != 0) result = 1;
-            blk->mFlag18 = blk->mFlag18 & (u16)~bit;
+            volatile u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag18;
+            if ((*w & bit) != 0) result = 1;
+            *w = *w & (u16)~bit;
             goto done;
         }
         if (kind == 7) {
-            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
-            if ((blk->mFlag1A & bit) != 0) result = 1;
-            blk->mFlag1A = blk->mFlag1A & (u16)~bit;
+            volatile u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag1A;
+            if ((*w & bit) != 0) result = 1;
+            *w = *w & (u16)~bit;
             goto done;
         }
         if (kind == 8) {
-            CItemBlockCounters* blk = (CItemBlockCounters*)lbl_eu_806641B8;
-            if ((blk->mFlag1C & bit) != 0) result = 1;
-            blk->mFlag1C = blk->mFlag1C & (u16)~bit;
+            volatile u16* w = &((CItemBlockCounters*)lbl_eu_806641B8)->mFlag1C;
+            if ((*w & bit) != 0) result = 1;
+            *w = *w & (u16)~bit;
             goto done;
         }
     }
@@ -1670,10 +1669,14 @@ extern "C" __declspec(noinline) CItemExt* func_80158420(u32 a, s16* pOut1, u32 b
         if (t2.h[0] != 0) {
             s32 n, stride;
             CItemExt* list = (CItemExt*)func_801579C4(t2.h[0], &n, &stride);
-            if (list != 0) {
-                for (s32 i = 0; i < n; i++) {
-                    CItemExt* r = (CItemExt*)((u8*)list + i * stride);
-                    if (a == (r->field_00 >> 20)) {
+            if (list != 0 && n > 0) {
+                // Scan the block for a record whose family id (top 12 bits
+                // of the packed word) matches.
+                CItemExt* r;
+                s32 i;
+                for (i = 0; i < n; i++) {
+                    r = (CItemExt*)((u8*)list + i * stride);
+                    if ((r->field_00 >> 20) == a) {
                         result = r;
                         break;
                     }
@@ -1695,8 +1698,10 @@ extern "C" __declspec(noinline) CItemExt* func_80158420(u32 a, s16* pOut1, u32 b
                 count = 99;
                 *pOut2 += (u32)rem;
             } else {
-                count = b + result->field_06;
+                // Store first: retail re-reads field_06 after the *pOut2
+                // update (the pointer store may alias the record byte).
                 *pOut2 += b;
+                count = b + result->field_06;
             }
         } else {
             count = 1;

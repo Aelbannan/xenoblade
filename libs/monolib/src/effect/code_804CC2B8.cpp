@@ -1282,10 +1282,8 @@ public:
 // and feeds each piece to the target through its virtual interface.
 void func_804CFBC8(EffectScene* self, CFBC8Target* obj, const ml::CMat34* a, Vec* d,
                    const f32* c, bool flag) {
-    const f32 zero = lbl_eu_8066B0DC;
-    const f32 one = lbl_eu_8066B0D8;
-    obj->setFlag(c[3] != zero);
-    obj->setAlpha(one - c[3]);
+    obj->setFlag(c[3] != lbl_eu_8066B0DC);
+    obj->setAlpha(lbl_eu_8066B0D8 - c[3]);
     obj->unk1C(flag);
 
     Vec trans;
@@ -1295,20 +1293,25 @@ void func_804CFBC8(EffectScene* self, CFBC8Target* obj, const ml::CMat34* a, Vec
     *obj->getPosSlot() = trans;
 
     ml::CMat34 m = *a;
-    // Only normalize when every element except m[0][0] matches the identity
-    // matrix within eps.
-    bool isUnit = ((f32)__fabs(m.m[0][1] - ml::CMat34::identity.m[0][1]) <= lbl_eu_8066A208 &&
-                   (f32)__fabs(m.m[0][2] - ml::CMat34::identity.m[0][2]) <= lbl_eu_8066A208 &&
-                   (f32)__fabs(m.m[0][3] - ml::CMat34::identity.m[0][3]) <= lbl_eu_8066A208 &&
-                   (f32)__fabs(m.m[1][0] - ml::CMat34::identity.m[1][0]) <= lbl_eu_8066A208 &&
-                   (f32)__fabs(m.m[1][1] - ml::CMat34::identity.m[1][1]) <= lbl_eu_8066A208 &&
-                   (f32)__fabs(m.m[1][2] - ml::CMat34::identity.m[1][2]) <= lbl_eu_8066A208 &&
-                   (f32)__fabs(m.m[1][3] - ml::CMat34::identity.m[1][3]) <= lbl_eu_8066A208 &&
-                   (f32)__fabs(m.m[2][0] - ml::CMat34::identity.m[2][0]) <= lbl_eu_8066A208 &&
-                   (f32)__fabs(m.m[2][1] - ml::CMat34::identity.m[2][1]) <= lbl_eu_8066A208 &&
-                   (f32)__fabs(m.m[2][2] - ml::CMat34::identity.m[2][2]) <= lbl_eu_8066A208 &&
-                   (f32)__fabs(m.m[2][3] - ml::CMat34::identity.m[2][3]) <= lbl_eu_8066A208);
-    if (isUnit) {
+    // Only normalize when every element matches the identity matrix within
+    // eps. Each conjunct gets its own named bool so MWCC keeps a dedicated
+    // flag register per step (matches retail's pre-zeroed flag-register chain).
+    const f32 eps = lbl_eu_8066A208;
+    bool eq00 = (f32)__fabs(m.m[0][0] - ml::CMat34::identity.m[0][0]) <= eps;
+    bool eq01 = eq00 && (f32)__fabs(m.m[0][1] - ml::CMat34::identity.m[0][1]) <= eps;
+    bool eq02 = eq01 && (f32)__fabs(m.m[0][2] - ml::CMat34::identity.m[0][2]) <= eps;
+    bool eq03 = eq02 && (f32)__fabs(m.m[0][3] - ml::CMat34::identity.m[0][3]) <= eps;
+    bool eq10 = eq03 && (f32)__fabs(m.m[1][0] - ml::CMat34::identity.m[1][0]) <= eps;
+    bool eq11 = eq10 && (f32)__fabs(m.m[1][1] - ml::CMat34::identity.m[1][1]) <= eps;
+    bool eq12 = eq11 && (f32)__fabs(m.m[1][2] - ml::CMat34::identity.m[1][2]) <= eps;
+    bool eq13 = eq12 && (f32)__fabs(m.m[1][3] - ml::CMat34::identity.m[1][3]) <= eps;
+    bool eq20 = eq13 && (f32)__fabs(m.m[2][0] - ml::CMat34::identity.m[2][0]) <= eps;
+    bool eq21 = eq20 && (f32)__fabs(m.m[2][1] - ml::CMat34::identity.m[2][1]) <= eps;
+    bool eq22 = eq21 && (f32)__fabs(m.m[2][2] - ml::CMat34::identity.m[2][2]) <= eps;
+    bool eq23 = eq22 && (f32)__fabs(m.m[2][3] - ml::CMat34::identity.m[2][3]) <= eps;
+    if (eq23) {
+        const f32 zero = lbl_eu_8066B0DC;
+        const f32 one = lbl_eu_8066B0D8;
         // Normalize each column (guarding degenerate/negative squared lengths).
         for (s32 i = 0; i < 3; i++) {
             Vec col;
@@ -1331,9 +1334,17 @@ void func_804CFBC8(EffectScene* self, CFBC8Target* obj, const ml::CMat34* a, Vec
         }
     }
     // Wrap the Z translation component back into range when it escapes
-    // [-B120, one]: truncate to integer and rescale by (1 - eps).
-    if (m.m[2][3] > one || m.m[2][3] < lbl_eu_8066B120) {
-        m.m[2][3] = (one - lbl_eu_8066A208) * (f32)(s32)m.m[2][3];
+    // [-B120, 1]: truncate to integer and rescale by (1 - eps). The explicit
+    // union round-trip mirrors retail's fctiwz + 0x4330000080000000 magic
+    // conversion through the shared B0F0 constant.
+    if (m.m[2][3] > lbl_eu_8066B0D8 || m.m[2][3] < lbl_eu_8066B120) {
+        union {
+            f64 d;
+            u32 w[2];
+        } conv;
+        conv.w[0] = 0x43300000u;
+        conv.w[1] = (u32)(s32)m.m[2][3] ^ 0x80000000u;
+        m.m[2][3] = (lbl_eu_8066B0D8 - lbl_eu_8066A208) * (f32)(conv.d - lbl_eu_8066B0F0);
     }
     ml::CVec3 rot;
     m.getRotXYZ(rot);
@@ -3528,35 +3539,24 @@ extern "C" void func_804D5764(RenderObj* self) {
     } else {
         GXSetChanCtrl(GX_COLOR0A0, GX_ENABLE, GX_SRC_REG, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_CLAMP, GX_AF_NONE);
         GXSetChanCtrl(GX_COLOR1A1, GX_ENABLE, GX_SRC_REG, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_CLAMP, GX_AF_NONE);
-        // Ambient color: 4-word copy of the source block (retail uses lwz/stw),
-        // scaled by the material factor then clamped into [B140, B14C].
+        // Ambient color: word-copy of the source RGBA block, scaled by the
+        // material factor and the B148 gain, then clamped into [B140, B14C].
         ColorSrc* cs = self->field_0x10->field_0x10->field_0x5c;
-        ml::CCol4 s = *(ml::CCol4*)&cs->field_0xac;
+        ml::CCol4 src = *(ml::CCol4*)&cs->field_0xac;
         void* q2 = self->field_0x14->field_0x114;
-        f32 f7 = q2 ? *(f32*)((u8*)q2 - 4) : lbl_eu_8066B144;
-        f32 d[4];
-        d[0] = s.r * f7;
-        d[1] = s.g * f7;
-        d[2] = s.b * f7;
-        d[3] = s.a;
-        f32 c[4];
-        c[0] = d[0] * lbl_eu_8066B148;
-        c[1] = d[1] * lbl_eu_8066B148;
-        c[2] = d[2] * lbl_eu_8066B148;
-        c[3] = d[3];
-        if (c[0] > lbl_eu_8066B14C) c[0] = lbl_eu_8066B14C;
-        else if (c[0] < lbl_eu_8066B140) c[0] = lbl_eu_8066B140;
-        if (c[1] > lbl_eu_8066B14C) c[1] = lbl_eu_8066B14C;
-        else if (c[1] < lbl_eu_8066B140) c[1] = lbl_eu_8066B140;
-        if (c[2] > lbl_eu_8066B14C) c[2] = lbl_eu_8066B14C;
-        else if (c[2] < lbl_eu_8066B140) c[2] = lbl_eu_8066B140;
-        if (c[3] > lbl_eu_8066B14C) c[3] = lbl_eu_8066B14C;
-        else if (c[3] < lbl_eu_8066B140) c[3] = lbl_eu_8066B140;
+        f32 factor = q2 ? *(f32*)((u8*)q2 - 4) : lbl_eu_8066B144;
+        ml::CCol4 mult;
+        ml::CCol4 scaled(src.r * factor, src.g * factor, src.b * factor, src.a);
+        mult.set(scaled.r * lbl_eu_8066B148, scaled.g * lbl_eu_8066B148,
+                 scaled.b * lbl_eu_8066B148, scaled.a);
+        ml::CCol4 c;
+        c = mult;
+        c.clamp(lbl_eu_8066B140, lbl_eu_8066B14C);
         GXColor col;
-        col.r = (u8)(s32)(lbl_eu_8066B150 * c[0]);
-        col.g = (u8)(s32)(lbl_eu_8066B150 * c[1]);
-        col.b = (u8)(s32)(lbl_eu_8066B150 * c[2]);
-        col.a = (u8)(s32)(lbl_eu_8066B150 * c[3]);
+        col.r = (u8)(s32)(lbl_eu_8066B150 * c.r);
+        col.g = (u8)(s32)(lbl_eu_8066B150 * c.g);
+        col.b = (u8)(s32)(lbl_eu_8066B150 * c.b);
+        col.a = (u8)(s32)(lbl_eu_8066B150 * c.a);
         GXSetChanAmbColor(GX_COLOR0A0, col);
         GXSetChanAmbColor(GX_COLOR1A1, col);
     }
@@ -3593,7 +3593,7 @@ extern "C" void func_804D5764(RenderObj* self) {
             GXSetTevSwapModeTable(GX_TEV_SWAP2, GX_CH_GREEN, GX_CH_GREEN, GX_CH_GREEN, GX_CH_ALPHA);
             GXSetTevSwapModeTable(GX_TEV_SWAP3, GX_CH_GREEN, GX_CH_GREEN, GX_CH_GREEN, GX_CH_ALPHA);
             break;
-        default:
+        case 3:
             GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_BLUE, GX_CH_BLUE, GX_CH_BLUE, GX_CH_ALPHA);
             GXSetTevSwapModeTable(GX_TEV_SWAP1, GX_CH_BLUE, GX_CH_BLUE, GX_CH_BLUE, GX_CH_ALPHA);
             GXSetTevSwapModeTable(GX_TEV_SWAP2, GX_CH_BLUE, GX_CH_BLUE, GX_CH_BLUE, GX_CH_ALPHA);

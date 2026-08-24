@@ -318,10 +318,14 @@ namespace g3d {
 #pragma dont_inline on
 void ResTev::GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord,
                            GXTexMapID map, GXChannelID channel) {
-    // Convert RAS channel ID to GX channel ID
-    static const u8 r2c[GX_RAS_MAX_CHANNEL] = {
-        GX_COLOR0A0,   GX_COLOR1A1,   GX_COLOR_NULL,  GX_COLOR_NULL,
-        GX_COLOR_NULL, GX_ALPHA_BUMP, GX_ALPHA_BUMPN, GX_COLOR_ZERO};
+    // Convert GX channel ID to GXRasChannelID (indexed by channel & 0xF)
+    static const u8 r2c[16] = {
+        GX_RAS_COLOR0A0,    GX_RAS_COLOR1A1,    GX_RAS_COLOR0A0,
+        GX_RAS_COLOR1A1,    GX_RAS_COLOR0A0,    GX_RAS_COLOR1A1,
+        GX_RAS_COLOR_ZERO,  GX_RAS_ALPHA_BUMP,  GX_RAS_ALPHA_BUMPN,
+        GX_RAS_COLOR0A0,    GX_RAS_COLOR0A0,    GX_RAS_COLOR0A0,
+        GX_RAS_COLOR0A0,    GX_RAS_COLOR0A0,    GX_RAS_COLOR0A0,
+        GX_RAS_COLOR_ZERO};
 
     GXTexCoordID coord2;
     GXTexMapID map2;

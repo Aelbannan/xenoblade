@@ -293,26 +293,27 @@ extern "C" void func_8009DBF4(void* selfV, unsigned long index, void* valueV) {
     // the item instance for the slot and derive the arts id from its first
     // word (extrwi 11,16 / srwi 20). The index-5 (arts) row additionally
     // copies the 0x49-stride arts row selected by the item/weapon bdat
-    // column when the old and new row selectors differ.
-    cf::CtrlObjectParamSlotView* self = reinterpret_cast<cf::CtrlObjectParamSlotView*>(selfV);
-    self->shortArr[index] = (s16)(s32)valueV;
-    u16 oldSlot = self->field_00[index + 1];
+    // column when the old and new row selectors differ. selfV is used
+    // directly (no cast-local) so MWCC preserves the parameter register.
+#define SELF ((cf::CtrlObjectParamSlotView*)selfV)
+    SELF->shortArr[index] = (s16)(unsigned long)valueV;
+    u16 oldSlot = SELF->field_00[index + 1];
     if ((s32)valueV == -1) {
-        self->field_0E[index] = 0;
-        self->field_00[index + 1] = 0;
+        SELF->field_0E[index] = 0;
+        SELF->field_00[index + 1] = 0;
     } else {
         void* item = NULL;
-        if (self->shortArr[index] > -1) {
-            item = func_80157C4C(index > 4 ? 2 : index + 4, self->shortArr[index]);
+        if (SELF->shortArr[index] > -1) {
+            item = func_80157C4C(index > 4 ? 2 : index + 4, SELF->shortArr[index]);
         }
         if (item != NULL) {
             // Three separate derefs (retail reloads word0 for each extract).
-            self->field_0E[index] =
+            SELF->field_0E[index] =
                 (u16)((reinterpret_cast<cf::CtrlObjectParamItemWord*>(item)->word0 >> 16) & 0x7FF);
-            self->field_00[index + 1] =
+            SELF->field_00[index + 1] =
                 (u16)(reinterpret_cast<cf::CtrlObjectParamItemWord*>(item)->word0 >> 20);
         }
-        if (index == 5 && self->field_00[0] == 1) {
+        if (index == 5 && SELF->field_00[0] == 1) {
             u32 newSlot = reinterpret_cast<cf::CtrlObjectParamItemWord*>(item)->word0 >> 20;
             const char* strBase = lbl_eu_804FBCB0;
             void* bdat = reinterpret_cast<void*>(lbl_eu_806640F4);
@@ -323,10 +324,10 @@ extern "C" void func_8009DBF4(void* selfV, unsigned long index, void* valueV) {
                 // 0x49-stride arts rows selected by the column bytes.
                 cf::CtrlObjectParamArtsRowCopy* src =
                     reinterpret_cast<cf::CtrlObjectParamArtsRowCopy*>(
-                        reinterpret_cast<u8*>(self) + (u32)(u8)col1 * 0x49);
+                    reinterpret_cast<u8*>(SELF) + (u32)(u8)col1 * 0x49);
                 cf::CtrlObjectParamArtsRowCopy* dst =
                     reinterpret_cast<cf::CtrlObjectParamArtsRowCopy*>(
-                        reinterpret_cast<u8*>(self) + (u32)(u8)col2 * 0x49);
+                        reinterpret_cast<u8*>(SELF) + (u32)(u8)col2 * 0x49);
                 dst->field_E8[0] = src->field_E8[0];
                 dst->field_119[0] = src->field_119[0];
                 dst->field_E8[1] = src->field_E8[1];
@@ -346,17 +347,17 @@ extern "C" void func_8009DBF4(void* selfV, unsigned long index, void* valueV) {
             }
         }
     }
-    func_8009D7F4(&self->shortArr[0], index, self);
+    func_8009D7F4(&SELF->shortArr[0], index, SELF);
     if (index == 5 && (s32)valueV != -1) {
         // Arts-row refresh: re-resolve the item for the fixed slot 5.
         void* item2 = NULL;
-        if (self->shortArr[5] > -1) {
-            item2 = func_80157C4C(index > 4 ? 2 : index + 4, self->shortArr[5]);
+        if (SELF->shortArr[5] > -1) {
+            item2 = func_80157C4C(index > 4 ? 2 : index + 4, SELF->shortArr[5]);
         }
         if (item2 != NULL) {
             // Slot 0x20C returns the level multiplier directly (its u16 form).
-            u16 mult = (u16)(u32)self->mParam.CActorParam_UnkVirtualFunc94();
-            if ((self->field_E6 & 4) != 0) {
+            u16 mult = (u16)(u32)SELF->mParam.CActorParam_UnkVirtualFunc94();
+            if ((SELF->field_E6 & 4) != 0) {
                 const char* strBase = lbl_eu_804FBCB0;
                 union { u32 w[2]; f64 d; } c1;
                 union { u32 w[2]; f64 d; } c2;
@@ -364,31 +365,32 @@ extern "C" void func_8009DBF4(void* selfV, unsigned long index, void* valueV) {
                     CItem_initItemImplInstances(item2))->_v028(item2, &strBase[0x22]);
                 c1.w[0] = 0x43300000;
                 c1.w[1] = (u32)(mult * v1) ^ 0x80000000;
-                self->field_D4 = (s16)(lbl_eu_80666780 * (f32)(c1.d - lbl_eu_80666788));
+                SELF->field_D4 = (s16)(lbl_eu_80666780 * (f32)(c1.d - lbl_eu_80666788));
                 u16 v2 = reinterpret_cast<cf::CtrlObjectParamVt028If*>(
                     CItem_initItemImplInstances(item2))->_v028(item2, &strBase[0x2A]);
                 c2.w[0] = 0x43300000;
                 c2.w[1] = (u32)(mult * v2) ^ 0x80000000;
-                self->field_D6 = (s16)(lbl_eu_80666784 * (f32)(c2.d - lbl_eu_80666788));
-                if (self->field_D4 > 0x3e7) self->field_D4 = 0x3e7;
-                if (self->field_D6 > 0x3e7) self->field_D6 = 0x3e7;
+                SELF->field_D6 = (s16)(lbl_eu_80666784 * (f32)(c2.d - lbl_eu_80666788));
+                if (SELF->field_D4 > 0x3e7) SELF->field_D4 = 0x3e7;
+                if (SELF->field_D6 > 0x3e7) SELF->field_D6 = 0x3e7;
             }
         }
     }
-    func_800A30E4(reinterpret_cast<cf::CtrlObjectParamActorOwner*>(self));
-    reinterpret_cast<cf::CtrlObjectParamVt0A4If*>(&self->mParam)->_v0A4(
-        reinterpret_cast<cf::CtrlObjectParamActorOwner*>(self));
+    func_800A30E4(reinterpret_cast<cf::CtrlObjectParamActorOwner*>(SELF));
+    reinterpret_cast<cf::CtrlObjectParamVt0A4If*>(&SELF->mParam)->_v0A4(
+        reinterpret_cast<cf::CtrlObjectParamActorOwner*>(SELF));
     if (lbl_eu_80663E24 & (1 << 20)) {
-        reinterpret_cast<cf::CtrlObjectParamVt0A4If*>(&self->mParam)->_v0A8(1);
+        reinterpret_cast<cf::CtrlObjectParamVt0A4If*>(&SELF->mParam)->_v0A8(1);
     } else {
-        f32 v38 = self->mParam.CActorParam_UnkVirtualFunc38();
-        if (self->mParam.CActorParam_UnkVirtualFunc37() > v38) {
-            self->mParam.CActorParam_UnkVirtualFunc33(
-                self->mParam.CActorParam_UnkVirtualFunc38());
+        f32 v38 = SELF->mParam.CActorParam_UnkVirtualFunc38();
+        if (SELF->mParam.CActorParam_UnkVirtualFunc37() > v38) {
+            SELF->mParam.CActorParam_UnkVirtualFunc33(
+                SELF->mParam.CActorParam_UnkVirtualFunc38());
         }
         reinterpret_cast<cf::CtrlObjectParamVt014If*>(
-            reinterpret_cast<u8*>(&self->mParam) + 8)->_v14(0x35);
+            reinterpret_cast<u8*>(&SELF->mParam) + 8)->_v14(0x35);
     }
+#undef SELF
 }
 
 void cf::CActorParam::CActorParam_UnkVirtualFunc33(float val) {
@@ -403,25 +405,29 @@ void func_8009DFC8(cf::CtrlObjectParamActorOwner* self) {
     reinterpret_cast<cf::CtrlObjectParamVt0A8If*>(&self->mParam)->_v0A8(1);
 }
 
-extern "C" void func_8009E024(void* a, void* c) { func_8009DBF4(a, 0, c); }
+extern "C" void func_8009E024(void* a, void* c) {
+    func_8009DBF4(reinterpret_cast<cf::CtrlObjectParamSlotView*>(a), 0, c);
+}
 
-extern "C" void func_8009E030(void* a, void* c) { func_8009DBF4(a, 1, c); }
+extern "C" void func_8009E030(void* a, void* c) {
+    func_8009DBF4(reinterpret_cast<cf::CtrlObjectParamSlotView*>(a), 1, c);
+}
 
 void cf::CtrlObjectParamData::setArgType2(void* arg) {
-    extern void func_8009DBF4(cf::CtrlObjectParamData*, unsigned long, void*);
-    func_8009DBF4(this, 2, arg);
+    extern void func_8009DBF4(cf::CtrlObjectParamSlotView*, unsigned long, void*);
+    func_8009DBF4(reinterpret_cast<cf::CtrlObjectParamSlotView*>(this), 2, arg);
 }
 
 void cf::CtrlObjectParamData::setArgType3(void* arg) {
-    extern void func_8009DBF4(cf::CtrlObjectParamData*, unsigned long, void*);
-    func_8009DBF4(this, 3, arg);
+    extern void func_8009DBF4(cf::CtrlObjectParamSlotView*, unsigned long, void*);
+    func_8009DBF4(reinterpret_cast<cf::CtrlObjectParamSlotView*>(this), 3, arg);
 }
 
 extern "C" void func_8009E054(cf::CtrlObjectParamData* self, u8* arg) {
     // Forward the arg as type 4, then run the type-8 init path when the
     // object's type tag is 8 and no actor exists for it.
-    extern void func_8009DBF4(cf::CtrlObjectParamData*, unsigned long, u8*);
-    func_8009DBF4(self, 4, arg);
+    extern void func_8009DBF4(cf::CtrlObjectParamSlotView*, unsigned long, u8*);
+    func_8009DBF4(reinterpret_cast<cf::CtrlObjectParamSlotView*>(self), 4, arg);
     if (self->field_00 == 8) {
         if (func_800B8B94(self->field_00) == 0) {
             func_800A145C(reinterpret_cast<cf::CtrlObjectParamArtsLearnView*>(self));
@@ -430,8 +436,8 @@ extern "C" void func_8009E054(cf::CtrlObjectParamData* self, u8* arg) {
 }
 
 void cf::CtrlObjectParamData::setArgType5(void* arg) {
-    extern void func_8009DBF4(cf::CtrlObjectParamData*, unsigned long, void*);
-    func_8009DBF4(this, 5, arg);
+    extern void func_8009DBF4(cf::CtrlObjectParamSlotView*, unsigned long, void*);
+    func_8009DBF4(reinterpret_cast<cf::CtrlObjectParamSlotView*>(this), 5, arg);
 }
 
 long cf::CtrlObjectParamData::getShortAt1C(unsigned long index) {
@@ -2814,4 +2820,6 @@ extern "C" void func_800A3A6C(cf::CtrlObjectParamArtsList* list) {
 done:;
 }
 
-extern "C" void func_8009E0A8(void* a, void* c) { func_8009DBF4(a, 5, c); }
+extern "C" void func_8009E0A8(void* a, void* c) {
+    func_8009DBF4(reinterpret_cast<cf::CtrlObjectParamSlotView*>(a), 5, c);
+}

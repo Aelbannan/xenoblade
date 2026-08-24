@@ -78,17 +78,6 @@ static double ConvS32ToF64(s32 x) {
     return u.d - lbl_eu_80668698;
 }
 
-// u8 -> double via the same trick but unsigned: no sign fixup, so the
-// subtract uses the plain 0x4330000000000000 magic lbl_eu_806686A8.
-static double ConvU8ToF64(u8 x) {
-    union {
-        double d;
-        u32 w[2];
-    } u;
-    u.w[0] = 0x43300000;
-    u.w[1] = x;
-    return u.d - lbl_eu_806686A8;
-}
 
 // Virtual method call helpers (offset 0x38 = Animate-like, offset 0x2C = BindAnim-like)
 static inline void callVirt_38_0(nw4r::lyt::Layout* layout) {
@@ -1894,21 +1883,22 @@ void func_80239EFC(CArtsInfo* self, u32 arg2, int arg3) {
 // scale * level + base (MWCC u32->float conversions via the 2^52 magic),
 // rounded to unsigned. On level-up the level+1 percentage is formatted on
 // layout 2 and the colour-pair helper runs when the two values differ.
+// NOTE: retail lfds the 2^52 correction constants from the shared sdata2
+// labels (lbl_eu_806686A8 unsigned / lbl_eu_80668698 signed); MWCC pools the
+// plain-cast equivalents as TU-local @N labels - needs a CArtsInfo.o
+// pool_patterns postprocess rule (values 43300000_00000000 / 43300000_80000000).
 void func_80239FC4(CArtsInfo* self, u32 arg2, int arg3) {
     char buf1[32]; // sprintf at +0x28
     char buf2[32]; // sprintf at +0x8
     char* s1 = func_802374F0(self, arg2);
     char* s2 = func_8023754C(self, arg2);
     u8 r = func_8013600C(lbl_eu_8050B00C + 0x18b, lbl_eu_8050B00C + 0x2ab, self->field_0x55);
-    // Percentage = scale * level + base. The current level is a u8 operand
-    // (unsigned 0x43300000 promotion) while level+1 is int arithmetic (signed
-    // promotion with the xoris fixup), matching retail codegen exactly.
-    u32 cur = (u32)(lbl_eu_806686BC * ConvU8ToF64(self->field_0x56) + ConvU8ToF64(r));
+    u32 cur = (u32)(lbl_eu_806686BC * (float)self->field_0x56 + (float)r);
     sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, cur, s2);
     sprintf(buf2, lbl_eu_8050B00C + 0x23b, arg3 + 2);
     func_80136A1C(self->mpLayout1, buf2, buf1, 0);
     if (self->field_0x56 < 0xA) {
-        u32 nxt = (u32)(lbl_eu_806686BC * ConvS32ToF64(self->field_0x56 + 1) + ConvU8ToF64(r));
+        u32 nxt = (u32)(lbl_eu_806686BC * (float)(self->field_0x56 + 1) + (float)r);
         sprintf(buf1, lbl_eu_8050B00C + 0x266, s1, nxt, s2);
         func_80136A1C(self->mpLayout2, buf2, buf1, 0);
         if (cur != nxt) {

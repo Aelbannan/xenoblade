@@ -23,7 +23,7 @@ extern const float lbl_eu_80666B50;
 extern const char lbl_eu_804FC648[];
 
 // Retail keeps these BDAT entry points as their short/unmangled linker names.
-extern "C" u32 getBdatStringColumnValue(void*, const char*, int);
+extern "C" u32 getBdatStringColumnValue(void*, const char*, s32);
 
 // BDAT manager reset/init (retail symbol unmangled; result discarded here).
 extern "C" void* func_8003AA34(void);

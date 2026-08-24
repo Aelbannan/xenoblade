@@ -152,7 +152,12 @@ public:
 // through ~0x25A.
 struct CfCamFollow : CfCam {
     u8 unk10[0x1C - 0x10];
-    u8 unk1C[0x64 - 0x1C]; // 0x1C..0x64
+    u8 unk1C[0x28 - 0x1C];
+    f32 field_0x28; // 0x28 camera position x
+    f32 field_0x2C;
+    f32 field_0x30; // 0x30 camera position z
+    f32 field_0x34;
+    u8 unk38[0x64 - 0x38];
     u32 field_0x64;        // 0x64 raw flag word
     u8 unk68[0x70 - 0x68]; // 0x68..0x70
     u8 unk70[0xC0]; // 0x70..0x130
@@ -161,7 +166,8 @@ struct CfCamFollow : CfCam {
     void* unk164; // 0x164 ctor arg1
     u8 unk168[0x180 - 0x168];
     f32 field_0x180;          // 0x180 snapshot source for unk1F8
-    u8 unk184[0x1D4 - 0x184];
+    f32 field_0x184;          // 0x184 blended heading angle
+    u8 unk188[0x1D4 - 0x188];
     u32 unk1D4; // 0x1D4
     u16 unk1D8; // 0x1D8
     u8 unk1DA[0x1DC - 0x1DA];
@@ -513,7 +519,7 @@ int CfRes_getD80Flag();                              // scene flag gate (CUIErrM
 // func_8049603C: this TU calls it with no args; CfGameManager.hpp's
 // (UnkScnResult*(CScn*)) decl is renamed out of the way via #define at include.
 extern "C" void* func_8049603C();
-bool func_80074A74();                                // in-TU def (defined below its first use), same signature (mixed linkage)
+bool func_80074A74(void* self, float input);         // in-TU def (defined below its first use), same signature (mixed linkage)
 void func_80070EBC(cf::CfCamFollow* self);           // in-TU def (defined below its first use), same signature (mixed linkage)
 ml::CVec3* func_8004B79C(ml::CVec3* out, const ml::CVec3* v); // retail 0x8004BE74 (vec helper)
 int func_8006C640(cf::CfCamFollow* self, u32 mask, int flag); // CfCam sibling (retail 0x8006D098)

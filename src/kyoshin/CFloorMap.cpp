@@ -932,16 +932,18 @@ void func_8024A448(void* self) {
         if ((g->m64 & 0x8000) == 0 && (g->m64 & 0x4000) == 0) continue;
         if (g->m91 != 6) continue;
 
-        // Word-wise snapshot of the position so the row loop compares a
-        // cached float (retail f26).
+        // Word-wise snapshot of the position; the y is cached in a scalar so
+        // MWCC dedicates a callee-saved FPR to it across the row loop
+        // (retail f26).
         CFloorMapVec3 pv = *g->GetPos();
+        f32 py = pv.y;
 
         u8 found = 0;
         u8 count = (u8)func_8003B1EC(lbl_eu_8066479C);
         for (u8 j = 1; j <= count; j++) {
             s16 h = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], j);
             convA.w[1] = (u32)(s16)h ^ 0x80000000;
-            if ((f32)(convA.d - convBias) > pv.y) {
+            if ((f32)(convA.d - convBias) > py) {
                 if (j == fm->field_0C) found = 1;
                 break;
             }
@@ -954,19 +956,19 @@ void func_8024A448(void* self) {
         s16 vx = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
         s16 vy = func_80136330(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
 
-        convA.w[1] = (u32)(s16)vy ^ 0x80000000;
-        f32 fvy = (f32)(convA.d - lbl_eu_80668770);
         convB.w[1] = (u32)(s16)vx ^ 0x80000000;
-        f32 fvx = (f32)(convB.d - lbl_eu_80668770);
+        convA.w[1] = (u32)(s16)vy ^ 0x80000000;
+        f32 fvx = (f32)(convB.d - convBias);
+        f32 fvy = (f32)(convA.d - convBias);
         u8 region = (u8)func_801361E8(lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1FE], lbl_eu_80664798);
+
+        // Word-wise copy of the position into a scratch vector; retail reads
+        // x/z back through the copy, zeroes z mid-computation, then stores the
+        // projected coordinates back over it.
+        nw4r::math::_VEC3 result = *(nw4r::math::_VEC3*)&pv;
 
         convB.w[1] = region;
         f32 denom = (f32)(convB.d - regionBase) * regionScale;
-
-        // Word-wise copy of the position into a scratch vector; retail reads
-        // x/z back through the copy, zeroes z, then stores the projected
-        // coordinates back over it.
-        nw4r::math::_VEC3 result = *(nw4r::math::_VEC3*)&pv;
 
         f32 zTerm = (result.z / denom) * projScale;
         result.z = zero;
@@ -2754,11 +2756,13 @@ void func_8024EE50(void* self) {
     func_80138078(3);
 }
 
-// Select the floor-table file pointer for map id `id` (28 known maps, string
-// offsets stride 0x10); unknown ids clear the pointer. MWCC emits this as a
-// jump table.
-void func_8024F1FC(u32 id) {
-    lbl_eu_80664798 = (u8)id;
+// Select the floor-table file pointer for map id `id` (29 ids, string offsets
+// stride 0x10). Map 18 aliases map 17's string and maps 26-28 alias map 25's,
+// so the last strings are reused; unknown ids clear the pointer. MWCC emits
+// this as a jump table.
+void func_8024F1FC(CFloorMap* self, u8 id) {
+    (void)self;
+    lbl_eu_80664798 = id;
     switch (id) {
     case 0:  func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x524]); break;
     case 1:  func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x534]); break;
@@ -2777,15 +2781,17 @@ void func_8024F1FC(u32 id) {
     case 14: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x604]); break;
     case 15: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x614]); break;
     case 16: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x624]); break;
+    // Maps 17 and 18 are written as two clauses sharing one string, so MWCC
+    // emits the body twice instead of merging the jump-table entries.
     case 17: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x634]); break;
-    case 18: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x644]); break;
-    case 19: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x654]); break;
-    case 20: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x664]); break;
-    case 21: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x674]); break;
-    case 22: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x684]); break;
-    case 23: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x694]); break;
-    case 24: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x6A4]); break;
-    case 25:
+    case 18: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x634]); break;
+    case 19: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x644]); break;
+    case 20: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x654]); break;
+    case 21: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x664]); break;
+    case 22: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x674]); break;
+    case 23: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x684]); break;
+    case 24: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x694]); break;
+    case 25: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x6A4]); break;
     case 26:
     case 27:
     case 28: func_8003AA34(); lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x6B4]); break;

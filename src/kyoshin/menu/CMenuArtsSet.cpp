@@ -988,8 +988,11 @@ extern "C" __declspec(noinline) void func_802320C0(SArts322BC* self, u8 arg) {
             (u32)func_80136190((char*)lbl_eu_8050AC70 + 0x1C8, lbl_eu_8050AC70 + 0x5B,
                                p->id + i);
         const u32 lo = ((const u8*)&w)[1];
-        row[8] = ((lo >> 7) == 0);
-        row[9] = ((lo >> 6) == 0);
+        // Bit-flag tests: MWCC lowers these to extrwi + subic/subfe bool.
+        int f1 = (lo & 0x80) == 0;
+        int f2 = (lo & 0x40) == 0;
+        row[8] = f1;
+        row[9] = f2;
     }
     func_801F36BC(self->field_0x28, 5, self->field_0x12C);
     func_801F3850(self->field_0x28, (u16)(s8)self->field_0x21);
@@ -1060,7 +1063,62 @@ extern "C" __declspec(noinline) u16 func_80232370(SArts322BC* self, int key) {
 }
 #pragma optimize_for_size off
 
-void func_802324C4(){}
+// Arts-list usage-counter bump: pick a row (current cursor row when
+// key == -1, else the first row whose id byte equals key), then ask the arts
+// manager (vtable +0x27C) to recompute, increment the counter pair indexed
+// by row[1] inside the current arts element, mirror the new count into
+// row[2], and refresh the character data plus both list panes.
+// The whole body is written out per arm (manager fetch included): retail
+// duplicates it instead of hoisting a shared prelude/tail.
+// optimize_for_size: retail's four-register prologue uses stmw (-O4,s).
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) void func_802324C4(SArts322BC* self, int key) {
+    if (key == -1) {
+        // base declared ahead of root: MWCC hands out callee-saved regs to
+        // pointer locals top-down, so this ordering yields root=r29/base=r30.
+        SArtsSubDElem* base;
+        SArtsManagerRoot* root = (SArtsManagerRoot*)func_8009EC9C(self->field_0x26);
+        root->mObj17C.v157();
+        base = &root->mElemsE8[0];
+        u8 arts = (u8)func_800A32BC(root);
+        u8* row = &self->mTable[((int)self->field_0x21 + (int)self->field_0x20) << 4];
+        // Usage counters live as byte pairs inside the arts element block,
+        // indexed by arts*0x49 + row-slot*2; low byte mirrors into the row.
+        u8* p = (u8*)base + arts * 0x49 + ((u8)row[1] << 1);
+        *p += 1;
+        row[2] = *p;
+        func_80280DBC((u8*)base);
+        func_800A1370(root);
+        func_80232C78((SArts327B0*)self);
+        func_80232B88((SArts327B0*)self);
+    } else {
+        SArtsSubDElem* base;
+        SArtsManagerRoot* root = (SArtsManagerRoot*)func_8009EC9C(self->field_0x26);
+        root->mObj17C.v157();
+        base = &root->mElemsE8[0];
+        // Call first, truncate after reading count: retail emits the count
+        // load ahead of the arts clrlwi.
+        int raw = func_800A32BC(root);
+        u8 count = self->field_0x12C;
+        u8 arts = (u8)raw;
+        u8* row = 0;
+        for (u8 i = 0; i < count; i++) {
+            u8* r = &self->mTable[i << 4];
+            if (key == (int)r[0]) {
+                row = r;
+                break;
+            }
+        }
+        u8* p = (u8*)base + arts * 0x49 + ((u8)row[1] << 1);
+        *p += 1;
+        row[2] = *p;
+        func_80280DBC((u8*)base);
+        func_800A1370(root);
+        func_80232C78((SArts327B0*)self);
+        func_80232B88((SArts327B0*)self);
+    }
+}
+#pragma optimize_for_size off
 
 // Arts-table row availability check: for key -1 use the current cursor row
 // ((0x21 + 0x20) << 4), else scan for the row whose id byte equals key.

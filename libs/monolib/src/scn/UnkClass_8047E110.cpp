@@ -808,15 +808,16 @@ extern "C" s32 func_8047F658__17UnkClass_8047E110Fv(UnkClass_8047E110* self, Scn
         node.xPos - m.nodes[idx2].xPos >= lbl_eu_8066A8B0) {
         const ScnWalkNode* nodes = m.nodes;
         u16 flags = node.reserved8;
+        s32 sel = (flags >> 12) & 0xF;
         if (!(s8)lbl_eu_806658D0[0]) {
             // waypoint table layout (f32 triples):
             //   block 0: {A8AC, A8AC, A8B4}  block 1: {A8AC, A8AC, A890}
             //   block 2: {A8B4, A8AC, A8AC}  block 3: {A890, A8AC, A8AC}
             const f32 vFlat = lbl_eu_8066A8AC;
+            ((f32*)lbl_eu_80658608)[0] = vFlat;
             f32* wp = (f32*)lbl_eu_80658608;
             const f32 vDepth = lbl_eu_8066A8B4;
             const f32 vHalf = lbl_eu_8066A890;
-            wp[0] = vFlat;
             wp[1] = vFlat;
             wp[2] = vDepth;
             wp[3] = vFlat;
@@ -832,7 +833,6 @@ extern "C" s32 func_8047F658__17UnkClass_8047E110Fv(UnkClass_8047E110* self, Scn
         }
 
         // high nibble of the flag halfword selects the waypoint block
-        s32 sel = (flags >> 12) & 0xF;
         const ScnVecWords* blocks = (const ScnVecWords*)lbl_eu_80658608;
         *out = blocks[sel];
         return 1;
@@ -1536,7 +1536,9 @@ extern "C" bool func_804813E8__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
         goto fail;
     if (!(scaleNodeCoord(node->z + node->depth + 1) >= m.field_0x5C))
         goto fail;
-    if (!(__fabs(m.field_0x58 - node->xPos) < m.field_0x20))
+    // float local forces the frsp rounding step seen in retail
+    f32 dy = __fabs(m.field_0x58 - node->xPos);
+    if (!(dy < m.field_0x20))
         goto fail;
     return true;
 fail:
@@ -1612,16 +1614,18 @@ extern "C" void func_8048163C__17UnkClass_8047E110Fv(UnkClass_8047E110* self, co
 extern "C" void func_8048169C__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
     const ml::CVec3* cornerMin, const ml::CVec3* cornerMax) {
     ScnManagerLayout& m = *(ScnManagerLayout*)self;
-    CVec3 dir;
+    m.field_0x90 = 0;
     const CVec3& boxMin = *(const CVec3*)&m.field_0x48;
-    CVec3& boxMax = *(CVec3*)&m.field_0x54;
+    const CVec3& boxMax = *(const CVec3*)&m.field_0x54;
     *(ScnVecWords*)&m.field_0x48 = *(const ScnVecWords*)cornerMin;
     *(ScnVecWords*)&m.field_0x54 = *(const ScnVecWords*)cornerMax;
-    dir = boxMin - boxMax;
+    // operator- lowers to a VEC3Sub temp plus set(); keeping the named local
+    // makes MWCC spill through two stack blocks like retail before the copy
+    // into the direction member.
+    CVec3 dir = boxMax - boxMin;
     m.dir = dir;
-    m.field_0x90 = 0;
-    m.field_0x88 = lbl_eu_8066A8AC;
     m.field_0x8C = lbl_eu_8066A8AC;
+    m.field_0x88 = lbl_eu_8066A8AC;
     if (m.dir.x != lbl_eu_8066A8AC) {
         m.field_0x88 = m.dir.z / m.dir.x;
     }
@@ -1629,8 +1633,9 @@ extern "C" void func_8048169C__17UnkClass_8047E110Fv(UnkClass_8047E110* self,
         m.field_0x8C = m.dir.x / m.dir.z;
     }
     u32* ref = lbl_eu_8056DC80;
-    m.field_0x9C.field_0x0 = *ref++;
+    u32 wordA = *ref++;
     m.field_0x9C.field_0x4 = *ref++;
+    m.field_0x9C.field_0x0 = wordA;
     m.field_0x9C.field_0x8 = *ref;
 }
 

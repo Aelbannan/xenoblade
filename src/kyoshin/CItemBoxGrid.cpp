@@ -5256,56 +5256,65 @@ extern "C" void func_801D05D4(void* self, int val) {
     }
     {
         const char* strbase = lbl_eu_8050566C;
-        u8 i;
-        for (i = 0; i < 2; i++) {
+        u8 i = 0;
+        do {
             u8 idx = buf[i];
             char pane1[32];
             char pane2[32];
             int tabNum = (s8)idx + 1;
-            int isCurTab = 0;
-            int isOtherTab = 0;
             sprintf(pane1, strbase + 0x520, tabNum);
             sprintf(pane2, strbase + 0x52f, tabNum);
             if (p[0x62 + (s8)idx] != 0) {
+                // Flags are first assigned only after idx's last use, so
+                // MWCC reuses the tabNum/idx registers for them.
+                int isCurTab;
+                int isOtherTab;
                 if ((s8)idx == (s8)p[0x6f]) {
                     isCurTab = 1;
+                    isOtherTab = 0;
                 } else {
+                    isCurTab = 0;
                     isOtherTab = 1;
                 }
                 func_80124270(((CItemPaneObjVt*)*(void**)(*(u32*)(p + 0x44) + 0x10))->_v3C(pane1, 1), isCurTab);
                 func_80124270(((CItemPaneObjVt*)*(void**)(*(u32*)(p + 0x44) + 0x10))->_v3C(pane2, 1), isOtherTab);
             }
-        }
+            i++;
+        } while (i < 2);
     }
     {
         u8 cat = p[(s8)p[0x6f] + 0x62];
         u32 diff = cat - 4;
         if (diff <= 4 || cat == 2 || cat == 0xB) {
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5aa], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5b6], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5c2], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5ce], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5da], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5e6], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5f2], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5fe], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x60a], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x616], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x621], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x62c], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            char* strbase = (char*)lbl_eu_8050566C;
+            // Layout pointer re-derived per call: func_80139A18 clobbers
+            // memory, so MWCC reloads *(p+0x44) before every call.
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x5aa, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x5b6, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x5c2, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x5ce, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x5da, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x5e6, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x5f2, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x5fe, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x60a, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x616, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x621, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x62c, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
         } else {
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5aa], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5b6], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5c2], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5ce], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5da], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5e6], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5f2], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5fe], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x60a], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x616], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x621], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
-            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x62c], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            char* strbase = (char*)lbl_eu_8050566C;
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x5aa, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x5b6, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x5c2, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x5ce, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x5da, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x5e6, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x5f2, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x5fe, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x60a, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x616, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x621, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)*(u32*)(p + 0x44), strbase + 0x62c, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
         }
     }
 }

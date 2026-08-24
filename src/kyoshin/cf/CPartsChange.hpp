@@ -7,7 +7,9 @@
 extern "C" u32 func_8009CF8C(u32 resourceId);
 
 // BDAT table column accessor (retail unmangled C-ABI import; func_80195384).
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, int index);
+// Third param spelled s32 (long) to match the canonical decl in
+// code_801862C0.hpp - under MWCC int and s32 are distinct types.
+extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, s32 index);
 
 // BDAT table pointer + column-name blob read by func_80195384.
 extern void* lbl_eu_806640CC;

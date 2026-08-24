@@ -7073,6 +7073,24 @@ afterCounter:
     }
 }
 
+// Field accessor over the move slot returned by the object's 0x298/0x29C
+// dispatch slots (never instantiated; overlay view only).
+struct E921SlotAcc {
+    u8 pad_00[0x50];
+    u32 field_50;
+    f32 f54;
+    f32 f58;
+    f32 f5C;
+    f32 f60;
+    f32 f64;
+    f32 f68;
+    f32 f6C;
+    s16 s70;
+    s16 s72;
+    u32 w74;
+    u32 w78;
+};
+
 // 0xBC-byte move snapshot block copied by value across the damage-preview
 // paths. The retail copy codegen is: single words at +0x00/+0x04, eight
 // 8-byte chunks +0x08..+0x44, three singles +0x48..+0x50, seven floats
@@ -7115,41 +7133,98 @@ struct E921C_MoveData {
     u32 wB8;    // +0xB8
 };
 
+// Vtable mirror for the battle-actor dispatch slots used below. Never
+// instantiated -- casting a retail object to this type and calling the named
+// virtuals makes MWCC route the dispatch through r12 (retail order) instead of
+// a general scratch register (cf. ActorVtableMirror / CVisionBattleObj).
+struct BMVtMirror {
+    virtual ~BMVtMirror() {}                       // i0  = 0x04
+    virtual void f01(); virtual void f02(); virtual void f03(); virtual void f04();
+    virtual void f05(); virtual void f06(); virtual void f07(); virtual void f08();
+    virtual u32 v28(u32 a);                        // i9  = 0x28
+    virtual void* v30();                           // i10 = 0x2C
+    virtual void f12(); virtual void f13(); virtual void f14(); virtual void f15();
+    virtual void f16(); virtual void f17(); virtual void* v4C(); virtual void f19();
+    virtual void f20(); virtual void f21(); virtual void f22(); virtual void f23();
+    virtual void f24(); virtual void f25(); virtual void f26(); virtual void f27();
+    virtual void f28(); virtual void f29(); virtual void f30(); virtual void f31();
+    virtual void fF32();
+    virtual void v88(f32 f);                       // i33 = 0x88
+    virtual void f34(); virtual void f35(); virtual void f36(); virtual void f37();
+    virtual void f38(); virtual void f39();
+    virtual void vA4(u32 v);                       // i40 = 0xA4
+    virtual void f41(); virtual void f42(); virtual void f43(); virtual void f44();
+    virtual void vB8();                            // i45 = 0xB8
+    virtual void vBC(void* a);                     // i46 = 0xBC
+    virtual void f47(); virtual void f48();
+    virtual void vC8();                            // i49 = 0xC8
+    virtual void f50(); virtual void f51(); virtual void f52(); virtual void f53();
+    virtual void f54(); virtual void f55(); virtual void f56(); virtual void f57();
+    virtual void f58(); virtual void f59(); virtual void f60(); virtual void f61();
+    virtual void f62(); virtual void f63(); virtual void f64();
+    virtual void* v108();                          // i65 = 0x108
+    virtual void f66(); virtual void f67(); virtual void f68(); virtual void f69();
+    virtual void f70(); virtual void f71(); virtual void f72();
+    virtual f32 v128();                            // i73 = 0x128
+    virtual void f74(); virtual void f75(); virtual void f76(); virtual void f77();
+    virtual void f78(); virtual void f79(); virtual void f80(); virtual void f81();
+    virtual void f82();
+    virtual void v150(f32 f);                      // i83 = 0x150
+    virtual void v154(f32 f);                      // i84 = 0x154
+    virtual void f85(); virtual void f86(); virtual void f87(); virtual void f88();
+    virtual void f89(); virtual void f90(); virtual void f91(); virtual void f92();
+    virtual void f93(); virtual void f94(); virtual void f95(); virtual void f96();
+    virtual void f97(); virtual void f98(); virtual void f99(); virtual void f100();
+    virtual void f101(); virtual void f102(); virtual void f103(); virtual void f104();
+    virtual void f105(); virtual void f106(); virtual void f107(); virtual void f108();
+    virtual void f109(); virtual void f110(); virtual void f111(); virtual void f112();
+    virtual void f113(); virtual void f114(); virtual void f115(); virtual void f116();
+    virtual void f117(); virtual void f118(); virtual void f119(); virtual void f120();
+    virtual void* v1E8();                          // i121 = 0x1E8
+    virtual void f122(); virtual void f123(); virtual void f124(); virtual void f125();
+    virtual void f126();
+    virtual void* v200();                          // i127 = 0x200
+    virtual void f128(); virtual void f129(); virtual void f130(); virtual void f131();
+    virtual void f132(); virtual void f133(); virtual void f134(); virtual void f135();
+    virtual void f136(); virtual void f137(); virtual void f138(); virtual void f139();
+    virtual void f140(); virtual void f141(); virtual void f142(); virtual void f143();
+    virtual void f144(); virtual void f145(); virtual void f146(); virtual void f147();
+    virtual void f148(); virtual void f149(); virtual void f150(); virtual void f151();
+    virtual void f152(); virtual void f153(); virtual void f154(); virtual void f155();
+    virtual void f156(); virtual void f157(); virtual void f158(); virtual void f159();
+    virtual void f160(); virtual void f161(); virtual void f162();
+    virtual s32 v290();                            // i163 = 0x290
+    virtual void f164();
+    virtual void* v298();                          // i165 = 0x298
+    virtual void* v29C(u32 idx);                   // i166 = 0x29C
+    virtual void f167();
+    virtual void* v2A4();                          // i168 = 0x2A4
+    virtual s32 v2A8();                            // i169 = 0x2A8
+    virtual void v2AC();                           // i170 = 0x2AC
+    virtual void f171();
+    virtual void v2B4();                           // i172 = 0x2B4
+    virtual void v2B8();                           // i173 = 0x2B8
+    virtual void f174(); virtual void f175(); virtual void f176(); virtual void f177();
+    virtual void f178(); virtual void f179(); virtual void f180(); virtual void f181();
+    virtual void f182(); virtual void f183(); virtual void f184(); virtual void f185();
+    virtual void f186(); virtual void f187(); virtual void f188(); virtual void f189();
+    virtual void f190(); virtual void f191();
+    virtual void v304(u32 v);                      // i192 = 0x304
+    virtual s32 v308();                            // i193 = 0x308
+};
+
 // func_800E921C (retail 0x800E9D04, 0x934 bytes): battle damage-preview setup.
 // Computes the damage preview for the party's selected arts: resolves the
 // target sub-object/action, clears all player selection flags, fills the
 // actor stat block and per-member move snapshots, then accumulates the
 // rounded damage sum into *outDamage.
-static __inline void* e921_vf298(void* o) {
-    return ((void* (*)(void*))(*(void***)o)[0x298 / 4])(o);
-}
-static __inline void* e921_vf29C(void* o, u32 i) {
-    return ((void* (*)(void*, u32))(*(void***)o)[0x29C / 4])(o, i);
-}
-static __inline void* e921_vf2A4(void* o) {
-    return ((void* (*)(void*))(*(void***)o)[0x2A4 / 4])(o);
-}
-static __inline s32 e921Vf2A8(void* o) {
-    return ((s32 (*)(void*))(*(void***)o)[0x2A8 / 4])(o);
-}
-static __inline void e921_vf2AC(void* o) {
-    ((void (*)(void*))(*(void***)o)[0x2AC / 4])(o);
-}
-static __inline void e921_vf2B8(void* o) {
-    ((void (*)(void*))(*(void***)o)[0x2B8 / 4])(o);
-}
-static __inline f32 e921_vf128(void* o) {
-    return ((f32 (*)(void*))(*(void***)o)[0x128 / 4])(o);
-}
-static __inline void e921_vfA4(void* o, u32 v) {
-    ((void (*)(void*, u32))(*(void***)o)[0xA4 / 4])(o, v);
-}
-
 void func_800E921C(void* self, void* actor, void* obj, f32* outDamage, s32* outFlag) {
+    BMVtMirror* objM = (BMVtMirror*)obj;
+
     // r23: selected target sub-object from obj's move slot; r31: its action.
-    void* subObj = *(void**)((u8*)e921_vf298(obj) + 0x50);
-    void* action = func_8016FE34(
-        (void*)(intptr_t)func_800B708C__Fi(*(s32*)((u8*)e921_vf298(obj) + 4)));
+    void* subObj = *(void**)((u8*)objM->v298() + 0x50);
+    BMVtMirror* action = (BMVtMirror*)func_8016FE34((void*)(intptr_t)func_800B708C__Fi(
+        *(s32*)((u8*)objM->v298() + 4)));
 
     *outDamage = lbl_eu_80666DDC;
     *outFlag = 0;
@@ -7159,7 +7234,7 @@ void func_800E921C(void* self, void* actor, void* obj, f32* outDamage, s32* outF
     if (subObj == nullptr) return;
 
     // Talent-gauge-full one-round path: the preview becomes the computed value.
-    if (*(u32*)((u8*)actor + 0x824) & 0x20000) {
+    if (*(u32*)((u8*)actor + 0x824) & 0x20000) {  // bit14 (rlwinm 14,14)
         cf::CfActorF64Conv conv;
         conv.w[0] = 0x43300000;
         conv.w[1] = (u32)func_800F4648(actor) ^ 0x80000000;
@@ -7175,63 +7250,62 @@ void func_800E921C(void* self, void* actor, void* obj, f32* outDamage, s32* outF
     }
 
     // Clear the selection flag on the action, the 3 party members, and obj.
-    e921_vfA4(action, 0);
+    action->vA4(0);
     for (s32 i = 0; i < 3; i++) {
-        void* player = func_8016FE34(getPlayer__Q22cf13CfGameManagerFi(i));
+        BMVtMirror* player =
+            (BMVtMirror*)func_8016FE34(getPlayer__Q22cf13CfGameManagerFi(i));
         if (player != nullptr && player != action) {
-            e921_vfA4(player, 0);
+            player->vA4(0);
         }
     }
-    e921_vfA4(obj, 0);
-    e921_vfA4(action, 0);
+    objM->vA4(0);
+    action->vA4(0);
 
     *(u32*)((u8*)actor + 0x88) &= ~0x1000;
 
     // Store the base damage into the target move slots (0x6C/0x68) and zero
-    // the tick counters.
+    // the tick counters (each store re-fetches the slot via 0x298).
     {
-        f32 dmg = e921_vf128(obj);
-        *(f32*)((u8*)e921_vf298(obj) + 0x6C) = dmg;
+        f32 dmg = objM->v128();
+        ((E921SlotAcc*)objM->v298())->f6C = dmg;
     }
     {
-        f32 dmg = e921_vf128(action);
-        *(f32*)((u8*)e921_vf298(obj) + 0x68) = dmg;
+        f32 dmg = action->v128();
+        ((E921SlotAcc*)objM->v298())->f68 = dmg;
     }
-    *(s16*)((u8*)e921_vf298(obj) + 0x70) = 0;
-    *(s16*)((u8*)e921_vf298(obj) + 0x72) = 0;
+    ((E921SlotAcc*)objM->v298())->s70 = 0;
+    ((E921SlotAcc*)objM->v298())->s72 = 0;
 
     // Reset each party member's move slot.
-    f32 zero = lbl_eu_80666DDC;
     for (s32 i = 0; i < *outFlag; i++) {
-        void* slot = e921_vf29C(obj, i);
-        *(u32*)((u8*)slot + 0x74) = 0;
-        u32 v = *(u32*)((u8*)slot + 0x78);
-        *(u32*)((u8*)slot + 0x78) = (v & 0xFFFF) | (v & 0x03F00000);
-        *(f32*)((u8*)slot + 0x54) = zero;
-        *(f32*)((u8*)slot + 0x58) = zero;
-        *(f32*)((u8*)slot + 0x5C) = zero;
-        *(f32*)((u8*)slot + 0x60) = zero;
-        *(f32*)((u8*)slot + 0x64) = zero;
+        E921SlotAcc* slot = (E921SlotAcc*)objM->v29C(i);
+        slot->w74 = 0;
+        slot->w78 = (slot->w78 & 0xFFFF0000) | (slot->w78 & 0x03F00000);
+        slot->f54 = lbl_eu_80666DDC;
+        slot->f58 = lbl_eu_80666DDC;
+        slot->f5C = lbl_eu_80666DDC;
+        slot->f60 = lbl_eu_80666DDC;
+        slot->f64 = lbl_eu_80666DDC;
     }
 
     // Per-party-member preview loop: run the ai dispatcher, snapshot the
     // stat block / per-member move data, accumulate the rounded damage.
     f32 zero2 = lbl_eu_80666DDC;
-    cf::CfActorF64Conv conv;    // hoisted 0x4330 stores (r24) + lfd f31
+    cf::CfActorF64Conv conv;    // w[0] hoisted into a register across the loop
     conv.w[0] = 0x43300000;
     s32 idx = 0;
     while (idx < *outFlag) {
-        void* slot = e921_vf298(obj);                       // r29
-        *(u32*)((u8*)slot + 0x78) |= 0x44000000;
+        E921SlotAcc* slot = (E921SlotAcc*)objM->v298();   // r29
+        slot->w78 |= 0x44000000;
         func_800DB0FC((void*)(intptr_t)lbl_eu_80663F00, obj, action, slot);
-        *(u32*)((u8*)slot + 0x78) &= ~0x04000000;
+        slot->w78 &= ~0x04000000;
 
-        if (e921Vf2A8(obj) == 0) {
+        if (objM->v2A8() == 0) {
             // Snapshot into the actor's displayed stat block (0x10..0xC8).
             *(E921C_MoveData*)((u8*)actor + 0x10) =
-                *(const E921C_MoveData*)e921_vf298(obj);
+                *(const E921C_MoveData*)objM->v298();
         } else {
-            u32 fl = *(u32*)((u8*)e921_vf298(obj) + 0x74);
+            u32 fl = ((E921SlotAcc*)objM->v298())->w74;
             if (fl & 0x80000000) {
                 *(u32*)((u8*)actor + 0x84) |= fl;
             } else {
@@ -7239,39 +7313,37 @@ void func_800E921C(void* self, void* actor, void* obj, f32* outDamage, s32* outF
             }
         }
 
-        // Per-member move snapshot at actor + 0x2A8*0xBC + 0xCC.
-        *(E921C_MoveData*)((u8*)actor + e921Vf2A8(obj) * 0xBC + 0xCC) =
+        // Per-member move snapshot at actor + v2A8()*0xBC + 0xCC.
+        *(E921C_MoveData*)((u8*)actor + objM->v2A8() * 0xBC + 0xCC) =
             *(const E921C_MoveData*)slot;
 
-        if (*(u32*)((u8*)slot + 0x78) & 0x1000) {
+        if (slot->w78 & 0x1000) {
             *(u32*)((u8*)actor + 0x828) = 0;
             *(u32*)((u8*)actor + 0x88) |= 0x40001000;
             *(u32*)((u8*)actor + 0x82C) = 0;
         }
 
         // Round base+variance to the nearest int and accumulate.
-        f32 sum = *(f32*)((u8*)slot + 0x5C) + *(f32*)((u8*)slot + 0x60);
-        s32 ival;
-        if (sum < 0.0f) {
-            ival = 0;
-        } else if (*(u32*)((u8*)slot + 0x74) & 0x80) {
-            ival = 0;
-        } else {
-            ival = (s32)((f64)sum + (sum <= 0.0f ? lbl_eu_80666E60 : lbl_eu_80666E58));
+        f32 sum = slot->f5C + slot->f60;
+        s32 ival = 0;
+        if (sum >= 0.0f) {
+            if (!(slot->w74 & 0x80)) {
+                ival = (s32)((f64)sum + (sum <= 0.0f ? lbl_eu_80666E60 : lbl_eu_80666E58));
+            }
         }
-        conv.w[1] = (u32)(s32)ival ^ 0x80000000;
+        conv.w[1] = (u32)ival ^ 0x80000000;
         f32 add = (f32)(conv.d - lbl_eu_80666DE0);
         *outDamage = *outDamage + add;
-        e921_vf2B8(obj);
+        objM->v2B8();
 
-        if (*(f32*)((u8*)slot + 0x6C) < zero2) break;
+        if (slot->f6C < zero2) break;
         idx++;
     }
 
     // Final snapshot into the 0x2A4 target block.
-    e921_vf2AC(obj);
-    void* dst = e921_vf2A4(obj);
-    void* src = e921_vf298(obj);
+    objM->v2AC();
+    BMVtMirror* src = (BMVtMirror*)objM->v298();
+    void* dst = objM->v2A4();
     *(E921C_MoveData*)dst = *(const E921C_MoveData*)src;
 
     if (*outDamage < 0.0f) *outDamage = 0.0f;
@@ -7317,7 +7389,7 @@ extern "C" void func_802A1D04(void*, void*);
 extern "C" void func_800E2594(void*, void*, void*, void*);
 
 void func_800E1B5C(void* mgr, void* actor) {
-    void* src = e921_vf298(actor);                          // r30
+    void* src = ((void* (*)(void*))(*(void***)actor)[0x298 / 4])(actor);  // r30
     void* dst = ((void* (*)(void*))(*(void***)actor)[0x2A0 / 4])(actor);
 
     // Both move objects must name the same target id / sub-object.
@@ -7383,7 +7455,7 @@ scan2:
             if (*(u32*)((u8*)actor + 0x3F00) & 0x02) {
                 if (*(u16*)((u8*)actor + 0x3F28) == 7) {
                     if (*(u32*)((u8*)src + 0x78) & 0x1000) {
-                        if (e921Vf2A8(actor) != 1) r14 = 0;
+                        if (((s32 (*)(void*))(*(void***)actor)[0x2A8 / 4])(actor) != 1) r14 = 0;
                     }
                 }
             }
@@ -9543,131 +9615,6 @@ struct E484_VisionPair {    // func_801A8070 result: two u32 ids
 struct E484_Global6C {      // func_80044DF4 result: f32 at +0x6C
     u8 pad_00[0x6C];
     f32 field_6C;           // +0x6C
-};
-
-// Vtable mirror for the battle-actor dispatch slots used below. Never
-// instantiated -- casting a retail object to this type and calling the named
-// virtuals makes MWCC route the dispatch through r12 (retail order) instead of
-// a general scratch register (cf. ActorVtableMirror / CVisionBattleObj).
-struct BMVtMirror {
-    virtual ~BMVtMirror() {}                       // i0  = 0x04
-    virtual void f01(); virtual void f02(); virtual void f03(); virtual void f04();
-    virtual void f05(); virtual void f06(); virtual void f07(); virtual void f08();
-    virtual u32 v28(u32 a);                        // i9  = 0x28
-    virtual void* v30();                           // i10 = 0x2C
-    virtual void f12(); virtual void f13(); virtual void f14(); virtual void f15();
-    virtual void f16(); virtual void f17(); virtual void* v4C(); virtual void f19();
-    virtual void f20(); virtual void f21(); virtual void f22(); virtual void f23();
-    virtual void f24(); virtual void f25(); virtual void f26(); virtual void f27();
-    virtual void f28(); virtual void f29(); virtual void f30(); virtual void f31();
-    virtual void fF32();
-    virtual void v88(f32 f);                       // i33 = 0x88
-    virtual void f34(); virtual void f35(); virtual void f36(); virtual void f37();
-    virtual void f38(); virtual void f39();
-    virtual void vA4(u32 v);                       // i40 = 0xA4
-    virtual void f41(); virtual void f42(); virtual void f43(); virtual void f44();
-    virtual void vB8();                            // i45 = 0xB8
-    virtual void vBC(void* a);                     // i46 = 0xBC
-    virtual void f47(); virtual void f48();
-    virtual void vC8();                            // i49 = 0xC8
-    virtual void f50(); virtual void f51(); virtual void f52(); virtual void f53();
-    virtual void f54(); virtual void f55(); virtual void f56(); virtual void f57();
-    virtual void f58(); virtual void f59(); virtual void f60(); virtual void f61();
-    virtual void f62(); virtual void f63(); virtual void f64();
-    virtual void* v108();                          // i65 = 0x108
-    virtual void f66(); virtual void f67(); virtual void f68(); virtual void f69();
-    virtual void f70(); virtual void f71(); virtual void f72();
-    virtual f32 v128();                            // i73 = 0x128
-    virtual void f74(); virtual void f75(); virtual void f76(); virtual void f77();
-    virtual void f78(); virtual void f79(); virtual void f80(); virtual void f81();
-    virtual void f82();
-    virtual void v150(f32 f);                      // i83 = 0x150
-    virtual void v154(f32 f);                      // i84 = 0x154
-    virtual void f85(); virtual void f86(); virtual void f87(); virtual void f88();
-    virtual void f89(); virtual void f90(); virtual void f91(); virtual void f92();
-    virtual void f93(); virtual void f94(); virtual void f95(); virtual void f96();
-    virtual void f97(); virtual void f98(); virtual void f99(); virtual void f100();
-    virtual void f101(); virtual void f102(); virtual void f103(); virtual void f104();
-    virtual void f105(); virtual void f106(); virtual void f107(); virtual void f108();
-    virtual void f109(); virtual void f110(); virtual void f111(); virtual void f112();
-    virtual void f113(); virtual void f114(); virtual void f115(); virtual void f116();
-    virtual void f117(); virtual void f118(); virtual void f119(); virtual void f120();
-    virtual void* v1E8();                          // i121 = 0x1E8
-    virtual void f122(); virtual void f123(); virtual void f124(); virtual void f125();
-    virtual void f126();
-    virtual void* v200();                          // i127 = 0x200
-    virtual void f128(); virtual void f129(); virtual void f130(); virtual void f131();
-    virtual void f132(); virtual void f133(); virtual void f134(); virtual void f135();
-    virtual void f136(); virtual void f137(); virtual void f138(); virtual void f139();
-    virtual void f140(); virtual void f141(); virtual void f142(); virtual void f143();
-    virtual void f144(); virtual void f145(); virtual void f146(); virtual void f147();
-    virtual void f148(); virtual void f149(); virtual void f150(); virtual void f151();
-    virtual void f152(); virtual void f153(); virtual void f154(); virtual void f155();
-    virtual void f156(); virtual void f157(); virtual void f158(); virtual void f159();
-    virtual void f160(); virtual void f161(); virtual void f162();
-    virtual s32 v290();                            // i163 = 0x290
-    virtual void f164();
-    virtual void* v298();                          // i165 = 0x298
-    virtual void* v29C(u32 idx);                   // i166 = 0x29C
-    virtual void f167();
-    virtual void* v2A4();                          // i168 = 0x2A4
-    virtual s32 v2A8();                            // i169 = 0x2A8
-    virtual void v2AC();                           // i170 = 0x2AC
-    virtual void f171();
-    virtual void v2B4();                           // i172 = 0x2B4
-    virtual void v2B8();                           // i173 = 0x2B8
-    virtual void f174(); virtual void f175(); virtual void f176(); virtual void f177();
-    virtual void f178(); virtual void f179(); virtual void f180(); virtual void f181();
-    virtual void f182(); virtual void f183(); virtual void f184(); virtual void f185();
-    virtual void f186(); virtual void f187(); virtual void f188(); virtual void f189();
-    virtual void f190(); virtual void f191();
-    virtual void v304(u32 v);                      // i192 = 0x304
-    virtual s32 v308();                            // i193 = 0x308
-    virtual void f194(); virtual void f195(); virtual void f196(); virtual void f197();
-    virtual void f198(); virtual void f199(); virtual void f200(); virtual void f201();
-    virtual void f202(); virtual void f203(); virtual void f204(); virtual void f205();
-    virtual void f206(); virtual void f207(); virtual void f208(); virtual void f209();
-    virtual void f210(); virtual void f211(); virtual void f212(); virtual void f213();
-    virtual void f214(); virtual void f215(); virtual void f216(); virtual void f217();
-    virtual void f218(); virtual void f219(); virtual void f220(); virtual void f221();
-    virtual void f222(); virtual void f223(); virtual void f224(); virtual void f225();
-    virtual void f226(); virtual void f227(); virtual void f228(); virtual void f229();
-    virtual void f230(); virtual void f231(); virtual void f232(); virtual void f233();
-    virtual void f234(); virtual void f235(); virtual void f236(); virtual void f237();
-    virtual void f238(); virtual void f239(); virtual void f240(); virtual void f241();
-    virtual void f242(); virtual void f243(); virtual void f244(); virtual void f245();
-    virtual void f246(); virtual void f247(); virtual void f248(); virtual void f249();
-    virtual void f250(); virtual void f251(); virtual void f252(); virtual void f253();
-    virtual void f254(); virtual void f255(); virtual void f256(); virtual void f257();
-    virtual void f258(); virtual void f259(); virtual void f260(); virtual void f261();
-    virtual void f262(); virtual void f263(); virtual void f264(); virtual void f265();
-    virtual void f266(); virtual void f267(); virtual void f268(); virtual void f269();
-    virtual void f270(); virtual void f271(); virtual void f272(); virtual void f273();
-    virtual void f274(); virtual void f275(); virtual void f276(); virtual void f277();
-    virtual void f278(); virtual void f279(); virtual void f280(); virtual void f281();
-    virtual void f282(); virtual void f283(); virtual void f284(); virtual void f285();
-    virtual void f286(); virtual void f287(); virtual void f288(); virtual void f289();
-    virtual void f290(); virtual void f291(); virtual void f292(); virtual void f293();
-    virtual void f294(); virtual void f295(); virtual void f296(); virtual void f297();
-    virtual void f298(); virtual void f299(); virtual void f300(); virtual void f301();
-    virtual void f302(); virtual void f303(); virtual void f304(); virtual void f305();
-    virtual void f306(); virtual void f307(); virtual void f308(); virtual void f309();
-    virtual void f310(); virtual void f311(); virtual void f312(); virtual void f313();
-    virtual void f314(); virtual void f315(); virtual void f316(); virtual void f317();
-    virtual void f318(); virtual void f319(); virtual void f320(); virtual void f321();
-    virtual void f322(); virtual void f323(); virtual void f324(); virtual void f325();
-    virtual void f326(); virtual void f327(); virtual void f328(); virtual void f329();
-    virtual void f330(); virtual void f331(); virtual void f332(); virtual void f333();
-    virtual void f334(); virtual void f335(); virtual void f336(); virtual void f337();
-    virtual void f338(); virtual void f339(); virtual void f340(); virtual void f341();
-    virtual void f342(); virtual void f343(); virtual void f344(); virtual void f345();
-    virtual void f346(); virtual void f347(); virtual void f348(); virtual void f349();
-    virtual void f350(); virtual void f351(); virtual void f352(); virtual void f353();
-    virtual void f354(); virtual void f355(); virtual void f356(); virtual void f357();
-    virtual void f358(); virtual void f359(); virtual void f360(); virtual void f361();
-    virtual void f362(); virtual void f363(); virtual void f364(); virtual void f365();
-    virtual void f366(); virtual void f367();
-    virtual void v5C4(f32 f);                      // i368 = 0x5C4
 };
 
 // ---- imports (retail-unmangled names) --------------------------------------

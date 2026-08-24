@@ -2055,7 +2055,288 @@ extern "C" void func_80287250(CEquipItemBox* self, int param) {
 }
 #pragma pop
 
-extern "C" void func_802873D8(){}
+// Main confirm-button handler (state 2, name pane down). Three top-level
+// paths: (1) syswin1 open -> close it, optionally run func_8028CBCC;
+// (2) sort menu open -> commit selection, reset cursor state; (3) neither ->
+// item move/equip dispatch for the selected cell. Sets unk_1fe when an
+// action fired and the page table reports 8 equipped slots.
+#pragma push
+#pragma optimize_for_size on
+extern "C" __declspec(noinline) void func_802873D8(CEquipItemBox* self) {
+    if (self->unk_41 != 2) return;
+    if (self->unk_375 != 0) return;
+    const char* base = lbl_eu_8050EFDC;
+
+    // ---- syswin1 open: close it, optionally run CBCC ----
+    if (CSysWin_getUnk34(&self->_padSysWin1[0]) != 0) {
+        if (CSysWin_isActive(&self->_padSysWin1[0]) == 0) return;
+        self->unk_41 = 5;
+        func_8022B8E4(&self->_padSysWin1[0]);
+        func_801D216C(&self->ccur18[0], 0);
+        self->unk_58 = 1;
+        if (self->unk_374 != 0) return;
+        func_8028CBCC(self);
+    }
+
+    // ---- sortmenu section (converges from both syswin1 states) ----
+    if (func_801D3320(&self->_padSortMenu[0]) != 0) {
+        // Sort menu commit path.
+        if (func_801D3328(&self->_padSortMenu[0]) == 0) return;
+        func_80157824(self->unk_36c[(s8)self->unk_373],
+                      (u32)func_801D37F4(&self->_padSortMenu[0]));
+        self->unk_379 = func_801D3808(&self->_padSortMenu[0]);
+        self->unk_37a = func_801D3810(&self->_padSortMenu[0]);
+        func_80287250(self, 1);
+        self->unk_1f4 = 0;
+        if ((s8)self->unk_1f5 > 0) self->unk_1f5 = 0;
+        func_80289CC0(self);
+        *((u8*)self + 0x2382) = 0;
+        func_80289500(self, 0);
+        func_80138078__FUl(3);
+        return;
+    }
+
+    // ---- item selection dispatch ----
+    s8 sel = (s8)self->unk_1f5;
+    if (sel == -1) return;
+    CEquipItemGrid* grid = (CEquipItemGrid*)&self->_pad37D[1];
+    u8 idx = (u8)(self->unk_1f4 + sel * 5);
+
+    u8 cellByte = func_80283118(grid, idx);
+    if (cellByte == 0 || CSysWin_getUnk34(&self->_padSysWin1[0]) != 0)
+        goto move_dispatch;
+
+    {
+        u8 cat = (u8)((self->unk_1fc >> 8) & 0xff);
+        u8 cur = (u8)func_802832D8(grid, idx);
+        if ((u8)func_801392B4(cat) == cur) goto cat_match;
+    }
+    {
+        // Category mismatch: show description subwindow.
+        self->unk_41 = 4;
+        u8 idA = 0x86, idB = 0x87, idC = 0x88;
+        if (self->unk_36c[(s8)self->unk_373] == 3 && cellByte >= 1 && cellByte <= 2) {
+            idA = (u8)(cellByte == 1 ? 0x8b : 0x8c);
+            idB = 0x8d;
+            idC = 0x8e;
+        }
+        char* n1 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, idA);
+        char* n2 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, idB);
+        char* n3 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, idC);
+        func_8022B9B4(&self->_padSysWin1[0], n1, 0);
+        func_8022BF6C(&self->_padSysWin1[0], n2, n3);
+        func_8022BFC8(&self->_padSysWin1[0], 0);
+        func_8022B8B8(&self->_padSysWin1[0]);
+        self->unk_58 = 0;
+        self->unk_374 = 0;
+        return;
+    }
+cat_match:
+    {
+        // Category match: check the second lookup and either show names or
+        // run the move/equip dispatch.
+        u8 page = self->unk_36c[(s8)self->unk_373];
+        u16 fc = self->unk_1fc;
+        u8 lowNib = (u8)(fc & 0xf);
+        if (page == 3) {
+            u8 alt = (u8)func_80283190(grid, idx);
+            if ((u8)(fc & 0xf) != alt) {
+                char* n1 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x89);
+                char* n2 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x8d);
+                char* n3 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x8e);
+                func_8022B9B4(&self->_padSysWin1[0], n1, 0);
+                func_8022BF6C(&self->_padSysWin1[0], n2, n3);
+                func_8022BFC8(&self->_padSysWin1[0], 0);
+                func_8022B8B8(&self->_padSysWin1[0]);
+                self->unk_58 = 0;
+                self->unk_374 = 0;
+                return;
+            }
+            goto move_dispatch;
+        }
+    }
+    // fallthrough to move_dispatch for non-page-3 category-match case too
+
+move_dispatch:
+    {
+        CEquipItemGrid* grid = (CEquipItemGrid*)&self->_pad37D[1];
+        u8 idx = (u8)(self->unk_1f4 + self->unk_1f5 * 5);
+        u32 kindByte = func_80282E4C(grid, idx);
+        u32 kind2 = func_80282EC4(grid, idx);
+        if (kind2 == 0) return;
+        func_801392E4(kindByte);
+        u16 kind2b = (u16)func_80139358(kind2);
+        u16 fcw = self->unk_1fc;
+        u8 hi = (u8)((fcw >> 8) & 0xf);
+        u8 lo = (u8)(fcw & 0xf);
+        u8 mapped = lo;
+        switch (lo) {
+        case 2: mapped = 2; break;
+        case 4: mapped = 4; break;
+        case 5: mapped = 5; break;
+        case 6: mapped = 6; break;
+        case 7: mapped = 7; break;
+        case 8: mapped = 8; break;
+        default: mapped = hi; break;
+        }
+        u8 hasRange = (lo == 2) ? 1 : (u8)((u32)(lo - 3) <= 1u ? 1 : 0);
+        u8 catB = (u8)func_801392B4(mapped);
+        void* cfg = func_8009EC9C(catB);
+        u32 texBase = *(u32*)&lbl_eu_8050EF84;
+        u32 w1 = *(u32*)((u8*)&lbl_eu_8050EF84 + 4);
+        u32 w2 = *(u32*)((u8*)&lbl_eu_8050EF84 + 8);
+        struct { void* vtbl; u32 a; u32 b; } texobj;
+        texobj.vtbl = (void*)texBase;
+        texobj.a = w1;
+        texobj.b = w2;
+        func_80043D90(&texobj);
+        void* mgr = func_80043F18(&texobj);
+        func_800F4A98(mgr, *(u32*)((u8*)cfg + kind2b * 4), 0);
+        func_80043F18(&texobj);
+        if (*(u32*)((char*)mgr + 0x620) < 1) goto no_move;
+        func_80043F18(&texobj);
+        func_800F6EC0(mgr, 0);
+        if (*(void**)((char*)mgr + 4) == 0) goto no_move;
+        func_800BFC68__FPQ22cf12CfObjectMove(mgr);
+        {
+            u32 sel_lo = kind2b & 0xffff;
+            switch (sel_lo) {
+            case 3:
+                func_8009E0A8(cfg, (int)kindByte); break;
+            case 2:
+                func_8009E024(cfg, (int)kindByte); break;
+            case 4:
+                func_8009E030(cfg, (int)kindByte); break;
+            case 5:
+                func_8009E03C(cfg, (int)kindByte); break;
+            case 6:
+                func_8009E048(cfg, (int)kindByte); break;
+            case 7:
+                func_8009E048(cfg, (int)kindByte); break;
+            case 8:
+                func_8009E054(cfg, (int)kindByte); break;
+            }
+            func_800A1370(cfg);
+            func_80138078__FUl(0x12);
+            nw4r::lyt::Pane* p =
+                self->field_38->GetRootPane()->FindPaneByName(&base[0x182], true);
+            if (p != 0) {
+                func_80124270(p, 0);
+                self->unk_378 = 0;
+            } else {
+                // Category-3 special: slot-id lookup and ImplView equip call.
+                u8 slotIdx = hasRange ? mapped : mapped;
+                (void)slotIdx;
+                s16 slotId = -1;
+                switch (mapped) {
+                case 2: slotId = ((CEquipItemBoxItemView*)cfg)->field_26; break;
+                case 4: slotId = ((CEquipItemBoxItemView*)cfg)->field_1c; break;
+                case 5: slotId = ((CEquipItemBoxItemView*)cfg)->field_1e; break;
+                case 6: slotId = ((CEquipItemBoxItemView*)cfg)->field_20; break;
+                case 7: slotId = ((CEquipItemBoxItemView*)cfg)->field_22; break;
+                case 8: slotId = ((CEquipItemBoxItemView*)cfg)->field_24; break;
+                }
+                CItemInstance* inst =
+                    (CItemInstance*)func_80157C4C(slotIdx, hasRange ? mapped : 0);
+                if (inst != 0 && *(u32*)inst != 0) {
+                    CEquipItemBoxItemImplView* impl =
+                        (CEquipItemBoxItemImplView*)CItem_initItemImplInstances(inst);
+                    impl->vf44(inst, (u8)hasRange, (s32)kindByte);
+                }
+                func_80138078__FUl(0x14);
+                func_8013B428(0x77);
+            }
+            self->unk_1fe = 1;
+            goto done;
+        }
+    }
+no_move:
+    // Build the per-category equippable-count table and sound when full.
+    {
+        void* cfg = func_8009EC9C((u8)func_801392B4(
+            (u16)((self->unk_1fc >> 0) & 0xf)));
+        (void)cfg;
+        u32 wordG = lbl_eu_80668B3C;
+        u16 halfG = lbl_eu_80668B40;
+        CEquipItemBoxItemView* iv =
+            (CEquipItemBoxItemView*)func_8009EC9C(0);
+        (void)iv;
+        u8 count = 0;
+        for (u8 cat_i = 0; cat_i < 6; cat_i++) {
+            u8 catByte = *(((u8*)&wordG) + cat_i);
+            s16 cfgHalf = (s16)(((u16*)&halfG))[cat_i];
+            CItemInstance* obj =
+                (CItemInstance*)func_80157C4C(catByte, cfgHalf);
+            if (obj == 0) continue;
+            u8 cnt = (u8)((CEquipItemBoxItemImplView*)
+                          CItem_initItemImplInstances(obj))->vf30(obj);
+            for (u8 j = 0; j < cnt; j++) {
+                if ((s16)((CEquipItemBoxItemImplView*)
+                          CItem_initItemImplInstances(obj))->vf40(obj, j) != -1) {
+                    continue;
+                }
+                CItemInstance* entry = (CItemInstance*)((CEquipItemBoxItemImplView*)
+                    CItem_initItemImplInstances(obj))->vf2C(obj, j);
+                if (entry == 0) continue;
+                if (((entry->flags) & 1) == 0) continue;
+                count++;
+                break;
+            }
+        }
+        if (count == 8) func_8013B428(0x78);
+    }
+done:
+    self->unk_1fe = 1;
+}
+#pragma pop
+
+// Advance page-2 system-window state while it is visible and active.
+void CEquipItemBox::func_80287D58() {
+    if (unk_375 != 0 && CSysWin_getUnk34(_padSysWin2) != 0
+        && CSysWin_isActive(_padSysWin2) != 0) {
+        func_8022B8E4(_padSysWin2);
+    }
+}
+
+// Rebuild the sort-menu page list: stash the input value/count, pick the
+// current page byte (cursor page when flag is set, else the value's bits 4-7),
+// reset the page list, then repopulate it (page 3 alone, otherwise pages
+// 2 + 4..8) and restore the page cursor for the 4..8 band.
+#pragma push
+#pragma optimize_for_size on
+#pragma dont_inline on
+extern "C" void func_80287DB4(CEquipItemBox* self, u32 v, u32 w, int flag) {
+    self->unk_1fc = (u16)v;
+    self->field_27A4 = w;
+    u32 raw;
+    if (flag != 0) {
+        raw = self->unk_36c[(s8)self->unk_373];
+    } else {
+        raw = (v >> 4) & 0xF;
+    }
+    u8 x = (u8)raw;
+    func_8028A07C(self);
+    if (x == 3) {
+        func_8028A0C0(self, 3);
+    } else {
+        func_8028A0C0(self, 2);
+        func_8028A0C0(self, 4);
+        func_8028A0C0(self, 5);
+        func_8028A0C0(self, 6);
+        func_8028A0C0(self, 7);
+        func_8028A0C0(self, 8);
+        switch (x) {
+        case 4: self->unk_373 = 1; break;
+        case 5: self->unk_373 = 2; break;
+        case 6: self->unk_373 = 3; break;
+        case 7: self->unk_373 = 4; break;
+        case 8: self->unk_373 = 5; break;
+        }
+    }
+    func_8028A1DC(self);
+    func_80289500(self, 1);
+}
+#pragma pop
 
 u8 CEquipItemBox::func_80287EE8() {
     u8 val = unk_1fe;
@@ -3292,21 +3573,21 @@ extern "C" void func_8028AF98(CEquipItemBox* self, int a, int b) {
         }
     }
     func_80139C98((u32)rateA, (u32)rateB, 0, f);
-    char* str = func_80136190(base + 0x2d, base + 0x36, 0xb);
+    char* str = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0xb);
     sprintf(buf, base + 0x618, rateA, str, rateB);
     func_80136A1C(self->field_38, base + 0x522, buf, 0);
     func_80136910(self->field_38, base + 0x546, (u8)name72);
     func_80136910(self->field_38, base + 0x552, (u8)name7a);
-    char* n1 = func_80136190(base + 0x2d, base + 0x36, 0x7f);
-    char* n2 = func_80136190(base + 0x2d, base + 0x36, 0x80);
+    char* n1 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x7f);
+    char* n2 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x80);
     if ((u8)name61) {
         sprintf(buf, base + 0x61f, n1, n2);
     } else {
         sprintf(buf, base + 0x626, (u8)name61, n2);
     }
     func_80136A1C(self->field_38, base + 0x52e, buf, 0);
-    n1 = func_80136190(base + 0x2d, base + 0x36, 0x7f);
-    n2 = func_80136190(base + 0x2d, base + 0x36, 0x80);
+    n1 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x7f);
+    n2 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x80);
     if ((u8)name69) {
         sprintf(buf, base + 0x61f, n1, n2);
     } else {
@@ -3377,13 +3658,13 @@ extern "C" void func_8028B7CC(CEquipItemBox* self, int kind, int item) {
     u8 b = (u8)v;
     char* str;
     if ((u32)(b - 4) <= 9) {
-        str = func_80136190(base + 0x2d, base + 0x36, 0x2e);
+        str = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x2e);
     } else if (b == 3) {
-        str = func_80136190(base + 0x2d, base + 0x36, 0x32);
+        str = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x32);
     } else if (b == 2) {
-        str = func_80136190(base + 0x2d, base + 0x36, 0x31);
+        str = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x31);
     } else if (b == 1) {
-        str = func_80136190(base + 0x2d, base + 0x36, 0x30);
+        str = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x30);
     } else {
         str = 0;
     }
@@ -3392,15 +3673,15 @@ extern "C" void func_8028B7CC(CEquipItemBox* self, int kind, int item) {
     char* str2 = 0;
     if ((u32)(b2 - 4) <= 8) {
         switch (b2) {
-        case 4: str2 = func_80136190(base + 0x62b, base + 0x36, 0x77); break;
-        case 5: str2 = func_80136190(base + 0x62b, base + 0x36, 0x78); break;
-        case 6: str2 = func_80136190(base + 0x62b, base + 0x36, 0x79); break;
-        case 7: str2 = func_80136190(base + 0x62b, base + 0x36, 0x7a); break;
-        case 8: str2 = func_80136190(base + 0x62b, base + 0x36, 0x7b); break;
-        case 9: str2 = func_80136190(base + 0x62b, base + 0x36, 0x7c); break;
-        case 10: str2 = func_80136190(base + 0x62b, base + 0x36, 0x7d); break;
-        case 11: str2 = func_80136190(base + 0x62b, base + 0x36, 0x7e); break;
-        case 12: str2 = func_80136190(base + 0x62b, base + 0x36, 0x7f); break;
+        case 4: str2 = func_80136190((char*)base + 0x62b, base + 0x36, 0x77); break;
+        case 5: str2 = func_80136190((char*)base + 0x62b, base + 0x36, 0x78); break;
+        case 6: str2 = func_80136190((char*)base + 0x62b, base + 0x36, 0x79); break;
+        case 7: str2 = func_80136190((char*)base + 0x62b, base + 0x36, 0x7a); break;
+        case 8: str2 = func_80136190((char*)base + 0x62b, base + 0x36, 0x7b); break;
+        case 9: str2 = func_80136190((char*)base + 0x62b, base + 0x36, 0x7c); break;
+        case 10: str2 = func_80136190((char*)base + 0x62b, base + 0x36, 0x7d); break;
+        case 11: str2 = func_80136190((char*)base + 0x62b, base + 0x36, 0x7e); break;
+        case 12: str2 = func_80136190((char*)base + 0x62b, base + 0x36, 0x7f); break;
         }
     }
     func_80136B4C(self->field_38, base + 0x517, str2, 0);
@@ -3445,7 +3726,7 @@ extern "C" void func_8028BE74(CEquipItemBox* self, int kind, int item) {
     u32 key = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf54(obj);
     // Count text: "xN" scaled by the vf08 slot count.
     u32 id = ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf08(obj);
-    char* str = func_80136190(base + 0x2d, base + 0x36, 0x1e - ((u8)id - 1));
+    char* str = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x1e - ((u8)id - 1));
     func_80136B4C(self->field_38, base + 0x5f2, str, 0);
     // Name text from the bdat lookup keyed by the vf54 name key.
     u32 name = func_801361E8(
@@ -3460,7 +3741,7 @@ extern "C" void func_8028BE74(CEquipItemBox* self, int kind, int item) {
         char buf[0x20];
         u32 v = func_801361E8(lbl_eu_806640D8, base + 0x633, (u16)key);
         if ((u8)v != 0 && (u32)((u8)v - 3) <= 1) {
-            char* str2 = func_80136190(base + 0x2d, base + 0x36, 0x21);
+            char* str2 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x21);
             sprintf(buf, base + 0x626,
                     ((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(obj))->vf90(obj), str2);
         } else {
@@ -3471,7 +3752,7 @@ extern "C" void func_8028BE74(CEquipItemBox* self, int kind, int item) {
     }
     // Category label: name-byte + 0x15 selects the category string.
     u32 cat = func_801361E8(lbl_eu_806640D8, base + 0, (u16)key);
-    char* str3 = func_80136190(base + 0x2d, base + 0x36, (u8)cat + 0x15);
+    char* str3 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, (u8)cat + 0x15);
     func_80136B4C(self->field_38, base + 0x640, str3, 0);
     // Cursor anchor: midpoint helper between the detail pane and anchor pane
     // (both looked up again through the pane-finder sub-object).
@@ -3532,7 +3813,7 @@ extern "C" void func_8028C280(CEquipItemBox* self, int a, int b) {
                 u32 g = lbl_eu_806640D8;
                 u16 kind = (u16)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(item))->vf54(item);
                 storeKind = kind;
-                char* name = func_80136190(base + 0x2d, base + 0x36,
+                char* name = func_80136190((char*)base + 0x2d, (char*)base + 0x36,
                                             0x1e - ((u16)((CEquipItemBoxItemImplView*)CItem_initItemImplInstances(item))->vf08(item) - 1));
                 switch ((u8)func_801361E8(g, base + 0x1a7, kind)) {
                 case 0:
@@ -3564,7 +3845,7 @@ extern "C" void func_8028C280(CEquipItemBox* self, int a, int b) {
                 } else {
                     u32 v = func_801361E8(g, base + 0x633, kind);
                     if (v != 0 && (u8)((u8)v - 3) <= 1) {
-                        char* str = func_80136190(base + 0x2d, base + 0x36, 0x21);
+                        char* str = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x21);
                         sprintf(buf40, base + 0x626, key90, str);
                     } else {
                         sprintf(buf40, base + 0x63c, key90);
@@ -3585,7 +3866,7 @@ extern "C" void func_8028C280(CEquipItemBox* self, int a, int b) {
                     u32 g2 = lbl_eu_806640D8;
                     u32 bits3 = (entry->word >> 22) & 7;
                     storeKind = kind2;
-                    char* name2 = func_80136190(base + 0x2d, base + 0x36, 0x1e - (bits3 - 1));
+                    char* name2 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x1e - (bits3 - 1));
                     switch ((u8)func_801361E8(g2, base + 0x1a7, kind2)) {
                     case 0:
                         icon = self->field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x65a, 0);
@@ -3616,7 +3897,7 @@ extern "C" void func_8028C280(CEquipItemBox* self, int a, int b) {
                     } else {
                         u32 v2 = func_801361E8(g2, base + 0x633, kind2);
                         if (v2 != 0 && (u8)((u8)v2 - 3) <= 1) {
-                            char* str3 = func_80136190(base + 0x2d, base + 0x36, 0x21);
+                            char* str3 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x21);
                             sprintf(buf40, base + 0x626, bit11, str3);
                         } else {
                             sprintf(buf40, base + 0x63c, bit11);
@@ -3633,7 +3914,7 @@ extern "C" void func_8028C280(CEquipItemBox* self, int a, int b) {
                     icon = self->field_34->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, base + 0x65a, 0);
                     sprintf(buf, base + 0x6f4, i1);
                     func_80136B4C(self->field_38, buf, base + 0x228, 0);
-                    sprintf(buf40, base + 0x2a, func_80136190(base + 0x2d, base + 0x36, 0x2a));
+                    sprintf(buf40, base + 0x2a, func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x2a));
                     sprintf(buf, base + 0x705, i1);
                     func_80136A1C(self->field_38, buf, buf40, 0);
                     func_80137F88(pane, (unsigned long)icon);
@@ -3823,7 +4104,7 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         }
         field_38->SetAnimationEnable((nw4r::lyt::AnimTransform*)field_3C, true);
         field_38->Animate(0);
-        char* s4 = func_80136190(base + 0x2d, base + 0x36, 4);
+        char* s4 = func_80136190((char*)base + 0x2d, (char*)base + 0x36, 4);
         func_80136B4C(field_38, base + 0x74c, s4, 0);
         func_80136B4C(field_38, base + 0x2d4, base + 0x228, 0);
         const char* name = (func_80086F9C__Q22cf13CfGameManagerFv(-1) == 0) ? base + 0x761 : base + 0x758;
@@ -3907,14 +4188,14 @@ int CEquipItemBox::OnFileEvent(CEventFile* ev) {
         func_801368C0(field_38, base + 0x5af, (u32)msg3);
         func_801368C0(field_38, base + 0x5be, (u32)msg3);
         func_801368C0(field_38, base + 0x5cd, (u32)msg3);
-        func_80136B4C(field_38, base + 0x4bf, func_80136190(base + 0x2d, base + 0x36, 0xa), 0);
-        func_80136B4C(field_38, base + 0x4ca, func_80136190(base + 0x2d, base + 0x36, 0xd), 0);
-        func_80136B4C(field_38, base + 0x4d5, func_80136190(base + 0x2d, base + 0x36, 0x11), 0);
-        func_80136B4C(field_38, base + 0x4e0, func_80136190(base + 0x2d, base + 0x36, 0x12), 0);
-        func_80136B4C(field_38, base + 0x4eb, func_80136190(base + 0x2d, base + 0x36, 0xc), 0);
-        func_80136B4C(field_38, base + 0x4f6, func_80136190(base + 0x2d, base + 0x36, 0x13), 0);
-        func_80136B4C(field_38, base + 0x5dc, func_80136190(base + 0x2d, base + 0x36, 0x18), 0);
-        func_80136B4C(field_38, base + 0x501, func_80136190(base + 0x2d, base + 0x36, 0x2f), 0);
+        func_80136B4C(field_38, base + 0x4bf, func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0xa), 0);
+        func_80136B4C(field_38, base + 0x4ca, func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0xd), 0);
+        func_80136B4C(field_38, base + 0x4d5, func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x11), 0);
+        func_80136B4C(field_38, base + 0x4e0, func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x12), 0);
+        func_80136B4C(field_38, base + 0x4eb, func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0xc), 0);
+        func_80136B4C(field_38, base + 0x4f6, func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x13), 0);
+        func_80136B4C(field_38, base + 0x5dc, func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x18), 0);
+        func_80136B4C(field_38, base + 0x501, func_80136190((char*)base + 0x2d, (char*)base + 0x36, 0x2f), 0);
         func_80136B4C(field_38, base + 0x591, base + 0x228, 0);
         func_80136B4C(field_38, base + 0x59b, base + 0x228, 0);
         func_80136B4C(field_38, base + 0x5a5, base + 0x228, 0);

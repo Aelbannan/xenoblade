@@ -508,7 +508,10 @@ public:
         u8* field_0x2C;                        // +0x2C base of the light-param array (func_804C6054)
         CScnEnvLgtBloom* field_0x2C_bloom;     // +0x2C CScnBloom handle (func_804C1094)
     };
-    CScnEnvLgtCtrlLgtParamCtl* field_0x30;  // +0x30 light-param control blob (func_804C6054 / null-check in func_804C3404)
+    union {
+        CScnEnvLgtCtrlLgtParamCtl* field_0x30;  // +0x30 light-param control blob (func_804C6054 / null-check in func_804C3404)
+        void* field_0x30_chk;                   // untyped view (CSE breaker for func_804C406C's null check)
+    };
     union {
         u8 field_0x34[4];                   // +0x34 byte view
         f32 field_0x34_f;                   // +0x34 float view (func_804C2124)

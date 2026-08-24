@@ -1829,79 +1829,90 @@ extern "C" int func_804AB538(CColiObject* self) {
     PSMTXMultVec((const f32(*)[4])((u8*)self->field_0x00_obj + 0x34),
                  (const Vec*)&self->field_0x50, (Vec*)&self->field_0x2e4);
 
-    // Fold the transformed point pair into per-axis min (0x2fc) / max
-    // (0x2f0) bounds.
-    if (self->field_0x2d8[0] > self->field_0x2e4[0]) {
-        self->field_0x2f0[0] = self->field_0x2d8[0];
-        self->field_0x2fc[0] = self->field_0x2e4[0];
-    } else {
+    // Fold the transformed point pair into per-axis max (0x2f0) / min
+    // (0x2fc) bounds; compare orientation matches retail's fcmpo/ble shape.
+    if (self->field_0x2e4[0] >= self->field_0x2d8[0]) {
         self->field_0x2f0[0] = self->field_0x2e4[0];
         self->field_0x2fc[0] = self->field_0x2d8[0];
-    }
-    if (self->field_0x2d8[1] > self->field_0x2e4[1]) {
-        self->field_0x2f0[1] = self->field_0x2d8[1];
-        self->field_0x2fc[1] = self->field_0x2e4[1];
     } else {
+        self->field_0x2f0[0] = self->field_0x2d8[0];
+        self->field_0x2fc[0] = self->field_0x2e4[0];
+    }
+    if (self->field_0x2e4[1] >= self->field_0x2d8[1]) {
         self->field_0x2f0[1] = self->field_0x2e4[1];
         self->field_0x2fc[1] = self->field_0x2d8[1];
-    }
-    if (self->field_0x2d8[2] > self->field_0x2e4[2]) {
-        self->field_0x2f0[2] = self->field_0x2d8[2];
-        self->field_0x2fc[2] = self->field_0x2e4[2];
     } else {
+        self->field_0x2f0[1] = self->field_0x2d8[1];
+        self->field_0x2fc[1] = self->field_0x2e4[1];
+    }
+    if (self->field_0x2e4[2] >= self->field_0x2d8[2]) {
         self->field_0x2f0[2] = self->field_0x2e4[2];
         self->field_0x2fc[2] = self->field_0x2d8[2];
+    } else {
+        self->field_0x2f0[2] = self->field_0x2d8[2];
+        self->field_0x2fc[2] = self->field_0x2e4[2];
     }
 
     CColiSweepCtrl* ctrl = lbl_eu_80665934;
-    memset(lbl_eu_8065CFA0, 0, ((ctrl->field_0x08 >> 5) + 1) * 4);
+    u32* visited = lbl_eu_8065CFA0;
+    memset(visited, 0, ((ctrl->field_0x08 >> 5) + 1) * 4);
     lbl_eu_80665924 =
         (ml::coli::CColiObject*)((u8*)lbl_eu_80665920 + ctrl->field_0x00 * 0x14);
+    self->field_0x80 = 0;
     VEC3Sub(&self->field_0x68, (const VEC3*)self->field_0x2e4,
             (const VEC3*)self->field_0x2d8);
-    self->field_0x80 = 0;
 
     CColiRec16* rec = &((CColiRec16*)lbl_eu_8066592C)[ctrl->field_0x04];
-    u16 kind = rec->field_0x0c;
-    if (kind == 3) {
-        // Group: mark each member id as visited and process it.
+    if (rec->field_0x0c == 3) {
+        // Group: mark each member id as visited and process it. The loop
+        // keeps both the counter and a walking pointer (retail shape).
         u16* arr = (u16*)((u8*)lbl_eu_80665930 + rec->field_0x00_off);
         u16 count = rec->field_0x0e;
-        for (int i = 0; i < count; i++) {
-            u16 id = arr[i];
+        int i = 0;
+        while (i < count) {
+            u16 id = *arr;
             u32 bit = 1u << (id & 31);
-            if ((lbl_eu_8065CFA0[id >> 5] & bit) == 0) {
-                lbl_eu_8065CFA0[id >> 5] |= bit;
-                func_804AD1E0(self, arr[i]);
+            u32* word = &visited[id >> 5];
+            if ((*word & bit) == 0) {
+                *word |= bit;
+                func_804AD1E0(self, *arr);
             }
+            i++;
+            arr++;
         }
     } else {
         // A: the record's sphere within self's box at the record's kind.
-        if (self->field_0x2fc[kind] <= rec->field_0x04 + rec->field_0x08 &&
-            self->field_0x2f0[kind] >= rec->field_0x04 &&
+        if (self->field_0x2fc[rec->field_0x0c] <=
+                rec->field_0x04 + rec->field_0x08 &&
+            self->field_0x2f0[rec->field_0x0c] >= rec->field_0x04 &&
             rec->field_0x00 != 0) {
             CColiRec16* sub = &((CColiRec16*)lbl_eu_8066592C)[rec->field_0x00];
             if (sub->field_0x0c == 3) {
                 u16* arr = (u16*)((u8*)lbl_eu_80665930 + sub->field_0x00_off);
                 u16 count = sub->field_0x0e;
-                for (int i = 0; i < count; i++) {
-                    u16 id = arr[i];
+                int i = 0;
+                while (i < count) {
+                    u16 id = *arr;
                     u32 bit = 1u << (id & 31);
-                    if ((lbl_eu_8065CFA0[id >> 5] & bit) == 0) {
-                        lbl_eu_8065CFA0[id >> 5] |= bit;
-                        func_804AD1E0(self, arr[i]);
+                    u32* word = &visited[id >> 5];
+                    if ((*word & bit) == 0) {
+                        *word |= bit;
+                        func_804AD1E0(self, *arr);
                     }
+                    i++;
+                    arr++;
                 }
             } else {
-                u16 k1 = sub->field_0x0c;
-                if (self->field_0x2fc[k1] <= sub->field_0x04 + sub->field_0x08 &&
-                    self->field_0x2f0[k1] >= sub->field_0x04 &&
+                if (self->field_0x2fc[sub->field_0x0c] <=
+                        sub->field_0x04 + sub->field_0x08 &&
+                    self->field_0x2f0[sub->field_0x0c] >= sub->field_0x04 &&
                     sub->field_0x00 != 0) {
                     func_804AC9F4(
                         self, &((CColiRec16*)lbl_eu_8066592C)[sub->field_0x00]);
                 }
-                if (self->field_0x2fc[k1] <= sub->field_0x04 &&
-                    self->field_0x2f0[k1] >= sub->field_0x04 - sub->field_0x08 &&
+                if (self->field_0x2fc[sub->field_0x0c] <= sub->field_0x04 &&
+                    self->field_0x2f0[sub->field_0x0c] >=
+                        sub->field_0x04 - sub->field_0x08 &&
                     sub->field_0x02 != 0) {
                     func_804AC9F4(
                         self, &((CColiRec16*)lbl_eu_8066592C)[sub->field_0x02]);
@@ -1909,31 +1920,37 @@ extern "C" int func_804AB538(CColiObject* self) {
             }
         }
         // B: the record's point within the shrunken box at its kind.
-        if (self->field_0x2fc[kind] <= rec->field_0x04 &&
-            self->field_0x2f0[kind] >= rec->field_0x04 - rec->field_0x08 &&
+        if (self->field_0x2fc[rec->field_0x0c] <= rec->field_0x04 &&
+            self->field_0x2f0[rec->field_0x0c] >=
+                rec->field_0x04 - rec->field_0x08 &&
             rec->field_0x02 != 0) {
             CColiRec16* sub2 = &((CColiRec16*)lbl_eu_8066592C)[rec->field_0x02];
             if (sub2->field_0x0c == 3) {
                 u16* arr = (u16*)((u8*)lbl_eu_80665930 + sub2->field_0x00_off);
                 u16 count = sub2->field_0x0e;
-                for (int i = 0; i < count; i++) {
-                    u16 id = arr[i];
+                int i = 0;
+                while (i < count) {
+                    u16 id = *arr;
                     u32 bit = 1u << (id & 31);
-                    if ((lbl_eu_8065CFA0[id >> 5] & bit) == 0) {
-                        lbl_eu_8065CFA0[id >> 5] |= bit;
-                        func_804AD1E0(self, arr[i]);
+                    u32* word = &visited[id >> 5];
+                    if ((*word & bit) == 0) {
+                        *word |= bit;
+                        func_804AD1E0(self, *arr);
                     }
+                    i++;
+                    arr++;
                 }
             } else {
-                u16 k2 = sub2->field_0x0c;
-                if (self->field_0x2fc[k2] <= sub2->field_0x04 + sub2->field_0x08 &&
-                    self->field_0x2f0[k2] >= sub2->field_0x04 &&
+                if (self->field_0x2fc[sub2->field_0x0c] <=
+                        sub2->field_0x04 + sub2->field_0x08 &&
+                    self->field_0x2f0[sub2->field_0x0c] >= sub2->field_0x04 &&
                     sub2->field_0x00 != 0) {
                     func_804AC9F4(
                         self, &((CColiRec16*)lbl_eu_8066592C)[sub2->field_0x00]);
                 }
-                if (self->field_0x2fc[k2] <= sub2->field_0x04 &&
-                    self->field_0x2f0[k2] >= sub2->field_0x04 - sub2->field_0x08 &&
+                if (self->field_0x2fc[sub2->field_0x0c] <= sub2->field_0x04 &&
+                    self->field_0x2f0[sub2->field_0x0c] >=
+                        sub2->field_0x04 - sub2->field_0x08 &&
                     sub2->field_0x02 != 0) {
                     func_804AC9F4(
                         self, &((CColiRec16*)lbl_eu_8066592C)[sub2->field_0x02]);
@@ -3314,9 +3331,12 @@ extern "C" int func_804AF32C(CColiObject* self, const _VEC3* a,
                              const _VEC3* b, const _VEC3* c) {
     VEC3 in;   // sp+0x44 transformed +0x50 point
     VEC3 out;  // sp+0x38 transformed +0x44 point
+    // Both flags are seeded before the first transform call (retail li
+    // r27/li r26 sit ahead of the bl).
+    int insideA = 1;
+    int insideB = 1;
     PSMTXMultVec((const f32(*)[4])(const void*)c,
                  (const Vec*)&self->field_0x50, (Vec*)&in);
-    int insideA = 1;
     if (a->x < in.x || -a->x > in.x) {
         insideA = 0;
     } else {
@@ -3330,7 +3350,6 @@ extern "C" int func_804AF32C(CColiObject* self, const _VEC3* a,
     }
     PSMTXMultVec((const f32(*)[4])(const void*)c,
                  (const Vec*)&self->field_0x44, (Vec*)&out);
-    int insideB = 1;
     if (a->x < out.x || -a->x > out.x) {
         insideB = 0;
     } else {
@@ -3350,8 +3369,10 @@ extern "C" int func_804AF32C(CColiObject* self, const _VEC3* a,
         in = out;
         out = t;
     }
-    CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
-    proc->field_0x08 = lbl_eu_80663A90[0];
+    // The partner-proc pointer is re-loaded from +0x3c at every use (retail
+    // never caches it in a callee-saved register).
+    ((CColiObj3C*)(uintptr_t)self->field_0x3c_u)->field_0x08 =
+        lbl_eu_80663A90[0];
     VEC3 dir;  // sp+0x20 outside - inside
     VEC3Sub(&dir, &out, &in);
     f32 mag = PSVECMag((const Vec*)&dir);
@@ -3387,18 +3408,19 @@ extern "C" int func_804AF32C(CColiObject* self, const _VEC3* a,
     f32 axisSign = lbl_eu_8066AE44;
     int axis = 0;
     int found = 0;
+    // Retail walks the extents pointer forward one float per iteration
+    // (addi r29,r29,4): advance a itself.
     for (int i = 0; i < 3; i++) {
         f32 iv = oneOver[i];
         if (iv == lbl_eu_8066AE44) {
             // Zero direction on this axis: the inside point must already
             // lie within the AABB on it.
-            if (((f32*)&in)[i] < -((const f32*)a)[i] ||
-                ((f32*)&in)[i] > ((const f32*)a)[i]) {
+            if (((f32*)&in)[i] < -a->x || ((f32*)&in)[i] > a->x) {
                 return 0;
             }
         } else {
-            f32 t0 = iv * (((const f32*)a)[i] - ((f32*)&in)[i]);
-            f32 t1 = iv * (-((const f32*)a)[i] - ((f32*)&in)[i]);
+            f32 t0 = iv * (a->x - ((f32*)&in)[i]);
+            f32 t1 = iv * (-a->x - ((f32*)&in)[i]);
             if (t1 > t0) {
                 if (t0 >= lbl_eu_8066AE44 && t0 > tLo) {
                     tLo = t0;
@@ -3418,6 +3440,7 @@ extern "C" int func_804AF32C(CColiObject* self, const _VEC3* a,
             }
             if (tLo > tHi) return 0;
         }
+        a = (const _VEC3*)((const f32*)a + 1);
     }
     if (tLo < lbl_eu_8066AE44 || mag < tLo) return 0;
     if (found == 0) return 0;
@@ -3426,6 +3449,7 @@ extern "C" int func_804AF32C(CColiObject* self, const _VEC3* a,
     VEC3 hit;  // sp+0x8
     VEC3Scale(&hit, &dir, tLo);
     VEC3Add(&hit, &in, &hit);
+    CColiObj3C* proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
     PSMTXMultVec((const f32(*)[4])(const void*)b, (const Vec*)&hit,
                  (Vec*)&proc->field_0x0c);
     // Axis-aligned normal in the partner frame.
@@ -3436,6 +3460,7 @@ extern "C" int func_804AF32C(CColiObject* self, const _VEC3* a,
     VEC3TransformNormal((VEC3*)&proc->field_0x18,
                         (const nw4r::math::MTX34*)(const void*)b,
                         (const VEC3*)&hit);
+    proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
     VEC3* n = (VEC3*)&proc->field_0x18;
     f32 len2 = n->y * n->y + n->x * n->x + n->z * n->z;
     if (len2 == lbl_eu_8066AE44) {
@@ -3443,6 +3468,7 @@ extern "C" int func_804AF32C(CColiObject* self, const _VEC3* a,
     } else {
         PSVECNormalize((const Vec*)n, (Vec*)n);
     }
+    proc = (CColiObj3C*)(uintptr_t)self->field_0x3c_u;
     proc->vtbl->field_0x08(proc, self->field_0x314);
     return 1;
 }

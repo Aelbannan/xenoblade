@@ -1176,42 +1176,38 @@ extern "C" bool func_8046D898__Q23LOD9LODMemManFv(LOD::LODMemMan* self, u32 arg,
     return true;
 }
 
-#pragma push
-#pragma auto_inline off
-#pragma scheduling off
 void LOD::LODMemMan::func_8046DA04() {
     LODMemManLayout* l = (LODMemManLayout*)this;
-    // Scheduling is off here: the statement order below mirrors the retail
-    // instruction order exactly (float pool loads interleaved with the
-    // zero/nine materializations, then the clears in field order).
+    // Float pool constants are cached in locals so MWCC CSEs them into
+    // f1 (1.0f) / f0 (scale divisor); the clears follow in field order.
+    // NOTE: MWCC's list scheduler pulls the first f0 consumer (the +0x7C
+    // store) up into the load-latency slot; retail keeps it in program
+    // order.  Every source lever tried (assignment order, zero/nine locals,
+    // interleaving, dup-store elimination, chained stores, #pragma
+    // scheduling off) leaves that one-instruction displacement unchanged.
     f32 v0, v1;
-    int z, nine;
     v1 = lbl_eu_8066A6C0;
-    z = 0;
     v0 = lbl_eu_8066A6D8;
-    nine = 9;
-    l->field_0x4 = (LODElem20*)z;
-    l->field_0xC = (u8*)z;
-    l->mCount_18 = z;
-    l->field_0x5C = (u8*)z;
-    l->field_0xA8 = (nw4r::g3d::G3dObj*)z;
-    l->field_0xAC = (nw4r::g3d::G3dObj*)z;
-    l->field_0xB4 = (u8*)z;
-    l->field_0x6C = z;
-    l->field_0xB8 = nine;
-    l->field_0xBA = z;
-    l->field_0xBC = z;
+    l->field_0x4 = 0;
+    l->field_0xC = 0;
+    l->mCount_18 = 0;
+    l->field_0x5C = 0;
+    l->field_0xA8 = 0;
+    l->field_0xAC = 0;
+    l->field_0xB4 = 0;
+    l->field_0x6C = 0;
+    l->field_0xB8 = 9;
+    l->field_0xBA = 0;
+    l->field_0xBC = 0;
     *(f32*)&l->field_0xC8[0].field_0x0 = v1;
     l->field_0xC4 = v1;
     l->field_0xC0 = v1;
-    l->field_0xBE = z;
+    l->field_0xBE = 0;
     l->field_0x7C = v0;
     l->field_0x1CDC = v0;
-    l->field_0xA4 = z;
+    l->field_0xA4 = 0;
     l->field_0x84 = v0;
 }
-#pragma scheduling on
-#pragma pop
 // ---------------------------------------------------------------------------
 // func_8046DA64: clear the view/shared-buffer pointers, then reset the +0xCC
 // sub-manager (both g3d passes) and the +0xA44 sub-manager, and clear flag
@@ -2996,19 +2992,28 @@ void func_80471184__Q23LOD9LODMemManFv(LOD::LODMemMan* self) {
 // ---------------------------------------------------------------------------
 #pragma push
 #pragma auto_inline off
+// Walk view: base pointer starts at `this`; each step advances 0xC (one g3d
+// slot) and reads the slot through the fixed +0xC8 window (matches MWCC).
+struct LODSlotStep {
+    u8         mPad[0xC8];
+    LODG3dSlot mSlot;
+};
+
 void func_80471224__Q23LOD9LODMemManFv(LOD::LODMemMan* self, CScn* scene) {
-    int i = 0;
     LODMemManLayout* l = (LODMemManLayout*)self;
-    if (l->field_0x0) {
-        while (i < 16) {
-            if (l->field_0xC8[i].field_0x0) {
-                ((LODG3dMgrVt*)l->field_0x0)->vf0D(l->field_0xC8[i].field_0x0);
+    if (l->field_0x0 != 0) {
+        LODSlotStep* p = (LODSlotStep*)self;
+        int i = 0;
+        do {
+            if (p->mSlot.field_0x0 != 0) {
+                ((LODG3dMgrVt*)l->field_0x0)->vf0D(p->mSlot.field_0x0);
             }
             i++;
-        }
+            p = (LODSlotStep*)((u8*)p + sizeof(LODG3dSlot));
+        } while (i < 16);
     }
-    if (scene) {
-        if (l->field_0x0) {
+    if (scene != 0) {
+        if (l->field_0x0 != 0) {
             ((nw4r::g3d::ScnGroup*)func_8048EC14(scene, 7))
                 ->Remove((nw4r::g3d::ScnObj*)l->field_0x0);
         }
@@ -3411,9 +3416,9 @@ void LOD::LODMemMan::func_80471938() {
     }
     l->field_0xC = 0;
     l->field_0x20 = 0;
-    const char* name = lbl_eu_80523D90;
-    l->field_0x74 = strlen(name);
-    strcpy(l->mStr_34, name);
+    // Retail re-seeds the reset name from an empty string literal.
+    l->field_0x74 = strlen("");
+    strcpy(l->mStr_34, "");
 }
 
 // ---------------------------------------------------------------------------

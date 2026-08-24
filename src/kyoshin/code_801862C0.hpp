@@ -165,7 +165,7 @@ extern "C" Unk80EE4Data* func_80081694__Q22cf13CfGameManagerFv(u32 modelId, u32 
 // Third param MUST be spelled `int` (not s32): under MWCC s32 is `signed
 // long`, a distinct type from int, which makes this an illegal extern "C"
 // overload against the canonical decl in code_80135FDC.hpp.
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, int index);
+extern "C" u32 getBdatStringColumnValue(void* bdat, const char* column, s32 index); // s32(long), NOT int - must match defining TU verbatim
 
 // Matches the CfGimmick.hpp declaration verbatim so TUs including both see
 // one consistent signature.

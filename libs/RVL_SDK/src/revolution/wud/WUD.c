@@ -3132,8 +3132,6 @@ void WUDShutdown(BOOL onReconnect) {
     OSRestoreInterrupts(enabled);
 }
 void __wudShutdownHandler(void) {
-    extern WUDCB __rvl_wudcb;
-
     switch (_wcb.shutdownState) {
     case WUD_STATE_SHUTDOWN_STORE_SETTINGS: {
         BOOL result = _wudReadNand;
@@ -3323,26 +3321,30 @@ void __wudModuleRebootCallback(void) {
 }
 
 void __wudInstallPatchCallback(tBTM_VSC_CMPL* p1) {
+    char* pMsg;
     u8 buf[WUD_PATCH_BUFFER_SIZE + 1];
-    u8 num;
 
-    if (_wudPatchNum == _wudInstallNum || p1 == NULL) {
-        DEBUGPrint(_wudWiiRemoteDescriptor + 0x8B0);
-        BTM_DeviceReset((tBTM_CMPL_CB*)__wudModuleRebootCallback);
-    } else {
-        num = MIN(_wudPatchNum - _wudInstallNum, WUD_MAX_PATCHES);
+    pMsg = _wudWiiRemoteDescriptor;
+
+    // Install the next batch of patches; when none remain (or on a spurious
+    // completion) reboot the Bluetooth module instead.
+    if ((_wudPatchNum != _wudInstallNum) & (p1 != NULL)) {
+        u8 num = MIN(_wudPatchNum - _wudInstallNum, WUD_MAX_PATCHES);
+        int len = num * sizeof(WUDPatchCmd);
 
         buf[0] = num;
         memcpy(&buf[1],
-               &_wudWiiRemoteDescriptor[0x1A4 + 1 + _wudInstallNum * 13],
-               num * sizeof(WUDPatchCmd));
+               &pMsg[0x1A4 + _wudInstallNum * sizeof(WUDPatchCmd)] + 1,
+               len);
 
         _wudInstallNum += num;
-        DEBUGPrint(_wudWiiRemoteDescriptor + 0x8C0);
+        DEBUGPrint(pMsg + 0x8C0);
 
-        BTM_VendorSpecificCommand(BT_VSC_NINTENDO_INSTALL_PATCH,
-                                  num * sizeof(WUDPatchCmd) + 1, buf,
-                                  __wudInstallPatchCallback);
+        BTM_VendorSpecificCommand(BT_VSC_NINTENDO_INSTALL_PATCH, len + 1,
+                                  buf, __wudInstallPatchCallback);
+    } else {
+        DEBUGPrint(pMsg + 0x8B0);
+        BTM_DeviceReset((tBTM_CMPL_CB*)__wudModuleRebootCallback);
     }
 }
 

@@ -1424,7 +1424,10 @@ int func_8006E18C(cf::CfCamFollow* self, float val) {
 // then fans the vec3 slots, the 9-word +0x114 block, the sub-object copies
 // and the scalar tail across, finally setting the source's 0x20 flag.
 void func_8006E2FC(int id) {
-    u8* dst = id != 0 ? reinterpret_cast<u8*>(id) : lbl_eu_80570A8C;
+    u8* dst = reinterpret_cast<u8*>(id);
+    if (id == 0) {
+        dst = lbl_eu_80570A8C;
+    }
     CfCamEventManager* mgr = func_8006E59C();
     if (mgr == 0) {
         return;
@@ -1607,7 +1610,7 @@ int func_8006F5C8(cf::CfCamFollow* self, void* arg, float* out1, float* out2) {
                                 ? lbl_eu_806662D0
                                 : lbl_eu_80666358;
                 }
-                if (func_80074A74() != 0) {
+                if (func_80074A74(self, lbl_eu_806662DC) != 0) {
                     *out1 *= func_8006BAF0(reinterpret_cast<u8*>(sub) + 0x68);
                 }
             }
@@ -1621,7 +1624,7 @@ int func_8006F5C8(cf::CfCamFollow* self, void* arg, float* out1, float* out2) {
                                 ? lbl_eu_80666358
                                 : lbl_eu_806662D0;
                 }
-                if (func_80074A74() != 0) {
+                if (func_80074A74(self, lbl_eu_806662DC) != 0) {
                     *out2 *= func_8006BAF0(reinterpret_cast<u8*>(sub) + 0x6C);
                 }
             }
@@ -1761,7 +1764,7 @@ int func_8006FC44(cf::CfCamFollow* self, float* angle) {
 // the target by the blended heading angle.
 void func_8006FD3C(cf::CfCamFollow* self, const nw4r::math::VEC3* arg,
                    float input) {
-    f32 lim = lbl_eu_806662D0;
+    f32 lim;
     if (input != lbl_eu_806662DC) {
         f32 scale;
         if (func_8006C6B4(reinterpret_cast<int>(self), 0x100) != 0) {
@@ -1769,8 +1772,12 @@ void func_8006FD3C(cf::CfCamFollow* self, const nw4r::math::VEC3* arg,
         } else {
             scale = lbl_eu_80661B40;
         }
+        // assigned here (not before the branch) so MWCC keeps the load inside
+        // the branch like retail instead of hoisting it to the prologue
+        // read input through its address so MWCC spills it to its stack slot
+        lim = lbl_eu_806662D0;
         self->unk1E4 = input * scale + self->unk1E4;
-        if (func_80074A74()) {
+        if (func_80074A74(self, input)) {
             lim = func_8006BAF0(&input);
         }
         // clamp unk1E4 into [-lim, lim]
@@ -1789,24 +1796,23 @@ void func_8006FD3C(cf::CfCamFollow* self, const nw4r::math::VEC3* arg,
     if (func_8006BAF0(&self->unk1F4) > lbl_eu_8066A208 ||
         func_8006BAF0(&self->unk1E4) > lbl_eu_8066A208) {
         f32 l10[3];
-        func_8004CB80(
-            l10, reinterpret_cast<const f32*>(self->unk1C + 0x0C),
-            reinterpret_cast<const f32*>(arg));
-        f32 f30 = self->unk244;
-        f32 camY = *reinterpret_cast<const f32*>(self->unk168 + 0x18);
+        func_8004CB80(l10, reinterpret_cast<const f32*>(&self->field_0x28),
+                      reinterpret_cast<const f32*>(arg));
+        f32 mag0 = self->unk244;
+        f32 camY = self->field_0x180;
         f32 yaw = func_8006D3D0(l10);
         f32 angle = yaw;
         if (func_8006BAF0(&self->unk1F4) > lbl_eu_8066A208) {
             f32 step = lbl_eu_8066634C * self->unk1F4;
-            step = scaleByGlobal(step);
-            // clamp step to +/-lbl_eu_80661B78 with sign of unk1F4
+            // limit is the scaled constant; step is clamped to +/-limit
+            f32 limit = scaleByGlobal(lbl_eu_80661B78);
             if (self->unk1F4 >= lbl_eu_806662DC) {
-                if (step > lbl_eu_80661B78) {
-                    step = lbl_eu_80661B78;
+                if (step > limit) {
+                    step = limit;
                 }
             } else {
-                if (step < -lbl_eu_80661B78) {
-                    step = -lbl_eu_80661B78;
+                if (step < -limit) {
+                    step = -limit;
                 }
             }
             angle = yaw + step;
@@ -1817,12 +1823,11 @@ void func_8006FD3C(cf::CfCamFollow* self, const nw4r::math::VEC3* arg,
         }
         f32 wrappedCamY = func_8004BC28(camY);
         angle = func_8004BC28(angle);
-        f32 mag = f30 * func_8004CC74(wrappedCamY);
+        f32 mag = mag0 * func_8004CC74(wrappedCamY);
         f32 sn = func_8004CC68(angle);
-        *reinterpret_cast<f32*>(self->unk1C + 0x0C) = mag * sn + arg->x;
-        *reinterpret_cast<f32*>(self->unk1C + 0x14) =
-            mag * func_8004CC74(angle) + arg->z;
-        *reinterpret_cast<f32*>(self->unk168 + 0x1C) = angle;
+        self->field_0x28 = mag * sn + arg->x;
+        self->field_0x30 = mag * func_8004CC74(angle) + arg->z;
+        self->field_0x184 = angle;
     }
 }
 // func_8006FFA8: follow-distance output selector. Defaults two output floats,
@@ -2743,7 +2748,11 @@ CPad* func_80074A3C(int controllerId) {
     return cf::CfGameManager::getCurrentPad();
 }
 // func_80074A74: whether the current pad is a classic controller (type 4).
-__declspec(noinline) bool func_80074A74() {
+// The self/input params are unused by the body but are part of the retail
+// calling convention (call sites set up r3/f1 before the bl).
+__declspec(noinline) bool func_80074A74(void* self, float input) {
+    (void)self;
+    (void)input;
     return cf::CfGameManager::getCurrentPad()->mPadType == PAD_TYPE_CLASSIC;
 }
 // func_80074AA4: run camera action `id` (0..5) on the active camera-state

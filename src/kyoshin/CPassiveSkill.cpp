@@ -924,7 +924,7 @@ extern "C" __declspec(noinline) void func_80266724(UI::CPassiveSkillLine* self, 
         func_80136A1C(self->field_8, &lbl_eu_8050DC20[0x139], errBuf, 0);
     } else {
         u32 table = (u32)lbl_eu_8066488C;
-        u8 v = (u8)(slot + row * 5 + (charId - 1) * 0x19 + 1);
+        u8 v = (u8)(row * 5 + slot + (charId - 1) * 0x19 + 1);
         u8 result = func_801361E8(table, &lbl_eu_8050DC20[0x344], v);
         u16 v100 = (u16)(result * 100);
         u16 cost = 0;
@@ -3692,13 +3692,19 @@ void func_8026D894(UI_CPassiveSkill* self) {
     // Visibility-gated update: while the menu is open (both gates set), drive
     // the +0x28 sub-object update and, depending on the window state byte
     // (1 = normal, 3 = closing), run the matching +0x28 state transition first.
+    // NB: written as a switch - retail emits the small-switch compare chain
+    // (beq into case bodies laid out after dispatch, break-jumps to tail);
+    // an if/else-if chain produces inverted bne-over branches instead.
     if (self->field_24 == 0 || self->field_25 == 0) {
         return;
     }
-    if (self->field_25 == 1) {
+    switch (self->field_25) {
+    case 1:
         func_8026DCF4(self);
-    } else if (self->field_25 == 3) {
+        break;
+    case 3:
         func_8026DD3C(self);
+        break;
     }
     func_80267360(self->_pad28);
 }
@@ -3982,9 +3988,11 @@ extern "C" __declspec(noinline) void func_80264060(UI::CPassiveSkillCur* self) {
 // pointers (lbl_eu_80668908 / lbl_eu_8066890C), look the pane up in the region
 // layout's root pane and show it only when arg matches the slot index. C
 // linkage so call relocs are the plain retail name; noinline keeps the retail
-// `bl` from func_80269924 / func_80269A18 / func_80269B14. The four callee-saved
-// registers (r28-r31) need the stmw/lmw frame retail uses, which -O4,p only
-// emits under optimize_for_size.
+// `bl` from func_80269924 / func_80269A18 / func_80269B14.
+// NB: no optimize_for_size here - retail's stmw r28 frame comes from
+// -use_lmw_stmw on plain -O4,p, whose scheduler keeps the two SDA pointer
+// loads after the register setup (the size pragma hoists them above it).
+// NB: optimize_for_size required for the stmw/lmw r28-r31 frame.
 #pragma optimize_for_size on
 extern "C" __declspec(noinline) void func_802640B8(UI::UI_PassiveSkillRegion3C* self, u8 arg) {
     const char* names[2];
@@ -3997,7 +4005,7 @@ extern "C" __declspec(noinline) void func_802640B8(UI::UI_PassiveSkillRegion3C* 
     }
 }
 #pragma optimize_for_size off
-// Cursor step helper (retail func_80264140): when the second anim transform's
+// Cursor step helper (retail func_80264140):
 // frame check succeeds, deactivate/hide the cursor, swap the enabled transform
 // back to mpAnimTrans0 and rewind its frame. extern C so func_80263FE8's call
 // reloc is the plain retail name; noinline keeps the retail `bl`.

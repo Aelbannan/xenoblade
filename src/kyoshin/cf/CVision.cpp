@@ -153,6 +153,10 @@ struct CVisionObj {
     u8 unk3F2A[0x4FFC - 0x3F2A];
 };
 
+// Parameter objects traversed by func_801A5BA8 via the fusion vtable.
+class CVisionPrmHolder;
+class CVisionPrm;
+
 // Result of func_8016FE34 (per-model battle state). The retail v20 call
 // dispatches at vtable offset 0x20; the vtable carries 2 leading slots plus
 // 7 declared virtuals (v20 = 7th, index 8).
@@ -207,6 +211,11 @@ public:
     virtual void f274(); virtual void f278(); virtual void f27C(); virtual void f280();
     virtual void f284(); virtual void f288(); virtual void f28C();
     virtual void* vf290();      // 0x290
+    // Named slots used by func_801A5BA8 (declared index N -> vtable (N+2)*4).
+    virtual CVisionPrmHolder* vf2A4();  // 0x2A4 -> index 168
+    virtual s32 vf2A8(CVisionPrm* prm); // 0x2A8 -> index 169
+    virtual void f2AC(); virtual void f2B0(); virtual void f2B4(); virtual void f2B8();
+    virtual s32 vf2BC();        // 0x2BC -> index 175
 };
 
 struct CVisionFusion {
@@ -1341,6 +1350,19 @@ void func_801A5444(CVision* self, CVisionBattleObj* obj, CVisionBattleObj* r5) {
     __ptmf_test(&t3);
 }
 
+// Parameter objects traversed by func_801A5BA8 via the fusion vtable.
+class CVisionPrmHolder {
+public:
+    u8 unk0[0x50];
+    CVisionPrm* field_50;   // 0x50
+};
+
+class CVisionPrm {
+public:
+    u8 unk0[0x44];
+    u8 b_44;                // 0x44 (retail lbz: unsigned byte)
+};
+
 void func_801A5BA8(CVision* self) {
     CVisionSub* sub = (self->sub.field_00 != 0) ? &self->sub : 0;
     CVisionFusion* p = (CVisionFusion*)func_8016FE34(func_800B708C__Fi(sub->field_00));
@@ -1348,32 +1370,71 @@ void func_801A5BA8(CVision* self) {
         self->vt_20(1);
         return;
     }
-    if (self->field_2619C == lbl_eu_80667CD4) {
+    // Retail materializes the equality test via mfcr/extrwi (value context).
+    bool atBase = (lbl_eu_80667CD4 == self->field_2619C);
+    if (atBase) {
         p->field_3388 |= 0x2;
     }
-    void* a = ((void* (*)(void*))((void**)p)[0x2A4 / 4])(p);
-    void* prm = *(void**)((u8*)a + 0x50);
-    s32 byte = *(u8*)((u8*)prm + 0x44);
-    s32 result = (s32)((s32(*)(void*, void*))((void**)p)[0x2A8 / 4])(p, prm);
-    // r29 = (result - byte) with sign: nonzero when the value moved out of range.
-    s32 diff = result - byte;
+    CVisionPrmHolder* a = p->vf2A4();
+    CVisionPrm* prm = a->field_50;
+    u8 byte = prm->b_44;
+    s32 result = p->vf2A8(prm);
+    // Retail r29 flag: subfc/adde idiom for `byte <= result` (byte is the
+    // zero-extended lbz value, so the compare is signed vs [0,255]).
+    bool changed = byte <= result;
+
+    // Materialized timer-window checks (retail evaluates each into r0).
+    int w1;
     if (self->field_26198 - self->field_261A0 <= lbl_eu_80667CD4 &&
-        self->field_26194 - self->field_261A0 > lbl_eu_80667CD4 && (diff != 0 || result < 0)) {
-        CBattleManager* bm = CBattleManager::getInstance();
-        ((void (*)(void*, u32, f32, f32))((void**)bm)[0x34 / 4])(bm, 8, lbl_eu_80667D30, lbl_eu_80667D34);
+        lbl_eu_80667CD4 < self->field_26194 - self->field_261A0) {
+        w1 = 1;
+    } else {
+        w1 = 0;
     }
+    if (w1) {
+        if (changed) {
+            CBattleManager* bm = CBattleManager::getInstance();
+            ((void (*)(void*, u32, f32, f32))((void**)bm)[0x34 / 4])(bm, 8,
+                                                                     lbl_eu_80667D30,
+                                                                     lbl_eu_80667D34);
+        }
+    }
+    int w2;
     if (self->field_26198 - self->field_261A0 <= lbl_eu_80667CD4 &&
-        self->field_26194 - self->field_261A0 > lbl_eu_80667CD4) {
+        lbl_eu_80667CD4 < self->field_26194 - self->field_261A0) {
+        w2 = 1;
+    } else {
+        w2 = 0;
+    }
+    if (w2) {
         func_801AD504(8);
     }
+    int w3;
     if (self->field_26198 - self->field_261A0 <= lbl_eu_80667D34 &&
-        self->field_26194 - self->field_261A0 > lbl_eu_80667D34 && (diff != 0 || result < 0)) {
-        func_800EA484(CBattleManager::getInstance(), lbl_eu_80667CD4, 3);
+        lbl_eu_80667D34 < self->field_26194 - self->field_261A0) {
+        w3 = 1;
+    } else {
+        w3 = 0;
     }
+    if (w3) {
+        if (changed) {
+            func_800EA484(CBattleManager::getInstance(), lbl_eu_80667CD4, 3);
+        }
+    }
+    int w4;
     if (self->field_26198 - self->field_261A0 <= lbl_eu_80667CD4 &&
-        self->field_26194 - self->field_261A0 > lbl_eu_80667CD4 &&
-        ((diff != 0 || result < 0) ||
-         ((s32)((s32(*)(void*))((void**)p)[0x2BC / 4])(p) != 0))) {
+        lbl_eu_80667CD4 < self->field_26194 - self->field_261A0) {
+        w4 = 1;
+    } else {
+        w4 = 0;
+    }
+    if (w4) {
+        // Without the flag, bail out early unless vt2BC says otherwise.
+        if (!changed) {
+            if (p->vf2BC() == 0) {
+                return;
+            }
+        }
         // Retail copies the 12-byte callback triplet as a struct.
         CVisionPtmf cb = lbl_eu_805331C4;
         self->mPtmf = cb;
@@ -1389,19 +1450,24 @@ void func_801A5BA8(CVision* self) {
 // func_801A5E58).
 // ---------------------------------------------------------------------------
 void func_801A5E58(CVision* self) {
-    // Declaration order drives MWCC's callee-saved GPR coloring (p, i, sub).
-    CVisionFusionSub* p;
-    int i;
+    // MWCC colors callee-saved GPRs in reverse declaration order (locals), so
+    // the declaration sequence below reproduces the retail mapping
+    // (convHi=r31, sub=r30, i=r29, p=r28, cv=r27); the parameter dies into the
+    // trailing local copy and is never spilled.
+    u32 convHi = 0x43300000u;
     CVisionSub* sub;
-    if (self->sub.field_00 == 0) {
+    int i;
+    CVisionFusionSub* p;
+    CVision* cv = self;
+    if (cv->sub.field_00 == 0) {
         sub = 0;
     } else {
-        sub = &self->sub;
+        sub = &cv->sub;
     }
     // Materialized timer-window check (retail evaluates the condition into r0).
     int w1;
-    if (self->field_26198 - self->field_261A0 <= lbl_eu_80667CD4 &&
-        lbl_eu_80667CD4 < self->field_26194 - self->field_261A0) {
+    if (cv->field_26198 - cv->field_261A0 <= lbl_eu_80667CD4 &&
+        lbl_eu_80667CD4 < cv->field_26194 - cv->field_261A0) {
         w1 = 1;
     } else {
         w1 = 0;
@@ -1427,7 +1493,7 @@ void func_801A5E58(CVision* self) {
                             u32 w[2];
                             double d;
                         } conv;
-                        conv.w[0] = 0x43300000u;
+                        conv.w[0] = convHi;
                         conv.w[1] = (u32)out ^ 0x80000000u;
                         scl += (f32)(conv.d - lbl_eu_80667D28);
                     }
@@ -1447,8 +1513,8 @@ void func_801A5E58(CVision* self) {
         func_801AD504(0x10);
     }
     int w2;
-    if (self->field_26198 - self->field_261A0 <= lbl_eu_80667D04 &&
-        lbl_eu_80667D04 < self->field_26194 - self->field_261A0) {
+    if (cv->field_26198 - cv->field_261A0 <= lbl_eu_80667D04 &&
+        lbl_eu_80667D04 < cv->field_26194 - cv->field_261A0) {
         w2 = 1;
     } else {
         w2 = 0;
@@ -1456,18 +1522,20 @@ void func_801A5E58(CVision* self) {
     if (w2) {
         // Retail copies the 12-byte callback triplet as a struct.
         CVisionPtmf cb = lbl_eu_805331D0;
-        self->mPtmf = cb;
-        self->field_2619C = lbl_eu_80667CD4;
-        self->field_261A0 = self->field_26194;
+        cv->mPtmf = cb;
+        cv->field_2619C = lbl_eu_80667CD4;
+        cv->field_261A0 = cv->field_26194;
         __ptmf_test(&cb);
     }
 }
 
 void func_801A60B0(CVision* self) {
+    // Retail hoists the first threshold into an FPR before anything else.
+    f32 t1 = lbl_eu_80667CD4;
     // Materialized timer-window check (retail evaluates the condition into r0).
     int w1;
-    if (self->field_26198 - self->field_261A0 <= lbl_eu_80667CD4 &&
-        lbl_eu_80667CD4 < self->field_26194 - self->field_261A0) {
+    if (self->field_26198 - self->field_261A0 <= t1 &&
+        t1 < self->field_26194 - self->field_261A0) {
         w1 = 1;
     } else {
         w1 = 0;
@@ -1477,9 +1545,10 @@ void func_801A60B0(CVision* self) {
         func_801BFE8C(0, 0x1bf, 0);
         func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x1c0, 0, 0, lbl_eu_80667CE0);
     }
+    f32 t2 = lbl_eu_80667D04;
     int w2;
-    if (self->field_26198 - self->field_261A0 <= lbl_eu_80667D04 &&
-        lbl_eu_80667D04 < self->field_26194 - self->field_261A0) {
+    if (self->field_26198 - self->field_261A0 <= t2 &&
+        t2 < self->field_26194 - self->field_261A0) {
         w2 = 1;
     } else {
         w2 = 0;
@@ -1511,16 +1580,22 @@ void func_801A60B0(CVision* self) {
         func_80081E90__Q22cf13CfGameManagerFv(0, 0, 0);
         func_8006E5D8();
     }
+    f32 t3 = lbl_eu_80667D44;
     int w3;
-    if (self->field_26198 - self->field_261A0 <= lbl_eu_80667D44 &&
-        lbl_eu_80667D44 < self->field_26194 - self->field_261A0) {
+    if (self->field_26198 - self->field_261A0 <= t3 &&
+        t3 < self->field_26194 - self->field_261A0) {
         w3 = 1;
     } else {
         w3 = 0;
     }
     if (w3) {
-        // Retail copies the 12-byte callback triplet as a struct.
-        CVisionPtmf cb = lbl_eu_805331DC;
+        // Retail walks the callback triplet with an updating pointer load,
+        // then copies it to the member as a struct.
+        CVisionPtmf cb;
+        u32* src = &lbl_eu_805331DC.mPfn;
+        cb.mPfn = *src++;
+        cb.mObj = *src++;
+        cb.mDelta = *src;
         self->mPtmf = cb;
         self->field_2619C = lbl_eu_80667CD4;
         self->field_261A0 = self->field_26194;

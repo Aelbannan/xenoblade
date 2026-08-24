@@ -1,5 +1,5 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/mwply/mwsfdsvm
-// Replace stubs with high-level C/C++ during decomp.
+// SVM server API glue for the Sofdec movie player (MWSFSVM).
 
 #include <harness_catalog.h>
 #include <string.h>
@@ -16,12 +16,13 @@ void SVM_CallErr1(const char* msg);
 
 /* Registered callback slots shared with mwsfdlib.c, zeroed by
  * MWSFSVM_Init: +0x00 spare, +0x04 id-callback function,
- * +0x08 idle callback id, +0x0C main callback id. */
+ * +0x08 idle callback svr id, +0x0C main callback svr id. */
 extern u32 lbl_eu_805FF1D0;
 extern u32 lbl_eu_805FF1D4;
 extern u32 lbl_eu_805FF1D8;
 extern u32 lbl_eu_805FF1DC;
 
+/* Zero the SVM server callback table after bringing up the server. */
 void MWSFSVM_Init(void) {
     u32* base;
     base = (u32*)&lbl_eu_805FF1D0;
@@ -57,8 +58,8 @@ s32 MWSFSVM_TestAndSet(void* p) { return SVM_TestAndSet(p); }
 
 /* ---- SVM trace callback infrastructure ----
  * lbl_eu_805FF3A0 is a global pointer to an optional trace object whose
- * vtable exposes a "trace" method at offset 0x24; lbl_eu_80566AC8 is the
- * error data record (sub-record at +0x6c). */
+ * vtable exposes a "trace" method at offset 0x24; lbl_eu_80566AC8 is this
+ * module's error data record (entry sub-record at +0x04, exit at +0x6c). */
 
 typedef struct TraceCb TraceCb;
 
@@ -75,17 +76,18 @@ struct TraceCb {
  * formatted message pointer is stashed at +0x0c. */
 typedef struct TraceRec TraceRec;
 struct TraceRec {
-    u8 pad_0x00[0x4];
-    u32 field_0x04;                            /* 0x04 (entry sub-record) */
-    u8 pad_0x08[0x4];
-    u32 field_0x0c;                            /* 0x0c (message pointer) */
-    u8 pad_0x10[0x5c];                         /* 0x10..0x6b */
-    u32 field_0x6c;                            /* 0x6c (exit sub-record) */
+    u32 field_0x00;     /* 0x00 */
+    u32 entry;          /* 0x04 (entry sub-record) */
+    u32 field_0x08;     /* 0x08 */
+    u32 self;           /* 0x0c (message pointer) */
+    u8  pad_0x10[0x5c]; /* 0x10..0x6b */
+    u32 exit;           /* 0x6c (exit sub-record) */
 };
 
 extern TraceCb* lbl_eu_805FF3A0;
 extern TraceRec lbl_eu_80566AC8;
 
+/* Shared 256-byte scratch buffer for formatted error messages. */
 extern char lbl_eu_805FF1E0[256];
 
 /* Format a message into the shared scratch buffer and report it:
@@ -107,17 +109,18 @@ void MWSFSVM_Error(const char* fmt, ...) {
     va_start(ap, fmt);
     vsprintf(lbl_eu_805FF1E0, fmt, ap);
     if (lbl_eu_805FF3A0 != NULL) {
-        lbl_eu_80566AC8.field_0x0c = (u32)lbl_eu_805FF1E0;
+        lbl_eu_80566AC8.self = (u32)lbl_eu_805FF1E0;
         lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0,
-            &lbl_eu_80566AC8.field_0x04);
+            &lbl_eu_80566AC8.entry);
     }
     SVM_CallErr1(lbl_eu_805FF1E0);
     if (lbl_eu_805FF3A0 != NULL) {
         lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0,
-            &lbl_eu_80566AC8.field_0x6c);
+            &lbl_eu_80566AC8.exit);
     }
 }
 
+/* Idle-border trace record for MWSFSVM_GotoIdleBorder. */
 extern TraceRec lbl_eu_80566B9C;
 
 /* Jump the server thread to its idle border, bracketing the transition
@@ -125,11 +128,11 @@ extern TraceRec lbl_eu_80566B9C;
 void MWSFSVM_GotoIdleBorder(void) {
     TraceCb* cb = lbl_eu_805FF3A0;
     if (cb != NULL) {
-        cb->vtable->trace(cb, &lbl_eu_80566B9C.field_0x04);
+        cb->vtable->trace(cb, &lbl_eu_80566B9C.entry);
     }
     SVM_GotoSvrBorder(6);
     cb = lbl_eu_805FF3A0;
     if (cb != NULL) {
-        cb->vtable->trace(cb, &lbl_eu_80566B9C.field_0x6c);
+        cb->vtable->trace(cb, &lbl_eu_80566B9C.exit);
     }
 }

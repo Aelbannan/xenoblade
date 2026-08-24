@@ -44,17 +44,21 @@ void func_802A5E54(CVS_THREAD_DOWN* self, CCharVoice* voicePtr) {
 
 // ── Target 3: us-802a83c4 (func_802A5C90) ──────────────────────────────────
 // Advance/play function for voice slot 1 (field_0x20).
-// Copies init data from lbl_eu_80539A74 to fields 0x00-0x08, checks if
-// the voice is still active (vtable method at offset 0x2BC), and if
-// inactive, plays a random voice ID (mtRand(2) + 0x70C).
+// Copies init data from lbl_eu_80539A74 into the base state words 0x00-0x08,
+// checks if the voice is still active (vtable method at offset 0x2BC), and
+// if inactive, plays a random voice ID (mtRand(2) + 0x70C).
 void func_802A5C90(CVS_THREAD_DOWN* self) {
-    u32 state0;  // first init word -- loaded before the slot read, kept in a temp
+    // Init-state triple view over the CVS_THREAD base words at 0x00-0x08.
+    // First word is loaded before the slot read and kept in a temp so the
+    // load/store schedule matches retail.
+    CVS_THREAD_DOWN_INIT* state = (CVS_THREAD_DOWN_INIT*)self;
+    u32 state0;
     u32* src = lbl_eu_80539A74;
     state0 = *src++;
     CVoiceHandle* handle20 = self->field_0x20;
-    ((CVS_THREAD_DOWN_raw*)self)->state1 = *src++;
-    ((CVS_THREAD_DOWN_raw*)self)->state0 = (u32*)state0;
-    ((CVS_THREAD_DOWN_raw*)self)->state2 = *src;
+    state->word1 = *src++;
+    state->word0 = state0;
+    state->word2 = *src;
 
     if (handle20 != NULL) {
         // Call vtable method at offset 0x2BC (is-active check) as a real
@@ -75,21 +79,23 @@ void func_802A5C90(CVS_THREAD_DOWN* self) {
 
 // ── Target 4: us-802a8480 (func_802A5D4C) ──────────────────────────────────
 // Advance/play function for voice slot 2 (field_0x24).
-// Copies init data from lbl_eu_80539A80 to fields 0x00-0x08, checks if
-// the voice is still active, and if inactive, plays a voice ID chosen by
-// mtRand(2): 0x713 when rand==0, otherwise 0x70E.
+// Copies init data from lbl_eu_80539A80 into the base state words 0x00-0x08,
+// checks if the voice is still active, and if inactive, plays a voice ID
+// chosen by mtRand(2): 0x713 when rand==0, otherwise 0x70E.
 void func_802A5D4C(CVS_THREAD_DOWN* self) {
     if (func_802A3E88(self) != 0) {
         return;
     }
 
+    // Init-state triple view over the CVS_THREAD base words at 0x00-0x08.
+    CVS_THREAD_DOWN_INIT* state = (CVS_THREAD_DOWN_INIT*)self;
     u32 state0;  // first init word -- loaded before the slot read, kept in a temp
     u32* src = lbl_eu_80539A80;
     state0 = *src++;
     CVoiceHandle* handle24 = self->field_0x24;
-    ((CVS_THREAD_DOWN_raw*)self)->state1 = *src++;
-    ((CVS_THREAD_DOWN_raw*)self)->state0 = (u32*)state0;
-    ((CVS_THREAD_DOWN_raw*)self)->state2 = *src;
+    state->word1 = *src++;
+    state->word0 = state0;
+    state->word2 = *src;
 
     if (handle24 != NULL) {
         // Call vtable method at offset 0x2BC (is-active check) as a real
@@ -111,7 +117,7 @@ void func_802A5D4C(CVS_THREAD_DOWN* self) {
     }
 }
 
-// ── Target 5: us-802a82bc (__ct__802A5B88) ──────────────────────────────────
+// ── Target 5: us-802a82bc (__ct__802A5B88) ─────────────────────────────────
 // Factory/constructor for CVS_THREAD_DOWN. Takes two owner CVoiceHandles
 // (each must have the factory-active flag bit 1 set at 0x3F00), allocates a
 // throwaway handle buffer (0xF0 bytes) and the object itself (0x28 bytes),
@@ -146,9 +152,8 @@ CVS_THREAD_DOWN* __ct__802A5B88(CVoiceHandle* owner1, CVoiceHandle* owner2) {
         }
     }
 
-    // Copy the init-state triple, same named-struct-pointer form as the
-    // CVS_THREAD_CHAIN factory: word1 into a temp first, then word0/word1/word2.
-    // Copy the init-state triple.
+    // Copy the init-state triple (bytes 0x00-0x08), same form as the
+    // CVS_THREAD_CHAIN factory.
     // NOTE (plateau): every reshaping tried (single/double temps, const ptr,
     // named struct views, whole-struct copy, direct stores) either merges the
     // ascending loads into lwzu or rotates {base,w1,w0} registers. This form

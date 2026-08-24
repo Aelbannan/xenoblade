@@ -157,19 +157,26 @@ void __ct__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self);
 void __dt__Q34nw4r3lyt8DrawInfoFv(nw4r::lyt::DrawInfo* self, int flags);
 int func_8013BE50();
 void* func_801355F4();
-void func_80138078__FUl(u32 op);
+void func_80138078(u32 op);
 void* getCfPadData__Q22cf13CfGameManagerFv();
 int func_80086F9C__Q22cf13CfGameManagerFv(int arg);
+// Sibling CSystemWindow subobject dtor / render callback, addressed by the
+// vtable-compatible thunks at the end of the TU (retail mangled members).
+void __dt__13CSystemWindowFv(u8* win);
+void cbRenderBefore__13CSystemWindowFv(u8* win);
+// Global-view alias of CSysWinSelect::cbRenderBefore so the thunks can take
+// its address under the retail mangled-member symbol name.
+void cbRenderBefore__13CSysWinSelectFv(u8* win);
 u32 CSysWin_isReady(void* syswin);
 int CSysWin_isActive(void* syswin);
 void func_8022B90C(void* syswin, int arg);
-void func_8022B9B4(void* syswin, void* str1, void* str2);
-void func_8022BF6C(void* syswin, void* a, void* b);
+void func_8022B9B4(u8* syswin, char* str1, char* str2);
+void func_8022BF6C(u8* syswin, char* a, char* b);
 void func_8022BFC8(void* syswin, int kind);
 void func_8022B8B8(void* syswin);
 void func_8022B8E4(void* syswin);
 void func_8022B748(void* syswin);
-void func_8022C1B4(void* out, void* syswin, unsigned char sel);
+void func_8022C1B4(u8* out, u8* syswin, u8 sel);
 void func_801D216C(void* cur, int val);
 void func_801D202C(void* cur);
 void __ct__CSysWin(void* syswin, int arg);
@@ -179,6 +186,17 @@ void __dt__7CSysWinFv(void* syswin, int flags);
 void __dt__6CCur18Fv(void* cursor, int flags);
 void __dt__8CProcessFv(CProcess* self, int flags);
 }
+
+// C++-linkage helper - retail emits the mangled form
+// func_80137250__FPQ34nw4r3lyt8DrawInfo (same convention as CSystemWindow.hpp).
+void func_80137250(nw4r::lyt::DrawInfo* drawInfo);
+
+// Raw view onto the object header so the constructor can install vtables by
+// hand (the CProcess base's vtable slot lives at +0x10).
+struct CSysWinSelectHeaderView {
+    u8  _00[0x10];
+    u32 vtable;      // +0x10
+};
 
 // Global data imports (MWCC does not mangle global-scope data names).
 extern CSysWinSelect* lbl_eu_80663FDC;  // singleton instance pointer (.sbss)

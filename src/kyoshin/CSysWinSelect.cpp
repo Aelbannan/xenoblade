@@ -7,15 +7,6 @@
 #include <string.h>
 #include <revolution/gx/GXPixel.h>
 
-// Forward decls used by the catalog thunks below (retail sibling symbols).
-// __dt__13CSysWinSelectFv / cbRenderBefore__13CSysWinSelectFv are declared in
-// CSysWinSelect.hpp; the CSystemWindow ones are imported here for the thunks.
-void __dt__13CSystemWindowFv(void* self);
-void cbRenderBefore__13CSystemWindowFv(void* self);
-// Global-view declaration so the catalog thunks can address the member method
-// by its retail symbol name (the definition below emits that symbol).
-void cbRenderBefore__13CSysWinSelectFv(void* self);
-
 // VTable-compatible thunks adjacent to the CSysWinSelect subobjects (retail
 // emits these as offset-adjusted dispatch stubs). Preserved from the scaffold.
 void func_801252A0(void* self) { ((void(*)(void*))__dt__13CSystemWindowFv)((char*)self - 0x6c); }
@@ -104,9 +95,13 @@ void CSysWinSelect::Move() {
 // ---------------------------------------------------------------------------
 // Target 3: CSysWinSelect::~CSysWinSelect (us-801257ac)
 // Complete-object destructor. Subobjects destroyed in reverse construction
-// order: CCur18@0xB4, then CSysWin@0x78, then the CProcess base. The nested
-// double null-check guards the base-class dtor (MWCC D2-inlined-into-D1
-// artifact), then a conditional operator delete when flags > 0.
+// order: CCur18@0xB4, then CSysWin@0x78, then the CProcess base. Written as a
+// C-linkage definition carrying the retail mangled-member symbol so the flags
+// parameter and MWCC's D2-inlined-into-D1 artifacts (nested double null-check
+// around the base dtor) can be expressed exactly; a real member definition
+// makes MWCC emit an extra vtable store and reorders the subobject calls.
+// The member declaration in CSysWinSelect.hpp is satisfied at link time
+// (CMapSel idiom).
 // ---------------------------------------------------------------------------
 extern "C" CSysWinSelect* __dt__13CSysWinSelectFv(CSysWinSelect* _this,
                                                    int flags) {
@@ -198,7 +193,7 @@ extern "C" void func_801250FC(CSysWinSelect* self) {
         func_8022B8E4(&self->mSysWin[0]);
         self->field_60 = (s8)self->mCursorSel + 1;
         func_801D216C(&self->mCur18[0], 0);
-        func_80138078__FUl(3);
+        func_80138078(3);
     } else if (up != 0) {
         // Up: move the cursor up one row, wrapping below 0 to 1.
         self->mCursorSel = (u8)(self->mCursorSel - 1);
@@ -206,7 +201,7 @@ extern "C" void func_801250FC(CSysWinSelect* self) {
         u8 tmp[0xC];
         func_8022C1B4(tmp, &self->mSysWin[0], self->mCursorSel);
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
-        func_80138078__FUl(1);
+        func_80138078(1);
     } else if (down != 0) {
         // Down: move the cursor down one row, wrapping over 1 to 0.
         self->mCursorSel = (u8)(self->mCursorSel + 1);
@@ -214,7 +209,7 @@ extern "C" void func_801250FC(CSysWinSelect* self) {
         u8 tmp[0xC];
         func_8022C1B4(tmp, &self->mSysWin[0], self->mCursorSel);
         reinterpret_cast<CCur18View*>(&self->mCur18[0])->vf04(tmp);
-        func_80138078__FUl(1);
+        func_80138078(1);
     }
 }
 
@@ -259,7 +254,7 @@ body:
     // its scope-exit destructor and bloat the body).
     u8 drawInfo[0x60];
     __ct__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
-    func_80137250__FPQ34nw4r3lyt8DrawInfo(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
+    func_80137250(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
     func_8022B7C8(&mSysWin[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
     func_801D20B0(&mCur18[0], reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]));
     __dt__Q34nw4r3lyt8DrawInfoFv(reinterpret_cast<nw4r::lyt::DrawInfo*>(&drawInfo[0]), -1);
@@ -276,21 +271,35 @@ extern "C" CSysWinSelect* __ct__CSysWinSelect(CSysWinSelect* self, void* scene,
     __ct__8CProcessFv((CProcess*)self);
 
     // Temporarily install the plain IUIWindow vtable at +0x10.
-    *(u32*)((u8*)self + 0x10) = (u32)&lbl_eu_8052D238[0];
+    reinterpret_cast<CSysWinSelectHeaderView*>(self)->vtable = (u32)lbl_eu_8052D238;
 
-    // Composite vtable and its IWorkEvent/IScnRender subobject pointers,
-    // computed up front and installed below.
-    u32 vt = (u32)&lbl_eu_8052D278[0];
-    u32 evtVt = vt + 0x24;
-    u32 rndVt = vt + 0xac;
+    // Materialize the composite vtable address + offset values before the
+    // callback copy so MWCC schedules their lis/addi ahead of the __ptmf_null
+    // base (retail interleaves the final-vtable lis between the temp-vtable
+    // store and the ptmf lwzu).
+    char* finalVt = lbl_eu_8052D278;
+    u32 evtVt = (u32)(finalVt + 0x24);
+    u32 rndVt = (u32)(finalVt + 0xac);
 
-    // Copy the two null pointer-to-member-function callback slots.
-    self->ptmf0[0] = __ptmf_null[0];
-    self->ptmf0[1] = __ptmf_null[1];
-    self->ptmf0[2] = __ptmf_null[2];
-    self->ptmf1[0] = __ptmf_null[0];
-    self->ptmf1[1] = __ptmf_null[1];
-    self->ptmf1[2] = __ptmf_null[2];
+    // Copy the null member-function pointer into both callback slots (retail
+    // store order 0x40,0x3C,0x44 then 0x4C,0x48,0x50). Post-increment derefs
+    // of a local pointer make MWCC fold the first access into `lwzu` instead
+    // of an extra `addi`-materialised pointer - cf. CTaskGameEvt / MWCC_CASES
+    // btm_sco_init lwzu shape.
+    const u32* src = __ptmf_null;
+    u32 ptmfWord0 = *src++;
+    u32 ptmfWord1 = *src++;
+    self->ptmf0[1] = ptmfWord1;
+    self->ptmf0[0] = ptmfWord0;
+    u32 ptmfWord2 = *src++;
+    self->ptmf0[2] = ptmfWord2;
+    src = __ptmf_null;
+    ptmfWord1 = *src++;
+    ptmfWord0 = *src++;
+    self->ptmf1[1] = ptmfWord0;
+    self->ptmf1[0] = ptmfWord1;
+    ptmfWord2 = *src++;
+    self->ptmf1[2] = ptmfWord2;
 
     self->field_54 = 0;
     self->field_58 = 0;
@@ -303,7 +312,7 @@ extern "C" CSysWinSelect* __ct__CSysWinSelect(CSysWinSelect* self, void* scene,
     self->field_68 = 0;
 
     // Overwrite +0x10 with the composite CSysWinSelect vtable.
-    *(u32*)((u8*)self + 0x10) = vt;
+    reinterpret_cast<CSysWinSelectHeaderView*>(self)->vtable = (u32)finalVt;
     self->mWorkEvent = evtVt;
     self->mScnRender = rndVt;
     self->mScene = (CScn*)scene;
